@@ -9,7 +9,7 @@ import { getPrimaryTagsConfig, getSubTagsOfPrimary, getTagEmoji, isSubTag, getPa
 import { state, setCurrentActiveParentForSub, getCurrentActiveParentForSub } from '../state';
 import { loadAll, onFullRefresh, onLightRefresh, onProgress, onLoadingChange, onFileChange } from '../store';
 import { applyFilter, cancelEdit, updateSticky, initScroll } from './entries';
-import { refreshSubTagsBar } from './filter-shared';
+import { createTag, rebuildTags, refreshSubTagsBar } from './filter-shared';
 import { createTagPicker, createAddDialog, createConfirmDialog, createDatePicker, showDatePicker, openAddDialog } from './dialogs';
 import { registerOpenDialogCommand, registerQuoteCommand } from './quote';
 
@@ -209,126 +209,8 @@ export function createTagBar() {
   return tagsContainer;
 }
 
-export function rebuildTags() {
-  const tagsContainer = document.getElementById('diary-tag-container');
-  if (!tagsContainer) return;
-
-  const currentSelectedTags = new Set(state.data.selectedTags);
-  const tagsScrollContainer = document.createElement('div');
-  tagsScrollContainer.className = 'diary-tags-scroll-container';
-
-  for (const tag of Object.keys(getPrimaryTagsConfig())) {
-    const count = getTagCountForPrimary(tag);
-    const emoji = getTagEmoji(tag);
-    const btn = createTag(tag, emoji, count); // createTag 内部会根据设置决定是否显示计数
-    if (currentSelectedTags.has(tag)) {
-      btn.style.background = 'var(--interactive-accent)';
-      btn.style.color = 'var(--background-primary)';
-    }
-    tagsScrollContainer.appendChild(btn);
-  }
-
-  const oldContainer = tagsContainer.querySelector('.diary-tags-scroll-container');
-  if (oldContainer) oldContainer.remove();
-  tagsContainer.appendChild(tagsScrollContainer);
-
-  refreshSubTagsBar();
-}
-
-// 辅助函数：统计主标签自身 + 所有二级标签的总条目数
-function getTagCountForPrimary(primaryTag: string) {
-  let count = 0;
-  const subTags = getSubTagsOfPrimary(primaryTag);
-  for (const entry of state.data.originalDiaryEntries) {
-    if (entry.tags.includes(primaryTag)) {
-      count++;
-    } else if (subTags) {
-      if (entry.tags.some((t) => subTags.some((sub) => sub.tag === t))) {
-        count++;
-      }
-    }
-  }
-  return count;
-}
-
-// 创建单个标签按钮
-export function createTag(tag: string, emoji: string, count: number | null) {
-  const showCount = getShowTagCountSetting(); // 默认 true
-
-  const button = document.createElement('button');
-  button.className = 'diary-tag-btn';
-  button.dataset.tag = tag;
-
-  let countHtml = '';
-  if (showCount && count !== null && count !== undefined) {
-    countHtml = `<span style="margin-left:4px; font-size:10px; opacity:0.8;">(${count})</span>`;
-  }
-  button.innerHTML = `${emoji} ${tag} ${countHtml}`;
-  button.style.cssText =
-    'border-radius:10px;background:var(--background-secondary);cursor:pointer;font-size:10px;color:var(--text-normal);transition:all 0.2s;display:flex;align-items:center;flex-shrink:0;box-shadow:none;';
-
-  const subTags = getSubTagsOfPrimary(tag);
-  if (subTags && subTags.length > 0) {
-    button.style.border = '1px solid var(--background-modifier-hover)';
-    button.style.padding = '0 8px';
-  }
-
-  button.onmouseenter = () => !state.data.selectedTags.has(tag) && (button.style.backgroundColor = 'var(--background-modifier-hover)');
-  button.onmouseleave = () => !state.data.selectedTags.has(tag) && (button.style.backgroundColor = 'var(--background-secondary)');
-
-  button.onclick = (e) => {
-    e.stopPropagation();
-    if (!state.data.selectedTags.has(tag)) {
-      state.data.selectedTags.clear();
-      state.data.selectedTags.add(tag);
-      document.querySelectorAll('.diary-tag-btn').forEach((btn) => {
-        (btn as HTMLElement).style.background = 'var(--background-secondary)';
-        (btn as HTMLElement).style.color = 'var(--text-normal)';
-      });
-      button.style.background = 'var(--interactive-accent)';
-      button.style.color = 'var(--background-primary)';
-    } else {
-      state.data.selectedTags.delete(tag);
-      button.style.background = 'var(--background-secondary)';
-      button.style.color = 'var(--text-normal)';
-    }
-    applyFilter({ skipTagCountUpdate: true });
-  };
-
-  return button;
-}
-
-// ===== 设置读取（由 settings 装配时注入） =====
-let showTagCountSetting = true;
-let enableLongPressSetting = true;
-let defaultTagSetting = '日记';
-let useFileDateTimeSetting = false;
-
-export function applyUiSettings(s: {
-  showTagCount?: boolean;
-  enableLongPress?: boolean;
-  defaultTag?: string;
-  useFileDateTime?: boolean;
-}) {
-  if (s.showTagCount !== undefined) showTagCountSetting = s.showTagCount;
-  if (s.enableLongPress !== undefined) enableLongPressSetting = s.enableLongPress;
-  if (s.defaultTag !== undefined) defaultTagSetting = s.defaultTag;
-  if (s.useFileDateTime !== undefined) useFileDateTimeSetting = s.useFileDateTime;
-}
-
-export function getShowTagCountSetting(): boolean {
-  return showTagCountSetting;
-}
-export function getEnableLongPressSetting(): boolean {
-  return enableLongPressSetting;
-}
-export function getDefaultTagSetting(): string {
-  return defaultTagSetting;
-}
-export function getUseFileDateTimeSetting(): boolean {
-  return useFileDateTimeSetting;
-}
-
+// ===== 设置读取（实现见 ui-settings.ts） =====
+export { applyUiSettings, getDefaultTagSetting, getEnableLongPressSetting, getShowTagCountSetting, getUseFileDateTimeSetting } from './ui-settings';
 // ===== 搜索（原 867-912） =====
 
 export function setLoadingState(loading: boolean) {
@@ -398,16 +280,13 @@ export async function init(plugin?: { registerEvent: (ref: unknown) => unknown }
   await registerQuoteCommand();
   createMaskAndPopup();
   createAddDialog();
-  createConfirmDialog();
   createDatePicker();
   registerEscapeListener();
 
-  if (state.ui.isPopupShown) {
-    state.ui.maskLayer!.style.visibility = 'visible';
-    state.ui.tagFilterPopup!.style.visibility = 'visible';
-  } else {
-    state.ui.isPopupShown = true;
-  }
+  // 加载即打开面板（原脚本此处首次不显示，属缺陷，修正）
+  state.ui.isPopupShown = true;
+  state.ui.maskLayer!.style.visibility = 'visible';
+  state.ui.tagFilterPopup!.style.visibility = 'visible';
 
   initScroll();
   await loadAll();

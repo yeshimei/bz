@@ -4,7 +4,7 @@
  */
 import { getPrimaryTagsConfig, getParentPrimaryTag, getSubTagsOfPrimary, getTagEmoji, isSubTag } from '../config';
 import { getCurrentActiveParentForSub, setCurrentActiveParentForSub, state } from '../state';
-import { getShowTagCountSetting } from './panel';
+import { getShowTagCountSetting } from './ui-settings';
 
 /** 更新标题上的日期后缀（原 1934-1952） */
 export function updateTitleSuffix() {
@@ -131,6 +131,95 @@ export function refreshSubTagsBar() {
 
     subContainer.appendChild(btn);
   }
+}
+
+export function rebuildTags() {
+  const tagsContainer = document.getElementById('diary-tag-container');
+  if (!tagsContainer) return;
+
+  const currentSelectedTags = new Set(state.data.selectedTags);
+  const tagsScrollContainer = document.createElement('div');
+  tagsScrollContainer.className = 'diary-tags-scroll-container';
+
+  for (const tag of Object.keys(getPrimaryTagsConfig())) {
+    const count = getTagCountForPrimary(tag);
+    const emoji = getTagEmoji(tag);
+    const btn = createTag(tag, emoji, count); // createTag 内部会根据设置决定是否显示计数
+    if (currentSelectedTags.has(tag)) {
+      btn.style.background = 'var(--interactive-accent)';
+      btn.style.color = 'var(--background-primary)';
+    }
+    tagsScrollContainer.appendChild(btn);
+  }
+
+  const oldContainer = tagsContainer.querySelector('.diary-tags-scroll-container');
+  if (oldContainer) oldContainer.remove();
+  tagsContainer.appendChild(tagsScrollContainer);
+
+  refreshSubTagsBar();
+}
+
+// 辅助函数：统计主标签自身 + 所有二级标签的总条目数
+function getTagCountForPrimary(primaryTag: string) {
+  let count = 0;
+  const subTags = getSubTagsOfPrimary(primaryTag);
+  for (const entry of state.data.originalDiaryEntries) {
+    if (entry.tags.includes(primaryTag)) {
+      count++;
+    } else if (subTags) {
+      if (entry.tags.some((t) => subTags.some((sub) => sub.tag === t))) {
+        count++;
+      }
+    }
+  }
+  return count;
+}
+
+// 创建单个标签按钮
+export function createTag(tag: string, emoji: string, count: number | null) {
+  const showCount = getShowTagCountSetting(); // 默认 true
+
+  const button = document.createElement('button');
+  button.className = 'diary-tag-btn';
+  button.dataset.tag = tag;
+
+  let countHtml = '';
+  if (showCount && count !== null && count !== undefined) {
+    countHtml = `<span style="margin-left:4px; font-size:10px; opacity:0.8;">(${count})</span>`;
+  }
+  button.innerHTML = `${emoji} ${tag} ${countHtml}`;
+  button.style.cssText =
+    'border-radius:10px;background:var(--background-secondary);cursor:pointer;font-size:10px;color:var(--text-normal);transition:all 0.2s;display:flex;align-items:center;flex-shrink:0;box-shadow:none;';
+
+  const subTags = getSubTagsOfPrimary(tag);
+  if (subTags && subTags.length > 0) {
+    button.style.border = '1px solid var(--background-modifier-hover)';
+    button.style.padding = '0 8px';
+  }
+
+  button.onmouseenter = () => !state.data.selectedTags.has(tag) && (button.style.backgroundColor = 'var(--background-modifier-hover)');
+  button.onmouseleave = () => !state.data.selectedTags.has(tag) && (button.style.backgroundColor = 'var(--background-secondary)');
+
+  button.onclick = (e) => {
+    e.stopPropagation();
+    if (!state.data.selectedTags.has(tag)) {
+      state.data.selectedTags.clear();
+      state.data.selectedTags.add(tag);
+      document.querySelectorAll('.diary-tag-btn').forEach((btn) => {
+        (btn as HTMLElement).style.background = 'var(--background-secondary)';
+        (btn as HTMLElement).style.color = 'var(--text-normal)';
+      });
+      button.style.background = 'var(--interactive-accent)';
+      button.style.color = 'var(--background-primary)';
+    } else {
+      state.data.selectedTags.delete(tag);
+      button.style.background = 'var(--background-secondary)';
+      button.style.color = 'var(--text-normal)';
+    }
+    applyFilterFromShared({ skipTagCountUpdate: true });
+  };
+
+  return button;
 }
 
 /** 更新二级标签区域的计数（在 applyFilter 后调用，原 1312-1315） */
