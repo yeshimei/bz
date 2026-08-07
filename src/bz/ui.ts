@@ -158,7 +158,7 @@ export const UIManager = {
     this.mask!.style.display = 'block';
     this.popup!.style.display = 'flex';
     App.refresh();
-    checkAndShowChangelog('memo');
+    checkAndShowChangelog('bz');
   },
   hideMain() {
     if (this.mask) this.mask.style.display = 'none';
@@ -1054,7 +1054,7 @@ export const UIManager = {
 
   // ---------- ESC ----------
   registerEscape() {
-    escManager.register('memo', {
+    escManager.register('bz', {
       isVisible: () => !!(this.mask && this.mask.style.display === 'block'),
       close: () => {
         // 共享 confirm mask（重构后由 confirm 创建，不在 UIManager 里）

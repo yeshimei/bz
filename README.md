@@ -1,4 +1,4 @@
-# 包仔（memo-suite）
+# 包仔（bz）
 
 由 16 个 QuickAdd 宏脚本（`CONFIG/SCRIPTS/Quickadd/`，约 21,000 行）独立化而来的 Obsidian 插件。**UI、文案、公式与逻辑与原脚本逐字保持一致**，**数据格式零迁移**（继续读写原脚本产出的全部数据文件）。
 
@@ -31,7 +31,7 @@
 
 ## 安装
 
-1. 构建：`npm install && npm run build` —— 产物自动输出到 vault 的 `.obsidian/plugins/memo-suite/`（main.js / manifest.json / styles.css）
+1. 构建：`npm install && npm run build` —— 产物自动输出到 vault 的 `.obsidian/plugins/bz/`（main.js / manifest.json / styles.css）
 2. Obsidian 设置 → 第三方插件 → 启用「包仔」
 
 ## 开发

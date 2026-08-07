@@ -1,4 +1,4 @@
-# Spec: QuickAdd 全脚本独立插件化（memo-suite）
+# Spec: QuickAdd 全脚本独立插件化（bz）
 
 Status: `ready-for-agent`
 Type: spec
@@ -8,11 +8,11 @@ Feature: memo-suite-plugin
 
 用户（叫我包仔）的 vault 依赖 16 个 QuickAdd 宏脚本（约 21,000 行）完成日常管理：待办（备忘录）、物品（归物本）、密码、剪藏、新闻聚合、收藏、读书、观影、复习、做题、闪念、AI 同步等。这些脚本依赖 QuickAdd 运行时与 Q3.js 挂载到 `window.__utils` 的共享工具（21 个导出），且脚本间存在命令互调（影视.js → `movie-analysis-open`）与全局状态共享（`window.__MOVIE_FOLDER_PATH`）。
 
-用户已通过「日记本」迁移验证了 QuickAdd → 标准 Obsidian 插件的可行路径（TS + esbuild、UI/逻辑逐字一致、数据格式零迁移、裸命令 id 保留热键）。现在要把**剩余 15 个脚本合并为一个插件** `memo-suite`（显示名「备忘录」），功能与样式完全复刻。B站下载排除（后续独立插件）。
+用户已通过「日记本」迁移验证了 QuickAdd → 标准 Obsidian 插件的可行路径（TS + esbuild、UI/逻辑逐字一致、数据格式零迁移、裸命令 id 保留热键）。现在要把**剩余 15 个脚本合并为一个插件** `bz`（显示名「备忘录」），功能与样式完全复刻。B站下载排除（后续独立插件）。
 
 ## Solution
 
-标准 Obsidian 插件 `memo-suite`：`src/core/` 完整移植 Q3/__utils（内部模块，不挂 window），15 个域（备忘录、归物本、剪藏本、聚合讯、密码本、收藏本、书库、阅读数据分析报告、影视、影视数据分析、自动摘要、AI Agent、复习计划、做题家、闪念）按模块化单向依赖组织；命令全部裸注册且不绑默认快捷键；AI 配置（DeepSeek/OpenCode Go）迁入插件设置页；聚合讯保留 dv.view（Dataview 插件渲染）；闪念经 HTTP 调 Ollama；外部进程能力（child_process）在桌面端可用。构建产物输出到 vault 插件目录，用户手动启用。
+标准 Obsidian 插件 `bz`：`src/core/` 完整移植 Q3/__utils（内部模块，不挂 window），15 个域（备忘录、归物本、剪藏本、聚合讯、密码本、收藏本、书库、阅读数据分析报告、影视、影视数据分析、自动摘要、AI Agent、复习计划、做题家、闪念）按模块化单向依赖组织；命令全部裸注册且不绑默认快捷键；AI 配置（DeepSeek/OpenCode Go）迁入插件设置页；聚合讯保留 dv.view（Dataview 插件渲染）；闪念经 HTTP 调 Ollama；外部进程能力（child_process）在桌面端可用。构建产物输出到 vault 插件目录，用户手动启用。
 
 ## User Stories
 
@@ -69,7 +69,7 @@ Feature: memo-suite-plugin
 20. 作为用户，我希望剪藏本设置保留 articleDirectory（文章目录）、batchSize（批量大小）、longPressDuration（长按时长），以便沿用原配置。
 21. 作为用户，我希望 `我的/文章` 下文章被修改时面板自动刷新（vault modify 监听），以便内容保持最新。
 22. 作为用户，我希望站点栏（createSiteBar/rebuildSiteBar 语义）显示全部站点并可单选过滤，以便按来源浏览。
-23. 作为用户，我希望剪藏本可跳转到聚合讯阅读器（互调 `news-reader-open`），以便剪藏与阅读联动。
+23. 作为用户，我希望剪藏本可跳转到聚合讯阅读器（互调 `bz-news-reader-open`），以便剪藏与阅读联动。
 24. 作为用户，我希望文章卡片显示作者（✍️）、反链笔记名（去《》书名号显示，📌）、站点计数（全部 (N)），以便与原脚本一致。
 25. 作为用户，我希望列表滚动到底自动加载更多（initScroll）、无文章时显示空态（renderEmpty），以便与原脚本一致。
 
@@ -78,7 +78,7 @@ Feature: memo-suite-plugin
 20. 作为用户，我希望新闻抓取（站点列表、platform map、news.json/news-stats.json 统计）与原脚本一致，以便继续聚合阅读。
 21. 作为用户，我希望聚合讯生成的笔记保留 dataviewjs 代码块（`dv.view('CONFIG/SCRIPTS/DataView/摘要')`），由 Dataview 插件渲染，以便摘要视图行为不变。
 22. 作为用户，我希望剪藏内容写入 `归档/网页剪藏`（CLIP_DIR），以便与自动摘要共享数据源。
-23. 作为用户，我希望聚合讯注册 `news-reader-open` 命令（阅读器入口），以便剪藏本互调。
+23. 作为用户，我希望聚合讯注册 `bz-news-reader-open` 命令（阅读器入口），以便剪藏本互调。
 24. 作为用户，我希望阅读统计（news-stats.json：记录/统计每篇文章的阅读行为，loadStats/saveStats/recordStat 语义）与原脚本一致，以便掌握阅读量。
 24b. 作为用户，我希望聚合讯是逐篇阅读流（一次显示一篇文章：news-card-header 标题 + meta + platform-pill 平台徽章，读完自动进入下一篇，全部读完显示完成态），以便与原脚本一致。（修正：非文章列表）
 25. 作为用户，我希望文章支持已读标记（markAsRead）、跳过（skipArticle）、检查新文章（checkNewArticles）、剪藏保存（saveToClip），以便完整管理阅读流。
@@ -105,7 +105,7 @@ Feature: memo-suite-plugin
 28. 作为用户，我希望书库面板内有设置弹窗（openSettingsModal/closeSettingsModal 语义，就地改显示开关），以便不用离开面板调整。
 29. 作为用户，我希望读书笔记支持高亮跳转（jumpToHighlight）、评论编辑（openEditCommentModal/updateComment）、删除高亮（deleteHighlight），以便精读管理。
 30. 作为用户，我希望书目列表显示状态颜色（getStatusColors）与文件大小/阅读时间（formatFileSize），以便与原脚本一致。
-31. 作为用户，我希望书库可生成阅读数据分析报告（互调 `show-reading-report`），以便一键出报告。
+31. 作为用户，我希望书库可生成阅读数据分析报告（互调 `bz-show-reading-report`），以便一键出报告。
 32. 作为用户，我希望读书笔记弹窗（📚《书》的读书笔记：高亮 ❝ 列表 + 日期 + 评论，支持跳转/编辑/删除）与原脚本一致，以便精读管理。
 33. 作为用户，我希望书目卡片显示阅读进度（📊 %）、阅读时间（⏱️ 格式化）、文件大小（📦）、作者（✍️）、🧮 统计按钮，以便与原脚本一致。
 
@@ -146,7 +146,7 @@ Feature: memo-suite-plugin
 38. 作为用户，我希望复习计划右上角图标可调用做题家，以便复习做题一体化。
 39. 作为用户，我希望做题家（quiz.json 统一题库、多选、完成状态、全完成自动替换笔记内容）与原脚本一致，以便继续做题。
 40. 作为用户，我希望复习与做题共用数据文件（CONFIG/STORAGE/review.json、quiz.json），以便数据零迁移。
-41. 作为用户，我希望复习计划可调用做题家（互调 `quiz-master-open`、`quiz-master-update`），以便复习做题一体化。
+41. 作为用户，我希望复习计划可调用做题家（互调 `bz-quiz-master-open`、`bz-quiz-master-update`），以便复习做题一体化。
 42. 作为用户，我希望复习计划监听相关事件（resolved/modify/rename/quit 四类，语义与原脚本一致），以便数据状态自动同步。
 43. 作为用户，我希望移出复习计划时有确认弹窗（「确定移出“xxx”？」），以便防误操作。
 44. 作为用户，我希望复习条目状态文案一致：✅ 已完成、R=X% 复习进度、📅 逾期、⏳ 待定/倒计时，以便一眼看出状态。
@@ -183,11 +183,11 @@ Feature: memo-suite-plugin
 
 ### 架构（ADR-0003 单插件多域）
 
-- 一个插件 `memo-suite`；`src/core/` 完整移植 Q3（21 导出，内部模块不挂 window）；域间共享状态显式 import（影视数据分析的 folder path 从影视域模块取，取代 `window.__MOVIE_FOLDER_PATH`）
+- 一个插件 `bz`；`src/core/` 完整移植 Q3（21 导出，内部模块不挂 window）；域间共享状态显式 import（影视数据分析的 folder path 从影视域模块取，取代 `window.__MOVIE_FOLDER_PATH`）
 - 模块化单向依赖：core ← 域数据层 ← 域 UI ← main（沿用 ADR-0002）
 - 懒加载：事件常驻域（自动摘要/AIAgent/闪念）按设置开关注册；UI 域首次打开初始化（沿用日记本 init 幂等模式）
 - 主 ribbon 一个入口打开备忘录面板；其余域命令进入
-- 构建：TS + esbuild，产物直出 vault `.obsidian/plugins/memo-suite/`；CSS 单独 `styles.css`
+- 构建：TS + esbuild，产物直出 vault `.obsidian/plugins/bz/`；CSS 单独 `styles.css`
 
 ### 命令（ADR-0004）
 
@@ -218,32 +218,32 @@ Feature: memo-suite-plugin
 - 插件设置：AI（provider/key/endpoint/model）、各域路径（dataFolder/storagePath/todoFilePath 等）、常驻监听开关（自动摘要/AIAgent/闪念）、原有各脚本设置项逐一迁移
 - 日记本已删除「标签配置/默认标签」设置的先例：设置项迁移以「保留原脚本可配置项」为原则，用户已确认删除的项不恢复
 
-### 命令 id 全清单（第 6 轮，源码提取——裸注册基准）
+### 命令 id 全清单（第 8 轮，源码提取——统一 bz- 前缀基准，ADR-0004 修订）
 
-- **备忘录**：`memo-open-panel`、`memo-create-item`
-- **归物本**：`belongings-add-item`
-- **剪藏本**：`article-open-view`
-- **聚合讯**：`news-reader-open`
-- **密码本**：`pw-open-manager`、`pw-add-entry`、`pw-generate-password`
-- **收藏本**：`favorites-open-panel`、`favorites-add-item`
-- **书库**：`open-library`、`open-book-notes`
-- **阅读数据分析报告**：`show-reading-report`
-- **影视**：`movie-manager-open`、`movie-manager-add`
+- **备忘录**：`bz-memo-open-panel`、`bz-memo-create-item`
+- **归物本**：`bz-belongings-add-item`、`bz-belongings-open-panel`（面板，主页归物点击）
+- **剪藏本**：`bz-article-open-view`
+- **聚合讯**：`bz-news-reader-open`
+- **密码本**：`bz-pw-open-manager`、`bz-pw-add-entry`、`bz-pw-generate-password`
+- **收藏本**：`bz-favorites-open-panel`、`bz-favorites-add-item`
+- **书库**：`bz-open-library`、`bz-open-book-notes`
+- **阅读数据分析报告**：`bz-show-reading-report`
+- **影视**：`bz-movie-manager-open`、`bz-movie-manager-add`
 - **影视数据分析**：`movie-analysis-open`
-- **复习计划**（5 个）：`review-open-panel`、`review-add-current`（添加当前笔记到复习）、`review-remove-current`（移除当前笔记）、`review-jump-overdue`（跳转逾期）、`review-mark-dialog`（评级对话框）
-- **做题家**：`quiz-master-update`、`quiz-master-open`
-- **闪念**：`shan-nian-open-reference`（打开参考窗口）、`shan-nian-open-chat`（打开聊天窗口）
-- **日记本**（已迁）：`diary-open-add-dialog`、`diary-create-quote`
+- **复习计划**（5 个）：`bz-review-open-panel`、`bz-review-add-current`（添加当前笔记到复习）、`bz-review-remove-current`（移除当前笔记）、`bz-review-jump-overdue`（跳转逾期）、`bz-review-mark-dialog`（评级对话框）
+- **做题家**：`bz-quiz-master-update`、`bz-quiz-master-open`
+- **闪念**：`bz-shan-nian-open-reference`（打开参考窗口）、`bz-shan-nian-open-chat`（打开聊天窗口）
+- **日记本**（已迁）：`bz-diary-open-add-dialog`、`bz-diary-create-quote`
 - Q3 自身无命令
 
 ### 命令互调链完整清单（源码提取）
 
 | 命令 id | 注册方 | 调用方 |
 |---|---|---|
-| `news-reader-open` | 聚合讯 | 剪藏本 |
-| `show-reading-report` | 阅读数据分析报告 | 书库 |
+| `bz-news-reader-open` | 聚合讯 | 剪藏本 |
+| `bz-show-reading-report` | 阅读数据分析报告 | 书库 |
 | `movie-analysis-open` | 影视数据分析 | 影视 |
-| `quiz-master-open`、`quiz-master-update` | 做题家 | 复习计划 |
+| `bz-quiz-master-open`、`bz-quiz-master-update` | 做题家 | 复习计划 |
 
 ### 事件监听完整清单（源码提取）
 
@@ -260,7 +260,7 @@ Feature: memo-suite-plugin
 
 | 原全局 | 域 | 迁移方式 |
 |---|---|---|
-| `window.__memo` | 备忘录（AIAgent 依赖） | memo 域导出单例 |
+| `window.__memo` | 备忘录（AIAgent 依赖） | bz 域导出单例 |
 | `window.__quiz` | 做题家（复习计划依赖） | quiz 域导出单例 |
 | `window.__homeFilmStatus` | 影视 | 影视域模块状态 |
 | `window.__MOVIE_FOLDER_PATH` | 影视/影视数据分析 | 影视域模块导出 |
@@ -320,7 +320,7 @@ Feature: memo-suite-plugin
 - **jsonStore(filePath)**：read = 不存在（建目录+建文件→[]）/解析失败（重置[]）；write = 存在 modify/不存在 create；**注意：原实现无锁、无原子写**（CONTEXT.md 原描述「原子写+锁」有误，已修正）
 - **generateId(prefix)**：`prefix-时间戳-随机6位`
 - **DEFAULT_PLATFORM_MAP**：数组 [{host, name}] ×7——知乎日报/知乎专栏/知乎/果壳/小黑盒/豆瓣/微信公众号（备忘录平台映射默认值）
-- **CHANGELOGS**：{identifier: {latestVersion, name, entries: {version: markdown}}}；identifier 需从各脚本收集（已知：belongings、memo）
+- **CHANGELOGS**：{identifier: {latestVersion, name, entries: {version: markdown}}}；identifier 需从各脚本收集（已知：belongings、bz）
 - **longPress(el, cb, dur, filter)**、notice(msg, dur)、createIconBtn(text, title, onClick, extra)、formatFileSize(bytes)、formatRelativeTime(date, now)、createSiteIcon(domain, size=16)、getPlatformName(url, customMap)、getCurrentNoteInfo()、getCurrentCursorPosition()、fetchPageTitle(url)、extractUrlAndDisplay(c)——签名如上，行为实现时逐字移植
 
 ### 数据格式总表（第 2 轮，源码提取——零迁移基准）
@@ -352,7 +352,7 @@ Feature: memo-suite-plugin
 - **影视排序**：键 date（有 watchDate 的在前、无日期的排后）/ rating / name；条目含 watchDate 字段
 - **影视数据分析评分桶**（ratingBucketOf 6 档）：≥5.5 / 5~5.5 / 4~5 / 3~4 / 2~3 / <2；buildAnalysisData 聚合 {total, watched, watching, want, …}
 - **归物本排序弹窗**：自绘弹窗（Promise），手动检测 theme-dark 取色板（bg/text/border/accent），不依赖主题变量
-- **闪念**：命令 `shan-nian-open-reference`（闪念：打开参考窗口）；ALLOW_PATHS 默认 ["卡片盒","主题盒","我的","归档","CODE"]；CHUNK_MIN_LENGTH 默认 50；TFIDF 中文停用词表（'的了是在我有和人这中大为上个国不以到说时要就出会也年对自其他里去子后也得着与把等'）+ 文档频率/平均长度（BM25 式）
+- **闪念**：命令 `bz-shan-nian-open-reference`（闪念：打开参考窗口）；ALLOW_PATHS 默认 ["卡片盒","主题盒","我的","归档","CODE"]；CHUNK_MIN_LENGTH 默认 50；TFIDF 中文停用词表（'的了是在我有和人这中大为上个国不以到说时要就出会也年对自其他里去子后也得着与把等'）+ 文档频率/平均长度（BM25 式）
 - **AI 提示词结构（移植基准）**：自动摘要（标题 15-30 字禁标点/作者可 null/摘要 150-250 字禁"本文"等前缀/3-6 个中文标签≤5 字/正文截断 6000）；AIAgent 匹配（→{match, itemId}，ai.json + max_tokens 200 + response_format）；收藏本（→{title, description}，简介≤50 字，ai.json）；做题家（单选四选一/多选不限/难度三档提示词）；备忘录 AI 推荐场景（→{scene, priority}，priority 仅"重要"/"次要"两档，ai.chat）
 
 ### 样式规模与边界行为（第 5 轮，源码提取）
@@ -374,18 +374,18 @@ Feature: memo-suite-plugin
 
 ### 收敛补充（第 6 轮）
 
-- **复习计划 5 命令交互**：review-add-current（当前笔记入复习队列）、review-remove-current（移出）、review-jump-overdue（定位逾期条目）、review-mark-dialog（评级弹窗）——除面板外命令入口齐全
+- **复习计划 5 命令交互**：bz-review-add-current（当前笔记入复习队列）、bz-review-remove-current（移出）、bz-review-jump-overdue（定位逾期条目）、bz-review-mark-dialog（评级弹窗）——除面板外命令入口齐全
 - **闪念 2 命令**：打开参考窗口 / 打开聊天窗口（除自动浮现外，可命令手动打开）
 - **密码本 3 命令**：管理器 / 新增条目 / 生成密码（生成密码是独立命令入口）
 - **影视 2 命令**：管理器 / 快速添加
 
 ### 收敛补丁（第 7 轮，反证扫描）
 
-- **changelog 全景**：Q3 CHANGELOGS 定义 8 个 identifier——memo / article / luhmann / library / movie / belongings / diary / password-manager；脚本调用方 6 个——备忘录'memo'、归物本'belongings'、剪藏本'article'、聚合讯'news'（Q3 无 news 定义，调用直接跳过）、书库'library'、影视'movie'；密码本有定义（password-manager）但脚本未调用（实现时确认是否需要触发）
+- **changelog 全景**：Q3 CHANGELOGS 定义 8 个 identifier——bz / article / luhmann / library / movie / belongings / diary / password-manager；脚本调用方 6 个——备忘录'bz'、归物本'belongings'、剪藏本'article'、聚合讯'news'（Q3 无 news 定义，调用直接跳过）、书库'library'、影视'movie'；密码本有定义（password-manager）但脚本未调用（实现时确认是否需要触发）
 - **影视条目字段全集**（由 buildAnalysisData 48 个聚合字段反推）：rating（自评）、douban（豆瓣评分）、watchDate、status（want/watching/watched）、tags（类型）、genres、countries、directors、actors、age、era（年代）、duration（时长）、weekday（观看星期）、diff（观影间隔）、review（评论）、series/season（剧集季）、yearRating、wantTags 等——实现时以源码逐字核对，分析配置（十组）即按这些字段聚合
 - **影视数据分析聚合输出**：total/watched/watching/want/ratingSum/ratingCount/doubanSum/doubanCount/groups/tags/years/months/buckets/genres/countries/directors/actors/topRated/wantList/ageBuckets/ageSum/ageCount/eras/durBuckets/durSum/durCount/groupDur/weekdays/diffSum/diffCount/treasure（惊喜）/disappoint（失望）/reviewKeywords/reviewCount/reviewCharSum/series/seasonSum/seasonCount/seasons/wantDoubanSum/wantDoubanCount/wantTags/yearRating
 - **密码本设置 UI 名称**：🔤 密码生成字符集（输入）、🔢 密码生成长度（输入）、🔒 安全模式（开关）——设置页文案逐字保留
-- **入口行为确认**：阅读数据分析报告入口 = 注册 show-reading-report 命令（被书库互调）；影视数据分析入口 = 注册 movie-analysis-open + folderPath 设置读取；做题家入口 = AI 检查（createAI 缺失即 Notice）+ 注册命令
+- **入口行为确认**：阅读数据分析报告入口 = 注册 bz-show-reading-report 命令（被书库互调）；影视数据分析入口 = 注册 movie-analysis-open + folderPath 设置读取；做题家入口 = AI 检查（createAI 缺失即 Notice）+ 注册命令
 
 ### 已知待收集信息（实现时从源码提取，不阻塞本 spec）
 
@@ -411,7 +411,7 @@ Feature: memo-suite-plugin
 - **B站下载**：独立插件另行规划（源码调研已完成：child_process 机制、ffmpeg/whisper 集成已验证可行）
 - **QAI.js、写诗.js、工具箱.js、番茄钟.js、卢曼卡片笔记.js**：不在清单，本次不迁移
 - **Dataview 渲染本身**：聚合讯生成的代码块由 Dataview 插件渲染，不测试/不实现渲染层
-- **日记本（diary-notebook）**：已交付，本次仅共享 core 演进时保持兼容（core 复制到 memo-suite，暂不抽公共包）
+- **日记本（diary-notebook）**：已交付，本次仅共享 core 演进时保持兼容（core 复制到 bz，暂不抽公共包）
 - **移动端**：不做移动端专项适配（原脚本亦无）
 - **快捷键迁移**：不自动迁移用户热键（Obsidian 层面无法迁移），用户自行在设置中绑定
 

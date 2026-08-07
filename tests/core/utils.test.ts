@@ -18,8 +18,8 @@ const now = new Date(2025, 5, 15, 12, 0, 0); // 2025-06-15 12:00
 
 describe('generateId', () => {
   it('格式为 prefix-时间戳-随机6位', () => {
-    const id = generateId('memo');
-    expect(id.startsWith('memo-')).toBe(true);
+    const id = generateId('bz');
+    expect(id.startsWith('bz-')).toBe(true);
     const parts = id.split('-');
     expect(parts.length).toBe(3);
     expect(parts[2].length).toBe(6);

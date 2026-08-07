@@ -1,6 +1,6 @@
-# 0003 — 单插件多域架构（memo-suite）
+# 0003 — 单插件多域架构（bz）
 
-将剩余 15 个 QuickAdd 脚本（备忘录、归物本、剪藏本、聚合讯、密码本、收藏本、书库、阅读数据分析报告、影视、影视数据分析、自动摘要、AI Agent、复习计划、做题家、闪念）合并为**一个插件** `memo-suite`（显示名「备忘录」）。B站下载排除在外，后续独立插件。
+将剩余 15 个 QuickAdd 脚本（备忘录、归物本、剪藏本、聚合讯、密码本、收藏本、书库、阅读数据分析报告、影视、影视数据分析、自动摘要、AI Agent、复习计划、做题家、闪念）合并为**一个插件** `bz`（显示名「备忘录」）。B站下载排除在外，后续独立插件。
 
 ## Context
 
@@ -8,7 +8,7 @@
 
 ## Decision
 
-- 一个插件 `memo-suite` 包含全部域；`src/core/` 完整移植 Q3/__utils（21 个工具 + jsonStore + AIService + changelog + 样式注入），**内部模块，不再挂 `window`**
+- 一个插件 `bz` 包含全部域；`src/core/` 完整移植 Q3/__utils（21 个工具 + jsonStore + AIService + changelog + 样式注入），**内部模块，不再挂 `window`**
 - 域间共享状态改为显式 import（如影视数据分析需要 `movieFolderPath` 时从影视域模块导入，不依赖 `window.__MOVIE_FOLDER_PATH`）
 - 脚本间的 `executeCommandById` 互调保留（命令 id 裸注册，见 ADR-0004）
 - 主 ribbon 一个入口（打开「备忘录」待办面板）；其余域通过命令 + 设置开关进入

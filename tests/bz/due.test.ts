@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import moment from 'moment';
-import { getDueStatus, formatDueText } from '../../src/memo/due';
+import { getDueStatus, formatDueText } from '../../src/bz/due';
 
 /** 固定当前时间为 2025-06-15 12:00 */
 function freezeNow(iso = '2025-06-15 12:00:00') {

@@ -67,7 +67,7 @@ export function showLibrary(app: any) {
   headerButtons.style.cssText = 'display: flex; align-items: center; gap: 8px;';
 
   const reportBtn = createIconBtn('🧮', '打开阅读数据分析报告', () => {
-    (app as any).commands.executeCommandById('show-reading-report');
+    (app as any).commands.executeCommandById('bz-show-reading-report');
   });
   const settingsBtn = createIconBtn('⚙️', '书库设置', () => {
     openSettingsModal(app);
