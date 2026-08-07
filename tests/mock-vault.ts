@@ -80,7 +80,19 @@ export function parseFrontmatter(content: string): Record<string, any> | null {
       // 简单数组解析 [电影]
       const arrMatch = value.match(/^\[(.*)\]$/);
       if (arrMatch) {
-        value = arrMatch[1].split(',').map((s) => s.trim()).filter(Boolean);
+        value = arrMatch[1]
+          .split(',')
+          .map((s) => s.trim())
+          .map((s) => {
+            if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) return s.slice(1, -1);
+            return s;
+          })
+          .filter(Boolean);
+      } else if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1); // 与 Obsidian parseFrontmatter 一致：剥引号
       } else if (value === 'true') {
         value = true;
       }
