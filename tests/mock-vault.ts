@@ -53,6 +53,10 @@ export class MockVault {
     this.modifiedPaths.push(file.path);
   }
 
+  async createFolder(path: string): Promise<void> {
+    this.dirs.add(path);
+  }
+
   on(): any {
     return { ref: 'mock-ref' };
   }
