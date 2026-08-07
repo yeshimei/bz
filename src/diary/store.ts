@@ -4,6 +4,7 @@
  * refreshFile（1724）、refreshSpecialFile（1764）、addEntry（3481）、deleteEntry（2526）。
  * UI 刷新通过回调解耦（避免循环依赖）。
  */
+import { Notice } from 'obsidian';
 import { getApp } from './app';
 import { BATCH_SIZE, DIARY_DIRECTORY, LETTER_DIRECTORY, MOVIE_DIRECTORY, buildTagMaps, getTagEmoji } from './config';
 import { isEncryptedEntry, parseFile, parseLetterFile, parseMovieFile } from './parser';
@@ -186,6 +187,11 @@ export async function loadAll() {
     state.data.currentDisplayCount = 0;
     emitFullRefresh();
     emitProgress(0, 0); // 隐藏进度条（原 hideProgress）
+  } catch (err: any) {
+    console.error('[日记本] 数据加载失败:', err);
+    try {
+      new Notice('[日记本] 数据加载失败: ' + (err?.message || err));
+    } catch (e) {}
   } finally {
     state.data.isLoadingData = false;
     emitLoading(false);
