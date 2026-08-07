@@ -148,6 +148,9 @@ export async function loadAll() {
 
     const totalFiles = totalDiaryFiles + movieFiles.length + letterFiles.length;
     if (totalFiles === 0) {
+      // 空库：渲染空态（原脚本此处早退导致空白面板，此处补齐刷新）
+      state.data.currentDisplayCount = 0;
+      emitFullRefresh();
       emitProgress(0, 0);
       state.data.isLoadingData = false;
       emitLoading(false);
