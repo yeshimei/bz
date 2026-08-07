@@ -1,0 +1,493 @@
+/* 添加日记弹窗样式 */
+#add-diary-mask {
+    backdrop-filter: blur(2px);
+    animation: fadeIn 0.2s ease-out;
+}
+
+.add-diary-popup {
+    animation: slideUp 0.3s ease-out;
+}
+
+#add-diary-datetime:focus,
+#add-diary-type:focus,
+#add-diary-content:focus {
+    outline: none;
+    border-color: var(--interactive-accent);
+    box-shadow: 0 0 0 3px var(--background-modifier-border-focus);
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+    .add-diary-popup {
+        width: 85%;
+        padding: 20px;
+    }
+}
+
+/* 删除按钮样式 */
+.diary-delete-btn {
+    background: var(--background-modifier-error) !important;
+    color: var(--text-on-accent) !important;
+    border: none !important;
+}
+
+.diary-delete-btn:hover {
+    background: var(--background-modifier-error-hover) !important;
+}
+
+/* 确认删除弹窗样式 */
+
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+
+    .diary-tag-selector-actions {
+        flex-direction: column-reverse;
+        gap: 8px;
+    }
+
+    .diary-delete-btn,
+    .diary-save-btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+
+
+/* 标签选择器弹窗样式优化 */
+#diary-tag-selector-mask {
+    backdrop-filter: blur(2px);
+    animation: fadeIn 0.2s ease-out;
+}
+
+.diary-tag-selector-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--background-primary);
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+    padding: 20px;
+    max-width: 300px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -40%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
+
+/* 移动端标签选择器优化 */
+@media (max-width: 768px) {
+    .diary-tag-selector-popup {
+        width: 85%;
+        max-height: 70vh;
+        padding: 16px;
+    }
+
+    .diary-tag-selector-title {
+        font-size: 15px;
+        margin-bottom: 12px;
+    }
+
+    .diary-tag-selector-buttons {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .diary-tag-selector-btn {
+        font-size: 13px;
+    }
+}
+
+
+@media (max-width: 768px) {
+    #diary-tag-filter {
+        width: 95% !important;
+        max-height: 90vh !important;
+        border-radius: 16px 16px 0 0 !important;
+        transform: translate(-50%, -50%) !important;
+        padding-top: 24px;
+    }
+
+    #diary-tag-filter .diary-popup-header {
+        padding: 16px 20px 12px 20px !important;
+    }
+
+    #diary-tag-container {
+        max-height: 100px !important;
+        padding: 12px 20px !important;
+        overflow-y: auto !important;
+    }
+
+    .diary-tag-btn {
+        margin-right: 8px !important;
+        font-size: 13px !important;
+    }
+
+    .diary-date-separator {
+        padding: 10px 0 !important;
+        font-size: 16px !important;
+    }
+
+    .diary-entry-card {
+        padding: 16px !important;
+        margin: 16px 0 !important;
+    }
+
+
+    /* 移动端标签单行滚动，隐藏滚动条 */
+    .diary-tags-scroll-container {
+        display: flex;
+        overflow-x: auto;
+        overflow-y: hidden;
+        var(--background-primary)-space: nowrap;
+        scrollbar-width: none;
+        /* Firefox */
+        -ms-overflow-style: none;
+        /* IE and Edge */
+        padding: 4px 0;
+    }
+
+    .diary-tags-scroll-container::-webkit-scrollbar {
+        display: none;
+        /* Chrome, Safari, Opera */
+    }
+}
+
+@media (max-width: 480px) {
+    #diary-tag-filter {
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        border-radius: 0 !important;
+    }
+
+    #diary-tag-filter .diary-popup-header h3 {
+        font-size: 16px !important;
+    }
+
+    .diary-tag-btn {
+        padding: 4px 10px !important;
+        font-size: 12px !important;
+    }
+}
+
+/* 桌面端标签平铺 */
+@media (min-width: 769px) {
+    .diary-tags-scroll-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        overflow: visible;
+    }
+}
+
+.diary-entry-content {
+    touch-action: pan-y;
+    /* 允许垂直触摸滚动穿透 */
+}
+
+.diary-entry-content.diary-editing {
+    border: 1px solid var(--interactive-accent) !important;
+    border-radius: 8px;
+    padding: 12px;
+    background: var(--background-secondary);
+}
+
+
+.diary-edit-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+
+
+
+
+
+.diary-tag-selector-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--background-primary);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    z-index: 10000;
+    padding: 20px;
+    display: none;
+    max-width: 300px;
+    width: 90%;
+}
+
+.diary-tag-selector-title {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    color: var(--text-normal);
+    font-weight: 600;
+}
+
+.diary-tag-selector-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.diary-tag-selector-btn {
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: var(--background-secondary) !important;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-normal);
+    transition: all 0.2s;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+
+
+.diary-tag-selector-btn.diary-active {
+    background: var(--interactive-accent) !important;
+}
+
+.diary-tag-selector-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.diary-action-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+
+.diary-save-btn {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.diary-action-btn:hover {
+    opacity: 0.9;
+}
+
+/* 确保图片和双链正确显示 */
+.diary-entry-content img {
+    max-width: 100%;
+    height: auto;
+}
+
+.diary-entry-content a {
+    color: var(--text-accent);
+    text-decoration: none;
+}
+
+.diary-entry-content a:hover {
+    text-decoration: underline;
+}
+
+.diary-entry-content .internal-link {
+    color: var(--text-accent);
+}
+
+.diary-entry-content .external-link {
+    color: var(--text-accent-hover);
+}
+
+/* 可编辑样式 */
+.diary-entry-content[contenteditable="true"] {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-tap-highlight-color: transparent;
+    border-radius: 4px;
+    min-height: 100px;
+    border: none !important;
+    touch-action: pan-y pinch-zoom;
+    -webkit-overflow-scrolling: touch;
+    overflow-wrap: break-word;
+}
+
+.diary-entry-content[contenteditable="true"]:focus {
+    background-color: var(--background-secondary);
+}
+
+/* 修复移动端光标选择问题 */
+.diary-entry-content[contenteditable="true"] * {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+}
+
+/* 移动端优化：禁用默认的长按菜单 */
+.diary-entry-content {
+    -webkit-touch-callout: default;
+    /* 允许长按选择文本 */
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+/* 日期筛选弹窗样式 */
+#diary-date-filter-mask {
+    backdrop-filter: blur(2px);
+}
+
+#diary-date-filter-popup {
+    animation: slideUp 0.3s ease-out;
+}
+
+
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    #diary-date-filter-popup {
+        width: 95%;
+        max-height: 85vh;
+    }
+
+}
+
+/* 优化后的日期筛选弹窗样式 */
+#diary-date-filter-popup {
+    animation: slideUp 0.3s ease-out;
+}
+
+#diary-date-filter-popup button {
+    transition: background 0.2s;
+}
+
+.diary-date-filter-month-card {
+    transition: transform 0.1s ease;
+}
+
+.diary-date-filter-month-card:active {
+    transform: scale(0.96);
+}
+
+
+
+/* GitHub风格细进度条 */
+.diary-github-progress-bar {
+    width: 0%;
+    height: 2px;
+    background-color: var(--interactive-accent);
+    background-image: repeating-linear-gradient(45deg,
+            rgba(255, 255, 255, 0.3) 0px,
+            rgba(255, 255, 255, 0.3) 10px,
+            transparent 10px,
+            transparent 20px);
+    background-size: 28px 28px;
+    transition: width 0.15s linear, opacity 0.3s ease;
+    /* 添加透明度过渡 */
+    border-radius: 2px;
+    animation: progress-stripes 0.6s linear infinite;
+    margin-bottom: 4px;
+}
+
+@keyframes progress-stripes {
+    0% {
+        background-position: 0 0;
+    }
+
+    100% {
+        background-position: 28px 0;
+    }
+}
+
+.diary-popup-header button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+#diary-subtags-container {
+    border-top: none !important;
+    margin-top: 12px;
+    padding-top: 12px;
+}
+
+@media (max-width: 768px) {
+    #diary-subtags-container {
+        flex-wrap: nowrap !important;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        /* Firefox 隐藏滚动条 */
+        -ms-overflow-style: none;
+        /* IE/Edge 隐藏滚动条 */
+        padding-bottom: 8px;
+        margin-top: 0 !important;
+    }
+
+    #diary-subtags-container::-webkit-scrollbar {
+        display: none;
+        /* Chrome/Safari/Opera 隐藏滚动条 */
+    }
+
+    #diary-subtags-container .diary-sub-tag-btn {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+}
+
+/* 移动端适配 */
+@media (max-width: 600px) {
+    #diary-date-filter-popup {
+        width: 95%;
+        max-width: none;
+    }
+
+    .diary-date-filter-month-card {
+        padding: 10px 4px;
+    }
+
+    .diary-date-filter-month-card div:first-child {
+        font-size: 14px;
+    }
+
+    .diary-date-filter-month-card div:last-child {
+        font-size: 11px;
+    }
+}
+
+.diary-datetime-scroll-container::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    background: transparent;
+}
+
+.diary-datetime-scroll-container {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
