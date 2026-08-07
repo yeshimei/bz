@@ -1,0 +1,125 @@
+/**
+ * 影视数据层（ticket 14：rebuildItems/sortItemList/getDisplayItems/refreshDataAndView）
+ */
+import type { App, TFile } from 'obsidian';
+import { ALL_TAGS, getGroupForTag, STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED } from './constants';
+import type { MovieItem } from './state';
+import { M } from './state';
+
+/** 重建条目列表（扫描 M.folderPath 下全部 md） */
+export function rebuildItems(app: App): MovieItem[] {
+  const newItems: MovieItem[] = [];
+  const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(M.folderPath + '/'));
+
+  for (const file of files) {
+    try {
+      const cache = app.metadataCache.getFileCache(file);
+      if (!cache || !cache.frontmatter) continue;
+      const fm = cache.frontmatter;
+
+      const basename = file.basename;
+      const name = basename.match(/《(.+)》/)?.[1] ?? basename;
+
+      // tags → typeTag（按 ALL_TAGS 顺序首个命中）
+      let rawTags = fm.tags;
+      if (typeof rawTags === 'string') rawTags = [rawTags];
+      const tags: string[] = Array.isArray(rawTags) ? rawTags.map((t: any) => String(t)) : [];
+      const typeTag = tags.find((t) => ALL_TAGS.includes(t)) ?? null;
+      if (!typeTag) continue;
+      const group = getGroupForTag(typeTag);
+      if (!group) continue;
+
+      const watchDate = fm['观影日期']?.toString() ?? null;
+      const rating = fm['评分'] !== undefined ? Number(fm['评分']) : null;
+
+      let status: number;
+      if (fm['状态'] !== undefined) {
+        status = Number(fm['状态']);
+      } else {
+        if (rating === -1) status = STATUS_WANT;
+        else if (rating === 0) status = STATUS_WATCHING;
+        else if ((rating ?? 0) > 0) status = STATUS_WATCHED;
+        else status = STATUS_WATCHED;
+      }
+
+      newItems.push({
+        file,
+        name,
+        typeTag,
+        group,
+        watchDate,
+        rating,
+        status,
+        poster: fm['海报']?.toString() ?? null,
+        review: fm['影评']?.toString() ?? null,
+        genre: fm['类型']?.toString() ?? null,
+        director: fm['导演']?.toString() ?? null,
+        actors: fm['主演']?.toString() ?? null,
+        region: fm['制片国家/地区']?.toString() ?? null,
+      });
+    } catch (error) {
+      console.warn('处理影视文件失败:', file.path, error);
+    }
+  }
+
+  M.items.length = 0;
+  M.items.push(...newItems);
+  return newItems;
+}
+
+/** 排序三键：date（有日期按时间，无日期恒排后）/ rating（有评分按数值）/ name（localeCompare zh） */
+export function sortItemList(list: MovieItem[], key: string, order: 'asc' | 'desc'): MovieItem[] {
+  const sorted = [...list];
+  const dir = order === 'desc' ? -1 : 1;
+
+  if (key === 'date') {
+    const withDate = sorted.filter((i) => i.watchDate && !isNaN(new Date(i.watchDate).getTime()));
+    const withoutDate = sorted.filter((i) => !i.watchDate || isNaN(new Date(i.watchDate).getTime()));
+    withDate.sort((a, b) => (new Date(a.watchDate as string).getTime() - new Date(b.watchDate as string).getTime()) * dir);
+    return [...withDate, ...withoutDate];
+  }
+
+  if (key === 'rating') {
+    const rated = sorted.filter((i) => i.rating !== null);
+    const unrated = sorted.filter((i) => i.rating === null);
+    rated.sort((a, b) => ((a.rating as number) - (b.rating as number)) * dir);
+    return [...rated, ...unrated];
+  }
+
+  if (key === 'name') {
+    sorted.sort((a, b) => a.name.localeCompare(b.name, 'zh') * dir);
+    return sorted;
+  }
+
+  return sorted;
+}
+
+/** 类型/状态/搜索过滤 + 排序 */
+export function getDisplayItems(): MovieItem[] {
+  let list = [...M.items];
+
+  if (M.typeFilter !== '全部') {
+    list = list.filter((i) => i.group === M.typeFilter);
+  }
+  if (M.statusFilter !== '全部') {
+    list = list.filter((i) => i.status === (M.statusFilter === '想看' ? STATUS_WANT : M.statusFilter === '在看' ? STATUS_WATCHING : STATUS_WATCHED));
+  }
+  if (M.searchKeyword) {
+    const kw = M.searchKeyword.toLowerCase();
+    list = list.filter((i) => {
+      const searchable = [i.name, i.typeTag, i.review, i.genre, i.director, i.actors, i.region]
+        .filter((v) => v)
+        .map((v) => v!.toLowerCase());
+      return searchable.some((v) => v.includes(kw));
+    });
+  }
+
+  return sortItemList(list, M.sortState.key, M.sortState.order);
+}
+
+/** 重建数据 + 重置分页 + 重渲染 */
+export function refreshDataAndView(app: App): void {
+  rebuildItems(app);
+  M.loadedCount = 0;
+  M.renderListFn?.();
+}
