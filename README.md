@@ -1,8 +1,8 @@
 # 包仔（bz）
 
-由 16 个 QuickAdd 宏脚本（`CONFIG/SCRIPTS/Quickadd/`，约 21,000 行）独立化而来的 Obsidian 插件。**UI、文案、公式与逻辑与原脚本逐字保持一致**，**数据格式零迁移**（继续读写原脚本产出的全部数据文件）。
+一站式 Obsidian 个人信息管理插件：日记本、备忘录、归物本、剪藏本、聚合讯、密码本、收藏本、书库、阅读数据分析报告、影视（含海报抓取）、自动摘要、复习计划、做题家、闪念、AI Agent 共 15 个功能域。**UI、文案、公式与数据格式保持既有约定**，旧数据直接可读。
 
-## 功能域（14 个）
+## 功能域（15 个）
 
 | 域 | 命令 | 数据文件（零迁移） |
 |---|---|---|
@@ -15,7 +15,7 @@
 | 收藏本 | 打开收藏面板 / 添加收藏 | `CONFIG/STORAGE/favorites.json` |
 | 书库 | 打开书库 / 打开读书笔记 | `书库/*.md`（book 标签） |
 | 阅读数据分析报告 | 打开阅读数据分析报告 | 同上（tags 含 book） |
-| 影视 | 影视：打开 / 影视：添加 | `我的/影视/*.md`（tags/评分/观影日期） |
+| 影视 | 影视：打开 / 影视：添加 | `我的/影视/*.md`（tags/评分/观影日期/豆瓣信息） |
 | 自动摘要 | （常驻）`归档/网页剪藏` 新文自动 AI 摘要 | 写入剪藏 frontmatter |
 | 复习计划 | 打开复习面板 / 加入复习计划 / 移出复习计划 / 复习（跳转逾期）/ 复习（选择难度） | `CONFIG/STORAGE/review.json`（FSRS v4） |
 | 做题家 | 更新题库 / 打开做题家 | `CONFIG/STORAGE/quiz.json` |
@@ -24,10 +24,11 @@
 
 ## 关键设计
 
-- **命令裸注册**：命令 id/名称提取自原脚本 `addCommand` 调用点，不设默认快捷键（保留原热键兼容）；卸载时 `removeCommand` 全量清理。
+- **命令裸注册**：命令 id 统一 `bz-` 前缀（ADR-0004），不设默认快捷键；卸载时 `removeCommand` 全量清理。
 - **懒加载**（ADR-0003）：UI 域首次打开初始化；事件常驻域（自动摘要/闪念/复习轮询/AI Agent）按设置开关注册。
-- **数据零迁移**：所有 JSON/目录/字段名与源码逐字一致，旧数据直接可读。
-- **降级链**：AI 服务（DeepSeek → Ollama 本地）、向量检索（远程 → TF-IDF → 文本）、批量出题（批量 → 逐篇）等均与源码一致。
+- **数据零迁移**：所有 JSON/目录/字段名沿用既有格式，旧数据直接可读。
+- **海报抓取**（ADR-0006）：影视域桌面端专属能力——新建或打开影视笔记时经全局 npm 包 `@jwbz/obsidian-douban-poster`（`tools/obsidian-douban-poster/`）自动抓取豆瓣高清海报并补全信息；移动端设置项置灰标注「仅桌面端可用」。
+- **降级链**：AI 服务（DeepSeek → Ollama 本地）、向量检索（远程 → TF-IDF → 文本）、批量出题（批量 → 逐篇）。
 
 ## 安装
 
@@ -48,8 +49,9 @@ npx tsc --noEmit   # 类型检查
 
 - `src/core/`：跨域基础设施（utils/dom/json-store/changelog/ai/app/settings-provider/esc-manager/confirm）
 - `src/<域>/`：每域独立（index 入口 + 数据层 + UI 层），main.ts 统一命令注册
+- `tools/obsidian-douban-poster/`：海报抓取所依赖的独立 Node CLI（npm 包 `@jwbz/obsidian-douban-poster` 的源码）
 - `tests/`：mock-obsidian-entry（Notice/requestUrl/moment/Plugin）+ mock-vault（内存文件树 + frontmatter 解析）+ 每域测试
 
 ### 测试规模
 
-474 测试（44 文件）覆盖：数据层/纯函数公式（FSRS 幂律、香农多样性、基尼平衡、AES-GCM）、jsdom UI 交互（弹窗/长按/防抖/无限滚动）、mock fetch（AI/余额查询/Ollama）。
+679 测试（57 文件）覆盖：数据层/纯函数公式（FSRS 幂律、香农多样性、基尼平衡、AES-GCM）、jsdom UI 交互（弹窗/长按/防抖/无限滚动）、mock fetch（AI/余额查询/Ollama）、mock child_process（海报抓取桌面端门禁/队列/超时）。
