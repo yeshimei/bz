@@ -82,11 +82,13 @@ export default interface BzSettings {
   /** 🏷️ 显示分类（源码无 UI 项，运行时默认 true，字段保留） */
   showCategory: boolean;
 
-  // ===== 🎬 影视（1 项）=====
+  // ===== 🎬 影视（2 项）=====
   /** 📁 影视文件夹 */
   movieFolderPath: string;
   /** 📄 每页加载数量（列表初始加载及每次滚动加载的条数） */
   moviePageSize: string;
+  /** 🖼️ 新建影视笔记自动抓取海报（桌面端专属，依赖全局 npm 包 @jwbz/obsidian-douban-poster） */
+  doubanPosterEnabled: boolean;
 
 
   // ===== 🧠 做题家（4 项，含 shuffleQuestions；设置并入复习计划 tab）=====
@@ -209,6 +211,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 影视
   movieFolderPath: '我的/影视',
   moviePageSize: '20',
+  doubanPosterEnabled: false,
 
 
   // 做题家（设置并入复习计划 tab）

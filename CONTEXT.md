@@ -51,6 +51,13 @@ _Avoid_: 待办列表、任务
 
 **影视数据分析 (Movie Analytics)**: 影视数据分析弹窗，命令 id `movie-analysis-open`，由影视.js 调用；共享状态 `window.__MOVIE_FOLDER_PATH`。
 
+**海报抓取 (Poster Fetch)**: 新建影视笔记时自动调用全局 npm 包 `@jwbz/obsidian-douban-poster`（spawn `node cli.js fetch`，ADR-0006）完成「豆瓣搜索 → 高清海报下载 → 13 个 frontmatter 字段补全 → 正文海报 embed」。桌面端专属；结果解析 stdout 标记（[完成]/[跳过]/[失败]）。
+_Avoid_: 抓海报、豆瓣补全、poster fetch
+
+**桌面端专属能力 (Desktop-only Capability)**: 依赖 Node.js 外部进程（child_process）、移动端（Capacitor）不可用的功能。门禁：`window.require('child_process')` 为 null 即非桌面端；移动端不注册事件监听，设置项置灰标注「仅桌面端可用」，不静默降级。
+_Avoid_: 仅 PC、desktop only
+
+
 **自动摘要 (Auto Summary)**: 常驻监听 `归档/网页剪藏` 新文件 → AI（deepseek-v4-flash）生成摘要/标签写回 frontmatter。
 
 **B站下载 (Bilibili Downloader)**: 输入链接 → B站 API 解析（封面/标题/清晰度）→ 下载合并（ffmpeg spawn）→ 裁切/压缩（ffmpeg）→ 转文字（faster-whisper，python -c 内嵌代码）→ AI 润色。**依赖 node require（child_process/fs/path/os）与外部二进制（ffmpeg、python）**，仅桌面端可用。**不在本插件迁移清单内——用户决策：后续作为独立插件单独写**。
