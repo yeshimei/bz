@@ -1,5 +1,5 @@
 /* ============================================================
- * memo-suite（备忘录）— 由 QuickAdd 脚本独立化而来
+ * bz（包仔）— 由 QuickAdd 脚本独立化而来
  * 各域样式随 ticket 逐批收敛至此（spec「样式规模」）：
  *   备忘录 ≈50KB、归物本 ≈48KB、闪念 ≈42KB、密码本 ≈27KB、
  *   复习计划 ≈25KB、剪藏本 ≈13KB、做题家 ≈8KB；
@@ -510,18 +510,18 @@
     background: var(--background-primary) !important;
 }
 /* ===== 设置页顶部分页（参考 obsidian-linter 设置页） ===== */
-.memo-suite-setting-header {
+.bz-setting-header {
     margin-bottom: 12px;
     overflow-x: auto;
 }
-.memo-suite-tab-group {
+.bz-tab-group {
     display: flex;
     flex-wrap: wrap;
     gap: 2px;
     border-bottom: 2px solid var(--background-modifier-border);
     padding: 4px 2px 0;
 }
-.memo-suite-tab {
+.bz-tab {
     cursor: pointer;
     font-weight: 600;
     font-size: 0.9em;
@@ -534,23 +534,23 @@
     user-select: none;
     transition: color 0.2s ease, background-color 0.2s ease;
 }
-.memo-suite-tab:hover {
+.bz-tab:hover {
     color: var(--text-normal);
     background: var(--background-modifier-hover);
 }
-.memo-suite-tab-active,
-.memo-suite-tab-active:hover {
+.bz-tab-active,
+.bz-tab-active:hover {
     color: var(--text-on-accent);
     background: var(--interactive-accent);
     border-color: var(--interactive-accent);
 }
-.memo-suite-tab-content {
+.bz-tab-content {
     display: none;
 }
-.memo-suite-tab-content-active {
+.bz-tab-content-active {
     display: block;
 }
-.memo-suite-setting-hidden {
+.bz-setting-hidden {
     display: none !important;
 }
 
