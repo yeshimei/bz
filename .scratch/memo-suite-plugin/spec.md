@@ -218,6 +218,24 @@ Feature: memo-suite-plugin
 - 插件设置：AI（provider/key/endpoint/model）、各域路径（dataFolder/storagePath/todoFilePath 等）、常驻监听开关（自动摘要/AIAgent/闪念）、原有各脚本设置项逐一迁移
 - 日记本已删除「标签配置/默认标签」设置的先例：设置项迁移以「保留原脚本可配置项」为原则，用户已确认删除的项不恢复
 
+### 命令 id 全清单（第 6 轮，源码提取——裸注册基准）
+
+- **备忘录**：`memo-open-panel`、`memo-create-item`
+- **归物本**：`belongings-add-item`
+- **剪藏本**：`article-open-view`
+- **聚合讯**：`news-reader-open`
+- **密码本**：`pw-open-manager`、`pw-add-entry`、`pw-generate-password`
+- **收藏本**：`favorites-open-panel`、`favorites-add-item`
+- **书库**：`open-library`、`open-book-notes`
+- **阅读数据分析报告**：`show-reading-report`
+- **影视**：`movie-manager-open`、`movie-manager-add`
+- **影视数据分析**：`movie-analysis-open`
+- **复习计划**（5 个）：`review-open-panel`、`review-add-current`（添加当前笔记到复习）、`review-remove-current`（移除当前笔记）、`review-jump-overdue`（跳转逾期）、`review-mark-dialog`（评级对话框）
+- **做题家**：`quiz-master-update`、`quiz-master-open`
+- **闪念**：`shan-nian-open-reference`（打开参考窗口）、`shan-nian-open-chat`（打开聊天窗口）
+- **日记本**（已迁）：`diary-open-add-dialog`、`diary-create-quote`
+- Q3 自身无命令
+
 ### 命令互调链完整清单（源码提取）
 
 | 命令 id | 注册方 | 调用方 |
@@ -353,6 +371,13 @@ Feature: memo-suite-plugin
   - 归物本：数据文件解析失败 → 警告弹窗提示检查格式
 - **空态文案**：剪藏本「暂无文章」、收藏本「暂无收藏 🎉」、书库「📭 没有找到符合条件的书籍」「📭 没有找到高亮或批注」、复习计划「🎉 没有逾期笔记」、闪念「⚠️ 没有符合条件的文件」
 - **加载态**：⏳ 推荐中… / ⏳ AI 整理中… / 🧠 正在分析你的观影历史… / 🧠 已分析 N 部观影历史，正在生成推荐… / 📚 正在加载文章… / 正在获取题库，请稍候… / 滚动加载更多… / 查询中… / 刷新中…
+
+### 收敛补充（第 6 轮）
+
+- **复习计划 5 命令交互**：review-add-current（当前笔记入复习队列）、review-remove-current（移出）、review-jump-overdue（定位逾期条目）、review-mark-dialog（评级弹窗）——除面板外命令入口齐全
+- **闪念 2 命令**：打开参考窗口 / 打开聊天窗口（除自动浮现外，可命令手动打开）
+- **密码本 3 命令**：管理器 / 新增条目 / 生成密码（生成密码是独立命令入口）
+- **影视 2 命令**：管理器 / 快速添加
 
 ### 已知待收集信息（实现时从源码提取，不阻塞本 spec）
 
