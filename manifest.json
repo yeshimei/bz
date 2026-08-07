@@ -1,9 +1,9 @@
 {
-  "id": "diary-notebook",
-  "name": "日记本",
+  "id": "memo-suite",
+  "name": "备忘录",
   "version": "1.0.0",
   "minAppVersion": "1.4.0",
-  "description": "日记本：标签筛选、写日记、写摘抄。由 QuickAdd 脚本「日记本」独立化而来，UI 与逻辑保持一致。",
+  "description": "备忘录：待办、归物本、剪藏本、聚合讯、密码本、收藏本、书库、阅读报告、影视、影视分析、自动摘要、复习计划、做题家、闪念、AI Agent。由 QuickAdd 脚本独立化而来，UI 与逻辑保持一致。",
   "author": "叫我包仔",
   "isDesktopOnly": false
 }
