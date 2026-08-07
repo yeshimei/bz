@@ -1,5 +1,5 @@
 /**
- * 复习计划数据层测试（ticket 16）：review.json 兼容迁移/addItem/updateFilePath
+ * 复习计划数据层测试（ticket 16 修正版）：ISO 日期/兼容迁移/updateItem(filePath,fn)
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -18,24 +18,29 @@ describe('ReviewDataManager', () => {
     document.body.innerHTML = '';
   });
 
-  it('addItem：完整字段 + 首次复习 1 分钟后', async () => {
+  it('addItem：完整字段 + 首次复习 1 分钟后（ISO 日期）', async () => {
     const vault = new MockVault();
     vault.files.set('A.md', '正文');
     const app = makeApp(vault);
     setApp(app);
     const dm = new ReviewDataManager(app);
-    const item = await dm.addItem(vault.file('A.md') as any);
+    const item = await dm.addItem('A.md', 'A');
     expect(item.stage).toBe(0);
     expect(item.phase).toBe('ladder');
     expect(item.stability).toBe(1);
     expect(item.difficulty).toBe(0.3);
     expect(item.completed).toBe(false);
-    expect(item.nextReviewDate - item.reviewStart).toBeCloseTo(60000, 0); // 1分钟
-    expect(item.currentStage).toBe(1);
-    // 落盘
+    expect(item.name).toBe('A');
+    // ISO 字符串日期
+    expect(typeof item.reviewStart).toBe('string');
+    expect(typeof item.nextReviewDate).toBe('string');
+    expect(new Date(item.nextReviewDate!).getTime() - new Date(item.reviewStart).getTime()).toBeCloseTo(60000, 0);
+    // 落盘（数组结构 + 剥离运行时字段）
     const raw = JSON.parse(vault.files.get(REVIEW_FILE_PATH)!);
-    expect(raw.items.length).toBe(1);
-    expect(raw.items[0].file).toBeUndefined(); // 剥离运行时字段
+    expect(Array.isArray(raw)).toBe(true);
+    expect(raw.length).toBe(1);
+    expect(raw[0].file).toBeUndefined();
+    expect(typeof raw[0].nextReviewDate).toBe('string');
   });
 
   it('addItem 重复 → 抛「该笔记已在复习计划中」', async () => {
@@ -44,25 +49,23 @@ describe('ReviewDataManager', () => {
     const app = makeApp(vault);
     setApp(app);
     const dm = new ReviewDataManager(app);
-    await dm.addItem(vault.file('A.md') as any);
-    await expect(dm.addItem(vault.file('A.md') as any)).rejects.toThrow('该笔记已在复习计划中');
+    await dm.addItem('A.md', 'A');
+    await expect(dm.addItem('A.md', 'A')).rejects.toThrow('该笔记已在复习计划中');
   });
 
-  it('loadItems 兼容迁移：reviewStage→stage、缺省值、phase、isOverdue', async () => {
+  it('loadItems 兼容迁移：reviewStage→stage、缺省值、phase、isOverdue（ISO）', async () => {
     const vault = new MockVault();
     vault.files.set('A.md', '正文');
     vault.files.set('B.md', '正文');
-    const now = Date.now();
-    vault.files.set(REVIEW_FILE_PATH, JSON.stringify({
-      items: [
-        // 旧格式：reviewStage=3（→stage=2 ladder）、无 stability/difficulty/phase
-        { id: '1', filePath: 'A.md', reviewStage: 3, reviewStart: now, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: now - 1000, lastReviewed: null, lastDifficulty: null, completed: false },
-        // 新格式 fsrs：stage=12
-        { id: '2', filePath: 'B.md', reviewStart: now, stage: 12, phase: 'fsrs', stability: 2.5, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: now + 1000000, lastReviewed: null, lastDifficulty: null, completed: false },
-        // 文件不存在 → 跳过
-        { id: '3', filePath: 'GONE.md', reviewStart: now, stage: 0, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: now, lastReviewed: null, lastDifficulty: null, completed: false },
-      ],
-    }));
+    const now = new Date();
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      // 旧格式：reviewStage=3（→stage=2 ladder）、无 stability/difficulty/phase
+      { id: '1', filePath: 'A.md', reviewStage: 3, reviewStart: now.toISOString(), reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() - 1000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+      // 新格式 fsrs：stage=12
+      { id: '2', filePath: 'B.md', reviewStart: now.toISOString(), stage: 12, phase: 'fsrs', stability: 2.5, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() + 1000000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+      // 文件不存在 → 跳过
+      { id: '3', filePath: 'GONE.md', reviewStart: now.toISOString(), stage: 0, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: now.toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+    ]));
     const app = makeApp(vault);
     setApp(app);
     const dm = new ReviewDataManager(app);
@@ -75,18 +78,33 @@ describe('ReviewDataManager', () => {
     expect(a.phase).toBe('ladder');
     expect(a.isOverdue).toBe(true);
     expect(a.currentStage).toBe(3);
-    expect(a.fileName).toBe('A');
+    expect(a.totalStages).toBe(10);
+    expect(a.name).toBe('A');
     const b = items.find((i) => i.id === '2')!;
     expect(b.phase).toBe('fsrs');
     expect(b.isOverdue).toBe(false);
   });
 
-  it('updateItem 缺失 → 抛「条目不存在」', async () => {
+  it('updateItem(filePath, fn) 缺失 → 抛「条目不存在」', async () => {
     const vault = new MockVault();
     const app = makeApp(vault);
     setApp(app);
     const dm = new ReviewDataManager(app);
-    await expect(dm.updateItem({ id: 'nope' } as any)).rejects.toThrow('条目不存在');
+    await expect(dm.updateItem('nope.md', () => {})).rejects.toThrow('条目不存在');
+  });
+
+  it('updateItem 就地修改 + 落盘', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    await dm.addItem('A.md', 'A');
+    await dm.updateItem('A.md', (it) => {
+      it.stage = 5;
+    });
+    const items = await dm.loadItems();
+    expect(items[0].stage).toBe(5);
   });
 
   it('updateFilePath：成功/目标被占/未找到', async () => {
@@ -97,27 +115,41 @@ describe('ReviewDataManager', () => {
     const app = makeApp(vault);
     setApp(app);
     const dm = new ReviewDataManager(app);
-    const itemA = await dm.addItem(vault.file('A.md') as any);
-    await dm.addItem(vault.file('B.md') as any);
+    await dm.addItem('A.md', 'A');
+    await dm.addItem('B.md', 'B');
     // 成功
     expect(await dm.updateFilePath('A.md', 'A2.md', 'A2')).toBe(true);
-    expect(dm.items.find((i) => i.id === itemA.id)!.filePath).toBe('A2.md');
     // 目标被占
     expect(await dm.updateFilePath('A2.md', 'B.md', 'B')).toBe(false);
     // 未找到
     expect(await dm.updateFilePath('Z.md', 'X.md', 'X')).toBe(false);
   });
 
-  it('removeItem', async () => {
+  it('removeItem(filePath)', async () => {
     const vault = new MockVault();
     vault.files.set('A.md', '正文');
     const app = makeApp(vault);
     setApp(app);
     const dm = new ReviewDataManager(app);
-    const item = await dm.addItem(vault.file('A.md') as any);
-    await dm.removeItem(item.id);
-    expect(dm.items.length).toBe(0);
+    await dm.addItem('A.md', 'A');
+    await dm.removeItem('A.md');
     const raw = JSON.parse(vault.files.get(REVIEW_FILE_PATH)!);
-    expect(raw.items.length).toBe(0);
+    expect(raw.length).toBe(0);
+  });
+
+  it('getOverdueCount', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    vault.files.set('B.md', '正文');
+    const now = new Date();
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      { id: '1', filePath: 'A.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() - 1000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+      { id: '2', filePath: 'B.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() + 1000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+    ]));
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    const items = await dm.loadItems();
+    expect(dm.getOverdueCount(items)).toBe(1);
   });
 });

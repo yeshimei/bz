@@ -23,7 +23,7 @@ function makeMockApp() {
         removedCommands.push(id);
       },
     },
-    metadataCache: { getFileCache: () => null, getBacklinksForFile: () => null },
+    metadataCache: { getFileCache: () => null, getBacklinksForFile: () => null, on: () => ({ ref: 'ref' }) },
     fileManager: { processFrontMatter: () => Promise.resolve() },
   };
 }
@@ -43,6 +43,7 @@ const EXPECTED_COMMAND_IDS = [
   'movie-manager-open', 'movie-manager-add',
   'movie-analysis-open',
   'review-open-panel', 'review-add-current', 'review-remove-current', 'review-jump-overdue', 'review-mark-dialog',
+  'review-mark-again', 'review-mark-hard', 'review-mark-good', 'review-mark-easy',
   'quiz-master-update', 'quiz-master-open',
   'shan-nian-open-reference', 'shan-nian-open-chat',
 ];
