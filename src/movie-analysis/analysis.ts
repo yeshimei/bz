@@ -97,7 +97,13 @@ export function buildAnalysisData(app: App): AnalysisData {
     let rawTags = fm.tags;
     if (typeof rawTags === 'string') rawTags = [rawTags];
     const tags: string[] = Array.isArray(rawTags) ? rawTags.map((t: any) => String(t)) : [];
-    const typeTag = tags.find((t) => ALL_TAGS.includes(t)) ?? null;
+    let typeTag: string | null = null;
+    for (const t of ALL_TAGS) {
+      if (tags.includes(t)) {
+        typeTag = t;
+        break;
+      }
+    }
     if (!typeTag) continue;
     const group = getGroupForTag(typeTag);
     if (!group) continue;
