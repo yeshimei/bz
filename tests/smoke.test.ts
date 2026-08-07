@@ -109,12 +109,15 @@ describe('memo-suite 骨架冒烟', () => {
     expect(s.passwordLength).toBe('16');
   });
 
-  it('未实现域的命令回调不抛异常（占位 Notice）', async () => {
+  it('域命令回调不抛异常（已实现域真实执行，未实现域占位 Notice）', async () => {
     const plugin = await createPlugin(makeMockApp());
 
-    // 任意取一个尚未实现的域命令，触发回调应只出 Notice 不抛错
-    const cmd = plugin.commands.find((c: any) => c.id === 'belongings-add-item');
-    expect(() => cmd.callback()).not.toThrow();
+    // 已实现域：归物本命令真实打开弹窗（异步），同步调用不抛错
+    const cmd1 = plugin.commands.find((c: any) => c.id === 'belongings-add-item');
+    expect(() => cmd1.callback()).not.toThrow();
+    // 未实现域：占位 Notice 不抛错
+    const cmd2 = plugin.commands.find((c: any) => c.id === 'quiz-master-open');
+    expect(() => cmd2.callback()).not.toThrow();
     expect(MockNotice.instances.length).toBeGreaterThan(0);
   });
 
