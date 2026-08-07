@@ -93,3 +93,20 @@
 - ✅ 测试：+7 新测试（clipping 每批 5 条、diary BATCH_SIZE 设置/回退、movie pageSize 设置/回退、quiz/review 路径 getter×3）；改造 3 个旧测试（弹窗默认不预选、保存先手动选日记、getDefaultTagSetting 断言→getEnableLongPressSetting）
 - ✅ spec.md「设置页」小节记录决策；构建产物 main.js 907KB 已直出 vault
 - ⚠️ 未做（用户未要求）：applyTagsConfig（primaryTagsConfig 解析）仍无调用点；备忘录场景列表/平台映射、归物本自定义分类、剪藏本长按时长仍固定默认
+
+---
+
+## 2026-08-07 设置页重组 + 主页影视过滤修复 + AI Agent 选项（第二批用户决策）
+
+**状态：488 测试全绿（44 文件），并行连续 3 次全绿，tsc 零错误，构建已产出**
+
+- ✅ **设置页重组**（14 tab → 12 tab）：
+  - 备忘录：移除「显示文件名」设置项（固定 true，字段保留，bz/app.ts 行为不变）
+  - 做题家 tab 删除 → 4 项选项（允许多选题/每笔记题目数量/打乱顺序/题目难度）并入复习计划 tab，**「做题决定难度」开启时才动态显示**（仿 AI tab 的 bz-setting-hidden 模式，helper 改返回 Setting）
+  - quizStoragePath 删除 → `getQuizFilePath()` 与 review 共用 `reviewStoragePath`
+  - 自动摘要 tab 删除 → 启用开关并入剪藏本 tab；`WATCH_DIR` 改为读 `articleDirectory`（路径与剪藏目录一致）
+  - AI Agent tab 新增 3 项：监听文件夹（aiAgentWatchedFolders 逗号分隔，默认 卡片盒,归档/网页剪藏，动态读取）、AI 剪藏匹配开关（enableAIClipMatch，关闭后仅 URL 精确匹配归档）、AI 匹配模型（aiAgentModel，core/ai json() 硬编码模型 → 改 ai.prompt 显式传参）
+- ✅ **主页影视过滤 bug 修复**：主页.js（dataviewjs）写 `window.__homeFilmStatus` 遗留全局，插件读模块状态 M.homeFilmStatus（无写入方）→ 永远显示全部。`createOverlay` 现在消费 `window.__homeFilmStatus` 并清除（兼容遗留通道，读完即清防残留）
+- ✅ **测试健壮性**（预存在脆弱性，stash 验证与本次改动无关）：password/ui.test.ts 7 处 150ms 固定等待 → 轮询 waitFor（3s 超时）；smoke「域命令回调」超时 5s→15s
+- ✅ 新增测试 5 个：ai-agent（enableAIClipMatch=false 不发 AI 请求 / aiAgentWatchedFolders 范围外不监听）、auto-summary（articleDirectory 跟随设置）、movie（window.__homeFilmStatus 在看/想看过滤 + 清除 + 默认全部）
+- ⚠️ 注意：`window.__homeFilmStatus` 是唯一新增的遗留全局读取点（AGENTS.md 铁律 6 的例外，主页.js 无法 import 插件模块）

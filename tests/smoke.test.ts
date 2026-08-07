@@ -118,6 +118,7 @@ describe('bz 骨架冒烟', () => {
   });
 
   it('域命令回调不抛异常（已实现域真实执行，未实现域占位 Notice）', async () => {
+    // 超时放宽到 15s：并行高负载下闪念/复习等异步初始化可能超过默认 5s
     const plugin = await createPlugin(makeMockApp());
 
     // 已实现域：归物本命令真实打开弹窗（异步），同步调用不抛错
@@ -130,8 +131,7 @@ describe('bz 骨架冒烟', () => {
     expect(() => cmd3.callback()).not.toThrow();
     expect(() => registeredCommands.find((c: any) => c.id === 'bz-review-add-current').callback()).not.toThrow();
     expect(() => registeredCommands.find((c: any) => c.id === 'bz-show-reading-report').callback()).not.toThrow();
-  });
-
+  }, 15000);
   it('onunload 清理全部裸注册命令', async () => {
     const plugin = await createPlugin(makeMockApp());
     plugin.onunload();

@@ -14,10 +14,10 @@ export default interface BzSettings {
   /** 🔑 OpenCode Go API Key */
   opencodeGoApiKey: string;
 
-  // ===== 📝 备忘录（3 项）=====
+  // ===== 📝 备忘录（2 项；showFileName 固定显示，不暴露设置）=====
   /** 📂 备忘录数据文件路径（memo.json 所在目录） */
   todoFilePath: string;
-  /** 📄 显示文件名 */
+  /** 📄 显示文件名（固定 true，不暴露设置） */
   showFileName: boolean;
   /** 🚀 启动时自动弹窗（有重要备忘录时） */
   autoPopupOnStart: boolean;
@@ -40,11 +40,13 @@ export default interface BzSettings {
   /** 📁 存储文件夹路径（belongings.json） */
   belongingsDataFolder: string;
 
-  // ===== 📰 剪藏本（1 项）=====
+  // ===== 📰 剪藏本（2 项 + 自动摘要开关）=====
   /** 📂 剪藏目录 */
   articleDirectory: string;
   /** 📄 每批加载数量（滚动加载每批显示的条目数） */
   articleBatchSize: string;
+  /** 📄 自动摘要：监听剪藏目录新文件（路径与剪藏目录一致） */
+  autoSummaryEnabled: boolean;
 
   // ===== 🔐 密码本（4 项）=====
   /** 📂 数据存储路径 */
@@ -87,9 +89,7 @@ export default interface BzSettings {
   moviePageSize: string;
 
 
-  // ===== 🧠 做题家（5 项，含 shuffleQuestions）=====
-  /** 数据存储路径（quiz.json 所在目录） */
-  quizStoragePath: string;
+  // ===== 🧠 做题家（4 项，含 shuffleQuestions；设置并入复习计划 tab）=====
   /** 允许多选题 */
   enableMultipleChoice: boolean;
   /** 每笔记题目数量（0 为自动） */
@@ -99,14 +99,14 @@ export default interface BzSettings {
   /** 题目难度：random/easy/medium/hard */
   difficulty: string;
 
-  // ===== 🔁 复习计划（4 项）=====
-  /** 数据存储路径（review.json 所在目录） */
+  // ===== 🔁 复习计划 + 做题家（合并 tab；quiz/review 共用数据路径）=====
+  /** 数据存储路径（review.json / quiz.json 所在目录） */
   reviewStoragePath: string;
   /** ⏱️ 检查间隔（秒） */
   autoCheckInterval: string;
   /** 🔔 启用逾期通知 */
   enableAutoNotify: boolean;
-  /** 🎯 做题决定难度 */
+  /** 🎯 做题决定难度（开启时显示做题家选项） */
   forceQuizForReview: boolean;
 
   // ===== 💭 闪念（17 项，全量迁移）=====
@@ -146,10 +146,14 @@ export default interface BzSettings {
   OLLAMA_REMOTE_URL: string;
 
   // ===== 常驻监听开关（懒加载架构，ADR-0003）=====
-  /** 自动摘要：监听 归档/网页剪藏 新文件 */
-  autoSummaryEnabled: boolean;
   /** AI Agent：笔记 rename/delete/create 同步 */
   aiAgentEnabled: boolean;
+  /** 🤖 AI 剪藏匹配：开启后剪藏未命中时用 AI 判断并弹窗批准 */
+  enableAIClipMatch: boolean;
+  /** 📂 AI Agent 监听文件夹（逗号分隔） */
+  aiAgentWatchedFolders: string;
+  /** 🧠 AI Agent 剪藏匹配模型 */
+  aiAgentModel: string;
   /** 闪念：常驻监听光标/文件 */
   flashEnabled: boolean;
 }
@@ -179,6 +183,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 剪藏本
   articleDirectory: '归档/网页剪藏',
   articleBatchSize: '20',
+  autoSummaryEnabled: true,
 
   // 密码本
   pwStoragePath: 'CONFIG/STORAGE',
@@ -206,14 +211,13 @@ export const DEFAULT_SETTINGS: BzSettings = {
   moviePageSize: '20',
 
 
-  // 做题家
-  quizStoragePath: 'CONFIG/STORAGE',
+  // 做题家（设置并入复习计划 tab）
   enableMultipleChoice: true,
   questionsPerNote: '0',
   shuffleQuestions: true,
   difficulty: 'random',
 
-  // 复习计划
+  // 复习计划（quiz/review 共用数据路径）
   reviewStoragePath: 'CONFIG/STORAGE',
   autoCheckInterval: '60',
   enableAutoNotify: true,
@@ -239,7 +243,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
   OLLAMA_REMOTE_URL: 'http://192.168.1.8:11434',
 
   // 常驻监听
-  autoSummaryEnabled: true,
   aiAgentEnabled: true,
+  enableAIClipMatch: true,
+  aiAgentWatchedFolders: '卡片盒,归档/网页剪藏',
+  aiAgentModel: 'deepseek-v4-flash',
   flashEnabled: true,
 };

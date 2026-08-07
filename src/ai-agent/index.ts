@@ -10,6 +10,7 @@
  */
 import type { App } from 'obsidian';
 import { createAI, type AIService } from '../core/ai';
+import { tryGetSettings } from '../core/settings-provider';
 import { DataManager } from '../bz/data';
 import { ensureBz } from '../bz';
 import {
@@ -18,14 +19,38 @@ import {
   syncAutoLink,
   loadJSON,
   saveJSON,
-  inWatchedFolders,
   CLIP_FOLDER,
 } from './sync';
 import { showClipConfirmDialog } from './dialog';
 
 const MEMO_PATH = 'CONFIG/STORAGE/memo.json'; // 备忘录
 const FAVORITES_PATH = 'CONFIG/STORAGE/favorites.json'; // 收藏本
-const AI_MODEL = 'deepseek-v4-flash';
+const AI_MODEL = 'deepseek-v4-flash'; // 默认模型（设置 aiAgentModel 可配）
+
+/** AI 剪藏匹配模型（设置可配，默认 deepseek-v4-flash） */
+function getAIModel(): string {
+  const s = tryGetSettings() as any;
+  return (s && s.aiAgentModel) || AI_MODEL;
+}
+
+/** 监听文件夹列表（设置可配，逗号分隔；默认 卡片盒,归档/网页剪藏） */
+function getWatchedFolders(): string[] {
+  const s = tryGetSettings() as any;
+  const raw = (s && s.aiAgentWatchedFolders) || '卡片盒,归档/网页剪藏';
+  return raw.split(',').map((x: string) => x.trim()).filter(Boolean);
+}
+
+/** 剪藏目录（与剪藏本 articleDirectory 一致，回退 CLIP_FOLDER） */
+function getClipFolder(): string {
+  const s = tryGetSettings() as any;
+  return (s && s.articleDirectory) || CLIP_FOLDER;
+}
+
+/** AI 剪藏匹配开关（设置可配，默认开启） */
+function isAIClipMatchEnabled(): boolean {
+  const s = tryGetSettings() as any;
+  return s ? s.enableAIClipMatch !== false : true;
+}
 
 let initialized = false;
 let _app: App | null = null;
@@ -74,8 +99,8 @@ ${candidatesDesc}
 只返回 JSON，不要有其他文字。`;
 
   try {
-    // core/ai json 签名为 (promptText, extraOptions)
-    const result = await ai.json(prompt, {
+    // 模型走设置（aiAgentModel），response_format 显式要求 JSON
+    const result = await ai.prompt(prompt, getAIModel(), {
       modelOptions: {
         max_tokens: 200,
         response_format: { type: 'json_object' },
@@ -106,7 +131,8 @@ async function handleClip(app: App, ai: AIService, file: any) {
     return;
   }
 
-  // ② AI 匹配 → 弹窗批准
+  // ② AI 匹配 → 弹窗批准（设置 enableAIClipMatch 关闭时跳过）
+  if (!isAIClipMatchEnabled()) return;
   await new Promise((resolve) => setTimeout(resolve, 800));
   const result = await matchClipByAI(
     ai,
@@ -141,7 +167,7 @@ function createNoteSyncAgent(app: App, ai: AIService | null): () => void {
     }
   }
 
-  const isMd = (file: any) => file && file.extension === 'md' && inWatchedFolders(file.path);
+  const isMd = (file: any) => file && file.extension === 'md' && getWatchedFolders().some((f) => file.path.startsWith(f + '/') || file.path === f);
 
   _refs.push(app.vault.on('rename', (file: any, oldPath: string) => {
     if (!isMd(file)) return;
@@ -165,7 +191,7 @@ function createNoteSyncAgent(app: App, ai: AIService | null): () => void {
     if (!isMd(file)) return;
     enqueue(async () => {
       // 剪藏目录 → 匹配归档（URL 精确 / AI + 弹窗）
-      if (file.path.startsWith(CLIP_FOLDER + '/') && ai) {
+      if (file.path.startsWith(getClipFolder() + '/') && ai) {
         await handleClip(app, ai, file);
       }
       // 同名条目自动关联（仅收藏本）
