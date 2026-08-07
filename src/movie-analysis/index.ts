@@ -1,5 +1,5 @@
 /**
- * 影视数据分析入口（ticket 15：ensureMovieAnalysis/openMovieAnalysis）
+ * 影视数据分析入口（ticket 15 修正版：对齐源码 openAnalysisModal 逐字）
  * 命令（movie-analysis-open）由 main.ts 裸注册。
  */
 import type { App } from 'obsidian';
@@ -26,66 +26,71 @@ export function closeAnalysis(): void {
   }
 }
 
-/** 打开观影数据分析弹窗 */
+/** 打开观影数据分析弹窗（源码 L468-528 逐字） */
 export function openMovieAnalysis(app: App): void {
   ensureMovieAnalysis(app);
-  if (analysisOverlay) closeAnalysis();
-
+  if (analysisOverlay) {
+    closeAnalysis();
+    return;
+  }
   const data = buildAnalysisData(app);
-  const html = buildAnalysisHTML(data);
 
   const overlay = document.createElement('div');
   overlay.style.cssText = `
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
-    z-index: 1200;
+    background: rgba(0,0,0,0.5); z-index: 1200;
+    display: flex; align-items: center; justify-content: center;
   `;
-
   const modal = document.createElement('div');
   modal.style.cssText = `
-    background: var(--background-primary); border-radius: 12px;
-    width: 100%; max-width: 600px; height: 90vh;
+    background: var(--background-primary); color: var(--text-normal);
+    border-radius: 12px; width: 100%; max-width: 600px; height: 90vh;
     display: flex; flex-direction: column; overflow: hidden;
     box-shadow: 0 8px 30px rgba(0,0,0,0.3);
   `;
-
   if (window.innerWidth <= 768) {
     modal.style.height = '100vh';
     modal.style.borderRadius = '0';
     modal.style.maxWidth = '100%';
+    modal.style.paddingTop = '24px';
   }
 
-  // 头部
   const header = document.createElement('div');
-  header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:12px 20px;flex-shrink:0;border-bottom:1px solid var(--background-modifier-border);';
-  const title = document.createElement('span');
-  title.textContent = '📊 观影数据分析';
-  title.style.cssText = 'font-size:1.1rem;font-weight:600;color:#2c3e50;';
+  header.style.cssText = `
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 26px; flex-shrink: 0;
+  `;
+  const titleEl = document.createElement('p');
+  titleEl.textContent = '📊 观影数据分析';
+  titleEl.style.cssText = 'font-size:.9rem;font-weight:600;';
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '❌';
-  closeBtn.style.cssText = 'background:none;border:none;cursor:pointer;font-size:.8rem;box-shadow:none;color:var(--text-muted);';
+  closeBtn.title = '关闭';
+  closeBtn.style.cssText = `
+    background: none; border: none; font-size: 0.55rem;
+    cursor: pointer; color: var(--text-muted); box-shadow: none;
+    padding: 0; margin-left: 15px;
+  `;
   closeBtn.addEventListener('click', closeAnalysis);
-  header.appendChild(title);
+  header.appendChild(titleEl);
   header.appendChild(closeBtn);
 
-  // 滚动内容
-  const scrollable = document.createElement('div');
-  scrollable.style.cssText = 'flex:1;overflow-y:auto;padding:16px 20px;';
-  scrollable.innerHTML = html;
+  const content = document.createElement('div');
+  content.style.cssText = 'flex: 1; overflow-y: auto; padding: 8px 16px 16px;';
+  content.innerHTML = buildAnalysisHTML(data);
 
   modal.appendChild(header);
-  modal.appendChild(scrollable);
+  modal.appendChild(content);
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
   analysisOverlay = overlay;
 
-  // 点遮罩空白关闭
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) closeAnalysis();
   });
 }
 
-/** ESC 注册 */
+/** ESC 注册（源码 L531-533） */
 function registerAnalysisEscape(): void {
   if (escRegistered) return;
   escRegistered = true;

@@ -41,12 +41,13 @@ tags: [美剧]
 describe('图表组件', () => {
   it('statCardHTML：6 色卡板循环', () => {
     expect(statCardHTML('总数', '3', 0)).toContain('总数');
-    expect(statCardHTML('总数', '3', 0)).toContain('#E6DFF5');
-    expect(statCardHTML('总数', '3', 6)).toContain('#E6DFF5');
+    expect(statCardHTML('总数', '3', 0)).toContain('#D6E4FF'); // PASTEL_CARDS[0]
+    expect(statCardHTML('总数', '3', 6)).toContain('#D6E4FF'); // 循环 6%6=0
   });
 
-  it('barChartHTML：max 为 0 不除零', () => {
-    expect(barChartHTML([{ label: 'a', value: 0 }])).toContain('height:2%');
+  it('barChartHTML：空 entries → emptyHTML；value 0 → minH 26px', () => {
+    expect(barChartHTML([])).toContain('暂无数据');
+    expect(barChartHTML([{ label: 'a', value: 0 }])).toContain('height:26px');
   });
 
   it('donutChartHTML：总数为 0 不除零', () => {
