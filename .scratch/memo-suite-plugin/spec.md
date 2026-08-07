@@ -41,6 +41,8 @@ Feature: memo-suite-plugin
 18. 作为用户，我希望学习/公开课场景的待办有课程字段（courseInput），以便记录课程归属。
 19. 作为用户，我希望可从当前笔记（📌 笔记名）或光标选中内容创建待办（getCurrentNoteInfo/getCurrentCursorPosition 语义），以便快速录入。
 20. 作为用户，我希望截止时间输入支持清除（dueClear）、位置按钮（posBtn）、焦点粘贴自动提取 URL（clipboardFocusHandler），以便与原脚本交互一致。
+21. 作为用户，我希望到期/过期待办自动置顶（已过期红色、今日到期橙色），启动时与打开笔记时触发到期提醒，以便不错过任务（changelog 1.6.0 行为）。
+22. 作为用户，我希望长按 #标签 直接编辑待办全部信息（内容/场景/优先级等），公开课场景标签不重复显示（changelog 1.5.0 行为），以便与原脚本一致。
 
 ### 归物本（Belongings）
 
@@ -286,6 +288,19 @@ Feature: memo-suite-plugin
 - **剪藏本**：attachFileListener 文件监听、✍️ 作者/📌 反链（去《》书名号）/全部 (N) 计数、initScroll 滚动加载、renderEmpty 空态
 - **聚合讯**：👤 作者/📅 日期、renderDoneState 完成态、toDatetime
 - **归物本**：refreshBtn 刷新、卡片点击交互
+
+### Q3 core 层逐行提取（第 1 轮，移植签名基准）
+
+- **AIService 方法集**（createAI(params, defaultModel='deepseek-v4-flash', defaultOptions={}, defaultMaxTokens=8192) 返回）：`prompt(text, model, options)` → Promise<string>（fetch 流式，失败自动 fallback requestUrl 非流式；provider.noCors 直接走 requestUrl）；`chat/reason/search/json/reasonAndSearch` 五个专用方法；`setDefaultModel/setDefaultOptions`；body = {model, messages, max_tokens(默认4096), stream:true} + modelOptions 透传（response_format/enable_thinking 等）；provider 异步获取，支持 provider.model 默认模型覆盖与 noCors 标记
+- **escManager**：`register(id, layer)`（layer 需 isVisible()/close()）→ 返回 unregister()；Escape 从栈顶向下找第一个可见层关闭
+- **injectStyles(id, css)**：`style[data-shared-style=id]` 幂等注入（已存在跳过）
+- **confirm(opts)**：{title, message, onConfirm, onCancel, confirmText='确定', cancelText='取消'}；mask id `__shared_confirm_mask__`、z-index 10003、点击遮罩取消
+- **createOverlay(opts)**：{maskId, popupId, zIndex=9999, onMaskClick}；mask/popup 固定定位居中、圆角阴影
+- **jsonStore(filePath)**：read = 不存在（建目录+建文件→[]）/解析失败（重置[]）；write = 存在 modify/不存在 create；**注意：原实现无锁、无原子写**（CONTEXT.md 原描述「原子写+锁」有误，已修正）
+- **generateId(prefix)**：`prefix-时间戳-随机6位`
+- **DEFAULT_PLATFORM_MAP**：数组 [{host, name}] ×7——知乎日报/知乎专栏/知乎/果壳/小黑盒/豆瓣/微信公众号（备忘录平台映射默认值）
+- **CHANGELOGS**：{identifier: {latestVersion, name, entries: {version: markdown}}}；identifier 需从各脚本收集（已知：belongings、memo）
+- **longPress(el, cb, dur, filter)**、notice(msg, dur)、createIconBtn(text, title, onClick, extra)、formatFileSize(bytes)、formatRelativeTime(date, now)、createSiteIcon(domain, size=16)、getPlatformName(url, customMap)、getCurrentNoteInfo()、getCurrentCursorPosition()、fetchPageTitle(url)、extractUrlAndDisplay(c)——签名如上，行为实现时逐字移植
 
 ### 已知待收集信息（实现时从源码提取，不阻塞本 spec）
 
