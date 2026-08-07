@@ -109,6 +109,13 @@ export function createMaskAndPopup() {
   });
   searchContainer.appendChild(searchInput);
 
+  // 临时诊断条（定位后移除）
+  const diagBar = document.createElement('div');
+  diagBar.id = 'diary-diag';
+  diagBar.style.cssText = 'padding:4px 24px;font-size:11px;color:var(--text-muted);background:var(--background-secondary);';
+  diagBar.textContent = '诊断初始化中...';
+  state.ui.tagFilterPopup.appendChild(diagBar);
+
   state.ui.tagFilterPopup.appendChild(header);
   state.ui.tagFilterPopup.appendChild(tagsContainer);
   state.ui.tagFilterPopup.appendChild(searchContainer);
