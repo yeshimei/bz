@@ -63,8 +63,146 @@ export class MockPlugin {
   registerDomEvent(): void {}
 }
 export const Plugin = MockPlugin;
-export const PluginSettingTab = class {};
-export const Setting = class {};
+/** PluginSettingTab mock：带 containerEl（display() 渲染目标） */
+export class PluginSettingTab {
+  app: any;
+  plugin: any;
+  containerEl: HTMLElement;
+  constructor(app: any, plugin: any) {
+    this.app = app;
+    this.plugin = plugin;
+    this.containerEl = document.createElement('div');
+    document.body.appendChild(this.containerEl);
+  }
+  display() {}
+}
+
+/** Setting 控件链式 mock（setName/setDesc/addDropdown/addText/addToggle/addButton） */
+export class MockDropdown {
+  options: Record<string, string> = {};
+  value = '';
+  private cb: ((v: string) => void) | null = null;
+  addOption(key: string, label: string): this {
+    this.options[key] = label;
+    return this;
+  }
+  setValue(v: string): this {
+    this.value = v;
+    return this;
+  }
+  onChange(cb: (v: string) => void): this {
+    this.cb = cb;
+    return this;
+  }
+  /** 测试辅助：模拟用户选择 */
+  trigger(v: string) {
+    this.value = v;
+    if (this.cb) void this.cb(v);
+  }
+}
+export class MockText {
+  value = '';
+  placeholder = '';
+  private cb: ((v: string) => void) | null = null;
+  setValue(v: string): this {
+    this.value = v;
+    return this;
+  }
+  setPlaceholder(p: string): this {
+    this.placeholder = p;
+    return this;
+  }
+  onChange(cb: (v: string) => void): this {
+    this.cb = cb;
+    return this;
+  }
+  /** 测试辅助：模拟输入 */
+  trigger(v: string) {
+    this.value = v;
+    if (this.cb) void this.cb(v);
+  }
+}
+export class MockToggle {
+  value = false;
+  private cb: ((v: boolean) => void) | null = null;
+  setValue(v: boolean): this {
+    this.value = v;
+    return this;
+  }
+  onChange(cb: (v: boolean) => void): this {
+    this.cb = cb;
+    return this;
+  }
+  /** 测试辅助：模拟开关 */
+  trigger(v: boolean) {
+    this.value = v;
+    if (this.cb) void this.cb(v);
+  }
+}
+export class MockButton {
+  text = '';
+  private cb: (() => void) | null = null;
+  setButtonText(t: string): this {
+    this.text = t;
+    return this;
+  }
+  onClick(cb: () => void): this {
+    this.cb = cb;
+    return this;
+  }
+  /** 测试辅助：模拟点击 */
+  trigger() {
+    if (this.cb) this.cb();
+  }
+}
+export class Setting {
+  containerEl: HTMLElement;
+  settingEl: HTMLElement;
+  name = '';
+  desc = '';
+  controls: any[] = [];
+  constructor(containerEl: HTMLElement) {
+    this.containerEl = containerEl;
+    this.settingEl = document.createElement('div');
+    this.settingEl.className = 'setting-item';
+    // 测试辅助：settingEl 反向引用实例（取控件用）
+    (this.settingEl as any).__setting = this;
+    containerEl.appendChild(this.settingEl);
+  }
+  setName(name: string): this {
+    this.name = name;
+    this.settingEl.dataset.name = name;
+    return this;
+  }
+  setDesc(desc: string): this {
+    this.desc = desc;
+    return this;
+  }
+  addDropdown(cb: (dd: MockDropdown) => void): this {
+    const dd = new MockDropdown();
+    cb(dd);
+    this.controls.push(dd);
+    return this;
+  }
+  addText(cb: (t: MockText) => void): this {
+    const t = new MockText();
+    cb(t);
+    this.controls.push(t);
+    return this;
+  }
+  addToggle(cb: (t: MockToggle) => void): this {
+    const t = new MockToggle();
+    cb(t);
+    this.controls.push(t);
+    return this;
+  }
+  addButton(cb: (b: MockButton) => void): this {
+    const b = new MockButton();
+    cb(b);
+    this.controls.push(b);
+    return this;
+  }
+}
 export const TFile = class {};
 export const TFolder = class {};
 export const normalizePath = (p: string) => p;

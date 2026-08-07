@@ -146,9 +146,15 @@ export function mockAppWithVault(vault: MockVault) {
       offref: () => {},
       getActiveFile: () => null,
     },
-    commands: {
-      addCommand: () => {},
-      removeCommand: () => {},
-    },
+    commands: (() => {
+      const registered: any[] = [];
+      return {
+        registered,
+        addCommand: (c: any) => {
+          registered.push(c);
+        },
+        removeCommand: () => {},
+      };
+    })(),
   } as any;
 }
