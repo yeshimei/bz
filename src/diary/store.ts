@@ -399,9 +399,11 @@ let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 export async function onFileChange(file: any) {
   if (state.events.isInternalUpdate) return;
   const filePath = file.path;
-  const isDiaryFile = filePath.startsWith(DIARY_DIRECTORY) && file.extension === 'md';
-  const isMovieFile = filePath.startsWith(MOVIE_DIRECTORY) && file.extension === 'md';
-  const isLetterFile = filePath.startsWith(LETTER_DIRECTORY) && file.extension === 'md';
+  // 目录前缀带边界匹配（避免 我的/日记.md、我的/日记本/... 误判）
+  const inDir = (p: string, dir: string) => p === dir || p.startsWith(dir + '/');
+  const isDiaryFile = inDir(filePath, DIARY_DIRECTORY) && file.extension === 'md';
+  const isMovieFile = inDir(filePath, MOVIE_DIRECTORY) && file.extension === 'md';
+  const isLetterFile = inDir(filePath, LETTER_DIRECTORY) && file.extension === 'md';
 
   if (!isDiaryFile && !isMovieFile && !isLetterFile) return;
 

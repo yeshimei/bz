@@ -4,11 +4,11 @@
 import { Plugin, PluginSettingTab, Setting } from 'obsidian';
 import { escManager } from './core/esc-manager';
 import { setApp } from './diary/app';
-import { applyDirectories, applyTagsConfig, resetTagsConfig } from './diary/config';
+import { applyDirectories, applyTagsConfig } from './diary/config';
 import { loadAll, setFileChangeDelay } from './diary/store';
 import { state } from './diary/state';
 import { applyUiSettings, init, showDiaryPanel, unregisterEscLayer } from './diary/ui/panel';
-import { openAddDialog } from './diary/ui/dialogs';
+
 import DiarySettings, { DEFAULT_SETTINGS } from './settings';
 
 /** 应用全部设置到运行时常量/配置（设置变更与启动时调用） */
@@ -26,21 +26,10 @@ export default class DiaryNotebookPlugin extends Plugin {
     setApp(this.app);
     applySettingsToRuntime(this.settings);
 
-    // 命令（与原 QuickAdd 脚本一致，id 不带插件前缀以保留 Alt+A 热键绑定）
-    (this.app as any).commands.addCommand({
-      id: 'diary-open-add-dialog',
-      name: '打开写日记弹窗',
-      callback: () => {
-        // 弹窗由 init 创建的 DOM 提供；未初始化时先初始化
-        if (!document.getElementById('add-diary-mask')) {
-          init(this).then(() => openAddDialogSafe());
-        } else {
-          openAddDialogSafe();
-        }
-      },
-    });
-
-    // ribbon 图标 + 面板命令（插件级，id 自动带前缀 diary-notebook:）
+    // 命令说明：
+    // - diary-open-add-dialog / diary-create-quote 由 init() 内经 registerOpenDialogCommand/
+    //   registerQuoteCommand 注册（原脚本同款，id 不带前缀以保留 Alt+A 热键绑定，见 ADR-0001）
+    // - 下方 ribbon 图标 + 面板命令（插件级，id 自动带前缀 diary-notebook:）
     this.addRibbonIcon('notebook-pen', '日记本', () => {
       showDiaryPanel(this);
     });
@@ -101,9 +90,6 @@ export default class DiaryNotebookPlugin extends Plugin {
   }
 }
 
-function openAddDialogSafe() {
-  openAddDialog();
-}
 
 // ===== 设置页 =====
 

@@ -9,7 +9,7 @@ import { BATCH_SIZE, DIARY_DIRECTORY, LONG_PRESS_DURATION, MOVIE_DIRECTORY, getS
 import { deleteEntry, getIsProcessingRemainingFiles } from '../store';
 import { state } from '../state';
 import type { DateFilter, DiaryEntry } from '../types';
-import { getEnableLongPressSetting } from './panel';
+import { getEnableLongPressSetting } from './ui-settings';
 import { showTagPicker } from './dialogs';
 import { refreshSubTagsBar, updateTagCounts, updateTitleSuffix } from './filter-shared';
 

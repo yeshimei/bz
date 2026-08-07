@@ -7,7 +7,8 @@ import { DIARY_DIRECTORY, getAllAvailableTags, getSortedTagsForAddDialog, getTag
 import { parseNaturalTime } from '../parser';
 import { addEntry, writeFile } from '../store';
 import { diaryDataMap, state } from '../state';
-import { getDefaultTagSetting, getUseFileDateTimeSetting, rebuildTags } from './panel';
+import { getDefaultTagSetting, getUseFileDateTimeSetting } from './ui-settings';
+import { rebuildTags } from './filter-shared';
 import { applyFilter as applyFilterFromDialogs, insertCard, jumpToEntry, removeCard, showConfirm as showConfirmFromDialogs } from './entries';
 import { updateTitleSuffix } from './filter-shared';
 import { createDateTimeControl, syncDateTime } from './datetime-picker';

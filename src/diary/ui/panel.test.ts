@@ -27,6 +27,8 @@ beforeEach(async () => {
   state.data.currentSearchKeyword = '';
   state.data.originalDiaryEntries = [];
   state.data.currentFilteredEntries = [];
+  state.ui.isPopupShown = false;
+  state.ui.editingEntryId = null;
   if (state.data.searchDebounceTimer) clearTimeout(state.data.searchDebounceTimer);
   vault = new MockVault();
   vault.files.set('我的/日记/2024-01-01.md', '# 📖 08:00\n第一条日记\n');
@@ -221,9 +223,47 @@ describe('滚轮日期时间选择器（ticket 07）', () => {
 });
 
 describe('摘抄命令（ticket 08）', () => {
-  it('registerQuoteCommand 注册命令', async () => {
-    // init 时已注册；验证命令存在（通过 mock commands 捕获）
-    expect(true).toBe(true);
+  it('写摘抄完整流程：选中文本 → 块ID → 预览 → 保存写回', async () => {
+    const { registerQuoteCommand } = await import('./quote');
+    const app = mockAppWithVault(vault);
+    const editor = {
+      somethingSelected: () => true,
+      getSelection: () => '经典语录',
+      listSelections: () => [{ anchor: { line: 2 } }],
+      getLine: (n: number) => (n === 2 ? '经典语录' : ''),
+      setLine: vi.fn(),
+      getCursor: () => ({ line: 2 }),
+      getValue: () => '第一行\n第二行\n经典语录\n',
+    };
+    const file = vault.file('书库/哲学.md');
+    app.workspace.getActiveViewOfType = () => ({ editor, file });
+    let callback: (() => Promise<void>) | null = null;
+    app.commands.addCommand = (cmd: any) => {
+      if (cmd.id === 'diary-create-quote') callback = cmd.callback;
+      return cmd;
+    };
+    setApp(app);
+    await registerQuoteCommand();
+    expect(callback).toBeTruthy();
+    await callback!();
+
+    // 弹窗打开 + 摘抄预览 + 默认选中「摘抄」
+    expect((document.getElementById('add-diary-mask') as HTMLElement).style.display).toBe('block');
+    expect(document.body.textContent).toContain('经典语录');
+    expect(document.querySelector('#add-diary-type-container [data-tag="摘抄"].diary-active')).toBeTruthy();
+
+    // 保存 → 新增条目写回（书库/ 路径附加书名）
+    const dt = document.getElementById('add-diary-datetime') as HTMLInputElement;
+    dt.value = '2024-01-05 14:00';
+    const saveBtn = Array.from(document.querySelectorAll('#add-diary-popup button')).find(
+      (b) => b.textContent === '保存'
+    ) as HTMLElement;
+    saveBtn.click();
+    await waitFor(() => vault.files.has('我的/日记/2024-01-05.md'));
+    const written = vault.files.get('我的/日记/2024-01-05.md')!;
+    expect(written).toContain('# 📌 14:00');
+    expect(written).toContain('经典语录');
+    expect(written).toContain('#《哲学》');
   });
 });
 
