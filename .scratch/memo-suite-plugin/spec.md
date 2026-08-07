@@ -36,6 +36,11 @@ Feature: memo-suite-plugin
 13. 作为用户，我希望待办逾期状态有醒目显示（getDueStatus/formatDueText 语义：逾期、今日截止等），以便一眼看出紧急任务。
 14. 作为用户，我希望输入/粘贴 URL 时自动提取页面标题生成待办（fetchPageTitle/extractUrlAndDisplay 语义），以便快速记录。
 15. 作为用户，我希望备忘录设置保留 5 项：todoFilePath（数据路径）、scenarios（场景列表）、platformMapping（平台映射）、showFileName（是否显示文件名）、autoPopupOnStart（启动自动弹出），以便与原脚本配置一致。
+16. 作为用户，我希望 AI 推荐场景分类（✨ AI 推荐按钮 + ⏳ 推荐中… 加载态），以便新增待办时自动归类。
+17. 作为用户，我希望已完成待办可归档（归档按钮），以便从主列表隐藏历史任务。
+18. 作为用户，我希望学习/公开课场景的待办有课程字段（courseInput），以便记录课程归属。
+19. 作为用户，我希望可从当前笔记（📌 笔记名）或光标选中内容创建待办（getCurrentNoteInfo/getCurrentCursorPosition 语义），以便快速录入。
+20. 作为用户，我希望截止时间输入支持清除（dueClear）、位置按钮（posBtn）、焦点粘贴自动提取 URL（clipboardFocusHandler），以便与原脚本交互一致。
 
 ### 归物本（Belongings）
 
@@ -44,6 +49,7 @@ Feature: memo-suite-plugin
 15. 作为用户，我希望启用时显示归物本 changelog（identifier 'belongings'），以便看到更新说明。
 16. 作为用户，我希望归物本支持自定义分类（customCategories 设置）与排序弹窗（按分类/时间等排序，showSortModal 语义），以便整理物品。
 17. 作为用户，我希望归物本有统计显示（按分类统计等），以便掌握物品分布。
+18. 作为用户，我希望物品卡片支持点击展开详情/操作、列表有刷新按钮（refreshBtn），以便与原脚本交互一致。
 
 ### 密码本（Password Vault）
 
@@ -51,6 +57,8 @@ Feature: memo-suite-plugin
 17. 作为用户，我希望存储路径可配置（storagePath），以便沿用原路径。
 18. 作为用户，我希望密码本内置密码生成器（passwordCharset 字符集/passwordLength 长度/securityMode 安全模式三项设置），以便生成强密码。
 19. 作为用户，我希望密码条目加密存储、支持点击复制密码，以便安全使用。
+20. 作为用户，我希望主密码机制完整保留：首次设置主密码（含再次输入确认）、解锁流程（输入主密码解锁密码本）、主密码驱动全部数据加密，以便与原脚本一致。
+21. 作为用户，我希望密码条目字段（账号/密码/链接/日期/备注）与 👁 显示切换、搜索过滤、生成按钮，以便与原脚本一致。
 
 ### 剪藏本（Clipping）
 
@@ -60,6 +68,8 @@ Feature: memo-suite-plugin
 21. 作为用户，我希望 `我的/文章` 下文章被修改时面板自动刷新（vault modify 监听），以便内容保持最新。
 22. 作为用户，我希望站点栏（createSiteBar/rebuildSiteBar 语义）显示全部站点并可单选过滤，以便按来源浏览。
 23. 作为用户，我希望剪藏本可跳转到聚合讯阅读器（互调 `news-reader-open`），以便剪藏与阅读联动。
+24. 作为用户，我希望文章卡片显示作者（✍️）、反链笔记名（去《》书名号显示，📌）、站点计数（全部 (N)），以便与原脚本一致。
+25. 作为用户，我希望列表滚动到底自动加载更多（initScroll）、无文章时显示空态（renderEmpty），以便与原脚本一致。
 
 ### 聚合讯（News Aggregator）
 
@@ -71,32 +81,44 @@ Feature: memo-suite-plugin
 25. 作为用户，我希望文章支持已读标记（markAsRead）、跳过（skipArticle）、检查新文章（checkNewArticles）、剪藏保存（saveToClip），以便完整管理阅读流。
 26. 作为用户，我希望阅读器内的摘要以 markdown 渲染（renderMarkdown），以便排版与原脚本一致。
 27. 作为用户，我希望聚合讯的约 196 行注入样式（弹窗/列表/统计）原样保留，以便视觉一致。
+28. 作为用户，我希望阅读器显示作者（👤）与日期（📅）、全部读完显示完成态（renderDoneState），以便与原脚本一致。
 
 ### 收藏本（Favorites）
 
 23. 作为用户，我希望 GitHub 收藏管理（列表、AI 生成标题/简介、打开链接、长按操作）与原脚本一致，以便管理我的 GitHub stars。
 24. 作为用户，我希望收藏本设置保留 storagePath（数据路径），数据读写 `CONFIG/STORAGE/favorites.json`，以便数据零迁移。
+25. 作为用户，我希望收藏支持置顶（📌 置顶）、编辑收藏、标签 emoji 显示、空态（暂无收藏 🎉），以便与原脚本一致。
+26. 作为用户，我希望余额查询保留：API Keys（每行一个，第一个用于余额查询）、余额查询 URL（完整 URL）、自动从返回对象查找余额数字、查询中/刷新中/错误状态显示与刷新，以便监控 API 配额。
+27. 作为用户，我希望大模型配置弹窗（🧠：API Keys 输入）与 AI 整理加载态（⏳ AI 整理中…），以便配置与反馈与原脚本一致。
 
 ### 书库（Library）与阅读数据分析报告（Reading Analytics）
 
 24. 作为用户，我希望书库面板（`书库/` 目录 + `我的/读书笔记` 聚合、搜索/排序/跳转）与原脚本一致，以便管理读书笔记。
 25. 作为用户，我希望阅读数据分析报告（年度统计、阅读热力图、习惯分析、读书笔记互动分析、聚焦分析）与原脚本一致，以便生成我的阅读报告。
 26. 作为用户，我希望阅读报告可写入笔记或复制（原脚本行为），以便保存报告。
+27. 作为用户，我希望报告章节完整保留：年度统计、作者统计、阅读速度分析、时间分布图表、习惯深度分析、阅读趋势（月度/季度平均/完成率/趋势方向）、热力图（月份网格/强度/颜色/tooltip）、聚焦分析（时间模式/一致性/总分/建议）、类别分析（多样性/平衡度/趋势/推荐/分布图）、笔记互动分析（思考比/参与度/模式/深度/连接度/图表/建议）、实用建议——各章节生成函数语义逐字一致。
+28. 作为用户，我希望报告以 HTML 弹窗展示（showReportInPopup，含暗色模式适配、进度条与图表组件），以便与原脚本一致。
 27. 作为用户，我希望书库设置保留 9 项：folderPath/notePath/bookTag + 显示开关 showFileSize/showReadingTime/showHighlights/showThinks/showReview/showCategory，以便沿用原配置。
 28. 作为用户，我希望书库面板内有设置弹窗（openSettingsModal/closeSettingsModal 语义，就地改显示开关），以便不用离开面板调整。
 29. 作为用户，我希望读书笔记支持高亮跳转（jumpToHighlight）、评论编辑（openEditCommentModal/updateComment）、删除高亮（deleteHighlight），以便精读管理。
 30. 作为用户，我希望书目列表显示状态颜色（getStatusColors）与文件大小/阅读时间（formatFileSize），以便与原脚本一致。
 31. 作为用户，我希望书库可生成阅读数据分析报告（互调 `show-reading-report`），以便一键出报告。
+32. 作为用户，我希望读书笔记弹窗（📚《书》的读书笔记：高亮 ❝ 列表 + 日期 + 评论，支持跳转/编辑/删除）与原脚本一致，以便精读管理。
+33. 作为用户，我希望书目卡片显示阅读进度（📊 %）、阅读时间（⏱️ 格式化）、文件大小（📦）、作者（✍️）、🧮 统计按钮，以便与原脚本一致。
 
 ### 影视（Movies）与影视数据分析（Movie Analytics）
 
 27. 作为用户，我希望影视管理（`我的/影视` 目录、frontmatter 读写 fileManager.processFrontMatter、类型/状态筛选、排序、添加/编辑/删除）与原脚本一致，以便管理观影记录。
 28. 作为用户，我希望影视.js 通过 `app.commands.executeCommandById('movie-analysis-open')` 打开影视数据分析，以便互调链路与原来一致。
 29. 作为用户，我希望影视数据分析弹窗（状态分布、趋势等，目录路径语义改为模块共享）与原脚本一致，以便分析观影数据。
+30. 作为用户，我希望数据分析的图表组件完整保留：统计卡片（statCardHTML）、条形图（barChartHTML）、环形图（donutChartHTML）、软条图（softBarHTML）、排行榜（topListHTML）、评分对比（ratingCompareListHTML）、内联统计（statInlineHTML），以便视觉与原脚本一致。
+31. 作为用户，我希望评分分桶（ratingBucketOf）、空态（emptyHTML）、ESC 关闭（registerAnalysisEscape）与原脚本一致。
 30. 作为用户，我希望影视目录变化（新增/修改/删除）时列表自动刷新（vault 三事件监听），以便无需手动刷新。
 31. 作为用户，我希望影视列表支持无限滚动（setupInfiniteScroll）、星级评分（getStarRating）、类型颜色（getTypeColor）、标签分组（getGroupForTag），以便与原脚本一致。
 32. 作为用户，我希望影视设置保留 folderPath/pageSize（分页大小）/enableQ3/posterFolder（海报目录），以便沿用原配置。
 33. 作为用户，我希望影视数据分析的分析口径配置（groups/buckets/genres/ageBuckets/eras/durBuckets/groupDur/reviewKeywords/series/yearRating 十组）保留为设置项，以便自定义分析维度。
+34. 作为用户，我希望 AI 推荐功能完整保留：基于观影历史构建口味画像（buildTasteProfile）→ AI 生成推荐（🧠 正在分析你的观影历史…）→ 推荐弹窗列表（含导演：、加入想看 按钮，quickAddWant 预填添加弹窗）→ 解析失败/生成失败错误提示（⚠️/❌），以便发现新片。
+35. 作为用户，我希望影视状态枚举（在看/想看/已看等）、类型分组/颜色映射（TYPE_GROUPS/TYPE_COLORS）、📊 数据分析入口、🤖 AI 推荐入口、⚙️ 设置弹窗，以便与原脚本一致。
 
 ### 自动摘要（Auto Summary）
 
@@ -110,6 +132,9 @@ Feature: memo-suite-plugin
 34. 作为用户，我希望笔记 create/open 自动关联收藏本同名条目，以便减少手动维护。
 35. 作为用户，我希望 AI 剪藏匹配（URL 精确匹配不中时）弹出批准确认，非 AI 操作静默直改，以便保持原权限模型。
 36. 作为用户，我希望 AIAgent 与备忘录共享数据（memo.json），依赖备忘录实例（原 window.__memo 语义改为模块共享），以便同步可用。
+37. 作为用户，我希望同步操作排队执行（enqueue 任务队列语义），以便并发事件不丢不冲突。
+38. 作为用户，我希望 AI 剪藏匹配命中后支持归档（archiveItem 语义，归档到备忘录/收藏本），以便剪藏流程闭环。
+39. 作为用户，我希望监听目录范围检查（inWatchedFolders 语义）与原脚本一致，以便只同步关注目录。
 
 ### 复习计划（Review Plan）与做题家（Quiz Master）
 
@@ -121,8 +146,10 @@ Feature: memo-suite-plugin
 41. 作为用户，我希望复习计划可调用做题家（互调 `quiz-master-open`、`quiz-master-update`），以便复习做题一体化。
 42. 作为用户，我希望复习计划监听相关事件（resolved/modify/rename/quit 四类，语义与原脚本一致），以便数据状态自动同步。
 43. 作为用户，我希望移出复习计划时有确认弹窗（「确定移出“xxx”？」），以便防误操作。
+44. 作为用户，我希望复习条目状态文案一致：✅ 已完成、R=X% 复习进度、📅 逾期、⏳ 待定/倒计时，以便一眼看出状态。
 44. 作为用户，我希望做题家支持 AI 生成题目（createAI 依赖，缺失时提示「未检测到 Q3.js 的 AI 服务」同语义），以便自动出题。
 45. 作为用户，我希望做题家设置保留 enableMultipleChoice（多选题开关）/questionsPerNote（每题数量）/difficulty（难度），以便沿用原配置。
+46. 作为用户，我希望答题流程与原脚本一致：题目展示 → 提交答案 → 下一题 →（多选支持），以便沿用做题习惯。
 
 ### 闪念（Flash Thought）
 
@@ -136,6 +163,8 @@ Feature: memo-suite-plugin
 48. 作为用户，我希望笔记修改时向量增量重建（vault modify 监听 + 防抖 DEBOUNCE_DELAY），以便索引不过期。
 49. 作为用户，我希望闪念的性能参数（chunk 切分长度、并发、光标轮询间隔、上下文限制、聊天历史上限）按设置生效，以便控制开销。
 50. 作为用户，我希望移动端检测（IS_MOBILE 语义）与降级行为与原脚本一致，以便移动端可用时行为正确。
+51. 作为用户，我希望 TF-IDF 检索保留（「✅ TF-IDF 就绪（N 段）」状态提示，与向量检索协同），以便无 Ollama 时也能基础检索。
+52. 作为用户，我希望连接状态提示（✅ 远程 Ollama 已连接）与聊天界面（发送/··· 菜单、📚 🤖 按钮）与原脚本一致。
 
 ### 全局
 
@@ -240,6 +269,23 @@ Feature: memo-suite-plugin
 - **备忘录**：逾期状态显示、URL 提取/页面标题抓取
 - **归物本**：排序弹窗、分类统计
 - **样式**：各域注入样式全部收敛到 styles.css（聚合讯 196 行、备忘录 38 行、密码本 data-pw-styles、剪藏本/影视/闪念 injectStyles 等）
+
+### 逐行对比补充要点（源码提取，第二批）
+
+- **密码本主密码流程**：首次设置（再次输入确认）→ 解锁（输入主密码）→ 主密码驱动加密；条目字段（账号/密码/链接/日期/备注）+ 👁 切换 + 搜索 + 生成
+- **备忘录**：AI 推荐场景（aiBtn/✨/⏳）、归档（archiveBtn）、课程字段（courseInput）、当前笔记/光标创建（getCurrentNoteInfo/getCurrentCursorPosition）、dueClear/posBtn/clipboardFocusHandler、标签点击
+- **收藏本**：置顶（📌 置顶）、余额查询（API Keys 每行一个 + 余额查询 URL + 自动查找余额 + 查询中/刷新中/❌ 错误 + 刷新）、🧠 大模型配置弹窗、⏳ AI 整理中、编辑收藏、标签 emoji
+- **影视 AI 推荐**：buildTasteProfile（口味画像）→ buildRecommendPrompt → parseRecommendJson → openRecommendModal（导演：/加入想看 quickAddWant 预填）→ ⚠️ 解析失败/❌ 生成失败；状态枚举（在看/想看/已看）+ TYPE_GROUPS/TYPE_COLORS
+- **书库读书笔记弹窗**：showBookNotes（📚《书》❝ 高亮 + 日期 + 评论）+ parseBookNotes + jumpToHighlight + openEditCommentModal/updateComment/deleteHighlight；阅读进度 %/时间格式/🧮 统计
+- **阅读数据分析报告章节**（80+ 生成函数，逐字保留）：年度/作者/速度/时间分布/习惯/趋势（月季平均/完成率/方向）/热力图（月份网格/强度/颜色/tooltip）/聚焦（5 维度+总分+建议）/类别（多样性/平衡/趋势/推荐/分布图）/笔记互动（思考比/参与度/模式/深度/连接度/图表/建议）/实用建议；showReportInPopup（HTML 弹窗 + 暗色模式 + 进度条/图表）
+- **影视数据分析图表组件**：statCardHTML/barChartHTML/donutChartHTML/softBarHTML/topListHTML/ratingCompareListHTML/statInlineHTML；ratingBucketOf 评分分桶；emptyHTML/registerAnalysisEscape
+- **闪念 TF-IDF**：「✅ TF-IDF 就绪（N 段）」——TF-IDF 与向量（bge-m3）协同检索（Ollama 不可用时 TF-IDF 兜底）；✅ 远程 Ollama 已连接提示；聊天 UI（发送/···/📚/🤖）
+- **AIAgent**：enqueue 任务队列、archiveItem 归档、inWatchedFolders 监听范围
+- **复习计划状态文案**：✅ 已完成/R=X%/📅 逾期/⏳ 待定；难度字段（difficulty）
+- **做题家答题流程**：题目展示 → 提交答案 → 下一题 →（多选）
+- **剪藏本**：attachFileListener 文件监听、✍️ 作者/📌 反链（去《》书名号）/全部 (N) 计数、initScroll 滚动加载、renderEmpty 空态
+- **聚合讯**：👤 作者/📅 日期、renderDoneState 完成态、toDatetime
+- **归物本**：refreshBtn 刷新、卡片点击交互
 
 ### 已知待收集信息（实现时从源码提取，不阻塞本 spec）
 
