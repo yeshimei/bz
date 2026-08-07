@@ -1,4 +1,4 @@
-# 备忘录（memo-suite）
+# 包仔（memo-suite）
 
 由 16 个 QuickAdd 宏脚本（`CONFIG/SCRIPTS/Quickadd/`，约 21,000 行）独立化而来的 Obsidian 插件。**UI、文案、公式与逻辑与原脚本逐字保持一致**，**数据格式零迁移**（继续读写原脚本产出的全部数据文件）。
 
@@ -6,6 +6,7 @@
 
 | 域 | 命令 | 数据文件（零迁移） |
 |---|---|---|
+| 日记本 | 打开日记本面板 / 写日记 / 写摘抄 | `我的/日记/*.md`（标签筛选、滚轮日期、摘抄引用） |
 | 备忘录 | 打开备忘录面板 / 创建备忘录条目 | `CONFIG/STORAGE/memo.json` |
 | 归物本 | 归物本：添加物品 | `CONFIG/STORAGE/belongings.json` |
 | 剪藏本 | 打开文章列表 | `归档/网页剪藏/*.md`（link+created frontmatter） |
@@ -32,7 +33,7 @@
 ## 安装
 
 1. 构建：`npm install && npm run build` —— 产物自动输出到 vault 的 `.obsidian/plugins/memo-suite/`（main.js / manifest.json / styles.css）
-2. Obsidian 设置 → 第三方插件 → 启用「备忘录」
+2. Obsidian 设置 → 第三方插件 → 启用「包仔」
 
 ## 开发
 

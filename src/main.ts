@@ -29,6 +29,12 @@ import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
 import { ensureAutoSummary } from './auto-summary';
 import { ensureAIAgent, unloadAIAgent } from './ai-agent';
+// 日记本（diary-notebook 合并）
+import { setApp as setDiaryApp } from './diary/app';
+import { applyDirectories } from './diary/config';
+import { loadAll, setFileChangeDelay } from './diary/store';
+import { state as diaryState } from './diary/state';
+import { applyUiSettings, init as diaryInit, showDiaryPanel, unregisterEscLayer } from './diary/ui/panel';
 
 /** 命令表：id/name 均提取自原脚本 addCommand 调用点（spec「命令 id 全清单」） */
 const COMMANDS: { id: string; name: string; callback: () => void }[] = [
@@ -76,6 +82,12 @@ const COMMANDS: { id: string; name: string; callback: () => void }[] = [
   { id: 'shan-nian-open-chat', name: '闪念：打开 AI 对话', callback: () => openFlashChat(getApp()) },
 ];
 
+/** 应用日记本设置到运行时常量（diary-notebook 原 applySettingsToRuntime） */
+function applyDiarySettingsToRuntime(s: MemoSettings) {
+  applyDirectories(s);
+  applyUiSettings(s);
+}
+
 export default class MemoSuitePlugin extends Plugin {
   settings: MemoSettings = { ...DEFAULT_SETTINGS };
   private registeredCommandIds: string[] = [];
@@ -90,6 +102,9 @@ export default class MemoSuitePlugin extends Plugin {
     setSettingsProvider(() => this.settings);
     // 备忘录设置注入
     setMemoSettingsProvider(() => this.settings);
+    // 日记本注入（diary-notebook 合并）
+    setDiaryApp(this.app);
+    applyDiarySettingsToRuntime(this.settings);
 
     // 命令裸注册（不设置默认 hotkeys，保留用户既有绑定）
     for (const c of COMMANDS) {
@@ -97,8 +112,13 @@ export default class MemoSuitePlugin extends Plugin {
       this.registeredCommandIds.push(c.id);
     }
 
-    // ribbon 主入口：备忘录面板
+    // ribbon 主入口：备忘录面板 + 日记本
     this.addRibbonIcon('check-square', '备忘录', () => openMemoPanel(this.app));
+    this.addRibbonIcon('notebook-pen', '日记本', () => showDiaryPanel(this));
+
+    // 日记本面板命令（id 不带前缀，保留既有热键；diary-open-add-dialog/diary-create-quote 由 init 内注册）
+    this.addCommand({ id: 'open-panel', name: '打开日记本面板', callback: () => showDiaryPanel(this) });
+    this.registeredCommandIds.push('open-panel');
 
     // 设置页
     this.addSettingTab(new MemoSuiteSettingTab(this.app, this));
@@ -107,6 +127,8 @@ export default class MemoSuitePlugin extends Plugin {
     this.app.workspace.onLayoutReady(() => {
       // 备忘录：启动即初始化（对齐源码 App.init：file-open 提醒 + 剪贴板监听 + autoPopupOnStart）
       void ensureMemo(this.app);
+      // 日记本：启动即初始化（diary-notebook 原行为：onLayoutReady → init）
+      void diaryInit(this);
       if (this.settings.autoSummaryEnabled) ensureAutoSummary(this.app);
       if (this.settings.aiAgentEnabled) ensureAIAgent(this.app);
       if (this.settings.flashEnabled) ensureFlashOnReady(this.app);
@@ -125,6 +147,34 @@ export default class MemoSuitePlugin extends Plugin {
     escManager.destroy();
     unloadMemo();
     unloadAIAgent();
+    // 日记本清理（diary-notebook 原 onunload；escManager.destroy 已在上面统一调用）
+    const diaryIds = [
+      'diary-tag-filter',
+      'diary-filter-mask',
+      'diary-search-container',
+      'diary-subtags-container',
+      'add-diary-mask',
+      'add-diary-popup',
+      'diary-tag-selector-mask',
+      'diary-tag-selector-popup',
+      'unified-datetime-picker-mask',
+      'diary-date-filter-mask',
+      'diary-date-filter-popup',
+      '__shared_confirm_mask__',
+      'diary-styles',
+    ];
+    for (const id of diaryIds) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
+    unregisterEscLayer();
+    try {
+      (this.app as any).commands.removeCommand('diary-open-add-dialog');
+      (this.app as any).commands.removeCommand('diary-create-quote');
+    } catch (e) {
+      /* 命令可能已被移除 */
+    }
+    diaryState.events.fileListenerAttached = false;
   }
 
   async saveSettings() {
@@ -169,6 +219,15 @@ export class MemoSuiteSettingTab extends PluginSettingTab {
     this.textSetting(containerEl, '🔧 Override endpoint（可选）', '脚本内指定第三方端点时的覆盖', ov.endpoint || '', save, (v) => (s.aiOverride = { ...(s.aiOverride || {}), endpoint: v || undefined }));
     this.textSetting(containerEl, '🔧 Override apiKey（可选）', '', ov.apiKey || '', save, (v) => (s.aiOverride = { ...(s.aiOverride || {}), apiKey: v || undefined }));
     this.textSetting(containerEl, '🔧 Override model（可选）', '', ov.model || '', save, (v) => (s.aiOverride = { ...(s.aiOverride || {}), model: v || undefined }));
+
+    containerEl.createEl('h2', { text: '📖 日记本' });
+    this.textSetting(containerEl, '📂 日记目录', '存放日记 markdown 文件的文件夹路径', s.diaryDirectory, save, (v) => (s.diaryDirectory = v));
+    this.textSetting(containerEl, '🎬 影视目录', '存放影视笔记的文件夹路径（日记本用）', s.movieDirectory, save, (v) => (s.movieDirectory = v));
+    this.textSetting(containerEl, '✉️ 信目录', '存放信件的文件夹路径', s.letterDirectory, save, (v) => (s.letterDirectory = v));
+    this.textSetting(containerEl, '⏳ 文件变更延迟(ms)', '文件修改后延迟刷新界面的毫秒数，可平衡性能', s.fileChangeDelay, save, (v) => (s.fileChangeDelay = v));
+    this.toggleSetting(containerEl, '👆 启用长按手势', '开启后长按卡片可复制链接或修改标签', s.enableLongPress, save, (v) => (s.enableLongPress = v));
+    this.toggleSetting(containerEl, '📊 显示标签计数', '在标签按钮上显示该标签包含的条目数量', s.showTagCount, save, (v) => (s.showTagCount = v));
+    this.toggleSetting(containerEl, '🕒 使用文件日期作为默认日期', '开启后，添加日记时默认日期取自当前打开的日记文件的日期（若为日记文件）；关闭则使用当前时间', s.useFileDateTime, save, (v) => (s.useFileDateTime = v));
 
     containerEl.createEl('h2', { text: '📝 备忘录' });
     this.textSetting(containerEl, '📂 备忘录数据文件路径', '存放 memo.json 的目录', s.todoFilePath, save, (v) => (s.todoFilePath = v));
