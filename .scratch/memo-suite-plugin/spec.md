@@ -217,6 +217,8 @@ Feature: memo-suite-plugin
 
 - 插件设置：AI（provider/key/endpoint/model）、各域路径（dataFolder/storagePath/todoFilePath 等）、常驻监听开关（自动摘要/AIAgent/闪念）、原有各脚本设置项逐一迁移
 - 日记本已删除「标签配置/默认标签」设置的先例：设置项迁移以「保留原脚本可配置项」为原则，用户已确认删除的项不恢复
+- **2026-08-07 补充（用户决策）**：新增 5 项设置——影视每页加载数量（moviePageSize，默认 20）、日记本每批加载数量（diaryBatchSize，默认 20）、剪藏本每批加载数量（articleBatchSize，默认 20）、做题家数据存储路径（quizStoragePath，默认 CONFIG/STORAGE）、复习计划数据存储路径（reviewStoragePath，默认 CONFIG/STORAGE）
+- **2026-08-07 决策**：影视海报整理（enableQ3/posterFolder）不提供，相关代码无残留（仅 frontmatter 海报字段读取展示）；日记本删除默认标签功能（写日记弹窗不预选任何标签，全部加载；getDefaultTagSetting 移除）；长按手势固定启用（不暴露选项）
 
 ### 命令 id 全清单（第 8 轮，源码提取——统一 bz- 前缀基准，ADR-0004 修订）
 

@@ -152,18 +152,21 @@ describe('标签筛选（ticket 06）', () => {
 });
 
 describe('添加日记弹窗（ticket 07）', () => {
-  it('打开弹窗：默认标签「日记」选中、日期时间为当前', () => {
+  it('打开弹窗：默认不预选标签（全部加载）、日期时间为当前', () => {
     openAddDialog();
     const mask = document.getElementById('add-diary-mask')!;
     expect(mask.style.display).toBe('block');
     const activeBtns = document.querySelectorAll('#add-diary-type-container .diary-active');
-    expect(activeBtns.length).toBeGreaterThan(0);
+    expect(activeBtns.length).toBe(0);
     const dt = document.getElementById('add-diary-datetime') as HTMLInputElement;
     expect(dt.value).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
   });
 
   it('保存新条目 → 写入文件 + Notice', async () => {
     openAddDialog();
+    // 默认不预选标签，先手动选择「日记」
+    const diaryBtn = document.querySelector('#add-diary-type-container [data-tag="日记"]') as HTMLElement;
+    diaryBtn.click();
     const dt = document.getElementById('add-diary-datetime') as HTMLInputElement;
     dt.value = '2024-01-03 10:30';
     // 触发同步显示
@@ -283,9 +286,9 @@ describe('摘抄命令（ticket 08）', () => {
 });
 
 describe('设置读取（ticket 09 前置）', () => {
-  it('默认标签固定为「日记」（设置项已移除）', async () => {
-    const { getDefaultTagSetting } = await import('../../../src/diary/ui/panel');
-    expect(getDefaultTagSetting()).toBe('日记');
+  it('长按手势固定启用（用户确认保持默认启用）', async () => {
+    const { getEnableLongPressSetting } = await import('../../../src/diary/ui/panel');
+    expect(getEnableLongPressSetting()).toBe(true);
   });
 
   it('applyUiSettings 生效', async () => {

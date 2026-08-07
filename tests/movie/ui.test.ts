@@ -11,8 +11,9 @@ import {
   openAddModal, openEditModal, openSettingsModal, createOverlay, registerEscapeHandler,
 } from '../../src/movie/ui';
 import { escManager } from '../../src/core/esc-manager';
-import { openMovieManager } from '../../src/movie/index';
+import { openMovieManager, ensureMovie, unloadMovie } from '../../src/movie/index';
 import { closeEditModal } from '../../src/movie/ui';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 
 function makeApp(vault: MockVault, extra: any = {}) {
   const app = mockAppWithVault(vault);
@@ -240,5 +241,25 @@ describe('ESC 层级', () => {
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(M.settingsOverlay).toBeNull();
     expect(M.currentOverlay).not.toBeNull();
+    expect(M.settingsOverlay).toBeNull();
+    expect(M.currentOverlay).not.toBeNull();
+  });
+});
+
+describe('ensureMovie 设置读取', () => {
+  it('moviePageSize 设置生效（默认 20）', () => {
+    unloadMovie();
+    resetMovieState();
+    setSettingsProvider(() => ({ movieFolderPath: '我的/影视', moviePageSize: '30' }) as any);
+    ensureMovie(makeApp(new MockVault()));
+    expect(M.pageSize).toBe(30);
+  });
+
+  it('moviePageSize 缺省回退默认 20', () => {
+    unloadMovie();
+    resetMovieState();
+    setSettingsProvider(() => ({} as any));
+    ensureMovie(makeApp(new MockVault()));
+    expect(M.pageSize).toBe(20);
   });
 });

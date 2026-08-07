@@ -1,7 +1,10 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import {
+  applyDirectories,
   applyTagsConfig,
+  BATCH_SIZE,
   buildTagMaps,
+  DIARY_DIRECTORY,
   emojiToTagMap,
   getAllAvailableTags,
   getParentPrimaryTag,
@@ -123,5 +126,24 @@ describe('标签辅助函数', () => {
     expect(sorted).toContain('日记');
     // 二级标签按配置顺序
     expect(sorted.indexOf('四川')).toBeLessThan(sorted.indexOf('大理'));
+  });
+});
+
+describe('applyDirectories 设置应用', () => {
+  it('diaryBatchSize 生效', () => {
+    applyDirectories({ diaryBatchSize: '10' });
+    expect(BATCH_SIZE).toBe(10);
+  });
+
+  it('diaryBatchSize 缺省/非法回退默认 20', () => {
+    applyDirectories({});
+    expect(BATCH_SIZE).toBe(20);
+    applyDirectories({ diaryBatchSize: 'abc' });
+    expect(BATCH_SIZE).toBe(20);
+  });
+
+  it('diaryDirectory 生效', () => {
+    applyDirectories({ diaryDirectory: '日记2' });
+    expect(DIARY_DIRECTORY).toBe('日记2');
   });
 });

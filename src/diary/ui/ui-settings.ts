@@ -15,13 +15,9 @@ export function applyUiSettings(s: {
 export function getShowTagCountSetting(): boolean {
   return showTagCountSetting;
 }
-/** 长按手势：固定启用（设置项已移除） */
+/** 长按手势：固定启用（设置项已移除，用户确认保持默认启用） */
 export function getEnableLongPressSetting(): boolean {
   return true;
-}
-/** 默认标签固定为「日记」（设置项已移除） */
-export function getDefaultTagSetting(): string {
-  return '日记';
 }
 export function getUseFileDateTimeSetting(): boolean {
   return useFileDateTimeSetting;

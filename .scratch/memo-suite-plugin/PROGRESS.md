@@ -77,3 +77,19 @@
 - ✅ ADR-0004 修订（裸 id → bz- 前缀）、AGENTS.md 铁律 2 更新、CONTEXT.md 术语更新、spec.md 命令清单（30 个）
 - ⚠️ 部署注意：Obsidian 视为新插件——**热键全丢需重绑**；需禁用旧插件 `memo-suite`、启用 `bz`；旧目录 `.obsidian/plugins/memo-suite/` 待用户确认后手动删
 - ⚠️ 保留：`.scratch/memo-suite-plugin/` 目录名与 `issues/*.md` 历史内容（工作区历史档案，未改名）
+
+---
+
+## 2026-08-07 设置项补全（用户决策）
+
+**状态：483 测试全绿（44 文件），tsc 零错误，构建已产出**
+
+- ✅ **新增 5 项设置**（BzSettings + 设置页 + 域内消费 + 测试）：
+  - 影视 `moviePageSize`（默认 '20'）：`ensureMovie` 读设置替换硬编码 50（movie/index.ts / state.ts 默认值同步 20）；**海报整理 enableQ3/posterFolder 不提供**（确认无残留代码，仅 frontmatter 海报字段读取展示；main.ts 注释已更新）
+  - 日记本 `diaryBatchSize`（默认 '20'）：`applyDirectories` 读设置（diary/config.ts BATCH_SIZE）
+  - 剪藏本 `articleBatchSize`（默认 '20'）：`applyArticleSettings` 读设置（clipping/view.ts BATCH_SIZE）
+  - 做题家 `quizStoragePath` + 复习计划 `reviewStoragePath`（默认 'CONFIG/STORAGE'）：新增 `getQuizFilePath()`/`getReviewDataPath()`/`getReviewFilePath()` getter（tryGetSettings 安全读取，未注入回退默认路径 → 旧测试不破）；常量 QUIZ_FILE_PATH/REVIEW_FILE_PATH/REVIEW_DATA_PATH 保留为默认值导出
+- ✅ **删除日记本默认标签功能**：`getDefaultTagSetting` 移除（ui-settings.ts/panel.ts 导出）；写日记弹窗打开**不预选任何标签**（dialogs.ts 删「默认选中日记」+ defaultTag 回退两处逻辑）；保存仍要求至少选一个类型（校验保留）；长按手势固定启用（getEnableLongPressSetting 保留，不暴露选项）
+- ✅ 测试：+7 新测试（clipping 每批 5 条、diary BATCH_SIZE 设置/回退、movie pageSize 设置/回退、quiz/review 路径 getter×3）；改造 3 个旧测试（弹窗默认不预选、保存先手动选日记、getDefaultTagSetting 断言→getEnableLongPressSetting）
+- ✅ spec.md「设置页」小节记录决策；构建产物 main.js 907KB 已直出 vault
+- ⚠️ 未做（用户未要求）：applyTagsConfig（primaryTagsConfig 解析）仍无调用点；备忘录场景列表/平台映射、归物本自定义分类、剪藏本长按时长仍固定默认
