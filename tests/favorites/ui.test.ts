@@ -32,7 +32,7 @@ async function setup() {
   document.body.innerHTML = '';
   const vault = new MockVault();
   setApp(makeApp(vault));
-  setSettingsProvider(() => ({ favoritesStoragePath: 'CONFIG/STORAGE/favorites.json' }) as any);
+  setSettingsProvider(() => ({ favoritesStoragePath: 'CONFIG/STORAGE' }) as any);
   const dm = new DataManager('CONFIG/STORAGE/favorites.json');
   const aiSvc = new FavoritesAIService();
   const ui = new UIManager(dm, aiSvc, null);

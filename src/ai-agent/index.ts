@@ -13,6 +13,7 @@ import { createAI, type AIService } from '../core/ai';
 import { tryGetSettings } from '../core/settings-provider';
 import { DataManager } from '../bz/data';
 import { ensureBz } from '../bz';
+import { getStoragePath } from '../favorites/config';
 import {
   syncRename,
   syncDelete,
@@ -23,8 +24,18 @@ import {
 } from './sync';
 import { showClipConfirmDialog } from './dialog';
 
-const MEMO_PATH = 'CONFIG/STORAGE/memo.json'; // 备忘录
-const FAVORITES_PATH = 'CONFIG/STORAGE/favorites.json'; // 收藏本
+/** 备忘录数据文件路径（与 bz DataManager 同源：todoFilePath 目录 + memo.json） */
+function getMemoPath(): string {
+  const s = tryGetSettings() as any;
+  const folder = ((s && s.todoFilePath) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
+  return folder + '/memo.json';
+}
+
+/** 收藏本数据文件路径（设置只允许改目录，文件名固定 favorites.json） */
+function getFavoritesPath(): string {
+  const s = tryGetSettings() as any;
+  return getStoragePath(s && s.favoritesStoragePath);
+}
 const AI_MODEL = 'deepseek-v4-flash'; // 默认模型（设置 aiAgentModel 可配）
 
 /** AI 剪藏匹配模型（设置可配，默认 deepseek-v4-flash） */
@@ -120,7 +131,7 @@ async function handleClip(app: App, ai: AIService, file: any) {
   const link = (cache as any)?.frontmatter?.link;
   if (!link) return;
 
-  const items = await loadJSON(app, MEMO_PATH);
+  const items = await loadJSON(app, getMemoPath());
   const candidates = items.filter((i) => i.scene === '剪藏' && i.url && !i.linkedNote);
   if (candidates.length === 0) return;
 
@@ -161,7 +172,7 @@ async function handleClip(app: App, ai: AIService, file: any) {
 function createNoteSyncAgent(app: App, ai: AIService | null): () => void {
   // 对两个数据源执行同步函数，有变化才写回
   async function syncSources(fn: (items: any[], ...args: any[]) => boolean, ...args: any[]) {
-    for (const path of [MEMO_PATH, FAVORITES_PATH]) {
+    for (const path of [getMemoPath(), getFavoritesPath()]) {
       const items = await loadJSON(app, path);
       if (fn(items, ...args)) await saveJSON(app, path, items);
     }
@@ -195,9 +206,9 @@ function createNoteSyncAgent(app: App, ai: AIService | null): () => void {
         await handleClip(app, ai, file);
       }
       // 同名条目自动关联（仅收藏本）
-      const items = await loadJSON(app, FAVORITES_PATH);
+      const items = await loadJSON(app, getFavoritesPath());
       if (syncAutoLink(items, file.basename, file.path)) {
-        await saveJSON(app, FAVORITES_PATH, items);
+        await saveJSON(app, getFavoritesPath(), items);
       }
     });
   }));
@@ -205,9 +216,9 @@ function createNoteSyncAgent(app: App, ai: AIService | null): () => void {
   _refs.push(app.workspace.on('file-open', (file: any) => {
     if (!isMd(file)) return;
     enqueue(async () => {
-      const items = await loadJSON(app, FAVORITES_PATH);
+      const items = await loadJSON(app, getFavoritesPath());
       if (syncAutoLink(items, file.basename, file.path)) {
-        await saveJSON(app, FAVORITES_PATH, items);
+        await saveJSON(app, getFavoritesPath(), items);
       }
     });
   }));

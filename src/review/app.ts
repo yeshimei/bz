@@ -150,14 +150,13 @@ export const reviewApp = {
     return 'again';
   },
 
-  /** 做题复习循环（源码 L587-657 逐字） */
+  /** 做题复习循环（源码 L587-657 逐字；经做题会话契约驱动做题家，不直写内部状态） */
   async quizReviewLoop(items: ReviewItem[], index: number, batchQuestions: Record<string, any[]>): Promise<void> {
     const app = getApp();
     const quiz: any = await this.getQuiz();
 
     if (index >= items.length) {
-      quiz._reviewMode = false;
-      if (quiz.mask) quiz.finishQuiz();
+      quiz.endReviewSession();
       new Notice('🎉 所有做题复习已完成');
       return;
     }
@@ -170,14 +169,9 @@ export const reviewApp = {
     }
 
     return new Promise((resolve) => {
-      quiz._reviewMode = true;
-      quiz.currentQuestions = questions;
-      quiz.currentIndex = 0;
-      quiz.correctCount = 0;
-      quiz.wrongCount = 0;
-      quiz.totalQuestions = questions.length;
-
-      quiz.onComplete = async (results: any) => {
+      quiz.startReviewSession({
+        questions,
+        onComplete: async (results: any) => {
         const rating = this.accuracyToRating(results.accuracy);
         const ratingNames: Record<string, string> = { again: '忘了', hard: '困难', good: '一般', easy: '简单' };
         const tagColors: Record<string, string> = { again: '#ff4757', hard: '#ff9f43', good: '#2ed573', easy: '#7bed9f' };
@@ -210,8 +204,7 @@ export const reviewApp = {
           });
 
           if (action === 'end') {
-            quiz._reviewMode = false;
-            quiz.finishQuiz();
+            quiz.endReviewSession();
             resolve();
             return;
           }
@@ -219,10 +212,10 @@ export const reviewApp = {
 
         resolve();
         await this.quizReviewLoop(items, index + 1, batchQuestions);
-      };
-      quiz.showQuestion();
+      },
     });
-  },
+    });
+},
 
   /** 批量生成题目（返回 {filePath: questions[]} 映射） */
   async batchGenerateQuestions(items: ReviewItem[]): Promise<Record<string, any[]>> {

@@ -96,7 +96,7 @@ CONTEXT.md                  领域术语表（Domain glossary）+ 规则
 - `tryGetSettings()` 未注入时返回空对象（安全读取）；`getSettings()` 未注入时抛错。
 - AI provider 有缓存（`resetAIProviderCache`）；测试间需重置。
 - esbuild 产物是 CJS、target es2018、external 含 `obsidian/electron/@codemirror/*`。
-- 闪念是最大域（约 2311 行），两处停用词表（35 字/44 字）分别保留。
+- 闪念（src/flash/）目前是 24 行占位骨架（ticket 18 未实现，`ensureFlash`/`openFlashReference`/`openFlashChat` 占位）；蓝图称原脚本约 2311 行，两处停用词表（35 字/44 字）分别保留。
 - `E:/Obsidian/1` 是源码仓库，`E:/Obsidian/叫我包仔/` 是用户 vault（构建产物落点），不要混淆。
 
 ## Agent skills
