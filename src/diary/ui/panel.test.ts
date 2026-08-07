@@ -61,8 +61,9 @@ describe('面板创建（ticket 06）', () => {
     expect(document.querySelectorAll('#diary-tag-filter').length).toBe(1);
   });
 
-  it('加载后渲染条目卡片（分批 + 空态）', async () => {
-    await waitFor(() => state.data.originalDiaryEntries.length === 2);
+  it('加载后渲染条目卡片（回调先于 loadAll 注册，无需等待）', async () => {
+    // init 完成时列表已渲染（回归：回调注册曾在 loadAll 之后导致列表为空）
+    expect(state.data.originalDiaryEntries.length).toBe(2);
     expect(state.data.currentFilteredEntries.length).toBe(2);
     const cards = document.querySelectorAll('.diary-entry-card');
     expect(cards.length).toBe(2);
@@ -71,6 +72,14 @@ describe('面板创建（ticket 06）', () => {
     // emoji 与时间（日期降序：第一个卡片是 2024-01-02 的 ✍️）
     expect(document.querySelector('.diary-emoji')!.textContent).toBe('✍️');
     expect(document.querySelector('.diary-entry-content')).toBeTruthy();
+  });
+
+  it('搜索框默认隐藏、搜索按钮可见（回归：setLoadingState 经回调生效）', () => {
+    const searchContainer = document.getElementById('diary-search-container')!;
+    expect(searchContainer.style.display).toBe('none');
+    const searchBtn = document.querySelector('.diary-popup-header button[title="搜索日记"]') as HTMLElement;
+    expect(searchBtn.style.opacity).toBe('1');
+    expect(searchBtn.style.pointerEvents).toBe('auto');
   });
 
   it('空数据时显示空态文案', async () => {
