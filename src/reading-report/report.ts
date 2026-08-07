@@ -14,6 +14,9 @@ import {
   analyzeReadingSpeed,
   analyzeReadingCategories,
   analyzeNotesInteractions,
+  generateCellTooltip,
+  calculateIntensityLevel,
+  getHeatmapColor,
 } from './stats';
 import type { ReadingStats, BookNoteEntry } from './stats';
 

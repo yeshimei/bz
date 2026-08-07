@@ -332,7 +332,7 @@ export function analyzeReadingHabits(sessions: any[]) {
 
 /** 分析会话时长分布 */
 export function analyzeSessionDurationDistribution(sessions: any[]) {
-  const durationDistribution: Record<string, { count: number; percentage: number }> = {
+  const durationDistribution: Record<string, { count: number; percentage: string | number }> = {
     short: { count: 0, percentage: 0 },    // 0-10分钟
     medium: { count: 0, percentage: 0 },   // 10-30分钟
     long: { count: 0, percentage: 0 },     // 30-60分钟
@@ -359,7 +359,7 @@ export function analyzeSessionDurationDistribution(sessions: any[]) {
   });
 
   Object.keys(durationDistribution).forEach((key) => {
-    durationDistribution[key].percentage = sessions.length > 0 ? parseFloat(((durationDistribution[key].count / sessions.length) * 100).toFixed(1)) : 0;
+    durationDistribution[key].percentage = sessions.length > 0 ? ((durationDistribution[key].count / sessions.length) * 100).toFixed(1) : 0;
   });
 
   return {

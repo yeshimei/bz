@@ -170,7 +170,8 @@ function render() {
 /** 创建搜索下拉分类（与添加/编辑一致，可复用 helper） */
 function createSearchSelect(
   field: { placeholder?: string; value?: string; options: string[] },
-  palette: { bg: string; text: string; border: string; inputBg: string; isDark: boolean }
+  palette: { bg: string; text: string; border: string; inputBg: string; isDark: boolean },
+  zIndex = 10002
 ): HTMLDivElement {
   const { bg, text, border, inputBg, isDark } = palette;
   const searchWrapper = document.createElement('div');
@@ -192,7 +193,7 @@ function createSearchSelect(
         position: absolute; top: 100%; left: 0; right: 0;
         background: ${bg}; border: 1px solid ${border};
         border-radius: 6px; max-height: 200px; overflow-y: auto;
-        display: none; z-index: 10002;
+        display: none; z-index: ${zIndex};
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       `;
 

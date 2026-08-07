@@ -9,7 +9,7 @@ import { escManager } from './core/esc-manager';
 import { setApp, getApp } from './core/app';
 import { setAISettingsProvider, resetAIProviderCache } from './core/ai';
 import { setSettingsProvider } from './core/settings-provider';
-import { setMemoSettingsProvider, unloadMemo } from './memo';
+import { setMemoSettingsProvider, unloadMemo, ensureMemo } from './memo';
 
 import MemoSettings, { DEFAULT_SETTINGS } from './settings';
 
@@ -105,6 +105,8 @@ export default class MemoSuitePlugin extends Plugin {
 
     // 事件常驻域按设置开关注册（懒加载架构）
     this.app.workspace.onLayoutReady(() => {
+      // 备忘录：启动即初始化（对齐源码 App.init：file-open 提醒 + 剪贴板监听 + autoPopupOnStart）
+      void ensureMemo(this.app);
       if (this.settings.autoSummaryEnabled) ensureAutoSummary(this.app);
       if (this.settings.aiAgentEnabled) ensureAIAgent(this.app);
       if (this.settings.flashEnabled) ensureFlashOnReady(this.app);

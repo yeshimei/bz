@@ -74,8 +74,8 @@ ${candidatesDesc}
 只返回 JSON，不要有其他文字。`;
 
   try {
-    // 逐字保留原脚本调用形式（Q3 AIService.json 签名为 2 参，第三参按原行为忽略）
-    const result = await (ai.json as any)(prompt, AI_MODEL, {
+    // core/ai json 签名为 (promptText, extraOptions)
+    const result = await ai.json(prompt, {
       modelOptions: {
         max_tokens: 200,
         response_format: { type: 'json_object' },
