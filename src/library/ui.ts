@@ -2,7 +2,7 @@
  * 书库 ui（ticket 12）：主面板/筛选设置/读书笔记弹窗/批注编辑，源码逐字移植。
  * 源码：书库.js L210-1007、L1118-1217
  */
-import { notice } from '../core/dom';
+import { notice, createIconBtn } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { checkAndShowChangelog } from '../core/changelog';
 import { getBookItems, sortItemList, formatFileSize, getStatusColors, deriveBookSettings, getSubfolder } from './items';
@@ -53,7 +53,7 @@ export function showLibrary(app: any) {
     modal.style.height = '100vh';
     modal.style.borderRadius = '0';
     modal.style.maxWidth = '100%';
-    modal.style.paddingTop = '24px';
+    modal.style.paddingTop = '34px';
   }
 
   const header = document.createElement('div');
@@ -66,53 +66,15 @@ export function showLibrary(app: any) {
   const headerButtons = document.createElement('div');
   headerButtons.style.cssText = 'display: flex; align-items: center; gap: 8px;';
 
-  const refreshBtn = document.createElement('button');
-  refreshBtn.textContent = '⏳';
-  refreshBtn.style.cssText = `
-    background: none; border: none; font-size: .7rem;
-    cursor: pointer; color: var(--text-muted);
-    box-shadow: none; padding: 0; margin-left: 3px;
-  `;
-  refreshBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    refreshLibrary(app);
-  });
-
-  const reportBtn = document.createElement('button');
-  reportBtn.textContent = '🧮';
-  reportBtn.style.cssText = `
-    background: none; border: none; font-size: .7rem;
-    cursor: pointer; color: var(--text-muted);
-    box-shadow: none; padding: 0; margin-left: 3px;
-  `;
-  reportBtn.title = '打开阅读数据分析报告';
-  reportBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
+  const reportBtn = createIconBtn('🧮', '打开阅读数据分析报告', () => {
     (app as any).commands.executeCommandById('show-reading-report');
   });
-
-  const settingsBtn = document.createElement('button');
-  settingsBtn.textContent = '⚙️';
-  settingsBtn.style.cssText = `
-    background: none; border: none; font-size: .7rem;
-    cursor: pointer; color: var(--text-muted);
-    box-shadow: none; padding: 0; margin-left: 3px;
-  `;
-  settingsBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
+  const settingsBtn = createIconBtn('⚙️', '书库设置', () => {
     openSettingsModal(app);
   });
 
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '❌';
-  closeBtn.style.cssText = `
-    background: none; border: none; font-size: 0.6rem;
-    cursor: pointer; color: var(--text-muted);
-    box-shadow: none; padding: 0; margin-left: 5px;
-  `;
-  closeBtn.addEventListener('click', () => (overlay.style.visibility = 'hidden'));
+  const closeBtn = createIconBtn('❌', '关闭', () => (overlay.style.visibility = 'hidden'));
 
-  headerButtons.appendChild(refreshBtn);
   headerButtons.appendChild(reportBtn);
   headerButtons.appendChild(settingsBtn);
   headerButtons.appendChild(closeBtn);
@@ -144,13 +106,6 @@ export function showLibrary(app: any) {
 
   renderLibraryList(app);
 }
-
-export function refreshLibrary(app: any) {
-  currentItems = getBookItems(app);
-  renderLibraryList(app);
-  closeSettingsModal();
-}
-
 export function renderLibraryList(app: any) {
   const settings = deriveBookSettings();
   const colors = getStatusColors();
@@ -545,7 +500,7 @@ export function showBookNotes(app: any, filePath: string) {
       modal.style.height = '100vh';
       modal.style.borderRadius = '0';
       modal.style.maxWidth = '100%';
-      modal.style.paddingTop = '24px';
+      modal.style.paddingTop = '34px';
     }
 
     const header = document.createElement('div');

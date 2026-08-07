@@ -1006,7 +1006,7 @@ export function createOverlay(app: App, statusType?: string): void {
     modal.style.height = '100vh';
     modal.style.borderRadius = '0';
     modal.style.maxWidth = '100%';
-    modal.style.paddingTop = '24px';
+    modal.style.paddingTop = '34px';
   }
 
   const header = document.createElement('div');
@@ -1017,85 +1017,53 @@ export function createOverlay(app: App, statusType?: string): void {
   header.innerHTML = '<p style="font-size:.8rem;">影视</p>';
 
   const headerButtons = document.createElement('div');
-  headerButtons.style.cssText = 'display: flex; align-items: center;';
+  headerButtons.style.cssText = 'display: flex; align-items: center; gap: 8px;';
 
-  const mkBtn = (text: string, title: string, css: string, onClick: (e: MouseEvent) => void) => {
+  /** 统一头部图标按钮：普通 14px/22×26，关闭 ❌ 13px/21×25，圆角 4 / hover 背景 */
+  const mkBtn = (text: string, title: string, color: string, onClick: (e: MouseEvent) => void) => {
     const btn = document.createElement('button');
     btn.textContent = text;
     if (title) btn.title = title;
-    btn.style.cssText = css;
+    const isClose = text === '❌';
+    btn.style.cssText = `
+      background: none; border: none; font-size: ${isClose ? 13 : 14}px;
+      cursor: pointer; color: ${color}; box-shadow: none;
+      padding: 0; width: ${isClose ? 21 : 22}px; height: ${isClose ? 25 : 26}px; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+    `;
+    btn.addEventListener('mouseover', () => (btn.style.background = 'var(--background-secondary)'));
+    btn.addEventListener('mouseout', () => (btn.style.background = 'none'));
     btn.addEventListener('click', onClick);
     headerButtons.appendChild(btn);
     return btn;
   };
 
-  const analysisBtn = mkBtn('📊', '观影数据分析', `
-    background: none; border: none; font-size: .7rem;
-    cursor: pointer; color: var(--text-normal); box-shadow: none;
-    padding: 0; margin-left: 15px;
-  `, (e) => {
-    e.stopPropagation();
-    const commands = (app as any).commands;
-    if (commands && commands.commands && commands.commands['movie-analysis-open']) {
-      commands.executeCommandById('movie-analysis-open');
-    } else {
-      new Notice('请先在命令面板运行一次「影视：观影数据分析」');
-    }
-  });
-
-  const recommendBtn = mkBtn('🤖', 'AI 推荐', `
-    background: none; border: none; font-size: .7rem;
-    cursor: pointer; color: var(--text-normal); box-shadow: none;
-    padding: 0; margin-left: 15px;
-  `, (e) => {
+  const recommendBtn = mkBtn('🤖', 'AI 推荐', 'var(--text-normal)', (e) => {
     e.stopPropagation();
     openRecommendModal(app);
   });
 
-  const settingsBtn = mkBtn('⚙️', '', `
-    background: none; border: none; border-radius: 6px; font-size: 0.7rem;
-    cursor: pointer; color: var(--text-normal); box-shadow: none;
-    padding: 0; margin-left: 15px;
-  `, (e) => {
+  const settingsBtn = mkBtn('⚙️', '影视设置', 'var(--text-normal)', (e) => {
     e.stopPropagation();
     openSettingsModal();
   });
 
-  const closeBtn = mkBtn('❌', '', `
-    background: none; border: none; font-size: 0.55rem;
-    cursor: pointer; color: var(--text-muted); box-shadow: none;
-    padding: 0; margin-left: 15px;
-  `, () => closeOverlay());
+  const closeBtn = mkBtn('❌', '关闭', 'var(--text-muted)', () => closeOverlay());
 
-  const addBtn = mkBtn('✏️', '', `
-    background: none; border: none; font-size: .65rem;
-    cursor: pointer; color: var(--text-normal); box-shadow: none;
-    padding: 0; margin-left: 15px;
-  `, (e) => {
+  const addBtn = mkBtn('✏️', '添加影视', 'var(--text-normal)', (e) => {
     e.stopPropagation();
     openAddModal(app);
   });
 
-  const searchBtn = mkBtn('🔍', '搜索影视', `
-    background: none; border: none; font-size: 15px;
-    cursor: pointer; color: var(--text-muted); box-shadow: none;
-    padding: 0; width: 20px; height: 20px; border-radius: 4px;
-    display: flex; align-items: center; justify-content: center;
-    transition: background 0.2s; margin-left: 15px; margin-top: 4px;
-  `, (e) => {
+  const searchBtn = mkBtn('🔍', '搜索影视', 'var(--text-muted)', (e) => {
     e.stopPropagation();
     toggleSearch();
   });
-  searchBtn.addEventListener('mouseover', () => {
-    searchBtn.style.background = 'var(--background-secondary)';
-  });
-  searchBtn.addEventListener('mouseout', () => {
-    searchBtn.style.background = 'none';
-  });
+
 
   headerButtons.appendChild(addBtn);
   headerButtons.appendChild(searchBtn);
-  headerButtons.appendChild(analysisBtn);
   headerButtons.appendChild(recommendBtn);
   headerButtons.appendChild(settingsBtn);
   headerButtons.appendChild(closeBtn);

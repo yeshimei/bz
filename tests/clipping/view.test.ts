@@ -54,7 +54,7 @@ function makeApp(vault: MockVault) {
   } as any;
 }
 
-const SETTINGS = { articleDirectory: '我的/文章', batchSize: '10', longPressDuration: '800' };
+const SETTINGS = { articleDirectory: '我的/文章' };
 
 async function setup() {
   resetObsidianMocks();
@@ -163,17 +163,16 @@ describe('剪藏本面板', () => {
     expect(MockNotice.instances.some((n) => n.message.includes('已删除'))).toBe(true);
   });
 
-  it('滚动到底加载更多（batchSize 分批 + 已显示所有文章）', async () => {
+  it('滚动到底加载更多（每批固定 20 条 + 已显示所有文章）', async () => {
     const { vault } = await setup();
-    setSettingsProvider(() => ({ ...SETTINGS, batchSize: '2' }) as any);
-    applyArticleSettings(); // 本测试依赖 batchSize=2 分批
-    for (let i = 0; i < 5; i++) {
-      vault.files.set(`我的/文章/文章${i}.md`, makeArticleMd(`https://x.com/${i}`, '站', `文章${i}`, `2025-06-0${i + 1}T08:00:00.000Z`));
+    for (let i = 0; i < 25; i++) {
+      const day = String(i + 1).padStart(2, '0');
+      vault.files.set(`我的/文章/文章${i}.md`, makeArticleMd(`https://x.com/${i}`, '站', `文章${i}`, `2025-06-${day}T08:00:00.000Z`));
     }
     await initArticleView(true);
     await new Promise((r) => setTimeout(r, 20));
-    // batchSize=2 → 只渲染 2 张
-    expect(document.querySelectorAll('.article-entry-card').length).toBe(2);
+    // 每批固定 20 条 → 首屏只渲染 20 张
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(20);
     // 模拟滚动到底
     const container = document.getElementById('__article-entries-container__')!;
     Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
@@ -181,10 +180,10 @@ describe('剪藏本面板', () => {
     Object.defineProperty(container, 'scrollTop', { value: 900, configurable: true });
     container.dispatchEvent(new Event('scroll'));
     await new Promise((r) => setTimeout(r, 0));
-    expect(document.querySelectorAll('.article-entry-card').length).toBe(4);
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(25);
     container.dispatchEvent(new Event('scroll'));
     await new Promise((r) => setTimeout(r, 0));
-    expect(document.querySelectorAll('.article-entry-card').length).toBe(5);
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(25);
     expect(document.querySelector('.article-loading-hint')!.textContent).toBe('已显示所有文章');
   });
 

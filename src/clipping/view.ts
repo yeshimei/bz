@@ -51,12 +51,12 @@ export interface ArticleEntry {
   backlinkSources: string[];
 }
 
-/** 读取插件设置（剪藏本 articleDirectory/batchSize/longPressDuration） */
+/** 读取插件设置（剪藏本 articleDirectory；批次/长按时长固定默认） */
 export function applyArticleSettings(): void {
   const s = tryGetSettings() as any;
   ARTICLE_DIRECTORY = s.articleDirectory || '归档/网页剪藏';
-  BATCH_SIZE = parseInt(s.batchSize) || 20;
-  LONG_PRESS_DURATION = parseInt(s.longPressDuration) || 800;
+  BATCH_SIZE = 20;
+  LONG_PRESS_DURATION = 800;
 }
 
 // ========== 初始化 ==========
@@ -154,7 +154,7 @@ function createHeader(): HTMLElement {
   title.style.cssText = 'margin:0;font-size:18px;font-weight:600;color:var(--text-normal);';
 
   const buttonContainer = document.createElement('div');
-  buttonContainer.style.cssText = 'display:flex;align-items:center;gap:12px;';
+  buttonContainer.style.cssText = 'display:flex;align-items:center;gap:8px;';
 
   // 搜索切换按钮
   const searchToggleBtn = createIconButton('🔍', '切换搜索框', () => {
@@ -216,8 +216,10 @@ function createIconButton(text: string, title: string, onClick: () => void): HTM
   const btn = document.createElement('button');
   btn.textContent = text;
   btn.title = title;
+  // 规格：普通 14px/22×26，关闭 ❌ 13px/21×25
+  const isClose = text === '❌';
   btn.style.cssText =
-    'background:none;border:none;font-size:13px;cursor:pointer;color:var(--text-muted);padding:0 4px;border-radius:4px;display:flex;align-items:center;justify-content:center;box-shadow:none;';
+    `background:none;border:none;font-size:${isClose ? 13 : 14}px;cursor:pointer;color:var(--text-muted);padding:0;width:${isClose ? 21 : 22}px;height:${isClose ? 25 : 26}px;border-radius:4px;display:flex;align-items:center;justify-content:center;box-shadow:none;`;
   btn.onmouseover = () => (btn.style.background = 'var(--background-secondary)');
   btn.onmouseout = () => (btn.style.background = 'none');
   btn.onclick = onClick;
@@ -400,6 +402,9 @@ export const CLIPPING_CSS = `
         transform: none !important;
         border-radius: 0 !important;
         animation: none !important;
+    }
+    #article-view-popup > div:first-child {
+        padding-top: 34px !important;
     }
     .article-sites-scroll {
         flex-wrap: nowrap;

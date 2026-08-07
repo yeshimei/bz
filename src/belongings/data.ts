@@ -46,26 +46,8 @@ export async function loadDatabase(): Promise<BelongingsDatabase> {
     db = emptyDatabase();
   }
 
-  // ----- 读取用户自定义分类 -----
-  const userCategoriesRaw = getSettings().customCategories || '';
-  let userCategories: string[] = [];
-  if (userCategoriesRaw.trim()) {
-    userCategories = userCategoriesRaw
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0);
-  }
-
-  // ----- 合并去重 -----
-  const combined = [...DEFAULT_CATEGORIES, ...userCategories];
-  const uniqueCategories: string[] = [];
-  const seen = new Set<string>();
-  for (const cat of combined) {
-    if (!seen.has(cat)) {
-      seen.add(cat);
-      uniqueCategories.push(cat);
-    }
-  }
+  // ----- 分类固定使用内置默认（自定义分类设置已移除）-----
+  const uniqueCategories = [...new Set(DEFAULT_CATEGORIES)];
 
   (db as BelongingsDatabase).categories = uniqueCategories;
 

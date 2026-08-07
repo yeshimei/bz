@@ -3,7 +3,7 @@
  */
 import moment from 'moment';
 import { notice } from '../core/dom';
-import { longPress, createIconBtn } from '../core/dom';
+import { longPress, createIconBtn, injectStyles } from '../core/dom';
 import { confirm } from '../core/confirm';
 import { escManager } from '../core/esc-manager';
 import { getApp } from '../core/app';
@@ -60,7 +60,20 @@ export class UIManager {
 
   // ---------- 构建主 UI ----------
   build() {
-    // 遮罩
+    // 移动端列表样式：平铺 + 隐藏滚动条
+    injectStyles('fav-mobile', `
+      @media (max-width: 768px) {
+        #fav-entries-container { scrollbar-width: none; -ms-overflow-style: none; }
+        #fav-entries-container::-webkit-scrollbar { display: none; }
+        #fav-entries-container .fav-card {
+          margin-left: -20px; margin-right: -20px;
+          border-radius: 0 !important;
+          border-left: none !important; border-right: none !important; border-top: none !important;
+          padding: 14px 20px !important;
+          margin-bottom: 0 !important;
+        }
+      }
+    `);
     this.mask = document.createElement('div');
     this.mask.id = 'fav-mask';
     Object.assign(this.mask.style, {
@@ -104,7 +117,6 @@ export class UIManager {
         maxHeight: '100vh',
         height: '100vh',
         borderRadius: '0',
-        paddingTop: '24px',
       });
     }
 
@@ -138,12 +150,12 @@ export class UIManager {
     header.style.cssText = 'padding:16px 24px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--background-modifier-border); flex-shrink:0;';
 
     const title = document.createElement('h3');
-    title.textContent = '📌 收藏';
+    title.textContent = '收藏本';
     title.style.cssText = 'margin:0; font-size:18px; font-weight:600; color:var(--text-normal);';
     header.appendChild(title);
 
     const actionGroup = document.createElement('div');
-    actionGroup.style.cssText = 'display:flex; gap:12px; align-items:center;';
+    actionGroup.style.cssText = 'display:flex; gap:8px; align-items:center;';
 
     // 添加按钮（✏️）
     const addBtn = this._createButton('✏️', '添加收藏', () => this._showAddDialog());
@@ -167,6 +179,8 @@ export class UIManager {
     actionGroup.appendChild(closeBtn);
 
     header.appendChild(actionGroup);
+    // 移动端：标题行距离顶部 24px（popup 不额外加 paddingTop）
+    if (window.innerWidth <= 768) header.style.paddingTop = '34px';
     return header;
   }
 

@@ -11,56 +11,36 @@ export default interface MemoSettings {
   aiProvider: string;
   /** 🔑 DeepSeek API Key（留空则回退读取 QuickAdd data.json） */
   deepseekApiKey: string;
-  /** 🌐 OpenCode Go 接口地址 */
-  opencodeGoEndpoint: string;
   /** 🔑 OpenCode Go API Key */
   opencodeGoApiKey: string;
-  /** 🧩 OpenCode Go 模型 */
-  opencodeGoModel: string;
-  /** override 对象 {endpoint, apiKey, model}（脚本内部自由指定第三方端点） */
-  aiOverride: { endpoint?: string; apiKey?: string; model?: string } | null;
 
-  // ===== 📝 备忘录（5 项）=====
+  // ===== 📝 备忘录（3 项）=====
   /** 📂 备忘录数据文件路径（memo.json 所在目录） */
   todoFilePath: string;
-  /** 🏷️ 场景列表（每行一个） */
-  scenarios: string;
-  /** 🌐 自定义平台映射（每行：域名 平台名） */
-  platformMapping: string;
   /** 📄 显示文件名 */
   showFileName: boolean;
   /** 🚀 启动时自动弹窗（有重要备忘录时） */
   autoPopupOnStart: boolean;
 
-  // ===== 📖 日记本（7 项，diary-notebook 合并）=====
+  // ===== 📖 日记本（5 项，diary-notebook 合并）=====
   /** 📂 日记目录 */
   diaryDirectory: string;
   /** 🎬 影视目录（日记本用） */
   movieDirectory: string;
   /** ✉️ 信目录 */
   letterDirectory: string;
-  /** ⏳ 文件变更延迟(ms) */
-  fileChangeDelay: string;
-  /** 👆 启用长按手势 */
-  enableLongPress: boolean;
   /** 📊 显示标签计数 */
   showTagCount: boolean;
   /** 🕒 使用文件日期作为默认日期 */
   useFileDateTime: boolean;
 
-  // ===== 📦 归物本（2 项）=====
+  // ===== 📦 归物本（1 项）=====
   /** 📁 存储文件夹路径（belongings.json） */
   belongingsDataFolder: string;
-  /** 📂 自定义分类（每行一个，格式：图标+空格+分类名） */
-  customCategories: string;
 
-  // ===== 📰 剪藏本（3 项）=====
+  // ===== 📰 剪藏本（1 项）=====
   /** 📂 剪藏目录 */
   articleDirectory: string;
-  /** 📄 每批加载数量 */
-  batchSize: string;
-  /** ⏱️ 长按识别时长(毫秒) */
-  longPressDuration: string;
 
   // ===== 🔐 密码本（4 项）=====
   /** 📂 数据存储路径 */
@@ -96,39 +76,10 @@ export default interface MemoSettings {
   /** 🏷️ 显示分类（源码无 UI 项，运行时默认 true，字段保留） */
   showCategory: boolean;
 
-  // ===== 🎬 影视（4 项）=====
+  // ===== 🎬 影视（1 项）=====
   /** 📁 影视文件夹 */
   movieFolderPath: string;
-  /** 📄 每页加载数量 */
-  moviePageSize: number;
-  /** 🖼️ 启用海报整理（Q3） */
-  enableQ3: boolean;
-  /** 📁 海报存储文件夹 */
-  posterFolder: string;
 
-  // ===== 📊 影视数据分析（1 路径 + 10 组分析配置）=====
-  /** 📁 影视文件夹（分析用） */
-  analysisFolderPath: string;
-  /** 分析配置：groups（分组） */
-  analysisGroups: string;
-  /** 分析配置：buckets（评分桶） */
-  analysisBuckets: string;
-  /** 分析配置：genres（类型） */
-  analysisGenres: string;
-  /** 分析配置：ageBuckets（年龄段） */
-  analysisAgeBuckets: string;
-  /** 分析配置：eras（年代） */
-  analysisEras: string;
-  /** 分析配置：durBuckets（时长桶） */
-  analysisDurBuckets: string;
-  /** 分析配置：groupDur（分组时长） */
-  analysisGroupDur: string;
-  /** 分析配置：reviewKeywords（评论关键词） */
-  analysisReviewKeywords: string;
-  /** 分析配置：series（剧集） */
-  analysisSeries: string;
-  /** 分析配置：yearRating（年度评分） */
-  analysisYearRating: string;
 
   // ===== 🧠 做题家（4 项，含 shuffleQuestions）=====
   /** 允许多选题 */
@@ -195,17 +146,12 @@ export default interface MemoSettings {
 
 export const DEFAULT_SETTINGS: MemoSettings = {
   // AI 全局
-  aiProvider: 'deepseek',
+  aiProvider: 'opencode-go',
   deepseekApiKey: '',
-  opencodeGoEndpoint: 'https://opencode.ai/zen/go/v1',
   opencodeGoApiKey: '',
-  opencodeGoModel: 'deepseek-v4-flash',
-  aiOverride: null,
 
   // 备忘录
   todoFilePath: 'CONFIG/STORAGE',
-  scenarios: '',
-  platformMapping: '',
   showFileName: true,
   autoPopupOnStart: true,
 
@@ -213,19 +159,14 @@ export const DEFAULT_SETTINGS: MemoSettings = {
   diaryDirectory: '我的/日记',
   movieDirectory: '我的/影视',
   letterDirectory: '我的/信',
-  fileChangeDelay: '100',
-  enableLongPress: true,
   showTagCount: true,
   useFileDateTime: false,
 
   // 归物本
   belongingsDataFolder: 'CONFIG/STORAGE',
-  customCategories: '',
 
   // 剪藏本
   articleDirectory: '归档/网页剪藏',
-  batchSize: '20',
-  longPressDuration: '800',
 
   // 密码本
   pwStoragePath: 'CONFIG/STORAGE',
@@ -250,22 +191,7 @@ export const DEFAULT_SETTINGS: MemoSettings = {
 
   // 影视
   movieFolderPath: '我的/影视',
-  moviePageSize: 50,
-  enableQ3: true,
-  posterFolder: 'CONFIG/MOVIE POSTER',
 
-  // 影视数据分析
-  analysisFolderPath: '我的/影视',
-  analysisGroups: '',
-  analysisBuckets: '',
-  analysisGenres: '',
-  analysisAgeBuckets: '',
-  analysisEras: '',
-  analysisDurBuckets: '',
-  analysisGroupDur: '',
-  analysisReviewKeywords: '',
-  analysisSeries: '',
-  analysisYearRating: '',
 
   // 做题家
   enableMultipleChoice: true,

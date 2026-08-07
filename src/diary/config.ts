@@ -11,19 +11,17 @@ export let LETTER_DIRECTORY = '我的/信';
 export let BATCH_SIZE = 20;
 export let LONG_PRESS_DURATION = 800;
 
-/** 应用目录与性能常量（设置变更时调用） */
+/** 应用目录常量（设置变更时调用；批量/长按时长固定默认） */
 export function applyDirectories(settings: {
   diaryDirectory?: string;
   movieDirectory?: string;
   letterDirectory?: string;
-  batchSize?: string;
-  longPressDuration?: string;
 }) {
   DIARY_DIRECTORY = settings.diaryDirectory || '我的/日记';
   MOVIE_DIRECTORY = settings.movieDirectory || '我的/影视';
   LETTER_DIRECTORY = settings.letterDirectory || '我的/信';
-  BATCH_SIZE = parseInt(settings.batchSize || '') || 20;
-  LONG_PRESS_DURATION = parseInt(settings.longPressDuration || '') || 800;
+  BATCH_SIZE = 20;
+  LONG_PRESS_DURATION = 800;
 }
 
 /** 获取当前标签配置 */

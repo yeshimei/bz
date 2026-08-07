@@ -19,8 +19,6 @@ function makeApp(vault: MockVault) {
 
 const BASE_SETTINGS = {
   todoFilePath: 'CONFIG/STORAGE',
-  scenarios: '',
-  platformMapping: '',
   showFileName: true,
   autoPopupOnStart: true,
   movieFolderPath: '我的/影视',
@@ -41,19 +39,16 @@ describe('DataManager 构建', () => {
     expect(DataManager.todoFilePath).toBe('自定义/memo.json');
   });
 
-  it('buildScenarios：默认 6 场景 + 用户自定义去重追加', () => {
-    DataManager.init({ ...BASE_SETTINGS, scenarios: '学习\n\n电影\n学习' });
-    expect(DataManager.getScenarios()).toEqual(['剪藏', '工作', '学习', '生活', '代码', '公开课', '电影']);
+  it('场景固定为默认 6 场景（设置项已移除）', () => {
+    DataManager.init({ ...BASE_SETTINGS });
+    expect(DataManager.getScenarios()).toEqual(['剪藏', '工作', '学习', '生活', '代码', '公开课']);
   });
 
-  it('buildPlatformMap：用户映射追加、同 host 覆盖默认', () => {
-    DataManager.init({ ...BASE_SETTINGS, platformMapping: 'example.com 示例站\nhttps://zhihu.com 知乎改' });
+  it('平台映射固定为内置默认（设置项已移除）', () => {
+    DataManager.init({ ...BASE_SETTINGS });
     const map = DataManager.getPlatformMap();
-    expect(map[map.length - 2]).toEqual({ host: 'example.com', name: '示例站' });
-    // zhihu.com 被用户映射覆盖 → 默认里不再有 zhihu.com
-    expect(map.some((m) => m.host === 'zhihu.com' && m.name === '知乎')).toBe(false);
-    expect(map.some((m) => m.host === 'zhihu.com' && m.name === '知乎改')).toBe(true);
-    // 知乎日报/专栏保留
+    expect(map.length).toBeGreaterThan(0);
+    expect(map.some((m) => m.host === 'zhihu.com' && m.name === '知乎')).toBe(true);
     expect(map.some((m) => m.host === 'daily.zhihu.com')).toBe(true);
   });
 

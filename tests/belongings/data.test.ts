@@ -28,7 +28,7 @@ describe('loadDatabase', () => {
   });
 
   it('文件不存在 → 空数据库结构（version 1.0/items {}）+ 默认分类', async () => {
-    setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE', customCategories: '' });
+    setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
     const db = await loadDatabase();
     expect(db.version).toBe('1.0');
     expect(db.items).toEqual({});
@@ -38,10 +38,10 @@ describe('loadDatabase', () => {
     expect(vault.files.has('CONFIG/STORAGE/belongings.json')).toBe(false); // 加载不建文件
   });
 
-  it('自定义分类追加且去重', async () => {
-    setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE', customCategories: '📱 智能手机\n🎁 自定义分类' });
+  it('分类固定为内置默认（自定义分类设置已移除）', async () => {
+    setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
     const db = await loadDatabase();
-    expect(db.categories.includes('🎁 自定义分类')).toBe(true);
+    expect(db.categories.includes('🎁 自定义分类')).toBe(false);
     expect(db.categories.filter((c) => c === '📱 智能手机').length).toBe(1);
   });
 
