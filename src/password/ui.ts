@@ -1055,7 +1055,7 @@ export class PasswordAppController {
         new Notice('复制失败，请手动复制');
       });
     this.uiManager.pendingPassword = pwd;
-    new Notice('密码已暂存，打开"添加条目"时将自动填入');
+    new Notice('密码已暂存，打开“添加条目”时将自动填入');
   }
 
   /** 卸载清理：移除注入 DOM */
