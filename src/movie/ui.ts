@@ -1,138 +1,162 @@
 /**
- * 影视 UI（ticket 14：renderAll/renderList/无限滚动/搜索/overlay/添加/编辑/设置/ESC）
+ * 影视 UI（ticket 14 修正版：对齐源码逐字——卡片/overlay/添加/编辑/设置弹窗）
  */
-import type { App } from 'obsidian';
-import { Notice, TFile } from 'obsidian';
+import type { App, TFile } from 'obsidian';
+import { Notice } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { checkAndShowChangelog } from '../core/changelog';
 import { formatRelativeTime } from '../core/utils';
 import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, getTypeColor, getStarRating, TYPE_GROUPS, ALL_TAGS, getGroupForTag } from './constants';
+import { M, takeHomeFilmStatus } from './state';
 import { getDisplayItems, refreshDataAndView, rebuildItems } from './data';
 import { openRecommendModal } from './recommend';
-import { M, takeHomeFilmStatus } from './state';
 
-/** 渲染卡片列表（分页） */
+/** 渲染卡片列表（分页，源码 L279-426 逐字） */
 export function renderAll(displayItems: any[], container: HTMLElement, app: App): void {
-  container.innerHTML = '';
   const total = displayItems.length;
-
   if (total === 0) {
     container.innerHTML = '<p style="text-align:center; color:var(--text-muted);">暂无符合条件的影视记录</p>';
     return;
   }
 
-  if (M.loadedCount === 0) {
-    M.loadedCount = Math.min(M.pageSize, total);
-  }
+  if (M.loadedCount === 0) M.loadedCount = Math.min(M.pageSize, total);
   const showCount = Math.min(M.loadedCount, total);
-  const slice = displayItems.slice(0, showCount);
 
-  slice.forEach((item) => {
-    container.appendChild(createMovieCard(item, app));
+  container.innerHTML = '';
+  const itemsToRender = displayItems.slice(0, showCount);
+
+  itemsToRender.forEach((item) => {
+    const card = document.createElement('div');
+    card.style.cssText = `
+      display: flex; align-items: flex-start; padding: 10px 8px;
+      border-radius: 8px; margin-bottom: 8px;
+      background: var(--background-secondary); cursor: pointer;
+      transition: background 0.2s;
+    `;
+    card.addEventListener('dblclick', () => {
+      app.workspace.openLinkText(item.file.path as string, '', false);
+      closeOverlay();
+    });
+
+    if (item.poster) {
+      const posterFile = app.vault.getAbstractFileByPath(item.poster);
+      if (posterFile && /\.(png|jpe?g|gif|webp)$/i.test(posterFile.name)) {
+        const img = document.createElement('img');
+        img.src = app.vault.getResourcePath(posterFile as TFile);
+        img.style.cssText = `
+          width: 48px; height: 64px; object-fit: cover;
+          border-radius: 6px; margin-right: 12px; flex-shrink: 0;
+          background: var(--background-modifier-border);
+        `;
+        card.appendChild(img);
+      }
+    }
+
+    const infoDiv = document.createElement('div');
+    infoDiv.style.cssText = 'flex: 1; min-width: 0;';
+
+    const nameEl = document.createElement('div');
+    nameEl.textContent = item.name;
+    nameEl.style.cssText = `
+      font-weight: 600; font-size: 1rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    `;
+
+    const metaRow = document.createElement('div');
+    metaRow.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap;';
+
+    const badge = document.createElement('span');
+    badge.textContent = item.typeTag;
+    const color = getTypeColor(item.group);
+    badge.style.cssText = `
+      display: inline-block; padding: 2px 8px; border-radius: 10px;
+      font-size: 0.75rem;
+      background: ${color};
+      color: white;
+      white-space: nowrap;
+    `;
+    metaRow.appendChild(badge);
+
+    const isClickable = item.status === STATUS_WANT || item.status === STATUS_WATCHING;
+    const statusContainer = document.createElement('span');
+    statusContainer.style.cssText = 'display: inline-flex; align-items: center; gap: 4px;';
+    if (isClickable) {
+      statusContainer.style.cursor = 'pointer';
+      statusContainer.title = '点击编辑';
+    }
+
+    if (item.status === STATUS_WATCHING) {
+      const watchingBadge = document.createElement('span');
+      watchingBadge.textContent = '在看';
+      watchingBadge.style.cssText = `
+        font-size: 0.75rem;
+        background: var(--text-accent);
+        color: var(--background-primary);
+        padding: 2px 8px; border-radius: 10px;
+      `;
+      statusContainer.appendChild(watchingBadge);
+    } else if (item.status === STATUS_WANT) {
+      const wish = document.createElement('span');
+      wish.textContent = '想看';
+      wish.style.cssText = `
+        font-size: 0.75rem;
+        background: var(--text-muted);
+        color: var(--background-primary);
+        padding: 2px 8px; border-radius: 10px;
+      `;
+      statusContainer.appendChild(wish);
+    } else if (item.status === STATUS_WATCHED) {
+      if (item.rating !== null && item.rating > 0) {
+        const stars = document.createElement('span');
+        stars.textContent = getStarRating(item.rating);
+        stars.style.cssText = 'font-size: 0.85rem;';
+        statusContainer.appendChild(stars);
+      }
+      if (item.watchDate) {
+        const dateEl = document.createElement('span');
+        dateEl.textContent = formatRelativeTime(item.watchDate as string);
+        dateEl.style.cssText = 'font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;';
+        statusContainer.appendChild(dateEl);
+      }
+    }
+
+    if (isClickable) {
+      statusContainer.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openEditModal(item, app);
+      });
+    }
+
+    metaRow.appendChild(statusContainer);
+    infoDiv.appendChild(nameEl);
+    infoDiv.appendChild(metaRow);
+
+    if (item.review) {
+      const reviewDiv = document.createElement('div');
+      reviewDiv.style.cssText = `
+        margin-top: 6px; font-size: 0.75rem; color: var(--text-muted);
+        display: flex; align-items: baseline; gap: 4px;
+      `;
+      const reviewTextSpan = document.createElement('span');
+      reviewTextSpan.textContent = item.review;
+      reviewTextSpan.style.overflow = 'hidden';
+      reviewTextSpan.style.textOverflow = 'ellipsis';
+      reviewTextSpan.style.whiteSpace = 'pre-wrap';
+      reviewDiv.appendChild(reviewTextSpan);
+      infoDiv.appendChild(reviewDiv);
+    }
+
+    card.appendChild(infoDiv);
+    container.appendChild(card);
   });
 
   if (showCount < total) {
-    const indicator = document.createElement('div');
-    indicator.id = 'load-more-indicator';
-    indicator.style.cssText = 'text-align:center; padding: 8px; color: var(--text-muted); font-size:0.8rem;';
-    indicator.textContent = '滚动加载更多...';
-    container.appendChild(indicator);
+    const loadMoreDiv = document.createElement('div');
+    loadMoreDiv.style.cssText = 'text-align:center; padding: 8px; color: var(--text-muted); font-size:0.8rem;';
+    loadMoreDiv.textContent = '滚动加载更多...';
+    loadMoreDiv.id = 'load-more-indicator';
+    container.appendChild(loadMoreDiv);
   }
-}
-
-/** 创建影视卡片 */
-export function createMovieCard(item: any, app: App): HTMLElement {
-  const card = document.createElement('div');
-  card.style.cssText = `
-    background: var(--background-secondary);
-    border-radius: 8px; padding: 12px 16px; margin-bottom: 10px;
-    cursor: default;
-  `;
-
-  // 双击打开笔记
-  card.addEventListener('dblclick', () => {
-    app.workspace.openLinkText(item.file.path, '', false);
-    closeOverlay();
-  });
-
-  // 海报
-  const posterContainer = document.createElement('div');
-  posterContainer.style.cssText = 'display:flex; align-items:flex-start; gap:12px;';
-
-  if (item.poster) {
-    const posterFile = app.vault.getAbstractFileByPath(item.poster);
-    if (posterFile && posterFile instanceof TFile && /\.(png|jpe?g|gif|webp)$/i.test(posterFile.path)) {
-      const img = document.createElement('img');
-      img.src = app.vault.getResourcePath(posterFile);
-      img.style.cssText = 'width:48px; height:64px; object-fit:cover; border-radius:4px; flex-shrink:0;';
-      posterContainer.appendChild(img);
-    }
-  }
-
-  const infoContainer = document.createElement('div');
-  infoContainer.style.cssText = 'flex:1; min-width:0;';
-
-  // 标题行 + 类型徽章
-  const titleRow = document.createElement('div');
-  titleRow.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:4px;';
-  const nameEl = document.createElement('span');
-  nameEl.textContent = item.name;
-  nameEl.style.cssText = 'font-weight:600; font-size:1rem; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
-  const typeBadge = document.createElement('span');
-  typeBadge.textContent = item.typeTag;
-  typeBadge.style.cssText = `background:${getTypeColor(item.group)}; color:white; font-size:.7rem; padding:2px 8px; border-radius:10px; flex-shrink:0;`;
-  titleRow.appendChild(nameEl);
-  titleRow.appendChild(typeBadge);
-
-  // 状态区
-  const statusContainer = document.createElement('div');
-  statusContainer.style.cssText = 'margin:4px 0; display:flex; align-items:center; gap:6px; min-height:20px;';
-
-  if (item.status === STATUS_WATCHING) {
-    const badge = document.createElement('span');
-    badge.textContent = '在看';
-    badge.style.cssText = 'background:var(--text-accent); color:var(--background-primary); font-size:.7rem; padding:2px 8px; border-radius:10px;';
-    statusContainer.appendChild(badge);
-  } else if (item.status === STATUS_WANT) {
-    const badge = document.createElement('span');
-    badge.textContent = '想看';
-    badge.style.cssText = 'background:var(--text-muted); color:var(--background-primary); font-size:.7rem; padding:2px 8px; border-radius:10px;';
-    statusContainer.appendChild(badge);
-  } else if (item.status === STATUS_WATCHED && item.rating !== null) {
-    const stars = document.createElement('span');
-    stars.textContent = getStarRating(item.rating);
-    stars.style.cssText = 'font-size:.85rem;';
-    statusContainer.appendChild(stars);
-    if (item.watchDate) {
-      const date = document.createElement('span');
-      date.textContent = formatRelativeTime(item.watchDate);
-      date.style.cssText = 'color:var(--text-muted); font-size:.75rem;';
-      statusContainer.appendChild(date);
-    }
-  }
-
-  // 在看/想看 → 点击打开编辑弹窗
-  if (item.status === STATUS_WATCHING || item.status === STATUS_WANT) {
-    statusContainer.style.cursor = 'pointer';
-    statusContainer.addEventListener('click', () => openEditModal(item, app));
-  }
-
-  // 影评
-  if (item.review) {
-    const review = document.createElement('div');
-    review.textContent = item.review;
-    review.style.cssText = 'color:var(--text-muted); font-size:.8rem; white-space:pre-wrap; margin-top:4px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;';
-    infoContainer.appendChild(titleRow);
-    infoContainer.appendChild(statusContainer);
-    infoContainer.appendChild(review);
-  } else {
-    infoContainer.appendChild(titleRow);
-    infoContainer.appendChild(statusContainer);
-  }
-
-  posterContainer.appendChild(infoContainer);
-  card.appendChild(posterContainer);
-  return card;
 }
 
 /** 渲染列表 */
@@ -145,13 +169,12 @@ export function renderList(): void {
   renderAll(getDisplayItems(), listContainer as HTMLElement, app);
 }
 
-/** 无限滚动 */
+/** 无限滚动（源码 L437-459） */
 export function setupInfiniteScroll(container: HTMLElement): void {
   const oldListener = (container as any)._scrollListener;
   if (oldListener) {
     container.removeEventListener('scroll', oldListener);
   }
-
   const listener = () => {
     if (M.isLoadingMore) return;
     if (M.loadedCount >= getDisplayItems().length) return;
@@ -165,236 +188,48 @@ export function setupInfiniteScroll(container: HTMLElement): void {
       M.isLoadingMore = false;
     }
   };
-
   (container as any)._scrollListener = listener;
   container.addEventListener('scroll', listener);
 }
 
-/** 搜索切换 */
+/** 搜索切换（源码 L462-483） */
 export function toggleSearch(): void {
-  if (!M.currentOverlay) return;
-  const container = M.currentOverlay.querySelector('#movie-search-container') as HTMLElement;
-  if (!container) return;
-  const isHidden = container.style.display === 'none' || !container.style.display;
-  container.style.display = isHidden ? 'block' : 'none';
-  if (!isHidden) {
+  const searchContainer = document.getElementById('movie-search-container') as HTMLElement | null;
+  const searchInput = document.getElementById('movie-search-input') as HTMLInputElement | null;
+  if (!searchContainer) return;
+
+  if (searchContainer.style.display === 'none' || getComputedStyle(searchContainer).display === 'none') {
+    searchContainer.style.display = 'block';
+    if (searchInput) {
+      searchInput.focus();
+      searchInput.select();
+    }
+  } else {
+    searchContainer.style.display = 'none';
+    if (searchInput) {
+      searchInput.value = '';
+    }
     M.searchKeyword = '';
-    const input = M.currentOverlay.querySelector('#movie-search-input') as HTMLInputElement;
-    if (input) input.value = '';
+    if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
     M.loadedCount = 0;
     renderList();
   }
 }
 
-/** 关闭主 overlay（触发 changelog） */
+/** 关闭主界面（源码 L486-496） */
 export function closeOverlay(): void {
   checkAndShowChangelog('movie');
   M.searchKeyword = '';
-  const timer = M.searchDebounceTimer;
-  if (timer) clearTimeout(timer);
+  if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
+
   if (M.currentOverlay) {
     M.currentOverlay.remove();
     M.currentOverlay = null;
   }
+  // 子弹窗保留，由 ESC 逐层关闭
 }
 
-// ---------- 添加弹窗 ----------
-
-export function openAddModal(app: App, prefill?: { name?: string; tag?: string; status?: number }): void {
-  if (M.addOverlay) return;
-
-  const overlay = document.createElement('div');
-  overlay.style.cssText = `
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
-    z-index: 1200;
-  `;
-
-  const modal = document.createElement('div');
-  modal.style.cssText = `
-    background: var(--background-primary); border-radius: 12px;
-    width: 100%; max-width: 520px; max-height: 85vh; overflow-y: auto;
-    padding: 24px;
-  `;
-
-  const title = document.createElement('h3');
-  title.textContent = '➕ 添加影视';
-  title.style.cssText = 'margin:0 0 16px 0;';
-
-  // 名称
-  const nameLabel = document.createElement('label');
-  nameLabel.textContent = '影视名称';
-  nameLabel.style.cssText = 'display:block; margin-bottom:4px; font-size:.9rem;';
-  const nameInput = document.createElement('input');
-  nameInput.type = 'text';
-  nameInput.placeholder = '例如：《肖申克的救赎》';
-  nameInput.value = prefill?.name || '';
-  nameInput.style.cssText = 'width:100%; margin-bottom:12px;';
-
-  // 类型标签
-  const tagLabel = document.createElement('label');
-  tagLabel.textContent = '类型标签';
-  tagLabel.style.cssText = 'display:block; margin-bottom:4px; font-size:.9rem;';
-  const tagSelect = document.createElement('select');
-  tagSelect.style.cssText = 'width:100%; margin-bottom:12px;';
-  ALL_TAGS.forEach((tag) => {
-    const opt = document.createElement('option');
-    opt.value = tag;
-    opt.textContent = tag;
-    tagSelect.appendChild(opt);
-  });
-  if (prefill?.tag) tagSelect.value = prefill.tag;
-
-  // 状态
-  const statusLabel = document.createElement('label');
-  statusLabel.textContent = '状态';
-  statusLabel.style.cssText = 'display:block; margin-bottom:4px; font-size:.9rem;';
-  const statusSelect = document.createElement('select');
-  statusSelect.style.cssText = 'width:100%; margin-bottom:12px;';
-  [['想看', STATUS_WANT], ['在看', STATUS_WATCHING], ['已看', STATUS_WATCHED]].forEach(([label, val]) => {
-    const opt = document.createElement('option');
-    opt.value = String(val);
-    opt.textContent = String(label);
-    statusSelect.appendChild(opt);
-  });
-  if (prefill?.status !== undefined) statusSelect.value = String(prefill.status);
-
-  // 评分（已看时显示）
-  const ratingWrap = document.createElement('div');
-  const ratingLabel = document.createElement('label');
-  ratingLabel.textContent = '评分（1-5）';
-  ratingLabel.style.cssText = 'display:block; margin-bottom:4px; font-size:.9rem;';
-  const ratingInput = document.createElement('input');
-  ratingInput.type = 'number';
-  ratingInput.min = '1';
-  ratingInput.max = '5';
-  ratingInput.step = '0.1';
-  ratingInput.style.cssText = 'width:100%; margin-bottom:12px;';
-  ratingWrap.appendChild(ratingLabel);
-  ratingWrap.appendChild(ratingInput);
-  ratingWrap.style.display = statusSelect.value === String(STATUS_WATCHED) ? 'block' : 'none';
-  statusSelect.addEventListener('change', () => {
-    ratingWrap.style.display = statusSelect.value === String(STATUS_WATCHED) ? 'block' : 'none';
-  });
-
-  // 观影日期
-  const dateLabel = document.createElement('label');
-  dateLabel.textContent = '观影日期';
-  dateLabel.style.cssText = 'display:block; margin-bottom:4px; font-size:.9rem;';
-  const dateInput = document.createElement('input');
-  dateInput.type = 'datetime-local';
-  const nowStr = new Date().toISOString().slice(0, 19).replace('T', ' ');
-  dateInput.value = nowStr;
-  dateInput.style.cssText = 'width:100%; margin-bottom:12px;';
-
-  // 季集
-  const seasonLabel = document.createElement('label');
-  seasonLabel.textContent = '季集（可选）';
-  seasonLabel.style.cssText = 'display:block; margin-bottom:4px; font-size:.9rem;';
-  const seasonInput = document.createElement('input');
-  seasonInput.type = 'text';
-  seasonInput.placeholder = '例如：S1E1 或 3';
-  seasonInput.style.cssText = 'width:100%; margin-bottom:12px;';
-
-  // 影评
-  const reviewLabel = document.createElement('label');
-  reviewLabel.textContent = '影评（可选）';
-  reviewLabel.style.cssText = 'display:block; margin-bottom:4px; font-size:.9rem;';
-  const reviewInput = document.createElement('textarea');
-  reviewInput.rows = 3;
-  reviewInput.style.cssText = 'width:100%; margin-bottom:16px;';
-
-  // 按钮
-  const btnRow = document.createElement('div');
-  btnRow.style.cssText = 'display:flex; gap:8px; justify-content:flex-end;';
-  const cancelBtn = document.createElement('button');
-  cancelBtn.textContent = '取消';
-  cancelBtn.style.cssText = 'background:var(--background-modifier-border); border:none; border-radius:4px; padding:6px 16px; cursor:pointer;';
-  cancelBtn.addEventListener('click', closeAddModal);
-  const confirmBtn = document.createElement('button');
-  confirmBtn.textContent = '确认添加';
-  confirmBtn.style.cssText = 'background:var(--interactive-accent); color:var(--text-on-accent); border:none; border-radius:4px; padding:6px 16px; cursor:pointer;';
-  confirmBtn.addEventListener('click', async () => {
-    await handleAddConfirm(app, nameInput, tagSelect, statusSelect, ratingInput, dateInput, seasonInput, reviewInput);
-  });
-  btnRow.appendChild(cancelBtn);
-  btnRow.appendChild(confirmBtn);
-
-  modal.appendChild(title);
-  modal.appendChild(nameLabel);
-  modal.appendChild(nameInput);
-  modal.appendChild(tagLabel);
-  modal.appendChild(tagSelect);
-  modal.appendChild(statusLabel);
-  modal.appendChild(statusSelect);
-  modal.appendChild(ratingWrap);
-  modal.appendChild(dateLabel);
-  modal.appendChild(dateInput);
-  modal.appendChild(seasonLabel);
-  modal.appendChild(seasonInput);
-  modal.appendChild(reviewLabel);
-  modal.appendChild(reviewInput);
-  modal.appendChild(btnRow);
-  overlay.appendChild(modal);
-  document.body.appendChild(overlay);
-  M.addOverlay = overlay;
-}
-
-async function handleAddConfirm(app: App, nameInput: HTMLInputElement, tagSelect: HTMLSelectElement, statusSelect: HTMLSelectElement, ratingInput: HTMLInputElement, dateInput: HTMLInputElement, seasonInput: HTMLInputElement, reviewInput: HTMLTextAreaElement): Promise<void> {
-  const name = nameInput.value.trim();
-  if (!name) {
-    new Notice('请输入影视名称');
-    return;
-  }
-  const selectedTag = tagSelect.value;
-  const selectedStatus = Number(statusSelect.value);
-  let ratingValue: number | string;
-  if (selectedStatus === STATUS_WANT) ratingValue = -1;
-  else if (selectedStatus === STATUS_WATCHING) ratingValue = 0;
-  else {
-    const r = parseFloat(ratingInput.value);
-    if (isNaN(r) || r <= 0) {
-      new Notice('已看状态请填写大于0的评分');
-      return;
-    }
-    ratingValue = r;
-  }
-
-  const watchDateValue = (dateInput.value || new Date().toISOString().slice(0, 19).replace('T', ' ')).replace('T', ' ');
-
-  // 重名检查
-  const existing = app.vault.getAbstractFileByPath(`${M.folderPath}/${`《${name}》`}.md`);
-  if (existing) {
-    new Notice(`影视"${name}"已存在，正在打开`);
-    closeAddModal();
-    app.workspace.getLeaf().openFile(existing as TFile);
-    return;
-  }
-
-  const seasonEpisode = seasonInput.value.trim();
-  const reviewText = reviewInput.value.trim();
-
-  let fmLines = [
-    '---',
-    'tags:',
-    `- ${selectedTag}`,
-    `观影日期: ${watchDateValue}`,
-    `评分: ${ratingValue}`,
-  ];
-  if (seasonEpisode) fmLines.push(`季集: ${seasonEpisode}`);
-  if (reviewText) fmLines.push(`影评: ${reviewText}`);
-  fmLines.push('海报: ');
-  fmLines.push('---');
-
-  try {
-    await app.vault.create(`${M.folderPath}/${`《${name}》`}.md`, fmLines.join('\n'));
-    new Notice(`✅ 已添加影视：${name}`);
-    closeAddModal();
-    refreshDataAndView(app);
-  } catch (e) {
-    new Notice('创建笔记失败');
-  }
-}
+// ---------- 添加弹窗（源码 L506-796 逐字） ----------
 
 export function closeAddModal(): void {
   if (M.addOverlay) {
@@ -403,160 +238,315 @@ export function closeAddModal(): void {
   }
 }
 
-// ---------- 编辑弹窗 ----------
+export function openAddModal(app: App, prefill?: { name?: string; tag?: string; status?: number }): void {
+  if (M.addOverlay) {
+    closeAddModal();
+    return;
+  }
 
-export function openEditModal(item: any, app: App): void {
-  if (M.editOverlay) return;
-
-  const overlay = document.createElement('div');
-  overlay.style.cssText = `
+  const addOverlayDiv = document.createElement('div');
+  addOverlayDiv.style.cssText = `
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
-    z-index: 1200;
+    background: rgba(0,0,0,0.4); z-index: 1200;
+    display: flex; align-items: center; justify-content: center;
+  `;
+  const addModal = document.createElement('div');
+  addModal.style.cssText = `
+    background: var(--background-primary); color: var(--text-normal);
+    border-radius: 12px; width: 90%; max-width: 480px;
+    padding: 20px; display: flex; flex-direction: column; gap: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    border: 1px solid var(--background-modifier-border);
+    max-height: 90vh;
+    overflow-y: auto;
   `;
 
-  const modal = document.createElement('div');
-  modal.style.cssText = `
-    background: var(--background-primary); border-radius: 12px;
-    width: 100%; max-width: 520px; max-height: 85vh; overflow-y: auto;
-    padding: 24px;
+  const titleEl = document.createElement('div');
+  titleEl.textContent = '添加影视';
+  titleEl.style.cssText = 'font-size: 1.2rem; font-weight: 600;';
+
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.placeholder = '名称';
+  nameInput.style.cssText = `
+    width: 100%; padding: 8px 12px;
+    border-radius: 6px; border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary); color: var(--text-normal);
+    font-size: 0.95rem;
   `;
 
-  const title = document.createElement('h3');
-  title.textContent = '✏️ 编辑影视';
-  title.style.cssText = 'margin:0 0 16px 0;';
+  if (prefill && prefill.name) nameInput.value = prefill.name;
 
-  const nameDisplay = document.createElement('div');
-  nameDisplay.textContent = item.name;
-  nameDisplay.style.cssText = 'font-size:1.1rem; font-weight:600; margin-bottom:16px;';
-
-  // 状态（仅 在看/已看）
-  const statusLabel = document.createElement('label');
-  statusLabel.textContent = '状态';
-  statusLabel.style.cssText = 'display:block; margin-bottom:4px; font-size:.9rem;';
-  const statusSelect = document.createElement('select');
-  statusSelect.style.cssText = 'width:100%; margin-bottom:12px;';
-  const selectedStatus = item.status === STATUS_WANT ? STATUS_WATCHING : item.status;
-  [[STATUS_WATCHING, '在看'], [STATUS_WATCHED, '已看']].forEach(([val, label]) => {
-    const opt = document.createElement('option');
-    opt.value = String(val);
-    opt.textContent = String(label);
-    statusSelect.appendChild(opt);
+  // 类型选择（13 个标签按钮组）
+  const typeContainer = document.createElement('div');
+  typeContainer.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap;';
+  let selectedTag = (prefill && prefill.tag) || '电影';
+  const tagButtons: HTMLElement[] = [];
+  ALL_TAGS.forEach((tag) => {
+    const group = getGroupForTag(tag);
+    const color = getTypeColor(group!);
+    const btn = document.createElement('button');
+    btn.textContent = tag;
+    btn.style.cssText = `
+      padding: 6px 14px; border-radius: 20px;
+      border: 1px solid var(--background-modifier-border);
+      box-shadow: none;
+      background: var(--background-secondary); color: var(--text-normal);
+      cursor: pointer; font-size: 0.85rem;
+    `;
+    if (selectedTag === tag) {
+      btn.style.background = color;
+      btn.style.color = 'white';
+      btn.style.borderColor = color;
+    }
+    btn.addEventListener('click', () => {
+      tagButtons.forEach((b) => {
+        b.style.background = 'var(--background-secondary)';
+        b.style.color = 'var(--text-normal)';
+        b.style.borderColor = 'var(--background-modifier-border)';
+      });
+      const newColor = getTypeColor(group!);
+      btn.style.background = newColor;
+      btn.style.color = 'white';
+      btn.style.borderColor = newColor;
+      selectedTag = tag;
+      updateInputVisibility();
+    });
+    tagButtons.push(btn);
+    typeContainer.appendChild(btn);
   });
-  statusSelect.value = String(selectedStatus);
 
-  // 评分
-  const ratingLabel = document.createElement('label');
-  ratingLabel.textContent = '评分（1-5）';
-  ratingLabel.style.cssText = 'display:block; margin-bottom:4px; font-size:.9rem;';
-  const ratingInput = document.createElement('input');
-  ratingInput.type = 'number';
-  ratingInput.min = '1';
-  ratingInput.max = '5';
-  ratingInput.step = '0.1';
-  ratingInput.value = item.rating !== null && item.rating > 0 ? String(item.rating) : '';
-  ratingInput.style.cssText = 'width:100%; margin-bottom:12px;';
-  const ratingWrap = document.createElement('div');
-  ratingWrap.appendChild(ratingLabel);
-  ratingWrap.appendChild(ratingInput);
-  ratingWrap.style.display = statusSelect.value === String(STATUS_WATCHED) ? 'block' : 'none';
-  statusSelect.addEventListener('change', () => {
-    ratingWrap.style.display = statusSelect.value === String(STATUS_WATCHED) ? 'block' : 'none';
+  // 状态单选（按钮组）
+  const statusContainer = document.createElement('div');
+  statusContainer.style.cssText = 'display: flex; flex-direction: column; gap: 8px;';
+  const statusButtonGroup = document.createElement('div');
+  statusButtonGroup.style.cssText = 'display: flex; gap: 12px;';
+  let selectedStatus = prefill && prefill.status !== undefined ? prefill.status : STATUS_WATCHED;
+  const statusOptions = [
+    { value: STATUS_WANT, label: '想看' },
+    { value: STATUS_WATCHING, label: '在看' },
+    { value: STATUS_WATCHED, label: '已看' },
+  ];
+  const statusRadioButtons: HTMLElement[] = [];
+  statusOptions.forEach((opt) => {
+    const btn = document.createElement('button');
+    btn.textContent = opt.label;
+    btn.style.cssText = `
+      padding: 6px 14px; border-radius: 20px;
+      box-shadow: none;
+      background: var(--background-secondary); color: var(--text-normal);
+      cursor: pointer; font-size: 0.85rem; min-width: 70px;
+    `;
+    if (selectedStatus === opt.value) {
+      btn.style.background = 'var(--interactive-accent)';
+      btn.style.color = 'var(--text-on-accent, white)';
+      btn.style.borderColor = 'var(--interactive-accent)';
+    }
+    btn.addEventListener('click', () => {
+      statusRadioButtons.forEach((b) => {
+        b.style.background = 'var(--background-secondary)';
+        b.style.color = 'var(--text-normal)';
+        b.style.borderColor = 'var(--background-modifier-border)';
+      });
+      btn.style.background = 'var(--interactive-accent)';
+      btn.style.color = 'var(--text-on-accent, white)';
+      btn.style.borderColor = 'var(--interactive-accent)';
+      selectedStatus = opt.value;
+      updateInputVisibility();
+    });
+    statusRadioButtons.push(btn);
+    statusButtonGroup.appendChild(btn);
   });
+  statusContainer.appendChild(statusButtonGroup);
 
   // 季集
-  const seasonLabel = document.createElement('label');
-  seasonLabel.textContent = '季集（可选）';
-  seasonLabel.style.cssText = 'display:block; margin-bottom:4px; font-size:.9rem;';
+  const seasonContainer = document.createElement('div');
+  seasonContainer.style.cssText = 'display: flex; gap: 8px; align-items: center;';
   const seasonInput = document.createElement('input');
   seasonInput.type = 'text';
-  seasonInput.value = item.file ? '' : '';
-  seasonInput.style.cssText = 'width:100%; margin-bottom:12px;';
+  seasonInput.placeholder = '季集（可选）';
+  seasonInput.style.cssText = `
+    flex: 1; padding: 6px 8px; border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary); color: var(--text-normal);
+    font-size: 0.9rem;
+  `;
+  seasonContainer.appendChild(seasonInput);
+
+  // 评分
+  const ratingContainer = document.createElement('div');
+  ratingContainer.style.cssText = 'display: flex; gap: 8px; align-items: center;';
+  const ratingInput = document.createElement('input');
+  ratingInput.type = 'number';
+  ratingInput.min = '0.1';
+  ratingInput.max = '5';
+  ratingInput.step = '0.1';
+  ratingInput.placeholder = '评分（0.1~5）';
+  ratingInput.style.cssText = `
+    flex: 1; padding: 6px 8px; border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary); color: var(--text-normal);
+    font-size: 0.9rem;
+    width: 100%;
+  `;
+  ratingContainer.appendChild(ratingInput);
+
+  // 观影日期
+  const dateContainer = document.createElement('div');
+  dateContainer.style.cssText = 'display: flex; gap: 8px; align-items: center;';
+  const dateInput = document.createElement('input');
+  dateInput.type = 'datetime-local';
+  dateInput.step = '1';
+  dateInput.placeholder = '观影日期';
+  dateInput.style.cssText = `
+    flex: 1; padding: 6px 8px; border-radius: 6px;
+    text-indent: 8px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary); color: var(--text-normal);
+    font-size: 0.9rem;
+  `;
+  dateInput.value = localNowFormat();
+  dateContainer.appendChild(dateInput);
 
   // 影评
-  const reviewLabel = document.createElement('label');
-  reviewLabel.textContent = '影评（可选）';
-  reviewLabel.style.cssText = 'display:block; margin-bottom:4px; font-size:.9rem;';
-  const reviewInput = document.createElement('textarea');
-  reviewInput.rows = 3;
-  reviewInput.value = item.review || '';
-  reviewInput.style.cssText = 'width:100%; margin-bottom:16px;';
+  const reviewContainer = document.createElement('div');
+  reviewContainer.style.cssText = 'display: flex; flex-direction: column; gap: 4px;';
+  const reviewTextarea = document.createElement('textarea');
+  reviewTextarea.rows = 3;
+  reviewTextarea.placeholder = '影评（可选）';
+  reviewTextarea.style.cssText = `
+    width: 100%; padding: 6px 8px; border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary); color: var(--text-normal);
+    font-size: 0.9rem;
+    resize: vertical;
+  `;
+  reviewContainer.appendChild(reviewTextarea);
+
+  function updateInputVisibility() {
+    const showRatingReview = selectedStatus === STATUS_WATCHED;
+    ratingContainer.style.display = showRatingReview ? 'flex' : 'none';
+    reviewContainer.style.display = showRatingReview ? 'flex' : 'none';
+    const group = getGroupForTag(selectedTag);
+    seasonContainer.style.display = group !== '电影' ? 'flex' : 'none';
+  }
 
   // 按钮
   const btnRow = document.createElement('div');
-  btnRow.style.cssText = 'display:flex; gap:8px; justify-content:flex-end;';
+  btnRow.style.cssText = 'display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px;';
   const cancelBtn = document.createElement('button');
   cancelBtn.textContent = '取消';
-  cancelBtn.style.cssText = 'background:var(--background-modifier-border); border:none; border-radius:4px; padding:6px 16px; cursor:pointer;';
-  cancelBtn.addEventListener('click', closeEditModal);
+  cancelBtn.style.cssText = `
+    box-shadow: none;
+    padding: 6px 16px; border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-secondary);
+    color: var(--text-normal); cursor: pointer;
+  `;
   const confirmBtn = document.createElement('button');
-  confirmBtn.textContent = '保存修改';
-  confirmBtn.style.cssText = 'background:var(--interactive-accent); color:var(--text-on-accent); border:none; border-radius:4px; padding:6px 16px; cursor:pointer;';
+  confirmBtn.textContent = '确定';
+  confirmBtn.style.cssText = `
+    box-shadow: none;
+    padding: 6px 16px; border-radius: 6px;
+    background: var(--interactive-accent); color: var(--text-on-accent, white);
+    border: none; cursor: pointer; font-weight: 500;
+  `;
+
+  cancelBtn.addEventListener('click', closeAddModal);
   confirmBtn.addEventListener('click', async () => {
-    await handleEditConfirm(app, item, statusSelect, ratingInput, seasonInput, reviewInput);
+    const name = nameInput.value.trim();
+    if (!name) {
+      new Notice('请输入名称');
+      return;
+    }
+    if (!selectedTag) {
+      new Notice('请选择类型');
+      return;
+    }
+
+    const targetFolder = M.folderPath;
+    let folderObj = app.vault.getAbstractFileByPath(targetFolder);
+    if (!folderObj) await app.vault.createFolder(targetFolder);
+
+    const fileName = `《${name}》.md`;
+    const filePath = `${targetFolder}/${fileName}`;
+    const existingFile = app.vault.getAbstractFileByPath(filePath);
+    if (existingFile) {
+      new Notice(`影视“${name}”已存在，正在打开`);
+      closeAddModal();
+      closeOverlay();
+      await app.workspace.getLeaf().openFile(existingFile as TFile);
+      return;
+    }
+
+    let ratingValue: number;
+    if (selectedStatus === STATUS_WANT) ratingValue = -1;
+    else if (selectedStatus === STATUS_WATCHING) ratingValue = 0;
+    else if (selectedStatus === STATUS_WATCHED) {
+      const inputRating = parseFloat(ratingInput.value);
+      if (isNaN(inputRating) || inputRating <= 0) {
+        new Notice('已看状态请填写大于0的评分');
+        return;
+      }
+      ratingValue = inputRating;
+    } else {
+      ratingValue = -1;
+    }
+
+    const now = new Date();
+    const watchDateValue = (dateInput.value || localNowFormat()).replace('T', ' ');
+    const seasonEpisode = seasonInput.value.trim();
+    const reviewText = reviewTextarea.value.trim();
+
+    let fileContent = `---\ntags:\n- ${selectedTag}\n观影日期: ${watchDateValue}\n评分: ${ratingValue}\n`;
+    if (seasonEpisode) fileContent += `季集: ${seasonEpisode}\n`;
+    if (reviewText) fileContent += `影评: ${reviewText}\n`;
+    fileContent += `海报: \n---\n`;
+
+    try {
+      const newFile = await app.vault.create(filePath, fileContent);
+      closeAddModal();
+      closeOverlay();
+      refreshDataAndView(app);
+      await app.workspace.getLeaf().openFile(newFile);
+    } catch (e) {
+      new Notice('创建笔记失败');
+      console.error(e);
+    }
   });
+
   btnRow.appendChild(cancelBtn);
   btnRow.appendChild(confirmBtn);
 
-  modal.appendChild(title);
-  modal.appendChild(nameDisplay);
-  modal.appendChild(statusLabel);
-  modal.appendChild(statusSelect);
-  modal.appendChild(ratingWrap);
-  modal.appendChild(seasonLabel);
-  modal.appendChild(seasonInput);
-  modal.appendChild(reviewLabel);
-  modal.appendChild(reviewInput);
-  modal.appendChild(btnRow);
-  overlay.appendChild(modal);
-  document.body.appendChild(overlay);
-  M.editOverlay = overlay;
+  addModal.appendChild(titleEl);
+  addModal.appendChild(nameInput);
+  addModal.appendChild(typeContainer);
+  addModal.appendChild(statusContainer);
+  addModal.appendChild(seasonContainer);
+  addModal.appendChild(ratingContainer);
+  addModal.appendChild(dateContainer);
+  addModal.appendChild(reviewContainer);
+  addModal.appendChild(btnRow);
 
-  // 加载当前季集
-  const cache = app.metadataCache.getFileCache(item.file);
-  const fm = cache?.frontmatter;
-  if (fm && fm['季集'] !== undefined) {
-    seasonInput.value = String(fm['季集']);
-  }
-}
+  updateInputVisibility();
 
-async function handleEditConfirm(app: App, item: any, statusSelect: HTMLSelectElement, ratingInput: HTMLInputElement, seasonInput: HTMLInputElement, reviewInput: HTMLTextAreaElement): Promise<void> {
-  const selectedStatus = Number(statusSelect.value);
-  let ratingValue: number | string;
-  if (selectedStatus === STATUS_WATCHING) {
-    ratingValue = 0;
-  } else {
-    const r = parseFloat(ratingInput.value);
-    if (isNaN(r) || r <= 0) {
-      new Notice('已看状态请填写大于0的评分');
-      return;
-    }
-    ratingValue = r;
-  }
-
-  const watchDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
-  const seasonEpisode = seasonInput.value.trim();
-  const reviewText = reviewInput.value.trim();
-
-  await app.fileManager.processFrontMatter(item.file, (fm: Record<string, any>) => {
-    fm['评分'] = ratingValue;
-    fm['观影日期'] = watchDate;
-    if (seasonEpisode) {
-      fm['季集'] = seasonEpisode;
-    } else {
-      delete fm['季集'];
-    }
-    if (reviewText) {
-      fm['影评'] = reviewText;
-    } else {
-      delete fm['影评'];
-    }
+  addOverlayDiv.appendChild(addModal);
+  document.body.appendChild(addOverlayDiv);
+  M.addOverlay = addOverlayDiv;
+  addOverlayDiv.addEventListener('click', (e) => {
+    if (e.target === addOverlayDiv) closeAddModal();
   });
-
-  new Notice('已更新影视信息');
-  closeEditModal();
-  refreshDataAndView(app);
+  setTimeout(() => nameInput.focus(), 50);
 }
+
+/** 本地时间格式 YYYY-MM-DDTHH:mm:ss（moment 语义） */
+function localNowFormat(): string {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
+// ---------- 编辑弹窗（源码 L800-1046 逐字） ----------
 
 export function closeEditModal(): void {
   if (M.editOverlay) {
@@ -565,114 +555,250 @@ export function closeEditModal(): void {
   }
 }
 
-// ---------- 设置/筛选弹窗 ----------
+export function openEditModal(item: any, app: App): void {
+  if (M.editOverlay) {
+    closeEditModal();
+    return;
+  }
 
-export function openSettingsModal(): void {
-  if (M.settingsOverlay) return;
-
-  const overlay = document.createElement('div');
-  overlay.style.cssText = `
+  const editOverlayDiv = document.createElement('div');
+  editOverlayDiv.style.cssText = `
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
-    z-index: 1200;
+    background: rgba(0,0,0,0.4); z-index: 1200;
+    display: flex; align-items: center; justify-content: center;
+  `;
+  const editModal = document.createElement('div');
+  editModal.style.cssText = `
+    background: var(--background-primary); color: var(--text-normal);
+    border-radius: 12px; width: 90%; max-width: 480px;
+    padding: 20px; display: flex; flex-direction: column; gap: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    border: 1px solid var(--background-modifier-border);
+    max-height: 90vh;
+    overflow-y: auto;
   `;
 
-  const modal = document.createElement('div');
-  modal.style.cssText = `
-    background: var(--background-primary); border-radius: 12px;
-    width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto;
-    padding: 24px;
-  `;
+  const titleEl = document.createElement('div');
+  titleEl.textContent = `编辑影视 - 《${item.name}》`;
+  titleEl.style.cssText = 'font-size: 1.2rem; font-weight: 600;';
 
-  const title = document.createElement('h3');
-  title.textContent = '⚙️ 筛选与排序';
-  title.style.cssText = 'margin:0 0 16px 0;';
+  const infoRow = document.createElement('div');
+  infoRow.style.cssText = 'display: flex; gap: 16px; font-size: 0.9rem; color: var(--text-muted);';
+  infoRow.innerHTML = `<span>类型：${item.typeTag}</span>`;
+  editModal.appendChild(titleEl);
+  editModal.appendChild(infoRow);
 
-  // 排序
-  const sortLabel = document.createElement('label');
-  sortLabel.textContent = '排序方式';
-  sortLabel.style.cssText = 'display:block; margin-bottom:4px; font-size:.9rem;';
-  const sortSelect = document.createElement('select');
-  sortSelect.style.cssText = 'width:100%; margin-bottom:16px;';
-  const sortOptions = [
-    ['date_desc', '日期↓'],
-    ['date_asc', '日期↑'],
-    ['rating_desc', '评分↓'],
-    ['rating_asc', '评分↑'],
-    ['name_asc', '名称A-Z'],
-    ['name_desc', '名称Z-A'],
+  // 状态单选（仅在看、已看）
+  const statusContainer = document.createElement('div');
+  statusContainer.style.cssText = 'display: flex; flex-direction: column; gap: 8px;';
+  const statusButtonGroup = document.createElement('div');
+  statusButtonGroup.style.cssText = 'display: flex; gap: 12px;';
+
+  const statusOptions = [
+    { value: STATUS_WATCHING, label: '在看' },
+    { value: STATUS_WATCHED, label: '已看' },
   ];
-  sortOptions.forEach(([val, label]) => {
-    const opt = document.createElement('option');
-    opt.value = val;
-    opt.textContent = String(label);
-    sortSelect.appendChild(opt);
-  });
-  sortSelect.value = `${M.sortState.key}_${M.sortState.order}`;
+  let selectedStatus = item.status === STATUS_WANT ? STATUS_WATCHING : item.status;
+  const statusRadioButtons: HTMLElement[] = [];
 
-  // 类型筛选
-  const typeLabel = document.createElement('label');
-  typeLabel.textContent = '类型筛选';
-  typeLabel.style.cssText = 'display:block; margin-bottom:4px; font-size:.9rem;';
-  const typeSelect = document.createElement('select');
-  typeSelect.style.cssText = 'width:100%; margin-bottom:16px;';
-  ['全部', ...Object.keys(TYPE_GROUPS)].forEach((g) => {
-    const opt = document.createElement('option');
-    opt.value = g;
-    opt.textContent = g;
-    typeSelect.appendChild(opt);
+  statusOptions.forEach((opt) => {
+    const btn = document.createElement('button');
+    btn.textContent = opt.label;
+    btn.style.cssText = `
+      padding: 6px 14px; border-radius: 20px;
+      box-shadow: none;
+      background: var(--background-secondary); color: var(--text-normal);
+      cursor: pointer; font-size: 0.85rem; min-width: 70px;
+    `;
+    if (selectedStatus === opt.value) {
+      btn.style.background = 'var(--interactive-accent)';
+      btn.style.color = 'var(--text-on-accent, white)';
+      btn.style.borderColor = 'var(--interactive-accent)';
+    }
+    btn.addEventListener('click', () => {
+      statusRadioButtons.forEach((b) => {
+        b.style.background = 'var(--background-secondary)';
+        b.style.color = 'var(--text-normal)';
+        b.style.borderColor = 'var(--background-modifier-border)';
+      });
+      btn.style.background = 'var(--interactive-accent)';
+      btn.style.color = 'var(--text-on-accent, white)';
+      btn.style.borderColor = 'var(--interactive-accent)';
+      selectedStatus = opt.value;
+      updateInputVisibility();
+    });
+    statusRadioButtons.push(btn);
+    statusButtonGroup.appendChild(btn);
   });
-  typeSelect.value = M.typeFilter;
 
-  // 状态筛选
-  const statusLabel = document.createElement('label');
-  statusLabel.textContent = '状态筛选';
-  statusLabel.style.cssText = 'display:block; margin-bottom:4px; font-size:.9rem;';
-  const statusSelect = document.createElement('select');
-  statusSelect.style.cssText = 'width:100%; margin-bottom:20px;';
-  ['全部', '想看', '在看', '已看'].forEach((s) => {
-    const opt = document.createElement('option');
-    opt.value = s;
-    opt.textContent = s;
-    statusSelect.appendChild(opt);
-  });
-  statusSelect.value = M.statusFilter;
+  statusContainer.appendChild(statusButtonGroup);
+  editModal.appendChild(statusContainer);
+
+  // 季集
+  const seasonContainer = document.createElement('div');
+  seasonContainer.style.cssText = 'display: flex; gap: 8px; align-items: center;';
+  const seasonInput = document.createElement('input');
+  seasonInput.type = 'text';
+  seasonInput.placeholder = '季集（可选）';
+  seasonInput.style.cssText = `
+    flex: 1; padding: 6px 8px; border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary); color: var(--text-normal);
+    font-size: 0.9rem;
+  `;
+  const fm = app.metadataCache.getFileCache(item.file)?.frontmatter;
+  if (fm && fm['季集']) {
+    seasonInput.value = fm['季集'].toString();
+  }
+  seasonContainer.appendChild(seasonInput);
+  editModal.appendChild(seasonContainer);
+
+  // 评分
+  const ratingContainer = document.createElement('div');
+  ratingContainer.style.cssText = 'display: flex; gap: 8px; align-items: center;';
+  const ratingInput = document.createElement('input');
+  ratingInput.type = 'number';
+  ratingInput.min = '0.1';
+  ratingInput.max = '5';
+  ratingInput.step = '0.1';
+  ratingInput.placeholder = '评分（0.1~5）';
+  ratingInput.style.cssText = `
+    flex: 1; padding: 6px 8px; border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary); color: var(--text-normal);
+    font-size: 0.9rem;
+    width: 100%;
+  `;
+  if (item.status === STATUS_WATCHED && item.rating !== null && item.rating > 0) {
+    ratingInput.value = item.rating;
+  }
+  ratingContainer.appendChild(ratingInput);
+  editModal.appendChild(ratingContainer);
+
+  // 观影日期 —— 强制显示今天
+  const dateContainer = document.createElement('div');
+  dateContainer.style.cssText = 'display: flex; gap: 8px; align-items: center;';
+  const dateInput = document.createElement('input');
+  dateInput.type = 'datetime-local';
+  dateInput.step = '1';
+  dateInput.placeholder = '观影日期';
+  dateInput.style.cssText = `
+    flex: 1; padding: 6px 8px; border-radius: 6px;
+    text-indent: 8px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary); color: var(--text-normal);
+    font-size: 0.9rem;
+  `;
+  dateInput.value = localNowFormat();
+  dateContainer.appendChild(dateInput);
+  editModal.appendChild(dateContainer);
+
+  // 影评
+  const reviewContainer = document.createElement('div');
+  reviewContainer.style.cssText = 'display: flex; flex-direction: column; gap: 4px;';
+  const reviewTextarea = document.createElement('textarea');
+  reviewTextarea.rows = 3;
+  reviewTextarea.placeholder = '影评（可选）';
+  reviewTextarea.style.cssText = `
+    width: 100%; padding: 6px 8px; border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary); color: var(--text-normal);
+    font-size: 0.9rem;
+    resize: vertical;
+  `;
+  if (item.review) {
+    reviewTextarea.value = item.review;
+  }
+  reviewContainer.appendChild(reviewTextarea);
+  editModal.appendChild(reviewContainer);
+
+  function updateInputVisibility() {
+    const showRatingReview = selectedStatus === STATUS_WATCHED;
+    ratingContainer.style.display = showRatingReview ? 'flex' : 'none';
+    reviewContainer.style.display = showRatingReview ? 'flex' : 'none';
+    const group = getGroupForTag(item.typeTag);
+    seasonContainer.style.display = group !== '电影' ? 'flex' : 'none';
+  }
 
   // 按钮
   const btnRow = document.createElement('div');
-  btnRow.style.cssText = 'display:flex; gap:8px; justify-content:flex-end;';
+  btnRow.style.cssText = 'display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px;';
   const cancelBtn = document.createElement('button');
   cancelBtn.textContent = '取消';
-  cancelBtn.style.cssText = 'background:var(--background-modifier-border); border:none; border-radius:4px; padding:6px 16px; cursor:pointer;';
-  cancelBtn.addEventListener('click', closeSettings);
+  cancelBtn.style.cssText = `
+    box-shadow: none;
+    padding: 6px 16px; border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-secondary);
+    color: var(--text-normal); cursor: pointer;
+  `;
   const confirmBtn = document.createElement('button');
-  confirmBtn.textContent = '应用';
-  confirmBtn.style.cssText = 'background:var(--interactive-accent); color:var(--text-on-accent); border:none; border-radius:4px; padding:6px 16px; cursor:pointer;';
-  confirmBtn.addEventListener('click', () => {
-    const [key, order] = sortSelect.value.split('_');
-    M.sortState.key = key;
-    M.sortState.order = order as 'asc' | 'desc';
-    M.typeFilter = typeSelect.value;
-    M.statusFilter = statusSelect.value;
-    M.loadedCount = 0;
-    closeSettings();
-    renderList();
+  confirmBtn.textContent = '确定';
+  confirmBtn.style.cssText = `
+    box-shadow: none;
+    padding: 6px 16px; border-radius: 6px;
+    background: var(--interactive-accent); color: var(--text-on-accent, white);
+    border: none; cursor: pointer; font-weight: 500;
+  `;
+
+  cancelBtn.addEventListener('click', closeEditModal);
+  confirmBtn.addEventListener('click', async () => {
+    if (selectedStatus === STATUS_WATCHED) {
+      const ratingVal = parseFloat(ratingInput.value);
+      if (isNaN(ratingVal) || ratingVal <= 0) {
+        new Notice('已看状态请填写大于0的评分');
+        return;
+      }
+    }
+
+    let ratingValue: number;
+    if (selectedStatus === STATUS_WATCHING) ratingValue = 0;
+    else if (selectedStatus === STATUS_WATCHED) {
+      ratingValue = parseFloat(ratingInput.value);
+    } else {
+      ratingValue = item.rating ?? -1;
+    }
+
+    const now = new Date();
+    const watchDate = (dateInput.value || localNowFormat()).replace('T', ' ');
+    const seasonEpisode = seasonInput.value.trim();
+    const reviewText = reviewTextarea.value.trim();
+
+    await app.fileManager.processFrontMatter(item.file, (fm: Record<string, any>) => {
+      fm['评分'] = ratingValue;
+      fm['观影日期'] = watchDate;
+      if (seasonEpisode) {
+        fm['季集'] = seasonEpisode;
+      } else {
+        delete fm['季集'];
+      }
+      if (reviewText) {
+        fm['影评'] = reviewText;
+      } else {
+        delete fm['影评'];
+      }
+    });
+
+    new Notice('已更新影视信息');
+    closeEditModal();
+    refreshDataAndView(app);
   });
+
   btnRow.appendChild(cancelBtn);
   btnRow.appendChild(confirmBtn);
+  editModal.appendChild(btnRow);
 
-  modal.appendChild(title);
-  modal.appendChild(sortLabel);
-  modal.appendChild(sortSelect);
-  modal.appendChild(typeLabel);
-  modal.appendChild(typeSelect);
-  modal.appendChild(statusLabel);
-  modal.appendChild(statusSelect);
-  modal.appendChild(btnRow);
-  overlay.appendChild(modal);
-  document.body.appendChild(overlay);
-  M.settingsOverlay = overlay;
+  updateInputVisibility();
+
+  editOverlayDiv.appendChild(editModal);
+  document.body.appendChild(editOverlayDiv);
+  M.editOverlay = editOverlayDiv;
+  editOverlayDiv.addEventListener('click', (e) => {
+    if (e.target === editOverlayDiv) closeEditModal();
+  });
 }
+
+// ---------- 设置/筛选弹窗（源码 L1048-1216 逐字） ----------
 
 export function closeSettings(): void {
   if (M.settingsOverlay) {
@@ -681,30 +807,201 @@ export function closeSettings(): void {
   }
 }
 
-// ---------- 主 overlay ----------
+export function openSettingsModal(): void {
+  if (M.settingsOverlay) {
+    closeSettings();
+    return;
+  }
+
+  const settingsOverlayDiv = document.createElement('div');
+  settingsOverlayDiv.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.3); z-index: 1100;
+    display: flex; align-items: center; justify-content: center;
+  `;
+  const settingsModal = document.createElement('div');
+  settingsModal.style.cssText = `
+    background: var(--background-primary); color: var(--text-normal);
+    border-radius: 12px; width: 90%; max-width: 500px;
+    display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    border: 1px solid var(--background-modifier-border);
+  `;
+
+  const settingsHeader = document.createElement('div');
+  settingsHeader.style.cssText = `
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; border-bottom: 1px solid var(--background-modifier-border);
+  `;
+  settingsHeader.innerHTML = '<h3 style="margin:0;">筛选与排序</h3>';
+  const closeSettingsBtn = document.createElement('button');
+  closeSettingsBtn.textContent = '✕';
+  closeSettingsBtn.style.cssText = `
+    background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-muted);
+  `;
+  closeSettingsBtn.addEventListener('click', closeSettings);
+  settingsHeader.appendChild(closeSettingsBtn);
+
+  const settingsContent = document.createElement('div');
+  settingsContent.style.cssText = 'padding: 16px; max-height: 70vh; overflow-y: auto;';
+
+  function refreshSettingsUI() {
+    settingsContent.innerHTML = '';
+
+    // 筛选：类型（['全部', ...ALL_TAGS] 单标签按钮，实时生效）
+    const filterSection = document.createElement('div');
+    filterSection.style.cssText = 'margin-bottom: 20px;';
+    const typeGroup = document.createElement('div');
+    typeGroup.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;';
+    const typeFilters = ['全部', ...ALL_TAGS];
+    typeFilters.forEach((opt) => {
+      const btn = document.createElement('button');
+      btn.textContent = opt;
+      btn.style.cssText = `
+        padding: 6px 14px; border-radius: 20px; box-shadow: none;
+        background: var(--background-secondary); color: var(--text-normal);
+        cursor: pointer; font-size: 0.85rem;
+        border: 1px solid var(--background-modifier-border);
+      `;
+      let color: string | null = null;
+      if (opt !== '全部') {
+        const group = getGroupForTag(opt);
+        if (group) color = getTypeColor(group);
+      }
+      if (M.typeFilter === opt) {
+        if (color) {
+          btn.style.background = color;
+          btn.style.color = 'white';
+          btn.style.borderColor = color;
+        } else {
+          btn.style.background = 'var(--interactive-accent)';
+          btn.style.color = 'var(--text-on-accent, white)';
+          btn.style.borderColor = 'var(--interactive-accent)';
+        }
+      }
+      btn.addEventListener('click', () => {
+        M.typeFilter = opt;
+        M.loadedCount = 0;
+        renderList();
+        refreshSettingsUI();
+      });
+      typeGroup.appendChild(btn);
+    });
+    filterSection.appendChild(typeGroup);
+
+    // 筛选：状态
+    const statusGroup = document.createElement('div');
+    statusGroup.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap;';
+    const statusFilters = ['全部', '想看', '在看', '已看'];
+    statusFilters.forEach((opt) => {
+      const btn = document.createElement('button');
+      btn.textContent = opt;
+      btn.style.cssText = `
+        padding: 6px 14px; border-radius: 20px; box-shadow: none;
+        background: var(--background-secondary); color: var(--text-normal);
+        cursor: pointer; font-size: 0.85rem;
+        border: 1px solid var(--background-modifier-border);
+      `;
+      if (M.statusFilter === opt) {
+        btn.style.background = 'var(--interactive-accent)';
+        btn.style.color = 'var(--text-on-accent, white)';
+        btn.style.borderColor = 'var(--interactive-accent)';
+      }
+      btn.addEventListener('click', () => {
+        M.statusFilter = opt;
+        M.loadedCount = 0;
+        renderList();
+        refreshSettingsUI();
+      });
+      statusGroup.appendChild(btn);
+    });
+    filterSection.appendChild(statusGroup);
+    settingsContent.appendChild(filterSection);
+
+    // 排序
+    const sortSection = document.createElement('div');
+    sortSection.style.cssText = 'margin-bottom: 8px;';
+    const sortGroup = document.createElement('div');
+    sortGroup.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap;';
+    const sortOptions = [
+      { label: '日期↓', key: 'date', order: 'desc' },
+      { label: '日期↑', key: 'date', order: 'asc' },
+      { label: '评分↓', key: 'rating', order: 'desc' },
+      { label: '评分↑', key: 'rating', order: 'asc' },
+      { label: '名称A-Z', key: 'name', order: 'asc' },
+      { label: '名称Z-A', key: 'name', order: 'desc' },
+    ];
+    sortOptions.forEach((opt) => {
+      const btn = document.createElement('button');
+      btn.textContent = opt.label;
+      btn.style.cssText = `
+        padding: 6px 12px; border-radius: 16px; box-shadow: none;
+        background: var(--background-secondary); color: var(--text-normal);
+        cursor: pointer; font-size: 0.85rem;
+        border: 1px solid var(--background-modifier-border);
+      `;
+      if (M.sortState.key === opt.key && M.sortState.order === opt.order) {
+        btn.style.background = 'var(--interactive-accent)';
+        btn.style.color = 'var(--text-on-accent, white)';
+        btn.style.borderColor = 'var(--interactive-accent)';
+      }
+      btn.addEventListener('click', () => {
+        M.sortState.key = opt.key;
+        M.sortState.order = opt.order as 'asc' | 'desc';
+        M.loadedCount = 0;
+        renderList();
+        refreshSettingsUI();
+      });
+      sortGroup.appendChild(btn);
+    });
+    sortSection.appendChild(sortGroup);
+    settingsContent.appendChild(sortSection);
+  }
+
+  refreshSettingsUI();
+  settingsModal.appendChild(settingsHeader);
+  settingsModal.appendChild(settingsContent);
+  settingsOverlayDiv.appendChild(settingsModal);
+  document.body.appendChild(settingsOverlayDiv);
+
+  M.settingsOverlay = settingsOverlayDiv;
+  settingsOverlayDiv.addEventListener('click', (e) => {
+    if (e.target === settingsOverlayDiv) closeSettings();
+  });
+}
+
+// ---------- 主 overlay（源码 L1219-1402 逐字） ----------
 
 export function createOverlay(app: App, statusType?: string): void {
-  let initialStatus = statusType;
-  if (!initialStatus) {
-    initialStatus = takeHomeFilmStatus() ?? '全部';
+  registerEscapeHandler(); // 确保监听已注册
+  // 主页点击"在看/想看"传入初始筛选；无参数时恢复默认"全部"
+  if (statusType) M.statusFilter = statusType;
+  else {
+    const home = takeHomeFilmStatus();
+    M.statusFilter = home || '全部';
+  }
+  M.loadedCount = 0;
+  if (M.currentOverlay) {
+    M.currentOverlay.style.visibility = 'visible';
+    renderList();
+    return;
   }
 
   const overlay = document.createElement('div');
   overlay.id = '__yin_ying__';
   overlay.style.cssText = `
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
-    z-index: 1000;
+    background: rgba(0,0,0,0.5); z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
   `;
 
   const modal = document.createElement('div');
   modal.style.cssText = `
-    background: var(--background-primary); border-radius: 12px;
-    width: 100%; max-width: 600px; height: 90vh;
+    background: var(--background-primary); color: var(--text-normal);
+    border-radius: 12px; width: 100%; max-width: 600px; height: 90vh;
     display: flex; flex-direction: column; overflow: hidden;
     box-shadow: 0 8px 30px rgba(0,0,0,0.3);
   `;
-
   if (window.innerWidth <= 768) {
     modal.style.height = '100vh';
     modal.style.borderRadius = '0';
@@ -712,38 +1009,32 @@ export function createOverlay(app: App, statusType?: string): void {
     modal.style.paddingTop = '24px';
   }
 
-  // 头部
   const header = document.createElement('div');
-  header.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:8px 16px; flex-shrink:0; border-bottom:1px solid var(--background-modifier-border);';
-  header.innerHTML = '<p style="font-size:.8rem; margin:0;">影视</p>';
+  header.style.cssText = `
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 26px;
+  `;
+  header.innerHTML = '<p style="font-size:.8rem;">影视</p>';
 
-  const btnGroup = document.createElement('div');
-  btnGroup.style.cssText = 'display:flex; gap:4px;';
+  const headerButtons = document.createElement('div');
+  headerButtons.style.cssText = 'display: flex; align-items: center;';
 
-  const addBtn = document.createElement('button');
-  addBtn.textContent = '✏️';
-  addBtn.style.cssText = 'background:none; border:none; cursor:pointer; font-size:1rem; box-shadow:none;';
-  addBtn.addEventListener('click', () => openAddModal(app));
-  btnGroup.appendChild(addBtn);
+  const mkBtn = (text: string, title: string, css: string, onClick: (e: MouseEvent) => void) => {
+    const btn = document.createElement('button');
+    btn.textContent = text;
+    if (title) btn.title = title;
+    btn.style.cssText = css;
+    btn.addEventListener('click', onClick);
+    headerButtons.appendChild(btn);
+    return btn;
+  };
 
-  const searchBtn = document.createElement('button');
-  searchBtn.textContent = '🔍';
-  searchBtn.title = '搜索影视';
-  searchBtn.style.cssText = 'background:none; border:none; cursor:pointer; font-size:1rem; box-shadow:none;';
-  searchBtn.addEventListener('mouseenter', () => {
-    searchBtn.style.background = 'var(--background-modifier-hover)';
-  });
-  searchBtn.addEventListener('mouseleave', () => {
-    searchBtn.style.background = 'none';
-  });
-  searchBtn.addEventListener('click', () => toggleSearch());
-  btnGroup.appendChild(searchBtn);
-
-  const analysisBtn = document.createElement('button');
-  analysisBtn.textContent = '📊';
-  analysisBtn.title = '观影数据分析';
-  analysisBtn.style.cssText = 'background:none; border:none; cursor:pointer; font-size:1rem; box-shadow:none;';
-  analysisBtn.addEventListener('click', () => {
+  const analysisBtn = mkBtn('📊', '观影数据分析', `
+    background: none; border: none; font-size: .7rem;
+    cursor: pointer; color: var(--text-normal); box-shadow: none;
+    padding: 0; margin-left: 15px;
+  `, (e) => {
+    e.stopPropagation();
     const commands = (app as any).commands;
     if (commands && commands.commands && commands.commands['movie-analysis-open']) {
       commands.executeCommandById('movie-analysis-open');
@@ -751,54 +1042,98 @@ export function createOverlay(app: App, statusType?: string): void {
       new Notice('请先在命令面板运行一次「影视：观影数据分析」');
     }
   });
-  btnGroup.appendChild(analysisBtn);
 
-  const recommendBtn = document.createElement('button');
-  recommendBtn.textContent = '🤖';
-  recommendBtn.title = 'AI 推荐';
-  recommendBtn.style.cssText = 'background:none; border:none; cursor:pointer; font-size:1rem; box-shadow:none;';
-  recommendBtn.addEventListener('click', () => {
+  const recommendBtn = mkBtn('🤖', 'AI 推荐', `
+    background: none; border: none; font-size: .7rem;
+    cursor: pointer; color: var(--text-normal); box-shadow: none;
+    padding: 0; margin-left: 15px;
+  `, (e) => {
+    e.stopPropagation();
     openRecommendModal(app);
   });
-  btnGroup.appendChild(recommendBtn);
 
-  const settingsBtn = document.createElement('button');
-  settingsBtn.textContent = '⚙️';
-  settingsBtn.style.cssText = 'background:none; border:none; cursor:pointer; font-size:1rem; box-shadow:none;';
-  settingsBtn.addEventListener('click', () => openSettingsModal());
-  btnGroup.appendChild(settingsBtn);
+  const settingsBtn = mkBtn('⚙️', '', `
+    background: none; border: none; border-radius: 6px; font-size: 0.7rem;
+    cursor: pointer; color: var(--text-normal); box-shadow: none;
+    padding: 0; margin-left: 15px;
+  `, (e) => {
+    e.stopPropagation();
+    openSettingsModal();
+  });
 
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '❌';
-  closeBtn.style.cssText = 'background:none; border:none; cursor:pointer; font-size:.8rem; box-shadow:none;';
-  closeBtn.addEventListener('click', closeOverlay);
-  btnGroup.appendChild(closeBtn);
+  const closeBtn = mkBtn('❌', '', `
+    background: none; border: none; font-size: 0.55rem;
+    cursor: pointer; color: var(--text-muted); box-shadow: none;
+    padding: 0; margin-left: 15px;
+  `, () => closeOverlay());
 
-  header.appendChild(btnGroup);
+  const addBtn = mkBtn('✏️', '', `
+    background: none; border: none; font-size: .65rem;
+    cursor: pointer; color: var(--text-normal); box-shadow: none;
+    padding: 0; margin-left: 15px;
+  `, (e) => {
+    e.stopPropagation();
+    openAddModal(app);
+  });
 
-  // 搜索区
+  const searchBtn = mkBtn('🔍', '搜索影视', `
+    background: none; border: none; font-size: 15px;
+    cursor: pointer; color: var(--text-muted); box-shadow: none;
+    padding: 0; width: 20px; height: 20px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s; margin-left: 15px; margin-top: 4px;
+  `, (e) => {
+    e.stopPropagation();
+    toggleSearch();
+  });
+  searchBtn.addEventListener('mouseover', () => {
+    searchBtn.style.background = 'var(--background-secondary)';
+  });
+  searchBtn.addEventListener('mouseout', () => {
+    searchBtn.style.background = 'none';
+  });
+
+  headerButtons.appendChild(addBtn);
+  headerButtons.appendChild(searchBtn);
+  headerButtons.appendChild(analysisBtn);
+  headerButtons.appendChild(recommendBtn);
+  headerButtons.appendChild(settingsBtn);
+  headerButtons.appendChild(closeBtn);
+  header.appendChild(headerButtons);
+
   const searchContainer = document.createElement('div');
   searchContainer.id = 'movie-search-container';
-  searchContainer.style.cssText = 'display:none; padding:0 24px 12px 24px;';
+  searchContainer.style.cssText = 'display: none; padding: 0 24px 12px 24px;';
+
   const searchInput = document.createElement('input');
   searchInput.id = 'movie-search-input';
   searchInput.type = 'text';
   searchInput.placeholder = '🔍 搜索影视（名称、类型、影评）...';
-  searchInput.style.cssText = 'width:100%;';
-  searchInput.addEventListener('input', () => {
+  searchInput.style.cssText = `
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    outline: none;
+    box-sizing: border-box;
+  `;
+  searchInput.addEventListener('input', (e) => {
+    const keyword = (e.target as HTMLInputElement).value.trim();
     if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
     M.searchDebounceTimer = setTimeout(() => {
-      M.searchKeyword = searchInput.value;
+      M.searchKeyword = keyword;
       M.loadedCount = 0;
       renderList();
     }, 300);
   });
   searchContainer.appendChild(searchInput);
 
-  // 列表容器
   const listContainer = document.createElement('div');
   listContainer.className = 'list-container';
-  listContainer.style.cssText = 'flex:1; overflow-y:auto; padding: 12px 16px;';
+  listContainer.style.cssText = 'flex: 1; overflow-y: auto; padding: 8px 16px;';
 
   modal.appendChild(header);
   modal.appendChild(searchContainer);
@@ -807,27 +1142,18 @@ export function createOverlay(app: App, statusType?: string): void {
   document.body.appendChild(overlay);
 
   M.currentOverlay = overlay;
-  M.renderListFn = renderList;
 
-  // 应用初始状态过滤
-  if (initialStatus && initialStatus !== '全部') {
-    M.statusFilter = initialStatus;
-  }
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeOverlay();
+  });
 
   rebuildItems(app);
   M.loadedCount = 0;
   renderList();
   setupInfiniteScroll(listContainer);
-
-  // 点击遮罩空白关闭
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) {
-      closeOverlay();
-    }
-  });
 }
 
-// ---------- ESC ----------
+// ---------- ESC（源码 L1403-1415 逐字） ----------
 
 export function registerEscapeHandler(): void {
   escManager.register('movie', {

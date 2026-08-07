@@ -20,11 +20,17 @@ export function rebuildItems(app: App): MovieItem[] {
       const basename = file.basename;
       const name = basename.match(/《(.+)》/)?.[1] ?? basename;
 
-      // tags → typeTag（按 ALL_TAGS 顺序首个命中）
+      // tags → typeTag（源码：遍历 ALL_TAGS，ALL_TAGS 顺序优先）
       let rawTags = fm.tags;
       if (typeof rawTags === 'string') rawTags = [rawTags];
       const tags: string[] = Array.isArray(rawTags) ? rawTags.map((t: any) => String(t)) : [];
-      const typeTag = tags.find((t) => ALL_TAGS.includes(t)) ?? null;
+      let typeTag: string | null = null;
+      for (const t of ALL_TAGS) {
+        if (tags.includes(t)) {
+          typeTag = t;
+          break;
+        }
+      }
       if (!typeTag) continue;
       const group = getGroupForTag(typeTag);
       if (!group) continue;
@@ -99,18 +105,19 @@ export function getDisplayItems(): MovieItem[] {
   let list = [...M.items];
 
   if (M.typeFilter !== '全部') {
-    list = list.filter((i) => i.group === M.typeFilter);
+    list = list.filter((item) => item.typeTag === M.typeFilter);
   }
   if (M.statusFilter !== '全部') {
     list = list.filter((i) => i.status === (M.statusFilter === '想看' ? STATUS_WANT : M.statusFilter === '在看' ? STATUS_WATCHING : STATUS_WATCHED));
   }
   if (M.searchKeyword) {
-    const kw = M.searchKeyword.toLowerCase();
-    list = list.filter((i) => {
-      const searchable = [i.name, i.typeTag, i.review, i.genre, i.director, i.actors, i.region]
-        .filter((v) => v)
-        .map((v) => v!.toLowerCase());
-      return searchable.some((v) => v.includes(kw));
+    const lowerKeyword = M.searchKeyword.toLowerCase();
+    list = list.filter((item) => {
+      return (
+        (item.name && item.name.toLowerCase().includes(lowerKeyword)) ||
+        (item.typeTag && item.typeTag.toLowerCase().includes(lowerKeyword)) ||
+        (item.review && item.review.toLowerCase().includes(lowerKeyword))
+      );
     });
   }
 
