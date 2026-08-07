@@ -10,3 +10,11 @@ if (!window.getSelection) {
     addRange: () => {},
   });
 }
+
+// 补齐 jsdom 缺失的 Clipboard API（备忘录剪贴板读取）
+if (!navigator.clipboard) {
+  Object.defineProperty(navigator, 'clipboard', {
+    value: { readText: () => Promise.resolve('') },
+    configurable: true,
+  });
+}

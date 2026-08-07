@@ -57,6 +57,10 @@ export class MockVault {
     this.dirs.add(path);
   }
 
+  getFiles(): any[] {
+    return [...this.files.keys()].map((p) => this.file(p));
+  }
+
   on(): any {
     return { ref: 'mock-ref' };
   }
