@@ -8,6 +8,7 @@ import { Plugin, PluginSettingTab, Setting } from 'obsidian';
 import { escManager } from './core/esc-manager';
 import { setApp, getApp } from './core/app';
 import { setAISettingsProvider, resetAIProviderCache } from './core/ai';
+import { setMemoSettingsProvider, unloadMemo } from './memo';
 
 import MemoSettings, { DEFAULT_SETTINGS } from './settings';
 
@@ -80,6 +81,8 @@ export default class MemoSuitePlugin extends Plugin {
     // AI 设置注入（Q3 的 _q3Settings 语义 → 插件设置）
     setAISettingsProvider(() => this.settings);
     resetAIProviderCache();
+    // 备忘录设置注入
+    setMemoSettingsProvider(() => this.settings);
 
     // 命令裸注册（不设置默认 hotkeys，保留用户既有绑定）
     for (const c of COMMANDS) {
@@ -111,6 +114,7 @@ export default class MemoSuitePlugin extends Plugin {
       }
     }
     escManager.destroy();
+    unloadMemo();
   }
 
   async saveSettings() {
