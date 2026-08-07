@@ -17,6 +17,8 @@ const context = await esbuild.context({
   logLevel: "info",
   sourcemap: prod ? false : "inline",
   treeShaking: true,
+  minify: prod,
+  charset: "utf8",
   outfile: path.join(VAULT_PLUGIN_DIR, "main.js"),
 });
 
