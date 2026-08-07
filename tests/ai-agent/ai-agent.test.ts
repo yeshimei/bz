@@ -125,7 +125,7 @@ describe('sync 纯函数', () => {
   });
 });
 
-describe('事件同步（memo + favorites）', () => {
+describe('事件同步（bz + favorites）', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
   });
@@ -145,8 +145,8 @@ describe('事件同步（memo + favorites）', () => {
     );
     await flushQueue();
 
-    const memo = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
-    expect(memo[0]).toMatchObject({ title: '新笔记', linkedNote: '卡片盒/新笔记.md', notePath: '卡片盒/新笔记.md' });
+    const bz = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(bz[0]).toMatchObject({ title: '新笔记', linkedNote: '卡片盒/新笔记.md', notePath: '卡片盒/新笔记.md' });
     const fav = JSON.parse(vault.files.get('CONFIG/STORAGE/favorites.json')!);
     expect(fav[0]).toMatchObject({ title: '新笔记', linkedNote: '卡片盒/新笔记.md' });
   });
@@ -161,8 +161,8 @@ describe('事件同步（memo + favorites）', () => {
       '我的/日记/2024.md'
     );
     await flushQueue();
-    const memo = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
-    expect(memo[0].linkedNote).toBe('我的/日记/2024.md'); // 未变
+    const bz = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(bz[0].linkedNote).toBe('我的/日记/2024.md'); // 未变
   });
 
   it('delete 事件：清空两个数据源的关联', async () => {
@@ -177,13 +177,13 @@ describe('事件同步（memo + favorites）', () => {
     vaultHandlers['delete'][0]({ path: '卡片盒/A.md', basename: 'A', extension: 'md' });
     await flushQueue();
 
-    const memo = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
-    expect(memo[0].linkedNote).toBeNull();
+    const bz = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(bz[0].linkedNote).toBeNull();
     const fav = JSON.parse(vault.files.get('CONFIG/STORAGE/favorites.json')!);
     expect(fav[0].linkedNote).toBeNull();
   });
 
-  it('create 事件：favorites 同名自动关联；memo 不动', async () => {
+  it('create 事件：favorites 同名自动关联；bz 不动', async () => {
     const { vault, vaultHandlers } = await setup();
     vault.files.set('CONFIG/STORAGE/favorites.json', JSON.stringify([
       { id: 'f1', title: '新文章', linkedNote: null },
@@ -227,8 +227,8 @@ describe('事件同步（memo + favorites）', () => {
     );
     await flushQueue();
 
-    const memo = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
-    expect(memo[0]).toMatchObject({ linkedNote: '卡片盒/C.md', notePath: '卡片盒/C.md', title: 'C' });
+    const bz = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(bz[0]).toMatchObject({ linkedNote: '卡片盒/C.md', notePath: '卡片盒/C.md', title: 'C' });
   });
 });
 
@@ -264,9 +264,9 @@ describe('AI 剪藏匹配', () => {
     await vi.advanceTimersByTimeAsync(50);
     await flushQueue();
 
-    const memo = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
-    expect(memo[0]).toMatchObject({ title: '文章1', linkedNote: '归档/网页剪藏/文章1.md' });
-    expect(memo[0].completed).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/); // 已归档
+    const bz = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(bz[0]).toMatchObject({ title: '文章1', linkedNote: '归档/网页剪藏/文章1.md' });
+    expect(bz[0].completed).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/); // 已归档
     expect(document.getElementById('clip-ok')).toBeNull(); // 无弹窗
     vi.useRealTimers();
   });
@@ -300,9 +300,9 @@ describe('AI 剪藏匹配', () => {
     okBtn!.click();
     await vi.advanceTimersByTimeAsync(100);
     await flushQueue();
-    const memo = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
-    expect(memo[0]).toMatchObject({ title: '文章1', linkedNote: '归档/网页剪藏/文章1.md' });
-    expect(memo[0].completed).not.toBeNull();
+    const bz = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(bz[0]).toMatchObject({ title: '文章1', linkedNote: '归档/网页剪藏/文章1.md' });
+    expect(bz[0].completed).not.toBeNull();
     vi.useRealTimers();
   });
 
@@ -326,8 +326,8 @@ describe('AI 剪藏匹配', () => {
     await flushQueue();
 
     expect(document.getElementById('clip-ok')).toBeNull();
-    const memo = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
-    expect(memo[0].completed).toBeNull();
+    const bz = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(bz[0].completed).toBeNull();
     vi.useRealTimers();
   });
 

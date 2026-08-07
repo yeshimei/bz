@@ -153,7 +153,7 @@ export class UIManager {
       this.refreshPanel();
     });
     header.querySelector('#review-btn-quiz')!.addEventListener('click', () => {
-      (app as any).commands?.executeCommandById?.('quiz-master-open');
+      (app as any).commands?.executeCommandById?.('bz-quiz-master-open');
     });
     header.querySelector('#review-btn-close')!.addEventListener('click', () => this.hideMain());
     this.mask.onclick = () => this.hideMain();
@@ -167,7 +167,7 @@ export class UIManager {
     this.refreshPanel();
     // 自动更新题库（异步，不阻塞界面）
     try {
-      (this.app as any).commands?.executeCommandById?.('quiz-master-update');
+      (this.app as any).commands?.executeCommandById?.('bz-quiz-master-update');
     } catch {
       /* ignore */
     }

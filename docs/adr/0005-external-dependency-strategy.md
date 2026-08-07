@@ -1,6 +1,6 @@
 # 0005 — 外部依赖策略：AI 配置入插件设置；Dataview 渲染保留；Ollama 走 HTTP
 
-memo-suite 涉及三类外部依赖，分别定策：
+bz 涉及三类外部依赖，分别定策：
 
 ## 1. AI 配置（DeepSeek / OpenCode Go）
 

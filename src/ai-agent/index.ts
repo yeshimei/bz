@@ -1,17 +1,17 @@
 /**
  * AI Agent（ticket 19）——笔记 ⇄ 备忘录/收藏本 自动同步 + AI 剪藏匹配
  * AIAgent.js 逐字移植：
- *   rename → 同步引用路径/标题（memo + favorites）
- *   delete → 清空关联（memo + favorites）
+ *   rename → 同步引用路径/标题（bz + favorites）
+ *   delete → 清空关联（bz + favorites）
  *   create/open → 同名条目自动关联（仅 favorites）
- *   create(剪藏) → URL 精确匹配直接归档；不中 → AI 判断弹窗批准（仅 memo）
+ *   create(剪藏) → URL 精确匹配直接归档；不中 → AI 判断弹窗批准（仅 bz）
  * 权限模型：非 AI 操作静默直改；仅 AI 剪藏匹配弹窗批准。
- * 依赖：memo 域（DataManager，src/memo/data.ts）、core AI（createAI）。
+ * 依赖：bz 域（DataManager，src/bz/data.ts）、core AI（createAI）。
  */
 import type { App } from 'obsidian';
 import { createAI, type AIService } from '../core/ai';
-import { DataManager } from '../memo/data';
-import { ensureMemo } from '../memo';
+import { DataManager } from '../bz/data';
+import { ensureBz } from '../bz';
 import {
   syncRename,
   syncDelete,
@@ -202,7 +202,7 @@ export async function ensureAIAgent(app: App): Promise<void> {
   initialized = true;
   _app = app;
   // 依赖备忘录实例（AIAgent 与备忘录共享 memo.json，原 window.__memo 语义）
-  await ensureMemo(app);
+  await ensureBz(app);
   _ai = createAI();
   createNoteSyncAgent(app, _ai);
 }

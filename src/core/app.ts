@@ -12,7 +12,7 @@ export function setApp(app: App) {
 
 export function getApp(): App {
   if (!_app) {
-    throw new Error('memo-suite: app 未初始化（setApp 未调用）');
+    throw new Error('bz: app 未初始化（setApp 未调用）');
   }
   return _app;
 }

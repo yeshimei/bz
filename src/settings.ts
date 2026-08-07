@@ -5,7 +5,7 @@
  * 默认值均提取自各脚本源码 settings.options.defaultValue。
  */
 
-export default interface MemoSettings {
+export default interface BzSettings {
   // ===== 🤖 AI 全局（Q3 语义，spec「AI 全局」）=====
   /** AI 服务商：deepseek / opencode-go */
   aiProvider: string;
@@ -144,7 +144,7 @@ export default interface MemoSettings {
   flashEnabled: boolean;
 }
 
-export const DEFAULT_SETTINGS: MemoSettings = {
+export const DEFAULT_SETTINGS: BzSettings = {
   // AI 全局
   aiProvider: 'opencode-go',
   deepseekApiKey: '',

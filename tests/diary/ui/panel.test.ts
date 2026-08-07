@@ -254,7 +254,7 @@ describe('摘抄命令（ticket 08）', () => {
     app.workspace.getActiveViewOfType = () => ({ editor, file });
     let callback: (() => Promise<void>) | null = null;
     app.commands.addCommand = (cmd: any) => {
-      if (cmd.id === 'diary-create-quote') callback = cmd.callback;
+      if (cmd.id === 'bz-diary-create-quote') callback = cmd.callback;
       return cmd;
     };
     setApp(app);

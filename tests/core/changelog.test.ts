@@ -13,7 +13,7 @@ import {
 describe('CHANGELOGS', () => {
   it('8 个 identifier 齐全', () => {
     expect(Object.keys(CHANGELOGS).sort()).toEqual(
-      ['memo', 'article', 'luhmann', 'library', 'movie', 'belongings', 'diary', 'password-manager'].sort()
+      ['bz', 'article', 'luhmann', 'library', 'movie', 'belongings', 'diary', 'password-manager'].sort()
     );
   });
 });
@@ -33,7 +33,7 @@ describe('getChangelogContent', () => {
   });
 
   it('shownVersion 为 null → 仅展开最新版本', () => {
-    const html = getChangelogContent('memo', null)!;
+    const html = getChangelogContent('bz', null)!;
     expect(html).toContain('v1.6.0');
     // 最新版本展开，旧版本折叠
     const v1_6 = html.match(/v1\.6\.0[\s\S]*?changelog-version-content" style="[^"]*">([\s\S]*?)<\/div>/);
@@ -43,7 +43,7 @@ describe('getChangelogContent', () => {
   });
 
   it('shownVersion 为旧版本 → 展开高于它的全部版本', () => {
-    const html = getChangelogContent('memo', '1.4.0')!;
+    const html = getChangelogContent('bz', '1.4.0')!;
     const v1_5 = html.match(/v1\.5\.0[\s\S]*?changelog-version-content" style="([^"]*)"/);
     expect(v1_5![1]).not.toContain('display:none');
     const v1_3 = html.match(/v1\.3\.0[\s\S]*?changelog-version-content" style="([^"]*)"/);
@@ -83,13 +83,13 @@ describe('displayChangelog / checkAndShowChangelog', () => {
   });
 
   it('checkAndShowChangelog：新版本弹窗并记录已读', () => {
-    checkAndShowChangelog('memo');
-    expect(localStorage.getItem('changelog_memo_shown_version')).toBe('1.6.0');
+    checkAndShowChangelog('bz');
+    expect(localStorage.getItem('changelog_bz_shown_version')).toBe('1.6.0');
     expect(findChangelogMask()).not.toBeNull();
 
     // 再次调用同版本不弹窗
     document.body.innerHTML = '';
-    checkAndShowChangelog('memo');
+    checkAndShowChangelog('bz');
     expect(findChangelogMask()).toBeNull();
   });
 
@@ -99,7 +99,7 @@ describe('displayChangelog / checkAndShowChangelog', () => {
   });
 
   it('折叠交互：点击版本标题展开/收起', () => {
-    displayChangelog('memo');
+    displayChangelog('bz');
     const title = document.querySelector('.changelog-version-title') as HTMLElement;
     const content = document.querySelector('.changelog-version-content') as HTMLElement;
     expect(content.style.display).not.toBe('none');

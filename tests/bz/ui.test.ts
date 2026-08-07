@@ -5,10 +5,10 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
-import { setMemoSettingsProvider } from '../../src/memo';
-import { App } from '../../src/memo/app';
-import { UIManager } from '../../src/memo/ui';
-import { DataManager } from '../../src/memo/data';
+import { setBzSettingsProvider } from '../../src/bz';
+import { App } from '../../src/bz/app';
+import { UIManager } from '../../src/bz/ui';
+import { DataManager } from '../../src/bz/data';
 import { MockVault } from '../mock-vault';
 import { MockNotice, resetObsidianMocks } from '../mock-obsidian-entry';
 import moment from 'moment';
@@ -40,7 +40,7 @@ const SETTINGS = {
 async function initApp(vault: MockVault) {
   const app = makeApp(vault);
   setApp(app as any);
-  setMemoSettingsProvider(() => ({ ...SETTINGS }));
+  setBzSettingsProvider(() => ({ ...SETTINGS }));
   setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'sk-test' }));
   resetAIProviderCache();
   await App.init(SETTINGS);
@@ -331,7 +331,7 @@ describe('从当前笔记/光标创建（ticket 05）', () => {
     app.workspace.getActiveFile = () => ({ path: '我的/笔记A.md', basename: '笔记A' });
     app.workspace.activeEditor = { editor: { getCursor: () => ({ line: 3, ch: 5 }) } };
     setApp(app);
-    setMemoSettingsProvider(() => ({ ...SETTINGS }));
+    setBzSettingsProvider(() => ({ ...SETTINGS }));
     await App.init(SETTINGS);
     UIManager.showAddDialog(null);
     const posBtn = document.getElementById('add-todo-pos-btn') as HTMLButtonElement;

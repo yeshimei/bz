@@ -17,7 +17,7 @@ let diaryCommandRegistered = false;
 export async function registerOpenDialogCommand() {
   if (!diaryCommandRegistered) {
     (getApp() as any).commands.addCommand({
-      id: 'diary-open-add-dialog',
+      id: 'bz-diary-open-add-dialog',
       name: '打开写日记弹窗',
       callback: () => {
         openAddDialog();
@@ -293,7 +293,7 @@ export async function registerQuoteCommand() {
   };
 
   (getApp() as any).commands.addCommand({
-    id: 'diary-create-quote',
+    id: 'bz-diary-create-quote',
     name: '写摘抄',
     callback: async () => {
       console.log('📝 写摘抄命令被触发');

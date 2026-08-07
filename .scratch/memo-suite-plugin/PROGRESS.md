@@ -1,15 +1,15 @@
-# memo-suite 进度（上下文压缩恢复点）
+# bz 进度（上下文压缩恢复点）
 
-最后更新：2026-08-07，241 测试全过。仓库 `E:/Obsidian/1`，构建产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/memo-suite/`。
+最后更新：2026-08-07，241 测试全过。仓库 `E:/Obsidian/1`，构建产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`。
 
 ## 已完成（git 已提交）
 
 | ticket | 域 | 说明 |
 |---|---|---|
-| 01 | 骨架 | esbuild→memo-suite、manifest、设置页全量、25 命令裸注册、ribbon、懒加载 |
+| 01 | 骨架 | esbuild→bz、manifest、设置页全量、25 命令裸注册、ribbon、懒加载 |
 | 02 | core | Q3 21 工具移植：`src/core/`（utils/dom/json-store/changelog/ai/app/esc-manager/confirm/settings-provider） |
 | 03 | AI/changelog | AIService+createAI（deepseek/opencode-go、override、noCors、fallback）；CHANGELOGS 8 identifier |
-| 04/05 | 备忘录 | `src/memo/`（types/due/data/ui/app/index），37 测试 |
+| 04/05 | 备忘录 | `src/bz/`（types/due/data/ui/app/index），37 测试 |
 | 06 | 归物本 | `src/belongings/`（default-categories.gen.ts 1226 条已落盘），18 测试 |
 | 07 | 密码本 | `src/password/`（crypto/data/ui/index），22 测试 |
 | 19 | AIAgent | `src/ai-agent/`（sync/dialog/index），16 测试 |
@@ -34,12 +34,12 @@
 - 样式写 `styles/<domain>.css`（最终收敛进根 styles.css），域内仍可 injectStyles（data-xxx-styles 幂等）
 - 测试：vitest+jsdom，`tests/mock-obsidian-entry.ts`（Notice/requestUrl/moment/Plugin/Setting mock）+ `tests/mock-vault.ts`（MockVault 有 getFiles/createFolder/create/modify/read/getAbstractFileByPath）；`setApp`+`setSettingsProvider` 注入
 - 长异步（PBKDF2/crypto）测试用真实 setTimeout 等待；fake timers 下用 advanceTimersByTimeAsync
-- 提交信息格式：`memo-suite: ticket NN <域> 完成——<要点>，N 测试`
+- 提交信息格式：`bz: ticket NN <域> 完成——<要点>，N 测试`
 
 ## 环境注意
 
 - 子代理写操作被环境全局拦截（权限门）——**只能主会话写盘**；worker 蓝图/代码在 `.pi-subagents/artifacts/*.md`
-- 编辑器注意：src/memo/ui.ts 等大文件 anchor 易 stale，改动用 python 脚本或 replace_text
+- 编辑器注意：src/bz/ui.ts 等大文件 anchor 易 stale，改动用 python 脚本或 replace_text
 
 ---
 
@@ -63,3 +63,17 @@
 - review：阶梯分支 again 不可达 fsrs（源码语义）；nextDiff clamp [0,1]（again→1）
 - flash（stash 内）：MobileBuffer 固定用于 .vec 写入（避免 Node Buffer 池偏移）；meta.json v7 chunks 只存 {text}
 - 停用词表实际长度 29/40（蓝图标注 35/44 有误，以源码字符串为准）
+
+---
+
+## 2026-01-17 主页改造 + 全量改名（ticket 21）
+
+**状态：30 命令全绿（474 测试）**
+
+- ✅ 主页.js 改造：`CONFIG/SCRIPTS/DataView/主页.js`（vault）——点击动作 QuickAdd → bz 命令；卡片无动作；移除 QuickAdd 降级链（QuickAdd 已删除）；统计/HTML 输出逐字保留；movie preset（__homeFilmStatus）保留；dataview-force-refresh-views 保留（dataview 仍渲染）
+- ✅ 全量改名 memo → bz（用户决策 Q8C/Q12A/Q13A）：插件目录 `memo-suite` → `bz`（manifest id=bz，esbuild 路径已改）；**全部命令 id 统一 `bz-` 前缀**（30 个）；`src/memo/` → `src/bz/`、`tests/memo/` → `tests/bz/`；`MemoSettings→BzSettings`、`ensureMemo→ensureBz`、`unloadMemo→unloadBz`、`openMemoPanel→openBzPanel`、`setMemoSettingsProvider→setBzSettingsProvider`、`MemoSuitePlugin→BzPlugin`、`MemoSuiteSettingTab→BzSettingTab`、changelog identifier 'memo'→'bz'、CSS 类 `memo-suite-*`→`bz-*`
+- ✅ 新增命令 `bz-belongings-open-panel`（归物本面板，主页归物点击需要；openBelongings 函数早已实现，只差注册）
+- ✅ 保留不变：`CONFIG/STORAGE/memo.json` 数据路径、DOM id（#todo-popup 等）、中文名（备忘录/归物本等）、changelog localStorage 键（仅 identifier 变 bz）
+- ✅ ADR-0004 修订（裸 id → bz- 前缀）、AGENTS.md 铁律 2 更新、CONTEXT.md 术语更新、spec.md 命令清单（30 个）
+- ⚠️ 部署注意：Obsidian 视为新插件——**热键全丢需重绑**；需禁用旧插件 `memo-suite`、启用 `bz`；旧目录 `.obsidian/plugins/memo-suite/` 待用户确认后手动删
+- ⚠️ 保留：`.scratch/memo-suite-plugin/` 目录名与 `issues/*.md` 历史内容（工作区历史档案，未改名）

@@ -1,8 +1,8 @@
-# AGENTS.md — 包仔（memo-suite）Obsidian 插件
+# AGENTS.md — 包仔（bz）Obsidian 插件
 
 ## 项目概述
 
-「包仔」（memo-suite）是一个独立的 Obsidian 插件，包含以下功能域：日记本、备忘录、归物本、剪藏本、聚合讯、密码本、收藏本、书库、阅读数据分析报告、影视（含影视分析）、复习计划、做题家、闪念、自动摘要、AI Agent。数据文件沿用既有格式（`CONFIG/STORAGE/*.json`、`我的/日记/*.md`、frontmatter 字段），旧数据直接可读。
+「包仔」（bz）是一个独立的 Obsidian 插件，包含以下功能域：日记本、备忘录、归物本、剪藏本、聚合讯、密码本、收藏本、书库、阅读数据分析报告、影视（含影视分析）、复习计划、做题家、闪念、自动摘要、AI Agent。数据文件沿用既有格式（`CONFIG/STORAGE/*.json`、`我的/日记/*.md`、frontmatter 字段），旧数据直接可读。
 
 **项目语言：中文**——代码注释、提交信息、issue、文档一律用中文。
 
@@ -16,7 +16,7 @@ npm test           # vitest 全量测试（约 500 测试）
 npx tsc --noEmit   # 类型检查
 ```
 
-- 构建产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/memo-suite/`（esbuild.config.mjs 硬编码，勿改路径）。
+- 构建产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`（esbuild.config.mjs 硬编码，勿改路径）。
 - 测试通过 `vitest.config.ts` 的 resolve.alias 把 `obsidian` 模块替换为 `tests/mock-obsidian-entry.ts`。
 
 ## 架构
@@ -42,7 +42,7 @@ CONTEXT.md                  领域术语表（Domain glossary）+ 规则
 ## 铁律（不可破坏的约定）
 
 1. **数据格式稳定**：读写格式保持既有约定——`CONFIG/STORAGE/*.json` 字段名、`我的/*` 笔记格式、frontmatter 字段。改字段 = 用户数据损坏。
-2. **命令裸注册**：命令 id 不带插件前缀（ADR-0001/0004），保持既有 id；**不设置默认快捷键**；命令只在 `src/main.ts` 的 COMMANDS 表注册一次，域内**不重复 addCommand**；卸载时 removeCommand 全量清理。
+2. **命令裸注册**：命令 id 统一 `bz-` 前缀（ADR-0004 修订：2025 用户决策品牌统一，推翻不带前缀约定）；**不设置默认快捷键**；命令只在 `src/main.ts` 的 COMMANDS 表注册一次，域内**不重复 addCommand**；卸载时 removeCommand 全量清理。
 3. **面板 DOM id/类名稳定**：外部依赖此约定（如 `#add-diary-mask`、`#todo-popup`）。新增 UI 保持既有 id/类名风格。
 4. **实现稳定性**：UI 文案、CSS、公式（FSRS 幂律、香农多样性、基尼平衡等）保持既有实现；已知缺陷保持不动（如多选计数 bug、主演计数取单次）。
 5. **懒加载（ADR-0003）**：UI 域 `ensureXxx` 幂等初始化（首次命令触发）；事件常驻域（auto-summary/ai-agent/flash）按设置开关注册（`ensureAutoSummary`/`ensureAIAgent`/`ensureFlashOnReady`）。
@@ -54,7 +54,7 @@ CONTEXT.md                  领域术语表（Domain glossary）+ 规则
 | 域 | 说明 | 数据 |
 |---|---|---|
 | diary 日记本 | 面板/写日记/写摘抄/标签筛选/滚轮日期 | `我的/日记/*.md` |
-| memo 备忘录 | 待办面板/Todo 弹窗/剪贴板监听/启动弹窗 | `CONFIG/STORAGE/memo.json` |
+| bz 备忘录 | 待办面板/Todo 弹窗/剪贴板监听/启动弹窗 | `CONFIG/STORAGE/memo.json` |
 | belongings 归物本 | 物品登记（1226 默认分类已落盘 gen 文件） | `CONFIG/STORAGE/belongings.json` |
 | clipping 剪藏本 | 文章列表/站点过滤/长按删除/反链 | `归档/网页剪藏/*.md` |
 | news 聚合讯 | 阅读流状态机/统计落盘/dataviewjs 渲染 | `CONFIG/STORAGE/news.json` |
@@ -79,7 +79,7 @@ CONTEXT.md                  领域术语表（Domain glossary）+ 规则
 
 ## Git / 提交规范
 
-- 分支：master。提交信息格式：`memo-suite: ticket NN <域> 完成——<要点>，N 测试`；chore/fix 前缀用于杂务。
+- 分支：master。提交信息格式：`bz: ticket NN <域> 完成——<要点>，N 测试`；chore/fix 前缀用于杂务。
 - 每个 ticket 一次提交（完成 + 测试全绿后提交），参考 git log 历史。
 
 ## 工作流
