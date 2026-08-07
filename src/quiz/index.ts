@@ -1,24 +1,44 @@
 /**
- * 做题家（ticket 17）
- * 占位骨架：命令入口与幂等初始化已就位，实现随 ticket 17 填充。
+ * 做题家入口（ticket 17：ensureQuiz/quizUpdate/quizOpen + 单例 re-export）
+ * 命令（quiz-master-update / quiz-master-open）由 main.ts 裸注册。
  */
 import type { App } from 'obsidian';
-import { Notice } from 'obsidian';
+import { createAI } from '../core/ai';
+import { getSettings } from '../core/settings-provider';
+import { QuizManager } from './manager';
+import { QuestionGenerator } from './generator';
+import { QuizMasterUI, quizUI } from './ui';
 
 let initialized = false;
+let _app: App | null = null;
 
+/** 幂等初始化：AI 注入 + 设置注入 + 样式 */
 export function ensureQuiz(app: App): void {
   if (initialized) return;
   initialized = true;
-  // TODO(ticket 17): 做题家数据层 + UI 初始化
+  _app = app;
+  QuizMasterUI.ai = createAI();
+  QuizMasterUI.settings = getSettings();
+  quizUI.app = app;
+  quizUI.manager = new QuizManager();
+  quizUI.generator = new QuestionGenerator(QuizMasterUI.ai);
 }
 
-export function quizUpdate(app: App): void {
+/** 更新题库（quiz-master-update） */
+export async function quizUpdate(app: App): Promise<void> {
   ensureQuiz(app);
-  new Notice('「做题家」正在迁移中（ticket 17）');
+  try {
+    await quizUI.manager.loadQuiz(app);
+    await quizUI.updateQuiz(app);
+  } catch (e) {
+    console.warn('更新题库失败', e);
+  }
 }
 
-export function quizOpen(app: App): void {
+/** 打开做题家（quiz-master-open） */
+export async function quizOpen(app: App): Promise<void> {
   ensureQuiz(app);
-  new Notice('「做题家」正在迁移中（ticket 17）');
+  await quizUI.startQuiz(app);
 }
+
+export { QuizManager, QuestionGenerator, QuizMasterUI, quizUI };
