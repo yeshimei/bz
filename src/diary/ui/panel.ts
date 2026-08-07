@@ -109,13 +109,6 @@ export function createMaskAndPopup() {
   });
   searchContainer.appendChild(searchInput);
 
-  // 临时诊断条（定位后移除）
-  const diagBar = document.createElement('div');
-  diagBar.id = 'diary-diag';
-  diagBar.style.cssText = 'padding:4px 24px;font-size:11px;color:var(--text-muted);background:var(--background-secondary);';
-  diagBar.textContent = '诊断初始化中...';
-  state.ui.tagFilterPopup.appendChild(diagBar);
-
   state.ui.tagFilterPopup.appendChild(header);
   state.ui.tagFilterPopup.appendChild(tagsContainer);
   state.ui.tagFilterPopup.appendChild(searchContainer);
@@ -283,14 +276,12 @@ export async function init(plugin?: { registerEvent: (ref: unknown) => unknown }
     if (state.ui.scrollContainer) setTimeout(updateSticky, 100);
     // 面板已存在但数据从未加载成功 → 补一次加载
     if (state.data.originalDiaryEntries.length === 0 && !state.data.isLoadingData) {
-      console.log('[日记本] 面板已存在但无数据，补充加载');
       loadAll();
     }
     return;
   }
 
   state.ui.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  console.log('[日记本] init: 开始初始化面板');
 
   // 注册 UI 刷新回调（必须在 loadAll 之前：首次加载即触发渲染/进度/加载态）
   if (!refreshCallbacksRegistered) {

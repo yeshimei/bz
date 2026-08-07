@@ -491,3 +491,11 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
+
+/* ===== 日期分隔条（sticky）：加高 + 完整背景覆盖，避免与标签栏之间露缝 ===== */
+.diary-date-separator {
+    padding: 10px 12px !important;
+    margin: 0 !important;
+    background: var(--background-primary) !important;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
