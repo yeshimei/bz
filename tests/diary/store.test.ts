@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import { setApp } from './app';
-import { resetTagsConfig, applyDirectories } from './config';
-import { buildTagMaps } from './config';
+import { setApp } from '../../src/diary/app';
+import { resetTagsConfig, applyDirectories } from '../../src/diary/config';
+import { buildTagMaps } from '../../src/diary/config';
 import {
   addEntry,
   deleteEntry,
@@ -12,8 +12,8 @@ import {
   onLoadingChange,
   onProgress,
   setFileChangeDelay,
-} from './store';
-import { diaryDataMap, setDiaryDataMap, state } from './state';
+} from '../../src/diary/store';
+import { diaryDataMap, setDiaryDataMap, state } from '../../src/diary/state';
 
 /** 内存 vault mock：可读写的虚拟文件树 */
 class MockVault {
@@ -173,7 +173,7 @@ describe('writeFile', () => {
         ],
       ])
     );
-    const { writeFile } = await import('./store');
+    const { writeFile } = await import('../../src/diary/store');
     await writeFile('2024-01-01');
     const out = vault.files.get('我的/日记/2024-01-01.md')!;
     expect(out).toBe('# 📖 08:00\n\n早上好\n\n# ✍️ 10:00\n\n晚点写的');
@@ -182,7 +182,7 @@ describe('writeFile', () => {
   it('空条目列表删除文件', async () => {
     makeVault({ '我的/日记/2024-01-01.md': '# 📖 08:00\nx\n' });
     setDiaryDataMap(new Map([['2024-01-01', []]]));
-    const { writeFile } = await import('./store');
+    const { writeFile } = await import('../../src/diary/store');
     await writeFile('2024-01-01');
     expect(vault.files.has('我的/日记/2024-01-01.md')).toBe(false);
   });
@@ -194,7 +194,7 @@ describe('writeFile', () => {
         ['2024-01-01', [{ date: '2024-01-01', time: '08:00', timeValue: 800, tags: ['日记'], emoji: '', content: 'hi', filename: '2024-01-01', lineNumber: 0 }]],
       ])
     );
-    const { writeFile } = await import('./store');
+    const { writeFile } = await import('../../src/diary/store');
     await writeFile('2024-01-01');
     expect(vault.files.has('我的/日记/2024-01-01.md')).toBe(true);
   });

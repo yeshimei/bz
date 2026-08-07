@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach } from 'vitest';
-import { setApp } from './app';
-import { buildTagMaps } from './config';
-import { parseFile, parseMovieFile, parseLetterFile, parseNaturalTime, isEncryptedEntry } from './parser';
+import { setApp } from '../../src/diary/app';
+import { buildTagMaps } from '../../src/diary/config';
+import { parseFile, parseMovieFile, parseLetterFile, parseNaturalTime, isEncryptedEntry } from '../../src/diary/parser';
 
 /** 构造测试用 mock app */
 function mockApp(files: Record<string, string>, frontmatters: Record<string, any>) {

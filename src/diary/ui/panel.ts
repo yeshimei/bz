@@ -305,10 +305,8 @@ export async function init(plugin?: { registerEvent: (ref: unknown) => unknown }
   createDatePicker();
   registerEscapeListener();
 
-  // 加载即打开面板（原脚本此处首次不显示，属缺陷，修正）
+  // 默认不弹窗：面板创建后保持隐藏，由 ribbon/命令（showDiaryPanel）显示
   state.ui.isPopupShown = true;
-  state.ui.maskLayer!.style.visibility = 'visible';
-  state.ui.tagFilterPopup!.style.visibility = 'visible';
 
   initScroll();
   await loadAll();
@@ -334,6 +332,12 @@ export async function init(plugin?: { registerEvent: (ref: unknown) => unknown }
 /** 显示日记面板（ribbon/命令入口） */
 export async function showDiaryPanel(plugin?: { registerEvent: (ref: unknown) => unknown }) {
   await init(plugin);
+  // 强制显示（init 创建时保持隐藏）
+  const popup = document.getElementById('diary-tag-filter');
+  if (popup) popup.style.visibility = 'visible';
+  const mask = document.getElementById('diary-filter-mask');
+  if (mask) mask.style.visibility = 'visible';
+  if (state.ui.scrollContainer) setTimeout(updateSticky, 100);
 }
 
 // ===== ESC 层级（原 4126-4146） =====

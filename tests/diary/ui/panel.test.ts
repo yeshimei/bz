@@ -3,17 +3,17 @@
  * 在 jsdom 中运行；obsidian 模块由 vitest alias 替换为 mock。
  */
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import { setApp } from '../app';
-import { applyDirectories, resetTagsConfig } from '../config';
-import { init } from './panel';
-import { openAddDialog, saveNewEntry, showTagPicker, updateTags } from './dialogs';
-import { showDateTimePicker } from './datetime-picker';
-import { escManager } from '../../core/esc-manager';
-import { state } from '../state';
-import { MockNotice } from '../../test/mock-obsidian-entry';
-import { MockVault, mockAppWithVault } from '../../test/mock-vault';
+import { setApp } from '../../../src/diary/app';
+import { applyDirectories, resetTagsConfig } from '../../../src/diary/config';
+import { init } from '../../../src/diary/ui/panel';
+import { openAddDialog, saveNewEntry, showTagPicker, updateTags } from '../../../src/diary/ui/dialogs';
+import { showDateTimePicker } from '../../../src/diary/ui/datetime-picker';
+import { escManager } from '../../../src/core/esc-manager';
+import { state } from '../../../src/diary/state';
+import { MockNotice } from '../../mock-obsidian-entry';
+import { MockVault, mockAppWithVault } from '../../mock-vault';
 import { moment } from 'obsidian';
-import { resetObsidianMocks } from '../../test/mock-obsidian-entry';
+import { resetObsidianMocks } from '../../mock-obsidian-entry';
 
 let vault: MockVault;
 
@@ -96,9 +96,15 @@ describe('面板创建（ticket 06）', () => {
     expect(empty.textContent).toContain('没有找到日记内容');
   });
 
-  it('ESC 关闭主面板', () => {
+  it('默认不弹窗；showDiaryPanel 显示；ESC 关闭', async () => {
     const popup = document.getElementById('diary-tag-filter')!;
+    // 默认不弹窗（init 后隐藏）
+    expect(popup.style.visibility).toBe('hidden');
+    // showDiaryPanel 强制显示
+    const { showDiaryPanel } = await import('../../../src/diary/ui/panel');
+    await showDiaryPanel();
     expect(popup.style.visibility).toBe('visible');
+    // ESC 关闭
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(popup.style.visibility).toBe('hidden');
   });
@@ -195,7 +201,7 @@ describe('标签选择器与删除（ticket 07）', () => {
     await waitFor(() => state.data.originalDiaryEntries.length === 2);
     const entry = state.data.originalDiaryEntries[0];
     // 直接调 showConfirm 路径（内部用共享 confirm）
-    const { showConfirm } = await import('./entries');
+    const { showConfirm } = await import('../../../src/diary/ui/entries');
     showConfirm(entry.id!);
     expect(document.getElementById('__shared_confirm_mask__')).toBeTruthy();
     // 点击确认
@@ -233,7 +239,7 @@ describe('滚轮日期时间选择器（ticket 07）', () => {
 
 describe('摘抄命令（ticket 08）', () => {
   it('写摘抄完整流程：选中文本 → 块ID → 预览 → 保存写回', async () => {
-    const { registerQuoteCommand } = await import('./quote');
+    const { registerQuoteCommand } = await import('../../../src/diary/ui/quote');
     const app = mockAppWithVault(vault);
     const editor = {
       somethingSelected: () => true,
@@ -277,9 +283,14 @@ describe('摘抄命令（ticket 08）', () => {
 });
 
 describe('设置读取（ticket 09 前置）', () => {
+  it('默认标签固定为「日记」（设置项已移除）', async () => {
+    const { getDefaultTagSetting } = await import('../../../src/diary/ui/panel');
+    expect(getDefaultTagSetting()).toBe('日记');
+  });
+
   it('applyUiSettings 生效', async () => {
-    const { applyUiSettings, getDefaultTagSetting } = await import('./panel');
-    applyUiSettings({ defaultTag: '诗' });
-    expect(getDefaultTagSetting()).toBe('诗');
+    const { applyUiSettings, getShowTagCountSetting } = await import('../../../src/diary/ui/panel');
+    applyUiSettings({ showTagCount: false });
+    expect(getShowTagCountSetting()).toBe(false);
   });
 });
