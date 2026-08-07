@@ -5,12 +5,12 @@ export default defineConfig({
   resolve: {
     alias: {
       // 测试环境将 obsidian 模块替换为 mock（vi.mock 在 setupFiles 中不可靠）
-      obsidian: path.resolve(__dirname, 'src/test/mock-obsidian-entry.ts'),
+      obsidian: path.resolve(__dirname, 'tests/mock-obsidian-entry.ts'),
     },
   },
   test: {
     environment: 'jsdom',
-    include: ['src/**/*.test.ts'],
-    setupFiles: ['src/test/setup.ts'],
+    include: ['tests/**/*.test.ts'],
+    setupFiles: ['tests/setup.ts'],
   },
 });

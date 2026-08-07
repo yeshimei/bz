@@ -3,18 +3,15 @@
  */
 let showTagCountSetting = true;
 let enableLongPressSetting = true;
-let defaultTagSetting = '日记';
 let useFileDateTimeSetting = false;
 
 export function applyUiSettings(s: {
   showTagCount?: boolean;
   enableLongPress?: boolean;
-  defaultTag?: string;
   useFileDateTime?: boolean;
 }) {
   if (s.showTagCount !== undefined) showTagCountSetting = s.showTagCount;
   if (s.enableLongPress !== undefined) enableLongPressSetting = s.enableLongPress;
-  if (s.defaultTag !== undefined) defaultTagSetting = s.defaultTag;
   if (s.useFileDateTime !== undefined) useFileDateTimeSetting = s.useFileDateTime;
 }
 
@@ -24,8 +21,9 @@ export function getShowTagCountSetting(): boolean {
 export function getEnableLongPressSetting(): boolean {
   return enableLongPressSetting;
 }
+/** 默认标签固定为「日记」（设置项已移除） */
 export function getDefaultTagSetting(): string {
-  return defaultTagSetting;
+  return '日记';
 }
 export function getUseFileDateTimeSetting(): boolean {
   return useFileDateTimeSetting;
