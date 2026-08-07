@@ -2,6 +2,8 @@
 
 **What to build:** 新建影视笔记时自动调用全局 npm 包 `@jwbz/obsidian-douban-poster`（CLI `douban-poster fetch`），从豆瓣抓取高清海报并补全 13 个 frontmatter 字段。替代原先的外部 watcher；桌面端专属，移动端设置项置灰标注「仅桌面端可用」。
 
+**追加（2026-08-07 用户反馈）**：① 修复「笔记不存在」——spawn 必须传**磁盘绝对路径**（`vault.adapter.getFullPath`），相对路径会被脚本 `path.join(movieFolder, input)` 重复拼接；② 新维度：`workspace file-open` 打开影视笔记且 frontmatter 无「海报」字段 → 同样触发抓取；create/open 双触发经 60s 冷却去重（`FETCH_COOLDOWN`）。
+
 **Blocked by:** 01, 02, 03, 14
 
 **Status:** ready-for-agent
