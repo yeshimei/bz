@@ -1,5 +1,5 @@
 /**
- * 做题家数据层（ticket 17，源码 L8-88 逐字移植）
+ * 做题家数据层（ticket 17 修正版：对齐源码 QuizManager，读方法每次读盘）
  */
 import type { App } from 'obsidian';
 import { jsonStore } from '../core/json-store';
@@ -15,50 +15,57 @@ export interface QuizQuestion {
   _index?: number;
 }
 
-export class QuizManager {
-  quiz: { notes: Record<string, QuizQuestion[]> } = { notes: {} };
+/** 复习数据读取（源码做题家.js 内嵌 ReviewDataManager L16-28） */
+export async function loadActiveItems(app: App): Promise<any[]> {
+  const data = (await jsonStore(REVIEW_DATA_PATH).read()) as any;
+  const items = Array.isArray(data) ? data : [];
+  return items.filter((f: any) => f && !f.completed);
+}
 
-  /** 加载（损坏/首跑归一化） */
-  async loadQuiz(app: App): Promise<void> {
+export class QuizManager {
+  /** 加载（源码 L33-35；损坏 → {notes:{}}） */
+  async loadQuiz(app: App): Promise<{ notes: Record<string, QuizQuestion[]> }> {
     try {
       const data = (await jsonStore(QUIZ_FILE_PATH).read()) as any;
-      if (data && typeof data === 'object' && data.notes) {
-        this.quiz = data;
-      } else if (Array.isArray(data)) {
-        this.quiz = { notes: {} }; // 归一化
-      } else {
-        this.quiz = { notes: {} };
-      }
+      if (data && typeof data === 'object' && data.notes) return data;
+      return { notes: {} };
     } catch {
-      this.quiz = { notes: {} };
+      return { notes: {} };
     }
   }
 
-  async saveQuiz(app: App): Promise<void> {
-    await jsonStore(QUIZ_FILE_PATH).write(this.quiz);
+  async saveQuiz(app: App, quiz: { notes: Record<string, QuizQuestion[]> }): Promise<void> {
+    await jsonStore(QUIZ_FILE_PATH).write(quiz);
   }
 
-  getQuestionsForNote(notePath: string): QuizQuestion[] | null {
-    return this.quiz.notes[notePath] || null;
+  /** 源码 L40-43 */
+  async getQuestionsForNote(app: App, notePath: string): Promise<QuizQuestion[] | null> {
+    const quiz = await this.loadQuiz(app);
+    return quiz.notes[notePath] || null;
   }
 
+  /** 源码 L45-49 */
   async saveQuestionsForNote(app: App, notePath: string, questions: QuizQuestion[]): Promise<void> {
-    this.quiz.notes[notePath] = questions.map((q) => ({ ...q }));
-    await this.saveQuiz(app);
+    const quiz = await this.loadQuiz(app);
+    quiz.notes[notePath] = questions.map((q) => ({ ...q }));
+    await this.saveQuiz(app, quiz);
   }
 
-  async removeQuestion(app: App, notePath: string, index: number): Promise<void> {
-    const list = this.quiz.notes[notePath];
-    if (!list) return;
-    list.splice(index, 1);
-    if (list.length === 0) delete this.quiz.notes[notePath];
-    await this.saveQuiz(app);
+  /** 源码 L51-57：splice，不删空键 */
+  async removeQuestion(app: App, notePath: string, questionIndex: number): Promise<void> {
+    const quiz = await this.loadQuiz(app);
+    const list = quiz.notes[notePath];
+    if (list && list[questionIndex]) {
+      list.splice(questionIndex, 1);
+      await this.saveQuiz(app, quiz);
+    }
   }
 
-  /** 遍历补 notePath/_index */
-  getUncompletedQuestions(): QuizQuestion[] {
+  /** 源码 L59-72：遍历补 notePath/_index */
+  async getUncompletedQuestions(app: App): Promise<QuizQuestion[]> {
+    const quiz = await this.loadQuiz(app);
     const out: QuizQuestion[] = [];
-    for (const [notePath, questions] of Object.entries(this.quiz.notes)) {
+    for (const [notePath, questions] of Object.entries(quiz.notes)) {
       questions.forEach((q, i) => {
         out.push({ ...q, notePath, _index: i });
       });
@@ -66,7 +73,8 @@ export class QuizManager {
     return out;
   }
 
-  getAllQuestions(): QuizQuestion[] {
-    return this.getUncompletedQuestions();
+  /** 源码 L74-87 */
+  async getAllQuestions(app: App): Promise<QuizQuestion[]> {
+    return this.getUncompletedQuestions(app);
   }
 }
