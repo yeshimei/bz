@@ -11,6 +11,29 @@ import { checkAndShowChangelog } from '../core/changelog';
 import { loadDatabase, saveDatabase, calculateDailyCost, calculateDaysUsed } from './data';
 import type { BelongingsDatabase, BelongingsItem } from './types';
 
+// ----- 类型 -----
+/** 弹窗色板（createModalShell 返回值） */
+interface ModalPalette {
+  bg: string;
+  text: string;
+  border: string;
+  inputBg: string;
+  isDark: boolean;
+}
+
+/** 表单字段描述（添加/编辑共用） */
+interface FormField {
+  id: string;
+  label: string;
+  type: string;
+  placeholder?: string;
+  value?: any;
+  default?: string;
+  options?: string[];
+  required?: boolean;
+}
+
+
 // ----- 模块状态（原脚本全局变量） -----
 let database: BelongingsDatabase | null = null;
 let listContainer: HTMLDivElement | null = null;
@@ -21,13 +44,43 @@ let isDarkMode = false;
 // ----- 渲染主界面 -----
 function render() {
   if (!listContainer) return;
-  const app = getApp();
   isDarkMode = document.body.classList.contains('theme-dark');
+
   // ----- 排序：根据当前 sortField 和 sortOrder -----
-  let items = Object.values(database!.items);
+  const items = sortItems();
+  const { totalValue, totalDailyCost, statusMap } = computeStats(items);
+
+  const palette = {
+    bg: isDarkMode ? '#1e1e1e' : '#ffffff',
+    textColor: isDarkMode ? '#ffffff' : '#333333',
+    cardBg: isDarkMode ? '#2d2d2d' : '#ffffff',
+    muted: isDarkMode ? '#b0b0b0' : '#666666',
+    border: isDarkMode ? '#404040' : '#e0e0e0',
+    isDark: isDarkMode,
+  };
+
+  const html = `
+  <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 15px; background: ${palette.bg}; min-height: 100vh; color: ${palette.textColor};">
+    ${buildStatsHtml(palette, totalValue, totalDailyCost, statusMap)}
+    ${buildItemGroupsHtml(palette, statusMap)}
+    <div style="text-align: center; color: ${palette.muted}; font-size: 11px; margin-top: 15px; padding-top: 15px; border-top: 1px solid ${palette.border};">
+      最后更新: ${new Date().toLocaleString('zh-CN')}
+    </div>
+  </div>
+  `;
+
+  listContainer.innerHTML = html;
+
+  // 为每个物品卡片绑定事件
+  bindCardEvents();
+}
+
+/** 排序：按当前 sortField/sortOrder 返回排序后的物品 */
+function sortItems(): any[] {
+  const items = Object.values(database!.items);
   items.sort((a: any, b: any) => {
-    let aVal = a[sortField];
-    let bVal = b[sortField];
+    const aVal = a[sortField];
+    const bVal = b[sortField];
     if (typeof aVal === 'string') {
       return sortOrder === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
     }
@@ -35,26 +88,37 @@ function render() {
     if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
     return 0;
   });
+  return items;
+}
 
-  const totalValue = items.reduce((sum, item) => sum + item.purchase_price, 0);
-  const totalDailyCost = items.reduce((sum, item) => {
+/** 统计计算：总资产/日均成本/按状态分组（保持全局排序顺序） */
+function computeStats(items: any[]): {
+  totalValue: number;
+  totalDailyCost: number;
+  statusMap: Record<string, any[]>;
+} {
+  const totalValue = items.reduce((sum: number, item: any) => sum + item.purchase_price, 0);
+  const totalDailyCost = items.reduce((sum: number, item: any) => {
     return sum + parseFloat(calculateDailyCost(item.purchase_price, item.purchase_date));
   }, 0);
 
   // 按状态分组，但保持全局排序顺序
   const statusMap: Record<string, any[]> = { '使用中': [], '闲置': [], '已转卖': [], '已丢弃': [] };
-  items.forEach((item) => {
+  items.forEach((item: any) => {
     if (statusMap[item.current_status]) statusMap[item.current_status].push(item);
   });
+  return { totalValue, totalDailyCost, statusMap };
+}
 
-  const bg = isDarkMode ? '#1e1e1e' : '#ffffff';
-  const textColor = isDarkMode ? '#ffffff' : '#333333';
-  const cardBg = isDarkMode ? '#2d2d2d' : '#ffffff';
-  const muted = isDarkMode ? '#b0b0b0' : '#666666';
-  const border = isDarkMode ? '#404040' : '#e0e0e0';
-
-  let html = `
-  <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 15px; background: ${bg}; min-height: 100vh; color: ${textColor};">
+/** 统计 HTML：顶部渐变统计卡 + 状态计数四宫格 */
+function buildStatsHtml(
+  palette: { bg: string; textColor: string; cardBg: string; muted: string; border: string },
+  totalValue: number,
+  totalDailyCost: number,
+  statusMap: Record<string, any[]>
+): string {
+  const { bg, textColor, cardBg, muted, border } = palette;
+  return `
     <!-- 统计卡片 -->
     <div style="background: linear-gradient(135deg, #3498db, #2ecc71); border-radius: 15px; padding: 20px; color: white; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(52,152,219,0.2);">
       <div style="margin-bottom: 15px;">
@@ -78,12 +142,21 @@ function render() {
           <div style="font-size: 11px; color: ${muted};">${status}</div>
         </div>`;
       }).join('')}
-    </div>
+    </div>`;
+}
+
+/** 物品列表 HTML：按状态分组渲染渐变卡片 */
+function buildItemGroupsHtml(
+  palette: { textColor: string; muted: string; border: string; isDark: boolean },
+  statusMap: Record<string, any[]>
+): string {
+  const { textColor, muted, border, isDark } = palette;
+  return `
     <!-- 物品列表 -->
     ${['使用中', '闲置', '已转卖', '已丢弃'].map((status) => {
       const list = statusMap[status] || [];
       if (list.length === 0) return '';
-      const colors = isDarkMode
+      const colors = isDark
         ? ['linear-gradient(135deg,#1e4a5f,#1a6b4b)', 'linear-gradient(135deg,#5d3a6f,#1e4a5f)', 'linear-gradient(135deg,#8b2c20,#a85e1a)', 'linear-gradient(135deg,#117a60,#0e6e57)', 'linear-gradient(135deg,#a85e1a,#8b4a0a)', 'linear-gradient(135deg,#1e4a5f,#1a4a6b)']
         : ['linear-gradient(135deg,#3498db,#2ecc71)', 'linear-gradient(135deg,#9b59b6,#3498db)', 'linear-gradient(135deg,#e74c3c,#e67e22)', 'linear-gradient(135deg,#1abc9c,#16a085)', 'linear-gradient(135deg,#f39c12,#d35400)', 'linear-gradient(135deg,#3498db,#2980b9)'];
       return `
@@ -117,20 +190,16 @@ function render() {
           }).join('')}
         </div>
       </div>`;
-    }).join('')}
-    <div style="text-align: center; color: ${muted}; font-size: 11px; margin-top: 15px; padding-top: 15px; border-top: 1px solid ${border};">
-      最后更新: ${new Date().toLocaleString('zh-CN')}
-    </div>
-  </div>
-  `;
+    }).join('')}`;
+}
 
-  listContainer.innerHTML = html;
-
-  // 为每个物品卡片绑定事件
+/** 为物品卡片绑定长按删除 / 单击编辑事件 */
+function bindCardEvents(): void {
+  if (!listContainer) return;
   listContainer.querySelectorAll('[data-id]').forEach((card) => {
     const id = (card as HTMLElement).dataset.id!;
 
-    card.addEventListener('pointerdown', (e) => {
+    card.addEventListener('pointerdown', () => {
       const startTime = Date.now();
       let longPressTriggered = false;
 
@@ -165,12 +234,13 @@ function render() {
   });
 }
 
+
 // ----- 操作函数 -----
 
 /** 创建搜索下拉分类（与添加/编辑一致，可复用 helper） */
 function createSearchSelect(
-  field: { placeholder?: string; value?: string; options: string[] },
-  palette: { bg: string; text: string; border: string; inputBg: string; isDark: boolean },
+  field: FormField,
+  palette: ModalPalette,
   zIndex = 10002
 ): HTMLDivElement {
   const { bg, text, border, inputBg, isDark } = palette;
@@ -197,7 +267,7 @@ function createSearchSelect(
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       `;
 
-  const allOptions = field.options;
+  const allOptions = field.options || [];
   const optionItems: HTMLDivElement[] = [];
 
   allOptions.forEach((opt) => {
@@ -258,7 +328,7 @@ function createSearchSelect(
     const visibleItems = optionItems.filter((item) => item.style.display !== 'none');
     if (visibleItems.length === 0) return;
     let currentIdx = visibleItems.findIndex((item) => item.style.background !== 'transparent');
-    if (currentIdx === -1) currentIdx = -1;
+
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -287,11 +357,132 @@ function createSearchSelect(
     }
   });
 
-  // 保存引用以便获取值
-  (input as any)._dropdown = dropdown;
-  (input as any)._optionItems = optionItems;
   return searchWrapper;
 }
+
+/** 表单校验（添加/编辑共用）：返回错误消息或 null */
+function validateForm(inputs: Record<string, any>): string | null {
+  if (!inputs.name.value.trim()) return '请输入物品名称';
+  const price = parseFloat(inputs.price.value);
+  if (isNaN(price) || price < 0) return '请输入有效的价格';
+  if (!inputs.date.value) return '请选择购买日期';
+  if (!inputs.category.value.trim()) return '请选择或输入分类';
+  return null;
+}
+
+/** 次要按钮（取消/关闭） */
+function createSecondaryButton(
+  text: string,
+  palette: Pick<ModalPalette, 'text' | 'border'>,
+  onClick: () => void
+): HTMLButtonElement {
+  const btn = document.createElement('button');
+  btn.textContent = text;
+  btn.style.cssText = `
+      padding: 8px 20px; border-radius: 6px; border: 1px solid ${palette.border};
+      background: transparent; color: ${palette.text}; cursor: pointer; font-size: 14px;
+    `;
+  btn.addEventListener('click', onClick);
+  return btn;
+}
+
+/** 主操作按钮（保存/删除等，自定义背景色） */
+function createActionButton(
+  text: string,
+  background: string,
+  onClick: () => void
+): HTMLButtonElement {
+  const btn = document.createElement('button');
+  btn.textContent = text;
+  btn.style.cssText = `
+      padding: 8px 20px; border-radius: 6px; border: none;
+      background: ${background}; color: white; cursor: pointer; font-size: 14px; font-weight: 500;
+    `;
+  btn.addEventListener('click', onClick);
+  return btn;
+}
+
+/** 构建表单（添加/编辑共用）；searchSelectInit 用于 search-select 字段的差异化初始化 */
+function buildForm(
+  fields: FormField[],
+  palette: ModalPalette,
+  searchSelectInit?: (input: HTMLInputElement, field: FormField) => void,
+  searchSelectZIndex = 10002
+): { form: HTMLDivElement; inputs: Record<string, any> } {
+  const { text, border, inputBg } = palette;
+  const form = document.createElement('div');
+  form.style.cssText = 'display: flex; flex-direction: column; gap: 16px;';
+
+  const inputs: Record<string, any> = {};
+
+  fields.forEach((field) => {
+    const wrapper = document.createElement('div');
+
+    const label = document.createElement('label');
+    label.textContent = field.label;
+    label.style.cssText = `display: block; font-size: 14px; font-weight: 500; margin-bottom: 4px; color: ${text};`;
+
+    let input: any;
+
+    if (field.type === 'search-select') {
+      const searchWrapper = createSearchSelect(field, palette, searchSelectZIndex);
+      const searchInput = searchWrapper.querySelector('input') as HTMLInputElement;
+      if (searchSelectInit) searchSelectInit(searchInput, field);
+      input = searchInput;
+      wrapper.appendChild(label);
+      wrapper.appendChild(searchWrapper);
+    } else if (field.type === 'select') {
+      input = document.createElement('select');
+      input.style.cssText = `
+        width: 100%; padding: 8px 12px; border-radius: 6px;
+        border: 1px solid ${border}; background: ${inputBg}; color: ${text};
+        font-size: 14px; box-sizing: border-box;
+      `;
+      (field.options || []).forEach((opt: string) => {
+        const option = document.createElement('option');
+        option.value = opt;
+        option.textContent = opt;
+        if (opt === field.value) option.selected = true;
+        input.appendChild(option);
+      });
+      wrapper.appendChild(label);
+      wrapper.appendChild(input);
+    } else if (field.type === 'textarea') {
+      input = document.createElement('textarea');
+      input.style.cssText = `
+        width: 100%; padding: 8px 12px; border-radius: 6px;
+        border: 1px solid ${border}; background: ${inputBg}; color: ${text};
+        font-size: 14px; box-sizing: border-box; resize: vertical; min-height: 60px;
+      `;
+      input.placeholder = field.placeholder || '';
+      input.value = field.value || '';
+      wrapper.appendChild(label);
+      wrapper.appendChild(input);
+    } else {
+      // text, number, date
+      input = document.createElement('input');
+      input.type = field.type;
+      input.style.cssText = `
+        width: 100%; padding: 8px 12px; border-radius: 6px;
+        border: 1px solid ${border}; background: ${inputBg}; color: ${text};
+        font-size: 14px; box-sizing: border-box;
+      `;
+      if (field.placeholder) input.placeholder = field.placeholder;
+      if (field.default) input.value = field.default;
+      else if (field.value !== undefined && field.value !== null) input.value = field.value;
+      if (field.type === 'number') input.step = '0.01';
+      wrapper.appendChild(label);
+      wrapper.appendChild(input);
+    }
+
+    if (field.required) input.required = true;
+    form.appendChild(wrapper);
+    inputs[field.id] = input;
+  });
+
+  return { form, inputs };
+}
+
 
 /** 弹窗公共结构（遮罩/弹窗/色板） */
 function createModalShell(
@@ -301,7 +492,7 @@ function createModalShell(
 ): {
   overlay: HTMLDivElement;
   modal: HTMLDivElement;
-  palette: { bg: string; text: string; border: string; inputBg: string; isDark: boolean };
+  palette: ModalPalette;
   resolve: (v?: unknown) => void;
   promise: Promise<unknown>;
 } {
@@ -354,10 +545,9 @@ function editItemById(id: string): Promise<void> {
   // ----- 创建独立编辑弹窗 -----
   return new Promise((resolve) => {
     const { overlay, modal, palette, resolve: done } = createModalShell(10001, 480, '编辑物品');
-    const { bg, text, border, inputBg, isDark } = palette;
 
     // 表单字段（预填当前值）
-    const fields: { id: string; label: string; type: string; placeholder?: string; value?: any; options?: string[]; required?: boolean }[] = [
+    const fields: FormField[] = [
       { id: 'name', label: '📝 物品名称', type: 'text', placeholder: '请输入物品名称', value: item.name, required: true },
       { id: 'category', label: '📦 分类', type: 'search-select', options: database!.categories, value: item.category, placeholder: '输入搜索分类...' },
       { id: 'price', label: '💰 购买价格（元）', type: 'number', placeholder: '0.00', value: item.purchase_price.toString(), required: true },
@@ -366,149 +556,36 @@ function editItemById(id: string): Promise<void> {
       { id: 'description', label: '📋 描述（可选）', type: 'textarea', placeholder: '规格、颜色、购买原因等...', value: item.description },
     ];
 
-    const form = document.createElement('div');
-    form.style.cssText = 'display: flex; flex-direction: column; gap: 16px;';
-
-    const inputs: Record<string, any> = {};
-
-    // ---- 构建表单 ----
-    fields.forEach((field) => {
-      const wrapper = document.createElement('div');
-
-      const label = document.createElement('label');
-      label.textContent = field.label;
-      label.style.cssText = `display: block; font-size: 14px; font-weight: 500; margin-bottom: 4px; color: ${text};`;
-
-      let input: any;
-
-      if (field.type === 'search-select') {
-        const searchWrapper = createSearchSelect(field as any, palette);
-        const inputElement = searchWrapper.querySelector('input') as HTMLInputElement;
-        inputElement.id = `edit-item-${field.id}`;
-        wrapper.appendChild(label);
-        wrapper.appendChild(searchWrapper);
-        inputs[field.id] = inputElement;
-        // 保存下拉选项以便获取
-        (inputElement as any)._dropdown = searchWrapper.querySelector('div');
-        (inputElement as any)._optionItems = Array.from((inputElement as any)._dropdown.querySelectorAll('div'));
-        // 设置初始值后触发搜索以高亮匹配项
-        setTimeout(() => {
-          inputElement.dispatchEvent(new Event('input'));
-        }, 0);
-      } else if (field.type === 'select') {
-        input = document.createElement('select');
-        input.style.cssText = `
-          width: 100%; padding: 8px 12px; border-radius: 6px;
-          border: 1px solid ${border}; background: ${inputBg}; color: ${text};
-          font-size: 14px; box-sizing: border-box;
-        `;
-        (field.options as string[]).forEach((opt) => {
-          const option = document.createElement('option');
-          option.value = opt;
-          option.textContent = opt;
-          if (opt === field.value) option.selected = true;
-          input.appendChild(option);
-        });
-        wrapper.appendChild(label);
-        wrapper.appendChild(input);
-        inputs[field.id] = input;
-      } else if (field.type === 'textarea') {
-        input = document.createElement('textarea');
-        input.style.cssText = `
-          width: 100%; padding: 8px 12px; border-radius: 6px;
-          border: 1px solid ${border}; background: ${inputBg}; color: ${text};
-          font-size: 14px; box-sizing: border-box; resize: vertical; min-height: 60px;
-        `;
-        input.placeholder = field.placeholder || '';
-        input.value = field.value || '';
-        wrapper.appendChild(label);
-        wrapper.appendChild(input);
-        inputs[field.id] = input;
-      } else {
-        input = document.createElement('input');
-        input.type = field.type;
-        input.style.cssText = `
-          width: 100%; padding: 8px 12px; border-radius: 6px;
-          border: 1px solid ${border}; background: ${inputBg}; color: ${text};
-          font-size: 14px; box-sizing: border-box;
-        `;
-        if (field.placeholder) input.placeholder = field.placeholder;
-        if (field.value !== undefined && field.value !== null) input.value = field.value;
-        if (field.type === 'number') input.step = '0.01';
-        wrapper.appendChild(label);
-        wrapper.appendChild(input);
-        inputs[field.id] = input;
-      }
-
-      if (field.required) input.required = true;
-      form.appendChild(wrapper);
+    const { form, inputs } = buildForm(fields, palette, (input, field) => {
+      // search-select：设置 id（回车处理识别）+ 初始化后触发搜索以高亮匹配项
+      input.id = `edit-item-${field.id}`;
+      setTimeout(() => {
+        input.dispatchEvent(new Event('input'));
+      }, 0);
     });
 
     // 按钮容器
     const btnRow = document.createElement('div');
     btnRow.style.cssText = 'display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px;';
 
-    const cancelBtn = document.createElement('button');
-    cancelBtn.textContent = '取消';
-    cancelBtn.style.cssText = `
-      padding: 8px 20px; border-radius: 6px; border: 1px solid ${border};
-      background: transparent; color: ${text}; cursor: pointer; font-size: 14px;
-    `;
-    cancelBtn.addEventListener('click', () => {
+    const cancelBtn = createSecondaryButton('取消', palette, () => {
       document.body.removeChild(overlay);
       done();
     });
 
-    const saveBtn = document.createElement('button');
-    saveBtn.textContent = '💾 保存';
-    saveBtn.style.cssText = `
-      padding: 8px 20px; border-radius: 6px; border: none;
-      background: var(--interactive-accent); color: white; cursor: pointer; font-size: 14px; font-weight: 500;
-    `;
-
-    btnRow.appendChild(cancelBtn);
-    btnRow.appendChild(saveBtn);
-
-    modal.appendChild(form);
-    modal.appendChild(btnRow);
-    escManager.register('belongings-modal', {
-      isVisible: () => overlay.isConnected,
-      close: () => {
-        if (document.body.contains(overlay)) document.body.removeChild(overlay);
-        done();
-      },
-    });
-
-    // ---- 提交保存 ----
-    saveBtn.addEventListener('click', async () => {
+    const saveBtn = createActionButton('💾 保存', 'var(--interactive-accent)', async () => {
+      const errMsg = validateForm(inputs);
+      if (errMsg) {
+        new Notice(errMsg, 3000);
+        return;
+      }
       const name = inputs.name.value.trim();
-      if (!name) {
-        new Notice('请输入物品名称', 3000);
-        return;
-      }
-      const price = parseFloat(inputs.price.value);
-      if (isNaN(price) || price < 0) {
-        new Notice('请输入有效的价格', 3000);
-        return;
-      }
-      const date = inputs.date.value;
-      if (!date) {
-        new Notice('请选择购买日期', 3000);
-        return;
-      }
-
-      // 获取分类（可能是 search-select 输入框的值）
-      let category = inputs.category.value.trim();
-      if (!category) {
-        new Notice('请选择或输入分类', 3000);
-        return;
-      }
 
       // 更新 item
       item.name = name;
-      item.category = category;
-      item.purchase_price = price;
-      item.purchase_date = date;
+      item.category = inputs.category.value.trim();
+      item.purchase_price = parseFloat(inputs.price.value);
+      item.purchase_date = inputs.date.value;
       item.current_status = inputs.status.value;
       item.description = inputs.description.value.trim();
       item.last_updated = new Date().toISOString();
@@ -522,6 +599,19 @@ function editItemById(id: string): Promise<void> {
       }
       done();
       resolve();
+    });
+
+    btnRow.appendChild(cancelBtn);
+    btnRow.appendChild(saveBtn);
+
+    modal.appendChild(form);
+    modal.appendChild(btnRow);
+    escManager.register('belongings-modal', {
+      isVisible: () => overlay.isConnected,
+      close: () => {
+        if (document.body.contains(overlay)) document.body.removeChild(overlay);
+        done();
+      },
     });
 
     // 点击遮罩关闭
@@ -558,7 +648,7 @@ function deleteItemById(id: string): Promise<void> {
   // ----- 创建独立确认弹窗 -----
   return new Promise((resolve) => {
     const { overlay, modal, palette, resolve: done } = createModalShell(10002, 400, '确认删除');
-    const { bg, text, border, isDark } = palette;
+    const { isDark } = palette;
 
     modal.style.maxHeight = 'none';
     modal.style.overflow = 'visible';
@@ -570,25 +660,13 @@ function deleteItemById(id: string): Promise<void> {
     const btnRow = document.createElement('div');
     btnRow.style.cssText = 'display: flex; justify-content: flex-end; gap: 12px;';
 
-    const cancelBtn = document.createElement('button');
-    cancelBtn.textContent = '取消';
-    cancelBtn.style.cssText = `
-      padding: 8px 20px; border-radius: 6px; border: 1px solid ${border};
-      background: transparent; color: ${text}; cursor: pointer; font-size: 14px;
-    `;
-    cancelBtn.addEventListener('click', () => {
+    const cancelBtn = createSecondaryButton('取消', palette, () => {
       document.body.removeChild(overlay);
       done();
       resolve();
     });
 
-    const confirmBtn = document.createElement('button');
-    confirmBtn.textContent = '🗑 删除';
-    confirmBtn.style.cssText = `
-      padding: 8px 20px; border-radius: 6px; border: none;
-      background: #e74c3c; color: white; cursor: pointer; font-size: 14px; font-weight: 500;
-    `;
-    confirmBtn.addEventListener('click', async () => {
+    const confirmBtn = createActionButton('🗑 删除', '#e74c3c', async () => {
       delete database!.items[id];
       await saveDatabase(database!);
       render();
@@ -639,7 +717,7 @@ function deleteItemById(id: string): Promise<void> {
 export function showSortModal(): Promise<void> {
   return new Promise((resolve) => {
     const { overlay, modal, palette, resolve: done } = createModalShell(10003, 480, '排序设置');
-    const { bg, text, border } = palette;
+    const { text, border } = palette;
     modal.style.maxHeight = 'none';
     modal.style.overflow = 'visible';
 
@@ -691,13 +769,7 @@ export function showSortModal(): Promise<void> {
     const btnRow = document.createElement('div');
     btnRow.style.cssText = 'display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px;';
 
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '关闭';
-    closeBtn.style.cssText = `
-      padding: 8px 20px; border-radius: 6px; border: 1px solid ${border};
-      background: transparent; color: ${text}; cursor: pointer; font-size: 14px;
-    `;
-    closeBtn.addEventListener('click', () => {
+    const closeBtn = createSecondaryButton('关闭', palette, () => {
       document.body.removeChild(overlay);
       done();
       resolve();
@@ -734,10 +806,8 @@ export function showSortModal(): Promise<void> {
 export function addItem(): Promise<void> {
   return new Promise((resolve) => {
     const { overlay, modal, palette, resolve: done } = createModalShell(10000, 480, '添加物品');
-    const { bg, text, border, inputBg, isDark } = palette;
 
-    // --- 修改 fields：将分类类型改为 'search-select' ---
-    const fields: { id: string; label: string; type: string; placeholder?: string; default?: string; options?: string[]; required?: boolean }[] = [
+    const fields: FormField[] = [
       { id: 'name', label: '📝 物品名称', type: 'text', placeholder: '请输入物品名称', required: true },
       { id: 'category', label: '📦 分类', type: 'search-select', options: database!.categories, placeholder: '输入搜索分类...' },
       { id: 'price', label: '💰 购买价格（元）', type: 'number', placeholder: '0.00', required: true },
@@ -746,263 +816,32 @@ export function addItem(): Promise<void> {
       { id: 'description', label: '📋 描述（可选）', type: 'textarea', placeholder: '规格、颜色、购买原因等...' },
     ];
 
-    const form = document.createElement('div');
-    form.style.cssText = 'display: flex; flex-direction: column; gap: 16px;';
-
-    const inputs: Record<string, any> = {};
-
-    fields.forEach((field) => {
-      const wrapper = document.createElement('div');
-
-      const label = document.createElement('label');
-      label.textContent = field.label;
-      label.style.cssText = `display: block; font-size: 14px; font-weight: 500; margin-bottom: 4px; color: ${text};`;
-
-      let input: any;
-
-      if (field.type === 'search-select') {
-        // 创建输入框和下拉列表容器
-        const searchWrapper = document.createElement('div');
-        searchWrapper.style.cssText = 'position: relative;';
-
-        input = document.createElement('input');
-        input.type = 'text';
-        input.placeholder = field.placeholder || '搜索分类...';
-        input.style.cssText = `
-          width: 100%; padding: 8px 12px; border-radius: 6px;
-          border: 1px solid ${border}; background: ${inputBg}; color: ${text};
-          font-size: 14px; box-sizing: border-box;
-        `;
-        input.autocomplete = 'off';
-
-        // 下拉列表容器
-        const dropdown = document.createElement('div');
-        dropdown.style.cssText = `
-          position: absolute; top: 100%; left: 0; right: 0;
-          background: ${bg}; border: 1px solid ${border};
-          border-radius: 6px; max-height: 200px; overflow-y: auto;
-          display: none; z-index: 10001;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        `;
-
-        // 填充选项
-        const allOptions = field.options || [];
-        const optionItems: HTMLDivElement[] = [];
-
-        allOptions.forEach((opt) => {
-          const item = document.createElement('div');
-          item.textContent = opt;
-          item.style.cssText = `
-            padding: 6px 12px; cursor: pointer; font-size: 14px;
-            color: ${text}; border-bottom: 1px solid ${border};
-          `;
-          item.addEventListener('mouseenter', () => {
-            item.style.background = isDark ? '#3d3d3d' : '#e8e8e8';
-          });
-          item.addEventListener('mouseleave', () => {
-            item.style.background = 'transparent';
-          });
-          item.addEventListener('click', () => {
-            input.value = opt;
-            dropdown.style.display = 'none';
-            // 触发输入事件以便验证
-            input.dispatchEvent(new Event('input'));
-          });
-          dropdown.appendChild(item);
-          optionItems.push(item);
-        });
-
-        searchWrapper.appendChild(input);
-        searchWrapper.appendChild(dropdown);
-        wrapper.appendChild(label);
-        wrapper.appendChild(searchWrapper);
-
-        // 搜索过滤
-        input.addEventListener('input', () => {
-          const query = input.value.toLowerCase().trim();
-          let hasVisible = false;
-          optionItems.forEach((item) => {
-            const text = item.textContent!.toLowerCase();
-            if (text.includes(query)) {
-              item.style.display = 'block';
-              hasVisible = true;
-            } else {
-              item.style.display = 'none';
-            }
-          });
-          dropdown.style.display = hasVisible ? 'block' : 'none';
-        });
-
-        // 点击输入框显示下拉
-        input.addEventListener('focus', () => {
-          // 重新触发过滤以显示所有项
-          input.dispatchEvent(new Event('input'));
-        });
-
-        // 点击外部关闭下拉
-        document.addEventListener('click', function closeDropdown(e) {
-          if (!searchWrapper.contains(e.target as Node)) {
-            dropdown.style.display = 'none';
-          }
-        });
-
-        // 键盘事件：上下键选择，回车确认
-        input.addEventListener('keydown', (e) => {
-          const visibleItems = optionItems.filter((item) => item.style.display !== 'none');
-          if (visibleItems.length === 0) return;
-          let currentIdx = visibleItems.findIndex((item) => item.style.background !== 'transparent');
-          if (currentIdx === -1) currentIdx = -1;
-
-          if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            const newIdx = Math.min(currentIdx + 1, visibleItems.length - 1);
-            visibleItems.forEach((item, idx) => {
-              item.style.background = idx === newIdx ? (isDark ? '#3d3d3d' : '#e8e8e8') : 'transparent';
-            });
-            if (newIdx >= 0) visibleItems[newIdx].scrollIntoView({ block: 'nearest' });
-          } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            const newIdx = Math.max(currentIdx - 1, 0);
-            visibleItems.forEach((item, idx) => {
-              item.style.background = idx === newIdx ? (isDark ? '#3d3d3d' : '#e8e8e8') : 'transparent';
-            });
-            if (newIdx >= 0) visibleItems[newIdx].scrollIntoView({ block: 'nearest' });
-          } else if (e.key === 'Enter') {
-            e.preventDefault();
-            const selected = visibleItems.find((item) => item.style.background !== 'transparent');
-            if (selected) {
-              input.value = selected.textContent!;
-              dropdown.style.display = 'none';
-              input.dispatchEvent(new Event('input'));
-            }
-          } else if (e.key === 'Escape') {
-            dropdown.style.display = 'none';
-          }
-        });
-
-        // 保存下拉引用以便后续清理（可选）
-        inputs[field.id] = input;
-        // 保存选项列表以便后续使用（例如获取选中值）
-        (input as any)._dropdownOptions = optionItems;
-        // 将 dropdown 保存在 input 上以便后续清理
-        (input as any)._dropdown = dropdown;
-
-      } else if (field.type === 'select') {
-        // 普通 select 保持不变
-        input = document.createElement('select');
-        input.style.cssText = `
-          width: 100%; padding: 8px 12px; border-radius: 6px;
-          border: 1px solid ${border}; background: ${inputBg}; color: ${text};
-          font-size: 14px; box-sizing: border-box;
-        `;
-        (field.options || []).forEach((opt: string) => {
-          const option = document.createElement('option');
-          option.value = opt;
-          option.textContent = opt;
-          input.appendChild(option);
-        });
-        wrapper.appendChild(label);
-        wrapper.appendChild(input);
-      } else if (field.type === 'textarea') {
-        input = document.createElement('textarea');
-        input.style.cssText = `
-          width: 100%; padding: 8px 12px; border-radius: 6px;
-          border: 1px solid ${border}; background: ${inputBg}; color: ${text};
-          font-size: 14px; box-sizing: border-box; resize: vertical; min-height: 60px;
-        `;
-        input.placeholder = field.placeholder || '';
-        wrapper.appendChild(label);
-        wrapper.appendChild(input);
-      } else {
-        // text, number, date
-        input = document.createElement('input');
-        input.type = field.type;
-        input.style.cssText = `
-          width: 100%; padding: 8px 12px; border-radius: 6px;
-          border: 1px solid ${border}; background: ${inputBg}; color: ${text};
-          font-size: 14px; box-sizing: border-box;
-        `;
-        if (field.placeholder) input.placeholder = field.placeholder;
-        if (field.default) input.value = field.default;
-        if (field.type === 'number') input.step = '0.01';
-        wrapper.appendChild(label);
-        wrapper.appendChild(input);
-      }
-
-      if (field.required) input.required = true;
-      form.appendChild(wrapper);
-      inputs[field.id] = input;
-    });
+    const { form, inputs } = buildForm(fields, palette, undefined, 10001);
 
     // 按钮容器
     const btnRow = document.createElement('div');
     btnRow.style.cssText = 'display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px;';
 
-    const cancelBtn = document.createElement('button');
-    cancelBtn.textContent = '取消';
-    cancelBtn.style.cssText = `
-      padding: 8px 20px; border-radius: 6px; border: 1px solid ${border};
-      background: transparent; color: ${text}; cursor: pointer; font-size: 14px;
-    `;
-    cancelBtn.addEventListener('click', () => {
+    const cancelBtn = createSecondaryButton('取消', palette, () => {
       document.body.removeChild(overlay);
       done();
       resolve();
     });
 
-    const submitBtn = document.createElement('button');
-    submitBtn.textContent = '✅ 保存';
-    submitBtn.style.cssText = `
-      padding: 8px 20px; border-radius: 6px; border: none;
-      background: var(--interactive-accent); color: white; cursor: pointer; font-size: 14px; font-weight: 500;
-    `;
-
-    btnRow.appendChild(cancelBtn);
-    btnRow.appendChild(submitBtn);
-
-    modal.appendChild(form);
-    modal.appendChild(btnRow);
-    escManager.register('belongings-modal', {
-      isVisible: () => overlay.isConnected,
-      close: () => {
-        if (document.body.contains(overlay)) document.body.removeChild(overlay);
-        done();
-        resolve();
-      },
-    });
-
-    // 提交事件
-    submitBtn.addEventListener('click', async () => {
+    const submitBtn = createActionButton('✅ 保存', 'var(--interactive-accent)', async () => {
+      const errMsg = validateForm(inputs);
+      if (errMsg) {
+        new Notice(errMsg, 3000);
+        return;
+      }
       const name = inputs.name.value.trim();
-      if (!name) {
-        new Notice('请输入物品名称', 3000);
-        return;
-      }
-      const price = parseFloat(inputs.price.value);
-      if (isNaN(price) || price < 0) {
-        new Notice('请输入有效的价格', 3000);
-        return;
-      }
-      const date = inputs.date.value;
-      if (!date) {
-        new Notice('请选择购买日期', 3000);
-        return;
-      }
-
-      // 获取分类值：如果是 search-select，取输入框的值；否则取 select 的值
-      let category = inputs.category.value.trim();
-      // 如果分类不在现有列表中，但用户输入了，我们仍然使用（允许自定义）
-      if (!category) {
-        new Notice('请选择或输入分类', 3000);
-        return;
-      }
 
       const newItem = {
         id: `item_${Date.now()}`,
         name: name,
-        category: category,
-        purchase_price: price,
-        purchase_date: date,
+        category: inputs.category.value.trim(),
+        purchase_price: parseFloat(inputs.price.value),
+        purchase_date: inputs.date.value,
         current_status: inputs.status.value,
         description: inputs.description.value.trim(),
         created_date: new Date().toISOString(),
@@ -1019,6 +858,20 @@ export function addItem(): Promise<void> {
       }
       done();
       resolve();
+    });
+
+    btnRow.appendChild(cancelBtn);
+    btnRow.appendChild(submitBtn);
+
+    modal.appendChild(form);
+    modal.appendChild(btnRow);
+    escManager.register('belongings-modal', {
+      isVisible: () => overlay.isConnected,
+      close: () => {
+        if (document.body.contains(overlay)) document.body.removeChild(overlay);
+        done();
+        resolve();
+      },
     });
 
     overlay.addEventListener('click', (e) => {
