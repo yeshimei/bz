@@ -71,10 +71,16 @@ export class MockVault {
   listeners: Record<string, Function[]> = {};
   on(event: string, cb: (...args: any[]) => void): any {
     (this.listeners[event] ||= []).push(cb);
-    return { ref: `mock-ref-${event}` };
+    return { event, cb };
   }
   off(): void {}
-  offref(): void {}
+  /** 按 on() 返回值移除监听（真实 offref 语义） */
+  offref(ref: any): void {
+    if (!ref || !ref.event) return;
+    const arr = this.listeners[ref.event] || [];
+    const idx = arr.indexOf(ref.cb);
+    if (idx >= 0) arr.splice(idx, 1);
+  }
   emit(event: string, ...args: any[]): void {
     for (const cb of this.listeners[event] || []) cb(...args);
   }
