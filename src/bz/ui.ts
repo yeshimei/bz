@@ -8,7 +8,7 @@ import { Notice } from 'obsidian';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { confirm } from '../core/confirm';
-import { createSiteIcon, createIconBtn as _unused } from '../core/dom';
+import { createSiteIcon } from '../core/dom';
 import {
   formatRelativeTime,
   extractUrlAndDisplay,
@@ -72,14 +72,10 @@ export const UIManager = {
   addMask: null as HTMLDivElement | null,
   addPopup: null as HTMLDivElement | null,
   addEditingId: null as string | null,
-  confirmMask: null as HTMLDivElement | null,
-  confirmPopup: null as HTMLDivElement | null,
-  confirmCallback: null as (() => void) | null,
   escapeRegistered: false,
   // 私有建议数据（避免全局污染）
   scriptSuggestions: [] as string[],
   courseSuggestions: [] as { name: string; path: string }[],
-  _handleSave: null as (() => Promise<void>) | null,
 
   injectStyles() {
     if (document.querySelector('style[data-todo-styles]')) return;
@@ -631,8 +627,6 @@ export const UIManager = {
       if (e.key === 'Escape') this.hideAddDialog();
     });
 
-    // 保存 handleSave 到实例，以便在 showAddDialog 中复用
-    this._handleSave = handleSave;
   },
 
   // ---------- AI 推荐场景和优先级 ----------
@@ -884,159 +878,6 @@ export const UIManager = {
     this.addPopup.style.display = 'block';
     contentInput.focus();
 
-    // ---------- 绑定事件（重写保存逻辑以提取 url） ----------
-    // 取消按钮
-    this.addPopup.querySelector('#add-todo-cancel')!.onclick = () => this.hideAddDialog();
-
-    const saveBtn = this.addPopup.querySelector('#add-todo-save') as HTMLButtonElement;
-    saveBtn.onclick = async () => {
-      let content = contentInput.value.trim();
-      if (!content) {
-        const placeholder = contentInput.placeholder;
-        if (placeholder && placeholder !== '输入备忘录内容...') {
-          contentInput.value = placeholder;
-        } else {
-          const raw = contentInput.dataset.rawClipboard || '';
-          if (raw) {
-            const { url } = extractUrlAndDisplay(raw);
-            if (url) contentInput.value = url;
-          }
-        }
-      }
-      const finalContent = contentInput.value.trim();
-      if (!finalContent) {
-        new Notice('请输入内容');
-        return;
-      }
-
-      const selectedScene = sceneContainer.querySelector('.scene-btn.active');
-      if (!selectedScene) {
-        new Notice('请选择场景');
-        return;
-      }
-      const scene = (selectedScene as HTMLElement).dataset.scene!;
-
-      const selectedPriority = priorityContainer.querySelector('.priority-btn.active');
-      const priority = selectedPriority ? (selectedPriority as HTMLElement).dataset.priority : 'minor';
-
-      let title = titleInput.value.trim();
-      if (!title) {
-        const ph = titleInput.placeholder;
-        if (ph && ph !== '标题（可选）') title = ph;
-      }
-
-      // 分离 title 和 url
-      const { url: extractedUrl, display } = extractUrlAndDisplay(finalContent);
-      let finalTitle = display;
-      if (title && extractedUrl) {
-        finalTitle = title;
-      } else if (!finalTitle) {
-        finalTitle = finalContent;
-      }
-      const finalUrl = extractedUrl || null;
-
-      const positionData = (posBtn as any).positionData || {};
-      const notePath = positionData.notePath || null;
-      const notePosition = positionData.notePosition || null;
-
-      let scriptName: string | null = null;
-      if (scene === '代码') {
-        const sv = scriptInput.value.trim();
-        if (sv) scriptName = sv;
-      }
-      let courseName: string | null = null,
-        coursePath: string | null = null;
-      if (scene === '公开课') {
-        const cv = courseInput.value.trim();
-        if (cv) {
-          courseName = cv;
-          if (courseInput.dataset.coursePath) coursePath = courseInput.dataset.coursePath;
-          else {
-            const suggestions = this.courseSuggestions || [];
-            const matched = suggestions.find((s) => s.name.toLowerCase() === cv.toLowerCase());
-            if (matched) coursePath = matched.path;
-          }
-        }
-      }
-
-      const editingId = this.addEditingId;
-      const dueValue = dueInput.value || null;
-      try {
-        if (editingId) {
-          await DataManager.updateItem(editingId, {
-            title: finalTitle,
-            scene,
-            priority,
-            due: dueValue,
-            notePath,
-            notePosition,
-            scriptName,
-            courseName,
-            coursePath,
-            url: finalUrl,
-          } as any);
-        } else {
-          const newItem = {
-            id: generateId('todo'),
-            title: finalTitle,
-            scene,
-            priority,
-            created: moment().format('YYYY-MM-DD HH:mm:ss'),
-            completed: null,
-            due: dueValue,
-            notePath,
-            notePosition,
-            scriptName,
-            courseName,
-            coursePath,
-            url: finalUrl,
-          };
-          await DataManager.addItem(newItem as any);
-        }
-        await App.loadData();
-        App.refresh();
-        this.hideAddDialog();
-      } catch (e: any) {
-        new Notice('保存失败：' + e.message);
-        console.error(e);
-      }
-    };
-
-    // 位置按钮（保留原有逻辑）
-    this.addPopup.querySelector('#add-todo-pos-btn')!.onclick = () => {
-      const data = (posBtn as any).positionData || {};
-      if (data.notePath && data.notePosition) {
-        data.notePath = null;
-        data.notePosition = null;
-        (posBtn as any).positionData = data;
-        posBtn.textContent = '📌';
-        posBtn.style.background = 'var(--background-secondary)';
-        posBtn.style.color = 'var(--text-muted)';
-      } else {
-        const info = getCurrentNoteInfo();
-        const pos = getCurrentCursorPosition();
-        if (info && pos) {
-          data.notePath = info.path;
-          data.notePosition = { line: pos.line, ch: pos.ch };
-          (posBtn as any).positionData = data;
-          posBtn.textContent = `📌 ${info.name}`;
-          posBtn.style.background = 'var(--interactive-accent)';
-          posBtn.style.color = 'var(--text-on-accent)';
-        } else {
-          new Notice('无法获取当前位置');
-        }
-      }
-    };
-
-    // AI 推荐按钮（保留原有逻辑）
-    this.addPopup.querySelector('#add-todo-ai-recommend')!.onclick = async () => {
-      const content = contentInput.value.trim();
-      if (!content) {
-        new Notice('请先输入备忘录内容');
-        return;
-      }
-      await this.handleAIRecommend();
-    };
   },
 
   hideAddDialog() {
@@ -1066,6 +907,51 @@ export const UIManager = {
     });
   },
 };
+
+/** 长按手势（场景标签编辑 / 时间标签删除共用，500ms 触发） */
+function attachLongPress(span: HTMLElement, onLongPress: () => void) {
+  let timer: any = null;
+  let isTouching = false;
+
+  const startLongPress = (e: any) => {
+    if (e.button !== undefined && e.button !== 0) return; // 仅左键
+    e.stopPropagation();
+    // 阻止默认行为防止滚动或上下文菜单
+    e.preventDefault();
+    timer = setTimeout(() => {
+      onLongPress();
+      timer = null;
+    }, 500);
+  };
+
+  const cancelLongPress = () => {
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+  };
+
+  // 鼠标事件
+  span.addEventListener('mousedown', startLongPress);
+  span.addEventListener('mouseup', cancelLongPress);
+  span.addEventListener('mouseleave', cancelLongPress);
+  // 触摸事件（移动端）
+  span.addEventListener('touchstart', (e) => {
+    // 阻止 mouse 事件后续触发
+    e.preventDefault();
+    isTouching = true;
+    startLongPress(e);
+  });
+  span.addEventListener('touchend', () => {
+    isTouching = false;
+    cancelLongPress();
+  });
+  span.addEventListener('touchmove', () => {
+    if (isTouching) {
+      cancelLongPress();
+    }
+  });
+}
 
 // ---------- 渲染器 ----------
 
@@ -1365,48 +1251,8 @@ export const Renderer = {
     const isImportant = item.priority === 'important';
     span.style.cssText = `padding:2px 8px;border-radius:12px;font-size:12px;background:${isImportant ? '#ff4757' : 'var(--background-secondary)'};color:${isImportant ? 'white' : 'var(--text-muted)'};white-space:nowrap;cursor:pointer;`;
 
-    let timer: any = null;
-    let isTouching = false;
-
-    const startLongPress = (e: any) => {
-      if (e.button !== undefined && e.button !== 0) return; // 仅左键
-      e.stopPropagation();
-      // 阻止默认行为防止滚动或上下文菜单
-      e.preventDefault();
-      timer = setTimeout(() => {
-        UIManager.showAddDialog(item);
-        timer = null;
-      }, 500);
-    };
-
-    const cancelLongPress = () => {
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
-      }
-    };
-
-    // 鼠标事件
-    span.addEventListener('mousedown', startLongPress);
-    span.addEventListener('mouseup', cancelLongPress);
-    span.addEventListener('mouseleave', cancelLongPress);
-    // 触摸事件（移动端）
-    span.addEventListener('touchstart', (e) => {
-      // 阻止 mouse 事件后续触发
-      e.preventDefault();
-      isTouching = true;
-      startLongPress(e);
-    });
-    span.addEventListener('touchend', () => {
-      isTouching = false;
-      cancelLongPress();
-    });
-    span.addEventListener('touchmove', () => {
-      if (isTouching) {
-        cancelLongPress();
-      }
-    });
-
+    // 长按 500ms 打开编辑弹窗
+    attachLongPress(span, () => UIManager.showAddDialog(item));
     return span;
   },
 
@@ -1415,47 +1261,13 @@ export const Renderer = {
     span.textContent = formatRelativeTime(item.created);
     span.style.cssText = 'font-size:12px;color:var(--text-faint);flex-shrink:0;cursor:pointer;';
 
-    let timer: any = null;
-    let isTouching = false;
-
-    const startLongPress = (e: any) => {
-      if (e.button !== undefined && e.button !== 0) return;
-      e.stopPropagation();
-      e.preventDefault();
-      timer = setTimeout(() => {
-        UIManager.showConfirm('删除备忘录', item.title, async () => {
-          await DataManager.deleteItem(item.id);
-          App.refresh();
-        });
-        timer = null;
-      }, 500);
-    };
-
-    const cancelLongPress = () => {
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
-      }
-    };
-
-    span.addEventListener('mousedown', startLongPress);
-    span.addEventListener('mouseup', cancelLongPress);
-    span.addEventListener('mouseleave', cancelLongPress);
-    span.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      isTouching = true;
-      startLongPress(e);
+    // 长按 500ms 弹出删除确认
+    attachLongPress(span, () => {
+      UIManager.showConfirm('删除备忘录', item.title, async () => {
+        await DataManager.deleteItem(item.id);
+        App.refresh();
+      });
     });
-    span.addEventListener('touchend', () => {
-      isTouching = false;
-      cancelLongPress();
-    });
-    span.addEventListener('touchmove', () => {
-      if (isTouching) {
-        cancelLongPress();
-      }
-    });
-
     return span;
   },
 

@@ -63,6 +63,29 @@ export interface ReadingStats {
   readingSpeed: { totalPages: number; totalWords: number; averagePagesPerHour: number; averageWordsPerHour: number };
 }
 
+/** 空月度统计（惰性初始化用） */
+function emptyMonthlyStats() {
+  return {
+    booksRead: 0,
+    booksCompleted: 0,
+    totalReadingTime: 0,
+    totalHighlights: 0,
+    readingProgress: 0,
+  };
+}
+
+/** 空年度统计（惰性初始化用） */
+function emptyYearlyStats() {
+  return {
+    booksRead: 0,
+    booksCompleted: 0,
+    totalReadingTime: 0,
+    totalHighlights: 0,
+    averageProgress: 0,
+  };
+}
+
+
 /** 计算阅读统计数据 */
 export function calculateReadingStats(books: BookNoteEntry[]): ReadingStats {
   const stats: ReadingStats = {
@@ -154,29 +177,13 @@ export function calculateReadingStats(books: BookNoteEntry[]): ReadingStats {
           const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
           const yearKey = date.getFullYear().toString();
 
-          if (!stats.monthlyStats[monthKey]) {
-            stats.monthlyStats[monthKey] = {
-              booksRead: 0,
-              booksCompleted: 0,
-              totalReadingTime: 0,
-              totalHighlights: 0,
-              readingProgress: 0,
-            };
-          }
+          if (!stats.monthlyStats[monthKey]) stats.monthlyStats[monthKey] = emptyMonthlyStats();
           stats.monthlyStats[monthKey].booksRead++;
           stats.monthlyStats[monthKey].totalReadingTime += readingTime;
           stats.monthlyStats[monthKey].totalHighlights += parseInt(fm.highlights) || 0;
           if (readingProgress >= 100) stats.monthlyStats[monthKey].booksCompleted++;
 
-          if (!stats.yearlyStats[yearKey]) {
-            stats.yearlyStats[yearKey] = {
-              booksRead: 0,
-              booksCompleted: 0,
-              totalReadingTime: 0,
-              totalHighlights: 0,
-              averageProgress: 0,
-            };
-          }
+          if (!stats.yearlyStats[yearKey]) stats.yearlyStats[yearKey] = emptyYearlyStats();
           stats.yearlyStats[yearKey].booksRead++;
           stats.yearlyStats[yearKey].totalReadingTime += readingTime;
           stats.yearlyStats[yearKey].totalHighlights += parseInt(fm.highlights) || 0;
@@ -193,26 +200,10 @@ export function calculateReadingStats(books: BookNoteEntry[]): ReadingStats {
           const compMonthKey = `${compDate.getFullYear()}-${(compDate.getMonth() + 1).toString().padStart(2, '0')}`;
           const compYearKey = compDate.getFullYear().toString();
 
-          if (!stats.monthlyStats[compMonthKey]) {
-            stats.monthlyStats[compMonthKey] = {
-              booksRead: 0,
-              booksCompleted: 0,
-              totalReadingTime: 0,
-              totalHighlights: 0,
-              readingProgress: 0,
-            };
-          }
+          if (!stats.monthlyStats[compMonthKey]) stats.monthlyStats[compMonthKey] = emptyMonthlyStats();
           stats.monthlyStats[compMonthKey].booksCompleted++;
 
-          if (!stats.yearlyStats[compYearKey]) {
-            stats.yearlyStats[compYearKey] = {
-              booksRead: 0,
-              booksCompleted: 0,
-              totalReadingTime: 0,
-              totalHighlights: 0,
-              averageProgress: 0,
-            };
-          }
+          if (!stats.yearlyStats[compYearKey]) stats.yearlyStats[compYearKey] = emptyYearlyStats();
           stats.yearlyStats[compYearKey].booksCompleted++;
         } catch (dateError) {
           console.warn(`完成日期解析错误: ${fm.completionDate}`, dateError);
