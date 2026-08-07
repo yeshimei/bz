@@ -91,10 +91,16 @@ export async function loadAll() {
   emitLoading(true);
   try {
     const app = getApp();
+    console.log('[日记本] loadAll 开始, 日记目录 =', DIARY_DIRECTORY);
     const diaryDir = app.vault.getAbstractFileByPath(DIARY_DIRECTORY) as any;
     if (!diaryDir || !diaryDir.children) {
+      console.warn('[日记本] 日记目录未找到或为空:', DIARY_DIRECTORY, '->', diaryDir);
       state.data.originalDiaryEntries = [];
       state.data.currentFilteredEntries = [];
+      // 渲染空态（避免静默空白）
+      state.data.currentDisplayCount = 0;
+      emitFullRefresh();
+      emitLoading(false);
       return;
     }
 
@@ -102,6 +108,7 @@ export async function loadAll() {
       .filter((f: any) => f.extension === 'md')
       .sort((a: any, b: any) => b.name.localeCompare(a.name));
     const totalDiaryFiles = mdFiles.length;
+    console.log('[日记本] 日记文件数:', totalDiaryFiles);
 
     let movieFiles: any[] = [];
     let letterFiles: any[] = [];
@@ -182,6 +189,7 @@ export async function loadAll() {
     sortEntries(state.data.originalDiaryEntries);
     // 确保每个条目都有 id
     assignIds(state.data.originalDiaryEntries);
+    console.log('[日记本] 条目总数:', state.data.originalDiaryEntries.length, '(影视+信计入)');
 
     // 修复点：使用 full refresh 正确应用筛选条件
     state.data.currentDisplayCount = 0;
