@@ -1,0 +1,64 @@
+/**
+ * 收藏本 DataManager 测试（ticket 11）：CRUD + 排序。
+ */
+import { describe, it, expect, beforeEach } from 'vitest';
+import { setApp } from '../../src/core/app';
+import { DataManager } from '../../src/favorites/data';
+import { MockVault } from '../mock-vault';
+
+function makeApp(vault: MockVault) {
+  return { vault, metadataCache: {}, workspace: {} } as any;
+}
+
+describe('DataManager', () => {
+  let vault: MockVault;
+  let dm: DataManager;
+
+  beforeEach(() => {
+    vault = new MockVault();
+    setApp(makeApp(vault));
+    dm = new DataManager('CONFIG/STORAGE/favorites.json');
+  });
+
+  it('空库读取 → [] + 自动建文件', async () => {
+    const data = await dm.getAll();
+    expect(data).toEqual([]);
+    expect(vault.files.has('CONFIG/STORAGE/favorites.json')).toBe(true);
+  });
+
+  it('add → unshift 到最前', async () => {
+    await dm.add({ id: '1', tags: ['GitHub'], title: 'A', description: '', pinned: false, url: '', balance: null, balanceCacheTime: null, balanceError: null, linkedNote: null, created: '2025-01-01 00:00:00', type: 'GitHub' } as any);
+    await dm.add({ id: '2', tags: ['网站'], title: 'B', description: '', pinned: false, url: '', balance: null, balanceCacheTime: null, balanceError: null, linkedNote: null, created: '2025-01-02 00:00:00', type: '网站' } as any);
+    const data = await dm.getAll();
+    expect(data.map((d) => d.id)).toEqual(['2', '1']);
+  });
+
+  it('update → 合并字段并落盘', async () => {
+    await dm.add({ id: '1', tags: ['GitHub'], title: 'A', description: '', pinned: false, url: '', balance: null, balanceCacheTime: null, balanceError: null, linkedNote: null, created: '2025-01-01 00:00:00', type: 'GitHub' } as any);
+    await dm.update('1', { pinned: true, title: 'A2' });
+    const data = await dm.getAll();
+    expect(data[0].pinned).toBe(true);
+    expect(data[0].title).toBe('A2');
+    expect(data[0].type).toBe('GitHub'); // 未更新的字段保留
+  });
+
+  it('delete → 移除', async () => {
+    await dm.add({ id: '1', tags: [], title: 'A', description: '', pinned: false, url: '', balance: null, balanceCacheTime: null, balanceError: null, linkedNote: null, created: '', type: '' } as any);
+    await dm.add({ id: '2', tags: [], title: 'B', description: '', pinned: false, url: '', balance: null, balanceCacheTime: null, balanceError: null, linkedNote: null, created: '', type: '' } as any);
+    await dm.delete('1');
+    expect((await dm.getAll()).map((d) => d.id)).toEqual(['2']);
+  });
+
+  it('13 字段落盘格式', async () => {
+    const item = {
+      id: '1234567890', tags: ['GitHub'], title: 'T', description: 'D', pinned: true,
+      url: 'https://github.com/a/b', balance: '10.5', balanceCacheTime: 123456, balanceError: null,
+      linkedNote: '笔记.md', created: '2025-06-01 08:00:00', type: 'GitHub',
+      llmConfig: { apiKeys: 'sk-1', balanceUrl: 'https://api.example.com/balance' },
+    };
+    await dm.add(item as any);
+    const saved = JSON.parse(vault.files.get('CONFIG/STORAGE/favorites.json')!);
+    expect(saved[0]).toEqual(item);
+    expect(Object.keys(saved[0]).length).toBe(13); // 12 必选字段 + llmConfig
+  });
+});

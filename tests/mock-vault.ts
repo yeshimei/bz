@@ -61,10 +61,17 @@ export class MockVault {
     return [...this.files.keys()].map((p) => this.file(p));
   }
 
-  on(): any {
-    return { ref: 'mock-ref' };
+  /** 事件模拟（create/modify/delete），供监听类测试 emit */
+  listeners: Record<string, Function[]> = {};
+  on(event: string, cb: (...args: any[]) => void): any {
+    (this.listeners[event] ||= []).push(cb);
+    return { ref: `mock-ref-${event}` };
   }
   off(): void {}
+  offref(): void {}
+  emit(event: string, ...args: any[]): void {
+    for (const cb of this.listeners[event] || []) cb(...args);
+  }
 }
 
 /** 解析 frontmatter（简易 YAML 子集：key: value 行） */
