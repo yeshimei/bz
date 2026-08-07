@@ -33,6 +33,8 @@ export default interface BzSettings {
   showTagCount: boolean;
   /** 🕒 使用文件日期作为默认日期 */
   useFileDateTime: boolean;
+  /** 📄 每批加载数量（滚动加载每批显示的条目数） */
+  diaryBatchSize: string;
 
   // ===== 📦 归物本（1 项）=====
   /** 📁 存储文件夹路径（belongings.json） */
@@ -41,6 +43,8 @@ export default interface BzSettings {
   // ===== 📰 剪藏本（1 项）=====
   /** 📂 剪藏目录 */
   articleDirectory: string;
+  /** 📄 每批加载数量（滚动加载每批显示的条目数） */
+  articleBatchSize: string;
 
   // ===== 🔐 密码本（4 项）=====
   /** 📂 数据存储路径 */
@@ -79,9 +83,13 @@ export default interface BzSettings {
   // ===== 🎬 影视（1 项）=====
   /** 📁 影视文件夹 */
   movieFolderPath: string;
+  /** 📄 每页加载数量（列表初始加载及每次滚动加载的条数） */
+  moviePageSize: string;
 
 
-  // ===== 🧠 做题家（4 项，含 shuffleQuestions）=====
+  // ===== 🧠 做题家（5 项，含 shuffleQuestions）=====
+  /** 数据存储路径（quiz.json 所在目录） */
+  quizStoragePath: string;
   /** 允许多选题 */
   enableMultipleChoice: boolean;
   /** 每笔记题目数量（0 为自动） */
@@ -91,7 +99,9 @@ export default interface BzSettings {
   /** 题目难度：random/easy/medium/hard */
   difficulty: string;
 
-  // ===== 🔁 复习计划（3 项）=====
+  // ===== 🔁 复习计划（4 项）=====
+  /** 数据存储路径（review.json 所在目录） */
+  reviewStoragePath: string;
   /** ⏱️ 检查间隔（秒） */
   autoCheckInterval: string;
   /** 🔔 启用逾期通知 */
@@ -161,12 +171,14 @@ export const DEFAULT_SETTINGS: BzSettings = {
   letterDirectory: '我的/信',
   showTagCount: true,
   useFileDateTime: false,
+  diaryBatchSize: '20',
 
   // 归物本
   belongingsDataFolder: 'CONFIG/STORAGE',
 
   // 剪藏本
   articleDirectory: '归档/网页剪藏',
+  articleBatchSize: '20',
 
   // 密码本
   pwStoragePath: 'CONFIG/STORAGE',
@@ -191,15 +203,18 @@ export const DEFAULT_SETTINGS: BzSettings = {
 
   // 影视
   movieFolderPath: '我的/影视',
+  moviePageSize: '20',
 
 
   // 做题家
+  quizStoragePath: 'CONFIG/STORAGE',
   enableMultipleChoice: true,
   questionsPerNote: '0',
   shuffleQuestions: true,
   difficulty: 'random',
 
   // 复习计划
+  reviewStoragePath: 'CONFIG/STORAGE',
   autoCheckInterval: '60',
   enableAutoNotify: true,
   forceQuizForReview: false,

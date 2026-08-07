@@ -7,7 +7,7 @@ import { DIARY_DIRECTORY, getAllAvailableTags, getSortedTagsForAddDialog, getTag
 import { parseNaturalTime } from '../parser';
 import { addEntry, writeFile } from '../store';
 import { diaryDataMap, state } from '../state';
-import { getDefaultTagSetting, getUseFileDateTimeSetting } from './ui-settings';
+import { getUseFileDateTimeSetting } from './ui-settings';
 import { rebuildTags } from './filter-shared';
 import { applyFilter as applyFilterFromDialogs, insertCard, jumpToEntry, removeCard, showConfirm as showConfirmFromDialogs } from './entries';
 import { updateTitleSuffix } from './filter-shared';
@@ -457,9 +457,7 @@ export function createAddDialog() {
     typeContainer.appendChild(btn);
   }
 
-  // 默认选中“日记”（如果存在）
-  const defaultBtn = typeContainer.querySelector('[data-tag="日记"]');
-  if (defaultBtn) defaultBtn.classList.add('diary-active');
+
 
   const buttonsContainer = document.createElement('div');
   buttonsContainer.style.cssText = 'display:flex;gap:12px;justify-content:flex-end;';
@@ -514,19 +512,7 @@ export function openAddDialog() {
       typeContainer.appendChild(btn);
     }
 
-    // ----- 使用设置中的默认标签 -----
-    const defaultTag = getDefaultTagSetting();
-    const defaultBtn = typeContainer.querySelector(`[data-tag="${defaultTag}"]`);
-    if (defaultBtn) {
-      defaultBtn.classList.add('diary-active');
-      popup.dataset.selectedTag = defaultTag;
-    } else {
-      const firstBtn = typeContainer.querySelector('.diary-tag-selector-btn');
-      if (firstBtn) {
-        firstBtn.classList.add('diary-active');
-        popup.dataset.selectedTag = (firstBtn as HTMLElement).dataset.tag;
-      }
-    }
+    // ----- 不预选任何标签（用户确认：默认全部加载，不选择任何标签） -----
   }
 
   // 2. 设置日期时间默认值

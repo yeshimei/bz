@@ -301,11 +301,12 @@ export class BzSettingTab extends PluginSettingTab {
     this.toggleSetting(el, '启动时自动弹窗', '启动时自动弹出备忘录面板（有重要备忘录时）', s.autoPopupOnStart, save, (v) => (s.autoPopupOnStart = v));
   }
 
-  // ===== 日记本 =====（文件变更延迟/长按手势设置已移除）
+  // ===== 日记本 =====（长按手势固定启用；每批加载数量可配）
   private buildDiaryTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
     this.textSetting(el, '日记目录', '存放日记 markdown 文件的文件夹路径', s.diaryDirectory, save, (v) => (s.diaryDirectory = v));
     this.textSetting(el, '影视目录', '存放影视笔记的文件夹路径（日记本用）', s.movieDirectory, save, (v) => (s.movieDirectory = v));
     this.textSetting(el, '信目录', '存放信件的文件夹路径', s.letterDirectory, save, (v) => (s.letterDirectory = v));
+    this.textSetting(el, '每批加载数量', '滚动加载时每批显示的条目数', s.diaryBatchSize, save, (v) => (s.diaryBatchSize = v));
     this.toggleSetting(el, '显示标签计数', '在标签按钮上显示该标签包含的条目数量', s.showTagCount, save, (v) => (s.showTagCount = v));
     this.toggleSetting(el, '使用文件日期作为默认日期', '开启后，添加日记时默认日期取自当前打开的日记文件的日期（若为日记文件）；关闭则使用当前时间', s.useFileDateTime, save, (v) => (s.useFileDateTime = v));
   }
@@ -315,9 +316,10 @@ export class BzSettingTab extends PluginSettingTab {
     this.textSetting(el, '存储文件夹路径', '存放 belongings.json 的文件夹', s.belongingsDataFolder, save, (v) => (s.belongingsDataFolder = v));
   }
 
-  // ===== 剪藏本 =====（每批加载数量/长按识别时长设置已移除）
+  // ===== 剪藏本 =====（长按识别时长固定默认；每批加载数量可配）
   private buildClippingTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
     this.textSetting(el, '剪藏目录', '存放网页剪藏 markdown 文件的文件夹', s.articleDirectory, save, (v) => (s.articleDirectory = v));
+    this.textSetting(el, '每批加载数量', '滚动加载时每批显示的条目数', s.articleBatchSize, save, (v) => (s.articleBatchSize = v));
   }
 
   // ===== 密码本 =====
@@ -345,13 +347,15 @@ export class BzSettingTab extends PluginSettingTab {
     this.toggleSetting(el, '显示书评摘要', '', s.showReview, save, (v) => (s.showReview = v));
   }
 
-  // ===== 影视 =====（每页加载数量/海报整理设置已移除）
+  // ===== 影视 =====（海报整理功能不提供；每页加载数量可配）
   private buildMovieTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
     this.textSetting(el, '影视文件夹', '存放影视笔记的文件夹路径', s.movieFolderPath, save, (v) => (s.movieFolderPath = v));
+    this.textSetting(el, '每页加载数量', '列表初始加载及每次滚动加载的条数', s.moviePageSize, save, (v) => (s.moviePageSize = v));
   }
 
   // ===== 做题家 =====（题目难度为下拉选择）
   private buildQuizTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
+    this.textSetting(el, '数据存储路径', '存放 quiz.json 的目录', s.quizStoragePath, save, (v) => (s.quizStoragePath = v));
     this.toggleSetting(el, '允许多选题', '若关闭，AI 只生成单选题', s.enableMultipleChoice, save, (v) => (s.enableMultipleChoice = v));
     this.textSetting(el, '每笔记题目数量（0为自动）', '设为0则由AI决定，设为正整数则固定数量', s.questionsPerNote, save, (v) => (s.questionsPerNote = v));
     this.toggleSetting(el, '打乱题目顺序', '每次打开做题窗口时是否随机打乱题目', s.shuffleQuestions, save, (v) => (s.shuffleQuestions = v));
@@ -373,6 +377,7 @@ export class BzSettingTab extends PluginSettingTab {
 
   // ===== 复习计划 =====
   private buildReviewTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
+    this.textSetting(el, '数据存储路径', '存放 review.json 的目录', s.reviewStoragePath, save, (v) => (s.reviewStoragePath = v));
     this.textSetting(el, '检查间隔（秒）', '逾期检查间隔，单位秒', s.autoCheckInterval, save, (v) => (s.autoCheckInterval = v));
     this.toggleSetting(el, '启用逾期通知', '是否在逾期时弹出通知', s.enableAutoNotify, save, (v) => (s.enableAutoNotify = v));
     this.toggleSetting(el, '做题决定难度', '开启后，点击复习自动做题，根据正确率自动选择难度', s.forceQuizForReview, save, (v) => (s.forceQuizForReview = v));

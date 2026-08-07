@@ -57,7 +57,7 @@ export const M: MovieState = {
   folderPath: '我的/影视',
   renderListFn: null,
   loadedCount: 0,
-  pageSize: 50,
+  pageSize: 20,
   isLoadingMore: false,
   searchKeyword: '',
   searchDebounceTimer: null,
@@ -92,7 +92,7 @@ export function resetMovieState(): void {
   M.folderPath = '我的/影视';
   M.renderListFn = null;
   M.loadedCount = 0;
-  M.pageSize = 50;
+  M.pageSize = 20;
   M.isLoadingMore = false;
   M.searchKeyword = '';
   M.searchDebounceTimer = null;

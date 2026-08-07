@@ -5,7 +5,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
-import { QuizManager, QUIZ_FILE_PATH, loadActiveItems, REVIEW_DATA_PATH } from '../../src/quiz/manager';
+import { setSettingsProvider } from '../../src/core/settings-provider';
+import { QuizManager, QUIZ_FILE_PATH, loadActiveItems, REVIEW_DATA_PATH, getQuizFilePath, getReviewDataPath } from '../../src/quiz/manager';
 
 describe('QuizManager', () => {
   beforeEach(() => {
@@ -78,5 +79,23 @@ describe('QuizManager', () => {
     const items = await loadActiveItems(app);
     expect(items).toHaveLength(1);
     expect(items[0].filePath).toBe('A.md');
+    expect(items).toHaveLength(1);
+    expect(items[0].filePath).toBe('A.md');
+  });
+});
+
+describe('数据文件路径设置', () => {
+  it('getQuizFilePath 读取 quizStoragePath 设置，缺省回退 CONFIG/STORAGE', () => {
+    setSettingsProvider(() => ({ quizStoragePath: '自定义/数据' }) as any);
+    expect(getQuizFilePath()).toBe('自定义/数据/quiz.json');
+    setSettingsProvider(() => ({} as any));
+    expect(getQuizFilePath()).toBe('CONFIG/STORAGE/quiz.json');
+  });
+
+  it('getReviewDataPath 读取 reviewStoragePath 设置，缺省回退 CONFIG/STORAGE', () => {
+    setSettingsProvider(() => ({ reviewStoragePath: '自定义/数据' }) as any);
+    expect(getReviewDataPath()).toBe('自定义/数据/review.json');
+    setSettingsProvider(() => ({} as any));
+    expect(getReviewDataPath()).toBe('CONFIG/STORAGE/review.json');
   });
 });

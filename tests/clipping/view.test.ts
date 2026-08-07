@@ -186,6 +186,23 @@ describe('剪藏本面板', () => {
     expect(document.querySelectorAll('.article-entry-card').length).toBe(25);
     expect(document.querySelector('.article-loading-hint')!.textContent).toBe('已显示所有文章');
   });
+  it('articleBatchSize 设置生效（每批 5 条）', async () => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+    document.head.innerHTML = '';
+    const vault = new MockVault();
+    setSettingsProvider(() => ({ articleDirectory: '我的/文章', articleBatchSize: '5' }) as any);
+    applyArticleSettings();
+    for (let i = 0; i < 25; i++) {
+      const day = String(i + 1).padStart(2, '0');
+      vault.files.set(`我的/文章/文章${i}.md`, makeArticleMd(`https://x.com/${i}`, '站', `文章${i}`, `2025-06-${day}T08:00:00.000Z`));
+    }
+    setApp(makeApp(vault));
+    await initArticleView(true);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(5);
+  });
+
 
   it('目录不存在 → 空态「暂无文章」', async () => {
     await setup();

@@ -5,7 +5,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
-import { ReviewDataManager, REVIEW_FILE_PATH } from '../../src/review/data';
+import { setSettingsProvider } from '../../src/core/settings-provider';
+import { ReviewDataManager, REVIEW_FILE_PATH, getReviewFilePath } from '../../src/review/data';
 
 function makeApp(vault: MockVault) {
   return mockAppWithVault(vault);
@@ -151,5 +152,14 @@ describe('ReviewDataManager', () => {
     const dm = new ReviewDataManager(app);
     const items = await dm.loadItems();
     expect(dm.getOverdueCount(items)).toBe(1);
+  });
+});
+
+describe('数据文件路径设置', () => {
+  it('getReviewFilePath 读取 reviewStoragePath 设置，缺省回退 CONFIG/STORAGE', () => {
+    setSettingsProvider(() => ({ reviewStoragePath: '自定义/数据' }) as any);
+    expect(getReviewFilePath()).toBe('自定义/数据/review.json');
+    setSettingsProvider(() => ({} as any));
+    expect(getReviewFilePath()).toBe('CONFIG/STORAGE/review.json');
   });
 });

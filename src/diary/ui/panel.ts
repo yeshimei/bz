@@ -207,7 +207,7 @@ export function createTagBar() {
 }
 
 // ===== 设置读取（实现见 ui-settings.ts） =====
-export { applyUiSettings, getDefaultTagSetting, getEnableLongPressSetting, getShowTagCountSetting, getUseFileDateTimeSetting } from './ui-settings';
+export { applyUiSettings, getEnableLongPressSetting, getShowTagCountSetting, getUseFileDateTimeSetting } from './ui-settings';
 // ===== 搜索（原 867-912） =====
 
 export function setLoadingState(loading: boolean) {
