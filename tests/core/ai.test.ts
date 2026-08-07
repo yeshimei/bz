@@ -22,10 +22,7 @@ function sseBody(chunks: string[]): ReadableStream<Uint8Array> {
 const DEFAULT_SETTINGS = {
   aiProvider: 'deepseek',
   deepseekApiKey: 'sk-deepseek-test',
-  opencodeGoEndpoint: 'https://opencode.ai/zen/go/v1',
   opencodeGoApiKey: 'sk-opencode-test',
-  opencodeGoModel: 'deepseek-v4-flash',
-  aiOverride: null,
 };
 
 describe('AIService', () => {
@@ -119,7 +116,7 @@ describe('AIService', () => {
     const ai = new AIService({}, 'deepseek-v4-flash');
     await ai.prompt('x');
     const reqOpts: any = vi.mocked(requestUrl).mock.calls[0][0];
-    expect(JSON.parse(reqOpts.body).model).toBe('deepseek-v4-flash'); // opencodeGoModel
+    expect(JSON.parse(reqOpts.body).model).toBe('deepseek-v4-flash'); // 固定默认模型
   });
 
   it('chat/json/reason：专用方法正确透传 modelOptions', async () => {

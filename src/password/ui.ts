@@ -266,7 +266,7 @@ export class UIManager {
       this.popup.style.maxHeight = '100vh';
       this.popup.style.height = '100vh';
       this.popup.style.borderRadius = '0';
-      this.popup.style.paddingTop = '24px';
+      this.popup.style.paddingTop = '34px';
     }
     // 搜索容器
     this.searchContainer = document.createElement('div');
@@ -326,7 +326,7 @@ export class UIManager {
     title.textContent = '密码本';
     title.style.cssText = 'margin:0;font-size:18px;font-weight:600;color:var(--text-normal);';
     const btnContainer = document.createElement('div');
-    btnContainer.style.cssText = 'display:flex;gap:12px;';
+    btnContainer.style.cssText = 'display:flex;gap:8px;';
 
     const addBtn = createIconBtn('✏️', '添加密码条目', () => this.openAddDialog());
     const searchBtn = createIconBtn('🔍', '搜索', () => {
@@ -341,23 +341,16 @@ export class UIManager {
         }
       }
     });
-    const refreshBtn = createIconBtn('⏳', '刷新列表', () => {
-      if (this.dataManager.unlocked) {
-        this.dataManager
-          .load()
-          .then(() => this.renderList())
-          .catch((e) => new Notice('刷新失败: ' + e.message));
-      }
-    });
     const closeBtn = createIconBtn('❌', '关闭', () => this.hide());
 
     btnContainer.appendChild(addBtn);
     btnContainer.appendChild(searchBtn);
-    btnContainer.appendChild(refreshBtn);
     btnContainer.appendChild(closeBtn);
 
     header.appendChild(title);
     header.appendChild(btnContainer);
+    // 移动端：标题行距离顶部 24px（popup 已带 paddingTop，去掉 header 自身顶部内边距）
+    if (window.innerWidth <= 768) header.style.paddingTop = '0';
     return header;
   }
 

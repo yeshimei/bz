@@ -50,14 +50,8 @@ function emitLoading(loading: boolean) {
   loadingCallbacks.forEach((cb) => cb(loading));
 }
 
-/** 文件变更延迟（设置应用时更新） */
-let fileChangeDelay = 100;
-export function setFileChangeDelay(v: number) {
-  fileChangeDelay = v;
-}
-export function getFileChangeDelay(): number {
-  return fileChangeDelay;
-}
+/** 文件变更延迟：固定 100ms（设置项已移除） */
+const FILE_CHANGE_DELAY = 100;
 
 /** 原 window.isProcessingRemainingFiles（死代码保留，行为一致） */
 let isProcessingRemainingFiles = false;
@@ -445,7 +439,7 @@ export async function onFileChange(file: any) {
       await refreshSpecialFile(filePath, parseLetterFile, 'letter');
     }
     refreshTimer = null;
-  }, fileChangeDelay);
+  }, FILE_CHANGE_DELAY);
 }
 
 /** 供 ui 层调用：重新构建标签映射（设置变更后） */

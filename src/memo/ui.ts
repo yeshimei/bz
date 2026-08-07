@@ -36,8 +36,10 @@ const TODOCSS = `
 #add-todo-due-input { color-scheme: light dark; }
 #add-todo-due-input::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; }
 #add-todo-due-input::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+#todo-popup .todo-btn-add:hover, #todo-popup .todo-btn-archive:hover, #todo-popup .todo-btn-close:hover { background: var(--background-secondary); }
 
 @media (max-width: 768px) {
+    /* 移动端：居中弹窗（宽度 95%），不全屏 */
     #todo-popup { width: 95%; max-height: 90vh; }
     .todo-card {
         flex-wrap: wrap;
@@ -125,16 +127,15 @@ export const UIManager = {
     this.popup.innerHTML = `
             <div style="padding:16px 24px 8px 24px;display:flex;justify-content:space-between;align-items:center;">
                 <h3 style="margin:0;font-size:18px;font-weight:600;color:var(--text-normal);">备忘录</h3>
-                <div style="display:flex;gap:12px;">
-                    <button class="todo-btn-add" style="background:none;border:none;font-size:13px;cursor:pointer;color:var(--text-muted);padding:0;width:18px;height:28px;box-shadow:none;">✏️</button>
-                    <button class="todo-btn-archive" style="background:none;border:none;font-size:13px;cursor:pointer;color:var(--text-muted);padding:0;width:18px;height:28px;box-shadow:none;">📁</button>
-                    <button class="todo-btn-close" style="background:none;border:none;font-size:13px;cursor:pointer;color:var(--text-muted);padding:0;width:18px;height:28px;box-shadow:none;">❌</button>
+                <div style="display:flex;gap:8px;">
+                    <button class="todo-btn-add" style="background:none;border:none;font-size:14px;cursor:pointer;color:var(--text-muted);padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;display:flex;align-items:center;justify-content:center;">✏️</button>
+                    <button class="todo-btn-archive" style="background:none;border:none;font-size:14px;cursor:pointer;color:var(--text-muted);padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;display:flex;align-items:center;justify-content:center;">📁</button>
+                    <button class="todo-btn-close" style="background:none;border:none;font-size:13px;cursor:pointer;color:var(--text-muted);padding:0;width:21px;height:25px;border-radius:4px;box-shadow:none;display:flex;align-items:center;justify-content:center;">❌</button>
                 </div>
             </div>
             <div id="todo-entries-container" style="flex:1;overflow-y:auto;padding:0 20px;min-height:200px;"></div>
         `;
     this.entriesContainer = this.popup.querySelector('#todo-entries-container');
-
     const addBtn = this.popup.querySelector('.todo-btn-add');
     addBtn!.onclick = () => this.showAddDialog(null);
     const archiveBtn = this.popup.querySelector('.todo-btn-archive');

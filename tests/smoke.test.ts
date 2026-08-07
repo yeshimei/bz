@@ -33,7 +33,7 @@ function makeMockApp() {
 
 const removedCommands: string[] = [];
 
-/** 期望的命令 id 全集（spec「命令 id 全清单」25 个 + 日记本 open-panel，共 26 个） */
+/** 期望的命令 id 全集（spec「命令 id 全清单」24 个 + 日记本 open-panel，共 25 个） */
 const EXPECTED_COMMAND_IDS = [
   'memo-open-panel', 'memo-create-item',
   'belongings-add-item',
@@ -45,7 +45,6 @@ const EXPECTED_COMMAND_IDS = [
   'open-panel',
   'show-reading-report',
   'movie-manager-open', 'movie-manager-add',
-  'movie-analysis-open',
   'review-open-panel', 'review-add-current', 'review-remove-current', 'review-jump-overdue', 'review-mark-dialog',
   'review-mark-again', 'review-mark-hard', 'review-mark-good', 'review-mark-easy',
   'quiz-master-update', 'quiz-master-open',
@@ -75,7 +74,7 @@ describe('memo-suite 骨架冒烟', () => {
     document.body.innerHTML = '';
   });
 
-  it('onload 注册全部 26 个裸命令 id（不带插件前缀）', async () => {
+  it('onload 注册全部 25 个裸命令 id（不带插件前缀）', async () => {
     const plugin = await createPlugin(makeMockApp());
 
     const ids = plugin.commands.map((c: any) => c.id);
@@ -126,7 +125,6 @@ describe('memo-suite 骨架冒烟', () => {
     const cmd3 = plugin.commands.find((c: any) => c.id === 'review-open-panel');
     expect(() => cmd3.callback()).not.toThrow();
     expect(() => plugin.commands.find((c: any) => c.id === 'review-add-current').callback()).not.toThrow();
-    expect(() => plugin.commands.find((c: any) => c.id === 'movie-analysis-open').callback()).not.toThrow();
     expect(() => plugin.commands.find((c: any) => c.id === 'show-reading-report').callback()).not.toThrow();
   });
 

@@ -11,7 +11,6 @@ import {
   onLightRefresh,
   onLoadingChange,
   onProgress,
-  setFileChangeDelay,
 } from '../../src/diary/store';
 import { diaryDataMap, setDiaryDataMap, state } from '../../src/diary/state';
 
@@ -68,7 +67,6 @@ let vault: MockVault;
 beforeEach(() => {
   resetTagsConfig();
   applyDirectories({});
-  setFileChangeDelay(0);
   state.data.originalDiaryEntries = [];
   state.data.currentFilteredEntries = [];
   state.data.selectedTags.clear();
@@ -244,13 +242,13 @@ describe('deleteEntry', () => {
 describe('onFileChange', () => {
   it('日记文件变更后刷新（节流合并）', async () => {
     makeVault({ '我的/日记/2024-01-01.md': '# 📖 08:00\nx\n' });
-    setFileChangeDelay(10);
     await loadAll();
     expect(state.data.originalDiaryEntries).toHaveLength(1);
     // 模拟外部修改：内容变化
     vault.files.set('我的/日记/2024-01-01.md', '# 📖 08:00\nx\n# ✍️ 09:00\ny\n');
     onFileChange({ path: '我的/日记/2024-01-01.md', extension: 'md' });
-    await new Promise((r) => setTimeout(r, 50));
+    // 文件变更延迟固定 100ms
+    await new Promise((r) => setTimeout(r, 250));
     expect(state.data.originalDiaryEntries).toHaveLength(2);
   });
 

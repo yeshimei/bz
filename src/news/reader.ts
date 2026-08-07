@@ -199,7 +199,7 @@ export const NEWS_CSS = `
 @keyframes newsSpin { to { transform: rotate(360deg); } }
 
 @media (max-width: 640px) {
-    .news-popup { width: 100vw; height: 100vh; max-height: 100vh; top: 0; left: 0; transform: none; border-radius: 0; padding-top: 48px; }
+    .news-popup { width: 100vw; height: 100vh; max-height: 100vh; top: 0; left: 0; transform: none; border-radius: 0; padding-top: 58px; }
     .news-card-header { padding: 12px 20px 0 20px; }
     .news-card-area { padding: 12px 20px 20px 20px; }
     .news-bottombar { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
