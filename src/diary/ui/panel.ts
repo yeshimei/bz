@@ -274,10 +274,16 @@ export async function init(plugin?: { registerEvent: (ref: unknown) => unknown }
     const mask = document.getElementById('diary-filter-mask');
     if (mask) mask.style.visibility = 'visible';
     if (state.ui.scrollContainer) setTimeout(updateSticky, 100);
+    // 面板已存在但数据从未加载成功 → 补一次加载
+    if (state.data.originalDiaryEntries.length === 0 && !state.data.isLoadingData) {
+      console.log('[日记本] 面板已存在但无数据，补充加载');
+      loadAll();
+    }
     return;
   }
 
   state.ui.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  console.log('[日记本] init: 开始初始化面板');
 
   // 注册 UI 刷新回调（必须在 loadAll 之前：首次加载即触发渲染/进度/加载态）
   if (!refreshCallbacksRegistered) {
