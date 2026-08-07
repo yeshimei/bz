@@ -302,6 +302,19 @@ Feature: memo-suite-plugin
 - **CHANGELOGS**：{identifier: {latestVersion, name, entries: {version: markdown}}}；identifier 需从各脚本收集（已知：belongings、memo）
 - **longPress(el, cb, dur, filter)**、notice(msg, dur)、createIconBtn(text, title, onClick, extra)、formatFileSize(bytes)、formatRelativeTime(date, now)、createSiteIcon(domain, size=16)、getPlatformName(url, customMap)、getCurrentNoteInfo()、getCurrentCursorPosition()、fetchPageTitle(url)、extractUrlAndDisplay(c)——签名如上，行为实现时逐字移植
 
+### 数据格式总表（第 2 轮，源码提取——零迁移基准）
+
+- **memo.json 条目**（14 字段）：id、title、scene、priority、created、completed、due、notePath、notePosition、scriptName、courseName、coursePath、linkedNote、url
+- **归物本条目**（8 字段）：id、name、description、category、purchase_price、purchase_date、current_status、last_updated
+- **密码本条目**（7 字段）：id、platform、url、account、password、note、createdAt；加密：AES + btoa/atob（具体方案实现时逐字移植）
+- **favorites.json 条目**（13 字段）：id、tags、title、description、pinned、url、balance、balanceCacheTime、balanceError、linkedNote、created、type + llmConfig
+- **review.json**：条目含 FSRS 字段（stability、difficulty、nextReviewDate、stage/reviewStage、completed、lastReviewed、averageConfidence、currentStage/totalStages、phase）+ **复习历史数组**（{timestamp, stage, rating, stability, R}——每次评级追加一条）
+- **quiz.json**：`{notes: {notePath: [question]}}`；题目 = {question, options, correctIndices（多选）, notePath, _index}；含 QuestionGenerator（AI 出题）与 QuizManager（loadQuiz/saveQuiz/removeQuestion 语义）
+- **news-stats.json**：{totalRead, totalSaved, totalSkipped, byPlatform, byDate}
+- **剪藏文章 frontmatter**：必需 link（原链接）与 created（创建时间）字段，缺任一则该文件跳过；title 取文件名
+- **自动摘要 frontmatter**：全字段重建（数组→列表、空值→""、引号/换行转义），写入 title/author/summary/tags
+- **影视 frontmatter**：含 海报 字段（posterFolder 关联）、tags 等（完整字段实现时以源码为准）
+
 ### 已知待收集信息（实现时从源码提取，不阻塞本 spec）
 
 - 各脚本 changelog identifier 清单（已确认：belongings；其余实现时收集）
