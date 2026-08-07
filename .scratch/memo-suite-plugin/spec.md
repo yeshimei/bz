@@ -80,6 +80,7 @@ Feature: memo-suite-plugin
 22. 作为用户，我希望剪藏内容写入 `归档/网页剪藏`（CLIP_DIR），以便与自动摘要共享数据源。
 23. 作为用户，我希望聚合讯注册 `news-reader-open` 命令（阅读器入口），以便剪藏本互调。
 24. 作为用户，我希望阅读统计（news-stats.json：记录/统计每篇文章的阅读行为，loadStats/saveStats/recordStat 语义）与原脚本一致，以便掌握阅读量。
+24b. 作为用户，我希望聚合讯是逐篇阅读流（一次显示一篇文章：news-card-header 标题 + meta + platform-pill 平台徽章，读完自动进入下一篇，全部读完显示完成态），以便与原脚本一致。（修正：非文章列表）
 25. 作为用户，我希望文章支持已读标记（markAsRead）、跳过（skipArticle）、检查新文章（checkNewArticles）、剪藏保存（saveToClip），以便完整管理阅读流。
 26. 作为用户，我希望阅读器内的摘要以 markdown 渲染（renderMarkdown），以便排版与原脚本一致。
 27. 作为用户，我希望聚合讯的约 196 行注入样式（弹窗/列表/统计）原样保留，以便视觉一致。
@@ -149,9 +150,11 @@ Feature: memo-suite-plugin
 42. 作为用户，我希望复习计划监听相关事件（resolved/modify/rename/quit 四类，语义与原脚本一致），以便数据状态自动同步。
 43. 作为用户，我希望移出复习计划时有确认弹窗（「确定移出“xxx”？」），以便防误操作。
 44. 作为用户，我希望复习条目状态文案一致：✅ 已完成、R=X% 复习进度、📅 逾期、⏳ 待定/倒计时，以便一眼看出状态。
+44b. 作为用户，我希望复习列表有搜索输入框（"搜索笔记..."）与归档显示开关（showArchived），评级按钮（再次/困难/良好/简单语义）、完成复习、移出确认，以便与原脚本一致。
 44. 作为用户，我希望做题家支持 AI 生成题目（createAI 依赖，缺失时提示「未检测到 Q3.js 的 AI 服务」同语义），以便自动出题。
 45. 作为用户，我希望做题家设置保留 enableMultipleChoice（多选题开关）/questionsPerNote（每题数量）/difficulty（难度），以便沿用原配置。
 46. 作为用户，我希望答题流程与原脚本一致：题目展示 → 提交答案 → 下一题 →（多选支持），以便沿用做题习惯。
+46b. 作为用户，我希望题型语义一致：单选题（四选一）/多选题（正确选项数量不限）；AI 出题难度三档（基础概念低难度/中等/高难度推理+多知识点交叉）；出题失败降级逐篇批量，以便与原脚本一致。
 
 ### 闪念（Flash Thought）
 
@@ -314,6 +317,14 @@ Feature: memo-suite-plugin
 - **剪藏文章 frontmatter**：必需 link（原链接）与 created（创建时间）字段，缺任一则该文件跳过；title 取文件名
 - **自动摘要 frontmatter**：全字段重建（数组→列表、空值→""、引号/换行转义），写入 title/author/summary/tags
 - **影视 frontmatter**：含 海报 字段（posterFolder 关联）、tags 等（完整字段实现时以源码为准）
+
+### 交互流程要点（第 3 轮，源码提取）
+
+- **聚合讯 = 逐篇阅读流**：单篇渲染（标题/元信息/平台徽章）+ 已读/跳过/剪藏保存/检查新文章 + 完成态；非列表 UI
+- **影视状态枚举**：STATUS_WANT（想看）/STATUS_WATCHING（在看）/STATUS_WATCHED（已看）+ 状态色；类型标签胶囊按钮组（ALL_TAGS，含 prefill 预填 name/tag——AI 推荐加入想看时预填）
+- **复习计划 UIManager 结构**：mask/popup/entriesContainer/confirmMask/confirmPopup/confirmCallback/escapeRegistered/searchInput/showArchived；评级按钮（再次/困难/良好/简单）→ review.json 历史追加 {timestamp, stage, rating}
+- **做题家**：题型 = 单选题（四选一）/多选题（正确选项不限）；AI 难度三档提示词（基础概念/中等/高难度推理交叉）；流程：获取题库 → 逐笔记出题（批量失败降级逐篇）→ 答题（提交答案/下一题）→ 全完成替换笔记；错误文案逐字保留（笔记不存在/内容为空/生成失败等）
+- **闪念模块划分**：MobileBuffer/TFIDF/VectorStore/FloatWindow/ReferencePanel/ChatPanel/MobilePanel 七类；FloatWindow 悬停展开（hoverExpandTimer）/吸附缩起（collapsed）/关闭行为
 
 ### 已知待收集信息（实现时从源码提取，不阻塞本 spec）
 
