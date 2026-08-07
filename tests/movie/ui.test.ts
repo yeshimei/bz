@@ -263,3 +263,31 @@ describe('ensureMovie 设置读取', () => {
     expect(M.pageSize).toBe(20);
   });
 });
+
+describe('主页影视状态过滤（window.__homeFilmStatus 兼容）', () => {
+  it('主页点击「在看」→ 只显示在看', () => {
+    unloadMovie();
+    resetMovieState();
+    (window as any).__homeFilmStatus = '在看';
+    openMovieManager(makeApp(new MockVault()));
+    expect(M.statusFilter).toBe('在看');
+    expect((window as any).__homeFilmStatus).toBeNull(); // 消费后清除，避免残留
+    closeOverlay();
+  });
+
+  it('主页点击「想看」→ 只显示想看；无标志时默认全部', () => {
+    unloadMovie();
+    resetMovieState();
+    (window as any).__homeFilmStatus = '想看';
+    openMovieManager(makeApp(new MockVault()));
+    expect(M.statusFilter).toBe('想看');
+    closeOverlay();
+
+    // 无标志 → 全部
+    unloadMovie();
+    resetMovieState();
+    openMovieManager(makeApp(new MockVault()));
+    expect(M.statusFilter).toBe('全部');
+    closeOverlay();
+  });
+});

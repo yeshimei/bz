@@ -218,9 +218,7 @@ export class BzSettingTab extends PluginSettingTab {
       { id: 'favorites', label: '收藏本', build: (el) => this.buildFavoritesTab(el, s, save) },
       { id: 'library', label: '书库', build: (el) => this.buildLibraryTab(el, s, save) },
       { id: 'movie', label: '影视', build: (el) => this.buildMovieTab(el, s, save) },
-      { id: 'quiz', label: '做题家', build: (el) => this.buildQuizTab(el, s, save) },
       { id: 'review', label: '复习计划', build: (el) => this.buildReviewTab(el, s, save) },
-      { id: 'auto-summary', label: '自动摘要', build: (el) => this.buildAutoSummaryTab(el, s, save) },
       { id: 'ai-agent', label: 'AI Agent', build: (el) => this.buildAIAgentTab(el, s, save) },
       { id: 'flash', label: '闪念', build: (el) => this.buildFlashTab(el, s, save) },
     ];
@@ -294,10 +292,9 @@ export class BzSettingTab extends PluginSettingTab {
     refreshKeys();
   }
 
-  // ===== 备忘录 =====（场景/平台映射设置已移除，使用内置默认）
+  // ===== 备忘录 =====（场景/平台映射设置已移除；显示文件名固定开启不暴露）
   private buildMemoTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
     this.textSetting(el, '备忘录数据文件路径', '存放 memo.json 的目录', s.todoFilePath, save, (v) => (s.todoFilePath = v));
-    this.toggleSetting(el, '显示文件名', '在备忘录位置标签中显示笔记文件名', s.showFileName, save, (v) => (s.showFileName = v));
     this.toggleSetting(el, '启动时自动弹窗', '启动时自动弹出备忘录面板（有重要备忘录时）', s.autoPopupOnStart, save, (v) => (s.autoPopupOnStart = v));
   }
 
@@ -316,10 +313,14 @@ export class BzSettingTab extends PluginSettingTab {
     this.textSetting(el, '存储文件夹路径', '存放 belongings.json 的文件夹', s.belongingsDataFolder, save, (v) => (s.belongingsDataFolder = v));
   }
 
-  // ===== 剪藏本 =====（长按识别时长固定默认；每批加载数量可配）
+  // ===== 剪藏本 =====（长按识别时长固定默认；自动摘要开关并入本 tab）
   private buildClippingTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
     this.textSetting(el, '剪藏目录', '存放网页剪藏 markdown 文件的文件夹', s.articleDirectory, save, (v) => (s.articleDirectory = v));
     this.textSetting(el, '每批加载数量', '滚动加载时每批显示的条目数', s.articleBatchSize, save, (v) => (s.articleBatchSize = v));
+    this.toggleSetting(el, '自动摘要', '监听剪藏目录新文件，AI 生成摘要写回 frontmatter（路径与剪藏目录一致）', s.autoSummaryEnabled, save, async (v) => {
+      s.autoSummaryEnabled = v;
+      if (v) ensureAutoSummary(this.plugin.app);
+    });
   }
 
   // ===== 密码本 =====
@@ -353,13 +354,33 @@ export class BzSettingTab extends PluginSettingTab {
     this.textSetting(el, '每页加载数量', '列表初始加载及每次滚动加载的条数', s.moviePageSize, save, (v) => (s.moviePageSize = v));
   }
 
-  // ===== 做题家 =====（题目难度为下拉选择）
-  private buildQuizTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
-    this.textSetting(el, '数据存储路径', '存放 quiz.json 的目录', s.quizStoragePath, save, (v) => (s.quizStoragePath = v));
-    this.toggleSetting(el, '允许多选题', '若关闭，AI 只生成单选题', s.enableMultipleChoice, save, (v) => (s.enableMultipleChoice = v));
-    this.textSetting(el, '每笔记题目数量（0为自动）', '设为0则由AI决定，设为正整数则固定数量', s.questionsPerNote, save, (v) => (s.questionsPerNote = v));
-    this.toggleSetting(el, '打乱题目顺序', '每次打开做题窗口时是否随机打乱题目', s.shuffleQuestions, save, (v) => (s.shuffleQuestions = v));
+  // ===== 复习计划 + 做题家 =====（做题家选项在「做题决定难度」开启时动态显示）
+  private buildReviewTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
+    this.textSetting(el, '数据存储路径', '存放 review.json 与 quiz.json 的目录（做题家共用）', s.reviewStoragePath, save, (v) => (s.reviewStoragePath = v));
+    this.textSetting(el, '检查间隔（秒）', '逾期检查间隔，单位秒', s.autoCheckInterval, save, (v) => (s.autoCheckInterval = v));
+    this.toggleSetting(el, '启用逾期通知', '是否在逾期时弹出通知', s.enableAutoNotify, save, (v) => (s.enableAutoNotify = v));
+    // 做题决定难度开关 + 做题家选项动态组（仿 AI tab 动态显示模式）
+    const quizRows: Setting[] = [];
+    const refreshQuizRows = () => {
+      const show = s.forceQuizForReview;
+      quizRows.forEach((r) => r.settingEl.toggleClass('bz-setting-hidden', !show));
+    };
     new Setting(el)
+      .setName('做题决定难度')
+      .setDesc('开启后，点击复习自动做题，根据正确率自动选择难度；同时显示下方做题家选项')
+      .addToggle((toggle) =>
+        toggle.setValue(s.forceQuizForReview).onChange(async (v) => {
+          s.forceQuizForReview = v;
+          refreshQuizRows();
+          await save();
+        })
+      );
+    quizRows.push(
+      this.toggleSetting(el, '允许多选题', '若关闭，AI 只生成单选题', s.enableMultipleChoice, save, (v) => (s.enableMultipleChoice = v)),
+      this.textSetting(el, '每笔记题目数量（0为自动）', '设为0则由AI决定，设为正整数则固定数量', s.questionsPerNote, save, (v) => (s.questionsPerNote = v)),
+      this.toggleSetting(el, '打乱题目顺序', '每次打开做题窗口时是否随机打乱题目', s.shuffleQuestions, save, (v) => (s.shuffleQuestions = v)),
+    );
+    const difficultyRow = new Setting(el)
       .setName('题目难度')
       .setDesc('生成题目时的难度等级')
       .addDropdown((dd) => {
@@ -373,14 +394,8 @@ export class BzSettingTab extends PluginSettingTab {
           await save();
         });
       });
-  }
-
-  // ===== 复习计划 =====
-  private buildReviewTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
-    this.textSetting(el, '数据存储路径', '存放 review.json 的目录', s.reviewStoragePath, save, (v) => (s.reviewStoragePath = v));
-    this.textSetting(el, '检查间隔（秒）', '逾期检查间隔，单位秒', s.autoCheckInterval, save, (v) => (s.autoCheckInterval = v));
-    this.toggleSetting(el, '启用逾期通知', '是否在逾期时弹出通知', s.enableAutoNotify, save, (v) => (s.enableAutoNotify = v));
-    this.toggleSetting(el, '做题决定难度', '开启后，点击复习自动做题，根据正确率自动选择难度', s.forceQuizForReview, save, (v) => (s.forceQuizForReview = v));
+    quizRows.push(difficultyRow);
+    refreshQuizRows();
   }
 
   // ===== 闪念 =====
@@ -408,25 +423,22 @@ export class BzSettingTab extends PluginSettingTab {
     this.textSetting(el, '远程 Ollama URL', '手机端使用的远程 Ollama 地址', s.OLLAMA_REMOTE_URL, save, (v) => (s.OLLAMA_REMOTE_URL = v));
   }
 
-  // ===== 自动摘要 =====（常驻监听新文件，懒加载开关）
-  private buildAutoSummaryTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
-    this.toggleSetting(el, '启用', '监听 归档/网页剪藏 新文件，AI 生成摘要写回 frontmatter', s.autoSummaryEnabled, save, async (v) => {
-      s.autoSummaryEnabled = v;
-      if (v) ensureAutoSummary(this.plugin.app);
-    });
-  }
 
-  // ===== AI Agent =====（笔记同步，懒加载开关）
+  // ===== AI Agent =====（笔记同步，懒加载开关 + 同步选项）
   private buildAIAgentTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
     this.toggleSetting(el, '启用', '笔记 rename/delete/create 自动同步备忘录/收藏本', s.aiAgentEnabled, save, async (v) => {
       s.aiAgentEnabled = v;
       if (v) ensureAIAgent(this.plugin.app);
     });
+    this.textSetting(el, '监听文件夹', '笔记同步监听的文件夹（逗号分隔）', s.aiAgentWatchedFolders, save, (v) => (s.aiAgentWatchedFolders = v));
+    this.toggleSetting(el, 'AI 剪藏匹配', '剪藏未精确命中时用 AI 判断并弹窗批准', s.enableAIClipMatch, save, (v) => (s.enableAIClipMatch = v));
+    this.textSetting(el, 'AI 匹配模型', 'AI 剪藏匹配使用的模型', s.aiAgentModel, save, (v) => (s.aiAgentModel = v));
   }
 
+
   // ---- 设置项 helper ----
-  private textSetting(containerEl: HTMLElement, name: string, desc: string, value: string, onSave: () => Promise<void>, apply: (v: string) => void, placeholder?: string) {
-    new Setting(containerEl).setName(name).setDesc(desc).addText((text) =>
+  private textSetting(containerEl: HTMLElement, name: string, desc: string, value: string, onSave: () => Promise<void>, apply: (v: string) => void, placeholder?: string): Setting {
+    return new Setting(containerEl).setName(name).setDesc(desc).addText((text) =>
       text.setValue(value).setPlaceholder(placeholder || '').onChange(async (v) => {
         apply(v);
         await onSave();
@@ -434,8 +446,8 @@ export class BzSettingTab extends PluginSettingTab {
     );
   }
 
-  private toggleSetting(containerEl: HTMLElement, name: string, desc: string, value: boolean, onSave: () => Promise<void>, apply: (v: boolean) => void) {
-    new Setting(containerEl).setName(name).setDesc(desc).addToggle((toggle) =>
+  private toggleSetting(containerEl: HTMLElement, name: string, desc: string, value: boolean, onSave: () => Promise<void>, apply: (v: boolean) => void): Setting {
+    return new Setting(containerEl).setName(name).setDesc(desc).addToggle((toggle) =>
       toggle.setValue(value).onChange(async (v) => {
         apply(v);
         await onSave();

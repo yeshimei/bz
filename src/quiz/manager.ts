@@ -9,10 +9,10 @@ import { tryGetSettings } from '../core/settings-provider';
 export const QUIZ_FILE_PATH = 'CONFIG/STORAGE/quiz.json';
 export const REVIEW_DATA_PATH = 'CONFIG/STORAGE/review.json';
 
-/** 做题家数据文件路径（设置可配，默认 CONFIG/STORAGE/quiz.json） */
+/** 做题家数据文件路径（与复习计划共用 reviewStoragePath 目录，默认 CONFIG/STORAGE/quiz.json） */
 export function getQuizFilePath(): string {
   const s = tryGetSettings() as any;
-  const dir = (s && s.quizStoragePath) || 'CONFIG/STORAGE';
+  const dir = (s && s.reviewStoragePath) || 'CONFIG/STORAGE';
   return `${dir}/quiz.json`;
 }
 

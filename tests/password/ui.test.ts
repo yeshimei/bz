@@ -10,6 +10,16 @@ import { DataManager } from '../../src/password/data';
 import { MockVault } from '../mock-vault';
 import { MockNotice, resetObsidianMocks } from '../mock-obsidian-entry';
 
+
+/** 轮询等待（并行高负载下真实 setTimeout 等待不足，轮询至条件满足） */
+async function waitFor(cond: () => boolean, timeout = 3000) {
+  const start = Date.now();
+  while (!cond()) {
+    if (Date.now() - start > timeout) throw new Error('waitFor 超时');
+    await new Promise((r) => setTimeout(r, 25));
+  }
+}
+
 const CONFIG = { storagePath: 'CONFIG/STORAGE', charset: 'abc123', length: '8', securityMode: false };
 
 function setup(vault: MockVault) {
@@ -143,7 +153,7 @@ describe('UIManager 面板与条目', () => {
 
   it('show 渲染条目卡片（平台/账号/掩码密码/👁）', async () => {
     ui.show();
-    await new Promise((r) => setTimeout(r, 150));
+    await waitFor(() => document.querySelectorAll('.pw-entry-card').length === 2);
     const container = document.getElementById('pw-entries-container')!;
     const cards = container.querySelectorAll('.pw-entry-card');
     expect(cards.length).toBe(2);
@@ -156,7 +166,7 @@ describe('UIManager 面板与条目', () => {
 
   it('👁 切换明文/掩码', async () => {
     ui.show();
-    await new Promise((r) => setTimeout(r, 150));
+    await waitFor(() => document.querySelectorAll('.pw-entry-card').length === 2);
     const container = document.getElementById('pw-entries-container')!;
     const eye = container.querySelector('.pw-eye') as HTMLElement;
     eye.click();
@@ -167,10 +177,10 @@ describe('UIManager 面板与条目', () => {
 
   it('搜索过滤：输入关键词实时过滤', async () => {
     ui.show();
-    await new Promise((r) => setTimeout(r, 150));
+    await waitFor(() => document.querySelectorAll('.pw-entry-card').length === 2);
     ui.searchInput!.value = 'gmail';
     ui.searchInput!.dispatchEvent(new Event('input'));
-    await new Promise((r) => setTimeout(r, 150));
+    await waitFor(() => document.querySelectorAll('.pw-entry-card').length === 1);
     const container = document.getElementById('pw-entries-container')!;
     expect(container.querySelectorAll('.pw-entry-card').length).toBe(1);
     expect(container.textContent).toContain('Gmail');
@@ -188,7 +198,7 @@ describe('UIManager 面板与条目', () => {
     ui._noteTextarea.value = '备用';
     const saveBtn = [...popup.querySelectorAll('button')].find((b) => b.textContent === '保存')!;
     saveBtn.click();
-    await new Promise((r) => setTimeout(r, 150));
+    await waitFor(() => dm.pwData.length === 3 && MockNotice.instances.some((n) => n.message === '保存成功'));
     expect(dm.pwData.length).toBe(3);
     expect(MockNotice.instances.some((n) => n.message === '保存成功')).toBe(true);
   });
@@ -215,7 +225,7 @@ describe('UIManager 面板与条目', () => {
 
   it('长按日期 → 删除确认 → 确认删除', async () => {
     ui.show();
-    await new Promise((r) => setTimeout(r, 150)); // 真实等待 PBKDF2 解密渲染
+    await waitFor(() => document.querySelectorAll('.pw-entry-card').length === 2); // 真实等待 PBKDF2 解密渲染
     vi.useFakeTimers();
     const container = document.getElementById('pw-entries-container')!;
     const dateSpan = container.querySelector('.pw-date') as HTMLElement;
@@ -232,7 +242,7 @@ describe('UIManager 面板与条目', () => {
 
   it('长按密码区域 → 编辑弹窗', async () => {
     ui.show();
-    await new Promise((r) => setTimeout(r, 150)); // 真实等待 PBKDF2 解密渲染
+    await waitFor(() => document.querySelectorAll('.pw-entry-card').length === 2); // 真实等待 PBKDF2 解密渲染
     vi.useFakeTimers();
     const container = document.getElementById('pw-entries-container')!;
     const pwArea = container.querySelector('.pw-password-area') as HTMLElement;
