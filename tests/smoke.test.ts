@@ -20,7 +20,7 @@ function makeMockApp() {
     },
     commands: {
       addCommand: (c: any) => {
-        /* diary init 内部注册（bz-diary-open-add-dialog / bz-diary-create-quote），测试不追踪 */
+        registeredCommands.push(c);
       },
       removeCommand: (id: string) => {
         removedCommands.push(id);
@@ -32,6 +32,7 @@ function makeMockApp() {
 }
 
 const removedCommands: string[] = [];
+const registeredCommands: any[] = [];
 
 /** 期望的命令 id 全集（spec「命令 id 全清单」29 个主表 + 日记本 bz-open-panel，共 30 个） */
 const EXPECTED_COMMAND_IDS = [
@@ -70,17 +71,20 @@ describe('bz 骨架冒烟', () => {
   beforeEach(() => {
     resetObsidianMocks();
     removedCommands.length = 0;
+    registeredCommands.length = 0;
     delete diskData['bz'];
     document.body.innerHTML = '';
   });
 
-  it('onload 注册全部 27 个裸命令 id（统一 bz- 前缀）', async () => {
-    const plugin = await createPlugin(makeMockApp());
+  it('onload 裸注册全部命令 id（统一 bz- 前缀，app.commands 原样 id 注册）', async () => {
+    await createPlugin(makeMockApp());
 
-    const ids = plugin.commands.map((c: any) => c.id);
-    expect(ids.sort()).toEqual([...EXPECTED_COMMAND_IDS].sort());
+    const ids = registeredCommands.map((c: any) => c.id);
+    // 含日记本 init 内注册的两个命令（bz-diary-open-add-dialog / bz-diary-create-quote）
+    const expected = [...EXPECTED_COMMAND_IDS, 'bz-diary-open-add-dialog', 'bz-diary-create-quote'];
+    expect(ids.sort()).toEqual(expected.sort());
     // 均未设置默认快捷键
-    for (const c of plugin.commands) {
+    for (const c of registeredCommands) {
       expect(c.hotkeys).toBeUndefined();
     }
   });
@@ -117,15 +121,15 @@ describe('bz 骨架冒烟', () => {
     const plugin = await createPlugin(makeMockApp());
 
     // 已实现域：归物本命令真实打开弹窗（异步），同步调用不抛错
-    const cmd1 = plugin.commands.find((c: any) => c.id === 'bz-belongings-add-item');
+    const cmd1 = registeredCommands.find((c: any) => c.id === 'bz-belongings-add-item');
     expect(() => cmd1.callback()).not.toThrow();
     // 已实现域：做题家/复习面板异步执行，同步调用不抛错
-    const cmd2 = plugin.commands.find((c: any) => c.id === 'bz-quiz-master-open');
+    const cmd2 = registeredCommands.find((c: any) => c.id === 'bz-quiz-master-open');
     expect(() => cmd2.callback()).not.toThrow();
-    const cmd3 = plugin.commands.find((c: any) => c.id === 'bz-review-open-panel');
+    const cmd3 = registeredCommands.find((c: any) => c.id === 'bz-review-open-panel');
     expect(() => cmd3.callback()).not.toThrow();
-    expect(() => plugin.commands.find((c: any) => c.id === 'bz-review-add-current').callback()).not.toThrow();
-    expect(() => plugin.commands.find((c: any) => c.id === 'bz-show-reading-report').callback()).not.toThrow();
+    expect(() => registeredCommands.find((c: any) => c.id === 'bz-review-add-current').callback()).not.toThrow();
+    expect(() => registeredCommands.find((c: any) => c.id === 'bz-show-reading-report').callback()).not.toThrow();
   });
 
   it('onunload 清理全部裸注册命令', async () => {
