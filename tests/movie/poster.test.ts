@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { EventEmitter } from 'node:events';
-import { MockVault } from '../mock-vault';
+import { MockVault, parseFrontmatter } from '../mock-vault';
 import { resetObsidianMocks, MockNotice } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
@@ -83,8 +83,36 @@ function clearNodeMock() {
   delete (window as any).require;
 }
 
-function makeApp(vault: MockVault) {
-  return { vault, metadataCache: {}, workspace: {} } as any;
+function makeApp(vault: MockVault, extra: any = {}) {
+  const v = vault as any;
+  v.adapter = { getFullPath: (p: string) => '/vault/' + p };
+  const wsEvents: Record<string, Function[]> = {};
+  const app = {
+    vault,
+    metadataCache: {
+      getFileCache: (f: any) => {
+        const content = vault.files.get(f.path) ?? '';
+        return content ? { frontmatter: parseFrontmatter(content) || {} } : null;
+      },
+    },
+    workspace: {
+      on: (ev: string, cb: any) => {
+        (wsEvents[ev] ||= []).push(cb);
+        return { ev, cb };
+      },
+      offref: (ref: any) => {
+        const arr = wsEvents[ref.ev] || [];
+        const i = arr.indexOf(ref.cb);
+        if (i >= 0) arr.splice(i, 1);
+      },
+      emit: (ev: string, ...args: any[]) => {
+        for (const cb of wsEvents[ev] || []) cb(...args);
+      },
+    },
+    _wsEvents: wsEvents,
+  };
+  Object.assign(app, extra);
+  return app;
 }
 
 function makePluginApp() {
@@ -136,17 +164,22 @@ describe('海报抓取 poster', () => {
       expect(isDesktop()).toBe(false);
     });
 
-    it('移动端（无 require）：ensure 不注册 create 监听', () => {
-      ensurePosterFetch(makeApp(vault));
+    it('移动端（无 require）：ensure 不注册 create/file-open 监听', () => {
+      const app = makeApp(vault);
+      ensurePosterFetch(app);
       expect(vault.listeners['create']).toBeUndefined();
+      expect(app._wsEvents['file-open']).toBeUndefined();
     });
 
-    it('桌面端：ensure 注册 create 监听，幂等', () => {
+    it('桌面端：ensure 注册 create + file-open 监听，幂等', () => {
       installNodeMock();
-      ensurePosterFetch(makeApp(vault));
+      const app = makeApp(vault);
+      ensurePosterFetch(app);
       expect(vault.listeners['create']).toHaveLength(1);
-      ensurePosterFetch(makeApp(vault));
+      expect(app._wsEvents['file-open']).toHaveLength(1);
+      ensurePosterFetch(app);
       expect(vault.listeners['create']).toHaveLength(1);
+      expect(app._wsEvents['file-open']).toHaveLength(1);
     });
   });
 
@@ -185,7 +218,7 @@ describe('海报抓取 poster', () => {
       vault.files.set('我的/影视/《新片》.md', '---\n---');
       vault.emit('create', vault.file('我的/影视/《新片》.md'));
       await vi.advanceTimersByTimeAsync(3000);
-      expect(m.spawnCalls).toEqual([{ bin: 'node', args: [CLI_PATH, 'fetch', '我的/影视/《新片》.md'] }]);
+      expect(m.spawnCalls).toEqual([{ bin: 'node', args: [CLI_PATH, 'fetch', '/vault/我的/影视/《新片》.md'] }]);
       expect(MockNotice.instances.some((n) => n.message.includes('正在为《新片》抓取海报'))).toBe(true);
     });
 
@@ -291,9 +324,101 @@ describe('海报抓取 poster', () => {
       m.emitStdout('[完成] x\n');
       m.finish(0);
       expect(m.spawnCalls).toHaveLength(2);
-      expect(m.spawnCalls[1].args[2]).toBe('我的/影视/《G2》.md');
+      expect(m.spawnCalls[1].args[2]).toBe('/vault/我的/影视/《G2》.md');
     });
 
+  describe('打开影视笔记触发（无海报）', () => {
+    it('打开无海报影视笔记 → 3s 后 spawn（绝对路径）', async () => {
+      const m = installNodeMock();
+      probeInstall();
+      const app = makeApp(vault);
+      ensurePosterFetch(app);
+      vault.files.set('我的/影视/《开》.md', '---\ntags: [电影]\n---\n');
+      app.workspace.emit('file-open', vault.file('我的/影视/《开》.md'));
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(m.spawnCalls).toEqual([{ bin: 'node', args: [CLI_PATH, 'fetch', '/vault/我的/影视/《开》.md'] }]);
+      expect(MockNotice.instances.some((n) => n.message.includes('正在为《开》抓取海报'))).toBe(true);
+    });
+
+    it('打开已有海报的笔记 → 不触发', async () => {
+      const m = installNodeMock();
+      probeInstall();
+      const app = makeApp(vault);
+      ensurePosterFetch(app);
+      vault.files.set('我的/影视/《有》.md', '---\n海报: CONFIG/MOVIE POSTER/x.jpg\n---\n');
+      app.workspace.emit('file-open', vault.file('我的/影视/《有》.md'));
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(m.spawnCalls).toHaveLength(0);
+      expect(MockNotice.instances).toHaveLength(0);
+    });
+
+    it('打开目录外笔记 / 非 md → 不触发', async () => {
+      const m = installNodeMock();
+      probeInstall();
+      const app = makeApp(vault);
+      ensurePosterFetch(app);
+      vault.files.set('Inbox/《外》.md', '---\n---');
+      vault.files.set('我的/影视/x.txt', 'hi');
+      app.workspace.emit('file-open', vault.file('Inbox/《外》.md'));
+      app.workspace.emit('file-open', vault.file('我的/影视/x.txt'));
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(m.spawnCalls).toHaveLength(0);
+    });
+
+    it('create + open 双触发 → 冷却去重只抓一次', async () => {
+      const m = installNodeMock();
+      probeInstall();
+      const app = makeApp(vault);
+      ensurePosterFetch(app);
+      vault.files.set('我的/影视/《双》.md', '---\n---');
+      vault.emit('create', vault.file('我的/影视/《双》.md'));
+      // 冷却期内的 open 被去重
+      app.workspace.emit('file-open', vault.file('我的/影视/《双》.md'));
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(m.spawnCalls).toHaveLength(1);
+    });
+
+    it('冷却 60s：重复打开不触发；冷却过后可再触发', async () => {
+      const m = installNodeMock();
+      probeInstall();
+      const app = makeApp(vault);
+      ensurePosterFetch(app);
+      vault.files.set('我的/影视/《冷》.md', '---\n---');
+      app.workspace.emit('file-open', vault.file('我的/影视/《冷》.md'));
+      await vi.advanceTimersByTimeAsync(3000);
+      m.emitStdout('[完成] x\n');
+      m.finish(0);
+      // 冷却期内再次打开
+      app.workspace.emit('file-open', vault.file('我的/影视/《冷》.md'));
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(m.spawnCalls).toHaveLength(1);
+      // 冷却过后（fake timers 同步推进 Date.now）
+      await vi.advanceTimersByTimeAsync(60000);
+      app.workspace.emit('file-open', vault.file('我的/影视/《冷》.md'));
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(m.spawnCalls).toHaveLength(2);
+    });
+
+    it('打开 null（关闭标签页）→ 不崩、不触发', async () => {
+      const m = installNodeMock();
+      probeInstall();
+      const app = makeApp(vault);
+      ensurePosterFetch(app);
+      app.workspace.emit('file-open', null);
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(m.spawnCalls).toHaveLength(0);
+    });
+
+    it('卸载：workspace file-open 监听 offref', async () => {
+      installNodeMock();
+      probeInstall();
+      const app = makeApp(vault);
+      ensurePosterFetch(app);
+      expect(app._wsEvents['file-open']).toHaveLength(1);
+      unloadPosterFetch();
+      expect(app._wsEvents['file-open']).toHaveLength(0);
+    });
+  });
     it('超时 60s → kill + 失败通知', async () => {
       const m = installNodeMock();
       probeInstall();

@@ -3,8 +3,9 @@
  * 从豆瓣抓取高清海报 + 补全 frontmatter（豆瓣评分/导演/主演/类型/… 13 字段）。
  *
  * 桌面端专属（依赖 Node.js 外部进程，ADR-0006）：移动端不注册监听，设置项置灰标注。
- * 触发：vault create → 延迟 3s（等添加弹窗写入 frontmatter）→ 串行队列 spawn
- * `node <cli.js> fetch <笔记路径>`；结果解析 stdout（脚本失败时 exit code 仍为 0）。
+ * 触发：vault create（新建）或 workspace file-open（打开且无海报）→ 延迟 3s → 串行队列 spawn
+ * `node <cli.js> fetch <笔记绝对路径>`（相对路径会被脚本重复拼接 movieFolder 导致「笔记不存在」）；
+ * 结果解析 stdout（脚本失败时 exit code 仍为 0）。
  */
 import { Notice } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
@@ -14,6 +15,8 @@ export const PACKAGE_NAME = '@jwbz/obsidian-douban-poster';
 const CLI_FILE = 'cli.js';
 /** create 后延迟（ms）：等添加弹窗把用户填写的字段写入 frontmatter */
 const CREATE_DELAY = 3000;
+/** 同一文件两次触发的冷却（ms）：create + file-open 双触发去重，也避免反复打开反复抓 */
+const FETCH_COOLDOWN = 60000;
 /** 单个 fetch 进程超时（ms） */
 const SPAWN_TIMEOUT = 60000;
 
@@ -25,9 +28,13 @@ let cliPathCache: string | null = null;
 
 let initialized = false;
 let vaultRef: any = null;
+let workspaceRef: any = null;
+let metadataCacheRef: any = null;
 let fileListenerRef: any = null;
+let openListenerRef: any = null;
 const pendingTimers = new Set<ReturnType<typeof setTimeout>>();
 const queue: { file: any; name: string }[] = [];
+const cooldownMap = new Map<string, number>();
 let running = false;
 let activeProc: any = null;
 
@@ -89,18 +96,48 @@ export function ensurePosterFetch(app: any): void {
   if (initialized) return;
   initialized = true;
   vaultRef = app.vault;
+  metadataCacheRef = app.metadataCache;
   if (!isDesktop()) return;
+  // 新建影视笔记 → 自动抓取
   fileListenerRef = vaultRef.on('create', (file: any) => {
     if (!file || file.extension !== 'md') return;
     const folder = getMovieFolder();
     if (!file.path.startsWith(folder + '/')) return;
     scheduleFetch(file);
   });
+  // 打开影视笔记且无海报 → 触发抓取
+  workspaceRef = app.workspace;
+  openListenerRef = workspaceRef.on('file-open', (file: any) => {
+    if (!file || file.extension !== 'md') return;
+    const folder = getMovieFolder();
+    if (!file.path.startsWith(folder + '/')) return;
+    if (!hasPoster(file)) scheduleFetch(file);
+  });
 }
 
 function getMovieFolder(): string {
   const s = tryGetSettings() as any;
   return (s && s.movieFolderPath) || '我的/影视';
+}
+
+/** frontmatter「海报」字段非空即视为已有海报（打开场景的跳过条件） */
+function hasPoster(file: any): boolean {
+  try {
+    const cache = metadataCacheRef?.getFileCache?.(file);
+    const p = cache?.frontmatter?.['海报'];
+    return !!(p && String(p).trim());
+  } catch {
+    return false;
+  }
+}
+
+/** vault 内相对路径 → 磁盘绝对路径（脚本 fetch 分支对相对路径会重复拼接 movieFolder） */
+function getFullPath(relPath: string): string {
+  const adapter = vaultRef?.adapter;
+  if (adapter && typeof adapter.getFullPath === 'function') {
+    try { return adapter.getFullPath(relPath); } catch { /* 忽略 */ }
+  }
+  return relPath;
 }
 
 /** 与脚本 extractMovieName 一致：《名称》.md 取《》内，否则全名 */
@@ -110,8 +147,15 @@ function extractName(file: any): string {
   return m ? m[1] : basename;
 }
 
-/** create 后延迟入队；延迟期间文件被删则取消 */
+/** 触发去重（冷却）+ 延迟入队；延迟期间文件被删则取消 */
 function scheduleFetch(file: any): void {
+  const now = Date.now();
+  if (now - (cooldownMap.get(file.path) || 0) < FETCH_COOLDOWN) return;
+  cooldownMap.set(file.path, now);
+  // 惰性清理过期条目（防泄漏）
+  for (const [p, t] of cooldownMap) {
+    if (now - t >= FETCH_COOLDOWN) cooldownMap.delete(p);
+  }
   const timer = setTimeout(() => {
     pendingTimers.delete(timer);
     if (vaultRef && !vaultRef.getAbstractFileByPath(file.path)) return;
@@ -156,7 +200,7 @@ function runFetch(job: { file: any; name: string }): void {
     return;
   }
 
-  const proc = cp.spawn('node', [cliPathCache, 'fetch', job.file.path], { windowsHide: true });
+  const proc = cp.spawn('node', [cliPathCache, 'fetch', getFullPath(job.file.path)], { windowsHide: true });
   activeProc = proc;
   let stdout = '';
   let stderr = '';
@@ -215,9 +259,16 @@ export function unloadPosterFetch(): void {
     try { vaultRef.offref(fileListenerRef); } catch { /* 忽略 */ }
     fileListenerRef = null;
   }
+  if (openListenerRef && workspaceRef) {
+    try { workspaceRef.offref(openListenerRef); } catch { /* 忽略 */ }
+    openListenerRef = null;
+  }
+  workspaceRef = null;
+  metadataCacheRef = null;
   initialized = false;
   vaultRef = null;
   queue.length = 0;
+  cooldownMap.clear();
   running = false;
   probeState = 'unknown';
   cliPathCache = null;
