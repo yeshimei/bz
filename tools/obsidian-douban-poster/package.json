@@ -1,0 +1,33 @@
+{
+  "name": "@jwbz/obsidian-douban-poster",
+  "version": "2.0.1",
+  "description": "自动从豆瓣抓取高清海报 + 补全影视信息 (评分/导演/主演等) 到 Obsidian vault，支持 watcher 监听和 pm2 后台守护",
+  "type": "module",
+  "bin": {
+    "douban-poster": "./cli.js"
+  },
+  "files": [
+    "cli.js",
+    "config.js",
+    "pipeline.js",
+    "douban-client.js",
+    "note-processor.js"
+  ],
+  "scripts": {
+    "start": "node cli.js watch",
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "douban",
+    "obsidian",
+    "poster",
+    "movie",
+    "fetch"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "chokidar": "^4.0.0"
+  }
+}
