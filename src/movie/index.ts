@@ -20,7 +20,7 @@ export function ensureMovie(app: App): void {
   M.appRef = app;
   const s = tryGetSettings();
   M.folderPath = (s as any).movieFolderPath || '我的/影视';
-  M.pageSize = 50; // 每页加载数量：固定默认（设置项已移除）
+  M.pageSize = parseInt((s as any).moviePageSize, 10) || 20; // 每页加载数量（设置可配，默认 20）
 
   registerEscapeHandler();
   registerAutoRefresh(app);

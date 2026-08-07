@@ -51,11 +51,11 @@ export interface ArticleEntry {
   backlinkSources: string[];
 }
 
-/** 读取插件设置（剪藏本 articleDirectory；批次/长按时长固定默认） */
+/** 读取插件设置（剪藏目录；批次读设置，长按时长固定默认） */
 export function applyArticleSettings(): void {
   const s = tryGetSettings() as any;
   ARTICLE_DIRECTORY = s.articleDirectory || '归档/网页剪藏';
-  BATCH_SIZE = 20;
+  BATCH_SIZE = parseInt(s.articleBatchSize || '20', 10) || 20;
   LONG_PRESS_DURATION = 800;
 }
 

@@ -4,9 +4,17 @@
  */
 import type { App, TFile } from 'obsidian';
 import { jsonStore } from '../core/json-store';
+import { tryGetSettings } from '../core/settings-provider';
 import { FSRS_FIRST_INTERVALS, LADDER_MAX, TOTAL_STAGES } from './fsrs';
 
 export const REVIEW_FILE_PATH = 'CONFIG/STORAGE/review.json';
+
+/** 复习数据文件路径（设置可配，默认 CONFIG/STORAGE/review.json） */
+export function getReviewFilePath(): string {
+  const s = tryGetSettings() as any;
+  const dir = (s && s.reviewStoragePath) || 'CONFIG/STORAGE';
+  return `${dir}/review.json`;
+}
 
 export interface ReviewItem {
   id: string;
@@ -43,7 +51,7 @@ export class ReviewDataManager {
 
   /** 加载条目（向后兼容旧字段；日期兼容 ISO 字符串与数字） */
   async loadItems(): Promise<ReviewItem[]> {
-    const data = (await jsonStore(REVIEW_FILE_PATH).read()) as any;
+    const data = (await jsonStore(getReviewFilePath()).read()) as any;
     const items = Array.isArray(data) ? data : [];
     const valid: ReviewItem[] = [];
 
@@ -73,7 +81,7 @@ export class ReviewDataManager {
   /** 保存（剥离运行时 file 字段） */
   async saveItems(items: ReviewItem[]): Promise<void> {
     const data = items.map(({ file, ...rest }) => rest);
-    await jsonStore(REVIEW_FILE_PATH).write(data);
+    await jsonStore(getReviewFilePath()).write(data);
   }
 
   /** 新增条目 */
