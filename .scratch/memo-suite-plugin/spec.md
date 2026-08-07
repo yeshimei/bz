@@ -379,6 +379,14 @@ Feature: memo-suite-plugin
 - **密码本 3 命令**：管理器 / 新增条目 / 生成密码（生成密码是独立命令入口）
 - **影视 2 命令**：管理器 / 快速添加
 
+### 收敛补丁（第 7 轮，反证扫描）
+
+- **changelog 全景**：Q3 CHANGELOGS 定义 8 个 identifier——memo / article / luhmann / library / movie / belongings / diary / password-manager；脚本调用方 6 个——备忘录'memo'、归物本'belongings'、剪藏本'article'、聚合讯'news'（Q3 无 news 定义，调用直接跳过）、书库'library'、影视'movie'；密码本有定义（password-manager）但脚本未调用（实现时确认是否需要触发）
+- **影视条目字段全集**（由 buildAnalysisData 48 个聚合字段反推）：rating（自评）、douban（豆瓣评分）、watchDate、status（want/watching/watched）、tags（类型）、genres、countries、directors、actors、age、era（年代）、duration（时长）、weekday（观看星期）、diff（观影间隔）、review（评论）、series/season（剧集季）、yearRating、wantTags 等——实现时以源码逐字核对，分析配置（十组）即按这些字段聚合
+- **影视数据分析聚合输出**：total/watched/watching/want/ratingSum/ratingCount/doubanSum/doubanCount/groups/tags/years/months/buckets/genres/countries/directors/actors/topRated/wantList/ageBuckets/ageSum/ageCount/eras/durBuckets/durSum/durCount/groupDur/weekdays/diffSum/diffCount/treasure（惊喜）/disappoint（失望）/reviewKeywords/reviewCount/reviewCharSum/series/seasonSum/seasonCount/seasons/wantDoubanSum/wantDoubanCount/wantTags/yearRating
+- **密码本设置 UI 名称**：🔤 密码生成字符集（输入）、🔢 密码生成长度（输入）、🔒 安全模式（开关）——设置页文案逐字保留
+- **入口行为确认**：阅读数据分析报告入口 = 注册 show-reading-report 命令（被书库互调）；影视数据分析入口 = 注册 movie-analysis-open + folderPath 设置读取；做题家入口 = AI 检查（createAI 缺失即 Notice）+ 注册命令
+
 ### 已知待收集信息（实现时从源码提取，不阻塞本 spec）
 
 - 各脚本 changelog identifier 清单（已确认：belongings；其余实现时收集）
