@@ -142,7 +142,7 @@ describe('getDisplayItems', () => {
   });
 
   it('类型过滤（组）+ 状态过滤', () => {
-    M.typeFilter = '剧集';
+    M.typeFilter = '美剧'; // 单标签（源码语义：typeTag === typeFilter）
     expect(getDisplayItems().map((i) => i.name)).toEqual(['B']);
     M.typeFilter = '全部';
     M.statusFilter = '想看';

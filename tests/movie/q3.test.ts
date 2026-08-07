@@ -9,7 +9,16 @@ import { initQ3, resetQ3 } from '../../src/movie/q3';
 
 function makeApp(vault: MockVault) {
   const app: any = mockAppWithVault(vault);
+  app.vault.adapter = {
+    exists: async (p: string) => vault.files.has(p),
+  };
   app.fileManager = {
+    renameFile: async (file: any, newPath: string) => {
+      const content = vault.files.get(file.path) ?? '';
+      vault.files.delete(file.path);
+      vault.files.set(newPath, content);
+      return { ...file, path: newPath, name: newPath.split('/').pop() };
+    },
     processFrontMatter: async (file: any, fn: (fm: Record<string, any>) => void) => {
       const content = vault.files.get(file.path) ?? '';
       const fm = content.match(/^---\n([\s\S]*?)\n---/)
@@ -26,12 +35,6 @@ function makeApp(vault: MockVault) {
       const lines = Object.entries(fm).map(([k, v]) => `${k}: ${v}`);
       vault.files.set(file.path, `---\n${lines.join('\n')}\n---\n${content.slice(content.indexOf('---', 4))}`);
     },
-  };
-  app.vault.rename = async (file: any, newPath: string) => {
-    const content = vault.files.get(file.path) ?? '';
-    vault.files.delete(file.path);
-    vault.files.set(newPath, content);
-    return { ...file, path: newPath, name: newPath.split('/').pop() };
   };
   return app;
 }
@@ -66,7 +69,7 @@ describe('initQ3 海报整理', () => {
     expect(vault.files.has('CONFIG/MOVIE POSTER/p1.png')).toBe(true);
     expect(vault.files.has('我的/影视/p1.png')).toBe(false);
     const content = vault.files.get('我的/影视/《A》.md')!;
-    expect(content).toContain('![[p1.png]]');
+    expect(content).toContain('![[CONFIG/MOVIE POSTER/p1.png]]'); // 完整路径（源码语义）
     expect(content).toContain('海报: CONFIG/MOVIE POSTER/p1.png');
   });
 
@@ -101,6 +104,7 @@ describe('initQ3 海报整理', () => {
     expect(vault.files.has('我的/影视/p1.png')).toBe(false);
     const content = vault.files.get('我的/影视/《A》.md')!;
     expect(content).toContain(`海报: CONFIG/MOVIE POSTER/${moved!.split('/').pop()}`);
+    expect(content).toContain(`![[CONFIG/MOVIE POSTER/${moved!.split('/').pop()}]]`);
   });
 
   it('扩展名不在白名单 → 跳过；无图片 → 跳过', async () => {

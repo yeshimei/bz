@@ -41,8 +41,11 @@ export function buildTasteProfile(): any {
   };
 
   const recent = [...watched]
-    .filter((i) => i.watchDate)
-    .sort((a, b) => new Date(b.watchDate as string).getTime() - new Date(a.watchDate as string).getTime())
+    .sort((a, b) => {
+      const da = a.watchDate ? new Date(a.watchDate).getTime() : 0;
+      const db = b.watchDate ? new Date(b.watchDate).getTime() : 0;
+      return db - da;
+    })
     .slice(0, 10)
     .map((i) => `${i.name}(${i.group},评分${i.rating}${i.review ? '，影评：' + i.review.slice(0, 60) : ''})`);
 
@@ -67,7 +70,7 @@ export function buildRecommendPrompt(profile: any, recent: string[], allNames: s
 地区偏好：${profile.regions.join('、') || '无'}
 最近看的10部：${recent.join('；')}
 
-请基于画像推荐 5 部用户可能喜欢的、且不在排除清单中的影视（电影/剧集/动漫/纪录片/公开课均可）。推荐理由必须具体引用画像中的偏好信号（如"你偏爱X导演的Y风格"）。只推荐真实存在的影视，避免编造。
+请基于画像推荐 5 部用户可能喜欢的、且不在排除清单中的影视（电影/剧集/动漫/纪录片/公开课均可）。推荐理由必须具体引用画像中的偏好信号（如“你偏爱X导演的Y风格”）。只推荐真实存在的影视，避免编造。
 
 排除清单（不要推荐这些）：${allNames.join('、')}
 
@@ -77,22 +80,22 @@ export function buildRecommendPrompt(profile: any, recent: string[], allNames: s
 /** 一键加入想看（直接建笔记，不弹确认表单） */
 export async function quickAddWant(app: App, name: string, type: string): Promise<void> {
   const tag = GROUP_DEFAULT_TAG[type] || '电影';
+  let folderObj = app.vault.getAbstractFileByPath(M.folderPath);
+  if (!folderObj) await app.vault.createFolder(M.folderPath);
   const filePath = `${M.folderPath}/${`《${name}》`}.md`;
-
-  const existing = app.vault.getAbstractFileByPath(filePath);
-  if (existing) {
-    new Notice(`影视"${name}"已在库中`);
+  if (app.vault.getAbstractFileByPath(filePath)) {
+    new Notice(`影视“${name}”已在库中`);
     return;
   }
-
-  const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
+  const now = localNowFormat();
   const content = `---
 tags:
 - ${tag}
 观影日期: ${now}
 评分: -1
 海报: 
----`;
+---
+`;
 
   try {
     await app.vault.create(filePath, content);
@@ -243,3 +246,10 @@ export function renderRecommendList(container: HTMLElement, list: any[]): void {
   });
 }
 
+
+/** 本地时间 YYYY-MM-DD HH:mm:ss（moment 语义） */
+function localNowFormat(): string {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
