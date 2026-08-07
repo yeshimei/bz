@@ -977,8 +977,14 @@ export function createOverlay(app: App, statusType?: string): void {
   // 主页点击"在看/想看"传入初始筛选；无参数时恢复默认"全部"
   if (statusType) M.statusFilter = statusType;
   else {
-    const home = takeHomeFilmStatus();
-    M.statusFilter = home || '全部';
+    // 主页.js（dataviewjs）写 window.__homeFilmStatus 遗留全局 → 消费并清除（兼容遗留通道）
+    const home = takeHomeFilmStatus() || (window as any).__homeFilmStatus || null;
+    if (home) {
+      M.statusFilter = home;
+      (window as any).__homeFilmStatus = null;
+    } else {
+      M.statusFilter = '全部';
+    }
   }
   M.loadedCount = 0;
   if (M.currentOverlay) {

@@ -3,9 +3,14 @@
  * 源码：自动摘要.js L124-140（插件版：删除 quickAddApi 检查；createAI 来自 core）
  */
 import { createAI } from '../core/ai';
+import { tryGetSettings } from '../core/settings-provider';
 import { processFile } from './processor';
 
-const WATCH_DIR = '归档/网页剪藏';
+/** 监听目录与剪藏本设置一致（articleDirectory，默认 归档/网页剪藏） */
+function getWatchDir(): string {
+  const s = tryGetSettings() as any;
+  return (s && s.articleDirectory) || '归档/网页剪藏';
+}
 
 let initialized = false;
 let vaultRef: any = null;
@@ -25,11 +30,12 @@ export function ensureAutoSummary(app: any): void {
     if (!vaultRef) return;
     fileListenerRef = vaultRef.on('create', (file: any) => {
       if (!file || file.extension !== 'md') return;
-      if (!file.path.startsWith(WATCH_DIR + '/')) return;
+      const watchDir = getWatchDir();
+      if (!file.path.startsWith(watchDir + '/')) return;
       // 延迟处理，等 frontmatter 写入完成
       setTimeout(() => processFile(app, ai, file), 1500);
     });
-    console.log(`[自动摘要] 👁️ 监听 ${WATCH_DIR}`);
+    console.log(`[自动摘要] 👁️ 监听 ${getWatchDir()}`);
   }, 2000);
 }
 

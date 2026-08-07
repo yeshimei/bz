@@ -219,6 +219,8 @@ Feature: memo-suite-plugin
 - 日记本已删除「标签配置/默认标签」设置的先例：设置项迁移以「保留原脚本可配置项」为原则，用户已确认删除的项不恢复
 - **2026-08-07 补充（用户决策）**：新增 5 项设置——影视每页加载数量（moviePageSize，默认 20）、日记本每批加载数量（diaryBatchSize，默认 20）、剪藏本每批加载数量（articleBatchSize，默认 20）、做题家数据存储路径（quizStoragePath，默认 CONFIG/STORAGE）、复习计划数据存储路径（reviewStoragePath，默认 CONFIG/STORAGE）
 - **2026-08-07 决策**：影视海报整理（enableQ3/posterFolder）不提供，相关代码无残留（仅 frontmatter 海报字段读取展示）；日记本删除默认标签功能（写日记弹窗不预选任何标签，全部加载；getDefaultTagSetting 移除）；长按手势固定启用（不暴露选项）
+- **2026-08-07 第二批（用户决策）**：① 备忘录「显示文件名」从设置页移除（固定 true，字段保留）；② 做题家 tab 删除，做题家 4 项选项并入复习计划 tab，仅在「做题决定难度」开启时动态显示（仿 AI tab 隐藏模式）；quizStoragePath 删除，quiz 与 review 共用 reviewStoragePath；③ 自动摘要 tab 删除，启用开关并入剪藏本 tab，监听目录跟随 articleDirectory；④ AI Agent 新增 3 项：监听文件夹（aiAgentWatchedFolders，默认 卡片盒,归档/网页剪藏）、AI 剪藏匹配开关（enableAIClipMatch，默认 true，关闭后仅 URL 精确匹配归档）、AI 匹配模型（aiAgentModel，默认 deepseek-v4-flash，经 ai.prompt 显式传参）；⑤ 主页影视「在看/想看」过滤修复——主页.js 写 window.__homeFilmStatus 遗留全局，createOverlay 消费并清除（此前插件读模块状态导致脱节，永远显示全部）
+- **2026-08-07 测试健壮性**：password/ui.test.ts 150ms 固定等待改轮询 waitFor（并行高负载下 PBKDF2 超时）；smoke 命令回调测试超时 5s→15s
 
 ### 命令 id 全清单（第 8 轮，源码提取——统一 bz- 前缀基准，ADR-0004 修订）
 

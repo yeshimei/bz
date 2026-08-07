@@ -85,8 +85,8 @@ describe('QuizManager', () => {
 });
 
 describe('数据文件路径设置', () => {
-  it('getQuizFilePath 读取 quizStoragePath 设置，缺省回退 CONFIG/STORAGE', () => {
-    setSettingsProvider(() => ({ quizStoragePath: '自定义/数据' }) as any);
+  it('getQuizFilePath 与复习计划共用 reviewStoragePath，缺省回退 CONFIG/STORAGE', () => {
+    setSettingsProvider(() => ({ reviewStoragePath: '自定义/数据' }) as any);
     expect(getQuizFilePath()).toBe('自定义/数据/quiz.json');
     setSettingsProvider(() => ({} as any));
     expect(getQuizFilePath()).toBe('CONFIG/STORAGE/quiz.json');

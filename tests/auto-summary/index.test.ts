@@ -3,6 +3,8 @@
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { setApp } from '../../src/core/app';
+import { setSettingsProvider } from '../../src/core/settings-provider';
+import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { ensureAutoSummary, isAutoSummaryInitialized, unloadAutoSummary } from '../../src/auto-summary/index';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
@@ -58,5 +60,35 @@ describe('auto-summary 入口', () => {
     // 再次 ensure 可重新注册
     ensureAutoSummary(makeApp(vault));
     expect(isAutoSummaryInitialized()).toBe(true);
+  });
+
+  it('监听目录跟随剪藏目录设置（articleDirectory）', async () => {
+    // mock AI 流式响应（core/ai 走 fetch SSE）
+    const encoder = new TextEncoder();
+    const chunks = [`data: ${JSON.stringify({ choices: [{ delta: { content: '{"title":"T","author":null,"summary":"S","tags":["a"]}' } }] })}\n`, 'data: [DONE]\n'];
+    (global as any).fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: new ReadableStream({
+        start(controller) {
+          chunks.forEach((c) => controller.enqueue(encoder.encode(c)));
+          controller.close();
+        },
+      }),
+    });
+    setSettingsProvider(() => ({ articleDirectory: '我的/剪藏2' }) as any);
+    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'sk-test' }));
+    resetAIProviderCache();
+    ensureAutoSummary(makeApp(vault));
+    await vi.advanceTimersByTimeAsync(2000);
+    // 设置目录内 md → 触发处理；默认目录内 → 不处理
+    vault.files.set('我的/剪藏2/x.md', `---\nlink: "https://x.com/x"\n---\n\n${LONG_BODY}`);
+    vault.files.set('归档/网页剪藏/y.md', `---\nlink: "https://y.com/y"\n---\n\n${LONG_BODY}`);
+    vault.emit('create', vault.file('我的/剪藏2/x.md'));
+    vault.emit('create', vault.file('归档/网页剪藏/y.md'));
+    await vi.advanceTimersByTimeAsync(1600);
+    // 只有设置目录内的文件被处理（x.md 被 modify）
+    expect(vault.modifiedPaths.some((p) => p.includes('我的/剪藏2/x.md'))).toBe(true);
+    expect(vault.modifiedPaths.some((p) => p.includes('归档/网页剪藏/y.md'))).toBe(false);
   });
 });

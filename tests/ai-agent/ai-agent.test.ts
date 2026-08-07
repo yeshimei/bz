@@ -368,4 +368,46 @@ describe('AI 剪藏匹配', () => {
     expect(document.getElementById('clip-ok')).toBeNull();
     vi.useRealTimers();
   });
+
+  it('enableAIClipMatch=false → 跳过 AI 判断（无弹窗无改动，不请求 AI）', async () => {
+    vi.useFakeTimers();
+    const { vault, vaultHandlers } = await setup();
+    setSettingsProvider(() => ({ ...SETTINGS, enableAIClipMatch: false } as any));
+    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
+      { id: 'm1', title: '某篇文章', scene: '剪藏', priority: 'minor', created: '2025-01-01 00:00:00', completed: null, url: 'https://old.example.com/x', linkedNote: null },
+    ], null, 2));
+    vault.files.set('CONFIG/STORAGE/favorites.json', '[]');
+    vault.files.set('归档/网页剪藏/文章1.md', CLIP_MD);
+    const fetchSpy = vi.fn().mockResolvedValue({ ok: true, status: 200, body: sseBody('{"match": true, "itemId": "m1"}') });
+    (global as any).fetch = fetchSpy;
+
+    vaultHandlers['create'][0]({ path: '归档/网页剪藏/文章1.md', basename: '文章1', extension: 'md' });
+    await vi.advanceTimersByTimeAsync(1000);
+    await flushQueue();
+    expect(document.getElementById('clip-ok')).toBeNull();
+    expect(fetchSpy).not.toHaveBeenCalled(); // AI 请求未发出
+    const bz = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(bz[0].completed).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it('aiAgentWatchedFolders 设置生效：范围外不监听', async () => {
+    vi.useFakeTimers();
+    const { vault, vaultHandlers } = await setup();
+    setSettingsProvider(() => ({ ...SETTINGS, aiAgentWatchedFolders: '我的/其他' } as any));
+    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
+      { id: 'm1', title: 'A', scene: '剪藏', priority: 'minor', created: '2025-01-01 00:00:00', completed: null, url: 'https://x.example.com', linkedNote: null },
+    ], null, 2));
+    vault.files.set('CONFIG/STORAGE/favorites.json', '[]');
+    vault.files.set('归档/网页剪藏/文章1.md', CLIP_MD);
+
+    vaultHandlers['create'][0]({ path: '归档/网页剪藏/文章1.md', basename: '文章1', extension: 'md' });
+    await vi.advanceTimersByTimeAsync(1000);
+    await flushQueue();
+    const bz = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(bz[0].completed).toBeNull(); // 未处理
+    expect(document.getElementById('clip-ok')).toBeNull();
+    vi.useRealTimers();
+  });
+
 });
