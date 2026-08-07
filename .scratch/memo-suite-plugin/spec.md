@@ -326,6 +326,17 @@ Feature: memo-suite-plugin
 - **做题家**：题型 = 单选题（四选一）/多选题（正确选项不限）；AI 难度三档提示词（基础概念/中等/高难度推理交叉）；流程：获取题库 → 逐笔记出题（批量失败降级逐篇）→ 答题（提交答案/下一题）→ 全完成替换笔记；错误文案逐字保留（笔记不存在/内容为空/生成失败等）
 - **闪念模块划分**：MobileBuffer/TFIDF/VectorStore/FloatWindow/ReferencePanel/ChatPanel/MobilePanel 七类；FloatWindow 悬停展开（hoverExpandTimer）/吸附缩起（collapsed）/关闭行为
 
+### 算法细节（第 4 轮，源码提取）
+
+- **复习计划 FSRS（幂律模型，非标准 FSRS 指数式）**：遗忘曲线 R(t,S) = (1 + t/(S·0.9))^(-0.9)，d=0.9；四评级 again/hard/good/easy（initS 取 w[0..3]）；难度更新 nextDiff（again→w[4]，hard→D+w[5]，easy→D+w[6]，good 不变，clamp 0..1）；稳定性 nextStab（again 分支 w[11..14] 公式；正常分支 base=exp(w[8])·(11-D)·S^(-w[9])·(exp(w[10]·(1-R))-1)，hard=S·base，good=S·(base+1)，easy=S·base·(exp(w[17])+1)）；间隔 days=S；**w 为 18 权重数组**（实现时从源码复制）
+- **固定阶梯阶段**：FSRS_FIRST_INTERVALS=[1/1440, 1/48, 1/4, 1, 3, 7, 15, 30, 60, 120]（天，文案 1m/30m/6h/1d/3d/7d/15d/30d/60d/120d）；stage 0-9 为 ladder 引导，stage≥9（LADDER_MAX）转 fsrs 阶段
+- **review.json 向后兼容**：旧字段 reviewStage → stage（-1）；缺省 stability=1、difficulty=0.3、phase 由 stage 推断（ladder/fsrs）；运行时字段 file/name/isCompleted/isOverdue
+- **影视排序**：键 date（有 watchDate 的在前、无日期的排后）/ rating / name；条目含 watchDate 字段
+- **影视数据分析评分桶**（ratingBucketOf 6 档）：≥5.5 / 5~5.5 / 4~5 / 3~4 / 2~3 / <2；buildAnalysisData 聚合 {total, watched, watching, want, …}
+- **归物本排序弹窗**：自绘弹窗（Promise），手动检测 theme-dark 取色板（bg/text/border/accent），不依赖主题变量
+- **闪念**：命令 `shan-nian-open-reference`（闪念：打开参考窗口）；ALLOW_PATHS 默认 ["卡片盒","主题盒","我的","归档","CODE"]；CHUNK_MIN_LENGTH 默认 50；TFIDF 中文停用词表（'的了是在我有和人这中大为上个国不以到说时要就出会也年对自其他里去子后也得着与把等'）+ 文档频率/平均长度（BM25 式）
+- **AI 提示词结构（移植基准）**：自动摘要（标题 15-30 字禁标点/作者可 null/摘要 150-250 字禁"本文"等前缀/3-6 个中文标签≤5 字/正文截断 6000）；AIAgent 匹配（→{match, itemId}，ai.json + max_tokens 200 + response_format）；收藏本（→{title, description}，简介≤50 字，ai.json）；做题家（单选四选一/多选不限/难度三档提示词）；备忘录 AI 推荐场景（→{scene, priority}，priority 仅"重要"/"次要"两档，ai.chat）
+
 ### 已知待收集信息（实现时从源码提取，不阻塞本 spec）
 
 - 各脚本 changelog identifier 清单（已确认：belongings；其余实现时收集）
