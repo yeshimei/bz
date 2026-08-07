@@ -15,6 +15,7 @@ function makeMockApp() {
     workspace: {
       onLayoutReady: (cb: () => void) => cb(),
       getActiveFile: () => null,
+      getActiveViewOfType: () => null,
       activeEditor: null,
       on: () => ({ ref: 'ref' }),
     },
@@ -131,6 +132,31 @@ describe('bz 骨架冒烟', () => {
     expect(() => cmd3.callback()).not.toThrow();
     expect(() => registeredCommands.find((c: any) => c.id === 'bz-review-add-current').callback()).not.toThrow();
     expect(() => registeredCommands.find((c: any) => c.id === 'bz-show-reading-report').callback()).not.toThrow();
+  }, 15000);
+  it('全部 30 命令回调冒烟：逐个调用覆盖各域懒加载入口（含日记本 init 两个命令）', async () => {
+    const plugin = await createPlugin(makeMockApp());
+    const failures: string[] = [];
+    for (const c of registeredCommands) {
+      try {
+        c.callback();
+        // 让异步初始化微任务跑完（不等待网络/长定时器）
+        await new Promise((r) => setTimeout(r, 5));
+      } catch (e) {
+        failures.push(`${c.id}: ${(e as Error).message}`);
+      }
+    }
+    expect(failures, `失败命令:
+${failures.join('\n')}`).toEqual([]);
+    expect(registeredCommands.length).toBeGreaterThanOrEqual(30);
+  }, 15000);
+  it('事件常驻域开关开启时 onload 注册（autoSummary/aiAgent/flash 懒加载分支）', async () => {
+    delete diskData['bz'];
+    diskData['bz'] = { autoSummaryEnabled: true, aiAgentEnabled: true, flashEnabled: true };
+    const plugin = await createPlugin(makeMockApp());
+    // 开启后 onLayoutReady 触发三个 ensure，均不抛错（占位/幂等）
+    expect(plugin.settings.autoSummaryEnabled).toBe(true);
+    expect(plugin.settings.aiAgentEnabled).toBe(true);
+    expect(plugin.settings.flashEnabled).toBe(true);
   }, 15000);
   it('onunload 清理全部裸注册命令', async () => {
     const plugin = await createPlugin(makeMockApp());
