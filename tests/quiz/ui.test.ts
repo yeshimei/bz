@@ -17,15 +17,15 @@ function makeApp(vault: MockVault) {
 /** 预置题库 + 活跃复习条目（updateQuiz 依赖 review.json 过滤） */
 function seedQuiz(vault: MockVault, notes: Record<string, any[]>) {
   vault.files.set(QUIZ_FILE_PATH, JSON.stringify({ notes }));
-  const now = Date.now();
-  vault.files.set(REVIEW_PATH, JSON.stringify({
-    items: Object.keys(notes).map((p, i) => ({
-      id: 'r' + i, filePath: p, fileName: p.split('/').pop()?.replace(/\.md$/, '') || p,
-      reviewStart: now, stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3,
+  const now = new Date();
+  vault.files.set(REVIEW_PATH, JSON.stringify(
+    Object.keys(notes).map((p, i) => ({
+      id: 'r' + i, filePath: p, name: p.split('/').pop()?.replace(/\.md$/, '') || p,
+      reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3,
       reviewHistory: [], totalReviews: 0, averageConfidence: 0,
-      nextReviewDate: now + 60000, lastReviewed: null, lastDifficulty: null, completed: false,
-    })),
-  }));
+      nextReviewDate: new Date(now.getTime() + 60000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false,
+    }))
+  ));
 }
 
 describe('QuizMasterUI', () => {

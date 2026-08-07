@@ -68,8 +68,8 @@ export class QuizMasterUI {
   async updateQuiz(app: App): Promise<void> {
     const { ReviewDataManager } = await import('../review/data');
     const rdm = new ReviewDataManager(app);
-    await rdm.loadItems();
-    const activePaths = new Set(rdm.items.filter((i) => !i.completed).map((i) => i.filePath));
+    const items = await rdm.loadItems();
+    const activePaths = new Set(items.filter((i) => !i.completed).map((i) => i.filePath));
     if (activePaths.size === 0) {
       this.manager.quiz = { notes: {} };
       await this.manager.saveQuiz(app);
