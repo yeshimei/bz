@@ -19,6 +19,9 @@ function makeMockApp() {
       on: () => ({ ref: 'ref' }),
     },
     commands: {
+      addCommand: (c: any) => {
+        /* diary init 内部注册（diary-open-add-dialog / diary-create-quote），测试不追踪 */
+      },
       removeCommand: (id: string) => {
         removedCommands.push(id);
       },
@@ -30,7 +33,7 @@ function makeMockApp() {
 
 const removedCommands: string[] = [];
 
-/** 期望的命令 id 全集（spec「命令 id 全清单」25 个，日记本已独立迁移不计） */
+/** 期望的命令 id 全集（spec「命令 id 全清单」25 个 + 日记本 open-panel，共 26 个） */
 const EXPECTED_COMMAND_IDS = [
   'memo-open-panel', 'memo-create-item',
   'belongings-add-item',
@@ -39,6 +42,7 @@ const EXPECTED_COMMAND_IDS = [
   'pw-open-manager', 'pw-add-entry', 'pw-generate-password',
   'favorites-open-panel', 'favorites-add-item',
   'open-library', 'open-book-notes',
+  'open-panel',
   'show-reading-report',
   'movie-manager-open', 'movie-manager-add',
   'movie-analysis-open',
@@ -71,7 +75,7 @@ describe('memo-suite 骨架冒烟', () => {
     document.body.innerHTML = '';
   });
 
-  it('onload 注册全部 25 个裸命令 id（不带插件前缀）', async () => {
+  it('onload 注册全部 26 个裸命令 id（不带插件前缀）', async () => {
     const plugin = await createPlugin(makeMockApp());
 
     const ids = plugin.commands.map((c: any) => c.id);
@@ -130,7 +134,9 @@ describe('memo-suite 骨架冒烟', () => {
     const plugin = await createPlugin(makeMockApp());
     plugin.onunload();
 
-    expect(removedCommands.sort()).toEqual([...EXPECTED_COMMAND_IDS].sort());
+    // 含日记本 init 内注册的两个命令（diary-open-add-dialog / diary-create-quote）
+    const expectedRemoved = [...EXPECTED_COMMAND_IDS, 'diary-open-add-dialog', 'diary-create-quote'];
+    expect(removedCommands.sort()).toEqual(expectedRemoved.sort());
   });
 
   it('设置持久化（saveData/loadData 往返）', async () => {

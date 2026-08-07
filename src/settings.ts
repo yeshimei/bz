@@ -32,6 +32,22 @@ export default interface MemoSettings {
   /** 🚀 启动时自动弹窗（有重要备忘录时） */
   autoPopupOnStart: boolean;
 
+  // ===== 📖 日记本（7 项，diary-notebook 合并）=====
+  /** 📂 日记目录 */
+  diaryDirectory: string;
+  /** 🎬 影视目录（日记本用） */
+  movieDirectory: string;
+  /** ✉️ 信目录 */
+  letterDirectory: string;
+  /** ⏳ 文件变更延迟(ms) */
+  fileChangeDelay: string;
+  /** 👆 启用长按手势 */
+  enableLongPress: boolean;
+  /** 📊 显示标签计数 */
+  showTagCount: boolean;
+  /** 🕒 使用文件日期作为默认日期 */
+  useFileDateTime: boolean;
+
   // ===== 📦 归物本（2 项）=====
   /** 📁 存储文件夹路径（belongings.json） */
   belongingsDataFolder: string;
@@ -192,6 +208,15 @@ export const DEFAULT_SETTINGS: MemoSettings = {
   platformMapping: '',
   showFileName: true,
   autoPopupOnStart: true,
+
+  // 日记本
+  diaryDirectory: '我的/日记',
+  movieDirectory: '我的/影视',
+  letterDirectory: '我的/信',
+  fileChangeDelay: '100',
+  enableLongPress: true,
+  showTagCount: true,
+  useFileDateTime: false,
 
   // 归物本
   belongingsDataFolder: 'CONFIG/STORAGE',
