@@ -22,12 +22,14 @@ export class MockVault {
 
   file(path: string) {
     const content = this.files.get(path)!;
-    const basename = path.split('/').pop()!.replace(/\.md$/, '');
+    const basename = path.split('/').pop()!.replace(/\.[^./]+$/, '');
+    const parentPath = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '/';
     return {
       path,
       basename,
-      extension: path.endsWith('.md') ? 'md' : '',
+      extension: path.includes('.') ? path.split('.').pop() : '',
       name: path.split('/').pop()!,
+      parent: { path: parentPath },
       stat: Promise.resolve({ ctime: Date.UTC(2024, 0, 1, 12, 0), birthtime: Date.UTC(2024, 0, 1, 12, 0) }),
       content,
     };
@@ -78,9 +80,9 @@ export class MockVault {
   }
 }
 
-/** 解析 frontmatter（简易 YAML 子集：key: value 行） */
+/** 解析 frontmatter（简易 YAML 子集：key: value 行 + `  - ` 列表项） */
 export function parseFrontmatter(content: string): Record<string, any> | null {
-  const m = content.match(/^---\n([\s\S]*?)\n---\n/);
+  const m = content.match(/^---\n([\s\S]*?)\n---\s*(?:\n|$)/);
   if (!m) return null;
   const fm: Record<string, any> = {};
   for (const line of m[1].split('\n')) {
@@ -93,8 +95,8 @@ export function parseFrontmatter(content: string): Record<string, any> | null {
       if (arrMatch) {
         value = arrMatch[1]
           .split(',')
-          .map((s) => s.trim())
-          .map((s) => {
+          .map((s: string) => s.trim())
+          .map((s: string) => {
             if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) return s.slice(1, -1);
             return s;
           })
@@ -110,6 +112,16 @@ export function parseFrontmatter(content: string): Record<string, any> | null {
         value = true;
       }
       fm[key] = value;
+    } else if (/^\s*-\s+/.test(line)) {
+      // YAML 列表项（tags:\n- 电影），挂到最后一个 key 上
+      const lastKey = Object.keys(fm).pop();
+      if (lastKey && !Array.isArray(fm[lastKey])) fm[lastKey] = [];
+      if (lastKey) {
+        let v: any = line.replace(/^\s*-\s+/, '').trim();
+        if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1);
+        if (/^-?\d+(\.\d+)?$/.test(v)) v = Number(v);
+        fm[lastKey].push(v);
+      }
     }
   }
   return fm;
@@ -129,6 +141,10 @@ export function mockAppWithVault(vault: MockVault) {
     workspace: {
       getActiveViewOfType: () => null,
       openLinkText: async () => {},
+      on: () => ({ ref: 'mock-ws-ref' }),
+      off: () => {},
+      offref: () => {},
+      getActiveFile: () => null,
     },
     commands: {
       addCommand: () => {},
