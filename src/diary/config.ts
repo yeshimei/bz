@@ -1,0 +1,245 @@
+/**
+ * 日记本领域配置：目录常量、批量数、标签配置（emoji 编码）与解析。
+ * 原脚本 35-158 行 + settings.primaryTagsConfig 解析逻辑。
+ */
+import type { DiaryEntry, SubTagConfig, TagConfig } from './types';
+
+// ===== 可变常量（设置应用时更新） =====
+export let DIARY_DIRECTORY = '我的/日记';
+export let MOVIE_DIRECTORY = '我的/影视';
+export let LETTER_DIRECTORY = '我的/信';
+export let BATCH_SIZE = 20;
+export let LONG_PRESS_DURATION = 800;
+
+/** 应用目录与性能常量（设置变更时调用） */
+export function applyDirectories(settings: {
+  diaryDirectory?: string;
+  movieDirectory?: string;
+  letterDirectory?: string;
+  batchSize?: string;
+  longPressDuration?: string;
+}) {
+  DIARY_DIRECTORY = settings.diaryDirectory || '我的/日记';
+  MOVIE_DIRECTORY = settings.movieDirectory || '我的/影视';
+  LETTER_DIRECTORY = settings.letterDirectory || '我的/信';
+  BATCH_SIZE = parseInt(settings.batchSize || '') || 20;
+  LONG_PRESS_DURATION = parseInt(settings.longPressDuration || '') || 800;
+}
+
+/** 获取当前标签配置 */
+export function getPrimaryTagsConfig(): Record<string, TagConfig> {
+  return PRIMARY_TAGS_CONFIG;
+}
+
+/** 恢复默认标签配置（测试与设置重置使用） */
+export function resetTagsConfig() {
+  PRIMARY_TAGS_CONFIG = JSON.parse(JSON.stringify(DEFAULT_TAGS_CONFIG));
+  buildTagMaps();
+}
+
+// ===== 默认标签配置 =====
+const DEFAULT_TAGS_CONFIG: Record<string, TagConfig> = {
+  日记: { emoji: '📖' },
+  念念碎: { emoji: '😶' },
+  对谈: { emoji: '🤝' },
+  随笔: { emoji: '✍️' },
+  梦: { emoji: '🌙' },
+  诗: { emoji: '🌟' },
+  书: { emoji: '📕' },
+  信: { emoji: '✉️' },
+  摘抄: { emoji: '📌' },
+  摄影: { emoji: '📸' },
+  骑行: { emoji: '🚴' },
+  代码: { emoji: '⚙️' },
+  做饭: { emoji: '🥘' },
+  游戏: { emoji: '🎮' },
+  音乐: { emoji: '🎧' },
+  电影: { emoji: '📽' },
+  电视剧: { emoji: '📺' },
+  动漫: { emoji: '🎨' },
+  纪录片: { emoji: '🎞' },
+  猫: { emoji: '🐱' },
+  狗: { emoji: '🐶' },
+  仓鼠: { emoji: '🐹' },
+  熊猫: { emoji: '🐼' },
+  博物馆: { emoji: '🏛️' },
+  美食: { emoji: '🍔' },
+  旅游: {
+    emoji: '✈️',
+    subTags: [
+      { tag: '四川', emoji: '🀄' },
+      { tag: '大理', emoji: '🛶' },
+    ],
+  },
+  收藏: {
+    emoji: '⭐',
+    subTags: [
+      { tag: '咪咪', emoji: '🐈' },
+      { tag: '广告', emoji: '📢' },
+      { tag: '神评', emoji: '🤣' },
+      { tag: '冷笑话', emoji: '😅' },
+      { tag: '抽象', emoji: '🌀' },
+      { tag: 'AI', emoji: '🤖' },
+      { tag: '愚人节', emoji: '🤪' },
+      { tag: '舞蹈', emoji: '🕺' },
+      { tag: '达人秀', emoji: '🤹' },
+      { tag: '艺术', emoji: '🧑‍🎨' },
+      { tag: '摄影集', emoji: '📷' },
+      { tag: '植物', emoji: '🌳' },
+      { tag: '创意', emoji: '🧩' },
+    ],
+  },
+};
+
+let PRIMARY_TAGS_CONFIG: Record<string, TagConfig> = JSON.parse(JSON.stringify(DEFAULT_TAGS_CONFIG));
+
+// ===== emoji 映射表（构建于 state.data，与 config 同步） =====
+export const tagToEmojiMap: Record<string, string> = {};
+export const emojiToTagMap: Record<string, string> = {};
+
+/** 构建标签↔emoji 双向映射 */
+export function buildTagMaps() {
+  for (const key of Object.keys(tagToEmojiMap)) delete tagToEmojiMap[key];
+  for (const key of Object.keys(emojiToTagMap)) delete emojiToTagMap[key];
+  for (const [tag, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
+    tagToEmojiMap[tag] = config.emoji;
+    emojiToTagMap[config.emoji] = tag;
+    if (config.subTags) {
+      for (const sub of config.subTags) {
+        tagToEmojiMap[sub.tag] = sub.emoji;
+        emojiToTagMap[sub.emoji] = sub.tag;
+      }
+    }
+  }
+}
+
+/** 获取标签对应的 emoji（自动识别主/二级） */
+export function getTagEmoji(tag: string): string {
+  return tagToEmojiMap[tag] || '📖';
+}
+
+/** 获取所有可用标签（主标签+二级标签） */
+export function getAllAvailableTags(): string[] {
+  const tags: string[] = [];
+  for (const [tag, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
+    tags.push(tag);
+    if (config.subTags) {
+      for (const sub of config.subTags) {
+        tags.push(sub.tag);
+      }
+    }
+  }
+  return tags;
+}
+
+/** 获取主标签的二级标签配置 */
+export function getSubTagsOfPrimary(primaryTag: string): SubTagConfig[] | null {
+  const config = PRIMARY_TAGS_CONFIG[primaryTag];
+  return config && config.subTags ? config.subTags : null;
+}
+
+/** 判断一个标签是否是二级标签 */
+export function isSubTag(tag: string): boolean {
+  for (const [, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
+    if (config.subTags && config.subTags.some((sub) => sub.tag === tag)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** 获取二级标签所属的主标签 */
+export function getParentPrimaryTag(subTag: string): string | null {
+  for (const [primary, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
+    if (config.subTags && config.subTags.some((sub) => sub.tag === subTag)) {
+      return primary;
+    }
+  }
+  return null;
+}
+
+// ===== 标签配置解析（原 settings 文本格式） =====
+/**
+ * 解析文本格式标签配置：
+ * - `标签名 emoji`
+ * - `主标签 emoji > 子标签 emoji, 子标签 emoji, ...`
+ */
+export function parseTagConfig(text: string): Record<string, TagConfig> {
+  const lines = text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  const config: Record<string, TagConfig> = {};
+  for (const line of lines) {
+    if (line.includes('>')) {
+      const parts = line.split('>').map((s) => s.trim());
+      const mainPart = parts[0];
+      const subPart = parts.slice(1).join('>').trim();
+
+      const mainMatch = mainPart.match(/^(.+?)\s+(\S+)$/);
+      if (!mainMatch) continue;
+      const mainTag = mainMatch[1].trim();
+      const mainEmoji = mainMatch[2].trim();
+
+      const subItems = subPart.split(',').map((s) => s.trim()).filter((s) => s.length > 0);
+      const subTags: SubTagConfig[] = [];
+      for (const item of subItems) {
+        const subMatch = item.match(/^(.+?)\s+(\S+)$/);
+        if (subMatch) {
+          subTags.push({ tag: subMatch[1].trim(), emoji: subMatch[2].trim() });
+        }
+      }
+      config[mainTag] = { emoji: mainEmoji, subTags };
+    } else {
+      const match = line.match(/^(.+?)\s+(\S+)$/);
+      if (match) {
+        const tag = match[1].trim();
+        const emoji = match[2].trim();
+        config[tag] = { emoji };
+      }
+    }
+  }
+  return config;
+}
+
+/**
+ * 应用标签配置（支持 JSON 或文本格式；解析失败保留默认配置）
+ */
+export function applyTagsConfig(rawConfig: string | undefined) {
+  if (rawConfig && rawConfig.trim()) {
+    const trimmed = rawConfig.trim();
+    if (trimmed.startsWith('{')) {
+      try {
+        PRIMARY_TAGS_CONFIG = JSON.parse(trimmed);
+      } catch (e) {
+        console.warn('JSON 解析失败，尝试文本格式');
+        PRIMARY_TAGS_CONFIG = parseTagConfig(trimmed);
+      }
+    } else {
+      PRIMARY_TAGS_CONFIG = parseTagConfig(trimmed);
+    }
+  }
+  buildTagMaps();
+}
+
+// ===== 排序辅助 =====
+
+/**
+ * 获取写日记弹窗中标签的排序列表：
+ * 有二级标签的主标签隐藏，只显示其二级标签（按配置顺序）
+ */
+export function getSortedTagsForAddDialog(): string[] {
+  const result: string[] = [];
+  for (const [primary, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
+    if (config.subTags && config.subTags.length > 0) {
+      for (const sub of config.subTags) {
+        result.push(sub.tag);
+      }
+    } else {
+      result.push(primary);
+    }
+  }
+  return result;
+}
+

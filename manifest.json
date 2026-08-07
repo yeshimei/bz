@@ -1,0 +1,9 @@
+{
+  "id": "diary-notebook",
+  "name": "日记本",
+  "version": "1.0.0",
+  "minAppVersion": "1.4.0",
+  "description": "日记本：标签筛选、写日记、写摘抄。由 QuickAdd 脚本「日记本」独立化而来，UI 与逻辑保持一致。",
+  "author": "叫我包仔",
+  "isDesktopOnly": false
+}
