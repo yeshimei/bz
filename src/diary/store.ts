@@ -72,6 +72,19 @@ export function getIsProcessingRemainingFiles(): boolean {
   return isProcessingRemainingFiles;
 }
 
+// ===== 目录递归查找（vault 未就绪时兜底） =====
+function findDirRecursive(folder: any, path: string): any {
+  if (!folder || !folder.children) return null;
+  if (folder.path === path) return folder;
+  for (const child of folder.children) {
+    if (child.children) {
+      const found = findDirRecursive(child, path);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
 // ===== 排序辅助 =====
 function sortEntries(entries: DiaryEntry[]) {
   entries.sort((a, b) => {
@@ -99,9 +112,15 @@ export async function loadAll() {
   try {
     const app = getApp();
     diag('loadAll 开始, 目录 = ' + DIARY_DIRECTORY);
-    const diaryDir = app.vault.getAbstractFileByPath(DIARY_DIRECTORY) as any;
+    let diaryDir = app.vault.getAbstractFileByPath(DIARY_DIRECTORY) as any;
     if (!diaryDir || !diaryDir.children) {
-      diag('!! 日记目录未找到: ' + DIARY_DIRECTORY);
+      // 兜底：vault 文件树可能未就绪，递归查找目录
+      const root = app.vault.getRoot() as any;
+      diag('getAbstractFileByPath 未找到, vault 根目录子项数: ' + (root?.children?.length ?? 'null'));
+      diaryDir = findDirRecursive(root, DIARY_DIRECTORY);
+    }
+    if (!diaryDir || !diaryDir.children) {
+      diag('!! 日记目录未找到（含兜底递归）: ' + DIARY_DIRECTORY);
       state.data.originalDiaryEntries = [];
       state.data.currentFilteredEntries = [];
       // 渲染空态（避免静默空白）
