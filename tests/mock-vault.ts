@@ -61,6 +61,10 @@ export class MockVault {
     return [...this.files.keys()].map((p) => this.file(p));
   }
 
+  getMarkdownFiles(): any[] {
+    return [...this.files.keys()].filter((p) => p.endsWith('.md')).map((p) => this.file(p));
+  }
+
   /** 事件模拟（create/modify/delete），供监听类测试 emit */
   listeners: Record<string, Function[]> = {};
   on(event: string, cb: (...args: any[]) => void): any {
@@ -100,6 +104,8 @@ export function parseFrontmatter(content: string): Record<string, any> | null {
         (value.startsWith("'") && value.endsWith("'"))
       ) {
         value = value.slice(1, -1); // 与 Obsidian parseFrontmatter 一致：剥引号
+      } else if (/^-?\d+(\.\d+)?$/.test(value)) {
+        value = Number(value); // 与 Obsidian parseFrontmatter 一致：数字
       } else if (value === 'true') {
         value = true;
       }
