@@ -1,8 +1,10 @@
-# 日记本插件工作区
+# 包仔插件工作区
 
-将 QuickAdd 宏脚本独立化为标准 Obsidian 插件（首个为「日记本」），并预留后续迁移全部脚本的架构。源码在 `src/`，构建产物输出到 vault 的 `.obsidian/plugins/diary-notebook/`。
+将 QuickAdd 宏脚本独立化为标准 Obsidian 插件：已交付「日记本」（`diary-notebook`），当前规划将剩余脚本（备忘录、剪藏本、聚合讯、密码本、收藏本、书库、影视、自动摘要、AI Agent、复习计划、做题家、闪念、归物本等 15 个）合并为**一个插件** `memo-suite`（显示名「备忘录」，ADR-0003）。B站下载另行单独插件。源码在 `src/`，测试在 `tests/`。
 
 ## Language
+
+### 已迁移域
 
 **日记条目 (DiaryEntry)**: 面板中展示的最小单位，由 `# emoji序列 HH:mm` 标题 + 正文构成，属于某个日期文件。
 _Avoid_: 日记、记录、post
@@ -26,8 +28,56 @@ _Avoid_: 类型、分类
 
 **全量刷新 / 轻量刷新**: 数据层向外发出的两类 UI 刷新信号——全量 = 重筛 + 重渲染 + 标签重建；轻量 = 仅标签重建与标题后缀。
 
+### 待迁移域
+
+**备忘录 (Memo/Todo)**: 待办事项管理，数据 `CONFIG/STORAGE/memo.json`，场景分类（剪藏/工作/学习/生活/代码/公开课），Todo 弹窗（#todo-popup）。被 AIAgent 与闪念引用。
+_Avoid_: 待办列表、任务
+
+**归物本 (Belongings)**: 物品登记管理，数据目录 `CONFIG/STORAGE`（可配置），含 changelog（identifier 'belongings'）。
+
+**剪藏本 (Clipping)**: `我的/文章` 的剪藏文章展示面板——搜索、站点过滤、排序、双击跳转、长按删除、反链笔记名显示（metadataCache.getBacklinksForFile）。
+
+**聚合讯 (News Aggregator)**: 抓取新闻写入 `归档/网页剪藏`（CLIP_DIR），管理 `CONFIG/STORAGE/news.json`、`news-stats.json`；把 `dataviewjs` 代码块（`dv.view('CONFIG/SCRIPTS/DataView/摘要')`）写进笔记由 **Dataview 插件**渲染。
+
+**密码本 (Password Vault)**: 密码管理，存储路径可配置（storagePath），含样式注入。
+
+**收藏本 (Favorites)**: GitHub 收藏管理，支持 AI 生成标题与简介。
+
+**书库 (Library)**: 读书笔记管理，`书库/` 目录 + `我的/读书笔记`。
+
+**阅读数据分析报告 (Reading Analytics)**: 基于 metadataCache 统计的阅读报告生成器（年度统计、热力图、习惯分析等），无 __utils 依赖。
+
+**影视 (Movies)**: `我的/影视` 目录管理，frontmatter 处理（fileManager.processFrontMatter），状态常量（想看/在看/已看等）。
+
+**影视数据分析 (Movie Analytics)**: 影视数据分析弹窗，命令 id `movie-analysis-open`，由影视.js 调用；共享状态 `window.__MOVIE_FOLDER_PATH`。
+
+**自动摘要 (Auto Summary)**: 常驻监听 `归档/网页剪藏` 新文件 → AI（deepseek-v4-flash）生成摘要/标签写回 frontmatter。
+
+**B站下载 (Bilibili Downloader)**: 输入链接 → B站 API 解析（封面/标题/清晰度）→ 下载合并（ffmpeg spawn）→ 裁切/压缩（ffmpeg）→ 转文字（faster-whisper，python -c 内嵌代码）→ AI 润色。**依赖 node require（child_process/fs/path/os）与外部二进制（ffmpeg、python）**，仅桌面端可用。**不在本插件迁移清单内——用户决策：后续作为独立插件单独写**。
+
+**AI Agent**: 笔记 ⇄ 备忘录/收藏本 自动同步 + AI 剪藏匹配。常驻监听 vault 事件（rename/delete/create）。权限模型：非 AI 操作静默直改；仅 AI 剪藏匹配弹窗批准。
+
+**复习计划 (Review Plan)**: FSRS v4 算法驱动的复习管理，数据 `CONFIG/STORAGE/review.json`，右上角图标调用做题家。
+
+**做题家 (Quiz Master)**: 统一题库 `CONFIG/STORAGE/quiz.json`，多选支持，完成状态记录，自动替换全完成的笔记。
+
+**闪念 (Flash Thought)**: 右侧窄窗 · 自动吸附缩起 · 悬停展开 · 向量检索增强（Ollama bge-m3）· AI 对话（Ollama qwen2.5 / DeepSeek）。常驻监听光标移动。
+
+### 共享层
+
+**Q3 / __utils**: QuickAdd 共享脚本（`CONFIG/SCRIPTS/Quickadd/Q/Q3.js`，1034 行），挂载 `window.__utils`，21 个导出：escManager、confirm、notice、generateId、jsonStore、longPress、injectStyles、createSiteIcon、createIconBtn、formatRelativeTime、formatFileSize、displayChangelog、checkAndShowChangelog、AIService、createAI、extractUrlAndDisplay、getPlatformName、getCurrentNoteInfo、getCurrentCursorPosition、fetchPageTitle、createOverlay。**新插件移植后为内部共享层（core），不再挂 window**。
+
+**jsonStore**: Q3 提供的 JSON 文件存储工具（原子写 + 锁），备忘录/归物本/密码本/复习计划等均使用 `CONFIG/STORAGE/*.json`。
+
+**AIService / createAI**: Q3 的 AI 服务抽象——provider 可选 deepseek / opencode-go，key 存于 QuickAdd 宏设置（`aiProvider`、`opencodeGoApiKey`），支持 override 对象（endpoint/apiKey/model）；插件化后迁移至插件设置。
+
+**changelog**: 各脚本版本更新日志（CHANGELOGS[identifier]），localStorage 记录已读版本（`changelog_<id>_shown_version`），插件化后保留机制。
+
 ## Rules
 
-- 面板 DOM 的 id/类名与原 QuickAdd 脚本保持一致（`diary-tag-filter`、`diary-entry-card` 等），外部依赖此约定。
-- 数据格式零迁移：读写格式与原脚本完全一致。
+- 面板 DOM 的 id/类名与原 QuickAdd 脚本保持一致，外部依赖此约定。
+- 数据格式零迁移：读写格式与原脚本完全一致（`CONFIG/STORAGE/*.json`、`我的/*` 笔记格式）。
 - UI 层不直接依赖数据层的刷新函数（回调注册，单向依赖）。
+- 命令 id 不带插件前缀（ADR-0001），保留用户已绑定的热键。
+- 一个插件包含全部待迁移域（用户决策）；外部进程能力（child_process）在 Electron 桌面端可用，移动端不可用。
+- 全部 16 个脚本功能与样式完全复刻。
