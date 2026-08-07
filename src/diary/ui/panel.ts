@@ -261,6 +261,7 @@ export function toggleSearch() {
 // ===== 初始化入口（原 160-200） =====
 
 let diaryEscHandle: EscHandle | null = null;
+let refreshCallbacksRegistered = false;
 
 /**
  * 初始化日记过滤器主入口（幂等：面板已存在时仅重新显示）
@@ -275,6 +276,21 @@ export async function init(plugin?: { registerEvent: (ref: unknown) => unknown }
   }
 
   state.ui.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+  // 注册 UI 刷新回调（必须在 loadAll 之前：首次加载即触发渲染/进度/加载态）
+  if (!refreshCallbacksRegistered) {
+    onFullRefresh(() => {
+      if (state.ui.editingEntryId) cancelEdit(state.ui.editingEntryId, null);
+      applyFilter();
+      rebuildTags();
+    });
+    onLightRefresh(() => {
+      rebuildTags();
+    });
+    onProgress(updateProgress);
+    onLoadingChange(setLoadingState);
+    refreshCallbacksRegistered = true;
+  }
 
   await registerOpenDialogCommand();
   await registerQuoteCommand();
@@ -301,18 +317,6 @@ export async function init(plugin?: { registerEvent: (ref: unknown) => unknown }
     }
     state.events.fileListenerAttached = true;
   }
-
-  // 注册 UI 刷新回调（全量/轻量）
-  onFullRefresh(() => {
-    if (state.ui.editingEntryId) cancelEdit(state.ui.editingEntryId, null);
-    applyFilter();
-    rebuildTags();
-  });
-  onLightRefresh(() => {
-    rebuildTags();
-  });
-  onProgress(updateProgress);
-  onLoadingChange(setLoadingState);
 }
 
 /** 显示日记面板（ribbon/命令入口） */
