@@ -23,6 +23,7 @@ import { openFavoritesPanel, addFavoriteItem } from './favorites';
 import { openLibrary, openBookNotes } from './library';
 import { showReadingReport } from './reading-report';
 import { openMovieManager, addMovieItem } from './movie';
+import { ensurePosterFetch, unloadPosterFetch, probeInstall, getProbeState, isDesktop as posterIsDesktop, PACKAGE_NAME } from './movie/poster';
 import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating } from './review';
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
@@ -123,6 +124,8 @@ export default class BzPlugin extends Plugin {
 
     // 事件常驻域按设置开关注册（懒加载架构）
     this.app.workspace.onLayoutReady(() => {
+      // 海报抓取：桌面端异步探测全局包安装状态（设置页开关可用性联动）
+      probeInstall();
       // 备忘录：启动即初始化（对齐源码 App.init：file-open 提醒 + 剪贴板监听 + autoPopupOnStart）
       void ensureBz(this.app);
       // 日记本：启动即初始化（diary-notebook 原行为：onLayoutReady → init）
@@ -130,6 +133,7 @@ export default class BzPlugin extends Plugin {
       if (this.settings.autoSummaryEnabled) ensureAutoSummary(this.app);
       if (this.settings.aiAgentEnabled) ensureAIAgent(this.app);
       if (this.settings.flashEnabled) ensureFlashOnReady(this.app);
+      if (this.settings.doubanPosterEnabled) ensurePosterFetch(this.app);
     });
   }
 
@@ -145,6 +149,7 @@ export default class BzPlugin extends Plugin {
     escManager.destroy();
     unloadBz();
     unloadAIAgent();
+    unloadPosterFetch();
     // 日记本清理（diary-notebook 原 onunload；escManager.destroy 已在上面统一调用）
     const diaryIds = [
       'diary-tag-filter',
@@ -348,10 +353,47 @@ export class BzSettingTab extends PluginSettingTab {
     this.toggleSetting(el, '显示书评摘要', '', s.showReview, save, (v) => (s.showReview = v));
   }
 
-  // ===== 影视 =====（海报整理功能不提供；每页加载数量可配）
+  // ===== 影视 =====（新建笔记自动抓取海报开关；每页加载数量可配）
   private buildMovieTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
     this.textSetting(el, '影视文件夹', '存放影视笔记的文件夹路径', s.movieFolderPath, save, (v) => (s.movieFolderPath = v));
     this.textSetting(el, '每页加载数量', '列表初始加载及每次滚动加载的条数', s.moviePageSize, save, (v) => (s.moviePageSize = v));
+    this.buildPosterSetting(el, s, save);
+  }
+
+  /** 海报抓取开关：桌面端按全局包安装状态联动；移动端置灰标注「仅桌面端可用」 */
+  private buildPosterSetting(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
+    const desktop = posterIsDesktop();
+    const row = new Setting(el).setName('新建影视笔记自动抓取海报');
+    let toggleRef: any = null;
+    row.addToggle((toggle) => {
+      toggleRef = toggle;
+      toggle.setValue(!!s.doubanPosterEnabled).onChange(async (v) => {
+        s.doubanPosterEnabled = v;
+        if (v) ensurePosterFetch(this.plugin.app);
+        else unloadPosterFetch();
+        await save();
+      });
+    });
+    const refresh = () => {
+      if (!desktop) {
+        row.setDesc('仅桌面端可用：新建影视笔记时自动从豆瓣抓取高清海报并补全信息（依赖 Node.js 环境）');
+        toggleRef?.setDisabled(true);
+        return;
+      }
+      const st = getProbeState();
+      if (st === 'installed') {
+        row.setDesc('新建影视笔记时自动从豆瓣抓取高清海报并补全信息（需全局安装 ' + PACKAGE_NAME + '）');
+        toggleRef?.setDisabled(false);
+      } else if (st === 'missing') {
+        row.setDesc('未检测到全局包 ' + PACKAGE_NAME + '，请先在终端执行 npm install -g ' + PACKAGE_NAME);
+        toggleRef?.setDisabled(true);
+      } else {
+        row.setDesc('正在检测全局包安装状态…');
+        toggleRef?.setDisabled(true);
+      }
+    };
+    refresh();
+    if (desktop) probeInstall(() => refresh());
   }
 
   // ===== 复习计划 + 做题家 =====（做题家选项在「做题决定难度」开启时动态显示）

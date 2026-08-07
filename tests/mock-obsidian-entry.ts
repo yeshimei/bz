@@ -124,9 +124,14 @@ export class MockText {
 }
 export class MockToggle {
   value = false;
+  disabled = false;
   private cb: ((v: boolean) => void) | null = null;
   setValue(v: boolean): this {
     this.value = v;
+    return this;
+  }
+  setDisabled(d: boolean): this {
+    this.disabled = d;
     return this;
   }
   onChange(cb: (v: boolean) => void): this {
