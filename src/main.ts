@@ -104,9 +104,9 @@ export default class BzPlugin extends Plugin {
     setDiaryApp(this.app);
     applyDiarySettingsToRuntime(this.settings);
 
-    // 命令裸注册（不设置默认 hotkeys，用户自行绑定）
+    // 命令裸注册（ADR-0004：app.commands.addCommand 原样 id 注册——plugin.addCommand 会被 Obsidian 自动加插件前缀，主页.js 等外部裸 id 调用会失效）
     for (const c of COMMANDS) {
-      this.addCommand({ id: c.id, name: c.name, callback: c.callback });
+      (this.app as any).commands.addCommand({ id: c.id, name: c.name, callback: c.callback });
       this.registeredCommandIds.push(c.id);
     }
 
@@ -115,7 +115,7 @@ export default class BzPlugin extends Plugin {
     this.addRibbonIcon('notebook-pen', '日记本', () => showDiaryPanel(this));
 
     // 日记本面板命令（统一 bz- 前缀；bz-diary-open-add-dialog/bz-diary-create-quote 由 init 内注册）
-    this.addCommand({ id: 'bz-open-panel', name: '打开日记本面板', callback: () => showDiaryPanel(this) });
+    (this.app as any).commands.addCommand({ id: 'bz-open-panel', name: '打开日记本面板', callback: () => showDiaryPanel(this) });
     this.registeredCommandIds.push('bz-open-panel');
 
     // 设置页
