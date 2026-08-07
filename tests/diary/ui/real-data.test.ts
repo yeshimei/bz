@@ -5,12 +5,12 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import { setApp } from '../app';
-import { resetTagsConfig, applyDirectories } from '../config';
-import { init } from './panel';
-import { state } from '../state';
-import { MockVault, mockAppWithVault } from '../../test/mock-vault';
-import { resetObsidianMocks } from '../../test/mock-obsidian-entry';
+import { setApp } from '../../../src/diary/app';
+import { resetTagsConfig, applyDirectories } from '../../../src/diary/config';
+import { init } from '../../../src/diary/ui/panel';
+import { state } from '../../../src/diary/state';
+import { MockVault, mockAppWithVault } from '../../mock-vault';
+import { resetObsidianMocks } from '../../mock-obsidian-entry';
 
 const VAULT = 'E:/Obsidian/叫我包仔';
 

@@ -4,7 +4,7 @@
 import { Plugin, PluginSettingTab, Setting } from 'obsidian';
 import { escManager } from './core/esc-manager';
 import { setApp } from './diary/app';
-import { applyDirectories, applyTagsConfig } from './diary/config';
+import { applyDirectories } from './diary/config';
 import { loadAll, setFileChangeDelay } from './diary/store';
 import { state } from './diary/state';
 import { applyUiSettings, init, showDiaryPanel, unregisterEscLayer } from './diary/ui/panel';
@@ -14,7 +14,6 @@ import DiarySettings, { DEFAULT_SETTINGS } from './settings';
 /** 应用全部设置到运行时常量/配置（设置变更与启动时调用） */
 export function applySettingsToRuntime(settings: DiarySettings) {
   applyDirectories(settings);
-  applyTagsConfig(settings.primaryTagsConfig);
   applyUiSettings(settings);
 }
 
@@ -216,19 +215,6 @@ export class DiaryNotebookSettingTab extends PluginSettingTab {
     containerEl.createEl('h3', { text: '📌 默认值配置' });
 
     new Setting(containerEl)
-      .setName('默认标签')
-      .setDesc('打开写日记弹窗时默认选中的标签名（需为有效标签）')
-      .addText((text) =>
-        text
-          .setValue(this.plugin.settings.defaultTag)
-          .onChange(async (value) => {
-            this.plugin.settings.defaultTag = value;
-            await this.plugin.saveSettings();
-            applyUiSettings({ defaultTag: value });
-          })
-      );
-
-    new Setting(containerEl)
       .setName('使用文件日期作为默认日期')
       .setDesc('开启后，添加日记时默认日期取自当前打开的日记文件的日期（若为日记文件）；关闭则使用当前时间')
       .addToggle((toggle) =>
@@ -239,25 +225,6 @@ export class DiaryNotebookSettingTab extends PluginSettingTab {
         })
       );
 
-    containerEl.createEl('h3', { text: '🏷️ 标签配置' });
-
-    new Setting(containerEl)
-      .setName('标签配置（每行一个）')
-      .setDesc(
-        '每行一个标签，格式：标签名 emoji（用空格分隔）；若需要二级标签，在主标签后加 > 和子标签列表，子标签之间用逗号分隔，例如：旅游 ✈️ > 四川 🀄, 大理 🛶'
-      )
-      .addTextArea((text) =>
-        text
-          .setValue(this.plugin.settings.primaryTagsConfig)
-          .onChange(async (value) => {
-            this.plugin.settings.primaryTagsConfig = value;
-            await this.plugin.saveSettings();
-            this.reloadRuntime();
-          })
-      );
-
-    containerEl.createEl('h4', { text: '默认标签配置（可复制修改）' });
-    containerEl.createEl('pre', { text: DEFAULT_SETTINGS.primaryTagsConfig });
   }
 
   /** 应用设置变更到运行时常量/配置并全量刷新 */

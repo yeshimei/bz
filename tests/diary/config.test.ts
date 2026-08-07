@@ -12,7 +12,7 @@ import {
   parseTagConfig,
   resetTagsConfig,
   tagToEmojiMap,
-} from './config';
+} from '../../src/diary/config';
 
 beforeEach(() => {
   resetTagsConfig();
