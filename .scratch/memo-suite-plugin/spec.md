@@ -33,44 +33,70 @@ Feature: memo-suite-plugin
 10. 作为用户，我希望待办支持场景分类（剪藏/工作/学习/生活/代码/公开课），以便按场景组织任务。
 11. 作为用户，我希望待办支持截止时间（日期选择器）、完成勾选、新增/编辑/删除，以便完整管理任务。
 12. 作为用户，我希望待办数据读写 `CONFIG/STORAGE/memo.json`（jsonStore），以便与 QuickAdd 时代数据无缝衔接。
+13. 作为用户，我希望待办逾期状态有醒目显示（getDueStatus/formatDueText 语义：逾期、今日截止等），以便一眼看出紧急任务。
+14. 作为用户，我希望输入/粘贴 URL 时自动提取页面标题生成待办（fetchPageTitle/extractUrlAndDisplay 语义），以便快速记录。
+15. 作为用户，我希望备忘录设置保留 5 项：todoFilePath（数据路径）、scenarios（场景列表）、platformMapping（平台映射）、showFileName（是否显示文件名）、autoPopupOnStart（启动自动弹出），以便与原脚本配置一致。
 
 ### 归物本（Belongings）
 
 13. 作为用户，我希望物品登记面板（列表、搜索、新增/编辑/删除、图片展示）与原脚本一致，以便继续登记我的物品。
 14. 作为用户，我希望数据目录默认 `CONFIG/STORAGE`（可在设置中配置 dataFolder），以便沿用原存储布局。
 15. 作为用户，我希望启用时显示归物本 changelog（identifier 'belongings'），以便看到更新说明。
+16. 作为用户，我希望归物本支持自定义分类（customCategories 设置）与排序弹窗（按分类/时间等排序，showSortModal 语义），以便整理物品。
+17. 作为用户，我希望归物本有统计显示（按分类统计等），以便掌握物品分布。
 
 ### 密码本（Password Vault）
 
 16. 作为用户，我希望密码管理面板（条目列表、加密存储、样式注入 data-pw-styles）与原脚本一致，以便继续管理密码。
 17. 作为用户，我希望存储路径可配置（storagePath），以便沿用原路径。
+18. 作为用户，我希望密码本内置密码生成器（passwordCharset 字符集/passwordLength 长度/securityMode 安全模式三项设置），以便生成强密码。
+19. 作为用户，我希望密码条目加密存储、支持点击复制密码，以便安全使用。
 
 ### 剪藏本（Clipping）
 
 18. 作为用户，我希望剪藏文章面板（`我的/文章` 目录）支持搜索、站点过滤（单选）、排序、双击跳转、长按删除，以便浏览剪藏文章。
 19. 作为用户，我希望面板中显示反链笔记名并支持点击跳转（metadataCache.getBacklinksForFile），以便发现文章被哪些笔记引用。
+20. 作为用户，我希望剪藏本设置保留 articleDirectory（文章目录）、batchSize（批量大小）、longPressDuration（长按时长），以便沿用原配置。
+21. 作为用户，我希望 `我的/文章` 下文章被修改时面板自动刷新（vault modify 监听），以便内容保持最新。
+22. 作为用户，我希望站点栏（createSiteBar/rebuildSiteBar 语义）显示全部站点并可单选过滤，以便按来源浏览。
+23. 作为用户，我希望剪藏本可跳转到聚合讯阅读器（互调 `news-reader-open`），以便剪藏与阅读联动。
 
 ### 聚合讯（News Aggregator）
 
 20. 作为用户，我希望新闻抓取（站点列表、platform map、news.json/news-stats.json 统计）与原脚本一致，以便继续聚合阅读。
 21. 作为用户，我希望聚合讯生成的笔记保留 dataviewjs 代码块（`dv.view('CONFIG/SCRIPTS/DataView/摘要')`），由 Dataview 插件渲染，以便摘要视图行为不变。
 22. 作为用户，我希望剪藏内容写入 `归档/网页剪藏`（CLIP_DIR），以便与自动摘要共享数据源。
+23. 作为用户，我希望聚合讯注册 `news-reader-open` 命令（阅读器入口），以便剪藏本互调。
+24. 作为用户，我希望阅读统计（news-stats.json：记录/统计每篇文章的阅读行为，loadStats/saveStats/recordStat 语义）与原脚本一致，以便掌握阅读量。
+25. 作为用户，我希望文章支持已读标记（markAsRead）、跳过（skipArticle）、检查新文章（checkNewArticles）、剪藏保存（saveToClip），以便完整管理阅读流。
+26. 作为用户，我希望阅读器内的摘要以 markdown 渲染（renderMarkdown），以便排版与原脚本一致。
+27. 作为用户，我希望聚合讯的约 196 行注入样式（弹窗/列表/统计）原样保留，以便视觉一致。
 
 ### 收藏本（Favorites）
 
-23. 作为用户，我希望 GitHub 收藏管理（列表、AI 生成标题/简介、打开链接）与原脚本一致，以便管理我的 GitHub stars。
+23. 作为用户，我希望 GitHub 收藏管理（列表、AI 生成标题/简介、打开链接、长按操作）与原脚本一致，以便管理我的 GitHub stars。
+24. 作为用户，我希望收藏本设置保留 storagePath（数据路径），数据读写 `CONFIG/STORAGE/favorites.json`，以便数据零迁移。
 
 ### 书库（Library）与阅读数据分析报告（Reading Analytics）
 
 24. 作为用户，我希望书库面板（`书库/` 目录 + `我的/读书笔记` 聚合、搜索/排序/跳转）与原脚本一致，以便管理读书笔记。
 25. 作为用户，我希望阅读数据分析报告（年度统计、阅读热力图、习惯分析、读书笔记互动分析、聚焦分析）与原脚本一致，以便生成我的阅读报告。
 26. 作为用户，我希望阅读报告可写入笔记或复制（原脚本行为），以便保存报告。
+27. 作为用户，我希望书库设置保留 9 项：folderPath/notePath/bookTag + 显示开关 showFileSize/showReadingTime/showHighlights/showThinks/showReview/showCategory，以便沿用原配置。
+28. 作为用户，我希望书库面板内有设置弹窗（openSettingsModal/closeSettingsModal 语义，就地改显示开关），以便不用离开面板调整。
+29. 作为用户，我希望读书笔记支持高亮跳转（jumpToHighlight）、评论编辑（openEditCommentModal/updateComment）、删除高亮（deleteHighlight），以便精读管理。
+30. 作为用户，我希望书目列表显示状态颜色（getStatusColors）与文件大小/阅读时间（formatFileSize），以便与原脚本一致。
+31. 作为用户，我希望书库可生成阅读数据分析报告（互调 `show-reading-report`），以便一键出报告。
 
 ### 影视（Movies）与影视数据分析（Movie Analytics）
 
 27. 作为用户，我希望影视管理（`我的/影视` 目录、frontmatter 读写 fileManager.processFrontMatter、类型/状态筛选、排序、添加/编辑/删除）与原脚本一致，以便管理观影记录。
 28. 作为用户，我希望影视.js 通过 `app.commands.executeCommandById('movie-analysis-open')` 打开影视数据分析，以便互调链路与原来一致。
-29. 作为用户，我希望影视数据分析弹窗（状态分布、趋势等，`window.__MOVIE_FOLDER_PATH` 语义改为模块共享）与原脚本一致，以便分析观影数据。
+29. 作为用户，我希望影视数据分析弹窗（状态分布、趋势等，目录路径语义改为模块共享）与原脚本一致，以便分析观影数据。
+30. 作为用户，我希望影视目录变化（新增/修改/删除）时列表自动刷新（vault 三事件监听），以便无需手动刷新。
+31. 作为用户，我希望影视列表支持无限滚动（setupInfiniteScroll）、星级评分（getStarRating）、类型颜色（getTypeColor）、标签分组（getGroupForTag），以便与原脚本一致。
+32. 作为用户，我希望影视设置保留 folderPath/pageSize（分页大小）/enableQ3/posterFolder（海报目录），以便沿用原配置。
+33. 作为用户，我希望影视数据分析的分析口径配置（groups/buckets/genres/ageBuckets/eras/durBuckets/groupDur/reviewKeywords/series/yearRating 十组）保留为设置项，以便自定义分析维度。
 
 ### 自动摘要（Auto Summary）
 
@@ -83,6 +109,7 @@ Feature: memo-suite-plugin
 33. 作为用户，我希望笔记 rename/delete 自动同步到备忘录/收藏本（引用路径/标题更新、关联清空），以便引用不失效。
 34. 作为用户，我希望笔记 create/open 自动关联收藏本同名条目，以便减少手动维护。
 35. 作为用户，我希望 AI 剪藏匹配（URL 精确匹配不中时）弹出批准确认，非 AI 操作静默直改，以便保持原权限模型。
+36. 作为用户，我希望 AIAgent 与备忘录共享数据（memo.json），依赖备忘录实例（原 window.__memo 语义改为模块共享），以便同步可用。
 
 ### 复习计划（Review Plan）与做题家（Quiz Master）
 
@@ -91,6 +118,11 @@ Feature: memo-suite-plugin
 38. 作为用户，我希望复习计划右上角图标可调用做题家，以便复习做题一体化。
 39. 作为用户，我希望做题家（quiz.json 统一题库、多选、完成状态、全完成自动替换笔记内容）与原脚本一致，以便继续做题。
 40. 作为用户，我希望复习与做题共用数据文件（CONFIG/STORAGE/review.json、quiz.json），以便数据零迁移。
+41. 作为用户，我希望复习计划可调用做题家（互调 `quiz-master-open`、`quiz-master-update`），以便复习做题一体化。
+42. 作为用户，我希望复习计划监听相关事件（resolved/modify/rename/quit 四类，语义与原脚本一致），以便数据状态自动同步。
+43. 作为用户，我希望移出复习计划时有确认弹窗（「确定移出“xxx”？」），以便防误操作。
+44. 作为用户，我希望做题家支持 AI 生成题目（createAI 依赖，缺失时提示「未检测到 Q3.js 的 AI 服务」同语义），以便自动出题。
+45. 作为用户，我希望做题家设置保留 enableMultipleChoice（多选题开关）/questionsPerNote（每题数量）/difficulty（难度），以便沿用原配置。
 
 ### 闪念（Flash Thought）
 
@@ -99,12 +131,19 @@ Feature: memo-suite-plugin
 43. 作为用户，我希望闪念支持 AI 对话（Ollama qwen2.5 本地 / DeepSeek 远程，可配置 URL 与模型），以便与笔记对话。
 44. 作为用户，我希望 Ollama 服务不可用时有明确提示而非崩溃，以便知道是环境问题。
 45. 作为用户，我希望闪念的常驻监听可按设置开关，以便不需要时节省资源。
+46. 作为用户，我希望闪念的 17 项设置全量迁移：OLLAMA_URL/EMBEDDING_MODEL/META_PATH/VEC_PATH/TOP_K/CHAT_TOP_K/CHUNK_MIN_LENGTH/ALLOW_PATHS/CONCURRENCY/CONTEXT_LIMIT/DEBOUNCE_DELAY/CURSOR_POLL_INTERVAL/OLLAMA_CHAT_MODEL/DEEPSEEK_MODEL/DEFAULT_USE_DEEPSEEK/MAX_HISTORY/OLLAMA_REMOTE_URL，以便精细调优。
+47. 作为用户，我希望向量索引持久化（meta.json + vectors.vec 二进制文件，存 CONFIG/STORAGE），以便重启后检索不失效。
+48. 作为用户，我希望笔记修改时向量增量重建（vault modify 监听 + 防抖 DEBOUNCE_DELAY），以便索引不过期。
+49. 作为用户，我希望闪念的性能参数（chunk 切分长度、并发、光标轮询间隔、上下文限制、聊天历史上限）按设置生效，以便控制开销。
+50. 作为用户，我希望移动端检测（IS_MOBILE 语义）与降级行为与原脚本一致，以便移动端可用时行为正确。
 
 ### 全局
 
 46. 作为用户，我希望所有域的面板 DOM id/类名与原脚本一致，以便样式与既有习惯不变。
 47. 作为用户，我希望所有域的数据读写格式与原脚本一致（零迁移），以便随时回退到 QuickAdd。
 48. 作为用户，我希望插件在未配置 AI key / 未装 Dataview / 无 Ollama 时各域优雅降级（禁用或提示），以便不拖垮主应用。
+49. 作为用户，我希望原脚本的域间全局状态（window.__memo/__quiz/__homeFilmStatus/__MOVIE_FOLDER_PATH/_bookSettings 等）改为模块级共享，语义不变，以便域间协作不受全局污染。
+50. 作为用户，我希望原脚本的命令防重注册机制（window.__belongingsCommandRegistered/_newsCommandRegistered 语义）由插件生命周期管理取代（onload 注册一次/onunload 清理），以便无重复注册。
 
 ## Implementation Decisions
 
@@ -145,9 +184,66 @@ Feature: memo-suite-plugin
 - 插件设置：AI（provider/key/endpoint/model）、各域路径（dataFolder/storagePath/todoFilePath 等）、常驻监听开关（自动摘要/AIAgent/闪念）、原有各脚本设置项逐一迁移
 - 日记本已删除「标签配置/默认标签」设置的先例：设置项迁移以「保留原脚本可配置项」为原则，用户已确认删除的项不恢复
 
+### 命令互调链完整清单（源码提取）
+
+| 命令 id | 注册方 | 调用方 |
+|---|---|---|
+| `news-reader-open` | 聚合讯 | 剪藏本 |
+| `show-reading-report` | 阅读数据分析报告 | 书库 |
+| `movie-analysis-open` | 影视数据分析 | 影视 |
+| `quiz-master-open`、`quiz-master-update` | 做题家 | 复习计划 |
+
+### 事件监听完整清单（源码提取）
+
+| 域 | 事件 | 行为 |
+|---|---|---|
+| 剪藏本 | vault modify | 文章修改自动刷新 |
+| 影视 | vault modify/create/delete | 列表自动刷新 |
+| 自动摘要 | vault create | 剪藏新文件 → AI 摘要写回 |
+| AIAgent | vault rename/delete/create | 同步备忘录/收藏本 |
+| 复习计划 | vault/workspace resolved/modify/rename/quit | 数据状态自动同步 |
+| 闪念 | vault modify | 向量增量重建（防抖） |
+
+### 域间共享状态（原 window.__ 语义 → 模块共享）
+
+| 原全局 | 域 | 迁移方式 |
+|---|---|---|
+| `window.__memo` | 备忘录（AIAgent 依赖） | memo 域导出单例 |
+| `window.__quiz` | 做题家（复习计划依赖） | quiz 域导出单例 |
+| `window.__homeFilmStatus` | 影视 | 影视域模块状态 |
+| `window.__MOVIE_FOLDER_PATH` | 影视/影视数据分析 | 影视域模块导出 |
+| `window._bookSettings` | 书库 | 书库域模块状态 |
+| `window.__belongingsCommandRegistered`、`_newsCommandRegistered` 等 | 命令防重 | 插件生命周期管理（onload 注册一次/onunload 清理），不再需要标志位 |
+
+### 设置项总表（源码提取，插件设置页全量迁移）
+
+- **备忘录（5）**：todoFilePath、scenarios、platformMapping、showFileName、autoPopupOnStart
+- **归物本（2）**：dataFolder、customCategories
+- **剪藏本（3）**：articleDirectory、batchSize、longPressDuration
+- **密码本（4）**：storagePath、passwordCharset、passwordLength、securityMode
+- **收藏本（1+）**：storagePath（favorites.json）
+- **书库（9）**：folderPath、notePath、bookTag、showFileSize、showReadingTime、showHighlights、showThinks、showReview、showCategory
+- **影视（4）**：folderPath、pageSize、enableQ3、posterFolder
+- **影视数据分析（10 组分析配置）**：groups、buckets、genres、ageBuckets、eras、durBuckets、groupDur、reviewKeywords、series、yearRating
+- **做题家（3）**：enableMultipleChoice、questionsPerNote、difficulty
+- **闪念（17）**：OLLAMA_URL、EMBEDDING_MODEL、META_PATH、VEC_PATH、TOP_K、CHAT_TOP_K、CHUNK_MIN_LENGTH、ALLOW_PATHS、CONCURRENCY、CONTEXT_LIMIT、DEBOUNCE_DELAY、CURSOR_POLL_INTERVAL、OLLAMA_CHAT_MODEL、DEEPSEEK_MODEL、DEFAULT_USE_DEEPSEEK、MAX_HISTORY、OLLAMA_REMOTE_URL
+- **AI 全局（Q3 语义）**：aiProvider、opencodeGoApiKey、override（endpoint/apiKey/model）
+
+### 功能实现要点（源码提取）
+
+- **密码生成器**：字符集（passwordCharset）+ 长度（passwordLength）+ 安全模式（securityMode）驱动的密码生成，加密存储（原脚本加密方案逐字移植），点击复制
+- **闪念向量索引**：meta.json（文本元数据）+ vectors.vec（二进制向量）持久化于 CONFIG/STORAGE；chunk 切分（CHUNK_MIN_LENGTH）、并发（CONCURRENCY）、防抖（DEBOUNCE_DELAY）、光标轮询（CURSOR_POLL_INTERVAL）、上下文限制（CONTEXT_LIMIT）、聊天历史（MAX_HISTORY）、远程 Ollama（OLLAMA_REMOTE_URL）、DeepSeek 默认开关（DEFAULT_USE_DEEPSEEK）、移动端检测（IS_MOBILE）降级
+- **做题家 AI 出题**：依赖 AIService（createAI），缺失时 Notice 提示（与原脚本同语义）
+- **聚合讯统计**：news-stats.json 读写（recordStat/loadStats/saveStats），已读/跳过/检查新文章交互，markdown 渲染
+- **书库**：面板内设置弹窗、高亮跳转、评论编辑、删除高亮、状态颜色
+- **影视**：无限滚动、星级评分、类型颜色、标签分组
+- **备忘录**：逾期状态显示、URL 提取/页面标题抓取
+- **归物本**：排序弹窗、分类统计
+- **样式**：各域注入样式全部收敛到 styles.css（聚合讯 196 行、备忘录 38 行、密码本 data-pw-styles、剪藏本/影视/闪念 injectStyles 等）
+
 ### 已知待收集信息（实现时从源码提取，不阻塞本 spec）
 
-- 各脚本的完整命令 id 清单、设置项清单、changelog identifier 清单
+- 各脚本 changelog identifier 清单（已确认：belongings；其余实现时收集）
 - 备忘录场景列表/平台映射（DEFAULTSCENARIOS/DEFAULT_PLATFORM_MAP）与 Q3 常量定义位置
 - 各域 DOM id/类名清单（面板容器、弹窗、按钮）
 
