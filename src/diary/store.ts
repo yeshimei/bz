@@ -11,13 +11,6 @@ import { isEncryptedEntry, parseFile, parseLetterFile, parseMovieFile } from './
 import { diaryDataMap, setDiaryDataMap, state } from './state';
 import type { DiaryEntry } from './types';
 
-// ===== 临时诊断（面板顶部显示最后阶段；定位后移除） =====
-export function diag(msg: string) {
-  console.log('[日记本]', msg);
-  const el = document.getElementById('diary-diag');
-  if (el) el.textContent = String(msg);
-}
-
 // ===== UI 刷新回调（由 ui 层注册） =====
 type RefreshCallback = () => void;
 
@@ -111,16 +104,13 @@ export async function loadAll() {
   emitLoading(true);
   try {
     const app = getApp();
-    diag('loadAll 开始, 目录 = ' + DIARY_DIRECTORY);
     let diaryDir = app.vault.getAbstractFileByPath(DIARY_DIRECTORY) as any;
     if (!diaryDir || !diaryDir.children) {
       // 兜底：vault 文件树可能未就绪，递归查找目录
       const root = app.vault.getRoot() as any;
-      diag('getAbstractFileByPath 未找到, vault 根目录子项数: ' + (root?.children?.length ?? 'null'));
       diaryDir = findDirRecursive(root, DIARY_DIRECTORY);
     }
     if (!diaryDir || !diaryDir.children) {
-      diag('!! 日记目录未找到（含兜底递归）: ' + DIARY_DIRECTORY);
       state.data.originalDiaryEntries = [];
       state.data.currentFilteredEntries = [];
       // 渲染空态（避免静默空白）
@@ -134,7 +124,6 @@ export async function loadAll() {
       .filter((f: any) => f.extension === 'md')
       .sort((a: any, b: any) => b.name.localeCompare(a.name));
     const totalDiaryFiles = mdFiles.length;
-    diag('日记文件数: ' + totalDiaryFiles);
 
     let movieFiles: any[] = [];
     let letterFiles: any[] = [];
@@ -215,7 +204,6 @@ export async function loadAll() {
     sortEntries(state.data.originalDiaryEntries);
     // 确保每个条目都有 id
     assignIds(state.data.originalDiaryEntries);
-    diag('条目总数: ' + state.data.originalDiaryEntries.length);
 
     // 修复点：使用 full refresh 正确应用筛选条件
     state.data.currentDisplayCount = 0;
@@ -223,7 +211,6 @@ export async function loadAll() {
     emitProgress(0, 0); // 隐藏进度条（原 hideProgress）
   } catch (err: any) {
     console.error('[日记本] 数据加载失败:', err);
-    diag('!! 加载失败: ' + (err?.message || err));
     try {
       new Notice('[日记本] 数据加载失败: ' + (err?.message || err));
     } catch (e) {}

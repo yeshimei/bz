@@ -153,7 +153,7 @@ export function renderEntries() {
       const dateSeparator = document.createElement('div');
       dateSeparator.className = 'diary-date-separator';
       dateSeparator.dataset.date = entry.date;
-      dateSeparator.style.cssText = 'position:sticky;top:0;z-index:10;12px 12px 0px 0px;background:var(--background-primary);color:var(--text-normal);font-weight:600;font-size:18px;';
+      dateSeparator.style.cssText = 'position:sticky;top:0;z-index:10;padding:10px 12px;background:var(--background-primary);color:var(--text-normal);font-weight:600;font-size:18px;';
       dateSeparator.textContent = entry.date;
 
       dateSection.appendChild(dateSeparator);

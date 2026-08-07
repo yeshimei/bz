@@ -25,7 +25,6 @@ export default class DiaryNotebookPlugin extends Plugin {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
     setApp(this.app);
     applySettingsToRuntime(this.settings);
-    console.log('[日记本] onload: 目录 =', this.settings.diaryDirectory, '| 标签配置长度 =', this.settings.primaryTagsConfig.length);
 
     // 命令说明：
     // - diary-open-add-dialog / diary-create-quote 由 init() 内经 registerOpenDialogCommand/
@@ -48,7 +47,6 @@ export default class DiaryNotebookPlugin extends Plugin {
     // 初始化面板（与原宏行为一致：加载即打开）
     // 等布局就绪后再初始化——vault 文件树此时保证可用（onload 时机可能过早）
     this.app.workspace.onLayoutReady(() => {
-      console.log('[日记本] layoutReady, 开始初始化');
       init(this);
     });
   }
