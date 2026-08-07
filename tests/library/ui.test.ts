@@ -87,13 +87,13 @@ describe('书库面板', () => {
     expect(overlay.textContent).toContain('在读');
   });
 
-  it('🧮 按钮 → executeCommandById show-reading-report', () => {
+  it('🧮 按钮 → executeCommandById bz-show-reading-report', () => {
     vault.files.set('书库/活着.md', BOOK_MD);
     const app = makeApp(vault);
     showLibrary(app);
     const reportBtn = [...document.querySelectorAll<HTMLElement>('#__book_library__ button')].find((b) => b.textContent === '🧮')!;
     reportBtn.click();
-    expect(app.commands.executeCommandById).toHaveBeenCalledWith('show-reading-report');
+    expect(app.commands.executeCommandById).toHaveBeenCalledWith('bz-show-reading-report');
   });
 
   it('设置弹窗：分类/状态/排序胶囊', () => {

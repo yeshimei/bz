@@ -8,7 +8,7 @@ import { getApp } from '../core/app';
 import { generateId, extractUrlAndDisplay, DEFAULT_PLATFORM_MAP, getPlatformName as q3GetPlatformName } from '../core/utils';
 import type { MemoItem, MemoPosition } from './types';
 
-export interface MemoSettingsLike {
+export interface BzSettingsLike {
   todoFilePath?: string;
   showFileName?: boolean;
   autoPopupOnStart?: boolean;
@@ -25,7 +25,7 @@ export const DataManager = {
   _store: null as ReturnType<typeof jsonStore> | null,
   movieFolderPath: '我的/影视',
 
-  init(settings: MemoSettingsLike) {
+  init(settings: BzSettingsLike) {
     const folder = (settings.todoFilePath || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
     this.todoFilePath = folder + '/memo.json';
     this._store = jsonStore(this.todoFilePath);

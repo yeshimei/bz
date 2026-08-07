@@ -5,7 +5,7 @@
 import { createAI, type AIService } from '../core/ai';
 import { getApp } from '../core/app';
 import { UIManager, Renderer } from './ui';
-import { DataManager, getPlatformName, type MemoSettingsLike } from './data';
+import { DataManager, getPlatformName, type BzSettingsLike } from './data';
 import { extractUrlAndDisplay } from '../core/utils';
 import { getDueStatus } from './due';
 import type { MemoItem } from './types';
@@ -27,7 +27,7 @@ export const App = {
   _fileOpenRef: null as any,
   _focusRef: null as any,
 
-  async init(settings: MemoSettingsLike) {
+  async init(settings: BzSettingsLike) {
     const app = getApp();
     DataManager.init(settings);
     this.state.showFileName = settings.showFileName !== false;

@@ -198,11 +198,11 @@ function createHeader(): HTMLElement {
 
   buttonContainer.appendChild(searchToggleBtn);
 
-  // 资讯阅读器按钮（剪藏本互调 news-reader-open）
+  // 资讯阅读器按钮（剪藏本互调 bz-news-reader-open）
   const newsBtn = createIconButton('📰', '打开资讯阅读器', () => {
     articleMask!.style.visibility = 'hidden';
     articlePopup!.style.visibility = 'hidden';
-    (app as any).commands.executeCommandById('news-reader-open');
+    (app as any).commands.executeCommandById('bz-news-reader-open');
   });
   buttonContainer.appendChild(newsBtn);
 

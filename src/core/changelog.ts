@@ -4,9 +4,9 @@
  */
 import { escManager } from './esc-manager';
 
-/** CHANGELOGS：8 个 identifier（memo/article/luhmann/library/movie/belongings/diary/password-manager） */
+/** CHANGELOGS：8 个 identifier（bz/article/luhmann/library/movie/belongings/diary/password-manager） */
 export const CHANGELOGS: Record<string, { latestVersion: string; name: string; entries: Record<string, string> }> = {
-  memo: {
+  bz: {
     latestVersion: '1.6.0',
     name: '备忘录',
     entries: {

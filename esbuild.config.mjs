@@ -6,7 +6,7 @@ import path from "path";
 const prod = process.argv[2] === "production";
 
 // 构建产物直接输出到 vault 的插件目录（安装即用）
-const VAULT_PLUGIN_DIR = "E:/Obsidian/叫我包仔/.obsidian/plugins/memo-suite";
+const VAULT_PLUGIN_DIR = "E:/Obsidian/叫我包仔/.obsidian/plugins/bz";
 
 const context = await esbuild.context({
   entryPoints: ["src/main.ts"],
