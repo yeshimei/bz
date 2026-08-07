@@ -3,7 +3,7 @@
  * 插件版：命令已由 main.ts 注册（删除 _registerCommands）；设置经 getSettings()。
  */
 import { getSettings } from '../core/settings-provider';
-import { CONFIG } from './config';
+import { getStoragePath } from './config';
 import { DataManager } from './data';
 import { FavoritesAIService } from './ai';
 import { UIManager } from './ui';
@@ -26,7 +26,8 @@ export class FavoritesApp {
     if (this.initialized) return;
 
     const settings = getSettings();
-    const storagePath = settings?.favoritesStoragePath || CONFIG.DEFAULT_STORAGE_PATH;
+    // 文件名固定 favorites.json，设置只允许改目录（兼容旧完整路径值）
+    const storagePath = getStoragePath(settings?.favoritesStoragePath);
 
     this.dataManager = new DataManager(storagePath);
     this.aiService = new FavoritesAIService();

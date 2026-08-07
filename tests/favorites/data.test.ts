@@ -4,6 +4,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { DataManager } from '../../src/favorites/data';
+import { getStorageDir, getStoragePath } from '../../src/favorites/config';
 import { MockVault } from '../mock-vault';
 
 function makeApp(vault: MockVault) {
@@ -60,5 +61,23 @@ describe('DataManager', () => {
     const saved = JSON.parse(vault.files.get('CONFIG/STORAGE/favorites.json')!);
     expect(saved[0]).toEqual(item);
     expect(Object.keys(saved[0]).length).toBe(13); // 12 必选字段 + llmConfig
+  });
+});
+
+describe('存储路径解析（文件名固定 favorites.json）', () => {
+  it('目录设置 → 拼接固定文件名', () => {
+    expect(getStoragePath('我的/数据')).toBe('我的/数据/favorites.json');
+    expect(getStoragePath('我的/数据/')).toBe('我的/数据/favorites.json');
+  });
+  it('未设置 → 默认目录', () => {
+    expect(getStoragePath(undefined)).toBe('CONFIG/STORAGE/favorites.json');
+  });
+  it('兼容旧值：完整文件路径 → 取目录', () => {
+    expect(getStoragePath('CONFIG/STORAGE/favorites.json')).toBe('CONFIG/STORAGE/favorites.json');
+    expect(getStoragePath('我的/数据/fav.json')).toBe('我的/数据/favorites.json');
+  });
+  it('文件名不可改：自定义 fav.json 一律落 favorites.json', () => {
+    const dir = getStorageDir('我的/数据/fav.json');
+    expect(dir).toBe('我的/数据');
   });
 });

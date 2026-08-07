@@ -217,7 +217,7 @@ describe('quizReviewLoop 集成', () => {
     const ui = new UIManager(app, dm);
     ui.showMain();
 
-    // mock quizUI
+    // mock quizUI（按复习联动契约实现 startReviewSession/endReviewSession）
     const quiz: any = {
       _reviewMode: false,
       mask: null,
@@ -228,6 +228,19 @@ describe('quizReviewLoop 集成', () => {
       wrongCount: 0,
       totalQuestions: 0,
       onComplete: null,
+      startReviewSession(opts: any) {
+        this._reviewMode = true;
+        this.currentQuestions = opts.questions;
+        this.currentIndex = 0;
+        this.correctCount = 0;
+        this.wrongCount = 0;
+        this.totalQuestions = opts.questions.length;
+        this.onComplete = opts.onComplete;
+        this.showQuestion();
+      },
+      endReviewSession() {
+        this._reviewMode = false;
+      },
       showQuestion() {
         this.mask = document.createElement('div');
         this.popup = document.createElement('div');
@@ -235,9 +248,6 @@ describe('quizReviewLoop 集成', () => {
         this.popup.innerHTML = '<div class="quiz-q">题目</div>';
         document.body.appendChild(this.mask);
         document.body.appendChild(this.popup);
-      },
-      finishQuiz() {
-        this._reviewMode = false;
       },
     };
 

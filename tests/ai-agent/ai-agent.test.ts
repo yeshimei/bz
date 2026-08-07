@@ -151,6 +151,43 @@ describe('事件同步（bz + favorites）', () => {
     expect(fav[0]).toMatchObject({ title: '新笔记', linkedNote: '卡片盒/新笔记.md' });
   });
 
+  it('设置路径生效：todoFilePath/favoritesStoragePath 自定义后读写新路径', async () => {
+    unloadAIAgent(); // 重置幂等守卫与监听
+    const vault = new MockVault();
+    const { app, vaultHandlers } = makeEventedApp(vault);
+    setApp(app as any);
+    setSettingsProvider(() => ({
+      ...SETTINGS,
+      todoFilePath: '我的/数据',
+      favoritesStoragePath: '我的/数据',
+    } as any));
+    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'sk-test' }));
+    resetAIProviderCache();
+    await ensureAIAgent(app as any);
+    vault.files.set('我的/数据/memo.json', JSON.stringify([
+      { id: 'm1', title: '旧笔记', scene: '工作', linkedNote: '卡片盒/旧笔记.md', notePath: '卡片盒/旧笔记.md', url: null },
+    ], null, 2));
+    vault.files.set('我的/数据/favorites.json', JSON.stringify([
+      { id: 'f1', title: '旧笔记', linkedNote: '卡片盒/旧笔记.md' },
+    ], null, 2));
+
+    vaultHandlers['rename'][0](
+      { path: '卡片盒/新笔记.md', basename: '新笔记', extension: 'md' },
+      '卡片盒/旧笔记.md'
+    );
+    await flushQueue();
+
+    // 自定义路径被读写
+    const bz = JSON.parse(vault.files.get('我的/数据/memo.json')!);
+    expect(bz[0]).toMatchObject({ title: '新笔记', linkedNote: '卡片盒/新笔记.md', notePath: '卡片盒/新笔记.md' });
+    const fav = JSON.parse(vault.files.get('我的/数据/favorites.json')!);
+    expect(fav[0]).toMatchObject({ title: '新笔记', linkedNote: '卡片盒/新笔记.md' });
+    // 默认路径未被创建（不再写死）
+    expect(vault.files.get('CONFIG/STORAGE/memo.json')).toBeUndefined();
+    expect(vault.files.get('CONFIG/STORAGE/favorites.json')).toBeUndefined();
+    unloadAIAgent();
+  });
+
   it('rename 事件：监听范围外（我的/）不处理', async () => {
     const { vault, vaultHandlers } = await setup();
     vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([

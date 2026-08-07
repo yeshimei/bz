@@ -111,7 +111,7 @@ describe('bz 骨架冒烟', () => {
     expect(s.articleDirectory).toBe('归档/网页剪藏');
     expect(s.movieFolderPath).toBe('我的/影视');
     expect(s.libraryFolderPath).toBe('书库');
-    expect(s.favoritesStoragePath).toBe('CONFIG/STORAGE/favorites.json');
+    expect(s.favoritesStoragePath).toBe('CONFIG/STORAGE');
     expect(s.OLLAMA_URL).toBe('http://localhost:11434');
     expect(s.EMBEDDING_MODEL).toBe('bge-m3');
     expect(s.passwordLength).toBe('16');

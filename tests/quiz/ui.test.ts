@@ -214,3 +214,40 @@ describe('QuizMasterUI', () => {
     expect(ui.loadingMask).toBeNull();
   });
 });
+
+describe('复习联动契约', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    document.body.innerHTML = '';
+    QuizMasterUI.ai = { json: vi.fn() } as any;
+    QuizMasterUI.settings = { enableMultipleChoice: true, questionsPerNote: '0', shuffleQuestions: false, difficulty: 'random' };
+  });
+
+  it('startReviewSession 设置会话状态并开始出题，endReviewSession 退出复习模式', () => {
+    const vault = new MockVault();
+    const app = makeApp(vault);
+    setApp(app);
+    const ui = new QuizMasterUI();
+    const questions = [
+      { question: 'RQ?', options: ['a', 'b', 'c', 'd'], correctIndices: [0], notePath: 'A.md' },
+    ];
+    const onComplete = vi.fn();
+    ui.startReviewSession({ questions, onComplete });
+    expect(ui._reviewMode).toBe(true);
+    expect(ui.currentQuestions).toEqual(questions);
+    expect(ui.currentIndex).toBe(0);
+    expect(ui.correctCount).toBe(0);
+    expect(ui.wrongCount).toBe(0);
+    expect(ui.totalQuestions).toBe(1);
+    expect(ui.onComplete).toBe(onComplete);
+    expect(document.getElementById('quiz-popup')!.textContent).toContain('RQ?');
+    // 结束会话：有未消费回调时按 finishQuiz 语义只回调不关闭
+    ui.endReviewSession();
+    expect(ui._reviewMode).toBe(false);
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    // 回调已消费后再结束 → 无回调 → 关闭弹窗
+    ui.endReviewSession();
+    expect(document.getElementById('quiz-popup')).toBeNull();
+  });
+});
