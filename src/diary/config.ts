@@ -93,6 +93,10 @@ const DEFAULT_TAGS_CONFIG: Record<string, TagConfig> = {
 
 let PRIMARY_TAGS_CONFIG: Record<string, TagConfig> = JSON.parse(JSON.stringify(DEFAULT_TAGS_CONFIG));
 
+// ===== 模块加载时立即构建映射（原脚本 156 行「初始化时调用一次」；
+// 设置项「标签配置」移除后，此调用是唯一构建入口，不可删除） =====
+buildTagMaps();
+
 // ===== emoji 映射表（构建于 state.data，与 config 同步） =====
 export const tagToEmojiMap: Record<string, string> = {};
 export const emojiToTagMap: Record<string, string> = {};

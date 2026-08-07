@@ -14,6 +14,12 @@ import {
   tagToEmojiMap,
 } from '../../src/diary/config';
 
+// 回归：模块加载时即构建 emoji 映射（设置项「标签配置」移除后不依赖设置应用流程）
+// 此断言位于 beforeEach 之前，真实反映模块顶层状态
+if (emojiToTagMap['📖'] !== '日记' || tagToEmojiMap['日记'] !== '📖') {
+  throw new Error('config 模块加载后 emoji 映射未构建——缺少模块顶层 buildTagMaps() 调用');
+}
+
 beforeEach(() => {
   resetTagsConfig();
 });
