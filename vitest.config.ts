@@ -13,4 +13,17 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
     setupFiles: ['tests/setup.ts'],
   },
+  coverage: {
+    provider: 'v8',
+    include: ['src/**/*.ts'],
+    exclude: ['src/**/*.gen.ts'],
+    reporter: ['text', 'html', 'json-summary'],
+    reportsDirectory: 'coverage',
+    thresholds: {
+      statements: 80,
+      lines: 80,
+      functions: 70,
+      branches: 60,
+    },
+  },
 });
