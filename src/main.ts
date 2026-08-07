@@ -24,7 +24,7 @@ import { openLibrary, openBookNotes } from './library';
 import { showReadingReport } from './reading-report';
 import { openMovieManager, addMovieItem } from './movie';
 import { openMovieAnalysis } from './movie-analysis';
-import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog } from './review';
+import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating } from './review';
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
 import { ensureAutoSummary } from './auto-summary';
@@ -64,6 +64,10 @@ const COMMANDS: { id: string; name: string; callback: () => void }[] = [
   { id: 'review-remove-current', name: '移出复习计划', callback: () => reviewRemoveCurrent(getApp()) },
   { id: 'review-jump-overdue', name: '复习（跳转逾期）', callback: () => reviewJumpOverdue(getApp()) },
   { id: 'review-mark-dialog', name: '复习（选择难度）', callback: () => reviewMarkDialog(getApp()) },
+  { id: 'review-mark-again', name: '复习：忘了（Again）', callback: () => reviewMarkRating(getApp(), 'again') },
+  { id: 'review-mark-hard', name: '复习：困难（Hard）', callback: () => reviewMarkRating(getApp(), 'hard') },
+  { id: 'review-mark-good', name: '复习：一般（Good）', callback: () => reviewMarkRating(getApp(), 'good') },
+  { id: 'review-mark-easy', name: '复习：简单（Easy）', callback: () => reviewMarkRating(getApp(), 'easy') },
   // 做题家
   { id: 'quiz-master-update', name: '更新题库', callback: () => quizUpdate(getApp()) },
   { id: 'quiz-master-open', name: '打开做题家', callback: () => quizOpen(getApp()) },

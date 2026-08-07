@@ -1,10 +1,9 @@
 /**
- * 复习计划入口（ticket 16：ensureReview + 5 命令回调 + unloadReview）
- * 命令（review-*）由 main.ts 裸注册。
+ * 复习计划入口（ticket 16 修正版：对齐源码 entry，含 4 快捷命令与完整事件监听）
+ * 命令（review-*）由 main.ts 裸注册（含 review-mark-again/hard/good/easy）。
  */
 import type { App } from 'obsidian';
 import { Notice } from 'obsidian';
-import { getSettings } from '../core/settings-provider';
 import { confirm } from '../core/confirm';
 import { ReviewDataManager } from './data';
 import { UIManager } from './ui';
@@ -12,91 +11,90 @@ import { reviewApp } from './app';
 import type { Rating } from './fsrs';
 
 let initialized = false;
-let dataManager: ReviewDataManager | null = null;
-let uiManager: UIManager | null = null;
-let timers: ReturnType<typeof setInterval>[] = [];
-let listeners: { off: () => void }[] = [];
+let appRef: App | null = null;
+export let dataManager: ReviewDataManager | null = null;
+export let uiManager: UIManager | null = null;
+let checkInterval: ReturnType<typeof setInterval> | null = null;
 
+/** 幂等初始化（对齐源码 entry：UI 构建 + 事件监听 + 2s 后首查 + 60s 周期） */
 export function ensureReview(app: App): void {
   if (initialized) return;
   initialized = true;
+  appRef = app;
+  reviewApp.ensure(app);
   dataManager = new ReviewDataManager(app);
   uiManager = new UIManager(app, dataManager);
-  registerEvents(app);
-  startAutoCheck(app);
-}
 
-function registerEvents(app: App): void {
-  const onModify = async (file: any) => {
-    if (dataManager && file && file.path) {
-      // 笔记修改 → 刷新文件树徽标
-      try {
-        const { applyReviewStyles } = await import('./styles-applier');
-        applyReviewStyles(app, dataManager, file);
-      } catch {
-        /* ignore */
+  setTimeout(() => {
+    reviewApp.checkOverdueAndNotify();
+    checkInterval = setInterval(() => reviewApp.checkOverdueAndNotify(), 60000);
+  }, 2000);
+
+  // 事件监听（源码 L864-879 逐字）
+  (app.metadataCache as any).on('resolved', async () => {
+    await reviewApp.applyReviewStyles(app);
+  });
+  (app.vault as any).on('modify', async (file: any) => {
+    if (file.extension === 'md') await reviewApp.applyReviewStyles(app, file);
+  });
+  (app.vault as any).on('rename', async (file: any, oldPath: string) => {
+    if (file.extension !== 'md') return;
+    if (oldPath === file.path) return;
+    try {
+      const items = await dataManager!.loadItems();
+      if (!items.some((i) => i.filePath === oldPath)) return;
+      const updated = await dataManager!.updateFilePath(oldPath, file.path, file.basename);
+      if (updated) {
+        console.log(`📂 复习计划：更新路径 ${oldPath} → ${file.path}`);
+        await uiManager!.refreshPanel();
+        await reviewApp.applyReviewStyles(app);
       }
-    }
-  };
-  const onRename = async (file: any, oldPath: string) => {
-    if (!dataManager) return;
-    const ok = await dataManager.updateFilePath(oldPath, file.path, file.basename);
-    if (!ok) {
+    } catch (e) {
+      console.error('复习计划：处理重命名事件失败', e);
       new Notice('复习计划路径更新失败，请检查控制台');
     }
-  };
-  listeners.push({ off: () => {} });
-  (app.vault as any).on('modify', onModify);
-  (app.vault as any).on('rename', onRename);
-}
-
-function startAutoCheck(app: App): void {
-  const settings = getSettings();
-  const intervalMin = parseInt(String(settings.autoCheckInterval)) || 60;
-  const checkOverdueAndNotify = async () => {
-    if (!dataManager || !settings.enableAutoNotify) return;
-    try {
-      await dataManager.loadItems();
-      const overdue = dataManager.items.filter((i) => i.isOverdue && !i.completed);
-      if (overdue.length > 0) {
-        new Notice(`📚 有 ${overdue.length} 条复习逾期`);
-      }
-    } catch {
-      /* ignore */
+  });
+  (app.workspace as any).on('quit', () => {
+    if (checkInterval) {
+      clearInterval(checkInterval);
+      checkInterval = null;
     }
-  };
-  const t = setTimeout(() => {
-    const interval = setInterval(checkOverdueAndNotify, Math.max(intervalMin, 1) * 60000);
-    timers.push(interval);
-  }, 2000);
-  timers.push(t as any);
+  });
 }
 
-/** 打开复习面板 */
-export async function openReviewPanel(app: App): Promise<void> {
+/** 打开复习面板（review-open-panel） */
+export function openReviewPanel(app: App): void {
   ensureReview(app);
-  if (uiManager) await uiManager.showMain();
+  uiManager?.showMain();
 }
 
-/** 加入复习计划 */
+/** 加入复习计划（review-add-current） */
 export async function reviewAddCurrent(app: App): Promise<void> {
   ensureReview(app);
-  if (!dataManager) return;
-  await reviewApp.addCurrentToReview(app, dataManager);
-  uiManager?.refreshPanel();
-}
-
-/** 移出复习计划 */
-export async function reviewRemoveCurrent(app: App): Promise<void> {
-  ensureReview(app);
-  if (!dataManager) return;
   const file = app.workspace.getActiveFile();
   if (!file) {
     new Notice('请先打开一个笔记');
     return;
   }
-  const item = dataManager.items.find((i) => i.filePath === file.path);
-  if (!item) {
+  try {
+    await reviewApp.addCurrentToReview(file);
+    await uiManager!.refreshPanel();
+    await reviewApp.applyReviewStyles(app);
+  } catch (e: any) {
+    new Notice(e.message);
+  }
+}
+
+/** 移出复习计划（review-remove-current） */
+export async function reviewRemoveCurrent(app: App): Promise<void> {
+  ensureReview(app);
+  const file = app.workspace.getActiveFile();
+  if (!file) {
+    new Notice('请先打开一个笔记');
+    return;
+  }
+  const items = await dataManager!.loadItems();
+  if (!items.some((i) => i.filePath === file.path)) {
     new Notice('该笔记不在复习计划中');
     return;
   }
@@ -106,56 +104,75 @@ export async function reviewRemoveCurrent(app: App): Promise<void> {
     confirmText: '确定',
     cancelText: '取消',
     onConfirm: async () => {
-      await dataManager!.removeItem(item.id);
+      await dataManager!.removeItem(file.path);
       new Notice('✅ 已移出复习计划');
-      uiManager?.refreshPanel();
+      await uiManager!.refreshPanel();
+      await reviewApp.applyReviewStyles(app);
     },
   });
 }
 
-/** 复习（跳转逾期） */
+/** 复习（跳转逾期）（review-jump-overdue） */
 export async function reviewJumpOverdue(app: App): Promise<void> {
   ensureReview(app);
-  if (!dataManager) return;
-  let quiz: any = null;
-  try {
-    const q = await import('../quiz');
-    quiz = q.quizUI;
-  } catch {
-    /* ignore */
-  }
-  await reviewApp.autoJumpOverdue(app, dataManager, quiz);
+  await reviewApp.autoJumpOverdue();
 }
 
-/** 复习（选择难度） */
+/** 复习（选择难度）（review-mark-dialog） */
 export async function reviewMarkDialog(app: App): Promise<void> {
   ensureReview(app);
-  if (!dataManager) return;
   const file = app.workspace.getActiveFile();
   if (!file) {
     new Notice('请先打开一个笔记');
     return;
   }
-  const item = dataManager.items.find((i) => i.filePath === file.path);
+  const items = await dataManager!.loadItems();
+  const item = items.find((i) => i.filePath === file.path);
   if (!item) {
     new Notice('该笔记不在复习计划中');
     return;
   }
-  uiManager?.showDifficultyDialog(item, async (rating: Rating) => {
-    await reviewApp.markReview(app, item, rating);
-    await dataManager!.saveItems();
-    uiManager?.refreshPanel();
+  if (item.completed) {
+    new Notice('该笔记已完成全部复习');
+    return;
+  }
+  uiManager?.showDifficultyDialog(item, async (diff) => {
+    await reviewApp.markReview(file.path, diff as Rating);
+    await reviewApp.applyReviewStyles(app);
   });
+}
+
+/** 快捷标记（review-mark-again/hard/good/easy） */
+export async function reviewMarkRating(app: App, rating: Rating): Promise<void> {
+  ensureReview(app);
+  const file = app.workspace.getActiveFile();
+  if (!file) {
+    new Notice('请先打开一个笔记');
+    return;
+  }
+  const items = await dataManager!.loadItems();
+  const item = items.find((i) => i.filePath === file.path);
+  if (!item) {
+    new Notice('该笔记不在复习计划中');
+    return;
+  }
+  if (item.completed) {
+    new Notice('该笔记已完成全部复习');
+    return;
+  }
+  await reviewApp.markReview(file.path, rating);
+  await reviewApp.applyReviewStyles(app);
 }
 
 /** 卸载清理 */
 export function unloadReview(): void {
   initialized = false;
-  timers.forEach((t) => clearInterval(t));
-  timers = [];
-  listeners.forEach((l) => l.off());
-  listeners = [];
+  if (checkInterval) {
+    clearInterval(checkInterval);
+    checkInterval = null;
+  }
   uiManager?.destroy();
   uiManager = null;
   dataManager = null;
+  appRef = null;
 }

@@ -1,14 +1,17 @@
 /**
- * 复习计划 UI（ticket 16，源码 L148-481 逐字移植）
- * UIManager：mask/popup/渲染/难度弹窗/确认框/搜索/归档。
+ * 复习计划 UI（ticket 16 修正版：对齐源码 UIManager + Renderer，常驻 DOM + display 切换）
  */
 import type { App } from 'obsidian';
 import { Notice } from 'obsidian';
+import { getApp } from '../core/app';
 import { FSRS, FSRS_FIRST_TEXTS, LADDER_MAX, TOTAL_STAGES } from './fsrs';
 import type { Rating } from './fsrs';
 import type { ReviewItem } from './data';
+import { ReviewDataManager } from './data';
 
 export class UIManager {
+  app: App;
+  dataManager: ReviewDataManager;
   mask: HTMLElement | null = null;
   popup: HTMLElement | null = null;
   entriesContainer: HTMLElement | null = null;
@@ -19,13 +22,12 @@ export class UIManager {
   searchInput: HTMLInputElement | null = null;
   showArchived = false;
 
-  dataManager: any;
-  app: App;
-
-  constructor(app: App, dataManager: any) {
+  constructor(app: App, dataManager: ReviewDataManager) {
     this.app = app;
     this.dataManager = dataManager;
     this.injectStyles();
+    this.createMainUI();
+    this.createConfirmDialog();
     this.registerEscape();
   }
 
@@ -34,367 +36,400 @@ export class UIManager {
     const style = document.createElement('style');
     style.setAttribute('data-review-styles', '');
     style.textContent = `
-      #review-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 9998; display: flex; align-items: center; justify-content: center; }
-      #review-popup { background: var(--background-primary); border-radius: 12px; max-width: 800px; width: 92%; max-height: 86vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); z-index: 9999; animation: reviewSlideUp .2s ease; }
-      @keyframes reviewSlideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-      #review-entries-container { overflow-y: auto; padding: 12px 16px; flex: 1; }
-      .review-card { background: var(--background-secondary); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
-      .review-card.completed { border-left: 3px solid #52c41a; }
-      .review-card.overdue { border-left: 3px solid #ff4757; }
-      .review-tag { font-size: .7rem; padding: 2px 8px; border-radius: 10px; flex-shrink: 0; }
-      .review-tag.ladder { background: #e6f7ff; color: #1890ff; }
-      .review-tag.fsrs { background: #fff7e6; color: #fa8c16; }
-      .review-tag.completed-tag { background: #f6ffed; color: #52c41a; }
-      .review-tag.overdue-tag { background: #fff1f0; color: #ff4757; }
-      .difficulty-dialog { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 10005; display: flex; align-items: center; justify-content: center; }
-      .diff-btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: .9rem; margin: 4px; }
+      #review-mask { backdrop-filter: blur(2px); }
+      #review-popup { animation: slideUp 0.3s ease-out; }
+      @keyframes slideUp {
+        from { opacity:0; transform: translate(-50%, -40%); }
+        to { opacity:1; transform: translate(-50%, -50%); }
+      }
+      #review-entries-container::-webkit-scrollbar { width: 6px; }
+      #review-entries-container::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
+      .review-card { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--background-modifier-border); }
+      .review-card .review-content { flex:1; font-size:15px; color:var(--text-normal); cursor:pointer; }
+      .review-card .review-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+      .review-tag { padding:0 8px; border-radius:12px; font-size:11px; background:var(--background-secondary); color:var(--text-muted); line-height:20px; white-space:nowrap; cursor:pointer; transition:background 0.2s; }
+      .review-tag.overdue { background:#ff4757; color:white; }
+      .review-tag.completed { background:#52c41a; color:white; }
+      .review-time { font-size:12px; color:var(--text-faint); cursor:pointer; }
+      .difficulty-dialog { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--background-primary); border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.3); padding:24px; z-index:10005; min-width:220px; display:none; }
+      .difficulty-dialog .diff-btn { display:block; width:100%; padding:10px; margin:6px 0; border:none; border-radius:6px; background:var(--background-secondary); cursor:pointer; font-size:14px; text-align:left; }
+      .difficulty-dialog .diff-btn:hover { background:var(--interactive-accent); color:var(--text-on-accent); }
+      .review-search-input { padding:4px 10px; border-radius:12px; border:1px solid var(--background-modifier-border); background:var(--background-secondary); color:var(--text-normal); font-size:13px; width:150px; outline:none; }
+      .review-search-input:focus { border-color:var(--interactive-accent); }
     `;
     document.head.appendChild(style);
   }
 
-  registerEscape(): void {
-    if (this.escapeRegistered) return;
-    this.escapeRegistered = true;
-    document.addEventListener('keydown', this.handleKeydown);
-  }
+  createMainUI(): void {
+    if (this.mask && document.body.contains(this.mask)) return;
+    this.mask = document.createElement('div');
+    this.mask.id = 'review-mask';
+    Object.assign(this.mask.style, { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'var(--background-modifier-cover)', zIndex: '9998', display: 'none' });
+    this.mask.onclick = () => this.hideMain();
 
-  handleKeydown = (e: KeyboardEvent): void => {
-    if (e.key !== 'Escape') return;
-    if (this.confirmMask) {
-      this.closeConfirm();
-    } else if (this.mask) {
-      this.hideMain();
-    }
-  };
-
-  /** 显示主面板（自动触发题库更新） */
-  async showMain(): Promise<void> {
-    const app = this.app;
-    await this.dataManager.loadItems();
-
-    if (this.mask) {
-      this.mask.remove();
-      this.mask = null;
-    }
-
-    const mask = document.createElement('div');
-    mask.id = 'review-mask';
-    const popup = document.createElement('div');
-    popup.id = 'review-popup';
+    this.popup = document.createElement('div');
+    this.popup.id = 'review-popup';
+    Object.assign(this.popup.style, { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'var(--background-primary)', borderRadius: '12px', boxShadow: '0 10px 40px rgba(0,0,0,0.2)', zIndex: '9999', width: '90%', maxWidth: '800px', maxHeight: '80vh', display: 'none', flexDirection: 'column' });
 
     const header = document.createElement('div');
-    header.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid var(--background-modifier-border); flex-shrink:0;';
-    header.innerHTML = '<span style="font-size:1.05rem; font-weight:600;">📚 复习计划</span>';
+    header.style.cssText = 'padding:16px 24px 8px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;';
+    header.innerHTML = `
+      <h3 style="margin:0;font-size:18px;font-weight:600;color:var(--text-normal);">复习计划</h3>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button id="review-btn-add" style="background:none;border:none;cursor:pointer;font-size:14px;padding:4px 0;border-radius:6px;box-shadow:none;color:var(--text-muted);">➕</button>
+        <button id="review-btn-start" style="background:none;border:none;cursor:pointer;font-size:14px;padding:4px 0;border-radius:6px;box-shadow:none;color:var(--text-muted);">▶️</button>
+        <button id="review-btn-search" style="background:none;border:none;cursor:pointer;font-size:14px;padding:4px 0;border-radius:6px;box-shadow:none;color:var(--text-muted);">🔍</button>
+        <button id="review-btn-archive" style="background:none;border:none;cursor:pointer;font-size:14px;padding:4px 0;border-radius:6px;box-shadow:none;color:var(--text-muted);">📁</button>
+        <button id="review-btn-quiz" style="background:none;border:none;cursor:pointer;font-size:14px;padding:4px 0;border-radius:6px;box-shadow:none;color:var(--text-muted);">🎯</button>
+        <button id="review-btn-close" style="background:none;border:none;cursor:pointer;font-size:13px;padding:4px 0;border-radius:6px;box-shadow:none;color:var(--text-muted);">❌</button>
+      </div>
+    `;
+    this.popup.appendChild(header);
 
-    const btnGroup = document.createElement('div');
-    btnGroup.style.cssText = 'display:flex; gap:4px;';
-
-    const mkBtn = (text: string, id: string, title: string) => {
-      const b = document.createElement('button');
-      b.id = id;
-      b.textContent = text;
-      b.title = title;
-      b.style.cssText = 'background:none; border:none; cursor:pointer; font-size:1rem; box-shadow:none; padding:2px 4px;';
-      btnGroup.appendChild(b);
-      return b;
-    };
-
-    const addBtn = mkBtn('➕', 'review-btn-add', '加入当前笔记');
-    addBtn.addEventListener('click', async () => {
-      const { reviewApp } = await import('./app');
-      await reviewApp.addCurrentToReview(app, this.dataManager);
-      this.refreshPanel();
-    });
-
-    const startBtn = mkBtn('▶️', 'review-btn-start', '开始复习（跳转逾期）');
-    startBtn.addEventListener('click', async () => {
-      const { reviewApp } = await import('./app');
-      await reviewApp.autoJumpOverdue(app, this.dataManager, null);
-    });
-
-    const searchBtn = mkBtn('🔍', 'review-btn-search', '搜索');
-    searchBtn.addEventListener('click', () => this.toggleSearch());
-
-    const archiveBtn = mkBtn('📁', 'review-btn-archive', '归档');
-    archiveBtn.addEventListener('click', () => {
-      this.showArchived = !this.showArchived;
-      archiveBtn.textContent = this.showArchived ? '📂' : '📁';
-      this.refreshPanel();
-    });
-
-    const quizBtn = mkBtn('🎯', 'review-btn-quiz', '做题家');
-    quizBtn.addEventListener('click', () => {
-      (app as any).commands?.executeCommandById?.('quiz-master-open');
-    });
-
-    const closeBtn = mkBtn('❌', 'review-btn-close', '关闭');
-    closeBtn.addEventListener('click', () => this.hideMain());
-
-    header.appendChild(btnGroup);
-    popup.appendChild(header);
-
-    // 搜索框
-    const searchWrap = document.createElement('div');
-    searchWrap.style.cssText = 'display:none; padding:8px 16px;';
+    const searchContainer = document.createElement('div');
+    searchContainer.style.cssText = 'padding:0 24px 8px 24px;display:none;';
     const searchInput = document.createElement('input');
+    searchInput.type = 'text';
     searchInput.className = 'review-search-input';
     searchInput.placeholder = '搜索笔记...';
-    searchInput.style.cssText = 'width:100%;';
-    searchInput.addEventListener('input', () => this.refreshPanel());
-    searchWrap.appendChild(searchInput);
-    popup.appendChild(searchWrap);
+    searchInput.style.width = '100%';
+    searchContainer.appendChild(searchInput);
+    this.popup.appendChild(searchContainer);
     this.searchInput = searchInput;
 
-    const entries = document.createElement('div');
-    entries.id = 'review-entries-container';
-    popup.appendChild(entries);
-    this.entriesContainer = entries;
+    const container = document.createElement('div');
+    container.id = 'review-entries-container';
+    container.style.cssText = 'flex:1;overflow-y:auto;padding:0 20px;min-height:200px;';
+    this.popup.appendChild(container);
+    this.entriesContainer = container;
 
-    mask.appendChild(popup);
-    document.body.appendChild(mask);
-    this.mask = mask;
-    this.popup = popup;
+    document.body.appendChild(this.mask);
+    document.body.appendChild(this.popup);
 
+    // 绑定事件
+    const app = this.app;
+    header.querySelector('#review-btn-add')!.addEventListener('click', async () => {
+      const file = app.workspace.getActiveFile();
+      if (!file) {
+        new Notice('请先打开一个笔记');
+        return;
+      }
+      try {
+        const { reviewApp } = await import('./app');
+        await reviewApp.addCurrentToReview(file);
+        await reviewApp.refreshPanel();
+        await reviewApp.applyReviewStyles(app);
+      } catch (e: any) {
+        new Notice(e.message);
+      }
+    });
+    header.querySelector('#review-btn-start')!.addEventListener('click', async () => {
+      const { reviewApp } = await import('./app');
+      await reviewApp.autoJumpOverdue();
+    });
+    let searchVisible = false;
+    header.querySelector('#review-btn-search')!.addEventListener('click', () => {
+      searchVisible = !searchVisible;
+      searchContainer.style.display = searchVisible ? 'block' : 'none';
+      if (searchVisible) searchInput.focus();
+      else {
+        searchInput.value = '';
+        this.refreshPanel();
+      }
+    });
+    searchInput.addEventListener('input', () => this.refreshPanel());
+    header.querySelector('#review-btn-archive')!.addEventListener('click', () => {
+      this.showArchived = !this.showArchived;
+      const btn = header.querySelector('#review-btn-archive') as HTMLElement;
+      btn.textContent = this.showArchived ? '📂' : '📁';
+      this.refreshPanel();
+    });
+    header.querySelector('#review-btn-quiz')!.addEventListener('click', () => {
+      (app as any).commands?.executeCommandById?.('quiz-master-open');
+    });
+    header.querySelector('#review-btn-close')!.addEventListener('click', () => this.hideMain());
+    this.mask.onclick = () => this.hideMain();
+  }
+
+  showMain(): void {
+    this.createMainUI();
+    if (!this.mask || !this.popup) return;
+    this.mask.style.display = 'block';
+    this.popup.style.display = 'flex';
     this.refreshPanel();
-
-    // 自动更新题库
+    // 自动更新题库（异步，不阻塞界面）
     try {
-      (app as any).commands?.executeCommandById?.('quiz-master-update');
+      (this.app as any).commands?.executeCommandById?.('quiz-master-update');
     } catch {
       /* ignore */
     }
   }
 
-  toggleSearch(): void {
-    const wrap = this.searchInput?.parentElement as HTMLElement | undefined;
-    if (!wrap) return;
-    const hidden = wrap.style.display === 'none' || !wrap.style.display;
-    wrap.style.display = hidden ? 'block' : 'none';
-    if (!hidden && this.searchInput) this.searchInput.value = '';
-    this.refreshPanel();
+  hideMain(): void {
+    if (this.mask) this.mask.style.display = 'none';
+    if (this.popup) this.popup.style.display = 'none';
   }
 
-  refreshPanel(): void {
-    if (!this.entriesContainer) return;
-    const items = this.dataManager.items as ReviewItem[];
-    const kw = (this.searchInput?.value || '').trim().toLowerCase();
-    const filtered = items.filter((i) => {
-      if (this.showArchived !== !!i.completed) return false;
-      if (kw && !i.fileName.toLowerCase().includes(kw)) return false;
-      return true;
-    });
-    this.renderEntries(filtered);
-  }
-
-  renderEntries(items: ReviewItem[]): void {
-    const container = this.entriesContainer!;
-    container.innerHTML = '';
-
-    if (items.length === 0) {
-      const empty = document.createElement('p');
-      empty.style.cssText = 'text-align:center; color:var(--text-muted); padding:30px 0;';
-      empty.textContent = this.showArchived ? '没有已完成（归档）的复习' : '没有复习计划 🎉';
-      container.appendChild(empty);
-      return;
-    }
-
-    // 排序：逾期优先，再按 nextReviewDate
-    const sorted = [...items].sort((a, b) => {
-      if (!!a.isOverdue !== !!b.isOverdue) return a.isOverdue ? -1 : 1;
-      return (a.nextReviewDate || 0) - (b.nextReviewDate || 0);
-    });
-
-    for (const item of sorted) {
-      container.appendChild(this.createCard(item));
-    }
-  }
-
-  createCard(item: ReviewItem): HTMLElement {
-    const card = document.createElement('div');
-    card.className = `review-card${item.completed ? ' completed' : item.isOverdue ? ' overdue' : ''}`;
-
-    const name = document.createElement('span');
-    name.textContent = item.fileName;
-    name.style.cssText = 'flex:1; font-size:.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
-    card.appendChild(name);
-
-    // 状态文案
-    const fsrs = new FSRS();
-    let statusText: string;
-    let tagClass = 'ladder';
-    if (item.completed) {
-      statusText = '✅ 已完成';
-      tagClass = 'completed-tag';
-    } else if (item.isOverdue) {
-      statusText = item.phase === 'fsrs' ? '⚠️ 逾期 (FSRS)' : `⚠️ 逾期 (${FSRS_FIRST_TEXTS[(item.currentStage || 1) - 1]})`;
-      tagClass = 'overdue-tag';
-    } else if (item.phase === 'fsrs') {
-      statusText = `FSRS Lv.${item.stage - LADDER_MAX + 1}`;
-      tagClass = 'fsrs';
-    } else {
-      statusText = `${item.currentStage}/${TOTAL_STAGES} ${FSRS_FIRST_TEXTS[(item.currentStage || 1) - 1]}`;
-    }
-    const tag = document.createElement('span');
-    tag.className = `review-tag ${tagClass}`;
-    tag.textContent = statusText;
-    card.appendChild(tag);
-
-    // FSRS R 标签
-    if (item.phase === 'fsrs' && item.lastReviewed && item.stability) {
-      const t = (Date.now() - item.lastReviewed) / 86400000;
-      const r = fsrs.R(t, item.stability);
-      const rTag = document.createElement('span');
-      rTag.className = 'review-tag fsrs';
-      rTag.textContent = `R=${Math.round(r * 100)}%`;
-      rTag.style.background = r > 0.8 ? '#52c41a22' : r > 0.5 ? '#faad1422' : '#ff475722';
-      card.appendChild(rTag);
-    }
-
-    // 时间
-    const time = document.createElement('span');
-    time.style.cssText = 'font-size:.75rem; color:var(--text-muted); flex-shrink:0;';
-    if (item.completed) {
-      time.textContent = '✅ 完成';
-    } else if (item.isOverdue) {
-      time.textContent = '📅 逾期';
-    } else if (item.nextReviewDate) {
-      const diff = item.nextReviewDate - Date.now();
-      if (diff > 0) {
-        const d = Math.floor(diff / 86400000);
-        const h = Math.floor((diff % 86400000) / 3600000);
-        const m = Math.floor((diff % 3600000) / 60000);
-        time.textContent = `⏳ ${d}d|${h}h|${m}m`;
-      } else {
-        time.textContent = '📅 逾期';
-      }
-    } else {
-      time.textContent = '⏳ 待定';
-    }
-    card.appendChild(time);
-
-    // 长按移出（500ms）
-    let pressTimer: ReturnType<typeof setTimeout> | null = null;
-    const startPress = () => {
-      pressTimer = setTimeout(() => {
-        this.showConfirm('移出复习计划', `确定移出“${item.fileName}”？`, async () => {
-          await this.dataManager.removeItem(item.id);
-          this.refreshPanel();
-        });
-      }, 500);
+  createConfirmDialog(): void {
+    if (this.confirmMask && document.body.contains(this.confirmMask)) return;
+    this.confirmMask = document.createElement('div');
+    Object.assign(this.confirmMask.style, { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.3)', zIndex: '10003', display: 'none' });
+    this.confirmMask.onclick = (e) => {
+      if (e.target === this.confirmMask) this.hideConfirm();
     };
-    const cancelPress = () => {
-      if (pressTimer) clearTimeout(pressTimer);
-    };
-    card.addEventListener('mousedown', startPress);
-    card.addEventListener('mouseup', cancelPress);
-    card.addEventListener('mouseleave', cancelPress);
-    card.addEventListener('touchstart', startPress);
-    card.addEventListener('touchend', cancelPress);
-
-    // 双击打开笔记
-    card.addEventListener('dblclick', () => {
-      const f = this.app.vault.getAbstractFileByPath(item.filePath);
-      if (f) (this.app as any).workspace.getLeaf().openFile(f);
+    this.confirmPopup = document.createElement('div');
+    Object.assign(this.confirmPopup.style, { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'var(--background-primary)', borderRadius: '12px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', zIndex: '10004', padding: '24px', maxWidth: '400px', width: '90%', display: 'none', flexDirection: 'column', alignItems: 'center', textAlign: 'center' });
+    this.confirmPopup.innerHTML = `
+      <h4 id="confirm-title" style="margin:0 0 12px 0;font-size:18px;font-weight:600;">确认删除</h4>
+      <p id="confirm-message" style="margin:0 0 20px 0;font-size:15px;color:var(--text-muted);"></p>
+      <div style="display:flex;gap:12px;width:100%;">
+        <button id="confirm-cancel" style="flex:1;padding:8px;border:none;border-radius:6px;background:var(--background-secondary);cursor:pointer;">取消</button>
+        <button id="confirm-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:var(--interactive-accent);color:var(--text-on-accent);cursor:pointer;font-weight:500;">确定</button>
+      </div>
+    `;
+    document.body.appendChild(this.confirmMask);
+    document.body.appendChild(this.confirmPopup);
+    this.confirmPopup.querySelector('#confirm-cancel')!.addEventListener('click', () => this.hideConfirm());
+    this.confirmPopup.querySelector('#confirm-ok')!.addEventListener('click', () => {
+      if (typeof this.confirmCallback === 'function') this.confirmCallback();
+      this.hideConfirm();
     });
-
-    return card;
   }
 
-  /** 难度弹窗 */
-  showDifficultyDialog(item: ReviewItem, onRate: (rating: Rating) => void): void {
-    const old = document.querySelector('.difficulty-dialog');
-    if (old) old.remove();
-
-    const dialog = document.createElement('div');
-    dialog.className = 'difficulty-dialog';
-    const box = document.createElement('div');
-    box.style.cssText = 'background:var(--background-primary); border-radius:12px; padding:24px; max-width:420px; width:90%; text-align:center;';
-    box.innerHTML = `<h4 style="margin:0 0 4px 0;">${item.fileName}</h4><p style="margin:0 0 16px 0; color:var(--text-muted); font-size:.85rem;">选择回忆难度</p>`;
-
-    const btns: [Rating, string][] = [
-      ['again', '🟥 忘了（Again）'],
-      ['hard', '🟧 困难（Hard）'],
-      ['good', '🟩 一般（Good）'],
-      ['easy', '✅ 简单（Easy）'],
-    ];
-    for (const [rating, label] of btns) {
-      const btn = document.createElement('button');
-      btn.className = 'diff-btn';
-      btn.textContent = label;
-      btn.setAttribute('data-diff', rating);
-      btn.addEventListener('click', () => {
-        dialog.remove();
-        onRate(rating);
-      });
-      box.appendChild(btn);
-    }
-    const cancel = document.createElement('button');
-    cancel.className = 'diff-btn';
-    cancel.textContent = '取消';
-    cancel.addEventListener('click', () => dialog.remove());
-    box.appendChild(cancel);
-
-    dialog.appendChild(box);
-    document.body.appendChild(dialog);
+  showConfirm(title: string, msg: string, onConfirm?: () => void): void {
+    this.createConfirmDialog();
+    if (!this.confirmPopup || !this.confirmMask) return;
+    this.confirmPopup.querySelector('#confirm-title')!.textContent = title || '确认';
+    this.confirmPopup.querySelector('#confirm-message')!.textContent = msg || '';
+    this.confirmCallback = onConfirm || null;
+    this.confirmMask.style.display = 'block';
+    this.confirmPopup.style.display = 'flex';
   }
 
-  /** 确认框 */
-  showConfirm(title: string, message: string, onOk: () => void): void {
-    if (this.confirmMask) this.confirmMask.remove();
-    const mask = document.createElement('div');
-    mask.id = 'review-confirm-mask';
-    mask.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:10003; display:flex; align-items:center; justify-content:center;';
-    const popup = document.createElement('div');
-    popup.id = 'review-confirm-popup';
-    popup.style.cssText = 'background:var(--background-primary); border-radius:12px; padding:24px; max-width:400px; width:90%; text-align:center;';
-    popup.innerHTML = `<h4 id="confirm-title" style="margin:0 0 8px 0;">${title}</h4><p id="confirm-message" style="margin:0 0 20px 0; color:var(--text-muted);">${message}</p>`;
-
-    const btnRow = document.createElement('div');
-    btnRow.style.cssText = 'display:flex; gap:8px; justify-content:center;';
-    const cancel = document.createElement('button');
-    cancel.id = 'confirm-cancel';
-    cancel.textContent = '取消';
-    cancel.style.cssText = 'padding:6px 16px; border-radius:6px; border:none; background:var(--background-modifier-border); cursor:pointer;';
-    cancel.addEventListener('click', () => this.closeConfirm());
-    const ok = document.createElement('button');
-    ok.id = 'confirm-ok';
-    ok.textContent = '确定';
-    ok.style.cssText = 'padding:6px 16px; border-radius:6px; border:none; background:#ff4757; color:white; cursor:pointer;';
-    ok.addEventListener('click', () => {
-      const cb = this.confirmCallback;
-      this.closeConfirm();
-      if (cb) cb();
-    });
-    btnRow.appendChild(cancel);
-    btnRow.appendChild(ok);
-    popup.appendChild(btnRow);
-
-    mask.appendChild(popup);
-    document.body.appendChild(mask);
-    this.confirmMask = mask;
-    this.confirmPopup = popup;
-    this.confirmCallback = onOk;
-  }
-
-  closeConfirm(): void {
-    if (this.confirmMask) this.confirmMask.remove();
-    this.confirmMask = null;
-    this.confirmPopup = null;
+  hideConfirm(): void {
+    if (this.confirmMask) this.confirmMask.style.display = 'none';
+    if (this.confirmPopup) this.confirmPopup.style.display = 'none';
     this.confirmCallback = null;
   }
 
-  hideMain(): void {
-    if (this.mask) {
-      this.mask.remove();
-      this.mask = null;
-      this.popup = null;
-      this.entriesContainer = null;
-    }
+  /** 难度弹窗（源码 L312-330 逐字） */
+  showDifficultyDialog(item: ReviewItem, onSelect?: (diff: string) => void): void {
+    const old = document.querySelector('.difficulty-dialog');
+    if (old) old.remove();
+    const div = document.createElement('div');
+    div.className = 'difficulty-dialog';
+    div.innerHTML = `
+      <h4 style="margin:0 0 12px 0;font-size:16px;">标记复习：${item.name}</h4>
+      <button class="diff-btn" data-diff="again" style="border-left:3px solid #ff4757;">🟥 忘了（Again）</button>
+      <button class="diff-btn" data-diff="hard" style="border-left:3px solid #ff9f43;">🟧 困难（Hard）</button>
+      <button class="diff-btn" data-diff="good" style="border-left:3px solid #2ed573;">🟩 一般（Good）</button>
+      <button class="diff-btn" data-diff="easy" style="border-left:3px solid #7bed9f;">✅ 简单（Easy）</button>
+      <button class="diff-btn" data-diff="cancel" style="margin-top:12px;color:var(--text-muted);">取消</button>
+    `;
+    document.body.appendChild(div);
+    div.style.display = 'block';
+    div.querySelectorAll('.diff-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        div.remove();
+        const diff = (btn as HTMLElement).dataset.diff;
+        if (diff !== 'cancel' && diff && onSelect) onSelect(diff);
+      });
+    });
+    setTimeout(() => {
+      const handler = (e: MouseEvent) => {
+        if (!div.contains(e.target as Node)) {
+          div.remove();
+          document.removeEventListener('click', handler);
+        }
+      };
+      document.addEventListener('click', handler);
+    }, 100);
   }
 
+  registerEscape(): void {
+    if (this.escapeRegistered) return;
+    this.escapeRegistered = true;
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      if (this.confirmMask?.style.display === 'block') {
+        this.hideConfirm();
+        e.preventDefault();
+        return;
+      }
+      if (this.mask?.style.display === 'block') {
+        this.hideMain();
+        e.preventDefault();
+      }
+    });
+  }
+
+  /** 刷新列表（源码 App.refreshPanel → Renderer.render） */
+  async refreshPanel(): Promise<void> {
+    const items = await this.dataManager.loadItems();
+    const searchText = this.searchInput ? this.searchInput.value.trim() : '';
+    this.renderEntries(items, searchText);
+  }
+
+  renderEntries(items: ReviewItem[], searchText = ''): void {
+    const container = this.entriesContainer;
+    if (!container) return;
+    container.innerHTML = '';
+    let filtered = items;
+    // 归档开关：false=仅未完成，true=全部（源码语义）
+    if (!this.showArchived) filtered = filtered.filter((i) => !i.isCompleted);
+    if (searchText) {
+      const lower = searchText.toLowerCase();
+      filtered = filtered.filter((i) => i.name.toLowerCase().includes(lower));
+    }
+    if (!filtered.length) {
+      container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-faint);font-size:16px;">${this.showArchived ? '没有已完成（归档）的复习' : '没有复习计划 🎉'}</div>`;
+      return;
+    }
+    filtered.sort((a, b) => {
+      if (a.isOverdue && !b.isOverdue) return -1;
+      if (!a.isOverdue && b.isOverdue) return 1;
+      return new Date(a.nextReviewDate!).getTime() - new Date(b.nextReviewDate!).getTime();
+    });
+    for (const item of filtered) container.appendChild(this.createCard(item));
+  }
+
+  createCard(item: ReviewItem): HTMLElement {
+    const app = this.app;
+    const card = document.createElement('div');
+    card.className = 'review-card';
+
+    const content = document.createElement('span');
+    content.className = 'review-content';
+    content.textContent = item.name.replace(/^《|》$/g, '');
+    content.title = item.filePath;
+    content.onclick = async () => {
+      this.hideMain();
+      const file = app.vault.getAbstractFileByPath(item.filePath);
+      if (file) {
+        const leaf = app.workspace.getLeaf();
+        await leaf.openFile(file as any);
+      } else new Notice('文件已删除');
+    };
+    card.appendChild(content);
+
+    const meta = document.createElement('div');
+    meta.className = 'review-meta';
+
+    const stageTag = document.createElement('span');
+    stageTag.className = 'review-tag';
+    if (item.completed) {
+      stageTag.textContent = '✅ 已完成';
+      stageTag.classList.add('completed');
+    } else if (item.isOverdue) {
+      stageTag.textContent = item.phase === 'fsrs' ? '⚠️ 逾期 (FSRS)' : `⚠️ 逾期 (${FSRS_FIRST_TEXTS[(item.currentStage || 1) - 1]})`;
+      stageTag.classList.add('overdue');
+    } else if (item.phase === 'fsrs') {
+      stageTag.textContent = `FSRS Lv.${item.stage - LADDER_MAX + 1}`;
+    } else {
+      stageTag.textContent = `${item.currentStage}/${TOTAL_STAGES} ${FSRS_FIRST_TEXTS[(item.currentStage || 1) - 1]}`;
+    }
+    if (!item.isCompleted) {
+      stageTag.onclick = (e) => {
+        e.stopPropagation();
+        this.showDifficultyDialog(item, async (diff) => {
+          const { reviewApp } = await import('./app');
+          await reviewApp.markReview(item.filePath, diff as Rating);
+          await this.refreshPanel();
+          await reviewApp.applyReviewStyles(app);
+        });
+      };
+    }
+    meta.appendChild(stageTag);
+
+    if ((item.averageConfidence || 0) > 0 && item.phase !== 'fsrs') {
+      const conf = document.createElement('span');
+      conf.className = 'review-tag';
+      conf.textContent = `🎯 ${Math.round((item.averageConfidence || 0) * 100)}%`;
+      conf.style.cursor = 'default';
+      meta.appendChild(conf);
+    }
+
+    // FSRS 阶段显示 R(t)
+    if (item.phase === 'fsrs' && item.stability && !item.completed) {
+      const now = new Date();
+      const last = item.lastReviewed ? new Date(item.lastReviewed) : null;
+      if (last) {
+        const t = (now.getTime() - last.getTime()) / 86400000;
+        const fsrs = new FSRS();
+        const r = fsrs.R(t, item.stability);
+        const rPct = Math.round(r * 100);
+        const rTag = document.createElement('span');
+        rTag.className = 'review-tag';
+        rTag.textContent = `R=${rPct}%`;
+        rTag.style.cursor = 'default';
+        if (r >= 0.9) rTag.style.background = '#52c41a22';
+        else if (r >= 0.7) rTag.style.background = '#faad1422';
+        else rTag.style.background = '#ff475722';
+        meta.appendChild(rTag);
+      }
+    }
+
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'review-time';
+    if (item.isCompleted) timeSpan.textContent = '✅ 完成';
+    else if (item.nextReviewDate) {
+      const now = new Date();
+      const diff = new Date(item.nextReviewDate).getTime() - now.getTime();
+      if (diff > 0) {
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        let text = '';
+        if (days > 0) text = `${days}d`;
+        else if (hours > 0) text = `${hours}h`;
+        else text = `${mins}m`;
+        timeSpan.textContent = `⏳ ${text}`;
+      } else timeSpan.textContent = '📅 逾期';
+    } else timeSpan.textContent = '⏳ 待定';
+
+    // 长按移出（绑定 timeSpan，源码 L438-456）
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const start = (e: MouseEvent | TouchEvent) => {
+      if ('button' in e && e.button !== 0) return;
+      timer = setTimeout(() => {
+        this.showConfirm('移出复习计划', `确定移出“${item.name}”？`, async () => {
+          await this.dataManager.removeItem(item.filePath);
+          await this.refreshPanel();
+          const { reviewApp } = await import('./app');
+          await reviewApp.applyReviewStyles(app);
+        });
+      }, 500);
+    };
+    const cancel = () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+    timeSpan.addEventListener('mousedown', start);
+    timeSpan.addEventListener('mouseup', cancel);
+    timeSpan.addEventListener('mouseleave', cancel);
+    timeSpan.addEventListener('touchstart', start);
+    timeSpan.addEventListener('touchend', cancel);
+    timeSpan.addEventListener('touchmove', cancel);
+    meta.appendChild(timeSpan);
+
+    card.appendChild(meta);
+    return card;
+  }
+
+  /** 销毁（卸载清理） */
   destroy(): void {
-    document.removeEventListener('keydown', this.handleKeydown);
     this.hideMain();
-    this.closeConfirm();
+    this.hideConfirm();
+    if (this.mask) this.mask.remove();
+    if (this.popup) this.popup.remove();
+    if (this.confirmMask) this.confirmMask.remove();
+    if (this.confirmPopup) this.confirmPopup.remove();
+    this.mask = null;
+    this.popup = null;
+    this.confirmMask = null;
+    this.confirmPopup = null;
+    this.entriesContainer = null;
   }
 }
