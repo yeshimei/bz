@@ -59,7 +59,7 @@ export default interface BzSettings {
   securityMode: boolean;
 
   // ===== ⭐ 收藏本（1 项）=====
-  /** 📂 数据存储路径（favorites.json） */
+  /** 📂 数据存储目录（文件名固定 favorites.json，只允许改目录） */
   favoritesStoragePath: string;
 
   // ===== 📚 书库（9 项）=====
@@ -192,8 +192,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   passwordLength: '16',
   securityMode: false,
 
-  // 收藏本
-  favoritesStoragePath: 'CONFIG/STORAGE/favorites.json',
+  // 收藏本（只允许改目录，文件名固定 favorites.json）
+  favoritesStoragePath: 'CONFIG/STORAGE',
 
   // 书库
   libraryFolderPath: '书库',

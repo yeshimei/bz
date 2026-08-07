@@ -333,7 +333,7 @@ export class BzSettingTab extends PluginSettingTab {
 
   // ===== 收藏本 =====
   private buildFavoritesTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
-    this.textSetting(el, '数据存储路径', '存放 favorites.json 的路径', s.favoritesStoragePath, save, (v) => (s.favoritesStoragePath = v));
+    this.textSetting(el, '数据存储路径', '存放 favorites.json 的目录（文件名固定，不可修改）', s.favoritesStoragePath, save, (v) => (s.favoritesStoragePath = v));
   }
 
   // ===== 书库 =====

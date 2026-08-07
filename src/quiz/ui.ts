@@ -11,6 +11,14 @@ import { QuestionGenerator } from './generator';
 import type { QuizQuestion } from './manager';
 import type { AIService } from '../core/ai';
 
+/** 复习联动结果：一轮做题会话完成后的统计（复习域经 onComplete 接收） */
+export interface QuizReviewResults {
+  correct: number;
+  wrong: number;
+  total: number;
+  accuracy: number;
+}
+
 export class QuizMasterUI {
   static ai: AIService | null = null;
   static settings: any = {};
@@ -23,9 +31,9 @@ export class QuizMasterUI {
   loadingPopup: HTMLElement | null = null;
   _generating = false;
 
-  // 复习联动
+  // 复习联动（仅经 startReviewSession/endReviewSession 契约访问，复习域不得直接改写）
   _reviewMode = false;
-  onComplete: ((results: any) => void) | null = null;
+  onComplete: ((results: QuizReviewResults) => void) | null = null;
   correctCount = 0;
   wrongCount = 0;
   totalQuestions = 0;
@@ -494,6 +502,27 @@ export class QuizMasterUI {
     mask.addEventListener('click', (e) => {
       if (e.target === mask) this.finishQuiz();
     });
+  }
+  /**
+   * 复习联动契约：开始一轮做题会话（复习计划经此进入做题模式）。
+   * 会话状态（_reviewMode/currentQuestions/计数/onComplete）只允许在本方法内设置，
+   * 复习域禁止直接改写——契约化后复习域只需调用本方法与 endReviewSession。
+   */
+  startReviewSession(opts: { questions: QuizQuestion[]; onComplete: ((results: QuizReviewResults) => void) | null }): void {
+    this._reviewMode = true;
+    this.currentQuestions = opts.questions;
+    this.currentIndex = 0;
+    this.correctCount = 0;
+    this.wrongCount = 0;
+    this.totalQuestions = opts.questions.length;
+    this.onComplete = opts.onComplete;
+    this.showQuestion();
+  }
+
+  /** 复习联动契约：结束做题会话（退出复习模式并按既有语义完成/关闭） */
+  endReviewSession(): void {
+    this._reviewMode = false;
+    this.finishQuiz();
   }
 
   /** 渲染单题（源码 L679-697 逐字） */

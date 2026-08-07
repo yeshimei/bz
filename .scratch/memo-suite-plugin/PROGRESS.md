@@ -1,6 +1,12 @@
 # bz 进度（上下文压缩恢复点）
 
-最后更新：2026-08-07，241 测试全过。仓库 `E:/Obsidian/1`，构建产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`。
+最后更新：2026-08-07（架构深化），490 测试全过。仓库 `E:/Obsidian/1`，构建产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`。
+
+## 最近一次架构深化（未提交，待 commit）
+
+- **复习⇄做题家联动契约化**：`src/quiz/ui.ts` 新增 `startReviewSession`/`endReviewSession` + 导出 `QuizReviewResults`；`src/review/app.ts` 的 quizReviewLoop 不再直写 quizUI 私有状态（_reviewMode/currentQuestions/onComplete 等），只调契约方法。新增契约测试（tests/quiz/ui.test.ts「复习联动契约」）；review 测试 mock 按契约实现。术语「做题会话 (Quiz Session)」已入 CONTEXT.md。
+- **AI Agent 路径去硬编码**：`src/ai-agent/index.ts` 删 `MEMO_PATH`/`FAVORITES_PATH` 常量，改为 `getMemoPath()`（todoFilePath 目录 + memo.json，与 bz DataManager 同源）/`getFavoritesPath()`（favoritesStoragePath，默认 CONFIG/STORAGE/favorites.json）。新增「设置路径生效」测试。
+- **侦察发现（文档过时）**：AGENTS.md 称闪念约 2311 行——实际 `src/flash/index.ts` 仅 24 行占位骨架（ticket 18 未实现）；文档已修正。
 
 ## 已完成（git 已提交）
 
