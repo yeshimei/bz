@@ -115,10 +115,14 @@ describe('memo-suite 骨架冒烟', () => {
     // 已实现域：归物本命令真实打开弹窗（异步），同步调用不抛错
     const cmd1 = plugin.commands.find((c: any) => c.id === 'belongings-add-item');
     expect(() => cmd1.callback()).not.toThrow();
-    // 未实现域：占位 Notice 不抛错
+    // 已实现域：做题家/复习面板异步执行，同步调用不抛错
     const cmd2 = plugin.commands.find((c: any) => c.id === 'quiz-master-open');
     expect(() => cmd2.callback()).not.toThrow();
-    expect(MockNotice.instances.length).toBeGreaterThan(0);
+    const cmd3 = plugin.commands.find((c: any) => c.id === 'review-open-panel');
+    expect(() => cmd3.callback()).not.toThrow();
+    expect(() => plugin.commands.find((c: any) => c.id === 'review-add-current').callback()).not.toThrow();
+    expect(() => plugin.commands.find((c: any) => c.id === 'movie-analysis-open').callback()).not.toThrow();
+    expect(() => plugin.commands.find((c: any) => c.id === 'show-reading-report').callback()).not.toThrow();
   });
 
   it('onunload 清理全部裸注册命令', async () => {
