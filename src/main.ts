@@ -8,6 +8,7 @@ import { Plugin, PluginSettingTab, Setting } from 'obsidian';
 import { escManager } from './core/esc-manager';
 import { setApp, getApp } from './core/app';
 import { setAISettingsProvider, resetAIProviderCache } from './core/ai';
+import { setSettingsProvider } from './core/settings-provider';
 import { setMemoSettingsProvider, unloadMemo } from './memo';
 
 import MemoSettings, { DEFAULT_SETTINGS } from './settings';
@@ -27,7 +28,7 @@ import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverd
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
 import { ensureAutoSummary } from './auto-summary';
-import { ensureAIAgent } from './ai-agent';
+import { ensureAIAgent, unloadAIAgent } from './ai-agent';
 
 /** 命令表：id/name 均提取自原脚本 addCommand 调用点（spec「命令 id 全清单」） */
 const COMMANDS: { id: string; name: string; callback: () => void }[] = [
@@ -81,6 +82,8 @@ export default class MemoSuitePlugin extends Plugin {
     // AI 设置注入（Q3 的 _q3Settings 语义 → 插件设置）
     setAISettingsProvider(() => this.settings);
     resetAIProviderCache();
+    // 通用设置访问器（各域经 getSettings 读取）
+    setSettingsProvider(() => this.settings);
     // 备忘录设置注入
     setMemoSettingsProvider(() => this.settings);
 
@@ -115,6 +118,7 @@ export default class MemoSuitePlugin extends Plugin {
     }
     escManager.destroy();
     unloadMemo();
+    unloadAIAgent();
   }
 
   async saveSettings() {
