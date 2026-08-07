@@ -1078,7 +1078,7 @@ export async function openBelongingsPanel(): Promise<void> {
     modal.style.height = '100vh';
     modal.style.borderRadius = '0';
     modal.style.maxWidth = '100%';
-    modal.style.paddingTop = '24px';
+    modal.style.paddingTop = '34px';
   }
 
   // 头部

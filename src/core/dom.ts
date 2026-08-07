@@ -106,7 +106,7 @@ export function createSiteIcon(domain: string | null | undefined, size = 16): HT
   return img;
 }
 
-/** createIconBtn(text, title, onClick, extra)：图标按钮（16px 字体 + hover 背景） */
+/** createIconBtn(text, title, onClick, extra)：图标按钮（普通 14px/22×26，关闭 ❌ 13px/21×25 + hover 背景） */
 export function createIconBtn(
   text: string,
   title: string,
@@ -116,8 +116,13 @@ export function createIconBtn(
   const b = document.createElement('button');
   b.textContent = text;
   b.title = title;
+  // 规格：普通按钮较 16px/24×28 减 2px；关闭按钮减 3px
+  const isClose = text === '❌';
+  const fs = isClose ? 13 : 14;
+  const w = isClose ? 21 : 22;
+  const h = isClose ? 25 : 26;
   b.style.cssText =
-    'background:none;border:none;font-size:16px;cursor:pointer;color:var(--text-muted);padding:0;width:24px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center;box-shadow:none;' +
+    `background:none;border:none;font-size:${fs}px;cursor:pointer;color:var(--text-muted);padding:0;width:${w}px;height:${h}px;border-radius:4px;display:flex;align-items:center;justify-content:center;box-shadow:none;` +
     (extra || '');
   b.onmouseover = function () { b.style.background = 'var(--background-secondary)'; };
   b.onmouseout = function () { b.style.background = 'none'; };

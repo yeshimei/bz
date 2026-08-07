@@ -75,6 +75,10 @@ export function showReportInPopup(htmlContent: string, isDarkMode: boolean) {
     background: ${isDarkMode ? '#1e1e1e' : 'white'};
     z-index: 5;
   `;
+  // 移动端：顶部标题行内边距 24px（与其他主窗口一致）
+  if (window.innerWidth <= 768) {
+    header.style.padding = '34px 20px 12px 20px';
+  }
 
   const titleSpan = document.createElement('span');
   titleSpan.textContent = '🧮 阅读数据分析报告';
@@ -86,15 +90,24 @@ export function showReportInPopup(htmlContent: string, isDarkMode: boolean) {
 
   const closeButton = document.createElement('button');
   closeButton.innerHTML = '❌';
+  closeButton.title = '关闭';
   closeButton.style.cssText = `
     background: none;
     border: none;
-    font-size: 0.8rem;
+    font-size: 16px;
+    width: 24px;
+    height: 28px;
+    border-radius: 4px;
     color: ${isDarkMode ? '#b0b0b0' : '#666'};
     cursor: pointer;
     padding: 0;
     box-shadow: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   `;
+  closeButton.onmouseover = () => (closeButton.style.background = isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)');
+  closeButton.onmouseout = () => (closeButton.style.background = 'none');
 
   const closeModal = () => {
     document.body.removeChild(modal);

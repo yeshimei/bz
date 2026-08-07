@@ -73,7 +73,6 @@ describe('createOverlay 主界面', () => {
     seed(vault);
     M.appRef = makeApp(vault, {
       commands: {
-        commands: { 'movie-analysis-open': {} },
         executeCommandById: vi.fn(),
       },
     });
@@ -86,15 +85,16 @@ describe('createOverlay 主界面', () => {
     expect(overlay!.querySelector('.list-container')).not.toBeNull();
     expect(overlay!.querySelector('#movie-search-container')).not.toBeNull();
     const buttons = overlay!.querySelectorAll('button');
-    expect(buttons.length).toBeGreaterThanOrEqual(6);
+    expect(buttons.length).toBeGreaterThanOrEqual(5);
   });
 
-  it('📊 按钮触发 movie-analysis-open 命令', () => {
+  it('🤖 AI 推荐按钮触发推荐弹窗', () => {
     createOverlay(M.appRef as any);
     const overlay = document.getElementById('__yin_ying__')!;
-    const analysisBtn = [...overlay.querySelectorAll('button')].find((b) => b.textContent === '📊')!;
-    analysisBtn.click();
-    expect((M.appRef as any).commands.executeCommandById).toHaveBeenCalledWith('movie-analysis-open');
+    const recommendBtn = [...overlay.querySelectorAll('button')].find((b) => b.textContent === '🤖')!;
+    expect(recommendBtn).toBeTruthy();
+    recommendBtn.click();
+    expect(M.recommendOverlay).not.toBeNull();
   });
 
   it('搜索输入防抖 300ms 后过滤渲染', async () => {

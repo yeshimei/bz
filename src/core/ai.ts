@@ -7,14 +7,10 @@
 import { requestUrl } from 'obsidian';
 import { getApp } from './app';
 
-/** AI 设置（main.ts 将 plugin.settings 注入，语义与 Q3 settings 一致） */
 export interface AISettingsLike {
   aiProvider?: string;
   deepseekApiKey?: string;
-  opencodeGoEndpoint?: string;
   opencodeGoApiKey?: string;
-  opencodeGoModel?: string;
-  aiOverride?: { endpoint?: string; apiKey?: string; model?: string } | null;
 }
 
 let _settingsProvider: (() => AISettingsLike) | null = null;
@@ -56,15 +52,15 @@ export async function getAIProvider(override?: string | { endpoint?: string; api
       model: (override as any).model || undefined,
     };
   }
-  const name = (typeof override === 'string' && override) || s.aiProvider || 'deepseek';
+  const name = (typeof override === 'string' && override) || s.aiProvider || 'opencode-go';
   if (name === 'opencode-go') {
     if (!s.opencodeGoApiKey) {
       throw new Error('未配置 OpenCode Go API Key：插件设置 → AI 配置 → OpenCode Go API Key');
     }
     _aiProviderCache = {
-      endpoint: String(s.opencodeGoEndpoint || 'https://opencode.ai/zen/go/v1').replace(/\/+$/, ''),
+      endpoint: 'https://opencode.ai/zen/go/v1',
       apiKey: s.opencodeGoApiKey,
-      model: s.opencodeGoModel || 'deepseek-v4-flash',
+      model: 'deepseek-v4-flash',
       noCors: true, // opencode.ai 无 CORS 头，fetch 必败 → 直接走 requestUrl
     };
     return _aiProviderCache;

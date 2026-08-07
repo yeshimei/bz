@@ -39,9 +39,6 @@ export interface MovieState {
   isLoadingMore: boolean;
   searchKeyword: string;
   searchDebounceTimer: ReturnType<typeof setTimeout> | null;
-  q3Initialized: boolean;
-  enableQ3: boolean;
-  posterFolder: string;
   homeFilmStatus: string | null;
 }
 
@@ -64,9 +61,6 @@ export const M: MovieState = {
   isLoadingMore: false,
   searchKeyword: '',
   searchDebounceTimer: null,
-  q3Initialized: false,
-  enableQ3: true,
-  posterFolder: 'CONFIG/MOVIE POSTER',
   homeFilmStatus: null,
 };
 
@@ -102,8 +96,5 @@ export function resetMovieState(): void {
   M.isLoadingMore = false;
   M.searchKeyword = '';
   M.searchDebounceTimer = null;
-  M.q3Initialized = false;
-  M.enableQ3 = true;
-  M.posterFolder = 'CONFIG/MOVIE POSTER';
   M.homeFilmStatus = null;
 }

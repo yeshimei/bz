@@ -10,8 +10,6 @@ import type { MemoItem, MemoPosition } from './types';
 
 export interface MemoSettingsLike {
   todoFilePath?: string;
-  scenarios?: string;
-  platformMapping?: string;
   showFileName?: boolean;
   autoPopupOnStart?: boolean;
   movieFolderPath?: string;
@@ -31,40 +29,12 @@ export const DataManager = {
     const folder = (settings.todoFilePath || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
     this.todoFilePath = folder + '/memo.json';
     this._store = jsonStore(this.todoFilePath);
-    this.scenarios = this.buildScenarios(settings.scenarios || '');
-    this.platformMap = this.buildPlatformMap(settings.platformMapping || '');
+    // 场景/平台映射固定使用内置默认（设置项已移除）
+    this.scenarios = [...DEFAULTSCENARIOS];
+    this.platformMap = [...DEFAULT_PLATFORM_MAP];
     this.movieFolderPath = settings.movieFolderPath || '我的/影视';
   },
 
-  buildScenarios(raw: string): string[] {
-    const user = raw
-      .split('\n')
-      .map((s) => s.trim())
-      .filter(Boolean);
-    return [...new Set([...DEFAULTSCENARIOS, ...user])];
-  },
-
-  buildPlatformMap(raw: string): { host: string; name: string }[] {
-    const user = raw
-      .split('\n')
-      .map((s) => s.trim())
-      .filter(Boolean);
-    const userMappings: { host: string; name: string }[] = [];
-    for (const line of user) {
-      const parts = line.split(/\s+/);
-      if (parts.length >= 2) {
-        let host = parts[0].trim();
-        try {
-          host = new URL(host).hostname;
-        } catch (e) { /* 保持原样 */ }
-        const name = parts.slice(1).join(' ');
-        if (host && name) userMappings.push({ host: host.toLowerCase(), name });
-      }
-    }
-    const map = [...DEFAULT_PLATFORM_MAP];
-    const userHosts = new Set(userMappings.map((m) => m.host));
-    return [...map.filter((m) => !userHosts.has(m.host)), ...userMappings];
-  },
 
   async read() {
     return this._store!.read();

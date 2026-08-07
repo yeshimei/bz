@@ -42,6 +42,11 @@ export class UIManager {
         from { opacity:0; transform: translate(-50%, -40%); }
         to { opacity:1; transform: translate(-50%, -50%); }
       }
+      #review-popup button:hover { background: var(--background-secondary); }
+      @media (max-width: 768px) {
+        #review-popup { animation: none !important; }
+        #review-popup > div:first-child { padding-top: 34px !important; }
+      }
       #review-entries-container::-webkit-scrollbar { width: 6px; }
       #review-entries-container::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
       .review-card { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--background-modifier-border); }
@@ -70,18 +75,21 @@ export class UIManager {
     this.popup = document.createElement('div');
     this.popup.id = 'review-popup';
     Object.assign(this.popup.style, { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'var(--background-primary)', borderRadius: '12px', boxShadow: '0 10px 40px rgba(0,0,0,0.2)', zIndex: '9999', width: '90%', maxWidth: '800px', maxHeight: '80vh', display: 'none', flexDirection: 'column' });
-
+    // 移动端全屏 + 顶部内边距 24px
+    if (window.innerWidth <= 768) {
+      Object.assign(this.popup.style, { top: '0', left: '0', transform: 'none', width: '100%', maxWidth: '100%', maxHeight: '100vh', height: '100vh', borderRadius: '0' });
+    }
     const header = document.createElement('div');
     header.style.cssText = 'padding:16px 24px 8px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;';
     header.innerHTML = `
       <h3 style="margin:0;font-size:18px;font-weight:600;color:var(--text-normal);">复习计划</h3>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <button id="review-btn-add" style="background:none;border:none;cursor:pointer;font-size:14px;padding:4px 0;border-radius:6px;box-shadow:none;color:var(--text-muted);">➕</button>
-        <button id="review-btn-start" style="background:none;border:none;cursor:pointer;font-size:14px;padding:4px 0;border-radius:6px;box-shadow:none;color:var(--text-muted);">▶️</button>
-        <button id="review-btn-search" style="background:none;border:none;cursor:pointer;font-size:14px;padding:4px 0;border-radius:6px;box-shadow:none;color:var(--text-muted);">🔍</button>
-        <button id="review-btn-archive" style="background:none;border:none;cursor:pointer;font-size:14px;padding:4px 0;border-radius:6px;box-shadow:none;color:var(--text-muted);">📁</button>
-        <button id="review-btn-quiz" style="background:none;border:none;cursor:pointer;font-size:14px;padding:4px 0;border-radius:6px;box-shadow:none;color:var(--text-muted);">🎯</button>
-        <button id="review-btn-close" style="background:none;border:none;cursor:pointer;font-size:13px;padding:4px 0;border-radius:6px;box-shadow:none;color:var(--text-muted);">❌</button>
+        <button id="review-btn-add" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">➕</button>
+        <button id="review-btn-start" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">▶️</button>
+        <button id="review-btn-search" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">🔍</button>
+        <button id="review-btn-archive" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">📁</button>
+        <button id="review-btn-quiz" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">🎯</button>
+        <button id="review-btn-close" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0;width:21px;height:25px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">❌</button>
       </div>
     `;
     this.popup.appendChild(header);

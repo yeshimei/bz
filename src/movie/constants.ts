@@ -1,8 +1,6 @@
 /**
  * 影视常量与工具（ticket 14，源码逐字移植）
  */
-import { tryGetSettings } from '../core/settings-provider';
-
 export const STATUS_WANT = 0;
 export const STATUS_WATCHING = 1;
 export const STATUS_WATCHED = 2;
@@ -39,10 +37,4 @@ export function getGroupForTag(tag: string): string | null {
 
 export function getStarRating(rating: number): string {
   return '⭐'.repeat(Math.floor(rating));
-}
-
-/** 影视文件夹路径（供 movie-analysis 复用） */
-export function getMovieFolderPath(): string {
-  const s = tryGetSettings();
-  return (s as any).movieFolderPath || '我的/影视';
 }

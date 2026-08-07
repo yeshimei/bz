@@ -151,23 +151,17 @@ function createHeader() {
   titleContainer.appendChild(title);
 
   const buttonContainer = document.createElement('div');
-  buttonContainer.style.cssText = 'display:flex;align-items:center;gap:12px;';
+  buttonContainer.style.cssText = 'display:flex;align-items:center;gap:8px;';
   const searchButton = createButton('🔍', '搜索日记', () => toggleSearch());
-  searchButton.style.fontSize = '15px';
-  searchButton.style.marginTop = '4px';
   searchButton.style.opacity = '0';
   searchButton.style.pointerEvents = 'none';
 
   const addButton = createButton('✏️', '写日记', () => openAddDialog());
-  addButton.style.fontSize = '15px';
-  addButton.style.marginTop = '4px';
 
   const closeButton = createButton('❌', '关闭', () => {
     state.ui.maskLayer!.style.visibility = 'hidden';
     state.ui.tagFilterPopup!.style.visibility = 'hidden';
   });
-  closeButton.style.fontSize = '13px';
-  closeButton.style.marginTop = '5px';
 
   buttonContainer.appendChild(addButton);
   buttonContainer.appendChild(searchButton);
@@ -183,8 +177,10 @@ function createButton(text: string, title: string, onClick: () => void) {
   const button = document.createElement('button');
   button.textContent = text;
   button.title = title;
+  // 规格：普通 14px/22×26，关闭 ❌ 13px/21×25
+  const isClose = text === '❌';
   button.style.cssText =
-    'background:none;border:none;font-size:28px;cursor:pointer;color:var(--text-muted);padding:0;width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;box-shadow:none;transition:background 0.2s;margin-top:0px;';
+    `background:none;border:none;font-size:${isClose ? 13 : 14}px;cursor:pointer;color:var(--text-muted);padding:0;width:${isClose ? 21 : 22}px;height:${isClose ? 25 : 26}px;border-radius:4px;display:flex;align-items:center;justify-content:center;box-shadow:none;transition:background 0.2s;`;
   button.onmouseover = () => (button.style.background = 'var(--background-secondary)');
   button.onmouseout = () => (button.style.background = 'none');
   button.onclick = onClick;
