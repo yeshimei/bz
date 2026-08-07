@@ -40,3 +40,26 @@
 
 - 子代理写操作被环境全局拦截（权限门）——**只能主会话写盘**；worker 蓝图/代码在 `.pi-subagents/artifacts/*.md`
 - 编辑器注意：src/memo/ui.ts 等大文件 anchor 易 stale，改动用 python 脚本或 replace_text
+
+---
+
+## 2025-08-07 收尾（ticket 20）
+
+**状态：14/20 域完成（闪念按用户指示暂缓，已 stash）**
+
+- ✅ ticket 13 阅读报告 `b0686c9`：stats.ts/report.ts/index.ts + 34 测试（香农多样性/基尼/热力图/21 section）
+- ✅ ticket 14/15 影视+分析 `74e5626`：src/movie/ 7 文件 + src/movie-analysis/ 3 文件 + 58 测试（排序三键/无限滚动/Q3 海报/AI 推荐/48 字段/6 档评分桶）
+- ✅ ticket 16/17 复习+做题 `ae5964c`：FSRS 19 权重/R(1,1)=0.5104/阶梯 10 级/难度弹窗 + QuizManager/三难度生成器 + 40 测试
+- ⏸️ ticket 18 闪念：15 文件 + 2 测试已写（vector-store 二进制格式已修好）→ **git stash flash-wip-ticket18**（用户指示暂缓；恢复：`git stash pop`）
+- ✅ ticket 20 收尾：README 重写、构建产物输出 vault 插件目录（main.js 774KB/manifest/styles.css）、全量 **478 测试 / 46 文件** 通过、tsc 零错误
+
+**全量命令 25 个**（spec 27 = 25 + 闪念 2，闪念命令占位 Notice 保留在 main.ts 注册表）
+
+**关键实现备注**：
+- MockVault 增强：YAML `- item` 列表解析、file parent/extension 通用 basename、workspace.on/getActiveFile、正则放宽 `
+---\s*(?:
+|$)`（无尾随换行兼容）
+- quiz generator：extractJSON 只截对象（源码语义，数组形态 → 报「AI 未返回有效题目数组」）
+- review：阶梯分支 again 不可达 fsrs（源码语义）；nextDiff clamp [0,1]（again→1）
+- flash（stash 内）：MobileBuffer 固定用于 .vec 写入（避免 Node Buffer 池偏移）；meta.json v7 chunks 只存 {text}
+- 停用词表实际长度 29/40（蓝图标注 35/44 有误，以源码字符串为准）
