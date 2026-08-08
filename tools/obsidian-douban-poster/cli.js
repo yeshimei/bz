@@ -40,6 +40,7 @@ function runPm2(args) {
   }
 }
 
+switch (command) {
   case 'watch': {
     const { default: chokidar } = await import('chokidar');
     const { collectMissingPosterNotes, sortByBirthtime, createProcessor } = await import('./watcher.js');
