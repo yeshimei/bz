@@ -2,14 +2,11 @@
  * DOM 工具（Q3.js window.__utils 移植）：notice/injectStyles/longPress/
  * createSiteIcon/createIconBtn/createOverlay——行为与 Q3 逐字一致。
  */
-import { Notice } from 'obsidian';
+import { notice } from './notice';
 
-/** notice(msg, dur)：提示（smartCat 气泡优先，否则 Obsidian Notice） */
-export function notice(msg: string, dur?: number): void {
-  const w = window as any;
-  if (w.smartCat && w.smartCat.showBubble) w.smartCat.showBubble(msg, dur || 3000);
-  else new Notice(msg, dur || 3000);
-}
+/** notice(msg, dur)：统一走自绘通知系统（自动语义归类，ticket 25 替代原生 Notice） */
+export { notice };
+
 
 /** injectStyles(id, css)：style[data-shared-style=id] 幂等注入（已存在跳过） */
 export function injectStyles(id: string, css: string): void {

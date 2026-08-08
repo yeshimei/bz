@@ -1,7 +1,8 @@
 /**
  * 滚轮日期时间选择器（原脚本 2629-3234）。
  */
-import { Notice, moment } from 'obsidian';
+import { moment } from 'obsidian';
+import { notice } from '../../core/notice';
 import { escManager } from '../../core/esc-manager';
 import { parseNaturalTime } from '../parser';
 
@@ -608,7 +609,7 @@ export function createDateTimeControl() {
       updateDisplay(currentMoment);
     } else {
       manualInput.value = hiddenInput.value;
-      new Notice('日期时间格式无效，已恢复');
+      notice('日期时间格式无效，已恢复');
     }
     isManualMode = false;
     manualInput.style.display = 'none';

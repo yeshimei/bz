@@ -1,7 +1,8 @@
 /**
  * 写摘抄命令与命令注册（原脚本 3763-4120）。
  */
-import { MarkdownView, Notice, moment } from 'obsidian';
+import { MarkdownView, moment } from 'obsidian';
+import { notice } from '../../core/notice';
 import { escapeHtml, generateBlockId, sleep } from '../../core/utils';
 import { getApp } from '../app';
 import { parseNaturalTime } from '../parser';
@@ -43,13 +44,13 @@ interface QuoteData {
 async function getSelectedTextAndBlockId(): Promise<QuoteData | null> {
   const activeView = getApp().workspace.getActiveViewOfType(MarkdownView);
   if (!activeView || !(activeView as any).editor) {
-    new Notice('请先打开一个笔记文件');
+    notice('请先打开一个笔记文件');
     return null;
   }
   const editor = (activeView as any).editor;
   const file = activeView.file;
   if (!file) {
-    new Notice('请先打开一个笔记文件');
+    notice('请先打开一个笔记文件');
     return null;
   }
   let rawSelectedText = '';
@@ -66,13 +67,13 @@ async function getSelectedTextAndBlockId(): Promise<QuoteData | null> {
     targetLine = cursor.line;
     rawSelectedText = editor.getLine(targetLine).trim();
     if (!rawSelectedText) {
-      new Notice('当前行没有文字内容');
+      notice('当前行没有文字内容');
       return null;
     }
   }
 
   if (!rawSelectedText) {
-    new Notice('未获取到文字内容');
+    notice('未获取到文字内容');
     return null;
   }
 
@@ -222,12 +223,12 @@ function createQuoteSaveHandler(popup: HTMLElement, mask: HTMLElement, quoteData
   return async function () {
     const datetimeInput = document.getElementById('add-diary-datetime') as HTMLInputElement | null;
     if (!datetimeInput) {
-      new Notice('无法获取日期时间');
+      notice('无法获取日期时间');
       return;
     }
 
     if (!quoteData.wikiLink || quoteData.wikiLink.trim() === '') {
-      new Notice('摘抄内容为空，无法保存');
+      notice('摘抄内容为空，无法保存');
       return;
     }
 
@@ -238,7 +239,7 @@ function createQuoteSaveHandler(popup: HTMLElement, mask: HTMLElement, quoteData
       selTagNames.push((btn as HTMLElement).dataset.tag!);
     });
     if (selTagNames.length === 0) {
-      new Notice('请至少选择一个标签');
+      notice('请至少选择一个标签');
       return;
     }
 
@@ -248,7 +249,7 @@ function createQuoteSaveHandler(popup: HTMLElement, mask: HTMLElement, quoteData
     if (!targetMoment || !targetMoment.isValid()) {
       targetMoment = moment(userInput, 'YYYY-MM-DD HH:mm', true);
       if (!targetMoment.isValid()) {
-        new Notice('日期时间格式不正确');
+        notice('日期时间格式不正确');
         return;
       }
     }
@@ -269,14 +270,14 @@ function createQuoteSaveHandler(popup: HTMLElement, mask: HTMLElement, quoteData
 
       const newEntry = await addEntry(dateStr, timeStr, selTagNames, finalContent);
       if (!newEntry) throw new Error('addEntry 返回空');
-      new Notice('摘抄已保存');
+      notice('✅ 摘抄已保存');
       mask.style.display = 'none';
       popup.style.display = 'none';
       cleanupDialogOverrides(popup, mask, q);
       await jumpToEntry(newEntry, 'edit');
     } catch (error: any) {
       console.error('保存摘抄失败:', error);
-      new Notice('保存摘抄失败: ' + error.message);
+      notice('❌ 保存摘抄失败：' + error.message);
     }
   };
 }
@@ -302,7 +303,7 @@ export async function registerQuoteCommand() {
 
       q.pendingQuoteData = quoteData;
       if (!document.getElementById('add-diary-mask')) {
-        new Notice('日记弹窗未初始化，请先打开日记本');
+        notice('日记弹窗未初始化，请先打开日记本');
         return;
       }
 
@@ -312,7 +313,7 @@ export async function registerQuoteCommand() {
       const mask = document.getElementById('add-diary-mask');
       const popup = document.getElementById('add-diary-popup');
       if (!mask || !popup) {
-        new Notice('无法打开日记弹窗');
+        notice('无法打开日记弹窗');
         q.pendingQuoteData = null;
         return;
       }

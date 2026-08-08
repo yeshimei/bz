@@ -2,7 +2,8 @@
  * 影视 UI（ticket 14 修正版：对齐源码逐字——卡片/overlay/添加/编辑/设置弹窗）
  */
 import type { App, TFile } from 'obsidian';
-import { Notice, Setting } from 'obsidian';
+import { Setting } from 'obsidian';
+import { notice } from '../core/notice';
 import { escManager } from '../core/esc-manager';
 import { checkAndShowChangelog } from '../core/changelog';
 import { formatRelativeTime } from '../core/utils';
@@ -459,11 +460,11 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
   confirmBtn.addEventListener('click', async () => {
     const name = nameInput.value.trim();
     if (!name) {
-      new Notice('请输入名称');
+      notice('请输入名称');
       return;
     }
     if (!selectedTag) {
-      new Notice('请选择类型');
+      notice('请选择类型');
       return;
     }
 
@@ -475,7 +476,7 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
     const filePath = `${targetFolder}/${fileName}`;
     const existingFile = app.vault.getAbstractFileByPath(filePath);
     if (existingFile) {
-      new Notice(`影视“${name}”已存在，正在打开`);
+      notice(`影视「${name}」已存在，正在打开`);
       closeAddModal();
       closeOverlay();
       await app.workspace.getLeaf().openFile(existingFile as TFile);
@@ -488,7 +489,7 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
     else if (selectedStatus === STATUS_WATCHED) {
       const inputRating = parseFloat(ratingInput.value);
       if (isNaN(inputRating) || inputRating <= 0) {
-        new Notice('已看状态请填写大于0的评分');
+        notice('已看状态请填写大于 0 的评分');
         return;
       }
       ratingValue = inputRating;
@@ -513,7 +514,7 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
       refreshDataAndView(app);
       await app.workspace.getLeaf().openFile(newFile);
     } catch (e) {
-      new Notice('创建笔记失败');
+      notice('❌ 创建笔记失败');
       console.error(e);
     }
   });
@@ -749,7 +750,7 @@ export function openEditModal(item: any, app: App): void {
     if (selectedStatus === STATUS_WATCHED) {
       const ratingVal = parseFloat(ratingInput.value);
       if (isNaN(ratingVal) || ratingVal <= 0) {
-        new Notice('已看状态请填写大于0的评分');
+        notice('已看状态请填写大于 0 的评分');
         return;
       }
     }
@@ -782,7 +783,7 @@ export function openEditModal(item: any, app: App): void {
       }
     });
 
-    new Notice('已更新影视信息');
+    notice('✅ 已更新影视信息');
     closeEditModal();
     refreshDataAndView(app);
   });

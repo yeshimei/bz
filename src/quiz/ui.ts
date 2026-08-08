@@ -3,7 +3,7 @@
  * 模块单例 quizUI（复习域联动）。
  */
 import type { App } from 'obsidian';
-import { Notice } from 'obsidian';
+import { notice } from '../core/notice';
 import { escManager } from '../core/esc-manager';
 import { getApp } from '../core/app';
 import { QuizManager, loadActiveItems } from './manager';
@@ -161,7 +161,7 @@ export class QuizMasterUI {
       const notePaths = activeItems.map((i: any) => i.filePath);
       await this.ensureQuestions(notePaths);
     } catch (e: any) {
-      new Notice('❌ 更新题库失败: ' + e.message);
+      notice('❌ 更新题库失败：' + e.message);
       console.error(e);
     }
   }
@@ -256,7 +256,7 @@ export class QuizMasterUI {
     if (this._generating) return;
 
     if (!QuizMasterUI.ai) {
-      new Notice('⚠️ AI 服务未初始化，无法生成题目。请先运行 Q3.js。', 5000);
+      notice('⚠️ AI 服务未配置，无法生成题目', 5000);
       return;
     }
 
@@ -281,14 +281,14 @@ export class QuizMasterUI {
           const file = app.vault.getAbstractFileByPath(notePath);
           if (!file) {
             this.closeLoading();
-            new Notice('笔记文件不存在: ' + notePath, 5000);
+            notice('笔记文件不存在', 5000);
             return;
           }
 
           const content = await app.vault.read(file as any);
           if (!content.trim()) {
             this.closeLoading();
-            new Notice('笔记内容为空，无法生成题目。', 5000);
+            notice('笔记内容为空，无法生成题目', 5000);
             return;
           }
 
@@ -305,14 +305,14 @@ export class QuizMasterUI {
           uncompleted = await this.manager.getUncompletedQuestions(app);
           if (uncompleted.length === 0) {
             this.closeLoading();
-            new Notice('生成题目失败，请重试。', 5000);
+            notice('生成题目失败，请重试', 5000);
             return;
           }
 
           this.closeLoading();
         } catch (e: any) {
           this.closeLoading();
-          new Notice('❌ 生成题目失败: ' + e.message, 5000);
+          notice('❌ 生成题目失败：' + e.message, 5000);
           console.error(e);
           return;
         }
@@ -419,7 +419,7 @@ export class QuizMasterUI {
                 }, 800);
               })
               .catch((e) => {
-                new Notice('删除题目失败: ' + e.message);
+                notice('❌ 删除题目失败：' + e.message);
                 answered = false;
                 optionElements.forEach((b) => b.classList.remove('disabled'));
               });
@@ -481,7 +481,7 @@ export class QuizMasterUI {
               }, 800);
             })
             .catch((e) => {
-              new Notice('删除题目失败: ' + e.message);
+              notice('❌ 删除题目失败：' + e.message);
               answered = false;
               submitBtn.disabled = false;
               optionElements.forEach((b) => b.classList.remove('disabled'));

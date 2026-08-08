@@ -112,6 +112,11 @@ _Avoid_: 设置弹窗（指筛选时）
 
 **changelog**: 各脚本版本更新日志（CHANGELOGS[identifier]），localStorage 记录已读版本（`changelog_<id>_shown_version`），插件化后保留机制。
 
+**通知 (Notification)**: bz 自绘 toast 通知（`src/core/notice.ts`，ADR-0010），替代 Obsidian 原生 Notice 与 Q3 smartCat 气泡。顶部居中 · z-index 10300 · 堆叠上限 5 · 点击关闭。类型 info/success/warning/error/progress 由消息内容自动归类（✅🎉→success、⚠️→warning、❌/失败/错误→error）；动效按类型自动映射（success→pop 打勾、warning/error→shake、info→drop）。支持动态消息（setMessage/setType）、进度条（setProgress，-1 不确定态）、富文本（title + action 按钮）。时长默认 3s、错误 5s、progress 不自动消失。
+_Avoid_: toast、气泡、原生通知、Notice
+
+**通知文案规范**: 成功 `✅ `、失败 `❌ `、警告 `⚠️ ` 前缀统一；中文全角冒号；不带感叹号；完成态动词「已」；不引用技术遗留（Q3.js/QuickAdd）；「错误：」等冗余前缀不写。
+
 ## Rules
 
 - 面板 DOM 的 id/类名与原 QuickAdd 脚本保持一致，外部依赖此约定。

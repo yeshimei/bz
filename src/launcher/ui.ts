@@ -3,7 +3,8 @@
  * 单例：已打开则复用聚焦。长按 0.5s 进编辑模式（iOS 式）；pointer 拖拽 + 推挤落位；
  * 右下角手柄调档位；左上角 × 删除；工具栏 + 添加（命令选择器）/ 完成退出。
  */
-import { getIcon, setIcon, Notice, Platform } from 'obsidian';
+import { getIcon, setIcon, Platform } from 'obsidian';
+import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { getSettings } from '../core/settings-provider';
 import { escManager } from '../core/esc-manager';
@@ -575,7 +576,7 @@ export class LauncherModal {
       return;
     }
     if (isGhost) {
-      new Notice(`命令不存在：${tile.commandId}`, 3000);
+      notice('❌ 命令不存在：' + tile.commandId, 3000);
       return;
     }
     const cmd = this.commandOf(tile);
@@ -585,7 +586,7 @@ export class LauncherModal {
     try {
       this.app.commands.executeCommandById(tile.commandId);
     } catch (e) {
-      new Notice(`命令执行失败：${tile.commandId}`, 3000);
+      notice(`命令执行失败：${tile.commandId}`, 3000);
     }
   }
 
@@ -819,7 +820,7 @@ export class LauncherModal {
         close();
         const others = this.tiles().filter((t) => t.id !== tile.id);
         if (!canPlace(others, tile.x, tile.y, w, h, undefined, this.columns())) {
-          new Notice('当前位置放不下该尺寸', 3000);
+          notice('当前位置放不下该尺寸', 3000);
           return;
         }
         tile.w = w;
@@ -865,7 +866,7 @@ export class LauncherModal {
       desktop: this.data.desktop,
       mobile: this.data.mobile,
     }).catch((e) => {
-      new Notice(`入口页保存失败：${LAUNCHER_PATH}`, 3000);
+      notice(`❌ 入口页保存失败：${LAUNCHER_PATH}`, 3000);
     });
   }
 

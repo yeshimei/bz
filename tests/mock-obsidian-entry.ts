@@ -17,6 +17,31 @@ export class MockNotice {
   }
 }
 
+/**
+ * 通知 DOM 断言辅助（ticket 25：自绘通知替代原生 Notice 后，测试断言通知 DOM）。
+ * getNoticeMessages：当前全部通知正文；hasNotice：精确（string）/模糊（RegExp）匹配；
+ * clearNotices：清空通知 DOM（残留计时器由通知模块自身安全兜底）。
+ */
+export function getNoticeMessages(): string[] {
+  return Array.from(document.querySelectorAll('.bz-notice-msg')).map(
+    (el) => (el as HTMLElement).textContent || ''
+  );
+}
+
+export function hasNotice(msg: string | RegExp): boolean {
+  return getNoticeMessages().some((m) =>
+    typeof msg === 'string' ? m === msg : msg.test(m)
+  );
+}
+
+export function clearNotices(): void {
+  const c = document.getElementById('bz-notice-container');
+  if (c && c.parentNode) c.parentNode.removeChild(c);
+  document.querySelectorAll('.bz-notice').forEach((el) => {
+    if (el.parentNode) el.parentNode.removeChild(el);
+  });
+}
+
 export const mockMarkdownRenderer = {
   render: vi.fn(async () => {}),
 };

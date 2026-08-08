@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks, MockNotice } from '../mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
 import {
   ensureReview, unloadReview, reviewAddCurrent, reviewRemoveCurrent,
   reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, dataManager, uiManager,
@@ -122,7 +122,7 @@ describe('命令分支', () => {
     seed(vault);
     const app = makeApp(vault);
     await reviewAddCurrent(app);
-    expect(MockNotice.instances.some((n) => n.message === '请先打开一个笔记')).toBe(true);
+    expect(hasNotice('请先打开一个笔记')).toBe(true);
   });
 
   it('reviewRemoveCurrent：无文件/不在计划 → Notice', async () => {
@@ -130,11 +130,11 @@ describe('命令分支', () => {
     seed(vault);
     const app = makeApp(vault);
     await reviewRemoveCurrent(app);
-    expect(MockNotice.instances.some((n) => n.message === '请先打开一个笔记')).toBe(true);
-    MockNotice.instances.length = 0;
+    expect(hasNotice('请先打开一个笔记')).toBe(true);
+    clearNotices();
     app.workspace.getActiveFile = () => ({ path: 'C.md', extension: 'md', basename: 'C' });
     await reviewRemoveCurrent(app);
-    expect(MockNotice.instances.some((n) => n.message === '该笔记不在复习计划中')).toBe(true);
+    expect(hasNotice('该笔记不在复习计划中')).toBe(true);
   });
 
   it('reviewMarkDialog：不在计划/completed → Notice；正常 → 难度弹窗', async () => {
@@ -143,9 +143,9 @@ describe('命令分支', () => {
     const app = makeApp(vault);
     app.workspace.getActiveFile = () => ({ path: 'C.md', extension: 'md', basename: 'C' });
     await reviewMarkDialog(app);
-    expect(MockNotice.instances.some((n) => n.message === '该笔记不在复习计划中')).toBe(true);
+    expect(hasNotice('该笔记不在复习计划中')).toBe(true);
 
-    MockNotice.instances.length = 0;
+    clearNotices();
     app.workspace.getActiveFile = () => activeFile;
     const showSpy = vi.spyOn(uiManager!, 'showDifficultyDialog').mockImplementation(() => {});
     await reviewMarkDialog(app);
@@ -157,14 +157,14 @@ describe('命令分支', () => {
     seed(vault);
     const app = makeApp(vault);
     await reviewMarkRating(app, 'good');
-    expect(MockNotice.instances.some((n) => n.message === '请先打开一个笔记')).toBe(true);
+    expect(hasNotice('请先打开一个笔记')).toBe(true);
 
-    MockNotice.instances.length = 0;
+    clearNotices();
     app.workspace.getActiveFile = () => ({ path: 'C.md', extension: 'md', basename: 'C' });
     await reviewMarkRating(app, 'good');
-    expect(MockNotice.instances.some((n) => n.message === '该笔记不在复习计划中')).toBe(true);
+    expect(hasNotice('该笔记不在复习计划中')).toBe(true);
 
-    MockNotice.instances.length = 0;
+    clearNotices();
     app.workspace.getActiveFile = () => activeFile;
     const markSpy = vi.spyOn(reviewApp, 'markReview').mockResolvedValue(undefined);
     const styleSpy = vi.spyOn(reviewApp, 'applyReviewStyles').mockResolvedValue(undefined);

@@ -11,7 +11,7 @@ import { createTagPicker, showTagPicker, updateTags, createAddDialog, openAddDia
 import { createDateTimeControl, syncDateTime, showDateTimePicker } from '../../../src/diary/ui/datetime-picker';
 import { registerQuoteCommand } from '../../../src/diary/ui/quote';
 import { state } from '../../../src/diary/state';
-import { MockNotice, resetObsidianMocks } from '../../mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../../mock-vault';
 import { moment } from 'obsidian';
 
@@ -72,7 +72,7 @@ describe('entries 补测', () => {
     await new Promise((r) => setTimeout(r, 900)); // LONG_PRESS_DURATION=800
     el.dispatchEvent(new MouseEvent('mouseup'));
     await new Promise((r) => setTimeout(r, 10));
-    expect(MockNotice.instances.some((n) => n.message.includes('已复制双链引用'))).toBe(true);
+    expect(hasNotice(/已复制双链引用/)).toBe(true);
   });
 
   it('addLongPress：emoji 类型长按打开标签选择器', async () => {
@@ -89,7 +89,7 @@ describe('entries 补测', () => {
   it('copyLink：生成双链并写剪贴板', async () => {
     const entry = state.data.originalDiaryEntries[0];
     await copyLink(entry.id!);
-    expect(MockNotice.instances.some((n) => n.message.includes('已复制双链引用'))).toBe(true);
+    expect(hasNotice(/已复制双链引用/)).toBe(true);
   });
 
   it('jumpToEntry：日记文件存在时 openLinkText 并隐藏弹窗', async () => {
@@ -102,13 +102,13 @@ describe('entries 补测', () => {
   it('jumpToEntry：文件不存在 → 「找不到日记文件」', async () => {
     const entry = { ...soloEntry(), filename: '2099-12-31' };
     await jumpToEntry(entry);
-    expect(MockNotice.instances.some((n) => n.message === '找不到日记文件')).toBe(true);
+    expect(hasNotice('找不到日记文件')).toBe(true);
   });
 
   it('jumpToEntry：影视条目找不到文件 → 「找不到影视文件」', async () => {
     const entry = { ...soloEntry(), id: 'movie-1', filename: '我的/影视/不存在.md' };
     await jumpToEntry(entry);
-    expect(MockNotice.instances.some((n) => n.message === '找不到影视文件')).toBe(true);
+    expect(hasNotice('找不到影视文件')).toBe(true);
   });
 
   it('cancelEdit：无内容元素直接返回；有元素恢复 contentEditable', () => {
@@ -196,7 +196,7 @@ describe('dialogs 补测', () => {
     await updateTags('nope', []);
     const entry = state.data.originalDiaryEntries[0];
     await updateTags(entry.id!, [...entry.tags]);
-    expect(MockNotice.instances.length).toBe(0);
+    expect(getNoticeMessages().length).toBe(0);
   });
 
   it('updateTags：修改标签写回文件 + 卡片 emoji 更新', async () => {

@@ -7,7 +7,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { initArticleView, applyArticleSettings, applyFilter, renderEmpty } from '../../src/clipping/view';
 import { MockVault } from '../mock-vault';
-import { MockNotice, resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
 
 function makeArticleMd(link: string, site: string, title: string, created: string, extra = '') {
   return `---
@@ -160,7 +160,7 @@ describe('剪藏本面板', () => {
     await vi.advanceTimersByTimeAsync(50);
 
     expect(vault.files.has('我的/文章/A.md')).toBe(false);
-    expect(MockNotice.instances.some((n) => n.message.includes('已删除'))).toBe(true);
+    expect(hasNotice(/已删除/)).toBe(true);
   });
 
   it('滚动到底加载更多（每批固定 20 条 + 已显示所有文章）', async () => {

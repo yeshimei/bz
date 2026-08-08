@@ -7,7 +7,7 @@ import { openBelongingsPanel, addBelongingsItemCommand, showSortModal, cleanupBe
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { MockVault } from '../mock-vault';
-import { MockNotice, resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
 
 function setup(vault: MockVault, settings: any = {}) {
   setApp({ vault, workspace: { getLeaf: () => ({ openFile: vi.fn() }) } } as any);
@@ -67,14 +67,14 @@ describe('校验失败分支', () => {
     // 价格为空
     submit.click();
     await new Promise((r) => setTimeout(r, 10));
-    expect(MockNotice.instances.some((n) => n.message === '请输入有效的价格')).toBe(true);
+    expect(hasNotice('请输入有效的价格')).toBe(true);
     // 价格为负数
-    MockNotice.instances.length = 0;
+    clearNotices();
     const numInput = modal.querySelector('input[type="number"]') as HTMLInputElement;
     numInput.value = '-5';
     submit.click();
     await new Promise((r) => setTimeout(r, 10));
-    expect(MockNotice.instances.some((n) => n.message === '请输入有效的价格')).toBe(true);
+    expect(hasNotice('请输入有效的价格')).toBe(true);
   });
 
   it('日期为空 → 「请选择购买日期」', async () => {
@@ -90,7 +90,7 @@ describe('校验失败分支', () => {
     const submit = [...modal.querySelectorAll('button')].find((b) => b.textContent === '✅ 保存')!;
     submit.click();
     await new Promise((r) => setTimeout(r, 10));
-    expect(MockNotice.instances.some((n) => n.message === '请选择购买日期')).toBe(true);
+    expect(hasNotice('请选择购买日期')).toBe(true);
   });
 
   it('分类为空 → 「请选择或输入分类」', async () => {
@@ -105,7 +105,7 @@ describe('校验失败分支', () => {
     const submit = [...modal.querySelectorAll('button')].find((b) => b.textContent === '✅ 保存')!;
     submit.click();
     await new Promise((r) => setTimeout(r, 10));
-    expect(MockNotice.instances.some((n) => n.message === '请选择或输入分类')).toBe(true);
+    expect(hasNotice('请选择或输入分类')).toBe(true);
   });
 });
 
@@ -168,7 +168,7 @@ describe('编辑保存流程', () => {
     await vi.advanceTimersByTimeAsync(50);
     const data = JSON.parse(vault.files.get('CONFIG/STORAGE/belongings.json')!);
     expect(data.items['item_1'].name).toBe('新键盘名');
-    expect(MockNotice.instances.some((n) => n.message.includes('编辑成功'))).toBe(true);
+    expect(hasNotice(/已更新/)).toBe(true);
   });
 });
 

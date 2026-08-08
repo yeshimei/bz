@@ -4,7 +4,8 @@
  * pw-add-popup/pw-add-* / pw-entry-card / pw-search-container / pw-suggestions。
  * 主密码流程：首次设置（再次输入确认）→ 解锁 → 加密驱动（showPasswordDialog）。
  */
-import { Notice, Setting } from 'obsidian';
+import { Setting } from 'obsidian';
+import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { confirm } from '../core/confirm';
@@ -406,7 +407,7 @@ export class UIManager {
     if (this.popup) this.popup.style.display = 'none';
     if (this.config.securityMode) {
       this.dataManager.lock();
-      new Notice('安全模式：已自动上锁');
+      notice('⏸️ 安全模式：已自动上锁');
     }
   }
 
@@ -420,7 +421,7 @@ export class UIManager {
         await this.dataManager.load();
       }
     } catch (e: any) {
-      new Notice('加载数据失败: ' + e.message);
+      notice('❌ 加载数据失败：' + e.message);
       return;
     }
 
@@ -479,7 +480,7 @@ export class UIManager {
       e.stopPropagation();
       if (item.account) {
         navigator.clipboard.writeText(item.account);
-        new Notice('账号已复制');
+        notice('✅ 账号已复制');
       }
     };
     accountWrapper.appendChild(accountSpan);
@@ -505,7 +506,7 @@ export class UIManager {
       e.stopPropagation();
       if (item.password) {
         navigator.clipboard.writeText(item.password);
-        new Notice('密码已复制');
+        notice('✅ 密码已复制');
       }
     };
 
@@ -544,9 +545,9 @@ export class UIManager {
           try {
             await this.dataManager.deleteItem(item.id);
             await this.renderList();
-            new Notice('已删除');
+            notice('✅ 已删除');
           } catch (e: any) {
-            new Notice('删除失败: ' + e.message);
+            notice('❌ 删除失败：' + e.message);
           }
         });
       }, 500);
@@ -671,12 +672,12 @@ export class UIManager {
       const note = noteTextarea.value.trim();
 
       if (!platform) {
-        new Notice('平台不能为空');
+        notice('平台不能为空');
         platformWrapper.input.focus();
         return;
       }
       if (!account || !password) {
-        new Notice('账号和密码不能为空');
+        notice('账号和密码不能为空');
         return;
       }
       try {
@@ -687,9 +688,9 @@ export class UIManager {
         }
         await this.renderList();
         this.closeAddDialog();
-        new Notice('保存成功');
+        notice('✅ 已保存');
       } catch (e: any) {
-        new Notice('保存失败: ' + e.message);
+        notice('❌ 保存失败：' + e.message);
       }
     };
 
@@ -816,7 +817,7 @@ export class UIManager {
 
   openAddDialog(editItem: PasswordEntry | null = null) {
     if (!this.dataManager.unlocked) {
-      new Notice('请先解锁密码本');
+      notice('请先解锁密码本');
       return;
     }
     if (!this.addMask) this.createAddDialog();
@@ -911,7 +912,7 @@ export class UIManager {
       confirmBtn.onclick = async () => {
         const pw = input.value;
         if (!pw) {
-          new Notice('请输入密码');
+          notice('请输入密码');
           return;
         }
         const fileExists = !!getApp().vault.getAbstractFileByPath(this.dataManager.filePath);
@@ -924,16 +925,16 @@ export class UIManager {
             return;
           } else {
             if (pw !== input2.value) {
-              new Notice('两次密码不一致');
+              notice('两次密码不一致');
               return;
             }
             try {
               await this.dataManager.unlock(pw);
               document.body.removeChild(mask);
               resolve(true);
-              new Notice('密码已设置，数据已加密');
+              notice('✅ 密码已设置，数据已加密');
             } catch (e: any) {
-              new Notice('设置失败: ' + e.message);
+              notice('❌ 设置失败：' + e.message);
               resolve(false);
             }
             return;
@@ -943,9 +944,9 @@ export class UIManager {
           if (success) {
             document.body.removeChild(mask);
             resolve(true);
-            new Notice('解锁成功');
+            notice('✅ 解锁成功');
           } else {
-            new Notice('密码错误，请重试');
+            notice('❌ 密码错误，请重试');
             input.value = '';
             input.focus();
           }
@@ -1070,7 +1071,7 @@ export class PasswordAppController {
 
   addEntry() {
     if (!this.dataManager.unlocked) {
-      new Notice('请先解锁密码本（打开管理器）');
+      notice('请先解锁密码本（打开管理器）');
       return;
     }
     this.uiManager.openAddDialog();
@@ -1081,13 +1082,13 @@ export class PasswordAppController {
     navigator.clipboard
       .writeText(pwd)
       .then(() => {
-        new Notice('密码已复制到剪贴板');
+        notice('✅ 密码已复制到剪贴板');
       })
       .catch(() => {
-        new Notice('复制失败，请手动复制');
+        notice('❌ 复制失败，请手动复制');
       });
     this.uiManager.pendingPassword = pwd;
-    new Notice('密码已暂存，打开“添加条目”时将自动填入');
+    notice('密码已暂存，打开“添加条目”时将自动填入');
   }
 
   /** 卸载清理：移除注入 DOM */

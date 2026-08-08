@@ -2,7 +2,8 @@
  * 复习计划 UI（ticket 16 修正版：对齐源码 UIManager + Renderer，常驻 DOM + display 切换）
  */
 import type { App } from 'obsidian';
-import { Notice, Setting } from 'obsidian';
+import { Setting } from 'obsidian';
+import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { getSettings, saveSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
@@ -122,7 +123,7 @@ export class UIManager {
     header.querySelector('#review-btn-add')!.addEventListener('click', async () => {
       const file = app.workspace.getActiveFile();
       if (!file) {
-        new Notice('请先打开一个笔记');
+        notice('请先打开一个笔记');
         return;
       }
       try {
@@ -131,7 +132,7 @@ export class UIManager {
         await reviewApp.refreshPanel();
         await reviewApp.applyReviewStyles(app);
       } catch (e: any) {
-        new Notice(e.message);
+        notice('❌ 操作失败：' + e.message);
       }
     });
     header.querySelector('#review-btn-start')!.addEventListener('click', async () => {
@@ -396,7 +397,7 @@ export class UIManager {
       if (file) {
         const leaf = app.workspace.getLeaf();
         await leaf.openFile(file as any);
-      } else new Notice('文件已删除');
+      } else notice('✅ 文件已删除');
     };
     card.appendChild(content);
 

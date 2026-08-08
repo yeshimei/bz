@@ -10,7 +10,7 @@ import { openAddDialog, saveNewEntry, showTagPicker, updateTags } from '../../..
 import { showDateTimePicker } from '../../../src/diary/ui/datetime-picker';
 import { escManager } from '../../../src/core/esc-manager';
 import { state } from '../../../src/diary/state';
-import { MockNotice } from '../../mock-obsidian-entry';
+import { getNoticeMessages, hasNotice, clearNotices } from '../../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../../mock-vault';
 import { moment } from 'obsidian';
 import { resetObsidianMocks } from '../../mock-obsidian-entry';
@@ -180,7 +180,7 @@ describe('添加日记弹窗（ticket 07）', () => {
     openAddDialog();
     document.querySelectorAll('#add-diary-type-container .diary-active').forEach((b) => b.classList.remove('diary-active'));
     await saveNewEntry();
-    expect(MockNotice.instances.some((n) => n.message.includes('至少选择一个类型'))).toBe(true);
+    expect(hasNotice(/至少选择一个类型/)).toBe(true);
   });
 });
 

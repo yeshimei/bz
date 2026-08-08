@@ -4,7 +4,8 @@
  * 命令 id 统一 `bz-` 前缀（ADR-0004 修订：2025 用户决策统一品牌前缀），不设置默认快捷键，
  * 卸载时 removeCommand 清理——取代原脚本的 window.__*CommandRegistered 防重标志。
  */
-import { Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { notice } from './core/notice';
 import { escManager } from './core/esc-manager';
 import { setApp, getApp } from './core/app';
 import { setAISettingsProvider, resetAIProviderCache } from './core/ai';
@@ -30,6 +31,8 @@ import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setL
 import { registerGestureListeners } from './launcher/gestures';
 import { ensureAutoSummary } from './auto-summary';
 import { ensureAIAgent, unloadAIAgent } from './ai-agent';
+// 通知系统（ticket 25）
+import { runNotificationDemo } from './core/notice-demo';
 // 日记本（diary-notebook 合并）
 import { setApp as setDiaryApp } from './diary/app';
 import { applyDirectories } from './diary/config';
@@ -81,6 +84,8 @@ const COMMANDS: { id: string; name: string; callback: () => void }[] = [
   // 做题家
   { id: 'bz-quiz-master-update', name: '更新题库', callback: () => quizUpdate(getApp()) },
   { id: 'bz-quiz-master-open', name: '打开做题家', callback: () => quizOpen(getApp()) },
+  // 通知系统（ticket 25，样式演示入口）
+  { id: 'bz-notification-demo', name: '通知样式演示', callback: () => runNotificationDemo() },
   // 闪念
   { id: 'bz-shan-nian-open-reference', name: '闪念：打开参考窗口', callback: () => openFlashReference(getApp()) },
   { id: 'bz-shan-nian-open-chat', name: '闪念：打开 AI 对话', callback: () => openFlashChat(getApp()) },
@@ -255,7 +260,7 @@ export default class BzPlugin extends Plugin {
       .map(([k]) => k)
       .join('、');
     if (custom) {
-      new Notice('bz：检测到旧版独立数据路径设置（' + custom + '），已统一为 CONFIG/STORAGE。请手动迁移对应数据文件。');
+      notice('⚠️ 检测到旧版数据路径设置（' + custom + '），已统一为 CONFIG/STORAGE，请手动迁移对应数据文件。');
     }
   }
 

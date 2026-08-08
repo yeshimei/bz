@@ -2,7 +2,7 @@
  * 影视 AI 推荐（ticket 14，源码 L1419-1650 逐字移植）
  */
 import type { App } from 'obsidian';
-import { Notice } from 'obsidian';
+import { notice } from '../core/notice';
 import { createAI } from '../core/ai';
 import { STATUS_WATCHED, STATUS_WANT } from './constants';
 import { refreshDataAndView } from './data';
@@ -84,7 +84,7 @@ export async function quickAddWant(app: App, name: string, type: string): Promis
   if (!folderObj) await app.vault.createFolder(M.folderPath);
   const filePath = `${M.folderPath}/${`《${name}》`}.md`;
   if (app.vault.getAbstractFileByPath(filePath)) {
-    new Notice(`影视“${name}”已在库中`);
+    notice(`影视「${name}」已在库中`);
     return;
   }
   const now = localNowFormat();
@@ -99,10 +99,10 @@ tags:
 
   try {
     await app.vault.create(filePath, content);
-    new Notice(`✅ 已加入想看：${name}`);
+    notice(`✅ 已加入想看：${name}`);
     refreshDataAndView(app);
   } catch (e) {
-    new Notice('创建笔记失败');
+    notice('❌ 创建笔记失败');
   }
 }
 

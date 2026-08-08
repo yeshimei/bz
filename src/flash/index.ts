@@ -3,7 +3,7 @@
  * 占位骨架：命令入口与幂等初始化已就位，实现随 ticket 18 填充。
  */
 import type { App } from 'obsidian';
-import { Notice } from 'obsidian';
+import { notice } from '../core/notice';
 
 let initialized = false;
 
@@ -15,10 +15,10 @@ export function ensureFlash(app: App): void {
 
 export function openFlashReference(app: App): void {
   ensureFlash(app);
-  new Notice('「闪念」正在迁移中（ticket 18）');
+  notice('「闪念」正在迁移中（ticket 18）');
 }
 
 export function openFlashChat(app: App): void {
   ensureFlash(app);
-  new Notice('「闪念」正在迁移中（ticket 18）');
+  notice('「闪念」正在迁移中（ticket 18）');
 }

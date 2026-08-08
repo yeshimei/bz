@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import BzPlugin, { BzSettingTab } from '../src/main';
 import { MockVault } from './mock-vault';
-import { MockNotice, resetObsidianMocks } from './mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from './mock-obsidian-entry';
 
 /** 构造 mock app（workspace/vault/commands/metadataCache 最小面） */
 function makeMockApp() {
@@ -54,6 +54,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-review-mark-again', 'bz-review-mark-hard', 'bz-review-mark-good', 'bz-review-mark-easy',
   'bz-quiz-master-update', 'bz-quiz-master-open',
   'bz-shan-nian-open-reference', 'bz-shan-nian-open-chat',
+  'bz-notification-demo',
 ];
 
 /** 内存"磁盘"存储：模拟 Obsidian 插件的 data.json 持久层 */
