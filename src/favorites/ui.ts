@@ -2,7 +2,7 @@
  * 收藏本 UI 管理器（ticket 11）：源码 收藏本.js L237-1423 逐字移植。
  */
 import moment from 'moment';
-import { notice } from '../core/dom';
+import { notice, notify } from '../core/notice';
 import { longPress, createIconBtn, injectStyles } from '../core/dom';
 import { confirm } from '../core/confirm';
 import { escManager } from '../core/esc-manager';
@@ -591,6 +591,7 @@ export class UIManager {
       }
     } catch (error) {
       console.error('余额查询失败:', error);
+      notify('⚠️ 余额查询失败', { dedupeKey: 'favorites-balance' });
     }
   }
 
@@ -1205,6 +1206,7 @@ export class UIManager {
           console.warn('初始余额查询失败:', error.message);
           // 保存失败状态，但不阻止保存
           data.balanceError = error.message;
+          notify('⚠️ 余额查询失败', { dedupeKey: 'favorites-balance' });
         }
       }
     }

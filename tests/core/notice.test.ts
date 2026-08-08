@@ -190,4 +190,66 @@ describe('通知系统', () => {
     await vi.advanceTimersByTimeAsync(60000);
     expect(visibleNotices()).toHaveLength(0);
   });
+
+  it('z-index 100000：最顶（盖过 Obsidian 全部 UI 层）+ 移动端安全区适配', () => {
+    notify('层级测试');
+    const container = document.getElementById('bz-notice-container')!;
+    expect(container).not.toBeNull();
+    const css = Array.from(document.querySelectorAll('style')).some(
+      (s) => s.textContent && s.textContent.includes('z-index: 100000')
+    );
+    expect(css).toBe(true);
+    // 移动端适配：顶部安全区 + 宽度 clamp 视口
+    const cssText = Array.from(document.querySelectorAll('style'))
+      .map((s) => s.textContent || '')
+      .join('');
+    expect(cssText).toContain('env(safe-area-inset-top');
+    expect(cssText).toContain('max-width: min(420px, calc(100vw - 24px))');
+    // 移动端断点（项目惯例 max-width: 768px）：顶部 34px
+    expect(cssText).toContain('@media (max-width: 768px)');
+    expect(cssText).toContain('top: calc(34px + env(safe-area-inset-top, 0px))');
+  });
+
+  describe('dedupeKey 去重（30s 窗口）', () => {
+    it('窗口内同键重复 → 不新弹，合并更新消息', () => {
+      const h1 = notify('第一次失败', { dedupeKey: 'test-sync' });
+      const h2 = notify('第二次失败', { dedupeKey: 'test-sync' });
+      expect(visibleNotices()).toHaveLength(1);
+      expect(visibleNotices()[0].querySelector('.bz-notice-msg')!.textContent).toBe('第二次失败');
+      // 返回的 handle 是 no-op，调用安全
+      expect(h1).not.toBe(h2);
+      h2.setMessage('x');
+      h2.setType('success');
+      h2.hide();
+    });
+
+    it('不同键互不影响', () => {
+      notify('A', { dedupeKey: 'key-a' });
+      notify('B', { dedupeKey: 'key-b' });
+      expect(visibleNotices()).toHaveLength(2);
+    });
+
+    it('窗口过后同键 → 重新弹（新通知）', async () => {
+      notify('第一次', { dedupeKey: 'test-window', type: 'progress' });
+      // 30s 窗口内：合并
+      notify('第二次', { dedupeKey: 'test-window', type: 'progress' });
+      expect(visibleNotices()).toHaveLength(1);
+      // 推进 31s：窗口过期
+      await vi.advanceTimersByTimeAsync(31000);
+      notify('第三次', { dedupeKey: 'test-window', type: 'progress' });
+      expect(visibleNotices()).toHaveLength(2);
+    });
+
+    it('同键通知已消失后窗口内重复 → 不新弹', async () => {
+      notify('短暂', { dedupeKey: 'test-gone' });
+      await vi.advanceTimersByTimeAsync(3300); // 3s 自动消失 + 退出动画
+      expect(visibleNotices()).toHaveLength(0);
+      notify('窗口内再触发', { dedupeKey: 'test-gone' });
+      expect(visibleNotices()).toHaveLength(0); // 窗口内不新弹
+      // 窗口过后可再弹
+      await vi.advanceTimersByTimeAsync(30000);
+      notify('窗口后触发', { dedupeKey: 'test-gone' });
+      expect(visibleNotices()).toHaveLength(1);
+    });
+  });
 });
