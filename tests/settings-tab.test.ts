@@ -2,7 +2,7 @@
  * 设置页测试（覆盖 main.ts BzSettingTab）：12 个 tab 渲染 + 控件交互触发保存持久化。
  * 依赖 mock-obsidian-entry 的 Setting 链式 mock（MockDropdown/MockText/MockToggle）。
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import BzPlugin, { BzSettingTab } from '../src/main';
 import { MockVault } from './mock-vault';
 import { resetObsidianMocks } from './mock-obsidian-entry';
@@ -68,6 +68,11 @@ describe('设置页 BzSettingTab', () => {
     tab.display();
   });
 
+  afterEach(() => {
+    // 清理手势监听，防测试间残留
+    if (plugin && plugin.unregisterGestures) plugin.unregisterGestures();
+  });
+
   it('display 渲染 13 个 tab，默认第一个（AI）激活', () => {
     const btns = [...tab.containerEl.querySelectorAll('.bz-tab')];
     expect(btns.map((b) => b.textContent)).toEqual(ALL_TABS);
@@ -87,7 +92,7 @@ describe('设置页 BzSettingTab', () => {
       书库: ['书库文件夹', '书籍识别标签'],
       影视: ['影视文件夹', '每页加载数量'],
       复习计划: ['数据存储路径', '做题决定难度', '题目难度'],
-      入口页: ['网格列数'],
+      入口页: ['网格列数', '双击页面', '连续三击页面', '双指下滑'],
       闪念: ['Ollama URL', 'Embedding 模型', '并发数'],
       'AI Agent': ['启用', '监听文件夹', 'AI 匹配模型'],
     };
@@ -155,6 +160,29 @@ describe('设置页 BzSettingTab', () => {
     const toggle = (el as any).__setting.controls.find((c: any) => typeof c.trigger === 'function');
     await expect(Promise.resolve(toggle.trigger(true))).resolves.toBeUndefined();
     expect(plugin.settings.autoSummaryEnabled).toBe(true);
+  });
+
+  it('入口页 tab：手势开关更新设置并同步手势监听', async () => {
+    clickTab(tab, '入口页');
+    const el = findSetting(tab, '双击页面');
+    const toggle = (el as any).__setting.controls.find((c: any) => typeof c.trigger === 'function' && c.value !== undefined);
+    toggle.trigger(true);
+    await new Promise((r) => setTimeout(r, 10));
+    expect(plugin.settings.gestureDoubleTap).toBe(true);
+    expect(diskData['bz'].gestureDoubleTap).toBe(true);
+    // 开启后 syncGestures 注册监听：双击页面 → 打开入口页
+    const executed: string[] = [];
+    plugin.app.commands.executeCommandById = (id: string) => executed.push(id);
+    document.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    document.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(executed).toEqual(['bz-launcher-open']);
+  });
+
+  it('onload 迁移旧手势 string 设置 → boolean', async () => {
+    diskData['bz'] = { gestureDoubleTap: 'bz-memo-open-panel', gestureTripleTap: 'off' };
+    const p = await createPlugin(makeMockApp());
+    expect(p.settings.gestureDoubleTap).toBe(true); // 旧命令 id → 开启
+    expect(p.settings.gestureTripleTap).toBe(false); // 'off' → 关闭
   });
 
   it('闪念 tab：启用开关触发 ensureFlashOnReady（占位实现不抛错）', async () => {

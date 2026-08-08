@@ -97,6 +97,11 @@ export default class BzPlugin extends Plugin {
 
   async onload() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    // 手势字段类型迁移：旧 string（'off'/命令 id）→ boolean（开启 = 打开入口页）
+    for (const k of ['gestureDoubleTap', 'gestureTripleTap', 'gestureSwipeDown'] as const) {
+      const v = (this.settings as any)[k];
+      if (typeof v === 'string') (this.settings as any)[k] = v !== 'off';
+    }
     setApp(this.app);
     // AI 设置注入（Q3 的 _q3Settings 语义 → 插件设置）
     setAISettingsProvider(() => this.settings);
@@ -191,7 +196,7 @@ export default class BzPlugin extends Plugin {
     await this.saveData(this.settings);
   }
 
-  /** 手势监听同步：按设置重新注册（设置变更/插件加载时调用，幂等） */
+  /** 手势监听同步：按设置重新注册（设置变更/插件加载时调用，幂等）；动作固定为打开入口页 */
   syncGestures(): void {
     if (this.unregisterGestures) {
       this.unregisterGestures();
@@ -199,9 +204,9 @@ export default class BzPlugin extends Plugin {
     }
     const s = this.settings;
     this.unregisterGestures = registerGestureListeners(this.app, {
-      gestureDoubleTap: s.gestureDoubleTap,
-      gestureTripleTap: s.gestureTripleTap,
-      gestureSwipeDown: s.gestureSwipeDown,
+      gestureDoubleTap: s.gestureDoubleTap ? 'bz-launcher-open' : 'off',
+      gestureTripleTap: s.gestureTripleTap ? 'bz-launcher-open' : 'off',
+      gestureSwipeDown: s.gestureSwipeDown ? 'bz-launcher-open' : 'off',
     });
   }
 }
@@ -466,42 +471,22 @@ export class BzSettingTab extends PluginSettingTab {
           await save();
         });
       });
-    // 手势触发：双击 / 连续三击 / 双指下滑 → 绑定命令
-    new Setting(el).setName('手势触发').setDesc('在页面任意位置执行手势时触发绑定命令（默认关闭，避免干扰正常操作）');
-    this.gestureSetting(el, '双击页面', s.gestureDoubleTap, save, (v) => (s.gestureDoubleTap = v));
-    this.gestureSetting(el, '连续三击页面', s.gestureTripleTap, save, (v) => (s.gestureTripleTap = v));
-    this.gestureSetting(el, '双指下滑', '触屏双指下滑或触控板连续向下滚动', s.gestureSwipeDown, save, (v) => (s.gestureSwipeDown = v));
-  }
-
-  /** 手势绑定下拉：off + 常用命令 */
-  private gestureSetting(
-    el: HTMLElement,
-    name: string,
-    value: string,
-    save: () => Promise<void>,
-    apply: (v: string) => void,
-    desc = '触发后执行的命令'
-  ): Setting {
-    const options: [string, string][] = [
-      ['off', '关闭'],
-      ['bz-launcher-open', '打开命令入口页'],
-      ['bz-memo-open-panel', '打开备忘录面板'],
-      ['bz-open-panel', '打开日记本面板'],
-      ['bz-belongings-open-panel', '打开归物本面板'],
-      ['bz-pw-open-manager', '打开密码本'],
-    ];
-    return new Setting(el)
-      .setName(name)
-      .setDesc(desc)
-      .addDropdown((dd) => {
-        for (const [k, label] of options) dd.addOption(k, label);
-        dd.setValue(value || 'off');
-        dd.onChange(async (v) => {
-          apply(v);
-          await save();
-          this.syncGestures(); // 手势监听随设置变更重注册
-        });
-      });
+    // 手势触发：双击 / 连续三击 / 双指下滑 → 打开命令入口页（固定动作）
+    new Setting(el)
+      .setName('手势触发')
+      .setDesc('在页面任意位置执行手势时打开命令入口页（默认关闭，避免干扰正常操作）');
+    this.toggleSetting(el, '双击页面', '双击任意位置 → 打开命令入口页', s.gestureDoubleTap, save, async (v) => {
+      s.gestureDoubleTap = v;
+      this.plugin.syncGestures();
+    });
+    this.toggleSetting(el, '连续三击页面', '快速点击三次 → 打开命令入口页', s.gestureTripleTap, save, async (v) => {
+      s.gestureTripleTap = v;
+      this.plugin.syncGestures();
+    });
+    this.toggleSetting(el, '双指下滑', '触屏双指下滑或触控板连续向下滚动 → 打开命令入口页', s.gestureSwipeDown, save, async (v) => {
+      s.gestureSwipeDown = v;
+      this.plugin.syncGestures();
+    });
   }
 
   // ===== AI Agent =====（笔记同步，懒加载开关 + 同步选项）
