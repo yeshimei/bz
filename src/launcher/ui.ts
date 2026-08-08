@@ -835,8 +835,9 @@ export class LauncherModal {
     this.render();
   }
 
-  /** 添加命令：选中后 1×1 落末尾第一个空位，并进入编辑模式便于摆放 */
+  /** 添加命令：选中后 1×1 落末尾第一个空位，并进入编辑模式便于摆放；命令自带图标 → 默认使用 */
   private addTile(commandId: string): void {
+    const cmd = this.commands.find((c) => c.id === commandId);
     const tile: LauncherTile = {
       id: generateId('lt-'),
       commandId,
@@ -844,6 +845,7 @@ export class LauncherModal {
       y: 0,
       w: 1,
       h: 1,
+      ...(cmd?.icon ? { icon: cmd.icon } : {}),
     };
     this.setTiles(placeAtEnd(this.tiles(), tile, this.columns()));
     this.save();
