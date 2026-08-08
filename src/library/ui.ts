@@ -2,9 +2,13 @@
  * 书库 ui（ticket 12）：主面板/筛选设置/读书笔记弹窗/批注编辑，源码逐字移植。
  * 源码：书库.js L210-1007、L1118-1217
  */
+import { Setting } from 'obsidian';
 import { notice, createIconBtn } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { checkAndShowChangelog } from '../core/changelog';
+import { getSettings, saveSettings } from '../core/settings-provider';
+import { openSettingsModal } from '../core/settings-modal';
+import type BzSettings from '../settings';
 import { getBookItems, sortItemList, formatFileSize, getStatusColors, deriveBookSettings, getSubfolder } from './items';
 import type { BookItem } from './items';
 import { parseBookNotes, jumpToHighlight, updateComment, deleteHighlight } from './notes';
@@ -69,14 +73,53 @@ export function showLibrary(app: any) {
   const reportBtn = createIconBtn('🧮', '打开阅读数据分析报告', () => {
     (app as any).commands.executeCommandById('bz-show-reading-report');
   });
+  // 筛选弹窗（ADR-0009：视图与筛选挂 🔀，⚙️ 只留给真设置）
+  const filterBtn = createIconBtn('🔀', '视图与筛选', () => {
+    openFilterModal(app);
+  });
+  // 书库设置弹窗（ADR-0009 域设置弹窗：文件夹/识别标签/显示开关）
   const settingsBtn = createIconBtn('⚙️', '书库设置', () => {
-    openSettingsModal(app);
+    openSettingsModal({
+      title: '书库设置',
+      build: (el) => {
+        const s = getSettings();
+        const textSetting = (name: string, desc: string, field: keyof BzSettings) =>
+          new Setting(el)
+            .setName(name)
+            .setDesc(desc)
+            .addText((text) =>
+              text.setValue(String((s as any)[field] || '')).onChange(async (v) => {
+                (s as any)[field] = v;
+                await saveSettings();
+              })
+            );
+        const toggleSetting = (name: string, desc: string, field: keyof BzSettings) =>
+          new Setting(el)
+            .setName(name)
+            .setDesc(desc)
+            .addToggle((toggle) =>
+              toggle.setValue(!!(s as any)[field]).onChange(async (v) => {
+                (s as any)[field] = v;
+                await saveSettings();
+              })
+            );
+        textSetting('书库文件夹', '存放书籍笔记的根目录', 'libraryFolderPath');
+        textSetting('读书笔记路径', '长按书籍时打开的读书笔记所在目录', 'libraryNotePath');
+        textSetting('书籍识别标签', 'Frontmatter 中用于识别书籍笔记的标签名', 'bookTag');
+        toggleSetting('显示文件大小', '', 'showFileSize');
+        toggleSetting('显示阅读时长', '', 'showReadingTime');
+        toggleSetting('显示划线数', '', 'showHighlights');
+        toggleSetting('显示想法数', '', 'showThinks');
+        toggleSetting('显示书评摘要', '', 'showReview');
+      },
+    });
   });
 
   const closeBtn = createIconBtn('❌', '关闭', () => (overlay.style.visibility = 'hidden'));
 
   headerButtons.appendChild(reportBtn);
   headerButtons.appendChild(settingsBtn);
+  headerButtons.appendChild(filterBtn);
   headerButtons.appendChild(closeBtn);
   header.appendChild(headerButtons);
 
@@ -302,9 +345,9 @@ export function renderLibraryList(app: any) {
 
 let settingsOverlay: HTMLElement | null = null;
 
-export function openSettingsModal(app: any) {
+export function openFilterModal(app: any) {
   if (settingsOverlay) {
-    closeSettingsModal();
+    closeFilterModal();
     return;
   }
 
@@ -333,7 +376,7 @@ export function openSettingsModal(app: any) {
   closeBtn.textContent = '✕';
   closeBtn.style.cssText =
     'background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);';
-  closeBtn.addEventListener('click', closeSettingsModal);
+  closeBtn.addEventListener('click', closeFilterModal);
   header.appendChild(closeBtn);
 
   const content = document.createElement('div');
@@ -448,15 +491,15 @@ export function openSettingsModal(app: any) {
   modal.appendChild(content);
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
-  escManager.register('lib', { isVisible: () => overlay.isConnected, close: () => closeSettingsModal() });
+  escManager.register('lib', { isVisible: () => overlay.isConnected, close: () => closeFilterModal() });
   settingsOverlay = overlay;
 
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) closeSettingsModal();
+    if (e.target === overlay) closeFilterModal();
   });
 }
 
-export function closeSettingsModal() {
+export function closeFilterModal() {
   if (settingsOverlay) {
     settingsOverlay.remove();
     settingsOverlay = null;

@@ -7,6 +7,7 @@ import { longPress, createIconBtn, injectStyles } from '../core/dom';
 import { confirm } from '../core/confirm';
 import { escManager } from '../core/esc-manager';
 import { getApp } from '../core/app';
+import { openSettingsModal } from '../core/settings-modal';
 import { CONFIG } from './config';
 import { BalanceService, FavoritesAIService } from './ai';
 import type { DataManager } from './data';
@@ -160,6 +161,19 @@ export class UIManager {
     // 添加按钮（✏️）
     const addBtn = this._createButton('✏️', '添加收藏', () => this._showAddDialog());
     actionGroup.appendChild(addBtn);
+
+    // 设置弹窗（ADR-0009：收藏本无行为设置，空弹窗）
+    const settingsBtn = this._createButton('⚙️', '收藏本设置', () => {
+      openSettingsModal({
+        title: '收藏本设置',
+        build: () => {
+          /* 收藏本无行为设置项（数据路径已全局化） */
+        },
+        emptyText: '收藏本没有可配置的设置项',
+        emptyDesc: '数据文件路径由全局设置「数据存储路径」统一管理',
+      });
+    });
+    actionGroup.appendChild(settingsBtn);
 
     // 搜索切换按钮（🔍）
     this.searchToggleBtn = this._createButton('🔍', '搜索', () => {

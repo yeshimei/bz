@@ -8,7 +8,7 @@ import { M, resetMovieState, setHomeFilmStatus } from '../../src/movie/state';
 import { rebuildItems } from '../../src/movie/data';
 import {
   renderAll, renderList, setupInfiniteScroll, toggleSearch, closeOverlay,
-  openAddModal, openEditModal, openSettingsModal, createOverlay, registerEscapeHandler,
+  openAddModal, openEditModal, openFilterModal, closeFilterModal, createOverlay, registerEscapeHandler,
 } from '../../src/movie/ui';
 import { escManager } from '../../src/core/esc-manager';
 import { openMovieManager, ensureMovie, unloadMovie } from '../../src/movie/index';
@@ -151,7 +151,7 @@ describe('设置弹窗筛选', () => {
 
   it('筛选/排序按钮组实时生效（类型单标签/状态/排序）', () => {
     createOverlay(M.appRef as any);
-    openSettingsModal();
+    openFilterModal();
     const overlay = M.settingsOverlay!;
     const buttons = [...overlay.querySelectorAll('button')];
     const typeBtn = buttons.find((b) => b.textContent === '美剧')!;
@@ -237,12 +237,32 @@ describe('ESC 层级', () => {
 
   it('settings 优先于 currentOverlay 关闭', () => {
     createOverlay(M.appRef as any);
-    openSettingsModal();
+    openFilterModal();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(M.settingsOverlay).toBeNull();
     expect(M.currentOverlay).not.toBeNull();
     expect(M.settingsOverlay).toBeNull();
     expect(M.currentOverlay).not.toBeNull();
+  });
+
+  it('⚙️ 打开真设置弹窗（影视文件夹/每页加载数量/海报抓取提示）；🔀 为筛选弹窗', () => {
+    setSettingsProvider(() => ({ movieFolderPath: '我的/影视', moviePageSize: '20' }));
+    createOverlay(M.appRef as any);
+    // 🔀 筛选弹窗（原 ⚙️ 语义，ADR-0009）
+    const filterBtn = [...document.querySelectorAll('button')].find((b) => b.title === '筛选与排序')!;
+    expect(filterBtn.textContent).toBe('🔀');
+    filterBtn.click();
+    expect(M.settingsOverlay).not.toBeNull();
+    closeFilterModal();
+    // ⚙️ 真设置弹窗
+    const settingsBtn = [...document.querySelectorAll('button')].find((b) => b.title === '影视设置')!;
+    settingsBtn.click();
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    expect(popup.textContent).toContain('影视设置');
+    const names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    expect(names).toContain('影视文件夹');
+    expect(names).toContain('每页加载数量');
+    expect(names).toContain('海报抓取');
   });
 });
 

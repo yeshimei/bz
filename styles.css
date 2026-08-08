@@ -510,6 +510,18 @@
     background: var(--background-primary) !important;
 }
 /* ===== 设置页顶部分页（参考 obsidian-linter 设置页） ===== */
+/* 设置区块标题（ADR-0009 单页平铺：🤖 AI / 📂 数据存储路径） */
+.bz-setting-section-title {
+    margin: 20px 0 10px;
+    font-size: 1.15em;
+    font-weight: 700;
+    color: var(--text-normal);
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+.bz-setting-section-title:first-child {
+    margin-top: 0;
+}
 .bz-setting-header {
     margin-bottom: 12px;
     overflow-x: auto;

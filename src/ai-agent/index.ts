@@ -24,17 +24,17 @@ import {
 } from './sync';
 import { showClipConfirmDialog } from './dialog';
 
-/** 备忘录数据文件路径（与 bz DataManager 同源：todoFilePath 目录 + memo.json） */
+/** 备忘录数据文件路径（ADR-0009：storagePath 优先，旧 todoFilePath 兼容兜底） */
 function getMemoPath(): string {
   const s = tryGetSettings() as any;
-  const folder = ((s && s.todoFilePath) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
+  const folder = ((s && (s.storagePath || s.todoFilePath)) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
   return folder + '/memo.json';
 }
 
-/** 收藏本数据文件路径（设置只允许改目录，文件名固定 favorites.json） */
+/** 收藏本数据文件路径（ADR-0009：storagePath 优先，旧字段兼容兜底） */
 function getFavoritesPath(): string {
   const s = tryGetSettings() as any;
-  return getStoragePath(s && s.favoritesStoragePath);
+  return getStoragePath(s && (s.storagePath || s.favoritesStoragePath));
 }
 const AI_MODEL = 'deepseek-v4-flash'; // 默认模型（设置 aiAgentModel 可配）
 

@@ -14,8 +14,12 @@ export default interface BzSettings {
   /** 🔑 OpenCode Go API Key */
   opencodeGoApiKey: string;
 
+  // ===== 📂 数据存储路径（ADR-0009 共享数据路径）=====
+  /** 共享 JSON 数据目录（memo/belongings/passwords/favorites/review/quiz/闪念 meta+vec 统一存放） */
+  storagePath: string;
+
   // ===== 📝 备忘录（2 项；showFileName 固定显示，不暴露设置）=====
-  /** 📂 备忘录数据文件路径（memo.json 所在目录） */
+  /** 📂 备忘录数据文件路径（memo.json 所在目录）——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
   todoFilePath: string;
   /** 📄 显示文件名（固定 true，不暴露设置） */
   showFileName: boolean;
@@ -36,8 +40,8 @@ export default interface BzSettings {
   /** 📄 每批加载数量（滚动加载每批显示的条目数） */
   diaryBatchSize: string;
 
-  // ===== 📦 归物本（1 项）=====
-  /** 📁 存储文件夹路径（belongings.json） */
+  // ===== 📦 归物本（1 项，ADR-0009 废弃）=====
+  /** 📁 存储文件夹路径（belongings.json）——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
   belongingsDataFolder: string;
 
   // ===== 📰 剪藏本（2 项 + 自动摘要开关）=====
@@ -49,7 +53,7 @@ export default interface BzSettings {
   autoSummaryEnabled: boolean;
 
   // ===== 🔐 密码本（4 项）=====
-  /** 📂 数据存储路径 */
+  /** 📂 数据存储路径——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
   pwStoragePath: string;
   /** 🔤 密码生成字符集 */
   passwordCharset: string;
@@ -58,8 +62,8 @@ export default interface BzSettings {
   /** 🔒 安全模式（关闭列表窗口立即自动上锁） */
   securityMode: boolean;
 
-  // ===== ⭐ 收藏本（1 项）=====
-  /** 📂 数据存储目录（文件名固定 favorites.json，只允许改目录） */
+  // ===== ⭐ 收藏本（1 项，ADR-0009 废弃）=====
+  /** 📂 数据存储目录（文件名固定 favorites.json，只允许改目录）——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
   favoritesStoragePath: string;
 
   // ===== 📚 书库（9 项）=====
@@ -100,7 +104,7 @@ export default interface BzSettings {
   difficulty: string;
 
   // ===== 🔁 复习计划 + 做题家（合并 tab；quiz/review 共用数据路径）=====
-  /** 数据存储路径（review.json / quiz.json 所在目录） */
+  /** 数据存储路径（review.json / quiz.json 所在目录）——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
   reviewStoragePath: string;
   /** ⏱️ 检查间隔（秒） */
   autoCheckInterval: string;
@@ -126,9 +130,9 @@ export default interface BzSettings {
   OLLAMA_URL: string;
   /** Embedding 模型 */
   EMBEDDING_MODEL: string;
-  /** 元数据路径（meta.json） */
+  /** 元数据路径（meta.json）——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
   META_PATH: string;
-  /** 向量文件路径（vectors.vec） */
+  /** 向量文件路径（vectors.vec）——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
   VEC_PATH: string;
   /** 参考结果数 */
   TOP_K: string;
@@ -158,6 +162,7 @@ export default interface BzSettings {
   OLLAMA_REMOTE_URL: string;
 
   // ===== 常驻监听开关（懒加载架构，ADR-0003）=====
+  // AI Agent 4 项（ADR-0009）：设置不暴露 UI，运行时读字段（默认值兜底，尊重旧 data.json 值）
   /** AI Agent：笔记 rename/delete/create 同步 */
   aiAgentEnabled: boolean;
   /** 🤖 AI 剪藏匹配：开启后剪藏未命中时用 AI 判断并弹窗批准 */
@@ -175,6 +180,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
   aiProvider: 'opencode-go',
   deepseekApiKey: '',
   opencodeGoApiKey: '',
+
+  // 共享数据路径（ADR-0009）
+  storagePath: 'CONFIG/STORAGE',
 
   // 备忘录
   todoFilePath: 'CONFIG/STORAGE',

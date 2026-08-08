@@ -9,9 +9,10 @@ import { getSettings } from '../core/settings-provider';
 import { DEFAULT_CATEGORIES } from './default-categories.gen';
 import type { BelongingsDatabase } from './types';
 
-/** 数据文件路径（设置 dataFolder + belongings.json） */
+/** 数据文件路径（ADR-0009：storagePath 优先，旧 dataFolder 兼容兜底） */
 export function getDataFilePath(): string {
-  const folder = (getSettings().belongingsDataFolder || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
+  const s = getSettings() as any;
+  const folder = ((s.storagePath || s.belongingsDataFolder) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
   return `${folder}/belongings.json`;
 }
 

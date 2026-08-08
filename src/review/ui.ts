@@ -2,8 +2,10 @@
  * 复习计划 UI（ticket 16 修正版：对齐源码 UIManager + Renderer，常驻 DOM + display 切换）
  */
 import type { App } from 'obsidian';
-import { Notice } from 'obsidian';
+import { Notice, Setting } from 'obsidian';
 import { getApp } from '../core/app';
+import { getSettings, saveSettings } from '../core/settings-provider';
+import { openSettingsModal } from '../core/settings-modal';
 import { FSRS, FSRS_FIRST_TEXTS, LADDER_MAX, TOTAL_STAGES } from './fsrs';
 import type { Rating } from './fsrs';
 import type { ReviewItem } from './data';
@@ -89,6 +91,7 @@ export class UIManager {
         <button id="review-btn-search" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">🔍</button>
         <button id="review-btn-archive" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">📁</button>
         <button id="review-btn-quiz" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">🎯</button>
+        <button id="review-btn-settings" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">⚙️</button>
         <button id="review-btn-close" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0;width:21px;height:25px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">❌</button>
       </div>
     `;
@@ -154,6 +157,83 @@ export class UIManager {
     });
     header.querySelector('#review-btn-quiz')!.addEventListener('click', () => {
       (app as any).commands?.executeCommandById?.('bz-quiz-master-open');
+    });
+    // 复习计划设置弹窗（ADR-0009：检查间隔/逾期通知 + 做题家 5 项）
+    header.querySelector('#review-btn-settings')!.addEventListener('click', () => {
+      openSettingsModal({
+        title: '复习计划设置',
+        build: (el) => {
+          const s = getSettings();
+          new Setting(el)
+            .setName('检查间隔（秒）')
+            .setDesc('逾期检查间隔，单位秒')
+            .addText((text) =>
+              text.setValue(s.autoCheckInterval || '').onChange(async (v) => {
+                s.autoCheckInterval = v;
+                await saveSettings();
+              })
+            );
+          new Setting(el)
+            .setName('启用逾期通知')
+            .setDesc('是否在逾期时弹出通知')
+            .addToggle((toggle) =>
+              toggle.setValue(!!s.enableAutoNotify).onChange(async (v) => {
+                s.enableAutoNotify = v;
+                await saveSettings();
+              })
+            );
+          new Setting(el)
+            .setName('做题决定难度')
+            .setDesc('开启后，点击复习自动做题，根据正确率自动选择难度')
+            .addToggle((toggle) =>
+              toggle.setValue(!!s.forceQuizForReview).onChange(async (v) => {
+                s.forceQuizForReview = v;
+                await saveSettings();
+              })
+            );
+          new Setting(el)
+            .setName('允许多选题')
+            .setDesc('若关闭，AI 只生成单选题')
+            .addToggle((toggle) =>
+              toggle.setValue(!!s.enableMultipleChoice).onChange(async (v) => {
+                s.enableMultipleChoice = v;
+                await saveSettings();
+              })
+            );
+          new Setting(el)
+            .setName('每笔记题目数量（0为自动）')
+            .setDesc('设为0则由AI决定，设为正整数则固定数量')
+            .addText((text) =>
+              text.setValue(s.questionsPerNote || '').onChange(async (v) => {
+                s.questionsPerNote = v;
+                await saveSettings();
+              })
+            );
+          new Setting(el)
+            .setName('打乱题目顺序')
+            .setDesc('每次打开做题窗口时是否随机打乱题目')
+            .addToggle((toggle) =>
+              toggle.setValue(!!s.shuffleQuestions).onChange(async (v) => {
+                s.shuffleQuestions = v;
+                await saveSettings();
+              })
+            );
+          new Setting(el)
+            .setName('题目难度')
+            .setDesc('生成题目时的难度等级')
+            .addDropdown((dd) => {
+              dd.addOption('random', '随机');
+              dd.addOption('easy', '简单');
+              dd.addOption('medium', '中等');
+              dd.addOption('hard', '困难');
+              dd.setValue(s.difficulty || 'random');
+              dd.onChange(async (v) => {
+                s.difficulty = v;
+                await saveSettings();
+              });
+            });
+        },
+      });
     });
     header.querySelector('#review-btn-close')!.addEventListener('click', () => this.hideMain());
     this.mask.onclick = () => this.hideMain();

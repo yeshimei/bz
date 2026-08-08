@@ -4,11 +4,11 @@
  * 命令 id 统一 `bz-` 前缀（ADR-0004 修订：2025 用户决策统一品牌前缀），不设置默认快捷键，
  * 卸载时 removeCommand 清理——取代原脚本的 window.__*CommandRegistered 防重标志。
  */
-import { Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 import { escManager } from './core/esc-manager';
 import { setApp, getApp } from './core/app';
 import { setAISettingsProvider, resetAIProviderCache } from './core/ai';
-import { setSettingsProvider } from './core/settings-provider';
+import { setSettingsProvider, setSettingsSaver } from './core/settings-provider';
 import { setBzSettingsProvider, unloadBz, ensureBz } from './bz';
 
 import BzSettings, { DEFAULT_SETTINGS } from './settings';
@@ -98,7 +98,10 @@ export default class BzPlugin extends Plugin {
   private unregisterGestures: (() => void) | null = null;
 
   async onload() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const loaded = await this.loadData();
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
+    // ADR-0009 迁移：共享数据路径 storagePath 初始化（旧 7 字段废弃仅兼容保留）
+    if (!loaded || loaded.storagePath === undefined) this.migrateStoragePath();
     // 手势设置迁移：旧 gestureDoubleTap/TripleTap/SwipeDown（string 'off'/命令 id 或 boolean）→ launcherGesture 单选
     const old = this.settings as any;
     const hasOldGesture =
@@ -126,6 +129,8 @@ export default class BzPlugin extends Plugin {
     resetAIProviderCache();
     // 通用设置访问器（各域经 getSettings 读取）
     setSettingsProvider(() => this.settings);
+    // 设置保存通道（域设置弹窗写回后持久化）
+    setSettingsSaver(() => this.saveSettings());
     // 入口页：右上角文字开关写回设置（编辑模式右上角切换）
     setLauncherShowTextSetter((v) => {
       this.settings.launcherShowText = v;
@@ -224,6 +229,34 @@ export default class BzPlugin extends Plugin {
     await this.saveData(this.settings);
   }
 
+  /** ADR-0009 迁移：旧 7 个 JSON 路径字段初始化 storagePath（全同 → seed；参差 → 默认 + Notice 列出被忽略路径） */
+  migrateStoragePath(): void {
+    const dirOf = (v: string) => (v || '').trim().replace(/\/+$/, '');
+    const fileDir = (v: string, file: string) => dirOf(v).replace(new RegExp('/' + file + '$'), '');
+    const oldPaths: Array<[string, string]> = [
+      ['todoFilePath', dirOf(this.settings.todoFilePath)],
+      ['belongingsDataFolder', dirOf(this.settings.belongingsDataFolder)],
+      ['pwStoragePath', dirOf(this.settings.pwStoragePath)],
+      ['favoritesStoragePath', dirOf(this.settings.favoritesStoragePath)],
+      ['reviewStoragePath', dirOf(this.settings.reviewStoragePath)],
+      ['META_PATH', fileDir(this.settings.META_PATH, 'ai_completion_meta.json')],
+      ['VEC_PATH', fileDir(this.settings.VEC_PATH, 'ai_completion_vectors.vec')],
+    ];
+    const vals = oldPaths.map(([, v]) => v || 'CONFIG/STORAGE');
+    if (vals.every((v) => v === vals[0])) {
+      this.settings.storagePath = vals[0] || 'CONFIG/STORAGE';
+      return;
+    }
+    this.settings.storagePath = 'CONFIG/STORAGE';
+    const custom = oldPaths
+      .filter(([, v]) => v && v !== 'CONFIG/STORAGE')
+      .map(([k]) => k)
+      .join('、');
+    if (custom) {
+      new Notice('bz：检测到旧版独立数据路径设置（' + custom + '），已统一为 CONFIG/STORAGE。请手动迁移对应数据文件。');
+    }
+  }
+
   /** 手势监听同步：按设置单选手势注册（设置变更/插件加载时调用，幂等）；动作固定为打开入口页 */
   syncGestures(): void {
     if (this.unregisterGestures) {
@@ -249,7 +282,7 @@ function ensureFlashOnReady(app: any) {
   }, 0);
 }
 
-// ===== 设置页 =====
+// ===== 设置页（ADR-0009：单页平铺，只含「🤖 AI」「📂 数据存储路径」两区块）=====
 
 export class BzSettingTab extends PluginSettingTab {
   plugin: BzPlugin;
@@ -267,46 +300,8 @@ export class BzSettingTab extends PluginSettingTab {
       await this.plugin.saveSettings();
     };
 
-    // 顶部分页（参考 obsidian-linter 设置页：tab 组 + 分区内容）
-    const tabs: { id: string; label: string; build: (el: HTMLElement) => void }[] = [
-      { id: 'ai', label: 'AI', build: (el) => this.buildAiTab(el, s, save) },
-      { id: 'bz', label: '备忘录', build: (el) => this.buildMemoTab(el, s, save) },
-      { id: 'diary', label: '日记本', build: (el) => this.buildDiaryTab(el, s, save) },
-      { id: 'belongings', label: '归物本', build: (el) => this.buildBelongingsTab(el, s, save) },
-      { id: 'clipping', label: '剪藏本', build: (el) => this.buildClippingTab(el, s, save) },
-      { id: 'password', label: '密码本', build: (el) => this.buildPasswordTab(el, s, save) },
-      { id: 'favorites', label: '收藏本', build: (el) => this.buildFavoritesTab(el, s, save) },
-      { id: 'library', label: '书库', build: (el) => this.buildLibraryTab(el, s, save) },
-      { id: 'movie', label: '影视', build: (el) => this.buildMovieTab(el, s, save) },
-      { id: 'review', label: '复习计划', build: (el) => this.buildReviewTab(el, s, save) },
-      { id: 'ai-agent', label: 'AI Agent', build: (el) => this.buildAIAgentTab(el, s, save) },
-      { id: 'flash', label: '闪念', build: (el) => this.buildFlashTab(el, s, save) },
-    ];
-
-    const header = containerEl.createDiv({ cls: 'bz-setting-header' });
-    const tabGroup = header.createDiv({ cls: 'bz-tab-group' });
-    const contentWrap = containerEl.createDiv({ cls: 'bz-setting-content' });
-
-    const buttons: HTMLElement[] = [];
-    const contents: HTMLElement[] = [];
-    for (const t of tabs) {
-      const btn = tabGroup.createDiv({ cls: 'bz-tab', text: t.label });
-      const content = contentWrap.createDiv({ cls: 'bz-tab-content' });
-      t.build(content);
-      btn.addEventListener('click', () => {
-        buttons.forEach((b, i) => b.toggleClass('bz-tab-active', b === btn));
-        contents.forEach((c, i) => c.toggleClass('bz-tab-content-active', c === content));
-      });
-      buttons.push(btn);
-      contents.push(content);
-    }
-    // 默认显示第一个 tab（AI）
-    buttons[0].addClass('bz-tab-active');
-    contents[0].addClass('bz-tab-content-active');
-  }
-
-  // ===== AI =====（服务商下拉 + 动态显示对应 API Key）
-  private buildAiTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
+    // 🤖 AI 区块：服务商下拉 + 动态显示对应 API Key
+    containerEl.createDiv({ cls: 'bz-setting-section-title', text: '🤖 AI' });
     let deepseekRow: Setting | null = null;
     let opencodeRow: Setting | null = null;
     const refreshKeys = () => {
@@ -314,7 +309,7 @@ export class BzSettingTab extends PluginSettingTab {
       if (deepseekRow) deepseekRow.settingEl.toggleClass('bz-setting-hidden', !isDeepseek);
       if (opencodeRow) opencodeRow.settingEl.toggleClass('bz-setting-hidden', isDeepseek);
     };
-    new Setting(el)
+    new Setting(containerEl)
       .setName('AI 服务商')
       .setDesc('选择 AI 服务商，切换后显示对应的 API Key 配置')
       .addDropdown((dd) => {
@@ -327,7 +322,7 @@ export class BzSettingTab extends PluginSettingTab {
           await save();
         });
       });
-    deepseekRow = new Setting(el)
+    deepseekRow = new Setting(containerEl)
       .setName('DeepSeek API Key')
       .setDesc('留空则回退读取 QuickAdd data.json 里的 key')
       .addText((text) =>
@@ -338,7 +333,7 @@ export class BzSettingTab extends PluginSettingTab {
             await save();
           })
       );
-    opencodeRow = new Setting(el)
+    opencodeRow = new Setting(containerEl)
       .setName('OpenCode Go API Key')
       .setDesc('从 opencode.ai/zen 订阅后获取')
       .addText((text) =>
@@ -350,153 +345,18 @@ export class BzSettingTab extends PluginSettingTab {
           })
       );
     refreshKeys();
-  }
 
-  // ===== 备忘录 =====（场景/平台映射设置已移除；显示文件名固定开启不暴露）
-  private buildMemoTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
-    this.textSetting(el, '备忘录数据文件路径', '存放 memo.json 的目录', s.todoFilePath, save, (v) => (s.todoFilePath = v));
-    this.toggleSetting(el, '启动时自动弹窗', '启动时自动弹出备忘录面板（有重要备忘录时）', s.autoPopupOnStart, save, (v) => (s.autoPopupOnStart = v));
-  }
-
-  // ===== 日记本 =====（长按手势固定启用；每批加载数量可配）
-  private buildDiaryTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
-    this.textSetting(el, '日记目录', '存放日记 markdown 文件的文件夹路径', s.diaryDirectory, save, (v) => (s.diaryDirectory = v));
-    this.textSetting(el, '影视目录', '存放影视笔记的文件夹路径（日记本用）', s.movieDirectory, save, (v) => (s.movieDirectory = v));
-    this.textSetting(el, '信目录', '存放信件的文件夹路径', s.letterDirectory, save, (v) => (s.letterDirectory = v));
-    this.textSetting(el, '每批加载数量', '滚动加载时每批显示的条目数', s.diaryBatchSize, save, (v) => (s.diaryBatchSize = v));
-    this.toggleSetting(el, '显示标签计数', '在标签按钮上显示该标签包含的条目数量', s.showTagCount, save, (v) => (s.showTagCount = v));
-    this.toggleSetting(el, '使用文件日期作为默认日期', '开启后，添加日记时默认日期取自当前打开的日记文件的日期（若为日记文件）；关闭则使用当前时间', s.useFileDateTime, save, (v) => (s.useFileDateTime = v));
-  }
-
-  // ===== 归物本 =====（自定义分类设置已移除）
-  private buildBelongingsTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
-    this.textSetting(el, '存储文件夹路径', '存放 belongings.json 的文件夹', s.belongingsDataFolder, save, (v) => (s.belongingsDataFolder = v));
-  }
-
-  // ===== 剪藏本 =====（长按识别时长固定默认；自动摘要开关并入本 tab）
-  private buildClippingTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
-    this.textSetting(el, '剪藏目录', '存放网页剪藏 markdown 文件的文件夹', s.articleDirectory, save, (v) => (s.articleDirectory = v));
-    this.textSetting(el, '每批加载数量', '滚动加载时每批显示的条目数', s.articleBatchSize, save, (v) => (s.articleBatchSize = v));
-    this.toggleSetting(el, '自动摘要', '监听剪藏目录新文件，AI 生成摘要写回 frontmatter（路径与剪藏目录一致）', s.autoSummaryEnabled, save, async (v) => {
-      s.autoSummaryEnabled = v;
-      if (v) ensureAutoSummary(this.plugin.app);
-    });
-  }
-
-  // ===== 密码本 =====
-  private buildPasswordTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
-    this.textSetting(el, '数据存储路径', '存放加密密码数据文件的目录', s.pwStoragePath, save, (v) => (s.pwStoragePath = v));
-    this.textSetting(el, '密码生成字符集', '随机生成密码时使用的字符集', s.passwordCharset, save, (v) => (s.passwordCharset = v));
-    this.textSetting(el, '密码生成长度', '随机生成密码的长度（数字）', s.passwordLength, save, (v) => (s.passwordLength = v));
-    this.toggleSetting(el, '安全模式', '开启后，关闭列表窗口立即自动上锁', s.securityMode, save, (v) => (s.securityMode = v));
-  }
-
-  // ===== 收藏本 =====
-  private buildFavoritesTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
-    this.textSetting(el, '数据存储路径', '存放 favorites.json 的目录（文件名固定，不可修改）', s.favoritesStoragePath, save, (v) => (s.favoritesStoragePath = v));
-  }
-
-  // ===== 书库 =====
-  private buildLibraryTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
-    this.textSetting(el, '书库文件夹', '存放书籍笔记的根目录', s.libraryFolderPath, save, (v) => (s.libraryFolderPath = v));
-    this.textSetting(el, '读书笔记路径', '长按书籍时打开的读书笔记所在目录', s.libraryNotePath, save, (v) => (s.libraryNotePath = v));
-    this.textSetting(el, '书籍识别标签', 'Frontmatter 中用于识别书籍笔记的标签名', s.bookTag, save, (v) => (s.bookTag = v));
-    this.toggleSetting(el, '显示文件大小', '', s.showFileSize, save, (v) => (s.showFileSize = v));
-    this.toggleSetting(el, '显示阅读时长', '', s.showReadingTime, save, (v) => (s.showReadingTime = v));
-    this.toggleSetting(el, '显示划线数', '', s.showHighlights, save, (v) => (s.showHighlights = v));
-    this.toggleSetting(el, '显示想法数', '', s.showThinks, save, (v) => (s.showThinks = v));
-    this.toggleSetting(el, '显示书评摘要', '', s.showReview, save, (v) => (s.showReview = v));
-  }
-
-  // ===== 影视 =====（海报抓取为外部脚本 + 独立守护进程，设置页仅提示；每页加载数量可配）
-  private buildMovieTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
-    this.textSetting(el, '影视文件夹', '存放影视笔记的文件夹路径', s.movieFolderPath, save, (v) => (s.movieFolderPath = v));
-    this.textSetting(el, '每页加载数量', '列表初始加载及每次滚动加载的条数', s.moviePageSize, save, (v) => (s.moviePageSize = v));
-    // 海报抓取：独立脚本 + PM2 守护（不内置于插件），仅文字提示
-    new Setting(el).setName('海报抓取').setDesc('影视海报与豆瓣信息抓取由独立脚本 @jwbz/obsidian-douban-poster 提供。');
-  }
-
-  // ===== 复习计划 + 做题家 =====（做题家选项在「做题决定难度」开启时动态显示）
-  private buildReviewTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
-    this.textSetting(el, '数据存储路径', '存放 review.json 与 quiz.json 的目录（做题家共用）', s.reviewStoragePath, save, (v) => (s.reviewStoragePath = v));
-    this.textSetting(el, '检查间隔（秒）', '逾期检查间隔，单位秒', s.autoCheckInterval, save, (v) => (s.autoCheckInterval = v));
-    this.toggleSetting(el, '启用逾期通知', '是否在逾期时弹出通知', s.enableAutoNotify, save, (v) => (s.enableAutoNotify = v));
-    // 做题决定难度开关 + 做题家选项动态组（仿 AI tab 动态显示模式）
-    const quizRows: Setting[] = [];
-    const refreshQuizRows = () => {
-      const show = s.forceQuizForReview;
-      quizRows.forEach((r) => r.settingEl.toggleClass('bz-setting-hidden', !show));
-    };
-    new Setting(el)
-      .setName('做题决定难度')
-      .setDesc('开启后，点击复习自动做题，根据正确率自动选择难度；同时显示下方做题家选项')
-      .addToggle((toggle) =>
-        toggle.setValue(s.forceQuizForReview).onChange(async (v) => {
-          s.forceQuizForReview = v;
-          refreshQuizRows();
-          await save();
-        })
-      );
-    quizRows.push(
-      this.toggleSetting(el, '允许多选题', '若关闭，AI 只生成单选题', s.enableMultipleChoice, save, (v) => (s.enableMultipleChoice = v)),
-      this.textSetting(el, '每笔记题目数量（0为自动）', '设为0则由AI决定，设为正整数则固定数量', s.questionsPerNote, save, (v) => (s.questionsPerNote = v)),
-      this.toggleSetting(el, '打乱题目顺序', '每次打开做题窗口时是否随机打乱题目', s.shuffleQuestions, save, (v) => (s.shuffleQuestions = v)),
+    // 📂 数据存储路径区块：共享 storagePath（ADR-0009，JSON 数据文件统一目录）
+    containerEl.createDiv({ cls: 'bz-setting-section-title', text: '📂 数据存储路径' });
+    this.textSetting(
+      containerEl,
+      '数据存储路径',
+      '所有 JSON 数据文件（备忘录/归物本/密码本/收藏本/复习计划/做题家/闪念）的统一存放目录',
+      s.storagePath,
+      save,
+      (v) => (s.storagePath = v)
     );
-    const difficultyRow = new Setting(el)
-      .setName('题目难度')
-      .setDesc('生成题目时的难度等级')
-      .addDropdown((dd) => {
-        dd.addOption('random', '随机');
-        dd.addOption('easy', '简单');
-        dd.addOption('medium', '中等');
-        dd.addOption('hard', '困难');
-        dd.setValue(s.difficulty || 'random');
-        dd.onChange(async (v) => {
-          s.difficulty = v;
-          await save();
-        });
-      });
-    quizRows.push(difficultyRow);
-    refreshQuizRows();
   }
-
-  // ===== 闪念 =====
-  private buildFlashTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
-    this.toggleSetting(el, '启用', '常驻监听光标移动与笔记变更（向量检索/AI 对话）', s.flashEnabled, save, async (v) => {
-      s.flashEnabled = v;
-      if (v) ensureFlashOnReady(this.plugin.app);
-    });
-    this.textSetting(el, 'Ollama URL', '本地 Ollama 服务地址', s.OLLAMA_URL, save, (v) => (s.OLLAMA_URL = v));
-    this.textSetting(el, 'Embedding 模型', '向量化模型', s.EMBEDDING_MODEL, save, (v) => (s.EMBEDDING_MODEL = v));
-    this.textSetting(el, '元数据路径', '向量元数据 JSON 路径', s.META_PATH, save, (v) => (s.META_PATH = v));
-    this.textSetting(el, '向量文件路径', '二进制向量文件路径', s.VEC_PATH, save, (v) => (s.VEC_PATH = v));
-    this.textSetting(el, '参考结果数', '参考面板显示的匹配结果数', s.TOP_K, save, (v) => (s.TOP_K = v));
-    this.textSetting(el, 'AI 检索结果数', 'AI 对话时检索的笔记数量', s.CHAT_TOP_K, save, (v) => (s.CHAT_TOP_K = v));
-    this.textSetting(el, '段落最小长度', '短于此长度的段落将被跳过', s.CHUNK_MIN_LENGTH, save, (v) => (s.CHUNK_MIN_LENGTH = v));
-    this.textSetting(el, '允许的文件夹', '只处理这些文件夹下的笔记 (逗号分隔)', s.ALLOW_PATHS, save, (v) => (s.ALLOW_PATHS = v));
-    this.textSetting(el, '并发数', 'Embedding 请求并发数', s.CONCURRENCY, save, (v) => (s.CONCURRENCY = v));
-    this.textSetting(el, '上下文限制', 'AI 上下文限制', s.CONTEXT_LIMIT, save, (v) => (s.CONTEXT_LIMIT = v));
-    this.textSetting(el, '防抖延迟', '光标变化后延迟多久触发搜索 (ms)', s.DEBOUNCE_DELAY, save, (v) => (s.DEBOUNCE_DELAY = v));
-    this.textSetting(el, '光标轮询间隔', '移动端光标轮询间隔 (ms)', s.CURSOR_POLL_INTERVAL, save, (v) => (s.CURSOR_POLL_INTERVAL = v));
-    this.textSetting(el, 'Ollama 对话模型', '用于 AI 对话的模型', s.OLLAMA_CHAT_MODEL, save, (v) => (s.OLLAMA_CHAT_MODEL = v));
-    this.textSetting(el, 'DeepSeek 模型', 'DeepSeek API 模型名称', s.DEEPSEEK_MODEL, save, (v) => (s.DEEPSEEK_MODEL = v));
-    this.textSetting(el, '默认使用 DeepSeek', 'AI 对话时默认勾选 DeepSeek (true/false)', s.DEFAULT_USE_DEEPSEEK, save, (v) => (s.DEFAULT_USE_DEEPSEEK = v));
-    this.textSetting(el, '最大历史记录', 'AI 聊天保留的对话轮数', s.MAX_HISTORY, save, (v) => (s.MAX_HISTORY = v));
-    this.textSetting(el, '远程 Ollama URL', '手机端使用的远程 Ollama 地址', s.OLLAMA_REMOTE_URL, save, (v) => (s.OLLAMA_REMOTE_URL = v));
-  }
-
-
-  // ===== AI Agent =====（笔记同步，懒加载开关 + 同步选项）
-  private buildAIAgentTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
-    this.toggleSetting(el, '启用', '笔记 rename/delete/create 自动同步备忘录/收藏本', s.aiAgentEnabled, save, async (v) => {
-      s.aiAgentEnabled = v;
-      if (v) ensureAIAgent(this.plugin.app);
-    });
-    this.textSetting(el, '监听文件夹', '笔记同步监听的文件夹（逗号分隔）', s.aiAgentWatchedFolders, save, (v) => (s.aiAgentWatchedFolders = v));
-    this.toggleSetting(el, 'AI 剪藏匹配', '剪藏未精确命中时用 AI 判断并弹窗批准', s.enableAIClipMatch, save, (v) => (s.enableAIClipMatch = v));
-    this.textSetting(el, 'AI 匹配模型', 'AI 剪藏匹配使用的模型', s.aiAgentModel, save, (v) => (s.aiAgentModel = v));
-  }
-
 
   // ---- 设置项 helper ----
   private textSetting(containerEl: HTMLElement, name: string, desc: string, value: string, onSave: () => Promise<void>, apply: (v: string) => void, placeholder?: string): Setting {
