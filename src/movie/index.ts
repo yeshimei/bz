@@ -8,6 +8,7 @@ import { M } from './state';
 import { STATUS_WATCHING, STATUS_WANT } from './constants';
 import { rebuildItems } from './data';
 import { registerEscapeHandler, createOverlay, closeOverlay, renderList, openAddModal } from './ui';
+import { openRecommendModal } from './recommend';
 
 let initialized = false;
 let autoRefreshRegistered = false;
@@ -63,6 +64,12 @@ export function openMovieManager(app: App): void {
 export function addMovieItem(app: App): void {
   ensureMovie(app);
   openAddModal(app);
+}
+
+/** 影视分析报告（movie-report）：AI 品味分析 + 推荐弹窗 */
+export async function openMovieReport(app: App): Promise<void> {
+  ensureMovie(app);
+  await openRecommendModal(app);
 }
 
 /** 卸载清理（main.ts onunload 调用） */
