@@ -5,10 +5,10 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
-import { setBzSettingsProvider } from '../../src/bz';
-import { App } from '../../src/bz/app';
-import { UIManager } from '../../src/bz/ui';
-import { DataManager } from '../../src/bz/data';
+import { setBzSettingsProvider } from '../../src/memo';
+import { App } from '../../src/memo/app';
+import { UIManager } from '../../src/memo/ui';
+import { DataManager } from '../../src/memo/data';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
 import moment from 'moment';
