@@ -10,6 +10,7 @@
  */
 import type { App } from 'obsidian';
 import { createAI, type AIService } from '../core/ai';
+import { notice, notify } from '../core/notice';
 import { tryGetSettings } from '../core/settings-provider';
 import { DataManager } from '../bz/data';
 import { ensureBz } from '../bz';
@@ -68,18 +69,27 @@ let _app: App | null = null;
 let _ai: AIService | null = null;
 let _refs: any[] = [];
 
-/** 任务队列：串行执行（防并发读写同一 JSON） */
+/** 任务队列：串行执行（防并发读写同一 JSON）；失败通知（去重防刷屏） */
 let queue: Promise<any> = Promise.resolve();
 function enqueue(task: () => Promise<any> | void) {
-  queue = queue.then(task).catch((e) => console.error('[ai-agent]', e));
+  queue = queue.then(task).catch((e) => {
+    console.error('[ai-agent]', e);
+    notify('❌ 备忘录同步失败，数据可能不一致', { dedupeKey: 'ai-agent-sync' });
+  });
 }
 
 // ---------- 剪藏归档（仅备忘录数据源） ----------
 
-/** 归档：更新条目 + 标记完成 */
+/** 归档：更新条目 + 标记完成（成功通知；失败 ❌） */
 async function archiveItem(item: any, file: any) {
-  await DataManager.updateItem(item.id, { title: file.basename, linkedNote: file.path } as any);
-  await DataManager.completeItem(item.id);
+  try {
+    await DataManager.updateItem(item.id, { title: file.basename, linkedNote: file.path } as any);
+    await DataManager.completeItem(item.id);
+    notify('✅ 已归档到备忘录', { type: 'success' });
+  } catch (e) {
+    console.error('[ai-agent] 归档失败', e);
+    notify('❌ 归档失败：' + ((e && (e as any).message) || e));
+  }
 }
 
 /** AI 判断：新剪藏笔记是否与某候选条目指向同一篇文章 */
@@ -121,6 +131,7 @@ ${candidatesDesc}
     return { match: parsed.match === true, itemId: parsed.itemId || null };
   } catch (e) {
     console.error('[ai-agent] AI 匹配失败', e);
+    notify('⚠️ AI 匹配失败，已跳过该剪藏', { dedupeKey: 'ai-agent-match' });
     return null;
   }
 }
@@ -163,7 +174,7 @@ async function handleClip(app: App, ai: AIService, file: any) {
     itemTitle: item.title,
     itemId: item.id,
     noteName: file.basename,
-    onConfirm: () => archiveItem(item, file).catch((e) => console.error('[ai-agent] 归档失败', e)),
+    onConfirm: () => archiveItem(item, file),
   });
 }
 

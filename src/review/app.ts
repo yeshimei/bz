@@ -225,6 +225,7 @@ export const reviewApp = {
     const quiz: any = await this.getQuiz();
     if (!quiz || !quiz.ai) {
       console.warn('做题家未初始化（缺少 AI）');
+      notify('⚠️ 做题家未初始化（缺少 AI），已改用普通复习', { dedupeKey: 'review-quiz-ai' });
       return {};
     }
 

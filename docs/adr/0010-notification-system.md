@@ -15,8 +15,10 @@ Accepted（grilling 会话 + 样式演示敲定，ticket 25 实施）。
 1. **统一通道**：全仓 `new Notice(...)` 一律改 `notice(msg, dur?)`；`notice()` 与 `notify()` 同源，smartCat 分支删除（不再让路外部气泡）。
 2. **自动语义归类**：`classifyNoticeType` 按消息内容归类（`✅`/`🎉` → success、`⚠️` → warning、`❌`/「失败」「错误」 → error、其余 info），保证 146 处调用点零心智负担获得一致类型。
 3. **动效自动映射**：不传 variant 时按类型选（success → pop 缩放 + 打勾描绘、warning/error → shake 抖动、info → drop 下滑）；可选变体 drop/pop/slide-left/slide-right/bounce/shake；退出动画与进入变体成对；`prefers-reduced-motion` 降级淡入淡出。
-4. **布局与行为**：顶部居中，z-index 10300（现有最高 10200 入口页之上）；堆叠上限 5 条（超出挤掉最旧）；点击即关闭；时长默认 info/success/warning 3s、error 5s、显式 duration 优先；progress 类型默认不自动消失。
+4. **布局与行为**：顶部居中，z-index 100000（最顶，盖过 Obsidian 全部 UI 层）；堆叠上限 5 条（超出挤掉最旧）；点击即关闭；时长默认 info/success/warning 3s、error 5s、显式 duration 优先；progress 类型默认不自动消失。移动端适配：`top: calc(16px + env(safe-area-inset-top))` + `max-width: min(420px, calc(100vw - 24px))`。
 5. **动态能力**：`setMessage` 原地更新、`setProgress`（0-100 完成变绿 / -1 不确定跑马灯）、`setType`（progress 完成转 success 并接管自动消失计时）、富文本 title + action 操作按钮。auto-summary 与复习批量出题已改造为「进行中 → 原地更新为结果」的动态链路。
+6. **去重节流（dedupeKey）**：`notify` 支持 `dedupeKey`——同键 30s 窗口内重复触发时合并更新消息（不新弹、不刷屏），供后台自动事件使用（ai-agent 同步失败/剪藏匹配失败、quiz 出题失败、favorites 余额查询失败、review 做题家降级等）。
+7. **通知补白（ticket 25 增量）**：P0 数据完整性——ai-agent 同步队列失败 ❌、AI 匹配失败 ⚠️、quiz 逐篇出题失败聚合 ⚠️、review 做题家未初始化降级 ⚠️（diary 文件重建失败经核实已有上层 catch 通知，不重复）；P1 体验——quiz 生成完成 ✅（N 篇）、ai-agent 归档完成 ✅/失败 ❌、favorites 余额查询失败 ⚠️。
 6. **文案规范**（一致性/通俗/简约）：成功 `✅ `、失败 `❌ `、警告 `⚠️ ` 前缀统一；删除遗留技术引用（Q3.js/QuickAdd 配置/「请检查控制台」）；冒号统一中文全角；成功消息不带感叹号；带「已」字完成态动词；「错误：」冗余前缀删除。
 
 ## Considered Options
