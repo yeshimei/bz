@@ -23,7 +23,6 @@ import { openFavoritesPanel, addFavoriteItem } from './favorites';
 import { openLibrary, openBookNotes } from './library';
 import { showReadingReport } from './reading-report';
 import { openMovieManager, addMovieItem } from './movie';
-import { ensurePosterFetch, unloadPosterFetch, probeInstall, getProbeState, isDesktop as posterIsDesktop, PACKAGE_NAME } from './movie/poster';
 import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating } from './review';
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
@@ -124,8 +123,6 @@ export default class BzPlugin extends Plugin {
 
     // 事件常驻域按设置开关注册（懒加载架构）
     this.app.workspace.onLayoutReady(() => {
-      // 海报抓取：桌面端异步探测全局包安装状态（设置页开关可用性联动）
-      probeInstall();
       // 备忘录：启动即初始化（对齐源码 App.init：file-open 提醒 + 剪贴板监听 + autoPopupOnStart）
       void ensureBz(this.app);
       // 日记本：启动即初始化（diary-notebook 原行为：onLayoutReady → init）
@@ -133,7 +130,6 @@ export default class BzPlugin extends Plugin {
       if (this.settings.autoSummaryEnabled) ensureAutoSummary(this.app);
       if (this.settings.aiAgentEnabled) ensureAIAgent(this.app);
       if (this.settings.flashEnabled) ensureFlashOnReady(this.app);
-      if (this.settings.doubanPosterEnabled) ensurePosterFetch(this.app);
     });
   }
 
@@ -149,7 +145,6 @@ export default class BzPlugin extends Plugin {
     escManager.destroy();
     unloadBz();
     unloadAIAgent();
-    unloadPosterFetch();
     // 日记本清理（diary-notebook 原 onunload；escManager.destroy 已在上面统一调用）
     const diaryIds = [
       'diary-tag-filter',
@@ -353,47 +348,25 @@ export class BzSettingTab extends PluginSettingTab {
     this.toggleSetting(el, '显示书评摘要', '', s.showReview, save, (v) => (s.showReview = v));
   }
 
-  // ===== 影视 =====（新建笔记自动抓取海报开关；每页加载数量可配）
+  // ===== 影视 =====（海报抓取为外部脚本 + 独立守护进程，设置页仅提示；每页加载数量可配）
   private buildMovieTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
     this.textSetting(el, '影视文件夹', '存放影视笔记的文件夹路径', s.movieFolderPath, save, (v) => (s.movieFolderPath = v));
     this.textSetting(el, '每页加载数量', '列表初始加载及每次滚动加载的条数', s.moviePageSize, save, (v) => (s.moviePageSize = v));
-    this.buildPosterSetting(el, s, save);
+    // 海报抓取：独立脚本 + PM2 守护（不内置于插件），仅文字提示
+    new Setting(el).setName('海报抓取（外部脚本）').setDesc(this.posterGuideText());
   }
 
-  /** 海报抓取开关：桌面端按全局包安装状态联动；移动端置灰标注「仅桌面端可用」 */
-  private buildPosterSetting(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
-    const desktop = posterIsDesktop();
-    const row = new Setting(el).setName('新建影视笔记自动抓取海报');
-    let toggleRef: any = null;
-    row.addToggle((toggle) => {
-      toggleRef = toggle;
-      toggle.setValue(!!s.doubanPosterEnabled).onChange(async (v) => {
-        s.doubanPosterEnabled = v;
-        if (v) ensurePosterFetch(this.plugin.app);
-        else unloadPosterFetch();
-        await save();
-      });
-    });
-    const refresh = () => {
-      if (!desktop) {
-        row.setDesc('仅桌面端可用：新建影视笔记时自动从豆瓣抓取高清海报并补全信息（依赖 Node.js 环境）');
-        toggleRef?.setDisabled(true);
-        return;
-      }
-      const st = getProbeState();
-      if (st === 'installed') {
-        row.setDesc('新建影视笔记时自动从豆瓣抓取高清海报并补全信息（需全局安装 ' + PACKAGE_NAME + '）');
-        toggleRef?.setDisabled(false);
-      } else if (st === 'missing') {
-        row.setDesc('未检测到全局包 ' + PACKAGE_NAME + '，请先在终端执行 npm install -g ' + PACKAGE_NAME);
-        toggleRef?.setDisabled(true);
-      } else {
-        row.setDesc('正在检测全局包安装状态…');
-        toggleRef?.setDisabled(true);
-      }
-    };
-    refresh();
-    if (desktop) probeInstall(() => refresh());
+  /** 海报抓取使用指引：安装 npm 包并以 PM2 守护运行（桌面端）；移动端标注仅桌面端可运行 */
+  private posterGuideText(): string {
+    const steps = [
+      '影视海报与豆瓣信息抓取由独立脚本 @jwbz/obsidian-douban-poster 提供，不内置于本插件。',
+      '桌面端安装并运行：',
+      '1. npm install -g @jwbz/obsidian-douban-poster',
+      '2. douban-poster start（PM2 守护，监听影视文件夹的新建/改动，遍历缺海报的笔记自动抓取，每 15 秒处理一个避免接口限流）',
+      '3. douban-poster status / logs 查看状态与日志；douban-poster stop 停止',
+    ];
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+    return steps.join('\n') + (isMobile ? '\n\n该脚本仅桌面端可运行（依赖 Node.js 环境）。' : '');
   }
 
   // ===== 复习计划 + 做题家 =====（做题家选项在「做题决定难度」开启时动态显示）

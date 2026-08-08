@@ -27,7 +27,7 @@
 - **命令裸注册**：命令 id 统一 `bz-` 前缀（ADR-0004），不设默认快捷键；卸载时 `removeCommand` 全量清理。
 - **懒加载**（ADR-0003）：UI 域首次打开初始化；事件常驻域（自动摘要/闪念/复习轮询/AI Agent）按设置开关注册。
 - **数据零迁移**：所有 JSON/目录/字段名沿用既有格式，旧数据直接可读。
-- **海报抓取**（ADR-0006）：影视域桌面端专属能力——新建或打开影视笔记时经全局 npm 包 `@jwbz/obsidian-douban-poster`（`tools/obsidian-douban-poster/`）自动抓取豆瓣高清海报并补全信息；移动端设置项置灰标注「仅桌面端可用」。
+- **海报抓取**（ADR-0007）：影视海报与豆瓣信息抓取由**独立 PM2 守护进程**承担（`tools/obsidian-douban-poster/` 的 npm 包 `@jwbz/obsidian-douban-poster`，`douban-poster start`）——监听影视文件夹新建/改动，遍历缺海报的笔记，按创建时间倒序入队，每 15 秒串行抓取防限流。插件不含抓取逻辑，设置页仅提供安装与运行指引。
 - **降级链**：AI 服务（DeepSeek → Ollama 本地）、向量检索（远程 → TF-IDF → 文本）、批量出题（批量 → 逐篇）。
 
 ## 安装
@@ -49,9 +49,9 @@ npx tsc --noEmit   # 类型检查
 
 - `src/core/`：跨域基础设施（utils/dom/json-store/changelog/ai/app/settings-provider/esc-manager/confirm）
 - `src/<域>/`：每域独立（index 入口 + 数据层 + UI 层），main.ts 统一命令注册
-- `tools/obsidian-douban-poster/`：海报抓取所依赖的独立 Node CLI（npm 包 `@jwbz/obsidian-douban-poster` 的源码）
+- `tools/obsidian-douban-poster/`：海报抓取独立守护进程源码（npm 包 `@jwbz/obsidian-douban-poster`，PM2 托管）
 - `tests/`：mock-obsidian-entry（Notice/requestUrl/moment/Plugin）+ mock-vault（内存文件树 + frontmatter 解析）+ 每域测试
 
 ### 测试规模
 
-679 测试（57 文件）覆盖：数据层/纯函数公式（FSRS 幂律、香农多样性、基尼平衡、AES-GCM）、jsdom UI 交互（弹窗/长按/防抖/无限滚动）、mock fetch（AI/余额查询/Ollama）、mock child_process（海报抓取桌面端门禁/队列/超时）。
+679 测试（57 文件）覆盖：数据层/纯函数公式（FSRS 幂律、香农多样性、基尼平衡、AES-GCM）、jsdom UI 交互（弹窗/长按/防抖/无限滚动）、mock fetch（AI/余额查询/Ollama）。
