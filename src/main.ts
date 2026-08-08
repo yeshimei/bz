@@ -22,7 +22,7 @@ import { openPasswordManager, addPasswordEntry, generatePassword } from './passw
 import { openFavoritesPanel, addFavoriteItem } from './favorites';
 import { openLibrary, openBookNotes } from './library';
 import { showReadingReport } from './reading-report';
-import { openMovieManager, addMovieItem } from './movie';
+import { openMovieManager, addMovieItem, openMovieReport } from './movie';
 import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart } from './review';
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
@@ -66,6 +66,7 @@ const COMMANDS: { id: string; name: string; callback: () => void }[] = [
   // 影视
   { id: 'bz-movie-manager-open', name: '影视：打开', callback: () => openMovieManager(getApp()) },
   { id: 'bz-movie-manager-add', name: '影视：添加', callback: () => addMovieItem(getApp()) },
+  { id: 'bz-movie-report', name: '影视分析报告', callback: () => openMovieReport(getApp()) },
   // 复习计划（6 命令）
   { id: 'bz-review-open-panel', name: '打开复习面板', callback: () => openReviewPanel(getApp()) },
   { id: 'bz-review-start', name: '开始复习（进入复习流程）', callback: () => reviewStart(getApp()) },
