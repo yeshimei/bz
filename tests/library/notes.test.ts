@@ -5,7 +5,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { parseBookNotes, updateComment, deleteHighlight } from '../../src/library/notes';
 import { MockVault } from '../mock-vault';
-import { MockNotice, resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
 
 function makeApp(vault: MockVault) {
   return { vault, metadataCache: {}, workspace: {} } as any;
@@ -79,7 +79,7 @@ describe('updateComment / deleteHighlight', () => {
     await new Promise((r) => setTimeout(r, 20));
     const out = vault.files.get('书库/活着.md')!;
     expect(out).toContain('data-comment="新批注"');
-    expect(MockNotice.instances.some((n) => n.message === '批注已更新')).toBe(true);
+    expect(hasNotice('✅ 批注已更新')).toBe(true);
     expect(done).toBe(true);
   });
 
@@ -88,7 +88,7 @@ describe('updateComment / deleteHighlight', () => {
     await new Promise((r) => setTimeout(r, 20));
     const out = vault.files.get('书库/活着.md')!;
     expect(out).not.toContain('data-comment="批注一"');
-    expect(MockNotice.instances.some((n) => n.message === '批注已清空')).toBe(true);
+    expect(hasNotice('✅ 批注已清空')).toBe(true);
   });
 
   it('updateComment：无 data-comment → 插入属性', async () => {
@@ -101,7 +101,7 @@ describe('updateComment / deleteHighlight', () => {
   it('updateComment：原文不匹配 → 「未找到对应高亮（原文不匹配），编辑失败」', async () => {
     updateComment(makeApp(vault), '书库/活着.md', 'h1', '不存在的原文', 'x');
     await new Promise((r) => setTimeout(r, 20));
-    expect(MockNotice.instances.some((n) => n.message === '未找到对应高亮（原文不匹配），编辑失败')).toBe(true);
+    expect(hasNotice('未找到对应高亮（原文不匹配），编辑失败')).toBe(true);
     expect(vault.modifiedPaths).toHaveLength(0);
   });
 
@@ -120,7 +120,7 @@ describe('updateComment / deleteHighlight', () => {
     const out = vault.files.get('书库/活着.md')!;
     expect(out).not.toContain('data-id="h1"');
     expect(out).toContain('data-id="h2"'); // 其他保留
-    expect(MockNotice.instances.some((n) => n.message === '已删除')).toBe(true);
+    expect(hasNotice('✅ 已删除')).toBe(true);
     spy.mockRestore();
   });
 
@@ -128,7 +128,7 @@ describe('updateComment / deleteHighlight', () => {
     const spy = vi.spyOn(window, 'confirm').mockReturnValue(true);
     deleteHighlight(makeApp(vault), '书库/活着.md', 'h1', '错原文');
     await new Promise((r) => setTimeout(r, 20));
-    expect(MockNotice.instances.some((n) => n.message === '未找到对应高亮（原文不匹配），删除失败')).toBe(true);
+    expect(hasNotice('未找到对应高亮（原文不匹配），删除失败')).toBe(true);
     spy.mockRestore();
   });
 });

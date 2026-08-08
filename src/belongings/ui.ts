@@ -3,7 +3,7 @@
  * 主面板：__gui_wu_ben__（visibility 控制，不销毁）；弹窗 z-index：add=10000/edit=10001/delete=10002/sort=10003；
  * 长按 600ms 删除 / 单击 <500ms 编辑；MutationObserver 主题变化重渲染。
  */
-import { Notice } from 'obsidian';
+import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { formatRelativeTime } from '../core/utils';
@@ -539,7 +539,7 @@ function createModalShell(
 function editItemById(id: string): Promise<void> {
   const item = database!.items[id];
   if (!item) {
-    new Notice('物品不存在', 3000);
+    notice('物品不存在', 3000);
     return Promise.resolve();
   }
 
@@ -577,7 +577,7 @@ function editItemById(id: string): Promise<void> {
     const saveBtn = createActionButton('💾 保存', 'var(--interactive-accent)', async () => {
       const errMsg = validateForm(inputs);
       if (errMsg) {
-        new Notice(errMsg, 3000);
+        notice(errMsg, 3000);
         return;
       }
       const name = inputs.name.value.trim();
@@ -593,7 +593,7 @@ function editItemById(id: string): Promise<void> {
 
       await saveDatabase(database!);
       render();
-      new Notice(`✅ 物品 "${name}" 编辑成功！`, 3000);
+      notice(`✅ 物品「${name}」已更新`, 3000);
 
       if (document.body.contains(overlay)) {
         document.body.removeChild(overlay);
@@ -642,7 +642,7 @@ function editItemById(id: string): Promise<void> {
 function deleteItemById(id: string): Promise<void> {
   const item = database!.items[id];
   if (!item) {
-    new Notice('物品不存在', 3000);
+    notice('物品不存在', 3000);
     return Promise.resolve();
   }
 
@@ -671,7 +671,7 @@ function deleteItemById(id: string): Promise<void> {
       delete database!.items[id];
       await saveDatabase(database!);
       render();
-      new Notice(`已删除 "${item.name}"`);
+      notice(`✅ 已删除「${item.name}」`);
       document.body.removeChild(overlay);
       done();
       resolve();
@@ -832,7 +832,7 @@ export function addItem(): Promise<void> {
     const submitBtn = createActionButton('✅ 保存', 'var(--interactive-accent)', async () => {
       const errMsg = validateForm(inputs);
       if (errMsg) {
-        new Notice(errMsg, 3000);
+        notice(errMsg, 3000);
         return;
       }
       const name = inputs.name.value.trim();
@@ -852,7 +852,7 @@ export function addItem(): Promise<void> {
       database!.items[newItem.id] = newItem;
       await saveDatabase(database!);
       render();
-      new Notice(`✅ 物品 "${name}" 添加成功！`, 3000);
+      notice(`✅ 物品「${name}」已添加`, 3000);
 
       if (document.body.contains(overlay)) {
         document.body.removeChild(overlay);
@@ -1000,7 +1000,7 @@ export async function openBelongingsPanel(): Promise<void> {
   refreshBtn.addEventListener('click', async () => {
     database = await loadDatabase();
     render();
-    new Notice('已刷新');
+    notice('✅ 已刷新');
   });
 
   const closeBtn = document.createElement('button');

@@ -14,7 +14,7 @@ import { updateTagCounts, updateSubTagsCounts, rebuildTags, createTag } from '..
 import { fixMobileSelect } from '../../../src/diary/ui/entries';
 import { applyUiSettings } from '../../../src/diary/ui/ui-settings';
 import { state } from '../../../src/diary/state';
-import { MockNotice, resetObsidianMocks } from '../../mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../../mock-vault';
 import * as storeModule from '../../../src/diary/store';
 
@@ -87,7 +87,7 @@ describe('saveNewEntry 分支', () => {
     const dt = document.getElementById('add-diary-datetime') as HTMLInputElement;
     dt.value = 'not-a-date';
     await saveNewEntry();
-    expect(MockNotice.instances.some((n) => n.message === '错误：日期时间格式不正确')).toBe(true);
+    expect(hasNotice('日期时间格式不正确')).toBe(true);
   });
 
   it('自然语言日期（10 分钟前）也可保存', async () => {
@@ -106,7 +106,7 @@ describe('saveNewEntry 分支', () => {
     openAddDialog();
     selectTag('日记');
     await saveNewEntry();
-    expect(MockNotice.instances.some((n) => n.message.includes('保存日记失败: boom'))).toBe(true);
+    expect(hasNotice(/保存日记失败：boom/)).toBe(true);
     spy.mockRestore();
   });
 
@@ -150,7 +150,7 @@ describe('datetime-picker 手动模式', () => {
     const manual = ctrl.querySelector('input[placeholder*="YYYY-MM-DD"]') as HTMLInputElement;
     manual.value = 'invalid!!';
     manual.dispatchEvent(new Event('blur'));
-    expect(MockNotice.instances.some((n) => n.message === '日期时间格式无效，已恢复')).toBe(true);
+    expect(hasNotice('日期时间格式无效，已恢复')).toBe(true);
     expect(manual.style.display).toBe('none');
   });
 
@@ -204,7 +204,7 @@ describe('quote 摘抄全流程', () => {
     const saveBtn = [...popup.querySelectorAll('button')].find((b) => b.textContent === '保存')!;
     saveBtn.click();
     await new Promise((r) => setTimeout(r, 50));
-    expect(MockNotice.instances.some((n) => n.message === '摘抄已保存')).toBe(true);
+    expect(hasNotice('✅ 摘抄已保存')).toBe(true);
     expect(vault.files.has('我的/日记/2024-01-01.md')).toBe(true);
   });
 
@@ -235,7 +235,7 @@ describe('quote 摘抄全流程', () => {
     await registerQuoteCommand();
     const cmd = app.commands.registered.find((c: any) => c.id === 'bz-diary-create-quote');
     await cmd.callback();
-    expect(MockNotice.instances.some((n) => n.message === '请先打开一个笔记文件')).toBe(true);
+    expect(hasNotice('请先打开一个笔记文件')).toBe(true);
   });
 });
 

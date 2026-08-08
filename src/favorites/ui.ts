@@ -471,7 +471,7 @@ export class UIManager {
         if (file) {
           app.workspace.openLinkText(item.linkedNote!, '', false);
         } else {
-          notice(`笔记文件不存在: ${item.linkedNote}`);
+          notice(`笔记文件不存在：${item.linkedNote}`);
         }
       };
       titleRow.appendChild(jumpIcon);
@@ -1140,10 +1140,10 @@ export class UIManager {
         }
       }
 
-      notice('✅ AI 智能整理完成！');
+      notice('✅ AI 整理完成');
     } catch (e: any) {
       console.error('AI 整理失败:', e);
-      notice('AI 整理失败：' + e.message);
+      notice('❌ AI 整理失败：' + e.message);
     } finally {
       this.addAiBtn!.textContent = '✨ AI 推荐';
       this.addAiBtn!.disabled = false;
@@ -1185,7 +1185,7 @@ export class UIManager {
 
       // 验证必填项
       if (!apiKeys) {
-        notice('请填写API Keys');
+        notice('请填写 API Keys');
         return;
       }
 
@@ -1226,16 +1226,16 @@ export class UIManager {
           }
         }
         await this.dataManager.update(this.editingItemId, data);
-        notice('收藏已更新 ✅');
+        notice('✅ 收藏已更新');
       } else {
         data.id = Date.now().toString();
         await this.dataManager.add(data);
-        notice('收藏已添加 ✅');
+        notice('✅ 收藏已添加');
       }
       await this.refreshData();
       this._hideAddDialog();
     } catch (e: any) {
-      notice('保存失败：' + e.message);
+      notice('❌ 保存失败：' + e.message);
     }
   }
 

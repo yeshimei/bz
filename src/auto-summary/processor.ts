@@ -3,7 +3,8 @@
  * 源码：自动摘要.js L63-121（逐字移植；ticket 22 改为缺什么补什么）
  */
 import { parseFrontmatter, buildFrontmatter, extractBodyForAI } from './parser';
-import { notice } from '../core/dom';
+import { notify } from '../core/notice';
+import type { NoticeHandle } from '../core/notice';
 import type { AIService } from '../core/ai';
 
 /** 缺失字段 → JSON 模板定义（规则文案逐字保留；不含 author） */
@@ -83,6 +84,7 @@ export function formatSummaryNotice(fm: Record<string, any>): string {
 
 /** 处理单个文件：缺什么补什么（title/summary/tags），字段齐全跳过；成功通知 */
 export async function processFile(app: any, ai: AIService, file: any): Promise<void> {
+  let h: NoticeHandle | null = null;
   try {
     const content = await app.vault.read(file);
     const { fm, body } = parseFrontmatter(content);
@@ -98,11 +100,18 @@ export async function processFile(app: any, ai: AIService, file: any): Promise<v
     if (missing.length === 0) return; // 字段齐全，无需处理
 
     console.log(`[自动摘要] 补全缺失字段(${missing.join('/')}): ${file.basename}`);
-    // 开始调用 AI：先通知用户（标题用已有 title 或文件名）
+    // 开始调用 AI：动态通知（进行中 → 原地更新为结果）
     const startName = fm && fm.title ? fm.title : file.basename;
-    notice(`正在为《${startName}》生成摘要…`, 3000);
+    h = notify(`正在为《${startName}》生成摘要…`, { type: 'progress' });
     const aiResult = await aiProcess(ai, bodyText, missing);
-    if (!aiResult) return;
+    if (!aiResult) {
+      if (h) {
+        h.setType('error');
+        h.setMessage('❌ 摘要生成失败，请重试');
+        window.setTimeout(() => h && h.hide(), 2500);
+      }
+      return;
+    }
 
     // 写回：只写缺失字段（不覆盖已有）
     let targetFile = file;
@@ -120,9 +129,15 @@ export async function processFile(app: any, ai: AIService, file: any): Promise<v
     await app.vault.modify(targetFile, newContent);
 
     const msg = formatSummaryNotice(newFm);
-    if (msg) notice(msg, 8000);
+    if (msg && h) {
+      h.setMessage(msg);
+      h.setType('success');
+    } else if (h) {
+      h.hide();
+    }
     console.log(`[自动摘要] ✅ 完成: ${targetFile.basename}`);
   } catch (e) {
+    if (h) h.hide();
     console.error(`[自动摘要] 处理失败: ${file.basename}`, e);
   }
 }

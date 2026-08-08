@@ -240,6 +240,7 @@ Feature: memo-suite-plugin
 - **复习计划**（5 个）：`bz-review-open-panel`、`bz-review-add-current`（添加当前笔记到复习）、`bz-review-remove-current`（移除当前笔记）、`bz-review-jump-overdue`（跳转逾期）、`bz-review-mark-dialog`（评级对话框）
 - **做题家**：`bz-quiz-master-update`、`bz-quiz-master-open`
 - **闪念**：`bz-shan-nian-open-reference`（打开参考窗口）、`bz-shan-nian-open-chat`（打开聊天窗口）
+- **通知**（ticket 25）：`bz-notification-demo`（通知样式演示，样式自查入口）
 - **日记本**（已迁）：`bz-diary-open-add-dialog`、`bz-diary-create-quote`
 - Q3 自身无命令
 

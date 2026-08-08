@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import BzPlugin, { BzSettingTab } from '../src/main';
 import { MockVault } from './mock-vault';
-import { resetObsidianMocks, MockNotice } from './mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from './mock-obsidian-entry';
 
 const diskData: Record<string, any> = {};
 
@@ -113,13 +113,13 @@ describe('storagePath 迁移（ADR-0009）', () => {
 
   beforeEach(() => {
     delete diskData['bz'];
-    MockNotice.instances.length = 0;
+    clearNotices();
   });
 
   it('旧 7 字段全部相同（默认 CONFIG/STORAGE）→ seed storagePath，无 Notice', async () => {
     const p = await createPlugin(makeAppNoLayout());
     expect(p.settings.storagePath).toBe('CONFIG/STORAGE');
-    expect(MockNotice.instances.length).toBe(0);
+    expect(getNoticeMessages().length).toBe(0);
   });
 
   it('旧字段全同但自定义 → 以该值初始化 storagePath', async () => {
@@ -134,7 +134,7 @@ describe('storagePath 迁移（ADR-0009）', () => {
     };
     const p = await createPlugin(makeAppNoLayout());
     expect(p.settings.storagePath).toBe('CONFIG/数据');
-    expect(MockNotice.instances.length).toBe(0);
+    expect(getNoticeMessages().length).toBe(0);
   });
 
   it('旧字段参差 → 默认 CONFIG/STORAGE + Notice 列出被忽略路径', async () => {
@@ -144,8 +144,8 @@ describe('storagePath 迁移（ADR-0009）', () => {
     };
     const p = await createPlugin(makeAppNoLayout());
     expect(p.settings.storagePath).toBe('CONFIG/STORAGE');
-    expect(MockNotice.instances.length).toBe(1);
-    const msg = MockNotice.instances[0].message as string;
+    expect(getNoticeMessages().length).toBe(1);
+    const msg = getNoticeMessages()[0] as string;
     expect(msg).toContain('todoFilePath');
     expect(msg).toContain('pwStoragePath');
   });
@@ -154,7 +154,7 @@ describe('storagePath 迁移（ADR-0009）', () => {
     diskData['bz'] = { storagePath: 'CONFIG/我的数据', todoFilePath: '旧/路径' };
     const p = await createPlugin(makeAppNoLayout());
     expect(p.settings.storagePath).toBe('CONFIG/我的数据');
-    expect(MockNotice.instances.length).toBe(0);
+    expect(getNoticeMessages().length).toBe(0);
   });
 });
 

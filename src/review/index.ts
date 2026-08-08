@@ -3,7 +3,7 @@
  * 命令（review-*）由 main.ts 裸注册（含 review-mark-again/hard/good/easy）。
  */
 import type { App } from 'obsidian';
-import { Notice } from 'obsidian';
+import { notice } from '../core/notice';
 import { confirm } from '../core/confirm';
 import { ReviewDataManager } from './data';
 import { UIManager } from './ui';
@@ -51,7 +51,7 @@ export function ensureReview(app: App): void {
       }
     } catch (e) {
       console.error('复习计划：处理重命名事件失败', e);
-      new Notice('复习计划路径更新失败，请检查控制台');
+      notice('❌ 复习计划路径更新失败');
     }
   });
   (app.workspace as any).on('quit', () => {
@@ -73,7 +73,7 @@ export async function reviewAddCurrent(app: App): Promise<void> {
   ensureReview(app);
   const file = app.workspace.getActiveFile();
   if (!file) {
-    new Notice('请先打开一个笔记');
+    notice('请先打开一个笔记');
     return;
   }
   try {
@@ -81,7 +81,7 @@ export async function reviewAddCurrent(app: App): Promise<void> {
     await uiManager!.refreshPanel();
     await reviewApp.applyReviewStyles(app);
   } catch (e: any) {
-    new Notice(e.message);
+    notice('❌ 操作失败：' + e.message);
   }
 }
 
@@ -90,12 +90,12 @@ export async function reviewRemoveCurrent(app: App): Promise<void> {
   ensureReview(app);
   const file = app.workspace.getActiveFile();
   if (!file) {
-    new Notice('请先打开一个笔记');
+    notice('请先打开一个笔记');
     return;
   }
   const items = await dataManager!.loadItems();
   if (!items.some((i) => i.filePath === file.path)) {
-    new Notice('该笔记不在复习计划中');
+    notice('该笔记不在复习计划中');
     return;
   }
   confirm({
@@ -105,7 +105,7 @@ export async function reviewRemoveCurrent(app: App): Promise<void> {
     cancelText: '取消',
     onConfirm: async () => {
       await dataManager!.removeItem(file.path);
-      new Notice('✅ 已移出复习计划');
+      notice('✅ 已移出复习计划');
       await uiManager!.refreshPanel();
       await reviewApp.applyReviewStyles(app);
     },
@@ -129,17 +129,17 @@ export async function reviewMarkDialog(app: App): Promise<void> {
   ensureReview(app);
   const file = app.workspace.getActiveFile();
   if (!file) {
-    new Notice('请先打开一个笔记');
+    notice('请先打开一个笔记');
     return;
   }
   const items = await dataManager!.loadItems();
   const item = items.find((i) => i.filePath === file.path);
   if (!item) {
-    new Notice('该笔记不在复习计划中');
+    notice('该笔记不在复习计划中');
     return;
   }
   if (item.completed) {
-    new Notice('该笔记已完成全部复习');
+    notice('该笔记已完成全部复习');
     return;
   }
   uiManager?.showDifficultyDialog(item, async (diff) => {
@@ -153,17 +153,17 @@ export async function reviewMarkRating(app: App, rating: Rating): Promise<void> 
   ensureReview(app);
   const file = app.workspace.getActiveFile();
   if (!file) {
-    new Notice('请先打开一个笔记');
+    notice('请先打开一个笔记');
     return;
   }
   const items = await dataManager!.loadItems();
   const item = items.find((i) => i.filePath === file.path);
   if (!item) {
-    new Notice('该笔记不在复习计划中');
+    notice('该笔记不在复习计划中');
     return;
   }
   if (item.completed) {
-    new Notice('该笔记已完成全部复习');
+    notice('该笔记已完成全部复习');
     return;
   }
   await reviewApp.markReview(file.path, rating);

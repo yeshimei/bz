@@ -2,7 +2,8 @@
  * 条目列表：筛选、渲染、卡片交互、滚动、编辑、删除确认。
  * 原脚本 1865-2578 行。
  */
-import { Component, MarkdownRenderer, Notice } from 'obsidian';
+import { Component, MarkdownRenderer } from 'obsidian';
+import { notice } from '../../core/notice';
 import { confirm } from '../../core/confirm';
 import { getApp } from '../app';
 import { BATCH_SIZE, DIARY_DIRECTORY, LONG_PRESS_DURATION, MOVIE_DIRECTORY, getSubTagsOfPrimary, getTagEmoji } from '../config';
@@ -267,7 +268,7 @@ export async function jumpToEntry(entry: DiaryEntry, mode: 'select' | 'edit' = '
     // 直接打开影视文件
     const file = getApp().vault.getAbstractFileByPath(entry.filename) as any;
     if (!file) {
-      new Notice('找不到影视文件');
+      notice('找不到影视文件');
       return;
     }
     await getApp().workspace.openLinkText(file.path, '', false, { active: true });
@@ -286,7 +287,7 @@ export async function jumpToEntry(entry: DiaryEntry, mode: 'select' | 'edit' = '
   // 检查文件是否存在
   const file = getApp().vault.getAbstractFileByPath(filePath) as any;
   if (!file) {
-    new Notice('找不到日记文件');
+    notice('找不到日记文件');
     return;
   }
 
@@ -375,7 +376,7 @@ export async function copyLink(entryId: string) {
   if (!entry) return;
   const link = `[[${entry.filename}#${entry.emoji} ${entry.time}]]`;
   await navigator.clipboard.writeText(link);
-  new Notice(`已复制双链引用: ${link}`);
+  notice(`✅ 已复制双链引用：${link}`);
 }
 
 // ===== 取消编辑（原 2218-2240） =====

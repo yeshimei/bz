@@ -4,7 +4,8 @@
  * add-todo-mask / add-todo-popup / add-todo-* / scene-btn / priority-btn / todo-card。
  */
 import moment from 'moment';
-import { Notice, Setting } from 'obsidian';
+import { Setting } from 'obsidian';
+import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { confirm } from '../core/confirm';
@@ -278,7 +279,7 @@ export const UIManager = {
     aiBtn.onclick = async () => {
       const content = contentInput.value.trim();
       if (!content) {
-        new Notice('请先输入备忘录内容');
+        notice('请先输入备忘录内容');
         return;
       }
       await this.handleAIRecommend();
@@ -361,7 +362,7 @@ export const UIManager = {
           posBtn.style.background = 'var(--interactive-accent)';
           posBtn.style.color = 'var(--text-on-accent)';
         } else {
-          new Notice('无法获取当前位置');
+          notice('无法获取当前位置');
         }
       }
     };
@@ -545,13 +546,13 @@ export const UIManager = {
       }
       const finalContent = contentInput.value.trim();
       if (!finalContent) {
-        new Notice('请输入内容');
+        notice('请输入内容');
         return;
       }
 
       const selectedScene = sceneContainer.querySelector('.scene-btn.active');
       if (!selectedScene) {
-        new Notice('请选择场景');
+        notice('请选择场景');
         return;
       }
       const scene = (selectedScene as HTMLElement).dataset.scene!;
@@ -637,7 +638,7 @@ export const UIManager = {
         App.refresh();
         this.hideAddDialog();
       } catch (e: any) {
-        new Notice('保存失败：' + e.message);
+        notice('❌ 保存失败：' + e.message);
         console.error(e);
       }
     };
@@ -657,7 +658,7 @@ export const UIManager = {
     if (!contentInput) return;
     const content = contentInput.value.trim();
     if (!content) {
-      new Notice('请先输入备忘录内容');
+      notice('请先输入备忘录内容');
       return;
     }
 
@@ -678,7 +679,7 @@ export const UIManager = {
 
     try {
       if (!App.ai) {
-        new Notice('AI 服务未初始化，请检查 QuickAdd 配置');
+        notice('⚠️ AI 服务未配置，请到设置中填写');
         return;
       }
 
@@ -714,7 +715,7 @@ export const UIManager = {
       // 验证推荐
       const validScenes = DataManager.getScenarios();
       if (!validScenes.includes(recommendation.scene)) {
-        new Notice(`推荐场景“${recommendation.scene}”不在可选列表中，请手动选择`);
+        notice(`推荐场景“${recommendation.scene}”不在可选列表中，请手动选择`);
         return;
       }
       if (!['重要', '次要'].includes(recommendation.priority)) {
@@ -741,10 +742,10 @@ export const UIManager = {
         }
       });
 
-      new Notice(`AI 推荐：场景【${recommendation.scene}】，优先级【${recommendation.priority}】`);
+      notice(`AI 推荐：场景【${recommendation.scene}】· 优先级【${recommendation.priority}】`);
     } catch (e) {
       console.error('AI 推荐失败:', e);
-      new Notice('AI 推荐失败，请手动选择');
+      notice('❌ AI 推荐失败，请手动选择');
     } finally {
       // 恢复按钮状态
       const aiBtn = document.querySelector('#add-todo-ai-recommend') as HTMLButtonElement | null;
@@ -1087,7 +1088,7 @@ export const Renderer = {
           const leaf = app.workspace.getLeaf();
           await leaf.openFile(file as any);
         } else {
-          new Notice('关联笔记不存在');
+          notice('关联笔记不存在');
         }
       };
       contentSpan.appendChild(link);

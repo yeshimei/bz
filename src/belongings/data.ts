@@ -3,7 +3,7 @@
  * 数据：CONFIG/STORAGE/belongings.json（dataFolder 可配置）
  * 默认分类 1226 条来自 default-categories.gen.ts（源码逐字提取）
  */
-import { Notice } from 'obsidian';
+import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { getSettings } from '../core/settings-provider';
 import { DEFAULT_CATEGORIES } from './default-categories.gen';
@@ -39,7 +39,7 @@ export async function loadDatabase(): Promise<BelongingsDatabase> {
       const content = await app.vault.read(file as any);
       db = JSON.parse(content);
     } catch (error) {
-      new Notice(`⚠️ 数据文件解析失败，请检查 ${DATA_FILE} 格式是否正确`, 5000);
+      notice('⚠️ 数据文件解析失败，已重置为空', 5000);
       console.error('数据文件解析错误:', error);
       db = emptyDatabase();
     }

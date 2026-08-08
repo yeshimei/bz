@@ -2,7 +2,7 @@
  * 复习计划核心应用（ticket 16 修正版：对齐源码 App，含 quizReviewLoop/reviewLoop）
  */
 import type { App, TFile } from 'obsidian';
-import { Notice } from 'obsidian';
+import { notice, notify } from '../core/notice';
 import { getApp } from '../core/app';
 import { FSRS, FSRS_FIRST_INTERVALS, FSRS_FIRST_TEXTS, LADDER_MAX } from './fsrs';
 import type { Rating } from './fsrs';
@@ -31,11 +31,11 @@ export const reviewApp = {
     const items = await dm.loadItems();
     const item = items.find((i) => i.filePath === filePath);
     if (!item) {
-      new Notice('条目不存在');
+      notice('条目不存在');
       return;
     }
     if (item.completed) {
-      new Notice('该笔记已完成全部复习');
+      notice('该笔记已完成全部复习');
       return;
     }
 
@@ -44,7 +44,7 @@ export const reviewApp = {
     if (now < nextReview) {
       const diff = nextReview.getTime() - now.getTime();
       const mins = Math.ceil(diff / 60000);
-      new Notice(`⏰ 还未到复习时间（${mins}分钟后）`);
+      notice(`⏰ 还未到复习时间（${mins}分钟后）`);
       return;
     }
 
@@ -79,7 +79,7 @@ export const reviewApp = {
         it.nextReviewDate = nextDate.toISOString();
         if (enteringFsrs) it.completed = false; // 进入 FSRS 不算完成
       });
-      new Notice(enteringFsrs ? `✅ 进入深度复习，${FSRS_FIRST_TEXTS[targetStage]}后复习` : `✅ ${FSRS_FIRST_TEXTS[targetStage]}后复习`);
+      notice(enteringFsrs ? `✅ 进入深度复习，${FSRS_FIRST_TEXTS[targetStage]}后复习` : `✅ ${FSRS_FIRST_TEXTS[targetStage]}后复习`);
       return;
     }
 
@@ -104,7 +104,7 @@ export const reviewApp = {
 
     const days = Math.round(result.days);
     const rPct = Math.round(R * 100);
-    new Notice(`✅ R=${rPct}% → 下次复习：${days > 0 ? days + '天' : '1天'}后`);
+    notice(`✅ R=${rPct}% → 下次复习：${days > 0 ? days + '天' : '1天'}后`);
   },
 
   /** 跳转逾期 */
@@ -115,7 +115,7 @@ export const reviewApp = {
     const items = await dm.loadItems();
     const overdue = items.filter((i) => i.isOverdue && !i.isCompleted);
     if (!overdue.length) {
-      new Notice('🎉 没有逾期笔记');
+      notice('🎉 没有逾期笔记');
       return;
     }
     overdue.sort((a, b) => new Date(a.nextReviewDate as string).getTime() - new Date(b.nextReviewDate as string).getTime());
@@ -128,13 +128,16 @@ export const reviewApp = {
     }
 
     if (quiz && quiz.ai) {
-      new Notice('📝 正在批量生成题目...');
+      const h = notify('正在批量生成题目…', { type: 'progress' });
       const batchQuestions = await this.batchGenerateQuestions(overdue);
       const hasAny = Object.values(batchQuestions).some((qs) => (qs as any[]).length > 0);
       if (!hasAny) {
-        new Notice('⚠️ 批量出题失败，改用普通复习');
+        h.setType('warning');
+        h.setMessage('⚠️ 批量出题失败，改用普通复习');
         await this.reviewLoop(overdue, 0);
       } else {
+        h.setType('success');
+        h.setMessage('✅ 题目已生成，开始做题复习');
         await this.quizReviewLoop(overdue, 0, batchQuestions);
       }
     } else {
@@ -157,7 +160,7 @@ export const reviewApp = {
 
     if (index >= items.length) {
       quiz.endReviewSession();
-      new Notice('🎉 所有做题复习已完成');
+      notice('🎉 所有做题复习已完成');
       return;
     }
     const item = items[index];
@@ -251,7 +254,7 @@ export const reviewApp = {
     this.ensure(app);
     const dm = this.dataManager!;
     if (index >= overdueNotes.length) {
-      new Notice('🎉 所有逾期笔记已复习完成');
+      notice('🎉 所有逾期笔记已复习完成');
       return;
     }
     const item = overdueNotes[index];
@@ -263,7 +266,7 @@ export const reviewApp = {
     }
     const leaf = app.workspace.getLeaf(false);
     await leaf.openFile(file as TFile);
-    new Notice(`📖 复习中 (${index + 1}/${overdueNotes.length}): ${item.name}`);
+    notice(`📖 复习中 (${index + 1}/${overdueNotes.length}): ${item.name}`);
 
     let checkCount = 0;
     const maxChecks = 300;
@@ -286,7 +289,7 @@ export const reviewApp = {
       }
       if (checkCount >= maxChecks) {
         clearInterval(interval);
-        new Notice('⏸️ 复习超时，请手动继续');
+        notice('⏸️ 复习超时，请手动继续');
       }
     }, 1000);
   },
@@ -298,7 +301,7 @@ export const reviewApp = {
     const items = await dm.loadItems();
     if (items.some((i) => i.filePath === file.path)) throw new Error('该笔记已在复习计划中');
     await dm.addItem(file.path, file.basename);
-    new Notice('✅ 已加入复习计划，首次复习：1分钟后');
+    notice('✅ 已加入复习计划，首次复习：1分钟后');
   },
 
   /** 文件树染色 + 阶段徽标（源码 L719-772 逐字） */

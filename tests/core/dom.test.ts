@@ -4,23 +4,33 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { notice, injectStyles, longPress, createIconBtn, createSiteIcon, createOverlay } from '../../src/core/dom';
-import { MockNotice, resetObsidianMocks } from '../mock-obsidian-entry';
+import { getNoticeMessages } from '../mock-obsidian-entry';
 
 describe('notice', () => {
-  beforeEach(() => resetObsidianMocks());
-
-  it('无 smartCat 时使用 Obsidian Notice', () => {
-    notice('测试提示');
-    expect(MockNotice.instances.length).toBe(1);
-    expect(MockNotice.instances[0].message).toBe('测试提示');
+  beforeEach(() => {
+    document.body.innerHTML = '';
   });
 
-  it('smartCat 存在时优先气泡', () => {
-    const showBubble = vi.fn();
-    (window as any).smartCat = { showBubble };
+  it('走自绘通知系统：DOM 渲染 + 自动语义归类（ticket 25）', () => {
+    notice('测试提示');
+    expect(getNoticeMessages()).toHaveLength(1);
+    expect(getNoticeMessages()[0]).toBe('测试提示');
+    expect(document.querySelector('.bz-notice--info')).not.toBeNull();
+  });
+
+  it('自动归类：✅ → success、❌ → error、⚠️ → warning', () => {
+    notice('✅ 完成');
+    notice('❌ 失败');
+    notice('⚠️ 警告');
+    expect(document.querySelector('.bz-notice--success')).not.toBeNull();
+    expect(document.querySelector('.bz-notice--error')).not.toBeNull();
+    expect(document.querySelector('.bz-notice--warning')).not.toBeNull();
+  });
+
+  it('不再让路 smartCat（Q3 兼容分支已删除）', () => {
+    (window as any).smartCat = { showBubble: vi.fn() };
     notice('气泡');
-    expect(showBubble).toHaveBeenCalledWith('气泡', 3000);
-    expect(MockNotice.instances.length).toBe(0);
+    expect(getNoticeMessages()).toHaveLength(1);
     delete (window as any).smartCat;
   });
 });

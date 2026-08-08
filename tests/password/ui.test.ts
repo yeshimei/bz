@@ -8,7 +8,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { PasswordAppController, UIManager } from '../../src/password/ui';
 import { DataManager } from '../../src/password/data';
 import { MockVault } from '../mock-vault';
-import { MockNotice, resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
 
 
 /** 轮询等待（并行高负载下真实 setTimeout 等待不足，轮询至条件满足） */
@@ -70,7 +70,7 @@ describe('UIManager 主密码流程', () => {
     (inputs[0] as HTMLInputElement).value = 'master123';
     (inputs[1] as HTMLInputElement).value = 'other';
     confirmBtn.click();
-    expect(MockNotice.instances.some((n) => n.message === '两次密码不一致')).toBe(true);
+    expect(hasNotice('两次密码不一致')).toBe(true);
 
     // 一致 → 设置成功
     (inputs[1] as HTMLInputElement).value = 'master123';
@@ -78,7 +78,7 @@ describe('UIManager 主密码流程', () => {
     await p;
     expect(dm.unlocked).toBe(true);
     expect(vault.files.has('CONFIG/STORAGE/passwords.enc')).toBe(true);
-    expect(MockNotice.instances.some((n) => n.message === '密码已设置，数据已加密')).toBe(true);
+    expect(hasNotice('✅ 密码已设置，数据已加密')).toBe(true);
   });
 
   it('再次打开（已有加密文件）：标题「输入主密码」解锁流程', async () => {
@@ -103,14 +103,14 @@ describe('UIManager 主密码流程', () => {
     confirmBtn.click();
     await new Promise((r) => setTimeout(r, 300));
     expect(dm.unlocked).toBe(false);
-    expect(MockNotice.instances.some((n) => n.message === '密码错误，请重试')).toBe(true);
+    expect(hasNotice('❌ 密码错误，请重试')).toBe(true);
 
     // 正确密码 → 解锁成功
     (inputs[0] as HTMLInputElement).value = 'master123';
     confirmBtn.click();
     await p;
     expect(dm.unlocked).toBe(true);
-    expect(MockNotice.instances.some((n) => n.message === '解锁成功')).toBe(true);
+    expect(hasNotice('✅ 解锁成功')).toBe(true);
   });
 
   it('安全模式：关闭面板自动上锁', async () => {
@@ -122,7 +122,7 @@ describe('UIManager 主密码流程', () => {
     expect(dm2.unlocked).toBe(true);
     ui2.hide();
     expect(dm2.unlocked).toBe(false);
-    expect(MockNotice.instances.some((n) => n.message === '安全模式：已自动上锁')).toBe(true);
+    expect(hasNotice('⏸️ 安全模式：已自动上锁')).toBe(true);
   });
 
   it('⚙️ 设置弹窗：字符集/生成长度/安全模式', async () => {
@@ -215,9 +215,9 @@ describe('UIManager 面板与条目', () => {
     ui._noteTextarea.value = '备用';
     const saveBtn = [...popup.querySelectorAll('button')].find((b) => b.textContent === '保存')!;
     saveBtn.click();
-    await waitFor(() => dm.pwData.length === 3 && MockNotice.instances.some((n) => n.message === '保存成功'));
+    await waitFor(() => dm.pwData.length === 3 && hasNotice('✅ 已保存'));
     expect(dm.pwData.length).toBe(3);
-    expect(MockNotice.instances.some((n) => n.message === '保存成功')).toBe(true);
+    expect(hasNotice('✅ 已保存')).toBe(true);
   });
 
   it('平台为空 → 「平台不能为空」；账号密码空 → 提示', async () => {
@@ -226,12 +226,12 @@ describe('UIManager 面板与条目', () => {
     const saveBtn = [...popup.querySelectorAll('button')].find((b) => b.textContent === '保存')!;
     saveBtn.click();
     await new Promise((r) => setTimeout(r, 10));
-    expect(MockNotice.instances.some((n) => n.message === '平台不能为空')).toBe(true);
+    expect(hasNotice('平台不能为空')).toBe(true);
 
     ui._platformInput.value = 'X';
     saveBtn.click();
     await new Promise((r) => setTimeout(r, 10));
-    expect(MockNotice.instances.some((n) => n.message === '账号和密码不能为空')).toBe(true);
+    expect(hasNotice('账号和密码不能为空')).toBe(true);
   });
 
   it('generatePassword：长度与字符集', () => {
@@ -295,13 +295,13 @@ describe('PasswordAppController 命令', () => {
     await c.init();
     c.generatePassword();
     expect(c.uiManager.pendingPassword).toBeTruthy();
-    expect(MockNotice.instances.some((n) => n.message.includes('密码已暂存'))).toBe(true);
+    expect(hasNotice(/密码已暂存/)).toBe(true);
   });
 
   it('未解锁时 addEntry → 「请先解锁密码本（打开管理器）」', async () => {
     const c = PasswordAppController.getInstance({ storagePath: 'CONFIG/STORAGE', charset: 'abc', length: '8', securityMode: false });
     await c.init();
     c.addEntry();
-    expect(MockNotice.instances.some((n) => n.message === '请先解锁密码本（打开管理器）')).toBe(true);
+    expect(hasNotice('请先解锁密码本（打开管理器）')).toBe(true);
   });
 });
