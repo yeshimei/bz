@@ -21,9 +21,9 @@ describe('launcher 数据层', () => {
 
   describe('normalizeData 容错', () => {
     it('null/非对象 → 空布局', () => {
-      expect(normalizeData(null)).toEqual({ version: 2, desktop: [], mobile: [] });
-      expect(normalizeData('x')).toEqual({ version: 2, desktop: [], mobile: [] });
-      expect(normalizeData({})).toEqual({ version: 2, desktop: [], mobile: [] });
+      expect(normalizeData(null)).toEqual({ version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 4 } });
+      expect(normalizeData('x')).toEqual({ version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 4 } });
+      expect(normalizeData({})).toEqual({ version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 4 } });
     });
 
     it('非法磁贴剔除、w/h 归一为 1|2、x/y 取整非负', () => {
@@ -37,27 +37,27 @@ describe('launcher 数据层', () => {
         ],
       };
       const d = normalizeData(raw);
-      expect(d.desktop.length).toBe(2);
-      expect(d.desktop[0].id).toBe('a');
-      expect(d.desktop[1]).toMatchObject({ id: 'b', x: 0, y: 2, w: 2, h: 2 });
+      expect(d.desktop.tiles.length).toBe(2);
+      expect(d.desktop.tiles[0].id).toBe('a');
+      expect(d.desktop.tiles[1]).toMatchObject({ id: 'b', x: 0, y: 2, w: 2, h: 2 });
     });
 
     it('icon 仅保留非空字符串', () => {
       const d = normalizeData({ tiles: [{ id: 'a', commandId: 'c', x: 0, y: 0, w: 1, h: 1, icon: 'star' }] });
-      expect(d.desktop[0].icon).toBe('star');
+      expect(d.desktop.tiles[0].icon).toBe('star');
       const d2 = normalizeData({ tiles: [{ id: 'a', commandId: 'c', x: 0, y: 0, w: 1, h: 1, icon: '' }] });
-      expect(d2.desktop[0].icon).toBeUndefined();
+      expect(d2.desktop.tiles[0].icon).toBeUndefined();
     });
 
     it('label 保留 trim 后的非空值；空白 label 忽略', () => {
       const d = normalizeData({
         tiles: [{ id: 'a', commandId: 'c', x: 0, y: 0, w: 1, h: 1, label: '  我的入口  ' }],
       });
-      expect(d.desktop[0].label).toBe('我的入口');
+      expect(d.desktop.tiles[0].label).toBe('我的入口');
       const d2 = normalizeData({ tiles: [{ id: 'a', commandId: 'c', x: 0, y: 0, w: 1, h: 1, label: '   ' }] });
-      expect(d2.desktop[0].label).toBeUndefined();
+      expect(d2.desktop.tiles[0].label).toBeUndefined();
       const d3 = normalizeData({ tiles: [{ id: 'a', commandId: 'c', x: 0, y: 0, w: 1, h: 1 }] });
-      expect(d3.desktop[0].label).toBeUndefined();
+      expect(d3.desktop.tiles[0].label).toBeUndefined();
     });
 
     it('v1 旧格式（顶层 tiles）→ 自动归入 desktop，mobile 为空', () => {
@@ -65,9 +65,9 @@ describe('launcher 数据层', () => {
         version: 1,
         tiles: [{ id: 'a', commandId: 'c', x: 0, y: 0, w: 1, h: 1 }],
       });
-      expect(d.version).toBe(2);
-      expect(d.desktop.length).toBe(1);
-      expect(d.mobile).toEqual([]);
+      expect(d.version).toBe(3);
+      expect(d.desktop.tiles.length).toBe(1);
+      expect(d.mobile.tiles).toEqual([]);
     });
 
     it('v2 双平台独立：desktop/mobile 各自容错清洗', () => {
@@ -76,11 +76,30 @@ describe('launcher 数据层', () => {
         desktop: [{ id: 'a', commandId: 'c1', x: 0, y: 0, w: 1, h: 1 }, 'bad'],
         mobile: [{ id: 'b', commandId: 'c2', x: 1, y: 2, w: 2, h: 1 }],
       });
-      expect(d.desktop.length).toBe(1);
-      expect(d.mobile[0]).toMatchObject({ id: 'b', x: 1, y: 2, w: 2, h: 1 });
+      expect(d.desktop.tiles.length).toBe(1);
+      expect(d.mobile.tiles[0]).toMatchObject({ id: 'b', x: 1, y: 2, w: 2, h: 1 });
       // v2 兼容 desktop:{tiles:[...]} 对象形态
       const d2 = normalizeData({ version: 2, desktop: { tiles: [{ id: 'a', commandId: 'c', x: 0, y: 0, w: 1, h: 1 }] }, mobile: { tiles: [] } });
-      expect(d2.desktop.length).toBe(1);
+      expect(d2.desktop.tiles.length).toBe(1);
+    });
+
+    it('v3：desktop/mobile 各自 {tiles, columns}，列数 clamp 3-8', () => {
+      const d = normalizeData({
+        version: 3,
+        desktop: { tiles: [{ id: 'a', commandId: 'c1', x: 0, y: 0, w: 1, h: 1 }], columns: 5 },
+        mobile: { tiles: [{ id: 'b', commandId: 'c2', x: 1, y: 2, w: 2, h: 1 }], columns: 99 }, // 99 → 4（移动端兜底）
+      });
+      expect(d.desktop.columns).toBe(5);
+      expect(d.desktop.tiles.length).toBe(1);
+      expect(d.mobile.columns).toBe(4); // 越界值回退移动端默认
+      // 缺省列数：desktop 6 / mobile 4
+      const d2 = normalizeData({ version: 3, desktop: { tiles: [] }, mobile: { tiles: [] } });
+      expect(d2.desktop.columns).toBe(6);
+      expect(d2.mobile.columns).toBe(4);
+      // 列数下限
+      const d3 = normalizeData({ version: 3, desktop: { tiles: [], columns: 2 }, mobile: { tiles: [], columns: 3 } });
+      expect(d3.desktop.columns).toBe(6);
+      expect(d3.mobile.columns).toBe(3);
     });
 
     it('hideText 仅保留布尔值', () => {
@@ -92,8 +111,8 @@ describe('launcher 数据层', () => {
         ],
         mobile: [],
       });
-      expect(d.desktop[0].hideText).toBe(true);
-      expect(d.desktop[1].hideText).toBeUndefined();
+      expect(d.desktop.tiles[0].hideText).toBe(true);
+      expect(d.desktop.tiles[1].hideText).toBeUndefined();
     });
   });
 
@@ -234,15 +253,15 @@ describe('launcher 数据层', () => {
     it('不存在 → 空布局；save 建目录建文件；load 往返', async () => {
       const vault = new MockVault();
       setApp({ vault } as any);
-      expect(await loadLauncherData(getApp())).toEqual({ version: 2, desktop: [], mobile: [] });
+      expect(await loadLauncherData(getApp())).toEqual({ version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 4 } });
       await saveLauncherData(getApp(), {
-        version: 2,
-        desktop: [tile({ id: 'a', x: 2, y: 3, icon: 'star', label: '入口A' })],
-        mobile: [],
+        version: 3,
+        desktop: { tiles: [tile({ id: 'a', x: 2, y: 3, icon: 'star', label: '入口A' })], columns: 6 },
+        mobile: { tiles: [], columns: 4 },
       });
       expect(vault.files.has(LAUNCHER_PATH)).toBe(true);
       const d = await loadLauncherData(getApp());
-      expect(d.desktop[0]).toMatchObject({ id: 'a', x: 2, y: 3, icon: 'star', label: '入口A' });
+      expect(d.desktop.tiles[0]).toMatchObject({ id: 'a', x: 2, y: 3, icon: 'star', label: '入口A' });
     });
 
     it('解析失败 → 空布局且不覆盖文件', async () => {
@@ -250,7 +269,7 @@ describe('launcher 数据层', () => {
       await vault.create(LAUNCHER_PATH, '{broken');
       setApp({ vault } as any);
       const d = await loadLauncherData(getApp());
-      expect(d).toEqual({ version: 2, desktop: [], mobile: [] });
+      expect(d).toEqual({ version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 4 } });
       expect(vault.files.get(LAUNCHER_PATH)).toBe('{broken'); // 未覆盖
     });
   });
