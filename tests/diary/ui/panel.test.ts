@@ -296,4 +296,21 @@ describe('设置读取（ticket 09 前置）', () => {
     applyUiSettings({ showTagCount: false });
     expect(getShowTagCountSetting()).toBe(false);
   });
+
+  it('⚙️ 设置弹窗：目录/批量/标签计数/文件日期', async () => {
+    const { setSettingsProvider } = await import('../../../src/core/settings-provider');
+    const { showDiaryPanel } = await import('../../../src/diary/ui/panel');
+    setSettingsProvider(() => ({
+      diaryDirectory: '我的/日记', movieDirectory: '我的/影视', letterDirectory: '我的/信',
+      diaryBatchSize: '20', showTagCount: true, useFileDateTime: false,
+    }) as any);
+    showDiaryPanel(null as any);
+    const settingsBtn = [...document.querySelectorAll('.diary-popup-header button')].find((b) => b.title === '日记本设置')!;
+    expect(settingsBtn).toBeTruthy();
+    settingsBtn.click();
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    expect(popup.textContent).toContain('日记本设置');
+    const names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    expect(names).toEqual(['日记目录', '影视目录', '信目录', '每批加载数量', '显示标签计数', '使用文件日期作为默认日期']);
+  });
 });

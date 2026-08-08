@@ -13,7 +13,8 @@ let controller: PasswordAppController | null = null;
 function getController(): PasswordAppController {
   if (!controller) {
     const s = getSettings();
-    const storagePath = (s.pwStoragePath || 'CONFIG/STORAGE').replace(/\/+$/, '');
+    // ADR-0009：storagePath 优先，旧 pwStoragePath 兼容兜底
+    const storagePath = ((s.storagePath || s.pwStoragePath) || 'CONFIG/STORAGE').replace(/\/+$/, '');
     const charset =
       s.passwordCharset ||
       '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+';

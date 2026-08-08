@@ -25,11 +25,19 @@ export interface FlashConfig {
 
 export function buildConfig(): FlashConfig {
   const s: any = tryGetSettings();
+  // ADR-0009：storagePath 优先；旧 META_PATH/VEC_PATH（完整文件路径）兼容兜底（取其目录）
+  const dirOf = (v: string) => String(v || '').trim().replace(/\/+$/, '');
+  const metaDir = s.storagePath
+    ? dirOf(s.storagePath)
+    : dirOf(s.META_PATH).replace(/\/ai_completion_meta\.json$/, '');
+  const vecDir = s.storagePath
+    ? dirOf(s.storagePath)
+    : dirOf(s.VEC_PATH).replace(/\/ai_completion_vectors\.vec$/, '');
   return {
     OLLAMA_URL: s.OLLAMA_URL || 'http://localhost:11434',
     EMBEDDING_MODEL: s.EMBEDDING_MODEL || 'bge-m3',
-    META_PATH: s.META_PATH || 'CONFIG/STORAGE/ai_completion_meta.json',
-    VEC_PATH: s.VEC_PATH || 'CONFIG/STORAGE/ai_completion_vectors.vec',
+    META_PATH: (metaDir || 'CONFIG/STORAGE') + '/ai_completion_meta.json',
+    VEC_PATH: (vecDir || 'CONFIG/STORAGE') + '/ai_completion_vectors.vec',
     TOP_K: Number(s.TOP_K) || 20,
     CHAT_TOP_K: Number(s.CHAT_TOP_K) || 20,
     CHUNK_MIN_LENGTH: Number(s.CHUNK_MIN_LENGTH) || 50,

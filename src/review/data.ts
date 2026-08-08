@@ -9,10 +9,10 @@ import { FSRS_FIRST_INTERVALS, LADDER_MAX, TOTAL_STAGES } from './fsrs';
 
 export const REVIEW_FILE_PATH = 'CONFIG/STORAGE/review.json';
 
-/** 复习数据文件路径（设置可配，默认 CONFIG/STORAGE/review.json） */
+/** 复习数据文件路径（ADR-0009：storagePath 优先，旧 reviewStoragePath 兼容兜底） */
 export function getReviewFilePath(): string {
   const s = tryGetSettings() as any;
-  const dir = (s && s.reviewStoragePath) || 'CONFIG/STORAGE';
+  const dir = (s && (s.storagePath || s.reviewStoragePath)) || 'CONFIG/STORAGE';
   return `${dir}/review.json`;
 }
 

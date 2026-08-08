@@ -26,8 +26,8 @@ export class FavoritesApp {
     if (this.initialized) return;
 
     const settings = getSettings();
-    // 文件名固定 favorites.json，设置只允许改目录（兼容旧完整路径值）
-    const storagePath = getStoragePath(settings?.favoritesStoragePath);
+    // 文件名固定 favorites.json，设置只允许改目录（ADR-0009：storagePath 优先，旧字段兼容兜底）
+    const storagePath = getStoragePath(settings?.storagePath || settings?.favoritesStoragePath);
 
     this.dataManager = new DataManager(storagePath);
     this.aiService = new FavoritesAIService();

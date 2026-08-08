@@ -9,6 +9,9 @@ import { generateId, extractUrlAndDisplay, DEFAULT_PLATFORM_MAP, getPlatformName
 import type { MemoItem, MemoPosition } from './types';
 
 export interface BzSettingsLike {
+  /** ADR-0009 共享数据路径（优先） */
+  storagePath?: string;
+  /** 旧独立路径（兼容保留） */
   todoFilePath?: string;
   showFileName?: boolean;
   autoPopupOnStart?: boolean;
@@ -26,7 +29,8 @@ export const DataManager = {
   movieFolderPath: '我的/影视',
 
   init(settings: BzSettingsLike) {
-    const folder = (settings.todoFilePath || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
+    // ADR-0009：storagePath 优先，旧 todoFilePath 兼容兜底
+    const folder = ((settings.storagePath || settings.todoFilePath) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
     this.todoFilePath = folder + '/memo.json';
     this._store = jsonStore(this.todoFilePath);
     // 场景/平台映射固定使用内置默认（设置项已移除）

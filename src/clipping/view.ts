@@ -3,12 +3,14 @@
  * 双击跳转、长按删除、反链显示、vault modify 自动刷新、滚动加载。
  * 源码：剪藏本.js 逐字移植（DOM id/类名、文案、交互一致）。
  */
-import { Notice } from 'obsidian';
+import { Notice, Setting } from 'obsidian';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { createSiteIcon, injectStyles } from '../core/dom';
 import { formatRelativeTime } from '../core/utils';
-import { tryGetSettings } from '../core/settings-provider';
+import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
+import { openSettingsModal } from '../core/settings-modal';
+import { ensureAutoSummary } from '../auto-summary';
 
 // ---------- 模块状态 ----------
 let articlePopup: HTMLElement | null = null;
@@ -190,6 +192,45 @@ function createHeader(): HTMLElement {
   });
   refreshBtn.disabled = true;
   refreshBtn.style.opacity = '0.5';
+
+  // 剪藏本设置弹窗（ADR-0009：仅剪藏目录 / 每批加载数量 / 自动摘要开关三项）
+  const settingsBtn = createIconButton('⚙️', '剪藏本设置', () => {
+    openSettingsModal({
+      title: '剪藏本设置',
+      build: (el) => {
+        const s = getSettings();
+        new Setting(el)
+          .setName('剪藏目录')
+          .setDesc('存放网页剪藏 markdown 文件的文件夹')
+          .addText((text) =>
+            text.setValue(s.articleDirectory || '').onChange(async (v) => {
+              s.articleDirectory = v;
+              await saveSettings();
+            })
+          );
+        new Setting(el)
+          .setName('每批加载数量')
+          .setDesc('滚动加载时每批显示的条目数')
+          .addText((text) =>
+            text.setValue(s.articleBatchSize || '').onChange(async (v) => {
+              s.articleBatchSize = v;
+              await saveSettings();
+            })
+          );
+        new Setting(el)
+          .setName('自动摘要')
+          .setDesc('监听剪藏目录新文件，AI 生成摘要写回 frontmatter（路径与剪藏目录一致）')
+          .addToggle((toggle) =>
+            toggle.setValue(!!s.autoSummaryEnabled).onChange(async (v) => {
+              s.autoSummaryEnabled = v;
+              await saveSettings();
+              if (v) ensureAutoSummary(app);
+            })
+          );
+      },
+    });
+  });
+  buttonContainer.appendChild(settingsBtn);
 
   const closeBtn = createIconButton('❌', '关闭', () => {
     articleMask!.style.visibility = 'hidden';

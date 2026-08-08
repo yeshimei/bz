@@ -1,11 +1,12 @@
 /**
- * 设置页测试（覆盖 main.ts BzSettingTab）：12 个 tab 渲染 + 控件交互触发保存持久化。
+ * 设置页测试（覆盖 main.ts BzSettingTab，ADR-0009）：单页两区块（🤖 AI / 📂 数据存储路径）渲染 +
+ * 控件交互保存持久化 + storagePath 迁移（旧 7 字段 → 共享路径）。
  * 依赖 mock-obsidian-entry 的 Setting 链式 mock（MockDropdown/MockText/MockToggle）。
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import BzPlugin, { BzSettingTab } from '../src/main';
 import { MockVault } from './mock-vault';
-import { resetObsidianMocks } from './mock-obsidian-entry';
+import { resetObsidianMocks, MockNotice } from './mock-obsidian-entry';
 
 const diskData: Record<string, any> = {};
 
@@ -36,16 +37,8 @@ async function createPlugin(app: any) {
   return plugin;
 }
 
-/** 点击 tab 并返回内容区 */
-function clickTab(tab: BzSettingTab, label: string): HTMLElement {
-  const btn = [...tab.containerEl.querySelectorAll('.bz-tab')].find((b) => b.textContent === label) as HTMLElement;
-  expect(btn, `tab「${label}」存在`).toBeTruthy();
-  btn.click();
-  return btn;
-}
-
 /** 按设置名找 setting-item */
-function findSetting(tab: BzSettingTab, name: string) {
+function findSetting(tab: BzSettingTab, name: string): HTMLElement {
   const el = [...tab.containerEl.querySelectorAll('.setting-item')].find(
     (s) => (s as HTMLElement).dataset.name === name
   ) as HTMLElement;
@@ -53,9 +46,12 @@ function findSetting(tab: BzSettingTab, name: string) {
   return el;
 }
 
-const ALL_TABS = ['AI', '备忘录', '日记本', '归物本', '剪藏本', '密码本', '收藏本', '书库', '影视', '复习计划', 'AI Agent', '闪念'];
+/** 取设置项的控件（MockText/MockToggle 均有 trigger） */
+function controlOf(el: HTMLElement): any {
+  return (el as any).__setting.controls.find((c: any) => typeof c.trigger === 'function');
+}
 
-describe('设置页 BzSettingTab', () => {
+describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
   let plugin: any;
   let tab: BzSettingTab;
 
@@ -69,127 +65,110 @@ describe('设置页 BzSettingTab', () => {
   });
 
   afterEach(() => {
-    // 清理手势监听，防测试间残留
     if (plugin && plugin.unregisterGestures) plugin.unregisterGestures();
   });
 
-  it('display 渲染 12 个 tab，默认第一个（AI）激活', () => {
-    const btns = [...tab.containerEl.querySelectorAll('.bz-tab')];
-    expect(btns.map((b) => b.textContent)).toEqual(ALL_TABS);
-    expect(btns[0].classList.contains('bz-tab-active')).toBe(true);
-    expect(tab.containerEl.querySelectorAll('.bz-tab-content').length).toBe(12);
+  it('单页平铺：无 tab，只有 🤖 AI 与 📂 数据存储路径 两个区块标题', () => {
+    expect(tab.containerEl.querySelectorAll('.bz-tab').length).toBe(0);
+    const titles = [...tab.containerEl.querySelectorAll('.bz-setting-section-title')].map((t) => t.textContent);
+    expect(titles).toEqual(['🤖 AI', '📂 数据存储路径']);
   });
 
-  it('每个 tab 点击后渲染对应设置项（抽查关键项）', () => {
-    const spotChecks: Record<string, string[]> = {
-      AI: ['AI 服务商', 'DeepSeek API Key', 'OpenCode Go API Key'],
-      备忘录: ['备忘录数据文件路径', '启动时自动弹窗'],
-      日记本: ['日记目录', '每批加载数量', '显示标签计数'],
-      归物本: ['存储文件夹路径'],
-      剪藏本: ['剪藏目录', '自动摘要'],
-      密码本: ['数据存储路径', '安全模式'],
-      收藏本: ['数据存储路径'],
-      书库: ['书库文件夹', '书籍识别标签'],
-      影视: ['影视文件夹', '每页加载数量'],
-      复习计划: ['数据存储路径', '做题决定难度', '题目难度'],
-      闪念: ['Ollama URL', 'Embedding 模型', '并发数'],
-      'AI Agent': ['启用', '监听文件夹', 'AI 匹配模型'],
-    };
-    for (const label of ALL_TABS) {
-      clickTab(tab, label);
-      for (const name of spotChecks[label]) {
-        expect(
-          [...tab.containerEl.querySelectorAll('.setting-item')].some((s) => (s as HTMLElement).dataset.name === name),
-          `${label} tab 应有「${name}」`
-        ).toBe(true);
-      }
-    }
+  it('AI 区块：服务商下拉 + 两个 API Key；数据存储路径区块：storagePath 输入', () => {
+    findSetting(tab, 'AI 服务商');
+    findSetting(tab, 'DeepSeek API Key');
+    findSetting(tab, 'OpenCode Go API Key');
+    findSetting(tab, '数据存储路径');
+    // 域设置不再出现在设置页（已迁往各域 ⚙️ 弹窗）
+    expect([...tab.containerEl.querySelectorAll('.setting-item')].some((s) => (s as HTMLElement).dataset.name === '启动时自动弹窗')).toBe(false);
+    expect([...tab.containerEl.querySelectorAll('.setting-item')].some((s) => (s as HTMLElement).dataset.name === '剪藏目录')).toBe(false);
   });
 
-  it('AI tab：切换服务商更新设置并持久化', async () => {
-    clickTab(tab, 'AI');
-    const aiSetting = [...tab.containerEl.querySelectorAll('.setting-item')].find(
-      (s) => (s as HTMLElement).dataset.name === 'AI 服务商'
-    ) as HTMLElement;
+  it('AI 服务商切换更新设置并持久化', async () => {
+    const aiSetting = findSetting(tab, 'AI 服务商');
     const dd = (aiSetting as any).__setting.controls.find((c: any) => c.options && 'opencode-go' in c.options);
-    expect(dd).toBeTruthy();
     dd.trigger('opencode-go');
     await new Promise((r) => setTimeout(r, 10));
     expect(plugin.settings.aiProvider).toBe('opencode-go');
     expect(diskData['bz'].aiProvider).toBe('opencode-go');
   });
 
-  it('备忘录 tab：文本输入更新设置并持久化', async () => {
-    clickTab(tab, '备忘录');
-    const el = findSetting(tab, '备忘录数据文件路径');
+  it('数据存储路径输入更新设置并持久化', async () => {
+    const el = findSetting(tab, '数据存储路径');
     const text = (el as any).__setting.controls.find((c: any) => typeof c.trigger === 'function' && c.placeholder !== undefined);
-    text.trigger('自定义/路径');
+    text.trigger('CONFIG/数据');
     await new Promise((r) => setTimeout(r, 10));
-    expect(plugin.settings.todoFilePath).toBe('自定义/路径');
-    expect(diskData['bz'].todoFilePath).toBe('自定义/路径');
+    expect(plugin.settings.storagePath).toBe('CONFIG/数据');
+    expect(diskData['bz'].storagePath).toBe('CONFIG/数据');
+  });
+});
+
+describe('storagePath 迁移（ADR-0009）', () => {
+  // 迁移只关心 onload 的 migrateStoragePath；不触发布局回调（避免日记本初始化噪音 Notice）
+  function makeAppNoLayout() {
+    const app = makeMockApp();
+    app.workspace.onLayoutReady = () => {};
+    return app;
+  }
+
+  beforeEach(() => {
+    delete diskData['bz'];
+    MockNotice.instances.length = 0;
   });
 
-  it('日记本 tab：开关交互更新设置', async () => {
-    clickTab(tab, '日记本');
-    const el = findSetting(tab, '显示标签计数');
-    const toggle = (el as any).__setting.controls.find((c: any) => typeof c.trigger === 'function');
-    toggle.trigger(false);
-    await new Promise((r) => setTimeout(r, 10));
-    expect(plugin.settings.showTagCount).toBe(false);
+  it('旧 7 字段全部相同（默认 CONFIG/STORAGE）→ seed storagePath，无 Notice', async () => {
+    const p = await createPlugin(makeAppNoLayout());
+    expect(p.settings.storagePath).toBe('CONFIG/STORAGE');
+    expect(MockNotice.instances.length).toBe(0);
   });
 
-  it('复习 tab：做题决定难度开关控制做题家选项显隐', async () => {
-    clickTab(tab, '复习计划');
-    const quizNames = ['允许多选题', '每笔记题目数量（0为自动）', '打乱题目顺序', '题目难度'];
-    const quizEls = quizNames.map((n) => findSetting(tab, n));
-    // 默认 forceQuizForReview=false → 选项隐藏
-    for (const el of quizEls) expect(el.classList.contains('bz-setting-hidden')).toBe(true);
-
-    const toggleEl = findSetting(tab, '做题决定难度');
-    const toggle = (toggleEl as any).__setting.controls.find((c: any) => typeof c.trigger === 'function');
-    toggle.trigger(true);
-    await new Promise((r) => setTimeout(r, 10));
-    expect(plugin.settings.forceQuizForReview).toBe(true);
-    for (const el of quizEls) expect(el.classList.contains('bz-setting-hidden')).toBe(false);
+  it('旧字段全同但自定义 → 以该值初始化 storagePath', async () => {
+    diskData['bz'] = {
+      todoFilePath: 'CONFIG/数据',
+      belongingsDataFolder: 'CONFIG/数据',
+      pwStoragePath: 'CONFIG/数据',
+      favoritesStoragePath: 'CONFIG/数据',
+      reviewStoragePath: 'CONFIG/数据',
+      META_PATH: 'CONFIG/数据/ai_completion_meta.json',
+      VEC_PATH: 'CONFIG/数据/ai_completion_vectors.vec',
+    };
+    const p = await createPlugin(makeAppNoLayout());
+    expect(p.settings.storagePath).toBe('CONFIG/数据');
+    expect(MockNotice.instances.length).toBe(0);
   });
 
-  it('剪藏 tab：自动摘要开关开启触发 ensureAutoSummary（不抛错）', async () => {
-    clickTab(tab, '剪藏本');
-    const el = findSetting(tab, '自动摘要');
-    const toggle = (el as any).__setting.controls.find((c: any) => typeof c.trigger === 'function');
-    await expect(Promise.resolve(toggle.trigger(true))).resolves.toBeUndefined();
-    expect(plugin.settings.autoSummaryEnabled).toBe(true);
+  it('旧字段参差 → 默认 CONFIG/STORAGE + Notice 列出被忽略路径', async () => {
+    diskData['bz'] = {
+      todoFilePath: 'CONFIG/数据',
+      pwStoragePath: '其他/路径',
+    };
+    const p = await createPlugin(makeAppNoLayout());
+    expect(p.settings.storagePath).toBe('CONFIG/STORAGE');
+    expect(MockNotice.instances.length).toBe(1);
+    const msg = MockNotice.instances[0].message as string;
+    expect(msg).toContain('todoFilePath');
+    expect(msg).toContain('pwStoragePath');
   });
 
-  it('onload 迁移旧手势设置 → launcherGesture 单选', async () => {
-    // 旧 boolean 版：double 开启
+  it('已有 storagePath → 不覆盖（用户已配置）', async () => {
+    diskData['bz'] = { storagePath: 'CONFIG/我的数据', todoFilePath: '旧/路径' };
+    const p = await createPlugin(makeAppNoLayout());
+    expect(p.settings.storagePath).toBe('CONFIG/我的数据');
+    expect(MockNotice.instances.length).toBe(0);
+  });
+});
+
+describe('设置页 onload 迁移（保留既有）', () => {
+  it('旧手势设置 → launcherGesture 单选', async () => {
     diskData['bz'] = { gestureDoubleTap: true, gestureTripleTap: false };
     const p1 = await createPlugin(makeMockApp());
     expect(p1.settings.launcherGesture).toBe('double');
-    expect((p1.settings as any).gestureDoubleTap).toBeUndefined(); // 旧字段清理
-    // 旧 string 版（命令 id / off）
+    expect((p1.settings as any).gestureDoubleTap).toBeUndefined();
     diskData['bz'] = { gestureSwipeDown: 'bz-memo-open-panel' };
     const p2 = await createPlugin(makeMockApp());
     expect(p2.settings.launcherGesture).toBe('swipe');
-    // 全部关闭 → off
     diskData['bz'] = { gestureTripleTap: 'off' };
     const p3 = await createPlugin(makeMockApp());
     expect(p3.settings.launcherGesture).toBe('off');
-  });
-
-  it('闪念 tab：启用开关触发 ensureFlashOnReady（占位实现不抛错）', async () => {
-    clickTab(tab, '闪念');
-    const el = findSetting(tab, '启用');
-    const toggle = (el as any).__setting.controls.find((c: any) => typeof c.trigger === 'function');
-    expect(() => toggle.trigger(true)).not.toThrow();
-    expect(plugin.settings.flashEnabled).toBe(true);
-  });
-
-  it('AI Agent tab：启用开关触发 ensureAIAgent（不抛错）', async () => {
-    clickTab(tab, 'AI Agent');
-    const el = findSetting(tab, '启用');
-    const toggle = (el as any).__setting.controls.find((c: any) => typeof c.trigger === 'function');
-    expect(() => toggle.trigger(true)).not.toThrow();
-    expect(plugin.settings.aiAgentEnabled).toBe(true);
   });
 });

@@ -124,6 +124,23 @@ describe('UIManager 主密码流程', () => {
     expect(dm2.unlocked).toBe(false);
     expect(MockNotice.instances.some((n) => n.message === '安全模式：已自动上锁')).toBe(true);
   });
+
+  it('⚙️ 设置弹窗：字符集/生成长度/安全模式', async () => {
+    const dm2 = new DataManager('CONFIG/STORAGE');
+    const ui2 = new UIManager(dm2, { charset: 'abc', length: '8', securityMode: false });
+    ui2.ensureElements();
+    setSettingsProvider(() => ({
+      pwStoragePath: 'CONFIG/STORAGE', passwordCharset: 'abc', passwordLength: '8', securityMode: false,
+    }) as any);
+    await dm2.unlock('pw');
+    ui2.show();
+    const settingsBtn = [...document.querySelectorAll('button')].find((b) => b.title === '密码本设置')!;
+    settingsBtn.click();
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    expect(popup.textContent).toContain('密码本设置');
+    const names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    expect(names).toEqual(['密码生成字符集', '密码生成长度', '安全模式']);
+  });
 });
 
 describe('UIManager 面板与条目', () => {

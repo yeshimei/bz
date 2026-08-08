@@ -96,6 +96,20 @@ _Avoid_: 无效磁贴、死磁贴
 
 **AIService / createAI**: Q3 的 AI 服务抽象——provider 可选 deepseek / opencode-go，key 存于 QuickAdd 宏设置（`aiProvider`、`opencodeGoApiKey`），支持 override 对象（endpoint/apiKey/model）；插件化后迁移至插件设置。
 
+### 设置模型（ADR-0009）
+
+**全局设置页 (Global Settings Page)**: Obsidian 设置中的 bz 设置页——单页平铺（无 tab），只含「AI」「数据存储路径」两个区块。
+_Avoid_: 设置 tab、分类设置、设置页分区
+
+**域设置弹窗 (Domain Settings Modal)**: 各功能主面板右上角 ⚙️ 打开的该功能专属设置弹窗，承载该域的行为设置（归物本/收藏本为空弹窗）。与全局设置页互补，设置就近。
+_Avoid_: 域设置 tab、功能设置页
+
+**共享数据路径 (Shared Storage Path)**: `storagePath` 设置项——所有 JSON 数据文件（memo/belongings/passwords/favorites/review/quiz/闪念 meta/vec）的统一目录，默认 `CONFIG/STORAGE`。旧各域路径字段（todoFilePath、belongingsDataFolder、pwStoragePath、favoritesStoragePath、reviewStoragePath、META_PATH、VEC_PATH）废弃，仅兼容保留不暴露。
+_Avoid_: 各脚本路径、存储路径们
+
+**筛选弹窗 (Filter Modal)**: 🔀 图标打开的筛选/排序弹窗（影视「筛选与排序」、书库「视图与筛选」），与 ⚙️ 域设置弹窗严格区分——🔀 只做筛选，⚙️ 只做设置。
+_Avoid_: 设置弹窗（指筛选时）
+
 **changelog**: 各脚本版本更新日志（CHANGELOGS[identifier]），localStorage 记录已读版本（`changelog_<id>_shown_version`），插件化后保留机制。
 
 ## Rules
@@ -106,3 +120,4 @@ _Avoid_: 无效磁贴、死磁贴
 - 命令 id 统一 `bz-` 前缀（ADR-0004 修订；用户决策品牌统一，推翻 ADR-0001 不带前缀约定）。
 - 一个插件包含全部待迁移域（用户决策）；外部进程能力（child_process）在 Electron 桌面端可用，移动端不可用。
 - 全部 16 个脚本功能与样式完全复刻。
+- 设置归属（ADR-0009）：全局设置页（AI/共享数据路径）+ 域设置弹窗（⚙️ 就近）；筛选/排序统一用 🔀；AI Agent 设置不暴露，用默认值。

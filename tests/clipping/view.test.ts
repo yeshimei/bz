@@ -210,4 +210,17 @@ describe('剪藏本面板', () => {
     await new Promise((r) => setTimeout(r, 20));
     expect(document.querySelector('.article-empty')!.textContent).toBe('暂无文章');
   });
+
+  it('⚙️ 设置弹窗：仅剪藏目录/每批加载数量/自动摘要开关三项', async () => {
+    const { vault } = await setup();
+    vault.files.set('我的/文章/A.md', makeArticleMd('https://x.com/a', '站', 'A', '2025-06-02T08:00:00.000Z'));
+    await initArticleView(true);
+    await new Promise((r) => setTimeout(r, 20));
+    const settingsBtn = [...document.querySelectorAll('button')].find((b) => b.title === '剪藏本设置')!;
+    settingsBtn.click();
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    expect(popup.textContent).toContain('剪藏本设置');
+    const names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    expect(names).toEqual(['剪藏目录', '每批加载数量', '自动摘要']);
+  });
 });

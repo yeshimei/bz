@@ -2,10 +2,14 @@
  * 主面板与标签栏（原脚本 160-240 + 735-1362 的 UI 部分）。
  * 负责面板/遮罩/头部/标签栏/进度条的创建，init 幂等入口，ESC 注册。
  */
-import { Notice } from 'obsidian';
+import { Notice, Setting } from 'obsidian';
 import { escManager } from '../../core/esc-manager';
 import type { EscHandle } from '../../core/esc-manager';
 import { getApp } from '../app';
+import { getSettings, saveSettings } from '../../core/settings-provider';
+import { openSettingsModal } from '../../core/settings-modal';
+import { applyDirectories } from '../config';
+import { applyUiSettings } from './ui-settings';
 import { getPrimaryTagsConfig, getSubTagsOfPrimary, getTagEmoji, isSubTag, getParentPrimaryTag } from '../config';
 import { state, setCurrentActiveParentForSub, getCurrentActiveParentForSub } from '../state';
 import { loadAll, onFullRefresh, onLightRefresh, onProgress, onLoadingChange, onFileChange } from '../store';
@@ -152,6 +156,43 @@ function createHeader() {
 
   const buttonContainer = document.createElement('div');
   buttonContainer.style.cssText = 'display:flex;align-items:center;gap:8px;';
+  const settingsButton = createButton('⚙️', '日记本设置', () => {
+    // 日记本设置弹窗（ADR-0009 域设置弹窗）
+    openSettingsModal({
+      title: '日记本设置',
+      build: (el) => {
+        const s = getSettings() as any;
+        const textSetting = (name: string, desc: string, field: string) =>
+          new Setting(el)
+            .setName(name)
+            .setDesc(desc)
+            .addText((text) =>
+              text.setValue(s[field] || '').onChange(async (v) => {
+                s[field] = v;
+                await saveSettings();
+                applyDirectories(s);
+              })
+            );
+        const toggleSetting = (name: string, desc: string, field: string) =>
+          new Setting(el)
+            .setName(name)
+            .setDesc(desc)
+            .addToggle((toggle) =>
+              toggle.setValue(!!s[field]).onChange(async (v) => {
+                s[field] = v;
+                await saveSettings();
+                applyUiSettings(s);
+              })
+            );
+        textSetting('日记目录', '存放日记 markdown 文件的文件夹路径', 'diaryDirectory');
+        textSetting('影视目录', '存放影视笔记的文件夹路径（日记本用）', 'movieDirectory');
+        textSetting('信目录', '存放信件的文件夹路径', 'letterDirectory');
+        textSetting('每批加载数量', '滚动加载时每批显示的条目数', 'diaryBatchSize');
+        toggleSetting('显示标签计数', '在标签按钮上显示该标签包含的条目数量', 'showTagCount');
+        toggleSetting('使用文件日期作为默认日期', '开启后，添加日记时默认日期取自当前打开的日记文件的日期（若为日记文件）；关闭则使用当前时间', 'useFileDateTime');
+      },
+    });
+  });
   const searchButton = createButton('🔍', '搜索日记', () => toggleSearch());
   searchButton.style.opacity = '0';
   searchButton.style.pointerEvents = 'none';
@@ -163,6 +204,7 @@ function createHeader() {
     state.ui.tagFilterPopup!.style.visibility = 'hidden';
   });
 
+  buttonContainer.appendChild(settingsButton);
   buttonContainer.appendChild(addButton);
   buttonContainer.appendChild(searchButton);
   buttonContainer.appendChild(closeButton);
