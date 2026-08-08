@@ -455,19 +455,26 @@ export class LauncherModal {
     }
   }
 
-  /** 是否显示磁贴文字（设置页统一开关；默认显示） */
+  /** 是否显示磁贴文字（平台独立：移动端读 launcherShowTextMobile，未设置继承桌面端） */
   private showText(): boolean {
     try {
-      return (getSettings() as any).launcherShowText !== false;
+      const s = getSettings() as any;
+      const v = LauncherModal.isMobileEnv()
+        ? (s.launcherShowTextMobile ?? s.launcherShowText)
+        : s.launcherShowText;
+      return v !== false;
     } catch (e) {
       return true;
     }
   }
 
-  /** 打开入口页的手势（off | double | triple | swipe） */
+  /** 打开入口页的手势（平台独立：移动端读 launcherGestureMobile，未设置继承桌面端） */
   private gesture(): string {
     try {
-      const v = (getSettings() as any).launcherGesture;
+      const s = getSettings() as any;
+      const v = LauncherModal.isMobileEnv()
+        ? (s.launcherGestureMobile ?? s.launcherGesture)
+        : s.launcherGesture;
       return v === 'double' || v === 'triple' || v === 'swipe' ? v : 'off';
     } catch (e) {
       return 'off';

@@ -118,12 +118,16 @@ export default interface BzSettings {
   launcherColumns: string;
   /** 移动端网格列数（3-8，默认 4——移动端格子更大更透气） */
   launcherMobileColumns: string;
-  /** 显示磁贴文字（统一开关；关闭 = 全部磁贴仅显示图标） */
+  /** 显示磁贴文字（桌面端；关闭 = 全部磁贴仅显示图标） */
   launcherShowText: boolean;
+  /** 移动端独立：显示磁贴文字（未设置 → 继承桌面端） */
+  launcherShowTextMobile?: boolean;
 
   // ===== 🖐 手势触发（入口页域：选一个手势打开命令入口页，默认关闭）=====
-  /** 打开入口页的手势：off | double | triple | swipe */
+  /** 打开入口页的手势（桌面端）：off | double | triple | swipe */
   launcherGesture: string;
+  /** 移动端独立：打开入口页手势（未设置 → 继承桌面端） */
+  launcherGestureMobile?: string;
 
   // ===== 💭 闪念（17 项，全量迁移）=====
   /** Ollama URL（本地） */
