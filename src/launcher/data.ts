@@ -102,7 +102,7 @@ export function normalizeData(raw: unknown): LauncherData {
   const empty: LauncherData = {
     version: 3,
     desktop: { tiles: [], columns: 6 },
-    mobile: { tiles: [], columns: 4 },
+    mobile: { tiles: [], columns: 6 },
   };
   if (!raw || typeof raw !== 'object') return empty;
   const r = raw as any;
@@ -120,12 +120,12 @@ export function normalizeData(raw: unknown): LauncherData {
   };
   // v1 兼容：顶层 tiles 数组 → desktop
   if (Array.isArray(r.tiles) && !r.desktop && !r.mobile) {
-    return { version: 3, desktop: { tiles: cleanTiles(r.tiles), columns: 6 }, mobile: { tiles: [], columns: 4 } };
+    return { version: 3, desktop: { tiles: cleanTiles(r.tiles), columns: 6 }, mobile: { tiles: [], columns: 6 } };
   }
   return {
     version: 3,
     desktop: parsePlatform(r.desktop, 6),
-    mobile: parsePlatform(r.mobile, 4),
+    mobile: parsePlatform(r.mobile, 6),
   };
 }
 
@@ -142,11 +142,11 @@ function cleanTiles(list: any[]): LauncherTile[] {
 export async function loadLauncherData(app: App): Promise<LauncherData> {
   try {
     const f = app.vault.getAbstractFileByPath(LAUNCHER_PATH);
-    if (!f) return { version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 4 } };
+    if (!f) return { version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 6 } };
     const text = await app.vault.read(f as any);
     return normalizeData(JSON.parse(text));
   } catch (e) {
-    return { version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 4 } };
+    return { version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 6 } };
   }
 }
 

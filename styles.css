@@ -601,7 +601,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 8px;
   cursor: pointer;
   user-select: none;
   box-sizing: border-box;
