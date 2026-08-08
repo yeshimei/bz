@@ -1,6 +1,8 @@
 # bz 进度（上下文压缩恢复点）
 
-最后更新：2026-08-08（ticket 25 通知系统），771 测试（1 既有失败 flash vector-store 增量刷新，与本次无关）。仓库 `E:/Obsidian/1`，构建产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`。
+最后更新：2026-08-08（ticket 25 通知补白 + 删除 flash 既有失败测试），**775/775 全绿（项目首次零失败）**。仓库 `E:/Obsidian/1`，构建产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`。
+
+- **flash vector-store 既有失败测试已删除**（用户决策）：增量刷新「文件删除清理条目」用例断言 `meta.notes` 清空但源码不清理（ticket 18 暂缓域的真实缺陷），长期挂红。删除后全量 775/775 零失败。缺陷本身仍存在（闪念实现时需修：refresh 应清理已删除文件的向量条目）。
 
 - **ticket 25 通知系统（ADR-0010，grilling 会话 + 样式演示敲定）**：自绘 toast `src/core/notice.ts` 替代全仓 146 处原生 Notice（124 处 `new Notice` + 22 处 `notice()` 通道）+ smartCat 气泡（Q3 遗留分支删除）。顶部居中 z-index 10300、堆叠上限 5、点击关闭、错误 5s/其余 3s；自动语义归类（✅🎉→success、⚠️→warning、❌/失败/错误→error）；动效按类型映射（success→pop 打勾描绘、warning/error→shake、info→drop，可选 slide-left/right/bounce）；动态能力 setMessage/setProgress（100 变绿、-1 跑马灯）/setType（progress→完成自动接管计时）/title+action；reduced-motion 降级。**文案规范**：✅❌⚠️ 前缀统一、全角冒号、去感叹号、删 Q3.js/QuickAdd/控制台遗留引用。**动态链路**：auto-summary（progress→结果原地更新）、复习批量出题（progress→成功/失败）。**测试迁移**：`getNoticeMessages`/`hasNotice`/`clearNotices` 进 mock-obsidian-entry，~19 文件 90 处 MockNotice 断言→DOM 断言。演示命令 `bz-notification-demo` 保留（13 场景样式自查）。注意：**edit 工具整批原子性**——一处 oldText 不匹配整批拒绝，改多文件时优先 python 脚本。tsc 预存 9 文件错误清单（vector-store/extra 测试）仍未清零。
 
