@@ -27,6 +27,7 @@ import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverd
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
 import { openLauncherPanel, unloadLauncherPanel } from './launcher';
+import { registerGestureListeners } from './launcher/gestures';
 import { ensureAutoSummary } from './auto-summary';
 import { ensureAIAgent, unloadAIAgent } from './ai-agent';
 // 日记本（diary-notebook 合并）
@@ -92,6 +93,7 @@ function applyDiarySettingsToRuntime(s: BzSettings) {
 export default class BzPlugin extends Plugin {
   settings: BzSettings = { ...DEFAULT_SETTINGS };
   private registeredCommandIds: string[] = [];
+  private unregisterGestures: (() => void) | null = null;
 
   async onload() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
@@ -134,6 +136,8 @@ export default class BzPlugin extends Plugin {
       if (this.settings.aiAgentEnabled) ensureAIAgent(this.app);
       if (this.settings.flashEnabled) ensureFlashOnReady(this.app);
     });
+    // 手势触发（设置页可配，默认关闭）
+    this.syncGestures();
   }
 
   async onunload() {
@@ -149,6 +153,10 @@ export default class BzPlugin extends Plugin {
     unloadBz();
     unloadAIAgent();
     unloadLauncherPanel();
+    if (this.unregisterGestures) {
+      this.unregisterGestures();
+      this.unregisterGestures = null;
+    }
     // 日记本清理（diary-notebook 原 onunload；escManager.destroy 已在上面统一调用）
     const diaryIds = [
       'diary-tag-filter',
@@ -181,6 +189,20 @@ export default class BzPlugin extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
+  }
+
+  /** 手势监听同步：按设置重新注册（设置变更/插件加载时调用，幂等） */
+  syncGestures(): void {
+    if (this.unregisterGestures) {
+      this.unregisterGestures();
+      this.unregisterGestures = null;
+    }
+    const s = this.settings;
+    this.unregisterGestures = registerGestureListeners(this.app, {
+      gestureDoubleTap: s.gestureDoubleTap,
+      gestureTripleTap: s.gestureTripleTap,
+      gestureSwipeDown: s.gestureSwipeDown,
+    });
   }
 }
 
@@ -431,7 +453,7 @@ export class BzSettingTab extends PluginSettingTab {
   }
 
 
-  // ===== 入口页 =====（网格列数）
+  // ===== 入口页 =====（网格列数 + 手势触发）
   private buildLauncherTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
     new Setting(el)
       .setName('网格列数')
@@ -442,6 +464,42 @@ export class BzSettingTab extends PluginSettingTab {
         dd.onChange(async (v) => {
           s.launcherColumns = v;
           await save();
+        });
+      });
+    // 手势触发：双击 / 连续三击 / 双指下滑 → 绑定命令
+    new Setting(el).setName('手势触发').setDesc('在页面任意位置执行手势时触发绑定命令（默认关闭，避免干扰正常操作）');
+    this.gestureSetting(el, '双击页面', s.gestureDoubleTap, save, (v) => (s.gestureDoubleTap = v));
+    this.gestureSetting(el, '连续三击页面', s.gestureTripleTap, save, (v) => (s.gestureTripleTap = v));
+    this.gestureSetting(el, '双指下滑', '触屏双指下滑或触控板连续向下滚动', s.gestureSwipeDown, save, (v) => (s.gestureSwipeDown = v));
+  }
+
+  /** 手势绑定下拉：off + 常用命令 */
+  private gestureSetting(
+    el: HTMLElement,
+    name: string,
+    value: string,
+    save: () => Promise<void>,
+    apply: (v: string) => void,
+    desc = '触发后执行的命令'
+  ): Setting {
+    const options: [string, string][] = [
+      ['off', '关闭'],
+      ['bz-launcher-open', '打开命令入口页'],
+      ['bz-memo-open-panel', '打开备忘录面板'],
+      ['bz-open-panel', '打开日记本面板'],
+      ['bz-belongings-open-panel', '打开归物本面板'],
+      ['bz-pw-open-manager', '打开密码本'],
+    ];
+    return new Setting(el)
+      .setName(name)
+      .setDesc(desc)
+      .addDropdown((dd) => {
+        for (const [k, label] of options) dd.addOption(k, label);
+        dd.setValue(value || 'off');
+        dd.onChange(async (v) => {
+          apply(v);
+          await save();
+          this.syncGestures(); // 手势监听随设置变更重注册
         });
       });
   }

@@ -557,13 +557,9 @@
 
 
 /* ===== 入口页（ticket 23）===== */
-#launcher-modal .launcher-toolbar {
-  user-select: none;
-}
-#launcher-modal .launcher-toolbar button {
-  background: none;
-  border: none;
-  cursor: pointer;
+/* 编辑模式空白单元格「＋」（hover 高亮） */
+#launcher-grid .launcher-empty-cell:hover {
+  background: var(--background-modifier-hover);
 }
 #launcher-grid .launcher-tile {
   position: relative;

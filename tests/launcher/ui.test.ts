@@ -70,11 +70,12 @@ describe('入口页 UI', () => {
     setApp(null as any);
   });
 
-  it('打开：弹窗挂载 + 空态提示', async () => {
+  it('打开：弹窗挂载 + 空态提示 + 无标题栏', async () => {
     await openOnce(new MockVault());
     expect(document.getElementById('launcher-overlay')).not.toBeNull();
     expect(document.getElementById('launcher-modal')).not.toBeNull();
     expect(document.getElementById('launcher-empty')).not.toBeNull();
+    expect(document.querySelector('.launcher-toolbar')).toBeNull(); // 标题栏已移除
   });
 
   it('单例：重复打开不重建（复用聚焦）', async () => {
@@ -129,7 +130,10 @@ describe('入口页 UI', () => {
       // 编辑模式元素：删除按钮 + 档位手柄
       expect(tile.querySelector('.launcher-del')).not.toBeNull();
       expect(tile.querySelector('.launcher-resize')).not.toBeNull();
-      expect(document.querySelector('.launcher-toolbar button[title="退出编辑模式"]')).not.toBeNull();
+      // 完成按钮悬浮显示（编辑模式唯一显式出口）
+      const done = document.getElementById('launcher-done-btn')!;
+      expect(done).not.toBeNull();
+      expect(done.style.display).not.toBe('none');
     } finally {
       vi.useRealTimers();
     }
@@ -154,14 +158,36 @@ describe('入口页 UI', () => {
     }
   });
 
-  it('添加：+ 打开命令选择器 → 过滤 → 选中 → 1×1 落末尾 + 写盘', async () => {
+  it('长按空白区域进入编辑模式（空态无磁贴时的入口）', async () => {
+    await openOnce(new MockVault());
+    const grid = document.getElementById('launcher-grid')!;
+    expect(grid.querySelector('#launcher-empty')).not.toBeNull();
+    vi.useFakeTimers();
+    try {
+      firePointer(grid, 'pointerdown', 100, 100);
+      expect(document.getElementById('launcher-done-btn')!.style.display).toBe('none');
+      vi.advanceTimersByTime(500);
+    } finally {
+      vi.useRealTimers();
+    }
+    // 编辑模式：空白单元格「＋」出现 + 完成按钮可见
+    expect(document.querySelectorAll('#launcher-grid .launcher-empty-cell').length).toBeGreaterThan(0);
+    expect(document.getElementById('launcher-done-btn')!.style.display).not.toBe('none');
+  });
+
+  it('添加：编辑模式点空白格「＋」→ 命令选择器 → 过滤 → 选中 → 1×1 落末尾 + 写盘', async () => {
     const vault = new MockVault();
     await openOnce(vault);
-    // 直接进编辑模式（长按模拟）
+    // 长按空白进入编辑模式
     const grid = document.getElementById('launcher-grid')!;
-    // 空态无磁贴 → 用 + 按钮进入流程
-    const addBtn = document.querySelector<HTMLElement>('.launcher-toolbar button[title="添加命令"]')!;
-    addBtn.click();
+    vi.useFakeTimers();
+    try {
+      firePointer(grid, 'pointerdown', 100, 100);
+      vi.advanceTimersByTime(500);
+    } finally {
+      vi.useRealTimers();
+    }
+    document.querySelector<HTMLElement>('#launcher-grid .launcher-empty-cell')!.click();
     expect(document.getElementById('launcher-cmd-mask')).not.toBeNull();
     const input = document.querySelector<HTMLInputElement>('#launcher-cmd-popup input')!;
     input.value = '备忘';
@@ -178,16 +204,23 @@ describe('入口页 UI', () => {
     expect(tiles[0].dataset.commandId).toBe('bz-memo-open-panel');
     expect(tiles[0].classList.contains('editing')).toBe(true);
     const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
-    expect(saved.tiles[0]).toMatchObject({ commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 });
-    void grid;
+    expect(saved.desktop[0]).toMatchObject({ commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 });
   });
 
   it('添加多个：依次落末尾空位', async () => {
     const vault = new MockVault();
     await openOnce(vault);
-    const addBtn = document.querySelector<HTMLElement>('.launcher-toolbar button[title="添加命令"]')!;
+    // 长按空白进入编辑模式
+    const grid = document.getElementById('launcher-grid')!;
+    vi.useFakeTimers();
+    try {
+      firePointer(grid, 'pointerdown', 100, 100);
+      vi.advanceTimersByTime(500);
+    } finally {
+      vi.useRealTimers();
+    }
     const pick = (id: string) => {
-      addBtn.click();
+      document.querySelector<HTMLElement>('#launcher-grid .launcher-empty-cell')!.click();
       const items = [...document.querySelectorAll<HTMLElement>('#launcher-cmd-popup .launcher-picker-item')];
       items.find((i) => i.dataset.commandId === id)!.click();
     };
@@ -223,7 +256,7 @@ describe('入口页 UI', () => {
     gridTiles()[0].querySelector<HTMLElement>('.launcher-del')!.click();
     expect(gridTiles().length).toBe(0);
     const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
-    expect(saved.tiles.length).toBe(0);
+    expect(saved.desktop.length).toBe(0);
   });
 
   it('点击磁贴：执行命令并关闭入口页', async () => {
@@ -301,10 +334,10 @@ describe('入口页 UI', () => {
     firePointer(document, 'pointerup', 3 * STEP + STEP / 2, STEP / 2);
     await new Promise((r) => setTimeout(r, 0));
     const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
-    const moved = saved.tiles.find((t: any) => t.id === 't1');
+    const moved = saved.desktop.find((t: any) => t.id === 't1');
     expect(moved).toMatchObject({ x: 3, y: 0 });
     // t2 未被挤（目标区空闲）
-    const t2s = saved.tiles.find((t: any) => t.id === 't2');
+    const t2s = saved.desktop.find((t: any) => t.id === 't2');
     expect(t2s).toMatchObject({ x: 1, y: 0 });
   });
 
@@ -336,8 +369,8 @@ describe('入口页 UI', () => {
     firePointer(document, 'pointerup', 1 * STEP + STEP / 2, STEP / 2);
     await new Promise((r) => setTimeout(r, 0));
     const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
-    expect(saved.tiles.find((t: any) => t.id === 't1')).toMatchObject({ x: 1, y: 0 });
-    expect(saved.tiles.find((t: any) => t.id === 't2')).toMatchObject({ x: 2, y: 0 }); // 被挤到右侧
+    expect(saved.desktop.find((t: any) => t.id === 't1')).toMatchObject({ x: 1, y: 0 });
+    expect(saved.desktop.find((t: any) => t.id === 't2')).toMatchObject({ x: 2, y: 0 }); // 被挤到右侧
   });
 
   it('档位手柄：拖动 → 尺寸变化 + 写盘', async () => {
@@ -361,7 +394,7 @@ describe('入口页 UI', () => {
     firePointer(document, 'pointermove', 250, 250); // 2×2
     firePointer(document, 'pointerup', 250, 250);    await new Promise((r) => setTimeout(r, 0));
     const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
-    expect(saved.tiles[0]).toMatchObject({ w: 2, h: 2 });
+    expect(saved.desktop[0]).toMatchObject({ w: 2, h: 2 });
   });
 
   it('档位被拒：扩大会与邻居重叠 → 保持原尺寸', async () => {
@@ -369,11 +402,12 @@ describe('入口页 UI', () => {
     await vault.create(
       LAUNCHER_PATH,
       JSON.stringify({
-        version: 1,
-        tiles: [
+        version: 2,
+        desktop: [
           { id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 },
           { id: 't2', commandId: 'bz-pw-open-manager', x: 1, y: 0, w: 2, h: 2 },
         ],
+        mobile: [],
       })
     );
     await openOnce(vault);
@@ -392,7 +426,7 @@ describe('入口页 UI', () => {
     firePointer(document, 'pointerup', 250, 250);
     await new Promise((r) => setTimeout(r, 0));
     const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
-    expect(saved.tiles.find((t: any) => t.id === 't1')).toMatchObject({ w: 1, h: 1 });
+    expect(saved.desktop.find((t: any) => t.id === 't1')).toMatchObject({ w: 1, h: 1 });
   });
 
   it('图标选择器：编辑模式点图标 → 选择 lucide 图标 → 写盘', async () => {
@@ -417,7 +451,7 @@ describe('入口页 UI', () => {
     cell.click();
     await new Promise((r) => setTimeout(r, 0));
     const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
-    expect(saved.tiles[0].icon).toBe('star');
+    expect(saved.desktop[0].icon).toBe('star');
   });
 
   it('改名：编辑模式点名字 → 弹窗输入 → 显示新名 + 写盘 label', async () => {
@@ -445,7 +479,7 @@ describe('入口页 UI', () => {
     await new Promise((r) => setTimeout(r, 0));
     expect(gridTiles()[0].querySelector('.launcher-name')!.textContent).toBe('我的备忘');
     const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
-    expect(saved.tiles[0].label).toBe('我的备忘');
+    expect(saved.desktop[0].label).toBe('我的备忘');
   });
 
   it('改名清空 → 恢复默认命令名 + label 删除', async () => {
@@ -475,20 +509,138 @@ describe('入口页 UI', () => {
     await new Promise((r) => setTimeout(r, 0));
     expect(gridTiles()[0].querySelector('.launcher-name')!.textContent).toBe('打开备忘录面板');
     const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
-    expect(saved.tiles[0].label).toBeUndefined();
+    expect(saved.desktop[0].label).toBeUndefined();
+  });
+
+  it('点击遮罩层关闭入口页', async () => {
+    await openOnce(new MockVault());
+    const overlay = document.getElementById('launcher-overlay')!;
+    overlay.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    expect(document.getElementById('launcher-overlay')).toBeNull();
+  });
+
+  it('隐藏文字：改名弹窗开关 → 磁贴仅图标 + 写盘 hideText', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+    );
+    await openOnce(vault);
+    let tile = gridTiles()[0];
+    vi.useFakeTimers();
+    try {
+      firePointer(tile, 'pointerdown', 50, 50);
+      vi.advanceTimersByTime(500);
+      tile = gridTiles()[0];
+    } finally {
+      vi.useRealTimers();
+    }
+    tile.querySelector<HTMLElement>('.launcher-name')!.click();
+    const cb = document.querySelector<HTMLInputElement>('#launcher-rename-popup .launcher-hide-text')!;
+    expect(cb.checked).toBe(false);
+    cb.click();
+    document.querySelector<HTMLElement>('#launcher-rename-popup button[title="保存名称"]')!.click();
+    await new Promise((r) => setTimeout(r, 0));
+    // 磁贴无名字元素（仅图标）
+    expect(gridTiles()[0].querySelector('.launcher-name')).toBeNull();
+    const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
+    expect(saved.desktop[0].hideText).toBe(true);
+  });
+
+  it('emoji 图标：图标选择器输入字符直接使用（lucide 清单外走文本渲染）', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+    );
+    await openOnce(vault);
+    let tile = gridTiles()[0];
+    vi.useFakeTimers();
+    try {
+      firePointer(tile, 'pointerdown', 50, 50);
+      vi.advanceTimersByTime(500);
+      tile = gridTiles()[0];
+    } finally {
+      vi.useRealTimers();
+    }
+    tile.querySelector<HTMLElement>('.launcher-icon')!.click();
+    const input = document.querySelector<HTMLInputElement>('#launcher-icon-popup input')!;
+    input.value = '🚀';
+    input.dispatchEvent(new Event('input'));
+    const emojiRow = document.querySelector<HTMLElement>('#launcher-icon-popup .launcher-icon-emoji')!;
+    expect(emojiRow.dataset.emoji).toBe('🚀');
+    emojiRow.click();
+    await new Promise((r) => setTimeout(r, 0));
+    // 磁贴图标渲染为文本字符（非 setIcon）
+    const iconEl = gridTiles()[0].querySelector<HTMLElement>('.launcher-icon')!;
+    expect(iconEl.textContent).toBe('🚀');
+    expect(iconEl.dataset.icon).toBeUndefined();
+    const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
+    expect(saved.desktop[0].icon).toBe('🚀');
+  });
+
+  it('移动端与桌面端配置独立互不影响', async () => {
+    const vault = new MockVault();
+    await openOnce(vault); // 桌面端
+    // 桌面端添加一个磁贴
+    const grid = document.getElementById('launcher-grid')!;
+    vi.useFakeTimers();
+    try {
+      firePointer(grid, 'pointerdown', 100, 100);
+      vi.advanceTimersByTime(500);
+    } finally {
+      vi.useRealTimers();
+    }
+    document.querySelector<HTMLElement>('#launcher-grid .launcher-empty-cell')!.click();
+    const items = [...document.querySelectorAll<HTMLElement>('#launcher-cmd-popup .launcher-picker-item')];
+    items.find((i) => i.dataset.commandId === 'bz-memo-open-panel')!.click();
+    await new Promise((r) => setTimeout(r, 0));
+    // 关闭
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(document.getElementById('launcher-overlay')).toBeNull();
+
+    // 切移动端环境（Capacitor）
+    (window as any).Capacitor = {};
+    try {
+      await openOnce(vault);
+      // 移动端是独立配置：无磁贴（空态）
+      expect(gridTiles().length).toBe(0);
+      expect(document.getElementById('launcher-empty')).not.toBeNull();
+      // 移动端添加另一个命令
+      const g2 = document.getElementById('launcher-grid')!;
+      vi.useFakeTimers();
+      try {
+        firePointer(g2, 'pointerdown', 100, 100);
+        vi.advanceTimersByTime(500);
+      } finally {
+        vi.useRealTimers();
+      }
+      document.querySelector<HTMLElement>('#launcher-grid .launcher-empty-cell')!.click();
+      const items2 = [...document.querySelectorAll<HTMLElement>('#launcher-cmd-popup .launcher-picker-item')];
+      items2.find((i) => i.dataset.commandId === 'bz-pw-open-manager')!.click();
+      await new Promise((r) => setTimeout(r, 0));
+      // 写盘：mobile 有、desktop 保留原样
+      const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
+      expect(saved.mobile.length).toBe(1);
+      expect(saved.mobile[0].commandId).toBe('bz-pw-open-manager');
+      expect(saved.desktop.length).toBe(1);
+      expect(saved.desktop[0].commandId).toBe('bz-memo-open-panel');
+    } finally {
+      delete (window as any).Capacitor;
+    }
   });
 
   it('calcCellSize：按容器宽度比例计算 + clamp 边界', () => {
-    // 6 列、间距 12、内边距 36：宽 800 → (800-36-60)/6 ≈ 117.3
-    expect(calcCellSize(800, 6)).toBeCloseTo(117.33, 1);
-    // 移动端窄屏：宽 390 → (390-36-60)/6 = 49（> MIN 44）
-    expect(calcCellSize(390, 6)).toBe(49);
+    // 6 列、间距 8、内边距 36：宽 800 → (800-36-40)/6 ≈ 120.7
+    expect(calcCellSize(800, 6)).toBeCloseTo(120.67, 1);
+    // 移动端窄屏：宽 390 → (390-36-40)/6 = 52.3（> MIN 44）
+    expect(calcCellSize(390, 6)).toBeCloseTo(52.33, 1);
     // 超窄屏 → clamp 到最小 44
     expect(calcCellSize(300, 6)).toBe(44);
     // 极宽 → clamp 到最大 200
     expect(calcCellSize(2000, 6)).toBe(200);
-    // 3 列窄屏：宽 300 → (300-36-24)/3 = 80
-    expect(calcCellSize(300, 3)).toBe(80);
+    // 3 列窄屏：宽 300 → (300-36-16)/3 ≈ 82.7
+    expect(calcCellSize(300, 3)).toBeCloseTo(82.67, 1);
   });
 
   it('ESC 关闭入口页', async () => {
@@ -499,7 +651,15 @@ describe('入口页 UI', () => {
 
   it('关闭时清理残留命令选择器', async () => {
     await openOnce(new MockVault());
-    document.querySelector<HTMLElement>('.launcher-toolbar button[title="添加命令"]')!.click();
+    const grid = document.getElementById('launcher-grid')!;
+    vi.useFakeTimers();
+    try {
+      firePointer(grid, 'pointerdown', 100, 100);
+      vi.advanceTimersByTime(500);
+    } finally {
+      vi.useRealTimers();
+    }
+    document.querySelector<HTMLElement>('#launcher-grid .launcher-empty-cell')!.click();
     expect(document.getElementById('launcher-cmd-mask')).not.toBeNull();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(document.getElementById('launcher-cmd-mask')).toBeNull();
