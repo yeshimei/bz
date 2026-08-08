@@ -22,7 +22,7 @@ const MIN_CELL = 44;
 /** 网格单元最大尺寸 */
 const MAX_CELL = 200;
 /** 网格间距 */
-const GAP = 10;
+const GAP = 14;
 /** 网格左右内边距合计（18×2） */
 const GRID_PAD = 36;
 /** 拖拽移动超过该距离取消长按 */
@@ -87,7 +87,7 @@ export class LauncherModal {
   private data: LauncherData = {
     version: 3,
     desktop: { tiles: [], columns: 6 },
-    mobile: { tiles: [], columns: 4 },
+    mobile: { tiles: [], columns: 6 },
   };
   private validIds = new Set<string>();
   private commands: CommandMeta[] = [];
@@ -164,7 +164,7 @@ export class LauncherModal {
     this.overlay.appendChild(this.modal);
 
     this.grid.style.cssText =
-      'overflow-y:auto;padding:16px 18px 20px;display:grid;gap:10px;' +
+      'overflow-y:auto;padding:16px 18px 20px;display:grid;gap:14px;' +
       'grid-auto-flow:row;align-content:start;position:relative;';
     this.applyColumns();
     this.modal.appendChild(this.grid);

@@ -18,7 +18,7 @@ import { LAUNCHER_PATH } from '../../src/launcher/data';
  * jsdom 无真实布局（grid.clientWidth = 0）→ 网格单元尺寸 clamp 到 MIN_CELL=44，步长 = 44 + 间距 10。
  * 真实环境按容器宽度比例计算（见 calcCellSize 测试）。
  */
-const STEP = 54;
+const STEP = 58;
 
 const BZ_COMMANDS = [
   { id: 'bz-memo-open-panel', name: '打开备忘录面板', icon: 'sticky-note' },
@@ -419,7 +419,7 @@ describe('入口页 UI', () => {
           ],
           columns: 6,
         },
-        mobile: { tiles: [], columns: 4 },
+        mobile: { tiles: [], columns: 6 },
       })
     );
     await openOnce(vault);
@@ -533,7 +533,7 @@ describe('入口页 UI', () => {
     expect(tiles.find((t: any) => t.id === 't1').x + tiles.find((t: any) => t.id === 't1').w).toBeLessThanOrEqual(3);
     expect(tiles.find((t: any) => t.id === 't2').x + tiles.find((t: any) => t.id === 't2').w).toBeLessThanOrEqual(3);
     // 桌面端列数改动不影响 mobile 配置
-    expect(saved.mobile.columns).toBe(4);
+    expect(saved.mobile.columns).toBe(6);
   });
 
   it('显示文字统一开关：关闭 → 全部磁贴仅图标；开启 → 显示文字', async () => {
@@ -611,7 +611,8 @@ describe('入口页 UI', () => {
       // 移动端是独立配置：无磁贴（空态）；列数用移动端独立设置（默认 4 列）
       expect(gridTiles().length).toBe(0);
       expect(document.getElementById('launcher-empty')).not.toBeNull();
-      expect(document.getElementById('launcher-grid')!.style.gridTemplateColumns).toBe('repeat(4, minmax(0, 1fr))');
+      // 移动端默认 6 列（与桌面统一）
+      expect(document.getElementById('launcher-grid')!.style.gridTemplateColumns).toBe('repeat(6, minmax(0, 1fr))');
       // 移动端添加另一个命令
       const g2 = document.getElementById('launcher-grid')!;
       vi.useFakeTimers();
@@ -637,16 +638,16 @@ describe('入口页 UI', () => {
   });
 
   it('calcCellSize：按容器宽度比例计算 + clamp 边界', () => {
-    // 6 列、间距 10、内边距 36：宽 800 → (800-36-50)/6 = 119
-    expect(calcCellSize(800, 6)).toBe(119);
-    // 移动端窄屏：宽 390 → (390-36-50)/6 ≈ 50.7（> MIN 44）
-    expect(calcCellSize(390, 6)).toBeCloseTo(50.67, 1);
+    // 6 列、间距 14、内边距 36：宽 800 → (800-36-70)/6 ≈ 115.7
+    expect(calcCellSize(800, 6)).toBeCloseTo(115.67, 1);
+    // 移动端窄屏：宽 390 → (390-36-70)/6 ≈ 47.3（> MIN 44）
+    expect(calcCellSize(390, 6)).toBeCloseTo(47.33, 1);
     // 超窄屏 → clamp 到最小 44
     expect(calcCellSize(300, 6)).toBe(44);
     // 极宽 → clamp 到最大 200
     expect(calcCellSize(2000, 6)).toBe(200);
-    // 3 列窄屏：宽 300 → (300-36-20)/3 ≈ 81.3
-    expect(calcCellSize(300, 3)).toBeCloseTo(81.33, 1);
+    // 3 列窄屏：宽 300 → (300-36-28)/3 ≈ 78.7
+    expect(calcCellSize(300, 3)).toBeCloseTo(78.67, 1);
   });
 
   it('ESC 关闭入口页', async () => {
