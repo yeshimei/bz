@@ -53,7 +53,7 @@ function findSetting(tab: BzSettingTab, name: string) {
   return el;
 }
 
-const ALL_TABS = ['AI', '备忘录', '日记本', '归物本', '剪藏本', '密码本', '收藏本', '书库', '影视', '复习计划', '入口页', 'AI Agent', '闪念'];
+const ALL_TABS = ['AI', '备忘录', '日记本', '归物本', '剪藏本', '密码本', '收藏本', '书库', '影视', '复习计划', 'AI Agent', '闪念'];
 
 describe('设置页 BzSettingTab', () => {
   let plugin: any;
@@ -73,11 +73,11 @@ describe('设置页 BzSettingTab', () => {
     if (plugin && plugin.unregisterGestures) plugin.unregisterGestures();
   });
 
-  it('display 渲染 13 个 tab，默认第一个（AI）激活', () => {
+  it('display 渲染 12 个 tab，默认第一个（AI）激活', () => {
     const btns = [...tab.containerEl.querySelectorAll('.bz-tab')];
     expect(btns.map((b) => b.textContent)).toEqual(ALL_TABS);
     expect(btns[0].classList.contains('bz-tab-active')).toBe(true);
-    expect(tab.containerEl.querySelectorAll('.bz-tab-content').length).toBe(13);
+    expect(tab.containerEl.querySelectorAll('.bz-tab-content').length).toBe(12);
   });
 
   it('每个 tab 点击后渲染对应设置项（抽查关键项）', () => {
@@ -92,7 +92,6 @@ describe('设置页 BzSettingTab', () => {
       书库: ['书库文件夹', '书籍识别标签'],
       影视: ['影视文件夹', '每页加载数量'],
       复习计划: ['数据存储路径', '做题决定难度', '题目难度'],
-      入口页: ['显示磁贴文字', '打开入口页的手势'],
       闪念: ['Ollama URL', 'Embedding 模型', '并发数'],
       'AI Agent': ['启用', '监听文件夹', 'AI 匹配模型'],
     };
@@ -160,23 +159,6 @@ describe('设置页 BzSettingTab', () => {
     const toggle = (el as any).__setting.controls.find((c: any) => typeof c.trigger === 'function');
     await expect(Promise.resolve(toggle.trigger(true))).resolves.toBeUndefined();
     expect(plugin.settings.autoSummaryEnabled).toBe(true);
-  });
-
-  it('入口页 tab：手势下拉更新设置并同步手势监听', async () => {
-    clickTab(tab, '入口页');
-    const el = findSetting(tab, '打开入口页的手势');
-    const dd = (el as any).__setting.controls.find((c: any) => c.options && 'double' in c.options);
-    expect(dd).toBeTruthy();
-    dd.trigger('double');
-    await new Promise((r) => setTimeout(r, 10));
-    expect(plugin.settings.launcherGesture).toBe('double');
-    expect(diskData['bz'].launcherGesture).toBe('double');
-    // 开启后 syncGestures 注册监听：双击页面 → 打开入口页
-    const executed: string[] = [];
-    plugin.app.commands.executeCommandById = (id: string) => executed.push(id);
-    document.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    document.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(executed).toEqual(['bz-launcher-open']);
   });
 
   it('onload 迁移旧手势设置 → launcherGesture 单选', async () => {

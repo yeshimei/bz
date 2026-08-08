@@ -16,5 +16,5 @@ export function unloadLauncherPanel(): void {
   unloadLauncher();
 }
 
-export { LauncherModal, setLauncherShowTextSetter, applyLauncherShowText } from './ui';
+export { LauncherModal, setLauncherShowTextSetter, applyLauncherShowText, setLauncherGestureSetter, applyLauncherGesture } from './ui';
 export * from './data';

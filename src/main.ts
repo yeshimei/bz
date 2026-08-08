@@ -26,7 +26,7 @@ import { openMovieManager, addMovieItem } from './movie';
 import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating } from './review';
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
-import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter } from './launcher';
+import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setLauncherGestureSetter } from './launcher';
 import { registerGestureListeners } from './launcher/gestures';
 import { ensureAutoSummary } from './auto-summary';
 import { ensureAIAgent, unloadAIAgent } from './ai-agent';
@@ -128,6 +128,11 @@ export default class BzPlugin extends Plugin {
     setLauncherShowTextSetter((v) => {
       this.settings.launcherShowText = v;
       void this.saveSettings();
+    });
+    setLauncherGestureSetter((v) => {
+      this.settings.launcherGesture = v;
+      void this.saveSettings();
+      this.syncGestures(); // 手势监听随设置变更重注册
     });
     // 备忘录设置注入
     setBzSettingsProvider(() => this.settings);
@@ -272,7 +277,6 @@ export class BzSettingTab extends PluginSettingTab {
       { id: 'library', label: '书库', build: (el) => this.buildLibraryTab(el, s, save) },
       { id: 'movie', label: '影视', build: (el) => this.buildMovieTab(el, s, save) },
       { id: 'review', label: '复习计划', build: (el) => this.buildReviewTab(el, s, save) },
-      { id: 'launcher', label: '入口页', build: (el) => this.buildLauncherTab(el, s, save) },
       { id: 'ai-agent', label: 'AI Agent', build: (el) => this.buildAIAgentTab(el, s, save) },
       { id: 'flash', label: '闪念', build: (el) => this.buildFlashTab(el, s, save) },
     ];
@@ -479,27 +483,6 @@ export class BzSettingTab extends PluginSettingTab {
     this.textSetting(el, '远程 Ollama URL', '手机端使用的远程 Ollama 地址', s.OLLAMA_REMOTE_URL, save, (v) => (s.OLLAMA_REMOTE_URL = v));
   }
 
-
-  // ===== 入口页 =====（文字显隐 + 手势触发；列数在入口页编辑模式内按平台配置）
-  private buildLauncherTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
-    this.toggleSetting(el, '显示磁贴文字', '统一控制所有磁贴是否显示文字（关闭后全部磁贴仅显示图标；入口页编辑模式右上角亦可切换）', s.launcherShowText, save, (v) => (s.launcherShowText = v));
-    // 手势触发：单选一个手势打开命令入口页（默认关闭）
-    new Setting(el)
-      .setName('打开入口页的手势')
-      .setDesc('在页面任意位置执行该手势时打开命令入口页（默认关闭，避免干扰正常操作）')
-      .addDropdown((dd) => {
-        dd.addOption('off', '关闭');
-        dd.addOption('double', '双击页面');
-        dd.addOption('triple', '连续三击页面');
-        dd.addOption('swipe', '双指下滑');
-        dd.setValue(s.launcherGesture || 'off');
-        dd.onChange(async (v) => {
-          s.launcherGesture = v;
-          await save();
-          this.plugin.syncGestures(); // 手势监听随设置变更重注册
-        });
-      });
-  }
 
   // ===== AI Agent =====（笔记同步，懒加载开关 + 同步选项）
   private buildAIAgentTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
