@@ -7,11 +7,14 @@ import { MockVault } from '../mock-vault';
 import { MockNotice, resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp, getApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { openLauncher, unloadLauncher } from '../../src/launcher/ui';
+import { openLauncher, unloadLauncher, calcCellSize } from '../../src/launcher/ui';
 import { LAUNCHER_PATH } from '../../src/launcher/data';
 
-const CELL_W = 110;
-const CELL_H = 110;
+/**
+ * jsdom 无真实布局（grid.clientWidth = 0）→ 网格单元尺寸 clamp 到 MIN_CELL=44，步长 = 44 + 间距 12。
+ * 真实环境按容器宽度比例计算（见 calcCellSize 测试）。
+ */
+const STEP = 56;
 
 const BZ_COMMANDS = [
   { id: 'bz-memo-open-panel', name: '打开备忘录面板', icon: 'sticky-note' },
@@ -290,12 +293,12 @@ describe('入口页 UI', () => {
     } finally {
       vi.useRealTimers();
     }
-    // 拖 t2（(1,0)）到 (3,0)：pointerdown 中心 (1*110+55, 55)
+    // 拖 t2（(1,0)）到 (3,0)：pointerdown 中心 (1*STEP+STEP/2, STEP/2)
     const t1 = gridTiles().find((t) => t.dataset.commandId === 'bz-memo-open-panel')!;
-    firePointer(t1, 'pointerdown', 0 * CELL_W + 55, 55);
-    // 目标格 (3,0)：pointer 需让磁贴中心落在 (3*110+55, 55)
-    firePointer(document, 'pointermove', 3 * CELL_W + 55, 55);
-    firePointer(document, 'pointerup', 3 * CELL_W + 55, 55);
+    firePointer(t1, 'pointerdown', 0 * STEP + STEP / 2, STEP / 2);
+    // 目标格 (3,0)：pointer 让磁贴中心落在 (3*STEP+STEP/2, STEP/2)
+    firePointer(document, 'pointermove', 3 * STEP + STEP / 2, STEP / 2);
+    firePointer(document, 'pointerup', 3 * STEP + STEP / 2, STEP / 2);
     await new Promise((r) => setTimeout(r, 0));
     const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
     const moved = saved.tiles.find((t: any) => t.id === 't1');
@@ -328,9 +331,9 @@ describe('入口页 UI', () => {
     }
     // 拖 t1（(0,0)）到 (1,0)（被 t2 占）
     const t1 = gridTiles().find((t) => t.dataset.commandId === 'bz-memo-open-panel')!;
-    firePointer(t1, 'pointerdown', 0 * CELL_W + 55, 55);
-    firePointer(document, 'pointermove', 1 * CELL_W + 55, 55);
-    firePointer(document, 'pointerup', 1 * CELL_W + 55, 55);
+    firePointer(t1, 'pointerdown', 0 * STEP + STEP / 2, STEP / 2);
+    firePointer(document, 'pointermove', 1 * STEP + STEP / 2, STEP / 2);
+    firePointer(document, 'pointerup', 1 * STEP + STEP / 2, STEP / 2);
     await new Promise((r) => setTimeout(r, 0));
     const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
     expect(saved.tiles.find((t: any) => t.id === 't1')).toMatchObject({ x: 1, y: 0 });
@@ -356,8 +359,7 @@ describe('入口页 UI', () => {
     const handle = tile.querySelector<HTMLElement>('.launcher-resize')!;
     firePointer(handle, 'pointerdown', 100, 100);
     firePointer(document, 'pointermove', 250, 250); // 2×2
-    firePointer(document, 'pointerup', 250, 250);
-    await new Promise((r) => setTimeout(r, 0));
+    firePointer(document, 'pointerup', 250, 250);    await new Promise((r) => setTimeout(r, 0));
     const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
     expect(saved.tiles[0]).toMatchObject({ w: 2, h: 2 });
   });
@@ -416,6 +418,77 @@ describe('入口页 UI', () => {
     await new Promise((r) => setTimeout(r, 0));
     const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
     expect(saved.tiles[0].icon).toBe('star');
+  });
+
+  it('改名：编辑模式点名字 → 弹窗输入 → 显示新名 + 写盘 label', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+    );
+    await openOnce(vault);
+    let tile = gridTiles()[0];
+    vi.useFakeTimers();
+    try {
+      firePointer(tile, 'pointerdown', 50, 50);
+      vi.advanceTimersByTime(500);
+      tile = gridTiles()[0];
+    } finally {
+      vi.useRealTimers();
+    }
+    tile.querySelector<HTMLElement>('.launcher-name')!.click();
+    expect(document.getElementById('launcher-rename-mask')).not.toBeNull();
+    const input = document.querySelector<HTMLInputElement>('#launcher-rename-popup input')!;
+    expect(input.value).toBe('打开备忘录面板'); // 预填当前命令名
+    input.value = '我的备忘';
+    document.querySelector<HTMLElement>('#launcher-rename-popup button[title="保存名称"]')!.click();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(gridTiles()[0].querySelector('.launcher-name')!.textContent).toBe('我的备忘');
+    const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
+    expect(saved.tiles[0].label).toBe('我的备忘');
+  });
+
+  it('改名清空 → 恢复默认命令名 + label 删除', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({
+        version: 1,
+        tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1, label: '自定义名' }],
+      })
+    );
+    await openOnce(vault);
+    let tile = gridTiles()[0];
+    vi.useFakeTimers();
+    try {
+      firePointer(tile, 'pointerdown', 50, 50);
+      vi.advanceTimersByTime(500);
+      tile = gridTiles()[0];
+    } finally {
+      vi.useRealTimers();
+    }
+    tile.querySelector<HTMLElement>('.launcher-name')!.click();
+    const input = document.querySelector<HTMLInputElement>('#launcher-rename-popup input')!;
+    expect(input.value).toBe('自定义名'); // 预填自定义名
+    input.value = '   ';
+    document.querySelector<HTMLElement>('#launcher-rename-popup button[title="保存名称"]')!.click();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(gridTiles()[0].querySelector('.launcher-name')!.textContent).toBe('打开备忘录面板');
+    const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
+    expect(saved.tiles[0].label).toBeUndefined();
+  });
+
+  it('calcCellSize：按容器宽度比例计算 + clamp 边界', () => {
+    // 6 列、间距 12、内边距 36：宽 800 → (800-36-60)/6 ≈ 117.3
+    expect(calcCellSize(800, 6)).toBeCloseTo(117.33, 1);
+    // 移动端窄屏：宽 390 → (390-36-60)/6 = 49（> MIN 44）
+    expect(calcCellSize(390, 6)).toBe(49);
+    // 超窄屏 → clamp 到最小 44
+    expect(calcCellSize(300, 6)).toBe(44);
+    // 极宽 → clamp 到最大 200
+    expect(calcCellSize(2000, 6)).toBe(200);
+    // 3 列窄屏：宽 300 → (300-36-24)/3 = 80
+    expect(calcCellSize(300, 3)).toBe(80);
   });
 
   it('ESC 关闭入口页', async () => {
