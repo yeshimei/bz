@@ -58,6 +58,8 @@ interface CommandMeta {
 
 /** 文字显隐写回通道：main.ts 注入（写插件设置 data.json 并保存）；未注入时静默，读仍走 getSettings */
 let showTextSetter: ((v: boolean) => void) | null = null;
+/** 手势选择写回通道：main.ts 注入（写设置 + syncGestures 重注册） */
+let gestureSetter: ((v: string) => void) | null = null;
 
 export function setLauncherShowTextSetter(fn: (v: boolean) => void): void {
   showTextSetter = fn;
@@ -65,6 +67,14 @@ export function setLauncherShowTextSetter(fn: (v: boolean) => void): void {
 
 export function applyLauncherShowText(v: boolean): void {
   if (showTextSetter) showTextSetter(v);
+}
+
+export function setLauncherGestureSetter(fn: (v: string) => void): void {
+  gestureSetter = fn;
+}
+
+export function applyLauncherGesture(v: string): void {
+  if (gestureSetter) gestureSetter(v);
 }
 
 /** 清空子节点（jsdom 无 Obsidian 扩展 empty） */
@@ -96,6 +106,7 @@ export class LauncherModal {
   private columnSel: HTMLSelectElement | null = null;
   private textToggleBtn: HTMLButtonElement | null = null;
   private syncTextToggle: (() => void) | null = null;
+  private gestureSel: HTMLSelectElement | null = null;
 
   private data: LauncherData = {
     version: 3,
@@ -159,11 +170,12 @@ export class LauncherModal {
     this.validIds = new Set(this.commands.map((c) => c.id));
     this.data = await loadLauncherData(this.app);
 
-    // 遮罩 + 弹窗骨架
+    // 遮罩 + 弹窗骨架（移动端：底部滑入贴底；桌面端：正常居中）
+    const isMobile = LauncherModal.isMobileEnv();
     this.overlay.style.cssText =
       'position:fixed;top:0;left:0;right:0;bottom:0;background:var(--background-modifier-cover);' +
-      'z-index:10100;display:flex;align-items:flex-end;justify-content:center;' +
-      'animation:launcher-mask-in 0.2s ease-out;';
+      'z-index:10100;display:flex;align-items:' + (isMobile ? 'flex-end' : 'center') +
+      ';justify-content:center;' + (isMobile ? 'animation:launcher-mask-in 0.2s ease-out;' : '');
     this.overlay.addEventListener('mousedown', (e) => {
       if (e.target === this.overlay) this.close();
     });
@@ -171,9 +183,11 @@ export class LauncherModal {
 
     this.modal.style.cssText =
       'background:var(--background-primary);color:var(--text-normal);' +
-      'border-radius:16px 16px 0 0;width:100%;max-width:800px;max-height:85vh;' +
-      'box-shadow:0 -8px 40px rgba(0,0,0,0.3);border:1px solid var(--background-modifier-border);border-bottom:none;' +
-      'overflow:hidden;animation:launcher-slide-up 0.28s ease-out;';
+      'border-radius:' + (isMobile ? '16px 16px 0 0' : '14px') + ';width:100%;max-width:800px;max-height:' +
+      (isMobile ? '85vh' : '88vh') + ';' +
+      'box-shadow:0 12px 44px rgba(0,0,0,0.3);' +
+      'border:1px solid var(--background-modifier-border);' +
+      (isMobile ? 'border-bottom:none;overflow:hidden;animation:launcher-slide-up 0.28s ease-out;' : 'overflow:hidden;animation:launcher-fade-in 0.15s ease;');
     this.overlay.appendChild(this.modal);
 
     this.grid.style.cssText =
@@ -236,7 +250,7 @@ export class LauncherModal {
     this.render();
   }
 
-  /** 编辑模式悬浮控件：列数选择 + 文字显隐 + ✓ 完成（距顶部 34px） */
+  /** 编辑模式悬浮控件：文字显隐 + 手势选择 + 列数 + ✓ 完成（距顶部 34px） */
   private buildDoneButton(): void {
     const wrap = document.createElement('div');
     wrap.id = 'launcher-edit-controls';
@@ -265,6 +279,32 @@ export class LauncherModal {
     wrap.appendChild(textBtn);
     this.textToggleBtn = textBtn;
     this.syncTextToggle = syncTextBtn;
+
+    // 手势选择（写回插件设置 + 重注册监听）
+    const gestureSel = document.createElement('select');
+    gestureSel.id = 'launcher-gesture-sel';
+    gestureSel.title = '打开入口页的手势';
+    gestureSel.style.cssText =
+      'background:var(--background-primary);color:var(--text-normal);border:1px solid var(--background-modifier-border);' +
+      'border-radius:14px;padding:5px 8px;font-size:12px;cursor:pointer;';
+    const gestureOptions: Array<[string, string]> = [
+      ['off', '手势关闭'],
+      ['double', '双击'],
+      ['triple', '三击'],
+      ['swipe', '双指下滑'],
+    ];
+    for (const [k, label] of gestureOptions) {
+      const opt = document.createElement('option');
+      opt.value = k;
+      opt.textContent = label;
+      gestureSel.appendChild(opt);
+    }
+    gestureSel.value = this.gesture();
+    gestureSel.addEventListener('change', () => {
+      applyLauncherGesture(gestureSel.value);
+    });
+    wrap.appendChild(gestureSel);
+    this.gestureSel = gestureSel;
 
     const sel = document.createElement('select');
     sel.id = 'launcher-columns-sel';
@@ -348,6 +388,7 @@ export class LauncherModal {
       this.columnSel = null;
       this.textToggleBtn = null;
       this.syncTextToggle = null;
+      this.gestureSel = null;
     }
     this.overlay.remove();
     window.removeEventListener('resize', this.onResize);
@@ -376,6 +417,10 @@ export class LauncherModal {
     if (this.doneBtn) this.doneBtn.style.display = this.editing ? 'inline-flex' : 'none';
     if (this.editControls) this.editControls.style.display = this.editing ? 'flex' : 'none';
     if (this.syncTextToggle) this.syncTextToggle();
+    if (this.gestureSel) {
+      const v = this.gesture();
+      if (this.gestureSel.value !== v) this.gestureSel.value = v;
+    }
     if (this.columnSel) {
       const v = String(this.columns());
       if (this.columnSel.value !== v) this.columnSel.value = v;
@@ -416,6 +461,16 @@ export class LauncherModal {
       return (getSettings() as any).launcherShowText !== false;
     } catch (e) {
       return true;
+    }
+  }
+
+  /** 打开入口页的手势（off | double | triple | swipe） */
+  private gesture(): string {
+    try {
+      const v = (getSettings() as any).launcherGesture;
+      return v === 'double' || v === 'triple' || v === 'swipe' ? v : 'off';
+    } catch (e) {
+      return 'off';
     }
   }
 
