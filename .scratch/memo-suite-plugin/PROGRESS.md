@@ -1,6 +1,8 @@
 # bz 进度（上下文压缩恢复点）
 
-最后更新：2026-08-08（ticket 22 自动摘要双触发），663 测试过（1 既有失败 flash vector-store 增量刷新，与本次无关）。仓库 `E:/Obsidian/1`，构建产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`。
+最后更新：2026-08-08（ticket 23 命令入口页），700 测试（1 既有失败 flash vector-store 增量刷新，与本次无关）。仓库 `E:/Obsidian/1`，构建产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`。
+
+- **ticket 23 命令入口页（Launcher）**（issue 23，grilling 会话 10 问封板）：`bz-launcher-open` 裸注册；全局唯一单例弹窗（自建 DOM + escManager，z-index 10100）；网格列数设置项 `launcherColumns`（默认 6，设置页新 tab「入口页」）；磁贴档位 {1×1,1×2,2×1,2×2}；长按 0.5s 进编辑模式（iOS 式：拖主体移动/右下角手柄调档位/左上角×删除/顶部+添加/✓完成）；添加走自建命令选择器（listCommands 全命令模糊搜）→ 1×1 落末尾空位；点击磁贴先关入口页再 executeCommandById；幽灵磁贴（命令失效灰色保留可删，复活自动恢复）；磁贴自定义 lucide 图标（内置 ~140 图标清单 + 选择器，优先于命令自带 icon）；推挤碰撞（pushMove 纯函数：目标被占 → 行优先顺移，行扩展兜底永不失败）；数据 `CONFIG/STORAGE/launcher.json`（{version, tiles:[{id,commandId,x,y,w,h,icon?}]}，normalizeData 容错）。术语已入 CONTEXT.md（入口页/磁贴/档位/编辑模式/推挤/幽灵磁贴）。36 测试（数据层 19 + UI 17）；smoke 命令 30→31；设置页 tab 12→13。**ADR 评估：全部决策为既有模式/用户偏好，不写 ADR。**
 
 - **ticket 22 自动摘要：create/open 双触发 + 逐字段补全 + 通知**（issue 22，用户问答确认）：`ensureAutoSummary` 注册 `vault.on('create')` + `workspace.on('file-open')`（watchDir 前缀边界一致；1500ms 延迟窗口 pending Set 去重；open 传 null 跳过；unload 双向 offref）。`processFile` 缺什么补什么（title/summary/tags，空串/空数组视为缺失；字段齐全跳过不 notify）；**缺 title → AI 标题重命名笔记文件**（非法字符清理/截断 80/防重名 (1)(2)，rename 失败回退仅写 frontmatter）；author 不再生成。`aiProcess(ai, bodyText, missing)` 提示词 JSON 模板按缺失字段裁剪（规则文案逐字保留，不含 author）。通知两条：调用 AI 前 `正在为《xx》生成摘要…`(3s，xx 用已有 title 或文件名) + 成功后 `notice(msg, 8000)` 格式《title》+空行+summary+空行+#tags。MockVault 补 rename。34 测试。spec.md 需求 30-34/事件监听/事件清单表/frontmatter/提示词结构/事件触发缝已同步。
 

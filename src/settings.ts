@@ -109,6 +109,10 @@ export default interface BzSettings {
   /** 🎯 做题决定难度（开启时显示做题家选项） */
   forceQuizForReview: boolean;
 
+  // ===== 🧩 入口页（1 项）=====
+  /** 网格列数（3-8，默认 6） */
+  launcherColumns: string;
+
   // ===== 💭 闪念（17 项，全量迁移）=====
   /** Ollama URL（本地） */
   OLLAMA_URL: string;
@@ -222,6 +226,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
   autoCheckInterval: '60',
   enableAutoNotify: true,
   forceQuizForReview: false,
+
+  // 入口页
+  launcherColumns: '6',
 
   // 闪念
   OLLAMA_URL: 'http://localhost:11434',
