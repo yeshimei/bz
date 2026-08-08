@@ -98,6 +98,9 @@ export async function processFile(app: any, ai: AIService, file: any): Promise<v
     if (missing.length === 0) return; // 字段齐全，无需处理
 
     console.log(`[自动摘要] 补全缺失字段(${missing.join('/')}): ${file.basename}`);
+    // 开始调用 AI：先通知用户（标题用已有 title 或文件名）
+    const startName = fm && fm.title ? fm.title : file.basename;
+    notice(`正在为《${startName}》生成摘要…`, 3000);
     const aiResult = await aiProcess(ai, bodyText, missing);
     if (!aiResult) return;
 

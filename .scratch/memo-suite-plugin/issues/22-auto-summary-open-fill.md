@@ -20,6 +20,7 @@ summary
 
 - [ ] `src/auto-summary/processor.ts`：`aiProcess(ai, bodyText, missing)` 提示词 JSON 模板按 missing 字段裁剪（字段规则文案逐字保留：标题 15-30 字禁标点/摘要 150-250 字禁「本文」等前缀/3-6 个中文标签≤5 字；**不含 author**；tags 规则块仅 missing 含 tags 时输出；正文截断 6000 不变；missing 为空返回 null 不调 AI）
 - [ ] `processFile`：缺失检测 = 无 title / 无 summary / tags 非数组或空数组（空串/空数组视为缺失）→ missing 非空才请求 AI；写回只写缺失字段（不覆盖已有）；字段齐全直接 return（不 modify、不通知）
+- [ ] 通知：调用 AI 前 `notice('正在为《xx》生成摘要…', 3000)`（xx 用已有 title 或文件名）；成功后 `notice()`（core/dom，smartCat 优先）显示 `《title》` + 空行 + summary + 空行 + `#tag1 #tag2`（缺哪段不显示哪段），时长 8s
 - [ ] 缺 title：AI 生成 title → 重命名笔记文件（清理非法字符 `\\/:*?"<>|`、截断 80 字、防重名 `(1)(2)…`；rename 失败回退仅写 frontmatter）→ frontmatter 也写 title 保持一致
 - [ ] `src/auto-summary/index.ts`：`ensureAutoSummary` 在延迟注册里增加 `workspace.on('file-open')`（传 null 关闭时跳过；目录前缀边界判断与 create 一致）；create/open 共用 1500ms 延迟 + pending Set 去重（同一文件延迟窗口内只排一次）
 - [ ] `unloadAutoSummary`：offref 清理 workspace 监听 + pending 清空
