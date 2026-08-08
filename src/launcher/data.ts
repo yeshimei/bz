@@ -20,6 +20,8 @@ export interface LauncherTile {
   h: number;
   /** 自定义 lucide 图标名（优先于命令自带 icon；缺省用命令 icon/兜底） */
   icon?: string;
+  /** 自定义显示名（优先于命令名；缺省用命令名） */
+  label?: string;
 }
 
 /** launcher.json 根结构 */
@@ -65,7 +67,16 @@ export function normalizeData(raw: unknown): LauncherData {
     const h = t.h >= 2 ? 2 : 1;
     const x = Math.max(0, Math.floor(t.x) || 0);
     const y = Math.max(0, Math.floor(t.y) || 0);
-    cleaned.push({ id: t.id, commandId: t.commandId, x, y, w, h, ...(typeof t.icon === 'string' && t.icon ? { icon: t.icon } : {}) });
+    cleaned.push({
+      id: t.id,
+      commandId: t.commandId,
+      x,
+      y,
+      w,
+      h,
+      ...(typeof t.icon === 'string' && t.icon ? { icon: t.icon } : {}),
+      ...(typeof t.label === 'string' && t.label.trim() ? { label: t.label.trim() } : {}),
+    });
   }
   return { version: 1, tiles: cleaned };
 }
