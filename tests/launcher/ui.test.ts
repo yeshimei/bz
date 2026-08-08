@@ -42,10 +42,10 @@ function makeMockApp(vault: MockVault, extraCommands: { id: string; name: string
   return { app, executed };
 }
 
-async function openOnce(vault: MockVault) {
+async function openOnce(vault: MockVault, settings: Record<string, any> = {}) {
   const { app, executed } = makeMockApp(vault);
   setApp(app);
-  setSettingsProvider(() => ({ launcherColumns: '6' }) as any);
+  setSettingsProvider(() => ({ launcherColumns: '6', ...settings }) as any);
   openLauncher(app);
   // 等待 loadLauncherData 完成
   await new Promise((r) => setTimeout(r, 0));
@@ -523,32 +523,26 @@ describe('入口页 UI', () => {
     expect(document.getElementById('launcher-overlay')).toBeNull();
   });
 
-  it('隐藏文字：改名弹窗开关 → 磁贴仅图标 + 写盘 hideText', async () => {
+  it('显示文字统一开关：关闭 → 全部磁贴仅图标；开启 → 显示文字', async () => {
     const vault = new MockVault();
     await vault.create(
       LAUNCHER_PATH,
-      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+      JSON.stringify({
+        version: 2,
+        desktop: [
+          { id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 },
+          { id: 't2', commandId: 'bz-pw-open-manager', x: 1, y: 0, w: 1, h: 1 },
+        ],
+        mobile: [],
+      })
     );
+    // 默认开启（未设置 launcherShowText）→ 显示文字
     await openOnce(vault);
-    let tile = gridTiles()[0];
-    vi.useFakeTimers();
-    try {
-      firePointer(tile, 'pointerdown', 50, 50);
-      vi.advanceTimersByTime(500);
-      tile = gridTiles()[0];
-    } finally {
-      vi.useRealTimers();
-    }
-    tile.querySelector<HTMLElement>('.launcher-name')!.click();
-    const cb = document.querySelector<HTMLInputElement>('#launcher-rename-popup .launcher-hide-text')!;
-    expect(cb.checked).toBe(false);
-    cb.click();
-    document.querySelector<HTMLElement>('#launcher-rename-popup button[title="保存名称"]')!.click();
-    await new Promise((r) => setTimeout(r, 0));
-    // 磁贴无名字元素（仅图标）
-    expect(gridTiles()[0].querySelector('.launcher-name')).toBeNull();
-    const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
-    expect(saved.desktop[0].hideText).toBe(true);
+    expect(gridTiles().every((t) => t.querySelector('.launcher-name'))).toBe(true);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    // 统一关闭 → 全部仅图标
+    await openOnce(vault, { launcherShowText: false });
+    expect(gridTiles().every((t) => t.querySelector('.launcher-name') === null)).toBe(true);
   });
 
   it('emoji 图标：图标选择器输入字符直接使用（lucide 清单外走文本渲染）', async () => {
