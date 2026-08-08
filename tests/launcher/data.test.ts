@@ -21,9 +21,9 @@ describe('launcher 数据层', () => {
 
   describe('normalizeData 容错', () => {
     it('null/非对象 → 空布局', () => {
-      expect(normalizeData(null)).toEqual({ version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 4 } });
-      expect(normalizeData('x')).toEqual({ version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 4 } });
-      expect(normalizeData({})).toEqual({ version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 4 } });
+      expect(normalizeData(null)).toEqual({ version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 6 } });
+      expect(normalizeData('x')).toEqual({ version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 6 } });
+      expect(normalizeData({})).toEqual({ version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 6 } });
     });
 
     it('非法磁贴剔除、w/h 归一为 1|2、x/y 取整非负', () => {
@@ -91,11 +91,11 @@ describe('launcher 数据层', () => {
       });
       expect(d.desktop.columns).toBe(5);
       expect(d.desktop.tiles.length).toBe(1);
-      expect(d.mobile.columns).toBe(4); // 越界值回退移动端默认
+      expect(d.mobile.columns).toBe(6); // 越界值回退移动端默认
       // 缺省列数：desktop 6 / mobile 4
       const d2 = normalizeData({ version: 3, desktop: { tiles: [] }, mobile: { tiles: [] } });
       expect(d2.desktop.columns).toBe(6);
-      expect(d2.mobile.columns).toBe(4);
+      expect(d2.mobile.columns).toBe(6);
       // 列数下限
       const d3 = normalizeData({ version: 3, desktop: { tiles: [], columns: 2 }, mobile: { tiles: [], columns: 3 } });
       expect(d3.desktop.columns).toBe(6);
@@ -253,11 +253,11 @@ describe('launcher 数据层', () => {
     it('不存在 → 空布局；save 建目录建文件；load 往返', async () => {
       const vault = new MockVault();
       setApp({ vault } as any);
-      expect(await loadLauncherData(getApp())).toEqual({ version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 4 } });
+      expect(await loadLauncherData(getApp())).toEqual({ version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 6 } });
       await saveLauncherData(getApp(), {
         version: 3,
         desktop: { tiles: [tile({ id: 'a', x: 2, y: 3, icon: 'star', label: '入口A' })], columns: 6 },
-        mobile: { tiles: [], columns: 4 },
+        mobile: { tiles: [], columns: 6 },
       });
       expect(vault.files.has(LAUNCHER_PATH)).toBe(true);
       const d = await loadLauncherData(getApp());
@@ -269,7 +269,7 @@ describe('launcher 数据层', () => {
       await vault.create(LAUNCHER_PATH, '{broken');
       setApp({ vault } as any);
       const d = await loadLauncherData(getApp());
-      expect(d).toEqual({ version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 4 } });
+      expect(d).toEqual({ version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 6 } });
       expect(vault.files.get(LAUNCHER_PATH)).toBe('{broken'); // 未覆盖
     });
   });
