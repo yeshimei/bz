@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 import { ReviewDataManager, REVIEW_FILE_PATH } from '../../src/review/data';
 import { UIManager } from '../../src/review/ui';
 import { reviewApp } from '../../src/review/app';
@@ -167,6 +168,34 @@ describe('UIManager', () => {
     expect(ui.confirmPopup!.style.display).toBe('flex');
     expect(document.getElementById('confirm-title')!.textContent).toBe('移出复习计划');
     expect(document.getElementById('confirm-message')!.textContent).toBe('确定移出“A”？');
+    ui.destroy();
+  });
+
+  it('⚙️ 设置弹窗：检查间隔/逾期通知 + 做题家 5 项', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const app = makeApp(vault);
+    setApp(app);
+    setSettingsProvider(() => ({
+      autoCheckInterval: '60', enableAutoNotify: true, forceQuizForReview: true,
+      enableMultipleChoice: true, questionsPerNote: '0', shuffleQuestions: true, difficulty: 'random',
+    }));
+    const dm = new ReviewDataManager(app);
+    const ui = new UIManager(app, dm);
+    ui.showMain();
+    const settingsBtn = document.getElementById('review-btn-settings') as HTMLElement;
+    expect(settingsBtn).not.toBeNull();
+    settingsBtn.click();
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    expect(popup.textContent).toContain('复习计划设置');
+    const names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    expect(names).toContain('检查间隔（秒）');
+    expect(names).toContain('启用逾期通知');
+    expect(names).toContain('做题决定难度');
+    expect(names).toContain('允许多选题');
+    expect(names).toContain('每笔记题目数量（0为自动）');
+    expect(names).toContain('打乱题目顺序');
+    expect(names).toContain('题目难度');
     ui.destroy();
   });
 

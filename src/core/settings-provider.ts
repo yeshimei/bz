@@ -5,9 +5,20 @@
 import type BzSettings from '../settings';
 
 let _provider: (() => BzSettings) | null = null;
+let _saver: (() => Promise<void>) | null = null;
 
 export function setSettingsProvider(fn: () => BzSettings): void {
   _provider = fn;
+}
+
+/** 注入设置保存通道（main.ts onload；域设置弹窗写回后经 saveSettings 持久化） */
+export function setSettingsSaver(fn: () => Promise<void>): void {
+  _saver = fn;
+}
+
+/** 保存设置到 data.json（未注入时静默——测试环境安全读取） */
+export function saveSettings(): Promise<void> {
+  return _saver ? _saver() : Promise.resolve();
 }
 
 export function getSettings(): BzSettings {

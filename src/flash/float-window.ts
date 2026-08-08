@@ -2,6 +2,9 @@
  * 闪念窄窗 FloatWindow（ticket 18，源码 L1119-1315 语义移植）
  * 右侧贴边/悬停展开/双击最大化/拖拽缩放。
  */
+import { Setting } from 'obsidian';
+import { getSettings, saveSettings } from '../core/settings-provider';
+import { openSettingsModal } from '../core/settings-modal';
 import { makeDraggable, makeResizable } from './ui-tools';
 
 export class FloatWindow {
@@ -70,10 +73,53 @@ export class FloatWindow {
     settingsBtn.textContent = '⚙';
     settingsBtn.title = '设置';
     settingsBtn.style.cssText = 'background:none;border:none;cursor:pointer;box-shadow:none;font-size:.8rem;';
-    settingsBtn.addEventListener('click', async (e) => {
+    settingsBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const { Notice } = await import('obsidian');
-      new Notice('QuickAdd 宏设置中修改配置（宏侧边栏 → ⚙）');
+      // 闪念设置弹窗（ADR-0009：17 项全量）
+      openSettingsModal({
+        title: '闪念设置',
+        build: (el) => {
+          const s = getSettings() as any;
+          const textSetting = (name: string, desc: string, field: string) =>
+            new Setting(el)
+              .setName(name)
+              .setDesc(desc)
+              .addText((text) =>
+                text.setValue(String(s[field] ?? '')).onChange(async (v) => {
+                  s[field] = v;
+                  await saveSettings();
+                })
+              );
+          const toggleSetting = (name: string, desc: string, field: string) =>
+            new Setting(el)
+              .setName(name)
+              .setDesc(desc)
+              .addToggle((toggle) =>
+                toggle.setValue(s[field] === 'true' || s[field] === true).onChange(async (v) => {
+                  s[field] = String(v);
+                  await saveSettings();
+                })
+              );
+          toggleSetting('启用', '常驻监听光标移动与笔记变更（向量检索/AI 对话）', 'flashEnabled');
+          textSetting('Ollama URL', '本地 Ollama 服务地址', 'OLLAMA_URL');
+          textSetting('Embedding 模型', '向量化模型', 'EMBEDDING_MODEL');
+          textSetting('元数据路径', '向量元数据 JSON 路径', 'META_PATH');
+          textSetting('向量文件路径', '二进制向量文件路径', 'VEC_PATH');
+          textSetting('参考结果数', '参考面板显示的匹配结果数', 'TOP_K');
+          textSetting('AI 检索结果数', 'AI 对话时检索的笔记数量', 'CHAT_TOP_K');
+          textSetting('段落最小长度', '短于此长度的段落将被跳过', 'CHUNK_MIN_LENGTH');
+          textSetting('允许的文件夹', '只处理这些文件夹下的笔记 (逗号分隔)', 'ALLOW_PATHS');
+          textSetting('并发数', 'Embedding 请求并发数', 'CONCURRENCY');
+          textSetting('上下文限制', 'AI 上下文限制', 'CONTEXT_LIMIT');
+          textSetting('防抖延迟', '光标变化后延迟多久触发搜索 (ms)', 'DEBOUNCE_DELAY');
+          textSetting('光标轮询间隔', '移动端光标轮询间隔 (ms)', 'CURSOR_POLL_INTERVAL');
+          textSetting('Ollama 对话模型', '用于 AI 对话的模型', 'OLLAMA_CHAT_MODEL');
+          textSetting('DeepSeek 模型', 'DeepSeek API 模型名称', 'DEEPSEEK_MODEL');
+          toggleSetting('默认使用 DeepSeek', 'AI 对话时默认勾选 DeepSeek', 'DEFAULT_USE_DEEPSEEK');
+          textSetting('最大历史记录', 'AI 聊天保留的对话轮数', 'MAX_HISTORY');
+          textSetting('远程 Ollama URL', '手机端使用的远程 Ollama 地址', 'OLLAMA_REMOTE_URL');
+        },
+      });
     });
 
     this.header.appendChild(titleSpan);

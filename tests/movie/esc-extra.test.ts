@@ -9,7 +9,7 @@ import { M, resetMovieState } from '../../src/movie/state';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { setApp } from '../../src/core/app';
 import {
-  openAddModal, openEditModal, openSettingsModal, createOverlay, registerEscapeHandler,
+  openAddModal, openEditModal, openFilterModal, createOverlay, registerEscapeHandler,
   closeOverlay,
 } from '../../src/movie/ui';
 import { escManager } from '../../src/core/esc-manager';
@@ -70,7 +70,7 @@ describe('ESC 多分支', () => {
   });
 
   it('设置弹窗打开时 ESC → 关闭设置', () => {
-    openSettingsModal();
+    openFilterModal();
     expect(M.settingsOverlay).toBeTruthy();
     pressEsc();
     expect(M.settingsOverlay).toBeNull();

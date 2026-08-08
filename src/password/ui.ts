@@ -4,12 +4,14 @@
  * pw-add-popup/pw-add-* / pw-entry-card / pw-search-container / pw-suggestions。
  * 主密码流程：首次设置（再次输入确认）→ 解锁 → 加密驱动（showPasswordDialog）。
  */
-import { Notice } from 'obsidian';
+import { Notice, Setting } from 'obsidian';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { confirm } from '../core/confirm';
 import { createIconBtn, injectStyles } from '../core/dom';
 import { formatRelativeTime } from '../core/utils';
+import { getSettings, saveSettings } from '../core/settings-provider';
+import { openSettingsModal } from '../core/settings-modal';
 import { DataManager, type PasswordEntry } from './data';
 
 const PW_STYLES = `
@@ -341,8 +343,45 @@ export class UIManager {
         }
       }
     });
+    // 密码本设置弹窗（ADR-0009：字符集 / 生成长度 / 安全模式）
+    const settingsBtn = createIconBtn('⚙️', '密码本设置', () => {
+      openSettingsModal({
+        title: '密码本设置',
+        build: (el) => {
+          const s = getSettings();
+          new Setting(el)
+            .setName('密码生成字符集')
+            .setDesc('随机生成密码时使用的字符集')
+            .addText((text) =>
+              text.setValue(s.passwordCharset || '').onChange(async (v) => {
+                s.passwordCharset = v;
+                await saveSettings();
+              })
+            );
+          new Setting(el)
+            .setName('密码生成长度')
+            .setDesc('随机生成密码的长度（数字）')
+            .addText((text) =>
+              text.setValue(s.passwordLength || '').onChange(async (v) => {
+                s.passwordLength = v;
+                await saveSettings();
+              })
+            );
+          new Setting(el)
+            .setName('安全模式')
+            .setDesc('开启后，关闭列表窗口立即自动上锁')
+            .addToggle((toggle) =>
+              toggle.setValue(!!s.securityMode).onChange(async (v) => {
+                s.securityMode = v;
+                await saveSettings();
+              })
+            );
+        },
+      });
+    });
     const closeBtn = createIconBtn('❌', '关闭', () => this.hide());
 
+    btnContainer.appendChild(settingsBtn);
     btnContainer.appendChild(addBtn);
     btnContainer.appendChild(searchBtn);
     btnContainer.appendChild(closeBtn);

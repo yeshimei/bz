@@ -8,6 +8,7 @@ import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { formatRelativeTime } from '../core/utils';
 import { checkAndShowChangelog } from '../core/changelog';
+import { openSettingsModal } from '../core/settings-modal';
 import { loadDatabase, saveDatabase, calculateDailyCost, calculateDaysUsed } from './data';
 import type { BelongingsDatabase, BelongingsItem } from './types';
 
@@ -958,7 +959,8 @@ export async function openBelongingsPanel(): Promise<void> {
   });
 
   const sortBtn = document.createElement('button');
-  sortBtn.textContent = '⚙️';
+  sortBtn.textContent = '🔀';
+  sortBtn.title = '排序';
   sortBtn.style.cssText = ` background: none; border: none; font-size: .7rem;
     cursor: pointer; color: var(--text-muted);
     box-shadow: none;
@@ -966,6 +968,26 @@ export async function openBelongingsPanel(): Promise<void> {
     margin-left: 3px;`;
   sortBtn.addEventListener('click', async () => {
     await showSortModal();
+  });
+
+  // 设置弹窗（ADR-0009：归物本无行为设置，空弹窗）
+  const settingsBtn = document.createElement('button');
+  settingsBtn.textContent = '⚙️';
+  settingsBtn.title = '归物本设置';
+  settingsBtn.style.cssText = ` background: none; border: none; font-size: .7rem;
+    cursor: pointer; color: var(--text-muted);
+    box-shadow: none;
+    padding: 0;
+    margin-left: 3px;`;
+  settingsBtn.addEventListener('click', () => {
+    openSettingsModal({
+      title: '归物本设置',
+      build: () => {
+        /* 归物本无行为设置项（数据路径已全局化） */
+      },
+      emptyText: '归物本没有可配置的设置项',
+      emptyDesc: '数据文件路径由全局设置「数据存储路径」统一管理',
+    });
   });
 
   const refreshBtn = document.createElement('button');
@@ -993,6 +1015,7 @@ export async function openBelongingsPanel(): Promise<void> {
   });
 
   headerButtons.appendChild(addBtn);
+  headerButtons.appendChild(settingsBtn);
   headerButtons.appendChild(refreshBtn);
   headerButtons.appendChild(sortBtn);
   headerButtons.appendChild(closeBtn);

@@ -217,7 +217,8 @@ Feature: memo-suite-plugin
 
 ### 设置页
 
-- 插件设置：AI（provider/key/endpoint/model）、各域路径（dataFolder/storagePath/todoFilePath 等）、常驻监听开关（自动摘要/AIAgent/闪念）、原有各脚本设置项逐一迁移
+- **设置归属模型（ADR-0009，2025 用户决策）**：设置两分——全局项留 Obsidian 设置页（单页平铺，无 tab，只含「🤖 AI」「📂 数据存储路径」两区块），域行为项进各功能主面板右上角 ⚙️ 域设置弹窗；筛选/排序弹窗统一挂 🔀（影视「筛选与排序」、书库「视图与筛选」），⚙️ 只表示真设置；AI Agent 4 项设置不暴露（字段保留，运行时读旧值、默认值兜底）；入口页不新增设置（编辑模式控件即入口，移动端列数由列数控件按平台读写）
+- **共享数据路径**：新增 storagePath 字段（默认 CONFIG/STORAGE），统一 memo/belongings/passwords/favorites/review/quiz/闪念 meta/vec 的 JSON 数据目录；旧 7 字段（todoFilePath/belongingsDataFolder/pwStoragePath/favoritesStoragePath/reviewStoragePath/META_PATH/VEC_PATH）废弃仅兼容保留（接口 + data.json 不删，UI 不暴露）。迁移（首次加载）：旧字段全部相同 → 用该值初始化；参差 → 默认值 + Notice 列出被忽略的自定义路径。内容目录类（日记/剪藏/书库/影视/信等笔记目录）不进共享路径，归各域设置弹窗单独配置
 - 日记本已删除「标签配置/默认标签」设置的先例：设置项迁移以「保留原脚本可配置项」为原则，用户已确认删除的项不恢复
 - **2026-08-07 补充（用户决策）**：新增 5 项设置——影视每页加载数量（moviePageSize，默认 20）、日记本每批加载数量（diaryBatchSize，默认 20）、剪藏本每批加载数量（articleBatchSize，默认 20）、做题家数据存储路径（quizStoragePath，默认 CONFIG/STORAGE）、复习计划数据存储路径（reviewStoragePath，默认 CONFIG/STORAGE）
 - **2026-08-07 决策**：影视海报整理（enableQ3/posterFolder）不提供，相关代码无残留（仅 frontmatter 海报字段读取展示）；日记本删除默认标签功能（写日记弹窗不预选任何标签，全部加载；getDefaultTagSetting 移除）；长按手势固定启用（不暴露选项）
@@ -273,19 +274,27 @@ Feature: memo-suite-plugin
 | `window._bookSettings` | 书库 | 书库域模块状态 |
 | `window.__belongingsCommandRegistered`、`_newsCommandRegistered` 等 | 命令防重 | 插件生命周期管理（onload 注册一次/onunload 清理），不再需要标志位 |
 
-### 设置项总表（源码提取，插件设置页全量迁移）
+### 设置项总表（源码提取，按 ADR-0009 归属重排）
 
-- **备忘录（5）**：todoFilePath、scenarios、platformMapping、showFileName、autoPopupOnStart
-- **归物本（2）**：dataFolder、customCategories
-- **剪藏本（3）**：articleDirectory、batchSize、longPressDuration
-- **密码本（4）**：storagePath、passwordCharset、passwordLength、securityMode
-- **收藏本（1+）**：storagePath（favorites.json）
-- **书库（9）**：folderPath、notePath、bookTag、showFileSize、showReadingTime、showHighlights、showThinks、showReview、showCategory
-- **影视（4）**：folderPath、pageSize、enableQ3、posterFolder
-- **影视数据分析（10 组分析配置）**：groups、buckets、genres、ageBuckets、eras、durBuckets、groupDur、reviewKeywords、series、yearRating
-- **做题家（3）**：enableMultipleChoice、questionsPerNote、difficulty
-- **闪念（17）**：OLLAMA_URL、EMBEDDING_MODEL、META_PATH、VEC_PATH、TOP_K、CHAT_TOP_K、CHUNK_MIN_LENGTH、ALLOW_PATHS、CONCURRENCY、CONTEXT_LIMIT、DEBOUNCE_DELAY、CURSOR_POLL_INTERVAL、OLLAMA_CHAT_MODEL、DEEPSEEK_MODEL、DEFAULT_USE_DEEPSEEK、MAX_HISTORY、OLLAMA_REMOTE_URL
-- **AI 全局（Q3 语义）**：aiProvider、opencodeGoApiKey、override（endpoint/apiKey/model）
+**全局设置页（单页平铺，两区块）**：
+- **🤖 AI**：aiProvider（服务商下拉）、deepseekApiKey、opencodeGoApiKey（AI Agent 4 项不暴露：aiAgentEnabled/enableAIClipMatch/aiAgentWatchedFolders/aiAgentModel 字段保留，默认值兜底）
+- **📂 数据存储路径**：storagePath（共享，默认 CONFIG/STORAGE；旧 7 字段废弃仅兼容：todoFilePath/belongingsDataFolder/pwStoragePath/favoritesStoragePath/reviewStoragePath/META_PATH/VEC_PATH）
+
+**域设置弹窗（⚙️，各功能主面板右上角）**：
+- **备忘录**：autoPopupOnStart
+- **日记本**：diaryDirectory、movieDirectory、letterDirectory、diaryBatchSize、showTagCount、useFileDateTime
+- **归物本**：空弹窗（无设置项）
+- **剪藏本**：articleDirectory、articleBatchSize、autoSummaryEnabled
+- **密码本**：passwordCharset、passwordLength、securityMode
+- **收藏本**：空弹窗（无设置项）
+- **书库**：libraryFolderPath、libraryNotePath、bookTag、showFileSize、showReadingTime、showHighlights、showThinks、showReview（showCategory 字段保留无 UI）
+- **影视**：movieFolderPath、moviePageSize（海报抓取仅文字提示）
+- **复习计划（含做题家）**：autoCheckInterval、enableAutoNotify + 做题家 5 项（enableMultipleChoice、questionsPerNote、shuffleQuestions、difficulty、forceQuizForReview）
+- **闪念（17 项全量，含 AI 项）**：OLLAMA_URL、EMBEDDING_MODEL、META_PATH、VEC_PATH、TOP_K、CHAT_TOP_K、CHUNK_MIN_LENGTH、ALLOW_PATHS、CONCURRENCY、CONTEXT_LIMIT、DEBOUNCE_DELAY、CURSOR_POLL_INTERVAL、OLLAMA_CHAT_MODEL、DEEPSEEK_MODEL、DEFAULT_USE_DEEPSEEK、MAX_HISTORY、OLLAMA_REMOTE_URL
+
+**筛选弹窗（🔀，非设置）**：影视「筛选与排序」（类型筛选+排序）、书库「视图与筛选」（分类筛选+视图）
+
+**历史形态（迁移前基准，仅供追溯）**：备忘录（5）todoFilePath/scenarios/platformMapping/showFileName/autoPopupOnStart；归物本（2）dataFolder/customCategories；剪藏本（3）articleDirectory/batchSize/longPressDuration；密码本（4）storagePath/passwordCharset/passwordLength/securityMode；收藏本（1+）storagePath；书库（9）folderPath/notePath/bookTag/showFileSize/showReadingTime/showHighlights/showThinks/showReview/showCategory；影视（4）folderPath/pageSize/enableQ3/posterFolder；影视数据分析（10 组分析配置）groups/buckets/genres/ageBuckets/eras/durBuckets/groupDur/reviewKeywords/series/yearRating；做题家（3）enableMultipleChoice/questionsPerNote/difficulty；闪念（17）OLLAMA_URL…OLLAMA_REMOTE_URL；AI 全局（Q3 语义）aiProvider/opencodeGoApiKey/override（endpoint/apiKey/model）
 
 ### 功能实现要点（源码提取）
 

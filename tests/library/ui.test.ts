@@ -4,7 +4,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { showLibrary, showBookNotes, openSettingsModal, _testResetLibrary } from '../../src/library/ui';
+import { showLibrary, showBookNotes, openFilterModal, _testResetLibrary } from '../../src/library/ui';
 import { openBookNotes } from '../../src/library/index';
 import { MockVault, parseFrontmatter } from '../mock-vault';
 import { MockNotice, resetObsidianMocks } from '../mock-obsidian-entry';
@@ -100,7 +100,7 @@ describe('书库面板', () => {
     vault.files.set('书库/活着.md', BOOK_MD);
     const app = makeApp(vault);
     showLibrary(app);
-    openSettingsModal(app);
+    openFilterModal(app);
     const modal = [...document.querySelectorAll('div')].find((d) => d.textContent!.includes('视图与筛选'))!;
     expect(modal.textContent).toContain('小说');
     expect(modal.textContent).toContain('未读');
@@ -109,6 +109,25 @@ describe('书库面板', () => {
     const readBtn = [...modal.querySelectorAll('button')].find((b) => b.textContent === '在读')!;
     readBtn.click();
     expect(document.getElementById('__book_library__')!.textContent).toContain('活着');
+  });
+
+  it('⚙️ 打开书库设置弹窗（文件夹/识别标签/显示开关）；🔀 为筛选弹窗', () => {
+    vault.files.set('书库/活着.md', BOOK_MD);
+    setSettingsProvider(() => ({ libraryFolderPath: '书库', libraryNotePath: '我的/读书笔记', bookTag: 'book' }));
+    const app = makeApp(vault);
+    showLibrary(app);
+    const filterBtn = [...document.querySelectorAll('button')].find((b) => b.title === '视图与筛选')!;
+    expect(filterBtn.textContent).toBe('🔀');
+    const settingsBtn = [...document.querySelectorAll('button')].find((b) => b.title === '书库设置')!;
+    settingsBtn.click();
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    expect(popup.textContent).toContain('书库设置');
+    const names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    expect(names).toContain('书库文件夹');
+    expect(names).toContain('读书笔记路径');
+    expect(names).toContain('书籍识别标签');
+    expect(names).toContain('显示文件大小');
+    expect(names).toContain('显示书评摘要');
   });
 
   it('读书笔记弹窗：标题/❝ 高亮/批注', async () => {

@@ -2,10 +2,12 @@
  * 影视 UI（ticket 14 修正版：对齐源码逐字——卡片/overlay/添加/编辑/设置弹窗）
  */
 import type { App, TFile } from 'obsidian';
-import { Notice } from 'obsidian';
+import { Notice, Setting } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { checkAndShowChangelog } from '../core/changelog';
 import { formatRelativeTime } from '../core/utils';
+import { getSettings, saveSettings } from '../core/settings-provider';
+import { openSettingsModal } from '../core/settings-modal';
 import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, getTypeColor, getStarRating, TYPE_GROUPS, ALL_TAGS, getGroupForTag } from './constants';
 import { M, takeHomeFilmStatus } from './state';
 import { getDisplayItems, refreshDataAndView, rebuildItems } from './data';
@@ -799,18 +801,18 @@ export function openEditModal(item: any, app: App): void {
   });
 }
 
-// ---------- 设置/筛选弹窗（源码 L1048-1216 逐字） ----------
+// ---------- 筛选/排序弹窗（源码 L1048-1216 逐字；ADR-0009：挂 🔀，非设置） ----------
 
-export function closeSettings(): void {
+export function closeFilterModal(): void {
   if (M.settingsOverlay) {
     M.settingsOverlay.remove();
     M.settingsOverlay = null;
   }
 }
 
-export function openSettingsModal(): void {
+export function openFilterModal(): void {
   if (M.settingsOverlay) {
-    closeSettings();
+    closeFilterModal();
     return;
   }
 
@@ -840,7 +842,7 @@ export function openSettingsModal(): void {
   closeSettingsBtn.style.cssText = `
     background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-muted);
   `;
-  closeSettingsBtn.addEventListener('click', closeSettings);
+  closeSettingsBtn.addEventListener('click', closeFilterModal);
   settingsHeader.appendChild(closeSettingsBtn);
 
   const settingsContent = document.createElement('div');
@@ -967,7 +969,7 @@ export function openSettingsModal(): void {
 
   M.settingsOverlay = settingsOverlayDiv;
   settingsOverlayDiv.addEventListener('click', (e) => {
-    if (e.target === settingsOverlayDiv) closeSettings();
+    if (e.target === settingsOverlayDiv) closeFilterModal();
   });
 }
 
@@ -1056,9 +1058,40 @@ export function createOverlay(app: App, statusType?: string): void {
     openAnalysisModal(app);
   });
 
+  // 筛选/排序弹窗（ADR-0009：挂 🔀，⚙️ 只留给真设置）
+  const filterBtn = mkBtn('🔀', '筛选与排序', 'var(--text-normal)', (e) => {
+    e.stopPropagation();
+    openFilterModal();
+  });
+
+  // 影视设置弹窗（ADR-0009 域设置弹窗）
   const settingsBtn = mkBtn('⚙️', '影视设置', 'var(--text-normal)', (e) => {
     e.stopPropagation();
-    openSettingsModal();
+    openSettingsModal({
+      title: '影视设置',
+      build: (el) => {
+        const s = getSettings();
+        new Setting(el)
+          .setName('影视文件夹')
+          .setDesc('存放影视笔记的文件夹路径')
+          .addText((text) =>
+            text.setValue(s.movieFolderPath || '').onChange(async (v) => {
+              s.movieFolderPath = v;
+              await saveSettings();
+            })
+          );
+        new Setting(el)
+          .setName('每页加载数量')
+          .setDesc('列表初始加载及每次滚动加载的条数')
+          .addText((text) =>
+            text.setValue(s.moviePageSize || '').onChange(async (v) => {
+              s.moviePageSize = v;
+              await saveSettings();
+            })
+          );
+        new Setting(el).setName('海报抓取').setDesc('影视海报与豆瓣信息抓取由独立脚本 @jwbz/obsidian-douban-poster 提供。');
+      },
+    });
   });
 
   const closeBtn = mkBtn('❌', '关闭', 'var(--text-muted)', () => closeOverlay());
@@ -1078,6 +1111,7 @@ export function createOverlay(app: App, statusType?: string): void {
   headerButtons.appendChild(searchBtn);
   headerButtons.appendChild(recommendBtn);
   headerButtons.appendChild(analysisBtn);
+  headerButtons.appendChild(filterBtn);
   headerButtons.appendChild(settingsBtn);
   headerButtons.appendChild(closeBtn);
   header.appendChild(headerButtons);
@@ -1145,7 +1179,7 @@ export function registerEscapeHandler(): void {
       else if (M.recommendOverlay) {
         M.recommendOverlay.remove();
         M.recommendOverlay = null;
-      } else if (M.settingsOverlay) closeSettings();
+      } else if (M.settingsOverlay) closeFilterModal();
       else if (M.currentOverlay) closeOverlay();
     },
   });

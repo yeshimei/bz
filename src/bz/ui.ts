@@ -4,11 +4,13 @@
  * add-todo-mask / add-todo-popup / add-todo-* / scene-btn / priority-btn / todo-card。
  */
 import moment from 'moment';
-import { Notice } from 'obsidian';
+import { Notice, Setting } from 'obsidian';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { confirm } from '../core/confirm';
 import { createSiteIcon } from '../core/dom';
+import { getSettings, saveSettings } from '../core/settings-provider';
+import { openSettingsModal } from '../core/settings-modal';
 import {
   formatRelativeTime,
   extractUrlAndDisplay,
@@ -124,6 +126,7 @@ export const UIManager = {
             <div style="padding:16px 24px 8px 24px;display:flex;justify-content:space-between;align-items:center;">
                 <h3 style="margin:0;font-size:18px;font-weight:600;color:var(--text-normal);">备忘录</h3>
                 <div style="display:flex;gap:8px;">
+                    <button class="todo-btn-settings" style="background:none;border:none;font-size:14px;cursor:pointer;color:var(--text-muted);padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;display:flex;align-items:center;justify-content:center;">⚙️</button>
                     <button class="todo-btn-add" style="background:none;border:none;font-size:14px;cursor:pointer;color:var(--text-muted);padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;display:flex;align-items:center;justify-content:center;">✏️</button>
                     <button class="todo-btn-archive" style="background:none;border:none;font-size:14px;cursor:pointer;color:var(--text-muted);padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;display:flex;align-items:center;justify-content:center;">📁</button>
                     <button class="todo-btn-close" style="background:none;border:none;font-size:13px;cursor:pointer;color:var(--text-muted);padding:0;width:21px;height:25px;border-radius:4px;box-shadow:none;display:flex;align-items:center;justify-content:center;">❌</button>
@@ -132,6 +135,25 @@ export const UIManager = {
             <div id="todo-entries-container" style="flex:1;overflow-y:auto;padding:0 20px;min-height:200px;"></div>
         `;
     this.entriesContainer = this.popup.querySelector('#todo-entries-container');
+    const settingsBtn = this.popup.querySelector('.todo-btn-settings');
+    settingsBtn!.onclick = () => {
+      // 备忘录设置弹窗（ADR-0009 域设置弹窗）
+      openSettingsModal({
+        title: '备忘录设置',
+        build: (el) => {
+          const s = getSettings();
+          new Setting(el)
+            .setName('启动时自动弹窗')
+            .setDesc('启动时自动弹出备忘录面板（有重要备忘录时）')
+            .addToggle((toggle) =>
+              toggle.setValue(s.autoPopupOnStart).onChange(async (v) => {
+                s.autoPopupOnStart = v;
+                await saveSettings();
+              })
+            );
+        },
+      });
+    };
     const addBtn = this.popup.querySelector('.todo-btn-add');
     addBtn!.onclick = () => this.showAddDialog(null);
     const archiveBtn = this.popup.querySelector('.todo-btn-archive');
