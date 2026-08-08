@@ -7,7 +7,7 @@ import { MockVault } from '../mock-vault';
 import { MockNotice, resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp, getApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { openLauncher, unloadLauncher, calcCellSize, setLauncherShowTextSetter } from '../../src/launcher/ui';
+import { openLauncher, unloadLauncher, calcCellSize, setLauncherShowTextSetter, setLauncherGestureSetter } from '../../src/launcher/ui';
 import { LAUNCHER_PATH } from '../../src/launcher/data';
 
 /**
@@ -567,6 +567,51 @@ describe('入口页 UI', () => {
     expect(settings.launcherShowText).toBe(true);
     expect(gridTiles()[0].querySelector('.launcher-name')).not.toBeNull();
     setLauncherShowTextSetter(() => {});
+  });
+
+  it('右上角手势选择：编辑模式选手势 → 写回设置（设置页已移除入口页项）', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+    );
+    const settings: Record<string, any> = { launcherColumns: '6' };
+    setSettingsProvider(() => ({ ...settings }) as any);
+    setLauncherGestureSetter((v) => {
+      settings.launcherGesture = v;
+    });
+    setApp(makeMockApp(vault).app);
+    openLauncher(makeMockApp(vault).app);
+    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
+    longPressEnterEdit(gridTiles()[0]);
+    const sel = document.getElementById('launcher-gesture-sel') as HTMLSelectElement;
+    expect(sel).not.toBeNull();
+    expect(sel.value).toBe('off'); // 默认关闭
+    sel.value = 'double';
+    sel.dispatchEvent(new Event('change'));
+    expect(settings.launcherGesture).toBe('double'); // 写回设置
+    setLauncherGestureSetter(() => {});
+  });
+
+  it('平台布局：移动端贴底滑入；桌面端居中显示', async () => {
+    const vault = new MockVault();
+    // 桌面端：居中 + 全圆角 + 淡入（无上滑动画）
+    await openOnce(vault);
+    expect(document.getElementById('launcher-overlay')!.style.alignItems).toBe('center');
+    expect(document.getElementById('launcher-modal')!.style.borderRadius).toBe('14px');
+    expect(document.getElementById('launcher-modal')!.style.animation).toContain('launcher-fade-in');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    // 移动端：贴底 + 顶部圆角 + 上滑动画
+    (window as any).Capacitor = {};
+    try {
+      await openOnce(vault);
+      expect(document.getElementById('launcher-overlay')!.style.alignItems).toBe('flex-end');
+      expect(document.getElementById('launcher-modal')!.style.borderRadius).toBe('16px 16px 0 0');
+      expect(document.getElementById('launcher-modal')!.style.animation).toContain('launcher-slide-up');
+    } finally {
+      delete (window as any).Capacitor;
+    }
   });
 
   it('显示文字统一开关：关闭 → 全部磁贴仅图标；开启 → 显示文字', async () => {
