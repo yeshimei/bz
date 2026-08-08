@@ -50,6 +50,15 @@ export class MockVault {
     this.modifiedPaths.push(file.path);
   }
 
+  async rename(file: any, newPath: string): Promise<void> {
+    const old = file.path;
+    if (!this.files.has(old)) return;
+    const content = this.files.get(old)!;
+    this.files.delete(old);
+    this.files.set(newPath, content);
+    this.modifiedPaths.push(newPath);
+  }
+
   async delete(file: any): Promise<void> {
     this.files.delete(file.path);
     this.modifiedPaths.push(file.path);
