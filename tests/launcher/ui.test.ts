@@ -575,11 +575,10 @@ describe('入口页 UI', () => {
     expect(emojiRow.dataset.emoji).toBe('🚀');
     emojiRow.click();
     await new Promise((r) => setTimeout(r, 0));
-    // 磁贴图标渲染为文本字符（非 setIcon）+ emoji 圆形底衬
+    // 磁贴图标渲染为文本字符（非 setIcon）
     const iconEl = gridTiles()[0].querySelector<HTMLElement>('.launcher-icon')!;
     expect(iconEl.textContent).toBe('🚀');
     expect(iconEl.dataset.icon).toBeUndefined();
-    expect(iconEl.classList.contains('launcher-icon-emoji')).toBe(true);
     const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
     expect(saved.desktop[0].icon).toBe('🚀');
   });
