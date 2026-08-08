@@ -227,6 +227,11 @@ export const requestUrl = vi.fn(async (opts: any) => ({
   text: '',
 }));
 
+/** Platform mock：isMobile 默认 false（桌面端）；测试切移动端改 isMobile = true */
+export const Platform = {
+  isMobile: false,
+};
+
 export const obsidianMock = {
   Notice,
   MarkdownView,
@@ -242,6 +247,7 @@ export const obsidianMock = {
   requestUrl,
   setIcon,
   getIcon,
+  Platform,
 };
 
 export function resetObsidianMocks() {
