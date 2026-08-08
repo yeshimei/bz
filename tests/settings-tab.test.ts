@@ -92,7 +92,7 @@ describe('设置页 BzSettingTab', () => {
       书库: ['书库文件夹', '书籍识别标签'],
       影视: ['影视文件夹', '每页加载数量'],
       复习计划: ['数据存储路径', '做题决定难度', '题目难度'],
-      入口页: ['桌面端网格列数', '移动端网格列数', '显示磁贴文字', '打开入口页的手势'],
+      入口页: ['显示磁贴文字', '打开入口页的手势'],
       闪念: ['Ollama URL', 'Embedding 模型', '并发数'],
       'AI Agent': ['启用', '监听文件夹', 'AI 匹配模型'],
     };
@@ -160,29 +160,6 @@ describe('设置页 BzSettingTab', () => {
     const toggle = (el as any).__setting.controls.find((c: any) => typeof c.trigger === 'function');
     await expect(Promise.resolve(toggle.trigger(true))).resolves.toBeUndefined();
     expect(plugin.settings.autoSummaryEnabled).toBe(true);
-  });
-
-  it('入口页 tab：列数下拉修改 → 写 launcher.json 对应平台配置（桌面/移动独立）', async () => {
-    clickTab(tab, '入口页');
-    // 异步回填初始值
-    await new Promise((r) => setTimeout(r, 10));
-    const desktopEl = findSetting(tab, '桌面端网格列数');
-    const desktopDd = (desktopEl as any).__setting.controls.find((c: any) => c.options && '8' in c.options);
-    expect(desktopDd).toBeTruthy();
-    expect(desktopDd.value).toBe('6'); // 默认回填
-    desktopDd.trigger('5');
-    await new Promise((r) => setTimeout(r, 10));
-    const saved = JSON.parse(plugin.app.vault.files.get('CONFIG/STORAGE/launcher.json')!);
-    expect(saved.desktop.columns).toBe(5);
-    expect(saved.mobile.columns).toBe(6); // 移动端不受影响
-    // 移动端列数独立修改
-    const mobileEl = findSetting(tab, '移动端网格列数');
-    const mobileDd = (mobileEl as any).__setting.controls.find((c: any) => c.options && '8' in c.options);
-    mobileDd.trigger('3');
-    await new Promise((r) => setTimeout(r, 10));
-    const saved2 = JSON.parse(plugin.app.vault.files.get('CONFIG/STORAGE/launcher.json')!);
-    expect(saved2.desktop.columns).toBe(5);
-    expect(saved2.mobile.columns).toBe(3);
   });
 
   it('入口页 tab：手势下拉更新设置并同步手势监听', async () => {

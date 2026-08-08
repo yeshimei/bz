@@ -26,7 +26,7 @@ import { openMovieManager, addMovieItem } from './movie';
 import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating } from './review';
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
-import { openLauncherPanel, unloadLauncherPanel, loadLauncherData, saveLauncherData } from './launcher';
+import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter } from './launcher';
 import { registerGestureListeners } from './launcher/gestures';
 import { ensureAutoSummary } from './auto-summary';
 import { ensureAIAgent, unloadAIAgent } from './ai-agent';
@@ -124,6 +124,11 @@ export default class BzPlugin extends Plugin {
     resetAIProviderCache();
     // 通用设置访问器（各域经 getSettings 读取）
     setSettingsProvider(() => this.settings);
+    // 入口页：右上角文字开关写回设置（编辑模式右上角切换）
+    setLauncherShowTextSetter((v) => {
+      this.settings.launcherShowText = v;
+      void this.saveSettings();
+    });
     // 备忘录设置注入
     setBzSettingsProvider(() => this.settings);
     // 日记本注入（diary-notebook 合并）
@@ -477,10 +482,7 @@ export class BzSettingTab extends PluginSettingTab {
 
   // ===== 入口页 =====（文字显隐 + 手势触发；列数在入口页编辑模式内按平台配置）
   private buildLauncherTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
-    // 列数：桌面/移动各自存 launcher.json（入口页编辑模式悬浮下拉同一份数据，双入口一致）
-    this.launcherColumnsSetting(el, '桌面端网格列数', 'desktop');
-    this.launcherColumnsSetting(el, '移动端网格列数', 'mobile');
-    this.toggleSetting(el, '显示磁贴文字', '统一控制所有磁贴是否显示文字（关闭后全部磁贴仅显示图标）', s.launcherShowText, save, (v) => (s.launcherShowText = v));
+    this.toggleSetting(el, '显示磁贴文字', '统一控制所有磁贴是否显示文字（关闭后全部磁贴仅显示图标；入口页编辑模式右上角亦可切换）', s.launcherShowText, save, (v) => (s.launcherShowText = v));
     // 手势触发：单选一个手势打开命令入口页（默认关闭）
     new Setting(el)
       .setName('打开入口页的手势')
@@ -497,30 +499,6 @@ export class BzSettingTab extends PluginSettingTab {
           this.plugin.syncGestures(); // 手势监听随设置变更重注册
         });
       });
-  }
-
-  /** 平台列数下拉：读/写 launcher.json 对应平台配置（异步读取初始值） */
-  private launcherColumnsSetting(el: HTMLElement, name: string, platform: 'desktop' | 'mobile'): void {
-    const fallback = '6'; // 桌面/移动默认均为 6 列
-    const setting = new Setting(el)
-      .setName(name)
-      .setDesc('命令入口页的网格列数（3-8 列；在入口页编辑模式内亦可调整，同一份配置）')
-      .addDropdown((dd) => {
-        for (let i = 3; i <= 8; i++) dd.addOption(String(i), `${i} 列`);
-        dd.setValue(fallback);
-        dd.onChange(async (v) => {
-          const data = await loadLauncherData(this.plugin.app);
-          data[platform].columns = parseInt(v, 10);
-          await saveLauncherData(this.plugin.app, data);
-        });
-      });
-    // 异步读取当前配置并回填（launcher.json 可能不存在/未创建）
-    void loadLauncherData(this.plugin.app).then((data) => {
-      const dd = (setting as any).components?.[0] || (setting as any).controls?.[0];
-      if (dd && typeof dd.setValue === 'function') {
-        dd.setValue(String(data[platform].columns));
-      }
-    });
   }
 
   // ===== AI Agent =====（笔记同步，懒加载开关 + 同步选项）
