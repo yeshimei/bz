@@ -264,6 +264,27 @@ describe('入口页 UI', () => {
     expect(saved.desktop.tiles[0].commandId).toBe('bz-no-icon-cmd');
   });
 
+  it('命令图标不在本地清单但 Obsidian 有效 → setIcon 渲染（不显示图标文字）', async () => {
+    const vault = new MockVault();
+    await openOnce(vault, {}, [{ id: 'bz-extra-icon', name: '外部命令', icon: 'pencil-line' }]);
+    const grid = document.getElementById('launcher-grid')!;
+    vi.useFakeTimers();
+    try {
+      firePointer(grid, 'pointerdown', 100, 100);
+      vi.advanceTimersByTime(500);
+    } finally {
+      vi.useRealTimers();
+    }
+    document.querySelector<HTMLElement>('#launcher-grid .launcher-empty-cell')!.click();
+    const items = [...document.querySelectorAll<HTMLElement>('#launcher-cmd-popup .launcher-picker-item')];
+    items.find((i) => i.dataset.commandId === 'bz-extra-icon')!.click();
+    await new Promise((r) => setTimeout(r, 0));
+    // 图标名未在 LUCIDE_ICONS 清单（仅 pencil）→ 但 getIcon 有效 → setIcon，不显示文字
+    const iconEl = gridTiles()[0].querySelector<HTMLElement>('.launcher-icon')!;
+    expect(iconEl.dataset.icon).toBe('pencil-line');
+    expect(iconEl.textContent).toBe('');
+  });
+
   it('添加多个：依次落末尾空位', async () => {
     const vault = new MockVault();
     await openOnce(vault);
@@ -633,14 +654,16 @@ describe('入口页 UI', () => {
     expect(document.getElementById('launcher-overlay')!.style.alignItems).toBe('center');
     expect(document.getElementById('launcher-modal')!.style.borderRadius).toBe('14px');
     expect(document.getElementById('launcher-modal')!.style.animation).toContain('launcher-fade-in');
+    expect(document.getElementById('launcher-grid')!.style.padding).toBe('16px 18px 20px'); // 桌面端底部 20px
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    // 移动端：贴底 + 顶部圆角 + 上滑动画
+    // 移动端：贴底 + 顶部圆角 + 上滑动画 + 底部大内边距撑起
     (window as any).Capacitor = {};
     try {
       await openOnce(vault);
       expect(document.getElementById('launcher-overlay')!.style.alignItems).toBe('flex-end');
       expect(document.getElementById('launcher-modal')!.style.borderRadius).toBe('16px 16px 0 0');
       expect(document.getElementById('launcher-modal')!.style.animation).toContain('launcher-slide-up');
+      expect(document.getElementById('launcher-grid')!.style.padding).toBe('16px 18px 48px'); // 移动端底部大内边距
     } finally {
       delete (window as any).Capacitor;
     }

@@ -3,7 +3,7 @@
  * 单例：已打开则复用聚焦。长按 0.5s 进编辑模式（iOS 式）；pointer 拖拽 + 推挤落位；
  * 右下角手柄调档位；左上角 × 删除；工具栏 + 添加（命令选择器）/ 完成退出。
  */
-import { setIcon, Notice } from 'obsidian';
+import { getIcon, setIcon, Notice } from 'obsidian';
 import { getApp } from '../core/app';
 import { getSettings } from '../core/settings-provider';
 import { escManager } from '../core/esc-manager';
@@ -191,7 +191,7 @@ export class LauncherModal {
     this.overlay.appendChild(this.modal);
 
     this.grid.style.cssText =
-      'overflow-y:auto;padding:16px 18px 20px;display:grid;gap:14px;' +
+      'overflow-y:auto;padding:16px 18px ' + (isMobile ? '48px' : '20px') + ';display:grid;gap:14px;' +
       'grid-auto-flow:row;align-content:start;position:relative;';
     this.applyColumns();
     this.modal.appendChild(this.grid);
@@ -511,8 +511,8 @@ export class LauncherModal {
     iconEl.dataset.iconSize = String(iconSize);
     const cmd = this.commandOf(tile);
     const iconName = tile.icon || cmd?.icon;
-    // 图标渲染：lucide 清单内 → setIcon；否则按 emoji/字符直接显示
-    const isLucide = !!iconName && LUCIDE_ICONS.includes(iconName);
+    // 图标渲染：Obsidian 内置图标（清单或 getIcon 有效）→ setIcon；emoji/字符 → 文本显示
+    const isLucide = !!iconName && (LUCIDE_ICONS.includes(iconName) || !!getIcon(iconName));
     if (iconName && !isLucide) {
       iconEl.textContent = iconName;
       iconEl.style.fontSize = Math.round(iconSize * 0.85) + 'px';

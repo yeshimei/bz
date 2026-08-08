@@ -217,6 +217,11 @@ export const setIcon = vi.fn((el: HTMLElement, name: string) => {
   el.dataset.icon = name;
 });
 
+/** getIcon mock：ASCII 图标名视为 Obsidian 内置图标有效；emoji/字符无效 */
+export const getIcon = vi.fn((name: string) =>
+  name && /^[\x20-\x7E]+$/.test(name) ? {} : undefined
+);
+
 export const requestUrl = vi.fn(async (opts: any) => ({
   status: 200,
   text: '',
@@ -236,12 +241,14 @@ export const obsidianMock = {
   normalizePath,
   requestUrl,
   setIcon,
+  getIcon,
 };
 
 export function resetObsidianMocks() {
   MockNotice.instances = [];
   mockMarkdownRenderer.render.mockClear();
   setIcon.mockClear();
+  getIcon.mockClear();
 }
 
 export default obsidianMock;
