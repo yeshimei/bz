@@ -126,9 +126,9 @@ export const UIManager = {
             <div style="padding:16px 24px 8px 24px;display:flex;justify-content:space-between;align-items:center;">
                 <h3 style="margin:0;font-size:18px;font-weight:600;color:var(--text-normal);">备忘录</h3>
                 <div style="display:flex;gap:8px;">
-                    <button class="todo-btn-settings" style="background:none;border:none;font-size:14px;cursor:pointer;color:var(--text-muted);padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;display:flex;align-items:center;justify-content:center;">⚙️</button>
                     <button class="todo-btn-add" style="background:none;border:none;font-size:14px;cursor:pointer;color:var(--text-muted);padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;display:flex;align-items:center;justify-content:center;">✏️</button>
                     <button class="todo-btn-archive" style="background:none;border:none;font-size:14px;cursor:pointer;color:var(--text-muted);padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;display:flex;align-items:center;justify-content:center;">📁</button>
+                    <button class="todo-btn-settings" style="background:none;border:none;font-size:14px;cursor:pointer;color:var(--text-muted);padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;display:flex;align-items:center;justify-content:center;">⚙️</button>
                     <button class="todo-btn-close" style="background:none;border:none;font-size:13px;cursor:pointer;color:var(--text-muted);padding:0;width:21px;height:25px;border-radius:4px;box-shadow:none;display:flex;align-items:center;justify-content:center;">❌</button>
                 </div>
             </div>

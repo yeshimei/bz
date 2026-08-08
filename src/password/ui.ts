@@ -381,9 +381,9 @@ export class UIManager {
     });
     const closeBtn = createIconBtn('❌', '关闭', () => this.hide());
 
-    btnContainer.appendChild(settingsBtn);
     btnContainer.appendChild(addBtn);
     btnContainer.appendChild(searchBtn);
+    btnContainer.appendChild(settingsBtn);
     btnContainer.appendChild(closeBtn);
 
     header.appendChild(title);

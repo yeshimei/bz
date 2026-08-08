@@ -1015,9 +1015,9 @@ export async function openBelongingsPanel(): Promise<void> {
   });
 
   headerButtons.appendChild(addBtn);
-  headerButtons.appendChild(settingsBtn);
   headerButtons.appendChild(refreshBtn);
   headerButtons.appendChild(sortBtn);
+  headerButtons.appendChild(settingsBtn);
   headerButtons.appendChild(closeBtn);
   header.appendChild(headerButtons);
 
