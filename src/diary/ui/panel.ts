@@ -204,9 +204,9 @@ function createHeader() {
     state.ui.tagFilterPopup!.style.visibility = 'hidden';
   });
 
-  buttonContainer.appendChild(settingsButton);
   buttonContainer.appendChild(addButton);
   buttonContainer.appendChild(searchButton);
+  buttonContainer.appendChild(settingsButton);
   buttonContainer.appendChild(closeButton);
   header.appendChild(titleContainer);
   header.appendChild(buttonContainer);
