@@ -5,6 +5,8 @@
  * - 顶部居中，z-index 10300（现有最高 10200 入口页之上）
  * - 堆叠 + 上限 5 条（超出挤掉最旧）
  * - 滑入滑出 200ms；prefers-reduced-motion 降级为淡入淡出
+ * - z-index 100000（最顶，盖过 Obsidian 全部 UI 层）
+ * - dedupeKey：同键在 30s 窗口内重复触发时合并更新（不刷屏，供后台自动事件用）
  * - 类型：info/success/warning/error + progress（进度条形态）
  * - 动态能力：setMessage（原地更新文本）/ setProgress（0-100 或 -1 不确定态）
  * - 富文本：title 标题行 + action 操作按钮（点击后自动收起）
@@ -41,6 +43,8 @@ export interface NoticeOptions {
   action?: NoticeAction;
   /** 动画变体（默认 'drop'） */
   variant?: NoticeVariant;
+  /** 去重键：同键在 30s 窗口内重复触发时合并更新消息，不新弹（防后台自动事件刷屏） */
+  dedupeKey?: string;
 }
 
 export interface NoticeHandle {
@@ -59,6 +63,8 @@ export interface NoticeHandle {
 const MAX_VISIBLE = 5;
 const STYLE_ID = 'bz-notice';
 const LEAVE_MS = 200;
+/** 去重窗口：同 dedupeKey 在此窗口内重复触发 → 合并更新，不新弹 */
+const DEDUPE_WINDOW_MS = 30000;
 
 /** 类型 → 默认动效变体（不传 variant 时自动选用，保证全站动效一致性） */
 const DEFAULT_VARIANT: Record<NoticeType, NoticeVariant> = {
@@ -103,15 +109,23 @@ const OUT_CLASS: Record<NoticeVariant, string> = {
 const NOTICE_CSS = `
 #bz-notice-container {
   position: fixed;
-  top: 16px;
+  top: calc(16px + env(safe-area-inset-top, 0px));
   left: 50%;
   transform: translateX(-50%);
-  z-index: 10300;
+  z-index: 100000;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
   pointer-events: none;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+}
+/* 移动端：Obsidian 顶部栏更高，通知下移（项目断点惯例 max-width: 768px） */
+@media (max-width: 768px) {
+  #bz-notice-container {
+    top: calc(34px + env(safe-area-inset-top, 0px));
+  }
 }
 .bz-notice {
   pointer-events: auto;
@@ -120,7 +134,7 @@ const NOTICE_CSS = `
   align-items: flex-start;
   gap: 10px;
   min-width: 240px;
-  max-width: 420px;
+  max-width: min(420px, calc(100vw - 24px));
   padding: 10px 14px 11px;
   border-radius: 10px;
   background: var(--background-primary);
@@ -396,6 +410,9 @@ interface InternalNotice {
 /** 当前存活通知（最旧在前），用于堆叠上限挤兑 */
 const live: InternalNotice[] = [];
 
+/** dedupeKey → 最近一次触发记录（窗口内重复触发合并） */
+const recent: Record<string, { at: number; n: InternalNotice | null }> = {};
+
 function removeInternal(n: InternalNotice): void {
   if (n.timer !== null) {
     window.clearTimeout(n.timer);
@@ -414,6 +431,17 @@ function evictOldest(): void {
   }
 }
 
+/** 空操作 handle：去重窗口内重复触发时返回（调用方安全调用 setMessage/setType/hide） */
+function noopHandle(): NoticeHandle {
+  return {
+    el: document.createElement('div'),
+    setMessage(): void {},
+    setProgress(): void {},
+    setType(): void {},
+    hide(): void {},
+  };
+}
+
 export function notify(msg: string, opts?: NoticeOptions): NoticeHandle {
   const kind: NoticeKind = (opts && opts.type) || 'info';
   const isProgress = kind === 'progress';
@@ -421,6 +449,19 @@ export function notify(msg: string, opts?: NoticeOptions): NoticeHandle {
   const variant: NoticeVariant =
     (opts && opts.variant) || DEFAULT_VARIANT[type];
   const container = ensureContainer();
+
+  // 去重：窗口内同键重复触发 → 合并更新消息，不新弹
+  if (opts && opts.dedupeKey) {
+    const key = opts.dedupeKey;
+    const r = recent[key];
+    const now = Date.now();
+    if (r && now - r.at < DEDUPE_WINDOW_MS) {
+      if (r.n && r.n.el.isConnected) r.n.msgEl.textContent = msg;
+      return noopHandle();
+    }
+    recent[key] = { at: now, n: null };
+  }
+
   evictOldest();
 
   const el = document.createElement('div');
@@ -482,6 +523,11 @@ export function notify(msg: string, opts?: NoticeOptions): NoticeHandle {
 
   const n: InternalNotice = { el, timer: null, msgEl, progressEl, iconEl: icon, variant, isProgress };
   live.push(n);
+  // 记录去重引用（同键窗口内重复触发时更新消息）
+  if (opts && opts.dedupeKey) {
+    const r = recent[opts.dedupeKey];
+    if (r) r.n = n;
+  }
 
   // 自动消失：progress 类型默认不自动消失，其余按类型默认（显式 duration 优先）
   if (!isProgress) {

@@ -3,7 +3,7 @@
  * 模块单例 quizUI（复习域联动）。
  */
 import type { App } from 'obsidian';
-import { notice } from '../core/notice';
+import { notice, notify } from '../core/notice';
 import { escManager } from '../core/esc-manager';
 import { getApp } from '../core/app';
 import { QuizManager, loadActiveItems } from './manager';
@@ -197,29 +197,43 @@ export class QuizMasterUI {
     if (QuizMasterUI.ai) {
       try {
         const batchResult = await this.generator.generateBatch(missing, QuizMasterUI.ai, enableMultipleChoice, questionsPerNote, difficulty);
+        let batchOk = 0;
         for (const [path, qs] of Object.entries(batchResult)) {
-          if (qs.length) quiz.notes[path] = qs;
+          if (qs.length) {
+            quiz.notes[path] = qs;
+            batchOk++;
+          }
         }
         await this.manager.saveQuiz(app, quiz);
+        if (batchOk > 0) notify(`✅ 已为 ${batchOk} 篇笔记生成题目`, { type: 'success' });
         return;
       } catch (e: any) {
         console.warn('批量出题失败，降级为逐篇:', e.message);
+        notify('⚠️ 批量出题失败，已改为逐篇生成', { dedupeKey: 'quiz-generate' });
       }
     }
 
     // fallback：逐篇生成
+    let okCount = 0;
+    let failCount = 0;
     for (const note of missing) {
       try {
         if (!QuizMasterUI.ai) throw new Error('AI 未初始化');
         const qs = await this.generator.generate(note.content, QuizMasterUI.ai, enableMultipleChoice, questionsPerNote, difficulty);
         if (qs.length) {
           quiz.notes[note.id] = qs;
+          okCount++;
           await this.manager.saveQuiz(app, quiz);
+        } else {
+          failCount++;
         }
       } catch (e: any) {
         console.warn(`出题失败 ${note.id}:`, e.message);
+        failCount++;
       }
     }
+    if (okCount > 0) notify(`✅ 已为 ${okCount} 篇笔记生成题目`, { type: 'success' });
+    if (failCount > 0) notify(`⚠️ ${failCount} 篇笔记出题失败`, { dedupeKey: 'quiz-generate' });
   }
 
   /** 加载提示（源码 L401-418 逐字） */
