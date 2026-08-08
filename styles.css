@@ -557,6 +557,25 @@
 
 
 /* ===== 入口页（ticket 23）===== */
+/* 底部滑入（Windows 开始菜单式） */
+@keyframes launcher-slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes launcher-mask-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
 /* 编辑模式空白单元格「＋」（hover 高亮 + 淡入） */
 #launcher-grid .launcher-empty-cell:hover {
   background: var(--background-modifier-hover);
@@ -572,32 +591,29 @@
     opacity: 1;
   }
 }
-/* 磁贴卡片化：微渐变 + 轻阴影 + 圆角 */
+/* Windows 磁贴风格：无背景无边框，emoji 在上、小字在下 */
 #launcher-grid .launcher-tile {
   position: relative;
-  background: linear-gradient(180deg, var(--background-primary), var(--background-secondary));
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 14px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   cursor: pointer;
   user-select: none;
   box-sizing: border-box;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  transition: transform 0.15s ease, background 0.15s ease;
 }
-/* 常态 hover：轻浮起；按下：缩放反馈 */
+/* hover：极淡高亮 + 轻浮起（Windows 磁贴交互感） */
 #launcher-grid .launcher-tile:hover {
-  background: linear-gradient(180deg, var(--background-primary), var(--background-modifier-hover));
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  background: var(--background-modifier-hover);
   transform: translateY(-1px);
 }
 #launcher-grid .launcher-tile:active {
-  transform: scale(0.96);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transform: scale(0.94);
 }
 #launcher-grid .launcher-tile .launcher-icon {
   color: var(--text-normal);
@@ -607,16 +623,10 @@
   width: 100%;
   height: 100%;
 }
-/* emoji 图标：圆形柔和底衬（不再悬空） */
-#launcher-grid .launcher-tile .launcher-icon.launcher-icon-emoji {
-  background: var(--background-modifier-hover);
-  border-radius: 50%;
-}
 /* 编辑模式：描边提示 + 拖拽光标 */
 #launcher-grid .launcher-tile.editing {
   border: 1.5px dashed var(--text-accent);
   cursor: grab;
-  box-shadow: none;
 }
 #launcher-grid .launcher-tile.editing:active {
   cursor: grabbing;
@@ -626,7 +636,6 @@
   opacity: 0.45;
   border-style: dashed;
   cursor: not-allowed;
-  box-shadow: none;
 }
 /* 拖拽中 */
 #launcher-grid .launcher-tile.dragging {
@@ -643,5 +652,5 @@
 #launcher-grid .launcher-placeholder {
   pointer-events: none;
   background: var(--background-modifier-hover);
-  border-radius: 14px;
+  border-radius: 10px;
 }

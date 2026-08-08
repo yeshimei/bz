@@ -136,17 +136,18 @@ export class LauncherModal {
     // 遮罩 + 弹窗骨架
     this.overlay.style.cssText =
       'position:fixed;top:0;left:0;right:0;bottom:0;background:var(--background-modifier-cover);' +
-      'z-index:10100;display:flex;align-items:center;justify-content:center;';
+      'z-index:10100;display:flex;align-items:flex-end;justify-content:center;' +
+      'animation:launcher-mask-in 0.2s ease-out;';
     this.overlay.addEventListener('mousedown', (e) => {
       if (e.target === this.overlay) this.close();
     });
     document.body.appendChild(this.overlay);
 
     this.modal.style.cssText =
-      'background:var(--background-primary);color:var(--text-normal);border-radius:14px;' +
-      'width:92%;max-width:800px;max-height:88vh;' +
-      'box-shadow:0 12px 44px rgba(0,0,0,0.35);border:1px solid var(--background-modifier-border);' +
-      'overflow:hidden;';
+      'background:var(--background-primary);color:var(--text-normal);' +
+      'border-radius:16px 16px 0 0;width:100%;max-width:800px;max-height:85vh;' +
+      'box-shadow:0 -8px 40px rgba(0,0,0,0.3);border:1px solid var(--background-modifier-border);border-bottom:none;' +
+      'overflow:hidden;animation:launcher-slide-up 0.28s ease-out;';
     this.overlay.appendChild(this.modal);
 
     this.grid.style.cssText =
@@ -337,7 +338,8 @@ export class LauncherModal {
     const area = tile.w * tile.h;
     const areaMul = area >= 4 ? 1.5 : area === 2 ? 1.2 : 1;
     const iconSize = Math.max(16, Math.min(48, Math.round(cell * 0.4 * areaMul)));
-    const fontSize = Math.max(10, Math.min(14, Math.round(cell * 0.14)));
+    // Windows 磁贴风格：文字很小
+    const fontSize = Math.max(9, Math.min(12, Math.round(cell * 0.11)));
     el.style.gridColumn = `${tile.x + 1} / span ${tile.w}`;
     el.style.gridRow = `${tile.y + 1} / span ${tile.h}`;
 
@@ -360,10 +362,9 @@ export class LauncherModal {
     }
     const cmd = this.commandOf(tile);
     const iconName = tile.icon || cmd?.icon;
-    // 图标渲染：lucide 清单内 → setIcon；否则按 emoji/字符直接显示（加圆形底衬）
+    // 图标渲染：lucide 清单内 → setIcon；否则按 emoji/字符直接显示
     const isLucide = !!iconName && LUCIDE_ICONS.includes(iconName);
     if (iconName && !isLucide) {
-      iconEl.classList.add('launcher-icon-emoji');
       iconEl.textContent = iconName;
       iconEl.style.fontSize = Math.round(iconSize * 0.85) + 'px';
       iconEl.style.lineHeight = '1';
@@ -382,7 +383,7 @@ export class LauncherModal {
       nameEl.className = 'launcher-name';
       nameEl.textContent = this.displayName(tile, isGhost);
       nameEl.style.cssText =
-        'font-size:' + fontSize + 'px;color:var(--text-normal);text-align:center;' +
+        'font-size:' + fontSize + 'px;color:var(--text-muted);text-align:center;' +
         'line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;' +
         'word-break:break-all;';
       if (this.editing) {
