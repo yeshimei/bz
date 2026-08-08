@@ -50,7 +50,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-open-panel',
   'bz-show-reading-report',
   'bz-movie-manager-open', 'bz-movie-manager-add',
-  'bz-review-open-panel', 'bz-review-add-current', 'bz-review-remove-current', 'bz-review-jump-overdue', 'bz-review-mark-dialog',
+  'bz-review-open-panel', 'bz-review-start', 'bz-review-add-current', 'bz-review-remove-current', 'bz-review-jump-overdue', 'bz-review-mark-dialog',
   'bz-review-mark-again', 'bz-review-mark-hard', 'bz-review-mark-good', 'bz-review-mark-easy',
   'bz-quiz-master-update', 'bz-quiz-master-open',
   'bz-shan-nian-open-reference', 'bz-shan-nian-open-chat',
