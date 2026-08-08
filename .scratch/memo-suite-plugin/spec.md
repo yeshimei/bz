@@ -125,9 +125,11 @@ Feature: memo-suite-plugin
 
 ### 自动摘要（Auto Summary）
 
-30. 作为用户，我希望插件启用后自动监听 `归档/网页剪藏` 新文件，AI 生成摘要与标签写回 frontmatter，以便剪藏内容自动整理。
-31. 作为用户，我希望 AI 处理失败时静默降级（console.warn，不打断使用），以便不影响日常浏览。
-32. 作为用户，我希望自动摘要可在设置中开关（常驻监听默认开启？以原脚本行为为准），以便控制资源占用。
+30. 作为用户，我希望插件启用后自动监听 `归档/网页剪藏`：文件创建或打开（workspace file-open）时都执行，对 frontmatter 逐字段检测缺失（title/summary/tags 缺什么补什么，空串/空数组视为缺失），AI 只生成缺失字段并写回，以便剪藏内容自动整理。
+31. 作为用户，我希望缺 title 时 AI 生成中文标题并替换笔记标题（重命名文件，非法字符清理/防重名；rename 失败回退仅写 frontmatter），以便剪藏文件有可读标题。
+32. 作为用户，我希望补全成功后通知显示《title》、空行、summary、空行、#tags（缺哪段不显示哪段），以便快速确认整理结果。
+33. 作为用户，我希望 AI 处理失败时静默降级（console.warn，不打断使用），以便不影响日常浏览。
+34. 作为用户，我希望自动摘要可在设置中开关（常驻监听默认开启？以原脚本行为为准），以便控制资源占用。
 
 ### AI Agent（AIAgent）
 
@@ -209,7 +211,7 @@ Feature: memo-suite-plugin
 
 ### 事件监听
 
-- 自动摘要：vault.on('create') 监听 `归档/网页剪藏` 新文件（目录前缀边界判断，防误触发）
+- 自动摘要：vault.on('create') + workspace.on('file-open') 监听 `归档/网页剪藏`（目录前缀边界判断，防误触发；同一文件 1500ms 延迟窗口内去重；open 传 null 关闭时跳过）
 - AIAgent：vault.on rename/delete/create/open 同步备忘录/收藏本
 - 闪念：workspace 光标/活动文件事件驱动右侧窄窗
 
@@ -255,7 +257,7 @@ Feature: memo-suite-plugin
 |---|---|---|
 | 剪藏本 | vault modify | 文章修改自动刷新 |
 | 影视 | vault modify/create/delete | 列表自动刷新 |
-| 自动摘要 | vault create | 剪藏新文件 → AI 摘要写回 |
+| 自动摘要 | vault create + workspace file-open | 剪藏新文件/打开 → 缺失字段 AI 补全（缺 title 重命名笔记）→ 通知《title》/summary/#tags |
 | AIAgent | vault rename/delete/create | 同步备忘录/收藏本 |
 | 复习计划 | vault/workspace resolved/modify/rename/quit | 数据状态自动同步 |
 | 闪念 | vault modify | 向量增量重建（防抖） |
@@ -337,7 +339,7 @@ Feature: memo-suite-plugin
 - **quiz.json**：`{notes: {notePath: [question]}}`；题目 = {question, options, correctIndices（多选）, notePath, _index}；含 QuestionGenerator（AI 出题）与 QuizManager（loadQuiz/saveQuiz/removeQuestion 语义）
 - **news-stats.json**：{totalRead, totalSaved, totalSkipped, byPlatform, byDate}
 - **剪藏文章 frontmatter**：必需 link（原链接）与 created（创建时间）字段，缺任一则该文件跳过；title 取文件名
-- **自动摘要 frontmatter**：全字段重建（数组→列表、空值→""、引号/换行转义），写入 title/author/summary/tags
+- **自动摘要 frontmatter**：全字段重建（数组→列表、空值→""、引号/换行转义）；逐字段补全 title/summary/tags（缺什么补什么，不覆盖已有；author 不生成不写入）；缺 title 时 AI 标题同时重命名笔记文件
 - **影视 frontmatter**：含 海报 字段（posterFolder 关联）、tags 等（完整字段实现时以源码为准）
 
 ### 交互流程要点（第 3 轮，源码提取）
@@ -357,7 +359,7 @@ Feature: memo-suite-plugin
 - **影视数据分析评分桶**（ratingBucketOf 6 档）：≥5.5 / 5~5.5 / 4~5 / 3~4 / 2~3 / <2；buildAnalysisData 聚合 {total, watched, watching, want, …}
 - **归物本排序弹窗**：自绘弹窗（Promise），手动检测 theme-dark 取色板（bg/text/border/accent），不依赖主题变量
 - **闪念**：命令 `bz-shan-nian-open-reference`（闪念：打开参考窗口）；ALLOW_PATHS 默认 ["卡片盒","主题盒","我的","归档","CODE"]；CHUNK_MIN_LENGTH 默认 50；TFIDF 中文停用词表（'的了是在我有和人这中大为上个国不以到说时要就出会也年对自其他里去子后也得着与把等'）+ 文档频率/平均长度（BM25 式）
-- **AI 提示词结构（移植基准）**：自动摘要（标题 15-30 字禁标点/作者可 null/摘要 150-250 字禁"本文"等前缀/3-6 个中文标签≤5 字/正文截断 6000）；AIAgent 匹配（→{match, itemId}，ai.json + max_tokens 200 + response_format）；收藏本（→{title, description}，简介≤50 字，ai.json）；做题家（单选四选一/多选不限/难度三档提示词）；备忘录 AI 推荐场景（→{scene, priority}，priority 仅"重要"/"次要"两档，ai.chat）
+- **AI 提示词结构（移植基准）**：自动摘要（JSON 模板按缺失字段裁剪，只含 title/summary/tags 定义；标题 15-30 字禁标点/摘要 150-250 字禁"本文"等前缀/3-6 个中文标签≤5 字/正文截断 6000；不含 author）；AIAgent 匹配（→{match, itemId}，ai.json + max_tokens 200 + response_format）；收藏本（→{title, description}，简介≤50 字，ai.json）；做题家（单选四选一/多选不限/难度三档提示词）；备忘录 AI 推荐场景（→{scene, priority}，priority 仅"重要"/"次要"两档，ai.chat）
 
 ### 样式规模与边界行为（第 5 轮，源码提取）
 
@@ -405,7 +407,7 @@ Feature: memo-suite-plugin
 - **纯函数缝**：FSRS v4 算法（评级→状态/间隔/下次复习时间流转，错一天边界）、做题家全完成替换逻辑、各域 parser、Q3 工具（formatRelativeTime/formatFileSize/extractUrlAndDisplay）
 - **数据层缝**：各域 store（目录扫描、jsonStore 读写、frontmatter 解析、事件回调注册）
 - **mock fetch 缝**（新增）：AIService 请求（DeepSeek/OpenCode 端点）、Ollama /api/embeddings、/api/embed、/api/chat——mock 响应断言调用参数与降级行为
-- **事件触发缝**（新增）：MockVault 触发 create/rename/delete 事件，断言自动摘要（新文件→摘要写回）与 AIAgent（rename→引用更新、delete→关联清空）
+- **事件触发缝**（新增）：MockVault 触发 create/rename/delete 事件 + workspace file-open，断言自动摘要（新文件/打开→缺失字段补全写回、create+open 去重、通知）与 AIAgent（rename→引用更新、delete→关联清空）
 - **UI jsdom 缝**：各域面板渲染 + 交互（备忘录 todo 增删勾选、剪藏本筛选排序、闪念窄窗吸附/展开）
 - **真实数据集成缝**：真实 vault 文件跑通核心链路（剪藏本读 `我的/文章`、书库读 `书库/`、备忘录读 memo.json）
 - **测试原则**：只测外部行为（渲染结果、数据落盘、事件副作用），不测实现细节；每批交付时 UI 与逻辑对照原脚本逐项验收
