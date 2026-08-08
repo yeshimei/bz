@@ -557,15 +557,27 @@
 
 
 /* ===== 入口页（ticket 23）===== */
-/* 编辑模式空白单元格「＋」（hover 高亮） */
+/* 编辑模式空白单元格「＋」（hover 高亮 + 淡入） */
 #launcher-grid .launcher-empty-cell:hover {
   background: var(--background-modifier-hover);
 }
+#launcher-grid .launcher-empty-cell {
+  animation: launcher-fade-in 0.2s ease;
+}
+@keyframes launcher-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+/* 磁贴卡片化：微渐变 + 轻阴影 + 圆角 */
 #launcher-grid .launcher-tile {
   position: relative;
-  background: var(--background-secondary);
+  background: linear-gradient(180deg, var(--background-primary), var(--background-secondary));
   border: 1px solid var(--background-modifier-border);
-  border-radius: 12px;
+  border-radius: 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -573,11 +585,19 @@
   gap: 6px;
   cursor: pointer;
   user-select: none;
-  transition: background 0.15s ease;
   box-sizing: border-box;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
+/* 常态 hover：轻浮起；按下：缩放反馈 */
 #launcher-grid .launcher-tile:hover {
-  background: var(--background-modifier-hover);
+  background: linear-gradient(180deg, var(--background-primary), var(--background-modifier-hover));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+#launcher-grid .launcher-tile:active {
+  transform: scale(0.96);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 #launcher-grid .launcher-tile .launcher-icon {
   color: var(--text-normal);
@@ -587,10 +607,16 @@
   width: 100%;
   height: 100%;
 }
+/* emoji 图标：圆形柔和底衬（不再悬空） */
+#launcher-grid .launcher-tile .launcher-icon.launcher-icon-emoji {
+  background: var(--background-modifier-hover);
+  border-radius: 50%;
+}
 /* 编辑模式：描边提示 + 拖拽光标 */
 #launcher-grid .launcher-tile.editing {
   border: 1.5px dashed var(--text-accent);
   cursor: grab;
+  box-shadow: none;
 }
 #launcher-grid .launcher-tile.editing:active {
   cursor: grabbing;
@@ -600,6 +626,7 @@
   opacity: 0.45;
   border-style: dashed;
   cursor: not-allowed;
+  box-shadow: none;
 }
 /* 拖拽中 */
 #launcher-grid .launcher-tile.dragging {
@@ -616,4 +643,5 @@
 #launcher-grid .launcher-placeholder {
   pointer-events: none;
   background: var(--background-modifier-hover);
+  border-radius: 14px;
 }
