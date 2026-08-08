@@ -2,6 +2,7 @@
 
 最后更新：2026-08-07（海报抓取），655 测试全过。仓库 `E:/Obsidian/1`，构建产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`。
 
+- **ticket 21 海报抓取方案反转（ADR-0007）**：抓取逻辑移出插件——`src/movie/poster.ts` 与 `tests/movie/poster.test.ts` 删除，设置项 `doubanPosterEnabled` 删除，影视设置 tab 改为纯文字指引（安装 npm 包 + `douban-poster start` PM2 守护）。脚本侧 2.1.0：`watcher.js`（扫描缺海报笔记 + birthtime 倒序 + 串行队列 15s 间隔 + 10s 事件防抖），cli.js watch 改监听 add/change → 扫描；工具 README 恢复 PM2 说明。28 个 node 测试。
 ## 最近一次架构深化（未提交，待 commit）
 
 - **ticket 21 海报抓取**：`src/movie/poster.ts` 新建影视笔记自动调全局 npm 包 `@jwbz/obsidian-douban-poster`（ADR-0006）。桌面端 `vault.on('create')` → 延迟 3s → 串行队列 spawn `node cli.js fetch`；结果解析 stdout（[完成]/[跳过]/[失败]）；60s 超时 kill；`npm root -g` 探测安装状态（未装 → 设置开关禁用 + 安装指引）；移动端不注册监听 + 设置项置灰「仅桌面端可用」；设置 `doubanPosterEnabled`（默认关）。**mock-vault offref 已实现真实移除语义**（on 返回 {event, cb}）。21 测试。
