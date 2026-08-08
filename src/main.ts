@@ -475,30 +475,8 @@ export class BzSettingTab extends PluginSettingTab {
   }
 
 
-  // ===== 入口页 =====（网格列数 + 手势触发）
+  // ===== 入口页 =====（文字显隐 + 手势触发；列数在入口页编辑模式内按平台配置）
   private buildLauncherTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
-    new Setting(el)
-      .setName('网格列数')
-      .setDesc('桌面端命令入口页的网格列数（磁贴档位最大 2×2，最小建议 3 列）')
-      .addDropdown((dd) => {
-        for (let i = 3; i <= 8; i++) dd.addOption(String(i), `${i} 列`);
-        dd.setValue(s.launcherColumns || '6');
-        dd.onChange(async (v) => {
-          s.launcherColumns = v;
-          await save();
-        });
-      });
-    new Setting(el)
-      .setName('移动端网格列数')
-      .setDesc('移动端（手机/平板）命令入口页的网格列数，默认 4 列——格子更大更透气')
-      .addDropdown((dd) => {
-        for (let i = 3; i <= 8; i++) dd.addOption(String(i), `${i} 列`);
-        dd.setValue(s.launcherMobileColumns || '4');
-        dd.onChange(async (v) => {
-          s.launcherMobileColumns = v;
-          await save();
-        });
-      });
     this.toggleSetting(el, '显示磁贴文字', '统一控制所有磁贴是否显示文字（关闭后全部磁贴仅显示图标）', s.launcherShowText, save, (v) => (s.launcherShowText = v));
     // 手势触发：单选一个手势打开命令入口页（默认关闭）
     new Setting(el)

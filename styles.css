@@ -605,7 +605,8 @@
   cursor: pointer;
   user-select: none;
   box-sizing: border-box;
-  transition: transform 0.15s ease, background 0.15s ease;
+  /* 安卓式实时让位：网格位置变化平滑动画 */
+  transition: transform 0.15s ease, background 0.15s ease, grid-column 0.2s ease, grid-row 0.2s ease;
 }
 /* hover：极淡高亮 + 轻浮起（Windows 磁贴交互感） */
 #launcher-grid .launcher-tile:hover {
@@ -637,14 +638,21 @@
   border-style: dashed;
   cursor: not-allowed;
 }
-/* 拖拽中 */
+/* 拖拽中（安卓式：跟随手指 + 放大 + 阴影） */
 #launcher-grid .launcher-tile.dragging {
   opacity: 0.9;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   cursor: grabbing;
+  z-index: 9999;
+  transition: none;
+  animation: launcher-drag-pop 0.18s ease;
 }
-#launcher-grid .launcher-tile.resizing {
-  border-color: var(--text-accent);
+@keyframes launcher-drag-pop {
+  from {
+    transform: scale(0.85);
+  }
+  to {
+    transform: scale(1.08);
+  }
 }
 #launcher-grid .launcher-tile .launcher-name {
   padding: 0 6px;
