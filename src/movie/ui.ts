@@ -10,6 +10,7 @@ import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, getTypeColor, getStarRati
 import { M, takeHomeFilmStatus } from './state';
 import { getDisplayItems, refreshDataAndView, rebuildItems } from './data';
 import { openRecommendModal } from './recommend';
+import { openAnalysisModal } from './analysis';
 
 /** 渲染卡片列表（分页，源码 L279-426 逐字） */
 export function renderAll(displayItems: any[], container: HTMLElement, app: App): void {
@@ -1050,6 +1051,11 @@ export function createOverlay(app: App, statusType?: string): void {
     openRecommendModal(app);
   });
 
+  const analysisBtn = mkBtn('📊', '影视数据分析', 'var(--text-normal)', (e) => {
+    e.stopPropagation();
+    openAnalysisModal(app);
+  });
+
   const settingsBtn = mkBtn('⚙️', '影视设置', 'var(--text-normal)', (e) => {
     e.stopPropagation();
     openSettingsModal();
@@ -1071,6 +1077,7 @@ export function createOverlay(app: App, statusType?: string): void {
   headerButtons.appendChild(addBtn);
   headerButtons.appendChild(searchBtn);
   headerButtons.appendChild(recommendBtn);
+  headerButtons.appendChild(analysisBtn);
   headerButtons.appendChild(settingsBtn);
   headerButtons.appendChild(closeBtn);
   header.appendChild(headerButtons);

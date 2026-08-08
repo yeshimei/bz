@@ -8,7 +8,7 @@ import { M } from './state';
 import { STATUS_WATCHING, STATUS_WANT } from './constants';
 import { rebuildItems } from './data';
 import { registerEscapeHandler, createOverlay, closeOverlay, renderList, openAddModal } from './ui';
-import { openRecommendModal } from './recommend';
+import { openAnalysisModal } from './analysis';
 
 let initialized = false;
 let autoRefreshRegistered = false;
@@ -66,10 +66,10 @@ export function addMovieItem(app: App): void {
   openAddModal(app);
 }
 
-/** 影视分析报告（movie-report）：AI 品味分析 + 推荐弹窗 */
-export async function openMovieReport(app: App): Promise<void> {
+/** 影视报告（movie-report）：观影数据分析窗口（迁移自 QuickAdd《影视数据分析.js》） */
+export function openMovieReport(app: App): void {
   ensureMovie(app);
-  await openRecommendModal(app);
+  openAnalysisModal(app);
 }
 
 /** 卸载清理（main.ts onunload 调用） */
