@@ -1,0 +1,23 @@
+{
+  "name": "@jwbz/news-watcher",
+  "version": "1.0.0",
+  "description": "每 30 分钟抓取最近 24 小时文章（果壳科学人 + 知乎日报），去重入库 news.json，供聚合讯阅读",
+  "main": "watcher.js",
+  "scripts": {
+    "start": "node watcher.js",
+    "check": "node --check watcher.js",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:stop": "pm2 stop news-watcher",
+    "pm2:logs": "pm2 logs news-watcher"
+  },
+  "keywords": [
+    "obsidian",
+    "news",
+    "guokr",
+    "zhihu",
+    "fetch"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}
