@@ -14,7 +14,11 @@ import { LAUNCHER_PATH } from '../../src/launcher/data';
  * jsdom 无真实布局（grid.clientWidth = 0）→ 网格单元尺寸 clamp 到 MIN_CELL=44，步长 = 44 + 间距 12。
  * 真实环境按容器宽度比例计算（见 calcCellSize 测试）。
  */
-const STEP = 56;
+/**
+ * jsdom 无真实布局（grid.clientWidth = 0）→ 网格单元尺寸 clamp 到 MIN_CELL=44，步长 = 44 + 间距 10。
+ * 真实环境按容器宽度比例计算（见 calcCellSize 测试）。
+ */
+const STEP = 54;
 
 const BZ_COMMANDS = [
   { id: 'bz-memo-open-panel', name: '打开备忘录面板', icon: 'sticky-note' },
@@ -571,10 +575,11 @@ describe('入口页 UI', () => {
     expect(emojiRow.dataset.emoji).toBe('🚀');
     emojiRow.click();
     await new Promise((r) => setTimeout(r, 0));
-    // 磁贴图标渲染为文本字符（非 setIcon）
+    // 磁贴图标渲染为文本字符（非 setIcon）+ emoji 圆形底衬
     const iconEl = gridTiles()[0].querySelector<HTMLElement>('.launcher-icon')!;
     expect(iconEl.textContent).toBe('🚀');
     expect(iconEl.dataset.icon).toBeUndefined();
+    expect(iconEl.classList.contains('launcher-icon-emoji')).toBe(true);
     const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
     expect(saved.desktop[0].icon).toBe('🚀');
   });
@@ -603,9 +608,10 @@ describe('入口页 UI', () => {
     (window as any).Capacitor = {};
     try {
       await openOnce(vault);
-      // 移动端是独立配置：无磁贴（空态）
+      // 移动端是独立配置：无磁贴（空态）；列数用移动端独立设置（默认 4 列）
       expect(gridTiles().length).toBe(0);
       expect(document.getElementById('launcher-empty')).not.toBeNull();
+      expect(document.getElementById('launcher-grid')!.style.gridTemplateColumns).toBe('repeat(4, minmax(0, 1fr))');
       // 移动端添加另一个命令
       const g2 = document.getElementById('launcher-grid')!;
       vi.useFakeTimers();
@@ -631,16 +637,16 @@ describe('入口页 UI', () => {
   });
 
   it('calcCellSize：按容器宽度比例计算 + clamp 边界', () => {
-    // 6 列、间距 8、内边距 36：宽 800 → (800-36-40)/6 ≈ 120.7
-    expect(calcCellSize(800, 6)).toBeCloseTo(120.67, 1);
-    // 移动端窄屏：宽 390 → (390-36-40)/6 = 52.3（> MIN 44）
-    expect(calcCellSize(390, 6)).toBeCloseTo(52.33, 1);
+    // 6 列、间距 10、内边距 36：宽 800 → (800-36-50)/6 = 119
+    expect(calcCellSize(800, 6)).toBe(119);
+    // 移动端窄屏：宽 390 → (390-36-50)/6 ≈ 50.7（> MIN 44）
+    expect(calcCellSize(390, 6)).toBeCloseTo(50.67, 1);
     // 超窄屏 → clamp 到最小 44
     expect(calcCellSize(300, 6)).toBe(44);
     // 极宽 → clamp 到最大 200
     expect(calcCellSize(2000, 6)).toBe(200);
-    // 3 列窄屏：宽 300 → (300-36-16)/3 ≈ 82.7
-    expect(calcCellSize(300, 3)).toBeCloseTo(82.67, 1);
+    // 3 列窄屏：宽 300 → (300-36-20)/3 ≈ 81.3
+    expect(calcCellSize(300, 3)).toBeCloseTo(81.33, 1);
   });
 
   it('ESC 关闭入口页', async () => {

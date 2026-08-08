@@ -479,12 +479,23 @@ export class BzSettingTab extends PluginSettingTab {
   private buildLauncherTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
     new Setting(el)
       .setName('网格列数')
-      .setDesc('命令入口页的网格列数（磁贴档位最大 2×2，最小建议 3 列）')
+      .setDesc('桌面端命令入口页的网格列数（磁贴档位最大 2×2，最小建议 3 列）')
       .addDropdown((dd) => {
         for (let i = 3; i <= 8; i++) dd.addOption(String(i), `${i} 列`);
         dd.setValue(s.launcherColumns || '6');
         dd.onChange(async (v) => {
           s.launcherColumns = v;
+          await save();
+        });
+      });
+    new Setting(el)
+      .setName('移动端网格列数')
+      .setDesc('移动端（手机/平板）命令入口页的网格列数，默认 4 列——格子更大更透气')
+      .addDropdown((dd) => {
+        for (let i = 3; i <= 8; i++) dd.addOption(String(i), `${i} 列`);
+        dd.setValue(s.launcherMobileColumns || '4');
+        dd.onChange(async (v) => {
+          s.launcherMobileColumns = v;
           await save();
         });
       });

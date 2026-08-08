@@ -22,7 +22,7 @@ const MIN_CELL = 44;
 /** 网格单元最大尺寸 */
 const MAX_CELL = 200;
 /** 网格间距 */
-const GAP = 8;
+const GAP = 10;
 /** 网格左右内边距合计（18×2） */
 const GRID_PAD = 36;
 /** 拖拽移动超过该距离取消长按 */
@@ -150,7 +150,7 @@ export class LauncherModal {
     this.overlay.appendChild(this.modal);
 
     this.grid.style.cssText =
-      'overflow-y:auto;padding:16px 18px 20px;display:grid;gap:8px;' +
+      'overflow-y:auto;padding:16px 18px 20px;display:grid;gap:10px;' +
       'grid-auto-flow:row;align-content:start;position:relative;';
     this.applyColumns();
     this.modal.appendChild(this.grid);
@@ -184,13 +184,14 @@ export class LauncherModal {
     this.grid.style.gridAutoRows = this.cellSize() + 'px';
   }
 
-  /** 列数：设置项 launcherColumns（3-8，默认 6） */
+  /** 列数：桌面/移动端独立（设置项 launcherColumns / launcherMobileColumns，3-8） */
   columns(): number {
     try {
-      const v = parseInt((getSettings() as any).launcherColumns ?? '6', 10);
+      const key = LauncherModal.isMobileEnv() ? 'launcherMobileColumns' : 'launcherColumns';
+      const v = parseInt((getSettings() as any)[key] ?? (LauncherModal.isMobileEnv() ? '4' : '6'), 10);
       return v >= 3 && v <= 8 ? v : 6;
     } catch (e) {
-      return 6;
+      return LauncherModal.isMobileEnv() ? 4 : 6;
     }
   }
 
@@ -359,9 +360,10 @@ export class LauncherModal {
     }
     const cmd = this.commandOf(tile);
     const iconName = tile.icon || cmd?.icon;
-    // 图标渲染：lucide 清单内 → setIcon；否则按 emoji/字符直接显示
+    // 图标渲染：lucide 清单内 → setIcon；否则按 emoji/字符直接显示（加圆形底衬）
     const isLucide = !!iconName && LUCIDE_ICONS.includes(iconName);
     if (iconName && !isLucide) {
+      iconEl.classList.add('launcher-icon-emoji');
       iconEl.textContent = iconName;
       iconEl.style.fontSize = Math.round(iconSize * 0.85) + 'px';
       iconEl.style.lineHeight = '1';
