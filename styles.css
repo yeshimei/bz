@@ -632,10 +632,10 @@
 #launcher-grid .launcher-tile.editing:active {
   cursor: grabbing;
 }
-/* 幽灵磁贴：命令失效保留态 */
+/* 幽灵磁贴：命令失效保留态 → 直接灰掉（无边框） */
 #launcher-grid .launcher-tile.ghost {
-  opacity: 0.45;
-  border-style: dashed;
+  opacity: 0.3;
+  filter: grayscale(1);
   cursor: not-allowed;
 }
 /* 拖拽中（安卓式：跟随手指 + 放大 + 阴影） */
