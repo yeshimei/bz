@@ -17,9 +17,14 @@ import { filterIcons } from './icons';
 
 /** 长按进入编辑模式的时长 */
 export const EDIT_LONG_PRESS_MS = 500;
-/** 网格单元基准尺寸（拖拽目标格换算；实际渲染由 CSS 决定） */
-const CELL_W = 110;
-const CELL_H = 110;
+/** 网格单元最小尺寸（移动端比例缩小下限） */
+const MIN_CELL = 44;
+/** 网格单元最大尺寸 */
+const MAX_CELL = 200;
+/** 网格间距 */
+const GAP = 12;
+/** 网格左右内边距合计（18×2） */
+const GRID_PAD = 36;
 /** 拖拽移动超过该距离取消长按 */
 const MOVE_CANCEL = 10;
 
@@ -31,6 +36,17 @@ const CMD_MASK_ID = 'launcher-cmd-mask';
 const CMD_POPUP_ID = 'launcher-cmd-popup';
 const ICON_MASK_ID = 'launcher-icon-mask';
 const ICON_POPUP_ID = 'launcher-icon-popup';
+const RENAME_MASK_ID = 'launcher-rename-mask';
+const RENAME_POPUP_ID = 'launcher-rename-popup';
+
+/**
+ * 网格单元尺寸按容器宽度比例计算（移动端自适应）:
+ * (容器宽 - 左右内边距 - 列间距) / 列数，并 clamp 到 [MIN_CELL, MAX_CELL]。
+ */
+export function calcCellSize(width: number, cols: number, gap = GAP, pad = GRID_PAD): number {
+  const cell = (width - pad - gap * (cols - 1)) / cols;
+  return Math.max(MIN_CELL, Math.min(MAX_CELL, cell));
+}
 
 interface CommandMeta {
   id: string;
@@ -72,6 +88,11 @@ export class LauncherModal {
   private editing = false;
   private escHandle: { unregister: () => void } | null = null;
   private suppressClick = false;
+  /** 窗口缩放 → 网格单元重算 + 磁贴内容缩放（箭头函数保证 removeEventListener 同引用） */
+  private onResize = () => {
+    this.applyColumns();
+    this.render();
+  };
 
   constructor(private app: any) {
     this.overlay = document.createElement('div');
@@ -121,7 +142,7 @@ export class LauncherModal {
 
     this.grid.style.cssText =
       'overflow-y:auto;padding:16px 18px 20px;display:grid;gap:12px;' +
-      'grid-auto-rows:110px;grid-auto-flow:row;align-content:start;position:relative;';
+      'grid-auto-flow:row;align-content:start;position:relative;';
     this.applyColumns();
     this.modal.appendChild(this.grid);
 
@@ -131,12 +152,24 @@ export class LauncherModal {
       close: () => this.close(),
     });
 
+    window.addEventListener('resize', this.onResize);
     this.render();
+  }
+
+  /** 当前网格单元尺寸（含容器宽度比例计算） */
+  cellSize(): number {
+    return calcCellSize(this.grid.clientWidth, this.columns());
+  }
+
+  /** 单格步长（单元 + 间距）：拖拽目标格换算用 */
+  cellStep(): number {
+    return this.cellSize() + GAP;
   }
 
   private applyColumns(): void {
     const cols = this.columns();
-    this.grid.style.gridTemplateColumns = `repeat(${cols}, minmax(96px, 1fr))`;
+    this.grid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+    this.grid.style.gridAutoRows = this.cellSize() + 'px';
   }
 
   /** 列数：设置项 launcherColumns（3-8，默认 6） */
@@ -182,6 +215,7 @@ export class LauncherModal {
       if (m) m.remove();
     }
     this.overlay.remove();
+    window.removeEventListener('resize', this.onResize);
     if (LauncherModal.instance === this) LauncherModal.instance = null;
   }
 
@@ -208,6 +242,14 @@ export class LauncherModal {
     return this.commands.find((c) => c.id === tile.commandId);
   }
 
+  /** 显示名：自定义 label 优先于命令名；幽灵磁贴无命令名时兜底 commandId */
+  private displayName(tile: LauncherTile, isGhost: boolean): string {
+    if (tile.label) return tile.label;
+    if (isGhost) return tile.commandId;
+    const cmd = this.commandOf(tile);
+    return cmd ? cmd.name : tile.commandId;
+  }
+
   private buildTile(tile: LauncherTile): HTMLDivElement {
     const el = document.createElement('div');
     el.className = 'launcher-tile' + (this.editing ? ' editing' : '');
@@ -217,8 +259,12 @@ export class LauncherModal {
     const isGhost = !this.validIds.has(tile.commandId);
     if (isGhost) el.classList.add('ghost');
 
+    // 内容随网格单元尺寸按比例缩放（移动端自适应）
+    const cell = this.cellSize();
     const area = tile.w * tile.h;
-    const iconSize = area >= 4 ? 44 : area === 2 ? 34 : 24;
+    const areaMul = area >= 4 ? 1.5 : area === 2 ? 1.2 : 1;
+    const iconSize = Math.max(16, Math.min(48, Math.round(cell * 0.4 * areaMul)));
+    const fontSize = Math.max(10, Math.min(14, Math.round(cell * 0.14)));
     el.style.gridColumn = `${tile.x + 1} / span ${tile.w}`;
     el.style.gridRow = `${tile.y + 1} / span ${tile.h}`;
 
@@ -250,11 +296,21 @@ export class LauncherModal {
 
     const nameEl = document.createElement('div');
     nameEl.className = 'launcher-name';
-    nameEl.textContent = isGhost ? tile.commandId : cmd ? cmd.name : tile.commandId;
+    nameEl.textContent = this.displayName(tile, isGhost);
     nameEl.style.cssText =
-      'font-size:' + (tile.w >= 2 ? 14 : 12) + 'px;color:var(--text-normal);text-align:center;' +
+      'font-size:' + fontSize + 'px;color:var(--text-normal);text-align:center;' +
       'line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;' +
       'word-break:break-all;';
+    if (this.editing) {
+      // 编辑模式：点名字可改名（标签弹窗）
+      nameEl.style.cursor = 'pointer';
+      nameEl.title = '点击修改名称';
+      nameEl.addEventListener('pointerdown', (e) => e.stopPropagation());
+      nameEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.openRenameDialog(tile.id);
+      });
+    }
     el.appendChild(nameEl);
 
     // 编辑模式：删除按钮 + 档位手柄
@@ -387,8 +443,9 @@ export class LauncherModal {
     el.style.position = 'fixed';
     el.style.zIndex = '9999';
     // 磁贴随 pointer 移动，保持抓取偏移（中心对齐）
-    const offX = e.clientX - (gridRect.left + tile.x * CELL_W + (tile.w * CELL_W) / 2);
-    const offY = e.clientY - (gridRect.top + tile.y * CELL_H + (tile.h * CELL_H) / 2);
+    const step = this.cellStep();
+    const offX = e.clientX - (gridRect.left + tile.x * step + (tile.w * step) / 2);
+    const offY = e.clientY - (gridRect.top + tile.y * step + (tile.h * step) / 2);
     el.dataset.grabOffX = String(offX);
     el.dataset.grabOffY = String(offY);
     el.style.left = e.clientX - offX + 'px';
@@ -401,13 +458,14 @@ export class LauncherModal {
     this.placePlaceholder(ph, tile, tile.x, tile.y);
     this.grid.appendChild(ph);
 
+    // 拖拽目标格换算：按实际单元步长（移动端比例网格）
     const move = (ev: PointerEvent) => {
       el.style.left = ev.clientX - parseFloat(el.dataset.grabOffX || '0') + 'px';
       el.style.top = ev.clientY - parseFloat(el.dataset.grabOffY || '0') + 'px';
       const left = ev.clientX - parseFloat(el.dataset.grabOffX || '0') - gridRect.left;
       const top = ev.clientY - parseFloat(el.dataset.grabOffY || '0') - gridRect.top;
-      const cx = Math.max(0, Math.min(this.columns() - tile.w, Math.floor(left / CELL_W)));
-      const cy = Math.max(0, Math.floor(top / CELL_H));
+      const cx = Math.max(0, Math.min(this.columns() - tile.w, Math.floor(left / step)));
+      const cy = Math.max(0, Math.floor(top / step));
       this.placePlaceholder(ph, tile, cx, cy);
       ph.dataset.cx = String(cx);
       ph.dataset.cy = String(cy);
@@ -424,8 +482,8 @@ export class LauncherModal {
       ph.remove();
       const left = ev.clientX - parseFloat(el.dataset.grabOffX || '0') - gridRect.left;
       const top = ev.clientY - parseFloat(el.dataset.grabOffY || '0') - gridRect.top;
-      const cx = Math.max(0, Math.min(this.columns() - tile.w, Math.floor(left / CELL_W)));
-      const cy = Math.max(0, Math.floor(top / CELL_H));
+      const cx = Math.max(0, Math.min(this.columns() - tile.w, Math.floor(left / step)));
+      const cy = Math.max(0, Math.floor(top / step));
       const result = pushMove(this.data.tiles, tile.id, cx, cy, this.columns());
       if (result) {
         this.data.tiles = result;
@@ -449,15 +507,16 @@ export class LauncherModal {
     e.preventDefault();
     e.stopPropagation();
     const gridRect = this.grid.getBoundingClientRect();
+    const step = this.cellStep();
     const el = this.grid.querySelector<HTMLElement>(`.launcher-tile[data-tile-id="${tile.id}"]`);
     if (!el) return;
     el.classList.add('resizing');
 
     const move = (ev: PointerEvent) => {
-      const left = ev.clientX - gridRect.left - tile.x * CELL_W;
-      const top = ev.clientY - gridRect.top - tile.y * CELL_H;
-      const w = Math.max(1, Math.min(2, Math.round(left / CELL_W)));
-      const h = Math.max(1, Math.min(2, Math.round(top / CELL_H)));
+      const left = ev.clientX - gridRect.left - tile.x * step;
+      const top = ev.clientY - gridRect.top - tile.y * step;
+      const w = Math.max(1, Math.min(2, Math.round(left / step)));
+      const h = Math.max(1, Math.min(2, Math.round(top / step)));
       el.style.gridColumn = `${tile.x + 1} / span ${w}`;
       el.style.gridRow = `${tile.y + 1} / span ${h}`;
       el.dataset.previewW = String(w);
@@ -651,6 +710,50 @@ export class LauncherModal {
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') this.closePicker(mask);
     });
+    setTimeout(() => input.focus(), 0);
+  }
+
+  // ===== 改名弹窗 =====
+
+  /** 修改磁贴显示名（label）；提交空串 → 删除 label 恢复默认名 */
+  openRenameDialog(tileId: string): void {
+    const tile = this.data.tiles.find((t) => t.id === tileId);
+    if (!tile) return;
+    const isGhost = !this.validIds.has(tile.commandId);
+    const { mask, popup } = this.buildPicker(RENAME_MASK_ID, RENAME_POPUP_ID, '修改名称');
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = tile.label || (isGhost ? tile.commandId : this.commandOf(tile)?.name || tile.commandId);
+    input.placeholder = '输入显示名称（留空恢复默认）';
+    input.className = 'launcher-picker-input';
+    input.style.cssText =
+      'width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--background-modifier-border);' +
+      'background:var(--background-secondary);color:var(--text-normal);font-size:13px;box-sizing:border-box;margin-bottom:10px;';
+    popup.appendChild(input);
+
+    const submit = () => {
+      const v = input.value.trim();
+      if (v) tile.label = v;
+      else delete tile.label;
+      this.closePicker(mask);
+      this.save();
+      this.render();
+    };
+
+    const okBtn = createIconBtn('✓ 确定', '保存名称', submit, 'font-size:13px;width:64px;height:26px;margin-right:8px;');
+    const cancelBtn = createIconBtn('✕ 取消', '取消', () => this.closePicker(mask), 'font-size:13px;width:64px;height:26px;');
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;justify-content:flex-end;';
+    row.appendChild(okBtn);
+    row.appendChild(cancelBtn);
+    popup.appendChild(row);
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') this.closePicker(mask);
+      if (e.key === 'Enter') submit();
+    });
+    input.select();
     setTimeout(() => input.focus(), 0);
   }
 

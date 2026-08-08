@@ -48,6 +48,17 @@ describe('launcher 数据层', () => {
       const d2 = normalizeData({ tiles: [{ id: 'a', commandId: 'c', x: 0, y: 0, w: 1, h: 1, icon: '' }] });
       expect(d2.tiles[0].icon).toBeUndefined();
     });
+
+    it('label 保留 trim 后的非空值；空白 label 忽略', () => {
+      const d = normalizeData({
+        tiles: [{ id: 'a', commandId: 'c', x: 0, y: 0, w: 1, h: 1, label: '  我的入口  ' }],
+      });
+      expect(d.tiles[0].label).toBe('我的入口');
+      const d2 = normalizeData({ tiles: [{ id: 'a', commandId: 'c', x: 0, y: 0, w: 1, h: 1, label: '   ' }] });
+      expect(d2.tiles[0].label).toBeUndefined();
+      const d3 = normalizeData({ tiles: [{ id: 'a', commandId: 'c', x: 0, y: 0, w: 1, h: 1 }] });
+      expect(d3.tiles[0].label).toBeUndefined();
+    });
   });
 
   describe('canPlace / overlaps / findFirstEmptySpot', () => {
@@ -190,11 +201,11 @@ describe('launcher 数据层', () => {
       expect(await loadLauncherData(getApp())).toEqual({ version: 1, tiles: [] });
       await saveLauncherData(getApp(), {
         version: 1,
-        tiles: [tile({ id: 'a', x: 2, y: 3, icon: 'star' })],
+        tiles: [tile({ id: 'a', x: 2, y: 3, icon: 'star', label: '入口A' })],
       });
       expect(vault.files.has(LAUNCHER_PATH)).toBe(true);
       const d = await loadLauncherData(getApp());
-      expect(d.tiles[0]).toMatchObject({ id: 'a', x: 2, y: 3, icon: 'star' });
+      expect(d.tiles[0]).toMatchObject({ id: 'a', x: 2, y: 3, icon: 'star', label: '入口A' });
     });
 
     it('解析失败 → 空布局且不覆盖文件', async () => {
