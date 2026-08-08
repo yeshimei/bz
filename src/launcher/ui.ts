@@ -3,7 +3,7 @@
  * 单例：已打开则复用聚焦。长按 0.5s 进编辑模式（iOS 式）；pointer 拖拽 + 推挤落位；
  * 右下角手柄调档位；左上角 × 删除；工具栏 + 添加（命令选择器）/ 完成退出。
  */
-import { getIcon, setIcon, Notice } from 'obsidian';
+import { getIcon, setIcon, Notice, Platform } from 'obsidian';
 import { getApp } from '../core/app';
 import { getSettings } from '../core/settings-provider';
 import { escManager } from '../core/esc-manager';
@@ -133,9 +133,9 @@ export class LauncherModal {
     this.grid.id = GRID_ID;
   }
 
-  /** 当前运行环境是否为移动端（Capacitor）——移动端/桌面端配置互不影响 */
+  /** 当前运行环境是否为移动端（Obsidian 官方 Platform.isMobile，比 window.Capacitor 可靠）——移动端/桌面端配置互不影响 */
   static isMobileEnv(): boolean {
-    return typeof window !== 'undefined' && !!(window as any).Capacitor;
+    return typeof Platform !== 'undefined' && !!Platform.isMobile;
   }
 
   /** 当前平台磁贴（引用） */

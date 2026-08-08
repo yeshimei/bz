@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault } from '../mock-vault';
-import { MockNotice, resetObsidianMocks } from '../mock-obsidian-entry';
+import { MockNotice, resetObsidianMocks, Platform as MockPlatform } from '../mock-obsidian-entry';
 import { setApp, getApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { openLauncher, unloadLauncher, calcCellSize, setLauncherShowTextSetter, setLauncherGestureSetter } from '../../src/launcher/ui';
@@ -657,7 +657,7 @@ describe('入口页 UI', () => {
     expect(document.getElementById('launcher-grid')!.style.padding).toBe('16px 18px 20px'); // 桌面端底部 20px
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     // 移动端：贴底 + 顶部圆角 + 上滑动画 + 底部大内边距撑起
-    (window as any).Capacitor = {};
+    MockPlatform.isMobile = true;
     try {
       await openOnce(vault);
       expect(document.getElementById('launcher-overlay')!.style.alignItems).toBe('flex-end');
@@ -665,7 +665,7 @@ describe('入口页 UI', () => {
       expect(document.getElementById('launcher-modal')!.style.animation).toContain('launcher-slide-up');
       expect(document.getElementById('launcher-grid')!.style.padding).toBe('16px 18px 48px'); // 移动端底部大内边距
     } finally {
-      delete (window as any).Capacitor;
+      MockPlatform.isMobile = false;
     }
   });
 
@@ -737,8 +737,8 @@ describe('入口页 UI', () => {
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(document.getElementById('launcher-overlay')).toBeNull();
 
-    // 切移动端环境（Capacitor）
-    (window as any).Capacitor = {};
+    // 切移动端环境（Platform.isMobile）
+    MockPlatform.isMobile = true;
     try {
       await openOnce(vault);
       // 移动端是独立配置：无磁贴（空态）；列数用移动端独立设置（默认 4 列）
@@ -766,7 +766,7 @@ describe('入口页 UI', () => {
       expect(saved.desktop.tiles.length).toBe(1);
       expect(saved.desktop.tiles[0].commandId).toBe('bz-memo-open-panel');
     } finally {
-      delete (window as any).Capacitor;
+      MockPlatform.isMobile = false;
     }
   });
 
