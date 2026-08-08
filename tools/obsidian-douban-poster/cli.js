@@ -40,33 +40,56 @@ function runPm2(args) {
   }
 }
 
-switch (command) {
   case 'watch': {
     const { default: chokidar } = await import('chokidar');
+    const { collectMissingPosterNotes, sortByBirthtime, createProcessor } = await import('./watcher.js');
     const movieFolder = path.join(config.vaultPath, config.movieFolder);
+    // 抓取间隔（ms）：每个完成后等 15s，避免豆瓣接口限流
+    const FETCH_INTERVAL = 15000;
+    // 事件防抖（ms）：create/change 触发扫描前的合并窗口
+    const SCAN_DEBOUNCE = 10000;
 
     console.log(`[Watcher] 开始监听: ${movieFolder}`);
+
+    // 串行处理器：每个抓取完成后等 15s 再处理下一个
+    const processor = createProcessor({
+      interval: FETCH_INTERVAL,
+      onNote: async (notePath) => {
+        console.log(`[队列] 开始处理: ${path.basename(notePath)}`);
+        await fetchPosterForNote(notePath, config);
+      },
+    });
+
+    // 全目录扫描：缺海报的笔记入队（按创建时间倒序，最新创建的先抓）
+    function scan() {
+      const missing = sortByBirthtime(collectMissingPosterNotes(movieFolder));
+      if (missing.length === 0) return;
+      console.log(`[扫描] 发现 ${missing.length} 个缺海报的笔记，加入队列`);
+      processor.pushMany(missing);
+    }
+
+    // 启动立即扫描一次
+    scan();
+
+    let scanTimer = null;
+    const scheduleScan = () => {
+      if (scanTimer) clearTimeout(scanTimer);
+      scanTimer = setTimeout(scan, SCAN_DEBOUNCE);
+    };
 
     const watcher = chokidar.watch(movieFolder, {
       ignoreInitial: true,
       depth: 0,
     });
 
-    const processing = new Set();
-
-    watcher.on('add', async (filePath) => {
+    // 创建/改动均触发扫描（扫描幂等：已有海报的笔记自动跳过）
+    watcher.on('add', (filePath) => {
       if (!filePath.endsWith('.md')) return;
-      if (processing.has(filePath)) return;
-      processing.add(filePath);
-
-      console.log(`[Watcher] 检测到新文件: ${path.basename(filePath)}`);
-      try {
-        await fetchPosterForNote(filePath, config);
-      } catch (err) {
-        console.error(`[Watcher] 处理失败: ${path.basename(filePath)} - ${err.message}`);
-      } finally {
-        processing.delete(filePath);
-      }
+      scheduleScan();
+    });
+    watcher.on('change', (filePath) => {
+      if (!filePath.endsWith('.md')) return;
+      scheduleScan();
     });
 
     watcher.on('error', (err) => {
@@ -75,6 +98,7 @@ switch (command) {
 
     process.on('SIGINT', () => {
       console.log('\n[Watcher] 正在退出...');
+      if (scanTimer) clearTimeout(scanTimer);
       watcher.close();
       process.exit(0);
     });
