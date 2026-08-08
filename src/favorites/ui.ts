@@ -616,6 +616,7 @@ export class UIManager {
   async _deleteItem(id: string) {
     await this.dataManager.delete(id);
     await this.refreshData();
+    notice('✅ 已删除收藏');
   }
 
   // ---------- 显示/隐藏主面板 ----------

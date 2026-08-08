@@ -415,6 +415,7 @@ export function showConfirm(entryId: string) {
     confirmText: '删除日记',
     onConfirm: async () => {
       await deleteEntry(entryId);
+      notice('✅ 日记条目已删除');
       const tagSelectorMask = document.getElementById('diary-tag-selector-mask');
       const tagSelectorPopup = document.getElementById('diary-tag-selector-popup');
       if (tagSelectorMask) tagSelectorMask.style.display = 'none';
