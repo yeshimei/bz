@@ -92,7 +92,7 @@ describe('设置页 BzSettingTab', () => {
       书库: ['书库文件夹', '书籍识别标签'],
       影视: ['影视文件夹', '每页加载数量'],
       复习计划: ['数据存储路径', '做题决定难度', '题目难度'],
-      入口页: ['网格列数', '双击页面', '连续三击页面', '双指下滑'],
+      入口页: ['网格列数', '打开入口页的手势'],
       闪念: ['Ollama URL', 'Embedding 模型', '并发数'],
       'AI Agent': ['启用', '监听文件夹', 'AI 匹配模型'],
     };
@@ -162,14 +162,15 @@ describe('设置页 BzSettingTab', () => {
     expect(plugin.settings.autoSummaryEnabled).toBe(true);
   });
 
-  it('入口页 tab：手势开关更新设置并同步手势监听', async () => {
+  it('入口页 tab：手势下拉更新设置并同步手势监听', async () => {
     clickTab(tab, '入口页');
-    const el = findSetting(tab, '双击页面');
-    const toggle = (el as any).__setting.controls.find((c: any) => typeof c.trigger === 'function' && c.value !== undefined);
-    toggle.trigger(true);
+    const el = findSetting(tab, '打开入口页的手势');
+    const dd = (el as any).__setting.controls.find((c: any) => c.options && 'double' in c.options);
+    expect(dd).toBeTruthy();
+    dd.trigger('double');
     await new Promise((r) => setTimeout(r, 10));
-    expect(plugin.settings.gestureDoubleTap).toBe(true);
-    expect(diskData['bz'].gestureDoubleTap).toBe(true);
+    expect(plugin.settings.launcherGesture).toBe('double');
+    expect(diskData['bz'].launcherGesture).toBe('double');
     // 开启后 syncGestures 注册监听：双击页面 → 打开入口页
     const executed: string[] = [];
     plugin.app.commands.executeCommandById = (id: string) => executed.push(id);
@@ -178,11 +179,20 @@ describe('设置页 BzSettingTab', () => {
     expect(executed).toEqual(['bz-launcher-open']);
   });
 
-  it('onload 迁移旧手势 string 设置 → boolean', async () => {
-    diskData['bz'] = { gestureDoubleTap: 'bz-memo-open-panel', gestureTripleTap: 'off' };
-    const p = await createPlugin(makeMockApp());
-    expect(p.settings.gestureDoubleTap).toBe(true); // 旧命令 id → 开启
-    expect(p.settings.gestureTripleTap).toBe(false); // 'off' → 关闭
+  it('onload 迁移旧手势设置 → launcherGesture 单选', async () => {
+    // 旧 boolean 版：double 开启
+    diskData['bz'] = { gestureDoubleTap: true, gestureTripleTap: false };
+    const p1 = await createPlugin(makeMockApp());
+    expect(p1.settings.launcherGesture).toBe('double');
+    expect((p1.settings as any).gestureDoubleTap).toBeUndefined(); // 旧字段清理
+    // 旧 string 版（命令 id / off）
+    diskData['bz'] = { gestureSwipeDown: 'bz-memo-open-panel' };
+    const p2 = await createPlugin(makeMockApp());
+    expect(p2.settings.launcherGesture).toBe('swipe');
+    // 全部关闭 → off
+    diskData['bz'] = { gestureTripleTap: 'off' };
+    const p3 = await createPlugin(makeMockApp());
+    expect(p3.settings.launcherGesture).toBe('off');
   });
 
   it('闪念 tab：启用开关触发 ensureFlashOnReady（占位实现不抛错）', async () => {
