@@ -1,6 +1,8 @@
 # bz 进度（上下文压缩恢复点）
 
-最后更新：2026-08-08（ticket 23 命令入口页），700 测试（1 既有失败 flash vector-store 增量刷新，与本次无关）。仓库 `E:/Obsidian/1`，构建产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`。
+最后更新：2026-08-08（ticket 23 入口页两轮增量），724 测试（1 既有失败 flash vector-store 增量刷新，与本次无关）。仓库 `E:/Obsidian/1`，构建产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`。
+
+- **ticket 23 增量 2（用户 8 问）**：① **双平台独立配置**——launcher.json 升 v2 `{version, desktop:{tiles}, mobile:{tiles}}`，v1 旧格式自动归入 desktop；平台判定 `window.Capacitor`（项目惯例 IS_MOBILE）。② **隐藏文字 + emoji 图标**——磁贴 `hideText` 字段（改名弹窗内开关）；图标选择器支持 emoji/任意字符（lucide 清单外走文本渲染，`LUCIDE_ICONS.includes` 判定）。③ **去标题栏**——toolbar 整体移除，常态零按钮（遮罩点击/ESC 关闭）。④ **编辑模式空白格「＋」**——长按空白区域（含空态）进编辑模式，空白单元格渲染 + 占位（含末尾追加行，全满可继续添加），点击弹命令选择器；「完成」按钮改悬浮右上角（编辑模式唯一显式出口）。⑤ 遮罩关闭补测试。⑥ 完成按钮语义=退出编辑模式。⑦ 网格间距 12→8（拖拽步长同步）。⑧ **手势触发**——`src/launcher/gestures.ts` 双击/连续三击/双指下滑（触屏双触点同向位移 + 滚轮 300px 累积兜底），绑定命令 id；三击配置时双击延迟判定（TAP_WINDOW 内无第三击才触发）；设置页入口页 tab 三组下拉（off + 5 常用命令），`syncGestures` 幂等重注册（设置变更/onload），onunload 清理。60 测试（数据 23 + UI 27 + 手势 10）。
 
 - **ticket 23 命令入口页（Launcher）**（issue 23，grilling 会话 10 问封板）：`bz-launcher-open` 裸注册；全局唯一单例弹窗（自建 DOM + escManager，z-index 10100）；网格列数设置项 `launcherColumns`（默认 6，设置页新 tab「入口页」）；磁贴档位 {1×1,1×2,2×1,2×2}；长按 0.5s 进编辑模式（iOS 式：拖主体移动/右下角手柄调档位/左上角×删除/顶部+添加/✓完成）；添加走自建命令选择器（listCommands 全命令模糊搜）→ 1×1 落末尾空位；点击磁贴先关入口页再 executeCommandById；幽灵磁贴（命令失效灰色保留可删，复活自动恢复）；磁贴自定义 lucide 图标（内置 ~140 图标清单 + 选择器，优先于命令自带 icon）；推挤碰撞（pushMove 纯函数：目标被占 → 行优先顺移，行扩展兜底永不失败）；数据 `CONFIG/STORAGE/launcher.json`（{version, tiles:[{id,commandId,x,y,w,h,icon?}]}，normalizeData 容错）。术语已入 CONTEXT.md（入口页/磁贴/档位/编辑模式/推挤/幽灵磁贴）。36 测试（数据层 19 + UI 17）；smoke 命令 30→31；设置页 tab 12→13。**ADR 评估：全部决策为既有模式/用户偏好，不写 ADR。**
 

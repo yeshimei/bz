@@ -113,6 +113,14 @@ export default interface BzSettings {
   /** 网格列数（3-8，默认 6） */
   launcherColumns: string;
 
+  // ===== 🖐 手势触发（入口页域，默认关闭）=====
+  /** 双击页面 → 命令 id（'off' 关闭） */
+  gestureDoubleTap: string;
+  /** 连续三击页面 → 命令 id（'off' 关闭） */
+  gestureTripleTap: string;
+  /** 双指下滑 → 命令 id（'off' 关闭） */
+  gestureSwipeDown: string;
+
   // ===== 💭 闪念（17 项，全量迁移）=====
   /** Ollama URL（本地） */
   OLLAMA_URL: string;
@@ -229,6 +237,11 @@ export const DEFAULT_SETTINGS: BzSettings = {
 
   // 入口页
   launcherColumns: '6',
+
+  // 手势触发（默认关闭）
+  gestureDoubleTap: 'off',
+  gestureTripleTap: 'off',
+  gestureSwipeDown: 'off',
 
   // 闪念
   OLLAMA_URL: 'http://localhost:11434',
