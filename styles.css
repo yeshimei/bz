@@ -555,3 +555,69 @@
 }
 
 
+
+/* ===== 入口页（ticket 23）===== */
+#launcher-modal .launcher-toolbar {
+  user-select: none;
+}
+#launcher-modal .launcher-toolbar button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+#launcher-grid .launcher-tile {
+  position: relative;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease;
+  box-sizing: border-box;
+}
+#launcher-grid .launcher-tile:hover {
+  background: var(--background-modifier-hover);
+}
+#launcher-grid .launcher-tile .launcher-icon {
+  color: var(--text-normal);
+  flex-shrink: 0;
+}
+#launcher-grid .launcher-tile .launcher-icon svg {
+  width: 100%;
+  height: 100%;
+}
+/* 编辑模式：描边提示 + 拖拽光标 */
+#launcher-grid .launcher-tile.editing {
+  border: 1.5px dashed var(--text-accent);
+  cursor: grab;
+}
+#launcher-grid .launcher-tile.editing:active {
+  cursor: grabbing;
+}
+/* 幽灵磁贴：命令失效保留态 */
+#launcher-grid .launcher-tile.ghost {
+  opacity: 0.45;
+  border-style: dashed;
+  cursor: not-allowed;
+}
+/* 拖拽中 */
+#launcher-grid .launcher-tile.dragging {
+  opacity: 0.9;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  cursor: grabbing;
+}
+#launcher-grid .launcher-tile.resizing {
+  border-color: var(--text-accent);
+}
+#launcher-grid .launcher-tile .launcher-name {
+  padding: 0 6px;
+}
+#launcher-grid .launcher-placeholder {
+  pointer-events: none;
+  background: var(--background-modifier-hover);
+}

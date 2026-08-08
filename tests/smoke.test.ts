@@ -26,6 +26,8 @@ function makeMockApp() {
       removeCommand: (id: string) => {
         removedCommands.push(id);
       },
+      listCommands: () => [],
+      executeCommandById: () => {},
     },
     metadataCache: { getFileCache: () => null, getBacklinksForFile: () => null, on: () => ({ ref: 'ref' }) },
     fileManager: { processFrontMatter: () => Promise.resolve() },
@@ -35,8 +37,9 @@ function makeMockApp() {
 const removedCommands: string[] = [];
 const registeredCommands: any[] = [];
 
-/** 期望的命令 id 全集（spec「命令 id 全清单」29 个主表 + 日记本 bz-open-panel，共 30 个） */
+/** 期望的命令 id 全集（spec「命令 id 全清单」29 个主表 + 入口页 + 日记本 bz-open-panel，共 31 个） */
 const EXPECTED_COMMAND_IDS = [
+  'bz-launcher-open',
   'bz-memo-open-panel', 'bz-memo-create-item',
   'bz-belongings-add-item', 'bz-belongings-open-panel',
   'bz-article-open-view',
@@ -133,7 +136,7 @@ describe('bz 骨架冒烟', () => {
     expect(() => registeredCommands.find((c: any) => c.id === 'bz-review-add-current').callback()).not.toThrow();
     expect(() => registeredCommands.find((c: any) => c.id === 'bz-show-reading-report').callback()).not.toThrow();
   }, 15000);
-  it('全部 30 命令回调冒烟：逐个调用覆盖各域懒加载入口（含日记本 init 两个命令）', async () => {
+  it('全部 31 命令回调冒烟：逐个调用覆盖各域懒加载入口（含日记本 init 两个命令）', async () => {
     const plugin = await createPlugin(makeMockApp());
     const failures: string[] = [];
     for (const c of registeredCommands) {
@@ -147,7 +150,7 @@ describe('bz 骨架冒烟', () => {
     }
     expect(failures, `失败命令:
 ${failures.join('\n')}`).toEqual([]);
-    expect(registeredCommands.length).toBeGreaterThanOrEqual(30);
+    expect(registeredCommands.length).toBeGreaterThanOrEqual(31);
   }, 15000);
   it('事件常驻域开关开启时 onload 注册（autoSummary/aiAgent/flash 懒加载分支）', async () => {
     delete diskData['bz'];
