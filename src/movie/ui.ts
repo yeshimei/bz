@@ -509,6 +509,7 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
 
     try {
       const newFile = await app.vault.create(filePath, fileContent);
+      notice(`✅ 影视已添加：${name}`);
       closeAddModal();
       closeOverlay();
       refreshDataAndView(app);
