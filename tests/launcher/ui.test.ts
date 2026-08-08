@@ -61,8 +61,8 @@ function gridTiles(): HTMLElement[] {
  * 长按进入编辑模式（render 重建后返回新磁贴）。
  * 真实场景中长按后松手会触发一次 click——消费它（编辑模式菜单由后续点击打开）。
  */
-function longPressEnterEdit(tile: HTMLElement | undefined, x = 50, y = 50): HTMLElement | undefined {
-  if (!tile) return undefined;
+function longPressEnterEdit(tile: HTMLElement | undefined, x = 50, y = 50): HTMLElement {
+  if (!tile) return document.createElement('div'); // 兜底（测试中磁贴必存在）
   vi.useFakeTimers();
   try {
     firePointer(tile, 'pointerdown', x, y);
@@ -72,7 +72,7 @@ function longPressEnterEdit(tile: HTMLElement | undefined, x = 50, y = 50): HTML
   }
   const fresh = gridTiles().find((t) => t.dataset.tileId === tile.dataset.tileId) || gridTiles()[0];
   if (fresh) fresh.click(); // 消费长按遗留的 click 抑制
-  return fresh;
+  return fresh as HTMLElement;
 }
 
 function firePointer(el: EventTarget, type: string, clientX: number, clientY: number) {
