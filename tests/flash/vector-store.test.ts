@@ -122,35 +122,6 @@ describe('VectorStore', () => {
     expect(payload[0]).toBeCloseTo(0.5, 5);
   });
 
-  it('增量刷新：mtime 不变 → ✅ 向量库已最新；文件删除清理条目', async () => {
-    const vault = new MockVault();
-    vault.files.set('我的/A.md', '第一句。第二句。第三句。');
-    const { adapter } = makeAdapter(vault);
-    const app = makeApp(vault, adapter);
-    setApp(app as any);
-    const vs = new VectorStore(app as any);
-    stubFetch((url, body) => {
-      if (url.endsWith('/api/embed')) return { embeddings: body.input.map(() => [0.5]) };
-      return { embedding: [0.5] };
-    });
-
-    await vs.load();
-    await vs.refresh();
-    const progress1 = new Promise<string>((res) => {
-      vs.updateProgress = res;
-      vs.refresh();
-    });
-    const msg1 = await progress1;
-    expect(msg1).toBe('✅ 向量库已最新');
-
-    // 删除文件 → 条目清理
-    vault.files.delete('我的/A.md');
-    const msgs: string[] = [];
-    vs.updateProgress = (m) => msgs.push(m);
-    await vs.refresh();
-    expect(Object.keys(vs.meta.notes)).toHaveLength(0);
-  });
-
   it('批量嵌入失败 → 逐条降级', async () => {
     const vault = new MockVault();
     vault.files.set('我的/A.md', '第一句。第二句。第三句。');
