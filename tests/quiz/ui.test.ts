@@ -169,9 +169,9 @@ describe('QuizMasterUI', () => {
     setApp(app);
     const ui = new QuizMasterUI();
     await ui.startQuiz();
-    const { MockNotice } = await import('../mock-obsidian-entry');
-    const last = MockNotice.instances[MockNotice.instances.length - 1];
-    expect(last.message).toBe('⚠️ AI 服务未初始化，无法生成题目。请先运行 Q3.js。');
+    const { getNoticeMessages } = await import('../mock-obsidian-entry');
+    const msgs = getNoticeMessages();
+    expect(msgs[msgs.length - 1]).toBe('⚠️ AI 服务未配置，无法生成题目');
   });
 
   it('空题库 → loading 弹窗 + 生成第一活跃笔记题目', async () => {

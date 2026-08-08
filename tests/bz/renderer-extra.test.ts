@@ -9,7 +9,7 @@ import { setBzSettingsProvider } from '../../src/bz';
 import { App } from '../../src/bz/app';
 import { Renderer } from '../../src/bz/ui';
 import { MockVault } from '../mock-vault';
-import { MockNotice, resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
 
 function makeApp(vault: MockVault, editor: any = null) {
   return {

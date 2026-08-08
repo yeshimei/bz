@@ -7,7 +7,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { showLibrary, showBookNotes, openFilterModal, _testResetLibrary } from '../../src/library/ui';
 import { openBookNotes } from '../../src/library/index';
 import { MockVault, parseFrontmatter } from '../mock-vault';
-import { MockNotice, resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
 
 function makeApp(vault: MockVault, extra: any = {}) {
   return {
@@ -66,7 +66,7 @@ describe('书库面板', () => {
 
   it('无书 → Notice 提示', () => {
     showLibrary(makeApp(vault));
-    expect(MockNotice.instances.some((n) => n.message.includes('未找到任何书籍笔记'))).toBe(true);
+    expect(hasNotice(/未找到任何书籍笔记/)).toBe(true);
     expect(document.getElementById('__book_library__')).toBeNull();
   });
 
@@ -152,7 +152,7 @@ describe('书库面板', () => {
 
   it('openBookNotes：无活动文件 → 「没有打开的文件」', () => {
     openBookNotes(makeApp(vault));
-    expect(MockNotice.instances.some((n) => n.message === '没有打开的文件')).toBe(true);
+    expect(hasNotice('没有打开的文件')).toBe(true);
   });
 
   it('openBookNotes：有活动文件 → 打开笔记弹窗', async () => {

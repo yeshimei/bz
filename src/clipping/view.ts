@@ -3,7 +3,8 @@
  * 双击跳转、长按删除、反链显示、vault modify 自动刷新、滚动加载。
  * 源码：剪藏本.js 逐字移植（DOM id/类名、文案、交互一致）。
  */
-import { Notice, Setting } from 'obsidian';
+import { Setting } from 'obsidian';
+import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { createSiteIcon, injectStyles } from '../core/dom';
@@ -834,10 +835,10 @@ async function deleteArticle(article: ArticleEntry, card: HTMLElement) {
       renderEntries(true);
     }
     rebuildSiteBar();
-    new Notice(`已删除「${article.title}」`);
+    notice(`✅ 已删除「${article.title}」`);
   } catch (e) {
     console.error('删除失败:', e);
-    new Notice('删除失败，请检查文件权限');
+    notice('❌ 删除失败，请检查文件权限');
   }
 }
 

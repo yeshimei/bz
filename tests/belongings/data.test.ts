@@ -7,7 +7,7 @@ import { loadDatabase, saveDatabase, calculateDailyCost, calculateDaysUsed, form
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { MockVault } from '../mock-vault';
-import { MockNotice, resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
 
 function setup(vault: MockVault, settings: any = {}) {
   setApp({ vault } as any);
@@ -51,7 +51,7 @@ describe('loadDatabase', () => {
     const warnSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const db = await loadDatabase();
     expect(db.items).toEqual({});
-    expect(MockNotice.instances.some((n) => n.message.includes('⚠️ 数据文件解析失败，请检查 CONFIG/STORAGE/belongings.json 格式是否正确'))).toBe(true);
+    expect(hasNotice(/数据文件解析失败/)).toBe(true);
     warnSpy.mockRestore();
   });
 

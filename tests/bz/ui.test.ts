@@ -10,7 +10,7 @@ import { App } from '../../src/bz/app';
 import { UIManager } from '../../src/bz/ui';
 import { DataManager } from '../../src/bz/data';
 import { MockVault } from '../mock-vault';
-import { MockNotice, resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
 import moment from 'moment';
 
 function makeApp(vault: MockVault) {
@@ -270,7 +270,7 @@ describe('备忘录 AI 推荐（ticket 05）', () => {
     expect((activeScene as HTMLElement).dataset.scene).toBe('学习');
     const activePriority = document.querySelector('#add-todo-priority .priority-btn.active');
     expect((activePriority as HTMLElement).dataset.priority).toBe('important');
-    expect(MockNotice.instances.some((n) => n.message.includes('AI 推荐'))).toBe(true);
+    expect(hasNotice(/AI\ 推荐/)).toBe(true);
     // 按钮恢复
     expect(aiBtn.textContent).toBe('✨ AI 推荐');
     vi.useRealTimers();
@@ -287,7 +287,7 @@ describe('备忘录 AI 推荐（ticket 05）', () => {
     (document.getElementById('add-todo-ai-recommend') as HTMLButtonElement).click();
     await vi.advanceTimersByTimeAsync(0);
     await vi.advanceTimersByTimeAsync(100);
-    expect(MockNotice.instances.some((n) => n.message.includes('AI 推荐失败，请手动选择'))).toBe(true);
+    expect(hasNotice(/AI\ 推荐失败，请手动选择/)).toBe(true);
     vi.useRealTimers();
   });
 
@@ -305,7 +305,7 @@ describe('备忘录 AI 推荐（ticket 05）', () => {
     (document.getElementById('add-todo-ai-recommend') as HTMLButtonElement).click();
     await vi.advanceTimersByTimeAsync(0);
     await vi.advanceTimersByTimeAsync(100);
-    expect(MockNotice.instances.some((n) => n.message.includes('不在可选列表中'))).toBe(true);
+    expect(hasNotice(/不在可选列表中/)).toBe(true);
     vi.useRealTimers();
   });
 
@@ -314,7 +314,7 @@ describe('备忘录 AI 推荐（ticket 05）', () => {
     await initApp(vault);
     UIManager.showAddDialog(null);
     (document.getElementById('add-todo-ai-recommend') as HTMLButtonElement).click();
-    expect(MockNotice.instances.some((n) => n.message === '请先输入备忘录内容')).toBe(true);
+    expect(hasNotice('请先输入备忘录内容')).toBe(true);
   });
 });
 
@@ -348,7 +348,7 @@ describe('从当前笔记/光标创建（ticket 05）', () => {
     await initApp(vault);
     UIManager.showAddDialog(null);
     (document.getElementById('add-todo-pos-btn') as HTMLButtonElement).click();
-    expect(MockNotice.instances.some((n) => n.message === '无法获取当前位置')).toBe(true);
+    expect(hasNotice('无法获取当前位置')).toBe(true);
   });
 
   it('URL 内容保存时自动提取 url 字段', async () => {

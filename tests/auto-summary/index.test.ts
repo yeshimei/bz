@@ -7,7 +7,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { ensureAutoSummary, isAutoSummaryInitialized, unloadAutoSummary } from '../../src/auto-summary/index';
 import { MockVault } from '../mock-vault';
-import { resetObsidianMocks, MockNotice } from '../mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages } from '../mock-obsidian-entry';
 
 /** workspace mock：可注册/触发 file-open 事件（offref 语义与 MockVault 一致） */
 function makeWorkspace() {
@@ -128,9 +128,9 @@ describe('auto-summary 入口', () => {
     const out = vault.files.get('归档/网页剪藏/x.md')!;
     expect(out).toContain('summary: "摘要"');
     expect(out).toContain('  - "AI"');
-    expect(MockNotice.instances).toHaveLength(2);
-    expect(MockNotice.instances[0].message).toBe('正在为《已有标题》生成摘要…');
-    expect(MockNotice.instances[1].message).toBe('《已有标题》\n\n摘要\n\n#AI');
+    // 动态链路（ticket 25）：单条通知原地更新为结果
+    expect(getNoticeMessages()).toHaveLength(1);
+    expect(getNoticeMessages()[0]).toBe('《已有标题》\n\n摘要\n\n#AI');
   });
 
   it('create + file-open 同一文件去重 → 只处理一次', async () => {

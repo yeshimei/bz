@@ -7,7 +7,7 @@ import { openBelongingsPanel, addBelongingsItemCommand, showSortModal, cleanupBe
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { MockVault } from '../mock-vault';
-import { MockNotice, resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
 
 function setup(vault: MockVault, settings: any = {}) {
   setApp({ vault, workspace: { getLeaf: () => ({ openFile: vi.fn() }) } } as any);
@@ -101,7 +101,7 @@ describe('归物本主面板', () => {
     refreshBtn.click();
     await new Promise((r) => setTimeout(r, 20));
     expect(overlay.textContent).toContain('新物品');
-    expect(MockNotice.instances.some((n) => n.message === '已刷新')).toBe(true);
+    expect(hasNotice('✅ 已刷新')).toBe(true);
   });
 });
 
@@ -148,7 +148,7 @@ describe('添加/编辑/删除', () => {
     const keys = Object.keys(data.items);
     expect(keys.length).toBe(3);
     expect(data.items[keys[2]]).toMatchObject({ name: '新耳机', category: '🎧 蓝牙耳机', purchase_price: 299, current_status: '使用中' });
-    expect(MockNotice.instances.some((n) => n.message.includes('添加成功'))).toBe(true);
+    expect(hasNotice(/已添加/)).toBe(true);
   });
 
   it('名称空 → 「请输入物品名称」', async () => {
@@ -157,7 +157,7 @@ describe('添加/编辑/删除', () => {
     const submit = [...document.querySelectorAll('button')].find((b) => b.textContent === '✅ 保存')!;
     submit.click();
     await new Promise((r) => setTimeout(r, 10));
-    expect(MockNotice.instances.some((n) => n.message === '请输入物品名称')).toBe(true);
+    expect(hasNotice('请输入物品名称')).toBe(true);
   });
 
   it('单击卡片（<500ms）→ 编辑弹窗；保存后数据更新', async () => {
@@ -204,7 +204,7 @@ describe('添加/编辑/删除', () => {
     await vi.advanceTimersByTimeAsync(50);
     const data = JSON.parse(vault.files.get('CONFIG/STORAGE/belongings.json')!);
     expect(data.items['item_2']).toBeUndefined();
-    expect(MockNotice.instances.some((n) => n.message.includes('已删除'))).toBe(true);
+    expect(hasNotice(/已删除/)).toBe(true);
     vi.useRealTimers();
   });
 });

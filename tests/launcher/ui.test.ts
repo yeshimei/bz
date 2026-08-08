@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault } from '../mock-vault';
-import { MockNotice, resetObsidianMocks, Platform as MockPlatform } from '../mock-obsidian-entry';
+import { resetObsidianMocks,  Platform as MockPlatform, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
 import { setApp, getApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { openLauncher, unloadLauncher, calcCellSize, setLauncherShowTextSetter, setLauncherGestureSetter } from '../../src/launcher/ui';
@@ -367,7 +367,7 @@ describe('入口页 UI', () => {
     // 点击幽灵 → 不执行 + 提示
     gridTiles()[0].click();
     expect(executed).toEqual([]);
-    expect(MockNotice.instances.some((n) => n.message.includes('命令不存在'))).toBe(true);
+    expect(hasNotice(/命令不存在/)).toBe(true);
     // 编辑模式可删除（操作菜单）
     longPressEnterEdit(gridTiles()[1], 150, 50);
     const ghost = gridTiles().find((t) => t.dataset.commandId === 'bz-gone-command')!;
@@ -484,7 +484,7 @@ describe('入口页 UI', () => {
     const rows = [...document.querySelectorAll<HTMLElement>('#launcher-menu-popup .launcher-picker-item')];
     rows.find((r) => r.textContent!.includes('尺寸 2×2'))!.click();
     await new Promise((r) => setTimeout(r, 0));
-    expect(MockNotice.instances.some((n) => n.message.includes('放不下'))).toBe(true);
+    expect(hasNotice(/放不下/)).toBe(true);
     const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
     expect(saved.desktop.tiles.find((t: any) => t.id === 't1')).toMatchObject({ w: 1, h: 1 });
   });

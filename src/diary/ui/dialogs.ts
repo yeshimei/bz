@@ -1,7 +1,8 @@
 /**
  * 弹窗族：添加日记、标签选择器、日期筛选（原脚本 949-1130 + 2243-2430 + 3238-3478）。
  */
-import { MarkdownView as MarkdownViewFromObsidian, Notice, moment } from 'obsidian';
+import { MarkdownView as MarkdownViewFromObsidian, moment } from 'obsidian';
+import { notice } from '../../core/notice';
 import { getApp } from '../app';
 import { DIARY_DIRECTORY, getAllAvailableTags, getSortedTagsForAddDialog, getTagEmoji, getParentPrimaryTag, isSubTag } from '../config';
 import { parseNaturalTime } from '../parser';
@@ -247,7 +248,7 @@ export function createTagPicker() {
     });
     const entryId = popup.dataset.entryId;
     if (selTagNames.length === 0) {
-      new Notice('请至少选择一个标签');
+      notice('请至少选择一个标签');
       return;
     }
     if (entryId) updateTags(entryId, selTagNames);
@@ -560,7 +561,7 @@ export async function saveNewEntry() {
     selTagNames.push((btn as HTMLElement).dataset.tag!);
   });
   if (selTagNames.length === 0) {
-    new Notice('请至少选择一个类型');
+    notice('请至少选择一个类型');
     return;
   }
 
@@ -568,7 +569,7 @@ export async function saveNewEntry() {
   if (!targetMoment || !targetMoment.isValid()) {
     targetMoment = moment(userInput, 'YYYY-MM-DD HH:mm', true);
     if (!targetMoment.isValid()) {
-      new Notice('错误：日期时间格式不正确');
+      notice('日期时间格式不正确');
       return;
     }
   }
@@ -602,7 +603,7 @@ export async function saveNewEntry() {
     }
   } catch (error: any) {
     console.error('保存日记失败:', error);
-    new Notice('保存日记失败: ' + error.message);
+    notice('❌ 保存日记失败：' + error.message);
   }
 }
 

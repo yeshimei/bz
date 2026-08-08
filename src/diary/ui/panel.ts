@@ -2,7 +2,8 @@
  * 主面板与标签栏（原脚本 160-240 + 735-1362 的 UI 部分）。
  * 负责面板/遮罩/头部/标签栏/进度条的创建，init 幂等入口，ESC 注册。
  */
-import { Notice, Setting } from 'obsidian';
+import { Setting } from 'obsidian';
+import { notice } from '../../core/notice';
 import { escManager } from '../../core/esc-manager';
 import type { EscHandle } from '../../core/esc-manager';
 import { getApp } from '../app';
@@ -362,7 +363,7 @@ export async function init(plugin?: { registerEvent: (ref: unknown) => unknown }
   } catch (err: any) {
     console.error('[日记本] 初始化失败:', err);
     try {
-      new Notice('[日记本] 初始化失败: ' + (err?.message || err));
+      notice('❌ 日记本初始化失败：' + (err?.message || err));
     } catch (e) {}
   }
 }

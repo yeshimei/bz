@@ -3,7 +3,8 @@
  * news.json / news-stats.json 统计、dataviewjs 代码块写入。
  * 源码：聚合讯.js 逐字移植（单篇渲染 DOM、文案、样式一致）。
  */
-import { Notice, TFile } from 'obsidian';
+import { TFile } from 'obsidian';
+import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { createSiteIcon, injectStyles } from '../core/dom';
@@ -451,7 +452,7 @@ export async function saveToClip() {
   if (!a) return;
 
   const cleanTitle = a.title.replace(/[\\/:*?"<>|]/g, '').trim();
-  if (!cleanTitle) { new Notice('标题为空'); return; }
+  if (!cleanTitle) { notice('标题为空'); return; }
 
   const filePath = `${CLIP_DIR}/${cleanTitle}.md`;
 
@@ -515,12 +516,12 @@ ${body}`;
     const existing = app.vault.getAbstractFileByPath(filePath);
     if (existing) await app.vault.modify(existing as TFile, md);
     else await app.vault.create(filePath, md);
-    new Notice(`✅ 已保存: ${cleanTitle}`);
+    notice(`✅ 已保存：${cleanTitle}`);
     hide();
     app.workspace.openLinkText(filePath, filePath, true);
     markAsRead('saved');
   } catch (e: any) {
-    new Notice(`❌ 保存失败: ${e.message}`);
+    notice(`❌ 保存失败：${e.message}`);
   }
 }
 
@@ -549,7 +550,7 @@ export async function checkNewArticles(prevTotal: number) {
     if (!af) return;
     const fresh = JSON.parse(await app.vault.read(af as TFile));
     if (fresh.length > prevTotal) {
-      new Notice(`📰 新增 ${fresh.length - prevTotal} 篇文章`);
+      notice(`📰 新增 ${fresh.length - prevTotal} 篇文章`);
     }
   } catch (e) { /* 忽略 */ }
 }
