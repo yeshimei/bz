@@ -5,9 +5,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
-import { setBzSettingsProvider } from '../../src/bz';
-import { App } from '../../src/bz/app';
-import { UIManager } from '../../src/bz/ui';
+import { setBzSettingsProvider } from '../../src/memo';
+import { App } from '../../src/memo/app';
+import { UIManager } from '../../src/memo/ui';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 
