@@ -26,6 +26,7 @@ import { openMovieManager, addMovieItem } from './movie';
 import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating } from './review';
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
+import { openLauncherPanel, unloadLauncherPanel } from './launcher';
 import { ensureAutoSummary } from './auto-summary';
 import { ensureAIAgent, unloadAIAgent } from './ai-agent';
 // 日记本（diary-notebook 合并）
@@ -37,6 +38,8 @@ import { applyUiSettings, init as diaryInit, showDiaryPanel, unregisterEscLayer 
 
 /** 命令表：id/name 均提取自原脚本 addCommand 调用点（spec「命令 id 全清单」） */
 const COMMANDS: { id: string; name: string; callback: () => void }[] = [
+  // 入口页
+  { id: 'bz-launcher-open', name: '打开命令入口页', callback: () => openLauncherPanel(getApp()) },
   // 备忘录
   { id: 'bz-memo-open-panel', name: '打开备忘录面板', callback: () => openBzPanel(getApp()) },
   { id: 'bz-memo-create-item', name: '创建备忘录条目', callback: () => createMemoItem(getApp()) },
@@ -145,6 +148,7 @@ export default class BzPlugin extends Plugin {
     escManager.destroy();
     unloadBz();
     unloadAIAgent();
+    unloadLauncherPanel();
     // 日记本清理（diary-notebook 原 onunload；escManager.destroy 已在上面统一调用）
     const diaryIds = [
       'diary-tag-filter',
@@ -219,6 +223,7 @@ export class BzSettingTab extends PluginSettingTab {
       { id: 'library', label: '书库', build: (el) => this.buildLibraryTab(el, s, save) },
       { id: 'movie', label: '影视', build: (el) => this.buildMovieTab(el, s, save) },
       { id: 'review', label: '复习计划', build: (el) => this.buildReviewTab(el, s, save) },
+      { id: 'launcher', label: '入口页', build: (el) => this.buildLauncherTab(el, s, save) },
       { id: 'ai-agent', label: 'AI Agent', build: (el) => this.buildAIAgentTab(el, s, save) },
       { id: 'flash', label: '闪念', build: (el) => this.buildFlashTab(el, s, save) },
     ];
@@ -353,20 +358,7 @@ export class BzSettingTab extends PluginSettingTab {
     this.textSetting(el, '影视文件夹', '存放影视笔记的文件夹路径', s.movieFolderPath, save, (v) => (s.movieFolderPath = v));
     this.textSetting(el, '每页加载数量', '列表初始加载及每次滚动加载的条数', s.moviePageSize, save, (v) => (s.moviePageSize = v));
     // 海报抓取：独立脚本 + PM2 守护（不内置于插件），仅文字提示
-    new Setting(el).setName('海报抓取（外部脚本）').setDesc(this.posterGuideText());
-  }
-
-  /** 海报抓取使用指引：安装 npm 包并以 PM2 守护运行（桌面端）；移动端标注仅桌面端可运行 */
-  private posterGuideText(): string {
-    const steps = [
-      '影视海报与豆瓣信息抓取由独立脚本 @jwbz/obsidian-douban-poster 提供，不内置于本插件。',
-      '桌面端安装并运行：',
-      '1. npm install -g @jwbz/obsidian-douban-poster',
-      '2. douban-poster start（PM2 守护，监听影视文件夹的新建/改动，遍历缺海报的笔记自动抓取，每 15 秒处理一个避免接口限流）',
-      '3. douban-poster status / logs 查看状态与日志；douban-poster stop 停止',
-    ];
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
-    return steps.join('\n') + (isMobile ? '\n\n该脚本仅桌面端可运行（依赖 Node.js 环境）。' : '');
+    new Setting(el).setName('海报抓取').setDesc('影视海报与豆瓣信息抓取由独立脚本 @jwbz/obsidian-douban-poster 提供。');
   }
 
   // ===== 复习计划 + 做题家 =====（做题家选项在「做题决定难度」开启时动态显示）
@@ -438,6 +430,21 @@ export class BzSettingTab extends PluginSettingTab {
     this.textSetting(el, '远程 Ollama URL', '手机端使用的远程 Ollama 地址', s.OLLAMA_REMOTE_URL, save, (v) => (s.OLLAMA_REMOTE_URL = v));
   }
 
+
+  // ===== 入口页 =====（网格列数）
+  private buildLauncherTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {
+    new Setting(el)
+      .setName('网格列数')
+      .setDesc('命令入口页的网格列数（磁贴档位最大 2×2，最小建议 3 列）')
+      .addDropdown((dd) => {
+        for (let i = 3; i <= 8; i++) dd.addOption(String(i), `${i} 列`);
+        dd.setValue(s.launcherColumns || '6');
+        dd.onChange(async (v) => {
+          s.launcherColumns = v;
+          await save();
+        });
+      });
+  }
 
   // ===== AI Agent =====（笔记同步，懒加载开关 + 同步选项）
   private buildAIAgentTab(el: HTMLElement, s: BzSettings, save: () => Promise<void>) {

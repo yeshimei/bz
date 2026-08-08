@@ -1,0 +1,435 @@
+/**
+ * 入口页 UI 测试（ticket 23）：jsdom 交互——单例打开 / 长按编辑模式 /
+ * 添加删除 / 拖拽推挤落位 / 档位手柄 / 点击执行并关闭 / 幽灵磁贴 / ESC。
+ */
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { MockVault } from '../mock-vault';
+import { MockNotice, resetObsidianMocks } from '../mock-obsidian-entry';
+import { setApp, getApp } from '../../src/core/app';
+import { setSettingsProvider } from '../../src/core/settings-provider';
+import { openLauncher, unloadLauncher } from '../../src/launcher/ui';
+import { LAUNCHER_PATH } from '../../src/launcher/data';
+
+const CELL_W = 110;
+const CELL_H = 110;
+
+const BZ_COMMANDS = [
+  { id: 'bz-memo-open-panel', name: '打开备忘录面板', icon: 'sticky-note' },
+  { id: 'bz-pw-open-manager', name: '打开密码本', icon: 'key' },
+  { id: 'bz-review-open-panel', name: '打开复习面板', icon: 'calendar' },
+];
+
+function makeMockApp(vault: MockVault, extraCommands: { id: string; name: string; icon?: string }[] = []) {
+  const executed: string[] = [];
+  const app: any = {
+    vault,
+    commands: {
+      listCommands: vi.fn(() => [...BZ_COMMANDS, ...extraCommands]),
+      executeCommandById: vi.fn((id: string) => {
+        executed.push(id);
+      }),
+    },
+    workspace: { on: () => ({ ref: 'r' }), onLayoutReady: (cb: () => void) => cb(), getActiveFile: () => null },
+    metadataCache: { getFileCache: () => null },
+  };
+  return { app, executed };
+}
+
+async function openOnce(vault: MockVault) {
+  const { app, executed } = makeMockApp(vault);
+  setApp(app);
+  setSettingsProvider(() => ({ launcherColumns: '6' }) as any);
+  openLauncher(app);
+  // 等待 loadLauncherData 完成
+  await new Promise((r) => setTimeout(r, 0));
+  await new Promise((r) => setTimeout(r, 0));
+  return { app, executed };
+}
+
+function gridTiles(): HTMLElement[] {
+  return [...document.querySelectorAll<HTMLElement>('#launcher-grid .launcher-tile')];
+}
+
+function firePointer(el: EventTarget, type: string, clientX: number, clientY: number) {
+  el.dispatchEvent(new PointerEvent(type, { clientX, clientY, bubbles: true, cancelable: true }));
+}
+
+describe('入口页 UI', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+    setSettingsProvider(() => ({}) as any);
+  });
+
+  afterEach(() => {
+    unloadLauncher();
+    document.body.innerHTML = '';
+    setApp(null as any);
+  });
+
+  it('打开：弹窗挂载 + 空态提示', async () => {
+    await openOnce(new MockVault());
+    expect(document.getElementById('launcher-overlay')).not.toBeNull();
+    expect(document.getElementById('launcher-modal')).not.toBeNull();
+    expect(document.getElementById('launcher-empty')).not.toBeNull();
+  });
+
+  it('单例：重复打开不重建（复用聚焦）', async () => {
+    const vault = new MockVault();
+    await openOnce(vault);
+    openLauncher((getApp() as any));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.querySelectorAll('#launcher-overlay').length).toBe(1);
+  });
+
+  it('读取已有布局：launcher.json 磁贴渲染（含自定义图标）', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({
+        version: 1,
+        tiles: [
+          { id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 2, h: 1, icon: 'star' },
+          { id: 't2', commandId: 'bz-pw-open-manager', x: 2, y: 0, w: 1, h: 1 },
+        ],
+      })
+    );
+    await openOnce(vault);
+    const tiles = gridTiles();
+    expect(tiles.length).toBe(2);
+    expect(tiles[0].dataset.commandId).toBe('bz-memo-open-panel');
+    expect(tiles[0].style.gridColumn).toBe('1 / span 2');
+    // 自定义图标优先于命令 icon
+    expect(tiles[0].querySelector<HTMLElement>('.launcher-icon')!.dataset.icon).toBe('star');
+    expect(tiles[1].querySelector<HTMLElement>('.launcher-icon')!.dataset.icon).toBe('key');
+  });
+
+  it('长按 0.5s 进入编辑模式：tile.editing + 完成按钮显示', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({
+        version: 1,
+        tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }],
+      })
+    );
+    await openOnce(vault);
+    let tile = gridTiles()[0];
+    vi.useFakeTimers();
+    try {
+      firePointer(tile, 'pointerdown', 50, 50);
+      expect(tile.classList.contains('editing')).toBe(false);
+      vi.advanceTimersByTime(500);
+      // render 重建 DOM，重新查询
+      tile = gridTiles()[0];
+      expect(tile.classList.contains('editing')).toBe(true);
+      // 编辑模式元素：删除按钮 + 档位手柄
+      expect(tile.querySelector('.launcher-del')).not.toBeNull();
+      expect(tile.querySelector('.launcher-resize')).not.toBeNull();
+      expect(document.querySelector('.launcher-toolbar button[title="退出编辑模式"]')).not.toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('长按前快速移动/松开取消进编辑', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+    );
+    await openOnce(vault);
+    const tile = gridTiles()[0];
+    vi.useFakeTimers();
+    try {
+      firePointer(tile, 'pointerdown', 50, 50);
+      firePointer(tile, 'pointermove', 80, 50); // 移动 30px > 10px 阈值
+      vi.advanceTimersByTime(500);
+      expect(tile.classList.contains('editing')).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('添加：+ 打开命令选择器 → 过滤 → 选中 → 1×1 落末尾 + 写盘', async () => {
+    const vault = new MockVault();
+    await openOnce(vault);
+    // 直接进编辑模式（长按模拟）
+    const grid = document.getElementById('launcher-grid')!;
+    // 空态无磁贴 → 用 + 按钮进入流程
+    const addBtn = document.querySelector<HTMLElement>('.launcher-toolbar button[title="添加命令"]')!;
+    addBtn.click();
+    expect(document.getElementById('launcher-cmd-mask')).not.toBeNull();
+    const input = document.querySelector<HTMLInputElement>('#launcher-cmd-popup input')!;
+    input.value = '备忘';
+    input.dispatchEvent(new Event('input'));
+    const items = document.querySelectorAll<HTMLElement>('#launcher-cmd-popup .launcher-picker-item');
+    expect(items.length).toBe(1);
+    expect(items[0].dataset.commandId).toBe('bz-memo-open-panel');
+    items[0].click();
+    // 等待写盘（saveLauncherData 建目录/建文件为异步链）
+    await new Promise((r) => setTimeout(r, 0));
+    // 磁贴出现 + 保存 + 进入编辑模式
+    const tiles = gridTiles();
+    expect(tiles.length).toBe(1);
+    expect(tiles[0].dataset.commandId).toBe('bz-memo-open-panel');
+    expect(tiles[0].classList.contains('editing')).toBe(true);
+    const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
+    expect(saved.tiles[0]).toMatchObject({ commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 });
+    void grid;
+  });
+
+  it('添加多个：依次落末尾空位', async () => {
+    const vault = new MockVault();
+    await openOnce(vault);
+    const addBtn = document.querySelector<HTMLElement>('.launcher-toolbar button[title="添加命令"]')!;
+    const pick = (id: string) => {
+      addBtn.click();
+      const items = [...document.querySelectorAll<HTMLElement>('#launcher-cmd-popup .launcher-picker-item')];
+      items.find((i) => i.dataset.commandId === id)!.click();
+    };
+    pick('bz-memo-open-panel');
+    pick('bz-pw-open-manager');
+    pick('bz-review-open-panel');
+    const tiles = gridTiles();
+    expect(tiles.map((t) => t.dataset.commandId)).toEqual([
+      'bz-memo-open-panel',
+      'bz-pw-open-manager',
+      'bz-review-open-panel',
+    ]);
+    expect(tiles[0].style.gridColumn).toBe('1 / span 1');
+    expect(tiles[1].style.gridColumn).toBe('2 / span 1');
+    expect(tiles[2].style.gridColumn).toBe('3 / span 1');
+  });
+
+  it('删除：编辑模式点 × → 磁贴移除 + 写盘', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+    );
+    await openOnce(vault);
+    const tile = gridTiles()[0];
+    vi.useFakeTimers();
+    try {
+      firePointer(tile, 'pointerdown', 50, 50);
+      vi.advanceTimersByTime(500);
+    } finally {
+      vi.useRealTimers();
+    }
+    gridTiles()[0].querySelector<HTMLElement>('.launcher-del')!.click();
+    expect(gridTiles().length).toBe(0);
+    const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
+    expect(saved.tiles.length).toBe(0);
+  });
+
+  it('点击磁贴：执行命令并关闭入口页', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+    );
+    const { executed } = await openOnce(vault);
+    const tile = gridTiles()[0];
+    tile.click();
+    expect(executed).toEqual(['bz-memo-open-panel']);
+    expect(document.getElementById('launcher-overlay')).toBeNull();
+  });
+
+  it('幽灵磁贴：命令失效 → ghost 类；点击提示不执行；可删除', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({
+        version: 1,
+        tiles: [
+          { id: 't1', commandId: 'bz-gone-command', x: 0, y: 0, w: 1, h: 1 }, // 失效
+          { id: 't2', commandId: 'bz-memo-open-panel', x: 1, y: 0, w: 1, h: 1 },
+        ],
+      })
+    );
+    const { executed } = await openOnce(vault);
+    const tiles = gridTiles();
+    expect(tiles[0].classList.contains('ghost')).toBe(true);
+    expect(tiles[1].classList.contains('ghost')).toBe(false);
+    // 点击幽灵 → 不执行 + 提示
+    gridTiles()[0].click();
+    expect(executed).toEqual([]);
+    expect(MockNotice.instances.some((n) => n.message.includes('命令不存在'))).toBe(true);
+    // 编辑模式可删除
+    vi.useFakeTimers();
+    try {
+      firePointer(gridTiles()[1], 'pointerdown', 150, 50);
+      vi.advanceTimersByTime(500);
+    } finally {
+      vi.useRealTimers();
+    }
+    const ghost = gridTiles().find((t) => t.dataset.commandId === 'bz-gone-command')!;
+    ghost.querySelector<HTMLElement>('.launcher-del')!.click();
+    expect(gridTiles().map((t) => t.dataset.commandId)).toEqual(['bz-memo-open-panel']);
+  });
+
+  it('拖拽移动：编辑模式拖主体 → 推挤落位 + 写盘', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({
+        version: 1,
+        tiles: [
+          { id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 },
+          { id: 't2', commandId: 'bz-pw-open-manager', x: 1, y: 0, w: 1, h: 1 },
+        ],
+      })
+    );
+    await openOnce(vault);
+    // 进编辑模式（长按 t2）
+    vi.useFakeTimers();
+    try {
+      firePointer(gridTiles().find((t) => t.dataset.commandId === 'bz-pw-open-manager')!, 'pointerdown', 160, 50);
+      vi.advanceTimersByTime(500);
+    } finally {
+      vi.useRealTimers();
+    }
+    // 拖 t2（(1,0)）到 (3,0)：pointerdown 中心 (1*110+55, 55)
+    const t1 = gridTiles().find((t) => t.dataset.commandId === 'bz-memo-open-panel')!;
+    firePointer(t1, 'pointerdown', 0 * CELL_W + 55, 55);
+    // 目标格 (3,0)：pointer 需让磁贴中心落在 (3*110+55, 55)
+    firePointer(document, 'pointermove', 3 * CELL_W + 55, 55);
+    firePointer(document, 'pointerup', 3 * CELL_W + 55, 55);
+    await new Promise((r) => setTimeout(r, 0));
+    const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
+    const moved = saved.tiles.find((t: any) => t.id === 't1');
+    expect(moved).toMatchObject({ x: 3, y: 0 });
+    // t2 未被挤（目标区空闲）
+    const t2s = saved.tiles.find((t: any) => t.id === 't2');
+    expect(t2s).toMatchObject({ x: 1, y: 0 });
+  });
+
+  it('拖拽推挤：目标被占 → 被占磁贴顺移', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({
+        version: 1,
+        tiles: [
+          { id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 },
+          { id: 't2', commandId: 'bz-pw-open-manager', x: 1, y: 0, w: 1, h: 1 },
+        ],
+      })
+    );
+    await openOnce(vault);
+    // 进编辑模式（长按 t1）
+    vi.useFakeTimers();
+    try {
+      firePointer(gridTiles()[0], 'pointerdown', 50, 50);
+      vi.advanceTimersByTime(500);
+    } finally {
+      vi.useRealTimers();
+    }
+    // 拖 t1（(0,0)）到 (1,0)（被 t2 占）
+    const t1 = gridTiles().find((t) => t.dataset.commandId === 'bz-memo-open-panel')!;
+    firePointer(t1, 'pointerdown', 0 * CELL_W + 55, 55);
+    firePointer(document, 'pointermove', 1 * CELL_W + 55, 55);
+    firePointer(document, 'pointerup', 1 * CELL_W + 55, 55);
+    await new Promise((r) => setTimeout(r, 0));
+    const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
+    expect(saved.tiles.find((t: any) => t.id === 't1')).toMatchObject({ x: 1, y: 0 });
+    expect(saved.tiles.find((t: any) => t.id === 't2')).toMatchObject({ x: 2, y: 0 }); // 被挤到右侧
+  });
+
+  it('档位手柄：拖动 → 尺寸变化 + 写盘', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+    );
+    await openOnce(vault);
+    let tile = gridTiles()[0];
+    vi.useFakeTimers();
+    try {
+      firePointer(tile, 'pointerdown', 50, 50);
+      vi.advanceTimersByTime(500);
+      tile = gridTiles()[0];
+    } finally {
+      vi.useRealTimers();
+    }
+    const handle = tile.querySelector<HTMLElement>('.launcher-resize')!;
+    firePointer(handle, 'pointerdown', 100, 100);
+    firePointer(document, 'pointermove', 250, 250); // 2×2
+    firePointer(document, 'pointerup', 250, 250);
+    await new Promise((r) => setTimeout(r, 0));
+    const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
+    expect(saved.tiles[0]).toMatchObject({ w: 2, h: 2 });
+  });
+
+  it('档位被拒：扩大会与邻居重叠 → 保持原尺寸', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({
+        version: 1,
+        tiles: [
+          { id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 },
+          { id: 't2', commandId: 'bz-pw-open-manager', x: 1, y: 0, w: 2, h: 2 },
+        ],
+      })
+    );
+    await openOnce(vault);
+    let tile = gridTiles().find((t) => t.dataset.commandId === 'bz-memo-open-panel')!;
+    vi.useFakeTimers();
+    try {
+      firePointer(tile, 'pointerdown', 50, 50);
+      vi.advanceTimersByTime(500);
+      tile = gridTiles().find((t) => t.dataset.commandId === 'bz-memo-open-panel')!;
+    } finally {
+      vi.useRealTimers();
+    }
+    const handle = tile.querySelector<HTMLElement>('.launcher-resize')!;
+    firePointer(handle, 'pointerdown', 100, 100);
+    firePointer(document, 'pointermove', 250, 250); // 2×2 与 t2 重叠 → 拒绝
+    firePointer(document, 'pointerup', 250, 250);
+    await new Promise((r) => setTimeout(r, 0));
+    const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
+    expect(saved.tiles.find((t: any) => t.id === 't1')).toMatchObject({ w: 1, h: 1 });
+  });
+
+  it('图标选择器：编辑模式点图标 → 选择 lucide 图标 → 写盘', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+    );
+    await openOnce(vault);
+    let tile = gridTiles()[0];
+    vi.useFakeTimers();
+    try {
+      firePointer(tile, 'pointerdown', 50, 50);
+      vi.advanceTimersByTime(500);
+      tile = gridTiles()[0];
+    } finally {
+      vi.useRealTimers();
+    }
+    tile.querySelector<HTMLElement>('.launcher-icon')!.click();
+    expect(document.getElementById('launcher-icon-mask')).not.toBeNull();
+    const cell = document.querySelector<HTMLElement>('#launcher-icon-popup .launcher-icon-cell[data-icon="star"]')!;
+    cell.click();
+    await new Promise((r) => setTimeout(r, 0));
+    const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
+    expect(saved.tiles[0].icon).toBe('star');
+  });
+
+  it('ESC 关闭入口页', async () => {
+    await openOnce(new MockVault());
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(document.getElementById('launcher-overlay')).toBeNull();
+  });
+
+  it('关闭时清理残留命令选择器', async () => {
+    await openOnce(new MockVault());
+    document.querySelector<HTMLElement>('.launcher-toolbar button[title="添加命令"]')!.click();
+    expect(document.getElementById('launcher-cmd-mask')).not.toBeNull();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(document.getElementById('launcher-cmd-mask')).toBeNull();
+    expect(document.getElementById('launcher-overlay')).toBeNull();
+  });
+});

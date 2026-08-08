@@ -212,6 +212,11 @@ export const TFile = class {};
 export const TFolder = class {};
 export const normalizePath = (p: string) => p;
 
+/** setIcon mock：把图标名记录到元素 dataset.icon（真实环境渲染 lucide svg） */
+export const setIcon = vi.fn((el: HTMLElement, name: string) => {
+  el.dataset.icon = name;
+});
+
 export const requestUrl = vi.fn(async (opts: any) => ({
   status: 200,
   text: '',
@@ -230,11 +235,13 @@ export const obsidianMock = {
   TFolder,
   normalizePath,
   requestUrl,
+  setIcon,
 };
 
 export function resetObsidianMocks() {
   MockNotice.instances = [];
   mockMarkdownRenderer.render.mockClear();
+  setIcon.mockClear();
 }
 
 export default obsidianMock;

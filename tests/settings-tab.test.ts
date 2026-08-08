@@ -53,7 +53,7 @@ function findSetting(tab: BzSettingTab, name: string) {
   return el;
 }
 
-const ALL_TABS = ['AI', '备忘录', '日记本', '归物本', '剪藏本', '密码本', '收藏本', '书库', '影视', '复习计划', 'AI Agent', '闪念'];
+const ALL_TABS = ['AI', '备忘录', '日记本', '归物本', '剪藏本', '密码本', '收藏本', '书库', '影视', '复习计划', '入口页', 'AI Agent', '闪念'];
 
 describe('设置页 BzSettingTab', () => {
   let plugin: any;
@@ -68,11 +68,11 @@ describe('设置页 BzSettingTab', () => {
     tab.display();
   });
 
-  it('display 渲染 12 个 tab，默认第一个（AI）激活', () => {
+  it('display 渲染 13 个 tab，默认第一个（AI）激活', () => {
     const btns = [...tab.containerEl.querySelectorAll('.bz-tab')];
     expect(btns.map((b) => b.textContent)).toEqual(ALL_TABS);
     expect(btns[0].classList.contains('bz-tab-active')).toBe(true);
-    expect(tab.containerEl.querySelectorAll('.bz-tab-content').length).toBe(12);
+    expect(tab.containerEl.querySelectorAll('.bz-tab-content').length).toBe(13);
   });
 
   it('每个 tab 点击后渲染对应设置项（抽查关键项）', () => {
@@ -87,6 +87,7 @@ describe('设置页 BzSettingTab', () => {
       书库: ['书库文件夹', '书籍识别标签'],
       影视: ['影视文件夹', '每页加载数量'],
       复习计划: ['数据存储路径', '做题决定难度', '题目难度'],
+      入口页: ['网格列数'],
       闪念: ['Ollama URL', 'Embedding 模型', '并发数'],
       'AI Agent': ['启用', '监听文件夹', 'AI 匹配模型'],
     };

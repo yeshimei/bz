@@ -74,6 +74,20 @@ _Avoid_: 抓海报、豆瓣补全、poster fetch
 
 **闪念 (Flash Thought)**: 右侧窄窗 · 自动吸附缩起 · 悬停展开 · 向量检索增强（Ollama bge-m3）· AI 对话（Ollama qwen2.5 / DeepSeek）。常驻监听光标移动。
 
+**入口页 (Launcher)**: 全局唯一的命令入口弹窗，网格化展示命令磁贴；单击磁贴执行对应命令并关闭入口页。范围不限 bz- 命令，其他插件命令亦可上墙。
+_Avoid_: 主页、启动台、dashboard、控制台
+
+**磁贴 (Tile)**: 入口页上的最小单元，对应一条命令，占据 列×行 个网格单元；可增删、拖拽移动、调整档位、自定义图标。
+
+**档位 (Size Preset)**: 磁贴的尺寸档位 {1×1, 1×2, 2×1, 2×2}（列×行，最大 2×2）。
+
+**编辑模式 (Edit Mode)**: 长按磁贴进入的编辑态（iOS 式）——拖动主体移动、拖右下角手柄调档位、左上角 × 删除、顶部 + 添加、完成退出；常态下单击磁贴即执行命令。
+
+**推挤 (Push)**: 磁贴拖拽落点被占据时的碰撞语义——被占磁贴及其后磁贴顺移腾位。
+
+**幽灵磁贴 (Ghost Tile)**: 命令失效（所属插件被禁用等）后磁贴的保留态——保留位置与配置，灰色不可用，可删除，命令恢复后自动复活。
+_Avoid_: 无效磁贴、死磁贴
+
 ### 共享层
 
 **Q3 / __utils**: QuickAdd 共享脚本（`CONFIG/SCRIPTS/Quickadd/Q/Q3.js`，1034 行），挂载 `window.__utils`，21 个导出：escManager、confirm、notice、generateId、jsonStore、longPress、injectStyles、createSiteIcon、createIconBtn、formatRelativeTime、formatFileSize、displayChangelog、checkAndShowChangelog、AIService、createAI、extractUrlAndDisplay、getPlatformName、getCurrentNoteInfo、getCurrentCursorPosition、fetchPageTitle、createOverlay。**新插件移植后为内部共享层（core），不再挂 window**。
