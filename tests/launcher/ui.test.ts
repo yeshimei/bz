@@ -42,8 +42,12 @@ function makeMockApp(vault: MockVault, extraCommands: { id: string; name: string
   return { app, executed };
 }
 
-async function openOnce(vault: MockVault, settings: Record<string, any> = {}) {
-  const { app, executed } = makeMockApp(vault);
+async function openOnce(
+  vault: MockVault,
+  settings: Record<string, any> = {},
+  extraCommands: { id: string; name: string; icon?: string }[] = []
+) {
+  const { app, executed } = makeMockApp(vault, extraCommands);
   setApp(app);
   setSettingsProvider(() => ({ launcherColumns: '6', ...settings }) as any);
   openLauncher(app);
@@ -223,13 +227,41 @@ describe('入口页 UI', () => {
     items[0].click();
     // 等待写盘（saveLauncherData 建目录/建文件为异步链）
     await new Promise((r) => setTimeout(r, 0));
-    // 磁贴出现 + 保存 + 进入编辑模式
+    // 磁贴出现 + 保存 + 进入编辑模式 + 固化命令自带图标
     const tiles = gridTiles();
     expect(tiles.length).toBe(1);
     expect(tiles[0].dataset.commandId).toBe('bz-memo-open-panel');
     expect(tiles[0].classList.contains('editing')).toBe(true);
+    expect(tiles[0].querySelector<HTMLElement>('.launcher-icon')!.dataset.icon).toBe('sticky-note');
     const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
-    expect(saved.desktop.tiles[0]).toMatchObject({ commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 });
+    expect(saved.desktop.tiles[0]).toMatchObject({
+      commandId: 'bz-memo-open-panel',
+      x: 0,
+      y: 0,
+      w: 1,
+      h: 1,
+      icon: 'sticky-note', // 命令有图标 → 默认固化
+    });
+  });
+
+  it('添加无图标命令 → 不固化 icon（运行时兜底）', async () => {
+    const vault = new MockVault();
+    await openOnce(vault, {}, [{ id: 'bz-no-icon-cmd', name: '无图标命令' }]);
+    const grid = document.getElementById('launcher-grid')!;
+    vi.useFakeTimers();
+    try {
+      firePointer(grid, 'pointerdown', 100, 100);
+      vi.advanceTimersByTime(500);
+    } finally {
+      vi.useRealTimers();
+    }
+    document.querySelector<HTMLElement>('#launcher-grid .launcher-empty-cell')!.click();
+    const items = [...document.querySelectorAll<HTMLElement>('#launcher-cmd-popup .launcher-picker-item')];
+    items.find((i) => i.dataset.commandId === 'bz-no-icon-cmd')!.click();
+    await new Promise((r) => setTimeout(r, 0));
+    const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
+    expect(saved.desktop.tiles[0].icon).toBeUndefined(); // 无图标不固化
+    expect(saved.desktop.tiles[0].commandId).toBe('bz-no-icon-cmd');
   });
 
   it('添加多个：依次落末尾空位', async () => {
