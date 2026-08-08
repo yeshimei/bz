@@ -26,13 +26,20 @@ export interface LauncherTile {
   hideText?: boolean;
 }
 
-/** launcher.json 根结构（v2：桌面/移动端两套独立配置，互不影响） */
+/** 单个平台的入口页配置（v3：tiles + 列数，桌面/移动互不影响） */
+export interface LauncherPlatformConfig {
+  tiles: LauncherTile[];
+  /** 网格列数（3-8） */
+  columns: number;
+}
+
+/** launcher.json 根结构（v3：桌面/移动端两套独立配置，各带列数） */
 export interface LauncherData {
   version: number;
-  /** 桌面端磁贴 */
-  desktop: LauncherTile[];
-  /** 移动端磁贴 */
-  mobile: LauncherTile[];
+  /** 桌面端配置 */
+  desktop: LauncherPlatformConfig;
+  /** 移动端配置 */
+  mobile: LauncherPlatformConfig;
 }
 
 /** v1 旧格式（仅桌面布局，无平台区分）——读取时自动归入 desktop */
@@ -84,18 +91,42 @@ function cleanTile(t: any): LauncherTile | null {
   };
 }
 
-/** 容错解析：非法字段剔除、缺字段补齐（数据损坏不致命）；v1 旧格式自动迁移到 desktop */
+/** 列数清洗：3-8，缺省桌面 6 / 移动 4 */
+function cleanColumns(v: any, fallback: number): number {
+  const n = parseInt(v, 10);
+  return n >= 3 && n <= 8 ? n : fallback;
+}
+
+/** 容错解析：非法字段剔除、缺字段补齐（数据损坏不致命）；v1/v2 旧格式自动迁移 */
 export function normalizeData(raw: unknown): LauncherData {
-  const empty: LauncherData = { version: 2, desktop: [], mobile: [] };
+  const empty: LauncherData = {
+    version: 3,
+    desktop: { tiles: [], columns: 6 },
+    mobile: { tiles: [], columns: 4 },
+  };
   if (!raw || typeof raw !== 'object') return empty;
   const r = raw as any;
+  const parsePlatform = (cfg: any, fallbackCols: number, legacyTiles?: any): LauncherPlatformConfig => {
+    if (Array.isArray(cfg)) {
+      // v2：desktop/mobile 直接是磁贴数组
+      return { tiles: cleanTiles(cfg), columns: fallbackCols };
+    }
+    if (cfg && typeof cfg === 'object') {
+      // v3：{ tiles, columns }
+      const t = Array.isArray(cfg.tiles) ? cfg.tiles : [];
+      return { tiles: cleanTiles(t), columns: cleanColumns(cfg.columns, fallbackCols) };
+    }
+    return { tiles: cleanTiles(legacyTiles || []), columns: fallbackCols };
+  };
   // v1 兼容：顶层 tiles 数组 → desktop
-  if (Array.isArray(r.tiles)) {
-    return { version: 2, desktop: cleanTiles(r.tiles), mobile: [] };
+  if (Array.isArray(r.tiles) && !r.desktop && !r.mobile) {
+    return { version: 3, desktop: { tiles: cleanTiles(r.tiles), columns: 6 }, mobile: { tiles: [], columns: 4 } };
   }
-  const desktop = Array.isArray(r.desktop) ? r.desktop : Array.isArray((r.desktop as any)?.tiles) ? (r.desktop as any).tiles : [];
-  const mobile = Array.isArray(r.mobile) ? r.mobile : Array.isArray((r.mobile as any)?.tiles) ? (r.mobile as any).tiles : [];
-  return { version: 2, desktop: cleanTiles(desktop), mobile: cleanTiles(mobile) };
+  return {
+    version: 3,
+    desktop: parsePlatform(r.desktop, 6),
+    mobile: parsePlatform(r.mobile, 4),
+  };
 }
 
 function cleanTiles(list: any[]): LauncherTile[] {
@@ -107,15 +138,15 @@ function cleanTiles(list: any[]): LauncherTile[] {
   return out;
 }
 
-/** 读取 launcher.json（不存在 → 空布局；解析失败 → 空布局，不覆盖文件） */
+/** 读取 launcher.json（不存在 → 空配置；解析失败 → 空配置，不覆盖文件） */
 export async function loadLauncherData(app: App): Promise<LauncherData> {
   try {
     const f = app.vault.getAbstractFileByPath(LAUNCHER_PATH);
-    if (!f) return { version: 2, desktop: [], mobile: [] };
+    if (!f) return { version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 4 } };
     const text = await app.vault.read(f as any);
     return normalizeData(JSON.parse(text));
   } catch (e) {
-    return { version: 2, desktop: [], mobile: [] };
+    return { version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 4 } };
   }
 }
 

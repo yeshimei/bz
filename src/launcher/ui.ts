@@ -10,7 +10,7 @@ import { escManager } from '../core/esc-manager';
 import { generateId } from '../core/utils';
 import { createIconBtn } from '../core/dom';
 import {
-  LauncherTile, LauncherData, LAUNCHER_PATH,
+  LauncherTile, LauncherData, LauncherPlatformConfig, LAUNCHER_PATH,
   loadLauncherData, saveLauncherData, placeAtEnd, pushMove, canPlace,
 } from './data';
 import { filterIcons, LUCIDE_ICONS } from './icons';
@@ -38,6 +38,8 @@ const ICON_MASK_ID = 'launcher-icon-mask';
 const ICON_POPUP_ID = 'launcher-icon-popup';
 const RENAME_MASK_ID = 'launcher-rename-mask';
 const RENAME_POPUP_ID = 'launcher-rename-popup';
+const MENU_MASK_ID = 'launcher-menu-mask';
+const MENU_POPUP_ID = 'launcher-menu-popup';
 
 /**
  * 网格单元尺寸按容器宽度比例计算（移动端自适应）:
@@ -79,8 +81,14 @@ export class LauncherModal {
   private modal: HTMLDivElement;
   private grid: HTMLDivElement;
   private doneBtn: HTMLButtonElement | null = null;
+  private editControls: HTMLDivElement | null = null;
+  private columnSel: HTMLSelectElement | null = null;
 
-  private data: LauncherData = { version: 2, desktop: [], mobile: [] };
+  private data: LauncherData = {
+    version: 3,
+    desktop: { tiles: [], columns: 6 },
+    mobile: { tiles: [], columns: 4 },
+  };
   private validIds = new Set<string>();
   private commands: CommandMeta[] = [];
   private editing = false;
@@ -108,13 +116,18 @@ export class LauncherModal {
 
   /** 当前平台磁贴（引用） */
   private tiles(): LauncherTile[] {
-    return LauncherModal.isMobileEnv() ? this.data.mobile : this.data.desktop;
+    return LauncherModal.isMobileEnv() ? this.data.mobile.tiles : this.data.desktop.tiles;
   }
 
   /** 写回当前平台磁贴 */
   private setTiles(list: LauncherTile[]): void {
-    if (LauncherModal.isMobileEnv()) this.data.mobile = list;
-    else this.data.desktop = list;
+    if (LauncherModal.isMobileEnv()) this.data.mobile.tiles = list;
+    else this.data.desktop.tiles = list;
+  }
+
+  /** 当前平台配置 */
+  private platform(): LauncherPlatformConfig {
+    return LauncherModal.isMobileEnv() ? this.data.mobile : this.data.desktop;
   }
 
   /** 单例入口：已打开 → 复用聚焦；否则创建 */
@@ -185,31 +198,70 @@ export class LauncherModal {
     this.grid.style.gridAutoRows = this.cellSize() + 'px';
   }
 
-  /** 列数：桌面/移动端独立（设置项 launcherColumns / launcherMobileColumns，3-8） */
+  /** 列数：桌面/移动端各自配置（launcher.json 内，3-8；缺省桌面 6 / 移动 4） */
   columns(): number {
-    try {
-      const key = LauncherModal.isMobileEnv() ? 'launcherMobileColumns' : 'launcherColumns';
-      const v = parseInt((getSettings() as any)[key] ?? (LauncherModal.isMobileEnv() ? '4' : '6'), 10);
-      return v >= 3 && v <= 8 ? v : 6;
-    } catch (e) {
-      return LauncherModal.isMobileEnv() ? 4 : 6;
-    }
+    return this.platform().columns;
   }
 
-  /** 编辑模式悬浮「✓ 完成」按钮（编辑模式唯一显式出口；ESC 亦可退出） */
+  /** 调整当前平台列数；越界磁贴按行优先顺序重排（reflow） */
+  setColumns(cols: number): void {
+    const cfg = this.platform();
+    const c = Math.max(3, Math.min(8, cols));
+    if (c === cfg.columns) return;
+    let tiles = this.tiles();
+    const anyOverflow = tiles.some((t) => t.x + t.w > c);
+    if (anyOverflow) {
+      // 越界 → 按 (y, x) 顺序重新流式排布
+      const sorted = tiles.slice().sort((a, b) => a.y - b.y || a.x - b.x);
+      let work: LauncherTile[] = [];
+      for (const t of sorted) work = placeAtEnd(work, t, c);
+      tiles = work;
+    }
+    cfg.columns = c;
+    this.setTiles(tiles);
+    this.save();
+    this.render();
+  }
+
+  /** 编辑模式悬浮控件：✓ 完成 + 列数选择（改当前平台配置，桌面/移动各自生效） */
   private buildDoneButton(): void {
+    const wrap = document.createElement('div');
+    wrap.id = 'launcher-edit-controls';
+    wrap.style.cssText =
+      'position:fixed;top:14px;right:18px;z-index:10101;display:none;align-items:center;gap:8px;';
+
+    const sel = document.createElement('select');
+    sel.id = 'launcher-columns-sel';
+    sel.title = '网格列数（当前平台配置）';
+    sel.style.cssText =
+      'background:var(--background-primary);color:var(--text-normal);border:1px solid var(--background-modifier-border);' +
+      'border-radius:14px;padding:5px 8px;font-size:12px;cursor:pointer;';
+    for (let i = 3; i <= 8; i++) {
+      const opt = document.createElement('option');
+      opt.value = String(i);
+      opt.textContent = i + ' 列';
+      sel.appendChild(opt);
+    }
+    sel.value = String(this.columns());
+    sel.addEventListener('change', () => this.setColumns(parseInt(sel.value, 10)));
+    wrap.appendChild(sel);
+
     const btn = document.createElement('button');
     btn.id = 'launcher-done-btn';
     btn.textContent = '✓ 完成';
     btn.title = '退出编辑模式';
     btn.style.cssText =
-      'position:fixed;top:14px;right:18px;z-index:10101;padding:6px 14px;border-radius:16px;border:none;' +
-      'background:var(--interactive-accent);color:#fff;font-size:13px;cursor:pointer;display:none;' +
+      'padding:6px 14px;border-radius:16px;border:none;' +
+      'background:var(--interactive-accent);color:#fff;font-size:13px;cursor:pointer;' +
       'box-shadow:0 4px 14px rgba(0,0,0,0.25);';
     btn.addEventListener('pointerdown', (e) => e.stopPropagation());
     btn.addEventListener('click', () => this.exitEdit());
-    document.body.appendChild(btn);
+    wrap.appendChild(btn);
+
+    document.body.appendChild(wrap);
+    this.editControls = wrap;
     this.doneBtn = btn;
+    this.columnSel = sel;
   }
 
   /** 长按网格空白区域（非磁贴）进入编辑模式——空态无磁贴时的入口 */
@@ -249,13 +301,15 @@ export class LauncherModal {
       this.escHandle = null;
     }
     // 清理可能残留的子选择器
-    for (const id of [CMD_MASK_ID, ICON_MASK_ID, RENAME_MASK_ID]) {
+    for (const id of [CMD_MASK_ID, ICON_MASK_ID, RENAME_MASK_ID, MENU_MASK_ID]) {
       const m = document.getElementById(id);
       if (m) m.remove();
     }
-    if (this.doneBtn) {
-      this.doneBtn.remove();
+    if (this.editControls) {
+      this.editControls.remove();
+      this.editControls = null;
       this.doneBtn = null;
+      this.columnSel = null;
     }
     this.overlay.remove();
     window.removeEventListener('resize', this.onResize);
@@ -281,7 +335,12 @@ export class LauncherModal {
     }
     // 编辑模式：空白单元格渲染「＋」（点击添加命令）
     if (this.editing) this.renderEmptyCells(tiles);
-    if (this.doneBtn) this.doneBtn.style.display = this.editing ? 'block' : 'none';
+    if (this.doneBtn) this.doneBtn.style.display = this.editing ? 'inline-flex' : 'none';
+    if (this.editControls) this.editControls.style.display = this.editing ? 'flex' : 'none';
+    if (this.columnSel) {
+      const v = String(this.columns());
+      if (this.columnSel.value !== v) this.columnSel.value = v;
+    }
   }
 
   /** 空白单元格「＋」占位（含末尾追加行——全满时也能继续添加） */
@@ -356,19 +415,6 @@ export class LauncherModal {
     iconEl.className = 'launcher-icon';
     iconEl.style.cssText = `width:${iconSize}px;height:${iconSize}px;display:flex;align-items:center;justify-content:center;`;
     iconEl.dataset.iconSize = String(iconSize);
-    if (this.editing) {
-      // 编辑模式：点图标可自定义（图标选择器）
-      iconEl.addEventListener('pointerdown', (e) => e.stopPropagation());
-      iconEl.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.openIconDialog(tile.id, (icon) => {
-          if (icon === null) delete tile.icon;
-          else tile.icon = icon;
-          this.save();
-          this.render();
-        });
-      });
-    }
     const cmd = this.commandOf(tile);
     const iconName = tile.icon || cmd?.icon;
     // 图标渲染：lucide 清单内 → setIcon；否则按 emoji/字符直接显示
@@ -396,56 +442,28 @@ export class LauncherModal {
         'line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;' +
         'word-break:break-all;';
       if (this.editing) {
-        // 编辑模式：点名字可改名（标签弹窗）
+        // 编辑模式：名字点击并入磁贴操作菜单
         nameEl.style.cursor = 'pointer';
-        nameEl.title = '点击修改名称';
-        nameEl.addEventListener('pointerdown', (e) => e.stopPropagation());
-        nameEl.addEventListener('click', (e) => {
-          e.stopPropagation();
-          this.openRenameDialog(tile.id);
-        });
       }
       el.appendChild(nameEl);
     }
 
-    // 编辑模式：删除按钮 + 档位手柄
+    // 编辑模式：整磁贴点击 → 操作菜单（改名/图标/尺寸/删除）
     if (this.editing) {
-      const del = document.createElement('button');
-      del.className = 'launcher-del';
-      del.title = '删除';
-      del.textContent = '×';
-      del.style.cssText =
-        'position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;border:none;' +
-        'background:var(--background-modifier-error);color:#fff;font-size:13px;line-height:1;' +
-        'cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;';
-      del.addEventListener('pointerdown', (e) => e.stopPropagation());
-      del.addEventListener('click', (e) => {
+      el.addEventListener('click', (e) => {
         e.stopPropagation();
-        this.removeTile(tile.id);
+        if (this.suppressClick) {
+          this.suppressClick = false;
+          return;
+        }
+        this.openTileMenu(tile.id);
       });
-      el.appendChild(del);
-
-      const resize = document.createElement('div');
-      resize.className = 'launcher-resize';
-      resize.title = '调整尺寸';
-      resize.textContent = '⤡';
-      resize.style.cssText =
-        'position:absolute;right:4px;bottom:4px;width:18px;height:18px;border-radius:4px;' +
-        'color:var(--text-muted);font-size:12px;line-height:1;cursor:se-resize;' +
-        'display:flex;align-items:center;justify-content:center;user-select:none;';
-      resize.addEventListener('pointerdown', (e) => {
-        e.stopPropagation();
-        this.startResize(tile, e);
-      });
-      el.appendChild(resize);
-    }
-
-    // 常态：点击执行命令并关闭
-    if (!this.editing) {
+    } else {
+      // 常态：点击执行命令并关闭
       el.addEventListener('click', () => this.onTileClick(tile, isGhost));
     }
 
-    // 长按进入编辑模式（常态）；编辑模式下拖主体移动
+    // 长按进入编辑模式（常态）；编辑模式下拖主体移动（安卓式实时重排）
     this.bindDrag(el, tile);
     return el;
   }
@@ -518,77 +536,129 @@ export class LauncherModal {
     el.addEventListener('pointerleave', end);
     el.addEventListener('pointercancel', end);
 
-    // 编辑模式：拖主体移动
+    // 编辑模式：拖主体移动（安卓式：先判定移动，超阈值才进入拖拽，避免点击闪烁）
     el.addEventListener('pointerdown', (e) => {
       if (!this.editing) return;
-      this.startDrag(tile, e as PointerEvent);
+      this.prepDrag(tile, e as PointerEvent);
     });
   }
 
-  // ===== 拖拽移动（推挤落位）=====
+  /** 编辑模式点击预判：位移超阈值 → 进入拖拽；未移动 → 由 click 触发操作菜单 */
+  private prepDrag(tile: LauncherTile, e: PointerEvent): void {
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const move = (ev: PointerEvent) => {
+      if (Math.abs(ev.clientX - startX) <= MOVE_CANCEL && Math.abs(ev.clientY - startY) <= MOVE_CANCEL) return;
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', up);
+      this.startDrag(tile, ev, startX, startY);
+    };
+    const up = () => {
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', up);
+    };
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', up);
+  }
 
-  private startDrag(tile: LauncherTile, e: PointerEvent): void {
+  // ===== 安卓式拖拽（实时让位重排）=====
+
+  private startDrag(tile: LauncherTile, e: PointerEvent, pressX?: number, pressY?: number): void {
     e.preventDefault();
     e.stopPropagation();
     const gridRect = this.grid.getBoundingClientRect();
-
-    const el = this.grid.querySelector<HTMLElement>(`.launcher-tile[data-tile-id="${tile.id}"]`);
-    if (!el) return;
-    el.classList.add('dragging');
-    el.style.position = 'fixed';
-    el.style.zIndex = '9999';
-    // 磁贴随 pointer 移动，保持抓取偏移（中心对齐）
     const step = this.cellStep();
-    const offX = e.clientX - (gridRect.left + tile.x * step + (tile.w * step) / 2);
-    const offY = e.clientY - (gridRect.top + tile.y * step + (tile.h * step) / 2);
-    el.dataset.grabOffX = String(offX);
-    el.dataset.grabOffY = String(offY);
-    el.style.left = e.clientX - offX + 'px';
-    el.style.top = e.clientY - offY + 'px';
+    const cols = this.columns();
+    // 抓取偏移（中心对齐）：以按下点为准（startDrag 的 ev 可能是移动后的位置）
+    const px = pressX ?? e.clientX;
+    const py = pressY ?? e.clientY;
+    const offX = px - (gridRect.left + tile.x * step + (tile.w * step) / 2);
+    const offY = py - (gridRect.top + tile.y * step + (tile.h * step) / 2);
+    const original = this.tiles().slice();
+    let work = original.slice();
+    let cellX = tile.x;
+    let cellY = tile.y;
+    let lastX = e.clientX;
+    let lastY = e.clientY;
+    let dragMoved = false;
 
-    // 占位框
+    // 占位框（实时目标格预览）
     const ph = document.createElement('div');
     ph.className = 'launcher-placeholder';
-    ph.style.cssText = 'border:2px dashed var(--text-muted);border-radius:12px;opacity:0.6;';
-    this.placePlaceholder(ph, tile, tile.x, tile.y);
+    ph.style.cssText = 'border:2px dashed var(--text-muted);border-radius:10px;opacity:0.6;';
+    this.placePlaceholder(ph, tile, cellX, cellY);
     this.grid.appendChild(ph);
 
-    // 拖拽目标格换算：按实际单元步长（移动端比例网格）
+    /** 拖拽磁贴跟随手指（fixed 定位 + 放大；render 重建后重新应用） */
+    const positionFloating = () => {
+      const el = this.grid.querySelector<HTMLElement>(`.launcher-tile[data-tile-id="${tile.id}"]`);
+      if (!el) return;
+      el.classList.add('dragging');
+      el.style.position = 'fixed';
+      el.style.zIndex = '9999';
+      el.style.width = tile.w * step - GAP + 'px';
+      el.style.height = tile.h * step - GAP + 'px';
+      el.style.left = lastX - offX + 'px';
+      el.style.top = lastY - offY + 'px';
+    };
+    positionFloating();
+
     const move = (ev: PointerEvent) => {
-      el.style.left = ev.clientX - parseFloat(el.dataset.grabOffX || '0') + 'px';
-      el.style.top = ev.clientY - parseFloat(el.dataset.grabOffY || '0') + 'px';
-      const left = ev.clientX - parseFloat(el.dataset.grabOffX || '0') - gridRect.left;
-      const top = ev.clientY - parseFloat(el.dataset.grabOffY || '0') - gridRect.top;
-      const cx = Math.max(0, Math.min(this.columns() - tile.w, Math.floor(left / step)));
+      dragMoved = true;
+      lastX = ev.clientX;
+      lastY = ev.clientY;
+      positionFloating();
+      const left = lastX - offX - gridRect.left;
+      const top = lastY - offY - gridRect.top;
+      const cx = Math.max(0, Math.min(cols - tile.w, Math.floor(left / step)));
       const cy = Math.max(0, Math.floor(top / step));
-      this.placePlaceholder(ph, tile, cx, cy);
-      ph.dataset.cx = String(cx);
-      ph.dataset.cy = String(cy);
+      if (cx !== cellX || cy !== cellY) {
+        const result = pushMove(work, tile.id, cx, cy, cols);
+        if (result) {
+          work = result;
+          cellX = cx;
+          cellY = cy;
+          this.setTiles(work); // 实时应用到正式布局（不保存，松手才落盘）
+          this.render(); // 其他磁贴实时让位（平滑动画由 CSS transition 提供）
+          this.grid.appendChild(ph);
+          this.placePlaceholder(ph, tile, cx, cy);
+          positionFloating();
+        }
+      }
     };
 
     const up = (ev: PointerEvent) => {
       document.removeEventListener('pointermove', move);
       document.removeEventListener('pointerup', up);
-      el.classList.remove('dragging');
-      el.style.position = '';
-      el.style.left = '';
-      el.style.top = '';
-      el.style.zIndex = '';
       ph.remove();
-      const left = ev.clientX - parseFloat(el.dataset.grabOffX || '0') - gridRect.left;
-      const top = ev.clientY - parseFloat(el.dataset.grabOffY || '0') - gridRect.top;
-      const cx = Math.max(0, Math.min(this.columns() - tile.w, Math.floor(left / step)));
+      const left = ev.clientX - offX - gridRect.left;
+      const top = ev.clientY - offY - gridRect.top;
+      const cx = Math.max(0, Math.min(cols - tile.w, Math.floor(left / step)));
       const cy = Math.max(0, Math.floor(top / step));
-      const result = pushMove(this.tiles(), tile.id, cx, cy, this.columns());
-      if (result) {
+      const result = pushMove(work, tile.id, cx, cy, cols);
+      if (result && (cx !== tile.x || cy !== tile.y)) {
         this.setTiles(result);
         this.save();
+        this.render();
+      } else {
+        // 回原位或未移动：恢复拖拽前的原始布局（撤销实时让位）
+        this.setTiles(original);
+        this.render();
       }
-      this.render();
+      // 真实拖拽过 → 抑制随后的 click（防误弹菜单）
+      if (dragMoved) {
+        this.suppressClick = true;
+        setTimeout(() => {
+          this.suppressClick = false;
+        }, 0);
+      }
     };
 
     document.addEventListener('pointermove', move);
     document.addEventListener('pointerup', up);
+    // 立即处理当前指针位置（首个移动事件来自 prepDrag 转发）
+    move(e);
   }
 
   private placePlaceholder(ph: HTMLElement, tile: LauncherTile, cx: number, cy: number): void {
@@ -596,45 +666,71 @@ export class LauncherModal {
     ph.style.gridRow = `${cy + 1} / span ${tile.h}`;
   }
 
-  // ===== 档位手柄 =====
+  // ===== 磁贴操作菜单 =====
 
-  private startResize(tile: LauncherTile, e: PointerEvent): void {
-    e.preventDefault();
-    e.stopPropagation();
-    const gridRect = this.grid.getBoundingClientRect();
-    const step = this.cellStep();
-    const el = this.grid.querySelector<HTMLElement>(`.launcher-tile[data-tile-id="${tile.id}"]`);
-    if (!el) return;
-    el.classList.add('resizing');
+  /** 编辑模式点磁贴 → 操作菜单（改名/图标/尺寸/删除） */
+  private openTileMenu(tileId: string): void {
+    const tile = this.tiles().find((t) => t.id === tileId);
+    if (!tile) return;
+    const { mask, popup } = this.buildPicker(MENU_MASK_ID, MENU_POPUP_ID, '磁贴操作');
+    const list = document.createElement('div');
+    list.style.cssText = 'display:flex;flex-direction:column;gap:2px;';
+    popup.appendChild(list);
 
-    const move = (ev: PointerEvent) => {
-      const left = ev.clientX - gridRect.left - tile.x * step;
-      const top = ev.clientY - gridRect.top - tile.y * step;
-      const w = Math.max(1, Math.min(2, Math.round(left / step)));
-      const h = Math.max(1, Math.min(2, Math.round(top / step)));
-      el.style.gridColumn = `${tile.x + 1} / span ${w}`;
-      el.style.gridRow = `${tile.y + 1} / span ${h}`;
-      el.dataset.previewW = String(w);
-      el.dataset.previewH = String(h);
+    const addRow = (text: string, handler: () => void) => {
+      const row = document.createElement('div');
+      row.className = 'launcher-picker-item';
+      row.textContent = text;
+      row.style.cssText =
+        'display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;' +
+        'font-size:13px;';
+      row.addEventListener('mouseenter', () => (row.style.background = 'var(--background-modifier-hover)'));
+      row.addEventListener('mouseleave', () => (row.style.background = ''));
+      row.addEventListener('click', handler);
+      list.appendChild(row);
+      return row;
     };
 
-    const up = () => {
-      document.removeEventListener('pointermove', move);
-      document.removeEventListener('pointerup', up);
-      el.classList.remove('resizing');
-      const w = parseInt(el.dataset.previewW || String(tile.w), 10);
-      const h = parseInt(el.dataset.previewH || String(tile.h), 10);
-      const others = this.tiles().filter((t) => t.id !== tile.id);
-      if (canPlace(others, tile.x, tile.y, w, h, undefined, this.columns())) {
+    const close = () => this.closePicker(mask);
+    addRow('✏️ 修改名称', () => {
+      close();
+      this.openRenameDialog(tileId);
+    });
+    addRow('🎨 选择图标', () => {
+      close();
+      this.openIconDialog(tileId, (icon) => {
+        if (icon === null) delete tile.icon;
+        else tile.icon = icon;
+        this.save();
+        this.render();
+      });
+    });
+    // 尺寸一键选择（替代拖拽手柄）：1×1 / 2×1 / 1×2 / 2×2
+    const sizes: Array<[string, number, number]> = [
+      ['1×1', 1, 1],
+      ['2×1', 2, 1],
+      ['1×2', 1, 2],
+      ['2×2', 2, 2],
+    ];
+    for (const [label, w, h] of sizes) {
+      const current = tile.w === w && tile.h === h;
+      addRow(`${current ? '✅ ' : '📐 '}尺寸 ${label}`, () => {
+        close();
+        const others = this.tiles().filter((t) => t.id !== tile.id);
+        if (!canPlace(others, tile.x, tile.y, w, h, undefined, this.columns())) {
+          new Notice('当前位置放不下该尺寸', 3000);
+          return;
+        }
         tile.w = w;
         tile.h = h;
         this.save();
-      }
-      this.render();
-    };
-
-    document.addEventListener('pointermove', move);
-    document.addEventListener('pointerup', up);
+        this.render();
+      });
+    }
+    addRow('🗑 删除磁贴', () => {
+      close();
+      this.removeTile(tileId);
+    });
   }
 
   // ===== 增删 =====
@@ -661,7 +757,11 @@ export class LauncherModal {
   }
 
   private save(): void {
-    void saveLauncherData(this.app, { version: 2, desktop: this.data.desktop, mobile: this.data.mobile }).catch((e) => {
+    void saveLauncherData(this.app, {
+      version: 3,
+      desktop: this.data.desktop,
+      mobile: this.data.mobile,
+    }).catch((e) => {
       new Notice(`入口页保存失败：${LAUNCHER_PATH}`, 3000);
     });
   }
