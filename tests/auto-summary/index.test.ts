@@ -128,8 +128,9 @@ describe('auto-summary 入口', () => {
     const out = vault.files.get('归档/网页剪藏/x.md')!;
     expect(out).toContain('summary: "摘要"');
     expect(out).toContain('  - "AI"');
-    expect(MockNotice.instances).toHaveLength(1);
-    expect(MockNotice.instances[0].message).toBe('《已有标题》\n\n摘要\n\n#AI');
+    expect(MockNotice.instances).toHaveLength(2);
+    expect(MockNotice.instances[0].message).toBe('正在为《已有标题》生成摘要…');
+    expect(MockNotice.instances[1].message).toBe('《已有标题》\n\n摘要\n\n#AI');
   });
 
   it('create + file-open 同一文件去重 → 只处理一次', async () => {

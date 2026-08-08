@@ -123,9 +123,10 @@ describe('processFile', () => {
     expect(out).toContain('  - "AI"');
     expect(out).toContain('  - "阅读"');
     expect(out).toContain('link: "https://x.com/a"'); // 原字段保留
-    // 通知
-    expect(MockNotice.instances).toHaveLength(1);
-    expect(MockNotice.instances[0].message).toBe('《新标题》\n\n摘要内容\n\n#AI #阅读');
+    // 通知：先「正在为…生成摘要」，成功后《title》+ summary + #tags
+    expect(MockNotice.instances).toHaveLength(2);
+    expect(MockNotice.instances[0].message).toBe('正在为《a》生成摘要…');
+    expect(MockNotice.instances[1].message).toBe('《新标题》\n\n摘要内容\n\n#AI #阅读');
   });
 
   it('已有 title/summary 只缺 tags → 只补 tags，不重命名，原字段保留', async () => {
@@ -141,7 +142,9 @@ describe('processFile', () => {
     expect(out).toContain('title: "已有标题"'); // 不覆盖
     expect(out).toContain('summary: "已有摘要"');
     expect(out).toContain('  - "新标签"');
-    expect(MockNotice.instances[0].message).toBe('《已有标题》\n\n已有摘要\n\n#新标签');
+    expect(MockNotice.instances).toHaveLength(2);
+    expect(MockNotice.instances[0].message).toBe('正在为《已有标题》生成摘要…');
+    expect(MockNotice.instances[1].message).toBe('《已有标题》\n\n已有摘要\n\n#新标签');
   });
 
   it('字段齐全 → 跳过（不 modify、不通知、不调 AI）', async () => {
@@ -194,10 +197,12 @@ describe('processFile', () => {
     expect(vault.modifiedPaths).toHaveLength(0);
   });
 
-  it('AI 返回 null → 不改文件', async () => {
+  it('AI 返回 null → 不改文件，只有开始通知', async () => {
     vault.files.set('归档/网页剪藏/h.md', `---\nlink: "https://x.com/h"\n---\n\n${LONG_BODY}`);
     await processFile(makeApp(vault), makeAI(null), vault.file('归档/网页剪藏/h.md'));
     expect(vault.modifiedPaths).toHaveLength(0);
-    expect(MockNotice.instances).toHaveLength(0);
+    // 开始通知已弹，无完成通知
+    expect(MockNotice.instances).toHaveLength(1);
+    expect(MockNotice.instances[0].message).toBe('正在为《h》生成摘要…');
   });
 });

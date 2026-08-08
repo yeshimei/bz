@@ -2,7 +2,7 @@
 
 最后更新：2026-08-08（ticket 22 自动摘要双触发），663 测试过（1 既有失败 flash vector-store 增量刷新，与本次无关）。仓库 `E:/Obsidian/1`，构建产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`。
 
-- **ticket 22 自动摘要：create/open 双触发 + 逐字段补全 + 通知**（issue 22，用户问答确认）：`ensureAutoSummary` 注册 `vault.on('create')` + `workspace.on('file-open')`（watchDir 前缀边界一致；1500ms 延迟窗口 pending Set 去重；open 传 null 跳过；unload 双向 offref）。`processFile` 缺什么补什么（title/summary/tags，空串/空数组视为缺失；字段齐全跳过不 notify）；**缺 title → AI 标题重命名笔记文件**（非法字符清理/截断 80/防重名 (1)(2)，rename 失败回退仅写 frontmatter）；author 不再生成。`aiProcess(ai, bodyText, missing)` 提示词 JSON 模板按缺失字段裁剪（规则文案逐字保留，不含 author）。成功通知 `notice(msg, 8000)` 格式《title》+空行+summary+空行+#tags。MockVault 补 rename。34 测试。spec.md 需求 30-34/事件监听/事件清单表/frontmatter/提示词结构/事件触发缝已同步。
+- **ticket 22 自动摘要：create/open 双触发 + 逐字段补全 + 通知**（issue 22，用户问答确认）：`ensureAutoSummary` 注册 `vault.on('create')` + `workspace.on('file-open')`（watchDir 前缀边界一致；1500ms 延迟窗口 pending Set 去重；open 传 null 跳过；unload 双向 offref）。`processFile` 缺什么补什么（title/summary/tags，空串/空数组视为缺失；字段齐全跳过不 notify）；**缺 title → AI 标题重命名笔记文件**（非法字符清理/截断 80/防重名 (1)(2)，rename 失败回退仅写 frontmatter）；author 不再生成。`aiProcess(ai, bodyText, missing)` 提示词 JSON 模板按缺失字段裁剪（规则文案逐字保留，不含 author）。通知两条：调用 AI 前 `正在为《xx》生成摘要…`(3s，xx 用已有 title 或文件名) + 成功后 `notice(msg, 8000)` 格式《title》+空行+summary+空行+#tags。MockVault 补 rename。34 测试。spec.md 需求 30-34/事件监听/事件清单表/frontmatter/提示词结构/事件触发缝已同步。
 
 - **ticket 21 海报抓取方案反转（ADR-0007）**：抓取逻辑移出插件——`src/movie/poster.ts` 与 `tests/movie/poster.test.ts` 删除，设置项 `doubanPosterEnabled` 删除，影视设置 tab 改为纯文字指引（安装 npm 包 + `douban-poster start` PM2 守护）。脚本侧 2.1.0：`watcher.js`（扫描缺海报笔记 + birthtime 倒序 + 串行队列 15s 间隔 + 10s 事件防抖），cli.js watch 改监听 add/change → 扫描；工具 README 恢复 PM2 说明。28 个 node 测试。
 
