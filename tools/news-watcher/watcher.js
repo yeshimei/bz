@@ -264,4 +264,4 @@ if (require.main === module) {
     setInterval(checkAndFetch, FETCH_INTERVAL_MS);
 }
 
-module.exports = { NEWS_PATH, resolveNewsPath, checkAndFetch };
+module.exports = { NEWS_PATH, FETCH_INTERVAL_MS, resolveNewsPath, checkAndFetch };
