@@ -13,7 +13,7 @@ import {
   LauncherTile, LauncherData, LAUNCHER_PATH,
   loadLauncherData, saveLauncherData, placeAtEnd, pushMove, canPlace,
 } from './data';
-import { filterIcons } from './icons';
+import { filterIcons, LUCIDE_ICONS } from './icons';
 
 /** 长按进入编辑模式的时长 */
 export const EDIT_LONG_PRESS_MS = 500;
@@ -22,7 +22,7 @@ const MIN_CELL = 44;
 /** 网格单元最大尺寸 */
 const MAX_CELL = 200;
 /** 网格间距 */
-const GAP = 12;
+const GAP = 8;
 /** 网格左右内边距合计（18×2） */
 const GRID_PAD = 36;
 /** 拖拽移动超过该距离取消长按 */
@@ -78,11 +78,9 @@ export class LauncherModal {
   private overlay: HTMLDivElement;
   private modal: HTMLDivElement;
   private grid: HTMLDivElement;
-  private toolbar: HTMLDivElement;
   private doneBtn: HTMLButtonElement | null = null;
-  private addBtn: HTMLButtonElement | null = null;
 
-  private data: LauncherData = { version: 1, tiles: [] };
+  private data: LauncherData = { version: 2, desktop: [], mobile: [] };
   private validIds = new Set<string>();
   private commands: CommandMeta[] = [];
   private editing = false;
@@ -99,10 +97,24 @@ export class LauncherModal {
     this.overlay.id = OVERLAY_ID;
     this.modal = document.createElement('div');
     this.modal.id = MODAL_ID;
-    this.toolbar = document.createElement('div');
-    this.toolbar.className = 'launcher-toolbar';
     this.grid = document.createElement('div');
     this.grid.id = GRID_ID;
+  }
+
+  /** 当前运行环境是否为移动端（Capacitor）——移动端/桌面端配置互不影响 */
+  static isMobileEnv(): boolean {
+    return typeof window !== 'undefined' && !!(window as any).Capacitor;
+  }
+
+  /** 当前平台磁贴（引用） */
+  private tiles(): LauncherTile[] {
+    return LauncherModal.isMobileEnv() ? this.data.mobile : this.data.desktop;
+  }
+
+  /** 写回当前平台磁贴 */
+  private setTiles(list: LauncherTile[]): void {
+    if (LauncherModal.isMobileEnv()) this.data.mobile = list;
+    else this.data.desktop = list;
   }
 
   /** 单例入口：已打开 → 复用聚焦；否则创建 */
@@ -132,19 +144,18 @@ export class LauncherModal {
 
     this.modal.style.cssText =
       'background:var(--background-primary);color:var(--text-normal);border-radius:14px;' +
-      'width:92%;max-width:800px;max-height:88vh;display:flex;flex-direction:column;' +
+      'width:92%;max-width:800px;max-height:88vh;' +
       'box-shadow:0 12px 44px rgba(0,0,0,0.35);border:1px solid var(--background-modifier-border);' +
       'overflow:hidden;';
     this.overlay.appendChild(this.modal);
 
-    this.buildToolbar();
-    this.modal.appendChild(this.toolbar);
-
     this.grid.style.cssText =
-      'overflow-y:auto;padding:16px 18px 20px;display:grid;gap:12px;' +
+      'overflow-y:auto;padding:16px 18px 20px;display:grid;gap:8px;' +
       'grid-auto-flow:row;align-content:start;position:relative;';
     this.applyColumns();
     this.modal.appendChild(this.grid);
+
+    this.bindGridLongPress();
 
     // ESC 关闭
     this.escHandle = escManager.register('launcher', {
@@ -152,6 +163,7 @@ export class LauncherModal {
       close: () => this.close(),
     });
 
+    this.buildDoneButton();
     window.addEventListener('resize', this.onResize);
     this.render();
   }
@@ -182,26 +194,51 @@ export class LauncherModal {
     }
   }
 
-  private buildToolbar(): void {
-    this.toolbar.className = 'launcher-toolbar';
-    this.toolbar.style.cssText =
-      'display:flex;align-items:center;gap:8px;padding:10px 14px;' +
-      'border-bottom:1px solid var(--background-modifier-border);flex-shrink:0;';
-    const title = document.createElement('span');
-    title.className = 'launcher-title';
-    title.textContent = '🧩 BZ 命令入口';
-    title.style.cssText = 'font-weight:600;font-size:15px;flex:1;';
-    this.toolbar.appendChild(title);
+  /** 编辑模式悬浮「✓ 完成」按钮（编辑模式唯一显式出口；ESC 亦可退出） */
+  private buildDoneButton(): void {
+    const btn = document.createElement('button');
+    btn.id = 'launcher-done-btn';
+    btn.textContent = '✓ 完成';
+    btn.title = '退出编辑模式';
+    btn.style.cssText =
+      'position:fixed;top:14px;right:18px;z-index:10101;padding:6px 14px;border-radius:16px;border:none;' +
+      'background:var(--interactive-accent);color:#fff;font-size:13px;cursor:pointer;display:none;' +
+      'box-shadow:0 4px 14px rgba(0,0,0,0.25);';
+    btn.addEventListener('pointerdown', (e) => e.stopPropagation());
+    btn.addEventListener('click', () => this.exitEdit());
+    document.body.appendChild(btn);
+    this.doneBtn = btn;
+  }
 
-    this.addBtn = createIconBtn('＋', '添加命令', () => this.openCommandDialog(), 'font-size:15px;width:26px;height:26px;');
-    this.toolbar.appendChild(this.addBtn);
-
-    this.doneBtn = createIconBtn('✓ 完成', '退出编辑模式', () => this.exitEdit(), 'font-size:13px;width:52px;height:26px;');
-    this.doneBtn.style.display = 'none';
-    this.toolbar.appendChild(this.doneBtn);
-
-    const closeBtn = createIconBtn('❌', '关闭', () => this.close());
-    this.toolbar.appendChild(closeBtn);
+  /** 长按网格空白区域（非磁贴）进入编辑模式——空态无磁贴时的入口 */
+  private bindGridLongPress(): void {
+    let timer: number | null = null;
+    let sx = 0;
+    let sy = 0;
+    const cancel = () => {
+      if (timer !== null) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+    this.grid.addEventListener('pointerdown', (e) => {
+      if (this.editing) return;
+      if ((e.target as HTMLElement).closest('.launcher-tile')) return; // 磁贴上由 bindDrag 处理
+      sx = (e as PointerEvent).clientX;
+      sy = (e as PointerEvent).clientY;
+      timer = window.setTimeout(() => {
+        timer = null;
+        this.enterEdit();
+      }, EDIT_LONG_PRESS_MS);
+    });
+    this.grid.addEventListener('pointermove', (e) => {
+      if (timer === null) return;
+      const dx = (e as PointerEvent).clientX - sx;
+      const dy = (e as PointerEvent).clientY - sy;
+      if (Math.abs(dx) > MOVE_CANCEL || Math.abs(dy) > MOVE_CANCEL) cancel();
+    });
+    this.grid.addEventListener('pointerup', cancel);
+    this.grid.addEventListener('pointerleave', cancel);
   }
 
   close(): void {
@@ -210,9 +247,13 @@ export class LauncherModal {
       this.escHandle = null;
     }
     // 清理可能残留的子选择器
-    for (const id of [CMD_MASK_ID, ICON_MASK_ID]) {
+    for (const id of [CMD_MASK_ID, ICON_MASK_ID, RENAME_MASK_ID]) {
       const m = document.getElementById(id);
       if (m) m.remove();
+    }
+    if (this.doneBtn) {
+      this.doneBtn.remove();
+      this.doneBtn = null;
     }
     this.overlay.remove();
     window.removeEventListener('resize', this.onResize);
@@ -224,18 +265,49 @@ export class LauncherModal {
   private render(): void {
     clearChildren(this.grid);
     this.applyColumns();
-    if (this.data.tiles.length === 0) {
+    const tiles = this.tiles();
+    if (tiles.length === 0 && !this.editing) {
       const empty = document.createElement('div');
       empty.id = EMPTY_ID;
-      empty.textContent = '入口页还是空的——点击右上角「＋」添加命令磁贴';
+      empty.textContent = '入口页还是空的——长按空白处进入编辑模式，添加命令磁贴';
       empty.style.cssText =
         'grid-column:1/-1;text-align:center;color:var(--text-muted);padding:48px 0;font-size:13px;';
       this.grid.appendChild(empty);
     }
-    for (const tile of this.data.tiles) {
+    for (const tile of tiles) {
       this.grid.appendChild(this.buildTile(tile));
     }
-    if (this.doneBtn) this.doneBtn.style.display = this.editing ? 'inline-flex' : 'none';
+    // 编辑模式：空白单元格渲染「＋」（点击添加命令）
+    if (this.editing) this.renderEmptyCells(tiles);
+    if (this.doneBtn) this.doneBtn.style.display = this.editing ? 'block' : 'none';
+  }
+
+  /** 空白单元格「＋」占位（含末尾追加行——全满时也能继续添加） */
+  private renderEmptyCells(tiles: LauncherTile[]): void {
+    const cols = this.columns();
+    const maxBottom = tiles.reduce((m, t) => Math.max(m, t.y + t.h), 0);
+    const rows = Math.max(1, maxBottom + 2); // 多扫一行，保证永远有可添加的位置
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        const occupied = tiles.some((t) => t.x < x + 1 && x < t.x + t.w && t.y < y + 1 && y < t.y + t.h);
+        if (occupied) continue;
+        const cell = document.createElement('div');
+        cell.className = 'launcher-empty-cell';
+        cell.dataset.cellX = String(x);
+        cell.dataset.cellY = String(y);
+        cell.textContent = '＋';
+        cell.title = '添加命令';
+        cell.style.cssText =
+          `grid-column:${x + 1} / span 1;grid-row:${y + 1} / span 1;` +
+          'display:flex;align-items:center;justify-content:center;color:var(--text-muted);' +
+          'font-size:18px;cursor:pointer;border-radius:12px;user-select:none;transition:background 0.15s ease;';
+        cell.addEventListener('mouseenter', () => (cell.style.background = 'var(--background-modifier-hover)'));
+        cell.addEventListener('mouseleave', () => (cell.style.background = ''));
+        cell.addEventListener('pointerdown', (e) => e.stopPropagation());
+        cell.addEventListener('click', () => this.openCommandDialog());
+        this.grid.appendChild(cell);
+      }
+    }
   }
 
   private commandOf(tile: LauncherTile): CommandMeta | undefined {
@@ -287,31 +359,42 @@ export class LauncherModal {
     }
     const cmd = this.commandOf(tile);
     const iconName = tile.icon || cmd?.icon;
-    try {
-      setIcon(iconEl, iconName || 'command');
-    } catch (e) {
-      /* 图标名无效时兜底 */
+    // 图标渲染：lucide 清单内 → setIcon；否则按 emoji/字符直接显示
+    const isLucide = !!iconName && LUCIDE_ICONS.includes(iconName);
+    if (iconName && !isLucide) {
+      iconEl.textContent = iconName;
+      iconEl.style.fontSize = Math.round(iconSize * 0.85) + 'px';
+      iconEl.style.lineHeight = '1';
+    } else {
+      try {
+        setIcon(iconEl, iconName || 'command');
+      } catch (e) {
+        /* 图标名无效时兜底 */
+      }
     }
     el.appendChild(iconEl);
 
-    const nameEl = document.createElement('div');
-    nameEl.className = 'launcher-name';
-    nameEl.textContent = this.displayName(tile, isGhost);
-    nameEl.style.cssText =
-      'font-size:' + fontSize + 'px;color:var(--text-normal);text-align:center;' +
-      'line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;' +
-      'word-break:break-all;';
-    if (this.editing) {
-      // 编辑模式：点名字可改名（标签弹窗）
-      nameEl.style.cursor = 'pointer';
-      nameEl.title = '点击修改名称';
-      nameEl.addEventListener('pointerdown', (e) => e.stopPropagation());
-      nameEl.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.openRenameDialog(tile.id);
-      });
+    // 隐藏文字：仅显示图标
+    if (!tile.hideText) {
+      const nameEl = document.createElement('div');
+      nameEl.className = 'launcher-name';
+      nameEl.textContent = this.displayName(tile, isGhost);
+      nameEl.style.cssText =
+        'font-size:' + fontSize + 'px;color:var(--text-normal);text-align:center;' +
+        'line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;' +
+        'word-break:break-all;';
+      if (this.editing) {
+        // 编辑模式：点名字可改名（标签弹窗）
+        nameEl.style.cursor = 'pointer';
+        nameEl.title = '点击修改名称';
+        nameEl.addEventListener('pointerdown', (e) => e.stopPropagation());
+        nameEl.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.openRenameDialog(tile.id);
+        });
+      }
+      el.appendChild(nameEl);
     }
-    el.appendChild(nameEl);
 
     // 编辑模式：删除按钮 + 档位手柄
     if (this.editing) {
@@ -484,9 +567,9 @@ export class LauncherModal {
       const top = ev.clientY - parseFloat(el.dataset.grabOffY || '0') - gridRect.top;
       const cx = Math.max(0, Math.min(this.columns() - tile.w, Math.floor(left / step)));
       const cy = Math.max(0, Math.floor(top / step));
-      const result = pushMove(this.data.tiles, tile.id, cx, cy, this.columns());
+      const result = pushMove(this.tiles(), tile.id, cx, cy, this.columns());
       if (result) {
-        this.data.tiles = result;
+        this.setTiles(result);
         this.save();
       }
       this.render();
@@ -529,7 +612,7 @@ export class LauncherModal {
       el.classList.remove('resizing');
       const w = parseInt(el.dataset.previewW || String(tile.w), 10);
       const h = parseInt(el.dataset.previewH || String(tile.h), 10);
-      const others = this.data.tiles.filter((t) => t.id !== tile.id);
+      const others = this.tiles().filter((t) => t.id !== tile.id);
       if (canPlace(others, tile.x, tile.y, w, h, undefined, this.columns())) {
         tile.w = w;
         tile.h = h;
@@ -545,7 +628,7 @@ export class LauncherModal {
   // ===== 增删 =====
 
   private removeTile(id: string): void {
-    this.data.tiles = this.data.tiles.filter((t) => t.id !== id);
+    this.setTiles(this.tiles().filter((t) => t.id !== id));
     this.save();
     this.render();
   }
@@ -560,13 +643,13 @@ export class LauncherModal {
       w: 1,
       h: 1,
     };
-    this.data.tiles = placeAtEnd(this.data.tiles, tile, this.columns());
+    this.setTiles(placeAtEnd(this.tiles(), tile, this.columns()));
     this.save();
     this.enterEdit();
   }
 
   private save(): void {
-    void saveLauncherData(this.app, { version: 1, tiles: this.data.tiles }).catch((e) => {
+    void saveLauncherData(this.app, { version: 2, desktop: this.data.desktop, mobile: this.data.mobile }).catch((e) => {
       new Notice(`入口页保存失败：${LAUNCHER_PATH}`, 3000);
     });
   }
@@ -661,7 +744,7 @@ export class LauncherModal {
     const { mask, popup } = this.buildPicker(ICON_MASK_ID, ICON_POPUP_ID, '选择图标');
     const input = document.createElement('input');
     input.type = 'text';
-    input.placeholder = '搜索图标…';
+    input.placeholder = '搜索图标，或输入 emoji/字符直接使用';
     input.className = 'launcher-picker-input';
     input.style.cssText =
       'width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--background-modifier-border);' +
@@ -675,7 +758,25 @@ export class LauncherModal {
     popup.appendChild(list);
 
     const renderList = (query: string) => {
-      list.empty();
+      clearChildren(list);
+      const q = query.trim();
+      // emoji/任意字符：输入非空时提供「直接使用」入口（lucide 清单外的字符走文本渲染）
+      if (q) {
+        const emojiRow = document.createElement('div');
+        emojiRow.className = 'launcher-icon-emoji';
+        emojiRow.dataset.emoji = q;
+        emojiRow.textContent = `使用「${q}」作为图标`;
+        emojiRow.style.cssText =
+          'grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;' +
+          'cursor:pointer;font-size:13px;color:var(--text-accent);';
+        emojiRow.addEventListener('mouseenter', () => (emojiRow.style.background = 'var(--background-modifier-hover)'));
+        emojiRow.addEventListener('mouseleave', () => (emojiRow.style.background = ''));
+        emojiRow.addEventListener('click', () => {
+          this.closePicker(mask);
+          onPick(q);
+        });
+        list.appendChild(emojiRow);
+      }
       for (const name of filterIcons(query)) {
         const cell = document.createElement('div');
         cell.className = 'launcher-icon-cell';
@@ -715,9 +816,9 @@ export class LauncherModal {
 
   // ===== 改名弹窗 =====
 
-  /** 修改磁贴显示名（label）；提交空串 → 删除 label 恢复默认名 */
+  /** 修改磁贴显示名（label）与隐藏文字开关；提交空串 → 删除 label 恢复默认名 */
   openRenameDialog(tileId: string): void {
-    const tile = this.data.tiles.find((t) => t.id === tileId);
+    const tile = this.tiles().find((t) => t.id === tileId);
     if (!tile) return;
     const isGhost = !this.validIds.has(tile.commandId);
     const { mask, popup } = this.buildPicker(RENAME_MASK_ID, RENAME_POPUP_ID, '修改名称');
@@ -736,10 +837,25 @@ export class LauncherModal {
       const v = input.value.trim();
       if (v) tile.label = v;
       else delete tile.label;
+      // 隐藏文字开关（仅显示图标）
+      if (hideCb.checked) tile.hideText = true;
+      else delete tile.hideText;
       this.closePicker(mask);
       this.save();
       this.render();
     };
+
+    // 隐藏文字开关：仅显示图标
+    const hideRow = document.createElement('label');
+    hideRow.style.cssText =
+      'display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;cursor:pointer;color:var(--text-normal);';
+    const hideCb = document.createElement('input');
+    hideCb.type = 'checkbox';
+    hideCb.className = 'launcher-hide-text';
+    hideCb.checked = !!tile.hideText;
+    hideRow.appendChild(hideCb);
+    hideRow.appendChild(document.createTextNode('仅显示图标（隐藏文字）'));
+    popup.appendChild(hideRow);
 
     const okBtn = createIconBtn('✓ 确定', '保存名称', submit, 'font-size:13px;width:64px;height:26px;margin-right:8px;');
     const cancelBtn = createIconBtn('✕ 取消', '取消', () => this.closePicker(mask), 'font-size:13px;width:64px;height:26px;');

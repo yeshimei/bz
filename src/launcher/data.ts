@@ -18,14 +18,25 @@ export interface LauncherTile {
   w: number;
   /** 高（档位 1|2） */
   h: number;
-  /** 自定义 lucide 图标名（优先于命令自带 icon；缺省用命令 icon/兜底） */
+  /** 自定义图标（lucide 图标名或 emoji 字符，优先于命令自带 icon；缺省用命令 icon/兜底） */
   icon?: string;
   /** 自定义显示名（优先于命令名；缺省用命令名） */
   label?: string;
+  /** 隐藏文字：仅显示图标 */
+  hideText?: boolean;
 }
 
-/** launcher.json 根结构 */
+/** launcher.json 根结构（v2：桌面/移动端两套独立配置，互不影响） */
 export interface LauncherData {
+  version: number;
+  /** 桌面端磁贴 */
+  desktop: LauncherTile[];
+  /** 移动端磁贴 */
+  mobile: LauncherTile[];
+}
+
+/** v1 旧格式（仅桌面布局，无平台区分）——读取时自动归入 desktop */
+export interface LauncherDataV1 {
   version: number;
   tiles: LauncherTile[];
 }
@@ -53,43 +64,58 @@ function isTile(t: any): t is LauncherTile {
   );
 }
 
-/** 容错解析：非法字段剔除、缺字段补齐（数据损坏不致命） */
+/** 单个磁贴清洗：非法剔除、w/h 归一 1|2、x/y 取整非负、icon/label/hideText 保留 */
+function cleanTile(t: any): LauncherTile | null {
+  if (!isTile(t)) return null;
+  const w = t.w >= 2 ? 2 : 1;
+  const h = t.h >= 2 ? 2 : 1;
+  const x = Math.max(0, Math.floor(t.x) || 0);
+  const y = Math.max(0, Math.floor(t.y) || 0);
+  return {
+    id: t.id,
+    commandId: t.commandId,
+    x,
+    y,
+    w,
+    h,
+    ...(typeof t.icon === 'string' && t.icon ? { icon: t.icon } : {}),
+    ...(typeof t.label === 'string' && t.label.trim() ? { label: t.label.trim() } : {}),
+    ...(typeof t.hideText === 'boolean' ? { hideText: t.hideText } : {}),
+  };
+}
+
+/** 容错解析：非法字段剔除、缺字段补齐（数据损坏不致命）；v1 旧格式自动迁移到 desktop */
 export function normalizeData(raw: unknown): LauncherData {
-  const base: LauncherData = { version: 1, tiles: [] };
-  if (!raw || typeof raw !== 'object') return base;
+  const empty: LauncherData = { version: 2, desktop: [], mobile: [] };
+  if (!raw || typeof raw !== 'object') return empty;
   const r = raw as any;
-  const tiles = Array.isArray(r.tiles) ? r.tiles : [];
-  const cleaned: LauncherTile[] = [];
-  for (const t of tiles) {
-    if (!isTile(t)) continue;
-    // w/h 归一为 1|2（非 1 一律视为 2）；x/y 取整非负
-    const w = t.w >= 2 ? 2 : 1;
-    const h = t.h >= 2 ? 2 : 1;
-    const x = Math.max(0, Math.floor(t.x) || 0);
-    const y = Math.max(0, Math.floor(t.y) || 0);
-    cleaned.push({
-      id: t.id,
-      commandId: t.commandId,
-      x,
-      y,
-      w,
-      h,
-      ...(typeof t.icon === 'string' && t.icon ? { icon: t.icon } : {}),
-      ...(typeof t.label === 'string' && t.label.trim() ? { label: t.label.trim() } : {}),
-    });
+  // v1 兼容：顶层 tiles 数组 → desktop
+  if (Array.isArray(r.tiles)) {
+    return { version: 2, desktop: cleanTiles(r.tiles), mobile: [] };
   }
-  return { version: 1, tiles: cleaned };
+  const desktop = Array.isArray(r.desktop) ? r.desktop : Array.isArray((r.desktop as any)?.tiles) ? (r.desktop as any).tiles : [];
+  const mobile = Array.isArray(r.mobile) ? r.mobile : Array.isArray((r.mobile as any)?.tiles) ? (r.mobile as any).tiles : [];
+  return { version: 2, desktop: cleanTiles(desktop), mobile: cleanTiles(mobile) };
+}
+
+function cleanTiles(list: any[]): LauncherTile[] {
+  const out: LauncherTile[] = [];
+  for (const t of list) {
+    const c = cleanTile(t);
+    if (c) out.push(c);
+  }
+  return out;
 }
 
 /** 读取 launcher.json（不存在 → 空布局；解析失败 → 空布局，不覆盖文件） */
 export async function loadLauncherData(app: App): Promise<LauncherData> {
   try {
     const f = app.vault.getAbstractFileByPath(LAUNCHER_PATH);
-    if (!f) return { version: 1, tiles: [] };
+    if (!f) return { version: 2, desktop: [], mobile: [] };
     const text = await app.vault.read(f as any);
     return normalizeData(JSON.parse(text));
   } catch (e) {
-    return { version: 1, tiles: [] };
+    return { version: 2, desktop: [], mobile: [] };
   }
 }
 
