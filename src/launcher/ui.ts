@@ -312,6 +312,15 @@ export class LauncherModal {
     }
   }
 
+  /** 是否显示磁贴文字（设置页统一开关；默认显示） */
+  private showText(): boolean {
+    try {
+      return (getSettings() as any).launcherShowText !== false;
+    } catch (e) {
+      return true;
+    }
+  }
+
   private commandOf(tile: LauncherTile): CommandMeta | undefined {
     return this.commands.find((c) => c.id === tile.commandId);
   }
@@ -377,8 +386,8 @@ export class LauncherModal {
     }
     el.appendChild(iconEl);
 
-    // 隐藏文字：仅显示图标
-    if (!tile.hideText) {
+    // 隐藏文字：仅显示图标（设置页统一开关）
+    if (this.showText()) {
       const nameEl = document.createElement('div');
       nameEl.className = 'launcher-name';
       nameEl.textContent = this.displayName(tile, isGhost);
@@ -819,7 +828,7 @@ export class LauncherModal {
 
   // ===== 改名弹窗 =====
 
-  /** 修改磁贴显示名（label）与隐藏文字开关；提交空串 → 删除 label 恢复默认名 */
+  /** 修改磁贴显示名（label）；提交空串 → 删除 label 恢复默认名 */
   openRenameDialog(tileId: string): void {
     const tile = this.tiles().find((t) => t.id === tileId);
     if (!tile) return;
@@ -840,25 +849,10 @@ export class LauncherModal {
       const v = input.value.trim();
       if (v) tile.label = v;
       else delete tile.label;
-      // 隐藏文字开关（仅显示图标）
-      if (hideCb.checked) tile.hideText = true;
-      else delete tile.hideText;
       this.closePicker(mask);
       this.save();
       this.render();
     };
-
-    // 隐藏文字开关：仅显示图标
-    const hideRow = document.createElement('label');
-    hideRow.style.cssText =
-      'display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;cursor:pointer;color:var(--text-normal);';
-    const hideCb = document.createElement('input');
-    hideCb.type = 'checkbox';
-    hideCb.className = 'launcher-hide-text';
-    hideCb.checked = !!tile.hideText;
-    hideRow.appendChild(hideCb);
-    hideRow.appendChild(document.createTextNode('仅显示图标（隐藏文字）'));
-    popup.appendChild(hideRow);
 
     const okBtn = createIconBtn('✓ 确定', '保存名称', submit, 'font-size:13px;width:64px;height:26px;margin-right:8px;');
     const cancelBtn = createIconBtn('✕ 取消', '取消', () => this.closePicker(mask), 'font-size:13px;width:64px;height:26px;');
