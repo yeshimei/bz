@@ -118,6 +118,12 @@ export async function reviewJumpOverdue(app: App): Promise<void> {
   await reviewApp.autoJumpOverdue();
 }
 
+/** 开始复习（进入复习流程）：跳过逾期 → 出题/复习循环（review-start） */
+export async function reviewStart(app: App): Promise<void> {
+  ensureReview(app);
+  await reviewApp.autoJumpOverdue();
+}
+
 /** 复习（选择难度）（review-mark-dialog） */
 export async function reviewMarkDialog(app: App): Promise<void> {
   ensureReview(app);
