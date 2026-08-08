@@ -7,7 +7,7 @@ import { MockVault } from '../mock-vault';
 import { MockNotice, resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp, getApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { openLauncher, unloadLauncher, calcCellSize } from '../../src/launcher/ui';
+import { openLauncher, unloadLauncher, calcCellSize, setLauncherShowTextSetter } from '../../src/launcher/ui';
 import { LAUNCHER_PATH } from '../../src/launcher/data';
 
 /**
@@ -152,11 +152,13 @@ describe('入口页 UI', () => {
       // 编辑模式：无删除按钮/手柄（已收进操作菜单）
       expect(tile.querySelector('.launcher-del')).toBeNull();
       expect(tile.querySelector('.launcher-resize')).toBeNull();
-      // 完成按钮 + 列数选择悬浮显示（编辑模式唯一显式出口）
+      // 完成按钮 + 列数选择悬浮显示（编辑模式唯一显式出口）；控件距顶部 34px
       const done = document.getElementById('launcher-done-btn')!;
       expect(done).not.toBeNull();
       expect(done.style.display).not.toBe('none');
       expect(document.getElementById('launcher-columns-sel')).not.toBeNull();
+      expect(document.getElementById('launcher-text-toggle')).not.toBeNull();
+      expect(document.getElementById('launcher-edit-controls')!.style.top).toBe('34px');
     } finally {
       vi.useRealTimers();
     }
@@ -534,6 +536,37 @@ describe('入口页 UI', () => {
     expect(tiles.find((t: any) => t.id === 't2').x + tiles.find((t: any) => t.id === 't2').w).toBeLessThanOrEqual(3);
     // 桌面端列数改动不影响 mobile 配置
     expect(saved.mobile.columns).toBe(6);
+  });
+
+  it('右上角文字开关：编辑模式点「文」→ 写回设置 + 磁贴文字显隐', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+    );
+    const settings: Record<string, any> = { launcherColumns: '6' };
+    setSettingsProvider(() => ({ ...settings }) as any);
+    setLauncherShowTextSetter((v) => {
+      settings.launcherShowText = v;
+    });
+    setApp(makeMockApp(vault).app);
+    openLauncher(makeMockApp(vault).app);
+    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
+    // 默认显示文字
+    expect(gridTiles()[0].querySelector('.launcher-name')).not.toBeNull();
+    // 长按进编辑 → 点「文」关闭文字
+    longPressEnterEdit(gridTiles()[0]);
+    document.getElementById('launcher-text-toggle')!.click();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(settings.launcherShowText).toBe(false); // 写回设置
+    expect(gridTiles()[0].querySelector('.launcher-name')).toBeNull(); // 磁贴仅图标
+    // 再点恢复
+    document.getElementById('launcher-text-toggle')!.click();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(settings.launcherShowText).toBe(true);
+    expect(gridTiles()[0].querySelector('.launcher-name')).not.toBeNull();
+    setLauncherShowTextSetter(() => {});
   });
 
   it('显示文字统一开关：关闭 → 全部磁贴仅图标；开启 → 显示文字', async () => {

@@ -56,6 +56,17 @@ interface CommandMeta {
   icon?: string;
 }
 
+/** 文字显隐写回通道：main.ts 注入（写插件设置 data.json 并保存）；未注入时静默，读仍走 getSettings */
+let showTextSetter: ((v: boolean) => void) | null = null;
+
+export function setLauncherShowTextSetter(fn: (v: boolean) => void): void {
+  showTextSetter = fn;
+}
+
+export function applyLauncherShowText(v: boolean): void {
+  if (showTextSetter) showTextSetter(v);
+}
+
 /** 清空子节点（jsdom 无 Obsidian 扩展 empty） */
 function clearChildren(el: HTMLElement): void {
   while (el.firstChild) el.removeChild(el.firstChild);
@@ -83,6 +94,8 @@ export class LauncherModal {
   private doneBtn: HTMLButtonElement | null = null;
   private editControls: HTMLDivElement | null = null;
   private columnSel: HTMLSelectElement | null = null;
+  private textToggleBtn: HTMLButtonElement | null = null;
+  private syncTextToggle: (() => void) | null = null;
 
   private data: LauncherData = {
     version: 3,
@@ -223,12 +236,35 @@ export class LauncherModal {
     this.render();
   }
 
-  /** 编辑模式悬浮控件：✓ 完成 + 列数选择（改当前平台配置，桌面/移动各自生效） */
+  /** 编辑模式悬浮控件：列数选择 + 文字显隐 + ✓ 完成（距顶部 34px） */
   private buildDoneButton(): void {
     const wrap = document.createElement('div');
     wrap.id = 'launcher-edit-controls';
     wrap.style.cssText =
-      'position:fixed;top:14px;right:18px;z-index:10101;display:none;align-items:center;gap:8px;';
+      'position:fixed;top:34px;right:18px;z-index:10101;display:none;align-items:center;gap:8px;';
+
+    // 文字显隐开关（写回插件设置，与设置页同字段）
+    const textBtn = document.createElement('button');
+    textBtn.id = 'launcher-text-toggle';
+    textBtn.textContent = '文';
+    textBtn.title = '显示/隐藏磁贴文字';
+    textBtn.style.cssText =
+      'width:30px;height:30px;border-radius:50%;border:1px solid var(--background-modifier-border);' +
+      'background:var(--background-primary);color:var(--text-normal);font-size:13px;cursor:pointer;';
+    const syncTextBtn = () => {
+      const on = this.showText();
+      textBtn.style.background = on ? 'var(--interactive-accent)' : 'var(--background-primary)';
+      textBtn.style.color = on ? '#fff' : 'var(--text-muted)';
+    };
+    textBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+    textBtn.addEventListener('click', () => {
+      applyLauncherShowText(!this.showText());
+      syncTextBtn();
+      this.render();
+    });
+    wrap.appendChild(textBtn);
+    this.textToggleBtn = textBtn;
+    this.syncTextToggle = syncTextBtn;
 
     const sel = document.createElement('select');
     sel.id = 'launcher-columns-sel';
@@ -310,6 +346,8 @@ export class LauncherModal {
       this.editControls = null;
       this.doneBtn = null;
       this.columnSel = null;
+      this.textToggleBtn = null;
+      this.syncTextToggle = null;
     }
     this.overlay.remove();
     window.removeEventListener('resize', this.onResize);
@@ -337,6 +375,7 @@ export class LauncherModal {
     if (this.editing) this.renderEmptyCells(tiles);
     if (this.doneBtn) this.doneBtn.style.display = this.editing ? 'inline-flex' : 'none';
     if (this.editControls) this.editControls.style.display = this.editing ? 'flex' : 'none';
+    if (this.syncTextToggle) this.syncTextToggle();
     if (this.columnSel) {
       const v = String(this.columns());
       if (this.columnSel.value !== v) this.columnSel.value = v;
