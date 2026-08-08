@@ -6,14 +6,14 @@
  *   create/open → 同名条目自动关联（仅 favorites）
  *   create(剪藏) → URL 精确匹配直接归档；不中 → AI 判断弹窗批准（仅 bz）
  * 权限模型：非 AI 操作静默直改；仅 AI 剪藏匹配弹窗批准。
- * 依赖：bz 域（DataManager，src/bz/data.ts）、core AI（createAI）。
+ * 依赖：bz 域（DataManager，src/memo/data.ts）、core AI（createAI）。
  */
 import type { App } from 'obsidian';
 import { createAI, type AIService } from '../core/ai';
 import { notice, notify } from '../core/notice';
 import { tryGetSettings } from '../core/settings-provider';
-import { DataManager } from '../bz/data';
-import { ensureBz } from '../bz';
+import { DataManager } from '../memo/data';
+import { ensureBz } from '../memo';
 import { getStoragePath } from '../favorites/config';
 import {
   syncRename,

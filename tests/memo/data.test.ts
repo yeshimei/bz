@@ -3,7 +3,7 @@
  * 场景/平台映射构建、条目 CRUD。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { DataManager } from '../../src/bz/data';
+import { DataManager } from '../../src/memo/data';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
 

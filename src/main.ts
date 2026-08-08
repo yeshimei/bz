@@ -10,12 +10,12 @@ import { escManager } from './core/esc-manager';
 import { setApp, getApp } from './core/app';
 import { setAISettingsProvider, resetAIProviderCache } from './core/ai';
 import { setSettingsProvider, setSettingsSaver } from './core/settings-provider';
-import { setBzSettingsProvider, unloadBz, ensureBz } from './bz';
+import { setBzSettingsProvider, unloadBz, ensureBz } from './memo';
 
 import BzSettings, { DEFAULT_SETTINGS } from './settings';
 
 // 15 域（懒加载：首次命令/事件触发时 ensureXxx 幂等初始化）
-import { openBzPanel, createMemoItem } from './bz';
+import { openBzPanel, createMemoItem } from './memo';
 import { addBelongingsItem, openBelongings } from './belongings';
 import { openArticleView } from './clipping';
 import { openNewsReader } from './news';
