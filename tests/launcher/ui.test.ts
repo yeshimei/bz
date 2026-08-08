@@ -647,6 +647,86 @@ describe('入口页 UI', () => {
     setLauncherGestureSetter(() => {});
   });
 
+  it('文字显隐平台独立：移动端字段不影响桌面；未设置继承桌面', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({
+        version: 3,
+        desktop: { columns: 6, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] },
+        mobile: { columns: 6, tiles: [{ id: 'm1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] },
+      })
+    );
+    // 桌面端：launcherShowTextMobile=false 不影响（桌面看 launcherShowText=true）→ 有文字
+    await openOnce(vault, { launcherShowText: true, launcherShowTextMobile: false });
+    expect(gridTiles()[0].querySelector('.launcher-name')).not.toBeNull();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    // 移动端：launcherShowTextMobile=false → 无文字（桌面 true 不影响）
+    MockPlatform.isMobile = true;
+    try {
+      await openOnce(vault, { launcherShowText: true, launcherShowTextMobile: false });
+      expect(gridTiles()[0].querySelector('.launcher-name')).toBeNull();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      // 移动端未设置 mobile 字段 → 继承桌面 false → 无文字
+      await openOnce(vault, { launcherShowText: false });
+      expect(gridTiles()[0].querySelector('.launcher-name')).toBeNull();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      // 移动端显式 true → 有文字（桌面 false 不影响）
+      await openOnce(vault, { launcherShowText: false, launcherShowTextMobile: true });
+      expect(gridTiles()[0].querySelector('.launcher-name')).not.toBeNull();
+    } finally {
+      MockPlatform.isMobile = false;
+    }
+  });
+
+  it('手势平台独立：移动端读 launcherGestureMobile；未设置继承桌面', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+    );
+    const settings: Record<string, any> = { launcherColumns: '6', launcherGesture: 'triple' };
+    setSettingsProvider(() => ({ ...settings }) as any);
+    setLauncherGestureSetter((v) => {
+      settings.launcherGestureMobile = v;
+    });
+    setApp(makeMockApp(vault).app);
+    // 桌面端：读 launcherGesture=triple
+    openLauncher(makeMockApp(vault).app);
+    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
+    longPressEnterEdit(gridTiles()[0]);
+    const sel = document.getElementById('launcher-gesture-sel') as HTMLSelectElement;
+    expect(sel.value).toBe('triple');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    // 移动端未设置 mobile → 继承桌面 triple
+    MockPlatform.isMobile = true;
+    try {
+      openLauncher(makeMockApp(vault).app);
+      await new Promise((r) => setTimeout(r, 0));
+      await new Promise((r) => setTimeout(r, 0));
+      longPressEnterEdit(gridTiles()[0]);
+      const sel2 = document.getElementById('launcher-gesture-sel') as HTMLSelectElement;
+      expect(sel2.value).toBe('triple'); // 继承
+      // 移动端改动 → 写 mobile 字段（桌面不动）
+      sel2.value = 'swipe';
+      sel2.dispatchEvent(new Event('change'));
+      expect(settings.launcherGestureMobile).toBe('swipe');
+      expect(settings.launcherGesture).toBe('triple');
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      // 移动端显式 double → 读 double（桌面 triple 不影响）
+      openLauncher(makeMockApp(vault).app);
+      await new Promise((r) => setTimeout(r, 0));
+      await new Promise((r) => setTimeout(r, 0));
+      longPressEnterEdit(gridTiles()[0]);
+      const sel3 = document.getElementById('launcher-gesture-sel') as HTMLSelectElement;
+      expect(sel3.value).toBe('swipe');
+    } finally {
+      MockPlatform.isMobile = false;
+      setLauncherGestureSetter(() => {});
+    }
+  });
+
   it('平台布局：移动端贴底滑入；桌面端居中显示', async () => {
     const vault = new MockVault();
     // 桌面端：居中 + 全圆角 + 淡入（无上滑动画）

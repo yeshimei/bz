@@ -26,7 +26,7 @@ import { openMovieManager, addMovieItem, openMovieReport } from './movie';
 import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart } from './review';
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
-import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setLauncherGestureSetter } from './launcher';
+import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setLauncherGestureSetter, LauncherModal } from './launcher';
 import { registerGestureListeners } from './launcher/gestures';
 import { ensureAutoSummary } from './auto-summary';
 import { ensureAIAgent, unloadAIAgent } from './ai-agent';
@@ -131,13 +131,15 @@ export default class BzPlugin extends Plugin {
     setSettingsProvider(() => this.settings);
     // 设置保存通道（域设置弹窗写回后持久化）
     setSettingsSaver(() => this.saveSettings());
-    // 入口页：右上角文字开关写回设置（编辑模式右上角切换）
+    // 入口页：右上角文字/手势开关写回设置（平台独立字段：桌面 launcherShowText/launcherGesture，移动 launcherShowTextMobile/launcherGestureMobile）
     setLauncherShowTextSetter((v) => {
-      this.settings.launcherShowText = v;
+      if (LauncherModal.isMobileEnv()) this.settings.launcherShowTextMobile = v;
+      else this.settings.launcherShowText = v;
       void this.saveSettings();
     });
     setLauncherGestureSetter((v) => {
-      this.settings.launcherGesture = v;
+      if (LauncherModal.isMobileEnv()) this.settings.launcherGestureMobile = v;
+      else this.settings.launcherGesture = v;
       void this.saveSettings();
       this.syncGestures(); // 手势监听随设置变更重注册
     });
@@ -263,7 +265,10 @@ export default class BzPlugin extends Plugin {
       this.unregisterGestures();
       this.unregisterGestures = null;
     }
-    const g = this.settings.launcherGesture;
+    const isMobile = LauncherModal.isMobileEnv();
+    const g = isMobile
+      ? (this.settings.launcherGestureMobile ?? this.settings.launcherGesture) // 移动端未设置 → 继承桌面
+      : this.settings.launcherGesture;
     const on = (kind: string) => (g === kind ? 'bz-launcher-open' : 'off');
     this.unregisterGestures = registerGestureListeners(this.app, {
       gestureDoubleTap: on('double'),
