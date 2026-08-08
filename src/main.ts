@@ -499,6 +499,7 @@ export class BzSettingTab extends PluginSettingTab {
           await save();
         });
       });
+    this.toggleSetting(el, '显示磁贴文字', '统一控制所有磁贴是否显示文字（关闭后全部磁贴仅显示图标）', s.launcherShowText, save, (v) => (s.launcherShowText = v));
     // 手势触发：单选一个手势打开命令入口页（默认关闭）
     new Setting(el)
       .setName('打开入口页的手势')

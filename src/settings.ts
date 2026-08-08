@@ -109,11 +109,13 @@ export default interface BzSettings {
   /** 🎯 做题决定难度（开启时显示做题家选项） */
   forceQuizForReview: boolean;
 
-  // ===== 🧩 入口页（2 项）=====
+  // ===== 🧩 入口页（3 项）=====
   /** 桌面端网格列数（3-8，默认 6） */
   launcherColumns: string;
   /** 移动端网格列数（3-8，默认 4——移动端格子更大更透气） */
   launcherMobileColumns: string;
+  /** 显示磁贴文字（统一开关；关闭 = 全部磁贴仅显示图标） */
+  launcherShowText: boolean;
 
   // ===== 🖐 手势触发（入口页域：选一个手势打开命令入口页，默认关闭）=====
   /** 打开入口页的手势：off | double | triple | swipe */
@@ -236,6 +238,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 入口页
   launcherColumns: '6',
   launcherMobileColumns: '4',
+  launcherShowText: true,
 
   // 手势触发（默认关闭；单选一个手势打开命令入口页）
   launcherGesture: 'off',
