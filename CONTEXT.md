@@ -1,6 +1,6 @@
 # 包仔插件工作区
 
-将 QuickAdd 宏脚本独立化为标准 Obsidian 插件：已交付「日记本」（`diary-notebook`），当前规划将剩余脚本（备忘录、剪藏本、聚合讯、密码本、收藏本、书库、影视、自动摘要、AI Agent、复习计划、做题家、闪念、归物本等 15 个）合并为**一个插件** `bz`（显示名「备忘录」，ADR-0003）。B站下载另行单独插件。源码在 `src/`，测试在 `tests/`。
+将 QuickAdd 宏脚本独立化为标准 Obsidian 插件：已交付「日记本」（`diary-notebook`），当前规划将剩余脚本（备忘录、剪藏本、聚合讯、密码本、收藏本、书库、影视、自动摘要、AI Agent、复习计划、做题家、闪念、归物本等 15 个）合并为**一个插件** `bz`（显示名「备忘录」，ADR-0003）。B站下载为独立 NodeJS Web 工具（`tools/bili-downloader/`，见其 CONTEXT.md，ADR-0011）。源码在 `src/`，测试在 `tests/`。
 
 ## Language
 
@@ -62,7 +62,7 @@ _Avoid_: 抓海报、豆瓣补全、poster fetch
 
 **自动摘要 (Auto Summary)**: 常驻监听 `归档/网页剪藏` 新文件 → AI（deepseek-v4-flash）生成摘要/标签写回 frontmatter。
 
-**B站下载 (Bilibili Downloader)**: 输入链接 → B站 API 解析（封面/标题/清晰度）→ 下载合并（ffmpeg spawn）→ 裁切/压缩（ffmpeg）→ 转文字（faster-whisper，python -c 内嵌代码）→ AI 润色。**依赖 node require（child_process/fs/path/os）与外部二进制（ffmpeg、python）**，仅桌面端可用。**不在本插件迁移清单内——用户决策：后续作为独立插件单独写**。
+**B站下载 (Bilibili Downloader)**: 输入链接 → B站 API 解析（封面/标题/清晰度）→ 下载合并（ffmpeg spawn）→ 裁切/压缩（ffmpeg）→ 转文字（faster-whisper，python -c 内嵌代码）。**用户决策：独立 NodeJS Web 工具（`tools/bili-downloader/`，bin `bili-dl`），不并入 bz 插件**——运行即起本地网页，网页内完成全部操作，设置图标可改交付目录。见 `tools/bili-downloader/CONTEXT.md`（ADR-0011）。
 
 **AI Agent**: 笔记 ⇄ 备忘录/收藏本 自动同步 + AI 剪藏匹配。常驻监听 vault 事件（rename/delete/create）。权限模型：非 AI 操作静默直改；仅 AI 剪藏匹配弹窗批准。
 
