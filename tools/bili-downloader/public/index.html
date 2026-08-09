@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B站下载器</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="top">
+  <h1><span class="logo"></span>B站下载器</h1>
+  <div class="top-actions">
+    <button class="iconbtn" id="history-btn" title="下载历史">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 12"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/></svg>
+    </button>
+    <button class="iconbtn" id="settings-btn" title="设置">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main>
+  <!-- 解析 -->
+  <section class="row" id="url-row">
+    <input type="text" id="url" placeholder="粘贴B站链接或BV号...">
+    <button class="btn primary" id="parse-btn">解析</button>
+  </section>
+
+  <!-- 信息卡 -->
+  <section class="card hidden" id="card-wrap">
+    <div class="card-inner">
+      <img id="cover" alt="">
+      <div class="card-info">
+        <div class="title" id="title"></div>
+        <div class="meta" id="meta"></div>
+        <div class="chips" id="chips"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 下载 -->
+  <section class="hidden" id="dl-wrap">
+    <div class="row">
+      <button class="btn primary" id="dl-btn">下载</button>
+      <div class="progress"><div class="fill" id="dl-fill"></div></div>
+      <div class="progtext" id="dl-text"></div>
+    </div>
+    <div class="hint" id="dl-diag"></div>
+  </section>
+
+  <!-- 预览 + 裁切/压缩 -->
+  <section class="hidden" id="preview-wrap">
+    <video id="video" controls playsinline></video>
+    <div class="vctrl">
+      <button class="btn small" id="play-btn">播放</button>
+      <span class="vtime" id="vtime">00:00 / 00:00</span>
+    </div>
+    <div class="range" id="range-bar">
+      <input type="range" id="range-start" min="0" max="100" value="0">
+      <input type="range" id="range-end" min="0" max="100" value="100">
+    </div>
+    <div class="rangelabels"><span id="start-label"></span><span id="end-label"></span></div>
+    <div class="crfs" id="crfs"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="trim-btn">✂ 应用裁切</button>
+      <div class="progress"><div class="fill" id="trim-fill"></div></div>
+      <div class="progtext" id="trim-text"></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="compress-btn">🗜 压缩</button>
+      <div class="progress"><div class="fill" id="cp-fill"></div></div>
+      <div class="progtext" id="cp-text"></div>
+    </div>
+    <div class="hint ok hidden" id="cp-feedback"></div>
+  </section>
+
+  <!-- 转录 -->
+  <section class="hidden" id="ts-wrap">
+    <div class="hint" id="ts-status"></div>
+    <textarea id="ts-text" placeholder="转录文本..." spellcheck="false"></textarea>
+    <div class="row" style="margin-top:8px">
+      <button class="btn small" id="ts-copy">复制</button>
+      <span class="hint" id="ts-tip">转录完成后自动复制到剪贴板</span>
+    </div>
+  </section>
+
+  <!-- 结果卡片 -->
+  <section class="hidden" id="result-wrap">
+    <div class="result-card">
+      <div class="result-head">✓ 已交付</div>
+      <div class="hint" id="result-path"></div>
+      <div class="result-clip" id="result-clip"></div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="copy-btn">复制</button>
+        <button class="btn" id="newtask-btn">新建任务</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cookie 引导（仅未配置/失效时显示） -->
+  <section class="card hidden" id="cookie-guide">
+    <div class="hint err" id="cookie-status"></div>
+    <details>
+      <summary>如何获取浏览器 Cookie（登录后可用高清/4K）</summary>
+      <ol>
+        <li>用浏览器打开 <b>bilibili.com</b> 并登录</li>
+        <li>按 <b>F12</b> → 顶部 <b>Network</b> → 刷新页面</li>
+        <li>点任意一条 bilibili.com 请求 → <b>Request Headers</b> → 找到 <b>Cookie:</b> 那一整段</li>
+        <li>整段复制，粘贴到设置 → Cookie 输入框 → 保存</li>
+      </ol>
+    </details>
+  </section>
+</main>
+
+<footer class="foot">
+  <button class="btn" id="transcribe-btn">转文字</button>
+  <button class="btn primary" id="done-btn" disabled>完成</button>
+  <button class="btn danger hidden" id="cancel-btn">✕ 取消任务</button>
+</footer>
+
+<!-- 设置弹层 -->
+<div class="mask hidden" id="settings-mask">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>设置</h3>
+      <button class="iconbtn" id="settings-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <label>📂 交付目录（视频最终放的位置）
+        <input type="text" id="set-outputDir" placeholder="E:/Obsidian/叫我包仔/CONFIG/APPENDIX">
+      </label>
+      <label>🗂 Obsidian vault 根目录（用于生成 wikilink，留空则复制普通路径）
+        <input type="text" id="set-vaultPath" placeholder="E:/Obsidian/叫我包仔">
+      </label>
+      <label>🎞 ffmpeg 路径
+        <input type="text" id="set-ffmpegPath" placeholder="ffmpeg">
+      </label>
+      <label>🐍 Python 路径（faster-whisper 所在，需 3.11+）
+        <input type="text" id="set-pythonPath" placeholder="C:/.../python.exe">
+      </label>
+      <label>🤖 Whisper 模型
+        <input type="text" id="set-whisperModel" placeholder="small">
+      </label>
+      <div class="divider"></div>
+      <div class="hint" id="cookie-status2"></div>
+      <label>🍪 Cookie（不回显明文，服务器端保存）
+        <textarea id="set-cookie" placeholder="粘贴 Cookie 整段（SESSDATA=...; bili_jct=...）" spellcheck="false"></textarea>
+      </label>
+      <div class="row" style="margin-top:10px;justify-content:flex-end">
+        <button class="btn" id="cookie-save-btn">保存 Cookie</button>
+        <button class="btn primary" id="settings-save">保存设置</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 历史弹层 -->
+<div class="mask hidden" id="history-mask">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>下载历史</h3>
+      <div class="row">
+        <button class="btn small danger hidden" id="history-clear">清空</button>
+        <button class="iconbtn" id="history-close">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="history-list"></div>
+  </div>
+</div>
+
+<div class="toast hidden" id="toast"></div>
+
+<script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,393 @@
+// ================================================================
+// B站下载器 - 核心逻辑（零 DOM 依赖，可 headless 测试）
+// 由 QuickAdd 脚本《B站下载.js》抽取：wbi 签名、view + playurl、
+// 官方 CDN 多节点切换（150ms 节流平滑进度条 + EMA 速度）、
+// 流复制裁切 + CRF 重编码压缩、faster-whisper 转文字（python -c）。
+// 网络函数（fetchJson / https.get）可注入，便于测试。
+// ================================================================
+const { spawn } = require('child_process')
+const crypto = require('crypto')
+const https = require('https')
+const fs = require('fs')
+const path = require('path')
+
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+
+// ---- B站 web API（wbi 签名）----
+const MIXIN_KEY_ENC_TAB = [46, 47, 18, 2, 53, 8, 23, 32, 15, 50, 10, 31, 58, 3, 45, 35, 27, 43, 5, 49, 33, 9, 42, 19, 29, 28, 14, 39, 12, 38, 41, 13, 37, 48, 7, 16, 24, 55, 40, 61, 26, 17, 0, 1, 60, 51, 30, 4, 22, 25, 54, 21, 56, 59, 6, 63, 57, 62, 11, 36, 20, 34, 44, 52]
+
+function getMixinKey(orig) {
+  return MIXIN_KEY_ENC_TAB.map(n => orig[n]).join('').slice(0, 32)
+}
+
+async function fetchJsonImpl(url, headers = {}) {
+  return new Promise((resolve, reject) => {
+    https.get(url, { headers: { 'User-Agent': UA, ...headers } }, res => {
+      let d = ''
+      res.on('data', c => (d += c))
+      res.on('end', () => {
+        try { resolve(JSON.parse(d)) } catch { reject(new Error('API 响应解析失败')) }
+      })
+    }).on('error', e => reject(new Error(`网络请求失败：${e.message}`)))
+  })
+}
+
+async function getWbiKeys(cookie, fetchJson) {
+  const j = await fetchJson('https://api.bilibili.com/x/web-interface/nav', cookie ? { Cookie: cookie } : {})
+  const w = j && j.data && j.data.wbi_img
+  if (!w) throw new Error('获取 wbi keys 失败')
+  return {
+    imgKey: w.img_url.slice(w.img_url.lastIndexOf('/') + 1, w.img_url.lastIndexOf('.')),
+    subKey: w.sub_url.slice(w.sub_url.lastIndexOf('/') + 1, w.sub_url.lastIndexOf('.')),
+  }
+}
+
+function wbiSign(params, imgKey, subKey) {
+  const mixinKey = getMixinKey(imgKey + subKey)
+  params.wts = Math.round(Date.now() / 1000)
+  const qs = Object.keys(params).sort().map(k => `${k}=${encodeURIComponent(params[k])}`).join('&')
+  return qs + '&w_rid=' + crypto.createHash('md5').update(qs + mixinKey).digest('hex')
+}
+
+async function getViewInfo({ bvid, cookie, fetchJson }) {
+  const j = await fetchJson(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, cookie ? { Cookie: cookie } : {})
+  if (j.code !== 0) throw new Error(`视频信息获取失败：${j.message || j.code}`)
+  return {
+    title: j.data.title, uploader: j.data.owner.name, duration: j.data.duration,
+    thumbnail: j.data.pic, cid: j.data.cid,
+  }
+}
+
+async function getPlayUrls({ bvid, cid, cookie, fetchJson }) {
+  const keys = await getWbiKeys(cookie, fetchJson)
+  const qs = wbiSign({ bvid, cid, fnval: 4048, fourk: 1, qn: 127, platform: 'pc' }, keys.imgKey, keys.subKey)
+  const j = await fetchJson(`https://api.bilibili.com/x/player/wbi/playurl?${qs}`, cookie ? { Cookie: cookie } : {})
+  if (j.code !== 0) throw new Error(`播放地址获取失败：${j.message || j.code}`)
+  return j.data.dash
+}
+
+function lastLine(s) {
+  const lines = s.trim().split(/\r?\n/)
+  return lines[lines.length - 1] || ''
+}
+
+function qualityLabel(f) {
+  const h = f.height
+  const base = h >= 2160 ? '4K' : h >= 1440 ? '2K' : `${h}P`
+  return (f.fps || 0) > 30 ? `${base} ${f.fps}帧` : base
+}
+
+function sanitizeName(s) {
+  return String(s).replace(/[\\/:*?"<>|#^[\]]/g, '_').replace(/\s+/g, ' ').trim().slice(0, 80) || '视频'
+}
+
+function extractBv(url) {
+  const m = String(url).match(/BV[0-9A-Za-z]{10}/)
+  return m ? m[0] : ''
+}
+
+function fmtTime(t) {
+  const s = Math.max(0, Math.round(t))
+  return `${String(Math.floor(s / 60)).padStart(2, '0')}-${String(s % 60).padStart(2, '0')}`
+}
+
+function fmtDuration(t) {
+  const s = Math.max(0, Math.round(t))
+  return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
+}
+
+function buildFileName({ title, bv, trimmed, start, end, duration, compressed, crf }) {
+  let name = `${sanitizeName(title)}_${bv}`
+  if (trimmed && (start > 0 || end < duration)) name += `_clip_${fmtTime(start)}-${fmtTime(end)}`
+  if (compressed && crf !== null && crf !== undefined) name += `_crf${crf}`
+  return `${name}.mp4`
+}
+
+// 解析：view API（标题/封面）+ playurl API（清晰度列表，官方 CDN baseUrl）
+async function parseVideo({ url, cookie, fetchJson = fetchJsonImpl }) {
+  const bvid = extractBv(url)
+  if (!bvid) throw new Error('无法从链接中识别 BV 号')
+  const view = await getViewInfo({ bvid, cookie, fetchJson })
+  const dash = await getPlayUrls({ bvid, cid: view.cid, cookie, fetchJson })
+  const vids = (dash.video || []).filter(v => v.height)
+  if (!vids.length) throw new Error('未找到可下载的视频流')
+  const best = new Map() // 每个高度保留一个代表格式（avc > hevc > av01）
+  for (const v of vids) {
+    const score = f => (f.codecs.startsWith('avc') ? 2 : f.codecs.startsWith('hev') ? 1 : 0) * 100 + (f.frameRate || 0)
+    if (!best.has(v.height) || score(v) > score(best.get(v.height))) best.set(v.height, v)
+  }
+  const formats = [...best.values()]
+    .sort((a, b) => b.height - a.height)
+    .map(f => ({ height: f.height, fps: Math.round(f.frameRate || 0), label: qualityLabel(f) }))
+  return {
+    title: view.title, uploader: view.uploader, duration: view.duration,
+    thumbnail: view.thumbnail, formats, maxHeight: formats[0] ? formats[0].height : 0,
+    bvid, cid: view.cid,
+  }
+}
+
+// 下载：自研 playurl + 多 CDN 节点切换（baseUrl → backupUrl 逐个尝试，慢节点自动跳过）
+function fmtEta(sec) {
+  if (!isFinite(sec) || sec < 0) return '?'
+  sec = Math.round(sec)
+  return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`
+}
+
+// 下载单个流：顺序尝试候选 URL；连接失败或前 6 秒速度 < 0.4MB/s → 切换下一个
+function downloadStream({ urls, outPath, referer, size, onProgress, onDiag, get = https.get }) {
+  return new Promise((resolve, reject) => {
+    const cands = [...urls]
+    let idx = 0
+    const tryNext = () => {
+      if (ABORTED) return reject(new Error('已中止'))
+      if (idx >= cands.length) return reject(new Error('所有 CDN 节点均失败'))
+      const url = cands[idx++]
+      const host = new URL(url).hostname
+      onDiag && onDiag(`节点 ${host}`)
+      const t0 = Date.now()
+      let received = 0, speed = 0, lastT = t0, lastB = 0, settled = false, lastReportAt = 0
+      const ws = fs.createWriteStream(outPath)
+      const h = { req: null, ws }
+      trackDownload(h)
+      const report = () => {
+        const now = Date.now()
+        const dt = (now - lastT) / 1000
+        const inst = dt > 0 ? (received - lastB) / 1048576 / dt : 0
+        speed = speed ? speed * 0.6 + inst * 0.4 : inst   // EMA 平滑瞬时速度，避免数字跳动
+        lastT = now; lastB = received
+        const total = size || received * 4
+        onProgress && onProgress({ phase: 'download', percent: Math.min(100, (received / total) * 100), received, total, speed: `${speed.toFixed(1)}MiB/s`, eta: fmtEta((total - received) / 1048576 / (speed || 0.01)) })
+      }
+      const slowTimer = setInterval(() => {
+        if (settled) return clearInterval(slowTimer)
+        report()   // 兜底更新（下载卡住无 data 时进度仍有响应）
+        if (Date.now() - t0 > 6000 && speed < 0.4) {
+          settled = true
+          req.destroy()
+          ws.destroy()
+          onDiag && onDiag(`节点 ${host} 过慢，切换…`)
+          tryNext()
+        }
+      }, 1000)
+      const req = get(url, { headers: { 'User-Agent': UA, Referer: referer } }, res => {
+        if (res.statusCode !== 200 && res.statusCode !== 206) {
+          res.resume()
+          settled = true
+          clearInterval(slowTimer)
+          ws.destroy()
+          return tryNext()
+        }
+        res.on('data', c => {
+          received += c.length
+          ws.write(c)
+          const now = Date.now()
+          if (now - lastReportAt >= 150) { lastReportAt = now; report() }   // 150ms 节流高频更新，进度条流畅
+        })
+        res.on('end', () => {
+          if (settled) return
+          settled = true
+          clearInterval(slowTimer)
+          DOWNLOADS.delete(h)
+          const total = size || received * 4
+          // end 回调：等数据全部 flush 落盘后再 resolve（否则调用方立即读文件会读到不完整内容）
+          ws.end(() => {
+            onProgress && onProgress({ phase: 'download', percent: Math.min(100, (received / total) * 100), received, total, speed: '✅', eta: '' })
+            resolve()
+          })
+        })
+        res.on('error', () => {
+          if (settled) return
+          settled = true
+          clearInterval(slowTimer)
+          ws.destroy()
+          tryNext()
+        })
+      })
+      h.req = req   // 注册请求句柄，取消任务时可 destroy 中止
+      req.on('error', () => {
+        if (settled) return
+        settled = true
+        clearInterval(slowTimer)
+        ws.destroy()
+        onDiag && onDiag(`节点 ${host} 连接失败，切换…`)
+        tryNext()
+      })
+    }
+    tryNext()
+  })
+}
+
+// 合并音视频（-c copy 秒级）
+function mergeStreams({ videoPath, audioPath, outPath, ffmpeg = 'ffmpeg' }) {
+  return new Promise((resolve, reject) => {
+    const p = spawn(ffmpeg, ['-y', '-i', videoPath, '-i', audioPath, '-c', 'copy', '-movflags', '+faststart', outPath], { windowsHide: true })
+    trackProc(p)
+    let err = ''
+    p.stderr.on('data', d => (err += d))
+    p.on('error', e => reject(new Error(`无法启动 ffmpeg：${e.message}`)))
+    p.on('close', code => {
+      if (code !== 0) reject(new Error(lastLine(err) || `ffmpeg 退出码 ${code}`))
+      else resolve()
+    })
+  })
+}
+
+async function downloadVideo({ url, cookie, height, outPath, onProgress, onDiag, ffmpeg = 'ffmpeg', fetchJson = fetchJsonImpl, get = https.get }) {
+  const bvid = extractBv(url)
+  const view = await getViewInfo({ bvid, cookie, fetchJson })
+  const dash = await getPlayUrls({ bvid, cid: view.cid, cookie, fetchJson })
+  const vids = (dash.video || []).filter(v => v.height)
+  if (!vids.length) throw new Error('未找到可下载的视频流')
+  // 目标清晰度：<= height 的最高，avc 优先；找不到则用已有最低
+  let v = vids.filter(f => f.height <= height && f.codecs.startsWith('avc')).sort((a, b) => b.height - a.height)[0]
+  if (!v) v = vids.filter(f => f.height <= height).sort((a, b) => b.height - a.height)[0]
+  if (!v) v = vids.sort((a, b) => b.height - a.height)[0]
+  const a = (dash.audio || [])[0]
+  if (!a) throw new Error('未找到音频流')
+  const tmpV = outPath + '.v.part'
+  const tmpA = outPath + '.a.part'
+  const referer = `https://www.bilibili.com/video/${bvid}`
+  // 音视频总进度聚合：两流字节数相加，避免流切换时进度条回跳
+  const totalBytes = (v.size || 0) + (a.size || 0)
+  let gotV = 0, gotA = 0
+  const agg = totalBytes > 0
+    ? key => p => {
+        const recv = p.received !== undefined ? p.received : (p.percent / 100) * (p.total || 0)
+        if (key === 'v') gotV = recv; else gotA = recv
+        onProgress && onProgress({ phase: 'download', percent: Math.min(100, ((gotV + gotA) / totalBytes) * 100), speed: p.speed, eta: p.eta })
+      }
+    : () => p => onProgress && onProgress(p)   // size 缺失（罕见）→ 原样透传
+  onDiag && onDiag(`视频流 ${v.height}P（${v.codecs}）`)
+  await downloadStream({ urls: [v.baseUrl, ...(v.backupUrl || [])], outPath: tmpV, referer, size: v.size, onProgress: agg('v'), onDiag, get })
+  onDiag && onDiag(`音频流 ${a.size ? (a.size / 1048576).toFixed(1) + 'MB' : ''}`)
+  await downloadStream({ urls: [a.baseUrl, ...(a.backupUrl || [])], outPath: tmpA, referer, size: a.size, onProgress: agg('a'), onDiag, get })
+  onDiag && onDiag('合并音视频…')
+  onProgress && onProgress({ phase: 'merge' })
+  await mergeStreams({ videoPath: tmpV, audioPath: tmpA, outPath, ffmpeg })
+  try { fs.unlinkSync(tmpV) } catch {}
+  try { fs.unlinkSync(tmpA) } catch {}
+}
+
+// 裁切+压缩：crf 为 null 时用流复制（快速无损裁切）；否则 libx264 重编码
+// 进度：解析 stderr 的 -stats 输出 time=HH:MM:SS（stderr 无缓冲，实时流式）
+function trimVideo({ inPath, outPath, ffmpeg = 'ffmpeg', start, end, crf, totalMs, onProgress }) {
+  return new Promise((resolve, reject) => {
+    const args = ['-y', '-ss', String(start), '-to', String(end), '-i', inPath]
+    if (crf === null || crf === undefined) {
+      args.push('-c', 'copy')
+    } else {
+      args.push('-c:v', 'libx264', '-crf', String(crf), '-preset', 'medium', '-c:a', 'aac')
+    }
+    args.push('-movflags', '+faststart', '-stats_period', '0.2', outPath)
+    const p = spawn(ffmpeg, args, { windowsHide: true })
+    trackProc(p)
+    let err = ''
+    p.stderr.on('data', d => {
+      err += d
+      const re = /time=(\d+):(\d+):([\d.]+)/g
+      let m
+      while ((m = re.exec(String(d))) !== null) {
+        const t = (+m[1]) * 3600 + (+m[2]) * 60 + parseFloat(m[3])
+        if (totalMs > 0) {
+          const pct = Math.min(100, (t * 1000 / totalMs) * 100)
+          onProgress && onProgress({ phase: 'trim', percent: pct })
+        }
+      }
+    })
+    p.on('error', e => reject(new Error(`无法启动 ffmpeg：${e.message}`)))
+    p.on('close', code => {
+      if (code !== 0) reject(new Error(lastLine(err) || `ffmpeg 退出码 ${code}`))
+      else resolve()
+    })
+  })
+}
+
+// ---- 任务中止追踪（取消时 kill 子进程 + 中断下载流）----
+const PROCS = new Set()        // 进行中的 ffmpeg / python 子进程
+const DOWNLOADS = new Set()    // 进行中的下载请求 { req, ws }
+let ABORTED = false            // 全局中止标志（downloadStream 的 tryNext 检查）
+function trackProc(p) { PROCS.add(p); p.on('close', () => PROCS.delete(p)) }
+function trackDownload(h) { DOWNLOADS.add(h) }
+function abortAll() {
+  ABORTED = true
+  PROCS.forEach(p => { try { p.kill() } catch {} })
+  DOWNLOADS.forEach(h => {
+    try { h.req && h.req.destroy() } catch {}
+    try { h.ws && h.ws.destroy() } catch {}
+  })
+  PROCS.clear(); DOWNLOADS.clear()
+}
+function resetAbort() { ABORTED = false }
+
+// ---- 通用 JSON / 文件工具 ----
+function loadCookies(file) {
+  try {
+    const c = JSON.parse(fs.readFileSync(file, 'utf8'))
+    return typeof c.cookie === 'string' && c.cookie.trim() ? c.cookie.trim() : null
+  } catch { return null }
+}
+
+function saveCookies(file, str) {
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  fs.writeFileSync(file, JSON.stringify({ cookie: str.trim(), savedAt: new Date().toISOString() }, null, 2))
+}
+
+function readJson(file, def) {
+  try { return JSON.parse(fs.readFileSync(file, 'utf8')) } catch { return def }
+}
+
+function writeJson(file, obj) {
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  fs.writeFileSync(file, JSON.stringify(obj, null, 2))
+}
+
+// 重名加序号：xxx.mp4 已存在 → xxx_2.mp4
+function uniquePath(file) {
+  if (!fs.existsSync(file)) return file
+  const ext = path.extname(file)
+  const base = file.slice(0, -ext.length)
+  for (let i = 2; ; i++) {
+    const cand = `${base}_${i}${ext}`
+    if (!fs.existsSync(cand)) return cand
+  }
+}
+
+// 内嵌转录 Python 代码（faster-whisper，python -c 执行，无需独立脚本文件）
+// 用法: python -c "此代码" <模型> <视频路径>，stdout 输出无换行一段文字
+const PY_TRANSCRIBE = `
+import sys
+from faster_whisper import WhisperModel
+for _s in (sys.stdout, sys.stderr):
+    try:
+        _s.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
+model = WhisperModel(sys.argv[1], device='cpu', compute_type='int8')
+segments, _ = model.transcribe(sys.argv[2], language='zh', vad_filter=True)
+for seg in segments:
+    t = seg.text.strip()
+    if t:
+        sys.stdout.write(t + ' ')
+        sys.stdout.flush()
+`
+
+// 转文字：python -c 执行内嵌代码；stdout 逐块回调（修复原版双监听导致的文本双写）
+function runPython({ py, args, onChunk }) {
+  return new Promise((resolve, reject) => {
+    const p = spawn(py, ['-c', PY_TRANSCRIBE, ...args], { windowsHide: true, env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' } })
+    trackProc(p)   // 取消任务时可 kill 中止转录
+    let err = ''
+    p.stdout.on('data', d => { const s = String(d); onChunk && onChunk(s) })
+    p.stderr.on('data', d => { err += d })
+    p.on('error', e => reject(new Error(`无法启动 Python：${e.message}`)))
+    p.on('close', code => { if (code !== 0) reject(new Error(lastLine(err) || `Python 退出码 ${code}`)); else resolve() })
+  })
+}
+
+module.exports = {
+  UA, MIXIN_KEY_ENC_TAB, getMixinKey, fetchJsonImpl, getWbiKeys, wbiSign, getViewInfo, getPlayUrls,
+  lastLine, qualityLabel, sanitizeName, extractBv, fmtTime, fmtDuration, buildFileName,
+  parseVideo, fmtEta, downloadStream, mergeStreams, downloadVideo, trimVideo,
+  loadCookies, saveCookies, readJson, writeJson, uniquePath,
+  abortAll, resetAbort, trackProc, runPython, PY_TRANSCRIBE,
+}
