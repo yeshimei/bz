@@ -3,6 +3,7 @@
  */
 import type { App, TFile } from 'obsidian';
 import { notice, notify } from '../core/notice';
+import type { NoticeHandle } from '../core/notice';
 import { getApp } from '../core/app';
 import { FSRS, FSRS_FIRST_INTERVALS, FSRS_FIRST_TEXTS, LADDER_MAX } from './fsrs';
 import type { Rating } from './fsrs';
@@ -14,6 +15,8 @@ export const reviewApp = {
   dataManager: null as ReviewDataManager | null,
   /** 测试注入：对齐源码 window.__quiz 语义 */
   _quizOverride: null as any | null,
+  /** 连续复习单框通知（同键合并，动态更新消息） */
+  _reviewNotice: null as NoticeHandle | null,
 
   async getQuiz(): Promise<any> {
     if (this._quizOverride) return this._quizOverride;
@@ -44,7 +47,7 @@ export const reviewApp = {
     if (now < nextReview) {
       const diff = nextReview.getTime() - now.getTime();
       const mins = Math.ceil(diff / 60000);
-      notice(`⏰ 还未到复习时间（${mins}分钟后）`);
+      notice(`还未到复习时间（${mins}分钟后）`);
       return;
     }
 
@@ -79,7 +82,7 @@ export const reviewApp = {
         it.nextReviewDate = nextDate.toISOString();
         if (enteringFsrs) it.completed = false; // 进入 FSRS 不算完成
       });
-      notice(enteringFsrs ? `✅ 进入深度复习，${FSRS_FIRST_TEXTS[targetStage]}后复习` : `✅ ${FSRS_FIRST_TEXTS[targetStage]}后复习`);
+      notice(enteringFsrs ? `进入深度复习，${FSRS_FIRST_TEXTS[targetStage]}后复习` : `${FSRS_FIRST_TEXTS[targetStage]}后复习`, 'success');
       return;
     }
 
@@ -104,7 +107,7 @@ export const reviewApp = {
 
     const days = Math.round(result.days);
     const rPct = Math.round(R * 100);
-    notice(`✅ R=${rPct}% → 下次复习：${days > 0 ? days + '天' : '1天'}后`);
+    notice(`R=${rPct}% → 下次复习：${days > 0 ? days + '天' : '1天'}后`, 'success');
   },
 
   /** 跳转逾期 */
@@ -115,7 +118,7 @@ export const reviewApp = {
     const items = await dm.loadItems();
     const overdue = items.filter((i) => i.isOverdue && !i.isCompleted);
     if (!overdue.length) {
-      notice('🎉 没有逾期笔记');
+      notice('没有逾期笔记', 'success');
       return;
     }
     overdue.sort((a, b) => new Date(a.nextReviewDate as string).getTime() - new Date(b.nextReviewDate as string).getTime());
@@ -128,16 +131,16 @@ export const reviewApp = {
     }
 
     if (quiz && quiz.ai) {
-      const h = notify('正在批量生成题目…', { type: 'progress' });
+      const h = notify('正在批量生成题目…', { type: 'progress', dedupeKey: 'review-generate' });
       const batchQuestions = await this.batchGenerateQuestions(overdue);
       const hasAny = Object.values(batchQuestions).some((qs) => (qs as any[]).length > 0);
       if (!hasAny) {
         h.setType('warning');
-        h.setMessage('⚠️ 批量出题失败，改用普通复习');
+        h.setMessage('批量出题失败，改用普通复习');
         await this.reviewLoop(overdue, 0);
       } else {
         h.setType('success');
-        h.setMessage('✅ 题目已生成，开始做题复习');
+        h.setMessage('题目已生成，开始做题复习');
         await this.quizReviewLoop(overdue, 0, batchQuestions);
       }
     } else {
@@ -160,7 +163,7 @@ export const reviewApp = {
 
     if (index >= items.length) {
       quiz.endReviewSession();
-      notice('🎉 所有做题复习已完成');
+      notice('所有做题复习已完成', 'success');
       return;
     }
     const item = items[index];
@@ -225,7 +228,7 @@ export const reviewApp = {
     const quiz: any = await this.getQuiz();
     if (!quiz || !quiz.ai) {
       console.warn('做题家未初始化（缺少 AI）');
-      notify('⚠️ 做题家未初始化（缺少 AI），已改用普通复习', { dedupeKey: 'review-quiz-ai' });
+      notify('做题家未初始化（缺少 AI），已改用普通复习', { type: 'warning', dedupeKey: 'review-quiz-ai' });
       return {};
     }
 
@@ -255,7 +258,13 @@ export const reviewApp = {
     this.ensure(app);
     const dm = this.dataManager!;
     if (index >= overdueNotes.length) {
-      notice('🎉 所有逾期笔记已复习完成');
+      if (this._reviewNotice) {
+        this._reviewNotice.setType('success');
+        this._reviewNotice.setMessage('所有逾期笔记已复习完成');
+        this._reviewNotice = null;
+      } else {
+        notice('所有逾期笔记已复习完成', 'success');
+      }
       return;
     }
     const item = overdueNotes[index];
@@ -267,7 +276,13 @@ export const reviewApp = {
     }
     const leaf = app.workspace.getLeaf(false);
     await leaf.openFile(file as TFile);
-    notice(`📖 复习中 (${index + 1}/${overdueNotes.length}): ${item.name}`);
+    // 连续复习：常驻单框动态更新（同键存活时原地合并，不刷屏）
+    const reviewMsg = `复习中 (${index + 1}/${overdueNotes.length}): ${item.name}`;
+    if (this._reviewNotice) {
+      this._reviewNotice.setMessage(reviewMsg);
+    } else {
+      this._reviewNotice = notify(reviewMsg, { type: 'progress', dedupeKey: 'review-loop' });
+    }
 
     let checkCount = 0;
     const maxChecks = 300;
@@ -290,7 +305,13 @@ export const reviewApp = {
       }
       if (checkCount >= maxChecks) {
         clearInterval(interval);
-        notice('⏸️ 复习超时，请手动继续');
+        if (this._reviewNotice) {
+          this._reviewNotice.setMessage('复习超时，请手动继续');
+          this._reviewNotice.setType('warning');
+          this._reviewNotice = null;
+        } else {
+          notice('复习超时，请手动继续', 'warning');
+        }
       }
     }, 1000);
   },
@@ -302,7 +323,7 @@ export const reviewApp = {
     const items = await dm.loadItems();
     if (items.some((i) => i.filePath === file.path)) throw new Error('该笔记已在复习计划中');
     await dm.addItem(file.path, file.basename);
-    notice('✅ 已加入复习计划，首次复习：1分钟后');
+    notice('已加入复习计划，首次复习：1分钟后', 'success');
   },
 
   /** 文件树染色 + 阶段徽标（源码 L719-772 逐字） */

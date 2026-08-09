@@ -79,7 +79,7 @@ describe('updateComment / deleteHighlight', () => {
     await new Promise((r) => setTimeout(r, 20));
     const out = vault.files.get('书库/活着.md')!;
     expect(out).toContain('data-comment="新批注"');
-    expect(hasNotice('✅ 批注已更新')).toBe(true);
+    expect(hasNotice('批注已更新')).toBe(true);
     expect(done).toBe(true);
   });
 
@@ -88,7 +88,7 @@ describe('updateComment / deleteHighlight', () => {
     await new Promise((r) => setTimeout(r, 20));
     const out = vault.files.get('书库/活着.md')!;
     expect(out).not.toContain('data-comment="批注一"');
-    expect(hasNotice('✅ 批注已清空')).toBe(true);
+    expect(hasNotice('批注已清空')).toBe(true);
   });
 
   it('updateComment：无 data-comment → 插入属性', async () => {
@@ -120,7 +120,7 @@ describe('updateComment / deleteHighlight', () => {
     const out = vault.files.get('书库/活着.md')!;
     expect(out).not.toContain('data-id="h1"');
     expect(out).toContain('data-id="h2"'); // 其他保留
-    expect(hasNotice('✅ 已删除')).toBe(true);
+    expect(hasNotice('已删除')).toBe(true);
     spy.mockRestore();
   });
 

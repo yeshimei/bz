@@ -4,6 +4,7 @@
  */
 import { vi } from 'vitest';
 import * as momentNs from 'moment';
+import { __resetNoticeForTests } from '../src/core/notice';
 
 // CJS/ESM 互操作：取到可调用的 moment 函数
 const realMoment: any = (momentNs as any).default || momentNs;
@@ -280,6 +281,8 @@ export function resetObsidianMocks() {
   mockMarkdownRenderer.render.mockClear();
   setIcon.mockClear();
   getIcon.mockClear();
+  // 自绘通知（ticket 25）：清存活/去重记录，防 dedupeKey 窗口跨测试残留
+  __resetNoticeForTests();
 }
 
 export default obsidianMock;

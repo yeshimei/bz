@@ -516,12 +516,12 @@ ${body}`;
     const existing = app.vault.getAbstractFileByPath(filePath);
     if (existing) await app.vault.modify(existing as TFile, md);
     else await app.vault.create(filePath, md);
-    notice(`✅ 已保存：${cleanTitle}`);
+    notice(`已保存：${cleanTitle}`, 'success');
     hide();
     app.workspace.openLinkText(filePath, filePath, true);
     markAsRead('saved');
   } catch (e: any) {
-    notice(`❌ 保存失败：${e.message}`);
+    notice(`保存失败：${e.message}`, 'error');
   }
 }
 
@@ -550,7 +550,7 @@ export async function checkNewArticles(prevTotal: number) {
     if (!af) return;
     const fresh = JSON.parse(await app.vault.read(af as TFile));
     if (fresh.length > prevTotal) {
-      notice(`📰 新增 ${fresh.length - prevTotal} 篇文章`);
+      notice(`新增 ${fresh.length - prevTotal} 篇文章`, 'info');
     }
   } catch (e) { /* 忽略 */ }
 }

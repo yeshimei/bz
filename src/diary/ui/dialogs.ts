@@ -603,7 +603,7 @@ export async function saveNewEntry() {
     }
   } catch (error: any) {
     console.error('保存日记失败:', error);
-    notice('❌ 保存日记失败：' + error.message);
+    notice('保存日记失败：' + error.message, 'error');
   }
 }
 

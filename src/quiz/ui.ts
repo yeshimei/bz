@@ -161,7 +161,7 @@ export class QuizMasterUI {
       const notePaths = activeItems.map((i: any) => i.filePath);
       await this.ensureQuestions(notePaths);
     } catch (e: any) {
-      notice('❌ 更新题库失败：' + e.message);
+      notice('更新题库失败：' + e.message, 'error');
       console.error(e);
     }
   }
@@ -193,9 +193,10 @@ export class QuizMasterUI {
 
     if (!missing.length) return;
 
-    // 批量生成（一次 AI 调用）
+    // 批量生成（一次 AI 调用）：常驻单框动态更新
     if (QuizMasterUI.ai) {
       try {
+        const h = notify(`正在为 ${missing.length} 篇笔记批量生成题目…`, { type: 'progress', dedupeKey: 'quiz-generate' });
         const batchResult = await this.generator.generateBatch(missing, QuizMasterUI.ai, enableMultipleChoice, questionsPerNote, difficulty);
         let batchOk = 0;
         for (const [path, qs] of Object.entries(batchResult)) {
@@ -205,11 +206,12 @@ export class QuizMasterUI {
           }
         }
         await this.manager.saveQuiz(app, quiz);
-        if (batchOk > 0) notify(`✅ 已为 ${batchOk} 篇笔记生成题目`, { type: 'success' });
+        h.setType('success');
+        h.setMessage(`已为 ${batchOk} 篇笔记生成题目`);
         return;
       } catch (e: any) {
         console.warn('批量出题失败，降级为逐篇:', e.message);
-        notify('⚠️ 批量出题失败，已改为逐篇生成', { dedupeKey: 'quiz-generate' });
+        notify('批量出题失败，已改为逐篇生成', { type: 'warning', dedupeKey: 'quiz-generate' });
       }
     }
 
@@ -232,8 +234,8 @@ export class QuizMasterUI {
         failCount++;
       }
     }
-    if (okCount > 0) notify(`✅ 已为 ${okCount} 篇笔记生成题目`, { type: 'success' });
-    if (failCount > 0) notify(`⚠️ ${failCount} 篇笔记出题失败`, { dedupeKey: 'quiz-generate' });
+    if (okCount > 0) notify(`已为 ${okCount} 篇笔记生成题目`, { type: 'success' });
+    if (failCount > 0) notify(`${failCount} 篇笔记出题失败`, { type: 'warning', dedupeKey: 'quiz-generate' });
   }
 
   /** 加载提示（源码 L401-418 逐字） */
@@ -270,7 +272,7 @@ export class QuizMasterUI {
     if (this._generating) return;
 
     if (!QuizMasterUI.ai) {
-      notice('⚠️ AI 服务未配置，无法生成题目', 5000);
+      notice('AI 服务未配置，无法生成题目', 'warning', 5000);
       return;
     }
 
@@ -295,14 +297,14 @@ export class QuizMasterUI {
           const file = app.vault.getAbstractFileByPath(notePath);
           if (!file) {
             this.closeLoading();
-            notice('笔记文件不存在', 5000);
+            notice('笔记文件不存在', 'error');
             return;
           }
 
           const content = await app.vault.read(file as any);
           if (!content.trim()) {
             this.closeLoading();
-            notice('笔记内容为空，无法生成题目', 5000);
+            notice('笔记内容为空，无法生成题目', 'error');
             return;
           }
 
@@ -319,14 +321,14 @@ export class QuizMasterUI {
           uncompleted = await this.manager.getUncompletedQuestions(app);
           if (uncompleted.length === 0) {
             this.closeLoading();
-            notice('生成题目失败，请重试', 5000);
+            notice('生成题目失败，请重试', 'error');
             return;
           }
 
           this.closeLoading();
         } catch (e: any) {
           this.closeLoading();
-          notice('❌ 生成题目失败：' + e.message, 5000);
+          notice('生成题目失败：' + e.message, 'error');
           console.error(e);
           return;
         }
@@ -433,7 +435,7 @@ export class QuizMasterUI {
                 }, 800);
               })
               .catch((e) => {
-                notice('❌ 删除题目失败：' + e.message);
+                notice('删除题目失败：' + e.message, 'error');
                 answered = false;
                 optionElements.forEach((b) => b.classList.remove('disabled'));
               });
@@ -495,7 +497,7 @@ export class QuizMasterUI {
               }, 800);
             })
             .catch((e) => {
-              notice('❌ 删除题目失败：' + e.message);
+              notice('删除题目失败：' + e.message, 'error');
               answered = false;
               submitBtn.disabled = false;
               optionElements.forEach((b) => b.classList.remove('disabled'));

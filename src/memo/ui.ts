@@ -638,7 +638,7 @@ export const UIManager = {
         App.refresh();
         this.hideAddDialog();
       } catch (e: any) {
-        notice('❌ 保存失败：' + e.message);
+        notice('保存失败：' + e.message, 'error');
         console.error(e);
       }
     };
@@ -679,7 +679,7 @@ export const UIManager = {
 
     try {
       if (!App.ai) {
-        notice('⚠️ AI 服务未配置，请到设置中填写');
+        notice('AI 服务未配置，请到设置中填写', 'warning');
         return;
       }
 
@@ -745,7 +745,7 @@ export const UIManager = {
       notice(`AI 推荐：场景【${recommendation.scene}】· 优先级【${recommendation.priority}】`);
     } catch (e) {
       console.error('AI 推荐失败:', e);
-      notice('❌ AI 推荐失败，请手动选择');
+      notice('AI 推荐失败，请手动选择', 'error');
     } finally {
       // 恢复按钮状态
       const aiBtn = document.querySelector('#add-todo-ai-recommend') as HTMLButtonElement | null;

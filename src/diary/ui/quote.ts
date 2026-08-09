@@ -270,14 +270,14 @@ function createQuoteSaveHandler(popup: HTMLElement, mask: HTMLElement, quoteData
 
       const newEntry = await addEntry(dateStr, timeStr, selTagNames, finalContent);
       if (!newEntry) throw new Error('addEntry 返回空');
-      notice('✅ 摘抄已保存');
+      notice('摘抄已保存', 'success');
       mask.style.display = 'none';
       popup.style.display = 'none';
       cleanupDialogOverrides(popup, mask, q);
       await jumpToEntry(newEntry, 'edit');
     } catch (error: any) {
       console.error('保存摘抄失败:', error);
-      notice('❌ 保存摘抄失败：' + error.message);
+      notice('保存摘抄失败：' + error.message, 'error');
     }
   };
 }

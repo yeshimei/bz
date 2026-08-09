@@ -264,7 +264,7 @@ export default class BzPlugin extends Plugin {
       .map(([k]) => k)
       .join('、');
     if (custom) {
-      notice('⚠️ 检测到旧版数据路径设置（' + custom + '），已统一为 CONFIG/STORAGE，请手动迁移对应数据文件。');
+      notice('检测到旧版数据路径设置（' + custom + '），已统一为 CONFIG/STORAGE，请手动迁移对应数据文件。', 'warning');
     }
   }
 

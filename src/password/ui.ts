@@ -407,7 +407,7 @@ export class UIManager {
     if (this.popup) this.popup.style.display = 'none';
     if (this.config.securityMode) {
       this.dataManager.lock();
-      notice('⏸️ 安全模式：已自动上锁');
+      notice('安全模式：已自动上锁');
     }
   }
 
@@ -421,7 +421,7 @@ export class UIManager {
         await this.dataManager.load();
       }
     } catch (e: any) {
-      notice('❌ 加载数据失败：' + e.message);
+      notice('加载数据失败：' + e.message, 'error');
       return;
     }
 
@@ -480,7 +480,7 @@ export class UIManager {
       e.stopPropagation();
       if (item.account) {
         navigator.clipboard.writeText(item.account);
-        notice('✅ 账号已复制');
+        notice('账号已复制', 'success');
       }
     };
     accountWrapper.appendChild(accountSpan);
@@ -506,7 +506,7 @@ export class UIManager {
       e.stopPropagation();
       if (item.password) {
         navigator.clipboard.writeText(item.password);
-        notice('✅ 密码已复制');
+        notice('密码已复制', 'success');
       }
     };
 
@@ -545,9 +545,9 @@ export class UIManager {
           try {
             await this.dataManager.deleteItem(item.id);
             await this.renderList();
-            notice('✅ 已删除');
+            notice('已删除', 'success');
           } catch (e: any) {
-            notice('❌ 删除失败：' + e.message);
+            notice('删除失败：' + e.message, 'error');
           }
         });
       }, 500);
@@ -688,9 +688,9 @@ export class UIManager {
         }
         await this.renderList();
         this.closeAddDialog();
-        notice('✅ 已保存');
+        notice('已保存', 'success');
       } catch (e: any) {
-        notice('❌ 保存失败：' + e.message);
+        notice('保存失败：' + e.message, 'error');
       }
     };
 
@@ -932,9 +932,9 @@ export class UIManager {
               await this.dataManager.unlock(pw);
               document.body.removeChild(mask);
               resolve(true);
-              notice('✅ 密码已设置，数据已加密');
+              notice('密码已设置，数据已加密', 'success');
             } catch (e: any) {
-              notice('❌ 设置失败：' + e.message);
+              notice('设置失败：' + e.message, 'error');
               resolve(false);
             }
             return;
@@ -944,9 +944,9 @@ export class UIManager {
           if (success) {
             document.body.removeChild(mask);
             resolve(true);
-            notice('✅ 解锁成功');
+            notice('解锁成功', 'success');
           } else {
-            notice('❌ 密码错误，请重试');
+            notice('密码错误，请重试', 'error');
             input.value = '';
             input.focus();
           }
@@ -1082,10 +1082,10 @@ export class PasswordAppController {
     navigator.clipboard
       .writeText(pwd)
       .then(() => {
-        notice('✅ 密码已复制到剪贴板');
+        notice('密码已复制到剪贴板', 'success');
       })
       .catch(() => {
-        notice('❌ 复制失败，请手动复制');
+        notice('复制失败，请手动复制', 'error');
       });
     this.uiManager.pendingPassword = pwd;
     notice('密码已暂存，打开“添加条目”时将自动填入');

@@ -39,7 +39,7 @@ export async function loadDatabase(): Promise<BelongingsDatabase> {
       const content = await app.vault.read(file as any);
       db = JSON.parse(content);
     } catch (error) {
-      notice('⚠️ 数据文件解析失败，已重置为空', 5000);
+      notice('数据文件解析失败，已重置为空', 'warning', 5000);
       console.error('数据文件解析错误:', error);
       db = emptyDatabase();
     }

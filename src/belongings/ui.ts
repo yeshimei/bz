@@ -539,7 +539,7 @@ function createModalShell(
 function editItemById(id: string): Promise<void> {
   const item = database!.items[id];
   if (!item) {
-    notice('物品不存在', 3000);
+    notice('物品不存在', 'warning');
     return Promise.resolve();
   }
 
@@ -577,7 +577,7 @@ function editItemById(id: string): Promise<void> {
     const saveBtn = createActionButton('💾 保存', 'var(--interactive-accent)', async () => {
       const errMsg = validateForm(inputs);
       if (errMsg) {
-        notice(errMsg, 3000);
+        notice(errMsg, 'warning');
         return;
       }
       const name = inputs.name.value.trim();
@@ -593,7 +593,7 @@ function editItemById(id: string): Promise<void> {
 
       await saveDatabase(database!);
       render();
-      notice(`✅ 物品「${name}」已更新`, 3000);
+      notice(`物品「${name}」已更新`, 'success');
 
       if (document.body.contains(overlay)) {
         document.body.removeChild(overlay);
@@ -642,7 +642,7 @@ function editItemById(id: string): Promise<void> {
 function deleteItemById(id: string): Promise<void> {
   const item = database!.items[id];
   if (!item) {
-    notice('物品不存在', 3000);
+    notice('物品不存在', 'warning');
     return Promise.resolve();
   }
 
@@ -671,7 +671,7 @@ function deleteItemById(id: string): Promise<void> {
       delete database!.items[id];
       await saveDatabase(database!);
       render();
-      notice(`✅ 已删除「${item.name}」`);
+      notice(`已删除「${item.name}」`, 'success');
       document.body.removeChild(overlay);
       done();
       resolve();
@@ -832,7 +832,7 @@ export function addItem(): Promise<void> {
     const submitBtn = createActionButton('✅ 保存', 'var(--interactive-accent)', async () => {
       const errMsg = validateForm(inputs);
       if (errMsg) {
-        notice(errMsg, 3000);
+        notice(errMsg, 'warning');
         return;
       }
       const name = inputs.name.value.trim();
@@ -852,7 +852,7 @@ export function addItem(): Promise<void> {
       database!.items[newItem.id] = newItem;
       await saveDatabase(database!);
       render();
-      notice(`✅ 物品「${name}」已添加`, 3000);
+      notice(`物品「${name}」已添加`, 'success');
 
       if (document.body.contains(overlay)) {
         document.body.removeChild(overlay);
@@ -1000,7 +1000,7 @@ export async function openBelongingsPanel(): Promise<void> {
   refreshBtn.addEventListener('click', async () => {
     database = await loadDatabase();
     render();
-    notice('✅ 已刷新');
+    notice('已刷新', 'success');
   });
 
   const closeBtn = document.createElement('button');
