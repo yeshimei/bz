@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 备忘录截止日期工具测试（ticket 04）：getDueStatus / formatDueText 语义
  * （逾期/今日到期/未来；N天前已过期/今天 HH:mm 到期等文案）。

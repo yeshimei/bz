@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * jsonStore 测试（ticket 02）：不存在建目录建文件、解析失败重置、write 语义。
  */

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * core 工具层测试（ticket 02）：纯函数逐字对照 Q3 行为。
  */

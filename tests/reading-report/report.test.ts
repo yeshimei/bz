@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 阅读数据分析报告 report 测试（ticket 13 补）：19 个报告生成纯函数，
  * 覆盖空数据分支与有数据分支。

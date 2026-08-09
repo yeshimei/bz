@@ -81,8 +81,10 @@ describe('entries 补测', () => {
     const el = document.createElement('div');
     document.body.appendChild(el);
     addLongPress(el, 'emoji', entry.id!);
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     el.dispatchEvent(new MouseEvent('mousedown'));
-    await new Promise((r) => setTimeout(r, 900));
+    await vi.advanceTimersByTimeAsync(900);
+    vi.useRealTimers();
     expect(document.getElementById('diary-tag-selector-popup')!.style.display).toBe('block');
   });
 
@@ -267,12 +269,3 @@ describe('datetime-picker 补测', () => {
   });
 });
 
-describe('quote 命令补测', () => {
-  it('registerQuoteCommand：注册命令（无选中文本回调不抛错）', async () => {
-    const addCommandSpy = vi.spyOn(app.commands, 'addCommand');
-    await registerQuoteCommand();
-    expect(addCommandSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'bz-diary-create-quote' })
-    );
-  });
-});

@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { setApp } from '../../src/diary/app';
 import { resetTagsConfig, applyDirectories } from '../../src/diary/config';
@@ -246,9 +247,11 @@ describe('onFileChange', () => {
     expect(state.data.originalDiaryEntries).toHaveLength(1);
     // 模拟外部修改：内容变化
     vault.files.set('我的/日记/2024-01-01.md', '# 📖 08:00\nx\n# ✍️ 09:00\ny\n');
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     onFileChange({ path: '我的/日记/2024-01-01.md', extension: 'md' });
     // 文件变更延迟固定 100ms
-    await new Promise((r) => setTimeout(r, 250));
+    await vi.advanceTimersByTimeAsync(250);
+    vi.useRealTimers();
     expect(state.data.originalDiaryEntries).toHaveLength(2);
   });
 

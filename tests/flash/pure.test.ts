@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 闪念纯函数测试（ticket 18）：vptree/chunk/tfidf/text-search
  */

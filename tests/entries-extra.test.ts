@@ -102,21 +102,25 @@ describe('movie 入口', () => {
 
   it('vault 事件触发防抖刷新（overlay 打开时 rebuild）', async () => {
     ensureMovie(app);
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     openMovieManager(app);
-    await new Promise((r) => setTimeout(r, 50)); // rebuildItems 完成
+    await vi.advanceTimersByTimeAsync(50); // rebuildItems 完成
     const before = (MovieM.entries || []).length;
     vault.emit('modify', { path: '我的/影视/《新片》.md', extension: 'md' });
-    await new Promise((r) => setTimeout(r, 400));
+    await vi.advanceTimersByTimeAsync(400);
+    vi.useRealTimers();
     expect((MovieM.entries || []).length).toBeGreaterThanOrEqual(before);
   });
 
   it('vault 事件：非影视目录文件不触发', async () => {
     ensureMovie(app);
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     openMovieManager(app);
-    await new Promise((r) => setTimeout(r, 50));
+    await vi.advanceTimersByTimeAsync(50);
     const before = (MovieM.entries || []).length;
     vault.emit('create', { path: '其他/x.md', extension: 'md' });
-    await new Promise((r) => setTimeout(r, 400));
+    await vi.advanceTimersByTimeAsync(400);
+    vi.useRealTimers();
     expect((MovieM.entries || []).length).toBe(before);
   });
 });

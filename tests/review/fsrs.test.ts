@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 复习计划 FSRS 测试（ticket 16）：R/initS/nextDiff/nextStab/nextInterval 数值断言
  */

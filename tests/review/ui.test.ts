@@ -1,7 +1,7 @@
 /**
  * 复习计划 UI 测试（ticket 16 修正版）：常驻 DOM/渲染/难度弹窗/确认框/归档语义
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
@@ -226,8 +226,10 @@ describe('UIManager', () => {
     await ui.refreshPanel();
     const container = document.getElementById('review-entries-container')!;
     const timeSpan = container.querySelector('.review-time') as HTMLElement;
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     timeSpan.dispatchEvent(new MouseEvent('mousedown', { button: 0 }));
-    await new Promise((r) => setTimeout(r, 550));
+    await vi.advanceTimersByTimeAsync(550);
+    vi.useRealTimers();
     expect(document.getElementById('confirm-title')!.textContent).toBe('移出复习计划');
     ui.destroy();
   });

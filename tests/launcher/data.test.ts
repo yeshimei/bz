@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 入口页数据层测试（ticket 23）：容错解析 / 越界重叠 / 追加 / 推挤。
  */

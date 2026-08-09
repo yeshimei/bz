@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 收藏本 BalanceService 测试（ticket 11）：findNumberInObject / fetchBalance / 缓存。
  */

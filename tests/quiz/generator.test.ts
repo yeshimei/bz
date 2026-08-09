@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 做题家生成器测试（ticket 17 修正版）：逐字提示词/三难度/extractJSON/generate 校验
  */
