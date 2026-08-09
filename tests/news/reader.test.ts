@@ -132,7 +132,7 @@ describe('聚合讯阅读流', () => {
     expect(md).toContain('site: "知乎日报"');
     expect(md).toContain('tags:\n  - "AI"');
     expect(md).toContain('await dv.view(`CONFIG/SCRIPTS/DataView/摘要`)');
-    expect(hasNotice(/✅\ 已保存/)).toBe(true);
+    expect(hasNotice(/已保存/)).toBe(true);
     // 已读后进入下一篇
     expect(document.querySelector('.news-card-title')!.textContent).toBe('第二篇新闻');
   });
@@ -146,7 +146,7 @@ describe('聚合讯阅读流', () => {
     await loadArticles();
     render();
     await saveToClip();
-    expect(hasNotice(/❌\ 保存失败/)).toBe(true);
+    expect(hasNotice(/保存失败/)).toBe(true);
   });
 
   it('renderMarkdown：转义 XSS 后再渲染', () => {

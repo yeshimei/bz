@@ -154,7 +154,7 @@ describe('收藏本面板', () => {
     expect(data[0].tags).toEqual(['GitHub']);
     expect(data[0].id).toBeTruthy();
     expect(data[0].created).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
-    expect(hasNotice('✅ 收藏已添加')).toBe(true);
+    expect(hasNotice('收藏已添加')).toBe(true);
   });
 
   it('大模型标签 → LLM 配置区显示 + apiKeys 校验', async () => {
@@ -208,7 +208,7 @@ describe('收藏本面板', () => {
     const data = await dm.getAll();
     expect(data[0].title).toBe('改后标题');
     expect(data[0].created).toBe('2025-06-01 08:00:00'); // created 保留
-    expect(hasNotice('✅ 收藏已更新')).toBe(true);
+    expect(hasNotice('收藏已更新')).toBe(true);
   });
 
   it('长按时间 → 删除确认 → 确认删除', async () => {
@@ -250,7 +250,7 @@ describe('收藏本面板', () => {
     expect(ui.addTitleInput!.value).toBe('AI标题');
     expect(ui.addDescInput!.value).toBe('AI简介');
     expect(ui.addAiBtn!.textContent).toBe('✨ AI 推荐');
-    expect(hasNotice('✅ AI 整理完成')).toBe(true);
+    expect(hasNotice('AI 整理完成')).toBe(true);
     const active = [...document.querySelectorAll('.fav-type-btn.active')].map((b) => (b as HTMLElement).dataset.tag);
     expect(active).toContain('GitHub');
   });
@@ -270,7 +270,7 @@ describe('收藏本面板', () => {
     ui.aiService.ai = { json: vi.fn().mockRejectedValue(new Error('网络错误')) } as any;
     ui.addAiBtn!.click();
     await new Promise((r) => setTimeout(r, 30));
-    expect(hasNotice('❌ AI 整理失败：网络错误')).toBe(true);
+    expect(hasNotice('AI 整理失败：网络错误')).toBe(true);
   });
 
   it('余额显示与点击刷新', async () => {

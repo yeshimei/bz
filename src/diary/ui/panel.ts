@@ -363,7 +363,7 @@ export async function init(plugin?: { registerEvent: (ref: unknown) => unknown }
   } catch (err: any) {
     console.error('[日记本] 初始化失败:', err);
     try {
-      notice('❌ 日记本初始化失败：' + (err?.message || err));
+      notice('日记本初始化失败：' + (err?.message || err), 'error');
     } catch (e) {}
   }
 }

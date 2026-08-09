@@ -201,6 +201,6 @@ describe('processFile', () => {
     expect(vault.modifiedPaths).toHaveLength(0);
     // 动态链路：progress → error（ticket 25）
     expect(getNoticeMessages()).toHaveLength(1);
-    expect(getNoticeMessages()[0]).toBe('❌ 摘要生成失败，请重试');
+    expect(getNoticeMessages()[0]).toBe('摘要生成失败，请重试');
   });
 });

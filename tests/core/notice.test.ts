@@ -33,7 +33,7 @@ describe('通知系统', () => {
     expect(document.getElementById('bz-notice-container')).toBe(container);
   });
 
-  it('类型类名：success/warning/error/info', () => {
+  it('类型类名：success/warning/error/info + emoji 图标', () => {
     notify('成功', { type: 'success' });
     notify('警告', { type: 'warning' });
     notify('错误', { type: 'error' });
@@ -43,6 +43,13 @@ describe('通知系统', () => {
     expect(els[1].classList.contains('bz-notice--warning')).toBe(true);
     expect(els[2].classList.contains('bz-notice--error')).toBe(true);
     expect(els[3].classList.contains('bz-notice--info')).toBe(true);
+    // 类型图标用 emoji（消息文本不含 emoji）
+    const icons = els.map((el) => el.querySelector('.bz-notice-icon')!.textContent);
+    expect(icons[0]).toBe('✅');
+    expect(icons[1]).toBe('⚠️');
+    expect(icons[2]).toBe('❌');
+    expect(icons[3]).toBe('ℹ️');
+    expect(els[0].querySelector('.bz-notice-msg')!.textContent).toBe('成功');
   });
 
   it('动画变体：进入类名 + 退出类名', async () => {
@@ -56,17 +63,36 @@ describe('通知系统', () => {
     expect(visibleNotices()).toHaveLength(0);
   });
 
-  it('默认变体 drop；slide/bounce/shake 类名正确', () => {
-    notify('默认');
+  it('默认变体：桌面 slide-right（右侧滑入）；移动端 drop（顶部下滑）', () => {
+    // jsdom 无 matchMedia → 桌面默认
+    notify('桌面');
+    expect(visibleNotices()[0].classList.contains('bz-notice--in-slide-right')).toBe(true);
+    visibleNotices()[0].remove();
+    // 模拟移动端视口（max-width: 768px）
+    window.matchMedia = ((q: string) => ({
+      matches: q === '(max-width: 768px)',
+      media: q,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      onchange: null,
+      dispatchEvent: () => false,
+    })) as any;
+    notify('移动端');
     expect(visibleNotices()[0].classList.contains('bz-notice--in-drop')).toBe(true);
+    delete (window as any).matchMedia;
+  });
+
+  it('slide/bounce/shake 显式变体类名正确', () => {
     notify('左滑', { variant: 'slide-left' });
-    expect(visibleNotices()[1].classList.contains('bz-notice--in-slide-left')).toBe(true);
+    expect(visibleNotices()[0].classList.contains('bz-notice--in-slide-left')).toBe(true);
     notify('右滑', { variant: 'slide-right' });
-    expect(visibleNotices()[2].classList.contains('bz-notice--in-slide-right')).toBe(true);
+    expect(visibleNotices()[1].classList.contains('bz-notice--in-slide-right')).toBe(true);
     notify('弹跳', { variant: 'bounce' });
-    expect(visibleNotices()[3].classList.contains('bz-notice--in-bounce')).toBe(true);
+    expect(visibleNotices()[2].classList.contains('bz-notice--in-bounce')).toBe(true);
     notify('抖动', { variant: 'shake' });
-    expect(visibleNotices()[4].classList.contains('bz-notice--in-shake')).toBe(true);
+    expect(visibleNotices()[3].classList.contains('bz-notice--in-shake')).toBe(true);
   });
 
   it('富文本标题 + 多行消息（white-space 换行保留）', () => {
@@ -104,9 +130,9 @@ describe('通知系统', () => {
 
   it('setMessage 动态更新正文', () => {
     const h = notify('正在生成摘要…');
-    h.setMessage('✅ 摘要已生成');
+    h.setMessage('摘要已生成');
     expect(visibleNotices()[0].querySelector('.bz-notice-msg')!.textContent).toBe(
-      '✅ 摘要已生成'
+      '摘要已生成'
     );
   });
 
@@ -191,26 +217,27 @@ describe('通知系统', () => {
     expect(visibleNotices()).toHaveLength(0);
   });
 
-  it('z-index 100000：最顶（盖过 Obsidian 全部 UI 层）+ 移动端安全区适配', () => {
+  it('z-index 100000：最顶（盖过 Obsidian 全部 UI 层）+ 桌面右侧/移动端居中 + 安全区适配', () => {
     notify('层级测试');
     const container = document.getElementById('bz-notice-container')!;
     expect(container).not.toBeNull();
-    const css = Array.from(document.querySelectorAll('style')).some(
-      (s) => s.textContent && s.textContent.includes('z-index: 100000')
-    );
-    expect(css).toBe(true);
-    // 移动端适配：顶部安全区 + 宽度 clamp 视口
     const cssText = Array.from(document.querySelectorAll('style'))
       .map((s) => s.textContent || '')
       .join('');
+    expect(cssText).toContain('z-index: 100000');
+    // 桌面端右侧弹出（右上角）
+    expect(cssText).toContain('right: 16px');
+    expect(cssText).toContain('align-items: flex-end');
+    // 移动端：顶部居中 + 安全区 + 顶部 34px（项目断点惯例 max-width: 768px）
+    expect(cssText).toContain('@media (max-width: 768px)');
+    expect(cssText).toContain('left: 50%');
+    expect(cssText).toContain('align-items: center');
     expect(cssText).toContain('env(safe-area-inset-top');
     expect(cssText).toContain('max-width: min(420px, calc(100vw - 24px))');
-    // 移动端断点（项目惯例 max-width: 768px）：顶部 34px
-    expect(cssText).toContain('@media (max-width: 768px)');
     expect(cssText).toContain('top: calc(34px + env(safe-area-inset-top, 0px))');
   });
 
-  describe('dedupeKey 去重（30s 窗口）', () => {
+  describe('dedupeKey 去重（同键单框合并）', () => {
     it('窗口内同键重复 → 不新弹，合并更新消息', () => {
       const h1 = notify('第一次失败', { dedupeKey: 'test-sync' });
       const h2 = notify('第二次失败', { dedupeKey: 'test-sync' });
@@ -229,18 +256,21 @@ describe('通知系统', () => {
       expect(visibleNotices()).toHaveLength(2);
     });
 
-    it('窗口过后同键 → 重新弹（新通知）', async () => {
+    it('同键 progress 常驻存活期无限合并（连续任务单框）', async () => {
       notify('第一次', { dedupeKey: 'test-window', type: 'progress' });
-      // 30s 窗口内：合并
+      // 推进 10 分钟：常驻 progress 仍存活，同键继续合并
+      await vi.advanceTimersByTimeAsync(600000);
       notify('第二次', { dedupeKey: 'test-window', type: 'progress' });
       expect(visibleNotices()).toHaveLength(1);
-      // 推进 31s：窗口过期
-      await vi.advanceTimersByTimeAsync(31000);
-      notify('第三次', { dedupeKey: 'test-window', type: 'progress' });
-      expect(visibleNotices()).toHaveLength(2);
+      expect(visibleNotices()[0].querySelector('.bz-notice-msg')!.textContent).toBe('第二次');
+      // 合并时类型可切换（progress → success）
+      notify('完成', { dedupeKey: 'test-window', type: 'success' });
+      expect(visibleNotices()).toHaveLength(1);
+      expect(visibleNotices()[0].classList.contains('bz-notice--success')).toBe(true);
+      expect(visibleNotices()[0].querySelector('.bz-notice-msg')!.textContent).toBe('完成');
     });
 
-    it('同键通知已消失后窗口内重复 → 不新弹', async () => {
+    it('同键通知已消失后窗口内重复 → 不新弹；窗口过后可再弹', async () => {
       notify('短暂', { dedupeKey: 'test-gone' });
       await vi.advanceTimersByTimeAsync(3300); // 3s 自动消失 + 退出动画
       expect(visibleNotices()).toHaveLength(0);

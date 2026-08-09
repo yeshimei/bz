@@ -102,12 +102,12 @@ export async function processFile(app: any, ai: AIService, file: any): Promise<v
     console.log(`[自动摘要] 补全缺失字段(${missing.join('/')}): ${file.basename}`);
     // 开始调用 AI：动态通知（进行中 → 原地更新为结果）
     const startName = fm && fm.title ? fm.title : file.basename;
-    h = notify(`正在为《${startName}》生成摘要…`, { type: 'progress' });
+    h = notify(`正在为《${startName}》生成摘要…`, { type: 'progress', dedupeKey: 'auto-summary' });
     const aiResult = await aiProcess(ai, bodyText, missing);
     if (!aiResult) {
       if (h) {
         h.setType('error');
-        h.setMessage('❌ 摘要生成失败，请重试');
+        h.setMessage('摘要生成失败，请重试');
         window.setTimeout(() => h && h.hide(), 2500);
       }
       return;

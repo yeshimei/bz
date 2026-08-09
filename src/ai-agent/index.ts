@@ -74,7 +74,7 @@ let queue: Promise<any> = Promise.resolve();
 function enqueue(task: () => Promise<any> | void) {
   queue = queue.then(task).catch((e) => {
     console.error('[ai-agent]', e);
-    notify('❌ 备忘录同步失败，数据可能不一致', { dedupeKey: 'ai-agent-sync' });
+    notify('备忘录同步失败，数据可能不一致', { type: 'error', dedupeKey: 'ai-agent-sync' });
   });
 }
 
@@ -85,10 +85,10 @@ async function archiveItem(item: any, file: any) {
   try {
     await DataManager.updateItem(item.id, { title: file.basename, linkedNote: file.path } as any);
     await DataManager.completeItem(item.id);
-    notify('✅ 已归档到备忘录', { type: 'success' });
+    notify('已归档到备忘录', { type: 'success' });
   } catch (e) {
     console.error('[ai-agent] 归档失败', e);
-    notify('❌ 归档失败：' + ((e && (e as any).message) || e));
+    notify('归档失败：' + ((e && (e as any).message) || e), { type: 'error' });
   }
 }
 
@@ -131,7 +131,7 @@ ${candidatesDesc}
     return { match: parsed.match === true, itemId: parsed.itemId || null };
   } catch (e) {
     console.error('[ai-agent] AI 匹配失败', e);
-    notify('⚠️ AI 匹配失败，已跳过该剪藏', { dedupeKey: 'ai-agent-match' });
+    notify('AI 匹配失败，已跳过该剪藏', { type: 'warning', dedupeKey: 'ai-agent-match' });
     return null;
   }
 }

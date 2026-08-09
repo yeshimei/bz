@@ -132,7 +132,7 @@ export class UIManager {
         await reviewApp.refreshPanel();
         await reviewApp.applyReviewStyles(app);
       } catch (e: any) {
-        notice('❌ 操作失败：' + e.message);
+        notice('操作失败：' + e.message, 'error');
       }
     });
     header.querySelector('#review-btn-start')!.addEventListener('click', async () => {
@@ -397,7 +397,7 @@ export class UIManager {
       if (file) {
         const leaf = app.workspace.getLeaf();
         await leaf.openFile(file as any);
-      } else notice('✅ 文件已删除');
+      } else notice('文件已删除', 'success');
     };
     card.appendChild(content);
 

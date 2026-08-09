@@ -170,7 +170,7 @@ export function updateComment(
       return;
     }
     app.vault.modify(file, newContent).then(() => {
-      notice(newComment === '' ? '✅ 批注已清空' : '✅ 批注已更新');
+      notice(newComment === '' ? '批注已清空' : '批注已更新', 'success');
       if (onDone) onDone();
     });
   });
@@ -203,7 +203,7 @@ export function deleteHighlight(
       return;
     }
     app.vault.modify(file, newContent).then(() => {
-      notice('✅ 已删除');
+      notice('已删除', 'success');
       if (onDone) onDone();
     });
   });

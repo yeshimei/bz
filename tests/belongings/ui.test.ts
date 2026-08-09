@@ -101,7 +101,7 @@ describe('归物本主面板', () => {
     refreshBtn.click();
     await new Promise((r) => setTimeout(r, 20));
     expect(overlay.textContent).toContain('新物品');
-    expect(hasNotice('✅ 已刷新')).toBe(true);
+    expect(hasNotice('已刷新')).toBe(true);
   });
 });
 
