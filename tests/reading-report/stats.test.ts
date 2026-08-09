@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 阅读数据分析报告 stats 测试（ticket 13）：核心公式与纯函数抽样断言。
  */

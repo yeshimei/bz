@@ -108,9 +108,11 @@ describe('createOverlay 主界面', () => {
 
     const input = overlay.querySelector('#movie-search-input') as HTMLInputElement;
     input.value = '在看片';
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     input.dispatchEvent(new Event('input'));
     expect(M.searchKeyword).toBe('');
-    await new Promise((r) => setTimeout(r, 350));
+    await vi.advanceTimersByTimeAsync(350);
+    vi.useRealTimers();
     expect(M.searchKeyword).toBe('在看片');
     const list = overlay.querySelector('.list-container') as HTMLElement;
     expect(list.textContent).toContain('在看片');

@@ -68,9 +68,10 @@ describe('QuizMasterUI', () => {
     await ui.startQuiz();
     expect(ui.totalQuestions).toBe(2);
     // 答对 Q1
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     (document.querySelectorAll('.quiz-option-btn')[0] as HTMLElement).click();
     expect(ui.correctCount).toBe(1);
-    await new Promise((r) => setTimeout(r, 900));
+    await vi.advanceTimersByTimeAsync(900);
     expect(document.getElementById('quiz-popup')!.textContent).toContain('Q2?');
     // totalQuestions 固定不变（源码语义：splice 后显示 (1/2)）
     expect(document.getElementById('quiz-popup')!.textContent).toContain('(1/2)');
@@ -78,9 +79,10 @@ describe('QuizMasterUI', () => {
     const onComplete = vi.fn();
     ui.onComplete = onComplete;
     (document.querySelectorAll('.quiz-option-btn')[1] as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 900));
+    await vi.advanceTimersByTimeAsync(900);
     expect(onComplete).toHaveBeenCalledWith({ correct: 2, wrong: 0, total: 2, accuracy: 100 });
     expect(document.getElementById('quiz-popup')).not.toBeNull(); // 回调不关弹窗
+    vi.useRealTimers();
   });
 
   it('单选答错：正确标绿 + 点击项标红 + 下一题按钮（不删题）', async () => {
@@ -122,11 +124,13 @@ describe('QuizMasterUI', () => {
     (btns[2] as HTMLElement).click();
     expect(btns[0].classList.contains('selected')).toBe(true);
     expect(btns[0].querySelector('.check-mark')).not.toBeNull();
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     submit.click();
     // 源码缺陷：多选不递增 correctCount（逐字保留）
     expect(ui.correctCount).toBe(0);
     expect(btns[0].classList.contains('correct')).toBe(true);
-    await new Promise((r) => setTimeout(r, 900));
+    await vi.advanceTimersByTimeAsync(900);
+    vi.useRealTimers();
     // 题目被 splice 移除 → 无题 → onComplete（total=correct+wrong=0 → accuracy 0）
     expect(onComplete).toHaveBeenCalledTimes(1);
   });

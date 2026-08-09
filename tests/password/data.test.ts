@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 密码本测试（ticket 07）：CryptoService 加密往返、DataManager 主密码状态机、
  * 未解锁拦截、生成器。

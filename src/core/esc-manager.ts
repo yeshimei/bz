@@ -33,7 +33,10 @@ export const escManager = (() => {
     }
   };
 
-  document.addEventListener('keydown', onKeydown);
+  // 环境守卫：node 环境下（数据层测试）不注册 DOM 监听，Obsidian 运行时 document 恒存在
+  if (typeof document !== 'undefined') {
+    document.addEventListener('keydown', onKeydown);
+  }
 
   return {
     register(id: string, layer: EscLayer): EscHandle {
@@ -51,7 +54,9 @@ export const escManager = (() => {
     },
     /** 插件卸载时移除全局监听 */
     destroy() {
-      document.removeEventListener('keydown', onKeydown);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('keydown', onKeydown);
+      }
     },
   };
 })();

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 自动摘要 parser 测试（ticket 10）：frontmatter 解析/重建/正文提取。
  */

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 影视数据层测试（ticket 14）：rebuildItems/sortItemList/getDisplayItems
  */
