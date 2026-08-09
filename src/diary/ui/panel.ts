@@ -10,14 +10,14 @@ import { getApp } from '../app';
 import { getSettings, saveSettings } from '../../core/settings-provider';
 import { openSettingsModal } from '../../core/settings-modal';
 import { applyDirectories } from '../config';
-import { applyUiSettings } from './ui-settings';
+import { applyUiSettings, getDefaultDateFilterSetting, getDefaultSelectedTagSetting } from './ui-settings';
 import { getPrimaryTagsConfig, getSubTagsOfPrimary, getTagEmoji, isSubTag, getParentPrimaryTag } from '../config';
 import { state, setCurrentActiveParentForSub, getCurrentActiveParentForSub } from '../state';
 import { loadAll, onFullRefresh, onLightRefresh, onProgress, onLoadingChange, onFileChange } from '../store';
 import { applyFilter, cancelEdit, updateSticky, initScroll } from './entries';
 import { createTag, rebuildTags, refreshSubTagsBar } from './filter-shared';
 import { createTagPicker, createAddDialog, createConfirmDialog, createDatePicker, showDatePicker, openAddDialog } from './dialogs';
-import { registerOpenDialogCommand, registerQuoteCommand } from './quote';
+import { registerOpenDialogCommand } from './quote';
 
 /** 面板内使用的标签配置访问器（由 ui-config 提供，避免直接依赖 config 的变更状态） */
 
@@ -183,14 +183,52 @@ function createHeader() {
                 s[field] = v;
                 await saveSettings();
                 applyUiSettings(s);
+                rebuildTags();
+                applyFilter();
               })
             );
+        const dropdownSetting = (name: string, desc: string, field: string, options: [string, string][]) =>
+          new Setting(el)
+            .setName(name)
+            .setDesc(desc)
+            .addDropdown((dd) => {
+              for (const [value, label] of options) dd.addOption(value, label);
+              dd.setValue(s[field] || options[0][0]).onChange(async (v) => {
+                s[field] = v;
+                await saveSettings();
+                applyUiSettings(s);
+                rebuildTags();
+                applyFilter();
+              });
+            });
         textSetting('日记目录', '存放日记 markdown 文件的文件夹路径', 'diaryDirectory');
         textSetting('影视目录', '存放影视笔记的文件夹路径（日记本用）', 'movieDirectory');
         textSetting('信目录', '存放信件的文件夹路径', 'letterDirectory');
         textSetting('每批加载数量', '滚动加载时每批显示的条目数', 'diaryBatchSize');
         toggleSetting('显示标签计数', '在标签按钮上显示该标签包含的条目数量', 'showTagCount');
         toggleSetting('使用文件日期作为默认日期', '开启后，添加日记时默认日期取自当前打开的日记文件的日期（若为日记文件）；关闭则使用当前时间', 'useFileDateTime');
+        // ===== 显示（第 9 轮设置扩展） =====
+        new Setting(el).setHeading().setName('显示');
+        toggleSetting('标签按钮显示 emoji', '筛选栏与写日记弹窗的标签按钮显示 emoji（关=纯文字）', 'diaryTagShowEmoji');
+        dropdownSetting('卡片内容渲染方式', '日记卡片内容按 Markdown 渲染或纯文本显示', 'diaryContentRenderMode', [
+          ['markdown', 'Markdown'],
+          ['plain', '纯文本'],
+        ]);
+        dropdownSetting('标签排序', '筛选栏主标签排序：内置配置顺序或按条目数量降序', 'diaryTagSortMode', [
+          ['fixed', '按固定顺序'],
+          ['count', '按条目数量'],
+        ]);
+        // ===== 默认视图（第 9 轮设置扩展） =====
+        new Setting(el).setHeading().setName('默认视图');
+        dropdownSetting('打开面板默认日期筛选', '打开日记本面板时默认的日期范围（重启生效）', 'diaryDefaultDateFilter', [
+          ['all', '全部'],
+          ['this-month', '本月'],
+        ]);
+        dropdownSetting('默认选中标签', '打开面板时默认选中的主标签（重启生效）', 'diaryDefaultSelectedTag', [
+          ['', '全部'],
+          ...Object.keys(getPrimaryTagsConfig()).map((tag) => [tag, tag] as [string, string]),
+        ]);
+        toggleSetting('保存后立即进入编辑', '保存日记后直接进入编辑模式（关=保存后仅关闭弹窗）', 'diaryJumpToEditAfterSave');
       },
     });
   });
@@ -338,11 +376,28 @@ export async function init(plugin?: { registerEvent: (ref: unknown) => unknown }
   }
 
   await registerOpenDialogCommand();
-  await registerQuoteCommand();
   createMaskAndPopup();
   createAddDialog();
   createDatePicker();
   registerEscapeListener();
+
+  // 默认视图（设置项 diaryDefaultDateFilter / diaryDefaultSelectedTag，重启生效）
+  const defaultDateFilter = getDefaultDateFilterSetting();
+  if (defaultDateFilter === 'this-month') {
+    const now = new Date();
+    state.data.currentDateFilter = {
+      year: String(now.getFullYear()),
+      month: String(now.getMonth() + 1).padStart(2, '0'),
+    };
+  } else {
+    state.data.currentDateFilter = null;
+  }
+  const defaultTag = getDefaultSelectedTagSetting();
+  if (defaultTag) {
+    state.data.selectedTags = new Set([defaultTag]);
+  } else {
+    state.data.selectedTags.clear();
+  }
 
   // 默认不弹窗：面板创建后保持隐藏，由 ribbon/命令（showDiaryPanel）显示
   state.ui.isPopupShown = true;

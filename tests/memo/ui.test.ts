@@ -1,11 +1,12 @@
 /**
  * 备忘录 UI 测试（ticket 04/05）：面板渲染、排序置顶、勾选完成/归档、
- * 长按编辑/删除、AI 推荐（mock fetch）。
+ * 长按编辑/删除、剪贴板/提醒设置开关、到期通知。
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { setBzSettingsProvider } from '../../src/memo';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 import { App } from '../../src/memo/app';
 import { UIManager } from '../../src/memo/ui';
 import { DataManager } from '../../src/memo/data';
@@ -41,6 +42,7 @@ async function initApp(vault: MockVault) {
   const app = makeApp(vault);
   setApp(app as any);
   setBzSettingsProvider(() => ({ ...SETTINGS }));
+  setSettingsProvider(() => ({ ...SETTINGS } as any));
   setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'sk-test' }));
   resetAIProviderCache();
   await App.init(SETTINGS);
@@ -225,98 +227,6 @@ describe('备忘录面板', () => {
   });
 });
 
-describe('备忘录 AI 推荐（ticket 05）', () => {
-  beforeEach(() => {
-    resetObsidianMocks();
-    document.body.innerHTML = '';
-    localStorage.clear();
-    vi.useRealTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-    delete (global as any).fetch;
-  });
-
-  function sseBody(content: string) {
-    const encoder = new TextEncoder();
-    const chunks = [`data: ${JSON.stringify({ choices: [{ delta: { content } }] })}\n`, 'data: [DONE]\n'];
-    return new ReadableStream({
-      start(controller) {
-        chunks.forEach((c) => controller.enqueue(encoder.encode(c)));
-        controller.close();
-      },
-    });
-  }
-
-  it('AI 推荐成功：自动选中场景与优先级 + Notice', async () => {
-    vi.useFakeTimers();
-    const vault = new MockVault();
-    await initApp(vault);
-    (global as any).fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      body: sseBody('{"scene": "学习", "priority": "重要"}'),
-    });
-    UIManager.showAddDialog(null);
-    const content = document.getElementById('add-todo-content') as HTMLInputElement;
-    content.value = '复习概率论';
-    const aiBtn = document.getElementById('add-todo-ai-recommend') as HTMLButtonElement;
-    aiBtn.click();
-    // 等 AI 返回
-    await vi.advanceTimersByTimeAsync(0);
-    await vi.advanceTimersByTimeAsync(100);
-    const activeScene = document.querySelector('#add-todo-scenes .scene-btn.active');
-    expect((activeScene as HTMLElement).dataset.scene).toBe('学习');
-    const activePriority = document.querySelector('#add-todo-priority .priority-btn.active');
-    expect((activePriority as HTMLElement).dataset.priority).toBe('important');
-    expect(hasNotice(/AI\ 推荐/)).toBe(true);
-    // 按钮恢复
-    expect(aiBtn.textContent).toBe('✨ AI 推荐');
-    vi.useRealTimers();
-  });
-
-  it('AI 失败 → 「AI 推荐失败，请手动选择」', async () => {
-    vi.useFakeTimers();
-    const vault = new MockVault();
-    await initApp(vault);
-    (global as any).fetch = vi.fn().mockRejectedValue(new Error('网络错误'));
-    UIManager.showAddDialog(null);
-    const content = document.getElementById('add-todo-content') as HTMLInputElement;
-    content.value = '测试内容';
-    (document.getElementById('add-todo-ai-recommend') as HTMLButtonElement).click();
-    await vi.advanceTimersByTimeAsync(0);
-    await vi.advanceTimersByTimeAsync(100);
-    expect(hasNotice(/AI\ 推荐失败，请手动选择/)).toBe(true);
-    vi.useRealTimers();
-  });
-
-  it('推荐场景不在列表 → 提示手动选择', async () => {
-    vi.useFakeTimers();
-    const vault = new MockVault();
-    await initApp(vault);
-    (global as any).fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      body: sseBody('{"scene": "不存在场景", "priority": "重要"}'),
-    });
-    UIManager.showAddDialog(null);
-    (document.getElementById('add-todo-content') as HTMLInputElement).value = 'x';
-    (document.getElementById('add-todo-ai-recommend') as HTMLButtonElement).click();
-    await vi.advanceTimersByTimeAsync(0);
-    await vi.advanceTimersByTimeAsync(100);
-    expect(hasNotice(/不在可选列表中/)).toBe(true);
-    vi.useRealTimers();
-  });
-
-  it('内容为空点 AI 推荐 → 「请先输入备忘录内容」', async () => {
-    const vault = new MockVault();
-    await initApp(vault);
-    UIManager.showAddDialog(null);
-    (document.getElementById('add-todo-ai-recommend') as HTMLButtonElement).click();
-    expect(hasNotice('请先输入备忘录内容')).toBe(true);
-  });
-});
 
 describe('从当前笔记/光标创建（ticket 05）', () => {
   beforeEach(() => {
@@ -363,5 +273,87 @@ describe('从当前笔记/光标创建（ticket 05）', () => {
     expect(items[0].url).toBe('https://example.com/page');
     expect(items[0].title).toBe('示例页'); // display 作为标题
     vi.useRealTimers();
+  });
+});
+
+describe('设置弹窗与新建默认值（第 9 轮设置扩展）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+    localStorage.clear();
+    vi.useRealTimers();
+  });
+
+  it('⚙️ 设置弹窗含 14 项（提醒/剪贴板/显示/新建/场景分组）', async () => {
+    const vault = new MockVault();
+    await initApp(vault);
+    UIManager.showMain(null, false);
+    const settingsBtn = [...document.querySelectorAll('#todo-popup button')].find((b) => b.className === 'todo-btn-settings')!;
+    settingsBtn.click();
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    const names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    // 13 项设置 + 5 个分组标题 = 18 个 setting-item
+    expect(names.length).toBe(18);
+    // 项名称（润色后的启动弹窗文案）
+    expect(names).toContain('启动时自动弹出');
+    expect(names).toContain('打开笔记自动提醒');
+    expect(names).toContain('到期通知');
+    expect(names).toContain('到期检查间隔（秒）');
+    expect(names).toContain('剪贴板监听');
+    expect(names).toContain('平台映射');
+    expect(names).toContain('默认排序方式');
+    expect(names).toContain('默认显示归档');
+    expect(names).toContain('到期时间格式');
+    expect(names).toContain('新条目默认优先级');
+    expect(names).toContain('新条目默认场景');
+    expect(names).toContain('完成后自动归档');
+    expect(names).toContain('场景');
+    // 旧 AI 推荐按钮不存在
+    expect(document.getElementById('add-todo-ai-recommend')).toBeNull();
+  });
+
+  it('新条目默认场景（memoDefaultScene）与默认优先级生效', async () => {
+    const vault = new MockVault();
+    const app = makeApp(vault);
+    setApp(app as any);
+    setBzSettingsProvider(() => ({ ...SETTINGS }));
+    setSettingsProvider(() => ({ ...SETTINGS } as any));
+    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'sk-test' }));
+    resetAIProviderCache();
+    await App.init({ ...SETTINGS, memoDefaultScene: '学习', memoDefaultPriority: 'important' });
+    UIManager.showAddDialog(null);
+    const activeScene = document.querySelector('#add-todo-scenes .scene-btn.active');
+    expect((activeScene as HTMLElement).dataset.scene).toBe('学习');
+    const activePriority = document.querySelector('#add-todo-priority .priority-btn.active');
+    expect((activePriority as HTMLElement).dataset.priority).toBe('important');
+  });
+
+  it('默认优先级缺省 → 次要（minor）', async () => {
+    const vault = new MockVault();
+    await initApp(vault);
+    UIManager.showAddDialog(null);
+    const activePriority = document.querySelector('#add-todo-priority .priority-btn.active');
+    expect((activePriority as HTMLElement).dataset.priority).toBe('minor');
+  });
+
+  it('场景列表变更后重建添加弹窗场景按钮（即时生效）', async () => {
+    const vault = new MockVault();
+    await initApp(vault);
+    UIManager.showAddDialog(null);
+    const before = document.querySelectorAll('#add-todo-scenes .scene-btn').length;
+    expect(before).toBe(6);
+    // 设置弹窗保存自定义场景 → 重建
+    DataManager.init({ ...SETTINGS, memoScenarios: '工作,生活' });
+    if (UIManager.addMask) {
+      UIManager.addMask.remove();
+      if (UIManager.addPopup) UIManager.addPopup.remove();
+      UIManager.addMask = null;
+      UIManager.addPopup = null;
+      UIManager.createAddDialog();
+    }
+    UIManager.showAddDialog(null);
+    const after = document.querySelectorAll('#add-todo-scenes .scene-btn');
+    expect(after.length).toBe(2);
+    expect((after[0] as HTMLElement).dataset.scene).toBe('工作');
   });
 });

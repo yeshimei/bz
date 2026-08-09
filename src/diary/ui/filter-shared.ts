@@ -4,7 +4,7 @@
  */
 import { getPrimaryTagsConfig, getParentPrimaryTag, getSubTagsOfPrimary, getTagEmoji, isSubTag } from '../config';
 import { getCurrentActiveParentForSub, setCurrentActiveParentForSub, state } from '../state';
-import { getShowTagCountSetting } from './ui-settings';
+import { getShowTagCountSetting, getTagShowEmojiSetting, getTagSortModeSetting } from './ui-settings';
 
 /** 更新标题上的日期后缀（原 1934-1952） */
 export function updateTitleSuffix() {
@@ -141,7 +141,16 @@ export function rebuildTags() {
   const tagsScrollContainer = document.createElement('div');
   tagsScrollContainer.className = 'diary-tags-scroll-container';
 
-  for (const tag of Object.keys(getPrimaryTagsConfig())) {
+  // 标签排序：fixed（内置配置顺序）/ count（条目数量降序）
+  let tagList = Object.keys(getPrimaryTagsConfig());
+  if (getTagSortModeSetting() === 'count') {
+    tagList = tagList
+      .map((tag) => ({ tag, count: getTagCountForPrimary(tag) }))
+      .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
+      .map((x) => x.tag);
+  }
+
+  for (const tag of tagList) {
     const count = getTagCountForPrimary(tag);
     const emoji = getTagEmoji(tag);
     const btn = createTag(tag, emoji, count); // createTag 内部会根据设置决定是否显示计数
@@ -187,7 +196,9 @@ export function createTag(tag: string, emoji: string, count: number | null) {
   if (showCount && count !== null && count !== undefined) {
     countHtml = `<span style="margin-left:4px; font-size:10px; opacity:0.8;">(${count})</span>`;
   }
-  button.innerHTML = `${emoji} ${tag} ${countHtml}`;
+  // 标签按钮显示 emoji 开关（设置项 diaryTagShowEmoji，关=纯文字）
+  const showEmoji = getTagShowEmojiSetting();
+  button.innerHTML = `${showEmoji ? emoji + ' ' : ''}${tag} ${countHtml}`;
   button.style.cssText =
     'border-radius:10px;background:var(--background-secondary);cursor:pointer;font-size:10px;color:var(--text-normal);transition:all 0.2s;display:flex;align-items:center;flex-shrink:0;box-shadow:none;';
 

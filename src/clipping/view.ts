@@ -244,7 +244,7 @@ function createHeader(): HTMLElement {
   const newsBtn = createIconButton('📰', '打开资讯阅读器', () => {
     articleMask!.style.visibility = 'hidden';
     articlePopup!.style.visibility = 'hidden';
-    (app as any).commands.executeCommandById('bz-news-reader-open');
+    (app as any).commands.executeCommandById('bz-news-open');
   });
   buttonContainer.appendChild(newsBtn);
 

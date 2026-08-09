@@ -9,7 +9,7 @@ import { applyDirectories, resetTagsConfig } from '../../../src/diary/config';
 import { init, toggleSearch, setLoadingState, showDiaryPanel } from '../../../src/diary/ui/panel';
 import { openAddDialog, saveNewEntry } from '../../../src/diary/ui/dialogs';
 import { createDateTimeControl } from '../../../src/diary/ui/datetime-picker';
-import { registerOpenDialogCommand, registerQuoteCommand } from '../../../src/diary/ui/quote';
+import { registerOpenDialogCommand } from '../../../src/diary/ui/quote';
 import { updateTagCounts, updateSubTagsCounts, rebuildTags, createTag } from '../../../src/diary/ui/filter-shared';
 import { fixMobileSelect } from '../../../src/diary/ui/entries';
 import { applyUiSettings } from '../../../src/diary/ui/ui-settings';
@@ -118,6 +118,19 @@ describe('saveNewEntry 分支', () => {
     await saveNewEntry();
     expect(state.data.currentFilteredEntries.some((e) => e.date === '2024-01-03')).toBe(true);
   });
+
+  it('diaryJumpToEditAfterSave=false → 保存后不进入编辑模式', async () => {
+    applyUiSettings({ diaryJumpToEditAfterSave: false });
+    openAddDialog();
+    selectTag('日记');
+    const dt = document.getElementById('add-diary-datetime') as HTMLInputElement;
+    dt.value = '2024-01-04 10:30';
+    await saveNewEntry();
+    // 弹窗关闭 + 无编辑态卡片
+    expect((document.getElementById('add-diary-mask') as HTMLElement).style.display).toBe('none');
+    expect(state.ui.editingEntryId).toBeNull();
+    expect(document.querySelector('.diary-editing')).toBeNull();
+  });
 });
 
 describe('datetime-picker 手动模式', () => {
@@ -211,6 +224,36 @@ describe('filter-shared 计数分支', () => {
     expect(state.data.selectedTags.has('日记')).toBe(true);
     btn.click();
     expect(state.data.selectedTags.has('日记')).toBe(false);
+  });
+
+  it('diaryTagShowEmoji=false → createTag 纯文字（无 emoji）', () => {
+    applyUiSettings({ diaryTagShowEmoji: false });
+    const btn = createTag('日记', '📖', 3);
+    expect(btn.innerHTML.startsWith('📖')).toBe(false);
+    expect(btn.innerHTML).toContain('日记');
+    applyUiSettings({ diaryTagShowEmoji: true });
+    const btn2 = createTag('日记', '📖', 3);
+    expect(btn2.innerHTML.startsWith('📖')).toBe(true);
+  });
+
+  it('diaryTagSortMode=count → rebuildTags 主标签按条目数量降序（收藏 2 条 > 日记 1 条，固定顺序反之）', () => {
+    state.data.originalDiaryEntries = [
+      { id: 'a', date: '2024-01-01', time: '08:00', timeValue: 800, tags: ['日记'], emoji: '', content: '', filename: '2024-01-01', lineNumber: 0 } as any,
+      { id: 'b', date: '2024-01-02', time: '09:00', timeValue: 900, tags: ['收藏'], emoji: '', content: '', filename: '2024-01-02', lineNumber: 0 } as any,
+      { id: 'c', date: '2024-01-03', time: '10:00', timeValue: 1000, tags: ['收藏'], emoji: '', content: '', filename: '2024-01-03', lineNumber: 0 } as any,
+    ];
+    const container = document.getElementById('diary-tag-container')!;
+    // 固定顺序：日记在前
+    applyUiSettings({ diaryTagSortMode: 'fixed' });
+    rebuildTags();
+    let buttons = [...container.querySelectorAll('.diary-tag-btn')];
+    expect(buttons[0].dataset.tag).toBe('日记');
+    // 按数量：收藏（2）在前
+    applyUiSettings({ diaryTagSortMode: 'count' });
+    rebuildTags();
+    buttons = [...container.querySelectorAll('.diary-tag-btn')];
+    expect(buttons[0].dataset.tag).toBe('收藏');
+    expect(buttons[1].dataset.tag).toBe('日记');
   });
 });
 

@@ -205,6 +205,10 @@ export class Setting {
     this.settingEl.dataset.name = name;
     return this;
   }
+  setHeading(): this {
+    this.settingEl.classList.add('setting-item-heading');
+    return this;
+  }
   setDesc(desc: string): this {
     this.desc = desc;
     return this;
@@ -216,6 +220,12 @@ export class Setting {
     return this;
   }
   addText(cb: (t: MockText) => void): this {
+    const t = new MockText();
+    cb(t);
+    this.controls.push(t);
+    return this;
+  }
+  addTextArea(cb: (t: MockText) => void): this {
     const t = new MockText();
     cb(t);
     this.controls.push(t);

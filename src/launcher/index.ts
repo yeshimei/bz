@@ -1,6 +1,6 @@
 /**
  * 入口页域入口（ticket 23）。
- * 命令（bz-launcher-open）由 main.ts 裸注册，此处提供回调。
+ * 命令（bz-home）由 main.ts 裸注册，此处提供回调。
  * 懒加载：首次命令触发时创建单例弹窗（ADR-0003 幂等语义：单例防重开）。
  */
 import { getApp } from '../core/app';

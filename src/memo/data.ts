@@ -16,10 +16,60 @@ export interface BzSettingsLike {
   showFileName?: boolean;
   autoPopupOnStart?: boolean;
   movieFolderPath?: string;
+  /** 场景列表（逗号分隔，空则内置默认） */
+  memoScenarios?: string;
+  /** 平台映射（每行 域名=平台名，空则内置默认） */
+  memoPlatformMapping?: string;
+  /** 打开笔记自动提醒 */
+  openNoteReminder?: boolean;
+  /** 剪贴板监听 */
+  clipboardMonitor?: boolean;
+  /** 默认排序方式：priority / due / created */
+  memoSortMode?: string;
+  /** 默认显示归档 */
+  memoShowArchivedByDefault?: boolean;
+  /** 新条目默认优先级：minor / important */
+  memoDefaultPriority?: string;
+  /** 到期通知 */
+  memoDueNotify?: boolean;
+  /** 到期检查间隔（秒） */
+  memoDueCheckInterval?: string;
+  /** 完成后自动归档 */
+  memoAutoArchive?: boolean;
+  /** 新条目默认场景（空=第一个） */
+  memoDefaultScene?: string;
+  /** 到期时间格式：relative / absolute */
+  memoDueFormat?: string;
 }
 
 /** 默认场景（DEFAULTSCENARIOS） */
 export const DEFAULTSCENARIOS = ['剪藏', '工作', '学习', '生活', '代码', '公开课'];
+
+/** 场景列表解析：逗号分隔 → 去空/去重，空结果回退内置默认 */
+export function parseScenarios(raw: string | undefined): string[] {
+  if (!raw || !raw.trim()) return [...DEFAULTSCENARIOS];
+  const list = raw
+    .split(/[,，]/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+  return list.length ? [...new Set(list)] : [...DEFAULTSCENARIOS];
+}
+
+/** 平台映射解析：每行 `域名=平台名`，空结果回退内置默认 */
+export function parsePlatformMapping(raw: string | undefined): { host: string; name: string }[] {
+  if (!raw || !raw.trim()) return [...DEFAULT_PLATFORM_MAP];
+  const list: { host: string; name: string }[] = [];
+  for (const line of raw.split(/[\n\r]+/)) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    const eq = trimmed.indexOf('=');
+    if (eq <= 0) continue; // 无 = 或 host 为空的行跳过
+    const host = trimmed.slice(0, eq).trim().toLowerCase();
+    const name = trimmed.slice(eq + 1).trim();
+    if (host && name) list.push({ host, name });
+  }
+  return list.length ? list : [...DEFAULT_PLATFORM_MAP];
+}
 
 export const DataManager = {
   todoFilePath: '',
@@ -33,9 +83,9 @@ export const DataManager = {
     const folder = ((settings.storagePath || settings.todoFilePath) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
     this.todoFilePath = folder + '/memo.json';
     this._store = jsonStore(this.todoFilePath);
-    // 场景/平台映射固定使用内置默认（设置项已移除）
-    this.scenarios = [...DEFAULTSCENARIOS];
-    this.platformMap = [...DEFAULT_PLATFORM_MAP];
+    // 场景/平台映射：设置可编辑（逗号分隔场景 / 每行 域名=平台名），空则内置默认
+    this.scenarios = parseScenarios(settings.memoScenarios);
+    this.platformMap = parsePlatformMapping(settings.memoPlatformMapping);
     this.movieFolderPath = settings.movieFolderPath || '我的/影视';
   },
 
