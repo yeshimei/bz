@@ -37,7 +37,7 @@ function makeMockApp() {
 const removedCommands: string[] = [];
 const registeredCommands: any[] = [];
 
-/** 期望的命令 id 全集（spec「命令 id 全清单」29 个主表 + 入口页 + 日记本 bz-open-panel，共 31 个） */
+/** 期望的命令 id 全集（spec「命令 id 全清单」29 个主表 + 入口页 + 日记本 bz-open-panel + B站下载器，共 32 个） */
 const EXPECTED_COMMAND_IDS = [
   'bz-launcher-open',
   'bz-memo-open-panel', 'bz-memo-create-item',
@@ -55,6 +55,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-quiz-master-update', 'bz-quiz-master-open',
   'bz-shan-nian-open-reference', 'bz-shan-nian-open-chat',
   'bz-notification-demo',
+  'bz-bili-downloader-open',
 ];
 
 /** 内存"磁盘"存储：模拟 Obsidian 插件的 data.json 持久层 */
