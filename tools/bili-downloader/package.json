@@ -1,10 +1,10 @@
 {
   "name": "@jwbz/bili-downloader",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "B站下载器——独立 NodeJS Web 工具：启动本地服务并打开网页，在网页内完成 B站视频解析、下载（多 CDN 节点切换）、裁切/压缩（ffmpeg）、转文字（faster-whisper）与交付（移入交付目录 + 剪贴板 wikilink）",
   "main": "server.js",
   "bin": {
-    "bili-dl": "./cli.js"
+    "bili-dl": "cli.js"
   },
   "files": [
     "cli.js",
@@ -25,6 +25,9 @@
     "whisper"
   ],
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=18"
   }

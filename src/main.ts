@@ -27,6 +27,8 @@ import { openMovieManager, addMovieItem, openMovieReport } from './movie';
 import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart } from './review';
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
+// B站下载器启动命令（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
+import { openBiliDownloader } from './bili-downloader';
 import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setLauncherGestureSetter, LauncherModal } from './launcher';
 import { registerGestureListeners } from './launcher/gestures';
 import { ensureAutoSummary } from './auto-summary';
@@ -86,9 +88,11 @@ const COMMANDS: { id: string; name: string; callback: () => void }[] = [
   { id: 'bz-quiz-master-open', name: '打开做题家', callback: () => quizOpen(getApp()) },
   // 通知系统（ticket 25，样式演示入口）
   { id: 'bz-notification-demo', name: '通知样式演示', callback: () => runNotificationDemo() },
-  // 闪念
+// 闪念
   { id: 'bz-shan-nian-open-reference', name: '闪念：打开参考窗口', callback: () => openFlashReference(getApp()) },
   { id: 'bz-shan-nian-open-chat', name: '闪念：打开 AI 对话', callback: () => openFlashChat(getApp()) },
+  // B站下载器（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
+  { id: 'bz-bili-downloader-open', name: '打开B站下载器（网页）', callback: () => openBiliDownloader() },
 ];
 
 /** 应用日记本设置到运行时常量（diary-notebook 原 applySettingsToRuntime） */
