@@ -33,8 +33,6 @@ import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setL
 import { registerGestureListeners } from './launcher/gestures';
 import { ensureAutoSummary } from './auto-summary';
 import { ensureAIAgent, unloadAIAgent } from './ai-agent';
-// 通知系统（ticket 25）
-import { runNotificationDemo } from './core/notice-demo';
 // 日记本（diary-notebook 合并）
 import { setApp as setDiaryApp } from './diary/app';
 import { applyDirectories } from './diary/config';
@@ -42,57 +40,55 @@ import { loadAll } from './diary/store';
 import { state as diaryState } from './diary/state';
 import { applyUiSettings, init as diaryInit, showDiaryPanel, unregisterEscLayer } from './diary/ui/panel';
 
-/** 命令表：id/name 均提取自原脚本 addCommand 调用点（spec「命令 id 全清单」） */
-const COMMANDS: { id: string; name: string; callback: () => void }[] = [
-  // 入口页
-  { id: 'bz-launcher-open', name: '打开命令入口页', callback: () => openLauncherPanel(getApp()) },
+/** 命令表：id/name 统一命名（spec「命令 id 全清单」第 9 轮：bz-<域>-<动作>，icon 与入口页磁贴一致） */
+const COMMANDS: { id: string; name: string; icon: string; callback: () => void }[] = [
+  // 主页
+  { id: 'bz-home', name: '主页', icon: 'home', callback: () => openLauncherPanel(getApp()) },
   // 备忘录
-  { id: 'bz-memo-open-panel', name: '打开备忘录面板', callback: () => openBzPanel(getApp()) },
-  { id: 'bz-memo-create-item', name: '创建备忘录条目', callback: () => createMemoItem(getApp()) },
+  { id: 'bz-memo-open', name: '备忘录', icon: 'sticky-note', callback: () => openBzPanel(getApp()) },
+  { id: 'bz-memo-add', name: '写备忘', icon: 'pencil', callback: () => createMemoItem(getApp()) },
   // 归物本
-  { id: 'bz-belongings-add-item', name: '归物本：添加物品', callback: () => addBelongingsItem(getApp()) },
-  { id: 'bz-belongings-open-panel', name: '归物本：打开面板', callback: () => openBelongings(getApp()) },
+  { id: 'bz-belongings-add', name: '加物品', icon: 'archive', callback: () => addBelongingsItem(getApp()) },
+  { id: 'bz-belongings-open', name: '归物本', icon: 'package', callback: () => openBelongings(getApp()) },
   // 剪藏本
-  { id: 'bz-article-open-view', name: '打开文章列表', callback: () => openArticleView(getApp()) },
+  { id: 'bz-clipping-open', name: '剪藏本', icon: 'scissors', callback: () => openArticleView(getApp()) },
   // 聚合讯
-  { id: 'bz-news-reader-open', name: '打开资讯阅读器', callback: () => openNewsReader(getApp()) },
+  { id: 'bz-news-open', name: '聚合讯', icon: 'rss', callback: () => openNewsReader(getApp()) },
   // 密码本
-  { id: 'bz-pw-open-manager', name: '打开密码本', callback: () => openPasswordManager(getApp()) },
-  { id: 'bz-pw-add-entry', name: '添加密码条目', callback: () => addPasswordEntry(getApp()) },
-  { id: 'bz-pw-generate-password', name: '生成随机密码', callback: () => generatePassword(getApp()) },
+  { id: 'bz-pw-open', name: '密码本', icon: 'key', callback: () => openPasswordManager(getApp()) },
+  { id: 'bz-pw-add', name: '加密码', icon: 'key-round', callback: () => addPasswordEntry(getApp()) },
+  { id: 'bz-pw-generate', name: '生成随机密码', icon: 'key-square', callback: () => generatePassword(getApp()) },
   // 收藏本
-  { id: 'bz-favorites-open-panel', name: '打开收藏面板', callback: () => openFavoritesPanel(getApp()) },
-  { id: 'bz-favorites-add-item', name: '添加收藏', callback: () => addFavoriteItem(getApp()) },
+  { id: 'bz-favorites-open', name: '收藏本', icon: 'star', callback: () => openFavoritesPanel(getApp()) },
+  { id: 'bz-favorites-add', name: '加收藏', icon: 'bookmark', callback: () => addFavoriteItem(getApp()) },
   // 书库
-  { id: 'bz-open-library', name: '打开书库', callback: () => openLibrary(getApp()) },
-  { id: 'bz-open-book-notes', name: '打开读书笔记', callback: () => openBookNotes(getApp()) },
+  { id: 'bz-library-open', name: '书库', icon: 'library', callback: () => openLibrary(getApp()) },
+  { id: 'bz-book-notes-open', name: '读书笔记', icon: 'book-open', callback: () => openBookNotes(getApp()) },
   // 阅读数据分析报告
-  { id: 'bz-show-reading-report', name: '打开阅读数据分析报告', callback: () => showReadingReport(getApp()) },
+  { id: 'bz-reading-report-open', name: '阅读分析报告', icon: 'bar-chart-3', callback: () => showReadingReport(getApp()) },
   // 影视
-  { id: 'bz-movie-manager-open', name: '影视：打开', callback: () => openMovieManager(getApp()) },
-  { id: 'bz-movie-manager-add', name: '影视：添加', callback: () => addMovieItem(getApp()) },
-  { id: 'bz-movie-report', name: '影视分析报告', callback: () => openMovieReport(getApp()) },
-  // 复习计划（6 命令）
-  { id: 'bz-review-open-panel', name: '打开复习面板', callback: () => openReviewPanel(getApp()) },
-  { id: 'bz-review-start', name: '开始复习（进入复习流程）', callback: () => reviewStart(getApp()) },
-  { id: 'bz-review-add-current', name: '加入复习计划', callback: () => reviewAddCurrent(getApp()) },
-  { id: 'bz-review-remove-current', name: '移出复习计划', callback: () => reviewRemoveCurrent(getApp()) },
-  { id: 'bz-review-jump-overdue', name: '复习（跳转逾期）', callback: () => reviewJumpOverdue(getApp()) },
-  { id: 'bz-review-mark-dialog', name: '复习（选择难度）', callback: () => reviewMarkDialog(getApp()) },
-  { id: 'bz-review-mark-again', name: '复习：忘了（Again）', callback: () => reviewMarkRating(getApp(), 'again') },
-  { id: 'bz-review-mark-hard', name: '复习：困难（Hard）', callback: () => reviewMarkRating(getApp(), 'hard') },
-  { id: 'bz-review-mark-good', name: '复习：一般（Good）', callback: () => reviewMarkRating(getApp(), 'good') },
-  { id: 'bz-review-mark-easy', name: '复习：简单（Easy）', callback: () => reviewMarkRating(getApp(), 'easy') },
+  { id: 'bz-movie-open', name: '影视', icon: 'film', callback: () => openMovieManager(getApp()) },
+  { id: 'bz-movie-add', name: '写影视', icon: 'clapperboard', callback: () => addMovieItem(getApp()) },
+  { id: 'bz-movie-report', name: '影视分析报告', icon: 'clapperboard', callback: () => openMovieReport(getApp()) },
+  // 复习计划（9 命令）
+  { id: 'bz-review-open', name: '复习计划', icon: 'calendar', callback: () => openReviewPanel(getApp()) },
+  { id: 'bz-review-start', name: '开始复习', icon: 'play', callback: () => reviewStart(getApp()) },
+  { id: 'bz-review-add', name: '加入复习计划', icon: 'plus', callback: () => reviewAddCurrent(getApp()) },
+  { id: 'bz-review-remove', name: '移出复习计划', icon: 'minus', callback: () => reviewRemoveCurrent(getApp()) },
+  { id: 'bz-review-overdue', name: '复习（跳转逾期）', icon: 'alarm-clock', callback: () => reviewJumpOverdue(getApp()) },
+  { id: 'bz-review-rate', name: '复习（选择难度）', icon: 'gauge', callback: () => reviewMarkDialog(getApp()) },
+  { id: 'bz-review-again', name: '复习：忘了（Again）', icon: 'rotate-ccw', callback: () => reviewMarkRating(getApp(), 'again') },
+  { id: 'bz-review-hard', name: '复习：困难（Hard）', icon: 'trending-up', callback: () => reviewMarkRating(getApp(), 'hard') },
+  { id: 'bz-review-good', name: '复习：一般（Good）', icon: 'check', callback: () => reviewMarkRating(getApp(), 'good') },
+  { id: 'bz-review-easy', name: '复习：简单（Easy）', icon: 'sparkles', callback: () => reviewMarkRating(getApp(), 'easy') },
   // 做题家
-  { id: 'bz-quiz-master-update', name: '更新题库', callback: () => quizUpdate(getApp()) },
-  { id: 'bz-quiz-master-open', name: '打开做题家', callback: () => quizOpen(getApp()) },
-  // 通知系统（ticket 25，样式演示入口）
-  { id: 'bz-notification-demo', name: '通知样式演示', callback: () => runNotificationDemo() },
-// 闪念
-  { id: 'bz-shan-nian-open-reference', name: '闪念：打开参考窗口', callback: () => openFlashReference(getApp()) },
-  { id: 'bz-shan-nian-open-chat', name: '闪念：打开 AI 对话', callback: () => openFlashChat(getApp()) },
+  { id: 'bz-quiz-update', name: '更新题库', icon: 'refresh-cw', callback: () => quizUpdate(getApp()) },
+  { id: 'bz-quiz-open', name: '做题家', icon: 'brain', callback: () => quizOpen(getApp()) },
+  // 闪念
+  { id: 'bz-flash-open', name: '闪念', icon: 'zap', callback: () => openFlashReference(getApp()) },
+  { id: 'bz-flash-chat', name: '闪念对话', icon: 'message-circle', callback: () => openFlashChat(getApp()) },
   // B站下载器（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
-  { id: 'bz-bili-downloader-open', name: '打开B站下载器（网页）', callback: () => openBiliDownloader() },
+  { id: 'bz-bili-open', name: 'B站下载器', icon: 'tv-minimal-play', callback: () => openBiliDownloader() },
 ];
 
 /** 应用日记本设置到运行时常量（diary-notebook 原 applySettingsToRuntime） */
@@ -160,7 +156,7 @@ export default class BzPlugin extends Plugin {
 
     // 命令裸注册（ADR-0004：app.commands.addCommand 原样 id 注册——plugin.addCommand 会被 Obsidian 自动加插件前缀，主页.js 等外部裸 id 调用会失效）
     for (const c of COMMANDS) {
-      (this.app as any).commands.addCommand({ id: c.id, name: c.name, callback: c.callback });
+      (this.app as any).commands.addCommand({ id: c.id, name: c.name, icon: c.icon, callback: c.callback });
       this.registeredCommandIds.push(c.id);
     }
 
@@ -168,9 +164,9 @@ export default class BzPlugin extends Plugin {
     this.addRibbonIcon('check-square', '备忘录', () => openBzPanel(this.app));
     this.addRibbonIcon('notebook-pen', '日记本', () => showDiaryPanel(this));
 
-    // 日记本面板命令（统一 bz- 前缀；bz-diary-open-add-dialog/bz-diary-create-quote 由 init 内注册）
-    (this.app as any).commands.addCommand({ id: 'bz-open-panel', name: '打开日记本面板', callback: () => showDiaryPanel(this) });
-    this.registeredCommandIds.push('bz-open-panel');
+    // 日记本面板命令（统一 bz- 前缀；bz-diary-write 由 quote.ts init 内注册）
+    (this.app as any).commands.addCommand({ id: 'bz-diary-open', name: '日记本', icon: 'notebook', callback: () => showDiaryPanel(this) });
+    this.registeredCommandIds.push('bz-diary-open');
 
     // 设置页
     this.addSettingTab(new BzSettingTab(this.app, this));
@@ -228,8 +224,7 @@ export default class BzPlugin extends Plugin {
     }
     unregisterEscLayer();
     try {
-      (this.app as any).commands.removeCommand('bz-diary-open-add-dialog');
-      (this.app as any).commands.removeCommand('bz-diary-create-quote');
+      (this.app as any).commands.removeCommand('bz-diary-write');
     } catch (e) {
       /* 命令可能已被移除 */
     }
@@ -278,7 +273,7 @@ export default class BzPlugin extends Plugin {
     const g = isMobile
       ? (this.settings.launcherGestureMobile ?? this.settings.launcherGesture) // 移动端未设置 → 继承桌面
       : this.settings.launcherGesture;
-    const on = (kind: string) => (g === kind ? 'bz-launcher-open' : 'off');
+    const on = (kind: string) => (g === kind ? 'bz-home' : 'off');
     this.unregisterGestures = registerGestureListeners(this.app, {
       gestureDoubleTap: on('double'),
       gestureTripleTap: on('triple'),

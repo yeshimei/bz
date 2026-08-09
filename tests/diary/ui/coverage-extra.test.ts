@@ -9,8 +9,8 @@ import { init } from '../../../src/diary/ui/panel';
 import { createEntryCard, addLongPress, copyLink, jumpToEntry, cancelEdit, removeCard, insertCard, updateSticky, fixMobileSelect } from '../../../src/diary/ui/entries';
 import { createTagPicker, showTagPicker, updateTags, createAddDialog, openAddDialog, createDatePicker } from '../../../src/diary/ui/dialogs';
 import { createDateTimeControl, syncDateTime, showDateTimePicker } from '../../../src/diary/ui/datetime-picker';
-import { registerQuoteCommand } from '../../../src/diary/ui/quote';
 import { state } from '../../../src/diary/state';
+import { applyUiSettings } from '../../../src/diary/ui/ui-settings';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../../mock-vault';
 import { moment } from 'obsidian';
@@ -63,15 +63,28 @@ describe('entries 补测', () => {
     expect((card2.querySelector('.diary-emoji') as HTMLElement).textContent).not.toContain('🎬');
   });
 
+  it('diaryContentRenderMode=plain → 卡片内容纯文本（无 Markdown 结构）', async () => {
+    const entry = soloEntry();
+    state.data.originalDiaryEntries[0] = { ...state.data.originalDiaryEntries[0], content: '**加粗** 和 `代码`' } as any;
+    applyUiSettings({ diaryContentRenderMode: 'plain' });
+    const card = createEntryCard({ ...entry, content: '**加粗** 和 `代码`' } as any);
+    const content = card.querySelector('.diary-entry-content') as HTMLElement;
+    expect(content.textContent).toContain('**加粗**');
+    expect(content.querySelector('strong')).toBeNull();
+    applyUiSettings({ diaryContentRenderMode: 'markdown' });
+  });
+
   it('addLongPress：content 类型长按触发 copyLink（剪贴板 + Notice）', async () => {
     const entry = state.data.originalDiaryEntries[0];
     const el = document.createElement('div');
     document.body.appendChild(el);
     addLongPress(el, 'content', entry.id!);
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     el.dispatchEvent(new MouseEvent('mousedown'));
-    await new Promise((r) => setTimeout(r, 900)); // LONG_PRESS_DURATION=800
+    await vi.advanceTimersByTimeAsync(900); // LONG_PRESS_DURATION=800
     el.dispatchEvent(new MouseEvent('mouseup'));
-    await new Promise((r) => setTimeout(r, 10));
+    await vi.advanceTimersByTimeAsync(10);
+    vi.useRealTimers();
     expect(hasNotice(/已复制双链引用/)).toBe(true);
   });
 

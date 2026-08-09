@@ -164,7 +164,7 @@ describe('设置页 onload 迁移（保留既有）', () => {
     const p1 = await createPlugin(makeMockApp());
     expect(p1.settings.launcherGesture).toBe('double');
     expect((p1.settings as any).gestureDoubleTap).toBeUndefined();
-    diskData['bz'] = { gestureSwipeDown: 'bz-memo-open-panel' };
+    diskData['bz'] = { gestureSwipeDown: 'bz-memo-open' };
     const p2 = await createPlugin(makeMockApp());
     expect(p2.settings.launcherGesture).toBe('swipe');
     diskData['bz'] = { gestureTripleTap: 'off' };

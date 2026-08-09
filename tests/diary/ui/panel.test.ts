@@ -240,50 +240,6 @@ describe('滚轮日期时间选择器（ticket 07）', () => {
   });
 });
 
-describe('摘抄命令（ticket 08）', () => {
-  it('写摘抄完整流程：选中文本 → 块ID → 预览 → 保存写回', async () => {
-    const { registerQuoteCommand } = await import('../../../src/diary/ui/quote');
-    const app = mockAppWithVault(vault);
-    const editor = {
-      somethingSelected: () => true,
-      getSelection: () => '经典语录',
-      listSelections: () => [{ anchor: { line: 2 } }],
-      getLine: (n: number) => (n === 2 ? '经典语录' : ''),
-      setLine: vi.fn(),
-      getCursor: () => ({ line: 2 }),
-      getValue: () => '第一行\n第二行\n经典语录\n',
-    };
-    const file = vault.file('书库/哲学.md');
-    app.workspace.getActiveViewOfType = () => ({ editor, file });
-    let callback: (() => Promise<void>) | null = null;
-    app.commands.addCommand = (cmd: any) => {
-      if (cmd.id === 'bz-diary-create-quote') callback = cmd.callback;
-      return cmd;
-    };
-    setApp(app);
-    await registerQuoteCommand();
-    expect(callback).toBeTruthy();
-    await callback!();
-
-    // 弹窗打开 + 摘抄预览 + 默认选中「摘抄」
-    expect((document.getElementById('add-diary-mask') as HTMLElement).style.display).toBe('block');
-    expect(document.body.textContent).toContain('经典语录');
-    expect(document.querySelector('#add-diary-type-container [data-tag="摘抄"].diary-active')).toBeTruthy();
-
-    // 保存 → 新增条目写回（书库/ 路径附加书名）
-    const dt = document.getElementById('add-diary-datetime') as HTMLInputElement;
-    dt.value = '2024-01-05 14:00';
-    const saveBtn = Array.from(document.querySelectorAll('#add-diary-popup button')).find(
-      (b) => b.textContent === '保存'
-    ) as HTMLElement;
-    saveBtn.click();
-    await waitFor(() => vault.files.has('我的/日记/2024-01-05.md'));
-    const written = vault.files.get('我的/日记/2024-01-05.md')!;
-    expect(written).toContain('# 📌 14:00');
-    expect(written).toContain('经典语录');
-    expect(written).toContain('#《哲学》');
-  });
-});
 
 describe('设置读取（ticket 09 前置）', () => {
   it('长按手势固定启用（用户确认保持默认启用）', async () => {
@@ -311,6 +267,27 @@ describe('设置读取（ticket 09 前置）', () => {
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect(popup.textContent).toContain('日记本设置');
     const names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
-    expect(names).toEqual(['日记目录', '影视目录', '信目录', '每批加载数量', '显示标签计数', '使用文件日期作为默认日期']);
+    expect(names).toEqual([
+      '日记目录', '影视目录', '信目录', '每批加载数量', '显示标签计数', '使用文件日期作为默认日期',
+      '显示', '标签按钮显示 emoji', '卡片内容渲染方式', '标签排序',
+      '默认视图', '打开面板默认日期筛选', '默认选中标签', '保存后立即进入编辑',
+    ]);
+  });
+
+  it('默认视图：diaryDefaultDateFilter=this-month + diaryDefaultSelectedTag → init 应用', async () => {
+    const { applyUiSettings } = await import('../../../src/diary/ui/ui-settings');
+    const { init: initPanel } = await import('../../../src/diary/ui/panel');
+    applyUiSettings({ diaryDefaultDateFilter: 'this-month', diaryDefaultSelectedTag: '书' });
+    // 清理面板 DOM 强制重新 init（验证 init 内默认视图应用）
+    document.querySelectorAll('#diary-tag-filter, #diary-filter-mask, .diary-popup-header').forEach((el) => el.remove());
+    await initPanel({ registerEvent: () => {} });
+    const now = new Date();
+    expect(state.data.currentDateFilter).toEqual({
+      year: String(now.getFullYear()),
+      month: String(now.getMonth() + 1).padStart(2, '0'),
+    });
+    expect(state.data.selectedTags.has('书')).toBe(true);
+    // 还原
+    applyUiSettings({ diaryDefaultDateFilter: 'all', diaryDefaultSelectedTag: '' });
   });
 });

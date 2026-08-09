@@ -10,6 +10,7 @@ import { App } from '../../src/memo/app';
 import { Renderer } from '../../src/memo/ui';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
+import moment from 'moment';
 
 function makeApp(vault: MockVault, editor: any = null) {
   return {
@@ -207,5 +208,73 @@ describe('Renderer.render 空态/归档分隔', () => {
     Renderer.render(container, [done], true);
     expect(container.textContent).toContain('已归档');
     expect(container.querySelectorAll('.todo-card').length).toBe(1);
+  });
+});
+
+describe('排序与归档模式（第 9 轮设置扩展）', () => {
+  function renderItems(items: any[]) {
+    const container = document.createElement('div');
+    Renderer.render(container, items, App.state.showArchived);
+    return container;
+  }
+
+  it('memoSortMode=created → 按创建时间降序', () => {
+    (App.settings as any).memoSortMode = 'created';
+    const container = renderItems([
+      baseItem({ id: 'a', title: '旧', created: '2024-01-01 10:00:00' }),
+      baseItem({ id: 'b', title: '新', created: '2025-01-01 10:00:00' }),
+    ]);
+    const cards = container.querySelectorAll('.todo-card');
+    expect((cards[0].textContent || '').includes('新')).toBe(true);
+    expect((cards[1].textContent || '').includes('旧')).toBe(true);
+  });
+
+  it('memoAutoArchive=false → 完成条目保留主列表（勾选态 + 划线 + 排最后）', () => {
+    (App.settings as any).memoAutoArchive = false;
+    const container = renderItems([
+      baseItem({ id: 'a', title: '未完成', completed: null }),
+      baseItem({ id: 'b', title: '已完成', completed: '2025-01-02 10:00:00' }),
+    ]);
+    const cards = container.querySelectorAll('.todo-card');
+    expect(cards.length).toBe(2);
+    // 完成条目排最后
+    expect((cards[1].textContent || '').includes('已完成')).toBe(true);
+    const checkbox = cards[1].querySelector('input[type="checkbox"]') as HTMLInputElement;
+    expect(checkbox.checked).toBe(true);
+    expect(checkbox.disabled).toBe(true);
+    // 划线样式
+    const contentSpan = cards[1].querySelector('span') as HTMLElement;
+    expect(contentSpan.style.textDecoration).toBe('line-through');
+    // 无「已归档」分隔段
+    expect(container.textContent).not.toContain('已归档');
+  });
+
+  it('memoAutoArchive 默认开（未设置）→ 完成条目进入归档段', () => {
+    delete (App.settings as any).memoAutoArchive;
+    const container = renderItems([
+      baseItem({ id: 'a', title: '未完成', completed: null }),
+      baseItem({ id: 'b', title: '已完成', completed: '2025-01-02 10:00:00' }),
+    ]);
+    const cards = container.querySelectorAll('.todo-card');
+    expect(cards.length).toBe(1);
+  });
+});
+
+describe('Renderer.createDueTag 格式（第 9 轮设置扩展）', () => {
+  it('memoDueFormat=absolute → 固定 MM/DD HH:mm 格式', () => {
+    (App.settings as any).memoDueFormat = 'absolute';
+    const due = moment().add(3, 'days').format('YYYY-MM-DD 14:30:00');
+    const tag = Renderer.createDueTag(baseItem({ due }));
+    expect((tag.textContent || '').includes('到期')).toBe(true);
+    expect(tag.textContent).toContain(moment(due.replace('T', ' ')).format('MM/DD'));
+    expect(tag.textContent).toContain('14:30');
+  });
+
+  it('默认 relative → 「明天 HH:mm 到期」', () => {
+    (App.settings as any).memoDueFormat = 'relative';
+    const due = moment().add(1, 'day').format('YYYY-MM-DD 14:30:00');
+    const tag = Renderer.createDueTag(baseItem({ due }));
+    expect((tag.textContent || '').includes('明天')).toBe(true);
+    expect(tag.textContent).toContain('14:30');
   });
 });
