@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 闪念 VectorStore 测试（ticket 18）：二进制格式往返/增量刷新/检索降级链
  */

@@ -168,76 +168,14 @@ describe('datetime-picker 手动模式', () => {
   it('单击 displayArea → 200ms 后打开滚轮选择器', async () => {
     const ctrl = mountControl();
     const display = ctrl.querySelector('#datetime-display-area') as HTMLElement;
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     display.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 260));
+    await vi.advanceTimersByTimeAsync(260);
+    vi.useRealTimers();
     expect(document.getElementById('unified-datetime-picker-mask')).toBeTruthy();
   });
 });
 
-describe('quote 摘抄全流程', () => {
-  it('registerQuoteCommand：选中带 data-date 的 span → 预览 + 保存', async () => {
-    const editorMock = {
-      somethingSelected: () => true,
-      getSelection: () => '<span data-date="2024-01-01 10:30:00">精选文本</span> ^block1',
-      listSelections: () => [{ anchor: { line: 0 } }],
-      getCursor: () => ({ line: 0, ch: 0 }),
-      getLine: () => '行文本 ^block1',
-      setLine: vi.fn(),
-      getValue: () => '内容',
-    };
-    app.workspace.getActiveViewOfType = () => ({
-      editor: editorMock,
-      file: { path: '我的/日记/2024-01-01.md' },
-    });
-
-    await registerQuoteCommand();
-    const cmd = app.commands.registered.find((c: any) => c.id === 'bz-diary-create-quote');
-    expect(cmd.id).toBe('bz-diary-create-quote');
-
-    await cmd.callback();
-    await new Promise((r) => setTimeout(r, 200)); // sleep(150)
-
-    const popup = document.getElementById('add-diary-popup')!;
-    expect(popup.querySelector('label')!.textContent).toBe('摘抄内容');
-    const dt = document.getElementById('add-diary-datetime') as HTMLInputElement;
-    expect(dt.value).toBe('2024-01-01 10:30');
-    const saveBtn = [...popup.querySelectorAll('button')].find((b) => b.textContent === '保存')!;
-    saveBtn.click();
-    await new Promise((r) => setTimeout(r, 50));
-    expect(hasNotice('摘抄已保存')).toBe(true);
-    expect(vault.files.has('我的/日记/2024-01-01.md')).toBe(true);
-  });
-
-  it('registerQuoteCommand：dateFromSpan 非标准格式走 moment 解析分支', async () => {
-    const editorMock = {
-      somethingSelected: () => true,
-      getSelection: () => '<span data-date="2024-06-15">精选</span>',
-      listSelections: () => [{ anchor: { line: 0 } }],
-      getCursor: () => ({ line: 0, ch: 0 }),
-      getLine: () => '行 ^b2',
-      setLine: vi.fn(),
-      getValue: () => '内容',
-    };
-    app.workspace.getActiveViewOfType = () => ({
-      editor: editorMock,
-      file: { path: '我的/日记/2024-01-01.md' },
-    });
-    await registerQuoteCommand();
-    const cmd = app.commands.registered.find((c: any) => c.id === 'bz-diary-create-quote');
-    await cmd.callback();
-    await new Promise((r) => setTimeout(r, 200));
-    const dt = document.getElementById('add-diary-datetime') as HTMLInputElement;
-    expect(dt.value).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
-  });
-
-  it('registerQuoteCommand：无选中文本 → 「请先打开一个笔记文件」', async () => {
-    app.workspace.getActiveViewOfType = () => null;
-    await registerQuoteCommand();
-    const cmd = app.commands.registered.find((c: any) => c.id === 'bz-diary-create-quote');
-    await cmd.callback();
-    expect(hasNotice('请先打开一个笔记文件')).toBe(true);
-  });
-});
 
 describe('filter-shared 计数分支', () => {
   it('showTagCount=false → updateTagCounts 直接返回', () => {

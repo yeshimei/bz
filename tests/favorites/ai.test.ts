@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 收藏本 FavoritesAIService 测试（ticket 11）：GitHub 信息获取。
  */

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 收藏本 DataManager 测试（ticket 11）：CRUD + 排序。
  */

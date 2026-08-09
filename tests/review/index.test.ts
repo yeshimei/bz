@@ -54,10 +54,12 @@ describe('ensureReview', () => {
     seed(vault);
     const app = makeApp(vault);
     const spy = vi.spyOn(reviewApp, 'checkOverdueAndNotify').mockResolvedValue(undefined);
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     ensureReview(app);
     ensureReview(app); // 幂等：不重复初始化
-    await new Promise((r) => setTimeout(r, 2100));
+    await vi.advanceTimersByTimeAsync(2100);
     expect(spy).toHaveBeenCalled();
+    vi.useRealTimers();
     unloadReview();
   }, 10000);
 
@@ -107,11 +109,13 @@ describe('ensureReview', () => {
     const vault = new MockVault();
     seed(vault);
     const app = makeApp(vault);
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     const clearSpy = vi.spyOn(globalThis, 'clearInterval');
     ensureReview(app);
-    await new Promise((r) => setTimeout(r, 2100)); // 让 setInterval 注册
+    await vi.advanceTimersByTimeAsync(2100); // 让 setInterval 注册
     app.emitWs('quit');
     expect(clearSpy).toHaveBeenCalled();
+    vi.useRealTimers();
     unloadReview();
   }, 10000);
 });
@@ -188,8 +192,10 @@ describe('unloadReview', () => {
     const vault = new MockVault();
     seed(vault);
     const app = makeApp(vault);
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     ensureReview(app);
-    await new Promise((r) => setTimeout(r, 2100));
+    await vi.advanceTimersByTimeAsync(2100);
+    vi.useRealTimers();
     unloadReview();
     expect(dataManager).toBeNull();
     expect(uiManager).toBeNull();

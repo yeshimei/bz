@@ -99,10 +99,12 @@ describe('file-open 提醒', () => {
 
 describe('focus 剪贴板监听', () => {
   it('focus 事件 + 剪贴板含平台 URL → 延迟打开添加弹窗', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     await initApp(SETTINGS, []);
     const readSpy = vi.spyOn(navigator.clipboard, 'readText').mockResolvedValue('https://www.zhihu.com/question/123456');
     window.dispatchEvent(new Event('focus'));
-    await new Promise((r) => setTimeout(r, 1100));
+    await vi.advanceTimersByTimeAsync(1100);
+    vi.useRealTimers();
     const mask = document.getElementById('add-todo-mask') as HTMLElement;
     expect(mask.style.display).toBe('block');
     expect(App.lastClipboardUrl).toBe('https://www.zhihu.com/question/123456');
@@ -129,15 +131,19 @@ describe('focus 剪贴板监听', () => {
 
 describe('autoPopupOnStart', () => {
   it('开启且有待办重要条目 → 300ms 后自动弹窗', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     await initApp({ ...SETTINGS, autoPopupOnStart: true }, [pendingItem({ priority: 'important' })]);
-    await new Promise((r) => setTimeout(r, 400));
+    await vi.advanceTimersByTimeAsync(400);
+    vi.useRealTimers();
     const mask = document.getElementById('todo-mask') as HTMLElement;
     expect(mask.style.display).toBe('block');
   });
 
   it('开启但无重要条目 → 不弹窗', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     await initApp({ ...SETTINGS, autoPopupOnStart: true }, [pendingItem({ priority: 'minor' })]);
-    await new Promise((r) => setTimeout(r, 400));
+    await vi.advanceTimersByTimeAsync(400);
+    vi.useRealTimers();
     const mask = document.getElementById('todo-mask') as HTMLElement;
     expect(mask.style.display).not.toBe('block');
   });

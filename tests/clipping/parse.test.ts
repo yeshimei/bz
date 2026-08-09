@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 剪藏本解析测试（ticket 08）：parseArticleFile 必需 link+created 字段、
  * title=文件名、作者/站点/摘要/标签、反链笔记名。

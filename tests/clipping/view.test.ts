@@ -123,8 +123,10 @@ describe('剪藏本面板', () => {
 
     const input = document.getElementById('article-search-input') as HTMLInputElement;
     input.value = '机器';
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     input.dispatchEvent(new Event('input'));
-    await new Promise((r) => setTimeout(r, 350)); // 防抖 300ms
+    await vi.advanceTimersByTimeAsync(350); // 防抖 300ms
+    vi.useRealTimers();
     expect(document.querySelectorAll('.article-entry-card').length).toBe(1);
     expect(document.querySelector('.article-entry-card')!.textContent).toContain('机器学习入门');
   });

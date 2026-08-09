@@ -12,6 +12,8 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['tests/**/*.test.ts'],
     setupFiles: ['tests/setup.ts'],
+    // threads 池：Windows 下比默认 forks 进程池启动成本低（全量 ~32s → ~22s）
+    pool: 'threads',
   },
   coverage: {
     provider: 'v8',

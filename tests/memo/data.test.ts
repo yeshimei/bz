@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 备忘录数据层测试（ticket 04）：memo.json 14 字段零迁移、
  * 场景/平台映射构建、条目 CRUD。
