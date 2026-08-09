@@ -37,6 +37,7 @@ function httpGet(url, { maxRedirects = 5 } = {}) {
     const mod = url.startsWith('https') ? https : http;
     const headers = {
       'User-Agent': UA,
+      'Referer': 'https://movie.douban.com/',
       'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       'Accept-Language': 'zh-CN,zh;q=0.9',
     };
@@ -166,11 +167,16 @@ export function parseSubjectMeta(html) {
   // 信息块: <div id="info">...<span class="pl">类型:</span> <span property="v:genre">剧情</span> / ...<br/>
   const info = (html.match(/<div[^>]*id="info"[^>]*>([\s\S]*?)<\/div>/i) || [])[1] || '';
   const fields = {};
+  // 媒体类型线索（免费信号，优先于 rexxar 探测）：首播/单集片长 → 剧集；上映日期 → 电影
+  let mediaHint = null;
   if (info) {
     for (const line of info.split(/<br\s*\/?>/i)) {
       const m = line.match(/<span[^>]*class=["']?pl["']?[^>]*>([^<]+?)<\/span>\s*:?\s*([\s\S]*)$/i);
       if (!m) continue;
-      const field = INFO_FIELD_MAP[m[1].trim().replace(/[：:]\s*$/, '')];
+      const rawKey = m[1].trim().replace(/[：:]\s*$/, '');
+      if (rawKey === '首播' || rawKey === '单集片长') mediaHint = 'tv';
+      else if (rawKey === '上映日期' && mediaHint !== 'tv') mediaHint = 'movie';
+      const field = INFO_FIELD_MAP[rawKey];
       if (!field) continue;
       let value = stripTags(m[2]);
       if (field === 'casts') value = value.split(' / ').slice(0, 6).join(' / ');
@@ -200,6 +206,7 @@ export function parseSubjectMeta(html) {
     directors: fields.directors || '',
     writers: fields.writers || '',
     casts: fields.casts || '',
+    mediaHint,
   };
 }
 
@@ -232,7 +239,7 @@ function extractSid(detailUrl) {
  * @param {string} detailUrl 豆瓣详情页 URL (https://movie.douban.com/subject/12345/)
  * @returns {{ rating, region, genre, date, runtime, directors, writers, casts, intro, lang, aka, imdb, url } | null}
  */
-export async function fetchSubjectInfo(detailUrl) {
+export async function fetchSubjectInfo(detailUrl, opts = {}) {
   const sid = extractSid(detailUrl);
   if (!sid) return null;
 
@@ -242,9 +249,13 @@ export async function fetchSubjectInfo(detailUrl) {
 
   const meta = parseSubjectMeta(subjectHtml);
 
-  // 2. 信息块解析不到演职员时，回退 Celebrities API
-  if (!meta.directors || !meta.writers || !meta.casts) {
-    for (const type of ['movie', 'tv']) {
+  // 2. 演职员探测 + 媒体类型判定（detectMediaType 模式总是探测）：
+  //    rexxar 的 movie API 对剧集 sid 也返回数据（无法区分），但电影 sid 的 tv API 返回 404——
+  //    所以先试 tv（成功 → 剧集），失败再试 movie（成功 → 电影）；详情页 mediaHint（首播/上映日期）优先
+  let mediaType = null;
+  const needCast = !meta.directors || !meta.writers || !meta.casts;
+  if (opts.detectMediaType || needCast) {
+    for (const type of ['tv', 'movie']) {
       try {
         const txt = await withRetry(() => httpGet(`https://m.douban.com/rexxar/api/v2/${type}/${sid}/celebrities`), '演职员');
         if (txt && txt.length > 150) {
@@ -254,12 +265,14 @@ export async function fetchSubjectInfo(detailUrl) {
             if (!meta.directors) meta.directors = c.directors;
             if (!meta.writers) meta.writers = c.writers;
             if (!meta.casts) meta.casts = c.casts;
+            mediaType = type;
             break;
           }
         }
       } catch {}
     }
   }
+  if (meta.mediaHint) mediaType = meta.mediaHint;
 
   // 3. 仍缺主演时从 og:description 补全
   if (!meta.casts) {
@@ -273,6 +286,7 @@ export async function fetchSubjectInfo(detailUrl) {
 
   return {
     ...meta,
+    mediaType,
     url: `https://movie.douban.com/subject/${sid}/`
   };
 }
