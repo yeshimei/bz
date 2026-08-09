@@ -20,13 +20,14 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; cha
 const T = {
   phase: 'idle',           // idle | parsing | downloading | trimming | compressing | transcribing | done
   url: '', info: null, quality: null,
+  originalPath: null,      // 下载原件（裁切/压缩后仍保留，可「返回原视频」重新裁切）
   curPath: null, curDur: 0,
   trimmed: false, compressed: false, crf: 23, start: 0, end: 0,
   transcript: '', finalPath: null, finalName: '', saved: false,
 }
 function resetTask() {
   core.resetAbort()
-  T.url = ''; T.info = null; T.quality = null; T.curPath = null; T.curDur = 0
+  T.url = ''; T.info = null; T.quality = null; T.originalPath = null; T.curPath = null; T.curDur = 0
   T.trimmed = false; T.compressed = false; T.crf = 23; T.start = 0; T.end = 0
   T.transcript = ''; T.finalPath = null; T.finalName = ''; T.saved = false
   T.phase = 'idle'
@@ -192,6 +193,7 @@ const handlers = {
         onProgress: p => broadcast({ type: 'download-progress', ...p }),
       })
       T.curPath = outPath
+      T.originalPath = outPath   // 下载原件：裁切/压缩后可「返回原视频」重新裁切
       T.curDur = T.info.duration
       T.trimmed = false; T.compressed = false
       T.phase = 'ready'
@@ -237,6 +239,12 @@ const handlers = {
         onProgress: ({ percent }) => broadcast({ type: 'trim-progress', percent }),
       })
       const after = fs.statSync(outPath).size
+      // 压缩无收益（产物 >= 原件）：丢弃压缩件、保留原件并提醒（kept:'original'）
+      if (after >= before) {
+        try { fs.unlinkSync(outPath) } catch {}
+        T.phase = 'ready'
+        return { ok: true, kept: 'original', before, after, pct: (1 - after / before) * 100 }
+      }
       T.curPath = outPath
       T.compressed = true
       T.crf = crf
@@ -265,6 +273,19 @@ const handlers = {
   async 'POST /api/done'() {
     if (busy) throw new Error('任务进行中')
     return doDone()
+  },
+  async 'POST /api/revert'() {
+    // 返回原视频：恢复下载原件，重置裁切/压缩状态（可重新裁切）
+    if (!T.originalPath || !T.curPath) throw new Error('暂无下载原件')
+    if (busy) throw new Error('任务进行中')
+    T.curPath = T.originalPath
+    T.curDur = T.info.duration
+    T.trimmed = false
+    T.compressed = false
+    T.start = 0
+    T.end = T.info.duration
+    T.phase = 'ready'
+    return { ok: true, duration: T.info.duration }
   },
   async 'POST /api/cancel'() {
     return doCancel()

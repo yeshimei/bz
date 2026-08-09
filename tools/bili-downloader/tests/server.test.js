@@ -13,7 +13,7 @@ process.env.BILI_DL_CONFIG = path.join(tmp, 'config.json')
 process.env.BILI_DL_COOKIES = path.join(tmp, 'cookies.json')
 process.env.BILI_DL_HISTORY = path.join(tmp, 'history.json')
 
-const { createServer } = require('../server')
+const { createServer, T, resetTask } = require('../server')
 
 let server, base
 before(async () => {
@@ -91,6 +91,37 @@ test('GET /api/history 初始为空，DELETE 清空可用', async () => {
 test('POST /api/cancel：空闲时取消也安全（重置任务）', async () => {
   const j = await (await req('POST', '/api/cancel', {})).json()
   assert.equal(j.ok, true)
+})
+
+test('POST /api/revert：无下载原件时报错', async () => {
+  const j = await (await req('POST', '/api/revert', {})).json()
+  assert.equal(j.ok, false)
+  assert.match(j.error, /下载原件/)
+})
+
+test('POST /api/revert：返回原视频并重置裁切/压缩状态', async () => {
+  const orig = path.join(tmp, 'orig.mp4')
+  const clip = path.join(tmp, 'clip.mp4')
+  fs.writeFileSync(orig, 'orig')
+  fs.writeFileSync(clip, 'clip')
+  T.originalPath = orig
+  T.curPath = clip
+  T.curDur = 30
+  T.trimmed = true
+  T.compressed = true
+  T.start = 5
+  T.end = 30
+  T.info = { duration: 120 }
+  const j = await (await req('POST', '/api/revert', {})).json()
+  assert.equal(j.ok, true)
+  assert.equal(j.duration, 120)
+  assert.equal(T.curPath, orig)      // 当前产物恢复为下载原件
+  assert.equal(T.curDur, 120)
+  assert.equal(T.trimmed, false)     // 裁切/压缩状态复位（交付时文件名不带标记）
+  assert.equal(T.compressed, false)
+  assert.equal(T.start, 0)
+  assert.equal(T.end, 120)
+  resetTask()   // 恢复任务状态，避免影响后续测试（media/current 等）
 })
 
 test('GET /media/current：无产物时 404', async () => {

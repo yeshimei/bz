@@ -138,6 +138,7 @@ textarea { min-height: 60px; font-family: var(--mono); font-size: 12.5px; width:
 /* ---- 预览 ---- */
 video { width: 100%; max-height: 260px; border-radius: 10px; background: #000; display: block; }
 .vctrl { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.vctrl #revert-btn { margin-left: auto; }
 .vtime { font-size: 12px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 .range { position: relative; height: 22px; margin: 10px 0 2px; border-radius: 4px; }
