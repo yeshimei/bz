@@ -8,7 +8,7 @@ import { M, resetMovieState, setHomeFilmStatus } from '../../src/movie/state';
 import { rebuildItems } from '../../src/movie/data';
 import {
   renderAll, renderList, setupInfiniteScroll, toggleSearch, closeOverlay,
-  openAddModal, openEditModal, openFilterModal, closeFilterModal, createOverlay, registerEscapeHandler,
+  openAddModal, closeAddModal, openEditModal, openFilterModal, closeFilterModal, createOverlay, registerEscapeHandler,
 } from '../../src/movie/ui';
 import { escManager } from '../../src/core/esc-manager';
 import { openMovieManager, ensureMovie, unloadMovie } from '../../src/movie/index';
@@ -198,6 +198,63 @@ describe('添加/编辑弹窗', () => {
     // 切到想看 → 评分隐藏
     statusBtns[0].click();
     expect(ratingInput.parentElement!.style.display).toBe('none');
+  });
+
+  it('openAddModal：标题实时检测已存在 → 输入框下方提示', () => {
+    openAddModal(M.appRef as any);
+    const overlay = M.addOverlay!;
+    const nameInput = overlay.querySelector('input[placeholder="名称"]') as HTMLInputElement;
+    const hint = nameInput.nextElementSibling as HTMLElement;
+    // 初始无输入 → 不提示
+    expect(hint.style.display).toBe('none');
+    // 输入已存在标题 → 提示
+    nameInput.value = '片1';
+    nameInput.dispatchEvent(new Event('input'));
+    expect(hint.style.display).toBe('block');
+    expect(hint.textContent).toContain('「片1」已存在');
+    // 改为不存在的标题 → 隐藏
+    nameInput.value = '全新片';
+    nameInput.dispatchEvent(new Event('input'));
+    expect(hint.style.display).toBe('none');
+    closeAddModal();
+  });
+
+  it('openAddModal：确认创建 → 常驻 progress 通知「正在获取海报和豆瓣信息」→ 海报填充后原地更新已完成', async () => {
+    vi.useFakeTimers();
+    // workspace 需带 getLeaf（openFile）才能走通创建流程
+    const vault = new MockVault();
+    seed(vault);
+    M.appRef = makeApp(vault, {
+      workspace: {
+        getActiveViewOfType: () => null,
+        openLinkText: async () => {},
+        on: () => ({ ref: 'mock-ws-ref' }),
+        off: () => {},
+        offref: () => {},
+        getActiveFile: () => null,
+        getLeaf: () => ({ openFile: async () => {} }),
+      },
+    });
+    openAddModal(M.appRef as any);
+    const overlay = M.addOverlay!;
+    const nameInput = overlay.querySelector('input[placeholder="名称"]') as HTMLInputElement;
+    nameInput.value = '新片';
+    const ratingInput = [...overlay.querySelectorAll('input')].find((i) => (i as HTMLInputElement).placeholder === '评分（0.1~5）') as HTMLInputElement;
+    ratingInput.value = '4';
+    const confirmBtn = [...overlay.querySelectorAll('button')].find((b) => b.textContent === '确定')!;
+    confirmBtn.click();
+    await vi.advanceTimersByTimeAsync(0);
+    // 创建完成 → 弹「正在获取海报和豆瓣信息」progress 通知（常驻转圈）
+    const noticeEl = document.querySelector('.bz-notice--progress')!;
+    expect(noticeEl).not.toBeNull();
+    expect(noticeEl.textContent).toContain('正在获取海报和豆瓣信息');
+    // 模拟外部 watcher 写入海报字段 → 原地更新为已完成
+    vault.files.set('我的/影视/《新片》.md', '---\ntags: [电影]\n评分: 4\n海报: 我的/影视/海报/新片.png\n---\n');
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(noticeEl.textContent).toContain('海报和豆瓣信息获取完成');
+    expect(noticeEl.classList.contains('bz-notice--success')).toBe(true);
+    expect(document.querySelector('.bz-notice--progress')).toBeNull();
+    vi.useRealTimers();
   });
 
   it('编辑弹窗：标题含《名》+ infoRow 类型 + 状态按钮组', () => {

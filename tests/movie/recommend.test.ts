@@ -78,6 +78,7 @@ describe('quickAddWant', () => {
   beforeEach(() => {
     resetObsidianMocks();
     resetMovieState();
+    document.body.innerHTML = '';
     M.folderPath = '我的/影视';
   });
 
@@ -100,6 +101,25 @@ describe('quickAddWant', () => {
     const app = mockAppWithVault(vault);
     await quickAddWant(app, 'A', '电影');
     expect(vault.files.size).toBe(1);
+  });
+
+  it('创建后弹常驻 progress 通知「正在获取海报和豆瓣信息」→ 海报填充后原地更新完成', async () => {
+    vi.useFakeTimers();
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《A》.md', '---\ntags: [电影]\n---');
+    const app = mockAppWithVault(vault);
+    M.appRef = app;
+    await quickAddWant(app, '新片2', '电影');
+    await vi.advanceTimersByTimeAsync(0);
+    const el = document.querySelector('.bz-notice--progress')!;
+    expect(el).not.toBeNull();
+    expect(el.textContent).toContain('正在获取海报和豆瓣信息');
+    // 外部 watcher 写入海报 → 原地更新为已完成
+    vault.files.set('我的/影视/《新片2》.md', '---\ntags: [电影]\n评分: -1\n海报: p.png\n---\n');
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(el.textContent).toContain('海报和豆瓣信息获取完成');
+    expect(el.classList.contains('bz-notice--success')).toBe(true);
+    vi.useRealTimers();
   });
 });
 
