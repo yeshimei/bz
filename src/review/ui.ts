@@ -157,7 +157,7 @@ export class UIManager {
       this.refreshPanel();
     });
     header.querySelector('#review-btn-quiz')!.addEventListener('click', () => {
-      (app as any).commands?.executeCommandById?.('bz-quiz-master-open');
+      (app as any).commands?.executeCommandById?.('bz-quiz-open');
     });
     // 复习计划设置弹窗（ADR-0009：检查间隔/逾期通知 + 做题家 5 项）
     header.querySelector('#review-btn-settings')!.addEventListener('click', () => {
@@ -248,7 +248,7 @@ export class UIManager {
     this.refreshPanel();
     // 自动更新题库（异步，不阻塞界面）
     try {
-      (this.app as any).commands?.executeCommandById?.('bz-quiz-master-update');
+      (this.app as any).commands?.executeCommandById?.('bz-quiz-update');
     } catch {
       /* ignore */
     }

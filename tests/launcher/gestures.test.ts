@@ -45,9 +45,9 @@ describe('手势触发', () => {
 
   it('双击 → 执行绑定命令', () => {
     const { app, executed } = makeApp();
-    unregister = registerGestureListeners(app, { gestureDoubleTap: 'bz-launcher-open' });
+    unregister = registerGestureListeners(app, { gestureDoubleTap: 'bz-home' });
     fireClick(2);
-    expect(executed).toEqual(['bz-launcher-open']);
+    expect(executed).toEqual(['bz-home']);
   });
 
   it('连续三击 → 执行三击绑定命令（不触发双击）', () => {
@@ -79,17 +79,17 @@ describe('手势触发', () => {
 
   it('单次点击不触发', () => {
     const { app, executed } = makeApp();
-    unregister = registerGestureListeners(app, { gestureDoubleTap: 'bz-launcher-open' });
+    unregister = registerGestureListeners(app, { gestureDoubleTap: 'bz-home' });
     fireClick(1);
     expect(executed).toEqual([]);
   });
 
   it('触发抑制：短时间内连击只触发一次', () => {
     const { app, executed } = makeApp();
-    unregister = registerGestureListeners(app, { gestureDoubleTap: 'bz-launcher-open' });
+    unregister = registerGestureListeners(app, { gestureDoubleTap: 'bz-home' });
     fireClick(2);
     fireClick(2); // 抑制窗口内 → 不重复触发
-    expect(executed).toEqual(['bz-launcher-open']);
+    expect(executed).toEqual(['bz-home']);
   });
 
   it('off 配置不注册 click 监听（不干扰既有交互）', () => {
@@ -101,19 +101,19 @@ describe('手势触发', () => {
 
   it('双指下滑（触屏双触点同向下移）→ 执行绑定命令', () => {
     const { app, executed } = makeApp();
-    unregister = registerGestureListeners(app, { gestureSwipeDown: 'bz-launcher-open' });
+    unregister = registerGestureListeners(app, { gestureSwipeDown: 'bz-home' });
     // touchstart 记录双触点
     const start = new Event('touchstart') as any;
     start.touches = [{ clientY: 100 }, { clientY: 120 }];
     document.dispatchEvent(start);
     // 两指均下移 80px
     fireTouch([{ clientY: 180 }, { clientY: 200 }]);
-    expect(executed).toEqual(['bz-launcher-open']);
+    expect(executed).toEqual(['bz-home']);
   });
 
   it('单指移动不触发双指下滑', () => {
     const { app, executed } = makeApp();
-    unregister = registerGestureListeners(app, { gestureSwipeDown: 'bz-launcher-open' });
+    unregister = registerGestureListeners(app, { gestureSwipeDown: 'bz-home' });
     const start = new Event('touchstart') as any;
     start.touches = [{ clientY: 100 }, { clientY: 120 }];
     document.dispatchEvent(start);
@@ -125,16 +125,16 @@ describe('手势触发', () => {
 
   it('双指下滑（触控板滚轮累积兜底）→ 执行绑定命令', () => {
     const { app, executed } = makeApp();
-    unregister = registerGestureListeners(app, { gestureSwipeDown: 'bz-launcher-open' });
+    unregister = registerGestureListeners(app, { gestureSwipeDown: 'bz-home' });
     document.dispatchEvent(new WheelEvent('wheel', { deltaY: 100 }));
     document.dispatchEvent(new WheelEvent('wheel', { deltaY: 100 }));
     document.dispatchEvent(new WheelEvent('wheel', { deltaY: 100 })); // 累积 300 → 触发
-    expect(executed).toEqual(['bz-launcher-open']);
+    expect(executed).toEqual(['bz-home']);
   });
 
   it('滚轮向上滚动不累积（重置）', () => {
     const { app, executed } = makeApp();
-    unregister = registerGestureListeners(app, { gestureSwipeDown: 'bz-launcher-open' });
+    unregister = registerGestureListeners(app, { gestureSwipeDown: 'bz-home' });
     document.dispatchEvent(new WheelEvent('wheel', { deltaY: 100 }));
     document.dispatchEvent(new WheelEvent('wheel', { deltaY: -50 })); // 反向 → 清零
     document.dispatchEvent(new WheelEvent('wheel', { deltaY: 100 }));
@@ -144,7 +144,7 @@ describe('手势触发', () => {
 
   it('unregister 后不再触发', () => {
     const { app, executed } = makeApp();
-    const un = registerGestureListeners(app, { gestureDoubleTap: 'bz-launcher-open' });
+    const un = registerGestureListeners(app, { gestureDoubleTap: 'bz-home' });
     un();
     unregister = null;
     fireClick(2);

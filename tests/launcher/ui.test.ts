@@ -21,8 +21,8 @@ import { LAUNCHER_PATH } from '../../src/launcher/data';
 const STEP = 58;
 
 const BZ_COMMANDS = [
-  { id: 'bz-memo-open-panel', name: '打开备忘录面板', icon: 'sticky-note' },
-  { id: 'bz-pw-open-manager', name: '打开密码本', icon: 'key' },
+  { id: 'bz-memo-open', name: '打开备忘录面板', icon: 'sticky-note' },
+  { id: 'bz-pw-open', name: '打开密码本', icon: 'key' },
   { id: 'bz-review-open-panel', name: '打开复习面板', icon: 'calendar' },
 ];
 
@@ -119,15 +119,15 @@ describe('入口页 UI', () => {
       JSON.stringify({
         version: 1,
         tiles: [
-          { id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 2, h: 1, icon: 'star' },
-          { id: 't2', commandId: 'bz-pw-open-manager', x: 2, y: 0, w: 1, h: 1 },
+          { id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 2, h: 1, icon: 'star' },
+          { id: 't2', commandId: 'bz-pw-open', x: 2, y: 0, w: 1, h: 1 },
         ],
       })
     );
     await openOnce(vault);
     const tiles = gridTiles();
     expect(tiles.length).toBe(2);
-    expect(tiles[0].dataset.commandId).toBe('bz-memo-open-panel');
+    expect(tiles[0].dataset.commandId).toBe('bz-memo-open');
     expect(tiles[0].style.gridColumn).toBe('1 / span 2');
     // 自定义图标优先于命令 icon
     expect(tiles[0].querySelector<HTMLElement>('.launcher-icon')!.dataset.icon).toBe('star');
@@ -140,7 +140,7 @@ describe('入口页 UI', () => {
       LAUNCHER_PATH,
       JSON.stringify({
         version: 1,
-        tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }],
+        tiles: [{ id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 }],
       })
     );
     await openOnce(vault);
@@ -172,7 +172,7 @@ describe('入口页 UI', () => {
     const vault = new MockVault();
     await vault.create(
       LAUNCHER_PATH,
-      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 }] })
     );
     await openOnce(vault);
     const tile = gridTiles()[0];
@@ -223,19 +223,19 @@ describe('入口页 UI', () => {
     input.dispatchEvent(new Event('input'));
     const items = document.querySelectorAll<HTMLElement>('#launcher-cmd-popup .launcher-picker-item');
     expect(items.length).toBe(1);
-    expect(items[0].dataset.commandId).toBe('bz-memo-open-panel');
+    expect(items[0].dataset.commandId).toBe('bz-memo-open');
     items[0].click();
     // 等待写盘（saveLauncherData 建目录/建文件为异步链）
     await new Promise((r) => setTimeout(r, 0));
     // 磁贴出现 + 保存 + 进入编辑模式 + 固化命令自带图标
     const tiles = gridTiles();
     expect(tiles.length).toBe(1);
-    expect(tiles[0].dataset.commandId).toBe('bz-memo-open-panel');
+    expect(tiles[0].dataset.commandId).toBe('bz-memo-open');
     expect(tiles[0].classList.contains('editing')).toBe(true);
     expect(tiles[0].querySelector<HTMLElement>('.launcher-icon')!.dataset.icon).toBe('sticky-note');
     const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
     expect(saved.desktop.tiles[0]).toMatchObject({
-      commandId: 'bz-memo-open-panel',
+      commandId: 'bz-memo-open',
       x: 0,
       y: 0,
       w: 1,
@@ -302,13 +302,13 @@ describe('入口页 UI', () => {
       const items = [...document.querySelectorAll<HTMLElement>('#launcher-cmd-popup .launcher-picker-item')];
       items.find((i) => i.dataset.commandId === id)!.click();
     };
-    pick('bz-memo-open-panel');
-    pick('bz-pw-open-manager');
+    pick('bz-memo-open');
+    pick('bz-pw-open');
     pick('bz-review-open-panel');
     const tiles = gridTiles();
     expect(tiles.map((t) => t.dataset.commandId)).toEqual([
-      'bz-memo-open-panel',
-      'bz-pw-open-manager',
+      'bz-memo-open',
+      'bz-pw-open',
       'bz-review-open-panel',
     ]);
     expect(tiles[0].style.gridColumn).toBe('1 / span 1');
@@ -320,7 +320,7 @@ describe('入口页 UI', () => {
     const vault = new MockVault();
     await vault.create(
       LAUNCHER_PATH,
-      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 }] })
     );
     await openOnce(vault);
     const tile = longPressEnterEdit(gridTiles()[0], 50, 50);
@@ -339,12 +339,12 @@ describe('入口页 UI', () => {
     const vault = new MockVault();
     await vault.create(
       LAUNCHER_PATH,
-      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 }] })
     );
     const { executed } = await openOnce(vault);
     const tile = gridTiles()[0];
     tile.click();
-    expect(executed).toEqual(['bz-memo-open-panel']);
+    expect(executed).toEqual(['bz-memo-open']);
     expect(document.getElementById('launcher-overlay')).toBeNull();
   });
 
@@ -356,7 +356,7 @@ describe('入口页 UI', () => {
         version: 1,
         tiles: [
           { id: 't1', commandId: 'bz-gone-command', x: 0, y: 0, w: 1, h: 1 }, // 失效
-          { id: 't2', commandId: 'bz-memo-open-panel', x: 1, y: 0, w: 1, h: 1 },
+          { id: 't2', commandId: 'bz-memo-open', x: 1, y: 0, w: 1, h: 1 },
         ],
       })
     );
@@ -374,7 +374,7 @@ describe('入口页 UI', () => {
     ghost.click();
     const rows = [...document.querySelectorAll<HTMLElement>('#launcher-menu-popup .launcher-picker-item')];
     rows.find((r) => r.textContent!.includes('删除磁贴'))!.click();
-    expect(gridTiles().map((t) => t.dataset.commandId)).toEqual(['bz-memo-open-panel']);
+    expect(gridTiles().map((t) => t.dataset.commandId)).toEqual(['bz-memo-open']);
   });
 
   it('拖拽移动：编辑模式拖主体 → 推挤落位 + 写盘', async () => {
@@ -384,17 +384,17 @@ describe('入口页 UI', () => {
       JSON.stringify({
         version: 1,
         tiles: [
-          { id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 },
-          { id: 't2', commandId: 'bz-pw-open-manager', x: 1, y: 0, w: 1, h: 1 },
+          { id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 },
+          { id: 't2', commandId: 'bz-pw-open', x: 1, y: 0, w: 1, h: 1 },
         ],
       })
     );
     await openOnce(vault);
     // 进编辑模式（长按 t2）
     longPressEnterEdit(
-      gridTiles().find((t) => t.dataset.commandId === 'bz-pw-open-manager'), 160, 50);
+      gridTiles().find((t) => t.dataset.commandId === 'bz-pw-open'), 160, 50);
     // 拖 t2（(1,0)）到 (3,0)：pointerdown 中心 (1*STEP+STEP/2, STEP/2)
-    const t1 = gridTiles().find((t) => t.dataset.commandId === 'bz-memo-open-panel')!;
+    const t1 = gridTiles().find((t) => t.dataset.commandId === 'bz-memo-open')!;
     firePointer(t1, 'pointerdown', 0 * STEP + STEP / 2, STEP / 2);
     // 目标格 (3,0)：pointer 让磁贴中心落在 (3*STEP+STEP/2, STEP/2)
     firePointer(document, 'pointermove', 3 * STEP + STEP / 2, STEP / 2);
@@ -415,8 +415,8 @@ describe('入口页 UI', () => {
       JSON.stringify({
         version: 1,
         tiles: [
-          { id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 },
-          { id: 't2', commandId: 'bz-pw-open-manager', x: 1, y: 0, w: 1, h: 1 },
+          { id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 },
+          { id: 't2', commandId: 'bz-pw-open', x: 1, y: 0, w: 1, h: 1 },
         ],
       })
     );
@@ -430,11 +430,11 @@ describe('入口页 UI', () => {
       vi.useRealTimers();
     }
     // 拖 t1（(0,0)）到 (1,0)（被 t2 占）
-    const t1 = gridTiles().find((t) => t.dataset.commandId === 'bz-memo-open-panel')!;
+    const t1 = gridTiles().find((t) => t.dataset.commandId === 'bz-memo-open')!;
     firePointer(t1, 'pointerdown', 0 * STEP + STEP / 2, STEP / 2);
     firePointer(document, 'pointermove', 1 * STEP + STEP / 2, STEP / 2);
     // 安卓式实时让位：松手前 t2 已顺移到 (2,0)
-    const live = gridTiles().find((t) => t.dataset.commandId === 'bz-pw-open-manager')!;
+    const live = gridTiles().find((t) => t.dataset.commandId === 'bz-pw-open')!;
     expect(live.style.gridColumn).toBe('3 / span 1');
     firePointer(document, 'pointerup', 1 * STEP + STEP / 2, STEP / 2);
     await new Promise((r) => setTimeout(r, 0));
@@ -447,7 +447,7 @@ describe('入口页 UI', () => {
     const vault = new MockVault();
     await vault.create(
       LAUNCHER_PATH,
-      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 }] })
     );
     await openOnce(vault);
     let tile = longPressEnterEdit(gridTiles()[0], 50, 50);
@@ -469,8 +469,8 @@ describe('入口页 UI', () => {
         version: 3,
         desktop: {
           tiles: [
-            { id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 },
-            { id: 't2', commandId: 'bz-pw-open-manager', x: 1, y: 0, w: 2, h: 2 },
+            { id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 },
+            { id: 't2', commandId: 'bz-pw-open', x: 1, y: 0, w: 2, h: 2 },
           ],
           columns: 6,
         },
@@ -479,7 +479,7 @@ describe('入口页 UI', () => {
     );
     await openOnce(vault);
     let tile = longPressEnterEdit(
-      gridTiles().find((t) => t.dataset.commandId === 'bz-memo-open-panel'), 50, 50);
+      gridTiles().find((t) => t.dataset.commandId === 'bz-memo-open'), 50, 50);
     tile.click();
     const rows = [...document.querySelectorAll<HTMLElement>('#launcher-menu-popup .launcher-picker-item')];
     rows.find((r) => r.textContent!.includes('尺寸 2×2'))!.click();
@@ -493,7 +493,7 @@ describe('入口页 UI', () => {
     const vault = new MockVault();
     await vault.create(
       LAUNCHER_PATH,
-      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 }] })
     );
     await openOnce(vault);
     let tile = longPressEnterEdit(gridTiles()[0], 50, 50);
@@ -512,7 +512,7 @@ describe('入口页 UI', () => {
     const vault = new MockVault();
     await vault.create(
       LAUNCHER_PATH,
-      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 }] })
     );
     await openOnce(vault);
     let tile = longPressEnterEdit(gridTiles()[0], 50, 50);
@@ -536,7 +536,7 @@ describe('入口页 UI', () => {
       LAUNCHER_PATH,
       JSON.stringify({
         version: 1,
-        tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1, label: '自定义名' }],
+        tiles: [{ id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1, label: '自定义名' }],
       })
     );
     await openOnce(vault);
@@ -568,8 +568,8 @@ describe('入口页 UI', () => {
       JSON.stringify({
         version: 2,
         desktop: [
-          { id: 't1', commandId: 'bz-memo-open-panel', x: 4, y: 0, w: 1, h: 1 }, // 6 列下在 x=4
-          { id: 't2', commandId: 'bz-pw-open-manager', x: 5, y: 0, w: 1, h: 1 }, // x=5
+          { id: 't1', commandId: 'bz-memo-open', x: 4, y: 0, w: 1, h: 1 }, // 6 列下在 x=4
+          { id: 't2', commandId: 'bz-pw-open', x: 5, y: 0, w: 1, h: 1 }, // x=5
         ],
         mobile: [],
       })
@@ -595,7 +595,7 @@ describe('入口页 UI', () => {
     const vault = new MockVault();
     await vault.create(
       LAUNCHER_PATH,
-      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 }] })
     );
     const settings: Record<string, any> = { launcherColumns: '6' };
     setSettingsProvider(() => ({ ...settings }) as any);
@@ -626,7 +626,7 @@ describe('入口页 UI', () => {
     const vault = new MockVault();
     await vault.create(
       LAUNCHER_PATH,
-      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 }] })
     );
     const settings: Record<string, any> = { launcherColumns: '6' };
     setSettingsProvider(() => ({ ...settings }) as any);
@@ -653,8 +653,8 @@ describe('入口页 UI', () => {
       LAUNCHER_PATH,
       JSON.stringify({
         version: 3,
-        desktop: { columns: 6, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] },
-        mobile: { columns: 6, tiles: [{ id: 'm1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] },
+        desktop: { columns: 6, tiles: [{ id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 }] },
+        mobile: { columns: 6, tiles: [{ id: 'm1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 }] },
       })
     );
     // 桌面端：launcherShowTextMobile=false 不影响（桌面看 launcherShowText=true）→ 有文字
@@ -683,7 +683,7 @@ describe('入口页 UI', () => {
     const vault = new MockVault();
     await vault.create(
       LAUNCHER_PATH,
-      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 }] })
     );
     const settings: Record<string, any> = { launcherColumns: '6', launcherGesture: 'triple' };
     setSettingsProvider(() => ({ ...settings }) as any);
@@ -756,8 +756,8 @@ describe('入口页 UI', () => {
       JSON.stringify({
         version: 2,
         desktop: [
-          { id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 },
-          { id: 't2', commandId: 'bz-pw-open-manager', x: 1, y: 0, w: 1, h: 1 },
+          { id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 },
+          { id: 't2', commandId: 'bz-pw-open', x: 1, y: 0, w: 1, h: 1 },
         ],
         mobile: [],
       })
@@ -775,7 +775,7 @@ describe('入口页 UI', () => {
     const vault = new MockVault();
     await vault.create(
       LAUNCHER_PATH,
-      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open-panel', x: 0, y: 0, w: 1, h: 1 }] })
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 }] })
     );
     await openOnce(vault);
     let tile = longPressEnterEdit(gridTiles()[0], 50, 50);
@@ -811,7 +811,7 @@ describe('入口页 UI', () => {
     }
     document.querySelector<HTMLElement>('#launcher-grid .launcher-empty-cell')!.click();
     const items = [...document.querySelectorAll<HTMLElement>('#launcher-cmd-popup .launcher-picker-item')];
-    items.find((i) => i.dataset.commandId === 'bz-memo-open-panel')!.click();
+    items.find((i) => i.dataset.commandId === 'bz-memo-open')!.click();
     await new Promise((r) => setTimeout(r, 0));
     // 关闭
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
@@ -837,14 +837,14 @@ describe('入口页 UI', () => {
       }
       document.querySelector<HTMLElement>('#launcher-grid .launcher-empty-cell')!.click();
       const items2 = [...document.querySelectorAll<HTMLElement>('#launcher-cmd-popup .launcher-picker-item')];
-      items2.find((i) => i.dataset.commandId === 'bz-pw-open-manager')!.click();
+      items2.find((i) => i.dataset.commandId === 'bz-pw-open')!.click();
       await new Promise((r) => setTimeout(r, 0));
       // 写盘：mobile 有、desktop 保留原样
       const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
       expect(saved.mobile.tiles.length).toBe(1);
-      expect(saved.mobile.tiles[0].commandId).toBe('bz-pw-open-manager');
+      expect(saved.mobile.tiles[0].commandId).toBe('bz-pw-open');
       expect(saved.desktop.tiles.length).toBe(1);
-      expect(saved.desktop.tiles[0].commandId).toBe('bz-memo-open-panel');
+      expect(saved.desktop.tiles[0].commandId).toBe('bz-memo-open');
     } finally {
       MockPlatform.isMobile = false;
     }

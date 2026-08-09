@@ -71,7 +71,7 @@ export function showLibrary(app: any) {
   headerButtons.style.cssText = 'display: flex; align-items: center; gap: 8px;';
 
   const reportBtn = createIconBtn('🧮', '打开阅读数据分析报告', () => {
-    (app as any).commands.executeCommandById('bz-show-reading-report');
+    (app as any).commands.executeCommandById('bz-reading-report-open');
   });
   // 筛选弹窗（ADR-0009：视图与筛选挂 🔀，⚙️ 只留给真设置）
   const filterBtn = createIconBtn('🔀', '视图与筛选', () => {

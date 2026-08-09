@@ -18,15 +18,39 @@ export default interface BzSettings {
   /** 共享 JSON 数据目录（memo/belongings/passwords/favorites/review/quiz/闪念 meta+vec 统一存放） */
   storagePath: string;
 
-  // ===== 📝 备忘录（2 项；showFileName 固定显示，不暴露设置）=====
+  // ===== 📝 备忘录（13 项）=====
   /** 📂 备忘录数据文件路径（memo.json 所在目录）——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
   todoFilePath: string;
   /** 📄 显示文件名（固定 true，不暴露设置） */
   showFileName: boolean;
-  /** 🚀 启动时自动弹窗（有重要备忘录时） */
+  /** 🚀 启动时自动弹出：启动时若存在未完成的重要或到期备忘录，自动弹出面板提醒 */
   autoPopupOnStart: boolean;
+  /** 🔔 打开笔记自动提醒：打开笔记时若该笔记有重要/到期未完成备忘录，自动弹出面板 */
+  openNoteReminder: boolean;
+  /** 📋 剪贴板监听：窗口聚焦时读取剪贴板，识别平台 URL 自动弹出添加框 */
+  clipboardMonitor: boolean;
+  /** 🏷️ 场景列表（逗号分隔，空则内置默认：剪藏,工作,学习,生活,代码,公开课） */
+  memoScenarios: string;
+  /** 🌐 平台映射（每行 域名=平台名，空则内置 7 项默认） */
+  memoPlatformMapping: string;
+  /** 🔀 默认排序方式：priority（紧急优先）/ due（仅到期）/ created（创建时间） */
+  memoSortMode: string;
+  /** 📁 默认显示归档：打开面板时显示已归档条目 */
+  memoShowArchivedByDefault: boolean;
+  /** ⭐ 新条目默认优先级：minor / important */
+  memoDefaultPriority: string;
+  /** 🔔 到期通知：到期/逾期待办轮询 Notice 提醒 */
+  memoDueNotify: boolean;
+  /** ⏱️ 到期检查间隔（秒） */
+  memoDueCheckInterval: string;
+  /** ✅ 完成后自动归档：关=完成条目保留主列表显示完成态 */
+  memoAutoArchive: boolean;
+  /** 🆕 新条目默认场景（空=第一个场景） */
+  memoDefaultScene: string;
+  /** 🕒 到期时间格式：relative（今天 14:00 到期）/ absolute（MM/DD HH:mm 到期） */
+  memoDueFormat: string;
 
-  // ===== 📖 日记本（5 项，diary-notebook 合并）=====
+  // ===== 📖 日记本（12 项，diary-notebook 合并）=====
   /** 📂 日记目录 */
   diaryDirectory: string;
   /** 🎬 影视目录（日记本用） */
@@ -39,6 +63,18 @@ export default interface BzSettings {
   useFileDateTime: boolean;
   /** 📄 每批加载数量（滚动加载每批显示的条目数） */
   diaryBatchSize: string;
+  /** 😀 标签按钮显示 emoji（筛选栏与写日记弹窗，关=纯文字） */
+  diaryTagShowEmoji: boolean;
+  /** 📝 卡片内容渲染方式：markdown / plain（纯文本） */
+  diaryContentRenderMode: string;
+  /** 🔀 标签排序：fixed（内置配置顺序）/ count（条目数量降序） */
+  diaryTagSortMode: string;
+  /** 📅 打开面板默认日期筛选：all（全部）/ this-month（本月） */
+  diaryDefaultDateFilter: string;
+  /** 🏷️ 默认选中标签（空=全部；填主标签名则打开面板即选中该标签） */
+  diaryDefaultSelectedTag: string;
+  /** ✏️ 保存后立即进入编辑（关=保存后仅关闭弹窗） */
+  diaryJumpToEditAfterSave: boolean;
 
   // ===== 📦 归物本（1 项，ADR-0009 废弃）=====
   /** 📁 存储文件夹路径（belongings.json）——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
@@ -192,6 +228,18 @@ export const DEFAULT_SETTINGS: BzSettings = {
   todoFilePath: 'CONFIG/STORAGE',
   showFileName: true,
   autoPopupOnStart: true,
+  openNoteReminder: true,
+  clipboardMonitor: true,
+  memoScenarios: '',
+  memoPlatformMapping: '',
+  memoSortMode: 'priority',
+  memoShowArchivedByDefault: false,
+  memoDefaultPriority: 'minor',
+  memoDueNotify: true,
+  memoDueCheckInterval: '300',
+  memoAutoArchive: true,
+  memoDefaultScene: '',
+  memoDueFormat: 'relative',
 
   // 日记本
   diaryDirectory: '我的/日记',
@@ -200,6 +248,12 @@ export const DEFAULT_SETTINGS: BzSettings = {
   showTagCount: true,
   useFileDateTime: false,
   diaryBatchSize: '20',
+  diaryTagShowEmoji: true,
+  diaryContentRenderMode: 'markdown',
+  diaryTagSortMode: 'fixed',
+  diaryDefaultDateFilter: 'all',
+  diaryDefaultSelectedTag: '',
+  diaryJumpToEditAfterSave: true,
 
   // 归物本
   belongingsDataFolder: 'CONFIG/STORAGE',

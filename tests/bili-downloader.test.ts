@@ -1,5 +1,5 @@
 /**
- * B站下载器启动命令测试（bz-bili-downloader-open，ticket 无——外部工具启动器）
+ * B站下载器启动命令测试（bz-bili-open，ticket 无——外部工具启动器）
  * 场景：非桌面端提示 / 桌面端 spawn bili-dl 解析地址提示 / ENOENT 提示安装 / 退出码非 0 提示安装
  */
 import { describe, it, expect, afterEach, vi } from 'vitest';

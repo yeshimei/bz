@@ -37,25 +37,24 @@ function makeMockApp() {
 const removedCommands: string[] = [];
 const registeredCommands: any[] = [];
 
-/** 期望的命令 id 全集（spec「命令 id 全清单」29 个主表 + 入口页 + 日记本 bz-open-panel + B站下载器，共 32 个） */
+/** 期望的命令 id 全集（spec「命令 id 全清单」第 9 轮：COMMANDS 表 33 个 + 日记本 bz-diary-open，共 34 个） */
 const EXPECTED_COMMAND_IDS = [
-  'bz-launcher-open',
-  'bz-memo-open-panel', 'bz-memo-create-item',
-  'bz-belongings-add-item', 'bz-belongings-open-panel',
-  'bz-article-open-view',
-  'bz-news-reader-open',
-  'bz-pw-open-manager', 'bz-pw-add-entry', 'bz-pw-generate-password',
-  'bz-favorites-open-panel', 'bz-favorites-add-item',
-  'bz-open-library', 'bz-open-book-notes',
-  'bz-open-panel',
-  'bz-show-reading-report',
-  'bz-movie-manager-open', 'bz-movie-manager-add', 'bz-movie-report',
-  'bz-review-open-panel', 'bz-review-start', 'bz-review-add-current', 'bz-review-remove-current', 'bz-review-jump-overdue', 'bz-review-mark-dialog',
-  'bz-review-mark-again', 'bz-review-mark-hard', 'bz-review-mark-good', 'bz-review-mark-easy',
-  'bz-quiz-master-update', 'bz-quiz-master-open',
-  'bz-shan-nian-open-reference', 'bz-shan-nian-open-chat',
-  'bz-notification-demo',
-  'bz-bili-downloader-open',
+  'bz-home',
+  'bz-memo-open', 'bz-memo-add',
+  'bz-belongings-add', 'bz-belongings-open',
+  'bz-clipping-open',
+  'bz-news-open',
+  'bz-pw-open', 'bz-pw-add', 'bz-pw-generate',
+  'bz-favorites-open', 'bz-favorites-add',
+  'bz-library-open', 'bz-book-notes-open',
+  'bz-reading-report-open',
+  'bz-movie-open', 'bz-movie-add', 'bz-movie-report',
+  'bz-review-open', 'bz-review-start', 'bz-review-add', 'bz-review-remove', 'bz-review-overdue', 'bz-review-rate',
+  'bz-review-again', 'bz-review-hard', 'bz-review-good', 'bz-review-easy',
+  'bz-quiz-update', 'bz-quiz-open',
+  'bz-flash-open', 'bz-flash-chat',
+  'bz-bili-open',
+  'bz-diary-open',
 ];
 
 /** 内存"磁盘"存储：模拟 Obsidian 插件的 data.json 持久层 */
@@ -86,8 +85,8 @@ describe('bz 骨架冒烟', () => {
     await createPlugin(makeMockApp());
 
     const ids = registeredCommands.map((c: any) => c.id);
-    // 含日记本 init 内注册的两个命令（bz-diary-open-add-dialog / bz-diary-create-quote）
-    const expected = [...EXPECTED_COMMAND_IDS, 'bz-diary-open-add-dialog', 'bz-diary-create-quote'];
+    // 含日记本 init 内注册的命令（bz-diary-write）
+    const expected = [...EXPECTED_COMMAND_IDS, 'bz-diary-write'];
     expect(ids.sort()).toEqual(expected.sort());
     // 均未设置默认快捷键
     for (const c of registeredCommands) {
@@ -128,15 +127,15 @@ describe('bz 骨架冒烟', () => {
     const plugin = await createPlugin(makeMockApp());
 
     // 已实现域：归物本命令真实打开弹窗（异步），同步调用不抛错
-    const cmd1 = registeredCommands.find((c: any) => c.id === 'bz-belongings-add-item');
+    const cmd1 = registeredCommands.find((c: any) => c.id === 'bz-belongings-add');
     expect(() => cmd1.callback()).not.toThrow();
     // 已实现域：做题家/复习面板异步执行，同步调用不抛错
-    const cmd2 = registeredCommands.find((c: any) => c.id === 'bz-quiz-master-open');
+    const cmd2 = registeredCommands.find((c: any) => c.id === 'bz-quiz-open');
     expect(() => cmd2.callback()).not.toThrow();
-    const cmd3 = registeredCommands.find((c: any) => c.id === 'bz-review-open-panel');
+    const cmd3 = registeredCommands.find((c: any) => c.id === 'bz-review-open');
     expect(() => cmd3.callback()).not.toThrow();
-    expect(() => registeredCommands.find((c: any) => c.id === 'bz-review-add-current').callback()).not.toThrow();
-    expect(() => registeredCommands.find((c: any) => c.id === 'bz-show-reading-report').callback()).not.toThrow();
+    expect(() => registeredCommands.find((c: any) => c.id === 'bz-review-add').callback()).not.toThrow();
+    expect(() => registeredCommands.find((c: any) => c.id === 'bz-reading-report-open').callback()).not.toThrow();
   }, 15000);
   it('全部 31 命令回调冒烟：逐个调用覆盖各域懒加载入口（含日记本 init 两个命令）', async () => {
     const plugin = await createPlugin(makeMockApp());
@@ -167,8 +166,8 @@ ${failures.join('\n')}`).toEqual([]);
     const plugin = await createPlugin(makeMockApp());
     plugin.onunload();
 
-    // 含日记本 init 内注册的两个命令（bz-diary-open-add-dialog / bz-diary-create-quote）
-    const expectedRemoved = [...EXPECTED_COMMAND_IDS, 'bz-diary-open-add-dialog', 'bz-diary-create-quote'];
+    // 含日记本 init 内注册的命令（bz-diary-write）
+    const expectedRemoved = [...EXPECTED_COMMAND_IDS, 'bz-diary-write'];
     expect(removedCommands.sort()).toEqual(expectedRemoved.sort());
   });
 

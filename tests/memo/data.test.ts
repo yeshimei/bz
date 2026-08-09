@@ -40,17 +40,30 @@ describe('DataManager 构建', () => {
     expect(DataManager.todoFilePath).toBe('自定义/memo.json');
   });
 
-  it('场景固定为默认 6 场景（设置项已移除）', () => {
-    DataManager.init({ ...BASE_SETTINGS });
+  it('场景从设置解析（逗号分隔，去空去重；空则默认 6 场景）', () => {
+    DataManager.init({ ...BASE_SETTINGS, memoScenarios: '工作,学习,工作, ' });
+    expect(DataManager.getScenarios()).toEqual(['工作', '学习']);
+    DataManager.init({ ...BASE_SETTINGS, memoScenarios: '' });
     expect(DataManager.getScenarios()).toEqual(['剪藏', '工作', '学习', '生活', '代码', '公开课']);
   });
 
-  it('平台映射固定为内置默认（设置项已移除）', () => {
-    DataManager.init({ ...BASE_SETTINGS });
+  it('平台映射从设置解析（每行 域名=平台名；空则内置默认）', () => {
+    DataManager.init({ ...BASE_SETTINGS, memoPlatformMapping: 'zhihu.com=知乎\ndouban.com=豆瓣\n\n坏行' });
     const map = DataManager.getPlatformMap();
-    expect(map.length).toBeGreaterThan(0);
-    expect(map.some((m) => m.host === 'zhihu.com' && m.name === '知乎')).toBe(true);
-    expect(map.some((m) => m.host === 'daily.zhihu.com')).toBe(true);
+    expect(map).toEqual([
+      { host: 'zhihu.com', name: '知乎' },
+      { host: 'douban.com', name: '豆瓣' },
+    ]);
+    DataManager.init({ ...BASE_SETTINGS, memoPlatformMapping: '' });
+    const def = DataManager.getPlatformMap();
+    expect(def.length).toBeGreaterThan(0);
+    expect(def.some((m) => m.host === 'zhihu.com' && m.name === '知乎')).toBe(true);
+    expect(def.some((m) => m.host === 'daily.zhihu.com')).toBe(true);
+  });
+
+  it('parseScenarios / parsePlatformMapping 单元：非法输入回退默认', () => {
+    DataManager.init(BASE_SETTINGS);
+    expect(DataManager.getPlatformMap().some((m) => m.host === 'zhihu.com')).toBe(true);
   });
 
   it('loadItems：缺省字段补齐（id 生成 + priority minor + 其余 null）', async () => {

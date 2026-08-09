@@ -110,14 +110,14 @@ describe('备忘录面板 ⚙️ 设置弹窗', () => {
     await App.init(SETTINGS);
   });
 
-  it('点 ⚙️ 打开弹窗，切换「启动时自动弹窗」写回设置', async () => {
+  it('点 ⚙️ 打开弹窗，切换「启动时自动弹出」写回设置', async () => {
     UIManager.showMain(null, false);
     const settingsBtn = document.querySelector('.todo-btn-settings') as HTMLElement;
     expect(settingsBtn).not.toBeNull();
     settingsBtn.click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect(popup.textContent).toContain('备忘录设置');
-    const item = [...popup.querySelectorAll('.setting-item')].find((el) => (el as HTMLElement).dataset.name === '启动时自动弹窗') as HTMLElement;
+    const item = [...popup.querySelectorAll('.setting-item')].find((el) => (el as HTMLElement).dataset.name === '启动时自动弹出') as HTMLElement;
     expect(item).toBeTruthy();
     const toggle = (item as any).__setting.controls.find((c: any) => typeof c.trigger === 'function');
     toggle.trigger(true);

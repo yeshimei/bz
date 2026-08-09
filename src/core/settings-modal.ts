@@ -21,6 +21,31 @@ export interface SettingsModalOptions {
 
 let currentModal: { mask: HTMLElement; popup: HTMLElement; dispose: () => void } | null = null;
 
+/** 设置弹窗样式：移动端（≤768px）字号层级——分组标题调大 / 设置项标题调小 / 简介更小（用户决策 2026-08-09） */
+const SETTINGS_MODAL_CSS = `
+@media (max-width: 768px) {
+    #bz-settings-modal-popup .setting-item-heading .setting-item-name {
+        font-size: 17px;
+        font-weight: 600;
+    }
+    #bz-settings-modal-popup .setting-item-name {
+        font-size: 14px;
+    }
+    #bz-settings-modal-popup .setting-item-description {
+        font-size: 12px;
+    }
+}
+`;
+
+/** 幂等注入设置弹窗样式 */
+function injectSettingsModalStyles(): void {
+  if (document.querySelector('style[data-settings-modal-styles]')) return;
+  const style = document.createElement('style');
+  style.setAttribute('data-settings-modal-styles', '');
+  style.textContent = SETTINGS_MODAL_CSS;
+  document.head.appendChild(style);
+}
+
 /** 关闭当前设置弹窗（无则静默） */
 export function closeSettingsModal(): void {
   if (currentModal) {
@@ -32,6 +57,7 @@ export function closeSettingsModal(): void {
 /** 打开域设置弹窗（幂等：已开先关） */
 export function openSettingsModal(opts: SettingsModalOptions): void {
   closeSettingsModal();
+  injectSettingsModalStyles();
 
   const { mask, popup } = createOverlay({
     maskId: 'bz-settings-modal-mask',
@@ -57,7 +83,7 @@ export function openSettingsModal(opts: SettingsModalOptions): void {
   header.appendChild(closeBtn);
 
   const content = document.createElement('div');
-  content.style.cssText = 'padding:4px 16px 16px;max-height:65vh;overflow-y:auto;';
+  content.style.cssText = 'padding:12px 16px 16px;max-height:65vh;overflow-y:auto;';
 
   opts.build(content);
 

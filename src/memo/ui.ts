@@ -138,19 +138,181 @@ export const UIManager = {
     this.entriesContainer = this.popup.querySelector('#todo-entries-container');
     const settingsBtn = this.popup.querySelector('.todo-btn-settings');
     settingsBtn!.onclick = () => {
-      // 备忘录设置弹窗（ADR-0009 域设置弹窗）
+      // 备忘录设置弹窗（ADR-0009 域设置弹窗，14 项）
       openSettingsModal({
         title: '备忘录设置',
         build: (el) => {
           const s = getSettings();
+
+          // 场景/平台映射变更后即时生效：重建 DataManager 与添加弹窗场景按钮
+          const reloadScenes = () => {
+            DataManager.init(s);
+            if (UIManager.addMask && document.body.contains(UIManager.addMask)) {
+              UIManager.addMask.remove();
+              if (UIManager.addPopup) UIManager.addPopup.remove();
+              UIManager.addMask = null;
+              UIManager.addPopup = null;
+              UIManager.createAddDialog();
+            }
+          };
+
+          // ===== 提醒 =====
+          new Setting(el).setHeading().setName('提醒');
           new Setting(el)
-            .setName('启动时自动弹窗')
-            .setDesc('启动时自动弹出备忘录面板（有重要备忘录时）')
+            .setName('启动时自动弹出')
+            .setDesc('启动时若存在未完成的重要或到期备忘录，自动弹出面板提醒')
             .addToggle((toggle) =>
               toggle.setValue(s.autoPopupOnStart).onChange(async (v) => {
                 s.autoPopupOnStart = v;
                 await saveSettings();
               })
+            );
+          new Setting(el)
+            .setName('打开笔记自动提醒')
+            .setDesc('打开笔记时若该笔记有重要或到期的未完成备忘录，自动弹出面板')
+            .addToggle((toggle) =>
+              toggle.setValue(s.openNoteReminder !== false).onChange(async (v) => {
+                s.openNoteReminder = v;
+                await saveSettings();
+              })
+            );
+          new Setting(el)
+            .setName('到期通知')
+            .setDesc('到期/逾期的备忘录轮询检查，弹出通知提醒')
+            .addToggle((toggle) =>
+              toggle.setValue(s.memoDueNotify !== false).onChange(async (v) => {
+                s.memoDueNotify = v;
+                await saveSettings();
+              })
+            );
+          new Setting(el)
+            .setName('到期检查间隔（秒）')
+            .setDesc('到期通知的轮询间隔，最小 10 秒')
+            .addText((text) =>
+              text
+                .setPlaceholder('300')
+                .setValue(s.memoDueCheckInterval || '')
+                .onChange(async (v) => {
+                  s.memoDueCheckInterval = v;
+                  await saveSettings();
+                })
+            );
+
+          // ===== 剪贴板 =====
+          new Setting(el).setHeading().setName('剪贴板');
+          new Setting(el)
+            .setName('剪贴板监听')
+            .setDesc('窗口聚焦时读取剪贴板，识别平台链接自动弹出添加框')
+            .addToggle((toggle) =>
+              toggle.setValue(s.clipboardMonitor !== false).onChange(async (v) => {
+                s.clipboardMonitor = v;
+                await saveSettings();
+              })
+            );
+          new Setting(el)
+            .setName('平台映射')
+            .setDesc('每行一个「域名=平台名」，识别剪贴板链接归属平台（留空用内置默认）')
+            .addTextArea((text) =>
+              text
+                .setPlaceholder('zhihu.com=知乎\ndouban.com=豆瓣')
+                .setValue(s.memoPlatformMapping || '')
+                .onChange(async (v) => {
+                  s.memoPlatformMapping = v;
+                  await saveSettings();
+                  reloadScenes();
+                })
+            );
+
+          // ===== 显示 =====
+          new Setting(el).setHeading().setName('显示');
+          new Setting(el)
+            .setName('默认排序方式')
+            .setDesc('面板条目的默认排序：紧急优先 / 仅按到期时间 / 按创建时间')
+            .addDropdown((dd) =>
+              dd
+                .addOption('priority', '紧急优先')
+                .addOption('due', '仅按到期时间')
+                .addOption('created', '按创建时间')
+                .setValue(s.memoSortMode || 'priority')
+                .onChange(async (v) => {
+                  s.memoSortMode = v;
+                  await saveSettings();
+                })
+            );
+          new Setting(el)
+            .setName('默认显示归档')
+            .setDesc('打开面板时显示已归档（已完成）条目')
+            .addToggle((toggle) =>
+              toggle.setValue(!!s.memoShowArchivedByDefault).onChange(async (v) => {
+                s.memoShowArchivedByDefault = v;
+                await saveSettings();
+              })
+            );
+          new Setting(el)
+            .setName('到期时间格式')
+            .setDesc('相对（今天 14:00 到期）/ 绝对（08/12 14:00 到期）')
+            .addDropdown((dd) =>
+              dd
+                .addOption('relative', '相对')
+                .addOption('absolute', '绝对')
+                .setValue(s.memoDueFormat || 'relative')
+                .onChange(async (v) => {
+                  s.memoDueFormat = v;
+                  await saveSettings();
+                })
+            );
+
+          // ===== 新建 =====
+          new Setting(el).setHeading().setName('新建');
+          new Setting(el)
+            .setName('新条目默认优先级')
+            .setDesc('新建备忘录时默认选中的优先级')
+            .addDropdown((dd) =>
+              dd
+                .addOption('minor', '次要')
+                .addOption('important', '重要')
+                .setValue(s.memoDefaultPriority || 'minor')
+                .onChange(async (v) => {
+                  s.memoDefaultPriority = v;
+                  await saveSettings();
+                })
+            );
+          new Setting(el)
+            .setName('新条目默认场景')
+            .setDesc('新建时默认选中的场景（「第一个场景」为自动）')
+            .addDropdown((dd) => {
+              dd.addOption('', '第一个场景');
+              const scenes = DataManager.getScenarios();
+              for (const scene of scenes) dd.addOption(scene, scene);
+              dd.setValue(s.memoDefaultScene || '').onChange(async (v) => {
+                s.memoDefaultScene = v;
+                await saveSettings();
+              });
+            });
+          new Setting(el)
+            .setName('完成后自动归档')
+            .setDesc('勾选完成时移入归档；关闭则完成条目保留在主列表（划线显示）')
+            .addToggle((toggle) =>
+              toggle.setValue(s.memoAutoArchive !== false).onChange(async (v) => {
+                s.memoAutoArchive = v;
+                await saveSettings();
+              })
+            );
+
+          // ===== 场景列表 =====
+          new Setting(el).setHeading().setName('场景列表');
+          new Setting(el)
+            .setName('场景')
+            .setDesc('逗号分隔的场景列表（留空用内置默认：剪藏,工作,学习,生活,代码,公开课）')
+            .addTextArea((text) =>
+              text
+                .setPlaceholder('剪藏,工作,学习,生活,代码,公开课')
+                .setValue(s.memoScenarios || '')
+                .onChange(async (v) => {
+                  s.memoScenarios = v;
+                  await saveSettings();
+                  reloadScenes();
+                })
             );
         },
       });
@@ -250,7 +412,6 @@ export const UIManager = {
                 <button id="add-todo-pos-btn" type="button" style="padding:4px 12px;border-radius:16px;background:var(--background-secondary);color:var(--text-muted);cursor:pointer;font-size:13px;box-shadow:none;border:1px solid var(--background-modifier-border);">📌</button>
             </div>
             <div style="display:flex;gap:12px;justify-content:flex-end;">
-                <button id="add-todo-ai-recommend" style="padding:8px 16px;border-radius:6px;border:none;background:var(--background-secondary);cursor:pointer;font-size:14px;box-shadow:none;">✨ AI 推荐</button>
                 <button id="add-todo-cancel" style="padding:8px 16px;border-radius:6px;border:none;background:var(--background-secondary);cursor:pointer;font-size:14px;box-shadow:none;">取消</button>
                 <button id="add-todo-save" style="padding:8px 16px;border-radius:6px;border:none;background:var(--interactive-accent);color:var(--text-on-accent);cursor:pointer;font-size:14px;font-weight:500;box-shadow:none;">保存</button>
             </div>
@@ -267,23 +428,12 @@ export const UIManager = {
     const posBtn = this.addPopup.querySelector('#add-todo-pos-btn') as HTMLButtonElement;
     const cancelBtn = this.addPopup.querySelector('#add-todo-cancel') as HTMLButtonElement;
     const saveBtn = this.addPopup.querySelector('#add-todo-save') as HTMLButtonElement;
-    const aiBtn = this.addPopup.querySelector('#add-todo-ai-recommend') as HTMLButtonElement;
     const scriptInput = this.addPopup.querySelector('#add-todo-script') as HTMLInputElement;
     const scriptSuggest = this.addPopup.querySelector('#add-todo-script-suggestions') as HTMLElement;
     const scriptContainer = this.addPopup.querySelector('#add-todo-script-container') as HTMLElement;
     const courseInput = this.addPopup.querySelector('#add-todo-course') as HTMLInputElement;
     const courseSuggest = this.addPopup.querySelector('#add-todo-course-suggestions') as HTMLElement;
     const courseContainer = this.addPopup.querySelector('#add-todo-course-container') as HTMLElement;
-
-    // ---------- AI 推荐按钮 ----------
-    aiBtn.onclick = async () => {
-      const content = contentInput.value.trim();
-      if (!content) {
-        notice('请先输入备忘录内容');
-        return;
-      }
-      await this.handleAIRecommend();
-    };
 
     // ---------- 优先级按钮 ----------
     const priorities = [
@@ -652,110 +802,6 @@ export const UIManager = {
 
   },
 
-  // ---------- AI 推荐场景和优先级 ----------
-  async handleAIRecommend() {
-    const contentInput = document.getElementById('add-todo-content') as HTMLInputElement | null;
-    if (!contentInput) return;
-    const content = contentInput.value.trim();
-    if (!content) {
-      notice('请先输入备忘录内容');
-      return;
-    }
-
-    const scenarios = DataManager.getScenarios();
-    const scenariosStr = scenarios.map((s) => `"${s}"`).join('、');
-
-    const prompt = `
-你是一个备忘录智能助手。根据以下用户输入的备忘录内容，判断最适合的场景（scene）和优先级（priority）。
-
-可选的场景有：${scenariosStr}。
-优先级分为两种："重要" 或 "次要"。
-
-请只返回一个 JSON 对象，格式如下：
-{"scene": "场景名", "priority": "重要/次要"}
-
-用户内容：${content}
-`;
-
-    try {
-      if (!App.ai) {
-        notice('AI 服务未配置，请到设置中填写', 'warning');
-        return;
-      }
-
-      // 显示加载状态（可选）
-      const aiBtn = document.querySelector('#add-todo-ai-recommend') as HTMLButtonElement | null;
-      if (aiBtn) {
-        aiBtn.textContent = '⏳ 推荐中...';
-        aiBtn.disabled = true;
-      }
-
-      const result = await App.ai.chat(prompt);
-
-      // 解析 AI 结果
-      let recommendation: { scene: string; priority: string };
-      try {
-        let jsonStr = result.trim();
-        const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-        if (jsonMatch && jsonMatch[1]) {
-          jsonStr = jsonMatch[1].trim();
-        }
-        recommendation = JSON.parse(jsonStr);
-      } catch (e) {
-        // 备选：从文本中提取
-        const sceneMatch = result.match(/场景[：:]\s*([^\s,，]+)/);
-        const priorityMatch = result.match(/优先级[：:]\s*([^\s,，]+)/);
-        if (sceneMatch && priorityMatch) {
-          recommendation = { scene: sceneMatch[1], priority: priorityMatch[1] };
-        } else {
-          throw new Error('无法解析 AI 推荐结果');
-        }
-      }
-
-      // 验证推荐
-      const validScenes = DataManager.getScenarios();
-      if (!validScenes.includes(recommendation.scene)) {
-        notice(`推荐场景“${recommendation.scene}”不在可选列表中，请手动选择`);
-        return;
-      }
-      if (!['重要', '次要'].includes(recommendation.priority)) {
-        recommendation.priority = '次要';
-      }
-
-      // 自动选中场景按钮
-      const sceneContainer = document.getElementById('add-todo-scenes');
-      const sceneBtns = sceneContainer!.querySelectorAll('.scene-btn');
-      sceneBtns.forEach((btn) => {
-        if ((btn as HTMLElement).dataset.scene === recommendation.scene) {
-          (btn as HTMLElement).click();
-        }
-      });
-
-      // 自动选中优先级按钮
-      const priorityContainer = document.getElementById('add-todo-priority');
-      const priorityBtns = priorityContainer!.querySelectorAll('.priority-btn');
-      const priorityMap: Record<string, string> = { '重要': 'important', '次要': 'minor' };
-      const targetPriority = priorityMap[recommendation.priority] || 'minor';
-      priorityBtns.forEach((btn) => {
-        if ((btn as HTMLElement).dataset.priority === targetPriority) {
-          (btn as HTMLElement).click();
-        }
-      });
-
-      notice(`AI 推荐：场景【${recommendation.scene}】· 优先级【${recommendation.priority}】`);
-    } catch (e) {
-      console.error('AI 推荐失败:', e);
-      notice('AI 推荐失败，请手动选择', 'error');
-    } finally {
-      // 恢复按钮状态
-      const aiBtn = document.querySelector('#add-todo-ai-recommend') as HTMLButtonElement | null;
-      if (aiBtn) {
-        aiBtn.textContent = '✨ AI 推荐';
-        aiBtn.disabled = false;
-      }
-    }
-  },
-
   showAddDialog(editItem: MemoItem | null) {
     this.createAddDialog();
     if (!this.addMask || !this.addPopup) return;
@@ -810,7 +856,7 @@ export const UIManager = {
       }
     });
 
-    // 场景按钮激活第一个
+    // 场景按钮激活（新建时按设置默认场景，空则第一个）
     const sceneBtns = sceneContainer.querySelectorAll('.scene-btn');
     if (sceneBtns.length) {
       if (editItem) {
@@ -825,7 +871,17 @@ export const UIManager = {
         // 编辑时回填内容到输入框（场景按钮会清空，所以放在最后）
         contentInput.value = editItem.title || '';
       } else {
-        (sceneBtns[0] as HTMLElement).click();
+        const defaultScene = App.settings.memoDefaultScene;
+        let activated = false;
+        if (defaultScene) {
+          sceneBtns.forEach((btn) => {
+            if ((btn as HTMLElement).dataset.scene === defaultScene) {
+              (btn as HTMLElement).click();
+              activated = true;
+            }
+          });
+        }
+        if (!activated) (sceneBtns[0] as HTMLElement).click();
       }
     }
 
@@ -839,7 +895,7 @@ export const UIManager = {
       btn.classList.remove('active');
       if (
         (editItem && btn.dataset.priority === editItem.priority) ||
-        (!editItem && btn.dataset.priority === 'minor')
+        (!editItem && btn.dataset.priority === (App.settings.memoDefaultPriority || 'minor'))
       ) {
         btn.style.opacity = '1';
         btn.style.background = 'var(--interactive-accent)';
@@ -982,8 +1038,10 @@ export const Renderer = {
   render(container: HTMLElement | null, items: MemoItem[], showArchived: boolean) {
     if (!container) return;
     container.innerHTML = '';
-    const active = items.filter((i) => i.completed === null);
-    const archived = items.filter((i) => i.completed !== null);
+    // 完成后自动归档：关=完成条目保留主列表（显示完成态）
+    const autoArchive = App.settings.memoAutoArchive !== false;
+    const active = items.filter((i) => (autoArchive ? i.completed === null : true));
+    const archived = items.filter((i) => i.completed !== null && autoArchive);
     const filter = App.state.filter;
     const filteredActive = filter ? active.filter(filter) : active;
     const filteredArchived = filter ? archived.filter(filter) : archived;
@@ -993,15 +1051,25 @@ export const Renderer = {
       return;
     }
 
+    // 排序模式：priority（紧急优先，默认）/ due（仅按到期时间）/ created（按创建时间）
+    const sortMode = App.state.sortByPriority ? 'priority' : App.settings.memoSortMode || 'priority';
+
     const sortFn = (a: MemoItem, b: MemoItem) => {
+      // 非归档模式下已完成条目排最后
+      if (!autoArchive) {
+        if (!!a.completed !== !!b.completed) return a.completed ? 1 : -1;
+      }
+      if (sortMode === 'created') {
+        return b.created.localeCompare(a.created);
+      }
       // 1. 截止日期紧急度：overdue > today > future > none
       const dueOrder: Record<string, number> = { overdue: 0, today: 1, future: 2 };
       const da = a.due && !a.completed ? (dueOrder[getDueStatus(a.due)!] ?? 3) : 3;
       const db = b.due && !b.completed ? (dueOrder[getDueStatus(b.due)!] ?? 3) : 3;
       if (da !== db) return da - db;
 
-      // 2. 优先级（开启时）
-      if (App.state.sortByPriority) {
+      // 2. 优先级（priority 模式）
+      if (sortMode === 'priority') {
         const order: Record<string, number> = { important: 1, minor: 2 };
         const oa = order[a.priority] || 2;
         const ob = order[b.priority] || 2;
@@ -1047,7 +1115,7 @@ export const Renderer = {
       opacity: isArchived ? '0.7' : '1',
     });
 
-    // 复选框（归档条目显示图标）
+    // 复选框（归档条目显示图标；非归档模式下已完成条目显示勾选态）
     if (isArchived) {
       const icon = document.createElement('span');
       icon.textContent = '📦';
@@ -1057,7 +1125,8 @@ export const Renderer = {
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.style.cssText = 'width:18px;height:18px;cursor:pointer;flex-shrink:0;';
-      checkbox.checked = false;
+      checkbox.checked = !!item.completed;
+      checkbox.disabled = !!item.completed;
       checkbox.onchange = async () => {
         if (checkbox.checked) {
           card.style.transition = 'opacity 0.3s';
@@ -1074,6 +1143,11 @@ export const Renderer = {
     // ---------- 内容区域（跳转逻辑，直接使用 item.linkedNote 和 item.url） ----------
     const contentSpan = document.createElement('span');
     contentSpan.style.cssText = 'flex:1;font-size:15px;color:var(--text-normal);word-break:break-word;user-select:text;';
+    // 非归档模式下已完成条目：划线显示
+    if (item.completed && !isArchived) {
+      contentSpan.style.textDecoration = 'line-through';
+      contentSpan.style.opacity = '0.6';
+    }
 
     // 1. 优先 linkedNote（内部笔记）
     if (item.linkedNote) {
@@ -1296,8 +1370,9 @@ export const Renderer = {
 
   createDueTag(item: MemoItem): HTMLElement {
     const status = getDueStatus(item.due);
+    const dueFormat = App.settings.memoDueFormat === 'absolute' ? 'absolute' : 'relative';
     const span = document.createElement('span');
-    span.textContent = `${status === 'overdue' ? '🔴' : status === 'today' ? '⚠️' : '📅'} ${formatDueText(item.due!)}`;
+    span.textContent = `${status === 'overdue' ? '🔴' : status === 'today' ? '⚠️' : '📅'} ${formatDueText(item.due!, dueFormat)}`;
     let bgColor: string, fgColor: string;
     if (status === 'overdue') {
       bgColor = 'rgba(255,71,87,0.12)';

@@ -10,7 +10,7 @@ import { BATCH_SIZE, DIARY_DIRECTORY, LONG_PRESS_DURATION, MOVIE_DIRECTORY, getS
 import { deleteEntry, getIsProcessingRemainingFiles } from '../store';
 import { state } from '../state';
 import type { DateFilter, DiaryEntry } from '../types';
-import { getEnableLongPressSetting } from './ui-settings';
+import { getContentRenderModeSetting, getEnableLongPressSetting } from './ui-settings';
 import { showTagPicker } from './dialogs';
 import { refreshSubTagsBar, updateTagCounts, updateTitleSuffix } from './filter-shared';
 
@@ -251,7 +251,12 @@ export function createEntryCard(entry: DiaryEntry) {
 
   const contentText = entry.content.trim();
   let filePath = entry.filename.includes('/') ? entry.filename : `${DIARY_DIRECTORY}/${entry.filename}.md`;
-  renderMarkdown(contentText, content, filePath);
+  // 内容渲染方式：markdown（默认）/ plain（纯文本，设置项 diaryContentRenderMode）
+  if (getContentRenderModeSetting() === 'plain') {
+    content.textContent = contentText;
+  } else {
+    renderMarkdown(contentText, content, filePath);
+  }
 
   entryCard.appendChild(header);
   entryCard.appendChild(content);
@@ -394,7 +399,12 @@ export function cancelEdit(entryId: string, originalHTML: string | null) {
     const entry = state.data.originalDiaryEntries.find((e) => e.id === entryId);
     if (entry) {
       const filePath = `${DIARY_DIRECTORY}/${entry.filename}.md`;
-      renderMarkdown(entry.content.trim(), contentElement, filePath);
+      // 退出编辑还原：跟随内容渲染方式设置
+      if (getContentRenderModeSetting() === 'plain') {
+        contentElement.textContent = entry.content.trim();
+      } else {
+        renderMarkdown(entry.content.trim(), contentElement, filePath);
+      }
     }
   }
   if ((contentElement as any)._editHandlers) {

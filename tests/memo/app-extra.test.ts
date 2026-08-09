@@ -9,7 +9,8 @@ import { setBzSettingsProvider } from '../../src/memo';
 import { App } from '../../src/memo/app';
 import { UIManager } from '../../src/memo/ui';
 import { MockVault } from '../mock-vault';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, hasNotice, clearNotices } from '../mock-obsidian-entry';
+import moment from 'moment';
 
 const SETTINGS = {
   todoFilePath: 'CONFIG/STORAGE',
@@ -162,5 +163,81 @@ describe('unload 清理', () => {
     expect(document.getElementById('todo-mask')).toBeNull();
     expect(document.getElementById('add-todo-mask')).toBeNull();
     expect(app.workspace.offref).toHaveBeenCalled();
+  });
+});
+
+describe('设置开关（第 9 轮设置扩展）', () => {
+  it('openNoteReminder=false → 不注册 file-open 提醒监听', async () => {
+    await initApp({ ...SETTINGS, openNoteReminder: false }, [pendingItem({ priority: 'important', notePath: 'A.md' })]);
+    expect(App.fileOpenRegistered).toBe(false);
+    // 即使手动触发事件也不弹面板
+    app.workspace.emit('file-open', { path: 'A.md' });
+    await new Promise((r) => setTimeout(r, 20));
+    const mask = document.getElementById('todo-mask') as HTMLElement;
+    expect(mask.style.display).not.toBe('block');
+  });
+
+  it('clipboardMonitor=false → 不注册 focus 剪贴板监听', async () => {
+    await initApp({ ...SETTINGS, clipboardMonitor: false }, []);
+    expect(App.focusRegistered).toBe(false);
+  });
+
+  it('memoShowArchivedByDefault=true → 面板初始显示归档', async () => {
+    await initApp({ ...SETTINGS, memoShowArchivedByDefault: true }, []);
+    expect(App.state.showArchived).toBe(true);
+  });
+});
+
+describe('到期通知轮询', () => {
+  it('checkDueNotify：到期/逾期待办 Notice 提醒，同状态仅提醒一次', async () => {
+    await initApp(
+      { ...SETTINGS, memoDueNotify: true },
+      [pendingItem({ id: 'd1', title: '过期任务', due: '2020-01-01 10:00:00' })]
+    );
+    App.checkDueNotify();
+    expect(hasNotice('🔴 已过期：过期任务')).toBe(true);
+    clearNotices();
+    App.checkDueNotify();
+    expect(hasNotice(/已过期/)).toBe(false);
+  });
+
+  it('checkDueNotify：今日到期 → warning 提醒；未来/无 due 不提醒', async () => {
+    const tomorrow = moment().add(1, 'day').format('YYYY-MM-DD 10:00:00');
+    const today = moment().add(2, 'hour').format('YYYY-MM-DD HH:mm:00');
+    await initApp(
+      { ...SETTINGS, memoDueNotify: true },
+      [
+        pendingItem({ id: 'a', title: '今日任务', due: today }),
+        pendingItem({ id: 'b', title: '未来任务', due: tomorrow }),
+        pendingItem({ id: 'c', title: '无截止', due: null }),
+      ]
+    );
+    App.checkDueNotify();
+    expect(hasNotice(/今日到期：今日任务/)).toBe(true);
+    expect(hasNotice(/未来任务/)).toBe(false);
+    expect(hasNotice(/无截止/)).toBe(false);
+  });
+
+  it('memoDueNotify=false → 不启动轮询', async () => {
+    await initApp({ ...SETTINGS, memoDueNotify: false }, [pendingItem({ due: '2020-01-01 10:00:00' })]);
+    expect(App.dueNotifyTimer).toBeNull();
+  });
+
+  it('间隔定时触发 checkDueNotify（interval 秒数生效，最小 10s）', async () => {
+    vi.useFakeTimers();
+    await initApp(
+      { ...SETTINGS, memoDueNotify: true, memoDueCheckInterval: '1' },
+      [pendingItem({ id: 'x', title: '轮询任务', due: '2020-01-01 10:00:00' })]
+    );
+    expect(App.dueNotifyTimer).not.toBeNull();
+    await vi.advanceTimersByTimeAsync(10000);
+    expect(hasNotice(/已过期：轮询任务/)).toBe(true);
+  });
+
+  it('unload 清理轮询定时器', async () => {
+    await initApp(SETTINGS, []);
+    expect(App.dueNotifyTimer).not.toBeNull();
+    App.unload();
+    expect(App.dueNotifyTimer).toBeNull();
   });
 });

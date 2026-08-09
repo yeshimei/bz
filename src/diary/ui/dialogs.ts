@@ -8,7 +8,7 @@ import { DIARY_DIRECTORY, getAllAvailableTags, getSortedTagsForAddDialog, getTag
 import { parseNaturalTime } from '../parser';
 import { addEntry, writeFile } from '../store';
 import { diaryDataMap, state } from '../state';
-import { getUseFileDateTimeSetting } from './ui-settings';
+import { getJumpToEditAfterSaveSetting, getTagShowEmojiSetting, getUseFileDateTimeSetting } from './ui-settings';
 import { rebuildTags } from './filter-shared';
 import { applyFilter as applyFilterFromDialogs, insertCard, jumpToEntry, removeCard, showConfirm as showConfirmFromDialogs } from './entries';
 import { updateTitleSuffix } from './filter-shared';
@@ -292,10 +292,11 @@ export function showTagPicker(entryId: string) {
     button.dataset.tag = tag;
     const emoji = getTagEmoji(tag);
 
-    let buttonText = `${emoji} ${tag}`;
+    // 标签按钮显示 emoji 开关（设置项 diaryTagShowEmoji，关=纯文字）
+    let buttonText = getTagShowEmojiSetting() ? `${emoji} ${tag}` : `${tag}`;
     if (isSubTag(tag)) {
       const parentTag = getParentPrimaryTag(tag);
-      if (parentTag) {
+      if (parentTag && getTagShowEmojiSetting()) {
         const parentEmoji = getTagEmoji(parentTag);
         buttonText += ` <span style="font-size: 12px;margin-left:4px;position: absolute;top: 0;right: 0;translate: 5px -5px;">${parentEmoji}</span>`;
       }
@@ -582,7 +583,8 @@ export async function saveNewEntry() {
     mask.style.display = 'none';
     popup.style.display = 'none';
 
-    if (newEntry) {
+    // 保存后立即进入编辑（设置项 diaryJumpToEditAfterSave，关=仅关闭弹窗）
+    if (getJumpToEditAfterSaveSetting() && newEntry) {
       jumpToEntry(newEntry, 'edit');
     }
 
