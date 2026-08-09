@@ -204,7 +204,7 @@ describe('quote 摘抄全流程', () => {
     const saveBtn = [...popup.querySelectorAll('button')].find((b) => b.textContent === '保存')!;
     saveBtn.click();
     await new Promise((r) => setTimeout(r, 50));
-    expect(hasNotice('✅ 摘抄已保存')).toBe(true);
+    expect(hasNotice('摘抄已保存')).toBe(true);
     expect(vault.files.has('我的/日记/2024-01-01.md')).toBe(true);
   });
 

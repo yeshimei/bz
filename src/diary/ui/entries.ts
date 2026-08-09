@@ -376,7 +376,7 @@ export async function copyLink(entryId: string) {
   if (!entry) return;
   const link = `[[${entry.filename}#${entry.emoji} ${entry.time}]]`;
   await navigator.clipboard.writeText(link);
-  notice(`✅ 已复制双链引用：${link}`);
+  notice(`已复制双链引用：${link}`, 'success');
 }
 
 // ===== 取消编辑（原 2218-2240） =====
@@ -415,7 +415,7 @@ export function showConfirm(entryId: string) {
     confirmText: '删除日记',
     onConfirm: async () => {
       await deleteEntry(entryId);
-      notice('✅ 日记条目已删除');
+      notice('日记条目已删除', 'success');
       const tagSelectorMask = document.getElementById('diary-tag-selector-mask');
       const tagSelectorPopup = document.getElementById('diary-tag-selector-popup');
       if (tagSelectorMask) tagSelectorMask.style.display = 'none';

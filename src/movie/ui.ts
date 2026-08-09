@@ -3,7 +3,7 @@
  */
 import type { App, TFile } from 'obsidian';
 import { Setting } from 'obsidian';
-import { notice } from '../core/notice';
+import { notice, notify } from '../core/notice';
 import { escManager } from '../core/esc-manager';
 import { checkAndShowChangelog } from '../core/changelog';
 import { formatRelativeTime } from '../core/utils';
@@ -13,6 +13,7 @@ import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, getTypeColor, getStarRati
 import { M, takeHomeFilmStatus } from './state';
 import { getDisplayItems, refreshDataAndView, rebuildItems } from './data';
 import { openRecommendModal } from './recommend';
+import { watchPosterFetch } from './poster-watch';
 import { openAnalysisModal } from './analysis';
 
 /** 渲染卡片列表（分页，源码 L279-426 逐字） */
@@ -281,6 +282,26 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
 
   if (prefill && prefill.name) nameInput.value = prefill.name;
 
+  // 标题存在性实时检测：输入时检查《name》.md 是否已存在，存在则在输入框下方提示
+  const dupHint = document.createElement('div');
+  dupHint.style.cssText = 'color: var(--color-red); font-size: 0.8rem; display: none;';
+  const checkTitleExists = (): void => {
+    const name = nameInput.value.trim();
+    if (!name) {
+      dupHint.style.display = 'none';
+      return;
+    }
+    const existing = app.vault.getAbstractFileByPath(`${M.folderPath}/《${name}》.md`);
+    if (existing) {
+      dupHint.textContent = `⚠️ 「${name}」已存在，确认后将直接打开已有笔记`;
+      dupHint.style.display = 'block';
+    } else {
+      dupHint.style.display = 'none';
+    }
+  };
+  nameInput.addEventListener('input', checkTitleExists);
+  checkTitleExists();
+
   // 类型选择（13 个标签按钮组）
   const typeContainer = document.createElement('div');
   typeContainer.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap;';
@@ -509,13 +530,15 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
 
     try {
       const newFile = await app.vault.create(filePath, fileContent);
-      notice(`✅ 影视已添加：${name}`);
       closeAddModal();
       closeOverlay();
       refreshDataAndView(app);
       await app.workspace.getLeaf().openFile(newFile);
+      // 创建完成：常驻 progress 通知「正在获取海报和豆瓣信息…」→ 海报字段填充后原地更新为已完成
+      const handle = notify('正在获取海报和豆瓣信息…', { type: 'progress' });
+      watchPosterFetch(app, newFile, handle);
     } catch (e) {
-      notice('❌ 创建笔记失败');
+      notice('创建笔记失败', 'error');
       console.error(e);
     }
   });
@@ -525,6 +548,7 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
 
   addModal.appendChild(titleEl);
   addModal.appendChild(nameInput);
+  addModal.appendChild(dupHint);
   addModal.appendChild(typeContainer);
   addModal.appendChild(statusContainer);
   addModal.appendChild(seasonContainer);
@@ -784,7 +808,7 @@ export function openEditModal(item: any, app: App): void {
       }
     });
 
-    notice('✅ 已更新影视信息');
+    notice('已更新影视信息', 'success');
     closeEditModal();
     refreshDataAndView(app);
   });

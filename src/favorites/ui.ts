@@ -591,7 +591,7 @@ export class UIManager {
       }
     } catch (error) {
       console.error('余额查询失败:', error);
-      notify('⚠️ 余额查询失败', { dedupeKey: 'favorites-balance' });
+      notify('余额查询失败', { type: 'warning', dedupeKey: 'favorites-balance' });
     }
   }
 
@@ -616,7 +616,7 @@ export class UIManager {
   async _deleteItem(id: string) {
     await this.dataManager.delete(id);
     await this.refreshData();
-    notice('✅ 已删除收藏');
+    notice('已删除收藏', 'success');
   }
 
   // ---------- 显示/隐藏主面板 ----------
@@ -1055,7 +1055,7 @@ export class UIManager {
 
   async _handleAIRecommend() {
     if (!this.aiService.isAvailable()) {
-      notice('⚠️ AI 服务未配置或不可用');
+      notice('AI 服务未配置或不可用', 'warning');
       return;
     }
 
@@ -1142,10 +1142,10 @@ export class UIManager {
         }
       }
 
-      notice('✅ AI 整理完成');
+      notice('AI 整理完成', 'success');
     } catch (e: any) {
       console.error('AI 整理失败:', e);
-      notice('❌ AI 整理失败：' + e.message);
+      notice('AI 整理失败：' + e.message, 'error');
     } finally {
       this.addAiBtn!.textContent = '✨ AI 推荐';
       this.addAiBtn!.disabled = false;
@@ -1207,7 +1207,7 @@ export class UIManager {
           console.warn('初始余额查询失败:', error.message);
           // 保存失败状态，但不阻止保存
           data.balanceError = error.message;
-          notify('⚠️ 余额查询失败', { dedupeKey: 'favorites-balance' });
+          notify('余额查询失败', { type: 'warning', dedupeKey: 'favorites-balance' });
         }
       }
     }
@@ -1229,16 +1229,16 @@ export class UIManager {
           }
         }
         await this.dataManager.update(this.editingItemId, data);
-        notice('✅ 收藏已更新');
+        notice('收藏已更新', 'success');
       } else {
         data.id = Date.now().toString();
         await this.dataManager.add(data);
-        notice('✅ 收藏已添加');
+        notice('收藏已添加', 'success');
       }
       await this.refreshData();
       this._hideAddDialog();
     } catch (e: any) {
-      notice('❌ 保存失败：' + e.message);
+      notice('保存失败：' + e.message, 'error');
     }
   }
 

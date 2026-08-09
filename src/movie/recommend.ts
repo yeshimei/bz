@@ -2,10 +2,11 @@
  * 影视 AI 推荐（ticket 14，源码 L1419-1650 逐字移植）
  */
 import type { App } from 'obsidian';
-import { notice } from '../core/notice';
+import { notice, notify } from '../core/notice';
 import { createAI } from '../core/ai';
 import { STATUS_WATCHED, STATUS_WANT } from './constants';
 import { refreshDataAndView } from './data';
+import { watchPosterFetch } from './poster-watch';
 import { M } from './state';
 
 const GROUP_DEFAULT_TAG: Record<string, string> = {
@@ -98,11 +99,14 @@ tags:
 `;
 
   try {
-    await app.vault.create(filePath, content);
-    notice(`✅ 已加入想看：${name}`);
+    const newFile = await app.vault.create(filePath, content);
+    notice(`已加入想看：${name}`, 'success');
     refreshDataAndView(app);
+    // 常驻 progress 通知：外部 watcher 抓海报/豆瓣信息，海报字段填充后原地更新为已完成
+    const handle = notify('正在获取海报和豆瓣信息…', { type: 'progress' });
+    watchPosterFetch(app, newFile, handle);
   } catch (e) {
-    notice('❌ 创建笔记失败');
+    notice('创建笔记失败', 'error');
   }
 }
 

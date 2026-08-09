@@ -576,7 +576,7 @@ export class LauncherModal {
       return;
     }
     if (isGhost) {
-      notice('❌ 命令不存在：' + tile.commandId, 3000);
+      notice('命令不存在：' + tile.commandId, 'error');
       return;
     }
     const cmd = this.commandOf(tile);
@@ -586,7 +586,7 @@ export class LauncherModal {
     try {
       this.app.commands.executeCommandById(tile.commandId);
     } catch (e) {
-      notice(`命令执行失败：${tile.commandId}`, 3000);
+      notice(`命令执行失败：${tile.commandId}`, 'error');
     }
   }
 
@@ -820,7 +820,7 @@ export class LauncherModal {
         close();
         const others = this.tiles().filter((t) => t.id !== tile.id);
         if (!canPlace(others, tile.x, tile.y, w, h, undefined, this.columns())) {
-          notice('当前位置放不下该尺寸', 3000);
+          notice('当前位置放不下该尺寸', 'warning');
           return;
         }
         tile.w = w;
@@ -866,7 +866,7 @@ export class LauncherModal {
       desktop: this.data.desktop,
       mobile: this.data.mobile,
     }).catch((e) => {
-      notice(`❌ 入口页保存失败：${LAUNCHER_PATH}`, 3000);
+      notice(`入口页保存失败：${LAUNCHER_PATH}`, 'error');
     });
   }
 

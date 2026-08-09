@@ -206,7 +206,7 @@ export async function loadAll() {
   } catch (err: any) {
     console.error('[日记本] 数据加载失败:', err);
     try {
-      notice('❌ 数据加载失败：' + (err?.message || err));
+      notice('数据加载失败：' + (err?.message || err), 'error');
     } catch (e) {}
   } finally {
     state.data.isLoadingData = false;

@@ -11,20 +11,22 @@ describe('notice', () => {
     document.body.innerHTML = '';
   });
 
-  it('走自绘通知系统：DOM 渲染 + 自动语义归类（ticket 25）', () => {
+  it('走自绘通知系统：DOM 渲染 + 显式类型（ticket 25）', () => {
     notice('测试提示');
     expect(getNoticeMessages()).toHaveLength(1);
     expect(getNoticeMessages()[0]).toBe('测试提示');
     expect(document.querySelector('.bz-notice--info')).not.toBeNull();
   });
 
-  it('自动归类：✅ → success、❌ → error、⚠️ → warning', () => {
-    notice('✅ 完成');
-    notice('❌ 失败');
-    notice('⚠️ 警告');
+  it('显式类型：success/error/warning 类名 + 消息不带 emoji', () => {
+    notice('完成', 'success');
+    notice('失败', 'error');
+    notice('警告', 'warning');
     expect(document.querySelector('.bz-notice--success')).not.toBeNull();
     expect(document.querySelector('.bz-notice--error')).not.toBeNull();
     expect(document.querySelector('.bz-notice--warning')).not.toBeNull();
+    // 消息文本不含 emoji（图标在类型样式上）
+    expect(getNoticeMessages().join('')).not.toMatch(/[✅❌⚠️]/);
   });
 
   it('不再让路 smartCat（Q3 兼容分支已删除）', () => {

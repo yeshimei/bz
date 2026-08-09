@@ -835,10 +835,10 @@ async function deleteArticle(article: ArticleEntry, card: HTMLElement) {
       renderEntries(true);
     }
     rebuildSiteBar();
-    notice(`✅ 已删除「${article.title}」`);
+    notice(`已删除「${article.title}」`, 'success');
   } catch (e) {
     console.error('删除失败:', e);
-    notice('❌ 删除失败，请检查文件权限');
+    notice('删除失败，请检查文件权限', 'error');
   }
 }
 

@@ -51,7 +51,7 @@ export function ensureReview(app: App): void {
       }
     } catch (e) {
       console.error('复习计划：处理重命名事件失败', e);
-      notice('❌ 复习计划路径更新失败');
+      notice('复习计划路径更新失败', 'error');
     }
   });
   (app.workspace as any).on('quit', () => {
@@ -81,7 +81,7 @@ export async function reviewAddCurrent(app: App): Promise<void> {
     await uiManager!.refreshPanel();
     await reviewApp.applyReviewStyles(app);
   } catch (e: any) {
-    notice('❌ 操作失败：' + e.message);
+    notice('操作失败：' + e.message, 'error');
   }
 }
 
@@ -105,7 +105,7 @@ export async function reviewRemoveCurrent(app: App): Promise<void> {
     cancelText: '取消',
     onConfirm: async () => {
       await dataManager!.removeItem(file.path);
-      notice('✅ 已移出复习计划');
+      notice('已移出复习计划', 'success');
       await uiManager!.refreshPanel();
       await reviewApp.applyReviewStyles(app);
     },

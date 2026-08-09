@@ -171,7 +171,7 @@ describe('QuizMasterUI', () => {
     await ui.startQuiz();
     const { getNoticeMessages } = await import('../mock-obsidian-entry');
     const msgs = getNoticeMessages();
-    expect(msgs[msgs.length - 1]).toBe('⚠️ AI 服务未配置，无法生成题目');
+    expect(msgs[msgs.length - 1]).toBe('AI 服务未配置，无法生成题目');
   });
 
   it('空题库 → loading 弹窗 + 生成第一活跃笔记题目', async () => {
