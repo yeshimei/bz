@@ -33,7 +33,7 @@ function toast(msg, isErr = false) {
 }
 
 // ---- 任务状态（单任务）----
-const S = { info: null, quality: 0, crf: 23, start: 0, end: 0, dur: 0, transcript: '', busy: false }
+const S = { info: null, quality: 0, crf: 23, start: 0, end: 0, dur: 0, transcript: '', busy: false, derived: false }
 const OP_BTNS = ['parse-btn', 'dl-btn', 'trim-btn', 'compress-btn', 'transcribe-btn', 'done-btn', 'ts-copy', 'cookie-save-btn', 'settings-save']
 function setBusy(b) {
   S.busy = b
@@ -154,6 +154,8 @@ $('dl-btn').onclick = async () => {
     S.dur = S.info.duration
     S.start = 0
     S.end = S.info.duration
+    S.derived = false
+    $('revert-btn').classList.add('hidden')
     initTrimUI(S.info.duration)
     loadVideo()
     $('done-btn').disabled = false
@@ -260,6 +262,8 @@ $('trim-btn').onclick = async () => {
     S.dur = r.duration !== undefined ? r.duration : (S.end - S.start)
     S.end = S.dur
     S.start = 0
+    S.derived = true
+    $('revert-btn').classList.remove('hidden')
     initTrimUI(S.dur)
     loadVideo()
     toast('✅ 已生成裁切片段，可继续压缩或转文字')
@@ -282,6 +286,15 @@ $('compress-btn').onclick = async () => {
     const fb = $('cp-feedback')
     fb.textContent = `原 ${fmtMB(r.before)} → ${fmtMB(r.after)} · ${r.pct >= 0 ? `减少 ${r.pct.toFixed(1)}%` : `增大 ${(-r.pct).toFixed(1)}%`}`
     fb.classList.remove('hidden')
+    if (r.kept === 'original') {
+      // 压缩无收益：服务端已保留原件，提醒用户
+      fb.className = 'hint err'
+      fb.textContent = '⚠️ 压缩后反而更大，已保留原文件：' + fb.textContent
+      toast('压缩无收益，已保留原文件')
+      return
+    }
+    S.derived = true
+    $('revert-btn').classList.remove('hidden')
     loadVideo()
     toast('✅ 压缩完成')
   } catch (e) {
@@ -350,11 +363,33 @@ $('copy-btn').onclick = async () => {
   catch { toast('复制失败', true) }
 }
 
+// ---- 返回原视频（重新裁切/压缩）----
+$('revert-btn').onclick = async () => {
+  try {
+    const r = await api('/api/revert', 'POST', {})
+    S.dur = r.duration
+    S.start = 0
+    S.end = r.duration
+    S.derived = false
+    $('revert-btn').classList.add('hidden')
+    initTrimUI(r.duration)
+    loadVideo()
+    $('trim-fill').style.width = '0'
+    $('trim-text').textContent = ''
+    $('cp-fill').style.width = '0'
+    $('cp-text').textContent = ''
+    $('cp-feedback').classList.add('hidden')
+    toast('↩ 已返回原视频，可重新裁切/压缩')
+  } catch (e) { toast(e.message, true) }
+}
+
 // ---- 取消 / 新建任务 ----
 function resetUI() {
   S.info = null
   S.transcript = ''
   S.dur = 0
+  S.derived = false
+  $('revert-btn').classList.add('hidden')
   ;['card-wrap', 'dl-wrap', 'preview-wrap', 'ts-wrap', 'result-wrap'].forEach(id => $(id).classList.add('hidden'))
   $('url').value = ''
   $('done-btn').disabled = true
