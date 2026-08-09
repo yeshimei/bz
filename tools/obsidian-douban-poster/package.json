@@ -1,7 +1,10 @@
 {
   "name": "@jwbz/obsidian-douban-poster",
-  "version": "2.1.2",
-  "description": "自动从豆瓣抓取高清海报 + 补全影视信息 (评分/导演/主演等) 到 Obsidian vault，支持 watcher 监听和 pm2 后台守护",
+  "version": "2.2.2",
+  "description": "自动从豆瓣抓取高清海报 + 补全影视信息 (评分/导演/主演等) 到 Obsidian vault，支持 watcher 监听和 pm2 后台守护，提供 parse 解析预览（JSON 输出）",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "bin": {
     "douban-poster": "./cli.js"
@@ -9,6 +12,7 @@
   "files": [
     "cli.js",
     "config.js",
+    "parse.js",
     "pipeline.js",
     "douban-client.js",
     "note-processor.js",

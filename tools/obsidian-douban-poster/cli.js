@@ -7,6 +7,7 @@
  * 用法:
  *   douban-poster watch          前台运行 watcher
  *   douban-poster fetch <file>   对单个笔记抓取海报
+ *   douban-poster parse <name>   解析影视并输出 JSON 预览（不写文件）
  *   douban-poster start          通过 pm2 启动 watcher（后台守护）
  *   douban-poster stop           停止 pm2 进程
  *   douban-poster status         查看 pm2 进程状态
@@ -120,6 +121,19 @@ switch (command) {
     break;
   }
 
+  case 'parse': {
+    const name = process.argv[3];
+    if (!name) {
+      console.log('用法: douban-poster parse <影视名称>');
+      console.log('示例: douban-poster parse 肖申克的救赎');
+      process.exit(1);
+    }
+    const { parseMovie } = await import('./parse.js');
+    const result = await parseMovie(name);
+    process.stdout.write(JSON.stringify(result) + '\n');
+    break;
+  }
+
   case 'start': {
     console.log('[pm2] 启动 watcher...');
     runPm2(`start ${path.join(__dirname, 'cli.js')} --name ${PM2_NAME} -- watch`);
@@ -149,6 +163,7 @@ douban-poster - 豆瓣海报自动抓取
 用法:
   douban-poster watch          前台运行 watcher
   douban-poster fetch <file>   对单个笔记抓取海报
+  douban-poster parse <name>   解析影视并输出 JSON 预览（不写文件）
   douban-poster start          通过 pm2 启动 watcher（后台守护）
   douban-poster stop           停止 pm2 进程
   douban-poster status         查看 pm2 进程状态
