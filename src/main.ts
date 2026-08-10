@@ -250,6 +250,8 @@ export default class BzPlugin extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
+    // 设置变更后重置 AI provider 缓存：DeepSeek key/服务商改动立即生效（黑匣子等 AI 消费方）
+    resetAIProviderCache();
   }
 
   /** ADR-0009 迁移：旧 7 个 JSON 路径字段初始化 storagePath（全同 → seed；参差 → 默认 + Notice 列出被忽略路径） */

@@ -118,14 +118,25 @@ export const FALLBACK_ASK_PROMPTS = [
   '为什么偏偏是它触动你了？',
 ];
 
-// ---------------- 检索（复用 flash TF-IDF） ----------------
+// ---------------- 检索（复用 flash TF-IDF，带引用+长度失效缓存） -------------
 
-/** 感触 TF-IDF 检索（纯函数）：返回按相关度排序的感触 */
+let tfidfCache: { ref: Impression[]; len: number; tfidf: TFIDF } | null = null;
+
+/** 感触 TF-IDF 检索（纯函数）：返回按相关度排序的感触。
+ * 缓存：同一 impressions 数组引用且长度未变（未新增感触）时复用已建索引，避免每次对话全量重建。 */
 export function searchImpressions(impressions: Impression[], query: string, topK = 5): Impression[] {
   if (!impressions.length || !query.trim()) return [];
-  const tfidf = new TFIDF();
-  tfidf.build(impressions.map((i) => ({ path: i.id, text: `${i.material} ${i.feeling} ${i.scene || ''} ${i.people || ''}` })));
-  const hits = tfidf.search(query, topK);
+  if (!tfidfCache || tfidfCache.ref !== impressions || tfidfCache.len !== impressions.length) {
+    const tfidf = new TFIDF();
+    tfidf.build(
+      impressions.map((i) => ({
+        path: i.id,
+        text: `${i.material} ${i.feeling} ${i.scene || ''} ${i.people || ''}`,
+      }))
+    );
+    tfidfCache = { ref: impressions, len: impressions.length, tfidf };
+  }
+  const hits = tfidfCache.tfidf.search(query, topK);
   const byId = new Map(impressions.map((i) => [i.id, i]));
   return hits.map((h) => byId.get(h.path)).filter((i): i is Impression => !!i);
 }
