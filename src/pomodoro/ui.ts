@@ -11,13 +11,16 @@ import { escManager } from '../core/esc-manager';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { notice } from '../core/notice';
 import { openSettingsModal } from '../core/settings-modal';
+import { createOverlay } from '../core/dom';
+import { jsonStore } from '../core/json-store';
+import { getBookItems } from '../library/items';
 import { PomodoroDataManager } from './data';
 import { playSound } from './sound';
 import type { SoundKind } from './sound';
 import { syncPomodoroStatusBar } from './statusbar';
-import { todayCount, last7Days } from './stats';
+import { todayCount, last7Days, bookMinutesToday } from './stats';
 import { PRESETS, CUSTOM_PRESET_ID } from './config';
-import type { PomodoroState, HistoryEntry, Durations, PomodoroOptions, Phase, PomodoroAction, PomodoroEvent } from './state';
+import type { PomodoroState, HistoryEntry, Durations, PomodoroOptions, Phase, PomodoroAction, PomodoroEvent, FocusTarget } from './state';
 import { transition, recover, createInitialState, DEFAULT_DURATIONS, phaseDurationSec } from './state';
 
 let dataManager: PomodoroDataManager | null = null;
@@ -27,7 +30,16 @@ let loaded = false;
 let maskEl: HTMLElement | null = null;
 let escHandle: { unregister: () => void } | null = null;
 let timerId: number | null = null;
+let appRef: App | null = null;
+let pickerMask: HTMLElement | null = null;
+let pickerEsc: { unregister: () => void } | null = null;
 
+/** 备忘录数据文件路径（storagePath 优先，todoFilePath 兼容兜底）——目标选择器读取 */
+function getMemoFilePath(): string {
+  const s = tryGetSettings();
+  const dir = ((s && (s.storagePath || s.todoFilePath)) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
+  return `${dir}/memo.json`;
+}
 /** 时长：按设置预设解析（T31）；自定义/非法值回退默认（经典 25/5/15、N=4） */
 function durations(): Durations {
   const s = tryGetSettings();
@@ -98,6 +110,11 @@ function renderStats(): void {
   const now = Date.now();
   const todayEl = document.getElementById('pomodoro-today');
   if (todayEl) todayEl.textContent = `今日 ${todayCount(history, now)} 个 🍅`;
+  const bookEl = document.getElementById('pomodoro-book');
+  if (bookEl) {
+    const m = bookMinutesToday(history, now);
+    bookEl.textContent = m > 0 ? `📚 读书 ${m} 分钟` : '';
+  }
   const weekEl = document.getElementById('pomodoro-week');
   if (!weekEl) return;
   const days = last7Days(history, now);
@@ -144,6 +161,23 @@ function render(): void {
   if (phaseEl) phaseEl.textContent = phaseText(state.phase, state.cycleFocusCount, d);
   const timeEl = document.getElementById('pomodoro-time');
   if (timeEl) timeEl.textContent = fmt(remain);
+  // 目标区：未选 → 灰字「选择目标」+ ✕ 隐藏；已选 → 目标名 + ✕
+  const targetEl = document.getElementById('pomodoro-target');
+  if (targetEl) {
+    const labelEl = document.getElementById('pomodoro-target-label');
+    const clearEl = document.getElementById('pomodoro-target-clear');
+    if (labelEl && clearEl) {
+      if (state.target) {
+        labelEl.textContent = `🎯 ${state.target.label}`;
+        clearEl.style.display = '';
+        targetEl.classList.remove('pomodoro-target-empty');
+      } else {
+        labelEl.textContent = '🎯 选择目标';
+        clearEl.style.display = 'none';
+        targetEl.classList.add('pomodoro-target-empty');
+      }
+    }
+  }
   renderStats();
   const startBtn = document.getElementById('pomodoro-btn-start') as HTMLButtonElement | null;
   if (startBtn) {
@@ -222,6 +256,21 @@ function injectStyles(): void {
     #pomodoro-btn-settings { position: absolute; top: 16px; right: 16px; padding: 6px; background: none; border-radius: 8px; color: var(--text-muted); transition: opacity 0.2s; }
     #pomodoro-btn-settings:hover { color: var(--text-normal); background: var(--background-modifier-hover); }
     #pomodoro-btn-settings.pomodoro-settings-hidden { opacity: 0; pointer-events: none; }
+    .pomodoro-target { margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border: 1px solid var(--background-modifier-border); border-radius: 12px; font-size: 13px; cursor: pointer; }
+    .pomodoro-target:hover { border-color: var(--interactive-accent); }
+    .pomodoro-target-empty { color: var(--text-faint); }
+    .pomodoro-target-clear { color: var(--text-muted); padding: 0 2px; }
+    .pomodoro-target-clear:hover { color: var(--text-error); }
+    .pomodoro-target-tabs { display: flex; gap: 4px; padding: 8px 12px 0; }
+    .pomodoro-target-tab { padding: 4px 10px; border-radius: 8px; background: none; color: var(--text-muted); cursor: pointer; font-size: 13px; }
+    .pomodoro-target-tab-active { background: var(--background-modifier-hover); color: var(--text-normal); }
+    .pomodoro-target-item { padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+    .pomodoro-target-item:hover { background: var(--background-modifier-hover); }
+    .pomodoro-book { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+    .pomodoro-target-note { padding: 10px; font-size: 13px; display: flex; align-items: center; gap: 10px; }
+    .pomodoro-target-note button { padding: 4px 12px; border-radius: 8px; background: var(--interactive-accent); color: var(--text-on-accent); cursor: pointer; font-size: 13px; }
+    #pomodoro-target-picker-clear { padding: 4px 12px; border-radius: 8px; background: none; color: var(--text-muted); cursor: pointer; font-size: 13px; }
+    #pomodoro-target-picker-clear:hover { background: var(--background-modifier-hover); }
     .pomodoro-stats { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--background-modifier-border); }
     #pomodoro-today { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
     .pomodoro-week { display: flex; gap: 6px; justify-content: center; align-items: flex-end; }
@@ -340,6 +389,12 @@ function bindEvents(): void {
   const popup = document.getElementById('pomodoro-popup')!;
   popup.addEventListener('mouseenter', () => settingsBtn.classList.remove('pomodoro-settings-hidden'));
   popup.addEventListener('mouseleave', () => settingsBtn.classList.add('pomodoro-settings-hidden'));
+  // 目标区：点击换目标，✕ 清除
+  document.getElementById('pomodoro-target')!.addEventListener('click', openTargetPicker);
+  document.getElementById('pomodoro-target-clear')!.addEventListener('click', (e) => {
+    e.stopPropagation();
+    clearTarget();
+  });
 }
 
 function buildDOM(): void {
@@ -350,6 +405,10 @@ function buildDOM(): void {
   mask.innerHTML = `
     <div id="pomodoro-popup">
       <button id="pomodoro-btn-settings" class="pomodoro-btn" title="设置"></button>
+      <div id="pomodoro-target" class="pomodoro-target pomodoro-target-empty" title="选择专注目标">
+        <span id="pomodoro-target-label"></span>
+        <span id="pomodoro-target-clear" class="pomodoro-target-clear">✕</span>
+      </div>
       <svg id="pomodoro-ring-svg" viewBox="0 0 120 120">
         <circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>
         <circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52"></circle>
@@ -363,6 +422,7 @@ function buildDOM(): void {
       </div>
       <div class="pomodoro-stats">
         <div id="pomodoro-today"></div>
+        <div id="pomodoro-book" class="pomodoro-book"></div>
         <div id="pomodoro-week" class="pomodoro-week"></div>
       </div>
     </div>`;
@@ -383,6 +443,7 @@ function buildDOM(): void {
 
 /** 打开弹窗（幂等：已存在则仅确保显示；未加载先 load+recover） */
 export async function openPomodoro(app: App): Promise<void> {
+  appRef = app;
   if (!dataManager) dataManager = new PomodoroDataManager(app);
   if (!maskEl) {
     if (!loaded) await initData();
@@ -393,6 +454,7 @@ export async function openPomodoro(app: App): Promise<void> {
 
 /** 插件启动恢复（main.ts onLayoutReady 调用）：load+recover+落盘；正在倒计时 → 后台 tick 继续；popup 模式自动弹窗 */
 export async function ensurePomodoro(app: App): Promise<void> {
+  appRef = app;
   if (!dataManager) dataManager = new PomodoroDataManager(app);
   if (!loaded) {
     await initData();
@@ -402,6 +464,138 @@ export async function ensurePomodoro(app: App): Promise<void> {
       const s = tryGetSettings();
       if (s.pomodoroRestoreMode === 'popup') void openPomodoro(app);
     }
+  }
+}
+
+// ===== 专注目标（任务关联，第一期）：目标区 + 三来源选择器 =====
+
+function setTarget(t: FocusTarget): void {
+  state = { ...state, target: t };
+  void save();
+  render();
+  closeTargetPicker();
+}
+
+function clearTarget(): void {
+  state = { ...state, target: null };
+  void save();
+  render();
+}
+
+function closeTargetPicker(): void {
+  if (pickerMask) {
+    pickerMask.remove();
+    pickerMask = null;
+  }
+  if (pickerEsc) {
+    pickerEsc.unregister();
+    pickerEsc = null;
+  }
+}
+
+function openTargetPicker(): void {
+  if (pickerMask || !appRef) return;
+  const { mask, popup } = createOverlay({
+    maskId: 'pomodoro-target-picker-mask',
+    popupId: 'pomodoro-target-picker',
+    zIndex: 10005, // 面板内弹窗层级（settings-modal 注释区间 10001-10005），高于主弹窗 9998、低于设置弹窗 10030
+    onMaskClick: closeTargetPicker,
+  });
+  popup.innerHTML = `
+    <div style="padding:14px 16px;border-bottom:1px solid var(--background-modifier-border);font-size:15px;font-weight:600;">选择专注目标</div>
+    <div class="pomodoro-target-tabs">
+      <button class="pomodoro-target-tab" data-tab="memo">📝 备忘录</button>
+      <button class="pomodoro-target-tab" data-tab="note">📄 当前笔记</button>
+      <button class="pomodoro-target-tab" data-tab="book">📚 书库</button>
+    </div>
+    <div id="pomodoro-target-list" style="padding:8px 12px;max-height:50vh;overflow-y:auto;"></div>
+    <div style="padding:10px 16px;border-top:1px solid var(--background-modifier-border);">
+      <button id="pomodoro-target-picker-clear">不使用目标</button>
+    </div>`;
+  popup.querySelectorAll('.pomodoro-target-tab').forEach((b) => {
+    b.addEventListener('click', () => switchTab((b as HTMLElement).dataset.tab || 'memo'));
+  });
+  popup.querySelector('#pomodoro-target-picker-clear')!.addEventListener('click', () => {
+    clearTarget();
+    closeTargetPicker();
+  });
+  document.body.appendChild(mask);
+  document.body.appendChild(popup);
+  mask.style.display = 'block';
+  popup.style.display = 'flex';
+  pickerMask = mask;
+  pickerEsc = escManager.register('pomodoro-target-picker', {
+    isVisible: () => pickerMask !== null,
+    close: closeTargetPicker,
+  });
+  switchTab('memo');
+}
+
+function switchTab(tab: string): void {
+  document.querySelectorAll('.pomodoro-target-tab').forEach((b) => {
+    b.classList.toggle('pomodoro-target-tab-active', (b as HTMLElement).dataset.tab === tab);
+  });
+  const list = document.getElementById('pomodoro-target-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (tab === 'memo') void renderMemoTab(list);
+  else if (tab === 'note') renderNoteTab(list);
+  else renderBookTab(list);
+}
+
+async function renderMemoTab(list: HTMLElement): Promise<void> {
+  try {
+    const items = (await jsonStore(getMemoFilePath()).read()) as any[];
+    // 竞态守卫：等待期间用户切换了 tab 或关闭了选择器 → 放弃渲染
+    if (!list.isConnected || document.querySelector('.pomodoro-target-tab-active')?.getAttribute('data-tab') !== 'memo') return;
+    const open = items.filter((i) => i && typeof i === 'object' && !i.completed);
+    if (open.length === 0) {
+      list.textContent = '没有未完成的备忘录';
+      return;
+    }
+    for (const it of open) {
+      const row = document.createElement('div');
+      row.className = 'pomodoro-target-item';
+      row.textContent = `${it.title}${it.scene ? `（${it.scene}）` : ''}`;
+      row.addEventListener('click', () => setTarget({ type: 'memo', id: it.id, label: it.title }));
+      list.appendChild(row);
+    }
+  } catch (e) {
+    list.textContent = '备忘录读取失败';
+  }
+}
+
+function renderNoteTab(list: HTMLElement): void {
+  const f = appRef?.workspace?.getActiveFile?.();
+  if (!f) {
+    list.textContent = '未打开任何笔记';
+    return;
+  }
+  list.innerHTML = `<div class="pomodoro-target-note">
+    <span id="pomodoro-target-note-name">📄 ${f.basename}</span>
+    <button id="pomodoro-target-note-use">使用此笔记</button>
+  </div>`;
+  document.getElementById('pomodoro-target-note-use')!.addEventListener('click', () =>
+    setTarget({ type: 'note', path: f.path, label: f.basename })
+  );
+}
+
+function renderBookTab(list: HTMLElement): void {
+  try {
+    const books = getBookItems(appRef);
+    if (books.length === 0) {
+      list.textContent = '书库为空';
+      return;
+    }
+    for (const b of books) {
+      const row = document.createElement('div');
+      row.className = 'pomodoro-target-item';
+      row.textContent = `📚 ${b.title}`;
+      row.addEventListener('click', () => setTarget({ type: 'book', path: b.file.path, label: b.title }));
+      list.appendChild(row);
+    }
+  } catch (e) {
+    list.textContent = '书库读取失败';
   }
 }
 
@@ -423,6 +617,7 @@ export function unloadPomodoro(): void {
     window.clearInterval(timerId);
     timerId = null;
   }
+  closeTargetPicker();
   closePomodoro();
   const style = document.querySelector('style[data-pomodoro-styles]');
   if (style) style.remove();
@@ -430,5 +625,6 @@ export function unloadPomodoro(): void {
   history = [];
   lastStatsKey = '';
   dataManager = null;
+  appRef = null;
   loaded = false;
 }

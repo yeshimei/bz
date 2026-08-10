@@ -5,6 +5,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { transition, recover, DEFAULT_DURATIONS, DEFAULT_OPTIONS, createInitialState } from '../../src/pomodoro/state';
+import type { FocusTarget, PomodoroState } from '../../src/pomodoro/state';
 
 const NOW = 1_000_000_000; // 固定基准时间戳
 const D = DEFAULT_DURATIONS; // 25/5/15、N=4
@@ -232,6 +233,38 @@ describe('transition：tick 阶段完成', () => {
     const r = transition(createInitialState(), 'tick', NOW, D, O);
     expect(r.state.phase).toBe('idle');
     expect(r.event.type).toBe('none');
+  });
+});
+
+describe('transition：专注目标（任务关联，ticket 26 第一期）', () => {
+  const TARGET: FocusTarget = { type: 'book', path: '书库/活着.md', label: '读《活着》' };
+
+  it('设置 target 后完成专注 → historyEntry 带 target，target 保留到下一阶段', () => {
+    const s0 = { ...createInitialState(), target: TARGET };
+    let s = transition(s0, 'start', NOW, D, O).state;
+    const r = transition(s, 'tick', NOW + WORK_MS, D, O);
+    expect(r.state.target).toEqual(TARGET); // 循环保留
+    expect(r.state.phase).toBe('short-break');
+    expect((r.event as any).historyEntry.target).toEqual(TARGET);
+  });
+
+  it('无 target：historyEntry 不带 target 字段（旧数据兼容）', () => {
+    const s = transition(createInitialState(), 'start', NOW, D, O).state;
+    const r = transition(s, 'tick', NOW + WORK_MS, D, O);
+    expect((r.event as any).historyEntry.target).toBeUndefined();
+    expect(createInitialState().target).toBeNull();
+  });
+
+  it('暂停中换目标 → 完成时记录新目标（target 取完成时 state）', () => {
+    let s: PomodoroState = { ...createInitialState(), target: { type: 'memo', id: 'm1', label: '写季度报告' } };
+    s = transition(s, 'start', NOW, D, O).state;
+    s = transition(s, 'pause', NOW + 1000, D, O).state;
+    // 暂停中换目标
+    s = transition(s, 'resume', NOW + 2000, D, O).state;
+    s = { ...s, target: { type: 'note', path: '工作/方案.md', label: '改方案' } as FocusTarget };
+    const r = transition(s, 'tick', s.endTime!, D, O);
+    // historyEntry 记录的是完成时 state.target（换目标后对该番茄生效）
+    expect((r.event as any).historyEntry.target.label).toBe('改方案');
   });
 });
 

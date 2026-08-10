@@ -23,6 +23,15 @@ export function todayCount(history: HistoryEntry[], now: number): number {
   return history.filter((h) => dayKey(h.ts) === today).length;
 }
 
+/** 今日读书分钟数（任务关联：按 target.type=book 聚合，取整分钟） */
+export function bookMinutesToday(history: HistoryEntry[], now: number): number {
+  const today = dayKey(now);
+  const secs = history
+    .filter((h) => dayKey(h.ts) === today && h.target?.type === 'book')
+    .reduce((s, h) => s + h.duration, 0);
+  return Math.round(secs / 60);
+}
+
 /** 近 7 天滚动窗口（含今天，最左 6 天前；窗口外不计） */
 export function last7Days(history: HistoryEntry[], now: number): DayCount[] {
   const counts = new Map<string, number>();
