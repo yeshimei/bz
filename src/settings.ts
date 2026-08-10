@@ -122,11 +122,19 @@ export default interface BzSettings {
   /** 🏷️ 显示分类（源码无 UI 项，运行时默认 true，字段保留） */
   showCategory: boolean;
 
-  // ===== 🎬 影视（1 项）=====
+  // ===== 🎬 影视（5 项）=====
   /** 📁 影视文件夹 */
   movieFolderPath: string;
   /** 📄 每页加载数量（列表初始加载及每次滚动加载的条数） */
   moviePageSize: string;
+  /** 🔀 默认排序：date-desc / date-asc / rating-desc / rating-asc / name-asc / name-desc */
+  movieDefaultSort: string;
+  /** 🏷️ 默认类型筛选（空=全部；填 ALL_TAGS 中类型名则打开即筛选） */
+  movieDefaultTypeFilter: string;
+  /** 📊 默认状态筛选：全部 / 想看 / 在看 / 已看 */
+  movieDefaultStatusFilter: string;
+  /** ⭐ 已看卡片评分显示：stars（星星串）/ number（⭐数字） */
+  movieRatingDisplay: string;
 
 
   // ===== 🧠 做题家（4 项，含 shuffleQuestions；设置并入复习计划 tab）=====
@@ -213,6 +221,26 @@ export default interface BzSettings {
   aiAgentModel: string;
   /** 闪念：常驻监听光标/文件 */
   flashEnabled: boolean;
+
+  // ===== 🍅 番茄钟（9 项，ticket 31）=====
+  /** 预设方案 id（PRESETS 12 档：11 科学预设 + custom 自定义） */
+  pomodoroPreset: string;
+  /** 自定义工作时长（分钟） */
+  pomodoroWorkMin: string;
+  /** 自定义短休息时长（分钟） */
+  pomodoroShortBreakMin: string;
+  /** 自定义长休息时长（分钟） */
+  pomodoroLongBreakMin: string;
+  /** 几个专注后进长休息（N，默认 4） */
+  pomodoroLongBreakInterval: string;
+  /** 强制专注模式：专注阶段禁暂停/跳过/重置 */
+  pomodoroForceFocus: boolean;
+  /** 自动循环：阶段完成自动进入下一阶段 */
+  pomodoroAutoCycle: boolean;
+  /** 自动跳过休息：连续工作模式 */
+  pomodoroAutoSkipBreak: boolean;
+  /** 声音提醒（默认开） */
+  pomodoroSound: boolean;
 }
 
 export const DEFAULT_SETTINGS: BzSettings = {
@@ -287,6 +315,10 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 影视
   movieFolderPath: '我的/影视',
   moviePageSize: '20',
+  movieDefaultSort: 'date-desc',
+  movieDefaultTypeFilter: '',
+  movieDefaultStatusFilter: '全部',
+  movieRatingDisplay: 'stars',
 
 
   // 做题家（设置并入复习计划 tab）
@@ -334,4 +366,15 @@ export const DEFAULT_SETTINGS: BzSettings = {
   aiAgentWatchedFolders: '卡片盒,归档/网页剪藏',
   aiAgentModel: 'deepseek-v4-flash',
   flashEnabled: true,
+
+  // 番茄钟（9 项，ticket 31）
+  pomodoroPreset: 'classic',
+  pomodoroWorkMin: '25',
+  pomodoroShortBreakMin: '5',
+  pomodoroLongBreakMin: '15',
+  pomodoroLongBreakInterval: '4',
+  pomodoroForceFocus: false,
+  pomodoroAutoCycle: false,
+  pomodoroAutoSkipBreak: false,
+  pomodoroSound: true,
 };

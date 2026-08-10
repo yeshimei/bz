@@ -1,17 +1,20 @@
 /**
- * 番茄钟弹窗 UI（ticket 28-29）：中央单例弹窗 + 1s tick 驱动 + 状态栏同步 + 完成通知。
+ * 番茄钟弹窗 UI（ticket 28-31）：中央单例弹窗 + 1s tick 驱动 + 状态栏同步 + 完成通知 + ⚙️ 设置弹窗。
  * 关闭弹窗计时后台继续（tick 常驻，状态栏持续刷新，重开从内存状态渲染）；
  * 阶段自然完成（tick 驱动）→ toast + 提示音 + 落盘；skip 静默；打开时超时恢复（initData 路径不通知）。
- * 设置读取：T31 前用默认时长/选项，pomodoroForceFocus/pomodoroSound 等字段已就位（tryGetSettings 缺省回退）。
+ * 设置：预设/自定义时长/N/四开关均读 BzSettings（tryGetSettings 缺省回退）。
  */
+import { Setting } from 'obsidian';
 import type { App } from 'obsidian';
 import { escManager } from '../core/esc-manager';
-import { tryGetSettings } from '../core/settings-provider';
+import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { notice } from '../core/notice';
+import { openSettingsModal } from '../core/settings-modal';
 import { PomodoroDataManager } from './data';
 import { playSound } from './sound';
 import { syncPomodoroStatusBar } from './statusbar';
 import { todayCount, last7Days } from './stats';
+import { PRESETS, CUSTOM_PRESET_ID } from './config';
 import type { PomodoroState, HistoryEntry, Durations, PomodoroOptions, Phase, PomodoroAction, PomodoroEvent } from './state';
 import { transition, recover, createInitialState, DEFAULT_DURATIONS, phaseDurationSec } from './state';
 
@@ -23,14 +26,25 @@ let maskEl: HTMLElement | null = null;
 let escHandle: { unregister: () => void } | null = null;
 let timerId: number | null = null;
 
-/** 时长：T31 前用默认（经典 25/5/15、N=4），设置接入后按预设解析 */
+/** 时长：按设置预设解析（T31）；自定义/非法值回退默认（经典 25/5/15、N=4） */
 function durations(): Durations {
-  return DEFAULT_DURATIONS;
+  const s = tryGetSettings();
+  const num = (v: string | undefined, def: number): number => {
+    const n = parseInt(v ?? '', 10);
+    return Number.isFinite(n) && n > 0 ? n : def;
+  };
+  const preset = s.pomodoroPreset && s.pomodoroPreset !== CUSTOM_PRESET_ID ? PRESETS[s.pomodoroPreset] : null;
+  return {
+    workMin: preset ? preset.workMin : num(s.pomodoroWorkMin, 25),
+    shortBreakMin: preset ? preset.shortBreakMin : num(s.pomodoroShortBreakMin, 5),
+    longBreakMin: preset ? preset.longBreakMin : num(s.pomodoroLongBreakMin, 15),
+    longBreakInterval: num(s.pomodoroLongBreakInterval, 4),
+  };
 }
 
-/** 选项：读设置（T31 前字段不存在 → 默认全关） */
+/** 选项：读设置（四开关，缺省全关） */
 function options(): PomodoroOptions {
-  const s = tryGetSettings() as any;
+  const s = tryGetSettings();
   return {
     forceFocus: !!s.pomodoroForceFocus,
     autoCycle: !!s.pomodoroAutoCycle,
@@ -54,7 +68,7 @@ function notifyPhaseComplete(e: Extract<PomodoroEvent, { type: 'phase-completed'
   } else {
     notice('休息结束：开始专注', 'success');
   }
-  const s = tryGetSettings() as any;
+  const s = tryGetSettings();
   if (s.pomodoroSound !== false) {
     playSound(e.completedPhase === 'focus' ? 'focus-end' : 'break-end');
   }
@@ -212,12 +226,94 @@ function injectStyles(): void {
   document.head.appendChild(style);
 }
 
+/** ⚙️ 番茄钟设置弹窗（ADR-0009：9 项，复用 core/settings-modal） */
+function openPomodoroSettings(): void {
+  openSettingsModal({
+    title: '番茄钟设置',
+    build: (el) => {
+      const s = getSettings();
+      const isCustom = () => s.pomodoroPreset === CUSTOM_PRESET_ID;
+      let workRow: Setting | null = null;
+      let shortRow: Setting | null = null;
+      let longRow: Setting | null = null;
+      const refreshCustom = () => {
+        const show = isCustom();
+        if (workRow) workRow.settingEl.toggleClass('bz-setting-hidden', !show);
+        if (shortRow) shortRow.settingEl.toggleClass('bz-setting-hidden', !show);
+        if (longRow) longRow.settingEl.toggleClass('bz-setting-hidden', !show);
+      };
+      new Setting(el)
+        .setName('预设方案')
+        .setDesc('工作时间 / 短休息 / 长休息 时长组合')
+        .addDropdown((dd) => {
+          for (const [id, p] of Object.entries(PRESETS)) {
+            dd.addOption(id, `${p.label}（${p.workMin}/${p.shortBreakMin}/${p.longBreakMin}）`);
+          }
+          dd.addOption(CUSTOM_PRESET_ID, '自定义');
+          dd.setValue(s.pomodoroPreset || 'classic');
+          dd.onChange(async (v) => {
+            s.pomodoroPreset = v;
+            refreshCustom(); // 立即反馈（先于落盘）
+            await saveSettings();
+            render();
+          });
+        });
+      const numSetting = (name: string, desc: string, get: () => string, set: (v: string) => void): Setting =>
+        new Setting(el)
+          .setName(name)
+          .setDesc(desc)
+          .addText((text) =>
+            text
+              .setValue(get())
+              .onChange(async (v) => {
+                set(v);
+                await saveSettings();
+                render();
+              })
+          );
+      workRow = numSetting('工作时长（分钟）', '自定义方案的工作阶段时长', () => s.pomodoroWorkMin ?? '25', (v) => (s.pomodoroWorkMin = v));
+      shortRow = numSetting('短休息时长（分钟）', '自定义方案的短休息时长', () => s.pomodoroShortBreakMin ?? '5', (v) => (s.pomodoroShortBreakMin = v));
+      longRow = numSetting('长休息时长（分钟）', '自定义方案的长休息时长', () => s.pomodoroLongBreakMin ?? '15', (v) => (s.pomodoroLongBreakMin = v));
+      new Setting(el)
+        .setName('长休息间隔')
+        .setDesc('几个专注后进入长休息（默认 4）')
+        .addText((text) =>
+          text
+            .setValue(s.pomodoroLongBreakInterval ?? '4')
+            .onChange(async (v) => {
+              s.pomodoroLongBreakInterval = v;
+              await saveSettings();
+              render();
+            })
+        );
+      const toggleSetting = (name: string, desc: string, get: () => boolean, set: (v: boolean) => void): Setting =>
+        new Setting(el)
+          .setName(name)
+          .setDesc(desc)
+          .addToggle((toggle) =>
+            toggle
+              .setValue(get())
+              .onChange(async (v) => {
+                set(v);
+                await saveSettings();
+                render();
+              })
+          );
+      toggleSetting('强制专注模式', '专注阶段无法暂停/跳过/重置', () => !!s.pomodoroForceFocus, (v) => (s.pomodoroForceFocus = v));
+      toggleSetting('自动循环', '阶段结束后自动开始下一阶段', () => !!s.pomodoroAutoCycle, (v) => (s.pomodoroAutoCycle = v));
+      toggleSetting('自动跳过休息', '专注结束后立即开始下一专注（连续工作）', () => !!s.pomodoroAutoSkipBreak, (v) => (s.pomodoroAutoSkipBreak = v));
+      toggleSetting('声音提醒', '阶段完成时的提示音', () => s.pomodoroSound !== false, (v) => (s.pomodoroSound = v));
+      refreshCustom();
+    },
+  });
+}
+
 function bindEvents(): void {
   const startBtn = document.getElementById('pomodoro-btn-start')!;
   startBtn.addEventListener('click', () => applyAction(state.paused ? 'resume' : state.endTime !== null ? 'pause' : 'start'));
   document.getElementById('pomodoro-btn-reset')!.addEventListener('click', () => applyAction('reset'));
   document.getElementById('pomodoro-btn-skip')!.addEventListener('click', () => applyAction('skip'));
-  // ⚙️ 设置弹窗由 T31 接入（复用 core/settings-modal.ts）
+  document.getElementById('pomodoro-btn-settings')!.addEventListener('click', openPomodoroSettings);
 }
 
 function buildDOM(): void {
