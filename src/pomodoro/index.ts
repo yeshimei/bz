@@ -3,5 +3,7 @@
  * 命令 bz-pomodoro-open 在 main.ts COMMANDS 表注册（域内不重复 addCommand）。
  */
 export { openPomodoro, closePomodoro, unloadPomodoro } from './ui';
+export { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './statusbar';
+export { playSound } from './sound';
 export { PomodoroDataManager, getPomodoroFilePath } from './data';
 export { transition, recover, DEFAULT_DURATIONS, DEFAULT_OPTIONS, createInitialState, phaseDurationSec } from './state';

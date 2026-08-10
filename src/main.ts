@@ -27,7 +27,8 @@ import { openMovieManager, addMovieItem, openMovieReport } from './movie';
 import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart } from './review';
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
-import { openPomodoro } from './pomodoro';
+import { openPomodoro, unloadPomodoro } from './pomodoro';
+import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // B站下载器启动命令（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
 import { openBiliDownloader } from './bili-downloader';
 import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setLauncherGestureSetter, LauncherModal } from './launcher';
@@ -167,6 +168,9 @@ export default class BzPlugin extends Plugin {
     this.addRibbonIcon('check-square', '备忘录', () => openBzPanel(this.app));
     this.addRibbonIcon('notebook-pen', '日记本', () => showDiaryPanel(this));
 
+    // 番茄钟状态栏（ticket 29：常驻倒计时，点击打开弹窗）
+    mountPomodoroStatusBar(this.addStatusBarItem(), this.app);
+
     // 日记本面板命令（统一 bz- 前缀；bz-diary-write 由 quote.ts init 内注册）
     (this.app as any).commands.addCommand({ id: 'bz-diary-open', name: '日记本', icon: 'notebook', callback: () => showDiaryPanel(this) });
     this.registeredCommandIds.push('bz-diary-open');
@@ -198,6 +202,8 @@ export default class BzPlugin extends Plugin {
       }
     }
     escManager.destroy();
+    unmountPomodoroStatusBar();
+    unloadPomodoro();
     unloadBz();
     unloadAIAgent();
     unloadLauncherPanel();
