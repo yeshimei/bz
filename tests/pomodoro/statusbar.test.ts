@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, setIcon } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { openPomodoro, unloadPomodoro } from '../../src/pomodoro';
@@ -37,31 +37,37 @@ describe('番茄钟状态栏', () => {
     vi.useRealTimers();
   });
 
-  it('mount：空闲灰态 🍅', () => {
+  it('mount：原生 lucide 图标（timer）+ 空闲灰态', () => {
     const app = makeApp(new MockVault());
     mountPomodoroStatusBar(container, app);
     const el = container.querySelector('.pomodoro-statusbar') as HTMLElement;
     expect(el).not.toBeNull();
-    expect(el.textContent).toBe('🍅');
     expect(el.classList.contains('pomodoro-statusbar-idle')).toBe(true);
+    const iconEl = el.querySelector('.pomodoro-statusbar-icon') as HTMLElement;
+    expect(iconEl).not.toBeNull();
+    expect(iconEl.dataset.icon).toBe('timer'); // setIcon mock 记录
+    expect(setIcon).toHaveBeenCalledWith(iconEl, 'timer');
+    expect((el.querySelector('.pomodoro-statusbar-text') as HTMLElement).textContent).toBe('');
   });
 
-  it('运行中：🍅 mm:ss 每秒刷新', async () => {
+  it('运行中：mm:ss 每秒刷新（图标常驻）', async () => {
     const vault = new MockVault();
     const app = makeApp(vault);
     setApp(app);
     mountPomodoroStatusBar(container, app);
     await openPomodoro(app);
     const statusEl = container.querySelector('.pomodoro-statusbar') as HTMLElement;
+    const textSpan = statusEl.querySelector('.pomodoro-statusbar-text') as HTMLElement;
     document.getElementById('pomodoro-btn-start')!.click();
     await vi.advanceTimersByTimeAsync(2000);
-    expect(statusEl.textContent).toContain('24:58');
+    expect(textSpan.textContent).toBe('24:58');
     expect(statusEl.classList.contains('pomodoro-statusbar-idle')).toBe(false);
+    expect(statusEl.querySelector('.pomodoro-statusbar-icon')).not.toBeNull();
     await vi.advanceTimersByTimeAsync(1000);
-    expect(statusEl.textContent).toContain('24:57');
+    expect(textSpan.textContent).toBe('24:57');
   });
 
-  it('暂停：回灰态 🍅', async () => {
+  it('暂停：回灰态（文本清空、图标保留）', async () => {
     const vault = new MockVault();
     const app = makeApp(vault);
     setApp(app);
@@ -70,8 +76,9 @@ describe('番茄钟状态栏', () => {
     document.getElementById('pomodoro-btn-start')!.click(); // 开始
     document.getElementById('pomodoro-btn-start')!.click(); // 暂停
     const statusEl = container.querySelector('.pomodoro-statusbar') as HTMLElement;
-    expect(statusEl.textContent).toBe('🍅');
+    expect((statusEl.querySelector('.pomodoro-statusbar-text') as HTMLElement).textContent).toBe('');
     expect(statusEl.classList.contains('pomodoro-statusbar-idle')).toBe(true);
+    expect(statusEl.querySelector('.pomodoro-statusbar-icon')).not.toBeNull();
   });
 
   it('点击状态栏打开弹窗（幂等单例）', async () => {
@@ -91,12 +98,13 @@ describe('番茄钟状态栏', () => {
     mountPomodoroStatusBar(container, app);
     await openPomodoro(app);
     const statusEl = container.querySelector('.pomodoro-statusbar') as HTMLElement;
+    const textSpan = statusEl.querySelector('.pomodoro-statusbar-text') as HTMLElement;
     document.getElementById('pomodoro-btn-start')!.click();
     await vi.advanceTimersByTimeAsync(2000); // 24:58
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); // 关闭弹窗
     expect(document.getElementById('pomodoro-mask')).toBeNull();
     await vi.advanceTimersByTimeAsync(3000);
-    expect(statusEl.textContent).toContain('24:55');
+    expect(textSpan.textContent).toBe('24:55');
   });
 
   it('unmount：状态栏元素移除', () => {
