@@ -1,0 +1,78 @@
+// @vitest-environment node
+/**
+ * 番茄钟历史聚合测试（ticket 30）：今日计数 + 近 7 天滚动窗口
+ */
+import { describe, it, expect } from 'vitest';
+import { todayCount, last7Days } from '../../src/pomodoro/stats';
+import type { HistoryEntry } from '../../src/pomodoro/state';
+
+// 本地时区日期（2026-08-10 周一 10:00 本地）
+const NOW = new Date(2026, 7, 10, 10, 0, 0).getTime();
+
+function entry(day: number, hour = 9): HistoryEntry {
+  return { ts: new Date(2026, 7, day, hour, 0, 0).getTime(), duration: 1500 };
+}
+
+describe('todayCount', () => {
+  it('空历史 → 0', () => {
+    expect(todayCount([], NOW)).toBe(0);
+  });
+
+  it('只计今天的完成', () => {
+    const h = [entry(10), entry(10, 14), entry(9), entry(8)];
+    expect(todayCount(h, NOW)).toBe(2);
+  });
+
+  it('跨月边界（今天为月初）', () => {
+    const now = new Date(2026, 7, 1, 10, 0, 0).getTime();
+    const h = [
+      { ts: new Date(2026, 7, 1, 8, 0, 0).getTime(), duration: 1500 }, // 8/1 今天
+      { ts: new Date(2026, 6, 31, 9, 0, 0).getTime(), duration: 1500 }, // 7/31 上月
+      { ts: new Date(2026, 6, 20, 9, 0, 0).getTime(), duration: 1500 }, // 7/20
+    ];
+    expect(todayCount(h, now)).toBe(1);
+  });
+
+  it('只有今天：窗口仅今天有值', () => {
+    const h = [entry(10), entry(10, 14)];
+    expect(todayCount(h, NOW)).toBe(2);
+    const days = last7Days(h, NOW);
+    expect(days[6]).toEqual({ date: '2026-08-10', count: 2 });
+    expect(days.slice(0, 6).every((d) => d.count === 0)).toBe(true);
+  });
+});
+
+describe('last7Days', () => {
+  it('空历史 → 7 个 0 的窗口（含今天，最左 6 天前）', () => {
+    const days = last7Days([], NOW);
+    expect(days).toHaveLength(7);
+    expect(days[6]).toEqual({ date: '2026-08-10', count: 0 });
+    expect(days[0]).toEqual({ date: '2026-08-04', count: 0 });
+  });
+
+  it('按日聚合计数（滚动窗口内）', () => {
+    const h = [entry(10), entry(10), entry(9), entry(6), entry(3)]; // 8/3 在窗口外（7 天前=8/3？8/4-8/10 共 7 天，8/3 外）
+    const days = last7Days(h, NOW);
+    expect(days[6]).toEqual({ date: '2026-08-10', count: 2 });
+    expect(days[5]).toEqual({ date: '2026-08-09', count: 1 });
+    expect(days[2]).toEqual({ date: '2026-08-06', count: 1 });
+    expect(days[0]).toEqual({ date: '2026-08-04', count: 0 });
+    const total = days.reduce((s, d) => s + d.count, 0);
+    expect(total).toBe(4); // 窗口外的 8/3 不计
+  });
+
+  it('跨月滚动窗口（今天 8/2 → 窗口含 7 月底）', () => {
+    const now = new Date(2026, 7, 2, 10, 0, 0).getTime();
+    const h = [
+      { ts: new Date(2026, 7, 2, 8, 0, 0).getTime(), duration: 1500 }, // 8/2
+      { ts: new Date(2026, 6, 31, 8, 0, 0).getTime(), duration: 1500 }, // 7/31
+      { ts: new Date(2026, 6, 20, 8, 0, 0).getTime(), duration: 1500 }, // 7/20 窗口外
+    ];
+    const days = last7Days(h, now);
+    expect(days).toHaveLength(7);
+    expect(days[0]).toEqual({ date: '2026-07-27', count: 0 });
+    expect(days[5]).toEqual({ date: '2026-08-01', count: 0 });
+    expect(days[6]).toEqual({ date: '2026-08-02', count: 1 });
+    expect(days).toContainEqual({ date: '2026-07-31', count: 1 });
+  });
+});
