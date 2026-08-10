@@ -165,13 +165,32 @@ describe('专注目标（任务关联，第一期）', () => {
     expect(el('pomodoro-target-clear').style.display).toBe('none');
   });
 
-  it('选择器：三来源 tab + 底部「不使用目标」', async () => {
+  it('选择器：三来源 tab + 右上角 ✕ 关闭按钮', async () => {
     const { app } = setup();
     await openPomodoro(app);
     el('pomodoro-target').click();
     expect(document.getElementById('pomodoro-target-picker')).not.toBeNull();
     expect(document.querySelectorAll('.pomodoro-target-tab').length).toBe(3);
-    expect(el('pomodoro-target-picker-clear').textContent).toContain('不使用目标');
+    expect(el('pomodoro-target-picker-close')).not.toBeNull();
+    expect(document.getElementById('pomodoro-target-picker-clear')).toBeNull(); // 底部按钮已移除
+  });
+
+  it('点击遮罩关闭选择器', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    el('pomodoro-target').click();
+    expect(document.getElementById('pomodoro-target-picker')).not.toBeNull();
+    el('pomodoro-target-picker-mask').click();
+    expect(document.getElementById('pomodoro-target-picker')).toBeNull();
+  });
+
+  it('右上角 ✕ 关闭选择器（不改变目标）', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    el('pomodoro-target').click();
+    el('pomodoro-target-picker-close').click();
+    expect(document.getElementById('pomodoro-target-picker')).toBeNull();
+    expect(el('pomodoro-target-label').textContent).toContain('选择目标');
   });
 
   it('备忘录 tab：只列未完成条目，点击选中并落盘（目标保留）', async () => {
@@ -187,6 +206,9 @@ describe('专注目标（任务关联，第一期）', () => {
     (document.querySelector('.pomodoro-target-item') as HTMLElement).click();
     expect(el('pomodoro-target-label').textContent).toContain('写季度报告');
     expect(el('pomodoro-target-clear').style.display).not.toBe('none');
+    // 选中后选择器必须关闭（防 popup 残留回归）
+    expect(document.getElementById('pomodoro-target-picker')).toBeNull();
+    expect(document.getElementById('pomodoro-target-picker-mask')).toBeNull();
     const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
     expect(raw.state.target).toEqual({ type: 'memo', id: 'm1', label: '写季度报告' });
   });
@@ -219,6 +241,7 @@ describe('专注目标（任务关联，第一期）', () => {
     expect(items.length).toBe(2);
     (document.querySelectorAll('.pomodoro-target-item')[0] as HTMLElement).click();
     expect(el('pomodoro-target-label').textContent).toContain('活着');
+    expect(document.getElementById('pomodoro-target-picker')).toBeNull();
     const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
     expect(raw.state.target).toEqual({ type: 'book', path: '书库/活着.md', label: '活着' });
   });
