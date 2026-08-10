@@ -7,7 +7,7 @@ import { notice, notify } from '../core/notice';
 import { escManager } from '../core/esc-manager';
 import { checkAndShowChangelog } from '../core/changelog';
 import { formatRelativeTime } from '../core/utils';
-import { getSettings, saveSettings } from '../core/settings-provider';
+import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
 import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, getTypeColor, getStarRating, TYPE_GROUPS, ALL_TAGS, getGroupForTag } from './constants';
 import { M, takeHomeFilmStatus } from './state';
@@ -113,7 +113,9 @@ export function renderAll(displayItems: any[], container: HTMLElement, app: App)
     } else if (item.status === STATUS_WATCHED) {
       if (item.rating !== null && item.rating > 0) {
         const stars = document.createElement('span');
-        stars.textContent = getStarRating(item.rating);
+        // 已看卡片评分显示（设置项 movieRatingDisplay：stars 星星串 / number ⭐数字）
+        const s = tryGetSettings() as any;
+        stars.textContent = s.movieRatingDisplay === 'number' ? `⭐${item.rating}` : getStarRating(item.rating);
         stars.style.cssText = 'font-size: 0.85rem;';
         statusContainer.appendChild(stars);
       }
@@ -1114,6 +1116,66 @@ export function createOverlay(app: App, statusType?: string): void {
               s.moviePageSize = v;
               await saveSettings();
             })
+          );
+        // ===== 默认视图（第 9 轮设置扩展） =====
+        new Setting(el).setHeading().setName('默认视图');
+        new Setting(el)
+          .setName('默认排序')
+          .setDesc('打开影视列表时的默认排序（重启生效）')
+          .addDropdown((dd) =>
+            dd
+              .addOption('date-desc', '日期↓')
+              .addOption('date-asc', '日期↑')
+              .addOption('rating-desc', '评分↓')
+              .addOption('rating-asc', '评分↑')
+              .addOption('name-asc', '名称A-Z')
+              .addOption('name-desc', '名称Z-A')
+              .setValue(s.movieDefaultSort || 'date-desc')
+              .onChange(async (v) => {
+                s.movieDefaultSort = v;
+                await saveSettings();
+              })
+          );
+        new Setting(el)
+          .setName('默认类型筛选')
+          .setDesc('打开影视列表时默认选中的类型（重启生效）')
+          .addDropdown((dd) => {
+            dd.addOption('', '全部');
+            for (const tag of ALL_TAGS) dd.addOption(tag, tag);
+            dd.setValue(s.movieDefaultTypeFilter || '').onChange(async (v) => {
+              s.movieDefaultTypeFilter = v;
+              await saveSettings();
+            });
+          });
+        new Setting(el)
+          .setName('默认状态筛选')
+          .setDesc('打开影视列表时默认选中的状态（重启生效）')
+          .addDropdown((dd) =>
+            dd
+              .addOption('全部', '全部')
+              .addOption('想看', '想看')
+              .addOption('在看', '在看')
+              .addOption('已看', '已看')
+              .setValue(s.movieDefaultStatusFilter || '全部')
+              .onChange(async (v) => {
+                s.movieDefaultStatusFilter = v;
+                await saveSettings();
+              })
+          );
+        // ===== 显示（第 9 轮设置扩展） =====
+        new Setting(el).setHeading().setName('显示');
+        new Setting(el)
+          .setName('已看卡片评分显示')
+          .setDesc('已看条目评分的显示方式：星星串或 ⭐数字')
+          .addDropdown((dd) =>
+            dd
+              .addOption('stars', '星星串')
+              .addOption('number', '⭐数字')
+              .setValue(s.movieRatingDisplay || 'stars')
+              .onChange(async (v) => {
+                s.movieRatingDisplay = v;
+                await saveSettings();
+              })
           );
         new Setting(el).setName('海报抓取').setDesc('影视海报与豆瓣信息抓取由独立脚本 @jwbz/obsidian-douban-poster 提供。');
       },
