@@ -256,6 +256,25 @@ describe('番茄钟弹窗', () => {
     expect(el('pomodoro-today').textContent).toContain('今日 2 个');
   });
 
+  it('点击遮罩关闭弹窗（计时后台继续，重开剩余正确）', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    el('pomodoro-btn-start').click();
+    await vi.advanceTimersByTimeAsync(2000); // 24:58
+    el('pomodoro-mask').click();
+    expect(document.getElementById('pomodoro-mask')).toBeNull();
+    await vi.advanceTimersByTimeAsync(3000); // 后台继续
+    await openPomodoro(app);
+    expect(el('pomodoro-time').textContent).toBe('24:55');
+  });
+
+  it('点击弹窗内部不关闭', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    el('pomodoro-popup').click();
+    expect(document.getElementById('pomodoro-mask')).not.toBeNull();
+  });
+
   it('恢复：数据文件运行中超时 → 打开自动流转并落盘', async () => {
     const vault = new MockVault();
     vault.files.set(
