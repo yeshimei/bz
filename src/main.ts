@@ -27,6 +27,7 @@ import { openMovieManager, addMovieItem, openMovieReport } from './movie';
 import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart } from './review';
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
+import { openPomodoro } from './pomodoro';
 // B站下载器启动命令（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
 import { openBiliDownloader } from './bili-downloader';
 import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setLauncherGestureSetter, LauncherModal } from './launcher';
@@ -87,6 +88,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 闪念
   { id: 'bz-flash-open', name: '闪念', icon: 'zap', callback: () => openFlashReference(getApp()) },
   { id: 'bz-flash-chat', name: '闪念对话', icon: 'message-circle', callback: () => openFlashChat(getApp()) },
+  // 番茄钟（ticket 26-32 新域）
+  { id: 'bz-pomodoro-open', name: '番茄钟', icon: 'timer', callback: () => openPomodoro(getApp()) },
   // B站下载器（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
   { id: 'bz-bili-open', name: 'B站下载器', icon: 'tv-minimal-play', callback: () => openBiliDownloader() },
 ];

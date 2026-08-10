@@ -89,7 +89,8 @@ function activePhase(phase: Phase): Phase {
 /** 超时重建最大流转步数（防 autoCycle 极端情况死循环） */
 const MAX_RECOVER_STEPS = 100;
 
-function phaseSec(phase: Phase, d: Durations): number {
+/** 阶段满时长（秒）——UI 进度条/默认显示共用 */
+export function phaseDurationSec(phase: Phase, d: Durations): number {
   if (phase === 'short-break') return d.shortBreakMin * 60;
   if (phase === 'long-break') return d.longBreakMin * 60;
   return d.workMin * 60;
@@ -103,7 +104,7 @@ function breakPhase(count: number, d: Durations): Phase {
 /** 从「未开始」态启动计时 */
 function startPhase(state: PomodoroState, phase: Phase, now: number, d: Durations): TransitionResult {
   return {
-    state: { ...state, phase, endTime: now + phaseSec(phase, d) * 1000, paused: false, remaining: 0 },
+    state: { ...state, phase, endTime: now + phaseDurationSec(phase, d) * 1000, paused: false, remaining: 0 },
     event: { type: 'started', phase },
   };
 }
@@ -141,7 +142,7 @@ function completePhase(state: PomodoroState, now: number, d: Durations, o: Pomod
   const res = autoStarted
     ? startPhase(nextState, next, now, d)
     : {
-        state: { ...nextState, endTime: null, paused: false, remaining: phaseSec(next, d) },
+        state: { ...nextState, endTime: null, paused: false, remaining: phaseDurationSec(next, d) },
         event: { type: 'none' as const },
       };
   return {
@@ -184,7 +185,7 @@ export function transition(state: PomodoroState, action: PomodoroAction, now: nu
     if (o.forceFocus && state.phase === 'focus') return { state, event: { type: 'none' } };
     const phase = activePhase(state.phase);
     return {
-      state: { ...state, phase, endTime: null, paused: false, remaining: phaseSec(phase, d) },
+      state: { ...state, phase, endTime: null, paused: false, remaining: phaseDurationSec(phase, d) },
       event: { type: 'none' },
     };
   }
@@ -195,7 +196,7 @@ export function transition(state: PomodoroState, action: PomodoroAction, now: nu
     if (phase === 'focus') next = o.autoSkipBreak ? 'focus' : breakPhase(state.cycleFocusCount, d);
     else next = 'focus';
     return {
-      state: { ...state, phase: next, endTime: null, paused: false, remaining: phaseSec(next, d) },
+      state: { ...state, phase: next, endTime: null, paused: false, remaining: phaseDurationSec(next, d) },
       event: { type: 'phase-completed', completedPhase: phase, nextPhase: next, autoStarted: false, longBreak: false },
     };
   }
