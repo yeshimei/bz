@@ -179,6 +179,18 @@ Feature: memo-suite-plugin
 51. 作为用户，我希望 TF-IDF 检索保留（「✅ TF-IDF 就绪（N 段）」状态提示，与向量检索协同），以便无 Ollama 时也能基础检索。
 52. 作为用户，我希望连接状态提示（✅ 远程 Ollama 已连接）与聊天界面（发送/··· 菜单、📚 🤖 按钮）与原脚本一致。
 
+### 番茄钟（Pomodoro，ticket 26 新域）
+
+1. 作为用户，我希望一条命令（`bz-pomodoro-open`「番茄钟」）打开中央弹窗，环形进度条 + 剩余 mm:ss 显示当前阶段，以便开始专注计时。
+2. 作为用户，我希望 11 个科学预设 + 自定义方案可选工作/短休/长休时长，以便匹配任务类型。
+3. 作为用户，我希望开始/暂停/重置/跳过控制计时；每 N 个专注（默认 4）后进入长休息，以便遵循番茄工作法节律。
+4. 作为用户，我希望四个开关（强制专注/自动循环/自动跳过休息/声音）按设置生效，以便按需定制行为。
+5. 作为用户，我希望关闭弹窗后计时后台继续、状态栏常驻「🍅 mm:ss」（空闲灰态，点击开弹窗），以便不中断计时。
+6. 作为用户，我希望阶段完成时收到 bz toast + Web Audio 提示音（可关），以便离开 Obsidian 也知道切换。
+7. 作为用户，我希望 Obsidian 重启自动恢复计时（含暂停态），关闭期间走完的阶段自动记为完成，以便意外关闭不丢进度。
+8. 作为用户，我希望完成历史只记自然完成的专注（跳过不计），弹窗内展示今日计数 + 近 7 天柱条，以便统计真实专注量。
+9. 作为用户，我希望设置经 ⚙️ 域设置弹窗调整（预设/时长/N/开关），以便就近定制。
+
 ### 全局
 
 46. 作为用户，我希望所有域的面板 DOM id/类名与原脚本一致，以便样式与既有习惯不变。
@@ -247,6 +259,7 @@ Feature: memo-suite-plugin
 - **复习计划**（9 个）：`bz-review-open`、`bz-review-start`、`bz-review-add`（添加当前笔记到复习）、`bz-review-remove`（移除当前笔记）、`bz-review-overdue`（跳转逾期）、`bz-review-rate`（评级对话框）、`bz-review-again`（忘了 Again）、`bz-review-hard`、`bz-review-good`、`bz-review-easy`
 - **做题家**：`bz-quiz-update`、`bz-quiz-open`
 - **闪念**：`bz-flash-open`（打开参考窗口）、`bz-flash-chat`（打开聊天窗口）
+- **番茄钟**（ticket 26 新域）：`bz-pomodoro-open`（中文名「番茄钟」，icon timer）
 - **日记本**（已迁）：`bz-diary-write`、`bz-diary-open`
 - **B站下载器**：`bz-bili-open`
 - 已删除命令：`bz-notification-demo`（通知样式演示）、`bz-diary-create-quote`（写摘抄）
@@ -297,8 +310,9 @@ Feature: memo-suite-plugin
 - **密码本**：passwordCharset、passwordLength、securityMode
 - **收藏本**：空弹窗（无设置项）
 - **书库**：libraryFolderPath、libraryNotePath、bookTag、showFileSize、showReadingTime、showHighlights、showThinks、showReview（showCategory 字段保留无 UI）
-- **影视**：movieFolderPath、moviePageSize（海报抓取仅文字提示）
+- **影视**（6 项）：movieFolderPath、moviePageSize（海报抓取仅文字提示）、movieDefaultSort（默认排序 date-desc/…/name-desc）、movieDefaultTypeFilter（默认类型筛选，空=全部）、movieDefaultStatusFilter（默认状态筛选 全部/想看/在看/已看）、movieRatingDisplay（已看卡片评分 stars/number）
 - **复习计划（含做题家）**：autoCheckInterval、enableAutoNotify + 做题家 5 项（enableMultipleChoice、questionsPerNote、shuffleQuestions、difficulty、forceQuizForReview）
+- **番茄钟（9 项）**：pomodoroPreset（12 档：11 预设+自定义）、pomodoroWorkMin/pomodoroShortBreakMin/pomodoroLongBreakMin（自定义时长，预设=自定义时动态显示）、pomodoroLongBreakInterval（N，默认 4）、pomodoroForceFocus（默认关）、pomodoroAutoCycle（默认关）、pomodoroAutoSkipBreak（默认关）、pomodoroSound（默认开）
 - **闪念（17 项全量，含 AI 项）**：OLLAMA_URL、EMBEDDING_MODEL、META_PATH、VEC_PATH、TOP_K、CHAT_TOP_K、CHUNK_MIN_LENGTH、ALLOW_PATHS、CONCURRENCY、CONTEXT_LIMIT、DEBOUNCE_DELAY、CURSOR_POLL_INTERVAL、OLLAMA_CHAT_MODEL、DEEPSEEK_MODEL、DEFAULT_USE_DEEPSEEK、MAX_HISTORY、OLLAMA_REMOTE_URL
 
 **筛选弹窗（🔀，非设置）**：影视「筛选与排序」（类型筛选+排序）、书库「视图与筛选」（分类筛选+视图）
@@ -433,7 +447,8 @@ Feature: memo-suite-plugin
 ## Out of Scope
 
 - **B站下载**：独立插件另行规划（源码调研已完成：child_process 机制、ffmpeg/whisper 集成已验证可行）
-- **QAI.js、写诗.js、工具箱.js、番茄钟.js、卢曼卡片笔记.js**：不在清单，本次不迁移
+- **QAI.js、写诗.js、工具箱.js、卢曼卡片笔记.js**：不在清单，本次不迁移
+- **番茄钟.js**：原脚本代码已丢失，按手册重建为新域（ticket 26，ADR-0012）——见「番茄钟（Pomodoro）」User Stories 节
 - **Dataview 渲染本身**：聚合讯生成的代码块由 Dataview 插件渲染，不测试/不实现渲染层
 - **日记本（diary-notebook）**：已交付，本次仅共享 core 演进时保持兼容（core 复制到 bz，暂不抽公共包）
 - **移动端**：不做移动端专项适配（原脚本亦无）
