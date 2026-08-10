@@ -73,6 +73,7 @@ function buildDOM(): void {
   document.body.appendChild(mask);
   document.body.appendChild(popup);
   mask.style.display = 'block';
+  popup.style.display = 'flex';
 
   // header
   const header = document.createElement('div');
