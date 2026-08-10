@@ -201,7 +201,7 @@ function injectStyles(): void {
   const style = document.createElement('style');
   style.setAttribute('data-pomodoro-styles', '');
   style.textContent = `
-    #pomodoro-mask { position: fixed; inset: 0; z-index: 10200; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; }
+    #pomodoro-mask { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.45); }
     #pomodoro-popup { width: 320px; padding: 24px; border-radius: 16px; background: var(--background-primary); box-shadow: 0 8px 40px rgba(0,0,0,0.3); text-align: center; position: relative; }
     #pomodoro-ring-svg { width: 160px; height: 160px; margin: 8px auto; display: block; }
     .pomodoro-ring-track { fill: none; stroke: var(--background-modifier-border); stroke-width: 8; }
@@ -319,6 +319,8 @@ function bindEvents(): void {
 function buildDOM(): void {
   const mask = document.createElement('div');
   mask.id = 'pomodoro-mask';
+  // 域主弹窗层级（password 先例 9998）：低于域设置弹窗 10030 与 Obsidian 设置页，⚙️ 弹窗可正常覆盖
+  mask.style.zIndex = '9998';
   mask.innerHTML = `
     <div id="pomodoro-popup">
       <button id="pomodoro-btn-settings" class="pomodoro-btn" title="设置">⚙️</button>
