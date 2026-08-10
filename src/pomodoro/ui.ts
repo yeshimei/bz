@@ -13,6 +13,7 @@ import { notice } from '../core/notice';
 import { openSettingsModal } from '../core/settings-modal';
 import { PomodoroDataManager } from './data';
 import { playSound } from './sound';
+import type { SoundKind } from './sound';
 import { syncPomodoroStatusBar } from './statusbar';
 import { todayCount, last7Days } from './stats';
 import { PRESETS, CUSTOM_PRESET_ID } from './config';
@@ -60,7 +61,7 @@ function phaseText(phase: Phase, count: number, d: Durations): string {
   return '🍅 番茄钟';
 }
 
-/** 阶段自然完成（有 historyEntry）→ toast + 提示音；skip 无 historyEntry 不通知 */
+/** 阶段自然完成（tick 驱动）→ toast（完成语义）+ 新阶段开始提示声；skip 无 historyEntry 不通知 */
 function notifyPhaseComplete(e: Extract<PomodoroEvent, { type: 'phase-completed' }>): void {
   const d = durations();
   if (e.completedPhase === 'focus') {
@@ -69,9 +70,12 @@ function notifyPhaseComplete(e: Extract<PomodoroEvent, { type: 'phase-completed'
   } else {
     notice('休息结束：开始专注', 'success');
   }
+  // 声音 = 新阶段开始提示（专注/短休/长休各一声，听声即知状态，无需打开弹窗）
   const s = tryGetSettings();
   if (s.pomodoroSound !== false) {
-    playSound(e.completedPhase === 'focus' ? 'focus-end' : 'break-end');
+    const kind: SoundKind =
+      e.nextPhase === 'focus' ? 'focus-start' : e.nextPhase === 'long-break' ? 'long-break-start' : 'short-break-start';
+    playSound(kind);
   }
 }
 

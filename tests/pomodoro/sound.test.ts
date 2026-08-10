@@ -1,6 +1,7 @@
 // @vitest-environment node
 /**
- * 番茄钟提示音测试（ticket 29）：Web Audio 蜂鸣——专注结束低音 3 响、休息结束高音 2 响。
+ * 番茄钟提示音测试（ticket 29 修订 2026-08-10）：阶段开始提示声——
+ * 专注开始 880Hz 一声 / 短休开始 523Hz 一声 / 长休开始 392Hz 一声（听声即知状态，无需打开弹窗）。
  * AudioContext mock 断言调用（无 AudioContext 环境静默降级）。
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
@@ -42,25 +43,31 @@ afterEach(() => {
   delete (globalThis as any).webkitAudioContext;
 });
 
-describe('playSound', () => {
-  it('专注结束：低音 3 响（220Hz × 3 个 oscillator）', () => {
+describe('playSound（阶段开始提示声，各一声）', () => {
+  it('专注开始：高音 880Hz 一声', () => {
     const ctx = mockAudio();
-    playSound('focus-end');
-    expect(ctx.createOscillator).toHaveBeenCalledTimes(3);
-    const osc = ctx.createOscillator.mock.results[0].value as FakeOscillator;
-    expect(osc.frequency.value).toBe(220);
+    playSound('focus-start');
+    expect(ctx.createOscillator).toHaveBeenCalledTimes(1);
+    expect(ctx.createOscillator.mock.results[0].value.frequency.value).toBe(880);
   });
 
-  it('休息结束：高音 2 响（440Hz × 2 个 oscillator）', () => {
+  it('短休开始：中音 523Hz 一声', () => {
     const ctx = mockAudio();
-    playSound('break-end');
-    expect(ctx.createOscillator).toHaveBeenCalledTimes(2);
-    const osc = ctx.createOscillator.mock.results[0].value as FakeOscillator;
-    expect(osc.frequency.value).toBe(440);
+    playSound('short-break-start');
+    expect(ctx.createOscillator).toHaveBeenCalledTimes(1);
+    expect(ctx.createOscillator.mock.results[0].value.frequency.value).toBe(523);
+  });
+
+  it('长休开始：低音 392Hz 一声', () => {
+    const ctx = mockAudio();
+    playSound('long-break-start');
+    expect(ctx.createOscillator).toHaveBeenCalledTimes(1);
+    expect(ctx.createOscillator.mock.results[0].value.frequency.value).toBe(392);
   });
 
   it('无 AudioContext（非浏览器环境）静默不抛', () => {
-    expect(() => playSound('focus-end')).not.toThrow();
-    expect(() => playSound('break-end')).not.toThrow();
+    expect(() => playSound('focus-start')).not.toThrow();
+    expect(() => playSound('short-break-start')).not.toThrow();
+    expect(() => playSound('long-break-start')).not.toThrow();
   });
 });
