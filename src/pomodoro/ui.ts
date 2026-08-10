@@ -11,6 +11,7 @@ import { notice } from '../core/notice';
 import { PomodoroDataManager } from './data';
 import { playSound } from './sound';
 import { syncPomodoroStatusBar } from './statusbar';
+import { todayCount, last7Days } from './stats';
 import type { PomodoroState, HistoryEntry, Durations, PomodoroOptions, Phase, PomodoroAction, PomodoroEvent } from './state';
 import { transition, recover, createInitialState, DEFAULT_DURATIONS, phaseDurationSec } from './state';
 
@@ -72,6 +73,39 @@ function fmt(sec: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+/** 历史统计区：今日计数 + 近 7 天柱条（ticket 30）；同日同计数跳过重建（防 tick 每秒 DOM churn） */
+let lastStatsKey = '';
+function renderStats(): void {
+  const now = Date.now();
+  const todayEl = document.getElementById('pomodoro-today');
+  if (todayEl) todayEl.textContent = `今日 ${todayCount(history, now)} 个 🍅`;
+  const weekEl = document.getElementById('pomodoro-week');
+  if (!weekEl) return;
+  const days = last7Days(history, now);
+  const key = days.map((d) => `${d.date}:${d.count}`).join(',');
+  if (key === lastStatsKey) return;
+  lastStatsKey = key;
+  const max = Math.max(1, ...days.map((d) => d.count));
+  weekEl.innerHTML = '';
+  for (const d of days) {
+    const bar = document.createElement('div');
+    bar.className = 'pomodoro-stat-day';
+    bar.title = `${d.date}：${d.count} 个`;
+    const col = document.createElement('div');
+    col.className = 'pomodoro-stat-col';
+    const h = document.createElement('div');
+    h.className = 'pomodoro-stat-bar';
+    h.style.height = `${Math.max(2, Math.round((d.count / max) * 40))}px`;
+    col.appendChild(h);
+    const label = document.createElement('span');
+    label.className = 'pomodoro-stat-label';
+    label.textContent = d.date.slice(5); // MM-DD
+    col.appendChild(label);
+    bar.appendChild(col);
+    weekEl.appendChild(bar);
+  }
+}
+
 function render(): void {
   const d = durations();
   const remain = remainingSec();
@@ -91,6 +125,7 @@ function render(): void {
   if (phaseEl) phaseEl.textContent = phaseText(state.phase, state.cycleFocusCount, d);
   const timeEl = document.getElementById('pomodoro-time');
   if (timeEl) timeEl.textContent = fmt(remain);
+  renderStats();
   const startBtn = document.getElementById('pomodoro-btn-start') as HTMLButtonElement | null;
   if (startBtn) {
     const running = state.endTime !== null;
@@ -166,6 +201,13 @@ function injectStyles(): void {
     .pomodoro-btn-primary { background: var(--interactive-accent); color: var(--text-on-accent); }
     .pomodoro-btn-primary:hover:not(:disabled) { background: var(--interactive-accent-hover); }
     #pomodoro-btn-settings { position: absolute; top: 12px; right: 12px; padding: 4px 8px; }
+    .pomodoro-stats { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--background-modifier-border); }
+    #pomodoro-today { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+    .pomodoro-week { display: flex; gap: 6px; justify-content: center; align-items: flex-end; }
+    .pomodoro-stat-day { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .pomodoro-stat-col { display: flex; align-items: flex-end; height: 40px; }
+    .pomodoro-stat-bar { width: 10px; border-radius: 3px 3px 0 0; background: var(--interactive-accent); min-height: 2px; }
+    .pomodoro-stat-label { font-size: 9px; color: var(--text-faint); }
   `;
   document.head.appendChild(style);
 }
@@ -194,6 +236,10 @@ function buildDOM(): void {
         <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary">开始</button>
         <button id="pomodoro-btn-reset" class="pomodoro-btn">重置</button>
         <button id="pomodoro-btn-skip" class="pomodoro-btn">跳过</button>
+      </div>
+      <div class="pomodoro-stats">
+        <div id="pomodoro-today"></div>
+        <div id="pomodoro-week" class="pomodoro-week"></div>
       </div>
     </div>`;
   document.body.appendChild(mask);
@@ -239,6 +285,7 @@ export function unloadPomodoro(): void {
   if (style) style.remove();
   state = createInitialState();
   history = [];
+  lastStatsKey = '';
   dataManager = null;
   loaded = false;
 }
