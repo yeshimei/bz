@@ -51,6 +51,7 @@ describe('黑匣子录入弹窗', () => {
     const { app } = setup();
     openBlackBoxCapture(app);
     expect(document.getElementById('bz-blackbox-capture-mask')).toBeTruthy();
+    expect(document.getElementById('bz-blackbox-capture-popup')!.style.display).toBe('flex');
     expect(document.getElementById('bz-blackbox-material')).toBeTruthy();
     expect(document.getElementById('bz-blackbox-feeling')).toBeTruthy();
     expect(document.querySelectorAll('.bz-blackbox-chip').length).toBe(24);
