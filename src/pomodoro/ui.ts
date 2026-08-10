@@ -32,6 +32,7 @@ let escHandle: { unregister: () => void } | null = null;
 let timerId: number | null = null;
 let appRef: App | null = null;
 let pickerMask: HTMLElement | null = null;
+let pickerPopupEl: HTMLElement | null = null;
 let pickerEsc: { unregister: () => void } | null = null;
 
 /** 备忘录数据文件路径（storagePath 优先，todoFilePath 兼容兜底）——目标选择器读取 */
@@ -269,8 +270,6 @@ function injectStyles(): void {
     .pomodoro-book { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
     .pomodoro-target-note { padding: 10px; font-size: 13px; display: flex; align-items: center; gap: 10px; }
     .pomodoro-target-note button { padding: 4px 12px; border-radius: 8px; background: var(--interactive-accent); color: var(--text-on-accent); cursor: pointer; font-size: 13px; }
-    #pomodoro-target-picker-clear { padding: 4px 12px; border-radius: 8px; background: none; color: var(--text-muted); cursor: pointer; font-size: 13px; }
-    #pomodoro-target-picker-clear:hover { background: var(--background-modifier-hover); }
     .pomodoro-stats { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--background-modifier-border); }
     #pomodoro-today { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
     .pomodoro-week { display: flex; gap: 6px; justify-content: center; align-items: flex-end; }
@@ -487,6 +486,11 @@ function closeTargetPicker(): void {
     pickerMask.remove();
     pickerMask = null;
   }
+  // mask 与 popup 是 body 下兄弟元素（createOverlay），必须同时移除——否则 popup 残留盖屏拦截点击
+  if (pickerPopupEl) {
+    pickerPopupEl.remove();
+    pickerPopupEl = null;
+  }
   if (pickerEsc) {
     pickerEsc.unregister();
     pickerEsc = null;
@@ -502,28 +506,26 @@ function openTargetPicker(): void {
     onMaskClick: closeTargetPicker,
   });
   popup.innerHTML = `
-    <div style="padding:14px 16px;border-bottom:1px solid var(--background-modifier-border);font-size:15px;font-weight:600;">选择专注目标</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--background-modifier-border);font-size:15px;font-weight:600;">
+      <span>选择专注目标</span>
+      <button id="pomodoro-target-picker-close" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--text-muted);padding:0 4px;">✕</button>
+    </div>
     <div class="pomodoro-target-tabs">
       <button class="pomodoro-target-tab" data-tab="memo">📝 备忘录</button>
       <button class="pomodoro-target-tab" data-tab="note">📄 当前笔记</button>
       <button class="pomodoro-target-tab" data-tab="book">📚 书库</button>
     </div>
-    <div id="pomodoro-target-list" style="padding:8px 12px;max-height:50vh;overflow-y:auto;"></div>
-    <div style="padding:10px 16px;border-top:1px solid var(--background-modifier-border);">
-      <button id="pomodoro-target-picker-clear">不使用目标</button>
-    </div>`;
+    <div id="pomodoro-target-list" style="padding:8px 12px;max-height:50vh;overflow-y:auto;"></div>`;
   popup.querySelectorAll('.pomodoro-target-tab').forEach((b) => {
     b.addEventListener('click', () => switchTab((b as HTMLElement).dataset.tab || 'memo'));
   });
-  popup.querySelector('#pomodoro-target-picker-clear')!.addEventListener('click', () => {
-    clearTarget();
-    closeTargetPicker();
-  });
+  popup.querySelector('#pomodoro-target-picker-close')!.addEventListener('click', closeTargetPicker);
   document.body.appendChild(mask);
   document.body.appendChild(popup);
   mask.style.display = 'block';
   popup.style.display = 'flex';
   pickerMask = mask;
+  pickerPopupEl = popup;
   pickerEsc = escManager.register('pomodoro-target-picker', {
     isVisible: () => pickerMask !== null,
     close: closeTargetPicker,
