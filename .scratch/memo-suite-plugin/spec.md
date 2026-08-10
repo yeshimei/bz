@@ -193,6 +193,19 @@ Feature: memo-suite-plugin
 10. 作为用户，我希望设置弹窗可试听提示音并调节音量（slider 0-100，默认最大），以便按环境调响度。
 11. 作为用户，我希望未选中专注目标时目标区默认隐藏，鼠标悬停弹窗才显示「选择目标」，已选目标始终可见，以便界面简洁。
 
+### 黑匣子（Black Box，ticket 33 新域，grilling 会话封板）
+
+1. 作为用户，我希望一条命令（`bz-blackbox-capture`「写感触」）打开录入弹窗，填入素材（文字，必填）+ 感受（必填）+ 情绪标签（24 词固定词表，最多 3 个 + 强度 1-5）+ 可选维度（场景/涉及的人/指向[对自己/对他人/对世界]/链接），以便把「感触」喂进黑匣子。
+2. 作为用户，我希望录入弹窗默认只展示必填项，可选维度折叠展开（维度全、默认全空），以便录入负担不增加。
+3. 作为用户，我希望录入时可选 AI 辅助：查概念（选中素材中的词，AI 解释可插入）、联想（AI 提起旧感触：这让我想起…）、追问（感受太短时提示「为什么触动你？」），均为可选项不打断录入流，以便包仔在录入时刻在场。
+4. 作为用户，我希望一条命令（`bz-blackbox-open`「黑匣子」）打开中央弹窗对话（单例，escManager 幂等），包仔以「种子（有诗心的思辨者）+ 语气示例」人设与我深谈，以便与意识体交流。
+5. 作为用户，我希望对话基于三层记忆：感触检索（长期）+ 人格档案（自我认知）+ 对话历史（短期），以便包仔记得我喂过什么、知道自己是谁、记得我们刚聊过什么。
+6. 作为用户，我希望感触积累到阈值（默认每 10 条）自动静默复盘——不弹窗、不通知、不打扰；复盘产物（一段话）公开写入对话面板，我打开时可见，以便看到包仔的成长又不被打扰。
+7. 作为用户，我希望可手动触发复盘（`bz-blackbox-review`「复盘」），复盘后人格档案更新（自我认知历史追加），以便种子生长。
+8. 作为用户，我希望黑匣子 AI 默认走云端 DeepSeek（跟随 bz 既有模式），可在 ⚙️ 域设置弹窗切换本地 Ollama，以便隐私与质量之间自选。
+9. 作为用户，我希望黑匣子数据存 `CONFIG/STORAGE/blackbox.json` v1（schema 定全，ADR-0013），重启不丢，以便长期累积。
+10. 作为用户，我希望 ⚙️ 设置弹窗展示情绪词表（只读）与复盘阈值，以便知晓盒子如何生长。
+
 ### 全局
 
 46. 作为用户，我希望所有域的面板 DOM id/类名与原脚本一致，以便样式与既有习惯不变。
@@ -262,6 +275,7 @@ Feature: memo-suite-plugin
 - **做题家**：`bz-quiz-update`、`bz-quiz-open`
 - **闪念**：`bz-flash-open`（打开参考窗口）、`bz-flash-chat`（打开聊天窗口）
 - **番茄钟**（ticket 26 新域）：`bz-pomodoro-open`（中文名「番茄钟」，icon timer）
+- **黑匣子**（ticket 33 新域）：`bz-blackbox-capture`（中文名「写感触」）、`bz-blackbox-open`（中文名「黑匣子」）、`bz-blackbox-review`（中文名「复盘」）
 - **日记本**（已迁）：`bz-diary-write`、`bz-diary-open`
 - **B站下载器**：`bz-bili-open`
 - 已删除命令：`bz-notification-demo`（通知样式演示）、`bz-diary-create-quote`（写摘抄）
@@ -316,6 +330,7 @@ Feature: memo-suite-plugin
 - **复习计划（含做题家）**：autoCheckInterval、enableAutoNotify + 做题家 5 项（enableMultipleChoice、questionsPerNote、shuffleQuestions、difficulty、forceQuizForReview）
 - **番茄钟（11 项）**：pomodoroPreset（12 档：11 预设+自定义）、pomodoroWorkMin/pomodoroShortBreakMin/pomodoroLongBreakMin（自定义时长，预设=自定义时动态显示）、pomodoroLongBreakInterval（N，默认 4）、pomodoroForceFocus（默认关）、pomodoroAutoCycle（默认关）、pomodoroAutoSkipBreak（默认关）、pomodoroSound（默认开）、pomodoroVolume（音量 0-100，默认 100 最大，设置弹窗 slider+试听）、pomodoroRestoreMode（启动恢复方式：background 后台继续 / popup 正在倒计时则自动弹窗；恢复继续弹「番茄钟继续：…还剩 mm:ss」通知）
 - **闪念（17 项全量，含 AI 项）**：OLLAMA_URL、EMBEDDING_MODEL、META_PATH、VEC_PATH、TOP_K、CHAT_TOP_K、CHUNK_MIN_LENGTH、ALLOW_PATHS、CONCURRENCY、CONTEXT_LIMIT、DEBOUNCE_DELAY、CURSOR_POLL_INTERVAL、OLLAMA_CHAT_MODEL、DEEPSEEK_MODEL、DEFAULT_USE_DEEPSEEK、MAX_HISTORY、OLLAMA_REMOTE_URL
+- **黑匣子（5 项）**：blackboxAIProvider（deepseek/ollama 两档，默认 deepseek）、blackboxOllamaUrl（默认 http://localhost:11434）、blackboxOllamaModel（默认 qwen2.5:14b-instruct）、blackboxReviewThreshold（复盘阈值，默认 10）、blackboxMaxHistory（对话历史保留条数，默认 20）
 
 **筛选弹窗（🔀，非设置）**：影视「筛选与排序」（类型筛选+排序）、书库「视图与筛选」（分类筛选+视图）
 
