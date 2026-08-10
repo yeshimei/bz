@@ -88,8 +88,14 @@ function notifyPhaseComplete(e: Extract<PomodoroEvent, { type: 'phase-completed'
   if (s.pomodoroSound !== false) {
     const kind: SoundKind =
       e.nextPhase === 'focus' ? 'focus-start' : e.nextPhase === 'long-break' ? 'long-break-start' : 'short-break-start';
-    playSound(kind);
+    playSound(kind, pomodoroVolume());
   }
+}
+
+/** 提示音音量（0-100，默认最大；旧设置无字段 → 100） */
+function pomodoroVolume(): number {
+  const v = tryGetSettings().pomodoroVolume;
+  return typeof v === 'number' && v >= 0 ? v : 100;
 }
 
 /** 剩余秒（运行中按 endTime 实时算；暂停/停止取 remaining；idle 显示满时长） */
@@ -172,10 +178,12 @@ function render(): void {
         labelEl.textContent = `🎯 ${state.target.label}`;
         clearEl.style.display = '';
         targetEl.classList.remove('pomodoro-target-empty');
+        targetEl.classList.remove('pomodoro-target-hidden'); // 选中后始终显示
       } else {
         labelEl.textContent = '🎯 选择目标';
         clearEl.style.display = 'none';
         targetEl.classList.add('pomodoro-target-empty');
+        // hidden 由 hover 管理（mouseenter/mouseleave 切换），render 不干预
       }
     }
   }
@@ -260,6 +268,7 @@ function injectStyles(): void {
     .pomodoro-target { margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border: 1px solid var(--background-modifier-border); border-radius: 12px; font-size: 13px; cursor: pointer; }
     .pomodoro-target:hover { border-color: var(--interactive-accent); }
     .pomodoro-target-empty { color: var(--text-faint); }
+    .pomodoro-target-hidden { opacity: 0; pointer-events: none; }
     .pomodoro-target-clear { color: var(--text-muted); padding: 0 2px; }
     .pomodoro-target-clear:hover { color: var(--text-error); }
     .pomodoro-target-tabs { display: flex; gap: 4px; padding: 8px 12px 0; }
@@ -281,7 +290,7 @@ function injectStyles(): void {
   document.head.appendChild(style);
 }
 
-/** ⚙️ 番茄钟设置弹窗（ADR-0009：9 项，复用 core/settings-modal） */
+/** ⚙️ 番茄钟设置弹窗（ADR-0009：11 项，复用 core/settings-modal） */
 function openPomodoroSettings(): void {
   openSettingsModal({
     title: '番茄钟设置',
@@ -359,6 +368,23 @@ function openPomodoroSettings(): void {
       toggleSetting('自动跳过休息', '专注结束后立即开始下一专注（连续工作）', () => !!s.pomodoroAutoSkipBreak, (v) => (s.pomodoroAutoSkipBreak = v));
       toggleSetting('声音提醒', '阶段完成时的提示音', () => s.pomodoroSound !== false, (v) => (s.pomodoroSound = v));
       new Setting(el)
+        .setName('音量')
+        .setDesc('提示音大小（默认最大）')
+        .addSlider((sl) => {
+          sl.setLimits(0, 100, 5)
+            .setValue(s.pomodoroVolume ?? 100)
+            .setDynamicTooltip();
+          sl.onChange(async (v) => {
+            s.pomodoroVolume = v;
+            await saveSettings();
+          });
+        })
+        .addButton((b) =>
+          b.setButtonText('试听').onClick(() => {
+            playSound('focus-start', s.pomodoroVolume ?? 100);
+          })
+        );
+      new Setting(el)
         .setName('打开时恢复方式')
         .setDesc('Obsidian 启动时若正在倒计时：后台继续（状态栏可见）或自动弹窗提醒')
         .addDropdown((dd) => {
@@ -386,8 +412,16 @@ function bindEvents(): void {
   setIcon(settingsBtn, 'gear'); // Obsidian 原生 lucide 图标（与状态栏/命令一致）
   settingsBtn.addEventListener('click', openPomodoroSettings);
   const popup = document.getElementById('pomodoro-popup')!;
-  popup.addEventListener('mouseenter', () => settingsBtn.classList.remove('pomodoro-settings-hidden'));
-  popup.addEventListener('mouseleave', () => settingsBtn.classList.add('pomodoro-settings-hidden'));
+  const targetEl = document.getElementById('pomodoro-target')!;
+  // 幽灵入口：默认隐藏，hover 面板才显示（设置按钮 + 未选中的目标区）
+  popup.addEventListener('mouseenter', () => {
+    settingsBtn.classList.remove('pomodoro-settings-hidden');
+    if (!state.target) targetEl.classList.remove('pomodoro-target-hidden');
+  });
+  popup.addEventListener('mouseleave', () => {
+    settingsBtn.classList.add('pomodoro-settings-hidden');
+    if (!state.target) targetEl.classList.add('pomodoro-target-hidden');
+  });
   // 目标区：点击换目标，✕ 清除
   document.getElementById('pomodoro-target')!.addEventListener('click', openTargetPicker);
   document.getElementById('pomodoro-target-clear')!.addEventListener('click', (e) => {
@@ -404,7 +438,7 @@ function buildDOM(): void {
   mask.innerHTML = `
     <div id="pomodoro-popup">
       <button id="pomodoro-btn-settings" class="pomodoro-btn" title="设置"></button>
-      <div id="pomodoro-target" class="pomodoro-target pomodoro-target-empty" title="选择专注目标">
+      <div id="pomodoro-target" class="pomodoro-target pomodoro-target-empty pomodoro-target-hidden" title="选择专注目标">
         <span id="pomodoro-target-label"></span>
         <span id="pomodoro-target-clear" class="pomodoro-target-clear">✕</span>
       </div>

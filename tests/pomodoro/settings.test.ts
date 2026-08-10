@@ -36,7 +36,7 @@ function itemByName(name: string): any {
 }
 
 describe('settings 结构', () => {
-  it('DEFAULT_SETTINGS 含番茄钟 9 项（ticket 31 默认值包）', () => {
+  it('DEFAULT_SETTINGS 含番茄钟 10 项（ticket 31 默认值包 + 音量默认最大）', () => {
     const s = DEFAULT_SETTINGS as any;
     expect(s.pomodoroPreset).toBe('classic');
     expect(s.pomodoroWorkMin).toBe('25');
@@ -47,6 +47,7 @@ describe('settings 结构', () => {
     expect(s.pomodoroAutoCycle).toBe(false);
     expect(s.pomodoroAutoSkipBreak).toBe(false);
     expect(s.pomodoroSound).toBe(true);
+    expect(s.pomodoroVolume).toBe(100); // 默认音量最大
   });
 
   it('PRESETS 11 预设（手册表）+ custom 标识', () => {
@@ -74,16 +75,17 @@ describe('⚙️ 设置弹窗', () => {
     vi.useRealTimers();
   });
 
-  it('打开设置弹窗：10 个设置项（9 项 + 恢复方式）', async () => {
+  it('打开设置弹窗：11 个设置项（10 项 + 音量）', async () => {
     const settings = { ...DEFAULT_SETTINGS } as any;
     const { app } = setup(settings);
     await openPomodoro(app);
     el('pomodoro-btn-settings').click();
     expect(el('bz-settings-modal-popup')).not.toBeNull();
-    expect(document.querySelectorAll('#bz-settings-modal-popup .setting-item').length).toBe(10);
+    expect(document.querySelectorAll('#bz-settings-modal-popup .setting-item').length).toBe(11);
     expect(itemByName('预设方案')).not.toBeUndefined();
     expect(itemByName('长休息间隔')).not.toBeUndefined();
     expect(itemByName('声音提醒')).not.toBeUndefined();
+    expect(itemByName('音量')).not.toBeUndefined();
     expect(itemByName('打开时恢复方式')).not.toBeUndefined();
   });
 
@@ -129,6 +131,44 @@ describe('⚙️ 设置弹窗', () => {
     toggle.trigger(true);
     expect(settings.pomodoroAutoCycle).toBe(true);
     expect(saves.length).toBe(2);
+  });
+
+  it('音量：slider 默认 100（旧数据无字段也最大），调节即保存；试听按当前音量播放', async () => {
+    const settings = {} as any; // 旧设置无音量字段
+    const { app, saves } = setup(settings);
+    await openPomodoro(app);
+    el('pomodoro-btn-settings').click();
+    const row = itemByName('音量');
+    expect(row).not.toBeUndefined();
+    const controls = row.__setting.controls;
+    const slider = controls[0];
+    const btn = controls[1];
+    expect(btn.text).toBe('试听');
+    expect(slider.value).toBe(100); // 默认最大
+    slider.trigger(60);
+    expect(settings.pomodoroVolume).toBe(60);
+    expect(saves.length).toBe(1);
+    // 试听：mock AudioContext 捕获峰值音量 = 0.4 * 60%
+    const ramps: number[] = [];
+    (window as any).AudioContext = class {
+      currentTime = 0;
+      destination = {};
+      createOscillator() {
+        return { type: '', frequency: { value: 0 }, connect() {}, start() {}, stop() {} };
+      }
+      createGain() {
+        return {
+          gain: { setValueAtTime() {}, exponentialRampToValueAtTime(v: number) { ramps.push(v); } },
+          connect() {},
+        };
+      }
+      close() {
+        return Promise.resolve();
+      }
+    };
+    btn.trigger();
+    expect(ramps[0]).toBeCloseTo(0.24); // 峰值 = 0.4 × 60%
+    delete (window as any).AudioContext;
   });
 
   it('恢复方式下拉：background 默认 + popup 选项 + 保存', async () => {

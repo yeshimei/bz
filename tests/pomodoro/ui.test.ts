@@ -253,6 +253,33 @@ describe('专注目标（任务关联，第一期）', () => {
     expect(raw.state.target).toEqual({ type: 'book', path: '书库/活着.md', label: '活着' });
   });
 
+  it('目标区幽灵模式：未选中默认隐藏，hover 弹窗显示', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    const target = el('pomodoro-target');
+    expect(target.classList.contains('pomodoro-target-hidden')).toBe(true); // 未选中：默认隐藏
+    const popup = el('pomodoro-popup');
+    popup.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+    expect(target.classList.contains('pomodoro-target-hidden')).toBe(false); // hover 显示
+    popup.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
+    expect(target.classList.contains('pomodoro-target-hidden')).toBe(true); // 移出再隐藏
+  });
+
+  it('已选中目标 → 始终显示（hover 不隐藏）', async () => {
+    const vault = new MockVault();
+    vault.files.set('CONFIG/STORAGE/memo.json', MEMO_JSON([memoItem('m1', '写季度报告', null)]));
+    const { app } = setup(vault);
+    await openPomodoro(app);
+    el('pomodoro-target').click();
+    await vi.advanceTimersByTimeAsync(10);
+    (document.querySelector('.pomodoro-target-item') as HTMLElement).click();
+    const target = el('pomodoro-target');
+    expect(target.classList.contains('pomodoro-target-hidden')).toBe(false); // 选中后始终可见
+    const popup = el('pomodoro-popup');
+    popup.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
+    expect(target.classList.contains('pomodoro-target-hidden')).toBe(false); // 移出不隐藏
+  });
+
   it('✕ 清除目标 → 回「选择目标」且 state.target 置空', async () => {
     const vault = new MockVault();
     vault.files.set('CONFIG/STORAGE/memo.json', MEMO_JSON([memoItem('m1', '写季度报告', null)]));

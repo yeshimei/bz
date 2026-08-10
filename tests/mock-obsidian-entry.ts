@@ -193,6 +193,32 @@ export class MockButton {
     if (this.cb) this.cb();
   }
 }
+
+export class MockSlider {
+  value = 0;
+  limits: [number, number, number] = [0, 100, 1];
+  private cb: ((v: number) => void) | null = null;
+  setLimits(min: number, max: number, step: number): this {
+    this.limits = [min, max, step];
+    return this;
+  }
+  setValue(v: number): this {
+    this.value = v;
+    return this;
+  }
+  setDynamicTooltip(): this {
+    return this;
+  }
+  onChange(cb: (v: number) => void): this {
+    this.cb = cb;
+    return this;
+  }
+  /** 测试辅助：模拟拖动 */
+  trigger(v: number) {
+    this.value = v;
+    if (this.cb) void this.cb(v);
+  }
+}
 export class Setting {
   containerEl: HTMLElement;
   settingEl: HTMLElement;
@@ -248,6 +274,12 @@ export class Setting {
     const b = new MockButton();
     cb(b);
     this.controls.push(b);
+    return this;
+  }
+  addSlider(cb: (sl: MockSlider) => void): this {
+    const sl = new MockSlider();
+    cb(sl);
+    this.controls.push(sl);
     return this;
   }
 }
