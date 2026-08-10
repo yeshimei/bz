@@ -17,6 +17,7 @@ import type { Direction, Impression } from './types';
 let appRef: App | null = null;
 let dataManager: BlackBoxDataManager | null = null;
 let maskEl: HTMLElement | null = null;
+let popupEl: HTMLElement | null = null;
 let escHandle: { unregister: () => void } | null = null;
 
 /** 表单状态（弹窗内实时） */
@@ -43,9 +44,14 @@ export function openBlackBoxCapture(app: App): void {
 }
 
 export function closeBlackBoxCapture(): void {
+  // mask 与 popup 是 body 下兄弟元素（createOverlay），必须同时移除——否则 popup 残留盖屏拦截点击
   if (maskEl) {
     maskEl.remove();
     maskEl = null;
+  }
+  if (popupEl) {
+    popupEl.remove();
+    popupEl = null;
   }
   if (escHandle) {
     escHandle.unregister();
@@ -70,6 +76,7 @@ function buildDOM(): void {
     onMaskClick: () => closeBlackBoxCapture(),
   });
   maskEl = mask;
+  popupEl = popup;
   document.body.appendChild(mask);
   document.body.appendChild(popup);
   mask.style.display = 'block';
@@ -366,16 +373,19 @@ async function runAssist(kind: 'ask' | 'recall'): Promise<void> {
     const ai = new BlackBoxAI();
     const data = await manager(appRef).load();
     const reply = await ai.assist(kind, input, data.impressions);
+    if (!maskEl) return; // 弹窗已在 AI 调用期间关闭，放弃写入
     const append = document.createElement('button');
     append.className = 'bz-blackbox-ai-append';
     append.textContent = '加入感受';
     append.addEventListener('click', () => {
       const f = document.getElementById('bz-blackbox-feeling') as HTMLTextAreaElement;
+      if (!f) return; // 弹窗已关闭
       f.value = (f.value ? f.value + '\n' : '') + `「${reply}」`;
       f.focus();
     });
     showAiResult(`<div class="bz-blackbox-ai-msg">${escapeHtml(reply)}</div>`);
-    document.getElementById('bz-blackbox-ai-result')!.appendChild(append);
+    const resultEl = document.getElementById('bz-blackbox-ai-result');
+    if (resultEl) resultEl.appendChild(append);
   } catch (e) {
     if (kind === 'ask') {
       fallbackIdx += 1;
@@ -409,7 +419,7 @@ function openConceptInput(): void {
   el.append(input, go);
   input.focus();
   input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.isComposing) {
       const term = input.value.trim();
       if (term) void runConcept(term);
     }
@@ -422,16 +432,19 @@ async function runConcept(term: string): Promise<void> {
   try {
     const ai = new BlackBoxAI();
     const reply = await ai.assist('concept', term);
+    if (!maskEl) return; // 弹窗已在 AI 调用期间关闭，放弃写入
     const append = document.createElement('button');
     append.className = 'bz-blackbox-ai-append';
     append.textContent = '加入素材';
     append.addEventListener('click', () => {
       const m = document.getElementById('bz-blackbox-material') as HTMLTextAreaElement;
+      if (!m) return; // 弹窗已关闭
       m.value = (m.value ? m.value + '\n' : '') + `📎 ${term}：${reply}`;
       m.focus();
     });
     showAiResult(`<div class="bz-blackbox-ai-msg">📎 <b>${escapeHtml(term)}</b>：${escapeHtml(reply)}</div>`);
-    document.getElementById('bz-blackbox-ai-result')!.appendChild(append);
+    const resultEl = document.getElementById('bz-blackbox-ai-result');
+    if (resultEl) resultEl.appendChild(append);
   } catch (e) {
     notice('❌ 查询失败：AI 暂时无法说话', 'error');
   } finally {

@@ -141,12 +141,99 @@ describe('黑匣子对话面板', () => {
     expect(hasNotice(/先写几条感触/)).toBe(true);
   });
 
+  it('发送时重载最新数据：面板快照期间外部新增的感触不被覆盖', async () => {
+    mockOllama('回复');
+    const vault = new MockVault();
+    seedVault(vault); // 3 条感触
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxChat(app);
+    // 模拟面板开着时经「写感触」录入了第 4 条（直接改文件）
+    const raw = JSON.parse(vault.files.get(getBlackBoxFilePath())!);
+    raw.impressions.push({
+      id: 'i4', ts: 't9', material: '新录入的感触', feeling: '不该被覆盖',
+      emotions: [], scene: '', people: '', direction: '', links: [],
+    });
+    vault.files.set(getBlackBoxFilePath(), JSON.stringify(raw));
+    // 面板内发消息
+    const input = document.getElementById('bz-blackbox-chat-input') as HTMLTextAreaElement;
+    input.value = '你好';
+    (document.getElementById('bz-blackbox-chat-send') as HTMLButtonElement).click();
+    await new Promise((r) => setTimeout(r, 30));
+    const saved = JSON.parse(vault.files.get(getBlackBoxFilePath())!);
+    expect(saved.impressions.length).toBe(4); // 第 4 条未被旧快照覆盖
+    expect(saved.impressions.some((i: any) => i.id === 'i4')).toBe(true);
+    expect(saved.chat.length).toBeGreaterThan(0);
+  });
+
+  it('重开面板重载数据：外部新增的感触反映到标题计数', async () => {
+    const vault = new MockVault();
+    seedVault(vault); // 3 条
+    const { app } = setup(vault);
+    await openBlackBoxChat(app);
+    expect(document.getElementById('bz-blackbox-chat-title')!.textContent).toContain('3 条感触');
+    // 外部写入第 4 条
+    const raw = JSON.parse(vault.files.get(getBlackBoxFilePath())!);
+    raw.impressions.push({
+      id: 'i4', ts: 't9', material: 'x', feeling: 'y',
+      emotions: [], scene: '', people: '', direction: '', links: [],
+    });
+    vault.files.set(getBlackBoxFilePath(), JSON.stringify(raw));
+    // 命令再次触发 open（面板已开）→ 重载刷新
+    await openBlackBoxChat(app);
+    expect(document.getElementById('bz-blackbox-chat-title')!.textContent).toContain('4 条感触');
+  });
+
+  it('AI 回复写前重载：回复期间外部新增的感触不被覆盖', async () => {
+    const fetchMock = vi.fn(async () => {
+      await new Promise((r) => setTimeout(r, 60)); // 模拟长 AI 调用
+      return { ok: true, json: async () => ({ message: { content: '回复内容' } }) };
+    });
+    (global as any).fetch = fetchMock;
+    const vault = new MockVault();
+    seedVault(vault); // 3 条
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxChat(app);
+    const input = document.getElementById('bz-blackbox-chat-input') as HTMLTextAreaElement;
+    input.value = '你好';
+    (document.getElementById('bz-blackbox-chat-send') as HTMLButtonElement).click();
+    await new Promise((r) => setTimeout(r, 20)); // AI 在途
+    // 外部并发写入第 4 条感触
+    const raw = JSON.parse(vault.files.get(getBlackBoxFilePath())!);
+    raw.impressions.push({
+      id: 'i4', ts: 't9', material: '并发新增', feeling: '不该被覆盖',
+      emotions: [], scene: '', people: '', direction: '', links: [],
+    });
+    vault.files.set(getBlackBoxFilePath(), JSON.stringify(raw));
+    await new Promise((r) => setTimeout(r, 120));
+    const saved = JSON.parse(vault.files.get(getBlackBoxFilePath())!);
+    expect(saved.impressions.length).toBe(4); // 外部新增未被回复写回覆盖
+    expect(saved.chat.some((m: any) => m.text === '回复内容')).toBe(true);
+  });
+
   it('关闭清理：esc 注销，重复开关无残留', async () => {
     const { app } = setup();
     await openBlackBoxChat(app);
     closeBlackBoxChat();
     expect(document.getElementById('bz-blackbox-chat-mask')).toBeFalsy();
+    expect(document.getElementById('bz-blackbox-chat-popup')).toBeFalsy(); // popup 是兄弟节点，必须同移除
     await openBlackBoxChat(app);
     expect(document.getElementById('bz-blackbox-chat-mask')).toBeTruthy();
+    expect(document.querySelectorAll('#bz-blackbox-chat-popup').length).toBe(1); // 无堆积
+  });
+
+  it('点击遮罩关闭：mask 与 popup 同消失', async () => {
+    const { app } = setup();
+    await openBlackBoxChat(app);
+    document.getElementById('bz-blackbox-chat-mask')!.click();
+    expect(document.getElementById('bz-blackbox-chat-mask')).toBeFalsy();
+    expect(document.getElementById('bz-blackbox-chat-popup')).toBeFalsy();
+  });
+
+  it('点击右上角 ✕ 关闭：mask 与 popup 同消失', async () => {
+    const { app } = setup();
+    await openBlackBoxChat(app);
+    (document.querySelector('.bz-blackbox-modal-close') as HTMLButtonElement).click();
+    expect(document.getElementById('bz-blackbox-chat-mask')).toBeFalsy();
+    expect(document.getElementById('bz-blackbox-chat-popup')).toBeFalsy();
   });
 });

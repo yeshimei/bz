@@ -19,7 +19,7 @@ export function openBlackBoxSettings(): void {
 
       new Setting(el)
         .setName('AI 服务')
-        .setDesc('deepseek = 云端（默认，跟随 bz 既有模式）；ollama = 本地（更私密，需本地运行）')
+        .setDesc('deepseek = 云端（默认，跟随 bz 既有模式）；ollama = 本地（更私密，需本地运行）。⚠️ 默认云端：感触与对话内容会经 DeepSeek API 传输，最私密的内容建议切换 ollama')
         .addDropdown((dd) => {
           dd.addOption('deepseek', 'DeepSeek（云端）');
           dd.addOption('ollama', 'Ollama（本地）');

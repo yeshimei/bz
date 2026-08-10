@@ -79,7 +79,7 @@ export class BlackBoxDataManager {
     this.app = app;
   }
 
-  /** 读取数据（不存在/坏 JSON → 默认数据） */
+  /** 读取数据（不存在/坏 JSON → 默认数据；坏 JSON 先改名备份 .bak-<ts> 防存量数据不可救） */
   async load(): Promise<BlackBoxData> {
     const filePath = getBlackBoxFilePath();
     const f = this.app.vault.getAbstractFileByPath(filePath);
@@ -87,6 +87,13 @@ export class BlackBoxDataManager {
     try {
       return normalizeData(JSON.parse(await this.app.vault.read(f as any)));
     } catch (e) {
+      // 坏文件：改名备份（保留现场）再返回默认；下次 save 不覆盖原文件内容
+      try {
+        const bak = filePath.replace(/\.json$/, '') + `.bak-${Date.now()}.json`;
+        await this.app.vault.rename(f as any, bak);
+      } catch (e2) {
+        /* 备份失败静默（rename 可能因只读/权限失败） */
+      }
       return defaultBlackBoxData();
     }
   }
