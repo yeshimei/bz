@@ -12,7 +12,7 @@ const SOUND_CONFIG: Record<SoundKind, { freq: number; dur: number }> = {
   'long-break-start': { freq: 392, dur: 0.45 },
 };
 
-export function playSound(kind: SoundKind): void {
+export function playSound(kind: SoundKind, volume = 100): void {
   const w = (typeof window !== 'undefined' ? window : globalThis) as any;
   const AC = w.AudioContext || w.webkitAudioContext;
   if (!AC) return;
@@ -23,9 +23,11 @@ export function playSound(kind: SoundKind): void {
     const gain = ctx.createGain();
     osc.type = 'sine';
     osc.frequency.value = cfg.freq;
+    // 音量 0-100（默认最大）：钳制 1-100（0 音量给近静音峰值，exponential 不允许 0）
+    const peak = 0.4 * (Math.max(1, Math.min(100, volume)) / 100);
     const t = ctx.currentTime;
     gain.gain.setValueAtTime(0.001, t);
-    gain.gain.exponentialRampToValueAtTime(0.4, t + 0.02);
+    gain.gain.exponentialRampToValueAtTime(peak, t + 0.02);
     gain.gain.exponentialRampToValueAtTime(0.001, t + cfg.dur);
     osc.connect(gain);
     gain.connect(ctx.destination);
