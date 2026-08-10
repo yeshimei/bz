@@ -3,7 +3,7 @@
  * 番茄钟历史聚合测试（ticket 30）：今日计数 + 近 7 天滚动窗口
  */
 import { describe, it, expect } from 'vitest';
-import { todayCount, last7Days } from '../../src/pomodoro/stats';
+import { todayCount, last7Days, bookMinutesToday } from '../../src/pomodoro/stats';
 import type { HistoryEntry } from '../../src/pomodoro/state';
 
 // 本地时区日期（2026-08-10 周一 10:00 本地）
@@ -39,6 +39,34 @@ describe('todayCount', () => {
     const days = last7Days(h, NOW);
     expect(days[6]).toEqual({ date: '2026-08-10', count: 2 });
     expect(days.slice(0, 6).every((d) => d.count === 0)).toBe(true);
+  });
+});
+
+describe('bookMinutesToday（任务关联统计）', () => {
+  function bookEntry(day: number, minutes: number): HistoryEntry {
+    return { ts: new Date(2026, 7, day, 9, 0, 0).getTime(), duration: minutes * 60, target: { type: 'book', path: '书库/活着.md', label: '读《活着》' } };
+  }
+
+  it('今日读书分钟聚合（按 target.type=book）', () => {
+    const h = [bookEntry(10, 25), bookEntry(10, 50), bookEntry(9, 25)];
+    expect(bookMinutesToday(h, NOW)).toBe(75);
+  });
+
+  it('非书目标 / 无目标不计入', () => {
+    const h: HistoryEntry[] = [
+      { ts: new Date(2026, 7, 10, 9, 0, 0).getTime(), duration: 1500, target: { type: 'memo', id: 'm1', label: '写报告' } },
+      { ts: new Date(2026, 7, 10, 10, 0, 0).getTime(), duration: 1500 },
+    ];
+    expect(bookMinutesToday(h, NOW)).toBe(0);
+  });
+
+  it('跨日不计（只有今天）', () => {
+    const h = [bookEntry(9, 25), bookEntry(10, 25)];
+    expect(bookMinutesToday(h, NOW)).toBe(25);
+  });
+
+  it('空历史 → 0', () => {
+    expect(bookMinutesToday([], NOW)).toBe(0);
   });
 });
 

@@ -5,7 +5,7 @@
  */
 import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
-import type { PomodoroState, HistoryEntry } from './state';
+import type { PomodoroState, HistoryEntry, FocusTarget } from './state';
 import { createInitialState, PHASES } from './state';
 
 export const POMODORO_FILE_PATH = 'CONFIG/STORAGE/pomodoro.json';
@@ -33,12 +33,15 @@ function normalizeData(raw: any): PomodoroData {
   if (!raw || typeof raw !== 'object') return def;
   const state = normalizeState(raw.state);
   const history = Array.isArray(raw.history)
-    ? raw.history.filter((h: any) => h && typeof h.ts === 'number' && typeof h.duration === 'number')
+    ? raw.history.filter(
+        (h: any) =>
+          h && typeof h.ts === 'number' && typeof h.duration === 'number' && (!h.target || isValidTarget(h.target))
+      )
     : [];
   return { version: 1, state, history };
 }
 
-/** 逐字段校验 state（非法 phase/负数 remaining 等一律回退默认） */
+/** 逐字段校验 state（非法 phase/负数 remaining/非法 target 一律回退默认） */
 function normalizeState(raw: any): PomodoroState {
   const def = createInitialState();
   if (!raw || typeof raw !== 'object') return def;
@@ -49,7 +52,18 @@ function normalizeState(raw: any): PomodoroState {
     paused: typeof raw.paused === 'boolean' ? raw.paused : def.paused,
     cycleFocusCount:
       typeof raw.cycleFocusCount === 'number' && raw.cycleFocusCount >= 0 ? raw.cycleFocusCount : def.cycleFocusCount,
+    target: isValidTarget(raw.target) ? raw.target : def.target,
   };
+}
+
+/** FocusTarget 合法性：type 白名单 + label 为字符串（memo 需 id，note/book 需 path） */
+function isValidTarget(t: any): t is FocusTarget {
+  if (!t || typeof t !== 'object') return false;
+  if (t.type !== 'memo' && t.type !== 'note' && t.type !== 'book') return false;
+  if (typeof t.label !== 'string' || !t.label) return false;
+  if (t.type === 'memo' && typeof t.id !== 'string') return false;
+  if ((t.type === 'note' || t.type === 'book') && typeof t.path !== 'string') return false;
+  return true;
 }
 
 export class PomodoroDataManager {

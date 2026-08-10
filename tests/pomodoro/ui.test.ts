@@ -125,6 +125,151 @@ describe('ensurePomodoro（插件启动恢复）', () => {
   });
 });
 
+describe('专注目标（任务关联，第一期）', () => {
+  const MEMO_JSON = (items: any[]) => JSON.stringify(items);
+  const memoItem = (id: string, title: string, completed: string | null) => ({
+    id,
+    title,
+    scene: '工作',
+    priority: 'important',
+    created: '2026-08-10',
+    completed,
+    due: null,
+    notePath: null,
+    notePosition: null,
+    scriptName: null,
+    courseName: null,
+    coursePath: null,
+    linkedNote: null,
+    url: null,
+  });
+
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => ({} as any));
+    document.body.innerHTML = '';
+    unloadPomodoro();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(T0));
+  });
+  afterEach(() => {
+    unloadPomodoro();
+    vi.useRealTimers();
+  });
+
+  it('未选目标：目标区显示「选择目标」，✕ 隐藏', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    expect(el('pomodoro-target-label').textContent).toContain('选择目标');
+    expect(el('pomodoro-target-clear').style.display).toBe('none');
+  });
+
+  it('选择器：三来源 tab + 底部「不使用目标」', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    el('pomodoro-target').click();
+    expect(document.getElementById('pomodoro-target-picker')).not.toBeNull();
+    expect(document.querySelectorAll('.pomodoro-target-tab').length).toBe(3);
+    expect(el('pomodoro-target-picker-clear').textContent).toContain('不使用目标');
+  });
+
+  it('备忘录 tab：只列未完成条目，点击选中并落盘（目标保留）', async () => {
+    const vault = new MockVault();
+    vault.files.set('CONFIG/STORAGE/memo.json', MEMO_JSON([memoItem('m1', '写季度报告', null), memoItem('m2', '买牛奶', '2026-08-10')]));
+    const { app } = setup(vault);
+    await openPomodoro(app);
+    el('pomodoro-target').click();
+    await vi.advanceTimersByTimeAsync(10); // 等 memo 异步加载
+    const items = Array.from(document.querySelectorAll('.pomodoro-target-item')).map((i) => (i as HTMLElement).textContent);
+    expect(items.length).toBe(1);
+    expect(items[0]).toContain('写季度报告');
+    (document.querySelector('.pomodoro-target-item') as HTMLElement).click();
+    expect(el('pomodoro-target-label').textContent).toContain('写季度报告');
+    expect(el('pomodoro-target-clear').style.display).not.toBe('none');
+    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
+    expect(raw.state.target).toEqual({ type: 'memo', id: 'm1', label: '写季度报告' });
+  });
+
+  it('当前笔记 tab：显示当前笔记名并可使用', async () => {
+    const vault = new MockVault();
+    const app = makeApp(vault);
+    app.workspace.getActiveFile = () => ({ path: '工作/方案.md', basename: '方案' } as any);
+    setApp(app);
+    setSettingsProvider(() => ({} as any));
+    await openPomodoro(app);
+    el('pomodoro-target').click();
+    (document.querySelectorAll('.pomodoro-target-tab')[1] as HTMLElement).click();
+    expect(el('pomodoro-target-note-name').textContent).toContain('方案');
+    el('pomodoro-target-note-use').click();
+    expect(el('pomodoro-target-label').textContent).toContain('方案');
+    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
+    expect(raw.state.target).toEqual({ type: 'note', path: '工作/方案.md', label: '方案' });
+  });
+
+  it('书库 tab：列出书籍并选中', async () => {
+    const vault = new MockVault();
+    vault.files.set('书库/活着.md', '---\ntags: [book]\ntitle: 活着\n---\n正文');
+    vault.files.set('书库/平凡的世界.md', '---\ntags: [book]\ntitle: 平凡的世界\n---\n正文');
+    const { app } = setup(vault);
+    await openPomodoro(app);
+    el('pomodoro-target').click();
+    (document.querySelectorAll('.pomodoro-target-tab')[2] as HTMLElement).click();
+    const items = Array.from(document.querySelectorAll('.pomodoro-target-item')).map((i) => (i as HTMLElement).textContent);
+    expect(items.length).toBe(2);
+    (document.querySelectorAll('.pomodoro-target-item')[0] as HTMLElement).click();
+    expect(el('pomodoro-target-label').textContent).toContain('活着');
+    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
+    expect(raw.state.target).toEqual({ type: 'book', path: '书库/活着.md', label: '活着' });
+  });
+
+  it('✕ 清除目标 → 回「选择目标」且 state.target 置空', async () => {
+    const vault = new MockVault();
+    vault.files.set('CONFIG/STORAGE/memo.json', MEMO_JSON([memoItem('m1', '写季度报告', null)]));
+    const { app } = setup(vault);
+    await openPomodoro(app);
+    el('pomodoro-target').click();
+    await vi.advanceTimersByTimeAsync(10);
+    (document.querySelector('.pomodoro-target-item') as HTMLElement).click();
+    el('pomodoro-target-clear').click();
+    expect(el('pomodoro-target-label').textContent).toContain('选择目标');
+    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
+    expect(raw.state.target).toBeNull();
+  });
+
+  it('完成专注 → history 条目带目标', async () => {
+    const vault = new MockVault();
+    vault.files.set('CONFIG/STORAGE/memo.json', MEMO_JSON([memoItem('m1', '写季度报告', null)]));
+    const { app } = setup(vault);
+    await openPomodoro(app);
+    el('pomodoro-target').click();
+    await vi.advanceTimersByTimeAsync(10);
+    (document.querySelector('.pomodoro-target-item') as HTMLElement).click();
+    el('pomodoro-btn-start').click();
+    await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
+    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
+    expect(raw.history[0].target).toEqual({ type: 'memo', id: 'm1', label: '写季度报告' });
+  });
+
+  it('预置书库历史 → 今日读书分钟统计显示', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      getPomodoroFilePath(),
+      JSON.stringify({
+        version: 1,
+        state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0, target: null },
+        history: [
+          { ts: T0 - 3_600_000, duration: 1500, target: { type: 'book', path: '书库/活着.md', label: '活着' } },
+          { ts: T0 - 7_200_000, duration: 1500, target: { type: 'memo', id: 'm1', label: '写季度报告' } },
+        ],
+      })
+    );
+    const { app } = setup(vault);
+    await openPomodoro(app);
+    expect(document.getElementById('pomodoro-book')!.textContent).toContain('读书 25 分钟');
+  });
+});
+
 function el(id: string): HTMLElement {
   return document.getElementById(id)!;
 }
