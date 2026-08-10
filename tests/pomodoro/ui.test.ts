@@ -70,7 +70,7 @@ describe('ensurePomodoro（插件启动恢复）', () => {
     });
   }
 
-  it('默认（后台继续）：不弹窗，tick 启动，状态栏同步', async () => {
+  it('默认（后台继续）：弹恢复通知，不弹窗，tick 启动，状态栏同步', async () => {
     const vault = new MockVault();
     vault.files.set(getPomodoroFilePath(), runningData());
     const app = makeApp(vault);
@@ -80,13 +80,18 @@ describe('ensurePomodoro（插件启动恢复）', () => {
     mountPomodoroStatusBar(container, app);
     await ensurePomodoro(app);
     expect(document.getElementById('pomodoro-mask')).toBeNull(); // 不自动弹窗
+    // 恢复继续 → 弹通知（阶段 + 剩余时间）
+    const n = document.querySelector('.bz-notice');
+    expect(n).not.toBeNull();
+    expect(n!.textContent).toContain('专注');
+    expect(n!.textContent).toContain('还剩 02:00');
     const textSpan = container.querySelector('.pomodoro-statusbar-text') as HTMLElement;
     expect(textSpan.textContent).toBe('02:00');
     await vi.advanceTimersByTimeAsync(2000);
     expect(textSpan.textContent).toBe('01:58'); // 后台继续走
   });
 
-  it('restoreMode=popup：正在倒计时 → 自动弹窗', async () => {
+  it('restoreMode=popup：正在倒计时 → 自动弹窗 + 恢复通知', async () => {
     const vault = new MockVault();
     vault.files.set(getPomodoroFilePath(), runningData());
     const app = makeApp(vault);
@@ -95,6 +100,7 @@ describe('ensurePomodoro（插件启动恢复）', () => {
     await ensurePomodoro(app);
     expect(document.getElementById('pomodoro-mask')).not.toBeNull();
     expect(el('pomodoro-phase').textContent).toContain('专注');
+    expect(document.querySelector('.bz-notice')).not.toBeNull(); // 弹窗模式也弹通知
   });
 
   it('restoreMode=popup 但未在倒计时 → 不弹窗', async () => {
@@ -112,6 +118,7 @@ describe('ensurePomodoro（插件启动恢复）', () => {
     setSettingsProvider(() => ({ pomodoroRestoreMode: 'popup' } as any));
     await ensurePomodoro(app);
     expect(document.getElementById('pomodoro-mask')).toBeNull();
+    expect(document.querySelector('.bz-notice')).toBeNull(); // 无倒计时 → 不弹通知
   });
 
   it('幂等：重复调用不重复加载', async () => {
@@ -599,5 +606,24 @@ describe('番茄钟弹窗', () => {
     expect(el('pomodoro-phase').textContent).toContain('专注');
     expect(el('pomodoro-time').textContent).toBe('20:00');
     expect(el('pomodoro-btn-start').textContent).toContain('继续');
+  });
+
+  it('ensurePomodoro：暂停态恢复 → 保持暂停，不弹恢复通知', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      getPomodoroFilePath(),
+      JSON.stringify({
+        version: 1,
+        state: { phase: 'focus', endTime: null, remaining: 1200, paused: true, cycleFocusCount: 0 },
+        history: [],
+      })
+    );
+    const app = makeApp(vault);
+    setApp(app);
+    await ensurePomodoro(app);
+    expect(document.querySelector('.bz-notice')).toBeNull(); // 暂停态不弹通知
+    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
+    expect(raw.state.paused).toBe(true);
+    expect(raw.state.remaining).toBe(1200); // 暂停保留
   });
 });
