@@ -63,6 +63,7 @@ describe('黑匣子对话面板', () => {
     const { app } = setup(vault);
     await openBlackBoxChat(app);
     expect(document.getElementById('bz-blackbox-chat-mask')).toBeTruthy();
+    expect(document.getElementById('bz-blackbox-chat-popup')!.style.display).toBe('flex');
     expect(document.getElementById('bz-blackbox-chat-title')!.textContent).toContain('包仔');
     expect(document.getElementById('bz-blackbox-chat-title')!.textContent).toContain('0 条感触');
     const bubbles = document.querySelectorAll('.bz-blackbox-bubble-assistant');
