@@ -69,6 +69,7 @@ describe('番茄钟弹窗', () => {
     const { app } = setup();
     await openPomodoro(app);
     expect(el('pomodoro-mask')).not.toBeNull();
+    expect(el('pomodoro-mask').style.zIndex).toBe('9998'); // 域主弹窗层级：低于设置页/设置弹窗
     const popup = el('pomodoro-popup');
     expect(popup).not.toBeNull();
     expect(popup.querySelector('#pomodoro-ring-svg')).not.toBeNull();
