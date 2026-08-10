@@ -61,6 +61,7 @@ export class MockPlugin {
   commands: any[] = [];
   settingTabs: any[] = [];
   ribbonIcons: any[] = [];
+  statusBarItems: any[] = [];
   private data: any = null;
 
   async loadData(): Promise<any> {
@@ -79,6 +80,12 @@ export class MockPlugin {
   addRibbonIcon(icon: string, title: string, callback: () => void): any {
     this.ribbonIcons.push({ icon, title, callback });
     return null;
+  }
+
+  addStatusBarItem(): any {
+    const el = document.createElement('div');
+    this.statusBarItems.push(el);
+    return el;
   }
 
   addSettingTab(tab: any): void {

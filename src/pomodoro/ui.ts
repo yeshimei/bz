@@ -1,14 +1,17 @@
 /**
- * 番茄钟弹窗 UI（ticket 28）：中央单例弹窗 + 1s tick 驱动。
- * 关闭弹窗计时后台继续（tick 常驻，重开从内存状态渲染）；
- * 阶段完成流转并落盘；打开时超时恢复（静默流转，通知由 T29 接入）。
- * 设置读取：T31 前用默认时长/选项，pomodoroForceFocus 等字段已就位（tryGetSettings 缺省回退）。
+ * 番茄钟弹窗 UI（ticket 28-29）：中央单例弹窗 + 1s tick 驱动 + 状态栏同步 + 完成通知。
+ * 关闭弹窗计时后台继续（tick 常驻，状态栏持续刷新，重开从内存状态渲染）；
+ * 阶段自然完成（tick 驱动）→ toast + 提示音 + 落盘；skip 静默；打开时超时恢复（initData 路径不通知）。
+ * 设置读取：T31 前用默认时长/选项，pomodoroForceFocus/pomodoroSound 等字段已就位（tryGetSettings 缺省回退）。
  */
 import type { App } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { tryGetSettings } from '../core/settings-provider';
+import { notice } from '../core/notice';
 import { PomodoroDataManager } from './data';
-import type { PomodoroState, HistoryEntry, Durations, PomodoroOptions, Phase, PomodoroAction } from './state';
+import { playSound } from './sound';
+import { syncPomodoroStatusBar } from './statusbar';
+import type { PomodoroState, HistoryEntry, Durations, PomodoroOptions, Phase, PomodoroAction, PomodoroEvent } from './state';
 import { transition, recover, createInitialState, DEFAULT_DURATIONS, phaseDurationSec } from './state';
 
 let dataManager: PomodoroDataManager | null = null;
@@ -41,6 +44,21 @@ function phaseText(phase: Phase, count: number, d: Durations): string {
   return '🍅 番茄钟';
 }
 
+/** 阶段自然完成（有 historyEntry）→ toast + 提示音；skip 无 historyEntry 不通知 */
+function notifyPhaseComplete(e: Extract<PomodoroEvent, { type: 'phase-completed' }>): void {
+  const d = durations();
+  if (e.completedPhase === 'focus') {
+    const rest = e.nextPhase === 'long-break' ? `长休息 ${d.longBreakMin} 分钟` : `休息 ${d.shortBreakMin} 分钟`;
+    notice(`专注完成：${rest}`, 'success');
+  } else {
+    notice('休息结束：开始专注', 'success');
+  }
+  const s = tryGetSettings() as any;
+  if (s.pomodoroSound !== false) {
+    playSound(e.completedPhase === 'focus' ? 'focus-end' : 'break-end');
+  }
+}
+
 /** 剩余秒（运行中按 endTime 实时算；暂停/停止取 remaining；idle 显示满时长） */
 function remainingSec(): number {
   if (state.endTime !== null) return Math.max(0, Math.ceil((state.endTime - Date.now()) / 1000));
@@ -55,10 +73,12 @@ function fmt(sec: number): string {
 }
 
 function render(): void {
-  if (!maskEl) return;
   const d = durations();
-  const total = phaseDurationSec(state.phase === 'idle' ? 'focus' : state.phase, d);
   const remain = remainingSec();
+  // 状态栏不依赖弹窗存在（关闭后继续每秒刷新）
+  syncPomodoroStatusBar(state, remain);
+  if (!maskEl) return;
+  const total = phaseDurationSec(state.phase === 'idle' ? 'focus' : state.phase, d);
   // 环形进度：剩余比例 → dashoffset（dasharray 恒为周长，offset=C*remain/total）
   const C = 2 * Math.PI * 52;
   const progress = total > 0 ? 1 - remain / total : 1;
@@ -85,11 +105,15 @@ function render(): void {
   }
 }
 
-/** 状态变更统一入口：transition → 落盘（完成事件）→ tick 生命周期 → 渲染 */
+/** 状态变更统一入口：transition → 落盘（完成事件）→ 通知/声音 → tick 生命周期 → 渲染 */
 function applyAction(action: PomodoroAction): void {
   const r = transition(state, action, Date.now(), durations(), options());
   state = r.state;
-  if (r.event.type === 'phase-completed' && r.event.historyEntry) history = history.concat(r.event.historyEntry);
+  if (r.event.type === 'phase-completed') {
+    if (r.event.historyEntry) history = history.concat(r.event.historyEntry);
+    // 仅自然完成（tick 驱动）通知+响；skip（手动）静默
+    if (action === 'tick') notifyPhaseComplete(r.event);
+  }
   if (r.event.type !== 'none') void save();
   ensureTick();
   render();

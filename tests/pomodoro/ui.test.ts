@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, hasNotice } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { openPomodoro, unloadPomodoro } from '../../src/pomodoro';
@@ -21,6 +21,29 @@ function setup(vault: MockVault = new MockVault(), settings: any = {}) {
   setApp(app);
   setSettingsProvider(() => settings);
   return { app, vault };
+}
+
+function makeAudioMock(): { createOscillator: ReturnType<typeof vi.fn> } {
+  class FakeOscillator {
+    type = '';
+    frequency = { value: 0 };
+    connect = vi.fn();
+    start = vi.fn();
+    stop = vi.fn();
+  }
+  class FakeGain {
+    gain = { setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() };
+    connect = vi.fn();
+  }
+  const createOscillator = vi.fn(() => new FakeOscillator());
+  (window as any).AudioContext = class {
+    currentTime = 0;
+    destination = {};
+    createOscillator = createOscillator;
+    createGain = vi.fn(() => new FakeGain());
+    close = vi.fn(() => Promise.resolve());
+  };
+  return { createOscillator };
 }
 
 function el(id: string): HTMLElement {
@@ -139,8 +162,9 @@ describe('番茄钟弹窗', () => {
     expect(el('pomodoro-time').textContent).toBe('24:25');
   });
 
-  it('tick 完成专注 → 流转短休息 + 历史落盘', async () => {
+  it('tick 完成专注 → 流转短休息 + 历史落盘 + toast + 声音（低音 3 响）', async () => {
     const { app, vault } = setup();
+    const audio = makeAudioMock();
     await openPomodoro(app);
     el('pomodoro-btn-start').click();
     await vi.advanceTimersByTimeAsync(25 * 60 * 1000); // 走完一个专注
@@ -150,6 +174,52 @@ describe('番茄钟弹窗', () => {
     expect(raw.history).toHaveLength(1);
     expect(raw.history[0].duration).toBe(25 * 60);
     expect(raw.state.phase).toBe('short-break');
+    expect(hasNotice('专注完成：休息 5 分钟')).toBe(true);
+    expect(audio.createOscillator).toHaveBeenCalledTimes(3);
+    expect(document.querySelector('.bz-notice--success')).not.toBeNull();
+  });
+
+  it('休息完成 → toast + 声音（高音 2 响）', async () => {
+    const { app } = setup();
+    const audio = makeAudioMock();
+    await openPomodoro(app);
+    el('pomodoro-btn-start').click();
+    await vi.advanceTimersByTimeAsync(25 * 60 * 1000); // 专注完成（低音 3 响）
+    el('pomodoro-btn-start').click(); // 开始短休
+    const before = audio.createOscillator.mock.calls.length;
+    await vi.advanceTimersByTimeAsync(5 * 60 * 1000); // 休息完成
+    expect(hasNotice('休息结束：开始专注')).toBe(true);
+    expect(audio.createOscillator.mock.calls.length - before).toBe(2);
+  });
+
+  it('skip：不通知不响（仅自然完成发 toast）', async () => {
+    const { app } = setup();
+    const audio = makeAudioMock();
+    await openPomodoro(app);
+    el('pomodoro-btn-start').click();
+    el('pomodoro-btn-skip').click();
+    expect(hasNotice('✅ 专注完成')).toBe(false);
+    expect(audio.createOscillator).not.toHaveBeenCalled();
+  });
+
+  it('声音开关关闭：完成时不响（toast 仍发）', async () => {
+    const { app } = setup(new MockVault(), { pomodoroSound: false });
+    const audio = makeAudioMock();
+    await openPomodoro(app);
+    el('pomodoro-btn-start').click();
+    await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
+    expect(hasNotice('专注完成：休息 5 分钟')).toBe(true);
+    expect(audio.createOscillator).not.toHaveBeenCalled();
+  });
+
+  it('unloadPomodoro：清理轮询无残留', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    el('pomodoro-btn-start').click();
+    expect(vi.getTimerCount()).toBeGreaterThan(0);
+    unloadPomodoro();
+    expect(vi.getTimerCount()).toBe(0);
+    expect(document.getElementById('pomodoro-mask')).toBeNull();
   });
 
   it('恢复：数据文件运行中超时 → 打开自动流转并落盘', async () => {
