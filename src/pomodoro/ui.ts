@@ -342,6 +342,10 @@ function buildDOM(): void {
     </div>`;
   document.body.appendChild(mask);
   maskEl = mask;
+  // 点击遮罩本身关闭（弹窗内部点击不关闭）——计时后台继续
+  mask.addEventListener('click', (e) => {
+    if (e.target === mask) closePomodoro();
+  });
   escHandle = escManager.register('pomodoro', {
     isVisible: () => maskEl !== null,
     close: closePomodoro,
