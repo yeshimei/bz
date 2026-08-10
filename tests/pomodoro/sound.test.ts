@@ -70,4 +70,26 @@ describe('playSound（阶段开始提示声，各一声）', () => {
     expect(() => playSound('short-break-start')).not.toThrow();
     expect(() => playSound('long-break-start')).not.toThrow();
   });
+
+  it('音量参数：50 → 峰值 0.2（0.4×50%）', () => {
+    const ctx = mockAudio();
+    playSound('focus-start', 50);
+    const gain = ctx.createGain.mock.results[0].value as FakeGain;
+    expect(gain.gain.exponentialRampToValueAtTime).toHaveBeenCalledWith(0.2, 0.02);
+  });
+
+  it('音量缺省 → 峰值 0.4（默认最大）', () => {
+    const ctx = mockAudio();
+    playSound('short-break-start');
+    const gain = ctx.createGain.mock.results[0].value as FakeGain;
+    expect(gain.gain.exponentialRampToValueAtTime).toHaveBeenCalledWith(0.4, 0.02);
+  });
+
+  it('音量越界钳制：150 → 0.4；0 → 0.004（近静音）', () => {
+    const ctx = mockAudio();
+    playSound('focus-start', 150);
+    expect((ctx.createGain.mock.results[0].value as FakeGain).gain.exponentialRampToValueAtTime).toHaveBeenCalledWith(0.4, 0.02);
+    playSound('focus-start', 0);
+    expect((ctx.createGain.mock.results[1].value as FakeGain).gain.exponentialRampToValueAtTime).toHaveBeenCalledWith(0.004, 0.02);
+  });
 });

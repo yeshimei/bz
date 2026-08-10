@@ -187,9 +187,11 @@ Feature: memo-suite-plugin
 4. 作为用户，我希望四个开关（强制专注/自动循环/自动跳过休息/声音）按设置生效，以便按需定制行为。
 5. 作为用户，我希望关闭弹窗后计时后台继续、状态栏常驻「🍅 mm:ss」（空闲灰态，点击开弹窗），以便不中断计时。
 6. 作为用户，我希望阶段完成时收到 bz toast + Web Audio 提示音（可关），以便离开 Obsidian 也知道切换。
-7. 作为用户，我希望 Obsidian 重启自动恢复计时（含暂停态），关闭期间走完的阶段自动记为完成，以便意外关闭不丢进度。
+7. 作为用户，我希望 Obsidian 重启自动恢复计时（含暂停态）：暂停 → 保持暂停；倒计时中 → 后台继续并弹「番茄钟继续：专注 2/4，还剩 02:00」通知（popup 模式另自动弹窗），关闭期间走完的阶段自动记为完成，以便意外关闭不丢进度。
 8. 作为用户，我希望完成历史只记自然完成的专注（跳过不计），弹窗内展示今日计数 + 近 7 天柱条，以便统计真实专注量。
 9. 作为用户，我希望设置经 ⚙️ 域设置弹窗调整（预设/时长/N/开关），以便就近定制。
+10. 作为用户，我希望设置弹窗可试听提示音并调节音量（slider 0-100，默认最大），以便按环境调响度。
+11. 作为用户，我希望未选中专注目标时目标区默认隐藏，鼠标悬停弹窗才显示「选择目标」，已选目标始终可见，以便界面简洁。
 
 ### 全局
 
@@ -312,7 +314,7 @@ Feature: memo-suite-plugin
 - **书库**：libraryFolderPath、libraryNotePath、bookTag、showFileSize、showReadingTime、showHighlights、showThinks、showReview（showCategory 字段保留无 UI）
 - **影视**（6 项）：movieFolderPath、moviePageSize（海报抓取仅文字提示）、movieDefaultSort（默认排序 date-desc/…/name-desc）、movieDefaultTypeFilter（默认类型筛选，空=全部）、movieDefaultStatusFilter（默认状态筛选 全部/想看/在看/已看）、movieRatingDisplay（已看卡片评分 stars/number）
 - **复习计划（含做题家）**：autoCheckInterval、enableAutoNotify + 做题家 5 项（enableMultipleChoice、questionsPerNote、shuffleQuestions、difficulty、forceQuizForReview）
-- **番茄钟（10 项）**：pomodoroPreset（12 档：11 预设+自定义）、pomodoroWorkMin/pomodoroShortBreakMin/pomodoroLongBreakMin（自定义时长，预设=自定义时动态显示）、pomodoroLongBreakInterval（N，默认 4）、pomodoroForceFocus（默认关）、pomodoroAutoCycle（默认关）、pomodoroAutoSkipBreak（默认关）、pomodoroSound（默认开）、pomodoroRestoreMode（启动恢复方式：background 后台继续 / popup 正在倒计时则自动弹窗）
+- **番茄钟（11 项）**：pomodoroPreset（12 档：11 预设+自定义）、pomodoroWorkMin/pomodoroShortBreakMin/pomodoroLongBreakMin（自定义时长，预设=自定义时动态显示）、pomodoroLongBreakInterval（N，默认 4）、pomodoroForceFocus（默认关）、pomodoroAutoCycle（默认关）、pomodoroAutoSkipBreak（默认关）、pomodoroSound（默认开）、pomodoroVolume（音量 0-100，默认 100 最大，设置弹窗 slider+试听）、pomodoroRestoreMode（启动恢复方式：background 后台继续 / popup 正在倒计时则自动弹窗；恢复继续弹「番茄钟继续：…还剩 mm:ss」通知）
 - **闪念（17 项全量，含 AI 项）**：OLLAMA_URL、EMBEDDING_MODEL、META_PATH、VEC_PATH、TOP_K、CHAT_TOP_K、CHUNK_MIN_LENGTH、ALLOW_PATHS、CONCURRENCY、CONTEXT_LIMIT、DEBOUNCE_DELAY、CURSOR_POLL_INTERVAL、OLLAMA_CHAT_MODEL、DEEPSEEK_MODEL、DEFAULT_USE_DEEPSEEK、MAX_HISTORY、OLLAMA_REMOTE_URL
 
 **筛选弹窗（🔀，非设置）**：影视「筛选与排序」（类型筛选+排序）、书库「视图与筛选」（分类筛选+视图）
