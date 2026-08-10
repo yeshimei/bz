@@ -6,6 +6,7 @@
  */
 import { Setting } from 'obsidian';
 import type { App } from 'obsidian';
+import { setIcon } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { notice } from '../core/notice';
@@ -214,7 +215,9 @@ function injectStyles(): void {
     .pomodoro-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .pomodoro-btn-primary { background: var(--interactive-accent); color: var(--text-on-accent); }
     .pomodoro-btn-primary:hover:not(:disabled) { background: var(--interactive-accent-hover); }
-    #pomodoro-btn-settings { position: absolute; top: 12px; right: 12px; padding: 4px 8px; }
+    #pomodoro-btn-settings { position: absolute; top: 16px; right: 16px; padding: 6px; background: none; border-radius: 8px; color: var(--text-muted); transition: opacity 0.2s; }
+    #pomodoro-btn-settings:hover { color: var(--text-normal); background: var(--background-modifier-hover); }
+    #pomodoro-btn-settings.pomodoro-settings-hidden { opacity: 0; pointer-events: none; }
     .pomodoro-stats { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--background-modifier-border); }
     #pomodoro-today { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
     .pomodoro-week { display: flex; gap: 6px; justify-content: center; align-items: flex-end; }
@@ -303,6 +306,18 @@ function openPomodoroSettings(): void {
       toggleSetting('自动循环', '阶段结束后自动开始下一阶段', () => !!s.pomodoroAutoCycle, (v) => (s.pomodoroAutoCycle = v));
       toggleSetting('自动跳过休息', '专注结束后立即开始下一专注（连续工作）', () => !!s.pomodoroAutoSkipBreak, (v) => (s.pomodoroAutoSkipBreak = v));
       toggleSetting('声音提醒', '阶段完成时的提示音', () => s.pomodoroSound !== false, (v) => (s.pomodoroSound = v));
+      new Setting(el)
+        .setName('打开时恢复方式')
+        .setDesc('Obsidian 启动时若正在倒计时：后台继续（状态栏可见）或自动弹窗提醒')
+        .addDropdown((dd) => {
+          dd.addOption('background', '后台继续');
+          dd.addOption('popup', '自动弹窗');
+          dd.setValue(s.pomodoroRestoreMode || 'background');
+          dd.onChange(async (v) => {
+            s.pomodoroRestoreMode = v;
+            await saveSettings();
+          });
+        });
       refreshCustom();
     },
   });
@@ -313,7 +328,14 @@ function bindEvents(): void {
   startBtn.addEventListener('click', () => applyAction(state.paused ? 'resume' : state.endTime !== null ? 'pause' : 'start'));
   document.getElementById('pomodoro-btn-reset')!.addEventListener('click', () => applyAction('reset'));
   document.getElementById('pomodoro-btn-skip')!.addEventListener('click', () => applyAction('skip'));
-  document.getElementById('pomodoro-btn-settings')!.addEventListener('click', openPomodoroSettings);
+  const settingsBtn = document.getElementById('pomodoro-btn-settings')!;
+  // 设置入口：默认隐藏，hover 面板才显示（幽灵图标）
+  settingsBtn.classList.add('pomodoro-settings-hidden');
+  setIcon(settingsBtn, 'gear'); // Obsidian 原生 lucide 图标（与状态栏/命令一致）
+  settingsBtn.addEventListener('click', openPomodoroSettings);
+  const popup = document.getElementById('pomodoro-popup')!;
+  popup.addEventListener('mouseenter', () => settingsBtn.classList.remove('pomodoro-settings-hidden'));
+  popup.addEventListener('mouseleave', () => settingsBtn.classList.add('pomodoro-settings-hidden'));
 }
 
 function buildDOM(): void {
@@ -323,7 +345,7 @@ function buildDOM(): void {
   mask.style.zIndex = '9998';
   mask.innerHTML = `
     <div id="pomodoro-popup">
-      <button id="pomodoro-btn-settings" class="pomodoro-btn" title="设置">⚙️</button>
+      <button id="pomodoro-btn-settings" class="pomodoro-btn" title="设置"></button>
       <svg id="pomodoro-ring-svg" viewBox="0 0 120 120">
         <circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>
         <circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52"></circle>
@@ -361,6 +383,21 @@ export async function openPomodoro(app: App): Promise<void> {
   if (!maskEl) {
     if (!loaded) await initData();
     buildDOM();
+    ensureTick(); // 恢复/首次打开时若在倒计时，启动轮询继续走（修复：恢复后不 tick 的 bug）
+  }
+}
+
+/** 插件启动恢复（main.ts onLayoutReady 调用）：load+recover+落盘；正在倒计时 → 后台 tick 继续；popup 模式自动弹窗 */
+export async function ensurePomodoro(app: App): Promise<void> {
+  if (!dataManager) dataManager = new PomodoroDataManager(app);
+  if (!loaded) {
+    await initData();
+    if (state.endTime !== null) {
+      ensureTick(); // 后台继续（无弹窗时 render 只同步状态栏）
+      render();
+      const s = tryGetSettings();
+      if (s.pomodoroRestoreMode === 'popup') void openPomodoro(app);
+    }
   }
 }
 

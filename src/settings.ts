@@ -241,6 +241,8 @@ export default interface BzSettings {
   pomodoroAutoSkipBreak: boolean;
   /** 声音提醒（默认开） */
   pomodoroSound: boolean;
+  /** 打开时恢复方式：background（后台继续倒计时）/ popup（正在倒计时则自动弹窗） */
+  pomodoroRestoreMode: string;
 }
 
 export const DEFAULT_SETTINGS: BzSettings = {
@@ -377,4 +379,5 @@ export const DEFAULT_SETTINGS: BzSettings = {
   pomodoroAutoCycle: false,
   pomodoroAutoSkipBreak: false,
   pomodoroSound: true,
+  pomodoroRestoreMode: 'background',
 };
