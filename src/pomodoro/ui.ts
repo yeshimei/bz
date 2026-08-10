@@ -451,7 +451,7 @@ export async function openPomodoro(app: App): Promise<void> {
   }
 }
 
-/** 插件启动恢复（main.ts onLayoutReady 调用）：load+recover+落盘；正在倒计时 → 后台 tick 继续；popup 模式自动弹窗 */
+/** 插件启动恢复（main.ts onLayoutReady 调用）：load+recover+落盘；正在倒计时 → 后台 tick 继续 + 弹恢复通知；popup 模式自动弹窗 */
 export async function ensurePomodoro(app: App): Promise<void> {
   appRef = app;
   if (!dataManager) dataManager = new PomodoroDataManager(app);
@@ -460,6 +460,9 @@ export async function ensurePomodoro(app: App): Promise<void> {
     if (state.endTime !== null) {
       ensureTick(); // 后台继续（无弹窗时 render 只同步状态栏）
       render();
+      // 恢复继续 → 弹通知（阶段 + 剩余）；暂停态（endTime 为 null）不弹
+      const remainSec = Math.max(0, Math.ceil((state.endTime - Date.now()) / 1000));
+      notice(`番茄钟继续：${phaseText(state.phase, state.cycleFocusCount, durations())}，还剩 ${fmt(remainSec)}`);
       const s = tryGetSettings();
       if (s.pomodoroRestoreMode === 'popup') void openPomodoro(app);
     }
