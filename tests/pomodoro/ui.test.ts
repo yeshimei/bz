@@ -222,6 +222,39 @@ describe('番茄钟弹窗', () => {
     expect(document.getElementById('pomodoro-mask')).toBeNull();
   });
 
+  it('弹窗内展示今日计数与近 7 天柱条，完成专注后刷新', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    expect(el('pomodoro-today').textContent).toContain('今日 0 个');
+    expect(document.querySelectorAll('.pomodoro-stat-day').length).toBe(7);
+    el('pomodoro-btn-start').click();
+    await vi.advanceTimersByTimeAsync(25 * 60 * 1000); // 完成一个专注
+    expect(el('pomodoro-today').textContent).toContain('今日 1 个');
+    const bars = Array.from(document.querySelectorAll('.pomodoro-stat-bar')).map((b) => (b as HTMLElement).style.height);
+    expect(bars[6]).toBe('40px'); // 今天最高
+  });
+
+  it('关闭重开历史不丢（数据来自 pomodoro.json）', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      getPomodoroFilePath(),
+      JSON.stringify({
+        version: 1,
+        state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 },
+        history: [
+          { ts: T0 - 3_600_000, duration: 1500 },
+          { ts: T0 - 7_200_000, duration: 1500 },
+        ],
+      })
+    );
+    const { app } = setup(vault);
+    await openPomodoro(app);
+    expect(el('pomodoro-today').textContent).toContain('今日 2 个');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await openPomodoro(app);
+    expect(el('pomodoro-today').textContent).toContain('今日 2 个');
+  });
+
   it('恢复：数据文件运行中超时 → 打开自动流转并落盘', async () => {
     const vault = new MockVault();
     vault.files.set(
