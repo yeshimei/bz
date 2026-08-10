@@ -7,7 +7,8 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, hasNotice } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { openPomodoro, unloadPomodoro } from '../../src/pomodoro';
+import { openPomodoro, unloadPomodoro, ensurePomodoro } from '../../src/pomodoro';
+import { mountPomodoroStatusBar } from '../../src/pomodoro/statusbar';
 import { getPomodoroFilePath } from '../../src/pomodoro/data';
 
 const T0 = new Date('2026-08-10T10:00:00').getTime();
@@ -45,6 +46,84 @@ function makeAudioMock(): { createOscillator: ReturnType<typeof vi.fn> } {
   };
   return { createOscillator };
 }
+
+describe('ensurePomodoro（插件启动恢复）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => ({} as any));
+    document.body.innerHTML = '';
+    unloadPomodoro();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(T0));
+  });
+  afterEach(() => {
+    unloadPomodoro();
+    vi.useRealTimers();
+  });
+
+  function runningData() {
+    return JSON.stringify({
+      version: 1,
+      state: { phase: 'focus', endTime: T0 + 120_000, remaining: 0, paused: false, cycleFocusCount: 1 },
+      history: [],
+    });
+  }
+
+  it('默认（后台继续）：不弹窗，tick 启动，状态栏同步', async () => {
+    const vault = new MockVault();
+    vault.files.set(getPomodoroFilePath(), runningData());
+    const app = makeApp(vault);
+    setApp(app);
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    mountPomodoroStatusBar(container, app);
+    await ensurePomodoro(app);
+    expect(document.getElementById('pomodoro-mask')).toBeNull(); // 不自动弹窗
+    const textSpan = container.querySelector('.pomodoro-statusbar-text') as HTMLElement;
+    expect(textSpan.textContent).toBe('02:00');
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(textSpan.textContent).toBe('01:58'); // 后台继续走
+  });
+
+  it('restoreMode=popup：正在倒计时 → 自动弹窗', async () => {
+    const vault = new MockVault();
+    vault.files.set(getPomodoroFilePath(), runningData());
+    const app = makeApp(vault);
+    setApp(app);
+    setSettingsProvider(() => ({ pomodoroRestoreMode: 'popup' } as any));
+    await ensurePomodoro(app);
+    expect(document.getElementById('pomodoro-mask')).not.toBeNull();
+    expect(el('pomodoro-phase').textContent).toContain('专注');
+  });
+
+  it('restoreMode=popup 但未在倒计时 → 不弹窗', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      getPomodoroFilePath(),
+      JSON.stringify({
+        version: 1,
+        state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 },
+        history: [],
+      })
+    );
+    const app = makeApp(vault);
+    setApp(app);
+    setSettingsProvider(() => ({ pomodoroRestoreMode: 'popup' } as any));
+    await ensurePomodoro(app);
+    expect(document.getElementById('pomodoro-mask')).toBeNull();
+  });
+
+  it('幂等：重复调用不重复加载', async () => {
+    const vault = new MockVault();
+    vault.files.set(getPomodoroFilePath(), runningData());
+    const app = makeApp(vault);
+    setApp(app);
+    await ensurePomodoro(app);
+    await ensurePomodoro(app);
+    expect(document.getElementById('pomodoro-mask')).toBeNull();
+  });
+});
 
 function el(id: string): HTMLElement {
   return document.getElementById(id)!;
@@ -273,6 +352,35 @@ describe('番茄钟弹窗', () => {
     await openPomodoro(app);
     el('pomodoro-popup').click();
     expect(document.getElementById('pomodoro-mask')).not.toBeNull();
+  });
+
+  it('恢复运行中状态（未超时）→ tick 自动启动继续倒计时', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      getPomodoroFilePath(),
+      JSON.stringify({
+        version: 1,
+        state: { phase: 'focus', endTime: T0 + 100_000, remaining: 0, paused: false, cycleFocusCount: 0 },
+        history: [],
+      })
+    );
+    const { app } = setup(vault);
+    await openPomodoro(app);
+    expect(el('pomodoro-time').textContent).toBe('01:40');
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(el('pomodoro-time').textContent).toBe('01:38'); // 倒计时继续走
+  });
+
+  it('设置按钮默认隐藏，hover 弹窗显示', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    const btn = el('pomodoro-btn-settings');
+    expect(btn.classList.contains('pomodoro-settings-hidden')).toBe(true);
+    const popup = el('pomodoro-popup');
+    popup.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+    expect(btn.classList.contains('pomodoro-settings-hidden')).toBe(false);
+    popup.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
+    expect(btn.classList.contains('pomodoro-settings-hidden')).toBe(true);
   });
 
   it('恢复：数据文件运行中超时 → 打开自动流转并落盘', async () => {

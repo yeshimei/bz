@@ -74,16 +74,17 @@ describe('⚙️ 设置弹窗', () => {
     vi.useRealTimers();
   });
 
-  it('打开设置弹窗：9 个设置项', async () => {
+  it('打开设置弹窗：10 个设置项（9 项 + 恢复方式）', async () => {
     const settings = { ...DEFAULT_SETTINGS } as any;
     const { app } = setup(settings);
     await openPomodoro(app);
     el('pomodoro-btn-settings').click();
     expect(el('bz-settings-modal-popup')).not.toBeNull();
-    expect(document.querySelectorAll('#bz-settings-modal-popup .setting-item').length).toBe(9);
+    expect(document.querySelectorAll('#bz-settings-modal-popup .setting-item').length).toBe(10);
     expect(itemByName('预设方案')).not.toBeUndefined();
     expect(itemByName('长休息间隔')).not.toBeUndefined();
     expect(itemByName('声音提醒')).not.toBeUndefined();
+    expect(itemByName('打开时恢复方式')).not.toBeUndefined();
   });
 
   it('预设下拉 12 档（11 预设 + 自定义）', async () => {
@@ -128,6 +129,19 @@ describe('⚙️ 设置弹窗', () => {
     toggle.trigger(true);
     expect(settings.pomodoroAutoCycle).toBe(true);
     expect(saves.length).toBe(2);
+  });
+
+  it('恢复方式下拉：background 默认 + popup 选项 + 保存', async () => {
+    const settings = { ...DEFAULT_SETTINGS } as any;
+    const { app, saves } = setup(settings);
+    await openPomodoro(app);
+    el('pomodoro-btn-settings').click();
+    const dd = itemByName('打开时恢复方式').__setting.controls[0];
+    expect(dd.value).toBe('background');
+    expect(Object.keys(dd.options)).toEqual(['background', 'popup']);
+    dd.trigger('popup');
+    expect(settings.pomodoroRestoreMode).toBe('popup');
+    expect(saves.length).toBe(1);
   });
 });
 
