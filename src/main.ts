@@ -28,6 +28,7 @@ import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverd
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
 import { openPomodoro, unloadPomodoro, ensurePomodoro } from './pomodoro';
+import { unloadBlackBox, openBlackBoxCapture, openBlackBoxChat, manualReview } from './blackbox';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // B站下载器启动命令（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
 import { openBiliDownloader } from './bili-downloader';
@@ -91,6 +92,10 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-flash-chat', name: '闪念对话', icon: 'message-circle', callback: () => openFlashChat(getApp()) },
   // 番茄钟（ticket 26-32 新域）
   { id: 'bz-pomodoro-open', name: '番茄钟', icon: 'timer', callback: () => openPomodoro(getApp()) },
+  // 黑匣子（ticket 33-38 新域）
+  { id: 'bz-blackbox-capture', name: '写感触', icon: 'inbox', callback: () => openBlackBoxCapture(getApp()) },
+  { id: 'bz-blackbox-open', name: '黑匣子', icon: 'message-circle-heart', callback: () => openBlackBoxChat(getApp()) },
+  { id: 'bz-blackbox-review', name: '复盘', icon: 'sprout', callback: () => manualReview(getApp()) },
   // B站下载器（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
   { id: 'bz-bili-open', name: 'B站下载器', icon: 'tv-minimal-play', callback: () => openBiliDownloader() },
 ];
@@ -206,6 +211,7 @@ export default class BzPlugin extends Plugin {
     escManager.destroy();
     unmountPomodoroStatusBar();
     unloadPomodoro();
+    unloadBlackBox();
     unloadBz();
     unloadAIAgent();
     unloadLauncherPanel();

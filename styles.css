@@ -674,3 +674,329 @@
   background: var(--background-modifier-hover);
   border-radius: 10px;
 }
+
+/* ==================== 黑匣子（ticket 33-38 新域） ==================== */
+
+/* 弹窗骨架 */
+#bz-blackbox-capture-popup,
+#bz-blackbox-chat-popup {
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+  overflow: hidden;
+}
+.bz-blackbox-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 15px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+.bz-blackbox-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.bz-blackbox-modal-close:hover {
+  background: var(--background-modifier-hover);
+}
+
+/* 录入弹窗 */
+.bz-blackbox-capture-body {
+  padding: 12px 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+.bz-blackbox-field-label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 10px 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.bz-blackbox-field-hint {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.bz-blackbox-textarea {
+  width: 100%;
+  min-height: 56px;
+  resize: vertical;
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  padding: 8px 10px;
+  font-size: 13px;
+}
+.bz-blackbox-input {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  padding: 6px 10px;
+  font-size: 13px;
+}
+.bz-blackbox-emotions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.bz-blackbox-chip {
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  border-radius: 14px;
+  padding: 3px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.bz-blackbox-chip:hover {
+  background: var(--background-modifier-hover);
+}
+.bz-blackbox-chip-on {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.bz-blackbox-intensity {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.bz-blackbox-intensity-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.bz-blackbox-intensity-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  font-size: 11px;
+  cursor: pointer;
+}
+.bz-blackbox-intensity-on {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.bz-blackbox-details {
+  margin-top: 10px;
+  font-size: 12px;
+}
+.bz-blackbox-details summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  user-select: none;
+}
+.bz-blackbox-dir-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+.bz-blackbox-dir {
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  border-radius: 10px;
+  padding: 3px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.bz-blackbox-dir-on {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.bz-blackbox-ai-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.bz-blackbox-ai-btn {
+  border: 1px dashed var(--background-modifier-border);
+  background: var(--background-secondary);
+  border-radius: 10px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.bz-blackbox-ai-btn:hover:not(:disabled) {
+  border-color: var(--interactive-accent);
+}
+.bz-blackbox-ai-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.bz-blackbox-ai-result {
+  margin-top: 8px;
+  font-size: 12px;
+}
+.bz-blackbox-ai-msg {
+  background: var(--background-secondary);
+  border-radius: 8px;
+  padding: 8px 10px;
+  white-space: pre-wrap;
+}
+.bz-blackbox-ai-fallback {
+  color: var(--text-muted);
+}
+.bz-blackbox-ai-append {
+  margin-top: 6px;
+  border: none;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-radius: 8px;
+  padding: 3px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.bz-blackbox-concept-input {
+  width: 240px;
+  margin-right: 6px;
+}
+.bz-blackbox-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+.bz-blackbox-btn {
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.bz-blackbox-btn:hover:not(:disabled) {
+  background: var(--background-modifier-hover);
+}
+.bz-blackbox-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.bz-blackbox-btn-primary {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.bz-blackbox-btn-primary:hover:not(:disabled) {
+  background: var(--interactive-accent-hover);
+}
+
+/* 对话面板 */
+.bz-blackbox-chat-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 200px;
+}
+.bz-blackbox-bubble {
+  max-width: 85%;
+  display: flex;
+  flex-direction: column;
+}
+.bz-blackbox-bubble-user {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+.bz-blackbox-bubble-assistant {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+.bz-blackbox-bubble-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.bz-blackbox-bubble-body {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 13px;
+  line-height: 1.6;
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+.bz-blackbox-bubble-user .bz-blackbox-bubble-body {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.bz-blackbox-bubble-assistant .bz-blackbox-bubble-body {
+  background: var(--background-secondary);
+}
+.bz-blackbox-chat-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+.bz-blackbox-chat-input {
+  flex: 1;
+  min-height: 40px;
+  max-height: 120px;
+  resize: vertical;
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+/* 成长区 */
+.bz-blackbox-growth {
+  border-top: 1px dashed var(--background-modifier-border);
+  padding: 8px 16px;
+  flex-shrink: 0;
+  max-height: 150px;
+  overflow-y: auto;
+}
+.bz-blackbox-growth-head {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.bz-blackbox-growth-tip {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+.bz-blackbox-growth-card {
+  background: var(--background-secondary);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+.bz-blackbox-growth-time {
+  font-size: 10px;
+  color: var(--text-faint);
+  margin-bottom: 2px;
+}
+.bz-blackbox-review-btn {
+  font-size: 12px;
+  padding: 4px 10px;
+}
