@@ -44,7 +44,7 @@
 - **状态机**：纯函数 `transition(state, action, now)`（先例：review FSRS 纯函数）。动作 start/pause/resume/reset/skip/tick；阶段结束自动流转 focus→short-break（第 N 个→long-break）→focus；`now > endTime` 超时 = 自动完成并流转、不补通知（Q11）；历史记录由状态机完成事件生成
 - **设置（BzSettings + ⚙️ 域设置弹窗，ADR-0009）9 项**：
   pomodoroPreset（12 档下拉：11 预设 + 自定义）、pomodoroWorkMin / pomodoroShortBreakMin / pomodoroLongBreakMin（预设=自定义时动态显示，仿 AI tab bz-setting-hidden 模式）、pomodoroLongBreakInterval（N，默认 4）、pomodoroForceFocus（默认关）、pomodoroAutoCycle（默认关）、pomodoroAutoSkipBreak（默认关）、pomodoroSound（默认开）——默认值包 Q16
-- **通知**：阶段完成 toast（文案规范：`✅ 专注完成：休息 5 分钟`）；Web Audio 蜂鸣——工作结束低音 3 响、休息结束高音 2 响（OscillatorNode 零依赖；移动端「开始」按钮即用户手势，满足 iOS 音频约束）
+- **通知**：阶段完成 toast（文案规范：`✅ 专注完成：休息 5 分钟`）；Web Audio 蜂鸣（OscillatorNode 零依赖；移动端「开始」按钮即用户手势，满足 iOS 音频约束）。**2026-08-10 修订（用户决策）**：声音改为**阶段开始提示**——专注开始 880Hz 一声 / 短休开始 523Hz 一声 / 长休开始 392Hz 一声，听声即知当前状态（自动循环下无需打开弹窗）；仅 tick 自然流转播放，手动 start/skip 不响
 - **状态栏**：默认开（Q13）；`🍅 mm:ss`；空闲灰态 🍅；点击开弹窗；1s 轮询（与状态机 tick 共用）
 - **弹窗**：单例（escManager，重复打开幂等）；布局 = 环形进度 SVG + 阶段文案（专注/短休/长休 + 第几个循环）+ 剩余 mm:ss + 开始/暂停/重置/跳过 + 今日计数 + 近 7 天柱条 + ⚙️（Q20）
 - **重置语义（Q19）**：当前阶段回满时长并**停止**；强制专注模式下禁用（手册原文）
