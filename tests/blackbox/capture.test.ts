@@ -27,6 +27,18 @@ function mockOllama(content: string) {
   return fetchMock;
 }
 
+/** 延迟返回的 ollama mock（模拟长 AI 调用，暴露并发竞态） */
+function mockOllamaDelayed(content: string, delayMs: number) {
+  const fetchMock = vi.fn(async () => {
+    await new Promise((r) => setTimeout(r, delayMs));
+    return { ok: true, json: async () => ({ message: { content } }) };
+  });
+  (global as any).fetch = fetchMock;
+  return fetchMock;
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 function openAndFill(material: string, feeling: string) {
   const m = document.getElementById('bz-blackbox-material') as HTMLTextAreaElement;
   const f = document.getElementById('bz-blackbox-feeling') as HTMLTextAreaElement;
@@ -147,12 +159,83 @@ describe('黑匣子录入弹窗', () => {
     expect(result.querySelector('.bz-blackbox-ai-fallback')).toBeTruthy();
   });
 
+  it('AI 辅助在途时关闭弹窗：不抛错、不误报', async () => {
+    mockOllamaDelayed('这句最戳你', 60);
+    const { app } = setup(new MockVault(), { blackboxAIProvider: 'ollama' });
+    openBlackBoxCapture(app);
+    openAndFill('素材', '感受');
+    const askBtn = Array.from(document.querySelectorAll('.bz-blackbox-ai-btn')).find(
+      (b) => b.textContent === '❓ 追问'
+    ) as HTMLButtonElement;
+    askBtn.click();
+    await sleep(20); // AI 在途
+    closeBlackBoxCapture();
+    await sleep(120); // AI 返回，应安全放弃（不抛错、不误报 toast）
+    expect(document.getElementById('bz-blackbox-capture-mask')).toBeFalsy();
+    expect(hasNotice(/联想失败|查询失败/)).toBe(false);
+  });
+
+  it('自动复盘写前重载：AI 复盘期间外部新增的感触不被覆盖', async () => {
+    mockOllamaDelayed('{"text": "复盘话", "newSelfView": "认知"}', 60);
+    const { app, vault } = setup(new MockVault(), { blackboxReviewThreshold: '1', blackboxAIProvider: 'ollama' });
+    openBlackBoxCapture(app);
+    openAndFill('素材', '感受');
+    (document.getElementById('bz-blackbox-save') as HTMLButtonElement).click();
+    await sleep(20); // 复盘在途
+    // 外部并发写入第 2 条感触
+    const raw = JSON.parse(vault.files.get(getBlackBoxFilePath())!);
+    raw.impressions.push({
+      id: 'i2', ts: 't9', material: '并发新增', feeling: '不该被覆盖',
+      emotions: [], scene: '', people: '', direction: '', links: [],
+    });
+    vault.files.set(getBlackBoxFilePath(), JSON.stringify(raw));
+    await sleep(120); // 复盘完成
+    const saved = JSON.parse(vault.files.get(getBlackBoxFilePath())!);
+    expect(saved.impressions.length).toBe(2); // 外部新增未被复盘写回覆盖
+    expect(saved.reviews.length).toBe(1);
+    expect(saved.persona.selfViews.length).toBe(1);
+  });
+
+  it('自动复盘并发去重：在途时再次触发被跳过，只复盘一次', async () => {
+    mockOllamaDelayed('{"text": "复盘话", "newSelfView": "认知"}', 60);
+    const { app, vault } = setup(new MockVault(), { blackboxReviewThreshold: '1', blackboxAIProvider: 'ollama' });
+    openBlackBoxCapture(app);
+    openAndFill('素材1', '感受1');
+    (document.getElementById('bz-blackbox-save') as HTMLButtonElement).click();
+    await sleep(20); // 第一次复盘在途
+    openBlackBoxCapture(app); // 重开录入第二条
+    openAndFill('素材2', '感受2');
+    (document.getElementById('bz-blackbox-save') as HTMLButtonElement).click();
+    await sleep(150);
+    const saved = JSON.parse(vault.files.get(getBlackBoxFilePath())!);
+    expect(saved.impressions.length).toBe(2);
+    expect(saved.reviews.length).toBe(1); // 去重：只复盘一次
+  });
+
   it('关闭清理：esc 注册注销，重复开关无残留', () => {
     const { app } = setup();
     openBlackBoxCapture(app);
     closeBlackBoxCapture();
     expect(document.getElementById('bz-blackbox-capture-mask')).toBeFalsy();
+    expect(document.getElementById('bz-blackbox-capture-popup')).toBeFalsy(); // popup 是兄弟节点，必须同移除
     openBlackBoxCapture(app);
     expect(document.getElementById('bz-blackbox-capture-mask')).toBeTruthy();
+    expect(document.querySelectorAll('#bz-blackbox-capture-popup').length).toBe(1); // 无堆积
+  });
+
+  it('点击遮罩关闭：mask 与 popup 同消失', () => {
+    const { app } = setup();
+    openBlackBoxCapture(app);
+    document.getElementById('bz-blackbox-capture-mask')!.click();
+    expect(document.getElementById('bz-blackbox-capture-mask')).toBeFalsy();
+    expect(document.getElementById('bz-blackbox-capture-popup')).toBeFalsy();
+  });
+
+  it('点击右上角 ✕ 关闭：mask 与 popup 同消失', () => {
+    const { app } = setup();
+    openBlackBoxCapture(app);
+    (document.querySelector('.bz-blackbox-modal-close') as HTMLButtonElement).click();
+    expect(document.getElementById('bz-blackbox-capture-mask')).toBeFalsy();
+    expect(document.getElementById('bz-blackbox-capture-popup')).toBeFalsy();
   });
 });

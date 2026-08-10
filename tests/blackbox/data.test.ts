@@ -56,12 +56,16 @@ describe('BlackBoxDataManager', () => {
     expect(data.chat).toEqual([]);
   });
 
-  it('load：坏 JSON → 默认数据', async () => {
+  it('load：坏 JSON → 默认数据，且原文件改名备份 .bak 保留现场', async () => {
     const vault = new MockVault();
     vault.files.set('CONFIG/STORAGE/blackbox.json', '{oops');
     const { app } = setup(vault);
     const data = await new BlackBoxDataManager(app).load();
     expect(data.impressions).toEqual([]);
+    const baks = [...vault.files.keys()].filter((p) => p.includes('.bak-'));
+    expect(baks.length).toBe(1);
+    expect(vault.files.get(baks[0])).toBe('{oops');
+    expect(vault.files.has('CONFIG/STORAGE/blackbox.json')).toBe(false); // 原文件已改名，不再被覆盖
   });
 
   it('save：不存在时建目录建文件，可读回', async () => {

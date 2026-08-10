@@ -15,6 +15,7 @@ import type { BlackBoxData } from './types';
 let appRef: App | null = null;
 let dataManager: BlackBoxDataManager | null = null;
 let maskEl: HTMLElement | null = null;
+let popupEl: HTMLElement | null = null;
 let escHandle: { unregister: () => void } | null = null;
 let data: BlackBoxData | null = null;
 let busy = false;
@@ -24,11 +25,14 @@ function manager(app: App): BlackBoxDataManager {
   return dataManager;
 }
 
-/** 打开对话面板（幂等；已开则仅确保显示） */
+/** 打开对话面板（幂等；已开则重新加载数据并刷新，保持与文件同步） */
 export async function openBlackBoxChat(app: App): Promise<void> {
   appRef = app;
   if (maskEl) {
     maskEl.style.display = 'block';
+    // 面板开着期间可能有其他写入（如新录入的感触/自动复盘）——重载刷新，避免旧快照显示与覆盖
+    data = await manager(app).load();
+    renderAll();
     return;
   }
   data = await manager(app).load();
@@ -37,9 +41,14 @@ export async function openBlackBoxChat(app: App): Promise<void> {
 }
 
 export function closeBlackBoxChat(): void {
+  // mask 与 popup 是 body 下兄弟元素（createOverlay），必须同时移除——否则 popup 残留盖屏拦截点击
   if (maskEl) {
     maskEl.remove();
     maskEl = null;
+  }
+  if (popupEl) {
+    popupEl.remove();
+    popupEl = null;
   }
   if (escHandle) {
     escHandle.unregister();
@@ -65,6 +74,7 @@ function buildDOM(): void {
     onMaskClick: () => closeBlackBoxChat(),
   });
   maskEl = mask;
+  popupEl = popup;
   document.body.appendChild(mask);
   document.body.appendChild(popup);
   mask.style.display = 'block';
@@ -103,7 +113,8 @@ function buildDOM(): void {
   input.className = 'bz-blackbox-chat-input';
   input.placeholder = '和包仔说点什么…';
   input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // isComposing：中文输入法选词确认（Enter）不触发发送
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
       e.preventDefault();
       void send();
     }
@@ -215,6 +226,8 @@ async function send(): Promise<void> {
   input.value = '';
   const ts = new Date().toISOString();
   const m = manager(appRef);
+  // 重新加载最新数据：面板快照期间可能已有其他写入（新感触/复盘），旧快照整体写回会覆盖丢数据
+  data = await m.load();
   await m.addChat(data, 'user', text, ts);
   renderChat();
   busy = true;
@@ -224,6 +237,8 @@ async function send(): Promise<void> {
   try {
     const ai = new BlackBoxAI();
     const reply = await ai.chat(data, text);
+    // 写前重载：AI 调用（长耗时）期间可能有其他写入（新感触/复盘），陈旧快照整体写回会覆盖丢数据
+    data = await m.load();
     await m.addChat(data, 'assistant', reply, new Date().toISOString());
   } catch (e) {
     console.warn('黑匣子对话失败', e);
