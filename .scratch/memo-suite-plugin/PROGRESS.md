@@ -142,3 +142,16 @@
 - ✅ **测试健壮性**（预存在脆弱性，stash 验证与本次改动无关）：password/ui.test.ts 7 处 150ms 固定等待 → 轮询 waitFor（3s 超时）；smoke「域命令回调」超时 5s→15s
 - ✅ 新增测试 5 个：ai-agent（enableAIClipMatch=false 不发 AI 请求 / aiAgentWatchedFolders 范围外不监听）、auto-summary（articleDirectory 跟随设置）、movie（window.__homeFilmStatus 在看/想看过滤 + 清除 + 默认全部）
 - ⚠️ 注意：`window.__homeFilmStatus` 是唯一新增的遗留全局读取点（AGENTS.md 铁律 6 的例外，主页.js 无法 import 插件模块）
+
+---
+
+## 2026-08-10 黑匣子新域（ticket 33-38，grilling 5 轮封板）
+
+**状态：974 测试全绿（76 文件），构建已产出（main.js 已直出 vault），提交 e351ed5**
+
+- ✅ **grilling 会话**（5 轮 17 问）：载体 = bz 新域；边界 = 平行新流（次级内容未来接入）；本质 = 他者（伴侣向）；输入 = 感触（素材+感受焊死）；人格 = 种子+生长（方案 D「有诗心的思辨者」，名字包仔）；交流 = 中央弹窗+静默复盘；记忆 = 三层；AI = 默认 DeepSeek 可切 Ollama
+- ✅ 新域 `src/blackbox/`（7 模块）：types（24 词情绪词表/阈值/裁剪纯函数）、data（blackbox.json v1）、ai（人设 prompt/三层记忆/JSON 容错）、capture（录入弹窗+AI 辅助）、chat（对话面板+成长区）、review（静默/手动复盘）、settings-ui（⚙️ 5 项）
+- ✅ 命令 +3：bz-blackbox-capture「写感触」/ bz-blackbox-open「黑匣子」/ bz-blackbox-review「复盘」；smoke 命令清单 38 个
+- ✅ ADR-0013（感触 schema v1 定全）、ADR-0014（平行流不元层）；CONTEXT.md 黑匣子术语 10 条；spec.md 黑匣子章节
+- ✅ 测试 +48（纯函数 20 / 数据层 8 / 录入 UI 9 / 对话 UI 11），全量 926 → 974
+- ⚠️ 待办：用户可选「种子编辑」（域设置弹窗目前只读展示）；次级内容接入机制（ADR-0014 演化路径）；入口页磁贴可自行添加三命令
