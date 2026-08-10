@@ -5,7 +5,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { M, resetMovieState, setHomeFilmStatus } from '../../src/movie/state';
-import { rebuildItems } from '../../src/movie/data';
+import { rebuildItems, getDisplayItems } from '../../src/movie/data';
 import {
   renderAll, renderList, setupInfiniteScroll, toggleSearch, closeOverlay,
   openAddModal, closeAddModal, openEditModal, openFilterModal, closeFilterModal, createOverlay, registerEscapeHandler,
@@ -61,6 +61,29 @@ describe('renderAll 分页', () => {
     M.loadedCount = 61; // seed 共 61 部
     renderAll(items, c, makeApp(vault));
     expect(c.innerHTML).not.toContain('滚动加载更多...');
+  });
+});
+
+describe('renderAll 分页', () => {
+  it('movieRatingDisplay=number → 已看卡片显示 ⭐数字', () => {
+    resetObsidianMocks();
+    resetMovieState();
+    document.body.innerHTML = '';
+    const vault = new MockVault();
+    vault.files.set(
+      '我的/影视/《评分片》.md',
+      ['---', 'tags: [电影]', '评分: 4.5', '观影日期: 2025-01-01T10:00:00', '---'].join('\n')
+    );
+    const app = makeApp(vault);
+    M.appRef = app;
+    setSettingsProvider(() => ({ movieRatingDisplay: 'number' }) as any);
+    rebuildItems(app);
+    const container = document.createElement('div');
+    renderAll(getDisplayItems(), container, app);
+    const overlay = container;
+    expect(overlay.textContent).toContain('⭐4.5');
+    expect(overlay.textContent).not.toContain('⭐⭐⭐⭐');
+    closeOverlay();
   });
 });
 
@@ -149,6 +172,21 @@ describe('设置弹窗筛选', () => {
     const vault = new MockVault();
     seed(vault);
     M.appRef = makeApp(vault);
+    setSettingsProvider(() => ({ movieFolderPath: '我的/影视', moviePageSize: '20' }) as any);
+  });
+
+  it('⚙️ 影视设置弹窗：文件夹/每页 + 默认视图 3 项 + 评分显示', () => {
+    createOverlay(M.appRef as any);
+    const settingsBtn = [...document.querySelectorAll('#__yin_ying__ button')].find((b) => b.title === '影视设置') as HTMLElement;
+    settingsBtn.click();
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    const names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    expect(names).toEqual([
+      '影视文件夹', '每页加载数量',
+      '默认视图', '默认排序', '默认类型筛选', '默认状态筛选',
+      '显示', '已看卡片评分显示', '海报抓取',
+    ]);
+    closeFilterModal();
   });
 
   it('筛选/排序按钮组实时生效（类型单标签/状态/排序）', () => {
@@ -340,6 +378,31 @@ describe('ensureMovie 设置读取', () => {
     setSettingsProvider(() => ({} as any));
     ensureMovie(makeApp(new MockVault()));
     expect(M.pageSize).toBe(20);
+  });
+
+  it('默认视图：movieDefaultSort/TypeFilter/StatusFilter 生效', () => {
+    unloadMovie();
+    resetMovieState();
+    setSettingsProvider(() => ({
+      movieFolderPath: '我的/影视',
+      movieDefaultSort: 'rating-desc',
+      movieDefaultTypeFilter: '美剧',
+      movieDefaultStatusFilter: '在看',
+    }) as any);
+    ensureMovie(makeApp(new MockVault()));
+    expect(M.sortState).toEqual({ key: 'rating', order: 'desc' });
+    expect(M.typeFilter).toBe('美剧');
+    expect(M.statusFilter).toBe('在看');
+  });
+
+  it('默认视图缺省回退：date-desc / 全部 / 全部；非法排序忽略', () => {
+    unloadMovie();
+    resetMovieState();
+    setSettingsProvider(() => ({ movieDefaultSort: 'bad-value' }) as any);
+    ensureMovie(makeApp(new MockVault()));
+    expect(M.sortState).toEqual({ key: 'date', order: 'desc' });
+    expect(M.typeFilter).toBe('全部');
+    expect(M.statusFilter).toBe('全部');
   });
 });
 
