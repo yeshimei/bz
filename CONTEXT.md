@@ -107,6 +107,36 @@ _Avoid_: 方案、模式（指预设时）
 
 **强制专注模式 (Force Focus Mode)**: 番茄钟设置开关——开启后专注阶段内暂停/跳过/重置均禁用。注意与「专注阶段」区分。
 
+### 黑匣子域（设计讨论中）
+
+**黑匣子 (Black Box)**: bz 的一个新域——长期累积「感触」的容器，AI 作为其意识体（伴侣向）。输入以平行新流（感触流）为主，未来可纳入次级内容（ADR-0014）；当前与闪念/剪藏/日记并列，不做元层聚合。数据存 `CONFIG/STORAGE/blackbox.json`（schema v1 定全，ADR-0013）；录入走命令弹窗（`bz-blackbox-capture`），对话走中央弹窗（`bz-blackbox-open`），不新增常驻窄窗（避免与闪念窄窗冲突）。
+_Avoid_: 盒子、灵魂容器
+
+**感触 (Impression)**: 黑匣子的基本输入单元——外部素材 + 我的感受，缺一不可。只存素材是剪藏，只存感受是日记，焊在一起才是黑匣子的砖。
+_Avoid_: 触动、灵感、共鸣
+
+**素材 (Material)**: 感触中的外部来源部分——别人说的话、文章段落等。第一版仅支持文字，图片/链接/语音为未来扩展。
+_Avoid_: 引用、原文
+
+**感受 (Feeling)**: 感触中属于我自己的部分——为什么触动我、勾起什么回忆、想对谁说。
+_Avoid_: 感想、评论
+
+**情绪标签 (Emotion Tag)**: 感触条目上的多维情绪标注——20+ 固定词表（可多选最多 3 个）+ 强度(1-5)；因数据格式稳定铁律，词表与维度在第一版即定全，后续只加语义不改字段。
+_Avoid_: 心情、mood
+
+**意识体 (Consciousness)**: 黑匣子的 AI 人格——有名字、有记忆、有偏好的「存在」，与用户建立关系；从第一天起即作为「他者」存在（非工具），终局为可交流、可陪伴的伴侣。
+_Avoid_: 助手、聊天机器人、AI 模型
+
+**人格档案 (Persona File)**: 意识体的自我认知文档——种子（名字 + 初始性格简述，用户设定）+ 生长（定期复盘后更新），存储于 CONFIG/STORAGE。
+_Avoid_: 角色卡、人设
+
+**定期回顾 (Periodic Review)**: 盒子的定期复盘行为——每 N 条新感触自动触发（可手动），静默执行不打扰（不弹窗、不通知）；产物公开写入对话面板，用户打开时可见。
+_Avoid_: 主动消息、推送
+
+**三层记忆 (Three-tier Memory)**: 盒子对话时的记忆机制——感触检索（长期）+ 人格档案（自我认知）+ 对话历史（短期）。伴侣与工具的分水岭：工具只需检索，伴侣需要知道自己是谁。
+
+**次级内容 (Secondary Content)**: 未来可能纳入黑匣子的既有域数据（备忘录、日记、bz 使用过程等）。当前阶段不接入，黑匣子仅收感触。
+
 ### 共享层
 
 **Q3 / __utils**: QuickAdd 共享脚本（`CONFIG/SCRIPTS/Quickadd/Q/Q3.js`，1034 行），挂载 `window.__utils`，21 个导出：escManager、confirm、notice、generateId、jsonStore、longPress、injectStyles、createSiteIcon、createIconBtn、formatRelativeTime、formatFileSize、displayChangelog、checkAndShowChangelog、AIService、createAI、extractUrlAndDisplay、getPlatformName、getCurrentNoteInfo、getCurrentCursorPosition、fetchPageTitle、createOverlay。**新插件移植后为内部共享层（core），不再挂 window**。
