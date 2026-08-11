@@ -105,6 +105,9 @@ describe('黑匣子录入弹窗（引导式）', () => {
     expect((cards[0] as HTMLElement).textContent).toContain('概念');
     expect((cards[1] as HTMLElement).textContent).toContain('文献');
     expect((cards[2] as HTMLElement).textContent).toContain('想法');
+    // 无标题（去「这次想记录什么」）/ 卡片无描述
+    expect(document.querySelector('.bz-blackbox-guide-page-title')).toBeNull();
+    expect(document.querySelector('.bz-blackbox-guide-card-desc')).toBeNull();
     // 无 header / 胶囊 / 保存 / 关闭
     expect(document.querySelector('#bz-blackbox-capture-popup .bz-blackbox-modal-header')).toBeNull();
     expect(document.querySelector('.bz-blackbox-type-tabs')).toBeNull();
@@ -127,7 +130,7 @@ describe('黑匣子录入弹窗（引导式）', () => {
     expect(document.getElementById('bz-blackbox-step-content')!.style.display).toBe('block');
     expect(document.getElementById('bz-blackbox-concept-name')).toBeTruthy(); // 一个输入框
     expect(document.getElementById('bz-blackbox-concept-gen')!.textContent).toBe('✨ 生成卡片');
-    expect(document.querySelector('.bz-blackbox-guide-back')!.textContent).toContain('换一个');
+    expect(document.querySelector('.bz-blackbox-guide-back')!.textContent).toBe('←');
     // 只有一个输入框（无其他字段）
     expect(document.querySelectorAll('#bz-blackbox-step-content textarea').length).toBe(1);
   });

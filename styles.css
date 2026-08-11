@@ -1514,11 +1514,6 @@
 }
 
 /* ① 类型选择 */
-.bz-blackbox-guide-page-title {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 14px;
-}
 .bz-blackbox-guide-card {
   display: flex;
   align-items: center;
@@ -1542,20 +1537,9 @@
   font-size: 22px;
   flex-shrink: 0;
 }
-.bz-blackbox-guide-card-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
 .bz-blackbox-guide-card-name {
   font-size: 14px;
   font-weight: 600;
-}
-.bz-blackbox-guide-card-desc {
-  font-size: 12px;
-  color: var(--text-muted);
 }
 .bz-blackbox-guide-card-arrow {
   color: var(--text-faint);
