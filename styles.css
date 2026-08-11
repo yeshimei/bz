@@ -1754,12 +1754,6 @@
   margin-top: 8px;
   background: color-mix(in srgb, var(--interactive-accent) 8%, transparent);
 }
-.bz-blackbox-import-aiblock-head {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--interactive-accent);
-  margin-bottom: 4px;
-}
 .bz-blackbox-import-aiblock-body {
   font-size: 13px;
   line-height: 1.65;
@@ -1772,4 +1766,70 @@
   font-size: 11px;
   color: var(--text-muted);
   margin-top: 4px;
+}
+.bz-blackbox-import-body-wrap {
+  position: relative;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.bz-blackbox-import-edit {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: none;
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  border-radius: 8px;
+  padding: 1px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  z-index: 1;
+}
+.bz-blackbox-import-edit:hover {
+  border-color: var(--interactive-accent);
+  color: var(--interactive-accent);
+}
+.bz-blackbox-import-edit-inline {
+  position: static;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.bz-blackbox-import-aiblock-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--interactive-accent);
+  margin-bottom: 4px;
+}
+.bz-blackbox-import-ta {
+  width: 100%;
+  min-height: 120px;
+  resize: vertical;
+  font-family: var(--font-monospace);
+  font-size: 12px;
+  line-height: 1.6;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border: 1px solid var(--interactive-accent);
+  border-radius: 10px;
+  padding: 8px 10px;
+  box-sizing: border-box;
+}
+.bz-blackbox-import-ta-ops {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+.bz-blackbox-import-cancel {
+  background: none;
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  border-radius: 10px;
+  padding: 4px 14px;
+  font-size: 12px;
+  cursor: pointer;
 }
