@@ -24,6 +24,9 @@ export function getImportLogPath(): string {
   return `${dir}/blackbox_import.json`;
 }
 
+/** AI 分类/总结批量大小（同时是 UI 一次展示的批次大小） */
+export const CLASSIFY_BATCH = 20;
+
 /** 敏感内容正则（安全红线：含这些关键词的卡片直接跳过） */
 const SENSITIVE_RE = /(恢复码|密码|密钥|验证码|私钥|身份证|银行卡|账号密码|登录凭证)/i;
 /** 剪藏残渣文件名 */
@@ -135,7 +138,7 @@ export function prefilterCard(card: CardItem): { kind: 'skip'; reason: string } 
 /** AI 批量分类（每批 20 张；失败降级为 concept——文本可读即入，永不拒收） */
 export async function classifyCards(ai: BlackBoxAI, cards: CardItem[]): Promise<ClassifiedCard[]> {
   const out: ClassifiedCard[] = [];
-  const BATCH = 20;
+  const BATCH = CLASSIFY_BATCH;
   for (let i = 0; i < cards.length; i += BATCH) {
     const batch = cards.slice(i, i + BATCH);
     const listText = batch
@@ -164,7 +167,7 @@ export async function classifyCards(ai: BlackBoxAI, cards: CardItem[]): Promise<
 
 /** 批量生成总结（仅对用户标记 aiSummary 的卡；失败行留空，不阻断导入） */
 export async function generateSummaries(ai: BlackBoxAI, cards: ClassifiedCard[]): Promise<void> {
-  const BATCH = 20;
+  const BATCH = CLASSIFY_BATCH;
   for (let i = 0; i < cards.length; i += BATCH) {
     const batch = cards.slice(i, i + BATCH);
     const listText = batch
