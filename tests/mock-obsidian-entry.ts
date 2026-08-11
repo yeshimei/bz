@@ -44,7 +44,7 @@ export function clearNotices(): void {
 }
 
 export const mockMarkdownRenderer = {
-  render: vi.fn(async () => {}),
+  render: vi.fn(async (..._args: any[]) => {}),
 };
 
 export class MockComponent {}
