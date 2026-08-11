@@ -1632,6 +1632,43 @@
   border-radius: 8px;
   padding: 0 6px;
 }
+.bz-blackbox-import-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 20px;
+}
+.bz-blackbox-import-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.bz-blackbox-import-body .markdown-preview-view {
+  font-size: 13px;
+  line-height: 1.65;
+}
+.bz-blackbox-import-body .markdown-preview-view p,
+.bz-blackbox-import-body .markdown-preview-view li {
+  font-size: 13px;
+  line-height: 1.65;
+}
+.bz-blackbox-import-ops {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 20px 6px;
+  flex-shrink: 0;
+}
 .bz-blackbox-import-preview {
   font-size: 11px;
   color: var(--text-muted);
