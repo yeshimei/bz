@@ -158,8 +158,8 @@ export function buildAssistPrompt(
       ? existingConcepts.map((c) => c.name).join('、')
       : '（暂无）';
     return [
-      `主人想搞懂「${input}」。请生成一张知识卡片：`,
-      `1. definition：用 2-3 句话口语化解释它是什么，适合放进个人笔记，不啰嗦；`,
+      `主人想搞懂「${input}」。请生成一张百科式的知识卡片：`,
+      `1. definition：用正式、百科式的口吻，一句话或一段话解释它是什么（像百科词条一样准确客观，不口语化、不废话）；`,
       `2. relatedNames：从既有概念「${names}」中挑 0-3 个与它相关的概念名（没有就空数组）。`,
       `只输出 JSON：{"definition": "...", "relatedNames": ["..."]}`,
     ].join('\n');
@@ -171,8 +171,9 @@ export function buildAssistPrompt(
     return [
       `主人摘抄了一段内容，来源：「${input}」。请提取其中出现的概念/实体（名词），与既有概念对照：`,
       `1. matched：既有概念「${names}」中，这段内容涉及的（0-5 个，名字原样）；`,
-      `2. newConcepts：内容中值得记录但不在既有概念里的新名词（0-5 个，简短）。`,
-      `只输出 JSON：{"matched": ["..."], "newConcepts": ["..."]}`,
+      `2. newConcepts：内容中值得记录但不在既有概念里的新名词（0-5 个，简短）；`,
+      `3. insight：从这段摘抄提炼一句主人可能有的想法/思考（一句话，供主人采纳或修改）。`,
+      `只输出 JSON：{"matched": ["..."], "newConcepts": ["..."], "insight": "..."}`,
     ].join('\n');
   }
   if (kind === 'recall') {
@@ -282,8 +283,8 @@ export function parseConceptJson(text: string): { definition: string; relatedNam
   }
 }
 
-/** 文献名词表分析 JSON 解析 */
-export function parseLiteratureJson(text: string): { matched: string[]; newConcepts: string[] } | null {
+/** 文献名词表分析 JSON 解析（insight 可缺省：旧模型未输出时降级为空） */
+export function parseLiteratureJson(text: string): { matched: string[]; newConcepts: string[]; insight: string } | null {
   if (!text) return null;
   const start = text.indexOf('{');
   const end = text.lastIndexOf('}');
@@ -296,6 +297,7 @@ export function parseLiteratureJson(text: string): { matched: string[]; newConce
       newConcepts: Array.isArray(obj.newConcepts)
         ? obj.newConcepts.filter((n: any): n is string => typeof n === 'string')
         : [],
+      insight: typeof obj.insight === 'string' && obj.insight.trim() ? obj.insight.trim() : '',
     };
   } catch (e) {
     return null;
