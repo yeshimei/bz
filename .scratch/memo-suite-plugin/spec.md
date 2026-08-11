@@ -206,6 +206,21 @@ Feature: memo-suite-plugin
 9. 作为用户，我希望黑匣子数据存 `CONFIG/STORAGE/blackbox.json` v1（schema 定全，ADR-0013），重启不丢，以便长期累积。
 10. 作为用户，我希望 ⚙️ 设置弹窗展示情绪词表（只读）与复盘阈值，以便知晓盒子如何生长。
 
+### 黑匣子 v2（三类输入 + 人物画像 + 事件时间线，ticket 39+ 演进，完整设计见 `.scratch/blackbox-suite-plugin/spec.md`）
+
+11. 作为用户，我希望录入弹窗顶部可切换三种类型（🧩 概念 / 📎 文献 / 💡 想法），以便按内容形态录入。
+12. 作为用户，我希望概念录入：给名词 → AI 生成知识卡片（定义 + 自动关联）→ 我仅确认是否录入；概念为纯知识卡片，**无感触外壳**。
+13. 作为用户，我希望文献录入：粘贴摘抄 + 来源 → AI 提取概念给出名词表勾选关联 → 可展开「带出想法」，以便摘抄与知识背景建立联系。
+14. 作为用户，我希望情绪标签**去掉强度**（24 词多选 ≤3，无 1-5），以便录入更轻。
+15. 作为用户，我希望主面板五标签（🧩 概念墙 / 📎 文献架 / 💡 想法池 / 👤 人物 / 🕐 时间线）浏览全部内容，以便按维度回看。
+16. 作为用户，我希望「涉及的人」可从已有画像选择或现场新建；未建画像只存名字，AI 复盘时提示，以便冷启动不打扰。
+17. 作为用户，我希望人物画像由 AI 从条目中提炼维护（印象/情绪聚合/事件投影），我的印象区字段级锁（改过 AI 不再覆盖），另有 AI 观察区（持续更新，可采纳进印象区），以便既有 AI 维护又有我的主权。
+18. 作为用户，我希望事件由 AI 全自动提炼（有具体行动/变化/时刻），推测事件虚线 + ❓ 可确认/删除；事件可编辑/删除/合并，改过的 AI 不再碰；画像时间线 = 事件按人投影（单份存储），以便零负担获得时间线且不被幻觉误导。
+19. 作为用户，我希望对话检索扩展到画像/事件概要级（画像：印象一句话 + 最近 3 个事件标题），以便包仔「认识我的人际世界」。
+20. 作为用户，我希望复盘产物新增：新人物提示（高频提及未建画像）+ 事件汇报一句话（「这周整理了 N 件新事件，其中 M 件推测」），以便生长可见。
+21. 作为用户，我希望 ⚙️ 设置新增：推测事件显示开关、情绪词表可编辑（增删，24 词预置），以便控制时间线与词表。
+22. 作为用户，我希望第一版不实现遗忘权（画像删除/断链、事件忽略持久化后置），以便范围收敛。
+
 ### 全局
 
 46. 作为用户，我希望所有域的面板 DOM id/类名与原脚本一致，以便样式与既有习惯不变。
@@ -275,7 +290,7 @@ Feature: memo-suite-plugin
 - **做题家**：`bz-quiz-update`、`bz-quiz-open`
 - **闪念**：`bz-flash-open`（打开参考窗口）、`bz-flash-chat`（打开聊天窗口）
 - **番茄钟**（ticket 26 新域）：`bz-pomodoro-open`（中文名「番茄钟」，icon timer）
-- **黑匣子**（ticket 33 新域）：`bz-blackbox-capture`（中文名「写感触」）、`bz-blackbox-open`（中文名「黑匣子」）、`bz-blackbox-review`（中文名「复盘」）
+- **黑匣子**（ticket 33 新域；v2 追加面板命令，ticket 41）：`bz-blackbox-capture`（中文名「录入」，v2 三类型后不再叫「写感触」）、`bz-blackbox-open`（中文名「黑匣子」）、`bz-blackbox-review`（中文名「复盘」）、`bz-blackbox-panel`（中文名「黑匣子面板」，v2 五标签主面板入口）
 - **日记本**（已迁）：`bz-diary-write`、`bz-diary-open`
 - **B站下载器**：`bz-bili-open`
 - 已删除命令：`bz-notification-demo`（通知样式演示）、`bz-diary-create-quote`（写摘抄）
@@ -330,7 +345,7 @@ Feature: memo-suite-plugin
 - **复习计划（含做题家）**：autoCheckInterval、enableAutoNotify + 做题家 5 项（enableMultipleChoice、questionsPerNote、shuffleQuestions、difficulty、forceQuizForReview）
 - **番茄钟（11 项）**：pomodoroPreset（12 档：11 预设+自定义）、pomodoroWorkMin/pomodoroShortBreakMin/pomodoroLongBreakMin（自定义时长，预设=自定义时动态显示）、pomodoroLongBreakInterval（N，默认 4）、pomodoroForceFocus（默认关）、pomodoroAutoCycle（默认关）、pomodoroAutoSkipBreak（默认关）、pomodoroSound（默认开）、pomodoroVolume（音量 0-100，默认 100 最大，设置弹窗 slider+试听）、pomodoroRestoreMode（启动恢复方式：background 后台继续 / popup 正在倒计时则自动弹窗；恢复继续弹「番茄钟继续：…还剩 mm:ss」通知）
 - **闪念（17 项全量，含 AI 项）**：OLLAMA_URL、EMBEDDING_MODEL、META_PATH、VEC_PATH、TOP_K、CHAT_TOP_K、CHUNK_MIN_LENGTH、ALLOW_PATHS、CONCURRENCY、CONTEXT_LIMIT、DEBOUNCE_DELAY、CURSOR_POLL_INTERVAL、OLLAMA_CHAT_MODEL、DEEPSEEK_MODEL、DEFAULT_USE_DEEPSEEK、MAX_HISTORY、OLLAMA_REMOTE_URL
-- **黑匣子（5 项）**：blackboxAIProvider（deepseek/ollama 两档，默认 deepseek）、blackboxOllamaUrl（默认 http://localhost:11434）、blackboxOllamaModel（默认 qwen2.5:14b-instruct）、blackboxReviewThreshold（复盘阈值，默认 10）、blackboxMaxHistory（对话历史保留条数，默认 20）
+- **黑匣子（v2 共 7 项）**：blackboxAIProvider（deepseek/ollama 两档，默认 deepseek）、blackboxOllamaUrl（默认 http://localhost:11434）、blackboxOllamaModel（默认 qwen2.5:14b-instruct）、blackboxReviewThreshold（复盘阈值，默认 10；数据内 settings.reviewThreshold 兕底同步）、blackboxMaxHistory（对话历史保留条数，默认 20）、blackboxShowSpeculativeEvents（推测事件显示开关，默认开，v2 新增）、情绪词表可编辑（settings.words 增删，预置 24 词，v2 新增）
 
 **筛选弹窗（🔀，非设置）**：影视「筛选与排序」（类型筛选+排序）、书库「视图与筛选」（分类筛选+视图）
 
