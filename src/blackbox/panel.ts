@@ -258,18 +258,11 @@ function renderWall(): void {
     card.type = 'button';
     card.className = 'bz-blackbox-concept-card';
     card.dataset.id = c.id;
+    card.title = '点击查看详情'; // 悬浮提示，卡片本体只显示名称（定义/关联数在详情内）
     const name = document.createElement('div');
     name.className = 'bz-blackbox-concept-card-name';
     name.textContent = c.name || '';
-    const def = document.createElement('div');
-    def.className = 'bz-blackbox-concept-card-def';
-    def.textContent = c.definition ? clip(c.definition, 40) : '暂无定义';
-    const meta = document.createElement('div');
-    meta.className = 'bz-blackbox-concept-card-meta';
-    const relatedCount = (c.related || []).length;
-    const refCount = data.entries.filter((e) => e.type === 'literature' && (e.terms || []).includes(c.id)).length;
-    meta.textContent = `🔗 ${relatedCount} 关联 · 📎 ${refCount} 引用`;
-    card.append(name, def, meta);
+    card.appendChild(name);
     card.addEventListener('click', () => {
       detailConceptId = c.id;
       renderWallDetail(box);
