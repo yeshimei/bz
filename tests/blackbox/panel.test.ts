@@ -2,7 +2,7 @@
  * 黑匣子主面板 UI 测试（ticket 41/43/44）：五标签切换/概念墙详情关联/文献架/想法池空态/
  * 人物详情（印象锁/AI 观察采纳/情绪聚合/事件投影）/时间线（年月分组/推测确认删除/筛选/开关）。
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
@@ -254,6 +254,30 @@ describe('黑匣子主面板（五标签）', () => {
     expect(cards.length).toBe(1);
     expect(cards[0].textContent).toContain('给妹妹买吉他');
     expect(document.getElementById('bz-blackbox-timeline')!.textContent).not.toContain('梦见去海边');
+  });
+
+  it('头部动作区：✏️ 录入 → 打开录入弹窗，⚙️ 设置，❌ 关闭在最后', async () => {
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault);
+    await openBlackBoxPanel(app);
+    const actions = document.querySelector('.bz-blackbox-hdr-actions')!;
+    const btns = actions.querySelectorAll('button');
+    // 顺序：✏️ 录入 → ⚙️ 设置 → ❌ 关闭（关闭恒在最后）
+    expect(btns.length).toBe(3);
+    expect(btns[0].id).toBe('bz-blackbox-panel-capture');
+    expect(btns[0].textContent).toBe('✏️');
+    expect(btns[1].id).toBe('bz-blackbox-panel-settings');
+    expect(btns[2].textContent).toBe('❌');
+    // 点 ✏️ → 录入弹窗打开（async 建 DOM，waitFor 等）；关闭录入弹窗后点 ❌ → 面板关闭
+    (btns[0] as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-capture-popup')).toBeTruthy();
+    });
+    expect(document.getElementById('bz-blackbox-capture-popup')!.style.display).toBe('flex');
+    (document.querySelector('#bz-blackbox-capture-popup .bz-blackbox-hdr-close') as HTMLElement).click();
+    (btns[2] as HTMLElement).click();
+    expect(document.getElementById('bz-blackbox-panel')).toBeNull(); // 关闭=整体移除 DOM
   });
 
   it('面板切换保留各页状态（详情展开态不因切 tab 丢失）', async () => {

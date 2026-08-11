@@ -689,23 +689,59 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  font-weight: 600;
-  font-size: 15px;
-  border-bottom: 1px solid var(--background-modifier-border);
+  padding: 16px 24px 8px;
   flex-shrink: 0;
 }
-.bz-blackbox-modal-close {
+.bz-blackbox-modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+/* 右上角动作区（备忘录 todo-popup 风格统一：无边框图标按钮，关闭在最后） */
+.bz-blackbox-hdr-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.bz-blackbox-hdr-btn {
   background: none;
   border: none;
   cursor: pointer;
   color: var(--text-muted);
-  font-size: 14px;
-  padding: 4px 8px;
+  padding: 0;
+  width: 26px;
+  height: 28px;
   border-radius: 6px;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: background 0.15s;
 }
-.bz-blackbox-modal-close:hover {
-  background: var(--background-modifier-hover);
+.bz-blackbox-hdr-btn:hover {
+  background: var(--background-secondary);
+}
+.bz-blackbox-hdr-btn-accent {
+  color: var(--interactive-accent);
+}
+.bz-blackbox-hdr-close {
+  font-size: 13px;
+}
+@keyframes bzSlideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -40%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+#bz-blackbox-capture-popup,
+#bz-blackbox-chat-popup,
+#bz-blackbox-panel {
+  animation: bzSlideUp 0.3s ease-out;
 }
 
 /* 录入弹窗 */
@@ -870,14 +906,6 @@
 .bz-blackbox-concept-input {
   width: 240px;
   margin-right: 6px;
-}
-.bz-blackbox-modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 10px 16px;
-  border-top: 1px solid var(--background-modifier-border);
-  flex-shrink: 0;
 }
 .bz-blackbox-btn {
   border: 1px solid var(--background-modifier-border);

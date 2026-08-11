@@ -72,6 +72,13 @@ describe('黑匣子录入弹窗（三类）', () => {
     const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
     await openBlackBoxCapture(app);
     expect(document.getElementById('bz-blackbox-capture-mask')).toBeTruthy();
+    // 头部动作区：💾 保存 + ❌ 关闭（关闭在最后）；底部 footer 已移除
+    const hdrBtns = document.querySelectorAll('#bz-blackbox-capture-popup .bz-blackbox-hdr-actions button');
+    expect(hdrBtns.length).toBe(2);
+    expect(hdrBtns[0].id).toBe('bz-blackbox-save');
+    expect(hdrBtns[0].textContent).toBe('💾');
+    expect(hdrBtns[1].textContent).toBe('❌');
+    expect(document.querySelector('#bz-blackbox-capture-popup .bz-blackbox-modal-footer')).toBeNull();
     const tabs = document.querySelectorAll('.bz-blackbox-type-btn');
     expect(tabs.length).toBe(3);
     expect((tabs[0] as HTMLElement).textContent).toContain('概念');
