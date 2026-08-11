@@ -155,6 +155,10 @@ function normalizeEntry(e: any): Entry | null {
   if (e.type === 'thought') {
     base.text = typeof e.text === 'string' ? e.text : '';
   }
+  // 卡片盒导入元信息透传（可选字段，缺省不填；旧数据读取不受影响）
+  if (typeof e.category === 'string' && e.category.trim()) base.category = e.category.trim();
+  if (Array.isArray(e.tags)) base.tags = e.tags.filter((t): t is string => typeof t === 'string');
+  if (typeof e.summary === 'string' && e.summary.trim()) base.summary = e.summary.trim();
   return base;
 }
 

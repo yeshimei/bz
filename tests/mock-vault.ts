@@ -7,6 +7,28 @@ export class MockVault {
   dirs = new Set<string>();
   modifiedPaths: string[] = [];
 
+  /** 内存文件系统 adapter（Obsidian 式 read/write，数据层日志/配置读写用） */
+  adapter = {
+    read: async (path: string): Promise<string> => {
+      const v = this.files.get(path);
+      if (v === undefined) throw new Error('file not found: ' + path);
+      return v;
+    },
+    write: async (path: string, content: string): Promise<void> => {
+      this.files.set(path, content);
+      this.modifiedPaths.push(path);
+    },
+    exists: async (path: string): Promise<boolean> => this.files.has(path),
+    list: async (path: string): Promise<{ files: string[]; folders: string[] }> => {
+      const prefix = path.endsWith('/') ? path : path + '/';
+      const files = [...this.files.keys()].filter((p) => p.startsWith(prefix) && !p.slice(prefix.length).includes('/'));
+      const folders = [...this.files.keys()]
+        .filter((p) => p.startsWith(prefix) && p.slice(prefix.length).includes('/'))
+        .map((p) => prefix + p.slice(prefix.length).split('/')[0]);
+      return { files, folders: [...new Set(folders)] };
+    },
+  };
+
   getAbstractFileByPath(path: string): any {
     if (this.files.has(path)) return this.file(path);
     // 目录：收集以 path/ 开头的直接子文件

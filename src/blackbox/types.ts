@@ -62,6 +62,13 @@ export interface Entry {
   toward: Direction;
   /** 链接数组（URL 或 [[笔记]]） */
   links: string[];
+  // 卡片盒导入元信息（可选，一次性导入工具写入；缺省 undefined，旧数据读取不受影响）：
+  /** 卡片分类（如 医学/计算机/摄影） */
+  category?: string;
+  /** 卡片标签（frontmatter tags 原样带入） */
+  tags?: string[];
+  /** 内容总结性描述（卡片自带 (描述:: …) 或 AI 生成，≤一句话） */
+  summary?: string;
 }
 
 /** 人物画像（派生层） */
