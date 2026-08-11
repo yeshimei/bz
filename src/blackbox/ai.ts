@@ -454,6 +454,43 @@ export function parseCardBoxCardJson(json: string): { summary: string; relatedNa
   }
 }
 
+/**
+ * 整组批量生成（导入工具「生成并导入本组」）：一次请求生成多张黑匣子概念卡。
+ * 每张卡：概念名 + 原文（截断）→ AI 输出 JSON 数组 [{i, summary, relatedNames}]。
+ */
+export function buildBatchCardPrompt(cards: { name: string; text: string }[], existingNames: string): string {
+  const list = cards.map((c, j) => `${j + 1}. ${c.name}：${c.text.slice(0, 150).replace(/\n/g, ' ')}`).join('\n');
+  return [
+    `以下 ${cards.length} 张卡片将导入主人的黑匣子。请为每张卡按黑匣子概念卡的方式写一张百科式知识卡片（不是总结原文，而是解释这个概念本身）：`,
+    `1. summary：正式、百科式的口吻写一段定义（80-150 字，像百科词条：它是什么、核心要点；不口语化、不废话）；`,
+    `2. relatedNames：从既有概念「${existingNames}」中挑 0-3 个与它相关的（没有就空数组）。`,
+    `卡片列表：`,
+    list,
+    `只输出 JSON 数组：[{"i": 1, "summary": "...", "relatedNames": ["..."]}]`,
+  ].join('\n');
+}
+
+/** 整组批量生成 JSON 容错解析 */
+export function parseBatchCardJson(text: string): { i: number; summary: string; relatedNames: string[] }[] {
+  if (!text) return [];
+  const start = text.indexOf('[');
+  const end = text.lastIndexOf(']');
+  if (start < 0 || end <= start) return [];
+  try {
+    const arr = JSON.parse(text.slice(start, end + 1));
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter((x: any) => x && typeof x === 'object' && typeof x.i === 'number')
+      .map((x: any) => ({
+        i: x.i,
+        summary: typeof x.summary === 'string' ? x.summary.trim() : '',
+        relatedNames: Array.isArray(x.relatedNames) ? x.relatedNames.filter((n: any) => typeof n === 'string').slice(0, 5) : [],
+      }));
+  } catch (e) {
+    return [];
+  }
+}
+
 /** 卡片盒总结 JSON 容错解析 */
 export function parseSummaryJson(text: string): { i: number; summary: string }[] {
   if (!text) return [];
@@ -568,6 +605,12 @@ export class BlackBoxAI {
   async cardConceptCard(name: string, text: string, existingNames: string[]): Promise<{ summary: string; relatedNames: string[] }> {
     const raw = await this.ask(buildCardBoxCardPrompt(name, text, existingNames.join('、') || '（暂无）'));
     return parseCardBoxCardJson(raw);
+  }
+
+  /** 整组批量生成黑匣子概念卡（导入工具「生成并导入本组」）：一次请求多张，失败返回空数组 */
+  async cardBatch(cards: { name: string; text: string }[], existingNames: string[]): Promise<{ i: number; summary: string; relatedNames: string[] }[]> {
+    const raw = await this.ask(buildBatchCardPrompt(cards, existingNames.join('、') || '（暂无）'));
+    return parseBatchCardJson(raw);
   }
 }
 
