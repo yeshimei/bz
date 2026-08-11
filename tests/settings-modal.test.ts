@@ -44,6 +44,15 @@ describe('core settings-modal 机制', () => {
     expect(popup!.querySelector('[data-name="测试项"]')).not.toBeNull();
   });
 
+  it('层级：设置弹窗 z-index 高于黑匣子面板（10040/10041），低于入口页 10100', () => {
+    openSettingsModal({ title: '层级测试', build: () => {} });
+    const mask = document.getElementById('bz-settings-modal-mask');
+    expect(mask).not.toBeNull();
+    const z = parseInt(mask!.style.zIndex, 10);
+    expect(z).toBeGreaterThan(10041);
+    expect(z).toBeLessThan(10100);
+  });
+
   it('空态：build 未挂 setting-item 时显示 emptyText/emptyDesc', () => {
     openSettingsModal({ title: '空设置', build: () => {}, emptyText: '没有可配置的设置项', emptyDesc: '路径由全局管理' });
     const popup = document.getElementById('bz-settings-modal-popup')!;

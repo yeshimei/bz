@@ -62,8 +62,8 @@ export function openSettingsModal(opts: SettingsModalOptions): void {
   const { mask, popup } = createOverlay({
     maskId: 'bz-settings-modal-mask',
     popupId: 'bz-settings-modal-popup',
-    // 高于所有面板与面板内弹窗（主面板 9999/弹窗 10001-10005/闪念窄窗 10020），低于入口页 10100
-    zIndex: 10030,
+    // 高于所有面板与面板内弹窗（主面板 9999/弹窗 10001-10005/闪念窄窗 10020/黑匣子 10040-10041），低于入口页 10100
+    zIndex: 10050,
     onMaskClick: () => closeSettingsModal(),
   });
 
