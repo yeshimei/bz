@@ -8,7 +8,7 @@ import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { openBlackBoxPanel, unloadBlackBoxPanel } from '../../src/blackbox/panel';
-import { unloadBlackBox } from '../../src/blackbox';
+import { unloadBlackBox, closeBlackBoxCapture } from '../../src/blackbox';
 import { getBlackBoxFilePath } from '../../src/blackbox/data';
 
 function makeApp(vault: MockVault) {
@@ -276,7 +276,7 @@ describe('黑匣子主面板（五标签）', () => {
       expect(document.getElementById('bz-blackbox-capture-popup')).toBeTruthy();
     });
     expect(document.getElementById('bz-blackbox-capture-popup')!.style.display).toBe('flex');
-    (document.querySelector('#bz-blackbox-capture-popup .bz-blackbox-hdr-close') as HTMLElement).click();
+    closeBlackBoxCapture(); // 引导式无 header 关闭按钮，走 ESC/程序关闭
     (btns[2] as HTMLElement).click();
     expect(document.getElementById('bz-blackbox-panel')).toBeNull(); // 关闭=整体移除 DOM
   });
