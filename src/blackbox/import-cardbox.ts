@@ -63,6 +63,8 @@ export interface ClassifiedCard extends CardItem {
   summary: string;
   /** AI 生成时挑的关联概念名（展示用；导入时并入 relatedNames） */
   aiRelated: string[];
+  /** 已尝试过 AI 建关联（导入时不再重复请求；失败也算，避免每张卡反复挂起） */
+  aiChecked: boolean;
 }
 
 // ---------------- 解析 ----------------
@@ -162,6 +164,7 @@ export async function classifyCards(ai: BlackBoxAI, cards: CardItem[]): Promise<
         aiSummary: false,
         summary: '',
         aiRelated: [],
+        aiChecked: false,
       });
     });
   }
@@ -327,31 +330,69 @@ export async function runImport(
         : createEntry({
             type: 'concept',
             name: c.name,
-            definition: c.text,
+            // AI 生成内容优先作为卡片主体（用户可编辑过）；没有 AI 生成才用原文
+            definition: c.summary && c.summary.trim() ? c.summary : c.text,
             related: [],
             createdAt: c.createdAt || undefined,
             category: c.category || undefined,
             tags: c.tags && c.tags.length ? c.tags : undefined,
-            summary: c.summary || c.desc || undefined,
+            summary: c.desc || undefined, // AI 内容已在 definition；summary 存卡片自带描述
           });
     nameToId.set(c.name, entry.id);
     created.push(entry);
   }
-  // 第二遍：related 回填（既有概念 id 直接用；本批卡片名 → 新 id；未知忽略）
+  // 第二遍：related 回填（既有概念 id 直接用；本批卡片名 → 新 id；其余 → pendingLinks 待跨批补链）
   for (const c of selected) {
     const e = created.find((x) => x.id === nameToId.get(c.name));
     if (!e || e.type !== 'concept') continue;
-    const ids = (c.relatedNames || [])
-      .map((n) => {
-        if (existingByName.has(n)) return existingByName.get(n)!;
-        return nameToId.get(n);
-      })
-      .filter((x): x is string => !!x);
+    const ids: string[] = [];
+    const pending: string[] = [];
+    for (const n of c.relatedNames || []) {
+      if (existingByName.has(n)) {
+        ids.push(existingByName.get(n)!);
+      } else {
+        const id = nameToId.get(n);
+        if (id && id !== e.id) ids.push(id);
+        else pending.push(n); // 可能指向后续批次才导入的卡 → 落盘待补链
+      }
+    }
     e.related = [...new Set(ids)].slice(0, 5);
+    if (pending.length) e.pendingLinks = pending;
   }
 
   latest.entries.push(...created);
   await m.save(latest);
   await writeImportLog(app, selected.map((c) => c.name), skippedNames);
   return { imported: created.length, data: latest };
+}
+
+/**
+ * 跨批补链：把条目 pendingLinks（未解析为 id 的关联卡名）解析为 related id。
+ * 每批导入后调用一次；已导入的概念（含本批）都能按名查到，找不到的保留待下一批。
+ */
+export async function resolvePendingLinks(app: App): Promise<void> {
+  try {
+    const m = new BlackBoxDataManager(app);
+    const data = await m.load();
+    let changed = false;
+    const nameToId = new Map(
+      data.entries.filter((e) => e.type === 'concept' && e.name).map((e) => [e.name, e.id])
+    );
+    for (const e of data.entries) {
+      if (e.type !== 'concept' || !e.pendingLinks || !e.pendingLinks.length) continue;
+      const ids: string[] = [];
+      const rest: string[] = [];
+      for (const n of e.pendingLinks) {
+        const id = nameToId.get(n);
+        if (id && id !== e.id) ids.push(id);
+        else rest.push(n);
+      }
+      e.related = [...new Set([...(e.related || []), ...ids])].slice(0, 5);
+      e.pendingLinks = rest.length ? rest : undefined;
+      changed = true;
+    }
+    if (changed) await m.save(data);
+  } catch (err) {
+    /* 补链失败静默（不影响导入主流程） */
+  }
 }

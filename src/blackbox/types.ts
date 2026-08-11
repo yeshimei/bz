@@ -69,6 +69,8 @@ export interface Entry {
   tags?: string[];
   /** 内容总结性描述（卡片自带 (描述:: …) 或 AI 生成，≤一句话） */
   summary?: string;
+  /** 卡片盒导入中间态：未解析为 id 的关联卡片名（待补链）；补链后清空 */
+  pendingLinks?: string[];
 }
 
 /** 人物画像（派生层） */

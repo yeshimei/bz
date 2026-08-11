@@ -17,10 +17,9 @@ import {
   CLASSIFY_BATCH,
   scanCardboxAsync,
   prefilterCard,
-  buildRelations,
-  generateSummaries,
   readImportLog,
   runImport,
+  resolvePendingLinks,
 } from './import-cardbox';
 import type { CardItem, ClassifiedCard } from './import-cardbox';
 
@@ -214,17 +213,8 @@ async function ensurePool(): Promise<void> {
     aiSummary: false,
     summary: '',
     aiRelated: [],
+    aiChecked: false,
   }));
-  // 关联：池内互链 + 既有概念（本批外的名字导入时自然落空，可接受）
-  try {
-    const m = new BlackBoxDataManager(appRef!);
-    const data = await m.load();
-    const existingConcepts = data.entries.filter((e) => e.type === 'concept');
-    const rel = buildRelations(batchCards, existingConcepts);
-    for (const c of classified) c.relatedNames = rel.get(c.name) || [];
-  } catch (e) {
-    /* 关联失败不影响导入 */
-  }
   pool.push(...classified);
   updateStats();
 }
@@ -273,64 +263,66 @@ async function renderCard(): Promise<void> {
   }
   card.appendChild(nameLine);
 
-  // 完整原始内容：仅 Markdown 渲染（先清空再渲染，避免重复）；渲染失败回退纯文本；可 ✏️ 编辑
-  const bodyWrap = document.createElement('div');
-  bodyWrap.className = 'bz-blackbox-import-body-wrap';
-  card.appendChild(bodyWrap);
-  const body = document.createElement('div');
-  body.className = 'bz-blackbox-import-body';
-  bodyWrap.appendChild(body);
-  if (editTarget && editTarget.name === c.name && editTarget.part === 'text') {
-    // 编辑态：textarea 修改原文
-    const ta = document.createElement('textarea');
-    ta.className = 'bz-blackbox-import-ta';
-    ta.value = c.text || '';
-    bodyWrap.appendChild(ta);
-    const ops = document.createElement('div');
-    ops.className = 'bz-blackbox-import-ta-ops';
-    const save = document.createElement('button');
-    save.type = 'button';
-    save.className = 'bz-blackbox-btn bz-blackbox-btn-primary';
-    save.textContent = '保存';
-    save.addEventListener('click', () => {
-      c.text = ta.value.trim();
-      editTarget = null;
-      void renderCard();
-      notice('✅ 原文已更新');
-    });
-    const cancel = document.createElement('button');
-    cancel.type = 'button';
-    cancel.className = 'bz-blackbox-import-cancel';
-    cancel.textContent = '取消';
-    cancel.addEventListener('click', () => {
-      editTarget = null;
-      void renderCard();
-    });
-    ops.append(save, cancel);
-    bodyWrap.appendChild(ops);
-  } else {
-    if (c.text) {
-      try {
-        body.empty(); // MarkdownRenderer.render 是追加语义，先清空避免重复
-        await MarkdownRenderer.render(appRef!, c.text, body, '', new Component());
-      } catch (e) {
-        body.textContent = c.text; // 渲染失败回退纯文本
-      }
+  // 有 AI 生成内容 → 隐藏原文，只显示 AI 生成的卡片；否则显示原文（可编辑）
+  if (!c.summary) {
+    const bodyWrap = document.createElement('div');
+    bodyWrap.className = 'bz-blackbox-import-body-wrap';
+    card.appendChild(bodyWrap);
+    const body = document.createElement('div');
+    body.className = 'bz-blackbox-import-body';
+    bodyWrap.appendChild(body);
+    if (editTarget && editTarget.name === c.name && editTarget.part === 'text') {
+      // 编辑态：textarea 修改原文
+      const ta = document.createElement('textarea');
+      ta.className = 'bz-blackbox-import-ta';
+      ta.value = c.text || '';
+      bodyWrap.appendChild(ta);
+      const ops = document.createElement('div');
+      ops.className = 'bz-blackbox-import-ta-ops';
+      const save = document.createElement('button');
+      save.type = 'button';
+      save.className = 'bz-blackbox-btn bz-blackbox-btn-primary';
+      save.textContent = '保存';
+      save.addEventListener('click', () => {
+        c.text = ta.value.trim();
+        editTarget = null;
+        void renderCard();
+        notice('✅ 原文已更新');
+      });
+      const cancel = document.createElement('button');
+      cancel.type = 'button';
+      cancel.className = 'bz-blackbox-import-cancel';
+      cancel.textContent = '取消';
+      cancel.addEventListener('click', () => {
+        editTarget = null;
+        void renderCard();
+      });
+      ops.append(save, cancel);
+      bodyWrap.appendChild(ops);
     } else {
-      body.textContent = '（无正文）';
+      if (c.text) {
+        try {
+          body.empty(); // MarkdownRenderer.render 是追加语义，先清空避免重复
+          await MarkdownRenderer.render(appRef!, c.text, body, '', new Component());
+        } catch (e) {
+          body.textContent = c.text; // 渲染失败回退纯文本
+        }
+      } else {
+        body.textContent = '（无正文）';
+      }
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'bz-blackbox-import-edit';
+      editBtn.textContent = '✏️ 编辑';
+      editBtn.title = '修改原文（导入时作为概念定义）';
+      editBtn.addEventListener('click', () => {
+        editTarget = { name: c.name, part: 'text' };
+        void renderCard();
+      });
+      bodyWrap.appendChild(editBtn);
     }
-    const editBtn = document.createElement('button');
-    editBtn.type = 'button';
-    editBtn.className = 'bz-blackbox-import-edit';
-    editBtn.textContent = '✏️ 编辑';
-    editBtn.title = '修改原文（导入时作为概念定义）';
-    editBtn.addEventListener('click', () => {
-      editTarget = { name: c.name, part: 'text' };
-      void renderCard();
-    });
-    bodyWrap.appendChild(editBtn);
   }
-  // AI 生成的黑匣子概念卡（展示在预览顶部，可确认可编辑）
+  // AI 生成的黑匣子概念卡（有 AI 内容时隐藏原文，只显示它；可确认可编辑）
   if (c.summary) {
     const aiBlock = document.createElement('div');
     aiBlock.className = 'bz-blackbox-import-aiblock';
@@ -395,7 +387,7 @@ async function renderCard(): Promise<void> {
       relLine.textContent = `🔗 关联：${c.aiRelated.join('、')}`;
       aiBlock.appendChild(relLine);
     }
-    card.insertBefore(aiBlock, bodyWrap);
+    card.appendChild(aiBlock);
   }
 
   // 按钮状态
@@ -455,6 +447,7 @@ function updateStats(): void {
  */
 async function generateAiCard(): Promise<void> {
   if (!appRef || busy) return;
+  flushEdit();
   const c = pool[0];
   if (!c) return;
   busy = true;
@@ -476,6 +469,7 @@ async function generateAiCard(): Promise<void> {
     const r = await new BlackBoxAI().cardConceptCard(c.name, c.text, existingNames);
     c.summary = r.summary;
     c.aiRelated = r.relatedNames;
+    c.aiChecked = true;
     for (const n of r.relatedNames) {
       if (!c.relatedNames.includes(n)) c.relatedNames.push(n);
     }
@@ -490,9 +484,29 @@ async function generateAiCard(): Promise<void> {
   }
 }
 
+/**
+ * 编辑态回填：未点「保存」直接点导入/跳过/AI 生成时，把 textarea 里已输入的内容回填到卡片对象，
+ * 避免丢失修改（编辑态下底部按钮仍可用）。
+ */
+function flushEdit(): void {
+  if (!editTarget) return;
+  const c = pool[0];
+  if (!c || editTarget.name !== c.name) {
+    editTarget = null;
+    return;
+  }
+  const ta = document.querySelector('.bz-blackbox-import-ta') as HTMLTextAreaElement | null;
+  if (ta) {
+    if (editTarget.part === 'text') c.text = ta.value.trim();
+    else c.summary = ta.value.trim();
+  }
+  editTarget = null;
+}
+
 /** 跳过当前这张（永不录入；可撤销） */
 async function doSkip(): Promise<void> {
   if (!appRef || busy) return;
+  flushEdit();
   const c = pool[0];
   if (!c) return;
   busy = true;
@@ -513,16 +527,39 @@ async function doSkip(): Promise<void> {
 /** 导入当前这张：AI 总结（勾选时）→ 批量写入 → 日志（含已跳过）→ 下一张 */
 async function doImport(): Promise<void> {
   if (!appRef || busy) return;
+  flushEdit();
   const c = pool[0];
   if (!c) return;
   busy = true;
   const btn = document.getElementById('bz-blackbox-import-run') as HTMLButtonElement | null;
   if (btn) btn.disabled = true;
   try {
+    // 没有 AI 生成内容 → 导入前也用 AI 建立关联（已有概念之间由 AI 决定）；失败不阻断
+    if (!c.summary && !c.aiChecked) {
+      if (btn) btn.textContent = '⏳ AI 建立关联…';
+      try {
+        let existingNames: string[] = [];
+        try {
+          const m = new BlackBoxDataManager(appRef);
+          const d = await m.load();
+          existingNames = d.entries.filter((e) => e.type === 'concept').map((e) => e.name).filter((x): x is string => !!x);
+        } catch (e) {
+          /* 拿不到就空 */
+        }
+        const r = await new BlackBoxAI().cardConceptCard(c.name, c.text, existingNames);
+        for (const n of r.relatedNames) {
+          if (!c.relatedNames.includes(n)) c.relatedNames.push(n);
+        }
+      } catch (e) {
+        console.warn('导入前 AI 建关联失败（不阻断）', e);
+      }
+      c.aiChecked = true;
+    }
     if (btn) btn.textContent = '⏳ 导入中…';
     const m = new BlackBoxDataManager(appRef);
     const data = await m.load();
     const r = await runImport(appRef, [c], data, skippedNames);
+    await resolvePendingLinks(appRef); // 跨批补链（本批/已导入概念名 → id）
     notice(`✅ 已导入「${c.name}」`);
     importedNames.add(c.name);
     skippedNames = [];

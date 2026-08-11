@@ -159,6 +159,7 @@ function normalizeEntry(e: any): Entry | null {
   if (typeof e.category === 'string' && e.category.trim()) base.category = e.category.trim();
   if (Array.isArray(e.tags)) base.tags = e.tags.filter((t): t is string => typeof t === 'string');
   if (typeof e.summary === 'string' && e.summary.trim()) base.summary = e.summary.trim();
+  if (Array.isArray(e.pendingLinks)) base.pendingLinks = e.pendingLinks.filter((x): x is string => typeof x === 'string' && !!x.trim());
   return base;
 }
 
