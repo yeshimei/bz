@@ -781,7 +781,16 @@ function renderTimeline(): void {
   filterRow.appendChild(yearSel);
   box.appendChild(filterRow);
 
-  if (tlPerson) events = events.filter((e) => e.people.includes(tlPerson) || e.mainPerson === tlPerson);
+  if (tlPerson) {
+    const tlProfile = data.profiles.find((p) => p.id === tlPerson);
+    events = events.filter(
+      (e) =>
+        e.people.includes(tlPerson) ||
+        e.mainPerson === tlPerson ||
+        // 冷启动期以纯名字落库的事件同样筛出（与画像投影 entryReferences 口径一致）
+        (!!tlProfile && (e.people.includes(tlProfile.name) || e.mainPerson === tlProfile.name))
+    );
+  }
   if (tlYear) events = events.filter((e) => (e.time || '').slice(0, 4) === tlYear);
 
   if (!events.length) {

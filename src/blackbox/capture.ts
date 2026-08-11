@@ -74,6 +74,13 @@ export async function openBlackBoxCapture(app: App): Promise<void> {
   literatureTerms = new Set();
   literatureSuggest = [];
   carryThoughtOpen = false;
+  // 文本状态一并重置（防重开残留上次内容导致重复录入）
+  literatureText = '';
+  literatureSource = '';
+  carryThoughtText = '';
+  thoughtText = '';
+  sceneText = '';
+  linksText = '';
   buildDOM();
   renderType();
 }
