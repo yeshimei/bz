@@ -1,9 +1,9 @@
 /**
  * 卡片盒导入预览确认弹窗（一次性工具）：bz-blackbox-import-cardbox「导入卡片盒」。
- * 流程：扫描「卡片盒/*.md」→ 规则预筛（空卡/敏感/残渣自动跳过）→ AI 批量分类（概念/文献）→
- * 预览列表逐行确认：✓ 默认全部导入；[✨ AI 总结] 勾选后导入前 AI 生成一句话总结；
- * [🚫 跳过] 移入已跳过区（持久化，重跑不再出现，可恢复）；底部「导入 N 张」→ 批量写入 + 日志。
- * 跳过/导入只作用于卡片盒导入流程，黑匣子正常录入不受任何影响。
+ * 逐批处理：扫描「卡片盒/*.md」一次（本地 IO 秒级）→ 规则预筛（空卡/敏感/残渣自动跳过）→
+ * 每次只分类并展示一批（20 张，AI 请求不积压）→ 用户确认本批（行内 🚫跳过 / ✨AI 总结勾选）→
+ * 「导入本批 N 张」→ 写入 + 日志 → 自动加载下一批；直到全部处理完毕。
+ * 跳过/导入只作用于卡片盒导入流程，黑匣子正常录入不受影响。
  */
 import type { App } from 'obsidian';
 import { escManager } from '../core/esc-manager';
@@ -12,6 +12,7 @@ import { notice } from '../core/notice';
 import { BlackBoxAI } from './ai';
 import { BlackBoxDataManager } from './data';
 import {
+  CLASSIFY_BATCH,
   scanCardboxAsync,
   prefilterCard,
   classifyCards,
@@ -19,21 +20,26 @@ import {
   readImportLog,
   runImport,
 } from './import-cardbox';
-import type { ClassifiedCard } from './import-cardbox';
+import type { CardItem, ClassifiedCard } from './import-cardbox';
 
 let appRef: App | null = null;
 let maskEl: HTMLElement | null = null;
 let popupEl: HTMLElement | null = null;
 let escHandle: { unregister: () => void } | null = null;
 
-/** 待导入列表（预览确认用，含用户标记） */
-let pending: ClassifiedCard[] = [];
-/** 用户标记跳过的卡（导入时持久化） */
+/** 未处理的剩余卡片（尚未 AI 分类） */
+let queue: CardItem[] = [];
+/** 当前展示批次（已分类，待用户确认） */
+let batch: ClassifiedCard[] = [];
+/** 本批中用户标记跳过的卡（导入时持久化，永不录入） */
 let skippedNames: string[] = [];
-/** 已导入 / 已跳过历史（本次会话去重展示） */
+/** 已导入卡片名（本次会话去重展示） */
 let importedNames = new Set<string>();
+/** 规则预筛跳过（一次性展示在统计里） */
+let ruleSkippedCount = 0;
+let busy = false;
 
-/** 打开导入面板（幂等：已开先关；异步：扫描→预筛→AI 分类→渲染） */
+/** 打开导入面板（幂等：已开先关；异步：扫描→预筛→第一批分类→渲染） */
 export async function openCardboxImport(app: App): Promise<void> {
   appRef = app;
   if (maskEl) {
@@ -56,7 +62,6 @@ export async function openCardboxImport(app: App): Promise<void> {
   popup.style.display = 'flex';
 
   // 骨架：标题行 + 统计 + 列表 + 底部导入按钮
-  const popupEl_ = popup;
   const head = document.createElement('div');
   head.className = 'bz-blackbox-import-head';
   const title = document.createElement('span');
@@ -71,7 +76,7 @@ export async function openCardboxImport(app: App): Promise<void> {
   closeBtn.type = 'button';
   closeBtn.className = 'bz-blackbox-hdr-btn bz-blackbox-hdr-close';
   closeBtn.textContent = '❌';
-  closeBtn.title = '关闭';
+  closeBtn.title = '关闭（进度已记录，下次继续）';
   closeBtn.addEventListener('click', () => closeCardboxImport());
   head.appendChild(closeBtn);
   popup.appendChild(head);
@@ -93,14 +98,14 @@ export async function openCardboxImport(app: App): Promise<void> {
   importBtn.className = 'bz-blackbox-btn bz-blackbox-btn-primary bz-blackbox-guide-main';
   importBtn.textContent = '⏳ 扫描中…';
   importBtn.disabled = true;
-  importBtn.addEventListener('click', () => void doImport(importBtn));
+  importBtn.addEventListener('click', () => void doImport());
   foot.appendChild(importBtn);
   popup.appendChild(foot);
 
   escHandle = escManager.register('blackbox-import', { isVisible: () => !!maskEl, close: () => closeCardboxImport() });
 
-  // 异步准备：扫描 → 预筛 → AI 分类
-  void prepare(importBtn);
+  // 异步准备：扫描 → 预筛 → 分类第一批
+  void prepare();
 }
 
 export function closeCardboxImport(): void {
@@ -121,56 +126,79 @@ export function closeCardboxImport(): void {
 export function unloadCardboxImport(): void {
   closeCardboxImport();
   appRef = null;
-  pending = [];
+  queue = [];
+  batch = [];
   skippedNames = [];
   importedNames = new Set();
+  ruleSkippedCount = 0;
+  busy = false;
 }
 
-/** 扫描 + 预筛 + AI 分类（失败降级：分类失败按 concept 入列，永不拒收） */
-async function prepare(importBtn: HTMLButtonElement): Promise<void> {
+/** 扫描 + 预筛 + 分类第一批（扫描本地 IO 秒级；AI 只在需要时逐批请求） */
+async function prepare(): Promise<void> {
   if (!appRef) return;
+  const btn = document.getElementById('bz-blackbox-import-run') as HTMLButtonElement | null;
   try {
     const cards = await scanCardboxAsync(appRef);
     const log = await readImportLog(appRef);
     importedNames = log.imported;
-    const ruleSkipped: string[] = [];
-    const candidates: ClassifiedCard[] = [];
+    const already = new Set([...log.imported, ...log.skipped]);
+    queue = [];
     for (const c of cards) {
-      if (log.imported.has(c.name) || log.skipped.has(c.name)) continue; // 已处理过的不再出现
-      const pf = prefilterCard(c);
-      if (pf) {
-        ruleSkipped.push(`${c.name}（${pf.reason}）`);
-        continue;
+      if (already.has(c.name)) continue; // 已导入/已跳过的不再出现
+      if (prefilterCard(c)) {
+        ruleSkippedCount++;
+        continue; // 规则预筛（空卡/敏感/残渣）
       }
-      candidates.push({ ...c, kind: 'concept', reason: '', relatedNames: [], aiSummary: false, summary: '' });
+      queue.push(c);
     }
-    const ai = new BlackBoxAI();
-    pending = await classifyCards(ai, candidates);
-    renderList(importBtn, ruleSkipped);
-    renderSkipped();
+    const total = queue.length;
+    updateStats();
+    await loadNextBatch();
   } catch (e) {
     console.warn('卡片盒扫描失败', e);
     notice('❌ 扫描失败：无法读取卡片盒', 'error');
-    importBtn.disabled = false;
-    importBtn.textContent = '关闭';
-    importBtn.addEventListener('click', () => closeCardboxImport());
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '关闭';
+      btn.onclick = () => closeCardboxImport();
+    }
   }
 }
 
-/** 渲染列表（每行：名/类型/内容预览/AI 总结开关/跳过） */
-function renderList(importBtn: HTMLButtonElement | undefined, ruleSkipped: string[]): void {
+/** 从队列取一批 → AI 分类（失败整批降级 concept，永不拒收）→ 渲染 */
+async function loadNextBatch(): Promise<void> {
+  const btn = document.getElementById('bz-blackbox-import-run') as HTMLButtonElement | null;
+  if (!queue.length) {
+    renderList();
+    renderSkipped();
+    return;
+  }
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = `⏳ 分类本批…`;
+  }
+  const batchCards = queue.splice(0, CLASSIFY_BATCH);
+  const classified = await classifyCards(new BlackBoxAI(), batchCards);
+  batch.push(...classified);
+  renderList();
+  renderSkipped();
+}
+
+/** 渲染当前批（每行：名/类型/内容预览/AI 总结开关/跳过） */
+function renderList(): void {
   const list = document.getElementById('bz-blackbox-import-list');
   if (!list) return;
   list.innerHTML = '';
-  if (!pending.length) {
+  if (!batch.length && !queue.length) {
     const empty = document.createElement('div');
     empty.className = 'bz-blackbox-empty';
     empty.innerHTML =
-      '<div class="bz-blackbox-empty-title">没有可导入的卡片</div>' +
-      '<div class="bz-blackbox-empty-desc">全部卡片已处理完毕（已导入 / 已跳过）</div>';
+      '<div class="bz-blackbox-empty-title">🎉 全部处理完毕</div>' +
+      '<div class="bz-blackbox-empty-desc">卡片盒已全部导入或跳过，可关闭弹窗</div>';
     list.appendChild(empty);
   }
-  for (const c of pending) {
+  for (const c of batch) {
     const row = document.createElement('div');
     row.className = 'bz-blackbox-import-row';
     row.dataset.name = c.name;
@@ -218,17 +246,17 @@ function renderList(importBtn: HTMLButtonElement | undefined, ruleSkipped: strin
     });
     row.appendChild(aiBtn);
 
-    // 跳过（持久化，重跑不再出现；可恢复）
+    // 跳过（持久化，永不录入；可恢复）
     const skipBtn = document.createElement('button');
     skipBtn.type = 'button';
     skipBtn.className = 'bz-blackbox-import-skip';
     skipBtn.textContent = '🚫 跳过';
-    skipBtn.title = '这张卡永不导入（导入时记录，重跑不再出现）';
+    skipBtn.title = '这张卡永不导入（记录后重跑不再出现）';
     skipBtn.addEventListener('click', () => {
-      pending = pending.filter((x) => x.name !== c.name);
+      batch = batch.filter((x) => x.name !== c.name);
       skippedNames.push(c.name);
-      restoredCache.set(c.name, { ...c }); // 恢复用暂存
-      renderList(importBtn, ruleSkipped);
+      restoredCache.set(c.name, { ...c });
+      renderList();
       renderSkipped();
       notice(`🚫 已跳过「${c.name}」`);
     });
@@ -237,13 +265,19 @@ function renderList(importBtn: HTMLButtonElement | undefined, ruleSkipped: strin
     list.appendChild(row);
   }
   updateStats();
-  if (importBtn) {
-    importBtn.disabled = false;
-    importBtn.textContent = `导入 ${pending.length} 张`;
+  const btn = document.getElementById('bz-blackbox-import-run') as HTMLButtonElement | null;
+  if (btn) {
+    btn.disabled = false;
+    if (!batch.length && !queue.length) {
+      btn.textContent = '✅ 完成';
+      btn.onclick = () => closeCardboxImport();
+    } else {
+      btn.textContent = `导入本批 ${batch.length} 张`;
+    }
   }
 }
 
-/** 已跳过区（可恢复） */
+/** 已跳过区（可恢复；恢复的卡回到当前批） */
 function renderSkipped(): void {
   const box = document.getElementById('bz-blackbox-import-skipped');
   if (!box) return;
@@ -251,7 +285,7 @@ function renderSkipped(): void {
   if (!skippedNames.length) return;
   const label = document.createElement('span');
   label.className = 'bz-blackbox-import-skipped-label';
-  label.textContent = `🚫 本次跳过 ${skippedNames.length} 张（导入时记录，不再出现）：`;
+  label.textContent = `🚫 本批跳过 ${skippedNames.length} 张（导入后记录，永不录入）：`;
   box.appendChild(label);
   for (const n of skippedNames) {
     const chip = document.createElement('button');
@@ -263,12 +297,10 @@ function renderSkipped(): void {
       skippedNames = skippedNames.filter((x) => x !== n);
       const orig = restoredCache.get(n);
       if (orig) {
-        pending.push(orig);
-        pending.sort((a, b) => (a.name < b.name ? -1 : 1));
+        batch.push(orig);
       }
       restoredCache.delete(n);
-      const btn = document.getElementById('bz-blackbox-import-run') as HTMLButtonElement | null;
-      renderList(btn ?? undefined, []);
+      renderList();
       renderSkipped();
     });
     box.appendChild(chip);
@@ -281,48 +313,51 @@ const restoredCache = new Map<string, ClassifiedCard>();
 function updateStats(): void {
   const stats = document.getElementById('bz-blackbox-import-stats');
   if (!stats) return;
-  stats.textContent = `待确认 ${pending.length} · 已导入 ${importedNames.size} · 已跳过 ${skippedNames.length}`;
+  stats.textContent = `本批 ${batch.length} · 待处理 ${queue.length + batch.length} · 已导入 ${importedNames.size} · 已跳过 ${skippedNames.length}`;
+  const _ = ruleSkippedCount;
 }
 
 function clip(s: string, n: number): string {
   return s.length > n ? s.slice(0, n) + '…' : s;
 }
 
-/** 执行导入：AI 总结（勾选的行）→ 批量写入 → 日志（含跳过）→ 刷新 */
-async function doImport(importBtn: HTMLButtonElement): Promise<void> {
-  if (!appRef) return;
-  const selected = pending.slice();
+/** 执行导入本批：AI 总结（勾选的行）→ 批量写入 → 日志（含跳过）→ 自动加载下一批 */
+async function doImport(): Promise<void> {
+  if (!appRef || busy) return;
+  const selected = batch.slice();
   if (!selected.length) {
-    notice('ℹ️ 没有待导入的卡片');
+    notice('ℹ️ 本批没有卡片');
     return;
   }
-  importBtn.disabled = true;
-  // 1) 对勾选 AI 总结的卡批量生成（分批，失败行留空不阻断）
-  const needAi = selected.filter((c) => c.aiSummary);
-  if (needAi.length) {
-    importBtn.textContent = `⏳ 生成总结中（${needAi.length} 张）…`;
-    await generateSummaries(new BlackBoxAI(), needAi);
-  }
-  // 2) 写前重载 → 批量写入 + 日志
-  importBtn.textContent = `⏳ 导入中…`;
+  busy = true;
+  const btn = document.getElementById('bz-blackbox-import-run') as HTMLButtonElement | null;
+  if (btn) btn.disabled = true;
   try {
+    // 1) 对勾选 AI 总结的卡生成（失败行留空不阻断）
+    const needAi = selected.filter((c) => c.aiSummary);
+    if (needAi.length) {
+      if (btn) btn.textContent = `⏳ 生成总结中（${needAi.length} 张）…`;
+      await generateSummaries(new BlackBoxAI(), needAi);
+    }
+    // 2) 写前重载 → 批量写入 + 日志（本批跳过的卡一并记录）
+    if (btn) btn.textContent = '⏳ 导入中…';
     const m = new BlackBoxDataManager(appRef);
     const data = await m.load();
     const r = await runImport(appRef, selected, data, skippedNames);
-    notice(`✅ 已导入 ${r.imported} 张卡片`);
+    notice(`✅ 已导入本批 ${r.imported} 张（剩余 ${queue.length}）`);
     for (const c of selected) importedNames.add(c.name);
-    pending = pending.filter((c) => !selected.some((s) => s.name === c.name));
+    batch = [];
     skippedNames = [];
     restoredCache.clear();
-    renderList(importBtn, []);
-    renderSkipped();
-    if (!pending.length) {
-      notice('🎉 卡片盒导入完成');
-    }
+    await loadNextBatch();
   } catch (e) {
     console.warn('卡片盒导入失败', e);
     notice('❌ 导入失败，请重试', 'error');
-    importBtn.disabled = false;
-    importBtn.textContent = `导入 ${pending.length} 张`;
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = `导入本批 ${batch.length} 张`;
+    }
+  } finally {
+    busy = false;
   }
 }
