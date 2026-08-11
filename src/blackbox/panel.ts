@@ -264,6 +264,14 @@ function renderWall(): void {
     name.className = 'bz-blackbox-concept-card-name';
     name.textContent = c.name || '';
     card.appendChild(name);
+    // 关联数角标（关联可见性：不点开也能看出卡片之间有关系）
+    if (c.related && c.related.length) {
+      const rel = document.createElement('div');
+      rel.className = 'bz-blackbox-concept-card-rel';
+      rel.textContent = `🔗 ${c.related.length}`;
+      rel.title = `${c.related.length} 个关联概念`;
+      card.appendChild(rel);
+    }
     card.addEventListener('click', () => {
       detailConceptId = c.id;
       renderWallDetail(box);

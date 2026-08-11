@@ -1833,3 +1833,13 @@
   font-size: 12px;
   cursor: pointer;
 }
+.bz-blackbox-concept-card {
+  position: relative;
+}
+.bz-blackbox-concept-card-rel {
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+  font-size: 10px;
+  color: var(--text-faint);
+}
