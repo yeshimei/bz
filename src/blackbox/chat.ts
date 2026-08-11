@@ -82,17 +82,23 @@ function buildDOM(): void {
   mask.style.display = 'block';
   popup.style.display = 'flex';
 
-  // header
+  // header（备忘录风格：左标题 + 右动作区，关闭在最后）
   const header = document.createElement('div');
   header.className = 'bz-blackbox-modal-header';
   const title = document.createElement('span');
+  title.className = 'bz-blackbox-modal-title';
   title.id = 'bz-blackbox-chat-title';
   header.appendChild(title);
+  const actions = document.createElement('div');
+  actions.className = 'bz-blackbox-hdr-actions';
   const closeBtn = document.createElement('button');
-  closeBtn.className = 'bz-blackbox-modal-close';
-  closeBtn.textContent = '✕';
+  closeBtn.type = 'button';
+  closeBtn.className = 'bz-blackbox-hdr-btn bz-blackbox-hdr-close';
+  closeBtn.textContent = '❌';
+  closeBtn.title = '关闭';
   closeBtn.addEventListener('click', () => closeBlackBoxChat());
-  header.appendChild(closeBtn);
+  actions.appendChild(closeBtn);
+  header.appendChild(actions);
   popup.appendChild(header);
 
   // 消息列表

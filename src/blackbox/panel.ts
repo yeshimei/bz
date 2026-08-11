@@ -11,7 +11,7 @@ import { createOverlay } from '../core/dom';
 import { notice } from '../core/notice';
 import { tryGetSettings } from '../core/settings-provider';
 import { BlackBoxDataManager } from './data';
-import { createProfileWithSeed } from './capture';
+import { createProfileWithSeed, openBlackBoxCapture } from './capture';
 import { openBlackBoxSettings } from './settings-ui';
 import {
   aggregateEmotions,
@@ -109,27 +109,43 @@ function buildDOM(): void {
   mask.style.display = 'block';
   popup.style.display = 'flex';
 
-  // header
+  // header（备忘录风格：左标题 + 右动作区，关闭在最后）
   const header = document.createElement('div');
   header.className = 'bz-blackbox-modal-header';
   const title = document.createElement('span');
+  title.className = 'bz-blackbox-modal-title';
   title.id = 'bz-blackbox-panel-title';
   header.appendChild(title);
-  const closeBtn = document.createElement('button');
-  closeBtn.className = 'bz-blackbox-modal-close';
-  closeBtn.textContent = '✕';
-  closeBtn.addEventListener('click', () => closeBlackBoxPanel());
-  header.appendChild(closeBtn);
+  const actions = document.createElement('div');
+  actions.className = 'bz-blackbox-hdr-actions';
+  const captureBtn = document.createElement('button');
+  captureBtn.type = 'button';
+  captureBtn.className = 'bz-blackbox-hdr-btn';
+  captureBtn.id = 'bz-blackbox-panel-capture';
+  captureBtn.textContent = '✏️';
+  captureBtn.title = '录入';
+  captureBtn.addEventListener('click', () => {
+    if (appRef) void openBlackBoxCapture(appRef);
+  });
+  actions.appendChild(captureBtn);
   const settingsBtn = document.createElement('button');
   settingsBtn.type = 'button';
-  settingsBtn.className = 'bz-blackbox-ai-btn';
+  settingsBtn.className = 'bz-blackbox-hdr-btn';
   settingsBtn.id = 'bz-blackbox-panel-settings';
   settingsBtn.textContent = '⚙️';
   settingsBtn.title = '黑匣子设置';
   settingsBtn.addEventListener('click', () => {
     if (appRef) void openBlackBoxSettings(appRef);
   });
-  header.appendChild(settingsBtn);
+  actions.appendChild(settingsBtn);
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'bz-blackbox-hdr-btn bz-blackbox-hdr-close';
+  closeBtn.textContent = '❌';
+  closeBtn.title = '关闭';
+  closeBtn.addEventListener('click', () => closeBlackBoxPanel());
+  actions.appendChild(closeBtn);
+  header.appendChild(actions);
   popup.appendChild(header);
 
   // 五标签
