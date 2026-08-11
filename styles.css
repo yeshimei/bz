@@ -1068,13 +1068,12 @@
 }
 .bz-blackbox-concept-card {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
   text-align: left;
   border: 1px solid var(--background-modifier-border);
   background: var(--background-secondary);
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 8px 12px;
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -1082,8 +1081,11 @@
   border-color: var(--interactive-accent);
 }
 .bz-blackbox-concept-card-name {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .bz-blackbox-concept-card-def {
   font-size: 12px;
