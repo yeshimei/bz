@@ -420,6 +420,40 @@ export function buildSummaryPrompt(cardsText: string): string {
   );
 }
 
+/**
+ * 单张卡片 → 黑匣子概念卡（导入工具 ✨AI 总结用）：不是原文摘要，而是按黑匣子录入概念的
+ * 方式写一张知识卡片——百科式定义（summary）+ 从既有概念挑关联（relatedNames）。
+ * 原文作为参考背景，输出概念本身。
+ */
+export function buildCardBoxCardPrompt(name: string, text: string, existingNames: string): string {
+  return [
+    `主人正在把「${name}」导入黑匣子。请按黑匣子的方式把这张卡写成一张百科式知识卡片（不是总结原文，而是解释这个概念本身）：`,
+    `1. summary：用正式、百科式的口吻写一段定义（80-150 字，像百科词条：它是什么、核心要点；不口语化、不废话）；`,
+    `2. relatedNames：从既有概念「${existingNames}」中挑 0-3 个与它相关的（没有就空数组）。`,
+    `原文仅供参考：`,
+    text.slice(0, 800),
+    `只输出 JSON：{"summary": "...", "relatedNames": ["..."]}`,
+  ].join('\n');
+}
+
+/** 黑匣子概念卡 JSON 容错解析 */
+export function parseCardBoxCardJson(json: string): { summary: string; relatedNames: string[] } {
+  const start = json.indexOf('{');
+  const end = json.lastIndexOf('}');
+  if (start < 0 || end <= start) return { summary: '', relatedNames: [] };
+  try {
+    const obj = JSON.parse(json.slice(start, end + 1));
+    return {
+      summary: typeof obj.summary === 'string' ? obj.summary.trim() : '',
+      relatedNames: Array.isArray(obj.relatedNames)
+        ? obj.relatedNames.filter((x: any) => typeof x === 'string').slice(0, 5)
+        : [],
+    };
+  } catch (e) {
+    return { summary: '', relatedNames: [] };
+  }
+}
+
 /** 卡片盒总结 JSON 容错解析 */
 export function parseSummaryJson(text: string): { i: number; summary: string }[] {
   if (!text) return [];
@@ -528,6 +562,12 @@ export class BlackBoxAI {
   /** 卡片盒批量总结（一次性导入工具）：返回原始文本，由 UI 层解析 */
   async summarizeCards(cardsText: string): Promise<string> {
     return this.ask(buildSummaryPrompt(cardsText));
+  }
+
+  /** 单张卡片 → 黑匣子概念卡（导入工具 ✨AI 总结）：按黑匣子录入概念的方式生成百科式知识卡片 */
+  async cardConceptCard(name: string, text: string, existingNames: string[]): Promise<{ summary: string; relatedNames: string[] }> {
+    const raw = await this.ask(buildCardBoxCardPrompt(name, text, existingNames.join('、') || '（暂无）'));
+    return parseCardBoxCardJson(raw);
   }
 }
 

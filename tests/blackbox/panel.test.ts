@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, hasNotice } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { openBlackBoxPanel, unloadBlackBoxPanel } from '../../src/blackbox/panel';
@@ -108,6 +108,39 @@ describe('黑匣子主面板（五标签）', () => {
     const relChip = detail.querySelector('.bz-blackbox-related-row .bz-blackbox-term-chip') as HTMLElement;
     relChip.click();
     expect(document.getElementById('bz-blackbox-wall-detail')!.textContent).toContain('用相关事物代替本体');
+  });
+
+  it('🧩 概念墙：删除概念（确认弹窗）→ 条目移除 + 引用清理', async () => {
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault);
+    await openPanel(app, 'wall');
+    // 展开提喻法详情 → 点删除
+    const cards = document.querySelectorAll('#bz-blackbox-wall .bz-blackbox-concept-card');
+    const tyu = Array.from(cards).find((c) => c.textContent.includes('提喻法')) as HTMLElement;
+    tyu.click();
+    const delBtn = document.querySelector('.bz-blackbox-del-btn') as HTMLElement;
+    expect(delBtn).toBeTruthy();
+    delBtn.click();
+    // 确认弹窗
+    expect(document.getElementById('__shared_confirm_mask__')).toBeTruthy();
+    expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('删除概念「提喻法」');
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
+    await vi.waitFor(() => {
+      const d = loaded(vault);
+      expect(d.entries.some((e: any) => e.name === '提喻法')).toBe(false);
+    });
+    // 引用清理：借代.related 不再含 bb_c1；文献 terms 不再含 bb_c1
+    const d = loaded(vault);
+    const jiedai = d.entries.find((e: any) => e.name === '借代');
+    expect(jiedai.related).toEqual([]);
+    const lit = d.entries.find((e: any) => e.type === 'literature');
+    expect(lit.terms).toEqual([]);
+    // 概念墙刷新：只剩借代，详情已关闭
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('#bz-blackbox-wall .bz-blackbox-concept-card').length).toBe(1);
+    });
+    expect(hasNotice(/已删除/)).toBe(true);
   });
 
   it('📎 文献架：来源 + 摘要 + 名词表标签；点击展开全文与链接', async () => {
