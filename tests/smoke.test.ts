@@ -37,7 +37,7 @@ function makeMockApp() {
 const removedCommands: string[] = [];
 const registeredCommands: any[] = [];
 
-/** 期望的命令 id 全集（spec「命令 id 全清单」第 9 轮：COMMANDS 表 37 个 + 日记本 bz-diary-open，共 38 个） */
+/** 期望的命令 id 全集（spec「命令 id 全清单」第 9 轮：COMMANDS 表 38 个 + 日记本 bz-diary-open，共 39 个） */
 const EXPECTED_COMMAND_IDS = [
   'bz-home',
   'bz-memo-open', 'bz-memo-add',
@@ -54,7 +54,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-quiz-update', 'bz-quiz-open',
   'bz-flash-open', 'bz-flash-chat',
   'bz-pomodoro-open',
-  'bz-blackbox-capture', 'bz-blackbox-open', 'bz-blackbox-review',
+  'bz-blackbox-capture', 'bz-blackbox-open', 'bz-blackbox-review', 'bz-blackbox-panel',
   'bz-bili-open',
   'bz-diary-open',
 ];

@@ -1,7 +1,8 @@
 /**
- * 黑匣子对话面板（ticket 36）：bz-blackbox-open「黑匣子」中央弹窗（单例）。
- * 三层记忆对话（感触检索 + 人格档案 + 对话历史）；首开无历史时包仔本地自我介绍；
- * 底部「成长」区：最近复盘产物 + 手动复盘按钮（复盘产物公开写入对话，静默执行不打扰）。
+ * 黑匣子对话面板（ticket 36/45）：bz-blackbox-open「黑匣子」中央弹窗（单例）。
+ * 三层记忆对话（条目检索 + 人格档案 + 对话历史；v2 检索上下文含画像概要 + 命中条目关联事件标题，
+ * 组装在 ai.chat 内，画像/事件未提炼时优雅降级与 v1 一致）；
+ * 首开无历史时包仔本地自我介绍；底部「成长」区：最近复盘产物（含事件汇报/新人物提示）+ 手动复盘按钮。
  */
 import type { App } from 'obsidian';
 import { escManager } from '../core/esc-manager';
@@ -10,7 +11,7 @@ import { notice } from '../core/notice';
 import { BlackBoxAI } from './ai';
 import { BlackBoxDataManager } from './data';
 import { manualReview } from './review';
-import type { BlackBoxData } from './types';
+import type { BlackBoxData, Review } from './types';
 
 let appRef: App | null = null;
 let dataManager: BlackBoxDataManager | null = null;
@@ -30,7 +31,7 @@ export async function openBlackBoxChat(app: App): Promise<void> {
   appRef = app;
   if (maskEl) {
     maskEl.style.display = 'block';
-    // 面板开着期间可能有其他写入（如新录入的感触/自动复盘）——重载刷新，避免旧快照显示与覆盖
+    // 面板开着期间可能有其他写入（如新录入的内容/自动复盘）——重载刷新，避免旧快照显示与覆盖
     data = await manager(app).load();
     renderAll();
     return;
@@ -71,6 +72,7 @@ function buildDOM(): void {
     popupId: 'bz-blackbox-chat-popup',
     zIndex: 10040,
     width: '560px',
+    maxWidth: 560,
     onMaskClick: () => closeBlackBoxChat(),
   });
   maskEl = mask;
@@ -135,7 +137,7 @@ function renderAll(): void {
   const title = document.getElementById('bz-blackbox-chat-title');
   if (title) {
     const name = data.persona?.name || '包仔';
-    title.textContent = `🕳️ ${name} · 已收录 ${data.impressions.length} 条感触`;
+    title.textContent = `🕳️ ${name} · 已收录 ${data.entries.length} 条内容`;
   }
   renderChat();
   renderGrowth();
@@ -153,7 +155,7 @@ function renderChat(): void {
     appendBubble(
       list,
       'assistant',
-      `我是${p.name}，黑匣子的意识体。\n\n${p.seed}${self}\n\n现在黑匣子还是空的。把你觉得值得记住的东西喂进来吧——别人的一句话、你心里的一阵风，我都会好好收着。`
+      `我是${p.name}，黑匣子的意识体。\n\n${p.seed}${self}\n\n现在黑匣子还是空的。把你觉得值得记住的东西喂进来吧——一个念头、一段摘抄、一个想搞懂的概念，我都会好好收着。`
     );
     return;
   }
@@ -184,7 +186,7 @@ function renderGrowth(): void {
   if (data.reviews.length === 0) {
     const tip = document.createElement('div');
     tip.className = 'bz-blackbox-growth-tip';
-    tip.textContent = '包仔会在每 10 条新感触后静静复盘，成长都会在这里。';
+    tip.textContent = '包仔会在每 10 条新内容后静静复盘，成长都会在这里。';
     el.appendChild(tip);
     const reviewBtn = document.createElement('button');
     reviewBtn.className = 'bz-blackbox-btn bz-blackbox-review-btn';
@@ -198,21 +200,38 @@ function renderGrowth(): void {
   head.textContent = '🌱 包仔的成长';
   el.appendChild(head);
   const last = data.reviews[data.reviews.length - 1];
-  const card = document.createElement('div');
-  card.className = 'bz-blackbox-growth-card';
-  const time = document.createElement('div');
-  time.className = 'bz-blackbox-growth-time';
-  time.textContent = last.ts.slice(0, 16).replace('T', ' ');
-  card.appendChild(time);
-  const text = document.createElement('div');
-  text.textContent = last.text;
-  card.appendChild(text);
-  el.appendChild(card);
+  el.appendChild(reviewCard(last));
   const reviewBtn = document.createElement('button');
   reviewBtn.className = 'bz-blackbox-btn bz-blackbox-review-btn';
   reviewBtn.textContent = '🕳️ 让包仔复盘一次';
   reviewBtn.addEventListener('click', () => void runManualReview(reviewBtn));
   el.appendChild(reviewBtn);
+}
+
+/** 复盘产物卡（v2：含事件汇报/新人物提示） */
+function reviewCard(r: Review): HTMLElement {
+  const card = document.createElement('div');
+  card.className = 'bz-blackbox-growth-card';
+  const time = document.createElement('div');
+  time.className = 'bz-blackbox-growth-time';
+  time.textContent = r.ts.slice(0, 16).replace('T', ' ');
+  card.appendChild(time);
+  const text = document.createElement('div');
+  text.textContent = r.text;
+  card.appendChild(text);
+  if (r.eventReport) {
+    const ev = document.createElement('div');
+    ev.className = 'bz-blackbox-growth-report';
+    ev.textContent = `🕐 ${r.eventReport}`;
+    card.appendChild(ev);
+  }
+  if (r.profileHint) {
+    const hint = document.createElement('div');
+    hint.className = 'bz-blackbox-growth-report';
+    hint.textContent = r.profileHint;
+    card.appendChild(hint);
+  }
+  return card;
 }
 
 // ---------------- 发送与复盘 ----------------
@@ -226,7 +245,7 @@ async function send(): Promise<void> {
   input.value = '';
   const ts = new Date().toISOString();
   const m = manager(appRef);
-  // 重新加载最新数据：面板快照期间可能已有其他写入（新感触/复盘），旧快照整体写回会覆盖丢数据
+  // 重新加载最新数据：面板快照期间可能已有其他写入（新内容/复盘），旧快照整体写回会覆盖丢数据
   data = await m.load();
   await m.addChat(data, 'user', text, ts);
   renderChat();
@@ -237,7 +256,7 @@ async function send(): Promise<void> {
   try {
     const ai = new BlackBoxAI();
     const reply = await ai.chat(data, text);
-    // 写前重载：AI 调用（长耗时）期间可能有其他写入（新感触/复盘），陈旧快照整体写回会覆盖丢数据
+    // 写前重载：AI 调用（长耗时）期间可能有其他写入（新内容/复盘），陈旧快照整体写回会覆盖丢数据
     data = await m.load();
     await m.addChat(data, 'assistant', reply, new Date().toISOString());
   } catch (e) {
