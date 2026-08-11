@@ -8,6 +8,7 @@
 import type { App } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { createOverlay } from '../core/dom';
+import { confirm } from '../core/confirm';
 import { notice } from '../core/notice';
 import { tryGetSettings } from '../core/settings-provider';
 import { BlackBoxDataManager } from './data';
@@ -291,6 +292,27 @@ function renderWallDetail(box: HTMLElement): void {
   head.className = 'bz-blackbox-detail-head';
   const title = document.createElement('span');
   title.textContent = `🧩 ${c.name}`;
+  const del = document.createElement('button');
+  del.type = 'button';
+  del.className = 'bz-blackbox-ai-btn bz-blackbox-del-btn';
+  del.textContent = '🗑 删除';
+  del.title = '删除这个概念（不可恢复；引用它的文献关联一并清理）';
+  del.addEventListener('click', () => {
+    confirm({
+      title: `删除概念「${c.name}」？`,
+      message: '删除后不可恢复；引用了它的文献名词关联会一并清理。',
+      confirmText: '删除',
+      cancelText: '取消',
+      onConfirm: () =>
+        void (async () => {
+          await manager(appRef!).deleteEntry(data!, c.id);
+          detailConceptId = null;
+          data = await manager(appRef!).load();
+          refreshAll();
+          notice(`🗑 已删除「${c.name}」`);
+        })(),
+    });
+  });
   const back = document.createElement('button');
   back.type = 'button';
   back.className = 'bz-blackbox-ai-btn';
@@ -299,7 +321,7 @@ function renderWallDetail(box: HTMLElement): void {
     detailConceptId = null;
     renderWall();
   });
-  head.append(title, back);
+  head.append(title, back, del);
   detail.appendChild(head);
 
   const def = document.createElement('div');

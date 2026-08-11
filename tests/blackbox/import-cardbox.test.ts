@@ -201,8 +201,8 @@ describe('卡片盒导入 · AI 分类与总结', () => {
   it('generateSummaries：勾选卡批量生成，失败行留空', async () => {
     mockOllama('[{"i":1,"summary":"开源许可协议"},{"i":2,"summary":"电子书管理器"}]');
     const cards = [
-      { name: 'A', text: 'A'.repeat(30), tags: [], category: '', desc: '', createdAt: '', path: '', kind: 'concept' as const, reason: '', relatedNames: [], aiSummary: true, summary: '' },
-      { name: 'B', text: 'B'.repeat(30), tags: [], category: '', desc: '', createdAt: '', path: '', kind: 'concept' as const, reason: '', relatedNames: [], aiSummary: true, summary: '' },
+      { name: 'A', text: 'A'.repeat(30), tags: [], category: '', desc: '', createdAt: '', path: '', kind: 'concept' as const, reason: '', relatedNames: [], aiSummary: true, summary: '', aiRelated: [] },
+      { name: 'B', text: 'B'.repeat(30), tags: [], category: '', desc: '', createdAt: '', path: '', kind: 'concept' as const, reason: '', relatedNames: [], aiSummary: true, summary: '', aiRelated: [] },
     ];
     await generateSummaries(new BlackBoxAI(), cards);
     expect(cards[0].summary).toBe('开源许可协议');
@@ -358,16 +358,24 @@ describe('卡片盒导入 · 预览 UI（一张一张）', () => {
     await vi.waitFor(() => {
       expect(document.getElementById('bz-blackbox-import-run')!.textContent).toBe('✅ 导入这张');
     });
-    // 勾选 AI 总结 → 导入第一张（MIT）
+    // 勾选 AI 生成卡片 → 导入第一张（MIT）
     (document.getElementById('bz-blackbox-import-ai') as HTMLElement).click();
-    mockOllama('[{"i":1,"summary":"开源许可协议概述"}]');
+    mockOllama('{"summary":"MIT协议（MIT License）是一种宽松的开源许可协议，允许任何人自由使用、修改和分发代码。","relatedNames":["开源"]}');
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('AI 生成（黑匣子概念卡）');
+    });
+    // 生成结果展示在预览区（用户可见可确认）
+    const cardEl = document.getElementById('bz-blackbox-import-card')!;
+    expect(cardEl.textContent).toContain('MIT协议（MIT License）是一种宽松的开源许可协议');
+    expect(cardEl.textContent).toContain('🔗 关联：开源');
+    expect(cardEl.textContent).toContain('MIT协议（MIT License）是由美国麻省理工学院'); // 原文仍在
     document.getElementById('bz-blackbox-import-run')!.click();
     await vi.waitFor(() => {
       expect(loaded(vault).entries.some((e: any) => e.name === 'MIT协议')).toBe(true);
     });
     const mit = loaded(vault).entries.find((e: any) => e.name === 'MIT协议');
     expect(mit.type).toBe('concept'); // 全部按概念
-    expect(mit.summary).toBe('开源许可协议概述'); // AI 生成
+    expect(mit.summary).toBe('MIT协议（MIT License）是一种宽松的开源许可协议，允许任何人自由使用、修改和分发代码。'); // AI 生成
     expect(mit.category).toBe('计算机');
     expect(mit.tags).toEqual(['开源', '许可协议']);
     expect(hasNotice(/已导入/)).toBe(true);

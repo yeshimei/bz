@@ -100,9 +100,9 @@ export async function openCardboxImport(app: App): Promise<void> {
   aiBtn.type = 'button';
   aiBtn.id = 'bz-blackbox-import-ai';
   aiBtn.className = 'bz-blackbox-import-ai';
-  aiBtn.textContent = '✨ AI 总结';
-  aiBtn.title = '勾选后由 AI 生成一句话总结（不勾选用原卡自带描述）';
-  aiBtn.addEventListener('click', () => toggleAiSummary());
+  aiBtn.textContent = '✨ AI 生成卡片';
+  aiBtn.title = '按黑匣子概念卡的方式生成（百科式定义 + 关联），结果展示在预览里';
+  aiBtn.addEventListener('click', () => void generateAiCard());
   ops.appendChild(aiBtn);
   const skipBtn = document.createElement('button');
   skipBtn.type = 'button';
@@ -210,6 +210,7 @@ async function ensurePool(): Promise<void> {
     relatedNames: [],
     aiSummary: false,
     summary: '',
+    aiRelated: [],
   }));
   // 关联：池内互链 + 既有概念（本批外的名字导入时自然落空，可接受）
   try {
@@ -281,12 +282,38 @@ async function renderCard(): Promise<void> {
       /* 渲染失败保留 textContent 回退 */
     }
   }
+  // AI 生成的黑匣子概念卡（展示在预览顶部，用户可确认）
+  if (c.summary) {
+    const aiBlock = document.createElement('div');
+    aiBlock.className = 'bz-blackbox-import-aiblock';
+    const aiHead = document.createElement('div');
+    aiHead.className = 'bz-blackbox-import-aiblock-head';
+    aiHead.textContent = '✨ AI 生成（黑匣子概念卡）';
+    aiBlock.appendChild(aiHead);
+    const aiBody = document.createElement('div');
+    aiBody.className = 'bz-blackbox-import-aiblock-body';
+    aiBody.textContent = c.summary;
+    try {
+      await MarkdownRenderer.render(appRef!, c.summary, aiBody, '', new Component());
+    } catch (e) {
+      /* 回退纯文本 */
+    }
+    aiBlock.appendChild(aiBody);
+    if (c.aiRelated.length) {
+      const relLine = document.createElement('div');
+      relLine.className = 'bz-blackbox-import-aiblock-rel';
+      relLine.textContent = `🔗 关联：${c.aiRelated.join('、')}`;
+      aiBlock.appendChild(relLine);
+    }
+    card.insertBefore(aiBlock, body);
+  }
 
   // 按钮状态
   const aiBtn = document.getElementById('bz-blackbox-import-ai') as HTMLButtonElement | null;
   if (aiBtn) {
-    aiBtn.classList.toggle('on', c.aiSummary);
-    aiBtn.textContent = c.aiSummary ? '✨ AI 总结 ✓' : '✨ AI 总结';
+    aiBtn.classList.toggle('on', !!c.summary);
+    aiBtn.textContent = c.summary ? '✨ 已生成，点击重新生成' : '✨ AI 生成卡片';
+    aiBtn.disabled = false;
   }
   const btn = document.getElementById('bz-blackbox-import-run') as HTMLButtonElement | null;
   if (btn) {
@@ -332,12 +359,45 @@ function updateStats(): void {
   stats.textContent = `第 ${pos}/${Math.max(total, pos)} 张 · 已导入 ${importedNames.size} · 已跳过 ${skippedNames.length}`;
 }
 
-/** ✨ AI 总结开关（只作用于当前这张） */
-function toggleAiSummary(): void {
+/**
+ * ✨ AI 生成卡片：按黑匣子录入概念的方式（百科式定义 + 关联）写这张卡，
+ * 不是总结原文；结果展示在预览区顶部供确认，导入时写入 summary。
+ */
+async function generateAiCard(): Promise<void> {
+  if (!appRef || busy) return;
   const c = pool[0];
   if (!c) return;
-  c.aiSummary = !c.aiSummary;
-  void renderCard();
+  busy = true;
+  const aiBtn = document.getElementById('bz-blackbox-import-ai') as HTMLButtonElement | null;
+  if (aiBtn) {
+    aiBtn.disabled = true;
+    aiBtn.textContent = '⏳ 生成中…';
+  }
+  try {
+    // 既有概念名（关联候选池）
+    let existingNames: string[] = [];
+    try {
+      const m = new BlackBoxDataManager(appRef);
+      const d = await m.load();
+      existingNames = d.entries.filter((e) => e.type === 'concept').map((e) => e.name).filter((x): x is string => !!x);
+    } catch (e) {
+      /* 拿不到就空 */
+    }
+    const r = await new BlackBoxAI().cardConceptCard(c.name, c.text, existingNames);
+    c.summary = r.summary;
+    c.aiRelated = r.relatedNames;
+    for (const n of r.relatedNames) {
+      if (!c.relatedNames.includes(n)) c.relatedNames.push(n);
+    }
+    if (c.summary) notice('✨ 已生成，见预览区');
+    else notice('⚠️ AI 生成失败，请重试', 'error');
+  } catch (e) {
+    console.warn('AI 生成卡片失败', e);
+    notice('⚠️ AI 生成失败，请重试', 'error');
+  } finally {
+    busy = false;
+    void renderCard();
+  }
 }
 
 /** 跳过当前这张（永不录入；可撤销） */
@@ -369,10 +429,6 @@ async function doImport(): Promise<void> {
   const btn = document.getElementById('bz-blackbox-import-run') as HTMLButtonElement | null;
   if (btn) btn.disabled = true;
   try {
-    if (c.aiSummary) {
-      if (btn) btn.textContent = '⏳ 生成总结…';
-      await generateSummaries(new BlackBoxAI(), [c]);
-    }
     if (btn) btn.textContent = '⏳ 导入中…';
     const m = new BlackBoxDataManager(appRef);
     const data = await m.load();
