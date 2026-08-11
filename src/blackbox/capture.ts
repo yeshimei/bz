@@ -153,7 +153,7 @@ function buildDOM(): void {
   header.appendChild(actions);
   popup.appendChild(header);
 
-  // 三类型切换胶囊
+  // 三类型切换胶囊（与面板五标签同款样式）
   const tabs = document.createElement('div');
   tabs.className = 'bz-blackbox-type-tabs';
   const tabDefs: { type: CaptureType; label: string }[] = [
@@ -176,23 +176,28 @@ function buildDOM(): void {
   }
   popup.appendChild(tabs);
 
+  // 单一滚动区（tab 内容 + 感触外壳连续滚动，与面板 content 同款行为）
+  const body = document.createElement('div');
+  body.className = 'bz-blackbox-capture-body';
+
   // 三个 tab 内容容器（切换保留 DOM 即保留已填内容）
   const conceptTab = document.createElement('div');
   conceptTab.className = 'bz-blackbox-tab';
   conceptTab.id = 'bz-blackbox-tab-concept';
-  popup.appendChild(conceptTab);
+  body.appendChild(conceptTab);
   const literatureTab = document.createElement('div');
   literatureTab.className = 'bz-blackbox-tab';
   literatureTab.id = 'bz-blackbox-tab-literature';
-  popup.appendChild(literatureTab);
+  body.appendChild(literatureTab);
   const thoughtTab = document.createElement('div');
   thoughtTab.className = 'bz-blackbox-tab';
   thoughtTab.id = 'bz-blackbox-tab-thought';
-  popup.appendChild(thoughtTab);
+  body.appendChild(thoughtTab);
 
   // 感触外壳（literature/thought 共享）
   const shell = buildShell();
-  popup.appendChild(shell);
+  body.appendChild(shell);
+  popup.appendChild(body);
 
   escHandle = escManager.register('blackbox-capture', { isVisible: () => !!maskEl, close: () => closeBlackBoxCapture() });
 }
