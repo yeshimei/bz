@@ -406,6 +406,54 @@ describe('卡片盒导入 · 预览 UI（一张一张）', () => {
     expect(log.skipped.size).toBe(0);
   });
 
+
+  it('✏️ 编辑：原文与 AI 生成内容都可修改，导入后生效', async () => {
+    const vault = new MockVault();
+    seedVault(vault);
+    seedCards(vault);
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openCardboxImport(app);
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-import-run')!.textContent).toBe('✅ 导入这张');
+    });
+    // 原文编辑：点 ✏️ → textarea 显示原文 → 修改 → 保存 → 预览更新
+    (document.querySelector('.bz-blackbox-import-body-wrap .bz-blackbox-import-edit') as HTMLElement).click();
+    const ta1 = document.querySelector('.bz-blackbox-import-ta') as HTMLTextAreaElement;
+    expect(ta1.value).toContain('由美国麻省理工学院制定');
+    ta1.value = ta1.value + '\n补充：本卡已人工修订。';
+    // 保存按钮（编辑态操作区第一个）
+    const ops1 = document.querySelector('.bz-blackbox-import-ta-ops')!;
+    (ops1.querySelector('button') as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('补充：本卡已人工修订。');
+    });
+    // AI 生成 → 编辑 AI 内容 → 保存
+    (document.getElementById('bz-blackbox-import-ai') as HTMLElement).click();
+    mockOllama('{"summary":"AI 初版定义","relatedNames":[]}');
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('AI 初版定义');
+    });
+    (document.querySelector('.bz-blackbox-import-aiblock .bz-blackbox-import-edit') as HTMLElement).click();
+    await vi.waitFor(() => {
+      const ta2 = document.querySelector('.bz-blackbox-import-ta') as HTMLTextAreaElement | null;
+      expect(ta2?.value).toBe('AI 初版定义');
+    });
+    const ta2 = document.querySelector('.bz-blackbox-import-ta') as HTMLTextAreaElement;
+    ta2.value = '人工修改后的定义';
+    const ops2 = document.querySelector('.bz-blackbox-import-ta-ops')!;
+    (ops2.querySelector('button') as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('人工修改后的定义');
+    });
+    // 导入 → 修改值生效（definition=修订后原文，summary=修订后 AI 定义）
+    document.getElementById('bz-blackbox-import-run')!.click();
+    await vi.waitFor(() => {
+      expect(loaded(vault).entries.some((e: any) => e.name === 'MIT协议')).toBe(true);
+    });
+    const mit = loaded(vault).entries.find((e: any) => e.name === 'MIT协议');
+    expect(mit.definition).toContain('补充：本卡已人工修订。');
+    expect(mit.summary).toBe('人工修改后的定义');
+  });
   it('跳过 → 持久化永不录入；关闭重开不再出现', async () => {
     const vault = new MockVault();
     seedVault(vault);

@@ -28,7 +28,7 @@ export function confirm(opts: ConfirmOptions) {
   const mask = document.createElement('div');
   mask.id = '__shared_confirm_mask__';
   mask.style.cssText =
-    'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);z-index:10003;display:flex;align-items:center;justify-content:center;';
+    'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);z-index:10060;display:flex;align-items:center;justify-content:center;';
   mask.onclick = (e) => {
     if (e.target === mask) close(false);
   };

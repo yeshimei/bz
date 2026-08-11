@@ -43,6 +43,8 @@ let undoStack: ClassifiedCard[] = [];
 let importedNames = new Set<string>();
 /** 规则预筛跳过数 */
 let ruleSkippedCount = 0;
+/** 当前编辑目标（原文/AI 内容编辑态，切卡自动失效） */
+let editTarget: { name: string; part: 'text' | 'summary' } | null = null;
 let busy = false;
 
 /** 打开导入面板（幂等：已开先关；异步：扫描→预筛→预取第一批→渲染第一张） */
@@ -159,6 +161,7 @@ export function unloadCardboxImport(): void {
   undoStack = [];
   importedNames = new Set();
   ruleSkippedCount = 0;
+  editTarget = null;
   busy = false;
 }
 
@@ -270,42 +273,129 @@ async function renderCard(): Promise<void> {
   }
   card.appendChild(nameLine);
 
-  // 完整原始内容（Markdown 渲染，可滚动；渲染失败回退纯文本）
+  // 完整原始内容：仅 Markdown 渲染（先清空再渲染，避免重复）；渲染失败回退纯文本；可 ✏️ 编辑
+  const bodyWrap = document.createElement('div');
+  bodyWrap.className = 'bz-blackbox-import-body-wrap';
+  card.appendChild(bodyWrap);
   const body = document.createElement('div');
   body.className = 'bz-blackbox-import-body';
-  body.textContent = c.text || '（无正文）';
-  card.appendChild(body);
-  if (c.text) {
-    try {
-      await MarkdownRenderer.render(appRef!, c.text, body, '', new Component());
-    } catch (e) {
-      /* 渲染失败保留 textContent 回退 */
+  bodyWrap.appendChild(body);
+  if (editTarget && editTarget.name === c.name && editTarget.part === 'text') {
+    // 编辑态：textarea 修改原文
+    const ta = document.createElement('textarea');
+    ta.className = 'bz-blackbox-import-ta';
+    ta.value = c.text || '';
+    bodyWrap.appendChild(ta);
+    const ops = document.createElement('div');
+    ops.className = 'bz-blackbox-import-ta-ops';
+    const save = document.createElement('button');
+    save.type = 'button';
+    save.className = 'bz-blackbox-btn bz-blackbox-btn-primary';
+    save.textContent = '保存';
+    save.addEventListener('click', () => {
+      c.text = ta.value.trim();
+      editTarget = null;
+      void renderCard();
+      notice('✅ 原文已更新');
+    });
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'bz-blackbox-import-cancel';
+    cancel.textContent = '取消';
+    cancel.addEventListener('click', () => {
+      editTarget = null;
+      void renderCard();
+    });
+    ops.append(save, cancel);
+    bodyWrap.appendChild(ops);
+  } else {
+    if (c.text) {
+      try {
+        body.empty(); // MarkdownRenderer.render 是追加语义，先清空避免重复
+        await MarkdownRenderer.render(appRef!, c.text, body, '', new Component());
+      } catch (e) {
+        body.textContent = c.text; // 渲染失败回退纯文本
+      }
+    } else {
+      body.textContent = '（无正文）';
     }
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'bz-blackbox-import-edit';
+    editBtn.textContent = '✏️ 编辑';
+    editBtn.title = '修改原文（导入时作为概念定义）';
+    editBtn.addEventListener('click', () => {
+      editTarget = { name: c.name, part: 'text' };
+      void renderCard();
+    });
+    bodyWrap.appendChild(editBtn);
   }
-  // AI 生成的黑匣子概念卡（展示在预览顶部，用户可确认）
+  // AI 生成的黑匣子概念卡（展示在预览顶部，可确认可编辑）
   if (c.summary) {
     const aiBlock = document.createElement('div');
     aiBlock.className = 'bz-blackbox-import-aiblock';
     const aiHead = document.createElement('div');
     aiHead.className = 'bz-blackbox-import-aiblock-head';
-    aiHead.textContent = '✨ AI 生成（黑匣子概念卡）';
+    const aiHeadLabel = document.createElement('span');
+    aiHeadLabel.textContent = '✨ AI 生成（黑匣子概念卡）';
+    aiHead.appendChild(aiHeadLabel);
     aiBlock.appendChild(aiHead);
-    const aiBody = document.createElement('div');
-    aiBody.className = 'bz-blackbox-import-aiblock-body';
-    aiBody.textContent = c.summary;
-    try {
-      await MarkdownRenderer.render(appRef!, c.summary, aiBody, '', new Component());
-    } catch (e) {
-      /* 回退纯文本 */
+    if (editTarget && editTarget.name === c.name && editTarget.part === 'summary') {
+      // 编辑态：textarea 修改 AI 定义
+      const ta = document.createElement('textarea');
+      ta.className = 'bz-blackbox-import-ta';
+      ta.value = c.summary;
+      aiBlock.appendChild(ta);
+      const ops = document.createElement('div');
+      ops.className = 'bz-blackbox-import-ta-ops';
+      const save = document.createElement('button');
+      save.type = 'button';
+      save.className = 'bz-blackbox-btn bz-blackbox-btn-primary';
+      save.textContent = '保存';
+      save.addEventListener('click', () => {
+        c.summary = ta.value.trim();
+        editTarget = null;
+        void renderCard();
+        notice('✅ AI 内容已更新');
+      });
+      const cancel = document.createElement('button');
+      cancel.type = 'button';
+      cancel.className = 'bz-blackbox-import-cancel';
+      cancel.textContent = '取消';
+      cancel.addEventListener('click', () => {
+        editTarget = null;
+        void renderCard();
+      });
+      ops.append(save, cancel);
+      aiBlock.appendChild(ops);
+    } else {
+      const aiBody = document.createElement('div');
+      aiBody.className = 'bz-blackbox-import-aiblock-body';
+      try {
+        aiBody.empty();
+        await MarkdownRenderer.render(appRef!, c.summary, aiBody, '', new Component());
+      } catch (e) {
+        aiBody.textContent = c.summary; // 回退纯文本
+      }
+      aiBlock.appendChild(aiBody);
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'bz-blackbox-import-edit bz-blackbox-import-edit-inline';
+      editBtn.textContent = '✏️ 编辑';
+      editBtn.title = '修改 AI 生成的定义';
+      editBtn.addEventListener('click', () => {
+        editTarget = { name: c.name, part: 'summary' };
+        void renderCard();
+      });
+      aiHead.appendChild(editBtn);
     }
-    aiBlock.appendChild(aiBody);
     if (c.aiRelated.length) {
       const relLine = document.createElement('div');
       relLine.className = 'bz-blackbox-import-aiblock-rel';
       relLine.textContent = `🔗 关联：${c.aiRelated.join('、')}`;
       aiBlock.appendChild(relLine);
     }
-    card.insertBefore(aiBlock, body);
+    card.insertBefore(aiBlock, bodyWrap);
   }
 
   // 按钮状态
