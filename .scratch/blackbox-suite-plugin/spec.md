@@ -34,9 +34,10 @@ bz 新域 `src/blackbox/`：单 JSON 数据文件 `CONFIG/STORAGE/blackbox.json`
 
 | id | 动作 | 说明 |
 |---|---|---|
-| `bz-blackbox-capture` | 打开录入弹窗（顶部三类型切换：🧩 概念 / 📎 文献 / 💡 想法） | 外部约定，launcher 磁贴/热键依赖 |
+| `bz-blackbox-capture` | 打开录入弹窗（顶部三类型切换：🧩 概念 / 📎 文献 / 💡 想法；中文名「录入」） | 外部约定，launcher 磁贴/热键依赖 |
 | `bz-blackbox-open` | 打开对话面板（中央弹窗，意识体交流） | 外部约定 |
 | `bz-blackbox-review` | 手动触发复盘 | 外部约定 |
+| `bz-blackbox-panel` | 打开五标签主面板（🧩 概念墙 / 📎 文献架 / 💡 想法池 / 👤 人物 / 🕐 时间线） | 外部约定（ticket 41 追加） |
 
 域内不重复 addCommand，仅在 main.ts COMMANDS 表注册一次（ADR-0004）。
 
