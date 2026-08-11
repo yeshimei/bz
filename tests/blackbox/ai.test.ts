@@ -1,139 +1,234 @@
 /**
- * 黑匣子 AI 纯函数测试（ticket 36/37）：人设 prompt 组装/复盘 prompt/JSON 容错解析/感触检索。
+ * 黑匣子 AI 纯函数测试（ticket 39/41/42/45）：人设 prompt v2（画像概要/事件标题）/复盘/事件提炼/
+ * 画像提炼/三类录入辅助/JSON 容错/条目检索。
  */
 import { describe, it, expect } from 'vitest';
 import {
   buildPersonaPrompt,
   buildReviewPrompt,
+  buildEventExtractPrompt,
+  buildProfileExtractPrompt,
+  buildProfileObservationPrompt,
   buildAssistPrompt,
   parseReviewJson,
-  searchImpressions,
+  parseEventExtractJson,
+  parseProfileJson,
+  parseConceptJson,
+  parseLiteratureJson,
+  searchEntries,
+  buildProfilesSummary,
+  buildEventTitlesByEntry,
   fallbackAsk,
   FALLBACK_ASK_PROMPTS,
 } from '../../src/blackbox/ai';
 import { DEFAULT_PERSONA } from '../../src/blackbox/types';
-import type { Impression } from '../../src/blackbox/types';
+import type { Entry, Profile } from '../../src/blackbox/types';
+import { createEntry, createEvent } from '../../src/blackbox/data';
 
-const imp = (id: string, material: string, feeling: string): Impression => ({
-  id,
-  ts: '2026-07-21T02:06:00.000Z',
-  material,
-  feeling,
-  emotions: [{ tag: '触动', intensity: 4 }],
-  scene: '',
-  people: '',
-  direction: '',
-  links: [],
-});
+const thought = (id: string, text: string, extra?: Partial<Entry>): Entry =>
+  createEntry({ id, type: 'thought', text, createdAt: '2026-07-21T02:06:00.000Z', ...extra });
+const concept = (id: string, name: string, definition: string): Entry =>
+  createEntry({ id, type: 'concept', name, definition, createdAt: '2026-07-21T02:06:00.000Z' });
 
-describe('buildPersonaPrompt 三层记忆组装', () => {
-  const ctx = {
-    persona: DEFAULT_PERSONA,
-    related: [imp('i1', '茉莉花的香气', '夏夜凉风')],
-    impressionCount: 5,
-    history: [{ role: 'user' as const, text: '你还记得茉莉花吗', ts: 't1' }],
-  };
-
-  it('包含种子/语气/计数/相关感触/历史/当前消息', () => {
-    const p = buildPersonaPrompt(ctx, '我今晚又闻到了');
+describe('buildPersonaPrompt 三层记忆组装（v2）', () => {
+  it('包含种子/计数/相关条目/历史/当前消息', () => {
+    const p = buildPersonaPrompt(
+      {
+        persona: DEFAULT_PERSONA,
+        related: [thought('i1', '茉莉花的香气', { emotions: ['温暖'] })],
+        entryCount: 5,
+        history: [{ role: 'user', text: '你还记得茉莉花吗', ts: 't1' }],
+        profilesSummary: [],
+        eventTitlesByEntry: new Map(),
+      },
+      '我今晚又闻到了'
+    );
     expect(p).toContain('包仔');
     expect(p).toContain(DEFAULT_PERSONA.seed);
-    expect(p).toContain(DEFAULT_PERSONA.toneExample);
-    expect(p).toContain('5 条感触');
+    expect(p).toContain('5 条内容');
     expect(p).toContain('茉莉花的香气');
     expect(p).toContain('你还记得茉莉花吗');
     expect(p).toContain('我今晚又闻到了');
-    expect(p).toContain('主人现在说');
   });
 
-  it('无相关感触/无历史时省略对应区块', () => {
+  it('画像概要进入上下文；命中条目附事件标题', () => {
     const p = buildPersonaPrompt(
-      { persona: DEFAULT_PERSONA, related: [], impressionCount: 0, history: [] },
+      {
+        persona: DEFAULT_PERSONA,
+        related: [thought('i1', '给妹妹买吉他')],
+        entryCount: 3,
+        history: [],
+        profilesSummary: ['妹妹（家人）；印象：很要强；最近事件：给妹妹买吉他'],
+        eventTitlesByEntry: new Map([['i1', ['给妹妹买吉他']]]),
+      },
+      '妹妹最近好吗'
+    );
+    expect(p).toContain('你认识的人');
+    expect(p).toContain('妹妹（家人）');
+    expect(p).toContain('最近事件：给妹妹买吉他');
+    expect(p).toContain('这些内容对应的事件');
+  });
+
+  it('画像/事件缺失时（尚未提炼）省略对应区块（v1 行为兼容）', () => {
+    const p = buildPersonaPrompt(
+      { persona: DEFAULT_PERSONA, related: [], entryCount: 0, history: [], profilesSummary: [], eventTitlesByEntry: new Map() },
       '你好'
     );
-    expect(p).not.toContain('此刻你想起的相关感触');
+    expect(p).not.toContain('你认识的人');
+    expect(p).not.toContain('这些内容对应的事件');
     expect(p).not.toContain('最近的对话');
-    expect(p).toContain('0 条感触');
-  });
-
-  it('自我认知（生长）写入 prompt', () => {
-    const persona = { ...DEFAULT_PERSONA, selfViews: [{ ts: 't', view: '我越来越懂主人了' }] };
-    const p = buildPersonaPrompt({ persona, related: [], impressionCount: 1, history: [] }, '嗨');
-    expect(p).toContain('我越来越懂主人了');
+    expect(p).toContain('0 条内容');
   });
 });
 
 describe('buildReviewPrompt 复盘 prompt', () => {
-  it('列出最近感触并要求 JSON 输出', () => {
-    const p = buildReviewPrompt(DEFAULT_PERSONA, [imp('i1', 'A', 'B'), imp('i2', 'C', 'D')], 12);
-    expect(p).toContain('12 条感触');
+  it('列出最近条目并要求 JSON 输出（text/newSelfView）', () => {
+    const p = buildReviewPrompt(DEFAULT_PERSONA, [thought('i1', 'A'), thought('i2', 'B')], 12);
+    expect(p).toContain('12 条内容');
     expect(p).toContain('最近 2 条');
     expect(p).toContain('"text"');
     expect(p).toContain('"newSelfView"');
   });
 });
 
-describe('buildAssistPrompt 录入辅助', () => {
-  it('查概念：口语化解释', () => {
-    const p = buildAssistPrompt('concept', '熵增');
+describe('buildEventExtractPrompt 事件提炼', () => {
+  it('包含条目列表、既有事件标题去重指令与 inferred 语义', () => {
+    const p = buildEventExtractPrompt([thought('i1', '给妹妹买了吉他')], ['给妹妹买吉他'], 30);
+    expect(p).toContain('30 条');
+    expect(p).toContain('已经记录过的事件标题');
+    expect(p).toContain('给妹妹买吉他');
+    expect(p).toContain('"inferred"');
+    expect(p).toContain('"events"');
+  });
+});
+
+describe('画像 prompt', () => {
+  it('buildProfileExtractPrompt：初始印象', () => {
+    const p = buildProfileExtractPrompt('妹妹', [thought('i1', '她考上了')]);
+    expect(p).toContain('妹妹');
+    expect(p).toContain('她考上了');
+    expect(p).toContain('"impression"');
+  });
+
+  it('buildProfileObservationPrompt：观察增量（第一人称）', () => {
+    const pf: Profile = { id: 'pf_1', name: '妹妹', relation: '家人', impression: '', aiObservations: [], pinnedEvents: [], createdAt: 't' };
+    const p = buildProfileObservationPrompt(pf, [thought('i1', '想她')]);
+    expect(p).toContain('妹妹');
+    expect(p).toContain('"observation"');
+  });
+});
+
+describe('buildAssistPrompt 录入辅助（v2 三类）', () => {
+  it('concept：知识卡片 JSON（含既有概念对照）', () => {
+    const p = buildAssistPrompt('concept', '提喻法', [], [concept('c1', '借代', 'x')]);
+    expect(p).toContain('提喻法');
+    expect(p).toContain('借代');
+    expect(p).toContain('"relatedNames"');
+  });
+
+  it('literature：名词表分析 JSON（matched/newConcepts）', () => {
+    const p = buildAssistPrompt('literature', '某本书', [], [concept('c1', '熵增', 'x')]);
+    expect(p).toContain('某本书');
     expect(p).toContain('熵增');
-    expect(p).toContain('2-3 句话');
+    expect(p).toContain('"newConcepts"');
   });
 
-  it('联想：带相关旧感触', () => {
-    const p = buildAssistPrompt('recall', '新感触', [imp('i1', '旧素材', '旧感受')]);
+  it('recall：联想旧内容；ask：温柔追问', () => {
+    const p = buildAssistPrompt('recall', '茉莉花', [thought('i1', '茉莉花的香气')]);
     expect(p).toContain('这让我想起');
-    expect(p).toContain('旧素材');
-  });
-
-  it('追问：不超过 40 字', () => {
-    const p = buildAssistPrompt('ask', '一句话');
-    expect(p).toContain('一句话');
-    expect(p).toContain('40 字');
+    const q = buildAssistPrompt('ask', '想妈妈了');
+    expect(q).toContain('想妈妈了');
+    expect(q.length).toBeGreaterThan(10);
   });
 });
 
-describe('parseReviewJson 容错解析', () => {
-  it('纯 JSON 解析', () => {
-    const r = parseReviewJson('{"text": "一段话", "newSelfView": "认知"}');
-    expect(r).toEqual({ text: '一段话', newSelfView: '认知' });
-  });
-
-  it('带前缀后缀噪音时提取 {} 块', () => {
-    const r = parseReviewJson('好的\n```json\n{"text": "话", "newSelfView": ""}\n```');
-    expect(r).toEqual({ text: '话', newSelfView: '' });
-  });
-
-  it('非 JSON/坏 JSON 回退 null', () => {
-    expect(parseReviewJson('我只是想说话')).toBeNull();
-    expect(parseReviewJson('{"text": }')).toBeNull();
+describe('JSON 容错解析', () => {
+  it('parseReviewJson：首对花括号提取；非 JSON 回退 null', () => {
+    expect(parseReviewJson('好的，输出如下：{"text": "你好", "newSelfView": "我成长了"} 完')).toEqual({
+      text: '你好',
+      newSelfView: '我成长了',
+    });
+    expect(parseReviewJson('没有 JSON')).toBeNull();
     expect(parseReviewJson('')).toBeNull();
+    expect(parseReviewJson('{"text": ""}')).toBeNull();
+  });
+
+  it('parseEventExtractJson：数组过滤非法项；confidence<0.6 亦推断为推测', () => {
+    const out = parseEventExtractJson(
+      '{"events": [{"title": "买吉他", "time": "2026-08-01", "inferred": false, "confidence": 0.9}, {"title": "", "x": 1}, {"title": "想买房", "confidence": 0.3}]}'
+    );
+    expect(out.length).toBe(2);
+    expect(out[0].title).toBe('买吉他');
+    expect(out[0].inferred).toBe(false);
+    expect(out[1].title).toBe('想买房');
+    expect(out[1].inferred).toBe(true);
+    expect(parseEventExtractJson('nope')).toEqual([]);
+  });
+
+  it('parseProfileJson / parseConceptJson / parseLiteratureJson 容错', () => {
+    expect(parseProfileJson('{"impression": "很要强"}')).toEqual({ impression: '很要强' });
+    expect(parseProfileJson('{"observation": "我注意到了"}')).toEqual({ observation: '我注意到了' });
+    expect(parseProfileJson('x')).toBeNull();
+    expect(parseConceptJson('{"definition": "一种修辞", "relatedNames": ["借代"]}')).toEqual({
+      definition: '一种修辞',
+      relatedNames: ['借代'],
+    });
+    expect(parseConceptJson('{}')).toBeNull();
+    expect(parseLiteratureJson('{"matched": ["熵增"], "newConcepts": ["提喻法"]}')).toEqual({
+      matched: ['熵增'],
+      newConcepts: ['提喻法'],
+    });
+    expect(parseLiteratureJson('bad')).toBeNull();
   });
 });
 
-describe('searchImpressions 感触检索（TF-IDF）', () => {
-  const impressions = [
-    imp('i1', '茉莉花在夏夜的风里', '暗香浮动'),
-    imp('i2', '量子隧穿宏观尺度', '科学转折'),
-    imp('i3', '给妹妹买吉他', '她一生的精神力量'),
+describe('searchEntries 条目检索（跨三类）', () => {
+  it('concept 按 name+definition 检索；thought 按 text', () => {
+    const entries = [
+      concept('c1', '提喻法', '以部分代整体的修辞'),
+      thought('t1', '茉莉花的香气', { people: ['妹妹'] }),
+    ];
+    expect(searchEntries(entries, '提喻法', 5).map((e) => e.id)).toEqual(['c1']);
+    expect(searchEntries(entries, '茉莉花', 5).map((e) => e.id)).toEqual(['t1']);
+    expect(searchEntries(entries, '', 5)).toEqual([]);
+  });
+});
+
+describe('画像/事件概要（ticket 45 记忆扩展）', () => {
+  const pf: Profile = { id: 'pf_1', name: '妹妹', relation: '家人', impression: '很要强', aiObservations: [], pinnedEvents: [], createdAt: 't' };
+  const events = [
+    createEvent({ id: 'ev_1', title: '买吉他', time: '2026-08-01', people: ['pf_1'] }),
+    createEvent({ id: 'ev_2', title: '搬家', time: '2026-07-01', people: ['pf_1'] }),
+    createEvent({ id: 'ev_3', title: '旅行', time: '2026-06-01', people: ['pf_1'] }),
+    createEvent({ id: 'ev_4', title: '旧事', time: '2026-05-01', people: ['pf_1'] }),
   ];
 
-  it('命中相关素材并排序（相关度高的在前）', () => {
-    const hits = searchImpressions(impressions, '夏夜茉莉', 5);
-    expect(hits.length).toBeGreaterThan(0);
-    expect(hits[0].id).toBe('i1');
+  it('buildProfilesSummary：印象一句话 + 最近 3 个事件标题；预算截断', () => {
+    const s = buildProfilesSummary([pf], events);
+    expect(s.length).toBe(1);
+    expect(s[0]).toContain('妹妹（家人）');
+    expect(s[0]).toContain('印象：很要强');
+    expect(s[0]).toContain('买吉他 / 搬家 / 旅行'); // 最近 3 件，旧事被裁
+    expect(buildProfilesSummary([], events)).toEqual([]);
   });
 
-  it('空查询/空库返回空', () => {
-    expect(searchImpressions(impressions, '')).toEqual([]);
-    expect(searchImpressions([], '茉莉')).toEqual([]);
+  it('buildEventTitlesByEntry：命中条目附事件标题', () => {
+    const entries = [thought('t1', '给妹妹买吉他'), thought('t2', '别的')];
+    const events2 = [
+      createEvent({ id: 'ev_1', title: '买吉他', evidence: ['t1'] }),
+      createEvent({ id: 'ev_2', title: '买琴后续', evidence: ['t1'] }),
+    ];
+    const m = buildEventTitlesByEntry(entries, events2);
+    expect(m.get('t1')).toEqual(['买吉他', '买琴后续']);
+    expect(m.has('t2')).toBe(false);
   });
 });
 
-describe('fallbackAsk 本地追问文案', () => {
-  it('在预设文案间轮换', () => {
-    expect(FALLBACK_ASK_PROMPTS.length).toBeGreaterThan(0);
+describe('fallbackAsk', () => {
+  it('轮换本地追问文案', () => {
+    expect(FALLBACK_ASK_PROMPTS.length).toBe(3);
     expect(fallbackAsk(0)).toBe(FALLBACK_ASK_PROMPTS[0]);
-    expect(fallbackAsk(3)).toBe(FALLBACK_ASK_PROMPTS[0]); // 3 % 3 = 0
+    expect(fallbackAsk(3)).toBe(FALLBACK_ASK_PROMPTS[0]);
+    expect(fallbackAsk(1)).toBe(FALLBACK_ASK_PROMPTS[1]);
   });
 });
