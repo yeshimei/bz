@@ -28,7 +28,7 @@ import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverd
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
 import { openPomodoro, unloadPomodoro, ensurePomodoro } from './pomodoro';
-import { unloadBlackBox, openBlackBoxCapture, openBlackBoxChat, openBlackBoxPanel, manualReview } from './blackbox';
+import { unloadBlackBox, openBlackBoxCapture, openBlackBoxChat, openBlackBoxPanel, openCardboxImport, manualReview } from './blackbox';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // B站下载器启动命令（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
 import { openBiliDownloader } from './bili-downloader';
@@ -97,6 +97,7 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-blackbox-open', name: '黑匣子', icon: 'message-circle-heart', callback: () => openBlackBoxChat(getApp()) },
   { id: 'bz-blackbox-review', name: '复盘', icon: 'sprout', callback: () => manualReview(getApp()) },
   { id: 'bz-blackbox-panel', name: '黑匣子面板', icon: 'layout-grid', callback: () => openBlackBoxPanel(getApp()) },
+  { id: 'bz-blackbox-import-cardbox', name: '导入卡片盒', icon: 'download', callback: () => openCardboxImport(getApp()) },
   // B站下载器（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
   { id: 'bz-bili-open', name: 'B站下载器', icon: 'tv-minimal-play', callback: () => openBiliDownloader() },
 ];
