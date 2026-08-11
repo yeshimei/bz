@@ -61,6 +61,8 @@ export interface ClassifiedCard extends CardItem {
   aiSummary: boolean;
   /** AI 生成结果回填（确认后生成，导入时写入条目） */
   summary: string;
+  /** AI 生成时挑的关联概念名（展示用；导入时并入 relatedNames） */
+  aiRelated: string[];
 }
 
 // ---------------- 解析 ----------------
@@ -159,6 +161,7 @@ export async function classifyCards(ai: BlackBoxAI, cards: CardItem[]): Promise<
         relatedNames: [],
         aiSummary: false,
         summary: '',
+        aiRelated: [],
       });
     });
   }

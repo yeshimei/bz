@@ -2,7 +2,7 @@
  * 黑匣子 AI 纯函数测试（ticket 39/41/42/45）：人设 prompt v2（画像概要/事件标题）/复盘/事件提炼/
  * 画像提炼/三类录入辅助/JSON 容错/条目检索。
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   buildPersonaPrompt,
   buildReviewPrompt,
@@ -20,7 +20,11 @@ import {
   buildEventTitlesByEntry,
   fallbackAsk,
   FALLBACK_ASK_PROMPTS,
+  buildCardBoxCardPrompt,
+  parseCardBoxCardJson,
 } from '../../src/blackbox/ai';
+import { BlackBoxAI } from '../../src/blackbox/ai';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 import { DEFAULT_PERSONA } from '../../src/blackbox/types';
 import type { Entry, Profile } from '../../src/blackbox/types';
 import { createEntry, createEvent } from '../../src/blackbox/data';
@@ -236,5 +240,38 @@ describe('fallbackAsk', () => {
     expect(fallbackAsk(0)).toBe(FALLBACK_ASK_PROMPTS[0]);
     expect(fallbackAsk(3)).toBe(FALLBACK_ASK_PROMPTS[0]);
     expect(fallbackAsk(1)).toBe(FALLBACK_ASK_PROMPTS[1]);
+  });
+
+  it('卡片盒 ✨AI 生成：黑匣子概念卡 prompt（百科式定义 + 关联，非原文摘要）+ JSON 容错解析', () => {
+    const p = buildCardBoxCardPrompt('MIT协议', '原文内容：允许无限制使用、修改、分发代码。', '开源、GPL');
+    expect(p).toContain('「MIT协议」');
+    expect(p).toContain('百科式');
+    expect(p).toContain('不是总结原文');
+    expect(p).toContain('开源、GPL');
+    expect(p).toContain('relatedNames');
+    expect(p).toContain('原文仅供参考');
+    expect(parseCardBoxCardJson('{"summary":"百科式定义","relatedNames":["开源","GPL"]}')).toEqual({
+      summary: '百科式定义',
+      relatedNames: ['开源', 'GPL'],
+    });
+    expect(parseCardBoxCardJson('乱文')).toEqual({ summary: '', relatedNames: [] });
+    expect(parseCardBoxCardJson('{"summary":""}')).toEqual({ summary: '', relatedNames: [] });
+  });
+
+  it('卡片盒 ✨AI 生成：mock 请求返回定义与关联', async () => {
+    setSettingsProvider(() => ({ blackboxAIProvider: 'ollama' } as any));
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ message: { content: '{"summary":"测试定义","relatedNames":["开源"]}' } }),
+    }));
+    (global as any).fetch = fetchMock;
+    try {
+      const r = await new BlackBoxAI().cardConceptCard('测试', '原文', ['开源']);
+      expect(r.summary).toBe('测试定义');
+      expect(r.relatedNames).toEqual(['开源']);
+    } finally {
+      delete (global as any).fetch;
+      setSettingsProvider(() => ({} as any));
+    }
   });
 });

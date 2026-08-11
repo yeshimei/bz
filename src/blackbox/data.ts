@@ -345,6 +345,18 @@ export class BlackBoxDataManager {
     data.events = data.events.filter((e) => e.id !== eventId);
     if (data.events.length !== before) await this.save(data);
   }
+
+  /** 删除条目（概念/文献/想法通用）；顺带清理其它条目对该 id 的 related/terms 引用 */
+  async deleteEntry(data: BlackBoxData, entryId: string): Promise<void> {
+    const before = data.entries.length;
+    data.entries = data.entries.filter((e) => e.id !== entryId);
+    if (data.entries.length === before) return;
+    for (const e of data.entries) {
+      if (Array.isArray(e.related)) e.related = e.related.filter((r) => r !== entryId);
+      if (e.type === 'literature' && Array.isArray(e.terms)) e.terms = e.terms.filter((t) => t !== entryId);
+    }
+    await this.save(data);
+  }
 }
 
 // ---------------- 构造器 ----------------
