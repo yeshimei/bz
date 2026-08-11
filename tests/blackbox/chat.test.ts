@@ -70,6 +70,11 @@ describe('黑匣子对话面板', () => {
     const vault = new MockVault();
     const { app } = setup(vault);
     await openBlackBoxChat(app);
+    // 头部动作区：仅 ❌ 关闭（发送按钮仍与输入框联动在底部）
+    const hdrBtns = document.querySelectorAll('#bz-blackbox-chat-popup .bz-blackbox-hdr-actions button');
+    expect(hdrBtns.length).toBe(1);
+    expect(hdrBtns[0].textContent).toBe('❌');
+    expect(document.getElementById('bz-blackbox-chat-send')).toBeTruthy();
     expect(document.getElementById('bz-blackbox-chat-mask')).toBeTruthy();
     expect(document.getElementById('bz-blackbox-chat-popup')!.style.display).toBe('flex');
     expect(document.getElementById('bz-blackbox-chat-title')!.textContent).toContain('包仔');
