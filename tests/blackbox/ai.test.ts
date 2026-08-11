@@ -177,6 +177,12 @@ describe('JSON 容错解析', () => {
     expect(parseLiteratureJson('{"matched": ["熵增"], "newConcepts": ["提喻法"]}')).toEqual({
       matched: ['熵增'],
       newConcepts: ['提喻法'],
+      insight: '', // 旧模型无 insight → 缺省为空
+    });
+    expect(parseLiteratureJson('{"matched": [], "newConcepts": [], "insight": "修辞让语言装下情意。"}')).toEqual({
+      matched: [],
+      newConcepts: [],
+      insight: '修辞让语言装下情意。',
     });
     expect(parseLiteratureJson('bad')).toBeNull();
   });

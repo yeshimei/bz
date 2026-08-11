@@ -827,33 +827,6 @@
   border-color: var(--interactive-accent);
   color: var(--text-on-accent);
 }
-.bz-blackbox-details {
-  margin-top: 10px;
-  font-size: 12px;
-}
-.bz-blackbox-details summary {
-  cursor: pointer;
-  color: var(--text-muted);
-  user-select: none;
-}
-.bz-blackbox-dir-row {
-  display: flex;
-  gap: 6px;
-  margin-top: 4px;
-}
-.bz-blackbox-dir {
-  border: 1px solid var(--background-modifier-border);
-  background: var(--background-secondary);
-  border-radius: 10px;
-  padding: 3px 10px;
-  font-size: 12px;
-  cursor: pointer;
-}
-.bz-blackbox-dir-on {
-  background: var(--interactive-accent);
-  border-color: var(--interactive-accent);
-  color: var(--text-on-accent);
-}
 .bz-blackbox-ai-row {
   display: flex;
   gap: 6px;
@@ -1026,46 +999,7 @@
 
 /* ==================== 黑匣子 v2（ticket 39-45：三类型录入/五标签面板/画像/事件时间线） ==================== */
 
-/* 录入弹窗：三类型切换胶囊 + tab 容器 */
-.bz-blackbox-type-tabs {
-  display: flex;
-  gap: 8px;
-  padding: 0 20px 12px;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-}
-.bz-blackbox-type-btn {
-  flex: 1;
-  min-width: 88px;
-  border: 1px solid var(--background-modifier-border);
-  background: var(--background-secondary);
-  color: var(--text-normal);
-  border-radius: 12px;
-  padding: 5px 8px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-.bz-blackbox-type-btn:hover {
-  background: var(--background-modifier-hover);
-}
-.bz-blackbox-type-btn-on {
-  background: var(--interactive-accent);
-  border-color: var(--interactive-accent);
-  color: var(--text-on-accent);
-}
-.bz-blackbox-tab {
-  /* 无独立滚动/内边距：由外层 .bz-blackbox-capture-body 统一滚动与缩进 */
-}
-.bz-blackbox-tab .bz-blackbox-textarea {
-  min-height: 72px;
-}
 
-/* 概念卡片生成 */
-.bz-blackbox-concept-preview {
-  margin-top: 8px;
-}
 .bz-blackbox-concept-card {
   display: flex;
   align-items: center;
@@ -1096,15 +1030,6 @@
   font-size: 10px;
   color: var(--text-faint);
 }
-.bz-blackbox-concept-def {
-  font-size: 13px;
-  line-height: 1.6;
-}
-.bz-blackbox-concept-related {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-top: 6px;
-}
 
 /* 名词表 chips（文献分析/词表编辑） */
 .bz-blackbox-term-chips {
@@ -1126,9 +1051,6 @@
   background: var(--interactive-accent);
   border-color: var(--interactive-accent);
   color: var(--text-on-accent);
-}
-.bz-blackbox-lit-terms {
-  margin-top: 6px;
 }
 
 /* 涉及的人选择器 */
@@ -1272,12 +1194,6 @@
 }
 .bz-blackbox-panel-tab-content {
   min-height: 100%;
-}
-/* 录入弹窗单一滚动区（tab 内容 + 感触外壳连续滚动） */
-.bz-blackbox-capture-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 20px 14px;
 }
 
 /* 空态 */
@@ -1583,4 +1499,121 @@
     width: 95% !important;
     max-width: 95% !important;
   }
+}
+
+/* ==================== 黑匣子录入引导式（v3：类型选择→内容→感触/连接，无 header） ==================== */
+
+/* 引导滚动区（无 header，整页留白） */
+.bz-blackbox-guide-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+.bz-blackbox-guide-step {
+  display: none;
+}
+
+/* ① 类型选择 */
+.bz-blackbox-guide-page-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+.bz-blackbox-guide-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: none;
+}
+.bz-blackbox-guide-card:hover {
+  border-color: var(--interactive-accent);
+  background: var(--background-modifier-hover);
+}
+.bz-blackbox-guide-card-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.bz-blackbox-guide-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.bz-blackbox-guide-card-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+.bz-blackbox-guide-card-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.bz-blackbox-guide-card-arrow {
+  color: var(--text-faint);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+/* ② 内容输入（轻导航 + 主操作按钮） */
+.bz-blackbox-guide-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.bz-blackbox-guide-type {
+  font-size: 14px;
+  font-weight: 600;
+}
+.bz-blackbox-guide-back {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.bz-blackbox-guide-back:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+.bz-blackbox-guide-main {
+  width: 100%;
+  margin-top: 14px;
+  padding: 9px 14px;
+  font-size: 13px;
+}
+
+/* ③ 概念连接展示 */
+.bz-blackbox-guide-conn-ok {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 6px 0 4px;
+}
+.bz-blackbox-guide-conn-card {
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.bz-blackbox-guide-conn-name {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.bz-blackbox-guide-conn-def {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
 }
