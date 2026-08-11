@@ -103,7 +103,13 @@ export async function openBlackBoxSettings(app: App): Promise<void> {
         .setName('推测事件显示')
         .setDesc('时间线是否显示推测事件（虚线 + ❓；关 = 只显示确认事件）。意图/计划/梦境等非事实内容由 AI 标记为推测')
         .addToggle((tg) => {
-          tg.setValue(data.settings.showSpeculativeEvents !== false);
+          // 全局设置优先（与时间线消费 resolveShowSpeculative 口径一致）
+          const s0 = getSettings();
+          const initial =
+            typeof s0.blackboxShowSpeculativeEvents === 'boolean'
+              ? s0.blackboxShowSpeculativeEvents
+              : data.settings.showSpeculativeEvents !== false;
+          tg.setValue(initial);
           tg.onChange(async (v) => {
             s.blackboxShowSpeculativeEvents = v;
             await saveSettings();

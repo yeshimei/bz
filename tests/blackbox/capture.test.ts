@@ -316,6 +316,20 @@ describe('黑匣子录入弹窗（三类）', () => {
     expect(thought.value).toContain('这让我想起 7 月');
   });
 
+  it('关闭重开不残留上次录入内容（状态泄漏回归）', async () => {
+    const vault = new MockVault();
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCapture(app);
+    const thought = document.getElementById('bz-blackbox-thought-text') as HTMLTextAreaElement;
+    thought.value = '这是一条旧的思考';
+    thought.dispatchEvent(new Event('input'));
+    closeBlackBoxCapture();
+    await openBlackBoxCapture(app);
+    const fresh = document.getElementById('bz-blackbox-thought-text') as HTMLTextAreaElement;
+    expect(fresh.value).toBe(''); // 不残留
+    expect(document.querySelectorAll('#bz-blackbox-emotions .bz-blackbox-chip-on').length).toBe(0);
+  });
+
   it('保存后阈值命中触发自动复盘（产物写入对话流）', async () => {
     mockOllama('{"text": "我看到一个细腻的人", "newSelfView": "我懂主人了"}');
     const vault = new MockVault();
