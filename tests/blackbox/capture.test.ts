@@ -163,6 +163,10 @@ describe('黑匣子录入弹窗（引导式）', () => {
     const c = loaded(vault).entries.find((e: any) => e.type === 'concept' && e.name === '隐喻');
     expect(c.definition).toContain('métonymie');
     expect(c.related).toEqual(['bb_c1']); // 关联既有概念「提喻法」
+    // 动态双向关联：既有概念「提喻法」反向关联新卡「隐喻」
+    const old = loaded(vault).entries.find((e: any) => e.id === 'bb_c1');
+    expect(old.related).toContain(c.id);
+    expect(old.related.length).toBe(1); // 无重复
   });
 
   it('概念：确认录入后显示连接页（与其他概念的连接），✓ 完成回类型选择', async () => {

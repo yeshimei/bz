@@ -342,6 +342,8 @@ export async function runImport(
     created.push(entry);
   }
   // 第二遍：related 回填（既有概念 id 直接用；本批卡片名 → 新 id；其余 → pendingLinks 待跨批补链）
+  // 动态双向：命中既有概念时，旧概念也反向关联新卡（关联是相互的）
+  const existingById = new Map(existingConcepts.map((e) => [e.id, e]));
   for (const c of selected) {
     const e = created.find((x) => x.id === nameToId.get(c.name));
     if (!e || e.type !== 'concept') continue;
@@ -358,6 +360,13 @@ export async function runImport(
     }
     e.related = [...new Set(ids)].slice(0, 5);
     if (pending.length) e.pendingLinks = pending;
+    // 反向回填：AI 挑中的既有概念也关联新卡（cap 5 去重）
+    for (const id of ids) {
+      const old = existingById.get(id);
+      if (old && !(old.related || []).includes(e.id)) {
+        old.related = [...(old.related || []), e.id].slice(0, 5);
+      }
+    }
   }
 
   latest.entries.push(...created);
