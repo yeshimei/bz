@@ -5,7 +5,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks, hasNotice } from '../mock-obsidian-entry';
+import { resetObsidianMocks, hasNotice, mockMarkdownRenderer } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import {
@@ -311,7 +311,7 @@ describe('卡片盒导入 · 批量导入与幂等', () => {
   });
 });
 
-describe('卡片盒导入 · 预览 UI', () => {
+describe('卡片盒导入 · 预览 UI（一张一张）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     setApp(null as any);
@@ -325,102 +325,118 @@ describe('卡片盒导入 · 预览 UI', () => {
     delete (global as any).fetch;
   });
 
-  it('打开：扫描+分类渲染列表（内容预览/✨AI 总结/🚫跳过），统计正确', async () => {
+  it('打开：全部按概念，展示第一张完整原始内容（Markdown 渲染），统计正确', async () => {
     const vault = new MockVault();
     seedVault(vault);
     seedCards(vault);
-    // 分类 mock：MIT→concept、Calibre→literature、Github（敏感）不进候选
-    mockOllama('[{"i":1,"kind":"concept","reason":"定义"},{"i":2,"kind":"literature","reason":"工具笔记"}]');
     const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
     await openCardboxImport(app);
     await vi.waitFor(() => {
-      expect(document.getElementById('bz-blackbox-import-run')!.textContent).toContain('导入本批 2 张');
+      expect(document.getElementById('bz-blackbox-import-run')!.textContent).toBe('✅ 导入这张');
     });
-    // 预筛：Github（敏感）+ 空卡（空）跳过 → 候选 = MIT + Calibre = 2 张
-    const rows = document.querySelectorAll('.bz-blackbox-import-row');
-    expect(rows.length).toBe(2);
-    // 行内容：原卡内容预览
-    const first = rows[0] as HTMLElement;
-    expect(first.textContent).toContain('MIT协议');
-    expect(first.textContent).toContain('开源许可协议'); // 自带 desc 展示
-    expect(first.textContent).toContain('✨ AI 总结');
-    expect(first.textContent).toContain('🚫 跳过');
-    // 统计
-    expect(document.getElementById('bz-blackbox-import-stats')!.textContent).toContain('本批 2');
+    // 预筛：Github（敏感）+ 空卡（空）跳过 → 候选 = MIT + Calibre = 2 张，第一张是 MIT
+    const card = document.getElementById('bz-blackbox-import-card')!;
+    expect(card.textContent).toContain('概念'); // 全部按概念
+    expect(card.textContent).toContain('MIT协议');
+    expect(card.textContent).toContain('开源许可协议'); // 自带 desc 展示
+    // 完整原始内容（不截断）：正文全文都在 DOM 里
+    expect(card.textContent).toContain('MIT协议（MIT License）是由美国麻省理工学院制定的开源许可协议');
+    // Markdown 渲染被调用（markdown 原文传入）
+    expect(mockMarkdownRenderer.render).toHaveBeenCalled();
+    const mdArg = mockMarkdownRenderer.render.mock.calls[0][1] as string;
+    expect(mdArg).toContain('由美国麻省理工学院制定');
+    // 统计：第 1/2 张
+    expect(document.getElementById('bz-blackbox-import-stats')!.textContent).toContain('第 1/2 张');
   });
 
-  it('跳过 → 移入跳过区可恢复；导入：AI 总结生成 + 批量写入 + 日志', async () => {
+  it('导入这张（AI 总结勾选）→ 下一张；跳过 → 撤销恢复', async () => {
     const vault = new MockVault();
     seedVault(vault);
     seedCards(vault);
-    mockOllama('[{"i":1,"kind":"concept","reason":"定义"},{"i":2,"kind":"literature","reason":"工具笔记"}]');
     const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
     await openCardboxImport(app);
     await vi.waitFor(() => {
-      expect(document.getElementById('bz-blackbox-import-run')!.textContent).toContain('导入本批 2 张');
+      expect(document.getElementById('bz-blackbox-import-run')!.textContent).toBe('✅ 导入这张');
     });
-    // 跳过 Calibre → 列表剩 1，跳过区出现
-    const rows = document.querySelectorAll('.bz-blackbox-import-row');
-    const calibreRow = Array.from(rows).find((r) => (r as HTMLElement).textContent!.includes('Calibre')) as HTMLElement;
-    (calibreRow.querySelector('.bz-blackbox-import-skip') as HTMLElement).click();
-    expect(document.querySelectorAll('.bz-blackbox-import-row').length).toBe(1);
-    expect(document.getElementById('bz-blackbox-import-skipped')!.textContent).toContain('Calibre');
-    // 恢复
-    (document.querySelector('.bz-blackbox-import-restore') as HTMLElement).click();
-    expect(document.querySelectorAll('.bz-blackbox-import-row').length).toBe(2);
-    // 勾选 MIT 的 AI 总结 + 导入
-    const mitRow = Array.from(document.querySelectorAll('.bz-blackbox-import-row')).find(
-      (r) => (r as HTMLElement).textContent!.includes('MIT协议')
-    ) as HTMLElement;
-    (mitRow.querySelector('.bz-blackbox-import-ai') as HTMLElement).click();
+    // 勾选 AI 总结 → 导入第一张（MIT）
+    (document.getElementById('bz-blackbox-import-ai') as HTMLElement).click();
     mockOllama('[{"i":1,"summary":"开源许可协议概述"}]');
     document.getElementById('bz-blackbox-import-run')!.click();
     await vi.waitFor(() => {
       expect(loaded(vault).entries.some((e: any) => e.name === 'MIT协议')).toBe(true);
     });
     const mit = loaded(vault).entries.find((e: any) => e.name === 'MIT协议');
+    expect(mit.type).toBe('concept'); // 全部按概念
     expect(mit.summary).toBe('开源许可协议概述'); // AI 生成
     expect(mit.category).toBe('计算机');
     expect(mit.tags).toEqual(['开源', '许可协议']);
-    // 日志含 imported + skipped（Calibre 之前被恢复，不在 skipped；MIT 已导入）
-    const log = await readImportLog(app);
-    expect(log.imported.has('MIT协议')).toBe(true);
     expect(hasNotice(/已导入/)).toBe(true);
+    // 下一张：Calibre（完整内容展示）
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('Calibre');
+    });
+    // 跳过 Calibre → 撤销恢复
+    document.getElementById('bz-blackbox-import-skip')!.click();
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-import-undobox')!.textContent).toContain('Calibre');
+    });
+    (document.querySelector('.bz-blackbox-import-restore') as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('Calibre');
+    });
+    // 恢复后导入 → 完成
+    document.getElementById('bz-blackbox-import-run')!.click();
+    await vi.waitFor(() => {
+      expect(loaded(vault).entries.some((e: any) => e.name === 'Calibre')).toBe(true);
+    });
+    const cal = loaded(vault).entries.find((e: any) => e.name === 'Calibre');
+    expect(cal.type).toBe('concept');
+    expect(cal.summary).toBe('一款功能强大且易于使用的电子书管理器'); // 自带 desc
+    // 日志：imported 2，无 skipped（恢复后跳过未持久化）
+    const log = await readImportLog(app);
+    expect(log.imported.size).toBe(2);
+    expect(log.skipped.size).toBe(0);
   });
 
-  it('关闭重开：已导入/已跳过的卡不再出现（幂等）', async () => {
+  it('跳过 → 持久化永不录入；关闭重开不再出现', async () => {
     const vault = new MockVault();
     seedVault(vault);
     seedCards(vault);
-    mockOllama('[{"i":1,"kind":"concept","reason":"定义"},{"i":2,"kind":"literature","reason":"工具笔记"}]');
     const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
     await openCardboxImport(app);
     await vi.waitFor(() => {
-      expect(document.getElementById('bz-blackbox-import-run')!.textContent).toContain('导入本批 2 张');
+      expect(document.getElementById('bz-blackbox-import-run')!.textContent).toBe('✅ 导入这张');
     });
-    // 跳过 MIT，导入 Calibre
-    const mitRow = Array.from(document.querySelectorAll('.bz-blackbox-import-row')).find(
-      (r) => (r as HTMLElement).textContent!.includes('MIT协议')
-    ) as HTMLElement;
-    (mitRow.querySelector('.bz-blackbox-import-skip') as HTMLElement).click();
+    // 跳过 MIT → 下一张 Calibre → 导入
+    document.getElementById('bz-blackbox-import-skip')!.click();
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('Calibre');
+    });
     document.getElementById('bz-blackbox-import-run')!.click();
     await vi.waitFor(() => {
-      expect(loaded(vault).entries.some((e: any) => e.type === 'literature')).toBe(true);
+      expect(loaded(vault).entries.some((e: any) => e.name === 'Calibre')).toBe(true);
     });
-    closeCardboxImport();
+    // 完成页
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('全部处理完毕');
+    });
+    const log = await readImportLog(app);
+    expect(log.imported.has('Calibre')).toBe(true);
+    expect(log.skipped.has('MIT协议')).toBe(true);
     // 重开：全部处理完毕（MIT 跳过 + Calibre 已导入）
+    closeCardboxImport();
     await openCardboxImport(app);
     await vi.waitFor(() => {
-      expect(document.getElementById('bz-blackbox-import-list')!.textContent).toContain('全部处理完毕');
+      expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('全部处理完毕');
     });
   });
 });
 
-describe('卡片盒导入 · 逐批处理', () => {
+describe('卡片盒导入 · 逐张处理', () => {
   beforeEach(() => {
     resetObsidianMocks();
     setApp(null as any);
-    setSettingsProvider(() => ({ blackboxAIProvider: 'ollama' } as any));
+    setSettingsProvider(() => ({} as any));
     document.body.innerHTML = '';
     unloadBlackBox();
   });
@@ -430,46 +446,35 @@ describe('卡片盒导入 · 逐批处理', () => {
     delete (global as any).fetch;
   });
 
-  it('45 张卡：第一批 20 → 导入后自动第二批 20 → 第三批 5 → 完成', async () => {
+  it('45 张卡：逐张导入（池预取 20+20+5），全部完成且日志正确', async () => {
     const vault = new MockVault();
     seedVault(vault);
     seedMany(vault, 45);
-    mockClassify();
     const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
     await openCardboxImport(app);
-    // 第一批：20 张
     await vi.waitFor(() => {
-      expect(document.querySelectorAll('.bz-blackbox-import-row').length).toBe(20);
+      expect(document.getElementById('bz-blackbox-import-run')!.textContent).toBe('✅ 导入这张');
     });
-    expect(document.getElementById('bz-blackbox-import-stats')!.textContent).toContain('本批 20');
-    expect(document.getElementById('bz-blackbox-import-run')!.textContent).toContain('导入本批 20 张');
-    // 本批内跳过一张
-    const firstRow = document.querySelector('.bz-blackbox-import-row') as HTMLElement;
-    const skipName = firstRow.dataset.name!;
-    (firstRow.querySelector('.bz-blackbox-import-skip') as HTMLElement).click();
-    expect(document.querySelectorAll('.bz-blackbox-import-row').length).toBe(19);
-    // 导入本批 19 张
-    document.getElementById('bz-blackbox-import-run')!.click();
+    expect(document.getElementById('bz-blackbox-import-stats')!.textContent).toContain('第 1/45 张');
+    // 逐张处理 45 次（第 3 张跳过，其余导入）
+    for (let i = 0; i < 45; i++) {
+      if (i === 2) {
+        document.getElementById('bz-blackbox-import-skip')!.click();
+      } else {
+        document.getElementById('bz-blackbox-import-run')!.click();
+      }
+      await vi.waitFor(() => {
+        const btn = document.getElementById('bz-blackbox-import-run')!;
+        expect(btn.textContent === '✅ 导入这张' || btn.textContent === '✅ 完成').toBe(true);
+      });
+    }
     await vi.waitFor(() => {
-      expect(document.querySelectorAll('.bz-blackbox-import-row').length).toBe(20); // 第二批
-    });
-    expect(loaded(vault).entries.length).toBe(19);
-    // 第二批导入
-    document.getElementById('bz-blackbox-import-run')!.click();
-    await vi.waitFor(() => {
-      expect(document.querySelectorAll('.bz-blackbox-import-row').length).toBe(5); // 第三批
-    });
-    expect(loaded(vault).entries.length).toBe(39);
-    // 第三批（5 张）导入 → 完成
-    document.getElementById('bz-blackbox-import-run')!.click();
-    await vi.waitFor(() => {
-      expect(document.getElementById('bz-blackbox-import-list')!.textContent).toContain('全部处理完毕');
+      expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('全部处理完毕');
     });
     expect(loaded(vault).entries.length).toBe(44); // 45 - 1 跳过
-    // 日志：44 imported + 1 skipped
     const log = await readImportLog(app);
     expect(log.imported.size).toBe(44);
-    expect(log.skipped.has(skipName)).toBe(true);
+    expect(log.skipped.size).toBe(1);
   });
 });
 
