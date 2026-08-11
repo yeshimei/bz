@@ -88,7 +88,7 @@ describe('黑匣子主面板（五标签）', () => {
     expect(document.getElementById('bz-blackbox-wall')!.style.display).toBe('block');
   });
 
-  it('🧩 概念墙：卡片网格（名称/定义摘要/关联数）+ 详情展开 + 关联跳转', async () => {
+  it('🧩 概念墙：卡片只显示名称（定义/关联数在详情内）+ 详情展开 + 关联跳转', async () => {
     const vault = new MockVault();
     seedVault(vault);
     const { app } = setup(vault);
@@ -96,8 +96,9 @@ describe('黑匣子主面板（五标签）', () => {
     const cards = document.querySelectorAll('#bz-blackbox-wall .bz-blackbox-concept-card');
     expect(cards.length).toBe(2);
     expect(cards[0].textContent).toContain('借代'); // 按时间倒序（最新在前）
-    expect(cards[0].textContent).toContain('🔗 1 关联');
-    // 点击提喻法卡片展开详情
+    expect(cards[0].textContent).not.toContain('🔗'); // 卡片不显示关联数
+    expect(cards[0].textContent).not.toContain('定义'); // 卡片不显示定义摘要
+    // 点击提喻法卡片展开详情（完整内容在详情）
     const tyu = Array.from(cards).find((c) => c.textContent.includes('提喻法')) as HTMLElement;
     tyu.click();
     const detail = document.getElementById('bz-blackbox-wall-detail')!;
