@@ -37,6 +37,24 @@ function mockOllama(content: string) {
   return fetchMock;
 }
 
+/** 动态分类 mock：按请求 prompt 里的编号逐条返回（i%3===0 归文献，其余概念） */
+function mockClassify() {
+  const fetchMock = vi.fn(async (_url: string, init: any) => {
+    const body = JSON.parse(init.body);
+    const prompt = body.messages[body.messages.length - 1].content as string;
+    const items = prompt
+      .split('\n')
+      .filter((l) => /^\d+\./.test(l))
+      .map((l) => {
+        const i = parseInt(l, 10);
+        return { i, kind: i % 3 === 0 ? 'literature' : 'concept', reason: 'mock' };
+      });
+    return { ok: true, json: async () => ({ message: { content: JSON.stringify(items) } }) };
+  });
+  (global as any).fetch = fetchMock;
+  return fetchMock;
+}
+
 function seedVault(vault: MockVault, entries: any[] = [], extra?: any): void {
   vault.files.set(
     getBlackBoxFilePath(),
@@ -57,6 +75,20 @@ function seedVault(vault: MockVault, entries: any[] = [], extra?: any): void {
 
 function loaded(vault: MockVault): any {
   return JSON.parse(vault.files.get(getBlackBoxFilePath())!);
+}
+
+/** 造 N 张普通卡片（用于分批测试） */
+function seedMany(vault: MockVault, n: number): void {
+  for (let i = 1; i <= n; i++) {
+    vault.files.set(`卡片盒/卡${String(i).padStart(3, '0')}.md`, [
+      '---',
+      'tags: [测试]',
+      'category: 测试',
+      '---',
+      `这是第 ${i} 张测试卡片，内容足够长用于导入验证，包含一些正文文字。`,
+      '',
+    ].join('\n'));
+  }
 }
 
 /** 预置三张卡片盒卡片（含 frontmatter/描述/嵌入/敏感卡） */
@@ -302,7 +334,7 @@ describe('卡片盒导入 · 预览 UI', () => {
     const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
     await openCardboxImport(app);
     await vi.waitFor(() => {
-      expect(document.getElementById('bz-blackbox-import-run')!.textContent).toContain('导入 2 张');
+      expect(document.getElementById('bz-blackbox-import-run')!.textContent).toContain('导入本批 2 张');
     });
     // 预筛：Github（敏感）+ 空卡（空）跳过 → 候选 = MIT + Calibre = 2 张
     const rows = document.querySelectorAll('.bz-blackbox-import-row');
@@ -314,7 +346,7 @@ describe('卡片盒导入 · 预览 UI', () => {
     expect(first.textContent).toContain('✨ AI 总结');
     expect(first.textContent).toContain('🚫 跳过');
     // 统计
-    expect(document.getElementById('bz-blackbox-import-stats')!.textContent).toContain('待确认 2');
+    expect(document.getElementById('bz-blackbox-import-stats')!.textContent).toContain('本批 2');
   });
 
   it('跳过 → 移入跳过区可恢复；导入：AI 总结生成 + 批量写入 + 日志', async () => {
@@ -325,7 +357,7 @@ describe('卡片盒导入 · 预览 UI', () => {
     const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
     await openCardboxImport(app);
     await vi.waitFor(() => {
-      expect(document.getElementById('bz-blackbox-import-run')!.textContent).toContain('导入 2 张');
+      expect(document.getElementById('bz-blackbox-import-run')!.textContent).toContain('导入本批 2 张');
     });
     // 跳过 Calibre → 列表剩 1，跳过区出现
     const rows = document.querySelectorAll('.bz-blackbox-import-row');
@@ -364,7 +396,7 @@ describe('卡片盒导入 · 预览 UI', () => {
     const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
     await openCardboxImport(app);
     await vi.waitFor(() => {
-      expect(document.getElementById('bz-blackbox-import-run')!.textContent).toContain('导入 2 张');
+      expect(document.getElementById('bz-blackbox-import-run')!.textContent).toContain('导入本批 2 张');
     });
     // 跳过 MIT，导入 Calibre
     const mitRow = Array.from(document.querySelectorAll('.bz-blackbox-import-row')).find(
@@ -379,8 +411,65 @@ describe('卡片盒导入 · 预览 UI', () => {
     // 重开：全部处理完毕（MIT 跳过 + Calibre 已导入）
     await openCardboxImport(app);
     await vi.waitFor(() => {
-      expect(document.getElementById('bz-blackbox-import-list')!.textContent).toContain('没有可导入的卡片');
+      expect(document.getElementById('bz-blackbox-import-list')!.textContent).toContain('全部处理完毕');
     });
+  });
+});
+
+describe('卡片盒导入 · 逐批处理', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => ({ blackboxAIProvider: 'ollama' } as any));
+    document.body.innerHTML = '';
+    unloadBlackBox();
+  });
+  afterEach(() => {
+    unloadBlackBox();
+    unloadCardboxImport();
+    delete (global as any).fetch;
+  });
+
+  it('45 张卡：第一批 20 → 导入后自动第二批 20 → 第三批 5 → 完成', async () => {
+    const vault = new MockVault();
+    seedVault(vault);
+    seedMany(vault, 45);
+    mockClassify();
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openCardboxImport(app);
+    // 第一批：20 张
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('.bz-blackbox-import-row').length).toBe(20);
+    });
+    expect(document.getElementById('bz-blackbox-import-stats')!.textContent).toContain('本批 20');
+    expect(document.getElementById('bz-blackbox-import-run')!.textContent).toContain('导入本批 20 张');
+    // 本批内跳过一张
+    const firstRow = document.querySelector('.bz-blackbox-import-row') as HTMLElement;
+    const skipName = firstRow.dataset.name!;
+    (firstRow.querySelector('.bz-blackbox-import-skip') as HTMLElement).click();
+    expect(document.querySelectorAll('.bz-blackbox-import-row').length).toBe(19);
+    // 导入本批 19 张
+    document.getElementById('bz-blackbox-import-run')!.click();
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('.bz-blackbox-import-row').length).toBe(20); // 第二批
+    });
+    expect(loaded(vault).entries.length).toBe(19);
+    // 第二批导入
+    document.getElementById('bz-blackbox-import-run')!.click();
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('.bz-blackbox-import-row').length).toBe(5); // 第三批
+    });
+    expect(loaded(vault).entries.length).toBe(39);
+    // 第三批（5 张）导入 → 完成
+    document.getElementById('bz-blackbox-import-run')!.click();
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-import-list')!.textContent).toContain('全部处理完毕');
+    });
+    expect(loaded(vault).entries.length).toBe(44); // 45 - 1 跳过
+    // 日志：44 imported + 1 skipped
+    const log = await readImportLog(app);
+    expect(log.imported.size).toBe(44);
+    expect(log.skipped.has(skipName)).toBe(true);
   });
 });
 
