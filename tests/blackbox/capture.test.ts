@@ -1,5 +1,5 @@
 /**
- * 黑匣子录入弹窗 UI 测试（ticket 35）：必填校验/情绪 chips 限 3 + 强度/保存落盘/阈值静默复盘/AI 辅助降级。
+ * 黑匣子三类录入弹窗 UI 测试（ticket 40/41）：三类型切换/概念生成/文献名词表/带出想法/感触外壳/画像选择器/降级。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -20,33 +20,40 @@ function setup(vault: MockVault = new MockVault(), settings: any = {}) {
   return { app, vault };
 }
 
-/** ollama 模式 mock fetch（POST /api/chat → message.content） */
+/** mock Ollama 对话（deepseek 走 requestUrl，ollama 走 fetch；测试统一 ollama 模式） */
 function mockOllama(content: string) {
   const fetchMock = vi.fn(async () => ({ ok: true, json: async () => ({ message: { content } }) }));
   (global as any).fetch = fetchMock;
   return fetchMock;
 }
 
-/** 延迟返回的 ollama mock（模拟长 AI 调用，暴露并发竞态） */
-function mockOllamaDelayed(content: string, delayMs: number) {
-  const fetchMock = vi.fn(async () => {
-    await new Promise((r) => setTimeout(r, delayMs));
-    return { ok: true, json: async () => ({ message: { content } }) };
-  });
-  (global as any).fetch = fetchMock;
-  return fetchMock;
+/** 预置 v2 数据：1 个既有概念 + 1 个画像 + 自定义词表 */
+function seedVault(vault: MockVault, extra?: any): void {
+  vault.files.set(
+    getBlackBoxFilePath(),
+    JSON.stringify({
+      version: 2,
+      settings: { reviewThreshold: 10, showSpeculativeEvents: true, words: ['触动', '温暖', '想念', '难过'] },
+      persona: { name: '包仔', seed: '种子', toneExample: '语气', selfViews: [] },
+      entries: [
+        { id: 'bb_c1', type: 'concept', createdAt: '2026-08-01T00:00:00.000Z', name: '提喻法', definition: '以部分代整体', related: [], emotions: [], people: [], scene: '', toward: '', links: [] },
+      ],
+      profiles: [{ id: 'pf_1', name: '妹妹', relation: '家人', impression: '', aiObservations: [], pinnedEvents: [], createdAt: 't' }],
+      events: [],
+      reviews: [],
+      chat: [],
+      meta: { lastReviewAt: '', totalEntries: 1, totalEvents: 0 },
+      ...extra,
+    })
+  );
 }
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-function openAndFill(material: string, feeling: string) {
-  const m = document.getElementById('bz-blackbox-material') as HTMLTextAreaElement;
-  const f = document.getElementById('bz-blackbox-feeling') as HTMLTextAreaElement;
-  if (m) m.value = material;
-  if (f) f.value = feeling;
+/** 读回落盘数据的辅助 */
+function loaded(vault: MockVault): any {
+  return JSON.parse(vault.files.get(getBlackBoxFilePath())!);
 }
 
-describe('黑匣子录入弹窗', () => {
+describe('黑匣子录入弹窗（三类）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     setApp(null as any);
@@ -59,183 +66,278 @@ describe('黑匣子录入弹窗', () => {
     delete (global as any).fetch;
   });
 
-  it('打开：渲染必填区与 24 个情绪 chips', () => {
-    const { app } = setup();
-    openBlackBoxCapture(app);
+  it('打开：三类型胶囊渲染，默认想法 tab，感触外壳对概念隐藏', async () => {
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCapture(app);
     expect(document.getElementById('bz-blackbox-capture-mask')).toBeTruthy();
-    expect(document.getElementById('bz-blackbox-capture-popup')!.style.display).toBe('flex');
-    expect(document.getElementById('bz-blackbox-material')).toBeTruthy();
-    expect(document.getElementById('bz-blackbox-feeling')).toBeTruthy();
-    expect(document.querySelectorAll('.bz-blackbox-chip').length).toBe(24);
+    const tabs = document.querySelectorAll('.bz-blackbox-type-btn');
+    expect(tabs.length).toBe(3);
+    expect((tabs[0] as HTMLElement).textContent).toContain('概念');
+    expect((tabs[1] as HTMLElement).textContent).toContain('文献');
+    expect((tabs[2] as HTMLElement).textContent).toContain('想法');
+    expect(document.getElementById('bz-blackbox-tab-thought')!.style.display).toBe('block');
+    expect(document.getElementById('bz-blackbox-tab-concept')!.style.display).toBe('none');
+    // 情绪词表来自数据 settings.words（自定义词表）
+    const chips = document.querySelectorAll('#bz-blackbox-emotions .bz-blackbox-chip');
+    expect(chips.length).toBe(4);
   });
 
-  it('重复打开幂等：不重建 DOM', () => {
-    const { app } = setup();
-    openBlackBoxCapture(app);
-    const first = document.getElementById('bz-blackbox-capture-popup');
-    openBlackBoxCapture(app);
-    expect(document.getElementById('bz-blackbox-capture-popup')).toBe(first);
+  it('类型切换保留已填内容不丢', async () => {
+    const vault = new MockVault();
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCapture(app);
+    const thought = document.getElementById('bz-blackbox-thought-text') as HTMLTextAreaElement;
+    thought.value = '我昨晚做的梦';
+    thought.dispatchEvent(new Event('input'));
+    // 切到概念
+    (document.querySelector('.bz-blackbox-type-btn[data-type="concept"]') as HTMLElement).click();
+    expect(document.getElementById('bz-blackbox-tab-concept')!.style.display).toBe('block');
+    expect(document.getElementById('bz-blackbox-tab-thought')!.style.display).toBe('none');
+    expect(document.getElementById('bz-blackbox-shell')!.style.display).toBe('none'); // 概念无感触外壳
+    // 切回想法
+    (document.querySelector('.bz-blackbox-type-btn[data-type="thought"]') as HTMLElement).click();
+    const thought2 = document.getElementById('bz-blackbox-thought-text') as HTMLTextAreaElement;
+    expect(thought2.value).toBe('我昨晚做的梦');
   });
 
-  it('情绪 chips：最多选 3 个，第 4 个被拒 + 强度区随选中出现', () => {
-    const { app } = setup();
-    openBlackBoxCapture(app);
-    const chips = Array.from(document.querySelectorAll('.bz-blackbox-chip')) as HTMLButtonElement[];
-    chips[0].click();
-    chips[1].click();
-    chips[2].click();
-    expect(document.querySelectorAll('.bz-blackbox-chip-on').length).toBe(3);
-    expect(document.querySelectorAll('.bz-blackbox-intensity-group').length).toBe(3);
-    chips[3].click();
-    expect(document.querySelectorAll('.bz-blackbox-chip-on').length).toBe(3);
-    expect(hasNotice(/最多选 3 个情绪/)).toBe(true);
-  });
-
-  it('强度按钮：点击后高亮，保存时记录', async () => {
-    const { app, vault } = setup(new MockVault(), { blackboxReviewThreshold: '999' });
-    openBlackBoxCapture(app);
-    (document.querySelectorAll('.bz-blackbox-chip')[0] as HTMLButtonElement).click();
-    const intensityBtns = Array.from(document.querySelectorAll('.bz-blackbox-intensity-btn')) as HTMLButtonElement[];
-    intensityBtns[4].click(); // 强度 5
-    openAndFill('那段话', '很触动我');
-    (document.getElementById('bz-blackbox-save') as HTMLButtonElement).click();
-    await new Promise((r) => setTimeout(r, 10));
-    const saved = JSON.parse(vault.files.get(getBlackBoxFilePath())!);
-    expect(saved.impressions[0].emotions).toEqual([{ tag: '触动', intensity: 5 }]);
-  });
-
-  it('保存校验：素材/感受为空时拒绝并提示', async () => {
-    const { app } = setup();
-    openBlackBoxCapture(app);
-    (document.getElementById('bz-blackbox-save') as HTMLButtonElement).click();
-    expect(hasNotice(/素材不能为空/)).toBe(true);
-    openAndFill('素材有了', '');
-    (document.getElementById('bz-blackbox-save') as HTMLButtonElement).click();
-    expect(hasNotice(/感受不能为空/)).toBe(true);
-  });
-
-  it('保存成功：落盘 + toast + 关闭弹窗', async () => {
-    const { app, vault } = setup(new MockVault(), { blackboxReviewThreshold: '999' });
-    openBlackBoxCapture(app);
-    openAndFill('别人说的那句话', '因为我想起了外婆');
-    (document.getElementById('bz-blackbox-save') as HTMLButtonElement).click();
-    await new Promise((r) => setTimeout(r, 10));
-    expect(hasNotice(/已存入黑匣子/)).toBe(true);
-    const saved = JSON.parse(vault.files.get(getBlackBoxFilePath())!);
-    expect(saved.impressions.length).toBe(1);
-    expect(saved.impressions[0].material).toBe('别人说的那句话');
-    expect(saved.impressions[0].feeling).toBe('因为我想起了外婆');
-    expect(document.getElementById('bz-blackbox-capture-mask')).toBeFalsy(); // 已关闭
-  });
-
-  it('阈值命中自动静默复盘：产物写入 reviews + 对话，无复盘 toast', async () => {
-    mockOllama('{"text": "我看到了一个细腻的人", "newSelfView": "主人是个细腻的人"}');
-    const { app, vault } = setup(new MockVault(), { blackboxReviewThreshold: '1', blackboxAIProvider: 'ollama' });
-    openBlackBoxCapture(app);
-    openAndFill('素材', '感受');
-    (document.getElementById('bz-blackbox-save') as HTMLButtonElement).click();
-    await new Promise((r) => setTimeout(r, 50)); // 等静默复盘完成
-    const saved = JSON.parse(vault.files.get(getBlackBoxFilePath())!);
-    expect(saved.reviews.length).toBe(1);
-    expect(saved.reviews[0].text).toBe('我看到了一个细腻的人');
-    expect(saved.persona.selfViews).toEqual([{ ts: saved.reviews[0].ts, view: '主人是个细腻的人' }]);
-    expect(saved.chat.some((m: any) => m.role === 'assistant' && m.text.includes('细腻'))).toBe(true);
-    expect(hasNotice(/复盘完成/)).toBe(false); // 静默：不弹复盘 toast
-  });
-
-  it('AI 辅助追问失败降级：本地文案显示在结果区', async () => {
-    (global as any).fetch = vi.fn(async () => {
-      throw new Error('network down');
+  it('概念流程：生成卡片（mock AI）→ 确认录入（无感触外壳）', async () => {
+    mockOllama('{"definition": "以部分代整体的修辞", "relatedNames": ["提喻法"]}');
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCapture(app);
+    (document.querySelector('.bz-blackbox-type-btn[data-type="concept"]') as HTMLElement).click();
+    const name = document.getElementById('bz-blackbox-concept-name') as HTMLInputElement;
+    name.value = '借代';
+    name.dispatchEvent(new Event('input'));
+    document.getElementById('bz-blackbox-concept-gen')!.click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-blackbox-concept-def')).toBeTruthy();
     });
-    const { app } = setup(new MockVault(), { blackboxAIProvider: 'ollama' });
-    openBlackBoxCapture(app);
-    openAndFill('素材', '一句话感受');
-    const askBtn = Array.from(document.querySelectorAll('.bz-blackbox-ai-btn')).find(
-      (b) => b.textContent === '❓ 追问'
-    ) as HTMLButtonElement;
-    askBtn.click();
-    await new Promise((r) => setTimeout(r, 30));
-    const result = document.getElementById('bz-blackbox-ai-result')!;
-    expect(result.querySelector('.bz-blackbox-ai-fallback')).toBeTruthy();
-  });
-
-  it('AI 辅助在途时关闭弹窗：不抛错、不误报', async () => {
-    mockOllamaDelayed('这句最戳你', 60);
-    const { app } = setup(new MockVault(), { blackboxAIProvider: 'ollama' });
-    openBlackBoxCapture(app);
-    openAndFill('素材', '感受');
-    const askBtn = Array.from(document.querySelectorAll('.bz-blackbox-ai-btn')).find(
-      (b) => b.textContent === '❓ 追问'
-    ) as HTMLButtonElement;
-    askBtn.click();
-    await sleep(20); // AI 在途
-    closeBlackBoxCapture();
-    await sleep(120); // AI 返回，应安全放弃（不抛错、不误报 toast）
-    expect(document.getElementById('bz-blackbox-capture-mask')).toBeFalsy();
-    expect(hasNotice(/联想失败|查询失败/)).toBe(false);
-  });
-
-  it('自动复盘写前重载：AI 复盘期间外部新增的感触不被覆盖', async () => {
-    mockOllamaDelayed('{"text": "复盘话", "newSelfView": "认知"}', 60);
-    const { app, vault } = setup(new MockVault(), { blackboxReviewThreshold: '1', blackboxAIProvider: 'ollama' });
-    openBlackBoxCapture(app);
-    openAndFill('素材', '感受');
-    (document.getElementById('bz-blackbox-save') as HTMLButtonElement).click();
-    await sleep(20); // 复盘在途
-    // 外部并发写入第 2 条感触
-    const raw = JSON.parse(vault.files.get(getBlackBoxFilePath())!);
-    raw.impressions.push({
-      id: 'i2', ts: 't9', material: '并发新增', feeling: '不该被覆盖',
-      emotions: [], scene: '', people: '', direction: '', links: [],
+    expect(document.getElementById('bz-blackbox-concept-preview')!.textContent).toContain('以部分代整体的修辞');
+    expect(document.getElementById('bz-blackbox-concept-preview')!.textContent).toContain('提喻法'); // 关联
+    document.getElementById('bz-blackbox-concept-confirm')!.click();
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-capture-mask')).toBeFalsy();
     });
-    vault.files.set(getBlackBoxFilePath(), JSON.stringify(raw));
-    await sleep(120); // 复盘完成
-    const saved = JSON.parse(vault.files.get(getBlackBoxFilePath())!);
-    expect(saved.impressions.length).toBe(2); // 外部新增未被复盘写回覆盖
-    expect(saved.reviews.length).toBe(1);
-    expect(saved.persona.selfViews.length).toBe(1);
+    const data = loaded(vault);
+    const concept = data.entries.find((e: any) => e.type === 'concept' && e.name === '借代');
+    expect(concept).toBeTruthy();
+    expect(concept.definition).toContain('以部分代整体的修辞');
+    expect(concept.related).toEqual(['bb_c1']);
+    // 概念无感触外壳
+    expect(concept.emotions).toEqual([]);
+    expect(concept.people).toEqual([]);
   });
 
-  it('自动复盘并发去重：在途时再次触发被跳过，只复盘一次', async () => {
-    mockOllamaDelayed('{"text": "复盘话", "newSelfView": "认知"}', 60);
-    const { app, vault } = setup(new MockVault(), { blackboxReviewThreshold: '1', blackboxAIProvider: 'ollama' });
-    openBlackBoxCapture(app);
-    openAndFill('素材1', '感受1');
-    (document.getElementById('bz-blackbox-save') as HTMLButtonElement).click();
-    await sleep(20); // 第一次复盘在途
-    openBlackBoxCapture(app); // 重开录入第二条
-    openAndFill('素材2', '感受2');
-    (document.getElementById('bz-blackbox-save') as HTMLButtonElement).click();
-    await sleep(150);
-    const saved = JSON.parse(vault.files.get(getBlackBoxFilePath())!);
-    expect(saved.impressions.length).toBe(2);
-    expect(saved.reviews.length).toBe(1); // 去重：只复盘一次
+  it('概念流程：AI 失败 → 纯名字仍可保存（永不拒收）', async () => {
+    mockOllama('not json');
+    const vault = new MockVault();
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCapture(app);
+    (document.querySelector('.bz-blackbox-type-btn[data-type="concept"]') as HTMLElement).click();
+    const name = document.getElementById('bz-blackbox-concept-name') as HTMLInputElement;
+    name.value = '熵增';
+    name.dispatchEvent(new Event('input'));
+    document.getElementById('bz-blackbox-concept-gen')!.click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-blackbox-concept-card')).toBeTruthy(); // 纯文本保留
+    });
+    document.getElementById('bz-blackbox-concept-confirm')!.click();
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-capture-mask')).toBeFalsy();
+    });
+    const data = loaded(vault);
+    expect(data.entries.some((e: any) => e.type === 'concept' && e.name === '熵增')).toBe(true);
   });
 
-  it('关闭清理：esc 注册注销，重复开关无残留', () => {
-    const { app } = setup();
-    openBlackBoxCapture(app);
-    closeBlackBoxCapture();
-    expect(document.getElementById('bz-blackbox-capture-mask')).toBeFalsy();
-    expect(document.getElementById('bz-blackbox-capture-popup')).toBeFalsy(); // popup 是兄弟节点，必须同移除
-    openBlackBoxCapture(app);
-    expect(document.getElementById('bz-blackbox-capture-mask')).toBeTruthy();
-    expect(document.querySelectorAll('#bz-blackbox-capture-popup').length).toBe(1); // 无堆积
+  it('概念流程：直接保存（未生成）→ 允许，definition 空', async () => {
+    const vault = new MockVault();
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCapture(app);
+    (document.querySelector('.bz-blackbox-type-btn[data-type="concept"]') as HTMLElement).click();
+    const name = document.getElementById('bz-blackbox-concept-name') as HTMLInputElement;
+    name.value = '空卡片';
+    name.dispatchEvent(new Event('input'));
+    document.getElementById('bz-blackbox-save')!.click();
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-capture-mask')).toBeFalsy();
+    });
+    const data = loaded(vault);
+    const c = data.entries.find((e: any) => e.name === '空卡片');
+    expect(c.definition).toBe('');
   });
 
-  it('点击遮罩关闭：mask 与 popup 同消失', () => {
-    const { app } = setup();
-    openBlackBoxCapture(app);
-    document.getElementById('bz-blackbox-capture-mask')!.click();
-    expect(document.getElementById('bz-blackbox-capture-mask')).toBeFalsy();
-    expect(document.getElementById('bz-blackbox-capture-popup')).toBeFalsy();
+  it('文献流程：分析名词（预勾已有概念 + 新概念）→ 带出想法 → 一次保存三条目', async () => {
+    mockOllama('{"matched": ["提喻法"], "newConcepts": ["隐喻"]}');
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCapture(app);
+    (document.querySelector('.bz-blackbox-type-btn[data-type="literature"]') as HTMLElement).click();
+    const text = document.getElementById('bz-blackbox-lit-text') as HTMLTextAreaElement;
+    text.value = '修辞手法在诗歌中随处可见';
+    text.dispatchEvent(new Event('input'));
+    const source = document.getElementById('bz-blackbox-lit-source') as HTMLInputElement;
+    source.value = '《诗学》';
+    source.dispatchEvent(new Event('input'));
+    document.getElementById('bz-blackbox-lit-analyze')!.click();
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('.bz-blackbox-term-chip').length).toBe(2);
+    });
+    // 提喻法预勾（✓），隐喻未勾
+    const chips = document.querySelectorAll('.bz-blackbox-term-chip');
+    expect((chips[0] as HTMLElement).textContent).toContain('提喻法');
+    expect((chips[0] as HTMLElement).classList.contains('bz-blackbox-term-chip-on')).toBe(true);
+    expect((chips[1] as HTMLElement).textContent).toContain('隐喻');
+    expect((chips[1] as HTMLElement).classList.contains('bz-blackbox-term-chip-on')).toBe(false);
+    // 勾选新概念
+    (chips[1] as HTMLElement).click();
+    // 展开带出想法
+    const carry = document.getElementById('bz-blackbox-carry') as HTMLDetailsElement;
+    carry.open = true;
+    carry.dispatchEvent(new Event('toggle'));
+    const carryText = document.getElementById('bz-blackbox-carry-text') as HTMLTextAreaElement;
+    carryText.value = '这让我想到诗歌的本质';
+    carryText.dispatchEvent(new Event('input'));
+    // 情绪 + 涉及的人
+    (document.querySelectorAll('#bz-blackbox-emotions .bz-blackbox-chip')[0] as HTMLElement).click();
+    const peopleInput = document.getElementById('bz-blackbox-people-input') as HTMLInputElement;
+    peopleInput.value = '妹妹';
+    peopleInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    document.getElementById('bz-blackbox-save')!.click();
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-capture-mask')).toBeFalsy();
+    });
+    const data = loaded(vault);
+    const lit = data.entries.find((e: any) => e.type === 'literature');
+    expect(lit).toBeTruthy();
+    expect(lit.source).toBe('《诗学》');
+    expect(lit.terms).toEqual(['bb_c1']);
+    expect(lit.people).toEqual(['pf_1']); // 名字匹配已有画像 → id
+    expect(lit.emotions).toEqual(['触动']);
+    const thought = data.entries.find((e: any) => e.type === 'thought' && e.text.includes('诗歌的本质'));
+    expect(thought).toBeTruthy();
+    expect(thought.people).toEqual(['pf_1']); // 带出想法共享外壳
+    const newConcept = data.entries.find((e: any) => e.type === 'concept' && e.name === '隐喻');
+    expect(newConcept).toBeTruthy(); // 勾选的新概念落为概念条目
   });
 
-  it('点击右上角 ✕ 关闭：mask 与 popup 同消失', () => {
-    const { app } = setup();
-    openBlackBoxCapture(app);
-    (document.querySelector('.bz-blackbox-modal-close') as HTMLButtonElement).click();
-    expect(document.getElementById('bz-blackbox-capture-mask')).toBeFalsy();
-    expect(document.getElementById('bz-blackbox-capture-popup')).toBeFalsy();
+  it('想法流程：保存 + 情绪 ≤3 校验 + 无画像纯名字', async () => {
+    const vault = new MockVault();
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCapture(app);
+    const thought = document.getElementById('bz-blackbox-thought-text') as HTMLTextAreaElement;
+    thought.value = '今晚的风很安静';
+    thought.dispatchEvent(new Event('input'));
+    // 点 4 个情绪：第 4 个被拒
+    const chips = document.querySelectorAll('#bz-blackbox-emotions .bz-blackbox-chip');
+    for (let i = 0; i < 4; i++) (chips[i] as HTMLElement).click();
+    expect(hasNotice('⚠️ 最多选 3 个情绪')).toBe(true);
+    expect(document.querySelectorAll('#bz-blackbox-emotions .bz-blackbox-chip-on').length).toBe(3);
+    // 纯名字（无匹配画像）
+    const peopleInput = document.getElementById('bz-blackbox-people-input') as HTMLInputElement;
+    peopleInput.value = '老王';
+    peopleInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(document.querySelector('.bz-blackbox-people-tag')!.textContent).toContain('老王');
+    document.getElementById('bz-blackbox-save')!.click();
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-capture-mask')).toBeFalsy();
+    });
+    const data = loaded(vault);
+    const t = data.entries.find((e: any) => e.type === 'thought');
+    expect(t.text).toBe('今晚的风很安静');
+    expect(t.emotions.length).toBe(3);
+    expect(t.people).toEqual(['老王']);
+  });
+
+  it('涉及的人：输入匹配已有画像自动补全 → 存画像 id；上限 5', async () => {
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCapture(app);
+    const peopleInput = document.getElementById('bz-blackbox-people-input') as HTMLInputElement;
+    // 输入「妹」出现补全建议
+    peopleInput.value = '妹';
+    peopleInput.dispatchEvent(new Event('input'));
+    const suggest = document.getElementById('bz-blackbox-people-suggest')!;
+    expect(suggest.style.display).toBe('block');
+    const items = suggest.querySelectorAll('.bz-blackbox-people-suggest-item');
+    expect(items.length).toBe(1);
+    expect((items[0] as HTMLElement).textContent).toContain('妹妹');
+    // 点击建议 → 画像 id chip
+    (items[0] as HTMLElement).click();
+    expect(document.querySelector('.bz-blackbox-people-tag')!.textContent).toContain('妹妹');
+    // 上限 5
+    for (let i = 0; i < 6; i++) {
+      peopleInput.value = `路人${i}`;
+      peopleInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    }
+    expect(hasNotice('⚠️ 最多 5 个人')).toBe(true);
+    expect(document.querySelectorAll('.bz-blackbox-people-tag').length).toBe(5);
+  });
+
+  it('现场新建画像（冷启动双路径）：创建即关联，画像落盘', async () => {
+    const vault = new MockVault();
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCapture(app);
+    document.getElementById('bz-blackbox-profile-new')!.click();
+    const name = document.getElementById('bz-blackbox-profile-form-name') as HTMLInputElement;
+    name.value = '前女友';
+    document.getElementById('bz-blackbox-profile-form-create')!.click();
+    await vi.waitFor(() => {
+      expect(hasNotice('✅ 画像「前女友」已创建')).toBe(true);
+    });
+    // chip 是画像 id（pf_ 前缀）
+    const chip = document.querySelector('.bz-blackbox-people-tag')!;
+    expect(chip.textContent).toContain('前女友');
+    const data = loaded(vault);
+    expect(data.profiles.some((p: any) => p.name === '前女友')).toBe(true);
+  });
+
+  it('想法 AI 辅助：⚡ 联想（mock AI）→ 可加入想法', async () => {
+    mockOllama('这让我想起 7 月——茉莉花的香气');
+    const vault = new MockVault();
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCapture(app);
+    const thought = document.getElementById('bz-blackbox-thought-text') as HTMLTextAreaElement;
+    thought.value = '茉莉花';
+    thought.dispatchEvent(new Event('input'));
+    // 联想按钮（⚡）
+    const recallBtn = Array.from(document.querySelectorAll('.bz-blackbox-ai-btn')).find((b) => b.textContent?.includes('联想'));
+    (recallBtn as HTMLButtonElement).click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-blackbox-ai-append')).toBeTruthy();
+    });
+    const append = document.querySelector('.bz-blackbox-ai-append') as HTMLButtonElement;
+    append.click();
+    expect(thought.value).toContain('这让我想起 7 月');
+  });
+
+  it('保存后阈值命中触发自动复盘（产物写入对话流）', async () => {
+    mockOllama('{"text": "我看到一个细腻的人", "newSelfView": "我懂主人了"}');
+    const vault = new MockVault();
+    // 已有 2 条 → 全局阈值 3 → 本次录入后命中
+    seedVault(vault, {
+      entries: [
+        { id: 'bb_c1', type: 'concept', createdAt: 't', name: '提喻法', definition: 'x', related: [], emotions: [], people: [], scene: '', toward: '', links: [] },
+        { id: 'bb_t1', type: 'thought', createdAt: 't2', text: '旧想法', emotions: [], people: [], scene: '', toward: '', links: [] },
+      ],
+    });
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama', blackboxReviewThreshold: '3' });
+    await openBlackBoxCapture(app);
+    const thought = document.getElementById('bz-blackbox-thought-text') as HTMLTextAreaElement;
+    thought.value = '第三条';
+    thought.dispatchEvent(new Event('input'));
+    document.getElementById('bz-blackbox-save')!.click();
+    await vi.waitFor(() => {
+      expect(loaded(vault).reviews.length).toBe(1);
+    });
+    const data = loaded(vault);
+    expect(data.reviews[0].text).toContain('细腻');
+    expect(data.persona.selfViews.length).toBe(1);
+    expect(data.chat.some((m: any) => m.role === 'assistant')).toBe(true);
   });
 });

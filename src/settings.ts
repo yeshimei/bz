@@ -246,17 +246,19 @@ export default interface BzSettings {
   /** 打开时恢复方式：background（后台继续倒计时）/ popup（正在倒计时则自动弹窗） */
   pomodoroRestoreMode: string;
 
-  // ===== 🕳️ 黑匣子（5 项，ticket 33 新域）=====
+  // ===== 🕳️ 黑匣子（6 项，ticket 33/45 新域）=====
   /** AI 服务：deepseek（默认，跟随 bz 既有模式）/ ollama（本地） */
   blackboxAIProvider: string;
   /** Ollama 地址（ollama 模式用） */
   blackboxOllamaUrl: string;
   /** Ollama 对话模型（ollama 模式用） */
   blackboxOllamaModel: string;
-  /** 复盘阈值：每 N 条新感触自动静默复盘（默认 10） */
+  /** 复盘阈值：每 N 条新内容自动静默复盘（默认 10） */
   blackboxReviewThreshold: string;
   /** 对话历史保留条数（三层记忆的短期记忆上限，默认 20） */
   blackboxMaxHistory: string;
+  /** 推测事件显示开关（默认开；数据内 settings.showSpeculativeEvents 兜底同步，v2 新增） */
+  blackboxShowSpeculativeEvents: boolean;
 }
 
 export const DEFAULT_SETTINGS: BzSettings = {
@@ -402,4 +404,5 @@ export const DEFAULT_SETTINGS: BzSettings = {
   blackboxOllamaModel: 'qwen2.5:14b-instruct',
   blackboxReviewThreshold: '10',
   blackboxMaxHistory: '20',
+  blackboxShowSpeculativeEvents: true,
 };
