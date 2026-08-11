@@ -177,7 +177,7 @@ function renderStep(): void {
   else renderStepConn();
 }
 
-/** 顶部轻导航：类型名 + 「← 换一个」（回类型选择） */
+/** 顶部轻导航：类型名 + 「←」图标（悬停提示换类型；引导文案由输入框 placeholder 承担） */
 function guideHead(typeLabel: string, backToType = true): HTMLElement {
   const head = document.createElement('div');
   head.className = 'bz-blackbox-guide-head';
@@ -189,7 +189,8 @@ function guideHead(typeLabel: string, backToType = true): HTMLElement {
     const back = document.createElement('button');
     back.type = 'button';
     back.className = 'bz-blackbox-guide-back';
-    back.textContent = '← 换一个';
+    back.textContent = '←';
+    back.title = '换一个类型';
     back.addEventListener('click', () => {
       resetEntry();
       renderStep();
@@ -220,14 +221,10 @@ function renderStepType(): void {
   const box = document.getElementById('bz-blackbox-step-type');
   if (!box) return;
   box.innerHTML = '';
-  const title = document.createElement('div');
-  title.className = 'bz-blackbox-guide-page-title';
-  title.textContent = '🕳️ 这次想记录什么？';
-  box.appendChild(title);
-  const cards: { type: CaptureType; icon: string; name: string; desc: string }[] = [
-    { type: 'concept', icon: '🧩', name: '概念', desc: '存知识：喂一个名词，包仔生成百科卡片' },
-    { type: 'literature', icon: '📎', name: '文献', desc: '摘抄入库：粘贴摘抄，自动分析名词、提炼想法' },
-    { type: 'thought', icon: '💡', name: '想法', desc: '记录此刻：写下念头，可选联想与追问' },
+  const cards: { type: CaptureType; icon: string; name: string }[] = [
+    { type: 'concept', icon: '🧩', name: '概念' },
+    { type: 'literature', icon: '📎', name: '文献' },
+    { type: 'thought', icon: '💡', name: '想法' },
   ];
   for (const c of cards) {
     const card = document.createElement('button');
@@ -237,19 +234,13 @@ function renderStepType(): void {
     const icon = document.createElement('span');
     icon.className = 'bz-blackbox-guide-card-icon';
     icon.textContent = c.icon;
-    const info = document.createElement('span');
-    info.className = 'bz-blackbox-guide-card-info';
     const name = document.createElement('span');
     name.className = 'bz-blackbox-guide-card-name';
     name.textContent = c.name;
-    const desc = document.createElement('span');
-    desc.className = 'bz-blackbox-guide-card-desc';
-    desc.textContent = c.desc;
-    info.append(name, desc);
     const arrow = document.createElement('span');
     arrow.className = 'bz-blackbox-guide-card-arrow';
     arrow.textContent = '›';
-    card.append(icon, info, arrow);
+    card.append(icon, name, arrow);
     card.addEventListener('click', () => {
       activeType = c.type;
       gotoStep('content');
@@ -270,7 +261,7 @@ function renderStepContent(): void {
     const input = document.createElement('textarea');
     input.id = 'bz-blackbox-concept-name';
     input.className = 'bz-blackbox-textarea';
-    input.placeholder = '输入一个名词，点下方「✨ 生成卡片」';
+    input.placeholder = '输入名词，点「✨ 生成卡片」（← 换类型）';
     input.value = conceptGenerated ? conceptDefinition : conceptName;
     input.addEventListener('input', () => {
       if (conceptGenerated) conceptDefinition = input.value;
@@ -290,7 +281,7 @@ function renderStepContent(): void {
     const text = document.createElement('textarea');
     text.id = 'bz-blackbox-lit-text';
     text.className = 'bz-blackbox-textarea';
-    text.placeholder = '粘贴摘抄内容……';
+    text.placeholder = '粘贴摘抄内容……（← 换类型）';
     text.value = literatureText;
     text.addEventListener('input', () => (literatureText = text.value));
     box.appendChild(text);
@@ -315,7 +306,7 @@ function renderStepContent(): void {
     const text = document.createElement('textarea');
     text.id = 'bz-blackbox-thought-text';
     text.className = 'bz-blackbox-textarea';
-    text.placeholder = '此刻在想什么……';
+    text.placeholder = '此刻在想什么……（← 换类型）';
     text.value = thoughtText;
     text.addEventListener('input', () => (thoughtText = text.value));
     box.appendChild(text);
