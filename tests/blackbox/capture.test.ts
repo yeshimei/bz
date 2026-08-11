@@ -121,7 +121,7 @@ describe('黑匣子录入弹窗（引导式）', () => {
 
   // ---------------- 🧩 概念 ----------------
 
-  it('概念：选类型 → 一个输入框 + 生成按钮 + ← 换一个', async () => {
+  it('概念：选类型 → 一个输入框 + 生成按钮；无头部/无 label（引导在 placeholder）', async () => {
     const vault = new MockVault();
     seedVault(vault);
     const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
@@ -130,7 +130,11 @@ describe('黑匣子录入弹窗（引导式）', () => {
     expect(document.getElementById('bz-blackbox-step-content')!.style.display).toBe('block');
     expect(document.getElementById('bz-blackbox-concept-name')).toBeTruthy(); // 一个输入框
     expect(document.getElementById('bz-blackbox-concept-gen')!.textContent).toBe('✨ 生成卡片');
-    expect(document.querySelector('.bz-blackbox-guide-back')!.textContent).toBe('←');
+    // 无头部标题 / 无返回按钮 / 无 label
+    expect(document.querySelector('#bz-blackbox-step-content .bz-blackbox-guide-head')).toBeNull();
+    expect(document.querySelector('.bz-blackbox-guide-back')).toBeNull();
+    expect(document.querySelector('#bz-blackbox-step-content .bz-blackbox-field-label')).toBeNull();
+    expect((document.getElementById('bz-blackbox-concept-name') as HTMLTextAreaElement).placeholder).toContain('提喻法');
     // 只有一个输入框（无其他字段）
     expect(document.querySelectorAll('#bz-blackbox-step-content textarea').length).toBe(1);
   });
@@ -409,18 +413,13 @@ describe('黑匣子录入弹窗（引导式）', () => {
 
   // ---------------- 导航与收尾 ----------------
 
-  it('← 换一个：回类型选择并重置；保存后回类型选择可连续录入；重开不残留', async () => {
+  it('保存后回类型选择可连续录入；重开不残留（无返回按钮，换类型=关闭重开）', async () => {
     const vault = new MockVault();
     seedVault(vault);
     const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
     await openBlackBoxCapture(app);
     selectType('thought');
-    setValue('bz-blackbox-thought-text', '第一条');
-    (document.querySelector('.bz-blackbox-guide-back') as HTMLElement).click();
-    expect(document.getElementById('bz-blackbox-step-type')!.style.display).toBe('block');
-    // 换一个后重进：内容已重置
-    selectType('thought');
-    expect((document.getElementById('bz-blackbox-thought-text') as HTMLTextAreaElement).value).toBe('');
+    expect(document.querySelector('.bz-blackbox-guide-back')).toBeNull(); // 无返回按钮
     // 走完整流程保存 → 回类型选择
     setValue('bz-blackbox-thought-text', '第二条');
     document.getElementById('bz-blackbox-thought-confirm')!.click();

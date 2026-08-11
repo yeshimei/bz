@@ -177,42 +177,13 @@ function renderStep(): void {
   else renderStepConn();
 }
 
-/** 顶部轻导航：类型名 + 「←」图标（悬停提示换类型；引导文案由输入框 placeholder 承担） */
-function guideHead(typeLabel: string, backToType = true): HTMLElement {
-  const head = document.createElement('div');
-  head.className = 'bz-blackbox-guide-head';
-  const label = document.createElement('span');
-  label.className = 'bz-blackbox-guide-type';
-  label.textContent = typeLabel;
-  head.appendChild(label);
-  if (backToType) {
-    const back = document.createElement('button');
-    back.type = 'button';
-    back.className = 'bz-blackbox-guide-back';
-    back.textContent = '←';
-    back.title = '换一个类型';
-    back.addEventListener('click', () => {
-      resetEntry();
-      renderStep();
-    });
-    head.appendChild(back);
-  }
-  return head;
-}
-
-function fieldLabel(text: string, hint: string): HTMLElement {
-  const wrap = document.createElement('div');
-  wrap.className = 'bz-blackbox-field-label';
-  const label = document.createElement('span');
-  label.textContent = text;
-  wrap.appendChild(label);
-  if (hint) {
-    const h = document.createElement('span');
-    h.className = 'bz-blackbox-field-hint';
-    h.textContent = hint;
-    wrap.appendChild(h);
-  }
-  return wrap;
+/** 分组轻提示（chips 组前一行小字，替代 label） */
+function groupHint(text: string): HTMLElement {
+  const el = document.createElement('div');
+  el.className = 'bz-blackbox-field-hint';
+  el.style.margin = '10px 0 6px';
+  el.textContent = text;
+  return el;
 }
 
 // ---------------- ① 类型选择 ----------------
@@ -256,12 +227,10 @@ function renderStepContent(): void {
   if (!box) return;
   box.innerHTML = '';
   if (activeType === 'concept') {
-    box.appendChild(guideHead('🧩 概念'));
-    box.appendChild(fieldLabel('名词', '想搞懂的概念或实体，如「提喻法」'));
     const input = document.createElement('textarea');
     input.id = 'bz-blackbox-concept-name';
     input.className = 'bz-blackbox-textarea';
-    input.placeholder = '输入名词，点「✨ 生成卡片」（← 换类型）';
+    input.placeholder = '想搞懂的概念或实体，如「提喻法」';
     input.value = conceptGenerated ? conceptDefinition : conceptName;
     input.addEventListener('input', () => {
       if (conceptGenerated) conceptDefinition = input.value;
@@ -276,20 +245,17 @@ function renderStepContent(): void {
     genBtn.addEventListener('click', () => void onConceptMainBtn(genBtn));
     box.appendChild(genBtn);
   } else if (activeType === 'literature') {
-    box.appendChild(guideHead('📎 文献'));
-    box.appendChild(fieldLabel('摘抄（必填）', '从别处摘下的信息片段'));
     const text = document.createElement('textarea');
     text.id = 'bz-blackbox-lit-text';
     text.className = 'bz-blackbox-textarea';
-    text.placeholder = '粘贴摘抄内容……（← 换类型）';
+    text.placeholder = '摘抄（必填）：从别处摘下的信息片段';
     text.value = literatureText;
     text.addEventListener('input', () => (literatureText = text.value));
     box.appendChild(text);
-    box.appendChild(fieldLabel('来源', 'URL 或书名/出处'));
     const source = document.createElement('input');
     source.id = 'bz-blackbox-lit-source';
     source.className = 'bz-blackbox-input';
-    source.placeholder = 'https://… 或《书名》';
+    source.placeholder = '来源：URL 或书名/出处';
     source.value = literatureSource;
     source.addEventListener('input', () => (literatureSource = source.value));
     box.appendChild(source);
@@ -301,12 +267,10 @@ function renderStepContent(): void {
     analyzeBtn.addEventListener('click', () => void analyzeLiterature(analyzeBtn));
     box.appendChild(analyzeBtn);
   } else {
-    box.appendChild(guideHead('💡 想法'));
-    box.appendChild(fieldLabel('想法（必填）', '你自己的思考、感受、念头'));
     const text = document.createElement('textarea');
     text.id = 'bz-blackbox-thought-text';
     text.className = 'bz-blackbox-textarea';
-    text.placeholder = '此刻在想什么……（← 换类型）';
+    text.placeholder = '想法（必填）：你自己的思考、感受、念头';
     text.value = thoughtText;
     text.addEventListener('input', () => (thoughtText = text.value));
     box.appendChild(text);
@@ -473,24 +437,11 @@ function renderStepFeel(): void {
   const box = document.getElementById('bz-blackbox-step-feel');
   if (!box) return;
   box.innerHTML = '';
-  const head = document.createElement('div');
-  head.className = 'bz-blackbox-guide-head';
-  const back = document.createElement('button');
-  back.type = 'button';
-  back.className = 'bz-blackbox-guide-back';
-  back.textContent = '← 返回';
-  back.addEventListener('click', () => gotoStep('content'));
-  head.appendChild(back);
-  const label = document.createElement('span');
-  label.className = 'bz-blackbox-guide-type';
-  label.textContent = activeType === 'literature' ? '📎 文献 · 补充感触' : '💡 想法 · 补充感触';
-  head.appendChild(label);
-  box.appendChild(head);
 
   if (activeType === 'literature') {
     // 名词表（分析后才有）
     if (literatureSuggest.length) {
-      box.appendChild(fieldLabel('名词表', '勾选要关联的概念（✦ 为新概念，存入时生成卡片）'));
+      box.appendChild(groupHint('勾选要关联的概念（✦ 新概念）'));
       const chips = document.createElement('div');
       chips.className = 'bz-blackbox-term-chips';
       for (const s of literatureSuggest) {
@@ -510,35 +461,32 @@ function renderStepFeel(): void {
       box.appendChild(chips);
     }
     // 提炼想法（AI 生成，可编辑/清空）
-    box.appendChild(fieldLabel('💡 提炼想法（可选）', '包仔从摘抄提炼，可编辑，存入时作为独立想法条目'));
     const insight = document.createElement('textarea');
     insight.id = 'bz-blackbox-insight';
     insight.className = 'bz-blackbox-textarea';
-    insight.placeholder = literatureInsight || '（无提炼，可直接跳过）';
+    insight.placeholder = '提炼想法（可选）：包仔从摘抄提炼，可编辑';
     insight.value = literatureInsight;
     insight.addEventListener('input', () => (literatureInsight = insight.value));
     box.appendChild(insight);
   }
 
-  box.appendChild(fieldLabel('情绪', `可选，最多 ${MAX_EMOTIONS} 个`));
+  box.appendChild(groupHint(`情绪（可选，最多 ${MAX_EMOTIONS} 个）`));
   const emotionRow = document.createElement('div');
   emotionRow.className = 'bz-blackbox-emotions';
   emotionRow.id = 'bz-blackbox-emotions';
   box.appendChild(emotionRow);
   renderEmotions();
 
-  box.appendChild(fieldLabel('涉及的人', `可选，最多 ${MAX_PEOPLE} 个：输入名字回车，或从已有画像选择`));
   const peopleRow = document.createElement('div');
   peopleRow.className = 'bz-blackbox-people-row';
   peopleRow.id = 'bz-blackbox-people-row';
   box.appendChild(peopleRow);
   renderPeopleChips();
 
-  box.appendChild(fieldLabel('场景', '可选，当时在做什么'));
   const scene = document.createElement('input');
   scene.id = 'bz-blackbox-scene';
   scene.className = 'bz-blackbox-input';
-  scene.placeholder = '深夜通勤、午休、看完那本书……';
+  scene.placeholder = `场景（可选）：当时在做什么，如深夜通勤（最多 ${MAX_PEOPLE} 个人）`;
   scene.value = sceneText;
   scene.addEventListener('input', () => (sceneText = scene.value));
   box.appendChild(scene);
