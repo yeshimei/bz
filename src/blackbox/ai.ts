@@ -377,6 +377,67 @@ function getAIConfig(): { provider: string; ollamaUrl: string; ollamaModel: stri
   };
 }
 
+/** 卡片盒批量分类 prompt（一次性导入工具）：逐张判断 概念/文献/跳过 */
+export function buildClassifyPrompt(cardsText: string): string {
+  return (
+    `主人要把卡片盒里的卡片批量导入黑匣子（个人知识库）。请逐张判断最适合的类型：\n` +
+    `1. concept：解释一个概念/实体/人物的内容（有定义性质），导入为概念卡片；\n` +
+    `2. literature：操作步骤、代码片段、摘抄、工具笔记、清单、链接集，导入为文献；\n` +
+    `3. skip：空内容、错误页面/404、纯图片或纯视频、个人私密信息（恢复码/密码/密钥/验证码等）。\n` +
+    `卡片清单（每张：序号. 名称：正文摘录）：\n` +
+    cardsText +
+    `\n只输出 JSON 数组（按卡片序号）：[{"i": 1, "kind": "concept", "reason": "一句话理由"}]`
+  );
+}
+
+/** 卡片盒分类 JSON 容错解析（非数组/无 kind 的项丢弃） */
+export function parseClassifyJson(text: string): { i: number; kind: 'concept' | 'literature' | 'skip'; reason: string }[] {
+  if (!text) return [];
+  const start = text.indexOf('[');
+  const end = text.lastIndexOf(']');
+  if (start < 0 || end <= start) return [];
+  try {
+    const arr = JSON.parse(text.slice(start, end + 1));
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter(
+        (x: any) =>
+          x && typeof x === 'object' && typeof x.i === 'number' &&
+          (x.kind === 'concept' || x.kind === 'literature' || x.kind === 'skip')
+      )
+      .map((x: any) => ({ i: x.i, kind: x.kind, reason: typeof x.reason === 'string' ? x.reason : '' }));
+  } catch (e) {
+    return [];
+  }
+}
+
+/** 卡片盒总结 prompt（一次性导入工具）：为确认导入的卡片各写一句话总结 */
+export function buildSummaryPrompt(cardsText: string): string {
+  return (
+    `以下卡片将导入主人的黑匣子（个人知识库）。请为每张卡写一句话总结（≤30 字，概括内容要点，用于检索与展示，不要评论）：\n` +
+    cardsText +
+    `\n只输出 JSON 数组：[{"i": 1, "summary": "…"}]`
+  );
+}
+
+/** 卡片盒总结 JSON 容错解析 */
+export function parseSummaryJson(text: string): { i: number; summary: string }[] {
+  if (!text) return [];
+  const start = text.indexOf('[');
+  const end = text.lastIndexOf(']');
+  if (start < 0 || end <= start) return [];
+  try {
+    const arr = JSON.parse(text.slice(start, end + 1));
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter((x: any) => x && typeof x === 'object' && typeof x.i === 'number' && typeof x.summary === 'string')
+      .map((x: any) => ({ i: x.i, summary: x.summary.trim() }))
+      .filter((x: any) => x.summary);
+  } catch (e) {
+    return [];
+  }
+}
+
 export class BlackBoxAI {
   /** 三层记忆对话：返回包仔的回应（失败抛错，由 UI 层降级提示） */
   async chat(data: BlackBoxData, userMsg: string, topK = 5): Promise<string> {
@@ -457,6 +518,16 @@ export class BlackBoxAI {
     }
     const ai = createAI(undefined, 'deepseek-v4-flash', {}, 16384);
     return ai.chat(prompt);
+  }
+
+  /** 卡片盒批量分类（一次性导入工具）：返回原始文本，由 UI 层解析 */
+  async classifyCards(cardsText: string): Promise<string> {
+    return this.ask(buildClassifyPrompt(cardsText));
+  }
+
+  /** 卡片盒批量总结（一次性导入工具）：返回原始文本，由 UI 层解析 */
+  async summarizeCards(cardsText: string): Promise<string> {
+    return this.ask(buildSummaryPrompt(cardsText));
   }
 }
 
