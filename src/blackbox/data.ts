@@ -358,6 +358,22 @@ export class BlackBoxDataManager {
     }
     await this.save(data);
   }
+
+  /**
+   * 动态双向关联：新概念录入后，让关联的既有概念也反向指向新概念（关联是相互的，动态维护）。
+   * relatedIds：新概念关联的既有概念 id（仅对既有概念回填，新概念自身不动）。
+   */
+  async backfillRelated(data: BlackBoxData, newEntryId: string, relatedIds: string[]): Promise<void> {
+    let changed = false;
+    for (const e of data.entries) {
+      if (e.type !== 'concept' || e.id === newEntryId) continue;
+      if (relatedIds.includes(e.id) && !(e.related || []).includes(newEntryId)) {
+        e.related = [...(e.related || []), newEntryId].slice(0, 5);
+        changed = true;
+      }
+    }
+    if (changed) await this.save(data);
+  }
 }
 
 // ---------------- 构造器 ----------------

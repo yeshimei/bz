@@ -372,6 +372,11 @@ async function saveConcept(): Promise<void> {
     const latest = await m.load();
     const r = await m.addEntry(latest, entry);
     data = latest;
+    // 动态双向关联：新概念关联的既有概念也反向指向新卡（关联是相互的，随录入动态维护）
+    if (conceptRelatedIds.length) {
+      await m.backfillRelated(latest, entry.id, conceptRelatedIds);
+      data = await m.load();
+    }
     notice('✅ 已录入概念卡片');
     // 连接展示（写前快照已含 related 概念条目）
     gotoStep('conn');
