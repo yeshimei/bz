@@ -23,7 +23,7 @@ import type { PomodoroState, HistoryEntry, Durations, PomodoroOptions, Phase, Po
 import { transition, recover, createInitialState, DEFAULT_DURATIONS, phaseDurationSec } from './state';
 import { bindPomodoroState, checkReadingNow } from './epub-link';
 import type { ReadingBook } from './epub-link';
-import { escapeHtml } from '../core/utils';
+import { escapeHtml, pad2 } from '../core/utils';
 
 let dataManager: PomodoroDataManager | null = null;
 let state: PomodoroState = createInitialState();
@@ -149,7 +149,7 @@ function remainingSec(): number {
 function fmt(sec: number): string {
   const m = Math.floor(sec / 60);
   const s = sec % 60;
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return `${pad2(m)}:${pad2(s)}`;
 }
 
 /** 历史统计区：今日计数 + 近 7 天柱条（ticket 30）；同日同计数跳过重建（防 tick 每秒 DOM churn） */

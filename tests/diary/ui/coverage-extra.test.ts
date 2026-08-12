@@ -222,7 +222,7 @@ describe('dialogs 补测', () => {
     document.body.appendChild(card);
     await updateTags(entry.id!, ['书']);
     expect(entry.emoji).toBe('📕');
-    expect((document.querySelector(`#diary-entry-${CSS.escape(entry.id)} .diary-emoji`) as HTMLElement).textContent).toBe('📕');
+    expect((document.querySelector(`#diary-entry-${CSS.escape(entry.id!)} .diary-emoji`) as HTMLElement).textContent).toBe('📕');
     expect(vault.files.get(`我的/日记/${entry.date}.md`)).toContain('📕');
   });
 

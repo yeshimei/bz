@@ -27,7 +27,7 @@ function setup() {
     movieFolderPath: '我的/影视',
     moviePageSize: '20',
     favoritesStoragePath: 'CONFIG/STORAGE',
-  }));
+  } as any));
   resetObsidianMocks();
   document.body.innerHTML = '';
 }
@@ -105,11 +105,11 @@ describe('movie 入口', () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     openMovieManager(app);
     await vi.advanceTimersByTimeAsync(50); // rebuildItems 完成
-    const before = (MovieM.entries || []).length;
+    const before = ((MovieM as any).entries || []).length;
     vault.emit('modify', { path: '我的/影视/《新片》.md', extension: 'md' });
     await vi.advanceTimersByTimeAsync(400);
     vi.useRealTimers();
-    expect((MovieM.entries || []).length).toBeGreaterThanOrEqual(before);
+    expect(((MovieM as any).entries || []).length).toBeGreaterThanOrEqual(before);
   });
 
   it('vault 事件：非影视目录文件不触发', async () => {
@@ -117,11 +117,11 @@ describe('movie 入口', () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     openMovieManager(app);
     await vi.advanceTimersByTimeAsync(50);
-    const before = (MovieM.entries || []).length;
+    const before = ((MovieM as any).entries || []).length;
     vault.emit('create', { path: '其他/x.md', extension: 'md' });
     await vi.advanceTimersByTimeAsync(400);
     vi.useRealTimers();
-    expect((MovieM.entries || []).length).toBe(before);
+    expect(((MovieM as any).entries || []).length).toBe(before);
   });
 });
 

@@ -1,6 +1,7 @@
 /**
  * 闪念窄窗 FloatWindow（ticket 18，源码 L1119-1315 语义移植）
  * 右侧贴边/悬停展开/双击最大化/拖拽缩放。
+ * ⚠️ WIP（ticket 18 未接线）：index.ts 仅占位，本模块尚未被任何入口引用，勿依赖其行为。
  */
 import { Setting } from 'obsidian';
 import { getSettings, saveSettings } from '../core/settings-provider';

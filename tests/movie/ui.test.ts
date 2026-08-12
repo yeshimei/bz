@@ -177,7 +177,7 @@ describe('设置弹窗筛选', () => {
 
   it('⚙️ 影视设置弹窗：文件夹/每页 + 默认视图 3 项 + 评分显示', () => {
     createOverlay(M.appRef as any);
-    const settingsBtn = [...document.querySelectorAll('#__yin_ying__ button')].find((b) => b.title === '影视设置') as HTMLElement;
+    const settingsBtn = [...document.querySelectorAll('#__yin_ying__ button')].find((b) => (b as HTMLElement).title === '影视设置') as HTMLElement;
     settingsBtn.click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     const names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
@@ -343,7 +343,7 @@ describe('ESC 层级', () => {
   });
 
   it('⚙️ 打开真设置弹窗（影视文件夹/每页加载数量/海报抓取提示）；🔀 为筛选弹窗', () => {
-    setSettingsProvider(() => ({ movieFolderPath: '我的/影视', moviePageSize: '20' }));
+    setSettingsProvider(() => ({ movieFolderPath: '我的/影视', moviePageSize: '20' }) as any);
     createOverlay(M.appRef as any);
     // 🔀 筛选弹窗（原 ⚙️ 语义，ADR-0009）
     const filterBtn = [...document.querySelectorAll('button')].find((b) => b.title === '筛选与排序')!;
@@ -352,7 +352,7 @@ describe('ESC 层级', () => {
     expect(M.settingsOverlay).not.toBeNull();
     closeFilterModal();
     // ⚙️ 真设置弹窗
-    const settingsBtn = [...document.querySelectorAll('button')].find((b) => b.title === '影视设置')!;
+    const settingsBtn = [...document.querySelectorAll('button')].find((b) => (b as HTMLElement).title === '影视设置')!;
     settingsBtn.click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect(popup.textContent).toContain('影视设置');

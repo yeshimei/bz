@@ -2,6 +2,7 @@
  * 影视 AI 推荐（ticket 14，源码 L1419-1650 逐字移植）
  */
 import type { App } from 'obsidian';
+import { pad2 } from '../core/utils';
 import { notice, notify } from '../core/notice';
 import { createAI } from '../core/ai';
 import { STATUS_WATCHED, STATUS_WANT } from './constants';
@@ -254,6 +255,6 @@ export function renderRecommendList(container: HTMLElement, list: any[]): void {
 /** 本地时间 YYYY-MM-DD HH:mm:ss（moment 语义） */
 function localNowFormat(): string {
   const d = new Date();
-  const p = (n: number) => String(n).padStart(2, '0');
+  const p = pad2;
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }

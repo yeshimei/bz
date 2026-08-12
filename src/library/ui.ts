@@ -175,168 +175,173 @@ export function renderLibraryList(app: any) {
   }
 
   filtered.forEach((item) => {
-    const card = document.createElement('div');
-    card.style.cssText = `
+    container.appendChild(renderBookCard(app, item, colors, settings));
+  });
+}
+
+/** 单本书卡片渲染（renderLibraryList 拆分） */
+function renderBookCard(app: any, item: any, colors: any, settings: any): HTMLElement {
+  const card = document.createElement('div');
+  card.style.cssText = `
       display: flex; align-items: flex-start; padding: 12px;
       border-radius: 10px; margin-bottom: 10px;
       background: var(--background-secondary);
       transition: background 0.2s;
     `;
 
-    // ---- 封面区域（单击打开读书笔记） ----
-    const coverWrapper = document.createElement('div');
-    coverWrapper.style.cssText = `
+  // ---- 封面区域（单击打开读书笔记） ----
+  const coverWrapper = document.createElement('div');
+  coverWrapper.style.cssText = `
       cursor: pointer;
       flex-shrink: 0;
       margin-right: 14px;
     `;
-    coverWrapper.title = '单击打开读书笔记';
+  coverWrapper.title = '单击打开读书笔记';
 
-    if (item.cover) {
-      const coverFile = app.vault.getAbstractFileByPath(item.cover);
-      if (coverFile && /\.(png|jpe?g|gif|webp)$/i.test(coverFile.name)) {
-        const img = document.createElement('img');
-        img.src = app.vault.getResourcePath(coverFile);
-        img.style.cssText = `
+  if (item.cover) {
+    const coverFile = app.vault.getAbstractFileByPath(item.cover);
+    if (coverFile && /\.(png|jpe?g|gif|webp)$/i.test(coverFile.name)) {
+      const img = document.createElement('img');
+      img.src = app.vault.getResourcePath(coverFile);
+      img.style.cssText = `
           width: 56px; height: 80px; object-fit: cover;
           border-radius: 6px;
           background: var(--background-modifier-border);
           display: block;
         `;
-        coverWrapper.appendChild(img);
-      } else {
-        const noCover = document.createElement('div');
-        noCover.textContent = '📖';
-        noCover.style.cssText = `
+      coverWrapper.appendChild(img);
+    } else {
+      const noCover = document.createElement('div');
+      noCover.textContent = '📖';
+      noCover.style.cssText = `
           width: 56px; height: 80px; background: var(--background-modifier-border);
           border-radius: 6px; display: flex;
           align-items: center; justify-content: center; font-size: 1.8rem;
           color: var(--text-muted);
         `;
-        coverWrapper.appendChild(noCover);
-      }
-    } else {
-      const noCover = document.createElement('div');
-      noCover.textContent = '📖';
-      noCover.style.cssText = `
+      coverWrapper.appendChild(noCover);
+    }
+  } else {
+    const noCover = document.createElement('div');
+    noCover.textContent = '📖';
+    noCover.style.cssText = `
         width: 56px; height: 80px; background: var(--background-modifier-border);
         border-radius: 6px; display: flex;
         align-items: center; justify-content: center; font-size: 1.8rem;
         color: var(--text-muted);
       `;
-      coverWrapper.appendChild(noCover);
-    }
+    coverWrapper.appendChild(noCover);
+  }
 
-    coverWrapper.addEventListener('click', (e) => {
-      e.stopPropagation();
-      showBookNotes(app, item.file.path);
-    });
+  coverWrapper.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showBookNotes(app, item.file.path);
+  });
 
-    card.appendChild(coverWrapper);
+  card.appendChild(coverWrapper);
 
-    // ---- 信息区域 ----
-    const infoDiv = document.createElement('div');
-    infoDiv.style.cssText = 'flex: 1; min-width: 0;';
+  // ---- 信息区域 ----
+  const infoDiv = document.createElement('div');
+  infoDiv.style.cssText = 'flex: 1; min-width: 0;';
 
-    // 标题行（标题单击打开原笔记）
-    const titleRow = document.createElement('div');
-    titleRow.style.cssText = 'display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px;';
-    const titleEl = document.createElement('div');
-    titleEl.textContent = item.title;
-    titleEl.style.cssText = `
+  // 标题行（标题单击打开原笔记）
+  const titleRow = document.createElement('div');
+  titleRow.style.cssText = 'display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px;';
+  const titleEl = document.createElement('div');
+  titleEl.textContent = item.title;
+  titleEl.style.cssText = `
       font-weight: 700; font-size: 1rem;
       cursor: pointer;
     `;
-    titleEl.title = '单击打开原笔记';
-    titleEl.addEventListener('click', (e) => {
-      e.stopPropagation();
-      app.workspace.openLinkText(item.file.path, '', false);
-      libraryOverlay!.style.visibility = 'hidden';
-    });
+  titleEl.title = '单击打开原笔记';
+  titleEl.addEventListener('click', (e) => {
+    e.stopPropagation();
+    app.workspace.openLinkText(item.file.path, '', false);
+    libraryOverlay!.style.visibility = 'hidden';
+  });
 
-    const statusBadge = document.createElement('span');
-    statusBadge.textContent = item.status;
-    statusBadge.style.cssText = `
+  const statusBadge = document.createElement('span');
+  statusBadge.textContent = item.status;
+  statusBadge.style.cssText = `
       font-size: 0.65rem; background: ${(colors.badgeBg as any)[item.status]}; color: white;
       padding: 2px 8px; border-radius: 20px; white-space: nowrap;
     `;
-    titleRow.appendChild(titleEl);
-    if (item.status !== '已读') titleRow.appendChild(statusBadge);
-    infoDiv.appendChild(titleRow);
+  titleRow.appendChild(titleEl);
+  if (item.status !== '已读') titleRow.appendChild(statusBadge);
+  infoDiv.appendChild(titleRow);
 
-    // 元数据行（仅显示作者，删除了分类/子文件夹显示）
-    const metaRow = document.createElement('div');
-    metaRow.style.cssText =
-      'display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0; font-size: 0.75rem; color: var(--text-muted);';
-    if (item.author) {
-      const authorSpan = document.createElement('span');
-      authorSpan.textContent = `✍️ ${item.author}`;
-      metaRow.appendChild(authorSpan);
+  // 元数据行（仅显示作者，删除了分类/子文件夹显示）
+  const metaRow = document.createElement('div');
+  metaRow.style.cssText =
+    'display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0; font-size: 0.75rem; color: var(--text-muted);';
+  if (item.author) {
+    const authorSpan = document.createElement('span');
+    authorSpan.textContent = `✍️ ${item.author}`;
+    metaRow.appendChild(authorSpan);
+  }
+  // 分类显示已移除
+  infoDiv.appendChild(metaRow);
+
+  // 进度行
+  const progressRow = document.createElement('div');
+  progressRow.style.cssText =
+    'margin: 6px 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;';
+
+  if (item.readingProgress !== undefined && item.readingProgress > 0) {
+    const progressText = document.createElement('span');
+    progressText.textContent = `📊 ${item.readingProgress}%`;
+    progressText.style.cssText = 'font-size: 0.7rem; padding: 2px 6px; border-radius: 12px;';
+    progressRow.appendChild(progressText);
+  }
+
+  if (settings.showReadingTime !== false && item.readingTimeFormat) {
+    const timeSpan = document.createElement('span');
+    timeSpan.textContent = `⏱️ ${item.readingTimeFormat}`;
+    timeSpan.style.cssText = 'font-size: 0.7rem;';
+    progressRow.appendChild(timeSpan);
+  }
+
+  if (settings.showHighlights !== false || settings.showThinks !== false) {
+    const parts: string[] = [];
+    if (settings.showHighlights !== false && item.highlights > 0) {
+      parts.push(`💡 划线${item.highlights}`);
     }
-    // 分类显示已移除
-    infoDiv.appendChild(metaRow);
-
-    // 进度行
-    const progressRow = document.createElement('div');
-    progressRow.style.cssText =
-      'margin: 6px 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;';
-
-    if (item.readingProgress !== undefined && item.readingProgress > 0) {
-      const progressText = document.createElement('span');
-      progressText.textContent = `📊 ${item.readingProgress}%`;
-      progressText.style.cssText = 'font-size: 0.7rem; padding: 2px 6px; border-radius: 12px;';
-      progressRow.appendChild(progressText);
+    if (settings.showThinks !== false && item.thinks > 0) {
+      parts.push(`🧠 想法${item.thinks}`);
     }
-
-    if (settings.showReadingTime !== false && item.readingTimeFormat) {
-      const timeSpan = document.createElement('span');
-      timeSpan.textContent = `⏱️ ${item.readingTimeFormat}`;
-      timeSpan.style.cssText = 'font-size: 0.7rem;';
-      progressRow.appendChild(timeSpan);
+    if (parts.length) {
+      const noteSpan = document.createElement('span');
+      noteSpan.textContent = parts.join(' · ');
+      noteSpan.style.cssText = 'font-size: 0.7rem;';
+      progressRow.appendChild(noteSpan);
     }
+  }
 
-    if (settings.showHighlights !== false || settings.showThinks !== false) {
-      const parts: string[] = [];
-      if (settings.showHighlights !== false && item.highlights > 0) {
-        parts.push(`💡 划线${item.highlights}`);
-      }
-      if (settings.showThinks !== false && item.thinks > 0) {
-        parts.push(`🧠 想法${item.thinks}`);
-      }
-      if (parts.length) {
-        const noteSpan = document.createElement('span');
-        noteSpan.textContent = parts.join(' · ');
-        noteSpan.style.cssText = 'font-size: 0.7rem;';
-        progressRow.appendChild(noteSpan);
-      }
+  if (settings.showFileSize !== false) {
+    const formattedSize = formatFileSize(item.sizeBytes);
+    if (formattedSize) {
+      const sizeSpan = document.createElement('span');
+      sizeSpan.textContent = `📦 ${formattedSize}`;
+      sizeSpan.style.cssText = 'font-size: 0.7rem;';
+      progressRow.appendChild(sizeSpan);
     }
+  }
 
-    if (settings.showFileSize !== false) {
-      const formattedSize = formatFileSize(item.sizeBytes);
-      if (formattedSize) {
-        const sizeSpan = document.createElement('span');
-        sizeSpan.textContent = `📦 ${formattedSize}`;
-        sizeSpan.style.cssText = 'font-size: 0.7rem;';
-        progressRow.appendChild(sizeSpan);
-      }
-    }
+  infoDiv.appendChild(progressRow);
 
-    infoDiv.appendChild(progressRow);
-
-    // 书评
-    if (settings.showReview !== false && item.bookReview) {
-      const reviewDiv = document.createElement('div');
-      reviewDiv.style.cssText = `
+  // 书评
+  if (settings.showReview !== false && item.bookReview) {
+    const reviewDiv = document.createElement('div');
+    reviewDiv.style.cssText = `
         margin-top: 6px; font-size: 0.7rem; color: var(--text-muted);
         padding: 6px 8px; border-radius: 8px; line-height: 1.3;
       `;
-      reviewDiv.textContent = item.bookReview;
-      infoDiv.appendChild(reviewDiv);
-    }
+    reviewDiv.textContent = item.bookReview;
+    infoDiv.appendChild(reviewDiv);
+  }
 
-    card.appendChild(infoDiv);
-    container.appendChild(card);
-  });
+  card.appendChild(infoDiv);
+  return card;
 }
 
 // ============ 设置面板 ============
@@ -504,6 +509,163 @@ export function closeFilterModal() {
   }
 }
 
+// ---------- 读书笔记树渲染（showBookNotes 拆分） ----------
+
+/** 读书笔记树递归渲染：无高亮的非一级节点跳过 */
+function renderBookNoteNode(node: BookNoteNode, container: HTMLElement, app: any, filePath: string): void {
+  if (node.level !== 0 && !node.hasHighlight) {
+    return;
+  }
+
+  if (node.level === 0) {
+    for (const child of node.children) {
+      renderBookNoteNode(child, container, app, filePath);
+    }
+    return;
+  }
+
+  const cleanHeading = node.heading!.replace(/\s*\[\^[0-9]+\]\s*/g, '').trim();
+
+  const headingEl = document.createElement('div');
+  headingEl.textContent = cleanHeading;
+  const fontSize = Math.max(0.9, 1.2 - node.level * 0.1) + 'rem';
+  const fontWeight = node.level === 1 ? 'bold' : '600';
+  const margin = node.level === 1 ? '16px 0 8px 0' : '12px 0 6px 0';
+  headingEl.style.cssText = `
+        font-size: ${fontSize};
+        font-weight: ${fontWeight};
+        margin: ${margin};
+        color: var(--heading-color, var(--text-accent));
+        user-select: none;
+      `;
+  container.appendChild(headingEl);
+
+  for (const hl of node.highlights) {
+    container.appendChild(renderHighlightBlock(hl, app, filePath));
+  }
+
+  for (const child of node.children) {
+    renderBookNoteNode(child, container, app, filePath);
+  }
+}
+
+/** 单条高亮块渲染（原文/批注/日期 + 双击跳转/长按编辑批注/长按删除高亮） */
+function renderHighlightBlock(hl: any, app: any, filePath: string): HTMLElement {
+  const block = document.createElement('div');
+  block.style.cssText = 'margin-bottom: 12px; padding: 0 0 25px 0; border-bottom: 1px solid var(--background-modifier-border);';
+
+  // ---- 内容区域（原文 + 批注）----
+  const contentArea = document.createElement('div');
+  contentArea.style.cssText = 'user-select: none;';
+
+  const quote = document.createElement('div');
+  quote.style.cssText = `
+          font-style: italic; color: var(--text-muted); font-size: 0.75em;
+          padding: 15px 0px 5px 0px; margin-bottom: 2px;
+        `;
+  quote.textContent = `❝ ${hl.text}`;
+  contentArea.appendChild(quote);
+
+  if (hl.comment) {
+    const commentEl = document.createElement('div');
+    commentEl.style.cssText = `
+            margin-left: 12px; font-size: 0.75em;
+            color: var(--text-normal); padding: 5px 0px;
+          `;
+    commentEl.textContent = hl.comment;
+    contentArea.appendChild(commentEl);
+  }
+
+  // ---- 日期区域 ----
+  const dateEl = document.createElement('div');
+  if (hl.date) {
+    dateEl.textContent = hl.date;
+    dateEl.style.cssText = `
+            text-align: right; font-size: 0.65em;
+            color: var(--text-faint); margin-top: 2px;
+            user-select: none;
+            cursor: pointer;
+          `;
+  } else {
+    dateEl.textContent = '无日期';
+    dateEl.style.cssText = `
+            text-align: right; font-size: 0.65em;
+            color: var(--text-faint); margin-top: 2px;
+            user-select: none;
+            cursor: default;
+          `;
+  }
+
+  // 将内容区域和日期添加到块
+  block.appendChild(contentArea);
+  block.appendChild(dateEl);
+
+  // ---------- 交互事件 ----------
+  let contentLongPressTimer: ReturnType<typeof setTimeout> | null = null;
+  let dateLongPressTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // 1. 双击整个块 => 跳转
+  block.addEventListener('dblclick', () => {
+    jumpToHighlight(app, filePath, hl.id);
+    setTimeout(() => {
+      if (bookNotesOverlay) {
+        bookNotesOverlay.remove();
+        bookNotesOverlay = null;
+      }
+    }, 200);
+  });
+
+  // 2. 长按内容区域 => 编辑批注
+  contentArea.addEventListener('pointerdown', (e) => {
+    e.stopPropagation(); // 防止冒泡到 block
+    contentLongPressTimer = setTimeout(() => {
+      contentLongPressTimer = null;
+      openEditCommentModal(app, filePath, hl.id, hl.text, hl.comment || '', () => {
+        showBookNotes(app, filePath);
+      });
+    }, 500);
+  });
+  contentArea.addEventListener('pointerup', () => {
+    if (contentLongPressTimer) {
+      clearTimeout(contentLongPressTimer);
+      contentLongPressTimer = null;
+    }
+  });
+  contentArea.addEventListener('pointerleave', () => {
+    if (contentLongPressTimer) {
+      clearTimeout(contentLongPressTimer);
+      contentLongPressTimer = null;
+    }
+  });
+
+  // 3. 长按日期区域 => 删除高亮
+  if (hl.date) {
+    dateEl.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      dateLongPressTimer = setTimeout(() => {
+        dateLongPressTimer = null;
+        deleteHighlight(app, filePath, hl.id, hl.text, () => {
+          showBookNotes(app, filePath);
+        });
+      }, 500);
+    });
+    dateEl.addEventListener('pointerup', () => {
+      if (dateLongPressTimer) {
+        clearTimeout(dateLongPressTimer);
+        dateLongPressTimer = null;
+      }
+    });
+    dateEl.addEventListener('pointerleave', () => {
+      if (dateLongPressTimer) {
+        clearTimeout(dateLongPressTimer);
+        dateLongPressTimer = null;
+      }
+    });
+  }
+
+  return block;
+}
+
 // ============ 读书笔记模态 ============
 
 let bookNotesOverlay: HTMLElement | null = null;
@@ -569,160 +731,10 @@ export function showBookNotes(app: any, filePath: string) {
     const contentContainer = document.createElement('div');
     contentContainer.style.cssText = 'flex: 1; overflow-y: auto; padding: 16px 20px;';
 
-    // ---- 递归渲染函数 ----
-    function renderNode(node: BookNoteNode, container: HTMLElement) {
-      if (node.level !== 0 && !node.hasHighlight) {
-        return;
-      }
-
-      if (node.level === 0) {
-        for (const child of node.children) {
-          renderNode(child, container);
-        }
-        return;
-      }
-
-      const cleanHeading = node.heading!.replace(/\s*\[\^[0-9]+\]\s*/g, '').trim();
-
-      const headingEl = document.createElement('div');
-      headingEl.textContent = cleanHeading;
-      const fontSize = Math.max(0.9, 1.2 - node.level * 0.1) + 'rem';
-      const fontWeight = node.level === 1 ? 'bold' : '600';
-      const margin = node.level === 1 ? '16px 0 8px 0' : '12px 0 6px 0';
-      headingEl.style.cssText = `
-        font-size: ${fontSize};
-        font-weight: ${fontWeight};
-        margin: ${margin};
-        color: var(--heading-color, var(--text-accent));
-        user-select: none;
-      `;
-      container.appendChild(headingEl);
-
-      for (const hl of node.highlights) {
-        const block = document.createElement('div');
-        block.style.cssText = 'margin-bottom: 12px; padding: 0 0 25px 0; border-bottom: 1px solid var(--background-modifier-border);';
-
-        // ---- 内容区域（原文 + 批注）----
-        const contentArea = document.createElement('div');
-        contentArea.style.cssText = 'user-select: none;';
-
-        const quote = document.createElement('div');
-        quote.style.cssText = `
-          font-style: italic; color: var(--text-muted); font-size: 0.75em;
-          padding: 15px 0px 5px 0px; margin-bottom: 2px;
-        `;
-        quote.textContent = `❝ ${hl.text}`;
-        contentArea.appendChild(quote);
-
-        if (hl.comment) {
-          const commentEl = document.createElement('div');
-          commentEl.style.cssText = `
-            margin-left: 12px; font-size: 0.75em;
-            color: var(--text-normal); padding: 5px 0px;
-          `;
-          commentEl.textContent = hl.comment;
-          contentArea.appendChild(commentEl);
-        }
-
-        // ---- 日期区域 ----
-        const dateEl = document.createElement('div');
-        if (hl.date) {
-          dateEl.textContent = hl.date;
-          dateEl.style.cssText = `
-            text-align: right; font-size: 0.65em;
-            color: var(--text-faint); margin-top: 2px;
-            user-select: none;
-            cursor: pointer;
-          `;
-        } else {
-          dateEl.textContent = '无日期';
-          dateEl.style.cssText = `
-            text-align: right; font-size: 0.65em;
-            color: var(--text-faint); margin-top: 2px;
-            user-select: none;
-            cursor: default;
-          `;
-        }
-
-        // 将内容区域和日期添加到块
-        block.appendChild(contentArea);
-        block.appendChild(dateEl);
-
-        // ---------- 交互事件 ----------
-        let contentLongPressTimer: ReturnType<typeof setTimeout> | null = null;
-        let dateLongPressTimer: ReturnType<typeof setTimeout> | null = null;
-
-        // 1. 双击整个块 => 跳转
-        block.addEventListener('dblclick', () => {
-          jumpToHighlight(app, filePath, hl.id);
-          setTimeout(() => {
-            if (bookNotesOverlay) {
-              bookNotesOverlay.remove();
-              bookNotesOverlay = null;
-            }
-          }, 200);
-        });
-
-        // 2. 长按内容区域 => 编辑批注
-        contentArea.addEventListener('pointerdown', (e) => {
-          e.stopPropagation(); // 防止冒泡到 block
-          contentLongPressTimer = setTimeout(() => {
-            contentLongPressTimer = null;
-            openEditCommentModal(app, filePath, hl.id, hl.text, hl.comment || '', () => {
-              showBookNotes(app, filePath);
-            });
-          }, 500);
-        });
-        contentArea.addEventListener('pointerup', () => {
-          if (contentLongPressTimer) {
-            clearTimeout(contentLongPressTimer);
-            contentLongPressTimer = null;
-          }
-        });
-        contentArea.addEventListener('pointerleave', () => {
-          if (contentLongPressTimer) {
-            clearTimeout(contentLongPressTimer);
-            contentLongPressTimer = null;
-          }
-        });
-
-        // 3. 长按日期区域 => 删除高亮
-        if (hl.date) {
-          dateEl.addEventListener('pointerdown', (e) => {
-            e.stopPropagation();
-            dateLongPressTimer = setTimeout(() => {
-              dateLongPressTimer = null;
-              deleteHighlight(app, filePath, hl.id, hl.text, () => {
-                showBookNotes(app, filePath);
-              });
-            }, 500);
-          });
-          dateEl.addEventListener('pointerup', () => {
-            if (dateLongPressTimer) {
-              clearTimeout(dateLongPressTimer);
-              dateLongPressTimer = null;
-            }
-          });
-          dateEl.addEventListener('pointerleave', () => {
-            if (dateLongPressTimer) {
-              clearTimeout(dateLongPressTimer);
-              dateLongPressTimer = null;
-            }
-          });
-        }
-
-        container.appendChild(block);
-      }
-
-      for (const child of node.children) {
-        renderNode(child, container);
-      }
-    }
-
     if (!parsed.root || parsed.root.children.length === 0) {
       contentContainer.innerHTML = '<p style="color:var(--text-muted);">📭 没有找到高亮或批注</p>';
     } else {
-      renderNode(parsed.root, contentContainer);
+      renderBookNoteNode(parsed.root, contentContainer, app, filePath);
     }
 
     modal.appendChild(header);

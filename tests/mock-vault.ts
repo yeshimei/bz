@@ -42,7 +42,7 @@ export class MockVault {
     return null;
   }
 
-  file(path: string) {
+  file(path: string): any {
     const content = this.files.get(path)!;
     const basename = path.split('/').pop()!.replace(/\.[^./]+$/, '');
     const parentPath = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '/';

@@ -2916,4 +2916,441 @@ button.bz-blackbox-source-link:hover {
     .pomodoro-stat-col { display: flex; align-items: flex-end; height: 40px; }
     .pomodoro-stat-bar { width: 10px; border-radius: 3px 3px 0 0; background: var(--interactive-accent); min-height: 2px; }
     .pomodoro-stat-label { font-size: 9px; color: var(--text-faint); }
-  
+/* ==================== core 层样式收敛（ticket 60 延伸：notice/settings-modal/confirm/dom） ==================== */
+/* 通知 toast（原 core/notice.ts NOTICE_CSS，ADR-0010） */
+#bz-notice-container {
+  position: fixed;
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  right: 16px;
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+}
+/* 移动端：顶部居中 + Obsidian 顶部栏更高，通知下移（项目断点惯例 max-width: 768px） */
+@media (max-width: 768px) {
+  #bz-notice-container {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    align-items: center;
+    top: calc(34px + env(safe-area-inset-top, 0px));
+  }
+}
+.bz-notice {
+  pointer-events: auto;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 240px;
+  max-width: min(420px, calc(100vw - 24px));
+  padding: 10px 14px 11px;
+  border-radius: 10px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-normal);
+  cursor: pointer;
+  overflow: hidden;
+  animation: bzNoticeIn 0.2s ease-out;
+}
+.bz-notice--leaving {
+  animation: bzNoticeOut 0.2s ease-in forwards;
+}
+.bz-notice--leaving.bz-notice--out-pop {
+  animation: bzNoticeOutPop 0.2s ease-in forwards;
+}
+.bz-notice--leaving.bz-notice--out-left {
+  animation: bzNoticeOutLeft 0.2s ease-in forwards;
+}
+.bz-notice--leaving.bz-notice--out-right {
+  animation: bzNoticeOutRight 0.2s ease-in forwards;
+}
+.bz-notice--leaving.bz-notice--out-fade {
+  animation: bzNoticeOutFade 0.2s ease-in forwards;
+}
+.bz-notice--in-pop {
+  animation: bzNoticeInPop 0.25s ease-out;
+}
+.bz-notice--in-slide-left {
+  animation: bzNoticeInLeft 0.25s ease-out;
+}
+.bz-notice--in-slide-right {
+  animation: bzNoticeInRight 0.25s ease-out;
+}
+.bz-notice--in-bounce {
+  animation: bzNoticeInBounce 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.bz-notice--in-shake {
+  animation: bzNoticeShake 0.4s ease-out;
+}
+.bz-notice-icon {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  animation: bzNoticeIconPop 0.3s ease-out;
+}
+.bz-notice-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.bz-notice--warning .bz-notice-icon { color: var(--color-orange); }
+.bz-notice--error .bz-notice-icon { color: var(--color-red); }
+.bz-notice--info .bz-notice-icon { color: var(--interactive-accent); }
+.bz-notice--success .bz-notice-icon { color: var(--color-green); }
+.bz-notice--pause .bz-notice-icon { color: var(--text-muted); }
+.bz-notice--accept .bz-notice-icon { color: var(--color-purple); }
+.bz-notice--delete .bz-notice-icon { color: var(--color-red); }
+.bz-notice--confirm .bz-notice-icon { color: var(--color-green); }
+.bz-notice--restore .bz-notice-icon { color: var(--color-cyan); }
+.bz-notice--skip .bz-notice-icon { color: var(--color-orange); }
+.bz-notice--archive .bz-notice-icon { color: var(--color-blue); }
+.bz-notice--progress .bz-notice-icon { color: var(--interactive-accent); }
+.bz-notice--progress .bz-notice-icon svg {
+  animation: bzNoticeSpin 1s linear infinite;
+}
+.bz-notice-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.bz-notice-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+.bz-notice-msg {
+  word-break: break-word;
+  white-space: pre-line;
+}
+.bz-notice-action {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  padding: 2px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--interactive-accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.bz-notice-action:hover {
+  background: var(--background-modifier-hover);
+}
+.bz-notice-progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 0;
+  background: var(--interactive-accent);
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.25) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0.25) 75%,
+    transparent 75%
+  );
+  background-size: 16px 16px;
+  animation: bzNoticeStripes 0.8s linear infinite;
+  transition: width 0.3s ease;
+}
+.bz-notice-progress--done {
+  background: var(--color-green);
+  animation: none;
+}
+.bz-notice-progress--indeterminate {
+  width: 40% !important;
+  animation: bzNoticeIndeterminate 1.2s ease-in-out infinite;
+}
+@keyframes bzNoticeIn {
+  from { opacity: 0; transform: translateY(-14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes bzNoticeInPop {
+  from { opacity: 0; transform: scale(0.88); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes bzNoticeInLeft {
+  from { opacity: 0; transform: translateX(-48px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes bzNoticeInRight {
+  from { opacity: 0; transform: translateX(48px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes bzNoticeInBounce {
+  0% { opacity: 0; transform: translateY(-26px) scale(0.95); }
+  60% { opacity: 1; transform: translateY(5px) scale(1.02); }
+  80% { transform: translateY(-3px); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes bzNoticeShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-7px); }
+  40% { transform: translateX(7px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+@keyframes bzNoticeIconPop {
+  0% { transform: scale(0.5); }
+  70% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+@keyframes bzNoticeStripes {
+  from { background-position: 0 0; }
+  to { background-position: 16px 0; }
+}
+@keyframes bzNoticeOut {
+  to { opacity: 0; transform: translateY(-14px); }
+}
+@keyframes bzNoticeOutPop {
+  to { opacity: 0; transform: scale(0.88); }
+}
+@keyframes bzNoticeOutLeft {
+  to { opacity: 0; transform: translateX(-48px); }
+}
+@keyframes bzNoticeOutRight {
+  to { opacity: 0; transform: translateX(48px); }
+}
+@keyframes bzNoticeOutFade {
+  to { opacity: 0; }
+}
+@keyframes bzNoticeSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes bzNoticeIndeterminate {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(320%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bz-notice,
+  .bz-notice--leaving,
+  .bz-notice--leaving.bz-notice--out-pop,
+  .bz-notice--leaving.bz-notice--out-left,
+  .bz-notice--leaving.bz-notice--out-right,
+  .bz-notice--leaving.bz-notice--out-fade,
+  .bz-notice--in-pop,
+  .bz-notice--in-slide-left,
+  .bz-notice--in-slide-right,
+  .bz-notice--in-bounce,
+  .bz-notice--in-shake {
+    animation: bzNoticeFade 0.15s ease-out;
+  }
+  /* progress 转圈保留：加载指示属功能性动画，reduced-motion 下不降级
+     （Windows 关闭动画效果时 Chromium 报 prefers-reduced-motion: reduce，若禁用则圆圈静态误导用户） */
+  .bz-notice-progress,
+  .bz-notice-progress--done {
+    animation: none;
+  }
+  .bz-notice-icon {
+    animation: none;
+  }
+}
+@keyframes bzNoticeFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 设置弹窗移动端字号（原 core/settings-modal.ts SETTINGS_MODAL_CSS） */
+@media (max-width: 768px) {
+    #bz-settings-modal-popup .setting-item-heading .setting-item-name {
+        font-size: 17px;
+        font-weight: 600;
+    }
+    #bz-settings-modal-popup .setting-item-name {
+        font-size: 14px;
+    }
+    #bz-settings-modal-popup .setting-item-description {
+        font-size: 12px;
+    }
+}
+
+/* 通用确认弹窗（原 core/confirm.ts 内联，Q3.js 移植；id 保持外部约定） */
+#__shared_confirm_mask__ {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 10060;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#__shared_confirm_popup__ {
+  position: relative;
+  background: var(--background-primary);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+#__shared_confirm_popup__ h4 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+#__shared_confirm_popup__ p {
+  margin: 0 0 20px 0;
+  font-size: 15px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  word-wrap: break-word;
+  max-width: 100%;
+}
+#__shared_confirm_popup__ .confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  width: 100%;
+}
+#__shared_confirm_cancel__ {
+  padding: 8px 24px;
+  border-radius: 6px;
+  border: none;
+  background: var(--background-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  box-shadow: none;
+  flex: 1;
+}
+#__shared_confirm_ok__ {
+  padding: 8px 24px;
+  border-radius: 6px;
+  border: none;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: none;
+  flex: 1;
+}
+
+/* 通用遮罩/弹窗（原 core/dom.ts createOverlay 内联；zIndex/width/maxWidth/display 仍为功能性内联） */
+.bz-overlay-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--background-modifier-cover);
+}
+.bz-overlay-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--background-primary);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 图标按钮（原 core/dom.ts createIconBtn 内联；hover 背景移 CSS；尺寸按关闭/普通两档类） */
+.bz-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none;
+  font-size: 14px;
+  width: 22px;
+  height: 26px;
+}
+.bz-icon-btn:hover {
+  background: var(--background-secondary);
+}
+.bz-icon-btn--close {
+  font-size: 13px;
+  width: 21px;
+  height: 25px;
+}
+
+/* 站点图标（原 core/dom.ts createSiteIcon 内联视觉部分；尺寸动态内联保留） */
+.bz-site-icon {
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* 设置弹窗头部（原 core/settings-modal.ts 内联） */
+.bz-settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+.bz-settings-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+.bz-settings-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0 4px;
+}
+/* 设置弹窗内容区/空态（原 core/settings-modal.ts 内联；max-height 滚动为功能性） */
+.bz-settings-content {
+  padding: 12px 16px 16px;
+  max-height: 65vh;
+  overflow-y: auto;
+}
+.bz-settings-empty {
+  padding: 28px 12px;
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 14px;
+}
+.bz-settings-empty-desc {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}

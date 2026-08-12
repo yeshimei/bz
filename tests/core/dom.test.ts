@@ -3,7 +3,7 @@
  * createSiteIcon/createOverlay——jsdom 环境行为断言。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { notice, injectStyles, longPress, createIconBtn, createSiteIcon, createOverlay } from '../../src/core/dom';
+import { notice, longPress, createIconBtn, createSiteIcon, createOverlay } from '../../src/core/dom';
 import { getNoticeMessages } from '../mock-obsidian-entry';
 
 describe('notice', () => {
@@ -34,19 +34,6 @@ describe('notice', () => {
     notice('气泡');
     expect(getNoticeMessages()).toHaveLength(1);
     delete (window as any).smartCat;
-  });
-});
-
-describe('injectStyles', () => {
-  beforeEach(() => {
-    document.head.innerHTML = '';
-  });
-
-  it('幂等注入（data-shared-style 标记）', () => {
-    injectStyles('test-id', 'body{color:red}');
-    injectStyles('test-id', 'body{color:red}');
-    expect(document.head.querySelectorAll('style[data-shared-style="test-id"]').length).toBe(1);
-    expect(document.head.querySelector('style[data-shared-style="test-id"]')!.textContent).toBe('body{color:red}');
   });
 });
 
@@ -106,9 +93,8 @@ describe('createIconBtn', () => {
     expect(btn.title).toBe('置顶');
     btn.click();
     expect(onClick).toHaveBeenCalledTimes(1);
-    // jsdom 丢弃 background shorthand，hover 行为验证即可
-    btn.dispatchEvent(new MouseEvent('mouseover'));
-    expect(btn.style.background).toBe('var(--background-secondary)');
+    // 视觉样式已收敛 styles.css（ticket 60），jsdom 只验证类名结构
+    expect(btn.className).toContain('bz-icon-btn');
   });
 });
 

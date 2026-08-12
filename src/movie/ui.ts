@@ -5,7 +5,7 @@ import type { App, TFile } from 'obsidian';
 import { Setting } from 'obsidian';
 import { notice, notify } from '../core/notice';
 import { escManager } from '../core/esc-manager';
-import { formatRelativeTime } from '../core/utils';
+import { formatRelativeTime, pad2 } from '../core/utils';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
 import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, getTypeColor, getStarRating, TYPE_GROUPS, ALL_TAGS, getGroupForTag } from './constants';
@@ -243,6 +243,134 @@ export function closeAddModal(): void {
   }
 }
 
+/** 类型标签按钮组（13 类）：选中变化经 onChange 回调同步外部状态 */
+function createTagGroup(initial: string, onChange: (tag: string) => void): { container: HTMLElement } {
+  const container = document.createElement('div');
+  container.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap;';
+  let selectedTag = initial;
+  const tagButtons: HTMLElement[] = [];
+  ALL_TAGS.forEach((tag) => {
+    const group = getGroupForTag(tag);
+    const color = getTypeColor(group!);
+    const btn = document.createElement('button');
+    btn.textContent = tag;
+    btn.style.cssText = `
+      padding: 6px 14px; border-radius: 20px;
+      border: 1px solid var(--background-modifier-border);
+      box-shadow: none;
+      background: var(--background-secondary); color: var(--text-normal);
+      cursor: pointer; font-size: 0.85rem;
+    `;
+    if (selectedTag === tag) {
+      btn.style.background = color;
+      btn.style.color = 'white';
+      btn.style.borderColor = color;
+    }
+    btn.addEventListener('click', () => {
+      tagButtons.forEach((b) => {
+        b.style.background = 'var(--background-secondary)';
+        b.style.color = 'var(--text-normal)';
+        b.style.borderColor = 'var(--background-modifier-border)';
+      });
+      const newColor = getTypeColor(group!);
+      btn.style.background = newColor;
+      btn.style.color = 'white';
+      btn.style.borderColor = newColor;
+      selectedTag = tag;
+      onChange(tag);
+    });
+    tagButtons.push(btn);
+    container.appendChild(btn);
+  });
+  return { container };
+}
+
+/** 状态单选按钮组（想看/在看/已看） */
+function createStatusGroup(initial: number, onChange: (status: number) => void): { container: HTMLElement } {
+  const container = document.createElement('div');
+  container.style.cssText = 'display: flex; flex-direction: column; gap: 8px;';
+  const buttonGroup = document.createElement('div');
+  buttonGroup.style.cssText = 'display: flex; gap: 12px;';
+  let selectedStatus = initial;
+  const options = [
+    { value: STATUS_WANT, label: '想看' },
+    { value: STATUS_WATCHING, label: '在看' },
+    { value: STATUS_WATCHED, label: '已看' },
+  ];
+  const radioButtons: HTMLElement[] = [];
+  options.forEach((opt) => {
+    const btn = document.createElement('button');
+    btn.textContent = opt.label;
+    btn.style.cssText = `
+      padding: 6px 14px; border-radius: 20px;
+      box-shadow: none;
+      background: var(--background-secondary); color: var(--text-normal);
+      cursor: pointer; font-size: 0.85rem; min-width: 70px;
+    `;
+    if (selectedStatus === opt.value) {
+      btn.style.background = 'var(--interactive-accent)';
+      btn.style.color = 'var(--text-on-accent, white)';
+      btn.style.borderColor = 'var(--interactive-accent)';
+    }
+    btn.addEventListener('click', () => {
+      radioButtons.forEach((b) => {
+        b.style.background = 'var(--background-secondary)';
+        b.style.color = 'var(--text-normal)';
+        b.style.borderColor = 'var(--background-modifier-border)';
+      });
+      btn.style.background = 'var(--interactive-accent)';
+      btn.style.color = 'var(--text-on-accent, white)';
+      btn.style.borderColor = 'var(--interactive-accent)';
+      selectedStatus = opt.value;
+      onChange(opt.value);
+    });
+    radioButtons.push(btn);
+    buttonGroup.appendChild(btn);
+  });
+  container.appendChild(buttonGroup);
+  return { container };
+}
+
+/** 字段输入行（季集/评分/观影日期共用）：返回 {container, input} */
+function createFieldRow(opts: { type: string; placeholder: string; min?: string; max?: string; step?: string; value?: string; extraCss?: string }): { container: HTMLElement; input: HTMLInputElement } {
+  const container = document.createElement('div');
+  container.style.cssText = 'display: flex; gap: 8px; align-items: center;';
+  const input = document.createElement('input');
+  input.type = opts.type;
+  input.placeholder = opts.placeholder;
+  if (opts.min) input.min = opts.min;
+  if (opts.max) input.max = opts.max;
+  if (opts.step) input.step = opts.step;
+  if (opts.value) input.value = opts.value;
+  input.style.cssText = `
+    flex: 1; padding: 6px 8px; border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary); color: var(--text-normal);
+    font-size: 0.9rem;
+    ${opts.extraCss || ''}
+  `;
+  container.appendChild(input);
+  return { container, input };
+}
+
+/** 多行文本输入行（影评） */
+function createTextareaRow(placeholder: string, rows: number): { container: HTMLElement; textarea: HTMLTextAreaElement } {
+  const container = document.createElement('div');
+  container.style.cssText = 'display: flex; flex-direction: column; gap: 4px;';
+  const textarea = document.createElement('textarea');
+  textarea.rows = rows;
+  textarea.placeholder = placeholder;
+  textarea.style.cssText = `
+    width: 100%; padding: 6px 8px; border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary); color: var(--text-normal);
+    font-size: 0.9rem;
+    resize: vertical;
+  `;
+  container.appendChild(textarea);
+  return { container, textarea };
+}
+
 export function openAddModal(app: App, prefill?: { name?: string; tag?: string; status?: number }): void {
   if (M.addOverlay) {
     closeAddModal();
@@ -302,158 +430,30 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
   nameInput.addEventListener('input', checkTitleExists);
   checkTitleExists();
 
-  // 类型选择（13 个标签按钮组）
-  const typeContainer = document.createElement('div');
-  typeContainer.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap;';
+  // 类型选择（13 个标签按钮组）+ 状态单选（想看/在看/已看）
   let selectedTag = (prefill && prefill.tag) || '电影';
-  const tagButtons: HTMLElement[] = [];
-  ALL_TAGS.forEach((tag) => {
-    const group = getGroupForTag(tag);
-    const color = getTypeColor(group!);
-    const btn = document.createElement('button');
-    btn.textContent = tag;
-    btn.style.cssText = `
-      padding: 6px 14px; border-radius: 20px;
-      border: 1px solid var(--background-modifier-border);
-      box-shadow: none;
-      background: var(--background-secondary); color: var(--text-normal);
-      cursor: pointer; font-size: 0.85rem;
-    `;
-    if (selectedTag === tag) {
-      btn.style.background = color;
-      btn.style.color = 'white';
-      btn.style.borderColor = color;
-    }
-    btn.addEventListener('click', () => {
-      tagButtons.forEach((b) => {
-        b.style.background = 'var(--background-secondary)';
-        b.style.color = 'var(--text-normal)';
-        b.style.borderColor = 'var(--background-modifier-border)';
-      });
-      const newColor = getTypeColor(group!);
-      btn.style.background = newColor;
-      btn.style.color = 'white';
-      btn.style.borderColor = newColor;
-      selectedTag = tag;
-      updateInputVisibility();
-    });
-    tagButtons.push(btn);
-    typeContainer.appendChild(btn);
-  });
-
-  // 状态单选（按钮组）
-  const statusContainer = document.createElement('div');
-  statusContainer.style.cssText = 'display: flex; flex-direction: column; gap: 8px;';
-  const statusButtonGroup = document.createElement('div');
-  statusButtonGroup.style.cssText = 'display: flex; gap: 12px;';
+  const typeContainer = createTagGroup(selectedTag, (t) => {
+    selectedTag = t;
+    updateInputVisibility();
+  }).container;
   let selectedStatus = prefill && prefill.status !== undefined ? prefill.status : STATUS_WATCHED;
-  const statusOptions = [
-    { value: STATUS_WANT, label: '想看' },
-    { value: STATUS_WATCHING, label: '在看' },
-    { value: STATUS_WATCHED, label: '已看' },
-  ];
-  const statusRadioButtons: HTMLElement[] = [];
-  statusOptions.forEach((opt) => {
-    const btn = document.createElement('button');
-    btn.textContent = opt.label;
-    btn.style.cssText = `
-      padding: 6px 14px; border-radius: 20px;
-      box-shadow: none;
-      background: var(--background-secondary); color: var(--text-normal);
-      cursor: pointer; font-size: 0.85rem; min-width: 70px;
-    `;
-    if (selectedStatus === opt.value) {
-      btn.style.background = 'var(--interactive-accent)';
-      btn.style.color = 'var(--text-on-accent, white)';
-      btn.style.borderColor = 'var(--interactive-accent)';
-    }
-    btn.addEventListener('click', () => {
-      statusRadioButtons.forEach((b) => {
-        b.style.background = 'var(--background-secondary)';
-        b.style.color = 'var(--text-normal)';
-        b.style.borderColor = 'var(--background-modifier-border)';
-      });
-      btn.style.background = 'var(--interactive-accent)';
-      btn.style.color = 'var(--text-on-accent, white)';
-      btn.style.borderColor = 'var(--interactive-accent)';
-      selectedStatus = opt.value;
-      updateInputVisibility();
-    });
-    statusRadioButtons.push(btn);
-    statusButtonGroup.appendChild(btn);
-  });
-  statusContainer.appendChild(statusButtonGroup);
+  const statusContainer = createStatusGroup(selectedStatus, (s) => {
+    selectedStatus = s;
+    updateInputVisibility();
+  }).container;
 
-  // 季集
-  const seasonContainer = document.createElement('div');
-  seasonContainer.style.cssText = 'display: flex; gap: 8px; align-items: center;';
-  const seasonInput = document.createElement('input');
-  seasonInput.type = 'text';
-  seasonInput.placeholder = '季集（可选）';
-  seasonInput.style.cssText = `
-    flex: 1; padding: 6px 8px; border-radius: 6px;
-    border: 1px solid var(--background-modifier-border);
-    background: var(--background-primary); color: var(--text-normal);
-    font-size: 0.9rem;
-  `;
-  seasonContainer.appendChild(seasonInput);
-
-  // 评分
-  const ratingContainer = document.createElement('div');
-  ratingContainer.style.cssText = 'display: flex; gap: 8px; align-items: center;';
-  const ratingInput = document.createElement('input');
-  ratingInput.type = 'number';
-  ratingInput.min = '0.1';
-  ratingInput.max = '5';
-  ratingInput.step = '0.1';
-  ratingInput.placeholder = '评分（0.1~5）';
-  ratingInput.style.cssText = `
-    flex: 1; padding: 6px 8px; border-radius: 6px;
-    border: 1px solid var(--background-modifier-border);
-    background: var(--background-primary); color: var(--text-normal);
-    font-size: 0.9rem;
-    width: 100%;
-  `;
-  ratingContainer.appendChild(ratingInput);
-
-  // 观影日期
-  const dateContainer = document.createElement('div');
-  dateContainer.style.cssText = 'display: flex; gap: 8px; align-items: center;';
-  const dateInput = document.createElement('input');
-  dateInput.type = 'datetime-local';
-  dateInput.step = '1';
-  dateInput.placeholder = '观影日期';
-  dateInput.style.cssText = `
-    flex: 1; padding: 6px 8px; border-radius: 6px;
-    text-indent: 8px;
-    border: 1px solid var(--background-modifier-border);
-    background: var(--background-primary); color: var(--text-normal);
-    font-size: 0.9rem;
-  `;
-  dateInput.value = localNowFormat();
-  dateContainer.appendChild(dateInput);
-
-  // 影评
-  const reviewContainer = document.createElement('div');
-  reviewContainer.style.cssText = 'display: flex; flex-direction: column; gap: 4px;';
-  const reviewTextarea = document.createElement('textarea');
-  reviewTextarea.rows = 3;
-  reviewTextarea.placeholder = '影评（可选）';
-  reviewTextarea.style.cssText = `
-    width: 100%; padding: 6px 8px; border-radius: 6px;
-    border: 1px solid var(--background-modifier-border);
-    background: var(--background-primary); color: var(--text-normal);
-    font-size: 0.9rem;
-    resize: vertical;
-  `;
-  reviewContainer.appendChild(reviewTextarea);
+  // 季集 / 评分 / 观影日期 / 影评
+  const seasonRow = createFieldRow({ type: 'text', placeholder: '季集（可选）' });
+  const ratingRow = createFieldRow({ type: 'number', placeholder: '评分（0.1~5）', min: '0.1', max: '5', step: '0.1', extraCss: 'width: 100%;' });
+  const dateRow = createFieldRow({ type: 'datetime-local', placeholder: '观影日期', step: '1', value: localNowFormat(), extraCss: 'text-indent: 8px;' });
+  const reviewRow = createTextareaRow('影评（可选）', 3);
 
   function updateInputVisibility() {
     const showRatingReview = selectedStatus === STATUS_WATCHED;
-    ratingContainer.style.display = showRatingReview ? 'flex' : 'none';
-    reviewContainer.style.display = showRatingReview ? 'flex' : 'none';
+    ratingRow.container.style.display = showRatingReview ? 'flex' : 'none';
+    reviewRow.container.style.display = showRatingReview ? 'flex' : 'none';
     const group = getGroupForTag(selectedTag);
-    seasonContainer.style.display = group !== '电影' ? 'flex' : 'none';
+    seasonRow.container.style.display = group !== '电影' ? 'flex' : 'none';
   }
 
   // 按钮
@@ -508,7 +508,7 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
     if (selectedStatus === STATUS_WANT) ratingValue = -1;
     else if (selectedStatus === STATUS_WATCHING) ratingValue = 0;
     else if (selectedStatus === STATUS_WATCHED) {
-      const inputRating = parseFloat(ratingInput.value);
+      const inputRating = parseFloat(ratingRow.input.value);
       if (isNaN(inputRating) || inputRating <= 0) {
         notice('已看状态请填写大于 0 的评分');
         return;
@@ -519,9 +519,9 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
     }
 
     const now = new Date();
-    const watchDateValue = (dateInput.value || localNowFormat()).replace('T', ' ');
-    const seasonEpisode = seasonInput.value.trim();
-    const reviewText = reviewTextarea.value.trim();
+    const watchDateValue = (dateRow.input.value || localNowFormat()).replace('T', ' ');
+    const seasonEpisode = seasonRow.input.value.trim();
+    const reviewText = reviewRow.textarea.value.trim();
 
     let fileContent = `---\ntags:\n- ${selectedTag}\n观影日期: ${watchDateValue}\n评分: ${ratingValue}\n`;
     if (seasonEpisode) fileContent += `季集: ${seasonEpisode}\n`;
@@ -551,10 +551,10 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
   addModal.appendChild(dupHint);
   addModal.appendChild(typeContainer);
   addModal.appendChild(statusContainer);
-  addModal.appendChild(seasonContainer);
-  addModal.appendChild(ratingContainer);
-  addModal.appendChild(dateContainer);
-  addModal.appendChild(reviewContainer);
+  addModal.appendChild(seasonRow.container);
+  addModal.appendChild(ratingRow.container);
+  addModal.appendChild(dateRow.container);
+  addModal.appendChild(reviewRow.container);
   addModal.appendChild(btnRow);
 
   updateInputVisibility();
@@ -571,7 +571,7 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
 /** 本地时间格式 YYYY-MM-DDTHH:mm:ss（moment 语义） */
 function localNowFormat(): string {
   const d = new Date();
-  const p = (n: number) => String(n).padStart(2, '0');
+  const p = pad2;
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
@@ -829,6 +829,121 @@ export function openEditModal(item: any, app: App): void {
 
 // ---------- 筛选/排序弹窗（源码 L1048-1216 逐字；ADR-0009：挂 🔀，非设置） ----------
 
+/** 筛选/排序弹窗内容渲染（openFilterModal 拆分）：类型/状态/排序三组按钮，实时生效 */
+function renderFilterSettings(content: HTMLElement): void {
+
+  content.innerHTML = '';
+
+  // 筛选：类型（['全部', ...ALL_TAGS] 单标签按钮，实时生效）
+  const filterSection = document.createElement('div');
+  filterSection.style.cssText = 'margin-bottom: 20px;';
+  const typeGroup = document.createElement('div');
+  typeGroup.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;';
+  const typeFilters = ['全部', ...ALL_TAGS];
+  typeFilters.forEach((opt) => {
+    const btn = document.createElement('button');
+    btn.textContent = opt;
+    btn.style.cssText = `
+      padding: 6px 14px; border-radius: 20px; box-shadow: none;
+      background: var(--background-secondary); color: var(--text-normal);
+      cursor: pointer; font-size: 0.85rem;
+      border: 1px solid var(--background-modifier-border);
+    `;
+    let color: string | null = null;
+    if (opt !== '全部') {
+      const group = getGroupForTag(opt);
+      if (group) color = getTypeColor(group);
+    }
+    if (M.typeFilter === opt) {
+      if (color) {
+        btn.style.background = color;
+        btn.style.color = 'white';
+        btn.style.borderColor = color;
+      } else {
+        btn.style.background = 'var(--interactive-accent)';
+        btn.style.color = 'var(--text-on-accent, white)';
+        btn.style.borderColor = 'var(--interactive-accent)';
+      }
+    }
+    btn.addEventListener('click', () => {
+      M.typeFilter = opt;
+      M.loadedCount = 0;
+      renderList();
+      renderFilterSettings(content);
+    });
+    typeGroup.appendChild(btn);
+  });
+  filterSection.appendChild(typeGroup);
+
+  // 筛选：状态
+  const statusGroup = document.createElement('div');
+  statusGroup.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap;';
+  const statusFilters = ['全部', '想看', '在看', '已看'];
+  statusFilters.forEach((opt) => {
+    const btn = document.createElement('button');
+    btn.textContent = opt;
+    btn.style.cssText = `
+      padding: 6px 14px; border-radius: 20px; box-shadow: none;
+      background: var(--background-secondary); color: var(--text-normal);
+      cursor: pointer; font-size: 0.85rem;
+      border: 1px solid var(--background-modifier-border);
+    `;
+    if (M.statusFilter === opt) {
+      btn.style.background = 'var(--interactive-accent)';
+      btn.style.color = 'var(--text-on-accent, white)';
+      btn.style.borderColor = 'var(--interactive-accent)';
+    }
+    btn.addEventListener('click', () => {
+      M.statusFilter = opt;
+      M.loadedCount = 0;
+      renderList();
+      renderFilterSettings(content);
+    });
+    statusGroup.appendChild(btn);
+  });
+  filterSection.appendChild(statusGroup);
+  content.appendChild(filterSection);
+
+  // 排序
+  const sortSection = document.createElement('div');
+  sortSection.style.cssText = 'margin-bottom: 8px;';
+  const sortGroup = document.createElement('div');
+  sortGroup.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap;';
+  const sortOptions = [
+    { label: '日期↓', key: 'date', order: 'desc' },
+    { label: '日期↑', key: 'date', order: 'asc' },
+    { label: '评分↓', key: 'rating', order: 'desc' },
+    { label: '评分↑', key: 'rating', order: 'asc' },
+    { label: '名称A-Z', key: 'name', order: 'asc' },
+    { label: '名称Z-A', key: 'name', order: 'desc' },
+  ];
+  sortOptions.forEach((opt) => {
+    const btn = document.createElement('button');
+    btn.textContent = opt.label;
+    btn.style.cssText = `
+      padding: 6px 12px; border-radius: 16px; box-shadow: none;
+      background: var(--background-secondary); color: var(--text-normal);
+      cursor: pointer; font-size: 0.85rem;
+      border: 1px solid var(--background-modifier-border);
+    `;
+    if (M.sortState.key === opt.key && M.sortState.order === opt.order) {
+      btn.style.background = 'var(--interactive-accent)';
+      btn.style.color = 'var(--text-on-accent, white)';
+      btn.style.borderColor = 'var(--interactive-accent)';
+    }
+    btn.addEventListener('click', () => {
+      M.sortState.key = opt.key;
+      M.sortState.order = opt.order as 'asc' | 'desc';
+      M.loadedCount = 0;
+      renderList();
+      renderFilterSettings(content);
+    });
+    sortGroup.appendChild(btn);
+  });
+  sortSection.appendChild(sortGroup);
+  content.appendChild(sortSection);
+}
+
 export function closeFilterModal(): void {
   if (M.settingsOverlay) {
     M.settingsOverlay.remove();
@@ -874,120 +989,7 @@ export function openFilterModal(): void {
   const settingsContent = document.createElement('div');
   settingsContent.style.cssText = 'padding: 16px; max-height: 70vh; overflow-y: auto;';
 
-  function refreshSettingsUI() {
-    settingsContent.innerHTML = '';
-
-    // 筛选：类型（['全部', ...ALL_TAGS] 单标签按钮，实时生效）
-    const filterSection = document.createElement('div');
-    filterSection.style.cssText = 'margin-bottom: 20px;';
-    const typeGroup = document.createElement('div');
-    typeGroup.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;';
-    const typeFilters = ['全部', ...ALL_TAGS];
-    typeFilters.forEach((opt) => {
-      const btn = document.createElement('button');
-      btn.textContent = opt;
-      btn.style.cssText = `
-        padding: 6px 14px; border-radius: 20px; box-shadow: none;
-        background: var(--background-secondary); color: var(--text-normal);
-        cursor: pointer; font-size: 0.85rem;
-        border: 1px solid var(--background-modifier-border);
-      `;
-      let color: string | null = null;
-      if (opt !== '全部') {
-        const group = getGroupForTag(opt);
-        if (group) color = getTypeColor(group);
-      }
-      if (M.typeFilter === opt) {
-        if (color) {
-          btn.style.background = color;
-          btn.style.color = 'white';
-          btn.style.borderColor = color;
-        } else {
-          btn.style.background = 'var(--interactive-accent)';
-          btn.style.color = 'var(--text-on-accent, white)';
-          btn.style.borderColor = 'var(--interactive-accent)';
-        }
-      }
-      btn.addEventListener('click', () => {
-        M.typeFilter = opt;
-        M.loadedCount = 0;
-        renderList();
-        refreshSettingsUI();
-      });
-      typeGroup.appendChild(btn);
-    });
-    filterSection.appendChild(typeGroup);
-
-    // 筛选：状态
-    const statusGroup = document.createElement('div');
-    statusGroup.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap;';
-    const statusFilters = ['全部', '想看', '在看', '已看'];
-    statusFilters.forEach((opt) => {
-      const btn = document.createElement('button');
-      btn.textContent = opt;
-      btn.style.cssText = `
-        padding: 6px 14px; border-radius: 20px; box-shadow: none;
-        background: var(--background-secondary); color: var(--text-normal);
-        cursor: pointer; font-size: 0.85rem;
-        border: 1px solid var(--background-modifier-border);
-      `;
-      if (M.statusFilter === opt) {
-        btn.style.background = 'var(--interactive-accent)';
-        btn.style.color = 'var(--text-on-accent, white)';
-        btn.style.borderColor = 'var(--interactive-accent)';
-      }
-      btn.addEventListener('click', () => {
-        M.statusFilter = opt;
-        M.loadedCount = 0;
-        renderList();
-        refreshSettingsUI();
-      });
-      statusGroup.appendChild(btn);
-    });
-    filterSection.appendChild(statusGroup);
-    settingsContent.appendChild(filterSection);
-
-    // 排序
-    const sortSection = document.createElement('div');
-    sortSection.style.cssText = 'margin-bottom: 8px;';
-    const sortGroup = document.createElement('div');
-    sortGroup.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap;';
-    const sortOptions = [
-      { label: '日期↓', key: 'date', order: 'desc' },
-      { label: '日期↑', key: 'date', order: 'asc' },
-      { label: '评分↓', key: 'rating', order: 'desc' },
-      { label: '评分↑', key: 'rating', order: 'asc' },
-      { label: '名称A-Z', key: 'name', order: 'asc' },
-      { label: '名称Z-A', key: 'name', order: 'desc' },
-    ];
-    sortOptions.forEach((opt) => {
-      const btn = document.createElement('button');
-      btn.textContent = opt.label;
-      btn.style.cssText = `
-        padding: 6px 12px; border-radius: 16px; box-shadow: none;
-        background: var(--background-secondary); color: var(--text-normal);
-        cursor: pointer; font-size: 0.85rem;
-        border: 1px solid var(--background-modifier-border);
-      `;
-      if (M.sortState.key === opt.key && M.sortState.order === opt.order) {
-        btn.style.background = 'var(--interactive-accent)';
-        btn.style.color = 'var(--text-on-accent, white)';
-        btn.style.borderColor = 'var(--interactive-accent)';
-      }
-      btn.addEventListener('click', () => {
-        M.sortState.key = opt.key;
-        M.sortState.order = opt.order as 'asc' | 'desc';
-        M.loadedCount = 0;
-        renderList();
-        refreshSettingsUI();
-      });
-      sortGroup.appendChild(btn);
-    });
-    sortSection.appendChild(sortGroup);
-    settingsContent.appendChild(sortSection);
-  }
-
-  refreshSettingsUI();
+  renderFilterSettings(settingsContent);
   settingsModal.appendChild(settingsHeader);
   settingsModal.appendChild(settingsContent);
   settingsOverlayDiv.appendChild(settingsModal);
