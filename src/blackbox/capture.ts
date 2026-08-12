@@ -528,11 +528,18 @@ async function analyzeLiterature(btn: HTMLButtonElement): Promise<void> {
     literatureTitle = parsed ? parsed.title : '';
     if (parsed) {
       for (const n of parsed.matched) {
-        const c = existing.find((x) => !!x.name && (x.name === n || x.name.includes(n) || n.includes(x.name)));
-        if (c) {
-          literatureSuggest.push({ id: c.id, label: c.name || n, checked: true });
+        // 同名概念（不同分类）全部匹配：label 带分类后缀区分，terms 关联全部 id
+        const hits = existing.filter((x) => !!x.name && (x.name === n || x.name.includes(n) || n.includes(x.name)));
+        for (const c of hits) {
+          const dup = hits.filter((h) => h.name === c.name).length > 1;
+          literatureSuggest.push({
+            id: c.id,
+            label: dup && c.category ? `${c.name}（${c.category}）` : c.name || n,
+            checked: true,
+          });
           literatureTerms.add(c.id);
         }
+        if (!hits.length) literatureSuggest.push({ id: null, label: n, checked: false });
       }
       for (const n of parsed.newConcepts) {
         if (!literatureSuggest.some((s) => s.label === n)) {

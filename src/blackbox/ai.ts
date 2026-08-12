@@ -160,7 +160,7 @@ export function buildAssistPrompt(
     return [
       `主人想搞懂「${input}」。请生成一张百科式的知识卡片：`,
       `1. definition：用正式、百科式的口吻，一句话或一段话解释它是什么（像百科词条一样准确客观，不口语化、不废话）；`,
-      `2. relatedNames：从既有概念「${names}」中挑 0-3 个与它相关的概念名（没有就空数组）。`,
+      `2. relatedNames：从既有概念「${names}」中挑出所有与它相关的概念名（数量不限，没有就空数组）。`,
       `只输出 JSON：{"definition": "...", "relatedNames": ["..."]}`,
     ].join('\n');
   }
