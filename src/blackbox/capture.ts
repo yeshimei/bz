@@ -21,6 +21,7 @@ import { triggerAutoReview } from './review';
 import { getSelectionSnapshot } from '../core/selection';
 import type { SelectionSnapshot } from '../core/selection';
 import { entryNoteTitle } from './notes';
+import { injectIntoSourceNote } from './inject';
 import { MAX_EMOTIONS, MAX_PEOPLE } from './types';
 import type { BlackBoxData, Entry, Profile } from './types';
 
@@ -466,6 +467,8 @@ async function saveConcept(): Promise<void> {
       await m.backfillRelated(latest, entry.id, conceptRelatedIds);
       data = await m.load();
     }
+    // 原位注入（ticket 06）：来源笔记选区原文 → [[概念名|原文字]]（守卫命中跳过 + toast）
+    await injectIntoSourceNote(appRef, selectionSnap, entry.name || '');
     notice('✅ 已录入概念卡片');
     if (directType) {
       // 直达命令：保存后直接关闭（可连续快速录入）
@@ -1018,6 +1021,10 @@ async function saveEntry(): Promise<void> {
       shouldReview = shouldReview || r.shouldReview;
     }
     data = latest;
+    // 原位注入（ticket 06）：摘抄目标 = AI 标题（保存时已确定）；概念/摘抄保存时带选区才触发
+    if (activeType === 'literature' && entries[0] && entries[0].title) {
+      await injectIntoSourceNote(appRef, selectionSnap, entries[0].title);
+    }
     notice(`✅ 已存入黑匣子（${entries.length} 条）`);
     if (directType) {
       // 直达命令：保存后直接关闭（可连续快速录入）
