@@ -19,6 +19,22 @@ export interface QuizReviewResults {
   accuracy: number;
 }
 
+/** 清理选项文本，去除可能的前缀如 "A." "A、" "A)" "(A)" 等（renderModal 拆分） */
+function cleanOptionText(text: string): string {
+  if (!text) return '';
+  // 匹配开头可能的字母（A-D）+ 标点，或带括号的
+  const match = text.match(/^([A-D])\s*[.、:：)）]\s*/);
+  if (match) {
+    return text.substring(match[0].length).trim();
+  }
+  // 匹配 (A) 形式
+  const matchParen = text.match(/^\(([A-D])\)\s*/);
+  if (matchParen) {
+    return text.substring(matchParen[0].length).trim();
+  }
+  return text.trim();
+}
+
 export class QuizMasterUI {
   static ai: AIService | null = null;
   static settings: any = {};
@@ -267,22 +283,6 @@ export class QuizMasterUI {
   renderModal(q: QuizQuestion): void {
     this.close();
 
-    // 清理选项文本，去除可能的前缀如 "A." "A、" "A)" "(A)" 等
-    function cleanOptionText(text: string): string {
-      if (!text) return '';
-      // 匹配开头可能的字母（A-D）+ 标点，或带括号的
-      const match = text.match(/^([A-D])\s*[.、:：)）]\s*/);
-      if (match) {
-        return text.substring(match[0].length).trim();
-      }
-      // 匹配 (A) 形式
-      const matchParen = text.match(/^\(([A-D])\)\s*/);
-      if (matchParen) {
-        return text.substring(matchParen[0].length).trim();
-      }
-      return text.trim();
-    }
-
     const mask = document.createElement('div');
     mask.id = 'quiz-mask';
     mask.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:10010;display:flex;align-items:center;justify-content:center;';
@@ -312,10 +312,27 @@ export class QuizMasterUI {
     // 选项容器
     const optionsContainer = document.createElement('div');
     optionsContainer.style.cssText = 'display:flex;flex-direction:column;gap:6px;';
-    const optionLabels = ['A', 'B', 'C', 'D'];
     const selectedIndices = new Set<number>();
-    let answered = false;
+    const answeredRef = { value: false };
 
+    const optionElements = this._buildOptionButtons(q, answeredRef, selectedIndices, popup);
+    optionElements.forEach((el) => optionsContainer.appendChild(el));
+    popup.appendChild(optionsContainer);
+
+    mask.appendChild(popup);
+    document.body.appendChild(mask);
+    escManager.register('quiz', {
+      isVisible: () => !!(this.mask && this.mask.isConnected),
+      close: () => this.close(),
+    });
+    mask.addEventListener('click', (e) => {
+      if (e.target === mask) this.finishQuiz();
+    });
+  }
+
+  /** 选项按钮组构建与答题逻辑（renderModal 拆分）：单选即点即判 / 多选切换 + 提交 */
+  _buildOptionButtons(q: QuizQuestion, answeredRef: { value: boolean }, selectedIndices: Set<number>, popup: HTMLElement): HTMLElement[] {
+    const optionLabels = ['A', 'B', 'C', 'D'];
     const isSingle = q.correctIndices.length === 1;
     const app = getApp();
 
@@ -328,10 +345,10 @@ export class QuizMasterUI {
       btn.dataset.index = String(idx);
 
       btn.onclick = () => {
-        if (answered) return;
+        if (answeredRef.value) return;
 
         if (isSingle) {
-          answered = true;
+          answeredRef.value = true;
           optionElements.forEach((b) => b.classList.add('disabled'));
           const isCorrect = idx === q.correctIndices[0];
 
@@ -351,7 +368,7 @@ export class QuizMasterUI {
               })
               .catch((e) => {
                 notice('删除题目失败：' + e.message, 'error');
-                answered = false;
+                answeredRef.value = false;
                 optionElements.forEach((b) => b.classList.remove('disabled'));
               });
           } else {
@@ -376,20 +393,17 @@ export class QuizMasterUI {
       };
       return btn;
     });
-    optionElements.forEach((el) => optionsContainer.appendChild(el));
-    popup.appendChild(optionsContainer);
-
     // 多选时添加提交按钮
     if (!isSingle) {
       const submitBtn = document.createElement('button');
       submitBtn.className = 'quiz-submit-btn';
       submitBtn.textContent = '提交答案';
       submitBtn.onclick = () => {
-        if (answered) return;
+        if (answeredRef.value) return;
         if (selectedIndices.size === 0) {
           return;
         }
-        answered = true;
+        answeredRef.value = true;
         submitBtn.disabled = true;
         const selected = Array.from(selectedIndices).sort();
         const correct = q.correctIndices.slice().sort();
@@ -413,7 +427,7 @@ export class QuizMasterUI {
             })
             .catch((e) => {
               notice('删除题目失败：' + e.message, 'error');
-              answered = false;
+              answeredRef.value = false;
               submitBtn.disabled = false;
               optionElements.forEach((b) => b.classList.remove('disabled'));
             });
@@ -424,17 +438,8 @@ export class QuizMasterUI {
       popup.appendChild(submitBtn);
     }
 
-    mask.appendChild(popup);
-    document.body.appendChild(mask);
-    escManager.register('quiz', {
-      isVisible: () => !!(this.mask && this.mask.isConnected),
-      close: () => this.close(),
-    });
-    mask.addEventListener('click', (e) => {
-      if (e.target === mask) this.finishQuiz();
-    });
-  }
-  /**
+    return optionElements;
+  }  /**
    * 复习联动契约：开始一轮做题会话（复习计划经此进入做题模式）。
    * 会话状态（_reviewMode/currentQuestions/计数/onComplete）只允许在本方法内设置，
    * 复习域禁止直接改写——契约化后复习域只需调用本方法与 endReviewSession。

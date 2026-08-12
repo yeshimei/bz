@@ -288,7 +288,7 @@ describe('设置弹窗与新建默认值（第 9 轮设置扩展）', () => {
     await initApp(vault);
     UIManager.showMain(null, false);
     const settingsBtn = [...document.querySelectorAll('#todo-popup button')].find((b) => b.className === 'todo-btn-settings')!;
-    settingsBtn.click();
+    (settingsBtn as HTMLElement).click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     const names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
     // 9 项设置 + 4 个分组标题 = 13 个 setting-item

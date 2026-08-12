@@ -3,6 +3,7 @@
  * 纯函数，无 DOM 依赖；本地时区按日聚合（ts = 完成时刻时间戳）。
  */
 import type { HistoryEntry } from './state';
+import { pad2 } from '../core/utils';
 
 export interface DayCount {
   /** YYYY-MM-DD（本地时区） */
@@ -12,8 +13,8 @@ export interface DayCount {
 
 function dayKey(ts: number): string {
   const d = new Date(ts);
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
+  const m = pad2(d.getMonth() + 1);
+  const day = pad2(d.getDate());
   return `${d.getFullYear()}-${m}-${day}`;
 }
 

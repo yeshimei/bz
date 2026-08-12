@@ -4,6 +4,7 @@
  * 由 ui.ts render 驱动刷新（syncPomodoroStatusBar）；mount 挂到 Obsidian 状态栏容器（main.ts addStatusBarItem）。
  */
 import { setIcon } from 'obsidian';
+import { pad2 } from '../core/utils';
 import type { App } from 'obsidian';
 import type { PomodoroState } from './state';
 
@@ -43,7 +44,7 @@ export function syncPomodoroStatusBar(state: PomodoroState, remainSec: number): 
   if (state.endTime !== null) {
     const m = Math.floor(remainSec / 60);
     const s = remainSec % 60;
-    if (textSpan) textSpan.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    if (textSpan) textSpan.textContent = `${pad2(m)}:${pad2(s)}`;
     statusEl.classList.remove('pomodoro-statusbar-idle');
   } else {
     if (textSpan) textSpan.textContent = '';

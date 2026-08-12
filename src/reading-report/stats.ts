@@ -2,6 +2,7 @@
  * 阅读数据分析报告 stats（ticket 13）：全部数据采集与纯函数，源码逐字移植。
  * 源码：阅读数据分析报告.js（重复函数只保留最终版）
  */
+import { pad2 } from '../core/utils';
 
 // ---------- 数据采集 ----------
 
@@ -174,7 +175,7 @@ export function calculateReadingStats(books: BookNoteEntry[]): ReadingStats {
       if (fm.readingDate) {
         try {
           const date = new Date(fm.readingDate);
-          const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+          const monthKey = `${date.getFullYear()}-${pad2(date.getMonth() + 1)}`;
           const yearKey = date.getFullYear().toString();
 
           if (!stats.monthlyStats[monthKey]) stats.monthlyStats[monthKey] = emptyMonthlyStats();
@@ -197,7 +198,7 @@ export function calculateReadingStats(books: BookNoteEntry[]): ReadingStats {
       if (fm.completionDate) {
         try {
           const compDate = new Date(fm.completionDate);
-          const compMonthKey = `${compDate.getFullYear()}-${(compDate.getMonth() + 1).toString().padStart(2, '0')}`;
+          const compMonthKey = `${compDate.getFullYear()}-${pad2(compDate.getMonth() + 1)}`;
           const compYearKey = compDate.getFullYear().toString();
 
           if (!stats.monthlyStats[compMonthKey]) stats.monthlyStats[compMonthKey] = emptyMonthlyStats();

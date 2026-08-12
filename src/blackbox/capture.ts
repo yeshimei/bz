@@ -12,6 +12,7 @@
  * 保存后阈值命中 → 静默复盘（triggerAutoReview，不打扰）。
  */
 import type { App } from 'obsidian';
+import { escapeHtml } from '../core/utils';
 import { escManager } from '../core/esc-manager';
 import { createOverlay } from '../core/dom';
 import { notice } from '../core/notice';
@@ -1070,10 +1071,6 @@ async function runThoughtAssist(kind: 'recall' | 'ask'): Promise<void> {
   } finally {
     setAiBusy(false);
   }
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 // ---------------- 保存（文献/想法：感触步 → 存入黑匣子） ----------------

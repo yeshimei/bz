@@ -1,5 +1,6 @@
 /**
  * 闪念移动端底部抽屉（ticket 18，源码 L1877-2186 语义移植）
+ * ⚠️ WIP（ticket 18 未接线）：index.ts 仅占位，本模块尚未被任何入口引用，勿依赖其行为。
  */
 import { escManager } from '../core/esc-manager';
 import { buildConfig } from './config';

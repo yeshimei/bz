@@ -115,7 +115,7 @@ describe('备忘录面板 ⚙️ 设置弹窗', () => {
     };
     setApp(app as any);
     setBzSettingsProvider(() => SETTINGS);
-    setSettingsProvider(() => SETTINGS);
+    setSettingsProvider(() => SETTINGS as any);
     await App.init(SETTINGS);
   });
 
@@ -143,7 +143,7 @@ describe('归物本 ⚙️ / 🔀', () => {
     const vault = new MockVault();
     vault.files.set('CONFIG/STORAGE/belongings.json', JSON.stringify({ version: '1.0', last_updated: '', items: {} }));
     setApp({ vault, workspace: { getLeaf: () => ({ openFile: vi.fn() }) } } as any);
-    setSettingsProvider(() => ({ belongingsDataFolder: 'CONFIG/STORAGE' }));
+    setSettingsProvider(() => ({ belongingsDataFolder: 'CONFIG/STORAGE' } as any));
     await openBelongingsPanel();
   });
 
@@ -176,7 +176,7 @@ describe('收藏本 ⚙️ 空弹窗', () => {
       commands: { executeCommandById: vi.fn() },
       fileManager: { processFrontMatter: () => Promise.resolve() },
     } as any);
-    setSettingsProvider(() => ({ favoritesStoragePath: 'CONFIG/STORAGE' }));
+    setSettingsProvider(() => ({ favoritesStoragePath: 'CONFIG/STORAGE' } as any));
     FavoritesApp.instance = null;
     await FavoritesApp.getInstance().init();
   });

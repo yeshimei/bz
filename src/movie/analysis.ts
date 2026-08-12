@@ -3,7 +3,7 @@
  * 入口：openMovieReport（bz-movie-report）与影视主界面右上角 📊 按钮。
  * 数据采集与渲染逻辑与原脚本一致（公式/配色/文案保持既有实现）。
  */
-import type { App } from 'obsidian';
+import type { App, TFile } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { M } from './state';
 
@@ -53,9 +53,9 @@ function ratingBucketOf(r: number): string {
   return '<2';
 }
 
-/** 构建分析数据（纯函数，供测试直接调用） */
-export function buildAnalysisData(app: App): any {
-  const data: any = {
+/** 空分析数据结构（buildAnalysisData 拆分） */
+function createEmptyAnalysis(): any {
+  return {
     total: 0, watched: 0, watching: 0, want: 0,
     ratingSum: 0, ratingCount: 0,
     doubanSum: 0, doubanCount: 0,
@@ -86,154 +86,166 @@ export function buildAnalysisData(app: App): any {
     // ⑨ 年度评分
     yearRating: {},
   };
+}
 
-  const folderPath = M.folderPath || '我的/影视';
-  const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folderPath + '/'));
-  for (const file of files) {
-    const cache = (app.metadataCache as any).getFileCache(file);
-    const fm = cache?.frontmatter;
-    if (!fm) continue;
+/** 解析单文件基础字段（buildAnalysisData 拆分）：非影视类型返回 null */
+function parseAnalysisItem(fm: any, file: TFile): { item: any; d: Date | null; db: number } | null {
+  const nameMatch = file.basename.match(/《(.+)》/);
+  const name = nameMatch ? nameMatch[1] : file.basename;
+  const tags = fm.tags || [];
+  const tagList = Array.isArray(tags) ? tags : [tags];
+  let typeTag: string | null = null;
+  for (const t of ALL_TAGS) {
+    if (tagList.includes(t)) { typeTag = t; break; }
+  }
+  if (!typeTag) return null;
+  const group = getGroupForTag(typeTag);
+  if (!group) return null;
 
-    const nameMatch = file.basename.match(/《(.+)》/);
-    const name = nameMatch ? nameMatch[1] : file.basename;
-    const tags = fm.tags || [];
-    const tagList = Array.isArray(tags) ? tags : [tags];
-    let typeTag: string | null = null;
-    for (const t of ALL_TAGS) {
-      if (tagList.includes(t)) { typeTag = t; break; }
-    }
-    if (!typeTag) continue;
-    const group = getGroupForTag(typeTag);
-    if (!group) continue;
+  const watchDate = fm['观影日期'] ? fm['观影日期'].toString() : null;
+  const rating = fm['评分'] !== undefined ? Number(fm['评分']) : null;
+  let status: number;
+  if (fm['状态'] !== undefined) {
+    status = Number(fm['状态']);
+  } else {
+    if (rating === -1) status = STATUS_WANT;
+    else if (rating === 0) status = STATUS_WATCHING;
+    else if (rating !== null && rating > 0) status = STATUS_WATCHED;
+    else status = STATUS_WATCHED;
+  }
+  const d = new Date(watchDate as string);
+  return {
+    item: { file, name, typeTag, group, watchDate, rating, status },
+    d: isNaN(d.getTime()) ? null : d,
+    db: Number(fm['豆瓣评分']),
+  };
+}
 
-    const watchDate = fm['观影日期'] ? fm['观影日期'].toString() : null;
-    const rating = fm['评分'] !== undefined ? Number(fm['评分']) : null;
-    let status: number;
-    if (fm['状态'] !== undefined) {
-      status = Number(fm['状态']);
-    } else {
-      if (rating === -1) status = STATUS_WANT;
-      else if (rating === 0) status = STATUS_WATCHING;
-      else if (rating !== null && rating > 0) status = STATUS_WATCHED;
-      else status = STATUS_WATCHED;
-    }
-    const item: any = { file, name, typeTag, group, watchDate, rating, status };
+/** 基础统计 + ①②③⑨（计数/标签/日期/评分桶/类型国家导演主演/片龄/片长/星期/年度评分） */
+function accumulateMovieStats(data: any, item: any, fm: any, d: Date | null, db: number): void {
+  const { status, typeTag, group, rating } = item;
 
-    data.total++;
-    if (status === STATUS_WATCHED) {
-      data.watched++;
-      if (rating !== null && rating > 0) {
-        data.ratingSum += rating;
-        data.ratingCount++;
-        data.topRated.push(item);
-      }
-    } else if (status === STATUS_WATCHING) {
-      data.watching++;
-    } else if (status === STATUS_WANT) {
-      data.want++;
-      data.wantList.push(item);
-    }
-
-    if (group) data.groups[group] = (data.groups[group] || 0) + 1;
-    if (typeTag) data.tags[typeTag] = (data.tags[typeTag] || 0) + 1;
-
-    const d = new Date(watchDate as string);
-    if (!isNaN(d.getTime())) {
-      const y = d.getFullYear();
-      data.years[y] = (data.years[y] || 0) + 1;
-      const m = d.getMonth() + 1;
-      data.months[m] = (data.months[m] || 0) + 1;
-    }
-
+  data.total++;
+  if (status === STATUS_WATCHED) {
+    data.watched++;
     if (rating !== null && rating > 0) {
-      data.buckets[ratingBucketOf(rating)]++;
+      data.ratingSum += rating;
+      data.ratingCount++;
+      data.topRated.push(item);
     }
-
-    const db = Number(fm['豆瓣评分']);
-    if (!isNaN(db) && db > 0) { data.doubanSum += db; data.doubanCount++; }
-    const splitAdd = (str: any, map: Record<string, number>) => String(str || '').split('/').map((s) => s.trim()).filter(Boolean).forEach((v) => { map[v] = (map[v] || 0) + 1; });
-    splitAdd(fm['类型'], data.genres);
-    splitAdd(fm['制片国家/地区'], data.countries);
-    splitAdd(fm['导演'], data.directors);
-    splitAdd(fm['主演'], data.actors);
-
-    // ① 片龄（上映年=上映日期前4位）
-    const relMatch = String(fm['上映日期'] || '').match(/^(\d{4})/);
-    if (relMatch && d && !isNaN(d.getTime())) {
-      const diff = d.getFullYear() - Number(relMatch[1]);
-      if (diff >= 0) {
-        if (diff === 0) data.ageBuckets['当年']++;
-        else if (diff <= 3) data.ageBuckets['1-3年']++;
-        else if (diff <= 10) data.ageBuckets['4-10年']++;
-        else data.ageBuckets['≥10年']++;
-        data.ageSum += diff; data.ageCount++;
-      }
-      const era = Math.floor(Number(relMatch[1]) / 10) * 10;
-      data.eras[era] = (data.eras[era] || 0) + 1;
-    }
-
-    // ② 片长
-    const durMatch = String(fm['片长'] || '').match(/^(\d+)/);
-    if (durMatch) {
-      const mins = Number(durMatch[1]);
-      if (mins < 90) data.durBuckets['<90']++;
-      else if (mins <= 120) data.durBuckets['90-120']++;
-      else data.durBuckets['>120']++;
-      data.durSum += mins; data.durCount++;
-      const gd = data.groupDur[group] = data.groupDur[group] || { sum: 0, count: 0 };
-      gd.sum += mins; gd.count++;
-    }
-
-    // ③ 星期 + 月份键
-    if (d && !isNaN(d.getTime())) {
-      data.weekdays[d.getDay()]++;
-      data.monthKeys.add(d.getFullYear() + '-' + (d.getMonth() + 1));
-    }
-
-    // ④ 打分习惯（个人6分制 → 10分制换算）
-    if (status === STATUS_WATCHED && rating !== null && rating > 0 && !isNaN(db) && db > 0) {
-      const r10 = rating * R6to10;
-      data.diffSum += r10 - db; data.diffCount++;
-      if (r10 >= 8.33 && db < 8) data.treasure.push({ name, typeTag, rating, douban: db });
-      if (rating <= 2 && db >= 8.5) data.disappoint.push({ name, typeTag, rating, douban: db });
-    }
-
-    // ⑤ 影评关键词
-    const review = fm['影评'] ? String(fm['影评']).trim() : '';
-    if (review) {
-      data.reviewCount++; data.reviewCharSum += review.length;
-      REVIEW_KEYWORDS.forEach((w) => { if (review.includes(w)) data.reviewKeywords[w] = (data.reviewKeywords[w] || 0) + 1; });
-    }
-
-    // ⑥ 系列基名（尾数字剥离，基名非空过滤《2046》类误伤）
-    const serMatch = name.match(/^(.*?)(\d+)$/);
-    const serBase = (serMatch && serMatch[1]) ? serMatch[1] : name;
-    data.series[serBase] = (data.series[serBase] || 0) + 1;
-
-    // ⑦ 季集（首个数字）
-    const seasonMatch = String(fm['季集'] || '').match(/(\d+)/);
-    if (seasonMatch) {
-      const n = Number(seasonMatch[1]);
-      data.seasonSum += n; data.seasonCount++;
-      data.seasons.push({ name, seasons: n });
-    }
-
-    // ⑧ 想看质量
-    if (status === STATUS_WANT && !isNaN(db) && db > 0) {
-      data.wantDoubanSum += db; data.wantDoubanCount++;
-    }
-    if (status === STATUS_WANT && typeTag) {
-      data.wantTags[typeTag] = (data.wantTags[typeTag] || 0) + 1;
-    }
-
-    // ⑨ 年度平均个人评分
-    if (rating !== null && rating > 0 && d && !isNaN(d.getTime())) {
-      const yr = d.getFullYear();
-      const yrStat = data.yearRating[yr] = data.yearRating[yr] || { sum: 0, count: 0 };
-      yrStat.sum += rating; yrStat.count++;
-    }
+  } else if (status === STATUS_WATCHING) {
+    data.watching++;
+  } else if (status === STATUS_WANT) {
+    data.want++;
+    data.wantList.push(item);
   }
 
+  if (group) data.groups[group] = (data.groups[group] || 0) + 1;
+  if (typeTag) data.tags[typeTag] = (data.tags[typeTag] || 0) + 1;
+
+  if (d) {
+    const y = d.getFullYear();
+    data.years[y] = (data.years[y] || 0) + 1;
+    const m = d.getMonth() + 1;
+    data.months[m] = (data.months[m] || 0) + 1;
+  }
+
+  if (rating !== null && rating > 0) {
+    data.buckets[ratingBucketOf(rating)]++;
+  }
+
+  if (!isNaN(db) && db > 0) { data.doubanSum += db; data.doubanCount++; }
+
+  const splitAdd = (str: any, map: Record<string, number>) => String(str || '').split('/').map((s) => s.trim()).filter(Boolean).forEach((v) => { map[v] = (map[v] || 0) + 1; });
+  splitAdd(fm['类型'], data.genres);
+  splitAdd(fm['制片国家/地区'], data.countries);
+  splitAdd(fm['导演'], data.directors);
+  splitAdd(fm['主演'], data.actors);
+
+  // ① 片龄（上映年=上映日期前4位）
+  const relMatch = String(fm['上映日期'] || '').match(/^(\d{4})/);
+  if (relMatch && d) {
+    const diff = d.getFullYear() - Number(relMatch[1]);
+    if (diff >= 0) {
+      if (diff === 0) data.ageBuckets['当年']++;
+      else if (diff <= 3) data.ageBuckets['1-3年']++;
+      else if (diff <= 10) data.ageBuckets['4-10年']++;
+      else data.ageBuckets['≥10年']++;
+      data.ageSum += diff; data.ageCount++;
+    }
+    const era = Math.floor(Number(relMatch[1]) / 10) * 10;
+    data.eras[era] = (data.eras[era] || 0) + 1;
+  }
+
+  // ② 片长
+  const durMatch = String(fm['片长'] || '').match(/^(\d+)/);
+  if (durMatch) {
+    const mins = Number(durMatch[1]);
+    if (mins < 90) data.durBuckets['<90']++;
+    else if (mins <= 120) data.durBuckets['90-120']++;
+    else data.durBuckets['>120']++;
+    data.durSum += mins; data.durCount++;
+    const gd = data.groupDur[group] = data.groupDur[group] || { sum: 0, count: 0 };
+    gd.sum += mins; gd.count++;
+  }
+
+  // ③ 星期 + 月份键
+  if (d) {
+    data.weekdays[d.getDay()]++;
+    data.monthKeys.add(d.getFullYear() + '-' + (d.getMonth() + 1));
+  }
+
+  // ⑨ 年度平均个人评分
+  if (rating !== null && rating > 0 && d) {
+    const yr = d.getFullYear();
+    const yrStat = data.yearRating[yr] = data.yearRating[yr] || { sum: 0, count: 0 };
+    yrStat.sum += rating; yrStat.count++;
+  }
+}
+
+/** 扩展统计 ④⑤⑥⑦⑧（打分习惯/影评关键词/系列/季集/想看质量） */
+function accumulateMovieExtras(data: any, item: any, fm: any, db: number): void {
+  const { status, typeTag, rating, name } = item;
+
+  // ④ 打分习惯（个人6分制 → 10分制换算）
+  if (status === STATUS_WATCHED && rating !== null && rating > 0 && !isNaN(db) && db > 0) {
+    const r10 = rating * R6to10;
+    data.diffSum += r10 - db; data.diffCount++;
+    if (r10 >= 8.33 && db < 8) data.treasure.push({ name, typeTag, rating, douban: db });
+    if (rating <= 2 && db >= 8.5) data.disappoint.push({ name, typeTag, rating, douban: db });
+  }
+
+  // ⑤ 影评关键词
+  const review = fm['影评'] ? String(fm['影评']).trim() : '';
+  if (review) {
+    data.reviewCount++; data.reviewCharSum += review.length;
+    REVIEW_KEYWORDS.forEach((w) => { if (review.includes(w)) data.reviewKeywords[w] = (data.reviewKeywords[w] || 0) + 1; });
+  }
+
+  // ⑥ 系列基名（尾数字剥离，基名非空过滤《2046》类误伤）
+  const serMatch = name.match(/^(.*?)(\d+)$/);
+  const serBase = (serMatch && serMatch[1]) ? serMatch[1] : name;
+  data.series[serBase] = (data.series[serBase] || 0) + 1;
+
+  // ⑦ 季集（首个数字）
+  const seasonMatch = String(fm['季集'] || '').match(/(\d+)/);
+  if (seasonMatch) {
+    const n = Number(seasonMatch[1]);
+    data.seasonSum += n; data.seasonCount++;
+    data.seasons.push({ name, seasons: n });
+  }
+
+  // ⑧ 想看质量
+  if (status === STATUS_WANT && !isNaN(db) && db > 0) {
+    data.wantDoubanSum += db; data.wantDoubanCount++;
+  }
+  if (status === STATUS_WANT && typeTag) {
+    data.wantTags[typeTag] = (data.wantTags[typeTag] || 0) + 1;
+  }
+}
+
+/** 汇总派生字段（排序/均值/趋势/条目化） */
+function finalizeAnalysis(data: any): void {
   data.topRated.sort((a: any, b: any) => b.rating - a.rating);
   data.topRated = data.topRated.slice(0, 10);
   data.treasure.sort((a: any, b: any) => b.rating - a.rating);
@@ -267,6 +279,26 @@ export function buildAnalysisData(app: App): any {
     }
     return out;
   })();
+}
+
+/** 构建分析数据（纯函数，供测试直接调用） */
+export function buildAnalysisData(app: App): any {
+  const data = createEmptyAnalysis();
+  const folderPath = M.folderPath || '我的/影视';
+  const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folderPath + '/'));
+  for (const file of files) {
+    const cache = (app.metadataCache as any).getFileCache(file);
+    const fm = cache?.frontmatter;
+    if (!fm) continue;
+
+    const parsed = parseAnalysisItem(fm, file);
+    if (!parsed) continue;
+
+    accumulateMovieStats(data, parsed.item, fm, parsed.d, parsed.db);
+    accumulateMovieExtras(data, parsed.item, fm, parsed.db);
+  }
+
+  finalizeAnalysis(data);
   return data;
 }
 

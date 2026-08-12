@@ -2,6 +2,7 @@
  * 弹窗族：添加日记、标签选择器、日期筛选（原脚本 949-1130 + 2243-2430 + 3238-3478）。
  */
 import { MarkdownView as MarkdownViewFromObsidian, moment } from 'obsidian';
+import { pad2 } from '../../core/utils';
 import { notice } from '../../core/notice';
 import { getApp } from '../app';
 import { DIARY_DIRECTORY, getAllAvailableTags, getSortedTagsForAddDialog, getTagEmoji, getParentPrimaryTag, isSubTag } from '../config';
@@ -154,7 +155,7 @@ function renderDatePicker(container: HTMLElement, years: string[], currentYear: 
   monthGrid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:12px;';
 
   for (let i = 1; i <= 12; i++) {
-    const monthStr = i.toString().padStart(2, '0');
+    const monthStr = pad2(i);
     const count = monthStats.get(monthStr) || 0;
     const monthCard = document.createElement('div');
     monthCard.className = 'diary-date-filter-month-card';

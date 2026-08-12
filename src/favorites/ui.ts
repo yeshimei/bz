@@ -325,7 +325,6 @@ export class UIManager {
   }
 
   _renderCard(item: FavoritesItem): HTMLElement {
-    const app = getApp();
     const card = document.createElement('div');
     card.className = 'fav-card';
     Object.assign(card.style, {
@@ -354,7 +353,32 @@ export class UIManager {
       if (!item.pinned) card.style.background = 'var(--background-primary)';
     };
 
-    // ---- 标题行 ----
+    // ---- 标题行（标题/链接 + 余额 + 跳转 + 标签） ----
+    card.appendChild(this._renderTitleRow(item));
+
+    // ---- 简介（为空则不显示） ----
+    if (item.description) {
+      const desc = document.createElement('div');
+      desc.textContent = item.description;
+      desc.style.cssText = 'font-size:14px; color:var(--text-muted); line-height:1.5; margin-bottom:8px; word-break:break-word;';
+      card.appendChild(desc);
+    }
+
+    // ---- 元信息（日期） ----
+    const meta = document.createElement('div');
+    meta.style.cssText = 'display:flex; gap:12px; font-size:12px; color:var(--text-faint);';
+    const timeSpan = document.createElement('span');
+    timeSpan.textContent = item.created || '';
+    this._attachLongPressDelete(timeSpan, item);
+    meta.appendChild(timeSpan);
+    card.appendChild(meta);
+
+    return card;
+  }
+
+  /** 标题行：标题（有链接转 <a>）+ 余额 + 跳转按钮 + 类型标签组 */
+  _renderTitleRow(item: FavoritesItem): HTMLElement {
+    const app = getApp();
     const titleRow = document.createElement('div');
     titleRow.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:6px;';
 
@@ -395,49 +419,7 @@ export class UIManager {
 
     // ---- 大模型余额显示（紧跟标题后） ----
     if (item.llmConfig && item.llmConfig.apiKeys && item.llmConfig.balanceUrl) {
-      const balanceSpan = document.createElement('span');
-      balanceSpan.style.cssText = 'font-size:12px; color:var(--text-muted); margin-left:4px; white-space:nowrap;';
-
-      if (item.balanceError) {
-        balanceSpan.textContent = `(❌ ${item.balanceError})`;
-        balanceSpan.style.color = 'var(--text-error)';
-      } else if (item.balance) {
-        const balanceNum = parseFloat(item.balance);
-        let color = 'var(--text-success)';
-        if (balanceNum < 10) color = 'var(--text-error)';
-        else if (balanceNum < 100) color = 'var(--text-warning)';
-
-        balanceSpan.textContent = `(余额: ${item.balance})`;
-        balanceSpan.style.color = color;
-      } else {
-        balanceSpan.textContent = '(查询中...)';
-        balanceSpan.style.opacity = '0.6';
-      }
-
-      // 点击刷新余额
-      balanceSpan.style.cursor = 'pointer';
-      balanceSpan.title = '点击刷新余额';
-      balanceSpan.onclick = async (e) => {
-        e.stopPropagation();
-        balanceSpan.textContent = '(刷新中...)';
-        balanceSpan.style.opacity = '0.6';
-        try {
-          const result = await this.balanceService.fetchBalance(item.llmConfig!);
-          item.balance = result.balance;
-          item.balanceCacheTime = result.timestamp;
-          item.balanceError = null;
-          await this.dataManager.update(item.id, {
-            balance: result.balance,
-            balanceCacheTime: result.timestamp,
-          });
-          this.render();
-        } catch (error: any) {
-          item.balanceError = error.message;
-          this.render();
-        }
-      };
-
-      titleRow.appendChild(balanceSpan);
+      titleRow.appendChild(this._renderBalanceSpan(item));
     }
 
     // ---- 添加 📄 跳转按钮（如果存在 linkedNote） ----
@@ -479,28 +461,55 @@ export class UIManager {
       }
       titleRow.appendChild(tagGroup);
     }
-    card.appendChild(titleRow);
-
-    // ---- 简介（为空则不显示） ----
-    if (item.description) {
-      const desc = document.createElement('div');
-      desc.textContent = item.description;
-      desc.style.cssText = 'font-size:14px; color:var(--text-muted); line-height:1.5; margin-bottom:8px; word-break:break-word;';
-      card.appendChild(desc);
-    }
-
-    // ---- 元信息（日期） ----
-    const meta = document.createElement('div');
-    meta.style.cssText = 'display:flex; gap:12px; font-size:12px; color:var(--text-faint);';
-    const timeSpan = document.createElement('span');
-    timeSpan.textContent = item.created || '';
-    this._attachLongPressDelete(timeSpan, item);
-    meta.appendChild(timeSpan);
-    card.appendChild(meta);
-
-    return card;
+    return titleRow;
   }
 
+  /** 余额 span：按余额档位着色；点击刷新（balanceService 5 分钟缓存） */
+  _renderBalanceSpan(item: FavoritesItem): HTMLElement {
+    const balanceSpan = document.createElement('span');
+    balanceSpan.style.cssText = 'font-size:12px; color:var(--text-muted); margin-left:4px; white-space:nowrap;';
+
+    if (item.balanceError) {
+      balanceSpan.textContent = `(❌ ${item.balanceError})`;
+      balanceSpan.style.color = 'var(--text-error)';
+    } else if (item.balance) {
+      const balanceNum = parseFloat(item.balance);
+      let color = 'var(--text-success)';
+      if (balanceNum < 10) color = 'var(--text-error)';
+      else if (balanceNum < 100) color = 'var(--text-warning)';
+
+      balanceSpan.textContent = `(余额: ${item.balance})`;
+      balanceSpan.style.color = color;
+    } else {
+      balanceSpan.textContent = '(查询中...)';
+      balanceSpan.style.opacity = '0.6';
+    }
+
+    // 点击刷新余额
+    balanceSpan.style.cursor = 'pointer';
+    balanceSpan.title = '点击刷新余额';
+    balanceSpan.onclick = async (e) => {
+      e.stopPropagation();
+      balanceSpan.textContent = '(刷新中...)';
+      balanceSpan.style.opacity = '0.6';
+      try {
+        const result = await this.balanceService.fetchBalance(item.llmConfig!);
+        item.balance = result.balance;
+        item.balanceCacheTime = result.timestamp;
+        item.balanceError = null;
+        await this.dataManager.update(item.id, {
+          balance: result.balance,
+          balanceCacheTime: result.timestamp,
+        });
+        this.render();
+      } catch (error: any) {
+        item.balanceError = error.message;
+        this.render();
+      }
+    };
+
+    return balanceSpan;
+  }
   // ---------- 长按删除 ----------
   _attachLongPressDelete(element: HTMLElement, item: FavoritesItem) {
     longPress(

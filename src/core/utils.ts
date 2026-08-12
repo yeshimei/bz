@@ -8,12 +8,18 @@ import { getApp } from './app';
 
 /** HTML 转义 */
 export function escapeHtml(str: string): string {
-  return str.replace(/[&<>]/g, (m) => {
+  return str.replace(/[&<>"']/g, (m) => {
     if (m === '&') return '&amp;';
     if (m === '<') return '&lt;';
     if (m === '>') return '&gt;';
-    return m;
+    if (m === '"') return '&quot;';
+    return '&#39;';
   });
+}
+
+/** pad2(n)：两位数补零（月/日/时/分/秒） */
+export function pad2(n: number | string): string {
+  return String(n).padStart(2, '0');
 }
 
 /** 生成随机块 ID */

@@ -261,9 +261,9 @@ describe('设置读取（ticket 09 前置）', () => {
       diaryBatchSize: '20', showTagCount: true, useFileDateTime: false,
     }) as any);
     showDiaryPanel(null as any);
-    const settingsBtn = [...document.querySelectorAll('.diary-popup-header button')].find((b) => b.title === '日记本设置')!;
+    const settingsBtn = [...document.querySelectorAll('.diary-popup-header button')].find((b) => (b as HTMLElement).title === '日记本设置')!;
     expect(settingsBtn).toBeTruthy();
-    settingsBtn.click();
+    (settingsBtn as HTMLElement).click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect(popup.textContent).toContain('日记本设置');
     const names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);

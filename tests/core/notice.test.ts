@@ -217,24 +217,15 @@ describe('通知系统', () => {
     expect(visibleNotices()).toHaveLength(0);
   });
 
-  it('z-index 100000：最顶（盖过 Obsidian 全部 UI 层）+ 桌面右侧/移动端居中 + 安全区适配', () => {
+  it('样式收敛（ticket 60）：容器就位且不再运行时注入 style', () => {
     notify('层级测试');
     const container = document.getElementById('bz-notice-container')!;
     expect(container).not.toBeNull();
-    const cssText = Array.from(document.querySelectorAll('style'))
-      .map((s) => s.textContent || '')
-      .join('');
-    expect(cssText).toContain('z-index: 100000');
-    // 桌面端右侧弹出（右上角）
-    expect(cssText).toContain('right: 16px');
-    expect(cssText).toContain('align-items: flex-end');
-    // 移动端：顶部居中 + 安全区 + 顶部 34px（项目断点惯例 max-width: 768px）
-    expect(cssText).toContain('@media (max-width: 768px)');
-    expect(cssText).toContain('left: 50%');
-    expect(cssText).toContain('align-items: center');
-    expect(cssText).toContain('env(safe-area-inset-top');
-    expect(cssText).toContain('max-width: min(420px, calc(100vw - 24px))');
-    expect(cssText).toContain('top: calc(34px + env(safe-area-inset-top, 0px))');
+    // 视觉样式已收敛 styles.css，运行时不得注入 <style>（铁律 9）
+    const injected = Array.from(document.querySelectorAll('style')).some(
+      (s) => s.getAttribute('data-shared-style') === 'bz-notice'
+    );
+    expect(injected).toBe(false);
   });
 
   describe('dedupeKey 去重（同键单框合并）', () => {

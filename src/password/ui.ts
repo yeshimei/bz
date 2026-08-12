@@ -21,6 +21,29 @@ interface UIConfig {
   securityMode: boolean;
 }
 
+/** 长按 500ms 触发（createCard 拆分：日期删除/备注编辑/密码区编辑共用） */
+function attachLongPress(el: HTMLElement, onLongPress: () => void): void {
+  let timer: any = null;
+  const start = () => {
+    timer = setTimeout(() => {
+      timer = null;
+      onLongPress();
+    }, 500);
+  };
+  const cancel = () => {
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+  };
+  el.addEventListener('mousedown', start);
+  el.addEventListener('mouseup', cancel);
+  el.addEventListener('mouseleave', cancel);
+  el.addEventListener('touchstart', start);
+  el.addEventListener('touchend', cancel);
+  el.addEventListener('touchmove', cancel);
+}
+
 export class UIManager {
   dataManager: DataManager;
   config: UIConfig;
@@ -344,32 +367,17 @@ export class UIManager {
     dateSpan.className = 'pw-date';
     dateSpan.textContent = formatRelativeTime(item.createdAt);
     // 长按删除
-    let pressTimer: any = null;
-    const startPress = () => {
-      pressTimer = setTimeout(() => {
-        this.showConfirm('删除密码条目', `确定删除账号 "${item.account}" 吗？`, async () => {
-          try {
-            await this.dataManager.deleteItem(item.id);
-            await this.renderList();
-            notice('已删除', 'success');
-          } catch (e: any) {
-            notice('删除失败：' + e.message, 'error');
-          }
-        });
-      }, 500);
-    };
-    const cancelPress = () => {
-      if (pressTimer) {
-        clearTimeout(pressTimer);
-        pressTimer = null;
-      }
-    };
-    dateSpan.addEventListener('mousedown', startPress);
-    dateSpan.addEventListener('mouseup', cancelPress);
-    dateSpan.addEventListener('mouseleave', cancelPress);
-    dateSpan.addEventListener('touchstart', startPress);
-    dateSpan.addEventListener('touchend', cancelPress);
-    dateSpan.addEventListener('touchmove', cancelPress);
+    attachLongPress(dateSpan, () => {
+      this.showConfirm('删除密码条目', `确定删除账号 "${item.account}" 吗？`, async () => {
+        try {
+          await this.dataManager.deleteItem(item.id);
+          await this.renderList();
+          notice('已删除', 'success');
+        } catch (e: any) {
+          notice('删除失败：' + e.message, 'error');
+        }
+      });
+    });
 
     top.appendChild(dateSpan);
     card.appendChild(top);
@@ -380,46 +388,12 @@ export class UIManager {
       noteSpan.className = 'pw-note hidden';
       noteSpan.textContent = item.note || '(备注隐藏)';
       // 长按编辑
-      let pressTimerNote: any = null;
-      const startPressNote = () => {
-        pressTimerNote = setTimeout(() => {
-          this.openAddDialog(item);
-        }, 500);
-      };
-      const cancelPressNote = () => {
-        if (pressTimerNote) {
-          clearTimeout(pressTimerNote);
-          pressTimerNote = null;
-        }
-      };
-      noteSpan.addEventListener('mousedown', startPressNote);
-      noteSpan.addEventListener('mouseup', cancelPressNote);
-      noteSpan.addEventListener('mouseleave', cancelPressNote);
-      noteSpan.addEventListener('touchstart', startPressNote);
-      noteSpan.addEventListener('touchend', cancelPressNote);
-      noteSpan.addEventListener('touchmove', cancelPressNote);
+      attachLongPress(noteSpan, () => this.openAddDialog(item));
       card.appendChild(noteSpan);
     }
 
     // 长按密码区域编辑
-    let pressTimerPw: any = null;
-    const startPressPw = () => {
-      pressTimerPw = setTimeout(() => {
-        this.openAddDialog(item);
-      }, 500);
-    };
-    const cancelPressPw = () => {
-      if (pressTimerPw) {
-        clearTimeout(pressTimerPw);
-        pressTimerPw = null;
-      }
-    };
-    passwordArea.addEventListener('mousedown', startPressPw);
-    passwordArea.addEventListener('mouseup', cancelPressPw);
-    passwordArea.addEventListener('mouseleave', cancelPressPw);
-    passwordArea.addEventListener('touchstart', startPressPw);
-    passwordArea.addEventListener('touchend', cancelPressPw);
-    passwordArea.addEventListener('touchmove', cancelPressPw);
+    attachLongPress(passwordArea, () => this.openAddDialog(item));
 
     return card;
   }

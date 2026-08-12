@@ -80,7 +80,7 @@ export class VectorStore {
     header.writeUInt32LE(dim, 0);
     const payload = new Uint8Array(this.vectors.buffer, this.vectors.byteOffset, this.vectors.byteLength);
     const data = MobileBuffer.concat([header._data, payload]);
-    await this.app.vault.adapter.writeBinary(CONFIG.VEC_PATH, data._data.buffer);
+    await this.app.vault.adapter.writeBinary(CONFIG.VEC_PATH, data._data.buffer as ArrayBuffer);
   }
 
   async saveStore(): Promise<void> {

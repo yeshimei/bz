@@ -187,6 +187,22 @@ function settingDropdown(el: HTMLElement, name: string, desc: string, options: [
   });
 }
 
+/** 添加弹窗共享元素上下文（createAddDialog 拆分传递） */
+interface AddDialogCtx {
+  contentInput: HTMLTextAreaElement;
+  titleInput: HTMLInputElement;
+  scriptInput: HTMLInputElement;
+  scriptSuggest: HTMLElement;
+  scriptContainer: HTMLElement;
+  courseInput: HTMLInputElement;
+  courseSuggest: HTMLElement;
+  courseContainer: HTMLElement;
+  sceneContainer: HTMLElement;
+  priorityContainer: HTMLElement;
+  dueInput: HTMLInputElement;
+  posBtn: HTMLButtonElement;
+}
+
 export const UIManager = {
   mask: null as HTMLDivElement | null,
   popup: null as HTMLDivElement | null,
@@ -394,65 +410,12 @@ export const UIManager = {
       }
     };
 
-    // ---------- 场景按钮构建 ----------
-    const buildScenes = () => {
-      sceneContainer.innerHTML = '';
-      for (const scene of DataManager.getScenarios()) {
-        makeChoiceBtn(sceneContainer, 'scene-btn', scene, scene, (btn) => {
-          // 切换场景时清空输入框内容（如果离开剪藏）
-          const isClip = btn.dataset.scene === '剪藏';
-          if (!isClip) {
-            contentInput.value = '';
-            contentInput.placeholder = '输入备忘录内容...';
-            contentInput.dataset.rawClipboard = '';
-            autoGrowContent(contentInput); // 清空后回到一行高
-            titleInput.value = '';
-            titleInput.placeholder = '标题（可选）';
-            titleInput.style.display = 'none';
-          } else {
-            // 剪藏场景：显示标题输入框，并尝试填充剪贴板
-            titleInput.style.display = 'block';
-            navigator.clipboard
-              .readText()
-              .then(async (text) => {
-                if (text) {
-                  const trimmed = text.trim();
-                  contentInput.dataset.rawClipboard = trimmed;
-                  const { url, display } = extractUrlAndDisplay(trimmed);
-                  if (url) {
-                    contentInput.placeholder = url;
-                    if (display && display !== url) titleInput.placeholder = display;
-                    else if (display === url) {
-                      const pageTitle = await fetchPageTitle(url);
-                      if (pageTitle) titleInput.placeholder = pageTitle;
-                    }
-                  } else {
-                    contentInput.placeholder = '输入备忘录内容...';
-                  }
-                }
-              })
-              .catch(() => {});
-          }
-
-          // 代码/公开课场景控制
-          const isCode = btn.dataset.scene === '代码';
-          scriptContainer.style.display = isCode ? 'block' : 'none';
-          if (!isCode) {
-            scriptInput.value = '';
-            scriptSuggest.style.display = 'none';
-          }
-          const isCourse = btn.dataset.scene === '公开课';
-          courseContainer.style.display = isCourse ? 'block' : 'none';
-          if (!isCourse) {
-            courseInput.value = '';
-            courseSuggest.style.display = 'none';
-          } else {
-            courseInput.dispatchEvent(new Event('input'));
-          }
-        });
-      }
+    // ---------- 场景按钮构建（拆分：_buildSceneButtons） ----------
+    const ctx: AddDialogCtx = {
+      contentInput, titleInput, scriptInput, scriptSuggest, scriptContainer,
+      courseInput, courseSuggest, courseContainer, sceneContainer, priorityContainer, dueInput, posBtn,
     };
-    buildScenes();
+    this._buildSceneButtons(ctx);
 
     // ---------- 脚本输入建议 ----------
     attachSuggestion<string>(
@@ -478,125 +441,188 @@ export const UIManager = {
     // ---------- 取消 / 保存 ----------
     cancelBtn.onclick = () => this.hideAddDialog();
 
-    // 将保存逻辑提取为独立函数以便复用
-    const handleSave = async () => {
-      let content = contentInput.value.trim();
-      if (!content) {
-        const placeholder = contentInput.placeholder;
-        if (placeholder && placeholder !== '输入备忘录内容...') {
-          contentInput.value = placeholder;
-        } else {
-          const raw = contentInput.dataset.rawClipboard || '';
-          if (raw) {
-            const { url } = extractUrlAndDisplay(raw);
-            if (url) contentInput.value = url;
-          }
-        }
-      }
-      const finalContent = contentInput.value.trim();
-      if (!finalContent) {
-        notice('请输入内容');
-        return;
-      }
-
-      const selectedScene = sceneContainer.querySelector('.scene-btn.active');
-      if (!selectedScene) {
-        notice('请选择场景');
-        return;
-      }
-      const scene = (selectedScene as HTMLElement).dataset.scene!;
-
-      const selectedPriority = priorityContainer.querySelector('.priority-btn.active');
-      const priority = selectedPriority ? (selectedPriority as HTMLElement).dataset.priority : 'minor';
-
-      let title = titleInput.value.trim();
-      if (!title) {
-        const ph = titleInput.placeholder;
-        if (ph && ph !== '标题（可选）') title = ph;
-      }
-
-      // 分离 title 和 url
-      const { url: extractedUrl, display } = extractUrlAndDisplay(finalContent);
-      let finalTitle = display;
-      if (title && extractedUrl) {
-        finalTitle = title;
-      } else if (!finalTitle) {
-        finalTitle = finalContent;
-      }
-      const finalUrl = extractedUrl || null;
-
-      const positionData = (posBtn as any).positionData || {};
-      const notePath = positionData.notePath || null;
-      const notePosition = positionData.notePosition || null;
-
-      let scriptName: string | null = null;
-      if (scene === '代码') {
-        const sv = scriptInput.value.trim();
-        if (sv) scriptName = sv;
-      }
-      let courseName: string | null = null,
-        coursePath: string | null = null;
-      if (scene === '公开课') {
-        const cv = courseInput.value.trim();
-        if (cv) {
-          courseName = cv;
-          if (courseInput.dataset.coursePath) coursePath = courseInput.dataset.coursePath;
-          else {
-            const matched = this.courseSuggestions.find((s) => s.name.toLowerCase() === cv.toLowerCase());
-            if (matched) coursePath = matched.path;
-          }
-        }
-      }
-
-      const editingId = this.addEditingId;
-      const dueValue = dueInput.value || null;
-      try {
-        if (editingId) {
-          await DataManager.updateItem(editingId, {
-            title: finalTitle,
-            scene,
-            priority,
-            due: dueValue,
-            notePath,
-            notePosition,
-            scriptName,
-            courseName,
-            coursePath,
-            url: finalUrl,
-          } as any);
-        } else {
-          const newItem = {
-            id: generateId('todo'),
-            title: finalTitle,
-            scene,
-            priority,
-            created: moment().format('YYYY-MM-DD HH:mm:ss'),
-            completed: null,
-            due: dueValue,
-            notePath,
-            notePosition,
-            scriptName,
-            courseName,
-            coursePath,
-            url: finalUrl,
-          };
-          await DataManager.addItem(newItem as any);
-        }
-        await App.loadData();
-        App.refresh();
-        this.hideAddDialog();
-      } catch (e: any) {
-        notice('保存失败：' + e.message, 'error');
-        console.error(e);
-      }
-    };
-
-    saveBtn.onclick = handleSave;
+    saveBtn.onclick = () => this._handleAddSave(ctx);
 
     // 键盘事件（ESC关闭）
     this.addPopup.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') this.hideAddDialog();
     });
+  },
+
+  // ---------- 添加弹窗拆分（ticket 61 重构） ----------
+
+  /** 场景按钮构建 + 切换处理（剪藏剪贴板预填/代码/公开课显隐） */
+  _buildSceneButtons(ctx: AddDialogCtx): void {
+    const { sceneContainer, contentInput, titleInput, scriptInput, scriptSuggest, scriptContainer, courseInput, courseSuggest, courseContainer } = ctx;
+    sceneContainer.innerHTML = '';
+    for (const scene of DataManager.getScenarios()) {
+      makeChoiceBtn(sceneContainer, 'scene-btn', scene, scene, (btn) => {
+        // 切换场景时清空输入框内容（如果离开剪藏）
+        const isClip = btn.dataset.scene === '剪藏';
+        if (!isClip) {
+          contentInput.value = '';
+          contentInput.placeholder = '输入备忘录内容...';
+          contentInput.dataset.rawClipboard = '';
+          autoGrowContent(contentInput); // 清空后回到一行高
+          titleInput.value = '';
+          titleInput.placeholder = '标题（可选）';
+          titleInput.style.display = 'none';
+        } else {
+          // 剪藏场景：显示标题输入框，并尝试填充剪贴板
+          titleInput.style.display = 'block';
+          navigator.clipboard
+            .readText()
+            .then(async (text) => {
+              if (text) {
+                const trimmed = text.trim();
+                contentInput.dataset.rawClipboard = trimmed;
+                const { url, display } = extractUrlAndDisplay(trimmed);
+                if (url) {
+                  contentInput.placeholder = url;
+                  if (display && display !== url) titleInput.placeholder = display;
+                  else if (display === url) {
+                    const pageTitle = await fetchPageTitle(url);
+                    if (pageTitle) titleInput.placeholder = pageTitle;
+                  }
+                } else {
+                  contentInput.placeholder = '输入备忘录内容...';
+                }
+              }
+            })
+            .catch(() => {});
+        }
+
+        // 代码/公开课场景控制
+        const isCode = btn.dataset.scene === '代码';
+        scriptContainer.style.display = isCode ? 'block' : 'none';
+        if (!isCode) {
+          scriptInput.value = '';
+          scriptSuggest.style.display = 'none';
+        }
+        const isCourse = btn.dataset.scene === '公开课';
+        courseContainer.style.display = isCourse ? 'block' : 'none';
+        if (!isCourse) {
+          courseInput.value = '';
+          courseSuggest.style.display = 'none';
+        } else {
+          courseInput.dispatchEvent(new Event('input'));
+        }
+      });
+    }
+  },
+
+  /** 保存逻辑（新建/编辑共用）：收集字段 → 写库 → 刷新 */
+  async _handleAddSave(ctx: AddDialogCtx): Promise<void> {
+    const { contentInput, titleInput, scriptInput, courseInput, dueInput, posBtn, sceneContainer, priorityContainer } = ctx;
+    let content = contentInput.value.trim();
+    if (!content) {
+      const placeholder = contentInput.placeholder;
+      if (placeholder && placeholder !== '输入备忘录内容...') {
+        contentInput.value = placeholder;
+      } else {
+        const raw = contentInput.dataset.rawClipboard || '';
+        if (raw) {
+          const { url } = extractUrlAndDisplay(raw);
+          if (url) contentInput.value = url;
+        }
+      }
+    }
+    const finalContent = contentInput.value.trim();
+    if (!finalContent) {
+      notice('请输入内容');
+      return;
+    }
+
+    const selectedScene = sceneContainer.querySelector('.scene-btn.active');
+    if (!selectedScene) {
+      notice('请选择场景');
+      return;
+    }
+    const scene = (selectedScene as HTMLElement).dataset.scene!;
+
+    const selectedPriority = priorityContainer.querySelector('.priority-btn.active');
+    const priority = selectedPriority ? (selectedPriority as HTMLElement).dataset.priority : 'minor';
+
+    let title = titleInput.value.trim();
+    if (!title) {
+      const ph = titleInput.placeholder;
+      if (ph && ph !== '标题（可选）') title = ph;
+    }
+
+    // 分离 title 和 url
+    const { url: extractedUrl, display } = extractUrlAndDisplay(finalContent);
+    let finalTitle = display;
+    if (title && extractedUrl) {
+      finalTitle = title;
+    } else if (!finalTitle) {
+      finalTitle = finalContent;
+    }
+    const finalUrl = extractedUrl || null;
+
+    const positionData = (posBtn as any).positionData || {};
+    const notePath = positionData.notePath || null;
+    const notePosition = positionData.notePosition || null;
+
+    let scriptName: string | null = null;
+    if (scene === '代码') {
+      const sv = scriptInput.value.trim();
+      if (sv) scriptName = sv;
+    }
+    let courseName: string | null = null,
+      coursePath: string | null = null;
+    if (scene === '公开课') {
+      const cv = courseInput.value.trim();
+      if (cv) {
+        courseName = cv;
+        if (courseInput.dataset.coursePath) coursePath = courseInput.dataset.coursePath;
+        else {
+          const matched = this.courseSuggestions.find((s) => s.name.toLowerCase() === cv.toLowerCase());
+          if (matched) coursePath = matched.path;
+        }
+      }
+    }
+
+    const editingId = this.addEditingId;
+    const dueValue = dueInput.value || null;
+    try {
+      if (editingId) {
+        await DataManager.updateItem(editingId, {
+          title: finalTitle,
+          scene,
+          priority,
+          due: dueValue,
+          notePath,
+          notePosition,
+          scriptName,
+          courseName,
+          coursePath,
+          url: finalUrl,
+        } as any);
+      } else {
+        const newItem = {
+          id: generateId('todo'),
+          title: finalTitle,
+          scene,
+          priority,
+          created: moment().format('YYYY-MM-DD HH:mm:ss'),
+          completed: null,
+          due: dueValue,
+          notePath,
+          notePosition,
+          scriptName,
+          courseName,
+          coursePath,
+          url: finalUrl,
+        };
+        await DataManager.addItem(newItem as any);
+      }
+      await App.loadData();
+      App.refresh();
+      this.hideAddDialog();
+    } catch (e: any) {
+      notice('保存失败：' + e.message, 'error');
+      console.error(e);
+    }
   },
 
   showAddDialog(editItem: MemoItem | null) {

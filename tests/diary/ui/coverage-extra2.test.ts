@@ -246,12 +246,12 @@ describe('filter-shared 计数分支', () => {
     // 固定顺序：日记在前
     applyUiSettings({ diaryTagSortMode: 'fixed' });
     rebuildTags();
-    let buttons = [...container.querySelectorAll('.diary-tag-btn')];
+    let buttons = [...container.querySelectorAll<HTMLElement>('.diary-tag-btn')];
     expect(buttons[0].dataset.tag).toBe('日记');
     // 按数量：收藏（2）在前
     applyUiSettings({ diaryTagSortMode: 'count' });
     rebuildTags();
-    buttons = [...container.querySelectorAll('.diary-tag-btn')];
+    buttons = [...container.querySelectorAll<HTMLElement>('.diary-tag-btn')];
     expect(buttons[0].dataset.tag).toBe('收藏');
     expect(buttons[1].dataset.tag).toBe('日记');
   });
