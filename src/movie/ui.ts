@@ -5,7 +5,6 @@ import type { App, TFile } from 'obsidian';
 import { Setting } from 'obsidian';
 import { notice, notify } from '../core/notice';
 import { escManager } from '../core/esc-manager';
-import { checkAndShowChangelog } from '../core/changelog';
 import { formatRelativeTime } from '../core/utils';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
@@ -225,7 +224,6 @@ export function toggleSearch(): void {
 
 /** 关闭主界面（源码 L486-496） */
 export function closeOverlay(): void {
-  checkAndShowChangelog('movie');
   M.searchKeyword = '';
   if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
 

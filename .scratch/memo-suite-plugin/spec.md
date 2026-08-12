@@ -22,10 +22,9 @@ Feature: memo-suite-plugin
 2. 作为用户，我希望 Q3 的 21 个工具（escManager、confirm、notice、generateId、jsonStore、longPress、injectStyles、createSiteIcon、createIconBtn、formatRelativeTime、formatFileSize、displayChangelog、checkAndShowChangelog、AIService、createAI、extractUrlAndDisplay、getPlatformName、getCurrentNoteInfo、getCurrentCursorPosition、fetchPageTitle、createOverlay）全部可用，以便 15 个域移植时逐字保留调用。
 3. 作为用户，我希望 jsonStore 对 `CONFIG/STORAGE/*.json` 的读写（原子写、锁、迁移兼容）与原脚本完全一致，以便备忘录/归物本/密码本/复习计划的数据零迁移。
 4. 作为用户，我希望插件设置页包含 AI 配置（provider：deepseek / opencode-go、apiKey、endpoint/model 覆盖），以便沿用原 Q3 设置语义。
-5. 作为用户，我希望各脚本的 changelog（更新日志弹窗）机制保留（localStorage 已读版本），以便迁移后同样能看到更新说明。
 6. 作为用户，我希望插件命令全部沿用原脚本命令 id 且不带插件前缀，以便既有热键绑定（设置 → 快捷键）可继续使用。
 7. 作为用户，我希望插件不注册任何默认快捷键，以便不干扰我已有的热键方案。
-8. 作为开发者，我希望 core 层有完整测试覆盖（escManager/jsonStore/AIService/changelog/样式注入），以便后续域移植有可信底座。
+8. 作为开发者，我希望 core 层有完整测试覆盖（escManager/jsonStore/AIService/样式注入），以便后续域移植有可信底座。
 
 ### 备忘录（Todo）
 
@@ -46,14 +45,13 @@ Feature: memo-suite-plugin
 18. 作为用户，我希望学习/公开课场景的待办有课程字段（courseInput），以便记录课程归属。
 19. 作为用户，我希望可从当前笔记（📌 笔记名）或光标选中内容创建待办（getCurrentNoteInfo/getCurrentCursorPosition 语义），以便快速录入。
 20. 作为用户，我希望截止时间输入支持清除（dueClear）、位置按钮（posBtn），以便与原脚本交互一致。（ticket 59：clipboardFocusHandler 已删除）
-21. 作为用户，我希望到期/过期待办自动置顶（已过期红色、今日到期橙色），启动时与打开笔记时触发到期提醒，以便不错过任务（changelog 1.6.0 行为）。
-22. 作为用户，我希望长按 #标签 直接编辑待办全部信息（内容/场景/优先级等），公开课场景标签不重复显示（changelog 1.5.0 行为），以便与原脚本一致。
+21. 作为用户，我希望到期/过期待办自动置顶（已过期红色、今日到期橙色），启动时与打开笔记时触发到期提醒，以便不错过任务。
+22. 作为用户，我希望长按 #标签 直接编辑待办全部信息（内容/场景/优先级等），公开课场景标签不重复显示，以便与原脚本一致。
 
 ### 归物本（Belongings）
 
 13. 作为用户，我希望物品登记面板（列表、搜索、新增/编辑/删除、图片展示）与原脚本一致，以便继续登记我的物品。
 14. 作为用户，我希望数据目录默认 `CONFIG/STORAGE`（可在设置中配置 dataFolder），以便沿用原存储布局。
-15. 作为用户，我希望启用时显示归物本 changelog（identifier 'belongings'），以便看到更新说明。
 16. 作为用户，我希望归物本支持自定义分类（customCategories 设置）与排序弹窗（按分类/时间等排序，showSortModal 语义），以便整理物品。
 17. 作为用户，我希望归物本有统计显示（按分类统计等），以便掌握物品分布。
 18. 作为用户，我希望物品卡片支持点击展开详情/操作、列表有刷新按钮（refreshBtn），以便与原脚本交互一致。
@@ -459,7 +457,7 @@ Feature: memo-suite-plugin
 
 ### 收敛补丁（第 7 轮，反证扫描）
 
-- **changelog 全景**：Q3 CHANGELOGS 定义 8 个 identifier——bz / article / luhmann / library / movie / belongings / diary / password-manager；脚本调用方 6 个——备忘录'bz'、归物本'belongings'、剪藏本'article'、聚合讯'news'（Q3 无 news 定义，调用直接跳过）、书库'library'、影视'movie'；密码本有定义（password-manager）但脚本未调用（实现时确认是否需要触发）
+- **changelog 已删除（ticket 61）**：Q3 CHANGELOGS 机制与 6 域调用全部移除
 - **影视条目字段全集**（由 buildAnalysisData 48 个聚合字段反推）：rating（自评）、douban（豆瓣评分）、watchDate、status（want/watching/watched）、tags（类型）、genres、countries、directors、actors、age、era（年代）、duration（时长）、weekday（观看星期）、diff（观影间隔）、review（评论）、series/season（剧集季）、yearRating、wantTags 等——实现时以源码逐字核对，分析配置（十组）即按这些字段聚合
 - **影视数据分析聚合输出**：total/watched/watching/want/ratingSum/ratingCount/doubanSum/doubanCount/groups/tags/years/months/buckets/genres/countries/directors/actors/topRated/wantList/ageBuckets/ageSum/ageCount/eras/durBuckets/durSum/durCount/groupDur/weekdays/diffSum/diffCount/treasure（惊喜）/disappoint（失望）/reviewKeywords/reviewCount/reviewCharSum/series/seasonSum/seasonCount/seasons/wantDoubanSum/wantDoubanCount/wantTags/yearRating
 - **密码本设置 UI 名称**：🔤 密码生成字符集（输入）、🔢 密码生成长度（输入）、🔒 安全模式（开关）——设置页文案逐字保留
@@ -467,7 +465,6 @@ Feature: memo-suite-plugin
 
 ### 已知待收集信息（实现时从源码提取，不阻塞本 spec）
 
-- 各脚本 changelog identifier 清单（已确认：belongings；其余实现时收集）
 - 备忘录场景列表/平台映射（DEFAULTSCENARIOS/DEFAULT_PLATFORM_MAP）与 Q3 常量定义位置
 - 各域 DOM id/类名清单（面板容器、弹窗、按钮）
 
@@ -498,5 +495,5 @@ Feature: memo-suite-plugin
 
 - 迁移批次（每批交付即对照原宏验收）：0) core+骨架；1) 备忘录/归物本/密码本；2) 剪藏本/聚合讯/自动摘要/收藏本；3) 书库/阅读数据分析/影视/影视数据分析；4) 复习计划/做题家/闪念/AIAgent
 - 原脚本与 QuickAdd 环境在迁移期间并存：验收完成前用户可随时回退
-- core 层的 AIService/changelog/jsonStore 是 B站下载独立插件与后续任何脚本迁移的共享基础，移植时保持 Q3 语义逐字一致
+- core 层的 AIService/jsonStore 是 B站下载独立插件与后续任何脚本迁移的共享基础，移植时保持 Q3 语义逐字一致（changelog 已删除，ticket 61）
 - 闪念依赖 Ollama 服务，验收需用户本机 Ollama 运行（bge-m3 + qwen2.5 模型）

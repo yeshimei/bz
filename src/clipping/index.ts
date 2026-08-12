@@ -4,7 +4,6 @@
  */
 import type { App } from 'obsidian';
 import { initArticleView, applyArticleSettings, unloadClipping } from './view';
-import { checkAndShowChangelog } from '../core/changelog';
 
 let initialized = false;
 
@@ -15,10 +14,9 @@ export function ensureClipping(app: App): void {
   applyArticleSettings();
 }
 
-/** 打开文章列表（article-open-view 命令回调；含 changelog 'article'） */
+/** 打开文章列表（article-open-view 命令回调） */
 export function openArticleView(app: App): void {
   ensureClipping(app);
-  checkAndShowChangelog('article');
   void initArticleView(true);
 }
 

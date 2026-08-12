@@ -21,7 +21,6 @@ import {
   getCurrentCursorPosition,
   fetchPageTitle,
 } from '../core/utils';
-import { checkAndShowChangelog } from '../core/changelog';
 import { DataManager } from './data';
 import { getPlatformName } from '../core/utils';
 import { getDueStatus, formatDueText } from './due';
@@ -286,7 +285,6 @@ export const UIManager = {
     this.mask!.style.display = 'block';
     this.popup!.style.display = 'flex';
     App.refresh();
-    checkAndShowChangelog('bz');
   },
   hideMain() {
     if (this.mask) this.mask.style.display = 'none';
