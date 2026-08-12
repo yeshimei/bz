@@ -12,7 +12,7 @@
 - `src/main.ts`：命令裸注册表、设置页、懒加载开关、onunload 清理（37 命令）
 - `src/core/`：共享层（不挂 window）——app/settings-provider/ai/json-store/esc-manager/confirm/utils/dom/changelog/notice（自绘 toast，ADR-0010）/settings-modal（域设置弹窗）
 - `src/<域>/`：index.ts + data + ui（+ state/types/config）；`src/diary/ui/` 已拆 panel/entries/dialogs/quote/datetime-picker/filter-shared/ui-settings
-- 其余：`src/settings.ts`（MemoSettings + DEFAULT_SETTINGS）；`styles.css`（676 行，各域样式收敛处）+ `styles/<域>.css`（中间态）；`docs/adr/`（0001-0012）；`CONTEXT.md`（术语表）；`.scratch/<feature>/`（spec.md + issues/NN-*.md）
+- 其余：`src/settings.ts`（MemoSettings + DEFAULT_SETTINGS）；`styles.css`（各域样式唯一收敛处，ticket 60 起样式全部集中于此）；`docs/adr/`（0001-0012）；`CONTEXT.md`（术语表）；`.scratch/<feature>/`（spec.md + issues/NN-*.md）
 - **依赖方向（ADR-0002）**：`core ← config/state ← parser ← store ← ui ← main`。store 无 DOM；UI 刷新靠回调（onFullRefresh/onLightRefresh）订阅；UI 内部函数级引用环允许，但须在函数体内延迟解析，禁止模块顶层互访。
 
 ## 铁律
@@ -25,6 +25,7 @@
 6. **域间共享**：经显式 import 或 core 层（getApp/getSettings/createAI），不挂 window（`__MOVIE_FOLDER_PATH` 为兼容遗留，勿新增）。
 7. **架构决策**：设置页单页（ADR-0009，仅 AI + 共享 storagePath，域设置走 ⚙️ 弹窗）；通知用自绘 toast（ADR-0010，`notice(msg, type?, duration?)`，不用原生 Notice）；外部依赖（ADR-0005/0006/0008/0011）——AI 配置在 data.json、聚合讯 dataviewjs 由 Dataview 渲染、闪念走 Ollama HTTP、B 站下载/海报抓取走外部 npm。
 8. **通知写法**：消息正文一律**不带 emoji 前缀**（类型图标即视觉前缀，重复）；新语义先查 `src/core/notice.ts` ICONS 表（11 类型：info/success/warning/error/pause/accept/delete/confirm/restore/skip/archive），确无匹配才新增（ICONS 项 + 颜色 class + 默认时长），不得把 emoji 写进正文；规范详见 CONTEXT.md「通知类型规范」。
+9. **样式收敛（ticket 60）**：视觉样式一律写根 `styles.css`（构建时自动复制到插件目录，Obsidian 自动加载），新增 UI 用类名（`bz-` 前缀，如 `.bz-tag`/`.bz-suggest-box`）；**禁止**运行时注入 `<style>`（`injectStyles`/`style.textContent`）与内联视觉样式（`style.cssText`/`style="..."`）；功能性内联仅限显隐（`display`）与动态计算（高度/滚动）；`styles/<域>.css` 中间态与 `injectStyles` 注入模式已废弃（memo/news/clipping/password/favorites/review/quiz/pomodoro 已收敛）。
 
 ## 领域清单（src/<域>/，数据均在 CONFIG/STORAGE/，表内只写文件名）
 
