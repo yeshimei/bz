@@ -167,7 +167,7 @@ describe('备忘录面板', () => {
     // 先切到工作场景（原脚本：切换非剪藏场景会清空输入框）
     const sceneBtns = document.querySelectorAll('#add-todo-scenes .scene-btn');
     (sceneBtns[1] as HTMLElement).click(); // 工作
-    const content = document.getElementById('add-todo-content') as HTMLInputElement;
+    const content = document.getElementById('add-todo-content') as HTMLTextAreaElement;
     content.value = '新任务内容';
     const saveBtn = document.getElementById('add-todo-save') as HTMLButtonElement;
     saveBtn.click();
@@ -197,7 +197,7 @@ describe('备忘录面板', () => {
     vi.advanceTimersByTime(550);
     expect(document.getElementById('add-todo-popup')!.style.display).toBe('block');
     expect((document.querySelector('h4') as HTMLElement).textContent).toBe('编辑备忘录');
-    expect((document.getElementById('add-todo-content') as HTMLInputElement).value).toBe('编辑我');
+    expect((document.getElementById('add-todo-content') as HTMLTextAreaElement).value).toBe('编辑我');
     vi.useRealTimers();
   });
 
@@ -266,7 +266,7 @@ describe('从当前笔记/光标创建（ticket 05）', () => {
     const vault = new MockVault();
     await initApp(vault);
     UIManager.showAddDialog(null);
-    (document.getElementById('add-todo-content') as HTMLInputElement).value = 'https://example.com/page 示例页';
+    (document.getElementById('add-todo-content') as HTMLTextAreaElement).value = 'https://example.com/page 示例页';
     (document.getElementById('add-todo-save') as HTMLButtonElement).click();
     await vi.advanceTimersByTimeAsync(50);
     const items = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
@@ -355,5 +355,101 @@ describe('设置弹窗与新建默认值（第 9 轮设置扩展）', () => {
     const after = document.querySelectorAll('#add-todo-scenes .scene-btn');
     expect(after.length).toBe(2);
     expect((after[0] as HTMLElement).dataset.scene).toBe('工作');
+  });
+});
+
+describe('多行输入（ticket 49）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+    localStorage.clear();
+    vi.useRealTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('内容输入框为 textarea：单行高起始，max-height 8 行，禁止拖拽', async () => {
+    const vault = new MockVault();
+    await initApp(vault);
+    const content = document.getElementById('add-todo-content')!;
+    expect(content.tagName).toBe('TEXTAREA');
+    const ta = content as HTMLTextAreaElement;
+    expect(ta.style.minHeight).toBe('37px');
+    expect(ta.style.maxHeight).toBe('184px');
+    expect(ta.style.resize).toBe('none');
+    expect(ta.style.overflowY).toBe('hidden');
+  });
+
+  it('keydown Enter 不触发保存/关闭（保存只走按钮）', async () => {
+    vi.useFakeTimers();
+    const vault = new MockVault();
+    await initApp(vault);
+    UIManager.showAddDialog(null);
+    const content = document.getElementById('add-todo-content') as HTMLTextAreaElement;
+    content.value = '回车测试';
+    content.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await vi.advanceTimersByTimeAsync(50);
+    // 未触发保存（memo.json 为空数组）
+    expect(JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!)).toEqual([]);
+    expect(document.getElementById('add-todo-popup')!.style.display).toBe('block'); // 未关闭
+    vi.useRealTimers();
+  });
+
+  it('多行内容保存：title 保留换行', async () => {
+    vi.useFakeTimers();
+    const vault = new MockVault();
+    await initApp(vault);
+    UIManager.showAddDialog(null);
+    const content = document.getElementById('add-todo-content') as HTMLTextAreaElement;
+    content.value = '第一行\n第二行\n第三行';
+    (document.getElementById('add-todo-save') as HTMLButtonElement).click();
+    await vi.advanceTimersByTimeAsync(50);
+    const items = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(items[0].title).toBe('第一行\n第二行\n第三行');
+    vi.useRealTimers();
+  });
+
+  it('auto-grow：随内容增高，超 8 行封顶 + 内部滚动，清空回到一行高', async () => {
+    const vault = new MockVault();
+    await initApp(vault);
+    const content = document.getElementById('add-todo-content') as HTMLTextAreaElement;
+    // 3 行高度：自适应
+    Object.defineProperty(content, 'scrollHeight', { value: 80, configurable: true });
+    content.dispatchEvent(new Event('input'));
+    expect(content.style.height).toBe('80px');
+    expect(content.style.overflowY).toBe('hidden');
+    // 超 8 行（184px）：封顶 + 内部滚动
+    Object.defineProperty(content, 'scrollHeight', { value: 400, configurable: true });
+    content.dispatchEvent(new Event('input'));
+    expect(content.style.height).toBe('184px');
+    expect(content.style.overflowY).toBe('auto');
+    // 空内容：回到一行高
+    Object.defineProperty(content, 'scrollHeight', { value: 0, configurable: true });
+    content.value = '';
+    content.dispatchEvent(new Event('input'));
+    expect(content.style.height).toBe('37px');
+    expect(content.style.overflowY).toBe('hidden');
+  });
+
+  it('编辑回填多行内容', async () => {
+    vi.useFakeTimers();
+    const vault = new MockVault();
+    await initApp(vault);
+    await seedItems(vault, [
+      { id: '1', title: '第一行\n第二行', scene: '学习', priority: 'important', created: '2025-06-14 10:00:00', completed: null },
+    ]);
+    await App.refresh();
+    // 长按场景标签打开编辑弹窗
+    const sceneTag = [...document.querySelectorAll('.todo-card span')].find(
+      (sp) => sp.textContent!.includes('#学习')
+    ) as HTMLElement;
+    sceneTag.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
+    vi.advanceTimersByTime(550);
+    const content = document.getElementById('add-todo-content') as HTMLTextAreaElement;
+    expect(content.value).toBe('第一行\n第二行');
+    expect(document.querySelector('h4')!.textContent).toBe('编辑备忘录');
+    vi.useRealTimers();
   });
 });

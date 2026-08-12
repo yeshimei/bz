@@ -26,6 +26,19 @@ import { getDueStatus, formatDueText } from './due';
 import type { MemoItem, MemoPosition } from './types';
 import { App } from './app';
 
+/** 内容输入框一行高（14px × 1.5 行高 + 上下 padding 16px） */
+const CONTENT_LINE_HEIGHT = 37;
+/** 内容输入框最高 8 行（8 × 21 + 16 = 184px），超出内部滚动 */
+const CONTENT_MAX_HEIGHT = 184;
+
+/** 内容输入框 auto-grow：高度 = clamp(scrollHeight, 一行, 8 行)；空时一行高 */
+function autoGrowContent(el: HTMLTextAreaElement) {
+  el.style.height = 'auto';
+  const h = Math.max(el.scrollHeight, CONTENT_LINE_HEIGHT);
+  el.style.height = `${Math.min(h, CONTENT_MAX_HEIGHT)}px`;
+  el.style.overflowY = el.scrollHeight > CONTENT_MAX_HEIGHT ? 'auto' : 'hidden';
+}
+
 /** 备忘录样式（TODOCSS，收敛 styles.css 前保留注入） */
 const TODOCSS = `
 #todo-mask { backdrop-filter: blur(2px); }
@@ -391,7 +404,7 @@ export const UIManager = {
     // 构造内部HTML（在底部按钮区增加 AI 推荐按钮）
     this.addPopup.innerHTML = `
             <h4 style="margin:0 0 16px 0;font-size:18px;font-weight:600;color:var(--text-normal);">创建备忘录</h4>
-            <input id="add-todo-content" type="text" placeholder="输入备忘录内容..." style="width:100%;padding:8px 12px;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:16px;">
+            <textarea id="add-todo-content" rows="1" placeholder="输入备忘录内容..." style="width:100%;padding:8px 12px;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:16px;resize:none;min-height:37px;max-height:184px;overflow-y:hidden;line-height:1.5;font-family:inherit;background:var(--background-primary);border:1px solid var(--background-modifier-border);"></textarea>
             <input id="add-todo-title" type="text" placeholder="标题（可选）" style="width:100%;padding:8px 12px;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:8px;display:none;">
             <div id="add-todo-script-container" style="display:none; margin-bottom:12px;">
                 <input id="add-todo-script" type="text" placeholder="脚本名" style="width:100%;padding:8px 12px;border-radius:6px;font-size:14px;box-sizing:border-box;">
@@ -421,7 +434,9 @@ export const UIManager = {
     document.body.appendChild(this.addPopup);
 
     // 绑定事件
-    const contentInput = this.addPopup.querySelector('#add-todo-content') as HTMLInputElement;
+    const contentInput = this.addPopup.querySelector('#add-todo-content') as HTMLTextAreaElement;
+    // 内容输入框 auto-grow（Enter 换行 = textarea 默认行为，不做任何拦截）
+    contentInput.addEventListener('input', () => autoGrowContent(contentInput));
     const titleInput = this.addPopup.querySelector('#add-todo-title') as HTMLInputElement;
     const sceneContainer = this.addPopup.querySelector('#add-todo-scenes') as HTMLElement;
     const priorityContainer = this.addPopup.querySelector('#add-todo-priority') as HTMLElement;
@@ -558,6 +573,7 @@ export const UIManager = {
             contentInput.value = '';
             contentInput.placeholder = '输入备忘录内容...';
             contentInput.dataset.rawClipboard = '';
+            autoGrowContent(contentInput); // 清空后回到一行高
             titleInput.value = '';
             titleInput.placeholder = '标题（可选）';
             titleInput.style.display = 'none';
@@ -807,7 +823,7 @@ export const UIManager = {
     if (!this.addMask || !this.addPopup) return;
     this.addEditingId = editItem ? editItem.id : null;
 
-    const contentInput = this.addPopup.querySelector('#add-todo-content') as HTMLInputElement;
+    const contentInput = this.addPopup.querySelector('#add-todo-content') as HTMLTextAreaElement;
     const titleInput = this.addPopup.querySelector('#add-todo-title') as HTMLInputElement;
     const sceneContainer = this.addPopup.querySelector('#add-todo-scenes') as HTMLElement;
     const priorityContainer = this.addPopup.querySelector('#add-todo-priority') as HTMLElement;
@@ -955,6 +971,7 @@ export const UIManager = {
 
     this.addMask.style.display = 'block';
     this.addPopup.style.display = 'block';
+    autoGrowContent(contentInput); // 打开/编辑回填后按内容调整高度
     contentInput.focus();
 
   },
@@ -1142,7 +1159,7 @@ export const Renderer = {
 
     // ---------- 内容区域（跳转逻辑，直接使用 item.linkedNote 和 item.url） ----------
     const contentSpan = document.createElement('span');
-    contentSpan.style.cssText = 'flex:1;font-size:15px;color:var(--text-normal);word-break:break-word;user-select:text;';
+    contentSpan.style.cssText = 'flex:1;font-size:15px;color:var(--text-normal);word-break:break-word;user-select:text;white-space:pre-wrap;';
     // 非归档模式下已完成条目：划线显示
     if (item.completed && !isArchived) {
       contentSpan.style.textDecoration = 'line-through';
