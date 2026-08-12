@@ -399,7 +399,19 @@ export class BlackBoxDataManager {
         continue;
       }
       const p = parseNoteContent(content, f.path);
-      if (!p || indexedIds.has(p.entry.id)) continue;
+      if (!p) continue;
+      if (indexedIds.has(p.entry.id)) {
+        // 同名 id 已被索引但指向缺失文件（改名/事件漏监）→ 重映射到新路径
+        const oldPath = data.index[p.entry.id];
+        if (oldPath && !this.app.vault.getAbstractFileByPath(oldPath)) {
+          data.index[p.entry.id] = f.path;
+          indexAdded[p.entry.id] = f.path;
+          indexedPaths.add(f.path);
+          parsedList.push({ ...p, path: f.path });
+          entries.push(p.entry);
+        }
+        continue;
+      }
       indexedIds.add(p.entry.id);
       data.index[p.entry.id] = f.path;
       indexAdded[p.entry.id] = f.path;

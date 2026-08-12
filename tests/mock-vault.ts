@@ -168,13 +168,30 @@ export function parseFrontmatter(content: string): Record<string, any> | null {
 export function mockAppWithVault(vault: MockVault) {
   return {
     vault,
-    metadataCache: {
-      getFileCache: (f: any) => {
-        const content = vault.files.get(f.path) ?? '';
-        const fm = parseFrontmatter(content);
-        return fm ? { frontmatter: fm } : null;
-      },
-    },
+    metadataCache: (() => {
+      const listeners: Record<string, Function[]> = {};
+      return {
+        getFileCache: (f: any) => {
+          const content = vault.files.get(f.path) ?? '';
+          const fm = parseFrontmatter(content);
+          return fm ? { frontmatter: fm } : null;
+        },
+        // 事件监听（changed 等），供实时同步类测试 emit
+        on: (event: string, cb: (...args: any[]) => void): any => {
+          (listeners[event] ||= []).push(cb);
+          return { event, cb };
+        },
+        offref: (ref: any): void => {
+          if (!ref || !ref.event) return;
+          const arr = listeners[ref.event] || [];
+          const idx = arr.indexOf(ref.cb);
+          if (idx >= 0) arr.splice(idx, 1);
+        },
+        emit: (event: string, ...args: any[]): void => {
+          for (const cb of listeners[event] || []) cb(...args);
+        },
+      };
+    })(),
     workspace: {
       getActiveViewOfType: () => null,
       openLinkText: async () => {},
