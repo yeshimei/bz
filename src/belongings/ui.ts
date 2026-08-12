@@ -7,7 +7,6 @@ import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { formatRelativeTime } from '../core/utils';
-import { checkAndShowChangelog } from '../core/changelog';
 import { openSettingsModal } from '../core/settings-modal';
 import { loadDatabase, saveDatabase, calculateDailyCost, calculateDaysUsed } from './data';
 import type { BelongingsDatabase, BelongingsItem } from './types';
@@ -900,7 +899,6 @@ export function addItem(): Promise<void> {
 
 // ----- 创建主弹窗 -----
 export async function openBelongingsPanel(): Promise<void> {
-  checkAndShowChangelog('belongings');
   const app = getApp();
 
   if (document.getElementById('__gui_wu_ben__')) {

@@ -5,7 +5,6 @@
 import { Setting } from 'obsidian';
 import { notice, createIconBtn } from '../core/dom';
 import { escManager } from '../core/esc-manager';
-import { checkAndShowChangelog } from '../core/changelog';
 import { getSettings, saveSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
 import type BzSettings from '../settings';
@@ -24,7 +23,6 @@ let categoryFilter = '全部';
 let statusFilter = '全部';
 
 export function showLibrary(app: any) {
-  checkAndShowChangelog('library');
 
   if (libraryOverlay) {
     libraryOverlay.style.visibility = 'visible';

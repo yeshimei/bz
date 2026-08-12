@@ -33,7 +33,7 @@ _Avoid_: 类型、分类
 **备忘录 (Memo/Todo)**: 待办事项管理，数据 `CONFIG/STORAGE/memo.json`，场景分类（剪藏/工作/学习/生活/代码/公开课），Todo 弹窗（#todo-popup）。被 AIAgent 与闪念引用。
 _Avoid_: 待办列表、任务
 
-**归物本 (Belongings)**: 物品登记管理，数据目录 `CONFIG/STORAGE`（可配置），含 changelog（identifier 'belongings'）。
+**归物本 (Belongings)**: 物品登记管理，数据目录 `CONFIG/STORAGE`（可配置）。
 
 **剪藏本 (Clipping)**: `我的/文章` 的剪藏文章展示面板——搜索、站点过滤、排序、双击跳转、长按删除、反链笔记名显示（metadataCache.getBacklinksForFile）。
 
@@ -200,7 +200,6 @@ _Avoid_: 各脚本路径、存储路径们
 **筛选弹窗 (Filter Modal)**: 🔀 图标打开的筛选/排序弹窗（影视「筛选与排序」、书库「视图与筛选」），与 ⚙️ 域设置弹窗严格区分——🔀 只做筛选，⚙️ 只做设置。
 _Avoid_: 设置弹窗（指筛选时）
 
-**changelog**: 各脚本版本更新日志（CHANGELOGS[identifier]），localStorage 记录已读版本（`changelog_<id>_shown_version`），插件化后保留机制。
 
 **通知 (Notification)**: bz 自绘 toast 通知（`src/core/notice.ts`，ADR-0010），替代 Obsidian 原生 Notice 与 Q3 smartCat 气泡。右上角滑入 · z-index 100000 · 堆叠上限 5 · 点击关闭。类型图标即视觉前缀：**消息正文一律不带 emoji**（类型图标与正文 emoji 重复，2026-08-1x 用户决策）。11 种类型：info ℹ️ / success ✅ / warning ⚠️ / error ❌ / pause ⏸️ / accept ✨ / delete 🗑️ / confirm ✓ / restore ↩️ / skip 🚫 / archive 📁 / progress 转圈。支持动态消息（setMessage/setType）、进度条（setProgress，-1 不确定态）、富文本（title + action 按钮）。时长默认 3s、错误 5s、progress 不自动消失。
 **通知类型规范**: 新增通知时先查 ICONS 表（`src/core/notice.ts`）——已有类型直接用；确无匹配再新增（加 ICONS 项 + 颜色 class + 默认时长），**不得把 emoji 写进消息正文**。
