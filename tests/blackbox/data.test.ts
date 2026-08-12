@@ -46,7 +46,7 @@ import {
   buildNoteContent,
   parseNoteContent,
   parseWikilinkNames,
-} from '../../src/blackbox/notes';
+ parseWikilinks,} from '../../src/blackbox/notes';
 import type { BlackBoxData, Entry, Profile } from '../../src/blackbox/types';
 
 function makeApp(vault: MockVault) {
@@ -202,40 +202,51 @@ describe('笔记引擎纯函数', () => {
     expect(entryNoteTitle(l).length).toBe(1);
   });
 
-  it('parseWikilinkNames：[[名]] / [[名|别名]] / [[名#锚点]]', () => {
+  it('parseWikilinkNames：[[名]] / [[名|别名]] / [[名#锚点]]；parseWikilinks：完整路径解析', () => {
     expect(parseWikilinkNames('- 关联：[[提喻法]] [[借代|别名]] [[修辞#锚点]]')).toEqual(['提喻法', '借代', '修辞']);
     expect(parseWikilinkNames('无链接')).toEqual([]);
+    // 2026-08-12：关联双链改完整路径 [[路径|名]]
+    expect(parseWikilinks('[[黑匣子/概念/文学/共鸣|共鸣]] [[提喻法]]')).toEqual([
+      { main: '黑匣子/概念/文学/共鸣', alias: '共鸣' },
+      { main: '提喻法', alias: '' },
+    ]);
   });
 
-  it('三类笔记 roundtrip：frontmatter + 正文 + 关联区双向一致', () => {
-    const nameById = new Map([
-      ['bb_c2', '借代'],
-      ['bb_c1', '提喻法'],
-      ['bb_l1', '修辞是语言的弹性'],
+  it('三类笔记 roundtrip：frontmatter + 正文（完整路径双链）+ 关联区双向一致', () => {
+    const refs = new Map([
+      ['bb_c2', { name: '借代', path: '黑匣子/概念/借代.md' }],
+      ['bb_c1', { name: '提喻法', path: '黑匣子/概念/提喻法.md' }],
+      ['bb_l1', { name: '修辞是语言的弹性', path: '黑匣子/摘抄/修辞是语言的弹性.md' }],
     ]);
     const concept = createEntry({ type: 'concept', name: '提喻法', definition: '以部分代整体的修辞', related: ['bb_c2'] });
     const lit = createEntry({ type: 'literature', text: '修辞是语言的弹性，让有限词句装下无限情意。', source: '《诗学》', terms: ['bb_c1'], emotions: ['触动'], links: ['https://a.com'] });
     const thought = createEntry({ type: 'thought', text: '给妹妹买吉他，她笑了很久。', emotions: ['温暖'], people: ['pf_1'], scene: '琴行', toward: 'others' });
     const litPath = '黑匣子/摘抄/修辞是语言的弹性.md';
     const thoughtPath = '黑匣子/想法/给妹妹买吉他，她笑了很久。.md';
-    const cContent = buildNoteContent(concept, (id) => nameById.get(id));
-    expect(cContent).toContain('- 关联：[[借代]]');
+    const cContent = buildNoteContent(concept, (id) => refs.get(id));
+    expect(cContent).toContain('- 关联：[[黑匣子/概念/借代|借代]]'); // 完整路径双链
     const cBack = parseNoteContent(cContent, '黑匣子/概念/提喻法.md')!;
     expect(cBack.entry.name).toBe('提喻法');
     expect(cBack.entry.definition).toBe('以部分代整体的修辞');
-    expect(cBack.relatedNames).toEqual(['借代']);
+    expect(cBack.relatedNames).toEqual([
+      { ref: '借代', display: '借代' }, // fm.related（名字）
+      { ref: '黑匣子/概念/借代', display: '借代' }, // 正文关联区（完整路径）
+    ]); // data 层：fm 名字与正文路径解析到同一 id，related 去重
 
-    const lContent = buildNoteContent(lit, (id) => nameById.get(id));
+    const lContent = buildNoteContent(lit, (id) => refs.get(id));
     expect(lContent).toContain('来源：《诗学》');
-    expect(lContent).toContain('关联概念：[[提喻法]]');
+    expect(lContent).toContain('关联概念：[[黑匣子/概念/提喻法|提喻法]]');
     const lBack = parseNoteContent(lContent, litPath)!;
     expect(lBack.entry.text).toBe('修辞是语言的弹性，让有限词句装下无限情意。');
     expect(lBack.entry.source).toBe('《诗学》');
     expect(lBack.entry.links).toEqual(['https://a.com']);
     expect(lBack.entry.emotions).toEqual(['触动']);
-    expect(lBack.termsNames).toEqual(['提喻法']);
+    expect(lBack.termsNames).toEqual([
+      { ref: '提喻法', display: '提喻法' },
+      { ref: '黑匣子/概念/提喻法', display: '提喻法' },
+    ]);
 
-    const tContent = buildNoteContent(thought, (id) => nameById.get(id));
+    const tContent = buildNoteContent(thought, (id) => refs.get(id));
     const tBack = parseNoteContent(tContent, thoughtPath)!;
     expect(tBack.entry.text).toBe('给妹妹买吉他，她笑了很久。');
     expect(tBack.entry.emotions).toEqual(['温暖']);
@@ -707,8 +718,8 @@ describe('BlackBoxDataManager 笔记化写入', () => {
     await dm.addEntry(fresh, createEntry({ id: 'bb_new', type: 'concept', name: '隐喻', related: ['bb_old'] }));
     data = await dm.load();
     await dm.backfillRelated(data, 'bb_new', ['bb_old']);
-    // 旧概念笔记关联区补上 [[隐喻]]
-    expect(vault.files.get('黑匣子/概念/提喻法.md')).toContain('- 关联：[[隐喻]]');
+    // 旧概念笔记关联区补上 [[完整路径|名]]
+    expect(vault.files.get('黑匣子/概念/提喻法.md')).toContain('- 关联：[[黑匣子/概念/隐喻|隐喻]]');
     const back = await dm.load();
     const old = back.entries.find((e) => e.id === 'bb_old')!;
     expect(old.related).toContain('bb_new');
@@ -970,5 +981,56 @@ describe('同名概念（不同分类）关联解析（2026-08-12 需求）', ()
     const back = await dm.load();
     expect(back.entries.filter((e) => e.name === '提喻法').length).toBe(2);
     expect(new Set(back.entries.map((e) => e.id)).size).toBe(2); // id 不重复
+  });
+});
+
+describe('完整路径双链（2026-08-12：[[完整路径|标题]]）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => ({} as any));
+  });
+
+  it('正文 [[路径|名]] 精确匹配目标（同名概念不歧义），frontmatter 名字兜底匹配', async () => {
+    const vault = new MockVault();
+    // 两个同名概念（不同分类）
+    vault.files.set(
+      '黑匣子/概念/文学/共鸣.md',
+      '---\nid: bb_r1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\nname: 共鸣\n---\n写作中的情感共鸣\n'
+    );
+    vault.files.set(
+      '黑匣子/概念/心理学/共鸣.md',
+      '---\nid: bb_r2\ntype: concept\ncreatedAt: "2026-08-02T00:00:00.000Z"\nname: 共鸣\n---\n共情产生的心理现象\n'
+    );
+    // 新概念用完整路径双链指向「文学/共鸣」
+    vault.files.set(
+      '黑匣子/概念/文学/代入感.md',
+      '---\nid: bb_r3\ntype: concept\ncreatedAt: "2026-08-03T00:00:00.000Z"\nname: 代入感\n---\n让读者身临其境\n\n- 关联：[[黑匣子/概念/文学/共鸣|共鸣]]\n'
+    );
+    vault.files.set(
+      'CONFIG/STORAGE/blackbox.json',
+      JSON.stringify({ version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {} })
+    );
+    const { app } = setup(vault);
+    const data = await new BlackBoxDataManager(app).load();
+    const r3 = data.entries.find((e) => e.id === 'bb_r3')!;
+    expect(r3.related).toEqual(['bb_r1']); // 精确指向文学/共鸣，不歧义到心理学/共鸣
+  });
+
+  it('路径双链指向已删除笔记 → pendingLinks 用显示名（别名）', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      '黑匣子/概念/新概念.md',
+      '---\nid: bb_n1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\nname: 新概念\n---\n定义\n\n- 关联：[[黑匣子/概念/已删除的卡|旧名]] [[普通名字]]\n'
+    );
+    vault.files.set(
+      'CONFIG/STORAGE/blackbox.json',
+      JSON.stringify({ version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {} })
+    );
+    const { app } = setup(vault);
+    const data = await new BlackBoxDataManager(app).load();
+    const e = data.entries.find((x) => x.id === 'bb_n1')!;
+    expect(e.related).toEqual([]);
+    expect(e.pendingLinks).toEqual(['旧名', '普通名字']); // 显示名可读
   });
 });

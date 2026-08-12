@@ -634,7 +634,7 @@ describe('摘抄/想法直达命令（ticket 03：标题 AI 生成 + 提炼想�
     expect(vault.files.has('黑匣子/摘抄/修辞的弹性.md')).toBe(true);
     const note = vault.files.get('黑匣子/摘抄/修辞的弹性.md')!;
     expect(note).toContain('来源：[[文学课]]');
-    expect(note).toContain('关联概念：[[提喻法]]');
+    expect(note).toContain('关联概念：[[黑匣子/概念/提喻法|提喻法]]');
     // 水合：source + terms 解析回内存
     const d = await loaded(app, vault);
     const lit = d.entries.find((e: any) => e.type === 'literature')!;
@@ -701,11 +701,11 @@ describe('摘抄/想法直达命令（ticket 03：标题 AI 生成 + 提炼想�
       const d = await loaded(app, vault);
       expect(d.entries.filter((e: any) => e.type === 'thought').length).toBe(1);
     });
-    // 想法笔记落盘：底部「来自：[[修辞的弹性]]」
+    // 想法笔记落盘：底部「来自：[[完整路径|摘抄标题]]」双链
     const thoughtNotes = [...vault.files.keys()].filter((p) => p.startsWith('黑匣子/想法/'));
     expect(thoughtNotes.length).toBe(1);
     const thoughtNote = vault.files.get(thoughtNotes[0])!;
-    expect(thoughtNote).toContain('来自：[[修辞的弹性]]');
+    expect(thoughtNote).toContain('来自：[[黑匣子/摘抄/修辞的弹性|修辞的弹性]]');
     // 水合：想法 from 解析为摘抄 id
     const d = await loaded(app, vault);
     const thought = d.entries.find((e: any) => e.type === 'thought')!;

@@ -24,8 +24,10 @@ import {
   isBlackBoxNotePath,
   noteNameFromPath,
   parseNoteContent,
+  parseWikilinks,
   sanitizeFileName,
   typeDir,
+  type LinkRef,
 } from './notes';
 
 /** 黑匣子数据文件路径（storagePath 优先，未注入回退默认；尾斜杠清理与全仓一致） */
@@ -45,8 +47,25 @@ export function buildNameById(entries: Entry[]): Map<string, string> {
   const map = new Map<string, string>();
   for (const e of entries || []) {
     if (!e || !e.id) continue;
-    const name = e.type === 'concept' ? (e.name || '').trim() : entryNoteTitle(e);
+    const name = noteNameOf(e);
     if (name) map.set(e.id, name);
+  }
+  return map;
+}
+
+/** 条目 → 展示名（概念 = name；文献/想法 = title 或正文前 20 字） */
+export function noteNameOf(entry: Entry): string {
+  return entry.type === 'concept' ? (entry.name || '').trim() : entryNoteTitle(entry);
+}
+
+/** 条目 id → {name, path}（2026-08-12：正文关联双链写完整路径 `[[路径|名]]` 需要 path；path 取自 index） */
+export function buildNoteRefs(entries: Entry[], index: Record<string, string>): Map<string, { name: string; path: string }> {
+  const map = new Map<string, { name: string; path: string }>();
+  for (const e of entries || []) {
+    if (!e || !e.id) continue;
+    const name = noteNameOf(e);
+    const path = index[e.id];
+    if (name && path) map.set(e.id, { name, path });
   }
   return map;
 }
@@ -327,7 +346,7 @@ export class BlackBoxDataManager {
    * 解析失败/损坏的笔记跳过（下次 load 重试）。
    */
   private async hydrate(data: BlackBoxData): Promise<void> {
-    type Parsed = { entry: Entry; relatedNames: string[]; termsNames: string[]; fromName: string; path: string };
+    type Parsed = { entry: Entry; relatedNames: LinkRef[]; termsNames: LinkRef[]; fromName: LinkRef; path: string };
     const parsedList: Parsed[] = [];
     const entries: Entry[] = [];
     const indexAdded: Record<string, string> = {};
@@ -352,11 +371,13 @@ export class BlackBoxDataManager {
       entries.push(p.entry);
     }
     // 文献/想法标题/概念名已由 parseNoteContent 从 frontmatter 读取（缺省回退文件名）
-    // 关联区名字 → id（概念名 → id 列表：不同分类允许同名概念，`[[同名]]` 解析到全部同名 id；
-    // 全部条目名 → id 用于「来自」：单值，取第一个命中）
+    // 关联区引用 → id（2026-08-12：正文双链为完整路径 `[[路径|名]]`，先路径精确匹配（同名不歧义）
+    // → 名字匹配（旧格式 [[名]] / frontmatter）→ 都未命中 pendingLinks（可读 display））
+    const pathToId = new Map<string, string>();
     const conceptNameToIds = new Map<string, string[]>();
     const nameToId = new Map<string, string>();
     for (const p of parsedList) {
+      pathToId.set(p.path.replace(/\.md$/, ''), p.entry.id);
       const name = p.entry.type === 'concept' ? (p.entry.name || '').trim() : p.entry.title || '';
       if (!name) continue;
       if (p.entry.type === 'concept') {
@@ -366,30 +387,36 @@ export class BlackBoxDataManager {
       }
       if (!nameToId.has(name)) nameToId.set(name, p.entry.id);
     }
+    const resolveIds = (ref: string): string[] => {
+      const viaPath = pathToId.get(ref);
+      if (viaPath) return [viaPath];
+      return conceptNameToIds.get(ref) || [];
+    };
     for (const p of parsedList) {
       if (p.entry.type === 'concept') {
         const ids: string[] = [];
         const pending: string[] = [];
-        for (const n of p.relatedNames) {
-          const all = conceptNameToIds.get(n) || [];
-          if (all.length) ids.push(...all.filter((id) => id !== p.entry.id));
-          else if (!pending.includes(n)) pending.push(n);
+        for (const l of p.relatedNames) {
+          const all = resolveIds(l.ref).filter((id) => id !== p.entry.id);
+          if (all.length) ids.push(...all);
+          else if (!pending.includes(l.display)) pending.push(l.display);
         }
         p.entry.related = [...new Set(ids)];
         if (pending.length) p.entry.pendingLinks = pending;
       } else if (p.entry.type === 'literature') {
         const ids: string[] = [];
         const pending: string[] = [];
-        for (const n of p.termsNames) {
-          const all = conceptNameToIds.get(n) || [];
-          if (all.length) ids.push(...all.filter((id) => id !== p.entry.id));
-          else if (!pending.includes(n)) pending.push(n);
+        for (const l of p.termsNames) {
+          const all = resolveIds(l.ref).filter((id) => id !== p.entry.id);
+          if (all.length) ids.push(...all);
+          else if (!pending.includes(l.display)) pending.push(l.display);
         }
         p.entry.terms = [...new Set(ids)];
         if (pending.length) p.entry.pendingLinks = pending;
-      } else if (p.fromName) {
-        const id = nameToId.get(p.fromName);
-        p.entry.from = id && id !== p.entry.id ? id : p.fromName;
+      } else if (p.fromName.ref) {
+        const viaPath = pathToId.get(p.fromName.ref);
+        const id = viaPath || nameToId.get(p.fromName.ref);
+        p.entry.from = id && id !== p.entry.id ? id : p.fromName.display;
       }
     }
     data.entries = entries;
@@ -456,7 +483,7 @@ export class BlackBoxDataManager {
   }
 
   /** 写单条笔记（建目录兜底 + 去重路径 + 内容组装）；概念有分类 → `黑匣子/概念/<分类>/<名>.md`。返回最终路径。 */
-  private async writeNote(entry: Entry, nameById: Map<string, string>): Promise<string> {
+  private async writeNote(entry: Entry, refs: Map<string, { name: string; path: string }>): Promise<string> {
     const catDir =
       entry.type === 'concept' && entry.category && entry.category.trim()
         ? sanitizeFileName(entry.category.trim())
@@ -465,7 +492,7 @@ export class BlackBoxDataManager {
     await this.ensureFolder(BB_NOTE_ROOT);
     await this.ensureFolder(dir);
     const path = await this.uniquePath(`${dir}/${entryNoteTitle(entry)}.md`);
-    const content = buildNoteContent(entry, (id) => nameById.get(id));
+    const content = buildNoteContent(entry, (id) => refs.get(id));
     await this.app.vault.create(path, content);
     return path;
   }
@@ -476,15 +503,15 @@ export class BlackBoxDataManager {
     if (!path) return;
     const f = this.app.vault.getAbstractFileByPath(path);
     if (!f) return;
-    const nameById = buildNameById(data.entries);
-    await this.app.vault.modify(f as any, buildNoteContent(entry, (id) => nameById.get(id)));
+    const refs = buildNoteRefs(data.entries, data.index);
+    await this.app.vault.modify(f as any, buildNoteContent(entry, (id) => refs.get(id)));
   }
 
   /** 新增条目（三类均计入复盘阈值）：写笔记 + 索引 + 派生层落盘。返回录入后的条目总数与是否应自动触发静默复盘 */
   async addEntry(data: BlackBoxData, entry: Entry): Promise<{ count: number; shouldReview: boolean }> {
     const threshold = resolveReviewThreshold(data, tryGetSettings() as any);
-    const nameById = buildNameById([...data.entries, entry]);
-    const path = await this.writeNote(entry, nameById);
+    const refs = buildNoteRefs([...data.entries, entry], data.index);
+    const path = await this.writeNote(entry, refs);
     data.index[entry.id] = path;
     data.entries.push(entry);
     await this.save(data);
@@ -526,11 +553,12 @@ export class BlackBoxDataManager {
   /** 批量新增（卡片盒导入）：一次写全部笔记 + 索引 + 单次派生层落盘（不走 addEntry，不触发自动复盘） */
   async addEntries(data: BlackBoxData, entries: Entry[]): Promise<void> {
     if (!entries.length) return;
-    const nameById = buildNameById([...data.entries, ...entries]);
+    const refs = buildNoteRefs(data.entries, data.index);
     for (const entry of entries) {
-      const path = await this.writeNote(entry, nameById);
+      const path = await this.writeNote(entry, refs);
       data.index[entry.id] = path;
       data.entries.push(entry);
+      refs.set(entry.id, { name: noteNameOf(entry), path });
     }
     await this.save(data);
   }
@@ -627,7 +655,7 @@ export class BlackBoxDataManager {
     for (const e of data.entries) {
       if (e.type !== 'concept' || e.id === newEntryId) continue;
       if (relatedIds.includes(e.id) && !(e.related || []).includes(newEntryId)) {
-        e.related = [...(e.related || []), newEntryId].slice(0, 5);
+        e.related = [...new Set([...(e.related || []), newEntryId])];
         changed = true;
       }
     }
