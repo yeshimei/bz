@@ -1,11 +1,11 @@
 /**
  * 备忘录数据管理器（备忘录.js DataManager 逐字移植）
- * memo.json 读写（jsonStore）、场景/平台映射构建、条目 CRUD、公开课笔记检索。
+ * memo.json 读写（jsonStore）、场景解析、条目 CRUD、公开课笔记检索。
  */
 import moment from 'moment';
 import { jsonStore } from '../core/json-store';
 import { getApp } from '../core/app';
-import { generateId, extractUrlAndDisplay, DEFAULT_PLATFORM_MAP, getPlatformName as q3GetPlatformName } from '../core/utils';
+import { generateId, extractUrlAndDisplay } from '../core/utils';
 import type { MemoItem, MemoPosition } from './types';
 
 export interface BzSettingsLike {
@@ -18,22 +18,14 @@ export interface BzSettingsLike {
   movieFolderPath?: string;
   /** 场景列表（逗号分隔，空则内置默认） */
   memoScenarios?: string;
-  /** 平台映射（每行 域名=平台名，空则内置默认） */
-  memoPlatformMapping?: string;
   /** 打开笔记自动提醒 */
   openNoteReminder?: boolean;
-  /** 剪贴板监听 */
-  clipboardMonitor?: boolean;
   /** 默认排序方式：priority / due / created */
   memoSortMode?: string;
   /** 默认显示归档 */
   memoShowArchivedByDefault?: boolean;
   /** 新条目默认优先级：minor / important */
   memoDefaultPriority?: string;
-  /** 到期通知 */
-  memoDueNotify?: boolean;
-  /** 到期检查间隔（秒） */
-  memoDueCheckInterval?: string;
   /** 完成后自动归档 */
   memoAutoArchive?: boolean;
   /** 新条目默认场景（空=第一个） */
@@ -55,22 +47,6 @@ export function parseScenarios(raw: string | undefined): string[] {
   return list.length ? [...new Set(list)] : [...DEFAULTSCENARIOS];
 }
 
-/** 平台映射解析：每行 `域名=平台名`，空结果回退内置默认 */
-export function parsePlatformMapping(raw: string | undefined): { host: string; name: string }[] {
-  if (!raw || !raw.trim()) return [...DEFAULT_PLATFORM_MAP];
-  const list: { host: string; name: string }[] = [];
-  for (const line of raw.split(/[\n\r]+/)) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    const eq = trimmed.indexOf('=');
-    if (eq <= 0) continue; // 无 = 或 host 为空的行跳过
-    const host = trimmed.slice(0, eq).trim().toLowerCase();
-    const name = trimmed.slice(eq + 1).trim();
-    if (host && name) list.push({ host, name });
-  }
-  return list.length ? list : [...DEFAULT_PLATFORM_MAP];
-}
-
 /** 文件缓存中是否含「公开课」标签（正文标签或 frontmatter tags） */
 function hasCourseTag(cache: any): boolean {
   if (cache.tags && (cache.tags as any[]).some((t) => t.tag === '#公开课' || t.tag === '公开课')) return true;
@@ -81,7 +57,6 @@ function hasCourseTag(cache: any): boolean {
 export const DataManager = {
   todoFilePath: '',
   scenarios: [] as string[],
-  platformMap: [] as { host: string; name: string }[],
   _store: null as ReturnType<typeof jsonStore> | null,
   movieFolderPath: '我的/影视',
 
@@ -90,9 +65,8 @@ export const DataManager = {
     const folder = ((settings.storagePath || settings.todoFilePath) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
     this.todoFilePath = folder + '/memo.json';
     this._store = jsonStore(this.todoFilePath);
-    // 场景/平台映射：设置可编辑（逗号分隔场景 / 每行 域名=平台名），空则内置默认
+    // 场景：设置可编辑（逗号分隔），空则内置默认
     this.scenarios = parseScenarios(settings.memoScenarios);
-    this.platformMap = parsePlatformMapping(settings.memoPlatformMapping);
     this.movieFolderPath = settings.movieFolderPath || '我的/影视';
   },
 
@@ -190,13 +164,4 @@ export const DataManager = {
   getScenarios(): string[] {
     return this.scenarios;
   },
-  getPlatformMap(): { host: string; name: string }[] {
-    return this.platformMap;
-  },
 };
-
-/** getPlatformName（备忘录版：使用 DataManager.getPlatformMap） */
-export function getPlatformName(url: string | null): string | null {
-  if (!url) return null;
-  return q3GetPlatformName(url, DataManager.getPlatformMap() as any);
-}

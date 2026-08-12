@@ -32,7 +32,6 @@ function makeApp(vault: MockVault) {
 const SETTINGS = {
   todoFilePath: 'CONFIG/STORAGE',
   scenarios: '',
-  platformMapping: '',
   showFileName: true,
   autoPopupOnStart: false,
   movieFolderPath: '我的/影视',
@@ -284,7 +283,7 @@ describe('设置弹窗与新建默认值（第 9 轮设置扩展）', () => {
     vi.useRealTimers();
   });
 
-  it('⚙️ 设置弹窗含 14 项（提醒/剪贴板/显示/新建/场景分组）', async () => {
+  it('⚙️ 设置弹窗含 9 项（提醒/显示/新建/场景分组）', async () => {
     const vault = new MockVault();
     await initApp(vault);
     UIManager.showMain(null, false);
@@ -292,15 +291,11 @@ describe('设置弹窗与新建默认值（第 9 轮设置扩展）', () => {
     settingsBtn.click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     const names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
-    // 13 项设置 + 5 个分组标题 = 18 个 setting-item
-    expect(names.length).toBe(18);
+    // 9 项设置 + 4 个分组标题 = 13 个 setting-item
+    expect(names.length).toBe(13);
     // 项名称（润色后的启动弹窗文案）
     expect(names).toContain('启动时自动弹出');
     expect(names).toContain('打开笔记自动提醒');
-    expect(names).toContain('到期通知');
-    expect(names).toContain('到期检查间隔（秒）');
-    expect(names).toContain('剪贴板监听');
-    expect(names).toContain('平台映射');
     expect(names).toContain('默认排序方式');
     expect(names).toContain('默认显示归档');
     expect(names).toContain('到期时间格式');
@@ -308,6 +303,11 @@ describe('设置弹窗与新建默认值（第 9 轮设置扩展）', () => {
     expect(names).toContain('新条目默认场景');
     expect(names).toContain('完成后自动归档');
     expect(names).toContain('场景');
+    // 已删除：到期轮询（到期通知/到期检查间隔）与剪贴板监听/平台映射（ticket 59）
+    expect(names).not.toContain('到期通知');
+    expect(names).not.toContain('到期检查间隔（秒）');
+    expect(names).not.toContain('剪贴板监听');
+    expect(names).not.toContain('平台映射');
     // 旧 AI 推荐按钮不存在
     expect(document.getElementById('add-todo-ai-recommend')).toBeNull();
   });
