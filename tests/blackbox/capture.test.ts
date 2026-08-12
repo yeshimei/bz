@@ -344,8 +344,8 @@ describe('黑匣子录入弹窗（引导式）', () => {
     expect(thought.text).toContain('语言在偷懒');
     const concept = d.entries.find((e: any) => e.type === 'concept' && e.name === '修辞');
     expect(concept.definition).toContain('修辞手法');
-    const litNote = [...vault.files.keys()].find((p) => p.startsWith('黑匣子/摘抄/'));
-    expect(vault.files.get(litNote!)).toContain('关联概念：[[黑匣子/概念/提喻法|提喻法]] [[黑匣子/概念/修辞|修辞]]');
+    const litNote = [...vault.files.keys()].find((p) => p.startsWith('我的/黑匣子/摘抄/'));
+    expect(vault.files.get(litNote!)).toContain('关联概念：[[我的/黑匣子/概念/提喻法|提喻法]] [[我的/黑匣子/概念/修辞|修辞]]');
   });
 
   it('流转：中途关闭弹窗 → 已确认的概念回填、未确认的不创建不加', async () => {
@@ -660,8 +660,8 @@ describe('概念直达命令（ticket 02：bz-blackbox-capture-concept）', () =
     expect((await loaded(app, vault)).entries.find((e: any) => e.name === '提喻法').definition).toBe('以部分代整体');
     expect(document.getElementById('bz-blackbox-capture-popup')).toBeNull();
     // 概念笔记落盘
-    const notes = [...vault.files.keys()].filter((p) => p.startsWith('黑匣子/概念/'));
-    expect(notes).toContain('黑匣子/概念/提喻法.md');
+    const notes = [...vault.files.keys()].filter((p) => p.startsWith('我的/黑匣子/概念/'));
+    expect(notes).toContain('我的/黑匣子/概念/提喻法.md');
   });
 
   it('无选区：概念名可手动输入；文本有内容 → 按钮「确定录入」直接保存（不调 AI）', async () => {
@@ -745,10 +745,10 @@ describe('摘抄/想法直达命令（ticket 03：标题 AI 生成 + 提炼想�
     });
     expect(document.getElementById('bz-blackbox-capture-popup')).toBeNull(); // 保存即关
     // 笔记落盘：标题 = 分析标题建议
-    expect(vault.files.has('黑匣子/摘抄/修辞的弹性.md')).toBe(true);
-    const note = vault.files.get('黑匣子/摘抄/修辞的弹性.md')!;
+    expect(vault.files.has('我的/黑匣子/摘抄/修辞的弹性.md')).toBe(true);
+    const note = vault.files.get('我的/黑匣子/摘抄/修辞的弹性.md')!;
     expect(note).toContain('来源：[[文学课]]');
-    expect(note).toContain('关联概念：[[黑匣子/概念/提喻法|提喻法]]');
+    expect(note).toContain('关联概念：[[我的/黑匣子/概念/提喻法|提喻法]]');
     // 水合：source + terms 解析回内存
     const d = await loaded(app, vault);
     const lit = d.entries.find((e: any) => e.type === 'literature')!;
@@ -773,7 +773,7 @@ describe('摘抄/想法直达命令（ticket 03：标题 AI 生成 + 提炼想�
     await vi.waitFor(async () => {
       expect((await loaded(app, vault)).entries.some((e: any) => e.type === 'literature')).toBe(true);
     });
-    expect(vault.files.has('黑匣子/摘抄/修辞的弹性.md')).toBe(true); // AI 标题
+    expect(vault.files.has('我的/黑匣子/摘抄/修辞的弹性.md')).toBe(true); // AI 标题
   });
 
   it('摘抄保存：AI 标题失败 → 降级正文前 20 字（永不拒收）', async () => {
@@ -793,7 +793,7 @@ describe('摘抄/想法直达命令（ticket 03：标题 AI 生成 + 提炼想�
     });
     // 标题 = 正文前 20 字（去空白）
     const title = '修辞是语言的弹性，让有限词句装下无限情意。'.slice(0, 20);
-    expect(vault.files.has(`黑匣子/摘抄/${title}.md`)).toBe(true);
+    expect(vault.files.has(`我的/黑匣子/摘抄/${title}.md`)).toBe(true);
   });
 
   it('手输想法 → 独立想法笔记 + 摘抄笔记底部「来自：[[摘抄]]」双链', async () => {
@@ -817,10 +817,10 @@ describe('摘抄/想法直达命令（ticket 03：标题 AI 生成 + 提炼想�
       expect(d.entries.filter((e: any) => e.type === 'thought').length).toBe(1);
     });
     // 想法笔记落盘：底部「来自：[[完整路径|摘抄标题]]」双链
-    const thoughtNotes = [...vault.files.keys()].filter((p) => p.startsWith('黑匣子/想法/'));
+    const thoughtNotes = [...vault.files.keys()].filter((p) => p.startsWith('我的/黑匣子/想法/'));
     expect(thoughtNotes.length).toBe(1);
     const thoughtNote = vault.files.get(thoughtNotes[0])!;
-    expect(thoughtNote).toContain('来自：[[黑匣子/摘抄/修辞的弹性|修辞的弹性]]');
+    expect(thoughtNote).toContain('来自：[[我的/黑匣子/摘抄/修辞的弹性|修辞的弹性]]');
     // 水合：想法 from 解析为摘抄 id
     const d = await loaded(app, vault);
     const thought = d.entries.find((e: any) => e.type === 'thought')!;
@@ -844,7 +844,7 @@ describe('摘抄/想法直达命令（ticket 03：标题 AI 生成 + 提炼想�
     });
     expect(document.getElementById('bz-blackbox-capture-popup')).toBeNull(); // 保存即关
     const title = '给妹妹买吉他，她笑了很久。'.slice(0, 20);
-    expect(vault.files.has(`黑匣子/想法/${title}.md`)).toBe(true); // AI 失败降级前 20 字
+    expect(vault.files.has(`我的/黑匣子/想法/${title}.md`)).toBe(true); // AI 失败降级前 20 字
   });
 
   it('想法直达：AI 生成标题成功 → 文件名 = AI 标题', async () => {
@@ -859,7 +859,7 @@ describe('摘抄/想法直达命令（ticket 03：标题 AI 生成 + 提炼想�
     await vi.waitFor(async () => {
       expect((await loaded(app, vault)).entries.some((e: any) => e.type === 'thought')).toBe(true);
     });
-    expect(vault.files.has('黑匣子/想法/夏夜的吉他声.md')).toBe(true);
+    expect(vault.files.has('我的/黑匣子/想法/夏夜的吉他声.md')).toBe(true);
   });
 
   it('AI 自动分类（2026-08-12 需求）：保存后异步归入分类文件夹（移动+fm+index+toast），分类输入框已移除', async () => {
@@ -882,15 +882,15 @@ describe('摘抄/想法直达命令（ticket 03：标题 AI 生成 + 提炼想�
     document.getElementById('bz-blackbox-concept-gen')!.click(); // 确认录入
     // 等异步分类完成：笔记移动到 文学/ 子文件夹 + fm category + index
     await vi.waitFor(async () => {
-      expect(vault.files.has('黑匣子/概念/文学/隐喻.md')).toBe(true);
+      expect(vault.files.has('我的/黑匣子/概念/文学/隐喻.md')).toBe(true);
     });
     expect(hasNotice(/已自动归入「文学」/)).toBe(true);
-    const raw = vault.files.get('黑匣子/概念/文学/隐喻.md')!;
+    const raw = vault.files.get('我的/黑匣子/概念/文学/隐喻.md')!;
     expect(raw).toContain('category: 文学');
     const d = await new BlackBoxDataManager(app).load();
     const entry = d.entries.find((e) => e.name === '隐喻')!;
     expect(entry.category).toBe('文学');
-    expect(d.index[entry.id]).toBe('黑匣子/概念/文学/隐喻.md');
+    expect(d.index[entry.id]).toBe('我的/黑匣子/概念/文学/隐喻.md');
   });
 
   it('AI 自动分类失败（Ollama 不可用）→ 静默留根目录，不打扰录入', async () => {
@@ -912,8 +912,8 @@ describe('摘抄/想法直达命令（ticket 03：标题 AI 生成 + 提炼想�
     });
     // 分类失败：静默留在根目录
     await new Promise((r) => setTimeout(r, 500));
-    expect(vault.files.has('黑匣子/概念/隐喻.md')).toBe(true);
-    expect(vault.files.has('黑匣子/概念/文学/隐喻.md')).toBe(false);
+    expect(vault.files.has('我的/黑匣子/概念/隐喻.md')).toBe(true);
+    expect(vault.files.has('我的/黑匣子/概念/文学/隐喻.md')).toBe(false);
     expect(hasNotice(/已自动归入/)).toBe(false); // 不打扰
   });
 });

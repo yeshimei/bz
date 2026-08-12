@@ -22,15 +22,15 @@ function setup(vault: MockVault = new MockVault(), settings: any = {}) {
 /** 预置 v3：2 概念 1 摘抄（含索引） */
 function seedNotes(vault: MockVault): void {
   vault.files.set(
-    '黑匣子/概念/提喻法.md',
+    '我的/黑匣子/概念/提喻法.md',
     '---\nid: bb_c1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\n---\n以部分代整体的修辞\n'
   );
   vault.files.set(
-    '黑匣子/概念/借代.md',
+    '我的/黑匣子/概念/借代.md',
     '---\nid: bb_c2\ntype: concept\ncreatedAt: "2026-08-02T00:00:00.000Z"\n---\n用相关事物代替本体\n'
   );
   vault.files.set(
-    '黑匣子/摘抄/修辞的弹性.md',
+    '我的/黑匣子/摘抄/修辞的弹性.md',
     '---\nid: bb_l1\ntype: literature\ncreatedAt: "2026-08-03T00:00:00.000Z"\nsource: "《诗学》"\n---\n修辞是语言的弹性，让有限词句装下无限情意。\n'
   );
   vault.files.set(
@@ -46,9 +46,9 @@ function seedNotes(vault: MockVault): void {
       chat: [],
       meta: {},
       index: {
-        bb_c1: '黑匣子/概念/提喻法.md',
-        bb_c2: '黑匣子/概念/借代.md',
-        bb_l1: '黑匣子/摘抄/修辞的弹性.md',
+        bb_c1: '我的/黑匣子/概念/提喻法.md',
+        bb_c2: '我的/黑匣子/概念/借代.md',
+        bb_l1: '我的/黑匣子/摘抄/修辞的弹性.md',
       },
     })
   );
@@ -81,8 +81,8 @@ describe('黑匣子实时同步（ticket 05）', () => {
     await openBlackBoxPanel(app);
     expect(streamCards().length).toBe(3);
     // 用户改笔记正文
-    vault.files.set('黑匣子/概念/提喻法.md', '---\nid: bb_c1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\n---\n以部分代整体的修辞（用户编辑后的新定义）\n');
-    (app.metadataCache as any).emit('changed', vault.file('黑匣子/概念/提喻法.md'));
+    vault.files.set('我的/黑匣子/概念/提喻法.md', '---\nid: bb_c1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\n---\n以部分代整体的修辞（用户编辑后的新定义）\n');
+    (app.metadataCache as any).emit('changed', vault.file('我的/黑匣子/概念/提喻法.md'));
     await vi.waitFor(() => {
       const card = streamCards().find((c) => c.textContent.includes('提喻法')) as HTMLElement;
       expect(card.textContent).toContain('用户编辑后的新定义');
@@ -99,12 +99,12 @@ describe('黑匣子实时同步（ticket 05）', () => {
     ensureBlackBoxSync(app);
     await openBlackBoxPanel(app);
     // 用户改名：提喻法.md → 提喻法与借代.md
-    const old = vault.file('黑匣子/概念/提喻法.md');
-    await vault.rename(old, '黑匣子/概念/提喻法与借代.md');
-    vault.emit('rename', vault.file('黑匣子/概念/提喻法与借代.md'), '黑匣子/概念/提喻法.md');
+    const old = vault.file('我的/黑匣子/概念/提喻法.md');
+    await vault.rename(old, '我的/黑匣子/概念/提喻法与借代.md');
+    vault.emit('rename', vault.file('我的/黑匣子/概念/提喻法与借代.md'), '我的/黑匣子/概念/提喻法.md');
     await vi.waitFor(async () => {
       const d = await new BlackBoxDataManager(app).load();
-      expect(d.index['bb_c1']).toBe('黑匣子/概念/提喻法与借代.md'); // 重映射
+      expect(d.index['bb_c1']).toBe('我的/黑匣子/概念/提喻法与借代.md'); // 重映射
       expect(d.entries.length).toBe(3);
     });
     // 面板仍显示 3 条（改名后不丢条）
@@ -118,8 +118,8 @@ describe('黑匣子实时同步（ticket 05）', () => {
     ensureBlackBoxSync(app);
     await openBlackBoxPanel(app);
     expect(streamCards().length).toBe(3);
-    await vault.delete(vault.file('黑匣子/概念/借代.md'));
-    vault.emit('delete', vault.file('黑匣子/概念/借代.md'));
+    await vault.delete(vault.file('我的/黑匣子/概念/借代.md'));
+    vault.emit('delete', vault.file('我的/黑匣子/概念/借代.md'));
     await vi.waitFor(() => {
       expect(streamCards().length).toBe(2); // 面板实时移除
     });
@@ -135,14 +135,14 @@ describe('黑匣子实时同步（ticket 05）', () => {
     await openBlackBoxPanel(app);
     // 用户手动新建一篇合法 bb 笔记（vault.create 不再触发实时刷新）
     await vault.create(
-      '黑匣子/想法/夏夜的吉他声.md',
+      '我的/黑匣子/想法/夏夜的吉他声.md',
       '---\nid: bb_t9\ntype: thought\ncreatedAt: "2026-08-09T00:00:00.000Z"\n---\n给妹妹买吉他，她笑了很久。\n'
     );
     await new Promise((r) => setTimeout(r, 400)); // 防抖窗口内无刷新
     expect(streamCards().length).toBe(3); // 面板未实时出现（create 不监听）
     // 下次 load（打开面板/任意事件）→ 孤儿自愈入索引
     const d = await new BlackBoxDataManager(app).load();
-    expect(d.index['bb_t9']).toBe('黑匣子/想法/夏夜的吉他声.md');
+    expect(d.index['bb_t9']).toBe('我的/黑匣子/想法/夏夜的吉他声.md');
     expect(d.entries.length).toBe(4);
     await openBlackBoxPanel(app);
     expect(streamCards().length).toBe(4); // 打开时水合后出现
@@ -158,8 +158,8 @@ describe('黑匣子实时同步（ticket 05）', () => {
     (document.querySelector('.bz-blackbox-type-btn[data-type="concept"]') as HTMLElement).click();
     expect(streamCards().length).toBe(2);
     // 编辑摘抄（非概念）→ 刷新后筛选仍生效
-    vault.files.set('黑匣子/摘抄/修辞的弹性.md', '---\nid: bb_l1\ntype: literature\ncreatedAt: "2026-08-03T00:00:00.000Z"\nsource: "《诗学》"\n---\n修辞是语言的弹性。（编辑）\n');
-    (app.metadataCache as any).emit('changed', vault.file('黑匣子/摘抄/修辞的弹性.md'));
+    vault.files.set('我的/黑匣子/摘抄/修辞的弹性.md', '---\nid: bb_l1\ntype: literature\ncreatedAt: "2026-08-03T00:00:00.000Z"\nsource: "《诗学》"\n---\n修辞是语言的弹性。（编辑）\n');
+    (app.metadataCache as any).emit('changed', vault.file('我的/黑匣子/摘抄/修辞的弹性.md'));
     await vi.waitFor(async () => {
       const d = await new BlackBoxDataManager(app).load();
       expect(d.entries.find((e: any) => e.id === 'bb_l1')!.text).toContain('（编辑）');
@@ -173,13 +173,13 @@ describe('黑匣子实时同步（ticket 05）', () => {
     const { app } = setup(vault);
     ensureBlackBoxSync(app);
     // 连续三次事件（改名 + 编辑 + 删除）→ 防抖合并一次重水合
-    await vault.rename(vault.file('黑匣子/概念/借代.md'), '黑匣子/概念/借代法.md');
-    vault.emit('rename', vault.file('黑匣子/概念/借代法.md'), '黑匣子/概念/借代.md');
-    vault.files.set('黑匣子/概念/提喻法.md', '---\nid: bb_c1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\n---\n编辑后定义\n');
-    (app.metadataCache as any).emit('changed', vault.file('黑匣子/概念/提喻法.md'));
+    await vault.rename(vault.file('我的/黑匣子/概念/借代.md'), '我的/黑匣子/概念/借代法.md');
+    vault.emit('rename', vault.file('我的/黑匣子/概念/借代法.md'), '我的/黑匣子/概念/借代.md');
+    vault.files.set('我的/黑匣子/概念/提喻法.md', '---\nid: bb_c1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\n---\n编辑后定义\n');
+    (app.metadataCache as any).emit('changed', vault.file('我的/黑匣子/概念/提喻法.md'));
     await new Promise((r) => setTimeout(r, 400));
     const d = await new BlackBoxDataManager(app).load();
-    expect(d.index['bb_c2']).toBe('黑匣子/概念/借代法.md');
+    expect(d.index['bb_c2']).toBe('我的/黑匣子/概念/借代法.md');
     expect(d.entries.find((e: any) => e.id === 'bb_c1')!.definition).toBe('编辑后定义');
     // 打开面板显示最新
     await openBlackBoxPanel(app);
@@ -191,19 +191,19 @@ describe('黑匣子实时同步（ticket 05）', () => {
     seedNotes(vault);
     const { app } = setup(vault);
     ensureBlackBoxSync(app);
-    // 手动移动到 黑匣子/概念/文学/（分类文件夹）
-    const old = vault.file('黑匣子/概念/提喻法.md');
-    await vault.rename(old, '黑匣子/概念/文学/提喻法.md');
-    vault.emit('rename', vault.file('黑匣子/概念/文学/提喻法.md'), '黑匣子/概念/提喻法.md');
+    // 手动移动到 我的/黑匣子/概念/文学/（分类文件夹）
+    const old = vault.file('我的/黑匣子/概念/提喻法.md');
+    await vault.rename(old, '我的/黑匣子/概念/文学/提喻法.md');
+    vault.emit('rename', vault.file('我的/黑匣子/概念/文学/提喻法.md'), '我的/黑匣子/概念/提喻法.md');
     await new Promise((r) => setTimeout(r, 400));
-    const raw = vault.files.get('黑匣子/概念/文学/提喻法.md')!;
+    const raw = vault.files.get('我的/黑匣子/概念/文学/提喻法.md')!;
     expect(raw).toContain('category: "文学"'); // sync 层写死带引号（YAML 合法，解析器剥引号）
     // 拖回类型根目录 → category 移除
-    const moved = vault.file('黑匣子/概念/文学/提喻法.md');
-    await vault.rename(moved, '黑匣子/概念/提喻法.md');
-    vault.emit('rename', vault.file('黑匣子/概念/提喻法.md'), '黑匣子/概念/文学/提喻法.md');
+    const moved = vault.file('我的/黑匣子/概念/文学/提喻法.md');
+    await vault.rename(moved, '我的/黑匣子/概念/提喻法.md');
+    vault.emit('rename', vault.file('我的/黑匣子/概念/提喻法.md'), '我的/黑匣子/概念/文学/提喻法.md');
     await new Promise((r) => setTimeout(r, 400));
-    const back = vault.files.get('黑匣子/概念/提喻法.md')!;
+    const back = vault.files.get('我的/黑匣子/概念/提喻法.md')!;
     expect(back).not.toContain('category:');
   });
 });

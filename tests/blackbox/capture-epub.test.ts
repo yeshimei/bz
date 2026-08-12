@@ -99,7 +99,7 @@ describe('书内选区录入：概念（ADR-0016）', () => {
     expect(concept!.links).toEqual([EPUB_LINK]);
 
     // 笔记落盘：frontmatter links + 正文 `来源：` 行
-    const note = vault.files.get('黑匣子/概念/提喻法.md') || '';
+    const note = vault.files.get('我的/黑匣子/概念/提喻法.md') || '';
     expect(note).toContain(`  - ${EPUB_LINK}`);
     expect(note).toContain(`来源：${EPUB_LINK}`);
   });
@@ -145,7 +145,7 @@ describe('书内选区录入：摘抄（ADR-0016）', () => {
     expect(lit!.text).toBe('宇宙很大，生活更大。');
     expect(lit!.source).toBe(EPUB_LINK);
 
-    const notePath = [...vault.files.keys()].find((p) => p.startsWith('黑匣子/摘抄/'));
+    const notePath = [...vault.files.keys()].find((p) => p.startsWith('我的/黑匣子/摘抄/'));
     expect(notePath).toBeTruthy();
     expect(vault.files.get(notePath!)).toContain(`来源：${EPUB_LINK}`);
   });
@@ -170,7 +170,7 @@ describe('对称来源回归：无外部参数（ADR-0016）', () => {
     const m = new BlackBoxDataManager(app);
     const concept = (await m.load()).entries.find((e) => e.type === 'concept');
     expect(concept!.links).toEqual(['[[文学课]]']);
-    expect(vault.files.get('黑匣子/概念/提喻法.md')).toContain('来源：[[文学课]]');
+    expect(vault.files.get('我的/黑匣子/概念/提喻法.md')).toContain('来源：[[文学课]]');
   });
 
   it('无选区无外部参数 → 概念无来源（links 为空，笔记无 `来源：` 行）', async () => {
@@ -186,7 +186,7 @@ describe('对称来源回归：无外部参数（ADR-0016）', () => {
       expect((await m.load()).entries.length).toBe(1);
     });
 
-    const note = vault.files.get('黑匣子/概念/提喻法.md') || '';
+    const note = vault.files.get('我的/黑匣子/概念/提喻法.md') || '';
     expect(note).not.toContain('来源：');
     const m = new BlackBoxDataManager(app);
     const concept = (await m.load()).entries.find((e) => e.type === 'concept');
