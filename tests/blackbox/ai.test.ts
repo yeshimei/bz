@@ -179,14 +179,22 @@ describe('JSON 容错解析', () => {
     });
     expect(parseConceptJson('{}')).toBeNull();
     expect(parseLiteratureJson('{"matched": ["熵增"], "newConcepts": ["提喻法"]}')).toEqual({
+      title: '', // 旧模型无 title → 缺省为空
       matched: ['熵增'],
       newConcepts: ['提喻法'],
       insight: '', // 旧模型无 insight → 缺省为空
     });
     expect(parseLiteratureJson('{"matched": [], "newConcepts": [], "insight": "修辞让语言装下情意。"}')).toEqual({
+      title: '',
       matched: [],
       newConcepts: [],
       insight: '修辞让语言装下情意。',
+    });
+    expect(parseLiteratureJson('{"title": "修辞的弹性", "matched": [], "newConcepts": [], "insight": ""}')).toEqual({
+      title: '修辞的弹性',
+      matched: [],
+      newConcepts: [],
+      insight: '',
     });
     expect(parseLiteratureJson('bad')).toBeNull();
   });

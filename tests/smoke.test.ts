@@ -54,7 +54,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-quiz-update', 'bz-quiz-open',
   'bz-flash-open', 'bz-flash-chat',
   'bz-pomodoro-open',
-  'bz-blackbox-capture', 'bz-blackbox-capture-concept', 'bz-blackbox-open', 'bz-blackbox-review', 'bz-blackbox-panel', 'bz-blackbox-import-cardbox',
+  'bz-blackbox-capture', 'bz-blackbox-capture-concept', 'bz-blackbox-capture-literature', 'bz-blackbox-capture-thought', 'bz-blackbox-open', 'bz-blackbox-review', 'bz-blackbox-panel', 'bz-blackbox-import-cardbox',
   'bz-bili-open',
   'bz-diary-open',
 ];

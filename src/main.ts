@@ -28,7 +28,7 @@ import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverd
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
 import { openPomodoro, unloadPomodoro, ensurePomodoro } from './pomodoro';
-import { unloadBlackBox, openBlackBoxCapture, openBlackBoxCaptureConcept, openBlackBoxChat, openBlackBoxPanel, openCardboxImport, manualReview } from './blackbox';
+import { unloadBlackBox, openBlackBoxCapture, openBlackBoxCaptureConcept, openBlackBoxCaptureLiterature, openBlackBoxCaptureThought, openBlackBoxChat, openBlackBoxPanel, openCardboxImport, manualReview } from './blackbox';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // B站下载器启动命令（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
 import { openBiliDownloader } from './bili-downloader';
@@ -95,6 +95,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 黑匣子（ticket 33-45 新域；v2 面板命令 ticket 41）
   { id: 'bz-blackbox-capture', name: '录入', icon: 'inbox', callback: () => openBlackBoxCapture(getApp()) },
   { id: 'bz-blackbox-capture-concept', name: '概念录入', icon: 'brain', callback: () => openBlackBoxCaptureConcept(getApp()) },
+  { id: 'bz-blackbox-capture-literature', name: '摘抄录入', icon: 'bookmark', callback: () => openBlackBoxCaptureLiterature(getApp()) },
+  { id: 'bz-blackbox-capture-thought', name: '想法录入', icon: 'lightbulb', callback: () => openBlackBoxCaptureThought(getApp()) },
   { id: 'bz-blackbox-open', name: '黑匣子', icon: 'message-circle-heart', callback: () => openBlackBoxChat(getApp()) },
   { id: 'bz-blackbox-review', name: '复盘', icon: 'sprout', callback: () => manualReview(getApp()) },
   { id: 'bz-blackbox-panel', name: '黑匣子面板', icon: 'layout-grid', callback: () => openBlackBoxPanel(getApp()) },

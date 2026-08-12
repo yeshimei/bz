@@ -50,10 +50,10 @@ export function noteNameFromPath(path: string): string {
   return base.replace(/-\d+$/, '');
 }
 
-/** 条目 → 笔记标题（文件名）：概念 = 概念名；文献/想法 = 正文前 20 字（去空白）。
- * 新录入的 AI 标题（ticket 03）在保存前替换此值。 */
+/** 条目 → 笔记标题（文件名）：概念 = 概念名；文献/想法 = AI 标题（ticket 03）或正文前 20 字（去空白）降级。 */
 export function entryNoteTitle(entry: Entry): string {
   if (entry.type === 'concept') return sanitizeFileName(entry.name || '');
+  if (entry.title && entry.title.trim()) return sanitizeFileName(entry.title.trim());
   const text = (entry.text || '').replace(/\s+/g, ' ').trim();
   return sanitizeFileName(text.slice(0, 20));
 }

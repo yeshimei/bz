@@ -9,7 +9,7 @@ import { openBlackBoxPanel, closeBlackBoxPanel, unloadBlackBoxPanel } from './pa
 import { manualReview, triggerAutoReview, unloadBlackBoxReview } from './review';
 import { openCardboxImport, closeCardboxImport, unloadCardboxImport } from './import-ui';
 
-export { openBlackBoxCapture, closeBlackBoxCapture, unloadBlackBoxCapture, openBlackBoxCaptureConcept } from './capture';
+export { openBlackBoxCapture, closeBlackBoxCapture, unloadBlackBoxCapture, openBlackBoxCaptureConcept, openBlackBoxCaptureLiterature, openBlackBoxCaptureThought } from './capture';
 export { openBlackBoxChat, closeBlackBoxChat, unloadBlackBoxChat } from './chat';
 export { openBlackBoxPanel, closeBlackBoxPanel, unloadBlackBoxPanel } from './panel';
 export { manualReview, triggerAutoReview, unloadBlackBoxReview } from './review';
