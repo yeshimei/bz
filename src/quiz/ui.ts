@@ -41,7 +41,6 @@ export class QuizMasterUI {
   generator = new QuestionGenerator();
 
   constructor() {
-    this.injectStyles();
   }
 
   shuffleArray<T>(arr: T[]): T[] {
@@ -50,90 +49,6 @@ export class QuizMasterUI {
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
     return arr;
-  }
-
-  injectStyles(): void {
-    if (document.querySelector('style[data-quiz-styles]')) return;
-    const style = document.createElement('style');
-    style.setAttribute('data-quiz-styles', '');
-    style.textContent = `
-      #quiz-mask {
-        backdrop-filter: blur(2px);
-      }
-      #quiz-popup {
-        background: var(--background-primary);
-        border-radius: 12px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        padding: 24px;
-        max-width: 600px;
-        width: 90%;
-        max-height: 80vh;
-        display: flex;
-        flex-direction: column;
-        position: relative;
-        transition: none;
-      }
-      .quiz-option-btn {
-        padding:10px 14px;
-        border:1px solid var(--background-modifier-border);
-        border-radius:6px;
-        background:var(--background-secondary);
-        text-align:left;
-        cursor:pointer;
-        font-size:15px;
-        transition:background 0.2s;
-        margin:4px 0;
-        display:flex;
-        align-items:center;
-        gap:8px;
-        box-shadow: none !important;
-      }
-      .quiz-option-btn:hover:not(.disabled) { background:var(--background-modifier-hover); }
-      .quiz-option-btn.correct { border-color:#52c41a !important; background:rgba(82,196,26,0.15); }
-      .quiz-option-btn.wrong { border-color:#ff4757 !important; background:rgba(255,71,87,0.15); }
-      .quiz-option-btn.selected { border-color:var(--interactive-accent); background:var(--background-modifier-hover); }
-      .quiz-option-btn .check-mark { opacity:0; transition:opacity 0.2s; }
-      .quiz-option-btn.selected .check-mark { opacity:1; }
-      .quiz-submit-btn {
-        margin-top:16px;
-        padding:8px 20px;
-        border:none;
-        border-radius:6px;
-        background:var(--interactive-accent);
-        color:var(--text-on-accent);
-        font-size:15px;
-        cursor:pointer;
-        align-self:center;
-        box-shadow: none !important;
-      }
-      .quiz-submit-btn:hover { opacity:0.9; }
-      .quiz-submit-btn:disabled { opacity:0.5; cursor:not-allowed; }
-      .quiz-next-btn {
-        margin-top:16px;
-        padding:8px 20px;
-        border:1px solid var(--background-modifier-border);
-        border-radius:6px;
-        background:var(--background-secondary);
-        color:var(--text-normal);
-        font-size:15px;
-        cursor:pointer;
-        align-self:center;
-        box-shadow: none !important;
-      }
-      .quiz-next-btn:hover { background:var(--background-modifier-hover); }
-      /* Loading 样式 */
-      #quiz-loading .spinner {
-        display: inline-block;
-        width: 40px;
-        height: 40px;
-        border: 4px solid var(--background-modifier-border);
-        border-top-color: var(--interactive-accent);
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-      }
-      @keyframes spin { to { transform: rotate(360deg); } }
-    `;
-    document.head.appendChild(style);
   }
 
   /** 更新题库（基于活跃笔记，空题目则生成；失败 Notice 逐字） */

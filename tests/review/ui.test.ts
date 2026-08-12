@@ -54,7 +54,7 @@ describe('UIManager', () => {
     expect(popup.style.display).toBe('none');
     expect(mask.style.zIndex).toBe('9998');
     expect(popup.style.maxWidth).toBe('800px');
-    expect(document.querySelector('style[data-review-styles]')).not.toBeNull();
+    expect(document.querySelector('style[data-review-styles]')).toBeNull(); // 样式已收敛 styles.css，不再运行时注入
     expect(document.getElementById('review-btn-add')).not.toBeNull();
     // 无 emoji 标题
     expect(popup.querySelector('h3')!.textContent).toBe('复习计划');

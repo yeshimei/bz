@@ -9,199 +9,11 @@ import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { confirm } from '../core/confirm';
-import { createIconBtn, injectStyles } from '../core/dom';
+import { createIconBtn } from '../core/dom';
 import { formatRelativeTime } from '../core/utils';
 import { getSettings, saveSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
 import { DataManager, type PasswordEntry } from './data';
-
-const PW_STYLES = `
-    #pw-mask { backdrop-filter: blur(2px); }
-    #pw-popup { animation: slideUp 0.3s ease-out; }
-    @keyframes slideUp {
-        from { opacity:0; transform: translate(-50%, -40%); }
-        to { opacity:1; transform: translate(-50%, -50%); }
-    }
-    #pw-entries-container::-webkit-scrollbar { width: 6px; }
-    #pw-entries-container::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
-
-    .pw-search-container {
-        padding: 0 24px 12px 24px;
-        display: none;
-    }
-    .pw-search-container input {
-        width: 100%;
-        padding: 6px 12px;
-        border-radius: 6px;
-        border: 1px solid var(--background-modifier-border);
-        background: var(--background-primary);
-        color: var(--text-normal);
-        font-size: 14px;
-        box-sizing: border-box;
-    }
-
-    .pw-entry-card {
-        display: flex;
-        flex-direction: column;
-        padding: 10px 0;
-        border-bottom: 1px solid var(--background-modifier-border);
-    }
-    .pw-entry-top {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: nowrap;
-    }
-    .pw-account-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        flex: 0 0 40%;
-        max-width: 40%;
-        overflow: hidden;
-    }
-    .pw-platform-link, .pw-platform-text {
-        flex: 0 0 100px;
-        font-weight: 600;
-        font-size: 14px;
-        text-decoration: none;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .pw-platform-link {
-        color: var(--text-accent);
-    }
-    .pw-platform-link:hover {
-        text-decoration: underline;
-    }
-    .pw-platform-text {
-        color: var(--text-muted);
-    }
-    .pw-account {
-        flex: 1;
-        font-size: 14px;
-        color: var(--text-normal);
-        cursor: pointer;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .pw-password-area {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        flex: 1;
-        min-width: 0;
-        cursor: pointer;
-    }
-    .pw-password-text {
-        font-family: monospace;
-        cursor: pointer;
-        color: var(--text-muted);
-        font-size: 14px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .pw-eye {
-        cursor: pointer;
-        font-size: 14px;
-        user-select: none;
-        opacity: 0.6;
-        flex-shrink: 0;
-    }
-    .pw-date {
-        font-size: 12px;
-        color: var(--text-faint);
-        flex: 0 0 auto;
-        white-space: nowrap;
-        cursor: pointer;
-    }
-    .pw-note {
-        margin-top: 4px;
-        font-size: 13px;
-        color: var(--text-muted);
-        padding: 10px 0;
-        cursor: pointer;
-        white-space: pre-wrap;
-        word-break: break-word;
-    }
-    .pw-note.hidden {
-        color: transparent;
-        background: repeating-linear-gradient(45deg, var(--background-modifier-border) 0px, var(--background-modifier-border) 2px, transparent 2px, transparent 4px);
-        border-radius: 4px;
-        padding: 10px 0;
-        min-height: 1.2em;
-    }
-
-    .pw-add-dialog input, .pw-add-dialog textarea {
-        width: 100%;
-        padding: 8px 12px;
-        border-radius: 6px;
-        font-size: 14px;
-        box-sizing: border-box;
-        margin-bottom: 12px;
-        border: 1px solid var(--background-modifier-border);
-        background: var(--background-primary);
-        color: var(--text-normal);
-    }
-    .pw-add-dialog textarea {
-        resize: vertical;
-        min-height: 60px;
-    }
-    .pw-generate-btn {
-        padding: 4px 12px;
-        border-radius: 16px;
-        background: var(--interactive-accent);
-        color: var(--text-on-accent);
-        border: none;
-        cursor: pointer;
-        font-size: 13px;
-        margin-left: 8px;
-    }
-    .pw-generate-btn:hover {
-        opacity: 0.8;
-    }
-    .pw-suggestions {
-        max-height: 120px;
-        overflow-y: auto;
-        background: var(--background-secondary);
-        border-radius: 4px;
-        margin-top: -8px;
-        margin-bottom: 12px;
-        display: none;
-        border: 1px solid var(--background-modifier-border);
-    }
-    .pw-suggestions .suggestion-item {
-        padding: 6px 12px;
-        cursor: pointer;
-        font-size: 14px;
-    }
-    .pw-suggestions .suggestion-item:hover {
-        background: var(--background-modifier-hover);
-    }
-
-    @media (max-width: 768px) {
-        .pw-entry-top {
-            flex-wrap: wrap;
-        }
-        .pw-account-wrapper {
-            flex: 0 0 100%;
-            max-width: 100%;
-        }
-        .pw-platform-link, .pw-platform-text {
-            flex: 0 0 80px;
-        }
-        .pw-password-area {
-            flex: 0 0 100%;
-            min-width: 0;
-        }
-        .pw-date {
-            margin-left: auto;
-        }
-    }
-`;
 
 interface UIConfig {
   charset: string;
@@ -247,15 +59,9 @@ export class UIManager {
     this.config = config;
   }
 
-  // ---------- 样式注入 ----------
-  injectStyles() {
-    injectStyles('pw-styles', PW_STYLES);
-  }
-
   // ---------- 创建 DOM ----------
   ensureElements() {
     if (this._initialized) return;
-    this.injectStyles();
 
     // 主遮罩和弹出
     this.mask = this.createMask('pw-mask');

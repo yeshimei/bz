@@ -28,44 +28,9 @@ export class UIManager {
   constructor(app: App, dataManager: ReviewDataManager) {
     this.app = app;
     this.dataManager = dataManager;
-    this.injectStyles();
     this.createMainUI();
     this.createConfirmDialog();
     this.registerEscape();
-  }
-
-  injectStyles(): void {
-    if (document.querySelector('style[data-review-styles]')) return;
-    const style = document.createElement('style');
-    style.setAttribute('data-review-styles', '');
-    style.textContent = `
-      #review-mask { backdrop-filter: blur(2px); }
-      #review-popup { animation: slideUp 0.3s ease-out; }
-      @keyframes slideUp {
-        from { opacity:0; transform: translate(-50%, -40%); }
-        to { opacity:1; transform: translate(-50%, -50%); }
-      }
-      #review-popup button:hover { background: var(--background-secondary); }
-      @media (max-width: 768px) {
-        #review-popup { animation: none !important; }
-        #review-popup > div:first-child { padding-top: 34px !important; }
-      }
-      #review-entries-container::-webkit-scrollbar { width: 6px; }
-      #review-entries-container::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
-      .review-card { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--background-modifier-border); }
-      .review-card .review-content { flex:1; font-size:15px; color:var(--text-normal); cursor:pointer; }
-      .review-card .review-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-      .review-tag { padding:0 8px; border-radius:12px; font-size:11px; background:var(--background-secondary); color:var(--text-muted); line-height:20px; white-space:nowrap; cursor:pointer; transition:background 0.2s; }
-      .review-tag.overdue { background:#ff4757; color:white; }
-      .review-tag.completed { background:#52c41a; color:white; }
-      .review-time { font-size:12px; color:var(--text-faint); cursor:pointer; }
-      .difficulty-dialog { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--background-primary); border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.3); padding:24px; z-index:10005; min-width:220px; display:none; }
-      .difficulty-dialog .diff-btn { display:block; width:100%; padding:10px; margin:6px 0; border:none; border-radius:6px; background:var(--background-secondary); cursor:pointer; font-size:14px; text-align:left; }
-      .difficulty-dialog .diff-btn:hover { background:var(--interactive-accent); color:var(--text-on-accent); }
-      .review-search-input { padding:4px 10px; border-radius:12px; border:1px solid var(--background-modifier-border); background:var(--background-secondary); color:var(--text-normal); font-size:13px; width:150px; outline:none; }
-      .review-search-input:focus { border-color:var(--interactive-accent); }
-    `;
-    document.head.appendChild(style);
   }
 
   createMainUI(): void {
