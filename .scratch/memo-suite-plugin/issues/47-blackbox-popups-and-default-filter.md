@@ -4,7 +4,7 @@
 
 **Blocked by:** 46 — 黑匣子主面板流式化
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## 验收标准
 

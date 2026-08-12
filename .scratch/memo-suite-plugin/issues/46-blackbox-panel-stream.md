@@ -4,7 +4,7 @@
 
 **Blocked by:** 无（45 — 黑匣子对话记忆 + 设置 2 项 已完成）
 
-**Status:** ready-for-agent
+**Status:** done
 
 ## 验收标准
 
