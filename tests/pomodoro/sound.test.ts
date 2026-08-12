@@ -65,31 +65,39 @@ describe('playSound（阶段开始提示声，各一声）', () => {
     expect(ctx.createOscillator.mock.results[0].value.frequency.value).toBe(392);
   });
 
+  it('暂停：中低音 440Hz 一声', () => {
+    const ctx = mockAudio();
+    playSound('pause');
+    expect(ctx.createOscillator).toHaveBeenCalledTimes(1);
+    expect(ctx.createOscillator.mock.results[0].value.frequency.value).toBe(440);
+  });
+
   it('无 AudioContext（非浏览器环境）静默不抛', () => {
     expect(() => playSound('focus-start')).not.toThrow();
     expect(() => playSound('short-break-start')).not.toThrow();
     expect(() => playSound('long-break-start')).not.toThrow();
+    expect(() => playSound('pause')).not.toThrow();
   });
 
-  it('音量参数：50 → 峰值 0.2（0.4×50%）', () => {
+  it('音量参数：50 → 峰值 0.4（0.8×50%，翻倍后）', () => {
     const ctx = mockAudio();
     playSound('focus-start', 50);
-    const gain = ctx.createGain.mock.results[0].value as FakeGain;
-    expect(gain.gain.exponentialRampToValueAtTime).toHaveBeenCalledWith(0.2, 0.02);
-  });
-
-  it('音量缺省 → 峰值 0.4（默认最大）', () => {
-    const ctx = mockAudio();
-    playSound('short-break-start');
     const gain = ctx.createGain.mock.results[0].value as FakeGain;
     expect(gain.gain.exponentialRampToValueAtTime).toHaveBeenCalledWith(0.4, 0.02);
   });
 
-  it('音量越界钳制：150 → 0.4；0 → 0.004（近静音）', () => {
+  it('音量缺省 → 峰值 0.8（默认最大，2026-08-1x 翻倍）', () => {
+    const ctx = mockAudio();
+    playSound('short-break-start');
+    const gain = ctx.createGain.mock.results[0].value as FakeGain;
+    expect(gain.gain.exponentialRampToValueAtTime).toHaveBeenCalledWith(0.8, 0.02);
+  });
+
+  it('音量越界钳制：150 → 0.8；0 → 0.008（近静音）', () => {
     const ctx = mockAudio();
     playSound('focus-start', 150);
-    expect((ctx.createGain.mock.results[0].value as FakeGain).gain.exponentialRampToValueAtTime).toHaveBeenCalledWith(0.4, 0.02);
+    expect((ctx.createGain.mock.results[0].value as FakeGain).gain.exponentialRampToValueAtTime).toHaveBeenCalledWith(0.8, 0.02);
     playSound('focus-start', 0);
-    expect((ctx.createGain.mock.results[1].value as FakeGain).gain.exponentialRampToValueAtTime).toHaveBeenCalledWith(0.004, 0.02);
+    expect((ctx.createGain.mock.results[1].value as FakeGain).gain.exponentialRampToValueAtTime).toHaveBeenCalledWith(0.008, 0.02);
   });
 });

@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, hasNotice } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { openPomodoro, unloadPomodoro, ensurePomodoro, ensurePomodoroEpubLink, unloadPomodoroEpubLink, getEpubBook, decideReadingAction, checkReadingNow } from '../../src/pomodoro';
@@ -185,6 +185,7 @@ describe('读书联动集成（ui 流程）', () => {
     expect(s.endTime).toBe(T0 + 45 * 60 * 1000); // 阅读沉浸 45 分钟
     expect(s.target).toEqual({ type: 'book', path: BOOK_A.path, label: '活着' });
     expect(document.getElementById('pomodoro-mask')).toBeNull(); // 后台形态：不弹窗
+    expect(hasNotice('✅ 已开始读书专注：《活着》')).toBe(true); // 自动开始弹通知
   });
 
   it('读书专注自然完成 → history duration = 45 分钟（读书预设生效）', async () => {
@@ -213,6 +214,7 @@ describe('读书联动集成（ui 流程）', () => {
     expect(s.endTime).toBeNull();
     expect(s.remaining).toBe(45 * 60 - 1); // 已走 1 秒（tick 推进 1000ms）
     expect(s.target).toEqual({ type: 'book', path: BOOK_A.path, label: '活着' }); // target 保留
+    expect(hasNotice('⏸️ 已暂停读书专注')).toBe(true); // 自动暂停弹通知
     // 预设恢复：手动继续后完成 → 25 分钟（经典）
     setSettingsProvider(() => ({ pomodoroPreset: 'classic' } as any));
     // 手动「继续」走 ui 按钮（forceFocus 未开，可用）——恢复暂停剩余（2699s）
