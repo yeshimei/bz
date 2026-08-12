@@ -71,6 +71,13 @@ export function parsePlatformMapping(raw: string | undefined): { host: string; n
   return list.length ? list : [...DEFAULT_PLATFORM_MAP];
 }
 
+/** 文件缓存中是否含「公开课」标签（正文标签或 frontmatter tags） */
+function hasCourseTag(cache: any): boolean {
+  if (cache.tags && (cache.tags as any[]).some((t) => t.tag === '#公开课' || t.tag === '公开课')) return true;
+  const tags = cache.frontmatter?.tags;
+  return !!tags && tags.includes('公开课'); // 数组与字符串均有 includes
+}
+
 export const DataManager = {
   todoFilePath: '',
   scenarios: [] as string[],
@@ -105,12 +112,14 @@ export const DataManager = {
         item.id = generateId();
         needWrite = true;
       }
+      // 统一字段形状（缺省补默认值，旧数据零迁移）
+      const { title, scene, created } = item;
       return {
         id: item.id,
-        title: item.title, // 统一使用 title
-        scene: item.scene,
+        title,
+        scene,
         priority: item.priority || 'minor',
-        created: item.created,
+        created,
         completed: item.completed || null,
         due: item.due || null,
         notePath: item.notePath || null,
@@ -168,23 +177,12 @@ export const DataManager = {
   /** 公开课笔记（影视目录中含 公开课 标签的文件） */
   async getCourseNotes(): Promise<{ name: string; path: string }[]> {
     const app = getApp();
-    const files = app.vault.getFiles();
-    const target = this.movieFolderPath;
     const result: { name: string; path: string }[] = [];
-    for (const file of files) {
-      if (!file.path.startsWith(target) || file.extension !== 'md') continue;
+    for (const file of app.vault.getFiles()) {
+      if (!file.path.startsWith(this.movieFolderPath) || file.extension !== 'md') continue;
       const cache = app.metadataCache.getFileCache(file);
       if (!cache) continue;
-      let hasTag = false;
-      if (cache.tags) {
-        hasTag = (cache.tags as any[]).some((t) => t.tag === '#公开课' || t.tag === '公开课');
-      }
-      if (!hasTag && (cache as any).frontmatter?.tags) {
-        const tags = (cache as any).frontmatter.tags;
-        if (Array.isArray(tags)) hasTag = tags.includes('公开课');
-        else if (typeof tags === 'string') hasTag = tags.includes('公开课');
-      }
-      if (hasTag) result.push({ name: file.basename, path: file.path });
+      if (hasCourseTag(cache)) result.push({ name: file.basename, path: file.path });
     }
     return result;
   },
