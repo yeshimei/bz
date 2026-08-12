@@ -113,7 +113,7 @@ describe('书库面板', () => {
 
   it('⚙️ 打开书库设置弹窗（文件夹/识别标签/显示开关）；🔀 为筛选弹窗', () => {
     vault.files.set('书库/活着.md', BOOK_MD);
-    setSettingsProvider(() => ({ libraryFolderPath: '书库', libraryNotePath: '我的/读书笔记', bookTag: 'book' }));
+    setSettingsProvider(() => ({ libraryFolderPath: '书库', libraryNotePath: '我的/读书笔记', bookTag: 'book' } as any));
     const app = makeApp(vault);
     showLibrary(app);
     const filterBtn = [...document.querySelectorAll('button')].find((b) => b.title === '视图与筛选')!;

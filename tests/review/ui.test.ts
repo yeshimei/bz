@@ -179,7 +179,7 @@ describe('UIManager', () => {
     setSettingsProvider(() => ({
       autoCheckInterval: '60', enableAutoNotify: true, forceQuizForReview: true,
       enableMultipleChoice: true, questionsPerNote: '0', shuffleQuestions: true, difficulty: 'random',
-    }));
+    } as any));
     const dm = new ReviewDataManager(app);
     const ui = new UIManager(app, dm);
     ui.showMain();

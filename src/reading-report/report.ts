@@ -19,6 +19,7 @@ import {
   getHeatmapColor,
 } from './stats';
 import type { ReadingStats, BookNoteEntry } from './stats';
+import { pad2 } from '../core/utils';
 
 // ---------- 主报告 ----------
 
@@ -534,7 +535,7 @@ export function generateMonthHeatmap(monthData: any, monthKey: string): string {
   }
 
   for (let day = 1; day <= daysInMonth; day++) {
-    const dateKey = `${year}-${month.padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+    const dateKey = `${year}-${pad2(month)}-${pad2(day)}`;
     const dayData = monthData.dailyData[dateKey];
 
     currentWeek.push({

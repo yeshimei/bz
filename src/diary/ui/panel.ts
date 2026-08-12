@@ -3,6 +3,7 @@
  * 负责面板/遮罩/头部/标签栏/进度条的创建，init 幂等入口，ESC 注册。
  */
 import { Setting } from 'obsidian';
+import { pad2 } from '../../core/utils';
 import { notice } from '../../core/notice';
 import { escManager } from '../../core/esc-manager';
 import type { EscHandle } from '../../core/esc-manager';
@@ -387,7 +388,7 @@ export async function init(plugin?: { registerEvent: (ref: unknown) => unknown }
     const now = new Date();
     state.data.currentDateFilter = {
       year: String(now.getFullYear()),
-      month: String(now.getMonth() + 1).padStart(2, '0'),
+      month: pad2(now.getMonth() + 1),
     };
   } else {
     state.data.currentDateFilter = null;

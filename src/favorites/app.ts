@@ -40,7 +40,6 @@ export class FavoritesApp {
     this.uiManager.build();
 
     this.initialized = true;
-    console.log('📌 收藏管理器已初始化');
   }
 
   async openPanel() {

@@ -1,21 +1,12 @@
 /**
- * DOM 工具（Q3.js window.__utils 移植）：notice/injectStyles/longPress/
+ * DOM 工具（Q3.js window.__utils 移植）：notice/longPress/
  * createSiteIcon/createIconBtn/createOverlay——行为与 Q3 逐字一致。
+ * injectStyles 已随 ticket 60 样式收敛废弃删除（铁律 9：禁运行时注入）。
  */
 import { notice } from './notice';
 
 /** notice(msg, dur)：统一走自绘通知系统（自动语义归类，ticket 25 替代原生 Notice） */
 export { notice };
-
-
-/** injectStyles(id, css)：style[data-shared-style=id] 幂等注入（已存在跳过） */
-export function injectStyles(id: string, css: string): void {
-  if (document.querySelector('style[data-shared-style="' + id + '"]')) return;
-  const s = document.createElement('style');
-  s.setAttribute('data-shared-style', id);
-  s.textContent = css;
-  document.head.appendChild(s);
-}
 
 /** longPress(el, cb, dur, filter)：长按手势（mousedown/touchstart 计时，移动超 10px 取消） */
 export function longPress(
@@ -61,7 +52,8 @@ export function createSiteIcon(domain: string | null | undefined, size = 16): HT
   const cacheKey = 'favicon_' + mappedDomain;
 
   const img = document.createElement('img');
-  img.style.cssText = `width:${size}px; height:${size}px; border-radius:2px; flex-shrink:0;`;
+  img.className = 'bz-site-icon';
+  img.style.cssText = `width:${size}px; height:${size}px;`;
   img.alt = '';
   (img as any).crossOrigin = 'anonymous';
 
@@ -113,16 +105,9 @@ export function createIconBtn(
   const b = document.createElement('button');
   b.textContent = text;
   b.title = title;
-  // 规格：普通按钮较 16px/24×28 减 2px；关闭按钮减 3px
-  const isClose = text === '❌';
-  const fs = isClose ? 13 : 14;
-  const w = isClose ? 21 : 22;
-  const h = isClose ? 25 : 26;
-  b.style.cssText =
-    `background:none;border:none;font-size:${fs}px;cursor:pointer;color:var(--text-muted);padding:0;width:${w}px;height:${h}px;border-radius:4px;display:flex;align-items:center;justify-content:center;box-shadow:none;` +
-    (extra || '');
-  b.onmouseover = function () { b.style.background = 'var(--background-secondary)'; };
-  b.onmouseout = function () { b.style.background = 'none'; };
+  // 规格：普通按钮 14px/22×26；关闭按钮 13px/21×25（--close 类，styles.css）
+  b.className = text === '❌' ? 'bz-icon-btn bz-icon-btn--close' : 'bz-icon-btn';
+  if (extra) b.style.cssText = extra;
   b.onclick = onClick;
   return b;
 }
@@ -138,22 +123,18 @@ export function createOverlay(opts: {
 }): { mask: HTMLDivElement; popup: HTMLDivElement } {
   const mask = document.createElement('div');
   mask.id = opts.maskId;
-  mask.style.cssText =
-    'position:fixed;top:0;left:0;right:0;bottom:0;background:var(--background-modifier-cover);z-index:' +
-    (opts.zIndex || 9999) +
-    ';display:none;';
+  mask.className = 'bz-overlay-mask';
+  mask.style.zIndex = String(opts.zIndex || 9999);
+  mask.style.display = 'none';
   mask.onclick = function (e) {
     if (e.target === mask && typeof opts.onMaskClick === 'function') opts.onMaskClick();
   };
   const popup = document.createElement('div');
   popup.id = opts.popupId;
-  popup.style.cssText =
-    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--background-primary);border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.2);z-index:' +
-    ((opts.zIndex || 9999) + 1) +
-    ';width:' +
-    (opts.width || '90%') +
-    ';max-width:' +
-    (opts.maxWidth || 400) +
-    'px;max-height:80vh;display:none;flex-direction:column;';
+  popup.className = 'bz-overlay-popup';
+  popup.style.zIndex = String((opts.zIndex || 9999) + 1);
+  popup.style.display = 'none';
+  popup.style.width = opts.width || '90%';
+  popup.style.maxWidth = (opts.maxWidth || 400) + 'px';
   return { mask, popup };
 }

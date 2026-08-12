@@ -4,6 +4,7 @@
  * 默认分类 1226 条来自 default-categories.gen.ts（源码逐字提取）
  */
 import { notice } from '../core/notice';
+import { pad2 } from '../core/utils';
 import { getApp } from '../core/app';
 import { getSettings } from '../core/settings-provider';
 import { DEFAULT_CATEGORIES } from './default-categories.gen';
@@ -101,8 +102,5 @@ export function calculateDaysUsed(purchaseDate: string): number {
 
 export function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return `${date.getFullYear()}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date
-    .getDate()
-    .toString()
-    .padStart(2, '0')}`;
+  return `${date.getFullYear()}.${pad2(date.getMonth() + 1)}.${pad2(date.getDate())}`;
 }

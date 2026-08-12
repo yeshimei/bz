@@ -185,13 +185,11 @@ export class AIService {
       const content = provider.noCors
         ? await chatCompletionsNonStream(provider, body)
         : await streamChatCompletions(provider, body);
-      console.log('AI 请求结果:', content);
       return content;
     } catch (streamError: any) {
       // fetch 失败（CORS/网络）→ requestUrl 非流式兜底
       try {
         const content = await chatCompletionsNonStream(provider, body);
-        console.log('AI 请求结果(非流式):', content);
         return content;
       } catch (e: any) {
         throw new Error(`AI 请求失败: ${streamError.message}（fallback: ${e.message}）`);

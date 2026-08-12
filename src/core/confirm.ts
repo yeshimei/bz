@@ -27,29 +27,18 @@ export function confirm(opts: ConfirmOptions) {
 
   const mask = document.createElement('div');
   mask.id = '__shared_confirm_mask__';
-  mask.style.cssText =
-    'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);z-index:10060;display:flex;align-items:center;justify-content:center;';
   mask.onclick = (e) => {
     if (e.target === mask) close(false);
   };
 
   const popup = document.createElement('div');
-  popup.style.cssText =
-    'position:relative;background:var(--background-primary);border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.3);padding:24px;max-width:400px;width:90%;display:flex;flex-direction:column;align-items:center;text-align:center;';
+  popup.id = '__shared_confirm_popup__';
   popup.innerHTML =
-    '<h4 style="margin:0 0 12px 0;font-size:18px;font-weight:600;color:var(--text-normal);">' +
-    t +
-    '</h4>' +
-    '<p style="margin:0 0 20px 0;font-size:15px;color:var(--text-muted);line-height:1.5;word-wrap:break-word;max-width:100%;">' +
-    m +
-    '</p>' +
-    '<div style="display:flex;gap:12px;justify-content:center;width:100%;">' +
-    '<button id="__shared_confirm_cancel__" style="padding:8px 24px;border-radius:6px;border:none;background:var(--background-secondary);cursor:pointer;font-size:14px;box-shadow:none;flex:1;">' +
-    noTxt +
-    '</button>' +
-    '<button id="__shared_confirm_ok__" style="padding:8px 24px;border-radius:6px;border:none;background:var(--interactive-accent);color:var(--text-on-accent);cursor:pointer;font-size:14px;font-weight:500;box-shadow:none;flex:1;">' +
-    okTxt +
-    '</button>' +
+    '<h4>' + t + '</h4>' +
+    '<p>' + m + '</p>' +
+    '<div class="confirm-actions">' +
+    '<button id="__shared_confirm_cancel__">' + noTxt + '</button>' +
+    '<button id="__shared_confirm_ok__">' + okTxt + '</button>' +
     '</div>';
 
   mask.appendChild(popup);

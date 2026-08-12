@@ -1,5 +1,6 @@
 /**
  * 闪念桌面参考面板（ticket 18，源码 L1317-1642 语义移植）
+ * ⚠️ WIP（ticket 18 未接线）：index.ts 仅占位，本模块尚未被任何入口引用，勿依赖其行为。
  */
 import type { App } from 'obsidian';
 import { FloatWindow } from './float-window';

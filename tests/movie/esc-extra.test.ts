@@ -39,11 +39,11 @@ beforeEach(async () => {
   const vault = new MockVault();
   vault.files.set('我的/影视/《测试片》.md', '---\ntags: [电影]\n评分: 5\n---');
   app = makeApp(vault);
-  setSettingsProvider(() => ({}));
+  setSettingsProvider(() => ({}) as any);
   M.folderPath = '我的/影视';
   M.pageSize = 50;
   ensureMovie(app);
-  M.entries = [sampleItem];
+  (M as any).entries = [sampleItem];
   registerEscapeHandler();
 });
 
