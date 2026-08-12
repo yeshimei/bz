@@ -4,7 +4,6 @@
  */
 import type { App } from 'obsidian';
 import { init, show, unloadNews } from './reader';
-import { checkAndShowChangelog } from '../core/changelog';
 
 let initialized = false;
 
@@ -15,10 +14,9 @@ export function ensureNews(app: App): void {
   init(false);
 }
 
-/** 打开资讯阅读器（news-reader-open 命令回调；Q3 无 'news' changelog，调用静默跳过） */
+/** 打开资讯阅读器（news-reader-open 命令回调） */
 export function openNewsReader(app: App): void {
   ensureNews(app);
-  checkAndShowChangelog('news');
   show();
 }
 

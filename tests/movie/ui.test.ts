@@ -156,7 +156,7 @@ describe('createOverlay 主界面', () => {
     expect(M.currentOverlay).toBeNull();
   });
 
-  it('closeOverlay 触发 changelog（不抛错）', () => {
+  it('closeOverlay 不抛错并关闭', () => {
     createOverlay(M.appRef as any);
     expect(() => closeOverlay()).not.toThrow();
     expect(M.currentOverlay).toBeNull();
