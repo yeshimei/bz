@@ -24,6 +24,7 @@
 5. **懒加载（ADR-0003）**：UI 域 `ensureXxx` 幂等初始化（首次命令触发）；事件常驻域（auto-summary/ai-agent/flash）按设置开关注册（ensureAutoSummary/ensureAIAgent/ensureFlashOnReady）。
 6. **域间共享**：经显式 import 或 core 层（getApp/getSettings/createAI），不挂 window（`__MOVIE_FOLDER_PATH` 为兼容遗留，勿新增）。
 7. **架构决策**：设置页单页（ADR-0009，仅 AI + 共享 storagePath，域设置走 ⚙️ 弹窗）；通知用自绘 toast（ADR-0010，`notice(msg, type?, duration?)`，不用原生 Notice）；外部依赖（ADR-0005/0006/0008/0011）——AI 配置在 data.json、聚合讯 dataviewjs 由 Dataview 渲染、闪念走 Ollama HTTP、B 站下载/海报抓取走外部 npm。
+8. **通知写法**：消息正文一律**不带 emoji 前缀**（类型图标即视觉前缀，重复）；新语义先查 `src/core/notice.ts` ICONS 表（11 类型：info/success/warning/error/pause/accept/delete/confirm/restore/skip/archive），确无匹配才新增（ICONS 项 + 颜色 class + 默认时长），不得把 emoji 写进正文；规范详见 CONTEXT.md「通知类型规范」。
 
 ## 领域清单（src/<域>/，数据均在 CONFIG/STORAGE/，表内只写文件名）
 
@@ -54,7 +55,7 @@
 - 注入：先 `setApp(mockApp)` + `setSettingsProvider(() => settings)` 再测；AI provider 缓存用 `resetAIProviderCache` 重置。
 - 分层：数据层/纯函数（parser/config/fsrs/crypto）+ UI 层（jsdom 交互、弹窗、长按、防抖、无限滚动）+ mock fetch（AI/余额/Ollama）。
 - 长异步（PBKDF2/crypto/网络）用真实 setTimeout；fake timers 用 `advanceTimersByTimeAsync`。
-- 新域必带数据层 + UI 层测试（tests/<域>/），smoke.test.ts（命令清单）同步更新；全量约 926 测试。
+- 新域必带数据层 + UI 层测试（tests/<域>/），smoke.test.ts（命令清单）同步更新；全量约 1212 测试。
 
 ## Git / 工作流
 
