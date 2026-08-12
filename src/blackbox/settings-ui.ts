@@ -192,11 +192,11 @@ function renderWords(app: App, data: BlackBoxData, box: HTMLElement): void {
 
 async function addWord(app: App, data: BlackBoxData, word: string): Promise<void> {
   if (!word) {
-    notice('⚠️ 词不能为空');
+    notice('词不能为空', 'warning');
     return;
   }
   if (data.settings.words.includes(word)) {
-    notice('⚠️ 词已存在');
+    notice('词已存在', 'warning');
     return;
   }
   const fresh = await manager(app).load();
@@ -205,7 +205,7 @@ async function addWord(app: App, data: BlackBoxData, word: string): Promise<void
   data.settings.words = fresh.settings.words;
   const box = document.getElementById('bz-blackbox-words-setting');
   if (box) renderWords(app, data, box);
-  notice(`✅ 已添加「${word}」`);
+  notice(`已添加「${word}」`, 'success');
 }
 
 async function removeWord(app: App, data: BlackBoxData, box: HTMLElement, word: string): Promise<void> {
@@ -214,5 +214,5 @@ async function removeWord(app: App, data: BlackBoxData, box: HTMLElement, word: 
   await manager(app).save(fresh);
   data.settings.words = fresh.settings.words;
   renderWords(app, data, box);
-  notice(`🗑 已删除「${word}」（存量条目不受影响）`);
+  notice(`已删除「${word}」（存量条目不受影响）`, 'delete');
 }

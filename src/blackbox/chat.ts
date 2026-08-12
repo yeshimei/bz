@@ -267,7 +267,7 @@ async function send(): Promise<void> {
     await m.addChat(data, 'assistant', reply, new Date().toISOString());
   } catch (e) {
     console.warn('黑匣子对话失败', e);
-    notice('❌ 包仔暂时没法说话（AI 未配置或网络异常）', 'error');
+    notice('包仔暂时没法说话（AI 未配置或网络异常）', 'error');
   } finally {
     busy = false;
     if (sendBtn) sendBtn.disabled = false;

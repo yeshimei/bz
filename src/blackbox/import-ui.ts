@@ -185,7 +185,7 @@ async function prepare(): Promise<void> {
     await loadNextGroup();
   } catch (e) {
     console.warn('卡片盒扫描失败', e);
-    notice('❌ 扫描失败：无法读取卡片盒', 'error');
+    notice('扫描失败：无法读取卡片盒', 'error');
     const btn = document.getElementById('bz-blackbox-import-run') as HTMLButtonElement | null;
     if (btn) {
       btn.disabled = false;
@@ -301,7 +301,7 @@ async function renderCard(): Promise<void> {
     save.addEventListener('click', () => {
       c.text = ta.value.trim();
       void renderCard();
-      notice('✅ 原文已更新');
+      notice('原文已更新', 'success');
     });
     const cancel = document.createElement('button');
     cancel.type = 'button';
@@ -368,7 +368,7 @@ function renderUndo(): void {
       undoStack = undoStack.filter((x) => x.name !== c.name);
       group.unshift(c);
       void renderCard();
-      notice(`↩ 已恢复「${c.name}」`);
+      notice(`已恢复「${c.name}」`, 'restore');
     });
     box.appendChild(chip);
   }
@@ -401,7 +401,7 @@ async function doSkip(): Promise<void> {
   skippedNames.push(c.name);
   undoStack.push(c);
   if (undoStack.length > 20) undoStack.shift();
-  notice(`🚫 已跳过「${c.name}」（可撤销）`);
+  notice(`已跳过「${c.name}」（可撤销）`, 'skip');
   void renderCard();
 }
 
@@ -458,10 +458,10 @@ async function doGenerateImport(): Promise<void> {
     const r = await runImport(appRef, cards, data, skippedNames);
     await resolvePendingLinks(appRef);
     for (const c of cards) importedNames.add(c.name);
-    notice(`✅ 已导入本组 ${r.imported} 张（累计 ${importedNames.size}）`);
+    notice(`已导入本组 ${r.imported} 张（累计 ${importedNames.size}）`, 'success');
   } catch (e) {
     console.warn('本组导入失败', e);
-    notice('❌ 导入失败，请重试', 'error');
+    notice('导入失败，请重试', 'error');
   } finally {
     busy = false;
     await loadNextGroup();

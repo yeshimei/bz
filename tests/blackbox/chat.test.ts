@@ -111,7 +111,7 @@ describe('黑匣子对话面板', () => {
     input.value = '在吗';
     document.getElementById('bz-blackbox-chat-send')!.click();
     await vi.waitFor(() => {
-      expect(hasNotice('❌ 包仔暂时没法说话（AI 未配置或网络异常）')).toBe(true);
+      expect(hasNotice('包仔暂时没法说话（AI 未配置或网络异常）')).toBe(true);
     });
     const data = JSON.parse(vault.files.get(getBlackBoxFilePath())!);
     expect(data.chat.filter((m: any) => m.role === 'assistant').length).toBe(0);

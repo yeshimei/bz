@@ -231,7 +231,7 @@ describe('复盘全流程（mock AI 序列）', () => {
     const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
     const text = await manualReview(app);
     expect(text).toBe('');
-    expect(hasNotice('⚠️ 黑匣子还是空的，先写点东西吧')).toBe(true);
+    expect(hasNotice('黑匣子还是空的，先写点东西吧')).toBe(true);
   });
 
   it('AI 失败：复盘失败 toast，不落盘', async () => {
@@ -244,7 +244,7 @@ describe('复盘全流程（mock AI 序列）', () => {
     const dm = new BlackBoxDataManager(app);
     const text = await manualReview(app);
     expect(text).toBe('');
-    expect(hasNotice('❌ 复盘失败：AI 暂时无法说话')).toBe(true);
+    expect(hasNotice('复盘失败：AI 暂时无法说话')).toBe(true);
     expect((await dm.load()).reviews.length).toBe(0);
   });
 });

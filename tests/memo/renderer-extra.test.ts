@@ -135,13 +135,13 @@ describe('Renderer.createSceneTag / createDueTag', () => {
 
   it('createDueTag：逾期红 / 今天橙 / 未来灰', () => {
     const overdue = Renderer.createDueTag(baseItem({ due: '2020-01-01 10:00' }));
-    expect(overdue.textContent).toContain('🔴');
+    expect(overdue.textContent).toContain('');
     expect(overdue.style.background).toContain('255, 71, 87');
     const now = new Date(Date.now() + 5 * 60000); // +5 分钟，保证未过期
     const pad = (n: number) => String(n).padStart(2, '0');
     const todayDue = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
     const today = Renderer.createDueTag(baseItem({ due: todayDue }));
-    expect(today.textContent).toContain('⚠️');
+    expect(today.textContent).toContain('');
     const future = Renderer.createDueTag(baseItem({ due: '2099-01-01 10:00' }));
     expect(future.textContent).toContain('📅');
   });

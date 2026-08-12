@@ -195,7 +195,7 @@ describe('到期通知轮询', () => {
       [pendingItem({ id: 'd1', title: '过期任务', due: '2020-01-01 10:00:00' })]
     );
     App.checkDueNotify();
-    expect(hasNotice('🔴 已过期：过期任务')).toBe(true);
+    expect(hasNotice('已过期：过期任务')).toBe(true);
     clearNotices();
     App.checkDueNotify();
     expect(hasNotice(/已过期/)).toBe(false);
