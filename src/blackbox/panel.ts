@@ -41,6 +41,8 @@ let data: BlackBoxData | null = null;
 let selectedTypes = new Set<EntryType>();
 /** 搜索关键词（防抖后生效） */
 let searchKeyword = '';
+/** 搜索框显隐（ticket 04：默认隐藏，🔍 切换；隐藏即清空关键词） */
+let searchVisible = false;
 /** 批次游标（已渲染条数上限） */
 let displayCount = BATCH;
 /** 滚动保留 */
@@ -79,11 +81,13 @@ export async function openBlackBoxPanel(app: App): Promise<void> {
     return;
   }
   data = await manager(app).load();
+  searchVisible = false; // 每次打开回到默认隐藏
   // 默认类型筛选（设置项 blackboxDefaultTypeFilter，重启生效；空 = 全部）
   const s = tryGetSettings() as any;
   const def = (s && s.blackboxDefaultTypeFilter) || '';
   selectedTypes = def === 'concept' || def === 'literature' || def === 'thought' ? new Set([def]) : new Set();
   searchKeyword = '';
+  searchVisible = false; // 每次打开搜索框默认隐藏
   displayCount = BATCH;
   streamScrollTop = 0;
   detailConceptId = null;
@@ -157,6 +161,10 @@ function buildDOM(): void {
   const timelineBtn = createIconBtn('🕐', '时间线', () => openTimelinePopup());
   timelineBtn.id = 'bz-blackbox-panel-timeline';
   actions.appendChild(timelineBtn);
+  // 搜索切换（ticket 04）：位于 ⚙️设置 前；显示时高亮
+  const searchBtn = createIconBtn('🔍', '搜索', () => toggleSearch());
+  searchBtn.id = 'bz-blackbox-panel-search';
+  actions.appendChild(searchBtn);
   const settingsBtn = createIconBtn('⚙️', '黑匣子设置', () => {
     if (appRef) void openBlackBoxSettings(appRef);
   });
@@ -194,9 +202,11 @@ function buildDOM(): void {
   }
   popup.appendChild(typeBar);
 
-  // 搜索框（防抖 300ms）
+  // 搜索框（ticket 04：默认隐藏；显示时宽度 100%；防抖 300ms）
   const searchWrap = document.createElement('div');
   searchWrap.className = 'bz-blackbox-search-wrap';
+  searchWrap.id = 'bz-blackbox-search-wrap';
+  searchWrap.style.display = 'none';
   const searchInput = document.createElement('input');
   searchInput.id = 'bz-blackbox-search-input';
   searchInput.type = 'text';
@@ -232,9 +242,27 @@ function buildDOM(): void {
 function renderAll(): void {
   if (!data) return;
   const title = document.getElementById('bz-blackbox-panel-title');
-  if (title) title.textContent = `🕳️ 黑匣子面板 · ${data.entries.length} 条内容`;
+  if (title) title.textContent = '黑匣子'; // ticket 04：无 emoji、无「N 条内容」
   renderTypeBar();
   renderStream();
+}
+
+/** 搜索框显隐切换（ticket 04）：隐藏即清空已输入关键词并立即重渲染 */
+function toggleSearch(): void {
+  searchVisible = !searchVisible;
+  const wrap = document.getElementById('bz-blackbox-search-wrap');
+  const btn = document.getElementById('bz-blackbox-panel-search');
+  const input = document.getElementById('bz-blackbox-search-input') as HTMLInputElement | null;
+  if (wrap) wrap.style.display = searchVisible ? 'block' : 'none';
+  if (btn) btn.classList.toggle('bz-blackbox-icon-on', searchVisible);
+  if (!searchVisible) {
+    searchKeyword = '';
+    if (input) input.value = '';
+    displayCount = BATCH;
+    renderStream();
+  } else if (input) {
+    input.focus();
+  }
 }
 
 /** 数据变更后全量刷新（标题/流/弹窗；保留筛选与滚动） */

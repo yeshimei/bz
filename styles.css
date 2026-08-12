@@ -722,6 +722,11 @@
 .bz-blackbox-hdr-btn:hover {
   background: var(--background-secondary);
 }
+/* ticket 04：搜索切换显示时高亮 */
+.bz-blackbox-hdr-btn.bz-blackbox-icon-on {
+  color: var(--interactive-accent);
+  background: var(--background-secondary);
+}
 .bz-blackbox-hdr-btn-accent {
   color: var(--interactive-accent);
 }
