@@ -11,7 +11,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { openBlackBoxPanel, unloadBlackBoxPanel } from '../../src/blackbox/panel';
 import { unloadBlackBox, closeBlackBoxCapture } from '../../src/blackbox';
-import { getBlackBoxFilePath } from '../../src/blackbox/data';
+import { BlackBoxDataManager, getBlackBoxFilePath } from '../../src/blackbox/data';
 
 function makeApp(vault: MockVault) {
   return mockAppWithVault(vault);
@@ -54,8 +54,8 @@ function seedVault(vault: MockVault, extra?: any): void {
   );
 }
 
-function loaded(vault: MockVault): any {
-  return JSON.parse(vault.files.get(getBlackBoxFilePath())!);
+async function loaded(app: any, vault: MockVault): Promise<any> {
+  return new BlackBoxDataManager(app).load();
 }
 
 function streamCards(): HTMLElement[] {
@@ -310,7 +310,7 @@ describe('黑匣子主面板（v3 流式）', () => {
     const adopt = detail.querySelector('.bz-blackbox-observation-row .bz-blackbox-ai-btn') as HTMLButtonElement;
     adopt.click();
     await new Promise((r) => setTimeout(r, 50));
-    const data = loaded(vault);
+    const data = await loaded(app, vault);
     expect(data.profiles[0].impression).toContain('我注意到她越来越独立');
     expect(data.profiles[0].aiObservations.length).toBe(0);
     // 保存印象（用户主权区）：返回卡墙再进详情
@@ -321,7 +321,7 @@ describe('黑匣子主面板（v3 流式）', () => {
     imp.value = '我的新版本';
     document.getElementById('bz-blackbox-profile-imp-save')!.click();
     await new Promise((r) => setTimeout(r, 50));
-    expect(loaded(vault).profiles[0].impression).toBe('我的新版本');
+    expect((await loaded(app, vault)).profiles[0].impression).toBe('我的新版本');
     // 关闭弹窗（❌）
     (document.querySelector('#bz-blackbox-people-popup .bz-blackbox-hdr-close') as HTMLElement).click();
     expect(document.getElementById('bz-blackbox-people-popup')).toBeNull();
@@ -349,7 +349,7 @@ describe('黑匣子主面板（v3 流式）', () => {
     const confirm = specCard.querySelector('.bz-blackbox-btn-primary') as HTMLButtonElement;
     confirm.click();
     await new Promise((r) => setTimeout(r, 50));
-    let data = loaded(vault);
+    let data = await loaded(app, vault);
     expect(data.events.find((e: any) => e.id === 'ev_2').inferred).toBe(false);
     // 删除事件（✕ 删除）
     data.events = data.events.filter((e: any) => e.id !== 'ev_1');

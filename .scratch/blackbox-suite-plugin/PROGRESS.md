@@ -30,3 +30,12 @@
 ```
 
 前沿 = 01；01 完成后 02/03/04/05 并行；最后 06。
+
+## 2026-08 · ticket 01 数据层笔记化完成（1069 测试全绿）
+
+- **v3 数据层**（`src/blackbox/data.ts` 重写 + 新 `notes.ts` 笔记引擎）：blackbox.json v3 = 派生层 + `index`（id→路径），entries 不落盘；load 时 v1/v2 自动迁移为笔记（幂等、单条失败留原数据段下次重试、崩溃孤儿同 id 跳过重写），v3 按索引水合条目（缺失文件/解析失败跳过保留索引）+ 孤儿自愈（黑匣子/ 下手写 bb 笔记自动入索引并持久化）。
+- **笔记引擎**（`src/blackbox/notes.ts`）：frontmatter（id/type/createdAt/外壳 + toward/links 兼容扩展 + 卡片盒可选字段）冻结格式；正文关联区 = 与正文空行分隔的末尾连续行块（`- 关联：`/`来源：`/`关联概念：`/`来自：`）；`[[名]]` 解析回 id（概念名→id 反查，未解析 → pendingLinks 待补链）；文件名非法字符清洗 + `-N` 去重；标题 = 概念名 / 正文前 20 字（AI 标题 ticket 03）。
+- **写入路径全笔记化**：addEntry/addEntries（批量导入）写笔记+索引；deleteEntry 删笔记 + 引用清理（related/terms/from）重写相关笔记；backfillRelated 反向关联重写既有概念笔记；resolvePendingLinks 改为水合推导（pending 名已随关联区落盘）。
+- **内存接口不变**：主面板/对话/复盘/事件提炼/AI 零改动（除 import-cardbox 写路径），既有测试在笔记数据源下保持绿色。
+- 测试：tests/blackbox 120→137（+17：迁移落盘断言/幂等/失败重试/孤儿自愈/pendingLinks/去重清洗/roundtrip/delete 引用清理）。
+- **注意**：`notes.ts` 关联区解析约定——正文与关联区以空行分隔（无正文时保留空行），引用归属「来源：」行若与正文无空行分隔则视为正文不被剥离（有专门测试）。

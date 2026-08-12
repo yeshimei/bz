@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately
 
-**Status:** ready-for-agent
+**Status:** done（实现完成，1069 测试全绿）
 
 - [ ] 存量 blackbox.json（v2）load 时自动迁移：概念标题=概念名，文献/想法标题=正文前 20 字（去空白），frontmatter（id/type/createdAt/感触外壳/卡片盒可选字段 category/tags/summary）与正文（定义/摘抄/想法 + 关联区 `[[…]]`）落盘正确；related/terms 按 id 解析为概念名写入关联区
 - [ ] 迁移幂等：重载不重复生成；单条失败留在原数据段下次重试；完成后 blackbox.json 为 v3（entries 段删除、index id→路径 建立、派生层原样保留）

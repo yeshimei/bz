@@ -9,7 +9,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { openBlackBoxSettings } from '../../src/blackbox/settings-ui';
 import { closeSettingsModal } from '../../src/core/settings-modal';
-import { getBlackBoxFilePath } from '../../src/blackbox/data';
+import { BlackBoxDataManager, getBlackBoxFilePath } from '../../src/blackbox/data';
 
 function makeApp(vault: MockVault) {
   return mockAppWithVault(vault);
@@ -42,8 +42,8 @@ function seedVault(vault: MockVault, extra?: any): void {
   );
 }
 
-function loaded(vault: MockVault): any {
-  return JSON.parse(vault.files.get(getBlackBoxFilePath())!);
+async function loaded(app: any, vault: MockVault): Promise<any> {
+  return new BlackBoxDataManager(app).load();
 }
 
 /** 弹窗内按名称找设置项（mock Setting 模式，与 pomodoro/settings.test.ts 一致） */
@@ -95,7 +95,7 @@ describe('黑匣子设置弹窗（v3 8 项）', () => {
     tg.trigger(false);
     await new Promise((r) => setTimeout(r, 50));
     expect(settings.blackboxShowSpeculativeEvents).toBe(false);
-    expect(loaded(vault).settings.showSpeculativeEvents).toBe(false); // 数据兜底同步
+    expect((await loaded(app, vault)).settings.showSpeculativeEvents).toBe(false); // 数据兜底同步
   });
 
   it('情绪词表增删：持久化到 blackbox.json settings.words；不影响存量条目 emotions', async () => {
@@ -109,14 +109,14 @@ describe('黑匣子设置弹窗（v3 8 项）', () => {
     document.getElementById('bz-blackbox-word-add')!.click();
     await new Promise((r) => setTimeout(r, 50));
     expect(hasNotice('✅ 已添加「释怀」')).toBe(true);
-    expect(loaded(vault).settings.words).toContain('释怀');
+    expect((await loaded(app, vault)).settings.words).toContain('释怀');
     expect(document.querySelectorAll('.bz-blackbox-word-chip').length).toBe(5);
     // 删除「难过」
     const chips = document.querySelectorAll('.bz-blackbox-word-chip');
     const target = Array.from(chips).find((c) => c.textContent?.includes('难过')) as HTMLElement;
     (target.querySelector('.bz-blackbox-people-remove') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 50));
-    const data = loaded(vault);
+    const data = (await loaded(app, vault));
     expect(data.settings.words).not.toContain('难过');
     // 存量条目 emotions 不受影响
     expect(data.entries[0].emotions).toEqual(['旧词']);
@@ -154,6 +154,6 @@ describe('黑匣子设置弹窗（v3 8 项）', () => {
     document.getElementById('bz-blackbox-word-add')!.click();
     await new Promise((r) => setTimeout(r, 50));
     expect(hasNotice('⚠️ 词不能为空')).toBe(true);
-    expect(loaded(vault).settings.words.length).toBe(4);
+    expect((await loaded(app, vault)).settings.words.length).toBe(4);
   });
 });
