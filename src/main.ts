@@ -28,7 +28,7 @@ import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverd
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
 import { openPomodoro, unloadPomodoro, ensurePomodoro } from './pomodoro';
-import { unloadBlackBox, openBlackBoxCapture, openBlackBoxCaptureConcept, openBlackBoxCaptureLiterature, openBlackBoxCaptureThought, openBlackBoxChat, openBlackBoxPanel, openCardboxImport, manualReview } from './blackbox';
+import { unloadBlackBox, openBlackBoxCapture, openBlackBoxCaptureConcept, openBlackBoxCaptureLiterature, openBlackBoxCaptureThought, openBlackBoxChat, openBlackBoxPanel, openCardboxImport, manualReview, ensureBlackBoxSync } from './blackbox';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // B站下载器启动命令（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
 import { openBiliDownloader } from './bili-downloader';
@@ -199,6 +199,8 @@ export default class BzPlugin extends Plugin {
       if (this.settings.flashEnabled) ensureFlashOnReady(this.app);
       // 番茄钟：启动即恢复（load+recover，正在倒计时则后台继续/按设置自动弹窗）
       void ensurePomodoro(this.app);
+      // 黑匣子实时同步（ticket 05：笔记即事实源，常驻注册无开关）
+      ensureBlackBoxSync(this.app);
     });
     // 手势触发（设置页可配，默认关闭）
     this.syncGestures();

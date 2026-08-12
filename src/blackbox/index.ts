@@ -8,12 +8,14 @@ import { openBlackBoxChat, closeBlackBoxChat, unloadBlackBoxChat } from './chat'
 import { openBlackBoxPanel, closeBlackBoxPanel, unloadBlackBoxPanel } from './panel';
 import { manualReview, triggerAutoReview, unloadBlackBoxReview } from './review';
 import { openCardboxImport, closeCardboxImport, unloadCardboxImport } from './import-ui';
+import { ensureBlackBoxSync, unloadBlackBoxSync, setBlackBoxSyncNotify } from './sync';
 
 export { openBlackBoxCapture, closeBlackBoxCapture, unloadBlackBoxCapture, openBlackBoxCaptureConcept, openBlackBoxCaptureLiterature, openBlackBoxCaptureThought } from './capture';
 export { openBlackBoxChat, closeBlackBoxChat, unloadBlackBoxChat } from './chat';
 export { openBlackBoxPanel, closeBlackBoxPanel, unloadBlackBoxPanel } from './panel';
 export { manualReview, triggerAutoReview, unloadBlackBoxReview } from './review';
 export { openCardboxImport, closeCardboxImport, unloadCardboxImport } from './import-ui';
+export { ensureBlackBoxSync, unloadBlackBoxSync, setBlackBoxSyncNotify } from './sync';
 export { BlackBoxDataManager, getBlackBoxFilePath, createEntry, createProfile, createEvent, buildNameById } from './data';
 export {
   BB_NOTE_ROOT,
@@ -87,4 +89,5 @@ export function unloadBlackBox(): void {
   unloadBlackBoxPanel();
   unloadBlackBoxReview();
   unloadCardboxImport();
+  unloadBlackBoxSync();
 }

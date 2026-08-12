@@ -15,6 +15,7 @@ import { confirm } from '../core/confirm';
 import { notice } from '../core/notice';
 import { tryGetSettings } from '../core/settings-provider';
 import { BlackBoxDataManager } from './data';
+import { setBlackBoxSyncNotify } from './sync';
 import { createProfileWithSeed, openBlackBoxCapture } from './capture';
 import { openBlackBoxSettings } from './settings-ui';
 import {
@@ -97,9 +98,15 @@ export async function openBlackBoxPanel(app: App): Promise<void> {
   panelNewProfileOpen = false;
   buildDOM();
   renderAll();
+  // 实时同步（ticket 05）：笔记变更 → 面板实时刷新（保留筛选与滚动）
+  setBlackBoxSyncNotify((fresh) => {
+    data = fresh;
+    refreshAll();
+  });
 }
 
 export function closeBlackBoxPanel(): void {
+  setBlackBoxSyncNotify(null);
   closePeoplePopup();
   closeTimelinePopup();
   if (maskEl) {
