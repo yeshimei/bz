@@ -624,6 +624,26 @@ export class BlackBoxAI {
     return parseCardBoxCardJson(raw);
   }
 
+  /** 单卡 AI 自动分类（2026-08-12 需求：分类由 AI 自动生成）：返回 16 类之一；AI 失败/不在候选 → ''（调用方留根目录） */
+  async classifyCard(card: Pick<Entry, 'type'> & { name?: string; definition?: string; text?: string }): Promise<string> {
+    const title = card.type === 'concept' ? card.name || '' : (card.text || '').slice(0, 60);
+    const body = card.type === 'concept' ? card.definition || '' : card.text || '';
+    const prompt = `你是中文百科分类专家。把下面这张知识卡片归入最合适的一个分类，只能从这 ${CARD_CATEGORIES.length} 类中选：${CARD_CATEGORIES.join('、')}。
+判断要点：医学=疾病/治疗/药物/人体生理；心理学=心理/情绪/认知/人格/行为；哲学=思想/伦理/存在/主义/逻辑；文学=作品/作家/文体/修辞；历史=朝代/人物/事件/历法；地理=山川/气候/植物/动物/地名；科学=物理/化学/数学/天文/生物/技术原理；宗教=信仰/神话/教派；计算机=软件/硬件/算法/网络/编程；艺术=绘画/建筑/美学/设计；社会=经济/政治/法律/文化/教育；饮食=食材/菜品/烹饪/饮品；音乐=乐曲/乐器/音乐体裁/音乐家；影视=电影/剧集/导演/演员；体育=运动项目/运动员/赛事；都不合适选「未分类」。
+
+卡片名称：${title}
+卡片内容：${body.slice(0, 600)}
+
+只输出一个分类名，不要任何其他文字。`;
+    try {
+      const raw = await this.ask(prompt);
+      const cat = (raw || '').trim().replace(/^["「『]|["」』]$/g, '');
+      return (CARD_CATEGORIES as readonly string[]).includes(cat) ? cat : '';
+    } catch {
+      return '';
+    }
+  }
+
   /** 整组批量生成黑匣子概念卡（导入工具「生成并导入本组」）：一次请求多张，失败返回空数组 */
   async cardBatch(cards: { name: string; text: string }[], existingNames: string[]): Promise<{ i: number; summary: string; relatedNames: string[] }[]> {
     const raw = await this.ask(buildBatchCardPrompt(cards, existingNames.join('、') || '（暂无）'));
@@ -635,3 +655,6 @@ export class BlackBoxAI {
 export function fallbackAsk(index: number): string {
   return FALLBACK_ASK_PROMPTS[Math.abs(index) % FALLBACK_ASK_PROMPTS.length];
 }
+
+/** 卡片分类候选（AI 自动分类专用，与 tools 脚本同表） */
+export const CARD_CATEGORIES = ['医学', '心理学', '哲学', '文学', '历史', '地理', '科学', '宗教', '计算机', '艺术', '社会', '饮食', '音乐', '影视', '体育', '未分类'] as const;
