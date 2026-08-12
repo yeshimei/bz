@@ -22,6 +22,7 @@ import { getSelectionSnapshot } from '../core/selection';
 import type { SelectionSnapshot } from '../core/selection';
 import { entryNoteTitle } from './notes';
 import { injectIntoSourceNote } from './inject';
+import { bookTitleFromSourceLink } from './source-jump';
 import { MAX_EMOTIONS, MAX_PEOPLE } from './types';
 import type { BlackBoxData, Entry, Profile } from './types';
 
@@ -48,8 +49,6 @@ let data: BlackBoxData | null = null;
 // 感触（literature/thought 共享）
 let selectedTags: string[] = [];
 let peopleChips: string[] = [];
-/** 新建画像 mini 表单展开态 */
-let newProfileOpen = false;
 
 // 概念表单
 let conceptName = '';
@@ -57,6 +56,8 @@ let conceptDefinition = '';
 let conceptRelatedIds: string[] = [];
 /** 概念名由选中文字自动填充 → 只读锁定（内容 ≡ 选区） */
 let conceptNameLocked = false;
+/** 概念来源（ADR-0016，单值）：书内双链 / [[来源笔记]]；无选区为空 */
+let conceptSource = '';
 // 文献表单
 let literatureText = '';
 let literatureSource = '';
@@ -66,7 +67,13 @@ let literatureTextLocked = false;
 let literatureTitle = '';
 let literatureSuggest: { id: string | null; label: string; checked: boolean }[] = [];
 let literatureTerms = new Set<string>();
-let literatureInsight = '';
+/** 想法（ticket 50：手输，不 AI 提炼）：内容步插在摘抄与来源之间 */
+let literatureThought = '';
+/** 新概念流转（ticket 50）：摘抄勾选 ✦新概念 → 保存后同弹窗依次概念录入 → 全部完成回填摘抄 terms */
+let conceptFlowMode = false;
+let pendingConceptQueue: string[] = [];
+let flowLitId: string | null = null;
+let flowCreated: { id: string; name: string }[] = [];
 // 想法表单
 let thoughtText = '';
 let sceneText = '';
@@ -77,14 +84,22 @@ let fallbackIdx = 0;
 let directType: CaptureType | null = null;
 /** 选区快照（打开时读取一次；自动填充 + 锁定 + 原位注入复用） */
 let selectionSnap: SelectionSnapshot | null = null;
+/** 书内选区录入的外部选区（ADR-0016）：阅读器 host 能力传入，优先于编辑器选区快照 */
+let externalSel: BlackBoxExternalSelection | null = null;
+
+/** 书内选区录入输入（ADR-0016）：选中文字 + 阅读器双链来源 */
+export interface BlackBoxExternalSelection {
+  selectedText: string;
+  sourceLink: string;
+}
 
 function manager(app: App): BlackBoxDataManager {
   if (!dataManager) dataManager = new BlackBoxDataManager(app);
   return dataManager;
 }
 
-/** 打开录入弹窗（幂等；异步加载词表/画像库/数据快照；读取当前选区快照） */
-export async function openBlackBoxCapture(app: App): Promise<void> {
+/** 打开录入弹窗（幂等；异步加载词表/画像库/数据快照；读取当前选区快照；externalSelection = 书内选区外部参数） */
+export async function openBlackBoxCapture(app: App, externalSelection?: BlackBoxExternalSelection | null): Promise<void> {
   appRef = app;
   if (maskEl) {
     maskEl.style.display = 'block';
@@ -94,18 +109,29 @@ export async function openBlackBoxCapture(app: App): Promise<void> {
   emotionWords = data.settings.words;
   profiles = data.profiles;
   selectionSnap = getSelectionSnapshot(app);
+  externalSel = externalSelection ?? null;
   resetEntry();
   buildDOM();
   renderStep();
 }
 
 /** 直达命令（ticket 02/03）：跳过类型选择直达对应类型；保存后直接关闭。入口页/热键裸调用约定。 */
-async function openBlackBoxCaptureDirect(app: App, type: CaptureType): Promise<void> {
-  await openBlackBoxCapture(app);
+async function openBlackBoxCaptureDirect(app: App, type: CaptureType, externalSelection?: BlackBoxExternalSelection | null): Promise<void> {
+  await openBlackBoxCapture(app, externalSelection);
   directType = type;
   activeType = type;
   applySelectionFill();
   gotoStep('content');
+}
+
+/** 书内选区录入（ADR-0016）：阅读器 host 能力（captureConceptFromEpub/captureExcerptFromEpub）调用；
+ *  直达 + 外部选区填充 + 保存后直接关闭；无原位注入（epub 不可写，externalSel 模式跳过注入） */
+export async function openBlackBoxCaptureFromEpub(
+  app: App,
+  type: CaptureType,
+  input: BlackBoxExternalSelection
+): Promise<void> {
+  await openBlackBoxCaptureDirect(app, type, input);
 }
 
 /** 概念直达（bz-blackbox-capture-concept「概念录入」，保存后直接关闭） */
@@ -123,17 +149,33 @@ export async function openBlackBoxCaptureThought(app: App): Promise<void> {
   await openBlackBoxCaptureDirect(app, 'thought');
 }
 
-/** 选区自动填充（概念名/摘抄文本由选中文字填充并锁定只读；摘抄来源自动填来源笔记；无选区不动作） */
+/** 选区自动填充（概念名/摘抄文本锁定只读 + 来源）：外部选区（书内录入）优先于编辑器选区快照；
+ *  来源对称规则（ADR-0016）：书内 → 阅读器双链；笔记选区 → [[来源笔记]]；无选区 → 无来源 */
 function applySelectionFill(): void {
-  if (!selectionSnap || !selectionSnap.text) return;
+  const ext = externalSel;
+  const snap = selectionSnap;
   if (activeType === 'concept') {
-    conceptName = selectionSnap.text;
-    conceptNameLocked = true;
+    const text = (ext ? ext.selectedText : '') || (snap ? snap.text : '') || '';
+    if (text) {
+      conceptName = text;
+      conceptNameLocked = true;
+    }
+    if (ext && ext.sourceLink) {
+      conceptSource = ext.sourceLink;
+    } else if (snap && snap.filePath) {
+      const base = snap.filePath.split('/').pop() || snap.filePath;
+      conceptSource = `[[${base.replace(/\.md$/, '')}]]`;
+    }
   } else if (activeType === 'literature') {
-    literatureText = selectionSnap.text;
-    literatureTextLocked = true;
-    if (selectionSnap.filePath) {
-      const base = selectionSnap.filePath.split('/').pop() || selectionSnap.filePath;
+    const text = (ext ? ext.selectedText : '') || (snap ? snap.text : '') || '';
+    if (text) {
+      literatureText = text;
+      literatureTextLocked = true;
+    }
+    if (ext && ext.sourceLink) {
+      literatureSource = ext.sourceLink;
+    } else if (snap && snap.filePath) {
+      const base = snap.filePath.split('/').pop() || snap.filePath;
       literatureSource = `[[${base.replace(/\.md$/, '')}]]`;
     }
   }
@@ -146,23 +188,43 @@ function resetEntry(): void {
   directType = null;
   selectedTags = [];
   peopleChips = [];
-  newProfileOpen = false;
   conceptName = '';
   conceptDefinition = '';
   conceptRelatedIds = [];
   conceptNameLocked = false;
+  conceptSource = '';
   literatureText = '';
   literatureSource = '';
   literatureTextLocked = false;
   literatureTitle = '';
   literatureSuggest = [];
   literatureTerms = new Set();
-  literatureInsight = '';
+  literatureThought = '';
   thoughtText = '';
   sceneText = '';
+  conceptFlowMode = false;
+  pendingConceptQueue = [];
+  flowLitId = null;
+  flowCreated = [];
 }
 
 export function closeBlackBoxCapture(): void {
+  // 流转未完成即关闭（ESC/遮罩，ticket 50）：已确认的概念已落盘仍回填摘抄 terms；未确认的丢弃（跳过不建不加）
+  if (flowLitId && flowCreated.length && appRef) {
+    const litId = flowLitId;
+    const created = flowCreated.slice();
+    flowLitId = null;
+    flowCreated = [];
+    void (async () => {
+      try {
+        const m = manager(appRef);
+        const latest = await m.load();
+        await m.appendEntryTerms(latest, litId, created.map((c) => c.id));
+      } catch (e) {
+        console.warn('黑匣子摘抄关联回填失败', e);
+      }
+    })();
+  }
   // mask 与 popup 是 body 下兄弟元素（createOverlay），必须同时移除——否则 popup 残留盖屏拦截点击
   if (maskEl) {
     maskEl.remove();
@@ -178,6 +240,11 @@ export function closeBlackBoxCapture(): void {
   }
   directType = null;
   selectionSnap = null;
+  externalSel = null;
+  conceptFlowMode = false;
+  pendingConceptQueue = [];
+  flowLitId = null;
+  flowCreated = [];
 }
 
 export function unloadBlackBoxCapture(): void {
@@ -323,6 +390,18 @@ function renderStepContent(): void {
     });
     box.appendChild(defInput);
     autoGrowDef(defInput);
+    // 概念来源（ticket 50：与摘抄面板一致，放定义下、主按钮上；书内选区只读显示纯文字书名）
+    const srcInput = document.createElement('input');
+    srcInput.type = 'text';
+    srcInput.id = 'bz-blackbox-concept-source';
+    srcInput.className = 'bz-blackbox-input' + (externalSel && conceptSource ? ' bz-blackbox-locked' : '');
+    srcInput.placeholder = '来源：URL 或书名/出处（书内选区自动填书名，不可改）';
+    srcInput.value = externalSel && conceptSource ? bookTitleFromSourceLink(conceptSource) : conceptSource;
+    srcInput.readOnly = !!externalSel && !!conceptSource;
+    srcInput.addEventListener('input', () => {
+      if (!externalSel) conceptSource = srcInput.value;
+    });
+    box.appendChild(srcInput);
     const genBtn = document.createElement('button');
     genBtn.type = 'button';
     genBtn.id = 'bz-blackbox-concept-gen';
@@ -342,12 +421,24 @@ function renderStepContent(): void {
     });
     box.appendChild(text);
     autoGrowDef(text);
+    // 想法（ticket 50：手输，不 AI 提炼；插在摘抄与来源之间，大间距）
+    const thought = document.createElement('textarea');
+    thought.id = 'bz-blackbox-lit-thought';
+    thought.className = 'bz-blackbox-textarea';
+    thought.placeholder = '想法（可选）：你自己的感受或联想，不 AI 提炼';
+    thought.value = literatureThought;
+    thought.addEventListener('input', () => (literatureThought = thought.value));
+    box.appendChild(thought);
+    autoGrowDef(thought);
     const source = document.createElement('input');
     source.id = 'bz-blackbox-lit-source';
-    source.className = 'bz-blackbox-input';
-    source.placeholder = '来源：URL 或书名/出处（有选区自动填来源笔记）';
-    source.value = literatureSource;
-    source.addEventListener('input', () => (literatureSource = source.value));
+    source.className = 'bz-blackbox-input' + (externalSel && literatureSource ? ' bz-blackbox-locked' : '');
+    source.placeholder = '来源：URL 或书名/出处（书内选区自动填书名，不可改）';
+    source.value = externalSel && literatureSource ? bookTitleFromSourceLink(literatureSource) : literatureSource;
+    source.readOnly = !!externalSel && !!literatureSource;
+    source.addEventListener('input', () => {
+      if (!externalSel) literatureSource = source.value;
+    });
     box.appendChild(source);
     const analyzeBtn = document.createElement('button');
     analyzeBtn.type = 'button';
@@ -451,11 +542,22 @@ async function saveConcept(): Promise<void> {
     notice('⚠️ 卡片内容不能为空');
     return;
   }
+  // 重名守卫（流转模式，ticket 50）：确认时改名与既有概念同名 → 不新建，摘抄直接关联既有概念
+  if (conceptFlowMode && data) {
+    const dup = data.entries.find((c) => c.type === 'concept' && c.name === name);
+    if (dup) {
+      notice(`⚠️ 已有同名概念「${name}」，已直接关联`);
+      flowCreated.push({ id: dup.id, name });
+      nextConceptFlow();
+      return;
+    }
+  }
   const entry = createEntry({
     type: 'concept',
     name,
     definition: conceptDefinition.trim(),
     related: conceptRelatedIds,
+    links: conceptSource ? [conceptSource] : [],
   });
   try {
     const m = manager(appRef);
@@ -467,10 +569,20 @@ async function saveConcept(): Promise<void> {
       await m.backfillRelated(latest, entry.id, conceptRelatedIds);
       data = await m.load();
     }
-    // 原位注入（ticket 06）：来源笔记选区原文 → [[概念名|原文字]]（守卫命中跳过 + toast）
-    await injectIntoSourceNote(appRef, selectionSnap, entry.name || '');
+    // 原位注入（ticket 06）：来源笔记选区原文 → [[概念名|原文字]]（守卫命中跳过 + toast）；
+    // 书内选区录入（externalSel）无来源笔记 → 跳过注入（epub 不可写）；
+    // 流转模式（ticket 50）跳过注入——摘抄保存时已对来源笔记注入摘抄标题，二次注入会覆盖选区原文
+    if (!externalSel && !conceptFlowMode) {
+      await injectIntoSourceNote(appRef, selectionSnap, entry.name || '');
+    }
     notice('✅ 已录入概念卡片');
     void autoClassify(appRef, entry.id);
+    if (conceptFlowMode) {
+      // 流转（ticket 50）：记录已建概念 → 下一个新概念或回填收尾
+      flowCreated.push({ id: entry.id, name: entry.name || name });
+      nextConceptFlow();
+      return;
+    }
     if (directType) {
       // 直达命令：保存后直接关闭（可连续快速录入）
       closeBlackBoxCapture();
@@ -524,7 +636,6 @@ async function analyzeLiterature(btn: HTMLButtonElement): Promise<void> {
     const parsed = parseLiteratureJson(raw);
     literatureTerms = new Set();
     literatureSuggest = [];
-    literatureInsight = '';
     literatureTitle = parsed ? parsed.title : '';
     if (parsed) {
       for (const n of parsed.matched) {
@@ -546,7 +657,6 @@ async function analyzeLiterature(btn: HTMLButtonElement): Promise<void> {
           literatureSuggest.push({ id: null, label: n, checked: false });
         }
       }
-      literatureInsight = parsed.insight;
     } else {
       notice('⚠️ 分析结果无法识别（仍可直接存入）');
     }
@@ -588,14 +698,6 @@ function renderStepFeel(): void {
       }
       box.appendChild(chips);
     }
-    // 提炼想法（AI 生成，可编辑/清空）
-    const insight = document.createElement('textarea');
-    insight.id = 'bz-blackbox-insight';
-    insight.className = 'bz-blackbox-textarea';
-    insight.placeholder = '提炼想法（可选）：包仔从摘抄提炼，可编辑';
-    insight.value = literatureInsight;
-    insight.addEventListener('input', () => (literatureInsight = insight.value));
-    box.appendChild(insight);
   }
 
   box.appendChild(groupHint(`情绪（可选，最多 ${MAX_EMOTIONS} 个）`));
@@ -758,61 +860,9 @@ function renderPeopleChips(): void {
     setTimeout(() => (suggest.style.display = 'none'), 150);
   });
   row.appendChild(inputWrap);
-
-  const newBtn = document.createElement('button');
-  newBtn.type = 'button';
-  newBtn.id = 'bz-blackbox-profile-new';
-  newBtn.className = 'bz-blackbox-ai-btn';
-  newBtn.textContent = '➕ 新建画像';
-  newBtn.addEventListener('click', () => {
-    newProfileOpen = !newProfileOpen;
-    renderPeopleChips();
-  });
-  row.appendChild(newBtn);
-
-  if (newProfileOpen) {
-    const form = document.createElement('div');
-    form.className = 'bz-blackbox-profile-form';
-    form.id = 'bz-blackbox-profile-form';
-    const name = document.createElement('input');
-    name.id = 'bz-blackbox-profile-form-name';
-    name.className = 'bz-blackbox-input';
-    name.placeholder = '名字（必填）';
-    const relation = document.createElement('input');
-    relation.id = 'bz-blackbox-profile-form-relation';
-    relation.className = 'bz-blackbox-input';
-    relation.placeholder = '关系（可选，如 家人/前任）';
-    const create = document.createElement('button');
-    create.type = 'button';
-    create.id = 'bz-blackbox-profile-form-create';
-    create.className = 'bz-blackbox-btn bz-blackbox-btn-primary';
-    create.textContent = '创建并关联';
-    create.addEventListener('click', () => void createProfileNow(name.value.trim(), relation.value.trim()));
-    form.append(name, relation, create);
-    row.appendChild(form);
-  }
 }
 
-/** 录入弹窗内的现场新建画像（冷启动双路径） */
-async function createProfileNow(name: string, relation: string): Promise<void> {
-  if (!appRef || !data) return;
-  if (!name) {
-    notice('⚠️ 画像名字不能为空');
-    return;
-  }
-  if (profiles.some((p) => p.name === name)) {
-    notice('⚠️ 已有同名画像，直接选择即可');
-    return;
-  }
-  const pf = await createProfileWithSeed(appRef, name, relation);
-  const latest = await manager(appRef).load();
-  data = latest;
-  profiles = latest.profiles;
-  addPeople(pf.id);
-  newProfileOpen = false;
-  renderPeopleChips();
-  notice(`✅ 画像「${name}」已创建`);
-}
+/** 录入弹窗内的现场新建画像（ticket 50 已删：冷启动双路径收归主面板，涉及的人只能匹配已有画像/仅存名字） */
 
 function renderSuggest(input: HTMLInputElement, suggest: HTMLElement): void {
   const q = input.value.trim();
@@ -995,14 +1045,14 @@ async function saveEntry(): Promise<void> {
       toward: '',
       links: [],
     });
-    // 标题：分析结果优先 → AI 生成 → 前 20 字降级；提炼想法 → 独立想法笔记 + 摘抄底部「来自：[[摘抄]]」
+    // 标题：分析结果优先 → AI 生成 → 前 20 字降级；想法手输（ticket 50）非空 → 独立想法笔记 + 摘抄底部「来自：[[摘抄]]」
     lit.title = await resolveEntryTitle(lit, literatureTitle);
     entries.push(lit);
-    if (literatureInsight.trim()) {
+    if (literatureThought.trim()) {
       entries.push(
         createEntry({
           type: 'thought',
-          text: literatureInsight.trim(),
+          text: literatureThought.trim(),
           emotions: selectedTags,
           people: peopleChips,
           scene: sceneText.trim(),
@@ -1012,11 +1062,11 @@ async function saveEntry(): Promise<void> {
         })
       );
     }
-    // 勾选的新概念（无 id）→ 落为概念条目（定义由后续生成补充）
-    for (const s of literatureSuggest) {
-      if (s.checked && !s.id) {
-        entries.push(createEntry({ type: 'concept', name: s.label, definition: '' }));
-      }
+    // 勾选的新概念（无 id）→ 不落空定义条目，保存后同弹窗流转概念录入（ticket 50）
+    const pendingNew = literatureSuggest.filter((s) => s.checked && !s.id).map((s) => s.label);
+    if (pendingNew.length) {
+      conceptFlowMode = true;
+      pendingConceptQueue = pendingNew.slice();
     }
   } else {
     if (!thoughtText.trim()) {
@@ -1044,13 +1094,21 @@ async function saveEntry(): Promise<void> {
     for (const e of entries) {
       const r = await m.addEntry(latest, e);
       shouldReview = shouldReview || r.shouldReview;
-      // AI 自动分类（2026-08-12 需求）：保存后异步归入分类文件夹，失败静默留根目录
-      void autoClassify(appRef, e.id);
+      // AI 自动分类（2026-08-12 需求）：仅概念归入分类文件夹（ticket 50：摘抄不分类留根目录），失败静默留根目录
+      if (e.type === 'concept') void autoClassify(appRef, e.id);
     }
     data = latest;
-    // 原位注入（ticket 06）：摘抄目标 = AI 标题（保存时已确定）；概念/摘抄保存时带选区才触发
-    if (activeType === 'literature' && entries[0] && entries[0].title) {
+    // 原位注入（ticket 06）：摘抄目标 = AI 标题（保存时已确定）；概念/摘抄保存时带选区才触发；
+    // 书内选区录入（externalSel）无来源笔记 → 跳过注入（epub 不可写）
+    if (activeType === 'literature' && entries[0] && entries[0].title && !externalSel) {
       await injectIntoSourceNote(appRef, selectionSnap, entries[0].title);
+    }
+    if (activeType === 'literature' && conceptFlowMode && entries[0]) {
+      // 新概念流转（ticket 50）：记录回填目标 → 同弹窗依次概念录入，全部完成后回填摘抄 terms
+      flowLitId = entries[0].id;
+      notice(`✅ 摘抄已存入，依次录入 ${pendingConceptQueue.length} 个新概念`);
+      startConceptFlow();
+      return;
     }
     notice(`✅ 已存入黑匣子（${entries.length} 条）`);
     if (directType) {
@@ -1067,5 +1125,54 @@ async function saveEntry(): Promise<void> {
   } catch (e) {
     console.warn('黑匣子保存失败', e);
     notice('❌ 存入失败', 'error');
+  }
+}
+
+// ---------------- 新概念流转（ticket 50） ----------------
+
+/** 启动/推进概念流转：预填当前概念名（可编辑）+ 来源继承摘抄（ADR-0016 单值） */
+function startConceptFlow(): void {
+  if (!pendingConceptQueue.length) return;
+  activeType = 'concept';
+  conceptName = pendingConceptQueue[0];
+  conceptDefinition = '';
+  conceptRelatedIds = [];
+  conceptNameLocked = false;
+  conceptSource = literatureSource;
+  gotoStep('content');
+}
+
+/** 一个概念确认（或重名直连）后：推进到下一个新概念，或回填收尾 */
+function nextConceptFlow(): void {
+  pendingConceptQueue.shift();
+  if (pendingConceptQueue.length) {
+    startConceptFlow();
+  } else {
+    void finishConceptFlow();
+  }
+}
+
+/** 收尾（ticket 50）：回填摘抄 terms（追加全部新建概念）→ 直达模式自动关闭 / 引导模式回类型选择 */
+async function finishConceptFlow(): Promise<void> {
+  if (appRef && flowLitId && flowCreated.length) {
+    try {
+      const m = manager(appRef);
+      const latest = await m.load();
+      const ok = await m.appendEntryTerms(latest, flowLitId, flowCreated.map((c) => c.id));
+      if (ok) notice(`✅ 已把 ${flowCreated.length} 个新概念加入摘抄关联`);
+    } catch (e) {
+      console.warn('黑匣子摘抄关联回填失败', e);
+    }
+  }
+  conceptFlowMode = false;
+  pendingConceptQueue = [];
+  flowLitId = null;
+  flowCreated = [];
+  if (directType) {
+    // 直达命令（含 EPUB 选区）：全部完成后自动关闭（保持直达「保存即关」语义）
+    closeBlackBoxCapture();
+  } else {
+    resetEntry();
+    renderStep();
   }
 }

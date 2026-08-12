@@ -1,6 +1,8 @@
 # bz 进度（上下文压缩恢复点）
 
-最后更新：2026-08-09（影视设置扩展：默认视图 3 项 + 评分显示），**806/806 全绿**。仓库 `E:/Obsidian/1`，构建产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`。
+最后更新：2026-09（ticket 50 黑匣子录入打磨 + 新概念流转 + 面板标签升级），**1171/1171 全绿**。仓库 `E:/Obsidian/bz`，构建产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`。
+
+- **ticket 50 黑匣子录入打磨 + 新概念流转 + 面板标签（grilling 会话封板，issue 50 ready-for-agent → 已实现）**：① 概念面板名→定义、摘抄面板 摘抄→想法→来源 统一大间距（CSS ~18px）；② 想法框移内容步插在摘抄与来源之间，**手输不 AI 提炼**（分析 insight 不再预填，空则只存摘抄）；③ 书内选区（externalSel）来源 input 只读显示纯文字书名（`bookTitleFromSourceLink`，保存仍完整双链 cfi 不丢），概念面板新增来源框（定义下、主按钮上）；④ 三类录入删「➕ 新建画像」（createProfileWithSeed 保留给主面板）；⑤ **新概念流转**：摘抄勾选 ✦新概念 → 保存不落空定义概念 → 同弹窗依次概念录入（名可编辑、来源继承摘抄）→ 全部完成 `appendEntryTerms` 回填摘抄 terms（fm+正文）；跳过/关窗=不建不加（已确认仍回填）；重名→不新建直接关联既有；流转模式跳过原位注入；直达/EPUB 模式完成自动关；⑥ 摘抄不分类（autoClassify 仅 concept）；⑦ 面板：三标签带数量 + 改单选 + 概念子分类行（category 分组数量降序，点子分类只显示该分类概念）；⑧ 卡片来源行移正文+chips 之后，显示可读名（epub 书名/笔记名/URL 原样）。术语入 CONTEXT.md（新概念流转/书内来源显示规则/文献笔记手输想法+不分类）；spec 同步（ticket 50 节）。235 黑匣子测试（capture 流转全流程/跳过不建/重名守卫 + source-jump 纯函数 + panel 标签子分类），全量 1171 全绿，tsc 黑匣子零新增错误（既有 flash/diary 错误清单未清零）。**注意**：工作区含 ticket 07/ADR-0016（书内选区录入，weave 侧已完成）未提交实现，与本次改动文件级交织，随本次一并提交（提交信息注明）。
 
 - **影视设置扩展（用户决策，第 9 轮）**：设置弹窗 2→6 项 + 2 分组（默认视图/显示）。新增：movieDefaultSort（默认排序 6 档 date-desc/date-asc/rating-desc/rating-asc/name-asc/name-desc）、movieDefaultTypeFilter（默认类型筛选，dropdown 全部+ALL_TAGS 13 类型）、movieDefaultStatusFilter（默认状态筛选 全部/想看/在看/已看）、movieRatingDisplay（已看卡片评分 stars 星星串 / number ⭐数字，ui.ts 卡片渲染读 tryGetSettings）。`applyDefaultView`（src/movie/index.ts 导出）在 ensureMovie 应用，非法排序忽略回退 date-desc（ensureMovie 幂等 → 重启生效）。spec 设置项总表影视行已同步（6 项）。测试 +4（ensureMovie 默认视图生效/缺省回退、设置弹窗 9 setting-item 断言、评分 number 渲染）。802→806。**注意**：movie 设置弹窗 describe 测试需 setSettingsProvider 注入（getSettings 会抛错）；bash heredoc 传 python 时 `\n` 转义会丢，字符串拼接用 join('\n') 或 write 工具。
 
