@@ -22,7 +22,8 @@ import {
   fetchPageTitle,
 } from '../core/utils';
 import { checkAndShowChangelog } from '../core/changelog';
-import { DataManager, getPlatformName } from './data';
+import { DataManager } from './data';
+import { getPlatformName } from '../core/utils';
 import { getDueStatus, formatDueText } from './due';
 import type { MemoItem, MemoPosition } from './types';
 import { App } from './app';
@@ -244,13 +245,6 @@ export const UIManager = {
           new Setting(el).setHeading().setName('提醒');
           settingToggle(el, '启动时自动弹出', '启动时若存在未完成的重要或到期备忘录，自动弹出面板提醒', s.autoPopupOnStart, 'autoPopupOnStart');
           settingToggle(el, '打开笔记自动提醒', '打开笔记时若该笔记有重要或到期的未完成备忘录，自动弹出面板', s.openNoteReminder !== false, 'openNoteReminder');
-          settingToggle(el, '到期通知', '到期/逾期的备忘录轮询检查，弹出通知提醒', s.memoDueNotify !== false, 'memoDueNotify');
-          settingText(el, '到期检查间隔（秒）', '到期通知的轮询间隔，最小 10 秒', '300', s.memoDueCheckInterval || '', 'memoDueCheckInterval');
-
-          // ===== 剪贴板 =====
-          new Setting(el).setHeading().setName('剪贴板');
-          settingToggle(el, '剪贴板监听', '窗口聚焦时读取剪贴板，识别平台链接自动弹出添加框', s.clipboardMonitor !== false, 'clipboardMonitor');
-          settingTextArea(el, '平台映射', '每行一个「域名=平台名」，识别剪贴板链接归属平台（留空用内置默认）', 'zhihu.com=知乎\ndouban.com=豆瓣', s.memoPlatformMapping || '', 'memoPlatformMapping', reloadScenes);
 
           // ===== 显示 =====
           new Setting(el).setHeading().setName('显示');

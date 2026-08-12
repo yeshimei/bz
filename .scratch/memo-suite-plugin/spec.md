@@ -35,9 +35,8 @@ Feature: memo-suite-plugin
 12. 作为用户，我希望待办数据读写 `CONFIG/STORAGE/memo.json`（jsonStore），以便与 QuickAdd 时代数据无缝衔接。
 13. 作为用户，我希望待办逾期状态有醒目显示（getDueStatus/formatDueText 语义：逾期、今日截止等），以便一眼看出紧急任务。
 14. 作为用户，我希望输入/粘贴 URL 时自动提取页面标题生成待办（fetchPageTitle/extractUrlAndDisplay 语义），以便快速记录。
-15. 作为用户，我希望备忘录设置暴露以下 13 项（域设置弹窗）：
-    - **提醒组**：启动时自动弹出（启动时若存在未完成的重要或到期备忘录自动弹面板）、打开笔记自动提醒（打开笔记时若该笔记有重要/到期待办自动弹面板）、到期通知（到期/逾期轮询 Notice 提醒）、到期检查间隔（秒）；
-    - **剪贴板组**：剪贴板监听（窗口聚焦时读剪贴板识别平台 URL）、平台映射（每行 `域名=平台名` 文本编辑，空则内置 7 项默认）；
+15. 作为用户，我希望备忘录设置暴露以下 9 项（域设置弹窗）：
+    - **提醒组**：启动时自动弹出（启动时若存在未完成的重要或到期备忘录自动弹面板，到期提醒合并于此）、打开笔记自动提醒（打开笔记时若该笔记有重要/到期待办自动弹面板）；
     - **显示组**：默认排序方式（紧急优先/仅优先级/创建时间）、默认显示归档、到期时间格式（相对/绝对）；
     - **新建组**：新条目默认优先级（次要/重要）、新条目默认场景（空=第一个）、完成后自动归档（关=完成条目保留主列表显示完成态）；
     - **场景列表**（逗号分隔文本编辑，空则内置 6 项默认）。
@@ -46,7 +45,7 @@ Feature: memo-suite-plugin
 17. 作为用户，我希望已完成待办可归档（归档按钮），以便从主列表隐藏历史任务。
 18. 作为用户，我希望学习/公开课场景的待办有课程字段（courseInput），以便记录课程归属。
 19. 作为用户，我希望可从当前笔记（📌 笔记名）或光标选中内容创建待办（getCurrentNoteInfo/getCurrentCursorPosition 语义），以便快速录入。
-20. 作为用户，我希望截止时间输入支持清除（dueClear）、位置按钮（posBtn）、焦点粘贴自动提取 URL（clipboardFocusHandler），以便与原脚本交互一致。
+20. 作为用户，我希望截止时间输入支持清除（dueClear）、位置按钮（posBtn），以便与原脚本交互一致。（ticket 59：clipboardFocusHandler 已删除）
 21. 作为用户，我希望到期/过期待办自动置顶（已过期红色、今日到期橙色），启动时与打开笔记时触发到期提醒，以便不错过任务（changelog 1.6.0 行为）。
 22. 作为用户，我希望长按 #标签 直接编辑待办全部信息（内容/场景/优先级等），公开课场景标签不重复显示（changelog 1.5.0 行为），以便与原脚本一致。
 
@@ -343,7 +342,7 @@ Feature: memo-suite-plugin
 - **📂 数据存储路径**：storagePath（共享，默认 CONFIG/STORAGE；旧 7 字段废弃仅兼容：todoFilePath/belongingsDataFolder/pwStoragePath/favoritesStoragePath/reviewStoragePath/META_PATH/VEC_PATH）
 
 **域设置弹窗（⚙️，各功能主面板右上角）**：
-- **备忘录**（13 项，分组：提醒/剪贴板/显示/新建/场景列表）：autoPopupOnStart、openNoteReminder、memoDueNotify、memoDueCheckInterval、clipboardMonitor、memoPlatformMapping、memoSortMode、memoShowArchivedByDefault、memoDueFormat、memoDefaultPriority、memoDefaultScene、memoAutoArchive、memoScenarios
+- **备忘录**（9 项，分组：提醒/显示/新建/场景列表）：autoPopupOnStart、openNoteReminder、memoSortMode、memoShowArchivedByDefault、memoDueFormat、memoDefaultPriority、memoDefaultScene、memoAutoArchive、memoScenarios
 - **日记本**（12 项）：diaryDirectory、movieDirectory、letterDirectory、diaryBatchSize、showTagCount、useFileDateTime、diaryTagShowEmoji（标签按钮 emoji）、diaryContentRenderMode（卡片内容 markdown/plain）、diaryTagSortMode（标签排序 fixed/count）、diaryDefaultDateFilter（打开面板默认日期筛选 all/this-month）、diaryDefaultSelectedTag（默认选中标签，空=全部）、diaryJumpToEditAfterSave（保存后立即进入编辑）
 - **归物本**：空弹窗（无设置项）
 - **剪藏本**：articleDirectory、articleBatchSize、autoSummaryEnabled
@@ -375,7 +374,7 @@ Feature: memo-suite-plugin
 ### 逐行对比补充要点（源码提取，第二批）
 
 - **密码本主密码流程**：首次设置（再次输入确认）→ 解锁（输入主密码）→ 主密码驱动加密；条目字段（账号/密码/链接/日期/备注）+ 👁 切换 + 搜索 + 生成
-- **备忘录**：AI 推荐场景（aiBtn/✨/⏳）、归档（archiveBtn）、课程字段（courseInput）、当前笔记/光标创建（getCurrentNoteInfo/getCurrentCursorPosition）、dueClear/posBtn/clipboardFocusHandler、标签点击
+- **备忘录**：AI 推荐场景（aiBtn/✨/⏳）、归档（archiveBtn）、课程字段（courseInput）、当前笔记/光标创建（getCurrentNoteInfo/getCurrentCursorPosition）、dueClear/posBtn、标签点击（ticket 59：clipboardFocusHandler 已删除）
 - **收藏本**：置顶（📌 置顶）、余额查询（API Keys 每行一个 + 余额查询 URL + 自动查找余额 + 查询中/刷新中/❌ 错误 + 刷新）、🧠 大模型配置弹窗、⏳ AI 整理中、编辑收藏、标签 emoji
 - **影视 AI 推荐**：buildTasteProfile（口味画像）→ buildRecommendPrompt → parseRecommendJson → openRecommendModal（导演：/加入想看 quickAddWant 预填）→ ⚠️ 解析失败/❌ 生成失败；状态枚举（在看/想看/已看）+ TYPE_GROUPS/TYPE_COLORS
 - **书库读书笔记弹窗**：showBookNotes（📚《书》❝ 高亮 + 日期 + 评论）+ parseBookNotes + jumpToHighlight + openEditCommentModal/updateComment/deleteHighlight；阅读进度 %/时间格式/🧮 统计

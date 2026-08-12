@@ -29,7 +29,6 @@ function makeApp(vault: MockVault, editor: any = null) {
 const SETTINGS = {
   todoFilePath: 'CONFIG/STORAGE',
   scenarios: '',
-  platformMapping: '',
   showFileName: true,
   autoPopupOnStart: false,
   movieFolderPath: '我的/影视',
