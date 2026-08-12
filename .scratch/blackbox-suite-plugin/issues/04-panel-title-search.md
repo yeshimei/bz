@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 — 数据层笔记化
 
-**Status:** ready-for-agent
+**Status:** done（实现完成，1086 测试全绿）
 
 - [ ] 面板标题显示「黑匣子」（无 🕳️、无「N 条内容」）；`bz-blackbox-panel-title` DOM id 保留
 - [ ] 搜索框默认隐藏；🔍 图标在 ⚙️设置 前，点击切换显隐，显示时高亮（.on 态）
