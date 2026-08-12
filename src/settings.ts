@@ -259,6 +259,8 @@ export default interface BzSettings {
   blackboxMaxHistory: string;
   /** 推测事件显示开关（默认开；数据内 settings.showSpeculativeEvents 兜底同步，v2 新增） */
   blackboxShowSpeculativeEvents: boolean;
+  /** 主面板默认类型筛选（''=全部 / concept / literature / thought；重启生效，v3 新增） */
+  blackboxDefaultTypeFilter: string;
 }
 
 export const DEFAULT_SETTINGS: BzSettings = {
@@ -405,4 +407,5 @@ export const DEFAULT_SETTINGS: BzSettings = {
   blackboxReviewThreshold: '10',
   blackboxMaxHistory: '20',
   blackboxShowSpeculativeEvents: true,
+  blackboxDefaultTypeFilter: '',
 };

@@ -1,6 +1,6 @@
 /**
- * 黑匣子设置弹窗测试（ticket 38/45）：v2 共 7 项——推测事件显示开关（默认开/持久化）、
- * 情绪词表编辑（增删持久化，不影响存量条目）、既有 5 项保留。
+ * 黑匣子设置弹窗测试（ticket 38/45，v3 增第 8 项）：推测事件显示开关（默认开/持久化）、
+ * 情绪词表编辑（增删持久化，不影响存量条目）、主面板默认类型筛选（默认全部/保存）、既有 5 项保留。
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -53,7 +53,7 @@ function itemByName(name: string): any {
   );
 }
 
-describe('黑匣子设置弹窗（v2 7 项）', () => {
+describe('黑匣子设置弹窗（v3 8 项）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     setApp(null as any);
@@ -78,6 +78,8 @@ describe('黑匣子设置弹窗（v2 7 项）', () => {
     // v2 2 项
     expect(itemByName('推测事件显示')).toBeTruthy();
     expect(itemByName('情绪词表')).toBeTruthy();
+    // v3 1 项
+    expect(itemByName('主面板默认类型筛选')).toBeTruthy();
     // 词表 4 词渲染
     expect(document.querySelectorAll('.bz-blackbox-word-chip').length).toBe(4);
   });
@@ -118,6 +120,24 @@ describe('黑匣子设置弹窗（v2 7 项）', () => {
     expect(data.settings.words).not.toContain('难过');
     // 存量条目 emotions 不受影响
     expect(data.entries[0].emotions).toEqual(['旧词']);
+  });
+
+  it('主面板默认类型筛选：默认全部；切换后持久化到 data.json', async () => {
+    const vault = new MockVault();
+    seedVault(vault);
+    const settings: any = {};
+    const { app } = setup(vault, settings);
+    await openBlackBoxSettings(app);
+    const dd = itemByName('主面板默认类型筛选').__setting.controls[0];
+    expect(dd.value).toBe(''); // 默认全部
+    dd.trigger('thought');
+    await new Promise((r) => setTimeout(r, 50));
+    expect(settings.blackboxDefaultTypeFilter).toBe('thought');
+    // 已设值时回显
+    const settings2: any = { blackboxDefaultTypeFilter: 'concept' };
+    const { app: app2 } = setup(vault, settings2);
+    await openBlackBoxSettings(app2);
+    expect(itemByName('主面板默认类型筛选').__setting.controls[0].value).toBe('concept');
   });
 
   it('重复词拒绝；空词拒绝', async () => {
