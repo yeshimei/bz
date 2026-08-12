@@ -14,7 +14,7 @@ bz 现有 18 个域均为"工具"（待办/剪藏/复习…），无"人格化�
 
 ## Solution
 
-bz 新域 `src/blackbox/`：单 JSON 数据文件 `CONFIG/STORAGE/blackbox.json`（受 ADR-0009 storagePath 约束），三类条目（概念与实体 / 文献笔记 / 核心知识）+ 两个派生层（人物画像 / 事件时间线）。UI = 中央录入弹窗（`bz-blackbox-capture`）+ 中央对话弹窗（`bz-blackbox-open`）+ 五标签主面板 + 复盘（`bz-blackbox-review`）。AI 复用 `core/createAI`（DeepSeek 优先 → Ollama 回退，同闪念模式），对话检索沿用 v1 已实现的 TF-IDF（不引入向量）。
+bz 新域 `src/blackbox/`：单 JSON 数据文件 `CONFIG/STORAGE/blackbox.json`（受 ADR-0009 storagePath 约束），三类条目（概念与实体 / 文献笔记 / 核心知识）+ 两个派生层（人物画像 / 事件时间线）。UI = 中央录入弹窗（`bz-blackbox-capture`）+ 中央对话弹窗（`bz-blackbox-open`）+ 流式主面板（v3）+ 复盘（`bz-blackbox-review`）。AI 复用 `core/createAI`（DeepSeek 优先 → Ollama 回退，同闪念模式），对话检索沿用 v1 已实现的 TF-IDF（不引入向量）。
 
 ### 领域模型
 
@@ -37,7 +37,7 @@ bz 新域 `src/blackbox/`：单 JSON 数据文件 `CONFIG/STORAGE/blackbox.json`
 | `bz-blackbox-capture` | 打开录入弹窗（顶部三类型切换：🧩 概念 / 📎 文献 / 💡 想法；中文名「录入」） | 外部约定，launcher 磁贴/热键依赖 |
 | `bz-blackbox-open` | 打开对话面板（中央弹窗，意识体交流） | 外部约定 |
 | `bz-blackbox-review` | 手动触发复盘 | 外部约定 |
-| `bz-blackbox-panel` | 打开五标签主面板（🧩 概念墙 / 📎 文献架 / 💡 想法池 / 👤 人物 / 🕐 时间线） | 外部约定（ticket 41 追加） |
+| `bz-blackbox-panel` | 打开流式主面板（v3：类型标签栏 + 搜索 + 时间流；👤 人物 / 🕐 时间线为面板内独立弹窗入口） | 外部约定（ticket 41 追加，v3 改流式） |
 
 域内不重复 addCommand，仅在 main.ts COMMANDS 表注册一次（ADR-0004）。
 
@@ -48,6 +48,7 @@ bz 新域 `src/blackbox/`：单 JSON 数据文件 `CONFIG/STORAGE/blackbox.json`
 | 复盘阈值（条） | 10 | 每 N 条新感触自动触发复盘提示；**读取优先全局设置 blackboxReviewThreshold（v1 兼容），settings.reviewThreshold 兜底并同步** |
 | 推测事件显示 | 开 | 时间线是否显示推测事件（关=只显示确认事件） |
 | 情绪词表 | 24 词内置 | 可增删（词表存 blackbox.json settings 段，第一版预置 24 词，内容可编辑、字段结构不改） |
+| 默认类型筛选 | 全部 | 打开主面板时默认选中的类型（全部/概念/文献/想法，空=全部），重启生效（与 diaryDefaultSelectedTag 同模式） |
 
 AI 设置跟随全局设置页（createAI/DeepSeek/Ollama 回退），黑匣子不设独立 AI 配置（Q27：不搞隐私分层）。
 
@@ -144,15 +145,36 @@ AI 设置跟随全局设置页（createAI/DeepSeek/Ollama 回退），黑匣子�
 
 **检索机制**：对话记忆检索沿用 v1 的 **TF-IDF**（非 bge-m3 向量；闪念才用向量），v2 索引文本 = entry.text（v1 的 material+feeling 合并后检索覆盖不变）。
 
-### 主面板（五标签，`bz-blackbox-open` 同源入口或面板内切换）
+### 主面板（v3 流式布局，`bz-blackbox-panel`，grilling 2026-08 封板）
 
-| 标签 | 内容 |
+> v1 面板为五标签（ticket 41-45：概念墙/文献架/想法池/人物/时间线）。v3 经 grilling 封板改为**流式布局**：面板骨架照搬日记本（header + 标签栏 + 搜索 + 单个时间流），卡片内容直接铺在流中，不做任何点击交互（无单击/双击/长按/emoji 点击——只参考日记本的流式布局，不搬日记本的交互）。人物画像与事件时间线拆为**面板内独立弹窗**（header 右上角 👤 / 🕐 入口），功能完整度保留。数据层零改动（三类条目/画像/事件 schema 不变，ADR-0013）。
+
+**面板结构**（照搬日记本骨架）：
+
+| 区块 | 内容 |
 |---|---|
-| 🧩 概念墙 | 概念卡网格（名称+定义摘要+关联数），点击展开详情 |
-| 📎 文献架 | 文献列表（来源+摘抄摘要+名词表关联） |
-| 💡 想法池 | 想法列表（文本+情绪标签+涉及的人） |
-| 👤 人物 | 画像卡片墙（名字/关系/印象摘要/事件数/情绪聚合）+ 新建画像；详情 = 印象（锁定）+ AI 观察（虚线，可采纳）+ 事件投影 + 情绪聚合 |
-| 🕐 时间线 | 按年月分组的纵向事件流；事件卡：日期+标题+人物+情绪色点+证据链入口；推测事件虚线+❓+[确认][删除]；筛选（人物/年份） |
+| header | 左标题「🕳️ 黑匣子面板 · N 条内容」；右动作区 ✏️ 录入 / 👤 人物 / 🕐 时间线 / ⚙️ 设置 / ❌ 关闭（关闭在最后，备忘录风格） |
+| 类型标签栏 | 🧩 概念 / 📎 文献 / 💡 想法 三胶囊（样式仿日记标签按钮），**多选**（Set），**默认空集 = 显示全部**；选中 = 只显示选中类型并集 |
+| 搜索框 | 🔍 输入框（防抖 300ms）；范围 = 名称/定义/文本/来源 + 情绪标签 + 涉及的人名 |
+| 时间流 | 日期分隔条（createdAt 日期，吸顶 sticky）+ 卡片；排序 `createdAt` 降序（新在上），同日按时间降序；批次渲染（BATCH 20）+ 滚到底加载下一批 + 底部「已显示所有内容」提示（照搬日记本无限滚动骨架，数据为内存全量，分页仅保 DOM 性能与观感一致） |
+
+**卡片**（纯展示，无任何点击交互）：
+
+| 类型 | 卡片内容 |
+|---|---|
+| 🧩 概念 | 头部 emoji + 录入时刻 HH:MM；名称 + 定义全文 + 关联概念 chips（纯展示） |
+| 📎 文献 | 头部 emoji + HH:MM；来源 + 摘抄全文 + 名词表 chips（纯展示）+ 链接 🔗 行（纯展示） |
+| 💡 想法 | 头部 emoji + HH:MM；全文 + 情绪/人物/场景 chips（纯展示） |
+
+**人物弹窗**（👤 header 入口，独立中央弹窗，完整度保留）：画像卡墙 + 详情（印象字段级锁 / AI 观察可采纳+移除 / 情绪聚合 / 事件投影）+ 新建画像（AI 提炼初始印象）。
+
+**时间线弹窗**（🕐 header 入口，独立中央弹窗，完整度保留）：按月分组事件流（降序新在前）+ 推测事件虚线 ❓ [确认][删除] + 证据链展开 + 人物/年份筛选 + 推测事件显示开关消费（resolveShowSpeculative）。
+
+**默认类型筛选设置**：`blackboxDefaultTypeFilter`（'' = 全部 / concept / literature / thought，默认 ''），**不写死**，用户可在 ⚙️ 设置弹窗修改；重启生效（与 diaryDefaultSelectedTag 同模式）。
+
+**移动端**（照搬日记本断点样式）：768px 断点（面板宽 95%、顶部圆角、类型标签单行横滚隐藏滚动条、紧凑 padding、日期分隔条紧凑）；480px 断点（全屏无圆角）。长按手势与 fixMobileSelect **不搬**（卡片无编辑/复制交互）。
+
+**DOM/命令约定**：`bz-blackbox-panel` 命令 id 与 `#bz-blackbox-panel` DOM id 保留；五标签容器 id（bz-blackbox-wall/shelf/pool/people/timeline）删除（grep 确认无外部依赖）；人物/时间线弹窗复用现有渲染函数（renderPeople/renderTimeline 及事件卡/画像卡样式）。删除的样式：五标签 tab、概念墙网格、文献架列表、想法池列表；保留：事件卡/画像卡/详情/chips/词表样式（弹窗复用）。
 
 ### 录入弹窗（capture）结构
 
@@ -172,11 +194,11 @@ AI 设置跟随全局设置页（createAI/DeepSeek/Ollama 回退），黑匣子�
 ### 样式（styles.css 收敛，bz 惯例）
 
 - 弹窗：`#blackbox-capture-mask` / `#blackbox-capture-popup`、`#blackbox-dialog-mask` / `#blackbox-dialog-popup`（沿用 add-diary/add-todo 的 mask+popup 骨架：居中、圆角 12px、`--background-primary`、z-index 10001/10002）
-- 面板：`#blackbox-panel` 五标签（标签胶囊复用日记标签按钮样式 `.diary-tag-selector-btn` 或新增 `.blackbox-tab-btn`）
+- 面板：`#bz-blackbox-panel` v3 流式（骨架照搬日记本：header/类型标签栏/搜索/日期分隔条/卡片；标签胶囊复用日记标签按钮样式 `.diary-tag-btn` 或仿 `.bz-blackbox-panel-tab-btn`）
 - 事件卡：`.blackbox-event-card`（确认态实线）+ `.blackbox-event-card.speculative`（虚线 + ❓）
 - 画像卡：`.blackbox-profile-card`；AI 观察区虚线框 `.blackbox-ai-observation`
 - 情绪胶囊：`.blackbox-emotion-btn`（激活态高亮）；涉及的人标签 `.blackbox-people-tag`
-- 移动端适配（@media max-width）：面板与弹窗宽 95%
+- 移动端适配（@media max-width）：768px 面板宽 95% + 顶部圆角 + 类型标签单行横滚；480px 全屏；照搬日记本断点（长按/fixMobileSelect 不搬）
 
 ### 降级链
 
@@ -189,7 +211,7 @@ AI 设置跟随全局设置页（createAI/DeepSeek/Ollama 回退），黑匣子�
 
 - 数据层：条目 CRUD（三类）、感触外壳校验（情绪 ≤3、涉及的人 ≤5）、词表校验、画像投影（事件按人过滤）、事件 edited 锁（用户改过 AI 不再更新）、推测事件确认/删除
 - 纯函数：词表默认值、情绪去重、时间线分组（按年月）、情绪聚合统计
-- UI 层（jsdom）：录入弹窗类型切换、概念生成流程（mock AI）、名词表勾选、感触外壳折叠、五标签切换、画像详情（AI 观察采纳）、事件卡确认/删除、复盘产物入对话流
+- UI 层（jsdom）：录入弹窗类型切换、概念生成流程（mock AI）、名词表勾选、感触外壳折叠、**主面板流式（v3）**：类型标签多选筛选/默认全部/搜索防抖/日期分组排序/批次滚动、人物弹窗（AI 观察采纳）、时间线弹窗（事件卡确认/删除）、复盘产物入对话流
 - mock fetch：AI 生成卡片/名词表/提炼/复盘（mock DeepSeek/Ollama）
 - smoke.test.ts 命令清单同步新增 3 条命令
 
@@ -209,7 +231,7 @@ AI 设置跟随全局设置页（createAI/DeepSeek/Ollama 回退），黑匣子�
 4. 作为用户，我希望文献录入可展开"带出想法"，摘抄引出的想法同一次录入完成，以便记录完整语境。
 5. 作为用户，我希望想法录入时可选 AI 辅助（查概念/联想旧感触/追问），以便录入不被打断又有伴侣在场感。
 6. 作为用户，我希望文献与想法条目有感触外壳（情绪标签≤3、涉及的人、场景/指向/链接），概念条目没有，以便记录"此刻的我"而非只存内容。
-7. 作为用户，我希望主面板五个标签（概念墙/文献架/想法池/人物/时间线）浏览全部内容，以便按维度回看。
+7. 作为用户，我希望主面板为**流式布局**（v3，照搬日记本骨架：类型标签栏 + 搜索 + 时间流），默认不选中任何类型（显示全部），按录入时间倒序铺开三类条目，以便打开即浏览全部内容。
 8. 作为用户，我希望「涉及的人」可从已有画像选择或现场新建画像，未建画像的人只存名字，以便冷启动不打扰。
 9. 作为用户，我希望人物画像由 AI 从条目中提炼维护（印象/情绪聚合/事件投影），我可编辑且改过字段 AI 不再覆盖，以便画像既有 AI 维护又有我的主权。
 10. 作为用户，我希望画像详情有 AI 观察区（持续更新的虚线框），我可一键采纳进印象区，以便我的版本与它的版本并存。
@@ -221,3 +243,4 @@ AI 设置跟随全局设置页（createAI/DeepSeek/Ollama 回退），黑匣子�
 16. 作为用户，我希望 AI 服务不可用时录入与浏览仍可用（仅 AI 辅助降级），以便黑匣子永不拒收我的输入。
 17. 作为用户，我希望情绪词表在设置中可增删（第一版预置 24 词），以便词表随我的语言生长。
 18. 作为用户，我希望黑匣子所有数据在本机 blackbox.json（storagePath 约束），以便数据属于我。
+19. 作为用户，我希望人物画像与事件时间线为面板右上角独立弹窗（👤 / 🕐，完整度保留），以便主视图保持单一时间流（v3）。
