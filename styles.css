@@ -1144,48 +1144,151 @@
   flex: 1;
 }
 
-/* ===== 主面板（五标签） ===== */
+/* ===== 主面板（v3 流式） ===== */
 #bz-blackbox-panel {
   display: flex;
   flex-direction: column;
   max-height: 86vh;
   overflow: hidden;
 }
-.bz-blackbox-panel-tabs {
+/* 类型标签栏（🧩 概念 / 📎 文献 / 💡 想法，多选；仿日记标签按钮） */
+.bz-blackbox-type-bar {
   display: flex;
-  gap: 8px;
-  padding: 0 20px 12px;
-  flex-shrink: 0;
   flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 20px 10px;
+  flex-shrink: 0;
 }
-.bz-blackbox-panel-tab-btn {
-  flex: 1;
-  min-width: 88px;
+.bz-blackbox-type-btn {
   border: 1px solid var(--background-modifier-border);
   background: var(--background-secondary);
   color: var(--text-normal);
   border-radius: 12px;
-  padding: 5px 8px;
+  padding: 5px 14px;
   font-size: 12px;
   cursor: pointer;
   transition: all 0.15s;
   white-space: nowrap;
 }
-.bz-blackbox-panel-tab-btn:hover {
+.bz-blackbox-type-btn:hover {
   background: var(--background-modifier-hover);
 }
-.bz-blackbox-panel-tab-btn-on {
+.bz-blackbox-type-btn-on {
   background: var(--interactive-accent);
   border-color: var(--interactive-accent);
   color: var(--text-on-accent);
 }
-.bz-blackbox-panel-content {
+/* 搜索框（仿 diary-search-input） */
+.bz-blackbox-search-wrap {
+  padding: 0 20px 12px;
+  flex-shrink: 0;
+}
+.bz-blackbox-search-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  outline: none;
+  box-sizing: border-box;
+}
+.bz-blackbox-search-input:focus {
+  border-color: var(--interactive-accent);
+}
+/* 时间流（无限滚动） */
+.bz-blackbox-stream {
   flex: 1;
   overflow-y: auto;
   padding: 0 20px 14px;
+  position: relative;
+  min-height: 300px;
 }
-.bz-blackbox-panel-tab-content {
-  min-height: 100%;
+.bz-blackbox-stream-date-section {
+  position: relative;
+}
+.bz-blackbox-stream-date {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 10px 12px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-weight: 600;
+  font-size: 18px;
+}
+.bz-blackbox-stream-end {
+  text-align: center;
+  color: var(--text-faint);
+  padding: 20px;
+  font-size: 14px;
+}
+/* 流式卡片（仿 diary-entry-card：边框圆角 12px 内边距 20px；纯展示无交互） */
+.bz-blackbox-stream-card {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  padding: 20px;
+  background: var(--background-primary);
+  margin: 20px 0;
+}
+.bz-blackbox-stream-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.bz-blackbox-stream-card-emoji {
+  font-size: 16px;
+  user-select: none;
+}
+.bz-blackbox-stream-card-time {
+  font-weight: 600;
+  color: var(--text-normal);
+  font-size: 15px;
+}
+.bz-blackbox-stream-card-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-normal);
+  margin-bottom: 6px;
+}
+.bz-blackbox-stream-card-def {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-normal);
+  white-space: normal;
+}
+.bz-blackbox-stream-card-source {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.bz-blackbox-stream-card-body {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-normal);
+  white-space: normal;
+}
+.bz-blackbox-stream-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 8px;
+}
+.bz-blackbox-stream-card-scene,
+.bz-blackbox-stream-card-links {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+/* 弹窗内容区（人物/时间线独立弹窗滚动） */
+.bz-blackbox-popup-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 20px 14px;
+  min-height: 300px;
 }
 
 /* 空态 */
@@ -1244,72 +1347,7 @@
   margin-bottom: 4px;
 }
 
-/* 🧩 概念墙 */
-.bz-blackbox-wall-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-/* 📎 文献架 */
-.bz-blackbox-shelf-card {
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.bz-blackbox-shelf-card:hover {
-  border-color: var(--interactive-accent);
-}
-.bz-blackbox-shelf-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-}
-.bz-blackbox-shelf-source {
-  font-size: 12px;
-  font-weight: 600;
-}
-.bz-blackbox-shelf-body {
-  font-size: 12px;
-  color: var(--text-muted);
-  line-height: 1.5;
-}
-.bz-blackbox-shelf-full {
-  font-size: 12px;
-  line-height: 1.6;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--background-modifier-border);
-}
-.bz-blackbox-shelf-links {
-  font-size: 11px;
-  color: var(--text-faint);
-  margin-top: 6px;
-}
-
-/* 💡 想法池 */
-.bz-blackbox-pool-card {
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-}
-.bz-blackbox-pool-body {
-  font-size: 13px;
-  line-height: 1.6;
-}
-.bz-blackbox-pool-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-  margin-top: 6px;
-}
+/* 🧩📎💡 流式卡片（v3，三类型统一；删除五标签期概念墙网格/文献架列表/想法池列表） */
 .bz-blackbox-emotion-tag {
   display: inline-block;
   background: var(--interactive-accent);
@@ -1319,7 +1357,8 @@
   font-size: 10px;
 }
 .bz-blackbox-pool-scene,
-.bz-blackbox-pool-links {
+.bz-blackbox-stream-card-scene,
+.bz-blackbox-stream-card-links {
   font-size: 11px;
   color: var(--text-faint);
 }
@@ -1490,13 +1529,55 @@
   margin-top: 4px;
 }
 
-/* 移动端适配 */
+/* 移动端适配（照搬日记本断点：768 圆角顶 + 标签横滚 + 紧凑 / 480 全屏；长按/fixMobileSelect 不搬） */
 @media (max-width: 768px) {
   #bz-blackbox-panel,
   #bz-blackbox-capture-popup,
-  #bz-blackbox-chat-popup {
+  #bz-blackbox-chat-popup,
+  #bz-blackbox-people-popup,
+  #bz-blackbox-timeline-popup {
     width: 95% !important;
     max-width: 95% !important;
+  }
+  #bz-blackbox-panel {
+    border-radius: 16px 16px 0 0 !important;
+    max-height: 90vh !important;
+    padding-top: 24px;
+  }
+  /* 类型标签单行横滚，隐藏滚动条（日记标签同款） */
+  .bz-blackbox-type-bar {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 0 20px 10px !important;
+  }
+  .bz-blackbox-type-bar::-webkit-scrollbar {
+    display: none;
+  }
+  .bz-blackbox-type-btn {
+    flex-shrink: 0;
+    font-size: 13px !important;
+  }
+  .bz-blackbox-stream-date {
+    padding: 10px 0 !important;
+    font-size: 16px !important;
+  }
+  .bz-blackbox-stream-card {
+    padding: 16px !important;
+    margin: 16px 0 !important;
+  }
+  .bz-blackbox-search-wrap {
+    padding: 0 20px 8px !important;
+  }
+}
+@media (max-width: 480px) {
+  #bz-blackbox-panel {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    border-radius: 0 !important;
   }
 }
 
