@@ -7,7 +7,7 @@ import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
-import { createSiteIcon, injectStyles } from '../core/dom';
+import { createSiteIcon } from '../core/dom';
 import { formatRelativeTime } from '../core/utils';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
@@ -85,7 +85,6 @@ export async function initArticleView(showImmediately = true): Promise<void> {
   // 首次创建
   isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   createMaskAndPopup();
-  injectStyles('clipping', CLIPPING_CSS);
   registerEscapeListener();
 
   // 设置可见性
@@ -278,9 +277,6 @@ function createSiteBar(): HTMLElement {
   sc.style.cssText =
     'display:flex;flex-wrap:wrap;gap:8px;overflow-x:auto;padding:4px 0;scrollbar-width:none;-ms-overflow-style:none;';
   sc.addEventListener('scroll', () => {});
-  const style = document.createElement('style');
-  style.textContent = `.article-sites-scroll::-webkit-scrollbar { display:none; }`;
-  document.head.appendChild(style);
 
   container.appendChild(sc);
   return container;
@@ -311,159 +307,6 @@ function createSearchContainer(): HTMLElement {
 }
 
 // ========== 注入样式（与源码逐字一致；已同步 styles/clipping.css） ==========
-export const CLIPPING_CSS = `
-        #article-view-popup {
-            animation: slideUp 0.3s ease-out;
-        }
-        #article-view-mask {
-            backdrop-filter: blur(2px);
-        }
-        .article-entry-card {
-            border: 1px solid var(--background-modifier-border);
-            border-radius: 12px;
-            padding: 18px 22px;
-            background: var(--background-primary);
-            margin: 18px 0;
-            cursor: pointer;
-            transition: background 0.15s;
-        }
-        .article-entry-card:hover {
-            background: var(--background-secondary);
-        }
-        .article-entry-title {
-            font-size: 17px;
-            font-weight: 600;
-            color: var(--text-normal);
-            margin-bottom: 8px;
-        }
-        .article-entry-title.has-backlink {
-            color: var(--text-accent) !important;
-        }
-        .article-entry-meta {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 12px;
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-        }
-        .article-entry-site {
-            background: var(--background-secondary);
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-        }
-        .article-entry-summary {
-            color: var(--text-muted);
-            line-height: 1.7;
-            font-size: 14px;
-            padding: 10px 0;
-        }
-        .article-site-btn {
-            border-radius: 20px;
-            background: var(--background-secondary);
-            padding: 4px 14px;
-            font-size: 10px;
-            cursor: pointer;
-            border: none;
-            color: var(--text-normal);
-            transition: all 0.2s;
-            box-shadow: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            white-space: nowrap;
-            box-shadow: none !important;
-            border:1px solid var(--background-modifier-border);
-        }
-        .article-site-btn:hover {
-            background: var(--background-modifier-hover) !important;
-        }
-        .article-site-btn.active {
-            background: var(--interactive-accent);
-            color: var(--text-on-accent);
-        }
-        .article-site-btn .count {
-            font-size: 10px;
-            opacity: 0.8;
-        }
-        .article-empty {
-            padding: 40px;
-            text-align: center;
-            color: var(--text-faint);
-            font-size: 16px;
-        }
-        .article-loading-hint {
-            text-align: center;
-            color: var(--text-faint);
-            padding: 20px;
-            font-size: 14px;
-        }
-        .article-backlink-list {
-            margin-top: 12px;
-            padding-top: 10px;
-            font-size: 13px;
-            color: var(--text-muted);
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 6px 12px;
-        }
-        .article-backlink-item {
-            cursor: pointer;
-            color: var(--text-accent);
-            transition: color 0.15s;
-        }
-        .article-backlink-item:hover {
-            color: var(--text-accent-hover);
-            text-decoration: underline;
-        }
-
-        @media (max-width: 768px) {
-            #article-view-popup {
-                width: 95%;
-                max-height: 90vh;
-            }
-            .article-sites-scroll {
-                flex-wrap: nowrap;
-                overflow-x: auto;
-            }
-            .article-entry-title {
-                font-size: 15px;
-            }
-
-            /* 弹窗全屏 */
-    #article-view-popup {
-        width: 100% !important;
-        max-width: 100% !important;
-        height: 100% !important;
-        max-height: 100vh !important;
-        top: 0 !important;
-        left: 0 !important;
-        transform: none !important;
-        border-radius: 0 !important;
-        animation: none !important;
-    }
-    #article-view-popup > div:first-child {
-        padding-top: 34px !important;
-    }
-    .article-sites-scroll {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-    }
-    .article-entry-title {
-        font-size: 15px;
-    }
-    #article-view-popup .article-entry-card {
-        padding: 14px 16px;
-    }
-        }
-        @keyframes slideUp {
-            from { opacity:0; transform:translate(-50%, -40%); }
-            to { opacity:1; transform:translate(-50%, -50%); }
-        }
-    `;
 
 // ========== 数据加载 ==========
 async function loadAllArticles(): Promise<void> {

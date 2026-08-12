@@ -10,18 +10,6 @@ import type { PomodoroState } from './state';
 let statusEl: HTMLElement | null = null;
 let textSpan: HTMLElement | null = null;
 
-function injectStyles(): void {
-  if (document.querySelector('style[data-pomodoro-statusbar-styles]')) return;
-  const style = document.createElement('style');
-  style.setAttribute('data-pomodoro-statusbar-styles', '');
-  style.textContent = `
-    .pomodoro-statusbar { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
-    .pomodoro-statusbar .pomodoro-statusbar-icon { display: inline-flex; align-items: center; }
-    .pomodoro-statusbar-idle { opacity: 0.45; }
-  `;
-  document.head.appendChild(style);
-}
-
 export function mountPomodoroStatusBar(container: HTMLElement, app: App): void {
   if (statusEl) return;
   statusEl = document.createElement('span');
@@ -38,7 +26,6 @@ export function mountPomodoroStatusBar(container: HTMLElement, app: App): void {
     // 函数体内延迟 import（ui.ts 顶层依赖本模块，避免循环引用环）
     void import('./ui').then((m) => m.openPomodoro(app));
   });
-  injectStyles();
   container.appendChild(statusEl);
 }
 

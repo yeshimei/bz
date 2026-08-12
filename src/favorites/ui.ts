@@ -3,7 +3,7 @@
  */
 import moment from 'moment';
 import { notice, notify } from '../core/notice';
-import { longPress, createIconBtn, injectStyles } from '../core/dom';
+import { longPress, createIconBtn } from '../core/dom';
 import { confirm } from '../core/confirm';
 import { escManager } from '../core/esc-manager';
 import { getApp } from '../core/app';
@@ -62,19 +62,6 @@ export class UIManager {
   // ---------- 构建主 UI ----------
   build() {
     // 移动端列表样式：平铺 + 隐藏滚动条
-    injectStyles('fav-mobile', `
-      @media (max-width: 768px) {
-        #fav-entries-container { scrollbar-width: none; -ms-overflow-style: none; }
-        #fav-entries-container::-webkit-scrollbar { display: none; }
-        #fav-entries-container .fav-card {
-          margin-left: -20px; margin-right: -20px;
-          border-radius: 0 !important;
-          border-left: none !important; border-right: none !important; border-top: none !important;
-          padding: 14px 20px !important;
-          margin-bottom: 0 !important;
-        }
-      }
-    `);
     this.mask = document.createElement('div');
     this.mask.id = 'fav-mask';
     Object.assign(this.mask.style, {
