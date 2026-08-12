@@ -82,10 +82,12 @@ describe('黑匣子主面板（v3 流式）', () => {
     await openBlackBoxPanel(app);
     expect(document.getElementById('bz-blackbox-panel-mask')).toBeTruthy();
     expect(document.getElementById('bz-blackbox-panel')!.style.display).toBe('flex');
-    expect(document.getElementById('bz-blackbox-panel-title')!.textContent).toContain('5 条内容');
-    // header 动作区顺序：✏️ 录入 → 👤 人物 → 🕐 时间线 → ⚙️ 设置 → ❌ 关闭
+    expect(document.getElementById('bz-blackbox-panel-title')!.textContent).toBe('黑匣子'); // 无 emoji、无条数
+    // header 动作区顺序：✏️ 录入 → 👤 人物 → 🕐 时间线 → 🔍 搜索 → ⚙️ 设置 → ❌ 关闭
     const btns = Array.from(document.querySelectorAll('.bz-blackbox-hdr-actions button'));
-    expect(btns.map((b) => (b as HTMLElement).textContent)).toEqual(['✏️', '👤', '🕐', '⚙️', '❌']);
+    expect(btns.map((b) => (b as HTMLElement).textContent)).toEqual(['✏️', '👤', '🕐', '🔍', '⚙️', '❌']);
+    // 搜索框默认隐藏
+    expect(document.getElementById('bz-blackbox-search-wrap')!.style.display).toBe('none');
     // 流：三类混排，无五标签容器
     expect(document.getElementById('bz-blackbox-wall')).toBeNull();
     const cards = streamCards();
@@ -265,8 +267,8 @@ describe('黑匣子主面板（v3 流式）', () => {
     });
     expect(document.getElementById('bz-blackbox-capture-popup')!.style.display).toBe('flex');
     closeBlackBoxCapture();
-    // ❌ → 面板关闭
-    (btns[4] as HTMLElement).click();
+    // ❌（最后一个按钮）→ 面板关闭
+    (btns[btns.length - 1] as HTMLElement).click();
     expect(document.getElementById('bz-blackbox-panel')).toBeNull();
   });
 
@@ -441,5 +443,69 @@ describe('黑匣子主面板（v3 流式）', () => {
     await openBlackBoxPanel(app);
     expect(document.querySelector('.bz-blackbox-del-btn')).toBeNull();
     expect(hasNotice(/已删除/)).toBe(false);
+  });
+});
+
+describe('主面板搜索切换（ticket 04）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => ({} as any));
+    document.body.innerHTML = '';
+    unloadBlackBox();
+  });
+
+  it('🔍 切换搜索框显隐：显示时高亮 + 宽度 100%；再次点击隐藏', async () => {
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault);
+    await openBlackBoxPanel(app);
+    const searchBtn = document.getElementById('bz-blackbox-panel-search') as HTMLElement;
+    const wrap = document.getElementById('bz-blackbox-search-wrap') as HTMLElement;
+    expect(wrap.style.display).toBe('none'); // 默认隐藏
+    expect(searchBtn.className).not.toContain('bz-blackbox-icon-on');
+    searchBtn.click();
+    expect(wrap.style.display).toBe('block'); // 显示
+    expect(searchBtn.className).toContain('bz-blackbox-icon-on'); // 高亮
+    searchBtn.click();
+    expect(wrap.style.display).toBe('none'); // 再次点击隐藏
+    expect(searchBtn.className).not.toContain('bz-blackbox-icon-on');
+  });
+
+  it('隐藏搜索框即清空已输入关键词并立即重渲染（防抖前也生效）', async () => {
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault);
+    await openBlackBoxPanel(app);
+    const searchBtn = document.getElementById('bz-blackbox-panel-search') as HTMLElement;
+    searchBtn.click();
+    const input = document.getElementById('bz-blackbox-search-input') as HTMLInputElement;
+    // 输入关键词（防抖未触发）
+    input.value = '不存在的关键词xyz';
+    input.dispatchEvent(new Event('input'));
+    // 立刻隐藏：清空 + 重渲染（无需等防抖）
+    searchBtn.click();
+    expect(input.value).toBe(''); // 清空已输入关键词
+    const cards = streamCards();
+    expect(cards.length).toBe(5); // 全量重渲染（关键词已清空）
+    // 重开后仍是默认隐藏
+    await openBlackBoxPanel(app);
+    expect(document.getElementById('bz-blackbox-search-wrap')!.style.display).toBe('none');
+  });
+
+  it('搜索显示时防抖过滤照常（范围语义不变）', async () => {
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault);
+    await openBlackBoxPanel(app);
+    (document.getElementById('bz-blackbox-panel-search') as HTMLElement).click();
+    const input = document.getElementById('bz-blackbox-search-input') as HTMLInputElement;
+    input.value = '给妹妹买吉他';
+    input.dispatchEvent(new Event('input'));
+    await vi.waitFor(() => {
+      const cards = streamCards();
+      expect(cards.length).toBe(1);
+      expect(cards[0].textContent).toContain('给妹妹买吉他');
+    });
   });
 });
