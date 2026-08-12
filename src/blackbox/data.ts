@@ -22,6 +22,7 @@ import {
   buildNoteContent,
   entryNoteTitle,
   isBlackBoxNotePath,
+  noteNameFromPath,
   notePathOf,
   parseNoteContent,
   typeDir,
@@ -367,7 +368,7 @@ export class BlackBoxDataManager {
    * 顺带扫描 `黑匣子/` 下未索引笔记（崩溃孤儿/用户手建 bb 笔记）自动入索引。
    */
   private async hydrate(data: BlackBoxData): Promise<void> {
-    type Parsed = { entry: Entry; relatedNames: string[]; termsNames: string[]; fromName: string };
+    type Parsed = { entry: Entry; relatedNames: string[]; termsNames: string[]; fromName: string; path: string };
     const parsedList: Parsed[] = [];
     const entries: Entry[] = [];
     const indexAdded: Record<string, string> = {};
@@ -383,7 +384,7 @@ export class BlackBoxDataManager {
       }
       const p = parseNoteContent(content, path);
       if (!p || p.entry.id !== id) continue; // 解析失败/损坏 → 跳过该条并保留索引重试
-      parsedList.push(p);
+      parsedList.push({ ...p, path });
       entries.push(p.entry);
     }
     // 孤儿自愈：黑匣子/ 下未索引但 frontmatter 合法的 bb 笔记（id 未被索引占用）
@@ -402,14 +403,18 @@ export class BlackBoxDataManager {
       indexedIds.add(p.entry.id);
       data.index[p.entry.id] = f.path;
       indexAdded[p.entry.id] = f.path;
-      parsedList.push(p);
+      parsedList.push({ ...p, path: f.path });
       entries.push(p.entry);
+    }
+    // 文献/想法标题 = 文件名（AI 标题/前 20 字降级都只存在于文件名；回填 title 保持一致）
+    for (const p of parsedList) {
+      if (p.entry.type !== 'concept') p.entry.title = noteNameFromPath(p.path);
     }
     // 关联区名字 → id（概念名 → id；全部条目名 → id 用于「来自」）
     const conceptNameToId = new Map<string, string>();
     const nameToId = new Map<string, string>();
     for (const p of parsedList) {
-      const name = p.entry.type === 'concept' ? (p.entry.name || '').trim() : entryNoteTitle(p.entry);
+      const name = p.entry.type === 'concept' ? (p.entry.name || '').trim() : p.entry.title || '';
       if (!name) continue;
       if (p.entry.type === 'concept' && !conceptNameToId.has(name)) conceptNameToId.set(name, p.entry.id);
       if (!nameToId.has(name)) nameToId.set(name, p.entry.id);

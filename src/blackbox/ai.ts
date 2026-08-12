@@ -170,10 +170,11 @@ export function buildAssistPrompt(
       : '（暂无）';
     return [
       `主人摘抄了一段内容，来源：「${input}」。请提取其中出现的概念/实体（名词），与既有概念对照：`,
+      `0. title：给这段摘抄起一个简短标题（≤20 字，像文件名一样可读，不要引号）；`,
       `1. matched：既有概念「${names}」中，这段内容涉及的（0-5 个，名字原样）；`,
       `2. newConcepts：内容中值得记录但不在既有概念里的新名词（0-5 个，简短）；`,
       `3. insight：从这段摘抄提炼一句主人可能有的想法/思考（一句话，供主人采纳或修改）。`,
-      `只输出 JSON：{"matched": ["..."], "newConcepts": ["..."], "insight": "..."}`,
+      `只输出 JSON：{"title": "...", "matched": ["..."], "newConcepts": ["..."], "insight": "..."}`,
     ].join('\n');
   }
   if (kind === 'recall') {
@@ -187,6 +188,15 @@ export function buildAssistPrompt(
   }
   // ask：温柔地追问为什么这条触动了他
   return `主人刚记下一点东西，但写得很短：「${input}」。用一句温柔的话问他为什么这条触动了他，像朋友一样好奇，不超过 40 字。`;
+}
+
+/** 标题建议 prompt（纯函数，ticket 03）：摘抄/想法保存时 AI 生成标题 */
+export function buildTitlePrompt(text: string): string {
+  return [
+    '给下面这段内容起一个简短标题（≤20 字，像文件名一样可读，不要引号、不要多余标点）。只输出标题本身，不要解释：',
+    '',
+    text.slice(0, 300),
+  ].join('\n');
 }
 
 /** AI 输出 JSON 容错解析（提取首对 {} 块，失败回退 null） */
@@ -284,7 +294,7 @@ export function parseConceptJson(text: string): { definition: string; relatedNam
 }
 
 /** 文献名词表分析 JSON 解析（insight 可缺省：旧模型未输出时降级为空） */
-export function parseLiteratureJson(text: string): { matched: string[]; newConcepts: string[]; insight: string } | null {
+export function parseLiteratureJson(text: string): { title: string; matched: string[]; newConcepts: string[]; insight: string } | null {
   if (!text) return null;
   const start = text.indexOf('{');
   const end = text.lastIndexOf('}');
@@ -293,6 +303,7 @@ export function parseLiteratureJson(text: string): { matched: string[]; newConce
     const obj = JSON.parse(text.slice(start, end + 1));
     if (typeof obj !== 'object') return null;
     return {
+      title: typeof obj.title === 'string' && obj.title.trim() ? obj.title.trim() : '',
       matched: Array.isArray(obj.matched) ? obj.matched.filter((n: any): n is string => typeof n === 'string') : [],
       newConcepts: Array.isArray(obj.newConcepts)
         ? obj.newConcepts.filter((n: any): n is string => typeof n === 'string')
@@ -579,6 +590,12 @@ export class BlackBoxAI {
     if (kind === 'recall') related = searchEntries(entries || [], input, 3);
     const prompt = buildAssistPrompt(kind, input, related, existingConcepts);
     return this.ask(prompt);
+  }
+
+  /** 标题建议（ticket 03）：摘抄/想法保存时 AI 生成；失败抛错由调用方降级前 20 字 */
+  async suggestTitle(text: string): Promise<string> {
+    const raw = await this.ask(buildTitlePrompt(text));
+    return (raw || '').trim().replace(/^["「『]|["」』]$/g, '');
   }
 
   /** 统一入口：deepseek（默认）→ ollama 可切；失败抛错 */

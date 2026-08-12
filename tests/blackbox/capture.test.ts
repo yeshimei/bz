@@ -8,7 +8,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, hasNotice, getNoticeMessages } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { openBlackBoxCapture, openBlackBoxCaptureConcept, closeBlackBoxCapture, unloadBlackBox } from '../../src/blackbox';
+import { openBlackBoxCapture, openBlackBoxCaptureConcept, openBlackBoxCaptureLiterature, openBlackBoxCaptureThought, closeBlackBoxCapture, unloadBlackBox } from '../../src/blackbox';
 import { BlackBoxDataManager, getBlackBoxFilePath } from '../../src/blackbox/data';
 
 function makeApp(vault: MockVault) {
@@ -575,5 +575,170 @@ describe('概念直达命令（ticket 02：bz-blackbox-capture-concept）', () =
     expect(document.getElementById('bz-blackbox-concept-gen')!.textContent).toBe('✅ 确定录入');
     setValue('bz-blackbox-concept-def', '   ');
     expect(document.getElementById('bz-blackbox-concept-gen')!.textContent).toBe('✨ 生成卡片');
+  });
+});
+
+describe('摘抄/想法直达命令（ticket 03：标题 AI 生成 + 提炼想法 + 保存即关）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => ({} as any));
+    document.body.innerHTML = '';
+    unloadBlackBox();
+  });
+  afterEach(() => {
+    unloadBlackBox();
+    delete (global as any).fetch;
+  });
+
+  function withSelection(app: any, text: string, filePath = '笔记/文学课.md'): void {
+    app.workspace.activeEditor = {
+      editor: {
+        getSelection: () => text,
+        getCursor: (which: string) => (which === 'from' ? { line: 1, ch: 0 } : { line: 1, ch: text.length }),
+      },
+      file: { path: filePath },
+    };
+  }
+
+  it('摘抄直达：选区自动填充（文本锁定 + 来源=来源笔记）→ 分析名词（标题建议）→ 保存即关 + 笔记落盘', async () => {
+    mockOllama('{"title": "修辞的弹性", "matched": ["提喻法"], "newConcepts": [], "insight": ""}');
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    withSelection(app, '修辞是语言的弹性，让有限词句装下无限情意。');
+    await openBlackBoxCaptureLiterature(app);
+    // 直达内容步 + 选区填充锁定
+    expect(document.getElementById('bz-blackbox-step-type')!.style.display).toBe('none');
+    const textEl = document.getElementById('bz-blackbox-lit-text') as HTMLTextAreaElement;
+    expect(textEl.value).toBe('修辞是语言的弹性，让有限词句装下无限情意。');
+    expect(textEl.readOnly).toBe(true);
+    expect((document.getElementById('bz-blackbox-lit-source') as HTMLInputElement).value).toBe('[[文学课]]');
+    // 分析名词（标题建议存下）
+    document.getElementById('bz-blackbox-lit-analyze')!.click();
+    await vi.waitFor(async () => {
+      expect(document.getElementById('bz-blackbox-step-feel')!.style.display).toBe('block');
+    });
+    // 保存（感触步空提交）
+    document.getElementById('bz-blackbox-save')!.click();
+    await vi.waitFor(async () => {
+      expect((await loaded(app, vault)).entries.some((e: any) => e.type === 'literature')).toBe(true);
+    });
+    expect(document.getElementById('bz-blackbox-capture-popup')).toBeNull(); // 保存即关
+    // 笔记落盘：标题 = 分析标题建议
+    expect(vault.files.has('黑匣子/摘抄/修辞的弹性.md')).toBe(true);
+    const note = vault.files.get('黑匣子/摘抄/修辞的弹性.md')!;
+    expect(note).toContain('来源：[[文学课]]');
+    expect(note).toContain('关联概念：[[提喻法]]');
+    // 水合：source + terms 解析回内存
+    const d = await loaded(app, vault);
+    const lit = d.entries.find((e: any) => e.type === 'literature')!;
+    expect(lit.source).toBe('[[文学课]]');
+    expect(lit.terms).toEqual(['bb_c1']);
+  });
+
+  it('摘抄保存：未分析时 AI 生成标题（保存时），AI 失败降级正文前 20 字', async () => {
+    // 无分析直接保存：AI 标题调用返回标题文本
+    mockOllama('修辞的弹性');
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCaptureLiterature(app);
+    setValue('bz-blackbox-lit-text', '修辞是语言的弹性，让有限词句装下无限情意。');
+    setValue('bz-blackbox-lit-source', '《诗学》');
+    document.getElementById('bz-blackbox-lit-analyze')!.click();
+    await vi.waitFor(async () => {
+      expect(document.getElementById('bz-blackbox-step-feel')!.style.display).toBe('block');
+    });
+    document.getElementById('bz-blackbox-save')!.click();
+    await vi.waitFor(async () => {
+      expect((await loaded(app, vault)).entries.some((e: any) => e.type === 'literature')).toBe(true);
+    });
+    expect(vault.files.has('黑匣子/摘抄/修辞的弹性.md')).toBe(true); // AI 标题
+  });
+
+  it('摘抄保存：AI 标题失败 → 降级正文前 20 字（永不拒收）', async () => {
+    mockOllamaFail();
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCaptureLiterature(app);
+    setValue('bz-blackbox-lit-text', '修辞是语言的弹性，让有限词句装下无限情意。');
+    document.getElementById('bz-blackbox-lit-analyze')!.click();
+    await vi.waitFor(async () => {
+      expect(document.getElementById('bz-blackbox-step-feel')!.style.display).toBe('block');
+    });
+    document.getElementById('bz-blackbox-save')!.click();
+    await vi.waitFor(async () => {
+      expect((await loaded(app, vault)).entries.some((e: any) => e.type === 'literature')).toBe(true);
+    });
+    // 标题 = 正文前 20 字（去空白）
+    const title = '修辞是语言的弹性，让有限词句装下无限情意。'.slice(0, 20);
+    expect(vault.files.has(`黑匣子/摘抄/${title}.md`)).toBe(true);
+  });
+
+  it('提炼想法 → 独立想法笔记 + 摘抄笔记底部「来自：[[摘抄]]」双链', async () => {
+    mockOllama('{"title": "修辞的弹性", "matched": ["提喻法"], "newConcepts": [], "insight": "语言有弹性，人就有了被理解的余地。"}');
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCaptureLiterature(app);
+    setValue('bz-blackbox-lit-text', '修辞是语言的弹性，让有限词句装下无限情意。');
+    document.getElementById('bz-blackbox-lit-analyze')!.click();
+    await vi.waitFor(async () => {
+      expect(document.getElementById('bz-blackbox-step-feel')!.style.display).toBe('block');
+    });
+    // 想法内容自动填入提炼想法框（分析 insight），直接保存
+    const insight = document.getElementById('bz-blackbox-insight') as HTMLTextAreaElement;
+    expect(insight.value).toContain('语言有弹性');
+    document.getElementById('bz-blackbox-save')!.click();
+    await vi.waitFor(async () => {
+      const d = await loaded(app, vault);
+      expect(d.entries.filter((e: any) => e.type === 'thought').length).toBe(1);
+    });
+    // 想法笔记落盘：底部「来自：[[修辞的弹性]]」
+    const thoughtNotes = [...vault.files.keys()].filter((p) => p.startsWith('黑匣子/想法/'));
+    expect(thoughtNotes.length).toBe(1);
+    const thoughtNote = vault.files.get(thoughtNotes[0])!;
+    expect(thoughtNote).toContain('来自：[[修辞的弹性]]');
+    // 水合：想法 from 解析为摘抄 id
+    const d = await loaded(app, vault);
+    const thought = d.entries.find((e: any) => e.type === 'thought')!;
+    const lit = d.entries.find((e: any) => e.type === 'literature')!;
+    expect(thought.from).toBe(lit.id);
+  });
+
+  it('想法直达：文本 + 保存即关；AI 生成标题失败降级', async () => {
+    mockOllamaFail();
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCaptureThought(app);
+    expect(document.getElementById('bz-blackbox-step-type')!.style.display).toBe('none');
+    setValue('bz-blackbox-thought-text', '给妹妹买吉他，她笑了很久。');
+    document.getElementById('bz-blackbox-thought-confirm')!.click();
+    expect(document.getElementById('bz-blackbox-step-feel')!.style.display).toBe('block');
+    document.getElementById('bz-blackbox-save')!.click();
+    await vi.waitFor(async () => {
+      expect((await loaded(app, vault)).entries.some((e: any) => e.type === 'thought')).toBe(true);
+    });
+    expect(document.getElementById('bz-blackbox-capture-popup')).toBeNull(); // 保存即关
+    const title = '给妹妹买吉他，她笑了很久。'.slice(0, 20);
+    expect(vault.files.has(`黑匣子/想法/${title}.md`)).toBe(true); // AI 失败降级前 20 字
+  });
+
+  it('想法直达：AI 生成标题成功 → 文件名 = AI 标题', async () => {
+    mockOllama('夏夜的吉他声');
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCaptureThought(app);
+    setValue('bz-blackbox-thought-text', '给妹妹买吉他，她笑了很久。');
+    document.getElementById('bz-blackbox-thought-confirm')!.click();
+    document.getElementById('bz-blackbox-save')!.click();
+    await vi.waitFor(async () => {
+      expect((await loaded(app, vault)).entries.some((e: any) => e.type === 'thought')).toBe(true);
+    });
+    expect(vault.files.has('黑匣子/想法/夏夜的吉他声.md')).toBe(true);
   });
 });
