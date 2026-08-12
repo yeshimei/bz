@@ -9,6 +9,7 @@ import { openBlackBoxPanel, closeBlackBoxPanel, unloadBlackBoxPanel } from './pa
 import { manualReview, triggerAutoReview, unloadBlackBoxReview } from './review';
 import { openCardboxImport, closeCardboxImport, unloadCardboxImport } from './import-ui';
 import { ensureBlackBoxSync, unloadBlackBoxSync, setBlackBoxSyncNotify } from './sync';
+import { resetBlackBoxCache } from './data';
 
 export { openBlackBoxCapture, closeBlackBoxCapture, unloadBlackBoxCapture, openBlackBoxCaptureConcept, openBlackBoxCaptureLiterature, openBlackBoxCaptureThought, openBlackBoxCaptureFromEpub } from './capture';
 export { openBlackBoxChat, closeBlackBoxChat, unloadBlackBoxChat } from './chat';
@@ -93,4 +94,5 @@ export function unloadBlackBox(): void {
   unloadBlackBoxReview();
   unloadCardboxImport();
   unloadBlackBoxSync();
+  resetBlackBoxCache();
 }

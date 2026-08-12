@@ -8,7 +8,7 @@
  */
 import type { App } from 'obsidian';
 import { getApp } from '../core/app';
-import { BlackBoxDataManager } from './data';
+import { BlackBoxDataManager, getBlackBoxFilePath, invalidateBlackBoxCache } from './data';
 import { BB_NOTE_ROOT, isBlackBoxNotePath } from './notes';
 import type { BlackBoxData } from './types';
 
@@ -34,10 +34,24 @@ export function ensureBlackBoxSync(app: App): void {
     offRefs.push({ off: () => mc.offref(ref) });
   }
   const v: any = app.vault;
-  // 仅监听 rename/delete：create 由 load 孤儿自愈兜底（防插件自身写笔记触发 refresh → 并发迁移循环）
+  // 缓存失效（同步事件）：外部改笔记/数据文件/移动/删除 → 下次 load 重新水合；插件自身写入先失效、save 后自愈恢复
+  const onCacheInvalidate = (path: string): void => {
+    if (path && (isBlackBoxNotePath(path) || path === getBlackBoxFilePath())) invalidateBlackBoxCache();
+  };
+  const refM = v.on('modify', (file: any) => {
+    if (file && file.path) onCacheInvalidate(file.path);
+  });
+  offRefs.push({ off: () => v.offref(refM) });
+  // create 仅用于缓存失效（不刷新面板）：插件自身写笔记 → 事件失效 → 随后的 save 自愈恢复；外部新建 → 下次 load 孤儿自愈收录
+  const refC = v.on('create', (file: any) => {
+    if (file && file.path) onCacheInvalidate(file.path);
+  });
+  offRefs.push({ off: () => v.offref(refC) });
+  // 面板刷新监听：仅监听 rename/delete（create 由 load 孤儿自愈兜底，防插件自身写笔记触发 refresh → 并发迁移循环）
   for (const ev of ['rename', 'delete']) {
     const ref = v.on(ev, (file: any, oldPath?: string) => {
       if (file && file.path) {
+        onCacheInvalidate(file.path);
         if (ev === 'rename' && oldPath && oldPath !== file.path) void syncCategoryFromMove(file.path, oldPath);
         onEvent(file.path);
       }
@@ -93,11 +107,12 @@ function schedule(): void {
   }, 300);
 }
 
-/** 重新水合 + 通知面板（索引重映射/移除/新增由 hydrate 孤儿自愈完成） */
+/** 重新水合 + 通知面板（索引重映射/移除/新增由 hydrate 孤儿自愈完成）；先强制失效缓存保证读到最新笔记 */
 async function refresh(): Promise<void> {
   try {
     const app = getApp();
     if (!app) return;
+    invalidateBlackBoxCache();
     const data = await new BlackBoxDataManager(app).load();
     const cb = notify;
     if (cb) cb(data);

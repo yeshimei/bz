@@ -127,20 +127,21 @@ describe('黑匣子实时同步（ticket 05）', () => {
     expect(cards.some((c) => c.textContent.includes('借代'))).toBe(false);
   });
 
-  it('新建笔记：无 create 监听（防插件自写循环），下次 load 孤儿自愈入索引', async () => {
+  it('新建笔记：create 仅失效缓存（不触发面板实时刷新），下次 load 孤儿自愈入索引', async () => {
     const vault = new MockVault();
     seedNotes(vault);
     const { app } = setup(vault);
     ensureBlackBoxSync(app);
     await openBlackBoxPanel(app);
-    // 用户手动新建一篇合法 bb 笔记（vault.create 不再触发实时刷新）
+    // 用户手动新建一篇合法 bb 笔记（vault create 事件 → 缓存失效；面板刷新不监听 create 防插件自写循环）
     await vault.create(
       '我的/黑匣子/想法/夏夜的吉他声.md',
       '---\nid: bb_t9\ntype: thought\ncreatedAt: "2026-08-09T00:00:00.000Z"\n---\n给妹妹买吉他，她笑了很久。\n'
     );
+    vault.emit('create', vault.file('我的/黑匣子/想法/夏夜的吉他声.md'));
     await new Promise((r) => setTimeout(r, 400)); // 防抖窗口内无刷新
-    expect(streamCards().length).toBe(3); // 面板未实时出现（create 不监听）
-    // 下次 load（打开面板/任意事件）→ 孤儿自愈入索引
+    expect(streamCards().length).toBe(3); // 面板未实时出现（create 不触发 refresh）
+    // 下次 load（打开面板/任意事件）→ 缓存已失效，全量水合孤儿自愈入索引
     const d = await new BlackBoxDataManager(app).load();
     expect(d.index['bb_t9']).toBe('我的/黑匣子/想法/夏夜的吉他声.md');
     expect(d.entries.length).toBe(4);

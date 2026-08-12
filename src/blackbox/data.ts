@@ -294,6 +294,25 @@ export function normalizeData(raw: any): BlackBoxData {
 
 /** 并发 load 互斥：多个 load 并发会竞争水合/孤儿自愈写盘，复用进行中的 promise */
 let loadInFlight: Promise<BlackBoxData> | null = null;
+/** 水合缓存（笔记即事实源的内存投影）：全量扫描只做一次，后续 load 直接命中；
+ *  save 同步缓存；外部改笔记由 vault 事件（sync.ts）触发 invalidateBlackBoxCache 失效。 */
+let cachedData: BlackBoxData | null = null;
+
+/** 缓存失效（vault 事件同步触发；插件自身写入会先失效、随后 save 同步恢复，自愈无全扫） */
+export function invalidateBlackBoxCache(): void {
+  cachedData = null;
+}
+
+/** 缓存重置（unload/测试隔离用） */
+export function resetBlackBoxCache(): void {
+  cachedData = null;
+  loadInFlight = null;
+}
+
+/** 水合缓存是否已就绪（打开 UI 判断是否显示「正在扫描」提示） */
+export function isBlackBoxCacheReady(): boolean {
+  return !!cachedData;
+}
 
 export class BlackBoxDataManager {
   app: App;
@@ -306,8 +325,12 @@ export class BlackBoxDataManager {
    * 笔记即事实源（ADR-0015）：v2 旧数据不在此自动迁移（用户决策，一次性迁移走 tools/migrate-blackbox-v3.mjs），
    * load 只做：派生层读取 + 索引水合（孤儿自愈）+ 缺失索引清理。 */
   async load(): Promise<BlackBoxData> {
+    if (cachedData) return cachedData;
     if (loadInFlight) return loadInFlight;
-    loadInFlight = this.doLoad();
+    loadInFlight = this.doLoad().then((d) => {
+      cachedData = d;
+      return d;
+    });
     try {
       return await loadInFlight;
     } finally {
@@ -459,6 +482,8 @@ export class BlackBoxDataManager {
       }
       await this.app.vault.create(filePath, c);
     }
+    // 内存缓存与磁盘同步（在 vault 写入之后赋值：插件自身写入触发的失效事件已被本赋值覆盖自愈）
+    cachedData = data;
   }
 
   // ---------------- 笔记写入 ----------------
@@ -561,6 +586,37 @@ export class BlackBoxDataManager {
     }
     entry.terms = terms;
     if (terms.length === before) return false;
+    await this.updateEntryNote(data, entry);
+    await this.save(data);
+    return true;
+  }
+
+  /** 文献/想法 AI 标题后台补全（保存即关后生成）：更新 title + 笔记重命名（去重冲突）+ 重写内容 + 持久化。
+   *  目标名与现路径一致 → 仅补 frontmatter title（文件名已是该标题）；返回是否成功。概念名即文件名，不走此方法。 */
+  async renameEntryNote(data: BlackBoxData, entryId: string, newTitle: string): Promise<boolean> {
+    const entry = data.entries.find((e) => e.id === entryId);
+    const oldPath = data.index[entryId];
+    const title = (newTitle || '').trim();
+    if (!entry || !oldPath || !title || entry.type === 'concept') return false;
+    const dir = oldPath.slice(0, oldPath.lastIndexOf('/'));
+    const base = `${dir}/${sanitizeFileName(title)}.md`;
+    entry.title = title;
+    if (base === oldPath) {
+      // 文件名已是该标题：仅重写 frontmatter（title 字段兜底同步）
+      await this.updateEntryNote(data, entry);
+      await this.save(data);
+      return true;
+    }
+    // 目标路径冲突去重（-1/-2…；先于 rename 判定，避免同名现路径被误判冲突）
+    const target = await this.uniquePath(base);
+    const f = this.app.vault.getAbstractFileByPath(oldPath);
+    if (!f) return false;
+    try {
+      await this.app.vault.rename(f as any, target);
+    } catch (e) {
+      return false; // 重命名失败：本次内存对象即弃，下次 load 由笔记自愈
+    }
+    data.index[entryId] = target;
     await this.updateEntryNote(data, entry);
     await this.save(data);
     return true;
