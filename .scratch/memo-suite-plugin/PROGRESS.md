@@ -212,3 +212,10 @@
 - ✅ **ticket 48 样式收敛 + 移动端**：五标签/概念墙网格/文献架/想法池旧样式删除（零引用确认）；新增流式骨架（类型标签栏/搜索框/时间流/吸顶日期条/卡片仿 diary-entry-card）；人物/时间线弹窗滚动区；移动端照搬日记本双断点（768px 圆角顶 95% + 类型标签单行横滚 + 紧凑 / 480px 全屏），长按与 fixMobileSelect 不搬
 - ✅ 提交：f2f21e4（设计落盘）/ 4ba8d81（46）/ 4b4047d（47）/ 98688b8（48）
 - ⚠️ 待办：事件实际发生时间推断校准；画像遗忘权；次级内容接入（ADR-0014）
+
+## 2026-08-1x 备忘录多行输入完成（ticket 49，grilling 会话）
+
+**状态：1052 测试全绿（79 文件），tsc 错误数 25 与基线持平（无新增）**
+
+- ✅ **ticket 49 内容多行输入**（用户报告 + grilling 封板 4 问）：`#add-todo-content` 由 `<input type="text">` 改 `<textarea rows="1">`——Enter 换行 = textarea 默认行为零代码；保存仍走「保存」按钮（不加快捷键）；**auto-grow**（`autoGrowContent`：高度 = clamp(scrollHeight, 一行 37px, 8 行 184px)，超出 overflow-y:auto；input 事件 + 弹窗打开/编辑回填 + 场景切换清空三处触发）；样式沿用现有 inline 并显式背景/边框与主题 input 一致（resize:none / line-height:1.5 / font-family:inherit）。面板 `createCard` 纯文本分支 `white-space: pre-wrap`（cssText 统一处，linkedNote/url 链接分支不受影响）。数据格式零改动（title 原样存含 \n，粘贴产生的历史多行数据直接受益）；剪藏 placeholder 兜底与 extractUrlAndDisplay 不动（多行下裸 URL 正则 \S+ 不跨行，已验证安全）。测试 +5（textarea 元素/Enter 不触发保存/多行保存 title 含 \n/auto-grow 三态/编辑回填多行），renderer 纯文本分支补 pre-wrap 断言；旧断言 3 处 HTMLInputElement → HTMLTextAreaElement。1047→1052
+- ✅ 提交：本 ticket 单次提交（见 git log）

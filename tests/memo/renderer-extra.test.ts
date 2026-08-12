@@ -164,10 +164,12 @@ describe('Renderer.createCard 链接三分支', () => {
     expect(appRef.openUrl).toHaveBeenCalledWith('https://example.com');
   });
 
-  it('纯文本：无链接', () => {
-    const card = Renderer.createCard(baseItem({ title: '纯文本条目' }), false);
+  it('纯文本：无链接，多行内容 pre-wrap 展示', () => {
+    const card = Renderer.createCard(baseItem({ title: '第一行\n第二行' }), false);
     expect(card.querySelector('a')).toBeNull();
-    expect(card.textContent).toContain('纯文本条目');
+    expect(card.textContent).toContain('第一行');
+    const contentSpan = card.querySelector('span') as HTMLElement;
+    expect(contentSpan.style.whiteSpace).toBe('pre-wrap');
   });
 
   it('归档条目：📦 图标 + 透明度', () => {
