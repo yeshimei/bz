@@ -524,6 +524,38 @@ export class BlackBoxDataManager {
     return { count: data.entries.length, shouldReview: shouldAutoReview(data.entries.length, threshold) };
   }
 
+  /** AI 分类落位（2026-08-12 需求：分类由 AI 自动生成）：移动笔记到 `黑匣子/<类型>/<分类>/<名>.md`
+   *   + 内存条目 category + 重写笔记 frontmatter + 更新 index + 持久化。已在目标分类文件夹时仅补 fm。返回是否成功。 */
+  async applyCategory(data: BlackBoxData, id: string, category: string): Promise<boolean> {
+    const entry = data.entries.find((e) => e.id === id);
+    const oldPath = data.index[id];
+    if (!entry || !oldPath) return false;
+    // 分类目录名：清洗非法字符；空 → 拒绝（不走 sanitizeFileName 的「未命名」兜底）
+    const cat = category.trim().replace(/[\\/:*?"<>|\u0000-\u001f]/g, '');
+    if (!cat) return false;
+    const dir = `${BB_NOTE_ROOT}/${typeDir(entry.type)}/${cat}`;
+    await this.ensureFolder(BB_NOTE_ROOT);
+    await this.ensureFolder(dir);
+    const base = oldPath.slice(oldPath.lastIndexOf('/') + 1);
+    const stem = base.replace(/\.md$/, '');
+    let target = `${dir}/${base}`;
+    if (target !== oldPath) {
+      let n = 1;
+      while (this.app.vault.getAbstractFileByPath(target)) {
+        target = `${dir}/${stem}-${n}.md`;
+        n += 1;
+      }
+      const f = this.app.vault.getAbstractFileByPath(oldPath);
+      if (!f) return false;
+      await this.app.vault.rename(f as any, target);
+    }
+    entry.category = cat;
+    data.index[id] = target;
+    await this.updateEntryNote(data, entry);
+    await this.save(data);
+    return true;
+  }
+
   /** 批量新增（卡片盒导入）：一次写全部笔记 + 索引 + 单次派生层落盘（不走 addEntry，不触发自动复盘） */
   async addEntries(data: BlackBoxData, entries: Entry[]): Promise<void> {
     if (!entries.length) return;

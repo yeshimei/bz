@@ -855,3 +855,59 @@ describe('frontmatter 关联权威（用户需求：正文关联区被手动修�
     expect(c1.related).toEqual(['bb_c2', 'bb_c3']);
   });
 });
+
+describe('AI 自动分类落位（2026-08-12 需求）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => ({} as any));
+  });
+
+  async function seedOne(vault: MockVault) {
+    vault.files.set(
+      '黑匣子/概念/提喻法.md',
+      '---\nid: bb_c1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\nname: 提喻法\n---\n以部分代整体的修辞\n'
+    );
+    vault.files.set(
+      'CONFIG/STORAGE/blackbox.json',
+      JSON.stringify({
+        version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {},
+        index: { bb_c1: '黑匣子/概念/提喻法.md' },
+      })
+    );
+    const { app } = setup(vault);
+    return { app, vault, dm: new BlackBoxDataManager(app) };
+  }
+
+  it('applyCategory：移动笔记到分类子文件夹 + fm category + index 更新 + 持久化', async () => {
+    const vault = new MockVault();
+    const { dm } = await seedOne(vault);
+    let data = await dm.load();
+    expect(data.entries[0].category).toBeUndefined();
+    expect(await dm.applyCategory(data, 'bb_c1', '文学')).toBe(true);
+    const moved = '黑匣子/概念/文学/提喻法.md';
+    expect(vault.files.has(moved)).toBe(true);
+    expect(vault.files.has('黑匣子/概念/提喻法.md')).toBe(false);
+    expect(vault.files.get(moved)!).toContain('category: 文学'); // quoteScalar：纯中文不加引号
+    // index 与内存条目同步
+    data = await dm.load();
+    expect(data.index['bb_c1']).toBe(moved);
+    expect(data.entries[0].category).toBe('文学');
+    // 持久化：blackbox.json index 已更新
+    const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/blackbox.json')!);
+    expect(raw.index['bb_c1']).toBe(moved);
+  });
+
+  it('applyCategory：已在目标分类文件夹 → 不移动仅补 fm；非法分类/未知 id → false', async () => {
+    const vault = new MockVault();
+    const { dm } = await seedOne(vault);
+    const data = await dm.load();
+    expect(await dm.applyCategory(data, 'bb_x', '文学')).toBe(false); // 未知 id
+    expect(await dm.applyCategory(data, 'bb_c1', '  ')).toBe(false); // 空分类
+    expect(await dm.applyCategory(data, 'bb_c1', '文学')).toBe(true);
+    expect(vault.files.has('黑匣子/概念/文学/提喻法.md')).toBe(true);
+    // 重复应用：已在文学/ → 原地补 fm 不报错
+    expect(await dm.applyCategory(data, 'bb_c1', '文学')).toBe(true);
+    expect(vault.files.get('黑匣子/概念/文学/提喻法.md')!).toContain('category: 文学');
+  });
+});
