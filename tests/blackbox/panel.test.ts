@@ -1,6 +1,8 @@
 /**
- * 黑匣子主面板 UI 测试（ticket 41/43/44）：五标签切换/概念墙详情关联/文献架/想法池空态/
- * 人物详情（印象锁/AI 观察采纳/情绪聚合/事件投影）/时间线（年月分组/推测确认删除/筛选/开关）。
+ * 黑匣子主面板 UI 测试（ticket 46，v3 流式）：打开/流式渲染排序/类型筛选/搜索防抖/批次滚动/
+ * 空态/默认类型筛选/头部动作区/人物弹窗（印象锁/AI 观察采纳/情绪聚合/事件投影）/
+ * 时间线弹窗（年月分组/推测确认删除/筛选/开关）。
+ * v3 卡片纯展示：无单击/双击/长按交互（点击卡片不应出现任何详情展开）。
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -56,13 +58,11 @@ function loaded(vault: MockVault): any {
   return JSON.parse(vault.files.get(getBlackBoxFilePath())!);
 }
 
-async function openPanel(app: any, tab: string): Promise<void> {
-  await openBlackBoxPanel(app);
-  const btn = document.querySelector(`.bz-blackbox-panel-tab-btn[data-tab="${tab}"]`) as HTMLElement;
-  btn.click();
+function streamCards(): HTMLElement[] {
+  return Array.from(document.querySelectorAll('#bz-blackbox-stream .bz-blackbox-stream-card')) as HTMLElement[];
 }
 
-describe('黑匣子主面板（五标签）', () => {
+describe('黑匣子主面板（v3 流式）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     setApp(null as any);
@@ -75,118 +75,224 @@ describe('黑匣子主面板（五标签）', () => {
     unloadBlackBox();
   });
 
-  it('打开：五标签渲染，默认概念墙', async () => {
+  it('打开：面板结构（header 5 按钮，关闭恒在最后）+ 标题条数 + 流渲染全部三类', async () => {
     const vault = new MockVault();
     seedVault(vault);
     const { app } = setup(vault);
     await openBlackBoxPanel(app);
     expect(document.getElementById('bz-blackbox-panel-mask')).toBeTruthy();
     expect(document.getElementById('bz-blackbox-panel')!.style.display).toBe('flex');
-    const tabs = document.querySelectorAll('.bz-blackbox-panel-tab-btn');
-    expect(tabs.length).toBe(5);
     expect(document.getElementById('bz-blackbox-panel-title')!.textContent).toContain('5 条内容');
-    expect(document.getElementById('bz-blackbox-wall')!.style.display).toBe('block');
+    // header 动作区顺序：✏️ 录入 → 👤 人物 → 🕐 时间线 → ⚙️ 设置 → ❌ 关闭
+    const btns = Array.from(document.querySelectorAll('.bz-blackbox-hdr-actions button'));
+    expect(btns.map((b) => (b as HTMLElement).textContent)).toEqual(['✏️', '👤', '🕐', '⚙️', '❌']);
+    // 流：三类混排，无五标签容器
+    expect(document.getElementById('bz-blackbox-wall')).toBeNull();
+    const cards = streamCards();
+    expect(cards.length).toBe(5);
+    // 类型标签栏三胶囊
+    expect(document.querySelectorAll('.bz-blackbox-type-btn').length).toBe(3);
   });
 
-  it('🧩 概念墙：卡片只显示名称（定义/关联数在详情内）+ 详情展开 + 关联跳转', async () => {
+  it('时间流：按 createdAt 倒序（新在上）+ 日期分隔条分组', async () => {
     const vault = new MockVault();
     seedVault(vault);
     const { app } = setup(vault);
-    await openPanel(app, 'wall');
-    const cards = document.querySelectorAll('#bz-blackbox-wall .bz-blackbox-concept-card');
-    expect(cards.length).toBe(2);
-    expect(cards[0].textContent).toContain('借代'); // 按时间倒序（最新在前）
-    expect(cards[0].textContent).toContain('🔗 1'); // 关联数角标（可见性）
-    expect(cards[0].textContent).not.toContain('定义'); // 卡片不显示定义摘要
-    expect(cards[0].textContent).not.toContain('以部分代整体'); // 不显示关联概念名
-    // 点击提喻法卡片展开详情（完整内容在详情）
-    const tyu = Array.from(cards).find((c) => c.textContent.includes('提喻法')) as HTMLElement;
-    tyu.click();
-    const detail = document.getElementById('bz-blackbox-wall-detail')!;
-    expect(detail.textContent).toContain('以部分代整体的修辞手法');
-    expect(detail.textContent).toContain('借代'); // 关联概念名
-    // 点击关联概念 → 跳到借代详情
-    const relChip = detail.querySelector('.bz-blackbox-related-row .bz-blackbox-term-chip') as HTMLElement;
-    relChip.click();
-    expect(document.getElementById('bz-blackbox-wall-detail')!.textContent).toContain('用相关事物代替本体');
-  });
-
-  it('🧩 概念墙：删除概念（确认弹窗）→ 条目移除 + 引用清理', async () => {
-    const vault = new MockVault();
-    seedVault(vault);
-    const { app } = setup(vault);
-    await openPanel(app, 'wall');
-    // 展开提喻法详情 → 点删除
-    const cards = document.querySelectorAll('#bz-blackbox-wall .bz-blackbox-concept-card');
-    const tyu = Array.from(cards).find((c) => c.textContent.includes('提喻法')) as HTMLElement;
-    tyu.click();
-    const delBtn = document.querySelector('.bz-blackbox-del-btn') as HTMLElement;
-    expect(delBtn).toBeTruthy();
-    delBtn.click();
-    // 确认弹窗
-    expect(document.getElementById('__shared_confirm_mask__')).toBeTruthy();
-    expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('删除概念「提喻法」');
-    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
-    await vi.waitFor(() => {
-      const d = loaded(vault);
-      expect(d.entries.some((e: any) => e.name === '提喻法')).toBe(false);
-    });
-    // 引用清理：借代.related 不再含 bb_c1；文献 terms 不再含 bb_c1
-    const d = loaded(vault);
-    const jiedai = d.entries.find((e: any) => e.name === '借代');
-    expect(jiedai.related).toEqual([]);
-    const lit = d.entries.find((e: any) => e.type === 'literature');
-    expect(lit.terms).toEqual([]);
-    // 概念墙刷新：只剩借代，详情已关闭
-    await vi.waitFor(() => {
-      expect(document.querySelectorAll('#bz-blackbox-wall .bz-blackbox-concept-card').length).toBe(1);
-    });
-    expect(hasNotice(/已删除/)).toBe(true);
-  });
-
-  it('📎 文献架：来源 + 摘要 + 名词表标签；点击展开全文与链接', async () => {
-    const vault = new MockVault();
-    seedVault(vault);
-    const { app } = setup(vault);
-    await openPanel(app, 'shelf');
-    const cards = document.querySelectorAll('#bz-blackbox-shelf .bz-blackbox-shelf-card');
-    expect(cards.length).toBe(1);
-    expect(cards[0].textContent).toContain('《诗学》');
-    expect(cards[0].textContent).toContain('提喻法');
-    const full = cards[0].querySelector('.bz-blackbox-shelf-full') as HTMLElement;
-    expect(full.style.display).toBe('none');
-    (cards[0] as HTMLElement).click();
-    expect(full.style.display).toBe('block');
-    expect(full.textContent).toContain('https://a.com');
-  });
-
-  it('💡 想法池：文本 + 情绪胶囊 + 涉及的人 + 场景；空态', async () => {
-    const vault = new MockVault();
-    seedVault(vault);
-    const { app } = setup(vault);
-    await openPanel(app, 'pool');
-    const cards = document.querySelectorAll('#bz-blackbox-pool .bz-blackbox-pool-card');
-    expect(cards.length).toBe(2);
+    await openBlackBoxPanel(app);
+    const cards = streamCards();
+    // 最新（08-05 想法）在最上，最旧（08-01 概念）在最下
     expect(cards[0].textContent).toContain('想带妈妈去看海');
-    expect(cards[0].textContent).toContain('希望');
-    expect(cards[0].textContent).toContain('老王');
-    expect(cards[1].textContent).toContain('温暖');
-    expect(cards[1].textContent).toContain('妹妹');
-    expect(cards[1].textContent).toContain('📍 琴行');
-    // 空态（先关面板再开新 vault）
-    unloadBlackBoxPanel();
-    const vault2 = new MockVault();
-    seedVault(vault2, { entries: [] });
-    const { app: app2 } = setup(vault2);
-    await openPanel(app2, 'pool');
-    expect(document.getElementById('bz-blackbox-pool')!.textContent).toContain('暂无想法');
+    expect(cards[4].textContent).toContain('提喻法');
+    // 日期分隔条：5 条各占一天（seed 数据每天一条）
+    const seps = Array.from(document.querySelectorAll('#bz-blackbox-stream .bz-blackbox-stream-date'));
+    expect(seps.length).toBe(5);
+    expect(seps[0].textContent).toBe('2026-08-05');
+    expect(seps[4].textContent).toBe('2026-08-01');
+    // 卡片头部：类型 emoji + 时刻
+    expect(cards[0].querySelector('.bz-blackbox-stream-card-emoji')!.textContent).toBe('💡');
+    expect(cards[4].querySelector('.bz-blackbox-stream-card-emoji')!.textContent).toBe('🧩');
   });
 
-  it('👤 人物：卡片墙（名字/印象/事件数/观察数）→ 详情：印象保存锁/AI 观察采纳/情绪聚合/事件投影', async () => {
+  it('卡片三铺法纯展示：🧩 概念（名称+定义+关联 chips）｜📎 文献（来源+全文+名词表+链接）｜💡 想法（全文+情绪+人物+场景）', async () => {
     const vault = new MockVault();
     seedVault(vault);
     const { app } = setup(vault);
-    await openPanel(app, 'people');
+    await openBlackBoxPanel(app);
+    const cards = streamCards();
+    // 概念卡：用头部 emoji 精确定位（文献卡的名词表也含「提喻法」）
+    const concept = cards.find(
+      (c) => c.querySelector('.bz-blackbox-stream-card-emoji')!.textContent === '🧩' && c.textContent.includes('以部分代整体')
+    )!;
+    expect(concept.textContent).toContain('以部分代整体的修辞手法');
+    expect(concept.textContent).toContain('借代'); // 关联概念 chips
+    const lit = cards.find((c) => c.textContent.includes('《诗学》'))!;
+    expect(lit.textContent).toContain('修辞是语言的弹性');
+    expect(lit.textContent).toContain('提喻法'); // 名词表
+    expect(lit.textContent).toContain('https://a.com'); // 链接
+    const thought = cards.find((c) => c.textContent.includes('给妹妹买吉他'))!;
+    expect(thought.textContent).toContain('温暖');
+    expect(thought.textContent).toContain('妹妹');
+    expect(thought.textContent).toContain('📍 琴行');
+    // 纯展示：点击卡片不产生任何详情/展开（无交互）
+    const before = document.getElementById('bz-blackbox-stream')!.innerHTML;
+    concept.click();
+    lit.click();
+    thought.click();
+    expect(document.getElementById('bz-blackbox-stream')!.innerHTML).toBe(before);
+    expect(document.getElementById('bz-blackbox-wall-detail')).toBeNull();
+  });
+
+  it('类型筛选：点击切换多选（并集），默认空集=全部；取消恢复', async () => {
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault);
+    await openBlackBoxPanel(app);
+    const typeBtns = () => Array.from(document.querySelectorAll('.bz-blackbox-type-btn')) as HTMLElement[];
+    // 默认全部
+    expect(streamCards().length).toBe(5);
+    // 只选概念
+    typeBtns().find((b) => b.dataset.type === 'concept')!.click();
+    expect(streamCards().length).toBe(2);
+    expect(streamCards().every((c) => c.textContent.includes('提喻法') || c.textContent.includes('借代'))).toBe(true);
+    // 加选想法（多选并集：概念 + 想法 = 4）
+    typeBtns().find((b) => b.dataset.type === 'thought')!.click();
+    expect(streamCards().length).toBe(4);
+    // 取消概念 → 只剩想法 2 条
+    typeBtns().find((b) => b.dataset.type === 'concept')!.click();
+    expect(streamCards().length).toBe(2);
+    expect(streamCards().every((c) => c.textContent.includes('想带妈妈') || c.textContent.includes('给妹妹'))).toBe(true);
+    // 全部取消 → 全部
+    typeBtns().find((b) => b.dataset.type === 'thought')!.click();
+    expect(streamCards().length).toBe(5);
+  });
+
+  it('搜索：防抖 300ms 后过滤（内容/情绪/人物名可搜）', async () => {
+    vi.useFakeTimers();
+    try {
+      const vault = new MockVault();
+      seedVault(vault);
+      const { app } = setup(vault);
+      await openBlackBoxPanel(app);
+      const input = document.getElementById('bz-blackbox-search-input') as HTMLInputElement;
+      // 输入内容关键词（用唯一词「弹性」，避免命中概念定义的「修辞」）
+      input.value = '弹性';
+      input.dispatchEvent(new Event('input'));
+      expect(streamCards().length).toBe(5); // 防抖期内未生效
+      await vi.advanceTimersByTimeAsync(300);
+      expect(streamCards().length).toBe(1);
+      expect(streamCards()[0].textContent).toContain('《诗学》');
+      // 情绪标签可搜
+      input.value = '温暖';
+      input.dispatchEvent(new Event('input'));
+      await vi.advanceTimersByTimeAsync(300);
+      expect(streamCards().length).toBe(1);
+      expect(streamCards()[0].textContent).toContain('给妹妹买吉他');
+      // 人物显示名可搜（画像 id 匹配显示名）
+      input.value = '妹妹';
+      input.dispatchEvent(new Event('input'));
+      await vi.advanceTimersByTimeAsync(300);
+      expect(streamCards().length).toBe(1);
+      // 无匹配 → 空态
+      input.value = '不存在的词';
+      input.dispatchEvent(new Event('input'));
+      await vi.advanceTimersByTimeAsync(300);
+      expect(streamCards().length).toBe(0);
+      expect(document.getElementById('bz-blackbox-stream')!.textContent).toContain('没有找到匹配的内容');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('批次滚动：初始渲染 BATCH 条，滚到底加载下一批，全部显示后出现「已显示所有内容」', async () => {
+    const vault = new MockVault();
+    seedVault(vault);
+    // 24 条想法（不同日期）
+    const entries: any[] = [];
+    for (let i = 0; i < 24; i++) {
+      entries.push({
+        id: `bb_b${String(i).padStart(2, '0')}`, type: 'thought', createdAt: `2026-08-${String((i % 28) + 1).padStart(2, '0')}T10:0${i % 10}:00.000Z`,
+        text: `批量想法 ${i}`, emotions: [], people: [], scene: '', toward: '', links: [],
+      });
+    }
+    vault.files.set(getBlackBoxFilePath(), JSON.stringify({
+      version: 2, settings: { reviewThreshold: 10, showSpeculativeEvents: true, words: [] },
+      persona: { name: '包仔', seed: '', toneExample: '', selfViews: [] },
+      entries, profiles: [], events: [], reviews: [], chat: [],
+      meta: { lastReviewAt: '', totalEntries: 24, totalEvents: 0 },
+    }));
+    const { app } = setup(vault);
+    await openBlackBoxPanel(app);
+    expect(streamCards().length).toBe(20); // 第一批 BATCH
+    expect(document.getElementById('bz-blackbox-stream')!.textContent).not.toContain('已显示所有内容');
+    // 滚动到底 → 加载剩余 4 条 + 提示
+    const stream = document.getElementById('bz-blackbox-stream')!;
+    stream.scrollTop = 9999;
+    stream.dispatchEvent(new Event('scroll'));
+    expect(streamCards().length).toBe(24);
+    expect(document.getElementById('bz-blackbox-stream')!.textContent).toContain('已显示所有内容');
+  });
+
+  it('空态：无任何条目 →「黑匣子还空着」', async () => {
+    const vault = new MockVault();
+    seedVault(vault, { entries: [] });
+    const { app } = setup(vault);
+    await openBlackBoxPanel(app);
+    expect(document.getElementById('bz-blackbox-stream')!.textContent).toContain('黑匣子还空着');
+  });
+
+  it('默认类型筛选（设置 blackboxDefaultTypeFilter）消费：concept → 打开只显示概念', async () => {
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault, { blackboxDefaultTypeFilter: 'concept' });
+    await openBlackBoxPanel(app);
+    const cards = streamCards();
+    expect(cards.length).toBe(2);
+    expect(cards.every((c) => c.textContent.includes('提喻法') || c.textContent.includes('借代'))).toBe(true);
+    // 类型按钮高亮
+    expect(document.querySelector('.bz-blackbox-type-btn[data-type="concept"]')!.classList.contains('bz-blackbox-type-btn-on')).toBe(true);
+  });
+
+  it('头部动作区：✏️ 录入打开录入弹窗；❌ 关闭面板（整体移除 DOM）', async () => {
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault);
+    await openBlackBoxPanel(app);
+    const btns = Array.from(document.querySelectorAll('.bz-blackbox-hdr-actions button'));
+    // ✏️ → 录入弹窗
+    (btns[0] as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-capture-popup')).toBeTruthy();
+    });
+    expect(document.getElementById('bz-blackbox-capture-popup')!.style.display).toBe('flex');
+    closeBlackBoxCapture();
+    // ❌ → 面板关闭
+    (btns[4] as HTMLElement).click();
+    expect(document.getElementById('bz-blackbox-panel')).toBeNull();
+  });
+
+  it('幂等重开：面板已存在时不重建 DOM，刷新数据', async () => {
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault);
+    await openBlackBoxPanel(app);
+    const stream1 = document.getElementById('bz-blackbox-stream');
+    await openBlackBoxPanel(app);
+    expect(document.getElementById('bz-blackbox-stream')).toBe(stream1);
+    expect(streamCards().length).toBe(5);
+  });
+
+  // ---------------- 👤 人物弹窗 ----------------
+
+  it('👤 人物弹窗：打开/关闭 + 卡墙 + 详情（印象保存锁/AI 观察采纳/情绪聚合/事件投影）', async () => {
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault);
+    await openBlackBoxPanel(app);
+    const peopleBtn = document.getElementById('bz-blackbox-panel-people') as HTMLElement;
+    peopleBtn.click();
+    expect(document.getElementById('bz-blackbox-people-mask')).toBeTruthy();
+    expect(document.getElementById('bz-blackbox-people-popup')!.style.display).toBe('flex');
+    // 卡墙
     const cards = document.querySelectorAll('#bz-blackbox-people .bz-blackbox-profile-card');
     expect(cards.length).toBe(1);
     expect(cards[0].textContent).toContain('妹妹（家人）');
@@ -207,8 +313,7 @@ describe('黑匣子主面板（五标签）', () => {
     const data = loaded(vault);
     expect(data.profiles[0].impression).toContain('我注意到她越来越独立');
     expect(data.profiles[0].aiObservations.length).toBe(0);
-    // 保存印象（用户主权区）：先返回卡片墙再进详情
-    await openPanel(app, 'people');
+    // 保存印象（用户主权区）：返回卡墙再进详情
     (document.querySelector('.bz-blackbox-profile-detail .bz-blackbox-ai-btn') as HTMLButtonElement).click(); // ← 返回
     const card = document.querySelector('.bz-blackbox-profile-card') as HTMLElement;
     card.click();
@@ -217,13 +322,22 @@ describe('黑匣子主面板（五标签）', () => {
     document.getElementById('bz-blackbox-profile-imp-save')!.click();
     await new Promise((r) => setTimeout(r, 50));
     expect(loaded(vault).profiles[0].impression).toBe('我的新版本');
+    // 关闭弹窗（❌）
+    (document.querySelector('#bz-blackbox-people-popup .bz-blackbox-hdr-close') as HTMLElement).click();
+    expect(document.getElementById('bz-blackbox-people-popup')).toBeNull();
+    // 面板仍在
+    expect(document.getElementById('bz-blackbox-panel')).toBeTruthy();
   });
 
-  it('🕐 时间线：年月分组 + 事件卡内容 + 推测卡确认/删除', async () => {
+  // ---------------- 🕐 时间线弹窗 ----------------
+
+  it('🕐 时间线弹窗：打开/关闭 + 年月分组 + 推测卡确认/删除', async () => {
     const vault = new MockVault();
     seedVault(vault);
     const { app } = setup(vault);
-    await openPanel(app, 'timeline');
+    await openBlackBoxPanel(app);
+    document.getElementById('bz-blackbox-panel-timeline')!.click();
+    expect(document.getElementById('bz-blackbox-timeline-mask')).toBeTruthy();
     const groups = document.querySelectorAll('#bz-blackbox-timeline .bz-blackbox-tl-group');
     expect(groups.length).toBe(2);
     expect(groups[0].textContent).toContain('2026 年 8 月');
@@ -238,29 +352,43 @@ describe('黑匣子主面板（五标签）', () => {
     let data = loaded(vault);
     expect(data.events.find((e: any) => e.id === 'ev_2').inferred).toBe(false);
     // 删除事件（✕ 删除）
-    await openPanel(app, 'timeline');
-    const specCard2 = document.querySelector('.bz-blackbox-event-card.speculative') as HTMLElement;
-    expect(specCard2).toBeNull(); // 确认后不再是推测样式
-    const ev1 = document.querySelector('.bz-blackbox-event-card') as HTMLElement;
-    expect(ev1.textContent).toContain('给妹妹买吉他');
-    expect(ev1.textContent).toContain('妹妹');
-    expect(ev1.textContent).toContain('📎 1 条证据');
-    // 证据链展开
-    (ev1.querySelector('.bz-blackbox-event-evidence-btn') as HTMLElement).click();
-    expect(ev1.querySelector('.bz-blackbox-event-evidence')!.textContent).toContain('给妹妹买吉他，她笑了很久');
-    // 删除一个非推测事件（时间线上无删除按钮，删除仅推测卡提供——此处验证删除后不残留）
-    data = loaded(vault);
     data.events = data.events.filter((e: any) => e.id !== 'ev_1');
     vault.files.set(getBlackBoxFilePath(), JSON.stringify(data));
-    await openPanel(app, 'timeline');
+    // 重开弹窗 → 内容刷新：先关弹窗，重开面板（幂等重载数据）后再开弹窗
+    (document.querySelector('#bz-blackbox-timeline-popup .bz-blackbox-hdr-close') as HTMLElement).click();
+    await openBlackBoxPanel(app);
+    document.getElementById('bz-blackbox-panel-timeline')!.click();
+    expect(document.querySelectorAll('#bz-blackbox-timeline .bz-blackbox-event-card').length).toBe(1);
     expect(document.getElementById('bz-blackbox-timeline')!.textContent).toContain('梦见去海边');
+    // 关闭弹窗（❌）
+    (document.querySelector('#bz-blackbox-timeline-popup .bz-blackbox-hdr-close') as HTMLElement).click();
+    expect(document.getElementById('bz-blackbox-timeline-popup')).toBeNull();
   });
 
-  it('时间线筛选：按人物/按年份', async () => {
+  it('时间线弹窗：推测事件确认后重渲染（虚线消失）+ 证据链展开', async () => {
     const vault = new MockVault();
     seedVault(vault);
     const { app } = setup(vault);
-    await openPanel(app, 'timeline');
+    await openBlackBoxPanel(app);
+    document.getElementById('bz-blackbox-panel-timeline')!.click();
+    // 确认推测事件 → refreshAll 同步弹窗：推测卡消失
+    const specCard = document.querySelector('.bz-blackbox-event-card.speculative') as HTMLElement;
+    (specCard.querySelector('.bz-blackbox-btn-primary') as HTMLButtonElement).click();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(document.querySelector('.bz-blackbox-event-card.speculative')).toBeNull();
+    // 证据链展开（非推测卡）
+    const ev1 = document.querySelector('#bz-blackbox-timeline .bz-blackbox-event-card') as HTMLElement;
+    expect(ev1.textContent).toContain('📎 1 条证据');
+    (ev1.querySelector('.bz-blackbox-event-evidence-btn') as HTMLElement).click();
+    expect(ev1.querySelector('.bz-blackbox-event-evidence')!.textContent).toContain('给妹妹买吉他，她笑了很久');
+  });
+
+  it('时间线弹窗：人物/年份筛选', async () => {
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault);
+    await openBlackBoxPanel(app);
+    document.getElementById('bz-blackbox-panel-timeline')!.click();
     // 按人物（妹妹）
     const personSel = document.getElementById('bz-blackbox-tl-person') as HTMLSelectElement;
     personSel.value = 'pf_1';
@@ -275,57 +403,43 @@ describe('黑匣子主面板（五标签）', () => {
     yearSel.value = '2026';
     yearSel.dispatchEvent(new Event('change'));
     const cards2 = document.querySelectorAll('#bz-blackbox-timeline .bz-blackbox-event-card');
-    expect(cards2.length).toBe(2); // 两个事件都在 2026 年
-    expect(cards2[0].textContent).toContain('给妹妹买吉他'); // 按时间倒序
+    expect(cards2.length).toBe(2);
+    expect(cards2[0].textContent).toContain('给妹妹买吉他');
     expect(cards2[1].textContent).toContain('梦见去海边');
   });
 
-  it('推测事件显示开关（全局设置）关闭 → 时间线隐藏推测事件', async () => {
+  it('推测事件显示开关（全局设置）关闭 → 时间线弹窗隐藏推测事件', async () => {
     const vault = new MockVault();
     seedVault(vault);
     const { app } = setup(vault, { blackboxShowSpeculativeEvents: false });
-    await openPanel(app, 'timeline');
+    await openBlackBoxPanel(app);
+    document.getElementById('bz-blackbox-panel-timeline')!.click();
     const cards = document.querySelectorAll('#bz-blackbox-timeline .bz-blackbox-event-card');
     expect(cards.length).toBe(1);
     expect(cards[0].textContent).toContain('给妹妹买吉他');
     expect(document.getElementById('bz-blackbox-timeline')!.textContent).not.toContain('梦见去海边');
   });
 
-  it('头部动作区：✏️ 录入 → 打开录入弹窗，⚙️ 设置，❌ 关闭在最后', async () => {
+  it('关闭面板连带关闭弹窗', async () => {
     const vault = new MockVault();
     seedVault(vault);
     const { app } = setup(vault);
     await openBlackBoxPanel(app);
-    const actions = document.querySelector('.bz-blackbox-hdr-actions')!;
-    const btns = actions.querySelectorAll('button');
-    // 顺序：✏️ 录入 → ⚙️ 设置 → ❌ 关闭（关闭恒在最后）
-    expect(btns.length).toBe(3);
-    expect(btns[0].id).toBe('bz-blackbox-panel-capture');
-    expect(btns[0].textContent).toBe('✏️');
-    expect(btns[1].id).toBe('bz-blackbox-panel-settings');
-    expect(btns[2].textContent).toBe('❌');
-    // 点 ✏️ → 录入弹窗打开（async 建 DOM，waitFor 等）；关闭录入弹窗后点 ❌ → 面板关闭
-    (btns[0] as HTMLElement).click();
-    await vi.waitFor(() => {
-      expect(document.getElementById('bz-blackbox-capture-popup')).toBeTruthy();
-    });
-    expect(document.getElementById('bz-blackbox-capture-popup')!.style.display).toBe('flex');
-    closeBlackBoxCapture(); // 引导式无 header 关闭按钮，走 ESC/程序关闭
-    (btns[2] as HTMLElement).click();
-    expect(document.getElementById('bz-blackbox-panel')).toBeNull(); // 关闭=整体移除 DOM
+    document.getElementById('bz-blackbox-panel-people')!.click();
+    document.getElementById('bz-blackbox-panel-timeline')!.click();
+    expect(document.getElementById('bz-blackbox-people-popup')).toBeTruthy();
+    expect(document.getElementById('bz-blackbox-timeline-popup')).toBeTruthy();
+    (document.querySelector('#bz-blackbox-panel .bz-blackbox-hdr-close') as HTMLElement).click();
+    expect(document.getElementById('bz-blackbox-people-popup')).toBeNull();
+    expect(document.getElementById('bz-blackbox-timeline-popup')).toBeNull();
   });
 
-  it('面板切换保留各页状态（详情展开态不因切 tab 丢失）', async () => {
+  it('概念删除入口已随五标签移除（纯浏览）：卡片无删除按钮', async () => {
     const vault = new MockVault();
     seedVault(vault);
     const { app } = setup(vault);
-    await openPanel(app, 'wall');
-    (document.querySelector('#bz-blackbox-wall .bz-blackbox-concept-card') as HTMLElement).click();
-    expect(document.getElementById('bz-blackbox-wall-detail')).toBeTruthy();
-    // 切到人物再切回
-    (document.querySelector('.bz-blackbox-panel-tab-btn[data-tab="people"]') as HTMLElement).click();
-    (document.querySelector('.bz-blackbox-panel-tab-btn[data-tab="wall"]') as HTMLElement).click();
-    expect(document.getElementById('bz-blackbox-wall-detail')).toBeTruthy();
-    expect(document.getElementById('bz-blackbox-wall-detail')!.textContent).toContain('提喻法');
+    await openBlackBoxPanel(app);
+    expect(document.querySelector('.bz-blackbox-del-btn')).toBeNull();
+    expect(hasNotice(/已删除/)).toBe(false);
   });
 });

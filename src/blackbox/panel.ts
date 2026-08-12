@@ -1,13 +1,16 @@
 /**
- * 黑匣子主面板（ticket 41/43/44）：bz-blackbox-panel「黑匣子面板」五标签中央弹窗。
- * 🧩 概念墙（卡片网格/详情展开/关联跳转）｜📎 文献架（来源+摘要+名词表）｜💡 想法池（情绪+人）
- * ｜👤 人物（画像卡墙 + 详情：印象字段级锁/AI 观察可采纳/情绪聚合/事件投影）｜🕐 时间线（年月分组/
- * 推测事件确认删除/人物年份筛选/证据链）。
+ * 黑匣子主面板（v3 流式，grilling 2026-08 封板）：bz-blackbox-panel「黑匣子面板」。
+ * 流式布局照搬日记本骨架：header（标题 + ✏️ 录入/👤 人物/🕐 时间线/⚙️ 设置/❌ 关闭）
+ * + 类型标签栏（🧩 概念/📎 文献/💡 想法 多选，默认空集=全部）+ 搜索框（防抖）+ 时间流
+ * （日期分隔吸顶 + 三类条目混排按 createdAt 降序 + 批次滚动）。
+ * 卡片纯展示，无任何点击交互（无单击/双击/长按/emoji 点击——只参考日记本流式布局）。
+ * 人物画像与事件时间线为面板内独立弹窗（完整度保留，复用 v2 渲染函数，宿主改为弹窗）。
  * 数据单份存储：画像事件投影与全局时间线同源（按人过滤，无复制）。
  */
 import type { App } from 'obsidian';
 import { escManager } from '../core/esc-manager';
-import { createOverlay } from '../core/dom';
+import type { EscHandle } from '../core/esc-manager';
+import { createOverlay, createIconBtn } from '../core/dom';
 import { confirm } from '../core/confirm';
 import { notice } from '../core/notice';
 import { tryGetSettings } from '../core/settings-provider';
@@ -22,20 +25,35 @@ import {
   resolveShowSpeculative,
   MAX_PEOPLE,
 } from './types';
-import type { BlackBoxData, Entry, EventItem, Profile } from './types';
+import type { BlackBoxData, Entry, EntryType, EventItem, Profile } from './types';
+
+/** 批次大小（照搬日记本无限滚动骨架；数据为内存全量，分页仅保 DOM 性能与观感一致） */
+const BATCH = 20;
 
 let appRef: App | null = null;
 let dataManager: BlackBoxDataManager | null = null;
 let maskEl: HTMLElement | null = null;
 let popupEl: HTMLElement | null = null;
-let escHandle: { unregister: () => void } | null = null;
+let escHandle: EscHandle | null = null;
 let data: BlackBoxData | null = null;
 
-type PanelTab = 'wall' | 'shelf' | 'pool' | 'people' | 'timeline';
-let activeTab: PanelTab = 'wall';
-/** 各 tab 滚动位置（切换保留） */
-const scrollPos: Record<string, number> = {};
-/** 概念详情展开态（概念墙跳转用） */
+/** 类型筛选（多选 Set；空集 = 显示全部） */
+let selectedTypes = new Set<EntryType>();
+/** 搜索关键词（防抖后生效） */
+let searchKeyword = '';
+/** 批次游标（已渲染条数上限） */
+let displayCount = BATCH;
+/** 滚动保留 */
+let streamScrollTop = 0;
+
+/** 弹窗状态（👤 人物 / 🕐 时间线） */
+let peopleMaskEl: HTMLElement | null = null;
+let peoplePopupEl: HTMLElement | null = null;
+let peopleEscHandle: EscHandle | null = null;
+let timelineMaskEl: HTMLElement | null = null;
+let timelinePopupEl: HTMLElement | null = null;
+let timelineEscHandle: EscHandle | null = null;
+/** 概念详情展开态（概念墙跳转用，保留 v2 语义） */
 let detailConceptId: string | null = null;
 /** 画像详情展开态 */
 let detailProfileId: string | null = null;
@@ -55,12 +73,19 @@ export async function openBlackBoxPanel(app: App): Promise<void> {
   appRef = app;
   if (maskEl) {
     maskEl.style.display = 'block';
+    popupEl!.style.display = 'flex';
     data = await manager(app).load();
     refreshAll();
     return;
   }
   data = await manager(app).load();
-  activeTab = 'wall';
+  // 默认类型筛选（设置项 blackboxDefaultTypeFilter，重启生效；空 = 全部）
+  const s = tryGetSettings() as any;
+  const def = (s && s.blackboxDefaultTypeFilter) || '';
+  selectedTypes = def === 'concept' || def === 'literature' || def === 'thought' ? new Set([def]) : new Set();
+  searchKeyword = '';
+  displayCount = BATCH;
+  streamScrollTop = 0;
   detailConceptId = null;
   detailProfileId = null;
   tlPerson = '';
@@ -71,6 +96,8 @@ export async function openBlackBoxPanel(app: App): Promise<void> {
 }
 
 export function closeBlackBoxPanel(): void {
+  closePeoplePopup();
+  closeTimelinePopup();
   if (maskEl) {
     maskEl.remove();
     maskEl = null;
@@ -119,74 +146,85 @@ function buildDOM(): void {
   header.appendChild(title);
   const actions = document.createElement('div');
   actions.className = 'bz-blackbox-hdr-actions';
-  const captureBtn = document.createElement('button');
-  captureBtn.type = 'button';
-  captureBtn.className = 'bz-blackbox-hdr-btn';
-  captureBtn.id = 'bz-blackbox-panel-capture';
-  captureBtn.textContent = '✏️';
-  captureBtn.title = '录入';
-  captureBtn.addEventListener('click', () => {
+  const captureBtn = createIconBtn('✏️', '录入', () => {
     if (appRef) void openBlackBoxCapture(appRef);
   });
+  captureBtn.id = 'bz-blackbox-panel-capture';
   actions.appendChild(captureBtn);
-  const settingsBtn = document.createElement('button');
-  settingsBtn.type = 'button';
-  settingsBtn.className = 'bz-blackbox-hdr-btn';
-  settingsBtn.id = 'bz-blackbox-panel-settings';
-  settingsBtn.textContent = '⚙️';
-  settingsBtn.title = '黑匣子设置';
-  settingsBtn.addEventListener('click', () => {
+  const peopleBtn = createIconBtn('👤', '人物', () => openPeoplePopup());
+  peopleBtn.id = 'bz-blackbox-panel-people';
+  actions.appendChild(peopleBtn);
+  const timelineBtn = createIconBtn('🕐', '时间线', () => openTimelinePopup());
+  timelineBtn.id = 'bz-blackbox-panel-timeline';
+  actions.appendChild(timelineBtn);
+  const settingsBtn = createIconBtn('⚙️', '黑匣子设置', () => {
     if (appRef) void openBlackBoxSettings(appRef);
   });
+  settingsBtn.id = 'bz-blackbox-panel-settings';
   actions.appendChild(settingsBtn);
-  const closeBtn = document.createElement('button');
-  closeBtn.type = 'button';
-  closeBtn.className = 'bz-blackbox-hdr-btn bz-blackbox-hdr-close';
-  closeBtn.textContent = '❌';
-  closeBtn.title = '关闭';
-  closeBtn.addEventListener('click', () => closeBlackBoxPanel());
+  const closeBtn = createIconBtn('❌', '关闭', () => closeBlackBoxPanel());
+  closeBtn.className = 'bz-blackbox-hdr-close';
   actions.appendChild(closeBtn);
   header.appendChild(actions);
   popup.appendChild(header);
 
-  // 五标签
-  const tabs = document.createElement('div');
-  tabs.className = 'bz-blackbox-panel-tabs';
-  tabs.id = 'bz-blackbox-panel-tabs';
-  const tabDefs: { tab: PanelTab; label: string }[] = [
-    { tab: 'wall', label: '🧩 概念墙' },
-    { tab: 'shelf', label: '📎 文献架' },
-    { tab: 'pool', label: '💡 想法池' },
-    { tab: 'people', label: '👤 人物' },
-    { tab: 'timeline', label: '🕐 时间线' },
+  // 类型标签栏（🧩 概念 / 📎 文献 / 💡 想法，多选；样式仿日记标签按钮）
+  const typeBar = document.createElement('div');
+  typeBar.className = 'bz-blackbox-type-bar';
+  typeBar.id = 'bz-blackbox-type-bar';
+  const typeDefs: { type: EntryType; label: string }[] = [
+    { type: 'concept', label: '🧩 概念' },
+    { type: 'literature', label: '📎 文献' },
+    { type: 'thought', label: '💡 想法' },
   ];
-  for (const t of tabDefs) {
+  for (const t of typeDefs) {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.dataset.tab = t.tab;
-    btn.className = 'bz-blackbox-panel-tab-btn';
+    btn.className = 'bz-blackbox-type-btn';
+    btn.dataset.type = t.type;
     btn.textContent = t.label;
     btn.addEventListener('click', () => {
-      activeTab = t.tab;
-      renderTabs();
-      renderActiveTab();
+      if (selectedTypes.has(t.type)) selectedTypes.delete(t.type);
+      else selectedTypes.add(t.type);
+      displayCount = BATCH;
+      renderTypeBar();
+      renderStream();
     });
-    tabs.appendChild(btn);
+    typeBar.appendChild(btn);
   }
-  popup.appendChild(tabs);
+  popup.appendChild(typeBar);
 
-  // 内容区（五容器常驻，切换保留状态）
-  const content = document.createElement('div');
-  content.className = 'bz-blackbox-panel-content';
-  const names: PanelTab[] = ['wall', 'shelf', 'pool', 'people', 'timeline'];
-  for (const n of names) {
-    const c = document.createElement('div');
-    c.id = `bz-blackbox-${n}`;
-    c.className = 'bz-blackbox-panel-tab-content';
-    c.style.display = 'none';
-    content.appendChild(c);
-  }
-  popup.appendChild(content);
+  // 搜索框（防抖 300ms）
+  const searchWrap = document.createElement('div');
+  searchWrap.className = 'bz-blackbox-search-wrap';
+  const searchInput = document.createElement('input');
+  searchInput.id = 'bz-blackbox-search-input';
+  searchInput.type = 'text';
+  searchInput.placeholder = '🔍 搜索黑匣子（内容、情绪、人物）...';
+  searchInput.addEventListener('input', (e) => {
+    const kw = (e.target as HTMLInputElement).value.trim();
+    clearTimeout((searchInput as any)._debounceTimer);
+    (searchInput as any)._debounceTimer = setTimeout(() => {
+      searchKeyword = kw;
+      displayCount = BATCH;
+      renderStream();
+    }, 300);
+  });
+  searchWrap.appendChild(searchInput);
+  popup.appendChild(searchWrap);
+
+  // 时间流容器（无限滚动）
+  const stream = document.createElement('div');
+  stream.id = 'bz-blackbox-stream';
+  stream.className = 'bz-blackbox-stream';
+  stream.addEventListener('scroll', () => {
+    streamScrollTop = stream.scrollTop;
+    if (stream.scrollTop + stream.clientHeight >= stream.scrollHeight - 50) {
+      displayCount += BATCH;
+      renderStream();
+    }
+  });
+  popup.appendChild(stream);
 
   escHandle = escManager.register('blackbox-panel', { isVisible: () => !!maskEl, close: () => closeBlackBoxPanel() });
 }
@@ -195,323 +233,330 @@ function renderAll(): void {
   if (!data) return;
   const title = document.getElementById('bz-blackbox-panel-title');
   if (title) title.textContent = `🕳️ 黑匣子面板 · ${data.entries.length} 条内容`;
-  renderTabs();
-  renderActiveTab();
+  renderTypeBar();
+  renderStream();
 }
 
-function renderTabs(): void {
-  for (const btn of Array.from(document.querySelectorAll('.bz-blackbox-panel-tab-btn'))) {
-    btn.classList.toggle('bz-blackbox-panel-tab-on', (btn as HTMLElement).dataset.tab === activeTab);
-  }
-}
-
-/** 渲染当前激活 tab（保留滚动位置） */
-function renderActiveTab(): void {
-  if (!data) return;
-  for (const n of ['wall', 'shelf', 'pool', 'people', 'timeline'] as PanelTab[]) {
-    const c = document.getElementById(`bz-blackbox-${n}`);
-    if (!c) continue;
-    if (n !== activeTab) {
-      scrollPos[n] = c.scrollTop;
-      c.style.display = 'none';
-      continue;
-    }
-    c.style.display = 'block';
-    const fn: Record<PanelTab, () => void> = {
-      wall: renderWall,
-      shelf: renderShelf,
-      pool: renderPool,
-      people: renderPeople,
-      timeline: renderTimeline,
-    };
-    fn[n]();
-    c.scrollTop = scrollPos[n] || 0;
-  }
-}
-
-/** 数据变更后全量刷新（保留各 tab 滚动） */
+/** 数据变更后全量刷新（标题/流/弹窗；保留筛选与滚动） */
 function refreshAll(): void {
   if (!data) return;
-  for (const n of ['wall', 'shelf', 'pool', 'people', 'timeline'] as PanelTab[]) {
-    const c = document.getElementById(`bz-blackbox-${n}`);
-    if (c) scrollPos[n] = c.scrollTop;
-  }
-  renderActiveTab();
+  renderAll();
+  if (peopleMaskEl) renderPeople();
+  if (timelineMaskEl) renderTimeline();
 }
 
-// ---------------- 🧩 概念墙 ----------------
+function renderTypeBar(): void {
+  for (const btn of Array.from(document.querySelectorAll('.bz-blackbox-type-btn'))) {
+    const t = (btn as HTMLElement).dataset.type as EntryType;
+    btn.classList.toggle('bz-blackbox-type-btn-on', !!t && selectedTypes.has(t));
+  }
+}
 
-function renderWall(): void {
-  const box = document.getElementById('bz-blackbox-wall');
-  if (!box || !data) return;
-  box.innerHTML = '';
-  const concepts = data.entries
-    .filter((e) => e.type === 'concept')
+// ---------------- 时间流（三类条目混排） ----------------
+
+/** 搜索匹配：名称/定义/文本/来源 + 情绪标签 + 涉及的人显示名 */
+function matchesSearch(e: Entry, kw: string): boolean {
+  if (!kw) return true;
+  const lower = kw.toLowerCase();
+  const texts = [e.name, e.definition, e.text, e.source].filter((t): t is string => !!t);
+  if (texts.some((t) => t.toLowerCase().includes(lower))) return true;
+  if (e.emotions.some((t) => t.toLowerCase().includes(lower))) return true;
+  if (e.people.some((p) => personLabel(p, data!.profiles).toLowerCase().includes(lower))) return true;
+  return false;
+}
+
+/** 筛选 + 排序（createdAt 降序，新在上；ISO 字符串全序直接比较） */
+function getFilteredEntries(): Entry[] {
+  if (!data) return [];
+  return data.entries
+    .filter((e) => (selectedTypes.size === 0 ? true : selectedTypes.has(e.type)))
+    .filter((e) => matchesSearch(e, searchKeyword))
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-  if (!concepts.length) {
-    box.appendChild(emptyState('暂无概念', '用「录入」喂一个名词给包仔，生成第一张知识卡片'));
-    return;
-  }
-  const grid = document.createElement('div');
-  grid.className = 'bz-blackbox-wall-grid';
-  for (const c of concepts) {
-    const card = document.createElement('button');
-    card.type = 'button';
-    card.className = 'bz-blackbox-concept-card';
-    card.dataset.id = c.id;
-    card.title = '点击查看详情'; // 悬浮提示，卡片本体只显示名称（定义/关联数在详情内）
-    const name = document.createElement('div');
-    name.className = 'bz-blackbox-concept-card-name';
-    name.textContent = c.name || '';
-    card.appendChild(name);
-    // 关联数角标（关联可见性：不点开也能看出卡片之间有关系）
-    if (c.related && c.related.length) {
-      const rel = document.createElement('div');
-      rel.className = 'bz-blackbox-concept-card-rel';
-      rel.textContent = `🔗 ${c.related.length}`;
-      rel.title = `${c.related.length} 个关联概念`;
-      card.appendChild(rel);
-    }
-    card.addEventListener('click', () => {
-      detailConceptId = c.id;
-      renderWallDetail(box);
-    });
-    grid.appendChild(card);
-  }
-  box.appendChild(grid);
-  // 详情容器（常驻，展开/跳转渲染于此）
-  const detailBox = document.createElement('div');
-  detailBox.id = 'bz-blackbox-wall-detail';
-  box.appendChild(detailBox);
-  if (detailConceptId) renderWallDetail(box);
 }
 
-function renderWallDetail(box: HTMLElement): void {
-  if (!data || !detailConceptId) return;
-  const c = data.entries.find((e) => e.id === detailConceptId);
-  const detail = document.getElementById('bz-blackbox-wall-detail');
-  if (!detail) return;
-  detail.innerHTML = '';
-  if (!c) {
-    detailConceptId = null;
+function renderStream(): void {
+  const stream = document.getElementById('bz-blackbox-stream');
+  if (!stream || !data) return;
+  stream.innerHTML = '';
+  if (!data.entries.length) {
+    stream.appendChild(emptyState('黑匣子还空着', '用右上角 ✏️ 录入第一条：概念、文献或想法'));
     return;
   }
+  const filtered = getFilteredEntries();
+  if (!filtered.length) {
+    stream.appendChild(emptyState('没有找到匹配的内容', '换个关键词，或清空类型筛选试试'));
+    return;
+  }
+  const shown = filtered.slice(0, displayCount);
+  let lastDate: string | null = null;
+  let dateSection: HTMLElement | null = null;
+  for (const e of shown) {
+    const d = (e.createdAt || '').slice(0, 10);
+    if (d !== lastDate) {
+      dateSection = document.createElement('div');
+      dateSection.className = 'bz-blackbox-stream-date-section';
+      const sep = document.createElement('div');
+      sep.className = 'bz-blackbox-stream-date';
+      sep.textContent = d;
+      dateSection.appendChild(sep);
+      stream.appendChild(dateSection);
+      lastDate = d;
+    }
+    if (dateSection) dateSection.appendChild(buildStreamCard(e));
+  }
+  if (displayCount >= filtered.length) {
+    const hint = document.createElement('div');
+    hint.className = 'bz-blackbox-stream-end';
+    hint.textContent = '已显示所有内容';
+    stream.appendChild(hint);
+  }
+  stream.scrollTop = streamScrollTop;
+}
+
+/** 卡片（纯展示，无任何点击交互）：头部 = 类型 emoji + 录入时刻 HH:MM；内容三铺法 */
+function buildStreamCard(e: Entry): HTMLElement {
+  const card = document.createElement('div');
+  card.className = 'bz-blackbox-stream-card';
+  card.dataset.id = e.id;
+
   const head = document.createElement('div');
-  head.className = 'bz-blackbox-detail-head';
-  const title = document.createElement('span');
-  title.textContent = `🧩 ${c.name}`;
-  const del = document.createElement('button');
-  del.type = 'button';
-  del.className = 'bz-blackbox-ai-btn bz-blackbox-del-btn';
-  del.textContent = '🗑 删除';
-  del.title = '删除这个概念（不可恢复；引用它的文献关联一并清理）';
-  del.addEventListener('click', () => {
-    confirm({
-      title: `删除概念「${c.name}」？`,
-      message: '删除后不可恢复；引用了它的文献名词关联会一并清理。',
-      confirmText: '删除',
-      cancelText: '取消',
-      onConfirm: () =>
-        void (async () => {
-          await manager(appRef!).deleteEntry(data!, c.id);
-          detailConceptId = null;
-          data = await manager(appRef!).load();
-          refreshAll();
-          notice(`🗑 已删除「${c.name}」`);
-        })(),
-    });
-  });
-  const back = document.createElement('button');
-  back.type = 'button';
-  back.className = 'bz-blackbox-ai-btn';
-  back.textContent = '← 返回';
-  back.addEventListener('click', () => {
-    detailConceptId = null;
-    renderWall();
-  });
-  head.append(title, back, del);
-  detail.appendChild(head);
+  head.className = 'bz-blackbox-stream-card-head';
+  const emoji = document.createElement('span');
+  emoji.className = 'bz-blackbox-stream-card-emoji';
+  emoji.textContent = e.type === 'concept' ? '🧩' : e.type === 'literature' ? '📎' : '💡';
+  const time = document.createElement('span');
+  time.className = 'bz-blackbox-stream-card-time';
+  time.textContent = (e.createdAt || '').slice(11, 16);
+  head.append(emoji, time);
+  card.appendChild(head);
 
-  const def = document.createElement('div');
-  def.className = 'bz-blackbox-detail-body';
-  def.textContent = c.definition || '暂无定义（可重新生成卡片）';
-  detail.appendChild(def);
-
-  const related = (c.related || []).map((id) => data!.entries.find((e) => e.id === id)).filter((e): e is Entry => !!e);
-  if (related.length) {
-    detail.appendChild(sectionLabel('🔗 关联概念'));
-    const relRow = document.createElement('div');
-    relRow.className = 'bz-blackbox-related-row';
-    for (const r of related) {
-      const chip = document.createElement('button');
-      chip.type = 'button';
-      chip.className = 'bz-blackbox-term-chip bz-blackbox-term-chip-on';
-      chip.textContent = r.name || r.id;
-      chip.addEventListener('click', () => {
-        detailConceptId = r.id;
-        renderWall();
-        renderWallDetail(box);
-      });
-      relRow.appendChild(chip);
+  if (e.type === 'concept') {
+    const name = document.createElement('div');
+    name.className = 'bz-blackbox-stream-card-name';
+    name.textContent = e.name || '';
+    card.appendChild(name);
+    if (e.definition) {
+      const def = document.createElement('div');
+      def.className = 'bz-blackbox-stream-card-def';
+      def.textContent = e.definition;
+      card.appendChild(def);
     }
-    detail.appendChild(relRow);
-  }
-
-  const refs = data.entries.filter((e) => e.type === 'literature' && (e.terms || []).includes(c.id));
-  if (refs.length) {
-    detail.appendChild(sectionLabel('📎 引用的文献'));
-    for (const r of refs.slice(0, 5)) {
-      const item = document.createElement('div');
-      item.className = 'bz-blackbox-ref-item';
-      item.textContent = clip(r.text || '', 60);
-      detail.appendChild(item);
-    }
-  }
-}
-
-function sectionLabel(text: string): HTMLElement {
-  const el = document.createElement('div');
-  el.className = 'bz-blackbox-section-label';
-  el.textContent = text;
-  return el;
-}
-
-function emptyState(text: string, desc: string): HTMLElement {
-  const wrap = document.createElement('div');
-  wrap.className = 'bz-blackbox-empty';
-  const t = document.createElement('div');
-  t.className = 'bz-blackbox-empty-title';
-  t.textContent = text;
-  const d = document.createElement('div');
-  d.className = 'bz-blackbox-empty-desc';
-  d.textContent = desc;
-  wrap.append(t, d);
-  return wrap;
-}
-
-// ---------------- 📎 文献架 ----------------
-
-function renderShelf(): void {
-  const box = document.getElementById('bz-blackbox-shelf');
-  if (!box || !data) return;
-  box.innerHTML = '';
-  const items = data.entries
-    .filter((e) => e.type === 'literature')
-    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-  if (!items.length) {
-    box.appendChild(emptyState('暂无文献', '用「录入」粘贴一段摘抄，包仔会帮你找概念'));
-    return;
-  }
-  for (const it of items) {
-    const card = document.createElement('div');
-    card.className = 'bz-blackbox-shelf-card';
-    const head = document.createElement('div');
-    head.className = 'bz-blackbox-shelf-head';
-    const src = document.createElement('span');
-    src.className = 'bz-blackbox-shelf-source';
-    src.textContent = it.source || '未标注来源';
-    const time = document.createElement('span');
-    time.className = 'bz-blackbox-growth-time';
-    time.textContent = it.createdAt.slice(0, 10);
-    head.append(src, time);
-    card.appendChild(head);
-    const body = document.createElement('div');
-    body.className = 'bz-blackbox-shelf-body';
-    body.textContent = clip(it.text || '', 80);
-    card.appendChild(body);
-    const terms = (it.terms || [])
-      .map((id) => data!.entries.find((e) => e.id === id))
-      .filter((e): e is Entry => !!e);
-    if (terms.length) {
-      const tagRow = document.createElement('div');
-      tagRow.className = 'bz-blackbox-term-chips';
-      for (const t of terms) {
-        const tag = document.createElement('span');
-        tag.className = 'bz-blackbox-term-chip bz-blackbox-term-chip-on';
-        tag.textContent = t.name || t.id;
-        tagRow.appendChild(tag);
-      }
-      card.appendChild(tagRow);
-    }
-    // 点击展开全文
-    const detail = document.createElement('div');
-    detail.className = 'bz-blackbox-shelf-full';
-    detail.style.display = 'none';
-    detail.textContent = it.text || '';
-    if (it.links && it.links.length) {
-      const links = document.createElement('div');
-      links.className = 'bz-blackbox-shelf-links';
-      links.textContent = `🔗 ${it.links.join('  ')}`;
-      detail.appendChild(links);
-    }
-    card.appendChild(detail);
-    card.addEventListener('click', () => {
-      detail.style.display = detail.style.display === 'none' ? 'block' : 'none';
-    });
-    box.appendChild(card);
-  }
-}
-
-// ---------------- 💡 想法池 ----------------
-
-function renderPool(): void {
-  const box = document.getElementById('bz-blackbox-pool');
-  if (!box || !data) return;
-  box.innerHTML = '';
-  const items = data.entries
-    .filter((e) => e.type === 'thought')
-    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
-  if (!items.length) {
-    box.appendChild(emptyState('暂无想法', '用「录入」记下此刻的念头，想法的核心层在这里'));
-    return;
-  }
-  for (const it of items) {
-    const card = document.createElement('div');
-    card.className = 'bz-blackbox-pool-card';
-    const body = document.createElement('div');
-    body.className = 'bz-blackbox-pool-body';
-    body.textContent = it.text || '';
-    card.appendChild(body);
-    const meta = document.createElement('div');
-    meta.className = 'bz-blackbox-pool-meta';
-    if (it.emotions.length) {
-      for (const tag of it.emotions) {
+    const related = (e.related || [])
+      .map((id) => data!.entries.find((x) => x.id === id))
+      .filter((x): x is Entry => !!x);
+    if (related.length) {
+      const row = document.createElement('div');
+      row.className = 'bz-blackbox-term-chips';
+      for (const r of related) {
         const chip = document.createElement('span');
-        chip.className = 'bz-blackbox-emotion-tag';
-        chip.textContent = tag;
-        meta.appendChild(chip);
+        chip.className = 'bz-blackbox-term-chip bz-blackbox-term-chip-on';
+        chip.textContent = r.name || r.id;
+        row.appendChild(chip);
       }
+      card.appendChild(row);
     }
-    if (it.people.length) {
-      for (const p of it.people) {
-        const tag = document.createElement('span');
-        tag.className = 'bz-blackbox-people-tag';
-        tag.textContent = personLabel(p, data!.profiles);
-        meta.appendChild(tag);
+  } else if (e.type === 'literature') {
+    if (e.source) {
+      const src = document.createElement('div');
+      src.className = 'bz-blackbox-stream-card-source';
+      src.textContent = `📌 ${e.source}`;
+      card.appendChild(src);
+    }
+    if (e.text) {
+      const body = document.createElement('div');
+      body.className = 'bz-blackbox-stream-card-body';
+      body.textContent = e.text;
+      card.appendChild(body);
+    }
+    const terms = (e.terms || [])
+      .map((id) => data!.entries.find((x) => x.id === id))
+      .filter((x): x is Entry => !!x);
+    if (terms.length) {
+      const row = document.createElement('div');
+      row.className = 'bz-blackbox-term-chips';
+      for (const t of terms) {
+        const chip = document.createElement('span');
+        chip.className = 'bz-blackbox-term-chip bz-blackbox-term-chip-on';
+        chip.textContent = t.name || t.id;
+        row.appendChild(chip);
       }
+      card.appendChild(row);
     }
-    if (it.scene) {
+    if (e.links && e.links.length) {
+      const links = document.createElement('div');
+      links.className = 'bz-blackbox-stream-card-links';
+      links.textContent = `🔗 ${e.links.join('  ')}`;
+      card.appendChild(links);
+    }
+  } else {
+    if (e.text) {
+      const body = document.createElement('div');
+      body.className = 'bz-blackbox-stream-card-body';
+      body.textContent = e.text;
+      card.appendChild(body);
+    }
+    const meta = document.createElement('div');
+    meta.className = 'bz-blackbox-stream-card-meta';
+    for (const tag of e.emotions || []) {
+      const chip = document.createElement('span');
+      chip.className = 'bz-blackbox-emotion-tag';
+      chip.textContent = tag;
+      meta.appendChild(chip);
+    }
+    for (const p of e.people || []) {
+      const tag = document.createElement('span');
+      tag.className = 'bz-blackbox-people-tag';
+      tag.textContent = personLabel(p, data!.profiles);
+      meta.appendChild(tag);
+    }
+    if (e.scene) {
       const sc = document.createElement('span');
-      sc.className = 'bz-blackbox-pool-scene';
-      sc.textContent = `📍 ${it.scene}`;
+      sc.className = 'bz-blackbox-stream-card-scene';
+      sc.textContent = `📍 ${e.scene}`;
       meta.appendChild(sc);
     }
-    if (it.links && it.links.length) {
+    if (e.links && e.links.length) {
       const lk = document.createElement('span');
-      lk.className = 'bz-blackbox-pool-links';
-      lk.textContent = `🔗 ${it.links.length}`;
+      lk.className = 'bz-blackbox-stream-card-links';
+      lk.textContent = `🔗 ${e.links.length}`;
       meta.appendChild(lk);
     }
-    const time = document.createElement('span');
-    time.className = 'bz-blackbox-growth-time';
-    time.textContent = it.createdAt.slice(0, 10);
-    meta.appendChild(time);
     card.appendChild(meta);
-    box.appendChild(card);
+  }
+  return card;
+}
+
+// ---------------- 👤 人物弹窗（独立中央弹窗，完整度保留） ----------------
+
+function openPeoplePopup(): void {
+  if (peopleMaskEl) {
+    peopleMaskEl.style.display = 'block';
+    peoplePopupEl!.style.display = 'flex';
+    renderPeople();
+    return;
+  }
+  const { mask, popup } = createOverlay({
+    maskId: 'bz-blackbox-people-mask',
+    popupId: 'bz-blackbox-people-popup',
+    zIndex: 10041,
+    width: '600px',
+    maxWidth: 600,
+    onMaskClick: () => closePeoplePopup(),
+  });
+  peopleMaskEl = mask;
+  peoplePopupEl = popup;
+  document.body.appendChild(mask);
+  document.body.appendChild(popup);
+  mask.style.display = 'block';
+  popup.style.display = 'flex';
+
+  const header = document.createElement('div');
+  header.className = 'bz-blackbox-modal-header';
+  const title = document.createElement('span');
+  title.className = 'bz-blackbox-modal-title';
+  title.textContent = '👤 人物';
+  header.appendChild(title);
+  const actions = document.createElement('div');
+  actions.className = 'bz-blackbox-hdr-actions';
+  const closeBtn = createIconBtn('❌', '关闭', () => closePeoplePopup());
+  closeBtn.className = 'bz-blackbox-hdr-close';
+  actions.appendChild(closeBtn);
+  header.appendChild(actions);
+  popup.appendChild(header);
+
+  const body = document.createElement('div');
+  body.id = 'bz-blackbox-people';
+  body.className = 'bz-blackbox-popup-body';
+  popup.appendChild(body);
+
+  peopleEscHandle = escManager.register('blackbox-people', {
+    isVisible: () => !!peopleMaskEl,
+    close: () => closePeoplePopup(),
+  });
+  renderPeople();
+}
+
+function closePeoplePopup(): void {
+  if (peopleMaskEl) {
+    peopleMaskEl.remove();
+    peopleMaskEl = null;
+  }
+  if (peoplePopupEl) {
+    peoplePopupEl.remove();
+    peoplePopupEl = null;
+  }
+  if (peopleEscHandle) {
+    peopleEscHandle.unregister();
+    peopleEscHandle = null;
   }
 }
 
-// ---------------- 👤 人物 ----------------
+// ---------------- 🕐 时间线弹窗（独立中央弹窗，完整度保留） ----------------
+
+function openTimelinePopup(): void {
+  if (timelineMaskEl) {
+    timelineMaskEl.style.display = 'block';
+    timelinePopupEl!.style.display = 'flex';
+    renderTimeline();
+    return;
+  }
+  const { mask, popup } = createOverlay({
+    maskId: 'bz-blackbox-timeline-mask',
+    popupId: 'bz-blackbox-timeline-popup',
+    zIndex: 10041,
+    width: '600px',
+    maxWidth: 600,
+    onMaskClick: () => closeTimelinePopup(),
+  });
+  timelineMaskEl = mask;
+  timelinePopupEl = popup;
+  document.body.appendChild(mask);
+  document.body.appendChild(popup);
+  mask.style.display = 'block';
+  popup.style.display = 'flex';
+
+  const header = document.createElement('div');
+  header.className = 'bz-blackbox-modal-header';
+  const title = document.createElement('span');
+  title.className = 'bz-blackbox-modal-title';
+  title.textContent = '🕐 时间线';
+  header.appendChild(title);
+  const actions = document.createElement('div');
+  actions.className = 'bz-blackbox-hdr-actions';
+  const closeBtn = createIconBtn('❌', '关闭', () => closeTimelinePopup());
+  closeBtn.className = 'bz-blackbox-hdr-close';
+  actions.appendChild(closeBtn);
+  header.appendChild(actions);
+  popup.appendChild(header);
+
+  const body = document.createElement('div');
+  body.id = 'bz-blackbox-timeline';
+  body.className = 'bz-blackbox-popup-body';
+  popup.appendChild(body);
+
+  timelineEscHandle = escManager.register('blackbox-timeline', {
+    isVisible: () => !!timelineMaskEl,
+    close: () => closeTimelinePopup(),
+  });
+  renderTimeline();
+}
+
+function closeTimelinePopup(): void {
+  if (timelineMaskEl) {
+    timelineMaskEl.remove();
+    timelineMaskEl = null;
+  }
+  if (timelinePopupEl) {
+    timelinePopupEl.remove();
+    timelinePopupEl = null;
+  }
+  if (timelineEscHandle) {
+    timelineEscHandle.unregister();
+    timelineEscHandle = null;
+  }
+}
+
+// ---------------- 👤 人物（v2 渲染复用：卡墙 + 详情 + 新建） ----------------
 
 function renderPeople(): void {
   const box = document.getElementById('bz-blackbox-people');
@@ -779,7 +824,7 @@ async function panelCreateProfile(name: string, relation: string): Promise<void>
   notice(`✅ 画像「${name}」已创建`);
 }
 
-// ---------------- 🕐 时间线 ----------------
+// ---------------- 🕐 时间线（v2 渲染复用：年月分组事件流 + 筛选） ----------------
 
 function renderTimeline(): void {
   const box = document.getElementById('bz-blackbox-timeline');
@@ -940,17 +985,17 @@ function eventCard(ev: EventItem): HTMLElement {
   if (ev.inferred) {
     const actions = document.createElement('div');
     actions.className = 'bz-blackbox-ai-row';
-    const confirm = document.createElement('button');
-    confirm.type = 'button';
-    confirm.className = 'bz-blackbox-btn bz-blackbox-btn-primary';
-    confirm.textContent = '✓ 确认';
-    confirm.addEventListener('click', () => void confirmEventAction(ev.id));
+    const confirmBtn = document.createElement('button');
+    confirmBtn.type = 'button';
+    confirmBtn.className = 'bz-blackbox-btn bz-blackbox-btn-primary';
+    confirmBtn.textContent = '✓ 确认';
+    confirmBtn.addEventListener('click', () => void confirmEventAction(ev.id));
     const del = document.createElement('button');
     del.type = 'button';
     del.className = 'bz-blackbox-ai-btn';
     del.textContent = '✕ 删除';
     del.addEventListener('click', () => void deleteEventAction(ev.id));
-    actions.append(confirm, del);
+    actions.append(confirmBtn, del);
     card.appendChild(actions);
   }
 
@@ -1015,6 +1060,28 @@ async function deleteEventAction(eventId: string): Promise<void> {
   data = latest;
   notice('🗑 已删除（遗忘权后置：不做忽略清单）');
   refreshAll();
+}
+
+// ---------------- 通用 ----------------
+
+function sectionLabel(text: string): HTMLElement {
+  const el = document.createElement('div');
+  el.className = 'bz-blackbox-section-label';
+  el.textContent = text;
+  return el;
+}
+
+function emptyState(text: string, desc: string): HTMLElement {
+  const wrap = document.createElement('div');
+  wrap.className = 'bz-blackbox-empty';
+  const t = document.createElement('div');
+  t.className = 'bz-blackbox-empty-title';
+  t.textContent = text;
+  const d = document.createElement('div');
+  d.className = 'bz-blackbox-empty-desc';
+  d.textContent = desc;
+  wrap.append(t, d);
+  return wrap;
 }
 
 function clip(s: string, n: number): string {
