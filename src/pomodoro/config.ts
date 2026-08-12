@@ -21,6 +21,7 @@ export const PRESETS: Record<string, PomodoroPreset> = {
   recovery: { label: '疲劳恢复', workMin: 20, shortBreakMin: 10, longBreakMin: 20 },
   intense: { label: '高强度', workMin: 50, shortBreakMin: 5, longBreakMin: 15 },
   balanced: { label: '平衡模式', workMin: 35, shortBreakMin: 7, longBreakMin: 18 },
+  reading: { label: '阅读沉浸', workMin: 45, shortBreakMin: 10, longBreakMin: 20 },
 };
 
 /** 自定义方案 id（设置下拉第 12 档） */

@@ -172,12 +172,12 @@ describe('专注目标（任务关联，第一期）', () => {
     expect(el('pomodoro-target-clear').style.display).toBe('none');
   });
 
-  it('选择器：三来源 tab + 右上角 ✕ 关闭按钮', async () => {
+  it('选择器：两来源 tab（书库已删，ticket 51）+ 右上角 ✕ 关闭按钮', async () => {
     const { app } = setup();
     await openPomodoro(app);
     el('pomodoro-target').click();
     expect(document.getElementById('pomodoro-target-picker')).not.toBeNull();
-    expect(document.querySelectorAll('.pomodoro-target-tab').length).toBe(3);
+    expect(document.querySelectorAll('.pomodoro-target-tab').length).toBe(2);
     expect(el('pomodoro-target-picker-close')).not.toBeNull();
     expect(document.getElementById('pomodoro-target-picker-clear')).toBeNull(); // 底部按钮已移除
   });
@@ -236,23 +236,6 @@ describe('专注目标（任务关联，第一期）', () => {
     expect(raw.state.target).toEqual({ type: 'note', path: '工作/方案.md', label: '方案' });
   });
 
-  it('书库 tab：列出书籍并选中', async () => {
-    const vault = new MockVault();
-    vault.files.set('书库/活着.md', '---\ntags: [book]\ntitle: 活着\n---\n正文');
-    vault.files.set('书库/平凡的世界.md', '---\ntags: [book]\ntitle: 平凡的世界\n---\n正文');
-    const { app } = setup(vault);
-    await openPomodoro(app);
-    el('pomodoro-target').click();
-    (document.querySelectorAll('.pomodoro-target-tab')[2] as HTMLElement).click();
-    const items = Array.from(document.querySelectorAll('.pomodoro-target-item')).map((i) => (i as HTMLElement).textContent);
-    expect(items.length).toBe(2);
-    (document.querySelectorAll('.pomodoro-target-item')[0] as HTMLElement).click();
-    expect(el('pomodoro-target-label').textContent).toContain('活着');
-    expect(document.getElementById('pomodoro-target-picker')).toBeNull();
-    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
-    expect(raw.state.target).toEqual({ type: 'book', path: '书库/活着.md', label: '活着' });
-  });
-
   it('目标区幽灵模式：未选中默认隐藏，hover 弹窗显示', async () => {
     const { app } = setup();
     await openPomodoro(app);
@@ -308,7 +291,7 @@ describe('专注目标（任务关联，第一期）', () => {
     expect(raw.history[0].target).toEqual({ type: 'memo', id: 'm1', label: '写季度报告' });
   });
 
-  it('预置书库历史 → 今日读书分钟统计显示', async () => {
+  it('预置书库历史 → 今日读书番茄数统计显示', async () => {
     const vault = new MockVault();
     vault.files.set(
       getPomodoroFilePath(),
@@ -316,14 +299,15 @@ describe('专注目标（任务关联，第一期）', () => {
         version: 1,
         state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0, target: null },
         history: [
-          { ts: T0 - 3_600_000, duration: 1500, target: { type: 'book', path: '书库/活着.md', label: '活着' } },
-          { ts: T0 - 7_200_000, duration: 1500, target: { type: 'memo', id: 'm1', label: '写季度报告' } },
+          { ts: T0 - 3_600_000, duration: 1500, target: { type: 'book', path: '书架/活着.epub', label: '活着' } },
+          { ts: T0 - 7_200_000, duration: 1500, target: { type: 'book', path: '书架/活着.epub', label: '活着' } },
+          { ts: T0 - 10_800_000, duration: 1500, target: { type: 'memo', id: 'm1', label: '写季度报告' } },
         ],
       })
     );
     const { app } = setup(vault);
     await openPomodoro(app);
-    expect(document.getElementById('pomodoro-book')!.textContent).toContain('读书 25 分钟');
+    expect(document.getElementById('pomodoro-book')!.textContent).toContain('读书 2 个 🍅');
   });
 });
 

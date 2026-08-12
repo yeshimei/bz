@@ -245,6 +245,10 @@ export default interface BzSettings {
   pomodoroVolume: number;
   /** 打开时恢复方式：background（后台继续倒计时）/ popup（正在倒计时则自动弹窗） */
   pomodoroRestoreMode: string;
+  /** 读书自动番茄钟：打开 epub 书自动进入读书专注（默认开，ticket 51） */
+  pomodoroEpubAuto: boolean;
+  /** 读书启动形态：background（后台静默）/ popup（自动弹窗），默认后台（ticket 51） */
+  pomodoroEpubMode: string;
 
   // ===== 🕳️ 黑匣子（6 项，ticket 33/45 新域）=====
   /** AI 服务：deepseek（默认，跟随 bz 既有模式）/ ollama（本地） */
@@ -399,6 +403,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   pomodoroSound: true,
   pomodoroVolume: 100,
   pomodoroRestoreMode: 'background',
+  pomodoroEpubAuto: true,
+  pomodoroEpubMode: 'background',
 
   // 黑匣子
   blackboxAIProvider: 'deepseek',
