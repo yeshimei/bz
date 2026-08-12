@@ -1,6 +1,6 @@
 # Spec: 黑匣子域（bz 插件第 19 域）——v3 笔记化架构
 
-Status: `ready-for-agent`
+Status: `done（v3 六票 01-06 全部落地，1108 测试全绿）`
 Type: spec
 Feature: blackbox-suite-plugin
 
