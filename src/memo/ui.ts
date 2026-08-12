@@ -1,5 +1,5 @@
 /**
- * 备忘录 UI（备忘录.js UIManager + Renderer 逐字移植）
+ * 备忘录 UI（备忘录.js UIManager + Renderer 移植）
  * DOM id/类名与原脚本一致：todo-mask / todo-popup / todo-entries-container /
  * add-todo-mask / add-todo-popup / add-todo-* / scene-btn / priority-btn / todo-card。
  */
@@ -30,14 +30,6 @@ import { App } from './app';
 const CONTENT_LINE_HEIGHT = 37;
 /** 内容输入框最高 8 行（8 × 21 + 16 = 184px），超出内部滚动 */
 const CONTENT_MAX_HEIGHT = 184;
-
-/** 内容输入框 auto-grow：高度 = clamp(scrollHeight, 一行, 8 行)；空时一行高 */
-function autoGrowContent(el: HTMLTextAreaElement) {
-  el.style.height = 'auto';
-  const h = Math.max(el.scrollHeight, CONTENT_LINE_HEIGHT);
-  el.style.height = `${Math.min(h, CONTENT_MAX_HEIGHT)}px`;
-  el.style.overflowY = el.scrollHeight > CONTENT_MAX_HEIGHT ? 'auto' : 'hidden';
-}
 
 /** 备忘录样式（TODOCSS，收敛 styles.css 前保留注入） */
 const TODOCSS = `
@@ -81,6 +73,181 @@ const TODOCSS = `
 }
 `;
 
+/** 内容输入框 auto-grow：高度 = clamp(scrollHeight, 一行, 8 行)；空时一行高 */
+function autoGrowContent(el: HTMLTextAreaElement) {
+  el.style.height = 'auto';
+  const h = Math.max(el.scrollHeight, CONTENT_LINE_HEIGHT);
+  el.style.height = `${Math.min(h, CONTENT_MAX_HEIGHT)}px`;
+  el.style.overflowY = el.scrollHeight > CONTENT_MAX_HEIGHT ? 'auto' : 'hidden';
+}
+
+// ---------- 共享小工具 ----------
+
+/** 选中态 / 未选中态（场景、优先级按钮共用） */
+function setActive(btn: HTMLElement, active: boolean) {
+  btn.style.opacity = active ? '1' : '0.5';
+  btn.style.background = active ? 'var(--interactive-accent)' : 'var(--background-secondary)';
+  btn.style.color = active ? 'var(--text-on-accent)' : 'var(--text-muted)';
+  btn.classList.toggle('active', active);
+}
+/** 取消容器内全部按钮选中 */
+function clearActive(container: HTMLElement, cls: string) {
+  container.querySelectorAll(`.${cls}`).forEach((b) => setActive(b as HTMLElement, false));
+}
+
+/** 胶囊选择按钮（scene-btn / priority-btn 共用样式与选中逻辑） */
+function makeChoiceBtn(container: HTMLElement, cls: string, value: string, label: string, onClick?: (btn: HTMLButtonElement) => void): HTMLButtonElement {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = cls;
+  btn.dataset[cls === 'scene-btn' ? 'scene' : 'priority'] = value;
+  btn.textContent = label;
+  Object.assign(btn.style, {
+    padding: '6px 14px',
+    borderRadius: '20px',
+    background: 'var(--background-secondary)',
+    color: 'var(--text-muted)',
+    cursor: 'pointer',
+    fontSize: '14px',
+    transition: 'all 0.2s',
+    opacity: '0.5',
+    boxShadow: 'none',
+    border: 'none',
+  });
+  btn.onclick = () => {
+    clearActive(container, cls);
+    setActive(btn, true);
+    onClick?.(btn);
+  };
+  container.appendChild(btn);
+  return btn;
+}
+
+/** 标签基样式（meta 标签共用前缀） */
+const TAG_BASE = 'padding:0 8px;border-radius:12px;font-size:11px;line-height:20px;white-space:nowrap;';
+/** 建议列表弹层样式（脚本/课程共用） */
+const SUGGEST_STYLE = 'display: block !important; max-height: 150px; overflow-y: auto; background: var(--background-secondary); border-radius: 4px; margin-top: 4px;';
+
+/** 输入建议列表（脚本/课程共用：过滤 → 渲染 → 点击回填 → 失焦关闭） */
+function attachSuggestion<T>(
+  input: HTMLInputElement,
+  sugg: HTMLElement,
+  container: HTMLElement,
+  getList: () => T[],
+  match: (val: string, item: T) => boolean,
+  render: (item: T) => string,
+  onPick: (item: T) => void
+) {
+  const refresh = () => {
+    const val = input.value.trim().toLowerCase();
+    const matched = getList().filter((item) => match(val, item));
+    if (matched.length) {
+      sugg.innerHTML = matched
+        .map((item) => `<div style="padding:6px 12px;cursor:pointer;border-bottom:1px solid var(--background-modifier-border);font-size:14px;">${render(item)}</div>`)
+        .join('');
+      sugg.style.cssText = SUGGEST_STYLE;
+      sugg.querySelectorAll('div').forEach((el, i) => {
+        (el as HTMLElement).onclick = () => {
+          onPick(matched[i]);
+          sugg.style.display = 'none';
+        };
+      });
+    } else {
+      sugg.style.display = 'none';
+    }
+  };
+  input.addEventListener('input', refresh);
+  input.addEventListener('focus', refresh);
+  document.addEventListener('click', (e) => {
+    if (!container.contains(e.target as Node)) sugg.style.display = 'none';
+  });
+}
+
+/** 长按手势（场景标签编辑 / 时间标签删除共用，500ms 触发） */
+function attachLongPress(span: HTMLElement, onLongPress: () => void) {
+  let timer: any = null;
+  let isTouching = false;
+
+  const startLongPress = (e: any) => {
+    if (e.button !== undefined && e.button !== 0) return; // 仅左键
+    e.stopPropagation();
+    // 阻止默认行为防止滚动或上下文菜单
+    e.preventDefault();
+    timer = setTimeout(() => {
+      onLongPress();
+      timer = null;
+    }, 500);
+  };
+
+  const cancelLongPress = () => {
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+  };
+
+  // 鼠标事件
+  span.addEventListener('mousedown', startLongPress);
+  span.addEventListener('mouseup', cancelLongPress);
+  span.addEventListener('mouseleave', cancelLongPress);
+  // 触摸事件（移动端）
+  span.addEventListener('touchstart', (e) => {
+    // 阻止 mouse 事件后续触发
+    e.preventDefault();
+    isTouching = true;
+    startLongPress(e);
+  });
+  span.addEventListener('touchend', () => {
+    isTouching = false;
+    cancelLongPress();
+  });
+  span.addEventListener('touchmove', () => {
+    if (isTouching) {
+      cancelLongPress();
+    }
+  });
+}
+
+// ---------- 设置弹窗（ADR-0009 域设置弹窗，14 项） ----------
+
+/** 设置项辅助：toggle / text / textArea / dropdown 四类，写回设置并保存，支持副作用 */
+function settingToggle(el: HTMLElement, name: string, desc: string, get: boolean, key: keyof any, after?: () => void) {
+  new Setting(el).setName(name).setDesc(desc).addToggle((toggle) =>
+    toggle.setValue(get).onChange(async (v) => {
+      (getSettings() as any)[key] = v;
+      await saveSettings();
+      after?.();
+    })
+  );
+}
+function settingText(el: HTMLElement, name: string, desc: string, placeholder: string, get: string, key: keyof any, after?: () => void) {
+  new Setting(el).setName(name).setDesc(desc).addText((text) =>
+    text.setPlaceholder(placeholder).setValue(get).onChange(async (v) => {
+      (getSettings() as any)[key] = v;
+      await saveSettings();
+      after?.();
+    })
+  );
+}
+function settingTextArea(el: HTMLElement, name: string, desc: string, placeholder: string, get: string, key: keyof any, after?: () => void) {
+  new Setting(el).setName(name).setDesc(desc).addTextArea((text) =>
+    text.setPlaceholder(placeholder).setValue(get).onChange(async (v) => {
+      (getSettings() as any)[key] = v;
+      await saveSettings();
+      after?.();
+    })
+  );
+}
+function settingDropdown(el: HTMLElement, name: string, desc: string, options: [string, string][], get: string, key: keyof any) {
+  new Setting(el).setName(name).setDesc(desc).addDropdown((dd) => {
+    for (const [v, label] of options) dd.addOption(v, label);
+    dd.setValue(get).onChange(async (v) => {
+      (getSettings() as any)[key] = v;
+      await saveSettings();
+    });
+  });
+}
+
 export const UIManager = {
   mask: null as HTMLDivElement | null,
   popup: null as HTMLDivElement | null,
@@ -108,33 +275,18 @@ export const UIManager = {
     this.mask = document.createElement('div');
     this.mask.id = 'todo-mask';
     Object.assign(this.mask.style, {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'var(--background-modifier-cover)',
-      zIndex: 9998,
-      display: 'none',
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      background: 'var(--background-modifier-cover)', zIndex: 9998, display: 'none',
     });
     this.mask.onclick = () => this.hideMain();
 
     this.popup = document.createElement('div');
     this.popup.id = 'todo-popup';
     Object.assign(this.popup.style, {
-      position: 'fixed',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%,-50%)',
-      background: 'var(--background-primary)',
-      borderRadius: '12px',
-      boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-      zIndex: 9999,
-      width: '90%',
-      maxWidth: '700px',
-      maxHeight: '80vh',
-      display: 'none',
-      flexDirection: 'column',
+      position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+      background: 'var(--background-primary)', borderRadius: '12px',
+      boxShadow: '0 10px 40px rgba(0,0,0,0.2)', zIndex: 9999, width: '90%', maxWidth: '700px',
+      maxHeight: '80vh', display: 'none', flexDirection: 'column',
     });
     this.popup.innerHTML = `
             <div style="padding:16px 24px 8px 24px;display:flex;justify-content:space-between;align-items:center;">
@@ -151,182 +303,49 @@ export const UIManager = {
     this.entriesContainer = this.popup.querySelector('#todo-entries-container');
     const settingsBtn = this.popup.querySelector('.todo-btn-settings');
     settingsBtn!.onclick = () => {
-      // 备忘录设置弹窗（ADR-0009 域设置弹窗，14 项）
+      const s = getSettings();
+      // 场景/平台映射变更后即时生效：重建 DataManager 与添加弹窗场景按钮
+      const reloadScenes = () => {
+        DataManager.init(s);
+        if (UIManager.addMask && document.body.contains(UIManager.addMask)) {
+          UIManager.addMask.remove();
+          if (UIManager.addPopup) UIManager.addPopup.remove();
+          UIManager.addMask = null;
+          UIManager.addPopup = null;
+          UIManager.createAddDialog();
+        }
+      };
+
       openSettingsModal({
         title: '备忘录设置',
         build: (el) => {
-          const s = getSettings();
-
-          // 场景/平台映射变更后即时生效：重建 DataManager 与添加弹窗场景按钮
-          const reloadScenes = () => {
-            DataManager.init(s);
-            if (UIManager.addMask && document.body.contains(UIManager.addMask)) {
-              UIManager.addMask.remove();
-              if (UIManager.addPopup) UIManager.addPopup.remove();
-              UIManager.addMask = null;
-              UIManager.addPopup = null;
-              UIManager.createAddDialog();
-            }
-          };
-
           // ===== 提醒 =====
           new Setting(el).setHeading().setName('提醒');
-          new Setting(el)
-            .setName('启动时自动弹出')
-            .setDesc('启动时若存在未完成的重要或到期备忘录，自动弹出面板提醒')
-            .addToggle((toggle) =>
-              toggle.setValue(s.autoPopupOnStart).onChange(async (v) => {
-                s.autoPopupOnStart = v;
-                await saveSettings();
-              })
-            );
-          new Setting(el)
-            .setName('打开笔记自动提醒')
-            .setDesc('打开笔记时若该笔记有重要或到期的未完成备忘录，自动弹出面板')
-            .addToggle((toggle) =>
-              toggle.setValue(s.openNoteReminder !== false).onChange(async (v) => {
-                s.openNoteReminder = v;
-                await saveSettings();
-              })
-            );
-          new Setting(el)
-            .setName('到期通知')
-            .setDesc('到期/逾期的备忘录轮询检查，弹出通知提醒')
-            .addToggle((toggle) =>
-              toggle.setValue(s.memoDueNotify !== false).onChange(async (v) => {
-                s.memoDueNotify = v;
-                await saveSettings();
-              })
-            );
-          new Setting(el)
-            .setName('到期检查间隔（秒）')
-            .setDesc('到期通知的轮询间隔，最小 10 秒')
-            .addText((text) =>
-              text
-                .setPlaceholder('300')
-                .setValue(s.memoDueCheckInterval || '')
-                .onChange(async (v) => {
-                  s.memoDueCheckInterval = v;
-                  await saveSettings();
-                })
-            );
+          settingToggle(el, '启动时自动弹出', '启动时若存在未完成的重要或到期备忘录，自动弹出面板提醒', s.autoPopupOnStart, 'autoPopupOnStart');
+          settingToggle(el, '打开笔记自动提醒', '打开笔记时若该笔记有重要或到期的未完成备忘录，自动弹出面板', s.openNoteReminder !== false, 'openNoteReminder');
+          settingToggle(el, '到期通知', '到期/逾期的备忘录轮询检查，弹出通知提醒', s.memoDueNotify !== false, 'memoDueNotify');
+          settingText(el, '到期检查间隔（秒）', '到期通知的轮询间隔，最小 10 秒', '300', s.memoDueCheckInterval || '', 'memoDueCheckInterval');
 
           // ===== 剪贴板 =====
           new Setting(el).setHeading().setName('剪贴板');
-          new Setting(el)
-            .setName('剪贴板监听')
-            .setDesc('窗口聚焦时读取剪贴板，识别平台链接自动弹出添加框')
-            .addToggle((toggle) =>
-              toggle.setValue(s.clipboardMonitor !== false).onChange(async (v) => {
-                s.clipboardMonitor = v;
-                await saveSettings();
-              })
-            );
-          new Setting(el)
-            .setName('平台映射')
-            .setDesc('每行一个「域名=平台名」，识别剪贴板链接归属平台（留空用内置默认）')
-            .addTextArea((text) =>
-              text
-                .setPlaceholder('zhihu.com=知乎\ndouban.com=豆瓣')
-                .setValue(s.memoPlatformMapping || '')
-                .onChange(async (v) => {
-                  s.memoPlatformMapping = v;
-                  await saveSettings();
-                  reloadScenes();
-                })
-            );
+          settingToggle(el, '剪贴板监听', '窗口聚焦时读取剪贴板，识别平台链接自动弹出添加框', s.clipboardMonitor !== false, 'clipboardMonitor');
+          settingTextArea(el, '平台映射', '每行一个「域名=平台名」，识别剪贴板链接归属平台（留空用内置默认）', 'zhihu.com=知乎\ndouban.com=豆瓣', s.memoPlatformMapping || '', 'memoPlatformMapping', reloadScenes);
 
           // ===== 显示 =====
           new Setting(el).setHeading().setName('显示');
-          new Setting(el)
-            .setName('默认排序方式')
-            .setDesc('面板条目的默认排序：紧急优先 / 仅按到期时间 / 按创建时间')
-            .addDropdown((dd) =>
-              dd
-                .addOption('priority', '紧急优先')
-                .addOption('due', '仅按到期时间')
-                .addOption('created', '按创建时间')
-                .setValue(s.memoSortMode || 'priority')
-                .onChange(async (v) => {
-                  s.memoSortMode = v;
-                  await saveSettings();
-                })
-            );
-          new Setting(el)
-            .setName('默认显示归档')
-            .setDesc('打开面板时显示已归档（已完成）条目')
-            .addToggle((toggle) =>
-              toggle.setValue(!!s.memoShowArchivedByDefault).onChange(async (v) => {
-                s.memoShowArchivedByDefault = v;
-                await saveSettings();
-              })
-            );
-          new Setting(el)
-            .setName('到期时间格式')
-            .setDesc('相对（今天 14:00 到期）/ 绝对（08/12 14:00 到期）')
-            .addDropdown((dd) =>
-              dd
-                .addOption('relative', '相对')
-                .addOption('absolute', '绝对')
-                .setValue(s.memoDueFormat || 'relative')
-                .onChange(async (v) => {
-                  s.memoDueFormat = v;
-                  await saveSettings();
-                })
-            );
+          settingDropdown(el, '默认排序方式', '面板条目的默认排序：紧急优先 / 仅按到期时间 / 按创建时间', [['priority', '紧急优先'], ['due', '仅按到期时间'], ['created', '按创建时间']], s.memoSortMode || 'priority', 'memoSortMode');
+          settingToggle(el, '默认显示归档', '打开面板时显示已归档（已完成）条目', !!s.memoShowArchivedByDefault, 'memoShowArchivedByDefault');
+          settingDropdown(el, '到期时间格式', '相对（今天 14:00 到期）/ 绝对（08/12 14:00 到期）', [['relative', '相对'], ['absolute', '绝对']], s.memoDueFormat || 'relative', 'memoDueFormat');
 
           // ===== 新建 =====
           new Setting(el).setHeading().setName('新建');
-          new Setting(el)
-            .setName('新条目默认优先级')
-            .setDesc('新建备忘录时默认选中的优先级')
-            .addDropdown((dd) =>
-              dd
-                .addOption('minor', '次要')
-                .addOption('important', '重要')
-                .setValue(s.memoDefaultPriority || 'minor')
-                .onChange(async (v) => {
-                  s.memoDefaultPriority = v;
-                  await saveSettings();
-                })
-            );
-          new Setting(el)
-            .setName('新条目默认场景')
-            .setDesc('新建时默认选中的场景（「第一个场景」为自动）')
-            .addDropdown((dd) => {
-              dd.addOption('', '第一个场景');
-              const scenes = DataManager.getScenarios();
-              for (const scene of scenes) dd.addOption(scene, scene);
-              dd.setValue(s.memoDefaultScene || '').onChange(async (v) => {
-                s.memoDefaultScene = v;
-                await saveSettings();
-              });
-            });
-          new Setting(el)
-            .setName('完成后自动归档')
-            .setDesc('勾选完成时移入归档；关闭则完成条目保留在主列表（划线显示）')
-            .addToggle((toggle) =>
-              toggle.setValue(s.memoAutoArchive !== false).onChange(async (v) => {
-                s.memoAutoArchive = v;
-                await saveSettings();
-              })
-            );
+          settingDropdown(el, '新条目默认优先级', '新建备忘录时默认选中的优先级', [['minor', '次要'], ['important', '重要']], s.memoDefaultPriority || 'minor', 'memoDefaultPriority');
+          settingDropdown(el, '新条目默认场景', '新建时默认选中的场景（「第一个场景」为自动）', [['', '第一个场景'], ...DataManager.getScenarios().map((sc) => [sc, sc] as [string, string])], s.memoDefaultScene || '', 'memoDefaultScene');
+          settingToggle(el, '完成后自动归档', '勾选完成时移入归档；关闭则完成条目保留在主列表（划线显示）', s.memoAutoArchive !== false, 'memoAutoArchive');
 
           // ===== 场景列表 =====
           new Setting(el).setHeading().setName('场景列表');
-          new Setting(el)
-            .setName('场景')
-            .setDesc('逗号分隔的场景列表（留空用内置默认：剪藏,工作,学习,生活,代码,公开课）')
-            .addTextArea((text) =>
-              text
-                .setPlaceholder('剪藏,工作,学习,生活,代码,公开课')
-                .setValue(s.memoScenarios || '')
-                .onChange(async (v) => {
-                  s.memoScenarios = v;
-                  await saveSettings();
-                  reloadScenes();
-                })
-            );
+          settingTextArea(el, '场景', '逗号分隔的场景列表（留空用内置默认：剪藏,工作,学习,生活,代码,公开课）', '剪藏,工作,学习,生活,代码,公开课', s.memoScenarios || '', 'memoScenarios', reloadScenes);
         },
       });
     };
@@ -369,14 +388,8 @@ export const UIManager = {
     this.addMask = document.createElement('div');
     this.addMask.id = 'add-todo-mask';
     Object.assign(this.addMask.style, {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(0,0,0,0.3)',
-      zIndex: 10001,
-      display: 'none',
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      background: 'rgba(0,0,0,0.3)', zIndex: 10001, display: 'none',
     });
     this.addMask.onclick = (e) => {
       if (e.target === this.addMask) this.hideAddDialog();
@@ -385,23 +398,13 @@ export const UIManager = {
     this.addPopup = document.createElement('div');
     this.addPopup.id = 'add-todo-popup';
     Object.assign(this.addPopup.style, {
-      position: 'fixed',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%,-50%)',
-      background: 'var(--background-primary)',
-      borderRadius: '12px',
-      boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-      zIndex: 10002,
-      padding: '24px',
-      maxWidth: '400px',
-      width: '90%',
-      maxHeight: '80vh',
-      overflowY: 'auto',
-      display: 'none',
+      position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
+      background: 'var(--background-primary)', borderRadius: '12px',
+      boxShadow: '0 20px 60px rgba(0,0,0,0.3)', zIndex: 10002, padding: '24px',
+      maxWidth: '400px', width: '90%', maxHeight: '80vh', overflowY: 'auto', display: 'none',
     });
 
-    // 构造内部HTML（在底部按钮区增加 AI 推荐按钮）
+    // 构造内部HTML
     this.addPopup.innerHTML = `
             <h4 style="margin:0 0 16px 0;font-size:18px;font-weight:600;color:var(--text-normal);">创建备忘录</h4>
             <textarea id="add-todo-content" rows="1" placeholder="输入备忘录内容..." style="width:100%;padding:8px 12px;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:16px;resize:none;min-height:37px;max-height:184px;overflow-y:hidden;line-height:1.5;font-family:inherit;background:var(--background-primary);border:1px solid var(--background-modifier-border);"></textarea>
@@ -434,69 +437,32 @@ export const UIManager = {
     document.body.appendChild(this.addPopup);
 
     // 绑定事件
-    const contentInput = this.addPopup.querySelector('#add-todo-content') as HTMLTextAreaElement;
+    const q = (sel: string) => this.addPopup!.querySelector(sel) as HTMLElement;
+    const contentInput = q('#add-todo-content') as HTMLTextAreaElement;
+    const titleInput = q('#add-todo-title') as HTMLInputElement;
+    const sceneContainer = q('#add-todo-scenes');
+    const priorityContainer = q('#add-todo-priority');
+    const posBtn = q('#add-todo-pos-btn') as HTMLButtonElement;
+    const cancelBtn = q('#add-todo-cancel') as HTMLButtonElement;
+    const saveBtn = q('#add-todo-save') as HTMLButtonElement;
+    const scriptInput = q('#add-todo-script') as HTMLInputElement;
+    const scriptSuggest = q('#add-todo-script-suggestions');
+    const scriptContainer = q('#add-todo-script-container');
+    const courseInput = q('#add-todo-course') as HTMLInputElement;
+    const courseSuggest = q('#add-todo-course-suggestions');
+    const courseContainer = q('#add-todo-course-container');
+
     // 内容输入框 auto-grow（Enter 换行 = textarea 默认行为，不做任何拦截）
     contentInput.addEventListener('input', () => autoGrowContent(contentInput));
-    const titleInput = this.addPopup.querySelector('#add-todo-title') as HTMLInputElement;
-    const sceneContainer = this.addPopup.querySelector('#add-todo-scenes') as HTMLElement;
-    const priorityContainer = this.addPopup.querySelector('#add-todo-priority') as HTMLElement;
-    const posBtn = this.addPopup.querySelector('#add-todo-pos-btn') as HTMLButtonElement;
-    const cancelBtn = this.addPopup.querySelector('#add-todo-cancel') as HTMLButtonElement;
-    const saveBtn = this.addPopup.querySelector('#add-todo-save') as HTMLButtonElement;
-    const scriptInput = this.addPopup.querySelector('#add-todo-script') as HTMLInputElement;
-    const scriptSuggest = this.addPopup.querySelector('#add-todo-script-suggestions') as HTMLElement;
-    const scriptContainer = this.addPopup.querySelector('#add-todo-script-container') as HTMLElement;
-    const courseInput = this.addPopup.querySelector('#add-todo-course') as HTMLInputElement;
-    const courseSuggest = this.addPopup.querySelector('#add-todo-course-suggestions') as HTMLElement;
-    const courseContainer = this.addPopup.querySelector('#add-todo-course-container') as HTMLElement;
 
     // ---------- 优先级按钮 ----------
-    const priorities = [
-      { value: 'minor', label: '次要' },
-      { value: 'important', label: '重要' },
-    ];
-    for (const p of priorities) {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'priority-btn';
-      btn.dataset.priority = p.value;
-      btn.textContent = p.label;
-      Object.assign(btn.style, {
-        padding: '6px 14px',
-        borderRadius: '20px',
-        background: 'var(--background-secondary)',
-        color: 'var(--text-muted)',
-        cursor: 'pointer',
-        fontSize: '14px',
-        transition: 'all 0.2s',
-        opacity: '0.5',
-        boxShadow: 'none',
-        border: 'none',
-      });
-      if (p.value === 'minor') {
-        btn.style.opacity = '1';
-        btn.style.background = 'var(--interactive-accent)';
-        btn.style.color = 'var(--text-on-accent)';
-        btn.classList.add('active');
-      }
-      btn.onclick = () => {
-        priorityContainer.querySelectorAll('.priority-btn').forEach((b) => {
-          (b as HTMLElement).style.opacity = '0.5';
-          (b as HTMLElement).style.background = 'var(--background-secondary)';
-          (b as HTMLElement).style.color = 'var(--text-muted)';
-          b.classList.remove('active');
-        });
-        btn.style.opacity = '1';
-        btn.style.background = 'var(--interactive-accent)';
-        btn.style.color = 'var(--text-on-accent)';
-        btn.classList.add('active');
-      };
-      priorityContainer.appendChild(btn);
-    }
+    makeChoiceBtn(priorityContainer, 'priority-btn', 'minor', '次要');
+    makeChoiceBtn(priorityContainer, 'priority-btn', 'important', '重要');
+    setActive(priorityContainer.querySelector('.priority-btn') as HTMLElement, true); // 默认次要
 
     // ---------- 截止日期 ----------
-    const dueInput = this.addPopup.querySelector('#add-todo-due-input') as HTMLInputElement;
-    const dueClear = this.addPopup.querySelector('#add-todo-due-clear') as HTMLButtonElement;
+    const dueInput = q('#add-todo-due-input') as HTMLInputElement;
+    const dueClear = q('#add-todo-due-clear') as HTMLButtonElement;
     dueInput.addEventListener('change', () => {
       dueClear.style.display = dueInput.value ? 'inline-block' : 'none';
     });
@@ -510,9 +476,7 @@ export const UIManager = {
     posBtn.onclick = () => {
       const data = (posBtn as any).positionData || {};
       if (data.notePath && data.notePosition) {
-        data.notePath = null;
-        data.notePosition = null;
-        (posBtn as any).positionData = data;
+        (posBtn as any).positionData = { notePath: null, notePosition: null };
         posBtn.textContent = '📌';
         posBtn.style.background = 'var(--background-secondary)';
         posBtn.style.color = 'var(--text-muted)';
@@ -520,9 +484,7 @@ export const UIManager = {
         const info = getCurrentNoteInfo();
         const pos = getCurrentCursorPosition();
         if (info && pos) {
-          data.notePath = info.path;
-          data.notePosition = { line: pos.line, ch: pos.ch };
-          (posBtn as any).positionData = data;
+          (posBtn as any).positionData = { notePath: info.path, notePosition: { line: pos.line, ch: pos.ch } };
           posBtn.textContent = `📌 ${info.name}`;
           posBtn.style.background = 'var(--interactive-accent)';
           posBtn.style.color = 'var(--text-on-accent)';
@@ -535,41 +497,11 @@ export const UIManager = {
     // ---------- 场景按钮构建 ----------
     const buildScenes = () => {
       sceneContainer.innerHTML = '';
-      const scenarios = DataManager.getScenarios();
-      for (const scene of scenarios) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'scene-btn';
-        btn.dataset.scene = scene;
-        btn.textContent = scene;
-        Object.assign(btn.style, {
-          padding: '6px 14px',
-          borderRadius: '20px',
-          background: 'var(--background-secondary)',
-          color: 'var(--text-muted)',
-          cursor: 'pointer',
-          fontSize: '14px',
-          transition: 'all 0.2s',
-          opacity: '0.5',
-          boxShadow: 'none',
-          border: 'none',
-        });
-        btn.onclick = () => {
-          sceneContainer.querySelectorAll('.scene-btn').forEach((b) => {
-            (b as HTMLElement).style.opacity = '0.5';
-            (b as HTMLElement).style.background = 'var(--background-secondary)';
-            (b as HTMLElement).style.color = 'var(--text-muted)';
-            b.classList.remove('active');
-          });
-          btn.style.opacity = '1';
-          btn.style.background = 'var(--interactive-accent)';
-          btn.style.color = 'var(--text-on-accent)';
-          btn.classList.add('active');
-
+      for (const scene of DataManager.getScenarios()) {
+        makeChoiceBtn(sceneContainer, 'scene-btn', scene, scene, (btn) => {
           // 切换场景时清空输入框内容（如果离开剪藏）
           const isClip = btn.dataset.scene === '剪藏';
           if (!isClip) {
-            // 清空内容输入框和标题输入框
             contentInput.value = '';
             contentInput.placeholder = '输入备忘录内容...';
             contentInput.dataset.rawClipboard = '';
@@ -617,80 +549,31 @@ export const UIManager = {
           } else {
             courseInput.dispatchEvent(new Event('input'));
           }
-        };
-        sceneContainer.appendChild(btn);
+        });
       }
     };
     buildScenes();
 
     // ---------- 脚本输入建议 ----------
-    scriptInput.addEventListener('input', () => {
-      const val = scriptInput.value.trim().toLowerCase();
-      const suggestions = this.scriptSuggestions || [];
-      let matched = suggestions;
-      if (val) {
-        matched = suggestions.filter((s) => s.toLowerCase().includes(val));
-      }
-      const sugg = scriptSuggest;
-      if (matched.length) {
-        sugg.innerHTML = matched
-          .map(
-            (s) =>
-              `<div style="padding:6px 12px;cursor:pointer;border-bottom:1px solid var(--background-modifier-border);font-size:14px;">${s}</div>`
-          )
-          .join('');
-        sugg.style.cssText = 'display: block !important; max-height: 150px; overflow-y: auto; background: var(--background-secondary); border-radius: 4px; margin-top: 4px;';
-        sugg.querySelectorAll('div').forEach((el) => {
-          (el as HTMLElement).onclick = () => {
-            scriptInput.value = (el as HTMLElement).textContent || '';
-            sugg.style.display = 'none';
-          };
-        });
-      } else {
-        sugg.style.display = 'none';
-      }
-    });
-    document.addEventListener('click', (e) => {
-      if (!scriptContainer.contains(e.target as Node)) scriptSuggest.style.display = 'none';
-    });
-    scriptInput.addEventListener('focus', () => {
-      scriptInput.dispatchEvent(new Event('input'));
-    });
+    attachSuggestion<string>(
+      scriptInput, scriptSuggest, scriptContainer,
+      () => this.scriptSuggestions,
+      (val, s) => !val || s.toLowerCase().includes(val),
+      (s) => s,
+      (s) => { scriptInput.value = s; }
+    );
 
-    // ---------- 课程输入建议 ----------
-    courseInput.addEventListener('input', () => {
-      const val = courseInput.value.trim().toLowerCase();
-      const suggestions = this.courseSuggestions || [];
-      let matched = suggestions;
-      if (val) {
-        matched = suggestions.filter((s) => s.name.toLowerCase().includes(val));
+    // ---------- 课程输入建议（渲染带 data-path，保存时回填 coursePath） ----------
+    attachSuggestion<{ name: string; path: string }>(
+      courseInput, courseSuggest, courseContainer,
+      () => this.courseSuggestions,
+      (val, c) => !val || c.name.toLowerCase().includes(val),
+      (c) => `<span data-path="${c.path}">${c.name}</span>`,
+      (c) => {
+        courseInput.value = c.name;
+        courseInput.dataset.coursePath = c.path;
       }
-      const sugg = courseSuggest;
-      if (matched.length) {
-        sugg.innerHTML = matched
-          .map(
-            (s) =>
-              `<div style="padding:6px 12px;cursor:pointer;border-bottom:1px solid var(--background-modifier-border);font-size:14px;" data-path="${s.path}">${s.name}</div>`
-          )
-          .join('');
-        sugg.style.cssText = 'display: block !important; max-height: 150px; overflow-y: auto; background: var(--background-secondary); border-radius: 4px; margin-top: 4px;';
-        sugg.querySelectorAll('div').forEach((el) => {
-          (el as HTMLElement).onclick = () => {
-            courseInput.value = (el as HTMLElement).textContent || '';
-            courseInput.dataset.coursePath = (el as HTMLElement).dataset.path || '';
-            sugg.style.display = 'none';
-          };
-        });
-      } else {
-        sugg.style.display = 'none';
-      }
-    });
-    courseInput.addEventListener('focus', () => {
-      courseInput.dispatchEvent(new Event('input'));
-    });
-    document.addEventListener('click', (e) => {
-      if (!courseContainer.contains(e.target as Node)) courseSuggest.style.display = 'none';
-    });
+    );
 
     // ---------- 取消 / 保存 ----------
     cancelBtn.onclick = () => this.hideAddDialog();
@@ -759,8 +642,7 @@ export const UIManager = {
           courseName = cv;
           if (courseInput.dataset.coursePath) coursePath = courseInput.dataset.coursePath;
           else {
-            const suggestions = this.courseSuggestions || [];
-            const matched = suggestions.find((s) => s.name.toLowerCase() === cv.toLowerCase());
+            const matched = this.courseSuggestions.find((s) => s.name.toLowerCase() === cv.toLowerCase());
             if (matched) coursePath = matched.path;
           }
         }
@@ -815,7 +697,6 @@ export const UIManager = {
     this.addPopup.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') this.hideAddDialog();
     });
-
   },
 
   showAddDialog(editItem: MemoItem | null) {
@@ -823,19 +704,20 @@ export const UIManager = {
     if (!this.addMask || !this.addPopup) return;
     this.addEditingId = editItem ? editItem.id : null;
 
-    const contentInput = this.addPopup.querySelector('#add-todo-content') as HTMLTextAreaElement;
-    const titleInput = this.addPopup.querySelector('#add-todo-title') as HTMLInputElement;
-    const sceneContainer = this.addPopup.querySelector('#add-todo-scenes') as HTMLElement;
-    const priorityContainer = this.addPopup.querySelector('#add-todo-priority') as HTMLElement;
-    const posBtn = this.addPopup.querySelector('#add-todo-pos-btn') as HTMLButtonElement;
-    const scriptInput = this.addPopup.querySelector('#add-todo-script') as HTMLInputElement;
-    const scriptContainer = this.addPopup.querySelector('#add-todo-script-container') as HTMLElement;
-    const courseInput = this.addPopup.querySelector('#add-todo-course') as HTMLInputElement;
-    const courseContainer = this.addPopup.querySelector('#add-todo-course-container') as HTMLElement;
-    const scriptSuggest = this.addPopup.querySelector('#add-todo-script-suggestions') as HTMLElement;
-    const courseSuggest = this.addPopup.querySelector('#add-todo-course-suggestions') as HTMLElement;
-    const dueInput = this.addPopup.querySelector('#add-todo-due-input') as HTMLInputElement;
-    const dueClear = this.addPopup.querySelector('#add-todo-due-clear') as HTMLButtonElement;
+    const q = (sel: string) => this.addPopup!.querySelector(sel) as HTMLElement;
+    const contentInput = q('#add-todo-content') as HTMLTextAreaElement;
+    const titleInput = q('#add-todo-title') as HTMLInputElement;
+    const sceneContainer = q('#add-todo-scenes');
+    const priorityContainer = q('#add-todo-priority');
+    const posBtn = q('#add-todo-pos-btn') as HTMLButtonElement;
+    const scriptInput = q('#add-todo-script') as HTMLInputElement;
+    const scriptContainer = q('#add-todo-script-container');
+    const courseInput = q('#add-todo-course') as HTMLInputElement;
+    const courseContainer = q('#add-todo-course-container');
+    const scriptSuggest = q('#add-todo-script-suggestions');
+    const courseSuggest = q('#add-todo-course-suggestions');
+    const dueInput = q('#add-todo-due-input') as HTMLInputElement;
+    const dueClear = q('#add-todo-due-clear') as HTMLButtonElement;
 
     // 重置
     contentInput.value = '';
@@ -905,30 +787,17 @@ export const UIManager = {
     const priorityBtns = priorityContainer.querySelectorAll('.priority-btn');
     priorityBtns.forEach((b) => {
       const btn = b as HTMLElement;
-      btn.style.opacity = '0.5';
-      btn.style.background = 'var(--background-secondary)';
-      btn.style.color = 'var(--text-muted)';
-      btn.classList.remove('active');
-      if (
+      const active =
         (editItem && btn.dataset.priority === editItem.priority) ||
-        (!editItem && btn.dataset.priority === (App.settings.memoDefaultPriority || 'minor'))
-      ) {
-        btn.style.opacity = '1';
-        btn.style.background = 'var(--interactive-accent)';
-        btn.style.color = 'var(--text-on-accent)';
-        btn.classList.add('active');
-      }
+        (!editItem && btn.dataset.priority === (App.settings.memoDefaultPriority || 'minor'));
+      setActive(btn, active);
     });
 
     // 填充编辑数据
     if (editItem) {
       this.addPopup.querySelector('h4')!.textContent = '编辑备忘录';
       contentInput.value = editItem.title || '';
-      if (editItem.url) {
-        contentInput.placeholder = editItem.url;
-      } else {
-        contentInput.placeholder = '输入备忘录内容...';
-      }
+      contentInput.placeholder = editItem.url || '输入备忘录内容...';
       // 如果是剪藏场景且存在 url，显示标题输入框
       if (editItem.scene === '剪藏' && editItem.url) {
         titleInput.style.display = 'block';
@@ -973,7 +842,6 @@ export const UIManager = {
     this.addPopup.style.display = 'block';
     autoGrowContent(contentInput); // 打开/编辑回填后按内容调整高度
     contentInput.focus();
-
   },
 
   hideAddDialog() {
@@ -1003,51 +871,6 @@ export const UIManager = {
     });
   },
 };
-
-/** 长按手势（场景标签编辑 / 时间标签删除共用，500ms 触发） */
-function attachLongPress(span: HTMLElement, onLongPress: () => void) {
-  let timer: any = null;
-  let isTouching = false;
-
-  const startLongPress = (e: any) => {
-    if (e.button !== undefined && e.button !== 0) return; // 仅左键
-    e.stopPropagation();
-    // 阻止默认行为防止滚动或上下文菜单
-    e.preventDefault();
-    timer = setTimeout(() => {
-      onLongPress();
-      timer = null;
-    }, 500);
-  };
-
-  const cancelLongPress = () => {
-    if (timer) {
-      clearTimeout(timer);
-      timer = null;
-    }
-  };
-
-  // 鼠标事件
-  span.addEventListener('mousedown', startLongPress);
-  span.addEventListener('mouseup', cancelLongPress);
-  span.addEventListener('mouseleave', cancelLongPress);
-  // 触摸事件（移动端）
-  span.addEventListener('touchstart', (e) => {
-    // 阻止 mouse 事件后续触发
-    e.preventDefault();
-    isTouching = true;
-    startLongPress(e);
-  });
-  span.addEventListener('touchend', () => {
-    isTouching = false;
-    cancelLongPress();
-  });
-  span.addEventListener('touchmove', () => {
-    if (isTouching) {
-      cancelLongPress();
-    }
-  });
-}
 
 // ---------- 渲染器 ----------
 
@@ -1119,6 +942,58 @@ export const Renderer = {
     }
   },
 
+  /** 卡片内容区：内部笔记链接 > 外部 URL > 纯文本 */
+  createContentSpan(item: MemoItem): HTMLSpanElement {
+    const app = getApp();
+    const contentSpan = document.createElement('span');
+    contentSpan.style.cssText = 'flex:1;font-size:15px;color:var(--text-normal);word-break:break-word;user-select:text;white-space:pre-wrap;';
+
+    const linkStyle = 'color:var(--text-accent);text-decoration:underline;cursor:pointer;word-break:break-word;';
+    // 1. 优先 linkedNote（内部笔记）
+    if (item.linkedNote) {
+      const link = document.createElement('a');
+      link.textContent = item.title; // 显示为链接文本
+      link.style.cssText = linkStyle;
+      link.onclick = async (e) => {
+        e.preventDefault();
+        UIManager.hideMain(); // 关闭备忘录面板
+        const file = app.vault.getAbstractFileByPath(item.linkedNote!);
+        if (file) {
+          const leaf = app.workspace.getLeaf();
+          await leaf.openFile(file as any);
+        } else {
+          notice('关联笔记不存在');
+        }
+      };
+      contentSpan.appendChild(link);
+    }
+    // 2. 检查是否有外部 URL（直接使用 item.url）
+    else if (item.url) {
+      const link = document.createElement('a');
+      link.href = item.url;
+      link.textContent = item.title; // 使用存储的显示文本
+      (link as any).target = 'blank';
+      link.style.cssText = linkStyle;
+      link.onclick = (e) => {
+        e.preventDefault();
+        UIManager.hideMain(); // 关闭备忘录面板
+        try {
+          (app as any).openUrl(item.url);
+        } catch {
+          // 桌面端 Electron 兜底
+          const electron = (window as any).require && (window as any).require('electron');
+          if (electron && electron.shell) electron.shell.openExternal(item.url);
+        }
+      };
+      contentSpan.appendChild(link);
+    }
+    // 3. 纯文本（无链接）
+    else {
+      contentSpan.textContent = item.title;
+    }
+    return contentSpan;
+  },
+
   createCard(item: MemoItem, isArchived: boolean): HTMLElement {
     const app = getApp();
     const card = document.createElement('div');
@@ -1158,55 +1033,10 @@ export const Renderer = {
     }
 
     // ---------- 内容区域（跳转逻辑，直接使用 item.linkedNote 和 item.url） ----------
-    const contentSpan = document.createElement('span');
-    contentSpan.style.cssText = 'flex:1;font-size:15px;color:var(--text-normal);word-break:break-word;user-select:text;white-space:pre-wrap;';
-    // 非归档模式下已完成条目：划线显示
+    const contentSpan = this.createContentSpan(item);
     if (item.completed && !isArchived) {
       contentSpan.style.textDecoration = 'line-through';
       contentSpan.style.opacity = '0.6';
-    }
-
-    // 1. 优先 linkedNote（内部笔记）
-    if (item.linkedNote) {
-      const link = document.createElement('a');
-      link.textContent = item.title; // 显示为链接文本
-      link.style.cssText = 'color:var(--text-accent);text-decoration:underline;cursor:pointer;word-break:break-word;';
-      link.onclick = async (e) => {
-        e.preventDefault();
-        UIManager.hideMain(); // 关闭备忘录面板
-        const file = app.vault.getAbstractFileByPath(item.linkedNote!);
-        if (file) {
-          const leaf = app.workspace.getLeaf();
-          await leaf.openFile(file as any);
-        } else {
-          notice('关联笔记不存在');
-        }
-      };
-      contentSpan.appendChild(link);
-    }
-    // 2. 检查是否有外部 URL（直接使用 item.url）
-    else if (item.url) {
-      const link = document.createElement('a');
-      link.href = item.url;
-      link.textContent = item.title; // 使用存储的显示文本
-      (link as any).target = 'blank';
-      link.style.cssText = 'color:var(--text-accent);text-decoration:underline;cursor:pointer;word-break:break-word;';
-      link.onclick = (e) => {
-        e.preventDefault();
-        UIManager.hideMain(); // 关闭备忘录面板
-        try {
-          (app as any).openUrl(item.url);
-        } catch {
-          // 桌面端 Electron 兜底
-          const electron = (window as any).require && (window as any).require('electron');
-          if (electron && electron.shell) electron.shell.openExternal(item.url);
-        }
-      };
-      contentSpan.appendChild(link);
-    }
-    // 3. 纯文本（无链接）
-    else {
-      contentSpan.textContent = item.title;
     }
     card.appendChild(contentSpan);
 
@@ -1245,17 +1075,7 @@ export const Renderer = {
     const displayName = item.courseName!.replace(/^《|》$/g, '');
     const tag = document.createElement('span');
     tag.textContent = `🎓 ${displayName}`;
-    Object.assign(tag.style, {
-      padding: '0 8px',
-      borderRadius: '12px',
-      fontSize: '11px',
-      background: 'var(--background-secondary)',
-      color: 'var(--text-muted)',
-      lineHeight: '20px',
-      whiteSpace: 'nowrap',
-      cursor: 'pointer',
-      transition: 'background 0.2s',
-    });
+    tag.style.cssText = `${TAG_BASE}background:var(--background-secondary);color:var(--text-muted);cursor:pointer;transition:background 0.2s;`;
     const targetPath = item.coursePath || item.notePath;
     if (targetPath) {
       const file = app.vault.getAbstractFileByPath(targetPath);
@@ -1292,22 +1112,13 @@ export const Renderer = {
   createScriptTag(name: string): HTMLElement {
     const tag = document.createElement('span');
     tag.textContent = `💻 ${name}`;
-    Object.assign(tag.style, {
-      padding: '0 8px',
-      borderRadius: '12px',
-      fontSize: '11px',
-      background: 'var(--background-secondary)',
-      color: 'var(--text-muted)',
-      lineHeight: '20px',
-      whiteSpace: 'nowrap',
-    });
+    tag.style.cssText = `${TAG_BASE}background:var(--background-secondary);color:var(--text-muted);`;
     return tag;
   },
 
   createPlatformTag(url: string, platform: string): HTMLElement {
     const container = document.createElement('span');
-    container.style.cssText =
-      'display:inline-flex;align-items:center;gap:4px;padding:0 8px;border-radius:12px;font-size:11px;background:var(--background-secondary);color:var(--text-muted);line-height:20px;white-space:nowrap;';
+    container.style.cssText = `display:inline-flex;align-items:center;gap:4px;${TAG_BASE}background:var(--background-secondary);color:var(--text-muted);`;
     try {
       const domain = new URL(url).hostname;
       const icon = createSiteIcon(domain, 14);
@@ -1326,8 +1137,7 @@ export const Renderer = {
       const base = item.notePath!.split('/').pop() || '未知文件';
       const tag = document.createElement('span');
       tag.textContent = `⚠️ ${base.replace(/^《|》$/g, '')}`;
-      tag.style.cssText =
-        'padding:0 8px;border-radius:12px;font-size:11px;background:var(--background-secondary);color:var(--text-error);line-height:20px;white-space:nowrap;';
+      tag.style.cssText = `${TAG_BASE}background:var(--background-secondary);color:var(--text-error);`;
       return tag;
     }
     const fileName = (file as any).basename.replace(/^《|》$/g, '');
@@ -1339,8 +1149,7 @@ export const Renderer = {
     let label = '📌';
     if (App.state.showFileName) label += ` ${fileName}`;
     tag.textContent = label;
-    tag.style.cssText =
-      'padding:0 8px;border-radius:12px;font-size:11px;background:var(--background-secondary);color:var(--text-muted);line-height:20px;white-space:nowrap;cursor:pointer;transition:background 0.2s;';
+    tag.style.cssText = `${TAG_BASE}background:var(--background-secondary);color:var(--text-muted);cursor:pointer;transition:background 0.2s;`;
     tag.onclick = async (e) => {
       e.stopPropagation();
       UIManager.hideMain();
@@ -1401,7 +1210,7 @@ export const Renderer = {
       bgColor = 'var(--background-secondary)';
       fgColor = 'var(--text-muted)';
     }
-    span.style.cssText = `padding:0 8px;border-radius:12px;font-size:11px;background:${bgColor};color:${fgColor};line-height:20px;white-space:nowrap;`;
+    span.style.cssText = `${TAG_BASE}background:${bgColor};color:${fgColor};`;
     return span;
   },
 };
