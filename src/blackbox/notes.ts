@@ -75,6 +75,27 @@ export function parseWikilinkNames(line: string): string[] {
   return out;
 }
 
+/** 行内 `[[…]]` 链接结构解析（2026-08-12：关联双链改完整路径 `[[路径|名]]`）：
+ *  main = 主名（可能是笔记路径，也可能是不含 `/` 的旧格式概念名）；alias = 竖线后显示名（可能为空）。 */
+export function parseWikilinks(line: string): { main: string; alias: string }[] {
+  const out: { main: string; alias: string }[] = [];
+  const re = /\[\[([^\]|#]+?)(?:\|([^\]|#]*))?(?:#[^\]]*)?\]\]/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(line || ''))) {
+    const main = (m[1] || '').trim();
+    const alias = (m[2] || '').trim();
+    if (main) out.push({ main, alias });
+  }
+  return out;
+}
+
+/** 链接显示名（别名 → 路径尾段 → 主名）：用于解析不到目标时写入 pendingLinks 的可读名 */
+export function wikilinkDisplay(link: { main: string; alias: string }): string {
+  if (link.alias) return link.alias;
+  const tail = link.main.split('/').pop() || '';
+  return tail || link.main;
+}
+
 /** YAML 标量引号剥除（与 Obsidian parseFrontmatter 一致） */
 function unquote(v: string): string {
   const t = v.trim();
@@ -143,7 +164,7 @@ function fmScalar(key: string, value: string | undefined): string[] {
  * 条目 → 笔记内容（frontmatter + 正文 + 关联区）。
  * nameForId：条目 id → 笔记名（用于把 related/terms/from 的 id 解析为 `[[名]]`；解析不到跳过该链接）。
  */
-export function buildNoteContent(entry: Entry, nameForId: (id: string) => string | undefined): string {
+export function buildNoteContent(entry: Entry, nameForId: (id: string) => { name: string; path: string } | undefined): string {
   const fm: string[] = ['---'];
   fm.push(`id: ${entry.id}`);
   fm.push(`type: ${entry.type}`);
@@ -163,15 +184,15 @@ export function buildNoteContent(entry: Entry, nameForId: (id: string) => string
   // 关联双链完整落盘 frontmatter（用户决策：正文关联区被手动修改/误删不丢数据，frontmatter 为准）：
   // 概念 related / 文献 terms（名字数组）；想法 from（来源摘抄名）；待补链 pendingLinks
   const relIds = entry.type === 'concept' ? entry.related || [] : entry.type === 'literature' ? entry.terms || [] : [];
-  const relNames = relIds
-    .map(nameForId)
-    .filter((n): n is string => !!n)
+  const relRefs = relIds.map(nameForId).filter((x): x is { name: string; path: string } => !!x);
+  const relNames = relRefs
+    .map((r) => r.name)
     .filter((n, i, a) => a.indexOf(n) === i);
   if (entry.type === 'concept' && relNames.length) fm.push(...fmList('related', relNames));
   if (entry.type === 'literature' && relNames.length) fm.push(...fmList('terms', relNames));
   if (entry.type === 'thought' && entry.from) {
-    const fromName = nameForId(entry.from);
-    if (fromName) fm.push(...fmScalar('from', fromName));
+    const fromRef = nameForId(entry.from);
+    if (fromRef) fm.push(...fmScalar('from', fromRef.name));
   }
   if (entry.pendingLinks && entry.pendingLinks.length) fm.push(...fmList('pendingLinks', entry.pendingLinks));
   // 卡片盒导入元信息（可选）
@@ -180,37 +201,50 @@ export function buildNoteContent(entry: Entry, nameForId: (id: string) => string
   if (entry.summary) fm.push(...fmScalar('summary', entry.summary));
   fm.push('---');
 
+  // 正文关联区双链：完整路径 `[[黑匣子/概念/<分类>/<名>|显示名]]`（Obsidian 可点跳转、同名不歧义）；
+  // pendingLinks（尚未落盘的概念）无路径 → 保持 `[[名]]`
+  const toLink = (r: { name: string; path: string }): string => `[[${r.path.replace(/\.md$/, '')}|${r.name}]]`;
   const body: string[] = [];
   const rel: string[] = [];
   if (entry.type === 'concept') {
     if (entry.definition) body.push(entry.definition.replace(/\s+$/, ''));
-    const names = [...(entry.related || []).map(nameForId), ...(entry.pendingLinks || [])]
-      .filter((n): n is string => !!n)
-      .filter((n, i, a) => a.indexOf(n) === i);
-    if (names.length) rel.push(`- 关联：${names.map((n) => `[[${n}]]`).join(' ')}`);
+    const links = [
+      ...(entry.related || []).map((id) => nameForId(id)).filter((x): x is { name: string; path: string } => !!x).map(toLink),
+      ...(entry.pendingLinks || []).map((n) => `[[${n}]]`),
+    ].filter((l, i, a) => a.indexOf(l) === i);
+    if (links.length) rel.push(`- 关联：${links.join(' ')}`);
   } else if (entry.type === 'literature') {
     if (entry.text) body.push(entry.text.replace(/\s+$/, ''));
     const src = (entry.source || '').trim();
     if (src) rel.push(`来源：${src}`);
-    const names = [...(entry.terms || []).map(nameForId), ...(entry.pendingLinks || [])]
-      .filter((n): n is string => !!n)
-      .filter((n, i, a) => a.indexOf(n) === i);
-    if (names.length) rel.push(`关联概念：${names.map((n) => `[[${n}]]`).join(' ')}`);
+    const links = [
+      ...(entry.terms || []).map((id) => nameForId(id)).filter((x): x is { name: string; path: string } => !!x).map(toLink),
+      ...(entry.pendingLinks || []).map((n) => `[[${n}]]`),
+    ].filter((l, i, a) => a.indexOf(l) === i);
+    if (links.length) rel.push(`关联概念：${links.join(' ')}`);
   } else {
     if (entry.text) body.push(entry.text.replace(/\s+$/, ''));
-    const fromName = entry.from ? nameForId(entry.from) : undefined;
-    if (fromName) rel.push(`来自：[[${fromName}]]`);
+    const fromRef = entry.from ? nameForId(entry.from) : undefined;
+    if (fromRef) rel.push(`来自：${toLink(fromRef)}`);
   }
   // 正文与关联区以空行分隔（无正文时也保留空行，解析统一）；关联区为连续行块
   const textBlock = body.join('\n\n');
   return fm.join('\n') + '\n' + (textBlock ? textBlock + '\n\n' : '\n') + (rel.length ? rel.join('\n') + '\n' : '');
 }
 
-/** 笔记内容解析 → 条目 + 关联区名字（关联 id 解析在 data 层完成）。解析失败返回 null（跳过该条并保留索引重试）。 */
+/** 关联链接引用（2026-08-12：正文关联双链为完整路径 `[[路径|名]]`）：
+ *  ref = 匹配键（路径链接 = 笔记路径（无 .md）；名字链接/frontmatter = 概念名或标题）；
+ *  display = 可读名（别名 → 路径尾段 → 主名；解析不到目标时写入 pendingLinks 用）。 */
+export interface LinkRef {
+  ref: string;
+  display: string;
+}
+
+/** 笔记内容解析 → 条目 + 关联区引用（关联 id 解析在 data 层完成）。解析失败返回 null（跳过该条并保留索引重试）。 */
 export function parseNoteContent(
   content: string,
   path: string
-): { entry: Entry; relatedNames: string[]; termsNames: string[]; fromName: string } | null {
+): { entry: Entry; relatedNames: LinkRef[]; termsNames: LinkRef[]; fromName: LinkRef } | null {
   const fm = parseFrontmatterBlock(content || '');
   if (!fm) return null;
   if (typeof fm.id !== 'string' || !fm.id) return null;
@@ -231,27 +265,28 @@ export function parseNoteContent(
     text = rawBody.slice(0, m.index).trim();
   }
 
-  const relatedNames: string[] = [];
-  const termsNames: string[] = [];
-  let fromName = '';
+  const relatedNames: LinkRef[] = [];
+  const termsNames: LinkRef[] = [];
+  let fromName: LinkRef = { ref: '', display: '' };
   // frontmatter 为准，正文关联区合并（用户手动增删任一处不丢数据；frontmatter 删了正文还在）
-  const pushUnique = (arr: string[], n: string): void => {
-    if (n && !arr.includes(n)) arr.push(n);
+  const pushUnique = (arr: LinkRef[], n: LinkRef): void => {
+    if (n.ref && !arr.some((x) => x.ref === n.ref)) arr.push(n);
   };
-  for (const n of Array.isArray(fm.related) ? fm.related.filter((x): x is string => typeof x === 'string') : []) pushUnique(relatedNames, n.trim());
-  for (const n of Array.isArray(fm.terms) ? fm.terms.filter((x): x is string => typeof x === 'string') : []) pushUnique(termsNames, n.trim());
-  for (const n of Array.isArray(fm.pendingLinks) ? fm.pendingLinks.filter((x): x is string => typeof x === 'string') : []) pushUnique(relatedNames, n.trim());
-  if (typeof fm.from === 'string' && fm.from.trim()) fromName = fm.from.trim();
+  const nameRef = (n: string): LinkRef => ({ ref: n, display: n });
+  for (const n of Array.isArray(fm.related) ? fm.related.filter((x): x is string => typeof x === 'string') : []) pushUnique(relatedNames, nameRef(n.trim()));
+  for (const n of Array.isArray(fm.terms) ? fm.terms.filter((x): x is string => typeof x === 'string') : []) pushUnique(termsNames, nameRef(n.trim()));
+  for (const n of Array.isArray(fm.pendingLinks) ? fm.pendingLinks.filter((x): x is string => typeof x === 'string') : []) pushUnique(relatedNames, nameRef(n.trim()));
+  if (typeof fm.from === 'string' && fm.from.trim()) fromName = nameRef(fm.from.trim());
   for (const line of relText.split('\n')) {
     const t = line.trim();
     if (!t) continue;
-    const names = parseWikilinkNames(t);
+    const links = parseWikilinks(t);
     if (t.startsWith('- 关联：')) {
-      for (const n of names) pushUnique(relatedNames, n);
+      for (const l of links) pushUnique(relatedNames, { ref: l.main, display: wikilinkDisplay(l) });
     } else if (t.startsWith('关联概念：')) {
-      for (const n of names) pushUnique(termsNames, n);
+      for (const l of links) pushUnique(termsNames, { ref: l.main, display: wikilinkDisplay(l) });
     } else if (t.startsWith('来自：')) {
-      if (!fromName) fromName = names[0] || '';
+      if (!fromName.ref) fromName = links.length ? { ref: links[0].main, display: wikilinkDisplay(links[0]) } : { ref: '', display: '' };
     }
   }
 
