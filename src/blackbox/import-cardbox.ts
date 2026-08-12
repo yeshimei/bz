@@ -2,7 +2,7 @@
  * 卡片盒批量导入（一次性工具）：bz-blackbox-import-cardbox「导入卡片盒」。
  * 扫描 vault「卡片盒/*.md」→ 解析 frontmatter + 正文（去图片/视频嵌入）→ 规则预筛（空卡/敏感词）→
  * AI 批量分类（concept/literature/skip + 理由）→ 自动关联（双链 [[…]] 解析 + TF-IDF 相似度）→
- * 预览确认（import-ui）→ 批量写入 blackbox.json（一次 load→push→save，写前重载）→
+ * 预览确认（import-ui）→ 批量写入黑匣子笔记（一次 load → 写全部笔记 + 索引 → 单次派生层落盘，写前重载）→
  * 进度记录 CONFIG/STORAGE/blackbox_import.json（已导入文件名，重跑自动跳过）。
  * 概念：name=文件名（去 .md），definition=正文原样（截断）；文献：text + source=原卡链接 + insight=AI 分类理由留空。
  * related 回填：既有概念存 id；本批新卡按 name→id 映射回填（上限 5，去重）。
@@ -344,6 +344,7 @@ export async function runImport(
   // 第二遍：related 回填（既有概念 id 直接用；本批卡片名 → 新 id；其余 → pendingLinks 待跨批补链）
   // 动态双向：命中既有概念时，旧概念也反向关联新卡（关联是相互的）
   const existingById = new Map(existingConcepts.map((e) => [e.id, e]));
+  const backfilled: Entry[] = [];
   for (const c of selected) {
     const e = created.find((x) => x.id === nameToId.get(c.name));
     if (!e || e.type !== 'concept') continue;
@@ -365,12 +366,16 @@ export async function runImport(
       const old = existingById.get(id);
       if (old && !(old.related || []).includes(e.id)) {
         old.related = [...(old.related || []), e.id].slice(0, 5);
+        if (!backfilled.includes(old)) backfilled.push(old);
       }
     }
   }
 
-  latest.entries.push(...created);
-  await m.save(latest);
+  // v3 笔记化：批量写笔记（含关联区双链）+ 索引 + 单次派生层落盘；回填的既有概念笔记重写反向链接
+  await m.addEntries(latest, created);
+  for (const old of backfilled) {
+    await m.updateEntryNote(latest, old);
+  }
   await writeImportLog(app, selected.map((c) => c.name), skippedNames);
   return { imported: created.length, data: latest };
 }
@@ -378,6 +383,7 @@ export async function runImport(
 /**
  * 跨批补链：把条目 pendingLinks（未解析为 id 的关联卡名）解析为 related id。
  * 每批导入后调用一次；已导入的概念（含本批）都能按名查到，找不到的保留待下一批。
+ * v3：条目由笔记水合，解析结果随下次水合重新推导（笔记关联区 `[[名]]` 已在落盘时写入）。
  */
 export async function resolvePendingLinks(app: App): Promise<void> {
   try {

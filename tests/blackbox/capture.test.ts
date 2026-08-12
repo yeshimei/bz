@@ -9,7 +9,7 @@ import { resetObsidianMocks, hasNotice, getNoticeMessages } from '../mock-obsidi
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { openBlackBoxCapture, closeBlackBoxCapture, unloadBlackBox } from '../../src/blackbox';
-import { getBlackBoxFilePath } from '../../src/blackbox/data';
+import { BlackBoxDataManager, getBlackBoxFilePath } from '../../src/blackbox/data';
 
 function makeApp(vault: MockVault) {
   return mockAppWithVault(vault);
@@ -60,9 +60,9 @@ function seedVault(vault: MockVault, extra?: any): void {
   );
 }
 
-/** 读回落盘数据的辅助 */
-function loaded(vault: MockVault): any {
-  return JSON.parse(vault.files.get(getBlackBoxFilePath())!);
+/** 读回落盘数据的辅助（v3：经 manager load 由笔记水合） */
+async function loaded(app: any, vault: MockVault): Promise<any> {
+  return new BlackBoxDataManager(app).load();
 }
 
 /** 点击类型卡片进入内容步 */
@@ -148,7 +148,7 @@ describe('黑匣子录入弹窗（引导式）', () => {
     selectType('concept');
     setValue('bz-blackbox-concept-name', '隐喻');
     document.getElementById('bz-blackbox-concept-gen')!.click();
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect((document.getElementById('bz-blackbox-concept-name') as HTMLTextAreaElement).value).toContain('修辞手法');
     });
     expect(document.getElementById('bz-blackbox-concept-gen')!.textContent).toBe('✅ 确认录入');
@@ -157,14 +157,14 @@ describe('黑匣子录入弹窗（引导式）', () => {
     input.value = '以部分代整体的修辞手法，语言含蓄而有力。（补充：源自法语 métonymie）';
     input.dispatchEvent(new Event('input'));
     document.getElementById('bz-blackbox-concept-gen')!.click();
-    await vi.waitFor(() => {
-      expect(loaded(vault).entries.some((e: any) => e.type === 'concept' && e.name === '隐喻')).toBe(true);
+    await vi.waitFor(async () => {
+      expect((await loaded(app, vault)).entries.some((e: any) => e.type === 'concept' && e.name === '隐喻')).toBe(true);
     });
-    const c = loaded(vault).entries.find((e: any) => e.type === 'concept' && e.name === '隐喻');
+    const c = (await loaded(app, vault)).entries.find((e: any) => e.type === 'concept' && e.name === '隐喻');
     expect(c.definition).toContain('métonymie');
     expect(c.related).toEqual(['bb_c1']); // 关联既有概念「提喻法」
     // 动态双向关联：既有概念「提喻法」反向关联新卡「隐喻」
-    const old = loaded(vault).entries.find((e: any) => e.id === 'bb_c1');
+    const old = (await loaded(app, vault)).entries.find((e: any) => e.id === 'bb_c1');
     expect(old.related).toContain(c.id);
     expect(old.related.length).toBe(1); // 无重复
   });
@@ -178,11 +178,11 @@ describe('黑匣子录入弹窗（引导式）', () => {
     selectType('concept');
     setValue('bz-blackbox-concept-name', '隐喻');
     document.getElementById('bz-blackbox-concept-gen')!.click();
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect((document.getElementById('bz-blackbox-concept-name') as HTMLTextAreaElement).value).toContain('修辞');
     });
     document.getElementById('bz-blackbox-concept-gen')!.click();
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-step-conn')!.style.display).toBe('block');
     });
     expect(document.getElementById('bz-blackbox-step-conn')!.textContent).toContain('已录入「隐喻」');
@@ -203,16 +203,16 @@ describe('黑匣子录入弹窗（引导式）', () => {
     selectType('concept');
     setValue('bz-blackbox-concept-name', '隐喻');
     document.getElementById('bz-blackbox-concept-gen')!.click();
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-concept-gen')!.textContent).toBe('✅ 确认录入');
     });
     expect(hasNotice(/生成失败/)).toBe(true);
     // 输入框保留名词，可直接确认保存
     document.getElementById('bz-blackbox-concept-gen')!.click();
-    await vi.waitFor(() => {
-      expect(loaded(vault).entries.some((e: any) => e.type === 'concept' && e.name === '隐喻')).toBe(true);
+    await vi.waitFor(async () => {
+      expect((await loaded(app, vault)).entries.some((e: any) => e.type === 'concept' && e.name === '隐喻')).toBe(true);
     });
-    expect(loaded(vault).entries.find((e: any) => e.name === '隐喻').definition).toBe('隐喻');
+    expect((await loaded(app, vault)).entries.find((e: any) => e.name === '隐喻').definition).toBe('隐喻');
   });
 
   it('概念：名词为空点生成 → 提示不调用 AI', async () => {
@@ -240,7 +240,7 @@ describe('黑匣子录入弹窗（引导式）', () => {
     setValue('bz-blackbox-lit-text', '提喻法是常见的修辞手法。');
     setValue('bz-blackbox-lit-source', '《诗学》');
     document.getElementById("bz-blackbox-lit-analyze")!.click();
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-step-feel')!.style.display).toBe('block');
     });
     // 名词表：既有概念「提喻法」预勾，新概念「修辞」未勾
@@ -270,7 +270,7 @@ describe('黑匣子录入弹窗（引导式）', () => {
     setValue('bz-blackbox-lit-text', '提喻法是常见的修辞手法。');
     setValue('bz-blackbox-lit-source', '《诗学》');
     document.getElementById("bz-blackbox-lit-analyze")!.click();
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-step-feel')!.style.display).toBe('block');
     });
     // 勾选新概念「修辞」+ 选情绪/人/场景
@@ -285,10 +285,10 @@ describe('黑匣子录入弹窗（引导式）', () => {
     peopleInput.value = '老王';
     peopleInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     document.getElementById('bz-blackbox-save')!.click();
-    await vi.waitFor(() => {
-      expect(loaded(vault).entries.length).toBe(5); // 2 既有 + 文献 + 想法 + 新概念
+    await vi.waitFor(async () => {
+      expect((await loaded(app, vault)).entries.length).toBe(5); // 2 既有 + 文献 + 想法 + 新概念
     });
-    const lit = loaded(vault).entries.find((e: any) => e.type === 'literature');
+    const lit = (await loaded(app, vault)).entries.find((e: any) => e.type === 'literature');
     expect(lit.text).toContain('提喻法');
     expect(lit.source).toBe('《诗学》');
     expect(lit.terms).toEqual(['bb_c1', '修辞'].length ? ['bb_c1'] : []);
@@ -297,9 +297,9 @@ describe('黑匣子录入弹窗（引导式）', () => {
     expect(lit.scene).toBe('深夜读书');
     expect(lit.toward).toBe(''); // 指向字段不再 UI 录入
     expect(lit.links).toEqual([]); // 链接字段不再 UI 录入
-    const thought = loaded(vault).entries.find((e: any) => e.type === 'thought');
+    const thought = (await loaded(app, vault)).entries.find((e: any) => e.type === 'thought');
     expect(thought.text).toContain('情意');
-    const concept = loaded(vault).entries.find((e: any) => e.type === 'concept' && e.name === '修辞');
+    const concept = (await loaded(app, vault)).entries.find((e: any) => e.type === 'concept' && e.name === '修辞');
     expect(concept).toBeTruthy();
   });
 
@@ -312,15 +312,15 @@ describe('黑匣子录入弹窗（引导式）', () => {
     selectType('literature');
     setValue('bz-blackbox-lit-text', '只是一段摘抄。');
     document.getElementById("bz-blackbox-lit-analyze")!.click();
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-step-feel')!.style.display).toBe('block');
     });
     expect(hasNotice(/分析失败/)).toBe(true);
     // 无名词表无提炼，但可保存
     expect(document.querySelectorAll('#bz-blackbox-step-feel .bz-blackbox-term-chip').length).toBe(0);
     document.getElementById('bz-blackbox-save')!.click();
-    await vi.waitFor(() => {
-      expect(loaded(vault).entries.some((e: any) => e.type === 'literature')).toBe(true);
+    await vi.waitFor(async () => {
+      expect((await loaded(app, vault)).entries.some((e: any) => e.type === 'literature')).toBe(true);
     });
   });
 
@@ -364,7 +364,7 @@ describe('黑匣子录入弹窗（引导式）', () => {
       (b) => b.textContent === '⚡ 联想'
     ) as HTMLElement;
     recall.click();
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-ai-result')!.textContent).toContain('风很静');
     });
     (document.querySelector('#bz-blackbox-ai-result .bz-blackbox-ai-append') as HTMLElement).click();
@@ -393,10 +393,10 @@ describe('黑匣子录入弹窗（引导式）', () => {
     peopleInput.value = '妹妹';
     peopleInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     document.getElementById('bz-blackbox-save')!.click();
-    await vi.waitFor(() => {
-      expect(loaded(vault).entries.some((e: any) => e.type === 'thought' && e.text === '今晚的风很安静')).toBe(true);
+    await vi.waitFor(async () => {
+      expect((await loaded(app, vault)).entries.some((e: any) => e.type === 'thought' && e.text === '今晚的风很安静')).toBe(true);
     });
-    const t = loaded(vault).entries.find((e: any) => e.type === 'thought');
+    const t = (await loaded(app, vault)).entries.find((e: any) => e.type === 'thought');
     expect(t.emotions.length).toBe(3);
     expect(t.people).toEqual(['pf_1']);
     expect(t.scene).toBe('窗台');
@@ -428,10 +428,10 @@ describe('黑匣子录入弹窗（引导式）', () => {
     setValue('bz-blackbox-thought-text', '第二条');
     document.getElementById('bz-blackbox-thought-confirm')!.click();
     document.getElementById('bz-blackbox-save')!.click();
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-step-type')!.style.display).toBe('block');
     });
-    expect(loaded(vault).entries.some((e: any) => e.text === '第二条')).toBe(true);
+    expect((await loaded(app, vault)).entries.some((e: any) => e.text === '第二条')).toBe(true);
     // 关闭重开：无残留
     closeBlackBoxCapture();
     await openBlackBoxCapture(app);
@@ -456,10 +456,10 @@ describe('黑匣子录入弹窗（引导式）', () => {
     setValue('bz-blackbox-thought-text', '第三条');
     document.getElementById('bz-blackbox-thought-confirm')!.click();
     document.getElementById('bz-blackbox-save')!.click();
-    await vi.waitFor(() => {
-      expect(loaded(vault).reviews.length).toBe(1);
+    await vi.waitFor(async () => {
+      expect((await loaded(app, vault)).reviews.length).toBe(1);
     });
-    const data = loaded(vault);
+    const data = await loaded(app, vault);
     expect(data.reviews[0].text).toContain('细腻');
     expect(data.persona.selfViews.length).toBe(1);
     expect(data.chat.some((m: any) => m.role === 'assistant')).toBe(true);
