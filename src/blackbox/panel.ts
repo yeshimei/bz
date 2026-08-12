@@ -18,6 +18,8 @@ import { BlackBoxDataManager } from './data';
 import { setBlackBoxSyncNotify } from './sync';
 import { createProfileWithSeed, openBlackBoxCapture } from './capture';
 import { openBlackBoxSettings } from './settings-ui';
+import { jumpFromSource } from './host';
+import { entrySourceText, resolveSourceJump, sourceDisplayText } from './source-jump';
 import {
   aggregateEmotions,
   filterEventsByPerson,
@@ -38,8 +40,10 @@ let popupEl: HTMLElement | null = null;
 let escHandle: EscHandle | null = null;
 let data: BlackBoxData | null = null;
 
-/** 类型筛选（多选 Set；空集 = 显示全部） */
+/** 类型筛选（单选 Set：0 或 1 个；空集 = 显示全部） */
 let selectedTypes = new Set<EntryType>();
+/** 概念子分类筛选（ticket 50：概念标签选中时展开子分类行，点击筛选该分类概念；null = 全览） */
+let selectedCategory: string | null = null;
 /** 搜索关键词（防抖后生效） */
 let searchKeyword = '';
 /** 搜索框显隐（ticket 04：默认隐藏，🔍 切换；隐藏即清空关键词） */
@@ -87,6 +91,7 @@ export async function openBlackBoxPanel(app: App): Promise<void> {
   const s = tryGetSettings() as any;
   const def = (s && s.blackboxDefaultTypeFilter) || '';
   selectedTypes = def === 'concept' || def === 'literature' || def === 'thought' ? new Set([def]) : new Set();
+  selectedCategory = null;
   searchKeyword = '';
   searchVisible = false; // 每次打开搜索框默认隐藏
   displayCount = BATCH;
@@ -183,7 +188,7 @@ function buildDOM(): void {
   header.appendChild(actions);
   popup.appendChild(header);
 
-  // 类型标签栏（🧩 概念 / 📎 文献 / 💡 想法，多选；样式仿日记标签按钮）
+  // 类型标签栏（🧩 概念 / 📎 文献 / 💡 想法，单选带数量；概念选中展开子分类；样式仿日记标签按钮）
   const typeBar = document.createElement('div');
   typeBar.className = 'bz-blackbox-type-bar';
   typeBar.id = 'bz-blackbox-type-bar';
@@ -197,10 +202,17 @@ function buildDOM(): void {
     btn.type = 'button';
     btn.className = 'bz-blackbox-type-btn';
     btn.dataset.type = t.type;
-    btn.textContent = t.label;
     btn.addEventListener('click', () => {
-      if (selectedTypes.has(t.type)) selectedTypes.delete(t.type);
-      else selectedTypes.add(t.type);
+      if (selectedTypes.has(t.type)) {
+        // 再点当前选中 → 取消（回全部）
+        selectedTypes.clear();
+        if (t.type === 'concept') selectedCategory = null;
+      } else {
+        // 单选切换（ticket 50）；切到非概念类型时收起子分类
+        selectedTypes.clear();
+        selectedTypes.add(t.type);
+        if (t.type !== 'concept') selectedCategory = null;
+      }
       displayCount = BATCH;
       renderTypeBar();
       renderStream();
@@ -208,6 +220,11 @@ function buildDOM(): void {
     typeBar.appendChild(btn);
   }
   popup.appendChild(typeBar);
+  // 概念子分类行（ticket 50：仅「概念」选中时显示；点击筛选该分类概念，再点取消）
+  const subBar = document.createElement('div');
+  subBar.className = 'bz-blackbox-subcat-bar';
+  subBar.id = 'bz-blackbox-subcats';
+  popup.appendChild(subBar);
 
   // 搜索框（ticket 04：默认隐藏；显示时宽度 100%；防抖 300ms）
   const searchWrap = document.createElement('div');
@@ -281,9 +298,54 @@ function refreshAll(): void {
 }
 
 function renderTypeBar(): void {
+  if (!data) return;
+  // 数量：各类型条目总数（原始数据统计，不随搜索/子分类变化；ticket 50）
+  const counts: Record<EntryType, number> = { concept: 0, literature: 0, thought: 0 };
+  for (const e of data.entries) {
+    if (e.type === 'concept' || e.type === 'literature' || e.type === 'thought') counts[e.type] += 1;
+  }
+  const labels: Record<EntryType, string> = { concept: '🧩 概念', literature: '📎 文献', thought: '💡 想法' };
   for (const btn of Array.from(document.querySelectorAll('.bz-blackbox-type-btn'))) {
     const t = (btn as HTMLElement).dataset.type as EntryType;
+    (btn as HTMLElement).innerHTML = `${labels[t]} <span class="bz-blackbox-type-count">(${counts[t]})</span>`;
     btn.classList.toggle('bz-blackbox-type-btn-on', !!t && selectedTypes.has(t));
+  }
+  renderSubCats();
+}
+
+/** 概念子分类行（ticket 50）：分类 = 概念条目的 category 文件夹；数量降序、同量按名；点击筛选/取消 */
+function renderSubCats(): void {
+  const sub = document.getElementById('bz-blackbox-subcats');
+  if (!sub || !data) return;
+  sub.innerHTML = '';
+  if (!selectedTypes.has('concept')) {
+    sub.style.display = 'none';
+    return;
+  }
+  const catCount = new Map<string, number>();
+  for (const e of data.entries) {
+    if (e.type === 'concept' && e.category && e.category.trim()) {
+      catCount.set(e.category, (catCount.get(e.category) || 0) + 1);
+    }
+  }
+  if (!catCount.size) {
+    sub.style.display = 'none';
+    return;
+  }
+  sub.style.display = 'flex';
+  const cats = [...catCount.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  for (const [cat, n] of cats) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'bz-blackbox-subcat-btn' + (selectedCategory === cat ? ' bz-blackbox-subcat-btn-on' : '');
+    btn.textContent = `${cat} (${n})`;
+    btn.addEventListener('click', () => {
+      selectedCategory = selectedCategory === cat ? null : cat;
+      displayCount = BATCH;
+      renderTypeBar();
+      renderStream();
+    });
+    sub.appendChild(btn);
   }
 }
 
@@ -305,6 +367,11 @@ function getFilteredEntries(): Entry[] {
   if (!data) return [];
   return data.entries
     .filter((e) => (selectedTypes.size === 0 ? true : selectedTypes.has(e.type)))
+    // 子分类筛选（ticket 50）：仅概念选中时生效，只显示该分类概念
+    .filter((e) => {
+      if (!selectedCategory) return true;
+      return selectedTypes.has('concept') && e.type === 'concept' && e.category === selectedCategory;
+    })
     .filter((e) => matchesSearch(e, searchKeyword))
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
@@ -349,6 +416,29 @@ function renderStream(): void {
 }
 
 /** 卡片（纯展示，无任何点击交互）：头部 = 类型 emoji + 录入时刻 HH:MM；内容三铺法 */
+/** 来源行渲染（ADR-0016）：epub 双链 / [[笔记]] / URL 可点击（点击经 jumpFromSource 分派执行）；其余纯文本不可点 */
+function appendSourceRow(card: HTMLElement, source: string): void {
+  if (!source) return;
+  const action = resolveSourceJump(source);
+  if (action.kind === 'none') {
+    const div = document.createElement('div');
+    div.className = 'bz-blackbox-stream-card-source';
+    div.textContent = `📌 ${sourceDisplayText(source)}`;
+    card.appendChild(div);
+    return;
+  }
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'bz-blackbox-stream-card-source bz-blackbox-source-link';
+  btn.title =
+    action.kind === 'epub' ? '跳转到书内原文位置' : action.kind === 'url' ? '用浏览器打开' : '在 Obsidian 中打开';
+  btn.textContent = `📌 ${sourceDisplayText(source)}`;
+  btn.addEventListener('click', () => {
+    if (appRef) void jumpFromSource(appRef, source);
+  });
+  card.appendChild(btn);
+}
+
 function buildStreamCard(e: Entry): HTMLElement {
   const card = document.createElement('div');
   card.className = 'bz-blackbox-stream-card';
@@ -390,13 +480,9 @@ function buildStreamCard(e: Entry): HTMLElement {
       }
       card.appendChild(row);
     }
+    // 概念来源（ADR-0016）：links[0] 单值；与摘抄来源同样可点击
+    appendSourceRow(card, entrySourceText(e));
   } else if (e.type === 'literature') {
-    if (e.source) {
-      const src = document.createElement('div');
-      src.className = 'bz-blackbox-stream-card-source';
-      src.textContent = `📌 ${e.source}`;
-      card.appendChild(src);
-    }
     if (e.text) {
       const body = document.createElement('div');
       body.className = 'bz-blackbox-stream-card-body';
@@ -417,6 +503,8 @@ function buildStreamCard(e: Entry): HTMLElement {
       }
       card.appendChild(row);
     }
+    // 来源行（ticket 50）：移到正文 + 关联概念之后（卡片最底，双链最后面）；显示可读名，点击跳转不变
+    appendSourceRow(card, entrySourceText(e));
     if (e.links && e.links.length) {
       const links = document.createElement('div');
       links.className = 'bz-blackbox-stream-card-links';

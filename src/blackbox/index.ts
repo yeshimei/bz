@@ -10,7 +10,7 @@ import { manualReview, triggerAutoReview, unloadBlackBoxReview } from './review'
 import { openCardboxImport, closeCardboxImport, unloadCardboxImport } from './import-ui';
 import { ensureBlackBoxSync, unloadBlackBoxSync, setBlackBoxSyncNotify } from './sync';
 
-export { openBlackBoxCapture, closeBlackBoxCapture, unloadBlackBoxCapture, openBlackBoxCaptureConcept, openBlackBoxCaptureLiterature, openBlackBoxCaptureThought } from './capture';
+export { openBlackBoxCapture, closeBlackBoxCapture, unloadBlackBoxCapture, openBlackBoxCaptureConcept, openBlackBoxCaptureLiterature, openBlackBoxCaptureThought, openBlackBoxCaptureFromEpub } from './capture';
 export { openBlackBoxChat, closeBlackBoxChat, unloadBlackBoxChat } from './chat';
 export { openBlackBoxPanel, closeBlackBoxPanel, unloadBlackBoxPanel } from './panel';
 export { manualReview, triggerAutoReview, unloadBlackBoxReview } from './review';
@@ -18,6 +18,8 @@ export { openCardboxImport, closeCardboxImport, unloadCardboxImport } from './im
 export { ensureBlackBoxSync, unloadBlackBoxSync, setBlackBoxSyncNotify } from './sync';
 export { computeInjection, injectIntoSourceNote, lineToOffset } from './inject';
 export { BlackBoxDataManager, getBlackBoxFilePath, createEntry, createProfile, createEvent, buildNameById } from './data';
+export { registerBlackBoxEpubHost, refreshBlackBoxEpubHost, unregisterBlackBoxEpubHost, jumpFromSource, getReaderPlugin } from './host';
+export { resolveSourceJump, entrySourceText, isBookPath, wikilinkPathFromLink } from './source-jump';
 export {
   BB_NOTE_ROOT,
   TYPE_DIR,

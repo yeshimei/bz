@@ -238,16 +238,25 @@ describe('黑匣子录入弹窗（引导式）', () => {
 
   // ---------------- 📎 文献 ----------------
 
-  it('文献：摘抄+来源 → 分析名词 → 感触页（名词表/提炼想法/情绪/人/场景）', async () => {
+  it('文献：摘抄+想法手输+来源 → 分析名词 → 感触页（名词表/情绪/人/场景，无 AI 提炼框）', async () => {
     mockOllama('{"matched": ["提喻法"], "newConcepts": ["修辞"], "insight": "修辞让有限语言装下无限情意。"}');
     const vault = new MockVault();
     seedVault(vault);
     const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
     await openBlackBoxCapture(app);
     selectType('literature');
+    // 内容步顺序：摘抄 → 想法（手输，不 AI 提炼）→ 来源
     expect(document.getElementById('bz-blackbox-lit-text')).toBeTruthy();
-    expect(document.getElementById('bz-blackbox-lit-source')).toBeTruthy();
+    const thought = document.getElementById('bz-blackbox-lit-thought') as HTMLTextAreaElement;
+    expect(thought).toBeTruthy();
+    expect(thought.value).toBe(''); // 无 AI 预填
+    // 想法框紧跟在摘抄框之后（摘抄 → 想法 → 来源）
+    expect((document.getElementById('bz-blackbox-lit-text')!.nextElementSibling as HTMLElement).id).toBe('bz-blackbox-lit-thought');
+    const srcEl = document.getElementById('bz-blackbox-lit-source') as HTMLInputElement;
+    expect(srcEl).toBeTruthy();
+    expect((thought.nextElementSibling as HTMLElement).id).toBe('bz-blackbox-lit-source');
     setValue('bz-blackbox-lit-text', '提喻法是常见的修辞手法。');
+    setValue('bz-blackbox-lit-thought', '语言在偷懒，也在创新。');
     setValue('bz-blackbox-lit-source', '《诗学》');
     document.getElementById("bz-blackbox-lit-analyze")!.click();
     await vi.waitFor(async () => {
@@ -259,8 +268,8 @@ describe('黑匣子录入弹窗（引导式）', () => {
     expect((chips[0] as HTMLElement).textContent).toContain('提喻法');
     expect((chips[0] as HTMLElement).classList.contains('bz-blackbox-term-chip-on')).toBe(true);
     expect((chips[1] as HTMLElement).textContent).toContain('修辞');
-    // 提炼想法有 AI 内容
-    expect((document.getElementById('bz-blackbox-insight') as HTMLTextAreaElement).value).toContain('情意');
+    // 感触步无 AI 提炼框（ticket 50：想法已手输在内容步，分析 insight 不使用）
+    expect(document.getElementById('bz-blackbox-insight')).toBeNull();
     // 情绪/人/场景区都在
     expect(document.getElementById('bz-blackbox-emotions')).toBeTruthy();
     expect(document.getElementById('bz-blackbox-people-row')).toBeTruthy();
@@ -270,14 +279,15 @@ describe('黑匣子录入弹窗（引导式）', () => {
     expect(document.querySelector('.bz-blackbox-dir-row')).toBeNull();
   });
 
-  it('文献：存入 → literature 条目 + 提炼想法 thought 条目 + 勾选新概念条目；toward/links 为空', async () => {
-    mockOllama('{"matched": ["提喻法"], "newConcepts": ["修辞"], "insight": "修辞让有限语言装下无限情意。"}');
+  it('文献：存入 → literature + 手输想法 thought；勾选新概念 → 流转概念录入 → 回填摘抄 terms', async () => {
+    mockOllamaSeq(['{"matched": ["提喻法"], "newConcepts": ["修辞"], "insight": "修辞让有限语言装下无限情意。"}', '修辞的弹性', '未分类']);
     const vault = new MockVault();
     seedVault(vault);
     const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
     await openBlackBoxCapture(app);
     selectType('literature');
     setValue('bz-blackbox-lit-text', '提喻法是常见的修辞手法。');
+    setValue('bz-blackbox-lit-thought', '语言在偷懒，也在创新。');
     setValue('bz-blackbox-lit-source', '《诗学》');
     document.getElementById("bz-blackbox-lit-analyze")!.click();
     await vi.waitFor(async () => {
@@ -295,22 +305,126 @@ describe('黑匣子录入弹窗（引导式）', () => {
     peopleInput.value = '老王';
     peopleInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     document.getElementById('bz-blackbox-save')!.click();
+    // 保存摘抄 → 同弹窗流转概念录入（ticket 50）：概念名预填、可编辑、来源继承摘抄
     await vi.waitFor(async () => {
-      expect((await loaded(app, vault)).entries.length).toBe(5); // 2 既有 + 文献 + 想法 + 新概念
+      expect(document.getElementById('bz-blackbox-step-content')!.style.display).toBe('block');
     });
-    const lit = (await loaded(app, vault)).entries.find((e: any) => e.type === 'literature');
+    const nameInput = document.getElementById('bz-blackbox-concept-name') as HTMLInputElement;
+    expect(nameInput.value).toBe('修辞');
+    expect(nameInput.readOnly).toBe(false); // 可编辑
+    expect((document.getElementById('bz-blackbox-concept-source') as HTMLInputElement).value).toBe('《诗学》'); // 来源继承
+    // 填定义 → 确认录入
+    setValue('bz-blackbox-concept-def', '以整体代部分的修辞手法。');
+    document.getElementById('bz-blackbox-concept-gen')!.click();
+    await vi.waitFor(async () => {
+      const d = await loaded(app, vault);
+      const c = d.entries.find((e: any) => e.type === 'concept' && e.name === '修辞');
+      expect(c && c.definition).toContain('修辞手法');
+    });
+    // 全部完成：回填摘抄 terms（既有 + 新建概念）+ 回类型选择
+    await vi.waitFor(async () => {
+      const d = await loaded(app, vault);
+      const lit = d.entries.find((e: any) => e.type === 'literature');
+      const c = d.entries.find((e: any) => e.type === 'concept' && e.name === '修辞');
+      expect(lit.terms).toEqual(['bb_c1', c.id]);
+    });
+    expect(document.getElementById('bz-blackbox-step-type')!.style.display).toBe('block');
+    // 落盘断言：摘抄/想法/概念 + 摘抄笔记正文关联概念行含新建概念
+    const d = await loaded(app, vault);
+    expect(d.entries.length).toBe(5); // 2 既有 + 摘抄 + 想法 + 新概念
+    const lit = d.entries.find((e: any) => e.type === 'literature');
     expect(lit.text).toContain('提喻法');
     expect(lit.source).toBe('《诗学》');
-    expect(lit.terms).toEqual(['bb_c1', '修辞'].length ? ['bb_c1'] : []);
     expect(lit.emotions).toEqual(['触动']);
     expect(lit.people).toEqual(['老王']);
     expect(lit.scene).toBe('深夜读书');
     expect(lit.toward).toBe(''); // 指向字段不再 UI 录入
     expect(lit.links).toEqual([]); // 链接字段不再 UI 录入
-    const thought = (await loaded(app, vault)).entries.find((e: any) => e.type === 'thought');
-    expect(thought.text).toContain('情意');
-    const concept = (await loaded(app, vault)).entries.find((e: any) => e.type === 'concept' && e.name === '修辞');
-    expect(concept).toBeTruthy();
+    const thought = d.entries.find((e: any) => e.type === 'thought');
+    expect(thought.text).toContain('语言在偷懒');
+    const concept = d.entries.find((e: any) => e.type === 'concept' && e.name === '修辞');
+    expect(concept.definition).toContain('修辞手法');
+    const litNote = [...vault.files.keys()].find((p) => p.startsWith('黑匣子/摘抄/'));
+    expect(vault.files.get(litNote!)).toContain('关联概念：[[黑匣子/概念/提喻法|提喻法]] [[黑匣子/概念/修辞|修辞]]');
+  });
+
+  it('流转：中途关闭弹窗 → 已确认的概念回填、未确认的不创建不加', async () => {
+    mockOllamaSeq(['{"matched": ["提喻法"], "newConcepts": ["修辞", "借喻"], "insight": ""}', '标题', '未分类']);
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCapture(app);
+    selectType('literature');
+    setValue('bz-blackbox-lit-text', '提喻法是常见的修辞手法。');
+    document.getElementById("bz-blackbox-lit-analyze")!.click();
+    await vi.waitFor(async () => {
+      expect(document.getElementById('bz-blackbox-step-feel')!.style.display).toBe('block');
+    });
+    // 勾选两个新概念「修辞」「借喻」
+    const chips = document.querySelectorAll('#bz-blackbox-step-feel .bz-blackbox-term-chip');
+    (chips[1] as HTMLElement).click();
+    (chips[2] as HTMLElement).click();
+    document.getElementById('bz-blackbox-save')!.click();
+    // 流转到第一个概念「修辞」
+    await vi.waitFor(async () => {
+      expect((document.getElementById('bz-blackbox-concept-name') as HTMLInputElement).value).toBe('修辞');
+    });
+    // 确认第一个（填定义 → 确定录入）
+    setValue('bz-blackbox-concept-def', '以整体代部分。');
+    document.getElementById('bz-blackbox-concept-gen')!.click();
+    await vi.waitFor(async () => {
+      const d = await loaded(app, vault);
+      expect(d.entries.some((e: any) => e.type === 'concept' && e.name === '修辞')).toBe(true);
+    });
+    // 流转到第二个「借喻」→ 直接关闭弹窗（跳过）
+    await vi.waitFor(async () => {
+      expect((document.getElementById('bz-blackbox-concept-name') as HTMLInputElement).value).toBe('借喻');
+    });
+    closeBlackBoxCapture();
+    await vi.waitFor(async () => {
+      const d = await loaded(app, vault);
+      // 修辞已建并回填摘抄；借喻未建、摘抄不加
+      const lit = d.entries.find((e: any) => e.type === 'literature');
+      const c = d.entries.find((e: any) => e.type === 'concept' && e.name === '修辞');
+      expect(lit.terms).toEqual(['bb_c1', c.id]);
+      expect(d.entries.some((e: any) => e.type === 'concept' && e.name === '借喻')).toBe(false);
+    });
+  });
+
+  it('流转：概念改名与既有同名 → 不新建，摘抄直接关联既有概念', async () => {
+    mockOllamaSeq(['{"matched": [], "newConcepts": ["修辞"], "insight": ""}', '标题', '未分类']);
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCapture(app);
+    selectType('literature');
+    setValue('bz-blackbox-lit-text', '提喻法是常见的修辞手法。');
+    document.getElementById("bz-blackbox-lit-analyze")!.click();
+    await vi.waitFor(async () => {
+      expect(document.getElementById('bz-blackbox-step-feel')!.style.display).toBe('block');
+    });
+    // 勾选新概念「修辞」
+    const chips = document.querySelectorAll('#bz-blackbox-step-feel .bz-blackbox-term-chip');
+    (chips[0] as HTMLElement).click();
+    document.getElementById('bz-blackbox-save')!.click();
+    await vi.waitFor(async () => {
+      expect((document.getElementById('bz-blackbox-concept-name') as HTMLInputElement).value).toBe('修辞');
+    });
+    // 改名与既有概念「提喻法」同名 → 确认 → 不新建、摘抄直接关联既有
+    setValue('bz-blackbox-concept-name', '提喻法');
+    setValue('bz-blackbox-concept-def', '以部分代整体。');
+    document.getElementById('bz-blackbox-concept-gen')!.click();
+    await vi.waitFor(async () => {
+      const d = await loaded(app, vault);
+      const lit = d.entries.find((e: any) => e.type === 'literature');
+      expect(lit.terms).toEqual(['bb_c1']);
+    });
+    expect(hasNotice(/已有同名概念/)).toBe(true);
+    // 概念数不变（2 既有）
+    const d = await loaded(app, vault);
+    expect(d.entries.filter((e: any) => e.type === 'concept').length).toBe(2);
+    // 完成回类型选择
+    expect(document.getElementById('bz-blackbox-step-type')!.style.display).toBe('block');
   });
 
   it("文献：分析 AI 失败 → 提示 + 仍进感触页 + 纯文本可保存（永不拒收）", async () => {
@@ -682,20 +796,21 @@ describe('摘抄/想法直达命令（ticket 03：标题 AI 生成 + 提炼想�
     expect(vault.files.has(`黑匣子/摘抄/${title}.md`)).toBe(true);
   });
 
-  it('提炼想法 → 独立想法笔记 + 摘抄笔记底部「来自：[[摘抄]]」双链', async () => {
+  it('手输想法 → 独立想法笔记 + 摘抄笔记底部「来自：[[摘抄]]」双链', async () => {
     mockOllama('{"title": "修辞的弹性", "matched": ["提喻法"], "newConcepts": [], "insight": "语言有弹性，人就有了被理解的余地。"}');
     const vault = new MockVault();
     seedVault(vault);
     const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
     await openBlackBoxCaptureLiterature(app);
     setValue('bz-blackbox-lit-text', '修辞是语言的弹性，让有限词句装下无限情意。');
+    // 想法手输（ticket 50：不 AI 提炼，想法框在内容步摘抄与来源之间）
+    setValue('bz-blackbox-lit-thought', '语言有弹性，人就有了被理解的余地。');
     document.getElementById('bz-blackbox-lit-analyze')!.click();
     await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-step-feel')!.style.display).toBe('block');
     });
-    // 想法内容自动填入提炼想法框（分析 insight），直接保存
-    const insight = document.getElementById('bz-blackbox-insight') as HTMLTextAreaElement;
-    expect(insight.value).toContain('语言有弹性');
+    // 分析后想法框不被 AI insight 覆盖（保持手输内容）
+    expect((document.getElementById('bz-blackbox-lit-thought') as HTMLTextAreaElement).value).toContain('被理解的余地');
     document.getElementById('bz-blackbox-save')!.click();
     await vi.waitFor(async () => {
       const d = await loaded(app, vault);

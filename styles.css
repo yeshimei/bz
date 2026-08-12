@@ -1183,6 +1183,39 @@
   border-color: var(--interactive-accent);
   color: var(--text-on-accent);
 }
+/* 标签数量（ticket 50）：小字弱化 */
+.bz-blackbox-type-count {
+  font-size: 10px;
+  opacity: 0.8;
+  margin-left: 3px;
+}
+/* 概念子分类行（ticket 50：仅概念选中时显示，仿日记二级标签） */
+.bz-blackbox-subcat-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 20px 10px;
+  flex-shrink: 0;
+}
+.bz-blackbox-subcat-btn {
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  border-radius: 10px;
+  padding: 3px 10px;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.bz-blackbox-subcat-btn:hover {
+  background: var(--background-modifier-hover);
+}
+.bz-blackbox-subcat-btn-on {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
 /* 搜索框（仿 diary-search-input） */
 .bz-blackbox-search-wrap {
   padding: 0 20px 12px;
@@ -1269,6 +1302,27 @@
   font-weight: 600;
   color: var(--text-muted);
   margin-bottom: 6px;
+}
+/* 来源可点击（ADR-0016）：epub 双链 / [[笔记]] / URL 形态 */
+button.bz-blackbox-source-link {
+  display: block;
+  max-width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-accent);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+button.bz-blackbox-source-link:hover {
+  color: var(--text-accent-hover, var(--text-accent));
+  text-decoration: underline;
 }
 .bz-blackbox-stream-card-body {
   font-size: 14px;
@@ -1638,6 +1692,23 @@
   margin-top: 14px;
   padding: 9px 14px;
   font-size: 13px;
+}
+
+/* 录入大间距（ticket 50）：概念名-定义、摘抄-想法-来源之间统一大间距 */
+#bz-blackbox-concept-name {
+  margin-bottom: 18px;
+}
+#bz-blackbox-concept-def {
+  margin-bottom: 18px;
+}
+#bz-blackbox-concept-source {
+  margin-top: 0;
+}
+#bz-blackbox-lit-thought {
+  margin-top: 18px;
+}
+#bz-blackbox-lit-source {
+  margin-top: 18px;
 }
 
 /* ③ 概念连接展示 */
