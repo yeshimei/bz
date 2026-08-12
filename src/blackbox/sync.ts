@@ -1,7 +1,7 @@
 /**
  * 黑匣子实时同步（ticket 05，ADR-0015 笔记即事实源的运行时承诺）：
  * 用户在 Obsidian 里改黑匣子笔记的标题或内容 → 索引与主面板实时跟随。
- * - 内容编辑：metadataCache 'changed' 命中 `黑匣子/` → 重新水合 + 面板打开时实时刷新（保留类型筛选/搜索词/滚动）
+ * - 内容编辑：metadataCache 'changed' 命中 `我的/黑匣子/` → 重新水合 + 面板打开时实时刷新（保留类型筛选/搜索词/滚动）
  * - 改名/删除/新建：vault rename/delete/create → 重新水合（索引按 frontmatter id 重映射/移除/新增，缺失跳过）
  * - 对话/复盘/事件提炼读取时总是读最新笔记（BlackBoxDataManager.load 每次全量水合，不缓存正文）
  * 常驻注册（onload 即注册，无设置开关）；同一文件高频事件 300ms 防抖合并。
@@ -9,7 +9,7 @@
 import type { App } from 'obsidian';
 import { getApp } from '../core/app';
 import { BlackBoxDataManager } from './data';
-import { isBlackBoxNotePath } from './notes';
+import { BB_NOTE_ROOT, isBlackBoxNotePath } from './notes';
 import type { BlackBoxData } from './types';
 
 let registered = false;
@@ -61,7 +61,7 @@ async function syncCategoryFromMove(newPath: string, oldPath: string): Promise<v
     const raw = await app.vault.read(f as any);
     const m = raw.match(/^---\n([\s\S]*?)\n---/);
     if (!m) return;
-    const typeRoots = ['黑匣子/概念', '黑匣子/摘抄', '黑匣子/想法'];
+    const typeRoots = [BB_NOTE_ROOT + '/概念', BB_NOTE_ROOT + '/摘抄', BB_NOTE_ROOT + '/想法'];
     const cat = typeRoots.some((r) => newDir.startsWith(r + '/')) ? newDir.slice(newDir.lastIndexOf('/') + 1) : '';
     const lines = m[1].split('\n');
     const idx = lines.findIndex((l) => /^category:/.test(l));

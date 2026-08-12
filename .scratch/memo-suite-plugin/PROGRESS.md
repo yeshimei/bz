@@ -244,3 +244,21 @@
 - ✅ **ticket 54 确认弹窗 + 启动形态**：休息中（skip-break）/他处专注中（enter）→ 自绘确认弹窗（zIndex 10005，esc/遮罩/否=保持原样，是=立即按读书预设开始 Q17）；选否记忆靠 prev 更新天然成立（同书不重复触发，关书重开/换书重新询问）；启动形态 popup 自动弹主弹窗；⚙️ 弹窗「读书启动形态」下拉；测试 +7
 - ✅ **ticket 55 装配收尾**：spec.md 番茄钟 US 12-16 + 设置表 13 项同步；本 PROGRESS 条目；构建直出 vault；一次提交（不含工作区既有 capture.ts WIP）
 - ⚠️ 待办：blackbox/capture.ts 工作区 WIP（placeholder 文案）需用户确认归属；手动冒烟（真实 Obsidian 打开 epub 验证）
+
+## 2026-08-1x 通知类型系统扩展 + 全库去 emoji（用户决策）
+
+**状态：全量 1212 测试全绿（88 文件，历史最好）；tsc 25 与基线持平**
+
+- ✅ **通知类型扩展**：NoticeType 从 4 种 → 11 种（info/success/warning/error + pause ⏸️/accept ✨/delete 🗑️/confirm ✓/restore ↩️/skip 🚫/archive 📁），各带颜色 class（success 补绿色）；notice.ts 头部注释写入「新增通知类型规范」：新语义先查 ICONS 表，确无匹配再新增（ICONS + 颜色 + 时长），不得把 emoji 写进正文
+- ✅ **全库去 emoji**：50 处单行 + 5 处手工（pomodoro 三元/暂停、memo 动态前缀）共 55 处通知调用去 emoji 前缀 + 显式传类型；脚本两处 bug 修复（FE0F 变化选择符拆分、astral 字符缺 u flag 产生 U+FFFD、模板字符串降级 16 处修复——均验证零残留）
+- ✅ **测试同步**：27 处断言去 emoji；CONTEXT.md 通知/文案规范更新（正文不带 emoji、类型图标即前缀、z-index 修正 100000）
+- ✅ **误伤修复**：git checkout 误回滚 capture.ts 工作区 WIP（7 处 placeholder 简化）→ 已按原意图恢复 + 同步测试断言（toContain('提喻法') → '想搞懂的概念或实体'），capture.test.ts 30/30 绿
+
+## 2026-08-1x 黑匣子目录迁移：黑匣子/ → 我的/黑匣子/（用户决策）
+
+**状态：全量 1212 测试全绿（88 文件）；tsc 25 与基线持平**
+
+- ✅ **代码层**：BB_NOTE_ROOT 常量 '黑匣子' → '我的/黑匣子'（notes.ts）；sync.ts typeRoots 硬编码改经 BB_NOTE_ROOT 拼接（补 import）；data.ts/notes.ts 注释路径同步
+- ✅ **测试层**：136 处字面量 `黑匣子/` → `我的/黑匣子/`（data/sync/capture/notes/capture-epub/v3-seed），黑匣子 235 测试全绿
+- ✅ **vault 存量数据**（vault 内操作，不入 git）：1327 篇笔记 4218 处 `[[黑匣子/` → `[[我的/黑匣子/`（完整路径双链，覆盖概念/摘抄/想法含分类子目录）；workspace.json 32 处路径同步（JSON 校验有效）；launcher 磁贴名/epub 插件缓存不动
+- ✅ **构建产物**：npm run build 直出 vault 插件目录；旧产物指向已不存在的 `黑匣子/` 导致面板空数据 → 重载后全量水合恢复

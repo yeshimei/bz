@@ -1,5 +1,5 @@
 /**
- * 黑匣子笔记引擎（ticket 01，ADR-0015 笔记化）：三类条目落盘 `黑匣子/概念|摘抄|想法/*.md`，
+ * 黑匣子笔记引擎（ticket 01，ADR-0015 笔记化）：三类条目落盘 `我的/黑匣子/概念|摘抄|想法/*.md`，
  * 笔记即事实源。frontmatter（id/type/createdAt + 感触外壳 + 卡片盒可选字段）+ 正文（定义/摘抄/想法
  * + 底部关联区 `[[…]]` 双链）。本文件为纯函数 + 内容组装/解析（不依赖 App 实例，便于单测）。
  *
@@ -16,8 +16,8 @@
 import type { Entry, EntryType } from './types';
 import { sanitizeEmotions, sanitizePeople, MAX_EMOTIONS, MAX_PEOPLE } from './types';
 
-/** 笔记根目录（vault 相对路径） */
-export const BB_NOTE_ROOT = '黑匣子';
+/** 笔记根目录（vault 相对路径；2026 用户迁移：随日记/影视等归入 `我的/` 下） */
+export const BB_NOTE_ROOT = '我的/黑匣子';
 /** 类型 → 子目录 */
 export const TYPE_DIR: Record<EntryType, string> = {
   concept: '概念',
@@ -201,7 +201,7 @@ export function buildNoteContent(entry: Entry, nameForId: (id: string) => { name
   if (entry.summary) fm.push(...fmScalar('summary', entry.summary));
   fm.push('---');
 
-  // 正文关联区双链：完整路径 `[[黑匣子/概念/<分类>/<名>|显示名]]`（Obsidian 可点跳转、同名不歧义）；
+  // 正文关联区双链：完整路径 `[[我的/黑匣子/概念/<分类>/<名>|显示名]]`（Obsidian 可点跳转、同名不歧义）；
   // pendingLinks（尚未落盘的概念）无路径 → 保持 `[[名]]`
   const toLink = (r: { name: string; path: string }): string => `[[${r.path.replace(/\.md$/, '')}|${r.name}]]`;
   const body: string[] = [];
