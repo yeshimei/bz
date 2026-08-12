@@ -376,6 +376,24 @@ describe('番茄钟弹窗', () => {
     expect(el('pomodoro-time').textContent).toBe('24:56');
   });
 
+  it('开始/暂停：toast + 提示音（手动操作也有声音）', async () => {
+    const { app } = setup();
+    const audio = makeAudioMock();
+    await openPomodoro(app);
+    el('pomodoro-btn-start').click(); // 开始
+    expect(hasNotice('✅ 专注开始')).toBe(true);
+    expect(audio.createOscillator).toHaveBeenCalledTimes(1);
+    expect(audio.createOscillator.mock.results[0].value.frequency.value).toBe(880); // 专注开始
+    await vi.advanceTimersByTimeAsync(2000);
+    el('pomodoro-btn-start').click(); // 暂停
+    expect(hasNotice('⏸️ 已暂停专注')).toBe(true);
+    expect(audio.createOscillator).toHaveBeenCalledTimes(2);
+    expect(audio.createOscillator.mock.results[1].value.frequency.value).toBe(440); // 暂停
+    el('pomodoro-btn-start').click(); // 继续
+    expect(hasNotice('✅ 专注开始')).toBe(true); // 继续也算开始
+    expect(audio.createOscillator.mock.results[2].value.frequency.value).toBe(880);
+  });
+
   it('重置 → 回满时长并停止（按钮回「开始」）', async () => {
     const { app } = setup();
     await openPomodoro(app);
@@ -428,11 +446,12 @@ describe('番茄钟弹窗', () => {
     expect(el('pomodoro-time').textContent).toBe('24:25');
   });
 
-  it('tick 完成专注 → 流转短休息 + 历史落盘 + toast + 短休开始声（523Hz 一声）', async () => {
+  it('tick 完成专注 → 流转短休息 + 历史落盘 + toast + 短休开始声（523Hz）', async () => {
     const { app, vault } = setup();
     const audio = makeAudioMock();
     await openPomodoro(app);
-    el('pomodoro-btn-start').click();
+    el('pomodoro-btn-start').click(); // 手动开始：专注开始声（880Hz）
+    const before = audio.createOscillator.mock.calls.length;
     await vi.advanceTimersByTimeAsync(25 * 60 * 1000); // 走完一个专注
     expect(el('pomodoro-phase').textContent).toContain('短休息');
     expect(el('pomodoro-time').textContent).toBe('05:00');
@@ -442,8 +461,8 @@ describe('番茄钟弹窗', () => {
     expect(raw.state.phase).toBe('short-break');
     expect(hasNotice('专注完成：休息 5 分钟')).toBe(true);
     expect(document.querySelector('.bz-notice--success')).not.toBeNull();
-    expect(audio.createOscillator).toHaveBeenCalledTimes(1);
-    expect(audio.createOscillator.mock.results[0].value.frequency.value).toBe(523); // 短休开始
+    expect(audio.createOscillator.mock.calls.length - before).toBe(1);
+    expect(audio.createOscillator.mock.results[before].value.frequency.value).toBe(523); // 短休开始
   });
 
   it('休息完成 → toast + 专注开始声（880Hz 一声）', async () => {
@@ -464,22 +483,23 @@ describe('番茄钟弹窗', () => {
     const { app } = setup();
     const audio = makeAudioMock();
     await openPomodoro(app);
-    el('pomodoro-btn-start').click();
+    el('pomodoro-btn-start').click(); // 开始有专注开始声（正常）
+    const before = audio.createOscillator.mock.calls.length;
     el('pomodoro-btn-skip').click();
     expect(hasNotice('✅ 专注完成')).toBe(false);
-    expect(audio.createOscillator).not.toHaveBeenCalled();
+    expect(audio.createOscillator.mock.calls.length - before).toBe(0); // skip 本身不响
   });
 
   it('第 4 个专注完成 → 长休开始声（392Hz）', async () => {
     const { app } = setup(new MockVault(), { pomodoroAutoCycle: true });
     const audio = makeAudioMock();
     await openPomodoro(app);
-    el('pomodoro-btn-start').click();
+    el('pomodoro-btn-start').click(); // 手动开始：专注开始声
     // 完整走完 4 个专注 + 3 个短休（115min），第 4 个专注完成 → 长休
     await vi.advanceTimersByTimeAsync(4 * 25 * 60 * 1000 + 3 * 5 * 60 * 1000);
     expect(el('pomodoro-phase').textContent).toContain('长休息');
     const calls = audio.createOscillator.mock.calls.length;
-    expect(calls).toBe(7); // 专注开始 4 次 + 短休开始 3 次
+    expect(calls).toBe(8); // 手动专注开始 1 + 专注开始 3 次（休息完成）+ 短休开始 3 次 + 长休开始 1 次
     expect(audio.createOscillator.mock.results[calls - 1].value.frequency.value).toBe(392); // 长休开始
   });
 
@@ -496,8 +516,9 @@ describe('番茄钟弹窗', () => {
   it('unloadPomodoro：清理轮询无残留', async () => {
     const { app } = setup();
     await openPomodoro(app);
-    el('pomodoro-btn-start').click();
+    el('pomodoro-btn-start').click(); // 手动开始：触发提示音（其 close 定时器随播完自动过期）
     expect(vi.getTimerCount()).toBeGreaterThan(0);
+    await vi.advanceTimersByTimeAsync(3500); // 走完提示音 close 定时器 + toast 3s 自动消失
     unloadPomodoro();
     expect(vi.getTimerCount()).toBe(0);
     expect(document.getElementById('pomodoro-mask')).toBeNull();
