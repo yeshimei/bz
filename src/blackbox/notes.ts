@@ -213,6 +213,9 @@ export function buildNoteContent(entry: Entry, nameForId: (id: string) => { name
       ...(entry.pendingLinks || []).map((n) => `[[${n}]]`),
     ].filter((l, i, a) => a.indexOf(l) === i);
     if (links.length) rel.push(`- 关联：${links.join(' ')}`);
+    // 概念来源（ADR-0016，与摘抄对称的单值语义）：entry.links[0] 为「来源」，展示在关联下方；无来源不输出行
+    const src = (entry.links && entry.links.length ? entry.links[0] : '').trim();
+    if (src) rel.push(`来源：${src}`);
   } else if (entry.type === 'literature') {
     if (entry.text) body.push(entry.text.replace(/\s+$/, ''));
     const src = (entry.source || '').trim();
@@ -268,6 +271,9 @@ export function parseNoteContent(
   const relatedNames: LinkRef[] = [];
   const termsNames: LinkRef[] = [];
   let fromName: LinkRef = { ref: '', display: '' };
+  /** 概念正文 `来源：` 行（ADR-0016）：仅 concept 类型解析并入 links（frontmatter 为准、正文合并去重）；
+   *  literature 的 `来源：` 行是 source 的正文展示，不并入 links（铁律 #1：不改既有字段语义） */
+  const bodySourceLinks: string[] = [];
   // frontmatter 为准，正文关联区合并（用户手动增删任一处不丢数据；frontmatter 删了正文还在）
   const pushUnique = (arr: LinkRef[], n: LinkRef): void => {
     if (n.ref && !arr.some((x) => x.ref === n.ref)) arr.push(n);
@@ -287,7 +293,20 @@ export function parseNoteContent(
       for (const l of links) pushUnique(termsNames, { ref: l.main, display: wikilinkDisplay(l) });
     } else if (t.startsWith('来自：')) {
       if (!fromName.ref) fromName = links.length ? { ref: links[0].main, display: wikilinkDisplay(links[0]) } : { ref: '', display: '' };
+    } else if (fm.type === 'concept') {
+      // 来源行原文整体保留（含 epub 双链 subpath：`[[书架/x.epub#weave-cfi=…|书名]]`，parseWikilinks 只取主名会丢定位符）
+      const srcMatch = t.match(/^[- ]*来源：\s*(.*)$/);
+      if (srcMatch && srcMatch[1].trim() && !bodySourceLinks.includes(srcMatch[1].trim())) {
+        bodySourceLinks.push(srcMatch[1].trim());
+      }
     }
+  }
+
+  const links: string[] = Array.isArray(fm.links)
+    ? fm.links.filter((l): l is string => typeof l === 'string')
+    : [];
+  for (const l of bodySourceLinks) {
+    if (!links.includes(l)) links.push(l);
   }
 
   const base: Entry = {
@@ -298,7 +317,7 @@ export function parseNoteContent(
     people: sanitizePeople(fm.people),
     scene: typeof fm.scene === 'string' ? fm.scene : '',
     toward: fm.toward === 'self' || fm.toward === 'others' || fm.toward === 'world' ? fm.toward : '',
-    links: Array.isArray(fm.links) ? fm.links.filter((l): l is string => typeof l === 'string') : [],
+    links,
   };
   if (fm.type === 'concept') {
     base.name = typeof fm.name === 'string' && fm.name.trim() ? fm.name.trim() : noteNameFromPath(path);

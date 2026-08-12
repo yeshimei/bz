@@ -89,3 +89,10 @@
 - **需求**（grilling 会话定稿）：EPUB 阅读器选区工具栏常驻「🧩 概念」「📎 摘抄」两按钮（bz 缺失置灰不隐藏）→ 点击打开黑匣子录入（文字锁定、来源=阅读器双链 `[[书路径#weave-cfi=…|书名]]`）；主面板列表来源可点击三分派（epub 双链→跳书 / [[笔记]]→开笔记 / URL→浏览器）。
 - **决策**：概念来源单值存 links（不加字段，ADR-0013 冻结）；概念笔记关联区 `- 关联：` 下方新增 `来源：` 行（build/parse 成对修改，round-trip 无损）；weave 新增 capability key（不挪用 openCreateCardModal/openIRReadingPointFromExternalSelection）+ 公开跳转 API（bz 不复刻 subpath 解析）；术语「书内来源 (In-book Source)」已入 CONTEXT.md。
 - **待办**：实现前落 ADR-0016（契约 + 冻结格式扩展）；spec 见 `issues/07-epub-selection-capture.md`（Status: ready-for-agent）。
+
+## 2026-09 · ticket 07 书内选区录入完成（ADR-0016，两仓库）
+
+- **weave 侧**：SelectionToolbar 常驻「🧩 概念」「📎 摘抄」按钮（i18n 双语；bz 能力缺失 → disabled 置灰 + tooltip）；EpubHostCapabilities 新增 captureConceptFromEpub/captureExcerptFromEpub（输入 {filePath, selectedText, sourceLink}，不挪用既有 key）；公开 registerExternalEpubHost（独立槽位，compose 按 key 合并不抢占）+ openEpubLocationFromLink（完整双链 → NavigationHub 定位，weave-cfi/compact 两种定位符）。测试：组件 5 + host 合并 1 + 公开 API 10。
+- **bz 侧**：capture.ts 外部选区路径（openBlackBoxCaptureFromEpub，externalSel 优先于编辑器快照；概念来源=links 单值、摘抄来源=sourceLink；externalSel 模式跳过原位注入）；notes.ts 概念 `来源：` 行 build/parse 成对（frontmatter links 为准、正文合并去重；literature 来源行不并入 links）；source-jump.ts 四形态分派纯函数；host.ts 注册/跳转执行（jumpFromSource 三分派）；panel.ts 来源行可点击；main.ts onLayoutReady 注册 + onunload 注销。测试：notes 11 + source-jump 14 + capture-epub 5 + panel-source-jump 7。
+- **验证**：bz 1156 全绿 + build；weave 相关 24 通过 + i18n validate + lint 干净 + build（1 个既有 EpubBacklinkHighlightService 失败与本次无关，stash 验证）。
+- spec.md 已更新（正文约定/书内选区录入节）；CONTEXT.md 已更新（书内来源术语）；ADR-0016 已落。

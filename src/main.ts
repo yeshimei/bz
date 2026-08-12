@@ -28,7 +28,7 @@ import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverd
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
 import { openPomodoro, unloadPomodoro, ensurePomodoro } from './pomodoro';
-import { unloadBlackBox, openBlackBoxCapture, openBlackBoxCaptureConcept, openBlackBoxCaptureLiterature, openBlackBoxCaptureThought, openBlackBoxChat, openBlackBoxPanel, openCardboxImport, manualReview, ensureBlackBoxSync } from './blackbox';
+import { unloadBlackBox, openBlackBoxCapture, openBlackBoxCaptureConcept, openBlackBoxCaptureLiterature, openBlackBoxCaptureThought, openBlackBoxChat, openBlackBoxPanel, openCardboxImport, manualReview, ensureBlackBoxSync, registerBlackBoxEpubHost, refreshBlackBoxEpubHost, unregisterBlackBoxEpubHost } from './blackbox';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // B站下载器启动命令（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
 import { openBiliDownloader } from './bili-downloader';
@@ -190,6 +190,12 @@ export default class BzPlugin extends Plugin {
 
     // 事件常驻域按设置开关注册（懒加载架构）
     this.app.workspace.onLayoutReady(() => {
+      // 黑匣子 × EPUB 阅读器跨插件契约（ADR-0016）：布局就绪时所有插件 onload 已完成，重试注册（幂等）
+      void registerBlackBoxEpubHost(this.app);
+      // 阅读器后加载/重载时补注册（ADR-0016：注册错过 reader 后靠 layout-change 补上；幂等）
+      this.registerEvent(this.app.workspace.on('layout-change', () => {
+        refreshBlackBoxEpubHost(this.app);
+      }));
       // 备忘录：启动即初始化（对齐源码 App.init：file-open 提醒 + 剪贴板监听 + autoPopupOnStart）
       void ensureBz(this.app);
       // 日记本：启动即初始化（diary-notebook 原行为：onLayoutReady → init）
@@ -219,6 +225,7 @@ export default class BzPlugin extends Plugin {
     unmountPomodoroStatusBar();
     unloadPomodoro();
     unloadBlackBox();
+    unregisterBlackBoxEpubHost();
     unloadBz();
     unloadAIAgent();
     unloadLauncherPanel();

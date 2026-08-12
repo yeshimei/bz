@@ -141,28 +141,54 @@ describe('黑匣子主面板（v3 流式）', () => {
     expect(document.getElementById('bz-blackbox-wall-detail')).toBeNull();
   });
 
-  it('类型筛选：点击切换多选（并集），默认空集=全部；取消恢复', async () => {
+  it('类型筛选：单选带数量；概念选中展开子分类行（数量降序）；子分类筛选该分类概念', async () => {
     const vault = new MockVault();
-    seedVault(vault);
+    seedVault(vault, {
+      entries: [
+        { id: 'bb_c1', type: 'concept', createdAt: '2026-08-01T00:00:00.000Z', name: '提喻法', definition: '以部分代整体的修辞手法', related: ['bb_c2'], emotions: [], people: [], scene: '', toward: '', links: [] },
+        { id: 'bb_c2', type: 'concept', createdAt: '2026-08-02T00:00:00.000Z', name: '借代', definition: '用相关事物代替本体', related: ['bb_c1'], emotions: [], people: [], scene: '', toward: '', links: [] },
+        { id: 'bb_l1', type: 'literature', createdAt: '2026-08-03T00:00:00.000Z', text: '修辞是语言的弹性，让有限词句装下无限情意。', source: '《诗学》', terms: ['bb_c1'], emotions: ['触动'], people: [], scene: '', toward: '', links: ['https://a.com'] },
+        { id: 'bb_t1', type: 'thought', createdAt: '2026-08-04T00:00:00.000Z', text: '给妹妹买吉他，她笑了很久。', emotions: ['温暖', '想念'], people: ['pf_1'], scene: '琴行', toward: 'others', links: [] },
+        { id: 'bb_t2', type: 'thought', createdAt: '2026-08-05T00:00:00.000Z', text: '想带妈妈去看海', emotions: ['希望'], people: ['老王'], scene: '', toward: '', links: [] },
+        // 带分类概念（子分类行测试）：医学 2 条 + 修辞学 1 条
+        { id: 'bb_c3', type: 'concept', createdAt: '2026-08-06T00:00:00.000Z', name: '中性粒细胞', definition: '免疫细胞', category: '医学', related: [], emotions: [], people: [], scene: '', toward: '', links: [] },
+        { id: 'bb_c4', type: 'concept', createdAt: '2026-08-07T00:00:00.000Z', name: '借代法', definition: '修辞', category: '修辞学', related: [], emotions: [], people: [], scene: '', toward: '', links: [] },
+        { id: 'bb_c5', type: 'concept', createdAt: '2026-08-08T00:00:00.000Z', name: 'B细胞', definition: '免疫细胞', category: '医学', related: [], emotions: [], people: [], scene: '', toward: '', links: [] },
+      ],
+    });
     const { app } = setup(vault);
     await openBlackBoxPanel(app);
     const typeBtns = () => Array.from(document.querySelectorAll('.bz-blackbox-type-btn')) as HTMLElement[];
+    // 标签带数量（原始数据统计，ticket 50）
+    expect(typeBtns().find((b) => b.dataset.type === 'concept')!.textContent).toContain('(5)');
+    expect(typeBtns().find((b) => b.dataset.type === 'literature')!.textContent).toContain('(1)');
+    expect(typeBtns().find((b) => b.dataset.type === 'thought')!.textContent).toContain('(2)');
     // 默认全部
+    expect(streamCards().length).toBe(8);
+    // 单选：点概念 → 只显示概念 + 子分类行展开（医学(2) 在修辞学(1) 前，数量降序）
+    typeBtns().find((b) => b.dataset.type === 'concept')!.click();
     expect(streamCards().length).toBe(5);
-    // 只选概念
-    typeBtns().find((b) => b.dataset.type === 'concept')!.click();
+    const subBar = document.getElementById('bz-blackbox-subcats')!;
+    expect(subBar.style.display).toBe('flex');
+    const subBtns = () => Array.from(subBar.querySelectorAll('.bz-blackbox-subcat-btn')) as HTMLElement[];
+    expect(subBtns().length).toBe(2);
+    expect(subBtns()[0].textContent).toContain('医学 (2)');
+    expect(subBtns()[1].textContent).toContain('修辞学 (1)');
+    // 点子分类 → 只显示该分类概念（未分类概念不可见）
+    subBtns()[0].click();
     expect(streamCards().length).toBe(2);
-    expect(streamCards().every((c) => c.textContent.includes('提喻法') || c.textContent.includes('借代'))).toBe(true);
-    // 加选想法（多选并集：概念 + 想法 = 4）
+    expect(streamCards().every((c) => c.textContent.includes('中性粒细胞') || c.textContent.includes('B细胞'))).toBe(true);
+    // 再点子分类 → 取消 → 概念全览（未分类概念可见）
+    subBtns()[0].click();
+    expect(streamCards().length).toBe(5);
+    // 单选切换：点想法 → 只显示想法，子分类行收起
     typeBtns().find((b) => b.dataset.type === 'thought')!.click();
-    expect(streamCards().length).toBe(4);
-    // 取消概念 → 只剩想法 2 条
-    typeBtns().find((b) => b.dataset.type === 'concept')!.click();
     expect(streamCards().length).toBe(2);
     expect(streamCards().every((c) => c.textContent.includes('想带妈妈') || c.textContent.includes('给妹妹'))).toBe(true);
-    // 全部取消 → 全部
+    expect(subBar.style.display).toBe('none');
+    // 再点想法 → 取消 → 全部
     typeBtns().find((b) => b.dataset.type === 'thought')!.click();
-    expect(streamCards().length).toBe(5);
+    expect(streamCards().length).toBe(8);
   });
 
   it('搜索：防抖 300ms 后过滤（内容/情绪/人物名可搜）', async () => {

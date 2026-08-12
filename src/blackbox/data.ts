@@ -550,6 +550,22 @@ export class BlackBoxDataManager {
     return true;
   }
 
+  /** 摘抄关联概念追加（ticket 50 新概念流转回填）：terms 去重追加 + 重写笔记（frontmatter + 正文关联区）+ 持久化。返回是否发生变更 */
+  async appendEntryTerms(data: BlackBoxData, entryId: string, conceptIds: string[]): Promise<boolean> {
+    const entry = data.entries.find((e) => e.id === entryId);
+    if (!entry || entry.type !== 'literature') return false;
+    const terms = entry.terms || [];
+    const before = terms.length;
+    for (const id of conceptIds) {
+      if (id && !terms.includes(id)) terms.push(id);
+    }
+    entry.terms = terms;
+    if (terms.length === before) return false;
+    await this.updateEntryNote(data, entry);
+    await this.save(data);
+    return true;
+  }
+
   /** 批量新增（卡片盒导入）：一次写全部笔记 + 索引 + 单次派生层落盘（不走 addEntry，不触发自动复盘） */
   async addEntries(data: BlackBoxData, entries: Entry[]): Promise<void> {
     if (!entries.length) return;
