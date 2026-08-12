@@ -166,7 +166,8 @@ export interface BlackBoxSettings {
 
 /** blackbox.json v3（ADR-0015 笔记化；字段冻结）。
  * 内存接口不变：entries 仍为完整条目数组（load 时由笔记水合，save 时不落盘）；
- * 落盘只写派生层 + index（id → 笔记路径）；entries 段仅迁移中途的失败残留使用。 */
+ * 落盘只写派生层；index（id → 笔记路径）为运行时内存映射（load 全量扫描构建，2026-08-12 用户决策不再持久化）；
+ * entries 段仅迁移中途的失败残留使用。 */
 export interface BlackBoxData {
   version: 3;
   settings: BlackBoxSettings;

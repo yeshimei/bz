@@ -8,7 +8,7 @@
  *   - 想法 → `黑匣子/想法/<标题>.md`
  * frontmatter（id/type/createdAt + 感触外壳 + toward/links 兼容 + 卡片盒可选字段）+ 正文 + 关联区双链。
  * 幂等：笔记已存在（frontmatter id 匹配）→ 跳过只登记索引；同名 `-N` 去重兜底；可安全重跑。
- * 完成后 blackbox.json 写 v3（派生层 + id→路径 index，entries 段删除；失败残留保留下次重跑）。
+ * 完成后 blackbox.json 写 v3（仅派生层——index 不持久化，2026-08-12 用户决策；entries 段删除；失败残留保留下次重跑）。
  * 幂等：已迁移（主文件 v3 且笔记存在）→ 从备份读 entries 补字段（备份已按用户要求删除时自动跳过）。
  *
  * 用法：node tools/migrate-blackbox-v3.mjs
@@ -239,7 +239,7 @@ function main() {
     }
   }
 
-  // 写 v3：派生层 + index（entries 段：失败残留保留）
+  // 写 v3：仅派生层（index 不持久化——2026-08-12 用户决策：load 全量扫描笔记构建；entries 段：失败残留保留）
   const v3 = {
     version: 3,
     settings: raw.settings || {},
@@ -253,7 +253,6 @@ function main() {
       totalEntries: Object.keys(index).length + residual.length,
       totalEvents: raw.meta && typeof raw.meta.totalEvents === 'number' ? raw.meta.totalEvents : 0,
     },
-    index,
   };
   if (residual.length) v3.entries = residual;
   fs.writeFileSync(BB_FILE, JSON.stringify(v3, null, 2), 'utf8');

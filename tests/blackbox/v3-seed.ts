@@ -53,6 +53,7 @@ export function seedV3(vault: MockVault, payload: Record<string, any>): Record<s
     index[String(e.id)] = path;
   }
   const { entries: _drop, ...rest } = payload;
-  vault.files.set('CONFIG/STORAGE/blackbox.json', JSON.stringify({ version: 3, index, ...rest }));
+  // index 不再持久化（2026-08-12 用户决策）：load 全量扫描笔记构建
+  vault.files.set('CONFIG/STORAGE/blackbox.json', JSON.stringify({ version: 3, ...rest }));
   return index;
 }

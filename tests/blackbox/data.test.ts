@@ -383,8 +383,9 @@ describe('v3 水合容错', () => {
     setSettingsProvider(() => ({} as any));
   });
 
-  it('索引指向缺失文件（笔记已删）→ 移除索引并持久化（展示以笔记为主，不残留）', async () => {
+  it('笔记删除（含历史残留 index 指向缺失）→ 水合不显示（扫描重建，无 index 持久化残留）', async () => {
     const vault = new MockVault();
+    // 历史文件即使残留 index 指向缺失文件，也不影响展示（index 不再持久化、load 忽略）
     vault.files.set(
       'CONFIG/STORAGE/blackbox.json',
       JSON.stringify({ version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {}, index: { bb_x: '黑匣子/概念/不存在的.md', bb_y: '黑匣子/概念/存在的.md' } })
@@ -393,26 +394,28 @@ describe('v3 水合容错', () => {
     const { app } = setup(vault);
     const data = await new BlackBoxDataManager(app).load();
     expect(data.entries.length).toBe(1);
-    expect(data.index['bb_x']).toBeUndefined(); // 缺失索引已移除
+    expect(data.index['bb_x']).toBeUndefined(); // 无该笔记 → 内存 index 无条目
     expect(data.index['bb_y']).toBe('黑匣子/概念/存在的.md');
+    // save 后 index 不持久化
+    await new BlackBoxDataManager(app).save(data);
     const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/blackbox.json')!);
-    expect(raw.index['bb_x']).toBeUndefined(); // 持久化
+    expect(raw.index).toBeUndefined(); // 无 index 字段
   });
 
-  it('笔记损坏（frontmatter 解析失败）→ 跳过该条保留索引', async () => {
+  it('笔记损坏（frontmatter 解析失败）→ 跳过该条不报错，下次 load 重试', async () => {
     const vault = new MockVault();
     vault.files.set('黑匣子/概念/坏笔记.md', '没有任何 frontmatter 的内容');
     vault.files.set(
       'CONFIG/STORAGE/blackbox.json',
-      JSON.stringify({ version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {}, index: { bb_bad: '黑匣子/概念/坏笔记.md' } })
+      JSON.stringify({ version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {}, index: {} })
     );
     const { app } = setup(vault);
     const data = await new BlackBoxDataManager(app).load();
     expect(data.entries).toEqual([]);
-    expect(data.index['bb_bad']).toBe('黑匣子/概念/坏笔记.md');
+    expect(data.index['bb_bad']).toBeUndefined(); // 解析失败 → 内存 index 也无条目
   });
 
-  it('孤儿自愈：黑匣子/ 下手写 bb 笔记（未索引）自动入索引', async () => {
+  it('手写 bb 笔记（无 index 记录）→ 全量扫描收录（内存 index + entries）', async () => {
     const vault = new MockVault();
     vault.files.set(
       '黑匣子/概念/我手写的概念.md',
@@ -420,17 +423,17 @@ describe('v3 水合容错', () => {
     );
     vault.files.set(
       'CONFIG/STORAGE/blackbox.json',
-      JSON.stringify({ version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {}, index: {} })
+      JSON.stringify({ version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {} })
     );
     const { app } = setup(vault);
     const data = await new BlackBoxDataManager(app).load();
     expect(data.entries.length).toBe(1);
     expect(data.entries[0].id).toBe('bb_hand');
     expect(data.entries[0].name).toBe('我手写的概念');
-    expect(data.index['bb_hand']).toBe('黑匣子/概念/我手写的概念.md');
-    // 孤儿已持久化进索引
+    expect(data.index['bb_hand']).toBe('黑匣子/概念/我手写的概念.md'); // 运行时内存映射
+    // save 后不写 index 字段
     const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/blackbox.json')!);
-    expect(raw.index['bb_hand']).toBe('黑匣子/概念/我手写的概念.md');
+    expect(raw.index).toBeUndefined();
   });
 
   it('关联区未解析名字 → pendingLinks（待补链）；解析后补进 related', async () => {
@@ -647,10 +650,11 @@ describe('BlackBoxDataManager 笔记化写入', () => {
     expect(vault.files.has(notePath)).toBe(true);
     expect(vault.files.get(notePath)).toContain('id: ' + data.entries[0].id);
     expect(vault.files.get(notePath)).toContain('以部分代整体');
-    // JSON 只落派生层 + 索引，无 entries 段
+    // JSON 只落派生层（无 entries 段、无 index 字段——index 为运行时内存映射）
     const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/blackbox.json')!);
     expect(raw.entries).toBeUndefined();
-    expect(Object.keys(raw.index)).toEqual([data.entries[0].id]);
+    expect(raw.index).toBeUndefined();
+    expect(data.index[data.entries[0].id]).toBe(notePath); // 内存映射仍可用
     // 重载水合
     const back = await dm.load();
     expect(back.entries.length).toBe(1);
@@ -893,9 +897,9 @@ describe('AI 自动分类落位（2026-08-12 需求）', () => {
     data = await dm.load();
     expect(data.index['bb_c1']).toBe(moved);
     expect(data.entries[0].category).toBe('文学');
-    // 持久化：blackbox.json index 已更新
+    // save 后不写 index（运行时扫描映射）
     const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/blackbox.json')!);
-    expect(raw.index['bb_c1']).toBe(moved);
+    expect(raw.index).toBeUndefined();
   });
 
   it('applyCategory：已在目标分类文件夹 → 不移动仅补 fm；非法分类/未知 id → false', async () => {
