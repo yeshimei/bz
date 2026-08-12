@@ -153,13 +153,6 @@ function main() {
     return;
   }
 
-  // 备份原文件（仅首次全量迁移时；补字段模式不再重复备份）
-  if (!fromBackup) {
-    const bak = BB_FILE.replace(/\.json$/, '') + `.bak-${Date.now()}.json`;
-    fs.copyFileSync(BB_FILE, bak);
-    console.log(`已备份原文件 → ${path.basename(bak)}`);
-  }
-
   // 幂等：扫描既有黑匣子笔记的 frontmatter id
   const existingById = new Map();
   if (fs.existsSync(path.join(VAULT, NOTE_ROOT))) {

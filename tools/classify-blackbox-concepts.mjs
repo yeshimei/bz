@@ -141,11 +141,6 @@ function main() {
     console.log('黑匣子/概念 目录不存在');
     return;
   }
-  // 备份 blackbox.json
-  const bak = BB_FILE.replace(/\.json$/, '') + `.bak-${Date.now()}.json`;
-  fs.copyFileSync(BB_FILE, bak);
-  console.log(`已备份 blackbox.json → ${path.basename(bak)}`);
-
   const bb = JSON.parse(fs.readFileSync(BB_FILE, 'utf8'));
   const index = bb.index || {};
 

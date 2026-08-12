@@ -35,13 +35,6 @@ function writeJSON(p, obj) {
   fs.mkdirSync(path.dirname(p), { recursive: true });
   fs.writeFileSync(p, JSON.stringify(obj, null, 2), 'utf8');
 }
-function backup(p) {
-  if (!fs.existsSync(p)) return null;
-  const ts = Date.now();
-  const bak = p.replace(/\.json$/, `.bak-${ts}.json`);
-  fs.copyFileSync(p, bak);
-  return bak;
-}
 
 /** 解析 frontmatter → {fm, body, raw}（fm 值为 string 或 string[]；raw 保留原文行） */
 function splitNote(p) {
@@ -173,8 +166,6 @@ async function classifyAll() {
   for (const items of pending) failed.push({ items: items.map((x) => x.rel) });
 
   if (Object.keys(result).length) {
-    const bak = backup(RESULT_FILE);
-    if (bak) console.log(`旧结果已备份 → ${path.basename(bak)}`);
     writeJSON(RESULT_FILE, { ts: new Date().toISOString(), categories: CATEGORIES, result, failed });
   }
   console.log(`\n结果：成功 ${Object.keys(result).length}/${notes.length} 篇 → ${RESULT_FILE}`);
@@ -196,8 +187,7 @@ function applyResult() {
   // 候选类以结果文件为准（AI 重分类后可能新增类，如「游戏」）
   const cats = Array.isArray(res.categories) && res.categories.length ? res.categories : CATEGORIES;
 
-  const bbBak = backup(BB_FILE);
-  console.log(`blackbox.json 已备份 → ${path.basename(bbBak)}`);
+  // 用户 2026-08-12 决策：不再生成 .bak 备份文件（脚本幂等可重跑）
   const bb = readJSON(BB_FILE, {});
   const index = bb.index || {};
 
