@@ -2,7 +2,7 @@
  * 黑匣子数据层（ticket 39 v2 + ticket 01 v3 笔记化）：blackbox.json v3 读写 + 无损迁移链
  * v1 → v2 → v3（v3 = ADR-0015 笔记即事实源：entries 不落盘，落盘派生层 + id→路径索引）。
  * load 时：v1/v2 自动迁移为笔记（幂等，单条失败留在原数据段下次重试）；v3 按索引水合条目，
- * 并扫描 `黑匣子/` 下未索引笔记自愈（崩溃孤儿/用户手建）。内存条目接口保持既有形状不变
+ * 并扫描 `我的/黑匣子/` 下未索引笔记自愈（崩溃孤儿/用户手建）。内存条目接口保持既有形状不变
  * （主面板/对话/复盘/AI 零改动）；save 只写派生层 + index。
  * 文件不存在/解析失败 → 默认数据（懒创建：save 时建目录建文件）；坏 JSON 先改名备份 .bak 保留现场。
  */
@@ -339,7 +339,7 @@ export class BlackBoxDataManager {
   }
 
   /**
-   * 水合：全量扫描 `黑匣子/` 下笔记（frontmatter + 正文关联区）→ 内存条目 + 内存 index（id → 路径）。
+   * 水合：全量扫描 `我的/黑匣子/` 下笔记（frontmatter + 正文关联区）→ 内存条目 + 内存 index（id → 路径）。
    * index 为运行时内存映射，由扫描构建、**不再持久化**（用户 2026-08-12 决策：index 字段冗余——
    * 笔记即事实源，load 每次全扫；笔记删了黑匣子就不显示，无残留索引）。
    * 关联区 `[[名]]` 解析：概念名 → id（related/terms）；解析不到的存入 pendingLinks（待补链）。
@@ -352,7 +352,7 @@ export class BlackBoxDataManager {
     const indexAdded: Record<string, string> = {};
     data.index = {};
 
-    // 全量扫描：黑匣子/ 下全部 bb 笔记（含分类子文件夹）→ 解析 → 内存 index
+    // 全量扫描：我的/黑匣子/ 下全部 bb 笔记（含分类子文件夹）→ 解析 → 内存 index
     const indexedIds = new Set<string>();
     for (const f of this.app.vault.getMarkdownFiles() as any[]) {
       if (!isBlackBoxNotePath(f.path)) continue;
@@ -482,7 +482,7 @@ export class BlackBoxDataManager {
     await this.app.vault.createFolder(dir);
   }
 
-  /** 写单条笔记（建目录兜底 + 去重路径 + 内容组装）；概念有分类 → `黑匣子/概念/<分类>/<名>.md`。返回最终路径。 */
+  /** 写单条笔记（建目录兜底 + 去重路径 + 内容组装）；概念有分类 → `我的/黑匣子/概念/<分类>/<名>.md`。返回最终路径。 */
   private async writeNote(entry: Entry, refs: Map<string, { name: string; path: string }>): Promise<string> {
     const catDir =
       entry.type === 'concept' && entry.category && entry.category.trim()
@@ -518,7 +518,7 @@ export class BlackBoxDataManager {
     return { count: data.entries.length, shouldReview: shouldAutoReview(data.entries.length, threshold) };
   }
 
-  /** AI 分类落位（2026-08-12 需求：分类由 AI 自动生成）：移动笔记到 `黑匣子/<类型>/<分类>/<名>.md`
+  /** AI 分类落位（2026-08-12 需求：分类由 AI 自动生成）：移动笔记到 `我的/黑匣子/<类型>/<分类>/<名>.md`
    *   + 内存条目 category + 重写笔记 frontmatter + 更新 index + 持久化。已在目标分类文件夹时仅补 fm。返回是否成功。 */
   async applyCategory(data: BlackBoxData, id: string, category: string): Promise<boolean> {
     const entry = data.entries.find((e) => e.id === id);

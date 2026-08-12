@@ -188,9 +188,9 @@ describe('笔记引擎纯函数', () => {
   });
 
   it('noteNameFromPath：去 .md 与去重后缀 -N', () => {
-    expect(noteNameFromPath('黑匣子/概念/提喻法.md')).toBe('提喻法');
-    expect(noteNameFromPath('黑匣子/概念/提喻法-2.md')).toBe('提喻法');
-    expect(noteNameFromPath('黑匣子/想法/标题-10.md')).toBe('标题');
+    expect(noteNameFromPath('我的/黑匣子/概念/提喻法.md')).toBe('提喻法');
+    expect(noteNameFromPath('我的/黑匣子/概念/提喻法-2.md')).toBe('提喻法');
+    expect(noteNameFromPath('我的/黑匣子/想法/标题-10.md')).toBe('标题');
   });
 
   it('entryNoteTitle：概念=名；文献/想法=正文前 20 字去空白', () => {
@@ -206,36 +206,36 @@ describe('笔记引擎纯函数', () => {
     expect(parseWikilinkNames('- 关联：[[提喻法]] [[借代|别名]] [[修辞#锚点]]')).toEqual(['提喻法', '借代', '修辞']);
     expect(parseWikilinkNames('无链接')).toEqual([]);
     // 2026-08-12：关联双链改完整路径 [[路径|名]]
-    expect(parseWikilinks('[[黑匣子/概念/文学/共鸣|共鸣]] [[提喻法]]')).toEqual([
-      { main: '黑匣子/概念/文学/共鸣', alias: '共鸣' },
+    expect(parseWikilinks('[[我的/黑匣子/概念/文学/共鸣|共鸣]] [[提喻法]]')).toEqual([
+      { main: '我的/黑匣子/概念/文学/共鸣', alias: '共鸣' },
       { main: '提喻法', alias: '' },
     ]);
   });
 
   it('三类笔记 roundtrip：frontmatter + 正文（完整路径双链）+ 关联区双向一致', () => {
     const refs = new Map([
-      ['bb_c2', { name: '借代', path: '黑匣子/概念/借代.md' }],
-      ['bb_c1', { name: '提喻法', path: '黑匣子/概念/提喻法.md' }],
-      ['bb_l1', { name: '修辞是语言的弹性', path: '黑匣子/摘抄/修辞是语言的弹性.md' }],
+      ['bb_c2', { name: '借代', path: '我的/黑匣子/概念/借代.md' }],
+      ['bb_c1', { name: '提喻法', path: '我的/黑匣子/概念/提喻法.md' }],
+      ['bb_l1', { name: '修辞是语言的弹性', path: '我的/黑匣子/摘抄/修辞是语言的弹性.md' }],
     ]);
     const concept = createEntry({ type: 'concept', name: '提喻法', definition: '以部分代整体的修辞', related: ['bb_c2'] });
     const lit = createEntry({ type: 'literature', text: '修辞是语言的弹性，让有限词句装下无限情意。', source: '《诗学》', terms: ['bb_c1'], emotions: ['触动'], links: ['https://a.com'] });
     const thought = createEntry({ type: 'thought', text: '给妹妹买吉他，她笑了很久。', emotions: ['温暖'], people: ['pf_1'], scene: '琴行', toward: 'others' });
-    const litPath = '黑匣子/摘抄/修辞是语言的弹性.md';
-    const thoughtPath = '黑匣子/想法/给妹妹买吉他，她笑了很久。.md';
+    const litPath = '我的/黑匣子/摘抄/修辞是语言的弹性.md';
+    const thoughtPath = '我的/黑匣子/想法/给妹妹买吉他，她笑了很久。.md';
     const cContent = buildNoteContent(concept, (id) => refs.get(id));
-    expect(cContent).toContain('- 关联：[[黑匣子/概念/借代|借代]]'); // 完整路径双链
-    const cBack = parseNoteContent(cContent, '黑匣子/概念/提喻法.md')!;
+    expect(cContent).toContain('- 关联：[[我的/黑匣子/概念/借代|借代]]'); // 完整路径双链
+    const cBack = parseNoteContent(cContent, '我的/黑匣子/概念/提喻法.md')!;
     expect(cBack.entry.name).toBe('提喻法');
     expect(cBack.entry.definition).toBe('以部分代整体的修辞');
     expect(cBack.relatedNames).toEqual([
       { ref: '借代', display: '借代' }, // fm.related（名字）
-      { ref: '黑匣子/概念/借代', display: '借代' }, // 正文关联区（完整路径）
+      { ref: '我的/黑匣子/概念/借代', display: '借代' }, // 正文关联区（完整路径）
     ]); // data 层：fm 名字与正文路径解析到同一 id，related 去重
 
     const lContent = buildNoteContent(lit, (id) => refs.get(id));
     expect(lContent).toContain('来源：《诗学》');
-    expect(lContent).toContain('关联概念：[[黑匣子/概念/提喻法|提喻法]]');
+    expect(lContent).toContain('关联概念：[[我的/黑匣子/概念/提喻法|提喻法]]');
     const lBack = parseNoteContent(lContent, litPath)!;
     expect(lBack.entry.text).toBe('修辞是语言的弹性，让有限词句装下无限情意。');
     expect(lBack.entry.source).toBe('《诗学》');
@@ -243,7 +243,7 @@ describe('笔记引擎纯函数', () => {
     expect(lBack.entry.emotions).toEqual(['触动']);
     expect(lBack.termsNames).toEqual([
       { ref: '提喻法', display: '提喻法' },
-      { ref: '黑匣子/概念/提喻法', display: '提喻法' },
+      { ref: '我的/黑匣子/概念/提喻法', display: '提喻法' },
     ]);
 
     const tContent = buildNoteContent(thought, (id) => refs.get(id));
@@ -256,18 +256,18 @@ describe('笔记引擎纯函数', () => {
   });
 
   it('解析容错：frontmatter 缺 id/type/createdAt 或类型非法 → null', () => {
-    expect(parseNoteContent('# 无 frontmatter', '黑匣子/概念/x.md')).toBeNull();
-    expect(parseNoteContent('---\nid: bb_x\ntype: concept\n---\n正文', '黑匣子/概念/x.md')).toBeNull(); // 缺 createdAt
-    expect(parseNoteContent('---\nid: bb_x\ntype: foo\ncreatedAt: t\n---\n正文', '黑匣子/概念/x.md')).toBeNull();
-    expect(parseNoteContent('---\nid: \ntype: concept\ncreatedAt: t\n---\n正文', '黑匣子/概念/x.md')).toBeNull();
+    expect(parseNoteContent('# 无 frontmatter', '我的/黑匣子/概念/x.md')).toBeNull();
+    expect(parseNoteContent('---\nid: bb_x\ntype: concept\n---\n正文', '我的/黑匣子/概念/x.md')).toBeNull(); // 缺 createdAt
+    expect(parseNoteContent('---\nid: bb_x\ntype: foo\ncreatedAt: t\n---\n正文', '我的/黑匣子/概念/x.md')).toBeNull();
+    expect(parseNoteContent('---\nid: \ntype: concept\ncreatedAt: t\n---\n正文', '我的/黑匣子/概念/x.md')).toBeNull();
   });
 
   it('解析容错：正文末尾「来源：」行（引用归属）不被当作关联区剥离（需空行分隔）', () => {
     const content = '---\nid: bb_l1\ntype: literature\ncreatedAt: t\n---\n引用文字\n来源：某书';
-    const p = parseNoteContent(content, '黑匣子/摘抄/x.md')!;
+    const p = parseNoteContent(content, '我的/黑匣子/摘抄/x.md')!;
     expect(p.entry.text).toBe('引用文字\n来源：某书'); // 无空行 → 全为正文
     const content2 = '---\nid: bb_l1\ntype: literature\ncreatedAt: t\n---\n引用文字\n\n来源：[[某笔记]]';
-    const p2 = parseNoteContent(content2, '黑匣子/摘抄/x.md')!;
+    const p2 = parseNoteContent(content2, '我的/黑匣子/摘抄/x.md')!;
     expect(p2.entry.text).toBe('引用文字');
   });
 });
@@ -309,19 +309,19 @@ describe('BlackBoxDataManager load 迁移（v1/v2 → v3 笔记化）', () => {
   it('笔记水合：frontmatter 完整字段读回（name/related/terms/source/links/标题）', async () => {
     const vault = new MockVault();
     vault.files.set(
-      '黑匣子/概念/提喻法.md',
+      '我的/黑匣子/概念/提喻法.md',
       '---\nid: bb_c1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\nname: 提喻法\nrelated:\n  - 借代\n---\n以部分代整体的修辞\n'
     );
     vault.files.set(
-      '黑匣子/概念/借代.md',
+      '我的/黑匣子/概念/借代.md',
       '---\nid: bb_c2\ntype: concept\ncreatedAt: "2026-08-02T00:00:00.000Z"\nname: 借代\n---\n用相关事物代替本体\n'
     );
     vault.files.set(
-      '黑匣子/摘抄/修辞的弹性.md',
+      '我的/黑匣子/摘抄/修辞的弹性.md',
       '---\nid: bb_l1\ntype: literature\ncreatedAt: "2026-08-03T00:00:00.000Z"\ntitle: 修辞的弹性\nsource: "《诗学》"\nterms:\n  - 提喻法\nlinks:\n  - https://a.com\n---\n修辞是语言的弹性。\n'
     );
     vault.files.set(
-      '黑匣子/想法/夏夜的吉他声.md',
+      '我的/黑匣子/想法/夏夜的吉他声.md',
       '---\nid: bb_t1\ntype: thought\ncreatedAt: "2026-08-04T00:00:00.000Z"\ntitle: 夏夜的吉他声\n---\n给妹妹买吉他，她笑了很久。\n'
     );
     vault.files.set(
@@ -329,10 +329,10 @@ describe('BlackBoxDataManager load 迁移（v1/v2 → v3 笔记化）', () => {
       JSON.stringify({
         version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {},
         index: {
-          bb_c1: '黑匣子/概念/提喻法.md',
-          bb_c2: '黑匣子/概念/借代.md',
-          bb_l1: '黑匣子/摘抄/修辞的弹性.md',
-          bb_t1: '黑匣子/想法/夏夜的吉他声.md',
+          bb_c1: '我的/黑匣子/概念/提喻法.md',
+          bb_c2: '我的/黑匣子/概念/借代.md',
+          bb_l1: '我的/黑匣子/摘抄/修辞的弹性.md',
+          bb_t1: '我的/黑匣子/想法/夏夜的吉他声.md',
         },
       })
     );
@@ -353,12 +353,12 @@ describe('BlackBoxDataManager load 迁移（v1/v2 → v3 笔记化）', () => {
   it('LK-99 场景：概念名含「-数字」不被去重后缀剥离（frontmatter name 权威）', async () => {
     const vault = new MockVault();
     vault.files.set(
-      '黑匣子/概念/LK-99.md',
+      '我的/黑匣子/概念/LK-99.md',
       '---\nid: bb_lk\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\nname: LK-99\n---\n铜掺杂铅磷灰石化合物\n'
     );
     vault.files.set(
       'CONFIG/STORAGE/blackbox.json',
-      JSON.stringify({ version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {}, index: { bb_lk: '黑匣子/概念/LK-99.md' } })
+      JSON.stringify({ version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {}, index: { bb_lk: '我的/黑匣子/概念/LK-99.md' } })
     );
     const { app } = setup(vault);
     const data = await new BlackBoxDataManager(app).load();
@@ -399,14 +399,14 @@ describe('v3 水合容错', () => {
     // 历史文件即使残留 index 指向缺失文件，也不影响展示（index 不再持久化、load 忽略）
     vault.files.set(
       'CONFIG/STORAGE/blackbox.json',
-      JSON.stringify({ version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {}, index: { bb_x: '黑匣子/概念/不存在的.md', bb_y: '黑匣子/概念/存在的.md' } })
+      JSON.stringify({ version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {}, index: { bb_x: '我的/黑匣子/概念/不存在的.md', bb_y: '我的/黑匣子/概念/存在的.md' } })
     );
-    vault.files.set('黑匣子/概念/存在的.md', '---\nid: bb_y\ntype: concept\ncreatedAt: t\n---\n存在\n');
+    vault.files.set('我的/黑匣子/概念/存在的.md', '---\nid: bb_y\ntype: concept\ncreatedAt: t\n---\n存在\n');
     const { app } = setup(vault);
     const data = await new BlackBoxDataManager(app).load();
     expect(data.entries.length).toBe(1);
     expect(data.index['bb_x']).toBeUndefined(); // 无该笔记 → 内存 index 无条目
-    expect(data.index['bb_y']).toBe('黑匣子/概念/存在的.md');
+    expect(data.index['bb_y']).toBe('我的/黑匣子/概念/存在的.md');
     // save 后 index 不持久化
     await new BlackBoxDataManager(app).save(data);
     const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/blackbox.json')!);
@@ -415,7 +415,7 @@ describe('v3 水合容错', () => {
 
   it('笔记损坏（frontmatter 解析失败）→ 跳过该条不报错，下次 load 重试', async () => {
     const vault = new MockVault();
-    vault.files.set('黑匣子/概念/坏笔记.md', '没有任何 frontmatter 的内容');
+    vault.files.set('我的/黑匣子/概念/坏笔记.md', '没有任何 frontmatter 的内容');
     vault.files.set(
       'CONFIG/STORAGE/blackbox.json',
       JSON.stringify({ version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {}, index: {} })
@@ -429,7 +429,7 @@ describe('v3 水合容错', () => {
   it('手写 bb 笔记（无 index 记录）→ 全量扫描收录（内存 index + entries）', async () => {
     const vault = new MockVault();
     vault.files.set(
-      '黑匣子/概念/我手写的概念.md',
+      '我的/黑匣子/概念/我手写的概念.md',
       '---\nid: bb_hand\ntype: concept\ncreatedAt: "2026-08-09T00:00:00.000Z"\n---\n手写定义\n\n- 关联：[[提喻法]]\n'
     );
     vault.files.set(
@@ -441,7 +441,7 @@ describe('v3 水合容错', () => {
     expect(data.entries.length).toBe(1);
     expect(data.entries[0].id).toBe('bb_hand');
     expect(data.entries[0].name).toBe('我手写的概念');
-    expect(data.index['bb_hand']).toBe('黑匣子/概念/我手写的概念.md'); // 运行时内存映射
+    expect(data.index['bb_hand']).toBe('我的/黑匣子/概念/我手写的概念.md'); // 运行时内存映射
     // save 后不写 index 字段
     const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/blackbox.json')!);
     expect(raw.index).toBeUndefined();
@@ -450,11 +450,11 @@ describe('v3 水合容错', () => {
   it('关联区未解析名字 → pendingLinks（待补链）；解析后补进 related', async () => {
     const vault = new MockVault();
     vault.files.set(
-      '黑匣子/概念/新概念.md',
+      '我的/黑匣子/概念/新概念.md',
       '---\nid: bb_new\ntype: concept\ncreatedAt: "2026-08-09T00:00:00.000Z"\n---\n定义\n\n- 关联：[[提喻法]] [[未来概念]]\n'
     );
     vault.files.set(
-      '黑匣子/概念/提喻法.md',
+      '我的/黑匣子/概念/提喻法.md',
       '---\nid: bb_c1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\n---\n以部分代整体\n'
     );
     vault.files.set(
@@ -469,7 +469,7 @@ describe('v3 水合容错', () => {
         reviews: [],
         chat: [],
         meta: {},
-        index: { bb_new: '黑匣子/概念/新概念.md', bb_c1: '黑匣子/概念/提喻法.md' },
+        index: { bb_new: '我的/黑匣子/概念/新概念.md', bb_c1: '我的/黑匣子/概念/提喻法.md' },
       })
     );
     const { app } = setup(vault);
@@ -657,7 +657,7 @@ describe('BlackBoxDataManager 笔记化写入', () => {
     const r = await dm.addEntry(data, createEntry({ type: 'concept', name: '提喻法', definition: '以部分代整体' }));
     expect(r.count).toBe(1);
     expect(r.shouldReview).toBe(false);
-    const notePath = '黑匣子/概念/提喻法.md';
+    const notePath = '我的/黑匣子/概念/提喻法.md';
     expect(vault.files.has(notePath)).toBe(true);
     expect(vault.files.get(notePath)).toContain('id: ' + data.entries[0].id);
     expect(vault.files.get(notePath)).toContain('以部分代整体');
@@ -681,12 +681,12 @@ describe('BlackBoxDataManager 笔记化写入', () => {
     await dm.addEntry(data, createEntry({ type: 'concept', name: '提喻法' }));
     data = await dm.load();
     await dm.addEntry(data, createEntry({ type: 'concept', name: '提喻法' }));
-    expect(vault.files.has('黑匣子/概念/提喻法.md')).toBe(true);
-    expect(vault.files.has('黑匣子/概念/提喻法-1.md')).toBe(true);
+    expect(vault.files.has('我的/黑匣子/概念/提喻法.md')).toBe(true);
+    expect(vault.files.has('我的/黑匣子/概念/提喻法-1.md')).toBe(true);
     // 非法字符清洗
     const weird = createEntry({ type: 'concept', name: 'a/b:c' });
     await dm.addEntry(data, weird);
-    expect(vault.files.has('黑匣子/概念/abc.md')).toBe(true);
+    expect(vault.files.has('我的/黑匣子/概念/abc.md')).toBe(true);
     const back = await dm.load();
     const w = back.entries.find((e) => e.id === weird.id)!;
     expect(w.name).toBe('a/b:c'); // frontmatter name 权威（文件名只是载体，不再被清洗影响）
@@ -719,7 +719,7 @@ describe('BlackBoxDataManager 笔记化写入', () => {
     data = await dm.load();
     await dm.backfillRelated(data, 'bb_new', ['bb_old']);
     // 旧概念笔记关联区补上 [[完整路径|名]]
-    expect(vault.files.get('黑匣子/概念/提喻法.md')).toContain('- 关联：[[黑匣子/概念/隐喻|隐喻]]');
+    expect(vault.files.get('我的/黑匣子/概念/提喻法.md')).toContain('- 关联：[[我的/黑匣子/概念/隐喻|隐喻]]');
     const back = await dm.load();
     const old = back.entries.find((e) => e.id === 'bb_old')!;
     expect(old.related).toContain('bb_new');
@@ -739,21 +739,21 @@ describe('BlackBoxDataManager 笔记化写入', () => {
         reviews: [],
         chat: [],
         meta: {},
-        index: { bb_a: '黑匣子/概念/A.md', bb_b: '黑匣子/概念/B.md' },
+        index: { bb_a: '我的/黑匣子/概念/A.md', bb_b: '我的/黑匣子/概念/B.md' },
       })
     );
-    vault.files.set('黑匣子/概念/A.md', '---\nid: bb_a\ntype: concept\ncreatedAt: t\n---\n定义A\n\n- 关联：[[B]]\n');
-    vault.files.set('黑匣子/概念/B.md', '---\nid: bb_b\ntype: concept\ncreatedAt: t\n---\n定义B\n\n- 关联：[[A]]\n');
+    vault.files.set('我的/黑匣子/概念/A.md', '---\nid: bb_a\ntype: concept\ncreatedAt: t\n---\n定义A\n\n- 关联：[[B]]\n');
+    vault.files.set('我的/黑匣子/概念/B.md', '---\nid: bb_b\ntype: concept\ncreatedAt: t\n---\n定义B\n\n- 关联：[[A]]\n');
     const { app } = setup(vault);
     const dm = new BlackBoxDataManager(app);
     const data = await dm.load();
     expect(data.entries.length).toBe(2);
     await dm.deleteEntry(data, 'bb_a');
-    expect(vault.files.has('黑匣子/概念/A.md')).toBe(false);
+    expect(vault.files.has('我的/黑匣子/概念/A.md')).toBe(false);
     expect(data.index['bb_a']).toBeUndefined();
     expect(data.entries.length).toBe(1);
     // B 的关联区引用 A 被清理
-    expect(vault.files.get('黑匣子/概念/B.md')).not.toContain('[[A]]');
+    expect(vault.files.get('我的/黑匣子/概念/B.md')).not.toContain('[[A]]');
     const back = await dm.load();
     expect(back.entries.length).toBe(1);
     expect(back.entries[0].related).toEqual([]);
@@ -825,22 +825,22 @@ describe('frontmatter 关联权威（用户需求：正文关联区被手动修�
 
   async function loadWithNotes(vault: MockVault, c1Body: string) {
     vault.files.set(
-      '黑匣子/概念/提喻法.md',
+      '我的/黑匣子/概念/提喻法.md',
       '---\nid: bb_c1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\nname: 提喻法\nrelated:\n  - 借代\n  - 隐喻\n---\n' + c1Body
     );
     vault.files.set(
-      '黑匣子/概念/借代.md',
+      '我的/黑匣子/概念/借代.md',
       '---\nid: bb_c2\ntype: concept\ncreatedAt: "2026-08-02T00:00:00.000Z"\nname: 借代\n---\n用相关事物代替本体\n'
     );
     vault.files.set(
-      '黑匣子/概念/隐喻.md',
+      '我的/黑匣子/概念/隐喻.md',
       '---\nid: bb_c3\ntype: concept\ncreatedAt: "2026-08-03T00:00:00.000Z"\nname: 隐喻\n---\n暗含的比喻\n'
     );
     vault.files.set(
       'CONFIG/STORAGE/blackbox.json',
       JSON.stringify({
         version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {},
-        index: { bb_c1: '黑匣子/概念/提喻法.md', bb_c2: '黑匣子/概念/借代.md', bb_c3: '黑匣子/概念/隐喻.md' },
+        index: { bb_c1: '我的/黑匣子/概念/提喻法.md', bb_c2: '我的/黑匣子/概念/借代.md', bb_c3: '我的/黑匣子/概念/隐喻.md' },
       })
     );
     const { app } = setup(vault);
@@ -880,14 +880,14 @@ describe('AI 自动分类落位（2026-08-12 需求）', () => {
 
   async function seedOne(vault: MockVault) {
     vault.files.set(
-      '黑匣子/概念/提喻法.md',
+      '我的/黑匣子/概念/提喻法.md',
       '---\nid: bb_c1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\nname: 提喻法\n---\n以部分代整体的修辞\n'
     );
     vault.files.set(
       'CONFIG/STORAGE/blackbox.json',
       JSON.stringify({
         version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {},
-        index: { bb_c1: '黑匣子/概念/提喻法.md' },
+        index: { bb_c1: '我的/黑匣子/概念/提喻法.md' },
       })
     );
     const { app } = setup(vault);
@@ -900,9 +900,9 @@ describe('AI 自动分类落位（2026-08-12 需求）', () => {
     let data = await dm.load();
     expect(data.entries[0].category).toBeUndefined();
     expect(await dm.applyCategory(data, 'bb_c1', '文学')).toBe(true);
-    const moved = '黑匣子/概念/文学/提喻法.md';
+    const moved = '我的/黑匣子/概念/文学/提喻法.md';
     expect(vault.files.has(moved)).toBe(true);
-    expect(vault.files.has('黑匣子/概念/提喻法.md')).toBe(false);
+    expect(vault.files.has('我的/黑匣子/概念/提喻法.md')).toBe(false);
     expect(vault.files.get(moved)!).toContain('category: 文学'); // quoteScalar：纯中文不加引号
     // index 与内存条目同步
     data = await dm.load();
@@ -920,10 +920,10 @@ describe('AI 自动分类落位（2026-08-12 需求）', () => {
     expect(await dm.applyCategory(data, 'bb_x', '文学')).toBe(false); // 未知 id
     expect(await dm.applyCategory(data, 'bb_c1', '  ')).toBe(false); // 空分类
     expect(await dm.applyCategory(data, 'bb_c1', '文学')).toBe(true);
-    expect(vault.files.has('黑匣子/概念/文学/提喻法.md')).toBe(true);
+    expect(vault.files.has('我的/黑匣子/概念/文学/提喻法.md')).toBe(true);
     // 重复应用：已在文学/ → 原地补 fm 不报错
     expect(await dm.applyCategory(data, 'bb_c1', '文学')).toBe(true);
-    expect(vault.files.get('黑匣子/概念/文学/提喻法.md')!).toContain('category: 文学');
+    expect(vault.files.get('我的/黑匣子/概念/文学/提喻法.md')!).toContain('category: 文学');
   });
 });
 
@@ -938,15 +938,15 @@ describe('同名概念（不同分类）关联解析（2026-08-12 需求）', ()
     const vault = new MockVault();
     // 文学/共鸣.md 与 心理学/共鸣.md 同名
     vault.files.set(
-      '黑匣子/概念/文学/共鸣.md',
+      '我的/黑匣子/概念/文学/共鸣.md',
       '---\nid: bb_r1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\nname: 共鸣\ncategory: 文学\nrelated:\n  - 共鸣\n---\n写作中的情感共鸣\n\n- 关联：[[共鸣]]\n'
     );
     vault.files.set(
-      '黑匣子/概念/心理学/共鸣.md',
+      '我的/黑匣子/概念/心理学/共鸣.md',
       '---\nid: bb_r2\ntype: concept\ncreatedAt: "2026-08-02T00:00:00.000Z"\nname: 共鸣\ncategory: 心理学\n---\n共情产生的心理现象\n'
     );
     vault.files.set(
-      '黑匣子/摘抄/关于共鸣.md',
+      '我的/黑匣子/摘抄/关于共鸣.md',
       '---\nid: bb_l1\ntype: literature\ncreatedAt: "2026-08-03T00:00:00.000Z"\ntitle: 关于共鸣\nterms:\n  - 共鸣\n---\n好的作品让人共鸣\n'
     );
     vault.files.set(
@@ -964,8 +964,8 @@ describe('同名概念（不同分类）关联解析（2026-08-12 需求）', ()
     const lit = data.entries.find((e) => e.id === 'bb_l1')!;
     expect(lit.terms).toEqual(['bb_r1', 'bb_r2']);
     // 各自内存 index 独立
-    expect(data.index['bb_r1']).toBe('黑匣子/概念/文学/共鸣.md');
-    expect(data.index['bb_r2']).toBe('黑匣子/概念/心理学/共鸣.md');
+    expect(data.index['bb_r1']).toBe('我的/黑匣子/概念/文学/共鸣.md');
+    expect(data.index['bb_r2']).toBe('我的/黑匣子/概念/心理学/共鸣.md');
   });
 
   it('同分类真重名录入：uniquePath 落 -1 文件（不同 id 并存不覆盖）', async () => {
@@ -976,8 +976,8 @@ describe('同名概念（不同分类）关联解析（2026-08-12 需求）', ()
     await dm.addEntry(data, createEntry({ type: 'concept', name: '提喻法' }));
     data = await dm.load();
     await dm.addEntry(data, createEntry({ type: 'concept', name: '提喻法' }));
-    expect(vault.files.has('黑匣子/概念/提喻法.md')).toBe(true);
-    expect(vault.files.has('黑匣子/概念/提喻法-1.md')).toBe(true);
+    expect(vault.files.has('我的/黑匣子/概念/提喻法.md')).toBe(true);
+    expect(vault.files.has('我的/黑匣子/概念/提喻法-1.md')).toBe(true);
     const back = await dm.load();
     expect(back.entries.filter((e) => e.name === '提喻法').length).toBe(2);
     expect(new Set(back.entries.map((e) => e.id)).size).toBe(2); // id 不重复
@@ -995,17 +995,17 @@ describe('完整路径双链（2026-08-12：[[完整路径|标题]]）', () => {
     const vault = new MockVault();
     // 两个同名概念（不同分类）
     vault.files.set(
-      '黑匣子/概念/文学/共鸣.md',
+      '我的/黑匣子/概念/文学/共鸣.md',
       '---\nid: bb_r1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\nname: 共鸣\n---\n写作中的情感共鸣\n'
     );
     vault.files.set(
-      '黑匣子/概念/心理学/共鸣.md',
+      '我的/黑匣子/概念/心理学/共鸣.md',
       '---\nid: bb_r2\ntype: concept\ncreatedAt: "2026-08-02T00:00:00.000Z"\nname: 共鸣\n---\n共情产生的心理现象\n'
     );
     // 新概念用完整路径双链指向「文学/共鸣」
     vault.files.set(
-      '黑匣子/概念/文学/代入感.md',
-      '---\nid: bb_r3\ntype: concept\ncreatedAt: "2026-08-03T00:00:00.000Z"\nname: 代入感\n---\n让读者身临其境\n\n- 关联：[[黑匣子/概念/文学/共鸣|共鸣]]\n'
+      '我的/黑匣子/概念/文学/代入感.md',
+      '---\nid: bb_r3\ntype: concept\ncreatedAt: "2026-08-03T00:00:00.000Z"\nname: 代入感\n---\n让读者身临其境\n\n- 关联：[[我的/黑匣子/概念/文学/共鸣|共鸣]]\n'
     );
     vault.files.set(
       'CONFIG/STORAGE/blackbox.json',
@@ -1020,8 +1020,8 @@ describe('完整路径双链（2026-08-12：[[完整路径|标题]]）', () => {
   it('路径双链指向已删除笔记 → pendingLinks 用显示名（别名）', async () => {
     const vault = new MockVault();
     vault.files.set(
-      '黑匣子/概念/新概念.md',
-      '---\nid: bb_n1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\nname: 新概念\n---\n定义\n\n- 关联：[[黑匣子/概念/已删除的卡|旧名]] [[普通名字]]\n'
+      '我的/黑匣子/概念/新概念.md',
+      '---\nid: bb_n1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\nname: 新概念\n---\n定义\n\n- 关联：[[我的/黑匣子/概念/已删除的卡|旧名]] [[普通名字]]\n'
     );
     vault.files.set(
       'CONFIG/STORAGE/blackbox.json',

@@ -16,7 +16,7 @@ export function seedV3(vault: MockVault, payload: Record<string, any>): Record<s
   }
   const index: Record<string, string> = {};
   for (const e of entries) {
-    const dir = `黑匣子/${TYPE_DIR[e.type] || '想法'}`;
+    const dir = `我的/黑匣子/${TYPE_DIR[e.type] || '想法'}`;
     const title =
       e.type === 'concept'
         ? String(e.name || '未命名')
