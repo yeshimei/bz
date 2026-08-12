@@ -30,6 +30,14 @@ function mockOllama(content: string) {
   return fetchMock;
 }
 
+/** mock Ollama 顺序响应（如：先生成卡片 JSON，再返回分类名） */
+function mockOllamaSeq(contents: string[]) {
+  let i = 0;
+  const fetchMock = vi.fn(async () => ({ ok: true, json: async () => ({ message: { content: contents[Math.min(i++, contents.length - 1)] } }) }));
+  (global as any).fetch = fetchMock;
+  return fetchMock;
+}
+
 /** mock Ollama 失败（永不拒收降级路径） */
 function mockOllamaFail() {
   const fetchMock = vi.fn(async () => {
@@ -737,5 +745,60 @@ describe('摘抄/想法直达命令（ticket 03：标题 AI 生成 + 提炼想�
       expect((await loaded(app, vault)).entries.some((e: any) => e.type === 'thought')).toBe(true);
     });
     expect(vault.files.has('黑匣子/想法/夏夜的吉他声.md')).toBe(true);
+  });
+
+  it('AI 自动分类（2026-08-12 需求）：保存后异步归入分类文件夹（移动+fm+index+toast），分类输入框已移除', async () => {
+    mockOllamaSeq([
+      '{"definition": "一种以部分代整体的修辞手法。", "relatedNames": []}',
+      '文学', // autoClassify 返回分类
+    ]);
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCapture(app);
+    selectType('concept');
+    // 分类输入框已移除（面板去分类）
+    expect(document.getElementById('bz-blackbox-concept-category')).toBeNull();
+    setValue('bz-blackbox-concept-name', '隐喻');
+    document.getElementById('bz-blackbox-concept-gen')!.click();
+    await vi.waitFor(async () => {
+      expect((document.getElementById('bz-blackbox-concept-def') as HTMLTextAreaElement).value).toContain('修辞');
+    });
+    document.getElementById('bz-blackbox-concept-gen')!.click(); // 确认录入
+    // 等异步分类完成：笔记移动到 文学/ 子文件夹 + fm category + index
+    await vi.waitFor(async () => {
+      expect(vault.files.has('黑匣子/概念/文学/隐喻.md')).toBe(true);
+    });
+    expect(hasNotice(/已自动归入「文学」/)).toBe(true);
+    const raw = vault.files.get('黑匣子/概念/文学/隐喻.md')!;
+    expect(raw).toContain('category: 文学');
+    const d = await new BlackBoxDataManager(app).load();
+    const entry = d.entries.find((e) => e.name === '隐喻')!;
+    expect(entry.category).toBe('文学');
+    expect(d.index[entry.id]).toBe('黑匣子/概念/文学/隐喻.md');
+  });
+
+  it('AI 自动分类失败（Ollama 不可用）→ 静默留根目录，不打扰录入', async () => {
+    mockOllamaFail();
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCapture(app);
+    selectType('concept');
+    setValue('bz-blackbox-concept-name', '隐喻');
+    document.getElementById('bz-blackbox-concept-gen')!.click();
+    // 生成失败 → 降级为确认录入 → 再点保存
+    await vi.waitFor(async () => {
+      expect(document.getElementById('bz-blackbox-concept-gen')!.textContent).toBe('✅ 确定录入');
+    });
+    document.getElementById('bz-blackbox-concept-gen')!.click();
+    await vi.waitFor(async () => {
+      expect(document.getElementById('bz-blackbox-step-conn')!.style.display).toBe('block');
+    });
+    // 分类失败：静默留在根目录
+    await new Promise((r) => setTimeout(r, 500));
+    expect(vault.files.has('黑匣子/概念/隐喻.md')).toBe(true);
+    expect(vault.files.has('黑匣子/概念/文学/隐喻.md')).toBe(false);
+    expect(hasNotice(/已自动归入/)).toBe(false); // 不打扰
   });
 });

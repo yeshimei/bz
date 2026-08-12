@@ -185,4 +185,25 @@ describe('黑匣子实时同步（ticket 05）', () => {
     await openBlackBoxPanel(app);
     expect(streamCards().length).toBe(3);
   });
+
+  it('自动维护：笔记手动拖入分类文件夹 → frontmatter category 跟随目录；拖回根目录 → 移除', async () => {
+    const vault = new MockVault();
+    seedNotes(vault);
+    const { app } = setup(vault);
+    ensureBlackBoxSync(app);
+    // 手动移动到 黑匣子/概念/文学/（分类文件夹）
+    const old = vault.file('黑匣子/概念/提喻法.md');
+    await vault.rename(old, '黑匣子/概念/文学/提喻法.md');
+    vault.emit('rename', vault.file('黑匣子/概念/文学/提喻法.md'), '黑匣子/概念/提喻法.md');
+    await new Promise((r) => setTimeout(r, 400));
+    const raw = vault.files.get('黑匣子/概念/文学/提喻法.md')!;
+    expect(raw).toContain('category: "文学"'); // sync 层写死带引号（YAML 合法，解析器剥引号）
+    // 拖回类型根目录 → category 移除
+    const moved = vault.file('黑匣子/概念/文学/提喻法.md');
+    await vault.rename(moved, '黑匣子/概念/提喻法.md');
+    vault.emit('rename', vault.file('黑匣子/概念/提喻法.md'), '黑匣子/概念/文学/提喻法.md');
+    await new Promise((r) => setTimeout(r, 400));
+    const back = vault.files.get('黑匣子/概念/提喻法.md')!;
+    expect(back).not.toContain('category:');
+  });
 });

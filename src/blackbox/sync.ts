@@ -36,10 +36,46 @@ export function ensureBlackBoxSync(app: App): void {
   const v: any = app.vault;
   // 仅监听 rename/delete：create 由 load 孤儿自愈兜底（防插件自身写笔记触发 refresh → 并发迁移循环）
   for (const ev of ['rename', 'delete']) {
-    const ref = v.on(ev, (file: any) => {
-      if (file && file.path) onEvent(file.path);
+    const ref = v.on(ev, (file: any, oldPath?: string) => {
+      if (file && file.path) {
+        if (ev === 'rename' && oldPath && oldPath !== file.path) void syncCategoryFromMove(file.path, oldPath);
+        onEvent(file.path);
+      }
     });
     offRefs.push({ off: () => v.offref(ref) });
+  }
+}
+
+/** 自动维护（2026-08-12 需求：分类自动维护）：笔记被手动拖到分类子文件夹 → frontmatter
+ *  category 跟随目录；拖回类型根目录 → 移除 category。纯文件层操作，失败静默。 */
+async function syncCategoryFromMove(newPath: string, oldPath: string): Promise<void> {
+  if (!isBlackBoxNotePath(newPath)) return;
+  try {
+    const app = getApp();
+    if (!app) return;
+    const newDir = newPath.slice(0, newPath.lastIndexOf('/'));
+    const oldDir = oldPath.slice(0, oldPath.lastIndexOf('/'));
+    if (newDir === oldDir) return;
+    const f = app.vault.getAbstractFileByPath(newPath);
+    if (!f) return;
+    const raw = await app.vault.read(f as any);
+    const m = raw.match(/^---\n([\s\S]*?)\n---/);
+    if (!m) return;
+    const typeRoots = ['黑匣子/概念', '黑匣子/摘抄', '黑匣子/想法'];
+    const cat = typeRoots.some((r) => newDir.startsWith(r + '/')) ? newDir.slice(newDir.lastIndexOf('/') + 1) : '';
+    const lines = m[1].split('\n');
+    const idx = lines.findIndex((l) => /^category:/.test(l));
+    if (cat) {
+      const line = `category: "${cat}"`;
+      if (idx >= 0) lines[idx] = line;
+      else lines.splice(1, 0, line);
+    } else if (idx >= 0) {
+      lines.splice(idx, 1);
+    }
+    const next = `---\n${lines.join('\n')}\n---${raw.slice(m[0].length)}`;
+    if (next !== raw) await app.vault.modify(f as any, next);
+  } catch (e) {
+    /* 静默：手动移动不同步 fm 也不影响数据完整性 */
   }
 }
 

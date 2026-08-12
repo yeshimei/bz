@@ -55,8 +55,6 @@ let newProfileOpen = false;
 let conceptName = '';
 let conceptDefinition = '';
 let conceptRelatedIds: string[] = [];
-/** 概念分类（可选，落盘 `黑匣子/概念/<分类>/<名>.md`） */
-let conceptCategory = '';
 /** 概念名由选中文字自动填充 → 只读锁定（内容 ≡ 选区） */
 let conceptNameLocked = false;
 // 文献表单
@@ -153,7 +151,6 @@ function resetEntry(): void {
   conceptDefinition = '';
   conceptRelatedIds = [];
   conceptNameLocked = false;
-  conceptCategory = '';
   literatureText = '';
   literatureSource = '';
   literatureTextLocked = false;
@@ -313,15 +310,6 @@ function renderStepContent(): void {
       if (!conceptNameLocked) conceptName = nameInput.value.trim();
     });
     box.appendChild(nameInput);
-    // 分类（可选）：落盘 `黑匣子/概念/<分类>/<名>.md`
-    const catInput = document.createElement('input');
-    catInput.type = 'text';
-    catInput.id = 'bz-blackbox-concept-category';
-    catInput.className = 'bz-blackbox-input';
-    catInput.placeholder = '分类（可选）：如 心理学/医学，落盘到对应子文件夹';
-    catInput.value = conceptCategory;
-    catInput.addEventListener('input', () => (conceptCategory = catInput.value.trim()));
-    box.appendChild(catInput);
     const defInput = document.createElement('textarea');
     defInput.id = 'bz-blackbox-concept-def';
     defInput.className = 'bz-blackbox-textarea';
@@ -468,7 +456,6 @@ async function saveConcept(): Promise<void> {
     name,
     definition: conceptDefinition.trim(),
     related: conceptRelatedIds,
-    category: conceptCategory.trim() || undefined,
   });
   try {
     const m = manager(appRef);
@@ -483,6 +470,7 @@ async function saveConcept(): Promise<void> {
     // 原位注入（ticket 06）：来源笔记选区原文 → [[概念名|原文字]]（守卫命中跳过 + toast）
     await injectIntoSourceNote(appRef, selectionSnap, entry.name || '');
     notice('✅ 已录入概念卡片');
+    void autoClassify(appRef, entry.id);
     if (directType) {
       // 直达命令：保存后直接关闭（可连续快速录入）
       closeBlackBoxCapture();
@@ -496,6 +484,23 @@ async function saveConcept(): Promise<void> {
   } catch (e) {
     console.warn('黑匣子概念保存失败', e);
     notice('❌ 存入失败', 'error');
+  }
+}
+
+/** AI 自动分类（2026-08-12 需求：分类由 AI 自动生成，自动放入对应分类文件夹）：
+ *  保存后异步：load 最新 → AI 判类 → applyCategory 移动+fm+index；失败静默留根目录不打扰录入。 */
+async function autoClassify(app: App, id: string): Promise<void> {
+  try {
+    const m = manager(app);
+    const d = await m.load();
+    const entry = d.entries.find((e) => e.id === id);
+    if (!entry) return;
+    const cat = await new BlackBoxAI().classifyCard(entry);
+    if (!cat || cat === '未分类') return;
+    const ok = await m.applyCategory(d, id, cat);
+    if (ok) notice(`📁 已自动归入「${cat}」`);
+  } catch {
+    // 静默：AI 不可用/失败 → 卡片留在根目录
   }
 }
 
@@ -1032,6 +1037,8 @@ async function saveEntry(): Promise<void> {
     for (const e of entries) {
       const r = await m.addEntry(latest, e);
       shouldReview = shouldReview || r.shouldReview;
+      // AI 自动分类（2026-08-12 需求）：保存后异步归入分类文件夹，失败静默留根目录
+      void autoClassify(appRef, e.id);
     }
     data = latest;
     // 原位注入（ticket 06）：摘抄目标 = AI 标题（保存时已确定）；概念/摘抄保存时带选区才触发
