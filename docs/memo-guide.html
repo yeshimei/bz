@@ -329,7 +329,7 @@
   <p class="sub">包仔 Obsidian 插件 · 面向初级程序员的源码导读（含精简实录）</p>
   <button class="start" onclick="go(1)">开始学习 →</button>
   <div class="meta">
-    6 个文件 · 1739 行 · 精简后减少约 200 行<br>
+    6 个文件 · 1622 行 · 两轮共减少约 300 行（含样式提取）<br>
     全部 1220 个自动化测试通过，功能零损失<br>
     按 <span class="kbd">←</span> <span class="kbd">→</span> 翻页，或点击下方圆点
   </div>
@@ -377,7 +377,7 @@
       <li>主面板 + 添加/编辑弹窗</li>
       <li>条目卡片渲染、排序</li>
       <li>设置弹窗（14 项）</li>
-      <li>最大：1216 行（精简后）</li>
+      <li>最大：1099 行（样式已提取）</li>
     </ul></div>
     <div class="card"><div class="title"><span class="ico">⏰</span>due.ts <span class="pill ui">时间算法</span></div><ul>
       <li>判断：过期 / 今天到期 / 未来</li>
@@ -621,7 +621,47 @@
   <div class="callout green"><b>三个机制的共同点：</b>全部受设置开关控制（<code>openNoteReminder</code> / <code>clipboardMonitor</code> / <code>memoDueNotify</code>），关掉就不注册监听/不启动定时器——省资源。这也是精简后 <code>ensureFileOpenListener(enable)</code> / <code>ensureClipboardListener(enable)</code> 的由来：注册与反注册逻辑合二为一。</div>
 </section>
 
-<!-- ================= 10. 精简前 vs 后 ================= -->
+<!-- ================= 10. 样式提取 ================= -->
+<section class="slide">
+  <h2>十、样式提取：从内联到样式表 <span class="tag">styles.css 收敛</span></h2>
+  <p>第一轮精简后，样式仍是「内联」的（写在 JS 里）。第二轮把它们全部提取到 <code>styles.css</code>——代码里只留类名，样式集中管理。</p>
+  <div class="grid g2">
+    <div class="card"><div class="title"><span class="ico">❌</span>提取前：JS 里写样式</div>
+<pre><code data-hl="1"><span class="cm">// 场景按钮的样式写在代码里</span>
+Object.assign(btn.style, {
+  padding: <span class="st">'6px 14px'</span>,
+  borderRadius: <span class="st">'20px'</span>,
+  background: <span class="st">'var(--background-secondary)'</span>,
+  <span class="cm">// ... 10 行</span>
+});
+<span class="cm">// 7 个标签重复同一串样式</span>
+tag.style.cssText = <span class="st">'padding:0 8px;border-radius:12px;font-size:11px;...'</span>;</code></pre>
+      <p class="muted">问题：样式散落在代码里；改一处颜色要翻代码，标签样式重复 7 遍。</p>
+    </div>
+    <div class="card"><div class="title"><span class="ico">✅</span>提取后：类名 + 样式表</div>
+<pre><code data-hl="1"><span class="cm">// JS 只管「是什么」</span>
+btn.className = <span class="st">'scene-btn'</span>;
+tag.className = <span class="st">'bz-tag bz-tag-course'</span>;</code></pre>
+<pre><code data-hl="1"><span class="cm">/* CSS 只管「长什么样」 */</span>
+.scene-btn {
+  padding: <span class="dg">6px</span> <span class="dg">14px</span>; border-radius: <span class="dg">20px</span>;
+  background: <span class="fn">var</span>(--background-secondary);
+}
+.bz-tag { padding: <span class="dg">0</span> <span class="dg">8px</span>; border-radius: <span class="dg">12px</span>; font-size: <span class="dg">11px</span>; }</code></pre>
+      <p class="muted">视觉归 styles.css，逻辑归 JS——各管各的。</p>
+    </div>
+  </div>
+  <h3>哪些样式留在 JS 里？（功能性样式）</h3>
+  <ul>
+    <li><code>display</code>：弹窗的显示/隐藏——show/hide 是<strong>行为</strong>，不是外观</li>
+    <li><code>height / overflowY</code>：输入框 auto-grow 的高度是 JS 实时计算的</li>
+    <li>激活态只切类：<code>classList.toggle('active')</code>，颜色交给 <code>.active</code> 类</li>
+  </ul>
+  <div class="callout green"><b>测试怎么跟着变？</b>jsdom 不加载样式表，所以「红色背景」这类视觉断言改成了<strong>类名断言</strong>：<code>expect(tag.classList.contains('important')).toBe(true)</code>。测试仍然验证了「重要条目有正确标记」，只是不再关心具体像素——语义更强了。</div>
+  <p class="muted">行数：ui.ts 1216 → 1099，styles.css +197 行。样式总量没变（逐字等价），但代码里再也看不见一串串 style 了。</p>
+</section>
+
+<!-- ================= 11. 精简前 vs 后 ================= -->
 <section class="slide">
   <h2>九、精简实录：我做了什么 <span class="tag">功能零损失</span></h2>
   <p>精简前 1936 行 → 精简后 1739 行（<span class="hl">-197 行，-10%</span>），1220 个测试全绿。方法不是删功能，而是<strong>消灭重复</strong>：</p>
@@ -669,14 +709,14 @@ tag.style.cssText = <span class="st">`${TAG_BASE}background:var(--background-sec
 
 <!-- ================= 11. 对比 ================= -->
 <section class="slide">
-  <h2>十、精简前后对比 <span class="tag">数字说话</span></h2>
+  <h2>十一、精简前后对比 <span class="tag">数字说话</span></h2>
   <div class="bars">
     <div class="bar-group">
       <div class="bar old" style="height:140px;"><div class="val">1936</div></div>
       <div class="label">精简前（行）</div>
     </div>
     <div class="bar-group">
-      <div class="bar new" style="height:126px;"><div class="val">1739</div></div>
+      <div class="bar new" style="height:117px;"><div class="val">1622</div></div>
       <div class="label">精简后（行）</div>
     </div>
     <div class="bar-group">
@@ -690,10 +730,11 @@ tag.style.cssText = <span class="st">`${TAG_BASE}background:var(--background-sec
   </div>
   <table>
     <tr><th>文件</th><th>精简前</th><th>精简后</th><th>变化</th><th>做了什么</th></tr>
-    <tr><td>ui.ts</td><td>1407</td><td>1216</td><td class="hl">-191</td><td>按钮工厂 / 标签常量 / 建议列表泛型化 / 设置项辅助</td></tr>
+    <tr><td>ui.ts</td><td>1407</td><td>1099</td><td class="hl">-308</td><td>按钮工厂 / 标签常量 / 建议列表泛型化 / 设置项辅助 / 内联样式提取到 styles.css</td></tr>
     <tr><td>app.ts</td><td>203</td><td>199</td><td class="hl">-4</td><td>ensureXxxListener 合并注册/反注册，hasPendingUrgent 复用</td></tr>
     <tr><td>data.ts</td><td>204</td><td>202</td><td class="hl">-2</td><td>hasCourseTag 提取，loadItems 紧凑化</td></tr>
     <tr><td>due.ts / index.ts / types.ts</td><td>122</td><td>122</td><td>0</td><td>本来就很精简，不动</td></tr>
+    <tr><td>styles.css（新增 memo 收敛块）</td><td>—</td><td>+197</td><td>+197</td><td>全部内联视觉样式逐字收敛至此</td></tr>
   </table>
   <div class="callout green"><b>顺便修了一个重构 bug：</b>课程建议列表泛型化时，差点丢失 data-path 回填（保存后课程路径会变 null）。因为重构后立刻跑测试——测试立刻抓住它。这就是「先有测试，后有重构」的价值。</div>
   <p class="muted center">精简过程中真实发生的插曲：我把课程建议的渲染写成了「点击任何条目都取第一个」，测试一跑就红——闭包捕获的正确姿势是 <code>matched[i]</code>，不是 <code>matched[0]</code>。写代码谁都会犯这种错，关键是测试能抓住它。</p>
@@ -701,7 +742,7 @@ tag.style.cssText = <span class="st">`${TAG_BASE}background:var(--background-sec
 
 <!-- ================= 12. 测试与结尾 ================= -->
 <section class="slide">
-  <h2>十一、怎么保证「没弄坏」？ <span class="tag">测试是安全带</span></h2>
+  <h2>十二、怎么保证「没弄坏」？ <span class="tag">测试是安全带</span></h2>
   <div class="grid g2">
     <div class="card"><div class="title"><span class="ico">🧪</span>测试就是「功能清单」</div>
       <p>memo 域有 5 个测试文件、82 个测试，覆盖：</p>
@@ -737,7 +778,7 @@ tag.style.cssText = <span class="st">`${TAG_BASE}background:var(--background-sec
 
 <div id="nav">
   <button id="prevBtn">← 上一页</button>
-  <span class="page" id="pageNo">1 / 12</span>
+  <span class="page" id="pageNo">1 / 13</span>
   <button id="nextBtn">下一页 →</button>
 </div>
 

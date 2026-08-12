@@ -2,6 +2,7 @@
  * 备忘录 UI（备忘录.js UIManager + Renderer 移植）
  * DOM id/类名与原脚本一致：todo-mask / todo-popup / todo-entries-container /
  * add-todo-mask / add-todo-popup / add-todo-* / scene-btn / priority-btn / todo-card。
+ * 视觉样式已收敛至 styles.css（ticket 57），此处仅保留功能性内联样式（显隐/高度计算）。
  */
 import moment from 'moment';
 import { Setting } from 'obsidian';
@@ -31,48 +32,6 @@ const CONTENT_LINE_HEIGHT = 37;
 /** 内容输入框最高 8 行（8 × 21 + 16 = 184px），超出内部滚动 */
 const CONTENT_MAX_HEIGHT = 184;
 
-/** 备忘录样式（TODOCSS，收敛 styles.css 前保留注入） */
-const TODOCSS = `
-#todo-mask { backdrop-filter: blur(2px); }
-#todo-popup { animation: slideUp 0.3s ease-out; }
-@keyframes slideUp {
-    from { opacity:0; transform: translate(-50%, -40%); }
-    to { opacity:1; transform: translate(-50%, -50%); }
-}
-#todo-entries-container::-webkit-scrollbar { width: 6px; }
-#todo-entries-container::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
-#add-todo-due-input { color-scheme: light dark; }
-#add-todo-due-input::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; }
-#add-todo-due-input::-webkit-calendar-picker-indicator:hover { opacity: 1; }
-#todo-popup .todo-btn-add:hover, #todo-popup .todo-btn-archive:hover, #todo-popup .todo-btn-close:hover { background: var(--background-secondary); }
-
-@media (max-width: 768px) {
-    /* 移动端：居中弹窗（宽度 95%），不全屏 */
-    #todo-popup { width: 95%; max-height: 90vh; }
-    .todo-card {
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 4px 12px;
-    }
-    .todo-card > input[type="checkbox"] {
-        flex: 0 0 auto;
-        width: auto;
-        margin-right: 0;
-    }
-    .todo-card .todo-content-span {
-        flex: 1 1 auto;
-        min-width: 0;
-    }
-    .todo-card .todo-meta-container {
-        flex: 0 0 100%;
-        flex-direction: row;
-        justify-content: flex-start;
-        gap: 8px;
-        padding-left: 28px;
-    }
-}
-`;
-
 /** 内容输入框 auto-grow：高度 = clamp(scrollHeight, 一行, 8 行)；空时一行高 */
 function autoGrowContent(el: HTMLTextAreaElement) {
   el.style.height = 'auto';
@@ -83,11 +42,8 @@ function autoGrowContent(el: HTMLTextAreaElement) {
 
 // ---------- 共享小工具 ----------
 
-/** 选中态 / 未选中态（场景、优先级按钮共用） */
+/** 选中态 / 未选中态（场景、优先级按钮共用，视觉见 .active 类） */
 function setActive(btn: HTMLElement, active: boolean) {
-  btn.style.opacity = active ? '1' : '0.5';
-  btn.style.background = active ? 'var(--interactive-accent)' : 'var(--background-secondary)';
-  btn.style.color = active ? 'var(--text-on-accent)' : 'var(--text-muted)';
   btn.classList.toggle('active', active);
 }
 /** 取消容器内全部按钮选中 */
@@ -95,25 +51,13 @@ function clearActive(container: HTMLElement, cls: string) {
   container.querySelectorAll(`.${cls}`).forEach((b) => setActive(b as HTMLElement, false));
 }
 
-/** 胶囊选择按钮（scene-btn / priority-btn 共用样式与选中逻辑） */
+/** 胶囊选择按钮（scene-btn / priority-btn 共用选中逻辑） */
 function makeChoiceBtn(container: HTMLElement, cls: string, value: string, label: string, onClick?: (btn: HTMLButtonElement) => void): HTMLButtonElement {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = cls;
   btn.dataset[cls === 'scene-btn' ? 'scene' : 'priority'] = value;
   btn.textContent = label;
-  Object.assign(btn.style, {
-    padding: '6px 14px',
-    borderRadius: '20px',
-    background: 'var(--background-secondary)',
-    color: 'var(--text-muted)',
-    cursor: 'pointer',
-    fontSize: '14px',
-    transition: 'all 0.2s',
-    opacity: '0.5',
-    boxShadow: 'none',
-    border: 'none',
-  });
   btn.onclick = () => {
     clearActive(container, cls);
     setActive(btn, true);
@@ -122,11 +66,6 @@ function makeChoiceBtn(container: HTMLElement, cls: string, value: string, label
   container.appendChild(btn);
   return btn;
 }
-
-/** 标签基样式（meta 标签共用前缀） */
-const TAG_BASE = 'padding:0 8px;border-radius:12px;font-size:11px;line-height:20px;white-space:nowrap;';
-/** 建议列表弹层样式（脚本/课程共用） */
-const SUGGEST_STYLE = 'display: block !important; max-height: 150px; overflow-y: auto; background: var(--background-secondary); border-radius: 4px; margin-top: 4px;';
 
 /** 输入建议列表（脚本/课程共用：过滤 → 渲染 → 点击回填 → 失焦关闭） */
 function attachSuggestion<T>(
@@ -143,9 +82,9 @@ function attachSuggestion<T>(
     const matched = getList().filter((item) => match(val, item));
     if (matched.length) {
       sugg.innerHTML = matched
-        .map((item) => `<div style="padding:6px 12px;cursor:pointer;border-bottom:1px solid var(--background-modifier-border);font-size:14px;">${render(item)}</div>`)
+        .map((item) => `<div class="bz-suggest-item">${render(item)}</div>`)
         .join('');
-      sugg.style.cssText = SUGGEST_STYLE;
+      sugg.className = 'bz-suggest-box';
       sugg.querySelectorAll('div').forEach((el, i) => {
         (el as HTMLElement).onclick = () => {
           onPick(matched[i]);
@@ -260,45 +199,27 @@ export const UIManager = {
   scriptSuggestions: [] as string[],
   courseSuggestions: [] as { name: string; path: string }[],
 
-  injectStyles() {
-    if (document.querySelector('style[data-todo-styles]')) return;
-    const style = document.createElement('style');
-    style.setAttribute('data-todo-styles', '');
-    style.textContent = TODOCSS;
-    document.head.appendChild(style);
-  },
-
   // ---------- 主面板 ----------
   createMainUI() {
     if (this.mask && document.body.contains(this.mask)) return;
 
     this.mask = document.createElement('div');
     this.mask.id = 'todo-mask';
-    Object.assign(this.mask.style, {
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      background: 'var(--background-modifier-cover)', zIndex: 9998, display: 'none',
-    });
     this.mask.onclick = () => this.hideMain();
 
     this.popup = document.createElement('div');
     this.popup.id = 'todo-popup';
-    Object.assign(this.popup.style, {
-      position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-      background: 'var(--background-primary)', borderRadius: '12px',
-      boxShadow: '0 10px 40px rgba(0,0,0,0.2)', zIndex: 9999, width: '90%', maxWidth: '700px',
-      maxHeight: '80vh', display: 'none', flexDirection: 'column',
-    });
     this.popup.innerHTML = `
-            <div style="padding:16px 24px 8px 24px;display:flex;justify-content:space-between;align-items:center;">
-                <h3 style="margin:0;font-size:18px;font-weight:600;color:var(--text-normal);">备忘录</h3>
-                <div style="display:flex;gap:8px;">
-                    <button class="todo-btn-add" style="background:none;border:none;font-size:14px;cursor:pointer;color:var(--text-muted);padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;display:flex;align-items:center;justify-content:center;">✏️</button>
-                    <button class="todo-btn-archive" style="background:none;border:none;font-size:14px;cursor:pointer;color:var(--text-muted);padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;display:flex;align-items:center;justify-content:center;">📁</button>
-                    <button class="todo-btn-settings" style="background:none;border:none;font-size:14px;cursor:pointer;color:var(--text-muted);padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;display:flex;align-items:center;justify-content:center;">⚙️</button>
-                    <button class="todo-btn-close" style="background:none;border:none;font-size:13px;cursor:pointer;color:var(--text-muted);padding:0;width:21px;height:25px;border-radius:4px;box-shadow:none;display:flex;align-items:center;justify-content:center;">❌</button>
+            <div class="bz-todo-head">
+                <h3>备忘录</h3>
+                <div class="bz-todo-head-btns">
+                    <button class="todo-btn-add">✏️</button>
+                    <button class="todo-btn-archive">📁</button>
+                    <button class="todo-btn-settings">⚙️</button>
+                    <button class="todo-btn-close">❌</button>
                 </div>
             </div>
-            <div id="todo-entries-container" style="flex:1;overflow-y:auto;padding:0 20px;min-height:200px;"></div>
+            <div id="todo-entries-container"></div>
         `;
     this.entriesContainer = this.popup.querySelector('#todo-entries-container');
     const settingsBtn = this.popup.querySelector('.todo-btn-settings');
@@ -387,49 +308,38 @@ export const UIManager = {
 
     this.addMask = document.createElement('div');
     this.addMask.id = 'add-todo-mask';
-    Object.assign(this.addMask.style, {
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      background: 'rgba(0,0,0,0.3)', zIndex: 10001, display: 'none',
-    });
     this.addMask.onclick = (e) => {
       if (e.target === this.addMask) this.hideAddDialog();
     };
 
     this.addPopup = document.createElement('div');
     this.addPopup.id = 'add-todo-popup';
-    Object.assign(this.addPopup.style, {
-      position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-      background: 'var(--background-primary)', borderRadius: '12px',
-      boxShadow: '0 20px 60px rgba(0,0,0,0.3)', zIndex: 10002, padding: '24px',
-      maxWidth: '400px', width: '90%', maxHeight: '80vh', overflowY: 'auto', display: 'none',
-    });
-
     // 构造内部HTML
     this.addPopup.innerHTML = `
-            <h4 style="margin:0 0 16px 0;font-size:18px;font-weight:600;color:var(--text-normal);">创建备忘录</h4>
-            <textarea id="add-todo-content" rows="1" placeholder="输入备忘录内容..." style="width:100%;padding:8px 12px;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:16px;resize:none;min-height:37px;max-height:184px;overflow-y:hidden;line-height:1.5;font-family:inherit;background:var(--background-primary);border:1px solid var(--background-modifier-border);"></textarea>
-            <input id="add-todo-title" type="text" placeholder="标题（可选）" style="width:100%;padding:8px 12px;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:8px;display:none;">
-            <div id="add-todo-script-container" style="display:none; margin-bottom:12px;">
-                <input id="add-todo-script" type="text" placeholder="脚本名" style="width:100%;padding:8px 12px;border-radius:6px;font-size:14px;box-sizing:border-box;">
-                <div id="add-todo-script-suggestions" style="max-height:150px;overflow-y:auto;background:var(--background-secondary);border-radius:4px;margin-top:4px;display:none;font-size:14px;"></div>
+            <h4>创建备忘录</h4>
+            <textarea id="add-todo-content" rows="1" placeholder="输入备忘录内容..."></textarea>
+            <input id="add-todo-title" type="text" placeholder="标题（可选）">
+            <div id="add-todo-script-container">
+                <input id="add-todo-script" type="text" placeholder="脚本名">
+                <div id="add-todo-script-suggestions"></div>
             </div>
-            <div id="add-todo-course-container" style="display:none; margin-bottom:12px;">
-                <input id="add-todo-course" type="text" placeholder="课程名" style="width:100%;padding:8px 12px;border-radius:6px;font-size:14px;box-sizing:border-box;">
-                <div id="add-todo-course-suggestions" style="max-height:150px;overflow-y:auto;background:var(--background-secondary);border-radius:4px;margin-top:4px;display:none;font-size:14px;"></div>
+            <div id="add-todo-course-container">
+                <input id="add-todo-course" type="text" placeholder="课程名">
+                <div id="add-todo-course-suggestions"></div>
             </div>
-            <div id="add-todo-scenes" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;"></div>
-            <div id="add-todo-priority" style="display:flex;gap:8px;margin-bottom:12px;align-items:center;"></div>
-            <div id="add-todo-due" style="display:flex;gap:8px;margin-bottom:16px;align-items:center;">
-                <input id="add-todo-due-input" type="datetime-local" step="60" style="padding:5px 10px;border-radius:16px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-normal);font-size:13px;cursor:pointer;box-shadow:none;max-width:220px;">
-                <button id="add-todo-due-clear" type="button" style="display:none;padding:2px 8px;border-radius:12px;border:none;background:var(--background-secondary);color:var(--text-muted);cursor:pointer;font-size:12px;box-shadow:none;">✕</button>
-                <span style="font-size:12px;color:var(--text-faint);">截止日期（可选）</span>
+            <div id="add-todo-scenes"></div>
+            <div id="add-todo-priority"></div>
+            <div id="add-todo-due">
+                <input id="add-todo-due-input" type="datetime-local" step="60">
+                <button id="add-todo-due-clear" type="button">✕</button>
+                <span>截止日期（可选）</span>
             </div>
-            <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-                <button id="add-todo-pos-btn" type="button" style="padding:4px 12px;border-radius:16px;background:var(--background-secondary);color:var(--text-muted);cursor:pointer;font-size:13px;box-shadow:none;border:1px solid var(--background-modifier-border);">📌</button>
+            <div class="bz-todo-pos-row">
+                <button id="add-todo-pos-btn" type="button">📌</button>
             </div>
-            <div style="display:flex;gap:12px;justify-content:flex-end;">
-                <button id="add-todo-cancel" style="padding:8px 16px;border-radius:6px;border:none;background:var(--background-secondary);cursor:pointer;font-size:14px;box-shadow:none;">取消</button>
-                <button id="add-todo-save" style="padding:8px 16px;border-radius:6px;border:none;background:var(--interactive-accent);color:var(--text-on-accent);cursor:pointer;font-size:14px;font-weight:500;box-shadow:none;">保存</button>
+            <div class="bz-todo-btn-row">
+                <button id="add-todo-cancel">取消</button>
+                <button id="add-todo-save">保存</button>
             </div>
         `;
 
@@ -478,16 +388,14 @@ export const UIManager = {
       if (data.notePath && data.notePosition) {
         (posBtn as any).positionData = { notePath: null, notePosition: null };
         posBtn.textContent = '📌';
-        posBtn.style.background = 'var(--background-secondary)';
-        posBtn.style.color = 'var(--text-muted)';
+        posBtn.classList.remove('active');
       } else {
         const info = getCurrentNoteInfo();
         const pos = getCurrentCursorPosition();
         if (info && pos) {
           (posBtn as any).positionData = { notePath: info.path, notePosition: { line: pos.line, ch: pos.ch } };
           posBtn.textContent = `📌 ${info.name}`;
-          posBtn.style.background = 'var(--interactive-accent)';
-          posBtn.style.color = 'var(--text-on-accent)';
+          posBtn.classList.add('active');
         } else {
           notice('无法获取当前位置');
         }
@@ -737,8 +645,7 @@ export const UIManager = {
     courseSuggest.style.display = 'none';
     (posBtn as any).positionData = { notePath: null, notePosition: null };
     posBtn.textContent = '📌';
-    posBtn.style.background = 'var(--background-secondary)';
-    posBtn.style.color = 'var(--text-muted)';
+    posBtn.classList.remove('active');
 
     // 收集脚本建议（来自已有备忘录）
     const allScriptNames = App.state.todoItems
@@ -825,8 +732,7 @@ export const UIManager = {
         const file = getApp().vault.getAbstractFileByPath(editItem.notePath);
         if (file) {
           posBtn.textContent = `📌 ${(file as any).basename}`;
-          posBtn.style.background = 'var(--interactive-accent)';
-          posBtn.style.color = 'var(--text-on-accent)';
+          posBtn.classList.add('active');
         }
       }
       if (editItem.due) {
@@ -887,7 +793,7 @@ export const Renderer = {
     const filteredArchived = filter ? archived.filter(filter) : archived;
 
     if (filteredActive.length === 0 && filteredArchived.length === 0) {
-      container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-faint);font-size:16px;">${filter ? '没有匹配的备忘录' : '没有备忘录 🎉'}</div>`;
+      container.innerHTML = `<div class="bz-todo-empty">${filter ? '没有匹配的备忘录' : '没有备忘录 🎉'}</div>`;
       return;
     }
 
@@ -933,8 +839,8 @@ export const Renderer = {
     }
     if (showArchived && filteredArchived.length) {
       const sep = document.createElement('div');
-      sep.style.cssText = 'margin:20px 0 12px 0;display:flex;align-items:center;justify-content:center;gap:12px;';
-      sep.innerHTML = `<span style="font-size:14px;color:var(--text-faint);">已归档</span>`;
+      sep.className = 'bz-todo-sep';
+      sep.innerHTML = `<span>已归档</span>`;
       container.appendChild(sep);
       for (const item of filteredArchived) {
         container.appendChild(this.createCard(item, true));
@@ -946,14 +852,13 @@ export const Renderer = {
   createContentSpan(item: MemoItem): HTMLSpanElement {
     const app = getApp();
     const contentSpan = document.createElement('span');
-    contentSpan.style.cssText = 'flex:1;font-size:15px;color:var(--text-normal);word-break:break-word;user-select:text;white-space:pre-wrap;';
-
-    const linkStyle = 'color:var(--text-accent);text-decoration:underline;cursor:pointer;word-break:break-word;';
+    contentSpan.className = 'todo-content-span';
+    const linkStyle = 'bz-todo-link';
     // 1. 优先 linkedNote（内部笔记）
     if (item.linkedNote) {
       const link = document.createElement('a');
+      link.className = linkStyle;
       link.textContent = item.title; // 显示为链接文本
-      link.style.cssText = linkStyle;
       link.onclick = async (e) => {
         e.preventDefault();
         UIManager.hideMain(); // 关闭备忘录面板
@@ -970,10 +875,10 @@ export const Renderer = {
     // 2. 检查是否有外部 URL（直接使用 item.url）
     else if (item.url) {
       const link = document.createElement('a');
+      link.className = linkStyle;
       link.href = item.url;
       link.textContent = item.title; // 使用存储的显示文本
       (link as any).target = 'blank';
-      link.style.cssText = linkStyle;
       link.onclick = (e) => {
         e.preventDefault();
         UIManager.hideMain(); // 关闭备忘录面板
@@ -997,26 +902,17 @@ export const Renderer = {
   createCard(item: MemoItem, isArchived: boolean): HTMLElement {
     const app = getApp();
     const card = document.createElement('div');
-    card.className = 'todo-card';
-    Object.assign(card.style, {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '12px',
-      padding: '12px 0',
-      borderBottom: '1px solid var(--background-modifier-border)',
-      opacity: isArchived ? '0.7' : '1',
-    });
+    card.className = 'todo-card' + (isArchived ? ' archived' : '');
 
     // 复选框（归档条目显示图标；非归档模式下已完成条目显示勾选态）
     if (isArchived) {
       const icon = document.createElement('span');
+      icon.className = 'bz-archived-icon';
       icon.textContent = '📦';
-      icon.style.cssText = 'font-size:16px;flex-shrink:0;width:18px;text-align:center;';
       card.appendChild(icon);
     } else {
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
-      checkbox.style.cssText = 'width:18px;height:18px;cursor:pointer;flex-shrink:0;';
       checkbox.checked = !!item.completed;
       checkbox.disabled = !!item.completed;
       checkbox.onchange = async () => {
@@ -1035,15 +931,13 @@ export const Renderer = {
     // ---------- 内容区域（跳转逻辑，直接使用 item.linkedNote 和 item.url） ----------
     const contentSpan = this.createContentSpan(item);
     if (item.completed && !isArchived) {
-      contentSpan.style.textDecoration = 'line-through';
-      contentSpan.style.opacity = '0.6';
+      contentSpan.classList.add('done'); // 非归档模式下已完成条目：划线显示
     }
     card.appendChild(contentSpan);
 
     // ---------- meta 信息（场景、时间、位置等） ----------
     const meta = document.createElement('div');
     meta.className = 'todo-meta-container';
-    meta.style.cssText = 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
 
     if (item.scene === '公开课' && item.courseName) {
       meta.appendChild(this.createCourseTag(item));
@@ -1074,8 +968,8 @@ export const Renderer = {
     const app = getApp();
     const displayName = item.courseName!.replace(/^《|》$/g, '');
     const tag = document.createElement('span');
+    tag.className = 'bz-tag bz-tag-course';
     tag.textContent = `🎓 ${displayName}`;
-    tag.style.cssText = `${TAG_BASE}background:var(--background-secondary);color:var(--text-muted);cursor:pointer;transition:background 0.2s;`;
     const targetPath = item.coursePath || item.notePath;
     if (targetPath) {
       const file = app.vault.getAbstractFileByPath(targetPath);
@@ -1102,7 +996,8 @@ export const Renderer = {
         };
       } else {
         tag.title = '关联文件不存在';
-        tag.style.cursor = 'not-allowed';
+        tag.classList.remove('bz-tag-course');
+        tag.classList.add('bz-tag-missing');
         tag.onclick = null;
       }
     }
@@ -1111,14 +1006,14 @@ export const Renderer = {
 
   createScriptTag(name: string): HTMLElement {
     const tag = document.createElement('span');
+    tag.className = 'bz-tag bz-tag-script';
     tag.textContent = `💻 ${name}`;
-    tag.style.cssText = `${TAG_BASE}background:var(--background-secondary);color:var(--text-muted);`;
     return tag;
   },
 
   createPlatformTag(url: string, platform: string): HTMLElement {
     const container = document.createElement('span');
-    container.style.cssText = `display:inline-flex;align-items:center;gap:4px;${TAG_BASE}background:var(--background-secondary);color:var(--text-muted);`;
+    container.className = 'bz-tag bz-tag-platform';
     try {
       const domain = new URL(url).hostname;
       const icon = createSiteIcon(domain, 14);
@@ -1136,8 +1031,8 @@ export const Renderer = {
     if (!file) {
       const base = item.notePath!.split('/').pop() || '未知文件';
       const tag = document.createElement('span');
+      tag.className = 'bz-tag bz-tag-warn';
       tag.textContent = `⚠️ ${base.replace(/^《|》$/g, '')}`;
-      tag.style.cssText = `${TAG_BASE}background:var(--background-secondary);color:var(--text-error);`;
       return tag;
     }
     const fileName = (file as any).basename.replace(/^《|》$/g, '');
@@ -1148,8 +1043,8 @@ export const Renderer = {
     const tag = document.createElement('span');
     let label = '📌';
     if (App.state.showFileName) label += ` ${fileName}`;
+    tag.className = 'bz-tag bz-tag-position';
     tag.textContent = label;
-    tag.style.cssText = `${TAG_BASE}background:var(--background-secondary);color:var(--text-muted);cursor:pointer;transition:background 0.2s;`;
     tag.onclick = async (e) => {
       e.stopPropagation();
       UIManager.hideMain();
@@ -1170,9 +1065,8 @@ export const Renderer = {
   // 长按事件（兼容移动端）
   createSceneTag(item: MemoItem): HTMLElement {
     const span = document.createElement('span');
+    span.className = 'bz-tag bz-tag-scene' + (item.priority === 'important' ? ' important' : '');
     span.textContent = `#${item.scene}`;
-    const isImportant = item.priority === 'important';
-    span.style.cssText = `padding:2px 8px;border-radius:12px;font-size:12px;background:${isImportant ? '#ff4757' : 'var(--background-secondary)'};color:${isImportant ? 'white' : 'var(--text-muted)'};white-space:nowrap;cursor:pointer;`;
 
     // 长按 500ms 打开编辑弹窗
     attachLongPress(span, () => UIManager.showAddDialog(item));
@@ -1181,8 +1075,8 @@ export const Renderer = {
 
   createTimeTag(item: MemoItem): HTMLElement {
     const span = document.createElement('span');
+    span.className = 'bz-tag-time';
     span.textContent = formatRelativeTime(item.created);
-    span.style.cssText = 'font-size:12px;color:var(--text-faint);flex-shrink:0;cursor:pointer;';
 
     // 长按 500ms 弹出删除确认
     attachLongPress(span, () => {
@@ -1198,19 +1092,8 @@ export const Renderer = {
     const status = getDueStatus(item.due);
     const dueFormat = App.settings.memoDueFormat === 'absolute' ? 'absolute' : 'relative';
     const span = document.createElement('span');
+    span.className = `bz-tag bz-tag-due ${status === 'overdue' ? 'overdue' : status === 'today' ? 'today' : 'future'}`;
     span.textContent = `${status === 'overdue' ? '🔴' : status === 'today' ? '⚠️' : '📅'} ${formatDueText(item.due!, dueFormat)}`;
-    let bgColor: string, fgColor: string;
-    if (status === 'overdue') {
-      bgColor = 'rgba(255,71,87,0.12)';
-      fgColor = 'var(--text-error)';
-    } else if (status === 'today') {
-      bgColor = 'rgba(255,159,67,0.12)';
-      fgColor = '#ff9f43';
-    } else {
-      bgColor = 'var(--background-secondary)';
-      fgColor = 'var(--text-muted)';
-    }
-    span.style.cssText = `${TAG_BASE}background:${bgColor};color:${fgColor};`;
     return span;
   },
 };

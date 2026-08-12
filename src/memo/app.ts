@@ -48,7 +48,6 @@ export const App = {
     this.state.showArchived = settings.memoShowArchivedByDefault === true;
     this.settings = settings;
 
-    UIManager.injectStyles();
     UIManager.createMainUI();
     UIManager.createAddDialog();
     UIManager.createConfirmDialog();
