@@ -3,7 +3,7 @@
  * 番茄钟历史聚合测试（ticket 30）：今日计数 + 近 7 天滚动窗口
  */
 import { describe, it, expect } from 'vitest';
-import { todayCount, last7Days, bookMinutesToday } from '../../src/pomodoro/stats';
+import { todayCount, last7Days, bookCountToday } from '../../src/pomodoro/stats';
 import type { HistoryEntry } from '../../src/pomodoro/state';
 
 // 本地时区日期（2026-08-10 周一 10:00 本地）
@@ -42,14 +42,14 @@ describe('todayCount', () => {
   });
 });
 
-describe('bookMinutesToday（任务关联统计）', () => {
-  function bookEntry(day: number, minutes: number): HistoryEntry {
-    return { ts: new Date(2026, 7, day, 9, 0, 0).getTime(), duration: minutes * 60, target: { type: 'book', path: '书库/活着.md', label: '读《活着》' } };
+describe('bookCountToday（读书番茄数，ticket 51）', () => {
+  function bookEntry(day: number, hour = 9): HistoryEntry {
+    return { ts: new Date(2026, 7, day, hour, 0, 0).getTime(), duration: 1500, target: { type: 'book', path: '书架/活着.epub', label: '活着' } };
   }
 
-  it('今日读书分钟聚合（按 target.type=book）', () => {
-    const h = [bookEntry(10, 25), bookEntry(10, 50), bookEntry(9, 25)];
-    expect(bookMinutesToday(h, NOW)).toBe(75);
+  it('今日读书番茄计数（按 target.type=book）', () => {
+    const h = [bookEntry(10), bookEntry(10, 14), bookEntry(9)];
+    expect(bookCountToday(h, NOW)).toBe(2);
   });
 
   it('非书目标 / 无目标不计入', () => {
@@ -57,16 +57,16 @@ describe('bookMinutesToday（任务关联统计）', () => {
       { ts: new Date(2026, 7, 10, 9, 0, 0).getTime(), duration: 1500, target: { type: 'memo', id: 'm1', label: '写报告' } },
       { ts: new Date(2026, 7, 10, 10, 0, 0).getTime(), duration: 1500 },
     ];
-    expect(bookMinutesToday(h, NOW)).toBe(0);
+    expect(bookCountToday(h, NOW)).toBe(0);
   });
 
   it('跨日不计（只有今天）', () => {
-    const h = [bookEntry(9, 25), bookEntry(10, 25)];
-    expect(bookMinutesToday(h, NOW)).toBe(25);
+    const h = [bookEntry(9), bookEntry(10)];
+    expect(bookCountToday(h, NOW)).toBe(1);
   });
 
   it('空历史 → 0', () => {
-    expect(bookMinutesToday([], NOW)).toBe(0);
+    expect(bookCountToday([], NOW)).toBe(0);
   });
 });
 

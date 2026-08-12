@@ -7,3 +7,5 @@ export { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './statusbar';
 export { playSound } from './sound';
 export { PomodoroDataManager, getPomodoroFilePath } from './data';
 export { transition, recover, DEFAULT_DURATIONS, DEFAULT_OPTIONS, createInitialState, phaseDurationSec } from './state';
+export { startReadingFocus, switchReadingFocus, pauseReadingFocus, exitReadingMode, showReadingConfirm } from './ui';
+export { ensurePomodoroEpubLink, unloadPomodoroEpubLink, getEpubBook, decideReadingAction, checkReadingNow, readingModePopupEnabled } from './epub-link';
