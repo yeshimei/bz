@@ -75,7 +75,7 @@ function manager(app: App): BlackBoxDataManager {
   return dataManager;
 }
 
-/** 打开主面板（幂等；每次打开重载数据；全新打开重置页状态） */
+/** 打开主面板（幂等；全新打开立即渲染骨架 + 「正在扫描」提示，数据后台加载后再渲染） */
 export async function openBlackBoxPanel(app: App): Promise<void> {
   appRef = app;
   if (maskEl) {
@@ -85,7 +85,6 @@ export async function openBlackBoxPanel(app: App): Promise<void> {
     refreshAll();
     return;
   }
-  data = await manager(app).load();
   searchVisible = false; // 每次打开回到默认隐藏
   // 默认类型筛选（设置项 blackboxDefaultTypeFilter，重启生效；空 = 全部）
   const s = tryGetSettings() as any;
@@ -102,6 +101,15 @@ export async function openBlackBoxPanel(app: App): Promise<void> {
   tlYear = '';
   panelNewProfileOpen = false;
   buildDOM();
+  // 缓存未就绪时先显示「正在扫描」提示（就绪后移除；缓存命中则下一帧前移除，不可见）
+  const hint = document.createElement('div');
+  hint.className = 'bz-blackbox-scanning';
+  hint.id = 'bz-blackbox-panel-scanning';
+  hint.textContent = '正在扫描黑匣子…';
+  popupEl!.prepend(hint);
+  // 数据后台加载：骨架立即显示，就绪后渲染（命令回调不 await 本函数 → 用户打开不阻塞）
+  data = await manager(app).load();
+  hint.remove();
   renderAll();
   // 实时同步（ticket 05）：笔记变更 → 面板实时刷新（保留筛选与滚动）
   setBlackBoxSyncNotify((fresh) => {

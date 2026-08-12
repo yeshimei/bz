@@ -93,6 +93,21 @@ describe('黑匣子主面板（v3 流式）', () => {
     expect(document.querySelectorAll('.bz-blackbox-type-btn').length).toBe(3);
   });
 
+  it('打开：先渲染骨架 + 「正在扫描黑匣子…」提示，数据就绪后移除并渲染流', async () => {
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault);
+    const p = openBlackBoxPanel(app); // 不 await：同步段先渲染骨架
+    // 同步点：骨架已建、扫描提示在（数据加载尚未完成）
+    expect(document.getElementById('bz-blackbox-panel')).toBeTruthy();
+    expect(document.getElementById('bz-blackbox-panel-scanning')!.textContent).toBe('正在扫描黑匣子…');
+    await p;
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-panel-scanning')).toBeNull(); // 就绪后移除
+    });
+    expect(streamCards().length).toBe(5); // 数据就绪后流渲染
+  });
+
   it('时间流：按 createdAt 倒序（新在上）+ 日期分隔条分组', async () => {
     const vault = new MockVault();
     seedVault(vault);
