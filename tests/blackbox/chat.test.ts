@@ -3,6 +3,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
+import { seedV3 } from './v3-seed';
 import { resetObsidianMocks, hasNotice } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
@@ -28,29 +29,25 @@ function mockOllama(content: string) {
 
 /** 预置 v2 数据：3 条内容 + 1 个画像 + 1 个事件 + 1 条复盘（含 v2 产物字段） */
 function seedVault(vault: MockVault, extra?: any): void {
-  vault.files.set(
-    getBlackBoxFilePath(),
-    JSON.stringify({
-      version: 2,
-      settings: { reviewThreshold: 10, showSpeculativeEvents: true, words: ['触动', '温暖', '想念', '难过'] },
-      persona: { name: '包仔', seed: '种子', toneExample: '语气', selfViews: [{ ts: 't0', view: '我认识主人了' }] },
-      entries: [
-        { id: 'bb_t1', type: 'thought', createdAt: 't1', text: '给妹妹买吉他', emotions: ['温暖'], people: ['pf_1'], scene: '', toward: '', links: [] },
-        { id: 'bb_t2', type: 'thought', createdAt: 't2', text: '量子隧穿', emotions: [], people: [], scene: '', toward: '', links: [] },
-        { id: 'bb_t3', type: 'thought', createdAt: 't3', text: '茉莉花的香气', emotions: [], people: [], scene: '', toward: '', links: [] },
-      ],
-      profiles: [{ id: 'pf_1', name: '妹妹', relation: '家人', impression: '很要强', aiObservations: [], pinnedEvents: [], createdAt: 't' }],
-      events: [
-        { id: 'ev_1', title: '给妹妹买吉他', time: '2026-08-01', inferred: false, summary: '', people: ['pf_1'], mainPerson: 'pf_1', evidence: ['bb_t1'], emotions: ['温暖'], edited: false },
-      ],
-      reviews: [
-        { ts: 't4', text: '我看到一个细腻又好奇的人', impressionCount: 3, newSelfView: '', eventReport: '这周我整理了 1 件新事件', profileHint: '👤 我常听你提起「老王」' },
-      ],
-      chat: [],
-      meta: { lastReviewAt: 't4', totalEntries: 3, totalEvents: 1 },
-      ...extra,
-    })
-  );
+  seedV3(vault, {
+    settings: { reviewThreshold: 10, showSpeculativeEvents: true, words: ['触动', '温暖', '想念', '难过'] },
+    persona: { name: '包仔', seed: '种子', toneExample: '语气', selfViews: [{ ts: 't0', view: '我认识主人了' }] },
+    entries: [
+      { id: 'bb_t1', type: 'thought', createdAt: 't1', text: '给妹妹买吉他', emotions: ['温暖'], people: ['pf_1'], scene: '', toward: '', links: [] },
+      { id: 'bb_t2', type: 'thought', createdAt: 't2', text: '量子隧穿', emotions: [], people: [], scene: '', toward: '', links: [] },
+      { id: 'bb_t3', type: 'thought', createdAt: 't3', text: '茉莉花的香气', emotions: [], people: [], scene: '', toward: '', links: [] },
+    ],
+    profiles: [{ id: 'pf_1', name: '妹妹', relation: '家人', impression: '很要强', aiObservations: [], pinnedEvents: [], createdAt: 't' }],
+    events: [
+      { id: 'ev_1', title: '给妹妹买吉他', time: '2026-08-01', inferred: false, summary: '', people: ['pf_1'], mainPerson: 'pf_1', evidence: ['bb_t1'], emotions: ['温暖'], edited: false },
+    ],
+    reviews: [
+      { ts: 't4', text: '我看到一个细腻又好奇的人', impressionCount: 3, newSelfView: '', eventReport: '这周我整理了 1 件新事件', profileHint: '👤 我常听你提起「老王」' },
+    ],
+    chat: [],
+    meta: { lastReviewAt: 't4', totalEntries: 3, totalEvents: 1 },
+    ...extra,
+  });
 }
 
 describe('黑匣子对话面板', () => {

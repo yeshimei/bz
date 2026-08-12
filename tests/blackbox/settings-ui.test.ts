@@ -4,6 +4,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
+import { seedV3 } from './v3-seed';
 import { resetObsidianMocks, hasNotice } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
@@ -23,23 +24,19 @@ function setup(vault: MockVault = new MockVault(), settings: any = {}) {
 }
 
 function seedVault(vault: MockVault, extra?: any): void {
-  vault.files.set(
-    getBlackBoxFilePath(),
-    JSON.stringify({
-      version: 2,
-      settings: { reviewThreshold: 10, showSpeculativeEvents: true, words: ['触动', '温暖', '想念', '难过'] },
-      persona: { name: '包仔', seed: '种子', toneExample: '语气', selfViews: [] },
-      entries: [
-        { id: 'bb_t1', type: 'thought', createdAt: 't', text: '旧条目带旧情绪词', emotions: ['旧词'], people: [], scene: '', toward: '', links: [] },
-      ],
-      profiles: [],
-      events: [],
-      reviews: [],
-      chat: [],
-      meta: { lastReviewAt: '', totalEntries: 1, totalEvents: 0 },
-      ...extra,
-    })
-  );
+  seedV3(vault, {
+    settings: { reviewThreshold: 10, showSpeculativeEvents: true, words: ['触动', '温暖', '想念', '难过'] },
+    persona: { name: '包仔', seed: '种子', toneExample: '语气', selfViews: [] },
+    entries: [
+      { id: 'bb_t1', type: 'thought', createdAt: 't', text: '旧条目带旧情绪词', emotions: ['旧词'], people: [], scene: '', toward: '', links: [] },
+    ],
+    profiles: [],
+    events: [],
+    reviews: [],
+    chat: [],
+    meta: { lastReviewAt: '', totalEntries: 1, totalEvents: 0 },
+    ...extra,
+  });
 }
 
 async function loaded(app: any, vault: MockVault): Promise<any> {

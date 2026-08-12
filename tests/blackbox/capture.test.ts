@@ -5,6 +5,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
+import { seedV3 } from './v3-seed';
 import { resetObsidianMocks, hasNotice, getNoticeMessages } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
@@ -40,24 +41,20 @@ function mockOllamaFail() {
 
 /** 预置 v2 数据：2 个既有概念 + 1 个画像 + 自定义词表 */
 function seedVault(vault: MockVault, extra?: any): void {
-  vault.files.set(
-    getBlackBoxFilePath(),
-    JSON.stringify({
-      version: 2,
-      settings: { reviewThreshold: 10, showSpeculativeEvents: true, words: ['触动', '温暖', '想念', '难过'] },
-      persona: { name: '包仔', seed: '种子', toneExample: '语气', selfViews: [] },
-      entries: [
-        { id: 'bb_c1', type: 'concept', createdAt: '2026-08-01T00:00:00.000Z', name: '提喻法', definition: '以部分代整体', related: [], emotions: [], people: [], scene: '', toward: '', links: [] },
-        { id: 'bb_c2', type: 'concept', createdAt: '2026-08-02T00:00:00.000Z', name: '借代', definition: '用相关事物代替本体', related: [], emotions: [], people: [], scene: '', toward: '', links: [] },
-      ],
-      profiles: [{ id: 'pf_1', name: '妹妹', relation: '家人', impression: '', aiObservations: [], pinnedEvents: [], createdAt: 't' }],
-      events: [],
-      reviews: [],
-      chat: [],
-      meta: { lastReviewAt: '', totalEntries: 2, totalEvents: 0 },
-      ...extra,
-    })
-  );
+  seedV3(vault, {
+    settings: { reviewThreshold: 10, showSpeculativeEvents: true, words: ['触动', '温暖', '想念', '难过'] },
+    persona: { name: '包仔', seed: '种子', toneExample: '语气', selfViews: [] },
+    entries: [
+      { id: 'bb_c1', type: 'concept', createdAt: '2026-08-01T00:00:00.000Z', name: '提喻法', definition: '以部分代整体', related: [], emotions: [], people: [], scene: '', toward: '', links: [] },
+      { id: 'bb_c2', type: 'concept', createdAt: '2026-08-02T00:00:00.000Z', name: '借代', definition: '用相关事物代替本体', related: [], emotions: [], people: [], scene: '', toward: '', links: [] },
+    ],
+    profiles: [{ id: 'pf_1', name: '妹妹', relation: '家人', impression: '', aiObservations: [], pinnedEvents: [], createdAt: 't' }],
+    events: [],
+    reviews: [],
+    chat: [],
+    meta: { lastReviewAt: '', totalEntries: 2, totalEvents: 0 },
+    ...extra,
+  });
 }
 
 /** 读回落盘数据的辅助（v3：经 manager load 由笔记水合） */

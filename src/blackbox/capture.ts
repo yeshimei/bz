@@ -55,6 +55,8 @@ let newProfileOpen = false;
 let conceptName = '';
 let conceptDefinition = '';
 let conceptRelatedIds: string[] = [];
+/** 概念分类（可选，落盘 `黑匣子/概念/<分类>/<名>.md`） */
+let conceptCategory = '';
 /** 概念名由选中文字自动填充 → 只读锁定（内容 ≡ 选区） */
 let conceptNameLocked = false;
 // 文献表单
@@ -151,6 +153,7 @@ function resetEntry(): void {
   conceptDefinition = '';
   conceptRelatedIds = [];
   conceptNameLocked = false;
+  conceptCategory = '';
   literatureText = '';
   literatureSource = '';
   literatureTextLocked = false;
@@ -310,6 +313,15 @@ function renderStepContent(): void {
       if (!conceptNameLocked) conceptName = nameInput.value.trim();
     });
     box.appendChild(nameInput);
+    // 分类（可选）：落盘 `黑匣子/概念/<分类>/<名>.md`
+    const catInput = document.createElement('input');
+    catInput.type = 'text';
+    catInput.id = 'bz-blackbox-concept-category';
+    catInput.className = 'bz-blackbox-input';
+    catInput.placeholder = '分类（可选）：如 心理学/医学，落盘到对应子文件夹';
+    catInput.value = conceptCategory;
+    catInput.addEventListener('input', () => (conceptCategory = catInput.value.trim()));
+    box.appendChild(catInput);
     const defInput = document.createElement('textarea');
     defInput.id = 'bz-blackbox-concept-def';
     defInput.className = 'bz-blackbox-textarea';
@@ -456,6 +468,7 @@ async function saveConcept(): Promise<void> {
     name,
     definition: conceptDefinition.trim(),
     related: conceptRelatedIds,
+    category: conceptCategory.trim() || undefined,
   });
   try {
     const m = manager(appRef);

@@ -23,8 +23,8 @@ import {
   entryNoteTitle,
   isBlackBoxNotePath,
   noteNameFromPath,
-  notePathOf,
   parseNoteContent,
+  sanitizeFileName,
   typeDir,
 } from './notes';
 
@@ -280,17 +280,30 @@ export function normalizeData(raw: any): BlackBoxData {
   };
 }
 
+/** 并发 load 互斥：多个 load 并发会竞争水合/孤儿自愈写盘，复用进行中的 promise */
+let loadInFlight: Promise<BlackBoxData> | null = null;
+
 export class BlackBoxDataManager {
   app: App;
-  /** 迁移中途标记：entries 尚为失败残留（未水合），总数 = 残留 + 索引（避免水合后双计） */
-  private migrating = false;
 
   constructor(app: App) {
     this.app = app;
   }
 
-  /** 读取数据（不存在/坏 JSON → 默认数据；v1/v2 → 自动迁移 v3 笔记化；坏 JSON 改名备份 .bak 保留现场） */
+  /** 读取数据（并发安全：进行中的 load 直接复用）
+   * 笔记即事实源（ADR-0015）：v2 旧数据不在此自动迁移（用户决策，一次性迁移走 tools/migrate-blackbox-v3.mjs），
+   * load 只做：派生层读取 + 索引水合（孤儿自愈）+ 缺失索引清理。 */
   async load(): Promise<BlackBoxData> {
+    if (loadInFlight) return loadInFlight;
+    loadInFlight = this.doLoad();
+    try {
+      return await loadInFlight;
+    } finally {
+      loadInFlight = null;
+    }
+  }
+
+  private async doLoad(): Promise<BlackBoxData> {
     const filePath = getBlackBoxFilePath();
     const f = this.app.vault.getAbstractFileByPath(filePath);
     if (!f) return defaultBlackBoxData();
@@ -307,64 +320,16 @@ export class BlackBoxDataManager {
       }
       return defaultBlackBoxData();
     }
-    // v1 → v2 无损迁移（幂等：迁移后 version 不再为 1）；随后统一走 v2 → v3 笔记化迁移
     const migrated = raw && raw.version === 1 ? migrateV1ToV2(raw) : raw;
     const data = normalizeData(migrated);
-    if (data.entries.length) {
-      this.migrating = true;
-      try {
-        await this.migrateToNotes(data);
-        // 完成即落盘 v3：entries 已清（或残留失败条目保留下次重试）→ 幂等
-        await this.save(data, { keepEntries: data.entries.length > 0 });
-      } finally {
-        this.migrating = false;
-      }
-    }
     await this.hydrate(data);
     return data;
   }
 
   /**
-   * v2 → v3 迁移（幂等）：entries 逐条写为笔记（概念标题=概念名，文献/想法=正文前 20 字去空白），
-   * frontmatter 落 id/type/createdAt + 感触外壳 + 卡片盒可选字段；related/terms 按 id 解析为概念名写入关联区。
-   * 单条失败留在原数据段下次重试；笔记已存在（index 已含 / 崩溃孤儿同 id）→ 跳过重写只登记索引。
-   */
-  private async migrateToNotes(data: BlackBoxData): Promise<void> {
-    // 既有黑匣子笔记 id → 路径（崩溃重试防重复写）
-    const existingById = new Map<string, string>();
-    for (const f of this.app.vault.getMarkdownFiles() as any[]) {
-      if (!isBlackBoxNotePath(f.path)) continue;
-      let content = '';
-      try {
-        content = await this.app.vault.read(f as any);
-      } catch (e) {
-        continue;
-      }
-      const p = parseNoteContent(content, f.path);
-      if (p && !existingById.has(p.entry.id)) existingById.set(p.entry.id, f.path);
-    }
-    const nameById = buildNameById(data.entries);
-    const residual: Entry[] = [];
-    for (const entry of data.entries) {
-      try {
-        let path = data.index[entry.id] || existingById.get(entry.id);
-        if (!path) {
-          path = await this.writeNote(entry, nameById);
-          data.index[entry.id] = path;
-        } else {
-          // 已存在（幂等）→ 只登记索引
-          data.index[entry.id] = path;
-        }
-      } catch (e) {
-        residual.push(entry); // 单条失败留在原数据段下次重试
-      }
-    }
-    data.entries = residual;
-  }
-
-  /**
-   * 水合：index → 笔记（frontmatter + 正文关联区）→ 内存条目；缺失/解析失败跳过该条（保留索引重试）。
+   * 水合：index → 笔记（frontmatter + 正文关联区）→ 内存条目；解析失败跳过该条（保留索引重试）。
    * 关联区 `[[名]]` 解析：概念名 → id（related/terms）；解析不到的存入 pendingLinks（待补链）。
+   * 笔记即事实源（用户决策）：**索引指向缺失文件 → 移除索引并持久化**（笔记删了黑匣子就不显示）；
    * 顺带扫描 `黑匣子/` 下未索引笔记（崩溃孤儿/用户手建 bb 笔记）自动入索引。
    */
   private async hydrate(data: BlackBoxData): Promise<void> {
@@ -372,10 +337,16 @@ export class BlackBoxDataManager {
     const parsedList: Parsed[] = [];
     const entries: Entry[] = [];
     const indexAdded: Record<string, string> = {};
+    const indexRemoved: string[] = [];
 
     for (const [id, path] of Object.entries(data.index)) {
       const f = this.app.vault.getAbstractFileByPath(path);
-      if (!f) continue; // 索引指向缺失文件 → 面板/检索静默跳过
+      if (!f) {
+        // 笔记已删除/改名 → 索引条目移除（展示以笔记为主，不残留）
+        delete data.index[id];
+        indexRemoved.push(id);
+        continue;
+      }
       let content = '';
       try {
         content = await this.app.vault.read(f as any);
@@ -418,10 +389,7 @@ export class BlackBoxDataManager {
       parsedList.push({ ...p, path: f.path });
       entries.push(p.entry);
     }
-    // 文献/想法标题 = 文件名（AI 标题/前 20 字降级都只存在于文件名；回填 title 保持一致）
-    for (const p of parsedList) {
-      if (p.entry.type !== 'concept') p.entry.title = noteNameFromPath(p.path);
-    }
+    // 文献/想法标题/概念名已由 parseNoteContent 从 frontmatter 读取（缺省回退文件名）
     // 关联区名字 → id（概念名 → id；全部条目名 → id 用于「来自」）
     const conceptNameToId = new Map<string, string>();
     const nameToId = new Map<string, string>();
@@ -458,19 +426,17 @@ export class BlackBoxDataManager {
       }
     }
     data.entries = entries;
-    if (Object.keys(indexAdded).length) {
-      await this.save(data); // 孤儿入索引持久化
+    if (Object.keys(indexAdded).length || indexRemoved.length) {
+      await this.save(data); // 孤儿入索引 / 缺失索引清理持久化
     }
   }
 
   /** 保存（存在 modify / 不存在 create，建目录兜底）；保存前同步统计与双源设置。
-   * v3：entries 不落盘（笔记即事实源），仅写派生层 + index；keepEntries=true 仅迁移中途使用（失败残留）。 */
-  async save(data: BlackBoxData, opts?: { keepEntries?: boolean }): Promise<void> {
+   * v3：entries 不落盘（笔记即事实源），仅写派生层 + index。 */
+  async save(data: BlackBoxData): Promise<void> {
     const filePath = getBlackBoxFilePath();
     const s = tryGetSettings() as any;
-    data.meta.totalEntries = this.migrating
-      ? data.entries.length + Object.keys(data.index).length
-      : data.entries.length;
+    data.meta.totalEntries = data.entries.length;
     data.meta.totalEvents = data.events.length;
     // 双源同步：全局设置存在时数据内 settings 兜底跟随（v1 兼容 + 文件自洽）
     data.settings.reviewThreshold = resolveReviewThreshold(data, s);
@@ -488,7 +454,6 @@ export class BlackBoxDataManager {
       meta: data.meta,
       index: data.index,
     };
-    if (opts && opts.keepEntries) payload.entries = data.entries;
     const c = JSON.stringify(payload, null, 2);
     const f = this.app.vault.getAbstractFileByPath(filePath);
     if (f) {
@@ -515,16 +480,24 @@ export class BlackBoxDataManager {
     return path;
   }
 
-  /** 写单条笔记（建目录兜底 + 去重路径 + 内容组装）；返回最终路径。 */
+  /** 逐级建目录（Obsidian createFolder 需父级存在；幂等） */
+  private async ensureFolder(dir: string): Promise<void> {
+    if (this.app.vault.getAbstractFileByPath(dir)) return;
+    const parent = dir.includes('/') ? dir.slice(0, dir.lastIndexOf('/')) : '';
+    if (parent) await this.ensureFolder(parent);
+    await this.app.vault.createFolder(dir);
+  }
+
+  /** 写单条笔记（建目录兜底 + 去重路径 + 内容组装）；概念有分类 → `黑匣子/概念/<分类>/<名>.md`。返回最终路径。 */
   private async writeNote(entry: Entry, nameById: Map<string, string>): Promise<string> {
-    const dir = `${BB_NOTE_ROOT}/${typeDir(entry.type)}`;
-    if (!this.app.vault.getAbstractFileByPath(BB_NOTE_ROOT)) {
-      await this.app.vault.createFolder(BB_NOTE_ROOT);
-    }
-    if (!this.app.vault.getAbstractFileByPath(dir)) {
-      await this.app.vault.createFolder(dir);
-    }
-    const path = await this.uniquePath(notePathOf(entry.type, entryNoteTitle(entry)));
+    const catDir =
+      entry.type === 'concept' && entry.category && entry.category.trim()
+        ? sanitizeFileName(entry.category.trim())
+        : '';
+    const dir = catDir ? `${BB_NOTE_ROOT}/${typeDir(entry.type)}/${catDir}` : `${BB_NOTE_ROOT}/${typeDir(entry.type)}`;
+    await this.ensureFolder(BB_NOTE_ROOT);
+    await this.ensureFolder(dir);
+    const path = await this.uniquePath(`${dir}/${entryNoteTitle(entry)}.md`);
     const content = buildNoteContent(entry, (id) => nameById.get(id));
     await this.app.vault.create(path, content);
     return path;
