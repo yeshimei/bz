@@ -896,7 +896,7 @@ async function saveProfileImpression(pf: Profile, value: string): Promise<void> 
   if (!target) return;
   target.impression = pf.impression;
   await m.updateProfile(latest, target);
-  notice('✅ 印象已保存（包仔不会再覆盖这里）');
+  notice('印象已保存（包仔不会再覆盖这里）', 'success');
 }
 
 /** 采纳：观察 → 印象（追加），移除该观察 */
@@ -913,7 +913,7 @@ async function adoptObservation(pf: Profile, o: string): Promise<void> {
   await m.updateProfile(latest, target);
   pf.impression = target.impression;
   pf.aiObservations = target.aiObservations;
-  notice('✨ 已采纳进印象');
+  notice('已采纳进印象', 'accept');
   refreshAll();
 }
 
@@ -932,11 +932,11 @@ async function dismissObservation(pf: Profile, o: string): Promise<void> {
 async function panelCreateProfile(name: string, relation: string): Promise<void> {
   if (!appRef || !data) return;
   if (!name) {
-    notice('⚠️ 名字不能为空');
+    notice('名字不能为空', 'warning');
     return;
   }
   if (data.profiles.some((p) => p.name === name)) {
-    notice('⚠️ 已有同名画像');
+    notice('已有同名画像', 'warning');
     return;
   }
   const pf = await createProfileWithSeed(appRef, name, relation);
@@ -944,7 +944,7 @@ async function panelCreateProfile(name: string, relation: string): Promise<void>
   detailProfileId = pf.id;
   panelNewProfileOpen = false;
   renderPeople();
-  notice(`✅ 画像「${name}」已创建`);
+  notice(`画像「${name}」已创建`, 'success');
 }
 
 // ---------------- 🕐 时间线（v2 渲染复用：年月分组事件流 + 筛选） ----------------
@@ -1171,7 +1171,7 @@ async function confirmEventAction(eventId: string): Promise<void> {
   const latest = await m.load();
   await m.confirmEvent(latest, eventId);
   data = latest;
-  notice('✓ 已确认（转为实线事件）');
+  notice('已确认（转为实线事件）', 'confirm');
   refreshAll();
 }
 
@@ -1181,7 +1181,7 @@ async function deleteEventAction(eventId: string): Promise<void> {
   const latest = await m.load();
   await m.deleteEvent(latest, eventId);
   data = latest;
-  notice('🗑 已删除（遗忘权后置：不做忽略清单）');
+  notice('已删除（遗忘权后置：不做忽略清单）', 'delete');
   refreshAll();
 }
 

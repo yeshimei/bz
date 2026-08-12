@@ -105,7 +105,7 @@ describe('黑匣子设置弹窗（v3 8 项）', () => {
     input.value = '释怀';
     document.getElementById('bz-blackbox-word-add')!.click();
     await new Promise((r) => setTimeout(r, 50));
-    expect(hasNotice('✅ 已添加「释怀」')).toBe(true);
+    expect(hasNotice('已添加「释怀」')).toBe(true);
     expect((await loaded(app, vault)).settings.words).toContain('释怀');
     expect(document.querySelectorAll('.bz-blackbox-word-chip').length).toBe(5);
     // 删除「难过」
@@ -146,11 +146,11 @@ describe('黑匣子设置弹窗（v3 8 项）', () => {
     input.value = '触动';
     document.getElementById('bz-blackbox-word-add')!.click();
     await new Promise((r) => setTimeout(r, 50));
-    expect(hasNotice('⚠️ 词已存在')).toBe(true);
+    expect(hasNotice('词已存在')).toBe(true);
     input.value = '   ';
     document.getElementById('bz-blackbox-word-add')!.click();
     await new Promise((r) => setTimeout(r, 50));
-    expect(hasNotice('⚠️ 词不能为空')).toBe(true);
+    expect(hasNotice('词不能为空')).toBe(true);
     expect((await loaded(app, vault)).settings.words.length).toBe(4);
   });
 });

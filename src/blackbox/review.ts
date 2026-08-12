@@ -173,10 +173,10 @@ async function runReview(app: App, data: BlackBoxData, silent: boolean): Promise
     for (const line of chatLines) {
       await m.addChat(latest2, 'assistant', line, new Date().toISOString());
     }
-    if (!silent) notice('✅ 包仔复盘完成');
+    if (!silent) notice('包仔复盘完成', 'success');
     return { ok: true, text: result.text };
   } catch (e) {
-    if (!silent) notice('❌ 复盘失败：AI 暂时无法说话', 'error');
+    if (!silent) notice('复盘失败：AI 暂时无法说话', 'error');
     console.warn('黑匣子复盘失败', e);
     return { ok: false, text: '' };
   } finally {
@@ -198,7 +198,7 @@ export async function manualReview(app: App): Promise<string> {
   const m = manager(app);
   const data = await m.load();
   if (data.entries.length === 0) {
-    notice('⚠️ 黑匣子还是空的，先写点东西吧');
+    notice('黑匣子还是空的，先写点东西吧', 'warning');
     return '';
   }
   const r = await runReview(app, data, false);

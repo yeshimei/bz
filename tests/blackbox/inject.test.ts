@@ -123,7 +123,7 @@ describe('injectIntoSourceNote（mock vault 写文件）', () => {
     const r = await injectIntoSourceNote(app, { ...SNAP('const a = 1;', '笔记/代码.md'), line: 2, endLine: 2 }, '目标');
     expect(r.injected).toBe(false);
     expect(r.blocked).toBe('code');
-    expect(hasNotice('⚠️ 选区位于代码块/元数据内，未插入链接')).toBe(true);
+    expect(hasNotice('选区位于代码块/元数据内，未插入链接')).toBe(true);
     expect(vault.files.get('笔记/代码.md')).toBe('前\n```\nconst a = 1;\n```\n后'); // 原文不动
   });
 

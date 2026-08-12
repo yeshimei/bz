@@ -381,16 +381,16 @@ describe('番茄钟弹窗', () => {
     const audio = makeAudioMock();
     await openPomodoro(app);
     el('pomodoro-btn-start').click(); // 开始
-    expect(hasNotice('✅ 专注开始')).toBe(true);
+    expect(hasNotice('专注开始')).toBe(true);
     expect(audio.createOscillator).toHaveBeenCalledTimes(1);
     expect(audio.createOscillator.mock.results[0].value.frequency.value).toBe(880); // 专注开始
     await vi.advanceTimersByTimeAsync(2000);
     el('pomodoro-btn-start').click(); // 暂停
-    expect(hasNotice('⏸️ 已暂停专注')).toBe(true);
+    expect(hasNotice('已暂停专注')).toBe(true);
     expect(audio.createOscillator).toHaveBeenCalledTimes(2);
     expect(audio.createOscillator.mock.results[1].value.frequency.value).toBe(440); // 暂停
     el('pomodoro-btn-start').click(); // 继续
-    expect(hasNotice('✅ 专注开始')).toBe(true); // 继续也算开始
+    expect(hasNotice('专注开始')).toBe(true); // 继续也算开始
     expect(audio.createOscillator.mock.results[2].value.frequency.value).toBe(880);
   });
 
@@ -486,7 +486,7 @@ describe('番茄钟弹窗', () => {
     el('pomodoro-btn-start').click(); // 开始有专注开始声（正常）
     const before = audio.createOscillator.mock.calls.length;
     el('pomodoro-btn-skip').click();
-    expect(hasNotice('✅ 专注完成')).toBe(false);
+    expect(hasNotice('专注完成')).toBe(false);
     expect(audio.createOscillator.mock.calls.length - before).toBe(0); // skip 本身不响
   });
 

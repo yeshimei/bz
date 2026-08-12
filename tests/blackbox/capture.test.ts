@@ -139,7 +139,7 @@ describe('黑匣子录入弹窗（引导式）', () => {
     expect(document.querySelector('#bz-blackbox-step-content .bz-blackbox-guide-head')).toBeNull();
     expect(document.querySelector('.bz-blackbox-guide-back')).toBeNull();
     expect(document.querySelector('#bz-blackbox-step-content .bz-blackbox-field-label')).toBeNull();
-    expect((document.getElementById('bz-blackbox-concept-name') as HTMLInputElement).placeholder).toContain('提喻法');
+    expect((document.getElementById('bz-blackbox-concept-name') as HTMLInputElement).placeholder).toContain('想搞懂的概念或实体');
     // 双输入（ticket 02）：概念名单行 + 定义 textarea ≤8 行；无其他字段
     expect(document.getElementById('bz-blackbox-concept-def')).toBeTruthy();
     expect(document.querySelectorAll('#bz-blackbox-step-content textarea').length).toBe(1);
@@ -232,7 +232,7 @@ describe('黑匣子录入弹窗（引导式）', () => {
     await openBlackBoxCapture(app);
     selectType('concept');
     document.getElementById('bz-blackbox-concept-gen')!.click();
-    expect(hasNotice('⚠️ 先输入名词')).toBe(true);
+    expect(hasNotice('先输入名词')).toBe(true);
     expect((global as any).fetch).toBeUndefined();
   });
 
@@ -455,7 +455,7 @@ describe('黑匣子录入弹窗（引导式）', () => {
     await openBlackBoxCapture(app);
     selectType('literature');
     document.getElementById("bz-blackbox-lit-analyze")!.click();
-    expect(hasNotice('⚠️ 先粘贴摘抄内容')).toBe(true);
+    expect(hasNotice('先粘贴摘抄内容')).toBe(true);
   });
 
   // ---------------- 💡 想法 ----------------
@@ -509,7 +509,7 @@ describe('黑匣子录入弹窗（引导式）', () => {
       const firstOff = Array.from(emo).find((c) => !c.classList.contains('bz-blackbox-chip-on')) as HTMLElement;
       firstOff.click();
     }
-    expect(getNoticeMessages()).toContain('⚠️ 最多选 3 个情绪');
+    expect(getNoticeMessages()).toContain('最多选 3 个情绪');
     expect(document.querySelectorAll('#bz-blackbox-emotions .bz-blackbox-chip-on').length).toBe(3);
     // 场景 + 涉及的人（匹配画像 → 存 id）
     setValue('bz-blackbox-scene', '窗台');
@@ -535,7 +535,7 @@ describe('黑匣子录入弹窗（引导式）', () => {
     await openBlackBoxCapture(app);
     selectType('thought');
     document.getElementById('bz-blackbox-thought-confirm')!.click();
-    expect(hasNotice('⚠️ 先写下想法')).toBe(true);
+    expect(hasNotice('先写下想法')).toBe(true);
     expect(document.getElementById('bz-blackbox-step-feel')!.style.display).toBe('none');
   });
 

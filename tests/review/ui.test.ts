@@ -76,13 +76,13 @@ describe('UIManager', () => {
     // A 逾期排前
     const cards = container.querySelectorAll('.review-card');
     expect(cards.length).toBe(2);
-    expect(container.textContent).toContain('⚠️ 逾期 (30m)'); // stage=1 → text[1]
+    expect(container.textContent).toContain('逾期 (30m)'); // stage=1 → text[1]
     expect(container.textContent).toContain('9/10 60d'); // stage=8 → currentStage 9
     // 时间单单位
     expect(container.textContent).toContain('📅 逾期');
     expect(container.textContent).toContain('⏳ 59m'); // 单单位
     // 归档默认隐藏已完成
-    expect(container.textContent).not.toContain('✅ 已完成');
+    expect(container.textContent).not.toContain('已完成');
     ui.destroy();
   });
 
@@ -108,7 +108,7 @@ describe('UIManager', () => {
     ui.showArchived = true;
     await ui.refreshPanel();
     expect(container.querySelectorAll('.review-card').length).toBe(3); // 全部
-    expect(container.textContent).toContain('✅ 已完成');
+    expect(container.textContent).toContain('已完成');
     ui.destroy();
   });
 
@@ -294,7 +294,7 @@ describe('quizReviewLoop 集成', () => {
     quiz.onComplete({ correct: 1, wrong: 0, total: 1, accuracy: 100 });
     await new Promise((r) => setTimeout(r, 50));
     expect(quiz.popup.innerHTML).toContain('🎯 A');
-    expect(quiz.popup.innerHTML).toContain('✅ 答对 1 题　❌ 答错 0 题');
+    expect(quiz.popup.innerHTML).toContain('答对 1 题　❌ 答错 0 题');
     expect(quiz.popup.innerHTML).toContain('自动标记：简单');
     expect(quiz.popup.innerHTML).toContain('完成复习'); // 最后一篇
     // 点击完成 → 所有做题复习已完成
