@@ -189,7 +189,6 @@ function applyResult() {
 
   // 用户 2026-08-12 决策：不再生成 .bak 备份文件（脚本幂等可重跑）
   const bb = readJSON(BB_FILE, {});
-  const index = bb.index || {};
 
   let moved = 0, same = 0, fail = 0, fixed = 0;
   for (const [rel, cat] of Object.entries(map)) {
@@ -241,12 +240,9 @@ function applyResult() {
       fail++;
       continue;
     }
-    // 更新 index
-    for (const [id, p] of Object.entries(index)) {
-      if (p === rel || p === curRel) index[id] = relOf(target);
-    }
   }
-  writeJSON(BB_FILE, { ...bb, index });
+  // index 不再持久化（2026-08-12 用户决策）：load 全量扫描笔记构建
+  writeJSON(BB_FILE, bb);
   console.log(`\n应用完成：移动 ${moved}，同分类原地 ${same}（其中 fm 补 category ${fixed}），失败 ${fail}`);
 }
 

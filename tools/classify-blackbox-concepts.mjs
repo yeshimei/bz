@@ -3,7 +3,7 @@
  * 规则关键词分类（16 类，按命中关键词数最多者；手动表兜底 23 条边缘概念）：
  *   医学/心理学/哲学/文学/历史/地理/科学/宗教/计算机/艺术/社会/饮食/音乐/影视/体育/未分类
  * 对每张概念笔记：frontmatter 写 category + 移动到 `黑匣子/概念/<分类>/<名>.md`（同名 -N 去重）
- * + 更新 blackbox.json 的 index 路径。幂等：已有 category 且已在分类文件夹 → 跳过；可安全重跑。
+ * index 不持久化（2026-08-12 用户决策）：load 全量扫描笔记构建。幂等：已有 category 且已在分类文件夹 → 跳过；可安全重跑。
  * 写前备份 blackbox.json。
  * 用法：node tools/classify-blackbox-concepts.mjs
  */
@@ -142,7 +142,6 @@ function main() {
     return;
   }
   const bb = JSON.parse(fs.readFileSync(BB_FILE, 'utf8'));
-  const index = bb.index || {};
 
   // 收集全部概念笔记（递归，含已有分类子文件夹）
   const notes = [];
@@ -209,7 +208,6 @@ function main() {
       mkdirp(targetDir);
       fs.writeFileSync(abs, setCategory(content, cat), 'utf8');
       fs.renameSync(abs, target);
-      index[id] = path.relative(VAULT, target).replace(/\\/g, '/');
       moved += 1;
     } catch (e) {
       failed += 1;
@@ -217,8 +215,7 @@ function main() {
     }
   }
 
-  // 更新 index 落盘
-  bb.index = index;
+  // 落盘（不再写 index 字段——2026-08-12 用户决策：load 全量扫描笔记构建）
   fs.writeFileSync(BB_FILE, JSON.stringify(bb, null, 2), 'utf8');
 
   console.log('----------------------------------------');

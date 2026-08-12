@@ -83,3 +83,9 @@
 - **触发**：概念保存后注入（目标=概念名）；摘抄保存后注入（目标=AI 标题，标题确定后）；guided/直达两路径共用。
 - 测试：tests/blackbox/inject.test.ts 新建 +16（替换正确性/多行选区/四重守卫/未闭合栅栏/越界降级/mock vault 写入/守卫 toast/无选区/集成两链路）。
 - **注意**：`notes.ts` 关联区解析约定——正文与关联区以空行分隔（无正文时保留空行），引用归属「来源：」行若与正文无空行分隔则视为正文不被剥离（有专门测试）。
+
+## 2026-09 · ticket 07 书内选区录入（规划完成，grilling 封板）
+
+- **需求**（grilling 会话定稿）：EPUB 阅读器选区工具栏常驻「🧩 概念」「📎 摘抄」两按钮（bz 缺失置灰不隐藏）→ 点击打开黑匣子录入（文字锁定、来源=阅读器双链 `[[书路径#weave-cfi=…|书名]]`）；主面板列表来源可点击三分派（epub 双链→跳书 / [[笔记]]→开笔记 / URL→浏览器）。
+- **决策**：概念来源单值存 links（不加字段，ADR-0013 冻结）；概念笔记关联区 `- 关联：` 下方新增 `来源：` 行（build/parse 成对修改，round-trip 无损）；weave 新增 capability key（不挪用 openCreateCardModal/openIRReadingPointFromExternalSelection）+ 公开跳转 API（bz 不复刻 subpath 解析）；术语「书内来源 (In-book Source)」已入 CONTEXT.md。
+- **待办**：实现前落 ADR-0016（契约 + 冻结格式扩展）；spec 见 `issues/07-epub-selection-capture.md`（Status: ready-for-agent）。

@@ -245,15 +245,7 @@ function normalizeChatMsg(m: any): ChatMsg | null {
   return { role: m.role, text: m.text, ts: typeof m.ts === 'string' ? m.ts : '' };
 }
 
-/** index 归一：id → 路径 字符串对（坏项过滤） */
-function normalizeIndex(raw: any): Record<string, string> {
-  const out: Record<string, string> = {};
-  if (!raw || typeof raw !== 'object') return out;
-  for (const [id, path] of Object.entries(raw)) {
-    if (id && typeof path === 'string' && path) out[id] = path;
-  }
-  return out;
-}
+/** index 不再持久化（2026-08-12 用户决策）：运行时内存映射，load 全量扫描笔记构建。 */
 
 /** 容错归一（v3）：非法字段回退默认、数组过滤非法条目（不静默改用户数据，只防坏文件）。
  * raw.entries（v2 残留/迁移失败残留）原样归一保留，由 load 决定是否迁移。 */
@@ -265,7 +257,8 @@ export function normalizeData(raw: any): BlackBoxData {
     settings: normalizeSettings(raw.settings),
     persona: normalizePersona(raw.persona),
     entries: Array.isArray(raw.entries) ? raw.entries.map(normalizeEntry).filter((e): e is Entry => !!e) : [],
-    index: normalizeIndex(raw.index),
+    // index 不再持久化（2026-08-12 用户决策）：运行时内存映射，load 时全量扫描笔记构建
+    index: {},
     profiles: Array.isArray(raw.profiles)
       ? raw.profiles.map(normalizeProfile).filter((p): p is Profile => !!p)
       : [],
@@ -327,42 +320,23 @@ export class BlackBoxDataManager {
   }
 
   /**
-   * 水合：index → 笔记（frontmatter + 正文关联区）→ 内存条目；解析失败跳过该条（保留索引重试）。
+   * 水合：全量扫描 `黑匣子/` 下笔记（frontmatter + 正文关联区）→ 内存条目 + 内存 index（id → 路径）。
+   * index 为运行时内存映射，由扫描构建、**不再持久化**（用户 2026-08-12 决策：index 字段冗余——
+   * 笔记即事实源，load 每次全扫；笔记删了黑匣子就不显示，无残留索引）。
    * 关联区 `[[名]]` 解析：概念名 → id（related/terms）；解析不到的存入 pendingLinks（待补链）。
-   * 笔记即事实源（用户决策）：**索引指向缺失文件 → 移除索引并持久化**（笔记删了黑匣子就不显示）；
-   * 顺带扫描 `黑匣子/` 下未索引笔记（崩溃孤儿/用户手建 bb 笔记）自动入索引。
+   * 解析失败/损坏的笔记跳过（下次 load 重试）。
    */
   private async hydrate(data: BlackBoxData): Promise<void> {
     type Parsed = { entry: Entry; relatedNames: string[]; termsNames: string[]; fromName: string; path: string };
     const parsedList: Parsed[] = [];
     const entries: Entry[] = [];
     const indexAdded: Record<string, string> = {};
-    const indexRemoved: string[] = [];
+    data.index = {};
 
-    for (const [id, path] of Object.entries(data.index)) {
-      const f = this.app.vault.getAbstractFileByPath(path);
-      if (!f) {
-        // 笔记已删除/改名 → 索引条目移除（展示以笔记为主，不残留）
-        delete data.index[id];
-        indexRemoved.push(id);
-        continue;
-      }
-      let content = '';
-      try {
-        content = await this.app.vault.read(f as any);
-      } catch (e) {
-        continue;
-      }
-      const p = parseNoteContent(content, path);
-      if (!p || p.entry.id !== id) continue; // 解析失败/损坏 → 跳过该条并保留索引重试
-      parsedList.push({ ...p, path });
-      entries.push(p.entry);
-    }
-    // 孤儿自愈：黑匣子/ 下未索引但 frontmatter 合法的 bb 笔记（id 未被索引占用）
-    const indexedIds = new Set(Object.keys(data.index));
-    const indexedPaths = new Set(Object.values(data.index));
+    // 全量扫描：黑匣子/ 下全部 bb 笔记（含分类子文件夹）→ 解析 → 内存 index
+    const indexedIds = new Set<string>();
     for (const f of this.app.vault.getMarkdownFiles() as any[]) {
-      if (!isBlackBoxNotePath(f.path) || indexedPaths.has(f.path)) continue;
+      if (!isBlackBoxNotePath(f.path)) continue;
       let content = '';
       try {
         content = await this.app.vault.read(f as any);
@@ -370,19 +344,7 @@ export class BlackBoxDataManager {
         continue;
       }
       const p = parseNoteContent(content, f.path);
-      if (!p) continue;
-      if (indexedIds.has(p.entry.id)) {
-        // 同名 id 已被索引但指向缺失文件（改名/事件漏监）→ 重映射到新路径
-        const oldPath = data.index[p.entry.id];
-        if (oldPath && !this.app.vault.getAbstractFileByPath(oldPath)) {
-          data.index[p.entry.id] = f.path;
-          indexAdded[p.entry.id] = f.path;
-          indexedPaths.add(f.path);
-          parsedList.push({ ...p, path: f.path });
-          entries.push(p.entry);
-        }
-        continue;
-      }
+      if (!p || indexedIds.has(p.entry.id)) continue; // 损坏/重复 id → 跳过
       indexedIds.add(p.entry.id);
       data.index[p.entry.id] = f.path;
       indexAdded[p.entry.id] = f.path;
@@ -426,13 +388,14 @@ export class BlackBoxDataManager {
       }
     }
     data.entries = entries;
-    if (Object.keys(indexAdded).length || indexRemoved.length) {
-      await this.save(data); // 孤儿入索引 / 缺失索引清理持久化
+    // 笔记增删导致统计过时 → 落盘（无 index 持久化，仅同步派生层统计）
+    if (Object.keys(indexAdded).length || data.meta.totalEntries !== entries.length || data.meta.totalEvents !== data.events.length) {
+      await this.save(data);
     }
   }
 
   /** 保存（存在 modify / 不存在 create，建目录兜底）；保存前同步统计与双源设置。
-   * v3：entries 不落盘（笔记即事实源），仅写派生层 + index。 */
+   * v3：entries 与 index 均不落盘（笔记即事实源 + index 为运行时扫描映射），仅写派生层。 */
   async save(data: BlackBoxData): Promise<void> {
     const filePath = getBlackBoxFilePath();
     const s = tryGetSettings() as any;
@@ -452,7 +415,6 @@ export class BlackBoxDataManager {
       reviews: data.reviews,
       chat: data.chat,
       meta: data.meta,
-      index: data.index,
     };
     const c = JSON.stringify(payload, null, 2);
     const f = this.app.vault.getAbstractFileByPath(filePath);
