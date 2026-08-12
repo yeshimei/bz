@@ -6,6 +6,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
+import { seedV3 } from './v3-seed';
 import { resetObsidianMocks, hasNotice } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
@@ -26,32 +27,28 @@ function setup(vault: MockVault = new MockVault(), settings: any = {}) {
 
 /** 预置 v2 全量数据：概念/文献/想法/画像/事件（含推测事件） */
 function seedVault(vault: MockVault, extra?: any): void {
-  vault.files.set(
-    getBlackBoxFilePath(),
-    JSON.stringify({
-      version: 2,
-      settings: { reviewThreshold: 10, showSpeculativeEvents: true, words: ['触动', '温暖', '想念', '难过'] },
-      persona: { name: '包仔', seed: '种子', toneExample: '语气', selfViews: [] },
-      entries: [
-        { id: 'bb_c1', type: 'concept', createdAt: '2026-08-01T00:00:00.000Z', name: '提喻法', definition: '以部分代整体的修辞手法', related: ['bb_c2'], emotions: [], people: [], scene: '', toward: '', links: [] },
-        { id: 'bb_c2', type: 'concept', createdAt: '2026-08-02T00:00:00.000Z', name: '借代', definition: '用相关事物代替本体', related: ['bb_c1'], emotions: [], people: [], scene: '', toward: '', links: [] },
-        { id: 'bb_l1', type: 'literature', createdAt: '2026-08-03T00:00:00.000Z', text: '修辞是语言的弹性，让有限词句装下无限情意。', source: '《诗学》', terms: ['bb_c1'], emotions: ['触动'], people: [], scene: '', toward: '', links: ['https://a.com'] },
-        { id: 'bb_t1', type: 'thought', createdAt: '2026-08-04T00:00:00.000Z', text: '给妹妹买吉他，她笑了很久。', emotions: ['温暖', '想念'], people: ['pf_1'], scene: '琴行', toward: 'others', links: [] },
-        { id: 'bb_t2', type: 'thought', createdAt: '2026-08-05T00:00:00.000Z', text: '想带妈妈去看海', emotions: ['希望'], people: ['老王'], scene: '', toward: '', links: [] },
-      ],
-      profiles: [
-        { id: 'pf_1', name: '妹妹', relation: '家人', impression: '很要强', aiObservations: ['我注意到她越来越独立'], pinnedEvents: [], createdAt: 't' },
-      ],
-      events: [
-        { id: 'ev_1', title: '给妹妹买吉他', time: '2026-08-01', inferred: false, summary: '挑了把入门琴', people: ['pf_1'], mainPerson: 'pf_1', evidence: ['bb_t1'], emotions: ['温暖'], edited: false },
-        { id: 'ev_2', title: '梦见去海边', time: '2026-07-20', inferred: true, summary: '可能是想旅行的投射', people: ['老王'], mainPerson: '', evidence: ['bb_t2'], emotions: [], edited: false },
-      ],
-      reviews: [],
-      chat: [],
-      meta: { lastReviewAt: '', totalEntries: 5, totalEvents: 2 },
-      ...extra,
-    })
-  );
+  seedV3(vault, {
+    settings: { reviewThreshold: 10, showSpeculativeEvents: true, words: ['触动', '温暖', '想念', '难过'] },
+    persona: { name: '包仔', seed: '种子', toneExample: '语气', selfViews: [] },
+    entries: [
+      { id: 'bb_c1', type: 'concept', createdAt: '2026-08-01T00:00:00.000Z', name: '提喻法', definition: '以部分代整体的修辞手法', related: ['bb_c2'], emotions: [], people: [], scene: '', toward: '', links: [] },
+      { id: 'bb_c2', type: 'concept', createdAt: '2026-08-02T00:00:00.000Z', name: '借代', definition: '用相关事物代替本体', related: ['bb_c1'], emotions: [], people: [], scene: '', toward: '', links: [] },
+      { id: 'bb_l1', type: 'literature', createdAt: '2026-08-03T00:00:00.000Z', text: '修辞是语言的弹性，让有限词句装下无限情意。', source: '《诗学》', terms: ['bb_c1'], emotions: ['触动'], people: [], scene: '', toward: '', links: ['https://a.com'] },
+      { id: 'bb_t1', type: 'thought', createdAt: '2026-08-04T00:00:00.000Z', text: '给妹妹买吉他，她笑了很久。', emotions: ['温暖', '想念'], people: ['pf_1'], scene: '琴行', toward: 'others', links: [] },
+      { id: 'bb_t2', type: 'thought', createdAt: '2026-08-05T00:00:00.000Z', text: '想带妈妈去看海', emotions: ['希望'], people: ['老王'], scene: '', toward: '', links: [] },
+    ],
+    profiles: [
+      { id: 'pf_1', name: '妹妹', relation: '家人', impression: '很要强', aiObservations: ['我注意到她越来越独立'], pinnedEvents: [], createdAt: 't' },
+    ],
+    events: [
+      { id: 'ev_1', title: '给妹妹买吉他', time: '2026-08-01', inferred: false, summary: '挑了把入门琴', people: ['pf_1'], mainPerson: 'pf_1', evidence: ['bb_t1'], emotions: ['温暖'], edited: false },
+      { id: 'ev_2', title: '梦见去海边', time: '2026-07-20', inferred: true, summary: '可能是想旅行的投射', people: ['老王'], mainPerson: '', evidence: ['bb_t2'], emotions: [], edited: false },
+    ],
+    reviews: [],
+    chat: [],
+    meta: { lastReviewAt: '', totalEntries: 5, totalEvents: 2 },
+    ...extra,
+  });
 }
 
 async function loaded(app: any, vault: MockVault): Promise<any> {
@@ -207,7 +204,6 @@ describe('黑匣子主面板（v3 流式）', () => {
 
   it('批次滚动：初始渲染 BATCH 条，滚到底加载下一批，全部显示后出现「已显示所有内容」', async () => {
     const vault = new MockVault();
-    seedVault(vault);
     // 24 条想法（不同日期）
     const entries: any[] = [];
     for (let i = 0; i < 24; i++) {
@@ -216,12 +212,12 @@ describe('黑匣子主面板（v3 流式）', () => {
         text: `批量想法 ${i}`, emotions: [], people: [], scene: '', toward: '', links: [],
       });
     }
-    vault.files.set(getBlackBoxFilePath(), JSON.stringify({
-      version: 2, settings: { reviewThreshold: 10, showSpeculativeEvents: true, words: [] },
+    seedV3(vault, {
+      settings: { reviewThreshold: 10, showSpeculativeEvents: true, words: [] },
       persona: { name: '包仔', seed: '', toneExample: '', selfViews: [] },
       entries, profiles: [], events: [], reviews: [], chat: [],
       meta: { lastReviewAt: '', totalEntries: 24, totalEvents: 0 },
-    }));
+    });
     const { app } = setup(vault);
     await openBlackBoxPanel(app);
     expect(streamCards().length).toBe(20); // 第一批 BATCH

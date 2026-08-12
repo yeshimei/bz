@@ -34,7 +34,8 @@ export function ensureBlackBoxSync(app: App): void {
     offRefs.push({ off: () => mc.offref(ref) });
   }
   const v: any = app.vault;
-  for (const ev of ['rename', 'delete', 'create']) {
+  // 仅监听 rename/delete：create 由 load 孤儿自愈兜底（防插件自身写笔记触发 refresh → 并发迁移循环）
+  for (const ev of ['rename', 'delete']) {
     const ref = v.on(ev, (file: any) => {
       if (file && file.path) onEvent(file.path);
     });

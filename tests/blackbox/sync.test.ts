@@ -127,22 +127,25 @@ describe('黑匣子实时同步（ticket 05）', () => {
     expect(cards.some((c) => c.textContent.includes('借代'))).toBe(false);
   });
 
-  it('新建（vault create）→ 索引新增；面板出现新条目', async () => {
+  it('新建笔记：无 create 监听（防插件自写循环），下次 load 孤儿自愈入索引', async () => {
     const vault = new MockVault();
     seedNotes(vault);
     const { app } = setup(vault);
     ensureBlackBoxSync(app);
     await openBlackBoxPanel(app);
+    // 用户手动新建一篇合法 bb 笔记（vault.create 不再触发实时刷新）
     await vault.create(
       '黑匣子/想法/夏夜的吉他声.md',
       '---\nid: bb_t9\ntype: thought\ncreatedAt: "2026-08-09T00:00:00.000Z"\n---\n给妹妹买吉他，她笑了很久。\n'
     );
-    vault.emit('create', vault.file('黑匣子/想法/夏夜的吉他声.md'));
-    await vi.waitFor(() => {
-      expect(streamCards().length).toBe(4); // 面板实时出现
-    });
+    await new Promise((r) => setTimeout(r, 400)); // 防抖窗口内无刷新
+    expect(streamCards().length).toBe(3); // 面板未实时出现（create 不监听）
+    // 下次 load（打开面板/任意事件）→ 孤儿自愈入索引
     const d = await new BlackBoxDataManager(app).load();
     expect(d.index['bb_t9']).toBe('黑匣子/想法/夏夜的吉他声.md');
+    expect(d.entries.length).toBe(4);
+    await openBlackBoxPanel(app);
+    expect(streamCards().length).toBe(4); // 打开时水合后出现
   });
 
   it('面板实时刷新保留类型筛选与搜索词（仅内容变，状态不丢）', async () => {

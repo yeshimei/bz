@@ -16,6 +16,7 @@ import {
   createEvent,
   migrateV1Impression,
   splitV1People,
+  normalizeData,
 } from '../../src/blackbox/data';
 import {
   defaultBlackBoxData,
@@ -267,127 +268,90 @@ describe('BlackBoxDataManager load 迁移（v1/v2 → v3 笔记化）', () => {
     setSettingsProvider(() => ({} as any));
   });
 
-  it('v1 文件加载自动迁移 v3：persona/reviews/chat 无损，impressions 全为 thought 笔记', async () => {
+  it('v1 文件加载不再自动迁移（用户决策）：派生层可读，entries 残留不水合、不写笔记', async () => {
     const vault = new MockVault();
     vault.files.set('CONFIG/STORAGE/blackbox.json', JSON.stringify(V1_SAMPLE));
     const { app } = setup(vault);
     const data = await new BlackBoxDataManager(app).load();
     expect(data.version).toBe(3);
-    expect(data.entries.length).toBe(2);
-    expect(data.entries.every((e) => e.type === 'thought')).toBe(true);
-    expect(data.entries[0].text).toContain('茉莉花的香气');
-    expect(data.entries[0].emotions).toEqual(['想念', '难过']);
-    expect(data.entries[0].people).toEqual(['妈妈', '妹妹', '老王']);
-    expect(data.entries[0].toward).toBe('others');
-    expect(data.entries[0].links).toEqual(['https://a.com', '[[某篇笔记]]']); // toward/links 迁移保留
+    expect(data.entries).toEqual([]); // 未迁移：无笔记可水合（一次性迁移走 tools/migrate-blackbox-v3.mjs）
     expect(data.persona.selfViews).toEqual([{ ts: 't0', view: '我认识主人了' }]);
     expect(data.reviews.length).toBe(1);
     expect(data.reviews[0].text).toBe('复盘一');
     expect(data.chat.length).toBe(2);
-    expect(data.profiles).toEqual([]);
-    expect(data.events).toEqual([]);
-    // 笔记落盘：想法目录下 2 个文件（标题=正文前 20 字去空白）
-    const notes = blackboxNoteFiles(vault);
-    expect(notes.length).toBe(2);
-    expect(notes.every((p) => p.startsWith('黑匣子/想法/'))).toBe(true);
-    expect(Object.keys(data.index).sort()).toEqual(['bb_i1', 'bb_i2']);
-    expect(data.index['bb_i1']).toBe(notes[0] || data.index['bb_i1']);
-    // 词表预置 24 词
+    expect(blackboxNoteFiles(vault)).toEqual([]); // 不写任何笔记
     expect(data.settings.words.length).toBe(24);
   });
 
-  it('v2 文件迁移：三类条目落盘 + frontmatter + 关联区双链 + 索引', async () => {
+  it('v2 文件加载不再自动迁移：residual entries 被忽略，仅水合 index/孤儿', async () => {
     const vault = new MockVault();
     vault.files.set('CONFIG/STORAGE/blackbox.json', JSON.stringify(V2_SAMPLE));
     const { app } = setup(vault);
-    const dm = new BlackBoxDataManager(app);
-    const data = await dm.load();
-    expect(data.entries.length).toBe(4);
-    expect(data.entries.map((e) => e.id)).toEqual(['bb_c1', 'bb_c2', 'bb_l1', 'bb_t1']);
-    // 概念笔记正文含关联区双链（related 按 id 解析为概念名）
-    const c1Note = vault.files.get(data.index['bb_c1'])!;
-    expect(c1Note).toContain('id: bb_c1');
-    expect(c1Note).toContain('type: concept');
-    expect(c1Note).toContain('- 关联：[[借代]]');
-    expect(c1Note).toContain('以部分代整体的修辞');
-    // 文献笔记：来源 + 关联概念 + links 保留
-    const l1Note = vault.files.get(data.index['bb_l1'])!;
-    expect(l1Note).toContain('来源：《诗学》');
-    expect(l1Note).toContain('关联概念：[[提喻法]]');
-    expect(l1Note).toContain('links:');
-    expect(l1Note).toContain('https://a.com');
-    // 想法笔记：外壳 frontmatter + toward
-    const t1Note = vault.files.get(data.index['bb_t1'])!;
-    expect(t1Note).toContain('scene: 琴行');
-    expect(t1Note).toContain('toward: others');
-    // 关联区名字 → id 解析回内存
-    expect(data.entries[0].related).toEqual(['bb_c2']);
-    expect(data.entries[1].related).toEqual(['bb_c1']);
-    expect(data.entries[2].terms).toEqual(['bb_c1']);
-    expect(data.entries[2].links).toEqual(['https://a.com']);
-    // 派生层无损
-    expect(data.profiles[0].name).toBe('妹妹');
+    const data = await new BlackBoxDataManager(app).load();
+    expect(data.entries).toEqual([]); // entries 残留不水合
+    expect(data.index).toEqual({});
+    expect(blackboxNoteFiles(vault)).toEqual([]); // 不自动写笔记
+    expect(data.profiles[0].name).toBe('妹妹'); // 派生层照常
     expect(data.events[0].evidence).toEqual(['bb_t1']);
   });
 
-  it('迁移幂等：迁移后保存再加载不再重复迁移（无重复笔记、entries 段删除）', async () => {
+  it('笔记水合：frontmatter 完整字段读回（name/related/terms/source/links/标题）', async () => {
     const vault = new MockVault();
-    vault.files.set('CONFIG/STORAGE/blackbox.json', JSON.stringify(V1_SAMPLE));
-    const { app } = setup(vault);
-    const dm = new BlackBoxDataManager(app);
-    const data = await dm.load();
-    expect(blackboxNoteFiles(vault).length).toBe(2);
-    await dm.save(data);
-    const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/blackbox.json')!);
-    expect(raw.version).toBe(3);
-    expect(raw.entries).toBeUndefined(); // entries 段删除
-    expect(Object.keys(raw.index).length).toBe(2);
-    const again = await dm.load();
-    expect(again.entries.length).toBe(2); // 未重复迁移
-    expect(again.entries[0].text).toBe('茉莉花的香气\n\n夏夜凉风，想妈妈了');
-    expect(blackboxNoteFiles(vault).length).toBe(2); // 笔记未重复生成
-  });
-
-  it('迁移失败重试：单条失败留在原数据段，下次 load 重试成功', async () => {
-    const vault = new MockVault();
-    vault.files.set('CONFIG/STORAGE/blackbox.json', JSON.stringify(V1_SAMPLE));
-    const { app } = setup(vault);
-    const dm = new BlackBoxDataManager(app);
-    // 让第二条（量子隧穿 → 标题「量子隧穿 震撼」）写入失败
-    const origCreate = vault.create.bind(vault);
-    let fail = true;
-    vault.create = async (path: string, content: string) => {
-      if (fail && path.includes('量子隧穿')) throw new Error('boom');
-      return origCreate(path, content);
-    };
-    const data = await dm.load();
-    fail = false;
-    expect(data.entries.length).toBe(1); // 失败条目未水合
-    expect(blackboxNoteFiles(vault).length).toBe(1);
-    const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/blackbox.json')!);
-    expect(raw.entries.length).toBe(1); // 失败残留保留
-    expect(raw.entries[0].id).toBe('bb_i2');
-    expect(Object.keys(raw.index)).toEqual(['bb_i1']);
-    // 下次 load 重试成功
-    const again = await dm.load();
-    expect(again.entries.length).toBe(2);
-    expect(blackboxNoteFiles(vault).length).toBe(2);
-  });
-
-  it('迁移幂等：笔记已存在（崩溃孤儿同 id）→ 跳过重写只登记索引', async () => {
-    const vault = new MockVault();
-    vault.files.set('CONFIG/STORAGE/blackbox.json', JSON.stringify(V2_SAMPLE));
-    // 预置一条手写笔记（同 id bb_c1，内容不同）——迁移应跳过重写
     vault.files.set(
       '黑匣子/概念/提喻法.md',
-      '---\nid: bb_c1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\n---\n手工定义内容\n'
+      '---\nid: bb_c1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\nname: 提喻法\nrelated:\n  - 借代\n---\n以部分代整体的修辞\n'
+    );
+    vault.files.set(
+      '黑匣子/概念/借代.md',
+      '---\nid: bb_c2\ntype: concept\ncreatedAt: "2026-08-02T00:00:00.000Z"\nname: 借代\n---\n用相关事物代替本体\n'
+    );
+    vault.files.set(
+      '黑匣子/摘抄/修辞的弹性.md',
+      '---\nid: bb_l1\ntype: literature\ncreatedAt: "2026-08-03T00:00:00.000Z"\ntitle: 修辞的弹性\nsource: "《诗学》"\nterms:\n  - 提喻法\nlinks:\n  - https://a.com\n---\n修辞是语言的弹性。\n'
+    );
+    vault.files.set(
+      '黑匣子/想法/夏夜的吉他声.md',
+      '---\nid: bb_t1\ntype: thought\ncreatedAt: "2026-08-04T00:00:00.000Z"\ntitle: 夏夜的吉他声\n---\n给妹妹买吉他，她笑了很久。\n'
+    );
+    vault.files.set(
+      'CONFIG/STORAGE/blackbox.json',
+      JSON.stringify({
+        version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {},
+        index: {
+          bb_c1: '黑匣子/概念/提喻法.md',
+          bb_c2: '黑匣子/概念/借代.md',
+          bb_l1: '黑匣子/摘抄/修辞的弹性.md',
+          bb_t1: '黑匣子/想法/夏夜的吉他声.md',
+        },
+      })
     );
     const { app } = setup(vault);
     const data = await new BlackBoxDataManager(app).load();
-    expect(data.index['bb_c1']).toBe('黑匣子/概念/提喻法.md');
-    expect(vault.files.get('黑匣子/概念/提喻法.md')).toContain('手工定义内容'); // 未被重写
     expect(data.entries.length).toBe(4);
-    expect(data.entries[0].definition).toBe('手工定义内容');
+    expect(data.entries[0].name).toBe('提喻法');
+    expect(data.entries[0].related).toEqual(['bb_c2']); // fm.related 名字 → id
+    const lit = data.entries.find((e) => e.type === 'literature')!;
+    expect(lit.title).toBe('修辞的弹性'); // fm.title 权威（不被文件名剥离）
+    expect(lit.source).toBe('《诗学》');
+    expect(lit.terms).toEqual(['bb_c1']);
+    expect(lit.links).toEqual(['https://a.com']);
+    const thought = data.entries.find((e) => e.type === 'thought')!;
+    expect(thought.title).toBe('夏夜的吉他声');
+  });
+
+  it('LK-99 场景：概念名含「-数字」不被去重后缀剥离（frontmatter name 权威）', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      '黑匣子/概念/LK-99.md',
+      '---\nid: bb_lk\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\nname: LK-99\n---\n铜掺杂铅磷灰石化合物\n'
+    );
+    vault.files.set(
+      'CONFIG/STORAGE/blackbox.json',
+      JSON.stringify({ version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {}, index: { bb_lk: '黑匣子/概念/LK-99.md' } })
+    );
+    const { app } = setup(vault);
+    const data = await new BlackBoxDataManager(app).load();
+    expect(data.entries[0].name).toBe('LK-99'); // 不再被 noteNameFromPath 剥成 LK
   });
 
   it('load：文件不存在 → 默认数据（v3 结构，种子包仔）', async () => {
@@ -419,16 +383,20 @@ describe('v3 水合容错', () => {
     setSettingsProvider(() => ({} as any));
   });
 
-  it('索引指向缺失文件 → 跳过该条不报错（索引保留）', async () => {
+  it('索引指向缺失文件（笔记已删）→ 移除索引并持久化（展示以笔记为主，不残留）', async () => {
     const vault = new MockVault();
     vault.files.set(
       'CONFIG/STORAGE/blackbox.json',
-      JSON.stringify({ version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {}, index: { bb_x: '黑匣子/概念/不存在的.md' } })
+      JSON.stringify({ version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {}, index: { bb_x: '黑匣子/概念/不存在的.md', bb_y: '黑匣子/概念/存在的.md' } })
     );
+    vault.files.set('黑匣子/概念/存在的.md', '---\nid: bb_y\ntype: concept\ncreatedAt: t\n---\n存在\n');
     const { app } = setup(vault);
     const data = await new BlackBoxDataManager(app).load();
-    expect(data.entries).toEqual([]);
-    expect(data.index['bb_x']).toBe('黑匣子/概念/不存在的.md'); // 索引保留重试
+    expect(data.entries.length).toBe(1);
+    expect(data.index['bb_x']).toBeUndefined(); // 缺失索引已移除
+    expect(data.index['bb_y']).toBe('黑匣子/概念/存在的.md');
+    const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/blackbox.json')!);
+    expect(raw.index['bb_x']).toBeUndefined(); // 持久化
   });
 
   it('笔记损坏（frontmatter 解析失败）→ 跳过该条保留索引', async () => {
@@ -505,31 +473,22 @@ describe('v2 normalize 容错（迁移前过滤）', () => {
     setSettingsProvider(() => ({} as any));
   });
 
-  it('三类条目各自必填校验：concept 要 name，literature/thought 要 text；非法条目过滤', async () => {
-    const vault = new MockVault();
-    vault.files.set(
-      'CONFIG/STORAGE/blackbox.json',
-      JSON.stringify({
-        version: 2,
-        entries: [
-          { id: 'bb_c1', type: 'concept', createdAt: 't', name: '提喻法', definition: '一种修辞', related: ['bb_c2'], emotions: [], people: [], scene: '', toward: '', links: [] },
-          { id: 'bb_c2', type: 'concept', createdAt: 't', name: '', definition: '缺名字' },
-          { id: 'bb_l1', type: 'literature', createdAt: 't', text: '摘抄', source: '书', terms: ['bb_c1'], emotions: ['触动'], people: ['pf_x'], scene: '', toward: '', links: [] },
-          { id: 'bb_t1', type: 'thought', createdAt: 't', text: '想法', emotions: ['难过'], people: [], scene: '', toward: '', links: [] },
-          { id: 'bb_bad', type: 'thought', createdAt: 't', text: '' },
-          { type: 'thought', createdAt: 't', text: '无 id' },
-        ],
-      })
-    );
-    const { app } = setup(vault);
-    const data = await new BlackBoxDataManager(app).load();
+  it('normalizeData：非法 entries 残留过滤（concept 缺名/literature 缺文本/无 id），合法保留', () => {
+    const data = normalizeData({
+      version: 2,
+      entries: [
+        { id: 'bb_c1', type: 'concept', createdAt: 't', name: '提喻法', definition: '一种修辞', related: ['bb_c2'], emotions: [], people: [], scene: '', toward: '', links: [] },
+        { id: 'bb_c2', type: 'concept', createdAt: 't', name: '', definition: '缺名字' },
+        { id: 'bb_l1', type: 'literature', createdAt: 't', text: '摘抄', source: '书', terms: ['bb_c1'], emotions: ['触动'], people: ['pf_x'], scene: '', toward: '', links: [] },
+        { id: 'bb_t1', type: 'thought', createdAt: 't', text: '想法', emotions: ['难过'], people: [], scene: '', toward: '', links: [] },
+        { id: 'bb_bad', type: 'thought', createdAt: 't', text: '' },
+        { type: 'thought', createdAt: 't', text: '无 id' },
+      ],
+    });
     expect(data.entries.map((e) => e.id)).toEqual(['bb_c1', 'bb_l1', 'bb_t1']);
-    // bb_c2 被过滤（缺名字）→ bb_c1 的 related 引用无法解析 → 不落关联区
-    expect(data.entries[0].related).toEqual([]);
+    expect(data.entries[0].related).toEqual(['bb_c2']);
     expect(data.entries[1].terms).toEqual(['bb_c1']);
     expect(data.entries[2].emotions).toEqual(['难过']);
-    // 仅 3 条合法条目落盘为笔记
-    expect(blackboxNoteFiles(vault).length).toBe(3);
   });
 
   it('profiles/events/settings 非法字段回退默认', async () => {
@@ -715,8 +674,7 @@ describe('BlackBoxDataManager 笔记化写入', () => {
     expect(vault.files.has('黑匣子/概念/abc.md')).toBe(true);
     const back = await dm.load();
     const w = back.entries.find((e) => e.id === weird.id)!;
-    expect(w.name).toBe('abc'); // 文件名清洗后即概念名
-    expect(w.name).toBe('abc');
+    expect(w.name).toBe('a/b:c'); // frontmatter name 权威（文件名只是载体，不再被清洗影响）
   });
 
   it('addEntry 阈值：三类条目均计入，命中全局阈值触发自动复盘', async () => {
@@ -840,5 +798,60 @@ describe('BlackBoxDataManager 笔记化写入', () => {
     const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/blackbox.json')!);
     expect(raw.settings.reviewThreshold).toBe(7);
     expect(raw.settings.showSpeculativeEvents).toBe(false);
+  });
+});
+
+describe('frontmatter 关联权威（用户需求：正文关联区被手动修改/误删不丢数据）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => ({} as any));
+  });
+
+  async function loadWithNotes(vault: MockVault, c1Body: string) {
+    vault.files.set(
+      '黑匣子/概念/提喻法.md',
+      '---\nid: bb_c1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\nname: 提喻法\nrelated:\n  - 借代\n  - 隐喻\n---\n' + c1Body
+    );
+    vault.files.set(
+      '黑匣子/概念/借代.md',
+      '---\nid: bb_c2\ntype: concept\ncreatedAt: "2026-08-02T00:00:00.000Z"\nname: 借代\n---\n用相关事物代替本体\n'
+    );
+    vault.files.set(
+      '黑匣子/概念/隐喻.md',
+      '---\nid: bb_c3\ntype: concept\ncreatedAt: "2026-08-03T00:00:00.000Z"\nname: 隐喻\n---\n暗含的比喻\n'
+    );
+    vault.files.set(
+      'CONFIG/STORAGE/blackbox.json',
+      JSON.stringify({
+        version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {},
+        index: { bb_c1: '黑匣子/概念/提喻法.md', bb_c2: '黑匣子/概念/借代.md', bb_c3: '黑匣子/概念/隐喻.md' },
+      })
+    );
+    const { app } = setup(vault);
+    return new BlackBoxDataManager(app).load();
+  }
+
+  it('正文关联区被误删 → frontmatter related 兜底，关联不丢', async () => {
+    const vault = new MockVault();
+    const data = await loadWithNotes(vault, '只剩定义，关联区被删了\n');
+    const c1 = data.entries.find((e) => e.id === 'bb_c1')!;
+    expect(c1.related).toEqual(['bb_c2', 'bb_c3']); // fm.related 权威
+  });
+
+  it('正文关联区新增 [[新名]] → 与 frontmatter 合并（用户手动增链生效）', async () => {
+    const vault = new MockVault();
+    const data = await loadWithNotes(vault, '定义\n\n- 关联：[[借代]] [[隐喻]] [[新概念X]]\n');
+    const c1 = data.entries.find((e) => e.id === 'bb_c1')!;
+    expect(c1.related).toEqual(['bb_c2', 'bb_c3']); // 已解析的合并去重
+    expect(c1.pendingLinks).toEqual(['新概念X']); // 未解析名待补链
+  });
+
+  it('用户改 frontmatter related（增删）→ 以 frontmatter 为准', async () => {
+    const vault = new MockVault();
+    const data = await loadWithNotes(vault, '定义\n\n- 关联：[[借代]]\n');
+    const c1 = data.entries.find((e) => e.id === 'bb_c1')!;
+    // fm.related 只有借代+隐喻；正文只有借代 → 合并 = 借代+隐喻
+    expect(c1.related).toEqual(['bb_c2', 'bb_c3']);
   });
 });
