@@ -4,6 +4,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
+import { seedV3 } from './v3-seed';
 import { resetObsidianMocks, hasNotice } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
@@ -33,20 +34,16 @@ function mockOllamaSequence(contents: string[]) {
 }
 
 function seedVault(vault: MockVault, entries: any[], profiles: any[] = [], events: any[] = []): void {
-  vault.files.set(
-    getBlackBoxFilePath(),
-    JSON.stringify({
-      version: 2,
-      settings: { reviewThreshold: 10, showSpeculativeEvents: true, words: ['触动', '温暖', '想念'] },
-      persona: { name: '包仔', seed: '种子', toneExample: '语气', selfViews: [] },
-      entries,
-      profiles,
-      events,
-      reviews: [],
-      chat: [],
-      meta: { lastReviewAt: '', totalEntries: entries.length, totalEvents: events.length },
-    })
-  );
+  seedV3(vault, {
+    settings: { reviewThreshold: 10, showSpeculativeEvents: true, words: ['触动', '温暖', '想念'] },
+    persona: { name: '包仔', seed: '种子', toneExample: '语气', selfViews: [] },
+    entries,
+    profiles,
+    events,
+    reviews: [],
+    chat: [],
+    meta: { lastReviewAt: '', totalEntries: entries.length, totalEvents: events.length },
+  });
 }
 
 const THOUGHT = (id: string, text: string, extra: any = {}) => ({

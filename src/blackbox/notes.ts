@@ -148,12 +148,32 @@ export function buildNoteContent(entry: Entry, nameForId: (id: string) => string
   fm.push(`id: ${entry.id}`);
   fm.push(`type: ${entry.type}`);
   fm.push(`createdAt: ${quoteScalar(entry.createdAt || new Date().toISOString())}`);
+  // 概念名/文献想法标题写进 frontmatter（文件名只是载体：避免「名含 -数字」被去重后缀剥离，如 LK-99）
+  if (entry.type === 'concept') {
+    if (entry.name) fm.push(`name: ${quoteScalar(entry.name.trim())}`);
+  } else if (entry.title) {
+    fm.push(`title: ${quoteScalar(entry.title.trim())}`);
+  }
   if (entry.emotions && entry.emotions.length) fm.push(...fmList('emotions', entry.emotions.slice(0, MAX_EMOTIONS)));
   if (entry.people && entry.people.length) fm.push(...fmList('people', entry.people.slice(0, MAX_PEOPLE)));
   if (entry.scene) fm.push(...fmScalar('scene', entry.scene));
   if (entry.toward) fm.push(`toward: ${entry.toward}`);
   if (entry.links && entry.links.length) fm.push(...fmList('links', entry.links));
   if (entry.type === 'literature' && entry.source) fm.push(...fmScalar('source', entry.source));
+  // 关联双链完整落盘 frontmatter（用户决策：正文关联区被手动修改/误删不丢数据，frontmatter 为准）：
+  // 概念 related / 文献 terms（名字数组）；想法 from（来源摘抄名）；待补链 pendingLinks
+  const relIds = entry.type === 'concept' ? entry.related || [] : entry.type === 'literature' ? entry.terms || [] : [];
+  const relNames = relIds
+    .map(nameForId)
+    .filter((n): n is string => !!n)
+    .filter((n, i, a) => a.indexOf(n) === i);
+  if (entry.type === 'concept' && relNames.length) fm.push(...fmList('related', relNames));
+  if (entry.type === 'literature' && relNames.length) fm.push(...fmList('terms', relNames));
+  if (entry.type === 'thought' && entry.from) {
+    const fromName = nameForId(entry.from);
+    if (fromName) fm.push(...fmScalar('from', fromName));
+  }
+  if (entry.pendingLinks && entry.pendingLinks.length) fm.push(...fmList('pendingLinks', entry.pendingLinks));
   // 卡片盒导入元信息（可选）
   if (entry.category) fm.push(...fmScalar('category', entry.category));
   if (entry.tags && entry.tags.length) fm.push(...fmList('tags', entry.tags));
@@ -214,20 +234,24 @@ export function parseNoteContent(
   const relatedNames: string[] = [];
   const termsNames: string[] = [];
   let fromName = '';
+  // frontmatter 为准，正文关联区合并（用户手动增删任一处不丢数据；frontmatter 删了正文还在）
+  const pushUnique = (arr: string[], n: string): void => {
+    if (n && !arr.includes(n)) arr.push(n);
+  };
+  for (const n of Array.isArray(fm.related) ? fm.related.filter((x): x is string => typeof x === 'string') : []) pushUnique(relatedNames, n.trim());
+  for (const n of Array.isArray(fm.terms) ? fm.terms.filter((x): x is string => typeof x === 'string') : []) pushUnique(termsNames, n.trim());
+  for (const n of Array.isArray(fm.pendingLinks) ? fm.pendingLinks.filter((x): x is string => typeof x === 'string') : []) pushUnique(relatedNames, n.trim());
+  if (typeof fm.from === 'string' && fm.from.trim()) fromName = fm.from.trim();
   for (const line of relText.split('\n')) {
     const t = line.trim();
     if (!t) continue;
     const names = parseWikilinkNames(t);
     if (t.startsWith('- 关联：')) {
-      for (const n of names) {
-        if (!relatedNames.includes(n)) relatedNames.push(n);
-      }
+      for (const n of names) pushUnique(relatedNames, n);
     } else if (t.startsWith('关联概念：')) {
-      for (const n of names) {
-        if (!termsNames.includes(n)) termsNames.push(n);
-      }
+      for (const n of names) pushUnique(termsNames, n);
     } else if (t.startsWith('来自：')) {
-      fromName = names[0] || '';
+      if (!fromName) fromName = names[0] || '';
     }
   }
 
@@ -242,15 +266,17 @@ export function parseNoteContent(
     links: Array.isArray(fm.links) ? fm.links.filter((l): l is string => typeof l === 'string') : [],
   };
   if (fm.type === 'concept') {
-    base.name = noteNameFromPath(path);
+    base.name = typeof fm.name === 'string' && fm.name.trim() ? fm.name.trim() : noteNameFromPath(path);
     base.definition = text;
     base.related = [];
   } else if (fm.type === 'literature') {
     base.text = text;
     base.source = typeof fm.source === 'string' ? fm.source : '';
     base.terms = [];
+    base.title = typeof fm.title === 'string' && fm.title.trim() ? fm.title.trim() : noteNameFromPath(path);
   } else {
     base.text = text;
+    base.title = typeof fm.title === 'string' && fm.title.trim() ? fm.title.trim() : noteNameFromPath(path);
   }
   if (typeof fm.category === 'string' && fm.category.trim()) base.category = fm.category.trim();
   if (Array.isArray(fm.tags)) base.tags = fm.tags.filter((t): t is string => typeof t === 'string');
