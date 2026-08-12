@@ -16,6 +16,7 @@ export { openBlackBoxPanel, closeBlackBoxPanel, unloadBlackBoxPanel } from './pa
 export { manualReview, triggerAutoReview, unloadBlackBoxReview } from './review';
 export { openCardboxImport, closeCardboxImport, unloadCardboxImport } from './import-ui';
 export { ensureBlackBoxSync, unloadBlackBoxSync, setBlackBoxSyncNotify } from './sync';
+export { computeInjection, injectIntoSourceNote, lineToOffset } from './inject';
 export { BlackBoxDataManager, getBlackBoxFilePath, createEntry, createProfile, createEvent, buildNameById } from './data';
 export {
   BB_NOTE_ROOT,
