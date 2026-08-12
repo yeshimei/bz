@@ -19,7 +19,7 @@ import {
   extractLinks,
 } from '../../src/blackbox/import-cardbox';
 import { parseClassifyJson, parseSummaryJson, buildClassifyPrompt, buildSummaryPrompt, BlackBoxAI } from '../../src/blackbox/ai';
-import { getBlackBoxFilePath } from '../../src/blackbox/data';
+import { BlackBoxDataManager, getBlackBoxFilePath } from '../../src/blackbox/data';
 import { openCardboxImport, unloadCardboxImport, closeCardboxImport } from '../../src/blackbox/import-ui';
 import { unloadBlackBox } from '../../src/blackbox';
 import { TFIDF } from '../../src/flash/tfidf';
@@ -73,8 +73,8 @@ function seedVault(vault: MockVault, entries: any[] = [], extra?: any): void {
   );
 }
 
-function loaded(vault: MockVault): any {
-  return JSON.parse(vault.files.get(getBlackBoxFilePath())!);
+async function loaded(app: any, vault: MockVault): Promise<any> {
+  return new BlackBoxDataManager(app).load();
 }
 
 /** 造 N 张普通卡片（用于分批测试） */
@@ -255,10 +255,10 @@ describe('卡片盒导入 · 批量导入与幂等', () => {
       { name: 'GPL', text: 'GPL 是严格的开源许可协议。', tags: [], category: '计算机', desc: '', createdAt: '2024-02-01T00:00:00.000Z', path: '', kind: 'concept' as const, reason: '', relatedNames: ['MIT协议'], aiSummary: true, summary: '严格开源协议', aiSummary2: undefined as any },
       { name: 'Calibre', text: '安装插件 markdown output。', tags: ['电子书'], category: '计算机', desc: '电子书管理器', createdAt: '', path: '', kind: 'literature' as const, reason: '', relatedNames: [], aiSummary: false, summary: '' },
     ] as any;
-    const data = loaded(vault);
+    const data = await loaded(app, vault);
     const r = await runImport(app, cards, data, ['Github']);
     expect(r.imported).toBe(3);
-    const d = loaded(vault);
+    const d = await loaded(app, vault);
     const mit = d.entries.find((e: any) => e.name === 'MIT协议');
     expect(mit.createdAt).toBe('2024-01-01T00:00:00.000Z'); // 卡片创建时间 → 录入时间
     expect(mit.category).toBe('计算机');
@@ -305,7 +305,7 @@ describe('卡片盒导入 · 批量导入与幂等', () => {
       .map((c) => ({ ...c, kind: 'concept' as const, reason: '', relatedNames: [], aiSummary: false, summary: '' }));
     const classified = await classifyCards(ai, candidates);
     expect(classified.length).toBe(2); // MIT + Calibre（Github 敏感/空卡被预筛）
-    await runImport(app, classified, loaded(vault), ['Github']);
+    await runImport(app, classified, await loaded(app, vault), ['Github']);
     // 4) 日志写入后：重跑（模拟）已导入的卡不再出现
     const log = await readImportLog(app);
     expect(log.imported.size).toBe(2);
@@ -333,7 +333,7 @@ describe('卡片盒导入 · 预览 UI（组模式）', () => {
     seedCards(vault);
     const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
     await openCardboxImport(app);
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('MIT协议');
     });
     const card = document.getElementById('bz-blackbox-import-card')!;
@@ -371,50 +371,50 @@ describe('卡片盒导入 · 预览 UI（组模式）', () => {
     (global as any).fetch = fetchMock;
     const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
     await openCardboxImport(app);
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('MIT协议');
     });
     // 确认第一张（MIT）→ 下一张 Calibre
     (document.getElementById('bz-blackbox-import-confirm') as HTMLElement).click();
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('Calibre');
     });
     // 跳过 Calibre → 撤销恢复
     (document.getElementById('bz-blackbox-import-skip') as HTMLElement).click();
     expect(document.getElementById('bz-blackbox-import-undobox')!.textContent).toContain('Calibre');
     (document.querySelector('.bz-blackbox-import-restore') as HTMLElement).click();
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('Calibre');
     });
     // 确认 Calibre → 本组处理完 → 出现「生成并导入本组 2 张」
     (document.getElementById('bz-blackbox-import-confirm') as HTMLElement).click();
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       const btn = document.getElementById('bz-blackbox-import-run') as HTMLElement;
       expect(btn.textContent).toContain('生成并导入本组 2 张');
     });
     // 批量生成+导入
     document.getElementById('bz-blackbox-import-run')!.click();
-    await vi.waitFor(() => {
-      expect(loaded(vault).entries.some((e: any) => e.name === 'MIT协议')).toBe(true);
+    await vi.waitFor(async () => {
+      expect((await loaded(app, vault)).entries.some((e: any) => e.name === 'MIT协议')).toBe(true);
     });
-    const mit = loaded(vault).entries.find((e: any) => e.name === 'MIT协议');
+    const mit = (await loaded(app, vault)).entries.find((e: any) => e.name === 'MIT协议');
     expect(mit.type).toBe('concept');
     expect(mit.definition).toBe('AI定义第1张'); // AI 内容作为概念主体
     expect(mit.category).toBe('计算机');
     expect(mit.tags).toEqual(['开源', '许可协议']);
     expect(mit.related).toContain('bb_c1'); // AI 关联落盘（既有概念 id）
-    const cal = loaded(vault).entries.find((e: any) => e.name === 'Calibre');
+    const cal = (await loaded(app, vault)).entries.find((e: any) => e.name === 'Calibre');
     expect(cal.definition).toBe('AI定义第2张');
     expect(cal.summary).toBe('一款功能强大且易于使用的电子书管理器'); // 自带 desc
     // 双向关联：既有概念「开源」反向关联新卡 MIT
-    const kaiyuan = loaded(vault).entries.find((e: any) => e.name === '开源');
+    const kaiyuan = (await loaded(app, vault)).entries.find((e: any) => e.name === '开源');
     expect(kaiyuan.related).toContain(mit.id);
     // 日志
     const log = await readImportLog(app);
     expect(log.imported.size).toBe(2);
     expect(hasNotice(/已导入本组 2 张/)).toBe(true);
     // 全部完成
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('全部处理完毕');
     });
   });
@@ -426,23 +426,23 @@ describe('卡片盒导入 · 预览 UI（组模式）', () => {
     mockOllama('[]'); // 批量生成空结果（降级按原文导入）
     const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
     await openCardboxImport(app);
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('MIT协议');
     });
     // 跳过 MIT → 确认 Calibre → 生成并导入
     (document.getElementById('bz-blackbox-import-skip') as HTMLElement).click();
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('Calibre');
     });
     (document.getElementById('bz-blackbox-import-confirm') as HTMLElement).click();
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-import-run')!.textContent).toContain('生成并导入本组 1 张');
     });
     document.getElementById('bz-blackbox-import-run')!.click();
-    await vi.waitFor(() => {
-      expect(loaded(vault).entries.some((e: any) => e.name === 'Calibre')).toBe(true);
+    await vi.waitFor(async () => {
+      expect((await loaded(app, vault)).entries.some((e: any) => e.name === 'Calibre')).toBe(true);
     });
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('全部处理完毕');
     });
     const log = await readImportLog(app);
@@ -451,7 +451,7 @@ describe('卡片盒导入 · 预览 UI（组模式）', () => {
     // 重开：全部处理完毕（MIT 跳过 + Calibre 已导入）
     closeCardboxImport();
     await openCardboxImport(app);
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('全部处理完毕');
     });
   });
@@ -466,22 +466,22 @@ describe('卡片盒导入 · 预览 UI（组模式）', () => {
     (global as any).fetch = fetchMock;
     const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
     await openCardboxImport(app);
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('MIT协议');
     });
     (document.getElementById('bz-blackbox-import-confirm') as HTMLElement).click();
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('Calibre');
     });
     (document.getElementById('bz-blackbox-import-confirm') as HTMLElement).click();
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-import-run')!.textContent).toContain('生成并导入本组 2 张');
     });
     document.getElementById('bz-blackbox-import-run')!.click();
-    await vi.waitFor(() => {
-      expect(loaded(vault).entries.some((e: any) => e.name === 'MIT协议')).toBe(true);
+    await vi.waitFor(async () => {
+      expect((await loaded(app, vault)).entries.some((e: any) => e.name === 'MIT协议')).toBe(true);
     });
-    const mit = loaded(vault).entries.find((e: any) => e.name === 'MIT协议');
+    const mit = (await loaded(app, vault)).entries.find((e: any) => e.name === 'MIT协议');
     expect(mit.definition).toContain('由美国麻省理工学院制定'); // 原文降级
     expect(mit.related).toEqual([]); // 无 AI 关联
   });
@@ -521,7 +521,7 @@ describe('卡片盒导入 · 组间补链', () => {
     (global as any).fetch = fetchMock;
     const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
     await openCardboxImport(app);
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('卡001');
     });
     // 三组：每组全确认 → 生成并导入
@@ -529,33 +529,33 @@ describe('卡片盒导入 · 组间补链', () => {
       // 本组 20/20/5 张逐张确认
       const size = g === 2 ? 5 : 20;
       for (let k = 0; k < size; k++) {
-        await vi.waitFor(() => {
+        await vi.waitFor(async () => {
           expect(document.getElementById('bz-blackbox-import-confirm')).toBeTruthy();
         });
         (document.getElementById('bz-blackbox-import-confirm') as HTMLElement).click();
         if (k < size - 1) {
-          await vi.waitFor(() => {
+          await vi.waitFor(async () => {
             const card = document.getElementById('bz-blackbox-import-card')!;
             expect(card.textContent).not.toContain('全部处理完毕');
           });
         }
       }
-      await vi.waitFor(() => {
+      await vi.waitFor(async () => {
         expect(document.getElementById('bz-blackbox-import-run')!.textContent).toContain('生成并导入本组');
       });
       document.getElementById('bz-blackbox-import-run')!.click();
       if (g < 2) {
         // 下一组第一张卡出现（组已载入）
-        await vi.waitFor(() => {
+        await vi.waitFor(async () => {
           const card = document.getElementById('bz-blackbox-import-card')!;
           expect(card.textContent).toContain('卡' + String((g + 1) * 20 + 1).padStart(3, '0'));
         });
       }
     }
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('全部处理完毕');
     });
-    const d = loaded(vault);
+    const d = await loaded(app, vault);
     expect(d.entries.length).toBe(45);
     // 跨组补链：卡020（第 1 组尾）→ 卡021（第 2 组头）
     const e20 = d.entries.find((e: any) => e.name === '卡020');
@@ -576,15 +576,15 @@ describe('卡片盒导入 · 组间补链', () => {
     mockOllama('[]');
     const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
     await openCardboxImport(app);
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-import-card')!.textContent).toContain('卡001');
     });
     (document.getElementById('bz-blackbox-import-confirm') as HTMLElement).click();
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-import-stats')!.textContent).toContain('本组已确认 1');
     });
     (document.getElementById('bz-blackbox-import-confirm') as HTMLElement).click();
-    await vi.waitFor(() => {
+    await vi.waitFor(async () => {
       expect(document.getElementById('bz-blackbox-import-stats')!.textContent).toContain('本组已确认 2');
     });
   });

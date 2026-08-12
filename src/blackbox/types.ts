@@ -71,6 +71,8 @@ export interface Entry {
   summary?: string;
   /** 卡片盒导入中间态：未解析为 id 的关联卡片名（待补链）；补链后清空 */
   pendingLinks?: string[];
+  // v3（笔记化）：想法「来自：[[摘抄]]」链接（literature 条目 id；解析不到时存名字）
+  from?: string;
 }
 
 /** 人物画像（派生层） */
@@ -160,13 +162,17 @@ export interface BlackBoxSettings {
   words: string[];
 }
 
-/** blackbox.json v2（字段冻结） */
+/** blackbox.json v3（ADR-0015 笔记化；字段冻结）。
+ * 内存接口不变：entries 仍为完整条目数组（load 时由笔记水合，save 时不落盘）；
+ * 落盘只写派生层 + index（id → 笔记路径）；entries 段仅迁移中途的失败残留使用。 */
 export interface BlackBoxData {
-  version: 2;
+  version: 3;
   settings: BlackBoxSettings;
   persona: Persona;
-  /** 三类条目（concept / literature / thought） */
+  /** 三类条目（concept / literature / thought）——内存由笔记水合，不持久化 */
   entries: Entry[];
+  /** id → 笔记路径索引（v3 落盘；rename/delete 事件重建） */
+  index: Record<string, string>;
   /** 人物画像（派生层） */
   profiles: Profile[];
   /** 事件（派生层） */
@@ -198,10 +204,11 @@ export function defaultBlackBoxSettings(): BlackBoxSettings {
 
 export function defaultBlackBoxData(): BlackBoxData {
   return {
-    version: 2,
+    version: 3,
     settings: defaultBlackBoxSettings(),
     persona: DEFAULT_PERSONA,
     entries: [],
+    index: {},
     profiles: [],
     events: [],
     reviews: [],

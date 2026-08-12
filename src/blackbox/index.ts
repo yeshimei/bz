@@ -14,7 +14,21 @@ export { openBlackBoxChat, closeBlackBoxChat, unloadBlackBoxChat } from './chat'
 export { openBlackBoxPanel, closeBlackBoxPanel, unloadBlackBoxPanel } from './panel';
 export { manualReview, triggerAutoReview, unloadBlackBoxReview } from './review';
 export { openCardboxImport, closeCardboxImport, unloadCardboxImport } from './import-ui';
-export { BlackBoxDataManager, getBlackBoxFilePath, createEntry, createProfile, createEvent } from './data';
+export { BlackBoxDataManager, getBlackBoxFilePath, createEntry, createProfile, createEvent, buildNameById } from './data';
+export {
+  BB_NOTE_ROOT,
+  TYPE_DIR,
+  typeDir,
+  isBlackBoxNotePath,
+  sanitizeFileName,
+  noteNameFromPath,
+  entryNoteTitle,
+  notePathOf,
+  parseWikilinkNames,
+  parseFrontmatterBlock,
+  buildNoteContent,
+  parseNoteContent,
+} from './notes';
 export {
   BlackBoxAI,
   buildPersonaPrompt,
