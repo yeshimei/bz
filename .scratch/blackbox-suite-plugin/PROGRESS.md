@@ -38,4 +38,12 @@
 - **写入路径全笔记化**：addEntry/addEntries（批量导入）写笔记+索引；deleteEntry 删笔记 + 引用清理（related/terms/from）重写相关笔记；backfillRelated 反向关联重写既有概念笔记；resolvePendingLinks 改为水合推导（pending 名已随关联区落盘）。
 - **内存接口不变**：主面板/对话/复盘/事件提炼/AI 零改动（除 import-cardbox 写路径），既有测试在笔记数据源下保持绿色。
 - 测试：tests/blackbox 120→137（+17：迁移落盘断言/幂等/失败重试/孤儿自愈/pendingLinks/去重清洗/roundtrip/delete 引用清理）。
+
+## 2026-08 · ticket 02 概念录入改造完成（1077 测试全绿）
+
+- **直达命令** `bz-blackbox-capture-concept`「概念录入」（icon brain，main.ts COMMANDS + smoke 清单 +1），跳过类型选择直达概念页，保存后直接关闭（可连续快速录入）。
+- **双输入**：概念名单行 input（`bz-blackbox-concept-name`）+ 定义 textarea（`bz-blackbox-concept-def`，auto-grow ≤8 行复用 memo 先例）；主按钮按文本输入框内容判定——空→「✨ 生成卡片」/ 非空→「✅ 确定录入」，无 generated 标志、无重新生成入口；清空文本按钮回「生成卡片」。
+- **选区锁定**：core 新增 `src/core/selection.ts`（getSelectionSnapshot：选中文字 + 行/列起止快照 + 来源笔记路径；无选区/读取失败 → null，ticket 06 注入复用）；打开时快照一次，概念名自动填充且只读（readonly + `.bz-blackbox-locked` 虚线样式），锁定态 input 事件不生效。
+- 生成卡片：AI 写定义进文本输入框（可编辑）；AI 不可用降级定义=概念名可编辑（永不拒收）。引导式 `bz-blackbox-capture` 概念连接展示保留。
+- 测试：capture +4（直达保存即关/锁定只读/无选区手动+内容判定/清空回生成）；tests/core/selection.test.ts +4。
 - **注意**：`notes.ts` 关联区解析约定——正文与关联区以空行分隔（无正文时保留空行），引用归属「来源：」行若与正文无空行分隔则视为正文不被剥离（有专门测试）。

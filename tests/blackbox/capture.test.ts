@@ -8,7 +8,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, hasNotice, getNoticeMessages } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { openBlackBoxCapture, closeBlackBoxCapture, unloadBlackBox } from '../../src/blackbox';
+import { openBlackBoxCapture, openBlackBoxCaptureConcept, closeBlackBoxCapture, unloadBlackBox } from '../../src/blackbox';
 import { BlackBoxDataManager, getBlackBoxFilePath } from '../../src/blackbox/data';
 
 function makeApp(vault: MockVault) {
@@ -134,9 +134,13 @@ describe('黑匣子录入弹窗（引导式）', () => {
     expect(document.querySelector('#bz-blackbox-step-content .bz-blackbox-guide-head')).toBeNull();
     expect(document.querySelector('.bz-blackbox-guide-back')).toBeNull();
     expect(document.querySelector('#bz-blackbox-step-content .bz-blackbox-field-label')).toBeNull();
-    expect((document.getElementById('bz-blackbox-concept-name') as HTMLTextAreaElement).placeholder).toContain('提喻法');
-    // 只有一个输入框（无其他字段）
+    expect((document.getElementById('bz-blackbox-concept-name') as HTMLInputElement).placeholder).toContain('提喻法');
+    // 双输入（ticket 02）：概念名单行 + 定义 textarea ≤8 行；无其他字段
+    expect(document.getElementById('bz-blackbox-concept-def')).toBeTruthy();
     expect(document.querySelectorAll('#bz-blackbox-step-content textarea').length).toBe(1);
+    expect((document.getElementById('bz-blackbox-concept-name') as HTMLInputElement).type).toBe('text');
+    // 按钮按文本内容判定：文本空 → 生成卡片
+    expect(document.getElementById('bz-blackbox-concept-gen')!.textContent).toBe('✨ 生成卡片');
   });
 
   it('概念：生成卡片 → 百科定义填入输入框可编辑，按钮变「确认录入」', async () => {
@@ -149,11 +153,11 @@ describe('黑匣子录入弹窗（引导式）', () => {
     setValue('bz-blackbox-concept-name', '隐喻');
     document.getElementById('bz-blackbox-concept-gen')!.click();
     await vi.waitFor(async () => {
-      expect((document.getElementById('bz-blackbox-concept-name') as HTMLTextAreaElement).value).toContain('修辞手法');
+      expect((document.getElementById('bz-blackbox-concept-def') as HTMLTextAreaElement).value).toContain('修辞手法');
     });
-    expect(document.getElementById('bz-blackbox-concept-gen')!.textContent).toBe('✅ 确认录入');
+    expect(document.getElementById('bz-blackbox-concept-gen')!.textContent).toBe('✅ 确定录入');
     // 生成内容可编辑（编辑后保存生效）
-    const input = document.getElementById('bz-blackbox-concept-name') as HTMLTextAreaElement;
+    const input = document.getElementById('bz-blackbox-concept-def') as HTMLTextAreaElement;
     input.value = '以部分代整体的修辞手法，语言含蓄而有力。（补充：源自法语 métonymie）';
     input.dispatchEvent(new Event('input'));
     document.getElementById('bz-blackbox-concept-gen')!.click();
@@ -179,7 +183,7 @@ describe('黑匣子录入弹窗（引导式）', () => {
     setValue('bz-blackbox-concept-name', '隐喻');
     document.getElementById('bz-blackbox-concept-gen')!.click();
     await vi.waitFor(async () => {
-      expect((document.getElementById('bz-blackbox-concept-name') as HTMLTextAreaElement).value).toContain('修辞');
+      expect((document.getElementById('bz-blackbox-concept-def') as HTMLTextAreaElement).value).toContain('修辞');
     });
     document.getElementById('bz-blackbox-concept-gen')!.click();
     await vi.waitFor(async () => {
@@ -204,10 +208,11 @@ describe('黑匣子录入弹窗（引导式）', () => {
     setValue('bz-blackbox-concept-name', '隐喻');
     document.getElementById('bz-blackbox-concept-gen')!.click();
     await vi.waitFor(async () => {
-      expect(document.getElementById('bz-blackbox-concept-gen')!.textContent).toBe('✅ 确认录入');
+      expect(document.getElementById('bz-blackbox-concept-gen')!.textContent).toBe('✅ 确定录入');
     });
     expect(hasNotice(/生成失败/)).toBe(true);
-    // 输入框保留名词，可直接确认保存
+    // 定义降级为原名词（可编辑），可直接确定保存
+    expect((document.getElementById('bz-blackbox-concept-def') as HTMLTextAreaElement).value).toBe('隐喻');
     document.getElementById('bz-blackbox-concept-gen')!.click();
     await vi.waitFor(async () => {
       expect((await loaded(app, vault)).entries.some((e: any) => e.type === 'concept' && e.name === '隐喻')).toBe(true);
@@ -463,5 +468,112 @@ describe('黑匣子录入弹窗（引导式）', () => {
     expect(data.reviews[0].text).toContain('细腻');
     expect(data.persona.selfViews.length).toBe(1);
     expect(data.chat.some((m: any) => m.role === 'assistant')).toBe(true);
+  });
+});
+
+describe('概念直达命令（ticket 02：bz-blackbox-capture-concept）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => ({} as any));
+    document.body.innerHTML = '';
+    unloadBlackBox();
+  });
+  afterEach(() => {
+    unloadBlackBox();
+    delete (global as any).fetch;
+  });
+
+  /** 给 mock app 挂上活动编辑器选区 */
+  function withSelection(app: any, text: string, filePath = '笔记/来源.md'): void {
+    app.workspace.activeEditor = {
+      editor: {
+        getSelection: () => text,
+        getCursor: (which: string) => (which === 'from' ? { line: 2, ch: 0 } : { line: 2, ch: text.length }),
+      },
+      file: { path: filePath },
+    };
+  }
+
+  it('直达命令：跳过类型选择直达概念页（双输入），保存后弹窗直接关闭', async () => {
+    mockOllama('{"definition": "以部分代整体的修辞手法。", "relatedNames": []}');
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCaptureConcept(app);
+    // 直达：内容步直接显示，类型选择步隐藏
+    expect(document.getElementById('bz-blackbox-step-content')!.style.display).toBe('block');
+    expect(document.getElementById('bz-blackbox-step-type')!.style.display).toBe('none');
+    expect(document.getElementById('bz-blackbox-concept-name')).toBeTruthy();
+    expect(document.getElementById('bz-blackbox-concept-def')).toBeTruthy();
+    // 生成卡片（AI 填定义）→ 确定录入 → 保存后直接关闭
+    setValue('bz-blackbox-concept-name', '隐喻');
+    document.getElementById('bz-blackbox-concept-gen')!.click();
+    await vi.waitFor(async () => {
+      expect((document.getElementById('bz-blackbox-concept-def') as HTMLTextAreaElement).value).toContain('修辞手法');
+    });
+    document.getElementById('bz-blackbox-concept-gen')!.click();
+    await vi.waitFor(async () => {
+      expect((await loaded(app, vault)).entries.some((e: any) => e.type === 'concept' && e.name === '隐喻')).toBe(true);
+    });
+    expect(document.getElementById('bz-blackbox-capture-popup')).toBeNull(); // 保存即关
+  });
+
+  it('直达命令：选中文字自动填充概念名并锁定只读；保存写概念笔记', async () => {
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    withSelection(app, '提喻法');
+    await openBlackBoxCaptureConcept(app);
+    const nameInput = document.getElementById('bz-blackbox-concept-name') as HTMLInputElement;
+    expect(nameInput.value).toBe('提喻法'); // 自动填充
+    expect(nameInput.readOnly).toBe(true); // 锁定只读
+    expect(nameInput.className).toContain('bz-blackbox-locked');
+    // 锁定态输入事件不生效（状态不被篡改；readonly 防用户输入）
+    nameInput.value = '篡改';
+    nameInput.dispatchEvent(new Event('input'));
+    // 手动填定义 → 确定录入保存
+    setValue('bz-blackbox-concept-def', '以部分代整体');
+    document.getElementById('bz-blackbox-concept-gen')!.click();
+    await vi.waitFor(async () => {
+      expect((await loaded(app, vault)).entries.some((e: any) => e.type === 'concept' && e.name === '提喻法')).toBe(true);
+    });
+    expect((await loaded(app, vault)).entries.find((e: any) => e.name === '提喻法').definition).toBe('以部分代整体');
+    expect(document.getElementById('bz-blackbox-capture-popup')).toBeNull();
+    // 概念笔记落盘
+    const notes = [...vault.files.keys()].filter((p) => p.startsWith('黑匣子/概念/'));
+    expect(notes).toContain('黑匣子/概念/提喻法.md');
+  });
+
+  it('无选区：概念名可手动输入；文本有内容 → 按钮「确定录入」直接保存（不调 AI）', async () => {
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCaptureConcept(app);
+    const nameInput = document.getElementById('bz-blackbox-concept-name') as HTMLInputElement;
+    expect(nameInput.readOnly).toBe(false);
+    setValue('bz-blackbox-concept-name', '修辞');
+    // 文本输入框有内容 → 「确定录入」（无重新生成入口）
+    setValue('bz-blackbox-concept-def', '让表达更生动的技巧');
+    expect(document.getElementById('bz-blackbox-concept-gen')!.textContent).toBe('✅ 确定录入');
+    document.getElementById('bz-blackbox-concept-gen')!.click();
+    await vi.waitFor(async () => {
+      expect((await loaded(app, vault)).entries.some((e: any) => e.type === 'concept' && e.name === '修辞')).toBe(true);
+    });
+    expect((global as any).fetch).toBeUndefined(); // 手动录入不调 AI
+    expect((await loaded(app, vault)).entries.find((e: any) => e.name === '修辞').definition).toBe('让表达更生动的技巧');
+  });
+
+  it('文本有内容后清空 → 按钮回「生成卡片」（内容判定）', async () => {
+    mockOllama('{"definition": "x。", "relatedNames": []}');
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    await openBlackBoxCaptureConcept(app);
+    setValue('bz-blackbox-concept-name', '隐喻');
+    setValue('bz-blackbox-concept-def', '有内容');
+    expect(document.getElementById('bz-blackbox-concept-gen')!.textContent).toBe('✅ 确定录入');
+    setValue('bz-blackbox-concept-def', '   ');
+    expect(document.getElementById('bz-blackbox-concept-gen')!.textContent).toBe('✨ 生成卡片');
   });
 });
