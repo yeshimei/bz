@@ -20,7 +20,7 @@ import { BlackBoxDataManager, createEntry, createProfile } from './data';
 import { triggerAutoReview } from './review';
 import { getSelectionSnapshot } from '../core/selection';
 import type { SelectionSnapshot } from '../core/selection';
-import { entryNoteTitle } from './notes';
+import { entryNoteTitle, sanitizeFileName } from './notes';
 import { injectIntoSourceNote } from './inject';
 import { bookTitleFromSourceLink } from './source-jump';
 import { MAX_EMOTIONS, MAX_PEOPLE } from './types';
@@ -31,6 +31,8 @@ let dataManager: BlackBoxDataManager | null = null;
 let maskEl: HTMLElement | null = null;
 let popupEl: HTMLElement | null = null;
 let escHandle: { unregister: () => void } | null = null;
+/** 打开时后台加载的数据承诺（打开不阻塞；AI/保存前 ensureDataLoaded 等待） */
+let dataLoadPromise: Promise<BlackBoxData | null> | null = null;
 
 type CaptureType = 'concept' | 'literature' | 'thought';
 type GuideStep = 'type' | 'content' | 'feel' | 'conn';
@@ -98,21 +100,56 @@ function manager(app: App): BlackBoxDataManager {
   return dataManager;
 }
 
-/** 打开录入弹窗（幂等；异步加载词表/画像库/数据快照；读取当前选区快照；externalSelection = 书内选区外部参数） */
+/** 数据后台加载 + 首次就绪缓存（并发复用；失败 → null，AI/保存前再走 m.load() 重试） */
+function ensureDataLoaded(): Promise<BlackBoxData | null> {
+  if (data) return Promise.resolve(data);
+  if (dataLoadPromise) return dataLoadPromise;
+  if (!appRef) return Promise.resolve(null);
+  dataLoadPromise = manager(appRef)
+    .load()
+    .then((d) => {
+      data = d;
+      emotionWords = d.settings.words;
+      profiles = d.profiles;
+      return d;
+    })
+    .catch(() => null);
+  return dataLoadPromise;
+}
+
+/** 数据就绪后刷新依赖数据的渲染（打开时情绪/画像区可能为空；用户在 feel 步则原地补渲染） */
+function refreshLoadedUI(): void {
+  if (!maskEl) return;
+  if (activeStep === 'feel') {
+    renderEmotions();
+    renderPeopleChips();
+  }
+}
+
+/** 打开录入弹窗（幂等；立即渲染不阻塞数据加载；读取当前选区快照；externalSelection = 书内选区外部参数） */
 export async function openBlackBoxCapture(app: App, externalSelection?: BlackBoxExternalSelection | null): Promise<void> {
   appRef = app;
   if (maskEl) {
     maskEl.style.display = 'block';
     return;
   }
-  data = await manager(app).load();
-  emotionWords = data.settings.words;
-  profiles = data.profiles;
   selectionSnap = getSelectionSnapshot(app);
   externalSel = externalSelection ?? null;
   resetEntry();
   buildDOM();
   renderStep();
+  // 缓存未就绪时先显示「正在扫描」提示（就绪后移除；缓存命中则下一帧前移除，不可见）
+  const hint = document.createElement('div');
+  hint.className = 'bz-blackbox-scanning';
+  hint.id = 'bz-blackbox-capture-scanning';
+  hint.textContent = '正在扫描黑匣子…';
+  popupEl!.prepend(hint);
+  // 数据后台加载（词表/画像/既有概念）：打开不等待，AI 操作前 ensureDataLoaded 兜底
+  void ensureDataLoaded().then(() => {
+    const el = document.getElementById('bz-blackbox-capture-scanning');
+    if (el) el.remove();
+    refreshLoadedUI();
+  });
 }
 
 /** 直达命令（ticket 02/03）：跳过类型选择直达对应类型；保存后直接关闭。入口页/热键裸调用约定。 */
@@ -252,6 +289,7 @@ export function unloadBlackBoxCapture(): void {
   dataManager = null;
   appRef = null;
   data = null;
+  dataLoadPromise = null;
 }
 
 // ---------------- DOM 骨架 ----------------
@@ -506,8 +544,10 @@ async function onConceptMainBtn(btn: HTMLButtonElement): Promise<void> {
   btn.disabled = true;
   btn.textContent = '⏳ 正在生成…';
   try {
+    const loaded = await ensureDataLoaded();
+    if (!loaded || !maskEl) return; // 数据未就绪/弹窗已关
     const ai = new BlackBoxAI();
-    const existing = data ? data.entries.filter((e) => e.type === 'concept') : [];
+    const existing = loaded.entries.filter((e) => e.type === 'concept');
     const raw = await ai.assist('concept', name, undefined, existing);
     if (!maskEl) return; // 弹窗已关
     const parsed = parseConceptJson(raw);
@@ -530,7 +570,8 @@ async function onConceptMainBtn(btn: HTMLButtonElement): Promise<void> {
   renderStepContent();
 }
 
-/** 概念：确定即保存 → 直达模式保存后直接关闭；引导式展示连接关系（流程结束） */
+/** 概念：确定即保存 → 直达模式保存后直接关闭；引导式展示连接关系（流程结束）。
+ *  双向关联回填 + 原位注入 + AI 分类均后台执行（确认即关，成功通知），不阻塞录入流。 */
 async function saveConcept(): Promise<void> {
   if (!appRef) return;
   const name = conceptName;
@@ -542,44 +583,39 @@ async function saveConcept(): Promise<void> {
     notice('卡片内容不能为空', 'warning');
     return;
   }
-  // 重名守卫（流转模式，ticket 50）：确认时改名与既有概念同名 → 不新建，摘抄直接关联既有概念
-  if (conceptFlowMode && data) {
-    const dup = data.entries.find((c) => c.type === 'concept' && c.name === name);
-    if (dup) {
-      notice(`已有同名概念「${name}」，已直接关联`, 'warning');
-      flowCreated.push({ id: dup.id, name });
-      nextConceptFlow();
-      return;
-    }
-  }
-  const entry = createEntry({
-    type: 'concept',
-    name,
-    definition: conceptDefinition.trim(),
-    related: conceptRelatedIds,
-    links: conceptSource ? [conceptSource] : [],
-  });
   try {
     const m = manager(appRef);
+    // 写前重载：弹窗开着期间可能已有其他写入（自动复盘/对话）
     const latest = await m.load();
+    // 重名守卫（流转模式，ticket 50）：确认时改名与既有概念同名 → 不新建，摘抄直接关联既有概念
+    if (conceptFlowMode) {
+      const dup = latest.entries.find((c) => c.type === 'concept' && c.name === name);
+      if (dup) {
+        notice(`已有同名概念「${name}」，已直接关联`, 'warning');
+        flowCreated.push({ id: dup.id, name });
+        nextConceptFlow();
+        return;
+      }
+    }
+    const entry = createEntry({
+      type: 'concept',
+      name,
+      definition: conceptDefinition.trim(),
+      related: conceptRelatedIds,
+      links: conceptSource ? [conceptSource] : [],
+    });
     const r = await m.addEntry(latest, entry);
     data = latest;
-    // 动态双向关联：新概念关联的既有概念也反向指向新卡（关联是相互的，随录入动态维护）
-    if (conceptRelatedIds.length) {
-      await m.backfillRelated(latest, entry.id, conceptRelatedIds);
-      data = await m.load();
-    }
-    // 原位注入（ticket 06）：来源笔记选区原文 → [[概念名|原文字]]（守卫命中跳过 + toast）；
-    // 书内选区录入（externalSel）无来源笔记 → 跳过注入（epub 不可写）；
-    // 流转模式（ticket 50）跳过注入——摘抄保存时已对来源笔记注入摘抄标题，二次注入会覆盖选区原文
-    if (!externalSel && !conceptFlowMode) {
-      await injectIntoSourceNote(appRef, selectionSnap, entry.name || '');
-    }
     notice('已录入概念卡片', 'success');
     void autoClassify(appRef, entry.id);
+    // 快照副本（closeBlackBoxCapture 会置空 selectionSnap/externalSel，后台补全仍需引用）
+    const snap = selectionSnap;
+    const ext = externalSel;
     if (conceptFlowMode) {
       // 流转（ticket 50）：记录已建概念 → 下一个新概念或回填收尾
       flowCreated.push({ id: entry.id, name: entry.name || name });
+      // 后台：双向关联回填（注入流转模式跳过，摘抄保存时已对来源笔记注入）
+      void finalizeConceptSave(appRef, entry.id, conceptRelatedIds, snap, ext, true);
       nextConceptFlow();
       return;
     }
@@ -593,9 +629,36 @@ async function saveConcept(): Promise<void> {
     if (r.shouldReview) {
       void triggerAutoReview(appRef, latest);
     }
+    // 后台补全（确认即关后执行）：双向关联回填 + 来源笔记原位注入，失败静默不打扰
+    void finalizeConceptSave(appRef, entry.id, conceptRelatedIds, snap, ext, false);
   } catch (e) {
     console.warn('黑匣子概念保存失败', e);
     notice('存入失败', 'error');
+  }
+}
+
+/** 概念后台补全（确认即关后执行）：双向关联回填 + 来源笔记原位注入；写前重载防并发覆盖，失败静默。 */
+async function finalizeConceptSave(
+  app: App,
+  entryId: string,
+  relatedIds: string[],
+  snap: SelectionSnapshot | null,
+  ext: BlackBoxExternalSelection | null,
+  flowMode: boolean
+): Promise<void> {
+  try {
+    const m = manager(app);
+    const latest = await m.load();
+    const entry = latest.entries.find((e) => e.id === entryId);
+    if (!entry) return;
+    // 动态双向关联：新概念关联的既有概念也反向指向新卡（关联是相互的，随录入动态维护）
+    if (relatedIds.length) await m.backfillRelated(latest, entryId, relatedIds);
+    // 原位注入（ticket 06）：来源笔记选区原文 → [[概念名|原文字]]；书内选区（epub 不可写）与流转模式跳过
+    if (!ext && !flowMode) {
+      await injectIntoSourceNote(app, snap, entry.name || '');
+    }
+  } catch (e) {
+    console.warn('黑匣子概念后台补全失败', e);
   }
 }
 
@@ -619,17 +682,18 @@ async function autoClassify(app: App, id: string): Promise<void> {
 // ----- 文献：分析名词 -----
 
 async function analyzeLiterature(btn: HTMLButtonElement): Promise<void> {
-  if (!appRef || !data) return;
   const text = literatureText.trim();
   if (!text) {
     notice('先粘贴摘抄内容', 'warning');
     return;
   }
+  const loaded = await ensureDataLoaded();
+  if (!loaded || !appRef || !maskEl) return;
   btn.disabled = true;
   btn.textContent = '⏳ 正在分析…';
   try {
     const ai = new BlackBoxAI();
-    const existing = data.entries.filter((e) => e.type === 'concept');
+    const existing = loaded.entries.filter((e) => e.type === 'concept');
     const input = `来源：${literatureSource || '未知'}\n摘抄：${text.slice(0, 800)}`;
     const raw = await ai.assist('literature', input, undefined, existing);
     if (!maskEl) return; // 弹窗已关
@@ -970,12 +1034,13 @@ function showAiResult(html: string): void {
 }
 
 async function runThoughtAssist(kind: 'recall' | 'ask'): Promise<void> {
-  if (!appRef || !data) return;
   const input = thoughtText.trim();
   if (!input) {
     notice('先写点想法吧', 'warning');
     return;
   }
+  const loaded = await ensureDataLoaded();
+  if (!loaded || !appRef || !maskEl) return;
   setAiBusy(true);
   try {
     const ai = new BlackBoxAI();
@@ -1013,19 +1078,7 @@ function escapeHtml(s: string): string {
 
 // ---------------- 保存（文献/想法：感触步 → 存入黑匣子） ----------------
 
-/** 标题解析（ticket 03）：分析标题优先 → AI 生成 → 正文前 20 字降级（永不拒收） */
-async function resolveEntryTitle(entry: Entry, prefer?: string): Promise<string> {
-  if (prefer && prefer.trim()) return prefer.trim();
-  try {
-    const ai = new BlackBoxAI();
-    const t = await ai.suggestTitle(entry.text || '');
-    if (t && t.trim()) return t.trim();
-  } catch (e) {
-    /* AI 不可用：降级正文前 20 字 */
-  }
-  return entryNoteTitle(entry);
-}
-
+/** 标题解析（ticket 03）：分析标题优先直接落盘；无分析标题 → 后台 AI 生成（finalizeEntrySave），正文前 20 字降级（永不拒收） */
 async function saveEntry(): Promise<void> {
   if (!appRef) return;
   let entries: Entry[] = [];
@@ -1045,8 +1098,9 @@ async function saveEntry(): Promise<void> {
       toward: '',
       links: [],
     });
-    // 标题：分析结果优先 → AI 生成 → 前 20 字降级；想法手输（ticket 50）非空 → 独立想法笔记 + 摘抄底部「来自：[[摘抄]]」
-    lit.title = await resolveEntryTitle(lit, literatureTitle);
+    // 标题：分析结果优先直接落盘；无 → 先落盘（正文前 20 字降级），AI 后台生成后重命名（ticket：保存即关不阻塞）；
+    // 想法手输（ticket 50）非空 → 独立想法笔记 + 摘抄底部「来自：[[摘抄]]」
+    lit.title = literatureTitle.trim();
     entries.push(lit);
     if (literatureThought.trim()) {
       entries.push(
@@ -1082,7 +1136,7 @@ async function saveEntry(): Promise<void> {
       toward: '',
       links: [],
     });
-    thought.title = await resolveEntryTitle(thought);
+    // 标题后台 AI 生成（finalizeEntrySave），先落盘正文前 20 字降级名
     entries.push(thought);
   }
 
@@ -1098,12 +1152,13 @@ async function saveEntry(): Promise<void> {
       if (e.type === 'concept') void autoClassify(appRef, e.id);
     }
     data = latest;
-    // 原位注入（ticket 06）：摘抄目标 = AI 标题（保存时已确定）；概念/摘抄保存时带选区才触发；
-    // 书内选区录入（externalSel）无来源笔记 → 跳过注入（epub 不可写）
-    if (activeType === 'literature' && entries[0] && entries[0].title && !externalSel) {
-      await injectIntoSourceNote(appRef, selectionSnap, entries[0].title);
-    }
-    if (activeType === 'literature' && conceptFlowMode && entries[0]) {
+    // 后台补全链（确认即关后执行）：AI 标题生成 → 重命名笔记 → 原位注入 → 完成通知；
+    // 快照先复制副本（closeBlackBoxCapture 会置空 selectionSnap/externalSel）
+    const snap = selectionSnap;
+    const ext = externalSel;
+    const flowMode = conceptFlowMode;
+    void finalizeEntrySave(appRef, entries[0], snap, ext, flowMode);
+    if (activeType === 'literature' && flowMode && entries[0]) {
       // 新概念流转（ticket 50）：记录回填目标 → 同弹窗依次概念录入，全部完成后回填摘抄 terms
       flowLitId = entries[0].id;
       notice(`摘抄已存入，依次录入 ${pendingConceptQueue.length} 个新概念`, 'success');
@@ -1125,6 +1180,45 @@ async function saveEntry(): Promise<void> {
   } catch (e) {
     console.warn('黑匣子保存失败', e);
     notice('存入失败', 'error');
+  }
+}
+
+/** 文献/想法后台补全（确认即关后执行）：AI 标题生成（无分析标题时）→ 重命名笔记 → 原位注入；
+ *  写前重载防并发覆盖；失败静默（已落盘数据永不回滚）；标题生成成功且改名 → 通知。 */
+async function finalizeEntrySave(
+  app: App,
+  first: Entry | undefined,
+  snap: SelectionSnapshot | null,
+  ext: BlackBoxExternalSelection | null,
+  flowMode: boolean
+): Promise<void> {
+  if (!first || first.type === 'concept') return;
+  try {
+    const m = manager(app);
+    const latest = await m.load();
+    const e = latest.entries.find((x) => x.id === first.id);
+    if (!e) return;
+    // AI 标题：分析标题已在保存时落盘则复用；否则（空 或 正文前 20 字降级名——水合时文件名回退为 title）后台生成，失败保持降级标题
+    const fallbackTitle = sanitizeFileName((e.text || '').replace(/\s+/g, ' ').trim().slice(0, 20));
+    let title = (e.title || '').trim();
+    if (!title || title === fallbackTitle) {
+      try {
+        const t = await new BlackBoxAI().suggestTitle(e.text || '');
+        title = (t || '').trim();
+      } catch (err) {
+        /* AI 不可用：保持降级标题 */
+      }
+    }
+    if (title && title !== e.title) {
+      const ok = await m.renameEntryNote(latest, e.id, title);
+      if (ok) notice(`已生成标题「${title}」`, 'info');
+    }
+    // 原位注入（ticket 06）：摘抄目标 = AI 标题；书内选区（epub 不可写）与流转模式跳过
+    if (!ext && !flowMode && e.type === 'literature') {
+      await injectIntoSourceNote(app, snap, title || entryNoteTitle(e));
+    }
+  } catch (err) {
+    console.warn('黑匣子后台补全失败', err);
   }
 }
 

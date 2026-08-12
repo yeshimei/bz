@@ -17,6 +17,8 @@ import {
   migrateV1Impression,
   splitV1People,
   normalizeData,
+  invalidateBlackBoxCache,
+  resetBlackBoxCache,
 } from '../../src/blackbox/data';
 import {
   defaultBlackBoxData,
@@ -1032,5 +1034,156 @@ describe('完整路径双链（2026-08-12：[[完整路径|标题]]）', () => {
     const e = data.entries.find((x) => x.id === 'bb_n1')!;
     expect(e.related).toEqual([]);
     expect(e.pendingLinks).toEqual(['旧名', '普通名字']); // 显示名可读
+  });
+});
+
+describe('水合缓存（打开只全扫一次；save 同步；事件失效）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => ({} as any));
+    resetBlackBoxCache();
+  });
+
+  it('load 命中缓存：文件已变但未失效 → 返回首次快照；失效后重新全扫', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      '我的/黑匣子/概念/提喻法.md',
+      '---\nid: bb_c1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\nname: 提喻法\n---\n以部分代整体\n'
+    );
+    vault.files.set(
+      getBlackBoxFilePath(),
+      JSON.stringify({ version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {} })
+    );
+    const { app } = setup(vault);
+    const dm = new BlackBoxDataManager(app);
+    const d1 = await dm.load();
+    expect(d1.entries.length).toBe(1);
+    // 文件被外部修改但未触发失效事件 → 缓存仍返回首次快照（同一对象）
+    vault.files.set(
+      '我的/黑匣子/概念/提喻法.md',
+      '---\nid: bb_c1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\nname: 提喻法\n---\n新定义\n'
+    );
+    const d2 = await dm.load();
+    expect(d2).toBe(d1);
+    expect(d2.entries[0].definition).toBe('以部分代整体');
+    // 失效（vault modify/create/rename/delete 事件触发）→ 重新全扫
+    invalidateBlackBoxCache();
+    const d3 = await dm.load();
+    expect(d3.entries[0].definition).toBe('新定义');
+  });
+
+  it('save 后缓存与磁盘同步：addEntry 后 load 直接命中含新条目的快照', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      getBlackBoxFilePath(),
+      JSON.stringify({ version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {} })
+    );
+    const { app } = setup(vault);
+    const dm = new BlackBoxDataManager(app);
+    const d = await dm.load();
+    expect(d.entries.length).toBe(0);
+    await dm.addEntry(d, createEntry({ type: 'thought', text: '一条想法' }));
+    const d2 = await dm.load();
+    expect(d2.entries.length).toBe(1);
+    expect(d2.entries[0].text).toBe('一条想法');
+  });
+});
+
+describe('renameEntryNote（AI 标题后台补全：保存即关后重命名）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => ({} as any));
+    resetBlackBoxCache();
+  });
+
+  it('文献：重命名笔记 + 更新 title/frontmatter/index；重载水合一致', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      '我的/黑匣子/摘抄/旧名.md',
+      '---\nid: bb_l1\ntype: literature\ncreatedAt: "2026-08-03T00:00:00.000Z"\n---\n正文内容\n'
+    );
+    vault.files.set(
+      getBlackBoxFilePath(),
+      JSON.stringify({
+        version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {},
+        index: { bb_l1: '我的/黑匣子/摘抄/旧名.md' },
+      })
+    );
+    const { app } = setup(vault);
+    const dm = new BlackBoxDataManager(app);
+    const d = await dm.load();
+    const entry = d.entries.find((e: any) => e.id === 'bb_l1')!;
+    const ok = await dm.renameEntryNote(d, entry.id, '新标题');
+    expect(ok).toBe(true);
+    expect(vault.files.has('我的/黑匣子/摘抄/新标题.md')).toBe(true);
+    expect(vault.files.has('我的/黑匣子/摘抄/旧名.md')).toBe(false);
+    expect(vault.files.get('我的/黑匣子/摘抄/新标题.md')).toContain('title: 新标题');
+    expect(d.index[entry.id]).toBe('我的/黑匣子/摘抄/新标题.md');
+    expect(entry.title).toBe('新标题');
+    // 重载水合一致
+    invalidateBlackBoxCache();
+    const d2 = await dm.load();
+    expect(d2.entries.find((e: any) => e.id === 'bb_l1')!.title).toBe('新标题');
+    expect(d2.index['bb_l1']).toBe('我的/黑匣子/摘抄/新标题.md');
+  });
+
+  it('目标名与现路径一致 → 仅补 frontmatter title，不移动文件', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      '我的/黑匣子/想法/夏夜的吉他声.md',
+      '---\nid: bb_t1\ntype: thought\ncreatedAt: "2026-08-04T00:00:00.000Z"\n---\n正文\n'
+    );
+    vault.files.set(
+      getBlackBoxFilePath(),
+      JSON.stringify({
+        version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {},
+        index: { bb_t1: '我的/黑匣子/想法/夏夜的吉他声.md' },
+      })
+    );
+    const { app } = setup(vault);
+    const dm = new BlackBoxDataManager(app);
+    const d = await dm.load();
+    const entry = d.entries.find((e: any) => e.id === 'bb_t1')!;
+    const ok = await dm.renameEntryNote(d, entry.id, '夏夜的吉他声');
+    expect(ok).toBe(true);
+    expect(vault.files.has('我的/黑匣子/想法/夏夜的吉他声.md')).toBe(true);
+    expect(vault.files.get('我的/黑匣子/想法/夏夜的吉他声.md')).toContain('title: 夏夜的吉他声');
+    expect(d.index[entry.id]).toBe('我的/黑匣子/想法/夏夜的吉他声.md');
+  });
+
+  it('概念类型拒绝（概念名即文件名，改名走删除重建）', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      '我的/黑匣子/概念/提喻法.md',
+      '---\nid: bb_c1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\nname: 提喻法\n---\n定义\n'
+    );
+    vault.files.set(
+      getBlackBoxFilePath(),
+      JSON.stringify({
+        version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {},
+        index: { bb_c1: '我的/黑匣子/概念/提喻法.md' },
+      })
+    );
+    const { app } = setup(vault);
+    const dm = new BlackBoxDataManager(app);
+    const d = await dm.load();
+    const entry = d.entries.find((e: any) => e.id === 'bb_c1')!;
+    expect(await dm.renameEntryNote(d, entry.id, '借代')).toBe(false);
+    expect(vault.files.has('我的/黑匣子/概念/提喻法.md')).toBe(true);
+  });
+
+  it('空标题 / 条目不存在 → 拒绝', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      getBlackBoxFilePath(),
+      JSON.stringify({ version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {} })
+    );
+    const { app } = setup(vault);
+    const dm = new BlackBoxDataManager(app);
+    const d = await dm.load();
+    expect(await dm.renameEntryNote(d, 'bb_x', '标题')).toBe(false);
+    expect(await dm.renameEntryNote(d, '不存在', '')).toBe(false);
   });
 });

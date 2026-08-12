@@ -262,3 +262,13 @@
 - ✅ **测试层**：136 处字面量 `黑匣子/` → `我的/黑匣子/`（data/sync/capture/notes/capture-epub/v3-seed），黑匣子 235 测试全绿
 - ✅ **vault 存量数据**（vault 内操作，不入 git）：1327 篇笔记 4218 处 `[[黑匣子/` → `[[我的/黑匣子/`（完整路径双链，覆盖概念/摘抄/想法含分类子目录）；workspace.json 32 处路径同步（JSON 校验有效）；launcher 磁贴名/epub 插件缓存不动
 - ✅ **构建产物**：npm run build 直出 vault 插件目录；旧产物指向已不存在的 `黑匣子/` 导致面板空数据 → 重载后全量水合恢复
+
+## 2026-08-1x 黑匣子打开提速 + 录入后台化（ticket 56，用户需求）
+
+**状态：blackbox 243 测试全绿（15 文件）；全量并发抖动项（belongings/pomodoro）与干净基线持平；tsc 零新增**
+
+- ✅ **打开秒开**：录入弹窗（概念/摘抄/想法/引导式）与主面板打开立即渲染骨架，不再同步等待全量水合；缓存未就绪时顶部显示「正在扫描黑匣子…」提示条（`.bz-blackbox-scanning`），数据就绪自动移除（缓存命中则不可见）
+- ✅ **水合缓存（只全扫一次）**：`BlackBoxDataManager.load` 内存缓存（`cachedData`）：首次 load 全扫水合后缓存，后续 load 直接命中；`save()` 末尾同步缓存（vault 写入之后赋值）；sync.ts vault modify/create/rename/delete 同步事件失效（插件自身写入 = 事件先失效 + save 后置恢复，自愈无额外全扫）；外部编辑/移动/删除 → 下次 load 重扫；sync refresh() 先失效再 load（编辑后强制全扫一次，面板实时跟随不变）
+- ✅ **录入后台化**：概念/文献/想法确认后先落盘核心数据再关面板（直达模式保存即关）；后台补全链：AI 标题生成（无分析标题时）→ `renameEntryNote` 重命名笔记 → 原位注入（摘抄目标 = AI 标题）→ 双向关联回填 → 自动分类（原异步保持）；标题生成成功且改名 → notice「已生成标题「xxx」」（info，不带 emoji）；AI 失败保持降级名（正文前 20 字）永不拒收
+- ✅ **关键修复**：finalize 降级名误判（水合时文件名回退为 title → 与降级名比较后仍触发 AI）；saveConcept 快照捕获顺序（close 置空 selectionSnap 前先复制副本）；renameEntryNote 同名现路径误判 -1（先比 base===oldPath 再 uniquePath）
+- ✅ **测试**：缓存行为（命中/失效重扫/save 同步）+ renameEntryNote 4 例（重命名/同名补 fm/概念拒绝/空标题拒绝）+ 扫描提示条（capture/panel 同步点断言）+ AI 标题后台重命名 waitFor + 注入目标 = AI 标题 + 概念注入后台化 + create 事件仅失效缓存不刷新面板；setup.ts 全局 beforeEach 重置水合缓存（防跨测试泄漏）

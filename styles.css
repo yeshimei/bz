@@ -685,6 +685,15 @@
   max-height: 80vh;
   overflow: hidden;
 }
+/* 「正在扫描黑匣子…」提示条（首次打开全量水合期间，顶部细条） */
+.bz-blackbox-scanning {
+  flex-shrink: 0;
+  padding: 8px 20px;
+  font-size: 12px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
 .bz-blackbox-modal-header {
   display: flex;
   justify-content: space-between;

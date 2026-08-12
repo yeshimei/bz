@@ -124,6 +124,23 @@ describe('黑匣子录入弹窗（引导式）', () => {
     expect(document.getElementById('bz-blackbox-step-conn')!.style.display).toBe('none');
   });
 
+  it('打开：立即渲染骨架 + 「正在扫描黑匣子…」提示，数据后台加载完成后移除', async () => {
+    const vault = new MockVault();
+    seedVault(vault);
+    const { app } = setup(vault, { blackboxAIProvider: 'ollama' });
+    const p = openBlackBoxCapture(app); // 不 await：同步段先渲染
+    // 同步点：弹窗骨架已构建、扫描提示在（数据加载尚未完成）
+    expect(document.getElementById('bz-blackbox-capture-popup')).toBeTruthy();
+    expect(document.getElementById('bz-blackbox-capture-scanning')!.textContent).toBe('正在扫描黑匣子…');
+    await p;
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-capture-scanning')).toBeNull(); // 就绪后移除
+    });
+    // 数据已就绪：情绪词表/画像可用
+    const box = document.getElementById('bz-blackbox-step-type');
+    expect(box).toBeTruthy();
+  });
+
   // ---------------- 🧩 概念 ----------------
 
   it('概念：选类型 → 一个输入框 + 生成按钮；无头部/无 label（引导在 placeholder）', async () => {
@@ -655,10 +672,12 @@ describe('概念直达命令（ticket 02：bz-blackbox-capture-concept）', () =
     setValue('bz-blackbox-concept-def', '以部分代整体');
     document.getElementById('bz-blackbox-concept-gen')!.click();
     await vi.waitFor(async () => {
-      expect((await loaded(app, vault)).entries.some((e: any) => e.type === 'concept' && e.name === '提喻法')).toBe(true);
+      expect((await loaded(app, vault)).entries.some((e: any) => e.type === 'concept' && e.name === '提喻法' && e.definition === '以部分代整体')).toBe(true);
     });
-    expect((await loaded(app, vault)).entries.find((e: any) => e.name === '提喻法').definition).toBe('以部分代整体');
-    expect(document.getElementById('bz-blackbox-capture-popup')).toBeNull();
+    // 保存完成即关闭（直达模式；与既有同名概念并存为 -1 文件，不覆盖）
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-capture-popup')).toBeNull();
+    });
     // 概念笔记落盘
     const notes = [...vault.files.keys()].filter((p) => p.startsWith('我的/黑匣子/概念/'));
     expect(notes).toContain('我的/黑匣子/概念/提喻法.md');
@@ -756,8 +775,8 @@ describe('摘抄/想法直达命令（ticket 03：标题 AI 生成 + 提炼想�
     expect(lit.terms).toEqual(['bb_c1']);
   });
 
-  it('摘抄保存：未分析时 AI 生成标题（保存时），AI 失败降级正文前 20 字', async () => {
-    // 无分析直接保存：AI 标题调用返回标题文本
+  it('摘抄保存：未分析时保存 → 先落盘关闭，AI 标题后台生成后重命名', async () => {
+    // 无分析直接保存：AI 标题调用返回标题文本（后台补全链：生成 → 重命名笔记）
     mockOllama('修辞的弹性');
     const vault = new MockVault();
     seedVault(vault);
@@ -770,10 +789,15 @@ describe('摘抄/想法直达命令（ticket 03：标题 AI 生成 + 提炼想�
       expect(document.getElementById('bz-blackbox-step-feel')!.style.display).toBe('block');
     });
     document.getElementById('bz-blackbox-save')!.click();
-    await vi.waitFor(async () => {
-      expect((await loaded(app, vault)).entries.some((e: any) => e.type === 'literature')).toBe(true);
+    // 保存即关（不等待 AI）
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-capture-popup')).toBeNull();
     });
-    expect(vault.files.has('我的/黑匣子/摘抄/修辞的弹性.md')).toBe(true); // AI 标题
+    // 后台 AI 标题生成 → 笔记重命名（通知）
+    await vi.waitFor(() => {
+      expect(vault.files.has('我的/黑匣子/摘抄/修辞的弹性.md')).toBe(true);
+    });
+    expect(hasNotice(/已生成标题「修辞的弹性」/)).toBe(true);
   });
 
   it('摘抄保存：AI 标题失败 → 降级正文前 20 字（永不拒收）', async () => {
@@ -843,11 +867,12 @@ describe('摘抄/想法直达命令（ticket 03：标题 AI 生成 + 提炼想�
       expect((await loaded(app, vault)).entries.some((e: any) => e.type === 'thought')).toBe(true);
     });
     expect(document.getElementById('bz-blackbox-capture-popup')).toBeNull(); // 保存即关
+    // AI 失败 → 保持正文前 20 字降级文件名（后台补全静默，不重命名）
     const title = '给妹妹买吉他，她笑了很久。'.slice(0, 20);
-    expect(vault.files.has(`我的/黑匣子/想法/${title}.md`)).toBe(true); // AI 失败降级前 20 字
+    expect(vault.files.has(`我的/黑匣子/想法/${title}.md`)).toBe(true);
   });
 
-  it('想法直达：AI 生成标题成功 → 文件名 = AI 标题', async () => {
+  it('想法直达：AI 生成标题成功 → 后台重命名文件 = AI 标题', async () => {
     mockOllama('夏夜的吉他声');
     const vault = new MockVault();
     seedVault(vault);
@@ -856,10 +881,15 @@ describe('摘抄/想法直达命令（ticket 03：标题 AI 生成 + 提炼想�
     setValue('bz-blackbox-thought-text', '给妹妹买吉他，她笑了很久。');
     document.getElementById('bz-blackbox-thought-confirm')!.click();
     document.getElementById('bz-blackbox-save')!.click();
-    await vi.waitFor(async () => {
-      expect((await loaded(app, vault)).entries.some((e: any) => e.type === 'thought')).toBe(true);
+    // 保存即关（不等待 AI）
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-blackbox-capture-popup')).toBeNull();
     });
-    expect(vault.files.has('我的/黑匣子/想法/夏夜的吉他声.md')).toBe(true);
+    // 后台 AI 标题生成 → 笔记重命名
+    await vi.waitFor(() => {
+      expect(vault.files.has('我的/黑匣子/想法/夏夜的吉他声.md')).toBe(true);
+    });
+    expect(hasNotice(/已生成标题「夏夜的吉他声」/)).toBe(true);
   });
 
   it('AI 自动分类（2026-08-12 需求）：保存后异步归入分类文件夹（移动+fm+index+toast），分类输入框已移除', async () => {
