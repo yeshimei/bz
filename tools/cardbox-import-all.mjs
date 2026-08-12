@@ -327,13 +327,7 @@ async function main() {
   const cfg = loadAI();
   console.log(`[config] endpoint=${cfg.endpoint} model=${cfg.model}（key 已隐藏）`);
 
-  // 备份（一次性，只由分片 0 执行）
-  if (SHARD_INDEX === 0) {
-    const ts = new Date().toISOString().replace(/[:.]/g, '-');
-    fs.copyFileSync(BB_FILE, `${BB_FILE}.bak-${ts}`);
-    fs.copyFileSync(LOG_FILE, `${LOG_FILE}.bak-${ts}`);
-    console.log(`[backup] blackbox.json / blackbox_import.json → .bak-${ts}`);
-  }
+  // 备份已按用户要求移除（2026-08-12：不再生成 .bak 文件）
 
   // 扫描卡片盒（只取文件名，正文零接触）
   const files = scanCardbox();
