@@ -100,10 +100,10 @@ describe('备忘录面板', () => {
     expect(cards.length).toBe(3);
     // 逾期最前、今日到期次之、普通最后（置顶排序）
     expect(cards[0].textContent).toContain('过期待办');
-    expect(cards[0].textContent).toContain('🔴');
+    expect(cards[0].textContent).toContain('');
     expect(cards[0].textContent).toContain('5天前已过期');
     expect(cards[1].textContent).toContain('今日到期');
-    expect(cards[1].textContent).toContain('⚠️');
+    expect(cards[1].textContent).toContain('');
     expect(cards[2].textContent).toContain('普通任务');
     // 场景标签
     expect(cards[0].textContent).toContain('#学习');

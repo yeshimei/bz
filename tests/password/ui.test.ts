@@ -61,7 +61,7 @@ describe('UIManager 主密码流程', () => {
     const dialog = findPasswordDialog()!;
     expect(dialog.textContent).toContain('设置主密码');
     expect(dialog.textContent).toContain('请设置一个主密码（用于加密所有数据）');
-    expect(dialog.textContent).toContain('⚠️ 重要提醒');
+    expect(dialog.textContent).toContain('重要提醒');
     const inputs = dialog.querySelectorAll('input[type="password"]');
     expect(inputs.length).toBe(2); // 密码 + 再次输入（首次设置模式已显示）
 

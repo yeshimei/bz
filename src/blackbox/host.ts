@@ -123,11 +123,11 @@ export async function jumpFromSource(app: App, source: string): Promise<void> {
   if (action.kind === 'epub') {
     const reader = getReaderPlugin(app);
     if (!reader || typeof reader.openEpubLocationFromLink !== 'function') {
-      notice('⚠️ 未安装 EPUB 阅读器插件');
+      notice('未安装 EPUB 阅读器插件', 'warning');
       return;
     }
     const ok = await reader.openEpubLocationFromLink(action.link);
-    if (!ok) notice('⚠️ 未能定位原文位置（书可能已被移动或删除）', 'warning');
+    if (!ok) notice('未能定位原文位置（书可能已被移动或删除）', 'warning');
   } else if (action.kind === 'note') {
     app.workspace.openLinkText(action.path, '', false, { active: true });
   } else if (action.kind === 'url') {

@@ -101,7 +101,7 @@ export async function injectIntoSourceNote(
   }
   const r = computeInjection(content, snap.line, snap.ch, snap.endLine, snap.endCh, targetName);
   if (!r.ok) {
-    if (r.reason !== 'empty') notice('⚠️ 选区位于代码块/元数据内，未插入链接', 'warning');
+    if (r.reason !== 'empty') notice('选区位于代码块/元数据内，未插入链接', 'warning');
     return { injected: false, blocked: r.reason };
   }
   try {

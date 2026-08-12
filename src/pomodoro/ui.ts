@@ -93,11 +93,11 @@ function notifyPhaseStarted(phase: Phase): void {
   const d = durations();
   if (phase === 'focus') {
     const isReading = state.target?.type === 'book';
-    notice(isReading ? `✅ 已开始读书专注：《${state.target!.label}》` : '✅ 专注开始', 'success');
+    notice(isReading ? `已开始读书专注：《${state.target!.label}》` : '专注开始', 'success');
   } else if (phase === 'long-break') {
-    notice(`✅ 长休息开始：${d.longBreakMin} 分钟`, 'success');
+    notice(`长休息开始：${d.longBreakMin} 分钟`, 'success');
   } else {
-    notice(`✅ 休息开始：${d.shortBreakMin} 分钟`, 'success');
+    notice(`休息开始：${d.shortBreakMin} 分钟`, 'success');
   }
   const s = tryGetSettings();
   if (s.pomodoroSound !== false) {
@@ -110,7 +110,7 @@ function notifyPhaseStarted(phase: Phase): void {
 /** 暂停（手动/读书自动）：toast + 提示音 */
 function notifyPaused(): void {
   const isReading = state.target?.type === 'book';
-  notice(isReading ? '⏸️ 已暂停读书专注' : '⏸️ 已暂停专注');
+  notice(isReading ? '已暂停读书专注' : '已暂停专注', 'pause');
   const s = tryGetSettings();
   if (s.pomodoroSound !== false) playSound('pause', pomodoroVolume());
 }

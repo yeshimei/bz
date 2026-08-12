@@ -5,8 +5,12 @@
  * - 位置：桌面端右上角、从右侧滑入；移动端（max-width 768px）顶部居中、从上往下
  * - 堆叠 + 上限 5 条（超出挤掉最旧）
  * - z-index 100000（最顶，盖过 Obsidian 全部 UI 层）
- * - 类型图标用 emoji（info ℹ️ / success ✅ / warning ⚠️ / error ❌ / progress 转圈）；
+ * - 类型图标用 emoji（info ℹ️ / success ✅ / warning ⚠️ / error ❌ / pause ⏸️ / accept ✨ /
+ *   delete 🗑️ / confirm ✓ / restore ↩️ / skip 🚫 / archive 📁 / progress 转圈）；
  *   类型由调用方显式指定（notice(msg, type)），不做消息内容自动归类
+ * - 通知文案规范（2026-08-1x 用户决策）：消息正文一律不带 emoji 前缀（类型图标即视觉前缀，重复）
+ * - 新增通知类型规范：新语义先查下方 ICONS 表——已有类型直接用；确无匹配再新增
+ *   （加 ICONS 项 + 颜色 class + 默认时长，progress 除外）；不得把 emoji 写进消息正文
  * - dedupeKey：同键且通知存活 → 原地合并更新消息并重置计时（连续任务单框语义）；
  *   已消失后 30s 窗口内同键不重复弹（防后台自动事件刷屏）
  * - duration <= 0 = 常驻不自动消失（连续任务配合 setMessage/setType 使用）
@@ -16,8 +20,19 @@
  *   progress 类型默认不自动消失（调用方控制）
  * - 点击通知本体即关闭
  */
-export type NoticeType = 'info' | 'success' | 'warning' | 'error';
-/** 通知类型：四种常规类型 + progress（进度条形态，默认不自动消失） */
+export type NoticeType =
+  | 'info'
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'pause'
+  | 'accept'
+  | 'delete'
+  | 'confirm'
+  | 'restore'
+  | 'skip'
+  | 'archive';
+/** 通知类型：常规类型 + progress（进度条形态，默认不自动消失） */
 export type NoticeKind = NoticeType | 'progress';
 
 /** 进入/退出动画变体（默认：桌面 slide-right 右侧滑入；移动端 drop 顶部下滑） */
@@ -70,12 +85,22 @@ const DEDUPE_WINDOW_MS = 30000;
 /** 移动端断点（项目惯例 max-width: 768px） */
 const MOBILE_QUERY = '(max-width: 768px)';
 
-/** 类型 → 图标 emoji（progress 用转圈 SVG，见 SPINNER_SVG） */
+/**
+ * 类型 → 图标 emoji（progress 用转圈 SVG，见 SPINNER_SVG）。
+ * 新增类型规范：此处加图标 + CSS 颜色 class + 默认时长（defaultDuration 非 error 均 3s）。
+ */
 const ICONS: Record<NoticeType, string> = {
   info: 'ℹ️',
   success: '✅',
   warning: '⚠️',
   error: '❌',
+  pause: '⏸️',
+  accept: '✨',
+  delete: '🗑️',
+  confirm: '✓',
+  restore: '↩️',
+  skip: '🚫',
+  archive: '📁',
 };
 
 const SPINNER_SVG = '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
@@ -210,6 +235,14 @@ const NOTICE_CSS = `
 .bz-notice--warning .bz-notice-icon { color: var(--color-orange); }
 .bz-notice--error .bz-notice-icon { color: var(--color-red); }
 .bz-notice--info .bz-notice-icon { color: var(--interactive-accent); }
+.bz-notice--success .bz-notice-icon { color: var(--color-green); }
+.bz-notice--pause .bz-notice-icon { color: var(--text-muted); }
+.bz-notice--accept .bz-notice-icon { color: var(--color-purple); }
+.bz-notice--delete .bz-notice-icon { color: var(--color-red); }
+.bz-notice--confirm .bz-notice-icon { color: var(--color-green); }
+.bz-notice--restore .bz-notice-icon { color: var(--color-cyan); }
+.bz-notice--skip .bz-notice-icon { color: var(--color-orange); }
+.bz-notice--archive .bz-notice-icon { color: var(--color-blue); }
 .bz-notice--progress .bz-notice-icon { color: var(--interactive-accent); }
 .bz-notice--progress .bz-notice-icon svg {
   animation: bzNoticeSpin 1s linear infinite;
@@ -423,8 +456,21 @@ function evictOldest(): void {
 /** 按类型更新元素类名与图标（创建/合并/setType 共用） */
 function applyTypeToEl(n: InternalNotice, kind: NoticeKind): void {
   const isProgressNow = kind === 'progress';
-  // 类型类名：五选一（先清全部再添加，防多次切换残留）
-  n.el.classList.remove('bz-notice--info', 'bz-notice--success', 'bz-notice--warning', 'bz-notice--error', 'bz-notice--progress');
+  // 类型类名：全部清掉再添加（防多次切换残留）
+  n.el.classList.remove(
+    'bz-notice--info',
+    'bz-notice--success',
+    'bz-notice--warning',
+    'bz-notice--error',
+    'bz-notice--pause',
+    'bz-notice--accept',
+    'bz-notice--delete',
+    'bz-notice--confirm',
+    'bz-notice--restore',
+    'bz-notice--skip',
+    'bz-notice--archive',
+    'bz-notice--progress'
+  );
   n.el.classList.add('bz-notice--' + (isProgressNow ? 'progress' : kind));
   // 图标（emoji；progress 转圈）
   n.iconEl.innerHTML = '';

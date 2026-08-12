@@ -370,7 +370,7 @@ function renderStepContent(): void {
     nameInput.type = 'text';
     nameInput.id = 'bz-blackbox-concept-name';
     nameInput.className = 'bz-blackbox-input' + (conceptNameLocked ? ' bz-blackbox-locked' : '');
-    nameInput.placeholder = '想搞懂的概念或实体，如「提喻法」';
+    nameInput.placeholder = '想搞懂的概念或实体';
     nameInput.value = conceptName;
     nameInput.readOnly = conceptNameLocked;
     nameInput.addEventListener('input', () => {
@@ -380,7 +380,7 @@ function renderStepContent(): void {
     const defInput = document.createElement('textarea');
     defInput.id = 'bz-blackbox-concept-def';
     defInput.className = 'bz-blackbox-textarea';
-    defInput.placeholder = '定义（可编辑）：AI 生成或手动填写，确认后落盘为概念笔记正文';
+    defInput.placeholder = '定义';
     defInput.value = conceptDefinition;
     defInput.addEventListener('input', () => {
       conceptDefinition = defInput.value;
@@ -395,7 +395,7 @@ function renderStepContent(): void {
     srcInput.type = 'text';
     srcInput.id = 'bz-blackbox-concept-source';
     srcInput.className = 'bz-blackbox-input' + (externalSel && conceptSource ? ' bz-blackbox-locked' : '');
-    srcInput.placeholder = '来源：URL 或书名/出处（书内选区自动填书名，不可改）';
+    srcInput.placeholder = '来源';
     srcInput.value = externalSel && conceptSource ? bookTitleFromSourceLink(conceptSource) : conceptSource;
     srcInput.readOnly = !!externalSel && !!conceptSource;
     srcInput.addEventListener('input', () => {
@@ -413,7 +413,7 @@ function renderStepContent(): void {
     const text = document.createElement('textarea');
     text.id = 'bz-blackbox-lit-text';
     text.className = 'bz-blackbox-textarea' + (literatureTextLocked ? ' bz-blackbox-locked' : '');
-    text.placeholder = '摘抄（必填）：从别处摘下的信息片段';
+    text.placeholder = '从别处摘下的信息片段';
     text.value = literatureText;
     text.readOnly = literatureTextLocked;
     text.addEventListener('input', () => {
@@ -425,7 +425,7 @@ function renderStepContent(): void {
     const thought = document.createElement('textarea');
     thought.id = 'bz-blackbox-lit-thought';
     thought.className = 'bz-blackbox-textarea';
-    thought.placeholder = '想法（可选）：你自己的感受或联想，不 AI 提炼';
+    thought.placeholder = '你自己的感受或联想，不 AI 提炼';
     thought.value = literatureThought;
     thought.addEventListener('input', () => (literatureThought = thought.value));
     box.appendChild(thought);
@@ -433,7 +433,7 @@ function renderStepContent(): void {
     const source = document.createElement('input');
     source.id = 'bz-blackbox-lit-source';
     source.className = 'bz-blackbox-input' + (externalSel && literatureSource ? ' bz-blackbox-locked' : '');
-    source.placeholder = '来源：URL 或书名/出处（书内选区自动填书名，不可改）';
+    source.placeholder = '来源';
     source.value = externalSel && literatureSource ? bookTitleFromSourceLink(literatureSource) : literatureSource;
     source.readOnly = !!externalSel && !!literatureSource;
     source.addEventListener('input', () => {
@@ -451,7 +451,7 @@ function renderStepContent(): void {
     const text = document.createElement('textarea');
     text.id = 'bz-blackbox-thought-text';
     text.className = 'bz-blackbox-textarea';
-    text.placeholder = '想法（必填）：你自己的思考、感受、念头';
+    text.placeholder = '你自己的思考、感受、念头';
     text.value = thoughtText;
     text.addEventListener('input', () => (thoughtText = text.value));
     box.appendChild(text);
@@ -472,7 +472,7 @@ function renderStepContent(): void {
     confirmBtn.textContent = '✅ 确认';
     confirmBtn.addEventListener('click', () => {
       if (!thoughtText.trim()) {
-        notice('⚠️ 先写下想法');
+        notice('先写下想法', 'warning');
         return;
       }
       gotoStep('feel');
@@ -500,7 +500,7 @@ async function onConceptMainBtn(btn: HTMLButtonElement): Promise<void> {
   }
   const name = conceptName;
   if (!name) {
-    notice('⚠️ 先输入名词');
+    notice('先输入名词', 'warning');
     return;
   }
   btn.disabled = true;
@@ -519,12 +519,12 @@ async function onConceptMainBtn(btn: HTMLButtonElement): Promise<void> {
         .map((c) => c.id);
     } else {
       conceptDefinition = raw;
-      notice('⚠️ 卡片生成不完整（已按纯文本填入，可编辑）');
+      notice('卡片生成不完整（已按纯文本填入，可编辑）', 'warning');
     }
   } catch (e) {
     // 永不拒收：AI 失败降级为直接录入（定义=原名词，用户可编辑）
     conceptDefinition = conceptName;
-    notice('❌ 生成失败：AI 暂时无法说话，可手动编辑后确定录入', 'error');
+    notice('生成失败：AI 暂时无法说话，可手动编辑后确定录入', 'error');
   }
   btn.disabled = false;
   renderStepContent();
@@ -535,18 +535,18 @@ async function saveConcept(): Promise<void> {
   if (!appRef) return;
   const name = conceptName;
   if (!name) {
-    notice('⚠️ 名词不能为空');
+    notice('名词不能为空', 'warning');
     return;
   }
   if (!conceptDefinition.trim()) {
-    notice('⚠️ 卡片内容不能为空');
+    notice('卡片内容不能为空', 'warning');
     return;
   }
   // 重名守卫（流转模式，ticket 50）：确认时改名与既有概念同名 → 不新建，摘抄直接关联既有概念
   if (conceptFlowMode && data) {
     const dup = data.entries.find((c) => c.type === 'concept' && c.name === name);
     if (dup) {
-      notice(`⚠️ 已有同名概念「${name}」，已直接关联`);
+      notice(`已有同名概念「${name}」，已直接关联`, 'warning');
       flowCreated.push({ id: dup.id, name });
       nextConceptFlow();
       return;
@@ -575,7 +575,7 @@ async function saveConcept(): Promise<void> {
     if (!externalSel && !conceptFlowMode) {
       await injectIntoSourceNote(appRef, selectionSnap, entry.name || '');
     }
-    notice('✅ 已录入概念卡片');
+    notice('已录入概念卡片', 'success');
     void autoClassify(appRef, entry.id);
     if (conceptFlowMode) {
       // 流转（ticket 50）：记录已建概念 → 下一个新概念或回填收尾
@@ -595,7 +595,7 @@ async function saveConcept(): Promise<void> {
     }
   } catch (e) {
     console.warn('黑匣子概念保存失败', e);
-    notice('❌ 存入失败', 'error');
+    notice('存入失败', 'error');
   }
 }
 
@@ -610,7 +610,7 @@ async function autoClassify(app: App, id: string): Promise<void> {
     const cat = await new BlackBoxAI().classifyCard(entry);
     if (!cat || cat === '未分类') return;
     const ok = await m.applyCategory(d, id, cat);
-    if (ok) notice(`📁 已自动归入「${cat}」`);
+    if (ok) notice(`已自动归入「${cat}」`, 'archive');
   } catch {
     // 静默：AI 不可用/失败 → 卡片留在根目录
   }
@@ -622,7 +622,7 @@ async function analyzeLiterature(btn: HTMLButtonElement): Promise<void> {
   if (!appRef || !data) return;
   const text = literatureText.trim();
   if (!text) {
-    notice('⚠️ 先粘贴摘抄内容');
+    notice('先粘贴摘抄内容', 'warning');
     return;
   }
   btn.disabled = true;
@@ -658,11 +658,11 @@ async function analyzeLiterature(btn: HTMLButtonElement): Promise<void> {
         }
       }
     } else {
-      notice('⚠️ 分析结果无法识别（仍可直接存入）');
+      notice('分析结果无法识别（仍可直接存入）', 'warning');
     }
   } catch (e) {
     // 永不拒收：分析失败仍进入感触步，纯文本可保存
-    notice('❌ 分析失败：AI 暂时无法说话，仍可直接存入', 'error');
+    notice('分析失败：AI 暂时无法说话，仍可直接存入', 'error');
   } finally {
     btn.disabled = false;
     gotoStep('feel');
@@ -803,7 +803,7 @@ function toggleTag(tag: string): void {
     selectedTags.splice(i, 1);
   } else {
     if (selectedTags.length >= MAX_EMOTIONS) {
-      notice(`⚠️ 最多选 ${MAX_EMOTIONS} 个情绪`);
+      notice(`最多选 ${MAX_EMOTIONS} 个情绪`, 'warning');
       return;
     }
     selectedTags.push(tag);
@@ -894,7 +894,7 @@ function renderSuggest(input: HTMLInputElement, suggest: HTMLElement): void {
 /** 添加涉及的人：名字精确匹配已有画像 → 画像 id；否则存纯名字 */
 function addPeople(v: string): void {
   if (peopleChips.length >= MAX_PEOPLE) {
-    notice(`⚠️ 最多 ${MAX_PEOPLE} 个人`);
+    notice(`最多 ${MAX_PEOPLE} 个人`, 'warning');
     return;
   }
   const pf = profiles.find((p) => p.name === v);
@@ -930,7 +930,7 @@ async function seedProfileImpression(app: App, pf: Profile): Promise<void> {
     if (target) {
       target.impression = impression;
       await m.save(fresh);
-      notice(`✨ 包仔已为「${pf.name}」写下初始印象`);
+      notice(`包仔已为「${pf.name}」写下初始印象`, 'accept');
     }
   } catch (e) {
     /* AI 不可用：画像已建，印象留空待手动 */
@@ -973,7 +973,7 @@ async function runThoughtAssist(kind: 'recall' | 'ask'): Promise<void> {
   if (!appRef || !data) return;
   const input = thoughtText.trim();
   if (!input) {
-    notice('⚠️ 先写点想法吧');
+    notice('先写点想法吧', 'warning');
     return;
   }
   setAiBusy(true);
@@ -1000,7 +1000,7 @@ async function runThoughtAssist(kind: 'recall' | 'ask'): Promise<void> {
       fallbackIdx += 1;
       showAiResult(`<div class="bz-blackbox-ai-msg bz-blackbox-ai-fallback">${fallbackAsk(fallbackIdx)}</div>`);
     } else {
-      notice('❌ 联想失败：AI 暂时无法说话', 'error');
+      notice('联想失败：AI 暂时无法说话', 'error');
     }
   } finally {
     setAiBusy(false);
@@ -1031,7 +1031,7 @@ async function saveEntry(): Promise<void> {
   let entries: Entry[] = [];
   if (activeType === 'literature') {
     if (!literatureText.trim()) {
-      notice('⚠️ 摘抄不能为空');
+      notice('摘抄不能为空', 'warning');
       return;
     }
     const lit = createEntry({
@@ -1070,7 +1070,7 @@ async function saveEntry(): Promise<void> {
     }
   } else {
     if (!thoughtText.trim()) {
-      notice('⚠️ 想法不能为空');
+      notice('想法不能为空', 'warning');
       return;
     }
     const thought = createEntry({
@@ -1106,11 +1106,11 @@ async function saveEntry(): Promise<void> {
     if (activeType === 'literature' && conceptFlowMode && entries[0]) {
       // 新概念流转（ticket 50）：记录回填目标 → 同弹窗依次概念录入，全部完成后回填摘抄 terms
       flowLitId = entries[0].id;
-      notice(`✅ 摘抄已存入，依次录入 ${pendingConceptQueue.length} 个新概念`);
+      notice(`摘抄已存入，依次录入 ${pendingConceptQueue.length} 个新概念`, 'success');
       startConceptFlow();
       return;
     }
-    notice(`✅ 已存入黑匣子（${entries.length} 条）`);
+    notice(`已存入黑匣子（${entries.length} 条）`, 'success');
     if (directType) {
       // 直达命令：保存后直接关闭（可连续快速录入）
       closeBlackBoxCapture();
@@ -1124,7 +1124,7 @@ async function saveEntry(): Promise<void> {
     }
   } catch (e) {
     console.warn('黑匣子保存失败', e);
-    notice('❌ 存入失败', 'error');
+    notice('存入失败', 'error');
   }
 }
 
@@ -1159,7 +1159,7 @@ async function finishConceptFlow(): Promise<void> {
       const m = manager(appRef);
       const latest = await m.load();
       const ok = await m.appendEntryTerms(latest, flowLitId, flowCreated.map((c) => c.id));
-      if (ok) notice(`✅ 已把 ${flowCreated.length} 个新概念加入摘抄关联`);
+      if (ok) notice(`已把 ${flowCreated.length} 个新概念加入摘抄关联`, 'success');
     } catch (e) {
       console.warn('黑匣子摘抄关联回填失败', e);
     }

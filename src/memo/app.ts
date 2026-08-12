@@ -130,7 +130,7 @@ export const App = {
       const key = `${item.id}:${status}`;
       if (this.notifiedDue.has(key)) continue;
       this.notifiedDue.add(key);
-      const prefix = status === 'overdue' ? '🔴 已过期' : '⚠️ 今日到期';
+      const prefix = status === 'overdue' ? '已过期' : '今日到期';
       notice(`${prefix}：${item.title}`, status === 'overdue' ? 'error' : 'warning');
     }
   },

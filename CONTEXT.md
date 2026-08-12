@@ -202,10 +202,11 @@ _Avoid_: 设置弹窗（指筛选时）
 
 **changelog**: 各脚本版本更新日志（CHANGELOGS[identifier]），localStorage 记录已读版本（`changelog_<id>_shown_version`），插件化后保留机制。
 
-**通知 (Notification)**: bz 自绘 toast 通知（`src/core/notice.ts`，ADR-0010），替代 Obsidian 原生 Notice 与 Q3 smartCat 气泡。顶部居中 · z-index 10300 · 堆叠上限 5 · 点击关闭。类型 info/success/warning/error/progress 由消息内容自动归类（✅🎉→success、⚠️→warning、❌/失败/错误→error）；动效按类型自动映射（success→pop 打勾、warning/error→shake、info→drop）。支持动态消息（setMessage/setType）、进度条（setProgress，-1 不确定态）、富文本（title + action 按钮）。时长默认 3s、错误 5s、progress 不自动消失。
+**通知 (Notification)**: bz 自绘 toast 通知（`src/core/notice.ts`，ADR-0010），替代 Obsidian 原生 Notice 与 Q3 smartCat 气泡。右上角滑入 · z-index 100000 · 堆叠上限 5 · 点击关闭。类型图标即视觉前缀：**消息正文一律不带 emoji**（类型图标与正文 emoji 重复，2026-08-1x 用户决策）。11 种类型：info ℹ️ / success ✅ / warning ⚠️ / error ❌ / pause ⏸️ / accept ✨ / delete 🗑️ / confirm ✓ / restore ↩️ / skip 🚫 / archive 📁 / progress 转圈。支持动态消息（setMessage/setType）、进度条（setProgress，-1 不确定态）、富文本（title + action 按钮）。时长默认 3s、错误 5s、progress 不自动消失。
+**通知类型规范**: 新增通知时先查 ICONS 表（`src/core/notice.ts`）——已有类型直接用；确无匹配再新增（加 ICONS 项 + 颜色 class + 默认时长），**不得把 emoji 写进消息正文**。
 _Avoid_: toast、气泡、原生通知、Notice
 
-**通知文案规范**: 成功 `✅ `、失败 `❌ `、警告 `⚠️ ` 前缀统一；中文全角冒号；不带感叹号；完成态动词「已」；不引用技术遗留（Q3.js/QuickAdd）；「错误：」等冗余前缀不写。
+**通知文案规范**: 类型图标自带前缀（success ✅ / warning ⚠️ / error ❌ 等），**消息正文不带 emoji**；中文全角冒号；不带感叹号；完成态动词「已」；「错误：」等冗余前缀不写。
 
 ## Rules
 
