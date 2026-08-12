@@ -120,6 +120,22 @@ export async function openBlackBoxSettings(app: App): Promise<void> {
           });
         });
 
+      // v3：主面板默认类型筛选（重启生效，与 diaryDefaultSelectedTag 同模式）
+      new Setting(el)
+        .setName('主面板默认类型筛选')
+        .setDesc('打开主面板时默认选中的类型（重启生效；空 = 全部）')
+        .addDropdown((dd) => {
+          dd.addOption('', '全部');
+          dd.addOption('concept', '🧩 概念');
+          dd.addOption('literature', '📎 文献');
+          dd.addOption('thought', '💡 想法');
+          dd.setValue(s.blackboxDefaultTypeFilter || '');
+          dd.onChange(async (v) => {
+            s.blackboxDefaultTypeFilter = v;
+            await saveSettings();
+          });
+        });
+
       // v2：情绪词表可编辑（settings.words 增删；删除词不影响存量条目）
       new Setting(el)
         .setName('情绪词表')
