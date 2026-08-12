@@ -915,3 +915,60 @@ describe('AI 自动分类落位（2026-08-12 需求）', () => {
     expect(vault.files.get('黑匣子/概念/文学/提喻法.md')!).toContain('category: 文学');
   });
 });
+
+describe('同名概念（不同分类）关联解析（2026-08-12 需求）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => ({} as any));
+  });
+
+  it('两个分类下同名概念：[[同名]] 关联解析到全部同名 id，互不覆盖', async () => {
+    const vault = new MockVault();
+    // 文学/共鸣.md 与 心理学/共鸣.md 同名
+    vault.files.set(
+      '黑匣子/概念/文学/共鸣.md',
+      '---\nid: bb_r1\ntype: concept\ncreatedAt: "2026-08-01T00:00:00.000Z"\nname: 共鸣\ncategory: 文学\nrelated:\n  - 共鸣\n---\n写作中的情感共鸣\n\n- 关联：[[共鸣]]\n'
+    );
+    vault.files.set(
+      '黑匣子/概念/心理学/共鸣.md',
+      '---\nid: bb_r2\ntype: concept\ncreatedAt: "2026-08-02T00:00:00.000Z"\nname: 共鸣\ncategory: 心理学\n---\n共情产生的心理现象\n'
+    );
+    vault.files.set(
+      '黑匣子/摘抄/关于共鸣.md',
+      '---\nid: bb_l1\ntype: literature\ncreatedAt: "2026-08-03T00:00:00.000Z"\ntitle: 关于共鸣\nterms:\n  - 共鸣\n---\n好的作品让人共鸣\n'
+    );
+    vault.files.set(
+      'CONFIG/STORAGE/blackbox.json',
+      JSON.stringify({ version: 3, settings: {}, persona: {}, entries: [], profiles: [], events: [], reviews: [], chat: [], meta: {} })
+    );
+    const { app } = setup(vault);
+    const data = await new BlackBoxDataManager(app).load();
+    expect(data.entries.length).toBe(3);
+    const r1 = data.entries.find((e) => e.id === 'bb_r1')!;
+    expect(r1.related).toEqual(['bb_r2']); // [[共鸣]] → 另一个分类的同名概念
+    expect(r1.name).toBe('共鸣');
+    expect(data.entries.find((e) => e.id === 'bb_r2')!.category).toBe('心理学');
+    // 摘抄 terms：同名解析到全部两个 id
+    const lit = data.entries.find((e) => e.id === 'bb_l1')!;
+    expect(lit.terms).toEqual(['bb_r1', 'bb_r2']);
+    // 各自内存 index 独立
+    expect(data.index['bb_r1']).toBe('黑匣子/概念/文学/共鸣.md');
+    expect(data.index['bb_r2']).toBe('黑匣子/概念/心理学/共鸣.md');
+  });
+
+  it('同分类真重名录入：uniquePath 落 -1 文件（不同 id 并存不覆盖）', async () => {
+    const vault = new MockVault();
+    const { app } = setup(vault);
+    const dm = new BlackBoxDataManager(app);
+    let data = await dm.load();
+    await dm.addEntry(data, createEntry({ type: 'concept', name: '提喻法' }));
+    data = await dm.load();
+    await dm.addEntry(data, createEntry({ type: 'concept', name: '提喻法' }));
+    expect(vault.files.has('黑匣子/概念/提喻法.md')).toBe(true);
+    expect(vault.files.has('黑匣子/概念/提喻法-1.md')).toBe(true);
+    const back = await dm.load();
+    expect(back.entries.filter((e) => e.name === '提喻法').length).toBe(2);
+    expect(new Set(back.entries.map((e) => e.id)).size).toBe(2); // id 不重复
+  });
+});

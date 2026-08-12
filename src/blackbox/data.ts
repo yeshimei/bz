@@ -352,13 +352,18 @@ export class BlackBoxDataManager {
       entries.push(p.entry);
     }
     // 文献/想法标题/概念名已由 parseNoteContent 从 frontmatter 读取（缺省回退文件名）
-    // 关联区名字 → id（概念名 → id；全部条目名 → id 用于「来自」）
-    const conceptNameToId = new Map<string, string>();
+    // 关联区名字 → id（概念名 → id 列表：不同分类允许同名概念，`[[同名]]` 解析到全部同名 id；
+    // 全部条目名 → id 用于「来自」：单值，取第一个命中）
+    const conceptNameToIds = new Map<string, string[]>();
     const nameToId = new Map<string, string>();
     for (const p of parsedList) {
       const name = p.entry.type === 'concept' ? (p.entry.name || '').trim() : p.entry.title || '';
       if (!name) continue;
-      if (p.entry.type === 'concept' && !conceptNameToId.has(name)) conceptNameToId.set(name, p.entry.id);
+      if (p.entry.type === 'concept') {
+        const list = conceptNameToIds.get(name);
+        if (list) list.push(p.entry.id);
+        else conceptNameToIds.set(name, [p.entry.id]);
+      }
       if (!nameToId.has(name)) nameToId.set(name, p.entry.id);
     }
     for (const p of parsedList) {
@@ -366,8 +371,8 @@ export class BlackBoxDataManager {
         const ids: string[] = [];
         const pending: string[] = [];
         for (const n of p.relatedNames) {
-          const id = conceptNameToId.get(n);
-          if (id && id !== p.entry.id) ids.push(id);
+          const all = conceptNameToIds.get(n) || [];
+          if (all.length) ids.push(...all.filter((id) => id !== p.entry.id));
           else if (!pending.includes(n)) pending.push(n);
         }
         p.entry.related = [...new Set(ids)];
@@ -376,8 +381,8 @@ export class BlackBoxDataManager {
         const ids: string[] = [];
         const pending: string[] = [];
         for (const n of p.termsNames) {
-          const id = conceptNameToId.get(n);
-          if (id && id !== p.entry.id) ids.push(id);
+          const all = conceptNameToIds.get(n) || [];
+          if (all.length) ids.push(...all.filter((id) => id !== p.entry.id));
           else if (!pending.includes(n)) pending.push(n);
         }
         p.entry.terms = [...new Set(ids)];
