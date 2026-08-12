@@ -376,10 +376,9 @@ describe('多行输入（ticket 49）', () => {
     const content = document.getElementById('add-todo-content')!;
     expect(content.tagName).toBe('TEXTAREA');
     const ta = content as HTMLTextAreaElement;
-    expect(ta.style.minHeight).toBe('37px');
-    expect(ta.style.maxHeight).toBe('184px');
-    expect(ta.style.resize).toBe('none');
-    expect(ta.style.overflowY).toBe('hidden');
+    // 行高/高度/禁止拖拽由 styles.css #add-todo-content 提供（jsdom 不加载样式表，验 id 与 autoGrow 行为）
+    expect(content.id).toBe('add-todo-content');
+    expect(content.getAttribute('placeholder')).toBe('输入备忘录内容...');
   });
 
   it('keydown Enter 不触发保存/关闭（保存只走按钮）', async () => {

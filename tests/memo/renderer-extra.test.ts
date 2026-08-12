@@ -82,7 +82,7 @@ describe('Renderer.createPositionTag', () => {
   it('文件不存在：⚠️ + 文件名 + 错误色', () => {
     const tag = Renderer.createPositionTag(baseItem({ notePath: '不存在/缺失.md' }));
     expect(tag!.textContent).toBe('⚠️ 缺失.md');
-    expect(tag!.style.color).toBe('var(--text-error)');
+    expect(tag!.classList.contains('bz-tag-warn')).toBe(true); // 错误色由 .bz-tag-warn 提供
   });
 
   it('公开课场景与课程同名：返回 null（不重复显示）', () => {
@@ -105,7 +105,7 @@ describe('Renderer.createCourseTag', () => {
   it('文件不存在：title 提示 + 不可点击', () => {
     const tag = Renderer.createCourseTag(baseItem({ scene: '公开课', courseName: '《测试课》', coursePath: '不存在/x.md' }));
     expect(tag.title).toBe('关联文件不存在');
-    expect(tag.style.cursor).toBe('not-allowed');
+    expect(tag.classList.contains('bz-tag-missing')).toBe(true);
   });
 });
 
@@ -128,20 +128,21 @@ describe('Renderer.createScriptTag / createPlatformTag', () => {
 describe('Renderer.createSceneTag / createDueTag', () => {
   it('createSceneTag：重要红色背景，次要默认', () => {
     const imp = Renderer.createSceneTag(baseItem({ priority: 'important' }));
-    expect(imp.style.background).toContain('255, 71, 87');
+    expect(imp.classList.contains('important')).toBe(true); // 红色背景由 .bz-tag-scene.important 提供
     const minor = Renderer.createSceneTag(baseItem());
-    expect(minor.style.background).not.toContain('255, 71, 87');
+    expect(minor.classList.contains('important')).toBe(false);
   });
 
   it('createDueTag：逾期红 / 今天橙 / 未来灰', () => {
     const overdue = Renderer.createDueTag(baseItem({ due: '2020-01-01 10:00' }));
     expect(overdue.textContent).toContain('');
-    expect(overdue.style.background).toContain('255, 71, 87');
+    expect(overdue.classList.contains('overdue')).toBe(true); // 红色背景由 .bz-tag-due.overdue 提供
     const now = new Date(Date.now() + 5 * 60000); // +5 分钟，保证未过期
     const pad = (n: number) => String(n).padStart(2, '0');
     const todayDue = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
     const today = Renderer.createDueTag(baseItem({ due: todayDue }));
     expect(today.textContent).toContain('');
+    expect(today.classList.contains('today')).toBe(true);
     const future = Renderer.createDueTag(baseItem({ due: '2099-01-01 10:00' }));
     expect(future.textContent).toContain('📅');
   });
@@ -152,7 +153,7 @@ describe('Renderer.createCard 链接三分支', () => {
     const card = Renderer.createCard(baseItem({ linkedNote: '笔记/A.md' }), false);
     const link = card.querySelector('a')!;
     expect(link.textContent).toBe('测试条目');
-    expect(link.style.color).toBe('var(--text-accent)');
+    expect(link.classList.contains('bz-todo-link')).toBe(true); // 链接色由 .bz-todo-link 提供
   });
 
   it('url：外部链接（点击 openUrl）', () => {
@@ -169,13 +170,13 @@ describe('Renderer.createCard 链接三分支', () => {
     expect(card.querySelector('a')).toBeNull();
     expect(card.textContent).toContain('第一行');
     const contentSpan = card.querySelector('span') as HTMLElement;
-    expect(contentSpan.style.whiteSpace).toBe('pre-wrap');
+    expect(contentSpan.classList.contains('todo-content-span')).toBe(true);
   });
 
   it('归档条目：📦 图标 + 透明度', () => {
     const card = Renderer.createCard(baseItem({ completed: '2025-01-02 10:00' }), true);
     expect(card.textContent).toContain('📦');
-    expect(card.style.opacity).toBe('0.7');
+    expect(card.classList.contains('archived')).toBe(true); // 半透明由 .todo-card.archived 提供
   });
 
   it('公开课/代码场景 meta 标签渲染', () => {
@@ -246,7 +247,7 @@ describe('排序与归档模式（第 9 轮设置扩展）', () => {
     expect(checkbox.disabled).toBe(true);
     // 划线样式
     const contentSpan = cards[1].querySelector('span') as HTMLElement;
-    expect(contentSpan.style.textDecoration).toBe('line-through');
+    expect(contentSpan.classList.contains('done')).toBe(true);
     // 无「已归档」分隔段
     expect(container.textContent).not.toContain('已归档');
   });
