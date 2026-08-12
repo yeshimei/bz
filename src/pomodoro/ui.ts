@@ -88,6 +88,33 @@ function phaseText(phase: Phase, count: number, d: Durations): string {
   return '🍅 番茄钟';
 }
 
+/** 阶段开始（手动开始/继续/读书自动）：toast + 提示音（专注/短休/长休各一种，听声即知状态） */
+function notifyPhaseStarted(phase: Phase): void {
+  const d = durations();
+  if (phase === 'focus') {
+    const isReading = state.target?.type === 'book';
+    notice(isReading ? `✅ 已开始读书专注：《${state.target!.label}》` : '✅ 专注开始', 'success');
+  } else if (phase === 'long-break') {
+    notice(`✅ 长休息开始：${d.longBreakMin} 分钟`, 'success');
+  } else {
+    notice(`✅ 休息开始：${d.shortBreakMin} 分钟`, 'success');
+  }
+  const s = tryGetSettings();
+  if (s.pomodoroSound !== false) {
+    const kind: SoundKind =
+      phase === 'focus' ? 'focus-start' : phase === 'long-break' ? 'long-break-start' : 'short-break-start';
+    playSound(kind, pomodoroVolume());
+  }
+}
+
+/** 暂停（手动/读书自动）：toast + 提示音 */
+function notifyPaused(): void {
+  const isReading = state.target?.type === 'book';
+  notice(isReading ? '⏸️ 已暂停读书专注' : '⏸️ 已暂停专注');
+  const s = tryGetSettings();
+  if (s.pomodoroSound !== false) playSound('pause', pomodoroVolume());
+}
+
 /** 阶段自然完成（tick 驱动）→ toast（完成语义）+ 新阶段开始提示声；skip 无 historyEntry 不通知 */
 function notifyPhaseComplete(e: Extract<PomodoroEvent, { type: 'phase-completed' }>): void {
   const d = durations();
@@ -220,11 +247,14 @@ function render(): void {
 function applyAction(action: PomodoroAction): void {
   const r = transition(state, action, Date.now(), durations(), options());
   state = r.state;
+  if (r.event.type === 'started') notifyPhaseStarted(r.event.phase);
   if (r.event.type === 'phase-completed') {
     if (r.event.historyEntry) history = history.concat(r.event.historyEntry);
     // 仅自然完成（tick 驱动）通知+响；skip（手动）静默
     if (action === 'tick') notifyPhaseComplete(r.event);
   }
+  // 暂停生效（含手动；forceFocus 下 transition 返回 none 不触发）才通知+响
+  if (action === 'pause' && state.paused) notifyPaused();
   if (r.event.type !== 'none') void save();
   ensureTick();
   render();
@@ -554,6 +584,7 @@ export function pauseReadingFocus(): void {
   if (state.endTime === null) return; // 未在运行不动作
   state = { ...state, paused: true, remaining: Math.ceil((state.endTime - Date.now()) / 1000), endTime: null };
   exitReadingMode(); // 预设恢复读书前所选
+  notifyPaused(); // 读书自动暂停：toast + 提示音（豁免 forceFocus）
   void save();
   ensureTick();
   render();

@@ -171,7 +171,7 @@ describe('⚙️ 设置弹窗', () => {
       }
     };
     btn.trigger();
-    expect(ramps[0]).toBeCloseTo(0.24); // 峰值 = 0.4 × 60%
+    expect(ramps[0]).toBeCloseTo(0.48); // 峰值 = 0.8 × 60%（2026-08-1x 音量翻倍）
     delete (window as any).AudioContext;
   });
 
