@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 — 数据层笔记化
 
-**Status:** ready-for-agent
+**Status:** done（实现完成，1077 测试全绿）
 
 - [ ] `bz-blackbox-capture-concept` 命令注册（main.ts COMMANDS + smoke 清单），打开直达概念录入，保存后弹窗直接关闭
 - [ ] 概念页：概念名输入框（单行）+ 文本输入框（自适应 ≤8 行）；按钮文案按文本框内容判定（空→「生成卡片」/ 非空→「确定录入」），无重新生成入口

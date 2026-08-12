@@ -18,6 +18,8 @@ import { notice } from '../core/notice';
 import { BlackBoxAI, fallbackAsk, parseConceptJson, parseLiteratureJson } from './ai';
 import { BlackBoxDataManager, createEntry, createProfile } from './data';
 import { triggerAutoReview } from './review';
+import { getSelectionSnapshot } from '../core/selection';
+import type { SelectionSnapshot } from '../core/selection';
 import { MAX_EMOTIONS, MAX_PEOPLE } from './types';
 import type { BlackBoxData, Entry, Profile } from './types';
 
@@ -51,7 +53,8 @@ let newProfileOpen = false;
 let conceptName = '';
 let conceptDefinition = '';
 let conceptRelatedIds: string[] = [];
-let conceptGenerated = false;
+/** 概念名由选中文字自动填充 → 只读锁定（内容 ≡ 选区） */
+let conceptNameLocked = false;
 // 文献表单
 let literatureText = '';
 let literatureSource = '';
@@ -64,12 +67,17 @@ let sceneText = '';
 /** 追问降级文案轮换计数 */
 let fallbackIdx = 0;
 
+/** 直达录入类型（null = 引导式）；直达命令保存后直接关闭 */
+let directType: CaptureType | null = null;
+/** 选区快照（打开时读取一次；自动填充 + 锁定 + 原位注入复用） */
+let selectionSnap: SelectionSnapshot | null = null;
+
 function manager(app: App): BlackBoxDataManager {
   if (!dataManager) dataManager = new BlackBoxDataManager(app);
   return dataManager;
 }
 
-/** 打开录入弹窗（幂等；异步加载词表/画像库/数据快照） */
+/** 打开录入弹窗（幂等；异步加载词表/画像库/数据快照；读取当前选区快照） */
 export async function openBlackBoxCapture(app: App): Promise<void> {
   appRef = app;
   if (maskEl) {
@@ -79,22 +87,47 @@ export async function openBlackBoxCapture(app: App): Promise<void> {
   data = await manager(app).load();
   emotionWords = data.settings.words;
   profiles = data.profiles;
+  selectionSnap = getSelectionSnapshot(app);
   resetEntry();
   buildDOM();
   renderStep();
+}
+
+/** 直达命令（ticket 02/03）：跳过类型选择直达对应类型；保存后直接关闭。入口页/热键裸调用约定。 */
+async function openBlackBoxCaptureDirect(app: App, type: CaptureType): Promise<void> {
+  await openBlackBoxCapture(app);
+  directType = type;
+  activeType = type;
+  applySelectionFill();
+  gotoStep('content');
+}
+
+/** 概念直达（bz-blackbox-capture-concept「概念录入」，保存后直接关闭） */
+export async function openBlackBoxCaptureConcept(app: App): Promise<void> {
+  await openBlackBoxCaptureDirect(app, 'concept');
+}
+
+/** 选区自动填充（概念名/摘抄文本由选中文字填充并锁定只读；无选区不动作） */
+function applySelectionFill(): void {
+  if (!selectionSnap || !selectionSnap.text) return;
+  if (activeType === 'concept') {
+    conceptName = selectionSnap.text;
+    conceptNameLocked = true;
+  }
 }
 
 /** 重置一条录入的全部状态（重开/换类型/保存完成后） */
 function resetEntry(): void {
   activeStep = 'type';
   activeType = 'thought';
+  directType = null;
   selectedTags = [];
   peopleChips = [];
   newProfileOpen = false;
   conceptName = '';
   conceptDefinition = '';
   conceptRelatedIds = [];
-  conceptGenerated = false;
+  conceptNameLocked = false;
   literatureText = '';
   literatureSource = '';
   literatureSuggest = [];
@@ -118,6 +151,8 @@ export function closeBlackBoxCapture(): void {
     escHandle.unregister();
     escHandle = null;
   }
+  directType = null;
+  selectionSnap = null;
 }
 
 export function unloadBlackBoxCapture(): void {
@@ -214,6 +249,7 @@ function renderStepType(): void {
     card.append(icon, name, arrow);
     card.addEventListener('click', () => {
       activeType = c.type;
+      applySelectionFill(); // 选中文字自动填充（概念名锁定只读；文献/想法 ticket 03）
       gotoStep('content');
     });
     box.appendChild(card);
@@ -222,26 +258,51 @@ function renderStepType(): void {
 
 // ---------------- ② 内容输入 ----------------
 
+/** 内容输入框 auto-grow（复用 memo 先例）：高度 = clamp(scrollHeight, 一行, 8 行) */
+const DEF_LINE_HEIGHT = 37;
+const DEF_MAX_HEIGHT = 184;
+function autoGrowDef(el: HTMLTextAreaElement): void {
+  el.style.height = 'auto';
+  const h = Math.max(el.scrollHeight, DEF_LINE_HEIGHT);
+  el.style.height = `${Math.min(h, DEF_MAX_HEIGHT)}px`;
+  el.style.overflowY = el.scrollHeight > DEF_MAX_HEIGHT ? 'auto' : 'hidden';
+}
+
 function renderStepContent(): void {
   const box = document.getElementById('bz-blackbox-step-content');
   if (!box) return;
   box.innerHTML = '';
   if (activeType === 'concept') {
-    const input = document.createElement('textarea');
-    input.id = 'bz-blackbox-concept-name';
-    input.className = 'bz-blackbox-textarea';
-    input.placeholder = '想搞懂的概念或实体，如「提喻法」';
-    input.value = conceptGenerated ? conceptDefinition : conceptName;
-    input.addEventListener('input', () => {
-      if (conceptGenerated) conceptDefinition = input.value;
-      else conceptName = input.value.trim();
+    // 双输入（ticket 02）：概念名（单行）+ 文本（textarea ≤8 行）；主按钮按文本内容判定
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.id = 'bz-blackbox-concept-name';
+    nameInput.className = 'bz-blackbox-input' + (conceptNameLocked ? ' bz-blackbox-locked' : '');
+    nameInput.placeholder = '想搞懂的概念或实体，如「提喻法」';
+    nameInput.value = conceptName;
+    nameInput.readOnly = conceptNameLocked;
+    nameInput.addEventListener('input', () => {
+      if (!conceptNameLocked) conceptName = nameInput.value.trim();
     });
-    box.appendChild(input);
+    box.appendChild(nameInput);
+    const defInput = document.createElement('textarea');
+    defInput.id = 'bz-blackbox-concept-def';
+    defInput.className = 'bz-blackbox-textarea';
+    defInput.placeholder = '定义（可编辑）：AI 生成或手动填写，确认后落盘为概念笔记正文';
+    defInput.value = conceptDefinition;
+    defInput.addEventListener('input', () => {
+      conceptDefinition = defInput.value;
+      autoGrowDef(defInput);
+      const btn = document.getElementById('bz-blackbox-concept-gen');
+      if (btn) btn.textContent = conceptDefinition.trim() ? '✅ 确定录入' : '✨ 生成卡片';
+    });
+    box.appendChild(defInput);
+    autoGrowDef(defInput);
     const genBtn = document.createElement('button');
     genBtn.type = 'button';
     genBtn.id = 'bz-blackbox-concept-gen';
     genBtn.className = 'bz-blackbox-btn bz-blackbox-btn-primary bz-blackbox-guide-main';
-    genBtn.textContent = conceptGenerated ? '✅ 确认录入' : '✨ 生成卡片';
+    genBtn.textContent = conceptDefinition.trim() ? '✅ 确定录入' : '✨ 生成卡片';
     genBtn.addEventListener('click', () => void onConceptMainBtn(genBtn));
     box.appendChild(genBtn);
   } else if (activeType === 'literature') {
@@ -309,10 +370,11 @@ function mkAiBtn(label: string, onClick: () => void): HTMLButtonElement {
   return btn;
 }
 
-// ----- 概念：生成卡片 / 确认录入 -----
+// ----- 概念：生成卡片 / 确定录入（ticket 02：按钮按文本内容判定，无 generated 标志） -----
 
 async function onConceptMainBtn(btn: HTMLButtonElement): Promise<void> {
-  if (conceptGenerated) {
+  // 文本输入框有内容 → 确定录入；空 → 生成卡片（内容判定，无重新生成入口）
+  if (conceptDefinition.trim()) {
     await saveConcept();
     return;
   }
@@ -342,14 +404,13 @@ async function onConceptMainBtn(btn: HTMLButtonElement): Promise<void> {
   } catch (e) {
     // 永不拒收：AI 失败降级为直接录入（定义=原名词，用户可编辑）
     conceptDefinition = conceptName;
-    notice('❌ 生成失败：AI 暂时无法说话，可手动编辑后确认录入', 'error');
+    notice('❌ 生成失败：AI 暂时无法说话，可手动编辑后确定录入', 'error');
   }
-  conceptGenerated = true;
   btn.disabled = false;
   renderStepContent();
 }
 
-/** 概念：确认即保存 → 展示连接关系（流程结束） */
+/** 概念：确定即保存 → 直达模式保存后直接关闭；引导式展示连接关系（流程结束） */
 async function saveConcept(): Promise<void> {
   if (!appRef) return;
   const name = conceptName;
@@ -378,8 +439,13 @@ async function saveConcept(): Promise<void> {
       data = await m.load();
     }
     notice('✅ 已录入概念卡片');
-    // 连接展示（写前快照已含 related 概念条目）
-    gotoStep('conn');
+    if (directType) {
+      // 直达命令：保存后直接关闭（可连续快速录入）
+      closeBlackBoxCapture();
+    } else {
+      // 连接展示（写前快照已含 related 概念条目）
+      gotoStep('conn');
+    }
     if (r.shouldReview) {
       void triggerAutoReview(appRef, latest);
     }

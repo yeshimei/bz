@@ -1924,3 +1924,10 @@
   font-size: 10px;
   color: var(--text-faint);
 }
+
+/* 黑匣子（ticket 02）：选中文字自动填充的只读输入（锁定态视觉） */
+.bz-blackbox-locked {
+  border-style: dashed !important;
+  opacity: 0.85;
+  cursor: not-allowed;
+}
