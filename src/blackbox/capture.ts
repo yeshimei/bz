@@ -20,6 +20,7 @@ import { BlackBoxDataManager, createEntry, createProfile } from './data';
 import { triggerAutoReview } from './review';
 import { getSelectionSnapshot } from '../core/selection';
 import type { SelectionSnapshot } from '../core/selection';
+import { entryNoteTitle } from './notes';
 import { MAX_EMOTIONS, MAX_PEOPLE } from './types';
 import type { BlackBoxData, Entry, Profile } from './types';
 
@@ -58,6 +59,10 @@ let conceptNameLocked = false;
 // 文献表单
 let literatureText = '';
 let literatureSource = '';
+/** 摘抄文本由选中文字自动填充 → 只读锁定（内容 ≡ 选区） */
+let literatureTextLocked = false;
+/** 分析名词返回的标题建议（保存时优先复用为文件名） */
+let literatureTitle = '';
 let literatureSuggest: { id: string | null; label: string; checked: boolean }[] = [];
 let literatureTerms = new Set<string>();
 let literatureInsight = '';
@@ -107,12 +112,29 @@ export async function openBlackBoxCaptureConcept(app: App): Promise<void> {
   await openBlackBoxCaptureDirect(app, 'concept');
 }
 
-/** 选区自动填充（概念名/摘抄文本由选中文字填充并锁定只读；无选区不动作） */
+/** 摘抄直达（bz-blackbox-capture-literature「摘抄录入」，保存后直接关闭） */
+export async function openBlackBoxCaptureLiterature(app: App): Promise<void> {
+  await openBlackBoxCaptureDirect(app, 'literature');
+}
+
+/** 想法直达（bz-blackbox-capture-thought「想法录入」，保存后直接关闭） */
+export async function openBlackBoxCaptureThought(app: App): Promise<void> {
+  await openBlackBoxCaptureDirect(app, 'thought');
+}
+
+/** 选区自动填充（概念名/摘抄文本由选中文字填充并锁定只读；摘抄来源自动填来源笔记；无选区不动作） */
 function applySelectionFill(): void {
   if (!selectionSnap || !selectionSnap.text) return;
   if (activeType === 'concept') {
     conceptName = selectionSnap.text;
     conceptNameLocked = true;
+  } else if (activeType === 'literature') {
+    literatureText = selectionSnap.text;
+    literatureTextLocked = true;
+    if (selectionSnap.filePath) {
+      const base = selectionSnap.filePath.split('/').pop() || selectionSnap.filePath;
+      literatureSource = `[[${base.replace(/\.md$/, '')}]]`;
+    }
   }
 }
 
@@ -130,6 +152,8 @@ function resetEntry(): void {
   conceptNameLocked = false;
   literatureText = '';
   literatureSource = '';
+  literatureTextLocked = false;
+  literatureTitle = '';
   literatureSuggest = [];
   literatureTerms = new Set();
   literatureInsight = '';
@@ -308,15 +332,19 @@ function renderStepContent(): void {
   } else if (activeType === 'literature') {
     const text = document.createElement('textarea');
     text.id = 'bz-blackbox-lit-text';
-    text.className = 'bz-blackbox-textarea';
+    text.className = 'bz-blackbox-textarea' + (literatureTextLocked ? ' bz-blackbox-locked' : '');
     text.placeholder = '摘抄（必填）：从别处摘下的信息片段';
     text.value = literatureText;
-    text.addEventListener('input', () => (literatureText = text.value));
+    text.readOnly = literatureTextLocked;
+    text.addEventListener('input', () => {
+      if (!literatureTextLocked) literatureText = text.value;
+    });
     box.appendChild(text);
+    autoGrowDef(text);
     const source = document.createElement('input');
     source.id = 'bz-blackbox-lit-source';
     source.className = 'bz-blackbox-input';
-    source.placeholder = '来源：URL 或书名/出处';
+    source.placeholder = '来源：URL 或书名/出处（有选区自动填来源笔记）';
     source.value = literatureSource;
     source.addEventListener('input', () => (literatureSource = source.value));
     box.appendChild(source);
@@ -476,6 +504,7 @@ async function analyzeLiterature(btn: HTMLButtonElement): Promise<void> {
     literatureTerms = new Set();
     literatureSuggest = [];
     literatureInsight = '';
+    literatureTitle = parsed ? parsed.title : '';
     if (parsed) {
       for (const n of parsed.matched) {
         const c = existing.find((x) => !!x.name && (x.name === n || x.name.includes(n) || n.includes(x.name)));
@@ -906,6 +935,19 @@ function escapeHtml(s: string): string {
 
 // ---------------- 保存（文献/想法：感触步 → 存入黑匣子） ----------------
 
+/** 标题解析（ticket 03）：分析标题优先 → AI 生成 → 正文前 20 字降级（永不拒收） */
+async function resolveEntryTitle(entry: Entry, prefer?: string): Promise<string> {
+  if (prefer && prefer.trim()) return prefer.trim();
+  try {
+    const ai = new BlackBoxAI();
+    const t = await ai.suggestTitle(entry.text || '');
+    if (t && t.trim()) return t.trim();
+  } catch (e) {
+    /* AI 不可用：降级正文前 20 字 */
+  }
+  return entryNoteTitle(entry);
+}
+
 async function saveEntry(): Promise<void> {
   if (!appRef) return;
   let entries: Entry[] = [];
@@ -914,20 +956,20 @@ async function saveEntry(): Promise<void> {
       notice('⚠️ 摘抄不能为空');
       return;
     }
-    entries.push(
-      createEntry({
-        type: 'literature',
-        text: literatureText.trim(),
-        source: literatureSource.trim(),
-        terms: [...literatureTerms],
-        emotions: selectedTags,
-        people: peopleChips,
-        scene: sceneText.trim(),
-        toward: '',
-        links: [],
-      })
-    );
-    // 提炼想法（可编辑/清空）：非空时同一次保存写入独立 thought 条目（共享感触）
+    const lit = createEntry({
+      type: 'literature',
+      text: literatureText.trim(),
+      source: literatureSource.trim(),
+      terms: [...literatureTerms],
+      emotions: selectedTags,
+      people: peopleChips,
+      scene: sceneText.trim(),
+      toward: '',
+      links: [],
+    });
+    // 标题：分析结果优先 → AI 生成 → 前 20 字降级；提炼想法 → 独立想法笔记 + 摘抄底部「来自：[[摘抄]]」
+    lit.title = await resolveEntryTitle(lit, literatureTitle);
+    entries.push(lit);
     if (literatureInsight.trim()) {
       entries.push(
         createEntry({
@@ -938,6 +980,7 @@ async function saveEntry(): Promise<void> {
           scene: sceneText.trim(),
           toward: '',
           links: [],
+          from: lit.id,
         })
       );
     }
@@ -952,17 +995,17 @@ async function saveEntry(): Promise<void> {
       notice('⚠️ 想法不能为空');
       return;
     }
-    entries.push(
-      createEntry({
-        type: 'thought',
-        text: thoughtText.trim(),
-        emotions: selectedTags,
-        people: peopleChips,
-        scene: sceneText.trim(),
-        toward: '',
-        links: [],
-      })
-    );
+    const thought = createEntry({
+      type: 'thought',
+      text: thoughtText.trim(),
+      emotions: selectedTags,
+      people: peopleChips,
+      scene: sceneText.trim(),
+      toward: '',
+      links: [],
+    });
+    thought.title = await resolveEntryTitle(thought);
+    entries.push(thought);
   }
 
   try {
@@ -976,8 +1019,13 @@ async function saveEntry(): Promise<void> {
     }
     data = latest;
     notice(`✅ 已存入黑匣子（${entries.length} 条）`);
-    resetEntry();
-    renderStep();
+    if (directType) {
+      // 直达命令：保存后直接关闭（可连续快速录入）
+      closeBlackBoxCapture();
+    } else {
+      resetEntry();
+      renderStep();
+    }
     if (shouldReview) {
       // 静默复盘：不弹窗不通知，产物公开写入对话面板（打开时可见）
       void triggerAutoReview(appRef, latest);

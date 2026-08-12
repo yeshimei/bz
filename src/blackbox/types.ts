@@ -73,6 +73,8 @@ export interface Entry {
   pendingLinks?: string[];
   // v3（笔记化）：想法「来自：[[摘抄]]」链接（literature 条目 id；解析不到时存名字）
   from?: string;
+  // v3（笔记化）：摘抄/想法 AI 生成标题（保存时确定；文件名来源，缺省回退正文前 20 字）
+  title?: string;
 }
 
 /** 人物画像（派生层） */

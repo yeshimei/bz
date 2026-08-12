@@ -46,4 +46,13 @@
 - **选区锁定**：core 新增 `src/core/selection.ts`（getSelectionSnapshot：选中文字 + 行/列起止快照 + 来源笔记路径；无选区/读取失败 → null，ticket 06 注入复用）；打开时快照一次，概念名自动填充且只读（readonly + `.bz-blackbox-locked` 虚线样式），锁定态 input 事件不生效。
 - 生成卡片：AI 写定义进文本输入框（可编辑）；AI 不可用降级定义=概念名可编辑（永不拒收）。引导式 `bz-blackbox-capture` 概念连接展示保留。
 - 测试：capture +4（直达保存即关/锁定只读/无选区手动+内容判定/清空回生成）；tests/core/selection.test.ts +4。
+
+## 2026-08 · ticket 03 摘抄/想法录入完成（1083 测试全绿）
+
+- **直达命令** `bz-blackbox-capture-literature`「摘抄录入」(icon bookmark) / `bz-blackbox-capture-thought`「想法录入」(icon lightbulb)，保存后直接关闭；`bz-blackbox-capture-concept` 同批落地（ticket 02）。
+- **摘抄**：选区自动填充摘抄文本锁定只读 + 来源自动填 `[[来源笔记]]`；📋分析名词 AI 返回新增 `title`（标题建议，≤20 字）；名词表勾选落盘为正文关联区双链。
+- **标题规则**：Entry 新增可选 `title`；保存时解析——分析标题优先 → AI 生成（ai.suggestTitle/buildTitlePrompt，纯文本输出）→ 降级正文前 20 字；文件名清洗 + `-N` 去重沿用引擎；水合时从文件名回填 title（noteNameFromPath）。
+- **提炼想法**：非空时同一次保存写独立想法笔记，`from: 摘抄 id` → 笔记底部「来自：[[摘抄标题]]」双链；水合 nameToId 解析回 id。
+- 引导式 `bz-blackbox-capture` 保存路径不变（ticket 01 已切笔记），标题生成同样生效。
+- 测试：capture +6（摘抄直达填充锁定/分析标题落盘/AI 标题与降级/提炼想法双链/想法直达两路径）；ai +1 断言（parseLiteratureJson title 字段）。
 - **注意**：`notes.ts` 关联区解析约定——正文与关联区以空行分隔（无正文时保留空行），引用归属「来源：」行若与正文无空行分隔则视为正文不被剥离（有专门测试）。
