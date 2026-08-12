@@ -192,6 +192,11 @@ Feature: memo-suite-plugin
 9. 作为用户，我希望设置经 ⚙️ 域设置弹窗调整（预设/时长/N/开关），以便就近定制。
 10. 作为用户，我希望设置弹窗可试听提示音并调节音量（slider 0-100，默认最大），以便按环境调响度。
 11. 作为用户，我希望未选中专注目标时目标区默认隐藏，鼠标悬停弹窗才显示「选择目标」，已选目标始终可见，以便界面简洁。
+12. 作为用户，我希望打开 epub 书阅读时番茄钟自动进入读书专注（目标自动挂书，仅 epub 文件路径、不匹配书库），关闭书自动暂停（豁免强制专注模式），重开书重新开始新专注，以便阅读专注零操作。
+13. 作为用户，我希望打开书时按场景决策：空闲直接开始（免确认）；休息中/他处专注中弹确认弹窗（选否保持原样、本次打开不再提示）；读书中换书直接切新书，以便不误伤其他专注。
+14. 作为用户，我希望读书模式自动使用第 12 个预设「阅读沉浸 45/10/20」（成人主动注意 40-50 分钟区间 + 课时制），关闭书后恢复读书前所选预设，以便读书场景时长自动适配。
+15. 作为用户，我希望读书统计显示「📚 读书 X 个 🍅」（今日完成、target 为书的专注数，取代按分钟聚合），以便统计读书消耗的番茄。
+16. 作为用户，我希望「读书自动番茄钟」开关（默认开）+「读书启动形态」（后台静默默认 / 自动弹窗）两项可设置，以便按需开关联动。
 
 ### 黑匣子（Black Box，ticket 33 新域，grilling 会话封板）
 
@@ -343,7 +348,7 @@ Feature: memo-suite-plugin
 - **书库**：libraryFolderPath、libraryNotePath、bookTag、showFileSize、showReadingTime、showHighlights、showThinks、showReview（showCategory 字段保留无 UI）
 - **影视**（6 项）：movieFolderPath、moviePageSize（海报抓取仅文字提示）、movieDefaultSort（默认排序 date-desc/…/name-desc）、movieDefaultTypeFilter（默认类型筛选，空=全部）、movieDefaultStatusFilter（默认状态筛选 全部/想看/在看/已看）、movieRatingDisplay（已看卡片评分 stars/number）
 - **复习计划（含做题家）**：autoCheckInterval、enableAutoNotify + 做题家 5 项（enableMultipleChoice、questionsPerNote、shuffleQuestions、difficulty、forceQuizForReview）
-- **番茄钟（11 项）**：pomodoroPreset（12 档：11 预设+自定义）、pomodoroWorkMin/pomodoroShortBreakMin/pomodoroLongBreakMin（自定义时长，预设=自定义时动态显示）、pomodoroLongBreakInterval（N，默认 4）、pomodoroForceFocus（默认关）、pomodoroAutoCycle（默认关）、pomodoroAutoSkipBreak（默认关）、pomodoroSound（默认开）、pomodoroVolume（音量 0-100，默认 100 最大，设置弹窗 slider+试听）、pomodoroRestoreMode（启动恢复方式：background 后台继续 / popup 正在倒计时则自动弹窗；恢复继续弹「番茄钟继续：…还剩 mm:ss」通知）
+- **番茄钟（13 项）**：pomodoroPreset（13 档：12 预设+自定义，含阅读沉浸 45/10/20）、pomodoroWorkMin/pomodoroShortBreakMin/pomodoroLongBreakMin（自定义时长，预设=自定义时动态显示）、pomodoroLongBreakInterval（N，默认 4）、pomodoroForceFocus（默认关）、pomodoroAutoCycle（默认关）、pomodoroAutoSkipBreak（默认关）、pomodoroSound（默认开）、pomodoroVolume（音量 0-100，默认 100 最大，设置弹窗 slider+试听）、pomodoroRestoreMode（启动恢复方式：background 后台继续 / popup 正在倒计时则自动弹窗；恢复继续弹「番茄钟继续：…还剩 mm:ss」通知）、pomodoroEpubAuto（读书自动番茄钟开关，默认开；关则联动静默不监听）、pomodoroEpubMode（读书启动形态：background 后台静默默认 / popup 自动弹窗）
 - **闪念（17 项全量，含 AI 项）**：OLLAMA_URL、EMBEDDING_MODEL、META_PATH、VEC_PATH、TOP_K、CHAT_TOP_K、CHUNK_MIN_LENGTH、ALLOW_PATHS、CONCURRENCY、CONTEXT_LIMIT、DEBOUNCE_DELAY、CURSOR_POLL_INTERVAL、OLLAMA_CHAT_MODEL、DEEPSEEK_MODEL、DEFAULT_USE_DEEPSEEK、MAX_HISTORY、OLLAMA_REMOTE_URL
 - **黑匣子（v3 共 8 项）**：blackboxAIProvider（deepseek/ollama 两档，默认 deepseek）、blackboxOllamaUrl（默认 http://localhost:11434）、blackboxOllamaModel（默认 qwen2.5:14b-instruct）、blackboxReviewThreshold（复盘阈值，默认 10；数据内 settings.reviewThreshold 兕底同步）、blackboxMaxHistory（对话历史保留条数，默认 20）、blackboxShowSpeculativeEvents（推测事件显示开关，默认开，v2 新增）、情绪词表可编辑（settings.words 增删，预置 24 词，v2 新增）、blackboxDefaultTypeFilter（主面板默认类型筛选：全部/概念/文献/想法，默认 ''=全部，重启生效，v3 新增）
 

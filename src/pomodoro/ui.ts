@@ -13,15 +13,17 @@ import { notice } from '../core/notice';
 import { openSettingsModal } from '../core/settings-modal';
 import { createOverlay } from '../core/dom';
 import { jsonStore } from '../core/json-store';
-import { getBookItems } from '../library/items';
 import { PomodoroDataManager } from './data';
 import { playSound } from './sound';
 import type { SoundKind } from './sound';
 import { syncPomodoroStatusBar } from './statusbar';
-import { todayCount, last7Days, bookMinutesToday } from './stats';
+import { todayCount, last7Days, bookCountToday } from './stats';
 import { PRESETS, CUSTOM_PRESET_ID } from './config';
 import type { PomodoroState, HistoryEntry, Durations, PomodoroOptions, Phase, PomodoroAction, PomodoroEvent, FocusTarget } from './state';
 import { transition, recover, createInitialState, DEFAULT_DURATIONS, phaseDurationSec } from './state';
+import { bindPomodoroState, checkReadingNow } from './epub-link';
+import type { ReadingBook } from './epub-link';
+import { escapeHtml } from '../core/utils';
 
 let dataManager: PomodoroDataManager | null = null;
 let state: PomodoroState = createInitialState();
@@ -41,13 +43,25 @@ function getMemoFilePath(): string {
   const dir = ((s && (s.storagePath || s.todoFilePath)) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
   return `${dir}/memo.json`;
 }
-/** 时长：按设置预设解析（T31）；自定义/非法值回退默认（经典 25/5/15、N=4） */
+/** 读书模式（ticket 51）：读书专注期间 durations() 自动返回读书预设；退出（关书自动暂停）恢复读书前所选 */
+let readingMode = false;
+
+/** 时长：按设置预设解析（T31）；读书模式 override 优先（ticket 51）；自定义/非法值回退默认（经典 25/5/15、N=4） */
 function durations(): Durations {
   const s = tryGetSettings();
   const num = (v: string | undefined, def: number): number => {
     const n = parseInt(v ?? '', 10);
     return Number.isFinite(n) && n > 0 ? n : def;
   };
+  if (readingMode) {
+    const p = PRESETS.reading;
+    return {
+      workMin: p.workMin,
+      shortBreakMin: p.shortBreakMin,
+      longBreakMin: p.longBreakMin,
+      longBreakInterval: num(s.pomodoroLongBreakInterval, 4),
+    };
+  }
   const preset = s.pomodoroPreset && s.pomodoroPreset !== CUSTOM_PRESET_ID ? PRESETS[s.pomodoroPreset] : null;
   return {
     workMin: preset ? preset.workMin : num(s.pomodoroWorkMin, 25),
@@ -119,8 +133,8 @@ function renderStats(): void {
   if (todayEl) todayEl.textContent = `今日 ${todayCount(history, now)} 个 🍅`;
   const bookEl = document.getElementById('pomodoro-book');
   if (bookEl) {
-    const m = bookMinutesToday(history, now);
-    bookEl.textContent = m > 0 ? `📚 读书 ${m} 分钟` : '';
+    const c = bookCountToday(history, now);
+    bookEl.textContent = c > 0 ? `📚 读书 ${c} 个 🍅` : '';
   }
   const weekEl = document.getElementById('pomodoro-week');
   if (!weekEl) return;
@@ -218,6 +232,7 @@ function applyAction(action: PomodoroAction): void {
 
 function onTick(): void {
   applyAction('tick');
+  checkReadingNow(); // 读书联动：同视图换书兜底轮询（复用 tick，不新增独立定时器）
 }
 
 /** tick 生命周期：有计时才轮询，停止/暂停即停（节省资源） */
@@ -396,6 +411,19 @@ function openPomodoroSettings(): void {
             await saveSettings();
           });
         });
+      toggleSetting('读书自动番茄钟', '打开 epub 书阅读时自动开始读书专注，关闭书自动暂停（默认开）', () => s.pomodoroEpubAuto !== false, (v) => (s.pomodoroEpubAuto = v));
+      new Setting(el)
+        .setName('读书启动形态')
+        .setDesc('打开 epub 书自动开始读书专注时的展示方式')
+        .addDropdown((dd) => {
+          dd.addOption('background', '后台静默（仅状态栏）');
+          dd.addOption('popup', '自动弹窗');
+          dd.setValue(s.pomodoroEpubMode || 'background');
+          dd.onChange(async (v) => {
+            s.pomodoroEpubMode = v;
+            await saveSettings();
+          });
+        });
       refreshCustom();
     },
   });
@@ -477,6 +505,7 @@ function buildDOM(): void {
 /** 打开弹窗（幂等：已存在则仅确保显示；未加载先 load+recover） */
 export async function openPomodoro(app: App): Promise<void> {
   appRef = app;
+  bindPomodoroState(() => state); // 读书联动状态快照（epub-link 决策用）
   if (!dataManager) dataManager = new PomodoroDataManager(app);
   if (!maskEl) {
     if (!loaded) await initData();
@@ -485,9 +514,117 @@ export async function openPomodoro(app: App): Promise<void> {
   }
 }
 
+// ===== 读书自动番茄钟动作（ticket 51，epub-link 经函数体内 import 调用）=====
+
+/** 退出读书模式：预设恢复读书前所选（读书预设仅读书场景生效，Q16 选 A） */
+export function exitReadingMode(): void {
+  readingMode = false;
+}
+
+/** 开始读书专注（新专注语义：idle/暂停/休息均重置为新的一段，Q2 重开不恢复；target 挂书 + 读书预设生效） */
+export function startReadingFocus(book: ReadingBook): void {
+  readingMode = true;
+  state = {
+    ...state,
+    phase: 'idle',
+    paused: false,
+    remaining: 0,
+    endTime: null,
+    target: { type: 'book', path: book.path, label: book.title },
+  };
+  applyAction('start');
+}
+
+/** 换书直接切（Q6）：旧书专注未完成不计 history，直接开始新书新专注 */
+export function switchReadingFocus(book: ReadingBook): void {
+  readingMode = true;
+  state = {
+    ...state,
+    phase: 'idle',
+    paused: false,
+    remaining: 0,
+    endTime: null,
+    target: { type: 'book', path: book.path, label: book.title },
+  };
+  applyAction('start');
+}
+
+/** 自动暂停（Q2/Q11）：豁免强制专注模式（响应关书而非用户操作）；remaining/target 保留，预设恢复 */
+export function pauseReadingFocus(): void {
+  if (state.endTime === null) return; // 未在运行不动作
+  state = { ...state, paused: true, remaining: Math.ceil((state.endTime - Date.now()) / 1000), endTime: null };
+  exitReadingMode(); // 预设恢复读书前所选
+  void save();
+  ensureTick();
+  render();
+}
+
+// ===== 读书确认弹窗（ticket 54，Q5/Q10）：休息中跳过 / 他处专注中进入 =====
+
+let readingConfirmMask: HTMLElement | null = null;
+let readingConfirmPopupEl: HTMLElement | null = null;
+let readingConfirmEsc: { unregister: () => void } | null = null;
+
+function closeReadingConfirm(): void {
+  if (readingConfirmMask) {
+    readingConfirmMask.remove();
+    readingConfirmMask = null;
+  }
+  if (readingConfirmPopupEl) {
+    readingConfirmPopupEl.remove();
+    readingConfirmPopupEl = null;
+  }
+  if (readingConfirmEsc) {
+    readingConfirmEsc.unregister();
+    readingConfirmEsc = null;
+  }
+}
+
+/** 读书确认弹窗：是 → 立即开始读书专注（Q17 按读书预设重启当前段）；否/ESC/遮罩 → 保持原样（Q12） */
+export function showReadingConfirm(d: { book: ReadingBook; mode: 'skip-break' | 'enter' }): void {
+  if (readingConfirmMask) return; // 已显示（快速换书/重复触发）
+  const { mask, popup } = createOverlay({
+    maskId: 'pomodoro-reading-confirm-mask',
+    popupId: 'pomodoro-reading-confirm',
+    zIndex: 10005, // 与目标选择器同级（settings-modal 注释区间 10001-10005）
+    onMaskClick: closeReadingConfirm,
+  });
+  const isBreak = d.mode === 'skip-break';
+  const bookName = escapeHtml(d.book.title);
+  popup.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--background-modifier-border);font-size:15px;font-weight:600;">
+      <span>📖 读书专注</span>
+      <button id="pomodoro-reading-confirm-close" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--text-muted);padding:0 4px;">✕</button>
+    </div>
+    <div style="padding:18px 16px;font-size:14px;line-height:1.6;color:var(--text-normal);max-width:280px;">
+      ${isBreak ? `跳过休息，开始读书专注《${bookName}》？` : `检测到阅读《${bookName}》，进入读书专注？`}
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;padding:0 16px 14px;">
+      <button id="pomodoro-reading-confirm-no" class="pomodoro-btn">否</button>
+      <button id="pomodoro-reading-confirm-yes" class="pomodoro-btn pomodoro-btn-primary">是，开始读书</button>
+    </div>`;
+  popup.querySelector('#pomodoro-reading-confirm-close')!.addEventListener('click', closeReadingConfirm);
+  popup.querySelector('#pomodoro-reading-confirm-no')!.addEventListener('click', closeReadingConfirm);
+  popup.querySelector('#pomodoro-reading-confirm-yes')!.addEventListener('click', () => {
+    closeReadingConfirm();
+    startReadingFocus(d.book); // Q17：立即按读书预设开始（当前段重启）
+  });
+  document.body.appendChild(mask);
+  document.body.appendChild(popup);
+  mask.style.display = 'block';
+  popup.style.display = 'flex';
+  readingConfirmMask = mask;
+  readingConfirmPopupEl = popup;
+  readingConfirmEsc = escManager.register('pomodoro-reading-confirm', {
+    isVisible: () => readingConfirmMask !== null,
+    close: closeReadingConfirm,
+  });
+}
+
 /** 插件启动恢复（main.ts onLayoutReady 调用）：load+recover+落盘；正在倒计时 → 后台 tick 继续 + 弹恢复通知；popup 模式自动弹窗 */
 export async function ensurePomodoro(app: App): Promise<void> {
   appRef = app;
+  bindPomodoroState(() => state); // 读书联动状态快照（epub-link 决策用）
   if (!dataManager) dataManager = new PomodoroDataManager(app);
   if (!loaded) {
     await initData();
@@ -550,7 +687,6 @@ function openTargetPicker(): void {
     <div class="pomodoro-target-tabs">
       <button class="pomodoro-target-tab" data-tab="memo">📝 备忘录</button>
       <button class="pomodoro-target-tab" data-tab="note">📄 当前笔记</button>
-      <button class="pomodoro-target-tab" data-tab="book">📚 书库</button>
     </div>
     <div id="pomodoro-target-list" style="padding:8px 12px;max-height:50vh;overflow-y:auto;"></div>`;
   popup.querySelectorAll('.pomodoro-target-tab').forEach((b) => {
@@ -578,8 +714,7 @@ function switchTab(tab: string): void {
   if (!list) return;
   list.innerHTML = '';
   if (tab === 'memo') void renderMemoTab(list);
-  else if (tab === 'note') renderNoteTab(list);
-  else renderBookTab(list);
+  else renderNoteTab(list);
 }
 
 async function renderMemoTab(list: HTMLElement): Promise<void> {
@@ -619,25 +754,6 @@ function renderNoteTab(list: HTMLElement): void {
   );
 }
 
-function renderBookTab(list: HTMLElement): void {
-  try {
-    const books = getBookItems(appRef);
-    if (books.length === 0) {
-      list.textContent = '书库为空';
-      return;
-    }
-    for (const b of books) {
-      const row = document.createElement('div');
-      row.className = 'pomodoro-target-item';
-      row.textContent = `📚 ${b.title}`;
-      row.addEventListener('click', () => setTarget({ type: 'book', path: b.file.path, label: b.title }));
-      list.appendChild(row);
-    }
-  } catch (e) {
-    list.textContent = '书库读取失败';
-  }
-}
-
 /** 关闭弹窗：移除 DOM，计时后台继续（tick 常驻） */
 export function closePomodoro(): void {
   if (maskEl) {
@@ -657,6 +773,7 @@ export function unloadPomodoro(): void {
     timerId = null;
   }
   closeTargetPicker();
+  closeReadingConfirm();
   closePomodoro();
   const style = document.querySelector('style[data-pomodoro-styles]');
   if (style) style.remove();
@@ -666,4 +783,5 @@ export function unloadPomodoro(): void {
   dataManager = null;
   appRef = null;
   loaded = false;
+  readingMode = false;
 }

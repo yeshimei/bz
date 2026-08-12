@@ -221,3 +221,26 @@
 
 - ✅ **ticket 49 内容多行输入**（用户报告 + grilling 封板 4 问）：`#add-todo-content` 由 `<input type="text">` 改 `<textarea rows="1">`——Enter 换行 = textarea 默认行为零代码；保存仍走「保存」按钮（不加快捷键）；**auto-grow**（`autoGrowContent`：高度 = clamp(scrollHeight, 一行 37px, 8 行 184px)，超出 overflow-y:auto；input 事件 + 弹窗打开/编辑回填 + 场景切换清空三处触发）；样式沿用现有 inline 并显式背景/边框与主题 input 一致（resize:none / line-height:1.5 / font-family:inherit）。面板 `createCard` 纯文本分支 `white-space: pre-wrap`（cssText 统一处，linkedNote/url 链接分支不受影响）。数据格式零改动（title 原样存含 \n，粘贴产生的历史多行数据直接受益）；剪藏 placeholder 兜底与 extractUrlAndDisplay 不动（多行下裸 URL 正则 \S+ 不跨行，已验证安全）。测试 +5（textarea 元素/Enter 不触发保存/多行保存 title 含 \n/auto-grow 三态/编辑回填多行），renderer 纯文本分支补 pre-wrap 断言；旧断言 3 处 HTMLInputElement → HTMLTextAreaElement。1047→1052
 - ✅ 提交：本 ticket 单次提交（见 git log）
+
+## 2026-08-1x 番茄钟读书自动关联 spec 落盘（ticket 51，grilling 会话）
+
+**状态：spec ready-for-agent，待实现**
+
+- ✅ **grilling 封板（17 问）**：打开 epub 书（fork-weave-epub-reader 视图 `weave-epub-reader-standalone`，形状探测只读 view.filePath/bookTitle，复用黑匣子 host.ts 先例，不注册阅读器 API）→ 番茄钟自动进入读书专注：idle 直接开始（免确认，形态按设置：后台静默默认/自动弹窗）；休息中/他处专注中 → 确认弹窗（是=立即按读书预设开始，否=保持原样本次不再提示）；读书中换书直接切；关书自动暂停（豁免 forceFocus）；重开同一本书重新开始新专注；选否后关闭再打开/换书重新询问；Obsidian 启动时书已打开视为打开事件；同视图换书靠 tick 轮询比对 filePath 兜底
+- ✅ **读书预设**：「阅读沉浸 45/10/20」第 12 项；读书模式自动切换（durations() override 不落盘），退出恢复读书前所选（含自定义）；确认后立即重启当前段
+- ✅ **统计改数量**：`📚 读书 X 个 🍅`（bookCountToday 今日完成数），删 bookMinutesToday 分钟聚合，pomodoro.json 零改动（Q3 撤销分钟统计）
+- ✅ **删书库 tab**：目标选择器只留备忘录/当前笔记；book target 仅自动关联产生
+- ✅ **设置 +2**：pomodoroEpubAuto（默认 true）+ pomodoroEpubMode（默认 background）
+- ✅ 术语入 CONTEXT.md：读书专注/读书模式/读书预设/读书番茄数
+- ✅ spec 落盘：`.scratch/memo-suite-plugin/issues/51-pomodoro-epub-reading.md`（Status: ready-for-agent）
+- ⏳ 待实现：epub-link.ts（决策纯函数 + 检测接线 + 确认弹窗 + 轮询兜底）+ ui.ts（forcePause/设置两项/统计行/tab 删）/ stats.ts（bookCountToday）/ config.ts（预设）/ settings.ts（两字段）/ main.ts（懒加载注册）+ 测试（决策表驱动 + UI 交互 + 检测接线 mock）
+
+## 2026-08-1x 番茄钟读书自动关联实现完成（ticket 51-55）
+
+**状态：全量 1209 测试通过（blackbox/capture 1 例失败为工作区既有 WIP：capture.ts placeholder 文案改动未提交，与本次无关，干净 checkout 基线 30/30 绿）；tsc 25 与基线持平**
+
+- ✅ **ticket 52 读书预设 + 统计 + 删书库 tab**：PRESETS 第 12 档「阅读沉浸 45/10/20」；stats `bookCountToday` 取代 `bookMinutesToday`，弹窗统计行「📚 读书 X 个 🍅」；目标选择器删 📚 书库 tab（book target 仅自动关联产生）；设置字段 pomodoroEpubAuto/pomodoroEpubMode 落盘；测试同步（119→122）
+- ✅ **ticket 53 读书联动核心**：`epub-link.ts`（getEpubBook 视图形状探测 reader viewType/filePath/bookTitle + decideReadingAction 决策纯函数 + active-leaf-change 监听 + tick 轮询兜底同视图换书 + 启动检测 1.5s 延迟）；ui `startReadingFocus/switchReadingFocus/pauseReadingFocus/exitReadingMode`（forcePause 豁免 forceFocus，状态机不动）；读书模式 durations() override（45/10/20，N 全局），退出恢复读书前预设；总开关关不注册（ADR-0003）；main 懒加载注册 + unload 清理；决策关键修复：prev=null∧book=null 不重复暂停（手动继续的专注不被 tick 误伤）、暂停后重开书=新专注（Q2）区分于手动暂停（尊重）；测试 +30
+- ✅ **ticket 54 确认弹窗 + 启动形态**：休息中（skip-break）/他处专注中（enter）→ 自绘确认弹窗（zIndex 10005，esc/遮罩/否=保持原样，是=立即按读书预设开始 Q17）；选否记忆靠 prev 更新天然成立（同书不重复触发，关书重开/换书重新询问）；启动形态 popup 自动弹主弹窗；⚙️ 弹窗「读书启动形态」下拉；测试 +7
+- ✅ **ticket 55 装配收尾**：spec.md 番茄钟 US 12-16 + 设置表 13 项同步；本 PROGRESS 条目；构建直出 vault；一次提交（不含工作区既有 capture.ts WIP）
+- ⚠️ 待办：blackbox/capture.ts 工作区 WIP（placeholder 文案）需用户确认归属；手动冒烟（真实 Obsidian 打开 epub 验证）
