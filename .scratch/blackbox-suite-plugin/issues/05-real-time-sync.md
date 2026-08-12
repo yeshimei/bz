@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 — 数据层笔记化
 
-**Status:** ready-for-agent
+**Status:** done（实现完成，1092 测试全绿）
 
 - [ ] 内容编辑（metadataCache changed）命中黑匣子笔记 → 索引刷新 + 面板打开时实时刷新（保留类型筛选、搜索词与滚动位置）
 - [ ] 改名/删除/新建（vault rename/delete/create）→ 索引按 id 重映射/移除/新增；删除后面板不残留该条

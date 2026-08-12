@@ -62,4 +62,13 @@
 - header 动作区 ✏️👤🕐 → 🔍（⚙️设置 前）→ ⚙️ → ❌；🔍 点击切换搜索框显隐，显示时高亮（.bz-blackbox-icon-on），隐藏即清空已输入关键词并立即重渲染（防抖前也生效）。
 - 搜索框默认隐藏（`#bz-blackbox-search-wrap` display none），显示时宽度 100%、自动聚焦；每次打开面板回到默认隐藏（open 两路径均重置 searchVisible）。
 - 测试：panel +3（切换显隐高亮/隐藏清空重渲染/防抖过滤语义不变）；旧断言更新（标题/按钮顺序 6 个）。
+
+## 2026-08 · ticket 05 实时同步完成（1092 测试全绿）
+
+- **`src/blackbox/sync.ts`**：ensureBlackBoxSync 常驻注册（main.ts onload，无设置开关）——metadataCache changed + vault rename/delete/create 命中 `黑匣子/` → 300ms 防抖合并 → 重新水合 → 面板回调实时刷新（保留类型筛选/搜索词/滚动）。
+- 面板 open 挂 `setBlackBoxSyncNotify`（data 换新 + refreshAll），close 摘除；面板未打开时同步照常（回调空安全）。
+- **索引重映射**：hydrate 孤儿自愈扩展——同 id 已被索引但原路径缺失（改名/事件漏监）→ 重映射新路径并持久化；删除 → 缺失跳过（面板不残留）；新建 → 孤儿入索引。
+- 对话/复盘/事件提炼读取总是最新：manager.load 每次全量水合，无正文缓存。
+- mock-vault metadataCache 补 on/offref/emit（changed 事件测试）。
+- 测试：tests/blackbox/sync.test.ts 新建 +6（编辑刷新/改名重映射/删除不残留/新建入索引/筛选保留/防抖合并）。
 - **注意**：`notes.ts` 关联区解析约定——正文与关联区以空行分隔（无正文时保留空行），引用归属「来源：」行若与正文无空行分隔则视为正文不被剥离（有专门测试）。
