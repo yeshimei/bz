@@ -28,7 +28,7 @@ import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverd
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
 import { openPomodoro, unloadPomodoro, ensurePomodoro, ensurePomodoroEpubLink, unloadPomodoroEpubLink } from './pomodoro';
-import { unloadBlackBox } from './blackbox';
+import { unloadBlackBox, openBlackBoxPanel, ensureBlackBoxExtraction, unloadBlackBoxExtraction } from './blackbox';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // B站下载器启动命令（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
 import { openBiliDownloader } from './bili-downloader';
@@ -93,6 +93,7 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 番茄钟（ticket 26-32 新域）
   { id: 'bz-pomodoro-open', name: '番茄钟', icon: 'timer', callback: () => openPomodoro(getApp()) },
   // 黑匣子（ticket 58 v4 数据层地基：命令在 ticket 59 起随 UI 重建恢复 open/panel/review）
+  { id: 'bz-blackbox-panel', name: '黑匣子面板', icon: 'layout-grid', callback: () => openBlackBoxPanel(getApp()) },
   // B站下载器（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
   { id: 'bz-bili-open', name: 'B站下载器', icon: 'tv-minimal-play', callback: () => openBiliDownloader() },
 ];
@@ -193,7 +194,8 @@ export default class BzPlugin extends Plugin {
       void ensurePomodoro(this.app);
       // 读书自动番茄钟（ticket 51）：打开/关闭 epub 书自动联动（设置开关默认开，关则静默）
       ensurePomodoroEpubLink(this.app);
-      // 黑匣子增量提炼监听（ticket 59 重建，58 数据层阶段不注册）
+      // 黑匣子增量提炼监听（ticket 59：vault modify/create 三目录 → 防抖 30 分钟）
+      ensureBlackBoxExtraction(this.app);
     });
     // 手势触发（设置页可配，默认关闭）
     this.syncGestures();
