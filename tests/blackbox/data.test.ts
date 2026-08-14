@@ -287,7 +287,7 @@ describe('BlackBoxDataManager load 迁移（v1/v2 → v3 笔记化）', () => {
     const { app } = setup(vault);
     const data = await new BlackBoxDataManager(app).load();
     expect(data.version).toBe(3);
-    expect(data.entries).toEqual([]); // 未迁移：无笔记可水合（一次性迁移走 tools/migrate-blackbox-v3.mjs）
+    expect(data.entries).toEqual([]); // 未迁移：无笔记可水合（一次性迁移已由 tools 脚本完成并移除）
     expect(data.persona.selfViews).toEqual([{ ts: 't0', view: '我认识主人了' }]);
     expect(data.reviews.length).toBe(1);
     expect(data.reviews[0].text).toBe('复盘一');
