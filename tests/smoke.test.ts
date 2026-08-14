@@ -55,7 +55,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-flash-open', 'bz-flash-chat',
   'bz-pomodoro-open',
   // 黑匣子（ticket 59：面板命令恢复；open/review 随 62/63 恢复）
-  'bz-blackbox-panel',
+  'bz-blackbox-panel', 'bz-blackbox-review',
   'bz-bili-open',
   'bz-diary-open',
 ];

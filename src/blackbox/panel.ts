@@ -7,6 +7,7 @@ import { escManager } from '../core/esc-manager';
 import { createOverlay, createIconBtn } from '../core/dom';
 import { BlackBoxDataManager } from './data';
 import { processPendingEntries } from './sync';
+import { manualReview } from './review';
 import { personLabel } from './types';
 import type { App } from 'obsidian';
 import type { BlackBoxData, EventItem, Profile, Review } from './types';
@@ -63,6 +64,12 @@ function buildPanel(): void {
   title.id = 'bz-blackbox-panel-title';
   title.textContent = '黑匣子';
   header.appendChild(title);
+  // 复盘按钮（手动触发，ticket 62）
+  header.appendChild(createIconBtn('📊', '复盘', () => {
+    void manualReview(_app).then((ok) => {
+      if (ok) void render();
+    });
+  }));
   // 关闭按钮
   header.appendChild(createIconBtn('❌', '关闭', () => closeBlackBoxPanel()));
   popup.appendChild(header);
