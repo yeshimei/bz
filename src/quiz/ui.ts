@@ -8,6 +8,7 @@ import { escManager } from '../core/esc-manager';
 import { getApp } from '../core/app';
 import { QuizManager, loadActiveItems } from './manager';
 import { QuestionGenerator } from './generator';
+import { escapeHtml } from '../core/utils';
 import type { QuizQuestion } from './manager';
 import type { AIService } from '../core/ai';
 
@@ -348,7 +349,7 @@ export class QuizMasterUI {
       btn.className = 'quiz-option-btn';
       // 清理选项文本，避免重复前缀
       const cleanText = cleanOptionText(opt);
-      btn.innerHTML = `<span>${optionLabels[idx]}.</span><span style="flex:1">${cleanText}</span><span class="check-mark">✔️</span>`;
+      btn.innerHTML = `<span>${optionLabels[idx]}.</span><span style="flex:1">${escapeHtml(cleanText)}</span><span class="check-mark">✔️</span>`;
       btn.dataset.index = String(idx);
 
       btn.onclick = () => {

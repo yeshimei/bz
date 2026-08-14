@@ -53,6 +53,25 @@ describe('QuizMasterUI', () => {
     expect(btns[0].querySelector('.check-mark')).not.toBeNull();
   });
 
+  it('选项文本 HTML 转义：含 < & 字符按文本显示，不截断/不解析为标签', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '内容');
+    seedQuiz(vault, {
+      'A.md': [{ question: 'Q?', options: ['a < b & c', 'x>y', '正常文本', 'd'], correctIndices: [0] }],
+    });
+    const app = makeApp(vault);
+    setApp(app);
+    const ui = new QuizMasterUI();
+    await ui.startQuiz();
+    const popup = document.getElementById('quiz-popup')!;
+    const spans = popup.querySelectorAll('.quiz-option-btn span');
+    const texts = [...spans].map((s) => s.textContent || '');
+    expect(texts.some((t) => t.includes('a < b & c'))).toBe(true);
+    expect(texts.some((t) => t.includes('x>y'))).toBe(true);
+    // 未被当作 HTML 解析（每个按钮 3 个 span：标签/文本/check-mark，4 按钮 = 12）
+    expect(popup.querySelectorAll('.quiz-option-btn span').length).toBe(12);
+  });
+
   it('单选答对：标绿 + 800ms 自动下一题（splice 不 ++）+ 移除题目', async () => {
     const vault = new MockVault();
     vault.files.set('A.md', '内容');
