@@ -701,10 +701,8 @@
         width: auto;
         margin-right: 0;
     }
-    .todo-card .todo-content-span {
-        flex: 1 1 auto;
-        min-width: 0;
-    }
+    /* 内容区用基础规则（flex: 1 + min-width: 0）：flex-basis 若为 auto，
+       超长单行会因 flex-wrap 被整体挤到下一行，故不再覆盖 */
     .todo-card .todo-meta-container {
         flex: 0 0 100%;
         flex-direction: row;
@@ -839,8 +837,9 @@
 .todo-card input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; }
 .todo-card .bz-archived-icon { font-size: 16px; flex-shrink: 0; width: 18px; text-align: center; }
 .todo-content-span {
-    flex: 1; font-size: 15px; color: var(--text-normal);
-    word-break: break-word; user-select: text; white-space: pre-wrap;
+    /* min-width: 0 允许 flex 收缩，长文本在复选框右侧同一行内换行，不整体下移 */
+    flex: 1; min-width: 0; font-size: 15px; color: var(--text-normal);
+    word-break: break-word; overflow-wrap: anywhere; user-select: text; white-space: pre-wrap;
 }
 .todo-content-span.done { text-decoration: line-through; opacity: 0.6; }
 .bz-todo-link {
