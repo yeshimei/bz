@@ -195,37 +195,24 @@ Feature: memo-suite-plugin
 15. 作为用户，我希望读书统计显示「📚 读书 X 个 🍅」（今日完成、target 为书的专注数，取代按分钟聚合），以便统计读书消耗的番茄。
 16. 作为用户，我希望「读书自动番茄钟」开关（默认开）+「读书启动形态」（后台静默默认 / 自动弹窗）两项可设置，以便按需开关联动。
 
-### 黑匣子（Black Box，ticket 33 新域，grilling 会话封板）
+### 黑匣子 v4（日记智能分析层，grilling 会话 + 社区调研封板，完整设计见 `.scratch/blackbox-suite-plugin/spec.md`）
 
-1. 作为用户，我希望一条命令（`bz-blackbox-capture`「写感触」）打开录入弹窗，填入素材（文字，必填）+ 感受（必填）+ 情绪标签（24 词固定词表，最多 3 个 + 强度 1-5）+ 可选维度（场景/涉及的人/指向[对自己/对他人/对世界]/链接），以便把「感触」喂进黑匣子。
-2. 作为用户，我希望录入弹窗默认只展示必填项，可选维度折叠展开（维度全、默认全空），以便录入负担不增加。
-3. 作为用户，我希望录入时可选 AI 辅助：查概念（选中素材中的词，AI 解释可插入）、联想（AI 提起旧感触：这让我想起…）、追问（感受太短时提示「为什么触动你？」），均为可选项不打断录入流，以便包仔在录入时刻在场。
-4. 作为用户，我希望一条命令（`bz-blackbox-open`「黑匣子」）打开中央弹窗对话（单例，escManager 幂等），包仔以「种子（有诗心的思辨者）+ 语气示例」人设与我深谈，以便与意识体交流。
-5. 作为用户，我希望对话基于三层记忆：感触检索（长期）+ 人格档案（自我认知）+ 对话历史（短期），以便包仔记得我喂过什么、知道自己是谁、记得我们刚聊过什么。
-6. 作为用户，我希望感触积累到阈值（默认每 10 条）自动静默复盘——不弹窗、不通知、不打扰；复盘产物（一段话）公开写入对话面板，我打开时可见，以便看到包仔的成长又不被打扰。
-7. 作为用户，我希望可手动触发复盘（`bz-blackbox-review`「复盘」），复盘后人格档案更新（自我认知历史追加），以便种子生长。
-8. 作为用户，我希望黑匣子 AI 默认走云端 DeepSeek（跟随 bz 既有模式），可在 ⚙️ 域设置弹窗切换本地 Ollama，以便隐私与质量之间自选。
-9. 作为用户，我希望黑匣子数据存 `CONFIG/STORAGE/blackbox.json` v1（schema 定全，ADR-0013），重启不丢，以便长期累积。
-10. 作为用户，我希望 ⚙️ 设置弹窗展示情绪词表（只读）与复盘阈值，以便知晓盒子如何生长。
+> v4 方向反转（ADR-0017）：黑匣子不再是容器（v1 感触/v2 三类条目/v3 笔记化全部作废），而是**日记的智能分析层**——数据仍由日记本书写（`我的/日记` + `我的/影视` + `我的/信` 三目录，唯一事实源），黑匣子只读日记、AI 提炼、产出派生层（blackbox.json v4）。不录入、不持有原始数据、不建笔记文件。存量已删（`我的/黑匣子/` 1492 文件 + blackbox.json，2026-08 执行）。
 
-### 黑匣子 v2（三类输入 + 人物画像 + 事件时间线，ticket 39+ 演进，完整设计见 `.scratch/blackbox-suite-plugin/spec.md`）
-
-11. 作为用户，我希望录入弹窗顶部可切换三种类型（🧩 概念 / 📎 文献 / 💡 想法），以便按内容形态录入。
-12. 作为用户，我希望概念录入：给名词 → AI 生成知识卡片（定义 + 自动关联）→ 我仅确认是否录入；概念为纯知识卡片，**无感触外壳**。
-13. 作为用户，我希望文献录入：粘贴摘抄 + 来源 → AI 提取概念给出名词表勾选关联 → 可展开「带出想法」，以便摘抄与知识背景建立联系。
-14. 作为用户，我希望情绪标签**去掉强度**（24 词多选 ≤3，无 1-5），以便录入更轻。
-15. 作为用户，我希望主面板为**流式布局**（v3，照搬日记本骨架：header + 类型标签栏 🧩📎💡 + 搜索 + 时间流），默认不选中任何类型（显示全部），按录入时间倒序铺开三类条目；人物画像与事件时间线为右上角独立弹窗（👤 / 🕐），以便打开即浏览全部内容。
-16. 作为用户，我希望「涉及的人」可从已有画像选择或现场新建；未建画像只存名字，AI 复盘时提示，以便冷启动不打扰。
-17. 作为用户，我希望人物画像由 AI 从条目中提炼维护（印象/情绪聚合/事件投影），我的印象区字段级锁（改过 AI 不再覆盖），另有 AI 观察区（持续更新，可采纳进印象区），以便既有 AI 维护又有我的主权。
-18. 作为用户，我希望事件由 AI 全自动提炼（有具体行动/变化/时刻），推测事件虚线 + ❓ 可确认/删除；事件可编辑/删除/合并，改过的 AI 不再碰；画像时间线 = 事件按人投影（单份存储），以便零负担获得时间线且不被幻觉误导。
-19. 作为用户，我希望对话检索扩展到画像/事件概要级（画像：印象一句话 + 最近 3 个事件标题），以便包仔「认识我的人际世界」。
-20. 作为用户，我希望复盘产物新增：新人物提示（高频提及未建画像）+ 事件汇报一句话（「这周整理了 N 件新事件，其中 M 件推测」），以便生长可见。
-21. 作为用户，我希望 ⚙️ 设置新增：推测事件显示开关、情绪词表可编辑（增删，24 词预置），以便控制时间线与词表。
-22. 作为用户，我希望第一版不实现遗忘权（画像删除/断链、事件忽略持久化后置），以便范围收敛。
-23. 作为用户，我希望打开黑匣子面板/录入弹窗**立即渲染不等待**：首次打开（缓存未就绪）顶部显示「正在扫描黑匣子…」提示条，数据就绪后自动移除，以便打开秒开不卡顿。
-24. 作为用户，我希望水合全量扫描（笔记即事实源的全量解析）**只做一次并缓存**：load 命中内存缓存（save 同步更新），vault create/modify/rename/delete 事件失效后下次 load 才重新扫描，以便重复打开不重复全扫。
-25. 作为用户，我希望概念/摘抄/想法**确认录入后先关闭面板**（直达模式保存即关），AI 补全（标题生成/自动分类/双向关联回填/原位注入）在后台执行、完成仅弹通知，以便录入不被 AI 等待打断。
-26. 作为用户，我希望文献/想法无分析标题时先以正文前 20 字落盘，AI 标题后台生成成功后重命名笔记并通知「已生成标题「xxx」」，以便保存即关且最终文件名友好（AI 失败保持降级名，永不拒收）。
+1. 作为用户，我希望黑匣子不要求我额外录入任何内容——它只读我的日记（`我的/日记` + `我的/影视` + `我的/信`），数据仍由日记本写，以便零负担获得 AI 分析。
+2. 作为用户，我希望写日记后黑匣子自动增量提炼（防抖 30 分钟），提炼人物提及/事件候选/情绪推断，以便无需手动触发。
+3. 作为用户，我希望打开黑匣子（对话/面板/复盘任一命令）时若有待处理日记条目，先即时提炼再渲染，以便数据永不过期。
+4. 作为用户，我希望首次启用时对历史日记做全量提炼（分批 50 条/批串行 + 进度通知），之后转增量，以便旧日记也被分析。
+5. 作为用户，我希望人物出现 ≥2 次（跨不同日期）自动建画像（AI 观察区给初始印象），单次出现只计入提及候选，以便不产生幻觉人物噪音。
+6. 作为用户，我希望人物画像分两层：印象区（我编辑的固定印象，改过 AI 不再覆盖）+ AI 观察区（持续更新，可采纳进印象区），以便既有 AI 维护又有我的主权。
+7. 作为用户，我希望事件由 AI 从日记提炼（一条日记可提炼多个），置信度 ≥0.7 直接入线、0.5–0.7 标推测（虚线+❓ 可确认/删除）、<0.5 不入库；改过的事件 AI 不再碰，以便零负担获得时间线又不被幻觉误导。
+8. 作为用户，我希望事件证据链可跳转（打开日记文件 + 定位条目），以便回到原始记录。
+9. 作为用户，我希望复盘为纯手动触发（`bz-blackbox-review` 命令 + 面板按钮），产物为四段结构化报告（人物画像更新/事件汇报/情绪聚合/反思建议），每条引用日期+原文片段，写入对话流可见，以便看到包仔的成长又不被泛泛而谈打扰。
+10. 作为用户，我希望情绪由 AI 从日记推断（24 词表，每条 1–3 词，推断失败不标注），聚合呈现于事件时间线（情绪色点 + 时段分布条）与复盘流（情绪趋势段），以便情绪分析不打断日记书写。
+11. 作为用户，我希望对话基于三层记忆：日记条目检索（TF-IDF）+ 画像概要（名字+印象一句话+最近事件标题）+ 对话历史，包仔人设保留，以便它真正「认识我」。
+12. 作为用户，我希望 `bz-blackbox-panel` 打开三标签派生面板（人物墙 / 事件时间线 / 复盘流），以便浏览 AI 分析结果。
+13. 作为用户，我希望 ⚙️ 设置 6 项：AI 服务商、Ollama URL、Ollama 模型、对话历史条数、推测事件显示开关、情绪词表可编辑，以便按需控制。
+14. 作为用户，我希望 AI 服务不可用时浏览始终可用（提炼跳过下次重试、复盘失败提示、对话降级文本检索），以便黑匣子永不因 AI 故障瘫痪。
 
 ### 全局
 
@@ -296,7 +283,8 @@ Feature: memo-suite-plugin
 - **做题家**：`bz-quiz-update`、`bz-quiz-open`
 - **闪念**：`bz-flash-open`（打开参考窗口）、`bz-flash-chat`（打开聊天窗口）
 - **番茄钟**（ticket 26 新域）：`bz-pomodoro-open`（中文名「番茄钟」，icon timer）
-- **黑匣子（ticket 33 新域；v2 追加面板命令，ticket 41；面板 v3 改流式）**：`bz-blackbox-capture`（中文名「录入」，v2 三类型后不再叫「写感触」）、`bz-blackbox-open`（中文名「黑匣子」）、`bz-blackbox-review`（中文名「复盘」）、`bz-blackbox-panel`（中文名「黑匣子面板」，v3 流式主面板入口）
+- **黑匣子（ticket 33 新域；v4 重构为日记分析层，ticket 57）**：`bz-blackbox-open`（中文名「黑匣子」，对话）、`bz-blackbox-review`（中文名「复盘」，手动聚合）、`bz-blackbox-panel`（中文名「黑匣子面板」，三标签派生面板：人物墙/事件时间线/复盘流）
+- **黑匣子已删除命令（v4）**：`bz-blackbox-capture`（录入，原「写感触」）、`bz-blackbox-capture-concept/-literature/-thought`（三类直达录入）、`bz-blackbox-import-cardbox`（导入卡片盒）
 - **日记本**（已迁）：`bz-diary-write`、`bz-diary-open`
 - **B站下载器**：`bz-bili-open`
 - 已删除命令：`bz-notification-demo`（通知样式演示）、`bz-diary-create-quote`（写摘抄）
@@ -321,6 +309,7 @@ Feature: memo-suite-plugin
 | AIAgent | vault rename/delete/create | 同步备忘录/收藏本 |
 | 复习计划 | vault/workspace resolved/modify/rename/quit | 数据状态自动同步 |
 | 闪念 | vault modify | 向量增量重建（防抖） |
+| 黑匣子（v4） | vault modify/create（三目录） | 增量提炼（防抖 30 分钟；打开黑匣子时待处理条目即时提炼） |
 
 ### 域间共享状态（原 window.__ 语义 → 模块共享）
 
@@ -351,7 +340,7 @@ Feature: memo-suite-plugin
 - **复习计划（含做题家）**：autoCheckInterval、enableAutoNotify + 做题家 5 项（enableMultipleChoice、questionsPerNote、shuffleQuestions、difficulty、forceQuizForReview）
 - **番茄钟（13 项）**：pomodoroPreset（13 档：12 预设+自定义，含阅读沉浸 45/10/20）、pomodoroWorkMin/pomodoroShortBreakMin/pomodoroLongBreakMin（自定义时长，预设=自定义时动态显示）、pomodoroLongBreakInterval（N，默认 4）、pomodoroForceFocus（默认关）、pomodoroAutoCycle（默认关）、pomodoroAutoSkipBreak（默认关）、pomodoroSound（默认开）、pomodoroVolume（音量 0-100，默认 100 最大，设置弹窗 slider+试听）、pomodoroRestoreMode（启动恢复方式：background 后台继续 / popup 正在倒计时则自动弹窗；恢复继续弹「番茄钟继续：…还剩 mm:ss」通知）、pomodoroEpubAuto（读书自动番茄钟开关，默认开；关则联动静默不监听）、pomodoroEpubMode（读书启动形态：background 后台静默默认 / popup 自动弹窗）
 - **闪念（17 项全量，含 AI 项）**：OLLAMA_URL、EMBEDDING_MODEL、META_PATH、VEC_PATH、TOP_K、CHAT_TOP_K、CHUNK_MIN_LENGTH、ALLOW_PATHS、CONCURRENCY、CONTEXT_LIMIT、DEBOUNCE_DELAY、CURSOR_POLL_INTERVAL、OLLAMA_CHAT_MODEL、DEEPSEEK_MODEL、DEFAULT_USE_DEEPSEEK、MAX_HISTORY、OLLAMA_REMOTE_URL
-- **黑匣子（v3 共 8 项）**：blackboxAIProvider（deepseek/ollama 两档，默认 deepseek）、blackboxOllamaUrl（默认 http://localhost:11434）、blackboxOllamaModel（默认 qwen2.5:14b-instruct）、blackboxReviewThreshold（复盘阈值，默认 10；数据内 settings.reviewThreshold 兕底同步）、blackboxMaxHistory（对话历史保留条数，默认 20）、blackboxShowSpeculativeEvents（推测事件显示开关，默认开，v2 新增）、情绪词表可编辑（settings.words 增删，预置 24 词，v2 新增）、blackboxDefaultTypeFilter（主面板默认类型筛选：全部/概念/文献/想法，默认 ''=全部，重启生效，v3 新增）
+- **黑匣子（v4 共 6 项）**：blackboxAIProvider（deepseek/ollama 两档，默认 deepseek）、blackboxOllamaUrl（默认 http://localhost:11434）、blackboxOllamaModel（默认 qwen2.5:14b-instruct）、blackboxMaxHistory（对话历史保留条数，默认 20）、blackboxShowSpeculativeEvents（推测事件显示开关，默认开）、情绪词表可编辑（settings.words 增删，预置 24 词）。**已删除（v4）**：blackboxReviewThreshold（复盘阈值，复盘改手动）、blackboxDefaultTypeFilter（默认类型筛选，三类条目已删）
 
 **筛选弹窗（🔀，非设置）**：影视「筛选与排序」（类型筛选+排序）、书库「视图与筛选」（分类筛选+视图）
 
@@ -373,7 +362,7 @@ Feature: memo-suite-plugin
 
 - **密码本主密码流程**：首次设置（再次输入确认）→ 解锁（输入主密码）→ 主密码驱动加密；条目字段（账号/密码/链接/日期/备注）+ 👁 切换 + 搜索 + 生成
 - **备忘录**：AI 推荐场景（aiBtn/✨/⏳）、归档（archiveBtn）、课程字段（courseInput）、当前笔记/光标创建（getCurrentNoteInfo/getCurrentCursorPosition）、dueClear/posBtn、标签点击（ticket 59：clipboardFocusHandler 已删除）
-- **收藏本**：置顶（📌 置顶）、余额查询（API Keys 每行一个 + 余额查询 URL + 自动查找余额 + 查询中/刷新中/❌ 错误 + 刷新）、🧠 大模型配置弹窗、⏳ AI 整理中、编辑收藏、标签 emoji
+- **收藏本**：置顶（📌 置顶）、余额查询（API Keys 每行一个 + 余额查询 URL + 自动查找余额 + 查询中/刷新中/❌ 错误 + 刷新）、🧠 大模型配置弹窗、⏳ AI 整理中、编辑收藏、标签 emoji；**AI 推荐 GitHub 增强**（GitHub 仓库链接 → GitHub API 取真实仓库名/简介 → 标题=仓库名预填、简介=AI 翻译成中文、GitHub 类型强制选中；API 失败降级仓库名+简介原文；非 GitHub 链接走常规整理）；**分类清单 9 项**（GitHub 🐙/桌面软件 💻/网站 🌐/大模型 🧠/pi ⌨️/Claude 🤖/skills ⚡/酒馆 🍺/DeepSeek Harness 🐋）
 - **影视 AI 推荐**：buildTasteProfile（口味画像）→ buildRecommendPrompt → parseRecommendJson → openRecommendModal（导演：/加入想看 quickAddWant 预填）→ ⚠️ 解析失败/❌ 生成失败；状态枚举（在看/想看/已看）+ TYPE_GROUPS/TYPE_COLORS
 - **书库读书笔记弹窗**：showBookNotes（📚《书》❝ 高亮 + 日期 + 评论）+ parseBookNotes + jumpToHighlight + openEditCommentModal/updateComment/deleteHighlight；阅读进度 %/时间格式/🧮 统计
 - **阅读数据分析报告章节**（80+ 生成函数，逐字保留）：年度/作者/速度/时间分布/习惯/趋势（月季平均/完成率/方向）/热力图（月份网格/强度/颜色/tooltip）/聚焦（5 维度+总分+建议）/类别（多样性/平衡/趋势/推荐/分布图）/笔记互动（思考比/参与度/模式/深度/连接度/图表/建议）/实用建议；showReportInPopup（HTML 弹窗 + 暗色模式 + 进度条/图表）
@@ -429,7 +418,7 @@ Feature: memo-suite-plugin
 - **影视数据分析评分桶**（ratingBucketOf 6 档）：≥5.5 / 5~5.5 / 4~5 / 3~4 / 2~3 / <2；buildAnalysisData 聚合 {total, watched, watching, want, …}
 - **归物本排序弹窗**：自绘弹窗（Promise），手动检测 theme-dark 取色板（bg/text/border/accent），不依赖主题变量
 - **闪念**：命令 `bz-flash-open`（闪念：打开参考窗口）；ALLOW_PATHS 默认 ["卡片盒","主题盒","我的","归档","CODE"]；CHUNK_MIN_LENGTH 默认 50；TFIDF 中文停用词表（'的了是在我有和人这中大为上个国不以到说时要就出会也年对自其他里去子后也得着与把等'）+ 文档频率/平均长度（BM25 式）
-- **AI 提示词结构（移植基准）**：自动摘要（JSON 模板按缺失字段裁剪，只含 title/summary/tags 定义；标题 15-30 字禁标点/摘要 150-250 字禁"本文"等前缀/3-6 个中文标签≤5 字/正文截断 6000；不含 author）；AIAgent 匹配（→{match, itemId}，ai.json + max_tokens 200 + response_format）；收藏本（→{title, description}，简介≤50 字，ai.json）；做题家（单选四选一/多选不限/难度三档提示词）；备忘录 AI 推荐场景（→{scene, priority}，priority 仅"重要"/"次要"两档，ai.chat）
+- **AI 提示词结构（移植基准）**：自动摘要（JSON 模板按缺失字段裁剪，只含 title/summary/tags 定义；标题 15-30 字禁标点/摘要 150-250 字禁"本文"等前缀/3-6 个中文标签≤5 字/正文截断 6000；不含 author）；AIAgent 匹配（→{match, itemId}，ai.json + max_tokens 200 + response_format）；收藏本（→{title, description}，简介≤50 字，ai.json；**GitHub 链接分支**：附 GitHub API 仓库名/简介（8s 超时 + 重试 1 次，失败时 fetched=false），标题=仓库名（用户已填则保留）、简介=仓库简介**忠实翻译成中文**（不扩写/不总结/不凑字数，已中文则原样保留；**获取失败或无简介时简介必须返回空字符串，严禁 AI 编造**，且弹 warning 提示「简介获取失败，简介留空不编造」、成功弹 info「已获取 GitHub 仓库信息」）、标签必须含 GitHub）；做题家（单选四选一/多选不限/难度三档提示词）；备忘录 AI 推荐场景（→{scene, priority}，priority 仅"重要"/"次要"两档，ai.chat）
 
 ### 样式规模与边界行为（第 5 轮，源码提取）
 
