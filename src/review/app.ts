@@ -255,9 +255,10 @@ export const reviewApp = {
     await quiz.ensureQuestions(notePaths);
 
     // 从 quiz.json 读取所有题目，补上 notePath/_index（renderModal 需要）
+    // 注意：getQuestionsForNote 签名为 (app, notePath)，缺参会导致 notePath=undefined 读不到题目
     const out: Record<string, any[]> = {};
     for (const item of items) {
-      const qs = await quiz.manager.getQuestionsForNote(item.filePath);
+      const qs = await quiz.manager.getQuestionsForNote(getApp(), item.filePath);
       if (qs && qs.length) {
         out[item.filePath] = qs.map((q: any, i: number) => ({
           ...q,

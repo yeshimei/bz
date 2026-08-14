@@ -154,6 +154,7 @@ export class QuizMasterUI {
     // fallback：逐篇生成
     let okCount = 0;
     let failCount = 0;
+    let firstError = '';
     for (const note of missing) {
       try {
         if (!QuizMasterUI.ai) throw new Error('AI 未初始化');
@@ -167,11 +168,12 @@ export class QuizMasterUI {
         }
       } catch (e: any) {
         console.warn(`出题失败 ${note.id}:`, e.message);
+        if (!firstError) firstError = e.message || '未知错误';
         failCount++;
       }
     }
     if (okCount > 0) notify(`已为 ${okCount} 篇笔记生成题目`, { type: 'success' });
-    if (failCount > 0) notify(`${failCount} 篇笔记出题失败`, { type: 'warning', dedupeKey: 'quiz-generate' });
+    if (failCount > 0) notify(`${failCount} 篇笔记出题失败${firstError ? `（${firstError}）` : ''}`, { type: 'warning', dedupeKey: 'quiz-generate' });
   }
 
   /** 加载提示（源码 L401-418 逐字） */
