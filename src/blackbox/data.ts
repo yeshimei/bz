@@ -182,6 +182,9 @@ export function normalizeData(raw: any): BlackBoxData {
     reviews: (Array.isArray(raw.reviews) ? raw.reviews : []).map(sanitizeReview).filter(Boolean),
     chat: (Array.isArray(raw.chat) ? raw.chat : []).map(sanitizeChat).filter(Boolean),
     cursor: sanitizeCursor(raw.cursor),
+    processedKeys: Array.isArray(raw.processedKeys)
+      ? raw.processedKeys.filter((k: any) => typeof k === 'string' && k.length > 0).slice(0, 20000)
+      : [],
   };
 }
 
@@ -239,6 +242,7 @@ export class BlackBoxDataManager {
       reviews: data.reviews,
       chat: data.chat,
       cursor: data.cursor,
+      processedKeys: data.processedKeys || [],
     };
     await app.vault.adapter.write(path, JSON.stringify(payload, null, 2));
     this.cachedData = data;
