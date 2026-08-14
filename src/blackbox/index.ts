@@ -19,6 +19,8 @@ export {
 export { openBlackBoxPanel, closeBlackBoxPanel, unloadBlackBoxPanel, getPanelState } from './panel';
 import { unloadBlackBoxPanel } from './panel';
 import { unloadBlackBoxExtraction } from './sync';
+export { manualReview, buildReviewPrompt, parseReviewJson, applyReview, triggerManualReview } from './review';
+export type { ReviewResult } from './review';
 export {
   DEFAULT_EMOTION_TAGS,
   MAX_EMOTIONS,
