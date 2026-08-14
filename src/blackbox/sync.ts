@@ -79,12 +79,13 @@ export async function autoStartBlackBoxExtraction(app: any, ai?: any): Promise<v
     const data = await dm.load();
     const all = await scanAllDiaryEntries(app);
     if (all.length === 0) return; // 无日记，无事可做
-    // AI 配置检查（core createAI 缺 key 会抛错，提前提示）
+    // AI 配置检查（与 core/getAIProvider 逻辑一致：默认 opencode-go；deepseek 需设置 aiProvider='deepseek'）
     const { tryGetSettings } = await import('../core/settings-provider');
     const s = tryGetSettings() as any;
-    const hasAI = !!(s && (s.deepseekApiKey || s.opencodeGoApiKey));
+    const provider = (s && s.aiProvider) || 'opencode-go';
+    const hasAI = provider === 'deepseek' ? !!(s && s.deepseekApiKey) : !!(s && s.opencodeGoApiKey);
     if (!hasAI) {
-      notice('黑匣子需要配置 AI（设置 → AI 配置）才能提炼日记', 'warning', 6000);
+      notice(`黑匣子需要配置 AI（设置 → AI 配置）：当前服务商 ${provider === 'deepseek' ? 'DeepSeek' : 'OpenCode Go'} 未填 API Key`, 'warning', 8000);
       return;
     }
     if (!data.cursor) {
@@ -133,18 +134,25 @@ function advanceCursor(data: BlackBoxData, processed: DiarySourceEntry[], all: D
   data.cursor = { file: newest.filename, entryIndex: count };
 }
 
-/** 单批提炼（AI 调用 + 应用；返回是否成功；不推进 cursor——由调用方统一推进） */
-async function extractBatch(app: any, ai: any, entries: DiarySourceEntry[], data: BlackBoxData): Promise<boolean> {
+/** 单批提炼结果 */
+type BatchResult = 'ok' | 'ai-fail' | 'parse-fail';
+
+/** 单批提炼（AI 调用 + 应用；返回结果分类——失败可见，不静默） */
+async function extractBatch(app: any, ai: any, entries: DiarySourceEntry[], data: BlackBoxData): Promise<BatchResult> {
   const prompt = buildExtractPrompt(entries);
-  if (!prompt) return false;
+  if (!prompt) return 'parse-fail';
   try {
     const text = await ai.json(prompt);
     const result = parseExtractJson(text);
-    if (!result) return false;
+    if (!result) {
+      console.warn('[黑匣子] AI 提炼返回无法解析:', (text || '').slice(0, 200));
+      return 'parse-fail';
+    }
     applyExtraction(data, result, entries);
-    return true;
-  } catch {
-    return false; // AI 失败：跳过下次重试
+    return 'ok';
+  } catch (err: any) {
+    console.warn('[黑匣子] AI 提炼调用失败:', err && err.message ? err.message : err);
+    return 'ai-fail'; // AI 失败：跳过下次重试
   }
 }
 
@@ -155,54 +163,76 @@ export async function processPendingEntries(app: any, ai?: any): Promise<boolean
   try {
     const dm = new BlackBoxDataManager();
     const data = await dm.load();
+    const profilesBefore = data.profiles.length;
+    const eventsBefore = data.events.length;
     const all = await scanAllDiaryEntries(app);
     const pending = collectNewEntries(all, data);
     if (pending.length === 0) return false;
     const service = ai || _ai || getBlackBoxAI();
-    let anySuccess = false;
+    let okCount = 0, failCount = 0;
     let processedAll: DiarySourceEntry[] = [];
     for (let i = 0; i < pending.length; i += MAX_ENTRIES_PER_CALL) {
       const batch = pending.slice(i, i + MAX_ENTRIES_PER_CALL);
-      const ok = await extractBatch(app, service, batch, data);
-      if (ok) {
-        anySuccess = true;
+      const r = await extractBatch(app, service, batch, data);
+      if (r === 'ok') {
+        okCount++;
         processedAll = processedAll.concat(batch);
+      } else {
+        failCount++;
       }
     }
-    if (anySuccess) {
+    if (okCount > 0) {
       advanceCursor(data, processedAll, all);
       await dm.save(data);
+      const p = data.profiles.length - profilesBefore;
+      const e = data.events.length - eventsBefore;
+      notice(`提炼完成：处理 ${pending.length} 条日记，新增人物 ${p}、事件 ${e}${failCount > 0 ? `（${failCount} 批失败将重试）` : ''}`, 'success');
+      return true;
     }
-    return anySuccess;
+    notice('提炼失败：AI 调用未成功，请检查 AI 配置与控制台日志', 'warning');
+    return false;
   } finally {
     inflight = false;
   }
 }
 
-/** 首次全量提炼（cursor 为空时；分批 FULL_BATCH_SIZE 串行 + 进度通知；全部完成后 cursor 指向最新文件） */
+/** 首次全量提炼（cursor 为空时；分批 FULL_BATCH_SIZE 串行 + 进度通知 + 完成汇总；全失败不推进 cursor） */
 export async function runFullExtraction(app: any, ai?: any): Promise<void> {
   if (inflight) return;
   inflight = true;
   try {
     const dm = new BlackBoxDataManager();
     const data = await dm.load();
+    const profilesBefore = data.profiles.length;
+    const eventsBefore = data.events.length;
     const all = await scanAllDiaryEntries(app);
     if (all.length === 0) return;
     const service = ai || _ai || getBlackBoxAI();
     const total = all.length;
     const batches = Math.ceil(total / FULL_BATCH_SIZE);
     let done = 0;
+    let okCount = 0, failCount = 0;
     for (let b = 0; b < batches; b++) {
       const batch = all.slice(b * FULL_BATCH_SIZE, (b + 1) * FULL_BATCH_SIZE);
       notice(`正在提炼历史日记… ${Math.min(done + batch.length, total)}/${total}`, 'info');
-      await extractBatch(app, service, batch, data);
+      const r = await extractBatch(app, service, batch, data);
+      if (r === 'ok') okCount++;
+      else failCount++;
       done += batch.length;
     }
-    // 全量完成：cursor 指向最新文件（全量已覆盖全部条目）
+    if (okCount === 0) {
+      // 全部失败：不推进 cursor（下次启动重试），明确提示
+      notice('提炼失败：AI 调用未成功，请检查 AI 配置（设置 → AI）与控制台日志', 'warning', 8000);
+      return;
+    }
+    // 全量完成：cursor 指向最新文件（成功批次已覆盖其条目）
     const newest = all[0];
     const count = all.filter((e) => e.filename === newest.filename).length;
     data.cursor = { file: newest.filename, entryIndex: count };
     await dm.save(data);
+    const p = data.profiles.length - profilesBefore;
+    const e = data.events.length - eventsBefore;
+    notice(`提炼完成：${total} 条日记 → 新增人物 ${p}、事件 ${e}${failCount > 0 ? `（${failCount} 批失败，下次启动重试）` : ''}`, 'success', 8000);
   } finally {
     inflight = false;
   }

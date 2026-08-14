@@ -118,6 +118,28 @@ describe('runFullExtraction（首次全量分批）', () => {
     expect(msgs).toContain('提炼');
   });
 
+  it('完成通知：提炼完成后 success 通知含「提炼完成」+ 新增人物/事件统计', async () => {
+    const { app } = setup();
+    const ai = makeAI(EXTRACT_JSON);
+    await runFullExtraction(app, ai);
+    const msgs = getNoticeMessages().join(' ');
+    expect(msgs).toContain('提炼完成');
+    expect(msgs).toContain('新增人物');
+    expect(msgs).toContain('事件');
+  });
+
+  it('全部批次 AI 失败 → warning 通知 + cursor 不推进（下次启动重试）', async () => {
+    const { app } = setup();
+    const ai = { json: vi.fn().mockRejectedValue(new Error('AI 挂了')) } as any;
+    await runFullExtraction(app, ai);
+    const msgs = getNoticeMessages().join(' ');
+    expect(msgs).toContain('提炼失败');
+    const dm = new BlackBoxDataManager();
+    const data = await dm.load();
+    expect(data.cursor).toBeNull(); // 全失败不推进 → 下次启动重试
+    expect(data.events).toHaveLength(0);
+  });
+
   it('无日记 → 不调 AI', async () => {
     const vault = new MockVault();
     const app = mockAppWithVault(vault);
@@ -206,7 +228,7 @@ describe('autoStartBlackBoxExtraction（启动自动提炼）', () => {
 
   it('cursor 空 + AI 已配置 + 有日记 → 自动全量提炼 + cursor 落盘', async () => {
     const { app } = setup();
-    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', deepseekApiKey: 'sk-test' }) as any);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', aiProvider: 'deepseek', deepseekApiKey: 'sk-test' }) as any);
     const ai = makeAI(EXTRACT_JSON);
     await autoStartBlackBoxExtraction(app, ai);
     expect(ai.json).toHaveBeenCalled();
