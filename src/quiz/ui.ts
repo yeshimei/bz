@@ -305,9 +305,12 @@ export class QuizMasterUI {
     header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;';
     const title = document.createElement('span');
     title.style.cssText = 'font-size:15px;font-weight:600;';
-    // 使用固定的总题数 this.totalQuestions
+    // 使用固定的总题数 this.totalQuestions；题号 = 已消费题数 + 1：
+    // 答对走 splice（currentIndex 不增、剩余长度减 1），答错走 currentIndex++，
+    // 两路相加即已做题数——不依赖 correct/wrong 计数（多选计数为已知缺陷）
     const noteName = q.notePath!.split('/').pop()!.replace('.md', '');
-    title.textContent = `📝 ${noteName} (${this.currentIndex + 1}/${this.totalQuestions})`;
+    const doneCount = this.currentIndex + (this.totalQuestions - this.currentQuestions.length);
+    title.textContent = `📝 ${noteName} (${doneCount + 1}/${this.totalQuestions})`;
     header.appendChild(title);
     popup.appendChild(header);
 

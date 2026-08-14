@@ -92,8 +92,8 @@ describe('QuizMasterUI', () => {
     expect(ui.correctCount).toBe(1);
     await vi.advanceTimersByTimeAsync(900);
     expect(document.getElementById('quiz-popup')!.textContent).toContain('Q2?');
-    // totalQuestions 固定不变（源码语义：splice 后显示 (1/2)）
-    expect(document.getElementById('quiz-popup')!.textContent).toContain('(1/2)');
+    // 题号用已完成数+1：答对 Q1（splice 不递增 currentIndex）后第二题显示 2/2
+    expect(document.getElementById('quiz-popup')!.textContent).toContain('(2/2)');
     // 答对 Q2 → 全部完成（弹窗保留，onComplete 回调）
     const onComplete = vi.fn();
     ui.onComplete = onComplete;
@@ -123,6 +123,27 @@ describe('QuizMasterUI', () => {
     // 题目未删除
     const quiz = JSON.parse(vault.files.get(QUIZ_FILE_PATH)!);
     expect(quiz.notes['A.md']).toHaveLength(1);
+  });
+
+  it('题号进度：答错点下一题 → 题号递增（2/N）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '内容');
+    seedQuiz(vault, {
+      'A.md': [
+        { question: 'Q1?', options: ['甲', '乙', '丙', '丁'], correctIndices: [0] },
+        { question: 'Q2?', options: ['甲', '乙', '丙', '丁'], correctIndices: [0] },
+      ],
+    });
+    const app = makeApp(vault);
+    setApp(app);
+    const ui = new QuizMasterUI();
+    await ui.startQuiz();
+    expect(document.getElementById('quiz-popup')!.textContent).toContain('(1/2)');
+    // 第一题答错 → 点下一题
+    (document.querySelectorAll('.quiz-option-btn')[1] as HTMLElement).click();
+    (document.querySelector('.quiz-next-btn') as HTMLElement).click();
+    expect(document.getElementById('quiz-popup')!.textContent).toContain('Q2?');
+    expect(document.getElementById('quiz-popup')!.textContent).toContain('(2/2)');
   });
 
   it('多选：selected 勾选 + 提交判定（正确：绿 + splice 下一题；源码不递增计数）', async () => {
