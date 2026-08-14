@@ -67,6 +67,36 @@ export function unloadBlackBoxExtraction(): void {
   _app = null;
 }
 
+/**
+ * 启动时自动提炼（用户反馈「重启后没反应」修复）：
+ * - 无 cursor 且日记非空 → 首次全量提炼（通知「正在提炼历史日记…」）
+ * - 有 cursor 但存在待处理条目 → 增量提炼
+ * - AI 未配置（无 deepseek/opencode-go key）→ warning 提示去设置（避免静默失败）
+ */
+export async function autoStartBlackBoxExtraction(app: any, ai?: any): Promise<void> {
+  try {
+    const dm = new BlackBoxDataManager();
+    const data = await dm.load();
+    const all = await scanAllDiaryEntries(app);
+    if (all.length === 0) return; // 无日记，无事可做
+    // AI 配置检查（core createAI 缺 key 会抛错，提前提示）
+    const { tryGetSettings } = await import('../core/settings-provider');
+    const s = tryGetSettings() as any;
+    const hasAI = !!(s && (s.deepseekApiKey || s.opencodeGoApiKey));
+    if (!hasAI) {
+      notice('黑匣子需要配置 AI（设置 → AI 配置）才能提炼日记', 'warning', 6000);
+      return;
+    }
+    if (!data.cursor) {
+      await runFullExtraction(app, ai);
+    } else {
+      await processPendingEntries(app, ai);
+    }
+  } catch {
+    // 启动阶段静默（不阻塞插件加载）
+  }
+}
+
 /** 是否有待处理条目（打开黑匣子时判断；cursor 为空 = 首次全量） */
 export async function hasPendingEntries(app: any): Promise<boolean> {
   const dm = new BlackBoxDataManager();
