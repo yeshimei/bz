@@ -28,7 +28,7 @@ import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverd
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
 import { openPomodoro, unloadPomodoro, ensurePomodoro, ensurePomodoroEpubLink, unloadPomodoroEpubLink } from './pomodoro';
-import { unloadBlackBox, openBlackBoxPanel, ensureBlackBoxExtraction, unloadBlackBoxExtraction, manualReview } from './blackbox';
+import { unloadBlackBox, openBlackBoxPanel, ensureBlackBoxExtraction, unloadBlackBoxExtraction, manualReview, openBlackBoxChat } from './blackbox';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // B站下载器启动命令（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
 import { openBiliDownloader } from './bili-downloader';
@@ -93,6 +93,7 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 番茄钟（ticket 26-32 新域）
   { id: 'bz-pomodoro-open', name: '番茄钟', icon: 'timer', callback: () => openPomodoro(getApp()) },
   // 黑匣子（ticket 58 v4 数据层地基：命令在 ticket 59 起随 UI 重建恢复 open/panel/review）
+  { id: 'bz-blackbox-open', name: '黑匣子', icon: 'message-circle-heart', callback: () => openBlackBoxChat(getApp()) },
   { id: 'bz-blackbox-panel', name: '黑匣子面板', icon: 'layout-grid', callback: () => openBlackBoxPanel(getApp()) },
   { id: 'bz-blackbox-review', name: '复盘', icon: 'sprout', callback: () => manualReview(getApp()) },
   // B站下载器（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
