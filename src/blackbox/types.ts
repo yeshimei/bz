@@ -144,6 +144,8 @@ export interface BlackBoxData {
   reviews: Review[];
   chat: ChatMsg[];
   cursor: Cursor | null;
+  /** 已提炼条目指纹（date time|filename；幂等标记——中断重跑不重复提炼，避免 mention count 翻倍） */
+  processedKeys?: string[];
 }
 
 /** 日记源条目（黑匣子只读：复用 diary/parser 产出的 DiaryEntry 形状） */
