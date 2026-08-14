@@ -28,7 +28,6 @@ import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverd
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
 import { openPomodoro, unloadPomodoro, ensurePomodoro, ensurePomodoroEpubLink, unloadPomodoroEpubLink } from './pomodoro';
-import { unloadBlackBox, openBlackBoxPanel, ensureBlackBoxExtraction, autoStartBlackBoxExtraction, unloadBlackBoxExtraction, manualReview, openBlackBoxChat } from './blackbox';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // B站下载器启动命令（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
 import { openBiliDownloader } from './bili-downloader';
@@ -92,10 +91,6 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-flash-chat', name: '闪念对话', icon: 'message-circle', callback: () => openFlashChat(getApp()) },
   // 番茄钟（ticket 26-32 新域）
   { id: 'bz-pomodoro-open', name: '番茄钟', icon: 'timer', callback: () => openPomodoro(getApp()) },
-  // 黑匣子（ticket 58 v4 数据层地基：命令在 ticket 59 起随 UI 重建恢复 open/panel/review）
-  { id: 'bz-blackbox-open', name: '黑匣子', icon: 'message-circle-heart', callback: () => openBlackBoxChat(getApp()) },
-  { id: 'bz-blackbox-panel', name: '黑匣子面板', icon: 'layout-grid', callback: () => openBlackBoxPanel(getApp()) },
-  { id: 'bz-blackbox-review', name: '复盘', icon: 'sprout', callback: () => manualReview(getApp()) },
   // B站下载器（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
   { id: 'bz-bili-open', name: 'B站下载器', icon: 'tv-minimal-play', callback: () => openBiliDownloader() },
 ];
@@ -196,10 +191,6 @@ export default class BzPlugin extends Plugin {
       void ensurePomodoro(this.app);
       // 读书自动番茄钟（ticket 51）：打开/关闭 epub 书自动联动（设置开关默认开，关则静默）
       ensurePomodoroEpubLink(this.app);
-      // 黑匣子增量提炼监听（ticket 59：vault modify/create 三目录 → 防抖 30 分钟）
-      ensureBlackBoxExtraction(this.app);
-      // 启动自动提炼（用户反馈修复：重启后无反应；cursor 空 → 全量，有待处理 → 增量）
-      void autoStartBlackBoxExtraction(this.app);
     });
     // 手势触发（设置页可配，默认关闭）
     this.syncGestures();
@@ -218,7 +209,6 @@ export default class BzPlugin extends Plugin {
     unmountPomodoroStatusBar();
     unloadPomodoro();
     unloadPomodoroEpubLink();
-    unloadBlackBox();
     unloadBz();
     unloadAIAgent();
     unloadLauncherPanel();
@@ -257,7 +247,7 @@ export default class BzPlugin extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
-    // 设置变更后重置 AI provider 缓存：DeepSeek key/服务商改动立即生效（黑匣子等 AI 消费方）
+    // 设置变更后重置 AI provider 缓存：DeepSeek key/服务商改动立即生效（AI 消费方）
     resetAIProviderCache();
   }
 

@@ -1,7 +1,7 @@
 /**
  * 读书自动番茄钟（ticket 51/53）：epub 阅读器联动层。
  * - 检测：active-leaf-change 监听 + 番茄钟 tick 顺带轮询（同视图换书兜底，不新增独立定时器）；
- *   active leaf 形状探测（视图类型 + filePath/bookTitle 只读属性），不注册阅读器 API（黑匣子 ADR-0016 同风格）。
+ *   active leaf 形状探测（视图类型 + filePath/bookTitle 只读属性），不注册阅读器 API。
  * - 决策：decideReadingAction 纯函数（事件×状态×设置 → 动作），confirm 场景（休息中/他处专注）输出占位动作，ticket 54 接线。
  * - 执行：函数体内延迟 import ui（ADR-0002：UI 内部函数级引用环允许，模块顶层互访禁止）。
  * 依赖方向：ui.ts 顶层 import 本模块（tick 轮询调用）；本模块顶层不 import ui。
@@ -11,7 +11,7 @@ import { tryGetSettings } from '../core/settings-provider';
 import type { PomodoroState } from './state';
 import { createInitialState } from './state';
 
-/** 阅读器视图类型（fork 构建；与黑匣子 host.ts READER_PLUGIN_IDS 同源风格） */
+/** 阅读器视图类型（fork 构建；形状探测风格） */
 export const READER_VIEW_TYPES = ['weave-epub-reader-standalone'] as const;
 
 /** 当前阅读的书（epub 文件路径 + 显示名快照） */

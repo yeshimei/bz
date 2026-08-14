@@ -2,13 +2,6 @@
  * 测试环境共享 setup：jsdom 中补齐 Obsidian 运行时常用 API。
  * obsidian 模块的替换由 vitest.config.ts 的 resolve.alias 完成。
  */
-import { beforeEach } from 'vitest';
-import { resetBlackBoxCache } from '../src/blackbox/data';
-
-// 黑匣子水合缓存模块级：每个测试前清空（防跨测试状态泄漏）
-beforeEach(() => {
-  resetBlackBoxCache();
-});
 // 补齐 jsdom 缺失的 API（node 环境跳过：数据层测试不依赖 DOM）
 if (typeof window !== 'undefined' && !window.getSelection) {
   (window as any).getSelection = () => ({

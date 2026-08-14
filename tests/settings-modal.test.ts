@@ -44,12 +44,12 @@ describe('core settings-modal 机制', () => {
     expect(popup!.querySelector('[data-name="测试项"]')).not.toBeNull();
   });
 
-  it('层级：设置弹窗 z-index 高于黑匣子面板（10040/10041），低于入口页 10100', () => {
+  it('层级：设置弹窗 z-index 高于普通面板弹窗（10001-10005），低于入口页 10100', () => {
     openSettingsModal({ title: '层级测试', build: () => {} });
     const mask = document.getElementById('bz-settings-modal-mask');
     expect(mask).not.toBeNull();
     const z = parseInt(mask!.style.zIndex, 10);
-    expect(z).toBeGreaterThan(10041);
+    expect(z).toBeGreaterThan(10005);
     expect(z).toBeLessThan(10100);
   });
 

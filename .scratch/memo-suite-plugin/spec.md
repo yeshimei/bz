@@ -195,25 +195,6 @@ Feature: memo-suite-plugin
 15. 作为用户，我希望读书统计显示「📚 读书 X 个 🍅」（今日完成、target 为书的专注数，取代按分钟聚合），以便统计读书消耗的番茄。
 16. 作为用户，我希望「读书自动番茄钟」开关（默认开）+「读书启动形态」（后台静默默认 / 自动弹窗）两项可设置，以便按需开关联动。
 
-### 黑匣子 v4（日记智能分析层，grilling 会话 + 社区调研封板，完整设计见 `.scratch/blackbox-suite-plugin/spec.md`）
-
-> v4 方向反转（ADR-0017）：黑匣子不再是容器（v1 感触/v2 三类条目/v3 笔记化全部作废），而是**日记的智能分析层**——数据仍由日记本书写（`我的/日记` + `我的/影视` + `我的/信` 三目录，唯一事实源），黑匣子只读日记、AI 提炼、产出派生层（blackbox.json v4）。不录入、不持有原始数据、不建笔记文件。存量已删（`我的/黑匣子/` 1492 文件 + blackbox.json，2026-08 执行）。
-
-1. 作为用户，我希望黑匣子不要求我额外录入任何内容——它只读我的日记（`我的/日记` + `我的/影视` + `我的/信`），数据仍由日记本写，以便零负担获得 AI 分析。
-2. 作为用户，我希望写日记后黑匣子自动增量提炼（防抖 30 分钟），提炼人物提及/事件候选/情绪推断，以便无需手动触发。
-3. 作为用户，我希望打开黑匣子（对话/面板/复盘任一命令）时若有待处理日记条目，先即时提炼再渲染，以便数据永不过期。
-4. 作为用户，我希望首次启用时对历史日记做全量提炼（分批 50 条/批串行 + 进度通知），之后转增量，以便旧日记也被分析。
-5. 作为用户，我希望人物出现 ≥2 次（跨不同日期）自动建画像（AI 观察区给初始印象），单次出现只计入提及候选，以便不产生幻觉人物噪音。
-6. 作为用户，我希望人物画像分两层：印象区（我编辑的固定印象，改过 AI 不再覆盖）+ AI 观察区（持续更新，可采纳进印象区），以便既有 AI 维护又有我的主权。
-7. 作为用户，我希望事件由 AI 从日记提炼（一条日记可提炼多个），置信度 ≥0.7 直接入线、0.5–0.7 标推测（虚线+❓ 可确认/删除）、<0.5 不入库；改过的事件 AI 不再碰，以便零负担获得时间线又不被幻觉误导。
-8. 作为用户，我希望事件证据链可跳转（打开日记文件 + 定位条目），以便回到原始记录。
-9. 作为用户，我希望复盘为纯手动触发（`bz-blackbox-review` 命令 + 面板按钮），产物为四段结构化报告（人物画像更新/事件汇报/情绪聚合/反思建议），每条引用日期+原文片段，写入对话流可见，以便看到包仔的成长又不被泛泛而谈打扰。
-10. 作为用户，我希望情绪由 AI 从日记推断（24 词表，每条 1–3 词，推断失败不标注），聚合呈现于事件时间线（情绪色点 + 时段分布条）与复盘流（情绪趋势段），以便情绪分析不打断日记书写。
-11. 作为用户，我希望对话基于三层记忆：日记条目检索（TF-IDF）+ 画像概要（名字+印象一句话+最近事件标题）+ 对话历史，包仔人设保留，以便它真正「认识我」。
-12. 作为用户，我希望 `bz-blackbox-panel` 打开三标签派生面板（人物墙 / 事件时间线 / 复盘流），以便浏览 AI 分析结果。
-13. 作为用户，我希望 ⚙️ 设置 6 项：AI 服务商、Ollama URL、Ollama 模型、对话历史条数、推测事件显示开关、情绪词表可编辑，以便按需控制。
-14. 作为用户，我希望 AI 服务不可用时浏览始终可用（提炼跳过下次重试、复盘失败提示、对话降级文本检索），以便黑匣子永不因 AI 故障瘫痪。
-
 ### 全局
 
 46. 作为用户，我希望所有域的面板 DOM id/类名与原脚本一致，以便样式与既有习惯不变。
@@ -283,8 +264,6 @@ Feature: memo-suite-plugin
 - **做题家**：`bz-quiz-update`、`bz-quiz-open`
 - **闪念**：`bz-flash-open`（打开参考窗口）、`bz-flash-chat`（打开聊天窗口）
 - **番茄钟**（ticket 26 新域）：`bz-pomodoro-open`（中文名「番茄钟」，icon timer）
-- **黑匣子（ticket 33 新域；v4 重构为日记分析层，ticket 57）**：`bz-blackbox-open`（中文名「黑匣子」，对话）、`bz-blackbox-review`（中文名「复盘」，手动聚合）、`bz-blackbox-panel`（中文名「黑匣子面板」，三标签派生面板：人物墙/事件时间线/复盘流）
-- **黑匣子已删除命令（v4）**：`bz-blackbox-capture`（录入，原「写感触」）、`bz-blackbox-capture-concept/-literature/-thought`（三类直达录入）、`bz-blackbox-import-cardbox`（导入卡片盒）
 - **日记本**（已迁）：`bz-diary-write`、`bz-diary-open`
 - **B站下载器**：`bz-bili-open`
 - 已删除命令：`bz-notification-demo`（通知样式演示）、`bz-diary-create-quote`（写摘抄）
@@ -309,7 +288,6 @@ Feature: memo-suite-plugin
 | AIAgent | vault rename/delete/create | 同步备忘录/收藏本 |
 | 复习计划 | vault/workspace resolved/modify/rename/quit | 数据状态自动同步 |
 | 闪念 | vault modify | 向量增量重建（防抖） |
-| 黑匣子（v4） | vault modify/create（三目录） | 增量提炼（防抖 30 分钟；打开黑匣子时待处理条目即时提炼） |
 
 ### 域间共享状态（原 window.__ 语义 → 模块共享）
 
@@ -340,7 +318,6 @@ Feature: memo-suite-plugin
 - **复习计划（含做题家）**：autoCheckInterval、enableAutoNotify + 做题家 5 项（enableMultipleChoice、questionsPerNote、shuffleQuestions、difficulty、forceQuizForReview）
 - **番茄钟（13 项）**：pomodoroPreset（13 档：12 预设+自定义，含阅读沉浸 45/10/20）、pomodoroWorkMin/pomodoroShortBreakMin/pomodoroLongBreakMin（自定义时长，预设=自定义时动态显示）、pomodoroLongBreakInterval（N，默认 4）、pomodoroForceFocus（默认关）、pomodoroAutoCycle（默认关）、pomodoroAutoSkipBreak（默认关）、pomodoroSound（默认开）、pomodoroVolume（音量 0-100，默认 100 最大，设置弹窗 slider+试听）、pomodoroRestoreMode（启动恢复方式：background 后台继续 / popup 正在倒计时则自动弹窗；恢复继续弹「番茄钟继续：…还剩 mm:ss」通知）、pomodoroEpubAuto（读书自动番茄钟开关，默认开；关则联动静默不监听）、pomodoroEpubMode（读书启动形态：background 后台静默默认 / popup 自动弹窗）
 - **闪念（17 项全量，含 AI 项）**：OLLAMA_URL、EMBEDDING_MODEL、META_PATH、VEC_PATH、TOP_K、CHAT_TOP_K、CHUNK_MIN_LENGTH、ALLOW_PATHS、CONCURRENCY、CONTEXT_LIMIT、DEBOUNCE_DELAY、CURSOR_POLL_INTERVAL、OLLAMA_CHAT_MODEL、DEEPSEEK_MODEL、DEFAULT_USE_DEEPSEEK、MAX_HISTORY、OLLAMA_REMOTE_URL
-- **黑匣子（v4 共 6 项）**：blackboxAIProvider（deepseek/ollama 两档，默认 deepseek）、blackboxOllamaUrl（默认 http://localhost:11434）、blackboxOllamaModel（默认 qwen2.5:14b-instruct）、blackboxMaxHistory（对话历史保留条数，默认 20）、blackboxShowSpeculativeEvents（推测事件显示开关，默认开）、情绪词表可编辑（settings.words 增删，预置 24 词）。**已删除（v4）**：blackboxReviewThreshold（复盘阈值，复盘改手动）、blackboxDefaultTypeFilter（默认类型筛选，三类条目已删）
 
 **筛选弹窗（🔀，非设置）**：影视「筛选与排序」（类型筛选+排序）、书库「视图与筛选」（分类筛选+视图）
 

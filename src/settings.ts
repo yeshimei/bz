@@ -241,18 +241,6 @@ export default interface BzSettings {
   pomodoroEpubAuto: boolean;
   /** 读书启动形态：background（后台静默）/ popup（自动弹窗），默认后台（ticket 51） */
   pomodoroEpubMode: string;
-
-  // ===== 🕳️ 黑匣子（6 项，ticket 58 v4 分析层）=====
-  /** AI 服务：deepseek（默认，跟随 bz 既有模式）/ ollama（本地） */
-  blackboxAIProvider: string;
-  /** Ollama 地址（ollama 模式用） */
-  blackboxOllamaUrl: string;
-  /** Ollama 对话模型（ollama 模式用） */
-  blackboxOllamaModel: string;
-  /** 对话历史保留条数（三层记忆的短期记忆上限，默认 20） */
-  blackboxMaxHistory: string;
-  /** 推测事件显示开关（默认开；数据内 settings.showSpeculativeEvents 兜底同步，v2 新增） */
-  blackboxShowSpeculativeEvents: boolean;
 }
 
 export const DEFAULT_SETTINGS: BzSettings = {
@@ -389,11 +377,4 @@ export const DEFAULT_SETTINGS: BzSettings = {
   pomodoroRestoreMode: 'background',
   pomodoroEpubAuto: true,
   pomodoroEpubMode: 'background',
-
-  // 黑匣子
-  blackboxAIProvider: 'deepseek',
-  blackboxOllamaUrl: 'http://localhost:11434',
-  blackboxOllamaModel: 'qwen2.5:14b-instruct',
-  blackboxMaxHistory: '20',
-  blackboxShowSpeculativeEvents: true,
 };

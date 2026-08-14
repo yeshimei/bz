@@ -1,18 +1,14 @@
 # bz 进度（上下文压缩恢复点）
 
-最后更新：2026-09（**黑匣子 v4 重构完成（ticket 57-64）：容器 → 日记智能分析层**，1077/1077 全绿）。仓库 `E:/Obsidian/bz`，构建产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`。
 
-- **黑匣子 v4 重构（ticket 57-64，grilling + 社区调研封板，ADR-0017）**：黑匣子从容器（v1 感触/v2 三类条目/v3 笔记化）重构为**日记智能分析层**——数据由日记本书写（`我的/日记` + `我的/影视` + `我的/信` 三目录，唯一事实源），黑匣子只读日记、AI 提炼、产出派生层（blackbox.json v4：profiles/mentions/events/reviews/chat/cursor/settings）。**删除**：录入（capture×4 命令 + 弹窗）、三类条目、导入卡片盒、`我的/黑匣子/` 笔记目录（存量已删 1492 文件 + blackbox.json）。**ticket 57** 设计落盘（spec 重写 + ADR-0017 + CONTEXT 术语 + 社区调研报告 4 主题 + tickets 57-64 拆分）。**ticket 58** 数据层地基（v4 schema 冻结：画像 provenance 分层/humanEdited 锁/mentions 门槛 ≥2 次跨日期/事件置信度分级 ≥0.7/0.5-0.7/<0.5/证据链 {path,lineNumber,time}；日记读取复用 diary/parser + config；坏 JSON 备份 .bak；42 测试）。**ticket 59** 提炼链路（vault modify/create 监听三目录 + 防抖 30 分钟 + 打开即时提炼 + 首次全量分批 50 串行 + 一次 AI 调用批量 {people,events,emotions} + 失败跳过重试；三标签面板骨架；31 测试）。**ticket 60** 事件时间线（事件卡/推测❓确认删除/人物年份筛选/时段情绪分布条/证据链跳转/showSpeculativeEvents 开关；7 测试）。**ticket 61** 人物画像（画像卡印象/观察摘要/情绪聚合/事件数 + 详情展开采纳移除 + mentions 候选 + humanEdited 锁；6 测试）。**ticket 62** 复盘（手动四段报告事实锚定 JSON 落盘 + 对话流可见 + 新人物提示 + 画像观察聚合 ≤5 裁旧 + 失败降级；12 测试）。**ticket 63** 对话（三层记忆：日记 TF-IDF 检索 + 画像概要 + 历史 maxHistory；包仔人设代码常量；AI 降级；7 测试）。**ticket 64** 设置/样式/装配（设置弹窗 6 项含词表增删 + Ollama 接入 getBlackBoxAI + styles.css v4 收敛删 v3 1300 行 + 移动端双断点 + 构建直出 vault；10 测试）。**命令**：删 capture×4 + import-cardbox，恢复 bz-blackbox-open/panel/review 三命令。**注意**：4218 处 `[[我的/黑匣子/…]]` 断链不管（Q11）；styles.css 提交含收藏本既有 WIP 3 行（无法分离）；cursor 单文件模型（旧文件修改不增量，cursor 文件删除回退全量）。**遗留**：黑匣子 Ollama 模式未实测（fetch /api/chat 已实现 + mock 测试）；事件实际发生时间推断校准（初版用记录日期）。
 
 - **收藏本优化（用户反馈，ticket 60 后续）**：① 移动端样式——右上角按钮去 box-shadow（`#fav-popup .fav-header .bz-icon-btn { box-shadow:none !important }`，主题 `button:not(.clickable-icon)` 特异性压制兜底；header 加 `fav-header` 类）、列表平铺去水平滚动条（容器补 `overflow-x: hidden`——`overflow-y:auto` 时横向溢出会连带计算为可滚动）+ 卡片下边框去除（移动端改 `border: none !important`）、标题栏移动端去下边框。② **AI 推荐 GitHub 增强**——`fetchGitHubInfo` 改真实 GitHub API（requestUrl 取 `https://api.github.com/repos/{owner}/{repo}`，原稿为纯 AI 生成，现取真实仓库名/简介，API 失败降级仓库名+空简介，非 GitHub 地址抛错）；`_handleAIRecommend` 检测 GitHub 链接：标题空则仓库名预填、提示词附仓库简介并要求翻译成中文（20-50 字）、GitHub 标签强制选中（AI 漏选/未返回时兜底，`let recommendedTags` 归一）；AI 失败时简介降级填仓库简介原文；「⏳ AI 整理中」按钮态提前到 GitHub 拉取前。③ **新增分类「DeepSeek Harness 🐋」**（CONFIG.DEFAULT_TAGS 追加第 9 项，标签栏/类型按钮/AI 提示词标签清单自动生效，旧数据不受影响）。④ **GitHub 简介忠实翻译修复**（用户反馈：短标语简介被 AI 扩写成泛泛介绍；GitHub 分支提示词改为「忠实翻译成中文，不扩写/不总结/不凑字数，已中文原样保留」——原「20-50 字」约束是扩写诱因；api.github.com 实测正常返回原文）。⑤ **GitHub 拉取加固 + 失败可见**（用户二次反馈怀疑简介是 AI 编的）：fetchGitHubInfo 返回加 `fetched` 标志（8s 超时 + 重试 1 次 + 非 2xx 判失败）；成功弹 info「已获取 GitHub 仓库信息」、失败弹 warning「GitHub 仓库简介获取失败，简介留空不编造」；**提示词在无简介/获取失败时强制「简介返回空字符串，严禁编造」**（此前失败静默降级 + AI 凭仓库名/记忆生成是「自己写的」根因）。spec 已同步（收藏本要点 + AI 提示词结构 GitHub 分支）。测试 +5（ai.test 3→5 改写真实 API mock、ui.test +3：仓库名预填+翻译+GitHub 选中 / API 失败降级+标签兜底 / AI 失败简介原文），收藏本 38→43 全绿。
 
-- **ticket 61 代码体检（用户要求全面体检后逐项落地）**：① P0 清理——删 core/ai.ts 两处「AI 请求结果」调试 console.log、favorites/app.ts「📌 收藏管理器已初始化」残留日志；AGENTS.md 领域表补 blackbox 第 19 域（`我的/黑匣子/*.md` + blackbox.json 派生层）。② **tsc 25 预存错误清零**（src/flash/vector-store.ts:83 ArrayBuffer 断言 + 测试 24 处：Element→HTMLElement、setSettingsProvider 补 as any、MockVault.file 返回 any、MovieM.entries 断言）——`npx tsc --noEmit` 从此 0 错误可作门禁。③ **core 层样式收敛（ticket 60 延伸）**——notice.ts NOTICE_CSS 262 行、settings-modal SETTINGS_MODAL_CSS 14 行移入 styles.css，confirm.ts 全内联改 `#__shared_confirm_*` id 选择器（popup 新增 id `__shared_confirm_popup__`，mask/按钮 id 不变），dom.ts createOverlay/createIconBtn/createSiteIcon 视觉改类名（bz-overlay-mask/bz-overlay-popup/bz-icon-btn/bz-icon-btn--close/bz-site-icon，hover 移 CSS :hover），settings-modal 头部/内容/空态类名化（bz-settings-*）；删除废弃导出 injectStyles（无调用方 + 测试同步删，1200→1199 测试）；测试视觉断言改类名断言（notice「不再注入 style」/dom「bz-icon-btn 类」）。④ **工具函数收敛**——escapeHtml 统一到 core（补 `"`/`'` 转义，capture.ts 删本地副本）；新增 core pad2 替换 9 文件 13 处 `padStart(2,'0')`（belongings/report/stats/movie×2/diary×2/pomodoro×3）；**genId 不统一**（blackbox `bb_时间戳_随机` 与 core `-` 分隔格式不同且 id 已落盘用户数据，铁律 1 保留）。⑤ **P3 大函数拆分（9 个，行为不变）**——favorites _renderCard 338→3 函数、movie openAddModal 262→createTagGroup/createStatusGroup/createFieldRow/createTextareaRow、movie openFilterModal→renderFilterSettings、memo createAddDialog 304→AddDialogCtx/_buildSceneButtons/_handleAddSave、movie analysis buildAnalysisData 215→5 纯函数、library renderLibraryList→renderBookCard + showBookNotes→renderBookNoteNode/renderHighlightBlock、password createCard→attachLongPress、quiz renderModal→_buildOptionButtons/cleanOptionText、review createMainUI→_bindHeaderEvents/_buildSettingsItems。⑥ flash 4 未接线文件（float-window/reference-panel/chat-panel/mobile-panel）头部加 ⚠️ WIP 标注（ticket 18 未接线，index.ts 仍占位）。**遗留**：域层内联样式仍多（reading-report 234/movie 76/library 63/belongings 60 处 cssText），属 ticket 60 式整域工程，待后续 ticket。
+- **ticket 61 代码体检（用户要求全面体检后逐项落地）**：① P0 清理——删 core/ai.ts 两处「AI 请求结果」调试 console.log、favorites/app.ts「📌 收藏管理器已初始化」残留日志。② **tsc 25 预存错误清零**（src/flash/vector-store.ts:83 ArrayBuffer 断言 + 测试 24 处：Element→HTMLElement、setSettingsProvider 补 as any、MockVault.file 返回 any、MovieM.entries 断言）——`npx tsc --noEmit` 从此 0 错误可作门禁。③ **core 层样式收敛（ticket 60 延伸）**——notice.ts NOTICE_CSS 262 行、settings-modal SETTINGS_MODAL_CSS 14 行移入 styles.css，confirm.ts 全内联改 `#__shared_confirm_*` id 选择器（popup 新增 id `__shared_confirm_popup__`，mask/按钮 id 不变），dom.ts createOverlay/createIconBtn/createSiteIcon 视觉改类名（bz-overlay-mask/bz-overlay-popup/bz-icon-btn/bz-icon-btn--close/bz-site-icon，hover 移 CSS :hover），settings-modal 头部/内容/空态类名化（bz-settings-*）；删除废弃导出 injectStyles（无调用方 + 测试同步删，1200→1199 测试）；测试视觉断言改类名断言（notice「不再注入 style」/dom「bz-icon-btn 类」）。④ **工具函数收敛**——escapeHtml 统一到 core（补 `"`/`'` 转义，删本地副本）；新增 core pad2 替换 9 文件 13 处 `padStart(2,'0')`（belongings/report/stats/movie×2/diary×2/pomodoro×3）。⑤ **P3 大函数拆分（9 个，行为不变）**——favorites _renderCard 338→3 函数、movie openAddModal 262→createTagGroup/createStatusGroup/createFieldRow/createTextareaRow、movie openFilterModal→renderFilterSettings、memo createAddDialog 304→AddDialogCtx/_buildSceneButtons/_handleAddSave、movie analysis buildAnalysisData 215→5 纯函数、library renderLibraryList→renderBookCard + showBookNotes→renderBookNoteNode/renderHighlightBlock、password createCard→attachLongPress、quiz renderModal→_buildOptionButtons/cleanOptionText、review createMainUI→_bindHeaderEvents/_buildSettingsItems。⑥ flash 4 未接线文件（float-window/reference-panel/chat-panel/mobile-panel）头部加 ⚠️ WIP 标注（ticket 18 未接线，index.ts 仍占位）。**遗留**：域层内联样式仍多（reading-report 234/movie 76/library 63/belongings 60 处 cssText），属 ticket 60 式整域工程，待后续 ticket。
 
 # bz 进度（上下文压缩恢复点）
 
-最后更新：2026-09（ticket 50 黑匣子录入打磨 + 新概念流转 + 面板标签升级），**1171/1171 全绿**。仓库 `E:/Obsidian/bz`，构建产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`。
 
-- **ticket 50 黑匣子录入打磨 + 新概念流转 + 面板标签（grilling 会话封板，issue 50 ready-for-agent → 已实现）**：① 概念面板名→定义、摘抄面板 摘抄→想法→来源 统一大间距（CSS ~18px）；② 想法框移内容步插在摘抄与来源之间，**手输不 AI 提炼**（分析 insight 不再预填，空则只存摘抄）；③ 书内选区（externalSel）来源 input 只读显示纯文字书名（`bookTitleFromSourceLink`，保存仍完整双链 cfi 不丢），概念面板新增来源框（定义下、主按钮上）；④ 三类录入删「➕ 新建画像」（createProfileWithSeed 保留给主面板）；⑤ **新概念流转**：摘抄勾选 ✦新概念 → 保存不落空定义概念 → 同弹窗依次概念录入（名可编辑、来源继承摘抄）→ 全部完成 `appendEntryTerms` 回填摘抄 terms（fm+正文）；跳过/关窗=不建不加（已确认仍回填）；重名→不新建直接关联既有；流转模式跳过原位注入；直达/EPUB 模式完成自动关；⑥ 摘抄不分类（autoClassify 仅 concept）；⑦ 面板：三标签带数量 + 改单选 + 概念子分类行（category 分组数量降序，点子分类只显示该分类概念）；⑧ 卡片来源行移正文+chips 之后，显示可读名（epub 书名/笔记名/URL 原样）。术语入 CONTEXT.md（新概念流转/书内来源显示规则/文献笔记手输想法+不分类）；spec 同步（ticket 50 节）。235 黑匣子测试（capture 流转全流程/跳过不建/重名守卫 + source-jump 纯函数 + panel 标签子分类），全量 1171 全绿，tsc 黑匣子零新增错误（既有 flash/diary 错误清单未清零）。**注意**：工作区含 ticket 07/ADR-0016（书内选区录入，weave 侧已完成）未提交实现，与本次改动文件级交织，随本次一并提交（提交信息注明）。
 
 - **影视设置扩展（用户决策，第 9 轮）**：设置弹窗 2→6 项 + 2 分组（默认视图/显示）。新增：movieDefaultSort（默认排序 6 档 date-desc/date-asc/rating-desc/rating-asc/name-asc/name-desc）、movieDefaultTypeFilter（默认类型筛选，dropdown 全部+ALL_TAGS 13 类型）、movieDefaultStatusFilter（默认状态筛选 全部/想看/在看/已看）、movieRatingDisplay（已看卡片评分 stars 星星串 / number ⭐数字，ui.ts 卡片渲染读 tryGetSettings）。`applyDefaultView`（src/movie/index.ts 导出）在 ensureMovie 应用，非法排序忽略回退 date-desc（ensureMovie 幂等 → 重启生效）。spec 设置项总表影视行已同步（6 项）。测试 +4（ensureMovie 默认视图生效/缺省回退、设置弹窗 9 setting-item 断言、评分 number 渲染）。802→806。**注意**：movie 设置弹窗 describe 测试需 setSettingsProvider 注入（getSettings 会抛错）；bash heredoc 传 python 时 `\n` 转义会丢，字符串拼接用 join('\n') 或 write 工具。
 
@@ -157,74 +153,6 @@
 
 ---
 
-## 2026-08-10 黑匣子新域（ticket 33-38，grilling 5 轮封板）
-
-**状态：974 测试全绿（76 文件），构建已产出（main.js 已直出 vault），提交 e351ed5**
-
-- ✅ **grilling 会话**（5 轮 17 问）：载体 = bz 新域；边界 = 平行新流（次级内容未来接入）；本质 = 他者（伴侣向）；输入 = 感触（素材+感受焊死）；人格 = 种子+生长（方案 D「有诗心的思辨者」，名字包仔）；交流 = 中央弹窗+静默复盘；记忆 = 三层；AI = 默认 DeepSeek 可切 Ollama
-- ✅ 新域 `src/blackbox/`（7 模块）：types（24 词情绪词表/阈值/裁剪纯函数）、data（blackbox.json v1）、ai（人设 prompt/三层记忆/JSON 容错）、capture（录入弹窗+AI 辅助）、chat（对话面板+成长区）、review（静默/手动复盘）、settings-ui（⚙️ 5 项）
-- ✅ 命令 +3：bz-blackbox-capture「写感触」/ bz-blackbox-open「黑匣子」/ bz-blackbox-review「复盘」；smoke 命令清单 38 个
-- ✅ ADR-0013（感触 schema v1 定全）、ADR-0014（平行流不元层）；CONTEXT.md 黑匣子术语 10 条；spec.md 黑匣子章节
-- ✅ 测试 +48（纯函数 20 / 数据层 8 / 录入 UI 9 / 对话 UI 11），全量 926 → 974
-- ⚠️ 待办：用户可选「种子编辑」（域设置弹窗目前只读展示）；次级内容接入机制（ADR-0014 演化路径）；入口页磁贴可自行添加三命令
-
----
-
-## 2026-08-1x 黑匣子 v2 设计封板（三类输入 + 人物画像 + 事件时间线，grilling 续轮）
-
-**状态：设计完成，spec 就绪，待开 ticket 实现**
-
-- ✅ **grilling 续轮**（设计树新增枝）：
-  - 三类条目：概念（AI 生成卡片 + 自动关联，**无感触外壳**）/ 文献（摘抄+来源+名词表勾选）/ 想法（核心层，前两类是其知识背景）
-  - 情绪标签**去掉强度**（24 词多选 ≤3）
-  - 人物画像（派生层）：印象字段级锁 + AI 观察区（可采纳）+ 事件投影 + 情绪聚合；冷启动双路径；虚拟角色可建；**遗忘权后置**
-  - 事件（派生层）：AI 全自动提炼 + 推测标记（虚线+❓，确认/删除）；改过 AI 不再碰；单份存储，画像时间线 = 按人投影
-  - 记忆扩展：画像/事件概要级进对话检索；复盘新增：新人物提示 + 事件汇报一句话
-  - 主面板五标签（概念墙/文献架/想法池/人物/时间线）；命令集不变（capture/open/review）
-- ✅ 完整 spec 落盘 `.scratch/blackbox-suite-plugin/spec.md`（schema v1 扩展：entries 三类 + profiles + events + persona/settings 段）；主 spec 黑匣子章节追加 v2 小节（US 11-22）
-- ✅ ADR-0013 更新（去强度、三类条目、派生层字段 v1 冻结）；ADR-0014 不变（平行流）
-- ⚠️ 待实现（ticket 39+）：三类录入 UI、画像、事件提炼、五标签面板、设置新增 2 项
-- ✅ **tickets 39-45 已落盘**（issues/39-45，用户批准 7 切片拆分）：39 schema v2+迁移（无阻塞）→ 40 三类录入 → 44 三标签页；39 → 41 画像全栈+主面板框架（panel 命令）→ 42 事件 → 43 时间线页；41/42 → 45 对话记忆+设置收尾
-- ✅ **回顾修正批次（写代码前）**：v2 外壳链接改数组 links[]（v1 实为逗号分隔多链接）；concept 关联概念字段改名 related[]；删除无必要的 linkedEntry/linkedPeople 落盘字段；检索机制明确沿用 v1 TF-IDF（非 bge-m3）；reviewThreshold 双源策略（全局设置优先，settings 兕底同步）；复盘计数口径=三类条目均计入；reviews 记录 v2 新增可选字段 eventReport/profileHint；主 spec 命令表 +bz-blackbox-panel、设置表 5→7 项；ticket 41 承担主面板框架、43 仅时间线页；ticket 39 迁移映射补 people 拆分/links 数组
-
-**▶ 新对话接手指引**：从 ticket 39 开始（`issues/39-blackbox-schema-v2.md`，无阻塞）。域源码 `src/blackbox/`（7 模块，v1 已提交 e3515ed）。设计事实源：`.scratch/blackbox-suite-plugin/spec.md`（v2 完整）+ 主 spec 黑匣子章节；术语 CONTEXT.md「黑匣子域」节；ADR-0013/0014。待用户确认的决策：panel 命令名、capture 中文名改「录入」、事件提炼时机（复盘批次）。
-
----
-
-## 2026-08-1x 黑匣子 v2 实现完成（ticket 39-45，全量重写 8 模块）
-
-**状态：1012 测试全绿（78 文件），类型检查无新增错误**
-
-- ✅ **ticket 39 schema v2 + 迁移**：blackbox.json v1→v2 无损迁移（impressions→thought 条目，素材+感受合并、情绪去强度、people 顿号/中英文逗号/空格拆分、links 逗号多链接拆数组）；三类条目（concept/literature/thought）各自必填校验；profiles/events/settings 容错回退；构造器 id 对齐 spec（bb_/pf_/ev_ 下划线）；TF-IDF 检索跨三类 + 复盘/事件提炼/画像提炼/三类辅助 prompt 纯函数层 + JSON 容错解析
-- ✅ **ticket 40 三类录入**：三类型胶囊切换（切换保留已填内容）；概念=名词→✨生成卡片（定义+关联既有概念）→确认/重新生成，无感触外壳；文献=摘抄+来源→✨分析名词表（预勾可增删，新概念确认后落概念条目）→「带出想法」同一次保存写 thought 条目；想法=textarea + ⚡联想/🔍查概念/❓追问（不打断录入流）；情绪 24 词多选 ≤3 无强度（词表实时来自 settings.words）；涉及的人=画像选择器（输入补全/现场新建画像/纯名字，≤5，AI 异步提炼初始印象）；AI 失败三类纯文本仍可保存（永不拒收）
-- ✅ **ticket 41 人物画像 + 主面板框架**：五标签面板 `bz-blackbox-panel`「黑匣子面板」（capture 中文名改「录入」）；人物卡墙+详情（印象用户主权区/AI 观察虚线区可采纳+移除/情绪聚合/事件投影）；新建画像 AI 从已有条目提炼初始印象；复盘新人物提示（程序计算高频提及未建画像人名）
-- ✅ **ticket 42 事件提炼**：复盘 AI 批量提炼（标题/摘要/时间回退/参与人物解析画像 id/证据链/情绪）；推测标记（AI 自评 + confidence<0.6 兜底）；标题+证据双重去重（edited 锁语义：改过不再碰）；画像观察增量（复盘追加，上限 5 裁旧，不覆盖用户印象）；事件汇报一句话「这周我整理了 N 件新事件（其中 M 件推测）」；部分失败降级（提炼失败不阻断复盘）
-- ✅ **ticket 43 时间线页**：年月分组事件流；事件卡=日期+标题+人物（主角完整/配角折叠）+情绪色点+证据链展开；推测事件虚线+❓+[✓确认][✕删除]（删除=数据删除，遗忘权后置）；人物/年份筛选；showSpeculativeEvents 关闭隐藏推测（全局优先，数据兜底同步）
-- ✅ **ticket 44 三浏览页**：概念墙卡片网格（名称/定义摘要/关联数，详情展开+关联跳转+引用文献）、文献架（来源+摘要+名词表，点击展开全文+链接）、想法池（文本+情绪+人+场景）；时间倒序+优雅空态
-- ✅ **ticket 45 对话记忆 + 设置 2 项**：对话检索上下文=条目检索 + 画像概要（名字/印象一句话/最近 3 个事件标题，预算截断）+ 命中条目关联事件标题；画像/事件未提炼时与 v1 行为一致降级；⚙️ 设置 5→7 项（推测事件显示开关、情绪词表增删持久化 settings.words）；删除词不影响存量条目
-- ✅ **测试 +86**（数据 28/纯函数 17/录入 11/对话 5/复盘 12/面板 9/设置 4）；smoke 命令清单 38→39
-- ⚠️ 待办：事件实际发生时间推断校准（初版用记录日期）；画像遗忘权（删除/断链/忽略持久化清单）；次级内容接入（ADR-0014 演化路径）
-
----
-
-## 2026-08-1x 黑匣子面板 v3 设计封板（grilling 会话，ticket 46 预留）
-
-**状态：设计已落 spec，未实现**
-
-- ✅ **grilling 封板（4 轮拷问）**：主面板五标签 → **流式布局**（照搬日记本骨架：header + 类型标签栏 🧩📎💡 多选 + 搜索 + 时间流，新在上，日期分隔条吸顶，批次滚动）；三类条目混排按 `createdAt` 倒序，事件不混入主流；**默认不选中任何类型（显示全部）**；卡片纯展示无交互（无单击/双击/长按/emoji 点击）；人物画像与事件时间线 → header 右上角独立弹窗（👤 / 🕐，完整度保留）；移动端照搬日记本断点（768px 95% 圆角顶 + 标签横滚 / 480px 全屏，长按与 fixMobileSelect 不搬）；新增设置项 `blackboxDefaultTypeFilter`（默认 ''=全部，重启生效，与 diaryDefaultSelectedTag 同模式）；数据层零改动（ADR-0013 schema 不动）
-- ✅ spec 落盘：`.scratch/blackbox-suite-plugin/spec.md`（主面板 v3 章节 + 设置表 8 项 + US 7/19 更新 + 样式/测试同步）+ 主 spec（US15/命令表/设置表）；PROGRESS 本节
-- ⏳ 待实现（ticket 46）：面板重写 panel.ts（流式 + 两弹窗）+ settings-ui.ts +1 项 + settings.ts DEFAULT_SETTINGS + styles.css 面板段重写 + 移动端断点 + 测试更新（面板测试五标签切换 → 流式/筛选/搜索/弹窗）
-
-## 2026-08-1x 黑匣子面板 v3 流式实现完成（ticket 46-48，全量 1047 测试）
-
-**状态：1047 测试全绿（79 文件），blackbox 零类型错误**
-
-- ✅ **ticket 46 流式主面板**：panel.ts 全量重写（五标签 → 时间流）：header 5 动作（✏️ 录入/👤 人物/🕐 时间线/⚙️ 设置/❌ 关闭）；类型标签栏三胶囊多选（默认空集=全部）；搜索防抖 300ms（名称/定义/文本/来源/情绪/人物显示名）；三类条目混排 createdAt 降序 + 日期分隔条吸顶 + 批次滚动（BATCH 20 + 「已显示所有内容」）；卡片纯展示三铺法（🧩 名称+定义+关联 chips ｜📎 来源+全文+名词表+链接 ｜💡 全文+情绪+人物+场景），无任何点击交互；人物/时间线独立弹窗宿主（复用 v2 渲染，esc 层级后注册先响应）；面板测试 17 个重写
-- ✅ **ticket 47 默认类型筛选设置项**：blackboxDefaultTypeFilter（''=全部/概念/文献/想法，重启生效，与 diaryDefaultSelectedTag 同模式）全链路：MemoSettings+DEFAULT_SETTINGS、⚙️ 弹窗下拉、面板打开消费；1 测试
-- ✅ **ticket 48 样式收敛 + 移动端**：五标签/概念墙网格/文献架/想法池旧样式删除（零引用确认）；新增流式骨架（类型标签栏/搜索框/时间流/吸顶日期条/卡片仿 diary-entry-card）；人物/时间线弹窗滚动区；移动端照搬日记本双断点（768px 圆角顶 95% + 类型标签单行横滚 + 紧凑 / 480px 全屏），长按与 fixMobileSelect 不搬
-- ✅ 提交：f2f21e4（设计落盘）/ 4ba8d81（46）/ 4b4047d（47）/ 98688b8（48）
-- ⚠️ 待办：事件实际发生时间推断校准；画像遗忘权；次级内容接入（ADR-0014）
-
 ## 2026-08-1x 备忘录多行输入完成（ticket 49，grilling 会话）
 
 **状态：1052 测试全绿（79 文件），tsc 错误数 25 与基线持平（无新增）**
@@ -236,7 +164,7 @@
 
 **状态：spec ready-for-agent，待实现**
 
-- ✅ **grilling 封板（17 问）**：打开 epub 书（fork-weave-epub-reader 视图 `weave-epub-reader-standalone`，形状探测只读 view.filePath/bookTitle，复用黑匣子 host.ts 先例，不注册阅读器 API）→ 番茄钟自动进入读书专注：idle 直接开始（免确认，形态按设置：后台静默默认/自动弹窗）；休息中/他处专注中 → 确认弹窗（是=立即按读书预设开始，否=保持原样本次不再提示）；读书中换书直接切；关书自动暂停（豁免 forceFocus）；重开同一本书重新开始新专注；选否后关闭再打开/换书重新询问；Obsidian 启动时书已打开视为打开事件；同视图换书靠 tick 轮询比对 filePath 兜底
+- ✅ **grilling 封板（17 问）**：打开 epub 书（fork-weave-epub-reader 视图 `weave-epub-reader-standalone`，形状探测只读 view.filePath/bookTitle，不注册阅读器 API）→ 番茄钟自动进入读书专注：idle 直接开始（免确认，形态按设置：后台静默默认/自动弹窗）；休息中/他处专注中 → 确认弹窗（是=立即按读书预设开始，否=保持原样本次不再提示）；读书中换书直接切；关书自动暂停（豁免 forceFocus）；重开同一本书重新开始新专注；选否后关闭再打开/换书重新询问；Obsidian 启动时书已打开视为打开事件；同视图换书靠 tick 轮询比对 filePath 兜底
 - ✅ **读书预设**：「阅读沉浸 45/10/20」第 12 项；读书模式自动切换（durations() override 不落盘），退出恢复读书前所选（含自定义）；确认后立即重启当前段
 - ✅ **统计改数量**：`📚 读书 X 个 🍅`（bookCountToday 今日完成数），删 bookMinutesToday 分钟聚合，pomodoro.json 零改动（Q3 撤销分钟统计）
 - ✅ **删书库 tab**：目标选择器只留备忘录/当前笔记；book target 仅自动关联产生
@@ -247,13 +175,13 @@
 
 ## 2026-08-1x 番茄钟读书自动关联实现完成（ticket 51-55）
 
-**状态：全量 1209 测试通过（blackbox/capture 1 例失败为工作区既有 WIP：capture.ts placeholder 文案改动未提交，与本次无关，干净 checkout 基线 30/30 绿）；tsc 25 与基线持平**
+**状态：全量 1209 测试通过；tsc 25 与基线持平**
 
 - ✅ **ticket 52 读书预设 + 统计 + 删书库 tab**：PRESETS 第 12 档「阅读沉浸 45/10/20」；stats `bookCountToday` 取代 `bookMinutesToday`，弹窗统计行「📚 读书 X 个 🍅」；目标选择器删 📚 书库 tab（book target 仅自动关联产生）；设置字段 pomodoroEpubAuto/pomodoroEpubMode 落盘；测试同步（119→122）
 - ✅ **ticket 53 读书联动核心**：`epub-link.ts`（getEpubBook 视图形状探测 reader viewType/filePath/bookTitle + decideReadingAction 决策纯函数 + active-leaf-change 监听 + tick 轮询兜底同视图换书 + 启动检测 1.5s 延迟）；ui `startReadingFocus/switchReadingFocus/pauseReadingFocus/exitReadingMode`（forcePause 豁免 forceFocus，状态机不动）；读书模式 durations() override（45/10/20，N 全局），退出恢复读书前预设；总开关关不注册（ADR-0003）；main 懒加载注册 + unload 清理；决策关键修复：prev=null∧book=null 不重复暂停（手动继续的专注不被 tick 误伤）、暂停后重开书=新专注（Q2）区分于手动暂停（尊重）；测试 +30
 - ✅ **ticket 54 确认弹窗 + 启动形态**：休息中（skip-break）/他处专注中（enter）→ 自绘确认弹窗（zIndex 10005，esc/遮罩/否=保持原样，是=立即按读书预设开始 Q17）；选否记忆靠 prev 更新天然成立（同书不重复触发，关书重开/换书重新询问）；启动形态 popup 自动弹主弹窗；⚙️ 弹窗「读书启动形态」下拉；测试 +7
-- ✅ **ticket 55 装配收尾**：spec.md 番茄钟 US 12-16 + 设置表 13 项同步；本 PROGRESS 条目；构建直出 vault；一次提交（不含工作区既有 capture.ts WIP）
-- ⚠️ 待办：blackbox/capture.ts 工作区 WIP（placeholder 文案）需用户确认归属；手动冒烟（真实 Obsidian 打开 epub 验证）
+- ✅ **ticket 55 装配收尾**：spec.md 番茄钟 US 12-16 + 设置表 13 项同步；本 PROGRESS 条目；构建直出 vault
+- ⚠️ 待办：手动冒烟（真实 Obsidian 打开 epub 验证）
 
 ## 2026-08-1x 通知类型系统扩展 + 全库去 emoji（用户决策）
 
@@ -262,23 +190,4 @@
 - ✅ **通知类型扩展**：NoticeType 从 4 种 → 11 种（info/success/warning/error + pause ⏸️/accept ✨/delete 🗑️/confirm ✓/restore ↩️/skip 🚫/archive 📁），各带颜色 class（success 补绿色）；notice.ts 头部注释写入「新增通知类型规范」：新语义先查 ICONS 表，确无匹配再新增（ICONS + 颜色 + 时长），不得把 emoji 写进正文
 - ✅ **全库去 emoji**：50 处单行 + 5 处手工（pomodoro 三元/暂停、memo 动态前缀）共 55 处通知调用去 emoji 前缀 + 显式传类型；脚本两处 bug 修复（FE0F 变化选择符拆分、astral 字符缺 u flag 产生 U+FFFD、模板字符串降级 16 处修复——均验证零残留）
 - ✅ **测试同步**：27 处断言去 emoji；CONTEXT.md 通知/文案规范更新（正文不带 emoji、类型图标即前缀、z-index 修正 100000）
-- ✅ **误伤修复**：git checkout 误回滚 capture.ts 工作区 WIP（7 处 placeholder 简化）→ 已按原意图恢复 + 同步测试断言（toContain('提喻法') → '想搞懂的概念或实体'），capture.test.ts 30/30 绿
 
-## 2026-08-1x 黑匣子目录迁移：黑匣子/ → 我的/黑匣子/（用户决策）
-
-**状态：全量 1212 测试全绿（88 文件）；tsc 25 与基线持平**
-
-- ✅ **代码层**：BB_NOTE_ROOT 常量 '黑匣子' → '我的/黑匣子'（notes.ts）；sync.ts typeRoots 硬编码改经 BB_NOTE_ROOT 拼接（补 import）；data.ts/notes.ts 注释路径同步
-- ✅ **测试层**：136 处字面量 `黑匣子/` → `我的/黑匣子/`（data/sync/capture/notes/capture-epub/v3-seed），黑匣子 235 测试全绿
-- ✅ **vault 存量数据**（vault 内操作，不入 git）：1327 篇笔记 4218 处 `[[黑匣子/` → `[[我的/黑匣子/`（完整路径双链，覆盖概念/摘抄/想法含分类子目录）；workspace.json 32 处路径同步（JSON 校验有效）；launcher 磁贴名/epub 插件缓存不动
-- ✅ **构建产物**：npm run build 直出 vault 插件目录；旧产物指向已不存在的 `黑匣子/` 导致面板空数据 → 重载后全量水合恢复
-
-## 2026-08-1x 黑匣子打开提速 + 录入后台化（ticket 56，用户需求）
-
-**状态：blackbox 243 测试全绿（15 文件）；全量并发抖动项（belongings/pomodoro）与干净基线持平；tsc 零新增**
-
-- ✅ **打开秒开**：录入弹窗（概念/摘抄/想法/引导式）与主面板打开立即渲染骨架，不再同步等待全量水合；缓存未就绪时顶部显示「正在扫描黑匣子…」提示条（`.bz-blackbox-scanning`），数据就绪自动移除（缓存命中则不可见）
-- ✅ **水合缓存（只全扫一次）**：`BlackBoxDataManager.load` 内存缓存（`cachedData`）：首次 load 全扫水合后缓存，后续 load 直接命中；`save()` 末尾同步缓存（vault 写入之后赋值）；sync.ts vault modify/create/rename/delete 同步事件失效（插件自身写入 = 事件先失效 + save 后置恢复，自愈无额外全扫）；外部编辑/移动/删除 → 下次 load 重扫；sync refresh() 先失效再 load（编辑后强制全扫一次，面板实时跟随不变）
-- ✅ **录入后台化**：概念/文献/想法确认后先落盘核心数据再关面板（直达模式保存即关）；后台补全链：AI 标题生成（无分析标题时）→ `renameEntryNote` 重命名笔记 → 原位注入（摘抄目标 = AI 标题）→ 双向关联回填 → 自动分类（原异步保持）；标题生成成功且改名 → notice「已生成标题「xxx」」（info，不带 emoji）；AI 失败保持降级名（正文前 20 字）永不拒收
-- ✅ **关键修复**：finalize 降级名误判（水合时文件名回退为 title → 与降级名比较后仍触发 AI）；saveConcept 快照捕获顺序（close 置空 selectionSnap 前先复制副本）；renameEntryNote 同名现路径误判 -1（先比 base===oldPath 再 uniquePath）
-- ✅ **测试**：缓存行为（命中/失效重扫/save 同步）+ renameEntryNote 4 例（重命名/同名补 fm/概念拒绝/空标题拒绝）+ 扫描提示条（capture/panel 同步点断言）+ AI 标题后台重命名 waitFor + 注入目标 = AI 标题 + 概念注入后台化 + create 事件仅失效缓存不刷新面板；setup.ts 全局 beforeEach 重置水合缓存（防跨测试泄漏）
