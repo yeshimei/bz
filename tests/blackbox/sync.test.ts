@@ -247,4 +247,30 @@ describe('autoStartBlackBoxExtraction（启动自动提炼）', () => {
     await autoStartBlackBoxExtraction(app, ai);
     expect(ai.json).not.toHaveBeenCalled();
   });
+
+  it('自动提炼全流程写 blackbox-debug.log（步骤/异常可观测）', async () => {
+    const { vault, app } = setup();
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', aiProvider: 'deepseek', deepseekApiKey: 'sk-test' }) as any);
+    const ai = makeAI(EXTRACT_JSON);
+    await autoStartBlackBoxExtraction(app, ai);
+    const log = vault.files.get('CONFIG/STORAGE/blackbox-debug.log') || '';
+    expect(log).toContain('自动提炼启动');
+    expect(log).toContain('cursor=null');
+    expect(log).toContain('全量提炼开始');
+    expect(log).toContain('全量完成');
+    expect(log).toContain('自动提炼流程结束');
+  });
+
+  it('自动提炼异常 → warning 通知 + 日志落盘（不再静默）', async () => {
+    const { app } = setup();
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', aiProvider: 'deepseek', deepseekApiKey: 'sk-test' }) as any);
+    const ai = makeAI(EXTRACT_JSON);
+    const spy = vi.spyOn(BlackBoxDataManager.prototype, 'load').mockRejectedValueOnce(new Error('测试异常'));
+    await autoStartBlackBoxExtraction(app, ai);
+    spy.mockRestore();
+    const msgs = getNoticeMessages().join(' ');
+    expect(msgs).toContain('异常');
+    const log = app.vault.files.get('CONFIG/STORAGE/blackbox-debug.log') || '';
+    expect(log).toContain('自动提炼异常');
+  });
 });

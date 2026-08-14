@@ -6,6 +6,7 @@
 import { getApp } from '../core/app';
 import { notice } from '../core/notice';
 import { getBlackBoxAI } from './ai';
+import { bbLog } from './debug';
 import { BlackBoxDataManager } from './data';
 import { isDiaryStreamFile, parseDiaryFile, scanAllDiaryEntries } from './diary-scan';
 import { applyExtraction, buildExtractPrompt, parseExtractJson } from './extract';
@@ -75,26 +76,39 @@ export function unloadBlackBoxExtraction(): void {
  */
 export async function autoStartBlackBoxExtraction(app: any, ai?: any): Promise<void> {
   try {
+    await bbLog(app, '自动提炼启动');
     const dm = new BlackBoxDataManager();
     const data = await dm.load();
+    await bbLog(app, `cursor=${data.cursor ? data.cursor.file + '#' + data.cursor.entryIndex : 'null'}`);
     const all = await scanAllDiaryEntries(app);
-    if (all.length === 0) return; // 无日记，无事可做
+    await bbLog(app, `扫描日记条目 ${all.length} 条`);
+    if (all.length === 0) {
+      await bbLog(app, '无日记，退出');
+      return; // 无日记，无事可做
+    }
     // AI 配置检查（与 core/getAIProvider 逻辑一致：默认 opencode-go；deepseek 需设置 aiProvider='deepseek'）
     const { tryGetSettings } = await import('../core/settings-provider');
     const s = tryGetSettings() as any;
     const provider = (s && s.aiProvider) || 'opencode-go';
     const hasAI = provider === 'deepseek' ? !!(s && s.deepseekApiKey) : !!(s && s.opencodeGoApiKey);
     if (!hasAI) {
+      await bbLog(app, `AI 未配置（provider=${provider}，缺 API Key），提示用户后退出`);
       notice(`黑匣子需要配置 AI（设置 → AI 配置）：当前服务商 ${provider === 'deepseek' ? 'DeepSeek' : 'OpenCode Go'} 未填 API Key`, 'warning', 8000);
       return;
     }
     if (!data.cursor) {
+      await bbLog(app, 'cursor 为空 → 全量提炼');
       await runFullExtraction(app, ai);
     } else {
+      await bbLog(app, 'cursor 存在 → 增量提炼');
       await processPendingEntries(app, ai);
     }
-  } catch {
-    // 启动阶段静默（不阻塞插件加载）
+    await bbLog(app, '自动提炼流程结束');
+  } catch (e: any) {
+    // 启动阶段不阻塞插件加载，但异常必须可见（此前静默导致「无反应」误判）
+    const msg = e && e.message ? e.message : String(e);
+    await bbLog(app, `自动提炼异常: ${msg}`);
+    notice(`黑匣子启动提炼异常：${msg}`, 'warning', 8000);
   }
 }
 
@@ -140,18 +154,25 @@ type BatchResult = 'ok' | 'ai-fail' | 'parse-fail';
 /** 单批提炼（AI 调用 + 应用；返回结果分类——失败可见，不静默） */
 async function extractBatch(app: any, ai: any, entries: DiarySourceEntry[], data: BlackBoxData): Promise<BatchResult> {
   const prompt = buildExtractPrompt(entries);
-  if (!prompt) return 'parse-fail';
+  if (!prompt) {
+    await bbLog(app, `parse-fail: 批次无有效条目（${entries.length} 条输入）`);
+    return 'parse-fail';
+  }
   try {
     const text = await ai.json(prompt);
     const result = parseExtractJson(text);
     if (!result) {
-      console.warn('[黑匣子] AI 提炼返回无法解析:', (text || '').slice(0, 200));
+      const detail = (text || '').slice(0, 200);
+      console.warn('[黑匣子] AI 提炼返回无法解析:', detail);
+      await bbLog(app, `parse-fail: ${detail}`);
       return 'parse-fail';
     }
     applyExtraction(data, result, entries);
     return 'ok';
   } catch (err: any) {
-    console.warn('[黑匣子] AI 提炼调用失败:', err && err.message ? err.message : err);
+    const msg = err && err.message ? err.message : String(err);
+    console.warn('[黑匣子] AI 提炼调用失败:', msg);
+    await bbLog(app, `ai-fail: ${msg}`);
     return 'ai-fail'; // AI 失败：跳过下次重试
   }
 }
@@ -161,6 +182,7 @@ export async function processPendingEntries(app: any, ai?: any): Promise<boolean
   if (inflight) return false;
   inflight = true;
   try {
+    await bbLog(app, '增量提炼开始');
     const dm = new BlackBoxDataManager();
     const data = await dm.load();
     const profilesBefore = data.profiles.length;
@@ -168,7 +190,11 @@ export async function processPendingEntries(app: any, ai?: any): Promise<boolean
     const emotionsBefore = (data.entryEmotions || []).length;
     const all = await scanAllDiaryEntries(app);
     const pending = collectNewEntries(all, data);
-    if (pending.length === 0) return false;
+    await bbLog(app, `待处理条目 ${pending.length} 条`);
+    if (pending.length === 0) {
+      await bbLog(app, '无待处理条目，结束');
+      return false;
+    }
     const service = ai || _ai || getBlackBoxAI();
     let okCount = 0, failCount = 0;
     let processedAll: DiarySourceEntry[] = [];
@@ -188,9 +214,11 @@ export async function processPendingEntries(app: any, ai?: any): Promise<boolean
       const p = data.profiles.length - profilesBefore;
       const e = data.events.length - eventsBefore;
       const emo = (data.entryEmotions || []).length - emotionsBefore;
+      await bbLog(app, `增量完成：成功 ${okCount} 批 / 失败 ${failCount} 批，新增人物 ${p}、事件 ${e}、情绪 ${emo}`);
       notice(`提炼完成：处理 ${pending.length} 条日记，新增人物 ${p}、事件 ${e}、情绪 ${emo} 条${failCount > 0 ? `（${failCount} 批失败将重试）` : ''}`, 'success');
       return true;
     }
+    await bbLog(app, `增量失败：${okCount} 批成功 / ${failCount} 批失败（全部失败不推进 cursor）`);
     notice('提炼失败：AI 调用未成功，请检查 AI 配置与控制台日志', 'warning');
     return false;
   } finally {
@@ -203,13 +231,18 @@ export async function runFullExtraction(app: any, ai?: any): Promise<void> {
   if (inflight) return;
   inflight = true;
   try {
+    await bbLog(app, '全量提炼开始');
     const dm = new BlackBoxDataManager();
     const data = await dm.load();
     const profilesBefore = data.profiles.length;
     const eventsBefore = data.events.length;
     const emotionsBefore = (data.entryEmotions || []).length;
     const all = await scanAllDiaryEntries(app);
-    if (all.length === 0) return;
+    if (all.length === 0) {
+      await bbLog(app, '全量：无日记条目，退出');
+      return;
+    }
+    await bbLog(app, `全量：${all.length} 条，${Math.ceil(all.length / FULL_BATCH_SIZE)} 批`);
     const service = ai || _ai || getBlackBoxAI();
     const total = all.length;
     const batches = Math.ceil(total / FULL_BATCH_SIZE);
@@ -225,6 +258,7 @@ export async function runFullExtraction(app: any, ai?: any): Promise<void> {
     }
     if (okCount === 0) {
       // 全部失败：不推进 cursor（下次启动重试），明确提示
+      await bbLog(app, `全量失败：${failCount}/${batches} 批失败，不推进 cursor`);
       notice('提炼失败：AI 调用未成功，请检查 AI 配置（设置 → AI）与控制台日志', 'warning', 8000);
       return;
     }
@@ -236,6 +270,7 @@ export async function runFullExtraction(app: any, ai?: any): Promise<void> {
     const p = data.profiles.length - profilesBefore;
     const e = data.events.length - eventsBefore;
     const emo = (data.entryEmotions || []).length - emotionsBefore;
+    await bbLog(app, `全量完成：成功 ${okCount} 批 / 失败 ${failCount} 批，新增人物 ${p}、事件 ${e}、情绪 ${emo}，cursor=${data.cursor.file}#${data.cursor.entryIndex}`);
     notice(`提炼完成：${total} 条日记 → 新增人物 ${p}、事件 ${e}、情绪 ${emo} 条${failCount > 0 ? `（${failCount} 批失败，下次启动重试）` : ''}`, 'success', 8000);
   } finally {
     inflight = false;
