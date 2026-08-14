@@ -5,7 +5,7 @@
  * 失败降级：AI 失败返回 false 不阻断，不落盘。
  */
 import { getApp } from '../core/app';
-import { createAI } from '../core/ai';
+import { getBlackBoxAI } from './ai';
 import { BlackBoxDataManager, genId } from './data';
 import { scanAllDiaryEntries } from './diary-scan';
 import { personLabel } from './types';
@@ -139,7 +139,7 @@ export async function manualReview(app: any, ai?: any): Promise<boolean> {
     const lastReview = data.reviews.length ? data.reviews[data.reviews.length - 1].createdAt.slice(0, 10) : '';
     const entries = lastReview ? all.filter((e) => e.date >= lastReview) : all;
     if (entries.length === 0) return false;
-    const service = ai || createAI();
+    const service = ai || getBlackBoxAI();
     const prompt = buildReviewPrompt(entries, data.profiles, data.mentions);
     if (!prompt) return false;
     const text = await service.json(prompt);

@@ -8,6 +8,7 @@ import { createOverlay, createIconBtn } from '../core/dom';
 import { BlackBoxDataManager } from './data';
 import { processPendingEntries } from './sync';
 import { manualReview } from './review';
+import { openBlackBoxSettings } from './settings-ui';
 import { personLabel } from './types';
 import type { App } from 'obsidian';
 import type { BlackBoxData, EventItem, Profile, Review } from './types';
@@ -70,6 +71,8 @@ function buildPanel(): void {
       if (ok) void render();
     });
   }));
+  // 设置按钮（ticket 64：6 项域设置）
+  header.appendChild(createIconBtn('⚙️', '设置', () => openBlackBoxSettings()));
   // 关闭按钮
   header.appendChild(createIconBtn('❌', '关闭', () => closeBlackBoxPanel()));
   popup.appendChild(header);

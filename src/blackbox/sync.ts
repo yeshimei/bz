@@ -5,7 +5,7 @@
  */
 import { getApp } from '../core/app';
 import { notice } from '../core/notice';
-import { createAI } from '../core/ai';
+import { getBlackBoxAI } from './ai';
 import { BlackBoxDataManager } from './data';
 import { isDiaryStreamFile, parseDiaryFile, scanAllDiaryEntries } from './diary-scan';
 import { applyExtraction, buildExtractPrompt, parseExtractJson } from './extract';
@@ -41,7 +41,7 @@ export function ensureBlackBoxExtraction(app: any, ai?: any): void {
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       debounceTimer = null;
-      void processPendingEntries(app, _ai || createAI());
+      void processPendingEntries(app, _ai || undefined);
     }, EXTRACT_DEBOUNCE_MS);
   };
   app.vault.on('modify', onFile);
@@ -128,7 +128,7 @@ export async function processPendingEntries(app: any, ai?: any): Promise<boolean
     const all = await scanAllDiaryEntries(app);
     const pending = collectNewEntries(all, data);
     if (pending.length === 0) return false;
-    const service = ai || _ai || createAI();
+    const service = ai || _ai || getBlackBoxAI();
     let anySuccess = false;
     let processedAll: DiarySourceEntry[] = [];
     for (let i = 0; i < pending.length; i += MAX_ENTRIES_PER_CALL) {
@@ -158,7 +158,7 @@ export async function runFullExtraction(app: any, ai?: any): Promise<void> {
     const data = await dm.load();
     const all = await scanAllDiaryEntries(app);
     if (all.length === 0) return;
-    const service = ai || _ai || createAI();
+    const service = ai || _ai || getBlackBoxAI();
     const total = all.length;
     const batches = Math.ceil(total / FULL_BATCH_SIZE);
     let done = 0;

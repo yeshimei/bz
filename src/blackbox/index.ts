@@ -23,6 +23,7 @@ export { manualReview, buildReviewPrompt, parseReviewJson, applyReview, triggerM
 export type { ReviewResult } from './review';
 export { openBlackBoxChat, closeBlackBoxChat, unloadBlackBoxChat, buildChatContext, searchDiaryEntries, profilesSummary, tokenize, DEFAULT_PERSONA } from './chat';
 import { unloadBlackBoxChat } from './chat';
+export { openBlackBoxSettings } from './settings-ui';
 export {
   DEFAULT_EMOTION_TAGS,
   MAX_EMOTIONS,
