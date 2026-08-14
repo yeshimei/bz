@@ -16,6 +16,7 @@ export function ensureQuiz(app: App): void {
   if (initialized) return;
   initialized = true;
   QuizMasterUI.ai = createAI();
+  quizUI.ai = QuizMasterUI.ai; // 实例镜像：复习域经 quizUI.ai 判断（静态属性不挂实例）
   QuizMasterUI.settings = getSettings();
 }
 

@@ -38,6 +38,11 @@ function cleanOptionText(text: string): string {
 export class QuizMasterUI {
   static ai: AIService | null = null;
   static settings: any = {};
+  /**
+   * 实例镜像：复习域经 quizUI.ai 读取。静态属性不挂在实例上（JS 中 quizUI.ai 恒为
+   * undefined），故 ensureQuiz 时同步设置本字段，复习域判断才生效。
+   */
+  ai: AIService | null = null;
 
   mask: HTMLElement | null = null;
   popup: HTMLElement | null = null;

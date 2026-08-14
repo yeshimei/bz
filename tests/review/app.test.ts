@@ -218,9 +218,13 @@ describe('autoJumpOverdue：做题决定难度开关', () => {
     (reviewApp as any).dataManager = null; // 重置单例（跨测试污染）
     (reviewApp as any)._quizOverride = null;
   });
-  afterEach(() => {
+  afterEach(async () => {
     vi.restoreAllMocks();
     (reviewApp as any)._quizOverride = null;
+    // 清理真实 quiz 模块的静态/实例 ai（跨测试污染）
+    const quizModule = await import('../../src/quiz');
+    quizModule.QuizMasterUI.ai = null;
+    quizModule.quizUI.ai = null;
   });
 
   it('开启 + 有题 → quizReviewLoop（不跳转笔记）', async () => {
@@ -294,6 +298,29 @@ describe('autoJumpOverdue：做题决定难度开关', () => {
     expect(spyRL).toHaveBeenCalled();
     expect(spyQL).not.toHaveBeenCalled();
     expect(getNoticeMessages()).toContain('批量出题失败，改用普通复习');
+  });
+
+  it('开启 + 做题家已初始化（quizUI.ai 实例镜像）→ quizReviewLoop（真实 quizUI 链路）', async () => {
+    setSettingsProvider(() => ({ forceQuizForReview: true }) as any);
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    await seedOverdue(vault);
+    const app = makeApp(vault);
+    setApp(app);
+    // 模拟做题家已初始化（ensureQuiz 后的静态 + 实例镜像状态）
+    const quizModule = await import('../../src/quiz');
+    quizModule.QuizMasterUI.ai = { json: vi.fn() } as any;
+    quizModule.quizUI.ai = quizModule.QuizMasterUI.ai;
+    (reviewApp as any)._quizOverride = null; // 走真实 quizUI
+    const spyQL = vi.spyOn(reviewApp, 'quizReviewLoop').mockResolvedValue(undefined);
+    const spyRL = vi.spyOn(reviewApp, 'reviewLoop').mockResolvedValue(undefined);
+    const spyBatch = vi.spyOn(reviewApp, 'batchGenerateQuestions').mockResolvedValue({
+      'A.md': [{ question: 'Q', options: ['a', 'b', 'c', 'd'], correctIndices: [0] }],
+    });
+    await reviewApp.autoJumpOverdue();
+    expect(spyBatch).toHaveBeenCalled();
+    expect(spyQL).toHaveBeenCalled();
+    expect(spyRL).not.toHaveBeenCalled();
   });
 });
 
