@@ -1,6 +1,7 @@
 /**
  * 收藏本 AI 服务 + 余额查询（ticket 11）：源码 收藏本.js L69-234 逐字。
  */
+import { requestUrl } from 'obsidian';
 import { createAI } from '../core/ai';
 import type { AIService } from '../core/ai';
 import type { FavoritesItem } from './types';
@@ -17,26 +18,52 @@ export class FavoritesAIService {
     return !!this.ai;
   }
 
-  async fetchGitHubInfo(url: string): Promise<{ title: string; description: string }> {
-    const match = url.match(/github\.com\/([^\/]+)\/([^\/]+)/);
+  /**
+   * 获取 GitHub 仓库信息（真实 API，增强：原稿为纯 AI 生成，现改为
+   * https://api.github.com/repos/{owner}/{repo} 取仓库名与简介原文）。
+   * 返回 {title, description, fetched}：fetched=false 表示请求失败/限流
+   * （此时 description 恒为空串，调用方不得让 AI 编造简介）；
+   * 非 GitHub 地址抛「无效的 GitHub 地址」。8s 超时 + 重试 1 次（api.github.com 网络不稳）。
+   */
+  async fetchGitHubInfo(url: string): Promise<{ title: string; description: string; fetched: boolean }> {
+    const match = url.match(/github\.com\/([^\/?#]+)\/([^\/?#]+)/);
     if (!match) throw new Error('无效的 GitHub 地址');
     const [, owner, repo] = match;
 
     let title = repo;
     let description = '';
-
-    if (this.ai) {
-      const prompt = `你是一个项目介绍助手。根据 GitHub 仓库 ${owner}/${repo}，生成一个简洁的项目标题（直接使用仓库名 ${repo}）和一段中文简介（不超过 50 字，概括项目用途）。返回 JSON 格式：{"title":"...", "description":"..."}`;
+    let fetched = false;
+    for (let attempt = 0; attempt < 2 && !fetched; attempt++) {
       try {
-        const result = await this.ai.json(prompt);
-        const parsed = JSON.parse(result);
-        title = parsed.title || repo;
-        description = parsed.description || '';
+        const resp: any = await this._requestUrlWithTimeout(
+          {
+            url: `https://api.github.com/repos/${owner}/${repo}`,
+            method: 'GET',
+            headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'obsidian-bz' },
+          },
+          8000
+        );
+        if (resp.status && resp.status >= 400) throw new Error(`HTTP ${resp.status}`);
+        const data = JSON.parse(resp.text || '{}');
+        title = data.name || repo;
+        description = String(data.description || '').trim();
+        fetched = true;
       } catch (e) {
-        console.warn('AI 生成失败，使用降级方案', e);
+        if (attempt === 1) console.warn('GitHub API 获取失败，使用降级方案', e);
       }
     }
-    return { title, description };
+    return { title, description, fetched };
+  }
+
+  /** requestUrl 包超时（避免 api.github.com 长时间挂起） */
+  private _requestUrlWithTimeout(opts: any, timeoutMs: number): Promise<any> {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error('GitHub API 请求超时')), timeoutMs);
+    });
+    return Promise.race([requestUrl(opts), timeout]).finally(() => {
+      if (timer) clearTimeout(timer);
+    });
   }
 }
 
