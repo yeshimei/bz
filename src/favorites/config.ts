@@ -15,6 +15,7 @@ export const CONFIG = {
     { tag: 'Claude', emoji: '🤖' },
     { tag: 'skills', emoji: '⚡' },
     { tag: '酒馆', emoji: '🍺' },
+    { tag: 'DeepSeek Harness', emoji: '🐋' },
   ],
   LONG_PRESS_DELAY: 600,
 };

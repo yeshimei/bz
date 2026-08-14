@@ -8,7 +8,7 @@ import { DataManager } from '../../src/favorites/data';
 import { FavoritesAIService } from '../../src/favorites/ai';
 import { UIManager } from '../../src/favorites/ui';
 import { MockVault } from '../mock-vault';
-import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices, requestUrl } from '../mock-obsidian-entry';
 
 function makeApp(vault: MockVault) {
   return {
@@ -270,6 +270,83 @@ describe('收藏本面板', () => {
     ui.aiService.ai = { json: vi.fn().mockRejectedValue(new Error('网络错误')) } as any;
     ui.addAiBtn!.click();
     await new Promise((r) => setTimeout(r, 30));
+    expect(hasNotice('AI 整理失败：网络错误')).toBe(true);
+  });
+
+  it('AI 整理：GitHub 链接 → 仓库名预填标题 + 简介翻译 + GitHub 类型自动选中', async () => {
+    const { ui } = await setup();
+    ui.build();
+    ui.openAddDialog();
+    ui.addUrlInput!.value = 'https://github.com/hellowind777/helloagents';
+    vi.mocked(requestUrl).mockResolvedValue({
+      status: 200,
+      text: JSON.stringify({ name: 'helloagents', description: 'A collection of AI agent experiments' }),
+    } as any);
+    ui.aiService.ai = {
+      json: vi.fn().mockResolvedValue('{"title":"helloagents","description":"一个 AI 智能体实验合集","tags":["GitHub","Claude"]}'),
+    } as any;
+
+    ui.addAiBtn!.click();
+    await new Promise((r) => setTimeout(r, 30));
+
+    expect(ui.addTitleInput!.value).toBe('helloagents');
+    expect(ui.addDescInput!.value).toBe('一个 AI 智能体实验合集');
+    expect(ui.addAiBtn!.textContent).toBe('✨ AI 推荐');
+    expect(hasNotice('已获取 GitHub 仓库信息')).toBe(true);
+    const active = [...document.querySelectorAll('.fav-type-btn.active')].map((b) => (b as HTMLElement).dataset.tag);
+    expect(active).toContain('GitHub');
+    expect(active).toContain('Claude');
+    // 提示词包含 GitHub API 取回的仓库简介原文，并要求忠实翻译成中文（不扩写凑字数）
+    const prompt = (ui.aiService.ai as any).json.mock.calls[0][0] as string;
+    expect(prompt).toContain('A collection of AI agent experiments');
+    expect(prompt).toContain('忠实翻译成中文');
+    expect(prompt).toContain('不扩写、不总结、不凑字数');
+  });
+
+  it('AI 整理：GitHub API 失败 → 降级（仓库名预填 + AI 漏选时 GitHub 标签兜底）', async () => {
+    const { ui } = await setup();
+    ui.build();
+    ui.openAddDialog();
+    ui.addUrlInput!.value = 'https://github.com/abc/def';
+    vi.mocked(requestUrl).mockRejectedValue(new Error('网络错误'));
+    ui.aiService.ai = {
+      json: vi.fn().mockResolvedValue('{"title":"自定义标题","description":"自定义简介","tags":["网站"]}'),
+    } as any;
+
+    ui.addAiBtn!.click();
+    await new Promise((r) => setTimeout(r, 30));
+
+    // AI 结果优先覆盖预填的仓库名
+    expect(ui.addTitleInput!.value).toBe('自定义标题');
+    expect(ui.addDescInput!.value).toBe('自定义简介');
+    // GitHub 标签兜底强制选中
+    const active = [...document.querySelectorAll('.fav-type-btn.active')].map((b) => (b as HTMLElement).dataset.tag);
+    expect(active).toContain('GitHub');
+    expect(active).toContain('网站');
+    // 获取失败可见 + 提示词禁止编造简介
+    expect(hasNotice('GitHub 仓库简介获取失败，简介留空不编造')).toBe(true);
+    const prompt = (ui.aiService.ai as any).json.mock.calls[0][0] as string;
+    expect(prompt).toContain('无简介或获取失败');
+    expect(prompt).toContain('严禁编造或自行生成简介');
+  });
+
+  it('AI 整理：GitHub 链接 + AI 失败 → 简介降级填入仓库简介原文', async () => {
+    const { ui } = await setup();
+    ui.build();
+    ui.openAddDialog();
+    ui.addUrlInput!.value = 'https://github.com/abc/def';
+    vi.mocked(requestUrl).mockResolvedValue({
+      status: 200,
+      text: JSON.stringify({ name: 'def', description: 'Original English description' }),
+    } as any);
+    ui.aiService.ai = { json: vi.fn().mockRejectedValue(new Error('网络错误')) } as any;
+
+    ui.addAiBtn!.click();
+    await new Promise((r) => setTimeout(r, 30));
+
+    // 标题保留仓库名预填，简介降级为原文（未翻译）
+    expect(ui.addTitleInput!.value).toBe('def');
+    expect(ui.addDescInput!.value).toBe('Original English description');
     expect(hasNotice('AI 整理失败：网络错误')).toBe(true);
   });
 
