@@ -217,6 +217,18 @@ describe('QuizMasterUI', () => {
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(ui.loadingMask).toBeNull();
   });
+
+  it('ensureQuiz：quizUI.ai 实例镜像同步（复习域经实例读取判断）', async () => {
+    const { setSettingsProvider } = await import('../../src/core/settings-provider');
+    setSettingsProvider(() => ({}) as any);
+    const { ensureQuiz, QuizMasterUI: QUI } = await import('../../src/quiz');
+    ensureQuiz(null as any);
+    expect(quizUI.ai).not.toBeNull();
+    expect(QUI.ai).not.toBeNull();
+    // 清理：还原实例/静态 ai（后续测试经 beforeEach 重置静态，实例需手动还原）
+    quizUI.ai = null;
+    QUI.ai = null;
+  });
 });
 
 describe('复习联动契约', () => {
