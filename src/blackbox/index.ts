@@ -60,6 +60,7 @@ export type {
   Review,
   ChatMsg,
   Cursor,
+  EntryEmotion,
   DiarySourceEntry,
   DiarySourceRef,
 } from './types';

@@ -165,6 +165,7 @@ export async function processPendingEntries(app: any, ai?: any): Promise<boolean
     const data = await dm.load();
     const profilesBefore = data.profiles.length;
     const eventsBefore = data.events.length;
+    const emotionsBefore = (data.entryEmotions || []).length;
     const all = await scanAllDiaryEntries(app);
     const pending = collectNewEntries(all, data);
     if (pending.length === 0) return false;
@@ -186,7 +187,8 @@ export async function processPendingEntries(app: any, ai?: any): Promise<boolean
       await dm.save(data);
       const p = data.profiles.length - profilesBefore;
       const e = data.events.length - eventsBefore;
-      notice(`提炼完成：处理 ${pending.length} 条日记，新增人物 ${p}、事件 ${e}${failCount > 0 ? `（${failCount} 批失败将重试）` : ''}`, 'success');
+      const emo = (data.entryEmotions || []).length - emotionsBefore;
+      notice(`提炼完成：处理 ${pending.length} 条日记，新增人物 ${p}、事件 ${e}、情绪 ${emo} 条${failCount > 0 ? `（${failCount} 批失败将重试）` : ''}`, 'success');
       return true;
     }
     notice('提炼失败：AI 调用未成功，请检查 AI 配置与控制台日志', 'warning');
@@ -205,6 +207,7 @@ export async function runFullExtraction(app: any, ai?: any): Promise<void> {
     const data = await dm.load();
     const profilesBefore = data.profiles.length;
     const eventsBefore = data.events.length;
+    const emotionsBefore = (data.entryEmotions || []).length;
     const all = await scanAllDiaryEntries(app);
     if (all.length === 0) return;
     const service = ai || _ai || getBlackBoxAI();
@@ -232,7 +235,8 @@ export async function runFullExtraction(app: any, ai?: any): Promise<void> {
     await dm.save(data);
     const p = data.profiles.length - profilesBefore;
     const e = data.events.length - eventsBefore;
-    notice(`提炼完成：${total} 条日记 → 新增人物 ${p}、事件 ${e}${failCount > 0 ? `（${failCount} 批失败，下次启动重试）` : ''}`, 'success', 8000);
+    const emo = (data.entryEmotions || []).length - emotionsBefore;
+    notice(`提炼完成：${total} 条日记 → 新增人物 ${p}、事件 ${e}、情绪 ${emo} 条${failCount > 0 ? `（${failCount} 批失败，下次启动重试）` : ''}`, 'success', 8000);
   } finally {
     inflight = false;
   }

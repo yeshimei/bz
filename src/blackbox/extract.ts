@@ -196,4 +196,23 @@ export function applyExtraction(data: BlackBoxData, result: ExtractResult, entri
     if (dedupeEvent(data.events, candidate)) continue;
     data.events.push(candidate);
   }
+
+  // ---- emotions → entryEmotions（v4 修订：日记条目情绪推断落盘） ----
+  if (!data.entryEmotions) data.entryEmotions = [];
+  for (const em of result.emotions || []) {
+    if (!em || !em.entry || !em.tags || !em.tags.length) continue;
+    // entry 格式 "YYYY-MM-DD HH:mm" → {date, time}
+    const m = em.entry.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})$/);
+    if (!m) continue;
+    const date = m[1];
+    const time = m[2];
+    // 去重（同条目同标签不重复）
+    const existing = data.entryEmotions.find((x) => x.date === date && x.time === time);
+    if (existing) {
+      for (const t of em.tags) if (!existing.tags.includes(t)) existing.tags.push(t);
+      existing.tags = existing.tags.slice(0, 3);
+    } else {
+      data.entryEmotions.push({ date, time, tags: sanitizeEmotions(em.tags) });
+    }
+  }
 }

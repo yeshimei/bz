@@ -166,6 +166,39 @@ describe('applyExtraction', () => {
     expect(data.mentions).toEqual([]);
     expect(data.events).toEqual([]);
   });
+
+  it('emotions → entryEmotions 落盘（v4 修订：日记条目情绪推断）', () => {
+    const data = defaultBlackBoxData();
+    applyExtraction(
+      data,
+      {
+        people: [],
+        events: [],
+        emotions: [
+          { entry: '2026-08-10 08:30', tags: ['疲惫', '释然'] },
+          { entry: '2026-08-11 09:00', tags: ['温暖'] },
+          { entry: '非法格式', tags: ['孤独'] },
+        ],
+      },
+      ENTRIES
+    );
+    expect(data.entryEmotions).toHaveLength(2);
+    expect(data.entryEmotions[0]).toEqual({ date: '2026-08-10', time: '08:30', tags: ['疲惫', '释然'] });
+    expect(data.entryEmotions[1]).toEqual({ date: '2026-08-11', time: '09:00', tags: ['温暖'] });
+  });
+
+  it('emotions 重复条目 → 合并标签不重复（限 3 词）', () => {
+    const data = defaultBlackBoxData();
+    const result = {
+      people: [],
+      events: [],
+      emotions: [{ entry: '2026-08-10 08:30', tags: ['疲惫', '希望'] }],
+    };
+    applyExtraction(data, result, ENTRIES);
+    applyExtraction(data, result, ENTRIES);
+    expect(data.entryEmotions).toHaveLength(1);
+    expect(data.entryEmotions[0].tags).toEqual(['疲惫', '希望']);
+  });
 });
 
 // ===== buildExtractPrompt =====
