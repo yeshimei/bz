@@ -1,9 +1,9 @@
 /**
  * 复习计划核心逻辑测试（ticket 16 修正版）：markReview 阶梯/FSRS/未到期/autoJumpOverdue
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { reviewApp } from '../../src/review/app';
@@ -209,6 +209,91 @@ describe('autoJumpOverdue / reviewLoop / accuracyToRating', () => {
     setApp(app);
     await reviewApp.addCurrentToReview(vault.file('A.md') as any);
     await expect(reviewApp.addCurrentToReview(vault.file('A.md') as any)).rejects.toThrow('该笔记已在复习计划中');
+  });
+});
+
+describe('autoJumpOverdue：做题决定难度开关', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    (reviewApp as any).dataManager = null; // 重置单例（跨测试污染）
+    (reviewApp as any)._quizOverride = null;
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    (reviewApp as any)._quizOverride = null;
+  });
+
+  it('开启 + 有题 → quizReviewLoop（不跳转笔记）', async () => {
+    setSettingsProvider(() => ({ forceQuizForReview: true }) as any);
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    await seedOverdue(vault);
+    const app = makeApp(vault);
+    setApp(app);
+    // mock 做题家（ai 就绪 + 已有题目）
+    (reviewApp as any)._quizOverride = {
+      ai: {},
+      ensureQuestions: async () => {},
+      manager: {
+        getQuestionsForNote: async () => [
+          { question: 'Q', options: ['a', 'b', 'c', 'd'], correctIndices: [0] },
+        ],
+      },
+    };
+    const spyQL = vi.spyOn(reviewApp, 'quizReviewLoop').mockResolvedValue(undefined);
+    const spyRL = vi.spyOn(reviewApp, 'reviewLoop').mockResolvedValue(undefined);
+    await reviewApp.autoJumpOverdue();
+    expect(spyQL).toHaveBeenCalled();
+    expect(spyRL).not.toHaveBeenCalled();
+  });
+
+  it('关闭 → reviewLoop（普通复习，不弹做题）', async () => {
+    setSettingsProvider(() => ({ forceQuizForReview: false }) as any);
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    await seedOverdue(vault);
+    const app = makeApp(vault);
+    setApp(app);
+    const spyQL = vi.spyOn(reviewApp, 'quizReviewLoop').mockResolvedValue(undefined);
+    const spyRL = vi.spyOn(reviewApp, 'reviewLoop').mockResolvedValue(undefined);
+    await reviewApp.autoJumpOverdue();
+    expect(spyRL).toHaveBeenCalled();
+    expect(spyQL).not.toHaveBeenCalled();
+  });
+
+  it('开启但做题家未初始化（ai 为 null）→ 降级 reviewLoop', async () => {
+    setSettingsProvider(() => ({ forceQuizForReview: true }) as any);
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    await seedOverdue(vault);
+    const app = makeApp(vault);
+    setApp(app);
+    (reviewApp as any)._quizOverride = { ai: null };
+    const spyQL = vi.spyOn(reviewApp, 'quizReviewLoop').mockResolvedValue(undefined);
+    const spyRL = vi.spyOn(reviewApp, 'reviewLoop').mockResolvedValue(undefined);
+    await reviewApp.autoJumpOverdue();
+    expect(spyRL).toHaveBeenCalled();
+    expect(spyQL).not.toHaveBeenCalled();
+  });
+
+  it('开启但批量出题失败（无题目）→ 降级 reviewLoop + warning 通知', async () => {
+    setSettingsProvider(() => ({ forceQuizForReview: true }) as any);
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    await seedOverdue(vault);
+    const app = makeApp(vault);
+    setApp(app);
+    (reviewApp as any)._quizOverride = {
+      ai: {},
+      ensureQuestions: async () => {},
+      manager: { getQuestionsForNote: async () => [] },
+    };
+    const spyQL = vi.spyOn(reviewApp, 'quizReviewLoop').mockResolvedValue(undefined);
+    const spyRL = vi.spyOn(reviewApp, 'reviewLoop').mockResolvedValue(undefined);
+    await reviewApp.autoJumpOverdue();
+    expect(spyRL).toHaveBeenCalled();
+    expect(spyQL).not.toHaveBeenCalled();
+    expect(getNoticeMessages()).toContain('批量出题失败，改用普通复习');
   });
 });
 
