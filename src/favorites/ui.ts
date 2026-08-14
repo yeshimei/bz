@@ -135,7 +135,8 @@ export class UIManager {
 
   _buildHeader(): HTMLElement {
     const header = document.createElement('div');
-    header.style.cssText = 'padding:16px 24px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--background-modifier-border); flex-shrink:0;';
+    header.className = 'fav-header';
+    header.style.cssText = 'padding:16px 24px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;';
 
     const title = document.createElement('h3');
     title.textContent = '收藏本';
@@ -194,8 +195,8 @@ export class UIManager {
     const container = document.createElement('div');
     const isMobile = window.innerWidth <= 768;
     container.style.cssText = isMobile
-      ? 'padding: 8px 20px; display:flex; flex-wrap:nowrap; gap:6px; border-bottom:1px solid var(--background-modifier-border); overflow-x:auto; white-space:nowrap; -webkit-overflow-scrolling:touch;'
-      : 'padding: 8px 20px; display:flex; flex-wrap:wrap; gap:6px; border-bottom:1px solid var(--background-modifier-border);';
+      ? 'padding: 8px 20px; display:flex; flex-wrap:nowrap; gap:6px;  overflow-x:auto; white-space:nowrap; -webkit-overflow-scrolling:touch;'
+      : 'padding: 8px 20px; display:flex; flex-wrap:wrap; gap:6px; ';
 
     for (const { tag, emoji } of CONFIG.DEFAULT_TAGS) {
       const btn = document.createElement('button');
@@ -1067,8 +1068,52 @@ export class UIManager {
       return;
     }
 
+    this.addAiBtn!.textContent = '⏳ AI 整理中...';
+    this.addAiBtn!.disabled = true;
+
+    // GitHub 仓库链接：先取真实仓库信息（仓库名预填标题，简介翻译与标签选择由下方 AI 一并处理）
+    let ghInfo: { title: string; description: string; fetched: boolean } | null = null;
+    try {
+      ghInfo = await this.aiService.fetchGitHubInfo(currentUrl);
+      if (ghInfo.title && !this.addTitleInput!.value.trim()) {
+        this.addTitleInput!.value = ghInfo.title;
+      }
+      if (ghInfo.fetched) {
+        notice('已获取 GitHub 仓库信息', 'info');
+      } else {
+        notice('GitHub 仓库简介获取失败，简介留空不编造', 'warning');
+      }
+    } catch (e) {
+      ghInfo = null; // 非 GitHub 地址：按常规整理
+    }
+
     const tagList = CONFIG.DEFAULT_TAGS.map((t) => t.tag).join('、');
-    const prompt = `你是一个智能收藏整理助手。用户正在添加一条收藏，请根据用户已输入的信息，全面优化和补全所有字段。
+    const prompt = ghInfo
+      ? `你是一个智能收藏整理助手。用户正在添加一条 GitHub 仓库收藏，请根据仓库信息和用户已输入的内容，优化和补全所有字段。
+
+用户当前输入：
+- 标题：${this.addTitleInput!.value.trim() || '(空)'}
+- 链接：${currentUrl || '(空)'}
+- 简介：${currentDesc || '(空)'}
+- 已选的标签：${currentTags.length ? currentTags.join('、') : '(未选择)'}
+
+GitHub 仓库信息（来自 GitHub API）：
+- 仓库名：${ghInfo.title}
+- 仓库简介：${ghInfo.description || '(无简介或获取失败)'}
+
+请执行以下操作：
+1. **标题**：如果用户已填写标题则保留不变；否则直接使用仓库名「${ghInfo.title}」，不要修改或另起标题。
+2. **链接**：保持 GitHub 仓库链接不变；如果缺少协议头（http:// 或 https://）请自动补全。
+3. **简介**：${ghInfo.description
+        ? '将上面的仓库简介**忠实翻译成中文**（保持原意，不扩写、不总结、不凑字数；若原简介已是中文则原样保留）。'
+        : '仓库无简介或简介获取失败，**简介必须返回空字符串**（严禁编造或自行生成简介）。'}
+4. **标签**：从以下固定标签列表中选择最合适的 1-3 个标签（可多选）：${tagList}。该链接是 GitHub 仓库，必须包含 GitHub 标签，再补充最匹配的其他标签。
+
+最终必须以严格合法的 JSON 格式返回，仅包含以下四个字段：
+{"title":"仓库名", "url":"优化后的链接", "description":"翻译后的中文简介", "tags":["标签1","标签2"]}
+
+不要返回任何其他文字或解释，只返回 JSON。`
+      : `你是一个智能收藏整理助手。用户正在添加一条收藏，请根据用户已输入的信息，全面优化和补全所有字段。
 
 用户当前输入：
 - 标题：${currentTitle || '(空)'}
@@ -1088,9 +1133,6 @@ export class UIManager {
 不要返回任何其他文字或解释，只返回 JSON。`;
 
     try {
-      this.addAiBtn!.textContent = '⏳ AI 整理中...';
-      this.addAiBtn!.disabled = true;
-
       const result = await this.aiService.ai!.json(prompt);
       let parsed: any;
       try {
@@ -1106,7 +1148,12 @@ export class UIManager {
       if (parsed.description) this.addDescInput!.value = parsed.description;
 
       // 处理 AI 推荐的标签（支持 tags 数组和单个 tag 两种格式）
-      const recommendedTags = parsed.tags || (parsed.tag ? [parsed.tag] : null);
+      let recommendedTags = parsed.tags || (parsed.tag ? [parsed.tag] : null);
+      // GitHub 仓库链接：确保 GitHub 类型被选中（AI 漏选时兜底）
+      if (ghInfo) {
+        if (!recommendedTags) recommendedTags = ['GitHub'];
+        else if (!recommendedTags.includes('GitHub')) recommendedTags = ['GitHub', ...recommendedTags];
+      }
       if (recommendedTags && Array.isArray(recommendedTags)) {
         const btns = this.addTypeContainer!.querySelectorAll('.fav-type-btn');
         // 先全部取消选中
@@ -1141,6 +1188,10 @@ export class UIManager {
       notice('AI 整理完成', 'success');
     } catch (e: any) {
       console.error('AI 整理失败:', e);
+      // GitHub 仓库链接且用户未填简介：降级填入仓库简介原文（未翻译），供手动处理
+      if (ghInfo && ghInfo.description && !this.addDescInput!.value.trim()) {
+        this.addDescInput!.value = ghInfo.description;
+      }
       notice('AI 整理失败：' + e.message, 'error');
     } finally {
       this.addAiBtn!.textContent = '✨ AI 推荐';
