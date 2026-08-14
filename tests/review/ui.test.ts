@@ -6,6 +6,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
+import { closeSettingsModal } from '../../src/core/settings-modal';
 import { ReviewDataManager, REVIEW_FILE_PATH } from '../../src/review/data';
 import { UIManager } from '../../src/review/ui';
 import { reviewApp } from '../../src/review/app';
@@ -196,6 +197,31 @@ describe('UIManager', () => {
     expect(names).toContain('每笔记题目数量（0为自动）');
     expect(names).toContain('打乱题目顺序');
     expect(names).toContain('题目难度');
+    ui.destroy();
+  });
+
+  it('⚙️ 设置弹窗：做题决定难度关闭 → 做题家 4 项隐藏，开启 toggle 后显示', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const app = makeApp(vault);
+    setApp(app);
+    setSettingsProvider(() => ({ forceQuizForReview: false } as any));
+    const dm = new ReviewDataManager(app);
+    const ui = new UIManager(app, dm);
+    ui.showMain();
+    (document.getElementById('review-btn-settings') as HTMLElement).click();
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    const quizBox = popup.querySelector('#review-quiz-settings') as HTMLElement;
+    expect(quizBox.style.display).toBe('none');
+    // 做题决定难度 toggle（第 3 个 setting-item 的 controls[0]）开启 → 4 项显示
+    const toggleSetting = [...popup.querySelectorAll('.setting-item')].find(
+      (el) => (el as HTMLElement).dataset.name === '做题决定难度'
+    ) as HTMLElement;
+    const toggle = (toggleSetting as any).__setting.controls[0];
+    toggle.trigger(true);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(quizBox.style.display).toBe('');
+    closeSettingsModal();
     ui.destroy();
   });
 

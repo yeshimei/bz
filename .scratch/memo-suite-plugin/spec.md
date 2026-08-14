@@ -315,7 +315,7 @@ Feature: memo-suite-plugin
 - **收藏本**：空弹窗（无设置项）
 - **书库**：libraryFolderPath、libraryNotePath、bookTag、showFileSize、showReadingTime、showHighlights、showThinks、showReview（showCategory 字段保留无 UI）
 - **影视**（6 项）：movieFolderPath、moviePageSize（海报抓取仅文字提示）、movieDefaultSort（默认排序 date-desc/…/name-desc）、movieDefaultTypeFilter（默认类型筛选，空=全部）、movieDefaultStatusFilter（默认状态筛选 全部/想看/在看/已看）、movieRatingDisplay（已看卡片评分 stars/number）
-- **复习计划（含做题家）**：autoCheckInterval、enableAutoNotify + 做题家 5 项（enableMultipleChoice、questionsPerNote、shuffleQuestions、difficulty、forceQuizForReview）
+- **复习计划（含做题家）**：autoCheckInterval、enableAutoNotify + 做题家 5 项（enableMultipleChoice、questionsPerNote、shuffleQuestions、difficulty、forceQuizForReview；做题家 4 项（除 forceQuizForReview）仅在其开启时动态显示）；**forceQuizForReview（做题决定难度）控制复习流程**：开启 → 开始复习（bz-review-start/跳转逾期）自动批量出题做题，正确率自动定级；关闭 → 普通复习（跳转笔记逐篇评级）；开启时做题家未初始化（ai 为 null）先 ensureQuiz 注入，出题失败/无题目 → 降级普通复习并警告
 - **番茄钟（13 项）**：pomodoroPreset（13 档：12 预设+自定义，含阅读沉浸 45/10/20）、pomodoroWorkMin/pomodoroShortBreakMin/pomodoroLongBreakMin（自定义时长，预设=自定义时动态显示）、pomodoroLongBreakInterval（N，默认 4）、pomodoroForceFocus（默认关）、pomodoroAutoCycle（默认关）、pomodoroAutoSkipBreak（默认关）、pomodoroSound（默认开）、pomodoroVolume（音量 0-100，默认 100 最大，设置弹窗 slider+试听）、pomodoroRestoreMode（启动恢复方式：background 后台继续 / popup 正在倒计时则自动弹窗；恢复继续弹「番茄钟继续：…还剩 mm:ss」通知）、pomodoroEpubAuto（读书自动番茄钟开关，默认开；关则联动静默不监听）、pomodoroEpubMode（读书启动形态：background 后台静默默认 / popup 自动弹窗）
 - **闪念（17 项全量，含 AI 项）**：OLLAMA_URL、EMBEDDING_MODEL、META_PATH、VEC_PATH、TOP_K、CHAT_TOP_K、CHUNK_MIN_LENGTH、ALLOW_PATHS、CONCURRENCY、CONTEXT_LIMIT、DEBOUNCE_DELAY、CURSOR_POLL_INTERVAL、OLLAMA_CHAT_MODEL、DEEPSEEK_MODEL、DEFAULT_USE_DEEPSEEK、MAX_HISTORY、OLLAMA_REMOTE_URL
 

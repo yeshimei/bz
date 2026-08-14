@@ -5,6 +5,7 @@ import type { App, TFile } from 'obsidian';
 import { notice, notify } from '../core/notice';
 import type { NoticeHandle } from '../core/notice';
 import { getApp } from '../core/app';
+import { getSettings } from '../core/settings-provider';
 import { FSRS, FSRS_FIRST_INTERVALS, FSRS_FIRST_TEXTS, LADDER_MAX } from './fsrs';
 import type { Rating } from './fsrs';
 import type { ReviewItem } from './data';
@@ -110,7 +111,7 @@ export const reviewApp = {
     notice(`R=${rPct}% → 下次复习：${days > 0 ? days + '天' : '1天'}后`, 'success');
   },
 
-  /** 跳转逾期 */
+  /** 跳转逾期（做题决定难度：开启 → 做题复习；关闭 → 普通复习跳转笔记） */
   async autoJumpOverdue(): Promise<void> {
     const app = getApp();
     this.ensure(app);
@@ -123,11 +124,26 @@ export const reviewApp = {
     }
     overdue.sort((a, b) => new Date(a.nextReviewDate as string).getTime() - new Date(b.nextReviewDate as string).getTime());
 
+    // 做题决定难度关闭 → 普通复习（跳转笔记，逐篇等待评级）
+    if (!getSettings().forceQuizForReview) {
+      await this.reviewLoop(overdue, 0);
+      return;
+    }
+
     let quiz: any = null;
     try {
       quiz = await this.getQuiz();
     } catch {
       /* ignore */
+    }
+    // 未开过做题家时 ai 为 null：先初始化（AI 注入），避免静默降级为普通复习
+    if (quiz && !quiz.ai) {
+      try {
+        const { ensureQuiz } = await import('../quiz');
+        ensureQuiz(app);
+      } catch {
+        /* ignore */
+      }
     }
 
     if (quiz && quiz.ai) {
@@ -144,6 +160,7 @@ export const reviewApp = {
         await this.quizReviewLoop(overdue, 0, batchQuestions);
       }
     } else {
+      notify('做题家未初始化，已改用普通复习', { type: 'warning', dedupeKey: 'review-quiz-ai' });
       await this.reviewLoop(overdue, 0);
     }
   },
