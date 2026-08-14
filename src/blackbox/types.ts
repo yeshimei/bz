@@ -124,6 +124,13 @@ export interface Cursor {
   entryIndex: number;
 }
 
+/** 日记条目情绪推断（v4 修订：AI 提炼 emotions 结果落盘，支撑时段分布/复盘趋势） */
+export interface EntryEmotion {
+  date: string;
+  time: string;
+  tags: string[];
+}
+
 /** blackbox.json v4（ADR-0017；字段冻结，落盘即不可改）。
  * 日记是唯一事实源，v4 只存派生层。 */
 export interface BlackBoxData {
@@ -132,6 +139,8 @@ export interface BlackBoxData {
   profiles: Profile[];
   mentions: Mention[];
   events: EventItem[];
+  /** 日记条目情绪推断（v4 修订追加；旧数据缺省空数组） */
+  entryEmotions: EntryEmotion[];
   reviews: Review[];
   chat: ChatMsg[];
   cursor: Cursor | null;
@@ -164,6 +173,7 @@ export function defaultBlackBoxData(): BlackBoxData {
     profiles: [],
     mentions: [],
     events: [],
+    entryEmotions: [],
     reviews: [],
     chat: [],
     cursor: null,

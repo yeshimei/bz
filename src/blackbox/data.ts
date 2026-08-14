@@ -176,6 +176,9 @@ export function normalizeData(raw: any): BlackBoxData {
     profiles: (Array.isArray(raw.profiles) ? raw.profiles : []).map(sanitizeProfile).filter((p): p is Profile => !!p),
     mentions: sanitizeMentions(raw.mentions),
     events: (Array.isArray(raw.events) ? raw.events : []).map(sanitizeEvent).filter((e): e is EventItem => !!e),
+    entryEmotions: (Array.isArray(raw.entryEmotions) ? raw.entryEmotions : [])
+      .filter((e: any) => e && typeof e.date === 'string' && typeof e.time === 'string')
+      .map((e: any) => ({ date: e.date, time: e.time, tags: sanitizeEmotions(e.tags) })),
     reviews: (Array.isArray(raw.reviews) ? raw.reviews : []).map(sanitizeReview).filter(Boolean),
     chat: (Array.isArray(raw.chat) ? raw.chat : []).map(sanitizeChat).filter(Boolean),
     cursor: sanitizeCursor(raw.cursor),
@@ -232,6 +235,7 @@ export class BlackBoxDataManager {
       profiles: data.profiles,
       mentions: data.mentions,
       events: data.events,
+      entryEmotions: data.entryEmotions,
       reviews: data.reviews,
       chat: data.chat,
       cursor: data.cursor,

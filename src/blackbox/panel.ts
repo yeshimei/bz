@@ -314,12 +314,16 @@ function renderEvents(data: BlackBoxData): void {
   bar.appendChild(yearSel);
   contentEl.appendChild(bar);
 
-  // 时段情绪分布条（按事件日期聚合情绪计数）
+  // 时段情绪分布条（事件情绪 + 日记条目情绪推断 entryEmotions，按当前年份筛选）
   const dist = document.createElement('div');
   dist.className = 'bz-event-emotion-dist';
   const counts: Record<string, number> = {};
   for (const ev of events) {
     for (const t of ev.emotions) counts[t] = (counts[t] || 0) + 1;
+  }
+  for (const em of data.entryEmotions || []) {
+    if (eventYearFilter && em.date.slice(0, 4) !== eventYearFilter) continue;
+    for (const t of em.tags) counts[t] = (counts[t] || 0) + 1;
   }
   const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
   if (entries.length) {
