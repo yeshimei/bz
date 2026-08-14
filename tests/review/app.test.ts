@@ -234,21 +234,23 @@ describe('autoJumpOverdue：做题决定难度开关', () => {
     await seedOverdue(vault);
     const app = makeApp(vault);
     setApp(app);
-    // mock 做题家（ai 就绪 + 已有题目）
+    // mock 做题家（ai 就绪 + 已有题目）；getQuestionsForNote 校验双参签名 (app, notePath)
+    const getQSpy = vi.fn(async (_app: any, notePath: string) =>
+      notePath === 'A.md' ? [{ question: 'Q', options: ['a', 'b', 'c', 'd'], correctIndices: [0] }] : null
+    );
     (reviewApp as any)._quizOverride = {
       ai: {},
       ensureQuestions: async () => {},
-      manager: {
-        getQuestionsForNote: async () => [
-          { question: 'Q', options: ['a', 'b', 'c', 'd'], correctIndices: [0] },
-        ],
-      },
+      manager: { getQuestionsForNote: getQSpy },
     };
     const spyQL = vi.spyOn(reviewApp, 'quizReviewLoop').mockResolvedValue(undefined);
     const spyRL = vi.spyOn(reviewApp, 'reviewLoop').mockResolvedValue(undefined);
     await reviewApp.autoJumpOverdue();
     expect(spyQL).toHaveBeenCalled();
     expect(spyRL).not.toHaveBeenCalled();
+    // 参数错位 bug 回归：必须以 (app, notePath) 双参调用，否则读不到题目
+    expect(getQSpy.mock.calls[0][0]).toBeTruthy(); // app
+    expect(getQSpy.mock.calls[0][1]).toBe('A.md'); // notePath
   });
 
   it('关闭 → reviewLoop（普通复习，不弹做题）', async () => {
