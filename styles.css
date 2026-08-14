@@ -1482,12 +1482,23 @@
         align-items:center;
         gap:8px;
         box-shadow: none !important;
+        /* 长文本修复：按钮可收缩不撑破弹窗；button 默认 white-space:pre 需改回 normal 才能换行 */
+        min-width:0;
+        width:100%;
+        box-sizing:border-box;
+        white-space:normal;
+      }
+      /* 选项文本：flex 子项允许收缩并在按钮内换行（长 URL/英文串不截断） */
+      .quiz-option-btn span {
+        min-width:0;
+        word-break:break-word;
+        overflow-wrap:anywhere;
       }
       .quiz-option-btn:hover:not(.disabled) { background:var(--background-modifier-hover); }
       .quiz-option-btn.correct { border-color:#52c41a !important; background:rgba(82,196,26,0.15); }
       .quiz-option-btn.wrong { border-color:#ff4757 !important; background:rgba(255,71,87,0.15); }
       .quiz-option-btn.selected { border-color:var(--interactive-accent); background:var(--background-modifier-hover); }
-      .quiz-option-btn .check-mark { opacity:0; transition:opacity 0.2s; }
+      .quiz-option-btn .check-mark { opacity:0; transition:opacity 0.2s; flex-shrink:0; }
       .quiz-option-btn.selected .check-mark { opacity:1; }
       .quiz-submit-btn {
         margin-top:16px;
