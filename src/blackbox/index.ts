@@ -21,6 +21,8 @@ import { unloadBlackBoxPanel } from './panel';
 import { unloadBlackBoxExtraction } from './sync';
 export { manualReview, buildReviewPrompt, parseReviewJson, applyReview, triggerManualReview } from './review';
 export type { ReviewResult } from './review';
+export { openBlackBoxChat, closeBlackBoxChat, unloadBlackBoxChat, buildChatContext, searchDiaryEntries, profilesSummary, tokenize, DEFAULT_PERSONA } from './chat';
+import { unloadBlackBoxChat } from './chat';
 export {
   DEFAULT_EMOTION_TAGS,
   MAX_EMOTIONS,
@@ -60,8 +62,9 @@ export type {
   DiarySourceRef,
 } from './types';
 
-/** onunload 清理（面板 + 提炼监听） */
+/** onunload 清理（面板 + 对话 + 提炼监听） */
 export function unloadBlackBox(): void {
   unloadBlackBoxPanel();
+  unloadBlackBoxChat();
   unloadBlackBoxExtraction();
 }
