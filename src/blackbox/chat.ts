@@ -5,7 +5,7 @@
  */
 import { escManager } from '../core/esc-manager';
 import { createOverlay, createIconBtn } from '../core/dom';
-import { createAI } from '../core/ai';
+import { getBlackBoxAI } from './ai';
 import { notice } from '../core/notice';
 import { BlackBoxDataManager } from './data';
 import { scanAllDiaryEntries } from './diary-scan';
@@ -208,7 +208,7 @@ async function sendMessage(): Promise<void> {
     const maxHistory = Number((await getMaxHistory())) || 20;
     const ctx = buildChatContext(all, data.profiles, data.events, data.chat, text, maxHistory);
     const prompt = `${DEFAULT_PERSONA.seed}\n\n语气示例：${DEFAULT_PERSONA.toneExample}\n\n${ctx}\n\n我：${text}\n包仔：`;
-    const service = _ai || createAI();
+    const service = _ai || getBlackBoxAI();
     const reply = await service.json(prompt);
     const clean = (reply || '').trim();
     aDiv.textContent = clean || '（没有回应）';
