@@ -98,7 +98,7 @@ describe('hasPendingEntries / processPendingEntries（打开即时提炼）', ()
 describe('runFullExtraction（首次全量分批）', () => {
   beforeEach(() => resetObsidianMocks());
 
-  it('分批 50 串行 + 进度通知 + cursor 落盘', async () => {
+  it('分批 10 + 并发 4 + 每轮保存 + 进度通知 + cursor 落盘', async () => {
     const vault = new MockVault();
     for (let d = 1; d <= 60; d++) {
       const date = `2026-07-${String(d).padStart(2, '0')}`;
@@ -109,13 +109,23 @@ describe('runFullExtraction（首次全量分批）', () => {
     setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' }) as any);
     const ai = makeAI(EXTRACT_JSON);
     await runFullExtraction(app, ai);
-    expect(ai.json.mock.calls.length).toBeGreaterThanOrEqual(2); // 60 条 / 50 每批 = 2 批
+    expect(ai.json.mock.calls.length).toBeGreaterThanOrEqual(6); // 60 条 / 10 每批 = 6 批
     const dm = new BlackBoxDataManager();
     const data = await dm.load();
     expect(data.cursor).not.toBeNull();
     // 进度通知存在
     const msgs = getNoticeMessages().join(' ');
     expect(msgs).toContain('提炼');
+  });
+
+  it('AI 失败批次重试 1 次（ai-fail 抖动恢复）', async () => {
+    const { app } = setup();
+    const ai = { json: vi.fn().mockRejectedValueOnce(new Error('网络抖动')).mockResolvedValue(EXTRACT_JSON) } as any;
+    await runFullExtraction(app, ai);
+    expect(ai.json).toHaveBeenCalledTimes(2); // 首轮失败 → 重试成功（setup 仅 1 批）
+    const dm = new BlackBoxDataManager();
+    const data = await dm.load();
+    expect(data.cursor).not.toBeNull();
   });
 
   it('完成通知：提炼完成后 success 通知含「提炼完成」+ 新增人物/事件统计', async () => {
