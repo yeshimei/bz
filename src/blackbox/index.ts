@@ -1,98 +1,50 @@
 /**
- * 黑匣子域入口（ticket 33-45）：命令回调与生命周期清理。
- * 命令在 main.ts COMMANDS 表注册（域内不重复 addCommand）：
- * bz-blackbox-capture（录入）/ bz-blackbox-open（黑匣子）/ bz-blackbox-review（复盘）/ bz-blackbox-panel（黑匣子面板）。
+ * 黑匣子域入口（ticket 58，v4 数据层地基阶段）：
+ * 命令在 main.ts COMMANDS 表注册（域内不重复 addCommand）。
+ * 58 阶段仅导出数据层与日记读取；对话/面板/复盘 UI 在 ticket 59+ 重建后恢复命令。
  */
-import { openBlackBoxCapture, closeBlackBoxCapture, unloadBlackBoxCapture } from './capture';
-import { openBlackBoxChat, closeBlackBoxChat, unloadBlackBoxChat } from './chat';
-import { openBlackBoxPanel, closeBlackBoxPanel, unloadBlackBoxPanel } from './panel';
-import { manualReview, triggerAutoReview, unloadBlackBoxReview } from './review';
-import { openCardboxImport, closeCardboxImport, unloadCardboxImport } from './import-ui';
-import { ensureBlackBoxSync, unloadBlackBoxSync, setBlackBoxSyncNotify } from './sync';
-import { resetBlackBoxCache } from './data';
-
-export { openBlackBoxCapture, closeBlackBoxCapture, unloadBlackBoxCapture, openBlackBoxCaptureConcept, openBlackBoxCaptureLiterature, openBlackBoxCaptureThought, openBlackBoxCaptureFromEpub } from './capture';
-export { openBlackBoxChat, closeBlackBoxChat, unloadBlackBoxChat } from './chat';
-export { openBlackBoxPanel, closeBlackBoxPanel, unloadBlackBoxPanel } from './panel';
-export { manualReview, triggerAutoReview, unloadBlackBoxReview } from './review';
-export { openCardboxImport, closeCardboxImport, unloadCardboxImport } from './import-ui';
-export { ensureBlackBoxSync, unloadBlackBoxSync, setBlackBoxSyncNotify } from './sync';
-export { computeInjection, injectIntoSourceNote, lineToOffset } from './inject';
-export { BlackBoxDataManager, getBlackBoxFilePath, createEntry, createProfile, createEvent, buildNameById } from './data';
-export { registerBlackBoxEpubHost, refreshBlackBoxEpubHost, unregisterBlackBoxEpubHost, jumpFromSource, getReaderPlugin } from './host';
-export { resolveSourceJump, entrySourceText, isBookPath, wikilinkPathFromLink } from './source-jump';
-export {
-  BB_NOTE_ROOT,
-  TYPE_DIR,
-  typeDir,
-  isBlackBoxNotePath,
-  sanitizeFileName,
-  noteNameFromPath,
-  entryNoteTitle,
-  notePathOf,
-  parseWikilinkNames,
-  parseFrontmatterBlock,
-  buildNoteContent,
-  parseNoteContent,
-} from './notes';
-export {
-  BlackBoxAI,
-  buildPersonaPrompt,
-  buildReviewPrompt,
-  buildEventExtractPrompt,
-  buildProfilesSummary,
-  buildEventTitlesByEntry,
-  searchEntries,
-  parseReviewJson,
-  parseEventExtractJson,
-  parseProfileJson,
-  parseConceptJson,
-  parseLiteratureJson,
-  fallbackAsk,
-} from './ai';
+export { BlackBoxDataManager, getBlackBoxFilePath, createProfile, createEvent, genId, normalizeData } from './data';
+export { isDiaryStreamFile, scanAllDiaryEntries, parseDiaryFile } from './diary-scan';
 export {
   DEFAULT_EMOTION_TAGS,
   MAX_EMOTIONS,
-  MAX_PEOPLE,
   MAX_WORDS,
-  DIRECTION_OPTIONS,
-  DEFAULT_PERSONA,
-  shouldAutoReview,
+  defaultBlackBoxData,
+  defaultBlackBoxSettings,
+  classifyEventConfidence,
+  dedupeEvent,
+  mergeMention,
+  sanitizeMentions,
+  shouldBuildProfile,
+  cursorEntryIndex,
+  filterNewEntries,
+  advanceCursor,
+  cursorForFile,
+  filterEventsByPerson,
+  groupEventsByMonth,
+  buildEventReport,
+  personLabel,
+  resolveShowSpeculative,
   trimChat,
   sanitizeWords,
   sanitizeEmotions,
   sanitizePeople,
-  resolveReviewThreshold,
-  resolveShowSpeculative,
-  groupEventsByMonth,
-  aggregateEmotions,
-  findProfileHints,
-  buildEventReport,
-  filterEventsByPerson,
-  personLabel,
 } from './types';
 export type {
   BlackBoxData,
-  Entry,
-  EntryType,
+  BlackBoxSettings,
   Profile,
+  AIObservation,
+  Mention,
   EventItem,
-  Persona,
   Review,
   ChatMsg,
-  Direction,
-  SelfView,
-  BlackBoxSettings,
+  Cursor,
+  DiarySourceEntry,
+  DiarySourceRef,
 } from './types';
-export { openBlackBoxSettings } from './settings-ui';
 
-/** onunload 全量清理 */
+/** onunload 清理（v4 数据层无常驻监听，保留空实现供 main 调用） */
 export function unloadBlackBox(): void {
-  unloadBlackBoxCapture();
-  unloadBlackBoxChat();
-  unloadBlackBoxPanel();
-  unloadBlackBoxReview();
-  unloadCardboxImport();
-  unloadBlackBoxSync();
-  resetBlackBoxCache();
+  // 58 阶段无注册监听；59+ 增量提炼监听在此清理
 }
