@@ -28,7 +28,7 @@ import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverd
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
 import { openPomodoro, unloadPomodoro, ensurePomodoro, ensurePomodoroEpubLink, unloadPomodoroEpubLink } from './pomodoro';
-import { unloadBlackBox, openBlackBoxCapture, openBlackBoxCaptureConcept, openBlackBoxCaptureLiterature, openBlackBoxCaptureThought, openBlackBoxChat, openBlackBoxPanel, openCardboxImport, manualReview, ensureBlackBoxSync, registerBlackBoxEpubHost, refreshBlackBoxEpubHost, unregisterBlackBoxEpubHost } from './blackbox';
+import { unloadBlackBox } from './blackbox';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // B站下载器启动命令（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
 import { openBiliDownloader } from './bili-downloader';
@@ -92,15 +92,7 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-flash-chat', name: '闪念对话', icon: 'message-circle', callback: () => openFlashChat(getApp()) },
   // 番茄钟（ticket 26-32 新域）
   { id: 'bz-pomodoro-open', name: '番茄钟', icon: 'timer', callback: () => openPomodoro(getApp()) },
-  // 黑匣子（ticket 33-45 新域；v2 面板命令 ticket 41）
-  { id: 'bz-blackbox-capture', name: '录入', icon: 'inbox', callback: () => openBlackBoxCapture(getApp()) },
-  { id: 'bz-blackbox-capture-concept', name: '概念录入', icon: 'brain', callback: () => openBlackBoxCaptureConcept(getApp()) },
-  { id: 'bz-blackbox-capture-literature', name: '摘抄录入', icon: 'bookmark', callback: () => openBlackBoxCaptureLiterature(getApp()) },
-  { id: 'bz-blackbox-capture-thought', name: '想法录入', icon: 'lightbulb', callback: () => openBlackBoxCaptureThought(getApp()) },
-  { id: 'bz-blackbox-open', name: '黑匣子', icon: 'message-circle-heart', callback: () => openBlackBoxChat(getApp()) },
-  { id: 'bz-blackbox-review', name: '复盘', icon: 'sprout', callback: () => manualReview(getApp()) },
-  { id: 'bz-blackbox-panel', name: '黑匣子面板', icon: 'layout-grid', callback: () => openBlackBoxPanel(getApp()) },
-  { id: 'bz-blackbox-import-cardbox', name: '导入卡片盒', icon: 'download', callback: () => openCardboxImport(getApp()) },
+  // 黑匣子（ticket 58 v4 数据层地基：命令在 ticket 59 起随 UI 重建恢复 open/panel/review）
   // B站下载器（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
   { id: 'bz-bili-open', name: 'B站下载器', icon: 'tv-minimal-play', callback: () => openBiliDownloader() },
 ];
@@ -190,12 +182,6 @@ export default class BzPlugin extends Plugin {
 
     // 事件常驻域按设置开关注册（懒加载架构）
     this.app.workspace.onLayoutReady(() => {
-      // 黑匣子 × EPUB 阅读器跨插件契约（ADR-0016）：布局就绪时所有插件 onload 已完成，重试注册（幂等）
-      void registerBlackBoxEpubHost(this.app);
-      // 阅读器后加载/重载时补注册（ADR-0016：注册错过 reader 后靠 layout-change 补上；幂等）
-      this.registerEvent(this.app.workspace.on('layout-change', () => {
-        refreshBlackBoxEpubHost(this.app);
-      }));
       // 备忘录：启动即初始化（对齐源码 App.init：file-open 提醒 + 剪贴板监听 + autoPopupOnStart）
       void ensureBz(this.app);
       // 日记本：启动即初始化（diary-notebook 原行为：onLayoutReady → init）
@@ -207,8 +193,7 @@ export default class BzPlugin extends Plugin {
       void ensurePomodoro(this.app);
       // 读书自动番茄钟（ticket 51）：打开/关闭 epub 书自动联动（设置开关默认开，关则静默）
       ensurePomodoroEpubLink(this.app);
-      // 黑匣子实时同步（ticket 05：笔记即事实源，常驻注册无开关）
-      ensureBlackBoxSync(this.app);
+      // 黑匣子增量提炼监听（ticket 59 重建，58 数据层阶段不注册）
     });
     // 手势触发（设置页可配，默认关闭）
     this.syncGestures();
@@ -228,7 +213,6 @@ export default class BzPlugin extends Plugin {
     unloadPomodoro();
     unloadPomodoroEpubLink();
     unloadBlackBox();
-    unregisterBlackBoxEpubHost();
     unloadBz();
     unloadAIAgent();
     unloadLauncherPanel();
