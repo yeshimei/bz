@@ -54,7 +54,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-quiz-update', 'bz-quiz-open',
   'bz-flash-open', 'bz-flash-chat',
   'bz-pomodoro-open',
-  'bz-blackbox-capture', 'bz-blackbox-capture-concept', 'bz-blackbox-capture-literature', 'bz-blackbox-capture-thought', 'bz-blackbox-open', 'bz-blackbox-review', 'bz-blackbox-panel', 'bz-blackbox-import-cardbox',
+  // 黑匣子（ticket 58 v4 数据层地基：命令暂移除，ticket 59 恢复 open/panel/review）
   'bz-bili-open',
   'bz-diary-open',
 ];

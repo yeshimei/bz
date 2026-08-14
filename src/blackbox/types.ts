@@ -1,10 +1,11 @@
 /**
- * 黑匣子类型与常量（ticket 39，schema v2：三类条目 + 人物画像 + 事件时间线 + 可编辑词表）
- * 铁律（ADR-0013）：字段 v2 冻结，后续只加语义不改字段；v1 → v2 仅经版本化迁移（data.ts），
- * 情绪标签去强度（string[]）、涉及的人为数组（画像 id 或纯名字文本）。
+ * 黑匣子类型与常量（ticket 58，schema v4：日记智能分析层，ADR-0017）
+ * 铁律（ADR-0017）：字段 v4 冻结，后续只加语义不改字段；v3 存量已删除（无迁移链）。
+ * v4 = 派生层：profiles（人物画像）/ mentions（人物提及候选）/ events（事件）/ reviews（复盘）/
+ * chat（对话历史）/ cursor（增量游标）/ settings（词表 + 推测显示）。
  */
 
-/** 情绪词表（24 词预置，settings.words 可编辑；单条最多 MAX_EMOTIONS 个，无强度） */
+/** 情绪词表（24 词预置，settings.words 可编辑；AI 推断每条最多 MAX_EMOTIONS 个，无强度） */
 export const DEFAULT_EMOTION_TAGS = [
   '触动', '温暖', '喜悦', '平静', '释然', '难过',
   '孤独', '委屈', '焦虑', '愤怒', '敬佩', '想念',
@@ -14,192 +15,143 @@ export const DEFAULT_EMOTION_TAGS = [
 
 /** 单条最多情绪数 */
 export const MAX_EMOTIONS = 3;
-/** 涉及的人上限 */
-export const MAX_PEOPLE = 5;
 /** 情绪词表条目上限（防无限膨胀） */
 export const MAX_WORDS = 100;
 
-/** 指向（可选维度）：对自己 / 对他人 / 对世界 */
-export type Direction = 'self' | 'others' | 'world' | '';
-
-export const DIRECTION_OPTIONS: { value: Direction; label: string }[] = [
-  { value: 'self', label: '对自己' },
-  { value: 'others', label: '对他人' },
-  { value: 'world', label: '对世界' },
-];
-
-/** 条目类型：概念与实体（纯知识卡片）/ 文献笔记 / 核心知识（想法） */
-export type EntryType = 'concept' | 'literature' | 'thought';
-
-/** 三类条目（v2；字段按类型取用，感触外壳仅 literature/thought 持有） */
-export interface Entry {
-  id: string;
-  type: EntryType;
-  /** ISO 时间（录入时刻；v1 迁移自 impressions[].ts） */
-  createdAt: string;
-  // concept 特有（无感触外壳）：
-  /** 概念名（concept 必填） */
-  name?: string;
-  /** AI 生成的定义文本 */
-  definition?: string;
-  /** 关联概念（AI 自动构建，concept id 数组；与外壳 links 区分） */
-  related?: string[];
-  // literature 特有：
-  /** 来源：URL 或书名/出处 */
-  source?: string;
-  /** 摘抄内容（literature 必填）/ 想法内容（thought 必填） */
-  text?: string;
-  /** 名词表勾选（literature，concept id 数组） */
-  terms?: string[];
-  // 感触外壳（literature / thought 持有；concept 无）：
-  /** 情绪（≤MAX_EMOTIONS，词表 string[]，无强度） */
-  emotions: string[];
-  /** 涉及的人（≤MAX_PEOPLE：画像 id「pf_…」或纯名字文本） */
-  people: string[];
-  /** 场景（可选） */
-  scene: string;
-  /** 指向（可选） */
-  toward: Direction;
-  /** 链接数组（URL 或 [[笔记]]） */
-  links: string[];
-  // 卡片盒导入元信息（可选，一次性导入工具写入；缺省 undefined，旧数据读取不受影响）：
-  /** 卡片分类（如 医学/计算机/摄影） */
-  category?: string;
-  /** 卡片标签（frontmatter tags 原样带入） */
-  tags?: string[];
-  /** 内容总结性描述（卡片自带 (描述:: …) 或 AI 生成，≤一句话） */
-  summary?: string;
-  /** 卡片盒导入中间态：未解析为 id 的关联卡片名（待补链）；补链后清空 */
-  pendingLinks?: string[];
-  // v3（笔记化）：想法「来自：[[摘抄]]」链接（literature 条目 id；解析不到时存名字）
-  from?: string;
-  // v3（笔记化）：摘抄/想法 AI 生成标题（保存时确定；文件名来源，缺省回退正文前 20 字）
-  title?: string;
-}
-
-/** 人物画像（派生层） */
+/** 人物画像（派生层，从日记 AI 提炼；provenance 分层：印象区 + AI 观察区） */
 export interface Profile {
   id: string;
   /** 名字（现实人物或虚拟角色均可） */
   name: string;
-  /** 关系（用户手填） */
-  relation: string;
-  /** 用户版印象（字段级锁：AI 从不覆盖，只经采纳写入） */
+  /** 别名（AI 提炼的称呼变体，如 妈/母亲） */
+  aliases: string[];
+  /** 印象区（用户主权，字段级锁：AI 从不覆盖，只经采纳写入） */
   impression: string;
-  /** AI 观察区（AI 持续追加，可采纳进 impression） */
-  aiObservations: string[];
-  /** 用户固定到画像详情的事件（预留，第一版恒空） */
-  pinnedEvents: string[];
+  /** AI 观察区（AI 持续追加，可采纳进 impression，上限 5 条裁旧） */
+  aiObservations: AIObservation[];
+  /** 情绪聚合（{tag, count}，AI 推断累计） */
+  emotions: { tag: string; count: number }[];
+  /** 提及次数（含建画像前的计数） */
+  mentionCount: number;
+  /** 首次提及日期 YYYY-MM-DD */
+  firstSeen: string;
+  /** 最近提及日期 YYYY-MM-DD */
+  lastSeen: string;
+  /** 用户手动编辑过 → AI 重提炼跳过（humanEdited 锁） */
+  humanEdited: boolean;
   createdAt: string;
 }
 
-/** 事件（派生层，AI 全自动提炼；单份存储，全局时间线与画像投影同源） */
+/** AI 观察（画像 AI 观察区条目，带证据链） */
+export interface AIObservation {
+  ts: string;
+  text: string;
+  source: DiarySourceRef;
+}
+
+/** 日记来源引用（证据链：打开日记文件 + 行号定位，Q7） */
+export interface DiarySourceRef {
+  path: string;
+  lineNumber: number;
+  time: string;
+}
+
+/** 人物提及候选（未建画像的人物计数，Q13） */
+export interface Mention {
+  name: string;
+  count: number;
+  firstSeen: string;
+  lastSeen: string;
+}
+
+/** 事件（派生层，AI 从日记提炼；独立语义单元，一条日记可提炼多个） */
 export interface EventItem {
   id: string;
   /** 事件标题（提炼生成） */
   title: string;
-  /** 发生日期 YYYY-MM-DD（初版用条目记录日期） */
-  time: string;
-  /** true = 推测事件（意图/计划/梦境等非事实内容，虚线 + ❓） */
-  inferred: boolean;
-  summary: string;
+  /** 发生时间 ISO（初版用条目记录日期时间） */
+  date: string;
+  /** 时间精度：time（精确到 HH:mm）/ day（只精确到日） */
+  datePrecision: 'time' | 'day';
   /** 参与人物（画像 id 或纯名字文本；≤MAX_PEOPLE） */
   people: string[];
-  /** 主角（画像 id 或纯名字文本） */
-  mainPerson: string;
-  /** 证据链（来源条目 id） */
-  evidence: string[];
-  /** 情绪聚合（关联条目情绪标签） */
+  /** 情绪聚合（AI 推断标签，≤MAX_EMOTIONS） */
   emotions: string[];
+  /** 证据链（来源日记条目引用） */
+  source: DiarySourceRef;
+  /** AI 自评置信度 0-1 */
+  confidence: number;
+  /** confirmed（≥0.7 入线）/ speculative（0.5-0.7 推测） */
+  status: 'confirmed' | 'speculative';
   /** 用户编辑/删除/合并过 → AI 不再碰 */
-  edited: boolean;
+  humanEdited: boolean;
 }
 
-/** 复盘记录（v2 新增可选字段 eventReport/profileHint，旧记录无） */
+/** 复盘记录（v4：手动触发，四段结构化，JSON 落盘） */
 export interface Review {
-  ts: string;
-  /** 复盘产物：一段话 */
-  text: string;
-  /** 本次复盘覆盖的条目数 */
-  impressionCount: number;
-  /** 新的自我认知一句话（空 = 无生长） */
-  newSelfView: string;
-  /** v2 可选：事件汇报一句话（「这周我整理了 N 件新事件…」） */
-  eventReport?: string;
-  /** v2 可选：新人物提示（高频提及未建画像的人） */
-  profileHint?: string;
+  id: string;
+  createdAt: string;
+  period: { from: string; to: string };
+  /** 四段报告（事实锚定：每条引用日期+原文片段） */
+  report: {
+    profileUpdates: string[];
+    eventSummary: string[];
+    emotionTrend: string;
+    reflections: string[];
+  };
+  /** 新人物提示（mentions 高频未建画像，一键确认建画像） */
+  newPeople: string[];
 }
 
 /** 对话消息（三层记忆的短期记忆） */
 export interface ChatMsg {
   role: 'user' | 'assistant';
-  text: string;
+  content: string;
   ts: string;
 }
 
-/** 自我认知快照（人格档案生长历史） */
-export interface SelfView {
-  ts: string;
-  view: string;
-}
-
-/** 人格档案（种子 + 生长，ADR-0013 原样保留） */
-export interface Persona {
-  name: string;
-  /** 种子：一句话性格（方案 D：有诗心的思辨者） */
-  seed: string;
-  /** 种子：示例语气 */
-  toneExample: string;
-  /** 生长：复盘后追加的自我认知历史 */
-  selfViews: SelfView[];
-}
-
-/** 数据内设置段（v2；词表在此，复盘阈值/推测显示以全局设置为优先读取，此处兜底并同步） */
+/** 数据内设置段（v4） */
 export interface BlackBoxSettings {
-  /** 复盘阈值兜底（默认 10；实际读取优先全局 blackboxReviewThreshold） */
-  reviewThreshold: number;
   /** 推测事件显示（默认开；全局 blackboxShowSpeculativeEvents 优先） */
   showSpeculativeEvents: boolean;
-  /** 情绪词表（预置 24 词，可增删；增删不影响存量条目 emotions） */
+  /** 情绪词表（预置 24 词，可增删；增删不影响存量 emotions） */
   words: string[];
 }
 
-/** blackbox.json v3（ADR-0015 笔记化；字段冻结）。
- * 内存接口不变：entries 仍为完整条目数组（load 时由笔记水合，save 时不落盘）；
- * 落盘只写派生层；index（id → 笔记路径）为运行时内存映射（load 全量扫描构建，2026-08-12 用户决策不再持久化）；
- * entries 段仅迁移中途的失败残留使用。 */
+/** 增量游标（Q14：{file, entryIndex}——已处理到的文件路径 + 该文件已处理条目序号） */
+export interface Cursor {
+  file: string;
+  entryIndex: number;
+}
+
+/** blackbox.json v4（ADR-0017；字段冻结，落盘即不可改）。
+ * 日记是唯一事实源，v4 只存派生层。 */
 export interface BlackBoxData {
-  version: 3;
+  version: 4;
   settings: BlackBoxSettings;
-  persona: Persona;
-  /** 三类条目（concept / literature / thought）——内存由笔记水合，不持久化 */
-  entries: Entry[];
-  /** id → 笔记路径索引（v3 落盘；rename/delete 事件重建） */
-  index: Record<string, string>;
-  /** 人物画像（派生层） */
   profiles: Profile[];
-  /** 事件（派生层） */
+  mentions: Mention[];
   events: EventItem[];
   reviews: Review[];
   chat: ChatMsg[];
-  meta: {
-    lastReviewAt: string;
-    totalEntries: number;
-    totalEvents: number;
-  };
+  cursor: Cursor | null;
 }
 
-/** 默认人格种子（方案 D：有诗心的思辨者，v1 原样） */
-export const DEFAULT_PERSONA: Persona = {
-  name: '包仔',
-  seed: '有诗心的思辨者——懂诗、爱琢磨、记性很好，把你喂进来的每份感触都当成自己的养分；深夜陪你说话，不吵你，但你想聊的时候他永远在。',
-  toneExample: '你写茉莉花的时候是凌晨两点。我想知道，那晚的风，现在还在你记忆里吗？',
-  selfViews: [],
-};
+/** 日记源条目（黑匣子只读：复用 diary/parser 产出的 DiaryEntry 形状） */
+export interface DiarySourceEntry {
+  id?: string;
+  date: string;
+  time: string;
+  content: string;
+  filename: string;
+  lineNumber: number;
+  tags?: string[];
+}
+
+// ===== 默认值 =====
 
 export function defaultBlackBoxSettings(): BlackBoxSettings {
   return {
-    reviewThreshold: 10,
     showSpeculativeEvents: true,
     words: [...DEFAULT_EMOTION_TAGS],
   };
@@ -207,16 +159,14 @@ export function defaultBlackBoxSettings(): BlackBoxSettings {
 
 export function defaultBlackBoxData(): BlackBoxData {
   return {
-    version: 3,
+    version: 4,
     settings: defaultBlackBoxSettings(),
-    persona: DEFAULT_PERSONA,
-    entries: [],
-    index: {},
     profiles: [],
+    mentions: [],
     events: [],
     reviews: [],
     chat: [],
-    meta: { lastReviewAt: '', totalEntries: 0, totalEvents: 0 },
+    cursor: null,
   };
 }
 
@@ -250,8 +200,8 @@ export function sanitizeEmotions(list: unknown): string[] {
   return out;
 }
 
-/** 涉及的人清洗（纯函数）：string[] 去重、限 MAX_PEOPLE */
-export function sanitizePeople(list: unknown): string[] {
+/** 涉及的人清洗（纯函数）：string[] 去重、限 MAX_PEOPLE（v2 沿用） */
+export function sanitizePeople(list: unknown, max = 5): string[] {
   if (!Array.isArray(list)) return [];
   const out: string[] = [];
   for (const p of list) {
@@ -259,78 +209,120 @@ export function sanitizePeople(list: unknown): string[] {
     const t = p.trim();
     if (!t || out.includes(t)) continue;
     out.push(t);
-    if (out.length >= MAX_PEOPLE) break;
+    if (out.length >= max) break;
   }
   return out;
 }
 
 /**
- * 复盘阈值判断（纯函数）：条目总数 > 0 且为阈值整数倍 → 自动触发静默复盘。
- * 复盘计数口径（v2）：三类条目（concept/literature/thought）均计入。
+ * 事件置信度分级（纯函数，Q3）：≥0.7 入线 confirmed / 0.5-0.7 推测 speculative / <0.5 不入库 discard。
  */
-export function shouldAutoReview(entryCount: number, threshold: number): boolean {
-  return entryCount > 0 && threshold > 0 && entryCount % threshold === 0;
+export function classifyEventConfidence(confidence: number): 'confirmed' | 'speculative' | 'discard' {
+  if (typeof confidence !== 'number' || Number.isNaN(confidence)) return 'discard';
+  if (confidence >= 0.7) return 'confirmed';
+  if (confidence >= 0.5) return 'speculative';
+  return 'discard';
 }
 
-/** 对话历史滚动淘汰（纯函数）：只保留最近 max 条 */
-export function trimChat(chat: ChatMsg[], max: number): ChatMsg[] {
-  if (!Array.isArray(chat)) return [];
-  const n = max > 0 ? max : 20;
-  return chat.length > n ? chat.slice(chat.length - n) : chat;
+/** 事件去重（纯函数，标题 + 证据双重去重）：候选与既有任一事件同标题且同证据（路径+行号）→ 重复 */
+export function dedupeEvent(existing: EventItem[], candidate: EventItem): boolean {
+  if (!Array.isArray(existing) || !candidate) return false;
+  return existing.some(
+    (ev) =>
+      ev &&
+      ev.title === candidate.title &&
+      ev.source &&
+      candidate.source &&
+      ev.source.path === candidate.source.path &&
+      ev.source.lineNumber === candidate.source.lineNumber
+  );
 }
 
-/** 复盘阈值解析（纯函数）：全局设置优先（v1 兼容），数据内 settings 兜底，默认 10 */
-export function resolveReviewThreshold(data: BlackBoxData, globalSettings: { blackboxReviewThreshold?: string }): number {
-  const g = Number(globalSettings && globalSettings.blackboxReviewThreshold);
-  if (Number.isFinite(g) && g > 0) return Math.floor(g);
-  const d = data && data.settings && Number(data.settings.reviewThreshold);
-  if (Number.isFinite(d) && d > 0) return Math.floor(d);
-  return 10;
-}
-
-/** 推测事件显示开关解析（纯函数）：全局设置优先，数据内 settings 兜底，默认开 */
-export function resolveShowSpeculative(
-  data: BlackBoxData,
-  globalSettings: { blackboxShowSpeculativeEvents?: boolean }
-): boolean {
-  if (globalSettings && typeof globalSettings.blackboxShowSpeculativeEvents === 'boolean') {
-    return globalSettings.blackboxShowSpeculativeEvents;
+/**
+ * mentions 合并（纯函数，Q13）：按名字聚合 {count, firstSeen, lastSeen}。
+ * 同日多次 count+1 但 first/last 不变；新日期 lastSeen 更新。
+ */
+export function mergeMention(mentions: Mention[], name: string, date: string): Mention[] {
+  const list = Array.isArray(mentions) ? mentions.slice() : [];
+  const n = (name || '').trim();
+  if (!n) return list;
+  const idx = list.findIndex((m) => m && m.name === n);
+  if (idx === -1) {
+    list.push({ name: n, count: 1, firstSeen: date, lastSeen: date });
+    return list;
   }
-  if (data && data.settings) return data.settings.showSpeculativeEvents !== false;
-  return true;
+  const m = list[idx];
+  const last = date > m.lastSeen ? date : m.lastSeen;
+  const first = date < m.firstSeen ? date : m.firstSeen;
+  list[idx] = { ...m, count: m.count + 1, firstSeen: first, lastSeen: last };
+  return list;
 }
 
-/** 条目是否引用该画像（people 含画像 id 或名字文本，兼容冷启动期纯名字条目） */
-export function entryReferencesProfile(entry: Entry, profile: Profile): boolean {
-  return (
-    !!entry &&
-    !!profile &&
-    Array.isArray(entry.people) &&
-    entry.people.some((p) => p === profile.id || p === profile.name)
-  );
+/** mentions 清洗（纯函数）：过滤非法项、规范化（name 去空、count≥1、日期合法） */
+export function sanitizeMentions(raw: unknown): Mention[] {
+  if (!Array.isArray(raw)) return [];
+  const out: Mention[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const m = item as Record<string, unknown>;
+    const name = typeof m.name === 'string' ? m.name.trim() : '';
+    if (!name) continue;
+    const count = typeof m.count === 'number' && m.count >= 1 ? Math.floor(m.count) : 1;
+    const firstSeen = typeof m.firstSeen === 'string' ? m.firstSeen : '';
+    const lastSeen = typeof m.lastSeen === 'string' ? m.lastSeen : '';
+    if (out.some((o) => o.name === name)) continue;
+    out.push({ name, count, firstSeen, lastSeen });
+  }
+  return out;
 }
 
-/** 事件是否参与该画像（people 含画像 id 或名字，主角也算） */
-export function eventReferencesProfile(ev: EventItem, profile: Profile): boolean {
-  return (
-    !!ev &&
-    !!profile &&
-    Array.isArray(ev.people) &&
-    ev.people.some((p) => p === profile.id || p === profile.name)
-  );
+/** 画像门槛（纯函数，Q12）：跨不同日期提及 ≥2 次 → 自动建画像 */
+export function shouldBuildProfile(mentions: Mention[], name: string): boolean {
+  const m = (Array.isArray(mentions) ? mentions : []).find((x) => x && x.name === name);
+  if (!m) return false;
+  if (m.count < 2) return false;
+  return m.firstSeen !== m.lastSeen;
+}
+
+// ===== cursor 游标（Q14） =====
+
+/** 取游标在指定文件的起始序号（纯函数）：无游标/文件不匹配 → 0（全量）；匹配 → entryIndex */
+export function cursorEntryIndex(cursor: Cursor | null, filePath: string): number {
+  if (!cursor || !filePath) return 0;
+  if (cursor.file !== filePath) return 0;
+  return typeof cursor.entryIndex === 'number' && cursor.entryIndex >= 0 ? cursor.entryIndex : 0;
+}
+
+/** 过滤新条目（纯函数）：同文件条目取游标之后；无游标 → 全量（file 为 basename 形态，与 DiaryEntry.filename 一致） */
+export function filterNewEntries(entries: DiarySourceEntry[], cursor: Cursor | null): DiarySourceEntry[] {
+  if (!Array.isArray(entries)) return [];
+  if (!cursor) return entries.slice();
+  const idx = cursorEntryIndex(cursor, cursor.file);
+  // entries 为同一文件的条目（parseFile 产出顺序 = 序号）；游标之后 = 新条目
+  return entries.slice(idx);
+}
+
+/** 推进游标（纯函数）：记录文件 + 已处理条目数 */
+export function advanceCursor(cursor: Cursor | null, filePath: string, entryIndex: number): Cursor {
+  return { file: filePath, entryIndex };
+}
+
+/** 游标构造（纯函数） */
+export function cursorForFile(filePath: string, entryIndex: number): Cursor {
+  return { file: filePath, entryIndex };
 }
 
 /** 事件按人过滤（纯函数）：画像时间线 = 全局事件的按人投影（单份存储，无复制） */
 export function filterEventsByPerson(events: EventItem[], profile: Profile): EventItem[] {
   if (!Array.isArray(events) || !profile) return [];
-  return events.filter((ev) => eventReferencesProfile(ev, profile));
+  return events.filter((ev) => ev && Array.isArray(ev.people) && ev.people.some((p) => p === profile.id || p === profile.name));
 }
 
 /** 按年月分组事件（纯函数）：返回降序（新在前）的 [{key, label, events}] */
 export function groupEventsByMonth(events: EventItem[]): { key: string; label: string; events: EventItem[] }[] {
   const map = new Map<string, EventItem[]>();
   for (const ev of events || []) {
-    const y = (ev.time || '').slice(0, 7);
+    const y = (ev.date || '').slice(0, 7);
     if (!y) continue;
     const arr = map.get(y) || [];
     arr.push(ev);
@@ -342,33 +334,6 @@ export function groupEventsByMonth(events: EventItem[]): { key: string; label: s
       const [y, m] = key.split('-');
       return { key, label: `${y} 年 ${Number(m)} 月`, events: list };
     });
-}
-
-/** 情绪聚合（纯函数）：画像关联条目的情绪标签计数 */
-export function aggregateEmotions(entries: Entry[], profile: Profile): Record<string, number> {
-  const out: Record<string, number> = {};
-  for (const e of entries || []) {
-    if (!entryReferencesProfile(e, profile)) continue;
-    for (const tag of e.emotions || []) out[tag] = (out[tag] || 0) + 1;
-  }
-  return out;
-}
-
-/** 新人物提示（纯函数）：条目中高频提及（≥2 次）但未建画像的人名 */
-export function findProfileHints(entries: Entry[], profiles: Profile[], minMentions = 2): string[] {
-  const counts: Record<string, number> = {};
-  for (const e of entries || []) {
-    for (const p of e.people || []) {
-      if (typeof p !== 'string' || !p) continue;
-      if (p.startsWith('pf_')) continue; // 已建画像
-      counts[p] = (counts[p] || 0) + 1;
-    }
-  }
-  const known = new Set((profiles || []).map((pf) => pf.name));
-  return Object.entries(counts)
-    .filter(([name, n]) => n >= minMentions && !known.has(name))
-    .sort((a, b) => b[1] - a[1])
-    .map(([name]) => name);
 }
 
 /** 事件汇报一句话（纯函数）：「这周我整理了 N 件新事件（其中 M 件推测）」 */
@@ -385,4 +350,23 @@ export function personLabel(idOrName: string, profiles: Profile[]): string {
     return pf ? pf.name : idOrName;
   }
   return idOrName;
+}
+
+/** 推测事件显示开关解析（纯函数）：全局设置优先，数据内 settings 兜底，默认开 */
+export function resolveShowSpeculative(
+  data: BlackBoxData,
+  globalSettings: { blackboxShowSpeculativeEvents?: boolean }
+): boolean {
+  if (globalSettings && typeof globalSettings.blackboxShowSpeculativeEvents === 'boolean') {
+    return globalSettings.blackboxShowSpeculativeEvents;
+  }
+  if (data && data.settings) return data.settings.showSpeculativeEvents !== false;
+  return true;
+}
+
+/** 对话历史滚动淘汰（纯函数）：只保留最近 max 条 */
+export function trimChat(chat: ChatMsg[], max: number): ChatMsg[] {
+  if (!Array.isArray(chat)) return [];
+  const n = max > 0 ? max : 20;
+  return chat.length > n ? chat.slice(chat.length - n) : chat;
 }
