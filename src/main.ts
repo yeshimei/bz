@@ -28,7 +28,7 @@ import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverd
 import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
 import { openPomodoro, unloadPomodoro, ensurePomodoro, ensurePomodoroEpubLink, unloadPomodoroEpubLink } from './pomodoro';
-import { unloadBlackBox, openBlackBoxPanel, ensureBlackBoxExtraction, unloadBlackBoxExtraction, manualReview, openBlackBoxChat } from './blackbox';
+import { unloadBlackBox, openBlackBoxPanel, ensureBlackBoxExtraction, autoStartBlackBoxExtraction, unloadBlackBoxExtraction, manualReview, openBlackBoxChat } from './blackbox';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // B站下载器启动命令（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
 import { openBiliDownloader } from './bili-downloader';
@@ -198,6 +198,8 @@ export default class BzPlugin extends Plugin {
       ensurePomodoroEpubLink(this.app);
       // 黑匣子增量提炼监听（ticket 59：vault modify/create 三目录 → 防抖 30 分钟）
       ensureBlackBoxExtraction(this.app);
+      // 启动自动提炼（用户反馈修复：重启后无反应；cursor 空 → 全量，有待处理 → 增量）
+      void autoStartBlackBoxExtraction(this.app);
     });
     // 手势触发（设置页可配，默认关闭）
     this.syncGestures();
