@@ -160,6 +160,9 @@ export class UIManager {
           await saveSettings();
         })
       );
+    // 做题家 4 项容器：仅「做题决定难度」开启时动态显示（spec 2026-08-07 用户决策，仿 AI tab 隐藏模式）
+    const quizBox = document.createElement('div');
+    quizBox.id = 'review-quiz-settings';
     new Setting(el)
       .setName('做题决定难度')
       .setDesc('开启后，点击复习自动做题，根据正确率自动选择难度')
@@ -167,9 +170,13 @@ export class UIManager {
         toggle.setValue(!!s.forceQuizForReview).onChange(async (v) => {
           s.forceQuizForReview = v;
           await saveSettings();
+          quizBox.style.display = v ? '' : 'none';
         })
       );
-    new Setting(el)
+    el.appendChild(quizBox);
+    quizBox.style.display = s.forceQuizForReview ? '' : 'none';
+
+    new Setting(quizBox)
       .setName('允许多选题')
       .setDesc('若关闭，AI 只生成单选题')
       .addToggle((toggle) =>
@@ -178,7 +185,7 @@ export class UIManager {
           await saveSettings();
         })
       );
-    new Setting(el)
+    new Setting(quizBox)
       .setName('每笔记题目数量（0为自动）')
       .setDesc('设为0则由AI决定，设为正整数则固定数量')
       .addText((text) =>
@@ -187,7 +194,7 @@ export class UIManager {
           await saveSettings();
         })
       );
-    new Setting(el)
+    new Setting(quizBox)
       .setName('打乱题目顺序')
       .setDesc('每次打开做题窗口时是否随机打乱题目')
       .addToggle((toggle) =>
@@ -196,7 +203,7 @@ export class UIManager {
           await saveSettings();
         })
       );
-    new Setting(el)
+    new Setting(quizBox)
       .setName('题目难度')
       .setDesc('生成题目时的难度等级')
       .addDropdown((dd) => {
