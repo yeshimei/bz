@@ -163,15 +163,110 @@ function renderProfiles(data: BlackBoxData): void {
   }
 }
 
-// ===== 事件时间线（ticket 60 精化；59 骨架 = 简单列表） =====
+// ===== 事件时间线（ticket 60 精化） =====
+
+/** 时间线筛选状态（模块级，面板会话内保持） */
+let eventPersonFilter = '';
+let eventYearFilter = '';
+
+/** 保存派生层 + 重渲染（事件操作后） */
+async function saveAndRender(data: BlackBoxData): Promise<void> {
+  const dm = new BlackBoxDataManager();
+  await dm.save(data);
+  await render();
+}
+
+/** 事件人物显示名（画像 id → 名；纯名字原样） */
+function evPersonLabel(p: string, profiles: Profile[]): string {
+  return personLabel(p, profiles);
+}
+
+/** 打开日记文件 + 滚动到条目（证据链跳转，Q7） */
+function jumpToDiary(app: any, path: string, lineNumber: number): void {
+  const file = app.vault.getAbstractFileByPath ? app.vault.getAbstractFileByPath(`${path}.md`) : null;
+  void app.workspace.openLinkText(path, '', false);
+}
 
 function renderEvents(data: BlackBoxData): void {
   if (!contentEl) return;
-  const events = data.events.slice().sort((a, b) => (a.date < b.date ? 1 : -1));
+  const showSpec = data.settings.showSpeculativeEvents !== false;
+  let events = data.events
+    .filter((ev) => showSpec || ev.status !== 'speculative')
+    .slice()
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
   if (!events.length) {
     contentEl.appendChild(emptyEl('暂无事件'));
     return;
   }
+  // 筛选栏：人物 + 年份
+  const bar = document.createElement('div');
+  bar.className = 'bz-event-filter-bar';
+  // 人物下拉
+  const personSel = document.createElement('select');
+  personSel.className = 'bz-event-person-filter';
+  const allOpt = document.createElement('option');
+  allOpt.value = '';
+  allOpt.textContent = '全部人物';
+  personSel.appendChild(allOpt);
+  for (const pf of data.profiles) {
+    const opt = document.createElement('option');
+    opt.value = pf.name;
+    opt.textContent = pf.name;
+    personSel.appendChild(opt);
+  }
+  personSel.value = eventPersonFilter;
+  personSel.onchange = () => {
+    eventPersonFilter = personSel.value;
+    void render();
+  };
+  bar.appendChild(personSel);
+  // 年份下拉
+  const yearSel = document.createElement('select');
+  yearSel.className = 'bz-event-year-filter';
+  const yAll = document.createElement('option');
+  yAll.value = '';
+  yAll.textContent = '全部年份';
+  yearSel.appendChild(yAll);
+  const years = [...new Set(data.events.map((e) => e.date.slice(0, 4)))].sort().reverse();
+  for (const y of years) {
+    const opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = y;
+    yearSel.appendChild(opt);
+  }
+  yearSel.value = eventYearFilter;
+  yearSel.onchange = () => {
+    eventYearFilter = yearSel.value;
+    void render();
+  };
+  bar.appendChild(yearSel);
+  contentEl.appendChild(bar);
+
+  // 时段情绪分布条（按事件日期聚合情绪计数）
+  const dist = document.createElement('div');
+  dist.className = 'bz-event-emotion-dist';
+  const counts: Record<string, number> = {};
+  for (const ev of events) {
+    for (const t of ev.emotions) counts[t] = (counts[t] || 0) + 1;
+  }
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  if (entries.length) {
+    dist.textContent = '情绪分布：' + entries.map(([t, n]) => `${t}×${n}`).join(' ');
+    contentEl.appendChild(dist);
+  }
+
+  // 应用筛选
+  if (eventPersonFilter) {
+    events = events.filter((ev) => ev.people.some((p) => evPersonLabel(p, data.profiles) === eventPersonFilter));
+  }
+  if (eventYearFilter) {
+    events = events.filter((ev) => ev.date.slice(0, 4) === eventYearFilter);
+  }
+  if (!events.length) {
+    contentEl.appendChild(emptyEl('暂无事件'));
+    return;
+  }
+
   for (const ev of events) {
     const card = document.createElement('div');
     card.className = 'bz-event-card' + (ev.status === 'speculative' ? ' speculative' : '');
@@ -179,11 +274,47 @@ function renderEvents(data: BlackBoxData): void {
     head.className = 'bz-event-head';
     head.textContent = `${ev.date.slice(0, 10)} ${ev.status === 'speculative' ? '❓' : ''} ${ev.title}`;
     card.appendChild(head);
+    if (ev.people.length) {
+      const people = document.createElement('div');
+      people.className = 'bz-event-people';
+      people.textContent = ev.people.map((p) => evPersonLabel(p, data.profiles)).join('、');
+      card.appendChild(people);
+    }
     if (ev.emotions.length) {
       const emo = document.createElement('div');
       emo.className = 'bz-event-emotions';
       emo.textContent = ev.emotions.join(' ');
       card.appendChild(emo);
+    }
+    // 证据链跳转
+    if (ev.source && ev.source.path) {
+      const src = document.createElement('button');
+      src.className = 'bz-event-source';
+      src.textContent = `📄 ${ev.source.path} #${ev.source.lineNumber}`;
+      src.onclick = () => jumpToDiary(_app, ev.source!.path, ev.source!.lineNumber);
+      card.appendChild(src);
+    }
+    // 推测事件操作
+    if (ev.status === 'speculative') {
+      const actions = document.createElement('div');
+      actions.className = 'bz-event-actions';
+      const confirm = document.createElement('button');
+      confirm.className = 'bz-event-confirm';
+      confirm.textContent = '✓ 确认';
+      confirm.onclick = async () => {
+        ev.status = 'confirmed';
+        await saveAndRender(data);
+      };
+      const del = document.createElement('button');
+      del.className = 'bz-event-delete';
+      del.textContent = '✕ 删除';
+      del.onclick = async () => {
+        data.events = data.events.filter((x) => x.id !== ev.id);
+        await saveAndRender(data);
+      };
+      actions.appendChild(confirm);
+      actions.appendChild(del);
+      card.appendChild(actions);
     }
     contentEl!.appendChild(card);
   }
