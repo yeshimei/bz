@@ -2,7 +2,7 @@
 
 **What to build:** grilling 会话（2026-08）确认的读书自动番茄钟——打开/关闭 epub 书自动联动番茄钟 + 读书预设自动切换 + 读书统计改为完成番茄数 + 删目标选择器书库 tab + 两个新设置项：
 
-1. **打开书自动联动**：检测到 EPUB 阅读器（fork-weave-epub-reader，视图类型 `weave-epub-reader-standalone`，视图形状探测复用黑匣子 host.ts 先例）打开书 → 番茄钟自动进入**读书专注**（target 自动设为该书，`type:'book'`，path = epub 文件路径，label = 书名）。场景决策（grilling Q9/Q10/Q5/Q6 定稿）：
+1. **打开书自动联动**：检测到 EPUB 阅读器（fork-weave-epub-reader，视图类型 `weave-epub-reader-standalone`，视图形状探测只读属性）打开书 → 番茄钟自动进入**读书专注**（target 自动设为该书，`type:'book'`，path = epub 文件路径，label = 书名）。场景决策（grilling Q9/Q10/Q5/Q6 定稿）：
    - 番茄钟 idle → **直接自动开始**，免确认（启动形态按设置：后台静默 / 自动弹窗，默认后台）
    - 休息阶段（短/长休）→ **弹窗确认**「跳过休息，开始读书专注？」
    - 专注中且 target 非书 → **弹窗确认**「进入读书专注？」
@@ -62,7 +62,7 @@
 ## Implementation Decisions
 
 - **新模块 `src/pomodoro/epub-link.ts`**（读书联动接线层，ui 依赖方向内）：
-  - `getEpubView(app)`：形状探测当前 active leaf——viewType ∈ {'weave-epub-reader-standalone'}（fork 构建；与黑匣子 host.ts 的 READER_PLUGIN_IDS 风格一致，常量收在本模块），鸭子类型读 `view.filePath` / `view.bookTitle`；无 → null。**只读 view 属性，不注册任何阅读器公开 API**（区别于 ADR-0016 的双向契约，无需阅读器侧配合）
+  - `getEpubView(app)`：形状探测当前 active leaf——viewType ∈ {'weave-epub-reader-standalone'}（fork 构建；常量收在本模块），鸭子类型读 `view.filePath` / `view.bookTitle`；无 → null。**只读 view 属性，不注册任何阅读器公开 API**（区别于 ADR-0016 的双向契约，无需阅读器侧配合）
   - `decideReadingAction(prev, next, state, settings)`：**纯函数决策**——输入（打开/关闭/换书事件 + 当前状态 + 设置）→ 输出（`{ action: 'start-focus' | 'pause' | 'confirm-enter' | 'confirm-skip-break' | 'none', book?: {path, label} }`），承载 Q9/Q10/Q5/Q6/Q12 全部场景表
   - `ensurePomodoroEpubLink(app)`：幂等常驻初始化——`active-leaf-change` 监听 + 轻量轮询兜底（同视图内换书不触发 leaf 变化，每秒 tick 时顺带比对 filePath；轮询间隔与番茄钟 tick 复用，不新增独立定时器）
   - `unloadPomodoroEpubLink()`：清理监听/轮询/确认弹窗

@@ -54,8 +54,6 @@ const EXPECTED_COMMAND_IDS = [
   'bz-quiz-update', 'bz-quiz-open',
   'bz-flash-open', 'bz-flash-chat',
   'bz-pomodoro-open',
-  // 黑匣子（ticket 59-63：命令恢复）
-  'bz-blackbox-open', 'bz-blackbox-panel', 'bz-blackbox-review',
   'bz-bili-open',
   'bz-diary-open',
 ];

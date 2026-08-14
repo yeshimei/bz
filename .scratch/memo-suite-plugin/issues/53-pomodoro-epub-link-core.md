@@ -1,6 +1,6 @@
 # 53 — 读书联动核心（epub 检测 + 决策 + 自动开始/暂停 + 预设切换）
 
-**What to build:** 读书联动的完整主链路：检测到 EPUB 阅读器（fork-weave-epub-reader，视图 `weave-epub-reader-standalone`，形状探测只读 filePath/bookTitle，复用黑匣子 host.ts 先例，不注册阅读器 API）打开书 → 番茄钟自动进入读书专注（target 自动挂书，path=epub 路径）；idle 时直接自动开始（后台形态，免确认）；读书专注中换书（含同视图内切书，tick 轮询比对兜底）→ 暂停旧书不计 history → 直接开始新书；关闭书 → 自动暂停（remaining/target 保留），豁免强制专注模式；重开同一本书 → 重新开始新专注（不恢复剩余）；读书模式期间自动切「阅读沉浸」预设、退出恢复读书前所选；总开关关闭 → 不注册监听全部静默；main 懒加载注册 + onunload 清理。确认弹窗场景（休息中/他处专注中/弹窗形态）留 ticket 54。
+**What to build:** 读书联动的完整主链路：检测到 EPUB 阅读器（fork-weave-epub-reader，视图 `weave-epub-reader-standalone`，形状探测只读 filePath/bookTitle，不注册阅读器 API）打开书 → 番茄钟自动进入读书专注（target 自动挂书，path=epub 路径）；idle 时直接自动开始（后台形态，免确认）；读书专注中换书（含同视图内切书，tick 轮询比对兜底）→ 暂停旧书不计 history → 直接开始新书；关闭书 → 自动暂停（remaining/target 保留），豁免强制专注模式；重开同一本书 → 重新开始新专注（不恢复剩余）；读书模式期间自动切「阅读沉浸」预设、退出恢复读书前所选；总开关关闭 → 不注册监听全部静默；main 懒加载注册 + onunload 清理。确认弹窗场景（休息中/他处专注中/弹窗形态）留 ticket 54。
 
 **Blocked by:** 52 — 读书预设 + 读书番茄统计 + 删书库 tab
 
