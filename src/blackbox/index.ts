@@ -14,6 +14,7 @@ export {
   runFullExtraction,
   hasPendingEntries,
   collectNewEntries,
+  autoStartBlackBoxExtraction,
   getExtractionInFlight,
 } from './sync';
 export { openBlackBoxPanel, closeBlackBoxPanel, unloadBlackBoxPanel, getPanelState } from './panel';

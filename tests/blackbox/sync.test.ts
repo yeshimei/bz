@@ -14,6 +14,7 @@ import {
   processPendingEntries,
   runFullExtraction,
   hasPendingEntries,
+  autoStartBlackBoxExtraction,
   getExtractionInFlight,
 } from '../../src/blackbox/sync';
 
@@ -181,5 +182,47 @@ describe('ensureBlackBoxExtraction（vault 监听 + 防抖 30 分钟）', () => 
     vault.emit('modify', f);
     await vi.advanceTimersByTimeAsync(31 * 60 * 1000);
     expect(ai.json).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('autoStartBlackBoxExtraction（启动自动提炼）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    unloadBlackBoxExtraction();
+    vi.useRealTimers();
+  });
+
+  it('AI 未配置 → warning 提示去设置，不调 AI', async () => {
+    const { app } = setup(); // setup 无 AI key
+    const ai = makeAI(EXTRACT_JSON);
+    await autoStartBlackBoxExtraction(app, ai);
+    expect(ai.json).not.toHaveBeenCalled();
+    const msgs = getNoticeMessages().join(' ');
+    expect(msgs).toContain('配置 AI');
+  });
+
+  it('cursor 空 + AI 已配置 + 有日记 → 自动全量提炼 + cursor 落盘', async () => {
+    const { app } = setup();
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', deepseekApiKey: 'sk-test' }) as any);
+    const ai = makeAI(EXTRACT_JSON);
+    await autoStartBlackBoxExtraction(app, ai);
+    expect(ai.json).toHaveBeenCalled();
+    const dm = new BlackBoxDataManager();
+    const data = await dm.load();
+    expect(data.cursor).not.toBeNull();
+    expect(data.events.length).toBeGreaterThan(0);
+  });
+
+  it('无日记目录 → 无操作不调 AI', async () => {
+    const vault = new MockVault();
+    const app = mockAppWithVault(vault);
+    setApp(app);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', deepseekApiKey: 'sk-test' }) as any);
+    const ai = makeAI(EXTRACT_JSON);
+    await autoStartBlackBoxExtraction(app, ai);
+    expect(ai.json).not.toHaveBeenCalled();
   });
 });
