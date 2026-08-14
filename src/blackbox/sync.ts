@@ -15,10 +15,14 @@ import type { BlackBoxData, DiarySourceEntry } from './types';
 
 /** 防抖时长：30 分钟（用户决策 Q5） */
 export const EXTRACT_DEBOUNCE_MS = 30 * 60 * 1000;
-/** 首次全量分批大小 */
-export const FULL_BATCH_SIZE = 50;
+/** 首次全量分批大小（10 条/批：opencode.ai 大批次请求易挂起/空响应，实测 9 条 ~33s 稳定） */
+export const FULL_BATCH_SIZE = 10;
 /** 单次 AI 提炼条目上限（提示词长度控制） */
-export const MAX_ENTRIES_PER_CALL = 50;
+export const MAX_ENTRIES_PER_CALL = 10;
+/** 全量并发批数（opencode.ai 允许多请求并发；每轮 4 批并行，全量总时长 ~1/4） */
+export const FULL_CONCURRENCY = 4;
+/** 单批 AI 调用失败重试次数（网络/503 抖动重试；parse-fail 不重试） */
+export const RETRY_COUNT = 1;
 
 let registered = false;
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -177,6 +181,16 @@ async function extractBatch(app: any, ai: any, entries: DiarySourceEntry[], data
   }
 }
 
+/** 单批提炼 + 失败重试（ai-fail 重试 RETRY_COUNT 次——网络/503 抖动；parse-fail 属内容问题不重试） */
+async function extractBatchWithRetry(app: any, ai: any, entries: DiarySourceEntry[], data: BlackBoxData): Promise<BatchResult> {
+  let r = await extractBatch(app, ai, entries, data);
+  for (let i = 0; i < RETRY_COUNT && r === 'ai-fail'; i++) {
+    await bbLog(app, `重试第 ${i + 1} 次（批 ${entries.length} 条）`);
+    r = await extractBatch(app, ai, entries, data);
+  }
+  return r;
+}
+
 /** 增量提炼（打开黑匣子时调用；处理全部待处理条目，分 MAX_ENTRIES_PER_CALL 批） */
 export async function processPendingEntries(app: any, ai?: any): Promise<boolean> {
   if (inflight) return false;
@@ -200,7 +214,7 @@ export async function processPendingEntries(app: any, ai?: any): Promise<boolean
     let processedAll: DiarySourceEntry[] = [];
     for (let i = 0; i < pending.length; i += MAX_ENTRIES_PER_CALL) {
       const batch = pending.slice(i, i + MAX_ENTRIES_PER_CALL);
-      const r = await extractBatch(app, service, batch, data);
+      const r = await extractBatchWithRetry(app, service, batch, data);
       if (r === 'ok') {
         okCount++;
         processedAll = processedAll.concat(batch);
@@ -242,23 +256,29 @@ export async function runFullExtraction(app: any, ai?: any): Promise<void> {
       await bbLog(app, '全量：无日记条目，退出');
       return;
     }
-    await bbLog(app, `全量：${all.length} 条，${Math.ceil(all.length / FULL_BATCH_SIZE)} 批`);
+    await bbLog(app, `全量：${all.length} 条，${Math.ceil(all.length / FULL_BATCH_SIZE)} 批，并发 ${FULL_CONCURRENCY}`);
     const service = ai || _ai || getBlackBoxAI();
     const total = all.length;
-    const batches = Math.ceil(total / FULL_BATCH_SIZE);
+    const batches: DiarySourceEntry[][] = [];
+    for (let i = 0; i < all.length; i += FULL_BATCH_SIZE) batches.push(all.slice(i, i + FULL_BATCH_SIZE));
     let done = 0;
     let okCount = 0, failCount = 0;
-    for (let b = 0; b < batches; b++) {
-      const batch = all.slice(b * FULL_BATCH_SIZE, (b + 1) * FULL_BATCH_SIZE);
-      notice(`正在提炼历史日记… ${Math.min(done + batch.length, total)}/${total}`, 'info');
-      const r = await extractBatch(app, service, batch, data);
-      if (r === 'ok') okCount++;
-      else failCount++;
-      done += batch.length;
+    for (let i = 0; i < batches.length; i += FULL_CONCURRENCY) {
+      const group = batches.slice(i, i + FULL_CONCURRENCY);
+      const results = await Promise.all(group.map((b) => extractBatchWithRetry(app, service, b, data)));
+      for (const r of results) {
+        if (r === 'ok') okCount++;
+        else failCount++;
+      }
+      done += group.reduce((s, b) => s + b.length, 0);
+      // 每轮保存：数据可见 + 中断不丢（cursor 仍等全量完成才推进，避免中途失败重跑重复提炼）
+      await dm.save(data);
+      await bbLog(app, `进度 ${done}/${total}（累计成功 ${okCount} 批 / 失败 ${failCount} 批）`);
+      notice(`正在提炼历史日记… ${done}/${total}`, 'info');
     }
     if (okCount === 0) {
       // 全部失败：不推进 cursor（下次启动重试），明确提示
-      await bbLog(app, `全量失败：${failCount}/${batches} 批失败，不推进 cursor`);
+      await bbLog(app, `全量失败：${failCount}/${batches.length} 批失败，不推进 cursor`);
       notice('提炼失败：AI 调用未成功，请检查 AI 配置（设置 → AI）与控制台日志', 'warning', 8000);
       return;
     }
