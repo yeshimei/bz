@@ -135,7 +135,7 @@ export function applyExtraction(data: BlackBoxData, result: ExtractResult, entri
   for (const p of result.people || []) {
     const name = p.name;
     if (!name) continue;
-    // 已有画像（同名）→ 只更新 mentionCount 与 lastSeen
+    // 已有画像（同名）→ 只更新 mentionCount 与日期统计（humanEdited 锁：用户改过不更新 aliases）
     const existingProfile = data.profiles.find((pf) => pf.name === name);
     if (existingProfile) {
       const appearDates2 = p.dates && p.dates.length ? p.dates : [];
@@ -143,7 +143,7 @@ export function applyExtraction(data: BlackBoxData, result: ExtractResult, entri
       existingProfile.mentionCount += Math.max(1, inc);
       if (last && last > existingProfile.lastSeen) existingProfile.lastSeen = last;
       if (first && (!existingProfile.firstSeen || first < existingProfile.firstSeen)) existingProfile.firstSeen = first;
-      if (p.aliases && p.aliases.length) {
+      if (!existingProfile.humanEdited && p.aliases && p.aliases.length) {
         for (const a of p.aliases) if (!existingProfile.aliases.includes(a)) existingProfile.aliases.push(a);
       }
       continue;
