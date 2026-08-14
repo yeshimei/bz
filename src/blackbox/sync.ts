@@ -19,10 +19,10 @@ export const EXTRACT_DEBOUNCE_MS = 30 * 60 * 1000;
 export const FULL_BATCH_SIZE = 10;
 /** 单次 AI 提炼条目上限（提示词长度控制） */
 export const MAX_ENTRIES_PER_CALL = 10;
-/** 全量并发批数（opencode.ai 允许多请求并发；每轮 4 批并行，全量总时长 ~1/4） */
-export const FULL_CONCURRENCY = 4;
+/** 全量并发批数（实测 opencode.ai 并发不稳：4 并发 3/4 超时、2 并发偶发全超时 → 串行最稳） */
+export const FULL_CONCURRENCY = 1;
 /** 单批 AI 调用失败重试次数（网络/503 抖动重试；parse-fail 不重试） */
-export const RETRY_COUNT = 1;
+export const RETRY_COUNT = 2;
 
 let registered = false;
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -155,9 +155,13 @@ function advanceCursor(data: BlackBoxData, processed: DiarySourceEntry[], all: D
 /** 单批提炼结果 */
 type BatchResult = 'ok' | 'ai-fail' | 'parse-fail';
 
-/** 单批提炼（AI 调用 + 应用；返回结果分类——失败可见，不静默） */
+/** 单批提炼（AI 调用 + 应用；返回结果分类——失败可见，不静默）。
+ * 幂等：跳过 processedKeys 已覆盖的条目（中断重跑不重复提炼，避免 mention count 翻倍）。 */
 async function extractBatch(app: any, ai: any, entries: DiarySourceEntry[], data: BlackBoxData): Promise<BatchResult> {
-  const prompt = buildExtractPrompt(entries);
+  // 过滤已处理条目（指纹：date time|filename）
+  const fresh = entries.filter((e) => !(data.processedKeys || []).includes(`${e.date} ${e.time}|${e.filename}`));
+  if (fresh.length === 0) return 'ok'; // 全部已处理（重跑场景）
+  const prompt = buildExtractPrompt(fresh);
   if (!prompt) {
     await bbLog(app, `parse-fail: 批次无有效条目（${entries.length} 条输入）`);
     return 'parse-fail';
@@ -171,7 +175,9 @@ async function extractBatch(app: any, ai: any, entries: DiarySourceEntry[], data
       await bbLog(app, `parse-fail: ${detail}`);
       return 'parse-fail';
     }
-    applyExtraction(data, result, entries);
+    applyExtraction(data, result, fresh);
+    // 幂等标记：本批条目已处理（成功应用后记录，中断重跑跳过）
+    data.processedKeys = [...(data.processedKeys || []), ...fresh.map((e) => `${e.date} ${e.time}|${e.filename}`)];
     return 'ok';
   } catch (err: any) {
     const msg = err && err.message ? err.message : String(err);

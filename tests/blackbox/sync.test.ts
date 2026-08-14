@@ -98,7 +98,7 @@ describe('hasPendingEntries / processPendingEntries（打开即时提炼）', ()
 describe('runFullExtraction（首次全量分批）', () => {
   beforeEach(() => resetObsidianMocks());
 
-  it('分批 10 + 并发 4 + 每轮保存 + 进度通知 + cursor 落盘', async () => {
+  it('分批 10 串行 + 每轮保存 + 进度通知 + cursor 落盘', async () => {
     const vault = new MockVault();
     for (let d = 1; d <= 60; d++) {
       const date = `2026-07-${String(d).padStart(2, '0')}`;
@@ -126,6 +126,27 @@ describe('runFullExtraction（首次全量分批）', () => {
     const dm = new BlackBoxDataManager();
     const data = await dm.load();
     expect(data.cursor).not.toBeNull();
+  });
+
+  it('重跑全量幂等：processedKeys 跳过已处理条目，mention count 不翻倍', async () => {
+    const { app } = setup();
+    const ai = makeAI(EXTRACT_JSON);
+    await runFullExtraction(app, ai);
+    const dm = new BlackBoxDataManager();
+    const first = await dm.load();
+    const firstCalls = ai.json.mock.calls.length;
+    // 模拟中断重跑：清空 cursor（processedKeys 保留）
+    first.cursor = null;
+    await dm.save(first);
+    await runFullExtraction(app, ai);
+    // 新实例读盘（避开旧实例内存缓存）
+    const second = await new BlackBoxDataManager().load();
+    expect(ai.json.mock.calls.length).toBe(firstCalls); // 已处理条目不再调 AI
+    const firstMentions = first.mentions.length;
+    const secondMentions = second.mentions.length;
+    expect(secondMentions).toBe(firstMentions); // mentions 不翻倍
+    expect(second.events.length).toBeGreaterThan(0);
+    expect(second.cursor).not.toBeNull();
   });
 
   it('完成通知：提炼完成后 success 通知含「提炼完成」+ 新增人物/事件统计', async () => {
