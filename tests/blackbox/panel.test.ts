@@ -245,3 +245,107 @@ describe('事件时间线精化（ticket 60）', () => {
     expect(dist!.textContent).toContain('疲惫');
   });
 });
+
+// ===== ticket 61：人物画像精化 =====
+
+async function setupWithProfile(withObservation = true) {
+  const vault = new MockVault();
+  vault.create('我的/日记/2026-08-10.md', '# 📖 08:30\n\n和妈妈搬完家。\n');
+  const app = mockAppWithVault(vault);
+  setApp(app);
+  setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' }) as any);
+  const dm = new BlackBoxDataManager();
+  const data = await dm.load();
+  const p = createProfile('妈妈', '2026-08-10');
+  p.impression = '温柔的人';
+  if (withObservation) {
+    p.aiObservations.push({ ts: '2026-08-11T00:00:00', text: 'AI 观察：搬家时很可靠', source: { path: '2026-08-10', lineNumber: 1, time: '08:30' } });
+  }
+  p.emotions = [{ tag: '温暖', count: 2 }];
+  p.mentionCount = 5;
+  data.profiles.push(p);
+  data.events.push(createEvent('搬家完成', '2026-08-10T08:30', 0.9, { path: '2026-08-10', lineNumber: 1, time: '08:30' }));
+  data.events[0].people = [p.id];
+  data.mentions.push({ name: '老张', count: 1, firstSeen: '2026-08-10', lastSeen: '2026-08-10' });
+  await dm.save(data);
+  return { vault, app };
+}
+
+function openProfiles(app: any) {
+  openBlackBoxPanel(app, { json: async () => '{"people":[],"events":[],"emotions":[]}' } as any);
+}
+
+describe('人物画像精化（ticket 61）', () => {
+  beforeEach(() => resetObsidianMocks());
+  afterEach(() => unloadBlackBoxPanel());
+
+  it('画像卡：名字 + 印象 + 情绪聚合 + 事件数；mentions 候选展示', async () => {
+    const { app } = await setupWithProfile();
+    openProfiles(app);
+    await new Promise((r) => setTimeout(r, 40));
+    const popup = document.getElementById('bz-blackbox-panel')!;
+    const content = document.getElementById('bz-blackbox-panel-content')!;
+    expect(content.textContent).toContain('妈妈');
+    expect(content.textContent).toContain('温柔的人');
+    expect(content.textContent).toContain('温暖×2');
+    expect(content.textContent).toContain('1 个事件');
+    // mentions 候选
+    expect(content.textContent).toContain('老张');
+  });
+
+  it('无印象但有 AI 观察 → 显示观察摘要', async () => {
+    const { app } = await setupWithProfile();
+    const dm = new BlackBoxDataManager();
+    const data = await dm.load();
+    data.profiles[0].impression = '';
+    await dm.save(data);
+    openProfiles(app);
+    await new Promise((r) => setTimeout(r, 40));
+    const content = document.getElementById('bz-blackbox-panel-content')!;
+    expect(content.textContent).toContain('AI 观察：搬家时很可靠');
+  });
+
+  it('点击画像卡展开详情 → AI 观察「采纳」→ 印象更新 + humanEdited + 落盘', async () => {
+    const { app } = await setupWithProfile();
+    openProfiles(app);
+    await new Promise((r) => setTimeout(r, 40));
+    const popup = document.getElementById('bz-blackbox-panel')!;
+    const card = popup.querySelector('.bz-profile-card') as HTMLElement;
+    card.click();
+    await new Promise((r) => setTimeout(r, 30));
+    const detail = popup.querySelector('.bz-profile-detail')!;
+    expect(detail).not.toBeNull();
+    expect(detail.textContent).toContain('AI 观察：搬家时很可靠');
+    (detail.querySelector('.bz-obs-adopt') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 30));
+    const dm = new BlackBoxDataManager();
+    const data = await dm.load();
+    expect(data.profiles[0].impression).toContain('很可靠');
+    expect(data.profiles[0].humanEdited).toBe(true);
+  });
+
+  it('AI 观察「移除」→ aiObservations 清空 + 落盘', async () => {
+    const { app } = await setupWithProfile();
+    openProfiles(app);
+    await new Promise((r) => setTimeout(r, 40));
+    const popup = document.getElementById('bz-blackbox-panel')!;
+    (popup.querySelector('.bz-profile-card') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 30));
+    (popup.querySelector('.bz-obs-remove') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 30));
+    const dm = new BlackBoxDataManager();
+    const data = await dm.load();
+    expect(data.profiles[0].aiObservations).toHaveLength(0);
+  });
+
+  it('详情展开显示事件投影（该画像参与的事件）', async () => {
+    const { app } = await setupWithProfile();
+    openProfiles(app);
+    await new Promise((r) => setTimeout(r, 40));
+    const popup = document.getElementById('bz-blackbox-panel')!;
+    (popup.querySelector('.bz-profile-card') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 30));
+    const detail = popup.querySelector('.bz-profile-detail')!;
+    expect(detail.textContent).toContain('搬家完成');
+  });
+});

@@ -108,6 +108,24 @@ describe('applyExtraction', () => {
     expect(data.events[0].title).toBe('搬家完成');
   });
 
+  it('humanEdited 锁：用户改过的画像 AI 不更新 aliases（统计仍更新）', () => {
+    const data = defaultBlackBoxData();
+    const profile = { id: 'pf_1', name: '妈妈', aliases: ['母亲'], impression: '我的印象', aiObservations: [], emotions: [], mentionCount: 3, firstSeen: '2026-08-01', lastSeen: '2026-08-10', humanEdited: true, createdAt: '' };
+    data.profiles.push(profile);
+    applyExtraction(
+      data,
+      { people: [{ name: '妈妈', aliases: ['妈'], dates: ['2026-08-12'] }], events: [], emotions: [] },
+      ENTRIES
+    );
+    // 统计更新（mentionCount+1、lastSeen 更新）
+    expect(data.profiles[0].mentionCount).toBe(4);
+    expect(data.profiles[0].lastSeen).toBe('2026-08-12');
+    // aliases 不被 AI 追加（锁）
+    expect(data.profiles[0].aliases).toEqual(['母亲']);
+    // impression 不被覆盖
+    expect(data.profiles[0].impression).toBe('我的印象');
+  });
+
   it('events：source 证据链绑定（date+time → 条目 lineNumber）', () => {
     const data = defaultBlackBoxData();
     applyExtraction(

@@ -129,10 +129,22 @@ function emptyEl(text: string): HTMLDivElement {
   return d;
 }
 
-// ===== 人物墙（ticket 61 精化；59 骨架 = 简单卡） =====
+// ===== 人物墙（ticket 61 精化） =====
+
+/** 画像关联事件数（事件投影计数） */
+function profileEventCount(p: Profile, events: EventItem[]): number {
+  return events.filter((ev) => ev.people.some((x) => x === p.id || x === p.name)).length;
+}
 
 function renderProfiles(data: BlackBoxData): void {
   if (!contentEl) return;
+  // mentions 候选（未建画像人物）
+  for (const m of data.mentions) {
+    const chip = document.createElement('div');
+    chip.className = 'bz-mention-chip';
+    chip.textContent = `${m.name}（提及 ${m.count} 次）`;
+    contentEl.appendChild(chip);
+  }
   if (!data.profiles.length) {
     contentEl.appendChild(emptyEl('暂无人物画像'));
     return;
@@ -142,7 +154,7 @@ function renderProfiles(data: BlackBoxData): void {
     card.className = 'bz-profile-card';
     const name = document.createElement('div');
     name.className = 'bz-profile-name';
-    name.textContent = p.name;
+    name.textContent = p.name + (p.humanEdited ? ' 🔒' : '');
     card.appendChild(name);
     if (p.impression) {
       const imp = document.createElement('div');
@@ -157,8 +169,58 @@ function renderProfiles(data: BlackBoxData): void {
     }
     const meta = document.createElement('div');
     meta.className = 'bz-profile-meta';
-    meta.textContent = `提及 ${p.mentionCount} 次 · ${p.firstSeen} ~ ${p.lastSeen}`;
+    const emoStr = p.emotions.length ? ` · ${p.emotions.map((e) => `${e.tag}×${e.count}`).join(' ')}` : '';
+    meta.textContent = `提及 ${p.mentionCount} 次 · ${profileEventCount(p, data.events)} 个事件${emoStr}`;
     card.appendChild(meta);
+    // 点击展开详情
+    card.onclick = () => {
+      card.classList.toggle('open');
+      const existing = card.querySelector('.bz-profile-detail');
+      if (existing) {
+        existing.remove();
+        return;
+      }
+      const detail = document.createElement('div');
+      detail.className = 'bz-profile-detail';
+      // AI 观察区（可采纳/移除）
+      for (const obs of p.aiObservations) {
+        const row = document.createElement('div');
+        row.className = 'bz-obs-row';
+        const txt = document.createElement('span');
+        txt.textContent = obs.text;
+        row.appendChild(txt);
+        const adopt = document.createElement('button');
+        adopt.className = 'bz-obs-adopt';
+        adopt.textContent = '采纳';
+        adopt.onclick = async (e) => {
+          e.stopPropagation();
+          p.impression = p.impression ? `${p.impression}；${obs.text}` : obs.text;
+          p.humanEdited = true;
+          await saveAndRender(data);
+        };
+        const remove = document.createElement('button');
+        remove.className = 'bz-obs-remove';
+        remove.textContent = '移除';
+        remove.onclick = async (e) => {
+          e.stopPropagation();
+          p.aiObservations = p.aiObservations.filter((x) => x !== obs);
+          p.humanEdited = true;
+          await saveAndRender(data);
+        };
+        row.appendChild(adopt);
+        row.appendChild(remove);
+        detail.appendChild(row);
+      }
+      // 事件投影
+      const evs = data.events.filter((ev) => ev.people.some((x) => x === p.id || x === p.name));
+      if (evs.length) {
+        const proj = document.createElement('div');
+        proj.className = 'bz-profile-events';
+        proj.textContent = '相关事件：' + evs.map((ev) => ev.title).join('、');
+        detail.appendChild(proj);
+      }
+      card.appendChild(detail);
+    };
     contentEl!.appendChild(card);
   }
 }
