@@ -322,7 +322,7 @@ export class BlackBoxDataManager {
   }
 
   /** 读取数据（并发安全：进行中的 load 直接复用）
-   * 笔记即事实源（ADR-0015）：v2 旧数据不在此自动迁移（用户决策，一次性迁移走 tools/migrate-blackbox-v3.mjs），
+   * 笔记即事实源（ADR-0015）：v2 旧数据不在此自动迁移（用户决策，一次性迁移已由 tools 脚本完成并移除），
    * load 只做：派生层读取 + 索引水合（孤儿自愈）+ 缺失索引清理。 */
   async load(): Promise<BlackBoxData> {
     if (cachedData) return cachedData;
