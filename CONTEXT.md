@@ -116,41 +116,6 @@ _Avoid_: 读书番茄、阅读专注
 
 **读书番茄数 (Reading Pomodoro Count)**: 今日完成、target 为书的专注数——弹窗统计行「📚 读书 X 个 🍅」。取代按分钟聚合的阅读时长（已撤销）。
 
-### 黑匣子域（v4 日记智能分析层，ADR-0017）
-
-**黑匣子 (Black Box)**: bz 的一个新域——**日记的智能分析层**（v4，ADR-0017；v1-v3 容器架构作废）。数据由日记本书写（`我的/日记` + `我的/影视` + `我的/信` 三目录，唯一事实源），黑匣子只读日记、AI 提炼、产出派生层（`CONFIG/STORAGE/blackbox.json` v4：profiles/mentions/events/reviews/chat/cursor/settings）。不录入、不持有原始数据、不建笔记文件。AI 作为其意识体（伴侣向）「包仔」。呈现：对话（`bz-blackbox-open`）+ 三标签面板（`bz-blackbox-panel`：人物墙/事件时间线/复盘流）+ 复盘（`bz-blackbox-review` 手动）。日记读取复用 diary 解析层（parser/config，显式 import）。
-_Avoid_: 盒子、灵魂容器
-
-**日记条目 (Diary Entry)**: 黑匣子的事实源单元——日记本解析出的 `{date, time, tags, emoji, content, filename, lineNumber, id}`（diary/types.ts 形状）。黑匣子只读不写。
-
-**增量提炼 (Incremental Extraction)**: 黑匣子的 AI 提炼机制——vault modify/create 监听三目录（防抖 30 分钟）+ 打开黑匣子时待处理条目即时提炼双触发；一次 AI 调用批量处理新增条目（输出人物提及/事件候选/情绪推断）；首次启用历史全量分批 50 条/批串行；失败跳过下次重试，永不拒收。
-
-**人物画像 (Character Profile)**: 黑匣子中关于某个现实人物（家人、朋友等）的派生档案——AI 从日记正文提炼维护（出现 ≥2 次跨不同日期自动建画像，单次出现只计入人物提及候选）。含用户印象区（字段级锁，用户改过 AI 不再覆盖）与 AI 观察区（持续写入，可采纳进印象区）；对话检索时以概要级（印象一句话 + 最近 3 个事件标题）进入包仔上下文。用户修改标记 humanEdited 后 AI 重提炼跳过。
-_Avoid_: 人设、名片、profile
-
-**人物提及 (Mention)**: 未建画像的人物计数候选 `{name, count, firstSeen, lastSeen}`——出现 ≥2 次（跨不同日期）自动建画像；单次出现只计数，复盘时提示「新人物」可一键确认建画像。
-
-**事件 (Event)**: 从日记条目中提炼出的「发生了什么」——有具体行动/变化/时刻的独立语义单元（一条日记可提炼多个）；AI 全自动提炼，置信度 ≥0.7 入线 / 0.5–0.7 推测 / <0.5 不入库；证据链 `source:{path,lineNumber,time}` 可跳回日记条目；用户可纠正（确认/删除，改过 AI 不再碰）。
-_Avoid_: 大事记、timeline
-
-**推测事件 (Speculative Event)**: 置信度 0.5–0.7 的事件——以推测样式入时间线（虚线 + ❓），用户可确认或忽略（showSpeculativeEvents 开关控制显示）。
-
-**AI 观察 (AI Observation)**: 人物画像中与用户印象区并存的 AI 视角区——AI 持续写入新认知（虚线框），用户认可可「采纳」进印象区（采纳后一并锁定）。
-
-**复盘 (Review)**: 黑匣子的手动聚合行为（`bz-blackbox-review` 命令 + 面板按钮，无定时自动）——对一段时期日记做 AI 分析，产物 JSON 落盘 `reviews[]`，四段结构化（人物画像更新/事件汇报/情绪聚合/反思建议），每条**事实锚定**（引用日期+原文片段，杜绝泛化套话）；复盘时聚合画像印象 + 新人物提示；产物同步显示在对话流（用户可见、可追问）。
-_Avoid_: 主动消息、推送
-
-**三层记忆 (Three-tier Memory)**: 盒子对话时的记忆机制——日记条目检索（长期，TF-IDF）+ 画像概要（自我认知）+ 对话历史（短期）。伴侣与工具的分水岭：工具只需检索，伴侣需要知道自己是谁。
-
-**情绪推断 (Emotion Inference)**: AI 从日记正文推断情绪——24 词表（冻结，可编辑），每条 1–3 词，推断失败不标注；聚合呈现于事件时间线（事件情绪色点 + 时段分布条）与复盘流（情绪趋势段）。
-
-**证据链 (Evidence Chain)**: 事件/AI 观察的来源引用 `{path, lineNumber, time}`——跳转 = 打开日记文件 + 定位条目（行号定位，不依赖标题双链）。
-
-**意识体 (Consciousness)**: 黑匣子的 AI 人格——有名字、有记忆、有偏好的「存在」，与用户建立关系；从第一天起即作为「他者」存在（非工具），终局为可交流、可陪伴的伴侣。人设（种子 + 语气示例）为代码常量。
-_Avoid_: 助手、聊天机器人、AI 模型
-
-_已删除术语（v4 无录入无条目）_：感触、素材、感受、情绪标签、来源笔记、书内来源、概念与实体、文献笔记、核心知识、新概念流转、名词表、知识背景、人格档案、次级内容、定期回顾。
-
 ### 共享层
 
 **Q3 / __utils**: QuickAdd 共享脚本（`CONFIG/SCRIPTS/Quickadd/Q/Q3.js`，1034 行），挂载 `window.__utils`，21 个导出：escManager、confirm、notice、generateId、jsonStore、longPress、injectStyles、createSiteIcon、createIconBtn、formatRelativeTime、formatFileSize、displayChangelog、checkAndShowChangelog、AIService、createAI、extractUrlAndDisplay、getPlatformName、getCurrentNoteInfo、getCurrentCursorPosition、fetchPageTitle、createOverlay。**新插件移植后为内部共享层（core），不再挂 window**。
