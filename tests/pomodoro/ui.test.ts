@@ -307,7 +307,8 @@ describe('专注目标（任务关联，第一期）', () => {
     );
     const { app } = setup(vault);
     await openPomodoro(app);
-    expect(document.getElementById('pomodoro-book')!.textContent).toContain('读书 2 个 🍅');
+    // 读书统计改为时长：2 条 book 历史各 25 分钟 → 50 分钟
+    expect(document.getElementById('pomodoro-book')!.textContent).toContain('读书 50 分');
   });
 });
 

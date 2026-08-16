@@ -107,14 +107,14 @@ _Avoid_: 方案、模式（指预设时）
 
 **强制专注模式 (Force Focus Mode)**: 番茄钟设置开关——开启后专注阶段内暂停/跳过/重置均禁用。注意与「专注阶段」区分。
 
-**读书专注 (Reading Focus)**: target 为书籍（type='book'）的历史条目——由关闭 epub 书时的独立读书计时结算产生（ticket 56），单独计入读书番茄数；path 即 epub 文件路径，不匹配书库 md 笔记。已不直接写入主番茄钟状态机（主番茄钟在读书期间挂起）。
-_Avoid_: 读书阶段、阅读专注
+**读书番茄钟 (Reading Pomodoro)**: 打开 epub 书时与主番茄钟状态机解耦的独立分段番茄钟（ticket 56）——快照并挂起主番茄钟，另起以「阅读沉浸 45/10/20」预设自走节律：专注 45 分钟走满记一个读书番茄（target.type=book，duration=实读秒数）→ 读书短休 10 分钟 → 每 4 个专注进读书长休 20 分钟 → 书仍开则自动下一段。endTime 基准，Obsidian 后台节流/重启不漏时。
+_Avoid_: 读书专注、阅读专注
 
-**独立读书计时 (Reading Session)**: 打开 epub 书时与主番茄钟状态机解耦的独立读书会话——结束在主番茄钟，另起端到端累计阅读时长（`pomodoro.json.reading`）。endTime 基准累计（elapsedMs + now-startedAt），Obsidian 后台节流/重启不漏时。关书（或换书）时结算累计 → 以 target.type=book 条目单独入读书历史 → 恢复挂起的主番茄钟快照（书开前状态原样继续）。
+**独立读书会话 (Reading Session)**: `pomodoro.json.reading` 字段——`{ active, book, state, prevState }`，承载独立读书番茄钟状态（state 复用 PomodoroState）与主番茄钟挂起快照（prevState）。旧数据无此字段 → 空会话。
 
-**关书恢复 (Close-book Restore)**: 关闭 epub 书结束读书会话时，将主番茄钟恢复为进入读书前的快照（`reading.prevState`）——若当时正在跑专注/休息则原 endTime 继续（时间不流逝），idle 则保持空闲。
+**关书恢复 (Close-book Restore)**: 关闭 epub 书结束读书番茄钟时，将主番茄钟恢复为进入读书前的快照（`reading.prevState`）——若当时正在跑专注/休息则原 endTime 继续（时间不流逝），idle 则保持空闲；当前读书段按实读时长单独入读书历史（读书休息段不计）。
 
-**读书番茄数 (Reading Pomodoro Count)**: 今日完成、target 为书的读书会话数——弹窗统计行「📚 读书 X 个 🍅」。
+**读书时长 (Reading Duration)**: 弹窗读书统计行「📚 读书 X 小时 Y 分」——今日（本地时区）target.type=book 历史条目实读秒数之和（`stats.readingSecondsToday`，取代按番茄个数的 `bookCountToday`）。
 
 ### 共享层
 
