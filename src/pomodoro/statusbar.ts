@@ -40,15 +40,22 @@ export function unmountPomodoroStatusBar(): void {
 
 /**
  * ui.ts render 每 1s 调用：
- * - 读书会话进行中（reading 累计）：显示独立读书累计时长（📖 前缀语义由类名体现），非空闲态；
+ * - 读书会话进行中（reading 番茄钟）：显示独立读书番茄钟倒计时（如「📖专注 44:59」/「📖短休 09:59」），非空闲态；
  * - 主番茄钟运行中：mm:ss；停止/暂停灰态（图标保留）。
  */
-export function syncPomodoroStatusBar(state: PomodoroState, remainSec: number, readingActive = false, readingSec = 0): void {
+export function syncPomodoroStatusBar(
+  state: PomodoroState,
+  remainSec: number,
+  readingActive = false,
+  readingSec = 0,
+  readingPhaseLabel = ''
+): void {
   if (!statusEl) return;
   if (readingActive) {
     const m = Math.floor(readingSec / 60);
     const s = readingSec % 60;
-    if (textSpan) textSpan.textContent = `📖 ${pad2(m)}:${pad2(s)}`;
+    const t = readingPhaseLabel ? `${readingPhaseLabel} ` : '';
+    if (textSpan) textSpan.textContent = `📖 ${t}${pad2(m)}:${pad2(s)}`;
     statusEl.classList.remove('pomodoro-statusbar-idle');
     return;
   }

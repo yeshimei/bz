@@ -1,74 +1,31 @@
 /**
- * 独立读书计时（ticket 56）：与主番茄钟状态机解耦的读书会话累计。
- * - 打开 epub 书 → 快照主番茄钟状态并挂起（主 endTime 冻结），另起独立读书会话端到端累计阅读时长；
- *   累计 = elapsedMs + (now - startedAt)，endTime 基准天然抗 Obsidian 后台节流与重启（不漏时）。
- * - 关闭/换书 → 结算当前会话累计时长 → 以 target.type=book 的历史条目「单独入账」→ 恢复挂起的主番茄钟快照。
+ * 独立读书番茄钟（ticket 56 重构）：与主番茄钟状态机解耦的**独立分段番茄钟**。
+ * - 打开 epub 书 → 快照并挂起主番茄钟，另起一个配「阅读沉浸 45/10/20」预设的独立读书番茄钟：
+ *   专注 45min 走满 → 记一个读书番茄（target.type=book）→ 读书短休 10min → 每 4 个专注进读书长休 20min。
+ * - 复用 state.ts 的 transition/recover（同一阶级模型），以读书预设施时长注入，自成节律；
+ *   读书历史 = 完成的读书专注段（duration=实读秒数，45*60）+ 中途关书按实读时长入账。
+ * - 关闭/换书 → 结算当前读书段按实读时长入账 → 恢复挂起的主番茄钟快照。
  * - 纯函数（无 DOM），时间一律由调用方传入（now），ui.ts 负责接线与落盘。
  */
-import type { PomodoroState } from './state';
-import { createInitialState } from './state';
+import type { PomodoroState, Durations, PomodoroOptions, HistoryEntry } from './state';
+import { createInitialState, transition, recover, phaseDurationSec, DEFAULT_OPTIONS } from './state';
 import type { ReadingBook } from './epub-link';
 
+/** 独立的读书番茄钟会话 */
 export interface ReadingSession {
-  /** 读书会话是否进行中（打开书且未关） */
+  /** 读书番茄钟是否进行中（打开书且未关） */
   active: boolean;
   /** 当前阅读的书（无会话为 null） */
   book: ReadingBook | null;
-  /** 已结算累计时长（ms，不含当前进行段） */
-  elapsedMs: number;
-  /** 当前进行段起点时间戳（ms；active 时有效） */
-  startedAt: number | null;
+  /** 独立读书番茄钟状态（复用 PomodoroState：phase/endTime/remaining/cycleFocusCount/target） */
+  state: PomodoroState;
   /** 进入读书前的主番茄钟快照（关书恢复用；无会话为 null） */
   prevState: PomodoroState | null;
 }
 
 /** 空会话（默认） */
 export function emptyReadingSession(): ReadingSession {
-  return { active: false, book: null, elapsedMs: 0, startedAt: null, prevState: null };
-}
-
-/** 当前累计阅读时长（ms）：进行段已走净值 + 已结算；endTime 基准，后台节流/重启不漏时 */
-export function readingElapsedMs(s: ReadingSession, now: number): number {
-  return s.active && s.startedAt !== null ? s.elapsedMs + Math.max(0, now - s.startedAt) : s.elapsedMs;
-}
-
-/**
- * 开始读书会话：快照主番茄钟（进入读书前的完整状态，含运行中 endTime，供关书恢复）
- * 返回新会话。挂起主番茄钟由调用方处理（冻结主 endTime、停主 tick）。
- */
-export function startReadingSession(
-  prevState: PomodoroState,
-  book: ReadingBook,
-  now: number
-): ReadingSession {
-  return { active: true, book, elapsedMs: 0, startedAt: now, prevState };
-}
-
-/** 换书（Q6：直接切）：结算当前书累计，返回新书会话 + 已结算时长（ms） */
-export function switchReadingBook(
-  s: ReadingSession,
-  book: ReadingBook,
-  now: number
-): { session: ReadingSession; settledMs: number } {
-  return {
-    session: { ...s, book, elapsedMs: 0, startedAt: now },
-    settledMs: readingElapsedMs(s, now),
-  };
-}
-
-/**
- * 结束读书会话：结算当前累计，返回空会话 + 结算时长（ms） + 主番茄钟快照（关书恢复）。
- * settledMs > 0 才入读书历史；快照用于恢复挂起的主番茄钟。
- */
-export function endReadingSession(
-  s: ReadingSession,
-  now: number
-): { session: ReadingSession; settledMs: number; prevState: PomodoroState | null } {
-  return {
-    session: { active: false, book: null, elapsedMs: 0, startedAt: null, prevState: null },
-    settledMs: readingElapsedMs(s, now),
-    prevState: s.prevState,
-  };
+  return { active: false, book: null, state: createInitialState(), prevState: null };
 }
 
 /** 会话是否进行中 */
@@ -76,23 +33,158 @@ export function isReadingActive(s: ReadingSession): boolean {
   return s.active;
 }
 
+/** 读书番茄钟当前状态（ui 渲染用） */
+export function readingState(s: ReadingSession): PomodoroState {
+  return s.state;
+}
+
+/** 读书专注目标（book 固定） */
+function bookTarget(book: ReadingBook): { type: 'book'; path: string; label: string } {
+  return { type: 'book', path: book.path, label: book.title };
+}
+
+/** 读书预设时长（专注 45/短休 10/长休 20；长休间隔随全局设置注入） */
+export function readingDurations(longBreakInterval: number): Durations {
+  return { workMin: 45, shortBreakMin: 10, longBreakMin: 20, longBreakInterval };
+}
+
+/** 读书读书选项：自动循环（休完自动下一段读书，书开着自成节律）；forceFocus 对读书番茄钟不适用 */
+export function readingOptions(o: PomodoroOptions): PomodoroOptions {
+  return { ...o, forceFocus: false, autoCycle: true };
+}
+
 /**
- * 数据层容错归一（data.ts 复用）：逐字段校验，非法回退空会话。
- * 保证旧数据（无 reading 字段）或缺字段 → 空会话，不破坏。
+ * 开始读书番茄钟（打开书）：快照主番茄钟供关书恢复，从读书专注段 45min 开始。
+ */
+export function startReadingSession(prevState: PomodoroState, book: ReadingBook, now: number, d: Durations): ReadingSession {
+  return {
+    active: true,
+    book,
+    state: {
+      phase: 'focus',
+      endTime: now + phaseDurationSec('focus', d) * 1000,
+      remaining: 0,
+      paused: false,
+      cycleFocusCount: 0,
+      target: bookTarget(book),
+    },
+    prevState,
+  };
+}
+
+/** 换书（Q6 直接切）：结算旧书当前段按实读时长入账，新书从新读书专注段开始 */
+export function switchReadingBook(
+  s: ReadingSession,
+  book: ReadingBook,
+  now: number,
+  d: Durations,
+  o: PomodoroOptions
+): { session: ReadingSession; settled: HistoryEntry[] } {
+  const settled = settleReadingSegment(s, now, d);
+  return {
+    session: startReadingSession(s.prevState ?? createInitialState(), book, now, d),
+    settled,
+  };
+}
+
+/**
+ * 读书番茄钟 tick：推进（专注完成 → 记读书历史；休息完成 → 自动下一段）。返回新会话 + 产生的读书历史。
+ */
+export function tickReadingSession(
+  s: ReadingSession,
+  now: number,
+  d: Durations,
+  o: PomodoroOptions
+): { session: ReadingSession; history: HistoryEntry[] } {
+  if (s.state.endTime === null || now < s.state.endTime) return { session: s, history: [] };
+  const r = transition(s.state, 'tick', now, d, readingOptions(o));
+  const history: HistoryEntry[] = [];
+  if (r.event.type === 'phase-completed' && r.event.historyEntry) {
+    // transition 已完成 focus → historyEntry.duration = 读书预设 45min；target 已挂书
+    history.push(r.event.historyEntry);
+  }
+  return { session: { ...s, state: r.state }, history };
+}
+
+/**
+ * 读书番茄钟超时恢复（Obsidian 重启）：逐段推进至不再超时，收集读书历史。
+ */
+export function recoverReadingSession(
+  s: ReadingSession,
+  now: number,
+  d: Durations,
+  o: PomodoroOptions
+): { session: ReadingSession; history: HistoryEntry[] } {
+  const r = recover(s.state, [], now, d, readingOptions(o));
+  return { session: { ...s, state: r.state }, history: r.history };
+}
+
+/**
+ * 结算当前读书段按实读时长入账（读专注 → 实读秒数入读书历史；读书休息 → 不计）。
+ * 用于：中途关书、换书。
+ */
+export function settleReadingSegment(s: ReadingSession, now: number, d: Durations): HistoryEntry[] {
+  if (!s.active || !s.book) return [];
+  const st = s.state;
+  if (st.phase !== 'focus') return []; // 休息段不记读书时长
+  const full = phaseDurationSec('focus', d) * 1000;
+  const elapsedMs = st.endTime !== null ? Math.max(0, full - (st.endTime - now)) : Math.max(0, full - st.remaining * 1000);
+  if (elapsedMs <= 0) return [];
+  return [{ ts: now, duration: Math.round(elapsedMs / 1000), target: bookTarget(s.book) }];
+}
+
+/**
+ * 结束读书番茄钟（关闭书）：结算当前段实读时长入读书历史，返回空会话 + 主番茄钟快照。
+ */
+export function endReadingSession(
+  s: ReadingSession,
+  now: number,
+  d: Durations
+): { session: ReadingSession; settled: HistoryEntry[]; prevState: PomodoroState | null } {
+  const settled = settleReadingSegment(s, now, d);
+  return {
+    session: emptyReadingSession(),
+    settled,
+    prevState: s.prevState,
+  };
+}
+
+/**
+ * 数据层容错归一：段级校验非法即回退空会话；state 用 phase 白名单校验。
  */
 export function normalizeReadingSession(raw: any): ReadingSession {
   const def = emptyReadingSession();
   if (!raw || typeof raw !== 'object') return def;
   const book = isValidBook(raw.book) ? raw.book : null;
-  // 自洽性：active 为真但缺合法 book / 合法起点 → 视为未进行（防结构不一致）
-  const active = raw.active === true && book !== null && typeof raw.startedAt === 'number' && raw.startedAt >= 0;
+  const active = raw.active === true && book !== null && isValidPhase(phaseOf(raw.state));
+  if (!active) return def;
+  const st = normalizeReadingState(raw.state, book);
   return {
-    active,
+    active: true,
     book,
-    elapsedMs: typeof raw.elapsedMs === 'number' && raw.elapsedMs >= 0 ? raw.elapsedMs : 0,
-    startedAt: active ? raw.startedAt : null,
+    state: st,
     prevState: raw.prevState && typeof raw.prevState === 'object' ? raw.prevState : null,
   };
+}
+
+function phaseOf(st: any): string {
+  return st && typeof st === 'object' && typeof st.phase === 'string' ? st.phase : '';
+}
+
+function isValidPhase(p: string): boolean {
+  return p === 'focus' || p === 'short-break' || p === 'long-break';
+}
+
+function normalizeReadingState(st: any, book: ReadingBook): PomodoroState {
+  const base: PomodoroState = {
+    phase: isValidPhase(st?.phase) ? st.phase : 'focus',
+    endTime: typeof st?.endTime === 'number' ? st.endTime : null,
+    remaining: typeof st?.remaining === 'number' && st.remaining >= 0 ? st.remaining : 0,
+    paused: st?.paused === true,
+    cycleFocusCount: typeof st?.cycleFocusCount === 'number' && st.cycleFocusCount >= 0 ? st.cycleFocusCount : 0,
+    target: bookTarget(book),
+  };
+  return base;
 }
 
 /** ReadingBook 合法性（path 字符串 + title 字符串，依 epub-link 接口） */
@@ -100,7 +192,7 @@ function isValidBook(b: any): b is ReadingBook {
   return !!b && typeof b === 'object' && typeof b.path === 'string' && !!b.path && typeof b.title === 'string' && !!b.title;
 }
 
-/** 测试钩子：默认空状态（createInitialState 复用语义） */
-export function readingPrevDefault(): PomodoroState {
-  return createInitialState();
+/** 测试钩子：默认选项（autoCycle 恒真） */
+export function readingDefaultOptions(): PomodoroOptions {
+  return DEFAULT_OPTIONS;
 }
