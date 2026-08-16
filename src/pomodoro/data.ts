@@ -7,6 +7,8 @@ import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
 import type { PomodoroState, HistoryEntry, FocusTarget } from './state';
 import { createInitialState, PHASES } from './state';
+import type { ReadingSession } from './reading';
+import { emptyReadingSession, normalizeReadingSession } from './reading';
 
 export const POMODORO_FILE_PATH = 'CONFIG/STORAGE/pomodoro.json';
 
@@ -21,13 +23,15 @@ export interface PomodoroData {
   version: 1;
   state: PomodoroState;
   history: HistoryEntry[];
+  /** 独立读书会话（ticket 56；可选，旧数据无此字段 → 空会话兼容） */
+  reading?: ReadingSession;
 }
 
 export function defaultPomodoroData(): PomodoroData {
-  return { version: 1, state: createInitialState(), history: [] };
+  return { version: 1, state: createInitialState(), history: [], reading: emptyReadingSession() };
 }
 
-/** 容错归一：非法字段回退默认、history 过滤非法条目 */
+/** 容错归一：非法字段回退默认、history 过滤非法条目、reading 归一 */
 function normalizeData(raw: any): PomodoroData {
   const def = defaultPomodoroData();
   if (!raw || typeof raw !== 'object') return def;
@@ -38,7 +42,7 @@ function normalizeData(raw: any): PomodoroData {
           h && typeof h.ts === 'number' && typeof h.duration === 'number' && (!h.target || isValidTarget(h.target))
       )
     : [];
-  return { version: 1, state, history };
+  return { version: 1, state, history, reading: normalizeReadingSession(raw.reading) };
 }
 
 /** 逐字段校验 state（非法 phase/负数 remaining/非法 target 一律回退默认） */

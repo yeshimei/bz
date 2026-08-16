@@ -47,7 +47,7 @@ const BOOK_B = { path: '书架/百年孤独.epub', title: '百年孤独' };
 describe('decideReadingAction（决策纯函数）', () => {
   it('开关关 → 一律 none', () => {
     expect(decideReadingAction(null, BOOK_A, createInitialState(), false)).toEqual({ action: 'none' });
-    expect(decideReadingAction(BOOK_A, null, focusState({ target: { type: 'book', path: BOOK_A.path, label: BOOK_A.title } }), false)).toEqual({ action: 'none' });
+    expect(decideReadingAction(BOOK_A, BOOK_A, createInitialState(), false, true)).toEqual({ action: 'none' });
   });
 
   it('同书（轮询比对无变化）→ none', () => {
@@ -74,39 +74,39 @@ describe('decideReadingAction（决策纯函数）', () => {
     expect(decideReadingAction(null, BOOK_A, s, true)).toEqual({ action: 'confirm', book: BOOK_A, mode: 'enter' });
   });
 
-  it('读书专注中 + 换书 → switch（Q6 直接切）', () => {
-    const s = focusState({ target: { type: 'book', path: BOOK_A.path, label: BOOK_A.title } });
-    expect(decideReadingAction(BOOK_A, BOOK_B, s, true)).toEqual({ action: 'switch', book: BOOK_B });
+  it('读书会话进行中 + 换书 → switch（Q6 直接切）', () => {
+    expect(decideReadingAction(BOOK_A, BOOK_B, createInitialState(), true, true)).toEqual({ action: 'switch', book: BOOK_B });
   });
 
-  it('读书专注中 + 关闭书 → pause（Q2）', () => {
-    const s = focusState({ target: { type: 'book', path: BOOK_A.path, label: BOOK_A.title } });
-    expect(decideReadingAction(BOOK_A, null, s, true)).toEqual({ action: 'pause' });
+  it('读书会话进行中 + 关闭书 → pause（Q2：结算并恢复主番茄钟）', () => {
+    expect(decideReadingAction(BOOK_A, null, createInitialState(), true, true)).toEqual({ action: 'pause' });
   });
 
-  it('读书专注中 + forceFocus → pause 照常（豁免由执行层保证，决策层不区分）', () => {
-    const s = focusState({ target: { type: 'book', path: BOOK_A.path, label: BOOK_A.title } });
-    expect(decideReadingAction(BOOK_A, null, s, true)).toEqual({ action: 'pause' });
+  it('读书会话进行中 + forceFocus → pause 照常（豁免由执行层保证）', () => {
+    expect(decideReadingAction(BOOK_A, null, createInitialState(), true, true)).toEqual({ action: 'pause' });
   });
 
-  it('启动恢复：专注正对这本书且运行中（无 prev）→ none 不打扰', () => {
-    const s = focusState({ target: { type: 'book', path: BOOK_A.path, label: BOOK_A.title } });
-    expect(decideReadingAction(null, BOOK_A, s, true)).toEqual({ action: 'none' });
+  it('读书会话进行中 + 书保持打开（prev null 启动恢复）→ none 不打扰', () => {
+    expect(decideReadingAction(null, BOOK_A, createInitialState(), true, true)).toEqual({ action: 'none' });
+  });
+
+  it('读书会话进行中 + 无书（prev null, book null，重启恢复场景）→ pause（结算并恢复主番茄钟）', () => {
+    expect(decideReadingAction(null, null, createInitialState(), true, true)).toEqual({ action: 'pause' });
   });
 
   it('用户手动暂停（书一直开着，同书）→ none（尊重用户暂停）', () => {
-    const s = focusState({ paused: true, endTime: null, remaining: 600, target: { type: 'book', path: BOOK_A.path, label: BOOK_A.title } });
+    const s = focusState({ paused: true, endTime: null, remaining: 600 });
     expect(decideReadingAction(BOOK_A, BOOK_A, s, true)).toEqual({ action: 'none' });
   });
 
-  it('自动暂停后重开同一本书 → start（Q2 新专注）', () => {
-    const s = focusState({ paused: true, endTime: null, remaining: 600, target: { type: 'book', path: BOOK_A.path, label: BOOK_A.title } });
-    expect(decideReadingAction(null, BOOK_A, s, true)).toEqual({ action: 'start', book: BOOK_A });
+  it('关书后主番茄钟恢复 idle → 重开同一本书 → start（Q2 新读书会话）', () => {
+    // 关书恢复后主状态已回到 idle，重开书 → 直接开始独立读书计时
+    expect(decideReadingAction(null, BOOK_A, createInitialState(), true)).toEqual({ action: 'start', book: BOOK_A });
   });
 
-  it('暂停态打开书（他处目标）→ confirm(enter)', () => {
+  it('暂停态打开书（主时钟已暂停，无运行）→ start（读书独立计时不受主暂停阻塞）', () => {
     const s = focusState({ paused: true, endTime: null, remaining: 600, target: { type: 'memo', id: 'm1', label: '写报告' } });
-    expect(decideReadingAction(null, BOOK_A, s, true)).toEqual({ action: 'confirm', book: BOOK_A, mode: 'enter' });
+    expect(decideReadingAction(null, BOOK_A, s, true)).toEqual({ action: 'start', book: BOOK_A });
   });
 
   it('reset 后的未运行 focus（endTime null）→ start（等同 idle）', () => {
@@ -119,14 +119,9 @@ describe('decideReadingAction（决策纯函数）', () => {
     expect(decideReadingAction(BOOK_A, BOOK_B, s, true)).toEqual({ action: 'confirm', book: BOOK_B, mode: 'skip-break' });
   });
 
-  it('非读书场景关闭书 → none', () => {
+  it('非读书场景关闭书 → none（读书会话未进行）', () => {
     expect(decideReadingAction(BOOK_A, null, focusState({ target: { type: 'memo', id: 'm1', label: '写报告' } }), true)).toEqual({ action: 'none' });
     expect(decideReadingAction(BOOK_A, null, focusState({ phase: 'short-break', endTime: T0 + 60_000 }), true)).toEqual({ action: 'none' });
-  });
-
-  it('持续无书（prev=null, book=null）+ 读书专注运行中 → none（不重复暂停手动恢复的专注）', () => {
-    const s = focusState({ target: { type: 'book', path: BOOK_A.path, label: BOOK_A.title } });
-    expect(decideReadingAction(null, null, s, true)).toEqual({ action: 'none' });
   });
 });
 
@@ -157,7 +152,7 @@ describe('getEpubBook（视图探测）', () => {
   });
 });
 
-describe('读书联动集成（ui 流程）', () => {
+describe('读书联动集成（独立读书计时，ticket 56）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     setApp(null as any);
@@ -174,136 +169,180 @@ describe('读书联动集成（ui 流程）', () => {
     vi.useRealTimers();
   });
 
-  it('打开书（idle）→ 自动开始读书专注：target 挂书、45 分钟读书预设、后台不弹窗', async () => {
+  function rawReading(vault: MockVault): any {
+    return JSON.parse(vault.files.get(getPomodoroFilePath())!).reading;
+  }
+  function rawComplete(vault: MockVault): any {
+    return JSON.parse(vault.files.get(getPomodoroFilePath())!);
+  }
+  function seedState(vault: MockVault, state: any, reading?: any): void {
+    const obj: any = { version: 1, state, history: [] };
+    if (reading !== undefined) obj.reading = reading;
+    vault.files.set(getPomodoroFilePath(), JSON.stringify(obj));
+  }
+
+  it('打开书（idle）→ 自动开始独立读书计时：读书会话 active、书挂入、主番茄钟挂起（idle→paused 冻结）、后台不弹窗', async () => {
     const { app, vault } = setup(new MockVault(), {}, readerView(BOOK_A.path, '活着'));
     await ensurePomodoro(app); // 启动恢复路径：不弹窗
     ensurePomodoroEpubLink(app);
     checkReadingNow();
     await vi.advanceTimersByTimeAsync(10);
-    const s = rawState(vault);
-    expect(s.phase).toBe('focus');
-    expect(s.endTime).toBe(T0 + 45 * 60 * 1000); // 阅读沉浸 45 分钟
-    expect(s.target).toEqual({ type: 'book', path: BOOK_A.path, label: '活着' });
+    const raw = rawComplete(vault);
+    expect(raw.reading.active).toBe(true);
+    expect(raw.reading.book).toEqual({ path: BOOK_A.path, title: '活着' });
+    // 主番茄钟被挂起：endTime 冻结为 null、paused、remaining 冻结，phase 保持原状
+    expect(raw.state.endTime).toBeNull();
+    expect(raw.state.paused).toBe(true);
+    expect(raw.state.phase).toBe('idle');
     expect(document.getElementById('pomodoro-mask')).toBeNull(); // 后台形态：不弹窗
-    expect(hasNotice('已开始读书专注：《活着》')).toBe(true); // 自动开始弹通知
+    expect(hasNotice('读书计时开始：活着')).toBe(true); // 自动开始弹通知
   });
 
-  it('读书专注自然完成 → history duration = 45 分钟（读书预设生效）', async () => {
+  it('读书累计端到端：打开→推进→显示随累计走（不随主番茄钟阶段）', async () => {
     const { app, vault } = setup(new MockVault(), {}, readerView(BOOK_A.path, '活着'));
     await openPomodoro(app);
     ensurePomodoroEpubLink(app);
     checkReadingNow();
-    await vi.advanceTimersByTimeAsync(45 * 60 * 1000 + 1000);
-    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
-    expect(raw.history[0].duration).toBe(45 * 60);
-    expect(raw.history[0].target).toEqual({ type: 'book', path: BOOK_A.path, label: '活着' });
+    await vi.advanceTimersByTimeAsync(10);
+    await vi.advanceTimersByTimeAsync(5000); // 读书累计 5s
+    const statusText = document.querySelector('.pomodoro-statusbar-text') as HTMLElement | null;
+    if (statusText) expect(statusText.textContent).toContain('00:05');
+    expect(rawReading(vault).active).toBe(true);
   });
 
-  it('关闭书 → 自动暂停：paused、remaining 保留、target 保留、预设恢复（下一专注回到 25 分钟）', async () => {
+  it('关闭书 → 结算读书累计入读书历史（target.type=book）+ 恢复挂起的主番茄钟快照', async () => {
     const { app, vault } = setup(new MockVault(), {}, readerView(BOOK_A.path, '活着'));
     await openPomodoro(app);
     ensurePomodoroEpubLink(app);
+    // 读到 A 一段时间
     checkReadingNow();
-    await vi.advanceTimersByTimeAsync(1000); // 走 1 秒（tick 轮询同书 → none）
-    // 关书：activeLeaf 置空
+    await vi.advanceTimersByTimeAsync(10);
+    await vi.advanceTimersByTimeAsync(6000); // 读书累计 6s
+    const startClose = Date.now();
+    // 关闭书
     (app.workspace as any).activeLeaf = null;
     checkReadingNow();
     await vi.advanceTimersByTimeAsync(10);
-    let s = rawState(vault);
-    expect(s.paused).toBe(true);
-    expect(s.endTime).toBeNull();
-    expect(s.remaining).toBe(45 * 60 - 1); // 已走 1 秒（tick 推进 1000ms）
-    expect(s.target).toEqual({ type: 'book', path: BOOK_A.path, label: '活着' }); // target 保留
-    expect(hasNotice('已暂停读书专注')).toBe(true); // 自动暂停弹通知
-    // 预设恢复：手动继续后完成 → 25 分钟（经典）
-    setSettingsProvider(() => ({ pomodoroPreset: 'classic' } as any));
-    // 手动「继续」走 ui 按钮（forceFocus 未开，可用）——恢复暂停剩余（2699s）
-    const startBtn = document.getElementById('pomodoro-btn-start') as HTMLButtonElement;
-    startBtn.click();
-    await vi.advanceTimersByTimeAsync(2699 * 1000 + 1000);
-    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
-    expect(raw.history[0].duration).toBe(25 * 60); // 恢复后的完成按用户预设（classic 25 分钟）
-    expect(raw.state.remaining).toBe(5 * 60); // 后续休息按 classic 5 分钟（读书预设已退出）
+    const raw = rawComplete(vault);
+    expect(raw.reading.active).toBe(false); // 会话已结束
+    const bookEntry = raw.history[raw.history.length - 1];
+    expect(bookEntry.target).toEqual({ type: 'book', path: BOOK_A.path, label: '活着' }); // 单独入读书历史
+    expect(bookEntry.duration).toBe(Math.round((Date.now() - startClose) / 1000) + 6); // ≈ 6s + 结算瞬间
+    expect(raw.state.phase).toBe('idle'); // 主番茄钟恢复挂起快照（idle）
+    expect(hasNotice(/读书结束/)).toBe(true);
   });
 
-  it('强制专注模式 + 关书 → 自动暂停仍生效（豁免）；手动暂停仍禁用', async () => {
+  it('关闭书 → 恢复挂起的运行中专注（原 endTime 继续，时间不流逝）', async () => {
+    const vault = new MockVault();
+    // 预置运行中专注（endTime=+100s，cycleFocusCount=0）
+    seedState(vault, { phase: 'focus', endTime: T0 + 100_000, remaining: 0, paused: false, cycleFocusCount: 0, target: { type: 'memo', id: 'm1', label: '写报告' } });
+    const { app } = setup(vault, {}, readerView(BOOK_A.path, '活着'));
+    await openPomodoro(app);
+    ensurePomodoroEpubLink(app);
+    // 专注运行中打开书 → confirm(enter)
+    checkReadingNow();
+    await vi.advanceTimersByTimeAsync(10);
+    expect(document.getElementById('pomodoro-reading-confirm')).not.toBeNull();
+    (document.getElementById('pomodoro-reading-confirm-yes') as HTMLElement).click();
+    await vi.advanceTimersByTimeAsync(10);
+    expect(rawReading(vault).active).toBe(true);
+    expect(rawReading(vault).prevState.endTime).toBe(T0 + 100_000); // 快照保留原 endTime
+    // 读书一段时间后关书
+    await vi.advanceTimersByTimeAsync(8000);
+    (app.workspace as any).activeLeaf = null;
+    checkReadingNow();
+    await vi.advanceTimersByTimeAsync(10);
+    const raw = rawComplete(vault);
+    expect(raw.reading.active).toBe(false);
+    expect(raw.state.endTime).toBe(T0 + 100_000); // 恢复原 endTime（时间未流逝）
+    expect(raw.state.phase).toBe('focus');
+    expect(raw.state.target).toEqual({ type: 'memo', id: 'm1', label: '写报告' }); // 目标也恢复
+  });
+
+  it('重启后读书会话恢复：书仍开 → active 保持、累计不丢（endTime 基准后台补时）', async () => {
+    const vault = new MockVault();
+    // 模拟重启前：读书会话 active，startedAt 在 100s 前（后台一段时间）
+    seedState(
+      vault,
+      { phase: 'idle', endTime: null, remaining: 0, paused: true, cycleFocusCount: 0, target: null },
+      { active: true, book: { path: BOOK_A.path, title: '活着' }, elapsedMs: 0, startedAt: T0, prevState: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0, target: null } }
+    );
+    const { app } = setup(vault, {}, readerView(BOOK_A.path, '活着'));
+    await ensurePomodoro(app); // 启动恢复：reading.active → tick 继续（累计随 now 走）
+    ensurePomodoroEpubLink(app);
+    await vi.advanceTimersByTimeAsync(100); // 启动检测延迟前
+    // startedAt=T0=Date.now()，故累计≈0+流逝
+    const progressed = Date.now() - T0;
+    // 推进到 startedAt 之后 30s 模拟后台流逝
+    await vi.advanceTimersByTimeAsync(30_000);
+    const raw = rawComplete(vault);
+    expect(raw.reading.active).toBe(true); // 书仍开，会话未结算
+    // 累计 = elapsedMs + (now - startedAt)
+    const elapsedSec = Math.round((raw.reading.elapsedMs + (Date.now() - raw.reading.startedAt)) / 1000);
+    expect(elapsedSec).toBe(30 + Math.round(progressed / 1000));
+  });
+
+  it('强制专注模式 + 关闭书 → 读书会话照常结算（豁免 forceFocus）', async () => {
     const { app, vault } = setup(new MockVault(), { pomodoroForceFocus: true }, readerView(BOOK_A.path, '活着'));
     await openPomodoro(app);
     ensurePomodoroEpubLink(app);
     checkReadingNow();
     await vi.advanceTimersByTimeAsync(10);
-    const startBtn = document.getElementById('pomodoro-btn-start') as HTMLButtonElement;
-    expect(startBtn.disabled).toBe(true); // 强制专注：手动暂停禁用
+    expect(rawReading(vault).active).toBe(true);
     (app.workspace as any).activeLeaf = null;
     checkReadingNow();
     await vi.advanceTimersByTimeAsync(10);
-    const s = rawState(vault);
-    expect(s.paused).toBe(true); // 自动暂停豁免生效
+    expect(rawReading(vault).active).toBe(false); // 关书结算豁免 forceFocus
   });
 
-  it('重开同一本书 → 重新开始新专注（不恢复暂停剩余）', async () => {
+  it('读书会话中换书 → 直接切新书（无确认）、旧书累计入读书历史', async () => {
     const { app, vault } = setup(new MockVault(), {}, readerView(BOOK_A.path, '活着'));
     await openPomodoro(app);
     ensurePomodoroEpubLink(app);
     checkReadingNow();
-    await vi.advanceTimersByTimeAsync(10);
-    (app.workspace as any).activeLeaf = null;
-    checkReadingNow();
-    await vi.advanceTimersByTimeAsync(10);
-    expect(rawState(vault).paused).toBe(true);
-    // 重开同一本书
-    (app.workspace as any).activeLeaf = { view: readerView(BOOK_A.path, '活着') };
-    checkReadingNow();
-    await vi.advanceTimersByTimeAsync(10);
-    const s = rawState(vault);
-    expect(s.paused).toBe(false);
-    expect(s.endTime).toBe(T0 + 20 + 45 * 60 * 1000); // 全新 45 分钟（已推进 20ms），不恢复剩余
-  });
-
-  it('读书专注中换书 → target 切新书、新专注（无确认）', async () => {
-    const { app, vault } = setup(new MockVault(), {}, readerView(BOOK_A.path, '活着'));
-    await openPomodoro(app);
-    ensurePomodoroEpubLink(app);
-    checkReadingNow();
-    await vi.advanceTimersByTimeAsync(10);
+    await vi.advanceTimersByTimeAsync(4000); // 读 A 4s
     (app.workspace as any).activeLeaf = { view: readerView(BOOK_B.path, '百年孤独') };
     checkReadingNow();
     await vi.advanceTimersByTimeAsync(10);
-    const s = rawState(vault);
-    expect(s.target).toEqual({ type: 'book', path: BOOK_B.path, label: '百年孤独' });
-    expect(s.paused).toBe(false);
-    expect(s.endTime).toBe(T0 + 10 + 45 * 60 * 1000); // 新专注从当前时刻（已推进 10ms）起 45 分钟
+    const raw = rawComplete(vault);
+    expect(raw.reading.active).toBe(true);
+    expect(raw.reading.book).toEqual({ path: BOOK_B.path, title: '百年孤独' });
+    // 旧书 A 的累计已入读书历史
+    const entryA = raw.history[raw.history.length - 1];
+    expect(entryA.target).toEqual({ type: 'book', path: BOOK_A.path, label: '活着' });
+    expect(entryA.duration).toBe(4);
+    expect(document.getElementById('pomodoro-reading-confirm')).toBeNull(); // 无确认
   });
 
-  it('Obsidian 启动时书已打开 → ensure 后延迟检测自动开始', async () => {
+  it('Obsidian 启动时书已打开（无读书会话）→ 延迟检测自动开始独立读书计时', async () => {
     const { app, vault } = setup(new MockVault(), {}, readerView(BOOK_A.path, '活着'));
-    await ensurePomodoro(app); // 启动恢复路径（bindPomodoroState）
+    await ensurePomodoro(app); // 启动恢复路径（bindPomodoroState/bindReadingSession）
     ensurePomodoroEpubLink(app);
     await vi.advanceTimersByTimeAsync(1500); // 启动检测延迟
-    const s = rawState(vault);
-    expect(s.phase).toBe('focus');
-    expect(s.target).toEqual({ type: 'book', path: BOOK_A.path, label: '活着' });
+    const raw = rawComplete(vault);
+    expect(raw.reading.active).toBe(true);
+    expect(raw.reading.book).toEqual({ path: BOOK_A.path, title: '活着' });
   });
 
-  it('总开关关 → ensure 不注册监听，check 无动作', async () => {
+  it('总开关关 → ensure 不注册监听，check 无动作（不落盘）', async () => {
     const { app, vault } = setup(new MockVault(), { pomodoroEpubAuto: false }, readerView(BOOK_A.path, '活着'));
     await openPomodoro(app);
     ensurePomodoroEpubLink(app); // 开关关：不注册
     checkReadingNow();
     await vi.advanceTimersByTimeAsync(2000);
-    expect(vault.files.get(getPomodoroFilePath())).toBeUndefined(); // 无任何落盘（未开始）
+    expect(vault.files.get(getPomodoroFilePath())).toBeUndefined(); // 无任何落盘
   });
 
-  it('同书持续打开（tick 轮询）→ 不重复动作', async () => {
+  it('同书持续打开（tick 轮询）→ 不重复动作、读书累计持续推进', async () => {
     const { app, vault } = setup(new MockVault(), {}, readerView(BOOK_A.path, '活着'));
     await openPomodoro(app);
     ensurePomodoroEpubLink(app);
     checkReadingNow();
     await vi.advanceTimersByTimeAsync(10);
-    // tick 轮询路径：每秒 checkReadingNow，同书 → none（endTime 不被重置）
-    const first = rawState(vault).endTime;
+    const startAt = rawReading(vault).startedAt;
     await vi.advanceTimersByTimeAsync(3000);
-    expect(rawState(vault).endTime).toBe(first);
+    expect(rawReading(vault).startedAt).toBe(startAt); // 同书不重置会话起点
+    expect(rawReading(vault).active).toBe(true);
   });
 
   it('unload 清理：书打开时卸载 → 再 check 无动作', async () => {
@@ -312,20 +351,17 @@ describe('读书联动集成（ui 流程）', () => {
     ensurePomodoroEpubLink(app);
     checkReadingNow();
     await vi.advanceTimersByTimeAsync(10);
+    expect(rawReading(vault).active).toBe(true);
     unloadPomodoroEpubLink();
     (app.workspace as any).activeLeaf = null;
     checkReadingNow();
     await vi.advanceTimersByTimeAsync(10);
-    expect(rawState(vault).paused).toBe(false); // 卸载后不再联动
+    expect(rawReading(vault).active).toBe(true); // 卸载后不再联动（读书会话保持，应用关闭才结算）
   });
 
-  // ===== ticket 54：确认弹窗 + 启动形态弹窗模式 =====
+  // ===== 确认弹窗（休息/他处专注） =====
 
-  function seedState(vault: MockVault, state: any): void {
-    vault.files.set(getPomodoroFilePath(), JSON.stringify({ version: 1, state, history: [] }));
-  }
-
-  it('休息中打开书 → 确认弹窗「跳过休息」：是 → 立即开始读书专注（读书预设，休息不计 history）', async () => {
+  it('休息中打开书 → 确认弹窗「跳过休息」：是 → 开始独立读书计时、休息会话挂起', async () => {
     const vault = new MockVault();
     seedState(vault, { phase: 'short-break', endTime: T0 + 300_000, remaining: 0, paused: false, cycleFocusCount: 1, target: null });
     const { app } = setup(vault, {}, readerView(BOOK_A.path, '活着'));
@@ -339,14 +375,17 @@ describe('读书联动集成（ui 流程）', () => {
     expect(popup!.textContent).toContain('活着');
     (document.getElementById('pomodoro-reading-confirm-yes') as HTMLElement).click();
     await vi.advanceTimersByTimeAsync(10);
-    const s = rawState(vault);
-    expect(s.phase).toBe('focus');
-    expect(s.endTime).toBe(T0 + 10 + 45 * 60 * 1000); // 读书预设 45 分钟
-    expect(s.target).toEqual({ type: 'book', path: BOOK_A.path, label: '活着' });
+    const raw = rawComplete(vault);
+    expect(raw.reading.active).toBe(true);
+    expect(raw.reading.book).toEqual({ path: BOOK_A.path, title: '活着' });
+    // 主番茄钟挂起：休息阶段冻结剩余
+    expect(raw.state.phase).toBe('short-break');
+    expect(raw.state.endTime).toBeNull();
+    expect(raw.state.paused).toBe(true);
     expect(document.getElementById('pomodoro-reading-confirm')).toBeNull();
   });
 
-  it('休息中打开书 → 选否：休息继续、弹窗关闭、本次打开不再提示（同书轮询不重复弹）', async () => {
+  it('休息中打开书 → 选否：休息继续、弹窗关闭、本次打开不再提示', async () => {
     const vault = new MockVault();
     seedState(vault, { phase: 'short-break', endTime: T0 + 300_000, remaining: 0, paused: false, cycleFocusCount: 1, target: null });
     const { app } = setup(vault, {}, readerView(BOOK_A.path, '活着'));
@@ -365,7 +404,7 @@ describe('读书联动集成（ui 流程）', () => {
     expect(document.getElementById('pomodoro-reading-confirm')).toBeNull();
   });
 
-  it('他处专注中打开书 → 确认弹窗「进入读书专注」：是 → 立即进入（当前专注不计 history）', async () => {
+  it('他处专注中打开书 → 确认弹窗「进入读书专注」：是 → 挂起专注重启读书会话', async () => {
     const vault = new MockVault();
     seedState(vault, { phase: 'focus', endTime: T0 + 100_000, remaining: 0, paused: false, cycleFocusCount: 0, target: { type: 'memo', id: 'm1', label: '写报告' } });
     const { app } = setup(vault, {}, readerView(BOOK_A.path, '活着'));
@@ -378,13 +417,13 @@ describe('读书联动集成（ui 流程）', () => {
     expect(popup!.textContent).toContain('进入读书专注');
     (document.getElementById('pomodoro-reading-confirm-yes') as HTMLElement).click();
     await vi.advanceTimersByTimeAsync(10);
-    const s = rawState(vault);
-    expect(s.phase).toBe('focus');
-    expect(s.target).toEqual({ type: 'book', path: BOOK_A.path, label: '活着' });
-    expect(s.endTime).toBe(T0 + 10 + 45 * 60 * 1000);
+    const raw = rawComplete(vault);
+    expect(raw.reading.active).toBe(true);
+    expect(raw.reading.prevState.target).toEqual({ type: 'memo', id: 'm1', label: '写报告' }); // 快照保留
+    expect(raw.state.paused).toBe(true); // 主挂起
   });
 
-  it('他处专注中打开书 → 选否：原专注保持原状（endTime 不变、target 不变）', async () => {
+  it('他处专注中打开书 → 选否：原专注保持原状（endTime/target 不变）', async () => {
     const vault = new MockVault();
     seedState(vault, { phase: 'focus', endTime: T0 + 100_000, remaining: 0, paused: false, cycleFocusCount: 0, target: { type: 'memo', id: 'm1', label: '写报告' } });
     const { app } = setup(vault, {}, readerView(BOOK_A.path, '活着'));
@@ -414,13 +453,17 @@ describe('读书联动集成（ui 流程）', () => {
     expect(rawState(vault).phase).toBe('long-break');
   });
 
-  it('启动形态=自动弹窗：idle 打开书 → 自动开始并弹出主弹窗', async () => {
+  it('启动形态=自动弹窗：idle 打开书 → 开始读书计时并弹出主弹窗（主番茄钟挂起）', async () => {
     const { app, vault } = setup(new MockVault(), { pomodoroEpubMode: 'popup' }, readerView(BOOK_A.path, '活着'));
     await ensurePomodoro(app); // 启动恢复路径（不弹窗）
     ensurePomodoroEpubLink(app);
     checkReadingNow();
     await vi.advanceTimersByTimeAsync(10);
     expect(document.getElementById('pomodoro-mask')).not.toBeNull(); // popup 形态自动弹窗
-    expect(rawState(vault).phase).toBe('focus');
+    expect(rawReading(vault).active).toBe(true); // 独立读书计时开始
   });
 });
+
+function el(id: string): HTMLElement {
+  return document.getElementById(id)!;
+}

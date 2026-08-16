@@ -7,5 +7,15 @@ export { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './statusbar';
 export { playSound } from './sound';
 export { PomodoroDataManager, getPomodoroFilePath } from './data';
 export { transition, recover, DEFAULT_DURATIONS, DEFAULT_OPTIONS, createInitialState, phaseDurationSec } from './state';
-export { startReadingFocus, switchReadingFocus, pauseReadingFocus, exitReadingMode, showReadingConfirm } from './ui';
+export {
+  emptyReadingSession,
+  startReadingSession,
+  switchReadingBook,
+  endReadingSession,
+  readingElapsedMs,
+  isReadingActive,
+  normalizeReadingSession,
+} from './reading';
+export type { ReadingSession } from './reading';
 export { ensurePomodoroEpubLink, unloadPomodoroEpubLink, getEpubBook, decideReadingAction, checkReadingNow, readingModePopupEnabled } from './epub-link';
+export { startReadingFocus, switchReadingFocus, closeReadingSession, exitReadingMode, showReadingConfirm } from './ui';
