@@ -406,6 +406,24 @@ describe('番茄钟弹窗', () => {
     expect(el('pomodoro-time').textContent).toBe('25:00');
   });
 
+  it('重置 → 同时清空关联目标（目标区回「选择目标」、state.target 置空）', async () => {
+    const vault = new MockVault();
+    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([{ id: 'm1', title: '写季度报告', completed: null }]));
+    const { app } = setup(vault);
+    await openPomodoro(app);
+    el('pomodoro-target').click();
+    await vi.advanceTimersByTimeAsync(10);
+    (document.querySelector('.pomodoro-target-item') as HTMLElement).click();
+    expect(el('pomodoro-target-label').textContent).toContain('写季度报告');
+    // 开始 + 重置
+    el('pomodoro-btn-start').click();
+    await vi.advanceTimersByTimeAsync(1000);
+    el('pomodoro-btn-reset').click();
+    expect(el('pomodoro-target-label').textContent).toContain('选择目标'); // 目标已清空
+    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
+    expect(raw.state.target).toBeNull(); // 落盘 target 置空
+  });
+
   it('跳过 → 流转到短休息（未开始）', async () => {
     const { app } = setup();
     await openPomodoro(app);

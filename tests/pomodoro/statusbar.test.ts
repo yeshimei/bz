@@ -7,7 +7,8 @@ import { resetObsidianMocks, setIcon } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { openPomodoro, unloadPomodoro } from '../../src/pomodoro';
-import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from '../../src/pomodoro/statusbar';
+import { mountPomodoroStatusBar, unmountPomodoroStatusBar, syncPomodoroStatusBar } from '../../src/pomodoro/statusbar';
+import { createInitialState } from '../../src/pomodoro/state';
 
 const T0 = new Date('2026-08-10T10:00:00').getTime();
 
@@ -113,5 +114,20 @@ describe('番茄钟状态栏', () => {
     expect(container.querySelector('.pomodoro-statusbar')).not.toBeNull();
     unmountPomodoroStatusBar();
     expect(container.querySelector('.pomodoro-statusbar')).toBeNull();
+  });
+
+  it('读书会话进行中：状态栏显示 📖 读书累计时长、非空闲态', () => {
+    const app = makeApp(new MockVault());
+    mountPomodoroStatusBar(container, app);
+    const statusEl = container.querySelector('.pomodoro-statusbar') as HTMLElement;
+    const textSpan = statusEl.querySelector('.pomodoro-statusbar-text') as HTMLElement;
+    // 读书累计 5 分 3 秒
+    syncPomodoroStatusBar(createInitialState(), 0, true, 5 * 60 + 3);
+    expect(textSpan.textContent).toBe('📖 05:03');
+    expect(statusEl.classList.contains('pomodoro-statusbar-idle')).toBe(false);
+    // 读书结束 → 回空闲（主番茄钟空闲）
+    syncPomodoroStatusBar(createInitialState(), 0);
+    expect(textSpan.textContent).toBe('');
+    expect(statusEl.classList.contains('pomodoro-statusbar-idle')).toBe(true);
   });
 });

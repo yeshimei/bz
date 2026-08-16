@@ -247,9 +247,49 @@ describe('PomodoroDataManager', () => {
     const app = makeApp(vault);
     setApp(app);
     const dm = new PomodoroDataManager(app);
-    const data = { version: 1 as const, state: { phase: 'long-break' as const, endTime: null, remaining: 900, paused: false, cycleFocusCount: 0, target: null }, history: [{ ts: 1, duration: 1500 }, { ts: 2, duration: 1500 }] };
+    const data = {
+      version: 1 as const,
+      state: { phase: 'long-break' as const, endTime: null, remaining: 900, paused: false, cycleFocusCount: 0, target: null },
+      history: [{ ts: 1, duration: 1500 }, { ts: 2, duration: 1500 }],
+      reading: { active: false, book: null, elapsedMs: 0, startedAt: null, prevState: null },
+    };
     await dm.save(data);
     const loaded = await dm.load();
     expect(loaded).toEqual(data);
+  });
+
+  it('load：旧数据无 reading 字段 → 空会话（兼容不破坏）', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      POMODORO_FILE_PATH,
+      JSON.stringify({
+        version: 1,
+        state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 },
+        history: [],
+      })
+    );
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new PomodoroDataManager(app);
+    const data = await dm.load();
+    expect(data.reading).toEqual({ active: false, book: null, elapsedMs: 0, startedAt: null, prevState: null });
+  });
+
+  it('load：非法 reading 字段 → 归一为空会话（elapsedMs 负 / book 非法）', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      POMODORO_FILE_PATH,
+      JSON.stringify({
+        version: 1,
+        state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 },
+        history: [],
+        reading: { active: true, book: { path: 3 }, elapsedMs: -5, startedAt: 'x' },
+      })
+    );
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new PomodoroDataManager(app);
+    const data = await dm.load();
+    expect(data.reading).toEqual({ active: false, book: null, elapsedMs: 0, startedAt: null, prevState: null });
   });
 });
