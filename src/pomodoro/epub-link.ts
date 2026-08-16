@@ -49,49 +49,39 @@ function basename(p: string): string {
 }
 
 /**
- * 决策纯函数：prev（上一轮检测的书）→ book（本轮）+ 当前状态 + 开关 → 动作。
- * 场景表（grilling Q2/Q5/Q6/Q9/Q10/Q12 定稿）：
- * - prev null → book（打开书）：idle → start；休息 → confirm(skip-break)；专注且 target 非书 → confirm(enter)；
- *   专注且正对这本书（启动恢复场景）→ none（不打扰）；用户暂停态 → none（尊重用户）
- * - prev → null（关闭书）：读书专注运行中 → pause；其余 → none
- * - prev A → book B（换书）：读书专注中 → switch；其余等同打开分派
- * - prev → 同书：none（轮询比对无变化）
+ * 决策纯函数：prev（上一轮检测的书）→ book（本轮）+ 当前状态 + 读书会话是否进行中 + 开关 → 动作。
+ * 场景表（grilling Q2/Q5/Q6/Q9/Q10/Q12 + ticket 56 独立读书计时改编）：
+ * - 读书会话进行中（readingActive）：
+ *   - 关书（book null）→ pause（结算并恢复主番茄钟）；同书 → none；换书 → switch（直接切，无确认）
+ * - prev null → book（打开书）：
+ *   - idle → start；休息 → confirm(skip-break)；专注中 target 非书 → confirm(enter)；
+   *   用户暂停态 → none（尊重用户，不自动开始）
+ * - 打开书（book 非空，非读书会话中）：按主番茄钟分派（idle start / 休息 confirm / 专注 confirm）
  */
 export function decideReadingAction(
   prev: ReadingBook | null,
   book: ReadingBook | null,
   state: PomodoroState,
-  epubAuto: boolean
+  epubAuto: boolean,
+  readingActive = false
 ): ReadingDecision {
   if (!epubAuto) return { action: 'none' };
   if (book && prev && book.path === prev.path) return { action: 'none' };
-  const running = state.endTime !== null;
-  if (book) {
-    // 启动恢复：专注正对这本书且活跃运行（恢复的倒计时继续走）→ 不打扰
-    if (running && !state.paused && state.phase === 'focus' && state.target?.type === 'book' && state.target.path === book.path && !prev) {
-      return { action: 'none' };
-    }
-    // 换书：读书专注中 → 直接切（Q6，无确认）
-    if (prev && state.phase === 'focus' && state.target?.type === 'book') return { action: 'switch', book };
-    // 用户手动暂停（书一直开着，同书分支已拦；换书暂停态同理尊重）→ 不自动开始
-    if (state.paused && prev) return { action: 'none' };
-    // 书关闭后重开（自动暂停的延续）→ 重新开始新专注（Q2，不恢复剩余）
-    if (state.paused && state.target?.type === 'book') return { action: 'start', book };
-    // 暂停态打开书（他处目标）→ 确认（Q5 精神，54 接线）
-    if (state.paused) return { action: 'confirm', book, mode: 'enter' };
-    // idle（含 reset 后的未运行 focus）→ 直接开始（Q9）
-    if (!running || state.phase === 'idle') return { action: 'start', book };
-    // 他处专注中 → 确认（Q5）
-    if (state.phase === 'focus') return { action: 'confirm', book, mode: 'enter' };
-    // 休息中 → 确认（Q10）
-    return { action: 'confirm', book, mode: 'skip-break' };
-  }
-  // 关闭书：仅「书从开→关」（prev 非空）且读书专注运行中 → 自动暂停（豁免 forceFocus，执行层保证）；
-  // prev 与 book 同为 null（书已关、持续无书）→ 不动作（防 tick 轮询重复暂停手动恢复的专注）
-  if (book === null) {
-    if (prev && running && state.phase === 'focus' && state.target?.type === 'book') return { action: 'pause' };
+  // 读书会话进行中：关书 → pause（结算+恢复）；换书 → switch（直接切）；同书已拦
+  if (readingActive) {
+    if (book === null) return { action: 'pause' };
+    if (prev && book.path !== prev.path) return { action: 'switch', book };
     return { action: 'none' };
   }
+  const running = state.endTime !== null;
+  if (book) {
+    // 主番茄钟未在倒计时（idle / 暂停 / reset 后未运行）→ 直接开始读书计时（Q9）
+    if (!running) return { action: 'start', book };
+    // 主番茄钟正在倒计时 → 按阶段确认（不打断用户主动的专注/休息）
+    if (state.phase === 'focus') return { action: 'confirm', book, mode: 'enter' }; // Q5
+    return { action: 'confirm', book, mode: 'skip-break' }; // Q10
+  }
+  // 关闭书：非读书会话 → 不动作
   return { action: 'none' };
 }
 
@@ -109,10 +99,17 @@ let initialized = false;
 let initTimer: ReturnType<typeof setTimeout> | null = null;
 /** ui 注入的状态快照 getter（ui.ts ensure 时绑定；避免顶层循环 import） */
 let stateGetter: () => PomodoroState = () => createInitialState();
+/** ui 注入的读书会话进行中 getter（独立读书计时判断，ticket 56） */
+let readingActiveGetter: () => boolean = () => false;
 
 /** ui.ts 绑定当前番茄钟状态（ensurePomodoro 时调用） */
 export function bindPomodoroState(getter: () => PomodoroState): void {
   stateGetter = getter;
+}
+
+/** ui.ts 绑定读书会话进行中状态（ensurePomodoro 时调用） */
+export function bindReadingSession(getter: () => boolean): void {
+  readingActiveGetter = getter;
 }
 
 /** 读书启动形态：popup（自动弹窗）时返回 true（ticket 54，Q1 默认后台） */
@@ -131,7 +128,7 @@ function execute(decision: ReadingDecision): void {
   } else if (decision.action === 'switch') {
     void import('./ui').then((m) => m.switchReadingFocus(decision.book));
   } else if (decision.action === 'pause') {
-    void import('./ui').then((m) => m.pauseReadingFocus());
+    void import('./ui').then((m) => m.closeReadingSession());
   } else if (decision.action === 'confirm') {
     // 确认弹窗（Q5/Q10）：是 → 立即开始读书专注；否/ESC/遮罩 → 保持原样（ticket 54）
     void import('./ui').then((m) => m.showReadingConfirm(decision));
@@ -142,7 +139,7 @@ function execute(decision: ReadingDecision): void {
 export function checkReadingNow(): void {
   if (!appRef) return;
   const book = getEpubBook(appRef);
-  const decision = decideReadingAction(prevBook, book, stateGetter(), readingEpubAutoEnabled());
+  const decision = decideReadingAction(prevBook, book, stateGetter(), readingEpubAutoEnabled(), readingActiveGetter());
   prevBook = book;
   execute(decision);
 }
@@ -170,6 +167,7 @@ export function unloadPomodoroEpubLink(): void {
   prevBook = null;
   initialized = false;
   stateGetter = () => createInitialState();
+  readingActiveGetter = () => false;
 }
 
 /** 测试钩子：直接检查当前状态（绕过监听时序） */
