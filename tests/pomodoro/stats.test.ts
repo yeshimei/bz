@@ -3,7 +3,7 @@
  * 番茄钟历史聚合测试（ticket 30）：今日计数 + 近 7 天滚动窗口
  */
 import { describe, it, expect } from 'vitest';
-import { todayCount, last7Days, bookCountToday } from '../../src/pomodoro/stats';
+import { todayCount, last7Days, readingSecondsToday } from '../../src/pomodoro/stats';
 import type { HistoryEntry } from '../../src/pomodoro/state';
 
 // 本地时区日期（2026-08-10 周一 10:00 本地）
@@ -42,14 +42,14 @@ describe('todayCount', () => {
   });
 });
 
-describe('bookCountToday（读书番茄数，ticket 51）', () => {
-  function bookEntry(day: number, hour = 9): HistoryEntry {
-    return { ts: new Date(2026, 7, day, hour, 0, 0).getTime(), duration: 1500, target: { type: 'book', path: '书架/活着.epub', label: '活着' } };
+describe('readingSecondsToday（今日读书时长，秒，ticket 56）', () => {
+  function bookEntry(day: number, hour = 9, duration = 1500, label = '活着'): HistoryEntry {
+    return { ts: new Date(2026, 7, day, hour, 0, 0).getTime(), duration, target: { type: 'book', path: `书架/${label}.epub`, label } };
   }
 
-  it('今日读书番茄计数（按 target.type=book）', () => {
-    const h = [bookEntry(10), bookEntry(10, 14), bookEntry(9)];
-    expect(bookCountToday(h, NOW)).toBe(2);
+  it('今日读书时长 = target.type=book 条目的实读秒数之和', () => {
+    const h = [bookEntry(10, 9, 2700), bookEntry(10, 14, 1200), bookEntry(9, 9, 2700)];
+    expect(readingSecondsToday(h, NOW)).toBe(2700 + 1200); // 3000s 昨天的 2700 不计
   });
 
   it('非书目标 / 无目标不计入', () => {
@@ -57,16 +57,16 @@ describe('bookCountToday（读书番茄数，ticket 51）', () => {
       { ts: new Date(2026, 7, 10, 9, 0, 0).getTime(), duration: 1500, target: { type: 'memo', id: 'm1', label: '写报告' } },
       { ts: new Date(2026, 7, 10, 10, 0, 0).getTime(), duration: 1500 },
     ];
-    expect(bookCountToday(h, NOW)).toBe(0);
+    expect(readingSecondsToday(h, NOW)).toBe(0);
   });
 
   it('跨日不计（只有今天）', () => {
-    const h = [bookEntry(9), bookEntry(10)];
-    expect(bookCountToday(h, NOW)).toBe(1);
+    const h = [bookEntry(9), bookEntry(10, 9, 2700)];
+    expect(readingSecondsToday(h, NOW)).toBe(2700);
   });
 
   it('空历史 → 0', () => {
-    expect(bookCountToday([], NOW)).toBe(0);
+    expect(readingSecondsToday([], NOW)).toBe(0);
   });
 });
 

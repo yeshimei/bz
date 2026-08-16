@@ -251,7 +251,7 @@ describe('PomodoroDataManager', () => {
       version: 1 as const,
       state: { phase: 'long-break' as const, endTime: null, remaining: 900, paused: false, cycleFocusCount: 0, target: null },
       history: [{ ts: 1, duration: 1500 }, { ts: 2, duration: 1500 }],
-      reading: { active: false, book: null, elapsedMs: 0, startedAt: null, prevState: null },
+      reading: { active: false, book: null, state: { phase: 'idle' as const, endTime: null, remaining: 0, paused: false, cycleFocusCount: 0, target: null }, prevState: null },
     };
     await dm.save(data);
     const loaded = await dm.load();
@@ -272,10 +272,10 @@ describe('PomodoroDataManager', () => {
     setApp(app);
     const dm = new PomodoroDataManager(app);
     const data = await dm.load();
-    expect(data.reading).toEqual({ active: false, book: null, elapsedMs: 0, startedAt: null, prevState: null });
+    expect(data.reading).toEqual({ active: false, book: null, state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0, target: null }, prevState: null });
   });
 
-  it('load：非法 reading 字段 → 归一为空会话（elapsedMs 负 / book 非法）', async () => {
+  it('load：非法 reading 字段 → 归一为空会话（book 非法 / state 缺合法 phase）', async () => {
     const vault = new MockVault();
     vault.files.set(
       POMODORO_FILE_PATH,
@@ -283,13 +283,13 @@ describe('PomodoroDataManager', () => {
         version: 1,
         state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 },
         history: [],
-        reading: { active: true, book: { path: 3 }, elapsedMs: -5, startedAt: 'x' },
+        reading: { active: true, book: { path: 3 }, state: { phase: 'focus', endTime: 1, remaining: 0, paused: false, cycleFocusCount: 0 } },
       })
     );
     const app = makeApp(vault);
     setApp(app);
     const dm = new PomodoroDataManager(app);
     const data = await dm.load();
-    expect(data.reading).toEqual({ active: false, book: null, elapsedMs: 0, startedAt: null, prevState: null });
+    expect(data.reading).toEqual({ active: false, book: null, state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0, target: null }, prevState: null });
   });
 });

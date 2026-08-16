@@ -17,7 +17,7 @@ import { PomodoroDataManager } from './data';
 import { playSound } from './sound';
 import type { SoundKind } from './sound';
 import { syncPomodoroStatusBar } from './statusbar';
-import { todayCount, last7Days, bookCountToday } from './stats';
+import { todayCount, last7Days, readingSecondsToday } from './stats';
 import { PRESETS, CUSTOM_PRESET_ID } from './config';
 import type { PomodoroState, HistoryEntry, Durations, PomodoroOptions, Phase, PomodoroAction, PomodoroEvent, FocusTarget } from './state';
 import { transition, recover, createInitialState, DEFAULT_DURATIONS, phaseDurationSec } from './state';
@@ -28,7 +28,11 @@ import {
   startReadingSession as newReadingSession,
   switchReadingBook as switchReadingSessionPure,
   endReadingSession as endReadingSessionPure,
-  readingElapsedMs,
+  tickReadingSession,
+  recoverReadingSession,
+  readingState as readingSessionState,
+  readingDurations,
+  readingOptions,
   isReadingActive,
 } from './reading';
 import { escapeHtml, pad2 } from '../core/utils';
@@ -36,7 +40,7 @@ import { escapeHtml, pad2 } from '../core/utils';
 let dataManager: PomodoroDataManager | null = null;
 let state: PomodoroState = createInitialState();
 let history: HistoryEntry[] = [];
-let reading: ReadingSession = { active: false, book: null, elapsedMs: 0, startedAt: null, prevState: null };
+let reading: ReadingSession = { active: false, book: null, state: createInitialState(), prevState: null };
 let loaded = false;
 let maskEl: HTMLElement | null = null;
 let escHandle: { unregister: () => void } | null = null;
@@ -77,6 +81,36 @@ function options(): PomodoroOptions {
     autoCycle: !!s.pomodoroAutoCycle,
     autoSkipBreak: !!s.pomodoroAutoSkipBreak,
   };
+}
+
+// ===== 读书番茄钟辅助（独立于主番茄钟，配「阅读沉浸 45/10/20」）=====
+
+/** 读书长休息间隔（沿用全局设置 N，默认 4） */
+function readingInterval(): number {
+  const n = parseInt(tryGetSettings().pomodoroLongBreakInterval ?? '', 10);
+  return Number.isFinite(n) && n > 0 ? n : 4;
+}
+
+/** 读书番茄钟剩余秒（运行中按 endTime 实时；暂停取 remaining） */
+function readingRemainingSec(rs: PomodoroState): number {
+  if (rs.endTime !== null) return Math.max(0, Math.ceil((rs.endTime - Date.now()) / 1000));
+  return rs.remaining;
+}
+
+/** 读书阶段短标签（状态栏前缀） */
+function readingPhaseLabel(phase: Phase): string {
+  if (phase === 'focus') return '专注';
+  if (phase === 'short-break') return '短休';
+  if (phase === 'long-break') return '长休';
+  return '读书';
+}
+
+/** 读书阶段文案（弹窗标题，含阶段+循环） */
+function readingPhaseText(rs: PomodoroState, d: Durations): string {
+  if (rs.phase === 'focus') return `读书专注 ${rs.cycleFocusCount + 1}/${d.longBreakInterval}`;
+  if (rs.phase === 'short-break') return '读书短休';
+  if (rs.phase === 'long-break') return '读书长休';
+  return '读书番茄钟';
 }
 
 function phaseText(phase: Phase, count: number, d: Durations): string {
@@ -129,6 +163,15 @@ function notifyPhaseComplete(e: Extract<PomodoroEvent, { type: 'phase-completed'
   }
 }
 
+/** 读书番茄钟专注完成通知（独立读书番茄钟，配读书预设） */
+function notifyReadingPhaseComplete(entries: HistoryEntry[], rd: Durations): void {
+  const last = entries[entries.length - 1];
+  if (!last || last.target?.type !== 'book') return;
+  const s = tryGetSettings();
+  if (s.pomodoroSound !== false) playSound('focus-start', pomodoroVolume());
+  notice(`读书专注完成：${fmtDuration(last.duration)}，主番茄钟已挂起`, 'success');
+}
+
 /** 提示音音量（0-100，默认最大；旧设置无字段 → 100） */
 function pomodoroVolume(): number {
   const v = tryGetSettings().pomodoroVolume;
@@ -148,6 +191,15 @@ function fmt(sec: number): string {
   return `${pad2(m)}:${pad2(s)}`;
 }
 
+/** 时长描述（读书记录显示）：X 小时 Y 分 / Y 分 */
+function fmtDuration(totalSec: number): string {
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  if (h > 0 && m > 0) return `${h} 小时 ${m} 分`;
+  if (h > 0) return `${h} 小时`;
+  return `${m} 分`;
+}
+
 /** 历史统计区：今日计数 + 近 7 天柱条（ticket 30）；同日同计数跳过重建（防 tick 每秒 DOM churn） */
 let lastStatsKey = '';
 function renderStats(): void {
@@ -156,8 +208,8 @@ function renderStats(): void {
   if (todayEl) todayEl.textContent = `今日 ${todayCount(history, now)} 个 🍅`;
   const bookEl = document.getElementById('pomodoro-book');
   if (bookEl) {
-    const c = bookCountToday(history, now);
-    bookEl.textContent = c > 0 ? `📚 读书 ${c} 个 🍅` : '';
+    const sec = readingSecondsToday(history, now);
+    bookEl.textContent = sec > 0 ? `📚 读书 ${fmtDuration(sec)}` : '';
   }
   const weekEl = document.getElementById('pomodoro-week');
   if (!weekEl) return;
@@ -189,16 +241,23 @@ function renderStats(): void {
 function render(): void {
   const d = durations();
   const remain = remainingSec();
-  // 读书中：状态栏与弹窗显示独立读书累计时长（主番茄钟挂起）
-  if (reading.active && reading.startedAt !== null) {
-    const readingRemain = fmt(Math.floor(readingElapsedMs(reading, Date.now()) / 1000));
-    syncPomodoroStatusBar(state, remain, reading.active, Math.floor(readingElapsedMs(reading, Date.now()) / 1000));
+  // 读书中：状态栏与弹窗显示独立读书番茄钟（读书专注/短休/长休倒计时，主番茄钟挂起）
+  if (reading.active) {
+    const rs = readingSessionState(reading);
+    const rd = readingDurations(readingInterval());
+    const rRemain = readingRemainingSec(rs);
+    syncPomodoroStatusBar(state, remain, true, rRemain, readingPhaseLabel(rs.phase));
     if (maskEl) {
-      setRingProgress(1); // 读书累计无「剩余」概念，环形显示为满
+      // 读书番茄钟环形进度
+      const total = phaseDurationSec(rs.phase === 'idle' ? 'focus' : rs.phase, rd);
+      setRingProgress(total > 0 ? 1 - rRemain / total : 1);
       const phaseEl = document.getElementById('pomodoro-phase');
-      if (phaseEl) phaseEl.textContent = `📖 读书中${reading.book ? `《${reading.book.title}》` : ''}`;
+      if (phaseEl) {
+        const bookTag = reading.book ? `《${reading.book.title}》` : '';
+        phaseEl.textContent = `📖 ${readingPhaseText(rs, rd)}${bookTag}`;
+      }
       const timeEl = document.getElementById('pomodoro-time');
-      if (timeEl) timeEl.textContent = readingRemain;
+      if (timeEl) timeEl.textContent = fmt(rRemain);
       renderTarget();
       renderStats();
       updateButtons();
@@ -290,7 +349,8 @@ function applyAction(action: PomodoroAction): void {
 
 function onTick(): void {
   applyAction('tick');
-  checkReadingNow(); // 读书联动：同视图换书兜底轮询（复用 tick，不新增独立定时器）
+  tickReading(); // 独立读书番茄钟自身推进（专注完成 → 记读书历史）
+  if (state.endTime !== null || reading.active) checkReadingNow(); // 读书联动：同视图换书兜底轮询（复用 tick）
 }
 
 /** tick 生命周期：主计时或读书会话进行中才轮询；两者都停即停（节省资源） */
@@ -308,14 +368,23 @@ async function save(): Promise<void> {
   if (dataManager) await dataManager.save({ version: 1, state, history, reading });
 }
 
-/** 首次打开：load + 主倒计时超时恢复（静默）+ 读书会话装载 */
+/** 首次打开：load + 主倒计时超时恢复（静默）+ 读书番茄钟装载并超时恢复 */
 async function initData(): Promise<void> {
   const data = await dataManager!.load();
   const r = recover(data.state, data.history, Date.now(), durations(), options());
   state = r.state;
   history = r.history;
-  reading = data.reading ? data.reading : { active: false, book: null, elapsedMs: 0, startedAt: null, prevState: null };
-  if (r.events.length > 0) await dataManager!.save({ version: 1, state, history, reading });
+  reading = data.reading ? data.reading : { active: false, book: null, state: createInitialState(), prevState: null };
+  let readingChanged = false;
+  if (reading.active) {
+    const rec = recoverReadingSession(reading, Date.now(), readingDurations(readingInterval()), options());
+    reading = rec.session;
+    if (rec.history.length > 0) {
+      history = history.concat(rec.history);
+      readingChanged = true;
+    }
+  }
+  if (r.events.length > 0 || readingChanged) await dataManager!.save({ version: 1, state, history, reading });
   loaded = true;
 }
 
@@ -528,69 +597,87 @@ export async function openPomodoro(app: App): Promise<void> {
   }
 }
 
-// ===== 独立读书计时动作（ticket 56，epub-link 经函数体内 import 调用）=====
+// ===== 独立读书番茄钟动作（ticket 56，epub-link 经函数体内 import 调用）=====
 
 /** 退出读书会话：等价 closeReadingSession（任何已保存会话由关书逻辑结算恢复） */
 export function exitReadingMode(): void {
   closeReadingSession();
 }
 
-/**
- * 开始读书会话（打开书，Q9 idle 直连 / Q17 确认后）：快照并挂起主番茄钟，
- * 另起独立读书计时（endTime 基准累计，后台节流/重启不漏时）。主番茄钟暂停在冻结剩余。
- */
-export function startReadingFocus(book: ReadingBook): void {
-  const now = Date.now();
-  // 主番茄钟挂起：冻结剩余（endTime → remaining/paused），快照完整原状（含 endTime 供恢复）
+/** 挂起主番茄钟：冻结剩余（endTime → paused/remaining），返回完整快照（供关书恢复） */
+function suspendMainState(now: number): PomodoroState {
   const frozenRemaining = state.endTime !== null ? Math.max(0, Math.ceil((state.endTime - now) / 1000)) : state.remaining;
   const snapshot = state;
   state = { ...state, endTime: null, paused: true, remaining: frozenRemaining };
-  reading = newReadingSession(snapshot, book, now);
-  notice(`读书计时开始：${book.title}`, 'success');
+  return snapshot;
+}
+
+/** 读书历史批量并入（reading.ts 已产出 target.type=book 条目） */
+function pushReadingHistory(entries: HistoryEntry[]): void {
+  for (const e of entries) history = history.concat(e);
+}
+
+/** 结算 / 入账 + 落盘 + tick + 渲染（公共收尾） */
+function settleAndRender(): void {
   void save();
   ensureTick();
   render();
 }
 
-/** 换书直接切（Q6）：结算当前书累计（>0 入读书历史），另起新书独立计时；主番茄钟保持挂起 */
+/**
+ * 开始读书番茄钟（打开书，Q9 idle 直连 / Q17 确认后）：快照并挂起主番茄钟，
+ * 另起配「阅读沉浸 45/10/20」的独立读书番茄钟（专注/短休/长休自走）。主番茄钟暂停在冻结剩余。
+ */
+export function startReadingFocus(book: ReadingBook): void {
+  const now = Date.now();
+  const rd = readingDurations(readingInterval());
+  const snapshot = suspendMainState(now);
+  reading = newReadingSession(snapshot, book, now, rd);
+  notice(`读书番茄钟开始：《${book.title}》，专注 45 分钟`, 'success');
+  settleAndRender();
+}
+
+/** 换书直接切（Q6）：结算旧书当前段按实读时长入账，新书从新读书专注段开始；主番茄钟保持挂起 */
 export function switchReadingFocus(book: ReadingBook): void {
   if (!reading.active) {
     startReadingFocus(book);
     return;
   }
   const now = Date.now();
-  const oldBook = reading.book;
-  const { session, settledMs } = switchReadingSessionPure(reading, book, now);
-  if (settledMs > 0 && oldBook) settleReadingHistory(oldBook, settledMs, now);
+  const rd = readingDurations(readingInterval());
+  const { session, settled } = switchReadingSessionPure(reading, book, now, rd, options());
+  pushReadingHistory(settled);
   reading = session;
-  void save();
-  ensureTick();
-  render();
+  settleAndRender();
 }
 
-/** 结算读书历史（按结束时刻入账 target.type=book 条目，单独计入读书番茄数） */
-function settleReadingHistory(book: ReadingBook | null, ms: number, ts: number): void {
-  if (!book || ms <= 0) return;
-  const sec = Math.round(ms / 1000);
-  history = history.concat({ ts, duration: sec, target: { type: 'book', path: book.path, label: book.title } });
-}
-
-/** 关闭书：结算读书累计 → 单独入账读书历史 → 恢复挂起的主番茄钟快照（Q21） */
+/** 关闭书：结算当前读书段按实读时长入账 → 恢复挂起的主番茄钟快照（Q21） */
 export function closeReadingSession(): void {
   if (!reading.active) return;
   const now = Date.now();
-  const oldBook = reading.book;
-  const { session, settledMs, prevState } = endReadingSessionPure(reading, now);
-  settleReadingHistory(oldBook, settledMs, now);
+  const rd = readingDurations(readingInterval());
+  const { session, settled, prevState } = endReadingSessionPure(reading, now, rd);
+  pushReadingHistory(settled);
   reading = session;
   if (prevState) state = prevState; // 恢复进入读书前的主番茄钟状态（原 endTime → 原样继续）
   notice(
-    settledMs > 0 ? `读书结束：${fmt(Math.floor(settledMs / 1000))}，主番茄钟已恢复` : '读书结束，主番茄钟已恢复',
+    settled.length > 0 ? `读书结束：${fmtDuration(settled[0].duration)}，主番茄钟已恢复` : '读书结束，主番茄钟已恢复',
     'success'
   );
-  void save();
-  ensureTick();
-  render();
+  settleAndRender();
+}
+
+/** 读书番茄钟 tick（onTick 内调用）：推进独立读书番茄钟，专注完成 → 记读书历史 */
+function tickReading(): void {
+  if (!reading.active) return;
+  const rd = readingDurations(readingInterval());
+  const { session, history: entries } = tickReadingSession(reading, Date.now(), rd, options());
+  if (entries.length > 0) {
+    pushReadingHistory(entries);
+    // 读书专注完成通知（主番茄钟通知接口复用：title 前缀区分）
+    notifyReadingPhaseComplete(entries, rd);
+  }
+  reading = session;
 }
 
 // ===== 读书确认弹窗（ticket 54，Q5/Q10）：休息中跳过 / 他处专注中进入 =====
@@ -832,7 +919,7 @@ export function unloadPomodoro(): void {
   closePomodoro();
   state = createInitialState();
   history = [];
-  reading = { active: false, book: null, elapsedMs: 0, startedAt: null, prevState: null };
+  reading = { active: false, book: null, state: createInitialState(), prevState: null };
   lastStatsKey = '';
   dataManager = null;
   appRef = null;

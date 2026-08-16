@@ -12,7 +12,9 @@ export {
   startReadingSession,
   switchReadingBook,
   endReadingSession,
-  readingElapsedMs,
+  tickReadingSession,
+  recoverReadingSession,
+  settleReadingSegment,
   isReadingActive,
   normalizeReadingSession,
 } from './reading';

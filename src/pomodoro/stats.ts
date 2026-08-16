@@ -24,10 +24,12 @@ export function todayCount(history: HistoryEntry[], now: number): number {
   return history.filter((h) => dayKey(h.ts) === today).length;
 }
 
-/** 今日读书番茄数（任务关联：target.type=book 的完成专注数，ticket 51）——取代按分钟聚合的阅读时长 */
-export function bookCountToday(history: HistoryEntry[], now: number): number {
+/** 今日读书时长（秒）：target.type=book 历史条目的实读秒数之和（ticket 56——统计改为时长，不再按完成番茄个数） */
+export function readingSecondsToday(history: HistoryEntry[], now: number): number {
   const today = dayKey(now);
-  return history.filter((h) => dayKey(h.ts) === today && h.target?.type === 'book').length;
+  return history
+    .filter((h) => dayKey(h.ts) === today && h.target?.type === 'book')
+    .reduce((sum, h) => sum + (typeof h.duration === 'number' ? h.duration : 0), 0);
 }
 
 /** 近 7 天滚动窗口（含今天，最左 6 天前；窗口外不计） */
