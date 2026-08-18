@@ -2,13 +2,12 @@
  * 番茄钟数据层（ticket 27）：pomodoro.json v1 读写。
  * 文件不存在/解析失败 → 默认数据（懒创建：save 时建目录建文件，jsonStore 语义）；
  * 路径跟随共享数据路径 storagePath（ADR-0009）。
+ * ticket 63：移除 reading 字段与 target 归一（旧数据残留字段读取时自然忽略，不迁移）。
  */
 import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
-import type { PomodoroState, HistoryEntry, FocusTarget } from './state';
+import type { PomodoroState, HistoryEntry } from './state';
 import { createInitialState, PHASES } from './state';
-import type { ReadingSession } from './reading';
-import { emptyReadingSession, normalizeReadingSession } from './reading';
 
 export const POMODORO_FILE_PATH = 'CONFIG/STORAGE/pomodoro.json';
 
@@ -23,29 +22,26 @@ export interface PomodoroData {
   version: 1;
   state: PomodoroState;
   history: HistoryEntry[];
-  /** 独立读书会话（ticket 56；可选，旧数据无此字段 → 空会话兼容） */
-  reading?: ReadingSession;
 }
 
 export function defaultPomodoroData(): PomodoroData {
-  return { version: 1, state: createInitialState(), history: [], reading: emptyReadingSession() };
+  return { version: 1, state: createInitialState(), history: [] };
 }
 
-/** 容错归一：非法字段回退默认、history 过滤非法条目、reading 归一 */
+/** 容错归一：非法字段回退默认、history 过滤非法条目 */
 function normalizeData(raw: any): PomodoroData {
   const def = defaultPomodoroData();
   if (!raw || typeof raw !== 'object') return def;
   const state = normalizeState(raw.state);
   const history = Array.isArray(raw.history)
-    ? raw.history.filter(
-        (h: any) =>
-          h && typeof h.ts === 'number' && typeof h.duration === 'number' && (!h.target || isValidTarget(h.target))
-      )
+    ? raw.history
+        .filter((h: any) => h && typeof h.ts === 'number' && typeof h.duration === 'number')
+        .map((h: any) => ({ ts: h.ts, duration: h.duration })) // 显式重建：剥离 target 等残留字段（ticket 63）
     : [];
-  return { version: 1, state, history, reading: normalizeReadingSession(raw.reading) };
+  return { version: 1, state, history };
 }
 
-/** 逐字段校验 state（非法 phase/负数 remaining/非法 target 一律回退默认） */
+/** 逐字段校验 state（非法 phase/负数 remaining 一律回退默认；旧 target/reading 字段忽略不迁移） */
 function normalizeState(raw: any): PomodoroState {
   const def = createInitialState();
   if (!raw || typeof raw !== 'object') return def;
@@ -56,18 +52,7 @@ function normalizeState(raw: any): PomodoroState {
     paused: typeof raw.paused === 'boolean' ? raw.paused : def.paused,
     cycleFocusCount:
       typeof raw.cycleFocusCount === 'number' && raw.cycleFocusCount >= 0 ? raw.cycleFocusCount : def.cycleFocusCount,
-    target: isValidTarget(raw.target) ? raw.target : def.target,
   };
-}
-
-/** FocusTarget 合法性：type 白名单 + label 为字符串（memo 需 id，note/book 需 path） */
-function isValidTarget(t: any): t is FocusTarget {
-  if (!t || typeof t !== 'object') return false;
-  if (t.type !== 'memo' && t.type !== 'note' && t.type !== 'book') return false;
-  if (typeof t.label !== 'string' || !t.label) return false;
-  if (t.type === 'memo' && typeof t.id !== 'string') return false;
-  if ((t.type === 'note' || t.type === 'book') && typeof t.path !== 'string') return false;
-  return true;
 }
 
 export class PomodoroDataManager {

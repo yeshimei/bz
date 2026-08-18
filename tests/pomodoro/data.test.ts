@@ -118,7 +118,7 @@ describe('PomodoroDataManager', () => {
     const app = makeApp(vault);
     setApp(app);
     const dm = new PomodoroDataManager(app);
-    await dm.save({ version: 1, state: { phase: 'focus', endTime: 42, remaining: 0, paused: false, cycleFocusCount: 1, target: null }, history: [] });
+    await dm.save({ version: 1, state: { phase: 'focus', endTime: 42, remaining: 0, paused: false, cycleFocusCount: 1 }, history: [] });
     const raw = JSON.parse(vault.files.get(POMODORO_FILE_PATH)!);
     expect(raw.state.phase).toBe('focus');
     expect(raw.state.endTime).toBe(42);
@@ -189,7 +189,7 @@ describe('PomodoroDataManager', () => {
     expect(reloaded.history).toEqual(r.history);
   });
 
-  it('load：state 带合法 target 保留（重启目标不丢）；非法 target 回退 null', async () => {
+  it('load：旧数据 state 残留 target 字段 → 忽略不迁移（ticket 63）', async () => {
     const vault = new MockVault();
     vault.files.set(
       POMODORO_FILE_PATH,
@@ -203,32 +203,19 @@ describe('PomodoroDataManager', () => {
     setApp(app);
     const dm = new PomodoroDataManager(app);
     const data = await dm.load();
-    expect(data.state.target).toEqual({ type: 'book', path: '书库/活着.md', label: '读《活着》' });
-
-    // 非法 target
-    vault.files.set(
-      POMODORO_FILE_PATH,
-      JSON.stringify({
-        version: 1,
-        state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0, target: { type: 'evil', label: 1 } },
-        history: [],
-      })
-    );
-    const data2 = await dm.load();
-    expect(data2.state.target).toBeNull();
+    expect((data.state as any).target).toBeUndefined(); // target 字段不再写入新状态
   });
 
-  it('load：history 条目 target 保留；非法 target 条目被过滤', async () => {
+  it('load：history 带 target 条目保留（target 字段忽略）', async () => {
     const vault = new MockVault();
     vault.files.set(
       POMODORO_FILE_PATH,
       JSON.stringify({
         version: 1,
-        state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0, target: null },
+        state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 },
         history: [
           { ts: 1, duration: 1500, target: { type: 'memo', id: 'm1', label: '写报告' } },
-          { ts: 2, duration: 1500, target: { type: 'bad' } }, // 非法 target → 整条过滤
-          { ts: 3, duration: 1500 },
+          { ts: 2, duration: 1500 },
         ],
       })
     );
@@ -236,28 +223,27 @@ describe('PomodoroDataManager', () => {
     setApp(app);
     const dm = new PomodoroDataManager(app);
     const data = await dm.load();
-    expect(data.history).toHaveLength(2);
-    expect(data.history[0].target).toEqual({ type: 'memo', id: 'm1', label: '写报告' });
-    expect(data.history[1].target).toBeUndefined();
+    expect(data.history).toHaveLength(2); // 合法条目保留
+    expect((data.history[0] as any).target).toBeUndefined(); // target 字段忽略
+    expect(data.history[1].duration).toBe(1500);
   });
 
-  it('往返：save → load 数据一致', async () => {
+  it('往返：save → load 数据一致（无 target/reading 字段）', async () => {
     const vault = new MockVault();
     const app = makeApp(vault);
     setApp(app);
     const dm = new PomodoroDataManager(app);
     const data = {
       version: 1 as const,
-      state: { phase: 'long-break' as const, endTime: null, remaining: 900, paused: false, cycleFocusCount: 0, target: null },
+      state: { phase: 'long-break' as const, endTime: null, remaining: 900, paused: false, cycleFocusCount: 0 },
       history: [{ ts: 1, duration: 1500 }, { ts: 2, duration: 1500 }],
-      reading: { active: false, book: null, state: { phase: 'idle' as const, endTime: null, remaining: 0, paused: false, cycleFocusCount: 0, target: null }, prevState: null },
     };
     await dm.save(data);
     const loaded = await dm.load();
     expect(loaded).toEqual(data);
   });
 
-  it('load：旧数据无 reading 字段 → 空会话（兼容不破坏）', async () => {
+  it('load：旧数据 reading 字段（ticket 51-56 遗留）→ 忽略不迁移（ticket 63）', async () => {
     const vault = new MockVault();
     vault.files.set(
       POMODORO_FILE_PATH,
@@ -265,30 +251,13 @@ describe('PomodoroDataManager', () => {
         version: 1,
         state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 },
         history: [],
+        reading: { active: true, book: { path: '书架/活着.epub', title: '活着' }, state: { phase: 'focus', endTime: 1, remaining: 0, paused: false, cycleFocusCount: 0 } },
       })
     );
     const app = makeApp(vault);
     setApp(app);
     const dm = new PomodoroDataManager(app);
     const data = await dm.load();
-    expect(data.reading).toEqual({ active: false, book: null, state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0, target: null }, prevState: null });
-  });
-
-  it('load：非法 reading 字段 → 归一为空会话（book 非法 / state 缺合法 phase）', async () => {
-    const vault = new MockVault();
-    vault.files.set(
-      POMODORO_FILE_PATH,
-      JSON.stringify({
-        version: 1,
-        state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 },
-        history: [],
-        reading: { active: true, book: { path: 3 }, state: { phase: 'focus', endTime: 1, remaining: 0, paused: false, cycleFocusCount: 0 } },
-      })
-    );
-    const app = makeApp(vault);
-    setApp(app);
-    const dm = new PomodoroDataManager(app);
-    const data = await dm.load();
-    expect(data.reading).toEqual({ active: false, book: null, state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0, target: null }, prevState: null });
+    expect((data as any).reading).toBeUndefined(); // reading 字段不再进入新数据
   });
 });

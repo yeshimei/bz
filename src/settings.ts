@@ -237,11 +237,7 @@ export default interface BzSettings {
   pomodoroVolume: number;
   /** 打开时恢复方式：background（后台继续倒计时）/ popup（正在倒计时则自动弹窗） */
   pomodoroRestoreMode: string;
-  /** 读书自动番茄钟：打开 epub 书自动进入读书专注（默认开，ticket 51） */
-  pomodoroEpubAuto: boolean;
-  /** 读书启动形态：background（后台静默）/ popup（自动弹窗），默认后台（ticket 51） */
-  pomodoroEpubMode: string;
-  /** 后台自动暂停：窗口 hidden（最小化/遮挡/休眠）时主番茄钟与读书会话暂停，恢复可见自动继续（默认开，ticket 62；blur 不触发） */
+  /** 后台自动暂停：窗口 hidden（最小化/遮挡/休眠）时主番茄钟暂停，恢复可见自动继续（默认开，ticket 62；blur 不触发） */
   pomodoroAutoPauseOnHide: boolean;
 }
 
@@ -377,7 +373,5 @@ export const DEFAULT_SETTINGS: BzSettings = {
   pomodoroSound: true,
   pomodoroVolume: 100,
   pomodoroRestoreMode: 'background',
-  pomodoroEpubAuto: true,
-  pomodoroEpubMode: 'background',
   pomodoroAutoPauseOnHide: true,
 };
