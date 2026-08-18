@@ -36,7 +36,7 @@ function itemByName(name: string): any {
 }
 
 describe('settings 结构', () => {
-  it('DEFAULT_SETTINGS 含番茄钟 12 项（ticket 31 默认值包 + 音量 + 读书联动两项）', () => {
+  it('DEFAULT_SETTINGS 含番茄钟 10 项（ticket 31 默认值包 + 音量 + 后台自动暂停）', () => {
     const s = DEFAULT_SETTINGS as any;
     expect(s.pomodoroPreset).toBe('classic');
     expect(s.pomodoroWorkMin).toBe('25');
@@ -48,16 +48,17 @@ describe('settings 结构', () => {
     expect(s.pomodoroAutoSkipBreak).toBe(false);
     expect(s.pomodoroSound).toBe(true);
     expect(s.pomodoroVolume).toBe(100); // 默认音量最大
-    expect(s.pomodoroEpubAuto).toBe(true);
-    expect(s.pomodoroEpubMode).toBe('background');
+    expect(s.pomodoroAutoPauseOnHide).toBe(true); // ticket 62
+    expect(s.pomodoroEpubAuto).toBeUndefined(); // ticket 63 移除
+    expect(s.pomodoroEpubMode).toBeUndefined();
   });
 
-  it('PRESETS 12 预设（11 科学预设 + 阅读沉浸）+ custom 标识', () => {
-    expect(Object.keys(PRESETS)).toHaveLength(12);
+  it('PRESETS 11 预设（11 科学预设）+ custom 标识（阅读沉浸已移除，ticket 63）', () => {
+    expect(Object.keys(PRESETS)).toHaveLength(11);
     expect(PRESETS.classic).toEqual({ label: '经典标准', workMin: 25, shortBreakMin: 5, longBreakMin: 15 });
     expect(PRESETS.marathon).toEqual({ label: '马拉松式', workMin: 45, shortBreakMin: 15, longBreakMin: 30 });
     expect(PRESETS.intense).toEqual({ label: '高强度', workMin: 50, shortBreakMin: 5, longBreakMin: 15 });
-    expect(PRESETS.reading).toEqual({ label: '阅读沉浸', workMin: 45, shortBreakMin: 10, longBreakMin: 20 });
+    expect((PRESETS as any).reading).toBeUndefined();
     expect(CUSTOM_PRESET_ID).toBe('custom');
   });
 });
@@ -78,31 +79,32 @@ describe('⚙️ 设置弹窗', () => {
     vi.useRealTimers();
   });
 
-  it('打开设置弹窗：14 个设置项（11 项 + 音量等）', async () => {
+  it('打开设置弹窗：12 个设置项（9 常用 + 音量等）', async () => {
     const settings = { ...DEFAULT_SETTINGS } as any;
     const { app } = setup(settings);
     await openPomodoro(app);
     el('pomodoro-btn-settings').click();
     expect(el('bz-settings-modal-popup')).not.toBeNull();
-    expect(document.querySelectorAll('#bz-settings-modal-popup .setting-item').length).toBe(14);
+    expect(document.querySelectorAll('#bz-settings-modal-popup .setting-item').length).toBe(12);
     expect(itemByName('预设方案')).not.toBeUndefined();
     expect(itemByName('长休息间隔')).not.toBeUndefined();
     expect(itemByName('声音提醒')).not.toBeUndefined();
     expect(itemByName('音量')).not.toBeUndefined();
     expect(itemByName('打开时恢复方式')).not.toBeUndefined();
     expect(itemByName('后台自动暂停')).not.toBeUndefined();
+    expect(itemByName('读书自动番茄钟')).toBeUndefined(); // ticket 63 移除
   });
 
-  it('预设下拉 13 档（12 预设 + 自定义）', async () => {
+  it('预设下拉 12 档（11 预设 + 自定义，阅读沉浸已移除）', async () => {
     const settings = { ...DEFAULT_SETTINGS } as any;
     const { app } = setup(settings);
     await openPomodoro(app);
     el('pomodoro-btn-settings').click();
     const dd = itemByName('预设方案').__setting.controls[0];
-    expect(Object.keys(dd.options)).toHaveLength(13);
+    expect(Object.keys(dd.options)).toHaveLength(12);
     expect(dd.value).toBe('classic');
     expect(dd.options.flow).toContain('深度心流');
-    expect(dd.options.reading).toContain('阅读沉浸');
+    expect((dd.options as any).reading).toBeUndefined(); // 阅读沉浸预设已移除
   });
 
   it('自定义时长动态显隐：classic 隐藏 / 切 custom 显示', async () => {
@@ -186,33 +188,6 @@ describe('⚙️ 设置弹窗', () => {
     expect(Object.keys(dd.options)).toEqual(['background', 'popup']);
     dd.trigger('popup');
     expect(settings.pomodoroRestoreMode).toBe('popup');
-    expect(saves.length).toBe(1);
-  });
-
-  it('读书自动番茄钟开关：默认开（旧数据无字段也开）+ 关闭即保存', async () => {
-    const settings = {} as any; // 旧设置无字段 → 默认开
-    const { app, saves } = setup(settings);
-    await openPomodoro(app);
-    el('pomodoro-btn-settings').click();
-    const row = itemByName('读书自动番茄钟');
-    expect(row).not.toBeUndefined();
-    const toggle = row.__setting.controls[0];
-    expect(toggle.value).toBe(true); // 默认开
-    toggle.trigger(false);
-    expect(settings.pomodoroEpubAuto).toBe(false);
-    expect(saves.length).toBe(1);
-  });
-
-  it('读书启动形态下拉：background 默认 + popup 选项 + 保存', async () => {
-    const settings = {} as any; // 旧设置无字段 → 默认后台
-    const { app, saves } = setup(settings);
-    await openPomodoro(app);
-    el('pomodoro-btn-settings').click();
-    const dd = itemByName('读书启动形态').__setting.controls[0];
-    expect(dd.value).toBe('background');
-    expect(Object.keys(dd.options)).toEqual(['background', 'popup']);
-    dd.trigger('popup');
-    expect(settings.pomodoroEpubMode).toBe('popup');
     expect(saves.length).toBe(1);
   });
 });

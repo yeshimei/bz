@@ -20,8 +20,6 @@ export interface PomodoroState {
   paused: boolean;
   /** 当前循环内已完成专注数（进长休后清零） */
   cycleFocusCount: number;
-  /** 当前专注目标（循环保留，完成时写入 history；可手动清除/更换） */
-  target: FocusTarget | null;
 }
 
 export interface Durations {
@@ -43,19 +41,6 @@ export interface HistoryEntry {
   ts: number;
   /** 实际专注时长（秒） */
   duration: number;
-  /** 该专注关联的目标（任务关联；旧数据无此字段） */
-  target?: FocusTarget;
-}
-
-/** 专注目标（任务关联，第一期）：备忘录条目 / 任意笔记 / 书库书籍 */
-export interface FocusTarget {
-  type: 'memo' | 'note' | 'book';
-  /** memo 条目 id */
-  id?: string;
-  /** note/book 文件路径 */
-  path?: string;
-  /** 显示名快照（条目改名后历史仍可读） */
-  label: string;
 }
 
 export type PomodoroEvent =
@@ -82,7 +67,7 @@ export const DEFAULT_DURATIONS: Durations = { workMin: 25, shortBreakMin: 5, lon
 export const DEFAULT_OPTIONS: PomodoroOptions = { forceFocus: false, autoCycle: false, autoSkipBreak: false };
 
 export function createInitialState(): PomodoroState {
-  return { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0, target: null };
+  return { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 };
 }
 
 /** 合法阶段白名单（数据层校验用） */
@@ -133,7 +118,7 @@ function completePhase(state: PomodoroState, now: number, d: Durations, o: Pomod
     longBreak = count >= d.longBreakInterval;
     if (longBreak) count = 0;
     // duration = 活跃专注时长：暂停期间时间不流逝（endTime 顺延），故恒等于名义工作时长
-    historyEntry = { ts: now, duration: d.workMin * 60, ...(state.target ? { target: state.target } : {}) };
+    historyEntry = { ts: now, duration: d.workMin * 60 };
   }
   // 下一阶段
   let next: Phase;
@@ -221,12 +206,12 @@ export function transition(state: PomodoroState, action: PomodoroAction, now: nu
 
 /** 空闲 phase（recover 超时回退用） */
 function idleState(): PomodoroState {
-  return { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0, target: null };
+  return { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 };
 }
 
 /**
  * 超时恢复（ticket 62 修订：不补算）：Obsidian 关闭/重启期间的时间一律不折算成历史。
- * - 运行中（endTime 非空）且已超时 → 会话结束回空闲（剩余作废、不记历史、清 target）。
+ * - 运行中（endTime 非空）且已超时 → 会话结束回空闲（剩余作废、不记历史）。
  * - 暂停态 / 空闲态不流转（时间已冻结，无超时概念）。
  * 取代旧「逐段补算」语义：不再把离开时长拆成完整番茄钟编造进历史。
  */

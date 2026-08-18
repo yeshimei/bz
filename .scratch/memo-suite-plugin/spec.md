@@ -188,14 +188,8 @@ Feature: memo-suite-plugin
 8. 作为用户，我希望完成历史只记自然完成的专注（跳过不计），弹窗内展示今日计数 + 近 7 天柱条，以便统计真实专注量。
 9. 作为用户，我希望设置经 ⚙️ 域设置弹窗调整（预设/时长/N/开关），以便就近定制。
 10. 作为用户，我希望设置弹窗可试听提示音并调节音量（slider 0-100，默认最大），以便按环境调响度。
-11. 作为用户，我希望未选中专注目标时目标区默认隐藏，鼠标悬停弹窗才显示「选择目标」，已选目标始终可见，以便界面简洁。
-12. 作为用户，我希望打开 epub 书阅读时**独立进行一个番茄钟**（与主番茄钟状态机解耦、快照并挂起主番茄钟），并自动选用「阅读沉浸」预设（45/10/20）：专注 45 分钟走满记一个读书番茄 → 读书短休 10 分钟 → 每 4 个专注进读书长休 20 分钟 → 书仍开则自动下一段（自走节律）；endTime 基准，**后台自动暂停**（ticket 62：窗口 hidden 时与主番茄钟同时冻结，恢复 visible 自动继续，重开不补算）。
-13. 作为用户，我希望关闭 epub 书（或换书）时结算当前读书段**按实读时长**单独以 target.type=book 条目入读书历史（读书休息段不计），并**恢复进入读书前的主番茄钟状态**（跑中的专注/休息原 endTime 继续、时间不流逝），以便不打断原有番茄钟节奏。
-14. 作为用户，我希望打开书时按场景决策：主番茄钟空闲/暂停/未运行 → 直接开始读书番茄钟（免确认）；休息中/他处专注运行中 → 弹确认（选否保持原样、本次打开不再提示）；读书番茄钟中换书直接切新书（旧书实读入账），以免误伤其他专注。
-15. 作为用户，我希望读书统计显示**读书时长**「📚 读书 X 小时 Y 分」（今日 target.type=book 历史条目实读秒数之和），且**今日番茄计数**只计完整走满的读书专注（duration ≥ 45min），中途关书/换书按实读结算的部分时长只进时长、不计个数（ticket 62 统计口径），以便准确反映专注量。
-16. 作为用户，我希望「读书自动番茄钟」开关（默认开）+「读书启动形态」（后台静默默认 / 自动弹窗）两项可设置，以便按需开关联动。
-17. 作为用户，我希望点「重置」按钮在重置当前阶段回满时长并停止的同时，也清空当前关联目标（🎯 回「选择目标」），以便一次性归零重来。
-18. 作为用户，我希望「后台自动暂停」开关（默认开，ticket 62）：Obsidian 窗口最小化/失去可见性（`visibilitychange` hidden）时主番茄钟与读书会话同时暂停，恢复可见且原本运行中 → 自动继续；手动暂停永不被自动覆盖，以便离开时不虚耗计时。（已知限制：锁屏/全屏切走不触发 hidden → 该场景不暂停。）
+11. 作为用户，我希望点「重置」按钮重置当前阶段回满时长并停止，以便一次性归零重来。
+12. 作为用户，我希望「后台自动暂停」开关（默认开，ticket 62）：Obsidian 窗口最小化/失去可见性（`visibilitychange` hidden）时主番茄钟暂停，恢复可见且原本运行中 → 自动继续；手动暂停永不被自动覆盖，以便离开时不虚耗计时。（已知限制：锁屏/全屏切走不触发 hidden → 该场景不暂停。）（ticket 63：读书番茄钟与专注目标选择已移除——原 US 11-16 删除。）
 
 ### 全局
 
@@ -318,7 +312,7 @@ Feature: memo-suite-plugin
 - **书库**：libraryFolderPath、libraryNotePath、bookTag、showFileSize、showReadingTime、showHighlights、showThinks、showReview（showCategory 字段保留无 UI）
 - **影视**（6 项）：movieFolderPath、moviePageSize（海报抓取仅文字提示）、movieDefaultSort（默认排序 date-desc/…/name-desc）、movieDefaultTypeFilter（默认类型筛选，空=全部）、movieDefaultStatusFilter（默认状态筛选 全部/想看/在看/已看）、movieRatingDisplay（已看卡片评分 stars/number）
 - **复习计划（含做题家）**：autoCheckInterval、enableAutoNotify + 做题家 5 项（enableMultipleChoice、questionsPerNote、shuffleQuestions、difficulty、forceQuizForReview；做题家 4 项（除 forceQuizForReview）仅在其开启时动态显示）；**forceQuizForReview（做题决定难度）控制复习流程**：开启 → 开始复习（bz-review-start/跳转逾期）自动批量出题做题，正确率自动定级；关闭 → 普通复习（跳转笔记逐篇评级）；开启时做题家未初始化（ai 为 null）先 ensureQuiz 注入，出题失败/无题目 → 降级普通复习并警告
-- **番茄钟（14 项）**：pomodoroPreset（13 档：12 预设+自定义，含阅读沉浸 45/10/20）、pomodoroWorkMin/pomodoroShortBreakMin/pomodoroLongBreakMin（自定义时长，预设=自定义时动态显示）、pomodoroLongBreakInterval（N，默认 4）、pomodoroForceFocus（默认关）、pomodoroAutoCycle（默认关）、pomodoroAutoSkipBreak（默认关）、pomodoroSound（默认开）、pomodoroVolume（音量 0-100，默认 100 最大，设置弹窗 slider+试听）、pomodoroRestoreMode（启动恢复方式：background 后台继续 / popup 正在倒计时则自动弹窗；恢复继续弹「番茄钟继续：…还剩 mm:ss」通知）、pomodoroEpubAuto（读书自动番茄钟开关，默认开；关则联动静默不监听）、pomodoroEpubMode（读书启动形态：background 后台静默默认 / popup 自动弹窗）、pomodoroAutoPauseOnHide（后台自动暂停，默认开，ticket 62：窗口 hidden 时主+读书会话暂停、恢复自动继续；blur 不触发）
+- **番茄钟（12 项）**：pomodoroPreset（12 档：11 预设+自定义）、pomodoroWorkMin/pomodoroShortBreakMin/pomodoroLongBreakMin（自定义时长，预设=自定义时动态显示）、pomodoroLongBreakInterval（N，默认 4）、pomodoroForceFocus（默认关）、pomodoroAutoCycle（默认关）、pomodoroAutoSkipBreak（默认关）、pomodoroSound（默认开）、pomodoroVolume（音量 0-100，默认 100 最大，设置弹窗 slider+试听）、pomodoroRestoreMode（启动恢复方式：background 后台继续 / popup 正在倒计时则自动弹窗；恢复继续弹「番茄钟继续：…还剩 mm:ss」通知）、pomodoroAutoPauseOnHide（后台自动暂停，默认开，ticket 62：窗口 hidden 时主番茄钟暂停、恢复自动继续；blur 不触发）。读书联动与目标选择已移除（ticket 63：pomodoroEpubAuto/pomodoroEpubMode 删除）
 - **闪念（17 项全量，含 AI 项）**：OLLAMA_URL、EMBEDDING_MODEL、META_PATH、VEC_PATH、TOP_K、CHAT_TOP_K、CHUNK_MIN_LENGTH、ALLOW_PATHS、CONCURRENCY、CONTEXT_LIMIT、DEBOUNCE_DELAY、CURSOR_POLL_INTERVAL、OLLAMA_CHAT_MODEL、DEEPSEEK_MODEL、DEFAULT_USE_DEEPSEEK、MAX_HISTORY、OLLAMA_REMOTE_URL
 
 **筛选弹窗（🔀，非设置）**：影视「筛选与排序」（类型筛选+排序）、书库「视图与筛选」（分类筛选+视图）
