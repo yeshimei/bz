@@ -115,19 +115,4 @@ describe('番茄钟状态栏', () => {
     unmountPomodoroStatusBar();
     expect(container.querySelector('.pomodoro-statusbar')).toBeNull();
   });
-
-  it('读书会话进行中：状态栏显示 📖 读书累计时长、非空闲态', () => {
-    const app = makeApp(new MockVault());
-    mountPomodoroStatusBar(container, app);
-    const statusEl = container.querySelector('.pomodoro-statusbar') as HTMLElement;
-    const textSpan = statusEl.querySelector('.pomodoro-statusbar-text') as HTMLElement;
-    // 读书累计 5 分 3 秒
-    syncPomodoroStatusBar(createInitialState(), 0, true, 5 * 60 + 3);
-    expect(textSpan.textContent).toBe('📖 05:03');
-    expect(statusEl.classList.contains('pomodoro-statusbar-idle')).toBe(false);
-    // 读书结束 → 回空闲（主番茄钟空闲）
-    syncPomodoroStatusBar(createInitialState(), 0);
-    expect(textSpan.textContent).toBe('');
-    expect(statusEl.classList.contains('pomodoro-statusbar-idle')).toBe(true);
-  });
 });

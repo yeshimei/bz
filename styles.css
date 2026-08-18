@@ -1563,20 +1563,6 @@
     #pomodoro-btn-settings { position: absolute; top: 16px; right: 16px; padding: 6px; background: none; border-radius: 8px; color: var(--text-muted); transition: opacity 0.2s; }
     #pomodoro-btn-settings:hover { color: var(--text-normal); background: var(--background-modifier-hover); }
     #pomodoro-btn-settings.pomodoro-settings-hidden { opacity: 0; pointer-events: none; }
-    .pomodoro-target { margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border: 1px solid var(--background-modifier-border); border-radius: 12px; font-size: 13px; cursor: pointer; }
-    .pomodoro-target:hover { border-color: var(--interactive-accent); }
-    .pomodoro-target-empty { color: var(--text-faint); }
-    .pomodoro-target-hidden { opacity: 0; pointer-events: none; }
-    .pomodoro-target-clear { color: var(--text-muted); padding: 0 2px; }
-    .pomodoro-target-clear:hover { color: var(--text-error); }
-    .pomodoro-target-tabs { display: flex; gap: 4px; padding: 8px 12px 0; }
-    .pomodoro-target-tab { padding: 4px 10px; border-radius: 8px; background: none; color: var(--text-muted); cursor: pointer; font-size: 13px; }
-    .pomodoro-target-tab-active { background: var(--background-modifier-hover); color: var(--text-normal); }
-    .pomodoro-target-item { padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; }
-    .pomodoro-target-item:hover { background: var(--background-modifier-hover); }
-    .pomodoro-book { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
-    .pomodoro-target-note { padding: 10px; font-size: 13px; display: flex; align-items: center; gap: 10px; }
-    .pomodoro-target-note button { padding: 4px 12px; border-radius: 8px; background: var(--interactive-accent); color: var(--text-on-accent); cursor: pointer; font-size: 13px; }
     .pomodoro-stats { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--background-modifier-border); }
     #pomodoro-today { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
     .pomodoro-week { display: flex; gap: 6px; justify-content: center; align-items: flex-end; }
