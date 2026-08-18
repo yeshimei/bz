@@ -241,6 +241,8 @@ export default interface BzSettings {
   pomodoroEpubAuto: boolean;
   /** 读书启动形态：background（后台静默）/ popup（自动弹窗），默认后台（ticket 51） */
   pomodoroEpubMode: string;
+  /** 后台自动暂停：窗口 hidden（最小化/遮挡/休眠）时主番茄钟与读书会话暂停，恢复可见自动继续（默认开，ticket 62；blur 不触发） */
+  pomodoroAutoPauseOnHide: boolean;
 }
 
 export const DEFAULT_SETTINGS: BzSettings = {
@@ -377,4 +379,5 @@ export const DEFAULT_SETTINGS: BzSettings = {
   pomodoroRestoreMode: 'background',
   pomodoroEpubAuto: true,
   pomodoroEpubMode: 'background',
+  pomodoroAutoPauseOnHide: true,
 };

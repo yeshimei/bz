@@ -101,9 +101,6 @@ function activePhase(phase: Phase): Phase {
   return phase === 'idle' ? 'focus' : phase;
 }
 
-/** 超时重建最大流转步数（防 autoCycle 极端情况死循环） */
-const MAX_RECOVER_STEPS = 100;
-
 /** 阶段满时长（秒）——UI 进度条/默认显示共用 */
 export function phaseDurationSec(phase: Phase, d: Durations): number {
   if (phase === 'short-break') return d.shortBreakMin * 60;
@@ -222,7 +219,17 @@ export function transition(state: PomodoroState, action: PomodoroAction, now: nu
   return { state, event: { type: 'none' } };
 }
 
-/** 超时恢复：循环 tick 直到不再超时（Obsidian 关闭期间时间流逝），返回新状态/历史/事件序列 */
+/** 空闲 phase（recover 超时回退用） */
+function idleState(): PomodoroState {
+  return { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0, target: null };
+}
+
+/**
+ * 超时恢复（ticket 62 修订：不补算）：Obsidian 关闭/重启期间的时间一律不折算成历史。
+ * - 运行中（endTime 非空）且已超时 → 会话结束回空闲（剩余作废、不记历史、清 target）。
+ * - 暂停态 / 空闲态不流转（时间已冻结，无超时概念）。
+ * 取代旧「逐段补算」语义：不再把离开时长拆成完整番茄钟编造进历史。
+ */
 export function recover(
   state: PomodoroState,
   history: HistoryEntry[],
@@ -230,17 +237,7 @@ export function recover(
   d: Durations,
   o: PomodoroOptions
 ): { state: PomodoroState; history: HistoryEntry[]; events: PomodoroEvent[] } {
-  let s = state;
-  const h = history.slice();
-  const events: PomodoroEvent[] = [];
-  let guard = 0;
-  while (s.endTime !== null && now >= s.endTime && guard < MAX_RECOVER_STEPS) {
-    // 完成时刻 = 段自身的 endTime（长时间离开时逐段推进，而非用固定 now）
-    const r = transition(s, 'tick', s.endTime, d, o);
-    if (r.event.type === 'phase-completed' && r.event.historyEntry) h.push(r.event.historyEntry);
-    events.push(r.event);
-    s = r.state;
-    guard += 1;
-  }
-  return { state: s, history: h, events };
+  if (state.endTime === null || now < state.endTime) return { state, history: history.slice(), events: [] };
+  // 已超时：会话结束回空闲（历史原样返回，不追加）
+  return { state: idleState(), history: history.slice(), events: [] };
 }
