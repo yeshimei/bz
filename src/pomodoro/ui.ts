@@ -49,6 +49,11 @@ let appRef: App | null = null;
 let pickerMask: HTMLElement | null = null;
 let pickerPopupEl: HTMLElement | null = null;
 let pickerEsc: { unregister: () => void } | null = null;
+/** 后台自动暂停冻结标记（ticket 62）：仅由本机制冻结的会话在恢复可见时自动 resume（手动暂停不被覆盖） */
+let autoPauseMain = false;
+let autoPauseReading = false;
+/** visibilitychange 监听清理引用（unload 用） */
+let visibilityHandler: (() => void) | null = null;
 
 /** 备忘录数据文件路径（storagePath 优先，todoFilePath 兼容兜底）——目标选择器读取 */
 function getMemoFilePath(): string {
@@ -342,7 +347,8 @@ function applyAction(action: PomodoroAction): void {
   }
   // 暂停生效（含手动；forceFocus 下 transition 返回 none 不触发）才通知+响
   if (action === 'pause' && state.paused) notifyPaused();
-  if (r.event.type !== 'none') void save();
+  // 落盘：事件非 none（阶段完成/开始），或手动暂停生效（ticket 62：暂停态与后台冻结应持久化）
+  if (r.event.type !== 'none' || (action === 'pause' && state.paused)) void save();
   ensureTick();
   render();
 }
@@ -351,6 +357,83 @@ function onTick(): void {
   applyAction('tick');
   tickReading(); // 独立读书番茄钟自身推进（专注完成 → 记读书历史）
   if (state.endTime !== null || reading.active) checkReadingNow(); // 读书联动：同视图换书兜底轮询（复用 tick）
+}
+
+// ===== 后台自动暂停（ticket 62）：visibilitychange hidden → 冻结，visible → 自动恢复 =====
+
+/** 后台暂停开关（缺省开） */
+function autoPauseEnabled(): boolean {
+  return tryGetSettings().pomodoroAutoPauseOnHide !== false;
+}
+
+/** 冻结单个运行中状态（绕过 forceFocus——后台暂停是环境事件，非手动；返回是否由本机制冻结） */
+function freezeRunning(s: PomodoroState, now: number): PomodoroState {
+  if (s.endTime === null || s.paused) return s;
+  return {
+    ...s,
+    paused: true,
+    remaining: Math.max(0, Math.ceil((s.endTime - now) / 1000)),
+    endTime: null,
+  };
+}
+
+/** 解冻本机制冻结的状态（仅解除 autoPause 标记的；手动暂停的保持暂停） */
+function unfreezeRunning(s: PomodoroState, now: number): PomodoroState {
+  if (!s.paused) return s;
+  return { ...s, paused: false, remaining: 0, endTime: now + s.remaining * 1000 };
+}
+
+/** 窗口 hidden：主番茄钟 + 读书会话同时冻结（仅运行中的；手动暂停的尊重不覆盖） */
+function pauseOnHidden(): void {
+  if (!autoPauseEnabled()) return;
+  const now = Date.now();
+  if (state.endTime !== null && !state.paused) {
+    state = freezeRunning(state, now);
+    autoPauseMain = true;
+  }
+  if (reading.active && reading.state.endTime !== null && !reading.state.paused) {
+    reading = { ...reading, state: freezeRunning(reading.state, now) };
+    autoPauseReading = true;
+  }
+  if (autoPauseMain || autoPauseReading) {
+    void save();
+    render();
+  }
+}
+
+/** 窗口恢复 visible：仅自动恢复由本机制冻结的会话 */
+function resumeOnVisible(): void {
+  const now = Date.now();
+  if (autoPauseMain && state.paused) {
+    state = unfreezeRunning(state, now);
+    autoPauseMain = false;
+  }
+  if (autoPauseReading && reading.active && reading.state.paused) {
+    reading = { ...reading, state: unfreezeRunning(reading.state, now) };
+    autoPauseReading = false;
+  }
+  if (!autoPauseMain && !autoPauseReading) {
+    void save();
+    render();
+  }
+}
+
+/** 注册/注销 visibilitychange 监听（ensurePomodoro 时注册，unload 时注销）——幂等 */
+function registerVisibilityListener(): void {
+  if (visibilityHandler) return;
+  visibilityHandler = () => {
+    if (document.hidden) pauseOnHidden();
+    else resumeOnVisible();
+  };
+  document.addEventListener('visibilitychange', visibilityHandler);
+}
+
+/** 注销 visibilitychange 监听 */
+function unregisterVisibilityListener(): void {
+  if (visibilityHandler) {
+    document.removeEventListener('visibilitychange', visibilityHandler);
+    visibilityHandler = null;
+  }
 }
 
 /** tick 生命周期：主计时或读书会话进行中才轮询；两者都停即停（节省资源） */
@@ -365,18 +448,26 @@ function ensureTick(): void {
 }
 
 async function save(): Promise<void> {
-  if (dataManager) await dataManager.save({ version: 1, state, history, reading });
+  // 落盘前同步刷新读书会话 lastActiveAt（ticket 62：save 时机即最近活跃基准，hidden 暂停/事件时都会触发）
+  if (dataManager) {
+    const toSave: ReadingSession = reading.active
+      ? { ...reading, lastActiveAt: Date.now() }
+      : reading;
+    await dataManager.save({ version: 1, state, history, reading: toSave });
+  }
 }
 
-/** 首次打开：load + 主倒计时超时恢复（静默）+ 读书番茄钟装载并超时恢复 */
+/** 首次打开：load + 主倒计时超时恢复（静默）+ 读书番茄钟装载并超时恢复（ticket 62 不补算） */
 async function initData(): Promise<void> {
   const data = await dataManager!.load();
   const r = recover(data.state, data.history, Date.now(), durations(), options());
   state = r.state;
   history = r.history;
   reading = data.reading ? data.reading : { active: false, book: null, state: createInitialState(), prevState: null };
+  const readingWasActive = reading.active;
   let readingChanged = false;
   if (reading.active) {
+    // 不补算：按 lastActiveAt 结算关闭前实读后结束会话（开关已关的残留会话同路径兜底结算退出）
     const rec = recoverReadingSession(reading, Date.now(), readingDurations(readingInterval()), options());
     reading = rec.session;
     if (rec.history.length > 0) {
@@ -384,7 +475,9 @@ async function initData(): Promise<void> {
       readingChanged = true;
     }
   }
-  if (r.events.length > 0 || readingChanged) await dataManager!.save({ version: 1, state, history, reading });
+  // 主番茄钟超时回空闲（endTime 从有到无）、读书结算入账、或残留读书会话被结算 → 落盘
+  const mainChanged = data.state.endTime !== null && r.state.endTime === null;
+  if (mainChanged || readingChanged || readingWasActive) await dataManager!.save({ version: 1, state, history, reading });
   loaded = true;
 }
 
@@ -448,7 +541,7 @@ function openPomodoroSettings(): void {
               render();
             })
         );
-      const toggleSetting = (name: string, desc: string, get: () => boolean, set: (v: boolean) => void): Setting =>
+      const toggleSetting = (name: string, desc: string, get: () => boolean, set: (v: boolean) => void, onAfter?: (v: boolean) => void): Setting =>
         new Setting(el)
           .setName(name)
           .setDesc(desc)
@@ -459,12 +552,14 @@ function openPomodoroSettings(): void {
                 set(v);
                 await saveSettings();
                 render();
+                onAfter?.(v);
               })
           );
       toggleSetting('强制专注模式', '专注阶段无法暂停/跳过/重置', () => !!s.pomodoroForceFocus, (v) => (s.pomodoroForceFocus = v));
       toggleSetting('自动循环', '阶段结束后自动开始下一阶段', () => !!s.pomodoroAutoCycle, (v) => (s.pomodoroAutoCycle = v));
       toggleSetting('自动跳过休息', '专注结束后立即开始下一专注（连续工作）', () => !!s.pomodoroAutoSkipBreak, (v) => (s.pomodoroAutoSkipBreak = v));
       toggleSetting('声音提醒', '阶段完成时的提示音', () => s.pomodoroSound !== false, (v) => (s.pomodoroSound = v));
+      toggleSetting('后台自动暂停', '窗口最小化/失去可见性时自动暂停番茄钟（含读书番茄钟），恢复后自动继续（默认开）', () => s.pomodoroAutoPauseOnHide !== false, (v) => (s.pomodoroAutoPauseOnHide = v));
       new Setting(el)
         .setName('音量')
         .setDesc('提示音大小（默认最大）')
@@ -494,7 +589,10 @@ function openPomodoroSettings(): void {
             await saveSettings();
           });
         });
-      toggleSetting('读书自动番茄钟', '打开 epub 书阅读时自动开始独立读书计时（主番茄钟挂起），关闭书结算并恢复主番茄钟（默认开）', () => s.pomodoroEpubAuto !== false, (v) => (s.pomodoroEpubAuto = v));
+      toggleSetting('读书自动番茄钟', '打开 epub 书阅读时自动开始独立读书计时（主番茄钟挂起），关闭书结算并恢复主番茄钟（默认开）', () => s.pomodoroEpubAuto !== false, (v) => (s.pomodoroEpubAuto = v), (v) => {
+        // ticket 62：关闭开关时若读书会话进行中 → 立即结算退出（恢复主番茄钟），避免残留卡死
+        if (!v && reading.active) closeReadingSession();
+      });
       new Setting(el)
         .setName('读书启动形态')
         .setDesc('打开 epub 书自动开始读书专注时的展示方式')
@@ -588,7 +686,7 @@ function buildDOM(): void {
 export async function openPomodoro(app: App): Promise<void> {
   appRef = app;
   bindPomodoroState(() => state); // 读书联动状态快照（epub-link 决策用）
-  bindReadingSession(() => isReadingActive(reading)); // 读书会话进行中（决策用）
+  bindReadingSession(() => (isReadingActive(reading) ? reading.book : null)); // 读书会话当前书（决策用，ticket 62）
   if (!dataManager) dataManager = new PomodoroDataManager(app);
   if (!maskEl) {
     if (!loaded) await initData();
@@ -746,19 +844,13 @@ export function showReadingConfirm(d: { book: ReadingBook; mode: 'skip-break' | 
 export async function ensurePomodoro(app: App): Promise<void> {
   appRef = app;
   bindPomodoroState(() => state); // 读书联动状态快照（epub-link 决策用）
-  bindReadingSession(() => isReadingActive(reading)); // 读书会话进行中（决策用）
+  bindReadingSession(() => (isReadingActive(reading) ? reading.book : null)); // 读书会话当前书（决策用，ticket 62）
   if (!dataManager) dataManager = new PomodoroDataManager(app);
+  registerVisibilityListener(); // ticket 62：后台自动暂停（幂等）
   if (!loaded) {
     await initData();
-    // 重启时若读书会话仍未结算（书开着）→ 恢复独立计时继续累计（endTime 基准，后台不漏时）；
-    // 书已关时由 epub-link 启动检测（checkReadingNow）触发关书结算 + 主番茄钟恢复。
-    if (reading.active) {
-      ensureTick();
-      render();
-      const s = tryGetSettings();
-      if (s.pomodoroRestoreMode === 'popup') void openPomodoro(app);
-      return;
-    }
+    // ticket 62 不补算：残留读书会话已在 initData 按 lastActiveAt 结算退出；
+    // 书仍开着由 epub-link 启动检测（checkReadingNow）触发重新开始读书会话。
     if (state.endTime !== null) {
       ensureTick(); // 后台继续（无弹窗时 render 只同步状态栏）
       render();
@@ -914,6 +1006,9 @@ export function unloadPomodoro(): void {
     window.clearInterval(timerId);
     timerId = null;
   }
+  unregisterVisibilityListener(); // ticket 62
+  autoPauseMain = false;
+  autoPauseReading = false;
   closeTargetPicker();
   closeReadingConfirm();
   closePomodoro();

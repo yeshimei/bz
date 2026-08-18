@@ -218,15 +218,17 @@ describe('transition：tick 阶段完成', () => {
 
   it('autoSkipBreak：focus 完成后直接进入下一 focus（自动开始）', () => {
     const AS = { ...O, autoSkipBreak: true };
-    const running = transition(createInitialState(), 'start', NOW, D, AS).state;
-    const r = transition(running, 'tick', NOW + WORK_MS, D, AS);
-    expect(r.state.phase).toBe('focus');
-    expect(r.state.endTime).toBe(NOW + WORK_MS + WORK_MS);
-    expect(r.state.cycleFocusCount).toBe(1);
-    // 第 4 个完成 → 计数清零（长休被跳过，仍回 focus）
-    const { state: s4 } = recover(running, [], NOW + 4 * WORK_MS + 1000, D, AS);
-    expect(s4.phase).toBe('focus');
-    expect(s4.cycleFocusCount).toBe(0);
+    // 连续 4 个专注：逐段 tick 推进（ticket 62 recover 不补算，改用 transition 显式推进）
+    let s = transition(createInitialState(), 'start', NOW, D, AS).state;
+    for (let i = 0; i < 4; i++) {
+      const r = transition(s, 'tick', NOW + (i + 1) * WORK_MS, D, AS);
+      expect(r.state.phase).toBe('focus'); // autoSkipBreak 恒回 focus
+      expect(r.state.endTime).toBe(NOW + (i + 2) * WORK_MS);
+      // 第 4 个完成 → 计数清零（长休被跳过，仍回 focus）
+      expect(r.state.cycleFocusCount).toBe(i === 3 ? 0 : i + 1);
+      s = r.state;
+    }
+    expect(s.phase).toBe('focus');
   });
 
   it('idle tick → 无操作', () => {
@@ -268,18 +270,33 @@ describe('transition：专注目标（任务关联，ticket 26 第一期）', ()
   });
 });
 
-describe('recover：超时重建', () => {
-  it('运行中已超时 → 流转到下一阶段（未开始），事件收集、history 追加', () => {
+describe('recover：超时恢复（ticket 62 不补算）', () => {
+  it('运行中已超时 → 回空闲（剩余作废、不记历史、无事件）', () => {
     const running = transition(createInitialState(), 'start', NOW, D, O).state;
     const { state, history, events } = recover(running, [], NOW + WORK_MS + 60_000, D, O);
-    expect(state.phase).toBe('short-break');
+    expect(state.phase).toBe('idle');
     expect(state.endTime).toBeNull();
-    expect(history.length).toBe(1);
-    expect(history[0].duration).toBe(25 * 60);
-    expect(events.length).toBe(1);
+    expect(state.remaining).toBe(0);
+    expect(history.length).toBe(0);
+    expect(events.length).toBe(0);
   });
 
-  it('暂停态 → 不流转', () => {
+  it('运行中超时且挂 target → 回空闲并清空 target', () => {
+    const running = transition({ ...createInitialState(), target: { type: 'note', path: 'x.md', label: 'X' } }, 'start', NOW, D, O).state;
+    const { state } = recover(running, [], NOW + WORK_MS + 1000, D, O);
+    expect(state.phase).toBe('idle');
+    expect(state.target).toBeNull();
+  });
+
+  it('未超时（now < endTime）→ 状态原样', () => {
+    const running = transition(createInitialState(), 'start', NOW, D, O).state;
+    const { state, history, events } = recover(running, [], NOW + WORK_MS - 60_000, D, O);
+    expect(state).toBe(running);
+    expect(history.length).toBe(0);
+    expect(events.length).toBe(0);
+  });
+
+  it('暂停态 → 不流转（保持暂停）', () => {
     const running = transition(createInitialState(), 'start', NOW, D, O).state;
     const paused = transition(running, 'pause', NOW + 60_000, D, O).state;
     const { state, history } = recover(paused, [], NOW + 3_600_000, D, O);
@@ -294,15 +311,14 @@ describe('recover：超时重建', () => {
     expect(events.length).toBe(0);
   });
 
-  it('autoCycle + 长时间离开 → 逐段流转到不再超时，history 多条', () => {
+  it('autoCycle + 长时间离开 → 回空闲、不把离开时长编造成历史（ticket 62 不再逐段补算）', () => {
     const AC = { ...O, autoCycle: true };
     const running = transition(createInitialState(), 'start', NOW, D, AC).state;
-    // 离开 91min：f(25)→s(5)→f→s→f→s(第 6 段刚超时) → 完成 3 个专注，自动开始中的 focus 未超时
     const awayMs = (WORK_MS + SHORT_MS) * 2 + WORK_MS + SHORT_MS + 60_000;
     const { state, history, events } = recover(running, [], NOW + awayMs, D, AC);
-    expect(history.length).toBe(3);
-    expect(state.phase).toBe('focus');
-    expect(state.endTime).not.toBeNull();
-    expect(events.length).toBe(6);
+    expect(state.phase).toBe('idle');
+    expect(state.endTime).toBeNull();
+    expect(history.length).toBe(0);
+    expect(events.length).toBe(0);
   });
 });

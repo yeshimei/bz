@@ -63,14 +63,17 @@ export function decideReadingAction(
   book: ReadingBook | null,
   state: PomodoroState,
   epubAuto: boolean,
-  readingActive = false
+  readingActive = false,
+  currentBook: ReadingBook | null = null
 ): ReadingDecision {
   if (!epubAuto) return { action: 'none' };
   if (book && prev && book.path === prev.path) return { action: 'none' };
   // 读书会话进行中：关书 → pause（结算+恢复）；换书 → switch（直接切）；同书已拦
   if (readingActive) {
     if (book === null) return { action: 'pause' };
-    if (prev && book.path !== prev.path) return { action: 'switch', book };
+    // ticket 62：换书判定优先对比会话当前书（currentBook，不依赖 prev 连续性——tick 轮询/切走再回来不漏判）；缺失回退 prev
+    const same = currentBook !== null ? book.path === currentBook.path : prev !== null && book.path === prev.path;
+    if (!same) return { action: 'switch', book };
     return { action: 'none' };
   }
   const running = state.endTime !== null;
@@ -99,17 +102,17 @@ let initialized = false;
 let initTimer: ReturnType<typeof setTimeout> | null = null;
 /** ui 注入的状态快照 getter（ui.ts ensure 时绑定；避免顶层循环 import） */
 let stateGetter: () => PomodoroState = () => createInitialState();
-/** ui 注入的读书会话进行中 getter（独立读书计时判断，ticket 56） */
-let readingActiveGetter: () => boolean = () => false;
+/** ui 注入的读书会话当前书 getter（ticket 62：换书判断以会话书为准；null = 会话未进行） */
+let readingBookGetter: () => ReadingBook | null = () => null;
 
 /** ui.ts 绑定当前番茄钟状态（ensurePomodoro 时调用） */
 export function bindPomodoroState(getter: () => PomodoroState): void {
   stateGetter = getter;
 }
 
-/** ui.ts 绑定读书会话进行中状态（ensurePomodoro 时调用） */
-export function bindReadingSession(getter: () => boolean): void {
-  readingActiveGetter = getter;
+/** ui.ts 绑定读书会话当前书（ensurePomodoro 时调用；未进行 → null） */
+export function bindReadingSession(getter: () => ReadingBook | null): void {
+  readingBookGetter = getter;
 }
 
 /** 读书启动形态：popup（自动弹窗）时返回 true（ticket 54，Q1 默认后台） */
@@ -139,7 +142,8 @@ function execute(decision: ReadingDecision): void {
 export function checkReadingNow(): void {
   if (!appRef) return;
   const book = getEpubBook(appRef);
-  const decision = decideReadingAction(prevBook, book, stateGetter(), readingEpubAutoEnabled(), readingActiveGetter());
+  const current = readingBookGetter();
+  const decision = decideReadingAction(prevBook, book, stateGetter(), readingEpubAutoEnabled(), current !== null, current);
   prevBook = book;
   execute(decision);
 }
@@ -167,7 +171,7 @@ export function unloadPomodoroEpubLink(): void {
   prevBook = null;
   initialized = false;
   stateGetter = () => createInitialState();
-  readingActiveGetter = () => false;
+  readingBookGetter = () => null;
 }
 
 /** 测试钩子：直接检查当前状态（绕过监听时序） */

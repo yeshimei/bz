@@ -87,7 +87,13 @@ describe('decideReadingAction（决策纯函数）', () => {
   });
 
   it('读书会话进行中 + 书保持打开（prev null 启动恢复）→ none 不打扰', () => {
-    expect(decideReadingAction(null, BOOK_A, createInitialState(), true, true)).toEqual({ action: 'none' });
+    // 会话当前书=A 且当前打开书=A：prev 未初始化也判定同书 → 不打扰
+    expect(decideReadingAction(null, BOOK_A, createInitialState(), true, true, BOOK_A)).toEqual({ action: 'none' });
+  });
+
+  it('读书会话进行中 + prev null 但会话书为 A、当前书为 B → switch（换书不漏判，ticket 62）', () => {
+    // prev 丢失（切走视图/启动初态）时，以会话书对比——换书仍能识别
+    expect(decideReadingAction(null, BOOK_B, createInitialState(), true, true, BOOK_A)).toEqual({ action: 'switch', book: BOOK_B });
   });
 
   it('读书会话进行中 + 无书（prev null, book null，重启恢复场景）→ pause（结算并恢复主番茄钟）', () => {
@@ -265,9 +271,9 @@ describe('读书联动集成（独立读书计时，ticket 56）', () => {
     expect(raw.state.target).toEqual({ type: 'memo', id: 'm1', label: '写报告' }); // 目标也恢复
   });
 
-  it('重启后读书会话恢复：书仍开 → 读书番茄钟超时段自动推进（endTime 基准后台补时）', async () => {
+  it('重启后残留读书会话（无 lastActiveAt 旧数据）→ 放弃结算、会话结束，书仍开则重新开始（ticket 62 不补算）', async () => {
     const vault = new MockVault();
-    // 模拟重启前：读书专注已走满（endTime 在 100s 前超时），书仍开
+    // 模拟重启前：读书专注已走满（endTime 在 100s 前超时），书仍开，无 lastActiveAt（旧数据）
     seedState(
       vault,
       { phase: 'idle', endTime: null, remaining: 0, paused: true, cycleFocusCount: 0, target: null },
@@ -279,16 +285,39 @@ describe('读书联动集成（独立读书计时，ticket 56）', () => {
       }
     );
     const { app } = setup(vault, {}, readerView(BOOK_A.path, '活着'));
-    await ensurePomodoro(app); // 启动恢复：initData recoverReadingSession 推进超时的专注
+    await ensurePomodoro(app); // 启动恢复：initData recoverReadingSession 放弃结算、会话结束
+    const afterInit = rawComplete(vault);
+    expect(afterInit.reading.active).toBe(false); // 残留会话已结束（不补算）
+    expect(afterInit.history).toEqual([]); // 无编造历史
+    // 书仍开：epub-link 启动检测重新开始读书会话（新 45min 段）
     ensurePomodoroEpubLink(app);
-    await vi.advanceTimersByTimeAsync(10);
+    await vi.advanceTimersByTimeAsync(1500); // 启动检测延迟
     const raw = rawComplete(vault);
-    expect(raw.reading.active).toBe(true); // 书仍开，会话未结算
-    // 已走的读书专注被结算入读书历史（duration=45min），读书番茄流转到读书短休
-    expect(raw.reading.state.phase).toBe('short-break');
+    expect(raw.reading.active).toBe(true);
+    expect(raw.reading.book).toEqual({ path: BOOK_A.path, title: '活着' });
+    expect(raw.reading.state.phase).toBe('focus');
+  });
+
+  it('重启后残留读书会话（有 lastActiveAt）→ 按 lastActiveAt 结算关闭前实读后结束，书仍开则重新开始', async () => {
+    const vault = new MockVault();
+    seedState(
+      vault,
+      { phase: 'idle', endTime: null, remaining: 0, paused: true, cycleFocusCount: 0, target: null },
+      {
+        active: true,
+        book: { path: BOOK_A.path, title: '活着' },
+        state: { phase: 'focus', endTime: T0 + 45 * 60 * 1000, remaining: 0, paused: false, cycleFocusCount: 0, target: { type: 'book', path: BOOK_A.path, label: '活着' } },
+        prevState: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0, target: null },
+        lastActiveAt: T0 + 20 * 60 * 1000, // 重开前刚读了 20min（段内）→ 按此结算
+      }
+    );
+    const { app } = setup(vault, {}, readerView(BOOK_A.path, '活着'));
+    await ensurePomodoro(app);
+    const raw = rawComplete(vault);
+    expect(raw.reading.active).toBe(false);
     const bookEntry = raw.history[raw.history.length - 1];
     expect(bookEntry.target).toEqual({ type: 'book', path: BOOK_A.path, label: '活着' });
-    expect(bookEntry.duration).toBe(45 * 60);
+    expect(bookEntry.duration).toBe(20 * 60); // 关闭前实读 20min（不把关闭期间补算）
   });
 
   it('强制专注模式 + 关闭书 → 读书会话照常结算（豁免 forceFocus）', async () => {

@@ -23,6 +23,17 @@ describe('todayCount', () => {
     expect(todayCount(h, NOW)).toBe(2);
   });
 
+  it('book 条目 duration < 45min（中途结算）→ 不计个数（ticket 62 完整番茄口径）', () => {
+    const h: HistoryEntry[] = [
+      { ts: new Date(2026, 7, 10, 8, 0, 0).getTime(), duration: 45 * 60, target: { type: 'book', path: '书架/a.epub', label: 'A' } }, // 完整 → 计
+      { ts: new Date(2026, 7, 10, 9, 0, 0).getTime(), duration: 20 * 60, target: { type: 'book', path: '书架/b.epub', label: 'B' } }, // 部分 → 不计
+      { ts: new Date(2026, 7, 10, 10, 0, 0).getTime(), duration: 1500 }, // 主番茄钟 → 计
+    ];
+    expect(todayCount(h, NOW)).toBe(2);
+    // 时长统计不受影响：两段 book 都计入
+    expect(readingSecondsToday(h, NOW)).toBe(45 * 60 + 20 * 60);
+  });
+
   it('跨月边界（今天为月初）', () => {
     const now = new Date(2026, 7, 1, 10, 0, 0).getTime();
     const h = [
@@ -102,5 +113,15 @@ describe('last7Days', () => {
     expect(days[5]).toEqual({ date: '2026-08-01', count: 0 });
     expect(days[6]).toEqual({ date: '2026-08-02', count: 1 });
     expect(days).toContainEqual({ date: '2026-07-31', count: 1 });
+  });
+
+  it('book 部分条目（<45min）不计入柱条（ticket 62）', () => {
+    const h: HistoryEntry[] = [
+      { ts: new Date(2026, 7, 10, 8, 0, 0).getTime(), duration: 45 * 60, target: { type: 'book', path: '书架/a.epub', label: 'A' } },
+      { ts: new Date(2026, 7, 10, 9, 0, 0).getTime(), duration: 10 * 60, target: { type: 'book', path: '书架/b.epub', label: 'B' } },
+      { ts: new Date(2026, 7, 10, 10, 0, 0).getTime(), duration: 1500 },
+    ];
+    const days = last7Days(h, NOW);
+    expect(days[6]).toEqual({ date: '2026-08-10', count: 2 }); // 完整 book + 主番茄钟
   });
 });

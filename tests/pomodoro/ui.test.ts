@@ -130,6 +130,66 @@ describe('ensurePomodoro（插件启动恢复）', () => {
     await ensurePomodoro(app);
     expect(document.getElementById('pomodoro-mask')).toBeNull();
   });
+
+  it('后台自动暂停：hidden → 主番茄钟冻结（paused/endTime null），visible → 自动恢复（ticket 62）', async () => {
+    const vault = new MockVault();
+    vault.files.set(getPomodoroFilePath(), runningData());
+    const app = makeApp(vault);
+    setApp(app);
+    await ensurePomodoro(app);
+    // 运行中（endTime 非空）→ 模拟窗口最小化 hidden
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(0);
+    const frozen = JSON.parse(vault.files.get(getPomodoroFilePath())!);
+    expect(frozen.state.paused).toBe(true);
+    expect(frozen.state.endTime).toBeNull();
+    expect(frozen.state.remaining).toBeGreaterThan(0);
+    // 恢复 visible → 自动继续
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(0);
+    const resumed = JSON.parse(vault.files.get(getPomodoroFilePath())!);
+    expect(resumed.state.paused).toBe(false);
+    expect(resumed.state.endTime).not.toBeNull();
+  });
+
+  it('后台自动暂停开关关闭 → hidden 不冻结（ticket 62）', async () => {
+    const vault = new MockVault();
+    vault.files.set(getPomodoroFilePath(), runningData());
+    const app = makeApp(vault);
+    setApp(app);
+    setSettingsProvider(() => ({ pomodoroAutoPauseOnHide: false } as any));
+    await ensurePomodoro(app);
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(0);
+    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
+    expect(raw.state.paused).toBe(false);
+    expect(raw.state.endTime).not.toBeNull();
+  });
+
+  it('手动暂停后 hidden → 不被自动覆盖，visible → 不自动恢复（ticket 62 尊重手动暂停）', async () => {
+    const vault = new MockVault();
+    vault.files.set(getPomodoroFilePath(), runningData());
+    const app = makeApp(vault);
+    setApp(app);
+    await openPomodoro(app);
+    // 手动暂停（点开始按钮 → 暂停）
+    (document.getElementById('pomodoro-btn-start') as HTMLElement).click();
+    await vi.advanceTimersByTimeAsync(0);
+    let raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
+    expect(raw.state.paused).toBe(true);
+    // hidden + visible：手动暂停保持
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(0);
+    raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
+    expect(raw.state.paused).toBe(true);
+    expect(raw.state.endTime).toBeNull(); // 保持暂停
+  });
 });
 
 describe('专注目标（任务关联，第一期）', () => {
@@ -624,7 +684,7 @@ describe('番茄钟弹窗', () => {
     expect(btn.classList.contains('pomodoro-settings-hidden')).toBe(true);
   });
 
-  it('恢复：数据文件运行中超时 → 打开自动流转并落盘', async () => {
+  it('恢复：数据文件运行中超时 → 回空闲（ticket 62 不补算，不再流转补历史）', async () => {
     const vault = new MockVault();
     vault.files.set(
       getPomodoroFilePath(),
@@ -636,10 +696,11 @@ describe('番茄钟弹窗', () => {
     );
     const { app } = setup(vault);
     await openPomodoro(app);
-    expect(el('pomodoro-phase').textContent).toContain('短休息');
+    expect(el('pomodoro-phase').textContent).toContain('🍅 番茄钟'); // 回空闲
     const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
-    expect(raw.history).toHaveLength(1);
-    expect(raw.state.phase).toBe('short-break');
+    expect(raw.history).toHaveLength(0); // 不补算历史
+    expect(raw.state.phase).toBe('idle');
+    expect(raw.state.endTime).toBeNull();
   });
 
   it('恢复：暂停态保留（不流转）', async () => {
