@@ -78,18 +78,19 @@ describe('⚙️ 设置弹窗', () => {
     vi.useRealTimers();
   });
 
-  it('打开设置弹窗：11 个设置项（10 项 + 音量）', async () => {
+  it('打开设置弹窗：14 个设置项（11 项 + 音量等）', async () => {
     const settings = { ...DEFAULT_SETTINGS } as any;
     const { app } = setup(settings);
     await openPomodoro(app);
     el('pomodoro-btn-settings').click();
     expect(el('bz-settings-modal-popup')).not.toBeNull();
-    expect(document.querySelectorAll('#bz-settings-modal-popup .setting-item').length).toBe(13);
+    expect(document.querySelectorAll('#bz-settings-modal-popup .setting-item').length).toBe(14);
     expect(itemByName('预设方案')).not.toBeUndefined();
     expect(itemByName('长休息间隔')).not.toBeUndefined();
     expect(itemByName('声音提醒')).not.toBeUndefined();
     expect(itemByName('音量')).not.toBeUndefined();
     expect(itemByName('打开时恢复方式')).not.toBeUndefined();
+    expect(itemByName('后台自动暂停')).not.toBeUndefined();
   });
 
   it('预设下拉 13 档（12 预设 + 自定义）', async () => {

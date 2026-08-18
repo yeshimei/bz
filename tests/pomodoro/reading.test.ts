@@ -29,7 +29,7 @@ function runningState(): PomodoroState {
 }
 
 describe('startReadingSession（读书番茄钟开始）', () => {
-  it('active、book 挂上、从读书专注 45min 开始、prevState 快照主番茄钟', () => {
+  it('active、book 挂上、从读书专注 45min 开始、prevState 快照主番茄钟、lastActiveAt 初始化', () => {
     const s = startReadingSession(runningState(), BOOK_A, T0, RD);
     expect(isReadingActive(s)).toBe(true);
     expect(s.book).toEqual(BOOK_A);
@@ -37,15 +37,17 @@ describe('startReadingSession（读书番茄钟开始）', () => {
     expect(s.state.endTime).toBe(T0 + 45 * 60 * 1000);
     expect(s.state.target).toEqual({ type: 'book', path: BOOK_A.path, label: '活着' });
     expect(s.prevState).toEqual(runningState());
+    expect(s.lastActiveAt).toBe(T0);
   });
 });
 
 describe('tickReadingSession（读书番茄钟推进）', () => {
-  it('未到 endTime → 无变化', () => {
+  it('未到 endTime → 无变化，但 lastActiveAt 刷新为 now', () => {
     const s = startReadingSession(runningState(), BOOK_A, T0, RD);
     const r = tickReadingSession(s, T0 + 1000, RD, OPT);
     expect(r.history).toEqual([]);
     expect(r.session.state.endTime).toBe(T0 + 45 * 60 * 1000);
+    expect(r.session.lastActiveAt).toBe(T0 + 1000);
   });
 
   it('专注走满 45min → 记读书历史（duration=2700、target=book）→ 流转读书短休 10min', () => {
@@ -122,23 +124,64 @@ describe('endReadingSession（关书结算 + 恢复快照）', () => {
   });
 });
 
-describe('recoverReadingSession（重启超时恢复）', () => {
-  it('关闭期间走满专注 → 补记读书历史 + 流转到短休', () => {
-    const s = startReadingSession(runningState(), BOOK_A, T0, RD);
-    const rec = recoverReadingSession(s, T0 + 45 * 60 * 1000 + 2000, RD, OPT);
+describe('recoverReadingSession（ticket 62 重启不补算）', () => {
+  it('有 lastActiveAt 且关闭前在读专注 → 按 lastActiveAt 结算实读后结束会话', () => {
+    // 专注 45min 走满段：start 后读到 lastActiveAt=T0+20min 关闭，重开 at T0+1h
+    const s = { ...startReadingSession(runningState(), BOOK_A, T0, RD), lastActiveAt: T0 + 20 * 60 * 1000 };
+    const rec = recoverReadingSession(s, T0 + 60 * 60 * 1000, RD, OPT);
+    expect(rec.history).toHaveLength(1);
+    expect(rec.history[0].duration).toBe(20 * 60);
+    expect(rec.history[0].target).toEqual({ type: 'book', path: BOOK_A.path, label: '活着' });
+    expect(rec.session.active).toBe(false);
+    expect(rec.session.book).toBeNull();
+  });
+
+  it('lastActiveAt 超段长（段其实走满但未 tick）→ 封顶满段 45min', () => {
+    const s = { ...startReadingSession(runningState(), BOOK_A, T0, RD), lastActiveAt: T0 + 50 * 60 * 1000 };
+    const rec = recoverReadingSession(s, T0 + 60 * 60 * 1000, RD, OPT);
     expect(rec.history).toHaveLength(1);
     expect(rec.history[0].duration).toBe(45 * 60);
-    expect(rec.session.state.phase).toBe('short-break');
+  });
+
+  it('无 lastActiveAt（旧数据）→ 放弃该段结算，直接结束会话不产生历史', () => {
+    const s = startReadingSession(runningState(), BOOK_A, T0, RD); // lastActiveAt 存在但模拟旧数据？
+    const old = { active: true, book: s.book, state: s.state, prevState: s.prevState } as any; // 无 lastActiveAt
+    const rec = recoverReadingSession(old, T0 + 60 * 60 * 1000, RD, OPT);
+    expect(rec.history).toEqual([]);
+    expect(rec.session.active).toBe(false);
+  });
+
+  it('读书休息段（lastActiveAt 在短休中）→ 不记读书时长，结束会话', () => {
+    let s = startReadingSession(runningState(), BOOK_A, T0, RD);
+    s = tickReadingSession(s, T0 + 45 * 60 * 1000, RD, OPT).session; // 进短休
+    const rec = recoverReadingSession(s, T0 + 60 * 60 * 1000, RD, OPT);
+    expect(rec.history).toEqual([]);
+    expect(rec.session.active).toBe(false);
+  });
+
+  it('非活动会话（已关书）→ 原样空会话', () => {
+    const rec = recoverReadingSession(emptyReadingSession(), T0 + 60 * 60 * 1000, RD, OPT);
+    expect(rec.history).toEqual([]);
+    expect(rec.session.active).toBe(false);
   });
 });
 
 describe('normalizeReadingSession（数据容错）', () => {
-  it('正常 round-trip 保留', () => {
-    const s = startReadingSession(runningState(), BOOK_A, T0, RD);
+  it('正常 round-trip 保留（含 lastActiveAt 可选字段）', () => {
+    const s = { ...startReadingSession(runningState(), BOOK_A, T0, RD), lastActiveAt: T0 + 123_000 };
     const n = normalizeReadingSession(s);
     expect(n.active).toBe(true);
     expect(n.book).toEqual(BOOK_A);
     expect(n.state.phase).toBe('focus');
+    expect(n.lastActiveAt).toBe(T0 + 123_000);
+  });
+
+  it('旧数据无 lastActiveAt → 归一为 undefined（放弃该段结算语义）', () => {
+    const s = startReadingSession(runningState(), BOOK_A, T0, RD);
+    const raw = { active: true, book: s.book, state: s.state, prevState: s.prevState };
+    const n = normalizeReadingSession(raw);
+    expect(n.active).toBe(true);
+    expect(n.lastActiveAt).toBeUndefined();
   });
 
   it('旧数据无 reading / null / 非对象 → 空会话', () => {

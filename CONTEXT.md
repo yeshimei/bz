@@ -107,14 +107,20 @@ _Avoid_: 方案、模式（指预设时）
 
 **强制专注模式 (Force Focus Mode)**: 番茄钟设置开关——开启后专注阶段内暂停/跳过/重置均禁用。注意与「专注阶段」区分。
 
-**读书番茄钟 (Reading Pomodoro)**: 打开 epub 书时与主番茄钟状态机解耦的独立分段番茄钟（ticket 56）——快照并挂起主番茄钟，另起以「阅读沉浸 45/10/20」预设自走节律：专注 45 分钟走满记一个读书番茄（target.type=book，duration=实读秒数）→ 读书短休 10 分钟 → 每 4 个专注进读书长休 20 分钟 → 书仍开则自动下一段。endTime 基准，Obsidian 后台节流/重启不漏时。
+**读书番茄钟 (Reading Pomodoro)**: 打开 epub 书时与主番茄钟状态机解耦的独立分段番茄钟（ticket 56）——快照并挂起主番茄钟，另起以「阅读沉浸 45/10/20」预设自走节律：专注 45 分钟走满记一个读书番茄（target.type=book，duration=实读秒数）→ 读书短休 10 分钟 → 每 4 个专注进读书长休 20 分钟 → 书仍开则自动下一段。endTime 基准，运行时前台连续计时。
 _Avoid_: 读书专注、阅读专注
 
-**独立读书会话 (Reading Session)**: `pomodoro.json.reading` 字段——`{ active, book, state, prevState }`，承载独立读书番茄钟状态（state 复用 PomodoroState）与主番茄钟挂起快照（prevState）。旧数据无此字段 → 空会话。
+**独立读书会话 (Reading Session)**: `pomodoro.json.reading` 字段——`{ active, book, state, prevState, lastActiveAt? }`，承载独立读书番茄钟状态（state 复用 PomodoroState）、主番茄钟挂起快照（prevState）与最近活跃时刻（lastActiveAt，可选，ticket 62——关闭前实读时长结算基准，旧数据无此字段 → 放弃该段结算）。旧数据无整个字段 → 空会话。
+
+**后台自动暂停 (Auto-pause on Hide)**: 番茄钟设置开关（默认开，ticket 62）——Obsidian 窗口因 `visibilitychange` 进入 hidden（最小化/遮挡/系统休眠）时，主番茄钟与读书会话同时暂停冻结；恢复 visible 且原本运行中 → 自动继续。仅认 hidden，blur 失焦不触发（锁屏/全屏切走等 hidden 抓不到的缝隙接受，记已知限制）。手动暂停永不被自动覆盖。
+
+**不补算 (No Backfill)**: 番茄钟恢复规则（ticket 62）——Obsidian 关闭/重启期间的时间一律不折算成历史：运行中状态重开时 endTime 已超时 → 主番茄钟回空闲（剩余作废、不记历史、清空关联目标）；读书会话按 lastActiveAt 结算关闭前实读时长后结束。暂停态不超时 → 保持暂停不受影响。取代旧「逐段补算」语义（recover 不再编造历史）。
+
+**完整番茄 (Full Pomodoro)**: 统计口径（ticket 62）——计入「今日 N 个 🍅」/ 近 7 天柱条的条目：book 条目须 duration ≥ 45min（完整走满的读书专注）才计；非 book 条目恒计（主番茄钟仅 tick 完成才产生）。中途关书/换书按实读结算的部分条目只管时长、不计个数。
 
 **关书恢复 (Close-book Restore)**: 关闭 epub 书结束读书番茄钟时，将主番茄钟恢复为进入读书前的快照（`reading.prevState`）——若当时正在跑专注/休息则原 endTime 继续（时间不流逝），idle 则保持空闲；当前读书段按实读时长单独入读书历史（读书休息段不计）。
 
-**读书时长 (Reading Duration)**: 弹窗读书统计行「📚 读书 X 小时 Y 分」——今日（本地时区）target.type=book 历史条目实读秒数之和（`stats.readingSecondsToday`，取代按番茄个数的 `bookCountToday`）。
+**读书时长 (Reading Duration)**: 弹窗读书统计行「📚 读书 X 小时 Y 分」——今日（本地时区）target.type=book 历史条目实读秒数之和（`stats.readingSecondsToday`，取代按番茄个数的 `bookCountToday`）。与「完整番茄」互补：中途结算的部分时长只进时长、不进番茄个数。
 
 ### 共享层
 

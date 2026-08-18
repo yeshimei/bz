@@ -164,7 +164,7 @@ describe('PomodoroDataManager', () => {
     expect(r.history.length).toBe(0);
   });
 
-  it('恢复链路：load 运行中超时 → recover 重建为已完成 → save 落盘', async () => {
+  it('恢复链路：load 运行中超时 → recover 回空闲（ticket 62 不补算）→ save 落盘', async () => {
     const vault = new MockVault();
     const now = Date.now();
     vault.files.set(
@@ -180,13 +180,12 @@ describe('PomodoroDataManager', () => {
     const dm = new PomodoroDataManager(app);
     const data = await dm.load();
     const r = recover(data.state, data.history, now, DEFAULT_DURATIONS, DEFAULT_OPTIONS);
-    expect(r.state.phase).toBe('long-break'); // 第 4 个专注完成 → 长休
-    expect(r.state.cycleFocusCount).toBe(0);
-    expect(r.history.length).toBe(1);
-    expect(r.history[0].duration).toBe(25 * 60);
+    expect(r.state.phase).toBe('idle'); // 超时 → 回空闲（不再补算流转）
+    expect(r.state.endTime).toBeNull();
+    expect(r.history.length).toBe(0); // 不编造历史
     await dm.save({ version: 1, state: r.state, history: r.history });
     const reloaded = await dm.load();
-    expect(reloaded.state.phase).toBe('long-break');
+    expect(reloaded.state.phase).toBe('idle');
     expect(reloaded.history).toEqual(r.history);
   });
 
