@@ -62,7 +62,7 @@ _Avoid_: 抓海报、豆瓣补全、poster fetch
 
 **自动摘要 (Auto Summary)**: 常驻监听 `归档/网页剪藏` 新文件 → AI（deepseek-v4-flash）生成摘要/标签写回 frontmatter。
 
-**B站下载 (Bilibili Downloader)**: 输入链接 → B站 API 解析（封面/标题/清晰度）→ 下载合并（ffmpeg spawn）→ 裁切/压缩（ffmpeg）→ 转文字（faster-whisper，python -c 内嵌代码）。**用户决策：独立 NodeJS Web 工具（`tools/bili-downloader/`，bin `bili-dl`），不并入 bz 插件**——运行即起本地网页，网页内完成全部操作，设置图标可改交付目录。见 `tools/bili-downloader/CONTEXT.md`（ADR-0011）。
+**B站下载 (Bilibili Downloader)**: 输入链接 → B站 API 解析（封面/标题/清晰度）→ 下载合并（ffmpeg spawn）→ 多段剪辑（对一个下载原件定义 0..N 段落，时间 0.1s/HH:MM:SS(.S)）/合并（段序拼接）/压缩（ffmpeg，产物 ffprobe 校验兜底，交付模式：分开、每段一个；合并、单文件）→ 转文字（faster-whisper，python -c 内嵌代码）。**用户决策：独立 NodeJS Web 工具（`tools/bili-downloader/`，bin `bili-dl`），不并入 bz 插件**——运行即起本地网页，网页内完成全部操作，设置图标可改交付目录。术语见 `tools/bili-downloader/CONTEXT.md`（ADR-0011）。
 
 **AI Agent**: 笔记 ⇄ 备忘录/收藏本 自动同步 + AI 剪藏匹配。常驻监听 vault 事件（rename/delete/create）。权限模型：非 AI 操作静默直改；仅 AI 剪藏匹配弹窗批准。
 
