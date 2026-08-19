@@ -7,11 +7,15 @@ const assert = require('node:assert')
 const fs = require('fs')
 const os = require('os')
 const path = require('path')
+const { spawnSync } = require('child_process')
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'bili-server-test-'))
 process.env.BILI_DL_CONFIG = path.join(tmp, 'config.json')
 process.env.BILI_DL_COOKIES = path.join(tmp, 'cookies.json')
 process.env.BILI_DL_HISTORY = path.join(tmp, 'history.json')
+
+// 端到端交付测试需要真实 ffmpeg；无二进制环境自动跳过
+const hasFfmpeg = (() => { try { return spawnSync('ffmpeg', ['-version']).status === 0 } catch { return false } })()
 
 const { createServer, T, resetTask } = require('../server')
 
@@ -99,28 +103,26 @@ test('POST /api/revert：无下载原件时报错', async () => {
   assert.match(j.error, /下载原件/)
 })
 
-test('POST /api/revert：返回原视频并重置裁切/压缩状态', async () => {
-  const orig = path.join(tmp, 'orig.mp4')
-  const clip = path.join(tmp, 'clip.mp4')
+test('POST /api/revert：返回原视频并清空段落/预编码缓存', async () => {
+  const orig = path.join(tmp, 'orig2.mp4')
+  const clip = path.join(tmp, 'clip2.mp4')
   fs.writeFileSync(orig, 'orig')
   fs.writeFileSync(clip, 'clip')
   T.originalPath = orig
   T.curPath = clip
   T.curDur = 30
-  T.trimmed = true
-  T.compressed = true
-  T.start = 5
-  T.end = 30
-  T.info = { duration: 120 }
+  T.crf = 23
+  T.mode = 'split'
+  T.segments = [{ id: 'a', start: 5, end: 30 }]
+  T.prepared = [{ id: 'a', start: 5, end: 30, mode: 'copy', tempPath: clip }]
+  T.info = { title: '测试', duration: 120 }
   const j = await (await req('POST', '/api/revert', {})).json()
   assert.equal(j.ok, true)
   assert.equal(j.duration, 120)
-  assert.equal(T.curPath, orig)      // 当前产物恢复为下载原件
+  assert.equal(T.curPath, orig)        // 预览恢复为下载原件
   assert.equal(T.curDur, 120)
-  assert.equal(T.trimmed, false)     // 裁切/压缩状态复位（交付时文件名不带标记）
-  assert.equal(T.compressed, false)
-  assert.equal(T.start, 0)
-  assert.equal(T.end, 120)
+  assert.deepEqual(T.segments, [])     // 段落清空
+  assert.deepEqual(T.prepared, [])
   resetTask()   // 恢复任务状态，避免影响后续测试（media/current 等）
 })
 
@@ -144,4 +146,49 @@ test('POST /api/cookie：空 Cookie 报错', async () => {
   const j = await (await req('POST', '/api/cookie', { cookie: '  ' })).json()
   assert.equal(j.ok, false)
   assert.match(j.error, /Cookie 为空/)
+})
+
+// ---------- 多段交付端到端（需真实 ffmpeg）----------
+
+function makeSrc() {
+  const src = path.join(tmp, 'tc-src-' + Date.now() + '.mp4')
+  const r = spawnSync('ffmpeg', ['-y', '-f', 'lavfi', '-i', 'testsrc2=size=64x64:rate=10', '-t', '3', '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', src], { encoding: 'utf8' })
+  assert.equal(r.status, 0, r.stderr || 'ffmpeg 生成源失败')
+  return src
+}
+
+test('POST /api/done：分开交付多段 → N 文件 + 多行 wikilink + 历史逐条', { skip: !hasFfmpeg }, async () => {
+  const src = makeSrc()
+  const outDir = path.join(tmp, 'deliver-split')
+  fs.mkdirSync(outDir, { recursive: true })
+  assert.equal((await (await req('POST', '/api/config', { outputDir: outDir, vaultPath: '' })).json()).ok, true)
+  T.originalPath = src; T.curPath = src; T.curDur = 3
+  T.info = { title: '多段测试', duration: 3 }; T.url = 'https://www.bilibili.com/video/BV1GJ411x7h7'; T.quality = 1080
+  const j = await (await req('POST', '/api/done', { segments: [{ id: 'a', start: 0, end: 1 }, { id: 'b', start: 1, end: 3 }], mode: 'split', crf: null })).json()
+  assert.equal(j.ok, true, j.error)
+  assert.equal(j.mode, 'split')
+  assert.equal(j.files.length, 2)
+  assert.ok(j.clipboard.includes('\n'), '分开交付应为多行 wikilink')
+  assert.ok(j.failures.length === 0, JSON.stringify(j.failures))
+  for (const f of j.files) assert.ok(fs.existsSync(f.finalPath), f.finalPath)
+  const hist = (await (await req('GET', '/api/history')).json()).history
+  assert.equal(hist.length, 2)
+  resetTask()
+})
+
+test('POST /api/done：合并交付多段 → 单文件 + 单条 wikilink', { skip: !hasFfmpeg }, async () => {
+  const src = makeSrc()
+  const outDir = path.join(tmp, 'deliver-merge')
+  fs.mkdirSync(outDir, { recursive: true })
+  await (await req('POST', '/api/config', { outputDir: outDir, vaultPath: '' })).json()
+  T.originalPath = src; T.curPath = src; T.curDur = 3
+  T.info = { title: '合并测试', duration: 3 }; T.url = 'https://www.bilibili.com/video/BV1GJ411x7h7'; T.quality = 720
+  const j = await (await req('POST', '/api/done', { segments: [{ id: 'a', start: 0, end: 1 }, { id: 'b', start: 1, end: 3 }], mode: 'merge', crf: null })).json()
+  assert.equal(j.ok, true, j.error)
+  assert.equal(j.mode, 'merge')
+  assert.equal(j.files.length, 1)
+  assert.ok(j.files[0].finalName.includes('_merge_2段'), j.files[0].finalName)
+  assert.ok(!j.clipboard.includes('\n'), '合并交付应为单条 wikilink')
+  assert.ok(fs.existsSync(j.files[0].finalPath))
+  resetTask()
 })

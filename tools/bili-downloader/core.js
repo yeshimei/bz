@@ -86,14 +86,38 @@ function extractBv(url) {
   return m ? m[0] : ''
 }
 
+const pad2 = n => String(n).padStart(2, '0')
+
+// 恒显小时位：文件名用 `-` 分隔（HH-MM-SS），显示用 `:` 分隔（HH:MM:SS）
 function fmtTime(t) {
   const s = Math.max(0, Math.round(t))
-  return `${String(Math.floor(s / 60)).padStart(2, '0')}-${String(s % 60).padStart(2, '0')}`
+  return `${pad2(Math.floor(s / 3600))}-${pad2(Math.floor(s % 3600 / 60))}-${pad2(s % 60)}`
 }
 
 function fmtDuration(t) {
   const s = Math.max(0, Math.round(t))
-  return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
+  return `${pad2(Math.floor(s / 3600))}:${pad2(Math.floor(s % 3600 / 60))}:${pad2(s % 60)}`
+}
+
+// 保留 1 位小数的秒字符串（ffmpeg 传参用，避免浮点尾巴）
+function fmtSec(t) {
+  const x = Math.max(0, Math.round((Number(t) || 0) * 10) / 10)
+  return String(x)
+}
+
+// 解析用户输入的时间：HH:MM:SS.S / MM:SS.S / SS.S / 裸秒 → 秒（1 位小数）；失败返回 null
+function parseTimeInput(str) {
+  const s = String(str).trim()
+  if (!s || !/^-?[\d:.]+$/.test(s)) return null
+  const parts = String(s).split(':').map(p => p.trim())
+  if (parts.length > 3) return null
+  const nums = parts.map(p => { const n = Number(p); return isFinite(n) && n >= 0 ? n : NaN })
+  if (nums.some(Number.isNaN)) return null
+  let sec
+  if (nums.length === 1) sec = nums[0]
+  else if (nums.length === 2) sec = nums[0] * 60 + nums[1]
+  else sec = nums[0] * 3600 + nums[1] * 60 + nums[2]
+  return Math.max(0, Math.round(sec * 10) / 10)
 }
 
 function buildFileName({ title, bv, trimmed, start, end, duration, compressed, crf }) {
@@ -268,17 +292,22 @@ async function downloadVideo({ url, cookie, height, outPath, onProgress, onDiag,
   try { fs.unlinkSync(tmpA) } catch {}
 }
 
-// 裁切+压缩：crf 为 null 时用流复制（快速无损裁切）；否则 libx264 重编码
-// 进度：解析 stderr 的 -stats 输出 time=HH:MM:SS（stderr 无缓冲，实时流式）
-function trimVideo({ inPath, outPath, ffmpeg = 'ffmpeg', start, end, crf, totalMs, onProgress }) {
+// ---- 裁切参数构造（纯函数，可 headless 测试）----
+// mode: 'copy'（快速无损：-ss 在 -i 前做输入级 seek + -t 相对时长）
+//       | 'reencode'（帧精确：-ss/-to 在 -i 后做输出级切帧）
+// 不用输入级 -to（不同 ffmpeg 版本语义有差异，长视频易出短/坏产物 → bug #5）
+function buildTrimArgs({ mode, inPath, outPath, start, end, crf = 23, faststartMaxSec = 1800 }) {
+  const dur = Math.max(0, end - start)
+  const faststart = dur <= faststartMaxSec ? ['-movflags', '+faststart'] : []
+  if (mode !== 'reencode') {
+    return ['-y', '-ss', fmtSec(start), '-i', inPath, '-t', fmtSec(dur), '-c', 'copy', ...faststart, '-stats_period', '0.2', outPath]
+  }
+  return ['-y', '-i', inPath, '-ss', fmtSec(start), '-to', fmtSec(end), '-c:v', 'libx264', '-crf', String(crf), '-preset', 'medium', '-c:a', 'aac', ...faststart, '-stats_period', '0.2', outPath]
+}
+
+// 执行 ffmpeg：解析 stderr 的 time=HH:MM:SS 做进度；返回 { ok, err }
+function runFfmpeg({ args, ffmpeg = 'ffmpeg', totalMs = 0, onProgress }) {
   return new Promise((resolve, reject) => {
-    const args = ['-y', '-ss', String(start), '-to', String(end), '-i', inPath]
-    if (crf === null || crf === undefined) {
-      args.push('-c', 'copy')
-    } else {
-      args.push('-c:v', 'libx264', '-crf', String(crf), '-preset', 'medium', '-c:a', 'aac')
-    }
-    args.push('-movflags', '+faststart', '-stats_period', '0.2', outPath)
     const p = spawn(ffmpeg, args, { windowsHide: true })
     trackProc(p)
     let err = ''
@@ -288,18 +317,82 @@ function trimVideo({ inPath, outPath, ffmpeg = 'ffmpeg', start, end, crf, totalM
       let m
       while ((m = re.exec(String(d))) !== null) {
         const t = (+m[1]) * 3600 + (+m[2]) * 60 + parseFloat(m[3])
-        if (totalMs > 0) {
-          const pct = Math.min(100, (t * 1000 / totalMs) * 100)
-          onProgress && onProgress({ phase: 'trim', percent: pct })
-        }
+        if (totalMs > 0) onProgress && onProgress({ percent: Math.min(100, (t * 1000 / totalMs) * 100) })
       }
     })
     p.on('error', e => reject(new Error(`无法启动 ffmpeg：${e.message}`)))
+    p.on('close', code => resolve({ ok: code === 0, err: lastLine(err) || `ffmpeg 退出码 ${code}` }))
+  })
+}
+
+// ffprobe 读取时长（秒）；失败返回 null
+function probeDuration(file, ffprobe = 'ffprobe') {
+  return new Promise(resolve => {
+    const p = spawn(ffprobe, ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', file], { windowsHide: true })
+    trackProc(p)
+    let out = ''
+    p.stdout.on('data', d => (out += d))
+    p.on('error', () => resolve(null))
     p.on('close', code => {
-      if (code !== 0) reject(new Error(lastLine(err) || `ffmpeg 退出码 ${code}`))
-      else resolve()
+      const n = parseFloat(out.trim())
+      resolve(code === 0 && isFinite(n) && n > 0 ? n : null)
     })
   })
+}
+
+// 产物校验：能读出时长且在容差内（copy 路径容忍关键帧吸附偏长）
+async function validateClip(file, { expectedSec, toleranceSec = 2, ffprobe = 'ffprobe' }) {
+  const dur = await probeDuration(file, ffprobe)
+  if (dur === null) return { ok: false, dur: null, reason: '无法读取产物' }
+  return { ok: Math.abs(dur - expectedSec) <= toleranceSec, dur, reason: `时长 ${dur.toFixed(1)}s 与期望 ${expectedSec.toFixed(1)}s 偏差超限` }
+}
+
+// 裁切+压缩：crf 为 null 用流复制（快速无损），否则 libx264 重编码。
+// 可靠性保障（bug #5）：copy 产物 ffprobe 校验，失败/时长不符自动重编码重试，保证可播。
+// 返回 { mode: 'copy'|'reencode', reencoded }；失败抛错。
+async function trimVideo({ inPath, outPath, ffmpeg = 'ffmpeg', ffprobe = 'ffprobe', start, end, crf, totalMs, onProgress, faststartMaxSec = 1800 }) {
+  const dur = Math.max(0, end - start)
+  if (crf === null || crf === undefined) {
+    let r = await runFfmpeg({ args: buildTrimArgs({ mode: 'copy', inPath, outPath, start, end, faststartMaxSec }), ffmpeg, totalMs, onProgress })
+    if (r.ok && (await validateClip(outPath, { expectedSec: dur, toleranceSec: 2, ffprobe })).ok) return { mode: 'copy', reencoded: false }
+    // copy 产物失效/时长不对 → 自动重编码（帧精确，默认 CRF 23）
+    try { fs.unlinkSync(outPath) } catch {}
+    const r2 = await runFfmpeg({ args: buildTrimArgs({ mode: 'reencode', inPath, outPath, start, end, crf: 23, faststartMaxSec }), ffmpeg, totalMs, onProgress })
+    if (r2.ok && (await validateClip(outPath, { expectedSec: dur, toleranceSec: 0.5, ffprobe })).ok) return { mode: 'reencode', reencoded: true }
+    throw new Error(`裁切失败:${[r.err, r2.err].filter(Boolean).join('；') || '产物校验未通过'}`)
+  }
+  const r3 = await runFfmpeg({ args: buildTrimArgs({ mode: 'reencode', inPath, outPath, start, end, crf, faststartMaxSec }), ffmpeg, totalMs, onProgress })
+  if (r3.ok && (await validateClip(outPath, { expectedSec: dur, toleranceSec: 0.5, ffprobe })).ok) return { mode: 'reencode', reencoded: false }
+  throw new Error(`压缩失败:${r3.err || '产物校验未通过'}`)
+}
+
+// ---- 合并参数构造（纯函数）----
+function buildMergeArgs({ mode, listPath, outPath, crf = 23, faststart = false }) {
+  const header = ['-y', '-f', 'concat', '-safe', '0', '-i', listPath]
+  const fsOpts = faststart ? ['-movflags', '+faststart'] : []
+  if (mode !== 'reencode') return [...header, '-c', 'copy', ...fsOpts, outPath]
+  return [...header, '-c:v', 'libx264', '-crf', String(crf), '-preset', 'medium', '-c:a', 'aac', ...fsOpts, outPath]
+}
+
+// concat 列表（ffmpeg concat demuxer 语法，转义单引号）
+function writeConcatList(listPath, files) {
+  const body = files.map(f => `file '${String(f).replace(/'/g, "'\\''")}'`).join('\n') + '\n'
+  fs.writeFileSync(listPath, body)
+}
+
+// 合并多段：-c copy 拼接优先，产物校验不过 → 重编码拼接（帧精确、兼容异源）。
+// 返回 { mode: 'copy'|'reencode' }；失败抛错。
+async function mergeSegments({ files, outPath, ffmpeg = 'ffmpeg', ffprobe = 'ffprobe', expectedSec, crf, onProgress, faststartMaxSec = 1800 }) {
+  const listPath = outPath + '.concat'
+  writeConcatList(listPath, files)
+  const faststart = expectedSec <= faststartMaxSec
+  let r = await runFfmpeg({ args: buildMergeArgs({ mode: 'copy', listPath, outPath, faststart }), ffmpeg, totalMs: expectedSec * 1000, onProgress })
+  if (r.ok && (await validateClip(outPath, { expectedSec, toleranceSec: 2, ffprobe })).ok) { try { fs.unlinkSync(listPath) } catch {}; return { mode: 'copy' } }
+  try { fs.unlinkSync(outPath) } catch {}
+  const r2 = await runFfmpeg({ args: buildMergeArgs({ mode: 'reencode', listPath, outPath, crf: crf ?? 23, faststart }), ffmpeg, totalMs: expectedSec * 1000, onProgress })
+  try { fs.unlinkSync(listPath) } catch {}
+  if (r2.ok && (await validateClip(outPath, { expectedSec, toleranceSec: 0.5, ffprobe })).ok) return { mode: 'reencode' }
+  throw new Error(`合并失败:${[r.err, r2.err].filter(Boolean).join('；') || '产物校验未通过'}`)
 }
 
 // ---- 任务中止追踪（取消时 kill 子进程 + 中断下载流）----
@@ -386,8 +479,10 @@ function runPython({ py, args, onChunk }) {
 
 module.exports = {
   UA, MIXIN_KEY_ENC_TAB, getMixinKey, fetchJsonImpl, getWbiKeys, wbiSign, getViewInfo, getPlayUrls,
-  lastLine, qualityLabel, sanitizeName, extractBv, fmtTime, fmtDuration, buildFileName,
-  parseVideo, fmtEta, downloadStream, mergeStreams, downloadVideo, trimVideo,
+  lastLine, qualityLabel, sanitizeName, extractBv, fmtTime, fmtDuration, fmtSec, parseTimeInput, buildFileName,
+  parseVideo, fmtEta, downloadStream, mergeStreams, downloadVideo,
+  buildTrimArgs, runFfmpeg, probeDuration, validateClip, trimVideo,
+  buildMergeArgs, writeConcatList, mergeSegments,
   loadCookies, saveCookies, readJson, writeJson, uniquePath,
   abortAll, resetAbort, trackProc, runPython, PY_TRANSCRIBE,
 }
