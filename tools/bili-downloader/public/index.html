@@ -49,19 +49,32 @@
     <div class="hint" id="dl-diag"></div>
   </section>
 
-  <!-- 预览 + 裁切/压缩 -->
+  <!-- 预览 + 剪辑（多段落）/ 压缩 -->
   <section class="hidden" id="preview-wrap">
     <video id="video" controls playsinline></video>
     <div class="vctrl">
       <button class="btn small" id="play-btn">播放</button>
-      <span class="vtime" id="vtime">00:00 / 00:00</span>
-      <button class="btn small hidden" id="revert-btn" title="返回下载原片，重新裁切/压缩">↩ 原视频</button>
+      <span class="vtime" id="vtime">00:00:00 / 00:00:00</span>
+      <span class="buf" id="buf-hint">缓冲中…</span>
+      <button class="btn small hidden" id="revert-btn" title="返回下载原片，清空段落重新剪辑">↩ 原视频</button>
+    </div>
+    <div class="seg-mode" id="mode-wrap">
+      <button class="seg-mode-btn sel" id="mode-split">分开交付（每段一个）</button>
+      <button class="seg-mode-btn" id="mode-merge">合并成一个视频</button>
     </div>
     <div class="range" id="range-bar">
-      <input type="range" id="range-start" min="0" max="100" value="0">
-      <input type="range" id="range-end" min="0" max="100" value="100">
+      <input type="range" id="range-start" min="0" max="100" value="0" step="0.1">
+      <input type="range" id="range-end" min="0" max="100" value="100" step="0.1">
+      <div class="blocks" id="timeline-blocks"></div>
     </div>
     <div class="rangelabels"><span id="start-label"></span><span id="end-label"></span></div>
+    <div class="seg-inputs">
+      <label class="time-in">开始 <input id="seg-start" type="text" inputmode="decimal" placeholder="00:00:00.0" spellcheck="false"></label>
+      <label class="time-in">结束 <input id="seg-end" type="text" inputmode="decimal" placeholder="00:01:00.0" spellcheck="false"></label>
+    </div>
+    <div class="hint err hidden" id="seg-input-err"></div>
+    <div class="segl" id="seg-list"></div>
+    <div class="row" style="margin-top:8px"><button class="btn small" id="add-seg-btn">+ 添加段落</button></div>
     <div class="crfs" id="crfs"></div>
     <div class="row" style="margin-top:10px">
       <button class="btn" id="trim-btn">✂ 应用裁切</button>
@@ -136,6 +149,9 @@
       </label>
       <label>🎞 ffmpeg 路径
         <input type="text" id="set-ffmpegPath" placeholder="ffmpeg">
+      </label>
+      <label>🎯 ffprobe 路径（裁切/合并产物校验用）
+        <input type="text" id="set-ffprobePath" placeholder="ffprobe">
       </label>
       <label>🐍 Python 路径（faster-whisper 所在，需 3.11+）
         <input type="text" id="set-pythonPath" placeholder="C:/.../python.exe">

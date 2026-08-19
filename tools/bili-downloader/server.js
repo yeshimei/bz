@@ -16,21 +16,33 @@ const cfg = require('./config')
 const PUBLIC_DIR = path.join(__dirname, 'public')
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon' }
 
-// ---- 任务状态（单任务语义）----
+// ---- 任务状态（单任务语义；一个任务可有多个「段落」）----
 const T = {
   phase: 'idle',           // idle | parsing | downloading | trimming | compressing | transcribing | done
   url: '', info: null, quality: null,
-  originalPath: null,      // 下载原件（裁切/压缩后仍保留，可「返回原视频」重新裁切）
-  curPath: null, curDur: 0,
-  trimmed: false, compressed: false, crf: 23, start: 0, end: 0,
-  transcript: '', finalPath: null, finalName: '', saved: false,
+  originalPath: null,      // 下载原件（剪辑的源；始终保留，「返回原视频」可重建段落）
+  curPath: null, curDur: 0, // /media/current 预览（默认即原件，保证时间轴坐标 = 原件时长）
+  crf: 23,
+  segments: [],            // [{id, start, end}] 段落列表，顺序即交付顺序
+  mode: 'split',           // split（分开交付，每段一个） | merge（合并成一个视频）
+  prepared: [],            // [{id, start, end, mode, tempPath}] 已校验段落临时产物缓存（交付复用）
+  transcript: '',
 }
 function resetTask() {
   core.resetAbort()
+  for (const p of T.prepared) { try { fs.unlinkSync(p.tempPath) } catch {} }   // 清残留预编码临时产物
   T.url = ''; T.info = null; T.quality = null; T.originalPath = null; T.curPath = null; T.curDur = 0
-  T.trimmed = false; T.compressed = false; T.crf = 23; T.start = 0; T.end = 0
-  T.transcript = ''; T.finalPath = null; T.finalName = ''; T.saved = false
+  T.crf = 23; T.segments = []; T.mode = 'split'; T.prepared = []
+  T.transcript = ''
   T.phase = 'idle'
+}
+
+// 段落钳制：必须落在原件时长内且 start < end，否则按整片处理
+function clampSeg(seg, duration) {
+  let start = Math.max(0, Number(seg.start) || 0)
+  let end = Math.min(duration, Number(seg.end) || duration)
+  if (end - start < 0.1) { start = 0; end = duration }
+  return { id: String(seg.id != null ? seg.id : Math.random()), start, end }
 }
 
 // ---- SSE 客户端 ----
@@ -68,38 +80,109 @@ function makeWiki(finalName, conf) {
   }
   return path.join(outAbs, finalName)
 }
-// 剪贴板内容：未转文字 = 仅 wikilink；已转文字 = wikilink + 空行 + 转录全文
-function buildClipboard(finalName) {
+// 剪贴板内容：wikilink 可多条（分开交付=每段一行，合并=单条）；已转文字 = 末尾空行 + 转录全文一次
+function buildClipboard(wikis) {
   const conf = cfg.loadConfig()
-  const wiki = makeWiki(finalName, conf)
+  const list = (Array.isArray(wikis) ? wikis : [wikis]).map(n => makeWiki(n, conf))
+  const wiki = list.join('\n')
   if (!T.transcript) return { wiki, text: wiki }
   return { wiki, text: `${wiki}\n\n${T.transcript}` }
 }
 
-// ---- 交付：移入交付目录 + 历史 ----
-async function doDone() {
-  if (!T.curPath) throw new Error('请先下载视频')
+// 段落截取并校验（缓存复用）；返回临时产物路径。crf 为 null 时用 copy 优先 + 自动重编码兜底。
+async function prepareSegment(seg, duration) {
+  const hit = T.prepared.find(p => p.id === seg.id && p.start === seg.start && p.end === seg.end && fs.existsSync(p.tempPath))
+  if (hit) return hit.tempPath
+  const conf = cfg.loadConfig()
+  const tmp = path.join(TMP_DIR, `bili_${Date.now()}_${seg.id}.mp4`)
+  const r = await core.trimVideo({
+    inPath: T.originalPath, outPath: tmp, ffmpeg: conf.ffmpegPath, ffprobe: conf.ffprobePath,
+    start: seg.start, end: seg.end, crf: null, totalMs: (seg.end - seg.start) * 1000,
+    onProgress: ({ percent }) => broadcast({ type: 'trim-progress', percent }),
+  })
+  T.prepared = T.prepared.filter(p => p.id !== seg.id)
+  T.prepared.push({ id: seg.id, start: seg.start, end: seg.end, mode: r.mode, tempPath: tmp })
+  return tmp
+}
+
+// 交付：按交付模式批量产出全部交付物（分开=每段一个文件+一条 wikilink；合并=段序拼接一个文件）
+async function doDone(body) {
+  if (!T.originalPath) throw new Error('请先下载视频')
+  const segs = (body.segments || []).filter(Boolean).map(s => clampSeg(s, T.info.duration))
+  if (!segs.length) throw new Error('请先添加至少一个段落')
+  T.segments = segs
+  T.mode = body.mode === 'merge' ? 'merge' : 'split'
+  const crf = body.crf === null || body.crf === undefined ? null : Number(body.crf)
+  T.crf = isFinite(crf) ? crf : 23
   const conf = cfg.loadConfig()
   const outDirAbs = path.resolve(conf.outputDir)
   fs.mkdirSync(outDirAbs, { recursive: true })
-  const en = T.end > 0 ? T.end : T.info.duration
-  T.finalName = core.buildFileName({ title: T.info.title, bv: core.extractBv(T.url), trimmed: T.trimmed, start: T.start, end: en, duration: T.info.duration, compressed: T.compressed, crf: T.crf })
-  const finalPath = core.uniquePath(path.join(outDirAbs, T.finalName))
-  fs.copyFileSync(T.curPath, finalPath)
-  try { fs.unlinkSync(T.curPath) } catch {}
-  T.finalPath = finalPath
-  T.finalName = path.basename(finalPath)
-  T.saved = true
+  const title = T.info.title, bv = core.extractBv(T.url), duration = T.info.duration
+  const files = [], failures = []
+  const history = (finalName, wiki) => cfg.pushHistory({ time: new Date().toLocaleString('zh-CN', { hour12: false }), title, bv, quality: `${T.quality}P`, file: finalName, wiki })
+
+  if (T.mode === 'merge') {
+    try {
+      const parts = []
+      for (const seg of segs) parts.push(await prepareSegment(seg, duration))
+      const merged = path.join(TMP_DIR, `bili_${Date.now()}_merge.mp4`)
+      const expected = segs.reduce((a, s) => a + (s.end - s.start), 0)
+      await core.mergeSegments({ files: parts, outPath: merged, ffmpeg: conf.ffmpegPath, ffprobe: conf.ffprobePath, expectedSec: expected, onProgress: ({ percent }) => broadcast({ type: 'trim-progress', percent }) })
+      let finalTemp = merged, compressed = false, usedCrf = null
+      if (crf !== null) {
+        const before = fs.statSync(merged).size
+        const enc = path.join(TMP_DIR, `bili_${Date.now()}_crf${crf}.mp4`)
+        await core.trimVideo({ inPath: merged, outPath: enc, ffmpeg: conf.ffmpegPath, ffprobe: conf.ffprobePath, start: 0, end: expected, crf, totalMs: expected * 1000, onProgress: ({ percent }) => broadcast({ type: 'trim-progress', percent }) })
+        const after = fs.statSync(enc).size
+        if (after < before) { finalTemp = enc; compressed = true; usedCrf = crf }
+        else { try { fs.unlinkSync(enc) } catch {} }   // 压缩回退：保留合并件
+      }
+      const name = `${core.sanitizeName(title)}_${bv}_merge_${segs.length}段${compressed ? `_crf${usedCrf}` : ''}.mp4`
+      const finalPath = core.uniquePath(path.join(outDirAbs, name))
+      fs.copyFileSync(finalTemp, finalPath)
+      try { fs.unlinkSync(finalTemp) } catch {}
+      const finalName = path.basename(finalPath)
+      history(finalName, makeWiki(finalName, conf))
+      files.push({ finalName, finalPath, wiki: makeWiki(finalName, conf) })
+    } catch (e) {
+      failures.push(`合并：${e.message}`)
+    }
+  } else {
+    for (const seg of segs) {
+      try {
+        const tmp = await prepareSegment(seg, duration)
+        let finalTemp = tmp, compressed = false, usedCrf = null
+        if (crf !== null) {
+          const before = fs.statSync(tmp).size
+          const enc = path.join(TMP_DIR, `bili_${Date.now()}_${seg.id}_crf${crf}.mp4`)
+          await core.trimVideo({ inPath: tmp, outPath: enc, ffmpeg: conf.ffmpegPath, ffprobe: conf.ffprobePath, start: 0, end: seg.end - seg.start, crf, totalMs: (seg.end - seg.start) * 1000, onProgress: ({ percent }) => broadcast({ type: 'trim-progress', percent }) })
+          const after = fs.statSync(enc).size
+          if (after < before) { finalTemp = enc; compressed = true; usedCrf = crf }
+          else { try { fs.unlinkSync(enc) } catch {} }
+        }
+        const full = !(seg.start > 0 || seg.end < duration)          // 全片 = 不裁切
+        const finalName = core.buildFileName({ title, bv, trimmed: !full, start: seg.start, end: seg.end, duration, compressed, crf: usedCrf })
+        const finalPath = core.uniquePath(path.join(outDirAbs, finalName))
+        fs.copyFileSync(finalTemp, finalPath)
+        try { if (finalTemp !== tmp) fs.unlinkSync(finalTemp) } catch {}
+        history(finalName, makeWiki(finalName, conf))
+        files.push({ finalName, finalPath, wiki: makeWiki(finalName, conf) })
+      } catch (e) {
+        failures.push(`段落 ${seg.id}：${e.message}`)
+      }
+    }
+  }
+  if (!files.length) throw new Error(failures.join('\n') || '交付失败')
   T.phase = 'done'
-  const clip = buildClipboard(T.finalName)
-  cfg.pushHistory({ time: new Date().toLocaleString('zh-CN', { hour12: false }), title: T.info.title, bv: core.extractBv(T.url), quality: `${T.quality}P`, file: T.finalName, wiki: clip.wiki })
-  return { ok: true, finalName: T.finalName, finalPath: T.finalPath, clipboard: clip.text, wiki: clip.wiki }
+  const clip = buildClipboard(files.map(f => f.wiki))
+  return { ok: true, mode: T.mode, files, failures, clipboard: clip.text, wiki: clip.wiki }
 }
 
 // ---- 取消：中止 + 删除全部产物 + 重置任务 ----
 async function doCancel() {
   core.abortAll()
-  try { if (T.curPath) fs.unlinkSync(T.curPath) } catch {}
+  for (const p of T.prepared) { try { fs.unlinkSync(p.tempPath) } catch {} }
+  try { if (T.curPath && T.curPath !== T.originalPath) fs.unlinkSync(T.curPath) } catch {}
   try { fs.rmSync(TMP_DIR, { recursive: true, force: true }) } catch {}
   fs.mkdirSync(TMP_DIR, { recursive: true })
   resetTask()
@@ -192,62 +275,55 @@ const handlers = {
         onDiag: text => broadcast({ type: 'diag', text }),
         onProgress: p => broadcast({ type: 'download-progress', ...p }),
       })
-      T.curPath = outPath
-      T.originalPath = outPath   // 下载原件：裁切/压缩后可「返回原视频」重新裁切
+      T.curPath = outPath      // 预览即下载原件（时间轴坐标 = 原件时长）
+      T.originalPath = outPath // 下载原件：剪辑的源，始终保留
       T.curDur = T.info.duration
-      T.trimmed = false; T.compressed = false
+      T.segments = []; T.prepared = []; T.mode = 'split'
       T.phase = 'ready'
       return { ok: true, path: outPath }
     } finally { setBusy(false) }
   },
   async 'POST /api/trim'(body) {
-    if (!T.curPath) throw new Error('请先下载视频')
+    if (!T.originalPath) throw new Error('请先下载视频')
     if (busy) throw new Error('任务进行中')
-    const start = Number(body.start) || 0
-    const end = Number(body.end) || T.info.duration
-    if (!(start > 0 || end < T.info.duration)) throw new Error('未选择裁切范围')
+    const seg = clampSeg({ id: body.segmentId, start: body.start, end: body.end }, T.info.duration)
+    if (!seg) throw new Error('请先选择段落')
     setBusy(true)
     T.phase = 'trimming'
     try {
-      const outPath = path.join(TMP_DIR, `bili_${Date.now()}_clip.mp4`)
-      await core.trimVideo({
-        inPath: T.curPath, outPath, ffmpeg: cfg.loadConfig().ffmpegPath,
-        start, end, crf: null, totalMs: (end - start) * 1000,
-        onProgress: ({ percent }) => broadcast({ type: 'trim-progress', percent }),
-      })
-      T.curPath = outPath
-      T.curDur = end - start
-      T.trimmed = true
-      T.start = start; T.end = end
-      T.phase = 'ready'
-      return { ok: true, path: outPath }
+      await prepareSegment(seg, T.info.duration)   // 校验 + 缓存（交付复用）
+      const p = T.prepared.find(x => x.id === seg.id)
+      return { ok: true, segmentId: seg.id, duration: seg.end - seg.start, mode: p ? p.mode : 'copy' }
     } finally { setBusy(false) }
   },
   async 'POST /api/compress'(body) {
-    if (!T.curPath) throw new Error('请先下载视频')
+    if (!T.originalPath) throw new Error('请先下载视频')
     if (busy) throw new Error('任务进行中')
     const crf = body.crf === null || body.crf === undefined ? null : Number(body.crf)
-    if (crf === null) throw new Error('已选择不压缩')
+    if (crf === null || !isFinite(crf)) throw new Error('请选择压缩档位')
+    const seg = clampSeg({ id: body.segmentId, start: body.start, end: body.end }, T.info.duration)
+    if (!seg) throw new Error('请先选择段落')
     setBusy(true)
     T.phase = 'compressing'
     try {
-      const before = fs.statSync(T.curPath).size
-      const outPath = path.join(TMP_DIR, `bili_${Date.now()}_crf${crf}.mp4`)
+      const copyTmp = await prepareSegment(seg, T.info.duration)
+      const before = fs.statSync(copyTmp).size
+      const enc = path.join(TMP_DIR, `bili_${Date.now()}_${seg.id}_crf${crf}.mp4`)
       await core.trimVideo({
-        inPath: T.curPath, outPath, ffmpeg: cfg.loadConfig().ffmpegPath,
-        start: 0, end: T.curDur, crf, totalMs: T.curDur * 1000,
+        inPath: copyTmp, outPath: enc, ffmpeg: cfg.loadConfig().ffmpegPath, ffprobe: cfg.loadConfig().ffprobePath,
+        start: 0, end: seg.end - seg.start, crf, totalMs: (seg.end - seg.start) * 1000,
         onProgress: ({ percent }) => broadcast({ type: 'trim-progress', percent }),
       })
-      const after = fs.statSync(outPath).size
-      // 压缩无收益（产物 >= 原件）：丢弃压缩件、保留原件并提醒（kept:'original'）
+      const after = fs.statSync(enc).size
+      // 压缩无收益（>= 编码前 copy 件）：丢弃编码件、保留 copy，提醒（kept:'original'）
       if (after >= before) {
-        try { fs.unlinkSync(outPath) } catch {}
+        try { fs.unlinkSync(enc) } catch {}
         T.phase = 'ready'
         return { ok: true, kept: 'original', before, after, pct: (1 - after / before) * 100 }
       }
-      T.curPath = outPath
-      T.compressed = true
-      T.crf = crf
+      // 编码件替换缓存（交付时直接复用该压好的产物）
+      T.prepared = T.prepared.filter(p => p.id !== seg.id)
+      T.prepared.push({ id: seg.id, start: seg.start, end: seg.end, mode: 'reencode', tempPath: enc })
       T.phase = 'ready'
       return { ok: true, before, after, pct: (1 - after / before) * 100 }
     } finally { setBusy(false) }
@@ -270,20 +346,20 @@ const handlers = {
       return { ok: true, transcript: T.transcript }
     } finally { setBusy(false) }
   },
-  async 'POST /api/done'() {
+  async 'POST /api/done'(body) {
     if (busy) throw new Error('任务进行中')
-    return doDone()
+    return doDone(body || {})
   },
   async 'POST /api/revert'() {
-    // 返回原视频：恢复下载原件，重置裁切/压缩状态（可重新裁切）
-    if (!T.originalPath || !T.curPath) throw new Error('暂无下载原件')
+    // 返回原视频：清空全部段落 + 关闭压缩 + 恢复下载原件（可重新剪辑）
+    if (!T.originalPath) throw new Error('暂无下载原件')
     if (busy) throw new Error('任务进行中')
+    for (const p of T.prepared) { try { fs.unlinkSync(p.tempPath) } catch {} }
+    T.prepared = []
+    T.segments = []
+    T.crf = 23
     T.curPath = T.originalPath
     T.curDur = T.info.duration
-    T.trimmed = false
-    T.compressed = false
-    T.start = 0
-    T.end = T.info.duration
     T.phase = 'ready'
     return { ok: true, duration: T.info.duration }
   },

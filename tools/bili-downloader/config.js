@@ -19,6 +19,7 @@ const DEFAULTS = {
   outputDir: 'E:/Obsidian/叫我包仔/CONFIG/APPENDIX',   // 交付目录：视频最终放的位置（设置图标可改）
   vaultPath: 'E:/Obsidian/叫我包仔',                   // Obsidian vault 根：交付目录在其下时生成 wikilink
   ffmpegPath: 'ffmpeg',
+  ffprobePath: 'ffprobe',                              // 产物校验（时长/可播放性）用
   pythonPath: 'C:/Users/PC/AppData/Local/Programs/Python/Python312/python.exe',
   whisperModel: 'small',
 }
