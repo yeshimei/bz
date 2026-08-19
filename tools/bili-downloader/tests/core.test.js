@@ -8,9 +8,13 @@ const fs = require('fs')
 const os = require('os')
 const path = require('path')
 const { EventEmitter } = require('events')
+const { spawnSync } = require('child_process')
 const core = require('../core')
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'bili-core-test-'))
+
+// 真实 ffmpeg 集成测试条件（无 ffmpeg 时跳过，保证 CI/无二进制环境可跑）
+const hasFfmpeg = (() => { try { return spawnSync('ffmpeg', ['-version']).status === 0 } catch { return false } })()
 
 // ---------- 纯函数 ----------
 
@@ -28,12 +32,12 @@ test('sanitizeName：非法字符替换 + 长度截断', () => {
   assert.equal(core.sanitizeName('   '), '视频')
 })
 
-test('buildFileName：裁切/压缩标记组合', () => {
+test('buildFileName：裁切/压缩标记组合（时间恒显小时位）', () => {
   const base = { title: '测试视频', bv: 'BV1GJ411x7h7', trimmed: false, compressed: false, start: 0, end: 120, duration: 120, crf: null }
   assert.equal(core.buildFileName(base), '测试视频_BV1GJ411x7h7.mp4')
   assert.equal(core.buildFileName({ ...base, compressed: true, crf: 23 }), '测试视频_BV1GJ411x7h7_crf23.mp4')
-  assert.equal(core.buildFileName({ ...base, trimmed: true, start: 10, end: 80 }), '测试视频_BV1GJ411x7h7_clip_00-10-01-20.mp4')
-  assert.equal(core.buildFileName({ ...base, trimmed: true, start: 10, end: 80, compressed: true, crf: 18 }), '测试视频_BV1GJ411x7h7_clip_00-10-01-20_crf18.mp4')
+  assert.equal(core.buildFileName({ ...base, trimmed: true, start: 10, end: 80 }), '测试视频_BV1GJ411x7h7_clip_00-00-10-00-01-20.mp4')
+  assert.equal(core.buildFileName({ ...base, trimmed: true, start: 10, end: 80, compressed: true, crf: 18 }), '测试视频_BV1GJ411x7h7_clip_00-00-10-00-01-20_crf18.mp4')
   // 全片范围不算裁切
   assert.equal(core.buildFileName({ ...base, trimmed: true, start: 0, end: 120 }), '测试视频_BV1GJ411x7h7.mp4')
 })
@@ -48,13 +52,29 @@ test('uniquePath：重名自动加序号', () => {
   assert.equal(f3, path.join(tmp, '重名_3.mp4'))
 })
 
-test('fmtDuration / fmtTime / fmtEta 格式化', () => {
-  assert.equal(core.fmtDuration(65), '01:05')
-  assert.equal(core.fmtDuration(3600), '60:00')
-  assert.equal(core.fmtTime(65), '01-05')
+test('fmtDuration / fmtTime / fmtSec / fmtEta 格式化（恒显小时位）', () => {
+  assert.equal(core.fmtDuration(65), '00:01:05')
+  assert.equal(core.fmtDuration(3600), '01:00:00')
+  assert.equal(core.fmtDuration(6000), '01:40:00')
+  assert.equal(core.fmtTime(65), '00-01-05')
+  assert.equal(core.fmtTime(3600), '01-00-00')
+  assert.equal(core.fmtSec(65.26), '65.3')
+  assert.equal(core.fmtSec(3600), '3600')
   assert.equal(core.fmtEta(125), '02:05')
   assert.equal(core.fmtEta(-1), '?')
   assert.equal(core.fmtEta(NaN), '?')
+})
+
+test('parseTimeInput：HH:MM:SS.S / MM:SS / 裸秒 解析', () => {
+  assert.equal(core.parseTimeInput('01:23:45'), 5025)
+  assert.equal(core.parseTimeInput('01:23:45.6'), 5025.6)
+  assert.equal(core.parseTimeInput('02:05'), 125)
+  assert.equal(core.parseTimeInput('125'), 125)
+  assert.equal(core.parseTimeInput(' 30.5 '), 30.5)
+  assert.equal(core.parseTimeInput(''), null)
+  assert.equal(core.parseTimeInput('abc'), null)
+  assert.equal(core.parseTimeInput('1:2:3:4'), null)
+  assert.equal(core.parseTimeInput('12:99'), 819)
 })
 
 test('qualityLabel：高度与帧率标签', () => {
@@ -238,4 +258,55 @@ test('downloadStream：取消后立即中止（ABORTED 标志）', async () => {
     /已中止/
   )
   core.resetAbort()
+})
+
+// ---------- 裁切/合并参数构造（bug #5 修复的关键：无输入级 -to）----------
+
+test('buildTrimArgs：copy 用 -ss -t 且无输入级 -to；reencode 帧精确；faststart 按时长门控', () => {
+  const copy = core.buildTrimArgs({ mode: 'copy', inPath: 'in.mp4', outPath: 'out.mp4', start: 10, end: 80 })
+  assert.deepEqual(copy.slice(0, 7), ['-y', '-ss', '10', '-i', 'in.mp4', '-t', '70'])
+  assert.ok(!copy.includes('-to'), 'copy 路径不得有 -to（输入级 -to 是长视频 bug 温床）')
+  assert.ok(copy.includes('-c') && copy.includes('copy'))
+  assert.ok(copy.includes('+faststart'), '短片段保留 +faststart')
+
+  const re = core.buildTrimArgs({ mode: 'reencode', inPath: 'in.mp4', outPath: 'out.mp4', start: 10, end: 80, crf: 23 })
+  assert.deepEqual(re.slice(0, 7), ['-y', '-i', 'in.mp4', '-ss', '10', '-to', '80'])
+  assert.ok(re.includes('-c:v') && re.includes('libx264') && re.includes('-crf'))
+
+  const big = core.buildTrimArgs({ mode: 'copy', inPath: 'in.mp4', outPath: 'out.mp4', start: 0, end: 4000, faststartMaxSec: 1800 })
+  assert.ok(!big.includes('+faststart'), '超长片段省略 +faststart（避免超大 copy 输出 moov 回写失败）')
+})
+
+test('buildMergeArgs：copy 拼接与重编码拼接', () => {
+  const c = core.buildMergeArgs({ mode: 'copy', listPath: 'l.txt', outPath: 'm.mp4', faststart: true })
+  assert.deepEqual(c, ['-y', '-f', 'concat', '-safe', '0', '-i', 'l.txt', '-c', 'copy', '-movflags', '+faststart', 'm.mp4'])
+  const r = core.buildMergeArgs({ mode: 'reencode', listPath: 'l.txt', outPath: 'm.mp4', crf: 28 })
+  assert.ok(r.includes('libx264') && r.includes('28'))
+  assert.deepEqual(r.slice(0, 6), ['-y', '-f', 'concat', '-safe', '0', '-i'])
+})
+
+// ---------- 真实 ffmpeg 集成（无 ffmpeg 环境自动跳过）----------
+
+test('trimVideo：真实 ffmpeg 裁切（copy 优先 + 校验），时长正确', { skip: !hasFfmpeg }, async () => {
+  const src = path.join(tmp, 'src.mp4')
+  const r = spawnSync('ffmpeg', ['-y', '-f', 'lavfi', '-i', 'testsrc2=size=64x64:rate=10', '-t', '3', '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', src], { encoding: 'utf8' })
+  assert.equal(r.status, 0, r.stderr || 'ffmpeg 生成源失败')
+  const out = path.join(tmp, 'clip.mp4')
+  const res = await core.trimVideo({ inPath: src, outPath: out, start: 0.5, end: 2.5, crf: null, totalMs: 2000 })
+  assert.ok(res.mode === 'copy' || res.mode === 'reencode', `mode=${res.mode}`)
+  const dur = await core.probeDuration(out)
+  assert.ok(dur !== null && Math.abs(dur - 2) <= 0.5, `dur=${dur}`)
+})
+
+test('mergeSegments：真实 ffmpeg 拼接两段，总时长正确', { skip: !hasFfmpeg }, async () => {
+  const src = path.join(tmp, 'src2.mp4')
+  spawnSync('ffmpeg', ['-y', '-f', 'lavfi', '-i', 'testsrc2=size=64x64:rate=10', '-t', '3', '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', src], { encoding: 'utf8' })
+  const p1 = path.join(tmp, 'a.mp4'), p2 = path.join(tmp, 'b.mp4')
+  await core.trimVideo({ inPath: src, outPath: p1, start: 0, end: 1, crf: null })
+  await core.trimVideo({ inPath: src, outPath: p2, start: 1, end: 2, crf: null })
+  const out = path.join(tmp, 'merged.mp4')
+  const res = await core.mergeSegments({ files: [p1, p2], outPath: out, expectedSec: 2 })
+  assert.ok(res.mode === 'copy' || res.mode === 'reencode', `mode=${res.mode}`)
+  const dur = await core.probeDuration(out)
+  assert.ok(dur !== null && Math.abs(dur - 2) <= 0.5, `dur=${dur}`)
 })

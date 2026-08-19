@@ -1,16 +1,37 @@
 // ================================================================
 // B站下载器 - 前端交互（vanilla，无依赖）
-// 与 server.js 的 API + SSE 协作；剪贴板交付：
-//   转录完成 → 自动复制转录文本；完成 → 复制 wikilink 或
-//   wikilink + 空行 + 转录全文（服务端组装，前端写入剪贴板）
+// 与 server.js 的 API + SSE 协作；剪辑 = 对一个「下载原件」定义
+// 0..N 个「段落{开始,结束}」，交付模式分「分开交付 / 合并成一个视频」。
+// 时间精度 0.1s，显示恒显小时位 HH:MM:SS(.S)。
 // ================================================================
 const $ = id => document.getElementById(id)
 
-const fmtDuration = t => {
-  const s = Math.max(0, Math.round(t))
-  return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
+const pad = n => String(n).padStart(2, '0')
+const fmtDuration = t => {                                  // HH:MM:SS（显示/播放头）
+  const s = Math.max(0, Math.floor(t))
+  return `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s % 3600 / 60))}:${pad(s % 60)}`
+}
+const fmtPrec = t => {                                      // HH:MM:SS.S（起/止精度 0.1s）
+  const s = Math.max(0, t)
+  const ss = Math.floor(s), ds = Math.round((s - ss) * 10)
+  return `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s % 3600 / 60))}:${pad(ss)}.${ds}`
 }
 const fmtMB = b => (b / 1048576).toFixed(1) + 'MB'
+
+// 解析用户输入时间 → 秒（与 core.parseTimeInput 同规）；失败返回 null
+function parseTimeInput(str) {
+  const s = String(str).trim()
+  if (!s || !/^-?[\d:.]+$/.test(s)) return null
+  const parts = s.split(':').map(p => p.trim())
+  if (parts.length > 3) return null
+  const nums = parts.map(p => { const n = Number(p); return isFinite(n) && n >= 0 ? n : NaN })
+  if (nums.some(Number.isNaN)) return null
+  let sec
+  if (nums.length === 1) sec = nums[0]
+  else if (nums.length === 2) sec = nums[0] * 60 + nums[1]
+  else sec = nums[0] * 3600 + nums[1] * 60 + nums[2]
+  return Math.max(0, Math.round(sec * 10) / 10)
+}
 
 async function api(path, method = 'GET', body) {
   const res = await fetch(path, {
@@ -32,9 +53,18 @@ function toast(msg, isErr = false) {
   toastTimer = setTimeout(() => el.classList.add('hidden'), 3600)
 }
 
-// ---- 任务状态（单任务）----
-const S = { info: null, quality: 0, crf: 23, start: 0, end: 0, dur: 0, transcript: '', busy: false, derived: false }
-const OP_BTNS = ['parse-btn', 'dl-btn', 'trim-btn', 'compress-btn', 'transcribe-btn', 'done-btn', 'ts-copy', 'cookie-save-btn', 'settings-save']
+// ---- 任务状态（单任务 + 多段落）----
+const S = {
+  info: null, quality: 0, crf: 23, dur: 0, transcript: '', busy: false,
+  mode: 'split',            // split（分开交付）| merge（合并成一个视频）
+  segments: [],             // [{id, start, end, checked?}]
+  activeId: null,
+}
+let segSeq = 0
+const nextSegId = () => 'seg' + (++segSeq)
+const activeSeg = () => S.segments.find(s => s.id === S.activeId) || null
+
+const OP_BTNS = ['parse-btn', 'dl-btn', 'trim-btn', 'compress-btn', 'transcribe-btn', 'done-btn', 'add-seg-btn', 'ts-copy', 'cookie-save-btn', 'settings-save']
 function setBusy(b) {
   S.busy = b
   OP_BTNS.forEach(id => { const el = $(id); if (el) el.disabled = b })
@@ -57,7 +87,6 @@ es.onmessage = e => {
       txt.textContent = `${d.percent.toFixed(1)}% · ${d.speed || '?'} · ETA ${d.eta || '?'}`
     }
   } else if (d.type === 'trim-progress') {
-    // 当前操作（trim/compress）由发起方记录在 S.op
     const fill = S.op === 'compress' ? $('cp-fill') : $('trim-fill')
     const txt = S.op === 'compress' ? $('cp-text') : $('trim-text')
     if (fill) fill.style.width = `${d.percent}%`
@@ -103,11 +132,7 @@ async function doParse() {
     $('dl-diag').textContent = ''
     $('dl-fill').style.width = '0'
     $('dl-text').textContent = ''
-    $('trim-fill').style.width = '0'
-    $('trim-text').textContent = ''
-    $('cp-fill').style.width = '0'
-    $('cp-text').textContent = ''
-    $('cp-feedback').classList.add('hidden')
+    resetProgress()
   } catch (e) {
     toast(e.message, true)
   } finally {
@@ -151,15 +176,20 @@ $('dl-btn').onclick = async () => {
     await api('/api/download', 'POST', { height: S.quality })
     $('dl-wrap').classList.add('hidden')
     $('preview-wrap').classList.remove('hidden')
+    // 默认生成一个「整片」段落：用户可拖动/加段/删段
     S.dur = S.info.duration
-    S.start = 0
-    S.end = S.info.duration
-    S.derived = false
+    S.mode = 'split'
+    setMode('split')
+    const id = nextSegId()
+    S.segments = [{ id, start: 0, end: S.info.duration }]
+    S.activeId = id
     $('revert-btn').classList.add('hidden')
     initTrimUI(S.info.duration)
+    renderSegList()
+    syncFromActive()
     loadVideo()
     $('done-btn').disabled = false
-    toast('✅ 下载完成，拖动滑块可实时预览裁切范围')
+    toast('✅ 下载完成，拖动滑块/色块可实时预览剪辑范围')
   } catch (e) {
     if (!/已中止/.test(e.message)) toast(e.message, true)
   } finally {
@@ -167,64 +197,219 @@ $('dl-btn').onclick = async () => {
   }
 }
 
-// ---- 预览 + 裁切 UI ----
+// ---- 预览 + 剪辑 UI ----
 function loadVideo() {
   const v = $('video')
   v.src = '/media/current?t=' + Date.now()
   $('play-btn').textContent = '播放'
-  v.onerror = () => toast('⚠️ 预览加载失败，不影响保存', true)
+  v.onerror = () => toast('⚠️ 预览加载失败，不影响剪辑', true)
   v.onplay = () => { $('play-btn').textContent = '暂停' }
   v.onpause = () => { $('play-btn').textContent = '播放' }
+  // F1：长视频 seek 缓冲反馈（waiting/seeked）
+  v.onwaiting = () => $('buf-hint').classList.remove('hidden')
+  v.onseeked = () => $('buf-hint').classList.add('hidden')
 }
+$('buf-hint').classList.add('hidden')
 $('play-btn').onclick = () => {
-  const v = $('video')
+  const v = $('video'); const a = activeSeg()
   if (v.paused) {
-    if (S.end > 0 && (v.currentTime < S.start || v.currentTime >= S.end)) v.currentTime = S.start
+    if (a && (v.currentTime < a.start || v.currentTime > a.end)) v.currentTime = a.start
     v.play()
   } else v.pause()
 }
 $('video').ontimeupdate = () => {
-  const v = $('video')
+  const v = $('video'); const a = activeSeg()
   $('vtime').textContent = `${fmtDuration(v.currentTime)} / ${fmtDuration(v.duration || S.dur)}`
-  if (S.end > 0 && v.currentTime >= S.end) { v.pause(); v.currentTime = S.end }
+  if (a && v.currentTime < a.start) { v.currentTime = a.start; return }
+  if (a && v.currentTime > a.end) { v.pause(); v.currentTime = a.end }
+}
+
+// 节流 seek：拖动时 <180ms 的请求合并到下一拍，避免长视频 seek 风暴；未就绪挂 loadedmetadata
+let seekTimer = null, lastSeekAt = 0
+function seekPreview(t) {
+  const v = $('video'); const a = activeSeg()
+  if (!v || !isFinite(t)) return
+  const now = Date.now()
+  if (now - lastSeekAt < 180) {
+    clearTimeout(seekTimer)
+    seekTimer = setTimeout(() => seekPreview(t), 160)
+    return
+  }
+  lastSeekAt = now
+  if (v.readyState >= 1) { v.currentTime = t; $('vtime').textContent = `${fmtDuration(t)} / ${fmtDuration(v.duration || S.dur)}` }
+  else { v.addEventListener('loadedmetadata', () => { v.currentTime = t }, { once: true }) }
 }
 
 function initTrimUI(duration) {
   const st = $('range-start'), en = $('range-end')
   st.max = en.max = String(duration)
-  st.value = '0'
-  en.value = String(duration)
-  S.start = 0
-  S.end = duration
-  syncRange()
+  st.step = en.step = '0.1'
   st.oninput = () => {
+    const a = activeSeg(); if (!a) return
     let v = parseFloat(st.value)
-    if (v > parseFloat(en.value)) { v = parseFloat(en.value); st.value = String(v) }
-    S.start = v
-    syncRange()
-    seekPreview(v)
+    if (v > a.end - 0.1) v = a.end - 0.1
+    a.start = Math.max(0, Math.round(v * 10) / 10)
+    st.value = String(a.start)
+    markDirty(a)
+    syncFromActive()
+    seekPreview(a.start)
   }
   en.oninput = () => {
+    const a = activeSeg(); if (!a) return
     let v = parseFloat(en.value)
-    if (v < parseFloat(st.value)) { v = parseFloat(st.value); en.value = String(v) }
-    S.end = v
-    syncRange()
-    seekPreview(v)
+    if (v < a.start + 0.1) v = Math.min(S.dur, a.start + 0.5)
+    a.end = Math.max(a.start + 0.1, Math.min(S.dur, Math.round(v * 10) / 10))
+    en.value = String(a.end)
+    markDirty(a)
+    syncFromActive()
+    seekPreview(a.start)
   }
+  syncFromActive()
 }
-function seekPreview(t) {
-  const v = $('video')
-  if (v && v.readyState >= 1) v.currentTime = t
+const markDirty = a => { delete a.checked }
+function setActive(id) { S.activeId = id; renderSegList(); syncFromActive() }
+function syncFromActive() {
+  renderBlocks()
+  const a = activeSeg()
+  $('range-start').value = a ? String(a.start) : '0'
+  $('range-end').value = a ? String(a.end) : String(S.dur)
+  syncRange()
 }
 function syncRange() {
-  $('start-label').textContent = `起 ${fmtDuration(S.start)}`
-  $('end-label').textContent = `止 ${fmtDuration(S.end)} / 共 ${fmtDuration(S.dur)}`
+  const a = activeSeg()
+  const s = a ? a.start : 0, e = a ? a.end : S.dur
+  $('start-label').textContent = `起 ${fmtPrec(s)}`
+  $('end-label').textContent = `止 ${fmtPrec(e)} / 共 ${fmtPrec(S.dur)}`
+  if (document.activeElement !== $('seg-start')) $('seg-start').value = fmtPrec(s)
+  if (document.activeElement !== $('seg-end')) $('seg-end').value = fmtPrec(e)
+  validateSegInputs()
   if (S.dur > 0) {
-    const p1 = (S.start / S.dur) * 100
-    const p2 = (S.end / S.dur) * 100
+    const p1 = (s / S.dur) * 100, p2 = (e / S.dur) * 100
     $('range-bar').style.background = `linear-gradient(to right, var(--border) ${p1}%, var(--accent) ${p1}% ${p2}%, var(--border) ${p2}%)`
   }
 }
+
+// ---- 时间轴色块（主时间轴 + 激活段手柄）----
+function renderBlocks() {
+  const wrap = $('timeline-blocks'); wrap.innerHTML = ''
+  if (!S.dur) return
+  for (const seg of S.segments) {
+    const b = document.createElement('div')
+    b.className = 'blk' + (seg.id === S.activeId ? ' active' : '')
+    b.style.left = (seg.start / S.dur * 100) + '%'
+    b.style.width = Math.max(0.6, (seg.end - seg.start) / S.dur * 100) + '%'
+    b.onclick = () => setActive(seg.id)
+    if (seg.id === S.activeId) {
+      const hl = document.createElement('div'), hr = document.createElement('div')
+      hl.className = 'handle hl'; hr.className = 'handle hr'
+      addHandleDrag(hl, 'start', seg); addHandleDrag(hr, 'end', seg)
+      b.appendChild(hl); b.appendChild(hr)
+    }
+    wrap.appendChild(b)
+  }
+}
+function addHandleDrag(el, which, seg) {
+  let dragging = false
+  el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); dragging = true; el.setPointerCapture(e.pointerId) })
+  el.addEventListener('pointermove', e => {
+    if (!dragging) return
+    const r = $('range-bar').getBoundingClientRect()
+    const frac = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width))
+    const v = Math.round(frac * S.dur * 10) / 10
+    if (which === 'start') { if (v < seg.end - 0.1) { seg.start = Math.max(0, v); markDirty(seg) } }
+    else { if (v > seg.start + 0.1) { seg.end = Math.min(S.dur, v); markDirty(seg) } }
+    syncFromActive(); seekPreview(seg.start)
+  })
+  el.addEventListener('pointerup', () => { dragging = false })
+}
+
+// ---- 手动时间输入（F3：双向同步 + 硬钳制）----
+function validateSegInputs() {
+  const a = activeSeg(); const err = $('seg-input-err')
+  const sEl = $('seg-start'), eEl = $('seg-end')
+  sEl.classList.remove('err'); eEl.classList.remove('err'); err.classList.add('hidden')
+  if (!a) return
+  const sv = parseTimeInput(sEl.value), ev = parseTimeInput(eEl.value)
+  if (sv !== null && ev !== null && sv >= ev) {
+    err.textContent = `开始必须小于结束（开始 ${fmtPrec(sv)} ≥ 结束 ${fmtPrec(ev)}）`
+    err.classList.remove('hidden')
+    sEl.classList.add('err'); eEl.classList.add('err')
+  }
+}
+function applySegTime(which) {
+  const a = activeSeg(); if (!a) return
+  const el = which === 'start' ? $('seg-start') : $('seg-end')
+  const v = parseTimeInput(el.value)
+  if (v === null) { el.classList.add('err'); $('seg-input-err').textContent = '时间格式：HH:MM:SS.S / MM:SS / 秒'; $('seg-input-err').classList.remove('hidden'); return }
+  const clamped = Math.max(0, Math.min(S.dur, v))
+  if (which === 'start') { if (clamped < a.end - 0.1) { a.start = Math.round(clamped * 10) / 10; markDirty(a) } }
+  else { if (clamped > a.start + 0.1) { a.end = Math.round(clamped * 10) / 10; markDirty(a) } }
+  syncFromActive()
+  seekPreview(a.start)
+}
+$('seg-start').addEventListener('change', () => applySegTime('start'))
+$('seg-end').addEventListener('change', () => applySegTime('end'))
+
+// ---- 段落列表（CRUD）----
+function renderSegList() {
+  const wrap = $('seg-list'); wrap.innerHTML = ''
+  if (!S.segments.length) {
+    wrap.innerHTML = '<div class="hist-empty">尚未添加段落，用上方时间轴/时间框圈选后「+ 添加段落」</div>'
+    return
+  }
+  S.segments.forEach((seg, i) => {
+    const row = document.createElement('div')
+    row.className = 'segl-row' + (seg.id === S.activeId ? ' sel' : '')
+    const t = document.createElement('div')
+    t.className = 'segl-time'
+    t.textContent = `${i + 1}. ${fmtPrec(seg.start)} → ${fmtPrec(seg.end)}${seg.checked ? ' ✓' : ''}`
+    t.onclick = () => setActive(seg.id)
+    const act = document.createElement('div')
+    act.className = 'segl-actions'
+    for (const [label, fn, title] of [['↑', () => moveSeg(i, -1), '上移'], ['↓', () => moveSeg(i, 1), '下移'], ['✕', () => delSeg(i), '删除']]) {
+      const b = document.createElement('button')
+      b.className = 'btn small'; b.textContent = label; b.title = title || ''
+      b.onclick = e => { e.stopPropagation(); fn() }
+      act.appendChild(b)
+    }
+    row.appendChild(t); row.appendChild(act)
+    wrap.appendChild(row)
+  })
+}
+function moveSeg(i, dir) {
+  const j = i + dir
+  if (j < 0 || j >= S.segments.length) return
+  const arr = S.segments
+  ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  renderSegList(); syncFromActive()
+}
+function delSeg(i) {
+  const seg = S.segments[i]
+  S.segments.splice(i, 1)
+  if (S.activeId === seg.id) S.activeId = (S.segments[Math.min(i, S.segments.length - 1)] || {}).id || null
+  renderSegList(); syncFromActive()
+}
+$('add-seg-btn').onclick = () => {
+  if (!S.dur) return
+  const last = S.segments[S.segments.length - 1]
+  let s = last ? Math.min(last.end, S.dur) : 0
+  let e = Math.min(S.dur, s + Math.max(60, (last ? (last.end - last.start) : 0) || S.dur))
+  if (e - s < 0.1) { s = 0; e = Math.min(S.dur, 60) }
+  if (e - s < 0.1) { s = 0; e = S.dur }
+  const id = nextSegId()
+  S.segments.push({ id, start: Math.round(s * 10) / 10, end: Math.round(e * 10) / 10 })
+  setActive(id)
+  if (S.dur > 0 && s < S.dur) seekPreview(s)
+}
+
+// ---- 交付模式切换 ----
+function setMode(m) {
+  S.mode = m
+  $('mode-split').classList.toggle('sel', m === 'split')
+  $('mode-merge').classList.toggle('sel', m === 'merge')
+}
+$('mode-split').onclick = () => setMode('split')
+$('mode-merge').onclick = () => setMode('merge')
 
 // ---- CRF（localStorage 记忆）----
 const CRF_OPTS = [
@@ -249,32 +434,40 @@ function renderCrfs() {
   }
 }
 
-// ---- 裁切 / 压缩 ----
+function resetProgress() {
+  $('trim-fill').style.width = '0'; $('trim-text').textContent = ''
+  $('cp-fill').style.width = '0'; $('cp-text').textContent = ''
+  $('cp-feedback').classList.add('hidden')
+}
+
+// ---- 应用裁切（只作用于激活段：校验 + 缓存）----
 $('trim-btn').onclick = async () => {
-  if (!(S.start > 0 || S.end < S.dur)) return toast('未选择裁切范围，请先拖动滑块', true)
+  const a = activeSeg()
+  if (!a) return toast('请先添加/选择段落', true)
+  if (a.end - a.start < 0.1) return toast('段落区间无效', true)
   const btn = $('trim-btn')
   btn.disabled = true
   S.op = 'trim'
   $('trim-fill').style.width = '0'
   $('trim-text').textContent = '裁切中…'
   try {
-    const r = await api('/api/trim', 'POST', { start: S.start, end: S.end })
-    S.dur = r.duration !== undefined ? r.duration : (S.end - S.start)
-    S.end = S.dur
-    S.start = 0
-    S.derived = true
-    $('revert-btn').classList.remove('hidden')
-    initTrimUI(S.dur)
-    loadVideo()
-    toast('✅ 已生成裁切片段，可继续压缩或转文字')
+    const r = await api('/api/trim', 'POST', { segmentId: a.id, start: a.start, end: a.end })
+    a.checked = true
+    renderSegList()
+    toast(`✅ 段落 ${fmtPrec(a.start)}-${fmtPrec(a.end)} 校验通过${r.mode === 'reencode' ? '（已自动重编码）' : ''}`)
   } catch (e) {
     if (!/已中止/.test(e.message)) toast(e.message, true)
   } finally {
     btn.disabled = false
+    $('trim-text').textContent = ''
   }
 }
+
+// ---- 压缩（作用于激活段：CRF 预编码 + 回退提示）----
 $('compress-btn').onclick = async () => {
-  if (S.crf === null) return toast('已选择「不压缩」，请先选择压缩档位', true)
+  if (S.crf === null) return toast('请先选择压缩档位', true)
+  const a = activeSeg()
+  if (!a) return toast('请先添加/选择段落', true)
   const btn = $('compress-btn')
   btn.disabled = true
   S.op = 'compress'
@@ -282,21 +475,19 @@ $('compress-btn').onclick = async () => {
   $('cp-text').textContent = '编码中…'
   $('cp-feedback').classList.add('hidden')
   try {
-    const r = await api('/api/compress', 'POST', { crf: S.crf })
+    const r = await api('/api/compress', 'POST', { segmentId: a.id, start: a.start, end: a.end, crf: S.crf })
     const fb = $('cp-feedback')
     fb.textContent = `原 ${fmtMB(r.before)} → ${fmtMB(r.after)} · ${r.pct >= 0 ? `减少 ${r.pct.toFixed(1)}%` : `增大 ${(-r.pct).toFixed(1)}%`}`
     fb.classList.remove('hidden')
     if (r.kept === 'original') {
-      // 压缩无收益：服务端已保留原件，提醒用户
       fb.className = 'hint err'
-      fb.textContent = '⚠️ 压缩后反而更大，已保留原文件：' + fb.textContent
-      toast('压缩无收益，已保留原文件')
+      fb.textContent = '⚠️ 压缩后反而更大，已保留快速件：' + fb.textContent
+      toast('压缩无收益，该段交付时将保留快速件')
       return
     }
-    S.derived = true
-    $('revert-btn').classList.remove('hidden')
-    loadVideo()
-    toast('✅ 压缩完成')
+    a.checked = true
+    renderSegList()
+    toast('✅ 该段已按所选 CRF 预编码，交付时直接复用')
   } catch (e) {
     if (!/已中止/.test(e.message)) toast(e.message, true)
   } finally {
@@ -338,18 +529,24 @@ $('ts-copy').onclick = async () => {
   catch { toast('复制失败，请手动选择复制', true) }
 }
 
-// ---- 完成 = 交付（自动复制 wikilink 或 wikilink+转录全文）----
+// ---- 完成 = 交付（按交付模式批量产出全部交付物）----
 $('done-btn').onclick = async () => {
+  if (!S.segments.length) return toast('请先添加至少一个段落', true)
   const btn = $('done-btn')
   btn.disabled = true
   try {
-    const r = await api('/api/done', 'POST', {})
-    $('result-path').textContent = '📂 ' + r.finalPath
+    const r = await api('/api/done', 'POST', {
+      segments: S.segments.map(s => ({ id: s.id, start: s.start, end: s.end })),
+      mode: S.mode,
+      crf: S.crf,
+    })
+    $('result-path').textContent = '📂 ' + r.files.map(f => f.finalPath).join('\n')
     $('result-clip').textContent = r.clipboard
     $('result-wrap').classList.remove('hidden')
+    if (r.failures && r.failures.length) toast('部分失败：' + r.failures.join('；'), true)
     try {
       await navigator.clipboard.writeText(r.clipboard)
-      toast('✅ 已交付并复制：' + r.wiki)
+      toast(`✅ 已交付并复制${r.files.length > 1 ? `：${r.files.length} 个文件` : ''}`)
     } catch {
       toast('✅ 已交付（剪贴板复制失败，请点「复制」按钮）')
     }
@@ -363,23 +560,21 @@ $('copy-btn').onclick = async () => {
   catch { toast('复制失败', true) }
 }
 
-// ---- 返回原视频（重新裁切/压缩）----
+// ---- 返回原视频（清空段落回到整片，可重新剪辑）----
 $('revert-btn').onclick = async () => {
   try {
     const r = await api('/api/revert', 'POST', {})
     S.dur = r.duration
-    S.start = 0
-    S.end = r.duration
-    S.derived = false
+    const id = nextSegId()
+    S.segments = [{ id, start: 0, end: r.duration }]
+    S.activeId = id
     $('revert-btn').classList.add('hidden')
     initTrimUI(r.duration)
+    renderSegList()
+    syncFromActive()
     loadVideo()
-    $('trim-fill').style.width = '0'
-    $('trim-text').textContent = ''
-    $('cp-fill').style.width = '0'
-    $('cp-text').textContent = ''
-    $('cp-feedback').classList.add('hidden')
-    toast('↩ 已返回原视频，可重新裁切/压缩')
+    resetProgress()
+    toast('↩ 已返回原视频，可重新剪辑')
   } catch (e) { toast(e.message, true) }
 }
 
@@ -388,7 +583,10 @@ function resetUI() {
   S.info = null
   S.transcript = ''
   S.dur = 0
-  S.derived = false
+  S.mode = 'split'
+  setMode('split')
+  S.segments = []
+  S.activeId = null
   $('revert-btn').classList.add('hidden')
   ;['card-wrap', 'dl-wrap', 'preview-wrap', 'ts-wrap', 'result-wrap'].forEach(id => $(id).classList.add('hidden'))
   $('url').value = ''
@@ -398,18 +596,17 @@ function resetUI() {
   $('dl-diag').textContent = ''
   $('dl-fill').style.width = '0'
   $('dl-text').textContent = ''
-  $('trim-fill').style.width = '0'
-  $('trim-text').textContent = ''
-  $('cp-fill').style.width = '0'
-  $('cp-text').textContent = ''
-  $('cp-feedback').classList.add('hidden')
+  resetProgress()
   $('ts-text').value = ''
+  $('seg-list').innerHTML = ''
+  $('timeline-blocks').innerHTML = ''
+  syncFromActive()
 }
 $('cancel-btn').onclick = async () => {
   try {
     await api('/api/cancel', 'POST', {})
     resetUI()
-    toast('任务已取消，全部产物已删除')
+    toast('任务已取消，全部临时产物已删除（已交付文件不受影响）')
   } catch (e) { toast(e.message, true) }
 }
 $('newtask-btn').onclick = async () => {
@@ -427,6 +624,7 @@ $('settings-btn').onclick = async () => {
     $('set-outputDir').value = r.config.outputDir || ''
     $('set-vaultPath').value = r.config.vaultPath || ''
     $('set-ffmpegPath').value = r.config.ffmpegPath || ''
+    $('set-ffprobePath').value = r.config.ffprobePath || ''
     $('set-pythonPath').value = r.config.pythonPath || ''
     $('set-whisperModel').value = r.config.whisperModel || ''
     $('set-cookie').value = ''
@@ -447,6 +645,7 @@ $('settings-save').onclick = async () => {
       outputDir: $('set-outputDir').value.trim() || 'E:/Obsidian/叫我包仔/CONFIG/APPENDIX',
       vaultPath: $('set-vaultPath').value.trim() || 'E:/Obsidian/叫我包仔',
       ffmpegPath: $('set-ffmpegPath').value.trim() || 'ffmpeg',
+      ffprobePath: $('set-ffprobePath').value.trim() || 'ffprobe',
       pythonPath: $('set-pythonPath').value.trim(),
       whisperModel: $('set-whisperModel').value.trim() || 'small',
     })
@@ -521,6 +720,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const savedCrf = localStorage.getItem('bili-crf')
   if (savedCrf !== null) S.crf = savedCrf === 'null' ? null : parseInt(savedCrf)
   renderCrfs()
+  syncFromActive()
   try {
     const r = await api('/api/config')
     onCookieStatus(r.cookieConfigured ? r.cookieValid : false)
