@@ -192,3 +192,33 @@ test('POST /api/done：合并交付多段 → 单文件 + 单条 wikilink', { sk
   assert.ok(fs.existsSync(j.files[0].finalPath))
   resetTask()
 })
+
+test('POST /api/done：vault 内交付 → wikilink 单层不嵌套（分P 命名）', { skip: !hasFfmpeg }, async () => {
+  const src = makeSrc()
+  const vault = path.join(tmp, 'deliver-vault')
+  const outDir = path.join(vault, 'CONFIG', 'APPENDIX')
+  fs.mkdirSync(outDir, { recursive: true })
+  await (await req('POST', '/api/config', { outputDir: outDir, vaultPath: vault })).json()
+  T.originalPath = src; T.curPath = src; T.curDur = 3
+  T.info = { title: '嵌套测试', duration: 3 }; T.url = 'https://www.bilibili.com/video/BV1GJ411x7h7'; T.quality = 1080
+  T.pageCount = 2; T.part = 2; T.cid = 1002
+
+  // 分开交付：多行，每行应为标准单层 ![[…]]，不得双重嵌套
+  const split = await (await req('POST', '/api/done', { segments: [{ id: 'a', start: 0, end: 1 }, { id: 'b', start: 1, end: 3 }], mode: 'split', crf: null })).json()
+  assert.equal(split.ok, true, split.error)
+  const lines = split.clipboard.split('\n')
+  assert.equal(lines.length, 2)
+  for (const ln of lines) assert.match(ln, /^!\[\[CONFIG\/APPENDIX\/[^\]]+\]\]$/, ln)
+  assert.ok(!split.clipboard.includes('![[CONFIG/APPENDIX/![[CONFIG'), '不得双重嵌套')
+  assert.ok(split.files.every(f => f.finalName.includes('_P2_')), split.files.map(f => f.finalName).join(','))
+
+  // 合并交付：单行标准 ![[…]]，文件名带 P 与 merge
+  T.prepared = []; T.segments = []
+  const merge = await (await req('POST', '/api/done', { segments: [{ id: 'a', start: 0, end: 1 }, { id: 'b', start: 1, end: 3 }], mode: 'merge', crf: null })).json()
+  assert.equal(merge.ok, true, merge.error)
+  assert.equal(merge.files.length, 1)
+  assert.match(merge.clipboard, /^!\[\[CONFIG\/APPENDIX\/[^\]]+\]\]$/, merge.clipboard)
+  assert.ok(!merge.clipboard.includes('![[CONFIG/APPENDIX/![[CONFIG'))
+  assert.ok(merge.files[0].finalName.includes('_P2_merge_2段'), merge.files[0].finalName)
+  resetTask()
+})
