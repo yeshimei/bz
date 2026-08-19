@@ -20,6 +20,7 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; cha
 const T = {
   phase: 'idle',           // idle | parsing | downloading | trimming | compressing | transcribing | done
   url: '', info: null, quality: null,
+  cid: null, part: 1, pageCount: 1, partTitle: '',   // 分P：当前选中 P 的 cid/序号/总数/标题
   originalPath: null,      // 下载原件（剪辑的源；始终保留，「返回原视频」可重建段落）
   curPath: null, curDur: 0, // /media/current 预览（默认即原件，保证时间轴坐标 = 原件时长）
   crf: 23,
@@ -31,7 +32,9 @@ const T = {
 function resetTask() {
   core.resetAbort()
   for (const p of T.prepared) { try { fs.unlinkSync(p.tempPath) } catch {} }   // 清残留预编码临时产物
-  T.url = ''; T.info = null; T.quality = null; T.originalPath = null; T.curPath = null; T.curDur = 0
+  T.url = ''; T.info = null; T.quality = null
+  T.cid = null; T.part = 1; T.pageCount = 1; T.partTitle = ''
+  T.originalPath = null; T.curPath = null; T.curDur = 0
   T.crf = 23; T.segments = []; T.mode = 'split'; T.prepared = []
   T.transcript = ''
   T.phase = 'idle'
@@ -118,6 +121,7 @@ async function doDone(body) {
   const outDirAbs = path.resolve(conf.outputDir)
   fs.mkdirSync(outDirAbs, { recursive: true })
   const title = T.info.title, bv = core.extractBv(T.url), duration = T.info.duration
+  const pageLabel = T.pageCount > 1 ? 'P' + T.part : ''   // 分P 视频文件名带 P 序号，避免同名碰撞
   const files = [], failures = []
   const history = (finalName, wiki) => cfg.pushHistory({ time: new Date().toLocaleString('zh-CN', { hour12: false }), title, bv, quality: `${T.quality}P`, file: finalName, wiki })
 
@@ -137,7 +141,7 @@ async function doDone(body) {
         if (after < before) { finalTemp = enc; compressed = true; usedCrf = crf }
         else { try { fs.unlinkSync(enc) } catch {} }   // 压缩回退：保留合并件
       }
-      const name = `${core.sanitizeName(title)}_${bv}_merge_${segs.length}段${compressed ? `_crf${usedCrf}` : ''}.mp4`
+      const name = `${core.sanitizeName(title)}_${bv}${pageLabel ? `_${pageLabel}` : ''}_merge_${segs.length}段${compressed ? `_crf${usedCrf}` : ''}.mp4`
       const finalPath = core.uniquePath(path.join(outDirAbs, name))
       fs.copyFileSync(finalTemp, finalPath)
       try { fs.unlinkSync(finalTemp) } catch {}
@@ -161,7 +165,7 @@ async function doDone(body) {
           else { try { fs.unlinkSync(enc) } catch {} }
         }
         const full = !(seg.start > 0 || seg.end < duration)          // 全片 = 不裁切
-        const finalName = core.buildFileName({ title, bv, trimmed: !full, start: seg.start, end: seg.end, duration, compressed, crf: usedCrf })
+        const finalName = core.buildFileName({ title, bv, page: pageLabel, trimmed: !full, start: seg.start, end: seg.end, duration, compressed, crf: usedCrf })
         const finalPath = core.uniquePath(path.join(outDirAbs, finalName))
         fs.copyFileSync(finalTemp, finalPath)
         try { if (finalTemp !== tmp) fs.unlinkSync(finalTemp) } catch {}
@@ -174,7 +178,7 @@ async function doDone(body) {
   }
   if (!files.length) throw new Error(failures.join('\n') || '交付失败')
   T.phase = 'done'
-  const clip = buildClipboard(files.map(f => f.wiki))
+  const clip = buildClipboard(files.map(f => f.finalName))   // 传裸文件名，由 buildClipboard 统一包一层 ![[ ]]，避免双重嵌套
   return { ok: true, mode: T.mode, files, failures, clipboard: clip.text, wiki: clip.wiki }
 }
 
@@ -259,6 +263,10 @@ const handlers = {
     T.url = String(body.url).trim()
     T.info = info
     T.quality = info.maxHeight
+    T.pageCount = (info.pages || []).length || 1
+    T.part = 1
+    T.cid = (info.pages && info.pages[0]) ? info.pages[0].cid : info.cid
+    T.partTitle = (info.pages && info.pages[0] && info.pages[0].title) || ''
     T.phase = 'ready'
     return { ok: true, info }
   },
@@ -266,12 +274,17 @@ const handlers = {
     if (!T.info) throw new Error('请先解析视频')
     if (busy) throw new Error('任务进行中')
     const height = Number(body.height) || T.info.maxHeight
+    // 分P：以用户选中的 P 为准（cid/序号/标题/该 P 时长）
+    if (body.cid) T.cid = Number(body.cid)
+    if (body.part) T.part = Number(body.part)
+    if (body.partTitle != null) T.partTitle = String(body.partTitle)
+    if (body.duration != null && isFinite(Number(body.duration))) T.info = { ...T.info, duration: Number(body.duration) }
     setBusy(true)
     T.phase = 'downloading'
     try {
       const outPath = path.join(TMP_DIR, `bili_${Date.now()}.mp4`)
       await core.downloadVideo({
-        url: T.url, cookie: cfg.loadCookie(), height, outPath, ffmpeg: cfg.loadConfig().ffmpegPath,
+        url: T.url, cookie: cfg.loadCookie(), height, cid: T.cid, outPath, ffmpeg: cfg.loadConfig().ffmpegPath,
         onDiag: text => broadcast({ type: 'diag', text }),
         onProgress: p => broadcast({ type: 'download-progress', ...p }),
       })
