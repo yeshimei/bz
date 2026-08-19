@@ -85,8 +85,11 @@ es.onmessage = e => {
     if (d.phase === 'merge') { fill.classList.add('indet'); txt.textContent = '合并音视频…' }
     else {
       fill.classList.remove('indet')
-      fill.style.width = `${d.percent}%`
-      txt.textContent = `${d.percent.toFixed(1)}% · ${d.speed || '?'} · ETA ${d.eta || '?'}`
+      // percent 为 null（拿不到总大小）时：不确定进度 + 已下载字节，绝不假报固定百分比
+      if (typeof d.percent === 'number') fill.style.width = `${d.percent}%`
+      else { fill.classList.add('indet'); fill.style.width = '0' }
+      const left = typeof d.percent === 'number' ? `${d.percent.toFixed(1)}%` : (d.received != null ? fmtMB(d.received) : '?')
+      txt.textContent = `${left} · ${d.speed || '?'} · ETA ${d.eta || '?'}`
     }
   } else if (d.type === 'trim-progress') {
     const fill = S.op === 'compress' ? $('cp-fill') : $('trim-fill')

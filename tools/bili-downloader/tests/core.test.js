@@ -208,7 +208,7 @@ test('parseVideo：无视频流报错', async () => {
 
 // ---------- downloadStream（mock https.get：CDN 节点切换）----------
 
-// mock get：behavior(url) => {status, chunks} 或 Error（连接失败）
+// mock get：behavior(url) => {status, headers?, chunks?, noEnd?} 或 Error（连接失败）
 function mockGet(behavior) {
   return (url, opts, cb) => {
     const req = new EventEmitter()
@@ -219,11 +219,12 @@ function mockGet(behavior) {
         if (b instanceof Error) return req.emit('error', b)
         const res = new EventEmitter()
         res.statusCode = b.status || 200
+        res.headers = b.headers || {}
         res.resume = () => {}   // 真实 IncomingMessage 有此方法，非 2xx 分支会调用
         cb(res)
         if (b.status && b.status !== 200 && b.status !== 206) return res.emit('end')   // 非 2xx：resume 后尝试下一节点
         for (const c of b.chunks) res.emit('data', c)
-        res.emit('end')
+        if (!b.noEnd) res.emit('end')   // noEnd=true 模拟死节点（连接着但永不结束）
       } catch (e) { req.emit('error', e) }
     }, 0)
     return req
@@ -274,6 +275,46 @@ test('downloadStream：取消后立即中止（ABORTED 标志）', async () => {
     /已中止/
   )
   core.resetAbort()
+})
+
+test('downloadStream：拿不到总大小时 percent 为 null（不再假报固定 25%）', async () => {
+  const out = path.join(tmp, 'dl-size.mp4')
+  const progs = []
+  await core.downloadStream({
+    urls: ['https://cdn1/v.m4s'], outPath: out, referer: 'x',
+    onProgress: p => progs.push(p),
+    get: mockGet(() => ({ status: 200, chunks: [Buffer.from('hello'), Buffer.from(' world')] })),
+  })
+  assert.equal(fs.readFileSync(out, 'utf8'), 'hello world')
+  assert.ok(progs.length > 0)
+  for (const p of progs) assert.ok(p.percent === null, `percent 应 null（无总大小），实际 ${p.percent}`)
+})
+
+test('downloadStream：Content-Length 提供总大小 → 真进度到 100%', async () => {
+  const out = path.join(tmp, 'dl-cl.mp4')
+  const progs = []
+  const data = Buffer.from('hello world')
+  await core.downloadStream({
+    urls: ['https://cdn1/v.m4s'], outPath: out, referer: 'x',
+    onProgress: p => progs.push(p),
+    get: mockGet(() => ({ status: 200, headers: { 'content-length': String(data.length) }, chunks: [data] })),
+  })
+  const last = progs[progs.length - 1]
+  assert.ok(last != null)
+  assert.equal(last.percent, 100)
+  assert.equal(last.total, data.length)
+})
+
+test('downloadStream：长时间零字节(stall)才切换节点（慢速不再触发切换）', async () => {
+  const out = path.join(tmp, 'dl-stall.mp4')
+  const diag = []
+  const get = mockGet(url => {
+    if (url.includes('cdn1')) return { status: 200, chunks: [], noEnd: true }   // 假死节点：连接着但零字节
+    return { status: 200, chunks: [Buffer.from('ok from cdn2')] }
+  })
+  await core.downloadStream({ urls: ['https://cdn1/v.m4s', 'https://cdn2/v.m4s'], outPath: out, referer: 'x', stallMs: 60, onDiag: t => diag.push(t), get })
+  assert.equal(fs.readFileSync(out, 'utf8'), 'ok from cdn2')
+  assert.ok(diag.some(t => t.includes('长时间无数据')), JSON.stringify(diag))
 })
 
 // ---------- 裁切/合并参数构造（bug #5 修复的关键：无输入级 -to）----------

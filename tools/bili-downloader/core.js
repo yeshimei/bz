@@ -162,19 +162,23 @@ function fmtEta(sec) {
   return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`
 }
 
-// 下载单个流：顺序尝试候选 URL；连接失败或前 6 秒速度 < 0.4MB/s → 切换下一个
-function downloadStream({ urls, outPath, referer, size, onProgress, onDiag, get = https.get }) {
+// 下载单个流：顺序尝试候选 URL；切换条件 = 连接失败 / 非 2xx / 长时间零字节(stall)。
+// 慢速但持续有数据的节点不切换（慢 ≠ 失败，只要在动就让它下完）。
+// 进度：总大小优先取传入 size，其次取响应 Content-Length；都没有时 percent 为 null（前端显示不确定进度 + 已下载字节）。
+function downloadStream({ urls, outPath, referer, size, stallMs = 12000, onProgress, onDiag, get = https.get }) {
   return new Promise((resolve, reject) => {
     const cands = [...urls]
     let idx = 0
+    // 跨节点累计的下载量（进度平滑，换节点不回跳；文件本身每次整下用一个节点）
+    let received = 0, speed = 0, lastT = Date.now(), lastB = 0, totalBytes = size > 0 ? size : 0
     const tryNext = () => {
       if (ABORTED) return reject(new Error('已中止'))
-      if (idx >= cands.length) return reject(new Error('所有 CDN 节点均失败'))
+      if (idx >= cands.length) return reject(new Error('所有 CDN 节点均失败（可能网络受限）'))
       const url = cands[idx++]
       const host = new URL(url).hostname
       onDiag && onDiag(`节点 ${host}`)
       const t0 = Date.now()
-      let received = 0, speed = 0, lastT = t0, lastB = 0, settled = false, lastReportAt = 0
+      let lastDataAt = 0, settled = false, lastReportAt = 0, contentLength = 0
       const ws = fs.createWriteStream(outPath)
       const h = { req: null, ws }
       trackDownload(h)
@@ -184,17 +188,24 @@ function downloadStream({ urls, outPath, referer, size, onProgress, onDiag, get 
         const inst = dt > 0 ? (received - lastB) / 1048576 / dt : 0
         speed = speed ? speed * 0.6 + inst * 0.4 : inst   // EMA 平滑瞬时速度，避免数字跳动
         lastT = now; lastB = received
-        const total = size || received * 4
-        onProgress && onProgress({ phase: 'download', percent: Math.min(100, (received / total) * 100), received, total, speed: `${speed.toFixed(1)}MiB/s`, eta: fmtEta((total - received) / 1048576 / (speed || 0.01)) })
+        const known = totalBytes > 0
+        onProgress && onProgress({
+          phase: 'download',
+          percent: known ? Math.min(100, (received / totalBytes) * 100) : null,
+          received, total: known ? totalBytes : 0,
+          speed: `${speed.toFixed(1)}MiB/s`,
+          eta: known ? fmtEta((totalBytes - received) / 1048576 / (speed || 0.01)) : '',
+        })
       }
-      const slowTimer = setInterval(() => {
-        if (settled) return clearInterval(slowTimer)
-        report()   // 兜底更新（下载卡住无 data 时进度仍有响应）
-        if (Date.now() - t0 > 6000 && speed < 0.4) {
+      const stallTimer = setInterval(() => {
+        if (settled) return clearInterval(stallTimer)
+        report()   // 兜底更新（即使零字节也让前端看到速度在动，慢 ≠ 卡死）
+        const idleFor = Date.now() - (lastDataAt || t0)
+        if (idleFor > stallMs) {   // 长时间没有任何字节 → 判定死节点，再换一个
           settled = true
           req.destroy()
           ws.destroy()
-          onDiag && onDiag(`节点 ${host} 过慢，切换…`)
+          onDiag && onDiag(`节点 ${host} 长时间无数据，切换…`)
           tryNext()
         }
       }, 1000)
@@ -202,12 +213,18 @@ function downloadStream({ urls, outPath, referer, size, onProgress, onDiag, get 
         if (res.statusCode !== 200 && res.statusCode !== 206) {
           res.resume()
           settled = true
-          clearInterval(slowTimer)
+          clearInterval(stallTimer)
           ws.destroy()
           return tryNext()
         }
+        // size 缺失时用 Content-Length 当总大小（真实，不再用 received*4 的 25% 假进度）
+        if (totalBytes <= 0 && res.headers) {
+          const cl = parseInt(res.headers['content-length'], 10)
+          if (cl > 0) totalBytes = cl
+        }
         res.on('data', c => {
           received += c.length
+          lastDataAt = Date.now()
           ws.write(c)
           const now = Date.now()
           if (now - lastReportAt >= 150) { lastReportAt = now; report() }   // 150ms 节流高频更新，进度条流畅
@@ -215,19 +232,19 @@ function downloadStream({ urls, outPath, referer, size, onProgress, onDiag, get 
         res.on('end', () => {
           if (settled) return
           settled = true
-          clearInterval(slowTimer)
+          clearInterval(stallTimer)
           DOWNLOADS.delete(h)
-          const total = size || received * 4
+          const known = totalBytes > 0
           // end 回调：等数据全部 flush 落盘后再 resolve（否则调用方立即读文件会读到不完整内容）
           ws.end(() => {
-            onProgress && onProgress({ phase: 'download', percent: Math.min(100, (received / total) * 100), received, total, speed: '✅', eta: '' })
+            onProgress && onProgress({ phase: 'download', percent: known ? Math.min(100, (received / totalBytes) * 100) : null, received, total: known ? totalBytes : received, speed: '✅', eta: '' })
             resolve()
           })
         })
         res.on('error', () => {
           if (settled) return
           settled = true
-          clearInterval(slowTimer)
+          clearInterval(stallTimer)
           ws.destroy()
           tryNext()
         })
@@ -236,7 +253,7 @@ function downloadStream({ urls, outPath, referer, size, onProgress, onDiag, get 
       req.on('error', () => {
         if (settled) return
         settled = true
-        clearInterval(slowTimer)
+        clearInterval(stallTimer)
         ws.destroy()
         onDiag && onDiag(`节点 ${host} 连接失败，切换…`)
         tryNext()
@@ -277,16 +294,17 @@ async function downloadVideo({ url, cookie, height, outPath, cid, onProgress, on
   const tmpV = outPath + '.v.part'
   const tmpA = outPath + '.a.part'
   const referer = `https://www.bilibili.com/video/${bvid}`
-  // 音视频总进度聚合：两流字节数相加，避免流切换时进度条回跳
-  const totalBytes = (v.size || 0) + (a.size || 0)
-  let gotV = 0, gotA = 0
-  const agg = totalBytes > 0
-    ? key => p => {
-        const recv = p.received !== undefined ? p.received : (p.percent / 100) * (p.total || 0)
-        if (key === 'v') gotV = recv; else gotA = recv
-        onProgress && onProgress({ phase: 'download', percent: Math.min(100, ((gotV + gotA) / totalBytes) * 100), speed: p.speed, eta: p.eta })
-      }
-    : () => p => onProgress && onProgress(p)   // size 缺失（罕见）→ 原样透传
+  // 音视频总进度聚合：两流累计字节相加；总大小 = API size 或响应 Content-Length（实时补全）。
+  // 都拿不到时 percent=null，前端显示不确定进度 + 已下载字节（绝不假报固定百分比）。
+  const vMeta = { recv: 0, total: 0 }, aMeta = { recv: 0, total: 0 }
+  const agg = key => p => {
+    const m = key === 'v' ? vMeta : aMeta
+    if (p.received !== undefined) m.recv = p.received
+    if (p.total > 0) m.total = p.total
+    const got = vMeta.recv + aMeta.recv
+    const tot = (vMeta.total || vMeta.recv) + (aMeta.total || aMeta.recv)
+    onProgress && onProgress({ phase: 'download', percent: tot > 0 ? Math.min(100, (got / tot) * 100) : null, received: got, total: tot, speed: p.speed, eta: p.eta })
+  }
   onDiag && onDiag(`视频流 ${v.height}P（${v.codecs}）`)
   await downloadStream({ urls: [v.baseUrl, ...(v.backupUrl || [])], outPath: tmpV, referer, size: v.size, onProgress: agg('v'), onDiag, get })
   onDiag && onDiag(`音频流 ${a.size ? (a.size / 1048576).toFixed(1) + 'MB' : ''}`)
