@@ -53,16 +53,18 @@ function toast(msg, isErr = false) {
   toastTimer = setTimeout(() => el.classList.add('hidden'), 3600)
 }
 
-// ---- 任务状态（单任务 + 多段落）----
+// ---- 任务状态（单任务 + 多段落 + 分P）----
 const S = {
   info: null, quality: 0, crf: 23, dur: 0, transcript: '', busy: false,
   mode: 'split',            // split（分开交付）| merge（合并成一个视频）
   segments: [],             // [{id, start, end, checked?}]
   activeId: null,
+  pages: [], pageIndex: 0,  // 分P/分批：解析出的 P 列表与当前选中
 }
 let segSeq = 0
 const nextSegId = () => 'seg' + (++segSeq)
 const activeSeg = () => S.segments.find(s => s.id === S.activeId) || null
+const pageCount = () => (S.pages || []).length || 1
 
 const OP_BTNS = ['parse-btn', 'dl-btn', 'trim-btn', 'compress-btn', 'transcribe-btn', 'done-btn', 'add-seg-btn', 'ts-copy', 'cookie-save-btn', 'settings-save']
 function setBusy(b) {
@@ -120,9 +122,12 @@ async function doParse() {
   try {
     const r = await api('/api/parse', 'POST', { url })
     S.info = r.info
+    S.pages = r.info.pages || []
+    S.pageIndex = 0
     const savedQ = parseInt(localStorage.getItem('bili-quality'))
     S.quality = savedQ && r.info.formats.some(f => f.height === savedQ) ? savedQ : r.info.maxHeight
     renderCard()
+    renderPages()
     $('card-wrap').classList.remove('hidden')
     $('dl-wrap').classList.remove('hidden')
     $('preview-wrap').classList.add('hidden')
@@ -164,6 +169,22 @@ function renderCard() {
   }
 }
 
+// 分批/分P：列出所有 P 供选择下载哪一批（默认第一个）
+function renderPages() {
+  const wrap = $('pages')
+  wrap.innerHTML = ''
+  if (pageCount() <= 1) { wrap.classList.add('hidden'); return }
+  wrap.classList.remove('hidden')
+  S.pages.forEach((p, i) => {
+    const c = document.createElement('div')
+    c.className = 'chip' + (i === S.pageIndex ? ' sel' : '')
+    c.textContent = `P${p.page}${p.title ? ' ' + p.title : ''}`.trim()
+    c.title = p.title || ''
+    c.onclick = () => { S.pageIndex = i; renderPages() }
+    wrap.appendChild(c)
+  })
+}
+
 // ---- 下载 ----
 $('dl-btn').onclick = async () => {
   const btn = $('dl-btn')
@@ -173,18 +194,25 @@ $('dl-btn').onclick = async () => {
   fill.style.width = '0'
   txt.textContent = '连接中…'
   try {
-    await api('/api/download', 'POST', { height: S.quality })
+    const page = S.pages[S.pageIndex]
+    await api('/api/download', 'POST', {
+      height: S.quality,
+      cid: page ? page.cid : undefined,
+      part: page ? page.page : 1,
+      partTitle: page ? page.title : '',
+      duration: page ? page.duration : S.info.duration,
+    })
     $('dl-wrap').classList.add('hidden')
     $('preview-wrap').classList.remove('hidden')
-    // 默认生成一个「整片」段落：用户可拖动/加段/删段
-    S.dur = S.info.duration
+    // 预览时长以所选 P 为准
+    S.dur = page ? page.duration : S.info.duration
     S.mode = 'split'
     setMode('split')
     const id = nextSegId()
-    S.segments = [{ id, start: 0, end: S.info.duration }]
+    S.segments = [{ id, start: 0, end: S.dur }]
     S.activeId = id
     $('revert-btn').classList.add('hidden')
-    initTrimUI(S.info.duration)
+    initTrimUI(S.dur)
     renderSegList()
     syncFromActive()
     loadVideo()
@@ -587,6 +615,8 @@ function resetUI() {
   setMode('split')
   S.segments = []
   S.activeId = null
+  S.pages = []; S.pageIndex = 0
+  const pagesEl = $('pages'); if (pagesEl) { pagesEl.innerHTML = ''; pagesEl.classList.add('hidden') }
   $('revert-btn').classList.add('hidden')
   ;['card-wrap', 'dl-wrap', 'preview-wrap', 'ts-wrap', 'result-wrap'].forEach(id => $(id).classList.add('hidden'))
   $('url').value = ''

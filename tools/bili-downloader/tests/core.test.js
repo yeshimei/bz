@@ -40,6 +40,8 @@ test('buildFileName：裁切/压缩标记组合（时间恒显小时位）', () 
   assert.equal(core.buildFileName({ ...base, trimmed: true, start: 10, end: 80, compressed: true, crf: 18 }), '测试视频_BV1GJ411x7h7_clip_00-00-10-00-01-20_crf18.mp4')
   // 全片范围不算裁切
   assert.equal(core.buildFileName({ ...base, trimmed: true, start: 0, end: 120 }), '测试视频_BV1GJ411x7h7.mp4')
+  // 分P 文件名带 P 标记
+  assert.equal(core.buildFileName({ ...base, page: 'P2', trimmed: true, start: 10, end: 80 }), '测试视频_BV1GJ411x7h7_P2_clip_00-00-10-00-01-20.mp4')
 })
 
 test('uniquePath：重名自动加序号', () => {
@@ -131,7 +133,16 @@ function navOk() {
   return { code: 0, data: { wbi_img: { img_url: 'https://i0.hdslb.com/bfs/wbi/abc123456789.png', sub_url: 'https://i0.hdslb.com/bfs/wbi/def987654321.png' } } }
 }
 function viewOk() {
-  return { code: 0, data: { title: '测试视频', owner: { name: 'UP主' }, duration: 120, pic: 'https://i0.hdslb.com/bfs/archive/cover.jpg', cid: 1001 } }
+  return {
+    code: 0,
+    data: {
+      title: '测试视频', owner: { name: 'UP主' }, duration: 120, pic: 'https://i0.hdslb.com/bfs/archive/cover.jpg', cid: 1001,
+      pages: [
+        { cid: 1001, page: 1, part: 'P1 引子', duration: 120 },
+        { cid: 1002, page: 2, part: 'P2 正片', duration: 90 },
+      ],
+    },
+  }
 }
 function playOk() {
   return {
@@ -162,6 +173,11 @@ test('parseVideo：成功解析（avc 优先，1080P 只留一个代表）', asy
   assert.equal(info.bvid, 'BV1GJ411x7h7')
   assert.equal(info.cid, 1001)
   assert.equal(info.maxHeight, 1080)
+  assert.equal(info.pages.length, 2)      // 分P 列表透出
+  assert.equal(info.pages[0].cid, 1001)
+  assert.equal(info.pages[1].cid, 1002)
+  assert.equal(info.pages[1].title, 'P2 正片')
+  assert.equal(info.pages[1].duration, 90)
   // 1080P 只保留 avc 代表
   assert.deepEqual(info.formats.map(f => f.height), [1080, 720])
 })

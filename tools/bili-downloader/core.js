@@ -52,9 +52,13 @@ function wbiSign(params, imgKey, subKey) {
 async function getViewInfo({ bvid, cookie, fetchJson }) {
   const j = await fetchJson(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, cookie ? { Cookie: cookie } : {})
   if (j.code !== 0) throw new Error(`视频信息获取失败：${j.message || j.code}`)
+  const d = j.data
+  const pages = Array.isArray(d.pages) && d.pages.length
+    ? d.pages.map((p, i) => ({ cid: p.cid, page: p.page != null ? p.page : i + 1, title: p.part || '', duration: p.duration != null ? p.duration : d.duration }))
+    : [{ cid: d.cid, page: 1, title: '', duration: d.duration }]
   return {
-    title: j.data.title, uploader: j.data.owner.name, duration: j.data.duration,
-    thumbnail: j.data.pic, cid: j.data.cid,
+    title: d.title, uploader: d.owner.name, duration: d.duration,
+    thumbnail: d.pic, cid: d.cid, pages,
   }
 }
 
@@ -120,8 +124,9 @@ function parseTimeInput(str) {
   return Math.max(0, Math.round(sec * 10) / 10)
 }
 
-function buildFileName({ title, bv, trimmed, start, end, duration, compressed, crf }) {
+function buildFileName({ title, bv, page, trimmed, start, end, duration, compressed, crf }) {
   let name = `${sanitizeName(title)}_${bv}`
+  if (page) name += `_${page}`
   if (trimmed && (start > 0 || end < duration)) name += `_clip_${fmtTime(start)}-${fmtTime(end)}`
   if (compressed && crf !== null && crf !== undefined) name += `_crf${crf}`
   return `${name}.mp4`
@@ -146,7 +151,7 @@ async function parseVideo({ url, cookie, fetchJson = fetchJsonImpl }) {
   return {
     title: view.title, uploader: view.uploader, duration: view.duration,
     thumbnail: view.thumbnail, formats, maxHeight: formats[0] ? formats[0].height : 0,
-    bvid, cid: view.cid,
+    bvid, cid: view.cid, pages: view.pages,
   }
 }
 
@@ -256,10 +261,11 @@ function mergeStreams({ videoPath, audioPath, outPath, ffmpeg = 'ffmpeg' }) {
   })
 }
 
-async function downloadVideo({ url, cookie, height, outPath, onProgress, onDiag, ffmpeg = 'ffmpeg', fetchJson = fetchJsonImpl, get = https.get }) {
+async function downloadVideo({ url, cookie, height, outPath, cid, onProgress, onDiag, ffmpeg = 'ffmpeg', fetchJson = fetchJsonImpl, get = https.get }) {
   const bvid = extractBv(url)
-  const view = await getViewInfo({ bvid, cookie, fetchJson })
-  const dash = await getPlayUrls({ bvid, cid: view.cid, cookie, fetchJson })
+  // 支持分P下载：给 cid 则直接取该 P 播放地址，省一次 view 请求
+  const playCid = cid || (await getViewInfo({ bvid, cookie, fetchJson })).cid
+  const dash = await getPlayUrls({ bvid, cid: playCid, cookie, fetchJson })
   const vids = (dash.video || []).filter(v => v.height)
   if (!vids.length) throw new Error('未找到可下载的视频流')
   // 目标清晰度：<= height 的最高，avc 优先；找不到则用已有最低
