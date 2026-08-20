@@ -24,6 +24,7 @@ function makeApp(vault: MockVault, extra: any = {}) {
       getActiveFile: vi.fn(() => null),
     },
     commands: { executeCommandById: vi.fn() },
+    plugins: { plugins: { 'weave-epub-reader': { settings: { dataPath: 'CONFIG/STORAGE' } } } },
     ...extra,
   } as any;
 }

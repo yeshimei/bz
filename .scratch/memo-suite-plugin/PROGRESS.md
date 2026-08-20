@@ -198,3 +198,12 @@
 - ✅ **全库去 emoji**：50 处单行 + 5 处手工（pomodoro 三元/暂停、memo 动态前缀）共 55 处通知调用去 emoji 前缀 + 显式传类型；脚本两处 bug 修复（FE0F 变化选择符拆分、astral 字符缺 u flag 产生 U+FFFD、模板字符串降级 16 处修复——均验证零残留）
 - ✅ **测试同步**：27 处断言去 emoji；CONTEXT.md 通知/文案规范更新（正文不带 emoji、类型图标即前缀、z-index 修正 100000）
 
+## 2026-08-1x 附件搬移新域完成（ticket 65）
+
+**状态：全量 964 测试通过（75 文件），tsc 通过；含新域 attach 27 个测试**
+
+- ✅ **ticket 65 附件搬移**：新域 attach，命令 `bz-attach-move`（中文名「移动附件」，icon folder-down）——解析当前笔记引用的 vault 内非 .md 文件（wikilink 嵌入 + md 链接）→ 自绘文件夹选择弹窗（记忆上次 `attachLastFolder`，运行时字段不暴露设置页）→ `vault.rename` 移动；仅目标文件夹存在同名才改名（`原名 (N).ext`）；不删空目录、无预览确认直接执行 + 结果 toast（移动/改名/改写处数）
+- ✅ **全库链接改写**：planRewritePairs 跨所有 md 笔记改写引用（wiki/md、`!` 嵌入、`|别名`/`#标题`/`^块` 后缀、显示文字全保留）；新目标用新文件夹限定库内路径；含糊引用（库内多同 basename 且非笔记同目录）保守不改写；`../` 相对、md 无前缀相对、库根绝对均支持
+- ✅ **主页磁贴播种**：main.onload `ensureAttachSeed` 幂等，desktop+mobile 各 `placeAtEnd` 末尾追加 1×1，写 launcher.json（失败静默）；smoke 登记 `bz-attach-move`
+- ✅ **文档/规范**：spec.md 命令 id 全清单 + 决策条目；CONTEXT.md 新增「附件/附件搬移/链接改写」术语；ADR-0014（vault.rename + 自研改写 vs fileManager.renameFile）；测试 data 20 + ui 7
+

@@ -242,6 +242,7 @@ Feature: memo-suite-plugin
 - **2026-08-07 决策**：影视海报整理（enableQ3/posterFolder）不提供，相关代码无残留（仅 frontmatter 海报字段读取展示）；日记本删除默认标签功能（写日记弹窗不预选任何标签，全部加载；getDefaultTagSetting 移除）；长按手势固定启用（不暴露选项）
 - **2026-08-07 第二批（用户决策）**：① 备忘录「显示文件名」从设置页移除（固定 true，字段保留）；② 做题家 tab 删除，做题家 4 项选项并入复习计划 tab，仅在「做题决定难度」开启时动态显示（仿 AI tab 隐藏模式）；quizStoragePath 删除，quiz 与 review 共用 reviewStoragePath；③ 自动摘要 tab 删除，启用开关并入剪藏本 tab，监听目录跟随 articleDirectory；④ AI Agent 新增 3 项：监听文件夹（aiAgentWatchedFolders，默认 卡片盒,归档/网页剪藏）、AI 剪藏匹配开关（enableAIClipMatch，默认 true，关闭后仅 URL 精确匹配归档）、AI 匹配模型（aiAgentModel，默认 deepseek-v4-flash，经 ai.prompt 显式传参）；⑤ 主页影视「在看/想看」过滤修复——主页.js 写 window.__homeFilmStatus 遗留全局，createOverlay 消费并清除（此前插件读模块状态导致脱节，永远显示全部）
 - **2026-08-07 测试健壮性**：password/ui.test.ts 150ms 固定等待改轮询 waitFor（并行高负载下 PBKDF2 超时）；smoke 命令回调测试超时 5s→15s
+- **2026-08-1x 附件搬移（ticket 65，新域 attach）**：命令 `bz-attach-move`（中文名「移动附件」，icon folder-down）——把当前笔记引用的全部 vault 内非 .md 文件（wikilink 嵌入 + Markdown 链接）移动到指定文件夹（弹文件夹选择器，记忆上次 `attachLastFolder`，运行时字段不暴露设置页）；**仅当目标文件夹已存在同名文件时才改名**（`原名 (N).ext`）；**不删除原空目录**；**无预览确认直接执行** + 结果 toast 汇总（移动/改名/改写处数）；目标链接全库改写（wikilink 新目标 = 新文件夹限定库内路径并保留原扩展名写法，`|别名`/`#标题`/`^块` 后缀与嵌入标记全保留；md 链接 = 带扩展名原样路径）；含糊引用（库内多文件名相同且不在当前笔记同目录）保守不改写，当前笔记同目录优先就近命中；主页磁贴自动播种（desktop+mobile 各 placeAtEnd 末尾追加 1×1，幂等）；底层 vault.rename + 自研链接改写（ADR-0014，不用 fileManager.renameFile）
 
 ### 命令 id 全清单（第 9 轮，统一命名：`bz-<域>-<动作>`，域全英文/缩写、无冗余词、动作统一 open/add/generate/start/mark 等；中文名与入口页磁贴 label 一致）
 
@@ -262,6 +263,7 @@ Feature: memo-suite-plugin
 - **番茄钟**（ticket 26 新域）：`bz-pomodoro-open`（中文名「番茄钟」，icon timer）
 - **日记本**（已迁）：`bz-diary-write`、`bz-diary-open`
 - **B站下载器**：`bz-bili-open`
+- **附件搬移**（ticket 65 新域）：`bz-attach-move`（中文名「移动附件」，icon folder-down，主页磁贴自动播种 desktop+mobile 末尾）
 - 已删除命令：`bz-notification-demo`（通知样式演示）、`bz-diary-create-quote`（写摘抄）
 - Q3 自身无命令
 

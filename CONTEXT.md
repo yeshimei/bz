@@ -122,6 +122,17 @@ _Avoid_: 方案、模式（指预设时）
 
 **不补算 (No Backfill)**: 番茄钟恢复规则（ticket 62）——Obsidian 关闭/重启期间的时间一律不折算成历史：运行中状态重开时 endTime 已超时 → 主番茄钟回空闲（剩余作废、不记历史）。暂停态不超时 → 保持暂停不受影响。取代旧「逐段补算」语义（recover 不再编造历史）。
 
+### 附件搬移域（ticket 65）
+
+**附件 (Attachment)**: vault 内被笔记引用的非 .md 文件（图片/音视频/PDF/压缩包等）；只要当前笔记引用了它（wikilink 嵌入或 Markdown 链接）即算。.md 笔记与外链不计。
+_Avoid_: 资源文件、素材、媒体文件（指附件时）
+
+**附件搬移 (Move Attachments)**: 命令 `bz-attach-move`（中文名「移动附件」）的语义——把当前笔记引用的附件移动到指定文件夹：弹文件夹选择器选目标（记忆上次 `attachLastFolder`）；**仅当目标文件夹已存在同名文件时才给被移动文件改名**（`原名 (N).ext`，Obsidian 同名惯例）；**不删除原空目录**、**无预览确认直接执行**；结束后 toast 汇总（移动/改名/改写处数）。目标文件夹为 vault 内任意目录。
+_Avoid_: 搬附件、整理附件、资源整理
+
+**链接改写 (Link Rewrite)**: 附件搬移时对全库所有引用被移动附件的笔记同步改写其 wikilink（`![[...]]` / `[[...]]`）与 Markdown 链接（`![](...)` / `[](...)`）——新目标 = 新文件夹限定的库内路径（无歧义）；保留 `!` 嵌入标记、`|别名`、`#标题`、`^块` 后缀与显示文字；md 链接用带扩展名原样路径。含糊引用（库内多文件同 basename 且不在当前笔记同目录）保守不改写。
+_Avoid_: 链接修复、改链接（泛指时）
+
 ### 共享层
 
 **Q3 / __utils**: QuickAdd 共享脚本（`CONFIG/SCRIPTS/Quickadd/Q/Q3.js`，1034 行），挂载 `window.__utils`，21 个导出：escManager、confirm、notice、generateId、jsonStore、longPress、injectStyles、createSiteIcon、createIconBtn、formatRelativeTime、formatFileSize、displayChangelog、checkAndShowChangelog、AIService、createAI、extractUrlAndDisplay、getPlatformName、getCurrentNoteInfo、getCurrentCursorPosition、fetchPageTitle、createOverlay。**新插件移植后为内部共享层（core），不再挂 window**。

@@ -1,15 +1,22 @@
 # AGENTS.md — 包仔（bz）Obsidian 插件
 
-独立 Obsidian 插件，18 个功能域：日记本、备忘录、归物本、剪藏本、聚合讯、密码本、收藏本、书库、阅读报告、影视（含分析）、复习计划、做题家、闪念、自动摘要、AI Agent、入口页、番茄钟、B 站下载。数据沿用既有格式（`CONFIG/STORAGE/*.json`、`我的/*.md`、frontmatter），旧数据直接可读。**项目语言：中文**（注释/提交/issue/文档）。
+独立 Obsidian 插件，19 个功能域：日记本、备忘录、归物本、剪藏本、聚合讯、密码本、收藏本、书库、阅读报告、影视（含分析）、复习计划、做题家、闪念、自动摘要、AI Agent、入口页、番茄钟、B 站下载、附件搬移。数据沿用既有格式（`CONFIG/STORAGE/*.json`、`我的/*.md`、frontmatter），旧数据直接可读。**项目语言：中文**（注释/提交/issue/文档）。
 
 ## 命令
 
 - `npm install` 首次安装；`npm run dev` 监听重建；`npm run build` 生产构建；`npm test` vitest run；`npm run test:watch` 监听；`npx tsc --noEmit` 类型检查。
 - 产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`（esbuild.config.mjs 硬编码勿改）。测试经 vitest.config.ts alias 把 `obsidian` 替换为 `tests/mock-obsidian-entry.ts`。
 
+## 写盘规则（本工作区在 E:，exFAT，无硬链接）
+
+- **新建文件一律用 `pwsh`**（推荐 `[IO.File]::WriteAllText($path, $content)`：UTF-8 无 BOM，5.1/7 通用）：`write` 工具新建走硬链接原子落盘，此卷不支持，必报 `EISDIR`（误导性文案，不是目录冲突；重试同路径必再挂）。
+- 若新建 `write`/`edit` 遇到 EISDIR：**同一步内改用 `pwsh` 完成该文件，不重试工具写入**（每个路径只尝试一次工具调用）。
+- **改已有文件不受限**（覆盖走 rename，exFAT 正常）：`edit`、对已存在文件的 `write` 照常使用。
+- 写中文/长文也经 `pwsh`，用 `[IO.File]::WriteAllText` 保持 UTF-8 无 BOM（勿用 `Set-Content` 默认编码，会带 BOM）。
+
 ## 架构
 
-- `src/main.ts`：命令裸注册表、设置页、懒加载开关、onunload 清理（37 命令）
+- `src/main.ts`：命令裸注册表、设置页、懒加载开关、onunload 清理（38 命令）
 - `src/core/`：共享层（不挂 window）——app/settings-provider/ai/json-store/esc-manager/confirm/utils/dom/changelog/notice（自绘 toast，ADR-0010）/settings-modal（域设置弹窗）
 - `src/<域>/`：index.ts + data + ui（+ state/types/config）；`src/diary/ui/` 已拆 panel/entries/dialogs/quote/datetime-picker/filter-shared/ui-settings
 - 其余：`src/settings.ts`（MemoSettings + DEFAULT_SETTINGS）；`styles.css`（各域样式唯一收敛处，ticket 60 起样式全部集中于此）；`docs/adr/`（0001-0012）；`CONTEXT.md`（术语表）；`.scratch/<feature>/`（spec.md + issues/NN-*.md）
@@ -48,6 +55,7 @@
 | ai-agent AI Agent（笔记⇄备忘录/收藏本同步/AI 剪藏匹配） | ai-agent.json |
 | launcher 入口页（磁贴网格/编辑模式/手势/双平台配置） | launcher.json |
 | pomodoro 番茄钟（状态机/任务关联/设置弹窗/状态栏） | pomodoro.json |
+| attach 附件搬移（移动当前笔记附件到指定文件夹/仅同名才改名/全库改写链接） | —（搬当前笔记引用的 vault 附件，无 CONFIG/STORAGE 数据） |
 | bili-downloader 下载工具（B 站 web 工具，外部 npm） | —（外部） |
 
 ## 测试
@@ -61,6 +69,7 @@
 ## Git / 工作流
 
 - 分支 master；提交格式 `bz: ticket NN <域> 完成——<要点>，N 测试`；chore/fix 用于杂务；每 ticket 一次提交（测试全绿后）。
+- **任务完成后必提交**：本 agent 每完成一个任务（ticket / 独立修复 / 文档改动）且测试全绿后，**立即 git 提交，不积压、不攒批**；工作区若有他人/并行未完成的改动，仅暂存本任务相关文件（`git add` 指定路径；settings.ts 之类被多任务共改的文件按 hunk 拆分暂存），其余改动原样保留，不得混入本提交。
 - spec 驱动：`.scratch/memo-suite-plugin/spec.md`（59KB，命令 id 全清单/设置项总表/样式/降级链）是唯一事实源，先改 spec。
 - ticket 驱动：`.scratch/memo-suite-plugin/issues/NN-<slug>.md`（01-32），头部 `Status:` 记 triage（docs/agents/triage-labels.md）。
 - 进度恢复点：`.scratch/memo-suite-plugin/PROGRESS.md`，每次重要节点更新（含待提交架构深化）。

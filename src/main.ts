@@ -31,6 +31,8 @@ import { openPomodoro, unloadPomodoro, ensurePomodoro } from './pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // B站下载器启动命令（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
 import { openBiliDownloader } from './bili-downloader';
+// 附件搬移（ticket 65 新域：移动当前笔记附件 + 全库改写链接 + 主页磁贴播种）
+import { openAttachMove, ensureAttachSeed, ATTACH_COMMAND_ID } from './attach';
 import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setLauncherGestureSetter, LauncherModal } from './launcher';
 import { registerGestureListeners } from './launcher/gestures';
 import { ensureAutoSummary } from './auto-summary';
@@ -93,6 +95,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-pomodoro-open', name: '番茄钟', icon: 'timer', callback: () => openPomodoro(getApp()) },
   // B站下载器（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
   { id: 'bz-bili-open', name: 'B站下载器', icon: 'tv-minimal-play', callback: () => openBiliDownloader() },
+  // 附件搬移（ticket 65 新域：移动当前笔记附件到指定文件夹 + 全库改写链接）
+  { id: ATTACH_COMMAND_ID, name: '移动附件', icon: 'folder-down', callback: () => openAttachMove(getApp()) },
 ];
 
 /** 应用日记本设置到运行时常量（diary-notebook 原 applySettingsToRuntime） */
@@ -163,6 +167,9 @@ export default class BzPlugin extends Plugin {
       (this.app as any).commands.addCommand({ id: c.id, name: c.name, icon: c.icon, callback: c.callback });
       this.registeredCommandIds.push(c.id);
     }
+
+    // 附件搬移：主页磁贴自动播种（desktop+mobile 末尾，幂等）
+    void ensureAttachSeed(this.app);
 
     // ribbon 主入口：备忘录面板 + 日记本
     this.addRibbonIcon('check-square', '备忘录', () => openBzPanel(this.app));
