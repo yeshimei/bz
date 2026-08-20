@@ -249,3 +249,51 @@ describe('SafeManager 深层目录（Parent folder 回归）', () => {
     expect(new TextDecoder().decode(bytes)).toBe('ABCDEFG');
   });
 });
+
+describe('SafeManager 进度回调（onProgress）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    vault = new MockVault();
+  });
+
+  it('lockNote：按附件逐个 + 笔记本身上报（done/total/current）', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/ENCRYPT');
+    await sm.unlock('pw');
+    const events: Array<{ done: number; total: number; current: string }> = [];
+    await sm.lockNote(
+      {
+        path: '我的/日记/a.md',
+        title: 'a',
+        content: '# a',
+        attachments: [
+          { path: '我的/影视/1.png', data: 'MTIzNA==' },
+          { path: '我的/影视/2.mp4', data: 'NTY3OA==' },
+        ],
+      },
+      (p) => events.push(p)
+    );
+    expect(events.length).toBe(3); // 2 附件 + 1 笔记
+    expect(events[0]).toMatchObject({ done: 1, total: 3, current: '我的/影视/1.png' });
+    expect(events[1]).toMatchObject({ done: 2, total: 3, current: '我的/影视/2.mp4' });
+    expect(events[2]).toMatchObject({ done: 3, total: 3, current: '我的/日记/a.md' });
+  });
+
+  it('restoreNote：按附件逐个 + 笔记本身上报，末尾 done===total', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/ENCRYPT');
+    await sm.unlock('pw');
+    const note = await sm.lockNote({
+      path: '我的/日记/a.md',
+      title: 'a',
+      content: '# a',
+      attachments: [{ path: '我的/影视/1.png', data: 'MTIzNA==' }],
+    });
+    const events: Array<{ done: number; total: number }> = [];
+    await sm.restoreNote(note.id, (p) => events.push({ done: p.done, total: p.total }));
+    const last = events[events.length - 1];
+    expect(last.done).toBe(2);
+    expect(last.total).toBe(2);
+  });
+});

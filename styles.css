@@ -2378,6 +2378,25 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 .bz-encrypt-preview-media {
   max-width: 100%; margin-top: 12px; border-radius: 8px; display: block;
 }
+.bz-encrypt-preview-md .bz-encrypt-preview-media {
+  margin: 8px auto; display: block;
+}
+.bz-encrypt-preview-gallery {
+  margin-top: 18px; padding-top: 12px;
+  border-top: 1px dashed var(--background-modifier-border);
+  display: flex; flex-wrap: wrap; gap: 10px;
+}
+.bz-encrypt-preview-gallery img {
+  max-width: 240px; max-height: 200px; object-fit: cover; border-radius: 8px;
+}
+.bz-encrypt-preview-missing {
+  margin: 8px 0; padding: 10px 12px; border-radius: 8px;
+  background: var(--background-secondary); color: var(--text-muted);
+  font-size: 12px; display: flex; flex-direction: column; gap: 2px;
+}
+.bz-encrypt-preview-missing-name {
+  font-weight: 600; color: var(--text-normal); word-break: break-all;
+}
 @media (max-width: 768px) {
   #bz-encrypt-popup { width: 95%; max-height: 90vh; }
 }
