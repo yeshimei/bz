@@ -1,10 +1,10 @@
 /**
  * 书库 items 测试（ticket 12）：getBookItems / sortItemList / getSubfolder / getStatusColors。
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { getBookItems, sortItemList, getSubfolder, getStatusColors, loadEpubBookItems } from '../../src/library/items';
+import { getBookItems, sortItemList, getSubfolder, loadEpubBookItems } from '../../src/library/items';
 import { MockVault, parseFrontmatter } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 
@@ -42,26 +42,6 @@ describe('getSubfolder', () => {
   it('第一段目录；无则 null', () => {
     expect(getSubfolder('书库/小说/活着.md', '书库')).toBe('小说');
     expect(getSubfolder('书库/活着.md', '书库')).toBeNull();
-  });
-});
-
-describe('getStatusColors', () => {
-  afterEach(() => {
-    document.body.classList.remove('theme-dark');
-  });
-
-  it('light 模式色板', () => {
-    document.body.classList.remove('theme-dark');
-    const c = getStatusColors();
-    expect(c.badgeBg.未读).toBe('#BDBDBD');
-    expect(c.badgeBg.在读).toBe('#FF8C42');
-    expect(c.badgeBg.已读).toBe('#66BB6A');
-  });
-
-  it('dark 模式色板', () => {
-    document.body.classList.add('theme-dark');
-    const c = getStatusColors();
-    expect(c.badgeBg.已读).toBe('#388E3C');
   });
 });
 
@@ -137,10 +117,10 @@ describe('sortItemList', () => {
     expect(desc).toEqual(['晚', '早', '无日期']);
   });
 
-  it('readingProgress：有进度在前', () => {
-    const list = [item({ title: '无进度', readingProgress: null as any }), item({ title: '50', readingProgress: 50 })];
-    expect(sortItemList(list, 'readingProgress', 'asc')[0].title).toBe('50');
-    expect(sortItemList(list, 'readingProgress', 'desc')[0].title).toBe('50');
+  it('readingProgress：数值升/降序（恒为 number，无“无值”分支）', () => {
+    const list = [item({ title: '50', readingProgress: 50 }), item({ title: '10', readingProgress: 10 })];
+    expect(sortItemList(list, 'readingProgress', 'asc').map((i) => i.title)).toEqual(['10', '50']);
+    expect(sortItemList(list, 'readingProgress', 'desc').map((i) => i.title)).toEqual(['50', '10']);
   });
 
   it('未知 key → 原序', () => {

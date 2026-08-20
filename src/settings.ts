@@ -94,11 +94,9 @@ export default interface BzSettings {
   /** 📂 数据存储目录（文件名固定 favorites.json，只允许改目录）——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
   favoritesStoragePath: string;
 
-  // ===== 📚 书库（9 项）=====
+  // ===== 📚 书库（8 项）=====
   /** 📁 书库文件夹 */
   libraryFolderPath: string;
-  /** 📁 读书笔记路径 */
-  libraryNotePath: string;
   /** 🏷️ 书籍识别标签 */
   bookTag: string;
   /** 📦 显示文件大小 */
@@ -111,8 +109,6 @@ export default interface BzSettings {
   showThinks: boolean;
   /** 📝 显示书评摘要 */
   showReview: boolean;
-  /** 🏷️ 显示分类（源码无 UI 项，运行时默认 true，字段保留） */
-  showCategory: boolean;
   /** 📖 Weave 数据路径：Weave 阅读数据文件（weave-data.json）所在目录，书库据此读取 EPUB 书目数据（ADR-0013） */
   weaveDataPath: string;
 
@@ -299,14 +295,12 @@ export const DEFAULT_SETTINGS: BzSettings = {
 
   // 书库
   libraryFolderPath: '书库',
-  libraryNotePath: '我的/读书笔记',
   bookTag: 'book',
   showFileSize: true,
   showReadingTime: true,
   showHighlights: true,
   showThinks: true,
   showReview: true,
-  showCategory: true,
   weaveDataPath: 'CONFIG/STORAGE',
 
   // 影视
