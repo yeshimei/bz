@@ -31,7 +31,7 @@ import { openPomodoro, unloadPomodoro, ensurePomodoro } from './pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // B站下载器启动命令（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
 import { openBiliDownloader } from './bili-downloader';
-// 附件搬移（ticket 65 新域：移动当前笔记附件 + 全库改写链接 + 主页磁贴播种）
+// 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 主页磁贴播种）
 import { openAttachMove, ensureAttachSeed, ATTACH_COMMAND_ID } from './attach';
 import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setLauncherGestureSetter, LauncherModal } from './launcher';
 import { registerGestureListeners } from './launcher/gestures';
@@ -95,7 +95,7 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-pomodoro-open', name: '番茄钟', icon: 'timer', callback: () => openPomodoro(getApp()) },
   // B站下载器（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
   { id: 'bz-bili-open', name: 'B站下载器', icon: 'tv-minimal-play', callback: () => openBiliDownloader() },
-  // 附件搬移（ticket 65 新域：移动当前笔记附件到指定文件夹 + 全库改写链接）
+  // 附件搬移（ticket 65 新域：移动当前笔记附件到指定文件夹，fileManager 自动更新内部链接）
   { id: ATTACH_COMMAND_ID, name: '移动附件', icon: 'folder-down', callback: () => openAttachMove(getApp()) },
 ];
 
