@@ -88,7 +88,6 @@ export function showLibrary(app: any) {
             );
         textSetting('书库文件夹', '存放书籍笔记的根目录', 'libraryFolderPath');
         textSetting('书籍识别标签', 'Frontmatter 中用于识别书籍笔记的标签名', 'bookTag');
-        textSetting('Weave 数据路径', 'Weave 阅读数据文件（weave-data.json）所在目录；书库据此读取 EPUB 书目数据', 'weaveDataPath');
         toggleSetting('显示文件大小', '', 'showFileSize');
         toggleSetting('显示阅读时长', '', 'showReadingTime');
         toggleSetting('显示划线数', '', 'showHighlights');

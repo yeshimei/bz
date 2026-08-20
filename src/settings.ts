@@ -18,6 +18,10 @@ export default interface BzSettings {
   /** 共享 JSON 数据目录（memo/belongings/passwords/favorites/review/quiz/闪念 meta+vec 统一存放） */
   storagePath: string;
 
+  // ===== 📎 附件搬移（ticket 65，运行时记忆，不暴露设置）=====
+  /** 上次选择的目标文件夹（文件夹选择器默认值） */
+  attachLastFolder: string;
+
   // ===== 📝 备忘录（9 项）=====
   /** 📂 备忘录数据文件路径（memo.json 所在目录）——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
   todoFilePath: string;
@@ -94,7 +98,7 @@ export default interface BzSettings {
   /** 📂 数据存储目录（文件名固定 favorites.json，只允许改目录）——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
   favoritesStoragePath: string;
 
-  // ===== 📚 书库（8 项）=====
+  // ===== 📚 书库（7 项）=====
   /** 📁 书库文件夹 */
   libraryFolderPath: string;
   /** 🏷️ 书籍识别标签 */
@@ -109,8 +113,6 @@ export default interface BzSettings {
   showThinks: boolean;
   /** 📝 显示书评摘要 */
   showReview: boolean;
-  /** 📖 Weave 数据路径：Weave 阅读数据文件（weave-data.json）所在目录，书库据此读取 EPUB 书目数据（ADR-0013） */
-  weaveDataPath: string;
 
   // ===== 🎬 影视（5 项）=====
   /** 📁 影视文件夹 */
@@ -248,6 +250,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 共享数据路径（ADR-0009）
   storagePath: 'CONFIG/STORAGE',
 
+  // 附件搬移（ticket 65，运行时记忆）
+  attachLastFolder: '',
+
   // 备忘录
   todoFilePath: 'CONFIG/STORAGE',
   showFileName: true,
@@ -301,7 +306,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
   showHighlights: true,
   showThinks: true,
   showReview: true,
-  weaveDataPath: 'CONFIG/STORAGE',
 
   // 影视
   movieFolderPath: '我的/影视',

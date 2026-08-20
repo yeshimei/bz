@@ -2246,3 +2246,82 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 }
 .bz-lib-pill--sm { padding: 5px 10px; border-radius: 16px; font-size: 0.75rem; }
 .bz-lib-pill--active { background: var(--interactive-accent); color: #fff; }
+
+/* ===== 附件搬移（ticket 65）===== */
+.bz-attach-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 200000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+}
+.bz-attach-popup {
+  width: 420px;
+  max-width: calc(100vw - 40px);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--background-primary);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--background-modifier-border);
+}
+.bz-attach-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.bz-attach-input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  font-size: 0.9rem;
+}
+.bz-attach-input:focus {
+  border-color: var(--interactive-accent);
+}
+.bz-attach-folder-list {
+  flex: 1;
+  min-height: 120px;
+  max-height: 40vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.bz-attach-folder-item {
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text-normal);
+}
+.bz-attach-folder-item:hover {
+  background: var(--background-modifier-hover);
+}
+.bz-attach-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.bz-attach-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.bz-attach-btn--ghost {
+  background: var(--background-modifier);
+  color: var(--text-normal);
+}
+.bz-attach-btn--primary {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
