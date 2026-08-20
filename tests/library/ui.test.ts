@@ -199,4 +199,75 @@ describe('书库面板', () => {
     titleEl.click();
     expect(app.workspace.openLinkText).toHaveBeenCalledWith('Books/悉达多.epub', '', false);
   });
+
+  it('EPUB 封面单击 → 读书笔记弹窗（划线+想法+章节标题）', async () => {
+    vault.files.set('书库/活着.md', BOOK_MD);
+    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
+      schemaVersion: 2,
+      books: {
+        bk_001: {
+          id: 'bk_001',
+          file: { vaultPath: '书库/悉达多.epub', sourceId: 'epubsrc-demo' },
+          meta: { title: '悉达多', author: '赫尔曼·黑塞', chapterCount: 10 },
+          reading: { position: { chapterIndex: 0, cfi: '', percent: 0 }, stats: { totalReadTime: 0, lastReadTime: 0, createdTime: 0 } },
+          notes: {
+            bookmarks: [],
+            highlights: [
+              { id: 'h1', text: '原文一', commentText: '想法一', chapterIndex: 0, chapterTitle: '第一章', cfiRange: 'epubcfi(/6/2)!/4/4', createdTime: 1700000000000 },
+            ],
+            excerpts: [],
+          },
+        },
+      },
+    }));
+    const app = makeApp(vault);
+    showLibrary(app);
+    await new Promise((r) => setTimeout(r, 20));
+    // 找封面容器（EPUB 卡片第一个 coverWghapter 区域）：直接调 showEpubBookNotes
+    const { showEpubBookNotes } = await import('../../src/library/ui');
+    showEpubBookNotes(app, {
+      file: { path: '书库/悉达多.epub' },
+      title: '悉达多',
+      isEpub: true,
+    } as any);
+    await new Promise((r) => setTimeout(r, 30));
+    const overlay = [...document.querySelectorAll('div')].find((d) => d.textContent!.includes('的读书笔记'))!;
+    expect(overlay.textContent).toContain('📚 《悉达多》的读书笔记');
+    expect(overlay.textContent).toContain('第一章');
+    expect(overlay.textContent).toContain('❝ 原文一');
+    expect(overlay.textContent).toContain('想法一');
+  });
+
+  it('EPUB 读书笔记：双击划线块 → 跳原文 weave-cfi 深链', async () => {
+    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
+      schemaVersion: 2,
+      books: {
+        bk_001: {
+          id: 'bk_001',
+          file: { vaultPath: '书库/悉达多.epub', sourceId: 'epubsrc-demo' },
+          meta: { title: '悉达多', author: '', chapterCount: 10 },
+          reading: { position: { chapterIndex: 0, cfi: '', percent: 0 }, stats: { totalReadTime: 0, lastReadTime: 0, createdTime: 0 } },
+          notes: {
+            bookmarks: [],
+            highlights: [
+              { id: 'h1', text: '原文一', commentText: '', chapterIndex: 0, chapterTitle: '第一章', cfiRange: 'epubcfi(/6/2)!/4/4', createdTime: 1700000000000 },
+            ],
+            excerpts: [],
+          },
+        },
+      },
+    }));
+    const app = makeApp(vault);
+    const { showEpubBookNotes } = await import('../../src/library/ui');
+    showEpubBookNotes(app, { file: { path: '书库/悉达多.epub' }, title: '悉达多', isEpub: true } as any);
+    await new Promise((r) => setTimeout(r, 30));
+    const quote = [...document.querySelectorAll('div')].find((d) => d.style.cssText.includes('font-style: italic') && d.textContent === '❝ 原文一')!;
+    const block = quote.parentElement!.parentElement!;
+    block.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(app.workspace.openLinkText).toHaveBeenCalledWith(
+      '书库/悉达多.epub#weave-cfi=epubcfi(/6/2)!/4/4&chapter=0&sid=epubsrc-demo',
+      '',
+      false
+    );
+  });
 });

@@ -53,7 +53,13 @@ _Avoid_: EPUB 电子书条目——指聚合列表中的书目条目（不要与
 
 **Weave 数据路径**: bz 设置中指向 Weave 阅读数据文件（`weave-data.json`）所在数据路径的设置项；书库据此读取 EPUB 书目数据。Weave 未启用或路径失效时 EPUB 条目静默缺省，markdown 部分照常。
 
-**阅读数据分析报告 (Reading Analytics)**: 基于 metadataCache 统计的阅读报告生成器（年度统计、热力图、习惯分析等），无 __utils 依赖。
+**阅读数据分析报告 (Reading Analytics)**: 基于 metadataCache 统计的阅读报告生成器（年度统计、热力图、习惯分析等），无 __utils 依赖。自 ADR-0013 扩展一起，报告已并入 EPUB 书目（全库 weave 书、不筛目录；缺字段按报告口径补齐后并入同一张报告）。
+
+**EPUB 读书笔记**: 书库 EPUB 条目的读书笔记弹窗——划线（`text`）+ 想法（`commentText`）按章节（`chapterTitle`，缺省「第 N 章」）分组的只读视图。单击封面打开；双击划线块经 `weave-cfi` 深链跳回原书；长按内容编辑想法、长按日期删除划线（见「EPUB 想法编辑」）。
+_Avoid_: 与 markdown 读书笔记（读 `我的/读书笔记` 笔记文件建树）混淆——EPUB 版直接读 weave-data
+
+**EPUB 想法编辑**: 修改/删除 EPUB 划线想法时 bz **直接改 weave-data.json**（ADR-0013 的唯一写例外，不动其他结构；写前重读最新文档）。用户决策：不走 Weave 命令桥。
+_Avoid_: 把「想法编辑」当成 bz 直写的一般能力——只此两处写入口，其余仍只读
 
 **影视 (Movies)**: `我的/影视` 目录管理，frontmatter 处理（fileManager.processFrontMatter），状态常量（想看/在看/已看等）。
 
