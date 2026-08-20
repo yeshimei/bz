@@ -3,7 +3,7 @@
  * 命令（show-reading-report）由 main.ts 裸注册；此处提供回调 + 幂等初始化。
  */
 import type { App } from 'obsidian';
-import { getAllBookNotes, calculateReadingStats } from './stats';
+import { getAllBookNotes, calculateReadingStats, getEpubBookNotes } from './stats';
 import { generateFullStatsReport } from './report';
 
 let initialized = false;
@@ -23,8 +23,11 @@ export function showReadingReport(app: App): void {
 /** 生成完整的统计报告 */
 async function generateEnhancedReadingReport(app: any) {
   const bookNotes = getAllBookNotes(app);
-  const stats = calculateReadingStats(bookNotes);
-  const statsContent = generateFullStatsReport(stats, bookNotes);
+  // EPUB 书条目（ADR-0013 扩展）：从 weave-data.json 并入，缺字段按报告口径补全。
+  const epubEntries = await getEpubBookNotes(app);
+  const allNotes = epubEntries.length > 0 ? [...bookNotes, ...epubEntries] : bookNotes;
+  const stats = calculateReadingStats(allNotes);
+  const statsContent = generateFullStatsReport(stats, allNotes);
   const isDarkMode = document.body.classList.contains('theme-dark');
   showReportInPopup(statsContent, isDarkMode);
 }

@@ -220,9 +220,11 @@ export function sortItemList(list: BookItem[], key: string, order: string): Book
 // ===== EPUB 书目条目（ADR-0013）：从 Weave 阅读数据文件（weave-data.json）构建 =====
 
 const DEFAULT_WEAVE_DATA_FILE = 'weave-data.json';
+export { DEFAULT_WEAVE_DATA_FILE };
 const COVER_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+const READING_SESSION_MIN_DURATION_SECONDS = 300;
 
-function normalizeWeaveDataPath(value?: string): string {
+export function normalizeWeaveDataPath(value?: string): string {
   const raw = String(value || '').trim().replace(/^\/+|\/+$/g, '');
   return raw || 'CONFIG/STORAGE';
 }
@@ -327,10 +329,10 @@ function buildEpubBookItem(app: any, aggregate: any): BookItem | null {
 }
 
 /**
- * 从 Weave 阅读数据文件（<weaveDataPath>/weave-data.json）构建 EPUB 书目条目。
- * Weave 未启用 / 文件缺失 / 解析失败 → 返回空数组（markdown 部分不受影响）。
+ * 读取 Weave 阅读数据文件并返回全部书籍聚合数组（文件缺失/解析失败返回 []）。
+ * 书库 getBookItems 与阅读报告 getEpubBookNotes 共用此解析通道。
  */
-export async function loadEpubBookItems(app: any): Promise<BookItem[]> {
+export async function readWeaveDataAggregates(app: any): Promise<any[]> {
   try {
     const settings = deriveBookSettings();
     const dataPath = normalizeWeaveDataPath(settings.weaveDataPath);
@@ -345,15 +347,24 @@ export async function loadEpubBookItems(app: any): Promise<BookItem[]> {
     if (!books || typeof books !== 'object') {
       return [];
     }
-    const items: BookItem[] = [];
-    for (const aggregate of Object.values(books)) {
-      const item = buildEpubBookItem(app, aggregate);
-      if (item) {
-        items.push(item);
-      }
-    }
-    return items;
+    return Object.values(books);
   } catch {
     return [];
   }
+}
+
+/**
+ * 从 Weave 阅读数据文件（<weaveDataPath>/weave-data.json）构建 EPUB 书目条目。
+ * Weave 未启用 / 文件缺失 / 解析失败 → 返回空数组（markdown 部分不受影响）。
+ */
+export async function loadEpubBookItems(app: any): Promise<BookItem[]> {
+  const aggregates = await readWeaveDataAggregates(app);
+  const items: BookItem[] = [];
+  for (const aggregate of aggregates) {
+    const item = buildEpubBookItem(app, aggregate);
+    if (item) {
+      items.push(item);
+    }
+  }
+  return items;
 }
