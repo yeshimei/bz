@@ -12,6 +12,8 @@ import { getBookItems, sortItemList, formatFileSize, getStatusColors, deriveBook
 import type { BookItem } from './items';
 import { parseBookNotes, jumpToHighlight, updateComment, deleteHighlight } from './notes';
 import type { ParsedBookNotes, BookNoteNode, BookHighlight } from './notes';
+import { loadEpubBookNotes, buildEpubJumpLink, updateEpubNoteComment, deleteEpubNote, findWeaveBookByPath } from './epub-notes';
+import type { EpubBookNote } from './epub-notes';
 
 // ---------- 模块级状态（源码 L212-218） ----------
 let libraryOverlay: HTMLElement | null = null;
@@ -245,12 +247,20 @@ function renderBookCard(app: any, item: any, colors: any, settings: any): HTMLEl
   coverWrapper.addEventListener('click', (e) => {
     e.stopPropagation();
     if (item.isEpub) {
-      app.workspace.openLinkText(item.file.path, '', false);
-      libraryOverlay!.style.visibility = 'hidden';
+      showEpubBookNotes(app, item);
       return;
     }
     showBookNotes(app, item.file.path);
   });
+
+  // EPUB：双击封面 → 打开阅读器（与标题行单击一致）；单击 → 读书笔记
+  if (item.isEpub) {
+    coverWrapper.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      app.workspace.openLinkText(item.file.path, '', false);
+      libraryOverlay!.style.visibility = 'hidden';
+    });
+  }
 
   card.appendChild(coverWrapper);
 
@@ -767,6 +777,345 @@ export function showBookNotes(app: any, filePath: string) {
   });
 }
 
+// ---------- EPUB 读书笔记模态（ADR-0013 扩展） ----------
+let epubBookNotesOverlay: HTMLElement | null = null;
+
+/** EPUB 书读书笔记：划线+想法按章节分组；双击跳原文、长按编辑想法/删除。 */
+export function showEpubBookNotes(app: any, item: BookItem) {
+  if (epubBookNotesOverlay) {
+    epubBookNotesOverlay.remove();
+    epubBookNotesOverlay = null;
+  }
+
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 1200;
+    display: flex; align-items: center; justify-content: center;
+  `;
+
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: var(--background-primary); color: var(--text-normal);
+    border-radius: 12px; width: 100%; max-width: 700px; height: 85vh;
+    display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  `;
+  if (window.innerWidth <= 768) {
+    modal.style.height = '100vh';
+    modal.style.borderRadius = '0';
+    modal.style.maxWidth = '100%';
+    modal.style.paddingTop = '34px';
+  }
+
+  const header = document.createElement('div');
+  header.style.cssText = `
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 20px; border-bottom: 1px solid var(--background-modifier-border);
+  `;
+  const titleSpan = document.createElement('span');
+  titleSpan.textContent = `📚 《${item.title}》的读书笔记`;
+  titleSpan.style.cssText = 'font-size: 1.1rem; font-weight: 600;';
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '❌';
+  closeBtn.style.cssText = `
+    background: none; border: none; font-size: 0.8rem;
+    cursor: pointer; color: var(--text-muted);
+    box-shadow: none; padding: 0;
+  `;
+  const closeModal = () => {
+    overlay.remove();
+    epubBookNotesOverlay = null;
+  };
+  closeBtn.addEventListener('click', closeModal);
+  header.appendChild(titleSpan);
+  header.appendChild(closeBtn);
+
+  const contentContainer = document.createElement('div');
+  contentContainer.style.cssText = 'flex: 1; overflow-y: auto; padding: 16px 20px;';
+  contentContainer.innerHTML = '<p style="color:var(--text-muted);">正在加载…</p>';
+
+  modal.appendChild(header);
+  modal.appendChild(contentContainer);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  escManager.register('lib', { isVisible: () => overlay.isConnected, close: closeModal });
+  epubBookNotesOverlay = overlay;
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeModal();
+  });
+
+  void (async () => {
+    const vaultPath = String(item.file?.path || '').trim();
+    const book = await findWeaveBookByPath(app, vaultPath);
+    if (!book) {
+      contentContainer.innerHTML = '<p style="color:var(--text-muted);">📭 未找到该书阅读数据</p>';
+      return;
+    }
+    const notes = await loadEpubBookNotes(app, vaultPath);
+    if (notes.length === 0) {
+      contentContainer.innerHTML = '<p style="color:var(--text-muted);">📭 没有找到高亮或想法</p>';
+      return;
+    }
+    renderEpubBookNoteTree(app, book, vaultPath, notes, contentContainer, () => {
+      // 编辑/删除后重开（与 md showBookNotes 的 onDone 语义一致）
+      void showEpubBookNotes(app, item);
+    });
+  })();
+}
+
+/** 按章节分组渲染（保留首现顺序）。 */
+function groupEpubNotesByChapter(notes: EpubBookNote[]): { chapterTitle: string; items: EpubBookNote[] }[] {
+  const groups: { chapterTitle: string; items: EpubBookNote[] }[] = [];
+  const byTitle = new Map<string, EpubBookNote[]>();
+  for (const note of notes) {
+    const key = note.chapterTitle;
+    if (!byTitle.has(key)) byTitle.set(key, []);
+    byTitle.get(key)!.push(note);
+  }
+  for (const [chapterTitle, items] of byTitle) {
+    groups.push({ chapterTitle, items });
+  }
+  return groups;
+}
+
+/** 递归渲染 EPUB 读书笔记树（章节标题 + 高亮块）。 */
+function renderEpubBookNoteTree(
+  app: any,
+  book: any,
+  vaultPath: string,
+  notes: EpubBookNote[],
+  container: HTMLElement,
+  onChanged: () => void
+): void {
+  const groups = groupEpubNotesByChapter(notes);
+  let first = true;
+  for (const group of groups) {
+    const headingEl = document.createElement('div');
+    headingEl.textContent = group.chapterTitle;
+    headingEl.style.cssText = `
+      font-size: 1rem;
+      font-weight: bold;
+      margin: ${first ? '0 0 8px 0' : '16px 0 8px 0'};
+      color: var(--heading-color, var(--text-accent));
+      user-select: none;
+    `;
+    first = false;
+    container.appendChild(headingEl);
+    for (const note of group.items) {
+      container.appendChild(renderEpubHighlightBlock(app, book, vaultPath, note, onChanged));
+    }
+  }
+}
+
+/** 单条 EPUB 划线块（原文/想法/日期 + 双击跳原文/长按编辑/长按删除）。 */
+function renderEpubHighlightBlock(
+  app: any,
+  book: any,
+  vaultPath: string,
+  note: EpubBookNote,
+  onChanged: () => void
+): HTMLElement {
+  const block = document.createElement('div');
+  block.style.cssText = 'margin-bottom: 12px; padding: 0 0 25px 0; border-bottom: 1px solid var(--background-modifier-border);';
+
+  const contentArea = document.createElement('div');
+  contentArea.style.cssText = 'user-select: none;';
+
+  const quote = document.createElement('div');
+  quote.style.cssText = `
+    font-style: italic; color: var(--text-muted); font-size: 0.75em;
+    padding: 15px 0px 5px 0px; margin-bottom: 2px;
+  `;
+  quote.textContent = `❝ ${note.text}`;
+  contentArea.appendChild(quote);
+
+  if (note.comment) {
+    const commentEl = document.createElement('div');
+    commentEl.style.cssText = `
+      margin-left: 12px; font-size: 0.75em;
+      color: var(--text-normal); padding: 5px 0px;
+    `;
+    commentEl.textContent = note.comment;
+    contentArea.appendChild(commentEl);
+  }
+
+  const dateEl = document.createElement('div');
+  if (note.createdTime) {
+    const d = new Date(note.createdTime);
+    dateEl.textContent = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  } else {
+    dateEl.textContent = '无日期';
+  }
+  dateEl.style.cssText = `
+    text-align: right; font-size: 0.65em;
+    color: var(--text-faint); margin-top: 2px;
+    user-select: none; cursor: pointer;
+  `;
+
+  block.appendChild(contentArea);
+  block.appendChild(dateEl);
+
+  const highlightId = String(note.highlight?.id || '');
+
+  // 双击整个块 → 跳原文（weave-cfi 深链）
+  block.addEventListener('dblclick', () => {
+    const linkText = buildEpubJumpLink(book, note);
+    if (!linkText) return;
+    app.workspace.openLinkText(linkText, '', false);
+    if (epubBookNotesOverlay) {
+      epubBookNotesOverlay.remove();
+      epubBookNotesOverlay = null;
+    }
+  });
+
+  // 长按内容 → 编辑想法
+  let contentLongPressTimer: ReturnType<typeof setTimeout> | null = null;
+  contentArea.addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+    contentLongPressTimer = setTimeout(() => {
+      contentLongPressTimer = null;
+      openEpubEditCommentModal(app, vaultPath, highlightId, note, onChanged);
+    }, 500);
+  });
+  contentArea.addEventListener('pointerup', () => {
+    if (contentLongPressTimer) { clearTimeout(contentLongPressTimer); contentLongPressTimer = null; }
+  });
+  contentArea.addEventListener('pointerleave', () => {
+    if (contentLongPressTimer) { clearTimeout(contentLongPressTimer); contentLongPressTimer = null; }
+  });
+
+  // 长按日期 → 删除高亮
+  let dateLongPressTimer: ReturnType<typeof setTimeout> | null = null;
+  dateEl.addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+    dateLongPressTimer = setTimeout(() => {
+      dateLongPressTimer = null;
+      if (!window.confirm('确定要删除该划线和想法吗？')) return;
+      void deleteEpubNote(app, vaultPath, highlightId).then((ok) => {
+        if (ok) onChanged();
+      });
+    }, 500);
+  });
+  dateEl.addEventListener('pointerup', () => {
+    if (dateLongPressTimer) { clearTimeout(dateLongPressTimer); dateLongPressTimer = null; }
+  });
+  dateEl.addEventListener('pointerleave', () => {
+    if (dateLongPressTimer) { clearTimeout(dateLongPressTimer); dateLongPressTimer = null; }
+  });
+
+  return block;
+}
+
+/** EPUB 想法编辑弹窗：改 commentText（直改 weave-data.json）。 */
+export function openEpubEditCommentModal(
+  app: any,
+  vaultPath: string,
+  highlightId: string,
+  note: EpubBookNote,
+  onDone?: () => void
+) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 1300;
+    display: flex; align-items: center; justify-content: center;
+  `;
+
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: var(--background-primary); color: var(--text-normal);
+    border-radius: 12px; width: 90%; max-width: 500px;
+    display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    border: 1px solid var(--background-modifier-border);
+    max-height: 80vh;
+  `;
+
+  const header = document.createElement('div');
+  header.style.cssText = `
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 16px; border-bottom: 1px solid var(--background-modifier-border);
+  `;
+  header.innerHTML = '<h3 style="margin:0;">编辑想法</h3>';
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕';
+  closeBtn.style.cssText =
+    'background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);';
+  closeBtn.addEventListener('click', () => overlay.remove());
+  header.appendChild(closeBtn);
+
+  const content = document.createElement('div');
+  content.style.cssText = 'padding: 16px; overflow-y: auto;';
+
+  const quoteDiv = document.createElement('div');
+  quoteDiv.style.cssText = `
+    font-style: italic; color: var(--text-muted); font-size: 0.85em;
+    padding: 8px 0; border-radius: 4px;
+    margin-bottom: 16px;
+    user-select: text;
+  `;
+  quoteDiv.textContent = `❝ ${note.text}`;
+  content.appendChild(quoteDiv);
+
+  const textarea = document.createElement('textarea');
+  textarea.value = note.comment || '';
+  textarea.style.cssText = `
+    width: 100%; min-height: 100px; padding: 8px;
+    font-size: 0.9rem; border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    color: var(--text-normal);
+    resize: vertical;
+    box-sizing: border-box;
+  `;
+  content.appendChild(textarea);
+
+  const btnGroup = document.createElement('div');
+  btnGroup.style.cssText = 'display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = '取消';
+  cancelBtn.style.cssText = `
+    padding: 6px 16px; border-radius: 4px;
+    background: var(--background-secondary); color: var(--text-normal);
+    border: none; cursor: pointer;
+  `;
+  cancelBtn.addEventListener('click', () => overlay.remove());
+
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = '保存';
+  saveBtn.style.cssText = `
+    padding: 6px 16px; border-radius: 4px;
+    background: var(--interactive-accent); color: white;
+    border: none; cursor: pointer;
+  `;
+  saveBtn.addEventListener('click', async () => {
+    const newComment = textarea.value;
+    const ok = await updateEpubNoteComment(app, vaultPath, highlightId, newComment);
+    if (!ok) return;
+    overlay.remove();
+    if (onDone) onDone();
+  });
+
+  btnGroup.appendChild(cancelBtn);
+  btnGroup.appendChild(saveBtn);
+  content.appendChild(btnGroup);
+
+  modal.appendChild(header);
+  modal.appendChild(content);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  escManager.register('lib', { isVisible: () => overlay.isConnected, close: () => overlay.remove() });
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.remove();
+  });
+
+  setTimeout(() => textarea.focus(), 50);
+}
+
 // ---------- 编辑批注弹窗 ----------
 export function openEditCommentModal(
   app: any,
@@ -887,6 +1236,7 @@ export function _testResetLibrary() {
   statusFilter = '全部';
   settingsOverlay = null;
   bookNotesOverlay = null;
+  epubBookNotesOverlay = null;
 }
 
 export { getSubfolder };

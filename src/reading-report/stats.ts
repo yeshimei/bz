@@ -3,6 +3,7 @@
  * 源码：阅读数据分析报告.js（重复函数只保留最终版）
  */
 import { pad2 } from '../core/utils';
+import { readWeaveDataAggregates } from '../library/items';
 
 // ---------- 数据采集 ----------
 
@@ -10,6 +11,78 @@ export interface BookNoteEntry {
   file: any;
   frontmatter: Record<string, any>;
   cache: any;
+}
+
+/** 阅读会话 → 报告 frontmatter 形状（duration 秒；start 可被 new Date 解析）。 */
+function mapWeaveSessionToReport(session: any): any {
+  const start = typeof session?.start === 'number' ? session.start : 0;
+  const end = typeof session?.end === 'number' ? session.end : start;
+  const durationSeconds =
+    typeof session?.durationSeconds === 'number' ? Math.round(session.durationSeconds) : 0;
+  return { start, end, duration: durationSeconds };
+}
+
+function toIsoDate(timestamp: number | undefined): string | null {
+  if (!Number.isFinite(timestamp) || !timestamp) return null;
+  return new Date(timestamp).toISOString().slice(0, 10);
+}
+
+/** 把 Weave 书籍聚合映射为报告书条目（frontmatter 口径与 md 书一致，缺 field 补缺省）。 */
+function buildEpubBookNoteEntry(aggregate: any): BookNoteEntry | null {
+  const meta = aggregate?.meta;
+  const fileRef = aggregate?.file;
+  const reading = aggregate?.reading;
+  const notes = aggregate?.notes;
+  const stats = reading?.stats;
+  const vaultPath = typeof fileRef?.vaultPath === 'string' ? fileRef.vaultPath.trim() : '';
+  const title = typeof meta?.title === 'string' ? meta.title.trim() : '';
+  if (!vaultPath || !title) return null;
+
+  const rawPercent = typeof reading?.position?.percent === 'number' ? reading.position.percent : 0;
+  const progress =
+    rawPercent > 1
+      ? Math.min(100, Math.round(rawPercent))
+      : Math.round(Math.max(0, Math.min(1, rawPercent)) * 100);
+  const wordCount = typeof meta?.wordCount === 'number' && meta.wordCount > 0 ? meta.wordCount : 0;
+  const pages = Math.floor(wordCount / 500);
+  const sessions = Array.isArray(reading?.sessions) ? reading.sessions : [];
+  const readingDate = stats?.lastReadTime ? toIsoDate(stats.lastReadTime) : null;
+
+  return {
+    file: {
+      path: vaultPath,
+      name: vaultPath.split('/').pop() || title,
+      basename: vaultPath.split('/').pop()?.replace(/\.[^./]+$/, '') || title,
+    },
+    frontmatter: {
+      title,
+      author: typeof meta?.author === 'string' && meta.author.trim() ? meta.author.trim() : '未知作者',
+      category: '未分类',
+      readingProgress: progress,
+      readingTime: typeof stats?.totalReadTime === 'number' ? stats.totalReadTime : 0,
+      readingSessions: sessions.map(mapWeaveSessionToReport),
+      readingDate,
+      completionDate: toIsoDate(stats?.completedTime),
+      highlights: Array.isArray(notes?.highlights) ? notes.highlights.length : 0,
+      thinks: Array.isArray(notes?.excerpts) ? notes.excerpts.length : 0,
+      dialogue: 0,
+      outlinks: 0,
+      pages,
+      wordCount,
+    },
+    cache: null,
+  };
+}
+
+/** 阅读报告的 EPUB 书条目（全库 weave 书，不筛目录；ADR-0013 扩展）。 */
+export async function getEpubBookNotes(app: any): Promise<BookNoteEntry[]> {
+  const aggregates = await readWeaveDataAggregates(app);
+  const entries: BookNoteEntry[] = [];
+  for (const aggregate of aggregates) {
+    const entry = buildEpubBookNoteEntry(aggregate);
+    if (entry) entries.push(entry);
+  }
+  return entries;
 }
 
 /** 获取所有带 book 标签的笔记 */
