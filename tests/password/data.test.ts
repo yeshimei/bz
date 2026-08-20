@@ -29,6 +29,14 @@ describe('CryptoService', () => {
     const b = await CryptoService.encrypt('same', 'pw');
     expect(a).not.toBe(b);
   });
+
+  it('大载荷加解密往返不栈溢出（回归：展开运算符 btoa(...bytes) 会爆栈）', async () => {
+    // ~300KB，远超旧实现 String.fromCharCode(...combined) 的调用栈/参数上限
+    const big = Buffer.alloc(300 * 1024, 'x').toString('utf8');
+    const encrypted = await CryptoService.encrypt(big, 'pw');
+    const decrypted = await CryptoService.decrypt(encrypted, 'pw');
+    expect(decrypted).toBe(big);
+  });
 });
 
 describe('DataManager 主密码状态机', () => {
