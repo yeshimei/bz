@@ -4,7 +4,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { getBookItems, sortItemList, getSubfolder, getStatusColors } from '../../src/library/items';
+import { getBookItems, sortItemList, getSubfolder, getStatusColors, loadEpubBookItems } from '../../src/library/items';
 import { MockVault, parseFrontmatter } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 
@@ -146,5 +146,81 @@ describe('sortItemList', () => {
   it('未知 key → 原序', () => {
     const list = [item({ title: 'B' }), item({ title: 'A' })];
     expect(sortItemList(list, 'xxx', 'asc').map((i) => i.title)).toEqual(['B', 'A']);
+  });
+});
+
+describe('loadEpubBookItems（ADR-0013，读 Weave 数据文件）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+    vault = new MockVault();
+    setApp(makeApp(vault));
+    setSettingsProvider(() => ({ libraryFolderPath: '书库', bookTag: 'book', weaveDataPath: 'CONFIG/STORAGE' }) as any);
+  });
+
+  function seedWeaveData(books: any) {
+    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({ schemaVersion: 2, books }));
+  }
+
+  it('从 weave-data.json 构建 EPUB 条目（字段 + coverPath + 状态）', async () => {
+    seedWeaveData({
+      bk_001: {
+        id: 'bk_001',
+        file: { vaultPath: '书库/悉达多.epub' },
+        meta: { title: '悉达多', author: '赫尔曼·黑塞', coverPath: 'CONFIG/BOOK/EPUB COVER/悉达多.jpg', chapterCount: 12 },
+        reading: {
+          position: { chapterIndex: 2, cfi: '', percent: 0.3 },
+          stats: { totalReadTime: 1500000, lastReadTime: 1735000000000, createdTime: 1730000000000 },
+        },
+        notes: { bookmarks: [], highlights: [{ id: 'h1' }], excerpts: [{ id: 'e1' }] },
+      },
+    });
+    vault.files.set('CONFIG/BOOK/EPUB COVER/悉达多.jpg', 'x');
+    const items = await loadEpubBookItems(makeApp(vault));
+    expect(items.length).toBe(1);
+    const b = items[0];
+    expect(b.isEpub).toBe(true);
+    expect(b.title).toBe('悉达多');
+    expect(b.author).toBe('赫尔曼·黑塞');
+    expect(b.category).toBe('未分类');
+    expect(b.cover).toBe('CONFIG/BOOK/EPUB COVER/悉达多.jpg');
+    expect(b.status).toBe('在读');
+    expect(b.readingProgress).toBe(30);
+    expect(b.highlights).toBe(1);
+    expect(b.thinks).toBe(1);
+    expect(b.readingTimeFormat).toBe('25分');
+  });
+
+  it('coverPath 缺失时退回按书名推断默认封面目录；未读状态', async () => {
+    seedWeaveData({
+      bk_002: {
+        id: 'bk_002',
+        file: { vaultPath: '书库/宇宙.epub' },
+        meta: { title: '宇宙', author: '卡尔·萨根', chapterCount: 8 },
+        reading: {
+          position: { chapterIndex: 0, cfi: '', percent: 0 },
+          stats: { totalReadTime: 0, lastReadTime: 0, createdTime: 0 },
+        },
+        notes: { bookmarks: [], highlights: [], excerpts: [] },
+      },
+    });
+    vault.files.set('CONFIG/BOOK/EPUB COVER/宇宙.png', 'x');
+    const items = await loadEpubBookItems(makeApp(vault));
+    expect(items[0].cover).toBe('CONFIG/BOOK/EPUB COVER/宇宙.png');
+    expect(items[0].status).toBe('未读');
+    expect(items[0].readingProgress).toBe(0);
+  });
+
+  it('weave-data.json 缺失 → 空数组（不抛错）', async () => {
+    const items = await loadEpubBookItems(makeApp(vault));
+    expect(items).toEqual([]);
+  });
+
+  it('weave-data.json 非法 JSON → 空数组', async () => {
+    vault.files.set('CONFIG/STORAGE/weave-data.json', 'not json{{{');
+    const items = await loadEpubBookItems(makeApp(vault));
+    expect(items).toEqual([]);
   });
 });

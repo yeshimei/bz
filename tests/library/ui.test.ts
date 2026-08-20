@@ -175,4 +175,28 @@ describe('书库面板', () => {
     block.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     expect(app.workspace.openLinkText).toHaveBeenCalledWith('书库/活着.md#^h1', '', false);
   });
+
+  it('EPUB 条目并入列表（读 weave-data.json）且单击标题跳 Weave 打开', async () => {
+    vault.files.set('书库/活着.md', BOOK_MD);
+    vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
+      schemaVersion: 2,
+      books: {
+        bk_001: {
+          id: 'bk_001',
+          file: { vaultPath: 'Books/悉达多.epub' },
+          meta: { title: '悉达多', author: '赫尔曼·黑塞', chapterCount: 10 },
+          reading: { position: { chapterIndex: 0, cfi: '', percent: 0 }, stats: { totalReadTime: 0, lastReadTime: 0, createdTime: 0 } },
+          notes: { bookmarks: [], highlights: [], excerpts: [] },
+        },
+      },
+    }));
+    const app = makeApp(vault);
+    showLibrary(app);
+    await new Promise((r) => setTimeout(r, 20));
+    const overlay = document.getElementById('__book_library__')!;
+    expect(overlay.textContent).toContain('悉达多');
+    const titleEl = [...overlay.querySelectorAll('div')].find((d) => d.textContent === '悉达多')!;
+    titleEl.click();
+    expect(app.workspace.openLinkText).toHaveBeenCalledWith('Books/悉达多.epub', '', false);
+  });
 });
