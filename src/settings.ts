@@ -113,6 +113,8 @@ export default interface BzSettings {
   showReview: boolean;
   /** 🏷️ 显示分类（源码无 UI 项，运行时默认 true，字段保留） */
   showCategory: boolean;
+  /** 📖 Weave 数据路径：Weave 阅读数据文件（weave-data.json）所在目录，书库据此读取 EPUB 书目数据（ADR-0013） */
+  weaveDataPath: string;
 
   // ===== 🎬 影视（5 项）=====
   /** 📁 影视文件夹 */
@@ -305,6 +307,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   showThinks: true,
   showReview: true,
   showCategory: true,
+  weaveDataPath: 'CONFIG/STORAGE',
 
   // 影视
   movieFolderPath: '我的/影视',

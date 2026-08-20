@@ -8,7 +8,7 @@ import { escManager } from '../core/esc-manager';
 import { getSettings, saveSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
 import type BzSettings from '../settings';
-import { getBookItems, sortItemList, formatFileSize, getStatusColors, deriveBookSettings, getSubfolder } from './items';
+import { getBookItems, sortItemList, formatFileSize, getStatusColors, deriveBookSettings, getSubfolder, loadEpubBookItems } from './items';
 import type { BookItem } from './items';
 import { parseBookNotes, jumpToHighlight, updateComment, deleteHighlight } from './notes';
 import type { ParsedBookNotes, BookNoteNode, BookHighlight } from './notes';
@@ -30,6 +30,14 @@ export function showLibrary(app: any) {
   }
 
   currentItems = getBookItems(app);
+  // EPUB 书目条目（ADR-0013）异步并入：读 weave-data.json 后并入列表并重渲染。
+  void loadEpubBookItems(app).then((epubItems) => {
+    if (!epubItems || epubItems.length === 0) return;
+    currentItems = [...currentItems, ...epubItems];
+    if (libraryOverlay && libraryListContainer) {
+      renderLibraryList(app);
+    }
+  });
   if (currentItems.length === 0) {
     const settings = deriveBookSettings();
     notice(`未找到任何书籍笔记（路径：${settings.folderPath}，需包含 tags: book）`);
@@ -104,6 +112,7 @@ export function showLibrary(app: any) {
         textSetting('书库文件夹', '存放书籍笔记的根目录', 'libraryFolderPath');
         textSetting('读书笔记路径', '长按书籍时打开的读书笔记所在目录', 'libraryNotePath');
         textSetting('书籍识别标签', 'Frontmatter 中用于识别书籍笔记的标签名', 'bookTag');
+        textSetting('Weave 数据路径', 'Weave 阅读数据文件（weave-data.json）所在目录；书库据此读取 EPUB 书目数据', 'weaveDataPath');
         toggleSetting('显示文件大小', '', 'showFileSize');
         toggleSetting('显示阅读时长', '', 'showReadingTime');
         toggleSetting('显示划线数', '', 'showHighlights');
@@ -196,7 +205,7 @@ function renderBookCard(app: any, item: any, colors: any, settings: any): HTMLEl
       flex-shrink: 0;
       margin-right: 14px;
     `;
-  coverWrapper.title = '单击打开读书笔记';
+  coverWrapper.title = item.isEpub ? '单击在阅读器中打开' : '单击打开读书笔记';
 
   if (item.cover) {
     const coverFile = app.vault.getAbstractFileByPath(item.cover);
@@ -235,6 +244,11 @@ function renderBookCard(app: any, item: any, colors: any, settings: any): HTMLEl
 
   coverWrapper.addEventListener('click', (e) => {
     e.stopPropagation();
+    if (item.isEpub) {
+      app.workspace.openLinkText(item.file.path, '', false);
+      libraryOverlay!.style.visibility = 'hidden';
+      return;
+    }
     showBookNotes(app, item.file.path);
   });
 
