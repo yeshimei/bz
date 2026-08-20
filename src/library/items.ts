@@ -12,8 +12,6 @@ export interface BookSettings {
   showHighlights: boolean;
   showThinks: boolean;
   showReview: boolean;
-  /** Weave 阅读数据文件（weave-data.json）所在目录（ADR-0013）。 */
-  weaveDataPath: string;
 }
 
 /** 从插件设置派生书库设置快照（源码 window._bookSettings 语义） */
@@ -27,7 +25,6 @@ export function deriveBookSettings(): BookSettings {
     showHighlights: s.showHighlights !== false,
     showThinks: s.showThinks !== false,
     showReview: s.showReview !== false,
-    weaveDataPath: s.weaveDataPath || 'CONFIG/STORAGE',
   };
 }
 
@@ -199,6 +196,19 @@ export function normalizeWeaveDataPath(value?: string): string {
   return raw || 'CONFIG/STORAGE';
 }
 
+const WEAVE_PLUGIN_ID = 'weave-epub-reader';
+
+/**
+ * 解析 Weave 阅读数据目录：直接读 Weave EPUB Reader 插件配置的 settings.dataPath
+ * （ticket 65：设置界面去掉 weave 数据路径，改由 Weave 插件配置提供，避免两处不同步）。
+ * 插件未安装/字段缺失 → 回落默认 CONFIG/STORAGE（即 Weave 的 DEFAULT_DATA_PATH）。
+ * 插件加载后 settings 即就绪，同步可读，无需读 data.json。
+ */
+export function resolveWeaveDataPath(app: any): string {
+  const fromWeave = app?.plugins?.plugins?.[WEAVE_PLUGIN_ID]?.settings?.dataPath;
+  return normalizeWeaveDataPath(fromWeave);
+}
+
 function isVaultImageFile(app: any, path: string): boolean {
   const file = app?.vault?.getAbstractFileByPath?.(path);
   return Boolean(file) && /\.(png|jpe?g|gif|webp)$/i.test(file.name || path);
@@ -304,8 +314,7 @@ function buildEpubBookItem(app: any, aggregate: any): BookItem | null {
  */
 export async function readWeaveDataAggregates(app: any): Promise<any[]> {
   try {
-    const settings = deriveBookSettings();
-    const dataPath = normalizeWeaveDataPath(settings.weaveDataPath);
+    const dataPath = resolveWeaveDataPath(app);
     const dataFilePath = `${dataPath}/${DEFAULT_WEAVE_DATA_FILE}`;
     const file = app?.vault?.getAbstractFileByPath?.(dataFilePath);
     if (!file) {

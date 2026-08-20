@@ -4,7 +4,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { getBookItems, sortItemList, getSubfolder, loadEpubBookItems } from '../../src/library/items';
+import { getBookItems, sortItemList, getSubfolder, loadEpubBookItems, resolveWeaveDataPath } from '../../src/library/items';
 import { MockVault, parseFrontmatter } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 
@@ -19,6 +19,8 @@ function makeApp(vault: MockVault) {
       },
     },
     workspace: {},
+    // 模拟已装 Weave EPUB Reader（ticket 65：weave 数据路径改由插件配置提供）
+    plugins: { plugins: { 'weave-epub-reader': { settings: { dataPath: 'CONFIG/STORAGE' } } } },
   } as any;
 }
 
@@ -42,6 +44,20 @@ describe('getSubfolder', () => {
   it('第一段目录；无则 null', () => {
     expect(getSubfolder('书库/小说/活着.md', '书库')).toBe('小说');
     expect(getSubfolder('书库/活着.md', '书库')).toBeNull();
+  });
+});
+
+describe('resolveWeaveDataPath（ticket 65：读 Weave 插件配置）', () => {
+  it('读 Weave EPUB Reader 的 settings.dataPath', () => {
+    const app = { plugins: { plugins: { 'weave-epub-reader': { settings: { dataPath: 'CUSTOM/阅读数据' } } } } };
+    expect(resolveWeaveDataPath(app)).toBe('CUSTOM/阅读数据');
+  });
+
+  it('插件未装 / 字段缺失 / 空 app → 默认 CONFIG/STORAGE', () => {
+    expect(resolveWeaveDataPath({})).toBe('CONFIG/STORAGE');
+    expect(resolveWeaveDataPath({ plugins: { plugins: { 'weave-epub-reader': { settings: {} } } } })).toBe('CONFIG/STORAGE');
+    expect(resolveWeaveDataPath({ plugins: { plugins: {} } })).toBe('CONFIG/STORAGE');
+    expect(resolveWeaveDataPath(undefined)).toBe('CONFIG/STORAGE');
   });
 });
 

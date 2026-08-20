@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 书库 EPUB 读书笔记测试（ADR-0013 扩展）：loadEpubBookNotes / buildEpubJumpLink / 直改 weave-data。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -26,6 +26,7 @@ function makeApp(vault: MockVault) {
       },
     },
     workspace: {},
+    plugins: { plugins: { 'weave-epub-reader': { settings: { dataPath: 'CONFIG/STORAGE' } } } },
   } as any;
 }
 

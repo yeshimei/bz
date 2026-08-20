@@ -3,7 +3,7 @@
  * 双击跳原文（weave-cfi 深链），长按编辑想法/删除（bz 直改 weave-data.json，ADR 记录竞态例外）。
  */
 import { notice } from '../core/dom';
-import { deriveBookSettings, DEFAULT_WEAVE_DATA_FILE, normalizeWeaveDataPath, readWeaveDataAggregates } from './items';
+import { DEFAULT_WEAVE_DATA_FILE, readWeaveDataAggregates, resolveWeaveDataPath } from './items';
 
 export interface EpubBookNote {
   /** 高亮记录引用（notes.highlights 中索引所在项）。 */
@@ -75,14 +75,13 @@ export function buildEpubJumpLink(book: any, note: EpubBookNote): string {
 
 // ---------- 直改 weave-data.json（Q16：bz 直接操作数据文件，ADR-0013 扩展记录竞态例外） ----------
 
-function weavDataFilePath(): string {
-  const settings = deriveBookSettings();
-  return `${normalizeWeaveDataPath(settings.weaveDataPath)}/weave-data.json`;
+function weavDataFilePath(app: any): string {
+  return `${resolveWeaveDataPath(app)}/${DEFAULT_WEAVE_DATA_FILE}`;
 }
 
 /** 读最新 weave-data.json 文档结构（原始对象，勿直接改动缓存）。 */
 async function readWeaveDocument(app: any): Promise<any> {
-  const filePath = weavDataFilePath();
+  const filePath = weavDataFilePath(app);
   const file = app?.vault?.getAbstractFileByPath?.(filePath);
   if (!file) throw new Error('weave-data.json 不存在');
   const content = await app.vault.adapter.read(filePath);
@@ -91,7 +90,7 @@ async function readWeaveDocument(app: any): Promise<any> {
 
 /** 写回 weave-data.json（整文件；沿用 vault 写入语义）。 */
 async function writeWeaveDocument(app: any, document: any): Promise<void> {
-  const filePath = weavDataFilePath();
+  const filePath = weavDataFilePath(app);
   const content = JSON.stringify(document, null, 2);
   const file = app?.vault?.getAbstractFileByPath?.(filePath);
   if (file) await app.vault.modify(file, content);
