@@ -83,6 +83,13 @@ export interface LockNoteInput {
   attachments: LockAttachmentInput[];
 }
 
+/** 加锁/还原的逐文件进度回调（done: 已完成数, total: 总数, current: 当前文件路径） */
+export interface EncryptProgress {
+  done: number;
+  total: number;
+  current: string;
+}
+
 /** ArrayBuffer → base64（分块，避免大附件逐字节性能瓶颈；结果与逐字节一致） */
 export function bytesToBase64(bytes: Uint8Array): string {
   const CHUNK = 0x8000; // 32768
@@ -285,13 +292,18 @@ export class SafeManager {
   /**
    * 加锁一篇笔记：把当前笔记正文 + 双链附件移入保险箱。
    * 先写密文镜像 + 更新清单，全部成功后才删 vault 原文件（崩溃幂等）。
+   * onProgress：按文件回调（附件逐个 + 笔记本身），UI 驱动进度通知。
    */
-  async lockNote(input: LockNoteInput): Promise<SafeNote> {
+  async lockNote(input: LockNoteInput, onProgress?: (p: EncryptProgress) => void): Promise<SafeNote> {
     if (!this.unlocked || !this.password) throw new Error('未解锁，无法加密笔记');
     await this.ensureMirrorDirs();
+    const total = input.attachments.length + 1;
+    let done = 0;
 
     const attachments: SafeAttachment[] = [];
     for (const a of input.attachments) {
+      done += 1;
+      onProgress?.({ done, total, current: a.path });
       const fp = await fingerprintOf(a.data);
       const enc = await CryptoService.encrypt(a.data, this.password);
       const blobRef = mirrorRef(a.path);
@@ -316,6 +328,8 @@ export class SafeManager {
       });
     }
 
+    done += 1;
+    onProgress?.({ done, total, current: input.path });
     const note: SafeNote = {
       id: genNoteId(),
       path: input.path,
@@ -341,22 +355,31 @@ export class SafeManager {
    * 真还原一篇笔记：解原文 + 原质量附件写回原路径，标记 restored。
    * 覆盖目标文件前校验指纹：不匹配（用户新建了同名文件）→ 跳过不盖。
    * 每写一个文件触发 metadataCache 更新（各域立即恢复）。
+   * onProgress：按文件回调（附件逐个 + 笔记本身），UI 驱动进度通知。
    */
-  async restoreNote(noteId: string): Promise<{ note: SafeNote; conflicts: string[] }> {
+  async restoreNote(
+    noteId: string,
+    onProgress?: (p: EncryptProgress) => void
+  ): Promise<{ note: SafeNote; conflicts: string[] }> {
     if (!this.unlocked || !this.password) throw new Error('未解锁，无法还原笔记');
     const app = getApp();
     const note = this.manifest.notes.find((n) => n.id === noteId);
     if (!note) throw new Error('未找到该加密笔记');
     const conflicts: string[] = [];
+    const total = note.attachments.length + 1;
+    let done = 0;
 
     // 附件先还原
     for (const a of note.attachments) {
       if (a.restored) continue;
+      onProgress?.({ done, total, current: a.path });
       const ok = await this.restoreAttachment(a);
+      done += 1;
       if (ok) a.restored = true;
       else conflicts.push(a.path);
     }
     // 正文还原
+    onProgress?.({ done, total, current: note.path });
     const plain = await CryptoService.decrypt(note.content, this.password);
     if (this.fileExists(note.path)) {
       // restored=false 时 vault 里本不该有该笔记；有 = 非本系统写入 → 冲突跳过
@@ -367,6 +390,8 @@ export class SafeManager {
       (app.metadataCache as any)?.trigger?.('changed', file);
       note.restored = true;
     }
+    done = total;
+    onProgress?.({ done, total, current: note.path });
     await this.saveManifest();
     return { note, conflicts };
   }

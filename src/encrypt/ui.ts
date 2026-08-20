@@ -5,7 +5,8 @@
  * 协调层：加锁当前笔记（含预览生成）、真还原、收回全部。
  */
 import { Setting, MarkdownRenderer, Component } from 'obsidian';
-import { notice } from '../core/notice';
+import { notice, notify } from '../core/notice';
+import type { NoticeHandle } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { confirm } from '../core/confirm';
@@ -51,6 +52,94 @@ export function kindOf(path: string): 'image' | 'video' {
   const ext = path.split('.').pop()?.toLowerCase() || '';
   return /^(mp4|webm|mov|mkv|avi|m4v|ogv)$/.test(ext) ? 'video' : 'image';
 }
+
+/** 预览窗混排占位槽：正文里每个嵌入对应一个槽 */
+export interface MediaSlot {
+  attachment: SafeAttachment | null;
+  token: string;
+}
+
+/**
+ * 把正文中的图片/视频嵌入改写为占位 token（按文档顺序），并映射回附件。
+ * 渲染 Markdown 后按 token 原位替换成解密出的预览图——实现「图随文走」混排，
+ * 而非把图片全部堆到末尾。未被引用的附件由调用方放到底部画廊兜底。
+ */
+export function collectMediaSlots(md: string, attachments: SafeAttachment[]): {
+  text: string;
+  slots: MediaSlot[];
+  inlined: Set<string>;
+} {
+  // 三种嵌入（按出现顺序单次扫描）：![[x]] / ![...](x) / <video src=x>
+  const re = /!\[\[([^\]|#]+)(?:\|[^\]]*)?\]\]|!\[[^\]]*\]\(([^)\s]+)\)|<video[^>]*src=["']([^"']+)["']/g;
+  const slots: MediaSlot[] = [];
+  const inlined = new Set<string>();
+  let out = '';
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(md)) !== null) {
+    const target = (m[1] || m[2] || m[3] || '').trim().replace(/^\.\//, '');
+    const att = findAttachment(target, attachments);
+    const token = '@@ENC_MEDIA_' + slots.length + '@@';
+    slots.push({ attachment: att ?? null, token });
+    if (att) inlined.add(att.path);
+    out += md.slice(last, m.index) + token;
+    last = m.index + m[0].length;
+  }
+  out += md.slice(last);
+  return { text: out, slots, inlined };
+}
+
+/** 按路径（basename 或全路径后缀）匹配附件 */
+function findAttachment(target: string, attachments: SafeAttachment[]): SafeAttachment | undefined {
+  const t = decodeURIComponent(target).trim();
+  return attachments.find((a) => a.path === t || a.path.endsWith('/' + t));
+}
+
+/** 附件预览媒体 HTML（有预览 → <img>；无/失败 → 占位提示真还原查看原图） */
+export function mediaHtml(a: SafeAttachment | null | undefined, dataUrl: string | null | undefined): string {
+  if (!a) return '';
+  const alt = (a.path || '').replace(/"/g, '&quot;');
+  if (dataUrl) {
+    return `<img class="bz-encrypt-preview-media" src="${dataUrl}" alt="${alt}" loading="lazy">`;
+  }
+  return `<div class="bz-encrypt-preview-missing" title="${alt}">
+      <span class="bz-encrypt-preview-missing-name">${alt}</span>
+      <span>${a.kind === 'video' ? '视频抽帧预览不可用' : '无压缩预览'}，用「真还原」查看原图</span>
+    </div>`;
+}
+
+/** 进度通知按次独立：每次加密/还原用唯一键，避免相邻操作被去重抑制 */
+function progressKey() {
+  return 'encrypt-progress-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+}
+
+/** 创建顶部动态进度通知（progress 类型，不自动消失） */
+export function progressNotify(title: string): NoticeHandle | null {
+  try {
+    return notify('0/0', { type: 'progress', title, dedupeKey: progressKey(), duration: -1 });
+  } catch (e) {
+    return null;
+  }
+}
+
+/** 更新进度通知：左「已处理 N/总数」右「当前文件名」 */
+export function updateProgress(h: NoticeHandle | null, done: number, total: number, current: string) {
+  if (!h) return;
+  const base = `已处理 ${done}/${total}`;
+  const name = current.split('/').pop() || current;
+  h.setMessage(`${base} · 当前：${name}`);
+  const pct = total > 0 ? Math.max(0, Math.min(100, Math.round((done / total) * 100))) : 0;
+  h.setProgress(pct);
+}
+
+/** 完成进度通知：转成功态并收起 */
+export function finishProgress(h: NoticeHandle | null, done: number, msg: string) {
+  if (!h) return;
+  h.setMessage(`${msg}（${done} 个文件）`);
+  h.setType('success');
+}
+
+
 
 export class UIManager {
   dataManager: SafeManager;
@@ -325,13 +414,37 @@ export class UIManager {
       message: `将「${note.title}」的原文${note.attachments.length ? '与 ' + note.attachments.length + ' 个原质量附件' : ''}还原到原路径。`,
       confirmText: '真还原',
       onConfirm: () => {
-        void this.dataManager.restoreNote(note.id).then(({ conflicts }) => {
-          if (conflicts.length) notice('还原冲突 ' + conflicts.length + ' 个（未覆盖同名文件）', 'warning');
-          else notice('已还原「' + note.title + '」', 'success');
-          void this.renderList();
-        }).catch((e: any) => notice('还原失败：' + e.message, 'error'));
+        const h = progressNotify('还原 ' + note.title);
+        void this.dataManager
+          .restoreNote(note.id, (p) => updateProgress(h, p.done, p.total, p.current))
+          .then(({ conflicts }) => {
+            const total = note.attachments.length + 1;
+            if (conflicts.length) {
+              finishProgress(h, total, '还原完成（' + conflicts.length + ' 个冲突未覆盖）');
+              notice('还原冲突 ' + conflicts.length + ' 个（未覆盖同名文件）', 'warning');
+            } else {
+              finishProgress(h, total, '已还原');
+              notice('已还原「' + note.title + '」', 'success');
+            }
+            this.openRestoredNote(note);
+            void this.renderList();
+          })
+          .catch((e: any) => notice('还原失败：' + e.message, 'error'));
       },
     });
+  }
+
+  /** 还原成功后打开该笔记（Obsidian 当前叶子页打开） */
+  openRestoredNote(note: SafeNote) {
+    const app = getApp();
+    try {
+      const file = app.vault.getAbstractFileByPath(note.path);
+      if (file && (file as any).isFolder !== true) {
+        (app.workspace as any).openLinkText?.(note.path, note.path);
+      }
+    } catch (e) {
+      /* 打开失败静默 */
+    }
   }
 
   // ---------- 预览窗 ----------
@@ -352,42 +465,62 @@ export class UIManager {
     this.previewPopup!.appendChild(header);
     const body = document.createElement('div');
     body.className = 'bz-encrypt-preview-body';
-    // 正文 Markdown 渲染
+
     try {
       const plain = await this.dataManager.decryptText(note.content);
+      // 先把嵌入改写占位 token（按文档顺序混排），渲染后再原位替换为预览图
+      const { text, slots, inlined } = collectMediaSlots(plain, note.attachments);
+      // 预先解密所有附件的预览层（每个只解一次；嵌入与底部画廊共用）
+      const dataUrls = new Map<string, string>();
+      for (const a of note.attachments) {
+        if (!a.hasPreview || dataUrls.has(a.path)) continue;
+        let du = '';
+        try {
+          du = (await this.dataManager.decryptPreview(a)) || '';
+        } catch (e) {
+          du = '';
+        }
+        dataUrls.set(a.path, du);
+      }
+      // Markdown 渲染（占位 token 原样保留）
       const mdEl = document.createElement('div');
       mdEl.className = 'bz-encrypt-preview-md';
+      let rendered = false;
       try {
-        await MarkdownRenderer.render(getApp(), plain, mdEl, note.path, new Component());
+        await MarkdownRenderer.render(getApp(), text, mdEl, note.path, new Component());
+        rendered = true;
       } catch (e) {
         mdEl.textContent = plain;
       }
+      if (rendered) {
+        // 原位替换 token → 预览图，实现图随文走
+        let html = mdEl.innerHTML;
+        for (const slot of slots) {
+          const a = slot.attachment;
+          if (a) html = html.split(slot.token).join(mediaHtml(a, dataUrls.get(a.path)));
+          else html = html.split(slot.token).join('');
+        }
+        mdEl.innerHTML = html;
+      }
       body.appendChild(mdEl);
+      // 底部画廊：未被正文引用的附件兜底展示（避免漏看）
+      const residuals = note.attachments.filter((a) => !inlined.has(a.path));
+      if (residuals.length) {
+        const gallery = document.createElement('div');
+        gallery.className = 'bz-encrypt-preview-gallery';
+        for (const a of residuals) {
+          const wrap = document.createElement('div');
+          wrap.innerHTML = mediaHtml(a, dataUrls.get(a.path));
+          gallery.appendChild(wrap);
+        }
+        body.appendChild(gallery);
+      }
     } catch (e) {
       const err = document.createElement('div');
       err.textContent = '正文解密失败';
       body.appendChild(err);
     }
-    // 附件预览（压缩层/抽帧图）
-    for (const a of note.attachments) {
-      const img = document.createElement('img');
-      img.className = 'bz-encrypt-preview-media';
-      img.alt = a.path;
-      if (a.hasPreview) {
-        try {
-          const dataUrl = await this.dataManager.decryptPreview(a);
-          if (dataUrl) img.src = dataUrl;
-        } catch (e) {
-          // 预览层解密失败 → 显示占位
-        }
-      } else {
-        img.src = '';
-      }
-      if (!img.src) {
-        img.alt = a.path + (a.kind === 'video' ? '（视频·抽帧预览缺失）' : '');
-      }
-      body.appendChild(img);
-    }
+
     this.previewPopup!.appendChild(body);
     this.previewMask!.style.display = 'block';
     this.previewPopup!.style.display = 'flex';
@@ -570,13 +703,19 @@ export class EncryptAppController {
         /* 附件读取失败跳过该附件 */
       }
     }
+    const h = progressNotify('加密 ' + file.basename);
     try {
-      await this.dataManager.lockNote({
-        path: file.path,
-        title: file.basename,
-        content,
-        attachments,
-      });
+      await this.dataManager.lockNote(
+        {
+          path: file.path,
+          title: file.basename,
+          content,
+          attachments,
+        },
+        (p) => updateProgress(h, p.done, p.total, p.current)
+      );
+      const total = attachments.length + 1;
+      finishProgress(h, total, '已加密');
       notice('已加密「' + file.basename + '」及其 ' + attachments.length + ' 个附件', 'success');
       void this.uiManager.renderList();
     } catch (e: any) {
