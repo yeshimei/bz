@@ -204,3 +204,48 @@ describe('SafeManager 未解锁拦截', () => {
     await expect(sm.restoreNote('x')).rejects.toThrow('未解锁');
   });
 });
+
+describe('SafeManager 深层目录（Parent folder 回归）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    vault = new MockVault();
+  });
+
+  it('加锁深层路径附件：中间镜像目录被递归创建（不抛 Parent folder missing）', async () => {
+    makeApp(vault);
+    vault.create('我的/影视/2025/片单.md', '# 片单');
+    const sm = new SafeManager('CONFIG/ENCRYPT');
+    await sm.unlock('pw');
+    await sm.lockNote({
+      path: '我的/影视/2025/片单.md',
+      title: '片单',
+      content: '# 片单',
+      attachments: [{ path: '我的/影视/2025/海报.png', data: 'QUJDREVGRw==' }],
+    });
+    // 镜像文件落盘，且其父目录链被创建
+    expect(vault.files.has('CONFIG/ENCRYPT/附件/我的/影视/2025/海报.png')).toBe(true);
+    expect(vault.dirs.has('CONFIG/ENCRYPT/附件/我的/影视/2025')).toBe(true);
+    expect(vault.dirs.has('CONFIG/ENCRYPT/附件/我的/影视')).toBe(true);
+    expect(vault.dirs.has('CONFIG/ENCRYPT/附件/我的')).toBe(true);
+  });
+
+  it('真还原到不存在且带深层的原目录：递归建目录后写回', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/ENCRYPT');
+    await sm.unlock('pw');
+    const note = await sm.lockNote({
+      path: '归档/深层/笔记.md',
+      title: '笔记',
+      content: '# 还原目标',
+      attachments: [{ path: '归档/深层/图.png', data: 'QUJDREVGRw==' }],
+    });
+    // 原目录不存在（模拟 Obsidian 把空目录清掉）
+    expect(vault.dirs.has('归档/深层')).toBe(false);
+    const { conflicts } = await sm.restoreNote(note.id);
+    expect(conflicts).toEqual([]);
+    expect(vault.files.get('归档/深层/笔记.md')).toContain('# 还原目标');
+    const bytes = await vault.readBinary(vault.file('归档/深层/图.png'));
+    expect(new TextDecoder().decode(bytes)).toBe('ABCDEFG');
+  });
+});

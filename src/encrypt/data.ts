@@ -198,10 +198,7 @@ export class SafeManager {
     if (!this.unlocked || !this.password) throw new Error('未解锁，无法保存清单');
     const json = JSON.stringify(this.manifest);
     const encrypted = await CryptoService.encrypt(json, this.password);
-    if (this.root) {
-      const dir = app.vault.getAbstractFileByPath(this.root);
-      if (!dir) await app.vault.createFolder(this.root);
-    }
+    await this.ensureParentFolder(this.manifestPath);
     const file = app.vault.getAbstractFileByPath(this.manifestPath);
     if (file) await app.vault.modify(file as any, encrypted);
     else await app.vault.create(this.manifestPath, encrypted);
@@ -219,19 +216,47 @@ export class SafeManager {
     await mkdir(this.root + '/附件/_预览');
   }
 
+  /**
+   * 递归确保目标文件的父目录全部存在（Obsidian vault.create/createBinary
+   * 在父目录缺失时抛「Parent folder doesn't exist」，且 createFolder 不递归建中间目录）。
+   * 在任意文件写入前调用；幂等。
+   */
+  private async ensureParentFolder(filePath: string) {
+    const app = getApp();
+    const idx = filePath.lastIndexOf('/');
+    if (idx <= 0) return; // 根目录下无需建
+    let dir = filePath.slice(0, idx);
+    const missing: string[] = [];
+    // 自底向上收集不存在的祖先目录
+    let probe = dir;
+    while (probe && probe !== '.' && probe !== '/') {
+      if (app.vault.getAbstractFileByPath(probe)) break;
+      missing.unshift(probe);
+      const slash = probe.lastIndexOf('/');
+      if (slash <= 0) break;
+      probe = probe.slice(0, slash);
+    }
+    for (const p of missing) {
+      await app.vault.createFolder(p);
+    }
+  }
+
   /** 读附件原始层（当前 vault 文件）→ base64 */
   private async readAttachmentData(file: any): Promise<string> {
     const buf = await getApp().vault.readBinary(file);
     return bytesToBase64(new Uint8Array(buf));
   }
 
-  /** 写镜像密文文件（文本 base64） */
+  /** 写镜像密文文件（文本 base64）；先确保父目录存在 */
   private async writeMirror(ref: string, ciphertext: string) {
     const app = getApp();
     const path = this.resolveRef(ref);
     const file = app.vault.getAbstractFileByPath(path);
     if (file) await app.vault.modify(file as any, ciphertext);
-    else await app.vault.create(path, ciphertext);
+    else {
+      await this.ensureParentFolder(path);
+      await app.vault.create(path, ciphertext);
+    }
   }
 
   /** 读镜像密文文件 → base64 密文字符串 */
@@ -337,6 +362,7 @@ export class SafeManager {
       // restored=false 时 vault 里本不该有该笔记；有 = 非本系统写入 → 冲突跳过
       conflicts.push(note.path);
     } else {
+      await this.ensureParentFolder(note.path);
       const file = await app.vault.create(note.path, plain);
       (app.metadataCache as any)?.trigger?.('changed', file);
       note.restored = true;
@@ -362,7 +388,10 @@ export class SafeManager {
     const existing = app.vault.getAbstractFileByPath(a.path);
     let file = existing;
     if (existing) await (app.vault as any).writeBinary(existing as any, buf);
-    else file = await app.vault.createBinary(a.path, buf);
+    else {
+      await this.ensureParentFolder(a.path);
+      file = await app.vault.createBinary(a.path, buf);
+    }
     (app.metadataCache as any)?.trigger?.('changed', file);
     return true;
   }
