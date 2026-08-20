@@ -239,6 +239,18 @@ export default interface BzSettings {
   pomodoroRestoreMode: string;
   /** 后台自动暂停：窗口 hidden（最小化/遮挡/休眠）时主番茄钟暂停，恢复可见自动继续（默认开，ticket 62；blur 不触发） */
   pomodoroAutoPauseOnHide: boolean;
+
+  // ===== 🔐 加密保险箱（encrypt 域，ticket NN）=====
+  /** 📂 保险箱根目录（加密清单 safe.enc 与附件密文镜像的统一存放目录，默认 CONFIG/ENCRYPT） */
+  encryptRoot: string;
+  /** 🖼️ 生成压缩预览：加密时生成图片/视频压缩预览层（体积小但看得清，默认开） */
+  encryptPreviewEnabled: boolean;
+  /** 📏 预览目标长边（px，默认 960） */
+  encryptPreviewSize: string;
+  /** 🎚️ 预览 JPEG 质量 0-1（默认 0.7） */
+  encryptPreviewQuality: string;
+  /** 🔒 安全模式：关闭保险箱面板立即自动上锁（默认关） */
+  encryptSecurityMode: boolean;
 }
 
 export const DEFAULT_SETTINGS: BzSettings = {
@@ -375,4 +387,11 @@ export const DEFAULT_SETTINGS: BzSettings = {
   pomodoroVolume: 100,
   pomodoroRestoreMode: 'background',
   pomodoroAutoPauseOnHide: true,
+
+  // 加密保险箱（encrypt 域）
+  encryptRoot: 'CONFIG/ENCRYPT',
+  encryptPreviewEnabled: true,
+  encryptPreviewSize: '960',
+  encryptPreviewQuality: '0.7',
+  encryptSecurityMode: false,
 };
