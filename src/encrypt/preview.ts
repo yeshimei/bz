@@ -3,12 +3,19 @@
  * 图片：canvas 缩放压缩（体积小但看得清）；视频：抽帧成图（零外部依赖，用户拍板）。
  * 依赖 document/canvas——仅 UI 层调用；环境不支持（jsdom 无 canvas 实现）时返回 null，
  * 调用方据此跳过预览层（hasPreview=false）。产物为 dataURL(base64)，再经数据层加密入库。
+ *
+ * 稳定性铁律：预览生成是可选增强，**永不阻塞加密主流程**。
+ * 空 src / 资源不可加载 / 加载或抽帧超时（onload/onloadedmetadata/onseeked 永不触发）
+ * 一律超时返回 null，由调用方跳过预览层，绝不陷入"无限循环"（挂起/假死）。
  */
 export interface CompressResult {
   dataUrl: string;
   width: number;
   height: number;
 }
+
+/** 预览单步超时上限（ms）——超时按失败处理，避免资源加载永久挂起 */
+export const PREVIEW_TIMEOUT_MS = 5000;
 
 /** 能否用 canvas（jsdom/node 无实现时 false） */
 function canvasAvailable(): boolean {
@@ -21,20 +28,50 @@ function canvasAvailable(): boolean {
 }
 
 /**
- * 压缩图片：把 dataURL / URL 加载为 Image → 按目标长边缩放 → 输出 JPEG/WebP dataURL。
- * @param src 图片 dataURL 或 object URL 或 http(s) 链接
- * @param maxSize 目标长边像素（默认 960）
- * @param quality 0-1 JPEG 质量（默认 0.7）
+ * 用超时 + 空值保护包裹 Union 事件 Promise：
+ * - src 为空 → 直接 reject（绝不等 onload/onerror 永不触发）
+ * - 超过 timeout 仍未触发目标事件 → reject（超时按失败，返回 null 由调用方跳过）
+ */
+export function withTimeout(promise: Promise<void>, timeoutMs: number, label: string): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(label + ' 超时')), timeoutMs);
+    promise.then(
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      }
+    );
+  });
+}
+
+/** 空/无效 src 快捷返回 null（不进入加载，避免挂起） */
+function isEmptySrc(src: string): boolean {
+  return !src || !src.trim();
+}
+
+/**
+ * 压缩图片：把 dataURL / URL 加载为 Image → 按目标长边缩放 → 输出 JPEG dataURL。
+ * 加载失败或超时返回 null（由调用方跳过预览层）。
  */
 export async function compressImage(src: string, maxSize = 960, quality = 0.7): Promise<CompressResult | null> {
-  if (!canvasAvailable()) return null;
+  if (!canvasAvailable() || isEmptySrc(src)) return null;
   const img = new Image();
   img.crossOrigin = 'anonymous';
-  await new Promise<void>((resolve, reject) => {
+  const loaded = new Promise<void>((resolve, reject) => {
     img.onload = () => resolve();
     img.onerror = () => reject(new Error('图片加载失败'));
     img.src = src;
   });
+  try {
+    await withTimeout(loaded, PREVIEW_TIMEOUT_MS, '图片加载');
+  } catch (e) {
+    return null;
+  }
+  if (!img.naturalWidth || !img.naturalHeight) return null;
   const scale = Math.min(1, maxSize / Math.max(img.naturalWidth, img.naturalHeight));
   const w = Math.max(1, Math.round(img.naturalWidth * scale));
   const h = Math.max(1, Math.round(img.naturalHeight * scale));
@@ -49,24 +86,26 @@ export async function compressImage(src: string, maxSize = 960, quality = 0.7): 
 
 /**
  * 视频抽帧：加载 video 元素 → 定位到 ~0.1s 关键帧 → 绘制到 canvas 输出首帧图 dataURL。
- * 仅抽一帧（用户拍板，不重编码短视频）。
- * @param src 视频 URL 或 object URL
- * @param maxSize 目标长边像素（默认 960）
- * @param quality JPEG 质量（默认 0.7）
+ * 仅抽一帧（用户拍板，不重编码短视频）。加载/抽帧失败或超时返回 null。
  */
 export async function videoFrame(src: string, maxSize = 960, quality = 0.7): Promise<CompressResult | null> {
-  if (!canvasAvailable() || !document.createElement('video')) return null;
+  if (!canvasAvailable() || !document.createElement('video') || isEmptySrc(src)) return null;
   const video = document.createElement('video');
   video.muted = true;
   video.playsInline = true;
   video.preload = 'metadata';
-  await new Promise<void>((resolve, reject) => {
+  const meta = new Promise<void>((resolve, reject) => {
     video.onloadedmetadata = () => resolve();
     video.onerror = () => reject(new Error('视频加载失败'));
     video.src = src;
   });
+  try {
+    await withTimeout(meta, PREVIEW_TIMEOUT_MS, '视频元数据加载');
+  } catch (e) {
+    return null;
+  }
   // 等元数据就绪后定位一帧
-  await new Promise<void>((resolve, reject) => {
+  const seek = new Promise<void>((resolve, reject) => {
     const t = video.duration ? Math.min(0.1, video.duration / 2) : 0.1;
     video.onseeked = () => resolve();
     video.onerror = () => reject(new Error('视频抽帧失败'));
@@ -76,6 +115,11 @@ export async function videoFrame(src: string, maxSize = 960, quality = 0.7): Pro
       resolve();
     }
   });
+  try {
+    await withTimeout(seek, PREVIEW_TIMEOUT_MS, '视频抽帧');
+  } catch (e) {
+    return null;
+  }
   const vw = video.videoWidth || 0;
   const vh = video.videoHeight || 0;
   if (!vw || !vh) return null;
