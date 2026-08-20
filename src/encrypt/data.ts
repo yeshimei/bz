@@ -83,10 +83,13 @@ export interface LockNoteInput {
   attachments: LockAttachmentInput[];
 }
 
-/** ArrayBuffer → base64 */
+/** ArrayBuffer → base64（分块，避免大附件逐字节性能瓶颈；结果与逐字节一致） */
 export function bytesToBase64(bytes: Uint8Array): string {
+  const CHUNK = 0x8000; // 32768
   let bin = '';
-  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK) as any);
+  }
   return btoa(bin);
 }
 

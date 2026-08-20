@@ -34,8 +34,10 @@ export class CryptoService {
     combined.set(salt, 0);
     combined.set(iv, salt.length);
     combined.set(new Uint8Array(ciphertext), salt.length + iv.length);
-    // 与原脚本一致：btoa(String.fromCharCode(...combined))
-    return btoa(String.fromCharCode(...combined));
+    // 与原脚本同布局：salt16+iv12+ct → Base64。
+    // 注意：勿用 btoa(String.fromCharCode(...combined))——大附件(图片/视频)展开整个字节数组
+    // 会触发「Maximum call stack size exceeded」；改分块编码，输出逐字节不变。
+    return toBase64(combined);
   }
 
   static async decrypt(encryptedBase64: string, password: string): Promise<string> {
@@ -51,4 +53,17 @@ export class CryptoService {
     );
     return new TextDecoder().decode(decrypted);
   }
+}
+
+/**
+ * 字节数组 → Base64（分块，逐字节结果与 String.fromCharCode(...bytes) 完全一致）。
+ * 分块（≤32k 字节/次）避免对大字节数组一次性展开触发栈溢出。
+ */
+function toBase64(bytes: Uint8Array): string {
+  const CHUNK = 0x8000; // 32768，远低于引擎参数上限
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK) as any);
+  }
+  return btoa(bin);
 }
