@@ -1,10 +1,12 @@
 /**
  * 附件搬移域——纯逻辑层（无 DOM / 无 App 依赖，全部可单测）。
  *
- * 核心语义（ticket 65，术语见 CONTEXT.md「附件/链接改写」）：
+ * 核心语义（ticket 65，术语见 CONTEXT.md「附件/附件搬移」）：
  * - 附件 = 当前笔记引用的 vault 内非 .md 文件（wikilink 嵌入 + Markdown 链接）。
- * - 同名冲突：仅当目标文件夹已存在同名文件时，被移动附件才改名（`原名 (N).ext`）。
- * - 链接改写：全库所有引用被移动附件的笔记同步改写，保留嵌入标记/别名/标题/锚点后缀。
+ * - 同名冲突：仅当目标文件夹已存在同名文件时才改名（`原名 (N).ext`）。
+ * - 链接更新：移动与全库链接更新由 Obsidian 内建 `app.fileManager.renameFile`
+ *   自动完成（ADR-0014，推翻 v1 自研全库改写——大库全量扫描 + 逐个 modify 会卡顿）。
+ *   本层只负责「收集当前笔记的资源」与「算出去重后的目标路径」，不改写文档内容。
  */
 export interface LinkRef {
   /** 引用形态：wiki（`[[]]`）/ md（`[]()`） */
@@ -15,7 +17,7 @@ export interface LinkRef {
   target: string;
   /** wiki: 后缀（`|别名` / `#标题` / `^锚点`，含前导符）；md: 显示文字（alt/text） */
   extra: string;
-  /** 原文整段（定位 + 全局替换用） */
+  /** 原文整段（收集用，仅用于定位与去重） */
   raw: string;
 }
 
@@ -68,12 +70,6 @@ export function parseLinkRefs(content: string): LinkRef[] {
   return out;
 }
 
-/** 由 LinkRef + 新目标重建成完整引用串（保留嵌入标记/别名/标题前缀） */
-export function buildLinkFromRef(ref: LinkRef, newTarget: string): string {
-  if (ref.kind === 'wiki') return (ref.embeds ? '!' : '') + '[[' + newTarget + ref.extra + ']]';
-  return (ref.embeds ? '!' : '') + '[' + ref.extra + '](' + newTarget + ')';
-}
-
 /** 精确 / 扩展名推断匹配一个候选路径 */
 function matchPath(allFiles: string[], p: string): string | null {
   if (allFiles.includes(p)) return p;
@@ -82,8 +78,8 @@ function matchPath(allFiles: string[], p: string): string | null {
 }
 
 /**
- * 链接目标解析：linktext/路径 → vault 文件路径（解析失败/含糊返回 null）。
- * 顺序：库根绝对 → 相对源笔记目录（md 链接语义）→ 库内唯一 basename（wikilink 最短路径语义）。
+ * 链接目标解析（收集阶段用）：linktext/路径 → vault 文件路径（解析失败/含糊返回 null）。
+ * 顺序：库根绝对 → 相对源笔记目录（md 链接语义）→ 库内唯一 basename；多同名时优先当前笔记同目录。
  */
 export function resolveTarget(allFiles: string[], target: string, sourcePath: string, kind: 'wiki' | 'md'): string | null {
   const t = target.trim();
@@ -159,68 +155,4 @@ export function planMoves(resources: string[], destFolder: string, allPaths: str
     out.push({ fromPath: from, toPath, toName, renamed: toName !== name });
   }
   return out;
-}
-
-export interface ReplacePair {
-  filePath: string;
-  raw: string;
-  newRaw: string;
-}
-
-export interface RewritePlan {
-  pairs: ReplacePair[];
-  /** 被改写的笔记路径（去重） */
-  touchedFiles: string[];
-  /** 改写处总数（含同一文件内重复引用） */
-  linkCount: number;
-}
-
-/** 全库改写规划：所有 md 笔记内引用被移动附件的地方 → 新目标 */
-export function planRewritePairs(markdownMap: Record<string, string>, allFiles: string[], moves: MoveOp[]): RewritePlan {
-  const moved = new Map<string, MoveOp>();
-  for (const m of moves) moved.set(m.fromPath, m);
-  const pairs: ReplacePair[] = [];
-  const touched = new Set<string>();
-  let linkCount = 0;
-  for (const filePath of Object.keys(markdownMap)) {
-    const content = markdownMap[filePath];
-    const seen = new Set<string>();
-    for (const ref of parseLinkRefs(content)) {
-      const resolved = resolveTarget(allFiles, ref.target, filePath, ref.kind);
-      const op = resolved ? moved.get(resolved) : undefined;
-      if (!op) continue;
-      // 新目标：md 链接用带扩展名完整路径（原样，Obsidian 可解析中文/空格）；wikilink 保留原扩展名形式，否则去扩展名
-      let newTarget: string;
-      if (ref.kind === 'md') {
-        newTarget = op.toPath;
-      } else {
-        newTarget = lastSeg(ref.target).includes('.') ? op.toPath : op.toPath.replace(EXT_RE, '');
-      }
-      const newRaw = buildLinkFromRef(ref, newTarget);
-      if (seen.has(ref.raw)) continue;
-      seen.add(ref.raw);
-      let idx = 0;
-      let count = 0;
-      while ((idx = content.indexOf(ref.raw, idx)) !== -1) {
-        count++;
-        idx += ref.raw.length;
-      }
-      linkCount += count;
-      pairs.push({ filePath, raw: ref.raw, newRaw });
-      touched.add(filePath);
-    }
-  }
-  return { pairs, touchedFiles: [...touched], linkCount };
-}
-
-/** 把一批替换对应用到内容（全局替换，重复 raw 一并处理） */
-export function applyReplacements(content: string, pairs: Array<{ raw: string; newRaw: string }>): string {
-  let c = content;
-  const done = new Set<string>();
-  for (const p of pairs) {
-    if (done.has(p.raw)) continue;
-    done.add(p.raw);
-    c = c.split(p.raw).join(p.newRaw);
-  }
-  return c;
 }
