@@ -1,11 +1,13 @@
 /**
  * 附件搬移域——UI 层（文件夹选择弹窗 + 执行编排）。
  * 自绘 DOM 弹窗（铁律 3/9：bz- 前缀类名，样式收敛在根 styles.css）；不依赖 obsidian Modal。
+ * 移动与全库链接更新走 Obsidian 内建 `app.fileManager.renameFile`（ADR-0014，自动更新内部链接，
+ * 避免 v1 自研全库扫描 + 逐个 modify 导致的大库卡顿）。
  */
 import { notice } from '../core/notice';
 import { getSettings, saveSettings } from '../core/settings-provider';
 import { escManager } from '../core/esc-manager';
-import { collectResources, planMoves, planRewritePairs, applyReplacements } from './data';
+import { collectResources, planMoves } from './data';
 
 /** 当前打开笔记；无则 null */
 export function getActiveNote(app: any): any | null {
@@ -137,13 +139,14 @@ export class FolderSelectModal {
 export interface MoveSummary {
   moved: number;
   renamed: number;
-  links: number;
-  notes: number;
+  /** 是否走了 fileManager（自动更新内部链接） */
+  linksAuto: boolean;
 }
 
 /**
- * 执行附件搬移：移动附件到目标文件夹（仅同名冲突才改名）+ 全库改写链接。
- * 返回汇总统计（供通知/测试断言）。
+ * 执行附件搬移：移动当前笔记附件到目标文件夹（仅同名冲突才改名）。
+ * 经 `app.fileManager.renameFile` 移动并自动更新全库内部链接（Obsidian 内建）；
+ * 无 fileManager（异常环境）回退 `vault.rename`（不更新链接，warning 通知）。
  */
 export async function runMove(app: any, note: any, destFolder: string): Promise<MoveSummary | null> {
   const dest = (destFolder || '').trim().replace(/^\/+|\/+$/g, '');
@@ -164,29 +167,23 @@ export async function runMove(app: any, note: any, destFolder: string): Promise<
       notice('资源已全部在目标文件夹', 'info');
       return null;
     }
-    const mdFiles = app.vault.getMarkdownFiles?.() ?? [];
-    const mdMap: Record<string, string> = {};
-    for (const mf of mdFiles) mdMap[mf.path] = await app.vault.read(mf);
-    const plan = planRewritePairs(mdMap, allFiles, moves);
 
-    // 执行：建目录 → 移动 → 改写链接
     if (!app.vault.getAbstractFileByPath(dest)) await app.vault.createFolder(dest);
+    const fmRename = app?.fileManager?.renameFile;
+    let failed = 0;
     for (const m of moves) {
       const f = app.vault.getAbstractFileByPath(m.fromPath);
-      if (f) await app.vault.rename(f, m.toPath);
-    }
-    const byFile = new Map<string, { raw: string; newRaw: string }[]>();
-    for (const p of plan.pairs) {
-      const arr = byFile.get(p.filePath) || [];
-      arr.push({ raw: p.raw, newRaw: p.newRaw });
-      byFile.set(p.filePath, arr);
-    }
-    for (const [path, list] of byFile) {
-      const f = app.vault.getAbstractFileByPath(path);
-      if (!f) continue;
-      let content = await app.vault.read(f);
-      content = applyReplacements(content, list);
-      await app.vault.modify(f, content);
+      if (!f) {
+        failed++;
+        continue;
+      }
+      try {
+        if (fmRename) await fmRename.call(app.fileManager, f, m.toPath);
+        else await app.vault.rename(f, m.toPath);
+      } catch (e) {
+        failed++;
+        console.warn('[附件搬移] 移动失败:', m.fromPath, e);
+      }
     }
 
     // 记忆上次文件夹（运行时字段，不暴露设置）
@@ -200,9 +197,12 @@ export async function runMove(app: any, note: any, destFolder: string): Promise<
       }
     }
 
+    const linksAuto = !!fmRename;
     const renamedCount = moves.filter((m) => m.renamed).length;
-    notice(`已移动 ${moves.length} 个资源到 ${dest}，改名 ${renamedCount} 个，改写 ${plan.linkCount} 处链接`, 'success');
-    return { moved: moves.length, renamed: renamedCount, links: plan.linkCount, notes: plan.touchedFiles.length };
+    const failTail = failed ? `，失败 ${failed} 个` : '';
+    const linkTail = linksAuto ? '，内部链接已自动更新' : '，链接未自动更新';
+    notice(`已移动 ${moves.length} 个资源到 ${dest}，改名 ${renamedCount} 个${linkTail}${failTail}`, linksAuto && failed === 0 ? 'success' : 'warning');
+    return { moved: moves.length, renamed: renamedCount, linksAuto };
   } catch (e) {
     console.error('[附件搬移] 失败:', e);
     notice('附件搬移失败，已中止（原文件未改动）', 'error');

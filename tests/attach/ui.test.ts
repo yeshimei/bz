@@ -1,7 +1,9 @@
 /**
  * 附件搬移域 UI / 执行层测试（ticket 65）。
+ * 移动经 app.fileManager.renameFile（Obsidian 内建，自动更新内部链接），
+ * mock 里 renameFile 只负责在 MockVault 中移动（链接更新是 Obsidian 内部职责）。
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
@@ -15,69 +17,81 @@ function makeApp(vault: MockVault, activePath?: string) {
   return app;
 }
 
-function withSettings(vault: MockVault, active: string, extra?: Record<string, any>) {
-  const settings: Record<string, any> = { attachLastFolder: '', ...extra };
+/** 带 Obsidian 式 fileManager.renameFile 的 app（记录调用参数并实际移动） */
+function withRename(vault: MockVault, active: string) {
+  const settings: Record<string, any> = { attachLastFolder: '' };
   setSettingsProvider(() => settings as any);
   const app = makeApp(vault, active);
+  const calls: Array<[string, string]> = [];
+  app.fileManager = {
+    renameFile: vi.fn(async (file: any, newPath: string) => {
+      calls.push([file.path, newPath]);
+      await vault.rename(file, newPath);
+    }),
+  };
   setApp(app as any);
-  return { app, vault, settings };
+  return { app, vault, settings, calls };
 }
 
-describe('runMove 执行编排', () => {
+describe('runMove 执行编排（fileManager.renameFile）', () => {
   beforeEach(() => {
     clearNotices();
     document.body.innerHTML = '';
     setSettingsSaver(async () => {});
   });
 
-  it('移动附件 + 全库改写 wikilink 与 md 链接 + 记忆文件夹', async () => {
+  it('移动当前笔记附件 + 记忆文件夹 + 汇总通知，不改写笔记内容', async () => {
     const vault = new MockVault();
     vault.create('笔记/章.md', '图：![[a.png]] 见 [[note2]] 与 ![x](assets/b.png)');
     vault.create('笔记/a.png', '');
     vault.create('assets/b.png', '');
     vault.create('note2.md', '');
     vault.create('其他.md', '也引用 ![[a.png]]');
-    const { app, settings } = withSettings(vault, '笔记/章.md');
+    const { app, settings, calls } = withRename(vault, '笔记/章.md');
 
     const summary = await runMove(app, vault.getAbstractFileByPath('笔记/章.md'), '附件');
 
-    expect(summary).toEqual({ moved: 2, renamed: 0, links: 3, notes: 2 });
+    expect(summary).toEqual({ moved: 2, renamed: 0, linksAuto: true });
+    expect(calls).toEqual([
+      ['笔记/a.png', '附件/a.png'],
+      ['assets/b.png', '附件/b.png'],
+    ]);
     expect(vault.files.has('笔记/a.png')).toBe(false);
     expect(vault.files.has('assets/b.png')).toBe(false);
     expect(vault.files.has('附件/a.png')).toBe(true);
     expect(vault.files.has('附件/b.png')).toBe(true);
-    expect(vault.files.get('笔记/章.md')).toBe('图：![[附件/a.png]] 见 [[note2]] 与 ![x](附件/b.png)');
-    expect(vault.files.get('其他.md')).toBe('也引用 ![[附件/a.png]]');
+    // 插件不再自行改写笔记内容（链接更新由 Obsidian 内建负责）
+    expect(vault.files.get('笔记/章.md')).toBe('图：![[a.png]] 见 [[note2]] 与 ![x](assets/b.png)');
+    expect(vault.files.get('其他.md')).toBe('也引用 ![[a.png]]');
     expect(settings.attachLastFolder).toBe('附件');
-    expect(hasNotice(/已移动 2 个资源到 附件/)).toBe(true);
+    expect(hasNotice(/已移动 2 个资源到 附件，改名 0 个，内部链接已自动更新/)).toBe(true);
   });
 
-  it('目标已有同名文件才改名，已存在文件保留', async () => {
+  it('目标已有同名文件才改名，renameFile 收到去重后的目标路径', async () => {
     const vault = new MockVault();
     vault.create('笔记/章.md', '图：![[a.png]]');
     vault.create('笔记/a.png', '');
     vault.create('附件/a.png', '');
-    vault.create('引用.md', '引用 ![[a.png]]');
-    const { app } = withSettings(vault, '笔记/章.md');
+    const { app, calls } = withRename(vault, '笔记/章.md');
 
-    // 笔记旁资源就近解析成功；库根 引用.md 的 a.png 前后均含糊（笔记/附件两处）→ 保守不改写
     const summary = await runMove(app, vault.getAbstractFileByPath('笔记/章.md'), '附件');
 
-    expect(summary).toEqual({ moved: 1, renamed: 1, links: 1, notes: 1 });
+    expect(summary).toEqual({ moved: 1, renamed: 1, linksAuto: true });
+    expect(calls).toEqual([['笔记/a.png', '附件/a (1).png']]);
     expect(vault.files.has('笔记/a.png')).toBe(false);
     expect(vault.files.has('附件/a.png')).toBe(true);
     expect(vault.files.has('附件/a (1).png')).toBe(true);
-    expect(vault.files.get('笔记/章.md')).toBe('图：![[附件/a (1).png]]');
-    expect(vault.files.get('引用.md')).toBe('引用 ![[a.png]]');
+    expect(hasNotice(/改名 1 个/)).toBe(true);
   });
 
   it('无资源可移动 → info 通知且不执行', async () => {
     const vault = new MockVault();
     vault.create('n.md', 'hello [[other]]');
     vault.create('other.md', 'x');
-    const { app } = withSettings(vault, 'n.md');
+    const { app, calls } = withRename(vault, 'n.md');
     const res = await runMove(app, vault.getAbstractFileByPath('n.md'), '附件');
     expect(res).toBeNull();
+    expect(calls).toHaveLength(0);
     expect(hasNotice('当前笔记没有可移动的资源文件')).toBe(true);
   });
 
@@ -85,10 +99,28 @@ describe('runMove 执行编排', () => {
     const vault = new MockVault();
     vault.create('附件/a.png', '');
     vault.create('n.md', '![[a.png]]');
-    const { app } = withSettings(vault, 'n.md');
+    const { app, calls } = withRename(vault, 'n.md');
     const res = await runMove(app, vault.getAbstractFileByPath('n.md'), '附件');
     expect(res).toBeNull();
+    expect(calls).toHaveLength(0);
     expect(hasNotice('资源已全部在目标文件夹')).toBe(true);
+  });
+
+  it('无 fileManager（异常环境）→ 回退 vault.rename，通知链接未自动更新', async () => {
+    const vault = new MockVault();
+    vault.create('笔记/章.md', '![[a.png]]');
+    vault.create('笔记/a.png', '');
+    const settings: Record<string, any> = { attachLastFolder: '' };
+    setSettingsProvider(() => settings as any);
+    const app = makeApp(vault, '笔记/章.md');
+    setApp(app as any);
+
+    const summary = await runMove(app, vault.getAbstractFileByPath('笔记/章.md'), '附件');
+
+    expect(summary).toEqual({ moved: 1, renamed: 0, linksAuto: false });
+    expect(vault.files.has('笔记/a.png')).toBe(false);
+    expect(vault.files.has('附件/a.png')).toBe(true);
+    expect(hasNotice(/已移动 1 个资源到 附件，改名 0 个，链接未自动更新/)).toBe(true);
   });
 });
 
