@@ -41,11 +41,12 @@ export async function findWeaveBookByPath(app: any, vaultPath: string): Promise<
   return aggregates.find((aggregate) => String(aggregate?.file?.vaultPath || '').trim() === normalized) || null;
 }
 
-/** 读某书的划线列表（notes.highlights），映射为读书笔记条目。 */
-export async function loadEpubBookNotes(app: any, vaultPath: string): Promise<EpubBookNote[]> {
-  const book = await findWeaveBookByPath(app, vaultPath);
-  if (!book) return [];
-  const highlights = Array.isArray(book?.notes?.highlights) ? book.notes.highlights : [];
+/** 读某书的划线列表（notes.highlights），映射为读书笔记条目。
+ *  调用方可传入已 findWeaveBookByPath 得到的 book，避免重复读取 weave-data.json。 */
+export async function loadEpubBookNotes(app: any, vaultPath: string, book?: any): Promise<EpubBookNote[]> {
+  const resolved = book ?? (await findWeaveBookByPath(app, vaultPath));
+  if (!resolved) return [];
+  const highlights = Array.isArray(resolved?.notes?.highlights) ? resolved.notes.highlights : [];
   return highlights
     .filter((h: any) => h && typeof h === 'object')
     .map((h: any) => ({
@@ -97,7 +98,7 @@ async function writeWeaveDocument(app: any, document: any): Promise<void> {
   else await app.vault.create(filePath, content);
 }
 
-/** 找到任意子域（高亮/想法）所在书聚合；不存在返回 null。 */
+/** 找到目标书所在聚合；不存在返回 null。 */
 async function findWeaveBookWithMutation(app: any, vaultPath: string): Promise<any | null> {
   let document: any;
   try {
@@ -108,10 +109,9 @@ async function findWeaveBookWithMutation(app: any, vaultPath: string): Promise<a
   const books = document?.books;
   if (!books || typeof books !== 'object') return null;
   const normalized = String(vaultPath || '').trim();
-  for (const bookId of Object.keys(books)) {
-    const aggregate = books[bookId];
+  for (const aggregate of Object.values(books) as any[]) {
     if (String(aggregate?.file?.vaultPath || '').trim() === normalized) {
-      return { document, bookId, aggregate };
+      return { document, aggregate };
     }
   }
   return null;
@@ -126,7 +126,7 @@ export async function updateEpubNoteComment(
 ): Promise<boolean> {
   const target = await findWeaveBookWithMutation(app, vaultPath);
   if (!target) return false;
-  const { document, bookId, aggregate } = target;
+  const { document, aggregate } = target;
   const highlights = aggregate?.notes?.highlights;
   if (!Array.isArray(highlights)) return false;
   const idx = highlights.findIndex((h: any) => String(h?.id || '') === String(highlightId || ''));
@@ -148,13 +148,12 @@ export async function updateEpubNoteComment(
 export async function deleteEpubNote(app: any, vaultPath: string, highlightId: string): Promise<boolean> {
   const target = await findWeaveBookWithMutation(app, vaultPath);
   if (!target) return false;
-  const { document, bookId, aggregate } = target;
+  const { document, aggregate } = target;
   const highlights = aggregate?.notes?.highlights;
   if (!Array.isArray(highlights)) return false;
   const before = highlights.length;
   aggregate.notes.highlights = highlights.filter((h: any) => String(h?.id || '') !== String(highlightId || ''));
   if (aggregate.notes.highlights.length === before) return false;
-  void bookId;
   await writeWeaveDocument(app, document);
   return true;
 }

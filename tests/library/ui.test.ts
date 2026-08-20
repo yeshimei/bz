@@ -64,8 +64,9 @@ describe('书库面板', () => {
     document.body.innerHTML = '';
   });
 
-  it('无书 → Notice 提示', () => {
+  it('无书 → Notice 提示且遮罩移除（EPUB 合并后判空）', async () => {
     showLibrary(makeApp(vault));
+    await new Promise((r) => setTimeout(r, 20));
     expect(hasNotice(/未找到任何书籍笔记/)).toBe(true);
     expect(document.getElementById('__book_library__')).toBeNull();
   });
@@ -113,7 +114,7 @@ describe('书库面板', () => {
 
   it('⚙️ 打开书库设置弹窗（文件夹/识别标签/显示开关）；🔀 为筛选弹窗', () => {
     vault.files.set('书库/活着.md', BOOK_MD);
-    setSettingsProvider(() => ({ libraryFolderPath: '书库', libraryNotePath: '我的/读书笔记', bookTag: 'book' } as any));
+    setSettingsProvider(() => ({ libraryFolderPath: '书库', bookTag: 'book' } as any));
     const app = makeApp(vault);
     showLibrary(app);
     const filterBtn = [...document.querySelectorAll('button')].find((b) => b.title === '视图与筛选')!;
@@ -124,7 +125,6 @@ describe('书库面板', () => {
     expect(popup.textContent).toContain('书库设置');
     const names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
     expect(names).toContain('书库文件夹');
-    expect(names).toContain('读书笔记路径');
     expect(names).toContain('书籍识别标签');
     expect(names).toContain('显示文件大小');
     expect(names).toContain('显示书评摘要');
@@ -170,7 +170,7 @@ describe('书库面板', () => {
     const app = makeApp(vault);
     showBookNotes(app, '书库/活着.md');
     await new Promise((r) => setTimeout(r, 20));
-    const quote = [...document.querySelectorAll('div')].find((d) => d.style.cssText.includes('font-style: italic') && d.textContent === '❝ 原文一')!;
+    const quote = [...document.querySelectorAll<HTMLElement>('.bz-lib-quote')].find((d) => d.textContent === '❝ 原文一')!;
     const block = quote.parentElement!.parentElement!; // quote → contentArea → block
     block.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     expect(app.workspace.openLinkText).toHaveBeenCalledWith('书库/活着.md#^h1', '', false);
@@ -261,7 +261,7 @@ describe('书库面板', () => {
     const { showEpubBookNotes } = await import('../../src/library/ui');
     showEpubBookNotes(app, { file: { path: '书库/悉达多.epub' }, title: '悉达多', isEpub: true } as any);
     await new Promise((r) => setTimeout(r, 30));
-    const quote = [...document.querySelectorAll('div')].find((d) => d.style.cssText.includes('font-style: italic') && d.textContent === '❝ 原文一')!;
+    const quote = [...document.querySelectorAll<HTMLElement>('.bz-lib-quote')].find((d) => d.textContent === '❝ 原文一')!;
     const block = quote.parentElement!.parentElement!;
     block.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     expect(app.workspace.openLinkText).toHaveBeenCalledWith(

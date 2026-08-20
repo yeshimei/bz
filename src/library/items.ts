@@ -1,20 +1,17 @@
 /**
- * 书库 items（ticket 12）：书目解析/子文件夹/状态色板/排序，源码逐字移植。
- * 源码：书库.js L100-208、L542-605
+ * 书库 items（ticket 12）：书目解析/子文件夹/排序/EPUB 聚合，源码逐字移植。
+ * 源码：书库.js L100-208、L542-605；状态色板已随 ticket 62 样式收敛移入 styles.css。
  */
-import { formatFileSize as coreFormatFileSize } from '../core/utils';
 import { getSettings } from '../core/settings-provider';
 
 export interface BookSettings {
   folderPath: string;
-  notePath: string;
   bookTag: string;
   showFileSize: boolean;
   showReadingTime: boolean;
   showHighlights: boolean;
   showThinks: boolean;
   showReview: boolean;
-  showCategory: boolean;
   /** Weave 阅读数据文件（weave-data.json）所在目录（ADR-0013）。 */
   weaveDataPath: string;
 }
@@ -24,14 +21,12 @@ export function deriveBookSettings(): BookSettings {
   const s = getSettings() as any;
   return {
     folderPath: s.libraryFolderPath || '书库',
-    notePath: s.libraryNotePath || '我的/读书笔记',
     bookTag: s.bookTag || 'book',
     showFileSize: s.showFileSize !== false,
     showReadingTime: s.showReadingTime !== false,
     showHighlights: s.showHighlights !== false,
     showThinks: s.showThinks !== false,
     showReview: s.showReview !== false,
-    showCategory: s.showCategory !== true,
     weaveDataPath: s.weaveDataPath || 'CONFIG/STORAGE',
   };
 }
@@ -44,26 +39,6 @@ export function getSubfolder(filePath: string, folderPath: string): string | nul
     return relative.slice(0, firstSlash);
   }
   return null;
-}
-
-export function formatFileSize(bytes: number): string | null {
-  return coreFormatFileSize(bytes);
-}
-
-/** 三状态色板（theme-dark 判定） */
-export function getStatusColors() {
-  const isDark = document.body.classList.contains('theme-dark');
-  if (isDark) {
-    return {
-      badgeBg: { 未读: '#616161', 在读: '#F57C00', 已读: '#388E3C' },
-      badgeText: { 未读: '#E0E0E0', 在读: '#FFF3E0', 已读: '#E8F5E9' },
-    };
-  } else {
-    return {
-      badgeBg: { 未读: '#BDBDBD', 在读: '#FF8C42', 已读: '#66BB6A' },
-      badgeText: { 未读: '#2C2C2C', 在读: '#2D1B00', 已读: '#1B5E20' },
-    };
-  }
 }
 
 export interface BookItem {
@@ -203,16 +178,11 @@ export function sortItemList(list: BookItem[], key: string, order: string): Book
     });
     return [...withVal, ...withoutVal];
   } else if (key === 'readingProgress') {
-    const withProgress = sorted.filter(
-      (item) => item.readingProgress !== null && item.readingProgress !== undefined
-    );
-    const withoutProgress = sorted.filter(
-      (item) => item.readingProgress === null || item.readingProgress === undefined
-    );
-    withProgress.sort((a, b) => {
+    // BookItem.readingProgress 恒为 number（构建时默认 0），无需“有值/无值”分桶
+    sorted.sort((a, b) => {
       return order === 'asc' ? a.readingProgress - b.readingProgress : b.readingProgress - a.readingProgress;
     });
-    return [...withProgress, ...withoutProgress];
+    return sorted;
   }
   return sorted;
 }
