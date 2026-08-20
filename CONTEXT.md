@@ -48,6 +48,11 @@ _Avoid_: 新闻抓取、新闻爬虫、news watcher 进程
 
 **书库 (Library)**: 读书笔记管理，`书库/` 目录 + `我的/读书笔记`。
 
+**书库 EPUB 条目**: 书库中由 Weave 阅读数据文件（`weave-data.json`）驱动的 EPUB 书目条目，与 markdown 书目条目**并列、互不影响**（同名书不合并）。数据不经现场解析 EPUB，直接读数据文件；字段契约以 Weave 侧为准（见 fork-weave-src `docs/adr/043`）。
+_Avoid_: EPUB 电子书条目——指聚合列表中的书目条目（不要与「影视条目/信条目」混淆）
+
+**Weave 数据路径**: bz 设置中指向 Weave 阅读数据文件（`weave-data.json`）所在数据路径的设置项；书库据此读取 EPUB 书目数据。Weave 未启用或路径失效时 EPUB 条目静默缺省，markdown 部分照常。
+
 **阅读数据分析报告 (Reading Analytics)**: 基于 metadataCache 统计的阅读报告生成器（年度统计、热力图、习惯分析等），无 __utils 依赖。
 
 **影视 (Movies)**: `我的/影视` 目录管理，frontmatter 处理（fileManager.processFrontMatter），状态常量（想看/在看/已看等）。

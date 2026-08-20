@@ -15,6 +15,8 @@ export interface BookSettings {
   showThinks: boolean;
   showReview: boolean;
   showCategory: boolean;
+  /** Weave 阅读数据文件（weave-data.json）所在目录（ADR-0013）。 */
+  weaveDataPath: string;
 }
 
 /** 从插件设置派生书库设置快照（源码 window._bookSettings 语义） */
@@ -30,6 +32,7 @@ export function deriveBookSettings(): BookSettings {
     showThinks: s.showThinks !== false,
     showReview: s.showReview !== false,
     showCategory: s.showCategory !== true,
+    weaveDataPath: s.weaveDataPath || 'CONFIG/STORAGE',
   };
 }
 
@@ -79,6 +82,8 @@ export interface BookItem {
   status: string;
   subfolder: string | null;
   sizeBytes: number;
+  /** true = 由 Weave 数据文件驱动的 EPUB 条目（与 markdown 书目并列、互不影响，ADR-0013）。 */
+  isEpub?: boolean;
 }
 
 /** 书目解析：frontmatter tags 含 bookTag + 路径在书库目录下 */
@@ -210,4 +215,145 @@ export function sortItemList(list: BookItem[], key: string, order: string): Book
     return [...withProgress, ...withoutProgress];
   }
   return sorted;
+}
+
+// ===== EPUB 书目条目（ADR-0013）：从 Weave 阅读数据文件（weave-data.json）构建 =====
+
+const DEFAULT_WEAVE_DATA_FILE = 'weave-data.json';
+const COVER_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+
+function normalizeWeaveDataPath(value?: string): string {
+  const raw = String(value || '').trim().replace(/^\/+|\/+$/g, '');
+  return raw || 'CONFIG/STORAGE';
+}
+
+function isVaultImageFile(app: any, path: string): boolean {
+  const file = app?.vault?.getAbstractFileByPath?.(path);
+  return Boolean(file) && /\.(png|jpe?g|gif|webp)$/i.test(file.name || path);
+}
+
+/** 封面路径：优先 meta.coverPath（Weave 落盘路径）；兜底按书名在默认封面输出目录下推断。 */
+function resolveEpubCoverPath(app: any, meta: any): string | null {
+  const coverPath = typeof meta?.coverPath === 'string' ? meta.coverPath.trim() : '';
+  if (coverPath && isVaultImageFile(app, coverPath)) {
+    return coverPath;
+  }
+  const title = typeof meta?.title === 'string' ? meta.title.trim() : '';
+  if (title) {
+    for (const ext of COVER_EXTENSIONS) {
+      const candidate = `CONFIG/BOOK/EPUB COVER/${title}.${ext}`;
+      if (isVaultImageFile(app, candidate)) {
+        return candidate;
+      }
+    }
+  }
+  return null;
+}
+
+/** 阅读时长 → 「N小时M分」展示格式（无时长返回 null）。 */
+function formatReadingTime(totalReadTimeMs: number | undefined): string | null {
+  const totalMinutes = Math.round((Number(totalReadTimeMs) || 0) / 60000);
+  if (totalMinutes <= 0) {
+    return null;
+  }
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours > 0) {
+    return minutes > 0 ? `${hours}小时${minutes}分` : `${hours}小时`;
+  }
+  return `${minutes}分`;
+}
+
+function toDateString(timestamp: number | undefined): string | null {
+  if (!Number.isFinite(timestamp) || !timestamp) {
+    return null;
+  }
+  return new Date(timestamp).toISOString().slice(0, 10);
+}
+
+/** 单本书聚合 → 书库条目（缺 title/vaultPath 的书跳过）。 */
+function buildEpubBookItem(app: any, aggregate: any): BookItem | null {
+  const meta = aggregate?.meta;
+  const fileRef = aggregate?.file;
+  const reading = aggregate?.reading;
+  const notes = aggregate?.notes;
+  const stats = reading?.stats;
+  const vaultPath = typeof fileRef?.vaultPath === 'string' ? fileRef.vaultPath.trim() : '';
+  const title = typeof meta?.title === 'string' ? meta.title.trim() : '';
+  if (!vaultPath || !title) {
+    return null;
+  }
+
+  const rawPercent = typeof reading?.position?.percent === 'number' ? reading.position.percent : 0;
+  const progressPercent =
+    rawPercent > 1
+      ? Math.min(100, Math.round(rawPercent))
+      : Math.round(Math.max(0, Math.min(1, rawPercent)) * 100);
+  const lastReadTime = Number.isFinite(stats?.lastReadTime) ? stats.lastReadTime : 0;
+  const completedTime = Number.isFinite(stats?.completedTime) ? stats.completedTime : 0;
+
+  const readingDate = progressPercent > 0 ? toDateString(lastReadTime) : null;
+  const completionDate = toDateString(completedTime);
+  let status = '未读';
+  if (completionDate) status = '已读';
+  else if (progressPercent > 0) status = '在读';
+
+  const vaultFile = app?.vault?.getAbstractFileByPath?.(vaultPath);
+  return {
+    file: {
+      path: vaultPath,
+      name: vaultPath.split('/').pop() || title,
+      stat: {
+        size: typeof vaultFile?.stat?.size === 'number' ? vaultFile.stat.size : 0,
+        ctime: lastReadTime || 0,
+      },
+    },
+    title,
+    author: typeof meta?.author === 'string' && meta.author.trim() ? meta.author.trim() : '未知作者',
+    category: '未分类',
+    cover: resolveEpubCoverPath(app, meta),
+    bookReview: null,
+    readingDate,
+    completionDate,
+    readingProgress: progressPercent,
+    readingTimeFormat: formatReadingTime(stats?.totalReadTime),
+    highlights: Array.isArray(notes?.highlights) ? notes.highlights.length : 0,
+    thinks: Array.isArray(notes?.excerpts) ? notes.excerpts.length : 0,
+    status,
+    subfolder: null,
+    sizeBytes: typeof vaultFile?.stat?.size === 'number' ? vaultFile.stat.size : 0,
+    isEpub: true,
+  };
+}
+
+/**
+ * 从 Weave 阅读数据文件（<weaveDataPath>/weave-data.json）构建 EPUB 书目条目。
+ * Weave 未启用 / 文件缺失 / 解析失败 → 返回空数组（markdown 部分不受影响）。
+ */
+export async function loadEpubBookItems(app: any): Promise<BookItem[]> {
+  try {
+    const settings = deriveBookSettings();
+    const dataPath = normalizeWeaveDataPath(settings.weaveDataPath);
+    const dataFilePath = `${dataPath}/${DEFAULT_WEAVE_DATA_FILE}`;
+    const file = app?.vault?.getAbstractFileByPath?.(dataFilePath);
+    if (!file) {
+      return [];
+    }
+    const content = await app.vault.adapter.read(dataFilePath);
+    const parsed = JSON.parse(content);
+    const books = parsed?.books;
+    if (!books || typeof books !== 'object') {
+      return [];
+    }
+    const items: BookItem[] = [];
+    for (const aggregate of Object.values(books)) {
+      const item = buildEpubBookItem(app, aggregate);
+      if (item) {
+        items.push(item);
+      }
+    }
+    return items;
+  } catch {
+    return [];
+  }
 }
