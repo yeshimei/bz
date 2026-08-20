@@ -3,6 +3,8 @@
  */
 export class MockVault {
   files = new Map<string, string>();
+  /** 二进制附件文件树（encrypt 域等用；与 files 分离，避免污染既有 string 型断言） */
+  binaryFiles = new Map<string, Uint8Array>();
   /** 显式注册的空目录（区分"空目录"与"目录不存在"） */
   dirs = new Set<string>();
   modifiedPaths: string[] = [];
@@ -30,12 +32,13 @@ export class MockVault {
   };
 
   getAbstractFileByPath(path: string): any {
-    if (this.files.has(path)) return this.file(path);
+    if (this.files.has(path) || this.binaryFiles.has(path)) return this.file(path);
     // 目录：收集以 path/ 开头的直接子文件
     const prefix = path.endsWith('/') ? path : path + '/';
-    const children = [...this.files.keys()]
-      .filter((p) => p.startsWith(prefix) && !p.slice(prefix.length).includes('/'))
-      .map((p) => this.file(p));
+    const children = [
+      ...[...this.files.keys(), ...this.binaryFiles.keys()]
+        .filter((p) => p.startsWith(prefix) && !p.slice(prefix.length).includes('/')),
+    ].map((p) => this.file(p));
     if (children.length || this.dirs.has(path)) {
       return { path, children, isFolder: true };
     }
@@ -43,7 +46,7 @@ export class MockVault {
   }
 
   file(path: string): any {
-    const content = this.files.get(path)!;
+    const content = this.files.get(path) ?? (this.binaryFiles.has(path) ? '<binary>' : undefined);
     const basename = path.split('/').pop()!.replace(/\.[^./]+$/, '');
     const parentPath = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '/';
     return {
@@ -61,10 +64,32 @@ export class MockVault {
     return this.files.get(file.path) ?? '';
   }
 
+  async readBinary(file: any): Promise<ArrayBuffer> {
+    const bytes = this.binaryFiles.get(file.path);
+    if (bytes) {
+      return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+    }
+    const v = this.files.get(file.path);
+    if (v === undefined) throw new Error('file not found: ' + file.path);
+    const enc = new TextEncoder().encode(v);
+    return enc.buffer.slice(enc.byteOffset, enc.byteOffset + enc.byteLength) as ArrayBuffer;
+  }
+
   async create(path: string, content: string): Promise<any> {
     this.files.set(path, content);
     this.modifiedPaths.push(path);
     return this.file(path);
+  }
+
+  async createBinary(path: string, data: ArrayBuffer): Promise<any> {
+    this.binaryFiles.set(path, new Uint8Array(data));
+    this.modifiedPaths.push(path);
+    return this.file(path);
+  }
+
+  async writeBinary(file: any, data: ArrayBuffer): Promise<void> {
+    this.binaryFiles.set(file.path, new Uint8Array(data));
+    this.modifiedPaths.push(file.path);
   }
 
   async modify(file: any, content: string): Promise<void> {
@@ -83,6 +108,7 @@ export class MockVault {
 
   async delete(file: any): Promise<void> {
     this.files.delete(file.path);
+    this.binaryFiles.delete(file.path);
     this.modifiedPaths.push(file.path);
   }
 
@@ -91,7 +117,7 @@ export class MockVault {
   }
 
   getFiles(): any[] {
-    return [...this.files.keys()].map((p) => this.file(p));
+    return [...new Set([...this.files.keys(), ...this.binaryFiles.keys()])].map((p) => this.file(p));
   }
 
   getMarkdownFiles(): any[] {

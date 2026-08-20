@@ -33,6 +33,8 @@ import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/sta
 import { openBiliDownloader } from './bili-downloader';
 // 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 主页磁贴播种）
 import { openAttachMove, ensureAttachSeed, ATTACH_COMMAND_ID } from './attach';
+// 加密保险箱（encrypt 新域：移出式清单容器加密，正文+图片/视频附件）
+import { openEncrypt, encryptCurrentNote, collectAllEncrypt, unloadEncrypt } from './encrypt';
 import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setLauncherGestureSetter, LauncherModal } from './launcher';
 import { registerGestureListeners } from './launcher/gestures';
 import { ensureAutoSummary } from './auto-summary';
@@ -97,6 +99,10 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-bili-open', name: 'B站下载器', icon: 'tv-minimal-play', callback: () => openBiliDownloader() },
   // 附件搬移（ticket 65 新域：移动当前笔记附件到指定文件夹，fileManager 自动更新内部链接）
   { id: ATTACH_COMMAND_ID, name: '移动附件', icon: 'folder-down', callback: () => openAttachMove(getApp()) },
+  // 加密保险箱（encrypt 新域：移出式清单容器加密）
+  { id: 'bz-encrypt-open', name: '加密保险箱', icon: 'lock', callback: () => openEncrypt(getApp()) },
+  { id: 'bz-encrypt-lock', name: '加密当前笔记', icon: 'lock-keyhole', callback: () => encryptCurrentNote(getApp()) },
+  { id: 'bz-encrypt-lock-all', name: '收回全部已还原', icon: 'lock', callback: () => collectAllEncrypt(getApp()) },
 ];
 
 /** 应用日记本设置到运行时常量（diary-notebook 原 applySettingsToRuntime） */
@@ -216,6 +222,7 @@ export default class BzPlugin extends Plugin {
     unloadBz();
     unloadAIAgent();
     unloadLauncherPanel();
+    unloadEncrypt();
     if (this.unregisterGestures) {
       this.unregisterGestures();
       this.unregisterGestures = null;

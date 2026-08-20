@@ -2325,3 +2325,59 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   background: var(--interactive-accent);
   color: var(--text-on-accent);
 }
+
+/* ==================== 加密保险箱（encrypt，ticket NN：移出式清单容器加密） ==================== */
+#bz-encrypt-mask { backdrop-filter: blur(2px); }
+#bz-encrypt-popup { animation: slideUp 0.3s ease-out; }
+#bz-encrypt-popup, #bz-encrypt-preview-popup {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  background: var(--background-primary); border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  flex-direction: column;
+}
+#bz-encrypt-popup { width: 90%; max-width: 700px; max-height: 80vh; }
+#bz-encrypt-preview-popup { max-height: 86vh; overflow: hidden; }
+.bz-encrypt-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 24px 8px 24px;
+}
+.bz-encrypt-head h3 { margin: 0; font-size: 18px; font-weight: 600; color: var(--text-normal); }
+.bz-encrypt-head-btns { display: flex; gap: 8px; }
+#bz-encrypt-list { flex: 1; overflow-y: auto; padding: 0 20px 16px; min-height: 200px; }
+#bz-encrypt-list::-webkit-scrollbar { width: 6px; }
+#bz-encrypt-list::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
+.bz-encrypt-empty { padding: 40px; text-align: center; color: var(--text-faint); font-size: 15px; }
+.bz-encrypt-card {
+  background: var(--background-secondary); border-radius: 10px;
+  padding: 12px 16px; margin-bottom: 10px;
+}
+.bz-encrypt-card--restored { border: 1px solid var(--interactive-accent); }
+.bz-encrypt-card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.bz-encrypt-card-titlebox { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.bz-encrypt-card-title { font-size: 15px; font-weight: 600; color: var(--text-normal); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bz-encrypt-badge {
+  font-size: 11px; padding: 1px 8px; border-radius: 10px;
+  background: var(--background-modifier); color: var(--text-muted); flex: 0 0 auto;
+}
+.bz-encrypt-badge--restored { background: var(--interactive-accent); color: var(--text-on-accent); }
+.bz-encrypt-card-meta { margin-top: 4px; font-size: 12px; color: var(--text-faint); }
+.bz-encrypt-card-actions { display: flex; gap: 6px; flex: 0 0 auto; }
+.bz-encrypt-btn {
+  padding: 4px 12px; border-radius: 6px; border: none; cursor: pointer;
+  font-size: 13px; background: var(--background-modifier); color: var(--text-normal);
+}
+.bz-encrypt-btn--primary { background: var(--interactive-accent); color: var(--text-on-accent); }
+.bz-encrypt-btn:disabled { opacity: 0.5; cursor: default; }
+.bz-encrypt-preview-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 20px 8px; border-bottom: 1px solid var(--background-modifier);
+}
+.bz-encrypt-preview-head h4 { margin: 0; font-size: 16px; font-weight: 600; color: var(--text-normal); }
+.bz-encrypt-preview-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
+.bz-encrypt-preview-md { color: var(--text-normal); font-size: 14px; line-height: 1.6; }
+.bz-encrypt-preview-media {
+  max-width: 100%; margin-top: 12px; border-radius: 8px; display: block;
+}
+@media (max-width: 768px) {
+  #bz-encrypt-popup { width: 95%; max-height: 90vh; }
+}
