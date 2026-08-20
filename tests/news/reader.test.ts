@@ -93,14 +93,15 @@ describe('聚合讯阅读流', () => {
     expect(saved[0].body).toBeUndefined(); // delete a.body
   });
 
-  it('读完所有文章 → 完成态 renderDoneState（本轮阅读/累计保存/跳过/总计）', async () => {
+  it('读完所有文章 → 完成态 renderDoneState（今日阅读/累计保存/总计）', async () => {
+    await loadStats();
     await loadArticles();
     render();
     skipArticle();
     skipArticle();
 
     const doneText = document.querySelector('.news-card-area')!.textContent!;
-    expect(doneText).toContain('本轮阅读');
+    expect(doneText).toContain('今日阅读');
     expect(doneText).toContain('2 篇');
     expect(doneText).toContain('今日文章已读完，欢迎明天再来！');
   });

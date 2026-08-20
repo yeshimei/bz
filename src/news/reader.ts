@@ -185,7 +185,8 @@ export function render() {
 }
 
 export function renderDoneState() {
-  const roundRead = allArticles.filter((a: any) => a.read).length;
+  const today = new Date().toISOString().substring(0, 10);
+  const todayRead = stats.byDate[today] || 0;
 
   const cardArea = document.createElement('div');
   cardArea.className = 'news-card-area';
@@ -195,9 +196,8 @@ export function renderDoneState() {
   cardArea.style.justifyContent = 'center';
   cardArea.innerHTML = `
         <div style="background:var(--background-secondary);border:1px solid var(--background-modifier-border);border-radius:10px;padding:20px 28px;width:100%;max-width:360px;margin-bottom:24px;">
-            <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:var(--text-muted);"><span>本轮阅读</span><span style="color:var(--text-normal);font-weight:600;">${roundRead} 篇</span></div>
+            <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:var(--text-muted);"><span>今日阅读</span><span style="color:var(--text-normal);font-weight:600;">${todayRead} 篇</span></div>
             <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:var(--text-muted);"><span>累计保存</span><span style="color:var(--text-normal);font-weight:600;">${stats.totalSaved} 篇</span></div>
-            <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:var(--text-muted);"><span>累计跳过</span><span style="color:var(--text-normal);font-weight:600;">${stats.totalSkipped} 篇</span></div>
             <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:var(--text-muted);"><span>总计阅读</span><span style="color:var(--text-normal);font-weight:600;">${stats.totalRead} 篇</span></div>
         </div>
         <div style="font-size:13px;color:var(--text-faint);">今日文章已读完，欢迎明天再来！</div>
