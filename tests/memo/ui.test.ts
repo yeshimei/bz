@@ -264,8 +264,13 @@ describe('备忘录面板', () => {
     card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
     card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
-    expect(sheet!.querySelector('.bz-item-sheet-title')!.textContent).toBe('抽屉测试');
-    expect(sheet!.querySelector('.bz-item-sheet-sub')!.textContent).toBe('#学习');
+    // 顶部信息区与列表一字不差：标题 + 场景标签 + 时间标签（buildSheetHead 复用列表 meta）
+    const head = sheet!.querySelector('.bz-item-sheet-head') as HTMLElement;
+    expect(head).not.toBeNull();
+    expect(head.querySelector('.bz-item-sheet-entry .todo-content-span')!.textContent).toBe('抽屉测试');
+    expect(head.textContent).toContain('#学习');
+    expect(head.querySelector('.todo-meta-container')).not.toBeNull();
+    expect(head.querySelector('.bz-tag-time')).not.toBeNull();
     const editItem = [...sheet!.querySelectorAll('.bz-item-sheet-item')].find(
       (b) => b.textContent!.includes('编辑')
     ) as HTMLElement;
