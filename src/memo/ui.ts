@@ -999,11 +999,11 @@ export const Renderer = {
     // 各项按条件显示：只有条目具备对应数据才出现（如「跳转关联笔记」仅绑定位置时显示）
     const actions: ItemAction[] = [];
     if (item.linkedNote || item.url) {
-      actions.push({ icon: '📄', label: '打开', title: '打开关联内容', onClick: () => this.openItem(item) });
+      actions.push({ icon: 'external-link', label: '打开', title: '打开关联内容', onClick: () => this.openItem(item) });
     }
     if (item.notePath) {
       actions.push({
-        icon: '📌',
+        icon: 'book-open',
         label: '跳转关联笔记',
         title: '跳转关联笔记',
         onClick: () => this.openLinkedNote(item),
@@ -1011,7 +1011,7 @@ export const Renderer = {
     }
     if (!item.completed) {
       actions.push({
-        icon: '✅',
+        icon: 'check-circle',
         label: '标记完成',
         title: '标记完成',
         onClick: async () => {
@@ -1022,7 +1022,7 @@ export const Renderer = {
       });
     } else {
       actions.push({
-        icon: '↩️',
+        icon: 'rotate-ccw',
         label: '恢复未完成',
         title: '恢复未完成',
         onClick: async () => {
@@ -1040,14 +1040,14 @@ export const Renderer = {
           App.refresh();
         });
       };
-      actions.push({ icon: '⏳', label: '延后 1 天', title: '延后 1 天', onClick: () => postpone(1) });
-      actions.push({ icon: '⏳', label: '延后 3 天', title: '延后 3 天', onClick: () => postpone(3) });
+      actions.push({ icon: 'clock', label: '延后 1 天', title: '延后 1 天', onClick: () => postpone(1) });
+      actions.push({ icon: 'clock', label: '延后 3 天', title: '延后 3 天', onClick: () => postpone(3) });
     }
-    actions.push({ icon: '✏️', label: '编辑', title: '编辑', onClick: () => UIManager.showAddDialog(item) });
+    actions.push({ icon: 'pencil', label: '编辑', title: '编辑', onClick: () => UIManager.showAddDialog(item) });
     // 拆分高频单项：优先级切换（重要 ↔ 次要，即时写盘）
     const isImportant = item.priority === 'important';
     actions.push({
-      icon: isImportant ? '⭐' : '☆',
+      icon: 'star',
       label: isImportant ? '转为次要' : '转为重要',
       title: '切换优先级',
       onClick: async () => {
@@ -1057,7 +1057,7 @@ export const Renderer = {
       },
     });
     actions.push({
-      icon: '📋',
+      icon: 'copy',
       label: '复制内容',
       title: '复制内容',
       onClick: async () => {
@@ -1066,7 +1066,7 @@ export const Renderer = {
       },
     });
     actions.push({
-      icon: '🗑',
+      icon: 'trash-2',
       label: '删除',
       title: '删除',
       kind: 'danger',

@@ -19,10 +19,11 @@
 import { longPress } from './dom';
 import { escManager } from './esc-manager';
 import { isMobileEnv } from './mobile';
+import { setIcon, type IconName } from 'obsidian';
 
 export interface ItemAction {
-  /** 图标字符（emoji），操作条与浮层项共用，不再添加文案前缀 */
-  icon: string;
+  /** Obsidian 内置 lucide 图标 id（如 'pencil'/'trash-2'/'star'），经 setIcon 渲染原生 SVG；尺寸由 styles.css 控制 */
+  icon: IconName;
   /** 菜单项文案（浮层显示） */
   label: string;
   /** 桌面操作条 tooltip（空则不加 title） */
@@ -30,6 +31,15 @@ export interface ItemAction {
   /** 危险操作（删除类）：浮层项红色强调 */
   kind?: 'normal' | 'danger';
   onClick: () => void;
+}
+
+/** 渲染 Obsidian 原生图标（未知 id 静默忽略） */
+function renderIcon(container: HTMLElement, iconId: IconName): void {
+  try {
+    setIcon(container, iconId);
+  } catch (e) {
+    /* 未知图标 id：忽略 */
+  }
 }
 
 /** 浮层附加信息（移动端抽屉顶部展示选中条目信息，参照网易云底部页） */
@@ -181,7 +191,14 @@ export function openItemMenu(x: number, y: number, actions: ItemAction[], suppre
     const item = document.createElement('button');
     item.type = 'button';
     item.className = 'bz-item-menu-item' + (a.kind === 'danger' ? ' bz-item-menu-item--danger' : '');
-    item.innerHTML = `<span class="bz-item-menu-icon">${a.icon}</span><span class="bz-item-menu-label">${a.label}</span>`;
+    const itemIcon = document.createElement('span');
+    itemIcon.className = 'bz-item-menu-icon';
+    renderIcon(itemIcon, a.icon);
+    const itemLabel = document.createElement('span');
+    itemLabel.className = 'bz-item-menu-label';
+    itemLabel.textContent = a.label;
+    item.appendChild(itemIcon);
+    item.appendChild(itemLabel);
     item.addEventListener('click', (ev) => {
       ev.stopPropagation();
       closeItemMenu();
@@ -233,7 +250,14 @@ export function openItemSheet(actions: ItemAction[], opts?: ItemActionsOptions, 
     const item = document.createElement('button');
     item.type = 'button';
     item.className = 'bz-item-sheet-item' + (a.kind === 'danger' ? ' bz-item-sheet-item--danger' : '');
-    item.innerHTML = `<span class="bz-item-sheet-icon">${a.icon}</span><span class="bz-item-sheet-label">${a.label}</span>`;
+    const itemIcon = document.createElement('span');
+    itemIcon.className = 'bz-item-sheet-icon';
+    renderIcon(itemIcon, a.icon);
+    const itemLabel = document.createElement('span');
+    itemLabel.className = 'bz-item-sheet-label';
+    itemLabel.textContent = a.label;
+    item.appendChild(itemIcon);
+    item.appendChild(itemLabel);
     item.addEventListener('click', (ev) => {
       ev.stopPropagation();
       closeItemMenu();
@@ -348,7 +372,7 @@ export function attachItemActions(card: HTMLElement, actions: ItemAction[], opts
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'bz-item-action' + (a.kind === 'danger' ? ' bz-item-action--danger' : '');
-    btn.textContent = a.icon;
+    renderIcon(btn, a.icon); // 原生 lucide svg，颜色继承 currentColor
     if (a.title) btn.title = a.title;
     btn.addEventListener('click', (ev) => {
       ev.stopPropagation();

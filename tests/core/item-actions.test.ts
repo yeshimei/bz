@@ -8,9 +8,9 @@ import { attachItemActions, closeItemMenu, openItemMenu, type ItemAction } from 
 import { Platform as MockPlatform } from '../mock-obsidian-entry';
 
 const ACTIONS: ItemAction[] = [
-  { icon: '📄', label: '打开', title: '打开', onClick: () => (window as any).__opened = true },
-  { icon: '✏️', label: '编辑', title: '编辑', onClick: () => (window as any).__edited = true },
-  { icon: '🗑', label: '删除', title: '删除', kind: 'danger', onClick: () => (window as any).__deleted = true },
+  { icon: 'external-link', label: '打开', title: '打开', onClick: () => (window as any).__opened = true },
+  { icon: 'pencil', label: '编辑', title: '编辑', onClick: () => (window as any).__edited = true },
+  { icon: 'trash-2', label: '删除', title: '删除', kind: 'danger', onClick: () => (window as any).__deleted = true },
 ];
 
 function makeCard(): HTMLElement {
@@ -38,15 +38,16 @@ describe('attachItemActions：桌面操作条', () => {
     (window as any).__linkClicked = false;
   });
 
-  it('注入操作条：顺序 = 打开/编辑/删除，危险项带 danger 类', () => {
+  it('注入操作条：顺序 = 打开/编辑/删除，原生 lucide 图标（setIcon 到 dataset.icon），危险项带 danger 类', () => {
     const card = makeCard();
     attachItemActions(card, ACTIONS);
     expect(card.classList.contains('bz-item-card')).toBe(true);
     const btns = card.querySelectorAll('.bz-item-action');
     expect(btns.length).toBe(3);
-    expect(btns[0].textContent).toBe('📄');
-    expect(btns[1].textContent).toBe('✏️');
-    expect(btns[2].textContent).toBe('🗑');
+    // Obsidian 原生图标：mock setIcon 记录 dataset.icon（真实环境渲染 lucide svg）
+    expect((btns[0] as HTMLElement).dataset.icon).toBe('external-link');
+    expect((btns[1] as HTMLElement).dataset.icon).toBe('pencil');
+    expect((btns[2] as HTMLElement).dataset.icon).toBe('trash-2');
     expect(btns[2].classList.contains('bz-item-action--danger')).toBe(true);
     expect((btns[0] as HTMLElement).title).toBe('打开');
   });
@@ -88,6 +89,9 @@ describe('长按跟手菜单（移动端主路径）', () => {
     expect(menu.textContent).toContain('打开');
     expect(menu.textContent).toContain('编辑');
     expect(menu.textContent).toContain('删除');
+    // 原生图标进入图标容器（mock setIcon → dataset.icon）
+    expect((menu.querySelector('.bz-item-menu-icon') as HTMLElement).dataset.icon).toBe('external-link');
+    expect((menu.querySelector('.bz-item-sheet-icon') as HTMLElement)).toBeNull();
     // 锚点右下 +GAP：left=132, top=112（jsdom 视口放得下）
     expect(menu.style.left).toBe('132px');
     expect(menu.style.top).toBe('112px');
@@ -229,6 +233,9 @@ describe('移动端底部抽屉（Platform.isMobile = true）', () => {
     const items = sheet.querySelectorAll('.bz-item-sheet-item');
     expect(items.length).toBe(3);
     expect(sheet.textContent).toContain('删除');
+    // 原生图标进入图标容器（mock setIcon → dataset.icon）
+    expect((items[0].querySelector('.bz-item-sheet-icon') as HTMLElement).dataset.icon).toBe('external-link');
+    expect((items[2].querySelector('.bz-item-sheet-icon') as HTMLElement).dataset.icon).toBe('trash-2');
     // 抽屉固定底部：不设 left/top（桌面跟手菜单才需要锚点定位）
     expect(sheet.style.left).toBe('');
     expect(sheet.style.top).toBe('');
