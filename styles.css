@@ -2767,13 +2767,14 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
    高特异性 + !important 抗 Obsidian 默认 button 样式（灰底/边框/圆角）压盖 */
 .bz-item-sheet button.bz-item-sheet-item {
   display: flex; align-items: center; gap: 8px;
+  justify-content: flex-start !important; /* 抗 Obsidian 默认 button 居中 */
   width: 100%; padding: 8px 6px;
   font-size: 13px; line-height: 1.5; color: var(--text-normal);
   background: transparent !important;
   border: none !important;
   border-radius: 0 !important;
   box-shadow: none !important;
-  cursor: pointer; text-align: left;
+  cursor: pointer; text-align: left !important;
 }
 .bz-item-sheet button.bz-item-sheet-item:hover,
 .bz-item-sheet button.bz-item-sheet-item:active {
