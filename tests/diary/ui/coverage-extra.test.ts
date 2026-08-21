@@ -6,12 +6,12 @@ import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { setApp } from '../../../src/diary/app';
 import { applyDirectories, resetTagsConfig } from '../../../src/diary/config';
 import { init } from '../../../src/diary/ui/panel';
-import { createEntryCard, addLongPress, copyLink, jumpToEntry, cancelEdit, removeCard, insertCard, updateSticky, fixMobileSelect } from '../../../src/diary/ui/entries';
+import { createEntryCard, copyLink, jumpToEntry, cancelEdit, removeCard, insertCard, updateSticky } from '../../../src/diary/ui/entries';
 import { createTagPicker, showTagPicker, updateTags, createAddDialog, openAddDialog, createDatePicker } from '../../../src/diary/ui/dialogs';
 import { createDateTimeControl, syncDateTime, showDateTimePicker } from '../../../src/diary/ui/datetime-picker';
 import { state } from '../../../src/diary/state';
 import { applyUiSettings } from '../../../src/diary/ui/ui-settings';
-import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../../mock-obsidian-entry';
+import { resetObsidianMocks, Platform as MockPlatform, getNoticeMessages, hasNotice, clearNotices } from '../../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../../mock-vault';
 import { moment } from 'obsidian';
 
@@ -51,7 +51,8 @@ describe('entries 补测', () => {
   it('createEntryCard：结构 + 单选标签显示分支', () => {
     const entry = soloEntry();
     const card = createEntryCard(entry);
-    expect(card.className).toBe('diary-entry-card');
+    expect(card.className).toContain('diary-entry-card');
+    expect(card.classList.contains('bz-item-card')).toBe(true); // 挂统一操作条容器类
     expect(card.id).toBe('diary-entry-test-1');
     expect(card.querySelector('.diary-emoji')!.textContent).toBe(entry.emoji);
     expect(card.querySelector('.diary-entry-content')).toBeTruthy();
@@ -74,31 +75,57 @@ describe('entries 补测', () => {
     applyUiSettings({ diaryContentRenderMode: 'markdown' });
   });
 
-  it('addLongPress：content 类型长按触发 copyLink（剪贴板 + Notice）', async () => {
-    const entry = state.data.originalDiaryEntries[0];
-    const el = document.createElement('div');
-    document.body.appendChild(el);
-    addLongPress(el, 'content', entry.id!);
+  it('长按卡片 → 移动端底部抽屉：非加密含 打开/复制双链/改标签/删除，头部与列表一致', async () => {
+    MockPlatform.isMobile = true;
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
-    el.dispatchEvent(new MouseEvent('mousedown'));
-    await vi.advanceTimersByTimeAsync(900); // LONG_PRESS_DURATION=800
-    el.dispatchEvent(new MouseEvent('mouseup'));
-    await vi.advanceTimersByTimeAsync(10);
+    const entry = state.data.originalDiaryEntries[0]; // 真实条目（showTagPicker 按 id 查库）
+    const card = createEntryCard(entry);
+    document.body.appendChild(card);
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 100, clientY: 100 }));
+    await vi.advanceTimersByTimeAsync(550);
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet).not.toBeNull();
+    expect(sheet.textContent).toContain('打开');
+    expect(sheet.textContent).toContain('复制双链');
+    expect(sheet.textContent).toContain('改标签');
+    expect(sheet.textContent).toContain('删除');
+    // 头部信息区：与列表一致的 emoji + 时间 + 内容
+    const head = sheet.querySelector('.bz-item-sheet-head') as HTMLElement;
+    expect(head.textContent).toContain(entry.time);
+    expect(head.textContent).toContain(entry.content.trim());
+    // 点「改标签」→ 标签选择器弹出（原 emoji 长按语义）
+    const tagItem = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('改标签')
+    ) as HTMLElement;
+    tagItem.click();
+    expect(document.getElementById('diary-tag-selector-popup')!.style.display).toBe('block');
+    MockPlatform.isMobile = false;
     vi.useRealTimers();
-    expect(hasNotice(/已复制双链引用/)).toBe(true);
   });
 
-  it('addLongPress：emoji 类型长按打开标签选择器', async () => {
-    const entry = state.data.originalDiaryEntries[0];
-    createTagPicker();
-    const el = document.createElement('div');
-    document.body.appendChild(el);
-    addLongPress(el, 'emoji', entry.id!);
+  it('长按卡片 → 抽屉条件显示：加密条目无「打开/复制双链」，头部显示已加密占位', async () => {
+    MockPlatform.isMobile = true;
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
-    el.dispatchEvent(new MouseEvent('mousedown'));
-    await vi.advanceTimersByTimeAsync(900);
+    const entry = { ...soloEntry(), id: 'enc-1', encrypted: true, noteId: 'note-1' } as any;
+    const card = createEntryCard(entry);
+    document.body.appendChild(card);
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 100, clientY: 100 }));
+    await vi.advanceTimersByTimeAsync(550);
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet).not.toBeNull();
+    expect(sheet.textContent).not.toContain('打开');
+    expect(sheet.textContent).not.toContain('复制双链');
+    expect(sheet.textContent).toContain('改分类');
+    expect(sheet.textContent).toContain('删除');
+    // 头部：已加密占位（不渲染密文）
+    const head = sheet.querySelector('.bz-item-sheet-head') as HTMLElement;
+    expect(head.textContent).toContain('已加密');
+    MockPlatform.isMobile = false;
     vi.useRealTimers();
-    expect(document.getElementById('diary-tag-selector-popup')!.style.display).toBe('block');
   });
 
   it('copyLink：生成双链并写剪贴板', async () => {
@@ -173,13 +200,6 @@ describe('entries 补测', () => {
     state.ui.scrollContainer = container;
     updateSticky();
     expect(sep.style.position).toBe('sticky');
-  });
-
-  it('fixMobileSelect：非触屏设备不绑定监听', () => {
-    const el = document.createElement('div');
-    fixMobileSelect(el);
-    expect(el.getAttribute('listener')).toBeNull();
-    expect(el.onclick).toBeNull();
   });
 });
 

@@ -1,7 +1,7 @@
 /**
  * diary UI 补测 2（单文件 80% 目标）：openAddDialog useFileDateTime 分支、
  * saveNewEntry 无效日期/失败分支、datetime-picker 手动模式、quote 摘抄全流程、
- * filter-shared 计数分支、fixMobileSelect 触屏分支、panel toggle。
+ * filter-shared 计数分支、panel toggle。
  */
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { setApp } from '../../../src/diary/app';
@@ -11,7 +11,6 @@ import { openAddDialog, saveNewEntry } from '../../../src/diary/ui/dialogs';
 import { createDateTimeControl } from '../../../src/diary/ui/datetime-picker';
 import { registerOpenDialogCommand } from '../../../src/diary/ui/quote';
 import { updateTagCounts, updateSubTagsCounts, rebuildTags, createTag } from '../../../src/diary/ui/filter-shared';
-import { fixMobileSelect } from '../../../src/diary/ui/entries';
 import { applyUiSettings } from '../../../src/diary/ui/ui-settings';
 import { state } from '../../../src/diary/state';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../../mock-obsidian-entry';
@@ -254,19 +253,6 @@ describe('filter-shared 计数分支', () => {
     buttons = [...container.querySelectorAll<HTMLElement>('.diary-tag-btn')];
     expect(buttons[0].dataset.tag).toBe('收藏');
     expect(buttons[1].dataset.tag).toBe('日记');
-  });
-});
-
-describe('fixMobileSelect 触屏分支', () => {
-  it('isTouchDevice=true → touchstart 聚焦 + touchmove 阻止滚动', () => {
-    state.ui.isTouchDevice = true;
-    const el = document.createElement('div');
-    document.body.appendChild(el);
-    fixMobileSelect(el);
-    el.dispatchEvent(new TouchEvent('touchstart', { bubbles: true }));
-    el.dispatchEvent(new TouchEvent('touchmove', { bubbles: true, cancelable: true }));
-    state.ui.editingEntryId = 'x';
-    el.dispatchEvent(new TouchEvent('touchmove', { bubbles: true, cancelable: true }));
   });
 });
 
