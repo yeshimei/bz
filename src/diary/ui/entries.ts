@@ -228,14 +228,6 @@ export function createEntryCard(entry: DiaryEntry) {
 
   timeInfo.appendChild(emojiSpan);
   timeInfo.appendChild(timeSpan);
-  // 加密日记角标（ADR-0017：🔐，只读、不跳 md）
-  if (entry.encrypted) {
-    const badge = document.createElement('span');
-    badge.className = 'bz-encrypt-badge';
-    badge.textContent = '🔐';
-    badge.title = '加密日记';
-    timeInfo.appendChild(badge);
-  }
   header.appendChild(timeInfo);
 
   const content = document.createElement('div');
@@ -248,17 +240,18 @@ export function createEntryCard(entry: DiaryEntry) {
 
   let lastClickTime = 0;
   content.addEventListener('click', async (e) => {
+    // 加密条目不跳 md（无锚点），正文即预览（用户决策：无需预览窗），点击无操作
+    if (entry.encrypted) {
+      e.stopPropagation();
+      e.preventDefault();
+      return;
+    }
     const currentTime = new Date().getTime();
     const timeDiff = currentTime - lastClickTime;
     if (timeDiff < 300 && timeDiff > 0) {
       e.stopPropagation();
       e.preventDefault();
-      if (entry.encrypted) {
-        // 加密条目不跳 md（无锚点），双击打开只读预览（ADR-0017 Q21-a 未解锁完全不可见）
-        openEncryptedPreview(entry);
-      } else {
-        await jumpToEntry(entry);
-      }
+      await jumpToEntry(entry);
     }
     lastClickTime = currentTime;
   });
@@ -402,71 +395,6 @@ export async function copyLink(entryId: string) {
   const link = `[[${entry.filename}#${entry.emoji} ${entry.time}]]`;
   await navigator.clipboard.writeText(link);
   notice(`已复制双链引用：${link}`, 'success');
-}
-
-// ===== 加密日记只读预览（ADR-0017 Q17-b：点击卡片打开只读预览，不原地编辑） =====
-
-/**
- * 打开加密日记只读预览弹窗（复用保险箱预览窗样式类，日记域独立 DOM id）。
- * Markdown 渲染正文，sourcePath 指向日记目录；仅提供 ✕ 关闭，无编辑/改分类入口
- * （改分类在标签选择器里完成）。
- */
-export function openEncryptedPreview(entry: DiaryEntry) {
-  const maskId = 'bz-diary-encrypt-preview-mask';
-  const popupId = 'bz-diary-encrypt-preview-popup';
-  let mask = document.getElementById(maskId) as HTMLElement | null;
-  let popup = document.getElementById(popupId) as HTMLElement | null;
-  if (!mask || !popup) {
-    mask = document.createElement('div');
-    mask.id = maskId;
-    mask.className = 'bz-overlay-mask';
-    mask.style.zIndex = '10060';
-    mask.style.display = 'none';
-    mask.onclick = () => {
-      if (mask) mask.style.display = 'none';
-    };
-    popup = document.createElement('div');
-    popup.id = popupId;
-    popup.className = 'bz-overlay-popup bz-encrypt-preview-popup';
-    popup.style.zIndex = '10061';
-    popup.style.width = '90%';
-    popup.style.maxWidth = '640px';
-    popup.style.maxHeight = '86vh';
-    popup.style.display = 'none';
-    document.body.appendChild(mask);
-    document.body.appendChild(popup);
-  }
-  popup.innerHTML = '';
-
-  const header = document.createElement('div');
-  header.className = 'bz-encrypt-preview-head';
-  const title = document.createElement('h4');
-  title.textContent = `${entry.date} · ${entry.time} 日记`;
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '✕';
-  closeBtn.className = 'bz-encrypt-btn';
-  closeBtn.onclick = () => {
-    if (mask) mask.style.display = 'none';
-  };
-  header.appendChild(title);
-  header.appendChild(closeBtn);
-  popup.appendChild(header);
-
-  const body = document.createElement('div');
-  body.className = 'bz-encrypt-preview-body';
-  const mdEl = document.createElement('div');
-  mdEl.className = 'bz-encrypt-preview-md';
-  body.appendChild(mdEl);
-  popup.appendChild(body);
-
-  // 只读 Markdown 渲染（sourcePath 指向日记目录，供内部链接正确解析）
-  const sourcePath = `${DIARY_DIRECTORY}/${entry.date}.md`;
-  void MarkdownRenderer.render(getApp(), entry.content || '', mdEl, sourcePath, new Component()).catch(() => {
-    mdEl.textContent = entry.content;
-  });
-
-  mask.style.display = 'block';
-  popup.style.display = 'flex';
 }
 
 // ===== 取消编辑（原 2218-2240） =====
