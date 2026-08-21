@@ -244,8 +244,6 @@ function createHeader(): HTMLElement {
       },
     });
   });
-  buttonContainer.appendChild(settingsBtn);
-
   const closeBtn = createIconButton('❌', '关闭', () => {
     articleMask!.style.visibility = 'hidden';
     articlePopup!.style.visibility = 'hidden';
@@ -261,6 +259,9 @@ function createHeader(): HTMLElement {
   });
   buttonContainer.appendChild(newsBtn);
 
+  // ⚙️ 设置置于关闭正前（用户拍板：所有窗口设置按钮都在关闭前）
+  buttonContainer.appendChild(settingsBtn);
+
   buttonContainer.appendChild(closeBtn);
   header.appendChild(title);
   header.appendChild(buttonContainer);
@@ -275,6 +276,7 @@ function createIconButton(text: string, title: string, onClick: () => void): HTM
   const isClose = text === '❌';
   btn.style.cssText =
     `background:none;border:none;font-size:${isClose ? 13 : 14}px;cursor:pointer;color:var(--text-muted);padding:0;width:${isClose ? 21 : 22}px;height:${isClose ? 25 : 26}px;border-radius:4px;display:flex;align-items:center;justify-content:center;box-shadow:none;`;
+  if (isClose) btn.classList.add('bz-win-close');
   btn.onmouseover = () => (btn.style.background = 'var(--background-secondary)');
   btn.onmouseout = () => (btn.style.background = 'none');
   btn.onclick = onClick;

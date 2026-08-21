@@ -1,5 +1,7 @@
 # bz 进度（上下文压缩恢复点）
 
+- **ticket 68 后续 3（用户反馈，已提交）**：① ⚙️ 设置按钮置于 ❌ 关闭**正前**（favorites 🔍↔⚙️ 换序、encrypt 🧹↔⚙️ 换序、clipping 📰 前移，其余窗口已合规）；② 关闭按钮整体**再小 2px**（22×26/14px → 20×24/12px，新类 `.bz-win-close` 挂到全部自定义关闭钮：diary/movie/clipping/review/阅读报告/影视分析/归物本，createIconBtn 系用 `--close`、memo 用 `.todo-btn-close`、news 用 `.news-close-btn`）；③ **移动端非真全屏（常规卡）隐藏关闭按钮**（≤768 且非 `.bz-win-mfs` → display:none，真全屏时显示；卡片态靠点遮罩关闭、全屏靠 ❌；桌面端不受影响）。
+
 - **ticket 68 后续 2（用户反馈：头部行全页面一致，已提交）**：主窗口头部行统一规范——① **头行** `padding:16px 24px 10px`（上/左右/下；头部↔底部列表间距统一 10px）+ 两端对齐 + 间距 8（统一类 `.bz-win-head` 加到缺钩子的 7 窗头部：password/review/belongings/clipping/movie 主/影视分析/阅读报告；diary/memo/favorites/library/encrypt 用既有类并入组）；② **头行按钮**统一 22×26/14px、透明、无阴影无边框、圆角 4、text-muted、hover `background-secondary`（!important 压制各窗内联/JS hover 与主题 button 默认样式；news 浮动按钮 32×32 圆→同规格、关闭右 10/设置右 40；番茄钟 ⚙️ 同规格；movie 分析 0.55rem/15px margin 独家规格废止；belongings 无 hover 补上）；③ 清理冗余：diary ≤768 头排规则删除（统一规格替代）、favorites 旧 `#fav-popup .fav-header .bz-icon-btn` 规则并入。ADR-0019 修订节追加第 3 条。
 
 - **ticket 68 后续（用户反馈，已提交）**：① 全屏顶距统一——所有主窗口真全屏时顶部避让统一为 `max(34px, env(safe-area-inset-top))`（首子避让为全窗口统一机制）：日记 ≤768 头排 `!important` padding 规则改 `:not(.bz-win-mfs)` 让位（原来是 16px 压过通用 34px）、news 自垫 58px 对齐 34px（首子为绝对定位关闭钮故自垫）、影视分析基样式残留 `padding-top:34px` 清除（原会 34+34=68px 双重垫顶）。② 主窗口头部按钮统一去阴影去边框（用户拍板）：`.bz-icon-btn` 升 `!important` + 11 组头部容器/按钮选择器 `box-shadow:none!important; border:none!important`，压制主题 `button:not(.clickable-icon)`（收藏本 fav-header 先例推广到全部主窗口）。ADR-0019 补修订节。
