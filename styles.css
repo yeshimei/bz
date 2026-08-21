@@ -137,10 +137,7 @@
 
 @media (max-width: 768px) {
     /* 主窗口常规卡由内联基样式承担；真全屏统一走 .bz-win-mfs（ticket 68） */
-    /* 头排内边距：常规形态（含移动端常规卡）自持；真全屏（.bz-win-mfs）时让位给统一顶部避让（ticket 68 后续） */
-    #diary-tag-filter:not(.bz-win-mfs) .diary-popup-header {
-        padding: 16px 20px 12px 20px !important;
-    }
+    /* 头排内边距由「主窗口头部行统一规范」统一承担（16/24/10，全平台一致，ticket 68 后续） */
 
     #diary-tag-container {
         max-height: 100px !important;
@@ -1057,7 +1054,7 @@
   display: none;
   position: absolute;
   top: 62px;
-  right: 48px;
+  right: 40px;
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -1074,21 +1071,83 @@
   .news-settings-btn { display: flex; align-items: center; justify-content: center; }
 }
 
-/* ==================== 主窗口头部按钮统一去阴影去边框（ticket 68 后续，用户拍板） ==================== */
-/* 头排图标按钮不套主题 button 默认样式：box-shadow/border 一律清除（!important 压制主题 button:not(.clickable-icon)） */
-#diary-tag-filter .diary-popup-header button,
-#todo-popup .bz-todo-head-btns button,
-#pw-popup > div:first-child button,
-#review-popup > div:first-child button,
-#fav-popup .fav-header button,
-#__book_library__ .bz-lib-header-btns button,
-#bz-encrypt-popup .bz-encrypt-head-btns button,
-#__gui_wu_ben__ button,
-#pomodoro-popup button,
+/* ==================== 主窗口头部行统一规范（ticket 68 后续，用户拍板） ==================== */
+/* 头行：16px 24px 10px（上/左右/下——头部到底部列表的间距统一 10px），行内两端对齐、间距 8 */
+.bz-win-head,
+.diary-popup-header,
+.bz-todo-head,
+.fav-header,
+.bz-lib-header,
+.bz-lib-modal-header,
+.bz-encrypt-head {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 16px 24px 10px !important;
+  flex-shrink: 0 !important;
+}
+/* 头行按钮容器：统一 8px 间距、垂直居中 */
+.bz-win-head > div,
+.diary-popup-header > div,
+.bz-todo-head-btns,
+.fav-header > div,
+.bz-lib-header-btns,
+.bz-encrypt-head-btns {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+/* 头行按钮：统一 22×26/14px、透明、无阴影无边框、圆角 4、text-muted；hover 统一背景 */
+.bz-win-head button,
+.diary-popup-header button,
+.bz-todo-head-btns button,
+.fav-header button,
+.bz-lib-header-btns button,
+.bz-lib-modal-header button,
+.bz-encrypt-head-btns button,
 .news-close-btn,
 .news-settings-btn {
-  box-shadow: none !important;
+  width: 22px !important;
+  height: 26px !important;
+  font-size: 14px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: none !important;
   border: none !important;
+  box-shadow: none !important;
+  border-radius: 4px !important;
+  color: var(--text-muted) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+}
+.bz-win-head button:hover,
+.diary-popup-header button:hover,
+.bz-todo-head-btns button:hover,
+.fav-header button:hover,
+.bz-lib-header-btns button:hover,
+.bz-lib-modal-header button:hover,
+.bz-encrypt-head-btns button:hover,
+.news-close-btn:hover,
+.news-settings-btn:hover {
+  background: var(--background-secondary) !important;
+}
+/* 番茄钟右上角设置钮：同头行按钮规格（absolute 定位保留） */
+#pomodoro-btn-settings {
+  width: 22px !important;
+  height: 26px !important;
+  padding: 0 !important;
+  font-size: 14px !important;
+  border: none !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  background: none !important;
+  color: var(--text-muted) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 /* ==================== 剪藏本（clipping，ticket 60 收敛：原 CLIPPING_CSS + 滚动条注入，逐字搬运） ==================== */
@@ -1420,7 +1479,7 @@
     }
 
 /* ==================== 收藏本（favorites，ticket 60 收敛：原 fav-mobile 注入，逐字搬运；后续优化：header 按钮去 box-shadow、移动端列表平铺去横向滚动/下边框、标题栏去下边框） ==================== */
-      #fav-popup .fav-header .bz-icon-btn { box-shadow: none !important; }
+      /* #fav-popup .fav-header .bz-icon-btn 去阴影已并入「主窗口头部行统一规范」（ticket 68 后续） */
       @media (max-width: 768px) {
         #fav-entries-container { scrollbar-width: none; -ms-overflow-style: none; overflow-x: hidden; }
         #fav-entries-container::-webkit-scrollbar { display: none; }

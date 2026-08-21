@@ -143,6 +143,7 @@ export class UIManager {
 
   createHeader(): HTMLDivElement {
     const header = document.createElement('div');
+    header.className = 'bz-win-head';
     header.style.cssText = 'padding:16px 24px 8px 24px;display:flex;justify-content:space-between;align-items:center;';
     const title = document.createElement('h3');
     title.textContent = '密码本';

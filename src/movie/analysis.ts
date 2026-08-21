@@ -528,6 +528,7 @@ export function openAnalysisModal(app: App): void {
   applyMobileWindowFullscreen(modal, tryGetSettings().movieMobileDefaultFullscreen === true);
 
   const header = document.createElement('div');
+  header.className = 'bz-win-head';
   header.style.cssText = `
         display: flex; justify-content: space-between; align-items: center;
         padding: 0 26px; flex-shrink: 0;

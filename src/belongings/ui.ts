@@ -937,6 +937,7 @@ export async function openBelongingsPanel(): Promise<void> {
 
   // 头部
   const header = document.createElement('div');
+  header.className = 'bz-win-head';
   header.style.cssText = `
       display: flex; justify-content: space-between; align-items: center;
       padding: 0 26px;
