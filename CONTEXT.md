@@ -156,6 +156,20 @@ _Avoid_: 搬附件、整理附件、资源整理
 **链接改写 (Link Rewrite)**: 附件搬移全库引用被移动附件的 wikilink / Markdown 链接自动更新，由 **Obsidian 内建 `app.fileManager.renameFile`** 完成（ADR-0014）——移动文件的同时按 Obsidian 自身消歧规则更新全库指向它的链接，插件不自研全库改写（v1 自研全库扫描 + 逐个 modify 因大库卡顿弃用）。插件自研解析逻辑仅用于「收集当前笔记附件」与「算去重后的目标路径」。
 _Avoid_: 链接修复、改链接（泛指时）
 
+### 加密日记条目（日记加密，ticket 67）
+
+**加密日记条目 (Encrypted Diary Entry)**: 日记本中「加密」分类（🔐）的真·密文条目——**整条（含 `# emoji HH:mm` 标题行与正文）从当日 md 文件移出**，作为一篇 `SafeNote` 存入保险箱（复用 `SafeManager.lockNote`；ADR-0017）。区别于既有「加密条目(正文含🔐仅隐藏，伪加密)」——本概念是真·密文，整条不见于 md。解锁后解密成标准 `DiaryEntry` 混排进日记面板；未解锁完全不可见（Q21-a）。
+_Avoid_: 加密条目（指🔐仅隐藏时）、普通加密笔记（保险箱整篇移出式）
+_Avoid_: 把「加密日记」当成一个新的独立数据文件——它复用保险箱 `safe.enc` 清单，无独立 .enc
+
+**日记加密入口 (Diary Encryption Entry)**: 加密**只发生在「改类型」时**——写日记弹窗不提供「加密」标签；在日记面板改分类（点 emoji → 标签选择器）时提供「加密」标签。选「加密」→ 若保险箱未解锁先弹主密码 → 因正文将离笔记再二次确认 → 确认后块级移入保险箱。已加密条目改类型=自动降级（Q20-a），不显示「加密」按钮。
+_Avoid_: 写日记时直接新建加密条目（不提供该入口）
+
+**日记条目还原 (Diary Entry Restore)**: 加密日记降级回普通的语义——解密写回原日期 md 文件的**对应时间点**（merge，按 date+time 重插 `# emoji HH:mm` 块；md 已删则新建），密文取出即删（复用 `restoreNote`）。附件随还原一并写回原 vault 路径。触发双入口：保险箱面板现成「还原」手势，或日记面板改类型选非加密（自动降级）。
+_Avoid_: 整文件覆盖还原（日记条目是日期文件里的一个块，非整篇笔记）
+
+**日记附件随加密**: 加密日记正文里 `![[...]]` 引用的图片/视频附件**一并移入保险箱**（作为 SafeNote 的 attachments 加密镜像），原 vault 附件删除；恢复时按原路径还原，正文里的 `![[原路径]]` 引用文本不变、可直接显示。附件与日记正文同属同一篇 SafeNote（Q25-B 存完整块）。
+
 ### 共享层
 
 **Q3 / __utils**: QuickAdd 共享脚本（`CONFIG/SCRIPTS/Quickadd/Q/Q3.js`，1034 行），挂载 `window.__utils`，21 个导出：escManager、confirm、notice、generateId、jsonStore、longPress、injectStyles、createSiteIcon、createIconBtn、formatRelativeTime、formatFileSize、displayChangelog、checkAndShowChangelog、AIService、createAI、extractUrlAndDisplay、getPlatformName、getCurrentNoteInfo、getCurrentCursorPosition、fetchPageTitle、createOverlay。**新插件移植后为内部共享层（core），不再挂 window**。

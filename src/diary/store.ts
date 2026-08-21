@@ -8,6 +8,7 @@ import { notice } from '../core/notice';
 import { getApp } from './app';
 import { BATCH_SIZE, DIARY_DIRECTORY, LETTER_DIRECTORY, MOVIE_DIRECTORY, buildTagMaps, getTagEmoji } from './config';
 import { isEncryptedEntry, parseFile, parseLetterFile, parseMovieFile } from './parser';
+import { loadEncryptedEntries, isUnlocked } from './encrypt';
 import { diaryDataMap, setDiaryDataMap, state } from './state';
 import type { DiaryEntry } from './types';
 
@@ -87,6 +88,23 @@ function assignIds(entries: DiaryEntry[]) {
       entry.id = `${entry.date}-${safeTime}-${idx}`;
     }
   });
+}
+
+/** 合并解锁后的加密日记条目进 originalDiaryEntries（Q21-a：未解锁不并入，完全不可见） */
+async function mergeEncryptedEntries() {
+  let encrypted: DiaryEntry[] = [];
+  try {
+    if (!isUnlocked()) return;
+    encrypted = await loadEncryptedEntries();
+  } catch (e) {
+    // encrypt 域未配置/设置未注入（如未初始化）：视为无加密条目，避免阻断主列表（ADR-0002 降级链）
+    return;
+  }
+  const existing = state.data.originalDiaryEntries.filter((e) => !e.encrypted);
+  const merged = [...existing, ...encrypted].filter(Boolean) as DiaryEntry[];
+  sortEntries(merged);
+  assignIds(merged);
+  state.data.originalDiaryEntries = merged;
 }
 
 // ===== 加载 =====
@@ -195,6 +213,7 @@ export async function loadAll() {
     }
 
     // 统一排序
+    await mergeEncryptedEntries(); // 解锁态下合并加密日记（ADR-0017；未解锁为空）
     sortEntries(state.data.originalDiaryEntries);
     // 确保每个条目都有 id
     assignIds(state.data.originalDiaryEntries);
@@ -374,12 +393,14 @@ async function refreshFile(filePath: string) {
     diaryDataMap!.set(dateStr, newEntries);
   }
 
-  const otherEntries = state.data.originalDiaryEntries.filter((e) => e.date !== dateStr);
+  const otherEntries = state.data.originalDiaryEntries.filter((e) => e.date !== dateStr && !e.encrypted);
   newEntries.forEach((entry) => {
     entry.filename = dateStr;
   });
   const visibleEntries = newEntries.filter((e) => !isEncryptedEntry(e));
   state.data.originalDiaryEntries = [...otherEntries, ...visibleEntries];
+
+  await mergeEncryptedEntries(); // 该日期若存在加密条目（不在 md 中），刷新后重新并入
 
   sortEntries(state.data.originalDiaryEntries);
   assignIds(state.data.originalDiaryEntries);
@@ -445,4 +466,25 @@ export async function onFileChange(file: any) {
 /** 供 ui 层调用：重新构建标签映射（设置变更后） */
 export function rebuildTagMaps() {
   buildTagMaps();
+}
+
+// ===== 加密日记可见性（ADR-0017，Q21-a 未解锁完全不可见） =====
+
+/** 解锁后重并加密条目并全量刷新（保险箱解锁回调 / 加密/降级动作后调用） */
+export async function reloadWithEncrypted() {
+  await mergeEncryptedEntries();
+  state.data.currentDisplayCount = 0;
+  emitFullRefresh();
+}
+
+/** 上锁后清除加密条目（保险箱上锁/关面板即上锁时调用），保持未解锁完全不可见 */
+export function clearEncryptedEntries() {
+  const hadEncrypted =
+    state.data.originalDiaryEntries.some((e) => e.encrypted) ||
+    state.data.currentFilteredEntries.some((e) => e.encrypted);
+  if (!hadEncrypted) return;
+  state.data.originalDiaryEntries = state.data.originalDiaryEntries.filter((e) => !e.encrypted);
+  state.data.currentFilteredEntries = state.data.currentFilteredEntries.filter((e) => !e.encrypted);
+  state.data.currentDisplayCount = 0;
+  emitFullRefresh();
 }

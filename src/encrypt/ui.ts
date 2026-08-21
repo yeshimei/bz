@@ -356,7 +356,10 @@ export class UIManager {
   async renderList() {
     if (!this.listContainer) return;
     this.listContainer.innerHTML = '';
-    const notes = [...this.dataManager.manifest.notes].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    // 保险箱面板只显示普通加密笔记，过滤日记加密条目（ADR-0017：日记加密由日记面板单独呈现）
+    const notes = [...this.dataManager.manifest.notes]
+      .filter((n) => n.kind !== 'diary-entry')
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
     if (notes.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'bz-encrypt-empty';

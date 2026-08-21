@@ -43,6 +43,8 @@ export interface SafeAttachment {
 /** 清单里的一条加密笔记 */
 export interface SafeNote {
   id: string;
+  /** 来源类型：缺省=普通加密笔记；'diary-entry'=加密日记条目（ADR-0017，保险箱面板过滤，日记面板单独读） */
+  kind?: 'diary-entry';
   /** 原笔记路径（如 我的/日记/2025-06-01.md） */
   path: string;
   /** 列表展示标题 */
@@ -82,6 +84,8 @@ export interface LockNoteInput {
   /** 原笔记路径 */
   path: string;
   title: string;
+  /** 来源类型：'diary-entry'=加密日记条目（ADR-0017） */
+  kind?: 'diary-entry';
   /** 笔记正文（明文） */
   content: string;
   /** 摘要（明文，可空） */
@@ -362,6 +366,7 @@ export class SafeManager {
     await this.writeMirror(bodyRef, bodyCipher);
     const note: SafeNote = {
       id: genNoteId(),
+      kind: input.kind || undefined,
       path: input.path,
       title: input.title,
       restored: false,
@@ -375,9 +380,10 @@ export class SafeManager {
     this.manifest.notes.push(note);
     await this.saveManifest();
 
-    // 全部成功后删除 vault 原文件（笔记 + 附件）
+    // 全部成功后删除 vault 附件原文件（附件随加密移动到保险箱）
     for (const a of input.attachments) await this.deleteVaultFile(a.path);
-    await this.deleteVaultFile(input.path);
+    // 普通加密笔记删除整篇原文件；加密日记条目不删整 md（条目块移除由日记域自行处理，ADR-0017 Q6-b）
+    if (input.kind !== 'diary-entry') await this.deleteVaultFile(input.path);
 
     return note;
   }
@@ -412,6 +418,10 @@ export class SafeManager {
     const plain = await this.decryptNoteBody(note);
     if (plain === null || plain === undefined) {
       conflicts.push(note.path);
+    } else if (note.kind === 'diary-entry') {
+      // 加密日记条目：块级 merge 回原日期文件（按 # emoji HH:mm 时间序重插），非整文件覆盖（ADR-0017 Q23-A）
+      const mergeOk = await this.mergeDiaryBlock(note.path, plain);
+      if (!mergeOk) conflicts.push(note.path);
     } else if (this.fileExists(note.path)) {
       // 目标路径已被用户占用（非本次还原写回）→ 冲突跳过
       conflicts.push(note.path);
@@ -447,6 +457,123 @@ export class SafeManager {
     }
     if (note.content) return CryptoService.decrypt(note.content, this.password);
     return null;
+  }
+
+  /**
+   * 加密日记条目还原：还原附件 → 把 finalBlock（由调用方准备，可为原文或改分类降级后重建）merge 回原日期 md → 取出即删。
+   */
+  async restoreDiaryEntry(noteId: string, finalBlock: string): Promise<boolean> {
+    if (!this.unlocked || !this.password) throw new Error('未解锁，无法还原加密日记');
+    const note = this.manifest.notes.find((n) => n.id === noteId);
+    if (!note || note.kind !== 'diary-entry') throw new Error('未找到该加密日记条目');
+    const conflicts: string[] = [];
+    for (const a of note.attachments) {
+      const ok = await this.restoreAttachment(a);
+      if (!ok) conflicts.push(a.path);
+    }
+    if (!finalBlock) {
+      conflicts.push(note.path);
+    } else {
+      const ok = await this.mergeDiaryBlock(note.path, finalBlock);
+      if (!ok) conflicts.push(note.path);
+    }
+    // 无冲突则彻底取出（删镜像 + 移除清单条目）
+    if (conflicts.length === 0) {
+      await this.deleteSafeFile(note.contentRef);
+      for (const a of note.attachments) {
+        await this.deleteSafeFile(a.blobRef);
+        if (a.hasPreview) await this.deleteSafeFile(a.previewRef);
+      }
+      const idx = this.manifest.notes.indexOf(note);
+      if (idx !== -1) this.manifest.notes.splice(idx, 1);
+    }
+    await this.saveManifest();
+    return conflicts.length === 0;
+  }
+
+  /** 解加密日记正文明文（供日记域准备还原块；退回 null 表示解密失败） */
+  async getDiaryEntryPlain(noteId: string): Promise<string | null> {
+    if (!this.unlocked || !this.password) throw new Error('未解锁');
+    const note = this.manifest.notes.find((n) => n.id === noteId);
+    if (!note || note.kind !== 'diary-entry') return null;
+    return this.decryptNoteBody(note);
+  }
+
+  /**
+   * 加密日记条目还原辅助：把 `# emoji HH:mm\n正文` 块 merge 回目标日期 md 文件。
+   * 解析块首行标题取时间 → 按时间序把块重插进该日期文件（文件已删则新建）；非整文件覆盖（ADR-0017 Q23-A）。
+   * @returns 成功写入返回 true；目标路径被占且非本系统（fingerprint 冲突）由附件层处理，正文 merge 属幂等写回。
+   */
+  private async mergeDiaryBlock(datePath: string, block: string): Promise<boolean> {
+    const app = getApp();
+    if (!datePath || !block) return false;
+    // 解析块标题 `# emoji HH:mm`
+    const md = block.replace(/\r\n/g, '\n');
+    const lines = md.split('\n');
+    const headMatch = lines[0] ? lines[0].match(/^#\s+\S+\s+(\d{2}:\d{2})$/) : null;
+    const time = headMatch ? headMatch[1] : null;
+    const timeValue = time ? (parseInt(time.slice(0, 2), 10) * 100 + parseInt(time.slice(3, 5), 10)) : null;
+    if (timeValue === null || Number.isNaN(timeValue)) return false;
+
+    await this.ensureVaultParentFolder(datePath);
+    const existing = app.vault.getAbstractFileByPath(datePath);
+    let existingText = '';
+    if (existing && (existing as any).isFolder !== true) {
+      existingText = await app.vault.read(existing as any);
+    }
+    const existingLines = existingText ? existingText.replace(/\r\n/g, '\n').split('\n') : [];
+
+    // 组装一条 block 文本（正文去尾空行）
+    const blockLines: string[] = [];
+    for (let i = 1; i < lines.length; i++) blockLines.push(lines[i]);
+    while (blockLines.length && blockLines[blockLines.length - 1].trim() === '') blockLines.pop();
+    const blockText = [`# ${lines[0].slice(2).trim()} ${time}`];
+    if (blockLines.length) blockText.push(...blockLines);
+    const blockJoined = blockText.join('\n');
+
+    // 按时间序 merge：找到第一个 timeValue >= 本条的标题行，在其前插入；否则追加到末尾
+    const headingRe = /^#\s+\S+\s+(\d{2}:\d{2})$/;
+    let insertIdx = existingLines.length;
+    for (let i = 0; i < existingLines.length; i++) {
+      const m = existingLines[i].match(headingRe);
+      if (m) {
+        const tv = parseInt(m[1].slice(0, 2), 10) * 100 + parseInt(m[1].slice(3, 5), 10);
+        if (tv >= timeValue) {
+          insertIdx = i;
+          break;
+        }
+      }
+    }
+
+    // 组装新文件内容
+    const out: string[] = [];
+    if (insertIdx > 0 && existingLines[insertIdx - 1].trim() !== '') {
+      // 与上一块之间补空行（若前一行非空）
+    }
+    for (let i = 0; i < existingLines.length; i++) out.push(existingLines[i]);
+    if (insertIdx >= 0) out.splice(insertIdx, 0, blockJoined);
+    else out.push(blockJoined);
+
+    // 规整：块间空行分隔，首尾不残留多余空行
+    const clean: string[] = [];
+    for (const ln of out) {
+      if (ln.trim() === '') {
+        if (clean.length && clean[clean.length - 1] !== '') clean.push('');
+      } else {
+        clean.push(ln);
+      }
+    }
+    while (clean.length && clean[0] === '') clean.shift();
+    while (clean.length && clean[clean.length - 1] === '') clean.pop();
+    const finalText = clean.join('\n');
+
+    if (existing && (existing as any).isFolder !== true) {
+      await app.vault.modify(existing as any, finalText);
+    } else {
+      const file = await app.vault.create(datePath, finalText);
+      (app.metadataCache as any)?.trigger?.('changed', file);
+    }
+    return true;
   }
 
   /** 还原单个附件：解原始层 → 写回原路径（二进制）；指纹不符或已存在非本系统文件视为冲突跳过 */

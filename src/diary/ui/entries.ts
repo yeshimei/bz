@@ -7,7 +7,8 @@ import { notice } from '../../core/notice';
 import { confirm } from '../../core/confirm';
 import { getApp } from '../app';
 import { BATCH_SIZE, DIARY_DIRECTORY, LONG_PRESS_DURATION, MOVIE_DIRECTORY, getSubTagsOfPrimary, getTagEmoji } from '../config';
-import { deleteEntry, getIsProcessingRemainingFiles } from '../store';
+import { deleteEntry, getIsProcessingRemainingFiles, reloadWithEncrypted } from '../store';
+import { deleteEncryptedEntry } from '../encrypt';
 import { state } from '../state';
 import type { DateFilter, DiaryEntry } from '../types';
 import { getContentRenderModeSetting, getEnableLongPressSetting } from './ui-settings';
@@ -227,6 +228,14 @@ export function createEntryCard(entry: DiaryEntry) {
 
   timeInfo.appendChild(emojiSpan);
   timeInfo.appendChild(timeSpan);
+  // 加密日记角标（ADR-0017：🔐，只读、不跳 md）
+  if (entry.encrypted) {
+    const badge = document.createElement('span');
+    badge.className = 'bz-encrypt-badge';
+    badge.textContent = '🔐';
+    badge.title = '加密日记';
+    timeInfo.appendChild(badge);
+  }
   header.appendChild(timeInfo);
 
   const content = document.createElement('div');
@@ -244,7 +253,12 @@ export function createEntryCard(entry: DiaryEntry) {
     if (timeDiff < 300 && timeDiff > 0) {
       e.stopPropagation();
       e.preventDefault();
-      await jumpToEntry(entry);
+      if (entry.encrypted) {
+        // 加密条目不跳 md（无锚点），双击打开只读预览（ADR-0017 Q21-a 未解锁完全不可见）
+        openEncryptedPreview(entry);
+      } else {
+        await jumpToEntry(entry);
+      }
     }
     lastClickTime = currentTime;
   });
@@ -319,8 +333,14 @@ export function addLongPress(element: HTMLElement, type: 'content' | 'emoji', en
   const duration = LONG_PRESS_DURATION;
 
   const longPressHandler = () => {
+    // 加密条目不复制双链（无 md 锚点），正文长按同样改为打开类型选择器（ADR-0017）
     if (type === 'content') {
-      copyLink(entryId);
+      const target = state.data.originalDiaryEntries.find((en) => en.id === entryId);
+      if (target?.encrypted) {
+        showTagPicker(entryId);
+      } else {
+        copyLink(entryId);
+      }
     } else if (type === 'emoji') {
       showTagPicker(entryId);
     }
@@ -384,6 +404,71 @@ export async function copyLink(entryId: string) {
   notice(`已复制双链引用：${link}`, 'success');
 }
 
+// ===== 加密日记只读预览（ADR-0017 Q17-b：点击卡片打开只读预览，不原地编辑） =====
+
+/**
+ * 打开加密日记只读预览弹窗（复用保险箱预览窗样式类，日记域独立 DOM id）。
+ * Markdown 渲染正文，sourcePath 指向日记目录；仅提供 ✕ 关闭，无编辑/改分类入口
+ * （改分类在标签选择器里完成）。
+ */
+export function openEncryptedPreview(entry: DiaryEntry) {
+  const maskId = 'bz-diary-encrypt-preview-mask';
+  const popupId = 'bz-diary-encrypt-preview-popup';
+  let mask = document.getElementById(maskId) as HTMLElement | null;
+  let popup = document.getElementById(popupId) as HTMLElement | null;
+  if (!mask || !popup) {
+    mask = document.createElement('div');
+    mask.id = maskId;
+    mask.className = 'bz-overlay-mask';
+    mask.style.zIndex = '10060';
+    mask.style.display = 'none';
+    mask.onclick = () => {
+      if (mask) mask.style.display = 'none';
+    };
+    popup = document.createElement('div');
+    popup.id = popupId;
+    popup.className = 'bz-overlay-popup bz-encrypt-preview-popup';
+    popup.style.zIndex = '10061';
+    popup.style.width = '90%';
+    popup.style.maxWidth = '640px';
+    popup.style.maxHeight = '86vh';
+    popup.style.display = 'none';
+    document.body.appendChild(mask);
+    document.body.appendChild(popup);
+  }
+  popup.innerHTML = '';
+
+  const header = document.createElement('div');
+  header.className = 'bz-encrypt-preview-head';
+  const title = document.createElement('h4');
+  title.textContent = `${entry.date} · ${entry.time} 日记`;
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕';
+  closeBtn.className = 'bz-encrypt-btn';
+  closeBtn.onclick = () => {
+    if (mask) mask.style.display = 'none';
+  };
+  header.appendChild(title);
+  header.appendChild(closeBtn);
+  popup.appendChild(header);
+
+  const body = document.createElement('div');
+  body.className = 'bz-encrypt-preview-body';
+  const mdEl = document.createElement('div');
+  mdEl.className = 'bz-encrypt-preview-md';
+  body.appendChild(mdEl);
+  popup.appendChild(body);
+
+  // 只读 Markdown 渲染（sourcePath 指向日记目录，供内部链接正确解析）
+  const sourcePath = `${DIARY_DIRECTORY}/${entry.date}.md`;
+  void MarkdownRenderer.render(getApp(), entry.content || '', mdEl, sourcePath, new Component()).catch(() => {
+    mdEl.textContent = entry.content;
+  });
+
+  mask.style.display = 'block';
+  popup.style.display = 'flex';
+}
+
 // ===== 取消编辑（原 2218-2240） =====
 
 export function cancelEdit(entryId: string, originalHTML: string | null) {
@@ -419,17 +504,30 @@ export function cancelEdit(entryId: string, originalHTML: string | null) {
 // ===== 删除确认（原 2509-2523） =====
 
 export function showConfirm(entryId: string) {
+  const entry = state.data.originalDiaryEntries.find((e) => e.id === entryId);
+  const isEncrypted = !!entry?.encrypted;
+  const hidePickers = () => {
+    const tagSelectorMask = document.getElementById('diary-tag-selector-mask');
+    const tagSelectorPopup = document.getElementById('diary-tag-selector-popup');
+    if (tagSelectorMask) tagSelectorMask.style.display = 'none';
+    if (tagSelectorPopup) tagSelectorPopup.style.display = 'none';
+  };
   confirm({
     title: '确认删除',
-    message: '确定要删除这篇日记吗？\n\n此操作不可撤销，日记将从笔记中永久删除。',
+    message: isEncrypted
+      ? '确定删除这篇加密日记吗？\n\n此操作不可撤销，密文将从保险箱永久销毁。'
+      : '确定要删除这篇日记吗？\n\n此操作不可撤销，日记将从笔记中永久删除。',
     confirmText: '删除日记',
     onConfirm: async () => {
-      await deleteEntry(entryId);
+      if (isEncrypted && entry && entry.noteId) {
+        // 加密条目：永久删除保险箱密文（ADR-0017）
+        await deleteEncryptedEntry(entry.noteId);
+        await reloadWithEncrypted();
+      } else {
+        await deleteEntry(entryId);
+      }
       notice('日记条目已删除', 'success');
-      const tagSelectorMask = document.getElementById('diary-tag-selector-mask');
-      const tagSelectorPopup = document.getElementById('diary-tag-selector-popup');
-      if (tagSelectorMask) tagSelectorMask.style.display = 'none';
-      if (tagSelectorPopup) tagSelectorPopup.style.display = 'none';
+      hidePickers();
     },
   });
 }

@@ -5,6 +5,9 @@
 import { getPrimaryTagsConfig, getParentPrimaryTag, getSubTagsOfPrimary, getTagEmoji, isSubTag } from '../config';
 import { getCurrentActiveParentForSub, setCurrentActiveParentForSub, state } from '../state';
 import { getShowTagCountSetting, getTagShowEmojiSetting, getTagSortModeSetting } from './ui-settings';
+import { ENCRYPT_TAG, isUnlocked } from '../encrypt';
+import { ensureSafeUnlocked } from '../../encrypt';
+import { reloadWithEncrypted } from '../store';
 
 /** 更新标题上的日期后缀（原 1934-1952） */
 export function updateTitleSuffix() {
@@ -184,21 +187,52 @@ function getTagCountForPrimary(primaryTag: string) {
   return count;
 }
 
+// 标签选中统一逻辑（普通点击与「加密」解锁后复用，原 214-231）
+function applyTagSelection(button: HTMLElement, tag: string) {
+  if (!state.data.selectedTags.has(tag)) {
+    state.data.selectedTags.clear();
+    state.data.selectedTags.add(tag);
+    document.querySelectorAll('.diary-tag-btn').forEach((btn) => {
+      (btn as HTMLElement).style.background = 'var(--background-secondary)';
+      (btn as HTMLElement).style.color = 'var(--text-normal)';
+    });
+    button.style.background = 'var(--interactive-accent)';
+    button.style.color = 'var(--background-primary)';
+  } else {
+    state.data.selectedTags.delete(tag);
+    button.style.background = 'var(--background-secondary)';
+    button.style.color = 'var(--text-normal)';
+  }
+  applyFilterFromShared({ skipTagCountUpdate: true });
+}
+
 // 创建单个标签按钮
 export function createTag(tag: string, emoji: string, count: number | null) {
   const showCount = getShowTagCountSetting(); // 默认 true
+  // 加密分类在上锁态显示为锁定态（🔒、无计数），解锁态为普通标签（ADR-0017）
+  // 设置未注入时视为上锁态（防御：既有测试/部分环境无设置提供者）
+  let encryptLocked = false;
+  if (tag === ENCRYPT_TAG) {
+    try {
+      encryptLocked = !isUnlocked();
+    } catch {
+      encryptLocked = true;
+    }
+  }
 
   const button = document.createElement('button');
   button.className = 'diary-tag-btn';
   button.dataset.tag = tag;
 
   let countHtml = '';
-  if (showCount && count !== null && count !== undefined) {
+  if (showCount && count !== null && count !== undefined && !encryptLocked) {
     countHtml = `<span style="margin-left:4px; font-size:10px; opacity:0.8;">(${count})</span>`;
   }
   // 标签按钮显示 emoji 开关（设置项 diaryTagShowEmoji，关=纯文字）
   const showEmoji = getTagShowEmojiSetting();
-  button.innerHTML = `${showEmoji ? emoji + ' ' : ''}${tag} ${countHtml}`;
+  const displayEmoji = encryptLocked ? '🔒' : emoji;
+  button.innerHTML = `${showEmoji ? displayEmoji + ' ' : ''}${tag} ${countHtml}`;
+  if (encryptLocked) button.classList.add('bz-encrypt-locked');
   button.style.cssText =
     'border-radius:10px;background:var(--background-secondary);cursor:pointer;font-size:10px;color:var(--text-normal);transition:all 0.2s;display:flex;align-items:center;flex-shrink:0;box-shadow:none;';
 
@@ -213,21 +247,26 @@ export function createTag(tag: string, emoji: string, count: number | null) {
 
   button.onclick = (e) => {
     e.stopPropagation();
-    if (!state.data.selectedTags.has(tag)) {
-      state.data.selectedTags.clear();
-      state.data.selectedTags.add(tag);
-      document.querySelectorAll('.diary-tag-btn').forEach((btn) => {
-        (btn as HTMLElement).style.background = 'var(--background-secondary)';
-        (btn as HTMLElement).style.color = 'var(--text-normal)';
-      });
-      button.style.background = 'var(--interactive-accent)';
-      button.style.color = 'var(--background-primary)';
-    } else {
-      state.data.selectedTags.delete(tag);
-      button.style.background = 'var(--background-secondary)';
-      button.style.color = 'var(--text-normal)';
+    if (tag === ENCRYPT_TAG) {
+      // 上锁态点击「加密」：先弹主密码，解锁成功后再选中该标签；
+      // 保险箱弹窗解锁不触发 onUnlockChange，需在此重并加密条目并重建标签栏
+      let locked = false;
+      try {
+        locked = !isUnlocked();
+      } catch {
+        locked = false;
+      }
+      if (locked) {
+        void ensureSafeUnlocked().then((ok) => {
+          if (ok) {
+            applyTagSelection(button, tag);
+            void reloadWithEncrypted();
+          }
+        });
+        return;
+      }
     }
-    applyFilterFromShared({ skipTagCountUpdate: true });
+    applyTagSelection(button, tag);
   };
 
   return button;
