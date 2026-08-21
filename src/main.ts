@@ -34,7 +34,7 @@ import { openBiliDownloader } from './bili-downloader';
 // 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 主页磁贴播种）
 import { openAttachMove, ensureAttachSeed, ATTACH_COMMAND_ID } from './attach';
 // 保险箱（encrypt 域：移出式清单容器加密，正文+图片/视频附件；原名「加密保险箱」，ticket 68 更名仅文案）
-import { openEncrypt, encryptCurrentNote, unloadEncrypt } from './encrypt';
+import { openEncrypt, encryptCurrentNote, unloadEncrypt, mountEncryptStatusBar, unmountEncryptStatusBar } from './encrypt';
 import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setLauncherGestureSetter, LauncherModal } from './launcher';
 import { registerGestureListeners } from './launcher/gestures';
 import { ensureAutoSummary } from './auto-summary';
@@ -183,6 +183,9 @@ export default class BzPlugin extends Plugin {
     // 番茄钟状态栏（ticket 29：常驻倒计时，点击打开弹窗）
     mountPomodoroStatusBar(this.addStatusBarItem(), this.app);
 
+    // 保险箱状态栏（补丁2：锁状态提示，点击打开面板；解锁态由 encrypt Controller 接管刷新）
+    mountEncryptStatusBar(this.addStatusBarItem());
+
     // 日记本面板命令（统一 bz- 前缀；bz-diary-write 由 quote.ts init 内注册）
     (this.app as any).commands.addCommand({ id: 'bz-diary-open', name: '日记本', icon: 'notebook', callback: () => showDiaryPanel(this) });
     this.registeredCommandIds.push('bz-diary-open');
@@ -217,6 +220,7 @@ export default class BzPlugin extends Plugin {
     }
     escManager.destroy();
     unmountPomodoroStatusBar();
+    unmountEncryptStatusBar();
     unloadPomodoro();
     unloadBz();
     unloadAIAgent();

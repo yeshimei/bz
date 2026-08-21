@@ -15,7 +15,7 @@ import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { getSettings, tryGetSettings, saveSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
 import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
-import { SafeManager, base64ToBytes, bytesToBase64, type SafeNote, type SafeAttachment } from './data';
+import { SafeManager, base64ToBytes, bytesToBase64, type SafeNote, type SafeAttachment, type HealthReport, type HealthItem } from './data';
 import { compressImage, videoFrame } from './preview';
 
 export interface EncryptUIConfig {
@@ -231,14 +231,15 @@ export class UIManager {
   config: EncryptUIConfig;
   /** 顶部「加密当前笔记」按钮回调（由 Controller 注入，调 lockCurrentNote） */
   onLockCurrentNote: (() => void) | null = null;
-  /** 顶部「清理未引用的密文」按钮回调（由 Controller 注入，调 cleanupOrphans；Q5-A 手动触发） */
-  onCleanupOrphans: (() => void) | null = null;
   // DOM
   mask: HTMLDivElement | null = null;
   popup: HTMLDivElement | null = null;
   listContainer: HTMLDivElement | null = null;
   previewMask: HTMLDivElement | null = null;
   previewPopup: HTMLDivElement | null = null;
+  /** 体检弹窗（右上角 🩺 替换原清理扫把：先报告后勾选清理，用户拍板） */
+  healthMask: HTMLDivElement | null = null;
+  healthPopup: HTMLDivElement | null = null;
   /** 缩略图按需加载产生的 Blob URL（预览窗关闭时统一 revoke，防泄漏） */
   private _previewUrls: string[] = [];
   _initialized = false;
@@ -301,10 +302,10 @@ export class UIManager {
     btns.className = 'bz-encrypt-head-btns';
     const lockBtn = createIconBtn('🔒', '加密当前笔记', () => this.onLockCurrentNote?.());
     const settingsBtn = createIconBtn('⚙️', '保险箱设置', () => this.openSettings());
-    const cleanupBtn = createIconBtn('🧹', '清理未引用的密文', () => this.onCleanupOrphans?.());
+    const healthBtn = createIconBtn('🩺', '保险箱体检与清理', () => void this.openHealthDialog());
     const closeBtn = createIconBtn('❌', '关闭', () => this.hide());
     if (this.onLockCurrentNote) btns.appendChild(lockBtn);
-    btns.appendChild(cleanupBtn);
+    btns.appendChild(healthBtn);
     btns.appendChild(settingsBtn);
     btns.appendChild(closeBtn);
     header.appendChild(title);
@@ -327,6 +328,221 @@ export class UIManager {
     if (this.config.securityMode) {
       this.dataManager.lock();
       notice('安全模式：已自动上锁');
+    }
+  }
+
+  // ---------- 体检弹窗 ----------
+  /**
+   * 体检（用户拍板：右上角 🩺 按钮替换原清理扫把，先报告后勾选清理）。
+   * 体检需解锁（对账依赖清单明文，完整性检测需解密）——未解锁先弹主密码，取消则不进入。
+   * 可清理类（失效条目/孤儿密文）默认勾选、可取消；损坏/缺失类只展示不清理（删了就是真丢数据）。
+   * 清理后自动重新体检，报告收敛。
+   */
+  async openHealthDialog() {
+    if (!this.dataManager.unlocked) {
+      const ok = await this.showPasswordDialog();
+      if (!ok) return;
+    }
+    if (!this.healthMask) this.ensureHealthElements();
+    this.healthMask!.style.display = 'flex';
+    this.healthPopup!.style.display = 'flex';
+    void this.runHealthScan();
+  }
+
+  private ensureHealthElements() {
+    const mask = document.createElement('div');
+    mask.id = 'bz-encrypt-health-mask';
+    mask.className = 'bz-encrypt-health-mask';
+    mask.style.zIndex = '10080';
+    mask.style.display = 'none';
+    const popup = document.createElement('div');
+    popup.id = 'bz-encrypt-health-popup';
+    popup.className = 'bz-encrypt-health-box';
+    popup.style.zIndex = '10081';
+    popup.style.display = 'none';
+    const head = document.createElement('div');
+    head.className = 'bz-encrypt-health-head';
+    const title = document.createElement('h4');
+    title.textContent = '保险箱体检';
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕';
+    closeBtn.className = 'bz-encrypt-btn';
+    closeBtn.onclick = () => this.hideHealthDialog();
+    head.appendChild(title);
+    head.appendChild(closeBtn);
+    popup.appendChild(head);
+    const body = document.createElement('div');
+    body.id = 'bz-encrypt-health-body';
+    body.className = 'bz-encrypt-health-body';
+    popup.appendChild(body);
+    const foot = document.createElement('div');
+    foot.className = 'bz-encrypt-health-foot';
+    const cleanBtn = document.createElement('button');
+    cleanBtn.id = 'bz-encrypt-health-clean';
+    cleanBtn.className = 'bz-encrypt-dialog-btn bz-encrypt-dialog-btn--primary';
+    cleanBtn.textContent = '清理勾选项 (0)';
+    cleanBtn.onclick = () => void this.confirmHealthCleanup();
+    const rescanBtn = document.createElement('button');
+    rescanBtn.className = 'bz-encrypt-dialog-btn';
+    rescanBtn.textContent = '重新体检';
+    rescanBtn.onclick = () => void this.runHealthScan();
+    const closeFootBtn = document.createElement('button');
+    closeFootBtn.className = 'bz-encrypt-dialog-btn';
+    closeFootBtn.textContent = '关闭';
+    closeFootBtn.onclick = () => this.hideHealthDialog();
+    foot.appendChild(cleanBtn);
+    foot.appendChild(rescanBtn);
+    foot.appendChild(closeFootBtn);
+    popup.appendChild(foot);
+    mask.appendChild(popup);
+    document.body.appendChild(mask);
+    document.body.appendChild(popup);
+    // 点遮罩（非内容区）关闭 = 取消（同解锁弹窗语义）
+    mask.onclick = (e) => {
+      if (e.target === mask) this.hideHealthDialog();
+    };
+    // esc 独立层级（后注册优先）：体检窗开着时 ESC 关体检而不是关主面板
+    escManager.register('encrypt-health', {
+      isVisible: () => !!(this.healthMask && this.healthMask.style.display === 'flex'),
+      close: () => this.hideHealthDialog(),
+    });
+    this.healthMask = mask;
+    this.healthPopup = popup;
+  }
+
+  private hideHealthDialog() {
+    if (this.healthMask) this.healthMask.style.display = 'none';
+    if (this.healthPopup) this.healthPopup.style.display = 'none';
+  }
+
+  private async runHealthScan() {
+    if (!this.healthPopup) return;
+    const body = this.healthPopup.querySelector('#bz-encrypt-health-body') as HTMLElement | null;
+    if (!body) return;
+    body.innerHTML = '';
+    const loading = document.createElement('div');
+    loading.className = 'bz-encrypt-preview-loading';
+    loading.textContent = '体检中…';
+    body.appendChild(loading);
+    try {
+      const report = await this.dataManager.scanHealth();
+      this.renderHealthReport(report, body);
+    } catch (e: any) {
+      body.innerHTML = '';
+      const err = document.createElement('div');
+      err.textContent = '体检失败：' + e.message;
+      body.appendChild(err);
+    }
+  }
+
+  /** 渲染体检报告（UI 保证解锁后调用，integrityChecked 恒 true）：可清理类默认勾选；损坏/缺失只展示 */
+  private renderHealthReport(report: HealthReport, body: HTMLElement) {
+    body.innerHTML = '';
+    const cleanable = report.items.filter((i) => i.cat === 'dead-entry' || i.cat === 'orphan-file');
+    const bad = report.items.filter((i) => i.cat === 'corrupted-body' || i.cat === 'corrupted-attachment');
+    const missing = report.items.filter((i) => i.cat === 'missing-attachment');
+    const summary = document.createElement('div');
+    summary.className = 'bz-encrypt-health-summary';
+    summary.textContent = '体检完成：' + report.items.length + ' 个问题';
+    body.appendChild(summary);
+    this.appendCleanableSection(body, cleanable);
+    if (bad.length) {
+      const sec = document.createElement('div');
+      sec.className = 'bz-encrypt-health-section bz-encrypt-health-section--bad';
+      const t = document.createElement('div');
+      t.className = 'bz-encrypt-health-section-title';
+      t.textContent = '损坏镜像（' + bad.length + '）——不可清理，请从备份恢复后重试还原';
+      sec.appendChild(t);
+      for (const item of bad) {
+        const row = document.createElement('div');
+        row.className = 'bz-encrypt-health-item bz-encrypt-health-item--bad';
+        row.textContent = item.label;
+        row.title = '损坏的密文镜像，删除即丢失数据';
+        sec.appendChild(row);
+      }
+      body.appendChild(sec);
+    }
+    if (missing.length) {
+      const sec = document.createElement('div');
+      sec.className = 'bz-encrypt-health-section';
+      const t = document.createElement('div');
+      t.className = 'bz-encrypt-health-section-title';
+      t.textContent = '附件镜像缺失（' + missing.length + '）——还原时该附件将不可用';
+      sec.appendChild(t);
+      for (const item of missing) {
+        const row = document.createElement('div');
+        row.className = 'bz-encrypt-health-item bz-encrypt-health-item--warn';
+        row.textContent = item.label;
+        sec.appendChild(row);
+      }
+      body.appendChild(sec);
+    }
+    if (!bad.length && !missing.length) {
+      const ok = document.createElement('div');
+      ok.className = 'bz-encrypt-health-hint';
+      ok.textContent = '全部镜像完整（解密+指纹校验通过）';
+      body.appendChild(ok);
+    }
+    this.updateHealthCleanCount();
+  }
+
+  /** 可清理区块：失效条目 + 孤儿密文（checkbox 默认勾选，可取消） */
+  private appendCleanableSection(body: HTMLElement, items: HealthItem[]) {
+    const sec = document.createElement('div');
+    sec.className = 'bz-encrypt-health-section bz-encrypt-health-section--clean';
+    const t = document.createElement('div');
+    t.className = 'bz-encrypt-health-section-title';
+    const dead = items.filter((i) => i.cat === 'dead-entry').length;
+    const orphan = items.filter((i) => i.cat === 'orphan-file').length;
+    t.textContent = items.length
+      ? '可清理（' + items.length + '）：' + dead + ' 个失效条目、' + orphan + ' 个孤儿密文'
+      : '可清理：无';
+    sec.appendChild(t);
+    for (const item of items) {
+      const row = document.createElement('label');
+      row.className = 'bz-encrypt-health-item';
+      const box = document.createElement('input');
+      box.type = 'checkbox';
+      box.className = 'bz-encrypt-health-check';
+      box.value = item.key;
+      box.checked = true; // 可清理项默认全选（对齐原扫把全清语义，可取消）
+      box.addEventListener('change', () => this.updateHealthCleanCount());
+      row.appendChild(box);
+      row.appendChild(document.createTextNode(item.label));
+      sec.appendChild(row);
+    }
+    body.appendChild(sec);
+  }
+
+  private updateHealthCleanCount() {
+    const btn = document.getElementById('bz-encrypt-health-clean') as HTMLButtonElement | null;
+    if (!btn) return;
+    btn.textContent = '清理勾选项 (' + this.collectCheckedKeys().length + ')';
+  }
+
+  private collectCheckedKeys(): string[] {
+    const popup = this.healthPopup;
+    if (!popup) return [];
+    return [...popup.querySelectorAll<HTMLInputElement>('input.bz-encrypt-health-check:checked')].map((i) => i.value);
+  }
+
+  /** 清理勾选项：只执行可清理类（resolveHealth 对损坏/缺失类防御性忽略），完成后自动重新体检 */
+  private async confirmHealthCleanup() {
+    const keys = this.collectCheckedKeys();
+    if (!keys.length) {
+      notice('未勾选任何可清理项');
+      return;
+    }
+    try {
+      const { notes, files } = await this.dataManager.resolveHealth(keys);
+      const parts: string[] = [];
+      if (notes > 0) parts.push(notes + ' 个失效条目');
+      if (files > 0) parts.push(files + ' 个孤儿密文');
+      notice(parts.length ? '已清理：' + parts.join('、') : '已清理所选项', 'success');
+      void this.renderList();
+      void this.runHealthScan(); // 清理后重新体检，报告收敛
+    } catch (e: any) {
+      notice('清理失败：' + e.message, 'error');
     }
   }
 
@@ -361,17 +577,27 @@ export class UIManager {
       warning.className = 'bz-encrypt-dialog-warning';
       warning.style.display = 'none'; // 功能性显隐
       warning.innerHTML = '<strong>⚠️ 重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，加密笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。';
+      // 硬警告确认：首设必须勾选「已了解风险」才能完成设置（用户拍板：遗忘=数据永久丢失，须显式确认）
+      const ack = document.createElement('label');
+      ack.className = 'bz-encrypt-dialog-ack';
+      ack.style.display = 'none'; // 功能性显隐（仅首设显示）
+      const ackBox = document.createElement('input');
+      ackBox.type = 'checkbox';
+      ack.appendChild(ackBox);
+      ack.appendChild(document.createTextNode('我已了解：主密码无法找回，遗忘将导致密文永久无法恢复'));
       if (exists) {
         title.textContent = '输入主密码';
         message.textContent = '请输入您设置的主密码以解锁保险箱';
         input2.style.display = 'none';
         warning.style.display = 'none';
+        ack.style.display = 'none';
       } else {
         title.textContent = '设置主密码';
         message.textContent = '请设置一个主密码（用于加密所有数据）';
         input2.style.display = 'block';
         input2.placeholder = '再次输入';
         warning.style.display = 'block';
+        ack.style.display = 'block';
       }
       const btnContainer = document.createElement('div');
       btnContainer.className = 'bz-encrypt-dialog-btns';
@@ -394,6 +620,7 @@ export class UIManager {
             return;
           } else {
             if (pw !== input2.value) { notice('两次密码不一致'); return; }
+            if (!ackBox.checked) { notice('请先勾选风险确认'); return; }
             try {
               const ok = await this.dataManager.unlock(pw);
               if (ok) {
@@ -457,6 +684,7 @@ export class UIManager {
       btnContainer.appendChild(confirmBtn);
       box.appendChild(title);
       box.appendChild(warning);
+      box.appendChild(ack);
       box.appendChild(message);
       box.appendChild(input);
       box.appendChild(input2);
@@ -922,6 +1150,8 @@ export class EncryptAppController {
   _initialized = false;
   /** 加密进行中标志（重入保护：处理中拒绝再次触发 lockCurrentNote） */
   private _locking = false;
+  /** 状态栏元素（main.ts mount 注入；解锁态变化时刷新，补丁：状态栏锁状态提示） */
+  private statusBarEl: HTMLElement | null = null;
 
   constructor(config: EncryptUIConfig) {
     this.config = config;
@@ -930,24 +1160,18 @@ export class EncryptAppController {
     this.uiManager.onLockCurrentNote = () => {
       void this.lockCurrentNote();
     };
-    this.uiManager.onCleanupOrphans = () => {
-      void this.cleanupOrphans();
-    };
   }
 
-  /** 手动清理无引用密文与失效条目（Q5-A：不自动触发，点按钮才跑）+ 过期暂存残留 */
-  async cleanupOrphans() {
-    try {
-      const { files, notes } = await this.dataManager.cleanupOrphans();
-      const parts: string[] = [];
-      if (notes > 0) parts.push(`${notes} 个失效条目`);
-      if (files > 0) parts.push(`${files} 个无引用密文`);
-      if (parts.length) notice(`已清理：${parts.join('、')}`, 'success');
-      else notice('没有需要清理的密文', 'success');
-      void this.uiManager.renderList();
-    } catch (e: any) {
-      notice('清理失败：' + e.message, 'error');
-    }
+  /**
+   * 状态栏挂载（main.ts onload 调用）：初始为锁定态；订阅解锁态变化刷新，
+   * 点击打开保险箱面板（openEncrypt 有解锁引导）。
+   */
+  attachStatusBar(el: HTMLElement) {
+    this.statusBarEl = el;
+    this.dataManager.onUnlockChange = (unlocked) => {
+      if (this.statusBarEl) this.statusBarEl.textContent = unlocked ? '🔓 保险箱' : '🔒 保险箱';
+    };
+    this.dataManager.onUnlockChange(this.dataManager.unlocked);
   }
 
   async init() {
@@ -1060,7 +1284,7 @@ export class EncryptAppController {
 
   /** 卸载清理 */
   cleanup() {
-    const ids = ['bz-encrypt-mask', 'bz-encrypt-popup', 'bz-encrypt-preview-mask', 'bz-encrypt-preview-popup'];
+    const ids = ['bz-encrypt-mask', 'bz-encrypt-popup', 'bz-encrypt-preview-mask', 'bz-encrypt-preview-popup', 'bz-encrypt-health-mask', 'bz-encrypt-health-popup'];
     for (const id of ids) {
       const el = document.getElementById(id);
       if (el) el.remove();
@@ -1069,7 +1293,10 @@ export class EncryptAppController {
     this.uiManager.popup = null;
     this.uiManager.previewMask = null;
     this.uiManager.previewPopup = null;
+    this.uiManager.healthMask = null;
+    this.uiManager.healthPopup = null;
     this.uiManager._initialized = false;
+    this.dataManager.onUnlockChange = null;
     this.dataManager.lock();
   }
 }
