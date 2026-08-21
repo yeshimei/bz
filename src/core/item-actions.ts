@@ -50,6 +50,8 @@ export interface ItemActionsOptions {
   sheetTitle?: string;
   /** 抽屉顶部副标题（未传 sheetHead 时使用） */
   sheetSub?: string;
+  /** 长按触发过滤器：返回 false 的按压不弹浮层（如正文文字区——让位系统长按选字/复制） */
+  longPressFilter?: (e: any) => boolean;
 }
 
 /** 浮层与视口边距（px，桌面跟手菜单用） */
@@ -383,14 +385,19 @@ export function attachItemActions(card: HTMLElement, actions: ItemAction[], opts
   }
   card.appendChild(bar);
 
-  // 长按 → 移动端底部抽屉 / 桌面跟手菜单
-  longPress(card, (ev: any) => {
-    const isMouse = ev.type !== 'touchstart';
-    if (isMobileEnv()) {
-      openItemSheet(actions, opts, isMouse);
-      return;
-    }
-    const pt = (ev.touches && ev.touches[0]) || ev;
-    openItemMenu(pt.clientX, pt.clientY, actions, isMouse);
-  });
+  // 长按 → 移动端底部抽屉 / 桌面跟手菜单；longPressFilter 排除区域（如正文文字）让位系统长按选字复制
+  longPress(
+    card,
+    (ev: any) => {
+      const isMouse = ev.type !== 'touchstart';
+      if (isMobileEnv()) {
+        openItemSheet(actions, opts, isMouse);
+        return;
+      }
+      const pt = (ev.touches && ev.touches[0]) || ev;
+      openItemMenu(pt.clientX, pt.clientY, actions, isMouse);
+    },
+    undefined,
+    opts?.longPressFilter
+  );
 }

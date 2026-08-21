@@ -58,6 +58,25 @@ describe('attachItemActions：桌面操作条', () => {
     expect(card.querySelector('.bz-item-actions')).toBeNull();
   });
 
+  it('longPressFilter：排除区域长按不弹浮层（让位系统选字/复制），其他区域正常', () => {
+    vi.useFakeTimers();
+    const card = makeCard();
+    attachItemActions(card, ACTIONS, {
+      longPressFilter: (e) => !(e.target as HTMLElement).closest('.bz-todo-link'),
+    });
+    // 长按排除区（链接）→ 不弹
+    const link = card.querySelector('.bz-todo-link') as HTMLElement;
+    link.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 60, clientY: 60 }));
+    vi.advanceTimersByTime(550);
+    expect(document.querySelector('.bz-item-menu')).toBeNull();
+    expect((window as any).__linkClicked).toBe(false);
+    // 长按卡片其他区域 → 弹菜单
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 60, clientY: 60 }));
+    vi.advanceTimersByTime(550);
+    expect(document.querySelector('.bz-item-menu')).not.toBeNull();
+    vi.useRealTimers();
+  });
+
   it('点操作条按钮直接执行回调（桌面主路径）', () => {
     const card = makeCard();
     attachItemActions(card, ACTIONS);
