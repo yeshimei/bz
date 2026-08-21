@@ -76,8 +76,8 @@ describe('聚合讯阅读流', () => {
     const body = document.querySelector('.news-card-body')!.innerHTML;
     expect(body).toContain('<h1>标题一</h1>');
     expect(body).toContain('<b>加粗</b>');
-    // 底部栏计数 0/2
-    expect(document.querySelector('.news-counter')!.textContent).toContain('0 / 2');
+    // 底部栏计数从 1 起算（正在读的这篇算已读）
+    expect(document.querySelector('.news-counter')!.textContent).toContain('1 / 2');
   });
 
   it('markAsRead("skipped")：标已读 + 统计 + 进入下一篇 + news.json 落盘 read=true', async () => {
@@ -86,7 +86,7 @@ describe('聚合讯阅读流', () => {
     skipArticle();
 
     expect(document.querySelector('.news-card-title')!.textContent).toBe('第二篇新闻');
-    expect(document.querySelector('.news-counter')!.textContent).toContain('1 / 2');
+    expect(document.querySelector('.news-counter')!.textContent).toContain('2 / 2');
     // news.json 写回 read 标记
     const saved = JSON.parse((getVault().files as Map<string, string>).get('CONFIG/STORAGE/news.json')!);
     expect(saved[0].read).toBe(true);
@@ -97,10 +97,11 @@ describe('聚合讯阅读流', () => {
     await loadStats();
     await loadArticles();
     render();
-    // 剩最后一篇时「下一篇」按钮变为完成说明
+    // 剩最后一篇时「下一篇」按钮变为完成说明（计数已是最终值 2 / 2）
     skipArticle();
-    expect(document.querySelector('[data-action="next"]')!.textContent).toContain('最后一篇');
-    expect(document.querySelector('.news-counter')!.textContent).toContain('1 / 2');
+    expect(document.querySelector('[data-action="next"]')!.textContent).toContain('完成阅读');
+    expect(document.querySelector('[data-action="next"]')!.textContent).not.toContain('下一篇');
+    expect(document.querySelector('.news-counter')!.textContent).toContain('2 / 2');
     skipArticle();
 
     const doneText = document.querySelector('.news-card-area')!.textContent!;
@@ -123,8 +124,9 @@ describe('聚合讯阅读流', () => {
     await loadArticles();
     render();
 
-    expect(document.querySelector('[data-action="next"]')!.textContent).toContain('最后一篇');
-    expect(document.querySelector('.news-counter')!.textContent).toContain('0 / 1');
+    expect(document.querySelector('[data-action="next"]')!.textContent).toContain('完成阅读');
+    expect(document.querySelector('[data-action="next"]')!.textContent).not.toContain('下一篇');
+    expect(document.querySelector('.news-counter')!.textContent).toContain('1 / 1');
     skipArticle();
     expect(document.querySelector('.news-bottombar .news-counter')!.textContent).toContain('1 / 1');
   });

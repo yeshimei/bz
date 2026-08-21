@@ -174,11 +174,11 @@ export function render() {
   // 底部栏（剩最后一篇时「下一篇」按钮改为完成说明）
   const bottombar = document.createElement('div');
   bottombar.className = 'news-bottombar';
-  const nextLabel = articles.length === 1 ? '✅ 最后一篇 · 完成阅读' : '⏭️ 下一篇';
+  const nextLabel = articles.length === 1 ? '✅ 完成阅读' : '⏭️ 下一篇';
   bottombar.innerHTML = `
         <button class="news-btn news-btn-primary" data-action="save">📥 保存至剪藏</button>
         <button class="news-btn" data-action="next">${nextLabel}</button>
-        <span class="news-counter">${batchTotal - articles.length} / ${batchTotal}</span>
+        <span class="news-counter">${batchTotal - articles.length + 1} / ${batchTotal}</span>
     `;
   container.appendChild(bottombar);
   bottombar.querySelector<HTMLElement>('[data-action="save"]')!.onclick = () => saveToClip();
@@ -204,7 +204,7 @@ export function renderDoneState() {
         <div style="font-size:13px;color:var(--text-faint);">今日文章已读完，欢迎明天再来！</div>
     `;
   container!.appendChild(cardArea);
-  // 完成态保留底部栏：右下角计数显示本轮读完的最终值（如 3 / 4 → 4 / 4）
+  // 完成态保留底部栏：右下角计数显示全部读完的最终值（N / N，与最后一篇一致）
   if (batchTotal > 0) {
     const bottombar = document.createElement('div');
     bottombar.className = 'news-bottombar';
