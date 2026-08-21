@@ -209,11 +209,23 @@ describe('UIManager 主面板', () => {
     expect(dm2.unlocked).toBe(false);
     expect(hasNotice('安全模式：已自动上锁')).toBe(true);
   });
+
+  it('面板只显示普通加密笔记：过滤 diary-entry 与 password-vault', async () => {
+    // 既有 beforeEach 已加锁 1 篇普通笔记；再补日记条目与密码本整表
+    await dm.lockNote({ path: '我的/日记/d.md', title: '日记d', kind: 'diary-entry', content: '# x', attachments: [] });
+    await dm.lockNote({ path: 'CONFIG/.ENCRYPT/passwords', title: '密码本', kind: 'password-vault', content: '[]', attachments: [] });
+    ui.show();
+    const list = document.getElementById('bz-encrypt-list')!;
+    expect(list.querySelectorAll('.bz-encrypt-card').length).toBe(1);
+    expect(list.textContent).toContain('2025-06-01');
+    expect(list.textContent).not.toContain('密码本');
+    expect(list.textContent).not.toContain('日记d');
+  });
 });
 
 describe('collectMediaSlots 混排', () => {
   const ATT = (path: string): SafeAttachment => ({
-    path, kind: 'image', blobRef: 'x', blobSize: 1, fingerprint: 'f', hasPreview: true, previewRef: 'p', restored: false,
+    path, kind: 'image', blobRef: 'x', blobSize: 1, fingerprint: 'f', hasPreview: true, previewRef: 'p',
   });
 
   it('按文档顺序替换嵌入为占位 token，记录已内联附件', () => {

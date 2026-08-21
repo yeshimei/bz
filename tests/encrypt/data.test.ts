@@ -130,7 +130,6 @@ describe('SafeManager 加锁', () => {
     expect(vault.dirs.has('CONFIG/.ENCRYPT/附件')).toBe(false);
     // 密文非明文
     expect(vault.files.get('CONFIG/.ENCRYPT/' + blobRef)!).not.toContain('IMGDATAIMG');
-    expect(note.hasSummary).toBe(false);
     expect(note.attachments[0].hasPreview).toBe(true);
   });
 
@@ -139,10 +138,10 @@ describe('SafeManager 加锁', () => {
     const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
     const note = await lockSample(sm);
-    // 正文镜像平铺落盘（encryptRoot 根），清单不再内嵌 base64
+    // 正文镜像平铺落盘（encryptRoot 根），清单不含正文本体
     expect(note.contentRef.startsWith('.')).toBe(true);
     expect(note.contentRef.endsWith('.enc')).toBe(true);
-    expect(note.content).toBe('');
+    expect((note as any).content).toBeUndefined(); // 内嵌字段已移除（不做旧版兼容）
     expect(vault.files.has('CONFIG/.ENCRYPT/' + note.contentRef)).toBe(true);
     // 重开解锁读取
     sm.lock();
@@ -671,6 +670,70 @@ describe('SafeManager 清单损坏与首设回滚（雷 1/4）', () => {
     } finally {
       spy.mockRestore();
     }
+  });
+});
+
+describe('SafeManager password-vault 载荷（路线 B：密码本合并至保险箱）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    vault = new MockVault();
+  });
+
+  it('lockNote kind=password-vault：不删任何原文件、清单带 kind 标记、正文镜像落盘', async () => {
+    makeApp(vault);
+    vault.create('某个/普通笔记.md', '# 别删我'); // 无关文件必须原样保留
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await sm.lockNote({
+      path: 'CONFIG/.ENCRYPT/passwords', // 虚拟占位路径（无原文件）
+      title: '密码本',
+      kind: 'password-vault',
+      content: JSON.stringify([{ id: 'pw-1', platform: 'GitHub' }]),
+      attachments: [],
+    });
+    expect(note.kind).toBe('password-vault');
+    expect(sm.manifest.notes.some((n) => n.id === note.id && n.kind === 'password-vault')).toBe(true);
+    expect(vault.files.has('某个/普通笔记.md')).toBe(true); // 原文件未动
+    expect(vault.files.has('CONFIG/.ENCRYPT/' + note.contentRef)).toBe(true);
+    // 密文非明文
+    expect(vault.files.get('CONFIG/.ENCRYPT/' + note.contentRef)!).not.toContain('GitHub');
+  });
+
+  it('updateNotePayload：覆盖同一 contentRef 镜像（不产生孤儿）、清单同步、重开可读', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await sm.lockNote({
+      path: 'CONFIG/.ENCRYPT/passwords',
+      title: '密码本',
+      kind: 'password-vault',
+      content: '[]',
+      attachments: [],
+    });
+    const ref = note.contentRef;
+    await sm.updateNotePayload(note.id, '[{"id":"pw-1"}]');
+    // 同一镜像名被覆盖：无新镜像、无孤儿
+    expect(sm.manifest.notes[0].contentRef).toBe(ref);
+    expect(vault.files.has('CONFIG/.ENCRYPT/' + ref)).toBe(true);
+    const topLevel = [...vault.files.keys()].filter(
+      (p) => p.startsWith('CONFIG/.ENCRYPT/') && !p.includes('/.staging/') && p.endsWith('.enc')
+    ).length;
+    expect(topLevel).toBe(2); // .safe.enc + 唯一正文镜像
+    // 重开（重新解锁）可读
+    sm.lock();
+    const sm2 = new SafeManager('CONFIG/.ENCRYPT');
+    await sm2.unlock('pw');
+    const plain = await sm2.decryptNoteBody(sm2.manifest.notes[0]);
+    expect(JSON.parse(plain!)).toEqual([{ id: 'pw-1' }]);
+  });
+
+  it('updateNotePayload：未解锁/条目不存在抛错', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await expect(sm.updateNotePayload('enc-x', '[]')).rejects.toThrow('未解锁');
+    await sm.unlock('pw');
+    await expect(sm.updateNotePayload('enc-x', '[]')).rejects.toThrow('未找到清单条目');
   });
 });
 

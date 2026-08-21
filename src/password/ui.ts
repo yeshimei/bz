@@ -14,6 +14,7 @@ import { formatRelativeTime } from '../core/utils';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
+import { ensureSafeUnlocked } from '../encrypt';
 import { DataManager, type PasswordEntry } from './data';
 
 interface UIConfig {
@@ -190,7 +191,7 @@ export class UIManager {
             );
           new Setting(el)
             .setName('安全模式')
-            .setDesc('开启后，关闭列表窗口立即自动上锁')
+            .setDesc('开启后，关闭密码本窗口立即整体上锁（保险箱与密码本共享解锁态）')
             .addToggle((toggle) =>
               toggle.setValue(!!s.securityMode).onChange(async (v) => {
                 s.securityMode = v;
@@ -643,134 +644,9 @@ export class UIManager {
   }
   closeConfirm() {}
 
-  // ---------- 密码输入对话框（解锁/首次设置） ----------
+  // ---------- 解锁（统一走保险箱主密码弹窗：共享同一解锁态，不再自绘） ----------
   showPasswordDialog(): Promise<boolean> {
-    return new Promise((resolve) => {
-      const mask = document.createElement('div');
-      mask.style.cssText =
-        'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:10005;display:flex;align-items:center;justify-content:center;';
-      const box = document.createElement('div');
-      box.style.cssText =
-        'background:var(--background-primary);border-radius:12px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);';
-      const title = document.createElement('h4');
-      title.style.cssText = 'margin:0 0 12px 0;font-size:18px;font-weight:600;';
-      const message = document.createElement('p');
-      message.style.cssText = 'margin:0 0 16px 0;font-size:14px;color:var(--text-muted);';
-      const input = document.createElement('input');
-      input.type = 'password';
-      input.placeholder = '输入主密码';
-      input.style.cssText =
-        'width:100%;padding:8px 12px;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:12px;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);';
-      const input2 = document.createElement('input');
-      input2.type = 'password';
-      input2.placeholder = '再次输入';
-      input2.style.cssText =
-        'width:100%;padding:8px 12px;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:16px;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);display:none;';
-
-      const warning = document.createElement('div');
-      warning.style.cssText =
-        'background:#ffecb0;color:#8a6d3b;padding:10px 12px;border-radius:6px;margin-bottom:16px;font-size:14px;border:1px solid #f5c842;display:none;';
-      warning.innerHTML = `
-                <strong>⚠️ 重要提醒</strong><br>
-                • 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>
-                • 若遗忘密码，所有数据将永久丢失。<br>
-                • 建议使用密码本（如 Bitwarden）保存此密码。
-            `;
-
-      const btnContainer = document.createElement('div');
-      btnContainer.style.cssText = 'display:flex;gap:12px;justify-content:flex-end;';
-      const cancelBtn = document.createElement('button');
-      cancelBtn.textContent = '取消';
-      cancelBtn.style.cssText =
-        'padding:8px 16px;border-radius:6px;border:none;background:var(--background-secondary);cursor:pointer;font-size:14px;';
-      cancelBtn.onclick = () => {
-        document.body.removeChild(mask);
-        resolve(false);
-      };
-      const confirmBtn = document.createElement('button');
-      confirmBtn.textContent = '确认';
-      confirmBtn.style.cssText =
-        'padding:8px 16px;border-radius:6px;border:none;background:var(--interactive-accent);color:var(--text-on-accent);cursor:pointer;font-size:14px;font-weight:500;';
-      confirmBtn.onclick = async () => {
-        const pw = input.value;
-        if (!pw) {
-          notice('请输入密码');
-          return;
-        }
-        const fileExists = !!getApp().vault.getAbstractFileByPath(this.dataManager.filePath);
-        if (!fileExists) {
-          if (input2.style.display === 'none') {
-            input2.style.display = 'block';
-            input2.value = '';
-            input2.focus();
-            message.textContent = '请再次输入主密码确认';
-            return;
-          } else {
-            if (pw !== input2.value) {
-              notice('两次密码不一致');
-              return;
-            }
-            try {
-              await this.dataManager.unlock(pw);
-              document.body.removeChild(mask);
-              resolve(true);
-              notice('密码已设置，数据已加密', 'success');
-            } catch (e: any) {
-              notice('设置失败：' + e.message, 'error');
-              resolve(false);
-            }
-            return;
-          }
-        } else {
-          const success = await this.dataManager.unlock(pw);
-          if (success) {
-            document.body.removeChild(mask);
-            resolve(true);
-            notice('解锁成功', 'success');
-          } else {
-            notice('密码错误，请重试', 'error');
-            input.value = '';
-            input.focus();
-          }
-        }
-      };
-
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') confirmBtn.click();
-      });
-      input2.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') confirmBtn.click();
-      });
-
-      btnContainer.appendChild(cancelBtn);
-      btnContainer.appendChild(confirmBtn);
-      box.appendChild(title);
-      box.appendChild(warning);
-      box.appendChild(message);
-      box.appendChild(input);
-      box.appendChild(input2);
-      box.appendChild(btnContainer);
-      mask.appendChild(box);
-      document.body.appendChild(mask);
-
-      // 检查文件是否存在
-      (async () => {
-        const fileExists = !!getApp().vault.getAbstractFileByPath(this.dataManager.filePath);
-        if (fileExists) {
-          title.textContent = '输入主密码';
-          message.textContent = '请输入您设置的主密码以解锁密码本';
-          input2.style.display = 'none';
-          warning.style.display = 'none';
-        } else {
-          title.textContent = '设置主密码';
-          message.textContent = '请设置一个主密码（用于加密所有数据）';
-          input2.style.display = 'block';
-          input2.placeholder = '再次输入';
-          warning.style.display = 'block';
-        }
-        input.focus();
-      })();
-    });
+    return ensureSafeUnlocked();
   }
 
   // ---------- 密码生成 ----------
@@ -805,7 +681,6 @@ export class PasswordAppController {
   static instance: PasswordAppController | null = null;
 
   static getInstance(config: {
-    storagePath: string;
     charset: string;
     length: string;
     securityMode: boolean;
@@ -816,7 +691,6 @@ export class PasswordAppController {
     return PasswordAppController.instance;
   }
 
-  storagePath: string;
   charset: string;
   length: string;
   securityMode: boolean;
@@ -824,12 +698,11 @@ export class PasswordAppController {
   uiManager: UIManager;
   _initialized = false;
 
-  constructor({ storagePath, charset, length, securityMode }: { storagePath: string; charset: string; length: string; securityMode: boolean }) {
-    this.storagePath = storagePath;
+  constructor({ charset, length, securityMode }: { charset: string; length: string; securityMode: boolean }) {
     this.charset = charset;
     this.length = length;
     this.securityMode = securityMode;
-    this.dataManager = new DataManager(storagePath);
+    this.dataManager = new DataManager();
     this.uiManager = new UIManager(this.dataManager, { charset, length, securityMode });
   }
 
