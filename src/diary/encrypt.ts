@@ -21,7 +21,12 @@ export const ENCRYPT_TAG = '加密';
 let unlockedListeners: (() => void)[] = [];
 
 export function isUnlocked(): boolean {
-  return getSafeManager().unlocked;
+  // 降级链：保险箱未初始化/设置未注入时视为未解锁，不阻断列表渲染（与 store 加密合并同策略）
+  try {
+    return getSafeManager().unlocked;
+  } catch (e) {
+    return false;
+  }
 }
 
 export function onUnlockChange(cb: () => void): void {

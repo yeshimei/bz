@@ -10,6 +10,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { applyDirectories, resetTagsConfig } from '../../src/diary/config';
 import { init, showDiaryPanel } from '../../src/diary/ui/panel';
 import { openAddDialog, showTagPicker } from '../../src/diary/ui/dialogs';
+import { createEntryCard } from '../../src/diary/ui/entries';
 import { state, setDiaryDataMap } from '../../src/diary/state';
 import { ENCRYPT_TAG, isUnlocked, encryptEntry, lockSafe } from '../../src/diary/encrypt';
 import { reloadWithEncrypted, deleteEntry } from '../../src/diary/store';
@@ -159,6 +160,27 @@ describe('筛选栏「加密」标签（ADR-0017）', () => {
 });
 
 describe('抽屉加密（唯一入口，ADR-0017）', () => {
+  it('解锁态：加密动作图标+小字换强调色，小字带附件数（已解锁 · N 附件语义）', async () => {
+    await unlockSafe();
+    vault.files.set('a.png', 'x');
+    const entry = { ...state.data.originalDiaryEntries[0], id: 'tone-1', content: '图 ![[a.png]]' } as any;
+    MockPlatform.isMobile = true;
+    const card = createEntryCard(entry);
+    document.body.appendChild(card);
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 100, clientY: 100 }));
+    await new Promise((r) => setTimeout(r, 600));
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const encItem = [...document.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('加密')
+    ) as HTMLElement;
+    expect(encItem.classList.contains('bz-item-sheet-item--accent')).toBe(true); // 解锁态强调色
+    expect((encItem.querySelector('.bz-item-sheet-item-sub') as HTMLElement).textContent).toBe('1 附件');
+    // 图标与强调色同挂（CSS 选择器锚定 .bz-item-sheet-icon 于 accent 项下）
+    expect(encItem.querySelector('.bz-item-sheet-icon')).not.toBeNull();
+    MockPlatform.isMobile = false;
+  });
+
   it('标签选择器不再提供「加密」分类（加密走抽屉动作）', async () => {
     await waitFor(() => !!document.querySelector('.diary-emoji'));
     (document.querySelector('.diary-emoji') as HTMLElement).click();
