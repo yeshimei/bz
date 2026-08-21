@@ -281,6 +281,44 @@ describe('备忘录面板', () => {
     vi.useRealTimers();
   });
 
+  it('移动端：长按正文与长按其他区域都弹抽屉（列表禁止选字复制，user-select 由样式承载）', async () => {
+    vi.useFakeTimers();
+    MockPlatform.isMobile = true;
+    const vault = new MockVault();
+    await initApp(vault);
+    await seedItems(vault, [
+      { id: '1', title: '正文内容', scene: '工作', priority: 'minor', created: '2025-06-14 10:00:00', completed: null },
+    ]);
+    await App.refresh();
+    const card = document.querySelector('.todo-card') as HTMLElement;
+    // 长按正文 → 弹抽屉（整卡长按，无排除区）
+    const content = card.querySelector('.todo-content-span') as HTMLElement;
+    content.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 40, clientY: 30 }));
+    vi.advanceTimersByTime(550);
+    expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
+    MockPlatform.isMobile = false;
+    vi.useRealTimers();
+  });
+
+  it('抽屉顺序：编辑紧贴删除之上（删除永远垫底）', async () => {
+    vi.useFakeTimers();
+    MockPlatform.isMobile = true;
+    const vault = new MockVault();
+    await initApp(vault);
+    await seedItems(vault, [
+      { id: '1', title: '顺序', scene: '工作', priority: 'minor', created: '2025-06-14 10:00:00', completed: null },
+    ]);
+    await App.refresh();
+    openSheetCard(document.querySelector('.todo-card') as HTMLElement);
+    const labels = [...document.querySelectorAll('.bz-item-sheet-item .bz-item-sheet-label')].map(
+      (el) => el.textContent
+    );
+    expect(labels[labels.length - 1]).toBe('删除');
+    expect(labels[labels.length - 2]).toBe('编辑');
+    MockPlatform.isMobile = false;
+    vi.useRealTimers();
+  });
+
   it('移动端：抽屉拆分「优先级切换」项——点「转为重要」即时写盘并刷新', async () => {
     vi.useFakeTimers();
     MockPlatform.isMobile = true;
