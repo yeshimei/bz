@@ -84,7 +84,7 @@ describe('longPress', () => {
     vi.useRealTimers();
   });
 
-  it('触屏短按（未到长按时长）→ 补发 click，长按回调不触发', () => {
+  it('触屏短按（未到长按时长）→ 合成 click 正常派发，长按回调不触发', () => {
     vi.useFakeTimers();
     const el = document.createElement('div');
     const cb = vi.fn();
@@ -92,19 +92,20 @@ describe('longPress', () => {
     el.addEventListener('click', onClick);
     longPress(el, cb, 300);
 
-    // 模拟触屏：touchstart（preventDefault 会吞掉原生 click）→ 立即 touchend
+    // 模拟触屏（touchstart 被动监听不再 preventDefault，滚动不受影响；jsdom 不自动合成 click，手动派发）
     const ts = new TouchEvent('touchstart', { bubbles: true, cancelable: true });
     Object.defineProperty(ts, 'touches', { value: [{ clientX: 10, clientY: 10 }] });
     el.dispatchEvent(ts);
     vi.advanceTimersByTime(100); // 未到 300ms
     el.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+    el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 
-    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(onClick).toHaveBeenCalledTimes(1); // 未长按不吞
     expect(cb).not.toHaveBeenCalled();
     vi.useRealTimers();
   });
 
-  it('触屏长按 → 触发长按回调，不再补发 click（避免双触发预览/还原）', () => {
+  it('触屏长按 → 触发长按回调，浏览器补发的合成 click 被吞（防穿透内部链接/按钮）', () => {
     vi.useFakeTimers();
     const el = document.createElement('div');
     const cb = vi.fn();
@@ -118,12 +119,13 @@ describe('longPress', () => {
     vi.advanceTimersByTime(350); // 长按触发
     expect(cb).toHaveBeenCalledTimes(1);
     el.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+    el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 
     expect(onClick).not.toHaveBeenCalled();
     vi.useRealTimers();
   });
 
-  it('触屏移动超阈值（滑动取消）→ 不补发 click', () => {
+  it('触屏移动超阈值（滑动取消长按）→ 未长按不吞 click，长按回调不触发', () => {
     vi.useFakeTimers();
     const el = document.createElement('div');
     const cb = vi.fn();
@@ -139,9 +141,10 @@ describe('longPress', () => {
     el.dispatchEvent(tm);
     vi.advanceTimersByTime(100);
     el.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+    el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 
-    expect(onClick).not.toHaveBeenCalled();
     expect(cb).not.toHaveBeenCalled();
+    expect(onClick).toHaveBeenCalledTimes(1); // 滑动后浏览器本不派发合成 click；此处验证未长按时不吞
     vi.useRealTimers();
   });
 });

@@ -9,8 +9,9 @@ import { notice } from './notice';
 export { notice };
 
 /** longPress(el, cb, dur, filter)：长按手势（mousedown/touchstart 计时，移动超 10px 取消）
- *  触屏兼容：touchstart preventDefault 会抑制浏览器派发 click（2026-08-22 保险箱触屏单击
- *  无预览），故 touchend 时若为「短按且未移动且未触发长按」补发合成 click，保证单击监听可触屏使用。 */
+ *  触屏滚动兼容：touchstart 被动监听、不 preventDefault（否则整段列表滚动被禁，memo 归档视图
+ *  实测复现），长按触发后吞掉浏览器补发的合成 click（防穿透到元素内部链接/按钮）；
+ *  未长按的短按由浏览器正常派发 click，不再自行补发。 */
 export function longPress(
   el: HTMLElement,
   cb: (e: any) => void,
@@ -19,6 +20,7 @@ export function longPress(
 ): void {
   if (!dur) dur = 500;
   let timer: any = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
+  let suppressClick = false;
   const M = 10;
   function start(e: any) {
     if (filter && !filter(e)) return;
@@ -40,25 +42,28 @@ export function longPress(
     if (Math.abs(t.clientX - sx) > M || Math.abs(t.clientY - sy) > M) { moved = true; cancel(); }
   }
   function endFromTouch() {
-    // 短按（未触发长按、未移动）→ 补发合成 click，补救 touchstart preventDefault 吞掉的单击
-    if (touching && !fired && !moved) {
-      try {
-        el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-      } catch (e) {
-        /* 补发失败忽略 */
-      }
-    }
+    // 长按已触发 → 吞掉浏览器随后补发的合成 click（防穿透）；未长按不吞（短按 = 普通点击）
+    if (fired) suppressClick = true;
     touching = false;
     cancel();
   }
   function endFromMouse() { touching = false; cancel(); }
+  function onClick(e: MouseEvent) {
+    if (suppressClick) {
+      suppressClick = false;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  }
   el.addEventListener('mousedown', start);
   el.addEventListener('mouseup', endFromMouse);
   el.addEventListener('mouseleave', endFromMouse);
-  el.addEventListener('touchstart', function (e) { e.preventDefault(); start(e); }, { passive: false });
+  el.addEventListener('touchstart', start, { passive: true });
   el.addEventListener('touchend', endFromTouch);
-  el.addEventListener('touchmove', move);
+  el.addEventListener('touchmove', move, { passive: true });
   el.addEventListener('touchcancel', endFromTouch);
+  // 捕获阶段拦截：必须在卡片内部链接/按钮的 handler（目标/冒泡阶段）之前执行才能防穿透
+  el.addEventListener('click', onClick, true);
 }
 
 /** DOMAIN_MAP：favicon 域名归一映射（Q3 同款） */
