@@ -583,10 +583,11 @@ describe('SafeManager 提交式加密（ADR-0018）', () => {
     const blobRef = note.attachments[0].blobRef;
     vault.files.set('CONFIG/.ENCRYPT/.junk1.enc', 'junk1');
     vault.files.set('CONFIG/.ENCRYPT/.junk2.enc', 'junk2');
-    vault.files.set('CONFIG/.ENCRYPT/plain.enc', 'non-dot'); // 非点前缀：不碰（旧布局保守）
+    vault.files.set('CONFIG/.ENCRYPT/plain.enc', 'non-dot'); // 非点前缀：不碰（目录结构保护）
     vault.files.set('CONFIG/.ENCRYPT/.staging/.stale.enc', 'stale');
-    const removed = await sm.cleanupOrphans();
-    expect(removed).toBe(2);
+    const { files, notes } = await sm.cleanupOrphans();
+    expect(files).toBe(2);
+    expect(notes).toBe(0);
     expect(vault.files.get('CONFIG/.ENCRYPT/.junk1.enc')).toBeUndefined();
     expect(vault.files.get('CONFIG/.ENCRYPT/.junk2.enc')).toBeUndefined();
     // 保留：引用镜像、清单本体、非点前缀文件；暂存已清空
@@ -595,6 +596,55 @@ describe('SafeManager 提交式加密（ADR-0018）', () => {
     expect(vault.files.get('CONFIG/.ENCRYPT/.safe.enc')).toBeTruthy();
     expect(vault.files.get('CONFIG/.ENCRYPT/plain.enc')).toBe('non-dot');
     expect(vault.files.get('CONFIG/.ENCRYPT/.staging/.stale.enc')).toBeUndefined();
+  });
+
+  it('清理失效条目：正文镜像已丢失的条目整条清除（含残留附件镜像），清单同步持久化', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const dead = await lockSample(sm, {
+      content: '# 正文已丢',
+      attachments: [
+        { path: '我的/影视/pic.png', data: 'QUJDREVGRw==', previewData: 'PREVIEW' },
+      ],
+    });
+    const alive = await lockSample(sm, {
+      notePath: '我的/日记/2025-06-02.md',
+      content: '# 存活的笔记',
+      attachments: [],
+    });
+    // 模拟镜像被误删/同步丢失：dead 的正文镜像没了
+    vault.files.delete('CONFIG/.ENCRYPT/' + dead.contentRef);
+    const { files, notes } = await sm.cleanupOrphans();
+    expect(notes).toBe(1);
+    expect(files).toBe(0);
+    // dead 条目从清单移除，其残留附件镜像（原始层+预览层）一并删除
+    expect(sm.manifest.notes.some((n) => n.id === dead.id)).toBe(false);
+    expect(vault.files.get('CONFIG/.ENCRYPT/' + dead.attachments[0].blobRef)).toBeUndefined();
+    expect(vault.files.get('CONFIG/.ENCRYPT/' + dead.attachments[0].previewRef)).toBeUndefined();
+    // alive 条目原样保留（正文镜像仍在）
+    expect(sm.manifest.notes.some((n) => n.id === alive.id)).toBe(true);
+    expect(vault.files.get('CONFIG/.ENCRYPT/' + alive.contentRef)).toBeTruthy();
+    // 清单已持久化：重开解锁后条目数一致
+    sm.lock();
+    const sm2 = new SafeManager('CONFIG/.ENCRYPT');
+    await sm2.unlock('pw');
+    expect(sm2.manifest.notes.length).toBe(1);
+  });
+
+  it('清理失效条目：仅附件镜像缺失但正文可读 → 条目保留（其预览镜像仍被清单引用，不误删）', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await lockSample(sm, {
+      content: '# 正文还在',
+      attachments: [{ path: '我的/影视/pic.png', data: 'QUJDREVGRw==', previewData: 'PREVIEW' }],
+    });
+    vault.files.delete('CONFIG/.ENCRYPT/' + note.attachments[0].blobRef); // 仅附件原始层镜像缺失
+    const { files, notes } = await sm.cleanupOrphans();
+    expect(notes).toBe(0); // 正文可读 → 不清条目
+    expect(files).toBe(0); // 预览镜像仍被清单引用 → 不误删
+    expect(sm.manifest.notes.some((n) => n.id === note.id)).toBe(true);
   });
 });
 

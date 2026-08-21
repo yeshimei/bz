@@ -468,20 +468,27 @@ describe('EncryptAppController', () => {
     (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
   });
 
-  it('面板顶部「清理未引用的密文」按钮：点击手动清理无引用密文并提示结果（Q5-A）', async () => {
+  it('面板顶部「清理未引用的密文」按钮：清理孤儿密文与失效条目并提示结果（Q5-A）', async () => {
     setup(vault, CONFIG);
     const c = EncryptAppController.getInstance(CONFIG);
     await c.init();
     await c.dataManager.unlock('pw');
     c.uiManager.show();
-    // 预置无引用密文孤儿
+    // 预置无引用密文孤儿 + 正文镜像丢失的失效条目
     vault.files.set('CONFIG/.ENCRYPT/.junk.enc', 'junk');
+    const dead = await c.dataManager.lockNote({
+      path: '笔记/没了.md', title: '失效笔记', content: '# x', attachments: [],
+    });
+    vault.files.delete('CONFIG/.ENCRYPT/' + dead.contentRef); // 正文镜像丢失
     const headBtns = [...document.querySelectorAll('.bz-encrypt-head-btns button')].map((b) => b.textContent);
     expect(headBtns.indexOf('🧹')).toBeGreaterThanOrEqual(0);
     const cleanupBtn = [...document.querySelectorAll('.bz-encrypt-head-btns button')].find((b) => b.textContent === '🧹') as HTMLButtonElement;
     cleanupBtn.click();
-    await waitFor(() => hasNotice('已删除 1 个无引用的密文文件'));
+    await waitFor(() => hasNotice(/已清理/));
     expect(vault.files.get('CONFIG/.ENCRYPT/.junk.enc')).toBeUndefined();
+    expect(c.dataManager.manifest.notes.some((n) => n.id === dead.id)).toBe(false);
+    // 列表同步刷新：失效条目不再显示
+    expect(document.getElementById('bz-encrypt-list')!.querySelectorAll('.bz-encrypt-card').length).toBe(0);
   });
 
   it('lockCurrentNote：附件读取失败 → 整笔放弃（不落任何东西、原文件不动、提示失败）', async () => {

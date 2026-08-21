@@ -556,13 +556,48 @@ export class SafeManager {
   }
 
   /**
-   * 手动「清理未引用的密文」（Q5-A：不自动触发，点按钮才跑）：
-   * 扫描 encryptRoot 顶层，删除未被任何清单条目 contentRef/blobRef/previewRef 引用的
-   * 点前缀 `.随机.enc` 形态密文（`.safe.enc` 与本目录旧布局一律不碰），并清空暂存区。
-   * @returns 删除的顶层密文文件数
+   * 手动「清理未引用的密文」（Q5-A：不自动触发，点按钮才跑），双向清理：
+   * 1. 文件侧：扫描 encryptRoot 顶层，删除未被任何清单条目 contentRef/blobRef/previewRef
+   *    引用的点前缀 `.随机.enc` 形态密文（`.safe.enc` 与目录结构一律不碰）；
+   * 2. 清单侧：正文镜像（contentRef）已不存在的条目 = 失效条目（正文不可解、还原无意义），
+   *    整条从清单移除并删除其残留的附件镜像——即用户所指「已经不存在的列表笔记」。
+   *    仅附件缺失但正文可读的条目保留（预览不受影响）。
+   * 并清空暂存区。
+   * @returns { files: 删除的顶层密文文件数, notes: 清除的失效条目数 }
    */
-  async cleanupOrphans(): Promise<number> {
+  async cleanupOrphans(): Promise<{ files: number; notes: number }> {
     if (!this.unlocked) throw new Error('未解锁，无法清理密文');
+    let notes = 0;
+    let files = 0;
+
+    // 1) 清单侧：正文镜像缺失的失效条目整条清除（残留附件镜像一并删除）
+    const kept: SafeNote[] = [];
+    for (const n of this.manifest.notes) {
+      let bodyExists = false;
+      if (n.contentRef) {
+        try {
+          bodyExists = await this.adapter.exists(this.resolveRef(n.contentRef));
+        } catch (e) {
+          bodyExists = false;
+        }
+      }
+      if (!bodyExists) {
+        // 正文密文已丢失：条目不可用，整条清理（幂等删除其残留镜像）
+        for (const a of n.attachments) {
+          await this.deleteSafeFile(a.blobRef);
+          if (a.hasPreview) await this.deleteSafeFile(a.previewRef);
+        }
+        notes += 1;
+      } else {
+        kept.push(n);
+      }
+    }
+    if (notes > 0) {
+      this.manifest.notes = kept;
+      await this.saveManifest(); // 清单落盘失败向上抛（下次重试，条目判定幂等）
+    }
+
+    // 2) 文件侧：无引用孤儿密文（referenced 基于清理后的清单）
     const referenced = new Set<string>();
     for (const n of this.manifest.notes) {
       if (n.contentRef) referenced.add(n.contentRef);
@@ -571,7 +606,6 @@ export class SafeManager {
         if (a.hasPreview && a.previewRef) referenced.add(a.previewRef);
       }
     }
-    let removed = 0;
     try {
       if (await this.adapter.exists(this.root)) {
         const listing = await this.adapter.list(this.root);
@@ -582,7 +616,7 @@ export class SafeManager {
           if (referenced.has(name)) continue; // 被引用不碰
           try {
             await this.adapter.remove(f);
-            removed += 1;
+            files += 1;
           } catch (e) {
             /* 单文件失败继续 */
           }
@@ -592,7 +626,7 @@ export class SafeManager {
     } catch (e) {
       /* 幂等 */
     }
-    return removed;
+    return { files, notes };
   }
 
   /**
