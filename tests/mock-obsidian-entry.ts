@@ -290,7 +290,7 @@ export const TFolder = class {};
 export const normalizePath = (p: string) => p;
 
 /** setIcon mock：把图标名记录到元素 dataset.icon（真实环境渲染 lucide svg） */
-export const setIcon = vi.fn((el: HTMLElement, name: string) => {
+export const setIcon = vi.fn((el: HTMLElement, name: string, _size?: number) => {
   el.dataset.icon = name;
 });
 
