@@ -316,6 +316,8 @@ export async function saveToClip() {
       Object.assign(ov.style, { position: 'fixed', inset: '0', background: 'var(--background-modifier-cover)', zIndex: 10000 });
       document.body.appendChild(ov);
       document.body.appendChild(el);
+      // 点遮罩 = 取消（与「取消」按钮同语义，用户拍板：小弹窗靠遮罩关闭）
+      ov.onclick = () => { ov.remove(); el.remove(); resolve(false); };
       escManager.register('news-confirm', {
         isVisible: () => ov.isConnected,
         close: () => { ov.remove(); el.remove(); resolve(false); },

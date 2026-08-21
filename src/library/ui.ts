@@ -367,7 +367,7 @@ export function openFilterModal(app: any) {
   title.className = 'bz-lib-modal-title';
   title.textContent = '视图与筛选';
   const closeBtn = document.createElement('button');
-  closeBtn.className = 'bz-lib-modal-close';
+  closeBtn.className = 'bz-lib-modal-close bz-win-close';
   closeBtn.textContent = '✕';
   closeBtn.addEventListener('click', closeFilterModal);
   header.appendChild(title);
@@ -663,7 +663,7 @@ function createBookNotesModal(title: string, onClose: () => void): { overlay: HT
   titleSpan.className = 'bz-lib-modal-title--lg';
   titleSpan.textContent = title;
   const closeBtn = document.createElement('button');
-  closeBtn.className = 'bz-lib-modal-close--sm';
+  closeBtn.className = 'bz-lib-modal-close--sm bz-win-close';
   closeBtn.textContent = '❌';
   closeBtn.addEventListener('click', onClose);
   header.appendChild(titleSpan);
@@ -820,7 +820,7 @@ function openNoteEditModal(opts: {
   title.className = 'bz-lib-modal-title';
   title.textContent = opts.title;
   const closeBtn = document.createElement('button');
-  closeBtn.className = 'bz-lib-modal-close';
+  closeBtn.className = 'bz-lib-modal-close bz-win-close';
   closeBtn.textContent = '✕';
   closeBtn.addEventListener('click', () => overlay.remove());
   header.appendChild(title);

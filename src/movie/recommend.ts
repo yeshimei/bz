@@ -157,6 +157,7 @@ export async function openRecommendModal(app: App): Promise<void> {
 
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '✕ 关闭';
+  closeBtn.className = 'bz-win-close';
   closeBtn.style.cssText = 'background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:.9rem;box-shadow:none;';
   closeBtn.addEventListener('click', () => {
     overlay.remove();
@@ -178,6 +179,13 @@ export async function openRecommendModal(app: App): Promise<void> {
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
   M.recommendOverlay = overlay;
+  // 点遮罩 = 关闭（用户拍板：小弹窗靠遮罩关闭）
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      overlay.remove();
+      M.recommendOverlay = null;
+    }
+  });
 
   try {
     const profile = buildTasteProfile();
