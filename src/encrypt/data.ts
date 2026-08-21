@@ -1,12 +1,16 @@
 /**
  * 加密保险箱数据层（encrypt 域，safe 数据）
- * 移出式清单容器加密：SafeManager 负责 清单(safe.enc) 读写、密文镜像（正文+附件）、
+ * 移出式清单容器加密：SafeManager 负责 清单(.safe.enc) 读写、密文镜像（正文+附件）、
  * 加锁(lockNote) / 还原取出(restoreNote，还原成功即删除镜像与条目)。
  *
- * 数据落地（用户拍板 Q10=A + 修订）：
- *   <encryptRoot>/safe.enc                整库唯一加密清单（不含正文本体）
- *   <encryptRoot>/附件/<原路径>             正文/附件原始层密文镜像
- *   <encryptRoot>/附件/_预览/<原路径>        附件预览层密文镜像
+ * 数据落地（ADR-0016 平铺点前缀布局，用户拍板）：
+ *   <encryptRoot>/.safe.enc            整库唯一加密清单（不含正文本体，点前缀）
+ *   <encryptRoot>/.随机名.enc           正文密文镜像（平铺、随机名、点前缀）
+ *   <encryptRoot>/.随机名.enc           附件原始层密文镜像（平铺、每文件独立随机名）
+ *   <encryptRoot>/.随机名.enc           附件预览层密文镜像（同上）
+ *
+ * 点前缀目录/文件 Obsidian 侧栏一律隐藏（防误删）；还原/删除全靠清单 path+ref 映射，
+ * 文件名不含任何可辨识信息。旧 附件/<原路径> 布局不再读取（ADR-0016：彻底不兼容）。
  *
  * 密钥：每个 blob 直接用主密码经 CryptoService.encrypt 独立加密（同 passwords.enc 模型）。
  * 依赖方向（ADR-0002）：core ← 本层；不挂 window；import CryptoService 复用密码本。
@@ -22,7 +26,7 @@ export interface SafeAttachment {
   /** 原 vault 路径（如 我的/影视/x.png） */
   path: string;
   kind: AttachmentKind;
-  /** 原始层镜像相对路径（encryptRoot 下，如 附件/我的/影视/x.png） */
+  /** 原始层镜像相对路径（encryptRoot 下，平铺随机名） */
   blobRef: string;
   /** 原始层密文文件大小（字节，便于 UI 展示） */
   blobSize: number;
@@ -30,7 +34,7 @@ export interface SafeAttachment {
   fingerprint: string;
   /** 是否有预览层 */
   hasPreview: boolean;
-  /** 预览层镜像相对路径 */
+  /** 预览层镜像相对路径（encryptRoot 下，平铺随机名） */
   previewRef: string;
   /** 是否已还原（明文在 vault） */
   restored: boolean;
@@ -46,7 +50,7 @@ export interface SafeNote {
   /** 是否已还原（存量状态字段；现还原=取出即删，新建数据恒 false，仅兼容旧数据保留） */
   restored: boolean;
   createdAt: string;
-  /** 正文密文镜像相对路径（encryptRoot 下，如 附件/我的/日记/2025-06-01.md；与附件同镜像目录） */
+  /** 正文密文镜像相对路径（encryptRoot 下，平铺随机名 .enc；与附件同级） */
   contentRef: string;
   /** 正文密文内嵌（base64）——旧版数据兼容；新版用 contentRef，此字段留空 */
   content: string;
@@ -116,14 +120,9 @@ export async function fingerprintOf(data: string): Promise<string> {
   return bytesToBase64(new Uint8Array(digest));
 }
 
-/** 镜像相对路径：附件原始层 */
-export function mirrorRef(origPath: string): string {
-  return '附件/' + origPath;
-}
-
-/** 镜像相对路径：附件预览层 */
-export function previewMirrorRef(origPath: string): string {
-  return '附件/_预览/' + origPath;
+/** 镜像相对路径（平铺随机名）：`.随机.enc`，点前缀 Obsidian 侧栏隐藏；文件名不含路径信息，还原靠清单映射 */
+export function flatName(): string {
+  return '.' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36) + '.enc';
 }
 
 /** 生成 note id */
@@ -132,8 +131,8 @@ export function genNoteId(): string {
 }
 
 export class SafeManager {
-  /** encryptRoot（vault 相对路径，默认 CONFIG/ENCRYPT） */
-  root = 'CONFIG/ENCRYPT';
+  /** encryptRoot（vault 相对路径，默认 CONFIG/.ENCRYPT——点前缀目录 Obsidian 侧栏隐藏） */
+  root = 'CONFIG/.ENCRYPT';
   /** 主密码（只存内存，锁定时清空） */
   password: string | null = null;
   unlocked = false;
@@ -143,9 +142,9 @@ export class SafeManager {
     if (root) this.root = root.replace(/\/+$/, '');
   }
 
-  /** 清单文件完整路径 */
+  /** 清单文件完整路径（点前缀，侧栏隐藏） */
   get manifestPath(): string {
-    return this.root + '/safe.enc';
+    return this.root + '/.safe.enc';
   }
 
   /** 镜像相对路径 → vault 完整路径 */
@@ -159,7 +158,7 @@ export class SafeManager {
   }
 
   /**
-   * 解锁：读 safe.enc → 解密 → 解析清单。首设（无文件）时创建空清单并设密码。
+   * 解锁：读 .safe.enc → 解密 → 解析清单。首设（无文件）时创建空清单并设密码。
    * 校验方式=解密成功即通过（GCM 认证，同密码本）。
    */
   async unlock(password: string): Promise<boolean> {
@@ -201,7 +200,7 @@ export class SafeManager {
     this.manifest = { version: 1, notes: [] };
   }
 
-  /** 持久化清单（整体加密写回 safe.enc） */
+  /** 持久化清单（整体加密写回 .safe.enc） */
   async saveManifest() {
     const app = getApp();
     if (!this.unlocked || !this.password) throw new Error('未解锁，无法保存清单');
@@ -213,16 +212,11 @@ export class SafeManager {
     else await app.vault.create(this.manifestPath, encrypted);
   }
 
-  /** 确保镜像目录存在（附件根 + 预览子目录） */
-  private async ensureMirrorDirs() {
+  /** 确保加密根目录存在（平铺布局只需根目录；点前缀目录 vault.createFolder 可建） */
+  private async ensureRootDir() {
     const app = getApp();
-    const mkdir = async (p: string) => {
-      const dir = app.vault.getAbstractFileByPath(p);
-      if (!dir) await app.vault.createFolder(p);
-    };
-    if (this.root) await mkdir(this.root);
-    await mkdir(this.root + '/附件');
-    await mkdir(this.root + '/附件/_预览');
+    const dir = app.vault.getAbstractFileByPath(this.root);
+    if (!dir) await app.vault.createFolder(this.root);
   }
 
   /**
@@ -298,7 +292,7 @@ export class SafeManager {
    */
   async lockNote(input: LockNoteInput, onProgress?: (p: EncryptProgress) => void): Promise<SafeNote> {
     if (!this.unlocked || !this.password) throw new Error('未解锁，无法加密笔记');
-    await this.ensureMirrorDirs();
+    await this.ensureRootDir();
     const total = input.attachments.length + 1;
     let done = 0;
 
@@ -308,13 +302,13 @@ export class SafeManager {
       onProgress?.({ done, total, current: a.path });
       const fp = await fingerprintOf(a.data);
       const enc = await CryptoService.encrypt(a.data, this.password);
-      const blobRef = mirrorRef(a.path);
+      const blobRef = flatName();
       await this.writeMirror(blobRef, enc);
       let hasPreview = false;
       let previewRef = '';
       if (a.previewData) {
         const encP = await CryptoService.encrypt(a.previewData, this.password);
-        previewRef = previewMirrorRef(a.path);
+        previewRef = flatName();
         await this.writeMirror(previewRef, encP);
         hasPreview = true;
       }
@@ -333,7 +327,7 @@ export class SafeManager {
     done += 1;
     onProgress?.({ done, total, current: input.path });
     // 正文同样写镜像文件（不内嵌进清单）
-    const bodyRef = mirrorRef(input.path);
+    const bodyRef = flatName();
     const bodyCipher = await CryptoService.encrypt(input.content, this.password);
     await this.writeMirror(bodyRef, bodyCipher);
     const note: SafeNote = {

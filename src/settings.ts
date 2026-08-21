@@ -241,7 +241,7 @@ export default interface BzSettings {
   pomodoroAutoPauseOnHide: boolean;
 
   // ===== 🔐 加密保险箱（encrypt 域，ticket NN）=====
-  /** 📂 保险箱根目录（加密清单 safe.enc 与附件密文镜像的统一存放目录，默认 CONFIG/ENCRYPT） */
+  /** 📂 保险箱根目录（加密清单 .safe.enc 与点前缀密文镜像的统一存放目录，默认 CONFIG/.ENCRYPT——点前缀目录 Obsidian 侧栏不可见，防误删） */
   encryptRoot: string;
   /** 🖼️ 生成压缩预览：加密时生成图片/视频压缩预览层（体积小但看得清，默认开） */
   encryptPreviewEnabled: boolean;
@@ -389,7 +389,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   pomodoroAutoPauseOnHide: true,
 
   // 加密保险箱（encrypt 域）
-  encryptRoot: 'CONFIG/ENCRYPT',
+  encryptRoot: 'CONFIG/.ENCRYPT',
   encryptPreviewEnabled: true,
   encryptPreviewSize: '960',
   encryptPreviewQuality: '0.7',
