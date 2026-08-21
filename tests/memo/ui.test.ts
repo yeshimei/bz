@@ -280,6 +280,37 @@ describe('备忘录面板', () => {
     MockPlatform.isMobile = false;
     vi.useRealTimers();
   });
+
+  it('移动端：抽屉拆分「优先级切换」项——点「转为重要」即时写盘并刷新', async () => {
+    vi.useFakeTimers();
+    MockPlatform.isMobile = true;
+    const vault = new MockVault();
+    await initApp(vault);
+    await seedItems(vault, [
+      { id: '1', title: '优先级', scene: '工作', priority: 'minor', created: '2025-06-14 10:00:00', completed: null },
+    ]);
+    await App.refresh();
+    const card = document.querySelector('.todo-card') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 60, clientY: 60 }));
+    vi.advanceTimersByTime(550);
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    // 抽屉里有拆分出的优先级项（次要与重要各显示对应文案）
+    const prioItem = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('转为重要')
+    ) as HTMLElement;
+    expect(prioItem).toBeDefined();
+    prioItem.click();
+    await vi.advanceTimersByTimeAsync(100);
+    const items = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(items[0].priority).toBe('important');
+    // 刷新后卡片场景标签挂 important 样式（红色）
+    const sceneTag = document.querySelector('.todo-card .bz-tag-scene') as HTMLElement;
+    expect(sceneTag.classList.contains('important')).toBe(true);
+    MockPlatform.isMobile = false;
+    vi.useRealTimers();
+  });
 });
 
 
