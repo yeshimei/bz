@@ -14,7 +14,7 @@ import { createIconBtn, createOverlay, longPress } from '../core/dom';
 import { formatRelativeTime } from '../core/utils';
 import { getSettings, saveSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
-import { SafeManager, type SafeNote, type SafeAttachment } from './data';
+import { SafeManager, base64ToBytes, type SafeNote, type SafeAttachment } from './data';
 import { compressImage, videoFrame } from './preview';
 
 export interface EncryptUIConfig {
@@ -51,6 +51,20 @@ export function collectNoteAttachments(content: string, vaultFiles: { path: stri
 export function kindOf(path: string): 'image' | 'video' {
   const ext = path.split('.').pop()?.toLowerCase() || '';
   return /^(mp4|webm|mov|mkv|avi|m4v|ogv)$/.test(ext) ? 'video' : 'image';
+}
+
+/** 按扩展名推断 MIME（缩略图点击加载原图/视频的 Blob 类型；未知回退 octet-stream） */
+export function mimeOf(path: string): string {
+  const ext = path.split('.').pop()?.toLowerCase() || '';
+  const IMG: Record<string, string> = {
+    png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif',
+    webp: 'image/webp', bmp: 'image/bmp', svg: 'image/svg+xml', avif: 'image/avif',
+  };
+  const VID: Record<string, string> = {
+    mp4: 'video/mp4', m4v: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime',
+    mkv: 'video/x-matroska', avi: 'video/x-msvideo', ogv: 'video/ogg',
+  };
+  return IMG[ext] || VID[ext] || 'application/octet-stream';
 }
 
 /** 预览窗混排占位槽：正文里每个嵌入对应一个槽 */
@@ -95,17 +109,26 @@ function findAttachment(target: string, attachments: SafeAttachment[]): SafeAtta
   return attachments.find((a) => a.path === t || a.path.endsWith('/' + t));
 }
 
-/** 附件预览媒体 HTML（有预览 → <img>；无/失败 → 占位提示真还原查看原图） */
+/**
+ * 附件预览媒体 HTML：slot 包裹（缩略图/占位 + 加载转圈），data-attach 按附件 path 标记。
+ * 有预览层 → 省略图 <img>；无 → 占位提示。点击 slot 由 bindMediaClicks 按需解密原始层，
+ * 原地替换为原始质量图片/可播放视频（只加载被点的那一张，缩略图内转圈，不弹通知）。
+ */
 export function mediaHtml(a: SafeAttachment | null | undefined, dataUrl: string | null | undefined): string {
   if (!a) return '';
   const alt = (a.path || '').replace(/"/g, '&quot;');
+  const key = encodeURIComponent(a.path);
+  const kindLabel = a.kind === 'video' ? '视频' : '图';
+  let inner: string;
   if (dataUrl) {
-    return `<img class="bz-encrypt-preview-media" src="${dataUrl}" alt="${alt}" loading="lazy">`;
-  }
-  return `<div class="bz-encrypt-preview-missing" title="${alt}">
+    inner = `<img class="bz-encrypt-preview-media" src="${dataUrl}" alt="${alt}" loading="lazy">`;
+  } else {
+    inner = `<div class="bz-encrypt-preview-missing" title="${alt}">
       <span class="bz-encrypt-preview-missing-name">${alt}</span>
-      <span>${a.kind === 'video' ? '视频抽帧预览不可用' : '无压缩预览'}，用「真还原」查看原图</span>
+      <span>${a.kind === 'video' ? '视频抽帧预览不可用' : '无压缩预览'}，点击加载原${kindLabel}</span>
     </div>`;
+  }
+  return `<span class="bz-encrypt-preview-slot" data-attach="${key}">${inner}<span class="bz-encrypt-preview-spinner"></span></span>`;
 }
 
 /** 进度通知按次独立：每次加密/还原用唯一键，避免相邻操作被去重抑制 */
@@ -160,6 +183,8 @@ export class UIManager {
   listContainer: HTMLDivElement | null = null;
   previewMask: HTMLDivElement | null = null;
   previewPopup: HTMLDivElement | null = null;
+  /** 缩略图按需加载产生的 Blob URL（预览窗关闭时统一 revoke，防泄漏） */
+  private _previewUrls: string[] = [];
   _initialized = false;
 
   constructor(dataManager: SafeManager, config: EncryptUIConfig) {
@@ -523,6 +548,8 @@ export class UIManager {
         }
         body.appendChild(gallery);
       }
+      // 缩略图/占位统一绑定：点击按需解密原始层（只加载被点的那一张）
+      this.bindMediaClicks(body, note.attachments);
     } catch (e) {
       body.innerHTML = '';
       const err = document.createElement('div');
@@ -552,7 +579,91 @@ export class UIManager {
     return finished;
   }
 
+  /** 预览窗内所有缩略图/占位 slot 绑定点击：只加载被点的那一张原始层 */
+  private bindMediaClicks(root: HTMLElement, attachments: SafeAttachment[]) {
+    const slots = root.querySelectorAll<HTMLElement>('.bz-encrypt-preview-slot');
+    for (const slot of slots) {
+      const key = slot.getAttribute('data-attach');
+      if (!key) continue;
+      const a = attachments.find((x) => x.path === decodeURIComponent(key));
+      if (!a) continue;
+      slot.addEventListener('click', () => void this.loadOriginal(a, slot));
+    }
+  }
+
+  /**
+   * 点击缩略图：该图 slot 显示转圈 → 解密原始层 → 原地替换为原始质量图片 / 可播放视频。
+   * 不弹通知（缩略图内加载态更直观）；失败恢复缩略图并提示 title 可重试。
+   */
+  private async loadOriginal(a: SafeAttachment, slot: HTMLElement) {
+    if (slot.dataset.loaded === '1' || slot.dataset.loading === '1') return;
+    slot.dataset.loading = '1';
+    slot.classList.add('bz-encrypt-preview-slot--loading');
+    try {
+      const b64 = await this.dataManager.decryptAttachmentOriginal(a);
+      if (!b64) throw new Error('无密文');
+      const url = await this.blobUrlOf(b64, mimeOf(a.path));
+      const img = slot.querySelector<HTMLImageElement>('img.bz-encrypt-preview-media');
+      const missing = slot.querySelector<HTMLElement>('.bz-encrypt-preview-missing');
+      if (a.kind === 'video') {
+        // 视频：缩略图/占位替换为可播放 <video>
+        const video = document.createElement('video');
+        video.className = 'bz-encrypt-preview-video';
+        video.controls = true;
+        video.preload = 'metadata';
+        video.src = url;
+        if (img) img.replaceWith(video);
+        else if (missing) missing.replaceWith(video);
+        else slot.appendChild(video);
+      } else if (img) {
+        // 图片：原地换 src（不用换元素，保持布局）
+        img.src = url;
+      } else if (missing) {
+        const im = document.createElement('img');
+        im.className = 'bz-encrypt-preview-media';
+        im.alt = (a.path || '').replace(/"/g, '&quot;');
+        im.src = url;
+        missing.replaceWith(im);
+      }
+      slot.dataset.loaded = '1';
+      slot.classList.add('bz-encrypt-preview-slot--loaded');
+    } catch (e) {
+      // 失败：恢复缩略图，title 提示可重试（不弹通知）
+      const img = slot.querySelector<HTMLImageElement>('img.bz-encrypt-preview-media');
+      const missing = slot.querySelector<HTMLElement>('.bz-encrypt-preview-missing');
+      if (img) img.title = '加载失败，点击重试';
+      if (missing) missing.title = '加载失败，点击重试';
+    } finally {
+      delete slot.dataset.loading;
+      slot.classList.remove('bz-encrypt-preview-slot--loading');
+    }
+  }
+
+  /** 原始 base64 → 展示 URL：优先 Blob URL（大视频/大图不撑坏内存），环境不支持时退回 dataURL */
+  private async blobUrlOf(b64: string, mime: string): Promise<string> {
+    try {
+      const bytes = base64ToBytes(b64);
+      const url = URL.createObjectURL(new Blob([bytes as any], { type: mime }));
+      if (url) {
+        this._previewUrls.push(url);
+        return url;
+      }
+    } catch (e) {
+      /* 环境不支持 Blob URL → 退回 dataURL */
+    }
+    return `data:${mime};base64,${b64}`;
+  }
+
   closePreview() {
+    // 释放本次预览产生的全部 Blob URL（防内存泄漏）
+    for (const u of this._previewUrls) {
+      try {
+        URL.revokeObjectURL(u);
+      } catch (e) {
+        /* 忽略 */
+      }
+    }
+    this._previewUrls = [];
     if (this.previewMask) this.previewMask.style.display = 'none';
     if (this.previewPopup) this.previewPopup.style.display = 'none';
   }
@@ -583,16 +694,16 @@ export class UIManager {
           );
         new Setting(el)
           .setName('预览目标长边（px）')
-          .setDesc('压缩/抽帧预览的目标分辨率长边')
+          .setDesc('压缩/抽帧预览（省略图）的目标分辨率长边，越小预览打开越快；点击缩略图可加载原图/视频')
           .addText((text) =>
-            text.setValue(String(s.encryptPreviewSize || '960')).onChange(async (v) => {
+            text.setValue(String(s.encryptPreviewSize || '480')).onChange(async (v) => {
               s.encryptPreviewSize = v;
               await saveSettings();
             })
           );
         new Setting(el)
           .setName('预览质量')
-          .setDesc('JPEG 压缩质量 0-1')
+          .setDesc('JPEG 压缩质量 0-1，模糊可接受时调低更省空间')
           .addText((text) =>
             text.setValue(String(s.encryptPreviewQuality || '0.7')).onChange(async (v) => {
               s.encryptPreviewQuality = v;
@@ -706,8 +817,8 @@ export class EncryptAppController {
     if (!proceed) return;
 
     const attachments: any[] = [];
-    const size = this.config.previewSize || 960;
-    const quality = this.config.previewQuality || 0.7;
+    const size = this.config.previewSize || 480;
+    const quality = this.config.previewQuality || 0.5;
     // Q3-A：任一附件读取失败 → 整笔放弃（不落任何东西、原文件不动）；预览失败不算失败（可选增强）
     for (const p of attPaths) {
       try {

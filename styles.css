@@ -2391,6 +2391,32 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 .bz-encrypt-preview-missing-name {
   font-weight: 600; color: var(--text-normal); word-break: break-all;
 }
+/* 缩略图按需加载原始层（省略图 + 点击转圈 + 原地替换原图/视频） */
+.bz-encrypt-preview-slot {
+  position: relative; display: block; margin: 8px 0;
+}
+.bz-encrypt-preview-slot .bz-encrypt-preview-media,
+.bz-encrypt-preview-slot .bz-encrypt-preview-missing {
+  cursor: zoom-in;
+}
+.bz-encrypt-preview-spinner {
+  display: none;
+  position: absolute; left: 50%; top: 50%;
+  width: 30px; height: 30px; margin: -15px 0 0 -15px;
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  border-top-color: var(--interactive-accent);
+  border-radius: 50%;
+  animation: bz-encrypt-spin 0.8s linear infinite;
+  pointer-events: none; z-index: 2;
+}
+.bz-encrypt-preview-slot--loading .bz-encrypt-preview-spinner { display: block; }
+.bz-encrypt-preview-slot--loading .bz-encrypt-preview-media,
+.bz-encrypt-preview-slot--loading .bz-encrypt-preview-missing { opacity: 0.35; }
+.bz-encrypt-preview-slot--loaded { cursor: default; }
+.bz-encrypt-preview-video {
+  max-width: 100%; max-height: 70vh; border-radius: 8px; display: block; margin: 8px 0;
+}
+@keyframes bz-encrypt-spin { to { transform: rotate(360deg); } }
 @media (max-width: 768px) {
   #bz-encrypt-popup { width: 95%; max-height: 90vh; }
 }

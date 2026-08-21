@@ -55,9 +55,11 @@ function isEmptySrc(src: string): boolean {
 
 /**
  * 压缩图片：把 dataURL / URL 加载为 Image → 按目标长边缩放 → 输出 JPEG dataURL。
+ * 默认产出「省略图」档（长边 480 / 质量 0.5，模糊可接受、看得清即可）——
+ * 预览窗只展示省略图，点击缩略图才按需加载原始质量（loadOriginal），故预览层越小打开越快。
  * 加载失败或超时返回 null（由调用方跳过预览层）。
  */
-export async function compressImage(src: string, maxSize = 960, quality = 0.7): Promise<CompressResult | null> {
+export async function compressImage(src: string, maxSize = 480, quality = 0.5): Promise<CompressResult | null> {
   if (!canvasAvailable() || isEmptySrc(src)) return null;
   const img = new Image();
   img.crossOrigin = 'anonymous';
@@ -86,9 +88,10 @@ export async function compressImage(src: string, maxSize = 960, quality = 0.7): 
 
 /**
  * 视频抽帧：加载 video 元素 → 定位到 ~0.1s 关键帧 → 绘制到 canvas 输出首帧图 dataURL。
- * 仅抽一帧（用户拍板，不重编码短视频）。加载/抽帧失败或超时返回 null。
+ * 仅抽一帧（用户拍板，不重编码短视频），默认省略图档（480/0.5）与图片一致。
+ * 加载/抽帧失败或超时返回 null。
  */
-export async function videoFrame(src: string, maxSize = 960, quality = 0.7): Promise<CompressResult | null> {
+export async function videoFrame(src: string, maxSize = 480, quality = 0.5): Promise<CompressResult | null> {
   if (!canvasAvailable() || !document.createElement('video') || isEmptySrc(src)) return null;
   const video = document.createElement('video');
   video.muted = true;
