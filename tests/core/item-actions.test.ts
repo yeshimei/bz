@@ -104,17 +104,17 @@ describe('长按跟手菜单（移动端主路径）', () => {
     longPressOn(card, 230, 290);
     const menu = document.querySelector('.bz-item-menu') as HTMLElement;
     expect(menu).not.toBeNull();
-    // 3 项菜单估算尺寸 168×134（jsdom offsetWidth/Height 恒 0 的兜底路径）
+    // 3 项菜单估算尺寸 168×100（jsdom offsetWidth/Height 恒 0 的兜底路径）
     const left = parseFloat(menu.style.left);
     const top = parseFloat(menu.style.top);
     // 不超出视口
     expect(left + 168).toBeLessThanOrEqual(240);
-    expect(top + 134).toBeLessThanOrEqual(300);
+    expect(top + 100).toBeLessThanOrEqual(300);
     expect(left).toBeGreaterThanOrEqual(0);
     expect(top).toBeGreaterThanOrEqual(0);
-    // 具体：左翻到锚点左侧（230-168-12=50），上翻到锚点上方（290-134-12=144）
+    // 具体：左翻到锚点左侧（230-168-12=50），上翻到锚点上方（290-100-12=178）
     expect(menu.style.left).toBe('50px');
-    expect(menu.style.top).toBe('144px');
+    expect(menu.style.top).toBe('178px');
     Object.defineProperty(window, 'innerWidth', { value: origW, configurable: true });
     Object.defineProperty(window, 'innerHeight', { value: origH, configurable: true });
     vi.useRealTimers();
@@ -129,6 +129,30 @@ describe('长按跟手菜单（移动端主路径）', () => {
     card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(document.querySelector('.bz-item-menu')).not.toBeNull();
     expect((window as any).__linkClicked).toBe(false);
+    vi.useRealTimers();
+  });
+
+  it('触屏长按：松手后的合成 click 在静置窗口内被吞（菜单不闪关、链接不触发），窗口过后菜单项可点', () => {
+    vi.useFakeTimers();
+    const card = makeCard();
+    attachItemActions(card, ACTIONS);
+    // 触屏路径：touchstart 长按出菜单（无 mouseup，走合成 click 静置窗口抑制）
+    const ts = new MouseEvent('touchstart', { bubbles: true, clientX: 60, clientY: 60 });
+    card.dispatchEvent(ts);
+    vi.advanceTimersByTime(550);
+    expect(document.querySelector('.bz-item-menu')).not.toBeNull();
+    card.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+    // 浏览器合成 click（400ms 窗口内）→ 吞掉：菜单保持打开、卡片链接不触发
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(document.querySelector('.bz-item-menu')).not.toBeNull();
+    expect((window as any).__linkClicked).toBe(false);
+    // 静置窗口过后，菜单项正常可点
+    vi.advanceTimersByTime(500);
+    const editItem = [...document.querySelectorAll('.bz-item-menu-item')].find(
+      (b) => b.textContent!.includes('编辑')
+    ) as HTMLElement;
+    editItem.click();
+    expect((window as any).__edited).toBe(true);
     vi.useRealTimers();
   });
 
