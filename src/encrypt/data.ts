@@ -16,7 +16,7 @@
  * 依赖方向（ADR-0002）：core ← 本层；不挂 window；import CryptoService 复用密码本。
  */
 import { getApp } from '../core/app';
-import { CryptoService } from '../password/crypto';
+import { CryptoService, clearCryptoKeyCache } from '../password/crypto';
 
 /** 附件类型 */
 export type AttachmentKind = 'image' | 'video';
@@ -213,11 +213,12 @@ export class SafeManager {
     }
   }
 
-  /** 加锁：清内存态 */
+  /** 加锁：清内存态（含派生密钥缓存，密钥不残留） */
   lock() {
     this.unlocked = false;
     this.password = null;
     this.manifest = { version: 1, notes: [] };
+    clearCryptoKeyCache();
   }
 
   /** 持久化清单（整体加密写回 .safe.enc；adapter 直写磁盘，点前缀可用） */

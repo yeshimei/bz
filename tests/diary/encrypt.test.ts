@@ -48,8 +48,6 @@ beforeEach(async () => {
   setSettingsProvider(() => ({
     encryptRoot: 'CONFIG/.ENCRYPT',
     encryptPreviewEnabled: false,
-    encryptPreviewSize: 960,
-    encryptPreviewQuality: 0.7,
     encryptSecurityMode: false,
     showTagCount: true,
   }) as any);

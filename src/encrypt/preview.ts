@@ -1,5 +1,5 @@
 /**
- * 加密保险箱预览层生成（encrypt 域，preview）
+ * 保险箱预览层生成（encrypt 域，preview）
  * 图片：canvas 缩放压缩（体积小但看得清）；视频：抽帧成图（零外部依赖，用户拍板）。
  * 依赖 document/canvas——仅 UI 层调用；环境不支持（jsdom 无 canvas 实现）时返回 null，
  * 调用方据此跳过预览层（hasPreview=false）。产物为 dataURL(base64)，再经数据层加密入库。
@@ -16,6 +16,14 @@ export interface CompressResult {
 
 /** 预览单步超时上限（ms）——超时按失败处理，避免资源加载永久挂起 */
 export const PREVIEW_TIMEOUT_MS = 5000;
+
+/**
+ * 省略图固定档（用户拍板：预览只要"看得清"，不提供长边/质量设置项）：
+ * 长边 256 / JPEG 质量 0.45——特别小、特别模糊均可接受；预览窗秒开，
+ * 要看清就点击缩略图按需加载原始质量。
+ */
+export const PREVIEW_OMIT_SIZE = 256;
+export const PREVIEW_OMIT_QUALITY = 0.45;
 
 /** 能否用 canvas（jsdom/node 无实现时 false） */
 function canvasAvailable(): boolean {
@@ -55,11 +63,11 @@ function isEmptySrc(src: string): boolean {
 
 /**
  * 压缩图片：把 dataURL / URL 加载为 Image → 按目标长边缩放 → 输出 JPEG dataURL。
- * 默认产出「省略图」档（长边 480 / 质量 0.5，模糊可接受、看得清即可）——
+ * 固定省略图档（PREVIEW_OMIT_SIZE/PREVIEW_OMIT_QUALITY，无设置项）——
  * 预览窗只展示省略图，点击缩略图才按需加载原始质量（loadOriginal），故预览层越小打开越快。
  * 加载失败或超时返回 null（由调用方跳过预览层）。
  */
-export async function compressImage(src: string, maxSize = 480, quality = 0.5): Promise<CompressResult | null> {
+export async function compressImage(src: string, maxSize = PREVIEW_OMIT_SIZE, quality = PREVIEW_OMIT_QUALITY): Promise<CompressResult | null> {
   if (!canvasAvailable() || isEmptySrc(src)) return null;
   const img = new Image();
   img.crossOrigin = 'anonymous';
@@ -88,10 +96,10 @@ export async function compressImage(src: string, maxSize = 480, quality = 0.5): 
 
 /**
  * 视频抽帧：加载 video 元素 → 定位到 ~0.1s 关键帧 → 绘制到 canvas 输出首帧图 dataURL。
- * 仅抽一帧（用户拍板，不重编码短视频），默认省略图档（480/0.5）与图片一致。
+ * 仅抽一帧（用户拍板，不重编码短视频），固定省略图档与图片一致。
  * 加载/抽帧失败或超时返回 null。
  */
-export async function videoFrame(src: string, maxSize = 480, quality = 0.5): Promise<CompressResult | null> {
+export async function videoFrame(src: string, maxSize = PREVIEW_OMIT_SIZE, quality = PREVIEW_OMIT_QUALITY): Promise<CompressResult | null> {
   if (!canvasAvailable() || !document.createElement('video') || isEmptySrc(src)) return null;
   const video = document.createElement('video');
   video.muted = true;

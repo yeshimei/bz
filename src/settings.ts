@@ -243,12 +243,8 @@ export default interface BzSettings {
   // ===== 🔐 加密保险箱（encrypt 域，ticket NN）=====
   /** 📂 保险箱根目录（加密清单 .safe.enc 与点前缀密文镜像的统一存放目录，默认 CONFIG/.ENCRYPT——点前缀目录 Obsidian 侧栏不可见，防误删） */
   encryptRoot: string;
-  /** 🖼️ 生成压缩预览：加密时生成图片/视频压缩预览层（体积小但看得清，默认开） */
+  /** 🖼️ 生成省略图预览：加密时生成固定小尺寸压缩预览（默认开；无长边/质量设置项） */
   encryptPreviewEnabled: boolean;
-  /** 📏 预览目标长边（px，默认 960） */
-  encryptPreviewSize: string;
-  /** 🎚️ 预览 JPEG 质量 0-1（默认 0.7） */
-  encryptPreviewQuality: string;
   /** 🔒 安全模式：关闭保险箱面板立即自动上锁（默认关） */
   encryptSecurityMode: boolean;
 }
@@ -391,7 +387,5 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 加密保险箱（encrypt 域）
   encryptRoot: 'CONFIG/.ENCRYPT',
   encryptPreviewEnabled: true,
-  encryptPreviewSize: '480',
-  encryptPreviewQuality: '0.5',
   encryptSecurityMode: false,
 };
