@@ -1,6 +1,6 @@
 /**
  * 加密保险箱 UI 测试：解锁弹窗（首设/解锁）、主面板列表渲染、
- * 真还原确认、独立预览窗、安全模式自动上锁、收回全部、加锁当前笔记。
+ * 单击开预览/长按还原确认、独立预览窗、安全模式自动上锁、加密二次确认、加锁当前笔记。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
@@ -19,7 +19,7 @@ async function waitFor(cond: () => boolean, timeout = 3000) {
   }
 }
 
-const CONFIG = { root: 'CONFIG/ENCRYPT', previewEnabled: false, previewSize: 960, previewQuality: 0.7, securityMode: false };
+const CONFIG = { root: 'CONFIG/.ENCRYPT', previewEnabled: false, previewSize: 960, previewQuality: 0.7, securityMode: false };
 
 function setup(vault: MockVault, config = CONFIG) {
   const app = mockAppWithVault(vault);
@@ -42,7 +42,7 @@ describe('UIManager 解锁弹窗', () => {
     vault = new MockVault();
     setup(vault);
     document.body.innerHTML = '';
-    dm = new SafeManager('CONFIG/ENCRYPT');
+    dm = new SafeManager('CONFIG/.ENCRYPT');
     ui = new UIManager(dm, CONFIG);
     ui.ensureElements();
   });
@@ -72,7 +72,7 @@ describe('UIManager 解锁弹窗', () => {
     confirmBtn.click();
     await p;
     expect(dm.unlocked).toBe(true);
-    expect(vault.files.has('CONFIG/ENCRYPT/safe.enc')).toBe(true);
+    expect(vault.files.has('CONFIG/.ENCRYPT/.safe.enc')).toBe(true);
     expect(hasNotice('密码已设置，数据已加密')).toBe(true);
   });
 
@@ -106,7 +106,7 @@ describe('UIManager 主面板', () => {
     vault = new MockVault();
     setup(vault);
     document.body.innerHTML = '';
-    dm = new SafeManager('CONFIG/ENCRYPT');
+    dm = new SafeManager('CONFIG/.ENCRYPT');
     ui = new UIManager(dm, CONFIG);
     ui.ensureElements();
     await dm.unlock('pw');
@@ -163,7 +163,7 @@ describe('UIManager 主面板', () => {
   });
 
   it('安全模式：关闭面板自动上锁', async () => {
-    const dm2 = new SafeManager('CONFIG/ENCRYPT');
+    const dm2 = new SafeManager('CONFIG/.ENCRYPT');
     const ui2 = new UIManager(dm2, { ...CONFIG, securityMode: true });
     ui2.ensureElements();
     await dm2.unlock('pw');
@@ -220,7 +220,7 @@ describe('预览窗混排与还原打开', () => {
     vault = new MockVault();
     setup(vault);
     document.body.innerHTML = '';
-    dm = new SafeManager('CONFIG/ENCRYPT');
+    dm = new SafeManager('CONFIG/.ENCRYPT');
     ui = new UIManager(dm, CONFIG);
     ui.ensureElements();
     await dm.unlock('pw');
@@ -316,7 +316,7 @@ describe('EncryptAppController', () => {
     expect(document.getElementById('bz-encrypt-popup')!.style.display).toBe('flex');
   });
 
-  it('lockCurrentNote：把当前笔记 + 双链附件移入保险箱', async () => {
+  it('lockCurrentNote：先弹二次确认，点「加密」才把当前笔记 + 双链附件移入保险箱', async () => {
     const app = setup(vault, CONFIG);
     // 当前笔记引用图片附件
     vault.create('笔记/主题.md', '正文\n![[pic.png]]');
@@ -328,7 +328,13 @@ describe('EncryptAppController', () => {
     const c = EncryptAppController.getInstance(CONFIG);
     await c.init();
     await c.dataManager.unlock('pw');
-    await c.lockCurrentNote();
+    const p = c.lockCurrentNote();
+    // 二次确认框出现，未确认前不加密
+    await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
+    expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('加密到保险箱');
+    expect(vault.files.has('笔记/主题.md')).toBe(true); // 还在，未加密
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    await p;
     // 等待加密完成（进度通知 finish 后打开面板）
     await waitFor(() => document.getElementById('bz-encrypt-popup')!.style.display === 'flex');
 
@@ -339,5 +345,26 @@ describe('EncryptAppController', () => {
     expect(c.dataManager.manifest.notes[0].attachments.length).toBe(1);
     // 加密完成主动打开保险箱面板
     expect(document.getElementById('bz-encrypt-popup')!.style.display).toBe('flex');
+  });
+
+  it('lockCurrentNote：取消二次确认则不加密', async () => {
+    const app = setup(vault, CONFIG);
+    vault.create('笔记/主题.md', '正文\n![[pic.png]]');
+    vault.createBinary('笔记/pic.png', new TextEncoder().encode('BCD').buffer);
+    const activeFile = { path: '笔记/主题.md', basename: '主题', vault: vault as any };
+    (app.workspace as any).getActiveFile = () => activeFile;
+
+    const c = EncryptAppController.getInstance(CONFIG);
+    await c.init();
+    await c.dataManager.unlock('pw');
+    const p = c.lockCurrentNote();
+    await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
+    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
+    await p;
+    // 未加密：笔记仍在，清单空，面板未开
+    expect(vault.files.has('笔记/主题.md')).toBe(true);
+    expect(vault.binaryFiles.has('笔记/pic.png')).toBe(true);
+    expect(c.dataManager.manifest.notes.length).toBe(0);
+    expect(document.getElementById('bz-encrypt-popup')!.style.display).toBe('none');
   });
 });
