@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { SafeManager, type SafeAttachment } from '../../src/encrypt/data';
-import { EncryptAppController, UIManager, collectMediaSlots, truncateName, mimeOf } from '../../src/encrypt/ui';
+import { EncryptAppController, UIManager, collectMediaSlots, truncateName, mimeOf, collectNoteAttachments, collectNoteAttachmentPaths } from '../../src/encrypt/ui';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices, mockMarkdownRenderer } from '../mock-obsidian-entry';
 
@@ -749,6 +749,223 @@ describe('预览窗缩略图按需加载原始层', () => {
       await waitFor(() => !!document.querySelector('.bz-encrypt-preview-slot--loaded') && document.querySelectorAll('.bz-encrypt-preview-slot--loaded').length === 2);
     } finally {
       spy.mockRestore();
+    }
+  });
+});
+
+describe('collectNoteAttachments embeds 收集（优化三：metadataCache 自带链接信息）', () => {
+  it('embeds 与正则兜底取并集：embeds 覆盖 ![[，正则兜底 md 图/video', () => {
+    const files = [
+      { path: '我的/影视/a.png' },
+      { path: '我的/影视/b/海报.png' },
+    ];
+    // embeds 提供（Obsidian 自带链接信息）：content 里没有嵌入语法也能收到
+    expect(collectNoteAttachments('# 无嵌入', ['a.png'], files)).toEqual(['我的/影视/a.png']);
+    // 正则兜底：markdown 图 + video（embeds 不覆盖的语法）
+    expect(collectNoteAttachments('![](b/海报.png) <video src="b/海报.png">', [], files)).toEqual(['我的/影视/b/海报.png']);
+    // 并集去重：同一引用两路来只出一个
+    expect(collectNoteAttachments('![[a.png]]', ['a.png'], files)).toEqual(['我的/影视/a.png']);
+    // 相对路径（含子目录）退化匹配
+    expect(collectNoteAttachments('![[影视/海报.png]]', [], [{ path: '我的/影视/海报.png' }])).toEqual(['我的/影视/海报.png']);
+    // 未知引用忽略
+    expect(collectNoteAttachments('![[不存在.png]]', ['也/没有.png'], files)).toEqual([]);
+  });
+
+  it('collectNoteAttachmentPaths：从 app.metadataCache.getFileCache().embeds 收集（app 级入口，路径字符串）', () => {
+    const vault = new MockVault();
+    const app = mockAppWithVault(vault);
+    vault.create('笔记/x.md', '正文\n![[pic.png]]');
+    vault.createBinary('笔记/pic.png', new TextEncoder().encode('X').buffer);
+    const paths = collectNoteAttachmentPaths(app, '笔记/x.md', '正文\n![[pic.png]]');
+    expect(paths).toEqual(['笔记/pic.png']);
+  });
+});
+
+describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI 侧）', () => {
+  let vault: MockVault;
+  let dm: SafeManager;
+  let ui: UIManager;
+
+  beforeEach(() => {
+    vault = new MockVault();
+    setup(vault);
+    document.body.innerHTML = '';
+    dm = new SafeManager('CONFIG/.ENCRYPT');
+    ui = new UIManager(dm, CONFIG);
+    ui.ensureElements();
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('空清单损坏：输密码解锁失败 → 弹「清单疑似损坏」确认 → 仍要重设 → 重设成功', async () => {
+    await dm.unlock('oldpw');
+    dm.lock();
+    vault.files.set('CONFIG/.ENCRYPT/.safe.enc', ''); // 半写崩溃现场：清单为空
+    const p = ui.showPasswordDialog();
+    await waitFor(() => !!findDialog());
+    const dialog = findDialog()!;
+    const inputs = dialog.querySelectorAll('input[type="password"]');
+    const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+    (inputs[0] as HTMLInputElement).value = 'newpw';
+    confirmBtn.click();
+    // 不清静默重设：先出损坏确认框
+    await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
+    expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('清单疑似损坏');
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    expect(await p).toBe(true);
+    expect(dm.unlocked).toBe(true);
+    expect(hasNotice('已重设主密码（旧数据不可恢复）')).toBe(true);
+  });
+
+  it('空清单损坏：点「暂不重设」→ 弹窗保留、未解锁、有警示', async () => {
+    await dm.unlock('oldpw');
+    dm.lock();
+    vault.files.set('CONFIG/.ENCRYPT/.safe.enc', '');
+    const p = ui.showPasswordDialog();
+    await waitFor(() => !!findDialog());
+    const dialog = findDialog()!;
+    const inputs = dialog.querySelectorAll('input[type="password"]');
+    const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+    (inputs[0] as HTMLInputElement).value = 'newpw';
+    confirmBtn.click();
+    await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
+    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
+    expect(hasNotice('未重设：请先检查或备份数据文件')).toBe(true);
+    // 密码弹窗仍保留、未解锁
+    expect(findDialog()).toBeTruthy();
+    expect(dm.unlocked).toBe(false);
+    void p;
+  });
+
+  it('密码错误（清单正常）仍走「密码错误，请重试」而非损坏确认', async () => {
+    await dm.unlock('pw');
+    dm.lock();
+    const p = ui.showPasswordDialog();
+    await waitFor(() => !!findDialog());
+    const dialog = findDialog()!;
+    const inputs = dialog.querySelectorAll('input[type="password"]');
+    const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+    (inputs[0] as HTMLInputElement).value = 'wrong';
+    confirmBtn.click();
+    await new Promise((r) => setTimeout(r, 200));
+    expect(hasNotice('密码错误，请重试')).toBe(true);
+    expect(document.getElementById('__shared_confirm_mask__')).toBeNull(); // 无损坏确认
+    (inputs[0] as HTMLInputElement).value = 'pw';
+    confirmBtn.click();
+    expect(await p).toBe(true);
+  });
+
+  it('首设写清单失败：提示设置失败并关闭弹窗（不再假装成功）', async () => {
+    const spy = vi.spyOn(vault.adapter, 'write').mockRejectedValue(new Error('disk full'));
+    try {
+      const p = ui.showPasswordDialog();
+      await waitFor(() => !!findDialog());
+      const dialog = findDialog()!;
+      const inputs = dialog.querySelectorAll('input[type="password"]');
+      const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+      (inputs[0] as HTMLInputElement).value = 'pw';
+      confirmBtn.click();
+      (inputs[1] as HTMLInputElement).value = 'pw';
+      confirmBtn.click();
+      expect(await p).toBe(false);
+      expect(hasNotice('设置失败：无法写入清单，请检查磁盘空间后重试')).toBe(true);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});
+
+describe('EncryptAppController 重入保护（雷 3）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    vault = new MockVault();
+    setup(vault);
+    document.body.innerHTML = '';
+  });
+
+  afterEach(() => {
+    EncryptAppController.instance?.cleanup();
+    EncryptAppController.instance = null;
+  });
+
+  it('lockCurrentNote 处理中再次触发被拒（busy 提示），原操作不受影响', async () => {
+    const app = setup(vault, CONFIG);
+    vault.create('笔记/主题.md', '正文');
+    const activeFile = { path: '笔记/主题.md', basename: '主题' };
+    (app.workspace as any).getActiveFile = () => activeFile;
+    const c = EncryptAppController.getInstance(CONFIG);
+    await c.init();
+    await c.dataManager.unlock('pw');
+    const p = c.lockCurrentNote();
+    await waitFor(() => !!document.getElementById('__shared_confirm_mask__')); // 第一次停在二次确认
+    await c.lockCurrentNote(); // 第二次触发 → 拒
+    expect(hasNotice('正在加密当前笔记，请稍候')).toBe(true);
+    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
+    await p;
+    expect(c.dataManager.manifest.notes.length).toBe(0);
+  });
+});
+
+describe('预览窗 Blob URL 释放（优化四：换预览即释放上一批）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    vault = new MockVault();
+    setup(vault);
+    document.body.innerHTML = '';
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('连开两篇预览不关窗：上一批 Blob URL 被 revoke', async () => {
+    // jsdom 无 Blob URL：stub 出真实链路（create/revoke 记录）
+    const created: string[] = [];
+    const revoked: string[] = [];
+    Object.defineProperty(URL, 'createObjectURL', {
+      value: vi.fn(() => {
+        const u = 'blob:mock-' + created.length;
+        created.push(u);
+        return u;
+      }),
+      configurable: true,
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      value: vi.fn((u: string) => {
+        revoked.push(u);
+      }),
+      configurable: true,
+    });
+    try {
+      const dm = new SafeManager('CONFIG/.ENCRYPT');
+      const ui = new UIManager(dm, CONFIG);
+      ui.ensureElements();
+      await dm.unlock('pw');
+      const noteA = await dm.lockNote({
+        path: 'a.md', title: 'a', content: '![[p.png]]',
+        attachments: [{ path: 'p.png', data: 'QUJD' }],
+      });
+      const noteB = await dm.lockNote({
+        path: 'b.md', title: 'b', content: '![[p2.png]]',
+        attachments: [{ path: 'p2.png', data: 'REVG' }],
+      });
+      ui.openPreview(noteA);
+      await waitFor(() => document.querySelectorAll('.bz-encrypt-preview-slot').length === 1);
+      // 点击加载原图 → 产生 blob URL
+      (document.querySelector('.bz-encrypt-preview-slot') as HTMLElement).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await waitFor(() => created.length === 1);
+      // 不关窗直接开第二篇 → 上一篇 blob 立即释放
+      ui.openPreview(noteB);
+      expect(revoked).toEqual(['blob:mock-0']);
+      // 关窗幂等（空列表）
+      ui.closePreview();
+    } finally {
+      delete (URL as any).createObjectURL;
+      delete (URL as any).revokeObjectURL;
     }
   });
 });

@@ -4,7 +4,7 @@
  * 清单加密存储、平铺点前缀密文镜像、指纹冲突安全、崩溃幂等。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { SafeManager, fingerprintOf, flatName } from '../../src/encrypt/data';
+import { SafeManager, fingerprintOf, flatName, mapLimit } from '../../src/encrypt/data';
 import { CryptoService, clearCryptoKeyCache } from '../../src/password/crypto';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
@@ -339,12 +339,12 @@ describe('SafeManager 进度回调（onProgress）', () => {
     vault = new MockVault();
   });
 
-  it('lockNote：按附件逐个 + 笔记本身上报（done/total/current）', async () => {
+  it('lockNote：附件并行加密后按完成数上报（done 递增、total 3、current 覆盖全部文件）', async () => {
     makeApp(vault);
     const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
     const events: Array<{ done: number; total: number; current: string }> = [];
-    await sm.lockNote(
+    const note = await sm.lockNote(
       {
         path: '我的/日记/a.md',
         title: 'a',
@@ -357,9 +357,13 @@ describe('SafeManager 进度回调（onProgress）', () => {
       (p) => events.push(p)
     );
     expect(events.length).toBe(3); // 2 附件 + 1 笔记
-    expect(events[0]).toMatchObject({ done: 1, total: 3, current: '我的/影视/1.png' });
-    expect(events[1]).toMatchObject({ done: 2, total: 3, current: '我的/影视/2.mp4' });
-    expect(events[2]).toMatchObject({ done: 3, total: 3, current: '我的/日记/a.md' });
+    // 并行（BLOB_CONCURRENCY）下完成序不定，但 done 必须严格递增到 total
+    expect(events.map((e) => e.done)).toEqual([1, 2, 3]);
+    expect(new Set(events.map((e) => e.current))).toEqual(
+      new Set(['我的/影视/1.png', '我的/影视/2.mp4', '我的/日记/a.md'])
+    );
+    // 清单附件顺序 = 输入顺序（并行只提速，不漂移顺序）
+    expect(note.attachments.map((a) => a.path)).toEqual(['我的/影视/1.png', '我的/影视/2.mp4']);
   });
 
   it('restoreNote：按附件逐个 + 笔记本身上报，末尾 done===total', async () => {
@@ -570,5 +574,220 @@ describe('SafeManager 提交式加密（ADR-0018）', () => {
     expect(vault.files.get('CONFIG/.ENCRYPT/.safe.enc')).toBeTruthy();
     expect(vault.files.get('CONFIG/.ENCRYPT/plain.enc')).toBe('non-dot');
     expect(vault.files.get('CONFIG/.ENCRYPT/.staging/.stale.enc')).toBeUndefined();
+  });
+});
+
+describe('SafeManager mapLimit 受控并发', () => {
+  it('并发执行、保持输入顺序返回、全部任务执行', async () => {
+    const order: number[] = [];
+    const results = await mapLimit([1, 2, 3, 4, 5], 3, async (x) => {
+      await new Promise((r) => setTimeout(r, 10));
+      order.push(x);
+      return x * 10;
+    });
+    expect(results).toEqual([10, 20, 30, 40, 50]);
+    expect(order.length).toBe(5);
+  });
+
+  it('任一任务 reject → 整体 reject', async () => {
+    await expect(
+      mapLimit([1, 2, 3], 2, async (x) => {
+        if (x === 2) throw new Error('boom');
+        return x;
+      })
+    ).rejects.toThrow('boom');
+  });
+});
+
+describe('SafeManager 清单损坏与首设回滚（雷 1/4）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    vault = new MockVault();
+  });
+
+  it('空清单文件：unlock 返回 false + manifestIssue=empty（不再静默重设主密码）', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw'); // 首设
+    sm.lock();
+    // 模拟半写崩溃：清单文件被截断为空
+    vault.files.set('CONFIG/.ENCRYPT/.safe.enc', '');
+    expect(await sm.unlock('any')).toBe(false);
+    expect(sm.manifestIssue).toBe('empty');
+    expect(sm.unlocked).toBe(false);
+    // 旧密文未被覆盖（等待 UI 显式确认重设）
+    expect(vault.files.get('CONFIG/.ENCRYPT/.safe.enc')).toBe('');
+  });
+
+  it('损坏清单（解密成功但解析失败）：unlock false + manifestIssue=corrupt；密码错误不设 issue', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    // 用正确密码加密一段非 JSON 内容（模拟清单被改坏）
+    vault.files.set('CONFIG/.ENCRYPT/.safe.enc', await CryptoService.encrypt('not-json-at-all', 'pw'));
+    sm.lock();
+    expect(await sm.unlock('pw')).toBe(false);
+    expect(sm.manifestIssue).toBe('corrupt');
+    // GCM 认证失败（密码错误）按密码错处理，不设 issue（UI 提示重试而非引导重设）
+    expect(await sm.unlock('wrong')).toBe(false);
+    expect(sm.manifestIssue).toBeUndefined();
+  });
+
+  it('forceReset：损坏清单显式确认后重设新密码（旧数据丢弃语义由 UI 确认负责）', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('oldpw');
+    sm.lock();
+    vault.files.set('CONFIG/.ENCRYPT/.safe.enc', '');
+    expect(await sm.unlock('newpw', true)).toBe(true);
+    expect(sm.unlocked).toBe(true);
+    sm.lock();
+    expect(await sm.unlock('newpw')).toBe(true);
+  });
+
+  it('saveManifest 原子写：.tmp 临时文件无残留，清单整体可解密再读', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    await sm.lockNote({ path: 'a.md', title: 'a', content: '# a', attachments: [] });
+    expect(vault.files.has('CONFIG/.ENCRYPT/.safe.enc')).toBe(true);
+    expect(vault.files.has('CONFIG/.ENCRYPT/.safe.enc.tmp')).toBe(false); // tmp+rename 无残留
+    sm.lock();
+    const sm2 = new SafeManager('CONFIG/.ENCRYPT');
+    expect(await sm2.unlock('pw')).toBe(true);
+    expect(sm2.manifest.notes.length).toBe(1);
+  });
+
+  it('首设写清单失败：unlock 回滚解锁态并返回 false（不假装成功）', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    const spy = vi.spyOn(vault.adapter, 'write').mockRejectedValue(new Error('disk full'));
+    try {
+      expect(await sm.unlock('pw')).toBe(false);
+      expect(sm.unlocked).toBe(false);
+      expect(sm.password).toBeNull();
+      expect(sm.manifest.notes).toEqual([]);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});
+
+describe('SafeManager 原子还原（优化五：全部成功才落盘）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    vault = new MockVault();
+  });
+
+  it('附件可解但正文目标被用户占用 → 整体不落盘：附件明文未写回、条目与密文保留', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await sm.lockNote({
+      path: '我的/日记/a.md',
+      title: 'a',
+      content: '# A',
+      attachments: [{ path: '我的/影视/pic.png', data: 'QUJDREVGRw==' }],
+    });
+    // 用户新建同名笔记占用正文路径；附件路径空闲
+    vault.create('我的/日记/a.md', '# 用户的笔记');
+    const { conflicts, removed } = await sm.restoreNote(note.id);
+    expect(conflicts).toEqual(['我的/日记/a.md']);
+    expect(removed).toBe(false);
+    // 原子语义：附件明文未写回（未落任何盘）
+    expect(vault.binaryFiles.has('我的/影视/pic.png')).toBe(false);
+    expect(vault.files.get('我的/日记/a.md')).toBe('# 用户的笔记'); // 用户文件未被覆盖
+    expect(sm.manifest.notes.some((n) => n.id === note.id)).toBe(true);
+    expect(vault.files.has('CONFIG/.ENCRYPT/' + note.attachments[0].blobRef)).toBe(true);
+  });
+
+  it('任一附件镜像缺失 → 整体不落盘：可解附件与正文均未写回', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await sm.lockNote({
+      path: '我的/日记/a.md',
+      title: 'a',
+      content: '# A',
+      attachments: [
+        { path: '我的/影视/good.png', data: 'QUJDREVGRw==' },
+        { path: '我的/影视/missing.png', data: 'REVGSElK' },
+      ],
+    });
+    vault.files.delete('CONFIG/.ENCRYPT/' + note.attachments[1].blobRef); // 镜像被误删
+    const { conflicts, removed } = await sm.restoreNote(note.id);
+    expect(conflicts).toEqual(['我的/影视/missing.png']);
+    expect(removed).toBe(false);
+    // 可解附件也未写回（原子：任一失败零落盘）
+    expect(vault.binaryFiles.has('我的/影视/good.png')).toBe(false);
+    expect(vault.files.has('我的/日记/a.md')).toBe(false);
+  });
+
+  it('指纹不符（镜像被替换成另一份同密码密文）→ 完整性冲突不写回，整体不落盘', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await sm.lockNote({
+      path: '我的/日记/a.md',
+      title: 'a',
+      content: '# A',
+      attachments: [
+        { path: '我的/影视/mine.png', data: 'QUJDREVGRw==' },
+        { path: '我的/影视/yours.png', data: 'REVGSElK' },
+      ],
+    });
+    // 镜像被替换成另一份同密码加密内容：解密能过但内容指纹与加密时不符（数据被改），永不写回
+    vault.files.set(
+      'CONFIG/.ENCRYPT/' + note.attachments[1].blobRef,
+      await CryptoService.encrypt('TAMPERED-BASE64', 'pw')
+    );
+    const { conflicts, removed } = await sm.restoreNote(note.id);
+    expect(conflicts).toEqual(['我的/影视/yours.png']);
+    expect(removed).toBe(false);
+    expect(vault.binaryFiles.has('我的/影视/mine.png')).toBe(false); // 未写回
+    expect(vault.files.has('我的/日记/a.md')).toBe(false);
+  });
+
+  it('目标路径被用户同名文件占用（内容不同）→ 判冲突不覆盖、整体不落盘', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await sm.lockNote({
+      path: '我的/日记/a.md',
+      title: 'a',
+      content: '# A',
+      attachments: [
+        { path: '我的/影视/mine.png', data: 'QUJDREVGRw==' },
+        { path: '我的/影视/yours.png', data: 'REVGSElK' },
+      ],
+    });
+    // 用户在附件原路径新建了不同内容的同名文件 → 占用冲突，绝不覆盖
+    vault.createBinary('我的/影视/yours.png', new TextEncoder().encode('USER-NEW-FILE').buffer);
+    const { conflicts, removed } = await sm.restoreNote(note.id);
+    expect(conflicts).toEqual(['我的/影视/yours.png']);
+    expect(removed).toBe(false);
+    const userBytes = await vault.readBinary(vault.file('我的/影视/yours.png'));
+    expect(new TextDecoder().decode(userBytes)).toBe('USER-NEW-FILE'); // 用户文件原样
+    expect(vault.binaryFiles.has('我的/影视/mine.png')).toBe(false); // 其余附件未写回
+    expect(vault.files.has('我的/日记/a.md')).toBe(false);
+  });
+
+  it('同指纹残留文件幂等覆盖：指纹匹配 → 非冲突，整体还原成功', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await sm.lockNote({
+      path: '我的/日记/a.md',
+      title: 'a',
+      content: '# A',
+      attachments: [{ path: '我的/影视/pic.png', data: 'QUJDREVGRw==' }],
+    });
+    // 本次还原先手动写回同内容文件（模拟上次半成状态）：指纹相同 → 放行覆盖
+    vault.createBinary('我的/影视/pic.png', new TextEncoder().encode('ABCDEFG').buffer);
+    const { conflicts, removed } = await sm.restoreNote(note.id);
+    expect(conflicts).toEqual([]);
+    expect(removed).toBe(true);
   });
 });

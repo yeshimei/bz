@@ -124,9 +124,21 @@ export async function fingerprintOf(data: string): Promise<string> {
   return bytesToBase64(new Uint8Array(digest));
 }
 
-/** 镜像相对路径（平铺随机名）：`.随机.enc`，点前缀 Obsidian 侧栏隐藏；文件名不含路径信息，还原靠清单映射 */
+/** 64 字符表（A-Za-z0-9-_）：byte % 64 无偏差，随机字节可直接映射 */
+const RAND_CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_';
+
+/** 加密安全随机 token（crypto.getRandomValues；64 字符表无取模偏差） */
+export function randToken(len: number): string {
+  const bytes = new Uint8Array(len);
+  crypto.getRandomValues(bytes);
+  let s = '';
+  for (let i = 0; i < len; i++) s += RAND_CHARS[bytes[i] % 64];
+  return s;
+}
+
+/** 镜像相对路径（平铺随机名）：`.随机.enc`，点前缀 Obsidian 侧栏隐藏；文件名不含路径与时间信息，还原靠清单映射 */
 export function flatName(): string {
-  return '.' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36) + '.enc';
+  return '.' + randToken(11) + '.enc';
 }
 
 /** 暂存目录名（encryptRoot 下，点前缀隐藏、与最终镜像同盘；ADR-0018 提交式加密） */
@@ -134,9 +146,39 @@ const STAGING_DIR = '.staging';
 /** 挂起标记文件名（暂存区内，明文 noteId 列表；带外标记——不改清单结构，铁律 1） */
 const PENDING_FILE = 'pending.json';
 
-/** 生成 note id */
+/** 生成 note id（前缀+时间戳便于排序辨识，随机段用加密安全源） */
 export function genNoteId(): string {
-  return 'enc-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+  return 'enc-' + Date.now() + '-' + randToken(6);
+}
+
+/** 附件加密/还原准备阶段并发上限（独立 blob 互不依赖；并发放大 PBKDF2 吞吐，写盘由 adapter 队列兜底） */
+const BLOB_CONCURRENCY = 3;
+
+/**
+ * 受控并发 map：同时最多 limit 个任务，返回顺序与输入一致；任一 reject 立即整体 reject。
+ * （UI 不可用场景/数据层无 DOM 依赖，直接在数据层实现）
+ */
+export async function mapLimit<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>
+): Promise<R[]> {
+  const out: R[] = new Array(items.length);
+  let next = 0;
+  const workers: Promise<void>[] = [];
+  const n = Math.min(limit, items.length);
+  for (let w = 0; w < n; w++) {
+    workers.push(
+      (async () => {
+        while (next < items.length) {
+          const i = next++;
+          out[i] = await fn(items[i], i);
+        }
+      })()
+    );
+  }
+  await Promise.all(workers);
+  return out;
 }
 
 export class SafeManager {
@@ -146,6 +188,14 @@ export class SafeManager {
   password: string | null = null;
   unlocked = false;
   manifest: SafeManifest = { version: 1, notes: [] };
+  /**
+   * 最近一次 unlock 发现的清单异常（解锁成功后清除）：
+   * 'empty' = .safe.enc 存在但内容为空（半写崩溃/被截断）；
+   * 'corrupt' = 密文解密成功但清单解析失败（密码正确、数据损坏）。
+   * 这两类必须由 UI 向用户明示「重设将丢失旧数据」后才能 forceReset，
+   * 绝不静默当作首次设置（旧密文会因此永久不可解）。
+   */
+  manifestIssue?: 'empty' | 'corrupt';
 
   constructor(root?: string) {
     if (root) this.root = root.replace(/\/+$/, '');
@@ -175,27 +225,33 @@ export class SafeManager {
   /**
    * 解锁：读 .safe.enc → 解密 → 解析清单。首设（无文件）时创建空清单并设密码。
    * 校验方式=解密成功即通过（GCM 认证，同密码本）。
+   * @param password 主密码
+   * @param forceReset 清单损坏（空/解析失败）时是否强制重设新密码——
+   *   重设会丢弃旧清单（旧密文永久不可解），必须由 UI 在用户明确确认后传入。
+   *   返回 false 时用 manifestIssue 区分「密码错误（无 issue）」与「清单损坏（empty/corrupt）」。
    */
-  async unlock(password: string): Promise<boolean> {
+  async unlock(password: string, forceReset = false): Promise<boolean> {
+    this.manifestIssue = undefined;
     const existsManifest = await this.exists();
-    if (!existsManifest) {
-      this.password = password;
-      this.unlocked = true;
-      this.manifest = { version: 1, notes: [] };
-      await this.saveManifest();
-      return true;
-    }
+    if (!existsManifest) return this.firstTimeSetup(password);
     const content = await this.adapter.read(this.manifestPath);
     if (!content.trim()) {
-      this.password = password;
-      this.unlocked = true;
-      this.manifest = { version: 1, notes: [] };
-      await this.saveManifest();
-      return true;
+      // 清单文件存在但为空：半写崩溃/被截断——绝不静默重设
+      this.manifestIssue = 'empty';
+      if (!forceReset) return false;
+      return this.firstTimeSetup(password);
     }
     try {
       const plain = await CryptoService.decrypt(content.trim(), password);
-      const parsed = JSON.parse(plain);
+      let parsed: SafeManifest;
+      try {
+        parsed = JSON.parse(plain);
+      } catch (e) {
+        // 密码正确但内容损坏（解密通过、解析失败）
+        this.manifestIssue = 'corrupt';
+        if (!forceReset) return false;
+        return this.firstTimeSetup(password);
+      }
       if (!parsed || !Array.isArray(parsed.notes)) parsed.notes = [];
       parsed.version = parsed.version || 1;
       this.manifest = parsed;
@@ -209,6 +265,24 @@ export class SafeManager {
       }
       return true;
     } catch (e) {
+      // GCM 认证失败：绝大多数是密码错误（数据损坏无法与密码错区分），
+      // 按密码错误处理（不设 manifestIssue，UI 提示重试）。
+      return false;
+    }
+  }
+
+  /** 首设/强制重设：写空清单。写失败必须回滚解锁态（否则下次打开又误判无清单） */
+  private async firstTimeSetup(password: string): Promise<boolean> {
+    this.password = password;
+    this.unlocked = true;
+    this.manifest = { version: 1, notes: [] };
+    try {
+      await this.saveManifest();
+      return true;
+    } catch (e) {
+      this.unlocked = false;
+      this.password = null;
+      this.manifest = { version: 1, notes: [] };
       return false;
     }
   }
@@ -221,13 +295,24 @@ export class SafeManager {
     clearCryptoKeyCache();
   }
 
-  /** 持久化清单（整体加密写回 .safe.enc；adapter 直写磁盘，点前缀可用） */
+  /**
+   * 持久化清单（整体加密写回 .safe.enc；adapter 直写磁盘，点前缀可用）。
+   * 原子写（ADR-0018 预留项兑现）：先写 `.safe.enc.tmp` 再 rename 覆盖——
+   * 写一半崩溃只会残留 tmp，不会损坏清单本体（清单是全库唯一真数据）。
+   */
   async saveManifest() {
     if (!this.unlocked || !this.password) throw new Error('未解锁，无法保存清单');
     const json = JSON.stringify(this.manifest);
     const encrypted = await CryptoService.encrypt(json, this.password);
     await this.ensureDirFor(this.manifestPath);
-    await this.adapter.write(this.manifestPath, encrypted);
+    const tmp = this.manifestPath + '.tmp';
+    try {
+      await this.adapter.remove(tmp); // 清上次崩溃残留，幂等
+    } catch (e) {
+      /* 幂等 */
+    }
+    await this.adapter.write(tmp, encrypted);
+    await this.adapter.rename(tmp, this.manifestPath);
   }
 
   /** 确保加密根目录存在（平铺布局只需根目录；adapter.mkdir 递归建，点前缀可用） */
@@ -478,6 +563,7 @@ export class SafeManager {
     if (!this.unlocked || !this.password) throw new Error('未解锁，无法加密笔记');
     await this.ensureSafeRootDir();
     await this.ensureStagingDir();
+    const password = this.password; // 局部断言非空（箭头函数闭包内避免 TS 收窄失效）
     const total = input.attachments.length + 1;
     let done = 0;
 
@@ -485,35 +571,48 @@ export class SafeManager {
     const finalRefs: string[] = [];
     const stagedRefs: string[] = [];
     try {
-      for (const a of input.attachments) {
-        done += 1;
-        onProgress?.({ done, total, current: a.path });
+      // 附件加密并行（BLOB_CONCURRENCY=3）：每个 blob 独立 salt → 逐附件 PBKDF2(100k)，
+      // 串行会让多附件明显变慢；进度按完成数上报（顺序不定，语义不变）。
+      // 注意：回调只返回结果，由 mapLimit 按输入顺序归位——附件在清单中的顺序必须与输入一致
+      //（直接被并发 push 会随完成顺序漂移，污染清单顺序与测试断言）。
+      // 失败 → 整笔放弃：本次已写暂存镜像在 catch 里清理，原文件不动。
+      const results = await mapLimit(input.attachments, BLOB_CONCURRENCY, async (a) => {
         const fp = await fingerprintOf(a.data);
-        const enc = await CryptoService.encrypt(a.data, this.password);
+        const enc = await CryptoService.encrypt(a.data, password);
         const blobRef = flatName();
         await this.writeStaged(blobRef, enc);
-        stagedRefs.push(blobRef);
-        finalRefs.push(blobRef);
         let hasPreview = false;
         let previewRef = '';
+        const refs: string[] = [blobRef];
         if (a.previewData) {
-          const encP = await CryptoService.encrypt(a.previewData, this.password);
+          const encP = await CryptoService.encrypt(a.previewData, password);
           previewRef = flatName();
           await this.writeStaged(previewRef, encP);
-          stagedRefs.push(previewRef);
-          finalRefs.push(previewRef);
+          refs.push(previewRef);
           hasPreview = true;
         }
-        attachments.push({
-          path: a.path,
-          kind: a.kind || 'image',
-          blobRef,
-          blobSize: enc.length,
-          fingerprint: fp,
-          hasPreview,
-          previewRef,
-          restored: false,
-        });
+        done += 1;
+        onProgress?.({ done, total, current: a.path });
+        return {
+          attachment: {
+            path: a.path,
+            kind: a.kind || 'image',
+            blobRef,
+            blobSize: enc.length,
+            fingerprint: fp,
+            hasPreview,
+            previewRef,
+            restored: false,
+          },
+          refs,
+        };
+      });
+      for (const r of results) {
+        attachments.push(r.attachment);
+        for (const ref of r.refs) {
+          stagedRefs.push(ref);
+          finalRefs.push(ref);
+        }
       }
 
       done += 1;
@@ -587,8 +686,10 @@ export class SafeManager {
 
   /**
    * 还原（取出即删）一篇笔记：解原文 + 原质量附件写回原路径。
-   * 覆盖目标文件前校验指纹：不匹配（用户新建了同名文件）→ 跳过不盖 → 该条目留在保险箱。
-   * 全部还原成功（无冲突）后：删除本文全部加密镜像（正文+附件原始层/预览层）、从清单移除，彻底取出。
+   * 原子语义（用户决策修订）：阶段一并行解密全部附件 + 正文并完成全部校验
+   * （指纹冲突/目标被占/镜像缺失/解密失败），**任一失败 → 整体放弃，零落盘**；
+   * 阶段二才批量写回明文（写回中途失败尽力回滚本次创建的文件）。
+   * 全部成功（无冲突）后：删除本文全部加密镜像（正文+附件原始层/预览层）、从清单移除，彻底取出。
    * onProgress：按文件回调（附件逐个 + 笔记本身），UI 驱动进度通知。
    */
   async restoreNote(
@@ -601,48 +702,72 @@ export class SafeManager {
     if (!note) throw new Error('未找到该加密笔记');
     const conflicts: string[] = [];
     const total = note.attachments.length + 1;
-    let done = 0;
 
-    // 附件先还原
-    for (const a of note.attachments) {
-      onProgress?.({ done, total, current: a.path });
-      const ok = await this.restoreAttachment(a);
+    // 阶段一（准备，并行）：附件解密 + 指纹校验 + 目标占用检查；冲突只收集不落盘
+    let done = 0;
+    const plainAttachments = await mapLimit(note.attachments, BLOB_CONCURRENCY, async (a) => {
+      const plainB64 = await this.prepareRestoreAttachment(a);
       done += 1;
-      if (!ok) conflicts.push(a.path);
-    }
-    // 正文还原（contentRef 镜像优先，兼容旧版内嵌 content）
+      onProgress?.({ done, total, current: a.path });
+      return plainB64;
+    });
+    note.attachments.forEach((a, i) => {
+      if (plainAttachments[i] === null) conflicts.push(a.path);
+    });
+    // 正文准备（contentRef 镜像优先，兼容旧版内嵌 content）
+    done += 1;
     onProgress?.({ done, total, current: note.path });
     const plain = await this.decryptNoteBody(note);
     if (plain === null || plain === undefined) {
       conflicts.push(note.path);
     } else if (note.kind === 'diary-entry') {
-      // 加密日记条目：块级 merge 回原日期文件（按 # emoji HH:mm 时间序重插），非整文件覆盖（ADR-0017 Q23-A）
-      const mergeOk = await this.mergeDiaryBlock(note.path, plain);
-      if (!mergeOk) conflicts.push(note.path);
+      // 加密日记条目：正文走 mergeDiaryBlock（ADR-0017），占用检查由 merge 路径自身处理
     } else if (this.fileExists(note.path)) {
-      // 目标路径已被用户占用（非本次还原写回）→ 冲突跳过
+      // 目标路径已被用户占用（非本次还原写回）→ 冲突；整体不落盘
       conflicts.push(note.path);
-    } else {
-      await this.ensureVaultParentFolder(note.path);
-      const file = await app.vault.create(note.path, plain);
-      (app.metadataCache as any)?.trigger?.('changed', file);
     }
-    done = total;
-    onProgress?.({ done, total, current: note.path });
+    if (conflicts.length > 0) return { note, conflicts, removed: false };
 
-    // 全部成功 → 彻底取出（删镜像 + 移除清单条目）；否则保留（含已还原文件留副本，安全第一）
-    const removed = conflicts.length === 0;
-    if (removed) {
-      await this.deleteSafeFile(note.contentRef);
-      for (const a of note.attachments) {
-        await this.deleteSafeFile(a.blobRef);
-        if (a.hasPreview) await this.deleteSafeFile(a.previewRef);
+    // 阶段二（提交）：全部准备成功才写回明文
+    const created: string[] = [];
+    try {
+      for (let i = 0; i < note.attachments.length; i++) {
+        const a = note.attachments[i];
+        const wasCreated = await this.commitRestoreAttachment(a, plainAttachments[i]!);
+        if (wasCreated) created.push(a.path);
       }
-      const idx = this.manifest.notes.indexOf(note);
-      if (idx !== -1) this.manifest.notes.splice(idx, 1);
+      if (note.kind === 'diary-entry') {
+        // 加密日记条目：块级 merge 回原日期文件（按 # emoji HH:mm 时间序重插），非整文件覆盖（ADR-0017 Q23-A）
+        const mergeOk = await this.mergeDiaryBlock(note.path, plain!);
+        if (!mergeOk) throw new Error('日记块 merge 失败');
+      } else {
+        await this.ensureVaultParentFolder(note.path);
+        const file = await app.vault.create(note.path, plain!);
+        created.push(note.path);
+        (app.metadataCache as any)?.trigger?.('changed', file);
+      }
+    } catch (e) {
+      // 写回中途失败：删除本次创建的文件（不触碰覆盖/既有文件），保持「未全部成功不落盘」
+      for (const p of created) {
+        try {
+          await this.deleteVaultFile(p);
+        } catch (err) {
+          /* 幂等 */
+        }
+      }
+      return { note, conflicts: [...conflicts, note.path], removed: false };
     }
+
+    // 全部成功 → 彻底取出（删镜像 + 移除清单条目）
+    await this.deleteSafeFile(note.contentRef);
+    for (const a of note.attachments) {
+      await this.deleteSafeFile(a.blobRef);
+      if (a.hasPreview) await this.deleteSafeFile(a.previewRef);
+    }
+    const idx = this.manifest.notes.indexOf(note);
+    if (idx !== -1) this.manifest.notes.splice(idx, 1);
     await this.saveManifest();
-    return { note, conflicts, removed };
+    return { note, conflicts, removed: true };
   }
 
   /** 解笔记正文明文：contentRef 镜像优先，旧版内嵌 content base64 兼容回退 */
@@ -658,34 +783,52 @@ export class SafeManager {
 
   /**
    * 加密日记条目还原：还原附件 → 把 finalBlock（由调用方准备，可为原文或改分类降级后重建）merge 回原日期 md → 取出即删。
+   * 原子语义同 restoreNote：全部附件解密/校验成功且块就绪才写回；任一失败零落盘。
    */
   async restoreDiaryEntry(noteId: string, finalBlock: string): Promise<boolean> {
     if (!this.unlocked || !this.password) throw new Error('未解锁，无法还原加密日记');
     const note = this.manifest.notes.find((n) => n.id === noteId);
     if (!note || note.kind !== 'diary-entry') throw new Error('未找到该加密日记条目');
     const conflicts: string[] = [];
-    for (const a of note.attachments) {
-      const ok = await this.restoreAttachment(a);
-      if (!ok) conflicts.push(a.path);
-    }
-    if (!finalBlock) {
-      conflicts.push(note.path);
-    } else {
+    // 阶段一（准备，并行）：全部附件解密 + 校验
+    const plainAttachments = await mapLimit(note.attachments, BLOB_CONCURRENCY, async (a) =>
+      this.prepareRestoreAttachment(a)
+    );
+    note.attachments.forEach((a, i) => {
+      if (plainAttachments[i] === null) conflicts.push(a.path);
+    });
+    if (!finalBlock) conflicts.push(note.path);
+    if (conflicts.length > 0) return false;
+    // 阶段二（提交）：写回附件 + merge 块；失败回滚本次创建
+    const created: string[] = [];
+    try {
+      for (let i = 0; i < note.attachments.length; i++) {
+        const a = note.attachments[i];
+        const wasCreated = await this.commitRestoreAttachment(a, plainAttachments[i]!);
+        if (wasCreated) created.push(a.path);
+      }
       const ok = await this.mergeDiaryBlock(note.path, finalBlock);
-      if (!ok) conflicts.push(note.path);
+      if (!ok) throw new Error('日记块 merge 失败');
+    } catch (e) {
+      for (const p of created) {
+        try {
+          await this.deleteVaultFile(p);
+        } catch (err) {
+          /* 幂等 */
+        }
+      }
+      return false;
     }
     // 无冲突则彻底取出（删镜像 + 移除清单条目）
-    if (conflicts.length === 0) {
-      await this.deleteSafeFile(note.contentRef);
-      for (const a of note.attachments) {
-        await this.deleteSafeFile(a.blobRef);
-        if (a.hasPreview) await this.deleteSafeFile(a.previewRef);
-      }
-      const idx = this.manifest.notes.indexOf(note);
-      if (idx !== -1) this.manifest.notes.splice(idx, 1);
+    await this.deleteSafeFile(note.contentRef);
+    for (const a of note.attachments) {
+      await this.deleteSafeFile(a.blobRef);
+      if (a.hasPreview) await this.deleteSafeFile(a.previewRef);
     }
+    const idx = this.manifest.notes.indexOf(note);
+    if (idx !== -1) this.manifest.notes.splice(idx, 1);
     await this.saveManifest();
-    return conflicts.length === 0;
+    return true;
   }
 
   /** 解加密日记正文明文（供日记域准备还原块；退回 null 表示解密失败） */
@@ -776,27 +919,57 @@ export class SafeManager {
     return true;
   }
 
-  /** 还原单个附件：解原始层 → 写回原路径（二进制）；指纹不符或已存在非本系统文件视为冲突跳过 */
-  private async restoreAttachment(a: SafeAttachment): Promise<boolean> {
-    const app = getApp();
+  /**
+   * 还原准备（原子语义）：解镜像 → 完整性指纹校验 → 目标占用检查。
+   * 完整性：镜像解密内容指纹必须与加密时记录一致（防镜像被篡改/替换），与目标是否被占无关；
+   * 占用：目标已有文件时读其内容比对指纹——相同 = 本系统还原残留（幂等覆盖），不同 = 用户文件（冲突）。
+   * @returns 明文 base64；null = 镜像缺失 / 解密失败 / 完整性不符 / 目标被用户占用（整体不落盘）
+   */
+  private async prepareRestoreAttachment(a: SafeAttachment): Promise<string | null> {
     const password = this.password;
-    if (!password) return false;
+    if (!password) return null;
     const cipher = await this.readMirror(a.blobRef);
-    if (cipher === null) return false;
-    const plainB64 = await CryptoService.decrypt(cipher, password);
-    const currentFp = await fingerprintOf(plainB64);
-    if (this.fileExists(a.path)) {
-      if (currentFp !== a.fingerprint) return false; // 用户新建同名文件 → 冲突
+    if (cipher === null) return null;
+    let plainB64: string;
+    try {
+      plainB64 = await CryptoService.decrypt(cipher, password);
+    } catch (e) {
+      return null;
     }
+    // 完整性：镜像内容与加密时不一致（被替换/篡改）→ 永不写回（无论目标是否占用）
+    const currentFp = await fingerprintOf(plainB64);
+    if (currentFp !== a.fingerprint) return null;
+    // 占用：目标已有文件，读其内容比对指纹（防误盖用户新建的同名文件）
+    if (this.fileExists(a.path)) {
+      try {
+        const app = getApp();
+        const existing = app.vault.getAbstractFileByPath(a.path);
+        const buf = await app.vault.readBinary(existing as any);
+        const existingFp = await fingerprintOf(bytesToBase64(new Uint8Array(buf)));
+        if (existingFp !== a.fingerprint) return null; // 用户文件 → 冲突
+        // 指纹相同 = 本系统还原残留/同名同内容 → 放行（提交阶段幂等覆盖）
+      } catch (e) {
+        return null; // 读不到目标内容（异常）→ 保守冲突
+      }
+    }
+    return plainB64;
+  }
+
+  /**
+   * 还原提交（仅在全部分解/校验成功后调用）：把准备阶段解出的明文写回原路径（二进制）。
+   * @returns 是否本次新建（true 时失败回滚可安全删除；false = 覆盖既有同指纹文件，不删）
+   */
+  private async commitRestoreAttachment(a: SafeAttachment, plainB64: string): Promise<boolean> {
+    const app = getApp();
     const data = base64ToBytes(plainB64);
     const buf = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
     const existing = app.vault.getAbstractFileByPath(a.path);
-    let file = existing;
-    if (existing) await (app.vault as any).writeBinary(existing as any, buf);
-    else {
-      await this.ensureVaultParentFolder(a.path);
-      file = await app.vault.createBinary(a.path, buf);
+    if (existing) {
+      await (app.vault as any).writeBinary(existing as any, buf);
+      return false;
     }
+    await this.ensureVaultParentFolder(a.path);
+    const file = await app.vault.createBinary(a.path, buf);
     (app.metadataCache as any)?.trigger?.('changed', file);
     return true;
   }
@@ -814,13 +987,6 @@ export class SafeManager {
     }
     this.manifest.notes.splice(idx, 1);
     await this.saveManifest();
-  }
-
-  /** 解正文密文 → 明文（兼容旧版内嵌 content base64，供既有调用/测试使用） */
-  async decryptText(contentCipher?: string): Promise<string> {
-    if (!this.unlocked || !this.password) throw new Error('未解锁');
-    if (!contentCipher) return '';
-    return CryptoService.decrypt(contentCipher, this.password);
   }
 
   /** 解附件摘要密文 → 明文（预览窗用；无预览层返回 null） */
@@ -848,10 +1014,5 @@ export class SafeManager {
     const cipher = await this.readMirror(a.blobRef);
     if (!cipher) return null;
     return CryptoService.decrypt(cipher, this.password);
-  }
-
-  /** 附件原始层尺寸（bytes） */
-  attachmentSize(a: SafeAttachment): number {
-    return a.blobSize;
   }
 }
