@@ -26,6 +26,8 @@ export interface ItemAction {
   icon: IconName;
   /** 菜单项文案（浮层显示） */
   label: string;
+  /** 菜单项右侧小字（次级/动态数据，如「123 字」；空则不显示） */
+  sub?: string;
   /** 桌面操作条 tooltip（空则不加 title） */
   title?: string;
   /** 危险操作（删除类）：浮层项红色强调 */
@@ -201,6 +203,12 @@ export function openItemMenu(x: number, y: number, actions: ItemAction[], suppre
     itemLabel.textContent = a.label;
     item.appendChild(itemIcon);
     item.appendChild(itemLabel);
+    if (a.sub) {
+      const itemSub = document.createElement('span');
+      itemSub.className = 'bz-item-menu-item-sub';
+      itemSub.textContent = a.sub;
+      item.appendChild(itemSub);
+    }
     item.addEventListener('click', (ev) => {
       ev.stopPropagation();
       closeItemMenu();
@@ -260,6 +268,12 @@ export function openItemSheet(actions: ItemAction[], opts?: ItemActionsOptions, 
     itemLabel.textContent = a.label;
     item.appendChild(itemIcon);
     item.appendChild(itemLabel);
+    if (a.sub) {
+      const itemSub = document.createElement('span');
+      itemSub.className = 'bz-item-sheet-item-sub';
+      itemSub.textContent = a.sub;
+      item.appendChild(itemSub);
+    }
     item.addEventListener('click', (ev) => {
       ev.stopPropagation();
       closeItemMenu();

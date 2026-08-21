@@ -75,7 +75,7 @@ describe('entries 补测', () => {
     applyUiSettings({ diaryContentRenderMode: 'markdown' });
   });
 
-  it('长按卡片 → 移动端底部抽屉：非加密含 打开/复制双链/改标签/删除，头部与列表一致', async () => {
+  it('长按卡片 → 移动端底部抽屉：非加密含 打开/复制双链/复制正文/改标签/加密/删除，头部与列表一致', async () => {
     MockPlatform.isMobile = true;
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     const entry = state.data.originalDiaryEntries[0]; // 真实条目（showTagPicker 按 id 查库）
@@ -89,8 +89,17 @@ describe('entries 补测', () => {
     expect(sheet).not.toBeNull();
     expect(sheet.textContent).toContain('打开');
     expect(sheet.textContent).toContain('复制双链');
+    expect(sheet.textContent).toContain('复制正文');
     expect(sheet.textContent).toContain('改标签');
+    expect(sheet.textContent).toContain('加密');
     expect(sheet.textContent).toContain('删除');
+    // 复制正文右侧小字：动态字数（次级数据）
+    const copyItem = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('复制正文')
+    ) as HTMLElement;
+    const copySub = copyItem.querySelector('.bz-item-sheet-item-sub') as HTMLElement;
+    expect(copySub).not.toBeNull();
+    expect(copySub.textContent).toBe(`${entry.content.trim().length} 字`);
     // 头部信息区：与列表一致的 emoji + 时间 + 内容
     const head = sheet.querySelector('.bz-item-sheet-head') as HTMLElement;
     expect(head.textContent).toContain(entry.time);
@@ -112,7 +121,30 @@ describe('entries 补测', () => {
     vi.useRealTimers();
   });
 
-  it('长按卡片 → 抽屉条件显示：加密条目无「打开/复制双链」，头部显示已加密占位', async () => {
+  it('长按卡片 → 抽屉点「复制正文」：写剪贴板 + 成功通知', async () => {
+    MockPlatform.isMobile = true;
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
+    const entry = state.data.originalDiaryEntries[0];
+    const card = createEntryCard(entry);
+    document.body.appendChild(card);
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 100, clientY: 100 }));
+    await vi.advanceTimersByTimeAsync(550);
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    const writeSpy = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+    const copyItem = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('复制正文')
+    ) as HTMLElement;
+    copyItem.click();
+    await vi.advanceTimersByTimeAsync(50);
+    expect(writeSpy).toHaveBeenCalledWith(entry.content.trim());
+    expect(hasNotice('已复制日记正文')).toBe(true);
+    MockPlatform.isMobile = false;
+    vi.useRealTimers();
+  });
+
+  it('长按卡片 → 抽屉条件显示：加密条目无「打开/复制双链/加密」，含「解密」，头部显示已加密占位', async () => {
     MockPlatform.isMobile = true;
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     const entry = { ...soloEntry(), id: 'enc-1', encrypted: true, noteId: 'note-1' } as any;
@@ -124,10 +156,15 @@ describe('entries 补测', () => {
     card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
     expect(sheet).not.toBeNull();
-    expect(sheet.textContent).not.toContain('打开');
-    expect(sheet.textContent).not.toContain('复制双链');
-    expect(sheet.textContent).toContain('改分类');
-    expect(sheet.textContent).toContain('删除');
+    const bodyText = (sheet.querySelector('.bz-item-sheet-body') as HTMLElement).textContent!;
+    // 头部占位含「已加密」字样，动作区断言限定在 body
+    expect(bodyText).not.toContain('打开');
+    expect(bodyText).not.toContain('复制双链');
+    expect(bodyText).not.toContain('复制正文');
+    expect(bodyText).not.toContain('加密');
+    expect(bodyText).toContain('解密');
+    expect(bodyText).toContain('改分类');
+    expect(bodyText).toContain('删除');
     // 头部：已加密占位（不渲染密文）
     const head = sheet.querySelector('.bz-item-sheet-head') as HTMLElement;
     expect(head.textContent).toContain('已加密');

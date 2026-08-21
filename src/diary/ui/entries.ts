@@ -9,7 +9,8 @@ import { attachItemActions, type ItemAction } from '../../core/item-actions';
 import { getApp } from '../app';
 import { BATCH_SIZE, DIARY_DIRECTORY, MOVIE_DIRECTORY, getSubTagsOfPrimary, getTagEmoji } from '../config';
 import { deleteEntry, getIsProcessingRemainingFiles, reloadWithEncrypted } from '../store';
-import { deleteEncryptedEntry } from '../encrypt';
+import { deleteEncryptedEntry, downgradeEntry, encryptEntry } from '../encrypt';
+import { ensureSafeUnlocked } from '../../encrypt';
 import { state } from '../state';
 import type { DateFilter, DiaryEntry } from '../types';
 import { getContentRenderModeSetting } from './ui-settings';
@@ -303,18 +304,25 @@ export function createEntryCard(entry: DiaryEntry) {
   entryCard.appendChild(header);
   entryCard.appendChild(content);
 
-  // 统一操作条/长按浮层（手势统一）：打开 > 复制双链 > 改标签/改分类 > 删除；加密条目隐藏打开/复制双链
+  // 统一操作条/长按浮层（手势统一）：
+  // 非加密：打开 > 复制双链 > 复制正文 > 改标签 > 加密 > 删除；加密：解密 > 改分类 > 删除
   const actions: ItemAction[] = [];
   if (!entry.encrypted) {
     actions.push({ icon: 'external-link', label: '打开', title: '打开原文', onClick: () => void jumpToEntry(entry) });
-    actions.push({ icon: 'link', label: '复制双链', title: '复制双链', onClick: () => copyLink(entry.id!) });
+    actions.push({ icon: 'link', label: '复制双链', title: '复制双链', onClick: () => void copyLink(entry.id!) });
+    actions.push({
+      icon: 'copy',
+      label: '复制正文',
+      title: '复制正文',
+      sub: `${entry.content.trim().length} 字`,
+      onClick: () => void copyEntryContent(entry.id!),
+    });
+    actions.push({ icon: 'tag', label: '改标签', title: '改标签', onClick: () => showTagPicker(entry.id!) });
+    actions.push({ icon: 'lock', label: '加密', title: '加密（移入保险箱）', onClick: () => void encryptFromSheet(entry.id!) });
+  } else {
+    actions.push({ icon: 'unlock', label: '解密', title: '解密还原', onClick: () => void decryptFromSheet(entry.id!) });
+    actions.push({ icon: 'tag', label: '改分类', title: '改分类（解密）', onClick: () => showTagPicker(entry.id!) });
   }
-  actions.push({
-    icon: 'tag',
-    label: entry.encrypted ? '改分类' : '改标签',
-    title: entry.encrypted ? '改分类（解密）' : '改标签',
-    onClick: () => showTagPicker(entry.id!),
-  });
   actions.push({
     icon: 'trash-2',
     label: '删除',
@@ -376,6 +384,73 @@ export async function copyLink(entryId: string) {
   const link = `[[${entry.filename}#${entry.emoji} ${entry.time}]]`;
   await navigator.clipboard.writeText(link);
   notice(`已复制双链引用：${link}`, 'success');
+}
+
+// ===== 复制正文（抽屉动作：主动复制，与列表禁选字不冲突） =====
+
+export async function copyEntryContent(entryId: string) {
+  const entry = state.data.originalDiaryEntries.find((e) => e.id === entryId);
+  if (!entry) return;
+  await navigator.clipboard.writeText(entry.content.trim());
+  notice('已复制日记正文', 'success');
+}
+
+// ===== 加密（抽屉直通；与标签选择器加密同一流程：解锁 → 确认 → 入库 → 摘除原块） =====
+
+async function encryptFromSheet(entryId: string) {
+  const entry = state.data.originalDiaryEntries.find((e) => e.id === entryId);
+  if (!entry || entry.encrypted) return;
+  try {
+    const unlocked = await ensureSafeUnlocked();
+    if (!unlocked) return;
+    const proceed = await new Promise<boolean>((resolve) => {
+      confirm({
+        title: '加密日记',
+        message: '确定将本条内容加密移出笔记？正文将从日记文件移除',
+        confirmText: '加密',
+        onConfirm: () => resolve(true),
+        onCancel: () => resolve(false),
+      });
+    });
+    if (!proceed) return;
+    const enc = await encryptEntry(entry);
+    if (enc) {
+      // 从 md 摘除原普通块（encryptEntry 不删整 md，块级移除由日记域处理）→ 重并加密版
+      if (entry.id) await deleteEntry(entry.id);
+      await reloadWithEncrypted();
+      notice('已加密移入保险箱', 'success');
+    }
+  } catch (e: any) {
+    notice('加密失败：' + (e?.message || e), 'error');
+  }
+}
+
+// ===== 解密还原（保持原分类；密文取出即删，ADR-0017） =====
+
+async function decryptFromSheet(entryId: string) {
+  const entry = state.data.originalDiaryEntries.find((e) => e.id === entryId);
+  if (!entry || !entry.encrypted || !entry.noteId) return;
+  const proceed = await new Promise<boolean>((resolve) => {
+    confirm({
+      title: '解密日记',
+      message: '解密此日记并恢复为普通类型（确定）？',
+      confirmText: '解密',
+      onConfirm: () => resolve(true),
+      onCancel: () => resolve(false),
+    });
+  });
+  if (!proceed) return;
+  try {
+    const ok = await downgradeEntry(entry.noteId);
+    if (!ok) {
+      notice('解密失败', 'error');
+      return;
+    }
+    await reloadWithEncrypted();
+    notice('已解密还原', 'success');
+  } catch (e) {
+    notice('解密失败', 'error');
+  }
 }
 
 // ===== 取消编辑（原 2218-2240） =====
