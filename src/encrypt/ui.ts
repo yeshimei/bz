@@ -264,7 +264,7 @@ export class UIManager {
     document.body.appendChild(this.mask);
     document.body.appendChild(this.popup);
     // 预览窗
-    const ov = createOverlay({ maskId: 'bz-encrypt-preview-mask', popupId: 'bz-encrypt-preview-popup', zIndex: 10060, maxWidth: 640 });
+    const ov = createOverlay({ maskId: 'bz-encrypt-preview-mask', popupId: 'bz-encrypt-preview-popup', zIndex: 10060, maxWidth: 640, onMaskClick: () => this.closePreview() });
     this.previewMask = ov.mask;
     this.previewPopup = ov.popup;
     document.body.appendChild(this.previewMask);
@@ -855,7 +855,7 @@ export class UIManager {
     title.textContent = note.title;
     const closeBtn = document.createElement('button');
     closeBtn.textContent = '✕';
-    closeBtn.className = 'bz-encrypt-btn';
+    closeBtn.className = 'bz-encrypt-btn bz-win-close';
     closeBtn.onclick = () => this.closePreview();
     header.appendChild(title);
     header.appendChild(closeBtn);
