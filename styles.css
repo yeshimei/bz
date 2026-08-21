@@ -2705,26 +2705,26 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 .bz-item-action:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
 .bz-item-action--danger:hover { color: var(--text-error); }
 
-/* 跟手菜单（长按弹出；定位由 JS 计算锚点+防溢出，样式仅布局与观感） */
+/* 跟手菜单（长按弹出；定位由 JS 计算锚点+防溢出，样式仅布局与观感；小尺寸紧凑风，无图标底色装饰） */
 .bz-item-menu {
   position: fixed; z-index: 11000;
-  min-width: 150px; padding: 6px;
+  min-width: 132px; padding: 4px;
   background: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
-  border-radius: 10px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   animation: bz-menu-in 0.12s ease-out;
 }
 .bz-item-menu-item {
-  display: flex; align-items: center; gap: 8px;
-  width: 100%; padding: 9px 10px;
-  font-size: 14px; color: var(--text-normal);
+  display: flex; align-items: center; gap: 6px;
+  width: 100%; padding: 6px 8px;
+  font-size: 13px; line-height: 1.4; color: var(--text-normal);
   background: transparent; border: none; border-radius: 6px;
   cursor: pointer; text-align: left;
 }
 .bz-item-menu-item:hover { background: var(--background-modifier-hover); }
 .bz-item-menu-item--danger { color: var(--text-error); }
-.bz-item-menu-icon { width: 18px; text-align: center; font-size: 13px; flex-shrink: 0; }
+.bz-item-menu-icon { width: 14px; text-align: center; font-size: 13px; flex-shrink: 0; }
 @keyframes bz-menu-in {
   from { opacity: 0; transform: scale(0.96) translateY(2px); }
   to { opacity: 1; transform: scale(1) translateY(0); }

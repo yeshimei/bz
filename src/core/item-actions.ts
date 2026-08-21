@@ -9,7 +9,7 @@
  * - 桌面长按同样可用（与 hover 条同语义），长按松手后的残余 click 会被吞掉，防穿透卡片内链接/复选框。
  *
  * 实现说明：
- * - 复用 core/dom longPress（500ms 默认、10px 移动取消、短按补发合成 click）。
+ * - 复用 core/dom longPress（500ms 默认、10px 移动取消；触屏滚动兼容，长按后吞浏览器合成 click）。
  * - 菜单注册 escManager（ESC 关闭）；点菜单外任意处关闭。
  */
 import { longPress } from './dom';
@@ -31,20 +31,25 @@ export interface ItemAction {
 const VIEWPORT_PAD = 8;
 /** 菜单相对手指锚点的偏移（px），先往右下放，放不下翻另一侧 */
 const ANCHOR_GAP = 12;
-/** 估算兜底（jsdom/测量为 0 时）：单菜单项高 + 内边距 */
-const ITEM_HEIGHT = 40;
-const MENU_PADDING = 14;
+/** 估算兜底（jsdom/测量为 0 时）：单菜单项高 + 内边距（与 styles.css 菜单紧凑尺寸对应） */
+const ITEM_HEIGHT = 30;
+const MENU_PADDING = 10;
 
 let menuEl: HTMLElement | null = null;
 let menuEsc: ReturnType<typeof escManager.register> | null = null;
 /**
- * 长按残余 click 抑制（仅桌面鼠标路径）：
+ * 长按残余 click 抑制（桌面鼠标路径）：
  * 长按松开时浏览器会补发一次 click，若不处理会穿透到卡片内链接/复选框。
  * 机制：菜单打开后注册 mouseup 捕获——松手（mouseup 落在菜单外）标记 residualClickArmed，
  * 紧随其后的 click 判定为残余（同一物理手势）吞掉；松手落在菜单内（拖动选择）则不吞。
  */
 let suppressNextClick = false;
 let residualClickArmed = false;
+/** 触屏路径：长按松手后浏览器补发的合成 click（touchstart 不再 preventDefault）——打开后短暂窗口吞一次，防菜单闪关 */
+let touchSettlePending = false;
+let touchSettleTimer: ReturnType<typeof setTimeout> | null = null;
+/** 触屏合成 click 静置窗口（ms）：长按松手到合成 click 派发通常 <300ms */
+const TOUCH_SETTLE_MS = 400;
 
 /** 文档捕获层 mousedown：点菜单外任意处按下即关闭菜单 */
 function onMouseDownCapture(ev: MouseEvent): void {
@@ -61,11 +66,17 @@ function onMouseUpCapture(ev: MouseEvent): void {
   residualClickArmed = true;
 }
 
-/** 文档捕获层 click：吞残余 click；其余外部点击关闭菜单（触屏路径无 mousedown，这里兜底） */
+/** 文档捕获层 click：吞残余/合成 click；其余外部点击关闭菜单（触屏路径无 mousedown，这里兜底） */
 function onClickCapture(ev: MouseEvent): void {
   const target = ev.target as Node;
   if (residualClickArmed) {
     residualClickArmed = false;
+    ev.stopImmediatePropagation();
+    ev.preventDefault();
+    return;
+  }
+  if (touchSettlePending) {
+    touchSettlePending = false;
     ev.stopImmediatePropagation();
     ev.preventDefault();
     return;
@@ -81,6 +92,10 @@ export function closeItemMenu(): void {
     menuEsc.unregister();
     menuEsc = null;
   }
+  if (touchSettleTimer) {
+    clearTimeout(touchSettleTimer);
+    touchSettleTimer = null;
+  }
   document.removeEventListener('mousedown', onMouseDownCapture, true);
   document.removeEventListener('mouseup', onMouseUpCapture, true);
   document.removeEventListener('click', onClickCapture, true);
@@ -90,6 +105,7 @@ export function closeItemMenu(): void {
   }
   suppressNextClick = false;
   residualClickArmed = false;
+  touchSettlePending = false;
 }
 
 /**
@@ -137,6 +153,15 @@ export function openItemMenu(x: number, y: number, actions: ItemAction[], suppre
   menuEl = m;
   suppressNextClick = suppressResidualClick;
   residualClickArmed = false;
+  if (!suppressResidualClick) {
+    // 触屏路径：长按松手后的合成 click 在窗口内吞一次，防菜单刚开就被当「外部点击」关闭
+    touchSettlePending = true;
+    if (touchSettleTimer) clearTimeout(touchSettleTimer);
+    touchSettleTimer = setTimeout(() => {
+      touchSettlePending = false;
+      touchSettleTimer = null;
+    }, TOUCH_SETTLE_MS);
+  }
   document.addEventListener('mousedown', onMouseDownCapture, true);
   document.addEventListener('mouseup', onMouseUpCapture, true);
   document.addEventListener('click', onClickCapture, true);
