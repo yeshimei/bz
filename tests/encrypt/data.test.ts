@@ -571,7 +571,7 @@ describe('SafeManager 提交式加密（ADR-0018）', () => {
     expect(vault.files.get('CONFIG/.ENCRYPT/.staging/.ghost.enc')).toBeUndefined();
   });
 
-  it('手动清理未引用密文（Q5-A）：只删无引用平铺点前缀密文，保留清单/引用镜像/非点前缀文件并清空暂存', async () => {
+  it('体检扫描孤儿密文（不删）：报告顶层无引用点前缀密文，保留清单/引用镜像/非点前缀文件；勾选后清理并清空暂存', async () => {
     makeApp(vault);
     const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
@@ -585,7 +585,14 @@ describe('SafeManager 提交式加密（ADR-0018）', () => {
     vault.files.set('CONFIG/.ENCRYPT/.junk2.enc', 'junk2');
     vault.files.set('CONFIG/.ENCRYPT/plain.enc', 'non-dot'); // 非点前缀：不碰（目录结构保护）
     vault.files.set('CONFIG/.ENCRYPT/.staging/.stale.enc', 'stale');
-    const { files, notes } = await sm.cleanupOrphans();
+    // 扫描只报告不删：孤儿仍在磁盘上
+    const report = await sm.scanHealth();
+    const orphans = report.items.filter((i) => i.cat === 'orphan-file');
+    expect(orphans.length).toBe(2);
+    expect(report.items.some((i) => i.cat === 'dead-entry')).toBe(false);
+    expect(vault.files.get('CONFIG/.ENCRYPT/.junk1.enc')).toBe('junk1');
+    // 勾选两个孤儿 → 清理
+    const { files, notes } = await sm.resolveHealth(orphans.map((i) => i.key));
     expect(files).toBe(2);
     expect(notes).toBe(0);
     expect(vault.files.get('CONFIG/.ENCRYPT/.junk1.enc')).toBeUndefined();
@@ -598,7 +605,7 @@ describe('SafeManager 提交式加密（ADR-0018）', () => {
     expect(vault.files.get('CONFIG/.ENCRYPT/.staging/.stale.enc')).toBeUndefined();
   });
 
-  it('清理失效条目：正文镜像已丢失的条目整条清除（含残留附件镜像），清单同步持久化', async () => {
+  it('体检失效条目：正文镜像已丢失 → dead-entry 报告；勾选后整条清除（含残留附件镜像），清单同步持久化', async () => {
     makeApp(vault);
     const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
@@ -615,7 +622,14 @@ describe('SafeManager 提交式加密（ADR-0018）', () => {
     });
     // 模拟镜像被误删/同步丢失：dead 的正文镜像没了
     vault.files.delete('CONFIG/.ENCRYPT/' + dead.contentRef);
-    const { files, notes } = await sm.cleanupOrphans();
+    const report = await sm.scanHealth();
+    const deadItems = report.items.filter((i) => i.cat === 'dead-entry');
+    expect(deadItems.length).toBe(1);
+    expect(deadItems[0].label).toBe(dead.title);
+    expect(deadItems[0].key).toBe('entry:' + dead.id);
+    expect(report.items.some((i) => i.cat === 'orphan-file')).toBe(false);
+    // 勾选清理
+    const { files, notes } = await sm.resolveHealth(deadItems.map((i) => i.key));
     expect(notes).toBe(1);
     expect(files).toBe(0);
     // dead 条目从清单移除，其残留附件镜像（原始层+预览层）一并删除
@@ -632,7 +646,7 @@ describe('SafeManager 提交式加密（ADR-0018）', () => {
     expect(sm2.manifest.notes.length).toBe(1);
   });
 
-  it('清理失效条目：仅附件镜像缺失但正文可读 → 条目保留（其预览镜像仍被清单引用，不误删）', async () => {
+  it('体检附件缺失：仅附件原始层镜像缺失但正文可读 → 条目保留，报告 missing-attachment 且勾选无效（不误删）', async () => {
     makeApp(vault);
     const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
@@ -641,10 +655,72 @@ describe('SafeManager 提交式加密（ADR-0018）', () => {
       attachments: [{ path: '我的/影视/pic.png', data: 'QUJDREVGRw==', previewData: 'PREVIEW' }],
     });
     vault.files.delete('CONFIG/.ENCRYPT/' + note.attachments[0].blobRef); // 仅附件原始层镜像缺失
-    const { files, notes } = await sm.cleanupOrphans();
-    expect(notes).toBe(0); // 正文可读 → 不清条目
-    expect(files).toBe(0); // 预览镜像仍被清单引用 → 不误删
+    const report = await sm.scanHealth();
+    expect(report.items.some((i) => i.cat === 'dead-entry')).toBe(false);
+    expect(report.items.some((i) => i.cat === 'orphan-file')).toBe(false); // 预览镜像仍被清单引用，不误报孤儿
+    const missing = report.items.filter((i) => i.cat === 'missing-attachment');
+    expect(missing.length).toBe(1);
+    expect(missing[0].label).toBe('我的/影视/pic.png');
+    // 勾选缺失类 / 损坏类 key → 防御性忽略，什么都不删
+    const { files, notes } = await sm.resolveHealth([missing[0].key, 'body:' + note.id]);
+    expect(files).toBe(0);
+    expect(notes).toBe(0);
     expect(sm.manifest.notes.some((n) => n.id === note.id)).toBe(true);
+  });
+
+  it('体检损坏镜像（解锁后完整性检测）：正文被篡改 → corrupted-body；附件被替换/篡改 → corrupted-attachment', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await lockSample(sm, {
+      content: '# 完好',
+      attachments: [{ path: '我的/影视/pic.png', data: 'QUJDREVGRw==' }],
+    });
+    const att = note.attachments[0];
+    // 正文镜像被垃圾覆盖（解密失败）→ corrupted-body
+    vault.files.set('CONFIG/.ENCRYPT/' + note.contentRef, 'garbage-not-cipher');
+    // 附件镜像被替换为「另一段正确加密」→ 解密成功但指纹不符 → corrupted-attachment
+    const otherCipher = await CryptoService.encrypt('OTM3MjQx', 'pw');
+    vault.files.set('CONFIG/.ENCRYPT/' + att.blobRef, otherCipher);
+    const report = await sm.scanHealth();
+    expect(report.integrityChecked).toBe(true);
+    expect(report.items.some((i) => i.cat === 'corrupted-body' && i.label === note.title)).toBe(true);
+    const corruptedAtt = report.items.filter((i) => i.cat === 'corrupted-attachment');
+    expect(corruptedAtt.length).toBe(1);
+    expect(corruptedAtt[0].label).toBe('我的/影视/pic.png');
+    // 条目与镜像仍在（只报告不清理）；再勾损坏类 key 也不会误删
+    await sm.resolveHealth(report.items.map((i) => i.key));
+    expect(sm.manifest.notes.some((n) => n.id === note.id)).toBe(true);
+    expect(vault.files.get('CONFIG/.ENCRYPT/' + att.blobRef)).toBe(otherCipher);
+  });
+
+  it('体检未解锁：返回空报告（清单明文已清空，无引用判定依据——绝不误把正文镜像当孤儿）', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await lockSample(sm, { content: '# x', attachments: [] });
+    vault.files.delete('CONFIG/.ENCRYPT/' + note.contentRef); // 正文镜像丢失
+    vault.files.set('CONFIG/.ENCRYPT/.junk.enc', 'junk');
+    sm.lock();
+    const report = await sm.scanHealth();
+    expect(report.integrityChecked).toBe(false);
+    expect(report.items.length).toBe(0); // 未解锁不做任何对账（否则正文镜像会被误判为孤儿）
+  });
+
+  it('解锁后重新体检：孤儿/失效条目/完整性恢复可见', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await lockSample(sm, { content: '# x', attachments: [] });
+    vault.files.delete('CONFIG/.ENCRYPT/' + note.contentRef);
+    vault.files.set('CONFIG/.ENCRYPT/.junk.enc', 'junk');
+    sm.lock();
+    expect((await sm.scanHealth()).items.length).toBe(0); // 锁定态空报告
+    await sm.unlock('pw'); // 二次解锁
+    const report = await sm.scanHealth();
+    expect(report.integrityChecked).toBe(true);
+    expect(report.items.some((i) => i.cat === 'dead-entry')).toBe(true);
+    expect(report.items.some((i) => i.cat === 'orphan-file')).toBe(true);
   });
 });
 

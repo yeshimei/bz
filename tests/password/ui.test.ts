@@ -86,6 +86,10 @@ describe('UIManager 主密码流程（统一走保险箱弹窗）', () => {
 
     // 一致 → 设置成功（保险箱清单创建，无独立 passwords.enc）
     (inputs[1] as HTMLInputElement).value = 'master123';
+    // 硬警告（补丁1）：未勾选风险确认拒绝设置
+    const ackBox = dialog.querySelector('.bz-encrypt-dialog-ack input') as HTMLInputElement;
+    expect(ackBox).toBeTruthy();
+    (ackBox as HTMLInputElement).checked = true;
     confirmBtn.click();
     await p;
     expect(dm.unlocked).toBe(true);

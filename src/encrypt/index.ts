@@ -5,6 +5,7 @@
  */
 import type { App } from 'obsidian';
 import { getSettings } from '../core/settings-provider';
+import { getApp } from '../core/app';
 import { EncryptAppController } from './ui';
 
 let initialized = false;
@@ -30,6 +31,33 @@ export async function ensureEncrypt(app: App): Promise<void> {
   if (initialized) return;
   initialized = true;
   await getController().init();
+}
+
+// ---------- 状态栏（补丁2：状态栏锁状态提示） ----------
+let statusBarEl: HTMLElement | null = null;
+
+/**
+ * 挂载保险箱状态栏（main.ts onload 调用，与番茄钟同范式）：
+ * 初始显示锁定态，点击打开保险箱面板；ensureEncrypt 后由 Controller 接管解锁态刷新。
+ */
+export function mountEncryptStatusBar(container: HTMLElement): void {
+  if (statusBarEl) return;
+  const el = document.createElement('span');
+  el.className = 'bz-encrypt-statusbar';
+  el.title = '保险箱：点击打开';
+  el.textContent = '🔒 保险箱';
+  el.addEventListener('click', () => openEncrypt(getApp()));
+  container.appendChild(el);
+  statusBarEl = el;
+  void ensureEncrypt(getApp()).then(() => getController().attachStatusBar(el));
+}
+
+/** 卸载状态栏（main.ts onunload 调用） */
+export function unmountEncryptStatusBar(): void {
+  if (statusBarEl) {
+    statusBarEl.remove();
+    statusBarEl = null;
+  }
 }
 
 export function openEncrypt(app: App): void {
