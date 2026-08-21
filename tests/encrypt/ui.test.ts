@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { SafeManager, type SafeAttachment } from '../../src/encrypt/data';
-import { EncryptAppController, UIManager, collectMediaSlots, truncateName } from '../../src/encrypt/ui';
+import { EncryptAppController, UIManager, collectMediaSlots, truncateName, mimeOf } from '../../src/encrypt/ui';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices, mockMarkdownRenderer } from '../mock-obsidian-entry';
 
@@ -494,5 +494,166 @@ describe('EncryptAppController', () => {
     expect(c.dataManager.manifest.notes.length).toBe(0);
     // 无任何密文镜像残留（.safe.enc 清单本体除外）
     expect([...vault.files.keys()].some((k) => k.startsWith('CONFIG/.ENCRYPT/') && k !== 'CONFIG/.ENCRYPT/.safe.enc' && k.endsWith('.enc'))).toBe(false);
+  });
+});
+
+describe('mimeOf 附件 MIME 推断', () => {
+  it('图片/视频/未知扩展名各归其类（大小写不敏感）', () => {
+    expect(mimeOf('x.PNG')).toBe('image/png');
+    expect(mimeOf('a.jpeg')).toBe('image/jpeg');
+    expect(mimeOf('w.webp')).toBe('image/webp');
+    expect(mimeOf('v.mp4')).toBe('video/mp4');
+    expect(mimeOf('v.mkv')).toBe('video/x-matroska');
+    expect(mimeOf('v.webm')).toBe('video/webm');
+    expect(mimeOf('noext')).toBe('application/octet-stream');
+  });
+});
+
+describe('预览窗缩略图按需加载原始层', () => {
+  let vault: MockVault;
+  let dm: SafeManager;
+  let ui: UIManager;
+
+  beforeEach(async () => {
+    vault = new MockVault();
+    setup(vault);
+    document.body.innerHTML = '';
+    dm = new SafeManager('CONFIG/.ENCRYPT');
+    ui = new UIManager(dm, CONFIG);
+    ui.ensureElements();
+    await dm.unlock('pw');
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('点击缩略图：该图 slot 转圈 → 解密原始层 → 原地替换为原图（只加载被点的那一张，不弹通知）', async () => {
+    const note = await dm.lockNote({
+      path: '我的/日记/x.md',
+      title: 'x',
+      content: '开头\n![[pic1.png]]\n中间\n![[pic2.png]]',
+      attachments: [
+        { path: '我的/影视/pic1.png', data: 'QUJDREVGRw==', previewData: 'data:image/jpeg;base64,QUJD' },
+        { path: '我的/影视/pic2.png', data: 'MTIzNDU2', previewData: 'data:image/jpeg;base64,MTIz' },
+      ],
+    });
+    ui.openPreview(note);
+    await waitFor(() => document.querySelectorAll('.bz-encrypt-preview-slot').length === 2);
+    const imgs = [...document.querySelectorAll('.bz-encrypt-preview-media')] as HTMLImageElement[];
+    // 初始显示均为预览层省略图
+    expect(imgs[0].getAttribute('src')).toBe('data:image/jpeg;base64,QUJD');
+    // 放慢原始层解密，便于断言转圈中间态
+    const orig = dm.decryptAttachmentOriginal.bind(dm);
+    const spy = vi.spyOn(dm, 'decryptAttachmentOriginal').mockImplementation(async (a) => {
+      await new Promise((r) => setTimeout(r, 80));
+      return orig(a);
+    });
+    try {
+      const slot0 = imgs[0].closest('.bz-encrypt-preview-slot') as HTMLElement;
+      slot0.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      // 该图立显加载转圈（loading class + spinner 可见）
+      expect(slot0.classList.contains('bz-encrypt-preview-slot--loading')).toBe(true);
+      await waitFor(() => slot0.classList.contains('bz-encrypt-preview-slot--loaded'));
+      const img0 = slot0.querySelector('.bz-encrypt-preview-media') as HTMLImageElement;
+      // 原图替换：png mime 的 dataURL（jsdom 无 Blob URL，走 dataURL 兜底）
+      expect(img0.src).toMatch(/^(blob:|data:image\/png)/);
+      expect(spy).toHaveBeenCalledTimes(1);
+      // 相邻缩略图未被加载（只加载被点的那一张）
+      const slot1 = imgs[1].closest('.bz-encrypt-preview-slot') as HTMLElement;
+      expect(slot1.querySelector('.bz-encrypt-preview-media')?.getAttribute('src')).toBe('data:image/jpeg;base64,MTIz');
+      expect(spy.mock.calls[0]![0].path).toBe('我的/影视/pic1.png');
+      // 不弹通知（缩略图内加载态更直观）
+      expect(document.querySelectorAll('.bz-notice').length).toBe(0);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('点击视频封面：转圈后替换为可播放 <video controls>（原始质量直供）', async () => {
+    const note = await dm.lockNote({
+      path: '我的/日记/x.md',
+      title: 'x',
+      content: '片尾\n<video src="clip.mp4">',
+      attachments: [{ path: '我的/影视/clip.mp4', kind: 'video', data: 'QUJDREVGRw==', previewData: 'data:image/jpeg;base64,QUJD' }],
+    });
+    ui.openPreview(note);
+    await waitFor(() => !!document.querySelector('.bz-encrypt-preview-slot'));
+    const slot = document.querySelector('.bz-encrypt-preview-slot') as HTMLElement;
+    // 初始为封面缩略图
+    const cover = slot.querySelector('.bz-encrypt-preview-media') as HTMLImageElement;
+    expect(cover.getAttribute('src')).toBe('data:image/jpeg;base64,QUJD');
+    slot.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await waitFor(() => !!document.querySelector('video.bz-encrypt-preview-video'));
+    const video = document.querySelector('video.bz-encrypt-preview-video') as HTMLVideoElement;
+    expect(video.controls).toBe(true);
+    expect(video.src).toMatch(/^(blob:|data:video\/mp4)/);
+    expect(slot.classList.contains('bz-encrypt-preview-slot--loaded')).toBe(true);
+    // 封面缩略图已被替换（不再存在）
+    expect(slot.querySelector('.bz-encrypt-preview-media')).toBeNull();
+  });
+
+  it('解密失败：转圈消失、缩略图保留、title 提示可重试（不弹通知、不误标 loaded）', async () => {
+    const note = await dm.lockNote({
+      path: '我的/日记/x.md',
+      title: 'x',
+      content: '![[pic.png]]',
+      attachments: [{ path: '我的/影视/pic.png', data: 'QUJDREVGRw==', previewData: 'data:image/jpeg;base64,QUJD' }],
+    });
+    ui.openPreview(note);
+    await waitFor(() => !!document.querySelector('.bz-encrypt-preview-slot'));
+    const spy = vi.spyOn(dm, 'decryptAttachmentOriginal').mockResolvedValue(null);
+    try {
+      const slot = document.querySelector('.bz-encrypt-preview-slot') as HTMLElement;
+      slot.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await waitFor(() => slot.classList.contains('bz-encrypt-preview-slot--loading') === false && slot.dataset.loading === undefined);
+      // 缩略图仍在、未标记已加载、title 提示可重试
+      const img = slot.querySelector('.bz-encrypt-preview-media') as HTMLImageElement;
+      expect(img.getAttribute('src')).toBe('data:image/jpeg;base64,QUJD');
+      expect(img.title).toBe('加载失败，点击重试');
+      expect(slot.classList.contains('bz-encrypt-preview-slot--loaded')).toBe(false);
+      expect(document.querySelectorAll('.bz-notice').length).toBe(0);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('无预览层占位也可点击加载原图（missing 提示 → 点击出原图）', async () => {
+    const note = await dm.lockNote({
+      path: '我的/日记/x.md',
+      title: 'x',
+      content: '![[only.png]]',
+      attachments: [{ path: '我的/影视/only.png', data: 'QUJDREVGRw==' }],
+    });
+    ui.openPreview(note);
+    // 无预览层 → 占位提示（非 img）
+    await waitFor(() => !!document.querySelector('.bz-encrypt-preview-missing'));
+    const slot = document.querySelector('.bz-encrypt-preview-slot') as HTMLElement;
+    expect(slot.querySelector('.bz-encrypt-preview-media')).toBeNull();
+    expect(slot.textContent).toContain('点击加载原图');
+    slot.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    // 占位被替换为原始质量图
+    await waitFor(() => !!slot.querySelector('img.bz-encrypt-preview-media'));
+    const img = slot.querySelector('img.bz-encrypt-preview-media') as HTMLImageElement;
+    expect(img.src).toMatch(/^(blob:|data:image\/png)/);
+    expect(slot.classList.contains('bz-encrypt-preview-slot--loaded')).toBe(true);
+  });
+
+  it('已加载的 slot 重复点击不重复解密（loaded 短路）', async () => {
+    const note = await dm.lockNote({
+      path: '我的/日记/x.md',
+      title: 'x',
+      content: '![[pic.png]]',
+      attachments: [{ path: '我的/影视/pic.png', data: 'QUJDREVGRw==', previewData: 'data:image/jpeg;base64,QUJD' }],
+    });
+    ui.openPreview(note);
+    await waitFor(() => !!document.querySelector('.bz-encrypt-preview-slot'));
+    const spy = vi.spyOn(dm, 'decryptAttachmentOriginal');
+    const slot = document.querySelector('.bz-encrypt-preview-slot') as HTMLElement;
+    slot.dataset.loaded = '1'; // 预置已加载态
+    slot.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 80));
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
   });
 });

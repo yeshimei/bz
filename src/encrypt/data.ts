@@ -838,6 +838,17 @@ export class SafeManager {
     return CryptoService.decrypt(cipher, this.password);
   }
 
+  /**
+   * 解附件原始层 → 原始 base64（预览窗缩略图点击按需加载原图/视频用）。
+   * 与预览层不同：走 blobRef 解原质量密文；无密文返回 null，解密失败向上抛（调用方兜底）。
+   */
+  async decryptAttachmentOriginal(a: SafeAttachment): Promise<string | null> {
+    if (!this.unlocked || !this.password) throw new Error('未解锁');
+    const cipher = await this.readMirror(a.blobRef);
+    if (!cipher) return null;
+    return CryptoService.decrypt(cipher, this.password);
+  }
+
   /** 附件原始层尺寸（bytes） */
   attachmentSize(a: SafeAttachment): number {
     return a.blobSize;
