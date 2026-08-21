@@ -95,6 +95,13 @@ describe('entries 补测', () => {
     const head = sheet.querySelector('.bz-item-sheet-head') as HTMLElement;
     expect(head.textContent).toContain(entry.time);
     expect(head.textContent).toContain(entry.content.trim());
+    // emoji 与标题行独立类（放大样式挂点：与列表头部一字不差）
+    const headEmoji = head.querySelector('.bz-item-sheet-emoji') as HTMLElement;
+    expect(headEmoji).not.toBeNull();
+    expect(headEmoji.textContent).toBe(entry.emoji);
+    const headTime = head.querySelector('.bz-item-sheet-time') as HTMLElement;
+    expect(headTime).not.toBeNull();
+    expect(headTime.textContent).toBe(entry.time);
     // 点「改标签」→ 标签选择器弹出（原 emoji 长按语义）
     const tagItem = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
       (b) => b.textContent!.includes('改标签')

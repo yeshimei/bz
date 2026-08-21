@@ -390,12 +390,13 @@
     -webkit-touch-callout: default;
 }
 
-/* 移动端优化：禁用默认的长按菜单 */
-.diary-entry-content {
-    -webkit-touch-callout: default;
-    /* 允许长按选择文本 */
-    -webkit-user-select: text;
-    user-select: text;
+/* 移动端：与整卡一致禁止选字/复制（长按整卡是操作抽屉，不出现系统选字菜单；
+   编辑模式例外见上 [contenteditable="true"] 规则，其特异性更高、仍可选字） */
+.diary-entry-content,
+.diary-entry-content * {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 /* 日期筛选弹窗样式 */
@@ -2797,9 +2798,12 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   -webkit-touch-callout: none;
 }
 .bz-item-sheet-entry-info {
-  display: flex; align-items: center; gap: 6px;
+  display: flex; align-items: center; gap: 8px;
   font-size: 14px; color: var(--text-muted);
 }
+/* emoji 与标题行放大：与列表卡片头部一字不差（20px emoji、16px 加粗时间） */
+.bz-item-sheet-emoji { font-size: 20px; line-height: 1; flex-shrink: 0; }
+.bz-item-sheet-time { font-size: 16px; font-weight: 600; color: var(--text-normal); }
 /* 头部内容：固定区域展示，超出三行省略（不滚动） */
 .bz-item-sheet-entry-content {
   font-size: 14px; color: var(--text-normal);

@@ -211,9 +211,11 @@ export function buildSheetHead(entry: DiaryEntry): HTMLElement {
   const infoRow = document.createElement('div');
   infoRow.className = 'bz-item-sheet-entry-info';
   const emoji = document.createElement('span');
+  emoji.className = 'bz-item-sheet-emoji'; // 与列表头部一致：20px 独立 span
   emoji.textContent = getDisplayEmojiSeq(entry);
   infoRow.appendChild(emoji);
   const timeSpan = document.createElement('span');
+  timeSpan.className = 'bz-item-sheet-time'; // 与列表头部一致：16px 加粗
   timeSpan.textContent = entry.time;
   infoRow.appendChild(timeSpan);
   head.appendChild(infoRow);
