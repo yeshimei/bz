@@ -292,6 +292,90 @@ describe('移动端底部抽屉（Platform.isMobile = true）', () => {
     expect((window as any).__linkClicked).toBe(false);
     vi.useRealTimers();
   });
+
+  it('功能项区：项收进 .bz-item-sheet-body（内部滚动、最高 70vh、无滚动条由样式承载）', () => {
+    vi.useFakeTimers();
+    const card = makeCard();
+    attachItemActions(card, ACTIONS, SHEET_OPTS);
+    openSheet(card);
+    const body = document.querySelector('.bz-item-sheet-body') as HTMLElement;
+    expect(body).not.toBeNull();
+    expect(body.querySelectorAll('.bz-item-sheet-item').length).toBe(3);
+    expect(document.querySelector('.bz-item-sheet-head')).not.toBeNull();
+    // 头部信息区与功能项区分层：head 与 body 是兄弟
+    expect((body.previousElementSibling as HTMLElement).classList.contains('bz-item-sheet-head')).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it('下滑关闭：拖动跟随位移、遮罩变淡；松手超阈值 → 滑出动画后移除', () => {
+    vi.useFakeTimers();
+    const card = makeCard();
+    attachItemActions(card, ACTIONS, SHEET_OPTS);
+    openSheet(card);
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    const mask = document.querySelector('.bz-item-sheet-mask') as HTMLElement;
+    // touchstart → touchmove 下拉 100px
+    const ts = new TouchEvent('touchstart', { bubbles: true, cancelable: true });
+    Object.defineProperty(ts, 'touches', { value: [{ clientY: 100 }] });
+    sheet.dispatchEvent(ts);
+    const tm = new TouchEvent('touchmove', { bubbles: true, cancelable: true });
+    Object.defineProperty(tm, 'touches', { value: [{ clientY: 200 }] });
+    sheet.dispatchEvent(tm);
+    expect(sheet.style.transform).toBe('translateY(100px)');
+    expect(sheet.classList.contains('bz-item-sheet--dragging')).toBe(true);
+    expect(parseFloat(mask.style.opacity)).toBeLessThan(1); // 遮罩变淡
+    // 松手（100 > 80 阈值）→ 滑出动画
+    sheet.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+    expect(sheet.style.transform).toBe('translateY(100%)');
+    expect(mask.style.opacity).toBe('0');
+    expect(document.querySelector('.bz-item-sheet')).not.toBeNull(); // 动画中未移除
+    vi.advanceTimersByTime(200);
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
+    expect(document.querySelector('.bz-item-sheet-mask')).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it('下滑未超阈值 → 回弹：transform 清空、遮罩恢复', () => {
+    vi.useFakeTimers();
+    const card = makeCard();
+    attachItemActions(card, ACTIONS, SHEET_OPTS);
+    openSheet(card);
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    const mask = document.querySelector('.bz-item-sheet-mask') as HTMLElement;
+    const ts = new TouchEvent('touchstart', { bubbles: true, cancelable: true });
+    Object.defineProperty(ts, 'touches', { value: [{ clientY: 100 }] });
+    sheet.dispatchEvent(ts);
+    const tm = new TouchEvent('touchmove', { bubbles: true, cancelable: true });
+    Object.defineProperty(tm, 'touches', { value: [{ clientY: 140 }] }); // 40px < 80
+    sheet.dispatchEvent(tm);
+    sheet.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+    expect(sheet.style.transform).toBe('');
+    expect(sheet.classList.contains('bz-item-sheet--dragging')).toBe(false);
+    expect(mask.style.opacity).toBe('1');
+    expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
+    vi.useRealTimers();
+  });
+
+  it('功能项区已向下滚动（scrollTop>0）且触摸在区内 → 不接管为下拉关闭', () => {
+    vi.useFakeTimers();
+    const card = makeCard();
+    attachItemActions(card, ACTIONS, SHEET_OPTS);
+    openSheet(card);
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    const body = document.querySelector('.bz-item-sheet-body') as HTMLElement;
+    body.scrollTop = 50; // 模拟已滚动
+    const item = body.querySelector('.bz-item-sheet-item') as HTMLElement;
+    const ts = new TouchEvent('touchstart', { bubbles: true, cancelable: true });
+    Object.defineProperty(ts, 'touches', { value: [{ clientY: 100 }] });
+    item.dispatchEvent(ts);
+    const tm = new TouchEvent('touchmove', { bubbles: true, cancelable: true });
+    Object.defineProperty(tm, 'touches', { value: [{ clientY: 200 }] });
+    item.dispatchEvent(tm);
+    expect(sheet.style.transform).toBe(''); // 未接管
+    item.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+    expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
+    vi.useRealTimers();
+  });
 });
 
 describe('openItemMenu / closeItemMenu', () => {

@@ -2736,6 +2736,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   z-index: 10999; /* 高于各域主面板（999x），低于抽屉本体（11000）——遮罩必须完整盖住主面板 */
   background: rgba(0, 0, 0, 0.4);
   animation: bz-mask-in 0.18s ease-out;
+  transition: opacity 0.2s ease; /* 下滑关闭时同步淡出 */
 }
 .bz-item-sheet {
   position: fixed; left: 0; right: 0; bottom: 0;
@@ -2745,7 +2746,17 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   padding: 10px 14px calc(16px + env(safe-area-inset-bottom));
   box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.18);
   animation: bz-sheet-in 0.24s cubic-bezier(0.32, 0.72, 0.24, 1);
+  transition: transform 0.22s ease; /* 下滑回弹/滑出关闭 */
 }
+.bz-item-sheet.bz-item-sheet--dragging { transition: none; } /* 拖拽中即时跟随 */
+/* 功能项区：项多内部滚动，最高 70vh，隐藏滚动条 */
+.bz-item-sheet-body {
+  max-height: 70vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.bz-item-sheet-body::-webkit-scrollbar { display: none; }
 /* 顶部信息区（网易云式：展示选中列表信息；memo 传入 buildSheetHead = 与列表一字不差的标题+meta） */
 .bz-item-sheet-head {
   padding: 10px 2px 14px;

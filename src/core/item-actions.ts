@@ -226,6 +226,9 @@ export function openItemSheet(actions: ItemAction[], opts?: ItemActionsOptions, 
     }
     sheet.appendChild(head);
   }
+  // 功能项区：项多时内部滚动（最大 70vh，隐藏滚动条，styles.css）
+  const body = document.createElement('div');
+  body.className = 'bz-item-sheet-body';
   for (const a of actions) {
     const item = document.createElement('button');
     item.type = 'button';
@@ -236,8 +239,9 @@ export function openItemSheet(actions: ItemAction[], opts?: ItemActionsOptions, 
       closeItemMenu();
       a.onClick();
     });
-    sheet.appendChild(item);
+    body.appendChild(item);
   }
+  sheet.appendChild(body);
   document.body.appendChild(mask);
   document.body.appendChild(sheet);
   popupEl = sheet;
@@ -246,6 +250,85 @@ export function openItemSheet(actions: ItemAction[], opts?: ItemActionsOptions, 
   residualClickArmed = false;
   if (!suppressResidualClick) armTouchSettle();
   attachPopupListeners('bz-item-sheet');
+  attachSheetDismiss(sheet, body);
+}
+
+/** 下滑关闭手势：按住抽屉下拉跟随位移、遮罩变淡；松手超阈值滑出关闭，未超回弹 */
+function attachSheetDismiss(sheet: HTMLElement, body: HTMLElement): void {
+  const CLOSE_AT = 80; // 松手关闭阈值（px）
+  let startY = 0;
+  let dragging = false;
+  let dy = 0;
+
+  const reset = () => {
+    dragging = false;
+    dy = 0;
+    sheet.style.transform = '';
+    sheet.classList.remove('bz-item-sheet--dragging');
+  };
+
+  sheet.addEventListener(
+    'touchstart',
+    (e) => {
+      const t = (e as any).touches && (e as any).touches[0];
+      if (!t) return;
+      startY = t.clientY;
+      dragging = true;
+      dy = 0;
+    },
+    { passive: true }
+  );
+
+  sheet.addEventListener(
+    'touchmove',
+    (e) => {
+      if (!dragging) return;
+      const t = (e as any).touches && (e as any).touches[0];
+      if (!t) return;
+      const cur = t.clientY - startY;
+      // 上滑：不接管（留给功能项区滚动）；已拖过则回弹复位
+      if (cur <= 0) {
+        if (dy !== 0) reset();
+        return;
+      }
+      // 功能项区内已向下滚动（scrollTop>0）：滚动优先，不接管为下拉关闭
+      if (body.scrollTop > 0 && body.contains(e.target as Node)) {
+        if (dy !== 0) reset();
+        return;
+      }
+      dy = cur;
+      e.preventDefault(); // 接管：禁止滚动，纯下拉
+      sheet.classList.add('bz-item-sheet--dragging');
+      sheet.style.transform = `translateY(${dy}px)`;
+      if (sheetMask) sheetMask.style.opacity = String(Math.max(0, 1 - dy / 400));
+    },
+    { passive: false }
+  );
+
+  const onTouchEnd = () => {
+    if (!dragging) return;
+    const over = dy > CLOSE_AT;
+    dragging = false;
+    if (over) {
+      // 滑出动画后移除（遮罩同步淡出）
+      sheet.classList.remove('bz-item-sheet--dragging');
+      const s = sheet;
+      s.style.transform = 'translateY(100%)';
+      if (sheetMask) sheetMask.style.opacity = '0';
+      setTimeout(() => {
+        if (popupEl === s) closeItemMenu();
+      }, 180);
+    } else {
+      reset();
+      if (sheetMask) sheetMask.style.opacity = '1';
+    }
+    dy = 0;
+  };
+  sheet.addEventListener('touchend', onTouchEnd);
+  sheet.addEventListener('touchcancel', () => {
+    reset();
+    if (sheetMask) sheetMask.style.opacity = '1';
+  });
 }
 
 /**
