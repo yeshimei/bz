@@ -31,3 +31,8 @@
 - 关=常规卡对原「顶部圆角抽屉」形态（日记 480-768）有形态差异：中号屏从抽屉变为全圆角卡（已拍板接受）。
 - `.bz-win-mfs` 头部避让依赖各窗口头部结构的选择器覆写，个别窗口头部结构特殊需逐域微调。
 - 窗口内无手动切换按钮：会话中途切换需关窗→改设置→重开。
+
+## 修订（2026-08，ticket 68 后续用户反馈）
+
+1. **全屏顶距统一为 `max(34px, env(safe-area-inset-top))`**（首子元素避让规则成为全部主窗口的统一机制）：日记 ≤768 头排 `padding:16px 20px 12px !important`（id 特异性压制通用规则）改 `:not(.bz-win-mfs)` 让位；news 自垫例外由 58px 对齐 34px（其首子是绝对定位关闭钮，故弹窗自垫而非垫首子）；影视分析基样式残留 `padding-top:34px` 清除（原 mfs 下 34px 弹窗垫 + 34px 首子垫 = 68px 双重垫顶）。此前 32 行「首子避让依赖逐域选择器」的已知限制就此解除。
+2. **主窗口头部按钮统一去阴影去边框**（用户拍板，移动端/桌面通吃）：`.bz-icon-btn` 的 `box-shadow/border` 升 `!important`，另加 11 组头部容器/按钮选择器 `box-shadow:none !important; border:none !important`——压制 Obsidian 主题 `button:not(.clickable-icon)` 的默认样式（收藏本 `.fav-header` 先例推广到全部主窗口头部）。

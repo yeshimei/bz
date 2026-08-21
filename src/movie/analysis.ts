@@ -523,9 +523,8 @@ export function openAnalysisModal(app: App): void {
         border-radius: 12px; width: 100%; max-width: 600px; height: 90vh;
         display: flex; flex-direction: column; overflow: hidden;
         box-shadow: 0 8px 30px rgba(0,0,0,0.3);
-        padding-top: 34px;
     `;
-  // 移动端默认全屏（与影视主面板同一 movie 键控制）
+  // 移动端默认全屏（与影视主面板同一 movie 键控制；顶部避让由 .bz-win-mfs 统一提供，基样式不再自带 34px 防双重垫顶）
   applyMobileWindowFullscreen(modal, tryGetSettings().movieMobileDefaultFullscreen === true);
 
   const header = document.createElement('div');
