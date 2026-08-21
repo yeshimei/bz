@@ -70,6 +70,7 @@
 
 - 分支 master；提交格式 `bz: ticket NN <域> 完成——<要点>，N 测试`；chore/fix 用于杂务；每 ticket 一次提交（测试全绿后）。
 - **任务完成后必提交**：本 agent 每完成一个任务（ticket / 独立修复 / 文档改动）且测试全绿后，**立即 git 提交，不积压、不攒批**；工作区若有他人/并行未完成的改动，仅暂存本任务相关文件（`git add` 指定路径；settings.ts 之类被多任务共改的文件按 hunk 拆分暂存），其余改动原样保留，不得混入本提交。
+- **任务完成后必构建部署**：提交后运行 `npm run build`，产物直出插件目录（`E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`，esbuild.config.mjs 硬编码），随后核对插件目录 `main.js`/`styles.css` 时间戳为新且内容含本次变更（如 `Select-String` 特征串），确认部署完成；用户需在 Obsidian 重载插件后生效。
 - spec 驱动：`.scratch/memo-suite-plugin/spec.md`（59KB，命令 id 全清单/设置项总表/样式/降级链）是唯一事实源，先改 spec。
 - ticket 驱动：`.scratch/memo-suite-plugin/issues/NN-<slug>.md`（01-32），头部 `Status:` 记 triage（docs/agents/triage-labels.md）。
 - 进度恢复点：`.scratch/memo-suite-plugin/PROGRESS.md`，每次重要节点更新（含待提交架构深化）。
