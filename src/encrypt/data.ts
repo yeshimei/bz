@@ -523,13 +523,17 @@ export class SafeManager {
     }
     const existingLines = existingText ? existingText.replace(/\r\n/g, '\n').split('\n') : [];
 
-    // 组装一条 block 文本（正文去尾空行）
+    // 组装块行：标题行原样保留（`# emoji HH:mm`，不再拼接时间），标题与正文间补空行
+    // （与 writeFile 生成格式一致：# emoji HH:mm → 空行 → 正文）
+    const blockRows: string[] = [lines[0].trim()];
     const blockLines: string[] = [];
     for (let i = 1; i < lines.length; i++) blockLines.push(lines[i]);
     while (blockLines.length && blockLines[blockLines.length - 1].trim() === '') blockLines.pop();
-    const blockText = [`# ${lines[0].slice(2).trim()} ${time}`];
-    if (blockLines.length) blockText.push(...blockLines);
-    const blockJoined = blockText.join('\n');
+    while (blockLines.length && blockLines[0].trim() === '') blockLines.shift();
+    if (blockLines.length) {
+      blockRows.push('');
+      blockRows.push(...blockLines);
+    }
 
     // 按时间序 merge：找到第一个 timeValue >= 本条的标题行，在其前插入；否则追加到末尾
     const headingRe = /^#\s+\S+\s+(\d{2}:\d{2})$/;
@@ -545,16 +549,15 @@ export class SafeManager {
       }
     }
 
-    // 组装新文件内容
+    // 组装新文件内容：前段 + （与前条目分隔空行）+ 本条块 + （与后条目分隔空行）+ 后段
     const out: string[] = [];
-    if (insertIdx > 0 && existingLines[insertIdx - 1].trim() !== '') {
-      // 与上一块之间补空行（若前一行非空）
-    }
-    for (let i = 0; i < existingLines.length; i++) out.push(existingLines[i]);
-    if (insertIdx >= 0) out.splice(insertIdx, 0, blockJoined);
-    else out.push(blockJoined);
+    for (let i = 0; i < insertIdx; i++) out.push(existingLines[i]);
+    if (insertIdx > 0 && existingLines[insertIdx - 1].trim() !== '') out.push('');
+    out.push(...blockRows);
+    if (insertIdx < existingLines.length && existingLines[insertIdx].trim() !== '') out.push('');
+    for (let i = insertIdx; i < existingLines.length; i++) out.push(existingLines[i]);
 
-    // 规整：块间空行分隔，首尾不残留多余空行
+    // 规整：连续空行折叠为一条、首尾不残留空行
     const clean: string[] = [];
     for (const ln of out) {
       if (ln.trim() === '') {

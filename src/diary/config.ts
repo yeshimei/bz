@@ -30,6 +30,22 @@ export function getPrimaryTagsConfig(): Record<string, TagConfig> {
   return PRIMARY_TAGS_CONFIG;
 }
 
+/** 加密分类标签名（ADR-0017；写块标题、筛选/计数、排序用） */
+export const ENCRYPT_TAG = '加密';
+
+/**
+ * 主标签展示顺序（筛选栏）：配置固定顺序，但「加密」标签固定排在最后（用户决策）。
+ * 用于筛选栏主标签按钮的遍历顺序（rebuildTags / createTagBar）。
+ */
+export function getPrimaryTagsInDisplayOrder(): string[] {
+  const tags = Object.keys(PRIMARY_TAGS_CONFIG);
+  const idx = tags.indexOf(ENCRYPT_TAG);
+  if (idx === -1) return tags;
+  const rest = tags.filter((t) => t !== ENCRYPT_TAG);
+  rest.push(ENCRYPT_TAG);
+  return rest;
+}
+
 /** 恢复默认标签配置（测试与设置重置使用） */
 export function resetTagsConfig() {
   PRIMARY_TAGS_CONFIG = JSON.parse(JSON.stringify(DEFAULT_TAGS_CONFIG));
