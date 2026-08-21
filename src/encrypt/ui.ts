@@ -913,12 +913,16 @@ export class EncryptAppController {
     };
   }
 
-  /** 手动清理无引用密文（Q5-A：不自动触发，点按钮才跑）+ 过期暂存残留 */
+  /** 手动清理无引用密文与失效条目（Q5-A：不自动触发，点按钮才跑）+ 过期暂存残留 */
   async cleanupOrphans() {
     try {
-      const removed = await this.dataManager.cleanupOrphans();
-      if (removed > 0) notice(`已删除 ${removed} 个无引用的密文文件`, 'success');
-      else notice('没有需要清理的无引用密文', 'success');
+      const { files, notes } = await this.dataManager.cleanupOrphans();
+      const parts: string[] = [];
+      if (notes > 0) parts.push(`${notes} 个失效条目`);
+      if (files > 0) parts.push(`${files} 个无引用密文`);
+      if (parts.length) notice(`已清理：${parts.join('、')}`, 'success');
+      else notice('没有需要清理的密文', 'success');
+      void this.uiManager.renderList();
     } catch (e: any) {
       notice('清理失败：' + e.message, 'error');
     }
