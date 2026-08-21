@@ -8,7 +8,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { SafeManager, type SafeAttachment } from '../../src/encrypt/data';
 import { EncryptAppController, UIManager, collectMediaSlots, truncateName } from '../../src/encrypt/ui';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices, mockMarkdownRenderer } from '../mock-obsidian-entry';
 
 /** 轮询等待（真实 PBKDF2 长异步） */
 async function waitFor(cond: () => boolean, timeout = 3000) {
@@ -156,10 +156,13 @@ describe('UIManager 主面板', () => {
     expect(document.getElementById('bz-encrypt-preview-popup')!.textContent).toContain('2025-06-01');
   });
 
-  it('预览按钮显示（有附件/摘要）→ 点击打开独立预览窗', async () => {
+  it('单击卡片 → 先同步弹出预览窗骨架，再异步填充正文（标题 + 图片）', async () => {
     ui.show();
     ui.openPreview(dm.manifest.notes[0]);
+    // 骨架先显示（同步）：弹窗立即可见，内容随后异步填充
     await waitFor(() => document.getElementById('bz-encrypt-preview-popup')!.style.display === 'flex');
+    // 异步填充到达后再断言正文内容
+    await waitFor(() => !!document.querySelector('.bz-encrypt-preview-md'));
     const popup = document.getElementById('bz-encrypt-preview-popup')!;
     expect(popup.textContent).toContain('2025-06-01');
     expect(popup.querySelectorAll('img').length).toBe(1);
@@ -257,7 +260,8 @@ describe('预览窗混排与还原打开', () => {
       attachments: [{ path: '我的/影视/pic.png', data: 'QUJDREVGRw==', previewData: 'data:image/jpeg;base64,QUJD' }],
     });
     ui.openPreview(note);
-    await waitFor(() => document.getElementById('bz-encrypt-preview-popup')!.style.display === 'flex');
+    // 骨架先显示，等异步填充完成后断言内联图
+    await waitFor(() => !!document.querySelector('.bz-encrypt-preview-md'));
     const md = document.querySelector('.bz-encrypt-preview-md')!;
     // 图片内联在 md 区
     expect(md.querySelectorAll('img.bz-encrypt-preview-media').length).toBe(1);
@@ -273,11 +277,37 @@ describe('预览窗混排与还原打开', () => {
       attachments: [{ path: '我的/影视/only.png', data: 'QUJDREVGRw==', previewData: 'data:image/jpeg;base64,QUJD' }],
     });
     ui.openPreview(note);
-    await waitFor(() => document.getElementById('bz-encrypt-preview-popup')!.style.display === 'flex');
+    // 骨架先显示，等异步填充完成后断言画廊
+    await waitFor(() => !!document.querySelector('.bz-encrypt-preview-gallery'));
     const gallery = document.querySelector('.bz-encrypt-preview-gallery')!;
     expect(gallery.querySelectorAll('img').length).toBe(1);
     // md 区无内联图
     expect(document.querySelector('.bz-encrypt-preview-md')!.querySelectorAll('img').length).toBe(0);
+  });
+
+  it('回归：Markdown 渲染挂起（超时不返回）→ 单击仍弹出预览窗，超时后降级纯文本', async () => {
+    ui.show();
+    const note = await dm.lockNote({
+      path: '我的/日记/x.md',
+      title: 'x',
+      content: '# 正文测试',
+      attachments: [],
+    });
+    // 模拟真实 Obsidian 里 render 永不 resolve 的挂起
+    const orig = mockMarkdownRenderer.render;
+    mockMarkdownRenderer.render = vi.fn(async () => new Promise<void>(() => {})) as any;
+    try {
+      ui.openPreview(note);
+      // 弹窗立即可见（骨架同步显示，不依赖渲染完成）
+      await waitFor(() => document.getElementById('bz-encrypt-preview-popup')!.style.display === 'flex');
+      // 超时兜底后降级纯文本正文（等 3s 渲染超时 + 余量）
+      await waitFor(() => (document.querySelector('.bz-encrypt-preview-md') as HTMLElement)?.textContent?.includes('正文'), 8000);
+      const md = document.querySelector('.bz-encrypt-preview-md')!;
+      expect(md.textContent).toContain('正文');
+      expect(md.querySelectorAll('img').length).toBe(0);
+    } finally {
+      mockMarkdownRenderer.render = orig;
+    }
   });
 
   it('长按还原成功 → 打开该笔记（openLinkText）并关闭保险箱面板', async () => {
