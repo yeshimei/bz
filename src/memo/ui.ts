@@ -857,6 +857,27 @@ export const Renderer = {
     }
   },
 
+  /** 跳转关联笔记（📌 位置标签与抽屉「跳转关联笔记」项共用）：打开笔记并定位到光标位置 */
+  openLinkedNote(item: MemoItem): void {
+    const app = getApp();
+    const file = app.vault.getAbstractFileByPath(item.notePath!);
+    if (!file) {
+      notice('关联笔记不存在');
+      return;
+    }
+    UIManager.hideMain();
+    const leaf = app.workspace.getLeaf();
+    App.state.remindedFiles.add(item.notePath!);
+    void leaf.openFile(file as any);
+    const editor = (leaf as any).view?.editor;
+    if (editor && item.notePosition) {
+      const { line, ch } = item.notePosition;
+      editor.focus();
+      editor.setCursor(line, ch || 0);
+      editor.scrollIntoView({ from: { line, ch: 0 }, to: { line, ch: 0 } }, true);
+    }
+  },
+
   /** 卡片内容区：内部笔记链接 > 外部 URL > 纯文本 */
   createContentSpan(item: MemoItem): HTMLSpanElement {
     const contentSpan = document.createElement('span');
@@ -974,10 +995,53 @@ export const Renderer = {
 
     card.appendChild(meta);
 
-    // 统一操作条/长按浮层（手势统一试点）：打开（有链接时）> 编辑 > 优先级切换 > 删除
+    // 统一操作条/长按浮层（手势统一）：打开 > 跳转笔记 > 完成状态 > 延后 > 编辑 > 优先级 > 复制 > 删除
+    // 各项按条件显示：只有条目具备对应数据才出现（如「跳转关联笔记」仅绑定位置时显示）
     const actions: ItemAction[] = [];
     if (item.linkedNote || item.url) {
       actions.push({ icon: '📄', label: '打开', title: '打开关联内容', onClick: () => this.openItem(item) });
+    }
+    if (item.notePath) {
+      actions.push({
+        icon: '📌',
+        label: '跳转关联笔记',
+        title: '跳转关联笔记',
+        onClick: () => this.openLinkedNote(item),
+      });
+    }
+    if (!item.completed) {
+      actions.push({
+        icon: '✅',
+        label: '标记完成',
+        title: '标记完成',
+        onClick: async () => {
+          await DataManager.completeItem(item.id);
+          notice('已标记完成', 'success');
+          App.refresh();
+        },
+      });
+    } else {
+      actions.push({
+        icon: '↩️',
+        label: '恢复未完成',
+        title: '恢复未完成',
+        onClick: async () => {
+          await DataManager.updateItem(item.id, { completed: null } as any);
+          notice('已恢复未完成', 'success');
+          App.refresh();
+        },
+      });
+    }
+    if (item.due && !item.completed) {
+      const postpone = (days: number) => {
+        const next = moment(item.due!.replace('T', ' ')).add(days, 'days').format('YYYY-MM-DD HH:mm');
+        void DataManager.updateItem(item.id, { due: next } as any).then(() => {
+          notice(`已延后 ${days} 天`, 'success');
+          App.refresh();
+        });
+      };
+      actions.push({ icon: '⏳', label: '延后 1 天', title: '延后 1 天', onClick: () => postpone(1) });
+      actions.push({ icon: '⏳', label: '延后 3 天', title: '延后 3 天', onClick: () => postpone(3) });
     }
     actions.push({ icon: '✏️', label: '编辑', title: '编辑', onClick: () => UIManager.showAddDialog(item) });
     // 拆分高频单项：优先级切换（重要 ↔ 次要，即时写盘）
@@ -990,6 +1054,15 @@ export const Renderer = {
         await DataManager.updateItem(item.id, { priority: isImportant ? 'minor' : 'important' } as any);
         notice(isImportant ? '已转为次要' : '已转为重要', 'success');
         App.refresh();
+      },
+    });
+    actions.push({
+      icon: '📋',
+      label: '复制内容',
+      title: '复制内容',
+      onClick: async () => {
+        await navigator.clipboard.writeText(item.title);
+        notice('内容已复制', 'success');
       },
     });
     actions.push({
@@ -1089,19 +1162,9 @@ export const Renderer = {
     if (App.state.showFileName) label += ` ${fileName}`;
     tag.className = 'bz-tag bz-tag-position';
     tag.textContent = label;
-    tag.onclick = async (e) => {
+    tag.onclick = (e) => {
       e.stopPropagation();
-      UIManager.hideMain();
-      const leaf = app.workspace.getLeaf();
-      App.state.remindedFiles.add(item.notePath!);
-      await leaf.openFile(file as any);
-      const editor = (leaf as any).view?.editor;
-      if (editor) {
-        const { line, ch } = item.notePosition!;
-        editor.focus();
-        editor.setCursor(line, ch || 0);
-        editor.scrollIntoView({ from: { line, ch: 0 }, to: { line, ch: 0 } }, true);
-      }
+      this.openLinkedNote(item);
     };
     return tag;
   },
