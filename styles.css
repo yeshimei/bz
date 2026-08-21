@@ -2572,6 +2572,11 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 .bz-encrypt-health-item--bad { color: var(--text-error); cursor: default; }
 .bz-encrypt-health-item--warn { color: var(--text-warning); cursor: default; }
 .bz-encrypt-health-hint { margin: 6px 0; font-size: 13px; color: var(--text-faint); }
+/* 体检动态显示：进度文本 + 条 + 扫描中实时发现区 */
+.bz-encrypt-health-progress { margin: 10px 0 6px; font-size: 13px; color: var(--text-muted); }
+.bz-encrypt-health-bar { height: 4px; background: var(--background-modifier); border-radius: 2px; overflow: hidden; margin-bottom: 8px; }
+.bz-encrypt-health-bar i { display: block; height: 100%; background: var(--interactive-accent); transition: width 0.2s ease; }
+.bz-encrypt-health-live { margin-bottom: 8px; }
 .bz-encrypt-health-foot {
   display: flex; gap: 10px; justify-content: flex-end; align-items: center;
   padding: 12px 20px 16px; border-top: 1px solid var(--background-modifier);
