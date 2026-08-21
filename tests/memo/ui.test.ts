@@ -391,6 +391,42 @@ describe('备忘录面板', () => {
     vi.useRealTimers();
   });
 
+  it('移动端：抽屉小字——打开(host/笔记名)、跳转(笔记名)、标记完成(到期文案)、延后(新日期)、复制(N 字)', async () => {
+    vi.useFakeTimers();
+    MockPlatform.isMobile = true;
+    const vault = new MockVault();
+    vault.files.set('我的/笔记A.md', '# 笔记A');
+    await initApp(vault);
+    await seedItems(vault, [
+      { id: '1', title: '剪藏链接', scene: '剪藏', priority: 'minor', created: '2025-06-14 10:00:00', completed: null, url: 'https://bilibili.com/video/1' },
+      { id: '2', title: '带笔记和到期', scene: '工作', priority: 'minor', created: '2025-06-14 10:00:00', completed: null, notePath: '我的/笔记A.md', notePosition: { line: 0, ch: 0 }, due: '2025-06-14 12:00' },
+    ]);
+    await App.refresh();
+    const cards = document.querySelectorAll('.todo-card');
+    const cardBy = (t: string) =>
+      [...document.querySelectorAll('.todo-card')].find((c) => c.textContent!.includes(t)) as HTMLElement;
+    const subOf = (sheet: HTMLElement, label: string) => {
+      const item = [...sheet.querySelectorAll('.bz-item-sheet-item')].find((b) => b.textContent!.includes(label)) as HTMLElement;
+      return (item.querySelector('.bz-item-sheet-item-sub') as HTMLElement)?.textContent ?? '';
+    };
+    // url 条目：打开小字 = 域名；复制内容小字 = 字数
+    openSheetCard(cardBy('剪藏链接'));
+    let sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(subOf(sheet, '打开')).toBe('bilibili.com');
+    expect(subOf(sheet, '复制内容')).toBe(`${'剪藏链接'.length} 字`);
+    // 笔记+到期条目：跳转小字 = 笔记名；标记完成小字 = 到期文案；延后小字 = 新日期
+    document.querySelector('.bz-item-sheet-mask')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await vi.advanceTimersByTimeAsync(10);
+    openSheetCard(cardBy('带笔记和到期'));
+    sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(subOf(sheet, '跳转关联笔记')).toBe('笔记A.md');
+    expect(subOf(sheet, '标记完成')).toContain('已过期'); // 2025-06-14 相对当前必过期
+    expect(subOf(sheet, '延后 1 天')).toBe('06-15 12:00');
+    expect(subOf(sheet, '延后 3 天')).toBe('06-17 12:00');
+    MockPlatform.isMobile = false;
+    vi.useRealTimers();
+  });
+
   it('移动端：点「跳转关联笔记」→ 打开笔记并定位（getLeaf().openFile 被调用）', async () => {
     vi.useFakeTimers();
     MockPlatform.isMobile = true;
