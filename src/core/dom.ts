@@ -8,7 +8,9 @@ import { notice } from './notice';
 /** notice(msg, dur)：统一走自绘通知系统（自动语义归类，ticket 25 替代原生 Notice） */
 export { notice };
 
-/** longPress(el, cb, dur, filter)：长按手势（mousedown/touchstart 计时，移动超 10px 取消） */
+/** longPress(el, cb, dur, filter)：长按手势（mousedown/touchstart 计时，移动超 10px 取消）
+ *  触屏兼容：touchstart preventDefault 会抑制浏览器派发 click（2026-08-22 保险箱触屏单击
+ *  无预览），故 touchend 时若为「短按且未移动且未触发长按」补发合成 click，保证单击监听可触屏使用。 */
 export function longPress(
   el: HTMLElement,
   cb: (e: any) => void,
@@ -16,27 +18,47 @@ export function longPress(
   filter?: (e: any) => boolean
 ): void {
   if (!dur) dur = 500;
-  let timer: any = null, touching = false, sx = 0, sy = 0;
+  let timer: any = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
   const M = 10;
   function start(e: any) {
     if (filter && !filter(e)) return;
     if (e.button !== undefined && e.button !== 0) return;
-    if (e.touches) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; touching = true; }
-    timer = setTimeout(function () { timer = null; cb(e); }, dur);
+    fired = false;
+    moved = false;
+    if (e.touches && e.touches.length) {
+      const t = e.touches[0];
+      sx = t.clientX;
+      sy = t.clientY;
+      touching = true;
+    }
+    timer = setTimeout(function () { timer = null; fired = true; cb(e); }, dur);
   }
   function cancel() { if (timer) { clearTimeout(timer); timer = null; } }
   function move(e: any) {
-    if (!timer || !touching) return;
+    if (!timer || !touching || !e.touches || !e.touches.length) return;
     const t = e.touches[0];
-    if (Math.abs(t.clientX - sx) > M || Math.abs(t.clientY - sy) > M) cancel();
+    if (Math.abs(t.clientX - sx) > M || Math.abs(t.clientY - sy) > M) { moved = true; cancel(); }
   }
-  function end() { touching = false; cancel(); }
+  function endFromTouch() {
+    // 短按（未触发长按、未移动）→ 补发合成 click，补救 touchstart preventDefault 吞掉的单击
+    if (touching && !fired && !moved) {
+      try {
+        el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      } catch (e) {
+        /* 补发失败忽略 */
+      }
+    }
+    touching = false;
+    cancel();
+  }
+  function endFromMouse() { touching = false; cancel(); }
   el.addEventListener('mousedown', start);
-  el.addEventListener('mouseup', end);
-  el.addEventListener('mouseleave', end);
-  el.addEventListener('touchstart', function (e) { e.preventDefault(); start(e); });
-  el.addEventListener('touchend', end);
+  el.addEventListener('mouseup', endFromMouse);
+  el.addEventListener('mouseleave', endFromMouse);
+  el.addEventListener('touchstart', function (e) { e.preventDefault(); start(e); }, { passive: false });
+  el.addEventListener('touchend', endFromTouch);
   el.addEventListener('touchmove', move);
+  el.addEventListener('touchcancel', endFromTouch);
 }
 
 /** DOMAIN_MAP：favicon 域名归一映射（Q3 同款） */
