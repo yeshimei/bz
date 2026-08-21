@@ -455,4 +455,44 @@ describe('EncryptAppController', () => {
     expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('加密到保险箱');
     (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
   });
+
+  it('面板顶部「清理未引用的密文」按钮：点击手动清理无引用密文并提示结果（Q5-A）', async () => {
+    setup(vault, CONFIG);
+    const c = EncryptAppController.getInstance(CONFIG);
+    await c.init();
+    await c.dataManager.unlock('pw');
+    c.uiManager.show();
+    // 预置无引用密文孤儿
+    vault.files.set('CONFIG/.ENCRYPT/.junk.enc', 'junk');
+    const headBtns = [...document.querySelectorAll('.bz-encrypt-head-btns button')].map((b) => b.textContent);
+    expect(headBtns.indexOf('🧹')).toBeGreaterThanOrEqual(0);
+    const cleanupBtn = [...document.querySelectorAll('.bz-encrypt-head-btns button')].find((b) => b.textContent === '🧹') as HTMLButtonElement;
+    cleanupBtn.click();
+    await waitFor(() => hasNotice('已删除 1 个无引用的密文文件'));
+    expect(vault.files.get('CONFIG/.ENCRYPT/.junk.enc')).toBeUndefined();
+  });
+
+  it('lockCurrentNote：附件读取失败 → 整笔放弃（不落任何东西、原文件不动、提示失败）', async () => {
+    const app = setup(vault, CONFIG);
+    vault.create('笔记/主题.md', '正文\n![[pic.png]]');
+    vault.createBinary('笔记/pic.png', new TextEncoder().encode('BCD').buffer);
+    const activeFile = { path: '笔记/主题.md', basename: '主题', vault: vault as any };
+    (app.workspace as any).getActiveFile = () => activeFile;
+
+    const c = EncryptAppController.getInstance(CONFIG);
+    await c.init();
+    await c.dataManager.unlock('pw');
+    vi.spyOn(vault, 'readBinary').mockRejectedValue(new Error('boom'));
+    const p = c.lockCurrentNote();
+    await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    await p;
+    expect(hasNotice('加密失败：附件读取失败（笔记/pic.png）')).toBe(true);
+    // 整笔放弃：原文件未动、无清单条目、无任何密文镜像/暂存残留
+    expect(vault.files.has('笔记/主题.md')).toBe(true);
+    expect(vault.binaryFiles.has('笔记/pic.png')).toBe(true);
+    expect(c.dataManager.manifest.notes.length).toBe(0);
+    // 无任何密文镜像残留（.safe.enc 清单本体除外）
+    expect([...vault.files.keys()].some((k) => k.startsWith('CONFIG/.ENCRYPT/') && k !== 'CONFIG/.ENCRYPT/.safe.enc' && k.endsWith('.enc'))).toBe(false);
+  });
 });

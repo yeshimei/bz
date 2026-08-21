@@ -152,6 +152,8 @@ export class UIManager {
   config: EncryptUIConfig;
   /** 顶部「加密当前笔记」按钮回调（由 Controller 注入，调 lockCurrentNote） */
   onLockCurrentNote: (() => void) | null = null;
+  /** 顶部「清理未引用的密文」按钮回调（由 Controller 注入，调 cleanupOrphans；Q5-A 手动触发） */
+  onCleanupOrphans: (() => void) | null = null;
   // DOM
   mask: HTMLDivElement | null = null;
   popup: HTMLDivElement | null = null;
@@ -230,9 +232,11 @@ export class UIManager {
     btns.className = 'bz-encrypt-head-btns';
     const lockBtn = createIconBtn('🔒', '加密当前笔记', () => this.onLockCurrentNote?.());
     const settingsBtn = createIconBtn('⚙️', '加密保险箱设置', () => this.openSettings());
+    const cleanupBtn = createIconBtn('🧹', '清理未引用的密文', () => this.onCleanupOrphans?.());
     const closeBtn = createIconBtn('❌', '关闭', () => this.hide());
     if (this.onLockCurrentNote) btns.appendChild(lockBtn);
     btns.appendChild(settingsBtn);
+    btns.appendChild(cleanupBtn);
     btns.appendChild(closeBtn);
     header.appendChild(title);
     header.appendChild(btns);
@@ -642,6 +646,20 @@ export class EncryptAppController {
     this.uiManager.onLockCurrentNote = () => {
       void this.lockCurrentNote();
     };
+    this.uiManager.onCleanupOrphans = () => {
+      void this.cleanupOrphans();
+    };
+  }
+
+  /** 手动清理无引用密文（Q5-A：不自动触发，点按钮才跑）+ 过期暂存残留 */
+  async cleanupOrphans() {
+    try {
+      const removed = await this.dataManager.cleanupOrphans();
+      if (removed > 0) notice(`已删除 ${removed} 个无引用的密文文件`, 'success');
+      else notice('没有需要清理的无引用密文', 'success');
+    } catch (e: any) {
+      notice('清理失败：' + e.message, 'error');
+    }
   }
 
   async init() {
@@ -690,10 +708,11 @@ export class EncryptAppController {
     const attachments: any[] = [];
     const size = this.config.previewSize || 960;
     const quality = this.config.previewQuality || 0.7;
+    // Q3-A：任一附件读取失败 → 整笔放弃（不落任何东西、原文件不动）；预览失败不算失败（可选增强）
     for (const p of attPaths) {
       try {
         const f = app.vault.getAbstractFileByPath(p);
-        if (!f) continue;
+        if (!f) throw new Error('附件不存在');
         const buf = await app.vault.readBinary(f as any);
         const bytes = new Uint8Array(buf);
         let bin = '';
@@ -713,8 +732,9 @@ export class EncryptAppController {
           }
         }
         attachments.push({ path: p, kind: kindOf(p), data, previewData });
-      } catch (e) {
-        /* 附件读取失败跳过该附件 */
+      } catch (e: any) {
+        notice('加密失败：附件读取失败（' + p + '）', 'error');
+        return;
       }
     }
     const h = progressNotify('加密 ' + file.basename);
@@ -726,7 +746,13 @@ export class EncryptAppController {
           content,
           attachments,
         },
-        (p) => updateProgress(h, p.done, p.total, p.current)
+        (p) => updateProgress(h, p.done, p.total, p.current),
+        (failed) => {
+          // Q4-A：删原文件失败仅提示、不回滚（冗余原文件可见、可手动删除）
+          if (failed.length) {
+            notice(failed.length + ' 个原文件删除失败（已保留在原位置，可手动删除）', 'warning');
+          }
+        }
       );
       // 主动打开加密保险箱面板，展示刚加密的条目（无独立完成 toast，进度通知已显示完成）
       const total = attachments.length + 1;
