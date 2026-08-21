@@ -161,6 +161,44 @@ describe('SafeManager 加锁', () => {
     expect(note.attachments[0].hasPreview).toBe(false);
     expect(note.attachments[0].previewRef).toBe('');
   });
+
+  it('decryptAttachmentOriginal：解原始层（blobRef）得原始 base64，与预览层互不影响', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await lockSample(sm, {
+      content: '# A',
+      attachments: [
+        { path: '我的/影视/pic.png', data: 'SUlHRFJBTQ==', previewData: 'PREVIEWDATA' },
+        { path: '我的/影视/clip.mp4', data: 'NTY3OA==', previewData: 'FRAME' },
+      ],
+    });
+    const pic = note.attachments[0];
+    const clip = note.attachments[1];
+    // 原始层解出加锁时传入的 base64（图片/视频各自独立）
+    expect(await sm.decryptAttachmentOriginal(pic)).toBe('SUlHRFJBTQ==');
+    expect(await sm.decryptAttachmentOriginal(clip)).toBe('NTY3OA==');
+    // 预览层解出压缩预览，与原始层不同源
+    expect(await sm.decryptPreview(pic)).toBe('PREVIEWDATA');
+    expect(await sm.decryptPreview(clip)).toBe('FRAME');
+  });
+
+  it('decryptAttachmentOriginal：未解锁抛「未解锁」、镜像缺失返回 null', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await lockSample(sm, {
+      content: '# A',
+      attachments: [{ path: '我的/影视/pic.png', data: 'SUlHRFJBTQ==' }],
+    });
+    const att = note.attachments[0];
+    // 镜像缺失（被误删）→ null（按需加载降级）
+    vault.files.delete('CONFIG/.ENCRYPT/' + att.blobRef);
+    expect(await sm.decryptAttachmentOriginal(att)).toBeNull();
+    // 未解锁 → 抛错（与 decryptPreview 同规约）
+    sm.lock();
+    await expect(sm.decryptAttachmentOriginal(att)).rejects.toThrow('未解锁');
+  });
 });
 
 describe('SafeManager 还原（取出即删）', () => {

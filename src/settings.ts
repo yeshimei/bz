@@ -391,7 +391,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 加密保险箱（encrypt 域）
   encryptRoot: 'CONFIG/.ENCRYPT',
   encryptPreviewEnabled: true,
-  encryptPreviewSize: '960',
-  encryptPreviewQuality: '0.7',
+  encryptPreviewSize: '480',
+  encryptPreviewQuality: '0.5',
   encryptSecurityMode: false,
 };
