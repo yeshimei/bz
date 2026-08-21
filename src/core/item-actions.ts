@@ -28,6 +28,8 @@ export interface ItemAction {
   label: string;
   /** 菜单项右侧小字（次级/动态数据，如「123 字」；空则不显示） */
   sub?: string;
+  /** 强调色调：图标与右侧小字同步变色（如解锁态加密/解密用强调色）；空为默认灰调 */
+  tone?: 'accent';
   /** 桌面操作条 tooltip（空则不加 title） */
   title?: string;
   /** 危险操作（删除类）：浮层项红色强调 */
@@ -194,7 +196,10 @@ export function openItemMenu(x: number, y: number, actions: ItemAction[], suppre
   for (const a of actions) {
     const item = document.createElement('button');
     item.type = 'button';
-    item.className = 'bz-item-menu-item' + (a.kind === 'danger' ? ' bz-item-menu-item--danger' : '');
+    item.className =
+      'bz-item-menu-item' +
+      (a.kind === 'danger' ? ' bz-item-menu-item--danger' : '') +
+      (a.tone === 'accent' ? ' bz-item-menu-item--accent' : '');
     const itemIcon = document.createElement('span');
     itemIcon.className = 'bz-item-menu-icon';
     renderIcon(itemIcon, a.icon);
@@ -259,7 +264,10 @@ export function openItemSheet(actions: ItemAction[], opts?: ItemActionsOptions, 
   for (const a of actions) {
     const item = document.createElement('button');
     item.type = 'button';
-    item.className = 'bz-item-sheet-item' + (a.kind === 'danger' ? ' bz-item-sheet-item--danger' : '');
+    item.className =
+      'bz-item-sheet-item' +
+      (a.kind === 'danger' ? ' bz-item-sheet-item--danger' : '') +
+      (a.tone === 'accent' ? ' bz-item-sheet-item--accent' : '');
     const itemIcon = document.createElement('span');
     itemIcon.className = 'bz-item-sheet-icon';
     renderIcon(itemIcon, a.icon);
