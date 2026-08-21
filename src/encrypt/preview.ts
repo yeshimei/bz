@@ -19,11 +19,11 @@ export const PREVIEW_TIMEOUT_MS = 5000;
 
 /**
  * 省略图固定档（用户拍板：预览只要"看得清"，不提供长边/质量设置项）：
- * 长边 256 / JPEG 质量 0.45——特别小、特别模糊均可接受；预览窗秒开，
- * 要看清就点击缩略图按需加载原始质量。
+ * 长边 384 / JPEG 质量 0.5——手机预览清晰、体积小（首版 256/0.45 反馈太小太糊，
+ * 480/0.7 偏大，取折中）；要看清就点击缩略图按需加载原始质量。
  */
-export const PREVIEW_OMIT_SIZE = 256;
-export const PREVIEW_OMIT_QUALITY = 0.45;
+export const PREVIEW_OMIT_SIZE = 384;
+export const PREVIEW_OMIT_QUALITY = 0.5;
 
 /** 能否用 canvas（jsdom/node 无实现时 false） */
 function canvasAvailable(): boolean {
