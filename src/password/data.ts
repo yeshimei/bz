@@ -1,10 +1,12 @@
 /**
- * 密码本数据管理器（密码本.js DataManager 逐字移植）
- * 数据文件：<storagePath>/passwords.enc（AES-GCM 加密）
- * 条目 7 字段：id/platform/url/account/password/note/createdAt
+ * 密码本数据管理器（合并至保险箱：路线 B 硬合并）
+ * 数据不再独立落盘（无 passwords.enc）——整表作为保险箱清单里的一篇 SafeNote：
+ *   kind='password-vault'，正文镜像（contentRef）存整表密文，与保险箱共享主密码/解锁态。
+ * 条目 7 字段不变：id/platform/url/account/password/note/createdAt（数据格式铁律 1）。
+ * 加解密复用 SafeManager（CryptoService 本就共享）；增删改 = 整表重加密覆盖同一镜像（不产生孤儿）。
  */
-import { getApp } from '../core/app';
-import { CryptoService } from './crypto';
+import { getSafeManager } from '../encrypt';
+import { type SafeManager } from '../encrypt/data';
 
 export interface PasswordEntry {
   id: string;
@@ -16,108 +18,85 @@ export interface PasswordEntry {
   createdAt: string;
 }
 
+/** 保险箱清单条目约定：kind 值 + 虚拟路径/标题（无原文件，不参与还原/删除） */
+const VAULT_KIND = 'password-vault' as const;
+const VAULT_PATH = 'CONFIG/.ENCRYPT/passwords';
+const VAULT_TITLE = '密码本';
+
 export class DataManager {
-  storagePath: string;
-  filePath: string;
-  masterPassword: string | null = null;
-  unlocked = false;
+  private safe: SafeManager;
   pwData: PasswordEntry[] = [];
 
-  constructor(storagePath: string) {
-    this.storagePath = storagePath;
-    this.filePath = `${storagePath}/passwords.enc`;
+  /** 注入 SafeManager（测试用）；缺省取保险箱单例（与保险箱面板共享主密码与解锁态） */
+  constructor(safe?: SafeManager) {
+    this.safe = safe || getSafeManager();
+  }
+
+  /** 解锁态 = 保险箱解锁态（同一把主密码） */
+  get unlocked(): boolean {
+    return this.safe.unlocked;
+  }
+
+  /** 密码本对应的清单条目（无则 null） */
+  private get vaultNote() {
+    return this.safe.manifest.notes.find((n) => n.kind === VAULT_KIND) || null;
   }
 
   async load() {
-    const app = getApp();
-    if (!this.unlocked || !this.masterPassword) {
+    if (!this.safe.unlocked) {
       throw new Error('未解锁，无法加载数据');
     }
-    const file = app.vault.getAbstractFileByPath(this.filePath);
-    if (!file) {
+    const note = this.vaultNote;
+    if (!note) {
       this.pwData = [];
       return;
     }
-    const content = await app.vault.read(file as any);
-    if (!content.trim()) {
-      this.pwData = [];
-      return;
-    }
+    const plain = await this.safe.decryptNoteBody(note);
+    if (plain === null) throw new Error('密码本数据解密失败');
+    let parsed: unknown;
     try {
-      const decrypted = await CryptoService.decrypt(content.trim(), this.masterPassword);
-      this.pwData = JSON.parse(decrypted);
-      // 确保每个条目有 id 和基本字段
-      this.pwData = this.pwData.map((item: any) => {
-        if (!item.id) item.id = `pw-${Date.now()}-${Math.random()}`;
-        if (!item.platform) item.platform = '';
-        if (!item.url) item.url = '';
-        if (!item.account) item.account = '';
-        if (!item.password) item.password = '';
-        if (!item.note) item.note = '';
-        if (!item.createdAt) item.createdAt = new Date().toISOString();
-        return item;
-      });
+      parsed = JSON.parse(plain);
     } catch (e) {
-      console.error('解密失败', e);
-      throw new Error('数据解密失败，密码可能错误');
+      throw new Error('密码本数据损坏');
     }
+    this.pwData = Array.isArray(parsed) ? parsed : [];
+    // 确保每个条目有 id 和基本字段
+    this.pwData = this.pwData.map((item: any) => {
+      if (!item.id) item.id = `pw-${Date.now()}-${Math.random()}`;
+      if (!item.platform) item.platform = '';
+      if (!item.url) item.url = '';
+      if (!item.account) item.account = '';
+      if (!item.password) item.password = '';
+      if (!item.note) item.note = '';
+      if (!item.createdAt) item.createdAt = new Date().toISOString();
+      return item;
+    });
   }
 
   async save() {
-    const app = getApp();
-    if (!this.unlocked || !this.masterPassword) {
+    if (!this.safe.unlocked) {
       throw new Error('未解锁，无法保存数据');
     }
     const json = JSON.stringify(this.pwData, null, 2);
-    const encrypted = await CryptoService.encrypt(json, this.masterPassword);
-    // 确保目录存在
-    const dirPath = this.storagePath;
-    if (dirPath) {
-      const dir = app.vault.getAbstractFileByPath(dirPath);
-      if (!dir) await app.vault.createFolder(dirPath);
-    }
-    const file = app.vault.getAbstractFileByPath(this.filePath);
-    if (file) {
-      await app.vault.modify(file as any, encrypted);
+    const note = this.vaultNote;
+    if (note) {
+      // 已有条目：整表重加密覆盖同一镜像（高频改写不产生孤儿密文）
+      await this.safe.updateNotePayload(note.id, json);
     } else {
-      await app.vault.create(this.filePath, encrypted);
+      // 首次建立：走保险箱提交式加密序列（事务/自愈语义全继承）
+      await this.safe.lockNote({
+        path: VAULT_PATH,
+        title: VAULT_TITLE,
+        kind: VAULT_KIND,
+        content: json,
+        attachments: [],
+      });
     }
   }
 
-  async unlock(password: string): Promise<boolean> {
-    const app = getApp();
-    const file = app.vault.getAbstractFileByPath(this.filePath);
-    if (!file) {
-      // 首次使用：设置密码并创建空数据
-      this.masterPassword = password;
-      this.unlocked = true;
-      this.pwData = [];
-      await this.save();
-      return true;
-    }
-    const content = await app.vault.read(file as any);
-    if (!content.trim()) {
-      // 文件为空，视为首次
-      this.masterPassword = password;
-      this.unlocked = true;
-      this.pwData = [];
-      await this.save();
-      return true;
-    }
-    try {
-      await CryptoService.decrypt(content.trim(), password);
-      this.masterPassword = password;
-      this.unlocked = true;
-      await this.load();
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
+  /** 上锁：整体锁定（与保险箱共享解锁态；安全模式/卸载时调用） */
   lock() {
-    this.unlocked = false;
-    this.masterPassword = null;
+    this.safe.lock();
     this.pwData = [];
   }
 

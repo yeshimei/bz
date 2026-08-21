@@ -13,14 +13,14 @@ let controller: PasswordAppController | null = null;
 function getController(): PasswordAppController {
   if (!controller) {
     const s = getSettings();
-    // ADR-0009：storagePath 优先，旧 pwStoragePath 兼容兜底
-    const storagePath = ((s.storagePath || s.pwStoragePath) || 'CONFIG/STORAGE').replace(/\/+$/, '');
+    // 密码本数据已合并至保险箱（路线 B：kind=password-vault，共享主密码）；
+    // 此处仅保留生成器设置（charset/length）与安全模式
     const charset =
       s.passwordCharset ||
       '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+';
     const length = String(parseInt(s.passwordLength) || 16);
     const securityMode = !!s.securityMode;
-    controller = PasswordAppController.getInstance({ storagePath, charset, length, securityMode });
+    controller = PasswordAppController.getInstance({ charset, length, securityMode });
   }
   return controller;
 }
