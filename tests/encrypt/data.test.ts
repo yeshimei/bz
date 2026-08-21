@@ -1,10 +1,10 @@
 // @vitest-environment node
 /**
- * 加密保险箱数据层测试：SafeManager 加锁/还原/收回 状态机、
- * 清单加密存储、附件二进制镜像、指纹冲突安全、崩溃幂等。
+ * 加密保险箱数据层测试：SafeManager 加锁/还原（取出即删）状态机、
+ * 清单加密存储、平铺点前缀密文镜像、指纹冲突安全、崩溃幂等。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { SafeManager, fingerprintOf, mirrorRef, previewMirrorRef } from '../../src/encrypt/data';
+import { SafeManager, fingerprintOf, flatName } from '../../src/encrypt/data';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
 
@@ -47,19 +47,25 @@ describe('SafeManager 状态机', () => {
     expect(a).not.toBe(c);
   });
 
-  it('镜像路径：原路径 → 附件/<原路径>，预览 → 附件/_预览/<原路径>', () => {
-    expect(mirrorRef('我的/影视/x.png')).toBe('附件/我的/影视/x.png');
-    expect(previewMirrorRef('我的/影视/x.png')).toBe('附件/_预览/我的/影视/x.png');
+  it('平铺随机名：点前缀 + .enc 后缀、互不相同、不含路径信息', () => {
+    const n1 = flatName();
+    const n2 = flatName();
+    expect(n1.startsWith('.')).toBe(true);
+    expect(n1.endsWith('.enc')).toBe(true);
+    expect(n1).not.toBe(n2);
+    expect(n1.includes('/')).toBe(false);
+    expect(n1.includes('附件')).toBe(false);
+    expect(n1.includes('.md')).toBe(false);
   });
 
-  it('首次 unlock：创建 safe.enc（密文非明文 JSON），清单为空', async () => {
+  it('首次 unlock：创建 .safe.enc（密文非明文 JSON），清单为空', async () => {
     makeApp(vault);
-    const sm = new SafeManager('CONFIG/ENCRYPT');
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
     const ok = await sm.unlock('master123');
     expect(ok).toBe(true);
     expect(sm.unlocked).toBe(true);
-    expect(vault.files.has('CONFIG/ENCRYPT/safe.enc')).toBe(true);
-    const content = vault.files.get('CONFIG/ENCRYPT/safe.enc')!;
+    expect(vault.files.has('CONFIG/.ENCRYPT/.safe.enc')).toBe(true);
+    const content = vault.files.get('CONFIG/.ENCRYPT/.safe.enc')!;
     expect(content.startsWith('{')).toBe(false);
     expect(content).not.toContain('master123');
     expect(sm.manifest.notes.length).toBe(0);
@@ -67,10 +73,10 @@ describe('SafeManager 状态机', () => {
 
   it('二次解锁：正确密码成功、错误密码失败', async () => {
     makeApp(vault);
-    const sm = new SafeManager('CONFIG/ENCRYPT');
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
     sm.lock();
-    const sm2 = new SafeManager('CONFIG/ENCRYPT');
+    const sm2 = new SafeManager('CONFIG/.ENCRYPT');
     expect(await sm2.unlock('wrong')).toBe(false);
     expect(sm2.unlocked).toBe(false);
     expect(await sm2.unlock('pw')).toBe(true);
@@ -85,11 +91,11 @@ describe('SafeManager 加锁', () => {
     vault = new MockVault();
   });
 
-  it('lockNote：正文+附件移入保险箱，原文件删除，密文镜像落盘', async () => {
+  it('lockNote：正文+附件移入保险箱，原文件删除，平铺点前缀密文镜像落盘', async () => {
     makeApp(vault);
     vault.create('我的/日记/2025-06-01.md', '# 日记');
     vault.createBinary('我的/影视/pic.png', new TextEncoder().encode('IMGDATAIMG').buffer);
-    const sm = new SafeManager('CONFIG/ENCRYPT');
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
 
     const note = await lockSample(sm, { content: '# 日记' });
@@ -97,29 +103,37 @@ describe('SafeManager 加锁', () => {
     // 原笔记与附件已移出
     expect(vault.files.has('我的/日记/2025-06-01.md')).toBe(false);
     expect(vault.binaryFiles.has('我的/影视/pic.png')).toBe(false);
-    // 密文镜像已生成（原始层 + 预览层）
-    const mirrorPath = 'CONFIG/ENCRYPT/' + mirrorRef('我的/影视/pic.png');
-    const prevPath = 'CONFIG/ENCRYPT/' + previewMirrorRef('我的/影视/pic.png');
-    expect(vault.files.has(mirrorPath)).toBe(true);
-    expect(vault.files.has(prevPath)).toBe(true);
+    // 密文镜像已生成（原始层 + 预览层），平铺在 encryptRoot 根、点前缀
+    const blobRef = note.attachments[0].blobRef;
+    const prevRef = note.attachments[0].previewRef;
+    const contentRef = note.contentRef;
+    expect(blobRef.startsWith('.')).toBe(true);
+    expect(prevRef.startsWith('.')).toBe(true);
+    expect(contentRef.startsWith('.')).toBe(true);
+    expect(vault.files.has('CONFIG/.ENCRYPT/' + blobRef)).toBe(true);
+    expect(vault.files.has('CONFIG/.ENCRYPT/' + prevRef)).toBe(true);
+    expect(vault.files.has('CONFIG/.ENCRYPT/' + contentRef)).toBe(true);
+    // 平铺无 附件/ 子目录
+    expect(vault.dirs.has('CONFIG/.ENCRYPT/附件')).toBe(false);
     // 密文非明文
-    expect(vault.files.get(mirrorPath)!).not.toContain('IMGDATAIMG');
+    expect(vault.files.get('CONFIG/.ENCRYPT/' + blobRef)!).not.toContain('IMGDATAIMG');
     expect(note.hasSummary).toBe(false);
     expect(note.attachments[0].hasPreview).toBe(true);
   });
 
   it('lockNote 正文写入镜像文件（contentRef），重新解锁经 decryptNoteBody 解出原文', async () => {
     makeApp(vault);
-    const sm = new SafeManager('CONFIG/ENCRYPT');
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
     const note = await lockSample(sm);
-    // 正文镜像落盘（附件目录镜像），清单不再内嵌 base64
-    expect(note.contentRef).toBe(mirrorRef('我的/日记/2025-06-01.md'));
+    // 正文镜像平铺落盘（encryptRoot 根），清单不再内嵌 base64
+    expect(note.contentRef.startsWith('.')).toBe(true);
+    expect(note.contentRef.endsWith('.enc')).toBe(true);
     expect(note.content).toBe('');
-    expect(vault.files.has('CONFIG/ENCRYPT/' + mirrorRef('我的/日记/2025-06-01.md'))).toBe(true);
+    expect(vault.files.has('CONFIG/.ENCRYPT/' + note.contentRef)).toBe(true);
     // 重开解锁读取
     sm.lock();
-    const sm2 = new SafeManager('CONFIG/ENCRYPT');
+    const sm2 = new SafeManager('CONFIG/.ENCRYPT');
     await sm2.unlock('pw');
     expect(sm2.manifest.notes.length).toBe(1);
     const plain = await sm2.decryptNoteBody(sm2.manifest.notes[0]);
@@ -128,11 +142,11 @@ describe('SafeManager 加锁', () => {
 
   it('加锁附件无预览时 hasPreview=false 且无预览镜像', async () => {
     makeApp(vault);
-    const sm = new SafeManager('CONFIG/ENCRYPT');
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
     const note = await lockSample(sm, { attachments: [{ path: '我的/x.png', data: 'REFLhUlG' }] });
     expect(note.attachments[0].hasPreview).toBe(false);
-    expect(vault.files.has('CONFIG/ENCRYPT/' + previewMirrorRef('我的/x.png'))).toBe(false);
+    expect(note.attachments[0].previewRef).toBe('');
   });
 });
 
@@ -145,12 +159,15 @@ describe('SafeManager 还原（取出即删）', () => {
 
   it('restoreNote：原文与附件写回原路径（二进制），removed=true，清单条目与全部镜像清理', async () => {
     const trigger = makeApp(vault);
-    const sm = new SafeManager('CONFIG/ENCRYPT');
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
     const note = await lockSample(sm, {
       content: '# 待还原',
       attachments: [{ path: '我的/影视/pic.png', data: 'QUJDREVGRw==', previewData: 'PREVIEW' }],
     });
+    const contentRef = note.contentRef;
+    const blobRef = note.attachments[0].blobRef;
+    const prevRef = note.attachments[0].previewRef;
 
     const { conflicts, removed } = await sm.restoreNote(note.id);
     expect(conflicts).toEqual([]);
@@ -162,16 +179,16 @@ describe('SafeManager 还原（取出即删）', () => {
     expect(new TextDecoder().decode(bytes)).toBe('ABCDEFG');
     // 取出即删：清单条目移除 + 正文/附件/预览镜像全部清理
     expect(sm.manifest.notes.find((n) => n.id === note.id)).toBeUndefined();
-    expect(vault.files.get('CONFIG/ENCRYPT/' + mirrorRef('我的/日记/2025-06-01.md'))).toBeUndefined();
-    expect(vault.files.get('CONFIG/ENCRYPT/' + mirrorRef('我的/影视/pic.png'))).toBeUndefined();
-    expect(vault.files.get('CONFIG/ENCRYPT/' + previewMirrorRef('我的/影视/pic.png'))).toBeUndefined();
+    expect(vault.files.get('CONFIG/.ENCRYPT/' + contentRef)).toBeUndefined();
+    expect(vault.files.get('CONFIG/.ENCRYPT/' + blobRef)).toBeUndefined();
+    expect(vault.files.get('CONFIG/.ENCRYPT/' + prevRef)).toBeUndefined();
     // metadataCache 触发（正文 + 附件各一次）
     expect(trigger.mock.calls.length).toBeGreaterThanOrEqual(2);
   });
 
   it('restoreNote 冲突：目标笔记被用户新建同名占用 → 跳过不盖，removed=false，条目保留在保险箱', async () => {
     makeApp(vault);
-    const sm = new SafeManager('CONFIG/ENCRYPT');
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
     const note = await lockSample(sm, { content: '# A' });
     // 用户新建同名笔记
@@ -189,7 +206,7 @@ describe('SafeManager 未解锁拦截', () => {
   it('未解锁 lockNote/restoreNote/saveManifest 抛「未解锁」', async () => {
     const vault = new MockVault();
     makeApp(vault);
-    const sm = new SafeManager('CONFIG/ENCRYPT');
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
     await expect(sm.saveManifest()).rejects.toThrow('未解锁');
     await expect(lockSample(sm)).rejects.toThrow('未解锁');
     await expect(sm.restoreNote('x')).rejects.toThrow('未解锁');
@@ -203,27 +220,27 @@ describe('SafeManager 深层目录（Parent folder 回归）', () => {
     vault = new MockVault();
   });
 
-  it('加锁深层路径附件：中间镜像目录被递归创建（不抛 Parent folder missing）', async () => {
+  it('加锁深层路径笔记：密文镜像平铺在 encryptRoot 根，不建 附件/ 层级目录', async () => {
     makeApp(vault);
     vault.create('我的/影视/2025/片单.md', '# 片单');
-    const sm = new SafeManager('CONFIG/ENCRYPT');
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
-    await sm.lockNote({
+    const note = await sm.lockNote({
       path: '我的/影视/2025/片单.md',
       title: '片单',
       content: '# 片单',
       attachments: [{ path: '我的/影视/2025/海报.png', data: 'QUJDREVGRw==' }],
     });
-    // 镜像文件落盘，且其父目录链被创建
-    expect(vault.files.has('CONFIG/ENCRYPT/附件/我的/影视/2025/海报.png')).toBe(true);
-    expect(vault.dirs.has('CONFIG/ENCRYPT/附件/我的/影视/2025')).toBe(true);
-    expect(vault.dirs.has('CONFIG/ENCRYPT/附件/我的/影视')).toBe(true);
-    expect(vault.dirs.has('CONFIG/ENCRYPT/附件/我的')).toBe(true);
+    // 镜像文件平铺落盘于根，无 附件/ 目录链
+    expect(vault.files.has('CONFIG/.ENCRYPT/' + note.attachments[0].blobRef)).toBe(true);
+    expect(vault.files.has('CONFIG/.ENCRYPT/' + note.contentRef)).toBe(true);
+    expect(vault.dirs.has('CONFIG/.ENCRYPT/附件')).toBe(false);
+    expect(vault.dirs.has('CONFIG/.ENCRYPT/附件/我的')).toBe(false);
   });
 
   it('真还原到不存在且带深层的原目录：递归建目录后写回', async () => {
     makeApp(vault);
-    const sm = new SafeManager('CONFIG/ENCRYPT');
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
     const note = await sm.lockNote({
       path: '归档/深层/笔记.md',
@@ -251,7 +268,7 @@ describe('SafeManager 进度回调（onProgress）', () => {
 
   it('lockNote：按附件逐个 + 笔记本身上报（done/total/current）', async () => {
     makeApp(vault);
-    const sm = new SafeManager('CONFIG/ENCRYPT');
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
     const events: Array<{ done: number; total: number; current: string }> = [];
     await sm.lockNote(
@@ -274,7 +291,7 @@ describe('SafeManager 进度回调（onProgress）', () => {
 
   it('restoreNote：按附件逐个 + 笔记本身上报，末尾 done===total', async () => {
     makeApp(vault);
-    const sm = new SafeManager('CONFIG/ENCRYPT');
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
     const note = await sm.lockNote({
       path: '我的/日记/a.md',

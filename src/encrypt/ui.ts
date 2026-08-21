@@ -522,9 +522,9 @@ export class UIManager {
         const s = getSettings() as any;
         new Setting(el)
           .setName('保险箱根目录')
-          .setDesc('加密清单与附件密文镜像的存放目录')
+          .setDesc('加密清单与点前缀密文镜像的存放目录（点前缀目录在 Obsidian 侧栏隐藏，防误删）')
           .addText((text) =>
-            text.setValue(s.encryptRoot || 'CONFIG/ENCRYPT').onChange(async (v) => {
+            text.setValue(s.encryptRoot || 'CONFIG/.ENCRYPT').onChange(async (v) => {
               s.encryptRoot = v;
               await saveSettings();
             })
@@ -618,7 +618,7 @@ export class EncryptAppController {
     }
   }
 
-  /** 加锁当前打开笔记（正文 + 双链图片/视频附件） */
+  /** 加锁当前打开笔记（正文 + 双链图片/视频附件；执行前弹确认） */
   async lockCurrentNote() {
     const app = getApp();
     const file = app.workspace.getActiveFile();
@@ -633,6 +633,18 @@ export class EncryptAppController {
     const content = await app.vault.read(file);
     const vaultFiles: { path: string }[] = (app.vault.getFiles && app.vault.getFiles()) || [];
     const attPaths = collectNoteAttachments(content, vaultFiles);
+    // 二次确认：正文与附件将移入保险箱（原路径消失），点确认才开始
+    const proceed = await new Promise<boolean>((resolve) => {
+      confirm({
+        title: '加密到保险箱',
+        message: `把「${file.basename}」的正文${attPaths.length ? '与 ' + attPaths.length + ' 个附件' : ''}加密移入保险箱？加密后原笔记与附件将从原路径移出（保险箱内为密文）。`,
+        confirmText: '加密',
+        onConfirm: () => resolve(true),
+        onCancel: () => resolve(false),
+      });
+    });
+    if (!proceed) return;
+
     const attachments: any[] = [];
     const size = this.config.previewSize || 960;
     const quality = this.config.previewQuality || 0.7;
