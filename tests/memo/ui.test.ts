@@ -63,6 +63,7 @@ describe('备忘录面板', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    MockPlatform.isMobile = false; // 防移动端用例失败时泄漏 isMobile 污染后续用例
   });
 
   it('init 构建 DOM（todo-mask/todo-popup/entries/add 弹窗）', async () => {
@@ -242,6 +243,36 @@ describe('备忘录面板', () => {
     await vi.advanceTimersByTimeAsync(50);
     const items = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
     expect(items).toEqual([]);
+    vi.useRealTimers();
+  });
+
+  it('移动端：长按卡片 → 底部抽屉（顶部显示条目信息）→ 点「编辑」打开编辑弹窗', async () => {
+    vi.useFakeTimers();
+    MockPlatform.isMobile = true;
+    const vault = new MockVault();
+    await initApp(vault);
+    await seedItems(vault, [
+      { id: '1', title: '抽屉测试', scene: '学习', priority: 'minor', created: '2025-06-14 10:00:00', completed: null },
+    ]);
+    await App.refresh();
+    const card = document.querySelector('.todo-card') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 60, clientY: 60 }));
+    vi.advanceTimersByTime(550);
+    const sheet = document.querySelector('.bz-item-sheet');
+    expect(sheet).not.toBeNull();
+    // 鼠标路径残余 click（同桌面菜单测试）：松手补发的 click 吞掉后再操作
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
+    expect(sheet!.querySelector('.bz-item-sheet-title')!.textContent).toBe('抽屉测试');
+    expect(sheet!.querySelector('.bz-item-sheet-sub')!.textContent).toBe('#学习');
+    const editItem = [...sheet!.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('编辑')
+    ) as HTMLElement;
+    editItem.click();
+    expect(document.getElementById('add-todo-popup')!.style.display).toBe('block');
+    expect((document.querySelector('h4') as HTMLElement).textContent).toBe('编辑备忘录');
+    MockPlatform.isMobile = false;
     vi.useRealTimers();
   });
 });

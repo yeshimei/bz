@@ -1,72 +1,88 @@
 /**
- * 统一「行操作条 / 跟手菜单」组件（手势统一试点，先接入 memo，后续域迁移复用）
+ * 统一「行操作条 / 长按浮层」组件（手势统一试点，先接入 memo，后续域迁移复用）
  *
  * 交互约定（桌面 / 移动分离）：
  * - 桌面端：卡片 hover 显示操作条（.bz-item-actions，@media (hover: hover) 控制显隐，样式在 styles.css），
- *   点按钮直接执行（删除类由调用方接 confirm）。
- * - 移动/触屏端：长按卡片弹出跟手菜单（.bz-item-menu）——锚定手指位置，
- *   放不下自动翻到锚点另一侧，最后夹紧视口边界，保证菜单不超出屏幕。
- * - 桌面长按同样可用（与 hover 条同语义），长按松手后的残余 click 会被吞掉，防穿透卡片内链接/复选框。
+ *   点按钮直接执行（删除类由调用方接 confirm）；长按出跟手小菜单（.bz-item-menu，锚定光标、防溢出）。
+ * - 移动/触屏端：长按卡片弹「底部抽屉」（.bz-item-sheet，参照 B 站/网易云）——
+ *   半透明遮罩 + 底部滑入面板，功能一行行列出，顶部显示该条目标题（网易云式：展示选中列表信息）。
+ *
+ * 防穿透机制：
+ * - 桌面鼠标路径：长按松手浏览器补发 click → mouseup 捕获标记 residualClickArmed，紧随其后的 click 吞掉。
+ * - 触屏路径：touchstart 被动监听（不 preventDefault，滚动不受影响），长按松手的合成 click
+ *   在 TOUCH_SETTLE_MS 静置窗口内吞一次，防浮层刚打开就被当成「外部点击」关闭。
  *
  * 实现说明：
- * - 复用 core/dom longPress（500ms 默认、10px 移动取消；触屏滚动兼容，长按后吞浏览器合成 click）。
- * - 菜单注册 escManager（ESC 关闭）；点菜单外任意处关闭。
+ * - 复用 core/dom longPress（500ms 默认、10px 移动取消）。
+ * - 浮层注册 escManager（ESC 关闭）；点浮层外任意处关闭（遮罩点击 = 关闭）。
  */
 import { longPress } from './dom';
 import { escManager } from './esc-manager';
+import { isMobileEnv } from './mobile';
 
 export interface ItemAction {
-  /** 图标字符（emoji），操作条与菜单项共用，不再添加文案前缀 */
+  /** 图标字符（emoji），操作条与浮层项共用，不再添加文案前缀 */
   icon: string;
-  /** 菜单项文案（触屏菜单显示） */
+  /** 菜单项文案（浮层显示） */
   label: string;
   /** 桌面操作条 tooltip（空则不加 title） */
   title?: string;
-  /** 危险操作（删除类）：菜单项红色强调 */
+  /** 危险操作（删除类）：浮层项红色强调 */
   kind?: 'normal' | 'danger';
   onClick: () => void;
 }
 
-/** 菜单与视口边距（px） */
+/** 浮层附加信息（移动端抽屉顶部展示选中条目信息，参照网易云底部页） */
+export interface ItemActionsOptions {
+  /** 抽屉顶部标题（如备忘录条目标题） */
+  sheetTitle?: string;
+  /** 抽屉顶部副标题（如场景/类型） */
+  sheetSub?: string;
+}
+
+/** 浮层与视口边距（px，桌面跟手菜单用） */
 const VIEWPORT_PAD = 8;
-/** 菜单相对手指锚点的偏移（px），先往右下放，放不下翻另一侧 */
+/** 菜单相对光标锚点的偏移（px），先往右下放，放不下翻另一侧 */
 const ANCHOR_GAP = 12;
 /** 估算兜底（jsdom/测量为 0 时）：单菜单项高 + 内边距（与 styles.css 菜单紧凑尺寸对应） */
 const ITEM_HEIGHT = 30;
 const MENU_PADDING = 10;
+/** 触屏合成 click 静置窗口（ms）：长按松手到合成 click 派发通常 <300ms */
+const TOUCH_SETTLE_MS = 400;
 
-let menuEl: HTMLElement | null = null;
+/** 当前浮层：跟手小菜单 或 底部抽屉 */
+let popupEl: HTMLElement | null = null;
+/** 底部抽屉遮罩（仅移动端抽屉） */
+let sheetMask: HTMLElement | null = null;
 let menuEsc: ReturnType<typeof escManager.register> | null = null;
 /**
  * 长按残余 click 抑制（桌面鼠标路径）：
  * 长按松开时浏览器会补发一次 click，若不处理会穿透到卡片内链接/复选框。
- * 机制：菜单打开后注册 mouseup 捕获——松手（mouseup 落在菜单外）标记 residualClickArmed，
- * 紧随其后的 click 判定为残余（同一物理手势）吞掉；松手落在菜单内（拖动选择）则不吞。
+ * 机制：浮层打开后注册 mouseup 捕获——松手（mouseup 落在浮层外）标记 residualClickArmed，
+ * 紧随其后的 click 判定为残余（同一物理手势）吞掉；松手落在浮层内（拖动选择）则不吞。
  */
 let suppressNextClick = false;
 let residualClickArmed = false;
-/** 触屏路径：长按松手后浏览器补发的合成 click（touchstart 不再 preventDefault）——打开后短暂窗口吞一次，防菜单闪关 */
+/** 触屏路径：长按松手后浏览器补发的合成 click（touchstart 不再 preventDefault）——打开后短暂窗口吞一次，防浮层闪关 */
 let touchSettlePending = false;
 let touchSettleTimer: ReturnType<typeof setTimeout> | null = null;
-/** 触屏合成 click 静置窗口（ms）：长按松手到合成 click 派发通常 <300ms */
-const TOUCH_SETTLE_MS = 400;
 
-/** 文档捕获层 mousedown：点菜单外任意处按下即关闭菜单 */
+/** 文档捕获层 mousedown：点浮层外任意处按下即关闭 */
 function onMouseDownCapture(ev: MouseEvent): void {
-  if (menuEl && menuEl.isConnected && !menuEl.contains(ev.target as Node)) {
+  if (popupEl && popupEl.isConnected && !popupEl.contains(ev.target as Node)) {
     closeItemMenu();
   }
 }
 
-/** 文档捕获层 mouseup：长按松手标记残余 click（落在菜单内 = 拖动选择，不标记） */
+/** 文档捕获层 mouseup：长按松手标记残余 click（落在浮层内 = 拖动选择，不标记） */
 function onMouseUpCapture(ev: MouseEvent): void {
   if (!suppressNextClick) return;
-  if (menuEl && menuEl.isConnected && menuEl.contains(ev.target as Node)) return;
+  if (popupEl && popupEl.isConnected && popupEl.contains(ev.target as Node)) return;
   suppressNextClick = false;
   residualClickArmed = true;
 }
 
-/** 文档捕获层 click：吞残余/合成 click；其余外部点击关闭菜单（触屏路径无 mousedown，这里兜底） */
+/** 文档捕获层 click：吞残余/合成 click；其余外部点击关闭浮层（触屏路径无 mousedown，这里兜底） */
 function onClickCapture(ev: MouseEvent): void {
   const target = ev.target as Node;
   if (residualClickArmed) {
@@ -81,12 +97,12 @@ function onClickCapture(ev: MouseEvent): void {
     ev.preventDefault();
     return;
   }
-  if (menuEl && menuEl.isConnected && !menuEl.contains(target)) {
+  if (popupEl && popupEl.isConnected && !popupEl.contains(target)) {
     closeItemMenu();
   }
 }
 
-/** 关闭当前菜单（幂等） */
+/** 关闭当前浮层（幂等）：跟手菜单 / 抽屉 + 遮罩，一并清理 */
 export function closeItemMenu(): void {
   if (menuEsc) {
     menuEsc.unregister();
@@ -99,18 +115,42 @@ export function closeItemMenu(): void {
   document.removeEventListener('mousedown', onMouseDownCapture, true);
   document.removeEventListener('mouseup', onMouseUpCapture, true);
   document.removeEventListener('click', onClickCapture, true);
-  if (menuEl) {
-    menuEl.remove();
-    menuEl = null;
+  if (sheetMask) {
+    sheetMask.remove();
+    sheetMask = null;
+  }
+  if (popupEl) {
+    popupEl.remove();
+    popupEl = null;
   }
   suppressNextClick = false;
   residualClickArmed = false;
   touchSettlePending = false;
 }
 
+/** 打开触屏合成 click 静置窗口（长按松手后的合成 click 吞一次） */
+function armTouchSettle(): void {
+  touchSettlePending = true;
+  if (touchSettleTimer) clearTimeout(touchSettleTimer);
+  touchSettleTimer = setTimeout(() => {
+    touchSettlePending = false;
+    touchSettleTimer = null;
+  }, TOUCH_SETTLE_MS);
+}
+
+/** 注册浮层通用监听（外部点击关闭 / 残余 click 抑制 / ESC） */
+function attachPopupListeners(id: string): void {
+  document.addEventListener('mousedown', onMouseDownCapture, true);
+  document.addEventListener('mouseup', onMouseUpCapture, true);
+  document.addEventListener('click', onClickCapture, true);
+  menuEsc = escManager.register(id, {
+    isVisible: () => !!(popupEl && popupEl.isConnected),
+    close: closeItemMenu,
+  });
+}
+
 /**
- * 定位菜单：跟手 + 防溢出。
- * 目标锚点 (x, y) 为手指/光标位置；先放右下（+偏移），放不下翻到左侧/上方，最后夹紧视口。
+ * 定位桌面跟手菜单：锚点 (x, y) 为光标位置；先放右下（+偏移），放不下翻到左侧/上方，最后夹紧视口。
  */
 function positionMenu(m: HTMLElement, x: number, y: number): void {
   // 尺寸测量（挂载后取；jsdom 恒 0 → 估算兜底，保证测试与真机路径一致）
@@ -129,7 +169,7 @@ function positionMenu(m: HTMLElement, x: number, y: number): void {
   m.style.top = `${top}px`;
 }
 
-/** 打开跟手菜单（closeItemMenu 幂等前置） */
+/** 桌面跟手菜单（鼠标长按；anchored at 光标，防溢出） */
 export function openItemMenu(x: number, y: number, actions: ItemAction[], suppressResidualClick = false): void {
   closeItemMenu();
   const m = document.createElement('div');
@@ -150,33 +190,64 @@ export function openItemMenu(x: number, y: number, actions: ItemAction[], suppre
   document.body.appendChild(m);
   positionMenu(m, x, y);
   m.style.visibility = 'visible';
-  menuEl = m;
+  popupEl = m;
   suppressNextClick = suppressResidualClick;
   residualClickArmed = false;
-  if (!suppressResidualClick) {
-    // 触屏路径：长按松手后的合成 click 在窗口内吞一次，防菜单刚开就被当「外部点击」关闭
-    touchSettlePending = true;
-    if (touchSettleTimer) clearTimeout(touchSettleTimer);
-    touchSettleTimer = setTimeout(() => {
-      touchSettlePending = false;
-      touchSettleTimer = null;
-    }, TOUCH_SETTLE_MS);
+  if (!suppressResidualClick) armTouchSettle();
+  attachPopupListeners('bz-item-menu');
+}
+
+/** 移动端底部抽屉（长按卡片弹出；遮罩 + 顶部信息 + 功能一行行列出） */
+export function openItemSheet(actions: ItemAction[], opts?: ItemActionsOptions, suppressResidualClick = false): void {
+  closeItemMenu();
+  const mask = document.createElement('div');
+  mask.className = 'bz-item-sheet-mask';
+  const sheet = document.createElement('div');
+  sheet.className = 'bz-item-sheet';
+  if (opts?.sheetTitle) {
+    const head = document.createElement('div');
+    head.className = 'bz-item-sheet-head';
+    const titleEl = document.createElement('div');
+    titleEl.className = 'bz-item-sheet-title';
+    titleEl.textContent = opts.sheetTitle;
+    head.appendChild(titleEl);
+    if (opts.sheetSub) {
+      const subEl = document.createElement('div');
+      subEl.className = 'bz-item-sheet-sub';
+      subEl.textContent = opts.sheetSub;
+      head.appendChild(subEl);
+    }
+    sheet.appendChild(head);
   }
-  document.addEventListener('mousedown', onMouseDownCapture, true);
-  document.addEventListener('mouseup', onMouseUpCapture, true);
-  document.addEventListener('click', onClickCapture, true);
-  menuEsc = escManager.register('bz-item-menu', {
-    isVisible: () => !!(menuEl && menuEl.isConnected),
-    close: closeItemMenu,
-  });
+  for (const a of actions) {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'bz-item-sheet-item' + (a.kind === 'danger' ? ' bz-item-sheet-item--danger' : '');
+    item.innerHTML = `<span class="bz-item-sheet-icon">${a.icon}</span><span class="bz-item-sheet-label">${a.label}</span>`;
+    item.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      closeItemMenu();
+      a.onClick();
+    });
+    sheet.appendChild(item);
+  }
+  document.body.appendChild(mask);
+  document.body.appendChild(sheet);
+  popupEl = sheet;
+  sheetMask = mask;
+  suppressNextClick = suppressResidualClick; // 鼠标路径：残余 click 由 mouseup 标记吞；触屏路径：走合成 click 静置窗口
+  residualClickArmed = false;
+  if (!suppressResidualClick) armTouchSettle();
+  attachPopupListeners('bz-item-sheet');
 }
 
 /**
- * 给列表卡片挂统一操作：桌面 hover 操作条 + 长按跟手菜单。
+ * 给列表卡片挂统一操作：桌面 hover 操作条 + 长按浮层（移动端底部抽屉 / 桌面跟手小菜单）。
  * @param card 卡片元素（须为相对定位容器，见 styles.css .bz-item-card）
  * @param actions 操作项（顺序即显示顺序；删除类传 kind: 'danger' 并自行接 confirm）
+ * @param opts 抽屉顶部信息（移动端显示选中条目信息，参照网易云）
  */
-export function attachItemActions(card: HTMLElement, actions: ItemAction[]): void {
+export function attachItemActions(card: HTMLElement, actions: ItemAction[], opts?: ItemActionsOptions): void {
   if (!card || actions.length === 0) return;
   card.classList.add('bz-item-card');
 
@@ -198,10 +269,14 @@ export function attachItemActions(card: HTMLElement, actions: ItemAction[]): voi
   }
   card.appendChild(bar);
 
-  // 长按 → 跟手菜单（触屏主入口；桌面兼容，与 hover 条同语义）
+  // 长按 → 移动端底部抽屉 / 桌面跟手菜单
   longPress(card, (ev: any) => {
+    const isMouse = ev.type !== 'touchstart';
+    if (isMobileEnv()) {
+      openItemSheet(actions, opts, isMouse);
+      return;
+    }
     const pt = (ev.touches && ev.touches[0]) || ev;
-    const isTouch = ev.type === 'touchstart';
-    openItemMenu(pt.clientX, pt.clientY, actions, !isTouch);
+    openItemMenu(pt.clientX, pt.clientY, actions, isMouse);
   });
 }
