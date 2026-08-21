@@ -11,11 +11,11 @@ import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { confirm } from '../core/confirm';
 import { createIconBtn, createOverlay, longPress } from '../core/dom';
-import { formatRelativeTime } from '../core/utils';
+import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { getSettings, tryGetSettings, saveSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
 import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
-import { SafeManager, base64ToBytes, type SafeNote, type SafeAttachment } from './data';
+import { SafeManager, base64ToBytes, bytesToBase64, type SafeNote, type SafeAttachment } from './data';
 import { compressImage, videoFrame } from './preview';
 
 export interface EncryptUIConfig {
@@ -27,9 +27,24 @@ export interface EncryptUIConfig {
   securityMode: boolean;
 }
 
-/** 收集当前打开笔记的双链图片/视频附件路径（纯函数，只读，便于单测） */
-export function collectNoteAttachments(content: string, vaultFiles: { path: string }[]): string[] {
+/**
+ * 收集笔记引用的图片/视频附件路径（纯函数，只读，便于单测）。
+ * 引用来源双通道：
+ * 1. embedLinks：调用方从 metadataCache.getFileCache(file).embeds 直接取 Obsidian
+ *    已索引的 `![[...]]` 嵌入（权威、含带块引用等变体）——用户拍板直接拿自带链接信息；
+ * 2. 正则兜底：embeds 不覆盖 markdown 图片 `![](x)` 与本地 `<video src>`，
+ *    且新建/刚保存文件缓存可能尚未刷新，故保留三件套正则取并集，不降级功能。
+ * 查找用 basename 索引（一次 O(n) 建表，逐引用 O(1)），替代逐引用全表扫描。
+ */
+export function collectNoteAttachments(
+  content: string,
+  embedLinks: string[],
+  vaultFiles: { path: string }[]
+): string[] {
   const refs = new Set<string>();
+  for (const l of embedLinks) {
+    if (l && typeof l === 'string') refs.add(l.trim());
+  }
   // wikilink 嵌入 ![[x.png]] / ![[x.png|alt]]（图片/视频附件）
   const wiki = /!\[\[([^\]|#]+)(?:\|[^\]]*)?\]\]/g;
   let m: RegExpExecArray | null;
@@ -39,14 +54,53 @@ export function collectNoteAttachments(content: string, vaultFiles: { path: stri
   while ((m = mdImg.exec(content)) !== null) refs.add(m[1].trim());
   const vid = /<video[^>]*src=["']([^"']+)["']/g;
   while ((m = vid.exec(content)) !== null) refs.add(m[1].trim());
+  // 一次性索引：全路径 Set + basename → 首个 path（顺序稳定，与旧 find 首命中一致）
+  const paths = new Set<string>();
+  const byName = new Map<string, string>();
+  for (const f of vaultFiles) {
+    paths.add(f.path);
+    const name = f.path.slice(f.path.lastIndexOf('/') + 1);
+    if (name && !byName.has(name)) byName.set(name, f.path);
+  }
   const valid = new Set<string>();
   for (const r of refs) {
     if (!r) continue;
     const clean = decodeURIComponent(r).replace(/^\.\//, '');
-    const hit = vaultFiles.find((f) => f.path === clean || f.path.endsWith('/' + clean));
-    if (hit) valid.add(hit.path);
+    let hit: string | undefined;
+    if (paths.has(clean)) hit = clean;
+    else if (!clean.includes('/')) hit = byName.get(clean);
+    else {
+      // 相对路径（含子目录）形式：退化为全表后缀匹配（低频路径）
+      for (const p of paths) {
+        if (p.endsWith('/' + clean)) {
+          hit = p;
+          break;
+        }
+      }
+    }
+    if (hit) valid.add(hit);
   }
   return [...valid];
+}
+
+/**
+ * 从 app 直接收集当前笔记引用的附件路径（UI/日记共用入口）：
+ * metadataCache.getFileCache().embeds 为主 + 正则兜底（见 collectNoteAttachments）。
+ * 兼容 file 对象或路径字符串；缓存缺失则退化为纯正则（功能不降级）。
+ */
+export function collectNoteAttachmentPaths(app: any, file: any, content: string): string[] {
+  const embedLinks: string[] = [];
+  try {
+    const cache = app?.metadataCache?.getFileCache?.(file);
+    const embeds = cache && Array.isArray(cache.embeds) ? cache.embeds : [];
+    for (const e of embeds) {
+      if (e && typeof e.link === 'string') embedLinks.push(e.link);
+    }
+  } catch (e) {
+    /* 缓存读取失败退化为纯正则 */
+  }
+  const vaultFiles: { path: string }[] = (app?.vault?.getFiles && app.vault.getFiles()) || [];
+  return collectNoteAttachments(content, embedLinks, vaultFiles);
 }
 
 /** 判断附件类型（按扩展名） */
@@ -118,7 +172,7 @@ function findAttachment(target: string, attachments: SafeAttachment[]): SafeAtta
  */
 export function mediaHtml(a: SafeAttachment | null | undefined, dataUrl: string | null | undefined): string {
   if (!a) return '';
-  const alt = (a.path || '').replace(/"/g, '&quot;');
+  const alt = escapeHtml(a.path || '');
   const key = encodeURIComponent(a.path);
   const kindLabel = a.kind === 'video' ? '视频' : '图';
   let inner: string;
@@ -233,9 +287,7 @@ export class UIManager {
     popup.id = id;
     popup.className = 'bz-overlay-popup';
     popup.style.zIndex = '9999';
-    popup.style.width = '90%';
-    popup.style.maxWidth = '700px';
-    popup.style.maxHeight = '80vh';
+    // 视觉尺寸已收敛至 styles.css（#bz-encrypt-popup），此处只保留功能性 zIndex/显隐
     popup.style.display = 'none';
     return popup;
   }
@@ -279,27 +331,35 @@ export class UIManager {
   }
 
   // ---------- 解锁弹窗 ----------
+  /**
+   * 主密码弹窗（首设两次确认 + 损坏清单重设确认）。视觉样式已收敛至 styles.css
+   * （铁律 9：.bz-encrypt-dialog-* 类）；内联仅保留功能性 zIndex/显隐（display）。
+   */
   async showPasswordDialog(): Promise<boolean> {
     const exists = await this.dataManager.exists();
     return new Promise((resolve) => {
       const mask = document.createElement('div');
-      mask.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:10070;display:flex;align-items:center;justify-content:center;';
+      mask.className = 'bz-encrypt-dialog-mask';
+      mask.style.zIndex = '10070';
+      mask.style.display = 'flex';
       const box = document.createElement('div');
-      box.style.cssText = 'background:var(--background-primary);border-radius:12px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);';
+      box.className = 'bz-encrypt-dialog-box';
       const title = document.createElement('h4');
-      title.style.cssText = 'margin:0 0 12px 0;font-size:18px;font-weight:600;';
+      title.className = 'bz-encrypt-dialog-title';
       const message = document.createElement('p');
-      message.style.cssText = 'margin:0 0 16px 0;font-size:14px;color:var(--text-muted);';
+      message.className = 'bz-encrypt-dialog-msg';
       const input = document.createElement('input');
       input.type = 'password';
       input.placeholder = '输入主密码';
-      input.style.cssText = 'width:100%;padding:8px 12px;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:12px;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);';
+      input.className = 'bz-encrypt-dialog-input';
       const input2 = document.createElement('input');
       input2.type = 'password';
       input2.placeholder = '再次输入';
-      input2.style.cssText = 'width:100%;padding:8px 12px;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:16px;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);display:none;';
+      input2.className = 'bz-encrypt-dialog-input';
+      input2.style.display = 'none'; // 功能性显隐（首设第二遍确认时才显示）
       const warning = document.createElement('div');
-      warning.style.cssText = 'background:#ffecb0;color:#8a6d3b;padding:10px 12px;border-radius:6px;margin-bottom:16px;font-size:14px;border:1px solid #f5c842;display:none;';
+      warning.className = 'bz-encrypt-dialog-warning';
+      warning.style.display = 'none'; // 功能性显隐
       warning.innerHTML = '<strong>⚠️ 重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，加密笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。';
       if (exists) {
         title.textContent = '输入主密码';
@@ -315,14 +375,14 @@ export class UIManager {
       }
       input.focus();
       const btnContainer = document.createElement('div');
-      btnContainer.style.cssText = 'display:flex;gap:12px;justify-content:flex-end;';
+      btnContainer.className = 'bz-encrypt-dialog-btns';
       const cancelBtn = document.createElement('button');
       cancelBtn.textContent = '取消';
-      cancelBtn.style.cssText = 'padding:8px 16px;border-radius:6px;border:none;background:var(--background-secondary);cursor:pointer;font-size:14px;';
+      cancelBtn.className = 'bz-encrypt-dialog-btn';
       cancelBtn.onclick = () => { document.body.removeChild(mask); resolve(false); };
       const confirmBtn = document.createElement('button');
       confirmBtn.textContent = '确认';
-      confirmBtn.style.cssText = 'padding:8px 16px;border-radius:6px;border:none;background:var(--interactive-accent);color:var(--text-on-accent);cursor:pointer;font-size:14px;font-weight:500;';
+      confirmBtn.className = 'bz-encrypt-dialog-btn bz-encrypt-dialog-btn--primary';
       confirmBtn.onclick = async () => {
         const pw = input.value;
         if (!pw) { notice('请输入密码'); return; }
@@ -336,10 +396,16 @@ export class UIManager {
           } else {
             if (pw !== input2.value) { notice('两次密码不一致'); return; }
             try {
-              await this.dataManager.unlock(pw);
-              document.body.removeChild(mask);
-              resolve(true);
-              notice('密码已设置，数据已加密', 'success');
+              const ok = await this.dataManager.unlock(pw);
+              if (ok) {
+                document.body.removeChild(mask);
+                resolve(true);
+                notice('密码已设置，数据已加密', 'success');
+              } else {
+                // 数据层已回滚解锁态；写盘失败必须明示（不再假装成功）
+                notice('设置失败：无法写入清单，请检查磁盘空间后重试', 'error');
+                resolve(false);
+              }
             } catch (e: any) {
               notice('设置失败：' + e.message, 'error');
               resolve(false);
@@ -353,9 +419,36 @@ export class UIManager {
             resolve(true);
             notice('解锁成功', 'success');
           } else {
-            notice('密码错误，请重试', 'error');
-            input.value = '';
-            input.focus();
+            // 区分「清单损坏」与「密码错误」：损坏必须显式确认后才能重设，绝不静默
+            const issue = this.dataManager.manifestIssue;
+            if (issue === 'empty' || issue === 'corrupt') {
+              confirm({
+                title: '清单疑似损坏',
+                message:
+                  '保险箱清单文件为空或无法解析（可能因写入中断/同步冲突损坏）。' +
+                  '重设主密码将生成全新空清单，旧加密数据将永久无法恢复。确定重设吗？',
+                confirmText: '仍要重设',
+                cancelText: '暂不重设',
+                onConfirm: () => {
+                  void this.dataManager.unlock(pw, true).then((ok) => {
+                    if (ok) {
+                      document.body.removeChild(mask);
+                      resolve(true);
+                      notice('已重设主密码（旧数据不可恢复）', 'warning');
+                    } else {
+                      notice('重设失败：无法写入清单', 'error');
+                    }
+                  });
+                },
+                onCancel: () => {
+                  notice('未重设：请先检查或备份数据文件', 'warning');
+                },
+              });
+            } else {
+              notice('密码错误，请重试', 'error');
+              input.value = '';
+              input.focus();
+            }
           }
         }
       };
@@ -432,9 +525,12 @@ export class UIManager {
               this.hide();
               this.openRestoredNote(note);
             } else {
-              // 有冲突：条目保留在保险箱，进度+警示提示
-              finishProgress(h, total, '还原完成（' + conflicts.length + ' 个冲突未覆盖）');
-              notice('还原冲突 ' + conflicts.length + ' 个（未覆盖同名文件），条目保留在保险箱', 'warning');
+              // 原子还原（优化五）：任一冲突/失败 → 整体未写回，条目保留在保险箱
+              finishProgress(h, total, '还原未完成（' + conflicts.length + ' 个目标有冲突）');
+              notice(
+                '还原中止：' + conflicts.length + ' 个目标被占用或不可用，未写入任何文件，条目保留在保险箱',
+                'warning'
+              );
             }
             void this.renderList();
           })
@@ -465,6 +561,8 @@ export class UIManager {
   async openPreview(note: SafeNote) {
     if (!this.previewPopup) this.ensureElements();
     if (!this.dataManager.unlocked || !this.dataManager.password) return;
+    // 连开多篇预览不关窗：先释放上一批 Blob URL（防内存泄漏）
+    this.revokePreviewUrls();
     const popup = this.previewPopup!;
     const mask = this.previewMask!;
     popup.innerHTML = '';
@@ -624,7 +722,7 @@ export class UIManager {
       } else if (missing) {
         const im = document.createElement('img');
         im.className = 'bz-encrypt-preview-media';
-        im.alt = (a.path || '').replace(/"/g, '&quot;');
+        im.alt = escapeHtml(a.path || '');
         im.src = url;
         missing.replaceWith(im);
       }
@@ -657,8 +755,8 @@ export class UIManager {
     return `data:${mime};base64,${b64}`;
   }
 
-  closePreview() {
-    // 释放本次预览产生的全部 Blob URL（防内存泄漏）
+  /** 释放本次预览积累的全部 Blob URL（关预览/换预览共用，防内存泄漏） */
+  private revokePreviewUrls() {
     for (const u of this._previewUrls) {
       try {
         URL.revokeObjectURL(u);
@@ -667,12 +765,25 @@ export class UIManager {
       }
     }
     this._previewUrls = [];
+  }
+
+  closePreview() {
+    // 释放本次预览产生的全部 Blob URL（防内存泄漏）
+    this.revokePreviewUrls();
     if (this.previewMask) this.previewMask.style.display = 'none';
     if (this.previewPopup) this.previewPopup.style.display = 'none';
   }
 
   // ---------- 设置弹窗 ----------
   openSettings() {
+    // 以下配置项均为启动快照（控制器构造时读取），改动需重载插件后生效——首次改动即提示一次
+    let reloadWarned = false;
+    const warnReload = () => {
+      if (!reloadWarned) {
+        reloadWarned = true;
+        notice('保险箱设置已保存，重载插件后生效', 'info');
+      }
+    };
     openSettingsModal({
       title: '保险箱设置',
       build: (el) => {
@@ -684,6 +795,7 @@ export class UIManager {
             text.setValue(s.encryptRoot || 'CONFIG/.ENCRYPT').onChange(async (v) => {
               s.encryptRoot = v;
               await saveSettings();
+              warnReload();
             })
           );
         new Setting(el)
@@ -693,6 +805,7 @@ export class UIManager {
             toggle.setValue(!!s.encryptPreviewEnabled).onChange(async (v) => {
               s.encryptPreviewEnabled = v;
               await saveSettings();
+              warnReload();
             })
           );
         new Setting(el)
@@ -702,6 +815,7 @@ export class UIManager {
             text.setValue(String(s.encryptPreviewSize || '384')).onChange(async (v) => {
               s.encryptPreviewSize = v;
               await saveSettings();
+              warnReload();
             })
           );
         new Setting(el)
@@ -711,6 +825,7 @@ export class UIManager {
             text.setValue(String(s.encryptPreviewQuality || '0.5')).onChange(async (v) => {
               s.encryptPreviewQuality = v;
               await saveSettings();
+              warnReload();
             })
           );
         new Setting(el)
@@ -720,6 +835,7 @@ export class UIManager {
             toggle.setValue(!!s.encryptAutoLoadOriginal).onChange(async (v) => {
               s.encryptAutoLoadOriginal = v;
               await saveSettings();
+              warnReload();
             })
           );
         new Setting(el)
@@ -729,6 +845,7 @@ export class UIManager {
             toggle.setValue(!!s.encryptSecurityMode).onChange(async (v) => {
               s.encryptSecurityMode = v;
               await saveSettings();
+              warnReload();
             })
           );
         if (isMobileEnv()) {
@@ -739,6 +856,7 @@ export class UIManager {
               toggle.setValue(!!s.encryptMobileDefaultFullscreen).onChange(async (v) => {
                 s.encryptMobileDefaultFullscreen = v;
                 await saveSettings();
+                warnReload();
               })
             );
         }
@@ -772,6 +890,8 @@ export class EncryptAppController {
   dataManager: SafeManager;
   uiManager: UIManager;
   _initialized = false;
+  /** 加密进行中标志（重入保护：处理中拒绝再次触发 lockCurrentNote） */
+  private _locking = false;
 
   constructor(config: EncryptUIConfig) {
     this.config = config;
@@ -812,21 +932,27 @@ export class EncryptAppController {
     }
   }
 
-  /** 加锁当前打开笔记（正文 + 双链图片/视频附件；执行前弹确认） */
+  /** 加锁当前打开笔记（正文 + 双链图片/视频附件；执行前弹确认）。重入保护：处理中拒绝再次触发 */
   async lockCurrentNote() {
-    const app = getApp();
-    const file = app.workspace.getActiveFile();
-    if (!file) {
-      notice('请先打开要加密的笔记');
+    if (this._locking) {
+      notice('正在加密当前笔记，请稍候');
       return;
     }
-    if (!this.dataManager.unlocked || !this.dataManager.password) {
-      notice('请先打开加密保险箱并解锁');
-      return;
-    }
-    const content = await app.vault.read(file);
-    const vaultFiles: { path: string }[] = (app.vault.getFiles && app.vault.getFiles()) || [];
-    const attPaths = collectNoteAttachments(content, vaultFiles);
+    this._locking = true;
+    try {
+      const app = getApp();
+      const file = app.workspace.getActiveFile();
+      if (!file) {
+        notice('请先打开要加密的笔记');
+        return;
+      }
+      if (!this.dataManager.unlocked || !this.dataManager.password) {
+        notice('请先打开加密保险箱并解锁');
+        return;
+      }
+      const content = await app.vault.read(file);
+      // 附件引用：metadataCache.embeds（Obsidian 自带链接信息）为主 + 正则兜底（collectNoteAttachmentPaths）
+      const attPaths = collectNoteAttachmentPaths(app, file, content);
     // 二次确认：正文与附件将移入保险箱（原路径消失），点确认才开始
     const proceed = await new Promise<boolean>((resolve) => {
       confirm({
@@ -849,10 +975,7 @@ export class EncryptAppController {
         const f = app.vault.getAbstractFileByPath(p);
         if (!f) throw new Error('附件不存在');
         const buf = await app.vault.readBinary(f as any);
-        const bytes = new Uint8Array(buf);
-        let bin = '';
-        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-        const data = btoa(bin);
+        const data = bytesToBase64(new Uint8Array(buf)); // 统一分块 util（防大附件栈溢出/性能劣化）
         let previewData: string | undefined;
         if (this.config.previewEnabled) {
           try {
@@ -895,6 +1018,9 @@ export class EncryptAppController {
       this.uiManager.show();
     } catch (e: any) {
       notice('加密失败：' + e.message, 'error');
+    }
+    } finally {
+      this._locking = false;
     }
   }
 

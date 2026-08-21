@@ -9,8 +9,8 @@
  */
 import { getApp } from './app';
 import { getSafeManager } from '../encrypt';
-import { collectNoteAttachments, kindOf } from '../encrypt/ui';
-import type { LockAttachmentInput } from '../encrypt/data';
+import { collectNoteAttachmentPaths, kindOf } from '../encrypt/ui';
+import { bytesToBase64, type LockAttachmentInput } from '../encrypt/data';
 import { DIARY_DIRECTORY, getTagEmoji, emojiToTagMap } from './config';
 import type { DiaryEntry } from './types';
 
@@ -42,20 +42,18 @@ export function lockSafe(): void {
 
 interface AttachmentInput extends LockAttachmentInput {}
 
-async function collectAttachmentsForContent(content: string): Promise<AttachmentInput[]> {
-  const vaultFiles: { path: string }[] = getApp().vault.getFiles?.() || [];
-  const paths = collectNoteAttachments(content, vaultFiles);
+async function collectAttachmentsForContent(content: string, datePath: string): Promise<AttachmentInput[]> {
+  const app = getApp();
+  // 附件引用：metadataCache.embeds（Obsidian 自带链接信息）为主 + 正则兜底（collectNoteAttachmentPaths）
+  const paths = collectNoteAttachmentPaths(app, datePath, content);
   const out: AttachmentInput[] = [];
   for (const p of paths) {
     try {
-      const f = getApp().vault.getAbstractFileByPath(p);
+      const f = app.vault.getAbstractFileByPath(p);
       if (!f) continue;
-      const buf = await getApp().vault.readBinary(f as any);
-      const bytes = new Uint8Array(buf);
-      let bin = '';
-      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-      // 原始 base64（无预览层精简；还原以原质量为准）
-      out.push({ path: p, kind: kindOf(p), data: btoa(bin) });
+      const buf = await app.vault.readBinary(f as any);
+      // 原始 base64（无预览层精简；还原以原质量为准）——统一分块 util
+      out.push({ path: p, kind: kindOf(p), data: bytesToBase64(new Uint8Array(buf)) });
     } catch (e) {
       /* 附件读取失败跳过该附件 */
     }
@@ -77,8 +75,8 @@ export async function encryptEntry(entry: DiaryEntry): Promise<DiaryEntry | null
   const tags = [...new Set([...entry.tags, ENCRYPT_TAG])];
   const emojiSeq = tags.map((t) => getTagEmoji(t)).join('');
   const block = `# ${emojiSeq} ${entry.time}\n${entry.content.trim()}`;
-  const attachments = await collectAttachmentsForContent(entry.content || '');
   const datePath = `${DIARY_DIRECTORY}/${entry.date}.md`;
+  const attachments = await collectAttachmentsForContent(entry.content || '', datePath);
 
   await safe.lockNote(
     {

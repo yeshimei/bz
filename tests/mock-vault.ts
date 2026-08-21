@@ -213,9 +213,16 @@ export function mockAppWithVault(vault: MockVault) {
       const listeners: Record<string, Function[]> = {};
       return {
         getFileCache: (f: any) => {
-          const content = vault.files.get(f.path) ?? '';
+          // 兼容 TFile 对象与路径字符串（encrypt 域 embeds 收集用）
+          const path = typeof f === 'string' ? f : f?.path ?? '';
+          const content = vault.files.get(path) ?? '';
           const fm = parseFrontmatter(content);
-          return fm ? { frontmatter: fm } : null;
+          // wikilink 嵌入解析（Obsidian 自带链接信息；encrypt 域附件收集的主数据源）
+          const embeds: { link: string }[] = [];
+          const re = /!\[\[([^\]|#]+)(?:\|[^\]]*)?\]\]/g;
+          let m: RegExpExecArray | null;
+          while ((m = re.exec(content)) !== null) embeds.push({ link: m[1].trim() });
+          return fm || embeds.length ? { frontmatter: fm, embeds } : null;
         },
         // 事件监听（changed 等），供实时同步类测试 emit
         on: (event: string, cb: (...args: any[]) => void): any => {
