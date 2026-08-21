@@ -154,6 +154,7 @@ function createMaskAndPopup() {
 function createHeader(): HTMLElement {
   const app = getApp();
   const header = document.createElement('div');
+  header.className = 'bz-win-head';
   header.style.cssText = 'padding:20px 24px 12px 24px;display:flex;justify-content:space-between;align-items:center;';
 
   const title = document.createElement('h3');

@@ -67,6 +67,7 @@ export function showReportInPopup(htmlContent: string, isDarkMode: boolean) {
   `;
 
   const header = document.createElement('div');
+  header.className = 'bz-win-head';
   header.style.cssText = `
     display: flex;
     justify-content: space-between;
