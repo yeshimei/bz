@@ -54,7 +54,7 @@ describe('UIManager 解锁弹窗', () => {
     document.body.innerHTML = '';
   });
 
-  it('首次无清单：标题「设置主密码」+ 再次确认 + 警告；一致则设置成功', async () => {
+  it('首次无清单：标题「设置主密码」+ 再次确认 + 硬警告；未勾选风险确认拒绝设置，勾选后成功', async () => {
     const p = ui.showPasswordDialog();
     await waitFor(() => !!findDialog());
     const dialog = findDialog()!;
@@ -62,14 +62,23 @@ describe('UIManager 解锁弹窗', () => {
     expect(dialog.textContent).toContain('重要提醒');
     const inputs = dialog.querySelectorAll('input[type="password"]');
     expect(inputs.length).toBe(2);
+    expect(dialog.querySelector('.bz-encrypt-dialog-ack')).toBeTruthy(); // 硬警告确认勾选（仅首设显示）
     const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
     // 两次不一致
     (inputs[0] as HTMLInputElement).value = 'pw1';
     (inputs[1] as HTMLInputElement).value = 'pw2';
     confirmBtn.click();
     expect(hasNotice('两次密码不一致')).toBe(true);
-    // 一致
+    // 一致但未勾选风险确认 → 拒绝设置
     (inputs[1] as HTMLInputElement).value = 'pw1';
+    confirmBtn.click();
+    expect(hasNotice('请先勾选风险确认')).toBe(true);
+    expect(dm.unlocked).toBe(false);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(dm.unlocked).toBe(false);
+    // 勾选后再确认 → 设置成功
+    const ackBox = dialog.querySelector('.bz-encrypt-dialog-ack input') as HTMLInputElement;
+    ackBox.click();
     confirmBtn.click();
     await p;
     expect(dm.unlocked).toBe(true);
@@ -378,13 +387,14 @@ describe('EncryptAppController', () => {
     await c.init();
     const p = c.openManager();
     await waitFor(() => !!findDialog());
-    // 首设两次一致
+    // 首设两次一致 + 勾选风险确认
     const dialog = findDialog()!;
     const inputs = dialog.querySelectorAll('input[type="password"]');
     const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
     (inputs[0] as HTMLInputElement).value = 'pw';
     confirmBtn.click();
     (inputs[1] as HTMLInputElement).value = 'pw';
+    (dialog.querySelector('.bz-encrypt-dialog-ack input') as HTMLInputElement).click();
     confirmBtn.click();
     await p;
     expect(c.dataManager.unlocked).toBe(true);
@@ -468,7 +478,7 @@ describe('EncryptAppController', () => {
     (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
   });
 
-  it('面板顶部「清理未引用的密文」按钮：清理孤儿密文与失效条目并提示结果（Q5-A）', async () => {
+  it('面板顶部「体检」按钮（替换原扫把）：体检弹窗报告失效条目与孤儿密文，默认勾选，清理后列表刷新', async () => {
     setup(vault, CONFIG);
     const c = EncryptAppController.getInstance(CONFIG);
     await c.init();
@@ -481,14 +491,91 @@ describe('EncryptAppController', () => {
     });
     vault.files.delete('CONFIG/.ENCRYPT/' + dead.contentRef); // 正文镜像丢失
     const headBtns = [...document.querySelectorAll('.bz-encrypt-head-btns button')].map((b) => b.textContent);
-    expect(headBtns.indexOf('🧹')).toBeGreaterThanOrEqual(0);
-    const cleanupBtn = [...document.querySelectorAll('.bz-encrypt-head-btns button')].find((b) => b.textContent === '🧹') as HTMLButtonElement;
-    cleanupBtn.click();
+    expect(headBtns.indexOf('🩺')).toBeGreaterThanOrEqual(0);
+    expect(headBtns.indexOf('🧹')).toBe(-1); // 原扫把已被体检替换
+    const healthBtn = [...document.querySelectorAll('.bz-encrypt-head-btns button')].find((b) => b.textContent === '🩺') as HTMLButtonElement;
+    healthBtn.click();
+    await waitFor(() => !!document.getElementById('bz-encrypt-health-popup') && document.getElementById('bz-encrypt-health-popup')!.style.display === 'flex');
+    // 等扫描完成：可清理区块出现
+    await waitFor(() => !!document.querySelector('.bz-encrypt-health-section--clean'));
+    const body = document.getElementById('bz-encrypt-health-body')!;
+    // 解锁态：完整性段已执行（全部镜像完整提示）
+    expect(body.textContent).toContain('全部镜像完整');
+    expect(body.textContent).toContain('失效笔记');
+    expect(body.textContent).toContain('.junk.enc');
+    // 可清理项默认全选（2 项：1 失效条目 + 1 孤儿密文）
+    const checks = [...document.querySelectorAll('input.bz-encrypt-health-check')] as HTMLInputElement[];
+    expect(checks.length).toBe(2);
+    expect(checks.every((x) => x.checked)).toBe(true);
+    (document.getElementById('bz-encrypt-health-clean') as HTMLButtonElement).click();
     await waitFor(() => hasNotice(/已清理/));
     expect(vault.files.get('CONFIG/.ENCRYPT/.junk.enc')).toBeUndefined();
     expect(c.dataManager.manifest.notes.some((n) => n.id === dead.id)).toBe(false);
-    // 列表同步刷新：失效条目不再显示
-    expect(document.getElementById('bz-encrypt-list')!.querySelectorAll('.bz-encrypt-card').length).toBe(0);
+    // 列表同步刷新（失效条目不再显示；beforeEach 的完好日记条目仍在）
+    await waitFor(() => !document.getElementById('bz-encrypt-list')!.textContent.includes('失效笔记'));
+    await waitFor(() => (document.getElementById('bz-encrypt-health-clean') as HTMLButtonElement).textContent === '清理勾选项 (0)');
+    c.uiManager.hide();
+  });
+
+  it('体检弹窗：损坏镜像只展示不可勾选；可取消勾选后只清理所选项', async () => {
+    setup(vault, CONFIG);
+    const c = EncryptAppController.getInstance(CONFIG);
+    await c.init();
+    await c.dataManager.unlock('pw');
+    const note = await c.dataManager.lockNote({
+      path: '笔记/坏.md', title: '被篡改的笔记', content: '# x',
+      attachments: [{ path: '我的/影视/pic.png', data: 'QUJDREVGRw==' }],
+    });
+    vault.files.set('CONFIG/.ENCRYPT/' + note.contentRef, 'garbage-not-cipher'); // 正文镜像损坏
+    vault.files.delete('CONFIG/.ENCRYPT/' + note.attachments[0].blobRef); // 附件镜像缺失
+    c.uiManager.openHealthDialog();
+    await waitFor(() => !!document.getElementById('bz-encrypt-health-popup'));
+    const body = document.getElementById('bz-encrypt-health-body')!;
+    await waitFor(() => body.textContent.includes('损坏镜像'));
+    // 损坏镜像区块：只读展示（无 checkbox），提示不可清理
+    expect(body.textContent).toContain('不可清理');
+    expect(body.textContent).toContain('被篡改的笔记');
+    expect(body.textContent).toContain('我的/影视/pic.png');
+    expect(body.querySelectorAll('.bz-encrypt-health-item--bad').length).toBeGreaterThan(0);
+    // 损坏/缺失类不带勾选框（只有可清理类才有）
+    const checks = [...document.querySelectorAll('input.bz-encrypt-health-check')] as HTMLInputElement[];
+    expect(checks.length).toBe(0);
+    expect((document.getElementById('bz-encrypt-health-clean') as HTMLButtonElement).textContent).toBe('清理勾选项 (0)');
+    // 条目与镜像原样保留（只报告不清理）
+    expect(c.dataManager.manifest.notes.some((n) => n.id === note.id)).toBe(true);
+    expect(vault.files.get('CONFIG/.ENCRYPT/' + note.attachments[0].blobRef)).toBeUndefined();
+    // 恢复现场：移除本用例条目（单例后续用例依赖清单干净）
+    await c.dataManager.removeNote(note.id);
+  });
+
+  it('体检弹窗：锁定态打开先弹主密码，解锁后进入体检并做完整性检测', async () => {
+    setup(vault, CONFIG);
+    const c = EncryptAppController.getInstance(CONFIG);
+    await c.init();
+    await c.dataManager.unlock('pw');
+    const note = await c.dataManager.lockNote({
+      path: '笔记/x.md', title: 'x', content: '# x', attachments: [],
+    });
+    vault.files.delete('CONFIG/.ENCRYPT/' + note.contentRef); // 正文镜像丢失（失效条目）
+    c.dataManager.lock();
+    // 锁定态点体检 → 先弹主密码（不进入体检页）
+    const p = c.uiManager.openHealthDialog();
+    await waitFor(() => !!findDialog());
+    expect(findDialog()!.textContent).toContain('输入主密码');
+    const dialog = findDialog()!;
+    const inputs = dialog.querySelectorAll('input[type="password"]');
+    (inputs[0] as HTMLInputElement).value = 'pw';
+    const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+    confirmBtn.click();
+    await p;
+    // 解锁后进入体检：对账报告失效条目（x），完整性段补检（其余镜像完好）
+    await waitFor(() => !!document.getElementById('bz-encrypt-health-popup') && document.getElementById('bz-encrypt-health-popup')!.style.display === 'flex');
+    const body = document.getElementById('bz-encrypt-health-body')!;
+    await waitFor(() => body.textContent.includes('可清理'));
+    expect(body.textContent).toContain('x');
+    expect(body.textContent).toContain('全部镜像完整');
+    // 恢复现场：移除本用例条目
+    await c.dataManager.removeNote(note.id);
   });
 
   it('lockCurrentNote：附件读取失败 → 整笔放弃（不落任何东西、原文件不动、提示失败）', async () => {
@@ -914,6 +1001,7 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
       (inputs[0] as HTMLInputElement).value = 'pw';
       confirmBtn.click();
       (inputs[1] as HTMLInputElement).value = 'pw';
+      (dialog.querySelector('.bz-encrypt-dialog-ack input') as HTMLInputElement).click();
       confirmBtn.click();
       expect(await p).toBe(false);
       expect(hasNotice('设置失败：无法写入清单，请检查磁盘空间后重试')).toBe(true);
@@ -1013,5 +1101,36 @@ describe('预览窗 Blob URL 释放（优化四：换预览即释放上一批）
       delete (URL as any).createObjectURL;
       delete (URL as any).revokeObjectURL;
     }
+  });
+});
+
+describe('保险箱状态栏（补丁：锁状态提示）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    vault = new MockVault();
+    setup(vault);
+    document.body.innerHTML = '';
+  });
+
+  afterEach(() => {
+    EncryptAppController.instance?.cleanup();
+    EncryptAppController.instance = null;
+    document.body.innerHTML = '';
+  });
+
+  it('挂载后显示锁定态；解锁成功变解锁态、lock() 回锁定态', async () => {
+    const c = new EncryptAppController(CONFIG);
+    const el = document.createElement('span');
+    document.body.appendChild(el);
+    c.attachStatusBar(el);
+    expect(el.textContent).toBe('🔒 保险箱');
+    await c.dataManager.unlock('pw');
+    expect(el.textContent).toBe('🔓 保险箱');
+    c.dataManager.lock();
+    expect(el.textContent).toBe('🔒 保险箱');
+    // 二次解锁（已存在清单）同样刷新
+    await c.dataManager.unlock('pw');
+    expect(el.textContent).toBe('🔓 保险箱');
   });
 });

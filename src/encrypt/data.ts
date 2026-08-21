@@ -63,6 +63,29 @@ export interface SafeManifest {
   notes: SafeNote[];
 }
 
+/** 体检问题类别：dead-entry/orphan-file 可勾选清理；损坏与缺失类只报告（删了就是真丢数据） */
+export type HealthCategory = 'dead-entry' | 'orphan-file' | 'corrupted-body' | 'corrupted-attachment' | 'missing-attachment';
+
+/** 体检发现的单个问题条目（勾选清理用；key 为唯一键） */
+export interface HealthItem {
+  cat: HealthCategory;
+  /** 唯一键：dead-entry=`entry:<id>`；orphan-file=`file:<文件名>`；损坏/缺失类仅供展示 */
+  key: string;
+  /** 展示标签（条目标题 / 文件名 / 附件路径） */
+  label: string;
+  /** 关联清单条目 id（dead-entry/corrupted-body） */
+  noteId?: string;
+  /** 镜像相对路径（orphan-file/损坏/缺失类） */
+  ref?: string;
+}
+
+/** 体检报告 */
+export interface HealthReport {
+  items: HealthItem[];
+  /** 是否执行了解密完整性检测（解锁后 true；锁定态仅清单↔磁盘对账） */
+  integrityChecked: boolean;
+}
+
 /** 加锁请求：由协调层（UI/测试）准备好各层数据与可选预览 */
 export interface LockAttachmentInput {
   path: string;
@@ -193,6 +216,9 @@ export class SafeManager {
     if (root) this.root = root.replace(/\/+$/, '');
   }
 
+  /** 解锁态变化回调（UI 状态栏等订阅；unlock 成功 / 首设成功 / lock() 时触发） */
+  onUnlockChange: ((unlocked: boolean) => void) | null = null;
+
   /** 清单文件完整路径（点前缀，侧栏隐藏） */
   get manifestPath(): string {
     return this.root + '/.safe.enc';
@@ -251,6 +277,7 @@ export class SafeManager {
       this.manifest = parsed;
       this.password = password;
       this.unlocked = true;
+      this.onUnlockChange?.(true);
       // 自愈（ADR-0018）：回滚挂起的半提交 + 清空暂存残留；失败不阻塞解锁
       try {
         await this.selfHeal();
@@ -269,6 +296,7 @@ export class SafeManager {
   private async firstTimeSetup(password: string): Promise<boolean> {
     this.password = password;
     this.unlocked = true;
+    this.onUnlockChange?.(true);
     this.manifest = { version: 1, notes: [] };
     try {
       await this.saveManifest();
@@ -286,6 +314,7 @@ export class SafeManager {
     this.unlocked = false;
     this.password = null;
     this.manifest = { version: 1, notes: [] };
+    this.onUnlockChange?.(false);
     clearCryptoKeyCache();
   }
 
@@ -556,22 +585,29 @@ export class SafeManager {
   }
 
   /**
-   * 手动「清理未引用的密文」（Q5-A：不自动触发，点按钮才跑），双向清理：
-   * 1. 文件侧：扫描 encryptRoot 顶层，删除未被任何清单条目 contentRef/blobRef/previewRef
-   *    引用的点前缀 `.随机.enc` 形态密文（`.safe.enc` 与目录结构一律不碰）；
-   * 2. 清单侧：正文镜像（contentRef）已不存在的条目 = 失效条目（正文不可解、还原无意义），
-   *    整条从清单移除并删除其残留的附件镜像——即用户所指「已经不存在的列表笔记」。
-   *    仅附件缺失但正文可读的条目保留（预览不受影响）。
-   * 并清空暂存区。
-   * @returns { files: 删除的顶层密文文件数, notes: 清除的失效条目数 }
+   * 体检扫描（用户拍板：右上角「体检」按钮替换原「清理」，先报告后勾选清理）。
+   * 扫描分两段：
+   * 1. 对账段（不依赖解锁，锁定态也可体检）：
+   *    - dead-entry：正文镜像（contentRef）缺失的条目 = 失效条目（正文不可解、还原无意义）；
+   *    - orphan-file：顶层未被任何清单条目 contentRef/blobRef/previewRef 引用的
+   *      点前缀 `.随机.enc` 形态密文（`.safe.enc` 与目录结构一律不碰）。
+   *    仅附件镜像缺失但正文可读的条目保留（预览不受影响）。
+   * 2. 完整性段（需解锁，解锁后自动执行）：
+   *    - corrupted-body：正文镜像解密失败（文件在但内容损坏/被替换）；
+   *    - corrupted-attachment：附件原始层解密失败或指纹与加密时不符（被篡改）；
+   *    - missing-attachment：附件原始层镜像缺失（正文可读，还原时该附件不可用）。
+   *    预览层不校验——还原不依赖预览层，缺失不致命。
+   *    损坏/缺失类只报告、不清理（删了就是真丢数据，由用户决定从备份恢复），
+   *    只有 dead-entry 与 orphan-file 可勾选清理。
+   * @returns { items: 问题清单, integrityChecked: 是否执行了解密完整性检测（未解锁为 false） }
    */
-  async cleanupOrphans(): Promise<{ files: number; notes: number }> {
-    if (!this.unlocked) throw new Error('未解锁，无法清理密文');
-    let notes = 0;
-    let files = 0;
+  async scanHealth(): Promise<HealthReport> {
+    const items: HealthItem[] = [];
+    // 未解锁：清单明文不在内存（lock 已清空），无引用判定依据——绝不做对账，
+    // 否则会把全部正文镜像误判为孤儿（灾难性误删）。UI 层保证解锁后才体检，这里双保险。
+    if (!this.unlocked || !this.password) return { items, integrityChecked: false };
 
-    // 1) 清单侧：正文镜像缺失的失效条目整条清除（残留附件镜像一并删除）
-    const kept: SafeNote[] = [];
+    // 清单侧对账：正文镜像缺失 = 失效条目（不解密）
     for (const n of this.manifest.notes) {
       let bodyExists = false;
       if (n.contentRef) {
@@ -582,22 +618,11 @@ export class SafeManager {
         }
       }
       if (!bodyExists) {
-        // 正文密文已丢失：条目不可用，整条清理（幂等删除其残留镜像）
-        for (const a of n.attachments) {
-          await this.deleteSafeFile(a.blobRef);
-          if (a.hasPreview) await this.deleteSafeFile(a.previewRef);
-        }
-        notes += 1;
-      } else {
-        kept.push(n);
+        items.push({ cat: 'dead-entry', key: 'entry:' + n.id, label: n.title, noteId: n.id });
       }
     }
-    if (notes > 0) {
-      this.manifest.notes = kept;
-      await this.saveManifest(); // 清单落盘失败向上抛（下次重试，条目判定幂等）
-    }
 
-    // 2) 文件侧：无引用孤儿密文（referenced 基于清理后的清单）
+    // 文件侧对账：未被任何清单引用（contentRef/blobRef/previewRef）的顶层点前缀密文 = 孤儿
     const referenced = new Set<string>();
     for (const n of this.manifest.notes) {
       if (n.contentRef) referenced.add(n.contentRef);
@@ -612,20 +637,110 @@ export class SafeManager {
         for (const f of listing.files) {
           const name = f.slice(f.lastIndexOf('/') + 1);
           if (name === '.safe.enc') continue; // 清单本体绝不触碰
-          if (!name.startsWith('.') || !name.endsWith('.enc')) continue; // 只清平铺点前缀密文形态
-          if (referenced.has(name)) continue; // 被引用不碰
-          try {
-            await this.adapter.remove(f);
-            files += 1;
-          } catch (e) {
-            /* 单文件失败继续 */
-          }
+          if (!name.startsWith('.') || !name.endsWith('.enc')) continue; // 只认平铺点前缀密文形态
+          if (referenced.has(name)) continue;
+          items.push({ cat: 'orphan-file', key: 'file:' + name, label: name, ref: name });
         }
       }
-      await this.clearStaging();
     } catch (e) {
       /* 幂等 */
     }
+
+    // 完整性段（需解锁）：逐个正文/附件原始层解密校验
+    const integrityChecked = !!(this.unlocked && this.password);
+    if (integrityChecked) {
+      const password = this.password as string;
+      for (const n of this.manifest.notes) {
+        // 正文：已失效（dead-entry）的条目跳过（镜像缺失无完整性可言）
+        if (items.some((i) => i.cat === 'dead-entry' && i.noteId === n.id)) continue;
+        if (!n.contentRef) continue;
+        try {
+          const cipher = await this.readMirror(n.contentRef);
+          if (cipher === null) continue; // 镜像缺失已由对账段报告
+          await CryptoService.decrypt(cipher, password);
+        } catch (e) {
+          items.push({ cat: 'corrupted-body', key: 'body:' + n.id, label: n.title, noteId: n.id, ref: n.contentRef });
+        }
+      }
+      for (const n of this.manifest.notes) {
+        for (const a of n.attachments) {
+          if (!a.blobRef) continue;
+          const key = 'att:' + n.id + ':' + a.path;
+          try {
+            const cipher = await this.readMirror(a.blobRef);
+            if (cipher === null) {
+              // 附件原始层镜像缺失（正文可读 → 条目保留，还原时该附件不可用）
+              items.push({ cat: 'missing-attachment', key, label: a.path, noteId: n.id, ref: a.blobRef });
+              continue;
+            }
+            const plain = await CryptoService.decrypt(cipher, password);
+            const fp = await fingerprintOf(plain);
+            if (fp !== a.fingerprint) {
+              items.push({ cat: 'corrupted-attachment', key, label: a.path, noteId: n.id, ref: a.blobRef });
+            }
+          } catch (e) {
+            items.push({ cat: 'corrupted-attachment', key, label: a.path, noteId: n.id, ref: a.blobRef });
+          }
+        }
+      }
+    }
+    return { items, integrityChecked };
+  }
+
+  /**
+   * 按勾选 key 清理（体检页「清理勾选项」执行；只处理可清理类，损坏/缺失类防御性忽略）：
+   * 1. dead-entry（key `entry:<id>`）：正文镜像当前仍缺失 → 整条清除（残留附件镜像一并删除）——
+   *    判定以当前磁盘为准（幂等：重复执行无副作用）；
+   * 2. orphan-file（key `file:<name>`）：删除该顶层密文文件（形态校验同扫描，绝不越界）。
+   * 有清单变更时持久化（落盘失败向上抛，下次重试判定幂等）；并清空暂存区。
+   * @returns { files: 删除的孤儿密文文件数, notes: 清除的失效条目数 }
+   */
+  async resolveHealth(keys: string[]): Promise<{ files: number; notes: number }> {
+    if (!this.unlocked) throw new Error('未解锁，无法清理');
+    const want = new Set(keys);
+    let notes = 0;
+    let files = 0;
+
+    // 1) 失效条目整条清除
+    const kept: SafeNote[] = [];
+    for (const n of this.manifest.notes) {
+      let bodyExists = false;
+      if (n.contentRef) {
+        try {
+          bodyExists = await this.adapter.exists(this.resolveRef(n.contentRef));
+        } catch (e) {
+          bodyExists = false;
+        }
+      }
+      if (want.has('entry:' + n.id) && !bodyExists) {
+        for (const a of n.attachments) {
+          await this.deleteSafeFile(a.blobRef);
+          if (a.hasPreview) await this.deleteSafeFile(a.previewRef);
+        }
+        notes += 1;
+      } else {
+        kept.push(n);
+      }
+    }
+    if (notes > 0) this.manifest.notes = kept;
+
+    // 2) 孤儿密文文件删除（形态校验同扫描：点前缀 + .enc，避开清单与目录结构）
+    for (const key of keys) {
+      if (!key.startsWith('file:')) continue;
+      const name = key.slice('file:'.length);
+      if (!name.startsWith('.') || !name.endsWith('.enc')) continue;
+      try {
+        if (await this.adapter.exists(this.resolveRef(name))) {
+          await this.adapter.remove(this.resolveRef(name));
+          files += 1;
+        }
+      } catch (e) {
+        /* 单文件失败继续 */
+      }
+    }
+
+    if (notes > 0) await this.saveManifest(); // 清单落盘失败向上抛（下次重试，条目判定幂等）
+    await this.clearStaging();
     return { files, notes };
   }
 
