@@ -50,6 +50,9 @@ describe('收藏本面板', () => {
     expect(document.getElementById('fav-mask')).not.toBeNull();
     expect(document.getElementById('fav-popup')).not.toBeNull();
     expect(document.getElementById('fav-add-mask')).not.toBeNull();
+    // 类型栏容器挂 fav-tagbar 类（移动端多行平铺，styles.css 覆写；原单行滚动会藏类型）
+    expect(document.querySelector('.fav-tagbar')).not.toBeNull();
+    expect(document.querySelector('.fav-tagbar')!.querySelectorAll('.fav-tag-btn').length).toBeGreaterThan(0);
 
     ui.show();
     await new Promise((r) => setTimeout(r, 20));

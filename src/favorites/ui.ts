@@ -194,10 +194,9 @@ export class UIManager {
   // ---------- 标签栏（无"全部"按钮） ----------
   _buildTagBar(): HTMLElement {
     const container = document.createElement('div');
-    const isMobile = window.innerWidth <= 768;
-    container.style.cssText = isMobile
-      ? 'padding: 8px 20px; display:flex; flex-wrap:nowrap; gap:6px;  overflow-x:auto; white-space:nowrap; -webkit-overflow-scrolling:touch;'
-      : 'padding: 8px 20px; display:flex; flex-wrap:wrap; gap:6px; ';
+    container.className = 'fav-tagbar';
+    // 类型多行平铺：移动端由 styles.css .fav-tagbar 覆写（常规卡窄幅也全部可见，不藏类型）
+    container.style.cssText = 'padding: 8px 20px; display:flex; flex-wrap:wrap; gap:6px;';
 
     for (const { tag, emoji } of CONFIG.DEFAULT_TAGS) {
       const btn = document.createElement('button');

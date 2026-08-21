@@ -33,6 +33,16 @@
         width: 85%;
         padding: 20px;
     }
+
+    /* 移动端写日记弹窗去纵向滚动条（滚动保持） */
+    #add-diary-popup {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    #add-diary-popup::-webkit-scrollbar {
+        display: none;
+    }
 }
 
 /* 删除按钮样式 */
@@ -125,12 +135,23 @@
     }
 
     .diary-tag-selector-buttons {
-        max-height: 200px;
-        overflow-y: auto;
+        /* 类型按钮全部平铺展示（原 max-height 200 + 纵向滚动：类型被隐藏显示不完整）；超高时由弹窗整体滚动承载 */
+        max-height: none !important;
+        overflow: visible !important;
     }
 
     .diary-tag-selector-btn {
         font-size: 13px;
+    }
+
+    /* 移动端弹窗去纵向滚动条（滚动保持） */
+    .diary-tag-selector-popup {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .diary-tag-selector-popup::-webkit-scrollbar {
+        display: none;
     }
 }
 
@@ -140,14 +161,19 @@
     /* 头排内边距由「主窗口头部行统一规范」统一承担（16/24/10，全平台一致，ticket 68 后续） */
 
     #diary-tag-container {
-        max-height: 100px !important;
-        padding: 12px 20px !important;
-        overflow-y: auto !important;
+        /* 类型栏：flex-shrink:0 防常规卡 80vh 挤压出纵向滚动条把类型裁掉（非全屏 bug 根因）；原 max-height/纵向滚动废止 */
+        flex-shrink: 0 !important;
+        padding: 10px 20px !important;
+        overflow: visible !important;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
     }
 
     .diary-tag-btn {
-        margin-right: 8px !important;
-        font-size: 13px !important;
+        margin-right: 6px !important;
+        margin-bottom: 4px !important;
+        font-size: 12px !important;
+        white-space: nowrap;
     }
 
     .diary-date-separator {
@@ -160,23 +186,35 @@
         margin: 16px 0 !important;
     }
 
-
-    /* 移动端标签单行滚动，隐藏滚动条 */
+    /* 移动端类型多行平铺（原单行滚动+隐藏滚动条：常规卡窄幅只露出前几个类型，其余被隐藏显示不完整；平铺后全部可见） */
     .diary-tags-scroll-container {
         display: flex;
-        overflow-x: auto;
-        overflow-y: hidden;
-        var(--background-primary)-space: nowrap;
+        flex-wrap: wrap;
+        gap: 6px;
+        overflow: visible;
         scrollbar-width: none;
-        /* Firefox */
         -ms-overflow-style: none;
-        /* IE and Edge */
-        padding: 4px 0;
+        padding: 2px 0;
     }
 
     .diary-tags-scroll-container::-webkit-scrollbar {
         display: none;
-        /* Chrome, Safari, Opera */
+    }
+
+    /* 移动端列表去纵向滚动条（原默认滚动条占宽遮内容；滚动本身不受影响） */
+    #__diary-entries-container__ {
+        min-height: 220px !important;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    #__diary-entries-container__::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* 二级类型栏：同款防挤压裁切 */
+    #diary-subtags-container {
+        flex-shrink: 0 !important;
     }
 }
 
@@ -843,9 +881,9 @@
 .bz-tag-position { cursor: pointer; transition: background 0.2s; }
 .bz-tag-warn { color: var(--text-error); }
 .bz-tag-missing { cursor: not-allowed; }
-.bz-tag-scene { padding: 2px 8px; border-radius: 12px; font-size: 12px; cursor: pointer; }
+.bz-tag-scene { padding: 2px 8px; border-radius: 12px; font-size: 12px; }
 .bz-tag-scene.important { background: #ff4757; color: white; }
-.bz-tag-time { font-size: 12px; color: var(--text-faint); flex-shrink: 0; cursor: pointer; }
+.bz-tag-time { font-size: 12px; color: var(--text-faint); flex-shrink: 0; }
 .bz-tag-due.overdue { background: rgba(255,71,87,0.12); color: var(--text-error); }
 .bz-tag-due.today { background: rgba(255,159,67,0.12); color: #ff9f43; }
 
@@ -1500,11 +1538,25 @@ button.news-close-btn {
         }
     }
 
-/* ==================== 收藏本（favorites，ticket 60 收敛：原 fav-mobile 注入，逐字搬运；后续优化：header 按钮去 box-shadow、移动端列表平铺去横向滚动/下边框、标题栏去下边框） ==================== */
+/* ==================== 收藏本（favorites，ticket 60 收敛：原 fav-mobile 注入，逐字搬运；后续优化：header 按钮去 box-shadow、移动端列表平铺去横向滚动/下边框、标题栏去下边框、类型栏多行平铺） ==================== */
       /* #fav-popup .fav-header .bz-icon-btn 去阴影已并入「主窗口头部行统一规范」（ticket 68 后续） */
       @media (max-width: 768px) {
         #fav-entries-container { scrollbar-width: none; -ms-overflow-style: none; overflow-x: hidden; }
         #fav-entries-container::-webkit-scrollbar { display: none; }
+        /* 类型栏多行平铺（原 flex-wrap:nowrap 单行横向滚动：常规卡窄幅只露出前几个类型，其余被隐藏显示不完整）；flex-shrink:0 防 80vh 挤压出纵向滚动条 */
+        .fav-tagbar {
+          flex-shrink: 0 !important;
+          flex-wrap: wrap !important;
+          overflow: visible !important;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        /* 添加/编辑弹窗去纵向滚动条（滚动保持） */
+        #fav-add-popup {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        #fav-add-popup::-webkit-scrollbar { display: none; }
         #fav-entries-container .fav-card {
           margin-left: -20px; margin-right: -20px;
           border-radius: 0 !important;
@@ -2630,4 +2682,50 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   .news-popup.bz-win-mfs > div:first-child {
     padding-top: 0 !important;
   }
+}
+
+/* ==================== 统一行操作条 / 跟手菜单（core/item-actions，手势统一试点） ==================== */
+/* 桌面端：hover 卡片显操作条（仅具备 hover 能力的设备）；触屏端：长按出跟手菜单 */
+.bz-item-card { position: relative; }
+
+.bz-item-actions {
+  position: absolute; top: 6px; right: 8px;
+  display: none; gap: 2px; z-index: 5;
+}
+@media (hover: hover) {
+  .bz-item-actions { display: flex; }
+}
+.bz-item-action {
+  width: 22px; height: 22px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; line-height: 1;
+  background: transparent; color: var(--text-muted);
+  border: none; border-radius: 4px; cursor: pointer;
+}
+.bz-item-action:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
+.bz-item-action--danger:hover { color: var(--text-error); }
+
+/* 跟手菜单（长按弹出；定位由 JS 计算锚点+防溢出，样式仅布局与观感） */
+.bz-item-menu {
+  position: fixed; z-index: 11000;
+  min-width: 150px; padding: 6px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  animation: bz-menu-in 0.12s ease-out;
+}
+.bz-item-menu-item {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 9px 10px;
+  font-size: 14px; color: var(--text-normal);
+  background: transparent; border: none; border-radius: 6px;
+  cursor: pointer; text-align: left;
+}
+.bz-item-menu-item:hover { background: var(--background-modifier-hover); }
+.bz-item-menu-item--danger { color: var(--text-error); }
+.bz-item-menu-icon { width: 18px; text-align: center; font-size: 13px; flex-shrink: 0; }
+@keyframes bz-menu-in {
+  from { opacity: 0; transform: scale(0.96) translateY(2px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
