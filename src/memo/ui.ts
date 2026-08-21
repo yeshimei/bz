@@ -972,7 +972,7 @@ export const Renderer = {
           App.refresh();
         }),
     });
-    attachItemActions(card, actions);
+    attachItemActions(card, actions, { sheetTitle: item.title, sheetSub: item.scene ? `#${item.scene}` : undefined });
 
     return card;
   },
