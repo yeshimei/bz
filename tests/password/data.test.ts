@@ -3,8 +3,8 @@
  * 密码本测试（ticket 07）：CryptoService 加密往返、DataManager 主密码状态机、
  * 未解锁拦截、生成器。
  */
-import { describe, it, expect, beforeEach } from 'vitest';
-import { CryptoService } from '../../src/password/crypto';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { CryptoService, clearCryptoKeyCache } from '../../src/password/crypto';
 import { DataManager } from '../../src/password/data';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
@@ -36,6 +36,42 @@ describe('CryptoService', () => {
     const encrypted = await CryptoService.encrypt(big, 'pw');
     const decrypted = await CryptoService.decrypt(encrypted, 'pw');
     expect(decrypted).toBe(big);
+  });
+
+  it('派生密钥缓存：加密已缓存 key，解密同一密文不再派生；clearCryptoKeyCache 后重新派生', async () => {
+    clearCryptoKeyCache();
+    const enc = await CryptoService.encrypt('cached', 'pw'); // encrypt 派生 1 次并缓存
+    // 打真实 PBKDF2 派生点（crypto.subtle.deriveKey）：缓存命中时不再执行派生
+    const spy = vi.spyOn(crypto.subtle, 'deriveKey' as any);
+    try {
+      expect(await CryptoService.decrypt(enc, 'pw')).toBe('cached');
+      expect(spy).toHaveBeenCalledTimes(0); // 命中加密时缓存的 key
+      expect(await CryptoService.decrypt(enc, 'pw')).toBe('cached');
+      expect(spy).toHaveBeenCalledTimes(0); // 重复解密也不派生
+      // 清缓存后重新派生
+      clearCryptoKeyCache();
+      expect(await CryptoService.decrypt(enc, 'pw')).toBe('cached');
+      expect(spy).toHaveBeenCalledTimes(1);
+    } finally {
+      spy.mockRestore();
+      clearCryptoKeyCache();
+    }
+  });
+
+  it('派生密钥缓存：错误密码尝试不污染正确密码（同 salt 校验 pw 重新派生）', async () => {
+    clearCryptoKeyCache();
+    const enc = await CryptoService.encrypt('x', 'right');
+    // 先错误密码解密（缓存了 wrong 的 key，但 GCM 认证失败）
+    await expect(CryptoService.decrypt(enc, 'wrong')).rejects.toThrow();
+    const spy = vi.spyOn(crypto.subtle, 'deriveKey' as any);
+    try {
+      expect(await CryptoService.decrypt(enc, 'right')).toBe('x');
+      // 同 salt 但密码不同 → 缓存校验 pw 不符 → 重新派生（结果正确）
+      expect(spy).toHaveBeenCalledTimes(1);
+    } finally {
+      spy.mockRestore();
+      clearCryptoKeyCache();
+    }
   });
 });
 

@@ -19,7 +19,7 @@ async function waitFor(cond: () => boolean, timeout = 3000) {
   }
 }
 
-const CONFIG = { root: 'CONFIG/.ENCRYPT', previewEnabled: false, previewSize: 960, previewQuality: 0.7, securityMode: false };
+const CONFIG = { root: 'CONFIG/.ENCRYPT', previewEnabled: false, securityMode: false };
 
 function setup(vault: MockVault, config = CONFIG) {
   const app = mockAppWithVault(vault);
