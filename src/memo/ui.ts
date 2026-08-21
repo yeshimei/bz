@@ -1043,7 +1043,6 @@ export const Renderer = {
       actions.push({ icon: 'clock', label: '延后 1 天', title: '延后 1 天', onClick: () => postpone(1) });
       actions.push({ icon: 'clock', label: '延后 3 天', title: '延后 3 天', onClick: () => postpone(3) });
     }
-    actions.push({ icon: 'pencil', label: '编辑', title: '编辑', onClick: () => UIManager.showAddDialog(item) });
     // 拆分高频单项：优先级切换（重要 ↔ 次要，即时写盘）
     const isImportant = item.priority === 'important';
     actions.push({
@@ -1065,6 +1064,8 @@ export const Renderer = {
         notice('内容已复制', 'success');
       },
     });
+    // 编辑紧贴删除之上（错误纠正：常用操作靠近危险项，删除永远垫底）
+    actions.push({ icon: 'pencil', label: '编辑', title: '编辑', onClick: () => UIManager.showAddDialog(item) });
     actions.push({
       icon: 'trash-2',
       label: '删除',
@@ -1076,7 +1077,10 @@ export const Renderer = {
           App.refresh();
         }),
     });
-    attachItemActions(card, actions, { sheetHead: this.buildSheetHead(item) });
+    attachItemActions(card, actions, {
+      sheetHead: this.buildSheetHead(item),
+      // 列表禁止选字/复制：长按整卡任何位置都弹抽屉（user-select:none 由 styles.css 承担）
+    });
 
     return card;
   },

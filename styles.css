@@ -860,6 +860,8 @@
 .todo-card {
     display: flex; align-items: center; gap: 12px; padding: 12px 0;
     border-bottom: 1px solid var(--background-modifier-border);
+    user-select: none; /* 列表禁止选字/复制：长按整卡是操作抽屉，不出现系统选字菜单 */
+    -webkit-touch-callout: none;
 }
 .todo-card.archived { opacity: 0.7; }
 .todo-card input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; }
@@ -867,7 +869,7 @@
 .todo-content-span {
     /* min-width: 0 允许 flex 收缩，长文本在复选框右侧同一行内换行，不整体下移 */
     flex: 1; min-width: 0; font-size: 15px; color: var(--text-normal);
-    word-break: break-word; overflow-wrap: anywhere; user-select: text; white-space: pre-wrap;
+    word-break: break-word; overflow-wrap: anywhere; white-space: pre-wrap;
 }
 .todo-content-span.done { text-decoration: line-through; opacity: 0.6; }
 .bz-todo-link {
