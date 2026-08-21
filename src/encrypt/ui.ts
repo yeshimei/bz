@@ -518,13 +518,20 @@ export class UIManager {
         const h = progressNotify('还原 ' + note.title);
         void this.dataManager
           .restoreNote(note.id, (p) => updateProgress(h, p.done, p.total, p.current))
-          .then(({ conflicts, removed }) => {
+          .then(({ conflicts, removed, manifestSaveFailed }) => {
             const total = note.attachments.length + 1;
             if (removed) {
               // 取出即删：进度通知内直接显示完成；随后跳转笔记并关闭面板
               finishProgress(h, total, '还原完成');
               this.hide();
               this.openRestoredNote(note);
+            } else if (manifestSaveFailed) {
+              // 文件已还原、仅清单落盘失败（磁盘异常）：如实告知，重试可幂等收敛
+              finishProgress(h, total, '文件已还原（清单保存失败）');
+              notice(
+                '笔记与附件已还原到原位置，但保险箱清单保存失败（磁盘异常）；下次解锁后重试还原将自动完成清理',
+                'warning'
+              );
             } else {
               // 原子还原（优化五）：任一冲突/失败 → 整体未写回，条目保留在保险箱
               finishProgress(h, total, '还原未完成（' + conflicts.length + ' 个目标有冲突）');
