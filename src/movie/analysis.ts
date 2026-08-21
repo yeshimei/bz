@@ -5,6 +5,8 @@
  */
 import type { App, TFile } from 'obsidian';
 import { escManager } from '../core/esc-manager';
+import { applyMobileWindowFullscreen } from '../core/mobile';
+import { tryGetSettings } from '../core/settings-provider';
 import { M } from './state';
 
 let analysisOverlay: HTMLElement | null = null;
@@ -523,11 +525,8 @@ export function openAnalysisModal(app: App): void {
         box-shadow: 0 8px 30px rgba(0,0,0,0.3);
         padding-top: 34px;
     `;
-  if (window.innerWidth <= 768) {
-    modal.style.height = '100vh';
-    modal.style.borderRadius = '0';
-    modal.style.maxWidth = '100%';
-  }
+  // 移动端默认全屏（与影视主面板同一 movie 键控制）
+  applyMobileWindowFullscreen(modal, tryGetSettings().movieMobileDefaultFullscreen === true);
 
   const header = document.createElement('div');
   header.style.cssText = `

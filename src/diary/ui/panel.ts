@@ -8,7 +8,8 @@ import { notice } from '../../core/notice';
 import { escManager } from '../../core/esc-manager';
 import type { EscHandle } from '../../core/esc-manager';
 import { getApp } from '../app';
-import { getSettings, saveSettings } from '../../core/settings-provider';
+import { getSettings, saveSettings, tryGetSettings } from '../../core/settings-provider';
+import { applyMobileWindowFullscreen, isMobileEnv } from '../../core/mobile';
 import { openSettingsModal } from '../../core/settings-modal';
 import { applyDirectories } from '../config';
 import { applyUiSettings, getDefaultDateFilterSetting, getDefaultSelectedTagSetting } from './ui-settings';
@@ -250,6 +251,15 @@ function createHeader() {
           ...Object.keys(getPrimaryTagsConfig()).map((tag) => [tag, tag] as [string, string]),
         ]);
         toggleSetting('保存后立即进入编辑', '保存日记后直接进入编辑模式（关=保存后仅关闭弹窗）', 'diaryJumpToEditAfterSave');
+        // ===== 移动端 =====
+        if (isMobileEnv()) {
+          new Setting(el)
+            .setName('移动端默认全屏')
+            .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
+            .addToggle((toggle) =>
+              toggle.setValue(!!s.diaryMobileDefaultFullscreen).onChange(async (v) => { s.diaryMobileDefaultFullscreen = v; await saveSettings(); })
+            );
+        }
       },
     });
   });
@@ -466,6 +476,8 @@ export async function showDiaryPanel(plugin?: { registerEvent: (ref: unknown) =>
   if (popup) popup.style.visibility = 'visible';
   const mask = document.getElementById('diary-filter-mask');
   if (mask) mask.style.visibility = 'visible';
+  // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡（每次显示均执行）
+  applyMobileWindowFullscreen(popup, tryGetSettings().diaryMobileDefaultFullscreen === true);
   if (state.ui.scrollContainer) setTimeout(updateSticky, 100);
 }
 

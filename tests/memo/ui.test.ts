@@ -11,7 +11,7 @@ import { App } from '../../src/memo/app';
 import { UIManager } from '../../src/memo/ui';
 import { DataManager } from '../../src/memo/data';
 import { MockVault } from '../mock-vault';
-import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
+import { resetObsidianMocks, Platform as MockPlatform, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
 import moment from 'moment';
 
 function makeApp(vault: MockVault) {
@@ -450,5 +450,53 @@ describe('多行输入（ticket 49）', () => {
     expect(content.value).toBe('第一行\n第二行');
     expect(document.querySelector('h4')!.textContent).toBe('编辑备忘录');
     vi.useRealTimers();
+  });
+});
+
+describe('移动端默认全屏（ticket 68）', () => {
+  afterEach(() => {
+    MockPlatform.isMobile = false;
+  });
+
+  it('移动端+开关开：showMain 后 popup 挂 bz-win-mfs（真全屏）', async () => {
+    const vault = new MockVault();
+    await initApp(vault);
+    setSettingsProvider(() => ({ ...SETTINGS, memoMobileDefaultFullscreen: true } as any));
+    MockPlatform.isMobile = true;
+    UIManager.showMain(null, false);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(document.getElementById('todo-popup')!.classList.contains('bz-win-mfs')).toBe(true);
+  });
+
+  it('移动端+开关关：不挂类（常规卡）', async () => {
+    const vault = new MockVault();
+    await initApp(vault);
+    MockPlatform.isMobile = true;
+    UIManager.showMain(null, false);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(document.getElementById('todo-popup')!.classList.contains('bz-win-mfs')).toBe(false);
+  });
+
+  it('桌面端：开关开也不挂类', async () => {
+    const vault = new MockVault();
+    await initApp(vault);
+    setSettingsProvider(() => ({ ...SETTINGS, memoMobileDefaultFullscreen: true } as any));
+    UIManager.showMain(null, false);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(document.getElementById('todo-popup')!.classList.contains('bz-win-mfs')).toBe(false);
+  });
+
+  it('设置弹窗：仅移动端显示「移动端默认全屏」行', async () => {
+    const vault = new MockVault();
+    await initApp(vault);
+    const settingNames = () =>
+      [...document.querySelectorAll('#bz-settings-modal-popup .setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    // 桌面端：无该行（设置项名在 dataset.name，与既有断言口径一致）
+    (document.querySelector('.todo-btn-settings') as HTMLElement).click();
+    expect(settingNames()).not.toContain('移动端默认全屏');
+    // 移动端：有该行（toggle 语义：再点先关旧再开新）
+    MockPlatform.isMobile = true;
+    (document.querySelector('.todo-btn-settings') as HTMLElement).click();
+    expect(settingNames()).toContain('移动端默认全屏');
   });
 });

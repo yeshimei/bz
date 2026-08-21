@@ -2,14 +2,15 @@
  * 聚合讯测试（ticket 09）：逐篇阅读流状态机、news-stats.json 统计、
  * 已读/跳过/完成态、剪藏保存 + dataviewjs 代码块。
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { setApp } from '../../src/core/app';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 import {
   loadArticles, render, markAsRead, skipArticle, saveToClip,
   loadStats, recordStat, renderMarkdown, toDatetime, init,
 } from '../../src/news/reader';
 import { MockVault } from '../mock-vault';
-import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
+import { resetObsidianMocks, Platform as MockPlatform, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
 
 function makeApp(vault: MockVault) {
   return {
@@ -192,3 +193,35 @@ let _vault: MockVault | null = null;
 function getVault(): MockVault {
   return _vault!;
 }
+
+describe('移动端默认全屏（ticket 68）', () => {
+  beforeEach(async () => {
+    await setup();
+    init(false);
+    setSettingsProvider(() => ({}) as any);
+    MockPlatform.isMobile = false;
+  });
+
+  afterEach(() => {
+    MockPlatform.isMobile = false;
+  });
+
+  it('窗口头部新增 ⚙️；设置弹窗仅移动端显示「移动端默认全屏」行', async () => {
+    await loadArticles();
+    render();
+    const btn = document.querySelector('.news-settings-btn') as HTMLElement | null;
+    expect(btn).not.toBeNull();
+    // 桌面端：弹窗存在但无该行（设置项名在 dataset.name，与既有断言口径一致）
+    (btn as HTMLElement).click();
+    const settingNames = () =>
+      [...document.querySelectorAll('#bz-settings-modal-popup .setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    expect(popup).not.toBeNull();
+    expect(popup.textContent).toContain('聚合讯设置');
+    expect(settingNames()).not.toContain('移动端默认全屏');
+    // 移动端：有该行（toggle 语义：再点先关旧再开新）
+    MockPlatform.isMobile = true;
+    (document.querySelector('.news-settings-btn') as HTMLElement).click();
+    expect(settingNames()).toContain('移动端默认全屏');
+  });
+});
