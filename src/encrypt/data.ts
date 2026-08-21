@@ -1,11 +1,11 @@
 /**
  * 加密保险箱数据层（encrypt 域，safe 数据）
- * 移出式清单容器加密：SafeManager 负责 清单(safe.enc) 读写、附件密文镜像、
- * 加锁(lockNote)/真还原(restoreNote)/收回(collectNote) 的状态机与落盘。
+ * 移出式清单容器加密：SafeManager 负责 清单(safe.enc) 读写、密文镜像（正文+附件）、
+ * 加锁(lockNote) / 还原取出(restoreNote，还原成功即删除镜像与条目)。
  *
- * 数据落地（用户拍板 Q10=A）：
- *   <encryptRoot>/safe.enc                整库唯一加密清单
- *   <encryptRoot>/附件/<原路径>             附件原始层密文镜像
+ * 数据落地（用户拍板 Q10=A + 修订）：
+ *   <encryptRoot>/safe.enc                整库唯一加密清单（不含正文本体）
+ *   <encryptRoot>/附件/<原路径>             正文/附件原始层密文镜像
  *   <encryptRoot>/附件/_预览/<原路径>        附件预览层密文镜像
  *
  * 密钥：每个 blob 直接用主密码经 CryptoService.encrypt 独立加密（同 passwords.enc 模型）。
@@ -43,10 +43,12 @@ export interface SafeNote {
   path: string;
   /** 列表展示标题 */
   title: string;
-  /** 是否已还原（true=明文在 vault，待收回） */
+  /** 是否已还原（存量状态字段；现还原=取出即删，新建数据恒 false，仅兼容旧数据保留） */
   restored: boolean;
   createdAt: string;
-  /** 正文密文（base64，CryptoService.encrypt(content)） */
+  /** 正文密文镜像相对路径（encryptRoot 下，如 附件/我的/日记/2025-06-01.md；与附件同镜像目录） */
+  contentRef: string;
+  /** 正文密文内嵌（base64）——旧版数据兼容；新版用 contentRef，此字段留空 */
   content: string;
   /** 摘要密文（base64，预览窗免费能力；可空） */
   summary: string;
@@ -330,13 +332,18 @@ export class SafeManager {
 
     done += 1;
     onProgress?.({ done, total, current: input.path });
+    // 正文同样写镜像文件（不内嵌进清单）
+    const bodyRef = mirrorRef(input.path);
+    const bodyCipher = await CryptoService.encrypt(input.content, this.password);
+    await this.writeMirror(bodyRef, bodyCipher);
     const note: SafeNote = {
       id: genNoteId(),
       path: input.path,
       title: input.title,
       restored: false,
       createdAt: new Date().toISOString(),
-      content: await CryptoService.encrypt(input.content, this.password),
+      contentRef: bodyRef,
+      content: '',
       summary: input.summary ? await CryptoService.encrypt(input.summary, this.password) : '',
       hasSummary: !!input.summary,
       attachments,
@@ -352,15 +359,15 @@ export class SafeManager {
   }
 
   /**
-   * 真还原一篇笔记：解原文 + 原质量附件写回原路径，标记 restored。
-   * 覆盖目标文件前校验指纹：不匹配（用户新建了同名文件）→ 跳过不盖。
-   * 每写一个文件触发 metadataCache 更新（各域立即恢复）。
+   * 还原（取出即删）一篇笔记：解原文 + 原质量附件写回原路径。
+   * 覆盖目标文件前校验指纹：不匹配（用户新建了同名文件）→ 跳过不盖 → 该条目留在保险箱。
+   * 全部还原成功（无冲突）后：删除本文全部加密镜像（正文+附件原始层/预览层）、从清单移除，彻底取出。
    * onProgress：按文件回调（附件逐个 + 笔记本身），UI 驱动进度通知。
    */
   async restoreNote(
     noteId: string,
     onProgress?: (p: EncryptProgress) => void
-  ): Promise<{ note: SafeNote; conflicts: string[] }> {
+  ): Promise<{ note: SafeNote; conflicts: string[]; removed: boolean }> {
     if (!this.unlocked || !this.password) throw new Error('未解锁，无法还原笔记');
     const app = getApp();
     const note = this.manifest.notes.find((n) => n.id === noteId);
@@ -371,29 +378,51 @@ export class SafeManager {
 
     // 附件先还原
     for (const a of note.attachments) {
-      if (a.restored) continue;
       onProgress?.({ done, total, current: a.path });
       const ok = await this.restoreAttachment(a);
       done += 1;
-      if (ok) a.restored = true;
-      else conflicts.push(a.path);
+      if (!ok) conflicts.push(a.path);
     }
-    // 正文还原
+    // 正文还原（contentRef 镜像优先，兼容旧版内嵌 content）
     onProgress?.({ done, total, current: note.path });
-    const plain = await CryptoService.decrypt(note.content, this.password);
-    if (this.fileExists(note.path)) {
-      // restored=false 时 vault 里本不该有该笔记；有 = 非本系统写入 → 冲突跳过
+    const plain = await this.decryptNoteBody(note);
+    if (plain === null || plain === undefined) {
+      conflicts.push(note.path);
+    } else if (this.fileExists(note.path)) {
+      // 目标路径已被用户占用（非本次还原写回）→ 冲突跳过
       conflicts.push(note.path);
     } else {
       await this.ensureParentFolder(note.path);
       const file = await app.vault.create(note.path, plain);
       (app.metadataCache as any)?.trigger?.('changed', file);
-      note.restored = true;
     }
     done = total;
     onProgress?.({ done, total, current: note.path });
+
+    // 全部成功 → 彻底取出（删镜像 + 移除清单条目）；否则保留（含已还原文件留副本，安全第一）
+    const removed = conflicts.length === 0;
+    if (removed) {
+      await this.deleteVaultFile(this.resolveRef(note.contentRef));
+      for (const a of note.attachments) {
+        await this.deleteVaultFile(this.resolveRef(a.blobRef));
+        if (a.hasPreview) await this.deleteVaultFile(this.resolveRef(a.previewRef));
+      }
+      const idx = this.manifest.notes.indexOf(note);
+      if (idx !== -1) this.manifest.notes.splice(idx, 1);
+    }
     await this.saveManifest();
-    return { note, conflicts };
+    return { note, conflicts, removed };
+  }
+
+  /** 解笔记正文明文：contentRef 镜像优先，旧版内嵌 content base64 兼容回退 */
+  async decryptNoteBody(note: SafeNote): Promise<string | null> {
+    if (!this.unlocked || !this.password) throw new Error('未解锁');
+    if (note.contentRef) {
+      const cipher = await this.readMirror(note.contentRef);
+      if (cipher) return CryptoService.decrypt(cipher, this.password);
+    }
+    if (note.content) return CryptoService.decrypt(note.content, this.password);
+    return null;
   }
 
   /** 还原单个附件：解原始层 → 写回原路径（二进制）；指纹不符或已存在非本系统文件视为冲突跳过 */
@@ -421,56 +450,13 @@ export class SafeManager {
     return true;
   }
 
-  /**
-   * 收回（加锁已还原笔记）：重新读取 vault 当前明文笔记 + 附件，再加密入库。
-   * 保留原 SafeNote 的 id/createdAt。
-   */
-  async collectNote(noteId: string): Promise<void> {
-    if (!this.unlocked || !this.password) throw new Error('未解锁，无法收回笔记');
-    const app = getApp();
-    const note = this.manifest.notes.find((n) => n.id === noteId);
-    if (!note) throw new Error('未找到该加密笔记');
-    if (!note.restored) return; // 已在库中
-
-    await this.ensureMirrorDirs();
-    const file = app.vault.getAbstractFileByPath(note.path);
-    if (!file) {
-      // 笔记文件不存在：视为已被用户删除，标记 restored=false（自身消失）
-      note.restored = false;
-      for (const a of note.attachments) a.restored = false;
-      await this.saveManifest();
-      return;
-    }
-    const content = await app.vault.read(file as any);
-    note.content = await CryptoService.encrypt(content, this.password);
-
-    // 已还原的附件：重新取当前磁盘明文再加密；未还原的不动
-    for (const a of note.attachments) {
-      if (!a.restored) continue;
-      const orig = app.vault.getAbstractFileByPath(a.path);
-      if (orig) {
-        const data = await this.readAttachmentData(orig);
-        const enc = await CryptoService.encrypt(data, this.password);
-        await this.writeMirror(a.blobRef, enc);
-        a.fingerprint = await fingerprintOf(data);
-      }
-    }
-    // 删除 vault 里已还原的原文件（正文 + 附件）
-    await this.deleteVaultFile(note.path);
-    for (const a of note.attachments) {
-      if (a.restored) await this.deleteVaultFile(a.path);
-    }
-    note.restored = false;
-    for (const a of note.attachments) a.restored = false;
-    await this.saveManifest();
-  }
-
   /** 删除一条加密笔记（连同镜像文件、清单记录）。谨慎：真删除不可恢复。 */
   async removeNote(noteId: string): Promise<void> {
     if (!this.unlocked) throw new Error('未解锁');
     const idx = this.manifest.notes.findIndex((n) => n.id === noteId);
     if (idx === -1) return;
     const note = this.manifest.notes[idx];
+    if (note.contentRef) await this.deleteVaultFile(this.resolveRef(note.contentRef));
     for (const a of note.attachments) {
       await this.deleteVaultFile(this.resolveRef(a.blobRef));
       if (a.hasPreview) await this.deleteVaultFile(this.resolveRef(a.previewRef));
@@ -479,7 +465,7 @@ export class SafeManager {
     await this.saveManifest();
   }
 
-  /** 解正文密文 → 明文（预览窗/阅读用） */
+  /** 解正文密文 → 明文（兼容旧版内嵌 content base64，供既有调用/测试使用） */
   async decryptText(contentCipher?: string): Promise<string> {
     if (!this.unlocked || !this.password) throw new Error('未解锁');
     if (!contentCipher) return '';

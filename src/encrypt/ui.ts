@@ -1,8 +1,8 @@
 /**
  * 加密保险箱 UI（encrypt 域）
- * 主面板（备忘录样式）：标题「加密保险箱」+ 列表 + 锁定/预览/设置。
+ * 主面板（备忘录样式）：标题「加密保险箱」+ 列表 + 预览/还原/设置。
  * 解锁弹窗（复用密码本 showPasswordDialog 范式）；预览窗（独立只读弹窗，Markdown 渲染 + 图片/视频压缩预览）。
- * 协调层：加锁当前笔记（含预览生成）、真还原、收回全部。
+ * 协调层：加锁当前笔记（含预览生成 + 动态进度；完成自动打开面板）、还原取出（完成跳转笔记并关闭面板）。
  */
 import { Setting, MarkdownRenderer, Component } from 'obsidian';
 import { notice, notify } from '../core/notice';
@@ -10,7 +10,7 @@ import type { NoticeHandle } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { confirm } from '../core/confirm';
-import { createIconBtn, createOverlay } from '../core/dom';
+import { createIconBtn, createOverlay, longPress } from '../core/dom';
 import { formatRelativeTime } from '../core/utils';
 import { getSettings, saveSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
@@ -122,12 +122,18 @@ export function progressNotify(title: string): NoticeHandle | null {
   }
 }
 
-/** 更新进度通知：左「已处理 N/总数」右「当前文件名」 */
+/** 文件名过长截断（先取 basename，再按 20 字符截断加省略号，防通知栏忽高忽低） */
+export function truncateName(current: string, maxLen = 20): string {
+  let name = current.split('/').pop() || current;
+  if (name.length > maxLen) name = name.slice(0, maxLen) + '…';
+  return name;
+}
+
+/** 更新进度通知：左「已处理 N/总数」右「当前文件名（截断）」 */
 export function updateProgress(h: NoticeHandle | null, done: number, total: number, current: string) {
   if (!h) return;
   const base = `已处理 ${done}/${total}`;
-  const name = current.split('/').pop() || current;
-  h.setMessage(`${base} · 当前：${name}`);
+  h.setMessage(`${base} · 当前：${truncateName(current)}`);
   const pct = total > 0 ? Math.max(0, Math.min(100, Math.round((done / total) * 100))) : 0;
   h.setProgress(pct);
 }
@@ -220,12 +226,8 @@ export class UIManager {
     title.textContent = '加密保险箱';
     const btns = document.createElement('div');
     btns.className = 'bz-encrypt-head-btns';
-    const lockBtn = createIconBtn('🔐', '收回全部（加锁）', () => this.collectAll());
-    const previewBtn = createIconBtn('👁', '预览模式', () => notice('点击条目上的「预览」打开独立预览窗'));
     const settingsBtn = createIconBtn('⚙️', '加密保险箱设置', () => this.openSettings());
     const closeBtn = createIconBtn('❌', '关闭', () => this.hide());
-    btns.appendChild(lockBtn);
-    btns.appendChild(previewBtn);
     btns.appendChild(settingsBtn);
     btns.appendChild(closeBtn);
     header.appendChild(title);
@@ -365,7 +367,7 @@ export class UIManager {
 
   createCard(note: SafeNote): HTMLDivElement {
     const card = document.createElement('div');
-    card.className = 'bz-encrypt-card' + (note.restored ? ' bz-encrypt-card--restored' : '');
+    card.className = 'bz-encrypt-card';
     const top = document.createElement('div');
     top.className = 'bz-encrypt-card-top';
     const titleBox = document.createElement('div');
@@ -373,60 +375,40 @@ export class UIManager {
     const title = document.createElement('span');
     title.className = 'bz-encrypt-card-title';
     title.textContent = note.title;
-    const badge = document.createElement('span');
-    badge.className = 'bz-encrypt-badge' + (note.restored ? ' bz-encrypt-badge--restored' : '');
-    badge.textContent = note.restored ? '已还原·待收回' : '已入库';
     titleBox.appendChild(title);
-    titleBox.appendChild(badge);
     const meta = document.createElement('div');
     meta.className = 'bz-encrypt-card-meta';
     meta.textContent = `${formatRelativeTime(note.createdAt)} · ${note.attachments.length} 个附件`;
-    const actions = document.createElement('div');
-    actions.className = 'bz-encrypt-card-actions';
-    if (note.attachments.length > 0 || note.hasSummary) {
-      const previewBtn = document.createElement('button');
-      previewBtn.textContent = '预览';
-      previewBtn.className = 'bz-encrypt-btn';
-      previewBtn.onclick = (e) => { e.stopPropagation(); void this.openPreview(note); };
-      actions.appendChild(previewBtn);
-    }
-    const restoreBtn = document.createElement('button');
-    restoreBtn.textContent = note.restored ? '已还原' : '真还原';
-    restoreBtn.className = 'bz-encrypt-btn bz-encrypt-btn--primary';
-    restoreBtn.disabled = note.restored;
-    restoreBtn.onclick = (e) => {
-      e.stopPropagation();
-      if (note.restored) return;
-      void this.confirmRestore(note);
-    };
-    actions.appendChild(restoreBtn);
     top.appendChild(titleBox);
-    top.appendChild(actions);
     card.appendChild(top);
     card.appendChild(meta);
-    // 主要动作均在卡片按钮；预览/还原不误触
+    // 手势触发（同其他面板）：单击 → 打开预览；长按 → 弹确认还原
+    card.addEventListener('click', () => void this.openPreview(note));
+    longPress(card, () => this.confirmRestore(note));
     return card;
   }
 
   confirmRestore(note: SafeNote) {
     confirm({
-      title: '真还原',
-      message: `将「${note.title}」的原文${note.attachments.length ? '与 ' + note.attachments.length + ' 个原质量附件' : ''}还原到原路径。`,
-      confirmText: '真还原',
+      title: '还原',
+      message: `将「${note.title}」的原文${note.attachments.length ? '与 ' + note.attachments.length + ' 个原质量附件' : ''}还原到原路径？`,
+      confirmText: '还原',
       onConfirm: () => {
         const h = progressNotify('还原 ' + note.title);
         void this.dataManager
           .restoreNote(note.id, (p) => updateProgress(h, p.done, p.total, p.current))
-          .then(({ conflicts }) => {
+          .then(({ conflicts, removed }) => {
             const total = note.attachments.length + 1;
-            if (conflicts.length) {
-              finishProgress(h, total, '还原完成（' + conflicts.length + ' 个冲突未覆盖）');
-              notice('还原冲突 ' + conflicts.length + ' 个（未覆盖同名文件）', 'warning');
+            if (removed) {
+              // 取出即删：进度通知内直接显示完成；随后跳转笔记并关闭面板
+              finishProgress(h, total, '还原完成');
+              this.hide();
+              this.openRestoredNote(note);
             } else {
-              finishProgress(h, total, '已还原');
-              notice('已还原「' + note.title + '」', 'success');
+              // 有冲突：条目保留在保险箱，进度+警示提示
+              finishProgress(h, total, '还原完成（' + conflicts.length + ' 个冲突未覆盖）');
+              notice('还原冲突 ' + conflicts.length + ' 个（未覆盖同名文件），条目保留在保险箱', 'warning');
             }
-            this.openRestoredNote(note);
             void this.renderList();
           })
           .catch((e: any) => notice('还原失败：' + e.message, 'error'));
@@ -467,7 +449,8 @@ export class UIManager {
     body.className = 'bz-encrypt-preview-body';
 
     try {
-      const plain = await this.dataManager.decryptText(note.content);
+      const bodyText = await this.dataManager.decryptNoteBody(note);
+      const plain = bodyText ?? '';
       // 先把嵌入改写占位 token（按文档顺序混排），渲染后再原位替换为预览图
       const { text, slots, inlined } = collectMediaSlots(plain, note.attachments);
       // 预先解密所有附件的预览层（每个只解一次；嵌入与底部画廊共用）
@@ -586,29 +569,6 @@ export class UIManager {
     });
   }
 
-  // ---------- 协调：收回全部 ----------
-  collectAll() {
-    const pending = this.dataManager.manifest.notes.filter((n) => n.restored);
-    if (pending.length === 0) {
-      notice('没有待收回的已还原笔记');
-      return;
-    }
-    confirm({
-      title: '收回全部',
-      message: `把 ${pending.length} 篇已还原笔记及其附件重新加密入库？`,
-      confirmText: '收回',
-      onConfirm: () => {
-        void (async () => {
-          for (const n of pending) {
-            await this.dataManager.collectNote(n.id);
-          }
-          notice('已收回 ' + pending.length + ' 篇', 'success');
-          void this.renderList();
-        })().catch((e: any) => notice('收回失败：' + e.message, 'error'));
-      },
-    });
-  }
-
   registerEscape() {
     escManager.register('encrypt', {
       isVisible: () => !!(this.mask && this.mask.style.display === 'block') || !!(this.previewMask && this.previewMask.style.display === 'block'),
@@ -714,10 +674,10 @@ export class EncryptAppController {
         },
         (p) => updateProgress(h, p.done, p.total, p.current)
       );
+      // 主动打开加密保险箱面板，展示刚加密的条目（无独立完成 toast，进度通知已显示完成）
       const total = attachments.length + 1;
-      finishProgress(h, total, '已加密');
-      notice('已加密「' + file.basename + '」及其 ' + attachments.length + ' 个附件', 'success');
-      void this.uiManager.renderList();
+      finishProgress(h, total, '加密完成');
+      this.uiManager.show();
     } catch (e: any) {
       notice('加密失败：' + e.message, 'error');
     }
