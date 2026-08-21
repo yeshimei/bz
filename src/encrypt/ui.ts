@@ -150,6 +150,8 @@ export function finishProgress(h: NoticeHandle | null, done: number, msg: string
 export class UIManager {
   dataManager: SafeManager;
   config: EncryptUIConfig;
+  /** 顶部「加密当前笔记」按钮回调（由 Controller 注入，调 lockCurrentNote） */
+  onLockCurrentNote: (() => void) | null = null;
   // DOM
   mask: HTMLDivElement | null = null;
   popup: HTMLDivElement | null = null;
@@ -226,8 +228,10 @@ export class UIManager {
     title.textContent = '加密保险箱';
     const btns = document.createElement('div');
     btns.className = 'bz-encrypt-head-btns';
+    const lockBtn = createIconBtn('🔒', '加密当前笔记', () => this.onLockCurrentNote?.());
     const settingsBtn = createIconBtn('⚙️', '加密保险箱设置', () => this.openSettings());
     const closeBtn = createIconBtn('❌', '关闭', () => this.hide());
+    if (this.onLockCurrentNote) btns.appendChild(lockBtn);
     btns.appendChild(settingsBtn);
     btns.appendChild(closeBtn);
     header.appendChild(title);
@@ -598,6 +602,9 @@ export class EncryptAppController {
     this.config = config;
     this.dataManager = new SafeManager(config.root);
     this.uiManager = new UIManager(this.dataManager, config);
+    this.uiManager.onLockCurrentNote = () => {
+      void this.lockCurrentNote();
+    };
   }
 
   async init() {
