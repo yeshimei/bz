@@ -248,6 +248,23 @@ export function mockAppWithVault(vault: MockVault) {
       offref: () => {},
       getActiveFile: () => null,
     },
+    fileManager: {
+      /** processFrontMatter：读文件 → 回调改 fm → 序列化写回（保留正文；数组用 [] 简式） */
+      processFrontMatter: async (file: any, cb: (fm: Record<string, any>) => void) => {
+        const path = typeof file === 'string' ? file : file.path;
+        const content = vault.files.get(path) ?? '';
+        const body = content.replace(/^---\n[\s\S]*?\n---\n?/, '');
+        const fm = parseFrontmatter(content) ?? {};
+        cb(fm);
+        const lines = ['---'];
+        for (const [k, v] of Object.entries(fm)) {
+          if (Array.isArray(v)) lines.push(`${k}: [${v.join(', ')}]`);
+          else lines.push(`${k}: ${v}`);
+        }
+        lines.push('---');
+        vault.files.set(path, lines.join('\n') + (body ? '\n' + body : ''));
+      },
+    },
     commands: (() => {
       const registered: any[] = [];
       return {
