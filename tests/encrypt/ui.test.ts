@@ -496,6 +496,8 @@ describe('EncryptAppController', () => {
     const healthBtn = [...document.querySelectorAll('.bz-encrypt-head-btns button')].find((b) => b.textContent === '🩺') as HTMLButtonElement;
     healthBtn.click();
     await waitFor(() => !!document.getElementById('bz-encrypt-health-popup') && document.getElementById('bz-encrypt-health-popup')!.style.display === 'flex');
+    // 回归：弹窗卡片必须是遮罩的子元素（脱离 flex 容器会沉入文档流，出现「只有遮罩没有内容」）
+    expect(document.getElementById('bz-encrypt-health-popup')!.parentElement).toBe(document.getElementById('bz-encrypt-health-mask'));
     // 等扫描完成：可清理区块出现
     await waitFor(() => !!document.querySelector('.bz-encrypt-health-section--clean'));
     const body = document.getElementById('bz-encrypt-health-body')!;
@@ -576,6 +578,38 @@ describe('EncryptAppController', () => {
     expect(body.textContent).toContain('全部镜像完整');
     // 恢复现场：移除本用例条目
     await c.dataManager.removeNote(note.id);
+  });
+
+  it('体检动态显示：扫描中实时进度 + 发现即时追加（无勾选框），完成后整理成整篇报告', async () => {
+    setup(vault, CONFIG);
+    const c = EncryptAppController.getInstance(CONFIG);
+    await c.init();
+    await c.dataManager.unlock('pw');
+    // 模拟慢速扫描：先回调一次进度（含一个实时发现），延迟后再完成
+    const spy = vi.spyOn(c.dataManager, 'scanHealth').mockImplementation(
+      (async (onProgress: any) => {
+        onProgress?.({
+          done: 1, total: 6, current: '第一篇',
+          found: [{ cat: 'orphan-file', key: 'file:.junk.enc', label: '.junk.enc' }],
+        });
+        await new Promise((r) => setTimeout(r, 60));
+        onProgress?.({ done: 6, total: 6, current: '扫描完成', found: [] });
+        return { items: [{ cat: 'orphan-file', key: 'file:.junk.enc', label: '.junk.enc' }], integrityChecked: true };
+      }) as any
+    );
+    try {
+      c.uiManager.openHealthDialog();
+      // 扫描中：进度文本 + 实时发现行已追加；尚未整理 → 无勾选框
+      await waitFor(() => document.getElementById('bz-encrypt-health-body')!.textContent.includes('检查中 1/6'));
+      const liveBody = document.getElementById('bz-encrypt-health-body')!;
+      expect(liveBody.textContent).toContain('.junk.enc');
+      expect(document.querySelector('input.bz-encrypt-health-check')).toBeNull();
+      // 完成后：整篇勾选报告（进度行消失）
+      await waitFor(() => !!document.querySelector('input.bz-encrypt-health-check'));
+      expect(document.getElementById('bz-encrypt-health-body')!.textContent).not.toContain('检查中');
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it('lockCurrentNote：附件读取失败 → 整笔放弃（不落任何东西、原文件不动、提示失败）', async () => {

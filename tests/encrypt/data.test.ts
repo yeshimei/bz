@@ -4,7 +4,7 @@
  * 清单加密存储、平铺点前缀密文镜像、指纹冲突安全、崩溃幂等。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { SafeManager, fingerprintOf, flatName, mapLimit } from '../../src/encrypt/data';
+import { SafeManager, fingerprintOf, flatName, mapLimit, type HealthProgress } from '../../src/encrypt/data';
 import { CryptoService, clearCryptoKeyCache } from '../../src/password/crypto';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
@@ -721,6 +721,42 @@ describe('SafeManager 提交式加密（ADR-0018）', () => {
     expect(report.integrityChecked).toBe(true);
     expect(report.items.some((i) => i.cat === 'dead-entry')).toBe(true);
     expect(report.items.some((i) => i.cat === 'orphan-file')).toBe(true);
+  });
+
+  it('体检进度回调：done 递增至 total、found 增量之和 = 报告、current 逐项变化', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    await lockSample(sm, {
+      content: '# 有附件',
+      attachments: [{ path: '我的/影视/p1.png', data: 'QUJDREVGRw==' }],
+    });
+    await lockSample(sm, {
+      notePath: '我的/笔记/b.md',
+      content: '# 无附件',
+      attachments: [],
+    });
+    const events: HealthProgress[] = [];
+    const report = await sm.scanHealth((p) => events.push(p));
+    // 步数 = 孤儿轮 1 + 每条（容器 + 正文完整性）+ 每个附件
+    const steps = 1 + (2 + 1) + (2 + 0);
+    expect(events.length).toBe(steps);
+    expect(events[0].done).toBe(1);
+    for (let i = 1; i < events.length; i++) expect(events[i].done).toBe(events[i - 1].done + 1);
+    expect(events[events.length - 1].done).toBe(events[events.length - 1].total);
+    expect(events.every((e) => e.current.length > 0)).toBe(true);
+    // 增量 found 之和 = 最终报告 items（本次无问题 → 全部为空数组也一致）
+    const foundAll = events.flatMap((e) => e.found);
+    expect(foundAll.length).toBe(report.items.length);
+
+    // 有发现时：失效条目的 found 在其对应的进度事件中增量出现
+    const n3 = await lockSample(sm, { notePath: '我的/笔记/c.md', content: '# 将失效', attachments: [] });
+    vault.files.delete('CONFIG/.ENCRYPT/' + n3.contentRef);
+    const events2: HealthProgress[] = [];
+    const report2 = await sm.scanHealth((p) => events2.push(p));
+    const deadFound = events2.filter((e) => e.found.some((i) => i.cat === 'dead-entry'));
+    expect(deadFound.length).toBe(1);
+    expect(deadFound[0].current).toBe(n3.title);
   });
 });
 
