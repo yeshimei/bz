@@ -5,6 +5,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SafeManager, fingerprintOf, flatName } from '../../src/encrypt/data';
+import { CryptoService } from '../../src/password/crypto';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
 
@@ -375,5 +376,139 @@ describe('SafeManager 进度回调（onProgress）', () => {
     const ok = await sm.restoreDiaryEntry(note.id, '# ✍️ 10:30\n随笔');
     expect(ok).toBe(true);
     expect(vault.files.get('我的/日记/2025-06-02.md')).toContain('随笔');
+  });
+});
+
+describe('SafeManager 提交式加密（ADR-0018）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    vault = new MockVault();
+  });
+
+  it('lockNote 成功：暂存区与挂起标记无残留，镜像平铺在正式顶层', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await lockSample(sm, {
+      content: '# A',
+      attachments: [{ path: '我的/影视/pic.png', data: 'QUJDREVGRw==', previewData: 'PREVIEW' }],
+    });
+    // 顶层镜像齐备（提交序列 S3 搬入成功）
+    expect(vault.files.has('CONFIG/.ENCRYPT/' + note.contentRef)).toBe(true);
+    expect(vault.files.has('CONFIG/.ENCRYPT/' + note.attachments[0].blobRef)).toBe(true);
+    expect(vault.files.has('CONFIG/.ENCRYPT/' + note.attachments[0].previewRef)).toBe(true);
+    // 暂存区无残留（无挂起标记、无 .staging 文件）
+    expect(vault.files.get('CONFIG/.ENCRYPT/.staging/pending.json')).toBeUndefined();
+    expect([...vault.files.keys()].some((p) => p.startsWith('CONFIG/.ENCRYPT/.staging/'))).toBe(false);
+  });
+
+  it('任一附件加密失败 → 整笔放弃：无顶层镜像、无暂存残留、原文件不动', async () => {
+    makeApp(vault);
+    vault.create('我的/日记/2025-06-01.md', '# 日记');
+    vault.createBinary('我的/影视/1.png', new TextEncoder().encode('FIRST').buffer);
+    vault.createBinary('我的/影视/2.png', new TextEncoder().encode('SECOND').buffer);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const realEncrypt = CryptoService.encrypt.bind(CryptoService);
+    const spy = vi.spyOn(CryptoService, 'encrypt').mockImplementation(async (data: string, pw: string) => {
+      if (data === 'SECOND') throw new Error('boom');
+      return realEncrypt(data, pw);
+    });
+    try {
+      await expect(
+        sm.lockNote({
+          path: '我的/日记/2025-06-01.md',
+          title: '2025-06-01',
+          content: '# 日记',
+          attachments: [
+            { path: '我的/影视/1.png', data: 'FIRST', previewData: 'P1' },
+            { path: '我的/影视/2.png', data: 'SECOND' },
+          ],
+        })
+      ).rejects.toThrow('boom');
+    } finally {
+      spy.mockRestore();
+    }
+    // 原文件未动
+    expect(vault.files.get('我的/日记/2025-06-01.md')).toBe('# 日记');
+    expect(vault.binaryFiles.has('我的/影视/1.png')).toBe(true);
+    expect(vault.binaryFiles.has('我的/影视/2.png')).toBe(true);
+    // 无顶层镜像（.safe.enc 除外）、无暂存残留、清单无条目、无挂起标记
+    expect(
+      [...vault.files.keys()].some(
+        (p) => p.startsWith('CONFIG/.ENCRYPT/') && p !== 'CONFIG/.ENCRYPT/.safe.enc' && !p.includes('/.staging/') && p.endsWith('.enc')
+      )
+    ).toBe(false);
+    expect([...vault.files.keys()].some((p) => p.startsWith('CONFIG/.ENCRYPT/.staging/'))).toBe(false);
+    expect(sm.manifest.notes.length).toBe(0);
+  });
+
+  it('自愈回滚：解锁时丢弃挂起半提交条目、删除已搬入镜像、清空暂存与标记', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await lockSample(sm, {
+      content: '# A',
+      attachments: [{ path: '我的/影视/pic.png', data: 'QUJDREVGRw==', previewData: 'PREVIEW' }],
+    });
+    const contentRef = note.contentRef;
+    const blobRef = note.attachments[0].blobRef;
+    const prevRef = note.attachments[0].previewRef;
+    // 制造崩溃现场（清单先行已提交 + 挂起标记残留 + 暂存残留）
+    vault.files.set('CONFIG/.ENCRYPT/.staging/pending.json', JSON.stringify([note.id]));
+    vault.files.set('CONFIG/.ENCRYPT/.staging/.stale.enc', 'stale');
+    expect(vault.files.has('CONFIG/.ENCRYPT/' + contentRef)).toBe(true); // 镜像已搬入顶层
+    sm.lock();
+    const sm2 = new SafeManager('CONFIG/.ENCRYPT');
+    await sm2.unlock('pw');
+    // 条目回滚、顶层镜像删除、暂存/标记清空；清单本体保留
+    expect(sm2.manifest.notes.length).toBe(0);
+    expect(vault.files.get('CONFIG/.ENCRYPT/' + contentRef)).toBeUndefined();
+    expect(vault.files.get('CONFIG/.ENCRYPT/' + blobRef)).toBeUndefined();
+    expect(vault.files.get('CONFIG/.ENCRYPT/' + prevRef)).toBeUndefined();
+    expect(vault.files.get('CONFIG/.ENCRYPT/.staging/pending.json')).toBeUndefined();
+    expect(vault.files.get('CONFIG/.ENCRYPT/.staging/.stale.enc')).toBeUndefined();
+    expect(vault.files.get('CONFIG/.ENCRYPT/.safe.enc')).toBeTruthy();
+  });
+
+  it('自愈回滚：挂起标记无对应条目（S2 前崩溃）→ 仅清空暂存，清单不动', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    vault.files.set('CONFIG/.ENCRYPT/.staging/pending.json', JSON.stringify(['enc-deadbeef']));
+    vault.files.set('CONFIG/.ENCRYPT/.staging/.ghost.enc', 'ghost');
+    sm.lock();
+    const sm2 = new SafeManager('CONFIG/.ENCRYPT');
+    await sm2.unlock('pw');
+    expect(sm2.manifest.notes.length).toBe(0);
+    expect(vault.files.get('CONFIG/.ENCRYPT/.staging/pending.json')).toBeUndefined();
+    expect(vault.files.get('CONFIG/.ENCRYPT/.staging/.ghost.enc')).toBeUndefined();
+  });
+
+  it('手动清理未引用密文（Q5-A）：只删无引用平铺点前缀密文，保留清单/引用镜像/非点前缀文件并清空暂存', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await lockSample(sm, {
+      content: '# A',
+      attachments: [{ path: '我的/影视/pic.png', data: 'QUJDREVGRw==' }],
+    });
+    const contentRef = note.contentRef;
+    const blobRef = note.attachments[0].blobRef;
+    vault.files.set('CONFIG/.ENCRYPT/.junk1.enc', 'junk1');
+    vault.files.set('CONFIG/.ENCRYPT/.junk2.enc', 'junk2');
+    vault.files.set('CONFIG/.ENCRYPT/plain.enc', 'non-dot'); // 非点前缀：不碰（旧布局保守）
+    vault.files.set('CONFIG/.ENCRYPT/.staging/.stale.enc', 'stale');
+    const removed = await sm.cleanupOrphans();
+    expect(removed).toBe(2);
+    expect(vault.files.get('CONFIG/.ENCRYPT/.junk1.enc')).toBeUndefined();
+    expect(vault.files.get('CONFIG/.ENCRYPT/.junk2.enc')).toBeUndefined();
+    // 保留：引用镜像、清单本体、非点前缀文件；暂存已清空
+    expect(vault.files.get('CONFIG/.ENCRYPT/' + contentRef)).toBeTruthy();
+    expect(vault.files.get('CONFIG/.ENCRYPT/' + blobRef)).toBeTruthy();
+    expect(vault.files.get('CONFIG/.ENCRYPT/.safe.enc')).toBeTruthy();
+    expect(vault.files.get('CONFIG/.ENCRYPT/plain.enc')).toBe('non-dot');
+    expect(vault.files.get('CONFIG/.ENCRYPT/.staging/.stale.enc')).toBeUndefined();
   });
 });
