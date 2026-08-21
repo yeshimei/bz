@@ -11,6 +11,7 @@ import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { confirm } from '../core/confirm';
 import { createSiteIcon } from '../core/dom';
+import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
@@ -100,51 +101,6 @@ function attachSuggestion<T>(
   input.addEventListener('focus', refresh);
   document.addEventListener('click', (e) => {
     if (!container.contains(e.target as Node)) sugg.style.display = 'none';
-  });
-}
-
-/** 长按手势（场景标签编辑 / 时间标签删除共用，500ms 触发） */
-function attachLongPress(span: HTMLElement, onLongPress: () => void) {
-  let timer: any = null;
-  let isTouching = false;
-
-  const startLongPress = (e: any) => {
-    if (e.button !== undefined && e.button !== 0) return; // 仅左键
-    e.stopPropagation();
-    // 阻止默认行为防止滚动或上下文菜单
-    e.preventDefault();
-    timer = setTimeout(() => {
-      onLongPress();
-      timer = null;
-    }, 500);
-  };
-
-  const cancelLongPress = () => {
-    if (timer) {
-      clearTimeout(timer);
-      timer = null;
-    }
-  };
-
-  // 鼠标事件
-  span.addEventListener('mousedown', startLongPress);
-  span.addEventListener('mouseup', cancelLongPress);
-  span.addEventListener('mouseleave', cancelLongPress);
-  // 触摸事件（移动端）
-  span.addEventListener('touchstart', (e) => {
-    // 阻止 mouse 事件后续触发
-    e.preventDefault();
-    isTouching = true;
-    startLongPress(e);
-  });
-  span.addEventListener('touchend', () => {
-    isTouching = false;
-    cancelLongPress();
-  });
-  span.addEventListener('touchmove', () => {
-    if (isTouching) {
-      cancelLongPress();
-    }
   });
 }
 
@@ -879,9 +835,30 @@ export const Renderer = {
     }
   },
 
+  /** 打开条目（操作条「打开」与内容链接共用）：内部笔记 > 外部 URL */
+  openItem(item: MemoItem): void {
+    const app = getApp();
+    UIManager.hideMain(); // 关闭备忘录面板
+    if (item.linkedNote) {
+      const file = app.vault.getAbstractFileByPath(item.linkedNote);
+      if (file) {
+        void app.workspace.getLeaf().openFile(file as any);
+      } else {
+        notice('关联笔记不存在');
+      }
+    } else if (item.url) {
+      try {
+        (app as any).openUrl(item.url);
+      } catch {
+        // 桌面端 Electron 兜底
+        const electron = (window as any).require && (window as any).require('electron');
+        if (electron && electron.shell) electron.shell.openExternal(item.url);
+      }
+    }
+  },
+
   /** 卡片内容区：内部笔记链接 > 外部 URL > 纯文本 */
   createContentSpan(item: MemoItem): HTMLSpanElement {
-    const app = getApp();
     const contentSpan = document.createElement('span');
     contentSpan.className = 'todo-content-span';
     const linkStyle = 'bz-todo-link';
@@ -890,16 +867,9 @@ export const Renderer = {
       const link = document.createElement('a');
       link.className = linkStyle;
       link.textContent = item.title; // 显示为链接文本
-      link.onclick = async (e) => {
+      link.onclick = (e) => {
         e.preventDefault();
-        UIManager.hideMain(); // 关闭备忘录面板
-        const file = app.vault.getAbstractFileByPath(item.linkedNote!);
-        if (file) {
-          const leaf = app.workspace.getLeaf();
-          await leaf.openFile(file as any);
-        } else {
-          notice('关联笔记不存在');
-        }
+        this.openItem(item);
       };
       contentSpan.appendChild(link);
     }
@@ -912,14 +882,7 @@ export const Renderer = {
       (link as any).target = 'blank';
       link.onclick = (e) => {
         e.preventDefault();
-        UIManager.hideMain(); // 关闭备忘录面板
-        try {
-          (app as any).openUrl(item.url);
-        } catch {
-          // 桌面端 Electron 兜底
-          const electron = (window as any).require && (window as any).require('electron');
-          if (electron && electron.shell) electron.shell.openExternal(item.url);
-        }
+        this.openItem(item);
       };
       contentSpan.appendChild(link);
     }
@@ -991,6 +954,25 @@ export const Renderer = {
     meta.appendChild(this.createTimeTag(item));
 
     card.appendChild(meta);
+
+    // 统一操作条/长按菜单（手势统一试点）：打开（有链接时）> 编辑 > 删除
+    const actions: ItemAction[] = [];
+    if (item.linkedNote || item.url) {
+      actions.push({ icon: '📄', label: '打开', title: '打开关联内容', onClick: () => this.openItem(item) });
+    }
+    actions.push({ icon: '✏️', label: '编辑', title: '编辑', onClick: () => UIManager.showAddDialog(item) });
+    actions.push({
+      icon: '🗑',
+      label: '删除',
+      title: '删除',
+      kind: 'danger',
+      onClick: () =>
+        UIManager.showConfirm('删除备忘录', item.title, async () => {
+          await DataManager.deleteItem(item.id);
+          App.refresh();
+        }),
+    });
+    attachItemActions(card, actions);
 
     return card;
   },
@@ -1093,14 +1075,11 @@ export const Renderer = {
     return tag;
   },
 
-  // 长按事件（兼容移动端）
+  // 场景标签（纯展示；编辑入口收敛到卡片操作条/长按菜单，手势统一）
   createSceneTag(item: MemoItem): HTMLElement {
     const span = document.createElement('span');
     span.className = 'bz-tag bz-tag-scene' + (item.priority === 'important' ? ' important' : '');
     span.textContent = `#${item.scene}`;
-
-    // 长按 500ms 打开编辑弹窗
-    attachLongPress(span, () => UIManager.showAddDialog(item));
     return span;
   },
 
@@ -1108,14 +1087,6 @@ export const Renderer = {
     const span = document.createElement('span');
     span.className = 'bz-tag-time';
     span.textContent = formatRelativeTime(item.created);
-
-    // 长按 500ms 弹出删除确认
-    attachLongPress(span, () => {
-      UIManager.showConfirm('删除备忘录', item.title, async () => {
-        await DataManager.deleteItem(item.id);
-        App.refresh();
-      });
-    });
     return span;
   },
 
