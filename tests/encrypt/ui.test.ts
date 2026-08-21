@@ -156,6 +156,20 @@ describe('UIManager 主面板', () => {
     expect(document.getElementById('bz-encrypt-preview-popup')!.textContent).toContain('2025-06-01');
   });
 
+  it('回归：触屏短按卡片 → longPress 补发 click → 打开预览窗（touchstart preventDefault 不再吞掉单击）', async () => {
+    ui.show();
+    const card = document.querySelector('.bz-encrypt-card') as HTMLElement;
+    // 模拟触屏：touchstart（preventDefault 会抑制原生 click）→ 短按后 touchend
+    const ts = new TouchEvent('touchstart', { bubbles: true, cancelable: true });
+    Object.defineProperty(ts, 'touches', { value: [{ clientX: 30, clientY: 30 }] });
+    card.dispatchEvent(ts);
+    await new Promise((r) => setTimeout(r, 60)); // 短按（< 500ms 长按阈值）
+    card.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+    // 补发 click → 预览窗打开
+    await waitFor(() => document.getElementById('bz-encrypt-preview-popup')!.style.display === 'flex');
+    expect(document.getElementById('bz-encrypt-preview-popup')!.textContent).toContain('2025-06-01');
+  });
+
   it('单击卡片 → 先同步弹出预览窗骨架，再异步填充正文（标题 + 图片）', async () => {
     ui.show();
     ui.openPreview(dm.manifest.notes[0]);
