@@ -224,6 +224,8 @@ export class SafeManager {
    */
   async unlock(password: string, forceReset = false): Promise<boolean> {
     this.manifestIssue = undefined;
+    // 先恢复可能中断的清单原子写（三段式 rename 的任一崩溃点，见 saveManifest）
+    await this.recoverManifestWrite();
     const existsManifest = await this.exists();
     if (!existsManifest) return this.firstTimeSetup(password);
     const content = await this.adapter.read(this.manifestPath);
@@ -289,8 +291,13 @@ export class SafeManager {
 
   /**
    * 持久化清单（整体加密写回 .safe.enc；adapter 直写磁盘，点前缀可用）。
-   * 原子写（ADR-0018 预留项兑现）：先写 `.safe.enc.tmp` 再 rename 覆盖——
-   * 写一半崩溃只会残留 tmp，不会损坏清单本体（清单是全库唯一真数据）。
+   * 原子写，三段式 rename——
+   * Obsidian adapter.rename 不支持覆盖已存在目标（报「Destination file already exists」），
+   * 故 rename 目标恒为唯一名：S1 写 `.tmp` 完整密文 → S2 旧清单挪走为 `.bak`
+   * → S3 `.tmp` 搬入为正本 → S4 删 `.bak`。任一中断点由解锁时 recoverManifestWrite 恢复：
+   *   - S2 后崩溃：tmp+bak 在，manifest 缺（用 tmp 恢复，删 bak）
+   *   - S3 后崩溃：manifest 新 + bak 旧（删 bak，保留新清单）
+   *   - S1 后崩溃：仅 tmp 残留（清理）
    */
   async saveManifest() {
     if (!this.unlocked || !this.password) throw new Error('未解锁，无法保存清单');
@@ -298,13 +305,66 @@ export class SafeManager {
     const encrypted = await CryptoService.encrypt(json, this.password);
     await this.ensureDirFor(this.manifestPath);
     const tmp = this.manifestPath + '.tmp';
+    const bak = this.manifestPath + '.bak';
+    // 清上次残留（幂等）
     try {
-      await this.adapter.remove(tmp); // 清上次崩溃残留，幂等
+      await this.adapter.remove(tmp);
+    } catch (e) {
+      /* 幂等 */
+    }
+    try {
+      await this.adapter.remove(bak);
     } catch (e) {
       /* 幂等 */
     }
     await this.adapter.write(tmp, encrypted);
-    await this.adapter.rename(tmp, this.manifestPath);
+    // S2 旧清单挪走（目标 .bak 恒不存在，rename 无冲突）
+    await this.adapter.rename(this.manifestPath, bak);
+    try {
+      // S3 新清单搬入正位（目标已挪走，rename 无冲突）
+      await this.adapter.rename(tmp, this.manifestPath);
+    } catch (e) {
+      // 搬入失败：回滚旧清单（.bak → 正位），保持可用
+      try {
+        await this.adapter.rename(bak, this.manifestPath);
+      } catch (err) {
+        /* 回滚失败留待解锁恢复（tmp+bak 均在，可自愈） */
+      }
+      throw e;
+    }
+    // S4 删旧
+    try {
+      await this.adapter.remove(bak);
+    } catch (e) {
+      /* 幂等（残留的 .bak 由解锁恢复清理） */
+    }
+  }
+
+  /**
+   * 原子写中断恢复（解锁前调用）：把清单恢复到一致状态，防「清单缺失被误判为首设」
+   * 或「旧清单残留覆盖新清单」。失败静默（下次解锁重试；无残留时零开销）。
+   */
+  private async recoverManifestWrite(): Promise<void> {
+    const adapter = this.adapter;
+    const tmp = this.manifestPath + '.tmp';
+    const bak = this.manifestPath + '.bak';
+    try {
+      const hasBak = await adapter.exists(bak);
+      const hasTmp = await adapter.exists(tmp);
+      if (hasBak) {
+        if (hasTmp) {
+          // S2 后崩溃：manifest 缺失，tmp 为最新完整密文 → 恢复正位，删旧
+          await adapter.rename(tmp, this.manifestPath);
+        }
+        // S3 后崩溃（tmp 已搬走）：保留新清单，删旧
+        await adapter.remove(bak);
+      } else if (hasTmp) {
+        // S1 后崩溃：仅残留 tmp，正位未动 → 清理
+        await adapter.remove(tmp);
+      }
+    } catch (e) {
+      /* 恢复失败留待下次解锁重试 */
+    }
   }
 
   /** 确保加密根目录存在（平铺布局只需根目录；adapter.mkdir 递归建，点前缀可用） */
@@ -683,7 +743,7 @@ export class SafeManager {
   async restoreNote(
     noteId: string,
     onProgress?: (p: EncryptProgress) => void
-  ): Promise<{ note: SafeNote; conflicts: string[]; removed: boolean }> {
+  ): Promise<{ note: SafeNote; conflicts: string[]; removed: boolean; manifestSaveFailed?: boolean }> {
     if (!this.unlocked || !this.password) throw new Error('未解锁，无法还原笔记');
     const app = getApp();
     const note = this.manifest.notes.find((n) => n.id === noteId);
@@ -711,8 +771,10 @@ export class SafeManager {
     } else if (note.kind === 'diary-entry') {
       // 加密日记条目：正文走 mergeDiaryBlock（ADR-0017），占用检查由 merge 路径自身处理
     } else if (this.fileExists(note.path)) {
-      // 目标路径已被用户占用（非本次还原写回）→ 冲突；整体不落盘
-      conflicts.push(note.path);
+      // 目标已被占用：内容与待还原明文一致（本系统上次还原残留/中断重试）→ 放行覆盖；
+      // 不一致（用户自己的同名文件）→ 冲突，整体不落盘
+      const sameContent = await this.isSameTextFile(note.path, plain);
+      if (!sameContent) conflicts.push(note.path);
     }
     if (conflicts.length > 0) return { note, conflicts, removed: false };
 
@@ -754,8 +816,28 @@ export class SafeManager {
     }
     const idx = this.manifest.notes.indexOf(note);
     if (idx !== -1) this.manifest.notes.splice(idx, 1);
-    await this.saveManifest();
+    try {
+      await this.saveManifest();
+    } catch (e) {
+      // 文件已还原、内存条目已移除，仅清单落盘失败（磁盘异常）：
+      // 如实告知（manifestSaveFailed），下次解锁后重试可幂等收敛——
+      // 正文/附件目标已存在且内容一致 → 放行，再还原一次即完成清理，绝不产生重复数据
+      return { note, conflicts, removed: false, manifestSaveFailed: true };
+    }
     return { note, conflicts, removed: true };
+  }
+
+  /** 目标文件内容与待还原明文是否一致（归一化行尾；占用幂等放行判断用） */
+  private async isSameTextFile(path: string, plain: string): Promise<boolean> {
+    try {
+      const app = getApp();
+      const f = app.vault.getAbstractFileByPath(path);
+      if (!f) return false;
+      const existing = await app.vault.read(f as any);
+      return existing.replace(/\r\n/g, '\n') === plain.replace(/\r\n/g, '\n');
+    } catch (e) {
+      return false;
+    }
   }
 
   /** 解笔记正文明文（contentRef 镜像；无镜像返回 null） */
@@ -805,7 +887,7 @@ export class SafeManager {
       }
       return false;
     }
-    // 无冲突则彻底取出（删镜像 + 移除清单条目）
+    // 无冲突则彻底取出（删镜像 + 移除清单条目）；清单落盘失败如实返回 false（merge 幂等兜底）
     await this.deleteSafeFile(note.contentRef);
     for (const a of note.attachments) {
       await this.deleteSafeFile(a.blobRef);
@@ -813,7 +895,11 @@ export class SafeManager {
     }
     const idx = this.manifest.notes.indexOf(note);
     if (idx !== -1) this.manifest.notes.splice(idx, 1);
-    await this.saveManifest();
+    try {
+      await this.saveManifest();
+    } catch (e) {
+      return false; // 块已 merge；重试时 mergeDiaryBlock 幂等跳过已存在标题行
+    }
     return true;
   }
 
@@ -848,6 +934,10 @@ export class SafeManager {
       existingText = await app.vault.read(existing as any);
     }
     const existingLines = existingText ? existingText.replace(/\r\n/g, '\n').split('\n') : [];
+
+    // 幂等：目标文件已含相同标题行（上次「块已 merge 但清单没保存」的中断残留/重试）
+    // → 视为已完成，跳过防重复插入（标题行 = 块唯一标识：emoji 序列 + HH:mm）
+    if (existingLines.some((l) => l.trim() === lines[0].trim())) return true;
 
     // 组装块行：标题行原样保留（`# emoji HH:mm`，不再拼接时间），标题与正文间补空行
     // （与 writeFile 生成格式一致：# emoji HH:mm → 空行 → 正文）

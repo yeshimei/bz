@@ -440,6 +440,28 @@ describe('SafeManager 进度回调（onProgress）', () => {
     expect(ok).toBe(true);
     expect(vault.files.get('我的/日记/2025-06-02.md')).toContain('随笔');
   });
+
+  it('restoreDiaryEntry 幂等：目标 md 已含相同标题行（中断残留）→ 不重复插入，仍成功清理', async () => {
+    makeApp(vault);
+    vault.create('我的/日记/2025-06-01.md', '# 📖 07:00\n早起\n');
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await sm.lockNote({
+      path: '我的/日记/2025-06-01.md',
+      title: '2025-06-01 · 09:00 日记',
+      kind: 'diary-entry',
+      content: '# 📖🔐 09:00\n上午写',
+      attachments: [],
+    });
+    // 模拟「块已 merge 但清单没保存」的残留现场：目标 md 已含还原块标题行
+    vault.create('我的/日记/2025-06-01.md', '# 📖 07:00\n早起\n# 📖 09:00\n上午写\n');
+    const ok = await sm.restoreDiaryEntry(note.id, '# 📖 09:00\n上午写');
+    expect(ok).toBe(true);
+    const md = vault.files.get('我的/日记/2025-06-01.md')!;
+    // 09:00 块只出现一次（不重复插入）
+    expect(md.match(/# 📖 09:00/g)).toHaveLength(1);
+    expect(sm.manifest.notes.some((n) => n.id === note.id)).toBe(false);
+  });
 });
 
 describe('SafeManager 提交式加密（ADR-0018）', () => {
@@ -645,17 +667,73 @@ describe('SafeManager 清单损坏与首设回滚（雷 1/4）', () => {
     expect(await sm.unlock('newpw')).toBe(true);
   });
 
-  it('saveManifest 原子写：.tmp 临时文件无残留，清单整体可解密再读', async () => {
+  it('saveManifest 三段式原子写：tmp/bak 均无残留，清单整体可解密再读', async () => {
     makeApp(vault);
     const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
     await sm.lockNote({ path: 'a.md', title: 'a', content: '# a', attachments: [] });
     expect(vault.files.has('CONFIG/.ENCRYPT/.safe.enc')).toBe(true);
-    expect(vault.files.has('CONFIG/.ENCRYPT/.safe.enc.tmp')).toBe(false); // tmp+rename 无残留
+    // Obsidian rename 不支持覆盖目标（Destination file already exists）→ 三段式，无任何残留副本
+    expect(vault.files.has('CONFIG/.ENCRYPT/.safe.enc.tmp')).toBe(false);
+    expect(vault.files.has('CONFIG/.ENCRYPT/.safe.enc.bak')).toBe(false);
     sm.lock();
     const sm2 = new SafeManager('CONFIG/.ENCRYPT');
     expect(await sm2.unlock('pw')).toBe(true);
     expect(sm2.manifest.notes.length).toBe(1);
+  });
+
+  it('原子写中断恢复：S2 后崩溃（tmp+bak 在、正位缺）→ unlock 用 tmp 恢复最新清单并删 bak', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    await sm.lockNote({ path: 'a.md', title: 'a', content: '# A', attachments: [] });
+    // 模拟 S2 后崩溃：旧清单已被挪成 .bak，新密文在 .tmp，正位缺失
+    const bak = await CryptoService.encrypt('{"version":1,"notes":[]}', 'pw');
+    vault.files.set('CONFIG/.ENCRYPT/.safe.enc.bak', bak);
+    const newer = await CryptoService.encrypt(
+      JSON.stringify({ version: 1, notes: [{ id: 'enc-x', path: 'b.md', title: 'b', contentRef: '.x.enc', createdAt: '2026-01-01T00:00:00.000Z', attachments: [] }] }),
+      'pw'
+    );
+    vault.files.set('CONFIG/.ENCRYPT/.safe.enc.tmp', newer);
+    vault.files.delete('CONFIG/.ENCRYPT/.safe.enc'); // 正位缺失
+    sm.lock();
+    const sm2 = new SafeManager('CONFIG/.ENCRYPT');
+    expect(await sm2.unlock('pw')).toBe(true);
+    // 恢复为 tmp 的最新内容；bak/tmp 已清
+    expect(sm2.manifest.notes.length).toBe(1);
+    expect(sm2.manifest.notes[0].title).toBe('b');
+    expect(vault.files.has('CONFIG/.ENCRYPT/.safe.enc.bak')).toBe(false);
+    expect(vault.files.has('CONFIG/.ENCRYPT/.safe.enc.tmp')).toBe(false);
+  });
+
+  it('原子写中断恢复：S3 后崩溃（正位新、bak 旧）→ unlock 删 bak 保留新清单', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    await sm.lockNote({ path: 'a.md', title: 'a', content: '# A', attachments: [] });
+    // 模拟 S3 后崩溃：正位已是新清单，旧副本在 .bak
+    vault.files.set(
+      'CONFIG/.ENCRYPT/.safe.enc.bak',
+      await CryptoService.encrypt('{"version":1,"notes":[]}', 'pw')
+    );
+    sm.lock();
+    const sm2 = new SafeManager('CONFIG/.ENCRYPT');
+    expect(await sm2.unlock('pw')).toBe(true);
+    expect(sm2.manifest.notes.length).toBe(1); // 保留新清单（含 a.md）
+    expect(vault.files.has('CONFIG/.ENCRYPT/.safe.enc.bak')).toBe(false);
+  });
+
+  it('原子写中断恢复：S1 后崩溃（仅 tmp 残留）→ unlock 清理 tmp，清单不受影响', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    await sm.lockNote({ path: 'a.md', title: 'a', content: '# A', attachments: [] });
+    vault.files.set('CONFIG/.ENCRYPT/.safe.enc.tmp', '残留密文');
+    sm.lock();
+    const sm2 = new SafeManager('CONFIG/.ENCRYPT');
+    expect(await sm2.unlock('pw')).toBe(true);
+    expect(sm2.manifest.notes.length).toBe(1);
+    expect(vault.files.has('CONFIG/.ENCRYPT/.safe.enc.tmp')).toBe(false);
   });
 
   it('首设写清单失败：unlock 回滚解锁态并返回 false（不假装成功）', async () => {
@@ -852,5 +930,54 @@ describe('SafeManager 原子还原（优化五：全部成功才落盘）', () =
     const { conflicts, removed } = await sm.restoreNote(note.id);
     expect(conflicts).toEqual([]);
     expect(removed).toBe(true);
+  });
+
+  it('还原重试幂等：正文/附件目标已存在且内容一致（上次中断残留）→ 放行，还原成功清理条目', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await sm.lockNote({
+      path: '我的/日记/a.md',
+      title: 'a',
+      content: '# 待还原内容',
+      attachments: [{ path: '我的/影视/pic.png', data: 'QUJDREVGRw==' }],
+    });
+    // 模拟「文件已还原但清单没保存」的残留现场：正文与附件都已在 vault（内容一致）
+    vault.create('我的/日记/a.md', '# 待还原内容');
+    vault.createBinary('我的/影视/pic.png', new TextEncoder().encode('ABCDEFG').buffer);
+    const { conflicts, removed } = await sm.restoreNote(note.id);
+    // 内容一致 → 无冲突，本次完成删镜像与条目清理
+    expect(conflicts).toEqual([]);
+    expect(removed).toBe(true);
+    expect(sm.manifest.notes.some((n) => n.id === note.id)).toBe(false);
+    expect(vault.files.has('CONFIG/.ENCRYPT/' + note.contentRef)).toBe(false);
+  });
+
+  it('清单落盘失败（磁盘异常）：文件已还原、manifestSaveFailed=true、内存条目移除，可幂等重试', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const noteStash = await sm.lockNote({
+      path: '我的/日记/a.md',
+      title: 'a',
+      content: '# 待还原',
+      attachments: [],
+    });
+    const origSave = sm.saveManifest.bind(sm);
+    const spy = vi.spyOn(sm, 'saveManifest').mockRejectedValue(new Error('disk error'));
+    try {
+      const { conflicts, removed, manifestSaveFailed } = await sm.restoreNote(noteStash.id);
+      expect(conflicts).toEqual([]);
+      expect(removed).toBe(false);
+      expect(manifestSaveFailed).toBe(true);
+      // 文件已还原到原位置
+      expect(vault.files.get('我的/日记/a.md')).toContain('# 待还原');
+      // 镜像已删、内存条目已移除（列表刷新后不再显示，磁盘清单留待下次保存）
+      expect(vault.files.has('CONFIG/.ENCRYPT/' + noteStash.contentRef)).toBe(false);
+      expect(sm.manifest.notes.some((n) => n.id === noteStash.id)).toBe(false);
+    } finally {
+      spy.mockRestore();
+      void origSave;
+    }
   });
 });
