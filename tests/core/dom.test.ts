@@ -83,6 +83,67 @@ describe('longPress', () => {
     expect(cb).not.toHaveBeenCalled();
     vi.useRealTimers();
   });
+
+  it('触屏短按（未到长按时长）→ 补发 click，长按回调不触发', () => {
+    vi.useFakeTimers();
+    const el = document.createElement('div');
+    const cb = vi.fn();
+    const onClick = vi.fn();
+    el.addEventListener('click', onClick);
+    longPress(el, cb, 300);
+
+    // 模拟触屏：touchstart（preventDefault 会吞掉原生 click）→ 立即 touchend
+    const ts = new TouchEvent('touchstart', { bubbles: true, cancelable: true });
+    Object.defineProperty(ts, 'touches', { value: [{ clientX: 10, clientY: 10 }] });
+    el.dispatchEvent(ts);
+    vi.advanceTimersByTime(100); // 未到 300ms
+    el.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(cb).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it('触屏长按 → 触发长按回调，不再补发 click（避免双触发预览/还原）', () => {
+    vi.useFakeTimers();
+    const el = document.createElement('div');
+    const cb = vi.fn();
+    const onClick = vi.fn();
+    el.addEventListener('click', onClick);
+    longPress(el, cb, 300);
+
+    const ts = new TouchEvent('touchstart', { bubbles: true, cancelable: true });
+    Object.defineProperty(ts, 'touches', { value: [{ clientX: 10, clientY: 10 }] });
+    el.dispatchEvent(ts);
+    vi.advanceTimersByTime(350); // 长按触发
+    expect(cb).toHaveBeenCalledTimes(1);
+    el.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+
+    expect(onClick).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it('触屏移动超阈值（滑动取消）→ 不补发 click', () => {
+    vi.useFakeTimers();
+    const el = document.createElement('div');
+    const cb = vi.fn();
+    const onClick = vi.fn();
+    el.addEventListener('click', onClick);
+    longPress(el, cb, 300);
+
+    const ts = new TouchEvent('touchstart', { bubbles: true, cancelable: true });
+    Object.defineProperty(ts, 'touches', { value: [{ clientX: 10, clientY: 10 }] });
+    el.dispatchEvent(ts);
+    const tm = new TouchEvent('touchmove', { bubbles: true, cancelable: true });
+    Object.defineProperty(tm, 'touches', { value: [{ clientX: 60, clientY: 10 }] });
+    el.dispatchEvent(tm);
+    vi.advanceTimersByTime(100);
+    el.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+
+    expect(onClick).not.toHaveBeenCalled();
+    expect(cb).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
 });
 
 describe('createIconBtn', () => {
