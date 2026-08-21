@@ -2345,6 +2345,37 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   box-shadow: 0 10px 40px rgba(0,0,0,0.2);
   flex-direction: column;
 }
+/* 主密码弹窗（铁律 9 收敛：视觉样式一律在此，JS 仅留功能性 zIndex/display） */
+.bz-encrypt-dialog-mask {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  align-items: center; justify-content: center;
+}
+.bz-encrypt-dialog-box {
+  background: var(--background-primary); border-radius: 12px;
+  padding: 28px; max-width: 420px; width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.bz-encrypt-dialog-title { margin: 0 0 12px 0; font-size: 18px; font-weight: 600; }
+.bz-encrypt-dialog-msg { margin: 0 0 16px 0; font-size: 14px; color: var(--text-muted); }
+.bz-encrypt-dialog-input {
+  width: 100%; padding: 8px 12px; border-radius: 6px; font-size: 14px;
+  box-sizing: border-box; margin-bottom: 12px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary); color: var(--text-normal);
+}
+.bz-encrypt-dialog-warning {
+  background: #ffecb0; color: #8a6d3b; padding: 10px 12px; border-radius: 6px;
+  margin-bottom: 16px; font-size: 14px; border: 1px solid #f5c842;
+}
+.bz-encrypt-dialog-btns { display: flex; gap: 12px; justify-content: flex-end; }
+.bz-encrypt-dialog-btn {
+  padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px;
+  background: var(--background-secondary); color: var(--text-normal);
+}
+.bz-encrypt-dialog-btn--primary {
+  background: var(--interactive-accent); color: var(--text-on-accent); font-weight: 500;
+}
 #bz-encrypt-popup { width: 90%; max-width: 700px; max-height: 80vh; }
 #bz-encrypt-preview-popup { max-height: 86vh; overflow: hidden; }
 .bz-encrypt-head {
