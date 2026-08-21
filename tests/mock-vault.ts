@@ -29,6 +29,13 @@ export class MockVault {
     mkdir: async (path: string): Promise<void> => {
       this.dirs.add(path);
     },
+    rename: async (oldPath: string, newPath: string): Promise<void> => {
+      const v = this.files.get(oldPath);
+      if (v === undefined) return;
+      this.files.delete(oldPath);
+      this.files.set(newPath, v);
+      this.modifiedPaths.push(newPath);
+    },
     list: async (path: string): Promise<{ files: string[]; folders: string[] }> => {
       const prefix = path.endsWith('/') ? path : path + '/';
       const files = [...this.files.keys()].filter((p) => p.startsWith(prefix) && !p.slice(prefix.length).includes('/'));

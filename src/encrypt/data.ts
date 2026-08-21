@@ -129,6 +129,11 @@ export function flatName(): string {
   return '.' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36) + '.enc';
 }
 
+/** 暂存目录名（encryptRoot 下，点前缀隐藏、与最终镜像同盘；ADR-0018 提交式加密） */
+const STAGING_DIR = '.staging';
+/** 挂起标记文件名（暂存区内，明文 noteId 列表；带外标记——不改清单结构，铁律 1） */
+const PENDING_FILE = 'pending.json';
+
 /** 生成 note id */
 export function genNoteId(): string {
   return 'enc-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
@@ -196,6 +201,12 @@ export class SafeManager {
       this.manifest = parsed;
       this.password = password;
       this.unlocked = true;
+      // 自愈（ADR-0018）：回滚挂起的半提交 + 清空暂存残留；失败不阻塞解锁
+      try {
+        await this.selfHeal();
+      } catch (e) {
+        /* 自愈失败留待下次解锁重试 */
+      }
       return true;
     } catch (e) {
       return false;
@@ -319,73 +330,258 @@ export class SafeManager {
     return !!f && (f as any).isFolder !== true;
   }
 
+  // ---------- 提交式加密（ADR-0018）：暂存区 / 挂起标记 / 自愈 / 手动清理 ----------
+
+  /** 暂存目录 vault 路径（点前缀隐藏，与最终镜像同盘保证 rename 高效） */
+  get stagingPath(): string {
+    return this.root + '/' + STAGING_DIR;
+  }
+
+  /** 挂起标记文件 vault 路径（暂存区内，明文 noteId 列表） */
+  get pendingPath(): string {
+    return this.stagingPath + '/' + PENDING_FILE;
+  }
+
+  /** 确保暂存目录存在 */
+  private async ensureStagingDir() {
+    await this.ensureDirFor(this.stagingPath + '/x');
+  }
+
+  /** 写镜像密文到暂存区（提交前不触碰数据文件夹正式布局、不占内存） */
+  private async writeStaged(ref: string, ciphertext: string) {
+    await this.ensureStagingDir();
+    await this.adapter.write(this.stagingPath + '/' + ref, ciphertext);
+  }
+
+  /** 暂存镜像搬入正式顶层（同盘 rename；失败抛出 → 整笔放弃，挂起态留待解锁自愈兜底） */
+  private async promoteStaged(ref: string) {
+    const staged = this.stagingPath + '/' + ref;
+    const final = this.resolveRef(ref);
+    if (!(await this.adapter.exists(staged))) throw new Error('暂存镜像缺失：' + ref);
+    await this.adapter.rename(staged, final);
+  }
+
+  /** 清空暂存区全部内容（含挂起标记；目录缺失/单文件失败一律幂等，不依赖目录注册） */
+  private async clearStaging() {
+    try {
+      const listing = await this.adapter.list(this.stagingPath);
+      for (const f of listing.files) {
+        try {
+          await this.adapter.remove(f);
+        } catch (e) {
+          /* 幂等 */
+        }
+      }
+    } catch (e) {
+      /* 幂等 */
+    }
+  }
+
+  /** 读挂起标记（pending.json 的 noteId 列表；缺失/损坏返回空） */
+  private async readPending(): Promise<string[]> {
+    try {
+      if (!(await this.adapter.exists(this.pendingPath))) return [];
+      const raw = await this.adapter.read(this.pendingPath);
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.filter((x) => typeof x === 'string') : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
   /**
-   * 加锁一篇笔记：把当前笔记正文 + 双链附件移入保险箱。
-   * 先写密文镜像 + 更新清单，全部成功后才删 vault 原文件（崩溃幂等）。
+   * 自愈回滚（ADR-0018）：对挂起标记仍在的条目判定「半提交」——删除其引用的顶层镜像
+   * （已搬入的清掉、未搬入的自然无文件）、从清单丢弃该条目，随后清空暂存区与标记。
+   * 关键不变量：标记于删原文件前清除，故标记存在 ⇒ 原文件未删 ⇒ 回滚永远安全、
+   * 不产生密文孤儿。无挂起条目时仅清空遗留暂存。解锁成功后调用；失败不阻塞解锁。
+   */
+  async selfHeal(): Promise<void> {
+    if (!this.unlocked || !this.password) return;
+    const pending = await this.readPending();
+    if (pending.length) {
+      let changed = false;
+      for (const id of pending) {
+        const idx = this.manifest.notes.findIndex((n) => n.id === id);
+        if (idx === -1) continue;
+        const note = this.manifest.notes[idx];
+        if (note.contentRef) await this.deleteSafeFile(note.contentRef);
+        for (const a of note.attachments) {
+          await this.deleteSafeFile(a.blobRef);
+          if (a.hasPreview) await this.deleteSafeFile(a.previewRef);
+        }
+        this.manifest.notes.splice(idx, 1);
+        changed = true;
+      }
+      if (changed) await this.saveManifest();
+    }
+    await this.clearStaging();
+  }
+
+  /**
+   * 手动「清理未引用的密文」（Q5-A：不自动触发，点按钮才跑）：
+   * 扫描 encryptRoot 顶层，删除未被任何清单条目 contentRef/blobRef/previewRef 引用的
+   * 点前缀 `.随机.enc` 形态密文（`.safe.enc` 与本目录旧布局一律不碰），并清空暂存区。
+   * @returns 删除的顶层密文文件数
+   */
+  async cleanupOrphans(): Promise<number> {
+    if (!this.unlocked) throw new Error('未解锁，无法清理密文');
+    const referenced = new Set<string>();
+    for (const n of this.manifest.notes) {
+      if (n.contentRef) referenced.add(n.contentRef);
+      for (const a of n.attachments) {
+        if (a.blobRef) referenced.add(a.blobRef);
+        if (a.hasPreview && a.previewRef) referenced.add(a.previewRef);
+      }
+    }
+    let removed = 0;
+    try {
+      if (await this.adapter.exists(this.root)) {
+        const listing = await this.adapter.list(this.root);
+        for (const f of listing.files) {
+          const name = f.slice(f.lastIndexOf('/') + 1);
+          if (name === '.safe.enc') continue; // 清单本体绝不触碰
+          if (!name.startsWith('.') || !name.endsWith('.enc')) continue; // 只清平铺点前缀密文形态
+          if (referenced.has(name)) continue; // 被引用不碰
+          try {
+            await this.adapter.remove(f);
+            removed += 1;
+          } catch (e) {
+            /* 单文件失败继续 */
+          }
+        }
+      }
+      await this.clearStaging();
+    } catch (e) {
+      /* 幂等 */
+    }
+    return removed;
+  }
+
+  /**
+   * 加锁一篇笔记：把当前笔记正文 + 双链附件移入保险箱（ADR-0018 提交式加密）。
+   * 加密阶段密文流式写入暂存区 `.staging/`（不占内存、不进入数据文件夹正式布局）；
+   * 全部加密成功后才进入提交序列：
+   *   S1 写挂起标记 → S2 清单先行（saveManifest，提交点）→ S3 暂存镜像搬入顶层
+   *   → S4 清除挂起标记 → S5 尽力删原文件（失败仅提示，onDeleteFailed 收集，不回滚）。
+   * 关键不变量：挂起标记存在 ⇒ 原文件未删 ⇒ 解锁自愈回滚永远安全；标记于删原文件前清除，
+   * 标记清除后的意外一律视为已提交、绝不回滚（Q4-A）。
+   * 任一失败（附件/正文加密、写暂存、清单写入、搬入、清标记）→ 整笔放弃：清理本次暂存、
+   * 原文件不动；清单先行已残留的挂起态由解锁自愈兜底。
    * onProgress：按文件回调（附件逐个 + 笔记本身），UI 驱动进度通知。
    */
-  async lockNote(input: LockNoteInput, onProgress?: (p: EncryptProgress) => void): Promise<SafeNote> {
+  async lockNote(
+    input: LockNoteInput,
+    onProgress?: (p: EncryptProgress) => void,
+    onDeleteFailed?: (paths: string[]) => void
+  ): Promise<SafeNote> {
     if (!this.unlocked || !this.password) throw new Error('未解锁，无法加密笔记');
     await this.ensureSafeRootDir();
+    await this.ensureStagingDir();
     const total = input.attachments.length + 1;
     let done = 0;
 
     const attachments: SafeAttachment[] = [];
-    for (const a of input.attachments) {
-      done += 1;
-      onProgress?.({ done, total, current: a.path });
-      const fp = await fingerprintOf(a.data);
-      const enc = await CryptoService.encrypt(a.data, this.password);
-      const blobRef = flatName();
-      await this.writeMirror(blobRef, enc);
-      let hasPreview = false;
-      let previewRef = '';
-      if (a.previewData) {
-        const encP = await CryptoService.encrypt(a.previewData, this.password);
-        previewRef = flatName();
-        await this.writeMirror(previewRef, encP);
-        hasPreview = true;
+    const finalRefs: string[] = [];
+    const stagedRefs: string[] = [];
+    try {
+      for (const a of input.attachments) {
+        done += 1;
+        onProgress?.({ done, total, current: a.path });
+        const fp = await fingerprintOf(a.data);
+        const enc = await CryptoService.encrypt(a.data, this.password);
+        const blobRef = flatName();
+        await this.writeStaged(blobRef, enc);
+        stagedRefs.push(blobRef);
+        finalRefs.push(blobRef);
+        let hasPreview = false;
+        let previewRef = '';
+        if (a.previewData) {
+          const encP = await CryptoService.encrypt(a.previewData, this.password);
+          previewRef = flatName();
+          await this.writeStaged(previewRef, encP);
+          stagedRefs.push(previewRef);
+          finalRefs.push(previewRef);
+          hasPreview = true;
+        }
+        attachments.push({
+          path: a.path,
+          kind: a.kind || 'image',
+          blobRef,
+          blobSize: enc.length,
+          fingerprint: fp,
+          hasPreview,
+          previewRef,
+          restored: false,
+        });
       }
-      attachments.push({
-        path: a.path,
-        kind: a.kind || 'image',
-        blobRef,
-        blobSize: enc.length,
-        fingerprint: fp,
-        hasPreview,
-        previewRef,
+
+      done += 1;
+      onProgress?.({ done, total, current: input.path });
+      // 正文同样写镜像文件（不内嵌进清单）
+      const bodyRef = flatName();
+      const bodyCipher = await CryptoService.encrypt(input.content, this.password);
+      await this.writeStaged(bodyRef, bodyCipher);
+      stagedRefs.push(bodyRef);
+      finalRefs.push(bodyRef);
+      const note: SafeNote = {
+        id: genNoteId(),
+        kind: input.kind || undefined,
+        path: input.path,
+        title: input.title,
         restored: false,
-      });
+        createdAt: new Date().toISOString(),
+        contentRef: bodyRef,
+        content: '',
+        summary: input.summary ? await CryptoService.encrypt(input.summary, this.password) : '',
+        hasSummary: !!input.summary,
+        attachments,
+      };
+
+      // ---- 提交序列（ADR-0018） ----
+      // S1 挂起标记（存在 ⇒ 可安全回滚；清除前绝不删除原文件）
+      await this.ensureStagingDir();
+      await this.adapter.write(this.pendingPath, JSON.stringify([note.id]));
+      // S2 清单先行（提交点）：条目先于镜像文件写入清单
+      this.manifest.notes.push(note);
+      await this.saveManifest();
+      // S3 暂存镜像搬入顶层（失败抛出 → 整笔放弃，挂起态留待解锁自愈）
+      for (const ref of finalRefs) await this.promoteStaged(ref);
+      // S4 清除挂起标记（失败必须抛出：标记残留时绝不允许进入 S5 删原文件）
+      try {
+        await this.adapter.remove(this.pendingPath);
+      } catch (e) {
+        throw new Error('清除挂起标记失败：' + (e as Error).message);
+      }
+      // S5 尽力删原文件（失败仅提示、不回滚；Q4-A）
+      const deleteFailed: string[] = [];
+      for (const a of input.attachments) {
+        try {
+          await this.deleteVaultFile(a.path);
+        } catch (e) {
+          deleteFailed.push(a.path);
+        }
+      }
+      // 普通加密笔记删除整篇原文件；加密日记条目不删整 md（条目块移除由日记域自行处理，ADR-0017 Q6-b）
+      if (input.kind !== 'diary-entry') {
+        try {
+          await this.deleteVaultFile(input.path);
+        } catch (e) {
+          deleteFailed.push(input.path);
+        }
+      }
+      onDeleteFailed?.(deleteFailed);
+      return note;
+    } catch (e) {
+      // 整笔放弃：清理本次已写入的暂存镜像（原文件未动）；挂起标记/清单残留由解锁自愈回收
+      for (const ref of stagedRefs) {
+        try {
+          await this.adapter.remove(this.stagingPath + '/' + ref);
+        } catch (err) {
+          /* 幂等 */
+        }
+      }
+      throw e;
     }
-
-    done += 1;
-    onProgress?.({ done, total, current: input.path });
-    // 正文同样写镜像文件（不内嵌进清单）
-    const bodyRef = flatName();
-    const bodyCipher = await CryptoService.encrypt(input.content, this.password);
-    await this.writeMirror(bodyRef, bodyCipher);
-    const note: SafeNote = {
-      id: genNoteId(),
-      kind: input.kind || undefined,
-      path: input.path,
-      title: input.title,
-      restored: false,
-      createdAt: new Date().toISOString(),
-      contentRef: bodyRef,
-      content: '',
-      summary: input.summary ? await CryptoService.encrypt(input.summary, this.password) : '',
-      hasSummary: !!input.summary,
-      attachments,
-    };
-    this.manifest.notes.push(note);
-    await this.saveManifest();
-
-    // 全部成功后删除 vault 附件原文件（附件随加密移动到保险箱）
-    for (const a of input.attachments) await this.deleteVaultFile(a.path);
-    // 普通加密笔记删除整篇原文件；加密日记条目不删整 md（条目块移除由日记域自行处理，ADR-0017 Q6-b）
-    if (input.kind !== 'diary-entry') await this.deleteVaultFile(input.path);
-
-    return note;
   }
 
   /**
