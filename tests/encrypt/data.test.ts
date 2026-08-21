@@ -317,4 +317,63 @@ describe('SafeManager 进度回调（onProgress）', () => {
     expect(last.done).toBe(2);
     expect(last.total).toBe(2);
   });
+
+  it('lockNote kind=diary-entry：不删整 md 原文件、清单带 kind 标记', async () => {
+    makeApp(vault);
+    vault.create('我的/日记/2025-06-01.md', '# 📖 08:00\n正文\n');
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await sm.lockNote({
+      path: '我的/日记/2025-06-01.md',
+      title: '2025-06-01 · 08:00 日记',
+      kind: 'diary-entry',
+      content: '# 📖🔐 08:00\n正文',
+      attachments: [],
+    });
+    // 整 md 不被删除（日记条目块由日记域自摘除）
+    expect(vault.getAbstractFileByPath('我的/日记/2025-06-01.md')).toBeTruthy();
+    expect(note.kind).toBe('diary-entry');
+    expect(sm.manifest.notes.some((n) => n.id === note.id && n.kind === 'diary-entry')).toBe(true);
+  });
+
+  it('restoreDiaryEntry：解正文并把块 merge 回原 md（时间序）', async () => {
+    makeApp(vault);
+    vault.create('我的/日记/2025-06-01.md', '# 📖 07:00\n早起\n');
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await sm.lockNote({
+      path: '我的/日记/2025-06-01.md',
+      title: '2025-06-01 · 09:00 日记',
+      kind: 'diary-entry',
+      content: '# 📖🔐 09:00\n上午写', // 09:00 应在 07:00 之后
+      attachments: [],
+    });
+    expect(await sm.getDiaryEntryPlain(note.id)).toBe('# 📖🔐 09:00\n上午写');
+    const ok = await sm.restoreDiaryEntry(note.id, '# 📖 09:00\n上午写');
+    expect(ok).toBe(true);
+    const md = vault.files.get('我的/日记/2025-06-01.md')!;
+    const idx07 = md.indexOf('# 📖 07:00');
+    const idx09 = md.indexOf('# 📖 09:00');
+    expect(idx07).toBeGreaterThanOrEqual(0);
+    expect(idx09).toBeGreaterThan(idx07); // 时间序在 07:00 之后
+    expect(md).toContain('上午写');
+    // 取出即删：清单不再含有该条
+    expect(sm.manifest.notes.some((n) => n.id === note.id)).toBe(false);
+  });
+
+  it('restoreDiaryEntry：md 已删则新建该日期文件', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await sm.lockNote({
+      path: '我的/日记/2025-06-02.md',
+      title: '2025-06-02 · 10:30 日记',
+      kind: 'diary-entry',
+      content: '# ✍️🔐 10:30\n随笔',
+      attachments: [],
+    });
+    const ok = await sm.restoreDiaryEntry(note.id, '# ✍️ 10:30\n随笔');
+    expect(ok).toBe(true);
+    expect(vault.files.get('我的/日记/2025-06-02.md')).toContain('随笔');
+  });
 });

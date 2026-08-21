@@ -2393,3 +2393,29 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 @media (max-width: 768px) {
   #bz-encrypt-popup { width: 95%; max-height: 90vh; }
 }
+
+/* ==================== 日记加密分类（ADR-0017） ==================== */
+/* 加密日记卡片角标 🔐 */
+.bz-encrypt-badge {
+  font-size: 14px;
+  line-height: 1;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+/* 上锁态「加密」筛选按钮（🔒、无计数） */
+.diary-tag-btn.bz-encrypt-locked {
+  opacity: 0.72;
+  border: 1px dashed var(--background-modifier-border);
+}
+.diary-tag-btn.bz-encrypt-locked:hover {
+  opacity: 1;
+}
+
+/* 加密日记只读预览弹窗（复用 bz-encrypt-preview-* 类；独立 DOM id 避免与保险箱预览冲突） */
+#bz-diary-encrypt-preview-mask {
+  backdrop-filter: blur(2px);
+}
+#bz-diary-encrypt-preview-popup {
+  overflow: hidden;
+}

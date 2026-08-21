@@ -4,10 +4,13 @@
 import { MarkdownView as MarkdownViewFromObsidian, moment } from 'obsidian';
 import { pad2 } from '../../core/utils';
 import { notice } from '../../core/notice';
+import { confirm } from '../../core/confirm';
 import { getApp } from '../app';
 import { DIARY_DIRECTORY, getAllAvailableTags, getSortedTagsForAddDialog, getTagEmoji, getParentPrimaryTag, isSubTag } from '../config';
 import { parseNaturalTime } from '../parser';
-import { addEntry, writeFile } from '../store';
+import { addEntry, writeFile, reloadWithEncrypted, deleteEntry } from '../store';
+import { ENCRYPT_TAG, encryptEntry, reclassifyEntry } from '../encrypt';
+import { ensureSafeUnlocked } from '../../encrypt';
 import { diaryDataMap, state } from '../state';
 import { getJumpToEditAfterSaveSetting, getTagShowEmojiSetting, getUseFileDateTimeSetting } from './ui-settings';
 import { rebuildTags } from './filter-shared';
@@ -248,13 +251,20 @@ export function createTagPicker() {
       selTagNames.push((btn as HTMLElement).dataset.tag!);
     });
     const entryId = popup.dataset.entryId;
+    if (!entryId) {
+      mask.style.display = 'none';
+      popup.style.display = 'none';
+      return;
+    }
     if (selTagNames.length === 0) {
       notice('请至少选择一个标签');
       return;
     }
-    if (entryId) updateTags(entryId, selTagNames);
-    mask.style.display = 'none';
-    popup.style.display = 'none';
+    const entry = state.data.originalDiaryEntries.find((e) => e.id === entryId);
+    const isEncryptedEntry = !!entry?.encrypted;
+    const wantsEncrypt = !isEncryptedEntry && selTagNames.includes(ENCRYPT_TAG);
+    hideTagPicker();
+    void handleTagPickerSave(entryId, selTagNames, isEncryptedEntry, wantsEncrypt);
   };
 
   actionsContainer.appendChild(deleteBtn);
@@ -264,6 +274,80 @@ export function createTagPicker() {
   popup.appendChild(actionsContainer);
   mask.appendChild(popup);
   document.body.appendChild(mask);
+}
+
+/** 隐藏标签选择器弹窗 */
+export function hideTagPicker() {
+  const mask = document.getElementById('diary-tag-selector-mask');
+  const popup = document.getElementById('diary-tag-selector-popup');
+  if (mask) mask.style.display = 'none';
+  if (popup) popup.style.display = 'none';
+}
+
+/**
+ * 标签选择器「保存」分流（ADR-0017）：
+ * - 加密条目的保存 = 改分类降级（reclassifyEntry），成功后 merge 回 md 并从保险箱取出。
+ * - 非加密条目选中「加密」= 加密流程（ensureSafeUnlocked → 二次确认 → encryptEntry），
+ *   并从 md 移除原普通块，之后 reloadWithEncrypted 把加密版并回列表。
+ * - 其余走原 updateTags 写回。
+ */
+async function handleTagPickerSave(
+  entryId: string,
+  selTagNames: string[],
+  isEncryptedEntry: boolean,
+  wantsEncrypt: boolean
+) {
+  const entry = state.data.originalDiaryEntries.find((e) => e.id === entryId);
+  if (!entry) return;
+
+  if (isEncryptedEntry) {
+    // 加密条目：改分类 = 解密降级 + 应用新标签（Q20-a）
+    const proceed = await new Promise<boolean>((resolve) => {
+      confirm({
+        title: '改分类',
+        message: '将解密此日记并恢复为普通类型（确定）？',
+        confirmText: '确定',
+        onConfirm: () => resolve(true),
+        onCancel: () => resolve(false),
+      });
+    });
+    if (!proceed) return;
+    if (!entry.noteId) return;
+    const success = await reclassifyEntry(entry.noteId, selTagNames);
+    if (!success) notice('解密改分类失败', 'error');
+    await reloadWithEncrypted();
+    return;
+  }
+
+  if (wantsEncrypt) {
+    // 加密流程：先确保保险箱解锁（弹主密码）
+    const unlocked = await ensureSafeUnlocked();
+    if (!unlocked) return;
+    const proceed = await new Promise<boolean>((resolve) => {
+      confirm({
+        title: '加密日记',
+        message: '确定将本条内容加密移出笔记？正文将从日记文件移除',
+        confirmText: '加密',
+        onConfirm: () => resolve(true),
+        onCancel: () => resolve(false),
+      });
+    });
+    if (!proceed) return;
+    try {
+      const enc = await encryptEntry(entry);
+      if (enc) {
+        // 从 md 摘除原普通块（encryptEntry 不删整 md，块级移除由日记域处理）→ 重并加密版
+        if (entry.id) await deleteEntry(entry.id);
+        await reloadWithEncrypted();
+      }
+    } catch (e: any) {
+      notice('加密失败：' + (e?.message || e), 'error');
+    }
+    return;
+  }
+
+  // 普通改分类
+  await updateTags(entryId, selTagNames);
 }
 
 export function showTagPicker(entryId: string) {
@@ -280,11 +364,15 @@ export function showTagPicker(entryId: string) {
   // 清空并重新生成按钮
   buttonsContainer.innerHTML = '';
 
-  // 获取排序后的标签列表（隐藏有二级标签的主标签）
-  const sortedTags = getSortedTagsForAddDialog();
+  // 加密分类仅在「改类型」时提供（新建弹窗已排除，ADR-0017 Q20-a）
+  const isEncryptedEntry = !!entry.encrypted;
+  let sortedTags = getSortedTagsForAddDialog();
+  if (!isEncryptedEntry) {
+    sortedTags = [...sortedTags, ENCRYPT_TAG];
+  }
 
-  // 当前条目的标签集合
-  const currentTagsSet = new Set(entry.tags);
+  // 当前条目的标签集合（加密条目：除「加密」外的原始分类为已选项）
+  const currentTagsSet = new Set(isEncryptedEntry ? entry.tags.filter((t) => t !== ENCRYPT_TAG) : entry.tags);
 
   // 生成按钮
   for (const tag of sortedTags) {
