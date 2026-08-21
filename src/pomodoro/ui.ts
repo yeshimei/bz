@@ -10,6 +10,7 @@ import type { App } from 'obsidian';
 import { setIcon } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
+import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { notice } from '../core/notice';
 import { openSettingsModal } from '../core/settings-modal';
 import { PomodoroDataManager } from './data';
@@ -425,6 +426,14 @@ function openPomodoroSettings(): void {
             await saveSettings();
           });
         });
+      if (isMobileEnv()) {
+        new Setting(el)
+          .setName('移动端默认全屏')
+          .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
+          .addToggle((toggle) =>
+            toggle.setValue(!!s.pomodoroMobileDefaultFullscreen).onChange(async (v) => { s.pomodoroMobileDefaultFullscreen = v; await saveSettings(); })
+          );
+      }
       refreshCustom();
     },
   });
@@ -497,6 +506,11 @@ export async function openPomodoro(app: App): Promise<void> {
     buildDOM();
     ensureTick(); // 恢复/首次打开时若在倒计时，启动轮询继续走（修复：恢复后不 tick 的 bug）
   }
+  // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
+  applyMobileWindowFullscreen(
+    maskEl && (maskEl.querySelector('#pomodoro-popup') as HTMLElement),
+    tryGetSettings().pomodoroMobileDefaultFullscreen === true
+  );
 }
 
 /** 插件启动恢复（main.ts onLayoutReady 调用）：load+recover+落盘；正在倒计时 → 后台 tick 继续 + 弹恢复通知；popup 模式自动弹窗 */

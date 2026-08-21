@@ -307,15 +307,17 @@ Feature: memo-suite-plugin
 **域设置弹窗（⚙️，各功能主面板右上角）**：
 - **备忘录**（9 项，分组：提醒/显示/新建/场景列表）：autoPopupOnStart、openNoteReminder、memoSortMode、memoShowArchivedByDefault、memoDueFormat、memoDefaultPriority、memoDefaultScene、memoAutoArchive、memoScenarios
 - **日记本**（12 项）：diaryDirectory、movieDirectory、letterDirectory、diaryBatchSize、showTagCount、useFileDateTime、diaryTagShowEmoji（标签按钮 emoji）、diaryContentRenderMode（卡片内容 markdown/plain）、diaryTagSortMode（标签排序 fixed/count）、diaryDefaultDateFilter（打开面板默认日期筛选 all/this-month）、diaryDefaultSelectedTag（默认选中标签，空=全部）、diaryJumpToEditAfterSave（保存后立即进入编辑）
-- **归物本**：空弹窗（无设置项）
+- **归物本**：1 项「移动端默认全屏」（仅移动端显示；桌面仍空态，见下跨域条目）
 - **剪藏本**：articleDirectory、articleBatchSize、autoSummaryEnabled
 - **密码本**：passwordCharset、passwordLength、securityMode
-- **收藏本**：空弹窗（无设置项）
+- **收藏本**：1 项「移动端默认全屏」（仅移动端显示；桌面仍空态，见下跨域条目）
 - **书库**：libraryFolderPath、libraryNotePath、bookTag、showFileSize、showReadingTime、showHighlights、showThinks、showReview（showCategory 字段保留无 UI）
 - **影视**（6 项）：movieFolderPath、moviePageSize（海报抓取仅文字提示）、movieDefaultSort（默认排序 date-desc/…/name-desc）、movieDefaultTypeFilter（默认类型筛选，空=全部）、movieDefaultStatusFilter（默认状态筛选 全部/想看/在看/已看）、movieRatingDisplay（已看卡片评分 stars/number）
 - **复习计划（含做题家）**：autoCheckInterval、enableAutoNotify + 做题家 5 项（enableMultipleChoice、questionsPerNote、shuffleQuestions、difficulty、forceQuizForReview；做题家 4 项（除 forceQuizForReview）仅在其开启时动态显示）；**forceQuizForReview（做题决定难度）控制复习流程**：开启 → 开始复习（bz-review-start/跳转逾期）自动批量出题做题，正确率自动定级；关闭 → 普通复习（跳转笔记逐篇评级）；开启时做题家未初始化（ai 为 null）先 ensureQuiz 注入，出题失败/无题目 → 降级普通复习并警告
 - **番茄钟（12 项）**：pomodoroPreset（12 档：11 预设+自定义）、pomodoroWorkMin/pomodoroShortBreakMin/pomodoroLongBreakMin（自定义时长，预设=自定义时动态显示）、pomodoroLongBreakInterval（N，默认 4）、pomodoroForceFocus（默认关）、pomodoroAutoCycle（默认关）、pomodoroAutoSkipBreak（默认关）、pomodoroSound（默认开）、pomodoroVolume（音量 0-100，默认 100 最大，设置弹窗 slider+试听）、pomodoroRestoreMode（启动恢复方式：background 后台继续 / popup 正在倒计时则自动弹窗；恢复继续弹「番茄钟继续：…还剩 mm:ss」通知）、pomodoroAutoPauseOnHide（后台自动暂停，默认开，ticket 62：窗口 hidden 时主番茄钟暂停、恢复自动继续；blur 不触发）。读书联动与目标选择已移除（ticket 63：pomodoroEpubAuto/pomodoroEpubMode 删除）
 - **闪念（17 项全量，含 AI 项）**：OLLAMA_URL、EMBEDDING_MODEL、META_PATH、VEC_PATH、TOP_K、CHAT_TOP_K、CHUNK_MIN_LENGTH、ALLOW_PATHS、CONCURRENCY、CONTEXT_LIMIT、DEBOUNCE_DELAY、CURSOR_POLL_INTERVAL、OLLAMA_CHAT_MODEL、DEEPSEEK_MODEL、DEFAULT_USE_DEEPSEEK、MAX_HISTORY、OLLAMA_REMOTE_URL
+
+**跨域：移动端主窗口默认全屏（ticket 68，ADR-0019）**：13 个有主窗口的域各 1 项布尔开关「移动端默认全屏」（键 `<域前缀>MobileDefaultFullscreen`，落 data.json），**仅移动端（Platform.isMobile）生效、设置项仅移动端显示**，桌面端行为与显示完全不动。语义：≤768px 时 **开=真全屏**（覆盖整个视口 100vw×100vh、去圆角、头部避让安全区、底部 env(safe-area-inset-bottom)，统一类 `.bz-win-mfs`）；**关=常规卡**（95%/90vh 圆角卡，统一 ≤768 规则），并解除既有写死的强制全屏（8 处 JS 内联 + 4 处 CSS 媒体规则，原 480/640/768 乱断点废止）。只决定每次打开的**初始形态**，窗口内无手动切换按钮（用户拍板，Q4-A）；多窗口域（影视主面板+影视分析、书库主面板+读书笔记）一并对控制，筛选/批注等小弹窗不纳入。默认值=行为保持（老用户零感知）：**默认开 11 域**——日记本（diaryMobileDefaultFullscreen）、归物本（belongingsMobileDefaultFullscreen）、剪藏本（clippingMobileDefaultFullscreen）、聚合讯（newsMobileDefaultFullscreen）、密码本（passwordMobileDefaultFullscreen）、收藏本（favoritesMobileDefaultFullscreen）、书库（libraryMobileDefaultFullscreen）、阅读报告（readingReportMobileDefaultFullscreen）、影视（movieMobileDefaultFullscreen）、复习计划（reviewMobileDefaultFullscreen）、保险箱（encryptMobileDefaultFullscreen）；**默认关 2 域**——备忘录（memoMobileDefaultFullscreen）、番茄钟（pomodoroMobileDefaultFullscreen）。**做题家、入口页明确排除**（用户拍板）。归物本/收藏本 ⚙️ 弹窗由空弹窗变为含此 1 项；聚合讯/阅读报告 ⚙️ 入口为本次新增（原窗口头部无 ⚙️ 按钮）。
 
 **筛选弹窗（🔀，非设置）**：影视「筛选与排序」（类型筛选+排序）、书库「视图与筛选」（分类筛选+视图）
 

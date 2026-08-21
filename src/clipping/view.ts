@@ -10,6 +10,7 @@ import { escManager } from '../core/esc-manager';
 import { createSiteIcon } from '../core/dom';
 import { formatRelativeTime } from '../core/utils';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
+import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
 import { ensureAutoSummary } from '../auto-summary';
 
@@ -71,6 +72,8 @@ export async function initArticleView(showImmediately = true): Promise<void> {
     if (showImmediately) {
       (existingPopup as HTMLElement).style.visibility = 'visible';
       (existingMask as HTMLElement).style.visibility = 'visible';
+      // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
+      applyMobileWindowFullscreen(articlePopup, tryGetSettings().clippingMobileDefaultFullscreen === true);
       // 若数据为空（可能加载失败），重新加载
       if (allArticles.length === 0 && !isLoadingData) {
         void loadAllArticles();
@@ -90,6 +93,8 @@ export async function initArticleView(showImmediately = true): Promise<void> {
   // 设置可见性
   articleMask!.style.visibility = showImmediately ? 'visible' : 'hidden';
   articlePopup!.style.visibility = showImmediately ? 'visible' : 'hidden';
+  // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
+  applyMobileWindowFullscreen(articlePopup, tryGetSettings().clippingMobileDefaultFullscreen === true);
 
   // 显示加载提示
   articlesContainer!.innerHTML = '';
@@ -227,6 +232,14 @@ function createHeader(): HTMLElement {
               if (v) ensureAutoSummary(app);
             })
           );
+        if (isMobileEnv()) {
+          new Setting(el)
+            .setName('移动端默认全屏')
+            .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
+            .addToggle((toggle) =>
+              toggle.setValue(!!s.clippingMobileDefaultFullscreen).onChange(async (v) => { s.clippingMobileDefaultFullscreen = v; await saveSettings(); })
+            );
+        }
       },
     });
   });

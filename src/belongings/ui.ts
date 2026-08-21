@@ -3,10 +3,13 @@
  * 主面板：__gui_wu_ben__（visibility 控制，不销毁）；弹窗 z-index：add=10000/edit=10001/delete=10002/sort=10003；
  * 长按 600ms 删除 / 单击 <500ms 编辑；MutationObserver 主题变化重渲染。
  */
+import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { formatRelativeTime } from '../core/utils';
+import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
+import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
 import { loadDatabase, saveDatabase, calculateDailyCost, calculateDaysUsed } from './data';
 import type { BelongingsDatabase, BelongingsItem } from './types';
@@ -902,7 +905,10 @@ export async function openBelongingsPanel(): Promise<void> {
   const app = getApp();
 
   if (document.getElementById('__gui_wu_ben__')) {
-    (document.getElementById('__gui_wu_ben__') as HTMLElement).style.visibility = 'visible';
+    const overlayEl = document.getElementById('__gui_wu_ben__') as HTMLElement;
+    // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等，对已存在面板同样生效），关=常规卡
+    applyMobileWindowFullscreen(overlayEl.firstElementChild as HTMLElement | null, tryGetSettings().belongingsMobileDefaultFullscreen === true);
+    overlayEl.style.visibility = 'visible';
     // 重新加载数据并渲染
     database = await loadDatabase();
     render();
@@ -926,12 +932,8 @@ export async function openBelongingsPanel(): Promise<void> {
       display: flex; flex-direction: column; overflow: hidden;
       box-shadow: 0 8px 30px rgba(0,0,0,0.3);
     `;
-  if (window.innerWidth <= 768) {
-    modal.style.height = '100vh';
-    modal.style.borderRadius = '0';
-    modal.style.maxWidth = '100%';
-    modal.style.paddingTop = '34px';
-  }
+  // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
+  applyMobileWindowFullscreen(modal, tryGetSettings().belongingsMobileDefaultFullscreen === true);
 
   // 头部
   const header = document.createElement('div');
@@ -980,8 +982,19 @@ export async function openBelongingsPanel(): Promise<void> {
   settingsBtn.addEventListener('click', () => {
     openSettingsModal({
       title: '归物本设置',
-      build: () => {
-        /* 归物本无行为设置项（数据路径已全局化） */
+      build: (el) => {
+        const s = getSettings();
+        if (isMobileEnv()) {
+          new Setting(el)
+            .setName('移动端默认全屏')
+            .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
+            .addToggle((toggle) =>
+              toggle.setValue(!!s.belongingsMobileDefaultFullscreen).onChange(async (v) => {
+                s.belongingsMobileDefaultFullscreen = v;
+                await saveSettings();
+              })
+            );
+        }
       },
       emptyText: '归物本没有可配置的设置项',
       emptyDesc: '数据文件路径由全局设置「数据存储路径」统一管理',

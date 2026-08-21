@@ -8,6 +8,7 @@ import { escManager } from '../core/esc-manager';
 import { formatRelativeTime, pad2 } from '../core/utils';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
+import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
 import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, getTypeColor, getStarRating, TYPE_GROUPS, ALL_TAGS, getGroupForTag } from './constants';
 import { M, takeHomeFilmStatus } from './state';
 import { getDisplayItems, refreshDataAndView, rebuildItems } from './data';
@@ -1018,6 +1019,8 @@ export function createOverlay(app: App, statusType?: string): void {
     }
   }
   M.loadedCount = 0;
+  // 移动端默认全屏：复用打开（已存在 → visibility visible）也重挂，设置变更后重开生效
+  applyMobileWindowFullscreen(M.currentOverlay?.firstElementChild as HTMLElement | null, tryGetSettings().movieMobileDefaultFullscreen === true);
   if (M.currentOverlay) {
     M.currentOverlay.style.visibility = 'visible';
     renderList();
@@ -1039,12 +1042,7 @@ export function createOverlay(app: App, statusType?: string): void {
     display: flex; flex-direction: column; overflow: hidden;
     box-shadow: 0 8px 30px rgba(0,0,0,0.3);
   `;
-  if (window.innerWidth <= 768) {
-    modal.style.height = '100vh';
-    modal.style.borderRadius = '0';
-    modal.style.maxWidth = '100%';
-    modal.style.paddingTop = '34px';
-  }
+  applyMobileWindowFullscreen(modal, tryGetSettings().movieMobileDefaultFullscreen === true);
 
   const header = document.createElement('div');
   header.style.cssText = `
@@ -1178,6 +1176,17 @@ export function createOverlay(app: App, statusType?: string): void {
               })
           );
         new Setting(el).setName('海报抓取').setDesc('影视海报与豆瓣信息抓取由独立脚本 @jwbz/obsidian-douban-poster 提供。');
+        if (isMobileEnv()) {
+          new Setting(el)
+            .setName('移动端默认全屏')
+            .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
+            .addToggle((toggle) =>
+              toggle.setValue(!!s.movieMobileDefaultFullscreen).onChange(async (v) => {
+                s.movieMobileDefaultFullscreen = v;
+                await saveSettings();
+              })
+            );
+        }
       },
     });
   });

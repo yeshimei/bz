@@ -2,11 +2,14 @@
  * 收藏本 UI 管理器（ticket 11）：源码 收藏本.js L237-1423 逐字移植。
  */
 import moment from 'moment';
+import { Setting } from 'obsidian';
 import { notice, notify } from '../core/notice';
 import { longPress, createIconBtn } from '../core/dom';
 import { confirm } from '../core/confirm';
 import { escManager } from '../core/esc-manager';
 import { getApp } from '../core/app';
+import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
+import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
 import { CONFIG } from './config';
 import { BalanceService, FavoritesAIService } from './ai';
@@ -95,18 +98,6 @@ export class UIManager {
       overflow: 'hidden',
       position: 'relative',
     });
-    if (window.innerWidth <= 768) {
-      Object.assign(this.popup.style, {
-        position: 'fixed',
-        top: '0',
-        left: '0',
-        width: '100%',
-        maxWidth: '100%',
-        maxHeight: '100vh',
-        height: '100vh',
-        borderRadius: '0',
-      });
-    }
 
     // 标题栏（含搜索切换按钮）
     this.popup.appendChild(this._buildHeader());
@@ -154,8 +145,19 @@ export class UIManager {
     const settingsBtn = this._createButton('⚙️', '收藏本设置', () => {
       openSettingsModal({
         title: '收藏本设置',
-        build: () => {
-          /* 收藏本无行为设置项（数据路径已全局化） */
+        build: (el) => {
+          const s = getSettings();
+          if (isMobileEnv()) {
+            new Setting(el)
+              .setName('移动端默认全屏')
+              .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
+              .addToggle((toggle) =>
+                toggle.setValue(!!s.favoritesMobileDefaultFullscreen).onChange(async (v) => {
+                  s.favoritesMobileDefaultFullscreen = v;
+                  await saveSettings();
+                })
+              );
+          }
         },
         emptyText: '收藏本没有可配置的设置项',
         emptyDesc: '数据文件路径由全局设置「数据存储路径」统一管理',
@@ -181,8 +183,6 @@ export class UIManager {
     actionGroup.appendChild(closeBtn);
 
     header.appendChild(actionGroup);
-    // 移动端：标题行距离顶部 24px（popup 不额外加 paddingTop）
-    if (window.innerWidth <= 768) header.style.paddingTop = '34px';
     return header;
   }
 
@@ -620,6 +620,8 @@ export class UIManager {
   show() {
     if (this.isVisible) return;
     this.isVisible = true;
+    // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
+    applyMobileWindowFullscreen(this.popup, tryGetSettings().favoritesMobileDefaultFullscreen === true);
     this.mask!.style.display = 'flex';
     this.popup!.style.display = 'flex';
     this._registerEscape();

@@ -11,7 +11,8 @@ import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { confirm } from '../core/confirm';
 import { createSiteIcon } from '../core/dom';
-import { getSettings, saveSettings } from '../core/settings-provider';
+import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
+import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
 import {
   formatRelativeTime,
@@ -276,6 +277,16 @@ export const UIManager = {
           // ===== 场景列表 =====
           new Setting(el).setHeading().setName('场景列表');
           settingTextArea(el, '场景', '逗号分隔的场景列表（留空用内置默认：剪藏,工作,学习,生活,代码,公开课）', '剪藏,工作,学习,生活,代码,公开课', s.memoScenarios || '', 'memoScenarios', reloadScenes);
+
+          // ===== 移动端 =====
+          if (isMobileEnv()) {
+            new Setting(el)
+              .setName('移动端默认全屏')
+              .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
+              .addToggle((toggle) =>
+                toggle.setValue(!!s.memoMobileDefaultFullscreen).onChange(async (v) => { s.memoMobileDefaultFullscreen = v; await saveSettings(); })
+              );
+          }
         },
       });
     };
@@ -300,6 +311,8 @@ export const UIManager = {
     App.state.sortByPriority = sortByPriority || false;
     this.mask!.style.display = 'block';
     this.popup!.style.display = 'flex';
+    // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
+    applyMobileWindowFullscreen(this.popup, tryGetSettings().memoMobileDefaultFullscreen === true);
     App.refresh();
   },
   hideMain() {

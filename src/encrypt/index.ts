@@ -1,5 +1,5 @@
 /**
- * 加密保险箱域入口（encrypt）
+ * 保险箱域入口（encrypt）
  * 命令 bz-encrypt-open / bz-encrypt-lock 由 main.ts 裸注册。
  * 懒加载：ensureEncrypt 幂等初始化（ADR-0003）。
  */

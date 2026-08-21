@@ -12,8 +12,9 @@ import { escManager } from '../core/esc-manager';
 import { confirm } from '../core/confirm';
 import { createIconBtn, createOverlay, longPress } from '../core/dom';
 import { formatRelativeTime } from '../core/utils';
-import { getSettings, saveSettings } from '../core/settings-provider';
+import { getSettings, tryGetSettings, saveSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
+import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
 import { SafeManager, base64ToBytes, type SafeNote, type SafeAttachment } from './data';
 import { compressImage, videoFrame, PREVIEW_OMIT_SIZE, PREVIEW_OMIT_QUALITY } from './preview';
 
@@ -195,17 +196,7 @@ export class UIManager {
     if (this._initialized) return;
     this.mask = this.createMask('bz-encrypt-mask');
     this.popup = this.createPopup('bz-encrypt-popup');
-    if (window.innerWidth <= 768) {
-      this.popup.style.top = '0';
-      this.popup.style.left = '0';
-      this.popup.style.transform = 'none';
-      this.popup.style.width = '100%';
-      this.popup.style.maxWidth = '100%';
-      this.popup.style.maxHeight = '100vh';
-      this.popup.style.height = '100vh';
-      this.popup.style.borderRadius = '0';
-      this.popup.style.paddingTop = '34px';
-    }
+    // 移动端形态：常规卡由基样式承担，真全屏统一走 .bz-win-mfs（ticket 68，show() 每次挂类）
     const header = this.createHeader();
     this.popup.appendChild(header);
     this.listContainer = document.createElement('div');
@@ -250,11 +241,11 @@ export class UIManager {
     const header = document.createElement('div');
     header.className = 'bz-encrypt-head';
     const title = document.createElement('h3');
-    title.textContent = '加密保险箱';
+    title.textContent = '保险箱';
     const btns = document.createElement('div');
     btns.className = 'bz-encrypt-head-btns';
     const lockBtn = createIconBtn('🔒', '加密当前笔记', () => this.onLockCurrentNote?.());
-    const settingsBtn = createIconBtn('⚙️', '加密保险箱设置', () => this.openSettings());
+    const settingsBtn = createIconBtn('⚙️', '保险箱设置', () => this.openSettings());
     const cleanupBtn = createIconBtn('🧹', '清理未引用的密文', () => this.onCleanupOrphans?.());
     const closeBtn = createIconBtn('❌', '关闭', () => this.hide());
     if (this.onLockCurrentNote) btns.appendChild(lockBtn);
@@ -269,6 +260,7 @@ export class UIManager {
   // ---------- 显示/隐藏 ----------
   show() {
     if (!this._initialized) this.ensureElements();
+    applyMobileWindowFullscreen(this.popup, tryGetSettings().encryptMobileDefaultFullscreen === true);
     this.mask!.style.display = 'block';
     this.popup!.style.display = 'flex';
     void this.renderList();
@@ -308,7 +300,7 @@ export class UIManager {
       warning.innerHTML = '<strong>⚠️ 重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，加密笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。';
       if (exists) {
         title.textContent = '输入主密码';
-        message.textContent = '请输入您设置的主密码以解锁加密保险箱';
+        message.textContent = '请输入您设置的主密码以解锁保险箱';
         input2.style.display = 'none';
         warning.style.display = 'none';
       } else {
@@ -674,7 +666,7 @@ export class UIManager {
   // ---------- 设置弹窗 ----------
   openSettings() {
     openSettingsModal({
-      title: '加密保险箱设置',
+      title: '保险箱设置',
       build: (el) => {
         const s = getSettings() as any;
         new Setting(el)
@@ -704,6 +696,17 @@ export class UIManager {
               await saveSettings();
             })
           );
+        if (isMobileEnv()) {
+          new Setting(el)
+            .setName('移动端默认全屏')
+            .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
+            .addToggle((toggle) =>
+              toggle.setValue(!!s.encryptMobileDefaultFullscreen).onChange(async (v) => {
+                s.encryptMobileDefaultFullscreen = v;
+                await saveSettings();
+              })
+            );
+        }
       },
     });
   }

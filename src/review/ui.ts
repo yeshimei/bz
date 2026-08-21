@@ -5,7 +5,8 @@ import type { App } from 'obsidian';
 import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
-import { getSettings, saveSettings } from '../core/settings-provider';
+import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
+import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
 import { FSRS, FSRS_FIRST_TEXTS, LADDER_MAX, TOTAL_STAGES } from './fsrs';
 import type { Rating } from './fsrs';
@@ -43,10 +44,6 @@ export class UIManager {
     this.popup = document.createElement('div');
     this.popup.id = 'review-popup';
     Object.assign(this.popup.style, { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'var(--background-primary)', borderRadius: '12px', boxShadow: '0 10px 40px rgba(0,0,0,0.2)', zIndex: '9999', width: '90%', maxWidth: '800px', maxHeight: '80vh', display: 'none', flexDirection: 'column' });
-    // 移动端全屏 + 顶部内边距 24px
-    if (window.innerWidth <= 768) {
-      Object.assign(this.popup.style, { top: '0', left: '0', transform: 'none', width: '100%', maxWidth: '100%', maxHeight: '100vh', height: '100vh', borderRadius: '0' });
-    }
     const header = document.createElement('div');
     header.style.cssText = 'padding:16px 24px 8px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;';
     header.innerHTML = `
@@ -217,11 +214,24 @@ export class UIManager {
           await saveSettings();
         });
       });
+    if (isMobileEnv()) {
+      new Setting(el)
+        .setName('移动端默认全屏')
+        .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
+        .addToggle((toggle) =>
+          toggle.setValue(!!s.reviewMobileDefaultFullscreen).onChange(async (v) => {
+            s.reviewMobileDefaultFullscreen = v;
+            await saveSettings();
+          })
+        );
+    }
   }
 
   showMain(): void {
     this.createMainUI();
     if (!this.mask || !this.popup) return;
+    // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
+    applyMobileWindowFullscreen(this.popup, tryGetSettings().reviewMobileDefaultFullscreen === true);
     this.mask.style.display = 'block';
     this.popup.style.display = 'flex';
     this.refreshPanel();

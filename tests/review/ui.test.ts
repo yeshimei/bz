@@ -1,9 +1,9 @@
 /**
  * 复习计划 UI 测试（ticket 16 修正版）：常驻 DOM/渲染/难度弹窗/确认框/归档语义
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, Platform as MockPlatform } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { closeSettingsModal } from '../../src/core/settings-modal';
@@ -326,6 +326,63 @@ describe('quizReviewLoop 集成', () => {
     // 点击完成 → 所有做题复习已完成
     quiz.popup.querySelector('#quiz-next-note')!.click();
     await new Promise((r) => setTimeout(r, 50));
+    ui.destroy();
+  });
+});
+
+describe('移动端默认全屏（ticket 68）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+    setApp(null as any);
+    MockPlatform.isMobile = false;
+  });
+
+  afterEach(() => {
+    MockPlatform.isMobile = false;
+  });
+
+  it('移动端+开关开（默认开）：showMain 后 popup 挂 bz-win-mfs；开关关不挂；桌面端恒不挂', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    const ui = new UIManager(app, dm);
+    // 桌面端：设置开也不挂
+    setSettingsProvider(() => ({ reviewMobileDefaultFullscreen: true } as any));
+    ui.showMain();
+    expect(ui.popup!.classList.contains('bz-win-mfs')).toBe(false);
+    // 移动端 + 开
+    setSettingsProvider(() => ({ reviewMobileDefaultFullscreen: true } as any));
+    MockPlatform.isMobile = true;
+    ui.showMain();
+    expect(ui.popup!.classList.contains('bz-win-mfs')).toBe(true);
+    // 移动端 + 关
+    setSettingsProvider(() => ({ reviewMobileDefaultFullscreen: false } as any));
+    ui.showMain();
+    expect(ui.popup!.classList.contains('bz-win-mfs')).toBe(false);
+    ui.destroy();
+  });
+
+  it('设置弹窗：仅移动端显示「移动端默认全屏」行', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    const ui = new UIManager(app, dm);
+    setSettingsProvider(() => ({}) as any);
+    const settingNames = () =>
+      [...document.querySelectorAll('#bz-settings-modal-popup .setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    // 桌面端：无该行（设置项名在 dataset.name，与既有断言口径一致）
+    (document.getElementById('review-btn-settings') as HTMLElement).click();
+    expect(settingNames()).not.toContain('移动端默认全屏');
+    // 移动端：有该行（toggle 语义：再点先关旧再开新）
+    MockPlatform.isMobile = true;
+    (document.getElementById('review-btn-settings') as HTMLElement).click();
+    expect(settingNames()).toContain('移动端默认全屏');
+    closeSettingsModal();
     ui.destroy();
   });
 });

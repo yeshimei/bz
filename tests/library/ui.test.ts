@@ -7,7 +7,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { showLibrary, showBookNotes, openFilterModal, _testResetLibrary } from '../../src/library/ui';
 import { openBookNotes } from '../../src/library/index';
 import { MockVault, parseFrontmatter } from '../mock-vault';
-import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
+import { resetObsidianMocks, Platform as MockPlatform, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
 
 function makeApp(vault: MockVault, extra: any = {}) {
   return {
@@ -270,5 +270,65 @@ describe('书库面板', () => {
       '',
       false
     );
+  });
+});
+
+describe('移动端默认全屏（ticket 68）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    _testResetLibrary();
+    document.body.innerHTML = '';
+    MockPlatform.isMobile = false;
+  });
+
+  afterEach(() => {
+    _testResetLibrary();
+    document.body.innerHTML = '';
+    MockPlatform.isMobile = false;
+  });
+
+  it('主面板：桌面不挂；移动端+开关开 → .bz-lib-modal--full 挂 bz-win-mfs（复用打开也重挂）', async () => {
+    const vault = new MockVault();
+    vault.files.set('书库/活着.md', BOOK_MD);
+    setSettingsProvider(() => ({ libraryFolderPath: '书库', bookTag: 'book', libraryMobileDefaultFullscreen: true } as any));
+    const app = makeApp(vault);
+    showLibrary(app);
+    await new Promise((r) => setTimeout(r, 60));
+    const modal = document.querySelector('.bz-lib-modal--full') as HTMLElement | null;
+    expect(modal).not.toBeNull();
+    expect(modal!.classList.contains('bz-win-mfs')).toBe(false);
+    // 移动端：复用打开路径（visibility 常驻）也重挂
+    MockPlatform.isMobile = true;
+    showLibrary(app);
+    await new Promise((r) => setTimeout(r, 60));
+    expect(document.querySelector('.bz-lib-modal--full')!.classList.contains('bz-win-mfs')).toBe(true);
+  });
+
+  it('读书笔记弹窗：移动端+开关开 → .bz-lib-modal--full-lg 挂 bz-win-mfs（与主面板同控）', async () => {
+    const vault = new MockVault();
+    vault.files.set('书库/活着.md', NOTE_MD);
+    setSettingsProvider(() => ({ libraryFolderPath: '书库', bookTag: 'book', libraryMobileDefaultFullscreen: true } as any));
+    MockPlatform.isMobile = true;
+    showBookNotes(makeApp(vault), '书库/活着.md');
+    await new Promise((r) => setTimeout(r, 60));
+    const modal = document.querySelector('.bz-lib-modal--full-lg') as HTMLElement | null;
+    expect(modal).not.toBeNull();
+    expect(modal!.classList.contains('bz-win-mfs')).toBe(true);
+  });
+
+  it('书库设置弹窗：仅移动端显示「移动端默认全屏」行', async () => {
+    const vault = new MockVault();
+    vault.files.set('书库/活着.md', BOOK_MD);
+    setSettingsProvider(() => ({ libraryFolderPath: '书库', bookTag: 'book' } as any));
+    const app = makeApp(vault);
+    showLibrary(app);
+    const settingsBtn = [...document.querySelectorAll('button')].find((b) => b.title === '书库设置')!;
+    const settingNames = () =>
+      [...document.querySelectorAll('#bz-settings-modal-popup .setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    settingsBtn.click();
+    expect(settingNames()).not.toContain('移动端默认全屏');
+    MockPlatform.isMobile = true;
+    settingsBtn.click(); // toggle：关旧开新
+    expect(settingNames()).toContain('移动端默认全屏');
   });
 });
