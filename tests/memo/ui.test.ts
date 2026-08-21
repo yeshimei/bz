@@ -181,7 +181,7 @@ describe('备忘录面板', () => {
     vi.useRealTimers();
   });
 
-  it('编辑：长按 #场景标签 500ms 打开编辑弹窗（回填内容）', async () => {
+  it('编辑：长按卡片 500ms → 跟手菜单 → 点「编辑」打开编辑弹窗（回填内容）', async () => {
     vi.useFakeTimers();
     const vault = new MockVault();
     await initApp(vault);
@@ -189,18 +189,34 @@ describe('备忘录面板', () => {
       { id: '1', title: '编辑我', scene: '学习', priority: 'important', created: '2025-06-14 10:00:00', completed: null },
     ]);
     await App.refresh();
-    const sceneTag = [...document.querySelectorAll('.todo-card span')].find(
-      (sp) => sp.textContent!.includes('#学习')
-    ) as HTMLElement;
-    sceneTag.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
+    const card = document.querySelector('.todo-card') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 120, clientY: 120 }));
     vi.advanceTimersByTime(550);
+    const menu = document.querySelector('.bz-item-menu');
+    expect(menu).not.toBeNull();
+    // 跟手定位：锚点右下方、不超出视口（jsdom 默认 1024×768）
+    const left = parseFloat((menu as HTMLElement).style.left || '0');
+    const top = parseFloat((menu as HTMLElement).style.top || '0');
+    expect(left).toBeGreaterThan(0);
+    expect(left).toBeLessThan(window.innerWidth);
+    expect(top).toBeGreaterThan(0);
+    expect(top).toBeLessThan(window.innerHeight);
+    // 松手残余 click 被吞（菜单不关、不穿透）
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(document.querySelector('.bz-item-menu')).not.toBeNull();
+    // 点「编辑」
+    const editItem = [...menu!.querySelectorAll('.bz-item-menu-item')].find(
+      (b) => b.textContent!.includes('编辑')
+    ) as HTMLElement;
+    editItem.click();
     expect(document.getElementById('add-todo-popup')!.style.display).toBe('block');
     expect((document.querySelector('h4') as HTMLElement).textContent).toBe('编辑备忘录');
     expect((document.getElementById('add-todo-content') as HTMLTextAreaElement).value).toBe('编辑我');
     vi.useRealTimers();
   });
 
-  it('长按时间标签 → 删除确认弹窗 → 确认删除', async () => {
+  it('长按卡片 → 跟手菜单 → 点「删除」→ 确认弹窗 → 确认删除', async () => {
     vi.useFakeTimers();
     const vault = new MockVault();
     await initApp(vault);
@@ -208,11 +224,15 @@ describe('备忘录面板', () => {
       { id: '1', title: '删除我', scene: '工作', priority: 'minor', created: '2025-06-14 10:00:00', completed: null },
     ]);
     await App.refresh();
-    // 时间标签（最后一个 span）
-    const spans = document.querySelectorAll('.todo-card span');
-    const timeTag = spans[spans.length - 1] as HTMLElement;
-    timeTag.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
+    const card = document.querySelector('.todo-card') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 100, clientY: 100 }));
     vi.advanceTimersByTime(550);
+    const menu = document.querySelector('.bz-item-menu');
+    expect(menu).not.toBeNull();
+    const deleteItem = [...menu!.querySelectorAll('.bz-item-menu-item')].find(
+      (b) => b.textContent!.includes('删除')
+    ) as HTMLElement;
+    deleteItem.click();
     // 确认弹窗出现
     const confirmMask = document.getElementById('__shared_confirm_mask__');
     expect(confirmMask).not.toBeNull();
@@ -440,12 +460,15 @@ describe('多行输入（ticket 49）', () => {
       { id: '1', title: '第一行\n第二行', scene: '学习', priority: 'important', created: '2025-06-14 10:00:00', completed: null },
     ]);
     await App.refresh();
-    // 长按场景标签打开编辑弹窗
-    const sceneTag = [...document.querySelectorAll('.todo-card span')].find(
-      (sp) => sp.textContent!.includes('#学习')
-    ) as HTMLElement;
-    sceneTag.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
+    // 长按卡片出跟手菜单 → 点「编辑」打开编辑弹窗
+    const card = document.querySelector('.todo-card') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 60, clientY: 60 }));
     vi.advanceTimersByTime(550);
+    const menu = document.querySelector('.bz-item-menu')!;
+    const editItem = [...menu.querySelectorAll('.bz-item-menu-item')].find(
+      (b) => b.textContent!.includes('编辑')
+    ) as HTMLElement;
+    editItem.click();
     const content = document.getElementById('add-todo-content') as HTMLTextAreaElement;
     expect(content.value).toBe('第一行\n第二行');
     expect(document.querySelector('h4')!.textContent).toBe('编辑备忘录');
