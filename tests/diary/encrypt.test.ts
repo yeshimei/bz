@@ -251,9 +251,13 @@ describe('抽屉解密（ADR-0017）', () => {
     expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('恢复为普通类型');
     (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
 
-    // 密文取出即删 + 列表无加密条目（reloadWithEncrypted 在异步 handler 内，须等待）
+    // 密文取出即删 + 列表出现还原的普通条目（主动重读文件，不依赖文件事件）
     await waitFor(() => sm.manifest.notes.length === 0);
     await waitFor(() => !state.data.originalDiaryEntries.some((e) => e.encrypted));
+    await waitFor(() => state.data.originalDiaryEntries.some((e) => !e.encrypted && e.content.includes('第一条日记')));
+    const restored = state.data.originalDiaryEntries.find((e) => !e.encrypted && e.content.includes('第一条日记'))!;
+    expect(restored.tags).toEqual(['日记']);
+    expect(restored.emoji).toBe('📖');
     expect(hasNotice('已解密还原')).toBe(true);
     // 块还原回原 md，标题 emoji 去掉 🔐（解密 = 去加密标签重建标题行）
     await waitFor(() => vault.files.has('我的/日记/2024-01-01.md'));

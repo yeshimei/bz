@@ -8,7 +8,7 @@ import { confirm } from '../../core/confirm';
 import { attachItemActions, type ItemAction } from '../../core/item-actions';
 import { getApp } from '../app';
 import { BATCH_SIZE, DIARY_DIRECTORY, MOVIE_DIRECTORY, getSubTagsOfPrimary, getTagEmoji } from '../config';
-import { deleteEntry, getIsProcessingRemainingFiles, reloadWithEncrypted } from '../store';
+import { deleteEntry, getIsProcessingRemainingFiles, refreshFile, reloadWithEncrypted } from '../store';
 import { ENCRYPT_TAG, deleteEncryptedEntry, encryptEntry, reclassifyEntry } from '../encrypt';
 import { ensureSafeUnlocked } from '../../encrypt';
 import { state } from '../state';
@@ -444,7 +444,9 @@ async function decryptFromSheet(entryId: string) {
       notice('解密失败', 'error');
       return;
     }
-    await reloadWithEncrypted();
+    // 主动重读该日期文件（还原块已在 md 内）：不依赖文件监听事件，还原条目立即进列表
+    //（refreshFile 内含重并其余加密条目 + 全量刷新，与事件路径幂等）
+    await refreshFile(`${DIARY_DIRECTORY}/${entry.date}.md`);
     notice('已解密还原', 'success');
   } catch (e) {
     notice('解密失败', 'error');
