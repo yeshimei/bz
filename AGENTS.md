@@ -1,6 +1,6 @@
 # AGENTS.md — 包仔（bz）Obsidian 插件
 
-独立 Obsidian 插件，19 个功能域：日记本、备忘录、归物本、剪藏本、聚合讯、密码本、收藏本、书库、阅读报告、影视（含分析）、复习计划、做题家、闪念、自动摘要、AI Agent、入口页、番茄钟、B 站下载、附件搬移。数据沿用既有格式（`CONFIG/STORAGE/*.json`、`我的/*.md`、frontmatter），旧数据直接可读。**项目语言：中文**（注释/提交/issue/文档）。
+独立 Obsidian 插件，20 个功能域：日记本、备忘录、归物本、剪藏本、聚合讯、密码本、收藏本、书库、阅读报告、影视（含分析）、复习计划、做题家、闪念、自动摘要、AI Agent、入口页、番茄钟、B 站下载、附件搬移、保险箱（encrypt 域，原「加密保险箱」，ticket 68 更名——仅用户可见文案与文档，命令 id 与存储不动）。数据沿用既有格式（`CONFIG/STORAGE/*.json`、`我的/*.md`、frontmatter），旧数据直接可读。**项目语言：中文**（注释/提交/issue/文档）。
 
 ## 命令
 
@@ -57,6 +57,7 @@
 | pomodoro 番茄钟（状态机/任务关联/设置弹窗/状态栏） | pomodoro.json |
 | attach 附件搬移（移动当前笔记附件到指定文件夹/仅同名才改名/全库改写链接） | —（搬当前笔记引用的 vault 附件，无 CONFIG/STORAGE 数据） |
 | bili-downloader 下载工具（B 站 web 工具，外部 npm） | —（外部） |
+| encrypt 保险箱（AES-GCM 清单容器加密/压缩预览/还原/提交式加密，ADR-0015~0018；原名「加密保险箱」，ticket 68 更名） | `CONFIG/.ENCRYPT/`（.safe.enc 清单 + .随机名.enc 密文镜像，不在 CONFIG/STORAGE） |
 
 ## 测试
 

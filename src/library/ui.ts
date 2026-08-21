@@ -11,8 +11,9 @@
 import { Setting } from 'obsidian';
 import { notice, createIconBtn, longPress } from '../core/dom';
 import { escManager } from '../core/esc-manager';
-import { getSettings, saveSettings } from '../core/settings-provider';
+import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
+import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
 import type BzSettings from '../settings';
 import { formatFileSize } from '../core/utils';
 import { getBookItems, sortItemList, deriveBookSettings, loadEpubBookItems } from './items';
@@ -31,6 +32,8 @@ let categoryFilter = '全部';
 let statusFilter = '全部';
 
 export function showLibrary(app: any) {
+  // 移动端默认全屏：复用打开（visibility 常驻）也重挂，设置变更后重开生效
+  applyMobileWindowFullscreen(document.querySelector<HTMLElement>('.bz-lib-modal--full'), tryGetSettings().libraryMobileDefaultFullscreen === true);
   if (libraryOverlay) {
     libraryOverlay.style.visibility = 'visible';
     return;
@@ -42,6 +45,7 @@ export function showLibrary(app: any) {
 
   const modal = document.createElement('div');
   modal.className = 'bz-lib-modal bz-lib-modal--full';
+  applyMobileWindowFullscreen(modal, tryGetSettings().libraryMobileDefaultFullscreen === true);
 
   const header = document.createElement('div');
   header.className = 'bz-lib-header';
@@ -93,6 +97,17 @@ export function showLibrary(app: any) {
         toggleSetting('显示划线数', '', 'showHighlights');
         toggleSetting('显示想法数', '', 'showThinks');
         toggleSetting('显示书评摘要', '', 'showReview');
+        if (isMobileEnv()) {
+          new Setting(el)
+            .setName('移动端默认全屏')
+            .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
+            .addToggle((toggle) =>
+              toggle.setValue(!!s.libraryMobileDefaultFullscreen).onChange(async (v) => {
+                s.libraryMobileDefaultFullscreen = v;
+                await saveSettings();
+              })
+            );
+        }
       },
     });
   });
@@ -640,6 +655,7 @@ function createBookNotesModal(title: string, onClose: () => void): { overlay: HT
 
   const modal = document.createElement('div');
   modal.className = 'bz-lib-modal bz-lib-modal--full-lg';
+  applyMobileWindowFullscreen(modal, tryGetSettings().libraryMobileDefaultFullscreen === true);
 
   const header = document.createElement('div');
   header.className = 'bz-lib-modal-header';

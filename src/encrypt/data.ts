@@ -1,5 +1,5 @@
 /**
- * 加密保险箱数据层（encrypt 域，safe 数据）
+ * 保险箱数据层（encrypt 域，safe 数据）
  * 移出式清单容器加密：SafeManager 负责 清单(.safe.enc) 读写、密文镜像（正文+附件）、
  * 加锁(lockNote) / 还原取出(restoreNote，还原成功即删除镜像与条目)。
  *

@@ -11,7 +11,8 @@ import { escManager } from '../core/esc-manager';
 import { confirm } from '../core/confirm';
 import { createIconBtn } from '../core/dom';
 import { formatRelativeTime } from '../core/utils';
-import { getSettings, saveSettings } from '../core/settings-provider';
+import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
+import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
 import { DataManager, type PasswordEntry } from './data';
 
@@ -89,17 +90,6 @@ export class UIManager {
     // 主遮罩和弹出
     this.mask = this.createMask('pw-mask');
     this.popup = this.createPopup();
-    if (window.innerWidth <= 768) {
-      this.popup.style.top = '0';
-      this.popup.style.left = '0';
-      this.popup.style.transform = 'none';
-      this.popup.style.width = '100%';
-      this.popup.style.maxWidth = '100%';
-      this.popup.style.maxHeight = '100vh';
-      this.popup.style.height = '100vh';
-      this.popup.style.borderRadius = '0';
-      this.popup.style.paddingTop = '34px';
-    }
     // 搜索容器
     this.searchContainer = document.createElement('div');
     this.searchContainer.className = 'pw-search-container';
@@ -206,6 +196,17 @@ export class UIManager {
                 await saveSettings();
               })
             );
+          if (isMobileEnv()) {
+            new Setting(el)
+              .setName('移动端默认全屏')
+              .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
+              .addToggle((toggle) =>
+                toggle.setValue(!!s.passwordMobileDefaultFullscreen).onChange(async (v) => {
+                  s.passwordMobileDefaultFullscreen = v;
+                  await saveSettings();
+                })
+              );
+          }
         },
       });
     });
@@ -218,14 +219,14 @@ export class UIManager {
 
     header.appendChild(title);
     header.appendChild(btnContainer);
-    // 移动端：标题行距离顶部 24px（popup 已带 paddingTop，去掉 header 自身顶部内边距）
-    if (window.innerWidth <= 768) header.style.paddingTop = '0';
     return header;
   }
 
   // ---------- 主面板显示/隐藏 ----------
   show() {
     if (!this._initialized) this.ensureElements();
+    // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
+    applyMobileWindowFullscreen(this.popup, tryGetSettings().passwordMobileDefaultFullscreen === true);
     this.mask!.style.display = 'block';
     this.popup!.style.display = 'flex';
     this.renderList();
