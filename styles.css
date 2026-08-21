@@ -186,15 +186,17 @@
         margin: 16px 0 !important;
     }
 
-    /* 移动端类型多行平铺（原单行滚动+隐藏滚动条：常规卡窄幅只露出前几个类型，其余被隐藏显示不完整；平铺后全部可见） */
+    /* 移动端类型标签单行平铺 + 左右拖拽（overflow-x 触屏原生滑动），隐藏滚动条（用户决策：与二级标签栏同形态） */
     .diary-tags-scroll-container {
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         gap: 6px;
-        overflow: visible;
+        overflow-x: auto;
+        overflow-y: hidden;
         scrollbar-width: none;
         -ms-overflow-style: none;
-        padding: 2px 0;
+        padding: 4px 0;
+        -webkit-overflow-scrolling: touch; /* iOS 惯性拖拽 */
     }
 
     .diary-tags-scroll-container::-webkit-scrollbar {
@@ -243,6 +245,11 @@
 .diary-entry-content {
     touch-action: pan-y;
     /* 允许垂直触摸滚动穿透 */
+}
+/* 日记条目卡片：列表禁止选字/复制（长按整卡是操作抽屉，与 memo 一致） */
+.diary-entry-card {
+    user-select: none;
+    -webkit-touch-callout: none;
 }
 
 .diary-entry-content.diary-editing {
@@ -1545,19 +1552,23 @@ button.news-close-btn {
         }
     }
 
-/* ==================== 收藏本（favorites，ticket 60 收敛：原 fav-mobile 注入，逐字搬运；后续优化：header 按钮去 box-shadow、移动端列表平铺去横向滚动/下边框、标题栏去下边框、类型栏多行平铺） ==================== */
+/* ==================== 收藏本（favorites，ticket 60 收敛：原 fav-mobile 注入，逐字搬运；后续优化：header 按钮去 box-shadow、移动端列表平铺去横向滚动/下边框、标题栏去下边框、类型栏单行横滑） ==================== */
       /* #fav-popup .fav-header .bz-icon-btn 去阴影已并入「主窗口头部行统一规范」（ticket 68 后续） */
       @media (max-width: 768px) {
         #fav-entries-container { scrollbar-width: none; -ms-overflow-style: none; overflow-x: hidden; }
         #fav-entries-container::-webkit-scrollbar { display: none; }
-        /* 类型栏多行平铺（原 flex-wrap:nowrap 单行横向滚动：常规卡窄幅只露出前几个类型，其余被隐藏显示不完整）；flex-shrink:0 防 80vh 挤压出纵向滚动条 */
+        /* 类型栏：单行平铺 + 左右拖拽（overflow-x 触屏原生滑动），隐藏滚动条；flex-shrink:0 防 80vh 挤压出纵向滚动条 */
         .fav-tagbar {
           flex-shrink: 0 !important;
-          flex-wrap: wrap !important;
-          overflow: visible !important;
-          scrollbar-width: none;
-          -ms-overflow-style: none;
+          flex-wrap: nowrap !important;
+          overflow-x: auto !important;
+          overflow-y: hidden !important;
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+          -webkit-overflow-scrolling: touch;
         }
+        .fav-tagbar::-webkit-scrollbar { display: none !important; }
+        .fav-tagbar .fav-tag-btn { flex-shrink: 0; white-space: nowrap; }
         /* 添加/编辑弹窗去纵向滚动条（滚动保持） */
         #fav-add-popup {
           scrollbar-width: none;
@@ -2779,10 +2790,20 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   max-height: 40vh;
   overflow-y: auto;
 }
-/* 条目展示：标题与 meta 行上下排列，留足间距 */
+/* 条目展示：标题与 meta 行上下排列，留足间距（memo/diary 共用） */
 .bz-item-sheet-entry {
   display: flex; flex-direction: column; gap: 8px;
 }
+.bz-item-sheet-entry-info {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--text-muted);
+}
+.bz-item-sheet-entry-content {
+  font-size: 14px; color: var(--text-normal);
+  line-height: 1.6; max-height: 26vh; overflow-y: auto;
+  word-break: break-word;
+}
+.bz-item-sheet-entry-content::-webkit-scrollbar { display: none; }
 .bz-item-sheet-title {
   font-size: 14px; font-weight: 600; color: var(--text-normal);
   line-height: 1.4; word-break: break-word;
