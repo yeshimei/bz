@@ -10,8 +10,10 @@ import { getSettings, saveSettings, tryGetSettings } from '../core/settings-prov
 import { openSettingsModal } from '../core/settings-modal';
 import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
 import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, getTypeColor, getStarRating, TYPE_GROUPS, ALL_TAGS, getGroupForTag } from './constants';
-import { M, takeHomeFilmStatus } from './state';
+import { M, takeHomeFilmStatus, type MovieItem } from './state';
 import { getDisplayItems, refreshDataAndView, rebuildItems } from './data';
+import { attachItemActions, type ItemAction } from '../core/item-actions';
+import { confirm } from '../core/confirm';
 import { openRecommendModal } from './recommend';
 import { watchPosterFetch } from './poster-watch';
 import { openAnalysisModal } from './analysis';
@@ -154,6 +156,7 @@ export function renderAll(displayItems: any[], container: HTMLElement, app: App)
     }
 
     card.appendChild(infoDiv);
+    attachMovieActions(card, item, app);
     container.appendChild(card);
   });
 
@@ -1283,4 +1286,257 @@ export function registerEscapeHandler(): void {
       else if (M.currentOverlay) closeOverlay();
     },
   });
+}
+
+// ===== 统一抽屉（手势统一组件；影视接入：打开/状态流转/写改影评/编辑/删除） =====
+
+/** 抽屉顶部信息区：海报 + 名称 + 类型徽章 + 状态/评分 + 观影日期 + 影评两行省略（与卡片一字不差） */
+function buildMovieSheetHead(item: MovieItem, app: App): HTMLElement {
+  const head = document.createElement('div');
+  head.className = 'bz-item-sheet-entry';
+  const body = document.createElement('div');
+  body.style.cssText = 'display:flex;gap:12px;align-items:flex-start;';
+
+  if (item.poster) {
+    const posterFile = app.vault.getAbstractFileByPath(item.poster);
+    if (posterFile && /\.(png|jpe?g|gif|webp)$/i.test(posterFile.name)) {
+      const img = document.createElement('img');
+      img.src = app.vault.getResourcePath(posterFile as TFile);
+      img.style.cssText =
+        'width:52px;height:70px;object-fit:cover;border-radius:6px;flex-shrink:0;background:var(--background-modifier-border);';
+      body.appendChild(img);
+    }
+  }
+
+  const info = document.createElement('div');
+  info.style.cssText = 'flex:1;min-width:0;';
+
+  const name = document.createElement('div');
+  name.className = 'bz-item-sheet-movie-name';
+  name.textContent = item.name;
+  info.appendChild(name);
+
+  const meta = document.createElement('div');
+  meta.className = 'bz-item-sheet-movie-meta';
+  const typeBadge = document.createElement('span');
+  typeBadge.className = 'bz-movie-badge';
+  typeBadge.textContent = item.typeTag;
+  typeBadge.style.background = getTypeColor(item.group); // 动态类型色（功能色）
+  meta.appendChild(typeBadge);
+  if (item.status === STATUS_WATCHING) {
+    const w = document.createElement('span');
+    w.className = 'bz-movie-badge bz-movie-badge--accent';
+    w.textContent = '在看';
+    meta.appendChild(w);
+  } else if (item.status === STATUS_WANT) {
+    const w = document.createElement('span');
+    w.className = 'bz-movie-badge';
+    w.textContent = '想看';
+    meta.appendChild(w);
+  } else if (item.status === STATUS_WATCHED) {
+    if (item.rating !== null && item.rating > 0) {
+      const stars = document.createElement('span');
+      stars.className = 'bz-movie-stars';
+      stars.textContent = getStarRating(item.rating);
+      meta.appendChild(stars);
+    }
+    if (item.watchDate) {
+      const d = document.createElement('span');
+      d.className = 'bz-movie-date';
+      d.textContent = formatRelativeTime(item.watchDate);
+      meta.appendChild(d);
+    }
+  }
+  info.appendChild(meta);
+
+  if (item.review) {
+    const review = document.createElement('div');
+    review.className = 'bz-item-sheet-movie-review';
+    review.textContent = item.review;
+    info.appendChild(review);
+  }
+
+  body.appendChild(info);
+  head.appendChild(body);
+  return head;
+}
+
+/** 打开影视笔记（与卡片双击同路径） */
+function openMovieNote(item: MovieItem, app: App): void {
+  void app.workspace.openLinkText(item.file.path as string, '', false);
+  closeOverlay();
+}
+
+/** 快捷状态流转（想看 → 在看）：写状态与评分 0（与编辑弹窗保存逻辑一致） */
+async function setMovieStatus(item: MovieItem, status: number, app: App): Promise<void> {
+  await app.fileManager.processFrontMatter(item.file, (fm: Record<string, any>) => {
+    fm['状态'] = status;
+    if (status === STATUS_WATCHING) fm['评分'] = 0;
+  });
+  notice('已标记在看', 'success');
+  refreshDataAndView(app);
+}
+
+/** 关闭小弹窗（幂等）：注销 ESC + 移除遮罩 */
+function closeMovieTinyModal(mask: HTMLElement, modalEsc: { unregister: () => void }): void {
+  modalEsc.unregister();
+  mask.remove();
+}
+
+/**
+ * 评分窗（标记已看 / 改评分共用）：评分输入 + 观影日期；遮罩点击/ESC 关闭，无取消按钮。
+ * 确认：状态=已看、评分、观影日期 一并写入 frontmatter。
+ */
+export function openRateModal(item: MovieItem, app: App, title: string): void {
+  const mask = document.createElement('div');
+  mask.className = 'bz-movie-tiny-mask';
+  const modal = document.createElement('div');
+  modal.className = 'bz-movie-tiny-modal';
+
+  const t = document.createElement('div');
+  t.className = 'bz-movie-tiny-title';
+  t.textContent = title;
+
+  const ratingInput = document.createElement('input');
+  ratingInput.type = 'number';
+  ratingInput.min = '0.1';
+  ratingInput.max = '5';
+  ratingInput.step = '0.1';
+  ratingInput.placeholder = '评分（0.1~5）';
+  ratingInput.className = 'bz-movie-tiny-input';
+  if (item.rating !== null && item.rating > 0) ratingInput.value = String(item.rating);
+
+  const dateInput = document.createElement('input');
+  dateInput.type = 'datetime-local';
+  dateInput.className = 'bz-movie-tiny-input';
+  dateInput.value = item.watchDate ? item.watchDate.replace(' ', 'T') : '';
+
+  const confirmBtn = document.createElement('button');
+  confirmBtn.type = 'button';
+  confirmBtn.className = 'bz-movie-tiny-confirm';
+  confirmBtn.textContent = '确认';
+
+  const modalEsc = escManager.register('bz-movie-rate', {
+    isVisible: () => mask.isConnected,
+    close: () => closeMovieTinyModal(mask, modalEsc),
+  });
+
+  confirmBtn.addEventListener('click', async () => {
+    const ratingVal = parseFloat(ratingInput.value);
+    if (isNaN(ratingVal) || ratingVal <= 0) {
+      notice('请填写大于 0 的评分');
+      return;
+    }
+    const watchDate = (dateInput.value || localNowFormat()).replace('T', ' ');
+    await app.fileManager.processFrontMatter(item.file, (fm: Record<string, any>) => {
+      fm['状态'] = STATUS_WATCHED;
+      fm['评分'] = ratingVal;
+      fm['观影日期'] = watchDate;
+    });
+    notice('已更新影视信息', 'success');
+    closeMovieTinyModal(mask, modalEsc);
+    refreshDataAndView(app);
+  });
+
+  mask.addEventListener('click', (e) => {
+    if (e.target === mask) closeMovieTinyModal(mask, modalEsc);
+  });
+
+  modal.appendChild(t);
+  modal.appendChild(ratingInput);
+  modal.appendChild(dateInput);
+  modal.appendChild(confirmBtn);
+  mask.appendChild(modal);
+  document.body.appendChild(mask);
+}
+
+/** 影评窗（写影评 / 改影评共用）：多行文本；遮罩点击/ESC 关闭，无取消按钮。空文本 = 删除影评字段。 */
+export function openReviewModal(item: MovieItem, app: App, title: string): void {
+  const mask = document.createElement('div');
+  mask.className = 'bz-movie-tiny-mask';
+  const modal = document.createElement('div');
+  modal.className = 'bz-movie-tiny-modal';
+
+  const t = document.createElement('div');
+  t.className = 'bz-movie-tiny-title';
+  t.textContent = title;
+
+  const reviewArea = document.createElement('textarea');
+  reviewArea.className = 'bz-movie-tiny-textarea';
+  reviewArea.placeholder = '写点什么…';
+  if (item.review) reviewArea.value = item.review;
+
+  const confirmBtn = document.createElement('button');
+  confirmBtn.type = 'button';
+  confirmBtn.className = 'bz-movie-tiny-confirm';
+  confirmBtn.textContent = '确认';
+
+  const modalEsc = escManager.register('bz-movie-review', {
+    isVisible: () => mask.isConnected,
+    close: () => closeMovieTinyModal(mask, modalEsc),
+  });
+
+  confirmBtn.addEventListener('click', async () => {
+    const reviewText = reviewArea.value.trim();
+    await app.fileManager.processFrontMatter(item.file, (fm: Record<string, any>) => {
+      if (reviewText) fm['影评'] = reviewText;
+      else delete fm['影评'];
+    });
+    notice(reviewText ? '已保存影评' : '已删除影评', 'success');
+    closeMovieTinyModal(mask, modalEsc);
+    refreshDataAndView(app);
+  });
+
+  mask.addEventListener('click', (e) => {
+    if (e.target === mask) closeMovieTinyModal(mask, modalEsc);
+  });
+
+  modal.appendChild(t);
+  modal.appendChild(reviewArea);
+  modal.appendChild(confirmBtn);
+  mask.appendChild(modal);
+  document.body.appendChild(mask);
+}
+
+/** 删除影视笔记（二次确认，不可撤销） */
+function confirmDeleteMovie(item: MovieItem, app: App): void {
+  confirm({
+    title: '删除影视',
+    message: `确定删除《${item.name}》吗？\n\n此操作不可撤销，影视笔记将从笔记库永久删除。`,
+    confirmText: '删除',
+    onConfirm: async () => {
+      await app.vault.delete(item.file);
+      notice('影视已删除', 'success');
+      refreshDataAndView(app);
+    },
+  });
+}
+
+/** 挂统一操作（桌面 hover 条 + 移动端抽屉）：打开 > 状态流转 > 写/改影评 > 编辑 > 删除 */
+function attachMovieActions(card: HTMLElement, item: MovieItem, app: App): void {
+  const actions: ItemAction[] = [];
+  actions.push({ icon: 'external-link', label: '打开', title: '打开影视笔记', onClick: () => openMovieNote(item, app) });
+  if (item.status === STATUS_WANT) {
+    actions.push({ icon: 'eye', label: '标记在看', title: '标记在看', onClick: () => void setMovieStatus(item, STATUS_WATCHING, app) });
+  } else if (item.status === STATUS_WATCHING) {
+    actions.push({ icon: 'check-circle', label: '标记已看', title: '标记已看', onClick: () => openRateModal(item, app, '标记已看') });
+  } else {
+    actions.push({ icon: 'star', label: '改评分', title: '改评分', onClick: () => openRateModal(item, app, '修改评分') });
+  }
+  // 有影评显示「改影评」，无影评显示「写影评」
+  actions.push({
+    icon: 'message-square',
+    label: item.review ? '改影评' : '写影评',
+    title: item.review ? '改影评' : '写影评',
+    onClick: () => openReviewModal(item, app, item.review ? '改影评' : '写影评'),
+  });
+  actions.push({ icon: 'pencil', label: '编辑', title: '编辑影视信息', onClick: () => openEditModal(item, app) });
+  actions.push({
+    icon: 'trash-2',
+    label: '删除',
+    title: '删除',
+    kind: 'danger',
+    onClick: () => confirmDeleteMovie(item, app),
+  });
+  attachItemActions(card, actions, { sheetHead: buildMovieSheetHead(item, app) });
 }
