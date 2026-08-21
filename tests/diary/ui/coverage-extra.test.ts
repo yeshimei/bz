@@ -6,7 +6,7 @@ import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { setApp } from '../../../src/diary/app';
 import { applyDirectories, resetTagsConfig } from '../../../src/diary/config';
 import { init } from '../../../src/diary/ui/panel';
-import { createEntryCard, copyLink, jumpToEntry, cancelEdit, removeCard, insertCard, updateSticky } from '../../../src/diary/ui/entries';
+import { createEntryCard, buildSheetHead, copyLink, jumpToEntry, cancelEdit, removeCard, insertCard, updateSticky } from '../../../src/diary/ui/entries';
 import { createTagPicker, showTagPicker, updateTags, createAddDialog, openAddDialog, createDatePicker } from '../../../src/diary/ui/dialogs';
 import { createDateTimeControl, syncDateTime, showDateTimePicker } from '../../../src/diary/ui/datetime-picker';
 import { state } from '../../../src/diary/state';
@@ -144,7 +144,7 @@ describe('entries 补测', () => {
     vi.useRealTimers();
   });
 
-  it('长按卡片 → 抽屉条件显示：加密条目无「打开/复制双链/加密」，含「解密」，头部显示已加密占位', async () => {
+  it('长按卡片 → 抽屉条件显示：加密条目无「打开/复制双链/加密」，含「解密」，头部与普通一致显示明文', async () => {
     MockPlatform.isMobile = true;
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     const entry = { ...soloEntry(), id: 'enc-1', encrypted: true, noteId: 'note-1' } as any;
@@ -157,7 +157,7 @@ describe('entries 补测', () => {
     const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
     expect(sheet).not.toBeNull();
     const bodyText = (sheet.querySelector('.bz-item-sheet-body') as HTMLElement).textContent!;
-    // 头部占位含「已加密」字样，动作区断言限定在 body
+    // 动作区断言限定在 body（头部与普通一致显示明文，无「已加密」占位）
     expect(bodyText).not.toContain('打开');
     expect(bodyText).not.toContain('复制双链');
     expect(bodyText).not.toContain('复制正文');
@@ -165,9 +165,41 @@ describe('entries 补测', () => {
     expect(bodyText).toContain('解密');
     expect(bodyText).toContain('改分类');
     expect(bodyText).toContain('删除');
-    // 头部：已加密占位（不渲染密文）
+    // 头部：与普通条目一致渲染明文内容（解锁态明文在内存，显示与列表一字不差）
     const head = sheet.querySelector('.bz-item-sheet-head') as HTMLElement;
-    expect(head.textContent).toContain('已加密');
+    expect(head.textContent).not.toContain('已加密');
+    expect(head.textContent).toContain(entry.content.trim());
+    MockPlatform.isMobile = false;
+    vi.useRealTimers();
+  });
+
+  it('buildSheetHead：单选标签时仍显示完整 emoji 序列（列表卡片收缩、抽屉头部完整，两处解耦）', () => {
+    const entry = { ...soloEntry(), id: 'test-9', tags: ['书', '电影'], emoji: '📕🎬' } as any;
+    state.ui.singleSelectedTagForDisplay = '书';
+    const card = createEntryCard(entry);
+    expect((card.querySelector('.diary-emoji') as HTMLElement).textContent).toBe('📕'); // 列表收缩
+    const head = buildSheetHead(entry);
+    expect((head.querySelector('.bz-item-sheet-emoji') as HTMLElement).textContent).toBe('📕🎬'); // 抽屉完整
+    state.ui.singleSelectedTagForDisplay = null;
+  });
+
+  it('抽屉加密动作：附件数小字 + 未解锁保持默认外观（无强调色 class）', async () => {
+    MockPlatform.isMobile = true;
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
+    vault.files.set('a.png', 'x');
+    state.data.originalDiaryEntries[0] = { ...soloEntry(), content: '看图 ![[a.png]]' } as any;
+    const card = createEntryCard(state.data.originalDiaryEntries[0]);
+    document.body.appendChild(card);
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 100, clientY: 100 }));
+    await vi.advanceTimersByTimeAsync(550);
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    const encItem = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('加密')
+    ) as HTMLElement;
+    expect((encItem.querySelector('.bz-item-sheet-item-sub') as HTMLElement).textContent).toBe('1 附件');
+    expect(encItem.classList.contains('bz-item-sheet-item--accent')).toBe(false); // 未解锁默认外观
     MockPlatform.isMobile = false;
     vi.useRealTimers();
   });

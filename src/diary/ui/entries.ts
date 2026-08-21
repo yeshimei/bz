@@ -9,8 +9,9 @@ import { attachItemActions, type ItemAction } from '../../core/item-actions';
 import { getApp } from '../app';
 import { BATCH_SIZE, DIARY_DIRECTORY, MOVIE_DIRECTORY, getSubTagsOfPrimary, getTagEmoji } from '../config';
 import { deleteEntry, getIsProcessingRemainingFiles, refreshFile, reloadWithEncrypted } from '../store';
-import { ENCRYPT_TAG, deleteEncryptedEntry, encryptEntry, reclassifyEntry } from '../encrypt';
-import { ensureSafeUnlocked } from '../../encrypt';
+import { ENCRYPT_TAG, deleteEncryptedEntry, encryptEntry, isUnlocked, reclassifyEntry } from '../encrypt';
+import { ensureSafeUnlocked, getSafeManager } from '../../encrypt';
+import { collectNoteAttachmentPaths } from '../../encrypt/ui';
 import { state } from '../state';
 import type { DateFilter, DiaryEntry } from '../types';
 import { getContentRenderModeSetting } from './ui-settings';
@@ -193,7 +194,7 @@ export function renderEntries() {
 
 // ===== 条目卡片（原 2032-2098） =====
 
-/** 显示的 emoji 序列：单选标签时只显示选中标签的 emoji（列表与抽屉头部共用，两处一字不差） */
+/** 显示的 emoji 序列：单选标签时只显示选中标签的 emoji（列表卡片专用；抽屉头部用 entry.emoji 完整序列） */
 function getDisplayEmojiSeq(entry: DiaryEntry): string {
   if (state.ui.singleSelectedTagForDisplay && entry.tags.includes(state.ui.singleSelectedTagForDisplay)) {
     return getTagEmoji(state.ui.singleSelectedTagForDisplay);
@@ -202,7 +203,26 @@ function getDisplayEmojiSeq(entry: DiaryEntry): string {
 }
 
 /**
+ * 条目附件数量：
+ * - 普通条目：正文里图片/视频引用计数（与加密时收集附件同源，正则为主）；
+ * - 加密条目：保险箱清单里该 note 的附件数（还原时一并放回）。
+ */
+function getEntryAttachmentCount(entry: DiaryEntry): number {
+  if (entry.encrypted) {
+    try {
+      const note = getSafeManager().manifest?.notes.find((n) => n.id === entry.noteId);
+      return note ? note.attachments.length : 0;
+    } catch (e) {
+      return 0; // 降级链：保险箱未初始化/设置未注入视为无附件
+    }
+  }
+  const datePath = `${DIARY_DIRECTORY}/${entry.date}.md`;
+  return collectNoteAttachmentPaths(getApp(), datePath, entry.content || '').length;
+}
+
+/**
  * 抽屉顶部信息区：与列表卡片一致的 emoji + 时间 + 内容（同渲染路径）。
+ * 差异化：emoji 始终显示完整序列（entry.emoji），不随列表单选标签收缩。
  * 加密条目（解锁态，明文已在内存）与普通条目显示完全一致；
  * 「隐藏」由未解锁完全不可见兜底（ADR-0017：密文绝不进列表，解锁后才解密进内存）。
  */
@@ -214,7 +234,7 @@ export function buildSheetHead(entry: DiaryEntry): HTMLElement {
   infoRow.className = 'bz-item-sheet-entry-info';
   const emoji = document.createElement('span');
   emoji.className = 'bz-item-sheet-emoji'; // 与列表头部一致：20px 独立 span
-  emoji.textContent = getDisplayEmojiSeq(entry);
+  emoji.textContent = entry.emoji; // 完整序列（所有标签图标），与列表收缩逻辑解耦
   infoRow.appendChild(emoji);
   const timeSpan = document.createElement('span');
   timeSpan.className = 'bz-item-sheet-time'; // 与列表头部一致：16px 加粗
@@ -303,6 +323,7 @@ export function createEntryCard(entry: DiaryEntry) {
 
   // 统一操作条/长按浮层（手势统一）：
   // 非加密：打开 > 复制双链 > 复制正文 > 改标签 > 加密 > 删除；加密：解密 > 改分类 > 删除
+  // 加密/解密：小字只带附件数（无附件不显示），已解锁时图标+小字换强调色（未解锁保持默认外观）
   const actions: ItemAction[] = [];
   if (!entry.encrypted) {
     actions.push({ icon: 'external-link', label: '打开', title: '打开原文', onClick: () => void jumpToEntry(entry) });
@@ -315,9 +336,25 @@ export function createEntryCard(entry: DiaryEntry) {
       onClick: () => void copyEntryContent(entry.id!),
     });
     actions.push({ icon: 'tag', label: '改标签', title: '改标签', onClick: () => showTagPicker(entry.id!) });
-    actions.push({ icon: 'lock', label: '加密', title: '加密（移入保险箱）', onClick: () => void encryptFromSheet(entry.id!) });
+    const attCount = getEntryAttachmentCount(entry);
+    actions.push({
+      icon: 'lock',
+      label: '加密',
+      title: '加密（移入保险箱）',
+      sub: attCount > 0 ? `${attCount} 附件` : undefined,
+      tone: isUnlocked() ? 'accent' : undefined,
+      onClick: () => void encryptFromSheet(entry.id!),
+    });
   } else {
-    actions.push({ icon: 'unlock', label: '解密', title: '解密还原', onClick: () => void decryptFromSheet(entry.id!) });
+    const attCount = getEntryAttachmentCount(entry);
+    actions.push({
+      icon: 'unlock',
+      label: '解密',
+      title: '解密还原',
+      sub: attCount > 0 ? `${attCount} 附件` : undefined,
+      tone: isUnlocked() ? 'accent' : undefined,
+      onClick: () => void decryptFromSheet(entry.id!),
+    });
     actions.push({ icon: 'tag', label: '改分类', title: '改分类（解密）', onClick: () => showTagPicker(entry.id!) });
   }
   actions.push({
