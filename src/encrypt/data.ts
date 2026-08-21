@@ -86,6 +86,16 @@ export interface HealthReport {
   integrityChecked: boolean;
 }
 
+/** 体检进度回调（UI 动态显示：逐项检查即时报进度与新增发现） */
+export interface HealthProgress {
+  done: number;
+  total: number;
+  /** 当前正在检查的对象（条目标题/文件名/附件路径） */
+  current: string;
+  /** 本次回调新发现的问题（增量，UI 实时追加） */
+  found: HealthItem[];
+}
+
 /** 加锁请求：由协调层（UI/测试）准备好各层数据与可选预览 */
 export interface LockAttachmentInput {
   path: string;
@@ -599,13 +609,24 @@ export class SafeManager {
    *    预览层不校验——还原不依赖预览层，缺失不致命。
    *    损坏/缺失类只报告、不清理（删了就是真丢数据，由用户决定从备份恢复），
    *    只有 dead-entry 与 orphan-file 可勾选清理。
+   * @param onProgress 进度回调（逐项检查时调用：done/total/当前对象/本次新增发现，UI 动态显示）
    * @returns { items: 问题清单, integrityChecked: 是否执行了解密完整性检测（未解锁为 false） }
    */
-  async scanHealth(): Promise<HealthReport> {
+  async scanHealth(onProgress?: (p: HealthProgress) => void): Promise<HealthReport> {
     const items: HealthItem[] = [];
     // 未解锁：清单明文不在内存（lock 已清空），无引用判定依据——绝不做对账，
     // 否则会把全部正文镜像误判为孤儿（灾难性误删）。UI 层保证解锁后才体检，这里双保险。
     if (!this.unlocked || !this.password) return { items, integrityChecked: false };
+
+    // 进度总步数：孤儿文件轮 1 + 每条（容器存在性 1 + 正文完整性 1 + 附件各自 1）
+    let total = 1;
+    for (const n of this.manifest.notes) total += 2 + n.attachments.length;
+    let done = 0;
+    const emit = (current: string, fresh: HealthItem[]) => {
+      done += 1;
+      if (fresh.length) items.push(...fresh); // 增量发现既进报告，也随回调给 UI 实时追加
+      onProgress?.({ done, total, current, found: fresh });
+    };
 
     // 清单侧对账：正文镜像缺失 = 失效条目（不解密）
     for (const n of this.manifest.notes) {
@@ -617,9 +638,11 @@ export class SafeManager {
           bodyExists = false;
         }
       }
+      const fresh: HealthItem[] = [];
       if (!bodyExists) {
-        items.push({ cat: 'dead-entry', key: 'entry:' + n.id, label: n.title, noteId: n.id });
+        fresh.push({ cat: 'dead-entry', key: 'entry:' + n.id, label: n.title, noteId: n.id });
       }
+      emit(n.title, fresh);
     }
 
     // 文件侧对账：未被任何清单引用（contentRef/blobRef/previewRef）的顶层点前缀密文 = 孤儿
@@ -631,19 +654,23 @@ export class SafeManager {
         if (a.hasPreview && a.previewRef) referenced.add(a.previewRef);
       }
     }
-    try {
-      if (await this.adapter.exists(this.root)) {
-        const listing = await this.adapter.list(this.root);
-        for (const f of listing.files) {
-          const name = f.slice(f.lastIndexOf('/') + 1);
-          if (name === '.safe.enc') continue; // 清单本体绝不触碰
-          if (!name.startsWith('.') || !name.endsWith('.enc')) continue; // 只认平铺点前缀密文形态
-          if (referenced.has(name)) continue;
-          items.push({ cat: 'orphan-file', key: 'file:' + name, label: name, ref: name });
+    {
+      const fresh: HealthItem[] = [];
+      try {
+        if (await this.adapter.exists(this.root)) {
+          const listing = await this.adapter.list(this.root);
+          for (const f of listing.files) {
+            const name = f.slice(f.lastIndexOf('/') + 1);
+            if (name === '.safe.enc') continue; // 清单本体绝不触碰
+            if (!name.startsWith('.') || !name.endsWith('.enc')) continue; // 只认平铺点前缀密文形态
+            if (referenced.has(name)) continue;
+            fresh.push({ cat: 'orphan-file', key: 'file:' + name, label: name, ref: name });
+          }
         }
+      } catch (e) {
+        /* 幂等 */
       }
-    } catch (e) {
-      /* 幂等 */
+      emit('孤儿密文文件', fresh);
     }
 
     // 完整性段（需解锁）：逐个正文/附件原始层解密校验
@@ -652,35 +679,48 @@ export class SafeManager {
       const password = this.password as string;
       for (const n of this.manifest.notes) {
         // 正文：已失效（dead-entry）的条目跳过（镜像缺失无完整性可言）
-        if (items.some((i) => i.cat === 'dead-entry' && i.noteId === n.id)) continue;
-        if (!n.contentRef) continue;
+        if (items.some((i) => i.cat === 'dead-entry' && i.noteId === n.id)) {
+          emit(n.title + '（失效，跳过校验）', []);
+          continue;
+        }
+        if (!n.contentRef) {
+          emit(n.title, []);
+          continue;
+        }
+        const fresh: HealthItem[] = [];
         try {
           const cipher = await this.readMirror(n.contentRef);
-          if (cipher === null) continue; // 镜像缺失已由对账段报告
-          await CryptoService.decrypt(cipher, password);
+          if (cipher !== null) await CryptoService.decrypt(cipher, password);
+          // cipher === null：镜像缺失已由对账段报告
         } catch (e) {
-          items.push({ cat: 'corrupted-body', key: 'body:' + n.id, label: n.title, noteId: n.id, ref: n.contentRef });
+          fresh.push({ cat: 'corrupted-body', key: 'body:' + n.id, label: n.title, noteId: n.id, ref: n.contentRef });
         }
+        emit(n.title, fresh);
       }
       for (const n of this.manifest.notes) {
         for (const a of n.attachments) {
-          if (!a.blobRef) continue;
+          if (!a.blobRef) {
+            emit(a.path, []);
+            continue;
+          }
           const key = 'att:' + n.id + ':' + a.path;
+          const fresh: HealthItem[] = [];
           try {
             const cipher = await this.readMirror(a.blobRef);
             if (cipher === null) {
               // 附件原始层镜像缺失（正文可读 → 条目保留，还原时该附件不可用）
-              items.push({ cat: 'missing-attachment', key, label: a.path, noteId: n.id, ref: a.blobRef });
-              continue;
-            }
-            const plain = await CryptoService.decrypt(cipher, password);
-            const fp = await fingerprintOf(plain);
-            if (fp !== a.fingerprint) {
-              items.push({ cat: 'corrupted-attachment', key, label: a.path, noteId: n.id, ref: a.blobRef });
+              fresh.push({ cat: 'missing-attachment', key, label: a.path, noteId: n.id, ref: a.blobRef });
+            } else {
+              const plain = await CryptoService.decrypt(cipher, password);
+              const fp = await fingerprintOf(plain);
+              if (fp !== a.fingerprint) {
+                fresh.push({ cat: 'corrupted-attachment', key, label: a.path, noteId: n.id, ref: a.blobRef });
+              }
             }
           } catch (e) {
-            items.push({ cat: 'corrupted-attachment', key, label: a.path, noteId: n.id, ref: a.blobRef });
+            fresh.push({ cat: 'corrupted-attachment', key, label: a.path, noteId: n.id, ref: a.blobRef });
           }
+          emit(a.path, fresh);
         }
       }
     }

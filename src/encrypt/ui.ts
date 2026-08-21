@@ -394,9 +394,10 @@ export class UIManager {
     foot.appendChild(rescanBtn);
     foot.appendChild(closeFootBtn);
     popup.appendChild(foot);
+    // 弹窗必须挂在遮罩内（mask 的 flex 居中承载；误挂 body 会脱离 flex 容器，
+    // 且本卡片无 fixed 定位 → 沉入文档流被遮罩盖住——曾出现「只有遮罩没有内容」）
     mask.appendChild(popup);
     document.body.appendChild(mask);
-    document.body.appendChild(popup);
     // 点遮罩（非内容区）关闭 = 取消（同解锁弹窗语义）
     mask.onclick = (e) => {
       if (e.target === mask) this.hideHealthDialog();
@@ -415,17 +416,49 @@ export class UIManager {
     if (this.healthPopup) this.healthPopup.style.display = 'none';
   }
 
+  /** 体检执行：动态显示（用户拍板）——扫描是长任务（逐镜像 PBKDF2），
+   *  顶部实时进度（计数 + 当前对象），发现的问题即时追加，扫完再整理成完整勾选报告。 */
   private async runHealthScan() {
     if (!this.healthPopup) return;
     const body = this.healthPopup.querySelector('#bz-encrypt-health-body') as HTMLElement | null;
     if (!body) return;
     body.innerHTML = '';
-    const loading = document.createElement('div');
-    loading.className = 'bz-encrypt-preview-loading';
-    loading.textContent = '体检中…';
-    body.appendChild(loading);
+    // 骨架：进度区（文本 + 条，宽度为功能性动态计算）+ 实时发现区
+    const progress = document.createElement('div');
+    progress.className = 'bz-encrypt-health-progress';
+    progress.textContent = '体检中…';
+    const bar = document.createElement('div');
+    bar.className = 'bz-encrypt-health-bar';
+    const barFill = document.createElement('i');
+    barFill.style.width = '0%';
+    bar.appendChild(barFill);
+    body.appendChild(progress);
+    body.appendChild(bar);
+    const live = document.createElement('div');
+    live.className = 'bz-encrypt-health-live';
+    const liveTitle = document.createElement('div');
+    liveTitle.className = 'bz-encrypt-health-section-title';
+    liveTitle.textContent = '发现的异常';
+    live.appendChild(liveTitle);
+    body.appendChild(live);
     try {
-      const report = await this.dataManager.scanHealth();
+      const report = await this.dataManager.scanHealth((p) => {
+        progress.textContent = `检查中 ${p.done}/${p.total} · ${truncateName(p.current)}`;
+        barFill.style.width = Math.round((p.done / p.total) * 100) + '%';
+        for (const item of p.found) {
+          const row = document.createElement('div');
+          row.className =
+            'bz-encrypt-health-item ' +
+            (item.cat === 'corrupted-body' || item.cat === 'corrupted-attachment'
+              ? 'bz-encrypt-health-item--bad'
+              : item.cat === 'missing-attachment'
+                ? 'bz-encrypt-health-item--warn'
+                : '');
+          row.textContent = item.label;
+          live.appendChild(row);
+        }
+      });
+      // 扫描完成：全量重渲染（分类规整 + 勾选框 + 底部按钮计数）
       this.renderHealthReport(report, body);
     } catch (e: any) {
       body.innerHTML = '';
