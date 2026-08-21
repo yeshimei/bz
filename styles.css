@@ -2790,20 +2790,25 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   max-height: 40vh;
   overflow-y: auto;
 }
-/* 条目展示：标题与 meta 行上下排列，留足间距（memo/diary 共用） */
+/* 条目展示：标题与 meta 行上下排列，留足间距（memo/diary 共用）；抽屉内信息同样禁止选字复制 */
 .bz-item-sheet-entry {
   display: flex; flex-direction: column; gap: 8px;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 .bz-item-sheet-entry-info {
   display: flex; align-items: center; gap: 6px;
-  font-size: 13px; color: var(--text-muted);
+  font-size: 14px; color: var(--text-muted);
 }
+/* 头部内容：固定区域展示，超出三行省略（不滚动） */
 .bz-item-sheet-entry-content {
   font-size: 14px; color: var(--text-normal);
-  line-height: 1.6; max-height: 26vh; overflow-y: auto;
-  word-break: break-word;
+  line-height: 1.6; word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
-.bz-item-sheet-entry-content::-webkit-scrollbar { display: none; }
 .bz-item-sheet-title {
   font-size: 14px; font-weight: 600; color: var(--text-normal);
   line-height: 1.4; word-break: break-word;
