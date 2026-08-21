@@ -5,7 +5,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SafeManager, fingerprintOf, flatName } from '../../src/encrypt/data';
-import { CryptoService } from '../../src/password/crypto';
+import { CryptoService, clearCryptoKeyCache } from '../../src/password/crypto';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
 
@@ -198,6 +198,28 @@ describe('SafeManager 加锁', () => {
     // 未解锁 → 抛错（与 decryptPreview 同规约）
     sm.lock();
     await expect(sm.decryptAttachmentOriginal(att)).rejects.toThrow('未解锁');
+  });
+
+  it('lock 清空派生密钥缓存：上锁后再次解锁解密需重新派生（密钥不残留内存）', async () => {
+    clearCryptoKeyCache();
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await lockSample(sm, { content: '# A' });
+    // 解锁态解密一次（正文/清单的 key 均已入缓存）
+    expect(await sm.decryptNoteBody(note)).toContain('# A');
+    // 打真实 PBKDF2 派生点：若 lock 未清缓存，重解锁/解密全部命中缓存 → 0 次派生
+    const spy = vi.spyOn(crypto.subtle, 'deriveKey' as any);
+    try {
+      sm.lock();
+      await sm.unlock('pw');
+      expect(await sm.decryptNoteBody(note)).toContain('# A');
+      // 缓存被清：清单 + 正文均重新派生（> 0）
+      expect(spy.mock.calls.length).toBeGreaterThan(0);
+    } finally {
+      spy.mockRestore();
+      clearCryptoKeyCache();
+    }
   });
 });
 

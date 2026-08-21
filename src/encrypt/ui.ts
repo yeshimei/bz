@@ -15,13 +15,11 @@ import { formatRelativeTime } from '../core/utils';
 import { getSettings, saveSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
 import { SafeManager, base64ToBytes, type SafeNote, type SafeAttachment } from './data';
-import { compressImage, videoFrame } from './preview';
+import { compressImage, videoFrame, PREVIEW_OMIT_SIZE, PREVIEW_OMIT_QUALITY } from './preview';
 
 export interface EncryptUIConfig {
   root: string;
   previewEnabled: boolean;
-  previewSize: number;
-  previewQuality: number;
   securityMode: boolean;
 }
 
@@ -502,21 +500,26 @@ export class UIManager {
   /** 预览窗正文异步填充：解密 → 渲染（带超时兜底）→ 图随文走 → 画廊 */
   private async fillPreviewBody(note: SafeNote, body: HTMLDivElement) {
     try {
-      const plain = (await this.dataManager.decryptNoteBody(note)) ?? '';
-      // 先把嵌入改写占位 token（按文档顺序混排），渲染后再原位替换为预览图
-      const { text, slots, inlined } = collectMediaSlots(plain, note.attachments);
-      // 预先解密所有附件的预览层（每个只解一次；嵌入与底部画廊共用）
-      const dataUrls = new Map<string, string>();
+      // 正文与全部预览层并行解密（PBKDF2 派生在浏览器多线程实现，串行逐个解会很慢；
+      // 并行后多附件预览窗显著提速；每个附件只解一次，嵌入与底部画廊共用）
+      const bodyP = this.dataManager.decryptNoteBody(note);
+      const previewP: Promise<{ path: string; du: string }>[] = [];
+      const seen = new Set<string>();
       for (const a of note.attachments) {
-        if (!a.hasPreview || dataUrls.has(a.path)) continue;
-        let du = '';
-        try {
-          du = (await this.dataManager.decryptPreview(a)) || '';
-        } catch (e) {
-          du = '';
-        }
-        dataUrls.set(a.path, du);
+        if (!a.hasPreview || seen.has(a.path)) continue;
+        seen.add(a.path);
+        previewP.push(
+          this.dataManager.decryptPreview(a).then(
+            (du) => ({ path: a.path, du: du || '' }),
+            () => ({ path: a.path, du: '' })
+          )
+        );
       }
+      const [plain, previewResults] = await Promise.all([bodyP, Promise.all(previewP)]);
+      const dataUrls = new Map<string, string>();
+      for (const r of previewResults) dataUrls.set(r.path, r.du);
+      // 先把嵌入改写占位 token（按文档顺序混排），渲染后再原位替换为预览图
+      const { text, slots, inlined } = collectMediaSlots(plain ?? '', note.attachments);
       // Markdown 渲染（占位 token 原样保留）——带超时：render 挂起时降级纯文本而不是让弹窗空白
       const mdEl = document.createElement('div');
       mdEl.className = 'bz-encrypt-preview-md';
@@ -685,28 +688,10 @@ export class UIManager {
           );
         new Setting(el)
           .setName('生成压缩预览')
-          .setDesc('加密时生成图片/视频压缩预览层（体积小但看得清）')
+          .setDesc('加密时生成省略图预览层（固定小尺寸，看不清时点击缩略图加载原图/视频）')
           .addToggle((toggle) =>
             toggle.setValue(!!s.encryptPreviewEnabled).onChange(async (v) => {
               s.encryptPreviewEnabled = v;
-              await saveSettings();
-            })
-          );
-        new Setting(el)
-          .setName('预览目标长边（px）')
-          .setDesc('压缩/抽帧预览（省略图）的目标分辨率长边，越小预览打开越快；点击缩略图可加载原图/视频')
-          .addText((text) =>
-            text.setValue(String(s.encryptPreviewSize || '480')).onChange(async (v) => {
-              s.encryptPreviewSize = v;
-              await saveSettings();
-            })
-          );
-        new Setting(el)
-          .setName('预览质量')
-          .setDesc('JPEG 压缩质量 0-1，模糊可接受时调低更省空间')
-          .addText((text) =>
-            text.setValue(String(s.encryptPreviewQuality || '0.7')).onChange(async (v) => {
-              s.encryptPreviewQuality = v;
               await saveSettings();
             })
           );
@@ -817,8 +802,9 @@ export class EncryptAppController {
     if (!proceed) return;
 
     const attachments: any[] = [];
-    const size = this.config.previewSize || 480;
-    const quality = this.config.previewQuality || 0.5;
+    // 省略图固定档（无设置项）：长边 256 / 质量 0.45，预览只要看得清，点击缩略图加载原始质量
+    const size = PREVIEW_OMIT_SIZE;
+    const quality = PREVIEW_OMIT_QUALITY;
     // Q3-A：任一附件读取失败 → 整笔放弃（不落任何东西、原文件不动）；预览失败不算失败（可选增强）
     for (const p of attPaths) {
       try {
