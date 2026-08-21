@@ -4,10 +4,11 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, Platform as MockPlatform } from '../mock-obsidian-entry';
 import { M, resetMovieState } from '../../src/movie/state';
 import { buildAnalysisData, openAnalysisModal, closeAnalysis } from '../../src/movie/analysis';
 import { openMovieReport } from '../../src/movie/index';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 
 function makeApp(vault: MockVault) {
   return mockAppWithVault(vault);
@@ -109,7 +110,7 @@ describe('buildAnalysisData 数据采集', () => {
 });
 
 describe('openAnalysisModal 弹窗', () => {
-  it('打开：遮罩 + 顶部 34px 内边距 + 标题；❌ 关闭', () => {
+  it('打开：遮罩 + 标题；❌ 关闭；移动端+开关开 → 分析窗挂 bz-win-mfs（ticket 68，基样式不再自带 34px 防双重垫顶）', () => {
     const vault = new MockVault();
     vault.files.set('我的/影视/《A》.md', movieMd({ tags: ['电影'], '观影日期': '2025-06-01T20:00:00', 评分: 5 }));
     openAnalysisModal(makeApp(vault));
@@ -117,7 +118,9 @@ describe('openAnalysisModal 弹窗', () => {
     const overlay = document.body.querySelector('div[style*="z-index: 1200"]') as HTMLElement;
     expect(overlay).not.toBeNull();
     const modal = overlay.querySelector(':scope > div') as HTMLElement;
-    expect(modal.style.paddingTop).toBe('34px');
+    // 顶部 34px 避让由 .bz-win-mfs 统一提供（仅移动端真全屏），基样式不再自带（ticket 68 后续）
+    expect(modal.style.paddingTop).toBe('');
+    expect(modal.classList.contains('bz-win-mfs')).toBe(false);
     expect(overlay.textContent).toContain('📊 观影数据分析');
     expect(overlay.textContent).toContain('收录总数');
 
@@ -125,6 +128,16 @@ describe('openAnalysisModal 弹窗', () => {
     const closeBtn = [...overlay.querySelectorAll('button')].find((b) => b.textContent === '❌')!;
     closeBtn.click();
     expect(overlay.isConnected).toBe(false);
+
+    // 移动端 + 开关开 → 真全屏类（与影视主面板同一键控制）
+    MockPlatform.isMobile = true;
+    setSettingsProvider(() => ({ movieMobileDefaultFullscreen: true } as any));
+    openAnalysisModal(makeApp(vault));
+    const overlay2 = document.body.querySelector('div[style*="z-index: 1200"]') as HTMLElement;
+    expect(overlay2).not.toBeNull();
+    expect((overlay2.querySelector(':scope > div') as HTMLElement).classList.contains('bz-win-mfs')).toBe(true);
+    closeAnalysis();
+    MockPlatform.isMobile = false;
   });
 
   it('已打开再调用 → 关闭（切换语义）；点遮罩关闭', () => {

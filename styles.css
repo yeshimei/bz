@@ -137,7 +137,8 @@
 
 @media (max-width: 768px) {
     /* 主窗口常规卡由内联基样式承担；真全屏统一走 .bz-win-mfs（ticket 68） */
-    #diary-tag-filter .diary-popup-header {
+    /* 头排内边距：常规形态（含移动端常规卡）自持；真全屏（.bz-win-mfs）时让位给统一顶部避让（ticket 68 后续） */
+    #diary-tag-filter:not(.bz-win-mfs) .diary-popup-header {
         padding: 16px 20px 12px 20px !important;
     }
 
@@ -1073,6 +1074,23 @@
   .news-settings-btn { display: flex; align-items: center; justify-content: center; }
 }
 
+/* ==================== 主窗口头部按钮统一去阴影去边框（ticket 68 后续，用户拍板） ==================== */
+/* 头排图标按钮不套主题 button 默认样式：box-shadow/border 一律清除（!important 压制主题 button:not(.clickable-icon)） */
+#diary-tag-filter .diary-popup-header button,
+#todo-popup .bz-todo-head-btns button,
+#pw-popup > div:first-child button,
+#review-popup > div:first-child button,
+#fav-popup .fav-header button,
+#__book_library__ .bz-lib-header-btns button,
+#bz-encrypt-popup .bz-encrypt-head-btns button,
+#__gui_wu_ben__ button,
+#pomodoro-popup button,
+.news-close-btn,
+.news-settings-btn {
+  box-shadow: none !important;
+  border: none !important;
+}
+
 /* ==================== 剪藏本（clipping，ticket 60 收敛：原 CLIPPING_CSS + 滚动条注入，逐字搬运） ==================== */
         #article-view-popup {
             animation: slideUp 0.3s ease-out;
@@ -1933,7 +1951,7 @@
 /* 图标按钮（原 core/dom.ts createIconBtn 内联；hover 背景移 CSS；尺寸按关闭/普通两档类） */
 .bz-icon-btn {
   background: none;
-  border: none;
+  border: none !important;
   cursor: pointer;
   color: var(--text-muted);
   padding: 0;
@@ -1941,7 +1959,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: none;
+  box-shadow: none !important;
   font-size: 14px;
   width: 22px;
   height: 26px;
@@ -2445,9 +2463,9 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   .bz-win-mfs > div:first-child {
     padding-top: max(34px, env(safe-area-inset-top)) !important;
   }
-  /* news 自垫例外（原 58px 语义）：真全屏时弹窗自身垫顶，首子不再垫 */
+  /* news 自垫例外：真全屏时弹窗自身垫顶（与各域统一 34px 顶距），首子不再垫（首子是绝对定位关闭钮） */
   .news-popup.bz-win-mfs {
-    padding-top: max(58px, env(safe-area-inset-top)) !important;
+    padding-top: max(34px, env(safe-area-inset-top)) !important;
   }
   .news-popup.bz-win-mfs > div:first-child {
     padding-top: 0 !important;
