@@ -97,13 +97,36 @@ describe('聚合讯阅读流', () => {
     await loadStats();
     await loadArticles();
     render();
+    // 剩最后一篇时「下一篇」按钮变为完成说明
     skipArticle();
+    expect(document.querySelector('[data-action="next"]')!.textContent).toContain('最后一篇');
+    expect(document.querySelector('.news-counter')!.textContent).toContain('1 / 2');
     skipArticle();
 
     const doneText = document.querySelector('.news-card-area')!.textContent!;
     expect(doneText).toContain('今日阅读');
     expect(doneText).toContain('2 篇');
     expect(doneText).toContain('今日文章已读完，欢迎明天再来！');
+    // 完成态底部栏保留最终计数（右下角 1 / 2 → 2 / 2），且无操作按钮
+    const doneCounter = document.querySelector('.news-bottombar .news-counter')!;
+    expect(doneCounter).not.toBeNull();
+    expect(doneCounter.textContent).toContain('2 / 2');
+    expect(document.querySelectorAll('.news-bottombar .news-btn').length).toBe(0);
+  });
+
+  it('打开时只剩最后一篇：按钮即完成说明，读完显示最终计数 1 / 1', async () => {
+    const vault = getVault();
+    const saved = JSON.parse(vault.files.get('CONFIG/STORAGE/news.json')!);
+    saved[0].read = true; // 只留第二篇未读
+    vault.files.set('CONFIG/STORAGE/news.json', JSON.stringify(saved));
+    await loadStats();
+    await loadArticles();
+    render();
+
+    expect(document.querySelector('[data-action="next"]')!.textContent).toContain('最后一篇');
+    expect(document.querySelector('.news-counter')!.textContent).toContain('0 / 1');
+    skipArticle();
+    expect(document.querySelector('.news-bottombar .news-counter')!.textContent).toContain('1 / 1');
   });
 
   it('news-stats.json：recordStat 累计并落盘（byPlatform/byDate）', async () => {
