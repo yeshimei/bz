@@ -34,6 +34,21 @@
 8. **通知写法**：消息正文一律**不带 emoji 前缀**（类型图标即视觉前缀，重复）；新语义先查 `src/core/notice.ts` ICONS 表（11 类型：info/success/warning/error/pause/accept/delete/confirm/restore/skip/archive），确无匹配才新增（ICONS 项 + 颜色 class + 默认时长），不得把 emoji 写进正文；规范详见 CONTEXT.md「通知类型规范」。
 9. **样式收敛（ticket 60）**：视觉样式一律写根 `styles.css`（构建时自动复制到插件目录，Obsidian 自动加载），新增 UI 用类名（`bz-` 前缀，如 `.bz-tag`/`.bz-suggest-box`）；**禁止**运行时注入 `<style>`（`injectStyles`/`style.textContent`）与内联视觉样式（`style.cssText`/`style="..."`）；功能性内联仅限显隐（`display`）与动态计算（高度/滚动）；`styles/<域>.css` 中间态与 `injectStyles` 注入模式已废弃（memo/news/clipping/password/favorites/review/quiz/pomodoro 已收敛）。
 
+## 主窗口样式规范（ticket 68 定稿，新增主窗口/功能参考，简化版）
+
+**新主窗口接入三件事**（参考任一已接入域，如 src/review/ui.ts）：
+1. `src/settings.ts` 加 `<域前缀>MobileDefaultFullscreen` 布尔键 + DEFAULT_SETTINGS 默认值（行为保持：原移动端即全屏 → `true`，居中卡 → `false`）；
+2. 打开路径（每次打开必经处）调 `applyMobileWindowFullscreen(popup, tryGetSettings().<键> === true)`（`src/core/mobile.ts`）；
+3. ⚙️ 域设置弹窗 build 末尾挂「移动端默认全屏」行，仅 `if (isMobileEnv())` 显示（`src/core/mobile.ts`）。
+
+**统一视觉**（规则已成套写在 styles.css「主窗口头部行统一规范」节，新窗口自动继承，勿另写差异样式）：
+- 主窗口头部行容器加类 **`.bz-win-head`**——头行自动获得 `padding:16px 24px 10px`、两端对齐、间距 8；
+- 头行按钮**自动**统一为 22×26/14px、透明、无阴影无边框、圆角 4、hover 浅灰底；自定义按钮无需再写内联尺寸/背景（写了也会被 `!important` 统一覆盖）；
+- 关闭按钮一律挂类 **`.bz-win-close`**——自动 20×24/12px 且**非真全屏自动隐藏**（桌面/卡片靠点遮罩+ESC，真全屏 `.bz-win-mfs` 才显示），无需自己写 display 控制；
+- 按钮秩序：功能按钮 → **⚙️ 设置 → 关闭**（⚙️ 紧贴关闭正前）；
+- **弹窗/小窗口不放关闭按钮**，靠点遮罩 + ESC 关闭（mask 点击 + escManager 必配，勿做「仅按钮可关」的弹窗）；
+- 全屏顶部避让统一 `max(34px, env(safe-area-inset-top))`（styles.css 全局规则，新窗口勿自写 padding-top）。
+
 ## 领域清单（src/<域>/，数据均在 CONFIG/STORAGE/，表内只写文件名）
 
 | 域 | 数据 |
