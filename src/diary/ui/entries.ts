@@ -5,13 +5,14 @@
 import { Component, MarkdownRenderer } from 'obsidian';
 import { notice } from '../../core/notice';
 import { confirm } from '../../core/confirm';
+import { attachItemActions, type ItemAction } from '../../core/item-actions';
 import { getApp } from '../app';
-import { BATCH_SIZE, DIARY_DIRECTORY, LONG_PRESS_DURATION, MOVIE_DIRECTORY, getSubTagsOfPrimary, getTagEmoji } from '../config';
+import { BATCH_SIZE, DIARY_DIRECTORY, MOVIE_DIRECTORY, getSubTagsOfPrimary, getTagEmoji } from '../config';
 import { deleteEntry, getIsProcessingRemainingFiles, reloadWithEncrypted } from '../store';
 import { deleteEncryptedEntry } from '../encrypt';
 import { state } from '../state';
 import type { DateFilter, DiaryEntry } from '../types';
-import { getContentRenderModeSetting, getEnableLongPressSetting } from './ui-settings';
+import { getContentRenderModeSetting } from './ui-settings';
 import { showTagPicker } from './dialogs';
 import { refreshSubTagsBar, updateTagCounts, updateTitleSuffix } from './filter-shared';
 
@@ -191,6 +192,48 @@ export function renderEntries() {
 
 // ===== 条目卡片（原 2032-2098） =====
 
+/** 显示的 emoji 序列：单选标签时只显示选中标签的 emoji（列表与抽屉头部共用，两处一字不差） */
+function getDisplayEmojiSeq(entry: DiaryEntry): string {
+  if (state.ui.singleSelectedTagForDisplay && entry.tags.includes(state.ui.singleSelectedTagForDisplay)) {
+    return getTagEmoji(state.ui.singleSelectedTagForDisplay);
+  }
+  return entry.tags.map((tag) => getTagEmoji(tag)).join('');
+}
+
+/**
+ * 抽屉顶部信息区：与列表卡片一致的 emoji + 时间 + 内容（同渲染路径）；
+ * 加密条目不渲染密文（安全边界，ADR-0017 密文只在保险箱预览）。
+ */
+export function buildSheetHead(entry: DiaryEntry): HTMLElement {
+  const head = document.createElement('div');
+  head.className = 'bz-item-sheet-entry';
+
+  const infoRow = document.createElement('div');
+  infoRow.className = 'bz-item-sheet-entry-info';
+  const emoji = document.createElement('span');
+  emoji.textContent = getDisplayEmojiSeq(entry);
+  infoRow.appendChild(emoji);
+  const timeSpan = document.createElement('span');
+  timeSpan.textContent = entry.time;
+  infoRow.appendChild(timeSpan);
+  head.appendChild(infoRow);
+
+  const content = document.createElement('div');
+  content.className = 'bz-item-sheet-entry-content';
+  if (entry.encrypted) {
+    content.textContent = '🔒 已加密（内容在保险箱）';
+  } else {
+    const contentText = entry.content.trim();
+    content.textContent = contentText; // 先给纯文本兜底，再按渲染模式渲染（与列表一致）
+    if (getContentRenderModeSetting() === 'markdown') {
+      const filePath = entry.filename.includes('/') ? entry.filename : `${DIARY_DIRECTORY}/${entry.filename}.md`;
+      void renderMarkdown(contentText, content, filePath);
+    }
+  }
+  head.appendChild(content);
+  return head;
+}
+
 export function createEntryCard(entry: DiaryEntry) {
   const entryCard = document.createElement('div');
   entryCard.className = 'diary-entry-card';
@@ -203,20 +246,13 @@ export function createEntryCard(entry: DiaryEntry) {
   const timeInfo = document.createElement('div');
   timeInfo.style.cssText = 'display:flex;align-items:center;gap:8px;';
 
-  // --- 决定显示的 emoji 字符串 ---
-  let displayEmojiSeq = '';
-  if (state.ui.singleSelectedTagForDisplay && entry.tags.includes(state.ui.singleSelectedTagForDisplay)) {
-    displayEmojiSeq = getTagEmoji(state.ui.singleSelectedTagForDisplay);
-  } else {
-    displayEmojiSeq = entry.tags.map((tag) => getTagEmoji(tag)).join('');
-  }
-
   const emojiSpan = document.createElement('span');
   emojiSpan.className = 'diary-emoji';
   emojiSpan.dataset.entryId = entry.id;
-  emojiSpan.textContent = displayEmojiSeq;
+  emojiSpan.textContent = getDisplayEmojiSeq(entry);
   emojiSpan.style.cssText = 'font-size:20px;cursor:pointer;user-select:none;';
 
+  // emoji 单击 = 标签选择器（高频习惯保留）；长按收敛到抽屉「改标签」
   emojiSpan.addEventListener('click', (e) => {
     e.stopPropagation();
     showTagPicker(entry.id!);
@@ -233,10 +269,7 @@ export function createEntryCard(entry: DiaryEntry) {
   const content = document.createElement('div');
   content.className = 'diary-entry-content';
   content.dataset.entryId = entry.id;
-  content.style.cssText = 'color:var(--text-normal);line-height:1.6;white-space:normal;font-size:15px;margin-bottom:12px;padding:8px;border-radius:4px;min-height:50px;cursor:text;user-select:text;';
-
-  addLongPress(content, 'content', entry.id!);
-  fixMobileSelect(content);
+  content.style.cssText = 'color:var(--text-normal);line-height:1.6;white-space:normal;font-size:15px;margin-bottom:12px;padding:8px;border-radius:4px;min-height:50px;cursor:text;';
 
   let lastClickTime = 0;
   content.addEventListener('click', async (e) => {
@@ -267,6 +300,28 @@ export function createEntryCard(entry: DiaryEntry) {
 
   entryCard.appendChild(header);
   entryCard.appendChild(content);
+
+  // 统一操作条/长按浮层（手势统一）：打开 > 复制双链 > 改标签/改分类 > 删除；加密条目隐藏打开/复制双链
+  const actions: ItemAction[] = [];
+  if (!entry.encrypted) {
+    actions.push({ icon: 'external-link', label: '打开', title: '打开原文', onClick: () => void jumpToEntry(entry) });
+    actions.push({ icon: 'link', label: '复制双链', title: '复制双链', onClick: () => copyLink(entry.id!) });
+  }
+  actions.push({
+    icon: 'tag',
+    label: entry.encrypted ? '改分类' : '改标签',
+    title: entry.encrypted ? '改分类（解密）' : '改标签',
+    onClick: () => showTagPicker(entry.id!),
+  });
+  actions.push({
+    icon: 'trash-2',
+    label: '删除',
+    title: '删除',
+    kind: 'danger',
+    onClick: () => showConfirm(entry.id!),
+  });
+  attachItemActions(entryCard, actions, { sheetHead: buildSheetHead(entry) });
+
   return entryCard;
 }
 
@@ -309,82 +364,6 @@ export async function jumpToEntry(entry: DiaryEntry, mode: 'select' | 'edit' = '
   // 关闭日记本弹窗
   if (state.ui.maskLayer) state.ui.maskLayer.style.visibility = 'hidden';
   if (state.ui.tagFilterPopup) state.ui.tagFilterPopup.style.visibility = 'hidden';
-}
-
-// ===== 长按手势（原 2140-2207） =====
-
-export function addLongPress(element: HTMLElement, type: 'content' | 'emoji', entryId: string) {
-  if (!getEnableLongPressSetting()) return; // 禁用长按
-
-  let pressTimer: ReturnType<typeof setTimeout> | null = null;
-  let isLongPress = false;
-  let touchStartX = 0;
-  let touchStartY = 0;
-  const MOVE_THRESHOLD = 10;
-
-  // 使用全局 LONG_PRESS_DURATION（已从设置读取）
-  const duration = LONG_PRESS_DURATION;
-
-  const longPressHandler = () => {
-    // 加密条目不复制双链（无 md 锚点），正文长按同样改为打开类型选择器（ADR-0017）
-    if (type === 'content') {
-      const target = state.data.originalDiaryEntries.find((en) => en.id === entryId);
-      if (target?.encrypted) {
-        showTagPicker(entryId);
-      } else {
-        copyLink(entryId);
-      }
-    } else if (type === 'emoji') {
-      showTagPicker(entryId);
-    }
-  };
-
-  element.addEventListener(
-    'touchstart',
-    (e) => {
-      if (state.ui.editingEntryId === entryId) return;
-      const touch = e.touches[0];
-      touchStartX = touch.clientX;
-      touchStartY = touch.clientY;
-      isLongPress = false;
-      pressTimer = setTimeout(() => {
-        isLongPress = true;
-        longPressHandler();
-      }, duration);
-    },
-    { passive: true }
-  );
-
-  element.addEventListener(
-    'touchmove',
-    (e) => {
-      if (!pressTimer) return;
-      const touch = e.touches[0];
-      const deltaX = Math.abs(touch.clientX - touchStartX);
-      const deltaY = Math.abs(touch.clientY - touchStartY);
-      if (deltaX > MOVE_THRESHOLD || deltaY > MOVE_THRESHOLD) {
-        clearTimeout(pressTimer);
-        pressTimer = null;
-      }
-    },
-    { passive: true }
-  );
-
-  element.addEventListener('touchend', (e) => {
-    if (pressTimer) clearTimeout(pressTimer);
-    if (isLongPress) {
-      e.preventDefault();
-      isLongPress = false;
-    }
-  });
-
-  element.addEventListener('mousedown', (e) => {
-    if (state.ui.editingEntryId === entryId) return;
-    pressTimer = setTimeout(longPressHandler, duration);
-  });
-
-  element.addEventListener('mouseup', () => { if (pressTimer) clearTimeout(pressTimer); });
-  element.addEventListener('mouseleave', () => { if (pressTimer) clearTimeout(pressTimer); });
 }
 
 // ===== 复制双链（原 2209-2215） =====
@@ -562,34 +541,4 @@ export function updateSticky() {
     el.style.background = 'var(--background-primary)';
   });
   if (currentStickyDate) currentStickyDate.style.zIndex = '20';
-}
-
-export function fixMobileSelect(element: HTMLElement) {
-  if (!state.ui.isTouchDevice) return;
-  element.addEventListener(
-    'touchstart',
-    function mobileCursorFix(e) {
-      if (document.activeElement !== this) {
-        (this as HTMLElement).focus();
-        setTimeout(() => {
-          if (window.getSelection && window.getSelection()!.rangeCount === 0) {
-            const range = document.createRange();
-            range.selectNodeContents(this as HTMLElement);
-            range.collapse(false);
-            const selection = window.getSelection()!;
-            selection.removeAllRanges();
-            selection.addRange(range);
-          }
-        }, 50);
-      }
-    },
-    { passive: true }
-  );
-  element.addEventListener(
-    'touchmove',
-    function preventScroll(e) {
-      if (state.ui.editingEntryId) e.stopPropagation();
-    },
-    { passive: false }
-  );
 }
