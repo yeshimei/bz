@@ -437,6 +437,9 @@ async function encryptFromSheet(entryId: string) {
   try {
     const unlocked = await ensureSafeUnlocked();
     if (!unlocked) return;
+    // 保险箱弹窗解锁不触发 onUnlockChange：解锁成功后手动重并，保险箱里已有的加密日记立即注入列表
+    //（与筛选栏「加密」标签解锁路径同策略；幂等，重复并只保留一次）
+    await reloadWithEncrypted();
     const proceed = await new Promise<boolean>((resolve) => {
       confirm({
         title: '加密日记',
