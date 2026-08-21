@@ -386,4 +386,29 @@ describe('EncryptAppController', () => {
     expect(c.dataManager.manifest.notes.length).toBe(0);
     expect(document.getElementById('bz-encrypt-popup')!.style.display).toBe('none');
   });
+
+  it('面板顶部「加密当前笔记」按钮在设置按钮前，点击触发加密确认', async () => {
+    const app = setup(vault, CONFIG);
+    vault.create('笔记/主题.md', '正文');
+    const activeFile = { path: '笔记/主题.md', basename: '主题', vault: vault as any };
+    (app.workspace as any).getActiveFile = () => activeFile;
+
+    const c = EncryptAppController.getInstance(CONFIG);
+    await c.init();
+    await c.dataManager.unlock('pw');
+    c.uiManager.show();
+    // 顶部按钮：加密当前笔记 在 设置 之前，关闭在最后
+    const headBtns = [...document.querySelectorAll('.bz-encrypt-head-btns button')].map((b) => b.textContent);
+    expect(headBtns.indexOf('🔒')).toBeGreaterThanOrEqual(0);
+    expect(headBtns.indexOf('⚙️')).toBeGreaterThanOrEqual(0);
+    expect(headBtns.indexOf('❌')).toBeGreaterThanOrEqual(0);
+    expect(headBtns.indexOf('🔒')).toBeLessThan(headBtns.indexOf('⚙️'));
+    expect(headBtns.indexOf('⚙️')).toBeLessThan(headBtns.indexOf('❌'));
+    // 点击 → 弹加密确认
+    const lockBtn = [...document.querySelectorAll('.bz-encrypt-head-btns button')].find((b) => b.textContent === '🔒') as HTMLButtonElement;
+    lockBtn.click();
+    await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
+    expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('加密到保险箱');
+    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
+  });
 });
