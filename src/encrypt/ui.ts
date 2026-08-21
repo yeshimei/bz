@@ -435,10 +435,17 @@ export class UIManager {
   }
 
   // ---------- 预览窗 ----------
+  /**
+   * 打开预览窗。关键：先同步显示弹窗骨架再异步填充正文——
+   * 真实 Obsidian 里 MarkdownRenderer.render 可能挂起（历史 b0831de 修过预览挂起），
+   * 若把所有 await 跑完才设 display，挂起时单击就毫无反应；故拆成「先显骨架 + 异步填充」。
+   */
   async openPreview(note: SafeNote) {
     if (!this.previewPopup) this.ensureElements();
     if (!this.dataManager.unlocked || !this.dataManager.password) return;
-    this.previewPopup!.innerHTML = '';
+    const popup = this.previewPopup!;
+    const mask = this.previewMask!;
+    popup.innerHTML = '';
     const header = document.createElement('div');
     header.className = 'bz-encrypt-preview-head';
     const title = document.createElement('h4');
@@ -449,13 +456,24 @@ export class UIManager {
     closeBtn.onclick = () => this.closePreview();
     header.appendChild(title);
     header.appendChild(closeBtn);
-    this.previewPopup!.appendChild(header);
+    popup.appendChild(header);
     const body = document.createElement('div');
     body.className = 'bz-encrypt-preview-body';
+    const loadHint = document.createElement('div');
+    loadHint.className = 'bz-encrypt-preview-loading';
+    loadHint.textContent = '解密中…';
+    body.appendChild(loadHint);
+    popup.appendChild(body);
+    // 先显示弹窗（同步），内容异步填充，保证单击必然弹出
+    mask.style.display = 'block';
+    popup.style.display = 'flex';
+    void this.fillPreviewBody(note, body);
+  }
 
+  /** 预览窗正文异步填充：解密 → 渲染（带超时兜底）→ 图随文走 → 画廊 */
+  private async fillPreviewBody(note: SafeNote, body: HTMLDivElement) {
     try {
-      const bodyText = await this.dataManager.decryptNoteBody(note);
-      const plain = bodyText ?? '';
+      const plain = (await this.dataManager.decryptNoteBody(note)) ?? '';
       // 先把嵌入改写占位 token（按文档顺序混排），渲染后再原位替换为预览图
       const { text, slots, inlined } = collectMediaSlots(plain, note.attachments);
       // 预先解密所有附件的预览层（每个只解一次；嵌入与底部画廊共用）
@@ -470,16 +488,10 @@ export class UIManager {
         }
         dataUrls.set(a.path, du);
       }
-      // Markdown 渲染（占位 token 原样保留）
+      // Markdown 渲染（占位 token 原样保留）——带超时：render 挂起时降级纯文本而不是让弹窗空白
       const mdEl = document.createElement('div');
       mdEl.className = 'bz-encrypt-preview-md';
-      let rendered = false;
-      try {
-        await MarkdownRenderer.render(getApp(), text, mdEl, note.path, new Component());
-        rendered = true;
-      } catch (e) {
-        mdEl.textContent = plain;
-      }
+      const rendered = await this.renderWithTimeout(getApp(), text, mdEl, note.path);
       if (rendered) {
         // 原位替换 token → 预览图，实现图随文走
         let html = mdEl.innerHTML;
@@ -489,7 +501,11 @@ export class UIManager {
           else html = html.split(slot.token).join('');
         }
         mdEl.innerHTML = html;
+      } else {
+        // 渲染失败/超时 → 纯文本兜底（至少能看正文）
+        mdEl.textContent = plain;
       }
+      body.innerHTML = '';
       body.appendChild(mdEl);
       // 底部画廊：未被正文引用的附件兜底展示（避免漏看）
       const residuals = note.attachments.filter((a) => !inlined.has(a.path));
@@ -504,14 +520,32 @@ export class UIManager {
         body.appendChild(gallery);
       }
     } catch (e) {
+      body.innerHTML = '';
       const err = document.createElement('div');
       err.textContent = '正文解密失败';
       body.appendChild(err);
     }
+  }
 
-    this.previewPopup!.appendChild(body);
-    this.previewMask!.style.display = 'block';
-    this.previewPopup!.style.display = 'flex';
+  /** 渲染带超时：3000ms 内不完成视为失败（防真实环境 render 挂起导致弹窗永久空白/不可关） */
+  private async renderWithTimeout(
+    app: any,
+    text: string,
+    el: HTMLElement,
+    path: string,
+    timeoutMs = 3000
+  ): Promise<boolean> {
+    let finished = false;
+    const render = MarkdownRenderer.render(app, text, el, path, new Component()).then(
+      () => {
+        finished = true;
+      },
+      () => {
+        finished = true;
+      }
+    );
+    await Promise.race([render, new Promise((r) => setTimeout(r, timeoutMs))]);
+    return finished;
   }
 
   closePreview() {
