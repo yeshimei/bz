@@ -311,6 +311,144 @@ describe('备忘录面板', () => {
     MockPlatform.isMobile = false;
     vi.useRealTimers();
   });
+
+  /** 长按开抽屉 + 消费鼠标残余 click（移动端路径） */
+  function openSheetCard(card: HTMLElement) {
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 60, clientY: 60 }));
+    vi.advanceTimersByTime(550);
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  }
+
+  it('移动端：抽屉项按条件显示——有定位显示「跳转关联笔记」，有到期显示「延后」，无定位/无到期的不显示', async () => {
+    vi.useFakeTimers();
+    MockPlatform.isMobile = true;
+    const vault = new MockVault();
+    vault.files.set('我的/笔记A.md', '# 笔记A');
+    await initApp(vault);
+    await seedItems(vault, [
+      { id: '1', title: '带位置', scene: '工作', priority: 'minor', created: '2025-06-14 10:00:00', completed: null, notePath: '我的/笔记A.md', notePosition: { line: 0, ch: 0 }, due: '2025-06-20 09:00' },
+      { id: '2', title: '普通', scene: '生活', priority: 'minor', created: '2025-06-14 10:00:00', completed: null },
+    ]);
+    await App.refresh();
+    const cards = document.querySelectorAll('.todo-card');
+    // 带位置+到期条目：跳转/延后/标记完成/复制/编辑全量可见
+    openSheetCard(cards[0] as HTMLElement);
+    let sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet.textContent).toContain('跳转关联笔记');
+    expect(sheet.textContent).toContain('延后 1 天');
+    expect(sheet.textContent).toContain('延后 3 天');
+    expect(sheet.textContent).toContain('标记完成');
+    expect(sheet.textContent).toContain('复制内容');
+    expect(sheet.textContent).toContain('编辑');
+    // 普通条目：无跳转/无延后
+    document.querySelector('.bz-item-sheet-mask')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    openSheetCard(cards[1] as HTMLElement);
+    sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet.textContent).not.toContain('跳转关联笔记');
+    expect(sheet.textContent).not.toContain('延后');
+    expect(sheet.textContent).toContain('标记完成');
+    expect(sheet.textContent).toContain('复制内容');
+    MockPlatform.isMobile = false;
+    vi.useRealTimers();
+  });
+
+  it('移动端：点「跳转关联笔记」→ 打开笔记并定位（getLeaf().openFile 被调用）', async () => {
+    vi.useFakeTimers();
+    MockPlatform.isMobile = true;
+    const vault = new MockVault();
+    vault.files.set('我的/笔记A.md', '# 笔记A');
+    const app = (await initApp(vault)) as any;
+    await seedItems(vault, [
+      { id: '1', title: '带位置', scene: '工作', priority: 'minor', created: '2025-06-14 10:00:00', completed: null, notePath: '我的/笔记A.md', notePosition: { line: 3, ch: 2 } },
+    ]);
+    await App.refresh();
+    openSheetCard(document.querySelector('.todo-card') as HTMLElement);
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    const jumpItem = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('跳转关联笔记')
+    ) as HTMLElement;
+    jumpItem.click();
+    await vi.advanceTimersByTimeAsync(50);
+    const leafCalls = app.workspace.getLeaf.mock.results;
+    expect(leafCalls.length).toBeGreaterThan(0);
+    expect(leafCalls[leafCalls.length - 1].value.openFile).toHaveBeenCalled();
+    MockPlatform.isMobile = false;
+    vi.useRealTimers();
+  });
+
+  it('移动端：点「标记完成」→ completed 写盘并移出主列表；已完成条目显示「恢复未完成」', async () => {
+    vi.useFakeTimers();
+    MockPlatform.isMobile = true;
+    const vault = new MockVault();
+    await initApp(vault);
+    await seedItems(vault, [
+      { id: '1', title: '待完成', scene: '工作', priority: 'minor', created: '2025-06-14 10:00:00', completed: null },
+    ]);
+    await App.refresh();
+    openSheetCard(document.querySelector('.todo-card') as HTMLElement);
+    let sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    const doneItem = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('标记完成')
+    ) as HTMLElement;
+    doneItem.click();
+    await vi.advanceTimersByTimeAsync(200);
+    let items = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(items[0].completed).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
+    // 默认自动归档：完成条目移出主列表
+    expect(document.querySelectorAll('.todo-card').length).toBe(0);
+    // 非自动归档模式：已完成条目留主列表，抽屉显示「恢复未完成」
+    (App.settings as any).memoAutoArchive = false;
+    await App.refresh();
+    expect(document.querySelectorAll('.todo-card').length).toBe(1);
+    openSheetCard(document.querySelector('.todo-card') as HTMLElement);
+    sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet.textContent).toContain('恢复未完成');
+    expect(sheet.textContent).not.toContain('标记完成');
+    expect(sheet.textContent).not.toContain('延后');
+    const restoreItem = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('恢复未完成')
+    ) as HTMLElement;
+    restoreItem.click();
+    await vi.advanceTimersByTimeAsync(200);
+    items = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(items[0].completed).toBeNull();
+    expect(getNoticeMessages()).toContain('已恢复未完成');
+    delete (App.settings as any).memoAutoArchive;
+    MockPlatform.isMobile = false;
+    vi.useRealTimers();
+  });
+
+  it('移动端：点「延后 1 天」→ due 加一天；点「复制内容」→ 入剪贴板', async () => {
+    vi.useFakeTimers();
+    MockPlatform.isMobile = true;
+    const vault = new MockVault();
+    await initApp(vault);
+    await seedItems(vault, [
+      { id: '1', title: '待延后', scene: '工作', priority: 'minor', created: '2025-06-14 10:00:00', completed: null, due: '2025-06-20 09:30' },
+    ]);
+    await App.refresh();
+    openSheetCard(document.querySelector('.todo-card') as HTMLElement);
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    const laterItem = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('延后 1 天')
+    ) as HTMLElement;
+    laterItem.click();
+    await vi.advanceTimersByTimeAsync(100);
+    let items = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(items[0].due).toBe('2025-06-21 09:30');
+    expect(getNoticeMessages()).toContain('已延后 1 天');
+    // 复制内容
+    openSheetCard(document.querySelector('.todo-card') as HTMLElement);
+    const copyItem = [...document.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('复制内容')
+    ) as HTMLElement;
+    copyItem.click();
+    await vi.advanceTimersByTimeAsync(50);
+    expect(getNoticeMessages()).toContain('内容已复制');
+    MockPlatform.isMobile = false;
+    vi.useRealTimers();
+  });
 });
 
 
