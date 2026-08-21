@@ -373,7 +373,6 @@ export class UIManager {
         input2.placeholder = '再次输入';
         warning.style.display = 'block';
       }
-      input.focus();
       const btnContainer = document.createElement('div');
       btnContainer.className = 'bz-encrypt-dialog-btns';
       const cancelBtn = document.createElement('button');
@@ -390,7 +389,7 @@ export class UIManager {
           if (input2.style.display === 'none') {
             input2.style.display = 'block';
             input2.value = '';
-            input2.focus();
+            this.focusUnlockInput(input2);
             message.textContent = '请再次输入主密码确认';
             return;
           } else {
@@ -447,7 +446,7 @@ export class UIManager {
             } else {
               notice('密码错误，请重试', 'error');
               input.value = '';
-              input.focus();
+              this.focusUnlockInput(input);
             }
           }
         }
@@ -464,7 +463,30 @@ export class UIManager {
       box.appendChild(btnContainer);
       mask.appendChild(box);
       document.body.appendChild(mask);
+      // 点遮罩（非内容区）关闭弹窗 = 取消
+      mask.onclick = (e) => {
+        if (e.target === mask) {
+          try {
+            document.body.removeChild(mask);
+          } catch (err) {
+            /* 幂等 */
+          }
+          resolve(false);
+        }
+      };
+      // 焦点：元素挂载后再聚焦才生效；移动端 WebView 对异步创建输入框需二次聚焦才弹键盘
+      this.focusUnlockInput(input);
+      setTimeout(() => this.focusUnlockInput(input), 150);
     });
+  }
+
+  /** 输入框聚焦（不滚动页面）+ 兼容性兜底；移动端靠二次聚焦触发系统键盘 */
+  private focusUnlockInput(el: HTMLInputElement) {
+    try {
+      el.focus({ preventScroll: true } as any);
+    } catch (e) {
+      el.focus();
+    }
   }
 
   // ---------- 渲染列表 ----------

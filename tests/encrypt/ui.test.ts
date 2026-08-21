@@ -876,6 +876,33 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
     expect(await p).toBe(true);
   });
 
+  it('解锁弹窗：打开即自动聚焦密码输入框（移动端直接弹键盘）', async () => {
+    const p = ui.showPasswordDialog();
+    await waitFor(() => !!findDialog());
+    const dialog = findDialog()!;
+    const inputs = dialog.querySelectorAll('input[type="password"]');
+    expect(document.activeElement).toBe(inputs[0]);
+    // 取消关闭
+    const cancelBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '取消')!;
+    cancelBtn.click();
+    expect(await p).toBe(false);
+  });
+
+  it('解锁弹窗：点击遮罩（内容区外）关闭面板 = 取消；点内容区不关闭', async () => {
+    const p = ui.showPasswordDialog();
+    await waitFor(() => !!findDialog());
+    const mask = findDialog()!;
+    // 点内容区（box）不关闭
+    const box = mask.querySelector('.bz-encrypt-dialog-box') as HTMLElement;
+    box.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(findDialog()).toBeTruthy();
+    // 点遮罩自身 → 关闭并取消
+    mask.dispatchEvent(new MouseEvent('click', { bubbles: false }));
+    expect(await p).toBe(false);
+    expect(findDialog()).toBeFalsy();
+  });
+
   it('首设写清单失败：提示设置失败并关闭弹窗（不再假装成功）', async () => {
     const spy = vi.spyOn(vault.adapter, 'write').mockRejectedValue(new Error('disk full'));
     try {
