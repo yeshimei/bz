@@ -999,13 +999,29 @@ export const Renderer = {
     // 各项按条件显示：只有条目具备对应数据才出现（如「跳转关联笔记」仅绑定位置时显示）
     const actions: ItemAction[] = [];
     if (item.linkedNote || item.url) {
-      actions.push({ icon: 'external-link', label: '打开', title: '打开关联内容', onClick: () => this.openItem(item) });
+      let openSub: string | undefined;
+      if (item.linkedNote) openSub = item.linkedNote.split('/').pop() || undefined;
+      else if (item.url) {
+        try {
+          openSub = new URL(item.url).hostname;
+        } catch (e) {
+          /* 非法 URL 不显示小字 */
+        }
+      }
+      actions.push({
+        icon: 'external-link',
+        label: '打开',
+        title: '打开关联内容',
+        sub: openSub,
+        onClick: () => this.openItem(item),
+      });
     }
     if (item.notePath) {
       actions.push({
         icon: 'book-open',
         label: '跳转关联笔记',
         title: '跳转关联笔记',
+        sub: item.notePath.split('/').pop() || undefined,
         onClick: () => this.openLinkedNote(item),
       });
     }
@@ -1014,6 +1030,7 @@ export const Renderer = {
         icon: 'check-circle',
         label: '标记完成',
         title: '标记完成',
+        sub: item.due ? formatDueText(item.due) : undefined, // 到期状态：剩 N 天/今天/已过期
         onClick: async () => {
           await DataManager.completeItem(item.id);
           notice('已标记完成', 'success');
@@ -1040,8 +1057,11 @@ export const Renderer = {
           App.refresh();
         });
       };
-      actions.push({ icon: 'clock', label: '延后 1 天', title: '延后 1 天', onClick: () => postpone(1) });
-      actions.push({ icon: 'clock', label: '延后 3 天', title: '延后 3 天', onClick: () => postpone(3) });
+      // 小字 = 延后后的新日期（MM-DD HH:mm），一眼看到结果
+      const postponeSub = (days: number) =>
+        moment(item.due!.replace('T', ' ')).add(days, 'days').format('MM-DD HH:mm');
+      actions.push({ icon: 'clock', label: '延后 1 天', title: '延后 1 天', sub: postponeSub(1), onClick: () => postpone(1) });
+      actions.push({ icon: 'clock', label: '延后 3 天', title: '延后 3 天', sub: postponeSub(3), onClick: () => postpone(3) });
     }
     // 拆分高频单项：优先级切换（重要 ↔ 次要，即时写盘）
     const isImportant = item.priority === 'important';
@@ -1059,6 +1079,7 @@ export const Renderer = {
       icon: 'copy',
       label: '复制内容',
       title: '复制内容',
+      sub: `${item.title.length} 字`,
       onClick: async () => {
         await navigator.clipboard.writeText(item.title);
         notice('内容已复制', 'success');

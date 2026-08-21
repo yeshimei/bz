@@ -181,6 +181,47 @@ describe('抽屉加密（唯一入口，ADR-0017）', () => {
     MockPlatform.isMobile = false;
   });
 
+  it('抽屉点「加密」→ 主密码解锁成功后：保险箱已有加密日记立即注入列表，随后弹加密确认', async () => {
+    const sm = await encryptViaSetup(); // 保险箱 1 篇加密日记 + 列表已并
+    lockSafe();
+    await waitFor(() => !state.data.originalDiaryEntries.some((e) => e.encrypted)); // 上锁完全不可见
+
+    // 长按一条普通条目卡片（独立构造，不依赖列表渲染）→ 点「加密」
+    MockPlatform.isMobile = true;
+    const plain = {
+      id: 'plain-1', date: '2024-01-01', time: '08:00', timeValue: 800,
+      tags: ['日记'], emoji: '📖', content: '第一条', filename: '2024-01-01', lineNumber: 0,
+    } as any;
+    state.data.originalDiaryEntries.push(plain); // encryptFromSheet 按 id 查库，必须入列
+    const card = createEntryCard(plain);
+    document.body.appendChild(card);
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 100, clientY: 100 }));
+    await new Promise((r) => setTimeout(r, 600));
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const encItem = [...document.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('加密')
+    ) as HTMLElement;
+    encItem.click();
+
+    // 主密码弹窗（非首设：输入主密码）→ 输入密码确认
+    await waitFor(() => !!findDialog());
+    const dialog = findDialog()!;
+    expect(dialog.textContent).toContain('输入主密码');
+    const inputs = dialog.querySelectorAll('input[type="password"]');
+    const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+    (inputs[0] as HTMLInputElement).value = 'pw';
+    confirmBtn.click();
+
+    // 解锁成功 → 保险箱加密日记注入列表（弹窗解锁不触发 onUnlockChange，靠主动重并）
+    await waitFor(() => state.data.originalDiaryEntries.some((e) => e.encrypted));
+    expect(state.data.originalDiaryEntries.some((e) => e.encrypted && e.noteId)).toBe(true);
+    // 加密确认弹窗随后出现（流程继续）
+    await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
+    expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('加密移出笔记');
+    MockPlatform.isMobile = false;
+  });
+
   it('标签选择器不再提供「加密」分类（加密走抽屉动作）', async () => {
     await waitFor(() => !!document.querySelector('.diary-emoji'));
     (document.querySelector('.diary-emoji') as HTMLElement).click();
