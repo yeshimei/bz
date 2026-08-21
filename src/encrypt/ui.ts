@@ -304,8 +304,8 @@ export class UIManager {
     const cleanupBtn = createIconBtn('🧹', '清理未引用的密文', () => this.onCleanupOrphans?.());
     const closeBtn = createIconBtn('❌', '关闭', () => this.hide());
     if (this.onLockCurrentNote) btns.appendChild(lockBtn);
-    btns.appendChild(settingsBtn);
     btns.appendChild(cleanupBtn);
+    btns.appendChild(settingsBtn);
     btns.appendChild(closeBtn);
     header.appendChild(title);
     header.appendChild(btns);

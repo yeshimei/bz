@@ -539,6 +539,7 @@ export function openAnalysisModal(app: App): void {
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '❌';
   closeBtn.title = '关闭';
+  closeBtn.className = 'bz-win-close';
   closeBtn.style.cssText = `
         background: none; border: none; font-size: 0.55rem;
         cursor: pointer; color: var(--text-muted); box-shadow: none;

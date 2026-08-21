@@ -292,6 +292,7 @@ function createButton(text: string, title: string, onClick: () => void) {
   const isClose = text === '❌';
   button.style.cssText =
     `background:none;border:none;font-size:${isClose ? 13 : 14}px;cursor:pointer;color:var(--text-muted);padding:0;width:${isClose ? 21 : 22}px;height:${isClose ? 25 : 26}px;border-radius:4px;display:flex;align-items:center;justify-content:center;box-shadow:none;transition:background 0.2s;`;
+  if (isClose) button.classList.add('bz-win-close');
   button.onmouseover = () => (button.style.background = 'var(--background-secondary)');
   button.onmouseout = () => (button.style.background = 'none');
   button.onclick = onClick;

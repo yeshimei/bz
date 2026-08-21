@@ -1068,6 +1068,7 @@ export function createOverlay(app: App, statusType?: string): void {
       display: flex; align-items: center; justify-content: center;
       transition: background 0.2s;
     `;
+    if (isClose) btn.classList.add('bz-win-close');
     btn.addEventListener('mouseover', () => (btn.style.background = 'var(--background-secondary)'));
     btn.addEventListener('mouseout', () => (btn.style.background = 'none'));
     btn.addEventListener('click', onClick);

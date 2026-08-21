@@ -163,8 +163,6 @@ export class UIManager {
         emptyDesc: '数据文件路径由全局设置「数据存储路径」统一管理',
       });
     });
-    actionGroup.appendChild(settingsBtn);
-
     // 搜索切换按钮（🔍）
     this.searchToggleBtn = this._createButton('🔍', '搜索', () => {
       this.searchVisible = !this.searchVisible;
@@ -177,6 +175,9 @@ export class UIManager {
     });
     this.searchToggleBtn.style.opacity = '0.5';
     actionGroup.appendChild(this.searchToggleBtn);
+
+    // ⚙️ 设置置于关闭正前（用户拍板：所有窗口设置按钮都在关闭前）
+    actionGroup.appendChild(settingsBtn);
 
     // 关闭按钮（❌）
     const closeBtn = this._createButton('❌', '关闭', () => this.hide());
