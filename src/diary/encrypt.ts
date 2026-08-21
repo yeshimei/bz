@@ -185,17 +185,8 @@ async function buildRestoreBlock(noteId: string, newTags?: string[]): Promise<st
 }
 
 /**
- * 降级加密日记为普通（保持原分类）：解正文原样 merge 回原 md，密文取出即删。
- * 调用方负责刷新（applyFilter / reloadWithEncrypted）。
- */
-export async function downgradeEntry(noteId: string): Promise<boolean> {
-  const block = await buildRestoreBlock(noteId);
-  if (block === null) return false;
-  return getSafeManager().restoreDiaryEntry(noteId, block);
-}
-
-/**
  * 改分类降级（Q20-a）：加密日记改类型 = 还原 + 以新标签重建标题行。
+ * 解密 = 传入去「加密」后的原标签（reclassifyEntry），标题 emoji 不残留 🔐。
  * 调用方负责刷新。
  */
 export async function reclassifyEntry(noteId: string, newTags: string[]): Promise<boolean> {

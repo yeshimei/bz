@@ -6,11 +6,10 @@ import { pad2 } from '../../core/utils';
 import { notice } from '../../core/notice';
 import { confirm } from '../../core/confirm';
 import { getApp } from '../app';
-import { DIARY_DIRECTORY, getAllAvailableTags, getSortedTagsForAddDialog, getTagEmoji, getParentPrimaryTag, isSubTag } from '../config';
+import { DIARY_DIRECTORY, getSortedTagsForAddDialog, getTagEmoji, getParentPrimaryTag, isSubTag } from '../config';
 import { parseNaturalTime } from '../parser';
-import { addEntry, writeFile, reloadWithEncrypted, deleteEntry } from '../store';
-import { ENCRYPT_TAG, encryptEntry, reclassifyEntry } from '../encrypt';
-import { ensureSafeUnlocked } from '../../encrypt';
+import { addEntry, writeFile, reloadWithEncrypted } from '../store';
+import { ENCRYPT_TAG, reclassifyEntry } from '../encrypt';
 import { diaryDataMap, state } from '../state';
 import { getJumpToEditAfterSaveSetting, getTagShowEmojiSetting, getUseFileDateTimeSetting } from './ui-settings';
 import { rebuildTags } from './filter-shared';
@@ -262,9 +261,8 @@ export function createTagPicker() {
     }
     const entry = state.data.originalDiaryEntries.find((e) => e.id === entryId);
     const isEncryptedEntry = !!entry?.encrypted;
-    const wantsEncrypt = !isEncryptedEntry && selTagNames.includes(ENCRYPT_TAG);
     hideTagPicker();
-    void handleTagPickerSave(entryId, selTagNames, isEncryptedEntry, wantsEncrypt);
+    void handleTagPickerSave(entryId, selTagNames, isEncryptedEntry);
   };
 
   actionsContainer.appendChild(deleteBtn);
@@ -287,15 +285,12 @@ export function hideTagPicker() {
 /**
  * 标签选择器「保存」分流（ADR-0017）：
  * - 加密条目的保存 = 改分类降级（reclassifyEntry），成功后 merge 回 md 并从保险箱取出。
- * - 非加密条目选中「加密」= 加密流程（ensureSafeUnlocked → 二次确认 → encryptEntry），
- *   并从 md 移除原普通块，之后 reloadWithEncrypted 把加密版并回列表。
- * - 其余走原 updateTags 写回。
+ * - 非加密条目走原 updateTags 写回（加密入口在抽屉「加密」动作，标签选择器不提供加密分类）。
  */
 async function handleTagPickerSave(
   entryId: string,
   selTagNames: string[],
-  isEncryptedEntry: boolean,
-  wantsEncrypt: boolean
+  isEncryptedEntry: boolean
 ) {
   const entry = state.data.originalDiaryEntries.find((e) => e.id === entryId);
   if (!entry) return;
@@ -319,33 +314,6 @@ async function handleTagPickerSave(
     return;
   }
 
-  if (wantsEncrypt) {
-    // 加密流程：先确保保险箱解锁（弹主密码）
-    const unlocked = await ensureSafeUnlocked();
-    if (!unlocked) return;
-    const proceed = await new Promise<boolean>((resolve) => {
-      confirm({
-        title: '加密日记',
-        message: '确定将本条内容加密移出笔记？正文将从日记文件移除',
-        confirmText: '加密',
-        onConfirm: () => resolve(true),
-        onCancel: () => resolve(false),
-      });
-    });
-    if (!proceed) return;
-    try {
-      const enc = await encryptEntry(entry);
-      if (enc) {
-        // 从 md 摘除原普通块（encryptEntry 不删整 md，块级移除由日记域处理）→ 重并加密版
-        if (entry.id) await deleteEntry(entry.id);
-        await reloadWithEncrypted();
-      }
-    } catch (e: any) {
-      notice('加密失败：' + (e?.message || e), 'error');
-    }
-    return;
-  }
-
   // 普通改分类
   await updateTags(entryId, selTagNames);
 }
@@ -364,12 +332,10 @@ export function showTagPicker(entryId: string) {
   // 清空并重新生成按钮
   buttonsContainer.innerHTML = '';
 
-  // 加密分类仅在「改类型」时提供（新建弹窗已排除，ADR-0017 Q20-a）
+  // 加密分类不在类型选择器提供（加密唯一入口 = 抽屉「加密」动作，ADR-0017）；
+  // 加密条目的改分类（降级）同样不含「加密」选项
   const isEncryptedEntry = !!entry.encrypted;
-  let sortedTags = getSortedTagsForAddDialog();
-  if (!isEncryptedEntry) {
-    sortedTags = [...sortedTags, ENCRYPT_TAG];
-  }
+  const sortedTags = getSortedTagsForAddDialog();
 
   // 当前条目的标签集合（加密条目：除「加密」外的原始分类为已选项）
   const currentTagsSet = new Set(isEncryptedEntry ? entry.tags.filter((t) => t !== ENCRYPT_TAG) : entry.tags);
@@ -519,8 +485,8 @@ export function createAddDialog() {
   typeContainer.id = 'add-diary-type-container';
   typeContainer.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;';
 
-  // 获取所有可用标签（主标签 + 二级标签）
-  const allTags = getAllAvailableTags();
+  // 类型按钮（排序规则与 openAddDialog 一致：主标签平铺、有二级标签的主标签展开为二级；加密分类不在此提供）
+  const allTags = getSortedTagsForAddDialog();
   for (const tag of allTags) {
     const btn = document.createElement('button');
     btn.type = 'button';

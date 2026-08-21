@@ -16,7 +16,7 @@ import { reloadWithEncrypted, deleteEntry } from '../../src/diary/store';
 import { getSafeManager, unloadEncrypt } from '../../src/encrypt';
 import { EncryptAppController } from '../../src/encrypt/ui';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks, clearNotices, hasNotice } from '../mock-obsidian-entry';
+import { resetObsidianMocks, clearNotices, hasNotice, Platform as MockPlatform } from '../mock-obsidian-entry';
 
 /** 轮询等待（真实 PBKDF2 长异步） */
 async function waitFor(cond: () => boolean, timeout = 8000) {
@@ -158,23 +158,33 @@ describe('筛选栏「加密」标签（ADR-0017）', () => {
   });
 });
 
-describe('改类型触发加密（ADR-0017 Q20-a）', () => {
-  it('非加密条目：类型选择器提供「加密」；选中保存 → 加密移入保险箱，md 块移除，列表出现加密条目', async () => {
-    const sm = await unlockSafe();
-    expect(state.data.originalDiaryEntries.length).toBe(1);
-
-    // 打开类型选择器
+describe('抽屉加密（唯一入口，ADR-0017）', () => {
+  it('标签选择器不再提供「加密」分类（加密走抽屉动作）', async () => {
     await waitFor(() => !!document.querySelector('.diary-emoji'));
     (document.querySelector('.diary-emoji') as HTMLElement).click();
     expect(document.getElementById('diary-tag-selector-popup')!.style.display).toBe('block');
-    // 「加密」按钮出现
-    const encBtn = document.querySelector('.diary-tag-selector-btn[data-tag="加密"]') as HTMLElement;
-    expect(encBtn).toBeTruthy();
-    encBtn.click();
-    expect(encBtn.classList.contains('diary-active')).toBe(true);
+    expect(document.querySelector('.diary-tag-selector-btn[data-tag="加密"]')).toBeNull();
+  });
 
-    // 保存 → 二次确认
-    (document.querySelector('.diary-save-btn') as HTMLElement).click();
+  it('长按卡片 → 抽屉点「加密」：确认后移入保险箱，md 块移除，列表出现加密条目', async () => {
+    const sm = await unlockSafe();
+    expect(state.data.originalDiaryEntries.length).toBe(1);
+
+    // 长按卡片弹抽屉（移动端路径）
+    MockPlatform.isMobile = true;
+    const card = document.querySelector('.diary-entry-card') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 100, clientY: 100 }));
+    await new Promise((r) => setTimeout(r, 600)); // 真实长按 500ms 触发
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true })); // 消费残余 click
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet).not.toBeNull();
+
+    // 点「加密」→ 二次确认
+    const encItem = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('加密')
+    ) as HTMLElement;
+    encItem.click();
     await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
     expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('加密移出笔记');
     (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
@@ -191,22 +201,66 @@ describe('改类型触发加密（ADR-0017 Q20-a）', () => {
     expect(encEntry.tags).toContain('加密');
     expect(encEntry.noteId).toBeTruthy();
     expect(encEntry.id!.startsWith('enc-diary-')).toBe(true);
-    // 卡片时间后不加 🔐 角标（用户决策：时间后不跟加密 emoji，识别靠 emoji 序列本身）
+    // 卡片时间后不加 🔐 角标（用户决策：识别靠 emoji 序列本身）
     expect(document.querySelector('.bz-encrypt-badge')).toBeNull();
+    MockPlatform.isMobile = false;
   });
 
-  it('保存时取消二次确认 → 不加密', async () => {
+  it('长按卡片 → 抽屉点「加密」：取消二次确认 → 不加密', async () => {
     const sm = await unlockSafe();
-    await waitFor(() => !!document.querySelector('.diary-emoji'));
-    (document.querySelector('.diary-emoji') as HTMLElement).click();
-    const encBtn = document.querySelector('.diary-tag-selector-btn[data-tag="加密"]') as HTMLElement;
-    encBtn.click();
-    (document.querySelector('.diary-save-btn') as HTMLElement).click();
+    MockPlatform.isMobile = true;
+    const card = document.querySelector('.diary-entry-card') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 100, clientY: 100 }));
+    await new Promise((r) => setTimeout(r, 600));
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const encItem = [...document.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('加密')
+    ) as HTMLElement;
+    encItem.click();
     await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
     (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
     // 无加密发生
     expect(sm.manifest.notes.length).toBe(0);
     expect(vault.files.has('我的/日记/2024-01-01.md')).toBe(true);
+    MockPlatform.isMobile = false;
+  });
+});
+
+describe('抽屉解密（ADR-0017）', () => {
+  it('加密条目长按 → 点「解密」：确认后标题去掉 🔐、块还原回原 md、列表无加密条目', async () => {
+    const sm = await encryptViaSetup();
+    MockPlatform.isMobile = true;
+    const encEntry = state.data.originalDiaryEntries.find((e) => e.encrypted)!;
+
+    // 长按加密条目卡片弹抽屉
+    const card = document.getElementById(`diary-entry-${encEntry.id}`) as HTMLElement;
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 100, clientY: 100 }));
+    await new Promise((r) => setTimeout(r, 600));
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true })); // 消费残余 click
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet).not.toBeNull();
+
+    // 点「解密」→ 二次确认
+    const decItem = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('解密')
+    ) as HTMLElement;
+    decItem.click();
+    await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
+    expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('恢复为普通类型');
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
+
+    // 密文取出即删 + 列表无加密条目（reloadWithEncrypted 在异步 handler 内，须等待）
+    await waitFor(() => sm.manifest.notes.length === 0);
+    await waitFor(() => !state.data.originalDiaryEntries.some((e) => e.encrypted));
+    expect(hasNotice('已解密还原')).toBe(true);
+    // 块还原回原 md，标题 emoji 去掉 🔐（解密 = 去加密标签重建标题行）
+    await waitFor(() => vault.files.has('我的/日记/2024-01-01.md'));
+    const md = vault.files.get('我的/日记/2024-01-01.md')!;
+    expect(md).toContain('# 📖 08:00');
+    expect(md).not.toContain('🔐');
+    MockPlatform.isMobile = false;
   });
 });
 
