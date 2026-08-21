@@ -974,12 +974,24 @@ export const Renderer = {
 
     card.appendChild(meta);
 
-    // 统一操作条/长按菜单（手势统一试点）：打开（有链接时）> 编辑 > 删除
+    // 统一操作条/长按浮层（手势统一试点）：打开（有链接时）> 编辑 > 优先级切换 > 删除
     const actions: ItemAction[] = [];
     if (item.linkedNote || item.url) {
       actions.push({ icon: '📄', label: '打开', title: '打开关联内容', onClick: () => this.openItem(item) });
     }
     actions.push({ icon: '✏️', label: '编辑', title: '编辑', onClick: () => UIManager.showAddDialog(item) });
+    // 拆分高频单项：优先级切换（重要 ↔ 次要，即时写盘）
+    const isImportant = item.priority === 'important';
+    actions.push({
+      icon: isImportant ? '⭐' : '☆',
+      label: isImportant ? '转为次要' : '转为重要',
+      title: '切换优先级',
+      onClick: async () => {
+        await DataManager.updateItem(item.id, { priority: isImportant ? 'minor' : 'important' } as any);
+        notice(isImportant ? '已转为次要' : '已转为重要', 'success');
+        App.refresh();
+      },
+    });
     actions.push({
       icon: '🗑',
       label: '删除',
