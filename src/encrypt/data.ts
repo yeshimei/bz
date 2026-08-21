@@ -152,9 +152,15 @@ export class SafeManager {
     return this.root + '/' + ref;
   }
 
-  /** 清单是否存在（用于首设判断） */
-  exists(): boolean {
-    return !!getApp().vault.getAbstractFileByPath(this.manifestPath);
+  /** 点前缀兼容适配器：Obsidian 对点前缀路径不索引，getAbstractFileByPath 返回 null；
+   *  因此加密根目录内的清单/镜像一律走 vault.adapter（直读磁盘，无视隐藏） */
+  private get adapter(): any {
+    return getApp().vault.adapter || (getApp().vault as any);
+  }
+
+  /** 清单是否存在（用于首设判断；adapter 直读磁盘，点前缀可用） */
+  async exists(): Promise<boolean> {
+    return await this.adapter.exists(this.manifestPath);
   }
 
   /**
@@ -162,16 +168,15 @@ export class SafeManager {
    * 校验方式=解密成功即通过（GCM 认证，同密码本）。
    */
   async unlock(password: string): Promise<boolean> {
-    const app = getApp();
-    const file = app.vault.getAbstractFileByPath(this.manifestPath);
-    if (!file) {
+    const existsManifest = await this.exists();
+    if (!existsManifest) {
       this.password = password;
       this.unlocked = true;
       this.manifest = { version: 1, notes: [] };
       await this.saveManifest();
       return true;
     }
-    const content = await app.vault.read(file as any);
+    const content = await this.adapter.read(this.manifestPath);
     if (!content.trim()) {
       this.password = password;
       this.unlocked = true;
@@ -200,37 +205,59 @@ export class SafeManager {
     this.manifest = { version: 1, notes: [] };
   }
 
-  /** 持久化清单（整体加密写回 .safe.enc） */
+  /** 持久化清单（整体加密写回 .safe.enc；adapter 直写磁盘，点前缀可用） */
   async saveManifest() {
-    const app = getApp();
     if (!this.unlocked || !this.password) throw new Error('未解锁，无法保存清单');
     const json = JSON.stringify(this.manifest);
     const encrypted = await CryptoService.encrypt(json, this.password);
-    await this.ensureParentFolder(this.manifestPath);
-    const file = app.vault.getAbstractFileByPath(this.manifestPath);
-    if (file) await app.vault.modify(file as any, encrypted);
-    else await app.vault.create(this.manifestPath, encrypted);
+    await this.ensureDirFor(this.manifestPath);
+    await this.adapter.write(this.manifestPath, encrypted);
   }
 
-  /** 确保加密根目录存在（平铺布局只需根目录；点前缀目录 vault.createFolder 可建） */
-  private async ensureRootDir() {
-    const app = getApp();
-    const dir = app.vault.getAbstractFileByPath(this.root);
-    if (!dir) await app.vault.createFolder(this.root);
+  /** 确保加密根目录存在（平铺布局只需根目录；adapter.mkdir 递归建，点前缀可用） */
+  private async ensureSafeRootDir() {
+    await this.ensureDirFor(this.root + '/x');
   }
 
   /**
-   * 递归确保目标文件的父目录全部存在（Obsidian vault.create/createBinary
-   * 在父目录缺失时抛「Parent folder doesn't exist」，且 createFolder 不递归建中间目录）。
-   * 在任意文件写入前调用；幂等。
+   * 递归确保目标 filePath 的父目录全部存在（用 adapter 直查磁盘 mkdir，
+   * 点前缀目录 vault.getAbstractFileByPath 查不到，故不走 vault）。幂等。
    */
-  private async ensureParentFolder(filePath: string) {
+  private async ensureDirFor(filePath: string) {
+    const adapter = this.adapter;
+    const idx = filePath.lastIndexOf('/');
+    if (idx <= 0) return; // 根目录下无需建
+    let dir = filePath.slice(0, idx);
+    const missing: string[] = [];
+    let probe = dir;
+    while (probe && probe !== '.' && probe !== '/') {
+      let exists = false;
+      try {
+        exists = await adapter.exists(probe);
+      } catch (e) {
+        exists = false;
+      }
+      if (exists) break;
+      missing.unshift(probe);
+      const slash = probe.lastIndexOf('/');
+      if (slash <= 0) break;
+      probe = probe.slice(0, slash);
+    }
+    for (const p of missing) {
+      await adapter.mkdir(p);
+    }
+  }
+
+  /**
+   * 递归确保目标文件的父目录全部存在（Obsidian vault 路径、非点前缀，
+   * 还原写回原路径用；走 vault 使 Obsidian 认可目录）。
+   */
+  private async ensureVaultParentFolder(filePath: string) {
     const app = getApp();
     const idx = filePath.lastIndexOf('/');
     if (idx <= 0) return; // 根目录下无需建
     let dir = filePath.slice(0, idx);
     const missing: string[] = [];
-    // 自底向上收集不存在的祖先目录
     let probe = dir;
     while (probe && probe !== '.' && probe !== '/') {
       if (app.vault.getAbstractFileByPath(probe)) break;
@@ -244,33 +271,36 @@ export class SafeManager {
     }
   }
 
-  /** 读附件原始层（当前 vault 文件）→ base64 */
-  private async readAttachmentData(file: any): Promise<string> {
-    const buf = await getApp().vault.readBinary(file);
-    return bytesToBase64(new Uint8Array(buf));
+  /** 写镜像密文文件（点前缀，adapter 直写磁盘） */
+  private async writeMirror(ref: string, ciphertext: string) {
+    const path = this.resolveRef(ref);
+    await this.ensureDirFor(path);
+    await this.adapter.write(path, ciphertext);
   }
 
-  /** 写镜像密文文件（文本 base64）；先确保父目录存在 */
-  private async writeMirror(ref: string, ciphertext: string) {
-    const app = getApp();
+  /** 读镜像密文文件 → base64 密文字符串（adapter，点前缀可用） */
+  private async readMirror(ref: string): Promise<string | null> {
     const path = this.resolveRef(ref);
-    const file = app.vault.getAbstractFileByPath(path);
-    if (file) await app.vault.modify(file as any, ciphertext);
-    else {
-      await this.ensureParentFolder(path);
-      await app.vault.create(path, ciphertext);
+    try {
+      if (!(await this.adapter.exists(path))) return null;
+      const c = await this.adapter.read(path);
+      return c.trim();
+    } catch (e) {
+      return null;
     }
   }
 
-  /** 读镜像密文文件 → base64 密文字符串 */
-  private async readMirror(ref: string): Promise<string | null> {
-    const app = getApp();
-    const file = app.vault.getAbstractFileByPath(this.resolveRef(ref));
-    if (!file) return null;
-    return (await app.vault.read(file as any)).trim();
+  /** 删除点前缀密文镜像文件（adapter，幂等） */
+  private async deleteSafeFile(ref: string) {
+    const path = this.resolveRef(ref);
+    try {
+      if (await this.adapter.exists(path)) await this.adapter.remove(path);
+    } catch (e) {
+      /* 幂等忽略 */
+    }
   }
 
-  /** 删除 vault 文件（幂等） */
+  /** 删除 vault 原文件（非点前缀，走 vault 使 Obsidian 认可删除；幂等） */
   private async deleteVaultFile(path: string) {
     const app = getApp();
     const file = app.vault.getAbstractFileByPath(path);
@@ -279,7 +309,7 @@ export class SafeManager {
     }
   }
 
-  /** 是否存在 vault 文件 */
+  /** 是否存在 vault 文件（非点前缀原路径判断用） */
   private fileExists(path: string): boolean {
     const f = getApp().vault.getAbstractFileByPath(path);
     return !!f && (f as any).isFolder !== true;
@@ -292,7 +322,7 @@ export class SafeManager {
    */
   async lockNote(input: LockNoteInput, onProgress?: (p: EncryptProgress) => void): Promise<SafeNote> {
     if (!this.unlocked || !this.password) throw new Error('未解锁，无法加密笔记');
-    await this.ensureRootDir();
+    await this.ensureSafeRootDir();
     const total = input.attachments.length + 1;
     let done = 0;
 
@@ -386,7 +416,7 @@ export class SafeManager {
       // 目标路径已被用户占用（非本次还原写回）→ 冲突跳过
       conflicts.push(note.path);
     } else {
-      await this.ensureParentFolder(note.path);
+      await this.ensureVaultParentFolder(note.path);
       const file = await app.vault.create(note.path, plain);
       (app.metadataCache as any)?.trigger?.('changed', file);
     }
@@ -396,10 +426,10 @@ export class SafeManager {
     // 全部成功 → 彻底取出（删镜像 + 移除清单条目）；否则保留（含已还原文件留副本，安全第一）
     const removed = conflicts.length === 0;
     if (removed) {
-      await this.deleteVaultFile(this.resolveRef(note.contentRef));
+      await this.deleteSafeFile(note.contentRef);
       for (const a of note.attachments) {
-        await this.deleteVaultFile(this.resolveRef(a.blobRef));
-        if (a.hasPreview) await this.deleteVaultFile(this.resolveRef(a.previewRef));
+        await this.deleteSafeFile(a.blobRef);
+        if (a.hasPreview) await this.deleteSafeFile(a.previewRef);
       }
       const idx = this.manifest.notes.indexOf(note);
       if (idx !== -1) this.manifest.notes.splice(idx, 1);
@@ -437,7 +467,7 @@ export class SafeManager {
     let file = existing;
     if (existing) await (app.vault as any).writeBinary(existing as any, buf);
     else {
-      await this.ensureParentFolder(a.path);
+      await this.ensureVaultParentFolder(a.path);
       file = await app.vault.createBinary(a.path, buf);
     }
     (app.metadataCache as any)?.trigger?.('changed', file);
@@ -450,10 +480,10 @@ export class SafeManager {
     const idx = this.manifest.notes.findIndex((n) => n.id === noteId);
     if (idx === -1) return;
     const note = this.manifest.notes[idx];
-    if (note.contentRef) await this.deleteVaultFile(this.resolveRef(note.contentRef));
+    if (note.contentRef) await this.deleteSafeFile(note.contentRef);
     for (const a of note.attachments) {
-      await this.deleteVaultFile(this.resolveRef(a.blobRef));
-      if (a.hasPreview) await this.deleteVaultFile(this.resolveRef(a.previewRef));
+      await this.deleteSafeFile(a.blobRef);
+      if (a.hasPreview) await this.deleteSafeFile(a.previewRef);
     }
     this.manifest.notes.splice(idx, 1);
     await this.saveManifest();

@@ -71,6 +71,18 @@ describe('SafeManager 状态机', () => {
     expect(sm.manifest.notes.length).toBe(0);
   });
 
+  it('回归：设主密码后 exists() 为 true（adapter 直读磁盘，点前缀不被 Obsidian 索引不影响）', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('master123');
+    // 新实例（模拟重启/再次打开）：exists() 应看到磁盘上的 .safe.enc
+    const sm2 = new SafeManager('CONFIG/.ENCRYPT');
+    expect(await sm2.exists()).toBe(true);
+    // 二次解锁可打开（密文往返正确）
+    expect(await sm2.unlock('master123')).toBe(true);
+    expect(sm2.unlocked).toBe(true);
+  });
+
   it('二次解锁：正确密码成功、错误密码失败', async () => {
     makeApp(vault);
     const sm = new SafeManager('CONFIG/.ENCRYPT');
