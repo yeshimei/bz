@@ -364,12 +364,8 @@ export class UIManager {
     head.className = 'bz-encrypt-health-head';
     const title = document.createElement('h4');
     title.textContent = '保险箱体检';
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '✕';
-    closeBtn.className = 'bz-encrypt-btn';
-    closeBtn.onclick = () => this.hideHealthDialog();
+    // 无右上角关闭按钮（用户拍板）：关闭走遮罩点击 / ESC（escManager 层级）
     head.appendChild(title);
-    head.appendChild(closeBtn);
     popup.appendChild(head);
     const body = document.createElement('div');
     body.id = 'bz-encrypt-health-body';
@@ -386,13 +382,9 @@ export class UIManager {
     rescanBtn.className = 'bz-encrypt-dialog-btn';
     rescanBtn.textContent = '重新体检';
     rescanBtn.onclick = () => void this.runHealthScan();
-    const closeFootBtn = document.createElement('button');
-    closeFootBtn.className = 'bz-encrypt-dialog-btn';
-    closeFootBtn.textContent = '关闭';
-    closeFootBtn.onclick = () => this.hideHealthDialog();
+    // 无底部关闭按钮（用户拍板）：关闭走遮罩点击 / ESC
     foot.appendChild(cleanBtn);
     foot.appendChild(rescanBtn);
-    foot.appendChild(closeFootBtn);
     popup.appendChild(foot);
     // 弹窗必须挂在遮罩内（mask 的 flex 居中承载；误挂 body 会脱离 flex 容器，
     // 且本卡片无 fixed 定位 → 沉入文档流被遮罩盖住——曾出现「只有遮罩没有内容」）

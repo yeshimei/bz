@@ -612,6 +612,30 @@ describe('EncryptAppController', () => {
     }
   });
 
+  it('体检弹窗无关闭按钮（用户拍板）：遮罩点击与 ESC 均可关闭', async () => {
+    setup(vault, CONFIG);
+    const c = EncryptAppController.getInstance(CONFIG);
+    await c.init();
+    await c.dataManager.unlock('pw');
+    c.uiManager.openHealthDialog();
+    await waitFor(() => !!document.getElementById('bz-encrypt-health-popup'));
+    const popup = document.getElementById('bz-encrypt-health-popup')!;
+    // 右上角 ✕ 与左下角「关闭」都不存在
+    const btns = [...popup.querySelectorAll('button')].map((b) => b.textContent);
+    expect(btns).not.toContain('✕');
+    expect(btns).not.toContain('关闭');
+    expect(btns.some((b) => (b || '').startsWith('清理勾选项'))).toBe(true);
+    expect(btns).toContain('重新体检');
+    // 遮罩点击关闭
+    document.getElementById('bz-encrypt-health-mask')!.dispatchEvent(new MouseEvent('click', { bubbles: false }));
+    expect(popup.style.display).toBe('none');
+    // 重新打开 → ESC 关闭（escManager 层级）
+    c.uiManager.openHealthDialog();
+    await waitFor(() => popup.style.display === 'flex');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(popup.style.display).toBe('none');
+  });
+
   it('lockCurrentNote：附件读取失败 → 整笔放弃（不落任何东西、原文件不动、提示失败）', async () => {
     const app = setup(vault, CONFIG);
     vault.create('笔记/主题.md', '正文\n![[pic.png]]');
