@@ -9,7 +9,7 @@ import { attachItemActions, type ItemAction } from '../../core/item-actions';
 import { getApp } from '../app';
 import { BATCH_SIZE, DIARY_DIRECTORY, MOVIE_DIRECTORY, getSubTagsOfPrimary, getTagEmoji } from '../config';
 import { deleteEntry, getIsProcessingRemainingFiles, reloadWithEncrypted } from '../store';
-import { deleteEncryptedEntry, downgradeEntry, encryptEntry } from '../encrypt';
+import { ENCRYPT_TAG, deleteEncryptedEntry, encryptEntry, reclassifyEntry } from '../encrypt';
 import { ensureSafeUnlocked } from '../../encrypt';
 import { state } from '../state';
 import type { DateFilter, DiaryEntry } from '../types';
@@ -202,8 +202,9 @@ function getDisplayEmojiSeq(entry: DiaryEntry): string {
 }
 
 /**
- * 抽屉顶部信息区：与列表卡片一致的 emoji + 时间 + 内容（同渲染路径）；
- * 加密条目不渲染密文（安全边界，ADR-0017 密文只在保险箱预览）。
+ * 抽屉顶部信息区：与列表卡片一致的 emoji + 时间 + 内容（同渲染路径）。
+ * 加密条目（解锁态，明文已在内存）与普通条目显示完全一致；
+ * 「隐藏」由未解锁完全不可见兜底（ADR-0017：密文绝不进列表，解锁后才解密进内存）。
  */
 export function buildSheetHead(entry: DiaryEntry): HTMLElement {
   const head = document.createElement('div');
@@ -223,15 +224,11 @@ export function buildSheetHead(entry: DiaryEntry): HTMLElement {
 
   const content = document.createElement('div');
   content.className = 'bz-item-sheet-entry-content';
-  if (entry.encrypted) {
-    content.textContent = '🔒 已加密（内容在保险箱）';
-  } else {
-    const contentText = entry.content.trim();
-    content.textContent = contentText; // 先给纯文本兜底，再按渲染模式渲染（与列表一致）
-    if (getContentRenderModeSetting() === 'markdown') {
-      const filePath = entry.filename.includes('/') ? entry.filename : `${DIARY_DIRECTORY}/${entry.filename}.md`;
-      void renderMarkdown(contentText, content, filePath);
-    }
+  const contentText = entry.content.trim();
+  content.textContent = contentText; // 先给纯文本兜底，再按渲染模式渲染（与列表一致）
+  if (getContentRenderModeSetting() === 'markdown') {
+    const filePath = entry.filename.includes('/') ? entry.filename : `${DIARY_DIRECTORY}/${entry.filename}.md`;
+    void renderMarkdown(contentText, content, filePath);
   }
   head.appendChild(content);
   return head;
@@ -425,7 +422,7 @@ async function encryptFromSheet(entryId: string) {
   }
 }
 
-// ===== 解密还原（保持原分类；密文取出即删，ADR-0017） =====
+// ===== 解密还原（去掉加密标签重建标题：🔐 不残留；密文取出即删，ADR-0017） =====
 
 async function decryptFromSheet(entryId: string) {
   const entry = state.data.originalDiaryEntries.find((e) => e.id === entryId);
@@ -441,7 +438,8 @@ async function decryptFromSheet(entryId: string) {
   });
   if (!proceed) return;
   try {
-    const ok = await downgradeEntry(entry.noteId);
+    const newTags = entry.tags.filter((t) => t !== ENCRYPT_TAG);
+    const ok = await reclassifyEntry(entry.noteId, newTags);
     if (!ok) {
       notice('解密失败', 'error');
       return;
