@@ -378,8 +378,8 @@ export async function deleteEntry(entryId: string) {
 
 // ===== 刷新（文件变更） =====
 
-/** 根据文件路径刷新对应日期的所有条目（原 refreshFile） */
-async function refreshFile(filePath: string) {
+/** 根据文件路径刷新对应日期的所有条目（原 refreshFile；导出供解密/外部改动后主动重读，不依赖文件事件） */
+export async function refreshFile(filePath: string) {
   const file = getApp().vault.getAbstractFileByPath(filePath) as any;
   if (!file) return;
   const dateStr = file.basename;
