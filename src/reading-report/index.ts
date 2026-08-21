@@ -89,6 +89,7 @@ export function showReportInPopup(htmlContent: string, isDarkMode: boolean) {
   const closeButton = document.createElement('button');
   closeButton.innerHTML = '❌';
   closeButton.title = '关闭';
+  closeButton.className = 'bz-win-close';
   closeButton.style.cssText = `
     background: none;
     border: none;

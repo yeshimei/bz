@@ -1149,6 +1149,30 @@
   align-items: center !important;
   justify-content: center !important;
 }
+/* 关闭按钮再小 2px（用户拍板）：20×24/12px */
+.bz-icon-btn--close,
+.bz-win-close,
+.todo-btn-close,
+.news-close-btn {
+  width: 20px !important;
+  height: 24px !important;
+  font-size: 12px !important;
+}
+/* 移动端非真全屏（常规卡）隐藏关闭按钮（用户拍板）：卡片态靠点遮罩关闭，真全屏时靠 ❌ 关闭；桌面端不受影响 */
+@media (max-width: 768px) {
+  .bz-win-close,
+  .bz-icon-btn--close,
+  .todo-btn-close,
+  .news-close-btn {
+    display: none !important;
+  }
+  .bz-win-mfs .bz-win-close,
+  .bz-win-mfs .bz-icon-btn--close,
+  .bz-win-mfs .todo-btn-close,
+  .bz-win-mfs .news-close-btn {
+    display: flex !important;
+  }
+}
 
 /* ==================== 剪藏本（clipping，ticket 60 收敛：原 CLIPPING_CSS + 滚动条注入，逐字搬运） ==================== */
         #article-view-popup {

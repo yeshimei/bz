@@ -1017,6 +1017,7 @@ export async function openBelongingsPanel(): Promise<void> {
 
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '❌';
+  closeBtn.className = 'bz-win-close';
   closeBtn.style.cssText = ` background: none; border: none; font-size: .6rem;
     cursor: pointer; color: var(--text-muted);
     box-shadow: none;
