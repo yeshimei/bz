@@ -2788,8 +2788,8 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   padding: 10px 2px 14px;
   border-bottom: 1px solid var(--background-modifier-border);
   margin-bottom: 6px;
-  max-height: 40vh;
-  overflow-y: auto;
+  /* 头部固定内容区：内容已收敛（三行省略），图片/视频限高，任何情况不出滚动条 */
+  overflow: hidden;
 }
 /* 条目展示：标题与 meta 行上下排列，留足间距（memo/diary 共用）；抽屉内信息同样禁止选字复制 */
 .bz-item-sheet-entry {
@@ -2812,6 +2812,15 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+/* 头部内的图片/视频/嵌入：限高展示，不把头部撑成滚动条（md 渲染的大图/视频常见病） */
+.bz-item-sheet-entry-content img,
+.bz-item-sheet-entry-content video,
+.bz-item-sheet-entry-content iframe {
+  max-width: 100%;
+  max-height: 80px;
+  object-fit: contain;
+  border-radius: 6px;
 }
 .bz-item-sheet-title {
   font-size: 14px; font-weight: 600; color: var(--text-normal);
@@ -2836,6 +2845,28 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   background: transparent !important; /* 无背景反馈，保持纯粹 */
 }
 .bz-item-sheet button.bz-item-sheet-item--danger { color: var(--text-error) !important; }
+/* 动作项右侧小字（次级/动态数据，如「123 字」）：右对齐、faint 弱化，不参与换行 */
+.bz-item-sheet-item-sub {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 45%;
+  flex-shrink: 1;
+}
+.bz-item-menu-item-sub {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 40%;
+  flex-shrink: 1;
+  padding-left: 12px;
+}
 .bz-item-sheet-icon { width: 16px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--text-muted); }
 .bz-item-sheet-item--danger .bz-item-sheet-icon { color: var(--text-error); }
 @keyframes bz-sheet-in {
