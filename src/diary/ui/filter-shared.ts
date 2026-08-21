@@ -2,7 +2,7 @@
  * 筛选联动共享逻辑（applyFilter 与标签栏重建共用，避免 entries ↔ panel 循环依赖）。
  * 原脚本 updateTitleSuffix（1934）、refreshSubTagsBar（1208）、updateSubTagsCounts（1312）、updateTagCounts（914）。
  */
-import { getPrimaryTagsConfig, getParentPrimaryTag, getSubTagsOfPrimary, getTagEmoji, isSubTag } from '../config';
+import { getPrimaryTagsConfig, getPrimaryTagsInDisplayOrder, getParentPrimaryTag, getSubTagsOfPrimary, getTagEmoji, isSubTag } from '../config';
 import { getCurrentActiveParentForSub, setCurrentActiveParentForSub, state } from '../state';
 import { getShowTagCountSetting, getTagShowEmojiSetting, getTagSortModeSetting } from './ui-settings';
 import { ENCRYPT_TAG, isUnlocked } from '../encrypt';
@@ -144,13 +144,15 @@ export function rebuildTags() {
   const tagsScrollContainer = document.createElement('div');
   tagsScrollContainer.className = 'diary-tags-scroll-container';
 
-  // 标签排序：fixed（内置配置顺序）/ count（条目数量降序）
-  let tagList = Object.keys(getPrimaryTagsConfig());
+  // 标签排序：fixed（内置配置顺序，加密固定最后）/ count（条目数量降序，加密仍最后）
+  let tagList = getPrimaryTagsInDisplayOrder();
   if (getTagSortModeSetting() === 'count') {
     tagList = tagList
+      .filter((t) => t !== ENCRYPT_TAG)
       .map((tag) => ({ tag, count: getTagCountForPrimary(tag) }))
       .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
       .map((x) => x.tag);
+    tagList.push(ENCRYPT_TAG); // 加密固定最后（用户决策）
   }
 
   for (const tag of tagList) {

@@ -12,7 +12,7 @@ import { getSettings, saveSettings } from '../../core/settings-provider';
 import { openSettingsModal } from '../../core/settings-modal';
 import { applyDirectories } from '../config';
 import { applyUiSettings, getDefaultDateFilterSetting, getDefaultSelectedTagSetting } from './ui-settings';
-import { getPrimaryTagsConfig, getSubTagsOfPrimary, getTagEmoji, isSubTag, getParentPrimaryTag } from '../config';
+import { getPrimaryTagsConfig, getPrimaryTagsInDisplayOrder, getSubTagsOfPrimary, getTagEmoji, isSubTag, getParentPrimaryTag } from '../config';
 import { state, setCurrentActiveParentForSub, getCurrentActiveParentForSub } from '../state';
 import { loadAll, onFullRefresh, onLightRefresh, onProgress, onLoadingChange, onFileChange, clearEncryptedEntries, reloadWithEncrypted } from '../store';
 import { lockSafe, isUnlocked, onUnlockChange } from '../encrypt';
@@ -298,9 +298,10 @@ export function createTagBar() {
   const tagsScrollContainer = document.createElement('div');
   tagsScrollContainer.className = 'diary-tags-scroll-container';
 
-  // 遍历主标签（不含二级标签）
-  for (const [tag, config] of Object.entries(getPrimaryTagsConfig())) {
-    tagsScrollContainer.appendChild(createTag(tag, config.emoji, null));
+  // 遍历主标签（不含二级标签；加密固定最后，用户决策）
+  const config = getPrimaryTagsConfig();
+  for (const tag of getPrimaryTagsInDisplayOrder()) {
+    tagsScrollContainer.appendChild(createTag(tag, config[tag]?.emoji || '📖', null));
   }
 
   tagsContainer.appendChild(tagsScrollContainer);

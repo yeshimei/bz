@@ -104,6 +104,12 @@ async function encryptViaSetup() {
 }
 
 describe('筛选栏「加密」标签（ADR-0017）', () => {
+  it('「加密」标签固定排筛选栏最后（用户决策）', () => {
+    const btns = [...document.querySelectorAll('.diary-tag-btn:not(.diary-sub-tag-btn)')];
+    expect(btns.length).toBeGreaterThan(0);
+    expect(btns[btns.length - 1].getAttribute('data-tag')).toBe(ENCRYPT_TAG);
+  });
+
   it('上锁态显示 🔒 无计数；点击弹主密码，解锁后恢复普通态', async () => {
     // 预置保险箱清单并上锁（非首设：输入主密码模式）
     const sm = getSafeManager();
@@ -187,8 +193,8 @@ describe('改类型触发加密（ADR-0017 Q20-a）', () => {
     expect(encEntry.tags).toContain('加密');
     expect(encEntry.noteId).toBeTruthy();
     expect(encEntry.id!.startsWith('enc-diary-')).toBe(true);
-    // 卡片 🔐 角标
-    await waitFor(() => !!document.querySelector('.bz-encrypt-badge'));
+    // 卡片时间后不加 🔐 角标（用户决策：时间后不跟加密 emoji，识别靠 emoji 序列本身）
+    expect(document.querySelector('.bz-encrypt-badge')).toBeNull();
   });
 
   it('保存时取消二次确认 → 不加密', async () => {
@@ -234,7 +240,10 @@ describe('加密条目（ADR-0017）', () => {
     await waitFor(() => vault.files.has('我的/日记/2024-01-01.md'));
     const md = vault.files.get('我的/日记/2024-01-01.md')!;
     expect(md).toContain('# 📖🌟 08:00');
+    expect(md).not.toContain('08:00 08:00'); // 回归：标题不得出现双时间
     expect(md).toContain('第一条日记');
+    // 标题与正文之间有空行（与 writeFile 生成格式一致）
+    expect(md.split('\n')[1]).toBe('');
     // 列表不再含加密条目（reloadWithEncrypted 在异步 handler 内，须等待）
     await waitFor(() => !state.data.originalDiaryEntries.some((e) => e.encrypted));
     expect(state.data.originalDiaryEntries.some((e) => e.encrypted)).toBe(false);
@@ -256,27 +265,23 @@ describe('加密条目（ADR-0017）', () => {
     expect(hasNotice(/日记条目已删除/)).toBe(true);
   });
 
-  it('双击加密卡片 → 只读预览弹窗（Markdown 渲染 + ✕ 关闭）', async () => {
+  it('加密卡片正文即预览：单击/双击无弹窗、不跳 md（正文渲染在卡片里）', async () => {
     await encryptViaSetup();
     const encEntry = state.data.originalDiaryEntries.find((e) => e.encrypted)!;
     const content = document.querySelector(
       `.diary-entry-content[data-entry-id="${encEntry.id}"]`
     ) as HTMLElement;
-    // 模拟双击（<300ms；用两次独立事件确保双击判定）
+    expect(content).toBeTruthy();
+    // 正文直接在卡片渲染（即预览，用户决策：不弹预览窗）
+    expect(content.textContent).toContain('第一条日记');
+    // 单击 + 双击都不产生任何预览弹窗
     const click = () => content.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     click();
     await new Promise((r) => setTimeout(r, 30));
     click();
-    await waitFor(
-      () => document.getElementById('bz-diary-encrypt-preview-popup')?.style.display === 'flex'
-    );
-    const popup = document.getElementById('bz-diary-encrypt-preview-popup')!;
-    const title = popup.querySelector('h4') as HTMLElement;
-    expect(title.textContent).toBe('2024-01-01 · 08:00 日记');
-    expect(popup.textContent).toContain('第一条日记'); // MarkdownRenderer mock 渲染正文
-    // ✕ 关闭
-    (popup.querySelector('.bz-encrypt-btn') as HTMLElement).click();
-    expect(document.getElementById('bz-diary-encrypt-preview-mask')!.style.display).toBe('none');
+    await new Promise((r) => setTimeout(r, 50));
+    expect(document.getElementById('bz-diary-encrypt-preview-popup')).toBeNull();
+    expect(document.getElementById('bz-diary-encrypt-preview-mask')).toBeNull();
   });
 });
 
