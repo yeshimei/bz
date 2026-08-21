@@ -12,7 +12,7 @@ import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
 import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, getTypeColor, getStarRating, TYPE_GROUPS, ALL_TAGS, getGroupForTag } from './constants';
 import { M, takeHomeFilmStatus, type MovieItem } from './state';
 import { getDisplayItems, refreshDataAndView, rebuildItems } from './data';
-import { attachItemActions, type ItemAction } from '../core/item-actions';
+import { attachItemActions, refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, type ItemAction } from '../core/item-actions';
 import { confirm } from '../core/confirm';
 import { openRecommendModal } from './recommend';
 import { watchPosterFetch } from './poster-watch';
@@ -446,8 +446,7 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
     updateInputVisibility();
   }).container;
 
-  // 季集 / 评分 / 观影日期 / 影评
-  const seasonRow = createFieldRow({ type: 'text', placeholder: '季集（可选）' });
+  // 评分 / 观影日期 / 影评（季集字段已移除：生成与编辑均不再提供）
   const ratingRow = createFieldRow({ type: 'number', placeholder: '评分（0.1~5）', min: '0.1', max: '5', step: '0.1', extraCss: 'width: 100%;' });
   const dateRow = createFieldRow({ type: 'datetime-local', placeholder: '观影日期', step: '1', value: localNowFormat(), extraCss: 'text-indent: 8px;' });
   const reviewRow = createTextareaRow('影评（可选）', 3);
@@ -456,8 +455,6 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
     const showRatingReview = selectedStatus === STATUS_WATCHED;
     ratingRow.container.style.display = showRatingReview ? 'flex' : 'none';
     reviewRow.container.style.display = showRatingReview ? 'flex' : 'none';
-    const group = getGroupForTag(selectedTag);
-    seasonRow.container.style.display = group !== '电影' ? 'flex' : 'none';
   }
 
   // 按钮
@@ -524,11 +521,9 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
 
     const now = new Date();
     const watchDateValue = (dateRow.input.value || localNowFormat()).replace('T', ' ');
-    const seasonEpisode = seasonRow.input.value.trim();
     const reviewText = reviewRow.textarea.value.trim();
 
     let fileContent = `---\ntags:\n- ${selectedTag}\n观影日期: ${watchDateValue}\n评分: ${ratingValue}\n`;
-    if (seasonEpisode) fileContent += `季集: ${seasonEpisode}\n`;
     if (reviewText) fileContent += `影评: ${reviewText}\n`;
     fileContent += `海报: \n---\n`;
 
@@ -555,7 +550,6 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
   addModal.appendChild(dupHint);
   addModal.appendChild(typeContainer);
   addModal.appendChild(statusContainer);
-  addModal.appendChild(seasonRow.container);
   addModal.appendChild(ratingRow.container);
   addModal.appendChild(dateRow.container);
   addModal.appendChild(reviewRow.container);
@@ -667,25 +661,6 @@ export function openEditModal(item: any, app: App): void {
   statusContainer.appendChild(statusButtonGroup);
   editModal.appendChild(statusContainer);
 
-  // 季集
-  const seasonContainer = document.createElement('div');
-  seasonContainer.style.cssText = 'display: flex; gap: 8px; align-items: center;';
-  const seasonInput = document.createElement('input');
-  seasonInput.type = 'text';
-  seasonInput.placeholder = '季集（可选）';
-  seasonInput.style.cssText = `
-    flex: 1; padding: 6px 8px; border-radius: 6px;
-    border: 1px solid var(--background-modifier-border);
-    background: var(--background-primary); color: var(--text-normal);
-    font-size: 0.9rem;
-  `;
-  const fm = app.metadataCache.getFileCache(item.file)?.frontmatter;
-  if (fm && fm['季集']) {
-    seasonInput.value = fm['季集'].toString();
-  }
-  seasonContainer.appendChild(seasonInput);
-  editModal.appendChild(seasonContainer);
-
   // 评分
   const ratingContainer = document.createElement('div');
   ratingContainer.style.cssText = 'display: flex; gap: 8px; align-items: center;';
@@ -749,8 +724,6 @@ export function openEditModal(item: any, app: App): void {
     const showRatingReview = selectedStatus === STATUS_WATCHED;
     ratingContainer.style.display = showRatingReview ? 'flex' : 'none';
     reviewContainer.style.display = showRatingReview ? 'flex' : 'none';
-    const group = getGroupForTag(item.typeTag);
-    seasonContainer.style.display = group !== '电影' ? 'flex' : 'none';
   }
 
   // 按钮
@@ -794,17 +767,11 @@ export function openEditModal(item: any, app: App): void {
 
     const now = new Date();
     const watchDate = (dateInput.value || localNowFormat()).replace('T', ' ');
-    const seasonEpisode = seasonInput.value.trim();
     const reviewText = reviewTextarea.value.trim();
 
     await app.fileManager.processFrontMatter(item.file, (fm: Record<string, any>) => {
       fm['评分'] = ratingValue;
       fm['观影日期'] = watchDate;
-      if (seasonEpisode) {
-        fm['季集'] = seasonEpisode;
-      } else {
-        delete fm['季集'];
-      }
       if (reviewText) {
         fm['影评'] = reviewText;
       } else {
@@ -1367,27 +1334,29 @@ function openMovieNote(item: MovieItem, app: App): void {
   closeOverlay();
 }
 
-/** 快捷状态流转（想看 → 在看）：写状态与评分 0（与编辑弹窗保存逻辑一致） */
+/** 快捷状态流转（想看 → 在看 / 在看 → 已看 直改标记；已看不写评分，保持无评分态） */
 async function setMovieStatus(item: MovieItem, status: number, app: App): Promise<void> {
   await app.fileManager.processFrontMatter(item.file, (fm: Record<string, any>) => {
     fm['状态'] = status;
     if (status === STATUS_WATCHING) fm['评分'] = 0;
   });
-  notice('已标记在看', 'success');
+  notice(status === STATUS_WATCHED ? '已标记已看' : '已标记在看', 'success');
   refreshDataAndView(app);
 }
 
-/** 关闭小弹窗（幂等）：注销 ESC + 移除遮罩 */
+/** 关闭小弹窗（幂等）：注销 ESC + 附属浮层注册 + 移除遮罩 */
 function closeMovieTinyModal(mask: HTMLElement, modalEsc: { unregister: () => void }): void {
   modalEsc.unregister();
+  unregisterSheetCompanion(mask);
   mask.remove();
 }
 
 /**
- * 评分窗（标记已看 / 改评分共用）：评分输入 + 观影日期；遮罩点击/ESC 关闭，无取消按钮。
+ * 评分窗（评分 / 改分 共用）：滑块拖动 + 实时数值；遮罩点击/ESC 关闭，无取消按钮。
+ * 无日期输入：默认当年日期（已有观影日期则保留，改分不覆盖）。
  * 确认：状态=已看、评分、观影日期 一并写入 frontmatter。
  */
-export function openRateModal(item: MovieItem, app: App, title: string): void {
+export function openRateModal(item: MovieItem, app: App, title: string, onDone?: () => void): void {
   const mask = document.createElement('div');
   mask.className = 'bz-movie-tiny-mask';
   const modal = document.createElement('div');
@@ -1397,19 +1366,22 @@ export function openRateModal(item: MovieItem, app: App, title: string): void {
   t.className = 'bz-movie-tiny-title';
   t.textContent = title;
 
-  const ratingInput = document.createElement('input');
-  ratingInput.type = 'number';
-  ratingInput.min = '0.1';
-  ratingInput.max = '5';
-  ratingInput.step = '0.1';
-  ratingInput.placeholder = '评分（0.1~5）';
-  ratingInput.className = 'bz-movie-tiny-input';
-  if (item.rating !== null && item.rating > 0) ratingInput.value = String(item.rating);
+  const hasRating = item.rating !== null && item.rating > 0;
+  const slider = document.createElement('input');
+  slider.type = 'range';
+  slider.min = '0.5';
+  slider.max = '5';
+  slider.step = '0.5';
+  slider.className = 'bz-movie-rating-slider';
+  slider.value = String(hasRating ? item.rating : 3.5);
 
-  const dateInput = document.createElement('input');
-  dateInput.type = 'datetime-local';
-  dateInput.className = 'bz-movie-tiny-input';
-  dateInput.value = item.watchDate ? item.watchDate.replace(' ', 'T') : '';
+  const valueLabel = document.createElement('div');
+  valueLabel.className = 'bz-movie-rating-value';
+  const updateValue = () => {
+    valueLabel.textContent = `⭐ ${Number(slider.value).toFixed(1)}`;
+  };
+  slider.addEventListener('input', updateValue);
+  updateValue();
 
   const confirmBtn = document.createElement('button');
   confirmBtn.type = 'button';
@@ -1422,20 +1394,20 @@ export function openRateModal(item: MovieItem, app: App, title: string): void {
   });
 
   confirmBtn.addEventListener('click', async () => {
-    const ratingVal = parseFloat(ratingInput.value);
-    if (isNaN(ratingVal) || ratingVal <= 0) {
-      notice('请填写大于 0 的评分');
-      return;
-    }
-    const watchDate = (dateInput.value || localNowFormat()).replace('T', ' ');
+    const ratingVal = parseFloat(slider.value);
+    // 无日期输入：新评分默认当年日期；已有观影日期保留（改分不覆盖旧日期）
+    const watchDate = item.watchDate || localNowFormat().replace('T', ' ');
     await app.fileManager.processFrontMatter(item.file, (fm: Record<string, any>) => {
       fm['状态'] = STATUS_WATCHED;
       fm['评分'] = ratingVal;
       fm['观影日期'] = watchDate;
     });
     notice('已更新影视信息', 'success');
+    item.rating = ratingVal;
+    item.watchDate = watchDate;
     closeMovieTinyModal(mask, modalEsc);
     refreshDataAndView(app);
+    onDone?.();
   });
 
   mask.addEventListener('click', (e) => {
@@ -1443,15 +1415,16 @@ export function openRateModal(item: MovieItem, app: App, title: string): void {
   });
 
   modal.appendChild(t);
-  modal.appendChild(ratingInput);
-  modal.appendChild(dateInput);
+  modal.appendChild(valueLabel);
+  modal.appendChild(slider);
   modal.appendChild(confirmBtn);
   mask.appendChild(modal);
+  registerSheetCompanion(mask); // 抽屉保持时叠于其上：点击遮罩/按钮不触发抽屉关闭
   document.body.appendChild(mask);
 }
 
 /** 影评窗（写影评 / 改影评共用）：多行文本；遮罩点击/ESC 关闭，无取消按钮。空文本 = 删除影评字段。 */
-export function openReviewModal(item: MovieItem, app: App, title: string): void {
+export function openReviewModal(item: MovieItem, app: App, title: string, onDone?: () => void): void {
   const mask = document.createElement('div');
   mask.className = 'bz-movie-tiny-mask';
   const modal = document.createElement('div');
@@ -1485,6 +1458,9 @@ export function openReviewModal(item: MovieItem, app: App, title: string): void 
     notice(reviewText ? '已保存影评' : '已删除影评', 'success');
     closeMovieTinyModal(mask, modalEsc);
     refreshDataAndView(app);
+    if (reviewText) item.review = reviewText;
+    else item.review = null;
+    onDone?.();
   });
 
   mask.addEventListener('click', (e) => {
@@ -1495,6 +1471,7 @@ export function openReviewModal(item: MovieItem, app: App, title: string): void 
   modal.appendChild(reviewArea);
   modal.appendChild(confirmBtn);
   mask.appendChild(modal);
+  registerSheetCompanion(mask); // 抽屉保持时叠于其上：点击遮罩/按钮不触发抽屉关闭
   document.body.appendChild(mask);
 }
 
@@ -1512,31 +1489,69 @@ function confirmDeleteMovie(item: MovieItem, app: App): void {
   });
 }
 
-/** 挂统一操作（桌面 hover 条 + 移动端抽屉）：打开 > 状态流转 > 写/改影评 > 编辑 > 删除 */
+/**
+ * 挂统一操作（桌面 hover 条 + 移动端抽屉）：
+ * 打开 > 状态流转 >（已看）评分/影评 > 编辑 > 删除。
+ * 动作随状态动态：想看=标记在看；在看=标记已看（直改标记，抽屉保持并刷新为已看动作）；
+ * 已看=评分/改分（滑块窗）+ 写/改影评（影评窗），评分与影评按有无内容切换文案。
+ */
 function attachMovieActions(card: HTMLElement, item: MovieItem, app: App): void {
-  const actions: ItemAction[] = [];
-  actions.push({ icon: 'external-link', label: '打开', title: '打开影视笔记', onClick: () => openMovieNote(item, app) });
-  if (item.status === STATUS_WANT) {
-    actions.push({ icon: 'eye', label: '标记在看', title: '标记在看', onClick: () => void setMovieStatus(item, STATUS_WATCHING, app) });
-  } else if (item.status === STATUS_WATCHING) {
-    actions.push({ icon: 'check-circle', label: '标记已看', title: '标记已看', onClick: () => openRateModal(item, app, '标记已看') });
-  } else {
-    actions.push({ icon: 'star', label: '改评分', title: '改评分', onClick: () => openRateModal(item, app, '修改评分') });
-  }
-  // 有影评显示「改影评」，无影评显示「写影评」
-  actions.push({
-    icon: 'message-square',
-    label: item.review ? '改影评' : '写影评',
-    title: item.review ? '改影评' : '写影评',
-    onClick: () => openReviewModal(item, app, item.review ? '改影评' : '写影评'),
-  });
-  actions.push({ icon: 'pencil', label: '编辑', title: '编辑影视信息', onClick: () => openEditModal(item, app) });
-  actions.push({
-    icon: 'trash-2',
-    label: '删除',
-    title: '删除',
-    kind: 'danger',
-    onClick: () => confirmDeleteMovie(item, app),
-  });
-  attachItemActions(card, actions, { sheetHead: buildMovieSheetHead(item, app) });
+  const buildActions = (): ItemAction[] => {
+    const acts: ItemAction[] = [];
+    acts.push({ icon: 'external-link', label: '打开', title: '打开影视笔记', onClick: () => openMovieNote(item, app) });
+    if (item.status === STATUS_WANT) {
+      acts.push({
+        icon: 'eye',
+        label: '标记在看',
+        title: '标记在看',
+        keepOpen: true,
+        onClick: () =>
+          void setMovieStatus(item, STATUS_WATCHING, app).then(() => {
+            item.status = STATUS_WATCHING;
+            item.rating = 0;
+            refreshItemSheet(buildActions());
+          }),
+      });
+    } else if (item.status === STATUS_WATCHING) {
+      acts.push({
+        icon: 'check-circle',
+        label: '标记已看',
+        title: '标记已看',
+        keepOpen: true,
+        onClick: () =>
+          void setMovieStatus(item, STATUS_WATCHED, app).then(() => {
+            item.status = STATUS_WATCHED;
+            refreshItemSheet(buildActions());
+          }),
+      });
+    } else {
+      // 已看态：评分/影评按有无内容切换文案（评分 → 改分；写影评 → 改影评）
+      const hasRating = item.rating !== null && item.rating > 0;
+      acts.push({
+        icon: 'star',
+        label: hasRating ? '改分' : '评分',
+        title: hasRating ? '改分' : '评分',
+        keepOpen: true,
+        onClick: () => openRateModal(item, app, hasRating ? '改分' : '评分', () => refreshItemSheet(buildActions())),
+      });
+      acts.push({
+        icon: 'message-square',
+        label: item.review ? '改影评' : '写影评',
+        title: item.review ? '改影评' : '写影评',
+        keepOpen: true,
+        onClick: () => openReviewModal(item, app, item.review ? '改影评' : '写影评', () => refreshItemSheet(buildActions())),
+      });
+    }
+    acts.push({ icon: 'pencil', label: '编辑', title: '编辑影视信息', onClick: () => openEditModal(item, app) });
+    acts.push({
+      icon: 'trash-2',
+      label: '删除',
+      title: '删除',
+      kind: 'danger',
+      onClick: () => confirmDeleteMovie(item, app),
+    });
+    return acts;
+  };
+
+  attachItemActions(card, buildActions(), { sheetHead: buildMovieSheetHead(item, app) });
 }
