@@ -34,6 +34,8 @@ export interface ItemAction {
   title?: string;
   /** 危险操作（删除类）：浮层项红色强调 */
   kind?: 'normal' | 'danger';
+  /** 执行后抽屉保持不关闭（域内动作变化后自行 refreshItemSheet 刷新；仅移动端抽屉生效） */
+  keepOpen?: boolean;
   onClick: () => void;
 }
 
@@ -72,7 +74,19 @@ const TOUCH_SETTLE_MS = 400;
 let popupEl: HTMLElement | null = null;
 /** 底部抽屉遮罩（仅移动端抽屉） */
 let sheetMask: HTMLElement | null = null;
+/** 底部抽屉功能项区容器（动态刷新用：域内动作变化后重建，抽屉保持不关） */
+let sheetBodyEl: HTMLElement | null = null;
+/** 附属浮层（抽屉之上的域内小弹窗，如评分窗/影评窗）：点击其中不触发「外部点击关闭抽屉」 */
+const sheetCompanions = new Set<HTMLElement>();
 let menuEsc: ReturnType<typeof escManager.register> | null = null;
+
+/** 注册附属浮层：抽屉保持打开时再叠的小弹窗（遮罩即可）；生命周期由域管理，关闭时注销 */
+export function registerSheetCompanion(el: HTMLElement): void {
+  sheetCompanions.add(el);
+}
+export function unregisterSheetCompanion(el: HTMLElement): void {
+  sheetCompanions.delete(el);
+}
 /**
  * 长按残余 click 抑制（桌面鼠标路径）：
  * 长按松开时浏览器会补发一次 click，若不处理会穿透到卡片内链接/复选框。
@@ -85,9 +99,17 @@ let residualClickArmed = false;
 let touchSettlePending = false;
 let touchSettleTimer: ReturnType<typeof setTimeout> | null = null;
 
+/** 点击是否落在当前抽屉的附属浮层内（是则不当作「外部点击」关闭抽屉） */
+function inSheetCompanion(target: Node): boolean {
+  for (const c of sheetCompanions) {
+    if (c.isConnected && c.contains(target)) return true;
+  }
+  return false;
+}
+
 /** 文档捕获层 mousedown：点浮层外任意处按下即关闭 */
 function onMouseDownCapture(ev: MouseEvent): void {
-  if (popupEl && popupEl.isConnected && !popupEl.contains(ev.target as Node)) {
+  if (popupEl && popupEl.isConnected && !popupEl.contains(ev.target as Node) && !inSheetCompanion(ev.target as Node)) {
     closeItemMenu();
   }
 }
@@ -115,7 +137,7 @@ function onClickCapture(ev: MouseEvent): void {
     ev.preventDefault();
     return;
   }
-  if (popupEl && popupEl.isConnected && !popupEl.contains(target)) {
+  if (popupEl && popupEl.isConnected && !popupEl.contains(target) && !inSheetCompanion(target)) {
     closeItemMenu();
   }
 }
@@ -141,6 +163,7 @@ export function closeItemMenu(): void {
     popupEl.remove();
     popupEl = null;
   }
+  sheetBodyEl = null;
   suppressNextClick = false;
   residualClickArmed = false;
   touchSettlePending = false;
@@ -231,6 +254,53 @@ export function openItemMenu(x: number, y: number, actions: ItemAction[], suppre
   attachPopupListeners('bz-item-menu');
 }
 
+/** 构建抽屉功能项按钮（openItemSheet / refreshItemSheet 共用） */
+function buildSheetItem(a: ItemAction): HTMLElement {
+  const item = document.createElement('button');
+  item.type = 'button';
+  item.className =
+    'bz-item-sheet-item' +
+    (a.kind === 'danger' ? ' bz-item-sheet-item--danger' : '') +
+    (a.tone === 'accent' ? ' bz-item-sheet-item--accent' : '');
+  const itemIcon = document.createElement('span');
+  itemIcon.className = 'bz-item-sheet-icon';
+  renderIcon(itemIcon, a.icon);
+  const itemLabel = document.createElement('span');
+  itemLabel.className = 'bz-item-sheet-label';
+  itemLabel.textContent = a.label;
+  item.appendChild(itemIcon);
+  item.appendChild(itemLabel);
+  if (a.sub) {
+    const itemSub = document.createElement('span');
+    itemSub.className = 'bz-item-sheet-item-sub';
+    itemSub.textContent = a.sub;
+    item.appendChild(itemSub);
+  }
+  item.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    if (a.keepOpen) {
+      // 执行后抽屉保持（动作列表由 refreshItemSheet 重建），仅抽屉路径使用
+      a.onClick();
+      return;
+    }
+    closeItemMenu();
+    a.onClick();
+  });
+  return item;
+}
+
+/**
+ * 动态刷新当前抽屉的功能项（域内动作变化后调用，如状态流转后动作列表重排）：
+ * 保留头部与遮罩，仅重建功能项区，抽屉不关闭。
+ */
+export function refreshItemSheet(actions: ItemAction[]): void {
+  if (!popupEl || popupEl.classList.contains('bz-item-sheet') === false || !sheetBodyEl) return;
+  sheetBodyEl.innerHTML = '';
+  for (const a of actions) {
+    sheetBodyEl.appendChild(buildSheetItem(a));
+  }
+}
+
 /** 移动端底部抽屉（长按卡片弹出；遮罩 + 顶部信息 + 功能一行行列出） */
 export function openItemSheet(actions: ItemAction[], opts?: ItemActionsOptions, suppressResidualClick = false): void {
   closeItemMenu();
@@ -262,38 +332,14 @@ export function openItemSheet(actions: ItemAction[], opts?: ItemActionsOptions, 
   const body = document.createElement('div');
   body.className = 'bz-item-sheet-body';
   for (const a of actions) {
-    const item = document.createElement('button');
-    item.type = 'button';
-    item.className =
-      'bz-item-sheet-item' +
-      (a.kind === 'danger' ? ' bz-item-sheet-item--danger' : '') +
-      (a.tone === 'accent' ? ' bz-item-sheet-item--accent' : '');
-    const itemIcon = document.createElement('span');
-    itemIcon.className = 'bz-item-sheet-icon';
-    renderIcon(itemIcon, a.icon);
-    const itemLabel = document.createElement('span');
-    itemLabel.className = 'bz-item-sheet-label';
-    itemLabel.textContent = a.label;
-    item.appendChild(itemIcon);
-    item.appendChild(itemLabel);
-    if (a.sub) {
-      const itemSub = document.createElement('span');
-      itemSub.className = 'bz-item-sheet-item-sub';
-      itemSub.textContent = a.sub;
-      item.appendChild(itemSub);
-    }
-    item.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      closeItemMenu();
-      a.onClick();
-    });
-    body.appendChild(item);
+    body.appendChild(buildSheetItem(a));
   }
   sheet.appendChild(body);
   document.body.appendChild(mask);
   document.body.appendChild(sheet);
   popupEl = sheet;
   sheetMask = mask;
+  sheetBodyEl = body;
   suppressNextClick = suppressResidualClick; // 鼠标路径：残余 click 由 mouseup 标记吞；触屏路径：走合成 click 静置窗口
   residualClickArmed = false;
   if (!suppressResidualClick) armTouchSettle();
