@@ -253,7 +253,8 @@ export class UIManager {
   }
 
   // ---------- 解锁弹窗 ----------
-  showPasswordDialog(): Promise<boolean> {
+  async showPasswordDialog(): Promise<boolean> {
+    const exists = await this.dataManager.exists();
     return new Promise((resolve) => {
       const mask = document.createElement('div');
       mask.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:10070;display:flex;align-items:center;justify-content:center;';
@@ -274,6 +275,19 @@ export class UIManager {
       const warning = document.createElement('div');
       warning.style.cssText = 'background:#ffecb0;color:#8a6d3b;padding:10px 12px;border-radius:6px;margin-bottom:16px;font-size:14px;border:1px solid #f5c842;display:none;';
       warning.innerHTML = '<strong>⚠️ 重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，加密笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。';
+      if (exists) {
+        title.textContent = '输入主密码';
+        message.textContent = '请输入您设置的主密码以解锁加密保险箱';
+        input2.style.display = 'none';
+        warning.style.display = 'none';
+      } else {
+        title.textContent = '设置主密码';
+        message.textContent = '请设置一个主密码（用于加密所有数据）';
+        input2.style.display = 'block';
+        input2.placeholder = '再次输入';
+        warning.style.display = 'block';
+      }
+      input.focus();
       const btnContainer = document.createElement('div');
       btnContainer.style.cssText = 'display:flex;gap:12px;justify-content:flex-end;';
       const cancelBtn = document.createElement('button');
@@ -286,7 +300,6 @@ export class UIManager {
       confirmBtn.onclick = async () => {
         const pw = input.value;
         if (!pw) { notice('请输入密码'); return; }
-        const exists = this.dataManager.exists();
         if (!exists) {
           if (input2.style.display === 'none') {
             input2.style.display = 'block';
@@ -332,21 +345,6 @@ export class UIManager {
       box.appendChild(btnContainer);
       mask.appendChild(box);
       document.body.appendChild(mask);
-      (async () => {
-        if (this.dataManager.exists()) {
-          title.textContent = '输入主密码';
-          message.textContent = '请输入您设置的主密码以解锁加密保险箱';
-          input2.style.display = 'none';
-          warning.style.display = 'none';
-        } else {
-          title.textContent = '设置主密码';
-          message.textContent = '请设置一个主密码（用于加密所有数据）';
-          input2.style.display = 'block';
-          input2.placeholder = '再次输入';
-          warning.style.display = 'block';
-        }
-        input.focus();
-      })();
     });
   }
 

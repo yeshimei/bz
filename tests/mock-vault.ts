@@ -20,7 +20,15 @@ export class MockVault {
       this.files.set(path, content);
       this.modifiedPaths.push(path);
     },
-    exists: async (path: string): Promise<boolean> => this.files.has(path),
+    exists: async (path: string): Promise<boolean> => this.files.has(path) || this.dirs.has(path),
+    remove: async (path: string): Promise<void> => {
+      this.files.delete(path);
+      this.binaryFiles.delete(path);
+      this.modifiedPaths.push(path);
+    },
+    mkdir: async (path: string): Promise<void> => {
+      this.dirs.add(path);
+    },
     list: async (path: string): Promise<{ files: string[]; folders: string[] }> => {
       const prefix = path.endsWith('/') ? path : path + '/';
       const files = [...this.files.keys()].filter((p) => p.startsWith(prefix) && !p.slice(prefix.length).includes('/'));

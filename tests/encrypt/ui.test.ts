@@ -56,6 +56,7 @@ describe('UIManager 解锁弹窗', () => {
 
   it('首次无清单：标题「设置主密码」+ 再次确认 + 警告；一致则设置成功', async () => {
     const p = ui.showPasswordDialog();
+    await waitFor(() => !!findDialog());
     const dialog = findDialog()!;
     expect(dialog.textContent).toContain('设置主密码');
     expect(dialog.textContent).toContain('重要提醒');
@@ -80,6 +81,7 @@ describe('UIManager 解锁弹窗', () => {
     await dm.unlock('master123');
     dm.lock();
     const p = ui.showPasswordDialog();
+    await waitFor(() => !!findDialog());
     const dialog = findDialog()!;
     expect(dialog.textContent).toContain('输入主密码');
     const inputs = dialog.querySelectorAll('input[type="password"]');
@@ -94,6 +96,23 @@ describe('UIManager 解锁弹窗', () => {
     confirmBtn.click();
     await p;
     expect(dm.unlocked).toBe(true);
+  });
+
+  it('回归：首次设主密码后再次打开→解锁弹窗（不再要求重设主密码）', async () => {
+    // 首次：设置主密码
+    const p1 = dm.unlock('master123');
+    expect(await p1).toBe(true);
+    expect(await dm.exists()).toBe(true);
+    // 再次打开：should 走「输入主密码」解锁流程而非「设置主密码」
+    const p2 = ui.showPasswordDialog();
+    await waitFor(() => !!findDialog());
+    const dialog = findDialog()!;
+    expect(dialog.textContent).toContain('输入主密码');
+    expect(dialog.textContent).not.toContain('设置主密码');
+    // 二次确认输入框隐藏（解锁流程无需再次输入）
+    const inputs = dialog.querySelectorAll('input[type="password"]');
+    expect((inputs[1] as HTMLInputElement).style.display).toBe('none');
+    ui.hide();
   });
 });
 
