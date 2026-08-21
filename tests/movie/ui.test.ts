@@ -1,9 +1,9 @@
 /**
  * 影视 UI 测试（ticket 14）：overlay/卡片/搜索/分页/设置筛选/ESC
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, hasNotice, Platform as MockPlatform } from '../mock-obsidian-entry';
 import { M, resetMovieState, setHomeFilmStatus } from '../../src/movie/state';
 import { rebuildItems, getDisplayItems } from '../../src/movie/data';
 import {
@@ -360,6 +360,185 @@ describe('ESC 层级', () => {
     expect(names).toContain('影视文件夹');
     expect(names).toContain('每页加载数量');
     expect(names).toContain('海报抓取');
+  });
+});
+
+describe('抽屉（统一手势组件接入）', () => {
+  /** 长按卡片弹抽屉（fake timers 内）+ 消费残余 click */
+  function openSheetCard(card: HTMLElement) {
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 100, clientY: 100 }));
+    vi.advanceTimersByTime(550);
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  }
+
+  function setupVault() {
+    const vault = new MockVault();
+    vault.files.set(
+      '我的/影视/《想看片》.md',
+      ['---', 'tags: [电影]', '状态: 0', '评分: -1', '---'].join('\n')
+    );
+    vault.files.set(
+      '我的/影视/《在看片》.md',
+      ['---', 'tags: [美剧]', '状态: 1', '评分: 0', '---'].join('\n')
+    );
+    vault.files.set(
+      '我的/影视/《已看片》.md',
+      ['---', 'tags: [电影]', '状态: 2', '评分: 4.5', '观影日期: 2025-01-01T10:00:00', '影评: 好片', '---'].join('\n')
+    );
+    return vault;
+  }
+
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetMovieState();
+    vi.useFakeTimers();
+    document.body.innerHTML = '';
+    MockPlatform.isMobile = true;
+  });
+
+  afterEach(() => {
+    MockPlatform.isMobile = false;
+    vi.useRealTimers();
+  });
+
+  it('长按想看条目 → 抽屉动作（打开/标记在看/写影评/编辑/删除）+ 头部名称与徽章', () => {
+    const vault = setupVault();
+    const app = makeApp(vault);
+    const items = rebuildItems(app);
+    const c = document.createElement('div');
+    document.body.appendChild(c);
+    renderAll(items, c, app);
+    const card = [...c.querySelectorAll('div')].find((d) => d.textContent === '想看片')!.parentElement!.parentElement!;
+    expect(card.classList.contains('bz-item-card')).toBe(true);
+    openSheetCard(card);
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet).not.toBeNull();
+    for (const label of ['打开', '标记在看', '写影评', '编辑', '删除']) {
+      expect(sheet.textContent).toContain(label);
+    }
+    expect(sheet.textContent).not.toContain('标记已看');
+    expect(sheet.textContent).not.toContain('改影评');
+    // 头部：名称 + 类型徽章 + 想看徽章
+    const head = sheet.querySelector('.bz-item-sheet-head') as HTMLElement;
+    expect(head.textContent).toContain('想看片');
+    expect(head.textContent).toContain('电影');
+    expect(head.textContent).toContain('想看');
+  });
+
+  it('点抽屉「标记在看」→ frontmatter 状态=1 评分=0，列表刷新', async () => {
+    const vault = setupVault();
+    const app = makeApp(vault);
+    const items = rebuildItems(app);
+    const c = document.createElement('div');
+    document.body.appendChild(c);
+    renderAll(items, c, app);
+    const card = [...c.querySelectorAll('div')].find((d) => d.textContent === '想看片')!.parentElement!.parentElement!;
+    openSheetCard(card);
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    const markBtn = [...sheet.querySelectorAll('.bz-item-sheet-item')].find((b) => b.textContent!.includes('标记在看')) as HTMLElement;
+    markBtn.click();
+    await vi.advanceTimersByTimeAsync(50);
+    expect(vault.files.get('我的/影视/《想看片》.md')).toContain('状态: 1');
+    expect(vault.files.get('我的/影视/《想看片》.md')).toContain('评分: 0');
+    expect(hasNotice('已标记在看')).toBe(true);
+  });
+
+  it('在看条目 → 「标记已看」弹评分窗（无取消按钮）；评分+日期确认写入 frontmatter', async () => {
+    const vault = setupVault();
+    const app = makeApp(vault);
+    const items = rebuildItems(app);
+    const c = document.createElement('div');
+    document.body.appendChild(c);
+    renderAll(items, c, app);
+    const card = [...c.querySelectorAll('div')].find((d) => d.textContent === '在看片')!.parentElement!.parentElement!;
+    openSheetCard(card);
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet.textContent).toContain('标记已看');
+    const markBtn = [...sheet.querySelectorAll('.bz-item-sheet-item')].find((b) => b.textContent!.includes('标记已看')) as HTMLElement;
+    markBtn.click();
+    const modal = document.querySelector('.bz-movie-tiny-modal') as HTMLElement;
+    expect(modal).not.toBeNull();
+    expect(modal.textContent).toContain('标记已看');
+    const buttons = [...modal.querySelectorAll('button')];
+    expect(buttons.length).toBe(1); // 只有确认，无取消
+    const ratingInput = modal.querySelector('input[placeholder="评分（0.1~5）"]') as HTMLInputElement;
+    ratingInput.value = '4.2';
+    (modal.querySelector('.bz-movie-tiny-confirm') as HTMLElement).click();
+    await vi.advanceTimersByTimeAsync(50);
+    const fileContent = vault.files.get('我的/影视/《在看片》.md')!;
+    expect(fileContent).toContain('状态: 2');
+    expect(fileContent).toContain('评分: 4.2');
+    expect(fileContent).toContain('观影日期:');
+    expect(hasNotice('已更新影视信息')).toBe(true);
+    expect(document.querySelector('.bz-movie-tiny-modal')).toBeNull(); // 确认后关闭
+  });
+
+  it('评分窗：遮罩点击关闭；已看条目抽屉显示「改评分」', async () => {
+    const vault = setupVault();
+    const app = makeApp(vault);
+    const items = rebuildItems(app);
+    const c = document.createElement('div');
+    document.body.appendChild(c);
+    renderAll(items, c, app);
+    const card = [...c.querySelectorAll('div')].find((d) => d.textContent === '已看片')!.parentElement!.parentElement!;
+    openSheetCard(card);
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet.textContent).toContain('改评分');
+    expect(sheet.textContent).toContain('改影评');
+    const rateBtn = [...sheet.querySelectorAll('.bz-item-sheet-item')].find((b) => b.textContent!.includes('改评分')) as HTMLElement;
+    rateBtn.click();
+    const modal = document.querySelector('.bz-movie-tiny-modal') as HTMLElement;
+    expect(modal.textContent).toContain('修改评分');
+    const ratingInput = modal.querySelector('input[placeholder="评分（0.1~5）"]') as HTMLInputElement;
+    expect(ratingInput.value).toBe('4.5'); // 预填当前评分
+    // 遮罩点击关闭
+    (document.querySelector('.bz-movie-tiny-mask') as HTMLElement).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(document.querySelector('.bz-movie-tiny-modal')).toBeNull();
+  });
+
+  it('影评窗：改影评预填 → 确认写入 frontmatter；空文本删除影评字段', async () => {
+    const vault = setupVault();
+    const app = makeApp(vault);
+    const items = rebuildItems(app);
+    const c = document.createElement('div');
+    document.body.appendChild(c);
+    renderAll(items, c, app);
+    const card = [...c.querySelectorAll('div')].find((d) => d.textContent === '已看片')!.parentElement!.parentElement!;
+    openSheetCard(card);
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    const reviewBtn = [...sheet.querySelectorAll('.bz-item-sheet-item')].find((b) => b.textContent!.includes('改影评')) as HTMLElement;
+    reviewBtn.click();
+    const modal = document.querySelector('.bz-movie-tiny-modal') as HTMLElement;
+    expect(modal.textContent).toContain('改影评');
+    const area = modal.querySelector('textarea') as HTMLTextAreaElement;
+    expect(area.value).toBe('好片');
+    area.value = '二刷更佳';
+    (modal.querySelector('.bz-movie-tiny-confirm') as HTMLElement).click();
+    await vi.advanceTimersByTimeAsync(50);
+    expect(vault.files.get('我的/影视/《已看片》.md')).toContain('影评: 二刷更佳');
+    expect(hasNotice('已保存影评')).toBe(true);
+  });
+
+  it('点抽屉「删除」→ 二次确认 → 影视笔记从库删除', async () => {
+    const vault = setupVault();
+    const app = makeApp(vault);
+    const items = rebuildItems(app);
+    const c = document.createElement('div');
+    document.body.appendChild(c);
+    renderAll(items, c, app);
+    const card = [...c.querySelectorAll('div')].find((d) => d.textContent === '想看片')!.parentElement!.parentElement!;
+    openSheetCard(card);
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    const delBtn = [...sheet.querySelectorAll('.bz-item-sheet-item')].find((b) => b.textContent!.includes('删除')) as HTMLElement;
+    delBtn.click();
+    const confirmMask = document.getElementById('__shared_confirm_mask__') as HTMLElement;
+    expect(confirmMask).not.toBeNull();
+    expect(confirmMask.textContent).toContain('想看片');
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
+    await vi.advanceTimersByTimeAsync(50);
+    expect(vault.files.has('我的/影视/《想看片》.md')).toBe(false);
+    expect(hasNotice('影视已删除')).toBe(true);
   });
 });
 
