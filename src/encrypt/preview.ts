@@ -18,9 +18,9 @@ export interface CompressResult {
 export const PREVIEW_TIMEOUT_MS = 5000;
 
 /**
- * 省略图固定档（用户拍板：预览只要"看得清"，不提供长边/质量设置项）：
- * 长边 384 / JPEG 质量 0.5——手机预览清晰、体积小（首版 256/0.45 反馈太小太糊，
- * 480/0.7 偏大，取折中）；要看清就点击缩略图按需加载原始质量。
+ * 省略图默认档（作为 compressImage/videoFrame 默认参数；实际取值由保险箱设置
+ * 「预览目标长边/预览质量」注入——用户可调，无需改代码）。
+ * 长边 384 / JPEG 质量 0.5：手机预览清晰、体积小；要看清就点击缩略图按需加载原始质量。
  */
 export const PREVIEW_OMIT_SIZE = 384;
 export const PREVIEW_OMIT_QUALITY = 0.5;
