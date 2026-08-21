@@ -5,6 +5,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { attachItemActions, closeItemMenu, openItemMenu, type ItemAction } from '../../src/core/item-actions';
+import { Platform as MockPlatform } from '../mock-obsidian-entry';
 
 const ACTIONS: ItemAction[] = [
   { icon: '📄', label: '打开', title: '打开', onClick: () => (window as any).__opened = true },
@@ -184,6 +185,111 @@ describe('长按跟手菜单（移动端主路径）', () => {
     expect(document.querySelector('.bz-item-menu')).not.toBeNull();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect(document.querySelector('.bz-item-menu')).toBeNull();
+    vi.useRealTimers();
+  });
+});
+
+describe('移动端底部抽屉（Platform.isMobile = true）', () => {
+  const SHEET_OPTS = { sheetTitle: '抽屉标题', sheetSub: '#工作' };
+
+  beforeEach(() => {
+    document.body.innerHTML = '';
+    (window as any).__opened = false;
+    (window as any).__edited = false;
+    (window as any).__deleted = false;
+    (window as any).__linkClicked = false;
+    MockPlatform.isMobile = true;
+  });
+
+  afterEach(() => {
+    MockPlatform.isMobile = false;
+    closeItemMenu();
+  });
+
+  /** 鼠标路径长按开抽屉 + 消费残余 click（与服务测试同构：mouseup 标记 → click 被吞） */
+  function openSheet(card: HTMLElement) {
+    longPressOn(card);
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  }
+
+  it('长按卡片 → 遮罩 + 底部抽屉：顶部显示选中条目信息，功能一行行列出', () => {
+    vi.useFakeTimers();
+    const card = makeCard();
+    attachItemActions(card, ACTIONS, SHEET_OPTS);
+    openSheet(card);
+    const mask = document.querySelector('.bz-item-sheet-mask');
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(mask).not.toBeNull();
+    expect(sheet).not.toBeNull();
+    // 顶部信息区（网易云式）
+    expect(sheet.querySelector('.bz-item-sheet-title')!.textContent).toBe('抽屉标题');
+    expect(sheet.querySelector('.bz-item-sheet-sub')!.textContent).toBe('#工作');
+    // 功能项一行行列出（打开/编辑/删除）
+    const items = sheet.querySelectorAll('.bz-item-sheet-item');
+    expect(items.length).toBe(3);
+    expect(sheet.textContent).toContain('删除');
+    // 抽屉固定底部：不设 left/top（桌面跟手菜单才需要锚点定位）
+    expect(sheet.style.left).toBe('');
+    expect(sheet.style.top).toBe('');
+    expect(document.querySelector('.bz-item-menu')).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it('无标题选项 → 抽屉不渲染顶部信息区（纯功能列表）', () => {
+    vi.useFakeTimers();
+    const card = makeCard();
+    attachItemActions(card, ACTIONS);
+    openSheet(card);
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet.querySelector('.bz-item-sheet-head')).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it('点抽屉项：执行回调并关闭（遮罩与抽屉都移除）', () => {
+    vi.useFakeTimers();
+    const card = makeCard();
+    attachItemActions(card, ACTIONS, SHEET_OPTS);
+    openSheet(card);
+    const editItem = [...document.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('编辑')
+    ) as HTMLElement;
+    editItem.click();
+    expect((window as any).__edited).toBe(true);
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
+    expect(document.querySelector('.bz-item-sheet-mask')).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it('点遮罩关闭；ESC 也关闭', () => {
+    vi.useFakeTimers();
+    const card = makeCard();
+    attachItemActions(card, ACTIONS, SHEET_OPTS);
+    openSheet(card);
+    // 点遮罩
+    document.querySelector('.bz-item-sheet-mask')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
+    // 再开，ESC 关
+    openSheet(card);
+    expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
+    expect(document.querySelector('.bz-item-sheet-mask')).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it('触屏长按：松手后的合成 click 被吞（抽屉不闪关、卡片链接不触发）', () => {
+    vi.useFakeTimers();
+    const card = makeCard();
+    attachItemActions(card, ACTIONS, SHEET_OPTS);
+    const ts = new MouseEvent('touchstart', { bubbles: true, clientX: 60, clientY: 60 });
+    card.dispatchEvent(ts);
+    vi.advanceTimersByTime(550);
+    expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
+    card.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
+    expect((window as any).__linkClicked).toBe(false);
     vi.useRealTimers();
   });
 });
