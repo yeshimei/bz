@@ -893,6 +893,46 @@ export const Renderer = {
     return contentSpan;
   },
 
+  /** meta 信息行（场景/时间/位置等）——列表卡片与移动端抽屉顶部共用，保证两处显示完全一致 */
+  buildMeta(item: MemoItem): HTMLElement {
+    const meta = document.createElement('div');
+    meta.className = 'todo-meta-container';
+
+    if (item.scene === '公开课' && item.courseName) {
+      meta.appendChild(this.createCourseTag(item));
+    }
+    if (item.scene === '代码' && item.scriptName) {
+      meta.appendChild(this.createScriptTag(item.scriptName));
+    }
+    if (item.url) {
+      const platform = getPlatformName(item.url);
+      if (platform) meta.appendChild(this.createPlatformTag(item.url, platform));
+    }
+    if (item.notePath && item.notePosition) {
+      const posTag = this.createPositionTag(item);
+      if (posTag) meta.appendChild(posTag);
+    }
+    meta.appendChild(this.createSceneTag(item));
+    if (item.due && !item.completed) {
+      meta.appendChild(this.createDueTag(item));
+    }
+    meta.appendChild(this.createTimeTag(item));
+    return meta;
+  },
+
+  /** 移动端抽屉顶部信息区：与列表卡片一模一样的「标题 + meta」展示（纯展示，不带跳转交互） */
+  buildSheetHead(item: MemoItem): HTMLElement {
+    const head = document.createElement('div');
+    head.className = 'bz-item-sheet-entry';
+    const title = document.createElement('div');
+    title.className = 'todo-content-span';
+    title.textContent = item.title;
+    if (item.completed) title.classList.add('done'); // 完成状态划线，与列表一致
+    head.appendChild(title);
+    head.appendChild(this.buildMeta(item));
+    return head;
+  },
+
   createCard(item: MemoItem, isArchived: boolean): HTMLElement {
     const app = getApp();
     const card = document.createElement('div');
@@ -929,29 +969,8 @@ export const Renderer = {
     }
     card.appendChild(contentSpan);
 
-    // ---------- meta 信息（场景、时间、位置等） ----------
-    const meta = document.createElement('div');
-    meta.className = 'todo-meta-container';
-
-    if (item.scene === '公开课' && item.courseName) {
-      meta.appendChild(this.createCourseTag(item));
-    }
-    if (item.scene === '代码' && item.scriptName) {
-      meta.appendChild(this.createScriptTag(item.scriptName));
-    }
-    if (item.url) {
-      const platform = getPlatformName(item.url);
-      if (platform) meta.appendChild(this.createPlatformTag(item.url, platform));
-    }
-    if (item.notePath && item.notePosition) {
-      const posTag = this.createPositionTag(item);
-      if (posTag) meta.appendChild(posTag);
-    }
-    meta.appendChild(this.createSceneTag(item));
-    if (item.due && !item.completed) {
-      meta.appendChild(this.createDueTag(item));
-    }
-    meta.appendChild(this.createTimeTag(item));
+    // ---------- meta 信息（场景、时间、位置等；与抽屉顶部共用 buildMeta，两处一字不差） ----------
+    const meta = this.buildMeta(item);
 
     card.appendChild(meta);
 
@@ -972,7 +991,7 @@ export const Renderer = {
           App.refresh();
         }),
     });
-    attachItemActions(card, actions, { sheetTitle: item.title, sheetSub: item.scene ? `#${item.scene}` : undefined });
+    attachItemActions(card, actions, { sheetHead: this.buildSheetHead(item) });
 
     return card;
   },

@@ -34,9 +34,11 @@ export interface ItemAction {
 
 /** 浮层附加信息（移动端抽屉顶部展示选中条目信息，参照网易云底部页） */
 export interface ItemActionsOptions {
-  /** 抽屉顶部标题（如备忘录条目标题） */
+  /** 抽屉顶部自定义内容节点（如条目标题 + 完整 meta 行，与列表显示一致）；未传时回退到 sheetTitle/sheetSub */
+  sheetHead?: HTMLElement;
+  /** 抽屉顶部标题（未传 sheetHead 时使用） */
   sheetTitle?: string;
-  /** 抽屉顶部副标题（如场景/类型） */
+  /** 抽屉顶部副标题（未传 sheetHead 时使用） */
   sheetSub?: string;
 }
 
@@ -204,7 +206,12 @@ export function openItemSheet(actions: ItemAction[], opts?: ItemActionsOptions, 
   mask.className = 'bz-item-sheet-mask';
   const sheet = document.createElement('div');
   sheet.className = 'bz-item-sheet';
-  if (opts?.sheetTitle) {
+  if (opts?.sheetHead) {
+    const head = document.createElement('div');
+    head.className = 'bz-item-sheet-head';
+    head.appendChild(opts.sheetHead);
+    sheet.appendChild(head);
+  } else if (opts?.sheetTitle) {
     const head = document.createElement('div');
     head.className = 'bz-item-sheet-head';
     const titleEl = document.createElement('div');
