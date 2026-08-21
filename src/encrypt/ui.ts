@@ -471,9 +471,10 @@ export class UIManager {
   async renderList() {
     if (!this.listContainer) return;
     this.listContainer.innerHTML = '';
-    // 保险箱面板只显示普通加密笔记，过滤日记加密条目（ADR-0017：日记加密由日记面板单独呈现）
+    // 保险箱面板只显示普通加密笔记，过滤日记/密码本条目
+    //（ADR-0017：日记加密由日记面板单独呈现；密码本由密码本面板单独读写）
     const notes = [...this.dataManager.manifest.notes]
-      .filter((n) => n.kind !== 'diary-entry')
+      .filter((n) => n.kind !== 'diary-entry' && n.kind !== 'password-vault')
       .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
     if (notes.length === 0) {
       const empty = document.createElement('div');

@@ -1,15 +1,16 @@
 /**
- * 密码本 UI 测试（ticket 07）：主密码弹窗流程（首次设置再次确认/解锁）、
- * 面板渲染/搜索/👁 切换/复制、生成器。
+ * 密码本 UI 测试（合并至保险箱）：解锁统一走保险箱主密码弹窗（共享解锁态）、
+ * 面板渲染/搜索/👁 切换/复制、数据读写经 password-vault 条目、生成器。
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { PasswordAppController, UIManager } from '../../src/password/ui';
 import { DataManager } from '../../src/password/data';
+import { EncryptAppController } from '../../src/encrypt/ui';
+import { getSafeManager } from '../../src/encrypt';
 import { MockVault } from '../mock-vault';
-import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
-
+import { resetObsidianMocks, hasNotice } from '../mock-obsidian-entry';
 
 /** 轮询等待（并行高负载下真实 setTimeout 等待不足，轮询至条件满足） */
 async function waitFor(cond: () => boolean, timeout = 3000) {
@@ -20,15 +21,23 @@ async function waitFor(cond: () => boolean, timeout = 3000) {
   }
 }
 
-const CONFIG = { storagePath: 'CONFIG/STORAGE', charset: 'abc123', length: '8', securityMode: false };
+const CONFIG = { charset: 'abc123', length: '8', securityMode: false };
 
 function setup(vault: MockVault) {
-  setApp({ vault } as any);
+  setApp({ vault, metadataCache: { getFileCache: () => null, trigger: () => {} } } as any);
   setSettingsProvider(() => CONFIG as any);
   resetObsidianMocks();
 }
 
-describe('UIManager 主密码流程', () => {
+/** 重置两个域的单例（密码本/保险箱共享解锁态，防跨测试污染） */
+function resetControllers() {
+  PasswordAppController.instance?.cleanup();
+  PasswordAppController.instance = null;
+  EncryptAppController.instance?.cleanup();
+  EncryptAppController.instance = null;
+}
+
+describe('UIManager 主密码流程（统一走保险箱弹窗）', () => {
   let vault: MockVault;
   let dm: DataManager;
   let ui: UIManager;
@@ -37,7 +46,7 @@ describe('UIManager 主密码流程', () => {
     vault = new MockVault();
     setup(vault);
     document.body.innerHTML = '';
-    dm = new DataManager('CONFIG/STORAGE');
+    dm = new DataManager(); // 缺省单例 = getSafeManager（与保险箱同一解锁态）
     ui = new UIManager(dm, { charset: 'abc123', length: '8', securityMode: false });
     ui.ensureElements();
   });
@@ -48,16 +57,19 @@ describe('UIManager 主密码流程', () => {
       document.getElementById(id)?.remove();
     });
     document.body.innerHTML = '';
+    resetControllers();
   });
 
   function findPasswordDialog(): HTMLElement | null {
+    // 保险箱主密码弹窗（zIndex 10070、flex 布局）
     return [...document.querySelectorAll('div')].find(
-      (d) => d.style.zIndex === '10005' && d.style.display === 'flex'
+      (d) => d.style.zIndex === '10070' && d.style.display === 'flex'
     ) as HTMLElement | null;
   }
 
-  it('首次打开（无加密文件）：标题「设置主密码」+ 再次输入确认 + 警告', async () => {
+  it('首次打开（保险箱未设密码）：标题「设置主密码」+ 再次输入确认 + 警告', async () => {
     const p = ui.showPasswordDialog();
+    await waitFor(() => !!findPasswordDialog());
     const dialog = findPasswordDialog()!;
     expect(dialog.textContent).toContain('设置主密码');
     expect(dialog.textContent).toContain('请设置一个主密码（用于加密所有数据）');
@@ -72,27 +84,26 @@ describe('UIManager 主密码流程', () => {
     confirmBtn.click();
     expect(hasNotice('两次密码不一致')).toBe(true);
 
-    // 一致 → 设置成功
+    // 一致 → 设置成功（保险箱清单创建，无独立 passwords.enc）
     (inputs[1] as HTMLInputElement).value = 'master123';
     confirmBtn.click();
     await p;
     expect(dm.unlocked).toBe(true);
-    expect(vault.files.has('CONFIG/STORAGE/passwords.enc')).toBe(true);
+    expect(vault.files.has('CONFIG/.ENCRYPT/.safe.enc')).toBe(true);
+    expect(vault.files.has('CONFIG/STORAGE/passwords.enc')).toBe(false);
     expect(hasNotice('密码已设置，数据已加密')).toBe(true);
   });
 
-  it('再次打开（已有加密文件）：标题「输入主密码」解锁流程', async () => {
-    // 先设置
-    await dm.unlock('master123');
-    dm.lock();
-
+  it('再次打开（已设密码）：标题「输入主密码」解锁流程', async () => {
+    // 先设好保险箱主密码
+    await getSafeManager().unlock('master123');
+    getSafeManager().lock();
     const p = ui.showPasswordDialog();
+    await waitFor(() => !!findPasswordDialog());
     const dialog = findPasswordDialog()!;
     expect(dialog.textContent).toContain('输入主密码');
-    expect(dialog.textContent).toContain('请输入您设置的主密码以解锁密码本');
-    // 解锁模式：警告块隐藏（display:none，内容仍在 DOM）
-    const warningDiv = [...dialog.querySelectorAll('div')].find((d) => d.style.cssText.includes('255, 236, 176')) as HTMLElement;
-    expect(warningDiv.style.display).toBe('none');
+    expect(dialog.textContent).toContain('请输入您设置的主密码以解锁保险箱');
+    // 解锁模式：再次输入框隐藏
     const inputs = dialog.querySelectorAll('input[type="password"]');
     expect(inputs.length).toBe(2); // 元素仍在 DOM
     expect((inputs[1] as HTMLInputElement).style.display).toBe('none'); // 解锁模式隐藏再次输入
@@ -113,26 +124,27 @@ describe('UIManager 主密码流程', () => {
     expect(hasNotice('解锁成功')).toBe(true);
   });
 
-  it('安全模式：关闭面板自动上锁', async () => {
-    const dm2 = new DataManager('CONFIG/STORAGE');
+  it('安全模式：关闭面板整体上锁（保险箱与密码本同步）', async () => {
+    const dm2 = new DataManager();
     const ui2 = new UIManager(dm2, { charset: 'abc', length: '8', securityMode: true });
     ui2.ensureElements();
-    await dm2.unlock('pw');
+    await getSafeManager().unlock('pw');
     ui2.show();
     expect(dm2.unlocked).toBe(true);
     ui2.hide();
     expect(dm2.unlocked).toBe(false);
+    expect(getSafeManager().unlocked).toBe(false); // 整体上锁
     expect(hasNotice('安全模式：已自动上锁')).toBe(true);
   });
 
   it('⚙️ 设置弹窗：字符集/生成长度/安全模式', async () => {
-    const dm2 = new DataManager('CONFIG/STORAGE');
+    const dm2 = new DataManager();
     const ui2 = new UIManager(dm2, { charset: 'abc', length: '8', securityMode: false });
     ui2.ensureElements();
     setSettingsProvider(() => ({
-      pwStoragePath: 'CONFIG/STORAGE', passwordCharset: 'abc', passwordLength: '8', securityMode: false,
+      passwordCharset: 'abc', passwordLength: '8', securityMode: false,
     }) as any);
-    await dm2.unlock('pw');
+    await getSafeManager().unlock('pw');
     ui2.show();
     const settingsBtn = [...document.querySelectorAll('button')].find((b) => b.title === '密码本设置')!;
     settingsBtn.click();
@@ -152,10 +164,10 @@ describe('UIManager 面板与条目', () => {
     vault = new MockVault();
     setup(vault);
     document.body.innerHTML = '';
-    dm = new DataManager('CONFIG/STORAGE');
+    dm = new DataManager();
     ui = new UIManager(dm, { charset: 'abc123', length: '8', securityMode: false });
     ui.ensureElements();
-    await dm.unlock('pw');
+    await getSafeManager().unlock('pw');
     await dm.addItem({ platform: 'GitHub', url: 'https://github.com', account: 'alice', password: 'secret1', note: '主账号' });
     await dm.addItem({ platform: 'Gmail', account: 'bob', password: 'secret2', note: '' } as any);
   });
@@ -166,6 +178,7 @@ describe('UIManager 面板与条目', () => {
     document.getElementById('pw-popup')?.remove();
     document.getElementById('pw-add-mask')?.remove();
     document.getElementById('pw-add-popup')?.remove();
+    resetControllers();
   });
 
   it('show 渲染条目卡片（平台/账号/掩码密码/👁）', async () => {
@@ -282,8 +295,12 @@ describe('PasswordAppController 命令', () => {
   });
 
   afterEach(() => {
-    PasswordAppController.instance?.cleanup();
-    PasswordAppController.instance = null;
+    resetControllers();
+    // 部分测试污染
+    for (const id of ['pw-mask', 'pw-popup', 'pw-add-mask', 'pw-add-popup']) {
+      document.getElementById(id)?.remove();
+    }
+    document.body.innerHTML = '';
   });
 
   it('generatePassword：复制 + 暂存（pendingPassword）', async () => {
@@ -291,7 +308,7 @@ describe('PasswordAppController 命令', () => {
       value: { writeText: vi.fn().mockResolvedValue(undefined) },
       configurable: true,
     });
-    const c = PasswordAppController.getInstance({ storagePath: 'CONFIG/STORAGE', charset: 'abc123', length: '8', securityMode: false });
+    const c = PasswordAppController.getInstance({ charset: 'abc123', length: '8', securityMode: false });
     await c.init();
     c.generatePassword();
     expect(c.uiManager.pendingPassword).toBeTruthy();
@@ -299,7 +316,7 @@ describe('PasswordAppController 命令', () => {
   });
 
   it('未解锁时 addEntry → 「请先解锁密码本（打开管理器）」', async () => {
-    const c = PasswordAppController.getInstance({ storagePath: 'CONFIG/STORAGE', charset: 'abc', length: '8', securityMode: false });
+    const c = PasswordAppController.getInstance({ charset: 'abc', length: '8', securityMode: false });
     await c.init();
     c.addEntry();
     expect(hasNotice('请先解锁密码本（打开管理器）')).toBe(true);

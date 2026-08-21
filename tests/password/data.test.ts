@@ -1,11 +1,12 @@
 // @vitest-environment node
 /**
- * 密码本测试（ticket 07）：CryptoService 加密往返、DataManager 主密码状态机、
- * 未解锁拦截、生成器。
+ * 密码本测试（合并至保险箱）：CryptoService 加密往返、DataManager（password-vault 条目）
+ * 未解锁拦截、CRUD 往返、篡改拦截、整体上锁、生成器。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CryptoService, clearCryptoKeyCache } from '../../src/password/crypto';
 import { DataManager } from '../../src/password/data';
+import { SafeManager } from '../../src/encrypt/data';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
 
@@ -75,60 +76,58 @@ describe('CryptoService', () => {
   });
 });
 
-describe('DataManager 主密码状态机', () => {
+describe('DataManager（合并至保险箱：password-vault 条目）', () => {
   let vault: MockVault;
+  let sm: SafeManager;
 
   beforeEach(() => {
     vault = new MockVault();
-    setApp({ vault } as any);
+    setApp({ vault, metadataCache: { trigger: vi.fn() } } as any);
   });
 
-  it('未解锁时 load/save 拦截（「未解锁，无法加载数据/保存数据」）', async () => {
-    const dm = new DataManager('CONFIG/STORAGE');
+  async function unlockedDM(password = 'pw'): Promise<DataManager> {
+    sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock(password);
+    return new DataManager(sm);
+  }
+
+  it('未解锁时 load/save 拦截；unlocked 反射保险箱解锁态', async () => {
+    const dm = new DataManager(new SafeManager('CONFIG/.ENCRYPT'));
+    expect(dm.unlocked).toBe(false);
     await expect(dm.load()).rejects.toThrow('未解锁，无法加载数据');
     await expect(dm.save()).rejects.toThrow('未解锁，无法保存数据');
     await expect(dm.addItem({ platform: 'x' } as any)).rejects.toThrow('未解锁');
   });
 
-  it('首次 unlock：设置密码并创建加密文件', async () => {
-    const dm = new DataManager('CONFIG/STORAGE');
-    const ok = await dm.unlock('master123');
-    expect(ok).toBe(true);
-    expect(dm.unlocked).toBe(true);
-    expect(vault.files.has('CONFIG/STORAGE/passwords.enc')).toBe(true);
-    // 文件是加密的（不是明文 JSON）
-    const content = vault.files.get('CONFIG/STORAGE/passwords.enc')!;
-    expect(content.startsWith('{')).toBe(false);
-    expect(content).not.toContain('master123');
-    // 解密验证
-    const decrypted = await CryptoService.decrypt(content.trim(), 'master123');
-    expect(JSON.parse(decrypted)).toEqual([]);
+  it('首次 save：以 password-vault 条目落进保险箱清单，不再产生 passwords.enc', async () => {
+    const dm = await unlockedDM('master123');
+    await dm.addItem({ platform: 'GitHub', url: 'https://github.com', account: 'me', password: 'p@ss', note: '主号' });
+    // 数据在保险箱：清单含 password-vault 条目 + 正文密文镜像
+    expect(sm.manifest.notes.length).toBe(1);
+    const note = sm.manifest.notes[0];
+    expect(note.kind).toBe('password-vault');
+    expect(note.title).toBe('密码本');
+    expect(vault.files.has('CONFIG/.ENCRYPT/' + note.contentRef)).toBe(true);
+    // 独立的 passwords.enc 已不存在（路线 B：单一密文库）
+    expect(vault.files.has('CONFIG/STORAGE/passwords.enc')).toBe(false);
+    // 镜像为密文（不含明文条目）
+    expect(vault.files.get('CONFIG/.ENCRYPT/' + note.contentRef)!).not.toContain('GitHub');
+    const plain = await sm.decryptNoteBody(note);
+    expect(JSON.parse(plain!).length).toBe(1);
   });
 
-  it('解锁流程：正确密码成功、错误密码失败', async () => {
-    const dm = new DataManager('CONFIG/STORAGE');
-    await dm.unlock('master123');
-    dm.lock();
-    expect(dm.unlocked).toBe(false);
-
-    const dm2 = new DataManager('CONFIG/STORAGE');
-    expect(await dm2.unlock('wrong')).toBe(false);
-    expect(dm2.unlocked).toBe(false);
-    expect(await dm2.unlock('master123')).toBe(true);
-    expect(dm2.unlocked).toBe(true);
-  });
-
-  it('解锁后 CRUD 往返（加密存储解密读取）', async () => {
-    const dm = new DataManager('CONFIG/STORAGE');
-    await dm.unlock('pw');
+  it('CRUD 往返：锁后另开实例（重新解锁保险箱）可读', async () => {
+    const dm = await unlockedDM('pw');
     await dm.addItem({ platform: 'GitHub', url: 'https://github.com', account: 'me', password: 'p@ss', note: '主号' });
     await dm.addItem({ platform: '知乎', account: 'zh', password: 'x1' } as any);
     expect(dm.pwData.length).toBe(2);
 
-    // 重新解锁读取
-    dm.lock();
-    const dm2 = new DataManager('CONFIG/STORAGE');
-    await dm2.unlock('pw');
+    // 模拟重启：锁定后新实例（同样走保险箱解锁）
+    sm.lock();
+    const sm2 = new SafeManager('CONFIG/.ENCRYPT');
+    await sm2.unlock('pw');
+    const dm2 = new DataManager(sm2);
+    await dm2.load();
     expect(dm2.pwData.length).toBe(2);
     expect(dm2.pwData[0]).toMatchObject({ platform: 'GitHub', account: 'me', password: 'p@ss' });
     expect(dm2.pwData[0].id).toMatch(/^pw-/);
@@ -142,20 +141,28 @@ describe('DataManager 主密码状态机', () => {
     expect(dm2.pwData.length).toBe(1);
   });
 
-  it('数据被篡改 → 解密失败提示「数据解密失败，密码可能错误」', async () => {
-    const dm = new DataManager('CONFIG/STORAGE');
-    await dm.unlock('pw');
-    // 篡改密文
-    const content = vault.files.get('CONFIG/STORAGE/passwords.enc')!;
-    const raw = Uint8Array.from(atob(content), (c) => c.charCodeAt(0));
-    raw[40] = raw[40] ^ 0xff;
-    vault.files.set('CONFIG/STORAGE/passwords.enc', btoa(String.fromCharCode(...raw)));
-    await expect(dm.load()).rejects.toThrow('数据解密失败，密码可能错误');
+  it('正文镜像被篡改 → load 解密失败向上抛（GCM 认证失败）', async () => {
+    const dm = await unlockedDM('pw');
+    await dm.addItem({ platform: 'x', account: 'a', password: 'p' } as any);
+    const note = sm.manifest.notes[0];
+    const raw = Uint8Array.from(
+      atob(vault.files.get('CONFIG/.ENCRYPT/' + note.contentRef)!),
+      (c) => c.charCodeAt(0)
+    );
+    raw[raw.length - 1] = raw[raw.length - 1] ^ 0xff; // 破坏密文尾部（GCM tag）
+    vault.files.set('CONFIG/.ENCRYPT/' + note.contentRef, btoa(String.fromCharCode(...raw)));
+    await expect(dm.load()).rejects.toThrow();
+  });
+
+  it('lock：整体上锁（保险箱与密码本共享解锁态）', async () => {
+    const dm = await unlockedDM('pw');
+    dm.lock();
+    expect(sm.unlocked).toBe(false);
+    expect(dm.unlocked).toBe(false);
   });
 
   it('search：平台/账号/备注关键词过滤', async () => {
-    const dm = new DataManager('CONFIG/STORAGE');
-    await dm.unlock('pw');
+    const dm = await unlockedDM('pw');
     await dm.addItem({ platform: 'GitHub', account: 'alice', password: 'a', note: '代码' });
     await dm.addItem({ platform: 'Gmail', account: 'bob@x.com', password: 'b', note: '' } as any);
     expect(dm.search('github').length).toBe(1);

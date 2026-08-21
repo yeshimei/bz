@@ -36,30 +36,24 @@ export interface SafeAttachment {
   hasPreview: boolean;
   /** 预览层镜像相对路径（encryptRoot 下，平铺随机名） */
   previewRef: string;
-  /** 是否已还原（明文在 vault） */
-  restored: boolean;
 }
 
 /** 清单里的一条加密笔记 */
 export interface SafeNote {
   id: string;
-  /** 来源类型：缺省=普通加密笔记；'diary-entry'=加密日记条目（ADR-0017，保险箱面板过滤，日记面板单独读） */
-  kind?: 'diary-entry';
+  /**
+   * 来源类型：缺省=普通加密笔记；
+   * 'diary-entry'=加密日记条目（ADR-0017，保险箱面板过滤，日记面板单独读）；
+   * 'password-vault'=密码本整表（与保险箱共享主密码/解锁态，密码本面板单独读写）。
+   */
+  kind?: 'diary-entry' | 'password-vault';
   /** 原笔记路径（如 我的/日记/2025-06-01.md） */
   path: string;
   /** 列表展示标题 */
   title: string;
-  /** 是否已还原（存量状态字段；现还原=取出即删，新建数据恒 false，仅兼容旧数据保留） */
-  restored: boolean;
   createdAt: string;
   /** 正文密文镜像相对路径（encryptRoot 下，平铺随机名 .enc；与附件同级） */
   contentRef: string;
-  /** 正文密文内嵌（base64）——旧版数据兼容；新版用 contentRef，此字段留空 */
-  content: string;
-  /** 摘要密文（base64，预览窗免费能力；可空） */
-  summary: string;
-  /** 是否含正文摘要（summary 空时 false） */
-  hasSummary: boolean;
   attachments: SafeAttachment[];
 }
 
@@ -84,12 +78,10 @@ export interface LockNoteInput {
   /** 原笔记路径 */
   path: string;
   title: string;
-  /** 来源类型：'diary-entry'=加密日记条目（ADR-0017） */
-  kind?: 'diary-entry';
+  /** 来源类型：'diary-entry'=加密日记条目（ADR-0017）；'password-vault'=密码本整表 */
+  kind?: 'diary-entry' | 'password-vault';
   /** 笔记正文（明文） */
   content: string;
-  /** 摘要（明文，可空） */
-  summary?: string;
   attachments: LockAttachmentInput[];
 }
 
@@ -602,7 +594,6 @@ export class SafeManager {
             fingerprint: fp,
             hasPreview,
             previewRef,
-            restored: false,
           },
           refs,
         };
@@ -628,12 +619,8 @@ export class SafeManager {
         kind: input.kind || undefined,
         path: input.path,
         title: input.title,
-        restored: false,
         createdAt: new Date().toISOString(),
         contentRef: bodyRef,
-        content: '',
-        summary: input.summary ? await CryptoService.encrypt(input.summary, this.password) : '',
-        hasSummary: !!input.summary,
         attachments,
       };
 
@@ -661,8 +648,9 @@ export class SafeManager {
           deleteFailed.push(a.path);
         }
       }
-      // 普通加密笔记删除整篇原文件；加密日记条目不删整 md（条目块移除由日记域自行处理，ADR-0017 Q6-b）
-      if (input.kind !== 'diary-entry') {
+      // 普通加密笔记删除整篇原文件；diary-entry/password-vault 无整文件可删
+      //（日记条目块移除由日记域自行处理 ADR-0017 Q6-b；密码本无原文件，path 为虚拟占位）
+      if (input.kind !== 'diary-entry' && input.kind !== 'password-vault') {
         try {
           await this.deleteVaultFile(input.path);
         } catch (e) {
@@ -714,7 +702,7 @@ export class SafeManager {
     note.attachments.forEach((a, i) => {
       if (plainAttachments[i] === null) conflicts.push(a.path);
     });
-    // 正文准备（contentRef 镜像优先，兼容旧版内嵌 content）
+    // 正文准备（contentRef 镜像）
     done += 1;
     onProgress?.({ done, total, current: note.path });
     const plain = await this.decryptNoteBody(note);
@@ -770,15 +758,13 @@ export class SafeManager {
     return { note, conflicts, removed: true };
   }
 
-  /** 解笔记正文明文：contentRef 镜像优先，旧版内嵌 content base64 兼容回退 */
+  /** 解笔记正文明文（contentRef 镜像；无镜像返回 null） */
   async decryptNoteBody(note: SafeNote): Promise<string | null> {
     if (!this.unlocked || !this.password) throw new Error('未解锁');
-    if (note.contentRef) {
-      const cipher = await this.readMirror(note.contentRef);
-      if (cipher) return CryptoService.decrypt(cipher, this.password);
-    }
-    if (note.content) return CryptoService.decrypt(note.content, this.password);
-    return null;
+    if (!note.contentRef) return null;
+    const cipher = await this.readMirror(note.contentRef);
+    if (!cipher) return null;
+    return CryptoService.decrypt(cipher, this.password);
   }
 
   /**
@@ -989,11 +975,23 @@ export class SafeManager {
     await this.saveManifest();
   }
 
-  /** 解附件摘要密文 → 明文（预览窗用；无预览层返回 null） */
-  async decryptSummary(note: SafeNote): Promise<string | null> {
-    if (!this.unlocked || !this.password) throw new Error('未解锁');
-    if (!note.hasSummary) return null;
-    return CryptoService.decrypt(note.summary, this.password);
+  /**
+   * 更新条目正文镜像（覆盖同一 contentRef，不产生孤儿镜像；清单同步持久化）。
+   * 供密码本整表（password-vault）等高频改写载荷用：重用既有镜像名，避免每次新镜像堆积。
+   */
+  async updateNotePayload(noteId: string, plainContent: string): Promise<void> {
+    if (!this.unlocked || !this.password) throw new Error('未解锁，无法保存');
+    const note = this.manifest.notes.find((n) => n.id === noteId);
+    if (!note) throw new Error('未找到清单条目');
+    const encrypted = await CryptoService.encrypt(plainContent, this.password);
+    if (note.contentRef) {
+      await this.writeMirror(note.contentRef, encrypted); // 覆盖同一密文镜像
+    } else {
+      const ref = flatName();
+      await this.writeMirror(ref, encrypted);
+      note.contentRef = ref;
+    }
+    await this.saveManifest();
   }
 
   /** 解附件预览层 → dataUrl 明文（预览窗用；无预览层返回 null） */
