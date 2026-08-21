@@ -56,7 +56,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-pomodoro-open',
   'bz-bili-open',
   'bz-attach-move',
-  'bz-encrypt-open', 'bz-encrypt-lock', 'bz-encrypt-lock-all',
+  'bz-encrypt-open', 'bz-encrypt-lock',
   'bz-diary-open',
 ];
 

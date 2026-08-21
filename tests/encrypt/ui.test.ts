@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { SafeManager, type SafeAttachment } from '../../src/encrypt/data';
-import { EncryptAppController, UIManager, collectMediaSlots } from '../../src/encrypt/ui';
+import { EncryptAppController, UIManager, collectMediaSlots, truncateName } from '../../src/encrypt/ui';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
 
@@ -122,13 +122,19 @@ describe('UIManager 主面板', () => {
     document.body.innerHTML = '';
   });
 
-  it('show 渲染笔记卡片（标题/徽标/附件数）', async () => {
+  it('show 渲染笔记卡片（标题/附件数），无预览/还原按钮，单击开预览', async () => {
     ui.show();
     const list = document.getElementById('bz-encrypt-list')!;
     expect(list.querySelectorAll('.bz-encrypt-card').length).toBe(1);
     expect(list.textContent).toContain('2025-06-01');
-    expect(list.textContent).toContain('已入库');
     expect(list.textContent).toContain('1 个附件');
+    // 卡片内无「预览」/「还原」按钮（改手势触发）
+    expect([...list.querySelectorAll('button')].some((b) => b.textContent === '预览')).toBe(false);
+    expect([...list.querySelectorAll('button')].some((b) => b.textContent === '还原')).toBe(false);
+    // 单击卡片 → 打开预览窗
+    (list.querySelector('.bz-encrypt-card') as HTMLElement).click();
+    await waitFor(() => document.getElementById('bz-encrypt-preview-popup')!.style.display === 'flex');
+    expect(document.getElementById('bz-encrypt-preview-popup')!.textContent).toContain('2025-06-01');
   });
 
   it('预览按钮显示（有附件/摘要）→ 点击打开独立预览窗', async () => {
@@ -142,15 +148,18 @@ describe('UIManager 主面板', () => {
     expect(popup.style.display).toBe('none');
   });
 
-  it('真还原按钮 → 确认弹窗 → 确认后调用 restoreNote 还原', async () => {
+  it('长按卡片 → 确认弹窗 → 确认后取出即删（正文写回、条目移除）', async () => {
     ui.show();
-    const restoreBtn = [...document.querySelectorAll('.bz-encrypt-btn--primary')].find((b) => b.textContent === '真还原') as HTMLButtonElement;
-    restoreBtn.click();
+    const card = document.querySelector('.bz-encrypt-card') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
+    await new Promise((r) => setTimeout(r, 620)); // 长按 500ms 后触发
     const confirmMask = document.getElementById('__shared_confirm_mask__')!;
-    expect(confirmMask.textContent).toContain('真还原');
+    expect(confirmMask.textContent).toContain('还原');
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
-    await waitFor(() => dm.manifest.notes[0].restored === true);
+    await waitFor(() => dm.manifest.notes.length === 0);
     expect(vault.files.get('我的/日记/2025-06-01.md')).toContain('# 日记');
+    // 取出即删：清单空
+    expect(dm.manifest.notes.length).toBe(0);
   });
 
   it('安全模式：关闭面板自动上锁', async () => {
@@ -191,6 +200,14 @@ describe('collectMediaSlots 混排', () => {
     const attachments = [ATT('a.png'), ATT('b.png')];
     const { inlined } = collectMediaSlots('只引用 ![[a.png]]', attachments);
     expect([...inlined]).toEqual(['a.png']);
+  });
+});
+
+describe('truncateName 文件名截断', () => {
+  it('短文件名原样，长文件名截断加省略号（防通知栏忽高忽低）', () => {
+    expect(truncateName('我的/影视/图.png')).toBe('图.png');
+    expect(truncateName('视频/一个特别特别特别特别特别特别特别长的名字.mp4').length).toBeLessThanOrEqual(21);
+    expect(truncateName('视频/一个特别特别特别特别特别特别特别长的名字.mp4')).toContain('…');
   });
 });
 
@@ -244,7 +261,7 @@ describe('预览窗混排与还原打开', () => {
     expect(document.querySelector('.bz-encrypt-preview-md')!.querySelectorAll('img').length).toBe(0);
   });
 
-  it('真还原成功 → 打开该笔记（workspace.openLinkText）', async () => {
+  it('长按还原成功 → 打开该笔记（openLinkText）并关闭保险箱面板', async () => {
     const app = setup(vault, CONFIG);
     const openLinkText = vi.fn();
     (app.workspace as any).openLinkText = openLinkText;
@@ -255,11 +272,15 @@ describe('预览窗混排与还原打开', () => {
       attachments: [],
     });
     ui.show();
-    const restoreBtn = [...document.querySelectorAll('.bz-encrypt-btn--primary')].find((b) => b.textContent === '真还原') as HTMLButtonElement;
-    restoreBtn.click();
+    const card = document.querySelector('.bz-encrypt-card') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
+    await new Promise((r) => setTimeout(r, 620));
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
     await waitFor(() => openLinkText.mock.calls.length > 0);
     expect(openLinkText).toHaveBeenCalledWith('我的/日记/x.md', '我的/日记/x.md');
+    // 取出即删 + 关闭面板
+    expect(dm.manifest.notes.length).toBe(0);
+    expect(document.getElementById('bz-encrypt-popup')!.style.display).toBe('none');
   });
 });
 
@@ -308,12 +329,15 @@ describe('EncryptAppController', () => {
     await c.init();
     await c.dataManager.unlock('pw');
     await c.lockCurrentNote();
+    // 等待加密完成（进度通知 finish 后打开面板）
+    await waitFor(() => document.getElementById('bz-encrypt-popup')!.style.display === 'flex');
 
     // 笔记与附件移出，进入保险箱
     expect(vault.files.has('笔记/主题.md')).toBe(false);
     expect(vault.binaryFiles.has('笔记/pic.png')).toBe(false);
     expect(c.dataManager.manifest.notes.length).toBe(1);
     expect(c.dataManager.manifest.notes[0].attachments.length).toBe(1);
-    expect(hasNotice(/已加密/)).toBe(true);
+    // 加密完成主动打开保险箱面板
+    expect(document.getElementById('bz-encrypt-popup')!.style.display).toBe('flex');
   });
 });
