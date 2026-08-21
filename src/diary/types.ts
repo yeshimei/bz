@@ -20,6 +20,10 @@ export interface DiaryEntry {
   lineNumber: number;
   /** 稳定 id */
   id?: string;
+  /** 是否为加密日记条目（ADR-0017）：解锁后解密进列表、卡片🔐角标、点击只读预览不跳 md */
+  encrypted?: boolean;
+  /** 对应的保险箱 SafeNote id（encrypted=true 时存在） */
+  noteId?: string;
 }
 
 /**

@@ -14,7 +14,8 @@ import { applyDirectories } from '../config';
 import { applyUiSettings, getDefaultDateFilterSetting, getDefaultSelectedTagSetting } from './ui-settings';
 import { getPrimaryTagsConfig, getSubTagsOfPrimary, getTagEmoji, isSubTag, getParentPrimaryTag } from '../config';
 import { state, setCurrentActiveParentForSub, getCurrentActiveParentForSub } from '../state';
-import { loadAll, onFullRefresh, onLightRefresh, onProgress, onLoadingChange, onFileChange } from '../store';
+import { loadAll, onFullRefresh, onLightRefresh, onProgress, onLoadingChange, onFileChange, clearEncryptedEntries, reloadWithEncrypted } from '../store';
+import { lockSafe, isUnlocked, onUnlockChange } from '../encrypt';
 import { applyFilter, cancelEdit, updateSticky, initScroll } from './entries';
 import { createTag, rebuildTags, refreshSubTagsBar } from './filter-shared';
 import { createTagPicker, createAddDialog, createConfirmDialog, createDatePicker, showDatePicker, openAddDialog } from './dialogs';
@@ -139,6 +140,25 @@ export function createMaskAndPopup() {
   createTagPicker();
 }
 
+// ===== 关闭面板（关面板即上锁，ADR-0017 固定行为） =====
+
+/** 隐藏主面板并锁定保险箱：上锁后加密条目完全不可见（Q21-a） */
+function closePanel() {
+  if (state.ui.maskLayer) state.ui.maskLayer.style.visibility = 'hidden';
+  if (state.ui.tagFilterPopup) state.ui.tagFilterPopup.style.visibility = 'hidden';
+  // 设置未注入时视为未解锁（防御：部分测试环境无设置提供者）
+  let unlocked = false;
+  try {
+    unlocked = isUnlocked();
+  } catch {
+    unlocked = false;
+  }
+  if (unlocked) {
+    lockSafe();
+    clearEncryptedEntries();
+  }
+}
+
 // ===== 头部（原 822-864） =====
 
 function createHeader() {
@@ -240,8 +260,7 @@ function createHeader() {
   const addButton = createButton('✏️', '写日记', () => openAddDialog());
 
   const closeButton = createButton('❌', '关闭', () => {
-    state.ui.maskLayer!.style.visibility = 'hidden';
-    state.ui.tagFilterPopup!.style.visibility = 'hidden';
+    closePanel();
   });
 
   buttonContainer.appendChild(addButton);
@@ -341,6 +360,7 @@ export function toggleSearch() {
 
 let diaryEscHandle: EscHandle | null = null;
 let refreshCallbacksRegistered = false;
+let unlockListenerRegistered = false;
 
 /**
  * 初始化日记过滤器主入口（幂等：面板已存在时仅重新显示）
@@ -374,6 +394,19 @@ export async function init(plugin?: { registerEvent: (ref: unknown) => unknown }
     onProgress(updateProgress);
     onLoadingChange(setLoadingState);
     refreshCallbacksRegistered = true;
+  }
+
+  // 保险箱解锁/上锁联动（ADR-0017）：解锁后重并加密条目进列表；上锁后清除，
+  // 标签栏「加密」按钮随之回到锁定态。refresh 回调会自动重建标签与筛选。
+  if (!unlockListenerRegistered) {
+    onUnlockChange(() => {
+      if (isUnlocked()) {
+        void reloadWithEncrypted();
+      } else {
+        clearEncryptedEntries();
+      }
+    });
+    unlockListenerRegistered = true;
   }
 
   await registerOpenDialogCommand();
@@ -480,9 +513,7 @@ function registerEscapeListener() {
       }
       const main = byId('diary-filter-mask');
       if (main && main.style.visibility === 'visible') {
-        main.style.visibility = 'hidden';
-        const popup = byId('diary-tag-filter');
-        if (popup) popup.style.visibility = 'hidden';
+        closePanel();
       }
     },
   });
