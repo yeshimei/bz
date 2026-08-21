@@ -16,6 +16,9 @@ function getController(): EncryptAppController {
     const config = {
       root: (s.encryptRoot || 'CONFIG/.ENCRYPT').replace(/\/+$/, ''),
       previewEnabled: s.encryptPreviewEnabled !== false,
+      previewSize: parseInt(s.encryptPreviewSize) || 384,
+      previewQuality: parseFloat(s.encryptPreviewQuality) || 0.5,
+      autoLoadOriginal: !!s.encryptAutoLoadOriginal,
       securityMode: !!s.encryptSecurityMode,
     };
     controller = EncryptAppController.getInstance(config);

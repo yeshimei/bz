@@ -16,11 +16,14 @@ import { getSettings, tryGetSettings, saveSettings } from '../core/settings-prov
 import { openSettingsModal } from '../core/settings-modal';
 import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
 import { SafeManager, base64ToBytes, type SafeNote, type SafeAttachment } from './data';
-import { compressImage, videoFrame, PREVIEW_OMIT_SIZE, PREVIEW_OMIT_QUALITY } from './preview';
+import { compressImage, videoFrame } from './preview';
 
 export interface EncryptUIConfig {
   root: string;
   previewEnabled: boolean;
+  previewSize: number;
+  previewQuality: number;
+  autoLoadOriginal: boolean;
   securityMode: boolean;
 }
 
@@ -545,6 +548,11 @@ export class UIManager {
       }
       // 缩略图/占位统一绑定：点击按需解密原始层（只加载被点的那一张）
       this.bindMediaClicks(body, note.attachments);
+      // 自动加载原图（设置开关，默认关）：预览打开即自动解密全部原始层替换省略图；
+      // 复用点击链路的 loadOriginal（每 slot 独立转圈/失败恢复，与手动点击同语义）
+      if (this.config.autoLoadOriginal) {
+        body.querySelectorAll<HTMLElement>('.bz-encrypt-preview-slot').forEach((slot) => slot.click());
+      }
     } catch (e) {
       body.innerHTML = '';
       const err = document.createElement('div');
@@ -680,10 +688,37 @@ export class UIManager {
           );
         new Setting(el)
           .setName('生成压缩预览')
-          .setDesc('加密时生成省略图预览层（固定小尺寸，看不清时点击缩略图加载原图/视频）')
+          .setDesc('加密时生成图片/视频压缩预览层（体积小但看得清）')
           .addToggle((toggle) =>
             toggle.setValue(!!s.encryptPreviewEnabled).onChange(async (v) => {
               s.encryptPreviewEnabled = v;
+              await saveSettings();
+            })
+          );
+        new Setting(el)
+          .setName('预览目标长边（px）')
+          .setDesc('压缩/抽帧预览（省略图）的目标分辨率长边，越小预览打开越快；点击缩略图可加载原图/视频')
+          .addText((text) =>
+            text.setValue(String(s.encryptPreviewSize || '384')).onChange(async (v) => {
+              s.encryptPreviewSize = v;
+              await saveSettings();
+            })
+          );
+        new Setting(el)
+          .setName('预览质量')
+          .setDesc('JPEG 压缩质量 0-1，模糊可接受时调低更省空间')
+          .addText((text) =>
+            text.setValue(String(s.encryptPreviewQuality || '0.5')).onChange(async (v) => {
+              s.encryptPreviewQuality = v;
+              await saveSettings();
+            })
+          );
+        new Setting(el)
+          .setName('预览自动加载原图')
+          .setDesc('预览窗打开后自动解密原始质量替换省略图（默认关，省流量/内存；开启后为每个附件逐个加载，视频同样替换为可播放）')
+          .addToggle((toggle) =>
+            toggle.setValue(!!s.encryptAutoLoadOriginal).onChange(async (v) => {
+              s.encryptAutoLoadOriginal = v;
               await saveSettings();
             })
           );
@@ -806,8 +841,8 @@ export class EncryptAppController {
 
     const attachments: any[] = [];
     // 省略图固定档（无设置项）：长边 256 / 质量 0.45，预览只要看得清，点击缩略图加载原始质量
-    const size = PREVIEW_OMIT_SIZE;
-    const quality = PREVIEW_OMIT_QUALITY;
+    const size = this.config.previewSize || 384;
+    const quality = this.config.previewQuality || 0.5;
     // Q3-A：任一附件读取失败 → 整笔放弃（不落任何东西、原文件不动）；预览失败不算失败（可选增强）
     for (const p of attPaths) {
       try {

@@ -19,7 +19,7 @@ async function waitFor(cond: () => boolean, timeout = 3000) {
   }
 }
 
-const CONFIG = { root: 'CONFIG/.ENCRYPT', previewEnabled: false, securityMode: false };
+const CONFIG = { root: 'CONFIG/.ENCRYPT', previewEnabled: false, previewSize: 384, previewQuality: 0.5, autoLoadOriginal: false, securityMode: false };
 
 function setup(vault: MockVault, config = CONFIG) {
   const app = mockAppWithVault(vault);
@@ -655,5 +655,100 @@ describe('预览窗缩略图按需加载原始层', () => {
     await new Promise((r) => setTimeout(r, 80));
     expect(spy).not.toHaveBeenCalled();
     spy.mockRestore();
+  });
+
+  it('默认（开关关）：打开预览只显示省略图，不自动解密原始层', async () => {
+    const note = await dm.lockNote({
+      path: '我的/日记/x.md',
+      title: 'x',
+      content: '![[pic.png]]',
+      attachments: [{ path: '我的/影视/pic.png', data: 'QUJDREVGRw==', previewData: 'data:image/jpeg;base64,QUJD' }],
+    });
+    const spy = vi.spyOn(dm, 'decryptAttachmentOriginal');
+    try {
+      ui.openPreview(note);
+      await waitFor(() => !!document.querySelector('.bz-encrypt-preview-slot'));
+      await new Promise((r) => setTimeout(r, 120));
+      // 无自动加载：原始层从未解密、缩略图保持省略图
+      expect(spy).not.toHaveBeenCalled();
+      const img = document.querySelector('.bz-encrypt-preview-media') as HTMLImageElement;
+      expect(img.getAttribute('src')).toBe('data:image/jpeg;base64,QUJD');
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('自动加载原图（开关开）：预览打开即自动解密全部原始层替换省略图（逐个转圈/替换）', async () => {
+    const dmA = new SafeManager('CONFIG/.ENCRYPT');
+    const uiA = new UIManager(dmA, { ...CONFIG, autoLoadOriginal: true });
+    uiA.ensureElements();
+    await dmA.unlock('pw');
+    const note = await dmA.lockNote({
+      path: '我的/日记/x.md',
+      title: 'x',
+      content: '开头\n![[pic1.png]]\n中间\n![[pic2.png]]',
+      attachments: [
+        { path: '我的/影视/pic1.png', data: 'QUJDREVGRw==', previewData: 'data:image/jpeg;base64,QUJD' },
+        { path: '我的/影视/pic2.png', data: 'MTIzNDU2', previewData: 'data:image/jpeg;base64,MTIz' },
+      ],
+    });
+    const spy = vi.spyOn(dmA, 'decryptAttachmentOriginal');
+    try {
+      uiA.openPreview(note);
+      // 打开后自动加载：两个 slot 全部进入替换（原图 src / loaded 态），无需手动点击
+      await waitFor(() => document.querySelectorAll('.bz-encrypt-preview-slot--loaded').length === 2);
+      expect(spy.mock.calls.length).toBe(2);
+      const imgs = [...document.querySelectorAll('.bz-encrypt-preview-media')] as HTMLImageElement[];
+      expect(imgs[0].src).toMatch(/^(blob:|data:image\/png)/);
+      expect(imgs[1].src).toMatch(/^(blob:|data:image\/png)/);
+      // 再次点击已加载 slot 不再解密（loaded 短路，自动与手动链路同语义）
+      const slot0 = imgs[0].closest('.bz-encrypt-preview-slot') as HTMLElement;
+      slot0.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await new Promise((r) => setTimeout(r, 80));
+      expect(spy.mock.calls.length).toBe(2);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('自动加载原图：某张解密失败不影响其他（失败者保留省略图可重试）', async () => {
+    const dmA = new SafeManager('CONFIG/.ENCRYPT');
+    const uiA = new UIManager(dmA, { ...CONFIG, autoLoadOriginal: true });
+    uiA.ensureElements();
+    await dmA.unlock('pw');
+    const note = await dmA.lockNote({
+      path: '我的/日记/x.md',
+      title: 'x',
+      content: '![[pic1.png]]\n![[pic2.png]]',
+      attachments: [
+        { path: '我的/影视/pic1.png', data: 'QUJDREVGRw==', previewData: 'data:image/jpeg;base64,QUJD' },
+        { path: '我的/影视/pic2.png', data: 'MTIzNDU2', previewData: 'data:image/jpeg;base64,MTIz' },
+      ],
+    });
+    const orig = dmA.decryptAttachmentOriginal.bind(dmA);
+    const spy = vi
+      .spyOn(dmA, 'decryptAttachmentOriginal')
+      .mockImplementation(async (a) => (a.path.includes('pic1') ? null : orig(a)));
+    try {
+      uiA.openPreview(note);
+      // pic2 自动加载成功；pic1 失败保留省略图（title 提示可重试）
+      await waitFor(() => document.querySelectorAll('.bz-encrypt-preview-slot').length === 2);
+      await waitFor(() => {
+        const slots = [...document.querySelectorAll<HTMLElement>('.bz-encrypt-preview-slot')];
+        const ok = slots.find((s) => s.querySelector('.bz-encrypt-preview-slot--loaded') || s.classList.contains('bz-encrypt-preview-slot--loaded'));
+        return slots.some((s) => s.classList.contains('bz-encrypt-preview-slot--loaded')) && slots.some((s) => s.querySelector('.bz-encrypt-preview-media')?.getAttribute('title') === '加载失败，点击重试');
+      });
+      const slots = [...document.querySelectorAll<HTMLElement>('.bz-encrypt-preview-slot')];
+      expect(slots.filter((s) => s.classList.contains('bz-encrypt-preview-slot--loaded')).length).toBe(1);
+      const failedImg = slots.find((s) => !s.classList.contains('bz-encrypt-preview-slot--loaded'))!.querySelector('.bz-encrypt-preview-media') as HTMLImageElement;
+      expect(failedImg.getAttribute('src')).toBe('data:image/jpeg;base64,QUJD');
+      expect(failedImg.title).toBe('加载失败，点击重试');
+      // 手动点击可重试成功
+      spy.mockImplementation((a) => orig(a));
+      slots.find((s) => !s.classList.contains('bz-encrypt-preview-slot--loaded'))!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await waitFor(() => !!document.querySelector('.bz-encrypt-preview-slot--loaded') && document.querySelectorAll('.bz-encrypt-preview-slot--loaded').length === 2);
+    } finally {
+      spy.mockRestore();
+    }
   });
 });
