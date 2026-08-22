@@ -14,13 +14,13 @@ import { BubbleManager, EmojiProcessor } from './bubble';
 import { MoodSystem, PersonalityGrowth } from './mood';
 import { MemorySystem } from './memory';
 import { SmartCatAnimation } from './animation';
-import { VoiceCommandSystem } from './voice';
 import { InteractionManager, MobileInputAdapter } from './interaction';
 import { getSmartCatMessage } from './messages';
 import { generatePrompt } from './prompts';
 import { callChat, isAIConfigured } from './api';
 import { generateBookDescription, hasBookTag } from './content';
 import { classifyPath, observationText } from './context-source';
+import { DOMAIN_FILES, snapshotDomains } from './domain-source';
 import type { SmartCatData, SmartCatConfig } from './types';
 import type { SmartcatPanels } from './ui';
 
@@ -32,7 +32,6 @@ let moodSystem: MoodSystem | null = null;
 let personalityGrowth: PersonalityGrowth | null = null;
 let memorySystem: MemorySystem | null = null;
 let animation: SmartCatAnimation | null = null;
-let voiceSystem: VoiceCommandSystem | null = null;
 let interaction: InteractionManager | null = null;
 let mobileAdapter: MobileInputAdapter | null = null;
 let panels: SmartcatPanels | null = null;
@@ -122,44 +121,12 @@ export async function ensureSmartCat(app: App): Promise<void> {
     }, 5000);
   };
 
-  // 语音
-  voiceSystem = new VoiceCommandSystem({
-    openSettings: () => openSettings(),
-    openChat: () => openChat(),
-    closePanels: () => {
-      closeChat();
-      closeSettings();
-    },
-    startReview: () => {
-      try {
-        (app as any).commands?.executeCommandById?.('bz-review-open');
-        bubbleManager!.showBubble('开始复习笔记啦！加油哦～');
-      } catch (e) {
-        bubbleManager!.showBubble('复习计划功能暂不可用');
-      }
-    },
-    casualChat: async (message) => {
-      try {
-        const prompt = generatePrompt('casual_chat', message, { pad: moodSystem!.pad, data, currentMood: moodSystem!.currentMood, currentEmotion: moodSystem!.getCurrentEmotion() });
-        const response = await callChat([
-          { role: 'system', content: prompt },
-          { role: 'user', content: `用户说："${message}"。请用简短的一句话回复。` },
-        ]);
-        if (response) bubbleManager!.showBubble(response);
-      } catch (error) {
-        bubbleManager!.showBubble('语音回复失败，请稍后再试');
-      }
-    },
-  });
-  voiceSystem.onShowBubble = (msg) => bubbleManager!.showBubble(msg);
-
-  // 交互
+  // 交互（2026-08-23 用户拍板：删语音模块）
   interaction = new InteractionManager({
     config: getConfig,
     saveConfig,
     bubble: bubbleManager,
     mood: moodSystem,
-    voice: voiceSystem,
     openChat: () => openChat(),
     closeChat: () => closeChat(),
     openSettings: () => openSettings(),
@@ -232,15 +199,17 @@ export async function ensureSmartCat(app: App): Promise<void> {
     }
     try {
       const text = await observationText(appRef, file as any, kind);
-      // 隐私红线（红队结论）：vault 内容观察一律本地规则打分（固定 importance + 词法情绪），
-      // 不走 LLM——记忆层不得成为把笔记内容外发给云端 AI 的管道
-      if (text) await memorySystem.addObservation(text, { source: kind, importance: 0.55, emotion: memorySystem.detectEmotion(text) });
+      // 2026-08-23 用户拍板：所有内容走 LLM 云端打分 + 词法情绪（AI 未配置降级本地规则分）
+      if (text) await memorySystem.addObservation(text, { source: kind });
     } catch { /* 读取失败静默（不打断主流程） */ }
   };
   if (app.vault && typeof (app.vault as any).on === 'function') {
     vaultRefs.push((app.vault as any).on('create', onVaultActivity));
     vaultRefs.push((app.vault as any).on('modify', onVaultActivity));
   }
+
+  // 域 JSON 感知（2026-08-23 用户拍板：CONFIG/STORAGE 域数据 modify → 观察；懒启动探测）
+  void onDomainActivity();
 
   // visibilitychange → 欢迎回来（离开超 60s 才允许）
   visibilityCleanup = setupVisibilityCheck({
@@ -563,7 +532,10 @@ export function unloadSmartCat(): void {
   memorySystem?.stopScheduler();
   moodSystem?.dispose();
   interaction?.dispose();
-  voiceSystem?.destroy();
+  domainReader?.();
+  domainReader = null;
+  domainPrev.clear();
+  domainObserved.clear();
   mobileAdapter?.destroy();
   if (panels) {
     panels.dispose();
@@ -576,7 +548,6 @@ export function unloadSmartCat(): void {
   personalityGrowth = null;
   memorySystem = null;
   animation = null;
-  voiceSystem = null;
   interaction = null;
   mobileAdapter = null;
   appRef = null;
@@ -585,5 +556,32 @@ export function unloadSmartCat(): void {
 
 /** 测试辅助：获取内部实例引用 */
 export function __getSmartcatInternals(): any {
-  return { data, bubbleManager, moodSystem, memorySystem, animation, interaction, panels, voiceSystem, initialized };
+  return { data, bubbleManager, moodSystem, memorySystem, animation, interaction, panels, initialized };
+}
+
+/** 域 JSON 感知状态（domain-source.ts 提供 extract 纯函数；此处管理监听生命周期） */
+const domainPrev = new Map<string, string>();
+const domainObserved = new Set<string>();
+let domainReader: (() => void) | null = null;
+
+/** 域 JSON 观察接入（2026-08-23 用户拍板：CONFIG/STORAGE 域数据 modify → 观察；懒启动探测已有数据文件） */
+async function onDomainActivity(): Promise<void> {
+  if (!appRef || !memorySystem) return;
+  const app = appRef;
+  const mem = memorySystem;
+  // 首次快照：记录各域当前状态（不产出观察）
+  const found = await snapshotDomains(async (path) => JSON.parse(await app.vault.read(app.vault.getAbstractFileByPath(path) as any)), domainPrev);
+  found.forEach((k) => domainObserved.add(k));
+  if (!domainReader) {
+    const ref = (app.vault as any).on?.('modify', async (file: any) => {
+      if (!file?.path) return;
+      const key = Object.keys(DOMAIN_FILES).find((k) => DOMAIN_FILES[k].file === file.path);
+      if (!key || !domainObserved.has(key)) return;
+      let raw: any = null;
+      try { raw = JSON.parse(await app.vault.read(file)); } catch { return; }
+      const text = DOMAIN_FILES[key].extract(raw, domainPrev);
+      if (text) await mem.addObservation(text, { source: 'domain:' + key });
+    });
+    if (ref) domainReader = () => (app as any)?.vault?.offref?.(ref as any);
+  }
 }
