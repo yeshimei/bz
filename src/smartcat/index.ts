@@ -22,6 +22,7 @@ import { generateBookDescription, hasBookTag } from './content';
 import { classifyPath, observationText } from './context-source';
 import { DOMAIN_FILES, snapshotDomains } from './domain-source';
 import { buildRhythmProfile, isActiveNow, describeRhythm, periodText, isoWeekKey } from './rhythm';
+import { buildWeeklyReportData, generateWeeklyReport, weekWindow } from './report';
 import type { SmartCatData, SmartCatConfig, ProactiveCareState } from './types';
 import type { SmartcatPanels } from './ui';
 
@@ -48,6 +49,15 @@ let greetTimer: ReturnType<typeof setTimeout> | null = null;
 let lastPetTime = Date.now();
 /** 主动关心调度（2026-08-23：作息模型判定时机，每周 ≤ proactiveWeeklyCap 次温和搭话） */
 let proactiveTimer: ReturnType<typeof setInterval> | null = null;
+/** 每周报告调度（每小时检查，10:00 触发生成） */
+let weeklyReportTimer: ReturnType<typeof setInterval> | null = null;
+/** 每周报告状态（editingData.weeklyReport） */
+interface WeeklyReportState { weekKey: string; at: number; }
+function getWeeklyReportState(): WeeklyReportState {
+  const d = dataProvider();
+  const s = (d.editingData?.weeklyReport || {}) as Partial<WeeklyReportState>;
+  return { weekKey: typeof s.weekKey === 'string' ? s.weekKey : '', at: typeof s.at === 'number' ? s.at : 0 };
+}
 
 const dataProvider = (): SmartCatData => {
   if (!data) throw new Error('smartcat: 数据未加载');
@@ -243,6 +253,9 @@ export async function ensureSmartCat(app: App): Promise<void> {
 
   // 主动关心（2026-08-23：作息模型 + 每周 ≤2 次温和搭话；每 10 分钟检查一次）
   startProactiveCare();
+  // 每周懂你报告（2026-08-23：每周一检查，有观察则生成写回流 + 气泡展示）
+  startWeeklyReport();
+  void maybeWeeklyReport();
 
   eventSystem.emit('appInitialized');
 }
@@ -317,6 +330,48 @@ async function maybeProactiveCare(): Promise<void> {
     await dataSaver(d);
   } catch (e) {
     /* 主动失败静默（不打扰） */
+  }
+}
+
+// ---------------- 每周懂你报告（2026-08-23「懂你」增强：⑦） ----------------
+
+/** 周报调度：每天 10:00 检查一次（新一周且本周有观察 → 生成） */
+function startWeeklyReport(): void {
+  if (weeklyReportTimer) clearInterval(weeklyReportTimer);
+  weeklyReportTimer = setInterval(() => {
+    const h = new Date().getHours();
+    if (h === 10) void maybeWeeklyReport();
+  }, 60 * 60 * 1000);
+}
+
+/** 生成本周报告（仅当新周 + 本周有观察；LLM/兜底 → 写回流 source weekly-report + 气泡展示 + 状态推进） */
+async function maybeWeeklyReport(): Promise<void> {
+  if (!data || !bubbleManager || !moodSystem || !memorySystem) return;
+  const st = getWeeklyReportState();
+  const weekKey = isoWeekKey();
+  if (st.weekKey === weekKey) return; // 本周已生成
+  const win = weekWindow(Date.now());
+  const [start] = win;
+  // 周一起算：只在本周窗口已至少过去 1 天且本周有观察时生成（周二起才可能）
+  if (Date.now() - start < 24 * 60 * 60 * 1000) return;
+  const weekEntries = data.memory.stream.filter((m) => {
+    const t = m.created ? new Date(m.created).getTime() : NaN;
+    return Number.isFinite(t) && t >= win[0] && t <= win[1] && m.type === 'observation';
+  });
+  if (weekEntries.length < 3) return; // 观察太少，本周报告无意义（下周再试）
+  try {
+    const report = buildWeeklyReportData(data.memory.stream, moodSystem.pad, Date.now());
+    const text = await generateWeeklyReport(report);
+    if (!text) return;
+    // 写回流（insight，source weekly-report，importance 高——记忆流可见但 insight 不作反思 evidence）
+    await memorySystem.addInsight(`【本周懂你报告】${text}`, [], 0.8, undefined, 'weekly-report');
+    // 气泡展示（隐藏超长：先给一句导语，全文在设置弹窗「查看报告」）
+    bubbleManager.showBubble(`喵~ 我读完这周关于你的记录了。${text.length > 60 ? text.substring(0, 60) + '……' : text}`);
+    const d = dataProvider();
+    d.editingData = { ...(d.editingData || {}), weeklyReport: { weekKey, at: Date.now() } as WeeklyReportState };
+    await dataSaver(d);
+  } catch (e) {
+    /* 周报失败静默（下周再试；不推进状态） */
   }
 }
 
@@ -471,6 +526,14 @@ function openSettings(): void {
       data.personalityGrowth = fresh;
       await saveSmartCatData(appRef, data);
     },
+    // 每周懂你报告（2026-08-23：最近一份 weekly-report 洞察，无则 null）
+    getWeeklyReport: () => {
+      if (!data || !memorySystem) return null;
+      const reports = data.memory.stream
+        .filter((m) => m.source === 'weekly-report' && m.type === 'insight')
+        .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime());
+      return reports.length ? reports[0].description : null;
+    },
   });
   if (interaction) {
     interaction.isSettingsOpen = true;
@@ -601,6 +664,10 @@ export function unloadSmartCat(): void {
   if (proactiveTimer) {
     clearInterval(proactiveTimer);
     proactiveTimer = null;
+  }
+  if (weeklyReportTimer) {
+    clearInterval(weeklyReportTimer);
+    weeklyReportTimer = null;
   }
   if (greetTimer) {
     clearTimeout(greetTimer);
