@@ -153,7 +153,7 @@ describe('runAIRecommend（动态通知模式）', () => {
     await promise;
     // 完成：通知更新为成功 + 结果界面自动弹出
     expect(document.querySelector('.bz-notice--progress')).toBeNull();
-    expect((document.querySelector('.bz-notice--success') as HTMLElement).textContent).toContain('AI 荐片完成');
+    expect((document.querySelector('.bz-notice--success') as HTMLElement).textContent).toContain('AI 分析完成');
     const modal = [...document.querySelectorAll('div')].find((d) => d.textContent?.includes('🤖 AI 荐片'));
     expect(modal).toBeDefined();
     const list = document.querySelector('.recommend-list') as HTMLElement;
@@ -171,7 +171,7 @@ describe('runAIRecommend（动态通知模式）', () => {
     const { requestUrl } = await import('obsidian');
     (requestUrl as any).mockRejectedValue(new Error('网络错误'));
     await runAIRecommend(M.appRef as any);
-    expect((document.querySelector('.bz-notice--error') as HTMLElement).textContent).toContain('AI 荐片失败');
+    expect((document.querySelector('.bz-notice--error') as HTMLElement).textContent).toContain('AI 分析失败');
     expect(M.recommendOverlay).toBeNull();
   });
 
@@ -183,7 +183,7 @@ describe('runAIRecommend（动态通知模式）', () => {
     const { requestUrl } = await import('obsidian');
     (requestUrl as any).mockResolvedValue({ status: 200, text: JSON.stringify({ choices: [{ message: { content: '不是 JSON' } }] }) });
     await runAIRecommend(M.appRef as any);
-    expect((document.querySelector('.bz-notice--error') as HTMLElement).textContent).toContain('AI 荐片失败');
+    expect((document.querySelector('.bz-notice--error') as HTMLElement).textContent).toContain('AI 分析失败');
     expect(M.recommendOverlay).toBeNull();
   });
 

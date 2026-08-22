@@ -114,14 +114,10 @@ describe('createOverlay 主界面', () => {
     expect(buttons.length).toBeGreaterThanOrEqual(5);
   });
 
-  it('🤖 AI 荐片：点击发进度通知不弹窗（完成后通知更新成功并自动弹结果）', async () => {
-    // 无 AI mock 时点击后仅出现进度通知，不带遮罩弹窗（动态通知模式）
+  it('头部无 AI 推荐图标（AI 荐片入口在抽屉）', () => {
     createOverlay(M.appRef as any);
     const overlay = document.getElementById('__yin_ying__')!;
-    const recommendBtn = [...overlay.querySelectorAll('button')].find((b) => b.textContent === '🤖')!;
-    expect(recommendBtn).toBeTruthy();
-    recommendBtn.click();
-    expect(M.recommendOverlay).toBeNull(); // 不立即弹窗
+    expect([...overlay.querySelectorAll('button')].find((b) => b.textContent === '🤖') || null).toBeNull();
   });
 
   it('搜索输入防抖 300ms 后过滤渲染', async () => {
@@ -705,7 +701,7 @@ describe('抽屉（统一手势组件接入）', () => {
     expect(hasNotice(/已复制双链/)).toBe(true);
   });
 
-  it('找同类：AI 报告窗生成推荐卡（复用「加入想看」）', async () => {
+  it('找同类：动态通知模式——点击发进度通知（抽屉关闭），完成后自动弹出结果窗口', async () => {
     const vault = setupVault();
     const app = makeApp(vault);
     const items = rebuildItems(app);
@@ -724,12 +720,17 @@ describe('抽屉（统一手势组件接入）', () => {
     const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
     const simBtn = [...sheet.querySelectorAll('.bz-item-sheet-item')].find((b) => b.textContent!.includes('找同类')) as HTMLElement;
     simBtn.click();
+    // 动态通知模式：不立即弹窗，抽屉关闭，进度通知在跑
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
+    const progressEl = document.querySelector('.bz-notice--progress') as HTMLElement;
+    expect(progressEl).not.toBeNull();
+    expect(progressEl.textContent).toContain('推荐'); // 进度通知（已进入分析阶段）
     await vi.advanceTimersByTimeAsync(50);
-    const modal = document.querySelector('.bz-movie-similar-modal') as HTMLElement;
-    expect(modal).not.toBeNull();
-    expect(modal.textContent).toContain('找同类 ·《已看片》');
-    await vi.advanceTimersByTimeAsync(0);
-    const list = modal.querySelector('.bz-movie-similar-list') as HTMLElement;
+    // 完成：结果窗口自动弹出（统一推荐窗口布局）
+    expect(M.recommendOverlay).not.toBeNull();
+    const modal = [...document.querySelectorAll('div')].find((d) => d.textContent?.includes('找同类 ·《已看片》'));
+    expect(modal).toBeDefined();
+    const list = document.querySelector('.recommend-list') as HTMLElement;
     expect(list.textContent).toContain('星际穿越');
     expect(list.textContent).toContain('导演：诺兰');
     expect(list.textContent).toContain('💡 同为诺兰科幻杰作');
