@@ -42,3 +42,30 @@
 - **笔记库内容 = 小橘信息来源**：新增 `src/smartcat/context-source.ts`——vault create/modify 实时事件分类器（diary/flash/clipping/movie/reading），观察文本隐私分级（日记仅标题计数、flash 首行、clipping 取 auto-summary 的 AI 摘要、movie 片名+评分；**不读私人正文**）；
 - **隐私红线（红队审查结论）**：vault 观察一律本地规则打分（`addObservation(…,{importance:0.55, emotion:词法})`），**不走 LLM**——记忆层不得成为把笔记内容外发云端 AI 的管道；LLM 打分仅限用户主动 chat；
 - config 新增 `noteSource` 开关（默认开，normalize 兜底；设置界面临时放开，后续随路线 1 设置收敛）。
+
+## 用户追加决策 2（2026-08-23，进化第 1 轮红队裁决，ticket 027）
+
+三路红队对抗审查（A 数据可靠性 / B 行为合规 / C 动力学-RL）后用户拍板三项，全部落地：
+
+1. **信任封顶 TRUST_CAP=0.85 软收拢**（红队三路一致裁决「纯线性增益在真实密度下必然顶格 0.999」）：
+   - `character.ts` 新增 `TRUST_SOFT_K=0.98`——`trustUpdate` 由硬钳改为软收拢 `v=cap+K·(v−cap)`（双向指数趋近，平衡点 v*=cap+49·gain≈0.91，终态 91% 落 55-92 验收带）；
+   - 真实库 5 种子 reward 0.5649±0.0029（前代无 cap 0.6157→硬钳 0.823→**软收拢 v2 口径 0.565**——注意口径 v2 同步调低情绪带后数值不可跨代直接比较），波动 0.5%，7/7 验收；
+2. **PAD 生产补接线 + 验收口径 v2 同步校准**（红队 C G1/G2 揭穿「情绪健康 PASS 是 sim 专属通道假阳性」——域事件→PAD 直加愉悦值 + 指数回摆 + effectScale 1.831 托底，生产端域事件根本不碰 PAD，真实流 pets=0 → 生产真心情不可达标）：
+   - `index.ts` onVaultActivity 新增 PAD 补接线：vault 正向活动（diary→note_create/flash→note_edit/其余→note_read）→ `mood.handleInteraction(type, 0.5)`（VAULT_PAD_GAIN），生产 EFFECTS 表不改公式；
+   - `mood.ts` 衰减由「60s 线性 −0.02/min 向 0 无吸引子」改为「指数回摆向中性基线 50（λ=0.07/0.10/0.20/h 半衰 10/7/3.5h，浮点精度防 60s 微移被 round 吞），与 sim DECAY_LAMBDA 一致」；
+   - 验收口径 v2（accept.mjs + sim computeMetrics rMood）：情绪带改为**生产可达** meanPle 45-65（中心 55）/ 好心情 0-40%（中心 18%）——原 62.5/45-70% 标注为「生产补接线前的模拟通道口径」，互动接入（chat/pet 高频）后重校准；
+   - 诚实结果：纯笔记陪伴（无抚摸/聊天）下小橘全年心情平淡（好心情 0-5%），属**环境瓶颈**（与真实库信任锁 50% 同类），不是参数缺陷；
+3. **数据链诚实化（红队 A P0 全采纳）**：
+   - sim 内核新增 `dedupeEvents`（A 队 P0-1 去弹跳镜像）：同 (day,kind) 分钟簇 ≥10 条折叠为 1 条 mechanical（diary 651+flash 884 中 243 条 ≥10 簇被折叠）；同 kind 10 分钟滑窗去重（对齐生产 lastActivity 语义）；
+   - `mechanical` 事件不计信任成长（developInteraction 跳过）、观察 importance 降权 0.55→0.3（A 队 P1-6）；
+   - extractor news 分桶（A 队 P0-2）：news 删除伪造钟点（原 sampleHour+rng 分钟 100% RNG），改为当日 12:00 固定针（无行为语义）；
+   - 命名诚实化（A 队 P0-4）：事件流定性为「一年文件变更流（含机械痕迹）」，RL 校准结论标注「实验校准，接入后按真实交互流重校准」；
+   - 判定：实施 P0 后真实事件流从 C 级升 B（条件可信）。
+
+其他工程级修复（红队 B，ticket 026 已提交）：反思 evidence 白名单（insight 不作证据，防自引用膨胀）、反思失败指数退避（5min→30min 封顶，防空转写盘）、衰减落盘限流（变化 ≥0.5 才写）、vault 批量导入机械去簇（1 分钟 ≥5 路径折叠）、diary 观察 0→1 谎报修复。
+
+**已知标定缺口（诚实声明）**：
+- rMood v2 的口径（45-65/0-40%）基于「生产补接线 0.5 强度」标定；若后续调 VAULT_PAD_GAIN 或接入 chat/pet 高频互动，需重校准；
+- movie 事件仍用 mtime 兜底（A 队 P1-5 换 frontmatter 源未实施——观影日期解析已在 extractor 优先，但 74% 窗口外观影日期被 mtime 顶替的残余仍在）；
+- 反思 production 侧节奏仍是 24h/20 条走 LLM，与 sim 的 7 天/60 条规则模板不一致（A 队 P1-7/红队 C G9 的 source 白名单与节奏对齐未实施，留接入后校准）；
+- trustErode 在真实流零触发（无冷互动路径），erode 相关参数未得到真实验证。

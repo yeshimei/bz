@@ -140,21 +140,28 @@ export class MoodSystem {
 
   // ---------------- 衰减 ----------------
 
-  /** 自动衰减（60s 空转守卫：PAD 三轴各自速率 ÷ 人格乘数；仅当任一轴累计变化 ≥0.5 才落盘） */
+  /**
+   * 自动衰减（60s；指数回摆向中性基线 50，2026-08-23 用户拍板生产补接线后校准）
+   * 原线性 -0.02/min 向 0 无吸引子（空闲 1.7 天 pleasure 归 0），与 sim 指数回摆不一致；
+   * 统一为 DECAY_LAMBDA 半衰（pleasure 10h/arousal 7h/dominance 3.5h）：增益进多少、潮汐回多少。
+   */
+  private static readonly BASE_PAD_ATTRACT = { pleasure: 50, arousal: 50, dominance: 50 };
+  private static readonly DECAY_LAMBDA = { pleasure: 0.07, arousal: 0.10, dominance: 0.20 };
   private lastSavedPad: PadDimensions | null = null;
 
   startAutoDecay(): void {
     if (this.decayTimer) clearInterval(this.decayTimer);
-    const baseDecayRates: Record<string, number> = {
-      pleasure: -0.02, arousal: -0.03, dominance: -0.02,
-    };
     this.decayTimer = setInterval(() => {
       const mod = this.getCharacterModulators();
-      for (const [axis, rate] of Object.entries(baseDecayRates)) {
-        const multiplier = mod.padMultipliers[axis] || 1.0;
-        const adjustedRate = rate * (1 / multiplier);
+      for (const [axis, lambda] of Object.entries(MoodSystem.DECAY_LAMBDA)) {
+        const multiplier = mod.padMultipliers[axis as keyof PadDimensions] || 1.0;
+        // 回摆速率 ÷ 人格乘数（高 dopamine/serotonin → 回落更慢，与 updatePad 增益同侧调制）
+        // dt=60s → 指数小时速率 λ（/h）折算到分钟：k=exp(−λ·dt/3600)
+        const k = Math.exp(-lambda / multiplier * (60 / 3600));
+        const attract = MoodSystem.BASE_PAD_ATTRACT[axis as keyof PadDimensions];
         const old = this.pad[axis as keyof PadDimensions] || 50;
-        this.pad[axis as keyof PadDimensions] = Math.max(0, Math.round((old + adjustedRate) * 10) / 10);
+        // 保留浮点精度（60s 微移 ~0.006，round 会吞掉回摆；落盘仍到 0.1 精度）
+        this.pad[axis as keyof PadDimensions] = Math.max(0, Math.min(100, attract + (old - attract) * k));
       }
       // 红队 B P1-3：无事件也每 60s 全量写盘 → 改为任一轴相对上次落盘变化 ≥0.5 才写
       const lp = this.lastSavedPad;
