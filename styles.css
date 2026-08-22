@@ -4,7 +4,6 @@
  *   共享样式 → src/core/styles.css；各域样式 → src/<域>/styles.css
  * 重新生成：npm run dev / npm run build（scripts/build-css.mjs）
  * ============================================================ */
-
 /* ============================================================
  * bz（包仔）共享层/跨域样式（src/core/styles.css）
  * 设置页分页 / 主窗口头部行统一规范 / core 层（notice·settings-modal·confirm·dom）
