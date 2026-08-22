@@ -1553,7 +1553,7 @@ button.news-close-btn {
         }
     }
 
-/* ==================== 收藏本（favorites，ticket 60 收敛：原 fav-mobile 注入，逐字搬运；后续优化：header 按钮去 box-shadow、移动端列表平铺去横向滚动/下边框、标题栏去下边框、类型栏单行横滑） ==================== */
+/* ==================== 收藏本（favorites，ticket 60 收敛：原 fav-mobile 注入，逐字搬运；后续优化：header 按钮去 box-shadow、标题栏去下边框、类型栏单行横滑；移动端列表卡片已恢复桌面样式（边框/圆角/间距随 ui.ts 内联样式），不再通栏平铺） ==================== */
       /* #fav-popup .fav-header .bz-icon-btn 去阴影已并入「主窗口头部行统一规范」（ticket 68 后续） */
       @media (max-width: 768px) {
         #fav-entries-container { scrollbar-width: none; -ms-overflow-style: none; overflow-x: hidden; }
@@ -1576,13 +1576,6 @@ button.news-close-btn {
           -ms-overflow-style: none;
         }
         #fav-add-popup::-webkit-scrollbar { display: none; }
-        #fav-entries-container .fav-card {
-          margin-left: -20px; margin-right: -20px;
-          border-radius: 0 !important;
-          border: none !important;
-          padding: 14px 20px !important;
-          margin-bottom: 0 !important;
-        }
       }
     
 
