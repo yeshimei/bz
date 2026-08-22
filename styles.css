@@ -2960,3 +2960,42 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* ==================== 收藏本抽屉头部（统一手势组件接入） ==================== */
+/* 分类 emoji（与日记抽屉 emoji 同级放大） */
+.bz-item-sheet .bz-fav-sheet-emoji {
+  font-size: 20px;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+/* 标题：加粗主行，置顶 📌 前缀随文本 */
+.bz-item-sheet .bz-fav-sheet-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-normal);
+  word-break: break-word;
+}
+/* 第二行小字：标签徽章 + 余额，可换行 */
+.bz-item-sheet .bz-fav-sheet-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.bz-item-sheet .bz-fav-sheet-tag {
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.bz-item-sheet .bz-fav-sheet-balance {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.bz-item-sheet .bz-fav-sheet-balance--error {
+  color: var(--text-error);
+}

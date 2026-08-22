@@ -8,7 +8,8 @@ import { DataManager } from '../../src/favorites/data';
 import { FavoritesAIService } from '../../src/favorites/ai';
 import { UIManager } from '../../src/favorites/ui';
 import { MockVault } from '../mock-vault';
-import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices, requestUrl } from '../mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices, requestUrl, Platform } from '../mock-obsidian-entry';
+import { closeItemMenu } from '../../src/core/item-actions';
 
 function makeApp(vault: MockVault) {
   return {
@@ -16,6 +17,37 @@ function makeApp(vault: MockVault) {
     metadataCache: {},
     workspace: { openLinkText: vi.fn() },
   } as any;
+}
+
+const tick = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** 长按卡片打开浮层（桌面=跟手菜单 / 移动=底部抽屉，由 Platform.isMobile 决定）+ 消费残余 click */
+function longPressOpen(card: HTMLElement) {
+  card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 100, clientY: 100 }));
+  vi.advanceTimersByTime(550);
+  card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+  card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+}
+
+/** 长按打开浮层（自带 fake timers 包裹）+ 等待一拍 */
+async function openByLongPress(card: HTMLElement) {
+  vi.useFakeTimers();
+  longPressOpen(card);
+  vi.useRealTimers();
+  await tick(10);
+}
+
+/** 当前浮层动作项文案列表 */
+function actionLabels(): (string | null)[] {
+  return [...document.querySelectorAll('.bz-item-menu-label, .bz-item-sheet-label')].map((e) => e.textContent);
+}
+
+/** 按文案点击浮层动作项 */
+function clickAction(label: string) {
+  const items = [...document.querySelectorAll('.bz-item-menu-item, .bz-item-sheet-item')] as HTMLElement[];
+  const target = items.find((el) => el.querySelector('.bz-item-menu-label, .bz-item-sheet-label')?.textContent === label);
+  if (!target) throw new Error('找不到动作项：' + label + '；现有=' + items.map((i) => i.textContent).join('|'));
+  target.click();
 }
 
 function makeItem(partial: Partial<any> = {}): any {
@@ -62,7 +94,7 @@ describe('收藏本面板', () => {
     expect(ui.mask!.style.display).toBe('none');
   });
 
-  it('渲染条目卡片（标题链接/简介/标签 emoji/时间）', async () => {
+  it('渲染条目卡片（标题纯文本/简介/标签 emoji/时间；无链接无跳转图标）', async () => {
     const { ui, dm } = await setup();
     await dm.add(makeItem());
     ui.build();
@@ -71,12 +103,15 @@ describe('收藏本面板', () => {
 
     const container = document.getElementById('fav-entries-container')!;
     expect(container.querySelector('.fav-card')).not.toBeNull();
-    const link = container.querySelector('a') as HTMLAnchorElement;
-    expect(link!.textContent).toBe('我的项目');
-    expect(link!.href).toBe('https://github.com/a/b');
+    // 手势收敛：标题为纯文本 span，不再是 <a>，也无 📄 跳转图标
+    expect(container.querySelector('a')).toBeNull();
+    expect(container.textContent).toContain('我的项目');
+    expect(container.textContent).not.toContain('📄');
     expect(container.textContent).toContain('🐙 GitHub');
     expect(container.textContent).toContain('2025-06-01 08:00:00');
     expect(container.textContent).toContain('一个测试项目');
+    // 卡片挂统一操作组件（长按出浮层/抽屉）
+    expect(container.querySelector('.fav-card')!.classList.contains('bz-item-card')).toBe(true);
   });
 
   it('置顶卡片样式与排序（pinned 优先）', async () => {
@@ -184,20 +219,21 @@ describe('收藏本面板', () => {
     expect(data[0].llmConfig).toEqual({ apiKeys: 'sk-abc', balanceUrl: '' });
   });
 
-  it('编辑模式：回填 + saveBtn「更新」+ 保留 created', async () => {
+  it('编辑模式：长按卡片→动作「编辑」→ 回填 + saveBtn「更新」+ 保留 created', async () => {
     const { ui, dm } = await setup();
     await dm.add(makeItem({ id: '7', title: '原标题', tags: ['GitHub', '网站'] }));
     ui.build();
     ui.show();
     await new Promise((r) => setTimeout(r, 20));
 
-    // 长按标签徽章 → 编辑（fake timers）
+    // 整卡长按 → 跟手菜单 → 编辑（fake timers）
     vi.useFakeTimers();
-    const container = document.getElementById('fav-entries-container')!;
-    const badge = [...container.querySelectorAll('span')].find((s) => (s as HTMLElement).style.borderRadius === '12px') as HTMLElement;
-    badge.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-    await vi.advanceTimersByTimeAsync(650);
+    const card = document.querySelector('#fav-entries-container .fav-card') as HTMLElement;
+    longPressOpen(card);
     vi.useRealTimers();
+    await new Promise((r) => setTimeout(r, 10));
+
+    clickAction('编辑');
     await new Promise((r) => setTimeout(r, 10));
 
     expect(ui.addPopup!.style.display).toBe('flex');
@@ -214,7 +250,7 @@ describe('收藏本面板', () => {
     expect(hasNotice('收藏已更新')).toBe(true);
   });
 
-  it('长按时间 → 删除确认 → 确认删除', async () => {
+  it('删除：长按卡片→动作「删除」→ confirm 确认删除', async () => {
     const { ui, dm } = await setup();
     await dm.add(makeItem());
     ui.build();
@@ -222,11 +258,12 @@ describe('收藏本面板', () => {
     await new Promise((r) => setTimeout(r, 20));
 
     vi.useFakeTimers();
-    const meta = document.querySelector('#fav-entries-container .fav-card span[style*="font-size:12px; color:var(--text-faint)"]') as HTMLElement;
-    const timeSpan = meta || ([...document.querySelectorAll('#fav-entries-container span')].find((s) => s.textContent === '2025-06-01 08:00:00') as HTMLElement);
-    timeSpan.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-    await vi.advanceTimersByTimeAsync(650);
+    const card = document.querySelector('#fav-entries-container .fav-card') as HTMLElement;
+    longPressOpen(card);
     vi.useRealTimers();
+    await new Promise((r) => setTimeout(r, 10));
+
+    clickAction('删除');
     await new Promise((r) => setTimeout(r, 10));
 
     const confirmMask = document.getElementById('__shared_confirm_mask__');
@@ -252,8 +289,10 @@ describe('收藏本面板', () => {
 
     expect(ui.addTitleInput!.value).toBe('AI标题');
     expect(ui.addDescInput!.value).toBe('AI简介');
-    expect(ui.addAiBtn!.textContent).toBe('✨ AI 推荐');
+    expect(ui.addAiBtn!.textContent).toBe('✨ AI 整理');
     expect(hasNotice('AI 整理完成')).toBe(true);
+    // 动态消息：完成态 toast 走 success 类型
+    expect(document.querySelector('.bz-notice--success')).not.toBeNull();
     const active = [...document.querySelectorAll('.fav-type-btn.active')].map((b) => (b as HTMLElement).dataset.tag);
     expect(active).toContain('GitHub');
   });
@@ -273,7 +312,7 @@ describe('收藏本面板', () => {
     ui.aiService.ai = { json: vi.fn().mockRejectedValue(new Error('网络错误')) } as any;
     ui.addAiBtn!.click();
     await new Promise((r) => setTimeout(r, 30));
-    expect(hasNotice('AI 整理失败：网络错误')).toBe(true);
+    expect(document.querySelector('.bz-notice--error')!.textContent).toContain('AI 整理失败：网络错误');
   });
 
   it('AI 整理：GitHub 链接 → 仓库名预填标题 + 简介翻译 + GitHub 类型自动选中', async () => {
@@ -294,8 +333,8 @@ describe('收藏本面板', () => {
 
     expect(ui.addTitleInput!.value).toBe('helloagents');
     expect(ui.addDescInput!.value).toBe('一个 AI 智能体实验合集');
-    expect(ui.addAiBtn!.textContent).toBe('✨ AI 推荐');
-    expect(hasNotice('已获取 GitHub 仓库信息')).toBe(true);
+    expect(ui.addAiBtn!.textContent).toBe('✨ AI 整理');
+    expect(hasNotice('AI 整理完成')).toBe(true);
     const active = [...document.querySelectorAll('.fav-type-btn.active')].map((b) => (b as HTMLElement).dataset.tag);
     expect(active).toContain('GitHub');
     expect(active).toContain('Claude');
@@ -326,8 +365,7 @@ describe('收藏本面板', () => {
     const active = [...document.querySelectorAll('.fav-type-btn.active')].map((b) => (b as HTMLElement).dataset.tag);
     expect(active).toContain('GitHub');
     expect(active).toContain('网站');
-    // 获取失败可见 + 提示词禁止编造简介
-    expect(hasNotice('GitHub 仓库简介获取失败，简介留空不编造')).toBe(true);
+    // 提示词禁止编造简介（获取失败的提示并入动态消息阶段文案，完成态不保留）
     const prompt = (ui.aiService.ai as any).json.mock.calls[0][0] as string;
     expect(prompt).toContain('无简介或获取失败');
     expect(prompt).toContain('严禁编造或自行生成简介');
@@ -353,7 +391,7 @@ describe('收藏本面板', () => {
     expect(hasNotice('AI 整理失败：网络错误')).toBe(true);
   });
 
-  it('余额显示与点击刷新', async () => {
+  it('余额：列表纯展示不可点击，刷新走抽屉「刷新余额」（小字+头部同步更新）', async () => {
     const { ui, dm } = await setup();
     await dm.add(makeItem({
       id: '9', tags: ['大模型'], title: 'LLM', url: '',
@@ -369,14 +407,144 @@ describe('收藏本面板', () => {
     const container = document.getElementById('fav-entries-container')!;
     expect(container.textContent).toContain('(❌');
 
-    // 点击刷新 → fetch 成功
+    // 抽屉「刷新余额」→ fetch 成功 → 小字与头部同步、数据写回（keepOpen 仅抽屉路径，切移动端）
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ balance: 42.5 }) }));
-    const balanceSpan = [...container.querySelectorAll('span')].find((s) => s.textContent!.startsWith('(❌')) as HTMLElement;
-    balanceSpan.click();
-    await new Promise((r) => setTimeout(r, 30));
-    expect(container.textContent).toContain('(余额: 42.5)');
-    const data = await dm.getAll();
-    expect(data[0].balance).toBe('42.5');
-    vi.unstubAllGlobals();
+    Platform.isMobile = true;
+    const card = container.querySelector('.fav-card') as HTMLElement;
+    await openByLongPress(card);
+    try {
+      clickAction('刷新余额');
+      await new Promise((r) => setTimeout(r, 30));
+      const subs = [...document.querySelectorAll('.bz-item-sheet-item-sub')].map((e) => e.textContent);
+      expect(subs).toContain('42.5');
+      expect(document.querySelector('.bz-fav-sheet-balance')!.textContent).toContain('42.5');
+      expect((await dm.getAll())[0].balance).toBe('42.5');
+      expect(document.querySelector('.bz-item-sheet')).not.toBeNull(); // keepOpen：抽屉保持
+    } finally {
+      Platform.isMobile = false;
+      closeItemMenu();
+      vi.unstubAllGlobals();
+    }
+  });
+});
+
+describe('收藏本抽屉（统一手势组件接入）', () => {
+  beforeEach(() => {
+    Platform.isMobile = true; // 底部抽屉路径
+  });
+
+  afterEach(() => {
+    Platform.isMobile = false;
+    closeItemMenu();
+  });
+
+  async function seedTwo(ui: UIManager, dm: DataManager) {
+    await dm.add(makeItem()); // 我的项目：有 url（GitHub）
+    await dm.add(makeItem({ id: '2', title: '网页', tags: ['网站'], type: '网站', url: '', linkedNote: '笔记库/说明.md' }));
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+    return [...document.querySelectorAll('#fav-entries-container .fav-card')] as HTMLElement[];
+  }
+
+  it('动作条件显示与顺序：打开→置顶→跳转笔记→刷新余额→编辑→删除', async () => {
+    const { ui, dm } = await setup();
+    const cards = await seedTwo(ui, dm);
+    expect(cards.length).toBe(2);
+
+    // 网页卡（无 url、有 linkedNote）：无「打开」「刷新余额」，跳转小字=笔记名
+    await openByLongPress(cards[0]);
+    expect(actionLabels()).toEqual(['置顶', '跳转笔记', '编辑', '删除']);
+    const subs0 = [...document.querySelectorAll('.bz-item-sheet-item-sub')].map((e) => e.textContent);
+    expect(subs0).toContain('说明.md');
+    closeItemMenu();
+
+    // 项目卡（有 url、无 llm）：打开在首位，小字=域名；无「跳转笔记」「刷新余额」
+    await openByLongPress(cards[1]);
+    expect(actionLabels()).toEqual(['打开', '置顶', '编辑', '删除']);
+    const subs1 = [...document.querySelectorAll('.bz-item-sheet-item-sub')].map((e) => e.textContent);
+    expect(subs1).toContain('github.com');
+
+    // 头部：分类 emoji + 标题 + 标签徽章
+    expect(document.querySelector('.bz-fav-sheet-title')!.textContent).toBe('我的项目');
+    expect(document.querySelector('.bz-fav-sheet-emoji')!.textContent).toBe('🐙');
+    const badges = [...document.querySelectorAll('.bz-fav-sheet-tag')].map((e) => e.textContent);
+    expect(badges).toEqual(['🐙 GitHub']);
+  });
+
+  it('置顶：keepOpen 原地翻转 + 数据写回 + 头部📌 + 列表重排', async () => {
+    const { ui, dm } = await setup();
+    await dm.add(makeItem({ id: '1', title: '甲', created: '2025-06-02 00:00:00' }));
+    await dm.add(makeItem({ id: '2', title: '乙', created: '2025-06-01 00:00:00' }));
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    let cards = [...document.querySelectorAll('#fav-entries-container .fav-card')] as HTMLElement[];
+    expect(cards[0].textContent).toContain('甲'); // 新创建在前
+
+    await openByLongPress(cards[0]);
+    clickAction('置顶');
+    await tick(30);
+
+    expect((await dm.getAll()).find((d) => d.id === '1')!.pinned).toBe(true);
+    expect(actionLabels()).toContain('取消置顶'); // 动作翻转
+    expect(document.querySelector('.bz-item-sheet')).not.toBeNull(); // 抽屉保持
+    expect(document.querySelector('.bz-fav-sheet-title')!.textContent).toContain('📌 甲'); // 头部同步
+
+    closeItemMenu();
+    await tick(30);
+    cards = [...document.querySelectorAll('#fav-entries-container .fav-card')] as HTMLElement[];
+    expect(cards[0].textContent).toContain('甲'); // 列表重排：置顶优先
+  });
+
+  it('编辑：弹窗叠抽屉（companion 防误关）；保存后自动关抽屉', async () => {
+    const { ui, dm } = await setup();
+    await dm.add(makeItem({ id: '7', title: '原标题' }));
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const card = document.querySelector('#fav-entries-container .fav-card') as HTMLElement;
+    await openByLongPress(card);
+    clickAction('编辑');
+    await tick(10);
+    expect(ui.addPopup!.style.display).toBe('flex');
+    expect(document.querySelector('.bz-item-sheet')).not.toBeNull(); // 弹窗开着，抽屉也在
+
+    // 点弹窗本体不触发外部点击关闭抽屉（companion）
+    ui.addPopup!.click();
+    await tick(10);
+    expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
+
+    ui.addTitleInput!.value = '改后标题';
+    ui.addSaveBtn!.click();
+    await tick(30);
+    expect(ui.addPopup!.style.display).toBe('none');
+    expect(document.querySelector('.bz-item-sheet')).toBeNull(); // Q8：保存后关抽屉
+    expect((await dm.getAll())[0].title).toBe('改后标题');
+    expect(hasNotice('收藏已更新')).toBe(true);
+  });
+
+  it('删除：抽屉项先收抽屉再 confirm，确认后删除', async () => {
+    const { ui, dm } = await setup();
+    await dm.add(makeItem());
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const card = document.querySelector('#fav-entries-container .fav-card') as HTMLElement;
+    await openByLongPress(card);
+    clickAction('删除');
+    await tick(10);
+    // 非 keepOpen：点删除即收抽屉，confirm 叠上
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
+    const confirmMask = document.getElementById('__shared_confirm_mask__');
+    expect(confirmMask).not.toBeNull();
+
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    await tick(30);
+    expect((await dm.getAll()).length).toBe(0);
+    expect(hasNotice('已删除收藏')).toBe(true);
   });
 });
