@@ -7,7 +7,8 @@
  *   用户拍板：桌面用鼠标右键打开，不再用鼠标长按）。
  * - 移动/触屏端：长按卡片弹「底部抽屉」（.bz-item-sheet，参照 B 站/网易云）——
  *   半透明遮罩 + 底部滑入面板，功能一行行列出，顶部显示该条目标题（网易云式：展示选中列表信息）。
- * - 动作项布局（菜单与抽屉一致）：图标左对齐 + 文案随后 + 小字右对齐（margin-left auto，样式层承载）。
+ * - 动作项布局：桌面右键菜单只保留 图标 + 文案（图标与文字左对齐，无小字、无边框，样式层承载）；
+ *   移动端抽屉为 图标左对齐 + 文案随后 + 小字右对齐（margin-left auto，样式层承载）。
  *
  * 防穿透机制：
  * - 触屏路径：touchstart 被动监听（不 preventDefault，滚动不受影响），长按松手的合成 click
@@ -28,7 +29,7 @@ export interface ItemAction {
   icon: IconName;
   /** 菜单项文案（浮层显示） */
   label: string;
-  /** 菜单项右侧小字（次级/动态数据，如「123 字」；空则不显示） */
+  /** 抽屉项右侧小字（次级/动态数据，如「123 字」；空则不显示；仅移动端抽屉渲染，桌面菜单不显示） */
   sub?: string;
   /** 强调色调：图标与右侧小字同步变色（如解锁态加密/解密用强调色）；空为默认灰调 */
   tone?: 'accent';
@@ -237,12 +238,7 @@ export function openItemMenu(x: number, y: number, actions: ItemAction[], suppre
     itemLabel.textContent = a.label;
     item.appendChild(itemIcon);
     item.appendChild(itemLabel);
-    if (a.sub) {
-      const itemSub = document.createElement('span');
-      itemSub.className = 'bz-item-menu-item-sub';
-      itemSub.textContent = a.sub;
-      item.appendChild(itemSub);
-    }
+    // 桌面菜单不渲染右侧小字（用户拍板：去掉小字，仅图标 + 文案；小字仅移动端抽屉显示）
     item.addEventListener('click', (ev) => {
       ev.stopPropagation();
       closeItemMenu();
