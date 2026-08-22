@@ -80,3 +80,23 @@
 4. L2 4 维化（红队 C C4）暂缓：rMem 检索项已撤销 alphaI 死维前提，effectScale/decayScale 中心与生产对偶配方已一致（1.0/1.0），激进裁剪推迟到接入后验证。
 
 **收敛判据核对（§11）**：① 多轮 reward 平台期（0.5256→0.5285，+0.6% 增量递减）；② 多种子波动 <2%（真实 0.5%、合成 0.9%）；③ 双环境指标全落验收区间（7/7）；④ 产品故事对照自洽（信任暖熟有过程、心情平淡=无互动诚实值、检索更贴话题）。**判定：收敛，停止训练，进入接入前待命**。
+
+## 用户追加决策 4（2026-08-23，ticket 029：数据接入面全面扩展，隐私红线重拍板）
+
+用户逐条拍板重定义「什么进入小橘」（推翻 ADR-0025 的「隐私分级只读标题/首行」口径，改为「全内容读取 + 所有内容走 LLM 云端打分 + 词法情绪」）：
+
+1. **9 类 .md 源全内容读取**（`context-source.ts` 重写）：
+   - **diary 日记**：读正文 + `extractKeywords` 标记关键词 + 词法情绪 → 观察含正文片段（原仅标题计数）；
+   - **flash 闪念**：取完整内容（原首行 ≤40）；
+   - **clipping 剪藏**：完整 AI 摘要（原 ≤60 截断）；
+   - **movie 影视**：读影评完整正文（原片名+评分）；
+   - **reading 书库**（weve epub）：提取划线 `<span class="__comment cm-highlight">`、想法 `==dialogue==` 块、`bookReview`（frontmatter）「记划线、想法、书评」；
+   - **新增 poem 现代诗 / letter 信 / reflection 反省**：完整内容；
+2. **7 域 CONFIG/STORAGE JSON 感知**（新 `domain-source.ts`）：memo/pomodoro/news/quiz/review/favorites/belongings 监听 modify → 解析新增条目生成观察（首次快照不产出，卸载清理）；
+3. **所有内容走 LLM 云端打分**：`addObservation(text, {source})` 默认走 `scoreImportanceAndEmotion`（LLM 打分 + 词法情绪；AI 未配置降级本地规则分）——**撤销「本地零 LLM」隐私红线**（用户拍板放开，接受笔记内容经 AI 打分；LLM 调用发生在用户主动配置 AI 之后）；
+4. **删语音模块**：`VoiceCommandSystem` 全删（index 装配、interaction 三击、语音测试）；三击无动作；
+5. **抚摸 = 纯互动信号**：`interaction.ts showPetMessage` 不再调 `mood.handleInteraction('pet')` / `onInteraction('pet')`——不涨信任、不动心情、不长人格（用户拍板「不增加任何东西」，仅气泡+动画即时反馈）。
+
+测试：新增 domain-source.test.ts（6 测试）、context-source 重写（12 测试），1288 全绿；已构建部署。
+
+**隐私语义变更说明**：此前「笔记内容不发给云端」改为「笔记内容参与 AI 打分与反思」（用户主动配置 AI 后生效，未配置时仍本地规则分兜底）。密码本/保险箱永不接入不变；机械去簇（批量导入不进信任、观察降权）不变。
