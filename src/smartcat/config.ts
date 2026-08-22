@@ -17,6 +17,7 @@ export function defaultConfig(): SmartCatConfig {
     contextSplitRatio: 0.5,
     conversationHistory: [],
     shortTermMemory: 50,
+    noteSource: true,
   };
 }
 
@@ -31,6 +32,7 @@ export function normalizeConfig(raw: any): SmartCatConfig {
   if (typeof c.contextLength !== 'number') c.contextLength = def.contextLength;
   if (typeof c.contextSplitRatio !== 'number') c.contextSplitRatio = def.contextSplitRatio;
   if (!Array.isArray(c.conversationHistory)) c.conversationHistory = [];
+  if (typeof c.noteSource !== 'boolean') c.noteSource = def.noteSource;
   // 外观不在合法表内回退默认（原版读任意字符串只是 CSS 类名不匹配，这里兜底防样式失效）
   const appearances: Appearance[] = ['orange','gray','black','white','calico','neon','galaxy','liquidMetal','fire','crystal','cyberpunk','rainbow','hologram'];
   if (!appearances.includes(c.appearance as Appearance)) c.appearance = def.appearance;

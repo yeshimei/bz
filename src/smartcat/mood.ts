@@ -249,8 +249,10 @@ export class PersonalityGrowth {
     return this.dataProvider().personalityGrowth.traits;
   }
 
-  /** 互动驱动（MATE character_transition：δ=δbase×Σ|eᵢ|×近因；softUpdate 饱和） */
-  async developBasedOnInteraction(interactionType: string, intensity: number, emotionIntensity = 0): Promise<void> {
+  /** 互动驱动（MATE character_transition：δ=δbase×Σ|eᵢ|×近因；softUpdate 饱和）
+   *  trustQuality：温暖互动的信任增益质量系数（默认 0.5；写日记/闪念以轻质量 0.15 计入，
+   *  ADR-0024 产品决策——不聊天时陪伴也能在「共享生活」中生长） */
+  async developBasedOnInteraction(interactionType: string, intensity: number, emotionIntensity = 0, trustQuality = 0.5): Promise<void> {
     const data = this.dataProvider();
     const g = data.personalityGrowth;
     const I = Math.max(emotionIntensity, intensity * 0.2);
@@ -259,7 +261,7 @@ export class PersonalityGrowth {
     if (interactionType === 'pet' || interactionType === 'learn') {
       g.traits = characterTransition(g.traits, { emotionIntensity: 0.2, trust: g.relationship.trust });
     }
-    g.relationship.trust = trustUpdate(g.relationship.trust, { warm: interactionType === 'pet' || interactionType !== 'click', trustCap: TRUST_CAP ?? undefined });
+    g.relationship.trust = trustUpdate(g.relationship.trust, { warm: interactionType === 'pet' || interactionType !== 'click', quality: trustQuality, trustCap: TRUST_CAP ?? undefined });
     // 活跃时段统计（按当时钟点滚一个众数近似）
     this.tickBehaviorStats(interactionType);
     g.growthHistory.push({
