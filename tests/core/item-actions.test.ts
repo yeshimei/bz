@@ -1,7 +1,7 @@
 /**
- * core/item-actions 测试（手势统一试点）：桌面操作条 + 长按跟手菜单
- * 覆盖：操作条按钮、长按出菜单、跟手定位防溢出（右下放不下翻左/上）、
- * 残余 click 抑制、外部点击/ESC 关闭、菜单项执行。
+ * core/item-actions 测试（手势统一）：右键跟手菜单（桌面）+ 长按抽屉（移动）
+ * 覆盖：列表不注入图标排、右键出菜单（preventDefault 拦原生）、跟手定位防溢出（右下放不下翻左/上）、
+ * 外部点击/ESC 关闭、菜单项执行；移动端遮罩抽屉、下滑关闭。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { attachItemActions, closeItemMenu, openItemMenu, type ItemAction } from '../../src/core/item-actions';
@@ -24,12 +24,20 @@ function makeCard(): HTMLElement {
   return card;
 }
 
+/** 桌面右键开菜单（同步，无补发 click） */
+function rightClickOn(card: HTMLElement, x = 60, y = 60): MouseEvent {
+  const ev = new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: x, clientY: y });
+  card.dispatchEvent(ev);
+  return ev;
+}
+
+/** 移动端路径长按（mousedown 计时触发抽屉；需在 fake timers 下调用） */
 function longPressOn(card: HTMLElement, x = 60, y = 60) {
   card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: x, clientY: y }));
   vi.advanceTimersByTime(550);
 }
 
-describe('attachItemActions：桌面操作条', () => {
+describe('attachItemActions：列表保持干净（无图标排）', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
     (window as any).__opened = false;
@@ -38,18 +46,12 @@ describe('attachItemActions：桌面操作条', () => {
     (window as any).__linkClicked = false;
   });
 
-  it('注入操作条：顺序 = 打开/编辑/删除，原生 lucide 图标（setIcon 到 dataset.icon），危险项带 danger 类', () => {
+  it('不注入任何常驻/hover 图标排，仅挂统一卡片类（入口只有浮层）', () => {
     const card = makeCard();
     attachItemActions(card, ACTIONS);
     expect(card.classList.contains('bz-item-card')).toBe(true);
-    const btns = card.querySelectorAll('.bz-item-action');
-    expect(btns.length).toBe(3);
-    // Obsidian 原生图标：mock setIcon 记录 dataset.icon（真实环境渲染 lucide svg）
-    expect((btns[0] as HTMLElement).dataset.icon).toBe('external-link');
-    expect((btns[1] as HTMLElement).dataset.icon).toBe('pencil');
-    expect((btns[2] as HTMLElement).dataset.icon).toBe('trash-2');
-    expect(btns[2].classList.contains('bz-item-action--danger')).toBe(true);
-    expect((btns[0] as HTMLElement).title).toBe('打开');
+    expect(card.querySelector('.bz-item-actions')).toBeNull();
+    expect(card.querySelectorAll('.bz-item-action').length).toBe(0);
   });
 
   it('空操作列表：不注入任何东西，也不影响卡片', () => {
@@ -58,37 +60,27 @@ describe('attachItemActions：桌面操作条', () => {
     expect(card.querySelector('.bz-item-actions')).toBeNull();
   });
 
-  it('longPressFilter：排除区域长按不弹浮层（让位系统选字/复制），其他区域正常', () => {
-    vi.useFakeTimers();
+  it('longPressFilter 排除区域右键不弹浮层且不拦原生菜单（让位系统选字/复制），其他区域正常弹+拦截', () => {
     const card = makeCard();
     attachItemActions(card, ACTIONS, {
       longPressFilter: (e) => !(e.target as HTMLElement).closest('.bz-todo-link'),
     });
-    // 长按排除区（链接）→ 不弹
+    // 右键排除区（链接）→ 不弹菜单，也不 preventDefault（放行原生右键菜单）
     const link = card.querySelector('.bz-todo-link') as HTMLElement;
-    link.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 60, clientY: 60 }));
-    vi.advanceTimersByTime(550);
+    const evFiltered = new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 });
+    Object.defineProperty(evFiltered, 'target', { value: link, configurable: true });
+    link.dispatchEvent(evFiltered);
     expect(document.querySelector('.bz-item-menu')).toBeNull();
-    expect((window as any).__linkClicked).toBe(false);
-    // 长按卡片其他区域 → 弹菜单
-    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 60, clientY: 60 }));
-    vi.advanceTimersByTime(550);
+    expect(evFiltered.defaultPrevented).toBe(false);
+    // 右键卡片其他区域 → 弹菜单 + 拦截原生
+    const ev = rightClickOn(card, 60, 60);
     expect(document.querySelector('.bz-item-menu')).not.toBeNull();
-    vi.useRealTimers();
-  });
-
-  it('点操作条按钮直接执行回调（桌面主路径）', () => {
-    const card = makeCard();
-    attachItemActions(card, ACTIONS);
-    const btns = card.querySelectorAll('.bz-item-action');
-    (btns[0] as HTMLElement).click();
-    expect((window as any).__opened).toBe(true);
-    (btns[2] as HTMLElement).click();
-    expect((window as any).__deleted).toBe(true);
+    expect(ev.defaultPrevented).toBe(true);
+    closeItemMenu();
   });
 });
 
-describe('长按跟手菜单（移动端主路径）', () => {
+describe('右键跟手菜单（桌面主路径）', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
     (window as any).__opened = false;
@@ -97,11 +89,14 @@ describe('长按跟手菜单（移动端主路径）', () => {
     (window as any).__linkClicked = false;
   });
 
-  it('长按出菜单：菜单项含文案，跟手定位在锚点右下方', () => {
-    vi.useFakeTimers();
+  afterEach(() => {
+    closeItemMenu();
+  });
+
+  it('右键出菜单：菜单项含文案与原生图标，tooltip 随动作 title；锚点右下方定位', () => {
     const card = makeCard();
     attachItemActions(card, ACTIONS);
-    longPressOn(card, 120, 100);
+    rightClickOn(card, 120, 100);
     const menu = document.querySelector('.bz-item-menu') as HTMLElement;
     expect(menu).not.toBeNull();
     expect(menu.querySelectorAll('.bz-item-menu-item').length).toBe(3);
@@ -111,21 +106,22 @@ describe('长按跟手菜单（移动端主路径）', () => {
     // 原生图标进入图标容器（mock setIcon → dataset.icon）
     expect((menu.querySelector('.bz-item-menu-icon') as HTMLElement).dataset.icon).toBe('external-link');
     expect((menu.querySelector('.bz-item-sheet-icon') as HTMLElement)).toBeNull();
+    // tooltip 随 action.title（hover 操作条移除后的承载点）
+    const editItem = [...menu.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.includes('编辑')) as HTMLElement;
+    expect(editItem.title).toBe('编辑');
     // 锚点右下 +GAP：left=132, top=112（jsdom 视口放得下）
     expect(menu.style.left).toBe('132px');
     expect(menu.style.top).toBe('112px');
-    vi.useRealTimers();
   });
 
   it('菜单防溢出：右下放不下 → 翻到锚点左/上方，并夹紧视口边界', () => {
-    vi.useFakeTimers();
     const origW = window.innerWidth;
     const origH = window.innerHeight;
     Object.defineProperty(window, 'innerWidth', { value: 240, configurable: true });
     Object.defineProperty(window, 'innerHeight', { value: 300, configurable: true });
     const card = makeCard();
     attachItemActions(card, ACTIONS);
-    longPressOn(card, 230, 290);
+    rightClickOn(card, 230, 290);
     const menu = document.querySelector('.bz-item-menu') as HTMLElement;
     expect(menu).not.toBeNull();
     // 3 项菜单估算尺寸 168×100（jsdom offsetWidth/Height 恒 0 的兜底路径）
@@ -141,73 +137,57 @@ describe('长按跟手菜单（移动端主路径）', () => {
     expect(menu.style.top).toBe('178px');
     Object.defineProperty(window, 'innerWidth', { value: origW, configurable: true });
     Object.defineProperty(window, 'innerHeight', { value: origH, configurable: true });
-    vi.useRealTimers();
   });
 
-  it('残余 click 抑制：长按松手补发的 click 被吞掉，菜单保持、卡片内链接不触发', () => {
-    vi.useFakeTimers();
+  it('右键路径无残余抑制：紧随的左键点击不被吞——外部点击关闭菜单、卡片链接正常触发', () => {
     const card = makeCard();
+    document.body.appendChild(card); // 卡片须在 DOM（真实场景）；否则点击冒泡不到 document 捕获层
     attachItemActions(card, ACTIONS);
-    longPressOn(card);
-    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
-    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    rightClickOn(card);
     expect(document.querySelector('.bz-item-menu')).not.toBeNull();
-    expect((window as any).__linkClicked).toBe(false);
-    vi.useRealTimers();
+    // 左键点卡片内链接（相对菜单为外部）→ 菜单关闭 + 链接自身点击生效
+    const link = card.querySelector('.bz-todo-link') as HTMLElement;
+    link.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(document.querySelector('.bz-item-menu')).toBeNull();
+    expect((window as any).__linkClicked).toBe(true);
   });
 
-  it('触屏长按：松手后的合成 click 在静置窗口内被吞（菜单不闪关、链接不触发），窗口过后菜单项可点', () => {
-    vi.useFakeTimers();
+  it('点菜单项：执行回调并关闭菜单（右键后立即可点，无静置窗口）', () => {
     const card = makeCard();
     attachItemActions(card, ACTIONS);
-    // 触屏路径：touchstart 长按出菜单（无 mouseup，走合成 click 静置窗口抑制）
-    const ts = new MouseEvent('touchstart', { bubbles: true, clientX: 60, clientY: 60 });
-    card.dispatchEvent(ts);
-    vi.advanceTimersByTime(550);
-    expect(document.querySelector('.bz-item-menu')).not.toBeNull();
-    card.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
-    // 浏览器合成 click（400ms 窗口内）→ 吞掉：菜单保持打开、卡片链接不触发
-    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(document.querySelector('.bz-item-menu')).not.toBeNull();
-    expect((window as any).__linkClicked).toBe(false);
-    // 静置窗口过后，菜单项正常可点
-    vi.advanceTimersByTime(500);
-    const editItem = [...document.querySelectorAll('.bz-item-menu-item')].find(
-      (b) => b.textContent!.includes('编辑')
-    ) as HTMLElement;
-    editItem.click();
-    expect((window as any).__edited).toBe(true);
-    vi.useRealTimers();
-  });
-
-  it('点菜单项：执行回调并关闭菜单', () => {
-    vi.useFakeTimers();
-    const card = makeCard();
-    attachItemActions(card, ACTIONS);
-    longPressOn(card);
+    rightClickOn(card);
     const editItem = [...document.querySelectorAll('.bz-item-menu-item')].find(
       (b) => b.textContent!.includes('编辑')
     ) as HTMLElement;
     editItem.click();
     expect((window as any).__edited).toBe(true);
     expect(document.querySelector('.bz-item-menu')).toBeNull();
-    vi.useRealTimers();
   });
 
   it('点菜单外任意处关闭；ESC 也关闭', () => {
-    vi.useFakeTimers();
     const card = makeCard();
     attachItemActions(card, ACTIONS);
-    longPressOn(card);
+    rightClickOn(card);
     expect(document.querySelector('.bz-item-menu')).not.toBeNull();
     // 点外部
     document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(document.querySelector('.bz-item-menu')).toBeNull();
     // 再开，ESC 关
-    longPressOn(card);
+    rightClickOn(card);
     expect(document.querySelector('.bz-item-menu')).not.toBeNull();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect(document.querySelector('.bz-item-menu')).toBeNull();
+  });
+
+  it('桌面鼠标长按不再触发任何浮层（右键接管）', () => {
+    vi.useFakeTimers();
+    const card = makeCard();
+    attachItemActions(card, ACTIONS);
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 60, clientY: 60 }));
+    vi.advanceTimersByTime(800);
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    expect(document.querySelector('.bz-item-menu')).toBeNull();
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
     vi.useRealTimers();
   });
 });

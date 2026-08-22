@@ -1,19 +1,21 @@
 /**
- * 统一「行操作条 / 长按浮层」组件（手势统一试点，先接入 memo，后续域迁移复用）
+ * 统一「右键菜单 / 长按抽屉」组件（手势统一试点，先接入 memo，后续域迁移复用）
  *
  * 交互约定（桌面 / 移动分离）：
- * - 桌面端：卡片 hover 显示操作条（.bz-item-actions，@media (hover: hover) 控制显隐，样式在 styles.css），
- *   点按钮直接执行（删除类由调用方接 confirm）；长按出跟手小菜单（.bz-item-menu，锚定光标、防溢出）。
+ * - 列表卡片**不注入任何常驻或 hover 图标排**（用户拍板：列表保持干净）。
+ * - 桌面端：**右键**出跟手菜单（.bz-item-menu，锚定光标、防溢出；preventDefault 拦原生右键菜单；
+ *   用户拍板：桌面用鼠标右键打开，不再用鼠标长按）。
  * - 移动/触屏端：长按卡片弹「底部抽屉」（.bz-item-sheet，参照 B 站/网易云）——
  *   半透明遮罩 + 底部滑入面板，功能一行行列出，顶部显示该条目标题（网易云式：展示选中列表信息）。
+ * - 动作项布局（菜单与抽屉一致）：图标左对齐 + 文案随后 + 小字右对齐（margin-left auto，样式层承载）。
  *
  * 防穿透机制：
- * - 桌面鼠标路径：长按松手浏览器补发 click → mouseup 捕获标记 residualClickArmed，紧随其后的 click 吞掉。
  * - 触屏路径：touchstart 被动监听（不 preventDefault，滚动不受影响），长按松手的合成 click
  *   在 TOUCH_SETTLE_MS 静置窗口内吞一次，防浮层刚打开就被当成「外部点击」关闭。
+ * - 桌面右键路径无补发 click，无需抑制。
  *
  * 实现说明：
- * - 复用 core/dom longPress（500ms 默认、10px 移动取消）。
+ * - 复用 core/dom longPress（500ms 默认、10px 移动取消，仅移动端路径使用）。
  * - 浮层注册 escManager（ESC 关闭）；点浮层外任意处关闭（遮罩点击 = 关闭）。
  */
 import { longPress } from './dom';
@@ -222,6 +224,7 @@ export function openItemMenu(x: number, y: number, actions: ItemAction[], suppre
   for (const a of actions) {
     const item = document.createElement('button');
     item.type = 'button';
+    if (a.title) item.title = a.title;
     item.className =
       'bz-item-menu-item' +
       (a.kind === 'danger' ? ' bz-item-menu-item--danger' : '') +
@@ -261,6 +264,7 @@ export function openItemMenu(x: number, y: number, actions: ItemAction[], suppre
 function buildSheetItem(a: ItemAction): HTMLElement {
   const item = document.createElement('button');
   item.type = 'button';
+  if (a.title) item.title = a.title;
   item.className =
     'bz-item-sheet-item' +
     (a.kind === 'danger' ? ' bz-item-sheet-item--danger' : '') +
@@ -437,44 +441,31 @@ function attachSheetDismiss(sheet: HTMLElement, body: HTMLElement): void {
 }
 
 /**
- * 给列表卡片挂统一操作：桌面 hover 操作条 + 长按浮层（移动端底部抽屉 / 桌面跟手小菜单）。
+ * 给列表卡片挂统一操作：桌面右键跟手菜单 / 移动端长按底部抽屉。
+ * 列表不注入任何常驻或 hover 图标排（用户拍板：列表保持干净，入口只有浮层）。
  * @param card 卡片元素（须为相对定位容器，见 styles.css .bz-item-card）
  * @param actions 操作项（顺序即显示顺序；删除类传 kind: 'danger' 并自行接 confirm）
- * @param opts 抽屉顶部信息（移动端显示选中条目信息，参照网易云）
+ * @param opts 抽屉顶部信息（移动端显示选中条目信息，参照网易云）与长按排除区
  */
 export function attachItemActions(card: HTMLElement, actions: ItemAction[], opts?: ItemActionsOptions): void {
   if (!card || actions.length === 0) return;
   card.classList.add('bz-item-card');
 
-  // 桌面操作条（hover 显示，显隐由 styles.css @media (hover: hover) 控制）
-  const bar = document.createElement('div');
-  bar.className = 'bz-item-actions';
-  for (const a of actions) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'bz-item-action' + (a.kind === 'danger' ? ' bz-item-action--danger' : '');
-    renderIcon(btn, a.icon); // 原生 lucide svg，颜色继承 currentColor
-    if (a.title) btn.title = a.title;
-    btn.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      closeItemMenu();
-      a.onClick();
-    });
-    bar.appendChild(btn);
-  }
-  card.appendChild(bar);
+  // 桌面端：右键 → 跟手菜单（preventDefault 拦原生右键菜单；让位区放行原生菜单）
+  card.addEventListener('contextmenu', (e) => {
+    if (isMobileEnv()) return; // 移动端走触屏长按 → 抽屉
+    if (opts?.longPressFilter && !opts.longPressFilter(e)) return; // 让位系统选字/复制：不弹也不拦
+    e.preventDefault();
+    openItemMenu(e.clientX, e.clientY, actions, true);
+    suppressNextClick = false; // 右键无补发 click，关闭残余抑制
+  });
 
-  // 长按 → 移动端底部抽屉 / 桌面跟手菜单；longPressFilter 排除区域（如正文文字）让位系统长按选字复制
+  // 触屏长按 → 底部抽屉（仅移动端生效；桌面由右键负责，鼠标长按不再触发）
   longPress(
     card,
     (ev: any) => {
-      const isMouse = ev.type !== 'touchstart';
-      if (isMobileEnv()) {
-        openItemSheet(actions, opts, isMouse);
-        return;
-      }
-      const pt = (ev.touches && ev.touches[0]) || ev;
-      openItemMenu(pt.clientX, pt.clientY, actions, isMouse);
+      if (!isMobileEnv()) return;
+      openItemSheet(actions, opts, ev.type !== 'touchstart');
     },
     undefined,
     opts?.longPressFilter
