@@ -8,6 +8,7 @@ import { showLibrary, showBookNotes, openFilterModal, _testResetLibrary } from '
 import { openBookNotes } from '../../src/library/index';
 import { MockVault, parseFrontmatter } from '../mock-vault';
 import { resetObsidianMocks, Platform as MockPlatform, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
+import { closeItemMenu } from '../../src/core/item-actions';
 
 function makeApp(vault: MockVault, extra: any = {}) {
   return {
@@ -63,6 +64,62 @@ describe('书库面板', () => {
   afterEach(() => {
     _testResetLibrary();
     document.body.innerHTML = '';
+    closeItemMenu();
+    MockPlatform.isMobile = false;
+  });
+
+  it('抽屉（移动端长按）：头部📖书名+作者·状态·进度；动作=打开原文/读书笔记；点打开原文跳转', async () => {
+    vault.files.set('书库/活着.md', BOOK_MD);
+    const app = makeApp(vault);
+    showLibrary(app);
+    await new Promise((r) => setTimeout(r, 20));
+    const card = document.querySelector('#__book_library__ .bz-lib-card') as HTMLElement;
+    expect(card.classList.contains('bz-item-card')).toBe(true);
+
+    MockPlatform.isMobile = true;
+    vi.useFakeTimers();
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 60, clientY: 60 }));
+    vi.advanceTimersByTime(550);
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    vi.useRealTimers();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet).not.toBeNull();
+    // 头部：📖 + 书名；小字=作者 · 状态 · 进度
+    expect(sheet.querySelector('.bz-item-sheet-title')!.textContent).toBe('活着');
+    expect(sheet.querySelector('.bz-item-sheet-sub')!.textContent).toContain('余华');
+    expect(sheet.querySelector('.bz-item-sheet-sub')!.textContent).toContain('在读');
+    expect(sheet.querySelector('.bz-item-sheet-sub')!.textContent).toContain('60%');
+    // 动作清单（用户拍板：无编辑无删除）
+    const labels = [...sheet.querySelectorAll('.bz-item-sheet-label')].map((e) => e.textContent);
+    expect(labels).toEqual(['打开原文', '读书笔记']);
+
+    // 点「打开原文」→ openLinkText + 主面板隐藏
+    const openItem = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('打开原文')
+    ) as HTMLElement;
+    openItem.click();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(app.workspace.openLinkText).toHaveBeenCalledWith('书库/活着.md', '', false);
+  });
+
+  it('桌面右键 → 菜单「读书笔记」→ 划线弹窗打开', async () => {
+    vault.files.set('书库/活着.md', BOOK_MD);
+    vault.files.set('书库/读书笔记/活着.md', NOTE_MD);
+    const app = makeApp(vault);
+    showLibrary(app);
+    const card = document.querySelector('#__book_library__ .bz-lib-card') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
+    const noteItem = [...document.querySelectorAll('.bz-item-menu-item')].find(
+      (b) => b.textContent!.includes('读书笔记')
+    ) as HTMLElement;
+    expect(noteItem).toBeTruthy();
+    noteItem.click();
+    await new Promise((r) => setTimeout(r, 30));
+    const overlay = [...document.querySelectorAll('div')].find((d) => d.textContent!.includes('的读书笔记'))!;
+    expect(overlay.textContent).toContain('📚 《活着》的读书笔记');
   });
 
   it('无书 → Notice 提示且遮罩移除（EPUB 合并后判空）', async () => {
@@ -177,7 +234,7 @@ describe('书库面板', () => {
     expect(app.workspace.openLinkText).toHaveBeenCalledWith('书库/活着.md#^h1', '', false);
   });
 
-  it('EPUB 条目并入列表（读 weave-data.json）且单击标题跳 Weave 打开', async () => {
+  it('EPUB 条目并入列表（读 weave-data.json）；双击封面跳 Weave 打开', async () => {
     vault.files.set('书库/活着.md', BOOK_MD);
     vault.files.set('CONFIG/STORAGE/weave-data.json', JSON.stringify({
       schemaVersion: 2,
@@ -196,8 +253,9 @@ describe('书库面板', () => {
     await new Promise((r) => setTimeout(r, 20));
     const overlay = document.getElementById('__book_library__')!;
     expect(overlay.textContent).toContain('悉达多');
-    const titleEl = [...overlay.querySelectorAll('div')].find((d) => d.textContent === '悉达多')!;
-    titleEl.click();
+    // 双击封面 → 打开阅读器（用户拍板保留双击转跳）
+    const cover = [...overlay.querySelectorAll('.bz-lib-cover')].pop() as HTMLElement;
+    cover.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     expect(app.workspace.openLinkText).toHaveBeenCalledWith('Books/悉达多.epub', '', false);
   });
 
