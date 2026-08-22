@@ -1021,7 +1021,7 @@ export const Renderer = {
         icon: 'book-open',
         label: '跳转关联笔记',
         title: '跳转关联笔记',
-        sub: item.notePath.split('/').pop() || undefined,
+        sub: (item.notePath.split('/').pop() || '').replace(/\.md$/i, '') || undefined,
         onClick: () => this.openLinkedNote(item),
       });
     }

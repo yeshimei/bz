@@ -738,6 +738,70 @@ describe('抽屉（统一手势组件接入）', () => {
   });
 });
 
+describe('双击打开影视笔记（2026-08-22 用户决策：ticket 69 收敛移除后回加）', () => {
+  /** 在容器中按片名找卡片（卡片无 class，子 div 文本 = 片名） */
+  function findCard(container: HTMLElement, name: string): HTMLElement {
+    const nameEl = [...container.querySelectorAll('div')].find((d) => d.textContent === name) as HTMLElement;
+    return nameEl.parentElement!.parentElement!;
+  }
+
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetMovieState();
+    document.body.innerHTML = '';
+    M.folderPath = '我的/影视';
+  });
+
+  function setupVault() {
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《片1》.md', ['---', 'tags: [电影]', '评分: 5', '观影日期: 2025-01-01T10:00:00', '---'].join('\n'));
+    return vault;
+  }
+
+  it('整卡双击（300ms 内两次单击）→ openLinkText(笔记路径) 并关闭主面板；单击无操作', () => {
+    const vault = setupVault();
+    const app = makeApp(vault);
+    const openLinkText = vi.fn().mockResolvedValue(undefined);
+    app.workspace.openLinkText = openLinkText;
+    M.appRef = app;
+    createOverlay(app as any);
+    const list = document.querySelector('.list-container') as HTMLElement;
+    const card = findCard(list, '片1');
+    // 单击：不打开、面板保留
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(openLinkText).not.toHaveBeenCalled();
+    expect(M.currentOverlay).not.toBeNull();
+    // 300ms 内第二次单击 → 双击：打开影视笔记并关闭主面板
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(openLinkText).toHaveBeenCalledTimes(1);
+    expect(openLinkText).toHaveBeenCalledWith('我的/影视/《片1》.md', '', false);
+    expect(M.currentOverlay).toBeNull();
+  });
+
+  it('间隔超过 300ms 不触发；随后双击仍正常', () => {
+    vi.useFakeTimers();
+    const vault = setupVault();
+    const app = makeApp(vault);
+    const openLinkText = vi.fn().mockResolvedValue(undefined);
+    app.workspace.openLinkText = openLinkText;
+    M.appRef = app;
+    createOverlay(app as any);
+    const list = document.querySelector('.list-container') as HTMLElement;
+    const card = findCard(list, '片1');
+    // 第一次单击 + 400ms 后再点：不算双击
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    vi.advanceTimersByTime(400);
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(openLinkText).not.toHaveBeenCalled();
+    expect(M.currentOverlay).not.toBeNull();
+    // 紧接着再点一次（间隔 ~0）→ 触发双击
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(openLinkText).toHaveBeenCalledTimes(1);
+    expect(M.currentOverlay).toBeNull();
+    vi.useRealTimers();
+  });
+});
+
 describe('ensureMovie 设置读取', () => {
   it('moviePageSize 设置生效（默认 20）', () => {
     unloadMovie();
