@@ -40,10 +40,7 @@ export function renderAll(displayItems: any[], container: HTMLElement, app: App)
       background: var(--background-secondary); cursor: pointer;
       transition: background 0.2s;
     `;
-    card.addEventListener('dblclick', () => {
-      app.workspace.openLinkText(item.file.path as string, '', false);
-      closeOverlay();
-    });
+    // 手势收敛：长按卡片弹抽屉（统一动作），其余手势（双击打开等）已移除
 
     if (item.poster) {
       const posterFile = app.vault.getAbstractFileByPath(item.poster);
@@ -84,13 +81,9 @@ export function renderAll(displayItems: any[], container: HTMLElement, app: App)
     `;
     metaRow.appendChild(badge);
 
-    const isClickable = item.status === STATUS_WANT || item.status === STATUS_WATCHING;
     const statusContainer = document.createElement('span');
     statusContainer.style.cssText = 'display: inline-flex; align-items: center; gap: 4px;';
-    if (isClickable) {
-      statusContainer.style.cursor = 'pointer';
-      statusContainer.title = '点击编辑';
-    }
+    // 手势收敛：状态徽章不再单独可点（长按卡片弹抽屉统一操作）
 
     if (item.status === STATUS_WATCHING) {
       const watchingBadge = document.createElement('span');
@@ -127,13 +120,6 @@ export function renderAll(displayItems: any[], container: HTMLElement, app: App)
         dateEl.style.cssText = 'font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;';
         statusContainer.appendChild(dateEl);
       }
-    }
-
-    if (isClickable) {
-      statusContainer.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openEditModal(item, app);
-      });
     }
 
     metaRow.appendChild(statusContainer);
@@ -1534,12 +1520,13 @@ function attachMovieActions(card: HTMLElement, item: MovieItem, app: App): void 
           }),
       });
     } else {
-      // 已看态：评分/影评按有无内容切换文案（评分 → 改分；写影评 → 改影评）
+      // 已看态：评分/影评按有无内容切换文案（评分 → 改分；写影评 → 改影评）；改分小字 = 当前分数
       const hasRating = item.rating !== null && item.rating > 0;
       acts.push({
         icon: 'star',
         label: hasRating ? '改分' : '评分',
         title: hasRating ? '改分' : '评分',
+        sub: hasRating ? `⭐${Number(item.rating).toFixed(1)}` : undefined,
         keepOpen: true,
         onClick: () => openRateModal(item, app, hasRating ? '改分' : '评分', rebuild),
       });
@@ -1551,7 +1538,6 @@ function attachMovieActions(card: HTMLElement, item: MovieItem, app: App): void 
         onClick: () => openReviewModal(item, app, item.review ? '改影评' : '写影评', rebuild),
       });
     }
-    acts.push({ icon: 'pencil', label: '编辑', title: '编辑影视信息', onClick: () => openEditModal(item, app) });
     acts.push({
       icon: 'trash-2',
       label: '删除',
