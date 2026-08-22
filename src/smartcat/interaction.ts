@@ -9,6 +9,7 @@ import { EVENTS } from './types';
 import { getSmartCatMessage } from './messages';
 import { generatePrompt } from './prompts';
 import { callChat, isAIConfigured } from './api';
+import { buildRetrieveQuery } from './memory';
 import { hasBookTag, getCursorContext, getViewportContent, getCurrentNoteContext, getVisibleContent } from './content';
 import { CAT_CONTAINER_ID } from './ui';
 import type { BubbleManager } from './bubble';
@@ -381,11 +382,13 @@ export class InteractionManager {
       if (contentContext) contextMessage += `- 当前内容：${contentContext}\n`;
     }
     // ADR-0021：相关记忆注入（记忆流三因子检索；未接线的降级 = 无记忆段）
+    // 2026-08 增强：query 结合用户消息 + 当前情绪 + 时段，检索更贴合当下状态
     if (this.deps.retrieveMemories) {
       try {
-        const memoriesText = await this.deps.retrieveMemories(userMessage);
+        const retrieveQuery = buildRetrieveQuery(userMessage, this.deps.mood.getCurrentEmotion());
+        const memoriesText = await this.deps.retrieveMemories(retrieveQuery);
         if (memoriesText) {
-          contextMessage += '\n### 相关记忆（小橘记得的事）\n' + memoriesText + '\n';
+          contextMessage += '\n### 相关记忆（小橘记得的事，含来源与时间）\n' + memoriesText + '\n';
         }
       } catch (e) {
         /* 记忆检索失败不阻断聊天 */

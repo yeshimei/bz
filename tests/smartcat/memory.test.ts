@@ -3,7 +3,7 @@
  * 三因子检索（词法/语义）/自增强 lastAccessed/500 上限/反思调度/降级链。
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { MemorySystem, MEMORY_CONFIG } from '../../src/smartcat/memory';
+import { MemorySystem, MEMORY_CONFIG, sourceLabel, formatRelativeTime, buildRetrieveQuery } from '../../src/smartcat/memory';
 import { defaultSmartCatData } from '../../src/smartcat/data';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { requestUrl } from '../mock-obsidian-entry';
@@ -321,6 +321,42 @@ describe('状态与格式化', () => {
     const text = m.formatMemoriesForPrompt([{ id: 'x', created: '', lastAccessed: '', description: 'hello world'.repeat(50), importance: 0.5, type: 'observation' } as any]);
     expect(text).toContain('[observation]');
     expect(text.length).toBeLessThan(300);
+  });
+});
+
+describe('RAG 增强（2026-08：来源标签/相对时间/情绪时段 query）', () => {
+  it('sourceLabel：来源 → 中文（chat/diary/domain:memo；未知回显）', () => {
+    expect(sourceLabel('chat')).toBe('聊天');
+    expect(sourceLabel('diary')).toBe('日记');
+    expect(sourceLabel('domain:memo')).toBe('备忘录');
+    expect(sourceLabel('domain:quiz')).toBe('做题');
+    expect(sourceLabel('unknown_things')).toBe('unknown_things');
+    expect(sourceLabel(undefined)).toBe('');
+  });
+
+  it('formatRelativeTime：分钟/小时/天/月日分级', () => {
+    const now = Date.now();
+    expect(formatRelativeTime(new Date(now - 30 * 1000).toISOString(), now)).toBe('刚刚');
+    expect(formatRelativeTime(new Date(now - 5 * 60000).toISOString(), now)).toBe('5 分钟前');
+    expect(formatRelativeTime(new Date(now - 3 * 3600 * 1000).toISOString(), now)).toBe('3 小时前');
+    expect(formatRelativeTime(new Date(now - 2 * 86400000).toISOString(), now)).toBe('2 天前');
+    const monthAgo = new Date(now - 40 * 86400000).toISOString();
+    expect(formatRelativeTime(monthAgo, now)).toMatch(/^\d+ 月 \d+ 日$/);
+  });
+
+  it('buildRetrieveQuery：用户消息 + 情绪 + 时段（无情绪省略；时段随钟点）', () => {
+    expect(buildRetrieveQuery('今天好累', 'sad', 22)).toBe('今天好累 当前情绪：sad 时段：晚上');
+    expect(buildRetrieveQuery('早上好', null, 8)).toBe('早上好 时段：早晨');
+    expect(buildRetrieveQuery('  ', 'happy', 14)).toBe('当前情绪：happy 时段：下午');
+  });
+
+  it('formatMemoriesForPrompt 增强：带来源中文 + 相对时间元信息', async () => {
+    const m = make();
+    const text = m.formatMemoriesForPrompt([
+      { id: 'x', created: new Date(Date.now() - 86400000 * 2).toISOString(), lastAccessed: '', description: '用户说：记得买牛奶', importance: 0.6, type: 'observation', source: 'chat' } as any,
+    ]);
+    expect(text).toContain('[observation（聊天·2 天前）]');
+    expect(text).toContain('记得买牛奶');
   });
 });
 
