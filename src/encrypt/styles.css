@@ -1,0 +1,175 @@
+/* ==================== 保险箱域样式（src/encrypt/styles.css） ==================== */
+/* ==================== 加密保险箱（encrypt，ticket NN：移出式清单容器加密） ==================== */
+#bz-encrypt-mask { backdrop-filter: blur(2px); }
+#bz-encrypt-popup { animation: slideUp 0.3s ease-out; }
+#bz-encrypt-popup, #bz-encrypt-preview-popup {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  background: var(--background-primary); border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  flex-direction: column;
+}
+/* 主密码弹窗（铁律 9 收敛：视觉样式一律在此，JS 仅留功能性 zIndex/display） */
+.bz-encrypt-dialog-mask {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  align-items: center; justify-content: center;
+}
+.bz-encrypt-dialog-box {
+  background: var(--background-primary); border-radius: 12px;
+  padding: 28px; max-width: 420px; width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.bz-encrypt-dialog-title { margin: 0 0 12px 0; font-size: 18px; font-weight: 600; }
+.bz-encrypt-dialog-msg { margin: 0 0 16px 0; font-size: 14px; color: var(--text-muted); }
+.bz-encrypt-dialog-input {
+  width: 100%; padding: 8px 12px; border-radius: 6px; font-size: 14px;
+  box-sizing: border-box; margin-bottom: 12px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary); color: var(--text-normal);
+}
+.bz-encrypt-dialog-warning {
+  background: #ffecb0; color: #8a6d3b; padding: 10px 12px; border-radius: 6px;
+  margin-bottom: 16px; font-size: 14px; border: 1px solid #f5c842;
+}
+.bz-encrypt-dialog-btns { display: flex; gap: 12px; justify-content: flex-end; }
+.bz-encrypt-dialog-btn {
+  padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px;
+  background: var(--background-secondary); color: var(--text-normal);
+}
+.bz-encrypt-dialog-btn--primary {
+  background: var(--interactive-accent); color: var(--text-on-accent); font-weight: 500;
+}
+#bz-encrypt-popup { width: 90%; max-width: 700px; max-height: 80vh; }
+#bz-encrypt-preview-popup { max-height: 86vh; overflow: hidden; }
+.bz-encrypt-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 24px 8px 24px;
+}
+.bz-encrypt-head h3 { margin: 0; font-size: 18px; font-weight: 600; color: var(--text-normal); }
+.bz-encrypt-head-btns { display: flex; gap: 8px; }
+#bz-encrypt-list { flex: 1; overflow-y: auto; padding: 0 20px 16px; min-height: 200px; }
+#bz-encrypt-list::-webkit-scrollbar { width: 6px; }
+#bz-encrypt-list::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
+.bz-encrypt-empty { padding: 40px; text-align: center; color: var(--text-faint); font-size: 15px; }
+.bz-encrypt-card {
+  background: var(--background-secondary); border-radius: 10px;
+  padding: 12px 16px; margin-bottom: 10px;
+  cursor: pointer;
+}
+.bz-encrypt-card:hover { background: var(--background-modifier); }
+.bz-encrypt-card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.bz-encrypt-card-titlebox { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.bz-encrypt-card-title { font-size: 15px; font-weight: 600; color: var(--text-normal); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bz-encrypt-card-meta { margin-top: 4px; font-size: 12px; color: var(--text-faint); }
+.bz-encrypt-preview-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 20px 8px; border-bottom: 1px solid var(--background-modifier);
+}
+.bz-encrypt-preview-head .bz-encrypt-btn {
+  padding: 4px 10px; border-radius: 6px; border: none; cursor: pointer;
+  font-size: 13px; background: var(--background-modifier); color: var(--text-normal);
+}
+.bz-encrypt-preview-head h4 { margin: 0; font-size: 16px; font-weight: 600; color: var(--text-normal); }
+.bz-encrypt-preview-body { flex: 1; overflow-y: auto; padding: 16px 20px; }
+.bz-encrypt-preview-loading { color: var(--text-faint); font-size: 14px; text-align: center; padding: 24px 0; }
+.bz-encrypt-preview-md { color: var(--text-normal); font-size: 14px; line-height: 1.6; }
+.bz-encrypt-preview-media {
+  max-width: 100%; margin-top: 12px; border-radius: 8px; display: block;
+}
+.bz-encrypt-preview-md .bz-encrypt-preview-media {
+  margin: 8px auto; display: block;
+}
+.bz-encrypt-preview-gallery {
+  margin-top: 18px; padding-top: 12px;
+  border-top: 1px dashed var(--background-modifier-border);
+  display: flex; flex-wrap: wrap; gap: 10px;
+}
+.bz-encrypt-preview-gallery img {
+  max-width: 240px; max-height: 200px; object-fit: cover; border-radius: 8px;
+}
+.bz-encrypt-preview-missing {
+  margin: 8px 0; padding: 10px 12px; border-radius: 8px;
+  background: var(--background-secondary); color: var(--text-muted);
+  font-size: 12px; display: flex; flex-direction: column; gap: 2px;
+}
+.bz-encrypt-preview-missing-name {
+  font-weight: 600; color: var(--text-normal); word-break: break-all;
+}
+/* 缩略图按需加载原始层（省略图 + 点击转圈 + 原地替换原图/视频） */
+.bz-encrypt-preview-slot {
+  position: relative; display: block; margin: 8px 0;
+}
+.bz-encrypt-preview-slot .bz-encrypt-preview-media,
+.bz-encrypt-preview-slot .bz-encrypt-preview-missing {
+  cursor: zoom-in;
+}
+.bz-encrypt-preview-spinner {
+  display: none;
+  position: absolute; left: 50%; top: 50%;
+  width: 30px; height: 30px; margin: -15px 0 0 -15px;
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  border-top-color: var(--interactive-accent);
+  border-radius: 50%;
+  animation: bz-encrypt-spin 0.8s linear infinite;
+  pointer-events: none; z-index: 2;
+}
+.bz-encrypt-preview-slot--loading .bz-encrypt-preview-spinner { display: block; }
+.bz-encrypt-preview-slot--loading .bz-encrypt-preview-media,
+.bz-encrypt-preview-slot--loading .bz-encrypt-preview-missing { opacity: 0.35; }
+.bz-encrypt-preview-slot--loaded { cursor: default; }
+.bz-encrypt-preview-video {
+  max-width: 100%; max-height: 70vh; border-radius: 8px; display: block; margin: 8px 0;
+}
+@keyframes bz-encrypt-spin { to { transform: rotate(360deg); } }
+@media (max-width: 768px) {
+  #bz-encrypt-popup { width: 95%; max-height: 90vh; }
+}
+/* 体检弹窗（右上角 🩺 替换原清理扫把：先报告后勾选清理） */
+.bz-encrypt-health-mask {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  align-items: center; justify-content: center;
+}
+.bz-encrypt-health-box {
+  background: var(--background-primary); border-radius: 12px;
+  width: 92%; max-width: 560px; max-height: 80vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.bz-encrypt-health-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 20px 8px; border-bottom: 1px solid var(--background-modifier);
+}
+.bz-encrypt-health-head h4 { margin: 0; font-size: 17px; font-weight: 600; color: var(--text-normal); }
+.bz-encrypt-health-body { flex: 1; overflow-y: auto; padding: 4px 20px 12px; }
+.bz-encrypt-health-summary { margin: 8px 0 6px; font-size: 13px; color: var(--text-muted); }
+.bz-encrypt-health-section { margin-bottom: 8px; }
+.bz-encrypt-health-section-title { font-size: 14px; font-weight: 600; margin: 12px 0 6px; color: var(--text-normal); }
+.bz-encrypt-health-section--bad .bz-encrypt-health-section-title { color: var(--text-error); }
+.bz-encrypt-health-item {
+  display: flex; gap: 8px; align-items: center; padding: 4px 0;
+  font-size: 13px; color: var(--text-normal); cursor: pointer;
+  word-break: break-all;
+}
+.bz-encrypt-health-item--bad { color: var(--text-error); cursor: default; }
+.bz-encrypt-health-item--warn { color: var(--text-warning); cursor: default; }
+.bz-encrypt-health-hint { margin: 6px 0; font-size: 13px; color: var(--text-faint); }
+/* 体检动态显示：进度文本 + 条 + 扫描中实时发现区 */
+.bz-encrypt-health-progress { margin: 10px 0 6px; font-size: 13px; color: var(--text-muted); }
+.bz-encrypt-health-bar { height: 4px; background: var(--background-modifier); border-radius: 2px; overflow: hidden; margin-bottom: 8px; }
+.bz-encrypt-health-bar i { display: block; height: 100%; background: var(--interactive-accent); transition: width 0.2s ease; }
+.bz-encrypt-health-live { margin-bottom: 8px; }
+.bz-encrypt-health-foot {
+  display: flex; gap: 10px; justify-content: flex-end; align-items: center;
+  padding: 12px 20px 16px; border-top: 1px solid var(--background-modifier);
+}
+/* 首设主密码硬警告：风险确认勾选 */
+.bz-encrypt-dialog-ack {
+  display: block; margin: -8px 0 12px 0; font-size: 13px;
+  color: var(--text-muted); cursor: pointer; user-select: none;
+}
+.bz-encrypt-dialog-ack input { margin-right: 6px; vertical-align: -1px; }
+/* 保险箱状态栏（补丁2：锁状态提示，点击打开面板） */
+.bz-encrypt-statusbar { cursor: pointer; }
+.bz-encrypt-statusbar:hover { opacity: 0.8; }
+

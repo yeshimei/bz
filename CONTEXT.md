@@ -42,7 +42,7 @@ _Avoid_: 待办列表、任务
 **数据源守护 (News Source Watcher)**: 聚合讯数据源的抓取守护进程（PM2 托管 `obsidian-news watch`，ADR-0008）——每 30 分钟抓取最近 24 小时文章（果壳科学人 + 知乎日报），URL + 标题双去重后入库 `CONFIG/STORAGE/news.json`，入库即未读。命名区分：**包** `@jwbz/obsidian-news`（npm 分发单元）≠ **CLI 命令** `obsidian-news`（bin 入口，六子命令 watch/fetch/start/stop/status/logs）≠ **PM2 进程名** `news-watcher`（历史名，引用不破）≠ 仓库目录 `tools/news-watcher/`。配置走 **rc 配置** `~/.news-watcherrc`（vaultPath 指向 vault 根）或 `NEWS_PATH` 环境变量；旧 vault 内嵌部署（`CONFIG/SCRIPTS/NodeJs/news-watcher`）已废弃（legacy）。与 bz 插件完全分离：插件不含抓取逻辑，只读 news.json 渲染阅读流。
 _Avoid_: 新闻抓取、新闻爬虫、news watcher 进程
 
-**密码本 (Password Vault)**: 密码管理，存储路径可配置（storagePath），含样式注入。
+**密码本 (Password Vault)**: 密码管理，存储路径可配置（storagePath）。样式在 `src/password/styles.css`（铁律 9 按域拆分，原「含样式注入」口径废止）。
 
 **收藏本 (Favorites)**: 通用链接收藏管理（GitHub 🐙/桌面软件 💻/网站 🌐/大模型 🧠 等 9 类固定标签），数据 `CONFIG/STORAGE/favorites.json`；大模型条目带余额查询（5 分钟缓存）。列表手势收敛为**仅整卡长按弹统一抽屉**（动作序：打开 → 置顶 → 跳转笔记 → 刷新余额 → 编辑 → 删除；标题纯文本、余额纯展示）；添加/编辑共用一个弹窗，保存后若从抽屉进入则连抽屉一并关闭。
 _Avoid_: GitHub 收藏管理（旧口径，实际已泛化到全部链接类型）
@@ -192,6 +192,9 @@ _Avoid_: 整文件覆盖还原（日记条目是日期文件里的一个块，�
 
 ### 共享层
 
+**样式按域拆分 (Domain-split Styles)**: bz 的样式组织方式（ticket 70，ADR-0020，取代 ticket 60「全收敛根 styles.css」）——视觉样式源文件按域拆分：各域样式写 `src/<域>/styles.css`（diary/launcher/memo/news/clipping/password/favorites/review/quiz/pomodoro/library/attach/encrypt/movie），共享层/跨域样式（设置页分页、主窗口头部行统一规范、core 层、移动端主窗口默认全屏、统一右键菜单/长按抽屉）写 `src/core/styles.css`；构建由 `scripts/build-css.mjs` 按 SOURCES 清单顺序聚合生成根 `styles.css`（Obsidian 每插件只加载一个 styles.css；**聚合产物勿手改**），`npm run dev` 监听 src/**/*.css 自动重新聚合。类名仍守 `bz-` 前缀；运行时注入 `<style>` 与内联视觉样式依旧禁止。
+_Avoid_: 手改根 styles.css、往根 styles.css 直接追加样式、styles/&lt;域&gt;.css 注入模式
+
 **统一行操作 (Unified Item Actions)**: 跨域列表卡片统一手势组件（`src/core/item-actions.ts`）——列表**不注入任何常驻或 hover 图标排**；桌面端=**右键**弹跟手菜单（preventDefault 拦原生菜单，鼠标长按不触发），移动/触屏端=**长按**弹底部抽屉（遮罩+顶部条目信息+动作逐行）。能力：keepOpen（动作后抽屉保持+refreshItemSheet 原地重建动作与头部）、附属浮层（companion，抽屉之上的域内弹窗点击不误关抽屉）、危险项红色、强调色整行。动作项布局统一：图标左对齐 → 文案 → 小字右对齐。已接入域：备忘录、日记本、剪藏本、影视、收藏本、归物本（含 4 状态流转+数据文件监听自动刷新）、密码本（保留平台链接点击与 👁 显隐）、书库（保留双击转跳书籍，md/EPUB 通用）、复习计划（保留双击打开笔记；开始复习难度弹窗为 companion）、保险箱（双击预览保留）；聚合讯（Dataview 外部渲染阅读流）等无卡片网格域不接入。
 _Avoid_: hover 操作条、行内图标排、行内按钮组（指列表卡片时）
 
@@ -243,3 +246,4 @@ _Avoid_: toast、气泡、原生通知、Notice
 - 一个插件包含全部待迁移域（用户决策）；外部进程能力（child_process）在 Electron 桌面端可用，移动端不可用。
 - 全部 16 个脚本功能与样式完全复刻。
 - 设置归属（ADR-0009）：全局设置页（AI/共享数据路径）+ 域设置弹窗（⚙️ 就近）；筛选/排序统一用 🔀；AI Agent 设置不暴露，用默认值。
+- 样式按域拆分（ADR-0020）：源写 `src/core/styles.css` 与 `src/<域>/styles.css`；根 `styles.css` 是构建聚合产物，勿手改。

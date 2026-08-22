@@ -19,7 +19,7 @@
 - `src/main.ts`：命令裸注册表、设置页、懒加载开关、onunload 清理（38 命令）
 - `src/core/`：共享层（不挂 window）——app/settings-provider/ai/json-store/esc-manager/confirm/utils/dom/changelog/notice（自绘 toast，ADR-0010）/settings-modal（域设置弹窗）
 - `src/<域>/`：index.ts + data + ui（+ state/types/config）；`src/diary/ui/` 已拆 panel/entries/dialogs/quote/datetime-picker/filter-shared/ui-settings
-- 其余：`src/settings.ts`（MemoSettings + DEFAULT_SETTINGS）；`styles.css`（各域样式唯一收敛处，ticket 60 起样式全部集中于此）；`docs/adr/`（0001-0012）；`CONTEXT.md`（术语表）；`.scratch/<feature>/`（spec.md + issues/NN-*.md）
+- 其余：`src/settings.ts`（MemoSettings + DEFAULT_SETTINGS）；样式按域拆分——源在 `src/core/styles.css`（共享层/跨域）与 `src/<域>/styles.css`（各域），构建由 `scripts/build-css.mjs` 聚合生成根 `styles.css`（产物勿手改，ticket 70）；`docs/adr/`（0001-0020）；`CONTEXT.md`（术语表）；`.scratch/<feature>/`（spec.md + issues/NN-*.md）
 - **依赖方向（ADR-0002）**：`core ← config/state ← parser ← store ← ui ← main`。store 无 DOM；UI 刷新靠回调（onFullRefresh/onLightRefresh）订阅；UI 内部函数级引用环允许，但须在函数体内延迟解析，禁止模块顶层互访。
 
 ## 铁律
@@ -32,7 +32,7 @@
 6. **域间共享**：经显式 import 或 core 层（getApp/getSettings/createAI），不挂 window（`__MOVIE_FOLDER_PATH` 为兼容遗留，勿新增）。
 7. **架构决策**：设置页单页（ADR-0009，仅 AI + 共享 storagePath，域设置走 ⚙️ 弹窗）；通知用自绘 toast（ADR-0010，`notice(msg, type?, duration?)`，不用原生 Notice）；外部依赖（ADR-0005/0006/0008/0011）——AI 配置在 data.json、聚合讯 dataviewjs 由 Dataview 渲染、闪念走 Ollama HTTP、B 站下载/海报抓取走外部 npm。
 8. **通知写法**：消息正文一律**不带 emoji 前缀**（类型图标即视觉前缀，重复）；新语义先查 `src/core/notice.ts` ICONS 表（11 类型：info/success/warning/error/pause/accept/delete/confirm/restore/skip/archive），确无匹配才新增（ICONS 项 + 颜色 class + 默认时长），不得把 emoji 写进正文；规范详见 CONTEXT.md「通知类型规范」。
-9. **样式收敛（ticket 60）**：视觉样式一律写根 `styles.css`（构建时自动复制到插件目录，Obsidian 自动加载），新增 UI 用类名（`bz-` 前缀，如 `.bz-tag`/`.bz-suggest-box`）；**禁止**运行时注入 `<style>`（`injectStyles`/`style.textContent`）与内联视觉样式（`style.cssText`/`style="..."`）；功能性内联仅限显隐（`display`）与动态计算（高度/滚动）；`styles/<域>.css` 中间态与 `injectStyles` 注入模式已废弃（memo/news/clipping/password/favorites/review/quiz/pomodoro 已收敛）。
+9. **样式按域拆分（ticket 70，取代 ticket 60 的「全收敛根 styles.css」）**：视觉样式源文件按域拆分——各域样式写 `src/<域>/styles.css`（diary/launcher/memo/news/clipping/password/favorites/review/quiz/pomodoro/library/attach/encrypt/movie），共享层/跨域样式（设置页分页、主窗口头部行统一规范、core 层 notice/settings-modal/confirm/dom、移动端主窗口默认全屏、统一右键菜单/长按抽屉）写 `src/core/styles.css`；构建由 `scripts/build-css.mjs` 按 SOURCES 清单顺序**聚合生成根 `styles.css`**（Obsidian 每插件只加载这一个文件；聚合产物勿手改，`npm run dev` 监听 src/**/*.css 自动重新聚合）；新增 UI 用类名（`bz-` 前缀，如 `.bz-tag`/`.bz-suggest-box`），新域样式文件在 SOURCES 清单对应位置插入；**禁止**运行时注入 `<style>`（`injectStyles`/`style.textContent`）与内联视觉样式（`style.cssText`/`style="..."`）；功能性内联仅限显隐（`display`）与动态计算（高度/滚动）；更早的 `styles/<域>.css`+`injectStyles` 注入模式依旧废止。
 
 ## 主窗口样式规范（ticket 68 定稿，新增主窗口/功能参考，简化版）
 
@@ -41,13 +41,13 @@
 2. 打开路径（每次打开必经处）调 `applyMobileWindowFullscreen(popup, tryGetSettings().<键> === true)`（`src/core/mobile.ts`）；
 3. ⚙️ 域设置弹窗 build 末尾挂「移动端默认全屏」行，仅 `if (isMobileEnv())` 显示（`src/core/mobile.ts`）。
 
-**统一视觉**（规则已成套写在 styles.css「主窗口头部行统一规范」节，新窗口自动继承，勿另写差异样式）：
+**统一视觉**（规则已成套写在 src/core/styles.css「主窗口头部行统一规范」节，新窗口自动继承，勿另写差异样式）：
 - 主窗口头部行容器加类 **`.bz-win-head`**——头行自动获得 `padding:16px 24px 10px`、两端对齐、间距 8；
 - 头行按钮**自动**统一为 22×26/14px、透明、无阴影无边框、圆角 4、hover 浅灰底；自定义按钮无需再写内联尺寸/背景（写了也会被 `!important` 统一覆盖）；
 - 关闭按钮一律挂类 **`.bz-win-close`**——自动 20×24/12px 且**非真全屏自动隐藏**（桌面/卡片靠点遮罩+ESC，真全屏 `.bz-win-mfs` 才显示），无需自己写 display 控制；
 - 按钮秩序：功能按钮 → **⚙️ 设置 → 关闭**（⚙️ 紧贴关闭正前）；
 - **弹窗/小窗口不放关闭按钮**，靠点遮罩 + ESC 关闭（mask 点击 + escManager 必配，勿做「仅按钮可关」的弹窗）；
-- 全屏顶部避让统一 `max(34px, env(safe-area-inset-top))`（styles.css 全局规则，新窗口勿自写 padding-top）。
+- 全屏顶部避让统一 `max(34px, env(safe-area-inset-top))`（src/core/styles.css 全局规则，新窗口勿自写 padding-top）。
 
 ## 领域清单（src/<域>/，数据均在 CONFIG/STORAGE/，表内只写文件名）
 
