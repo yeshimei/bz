@@ -40,6 +40,14 @@ describe('normalizeConfig', () => {
     expect(normalizeConfig({ noteSource: false }).noteSource).toBe(false);
   });
 
+  it('主动关心默认开、每周上限 2（2026-08-23 用户拍板：温和主动搭话）', () => {
+    expect(defaultConfig().proactiveCare).toBe(true);
+    expect(defaultConfig().proactiveWeeklyCap).toBe(2);
+    expect(normalizeConfig({}).proactiveCare).toBe(true);
+    expect(normalizeConfig({ proactiveCare: false }).proactiveCare).toBe(false);
+    expect(normalizeConfig({ proactiveWeeklyCap: 9 }).proactiveWeeklyCap).toBe(2); // 越界回默认
+  });
+
   it('外观非法 → 回退默认（预设人格校验已移除）', () => {
     expect(normalizeConfig({ appearance: 'pink' }).appearance).toBe('orange');
     expect(normalizeConfig({ appearance: 'neon' }).appearance).toBe('neon');
