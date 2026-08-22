@@ -45,6 +45,8 @@ import { applyDirectories } from './diary/config';
 import { loadAll } from './diary/store';
 import { state as diaryState } from './diary/state';
 import { applyUiSettings, init as diaryInit, showDiaryPanel, unregisterEscLayer } from './diary/ui/panel';
+// 小橘陪伴猫（smartcat 域：桌面宠物 + AI 陪伴；AI 走 bz core/ai，数据单 json smartcat.json）
+import { ensureSmartCat, unloadSmartCat, openSmartCat, openSmartCatChat, hideSmartCat } from './smartcat';
 
 /** 命令表：id/name 统一命名（spec「命令 id 全清单」第 9 轮：bz-<域>-<动作>，icon 与入口页磁贴一致） */
 const COMMANDS: { id: string; name: string; icon: string; callback: () => void }[] = [
@@ -102,6 +104,10 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 保险箱（encrypt 域：移出式清单容器加密；原名「加密保险箱」，ticket 68 更名仅文案）
   { id: 'bz-encrypt-open', name: '保险箱', icon: 'lock', callback: () => openEncrypt(getApp()) },
   { id: 'bz-encrypt-lock', name: '加密当前笔记', icon: 'lock-keyhole', callback: () => encryptCurrentNote(getApp()) },
+  // 小橘陪伴猫（smartcat 域）
+  { id: 'bz-smartcat-open', name: '小橘', icon: 'cat', callback: () => openSmartCat(getApp()) },
+  { id: 'bz-smartcat-chat', name: '小橘聊天', icon: 'message-circle', callback: () => openSmartCatChat(getApp()) },
+  { id: 'bz-smartcat-hide', name: '隐藏小橘', icon: 'eye-off', callback: () => hideSmartCat() },
 ];
 
 /** 应用日记本设置到运行时常量（diary-notebook 原 applySettingsToRuntime） */
@@ -204,6 +210,8 @@ export default class BzPlugin extends Plugin {
       if (this.settings.flashEnabled) ensureFlashOnReady(this.app);
       // 番茄钟：启动即恢复（load+recover，正在倒计时则后台继续/按设置自动弹窗）
       void ensurePomodoro(this.app);
+      // 小橘：启动即挂载（smartcatEnabled 开关；桌面宠物常驻）
+      if (this.settings.smartcatEnabled) void ensureSmartCat(this.app);
     });
     // 手势触发（设置页可配，默认关闭）
     this.syncGestures();
@@ -226,6 +234,7 @@ export default class BzPlugin extends Plugin {
     unloadAIAgent();
     unloadLauncherPanel();
     unloadEncrypt();
+    unloadSmartCat();
     if (this.unregisterGestures) {
       this.unregisterGestures();
       this.unregisterGestures = null;

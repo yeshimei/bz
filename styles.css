@@ -2994,3 +2994,773 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   to { opacity: 1; }
 }
 
+/**
+ * smartcat 域样式（小橘陪伴猫）
+ * 用户拍板：css 文件放到域中——构建时由 esbuild.config.mjs 合并进产物 styles.css。
+ * 铁律 9 收敛：仅在 styles.css（含域内文件合并）静态定义，禁运行时注入。
+ */
+
+
+/* ==================== 小橘陪伴猫（smartcat 域） ==================== */
+/* 猫本体容器：fixed 右下角悬浮（原 SmartCatUI createCatContainer 内联；收敛静态） */
+#smart-companion-cat {
+  position: fixed;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 50px;
+  z-index: 100000;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  transition: all 0.3s ease;
+}
+#smart-companion-cat * {
+  box-sizing: border-box;
+}
+/* 猫本体 */
+#smart-companion-cat .cat-body {
+  width: 50px;
+  height: 40px;
+  border-radius: 25px 25px 15px 15px;
+  position: relative;
+  animation: catFloat 4s ease-in-out infinite;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+/* 耳朵 */
+#smart-companion-cat .cat-ear {
+  position: absolute;
+  top: -6px;
+  width: 10px;
+  height: 12px;
+  border-radius: 50%;
+}
+#smart-companion-cat .cat-ear-left {
+  left: 10px;
+  transform: rotate(-15deg);
+}
+#smart-companion-cat .cat-ear-right {
+  right: 10px;
+  transform: rotate(15deg);
+}
+/* 脸（原版无宽高：shrink-to-fit 宽度≈0，眼睛以 12px 分居 body 中心两侧；
+   勿加 width——会把两只 5px 眼睛挤在中间重叠成"一只正中的眼"） */
+#smart-companion-cat .cat-face {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+/* 眼睛 */
+#smart-companion-cat .cat-eye {
+  position: absolute;
+  top: 4px;
+  width: 5px;
+  height: 7px;
+  border-radius: 50%;
+  background: #2c3e50;
+}
+#smart-companion-cat .cat-eye-left { left: 12px; }
+#smart-companion-cat .cat-eye-right { right: 12px; }
+/* 鼻子 */
+#smart-companion-cat .cat-nose {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 2px;
+  background: #e84393;
+  border-radius: 50%;
+}
+/* 尾巴 */
+#smart-companion-cat .cat-tail {
+  position: absolute;
+  right: -12px;
+  bottom: 8px;
+  width: 15px;
+  height: 4px;
+  border-radius: 2px;
+  transform-origin: left center;
+  animation: tailSway 3s ease-in-out infinite;
+}
+
+/* 基础皮肤色（原 getBasicSkin 5 色；渐变 + 耳尾同色） */
+#smart-companion-cat .cat-body {
+  background: linear-gradient(135deg, #FF6B35, #F7931E);
+}
+#smart-companion-cat.skin-gray .cat-body { background: linear-gradient(135deg, #95A5A6, #7F8C8D); }
+#smart-companion-cat.skin-black .cat-body { background: linear-gradient(135deg, #2C3E50, #34495E); }
+#smart-companion-cat.skin-white .cat-body { background: linear-gradient(135deg, #ECF0F1, #BDC3C7); }
+#smart-companion-cat.skin-calico .cat-body { background: linear-gradient(135deg, #E74C3C, #F39C12); }
+#smart-companion-cat.skin-gray .cat-ear, #smart-companion-cat.skin-gray .cat-tail { background: #95A5A6; }
+#smart-companion-cat.skin-black .cat-ear, #smart-companion-cat.skin-black .cat-tail { background: #2C3E50; }
+#smart-companion-cat.skin-white .cat-ear, #smart-companion-cat.skin-white .cat-tail { background: #ECF0F1; }
+#smart-companion-cat.skin-calico .cat-ear, #smart-companion-cat.skin-calico .cat-tail { background: #E74C3C; }
+#smart-companion-cat .cat-ear, #smart-companion-cat .cat-tail { background: #FF6B35; }
+
+/* 高级皮肤（原 AppearanceManager.advancedSkins：渐变/辉光/动画；风格静态化） */
+#smart-companion-cat.skin-neon .cat-body {
+  background: linear-gradient(135deg, #00FFFF, #FF00FF);
+  box-shadow: 0 0 20px #00FFFF, 0 0 40px #FF00FF, 0 0 60px #00FFFF;
+  animation: neonPulse 2s ease-in-out infinite alternate;
+}
+#smart-companion-cat.skin-neon .cat-ear { background: #00FFFF; box-shadow: 0 0 10px #00FFFF; }
+#smart-companion-cat.skin-neon .cat-tail { background: #FF00FF; box-shadow: 0 0 15px #FF00FF; animation: neonTail 3s ease-in-out infinite; }
+#smart-companion-cat.skin-galaxy .cat-body {
+  background: radial-gradient(circle at 30% 30%, #1a1a2e, #16213e, #0f3460);
+  position: relative;
+  overflow: hidden;
+}
+#smart-companion-cat.skin-galaxy .cat-ear { background: linear-gradient(45deg, #533483, #e94560); }
+#smart-companion-cat.skin-galaxy .cat-tail { background: linear-gradient(90deg, #533483, #e94560); animation: galaxyTail 4s ease-in-out infinite; }
+#smart-companion-cat.skin-galaxy .cat-body::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 20%, #fff 1px, transparent 1px),
+    radial-gradient(circle at 80% 30%, #fff 1px, transparent 1px),
+    radial-gradient(circle at 40% 70%, #fff 1px, transparent 1px),
+    radial-gradient(circle at 60% 80%, #fff 2px, transparent 2px);
+  background-size: 50px 50px;
+  animation: twinkle 8s linear infinite;
+}
+#smart-companion-cat.skin-liquidMetal .cat-body {
+  background: linear-gradient(135deg, #ecf0f1 0%, #bdc3c7 25%, #95a5a6 50%, #7f8c8d 75%, #34495e 100%);
+  background-size: 400% 400%;
+  animation: liquidFlow 6s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
+}
+#smart-companion-cat.skin-liquidMetal .cat-ear { background: linear-gradient(45deg, #bdc3c7, #95a5a6); box-shadow: inset 0 0 10px rgba(255,255,255,0.5); }
+#smart-companion-cat.skin-liquidMetal .cat-tail { background: linear-gradient(90deg, #bdc3c7, #95a5a6); animation: metalTail 3s ease-in-out infinite; }
+#smart-companion-cat.skin-liquidMetal .cat-body::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+  animation: shine 3s ease-in-out infinite;
+}
+#smart-companion-cat.skin-fire .cat-body {
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 25%, #ff8c00 50%, #ff4500 75%, #dc143c 100%);
+  background-size: 200% 200%;
+  animation: fireBurn 4s ease-in-out infinite;
+  position: relative;
+}
+#smart-companion-cat.skin-fire .cat-ear { background: linear-gradient(45deg, #ff6b35, #ff4500); box-shadow: 0 0 15px #ff6b35; }
+#smart-companion-cat.skin-fire .cat-tail { background: linear-gradient(90deg, #ff6b35, #ff4500); animation: fireTail 2s ease-in-out infinite; }
+#smart-companion-cat.skin-fire .cat-body::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 30% 20%, #ff8c00 2px, transparent 2px),
+    radial-gradient(circle at 70% 30%, #ff4500 3px, transparent 3px),
+    radial-gradient(circle at 40% 70%, #dc143c 2px, transparent 2px);
+  animation: emberFloat 5s ease-in-out infinite;
+}
+#smart-companion-cat.skin-crystal .cat-body {
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.1) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.2);
+  position: relative;
+  overflow: hidden;
+}
+#smart-companion-cat.skin-crystal .cat-ear { background: rgba(255,255,255,0.3); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); }
+#smart-companion-cat.skin-crystal .cat-tail { background: rgba(255,255,255,0.3); backdrop-filter: blur(10px); animation: crystalTail 4s ease-in-out infinite; }
+#smart-companion-cat.skin-crystal .cat-body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, transparent 45%, rgba(255,255,255,0.1) 50%, transparent 55%);
+  animation: crystalShine 6s ease-in-out infinite;
+}
+#smart-companion-cat.skin-cyberpunk .cat-body {
+  background: linear-gradient(135deg, #00ff88 0%, #0088ff 50%, #ff0088 100%);
+  background-size: 300% 300%;
+  animation: cyberGlitch 5s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
+}
+#smart-companion-cat.skin-cyberpunk .cat-ear { background: #00ff88; box-shadow: 0 0 10px #00ff88, 0 0 20px #0088ff; }
+#smart-companion-cat.skin-cyberpunk .cat-tail { background: linear-gradient(90deg, #00ff88, #0088ff); animation: cyberTail 3s ease-in-out infinite; }
+#smart-companion-cat.skin-cyberpunk .cat-body::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(90deg, transparent 0px, transparent 2px, rgba(0,255,136,0.1) 2px, rgba(0,255,136,0.1) 4px),
+    repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,136,255,0.1) 2px, rgba(0,136,255,0.1) 4px);
+  animation: gridScan 4s linear infinite;
+}
+#smart-companion-cat.skin-rainbow .cat-body {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ffa726 16.66%, #ffee58 33.33%, #4ecdc4 50%, #45b7d1 66.66%, #96ceb4 83.33%, #ff6b6b 100%);
+  background-size: 400% 400%;
+  animation: rainbowFlow 8s ease-in-out infinite;
+}
+#smart-companion-cat.skin-rainbow .cat-ear { background: linear-gradient(45deg, #ff6b6b, #4ecdc4); }
+#smart-companion-cat.skin-rainbow .cat-tail { background: linear-gradient(90deg, #ff6b6b, #4ecdc4); animation: rainbowTail 4s ease-in-out infinite; }
+#smart-companion-cat.skin-hologram .cat-body {
+  background: linear-gradient(135deg, rgba(0,255,255,0.3) 0%, rgba(255,0,255,0.3) 50%, rgba(255,255,0,0.3) 100%);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255,255,255,0.1);
+  position: relative;
+  overflow: hidden;
+}
+#smart-companion-cat.skin-hologram .cat-ear { background: rgba(0,255,255,0.5); backdrop-filter: blur(5px); }
+#smart-companion-cat.skin-hologram .cat-tail { background: rgba(255,0,255,0.5); animation: hologramTail 3s ease-in-out infinite; }
+#smart-companion-cat.skin-hologram .cat-body::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: hologramScan 3s ease-in-out infinite;
+}
+
+/* 思考指示器（原 thinking-indicator：顶部绿点） */
+#smart-companion-cat .thinking-indicator {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4caf50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3), 0 0 10px 4px rgba(76, 175, 80, 0.2);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100001;
+  pointer-events: none;
+}
+#smart-companion-cat .thinking-indicator.active {
+  opacity: 1;
+  animation: thinkingPulse 1.5s ease-in-out infinite;
+}
+/* 语音指示器 */
+#smart-companion-cat .voice-indicator {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+  box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.3), 0 0 10px 4px rgba(255, 107, 107, 0.2);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100001;
+  pointer-events: none;
+}
+#smart-companion-cat .voice-indicator.active {
+  opacity: 1;
+  animation: voiceIndicatorPulse 1.5s ease-in-out infinite;
+}
+
+/* 气泡容器与气泡（原 cat-bubbles-container / cat-bubble；堆叠 transform 动态计算保留内联）
+   用户反馈原 65px 太靠下 → 上移 95px，气泡浮在猫头顶上方更明显 */
+#smart-companion-cat .cat-bubbles-container {
+  position: absolute;
+  bottom: 95px;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+  max-height: 300px;
+  overflow: visible;
+  z-index: 10001;
+}
+#smart-companion-cat .cat-bubble {
+  position: relative;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  color: #2c3e50;
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 13px;
+  max-width: 300px;
+  min-width: 175px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui;
+  line-height: 1.4;
+  word-wrap: break-word;
+  z-index: 10001;
+  opacity: 0;
+  transform: translateY(10px) scale(0.95);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+#smart-companion-cat .cat-bubble.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+#smart-companion-cat .cat-bubble.hide {
+  opacity: 0;
+  transform: translateY(10px) scale(0.95);
+}
+#smart-companion-cat .cat-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  right: 12px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid rgba(255, 255, 255, 0.95);
+}
+#smart-companion-cat .cat-bubble.bz-sc-bubble-pinned {
+  box-shadow: 3px 1px 5px rgba(0, 0, 0, 0.15), 0 0 0 2px #4CAF50;
+  transition: box-shadow 0.3s ease;
+}
+/* 暗色模式适配（原 prefers-color-scheme: dark：气泡深色化） */
+@media (prefers-color-scheme: dark) {
+  #smart-companion-cat .cat-bubble {
+    background: rgba(30, 30, 30, 0.95);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  #smart-companion-cat .cat-bubble::after {
+    border-top-color: rgba(30, 30, 30, 0.95);
+  }
+}
+/* 心情 emoji 指示（原 moodIndicator：气泡顶部 5s） */
+#smart-companion-cat[data-mood-emoji]::before {
+  content: attr(data-mood-emoji);
+  position: absolute;
+  top: -22px;
+  right: 0;
+  font-size: 18px;
+  animation: moodEmojiPop 0.3s ease-out;
+  z-index: 10001;
+}
+@keyframes moodEmojiPop {
+  from { transform: scale(0.3); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* 动画承载类（animation.ts 用 CSS 变量设置一次性动画名/时长） */
+#smart-companion-cat .bz-sc-anim {
+  animation: var(--bz-sc-anim-name, gentleNod) var(--bz-sc-anim-dur, 1000ms) ease-in-out;
+}
+/* 基础循环动画组合（原 setBaseAnimations） */
+#smart-companion-cat .bz-sc-anim-base {
+  animation: breathing 3s ease-in-out infinite, gentleSway 8s ease-in-out infinite;
+}
+#smart-companion-cat .bz-sc-anim-ear-base { animation: earsTwitch 12s ease-in-out infinite; }
+#smart-companion-cat .bz-sc-anim-tail-base { animation: tailFlick 7s ease-in-out infinite; }
+#smart-companion-cat .bz-sc-anim-eye-base { animation: blinkSlow 5s ease-in-out infinite; }
+
+/* 心情组合动画（原 applyMoodAnimations 各 mood 组合；类加在 .cat-body 上） */
+#smart-companion-cat .bz-sc-mood-happy { animation: happyBounce 4s ease-in-out infinite, gentleSway 6s ease-in-out infinite; }
+#smart-companion-cat .bz-sc-mood-happy .cat-tail { animation: tailWagHappy 3s ease-in-out infinite; }
+#smart-companion-cat .bz-sc-mood-happy .cat-eye { animation: blinkQuick 3s ease-in-out infinite, eyesSparkle 5s ease-in-out infinite; }
+#smart-companion-cat .bz-sc-mood-curious { animation: curiousTilt 5s ease-in-out infinite; }
+#smart-companion-cat .bz-sc-mood-curious .cat-eye { animation: blinkSlow 4s ease-in-out infinite, eyesWiden 6s ease-in-out infinite; }
+#smart-companion-cat .bz-sc-mood-sleepy { animation: sleepySway 8s ease-in-out infinite; }
+#smart-companion-cat .bz-sc-mood-sleepy .cat-ear,
+#smart-companion-cat .bz-sc-mood-sleepy .cat-tail { animation: none; }
+#smart-companion-cat .bz-sc-mood-sleepy .cat-eye { animation: blinkSlow 8s ease-in-out infinite; }
+#smart-companion-cat .bz-sc-mood-excited { animation: excitedVibrate 2s ease-in-out infinite, breathing 2s ease-in-out infinite; }
+#smart-companion-cat .bz-sc-mood-excited .cat-tail { animation: tailSwish 1.5s ease-in-out infinite; }
+#smart-companion-cat .bz-sc-mood-excited .cat-eye { animation: blinkQuick 2s ease-in-out infinite; }
+#smart-companion-cat .bz-sc-mood-playful { animation: playfulHop 3s ease-in-out infinite; }
+#smart-companion-cat .bz-sc-mood-playful .cat-tail { animation: tailFlick 2s ease-in-out infinite; }
+#smart-companion-cat .bz-sc-mood-playful .cat-eye { animation: blinkQuick 3s ease-in-out infinite; }
+
+/* 聊天面板（bz 主窗口：chat-panel 由 createOverlay 生成；样式走 bz-overlay + 头行） */
+#chat-panel {
+  max-height: 60vh;
+  flex-direction: column;
+}
+#chat-panel .chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 200px;
+}
+#chat-panel .message {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+#chat-panel .user-message {
+  align-self: flex-end;
+  background: rgba(0, 122, 204, 0.9);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+#chat-panel .cat-message {
+  align-self: flex-start;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-normal);
+  border-bottom-left-radius: 4px;
+}
+#chat-panel .chat-input-area {
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--background-modifier-border);
+  align-items: center;
+}
+#chat-panel .chat-input {
+  flex: 1;
+  border-radius: 20px;
+  padding: 8px 14px;
+  font-size: 14px;
+  resize: none;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+  outline: none;
+}
+#chat-panel .chat-input:focus {
+  border-color: var(--interactive-accent);
+}
+#chat-panel .send-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--interactive-accent);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 移动端适配（≤768px：猫 70px、气泡 280px、面板 95vw） */
+@media (max-width: 768px) {
+  #smart-companion-cat {
+    width: 70px;
+    height: 70px;
+  }
+  #smart-companion-cat .cat-body {
+    transform: scale(1.2);
+    transform-origin: bottom center;
+  }
+  #smart-companion-cat .cat-bubble {
+    max-width: 280px;
+  }
+}
+
+/* keyframes（原 SmartCatStyles.js 156 个搬运核心；移动/语音/基础/皮肤动画） */
+@keyframes catFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+@keyframes tailSway {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(20deg); }
+}
+@keyframes breathing {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+@keyframes gentleSway {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(3deg); }
+}
+@keyframes earsTwitch {
+  0%, 100% { transform: rotate(0deg); }
+  10% { transform: rotate(-8deg); }
+  20% { transform: rotate(5deg); }
+  30% { transform: rotate(0deg); }
+}
+@keyframes tailFlick {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-15deg); }
+  75% { transform: rotate(10deg); }
+}
+@keyframes blinkSlow {
+  0%, 92%, 100% { transform: scaleY(1); }
+  94%, 96% { transform: scaleY(0.1); }
+}
+@keyframes blinkQuick {
+  0%, 80%, 100% { transform: scaleY(1); }
+  84%, 88% { transform: scaleY(0.1); }
+}
+@keyframes happyBounce {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-4px); }
+  60% { transform: translateY(-2px); }
+}
+@keyframes curiousTilt {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-10deg); }
+}
+@keyframes sleepySway {
+  0%, 100% { transform: rotate(-2deg) translateY(1px); }
+  50% { transform: rotate(2deg) translateY(0); }
+}
+@keyframes excitedVibrate {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-2px, -1px) rotate(-2deg); }
+  75% { transform: translate(2px, 1px) rotate(2deg); }
+}
+@keyframes playfulHop {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+@keyframes tailSwish {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(30deg); }
+}
+@keyframes tailWagHappy {
+  0%, 100% { transform: rotate(-10deg); }
+  50% { transform: rotate(25deg); }
+}
+@keyframes eyesSparkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@keyframes eyesWiden {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.3); }
+}
+@keyframes happyBouncePulse { /* 保留占位，未用 */ }
+@keyframes thinkingPulse {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.7; }
+  50% { transform: translateX(-50%) scale(1.4); opacity: 1; }
+}
+@keyframes voiceIndicatorPulse {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.5); }
+}
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.1); }
+  50% { transform: scale(1); }
+  75% { transform: scale(1.08); }
+}
+@keyframes attentionPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+@keyframes curiousLook {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-12deg) scale(1.05); }
+}
+@keyframes excitedWiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-8deg); }
+  75% { transform: rotate(8deg); }
+}
+@keyframes contentStretch {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px) scale(1.1, 0.9); }
+}
+@keyframes earFlickLeft {
+  0%, 100% { transform: rotate(-15deg); }
+  50% { transform: rotate(15deg); }
+}
+@keyframes earFlickRight {
+  0%, 100% { transform: rotate(15deg); }
+  50% { transform: rotate(-15deg); }
+}
+@keyframes greetingBow {
+  0%, 100% { transform: rotate(0deg); }
+  40% { transform: rotate(-10deg) translateY(3px); }
+}
+@keyframes celebrationDance {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  25% { transform: rotate(-10deg) translateY(-4px); }
+  75% { transform: rotate(10deg) translateY(-4px); }
+}
+@keyframes surpriseJump {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-10px); }
+}
+@keyframes neonPulse {
+  from { filter: brightness(1); }
+  to { filter: brightness(1.4); }
+}
+@keyframes neonTail {
+  0%, 100% { transform: rotate(0deg); opacity: 0.8; }
+  50% { transform: rotate(-20deg); opacity: 1; }
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+@keyframes galaxyTail {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(25deg); }
+}
+@keyframes liquidFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes shine {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(50%); }
+}
+@keyframes metalTail {
+  0%, 100% { transform: rotate(0deg); filter: brightness(1); }
+  50% { transform: rotate(-18deg); filter: brightness(1.2); }
+}
+@keyframes fireBurn {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes emberFloat {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+@keyframes fireTail {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-22deg); }
+}
+@keyframes crystalShine {
+  0% { transform: translateX(-60%); }
+  100% { transform: translateX(60%); }
+}
+@keyframes crystalTail {
+  0%, 100% { transform: rotate(0deg); opacity: 0.7; }
+  50% { transform: rotate(20deg); opacity: 1; }
+}
+@keyframes cyberGlitch {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+@keyframes gridScan {
+  0% { background-position: 0 0; }
+  100% { background-position: 40px 40px; }
+}
+@keyframes cyberTail {
+  0%, 100% { transform: rotate(0deg); filter: hue-rotate(0deg); }
+  50% { transform: rotate(-20deg); filter: hue-rotate(90deg); }
+}
+@keyframes rainbowFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes rainbowTail {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(25deg); }
+}
+@keyframes hologramScan {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+@keyframes hologramTail {
+  0%, 100% { transform: rotate(0deg); opacity: 0.8; }
+  50% { transform: rotate(20deg); opacity: 1; }
+}
+
+/* 72 小动作 keyframes（原 generateAnimationCSS 引用全集；轻量通用实现） */
+@keyframes gentleNod { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(-6deg); } }
+@keyframes quickBlink { 0%,80%,100% { transform: scaleY(1); } 85%,90% { transform: scaleY(0.1); } }
+@keyframes earTwitch { 0%,100% { transform: rotate(0deg); } 30% { transform: rotate(12deg); } }
+@keyframes bodyShiver { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-1px); } 75% { transform: translateX(1px); } }
+@keyframes headTilt { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(14deg); } }
+@keyframes bodyStretch { 0%,100% { transform: translateY(0) scaleY(1); } 50% { transform: translateY(6px) scaleY(0.85); } }
+@keyframes pawLift { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes squintSmile { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(0.4) scaleX(1.2); } }
+@keyframes earsBack { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(-20deg); } }
+@keyframes tailCurl { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(45deg); } }
+@keyframes bodySway { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(4deg); } }
+@keyframes cuteHeadTilt { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(18deg) translateY(-2px); } }
+@keyframes cuteBlink { 0%,75%,100% { transform: scaleY(1); } 80%,90% { transform: scaleY(0.08); } }
+@keyframes earFlutter { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(-15deg); } 50% { transform: rotate(10deg); } }
+@keyframes tailCircle { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(360deg); } }
+@keyframes bodyWiggle { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(-6deg); } 75% { transform: rotate(6deg); } }
+@keyframes faceWash { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(3px) rotate(10deg); } }
+@keyframes cuteRoll { 0%,100% { transform: rotate(0deg) translateY(0); } 50% { transform: rotate(180deg) translateY(-4px); } }
+@keyframes cuteEarTwitch { 0%,100% { transform: rotate(0deg); } 40% { transform: rotate(8deg); } }
+@keyframes cuteTailWag { 0%,100% { transform: rotate(-5deg); } 50% { transform: rotate(30deg); } }
+@keyframes cuteSquint { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(0.3); } }
+@keyframes bodyCurling { 0%,100% { transform: scale(1); } 50% { transform: scale(0.85) translateY(4px); } }
+@keyframes pawPat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes excitedJump { 0%,100% { transform: translateY(0); } 40% { transform: translateY(-8px); } }
+@keyframes fastTailWag { 0%,100% { transform: rotate(-8deg); } 50% { transform: rotate(25deg); } }
+@keyframes earsPerk { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(10deg) translateY(-2px); } }
+@keyframes bodyBounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes fastEarTwitch { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(6deg); } }
+@keyframes bodyHop { 0%,100% { transform: translateY(0); } 40% { transform: translateY(-7px) rotate(-4deg); } }
+@keyframes excitedTailWag { 0%,100% { transform: rotate(-12deg); } 50% { transform: rotate(30deg); } }
+@keyframes excitedEarTwitch { 0%,100% { transform: rotate(0deg); } 40% { transform: rotate(12deg); } }
+@keyframes fastBodyWiggle { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(8deg); } }
+@keyframes fastTailCurl { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(60deg); } }
+@keyframes excitedShiver { 0%,100% { transform: translate(0,0); } 50% { transform: translate(1px,-1px); } }
+@keyframes elegantTurn { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(45deg); } }
+@keyframes elegantTailSway { 0%,100% { transform: rotate(-8deg); } 50% { transform: rotate(18deg); } }
+@keyframes elegantEarTwitch { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(8deg); } }
+@keyframes elegantStretch { 0%,100% { transform: translateY(0) scaleY(1); } 50% { transform: translateY(4px) scaleY(0.9); } }
+@keyframes elegantTailCurl { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(35deg); } }
+@keyframes elegantEarsBack { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(-14deg); } }
+@keyframes elegantBodySway { 0%,100% { transform: rotate(-2deg); } 50% { transform: rotate(4deg); } }
+@keyframes elegantTailFlick { 0%,100% { transform: rotate(0deg); } 30% { transform: rotate(-12deg); } }
+@keyframes elegantEarsPerk { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(9deg) translateY(-1px); } }
+@keyframes elegantSpin { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(180deg); } }
+@keyframes elegantTailWave { 0%,100% { transform: rotate(-6deg); } 50% { transform: rotate(20deg); } }
+@keyframes elegantBow { 0%,100% { transform: rotate(0deg) translateY(0); } 40% { transform: rotate(-20deg) translateY(4px); } }
+@keyframes funnyFall { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(6px) rotate(-20deg); } }
+@keyframes tailTangle { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(120deg); } }
+@keyframes earCramp { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(20deg); } }
+@keyframes funnyWiggle { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(-10deg); } }
+@keyframes funnyTailWag { 0%,100% { transform: rotate(-10deg); } 50% { transform: rotate(35deg); } }
+@keyframes funnyEarTwitch { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(15deg); } }
+@keyframes funnyJump { 0%,100% { transform: translateY(0); } 40% { transform: translateY(-9px) rotate(8deg); } }
+@keyframes funnyTailCurl { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(90deg); } }
+@keyframes funnyEarsPerk { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(-12deg); } }
+@keyframes funnySpin { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(-180deg); } }
+@keyframes funnyTailWave { 0%,100% { transform: rotate(-10deg); } 50% { transform: rotate(25deg); } }
+@keyframes funnyBow { 0%,100% { transform: rotate(0deg) translateY(0); } 40% { transform: rotate(15deg) translateY(4px); } }
+@keyframes starTwinkle { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes rainbowHalo { 0%,100% { filter: hue-rotate(0deg); } 50% { filter: hue-rotate(180deg); } }
+@keyframes bubbleFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes heartFloat { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-4px) scale(1.15); } }
+@keyframes snowFall { 0%,100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+@keyframes petalShower { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(4px) rotate(20deg); } }
+@keyframes flashEffect { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes colorShift { 0%,100% { filter: hue-rotate(0deg); } 50% { filter: hue-rotate(120deg); } }
+@keyframes shadowClone { 0%,100% { transform: translate(0,0); opacity: 1; } 50% { transform: translate(3px,3px); opacity: 0.6; } }
+@keyframes transparentEffect { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+@keyframes scalePulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+@keyframes spinEffect { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(90deg); } }
+
+/* 快速动画引用（原 playAnimation 用不定时长的一次性动画：此处补齐动画应用） */
+#smart-companion-cat .bz-sc-anim[style*="--bz-sc-anim-name"] {
+  animation: var(--bz-sc-anim-name) var(--bz-sc-anim-dur, 1000ms) cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 行走/奔跑（跟随移动：原 cat-running/cat-walking） */
+#smart-companion-cat.cat-running .cat-body { animation: complexCatRunning 0.6s ease-in-out infinite; }
+#smart-companion-cat.cat-walking .cat-body { animation: complexCatWalking 0.9s ease-in-out infinite; }
+@keyframes complexCatRunning {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-4px) rotate(-6deg); }
+  75% { transform: translateY(-2px) rotate(6deg); }
+}
+@keyframes complexCatWalking {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-2px) rotate(3deg); }
+}
