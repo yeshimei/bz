@@ -10,6 +10,7 @@ import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
+import { notice } from '../core/notice';
 import type { Appearance } from './types';
 
 export const CAT_CONTAINER_ID = 'smart-companion-cat';
@@ -198,14 +199,16 @@ export interface SettingsModalBuildResult {
 }
 
 /**
- * 打开 smartcat 域设置弹窗（bz openSettingsModal；外观/性格/间隔/概率/记忆量/上下文长度/比例 + 移动端全屏）
- * 写回 data.config（smartcat.json）与 bz settings（移动端全屏）。
+ * 打开 smartcat 域设置弹窗（bz openSettingsModal；外观/人格成长可视化/间隔/概率/记忆量/
+ * 上下文长度/比例 + 移动端全屏）。ADR-0023：预设「性格」下拉删除 → OCEAN+traits 可视化。
  */
 export function openSmartcatSettings(opts: {
   getConfig: () => any;
   saveConfig: (config: any) => Promise<void>;
   settingsKeys: { enabled: boolean; mobileFullscreen: boolean };
   setMobileFullscreen: (v: boolean) => Promise<void>;
+  getPersonalityGrowth?: () => any;
+  resetPersonalityGrowth?: () => Promise<void>;
 }): void {
   const config = opts.getConfig();
   openSettingsModal({
@@ -223,21 +226,39 @@ export function openSmartcatSettings(opts: {
           });
         });
 
-      new Setting(el)
-        .setName('性格')
-        .setDesc('对话语气')
-        .addDropdown((dd: any) => {
-          dd.addOption('lively', '活泼型');
-          dd.addOption('quiet', '安静型');
-          dd.addOption('wise', '智慧型');
-          dd.addOption('cute', '萌系型');
-          dd.addOption('mentor', '导师型');
-          dd.setValue(config.personality);
-          dd.onChange(async (v: string) => {
-            config.personality = v;
-            await opts.saveConfig(config);
-          });
-        });
+      // ADR-0023：人格成长可视化（OCEAN 5 轴 + 关键特质条形；替代预设 5 选 1）
+      const g = opts.getPersonalityGrowth?.();
+      if (g) {
+        const panelEl = el.createDiv({ cls: 'bz-sc-personality-panel' });
+        const bar = (label: string, v: number) =>
+          `<div class="bz-sc-trait-row"><span class="bz-sc-trait-name">${label}</span>` +
+          `<div class="bz-sc-trait-bar"><div class="bz-sc-trait-fill" style="width:${Math.round(Math.min(1, Math.max(0, v)) * 100)}%"></div></div>` +
+          `<span class="bz-sc-trait-val">${(v * 100).toFixed(0)}</span></div>`;
+        const oceanNames: Record<string, string> = {
+          openness: '开放', conscientiousness: '尽责', extraversion: '外向', agreeableness: '宜人', neuroticism: '敏感',
+        };
+        const keyTraits: Record<string, string> = {
+          warmth: '温暖', self_worth: '自我价值', others_trust: '信任他人',
+          anxiety: '焦虑', humor: '幽默', beh_depth: '深度', optimism: '乐观',
+        };
+        let html = '<div class="bz-sc-personality-title">人格成长（随相处自动演化）</div>';
+        html += '<div class="bz-sc-personality-section">OCEAN</div>';
+        for (const [k, name] of Object.entries(oceanNames)) html += bar(name, g.ocean?.[k] ?? 0.5);
+        html += '<div class="bz-sc-personality-section">关键特质</div>';
+        for (const [k, name] of Object.entries(keyTraits)) html += bar(name, g.traits?.[k] ?? 0.5);
+        panelEl.innerHTML = html;
+        if (opts.resetPersonalityGrowth) {
+          new Setting(el)
+            .setName('重置成长')
+            .setDesc('清空已演化的人格，回到新的 OCEAN 种子')
+            .addButton((btn: any) => {
+              btn.setButtonText('重置').onClick(async () => {
+                await opts.resetPersonalityGrowth!();
+                notice('人格已重置，请重新打开设置查看新种子', 'info');
+              });
+            });
+        }
+      }
 
       new Setting(el)
         .setName('自言自语间隔（分钟）')

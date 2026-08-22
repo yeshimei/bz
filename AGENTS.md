@@ -73,7 +73,7 @@
 | attach 附件搬移（移动当前笔记附件到指定文件夹/仅同名才改名/全库改写链接） | —（搬当前笔记引用的 vault 附件，无 CONFIG/STORAGE 数据） |
 | bili-downloader 下载工具（B 站 web 工具，外部 npm） | —（外部） |
 | encrypt 保险箱（AES-GCM 清单容器加密/压缩预览/还原/提交式加密，ADR-0015~0018；原名「加密保险箱」，ticket 68 更名） | `CONFIG/.ENCRYPT/`（.safe.enc 清单 + .随机名.enc 密文镜像，不在 CONFIG/STORAGE） |
-| smartcat 小橘（桌面宠物猫 + 笔记 AI 陪伴：气泡/聊天/心情（PAD 三层：情绪/心情/人格，ADR-0022）/记忆流（ADR-0021，单层 GA 三因子）/动画/语音/跟随/书评；AI 走 bz core/ai，数据单 json（向量豁免 .vec），样式域内 styles.css） | smartcat.json（config/mood(PAD)/personalityGrowth/editingData/memory 记忆流）+ smartcat-memory-vectors.vec |
+| smartcat 小橘（桌面宠物猫 + 笔记 AI 陪伴：气泡/聊天/心情（PAD 三层：情绪/心情/人格，ADR-0022）/人格（MATE 30 特质+OCEAN 种子，ADR-0023）/记忆流（ADR-0021，单层 GA 三因子）/动画/语音/跟随/书评；AI 走 bz core/ai，数据单 json（向量豁免 .vec），样式域内 styles.css） | smartcat.json（config/mood(PAD)/personalityGrowth(OCEAN+30 特质)/editingData/memory 记忆流）+ smartcat-memory-vectors.vec |
 
 ## 测试
 

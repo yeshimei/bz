@@ -30,6 +30,10 @@ export interface InteractionDeps {
   onAppearanceChanged: (appearance: string) => void;
   /** 记忆流检索（ADR-0021：聊天上下文注入相关记忆；index 注入，避免顶层互访） */
   retrieveMemories?: (query: string) => Promise<string>;
+  /** 性格数据（ADR-0023：prompt 状态向量用；index 注入 data.personalityGrowth） */
+  characterData?: () => any;
+  /** 互动回流（ADR-0023：每种互动触发性格微移；index 接 PersonalityGrowth.developBasedOnInteraction） */
+  onInteraction?: (type: string, intensity?: number) => void;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -259,6 +263,9 @@ export class InteractionManager {
       }, 500);
     }
     eventSystem.emit(EVENTS.PET_INTERACTION);
+    // ADR-0023：抚摸 → 性格微移（warmth/others_trust 成长 + PAD 调节）
+    this.deps.mood.handleInteraction('pet', 1);
+    this.deps.onInteraction?.('pet', 1);
   }
 
   /** 陪伴定时器（原 startCompanionMode：speakInterval 分钟 × 概率；启动 1s 后欢迎/引导气泡） */
@@ -310,7 +317,7 @@ export class InteractionManager {
       if (!context) context = getViewportContent();
 
       const selection = window.getSelection ? (window.getSelection()?.toString() || '').trim() : '';
-      const moodOpts = { pad: this.deps.mood.pad, personality: cfg.personality, currentMood: this.deps.mood.currentMood, currentEmotion: this.deps.mood.getCurrentEmotion() };
+      const moodOpts = { pad: this.deps.mood.pad, data: this.deps.characterData?.() ?? null, currentMood: this.deps.mood.currentMood, currentEmotion: this.deps.mood.getCurrentEmotion() };
       const prompt = generatePrompt('learn', context || '', moodOpts);
 
       if (selection && selection.length <= 1500) {
@@ -330,7 +337,7 @@ export class InteractionManager {
       }
 
       if (!context || context.length < 10) {
-        const rp = generatePrompt('auto_companion', '', { pad: this.deps.mood.pad, personality: cfg.personality, currentMood: this.deps.mood.currentMood, currentEmotion: this.deps.mood.getCurrentEmotion() });
+        const rp = generatePrompt('auto_companion', '', { pad: this.deps.mood.pad, data: this.deps.characterData?.() ?? null, currentMood: this.deps.mood.currentMood, currentEmotion: this.deps.mood.getCurrentEmotion() });
         startThinking();
         this.generateAutoCompanionMessageLock = true;
         try {
@@ -368,7 +375,7 @@ export class InteractionManager {
   async prepareChatMessages(userMessage: string): Promise<any[]> {
     const cfg = this.deps.config();
     const messages: any[] = [];
-    messages.push({ role: 'system', content: generatePrompt('talk', userMessage, { pad: this.deps.mood.pad, personality: cfg.personality, currentMood: this.deps.mood.currentMood, currentEmotion: this.deps.mood.getCurrentEmotion() }) });
+    messages.push({ role: 'system', content: generatePrompt('talk', userMessage, { pad: this.deps.mood.pad, data: this.deps.characterData?.() ?? null, currentMood: this.deps.mood.currentMood, currentEmotion: this.deps.mood.getCurrentEmotion() }) });
 
     if (cfg.conversationHistory && cfg.conversationHistory.length > 0) {
       const maxHistoryMessages = Math.min(cfg.shortTermMemory * 2, cfg.conversationHistory.length);
