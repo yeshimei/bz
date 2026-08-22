@@ -10,7 +10,8 @@ import { DataManager } from '../../src/password/data';
 import { EncryptAppController } from '../../src/encrypt/ui';
 import { getSafeManager } from '../../src/encrypt';
 import { MockVault } from '../mock-vault';
-import { resetObsidianMocks, hasNotice } from '../mock-obsidian-entry';
+import { resetObsidianMocks, hasNotice, Platform } from '../mock-obsidian-entry';
+import { closeItemMenu } from '../../src/core/item-actions';
 
 /** 轮询等待（并行高负载下真实 setTimeout 等待不足，轮询至条件满足） */
 async function waitFor(cond: () => boolean, timeout = 3000) {
@@ -57,6 +58,8 @@ describe('UIManager 主密码流程（统一走保险箱弹窗）', () => {
       document.getElementById(id)?.remove();
     });
     document.body.innerHTML = '';
+    Platform.isMobile = false;
+    closeItemMenu();
     resetControllers();
   });
 
@@ -257,36 +260,97 @@ describe('UIManager 面板与条目', () => {
     expect([...pwd].every((c) => 'abc123'.includes(c))).toBe(true);
   });
 
-  it('长按日期 → 删除确认 → 确认删除', async () => {
+  it('右键卡片 → 菜单「删除」→ 确认删除', async () => {
     ui.show();
     await waitFor(() => document.querySelectorAll('.pw-entry-card').length === 2); // 真实等待 PBKDF2 解密渲染
-    vi.useFakeTimers();
     const container = document.getElementById('pw-entries-container')!;
-    const dateSpan = container.querySelector('.pw-date') as HTMLElement;
-    dateSpan.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-    vi.advanceTimersByTime(550);
+    const card = container.querySelector('.pw-entry-card') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
+    const delItem = [...document.querySelectorAll('.bz-item-menu-item')].find(
+      (b) => b.textContent!.includes('删除')
+    ) as HTMLElement;
+    expect(delItem).toBeTruthy();
+    delItem.click();
+    await new Promise((r) => setTimeout(r, 10));
     const confirmMask = document.getElementById('__shared_confirm_mask__');
     expect(confirmMask).not.toBeNull();
     expect(confirmMask!.textContent).toContain('删除密码条目');
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
-    await vi.advanceTimersByTimeAsync(50);
-    expect(dm.pwData.length).toBe(1);
-    vi.useRealTimers();
+    await waitFor(() => dm.pwData.length === 1);
   });
 
-  it('长按密码区域 → 编辑弹窗', async () => {
+  it('右键卡片 → 菜单「编辑」→ 编辑弹窗（回填）；保存后抽屉关闭', async () => {
     ui.show();
-    await waitFor(() => document.querySelectorAll('.pw-entry-card').length === 2); // 真实等待 PBKDF2 解密渲染
-    vi.useFakeTimers();
+    await waitFor(() => document.querySelectorAll('.pw-entry-card').length === 2);
     const container = document.getElementById('pw-entries-container')!;
-    const pwArea = container.querySelector('.pw-password-area') as HTMLElement;
-    pwArea.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-    vi.advanceTimersByTime(550);
+    const card = container.querySelector('.pw-entry-card') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
+    const editItem = [...document.querySelectorAll('.bz-item-menu-item')].find(
+      (b) => b.textContent!.includes('编辑')
+    ) as HTMLElement;
+    editItem.click();
+    await new Promise((r) => setTimeout(r, 10));
     const popup = document.getElementById('pw-add-popup')!;
     expect(popup.style.display).toBe('block');
     expect(popup.textContent).toContain('编辑密码条目');
     expect(ui._platformInput.value).toBe('Gmail'); // 首卡 Gmail
+    // 保存 → 抽屉来源编辑标志清理（保存成功关抽屉）
+    ui._noteTextarea.value = '改备注';
+    const saveBtn = [...popup.querySelectorAll('button')].find((b) => b.textContent === '保存')!;
+    saveBtn.click();
+    await waitFor(() => hasNotice('已保存'));
+  });
+
+  it('抽屉复制账号/复制密码（剪贴板 + toast）+ 头部平台名', async () => {
+    const writeSpy = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined as any);
+    ui.show();
+    await waitFor(() => document.querySelectorAll('.pw-entry-card').length === 2);
+    const container = document.getElementById('pw-entries-container')!;
+    // 移动端长按弹抽屉
+    Platform.isMobile = true;
+    vi.useFakeTimers();
+    const card = container.querySelector('.pw-entry-card') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 60, clientY: 60 }));
+    vi.advanceTimersByTime(550);
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     vi.useRealTimers();
+    await new Promise((r) => setTimeout(r, 10));
+
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet).not.toBeNull();
+    // 头部：🔑 + 平台名 + 账号小字
+    expect(sheet.querySelector('.bz-item-sheet-title')!.textContent).toBe('Gmail');
+    expect(sheet.querySelector('.bz-item-sheet-sub')!.textContent).toContain('bob');
+    const labels = [...sheet.querySelectorAll('.bz-item-sheet-label')].map((e) => e.textContent);
+    expect(labels).toEqual(['复制账号', '复制密码', '编辑', '删除']);
+
+    // 点「复制账号」→ 剪贴板 + 关抽屉（非 keepOpen）
+    const copyAcc = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('复制账号')
+    ) as HTMLElement;
+    copyAcc.click();
+    await waitFor(() => writeSpy.mock.calls.some((c: any[]) => c[0] === 'bob'));
+    expect(hasNotice('账号已复制')).toBe(true);
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
+
+    // 再开抽屉点「复制密码」
+    vi.useFakeTimers();
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 60, clientY: 60 }));
+    vi.advanceTimersByTime(550);
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    vi.useRealTimers();
+    await new Promise((r) => setTimeout(r, 10));
+    const copyPwd = [...(document.querySelector('.bz-item-sheet') as HTMLElement).querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('复制密码')
+    ) as HTMLElement;
+    copyPwd.click();
+    await waitFor(() => writeSpy.mock.calls.some((c: any[]) => c[0] === 'secret2'));
+    expect(hasNotice('密码已复制')).toBe(true);
+
+    Platform.isMobile = false;
+    writeSpy.mockRestore();
   });
 });
 
