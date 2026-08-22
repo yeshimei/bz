@@ -2715,16 +2715,20 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   animation: bz-menu-in 0.12s ease-out;
 }
-.bz-item-menu-item {
+/* 菜单项：图标+文字左对齐、无边框无底色（抗 Obsidian 默认 button 灰底/边框/圆角压盖——与抽屉项同款处理） */
+.bz-item-menu button.bz-item-menu-item {
   display: flex; align-items: center; gap: 6px;
-  justify-content: flex-start !important; /* 图标+文字左对齐（抗 Obsidian 默认 button 居中） */
+  justify-content: flex-start !important; /* 抗 Obsidian 默认 button 居中 */
   width: 100%; padding: 6px 8px;
   font-size: 13px; line-height: 1.4; color: var(--text-normal);
-  background: transparent; border: none; border-radius: 6px;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
   cursor: pointer; text-align: left !important;
 }
-.bz-item-menu-item:hover { background: var(--background-modifier-hover); }
-.bz-item-menu-item--danger { color: var(--text-error); }
+.bz-item-menu button.bz-item-menu-item:hover { background: var(--background-modifier-hover) !important; }
+.bz-item-menu button.bz-item-menu-item--danger { color: var(--text-error) !important; }
 /* 强调色调：整行（文字 + 图标 + 小字）同步换强调色（如解锁态加密/解密）；未解锁保持默认外观。
    高特异性 + !important 抗 Obsidian 默认 button 样式压盖；桌面菜单无小字（不渲染） */
 .bz-item-sheet button.bz-item-sheet-item--accent,
@@ -2735,7 +2739,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   color: var(--color-green) !important;
 }
 .bz-item-menu-icon { width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--text-muted); }
-.bz-item-menu-item--danger .bz-item-menu-icon { color: var(--text-error); }
+.bz-item-menu button.bz-item-menu-item--danger .bz-item-menu-icon { color: var(--text-error); }
 @keyframes bz-menu-in {
   from { opacity: 0; transform: scale(0.96) translateY(2px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
