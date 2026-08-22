@@ -320,6 +320,17 @@ export function openSmartcatSettings(opts: {
           });
         });
 
+      // 主动关心（2026-08-23 用户拍板：每周温和主动搭话；默认开）
+      new Setting(el)
+        .setName('主动关心')
+        .setDesc('按你的活跃时段，每周温和主动搭话 1-2 次（可关）')
+        .addToggle((toggle: any) =>
+          toggle.setValue(!!config.proactiveCare).onChange((v: boolean) => {
+            config.proactiveCare = v;
+            void opts.saveConfig(config);
+          })
+        );
+
       if (isMobileEnv()) {
         new Setting(el)
           .setName('移动端默认全屏')
