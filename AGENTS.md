@@ -56,7 +56,7 @@
 | diary 日记本（面板/写日记摘抄/标签筛选/滚轮日期） | `我的/日记/*.md` |
 | memo 备忘录（待办面板/Todo 弹窗/剪贴板监听/启动弹窗/到期通知） | memo.json |
 | belongings 归物本（物品登记，1226 分类已落盘 gen） | belongings.json |
-| clipping 剪藏本（单击直开/统一抽屉·桌面右键移动长按/站点过滤/反链直点） | `归档/网页剪藏/*.md` |
+| clipping 剪藏本（双击打开/统一抽屉·桌面右键移动长按/站点过滤/反链直点） | `归档/网页剪藏/*.md` |
 | news 聚合讯（状态机/统计落盘/dataviewjs 渲染） | news.json |
 | password 密码本（AES-GCM/主密码状态机/生成器） | passwords.json |
 | favorites 收藏本（GitHub 收藏/AI 简介/余额 5 分钟缓存） | favorites.json |
