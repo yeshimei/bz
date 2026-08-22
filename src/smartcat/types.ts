@@ -50,6 +50,8 @@ export interface SmartCatConfig {
   contextSplitRatio: number;
   conversationHistory: ChatMessage[];
   shortTermMemory: number;
+  /** 笔记库接入总开关（ADR-0024 决策：写日记/闪念计入信任成长 + 笔记库内容 = 信息来源；默认开） */
+  noteSource: boolean;
 }
 
 /** 心情持久化（PAD 三维 + 5 档显示位 + 瞬时情绪；情绪标注经记忆条目/currentEmotion） */

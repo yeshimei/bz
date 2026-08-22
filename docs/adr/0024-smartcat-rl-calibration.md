@@ -35,3 +35,10 @@
 - 注意：记忆检索权重变化（recency 减半、importance 0.73、relevance 减半、decay 更陡 0.986）→ 检索结果排序有实际改变，需上线观察；
 - 训练与模拟资产（sim-core.mjs/实时服务/live 观测页/验收脚本 accept.mjs）存 `.scratch/smartcat-integration/`（gitignored），配方 JSON 同目录存档；
 - 后续：真实接入（integration 路线 1）后按新事件流再校准（闭环）；信任封顶与否另立产品 ticket。
+
+## 用户追加决策（2026-08-23，ticket 025）
+
+- **写日记/闪念计入信任成长**：`PersonalityGrowth.developBasedOnInteraction(kind, 0.3, 0.02, 0.15)`——轻质量 0.15，不聊天时陪伴也能在「共享生活」中生长（修复真实库信任锁 50% 结构性问题）；
+- **笔记库内容 = 小橘信息来源**：新增 `src/smartcat/context-source.ts`——vault create/modify 实时事件分类器（diary/flash/clipping/movie/reading），观察文本隐私分级（日记仅标题计数、flash 首行、clipping 取 auto-summary 的 AI 摘要、movie 片名+评分；**不读私人正文**）；
+- **隐私红线（红队审查结论）**：vault 观察一律本地规则打分（`addObservation(…,{importance:0.55, emotion:词法})`），**不走 LLM**——记忆层不得成为把笔记内容外发云端 AI 的管道；LLM 打分仅限用户主动 chat；
+- config 新增 `noteSource` 开关（默认开，normalize 兜底；设置界面临时放开，后续随路线 1 设置收敛）。

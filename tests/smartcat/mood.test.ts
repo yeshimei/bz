@@ -174,6 +174,19 @@ describe('PersonalityGrowth（MATE ADR-0023）', () => {
     expect(data.personalityGrowth.growthHistory[0].source).toBe('interaction');
   });
 
+  it('写日记/闪念计入信任成长：轻质量 0.15（ticket 025，ADR-0024 决策）', async () => {
+    const pg = new PersonalityGrowth(() => data, saver);
+    const before = data.personalityGrowth.relationship.trust;
+    await pg.developBasedOnInteraction('diary', 0.3, 0.02, 0.15);
+    expect(data.personalityGrowth.relationship.trust - before).toBeCloseTo(0.0082 * 0.15, 6);
+    expect(data.personalityGrowth.relationship.trust).toBeGreaterThan(before);
+    // 默认 quality 仍为 0.5（既有聊天/抚摸路径不变）
+    const pg2 = new PersonalityGrowth(() => data, saver);
+    const before2 = data.personalityGrowth.relationship.trust;
+    await pg2.developBasedOnInteraction('pet', 1);
+    expect(data.personalityGrowth.relationship.trust - before2).toBeGreaterThan(0.0082 * 0.15);
+  });
+
   it('tickBehaviorStats：互动计数 + 活跃时段记录', async () => {
     const pg = new PersonalityGrowth(() => data, saver);
     await pg.developBasedOnInteraction('pet', 1);
