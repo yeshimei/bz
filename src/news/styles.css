@@ -1,0 +1,217 @@
+/* ==================== 聚合讯域样式（src/news/styles.css） ==================== */
+/* ==================== 聚合讯（news，ticket 60 收敛：原 NEWS_CSS 运行时注入，逐字搬运） ==================== */
+.news-mask {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--background-modifier-cover);
+    backdrop-filter: blur(2px);
+    z-index: 9998;
+    visibility: hidden;
+}
+.news-popup {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--background-primary);
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+    z-index: 9999;
+    width: 90%; max-width: 680px; max-height: 80vh;
+    display: flex; flex-direction: column;
+    font-family: -apple-system, BlinkMacSystemFont, Segoe UI, system-ui, sans-serif;
+    visibility: hidden;
+    animation: newsSlideUp 0.25s ease-out;
+}
+@keyframes newsSlideUp {
+    from { opacity: 0; transform: translate(-50%, -46%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
+.news-card-header {
+    padding: 28px 32px 0 32px;
+    flex-shrink: 0;
+}
+.news-card-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 32px 28px 32px;
+}
+.news-card-area::-webkit-scrollbar { width: 6px; }
+.news-card-area::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
+.news-card-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-normal);
+    line-height: 1.45;
+    margin-bottom: 12px;
+}
+.news-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+}
+.news-card-meta .platform-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--background-secondary);
+    padding: 2px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--background-modifier-border);
+}
+.news-card-body {
+    font-size: 15px;
+    line-height: 1.85;
+    color: var(--text-normal);
+}
+.news-card-body img { max-width: 100%; border-radius: 6px; margin: 8px 0; }
+.news-card-body h1, .news-card-body h2, .news-card-body h3, .news-card-body h4 {
+    font-weight: 600; margin: 16px 0 8px 0; color: var(--text-normal);
+}
+.news-card-body h1 { font-size: 18px; }
+.news-card-body h2 { font-size: 16px; }
+.news-card-body h3 { font-size: 15px; }
+.news-card-body blockquote {
+    border-left: 3px solid var(--background-modifier-border);
+    padding-left: 12px; color: var(--text-muted); margin: 8px 0;
+}
+.news-card-body a { color: var(--interactive-accent); }
+.news-bottombar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    border-top: 1px solid var(--background-modifier-border);
+    flex-shrink: 0;
+}
+.news-counter {
+    font-size: 12px;
+    color: var(--text-faint);
+    margin-left: auto;
+}
+.news-btn {
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--background-modifier-border);
+    transition: all 0.15s;
+    background: var(--background-secondary);
+    color: var(--text-normal);
+}
+.news-btn:hover { background: var(--background-modifier-hover); }
+.news-btn-primary {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-color: transparent;
+}
+.news-btn-primary:hover { opacity: 0.9; }
+
+/* 空状态 */
+.news-done {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+    padding: 32px;
+}
+.news-done-stats {
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 10px;
+    padding: 20px 28px;
+    width: 100%;
+    max-width: 360px;
+}
+.news-done-stats-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-normal);
+    margin-bottom: 14px;
+    text-align: center;
+}
+.news-stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+.news-stat-row .num {
+    color: var(--text-normal);
+    font-weight: 600;
+}
+.news-done-hint {
+    font-size: 13px;
+    color: var(--text-faint);
+    margin-top: 4px;
+}
+.news-loading {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+    color: var(--text-muted);
+}
+.news-loading-spinner {
+    width: 28px; height: 28px;
+    border: 3px solid var(--background-modifier-border);
+    border-top-color: var(--interactive-accent);
+    border-radius: 50%;
+    animation: newsSpin 0.8s linear infinite;
+}
+@keyframes newsSpin { to { transform: rotate(360deg); } }
+
+@media (max-width: 640px) {
+    /* 原强制真全屏规则已废止（ticket 68：真全屏统一走 .bz-win-mfs，news 自垫例外见文件尾通用块） */
+    .news-card-header { padding: 12px 20px 0 20px; }
+    .news-card-area { padding: 12px 20px 20px 20px; }
+    .news-bottombar { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+}
+.news-close-btn {
+    display: none;
+    position: absolute;
+    top: 62px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: var(--background-secondary);
+    color: var(--text-muted);
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 10;
+    line-height: 1;
+}
+.news-close-btn:hover { background: var(--background-modifier-hover); }
+/* 关闭钮仅真全屏态显示（ticket 68） */
+.bz-win-mfs .news-close-btn { display: flex; align-items: center; justify-content: center; }
+/* 聚合讯设置入口（ticket 68）：仅移动端显示（设置项仅移动端存在，桌面无需入口） */
+.news-settings-btn {
+  display: none;
+  position: absolute;
+  top: 62px;
+  right: 40px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 10;
+  line-height: 1;
+}
+.news-settings-btn:hover { background: var(--background-modifier-hover); }
+@media (max-width: 768px) {
+  .news-settings-btn { display: flex; align-items: center; justify-content: center; }
+}
+

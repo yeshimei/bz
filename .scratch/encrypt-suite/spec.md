@@ -151,5 +151,5 @@ encryptSecurityMode: boolean // false
 - 数据格式稳定（铁律1）：**不写任何既有域数据文件**；不碰 `我的/*` 之外；被加密笔记从 vault 移出是加密语义本身（用户显式选择），不动其他未加密笔记与各域 json。
 - 命令裸注册（铁律2）：bz-encrypt-* 三段式，main.ts COMMANDS 表注册一次。
 - DOM id/类名稳定（铁律3）：新增 `bz-encrypt-*` 前缀（encrypt-mask/encrypt-popup/encrypt-list/encrypt-preview-*）。
-- 懒加载（铁律5）、样式收敛（铁律9：样式写根 styles.css，.bz-encrypt-* 类）。
+- 懒加载（铁律5）、样式按域拆分（铁律9，ticket 70：样式写 `src/encrypt/styles.css`，.bz-encrypt-* 类）。
 - 通知写法（铁律8）：消息正文不带 emoji，查 ICONS 表用既有类型。

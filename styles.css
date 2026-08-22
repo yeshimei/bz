@@ -1,13 +1,764 @@
 /* ============================================================
  * bz（包仔）— 由 QuickAdd 脚本独立化而来
- * 各域样式随 ticket 逐批收敛至此（spec「样式规模」）：
- *   备忘录 ≈50KB、归物本 ≈48KB、闪念 ≈42KB、密码本 ≈27KB、
- *   复习计划 ≈25KB、剪藏本 ≈13KB、做题家 ≈8KB；
- *   聚合讯/书库/影视/收藏本以内联样式为主。
+ * 样式按域拆分（铁律 9）：本文件是构建聚合产物，请勿手改——
+ *   共享样式 → src/core/styles.css；各域样式 → src/<域>/styles.css
+ * 重新生成：npm run dev / npm run build（scripts/build-css.mjs）
  * ============================================================ */
 
-/* 占位：各域样式随 ticket 02~19 逐个追加 */
+/* ============================================================
+ * bz（包仔）共享层/跨域样式（src/core/styles.css）
+ * 设置页分页 / 主窗口头部行统一规范 / core 层（notice·settings-modal·confirm·dom）
+ * / 移动端主窗口默认全屏 / 统一右键菜单·长按抽屉
+ * 本文件是样式源之一，构建时由 scripts/build-css.mjs 聚合成根 styles.css
+ * ============================================================ */
 
+/* ===== 设置页顶部分页（参考 obsidian-linter 设置页） ===== */
+/* 设置区块标题（ADR-0009 单页平铺：🤖 AI / 📂 数据存储路径） */
+.bz-setting-section-title {
+    margin: 20px 0 10px;
+    font-size: 1.15em;
+    font-weight: 700;
+    color: var(--text-normal);
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+.bz-setting-section-title:first-child {
+    margin-top: 0;
+}
+.bz-setting-header {
+    margin-bottom: 12px;
+    overflow-x: auto;
+}
+.bz-tab-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    border-bottom: 2px solid var(--background-modifier-border);
+    padding: 4px 2px 0;
+}
+.bz-tab {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9em;
+    padding: 6px 14px;
+    border: 2px solid transparent;
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    color: var(--text-muted);
+    white-space: nowrap;
+    user-select: none;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+.bz-tab:hover {
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
+}
+.bz-tab-active,
+.bz-tab-active:hover {
+    color: var(--text-on-accent);
+    background: var(--interactive-accent);
+    border-color: var(--interactive-accent);
+}
+.bz-tab-content {
+    display: none;
+}
+.bz-tab-content-active {
+    display: block;
+}
+.bz-setting-hidden {
+    display: none !important;
+}
+
+
+
+/* ==================== 主窗口头部行统一规范（ticket 68 后续，用户拍板） ==================== */
+/* 头行：16px 24px 10px（上/左右/下——头部到底部列表的间距统一 10px），行内两端对齐、间距 8 */
+.bz-win-head,
+.diary-popup-header,
+.bz-todo-head,
+.fav-header,
+.bz-lib-header,
+.bz-lib-modal-header,
+.bz-encrypt-head {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 16px 24px 10px !important;
+  flex-shrink: 0 !important;
+}
+/* 头行按钮容器：统一 8px 间距、垂直居中 */
+.bz-win-head > div,
+.diary-popup-header > div,
+.bz-todo-head-btns,
+.fav-header > div,
+.bz-lib-header-btns,
+.bz-encrypt-head-btns {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+/* 头行按钮：统一 22×26/14px、透明、无阴影无边框、圆角 4、text-muted；hover 统一背景 */
+.bz-win-head button,
+.diary-popup-header button,
+.bz-todo-head-btns button,
+.fav-header button,
+.bz-lib-header-btns button,
+.bz-lib-modal-header button,
+.bz-encrypt-head-btns button,
+.news-close-btn,
+.news-settings-btn {
+  width: 22px !important;
+  height: 26px !important;
+  font-size: 14px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 4px !important;
+  color: var(--text-muted) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+}
+.bz-win-head button:hover,
+.diary-popup-header button:hover,
+.bz-todo-head-btns button:hover,
+.fav-header button:hover,
+.bz-lib-header-btns button:hover,
+.bz-lib-modal-header button:hover,
+.bz-encrypt-head-btns button:hover,
+.news-close-btn:hover,
+.news-settings-btn:hover {
+  background: var(--background-secondary) !important;
+}
+/* 番茄钟右上角设置钮：同头行按钮规格（absolute 定位保留） */
+#pomodoro-btn-settings {
+  width: 22px !important;
+  height: 26px !important;
+  padding: 0 !important;
+  font-size: 14px !important;
+  border: none !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  background: none !important;
+  color: var(--text-muted) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+/* 关闭按钮再小 2px（用户拍板）：20×24/12px（元素选择器提特异性，压过统一按钮组） */
+button.bz-icon-btn--close,
+button.bz-win-close,
+button.todo-btn-close,
+button.news-close-btn {
+  width: 20px !important;
+  height: 24px !important;
+  font-size: 12px !important;
+}
+/* 非真全屏一律隐藏关闭按钮（含桌面端——用户拍板）：桌面/卡片态靠点遮罩与 ESC 关闭，真全屏时靠 ❌ 关闭 */
+button.bz-win-close,
+button.bz-icon-btn--close,
+button.todo-btn-close,
+button.news-close-btn {
+  display: none !important;
+}
+.bz-win-mfs button.bz-win-close,
+.bz-win-mfs button.bz-icon-btn--close,
+.bz-win-mfs button.todo-btn-close,
+.bz-win-mfs button.news-close-btn {
+  display: flex !important;
+}
+
+/* ==================== core 层样式收敛（ticket 60 延伸：notice/settings-modal/confirm/dom） ==================== */
+/* 通知 toast（原 core/notice.ts NOTICE_CSS，ADR-0010） */
+#bz-notice-container {
+  position: fixed;
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  right: 16px;
+  z-index: 100000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+}
+/* 移动端：顶部居中 + Obsidian 顶部栏更高，通知下移（项目断点惯例 max-width: 768px） */
+@media (max-width: 768px) {
+  #bz-notice-container {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    align-items: center;
+    top: calc(34px + env(safe-area-inset-top, 0px));
+  }
+}
+.bz-notice {
+  pointer-events: auto;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 240px;
+  max-width: min(420px, calc(100vw - 24px));
+  padding: 10px 14px 11px;
+  border-radius: 10px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-normal);
+  cursor: pointer;
+  overflow: hidden;
+  animation: bzNoticeIn 0.2s ease-out;
+}
+.bz-notice--leaving {
+  animation: bzNoticeOut 0.2s ease-in forwards;
+}
+.bz-notice--leaving.bz-notice--out-pop {
+  animation: bzNoticeOutPop 0.2s ease-in forwards;
+}
+.bz-notice--leaving.bz-notice--out-left {
+  animation: bzNoticeOutLeft 0.2s ease-in forwards;
+}
+.bz-notice--leaving.bz-notice--out-right {
+  animation: bzNoticeOutRight 0.2s ease-in forwards;
+}
+.bz-notice--leaving.bz-notice--out-fade {
+  animation: bzNoticeOutFade 0.2s ease-in forwards;
+}
+.bz-notice--in-pop {
+  animation: bzNoticeInPop 0.25s ease-out;
+}
+.bz-notice--in-slide-left {
+  animation: bzNoticeInLeft 0.25s ease-out;
+}
+.bz-notice--in-slide-right {
+  animation: bzNoticeInRight 0.25s ease-out;
+}
+.bz-notice--in-bounce {
+  animation: bzNoticeInBounce 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.bz-notice--in-shake {
+  animation: bzNoticeShake 0.4s ease-out;
+}
+.bz-notice-icon {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  animation: bzNoticeIconPop 0.3s ease-out;
+}
+.bz-notice-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.bz-notice--warning .bz-notice-icon { color: var(--color-orange); }
+.bz-notice--error .bz-notice-icon { color: var(--color-red); }
+.bz-notice--info .bz-notice-icon { color: var(--interactive-accent); }
+.bz-notice--success .bz-notice-icon { color: var(--color-green); }
+.bz-notice--pause .bz-notice-icon { color: var(--text-muted); }
+.bz-notice--accept .bz-notice-icon { color: var(--color-purple); }
+.bz-notice--delete .bz-notice-icon { color: var(--color-red); }
+.bz-notice--confirm .bz-notice-icon { color: var(--color-green); }
+.bz-notice--restore .bz-notice-icon { color: var(--color-cyan); }
+.bz-notice--skip .bz-notice-icon { color: var(--color-orange); }
+.bz-notice--archive .bz-notice-icon { color: var(--color-blue); }
+.bz-notice--progress .bz-notice-icon { color: var(--interactive-accent); }
+.bz-notice--progress .bz-notice-icon svg {
+  animation: bzNoticeSpin 1s linear infinite;
+}
+.bz-notice-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.bz-notice-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+.bz-notice-msg {
+  word-break: break-word;
+  white-space: pre-line;
+}
+.bz-notice-action {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  padding: 2px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--interactive-accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.bz-notice-action:hover {
+  background: var(--background-modifier-hover);
+}
+.bz-notice-progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 0;
+  background: var(--interactive-accent);
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.25) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0.25) 75%,
+    transparent 75%
+  );
+  background-size: 16px 16px;
+  animation: bzNoticeStripes 0.8s linear infinite;
+  transition: width 0.3s ease;
+}
+.bz-notice-progress--done {
+  background: var(--color-green);
+  animation: none;
+}
+.bz-notice-progress--indeterminate {
+  width: 40% !important;
+  animation: bzNoticeIndeterminate 1.2s ease-in-out infinite;
+}
+@keyframes bzNoticeIn {
+  from { opacity: 0; transform: translateY(-14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes bzNoticeInPop {
+  from { opacity: 0; transform: scale(0.88); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes bzNoticeInLeft {
+  from { opacity: 0; transform: translateX(-48px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes bzNoticeInRight {
+  from { opacity: 0; transform: translateX(48px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes bzNoticeInBounce {
+  0% { opacity: 0; transform: translateY(-26px) scale(0.95); }
+  60% { opacity: 1; transform: translateY(5px) scale(1.02); }
+  80% { transform: translateY(-3px); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes bzNoticeShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-7px); }
+  40% { transform: translateX(7px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+@keyframes bzNoticeIconPop {
+  0% { transform: scale(0.5); }
+  70% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+@keyframes bzNoticeStripes {
+  from { background-position: 0 0; }
+  to { background-position: 16px 0; }
+}
+@keyframes bzNoticeOut {
+  to { opacity: 0; transform: translateY(-14px); }
+}
+@keyframes bzNoticeOutPop {
+  to { opacity: 0; transform: scale(0.88); }
+}
+@keyframes bzNoticeOutLeft {
+  to { opacity: 0; transform: translateX(-48px); }
+}
+@keyframes bzNoticeOutRight {
+  to { opacity: 0; transform: translateX(48px); }
+}
+@keyframes bzNoticeOutFade {
+  to { opacity: 0; }
+}
+@keyframes bzNoticeSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes bzNoticeIndeterminate {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(320%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bz-notice,
+  .bz-notice--leaving,
+  .bz-notice--leaving.bz-notice--out-pop,
+  .bz-notice--leaving.bz-notice--out-left,
+  .bz-notice--leaving.bz-notice--out-right,
+  .bz-notice--leaving.bz-notice--out-fade,
+  .bz-notice--in-pop,
+  .bz-notice--in-slide-left,
+  .bz-notice--in-slide-right,
+  .bz-notice--in-bounce,
+  .bz-notice--in-shake {
+    animation: bzNoticeFade 0.15s ease-out;
+  }
+  /* progress 转圈保留：加载指示属功能性动画，reduced-motion 下不降级
+     （Windows 关闭动画效果时 Chromium 报 prefers-reduced-motion: reduce，若禁用则圆圈静态误导用户） */
+  .bz-notice-progress,
+  .bz-notice-progress--done {
+    animation: none;
+  }
+  .bz-notice-icon {
+    animation: none;
+  }
+}
+@keyframes bzNoticeFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 设置弹窗移动端字号（原 core/settings-modal.ts SETTINGS_MODAL_CSS） */
+@media (max-width: 768px) {
+    #bz-settings-modal-popup .setting-item-heading .setting-item-name {
+        font-size: 17px;
+        font-weight: 600;
+    }
+    #bz-settings-modal-popup .setting-item-name {
+        font-size: 14px;
+    }
+    #bz-settings-modal-popup .setting-item-description {
+        font-size: 12px;
+    }
+}
+
+/* 通用确认弹窗（原 core/confirm.ts 内联，Q3.js 移植；id 保持外部约定） */
+#__shared_confirm_mask__ {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 10060;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#__shared_confirm_popup__ {
+  position: relative;
+  background: var(--background-primary);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+#__shared_confirm_popup__ h4 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+#__shared_confirm_popup__ p {
+  margin: 0 0 20px 0;
+  font-size: 15px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  word-wrap: break-word;
+  max-width: 100%;
+}
+#__shared_confirm_popup__ .confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  width: 100%;
+}
+#__shared_confirm_cancel__ {
+  padding: 8px 24px;
+  border-radius: 6px;
+  border: none;
+  background: var(--background-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  box-shadow: none;
+  flex: 1;
+}
+#__shared_confirm_ok__ {
+  padding: 8px 24px;
+  border-radius: 6px;
+  border: none;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: none;
+  flex: 1;
+}
+
+/* 通用遮罩/弹窗（原 core/dom.ts createOverlay 内联；zIndex/width/maxWidth/display 仍为功能性内联） */
+.bz-overlay-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--background-modifier-cover);
+}
+.bz-overlay-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--background-primary);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 图标按钮（原 core/dom.ts createIconBtn 内联；hover 背景移 CSS；尺寸按关闭/普通两档类） */
+.bz-icon-btn {
+  background: none;
+  border: none !important;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none !important;
+  font-size: 14px;
+  width: 22px;
+  height: 26px;
+}
+.bz-icon-btn:hover {
+  background: var(--background-secondary);
+}
+.bz-icon-btn--close {
+  font-size: 13px;
+  width: 21px;
+  height: 25px;
+}
+
+/* 站点图标（原 core/dom.ts createSiteIcon 内联视觉部分；尺寸动态内联保留） */
+.bz-site-icon {
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* 设置弹窗头部（原 core/settings-modal.ts 内联） */
+.bz-settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+.bz-settings-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+.bz-settings-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0 4px;
+}
+/* 设置弹窗内容区/空态（原 core/settings-modal.ts 内联；max-height 滚动为功能性） */
+.bz-settings-content {
+  padding: 12px 16px 16px;
+  max-height: 65vh;
+  overflow-y: auto;
+}
+.bz-settings-empty {
+  padding: 28px 12px;
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 14px;
+}
+.bz-settings-empty-desc {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ==================== 移动端主窗口默认全屏（ticket 68，ADR-0019） ==================== */
+/* 统一 ≤768px 两态（废止原 480/640/768 乱断点）：开=真全屏（.bz-win-mfs）/ 关=常规卡（各域 ≤768 基规则） */
+@media (max-width: 768px) {
+  /* 真全屏：覆盖整个视口、去圆角、去变换/动画（各域桌面定位统一覆写） */
+  .bz-win-mfs {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    animation: none !important;
+  }
+  /* 真全屏头部避让顶部安全区：多数窗口首子元素即头部行 */
+  .bz-win-mfs > div:first-child {
+    padding-top: max(34px, env(safe-area-inset-top)) !important;
+  }
+  /* news 自垫例外：真全屏时弹窗自身垫顶（与各域统一 34px 顶距），首子不再垫（首子是绝对定位关闭钮） */
+  .news-popup.bz-win-mfs {
+    padding-top: max(34px, env(safe-area-inset-top)) !important;
+  }
+  .news-popup.bz-win-mfs > div:first-child {
+    padding-top: 0 !important;
+  }
+}
+
+/* ==================== 统一右键菜单 / 长按抽屉（core/item-actions，手势统一） ==================== */
+/* 列表卡片不注入任何常驻或 hover 图标排（用户拍板：列表保持干净）；桌面=右键菜单，触屏=长按抽屉 */
+.bz-item-card { position: relative; }
+
+/* 原生 lucide 图标尺寸统一（setIcon 生成的 svg；颜色继承 currentColor） */
+.bz-item-menu-icon svg,
+.bz-item-sheet-icon svg {
+  width: 13px; height: 13px;
+}
+
+/* 跟手菜单（右键弹出；定位由 JS 计算锚点+防溢出，样式仅布局与观感；小尺寸紧凑风，无边框无图标底色装饰） */
+.bz-item-menu {
+  position: fixed; z-index: 11000;
+  min-width: 132px; padding: 4px;
+  background: var(--background-primary);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  animation: bz-menu-in 0.12s ease-out;
+}
+/* 菜单项：图标+文字左对齐、无边框无底色（抗 Obsidian 默认 button 灰底/边框/圆角压盖——与抽屉项同款处理） */
+.bz-item-menu button.bz-item-menu-item {
+  display: flex; align-items: center; gap: 6px;
+  justify-content: flex-start !important; /* 抗 Obsidian 默认 button 居中 */
+  width: 100%; padding: 6px 8px;
+  font-size: 13px; line-height: 1.4; color: var(--text-normal);
+  background: transparent !important;
+  border: none !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  cursor: pointer; text-align: left !important;
+}
+.bz-item-menu button.bz-item-menu-item:hover { background: var(--background-modifier-hover) !important; }
+.bz-item-menu button.bz-item-menu-item--danger { color: var(--text-error) !important; }
+/* 强调色调：整行（文字 + 图标 + 小字）同步换强调色（如解锁态加密/解密）；未解锁保持默认外观。
+   高特异性 + !important 抗 Obsidian 默认 button 样式压盖；桌面菜单无小字（不渲染） */
+.bz-item-sheet button.bz-item-sheet-item--accent,
+.bz-item-sheet button.bz-item-sheet-item--accent .bz-item-sheet-icon,
+.bz-item-sheet button.bz-item-sheet-item--accent .bz-item-sheet-item-sub,
+.bz-item-menu button.bz-item-menu-item--accent,
+.bz-item-menu button.bz-item-menu-item--accent .bz-item-menu-icon {
+  color: var(--color-green) !important;
+}
+.bz-item-menu-icon { width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--text-muted); }
+.bz-item-menu button.bz-item-menu-item--danger .bz-item-menu-icon { color: var(--text-error); }
+@keyframes bz-menu-in {
+  from { opacity: 0; transform: scale(0.96) translateY(2px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* 移动端底部抽屉（长按卡片弹出，参照 B 站/网易云：遮罩 + 底部滑入 + 顶部选中条目信息） */
+.bz-item-sheet-mask {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 10999; /* 高于各域主面板（999x），低于抽屉本体（11000）——遮罩必须完整盖住主面板 */
+  background: rgba(0, 0, 0, 0.4);
+  animation: bz-mask-in 0.18s ease-out;
+  transition: opacity 0.2s ease; /* 下滑关闭时同步淡出 */
+}
+.bz-item-sheet {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  z-index: 11000;
+  background: var(--background-primary);
+  border-radius: 14px 14px 0 0;
+  padding: 10px 14px calc(16px + env(safe-area-inset-bottom));
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.18);
+  animation: bz-sheet-in 0.24s cubic-bezier(0.32, 0.72, 0.24, 1);
+  transition: transform 0.22s ease; /* 下滑回弹/滑出关闭 */
+}
+.bz-item-sheet.bz-item-sheet--dragging { transition: none; } /* 拖拽中即时跟随 */
+/* 功能项区：项多内部滚动，最高 70vh，隐藏滚动条 */
+.bz-item-sheet-body {
+  max-height: 70vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.bz-item-sheet-body::-webkit-scrollbar { display: none; }
+/* 顶部信息区（网易云式：展示选中列表信息；memo 传入 buildSheetHead = 与列表一字不差的标题+meta） */
+.bz-item-sheet-head {
+  padding: 10px 2px 14px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  margin-bottom: 6px;
+  /* 头部固定内容区：内容已收敛（三行省略），图片/视频限高，任何情况不出滚动条 */
+  overflow: hidden;
+}
+/* 条目展示：标题与 meta 行上下排列，留足间距（memo/diary 共用）；抽屉内信息同样禁止选字复制 */
+.bz-item-sheet-entry {
+  display: flex; flex-direction: column; gap: 8px;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.bz-item-sheet-entry-info {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 14px; color: var(--text-muted);
+}
+/* emoji 与标题行放大：与列表卡片头部一字不差（20px emoji、16px 加粗时间） */
+.bz-item-sheet-emoji { font-size: 20px; line-height: 1; flex-shrink: 0; }
+.bz-item-sheet-time { font-size: 16px; font-weight: 600; color: var(--text-normal); }
+/* 头部内容：固定区域展示，超出三行省略（不滚动） */
+.bz-item-sheet-entry-content {
+  font-size: 14px; color: var(--text-normal);
+  line-height: 1.6; word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+/* 头部内的图片/视频/嵌入：限高展示，不把头部撑成滚动条（md 渲染的大图/视频常见病） */
+.bz-item-sheet-entry-content img,
+.bz-item-sheet-entry-content video,
+.bz-item-sheet-entry-content iframe {
+  max-width: 100%;
+  max-height: 80px;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+/* ==================== 日记本域样式（src/diary/styles.css） ==================== */
 /* ==================== 日记本（diary-notebook 合并） ==================== */
 /* 添加日记弹窗样式 */
 #add-diary-mask {
@@ -540,65 +1291,17 @@
     margin: 0 !important;
     background: var(--background-primary) !important;
 }
-/* ===== 设置页顶部分页（参考 obsidian-linter 设置页） ===== */
-/* 设置区块标题（ADR-0009 单页平铺：🤖 AI / 📂 数据存储路径） */
-.bz-setting-section-title {
-    margin: 20px 0 10px;
-    font-size: 1.15em;
-    font-weight: 700;
-    color: var(--text-normal);
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--background-modifier-border);
+/* ==================== 日记加密分类（ADR-0017） ==================== */
+/* 上锁态「加密」筛选按钮（🔒、无计数） */
+.diary-tag-btn.bz-encrypt-locked {
+  opacity: 0.72;
+  border: 1px dashed var(--background-modifier-border);
 }
-.bz-setting-section-title:first-child {
-    margin-top: 0;
-}
-.bz-setting-header {
-    margin-bottom: 12px;
-    overflow-x: auto;
-}
-.bz-tab-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px;
-    border-bottom: 2px solid var(--background-modifier-border);
-    padding: 4px 2px 0;
-}
-.bz-tab {
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.9em;
-    padding: 6px 14px;
-    border: 2px solid transparent;
-    border-bottom: none;
-    border-radius: 6px 6px 0 0;
-    color: var(--text-muted);
-    white-space: nowrap;
-    user-select: none;
-    transition: color 0.2s ease, background-color 0.2s ease;
-}
-.bz-tab:hover {
-    color: var(--text-normal);
-    background: var(--background-modifier-hover);
-}
-.bz-tab-active,
-.bz-tab-active:hover {
-    color: var(--text-on-accent);
-    background: var(--interactive-accent);
-    border-color: var(--interactive-accent);
-}
-.bz-tab-content {
-    display: none;
-}
-.bz-tab-content-active {
-    display: block;
-}
-.bz-setting-hidden {
-    display: none !important;
+.diary-tag-btn.bz-encrypt-locked:hover {
+  opacity: 1;
 }
 
-
-
+/* ==================== 入口页域样式（src/launcher/styles.css） ==================== */
 /* ===== 入口页（ticket 23）===== */
 /* 底部滑入（Windows 开始菜单式） */
 @keyframes launcher-slide-up {
@@ -705,6 +1408,7 @@
   background: var(--background-modifier-hover);
   border-radius: 10px;
 }
+/* ==================== 备忘录域样式（src/memo/styles.css） ==================== */
 /* ==================== 备忘录（memo，ticket 57 样式收敛：原 TODOCSS 注入 + 内联样式提取，视觉逐字等价） ==================== */
 #todo-mask { backdrop-filter: blur(2px); }
 #todo-popup { animation: slideUp 0.3s ease-out; }
@@ -908,6 +1612,7 @@
 .bz-todo-sep span { font-size: 14px; color: var(--text-faint); }
 
 
+/* ==================== 聚合讯域样式（src/news/styles.css） ==================== */
 /* ==================== 聚合讯（news，ticket 60 收敛：原 NEWS_CSS 运行时注入，逐字搬运） ==================== */
 .news-mask {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -1124,107 +1829,7 @@
   .news-settings-btn { display: flex; align-items: center; justify-content: center; }
 }
 
-/* ==================== 主窗口头部行统一规范（ticket 68 后续，用户拍板） ==================== */
-/* 头行：16px 24px 10px（上/左右/下——头部到底部列表的间距统一 10px），行内两端对齐、间距 8 */
-.bz-win-head,
-.diary-popup-header,
-.bz-todo-head,
-.fav-header,
-.bz-lib-header,
-.bz-lib-modal-header,
-.bz-encrypt-head {
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  gap: 8px !important;
-  padding: 16px 24px 10px !important;
-  flex-shrink: 0 !important;
-}
-/* 头行按钮容器：统一 8px 间距、垂直居中 */
-.bz-win-head > div,
-.diary-popup-header > div,
-.bz-todo-head-btns,
-.fav-header > div,
-.bz-lib-header-btns,
-.bz-encrypt-head-btns {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-}
-/* 头行按钮：统一 22×26/14px、透明、无阴影无边框、圆角 4、text-muted；hover 统一背景 */
-.bz-win-head button,
-.diary-popup-header button,
-.bz-todo-head-btns button,
-.fav-header button,
-.bz-lib-header-btns button,
-.bz-lib-modal-header button,
-.bz-encrypt-head-btns button,
-.news-close-btn,
-.news-settings-btn {
-  width: 22px !important;
-  height: 26px !important;
-  font-size: 14px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  border-radius: 4px !important;
-  color: var(--text-muted) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  line-height: 1 !important;
-}
-.bz-win-head button:hover,
-.diary-popup-header button:hover,
-.bz-todo-head-btns button:hover,
-.fav-header button:hover,
-.bz-lib-header-btns button:hover,
-.bz-lib-modal-header button:hover,
-.bz-encrypt-head-btns button:hover,
-.news-close-btn:hover,
-.news-settings-btn:hover {
-  background: var(--background-secondary) !important;
-}
-/* 番茄钟右上角设置钮：同头行按钮规格（absolute 定位保留） */
-#pomodoro-btn-settings {
-  width: 22px !important;
-  height: 26px !important;
-  padding: 0 !important;
-  font-size: 14px !important;
-  border: none !important;
-  border-radius: 4px !important;
-  box-shadow: none !important;
-  background: none !important;
-  color: var(--text-muted) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-/* 关闭按钮再小 2px（用户拍板）：20×24/12px（元素选择器提特异性，压过统一按钮组） */
-button.bz-icon-btn--close,
-button.bz-win-close,
-button.todo-btn-close,
-button.news-close-btn {
-  width: 20px !important;
-  height: 24px !important;
-  font-size: 12px !important;
-}
-/* 非真全屏一律隐藏关闭按钮（含桌面端——用户拍板）：桌面/卡片态靠点遮罩与 ESC 关闭，真全屏时靠 ❌ 关闭 */
-button.bz-win-close,
-button.bz-icon-btn--close,
-button.todo-btn-close,
-button.news-close-btn {
-  display: none !important;
-}
-.bz-win-mfs button.bz-win-close,
-.bz-win-mfs button.bz-icon-btn--close,
-.bz-win-mfs button.todo-btn-close,
-.bz-win-mfs button.news-close-btn {
-  display: flex !important;
-}
-
+/* ==================== 剪藏本域样式（src/clipping/styles.css） ==================== */
 /* ==================== 剪藏本（clipping，ticket 60 收敛：原 CLIPPING_CSS + 滚动条注入，逐字搬运） ==================== */
         #article-view-popup {
             animation: slideUp 0.3s ease-out;
@@ -1376,6 +1981,7 @@ button.news-close-btn {
     
 .article-sites-scroll::-webkit-scrollbar { display:none; }
 
+/* ==================== 密码本域样式（src/password/styles.css） ==================== */
 /* ==================== 密码本（password，ticket 60 收敛：原 PW_STYLES 运行时注入，逐字搬运） ==================== */
     #pw-mask { backdrop-filter: blur(2px); }
     #pw-popup { animation: slideUp 0.3s ease-out; }
@@ -1563,6 +2169,7 @@ button.news-close-btn {
         }
     }
 
+/* ==================== 收藏本域样式（src/favorites/styles.css） ==================== */
 /* ==================== 收藏本（favorites，ticket 60 收敛：原 fav-mobile 注入，逐字搬运；后续优化：header 按钮去 box-shadow、标题栏去下边框、类型栏单行横滑；移动端列表卡片已恢复桌面样式（边框/圆角/间距随 ui.ts 内联样式），不再通栏平铺） ==================== */
       /* #fav-popup .fav-header .bz-icon-btn 去阴影已并入「主窗口头部行统一规范」（ticket 68 后续） */
       @media (max-width: 768px) {
@@ -1589,6 +2196,45 @@ button.news-close-btn {
       }
     
 
+/* ==================== 收藏本抽屉头部（统一手势组件接入） ==================== */
+/* 分类 emoji（与日记抽屉 emoji 同级放大） */
+.bz-item-sheet .bz-fav-sheet-emoji {
+  font-size: 20px;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+/* 标题：加粗主行，置顶 📌 前缀随文本 */
+.bz-item-sheet .bz-fav-sheet-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-normal);
+  word-break: break-word;
+}
+/* 第二行小字：标签徽章 + 余额，可换行 */
+.bz-item-sheet .bz-fav-sheet-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.bz-item-sheet .bz-fav-sheet-tag {
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.bz-item-sheet .bz-fav-sheet-balance {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.bz-item-sheet .bz-fav-sheet-balance--error {
+  color: var(--text-error);
+}
+/* ==================== 复习计划域样式（src/review/styles.css） ==================== */
 /* ==================== 复习计划（review，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
       #review-mask { backdrop-filter: blur(2px); }
       #review-popup { animation: slideUp 0.3s ease-out; }
@@ -1617,6 +2263,7 @@ button.news-close-btn {
       .review-search-input:focus { border-color:var(--interactive-accent); }
     
 
+/* ==================== 做题家域样式（src/quiz/styles.css） ==================== */
 /* ==================== 做题家（quiz，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
       #quiz-mask {
         backdrop-filter: blur(2px);
@@ -1706,6 +2353,7 @@ button.news-close-btn {
       @keyframes spin { to { transform: rotate(360deg); } }
     
 
+/* ==================== 番茄钟域样式（src/pomodoro/styles.css） ==================== */
 /* ==================== 番茄钟状态栏（pomodoro，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
     .pomodoro-statusbar { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
     .pomodoro-statusbar .pomodoro-statusbar-icon { display: inline-flex; align-items: center; }
@@ -1736,445 +2384,7 @@ button.news-close-btn {
     .pomodoro-stat-col { display: flex; align-items: flex-end; height: 40px; }
     .pomodoro-stat-bar { width: 10px; border-radius: 3px 3px 0 0; background: var(--interactive-accent); min-height: 2px; }
     .pomodoro-stat-label { font-size: 9px; color: var(--text-faint); }
-/* ==================== core 层样式收敛（ticket 60 延伸：notice/settings-modal/confirm/dom） ==================== */
-/* 通知 toast（原 core/notice.ts NOTICE_CSS，ADR-0010） */
-#bz-notice-container {
-  position: fixed;
-  top: calc(16px + env(safe-area-inset-top, 0px));
-  right: 16px;
-  z-index: 100000;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-  pointer-events: none;
-  width: max-content;
-  max-width: calc(100vw - 24px);
-}
-/* 移动端：顶部居中 + Obsidian 顶部栏更高，通知下移（项目断点惯例 max-width: 768px） */
-@media (max-width: 768px) {
-  #bz-notice-container {
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-    align-items: center;
-    top: calc(34px + env(safe-area-inset-top, 0px));
-  }
-}
-.bz-notice {
-  pointer-events: auto;
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  min-width: 240px;
-  max-width: min(420px, calc(100vw - 24px));
-  padding: 10px 14px 11px;
-  border-radius: 10px;
-  background: var(--background-primary);
-  border: 1px solid var(--background-modifier-border);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--text-normal);
-  cursor: pointer;
-  overflow: hidden;
-  animation: bzNoticeIn 0.2s ease-out;
-}
-.bz-notice--leaving {
-  animation: bzNoticeOut 0.2s ease-in forwards;
-}
-.bz-notice--leaving.bz-notice--out-pop {
-  animation: bzNoticeOutPop 0.2s ease-in forwards;
-}
-.bz-notice--leaving.bz-notice--out-left {
-  animation: bzNoticeOutLeft 0.2s ease-in forwards;
-}
-.bz-notice--leaving.bz-notice--out-right {
-  animation: bzNoticeOutRight 0.2s ease-in forwards;
-}
-.bz-notice--leaving.bz-notice--out-fade {
-  animation: bzNoticeOutFade 0.2s ease-in forwards;
-}
-.bz-notice--in-pop {
-  animation: bzNoticeInPop 0.25s ease-out;
-}
-.bz-notice--in-slide-left {
-  animation: bzNoticeInLeft 0.25s ease-out;
-}
-.bz-notice--in-slide-right {
-  animation: bzNoticeInRight 0.25s ease-out;
-}
-.bz-notice--in-bounce {
-  animation: bzNoticeInBounce 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.bz-notice--in-shake {
-  animation: bzNoticeShake 0.4s ease-out;
-}
-.bz-notice-icon {
-  flex: 0 0 auto;
-  width: 20px;
-  height: 20px;
-  margin-top: 2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  line-height: 1;
-  animation: bzNoticeIconPop 0.3s ease-out;
-}
-.bz-notice-icon svg {
-  width: 18px;
-  height: 18px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.bz-notice--warning .bz-notice-icon { color: var(--color-orange); }
-.bz-notice--error .bz-notice-icon { color: var(--color-red); }
-.bz-notice--info .bz-notice-icon { color: var(--interactive-accent); }
-.bz-notice--success .bz-notice-icon { color: var(--color-green); }
-.bz-notice--pause .bz-notice-icon { color: var(--text-muted); }
-.bz-notice--accept .bz-notice-icon { color: var(--color-purple); }
-.bz-notice--delete .bz-notice-icon { color: var(--color-red); }
-.bz-notice--confirm .bz-notice-icon { color: var(--color-green); }
-.bz-notice--restore .bz-notice-icon { color: var(--color-cyan); }
-.bz-notice--skip .bz-notice-icon { color: var(--color-orange); }
-.bz-notice--archive .bz-notice-icon { color: var(--color-blue); }
-.bz-notice--progress .bz-notice-icon { color: var(--interactive-accent); }
-.bz-notice--progress .bz-notice-icon svg {
-  animation: bzNoticeSpin 1s linear infinite;
-}
-.bz-notice-body {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.bz-notice-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
-  letter-spacing: 0.02em;
-}
-.bz-notice-msg {
-  word-break: break-word;
-  white-space: pre-line;
-}
-.bz-notice-action {
-  flex: 0 0 auto;
-  margin-top: 1px;
-  padding: 2px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--background-modifier-border);
-  background: var(--background-secondary);
-  color: var(--interactive-accent);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.bz-notice-action:hover {
-  background: var(--background-modifier-hover);
-}
-.bz-notice-progress {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  height: 3px;
-  width: 0;
-  background: var(--interactive-accent);
-  background-image: linear-gradient(
-    45deg,
-    rgba(255, 255, 255, 0.25) 25%,
-    transparent 25%,
-    transparent 50%,
-    rgba(255, 255, 255, 0.25) 50%,
-    rgba(255, 255, 255, 0.25) 75%,
-    transparent 75%
-  );
-  background-size: 16px 16px;
-  animation: bzNoticeStripes 0.8s linear infinite;
-  transition: width 0.3s ease;
-}
-.bz-notice-progress--done {
-  background: var(--color-green);
-  animation: none;
-}
-.bz-notice-progress--indeterminate {
-  width: 40% !important;
-  animation: bzNoticeIndeterminate 1.2s ease-in-out infinite;
-}
-@keyframes bzNoticeIn {
-  from { opacity: 0; transform: translateY(-14px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes bzNoticeInPop {
-  from { opacity: 0; transform: scale(0.88); }
-  to { opacity: 1; transform: scale(1); }
-}
-@keyframes bzNoticeInLeft {
-  from { opacity: 0; transform: translateX(-48px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-@keyframes bzNoticeInRight {
-  from { opacity: 0; transform: translateX(48px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-@keyframes bzNoticeInBounce {
-  0% { opacity: 0; transform: translateY(-26px) scale(0.95); }
-  60% { opacity: 1; transform: translateY(5px) scale(1.02); }
-  80% { transform: translateY(-3px); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
-}
-@keyframes bzNoticeShake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-7px); }
-  40% { transform: translateX(7px); }
-  60% { transform: translateX(-4px); }
-  80% { transform: translateX(4px); }
-}
-@keyframes bzNoticeIconPop {
-  0% { transform: scale(0.5); }
-  70% { transform: scale(1.2); }
-  100% { transform: scale(1); }
-}
-@keyframes bzNoticeStripes {
-  from { background-position: 0 0; }
-  to { background-position: 16px 0; }
-}
-@keyframes bzNoticeOut {
-  to { opacity: 0; transform: translateY(-14px); }
-}
-@keyframes bzNoticeOutPop {
-  to { opacity: 0; transform: scale(0.88); }
-}
-@keyframes bzNoticeOutLeft {
-  to { opacity: 0; transform: translateX(-48px); }
-}
-@keyframes bzNoticeOutRight {
-  to { opacity: 0; transform: translateX(48px); }
-}
-@keyframes bzNoticeOutFade {
-  to { opacity: 0; }
-}
-@keyframes bzNoticeSpin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-@keyframes bzNoticeIndeterminate {
-  0% { transform: translateX(-120%); }
-  100% { transform: translateX(320%); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .bz-notice,
-  .bz-notice--leaving,
-  .bz-notice--leaving.bz-notice--out-pop,
-  .bz-notice--leaving.bz-notice--out-left,
-  .bz-notice--leaving.bz-notice--out-right,
-  .bz-notice--leaving.bz-notice--out-fade,
-  .bz-notice--in-pop,
-  .bz-notice--in-slide-left,
-  .bz-notice--in-slide-right,
-  .bz-notice--in-bounce,
-  .bz-notice--in-shake {
-    animation: bzNoticeFade 0.15s ease-out;
-  }
-  /* progress 转圈保留：加载指示属功能性动画，reduced-motion 下不降级
-     （Windows 关闭动画效果时 Chromium 报 prefers-reduced-motion: reduce，若禁用则圆圈静态误导用户） */
-  .bz-notice-progress,
-  .bz-notice-progress--done {
-    animation: none;
-  }
-  .bz-notice-icon {
-    animation: none;
-  }
-}
-@keyframes bzNoticeFade {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* 设置弹窗移动端字号（原 core/settings-modal.ts SETTINGS_MODAL_CSS） */
-@media (max-width: 768px) {
-    #bz-settings-modal-popup .setting-item-heading .setting-item-name {
-        font-size: 17px;
-        font-weight: 600;
-    }
-    #bz-settings-modal-popup .setting-item-name {
-        font-size: 14px;
-    }
-    #bz-settings-modal-popup .setting-item-description {
-        font-size: 12px;
-    }
-}
-
-/* 通用确认弹窗（原 core/confirm.ts 内联，Q3.js 移植；id 保持外部约定） */
-#__shared_confirm_mask__ {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-  z-index: 10060;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-#__shared_confirm_popup__ {
-  position: relative;
-  background: var(--background-primary);
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  padding: 24px;
-  max-width: 400px;
-  width: 90%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-#__shared_confirm_popup__ h4 {
-  margin: 0 0 12px 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-normal);
-}
-#__shared_confirm_popup__ p {
-  margin: 0 0 20px 0;
-  font-size: 15px;
-  color: var(--text-muted);
-  line-height: 1.5;
-  word-wrap: break-word;
-  max-width: 100%;
-}
-#__shared_confirm_popup__ .confirm-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  width: 100%;
-}
-#__shared_confirm_cancel__ {
-  padding: 8px 24px;
-  border-radius: 6px;
-  border: none;
-  background: var(--background-secondary);
-  cursor: pointer;
-  font-size: 14px;
-  box-shadow: none;
-  flex: 1;
-}
-#__shared_confirm_ok__ {
-  padding: 8px 24px;
-  border-radius: 6px;
-  border: none;
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  box-shadow: none;
-  flex: 1;
-}
-
-/* 通用遮罩/弹窗（原 core/dom.ts createOverlay 内联；zIndex/width/maxWidth/display 仍为功能性内联） */
-.bz-overlay-mask {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--background-modifier-cover);
-}
-.bz-overlay-popup {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: var(--background-primary);
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 图标按钮（原 core/dom.ts createIconBtn 内联；hover 背景移 CSS；尺寸按关闭/普通两档类） */
-.bz-icon-btn {
-  background: none;
-  border: none !important;
-  cursor: pointer;
-  color: var(--text-muted);
-  padding: 0;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: none !important;
-  font-size: 14px;
-  width: 22px;
-  height: 26px;
-}
-.bz-icon-btn:hover {
-  background: var(--background-secondary);
-}
-.bz-icon-btn--close {
-  font-size: 13px;
-  width: 21px;
-  height: 25px;
-}
-
-/* 站点图标（原 core/dom.ts createSiteIcon 内联视觉部分；尺寸动态内联保留） */
-.bz-site-icon {
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-
-/* 设置弹窗头部（原 core/settings-modal.ts 内联） */
-.bz-settings-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--background-modifier-border);
-  flex-shrink: 0;
-}
-.bz-settings-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-normal);
-}
-.bz-settings-close {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  color: var(--text-muted);
-  padding: 0 4px;
-}
-/* 设置弹窗内容区/空态（原 core/settings-modal.ts 内联；max-height 滚动为功能性） */
-.bz-settings-content {
-  padding: 12px 16px 16px;
-  max-height: 65vh;
-  overflow-y: auto;
-}
-.bz-settings-empty {
-  padding: 28px 12px;
-  text-align: center;
-  color: var(--text-faint);
-  font-size: 14px;
-}
-.bz-settings-empty-desc {
-  margin-top: 6px;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
+/* ==================== 书库域样式（src/library/styles.css） ==================== */
 /* ============ 书库 library（ticket 62 样式收敛：原 ui.ts 内联 → bz-lib-*） ============ */
 /* 遮罩分层：1000 主面板 / 1100 筛选 / 1200 读书笔记 / 1300 编辑弹窗 */
 .bz-lib-overlay {
@@ -2412,6 +2622,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 .bz-lib-pill--sm { padding: 5px 10px; border-radius: 16px; font-size: 0.75rem; }
 .bz-lib-pill--active { background: var(--interactive-accent); color: #fff; }
 
+/* ==================== 附件搬移域样式（src/attach/styles.css） ==================== */
 /* ===== 附件搬移（ticket 65）===== */
 .bz-attach-mask {
   position: fixed;
@@ -2491,6 +2702,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   color: var(--text-on-accent);
 }
 
+/* ==================== 保险箱域样式（src/encrypt/styles.css） ==================== */
 /* ==================== 加密保险箱（encrypt，ticket NN：移出式清单容器加密） ==================== */
 #bz-encrypt-mask { backdrop-filter: blur(2px); }
 #bz-encrypt-popup { animation: slideUp 0.3s ease-out; }
@@ -2665,163 +2877,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 .bz-encrypt-statusbar { cursor: pointer; }
 .bz-encrypt-statusbar:hover { opacity: 0.8; }
 
-/* ==================== 日记加密分类（ADR-0017） ==================== */
-/* 上锁态「加密」筛选按钮（🔒、无计数） */
-.diary-tag-btn.bz-encrypt-locked {
-  opacity: 0.72;
-  border: 1px dashed var(--background-modifier-border);
-}
-.diary-tag-btn.bz-encrypt-locked:hover {
-  opacity: 1;
-}
-
-/* ==================== 移动端主窗口默认全屏（ticket 68，ADR-0019） ==================== */
-/* 统一 ≤768px 两态（废止原 480/640/768 乱断点）：开=真全屏（.bz-win-mfs）/ 关=常规卡（各域 ≤768 基规则） */
-@media (max-width: 768px) {
-  /* 真全屏：覆盖整个视口、去圆角、去变换/动画（各域桌面定位统一覆写） */
-  .bz-win-mfs {
-    width: 100vw !important;
-    height: 100vh !important;
-    max-width: 100vw !important;
-    max-height: 100vh !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: auto !important;
-    bottom: auto !important;
-    transform: none !important;
-    animation: none !important;
-  }
-  /* 真全屏头部避让顶部安全区：多数窗口首子元素即头部行 */
-  .bz-win-mfs > div:first-child {
-    padding-top: max(34px, env(safe-area-inset-top)) !important;
-  }
-  /* news 自垫例外：真全屏时弹窗自身垫顶（与各域统一 34px 顶距），首子不再垫（首子是绝对定位关闭钮） */
-  .news-popup.bz-win-mfs {
-    padding-top: max(34px, env(safe-area-inset-top)) !important;
-  }
-  .news-popup.bz-win-mfs > div:first-child {
-    padding-top: 0 !important;
-  }
-}
-
-/* ==================== 统一右键菜单 / 长按抽屉（core/item-actions，手势统一） ==================== */
-/* 列表卡片不注入任何常驻或 hover 图标排（用户拍板：列表保持干净）；桌面=右键菜单，触屏=长按抽屉 */
-.bz-item-card { position: relative; }
-
-/* 原生 lucide 图标尺寸统一（setIcon 生成的 svg；颜色继承 currentColor） */
-.bz-item-menu-icon svg,
-.bz-item-sheet-icon svg {
-  width: 13px; height: 13px;
-}
-
-/* 跟手菜单（右键弹出；定位由 JS 计算锚点+防溢出，样式仅布局与观感；小尺寸紧凑风，无边框无图标底色装饰） */
-.bz-item-menu {
-  position: fixed; z-index: 11000;
-  min-width: 132px; padding: 4px;
-  background: var(--background-primary);
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  animation: bz-menu-in 0.12s ease-out;
-}
-/* 菜单项：图标+文字左对齐、无边框无底色（抗 Obsidian 默认 button 灰底/边框/圆角压盖——与抽屉项同款处理） */
-.bz-item-menu button.bz-item-menu-item {
-  display: flex; align-items: center; gap: 6px;
-  justify-content: flex-start !important; /* 抗 Obsidian 默认 button 居中 */
-  width: 100%; padding: 6px 8px;
-  font-size: 13px; line-height: 1.4; color: var(--text-normal);
-  background: transparent !important;
-  border: none !important;
-  border-radius: 6px !important;
-  box-shadow: none !important;
-  cursor: pointer; text-align: left !important;
-}
-.bz-item-menu button.bz-item-menu-item:hover { background: var(--background-modifier-hover) !important; }
-.bz-item-menu button.bz-item-menu-item--danger { color: var(--text-error) !important; }
-/* 强调色调：整行（文字 + 图标 + 小字）同步换强调色（如解锁态加密/解密）；未解锁保持默认外观。
-   高特异性 + !important 抗 Obsidian 默认 button 样式压盖；桌面菜单无小字（不渲染） */
-.bz-item-sheet button.bz-item-sheet-item--accent,
-.bz-item-sheet button.bz-item-sheet-item--accent .bz-item-sheet-icon,
-.bz-item-sheet button.bz-item-sheet-item--accent .bz-item-sheet-item-sub,
-.bz-item-menu button.bz-item-menu-item--accent,
-.bz-item-menu button.bz-item-menu-item--accent .bz-item-menu-icon {
-  color: var(--color-green) !important;
-}
-.bz-item-menu-icon { width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--text-muted); }
-.bz-item-menu button.bz-item-menu-item--danger .bz-item-menu-icon { color: var(--text-error); }
-@keyframes bz-menu-in {
-  from { opacity: 0; transform: scale(0.96) translateY(2px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-/* 移动端底部抽屉（长按卡片弹出，参照 B 站/网易云：遮罩 + 底部滑入 + 顶部选中条目信息） */
-.bz-item-sheet-mask {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  z-index: 10999; /* 高于各域主面板（999x），低于抽屉本体（11000）——遮罩必须完整盖住主面板 */
-  background: rgba(0, 0, 0, 0.4);
-  animation: bz-mask-in 0.18s ease-out;
-  transition: opacity 0.2s ease; /* 下滑关闭时同步淡出 */
-}
-.bz-item-sheet {
-  position: fixed; left: 0; right: 0; bottom: 0;
-  z-index: 11000;
-  background: var(--background-primary);
-  border-radius: 14px 14px 0 0;
-  padding: 10px 14px calc(16px + env(safe-area-inset-bottom));
-  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.18);
-  animation: bz-sheet-in 0.24s cubic-bezier(0.32, 0.72, 0.24, 1);
-  transition: transform 0.22s ease; /* 下滑回弹/滑出关闭 */
-}
-.bz-item-sheet.bz-item-sheet--dragging { transition: none; } /* 拖拽中即时跟随 */
-/* 功能项区：项多内部滚动，最高 70vh，隐藏滚动条 */
-.bz-item-sheet-body {
-  max-height: 70vh;
-  overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.bz-item-sheet-body::-webkit-scrollbar { display: none; }
-/* 顶部信息区（网易云式：展示选中列表信息；memo 传入 buildSheetHead = 与列表一字不差的标题+meta） */
-.bz-item-sheet-head {
-  padding: 10px 2px 14px;
-  border-bottom: 1px solid var(--background-modifier-border);
-  margin-bottom: 6px;
-  /* 头部固定内容区：内容已收敛（三行省略），图片/视频限高，任何情况不出滚动条 */
-  overflow: hidden;
-}
-/* 条目展示：标题与 meta 行上下排列，留足间距（memo/diary 共用）；抽屉内信息同样禁止选字复制 */
-.bz-item-sheet-entry {
-  display: flex; flex-direction: column; gap: 8px;
-  user-select: none;
-  -webkit-touch-callout: none;
-}
-.bz-item-sheet-entry-info {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 14px; color: var(--text-muted);
-}
-/* emoji 与标题行放大：与列表卡片头部一字不差（20px emoji、16px 加粗时间） */
-.bz-item-sheet-emoji { font-size: 20px; line-height: 1; flex-shrink: 0; }
-.bz-item-sheet-time { font-size: 16px; font-weight: 600; color: var(--text-normal); }
-/* 头部内容：固定区域展示，超出三行省略（不滚动） */
-.bz-item-sheet-entry-content {
-  font-size: 14px; color: var(--text-normal);
-  line-height: 1.6; word-break: break-word;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-/* 头部内的图片/视频/嵌入：限高展示，不把头部撑成滚动条（md 渲染的大图/视频常见病） */
-.bz-item-sheet-entry-content img,
-.bz-item-sheet-entry-content video,
-.bz-item-sheet-entry-content iframe {
-  max-width: 100%;
-  max-height: 80px;
-  object-fit: contain;
-  border-radius: 6px;
-}
-
+/* ==================== 影视域样式（src/movie/styles.css） ==================== */
 /* ---- 影视抽屉头部（与影视卡片一字不差：海报 + 名称 + 徽章 + 影评） ---- */
 .bz-item-sheet-movie-name {
   font-size: 16px; font-weight: 600; color: var(--text-normal);
@@ -2939,41 +2995,3 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   to { opacity: 1; }
 }
 
-/* ==================== 收藏本抽屉头部（统一手势组件接入） ==================== */
-/* 分类 emoji（与日记抽屉 emoji 同级放大） */
-.bz-item-sheet .bz-fav-sheet-emoji {
-  font-size: 20px;
-  line-height: 1.2;
-  flex-shrink: 0;
-}
-/* 标题：加粗主行，置顶 📌 前缀随文本 */
-.bz-item-sheet .bz-fav-sheet-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-normal);
-  word-break: break-word;
-}
-/* 第二行小字：标签徽章 + 余额，可换行 */
-.bz-item-sheet .bz-fav-sheet-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin-top: 6px;
-}
-.bz-item-sheet .bz-fav-sheet-tag {
-  font-size: 11px;
-  padding: 1px 8px;
-  border-radius: 10px;
-  background: var(--background-secondary);
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-.bz-item-sheet .bz-fav-sheet-balance {
-  font-size: 11px;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-.bz-item-sheet .bz-fav-sheet-balance--error {
-  color: var(--text-error);
-}
