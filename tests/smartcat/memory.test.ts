@@ -360,6 +360,89 @@ describe('RAG 增强（2026-08：来源标签/相对时间/情绪时段 query）
   });
 });
 
+describe('睡前巩固（Digest，2026-08-23 增强）', () => {
+  it('从未小结过 → 不触发（数据太少无意义）', async () => {
+    const m = make({ ai: true });
+    await m.addObservation('用户说：a', { importance: 0.5 });
+    await m.addObservation('用户说：b', { importance: 0.5 });
+    await m.addObservation('用户说：c', { importance: 0.5 });
+    expect((m as any).shouldDigest(Date.now())).toBe(false);
+    expect(data.memory.reflection.digestCount).toBe(0);
+  });
+
+  it('距上次小结 <18h → 不触发；≥18h 且新增不足 3 条 → 不触发', async () => {
+    const m = make({ ai: true });
+    data.memory.reflection.lastDigestAt = Date.now() - 10 * 60 * 60 * 1000;
+    data.memory.reflection.digestCount = 1;
+    await m.addObservation('用户说：a', { importance: 0.5 });
+    expect((m as any).shouldDigest(Date.now())).toBe(false); // 间隔不够
+    data.memory.reflection.lastDigestAt = Date.now() - 20 * 60 * 60 * 1000;
+    expect((m as any).shouldDigest(Date.now())).toBe(false); // 新增 <3
+    await m.addObservation('用户说：b', { importance: 0.5 });
+    await m.addObservation('用户说：c', { importance: 0.5 });
+    expect((m as any).shouldDigest(Date.now())).toBe(true);
+  });
+
+  it('LLM 配置时 digest 生成【今日小结】写回流（source digest + evidenceIds + 推进 lastDigestAt）', async () => {
+    const m = make({ ai: true });
+    data.memory.reflection.lastDigestAt = Date.now() - 20 * 60 * 60 * 1000;
+    data.memory.reflection.digestCount = 1;
+    await m.addObservation('用户说：今天完成了项目上线', { importance: 0.9 });
+    await m.addObservation('用户说：晚上去跑步了', { importance: 0.7 });
+    await m.addObservation('用户说：心情不错', { importance: 0.6 });
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content: JSON.stringify({ digests: [{ text: '项目上线成功，晚上跑步放松', evidence: [1, 2] }] }) } }],
+      }),
+    }));
+    (globalThis as any).fetch = fetchMock;
+    await m.digest();
+    const digests = data.memory.stream.filter((x) => x.type === 'insight' && x.source === 'digest');
+    expect(digests.length).toBe(1);
+    expect(digests[0].description).toContain('【今日小结】');
+    expect(digests[0].evidenceIds!.length).toBe(2);
+    expect(data.memory.reflection.digestCount).toBe(2);
+    expect(data.memory.reflection.lastDigestAt).toBeGreaterThan(0);
+  });
+
+  it('AI 未配置 → digest 无产出（不写流、不推进 lastDigestAt、进入退避）', async () => {
+    const m = make();
+    data.memory.reflection.lastDigestAt = Date.now() - 20 * 60 * 60 * 1000;
+    await m.addObservation('a', { importance: 0.5 });
+    await m.addObservation('b', { importance: 0.5 });
+    await m.addObservation('c', { importance: 0.5 });
+    const streamBefore = data.memory.stream.length;
+    (saver as any).mockClear();
+    await m.digest();
+    expect(data.memory.stream.length).toBe(streamBefore);
+    expect(data.memory.reflection.lastDigestAt).toBeLessThan(Date.now() - 10 * 60 * 60 * 1000);
+    expect((m as any).reflectBackoffUntil).toBeGreaterThan(Date.now()); // 失败进入退避
+  });
+
+  it('digest 产出的【今日小结】不进反思 evidence（防自引用）', async () => {
+    const m = make({ ai: true });
+    data.memory.reflection.lastDigestAt = Date.now() - 20 * 60 * 60 * 1000;
+    await m.addObservation('用户说：真实观察一', { importance: 0.8 });
+    await m.addObservation('用户说：真实观察二', { importance: 0.8 });
+    await m.addObservation('用户说：真实观察三', { importance: 0.8 });
+    const f1 = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ choices: [{ message: { content: JSON.stringify({ digests: [{ text: '今日小结：真实观察汇总', evidence: [1, 2, 3] }] }) } }] }),
+    }));
+    (globalThis as any).fetch = f1;
+    await m.digest();
+    const insightCount = data.memory.stream.filter((x) => x.type === 'insight').length;
+    expect(insightCount).toBe(1);
+    // 第二次 digest：候选应不含 digest 小结（source 过滤），且 observations 都被上次消化
+    const f2 = vi.fn(async () => ({ ok: true, json: async () => ({ choices: [{ message: { content: '{}' } }] }) }));
+    (globalThis as any).fetch = f2;
+    await m.digest();
+    // 无新观察 → 不推进（应触发 shouldDigest 的阈值判断失败直接返回）
+    expect(data.memory.stream.filter((x) => x.type === 'insight').length).toBe(1);
+  });
+});
+
 describe('RL 校准配置（ADR-0024 + 进化第 3 轮）', () => {
   it('MEMORY_CONFIG 三因子权重与 decay 为真实库配方（0.66/0.95/1.5/0.982：rMem 接回检索项后的重标定）', () => {
     expect(MEMORY_CONFIG.alphaRecency).toBe(0.66);

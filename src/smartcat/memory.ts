@@ -39,6 +39,14 @@ export const MEMORY_CONFIG = {
   evidenceTop: 50,
   /** 反思：一次生成洞察条数 */
   insightCount: 3,
+  /** 睡前巩固（digest，2026-08-23 增强）：距上次日小结至少间隔（ms，≈18h 容许时差） */
+  digestInterval: 18 * 60 * 60 * 1000,
+  /** 睡前巩固：距上次小结以来新增观察达到该条数才产出（太少无意义） */
+  digestMinNew: 3,
+  /** 睡前巩固：evidence 取距上次小结以来的新增观察，上限 N 条 */
+  digestMaxEvidence: 24,
+  /** 睡前巩固：一次生成日小结条数 */
+  digestCount: 2,
 } as const;
 
 export class MemorySystem {
@@ -51,6 +59,8 @@ export class MemorySystem {
   private pendingSinceReflect = 0;
   private reflectionTimer: ReturnType<typeof setInterval> | null = null;
   private reflecting = false;
+  /** 睡前巩固进行中锁（防并发） */
+  private digesting = false;
   /** 反思失败退避（空转守卫：AI 未配置/调用失败后 5 分钟不重试，指数递增至 30 分钟） */
   private reflectBackoffUntil = 0;
   private reflectBackoffMs = 5 * 60 * 1000;
@@ -102,8 +112,8 @@ export class MemorySystem {
     return memory;
   }
 
-  /** 添加洞察记忆（反思产物；importance 固定高值可由调用方传入） */
-  async addInsight(description: string, evidenceIds: string[], importance = 0.75, emotion?: string): Promise<MemoryStreamEntry> {
+  /** 添加洞察记忆（反思产物；importance 固定高值可由调用方传入；source 默认 reflection，日小结传 digest） */
+  async addInsight(description: string, evidenceIds: string[], importance = 0.75, emotion?: string, source = 'reflection'): Promise<MemoryStreamEntry> {
     const memory: MemoryStreamEntry = {
       id: `insight_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       created: new Date().toISOString(),
@@ -112,7 +122,7 @@ export class MemorySystem {
       importance,
       type: 'insight',
       evidenceIds,
-      source: 'reflection',
+      source,
       emotion,
     };
     this.stream.push(memory);
@@ -379,11 +389,12 @@ export class MemorySystem {
 
   // ---------------- 反思（Reflection） ----------------
 
-  /** 反思调度（每 30s 检查一次；24h 或新增 ≥20 条触发） */
+  /** 反思调度（每 30s 检查一次；24h 或新增 ≥20 条触发反思；睡前巩固 digest 同循环） */
   startReflectionScheduler(): void {
     if (this.reflectionTimer) clearInterval(this.reflectionTimer);
     this.reflectionTimer = setInterval(() => {
       void this.maybeReflect();
+      this.maybeDigest();
     }, 30 * 1000);
   }
 
@@ -483,6 +494,88 @@ export class MemorySystem {
       data.memory.lastUpdated = new Date().toISOString();
       await this.dataSaver(data); // 红队 B P1-2：仅产出时落盘（失败退避期不空转写盘）
     }
+  }
+
+  // ---------------- 睡前巩固（Digest，2026-08-23「小橘做梦」） ----------------
+
+  /** 日小结调度（并入反思调度 30s 循环；距上次小结 ≥digestInterval 且新增 ≥digestMinNew 触发） */
+  maybeDigest(): boolean {
+    if (this.digesting) return false;
+    if (!this.shouldDigest(Date.now())) return false;
+    this.digesting = true;
+    void this.digest().finally(() => { this.digesting = false; });
+    return true;
+  }
+
+  /** 触发条件：距上次日小结 ≥digestInterval 且期间新增观察 ≥digestMinNew；失败退避期不触发 */
+  private shouldDigest(now: number): boolean {
+    if (now < this.reflectBackoffUntil) return false; // 与反思共用退避（AI 不可用不空转）
+    const last = this.dataProvider().memory.reflection.lastDigestAt || 0;
+    if (!last) return false; // 从未小结过：等首次反思后再做日小结（数据太少无意义）
+    if (now - last < MEMORY_CONFIG.digestInterval) return false;
+    // 距上次小结以来的新增观察数（observation 且创建时间 > last）
+    const since = this.stream.filter((m) => m.type === 'observation' && m.source !== 'digest' && new Date(m.created).getTime() > last).length;
+    return since >= MEMORY_CONFIG.digestMinNew;
+  }
+
+  /** 日小结主流程：上一日观察 → LLM 归纳 digestCount 条日小结 → 写回流（source digest，遮蔽反思 evidence）
+   *  无产出（AI 未配置/失败/证据不足）不推进 lastDigestAt——保持待消化状态。 */
+  async digest(): Promise<void> {
+    const data = this.dataProvider();
+    const now = Date.now();
+    const last = data.memory.reflection.lastDigestAt || 0;
+    const candidates = this.stream
+      .filter((m) => m.type === 'observation' && m.source !== 'digest' && new Date(m.created).getTime() > last)
+      .slice(-MEMORY_CONFIG.digestMaxEvidence);
+    if (candidates.length < MEMORY_CONFIG.digestMinNew) return;
+
+    const scope = `过去一天（${new Date(last).toISOString().slice(0, 10)} 至 ${new Date(now).toISOString().slice(0, 10)}）`;
+    const numbered = candidates.map((m, i) => `${i + 1}. ${m.description}`).join('\n');
+    const prompt =
+      `你是小橘，一只陪伴猫咪。以下是用户${scope}的记忆（编号 1-${candidates.length}）：\n` +
+      numbered +
+      '\n\n请把这几天用户重要的事压缩成 ' + MEMORY_CONFIG.digestCount + ' 条「日小结」（每条约 30 字，讲述用户经历了什么、情绪如何、进展如何），' +
+      '每条必须引用 1 条以上记忆编号。只返回 JSON：' +
+      `{"digests":[{"text":"日小结","evidence":[编号]}]}`;
+
+    let digests: { text: string; evidence: number[] }[] = [];
+    try {
+      if (await isAIConfigured()) {
+        const r = await callChatJson([
+          { role: 'system', content: '你是辅助归纳记忆的助手，只输出合法 JSON。' },
+          { role: 'user', content: prompt },
+        ], 800);
+        if (Array.isArray(r?.digests)) {
+          digests = r.digests
+            .filter((x: any) => x && typeof x.text === 'string' && x.text.trim())
+            .slice(0, MEMORY_CONFIG.digestCount)
+            .map((x: any) => ({ text: x.text.trim(), evidence: Array.isArray(x.evidence) ? x.evidence.map(Number) : [] }));
+        }
+      }
+    } catch (e) { /* 日小结失败 → 无产出，保持待消化 */ }
+
+    if (!digests.length) {
+      this.backoffReflection();
+      return;
+    }
+    this.reflectBackoffUntil = 0;
+    this.reflectBackoffMs = 5 * 60 * 1000;
+    for (const d of digests) {
+      const evidenceIds = d.evidence
+        .map((n) => candidates[n - 1]?.id)
+        .filter((id): id is string => !!id);
+      await this.addInsight(`【今日小结】${d.text}`, evidenceIds, 0.7, undefined, 'digest');
+    }
+    data.memory.reflection.lastDigestAt = now;
+    data.memory.reflection.digestCount = (data.memory.reflection.digestCount || 0) + 1;
+    // 睡前巩固也驱动人格（极轻微：洞察 → existential 成长；onReflect 钩子复用）
+    if (this.onReflect) {
+      try {
+        await this.onReflect(digests.map((d) => ({ text: d.text })));
+      } catch (e) { /* 成长失败不影响记忆流 */ }
+    }
+    data.memory.lastUpdated = new Date().toISOString();
+    await this.dataSaver(data);
   }
 
   // ---------------- 状态与格式化 ----------------
