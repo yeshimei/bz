@@ -39,6 +39,7 @@ let panels: SmartcatPanels | null = null;
 let fileOpenRef: any = null;
 let visibilityCleanup: (() => void) | null = null;
 let followTimer: ReturnType<typeof setInterval> | null = null;
+let greetTimer: ReturnType<typeof setTimeout> | null = null;
 let lastPetTime = Date.now();
 
 const dataProvider = (): SmartCatData => {
@@ -68,9 +69,19 @@ export async function ensureSmartCat(app: App): Promise<void> {
   setSmartcatApp(app);
 
   data = await loadSmartCatData(app);
+  // 竞态守卫：等待期间若被 unload（main 的 void ensureSmartCat 是 fire-and-forget），停止装配
+  if (!initialized) {
+    data = null;
+    return;
+  }
   // 用户拍板：所有数据单 json——首次无文件时也落盘一次（迁移或在空账本上建文件）
   if (!app.vault.getAbstractFileByPath(getSmartcatFilePath())) {
     await saveSmartCatData(app, data);
+  }
+  // 竞态守卫 1.5：首次落盘等待期间被 unload 则停止装配
+  if (!initialized) {
+    data = null;
+    return;
   }
 
   // ---- 子系统装配（顺序与原 SmartCompanionApp 一致） ----
@@ -79,15 +90,17 @@ export async function ensureSmartCat(app: App): Promise<void> {
   emotionalMemory = new EmotionalMemory(app, dataProvider, dataSaver);
   personalityGrowth = new PersonalityGrowth(dataProvider, dataSaver);
   memorySystem = new MemorySystem(app, dataProvider, dataSaver);
-  memorySystem.startConsolidationScheduler();
+  // ADR-0021：init = 探测 Ollama + 加载向量 + 反思调度（取代原 24h 固化调度）
+  await memorySystem.init();
+  if (!initialized) return; // 竞态守卫 2：init 期间被 unload 则丢弃装配
 
   // 猫容器 + 皮肤 + 动画 + 指示器
   const container = mountCatContainer()!;
   applyAppearance(container, data.config.appearance);
   animation = new SmartCatAnimation(container);
   animation.initialize();
-  // 100ms 后问候（原 SmartCatAnimation module.exports greet）
-  setTimeout(() => animation!.greet(), 100);
+  // 100ms 后问候（原 SmartCatAnimation module.exports greet；定时器挂模块级供 unload 清理）
+  greetTimer = setTimeout(() => animation?.greet(), 100);
 
   // 气泡 emoji 抽离 → 心情指示器（原 moodIndicator.showCustomMood 语义：挂 mood-emoji 数据 + 5s 隐藏）
   bubbleManager.onEmojiDetached = (icon: string) => {
@@ -142,6 +155,16 @@ export async function ensureSmartCat(app: App): Promise<void> {
     closeSettings: () => closeSettings(),
     onAppearanceChanged: (appearance) => {
       applyAppearance(mountCatContainer()!, appearance as any);
+    },
+    // ADR-0021：记忆流检索注入聊天上下文（格式化后返回；失败返回空串）
+    retrieveMemories: async (query: string) => {
+      if (!memorySystem) return '';
+      try {
+        const memories = await memorySystem.retrieve(query);
+        return memories.length ? memorySystem.formatMemoriesForPrompt(memories) : '';
+      } catch (e) {
+        return '';
+      }
     },
   });
   interaction.setupInteractions();
@@ -395,8 +418,9 @@ async function sendChatMessage(message: string): Promise<void> {
     data.config.conversationHistory.push({ role: 'user', content: message, timestamp: new Date().toISOString() });
     data.config.conversationHistory.push({ role: 'assistant', content: response, timestamp: new Date().toISOString() });
     await dataSaver(data);
-    // 记忆：对话进短期记忆（记忆系统接入聊天——原版未接线，bz 化后按 spec 接入）
-    await memorySystem!.addShortTermMemory(`用户说：${message}`, { isRepetitive: false });
+    // 记忆流（ADR-0021）：对话写入 observation（写入面最小化——仅聊天接入；importance LLM 打分，
+    // AI 未配置降级规则分；Ollama 可用时同期写向量）
+    await memorySystem!.addObservation(`用户说：${message}`, { source: 'chat' });
   } catch (error) {
     const indicator = chatMessages.querySelector('#typing-indicator');
     if (indicator) indicator.remove();
@@ -444,6 +468,10 @@ export function unloadSmartCat(): void {
   if (followTimer) {
     clearInterval(followTimer);
     followTimer = null;
+  }
+  if (greetTimer) {
+    clearTimeout(greetTimer);
+    greetTimer = null;
   }
   document.removeEventListener('mousemove', windowMouseMove);
   animation?.dispose();
