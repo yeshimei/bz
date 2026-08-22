@@ -1,7 +1,9 @@
 /**
  * 剪藏本（ticket 08）：文章展示面板——搜索、站点过滤（单选）、排序、
- * 双击跳转、长按删除、反链显示、vault modify 自动刷新、滚动加载。
- * 源码：剪藏本.js 逐字移植（DOM id/类名、文案、交互一致）。
+ * 反链显示、vault modify 自动刷新、滚动加载。
+ * ticket 69 手势重构：单击整卡打开文章（五域首例单击直开）+ 统一抽屉
+ * （打开/复制双链/复制原文链接/删除；桌面右键 → 跟手菜单，移动端长按 → 底部抽屉，全局组件承载）；
+ * 移除旧「双击跳转」与「长按日期删除」。
  */
 import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
@@ -12,6 +14,7 @@ import { formatRelativeTime } from '../core/utils';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
+import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { ensureAutoSummary } from '../auto-summary';
 
 // ---------- 模块状态 ----------
@@ -37,7 +40,6 @@ let isLoadingData = false;
 // ---------- 配置（从设置读取） ----------
 let ARTICLE_DIRECTORY = '归档/网页剪藏';
 let BATCH_SIZE = 20;
-let LONG_PRESS_DURATION = 800;
 
 /** 文章条目（parseArticleFile 产物） */
 export interface ArticleEntry {
@@ -55,12 +57,11 @@ export interface ArticleEntry {
   backlinkSources: string[];
 }
 
-/** 读取插件设置（剪藏目录；批次读设置，长按时长固定默认） */
+/** 读取插件设置（剪藏目录；批次读设置） */
 export function applyArticleSettings(): void {
   const s = tryGetSettings() as any;
   ARTICLE_DIRECTORY = s.articleDirectory || '归档/网页剪藏';
   BATCH_SIZE = parseInt(s.articleBatchSize || '20', 10) || 20;
-  LONG_PRESS_DURATION = 800;
 }
 
 // ========== 初始化 ==========
@@ -482,26 +483,31 @@ export function renderEntries(reset = false) {
   }
 }
 
-function createArticleCard(article: ArticleEntry): HTMLElement {
-  const app = getApp();
-  const card = document.createElement('div');
-  card.className = 'article-entry-card';
-  card.dataset.path = article.path;
-
-  // 标题
+/** 卡片标题块（列表与抽屉头部共用，ticket 69 提取） */
+function buildTitleDiv(article: ArticleEntry): HTMLElement {
   const titleDiv = document.createElement('div');
   titleDiv.className = 'article-entry-title';
   if (article.hasBacklink) {
     titleDiv.classList.add('has-backlink');
   }
   titleDiv.textContent = `${article.title}` || '无标题';
+  return titleDiv;
+}
 
-  // 摘要
+/** 卡片摘要块（列表与抽屉头部共用） */
+function buildSummaryEl(article: ArticleEntry): HTMLElement {
   const summary = document.createElement('div');
   summary.className = 'article-entry-summary';
   summary.textContent = article.summary || '（无摘要）';
+  return summary;
+}
 
-  // ---- 元信息行 ----
+/**
+ * 元信息行（站点图标/作者/反链/相对时间；列表与抽屉头部共用）。
+ * @param interactive true=列表卡片（反链可点跳转）；false=抽屉头部纯展示（反链不带跳转交互，memo 范式）
+ */
+function buildMetaRow(article: ArticleEntry, interactive: boolean): HTMLElement {
+  const app = getApp();
   const metaRow = document.createElement('div');
   metaRow.className = 'article-entry-meta';
   metaRow.style.cssText =
@@ -534,7 +540,7 @@ function createArticleCard(article: ArticleEntry): HTMLElement {
     metaRow.appendChild(authorSpan);
   }
 
-  // -------- 反链笔记（去《》书名号显示） --------
+  // -------- 反链笔记（去《》书名号显示；仅列表可点，抽屉头部纯展示） --------
   if (article.backlinkSources && article.backlinkSources.length > 0) {
     for (const sourcePath of article.backlinkSources) {
       const sourceFile = app.vault.getAbstractFileByPath(sourcePath);
@@ -542,14 +548,16 @@ function createArticleCard(article: ArticleEntry): HTMLElement {
       const name = (sourceFile as any).basename;
       const linkTag = document.createElement('span');
       linkTag.className = 'article-entry-site';
-      linkTag.style.cursor = 'pointer';
       linkTag.textContent = `📌 ${name.replace(/^《|》$/g, '')}`;
-      linkTag.onclick = (e) => {
-        e.stopPropagation();
-        app.workspace.openLinkText(sourcePath, '', false, { active: true });
-        articleMask!.style.visibility = 'hidden';
-        articlePopup!.style.visibility = 'hidden';
-      };
+      if (interactive) {
+        linkTag.style.cursor = 'pointer';
+        linkTag.onclick = (e) => {
+          e.stopPropagation();
+          app.workspace.openLinkText(sourcePath, '', false, { active: true });
+          articleMask!.style.visibility = 'hidden';
+          articlePopup!.style.visibility = 'hidden';
+        };
+      }
       metaRow.appendChild(linkTag);
     }
   }
@@ -561,77 +569,93 @@ function createArticleCard(article: ArticleEntry): HTMLElement {
   dateSpan.style.marginLeft = 'auto';
   metaRow.appendChild(dateSpan);
 
-  // 组装卡片
-  card.appendChild(titleDiv);
-  card.appendChild(summary);
-  card.appendChild(metaRow);
+  return metaRow;
+}
 
-  // 双击跳转
-  card.addEventListener('dblclick', (e) => {
-    e.stopPropagation();
+/**
+ * 抽屉顶部信息区：两行精简（用户拍板：头部不要太多）——
+ * 第 1 行标题 + 第 2 行简介（文章摘要，最多两行超出省略号截断，CSS 承载）；
+ * meta 行（站点/作者/时间）不在抽屉头部显示。
+ */
+export function buildSheetHead(article: ArticleEntry): HTMLElement {
+  const head = document.createElement('div');
+  head.className = 'bz-item-sheet-entry';
+  head.appendChild(buildTitleDiv(article));
+  head.appendChild(buildSummaryEl(article));
+  return head;
+}
+
+// ========== 抽屉动作（打开 / 复制双链 / 复制原文链接 / 删除） ==========
+function buildArticleActions(article: ArticleEntry): ItemAction[] {
+  // 复制原文链接右侧小字：域名（取不到则不显示小字）
+  let domain = '';
+  if (article.link) {
+    try {
+      domain = new URL(article.link).hostname;
+    } catch (e) { /* 忽略 */ }
+  }
+  return [
+    { icon: 'external-link', label: '打开', title: '打开文章', onClick: () => jumpToArticle(article) },
+    { icon: 'link', label: '复制双链', title: '复制双链', onClick: () => void copyWikilink(article) },
+    {
+      icon: 'globe',
+      label: '复制原文链接',
+      sub: domain || undefined,
+      title: '复制原文链接',
+      onClick: () => void copyOriginalLink(article),
+    },
+    {
+      icon: 'trash-2',
+      label: '删除',
+      kind: 'danger',
+      title: '删除文章',
+      onClick: () => showDeleteConfirm(article, findCardByPath(article.path)),
+    },
+  ];
+}
+
+async function copyWikilink(article: ArticleEntry): Promise<void> {
+  const link = `[[${article.path}|${article.title}]]`;
+  await navigator.clipboard.writeText(link);
+  notice(`已复制双链引用：${link}`, 'success');
+}
+
+async function copyOriginalLink(article: ArticleEntry): Promise<void> {
+  await navigator.clipboard.writeText(article.link);
+  notice(`已复制原文链接：${article.link}`, 'success');
+}
+
+/** 按路径找回列表卡片节点（删除确认后移除卡片用；找不到返回 null，deleteArticle 已兜底） */
+function findCardByPath(path: string): HTMLElement | null {
+  return (articlesContainer?.querySelector(`.article-entry-card[data-path="${path}"]`) as HTMLElement) || null;
+}
+
+function createArticleCard(article: ArticleEntry): HTMLElement {
+  const card = document.createElement('div');
+  card.className = 'article-entry-card';
+  card.dataset.path = article.path;
+
+  // 组装卡片（标题/摘要/meta 与抽屉头部同构建函数）
+  card.appendChild(buildTitleDiv(article));
+  card.appendChild(buildSummaryEl(article));
+  card.appendChild(buildMetaRow(article, true));
+
+  // 单击整卡打开文章（ticket 69：五域首例单击直开）。反链📌自带 stopPropagation 不受影响；
+  // 长按松手的残余/合成 click 由 item-actions 文档捕获层吞掉，不会误触打开。
+  card.addEventListener('click', () => {
     jumpToArticle(article);
   });
 
-  // 长按删除
-  addLongPress(dateSpan, article, card);
+  // 统一操作：桌面右键 → 跟手菜单 / 移动端长按 → 底部抽屉（ticket 69 + 全局右键方案）
+  attachItemActions(card, buildArticleActions(article), {
+    sheetHead: buildSheetHead(article),
+  });
 
   return card;
 }
 
-// ========== 长按处理 ==========
-function addLongPress(element: HTMLElement, article: ArticleEntry, card: HTMLElement) {
-  let pressTimer: ReturnType<typeof setTimeout> | null = null;
-  let isLongPress = false;
-  let touchStartX = 0,
-    touchStartY = 0;
-  const MOVE_THRESHOLD = 10;
-  const duration = LONG_PRESS_DURATION;
-
-  const longPressHandler = () => {
-    showDeleteConfirm(article, card);
-  };
-
-  const start = (e: any) => {
-    if (e.type === 'touchstart') {
-      const touch = e.touches[0];
-      touchStartX = touch.clientX;
-      touchStartY = touch.clientY;
-    }
-    isLongPress = false;
-    pressTimer = setTimeout(longPressHandler, duration);
-  };
-
-  const move = (e: any) => {
-    if (!pressTimer) return;
-    if (e.type === 'touchmove') {
-      const touch = e.touches[0];
-      const dx = Math.abs(touch.clientX - touchStartX);
-      const dy = Math.abs(touch.clientY - touchStartY);
-      if (dx > MOVE_THRESHOLD || dy > MOVE_THRESHOLD) {
-        clearTimeout(pressTimer);
-        pressTimer = null;
-      }
-    }
-  };
-
-  const end = (e: any) => {
-    if (pressTimer) clearTimeout(pressTimer);
-    if (isLongPress) {
-      e.preventDefault();
-      isLongPress = false;
-    }
-  };
-
-  element.addEventListener('touchstart', start, { passive: true });
-  element.addEventListener('touchmove', move, { passive: true });
-  element.addEventListener('touchend', end, { passive: false });
-  element.addEventListener('mousedown', start);
-  element.addEventListener('mouseup', end);
-  element.addEventListener('mouseleave', end);
-}
-
 // ========== 删除确认 ==========
-function showDeleteConfirm(article: ArticleEntry, card: HTMLElement) {
+function showDeleteConfirm(article: ArticleEntry, card: HTMLElement | null) {
   const confirmMask = document.createElement('div');
   confirmMask.style.cssText =
     'position:fixed;top:0;left:0;right:0;bottom:0;background:var(--background-modifier-cover);z-index:10001;display:flex;align-items:center;justify-content:center;';
@@ -680,7 +704,7 @@ function showDeleteConfirm(article: ArticleEntry, card: HTMLElement) {
   });
 }
 
-async function deleteArticle(article: ArticleEntry, card: HTMLElement) {
+async function deleteArticle(article: ArticleEntry, card: HTMLElement | null) {
   const app = getApp();
   try {
     await app.vault.delete(article.file);
