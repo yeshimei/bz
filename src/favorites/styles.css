@@ -1,0 +1,65 @@
+/* ==================== 收藏本域样式（src/favorites/styles.css） ==================== */
+/* ==================== 收藏本（favorites，ticket 60 收敛：原 fav-mobile 注入，逐字搬运；后续优化：header 按钮去 box-shadow、标题栏去下边框、类型栏单行横滑；移动端列表卡片已恢复桌面样式（边框/圆角/间距随 ui.ts 内联样式），不再通栏平铺） ==================== */
+      /* #fav-popup .fav-header .bz-icon-btn 去阴影已并入「主窗口头部行统一规范」（ticket 68 后续） */
+      @media (max-width: 768px) {
+        #fav-entries-container { scrollbar-width: none; -ms-overflow-style: none; overflow-x: hidden; }
+        #fav-entries-container::-webkit-scrollbar { display: none; }
+        /* 类型栏：单行平铺 + 左右拖拽（overflow-x 触屏原生滑动），隐藏滚动条；flex-shrink:0 防 80vh 挤压出纵向滚动条 */
+        .fav-tagbar {
+          flex-shrink: 0 !important;
+          flex-wrap: nowrap !important;
+          overflow-x: auto !important;
+          overflow-y: hidden !important;
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+          -webkit-overflow-scrolling: touch;
+        }
+        .fav-tagbar::-webkit-scrollbar { display: none !important; }
+        .fav-tagbar .fav-tag-btn { flex-shrink: 0; white-space: nowrap; }
+        /* 添加/编辑弹窗去纵向滚动条（滚动保持） */
+        #fav-add-popup {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        #fav-add-popup::-webkit-scrollbar { display: none; }
+      }
+    
+
+/* ==================== 收藏本抽屉头部（统一手势组件接入） ==================== */
+/* 分类 emoji（与日记抽屉 emoji 同级放大） */
+.bz-item-sheet .bz-fav-sheet-emoji {
+  font-size: 20px;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+/* 标题：加粗主行，置顶 📌 前缀随文本 */
+.bz-item-sheet .bz-fav-sheet-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-normal);
+  word-break: break-word;
+}
+/* 第二行小字：标签徽章 + 余额，可换行 */
+.bz-item-sheet .bz-fav-sheet-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.bz-item-sheet .bz-fav-sheet-tag {
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.bz-item-sheet .bz-fav-sheet-balance {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.bz-item-sheet .bz-fav-sheet-balance--error {
+  color: var(--text-error);
+}

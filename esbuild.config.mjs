@@ -2,6 +2,7 @@ import esbuild from "esbuild";
 import process from "process";
 import fs from "fs";
 import path from "path";
+import { buildStyles, watchStyles } from "./scripts/build-css.mjs";
 
 const prod = process.argv[2] === "production";
 
@@ -35,10 +36,13 @@ function copyStatic() {
 
 if (prod) {
   await context.rebuild();
+  buildStyles(); // 铁律 9：聚合 src/**/styles.css → 根 styles.css（并同步插件目录）
   copyStatic();
   process.exit(0);
 } else {
   await context.watch();
+  buildStyles();
+  watchStyles(); // 监听 src/**/*.css 变化重新聚合（esbuild 只监听 TS 依赖图）
   copyStatic();
   console.log("watching for changes...");
 }

@@ -207,7 +207,7 @@ Feature: memo-suite-plugin
 - 模块化单向依赖：core ← 域数据层 ← 域 UI ← main（沿用 ADR-0002）
 - 懒加载：事件常驻域（自动摘要/AIAgent/闪念）按设置开关注册；UI 域首次打开初始化（沿用日记本 init 幂等模式）
 - 主 ribbon 一个入口打开备忘录面板；其余域命令进入
-- 构建：TS + esbuild，产物直出 vault `.obsidian/plugins/bz/`；CSS 单独 `styles.css`
+- 构建：TS + esbuild，产物直出 vault `.obsidian/plugins/bz/`；CSS 按域拆分（`src/<域>/styles.css` + `src/core/styles.css`），构建时由 `scripts/build-css.mjs` 聚合生成根 `styles.css`
 
 ### 命令（ADR-0004）
 
@@ -333,7 +333,7 @@ Feature: memo-suite-plugin
 - **影视**：无限滚动、星级评分、类型颜色、标签分组
 - **备忘录**：逾期状态显示、URL 提取/页面标题抓取
 - **归物本**：排序弹窗、分类统计
-- **样式**：各域注入样式全部收敛到 styles.css（聚合讯 196 行、备忘录 38 行、密码本 data-pw-styles、剪藏本/影视/闪念 injectStyles 等）
+- **样式**：原各域注入样式已全部收敛（ticket 60），ticket 70 起按铁律 9 **按域拆分**为源文件 `src/<域>/styles.css` + `src/core/styles.css`，构建由 `scripts/build-css.mjs` 聚合生成根 `styles.css`
 
 ### 逐行对比补充要点（源码提取，第二批）
 
@@ -399,7 +399,7 @@ Feature: memo-suite-plugin
 
 ### 样式规模与边界行为（第 5 轮，源码提取）
 
-- **CSS 规模**（全部收敛 styles.css）：备忘录 ≈50KB、归物本 ≈48KB、闪念 ≈42KB、密码本 ≈27KB、复习计划 ≈25KB、剪藏本 ≈13KB、做题家 ≈8KB；聚合讯/书库/影视/收藏本以内联样式为主（少量全局 CSS）
+- **CSS 规模**（ticket 60 收敛 → ticket 70 按域拆分为 `src/<域>/styles.css`）：备忘录 ≈50KB、归物本 ≈48KB、闪念 ≈42KB、密码本 ≈27KB、复习计划 ≈25KB、剪藏本 ≈13KB、做题家 ≈8KB；聚合讯/书库/影视/收藏本以内联样式为主（少量全局 CSS）
 - **移动端适配**（@media）：备忘录、剪藏本、聚合讯（×2）、密码本 有媒体查询适配
 - **降级链（逐字保留）**：
   - 闪念：批量向量化失败 → 回退逐条；远程向量检索失败 → 降级本地；[移动端] TF-IDF 无数据 → 文本匹配；DeepSeek 调用失败 → 回退本地 Ollama；Ollama HTTP 错误显示状态码
