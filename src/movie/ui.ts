@@ -435,6 +435,8 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
   // 评分滑块（1~6 · 0.1 步进，默认 3.5）与影评（季集已移除；无日期字段——保存时默认当前日期）
   const ratingContainer = document.createElement('div');
   ratingContainer.style.cssText = 'display: none;'; // 仅已看状态下显示
+  const ratingValue = document.createElement('div');
+  ratingValue.className = 'bz-movie-rating-value';
   const ratingSlider = document.createElement('input');
   ratingSlider.type = 'range';
   ratingSlider.min = '1';
@@ -442,6 +444,12 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
   ratingSlider.step = '0.1';
   ratingSlider.value = '3.5';
   ratingSlider.className = 'bz-movie-rating-slider';
+  const updateRatingValue = () => {
+    ratingValue.textContent = Number(ratingSlider.value).toFixed(1); // 滑块对应分数实时显示
+  };
+  ratingSlider.addEventListener('input', updateRatingValue);
+  updateRatingValue();
+  ratingContainer.appendChild(ratingValue);
   ratingContainer.appendChild(ratingSlider);
   const reviewRow = createTextareaRow('影评（可选）', 3);
 
