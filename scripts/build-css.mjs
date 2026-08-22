@@ -41,14 +41,15 @@ const SOURCES = [
   "src/movie/styles.css",
 ];
 
-const HEADER = `/* ============================================================
- * bz（包仔）— 由 QuickAdd 脚本独立化而来
- * 样式按域拆分（铁律 9）：本文件是构建聚合产物，请勿手改——
- *   共享样式 → src/core/styles.css；各域样式 → src/<域>/styles.css
- * 重新生成：npm run dev / npm run build（scripts/build-css.mjs）
- * ============================================================ */
-
-`;
+const HEADER = [
+  "/* ============================================================",
+  " * bz（包仔）— 由 QuickAdd 脚本独立化而来",
+  " * 样式按域拆分（铁律 9）：本文件是构建聚合产物，请勿手改——",
+  " *   共享样式 → src/core/styles.css；各域样式 → src/<域>/styles.css",
+  " * 重新生成：npm run dev / npm run build（scripts/build-css.mjs）",
+  " * ============================================================ */",
+  "",
+].join("\r\n");
 
 export function buildStyles() {
   const parts = [HEADER];
@@ -57,8 +58,9 @@ export function buildStyles() {
     if (!fs.existsSync(file)) {
       throw new Error(`样式源缺失：${rel}（聚合清单见 scripts/build-css.mjs SOURCES）`);
     }
-    let text = fs.readFileSync(file, "utf8");
-    if (!text.endsWith("\n")) text += "\n";
+    // 行尾统一 CRLF：与仓库工作区惯例一致，避免混合行尾造成 git 状态假差异
+    let text = fs.readFileSync(file, "utf8").replace(/\r?\n/g, "\r\n");
+    if (!text.endsWith("\n")) text += "\r\n";
     parts.push(text);
   }
   const css = parts.join("");
