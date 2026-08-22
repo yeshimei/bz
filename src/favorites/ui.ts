@@ -4,9 +4,17 @@
 import moment from 'moment';
 import { Setting } from 'obsidian';
 import { notice, notify } from '../core/notice';
-import { longPress, createIconBtn } from '../core/dom';
+import { createIconBtn } from '../core/dom';
 import { confirm } from '../core/confirm';
 import { escManager } from '../core/esc-manager';
+import {
+  attachItemActions,
+  refreshItemSheet,
+  registerSheetCompanion,
+  unregisterSheetCompanion,
+  closeItemMenu,
+  type ItemAction,
+} from '../core/item-actions';
 import { getApp } from '../core/app';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
@@ -28,6 +36,7 @@ export class UIManager {
   isVisible = false;
   searchVisible = false;                // 搜索框是否可见
   editingItemId: string | null = null;  // 正在编辑的条目ID
+  _sheetEditPending = false;            // 本次编辑弹窗来自抽屉（保存后需关抽屉，用户拍板 Q8）
 
   // DOM 引用
   mask: HTMLElement | null = null;
@@ -370,20 +379,144 @@ export class UIManager {
     meta.style.cssText = 'display:flex; gap:12px; font-size:12px; color:var(--text-faint);';
     const timeSpan = document.createElement('span');
     timeSpan.textContent = item.created || '';
-    this._attachLongPressDelete(timeSpan, item);
     meta.appendChild(timeSpan);
     card.appendChild(meta);
+
+    // ---- 统一长按抽屉（手势收敛：列表仅保留整卡长按，其余手势全部移除） ----
+    let queryingBalance = false; // 刷新余额进行中（小字显示「查询中…」）
+    const buildActions = (): ItemAction[] => {
+      const acts: ItemAction[] = [];
+
+      // 1. 打开（有链接才显示；小字=域名）
+      const rawUrl = (item.url || '').trim();
+      if (rawUrl) {
+        const openUrl = this._normalizeUrl(rawUrl);
+        acts.push({
+          icon: 'external-link',
+          label: '打开',
+          sub: this._hostOf(openUrl),
+          title: '在浏览器打开',
+          onClick: () => this._openExternal(openUrl),
+        });
+      }
+
+      // 2. 置顶/取消置顶（keepOpen：原地翻转 + 抽屉刷新）
+      acts.push({
+        icon: item.pinned ? 'pin-off' : 'pin',
+        label: item.pinned ? '取消置顶' : '置顶',
+        title: '置顶收藏',
+        keepOpen: true,
+        onClick: () => {
+          void (async () => {
+            item.pinned = !item.pinned;
+            await this.dataManager.update(item.id, { pinned: item.pinned });
+            void this.refreshData(); // 列表重排（置顶优先），抽屉保持
+            rebuild();
+          })();
+        },
+      });
+
+      // 3. 跳转笔记（有关联笔记才显示；小字=笔记名）
+      const note = (item.linkedNote || '').trim();
+      if (note) {
+        acts.push({
+          icon: 'file-text',
+          label: '跳转笔记',
+          sub: note.split('/').pop() || note,
+          title: `跳转到笔记：${note}`,
+          onClick: () => {
+            const app = getApp();
+            const file = app.vault.getAbstractFileByPath(note);
+            if (file) {
+              app.workspace.openLinkText(note, '', false);
+            } else {
+              notice(`笔记文件不存在：${note}`);
+            }
+          },
+        });
+      }
+
+      // 4. 刷新余额（有大模型配置才显示；keepOpen，小字动态更新）
+      if (item.llmConfig && item.llmConfig.apiKeys && item.llmConfig.balanceUrl) {
+        acts.push({
+          icon: 'refresh-cw',
+          label: '刷新余额',
+          sub: queryingBalance ? '查询中…' : item.balanceError ? '查询失败' : item.balance || '未查询',
+          title: '重新查询大模型余额',
+          keepOpen: true,
+          onClick: () => {
+            void (async () => {
+              if (queryingBalance) return;
+              queryingBalance = true;
+              rebuild();
+              try {
+                const result = await this.balanceService.fetchBalance(item.llmConfig!);
+                item.balance = result.balance;
+                item.balanceCacheTime = result.timestamp;
+                item.balanceError = null;
+                await this.dataManager.update(item.id, {
+                  balance: result.balance,
+                  balanceCacheTime: result.timestamp,
+                });
+              } catch (error: any) {
+                item.balanceError = error.message;
+              }
+              queryingBalance = false;
+              void this.refreshData();
+              rebuild();
+            })();
+          },
+        });
+      }
+
+      // 5. 编辑（keepOpen：编辑弹窗叠在抽屉上；保存成功后关抽屉——用户拍板 Q8）
+      acts.push({
+        icon: 'pencil',
+        label: '编辑',
+        title: '编辑收藏',
+        keepOpen: true,
+        onClick: () => {
+          this.editingItemId = item.id;
+          this._sheetEditPending = true;
+          this._showAddDialog(item);
+        },
+      });
+
+      // 6. 删除（danger；confirm 确认后删除并关抽屉）
+      acts.push({
+        icon: 'trash-2',
+        label: '删除',
+        kind: 'danger',
+        sub: item.created || undefined,
+        title: '删除收藏',
+        onClick: () => {
+          confirm({
+            title: '删除确认',
+            message: '确定删除收藏 "' + item.title + '" 吗？',
+            onConfirm: () => {
+              void (async () => {
+                await this._deleteItem(item.id);
+                closeItemMenu();
+              })();
+            },
+          });
+        },
+      });
+
+      return acts;
+    };
+    const rebuild = () => refreshItemSheet(buildActions(), this._buildSheetHead(item));
+    attachItemActions(card, buildActions(), { sheetHead: this._buildSheetHead(item) });
 
     return card;
   }
 
-  /** 标题行：标题（有链接转 <a>）+ 余额 + 跳转按钮 + 类型标签组 */
+  /** 标题行：标题（纯文本，打开动作在抽屉）+ 余额展示 + 类型标签组 */
   _renderTitleRow(item: FavoritesItem): HTMLElement {
-    const app = getApp();
     const titleRow = document.createElement('div');
     titleRow.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:6px;';
 
-    // 标题部分：如果有 url，创建链接；否则只显示文本
+    // 标题：纯文本（手势收敛后列表不再直开链接，「打开」在抽屉）
     const titleElement = document.createElement('span');
     titleElement.textContent = item.title || '无标题';
     Object.assign(titleElement.style, {
@@ -391,60 +524,11 @@ export class UIManager {
       fontWeight: '600',
       color: 'var(--text-normal)',
     });
+    titleRow.appendChild(titleElement);
 
-    let url = item.url ? item.url.trim() : '';
-    if (url) {
-      // 有链接：转换成链接元素
-      const link = document.createElement('a');
-      if (!/^https?:\/\//i.test(url)) {
-        url = 'https://' + url;
-      }
-      link.href = url;
-      link.target = '_blank';
-      link.textContent = item.title || '无标题';
-      Object.assign(link.style, {
-        fontSize: '16px',
-        fontWeight: '600',
-        color: 'var(--text-accent)',
-        textDecoration: 'none',
-        cursor: 'pointer',
-      });
-      link.onmouseenter = () => (link.style.textDecoration = 'underline');
-      link.onmouseleave = () => (link.style.textDecoration = 'none');
-      link.onclick = (e) => e.stopPropagation();
-      titleRow.appendChild(link);
-    } else {
-      // 无链接：直接显示文本
-      titleRow.appendChild(titleElement);
-    }
-
-    // ---- 大模型余额显示（紧跟标题后） ----
+    // ---- 大模型余额显示（紧跟标题后，纯展示；刷新在抽屉「刷新余额」） ----
     if (item.llmConfig && item.llmConfig.apiKeys && item.llmConfig.balanceUrl) {
       titleRow.appendChild(this._renderBalanceSpan(item));
-    }
-
-    // ---- 添加 📄 跳转按钮（如果存在 linkedNote） ----
-    if (item.linkedNote) {
-      const jumpIcon = document.createElement('span');
-      jumpIcon.textContent = ' 📄';
-      jumpIcon.style.cssText = `
-            font-size: 16px;
-            cursor: pointer;
-            color: var(--text-accent);
-            margin-left: 4px;
-            user-select: none;
-        `;
-      jumpIcon.title = `跳转到笔记: ${item.linkedNote}`;
-      jumpIcon.onclick = (e) => {
-        e.stopPropagation();
-        const file = app.vault.getAbstractFileByPath(item.linkedNote!);
-        if (file) {
-          app.workspace.openLinkText(item.linkedNote!, '', false);
-        } else {
-          notice(`笔记文件不存在：${item.linkedNote}`);
-        }
-      };
-      titleRow.appendChild(jumpIcon);
     }
 
     // 类型标签（选中分类时只显示匹配的，否则显示全部）
@@ -458,14 +542,13 @@ export class UIManager {
         tagBadge.textContent = `${tagEmoji} ${tag}`;
         tagBadge.style.cssText = 'font-size:12px; padding:2px 10px; border-radius:12px; background:var(--background-secondary); color:var(--text-muted); white-space:nowrap; cursor:default;';
         tagGroup.appendChild(tagBadge);
-        this._attachLongPressEdit(tagBadge, item);
       }
       titleRow.appendChild(tagGroup);
     }
     return titleRow;
   }
 
-  /** 余额 span：按余额档位着色；点击刷新（balanceService 5 分钟缓存） */
+  /** 余额 span：按余额档位着色；纯展示（刷新走抽屉「刷新余额」，5 分钟缓存） */
   _renderBalanceSpan(item: FavoritesItem): HTMLElement {
     const balanceSpan = document.createElement('span');
     balanceSpan.style.cssText = 'font-size:12px; color:var(--text-muted); margin-left:4px; white-space:nowrap;';
@@ -486,55 +569,82 @@ export class UIManager {
       balanceSpan.style.opacity = '0.6';
     }
 
-    // 点击刷新余额
-    balanceSpan.style.cursor = 'pointer';
-    balanceSpan.title = '点击刷新余额';
-    balanceSpan.onclick = async (e) => {
-      e.stopPropagation();
-      balanceSpan.textContent = '(刷新中...)';
-      balanceSpan.style.opacity = '0.6';
-      try {
-        const result = await this.balanceService.fetchBalance(item.llmConfig!);
-        item.balance = result.balance;
-        item.balanceCacheTime = result.timestamp;
-        item.balanceError = null;
-        await this.dataManager.update(item.id, {
-          balance: result.balance,
-          balanceCacheTime: result.timestamp,
-        });
-        this.render();
-      } catch (error: any) {
-        item.balanceError = error.message;
-        this.render();
-      }
-    };
-
     return balanceSpan;
   }
-  // ---------- 长按删除 ----------
-  _attachLongPressDelete(element: HTMLElement, item: FavoritesItem) {
-    longPress(
-      element,
-      () => {
-        confirm({
-          title: '删除确认',
-          message: '确定删除收藏 "' + item.title + '" 吗？',
-          onConfirm: () => this._deleteItem(item.id),
-        });
-      },
-      CONFIG.LONG_PRESS_DELAY
-    );
+
+  // ---------- 抽屉辅助 ----------
+  /** 链接补协议头（原 <a> 渲染时的规范化逻辑，抽屉「打开」沿用） */
+  _normalizeUrl(url: string): string {
+    return /^https?:\/\//i.test(url) ? url : 'https://' + url;
   }
 
-  // ---------- 长按类型 -> 编辑 ----------
-  _attachLongPressEdit(element: HTMLElement, item: FavoritesItem) {
-    longPress(element, () => this._editItem(item), CONFIG.LONG_PRESS_DELAY);
+  /** 打开动作小字：域名（去 www；解析失败截断原文） */
+  _hostOf(url: string): string {
+    try {
+      return new URL(url).hostname.replace(/^www\./, '');
+    } catch {
+      return url.slice(0, 24);
+    }
   }
 
-  // ---------- 编辑项 ----------
-  _editItem(item: FavoritesItem) {
-    this.editingItemId = item.id;
-    this._showAddDialog(item);
+  /** 外部浏览器打开（app.openUrl 优先，Electron shell 兜底，与备忘录同路径） */
+  _openExternal(url: string): void {
+    const app = getApp();
+    try {
+      (app as any).openUrl(url);
+    } catch {
+      const electron = (window as any).require && (window as any).require('electron');
+      if (electron && electron.shell) electron.shell.openExternal(url);
+    }
+  }
+
+  /**
+   * 抽屉头部：分类 emoji + 标题一行，第二行小字 = 置顶标记 + 标签徽章组 + 余额（若有）。
+   * 与列表显示一致（网易云式选中信息展示）；置顶条目 📌 前缀。
+   */
+  _buildSheetHead(item: FavoritesItem): HTMLElement {
+    const head = document.createElement('div');
+    head.className = 'bz-item-sheet-entry';
+    const body = document.createElement('div');
+    body.style.cssText = 'display:flex; gap:10px; align-items:flex-start;';
+
+    // 分类 emoji（第一个标签的 emoji）
+    const primaryTag = (item.tags && item.tags[0]) || item.type || '';
+    const emoji = CONFIG.DEFAULT_TAGS.find((t) => t.tag === primaryTag)?.emoji || '📌';
+    const emojiEl = document.createElement('span');
+    emojiEl.className = 'bz-fav-sheet-emoji';
+    emojiEl.textContent = emoji;
+    body.appendChild(emojiEl);
+
+    const info = document.createElement('div');
+    info.style.cssText = 'flex:1; min-width:0;';
+
+    const title = document.createElement('div');
+    title.className = 'bz-fav-sheet-title';
+    title.textContent = (item.pinned ? '📌 ' : '') + (item.title || '无标题');
+    info.appendChild(title);
+
+    // 第二行小字：标签徽章 + 余额
+    const meta = document.createElement('div');
+    meta.className = 'bz-fav-sheet-meta';
+    for (const tag of item.tags || []) {
+      const tagEmoji = CONFIG.DEFAULT_TAGS.find((t) => t.tag === tag)?.emoji || '📌';
+      const badge = document.createElement('span');
+      badge.className = 'bz-fav-sheet-tag';
+      badge.textContent = `${tagEmoji} ${tag}`;
+      meta.appendChild(badge);
+    }
+    if (item.llmConfig && item.llmConfig.apiKeys && item.llmConfig.balanceUrl) {
+      const bal = document.createElement('span');
+      bal.className = 'bz-fav-sheet-balance' + (item.balanceError ? ' bz-fav-sheet-balance--error' : '');
+      bal.textContent = item.balanceError ? `余额查询失败` : item.balance ? `余额 ${item.balance}` : '余额未查询';
+      meta.appendChild(bal);
+    }
+    if (meta.children.length) info.appendChild(meta);
+
+    body.appendChild(info);
+    head.appendChild(body);
+    return head;
   }
 
   // ---------- 刷新 ----------
@@ -836,7 +946,7 @@ export class UIManager {
 
     // AI 推荐按钮
     this.addAiBtn = document.createElement('button');
-    this.addAiBtn.textContent = '✨ AI 推荐';
+    this.addAiBtn.textContent = '✨ AI 整理';
     Object.assign(this.addAiBtn.style, {
       padding: '8px 16px',
       borderRadius: '6px',
@@ -974,6 +1084,8 @@ export class UIManager {
   _showAddDialog(item: FavoritesItem | null = null) {
     if (!this.addMask) return;
     this._registerEscape(); // 命令直开添加窗口时 handler 可能未注册
+    // 来自抽屉的编辑：注册附属浮层，弹窗内点击不误关抽屉
+    if (this._sheetEditPending) registerSheetCompanion(this.addMask);
 
     // 清空输入
     this.addTitleInput!.value = '';
@@ -1050,6 +1162,8 @@ export class UIManager {
       this.addPopup!.style.display = 'none';
       this.editingItemId = null; // 重置编辑状态
     }
+    unregisterSheetCompanion(this.addMask!);
+    this._sheetEditPending = false;
   }
 
   async _handleAIRecommend() {
@@ -1072,6 +1186,8 @@ export class UIManager {
 
     this.addAiBtn!.textContent = '⏳ AI 整理中...';
     this.addAiBtn!.disabled = true;
+    // 动态消息（与影视 AI 荐片同模板：progress 常驻 → 阶段 setMessage → 完成 setType）
+    const handle = notify('AI 分析中…', { type: 'progress' });
 
     // GitHub 仓库链接：先取真实仓库信息（仓库名预填标题，简介翻译与标签选择由下方 AI 一并处理）
     let ghInfo: { title: string; description: string; fetched: boolean } | null = null;
@@ -1081,9 +1197,9 @@ export class UIManager {
         this.addTitleInput!.value = ghInfo.title;
       }
       if (ghInfo.fetched) {
-        notice('已获取 GitHub 仓库信息', 'info');
+        handle.setMessage('已获取仓库信息，正在整理…');
       } else {
-        notice('GitHub 仓库简介获取失败，简介留空不编造', 'warning');
+        handle.setMessage('仓库简介获取失败，按常规整理…');
       }
     } catch (e) {
       ghInfo = null; // 非 GitHub 地址：按常规整理
@@ -1183,20 +1299,22 @@ GitHub 仓库信息（来自 GitHub API）：
           }
         });
         if (unknownTags.length) {
-          notice(`AI 推荐的标签 "${unknownTags.join('、')}" 不在列表中，已忽略`);
+          notice(`AI 整理的标签 "${unknownTags.join('、')}" 不在列表中，已忽略`);
         }
       }
 
-      notice('AI 整理完成', 'success');
+      handle.setType('success');
+      handle.setMessage('AI 整理完成');
     } catch (e: any) {
       console.error('AI 整理失败:', e);
       // GitHub 仓库链接且用户未填简介：降级填入仓库简介原文（未翻译），供手动处理
       if (ghInfo && ghInfo.description && !this.addDescInput!.value.trim()) {
         this.addDescInput!.value = ghInfo.description;
       }
-      notice('AI 整理失败：' + e.message, 'error');
+      handle.setType('error');
+      handle.setMessage('AI 整理失败：' + e.message);
     } finally {
-      this.addAiBtn!.textContent = '✨ AI 推荐';
+      this.addAiBtn!.textContent = '✨ AI 整理';
       this.addAiBtn!.disabled = false;
     }
   }
@@ -1284,8 +1402,10 @@ GitHub 仓库信息（来自 GitHub API）：
         await this.dataManager.add(data);
         notice('收藏已添加', 'success');
       }
+      const fromSheet = this._sheetEditPending; // 保存成功后关抽屉（用户拍板 Q8）
       await this.refreshData();
       this._hideAddDialog();
+      if (fromSheet) closeItemMenu();
     } catch (e: any) {
       notice('保存失败：' + e.message, 'error');
     }
