@@ -6,8 +6,14 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { openBelongingsPanel, addBelongingsItemCommand, showSortModal, cleanupBelongings } from '../../src/belongings/ui';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
+import { closeItemMenu } from '../../src/core/item-actions';
 import { MockVault } from '../mock-vault';
-import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices, Platform } from '../mock-obsidian-entry';
+
+/** 桌面右键开菜单（已有卡片挂统一抽屉） */
+function rightClickOpen(card: HTMLElement) {
+  card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
+}
 
 function setup(vault: MockVault, settings: any = {}) {
   setApp({ vault, workspace: { getLeaf: () => ({ openFile: vi.fn() }) } } as any);
@@ -89,19 +95,33 @@ describe('归物本主面板', () => {
     expect(document.getElementById('__gui_wu_ben__')).not.toBeNull();
   });
 
-  it('refreshBtn：重新加载数据 + 「已刷新」', async () => {
+  it('自动刷新：面板打开期间数据文件变更 → 实时重渲染（无 ⏳ 按钮）', async () => {
     seed(vault);
     await openBelongingsPanel();
     const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
-    // 外部修改数据
+    // 右上角不再有刷新按钮
+    expect([...overlay.querySelectorAll('button')].find((b) => b.textContent === '⏳')).toBeUndefined();
+    // 外部修改数据 → modify 事件
     const data = JSON.parse(vault.files.get('CONFIG/STORAGE/belongings.json')!);
     data.items['item_3'] = { id: 'item_3', name: '新物品', category: '🎁 礼品', purchase_price: 10, purchase_date: '2025-01-01', current_status: '使用中', description: '', created_date: '', last_updated: '' };
     vault.files.set('CONFIG/STORAGE/belongings.json', JSON.stringify(data));
-    const refreshBtn = [...overlay.querySelectorAll('button')].find((b) => b.textContent === '⏳')!;
-    refreshBtn.click();
+    vault.emit('modify', { path: 'CONFIG/STORAGE/belongings.json' });
     await new Promise((r) => setTimeout(r, 20));
     expect(overlay.textContent).toContain('新物品');
-    expect(hasNotice('已刷新')).toBe(true);
+  });
+
+  it('自动刷新：关闭面板后变更不再触发', async () => {
+    seed(vault);
+    await openBelongingsPanel();
+    const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
+    const closeBtn = [...overlay.querySelectorAll('button')].find((b) => b.textContent === '❌')!;
+    closeBtn.click();
+    const data = JSON.parse(vault.files.get('CONFIG/STORAGE/belongings.json')!);
+    data.items['item_3'] = { id: 'item_3', name: '新物品', category: '🎁 礼品', purchase_price: 10, purchase_date: '2025-01-01', current_status: '使用中', description: '', created_date: '', last_updated: '' };
+    vault.files.set('CONFIG/STORAGE/belongings.json', JSON.stringify(data));
+    vault.emit('modify', { path: 'CONFIG/STORAGE/belongings.json' });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(overlay.textContent).not.toContain('新物品');
   });
 });
 
@@ -160,36 +180,38 @@ describe('添加/编辑/删除', () => {
     expect(hasNotice('请输入物品名称')).toBe(true);
   });
 
-  it('单击卡片（<500ms）→ 编辑弹窗；保存后数据更新', async () => {
-    vi.useFakeTimers();
+  it('右键卡片 → 菜单「编辑」→ 编辑弹窗（回填）', async () => {
     seed(vault);
     await openBelongingsPanel();
     const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
     const card = overlay.querySelector('[data-id="item_1"]') as HTMLElement;
 
-    card.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-    await vi.advanceTimersByTimeAsync(100);
-    card.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
-    await vi.advanceTimersByTimeAsync(20);
+    rightClickOpen(card);
+    const editItem = [...document.querySelectorAll('.bz-item-menu-item')].find(
+      (b) => b.textContent!.includes('编辑')
+    ) as HTMLElement;
+    editItem.click();
+    await new Promise((r) => setTimeout(r, 20));
 
     const editModal = [...document.querySelectorAll('div')].find(
       (d) => d.style.zIndex === '10001'
     ) as HTMLElement;
     expect(editModal.textContent).toContain('编辑物品');
     expect(editModal.textContent).toContain('机械键盘');
-    vi.useRealTimers();
   });
 
-  it('长按卡片（600ms）→ 删除确认弹窗 → 确认删除', async () => {
-    vi.useFakeTimers();
+  it('右键卡片 → 菜单「删除」→ 删除确认弹窗 → 确认删除', async () => {
     seed(vault);
     await openBelongingsPanel();
     const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
     const card = overlay.querySelector('[data-id="item_2"]') as HTMLElement;
 
-    card.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-    await vi.advanceTimersByTimeAsync(700);
-    await vi.advanceTimersByTimeAsync(20);
+    rightClickOpen(card);
+    const delItem = [...document.querySelectorAll('.bz-item-menu-item')].find(
+      (b) => b.textContent!.includes('删除')
+    ) as HTMLElement;
+    delItem.click();
+    await new Promise((r) => setTimeout(r, 20));
 
     const confirmModal = [...document.querySelectorAll('div')].find(
       (d) => d.style.zIndex === '10002'
@@ -201,11 +223,94 @@ describe('添加/编辑/删除', () => {
     // 确认删除
     const delBtn = [...confirmModal.querySelectorAll('button')].find((b) => b.textContent === '🗑 删除')!;
     delBtn.click();
-    await vi.advanceTimersByTimeAsync(50);
+    await new Promise((r) => setTimeout(r, 50));
     const data = JSON.parse(vault.files.get('CONFIG/STORAGE/belongings.json')!);
     expect(data.items['item_2']).toBeUndefined();
     expect(hasNotice(/已删除/)).toBe(true);
+  });
+});
+
+describe('归物本抽屉（移动端：状态流转 keepOpen）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    vault = new MockVault();
+    document.body.innerHTML = '';
+    localStorage.clear();
+    cleanupBelongings();
+    setup(vault);
+    Platform.isMobile = true;
+  });
+
+  afterEach(() => {
+    Platform.isMobile = false;
+    closeItemMenu();
+    cleanupBelongings();
+  });
+
+  it('长按卡片 → 抽屉：状态流转（当前状态不显示）+ 编辑 + 删除', async () => {
+    seed(vault);
+    await openBelongingsPanel();
+    const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
+    const card = overlay.querySelector('[data-id="item_1"]') as HTMLElement; // 使用中
+
+    vi.useFakeTimers();
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 60, clientY: 60 }));
+    vi.advanceTimersByTime(550);
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     vi.useRealTimers();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet).not.toBeNull();
+    const labels = [...sheet.querySelectorAll('.bz-item-sheet-label')].map((e) => e.textContent);
+    // 使用中条目：不显示「标记为使用中」，其余三状态流转 + 编辑 + 删除
+    expect(labels).not.toContain('标记为使用中');
+    expect(labels).toContain('标记为闲置');
+    expect(labels).toContain('标记为已转卖');
+    expect(labels).toContain('标记为已丢弃');
+    expect(labels).toContain('编辑');
+    expect(labels).toContain('删除');
+    // 头部：分类 emoji + 名称 + 小字
+    expect(sheet.querySelector('.bz-item-sheet-title')!.textContent).toBe('机械键盘');
+    expect(sheet.querySelector('.bz-item-sheet-sub')!.textContent).toContain('机械键盘');
+
+    // 点「标记为闲置」→ keepOpen：抽屉保持 + 数据写回 + 动作区刷新（使用中 出现、闲置 消失）
+    const idleItem = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('标记为闲置')
+    ) as HTMLElement;
+    idleItem.click();
+    await new Promise((r) => setTimeout(r, 30));
+    const data = JSON.parse(vault.files.get('CONFIG/STORAGE/belongings.json')!);
+    expect(data.items['item_1'].current_status).toBe('闲置');
+    expect(document.querySelector('.bz-item-sheet')).not.toBeNull(); // keepOpen
+    const labels2 = [...document.querySelectorAll('.bz-item-sheet-label')].map((e) => e.textContent);
+    expect(labels2).toContain('标记为使用中');
+    expect(labels2).not.toContain('标记为闲置');
+  });
+
+  it('抽屉删除：先收抽屉再弹确认（非 keepOpen）', async () => {
+    seed(vault);
+    await openBelongingsPanel();
+    const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
+    const card = overlay.querySelector('[data-id="item_2"]') as HTMLElement;
+
+    vi.useFakeTimers();
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 60, clientY: 60 }));
+    vi.advanceTimersByTime(550);
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    vi.useRealTimers();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const delItem = [...document.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('删除')
+    ) as HTMLElement;
+    delItem.click();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(document.querySelector('.bz-item-sheet')).toBeNull(); // 先收抽屉
+    expect([...document.querySelectorAll('div')].some((d) => (d as HTMLElement).style.zIndex === '10002')).toBe(true);
   });
 });
 

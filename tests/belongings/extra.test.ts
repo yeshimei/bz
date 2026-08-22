@@ -145,18 +145,19 @@ describe('search-select 键盘导航', () => {
 });
 
 describe('编辑保存流程', () => {
-  it('单击卡片 → 编辑弹窗 → 修改保存 → 数据更新', async () => {
-    vi.useFakeTimers();
+  it('右键卡片 → 编辑弹窗 → 修改保存 → 数据更新', async () => {
     const vault = new MockVault();
     seed(vault);
     setup(vault);
     await openBelongingsPanel();
     const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
     const card = overlay.querySelector('[data-id="item_1"]') as HTMLElement;
-    card.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-    await vi.advanceTimersByTimeAsync(100);
-    card.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
-    await vi.advanceTimersByTimeAsync(20);
+    card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
+    const editItem = [...document.querySelectorAll('.bz-item-menu-item')].find(
+      (b) => b.textContent!.includes('编辑')
+    ) as HTMLElement;
+    editItem.click();
+    await new Promise((r) => setTimeout(r, 20));
 
     const editModal = [...document.querySelectorAll('div')].find((d) => d.style.zIndex === '10001') as HTMLElement;
     expect(editModal.textContent).toContain('编辑物品');
@@ -165,7 +166,7 @@ describe('编辑保存流程', () => {
     nameInput.value = '新键盘名';
     const saveBtn = [...editModal.querySelectorAll('button')].find((b) => b.textContent === '💾 保存')!;
     saveBtn.click();
-    await vi.advanceTimersByTimeAsync(50);
+    await new Promise((r) => setTimeout(r, 50));
     const data = JSON.parse(vault.files.get('CONFIG/STORAGE/belongings.json')!);
     expect(data.items['item_1'].name).toBe('新键盘名');
     expect(hasNotice(/已更新/)).toBe(true);
@@ -173,21 +174,24 @@ describe('编辑保存流程', () => {
 });
 
 describe('删除取消 / 排序关闭', () => {
-  it('长按卡片 → 确认弹窗 → 取消不删除', async () => {
-    vi.useFakeTimers();
+  it('右键卡片 → 确认弹窗 → 取消不删除', async () => {
     const vault = new MockVault();
     seed(vault);
     setup(vault);
     await openBelongingsPanel();
     const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
     const card = overlay.querySelector('[data-id="item_1"]') as HTMLElement;
-    card.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-    await vi.advanceTimersByTimeAsync(700);
+    card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
+    const delItem = [...document.querySelectorAll('.bz-item-menu-item')].find(
+      (b) => b.textContent!.includes('删除')
+    ) as HTMLElement;
+    delItem.click();
+    await new Promise((r) => setTimeout(r, 20));
     const confirmModal = [...document.querySelectorAll('div')].find((d) => d.style.zIndex === '10002') as HTMLElement;
     expect(confirmModal.textContent).toContain('确认删除');
     const cancelBtn = [...confirmModal.querySelectorAll('button')].find((b) => b.textContent === '取消')!;
     cancelBtn.click();
-    await vi.advanceTimersByTimeAsync(20);
+    await new Promise((r) => setTimeout(r, 20));
     const data = JSON.parse(vault.files.get('CONFIG/STORAGE/belongings.json')!);
     expect(data.items['item_1']).toBeDefined();
   });
