@@ -310,7 +310,8 @@ export class InteractionManager {
       if (!context) context = getViewportContent();
 
       const selection = window.getSelection ? (window.getSelection()?.toString() || '').trim() : '';
-      const prompt = generatePrompt('learn', context || '', { dimensions: this.deps.mood.dimensions, personality: cfg.personality });
+      const moodOpts = { pad: this.deps.mood.pad, personality: cfg.personality, currentMood: this.deps.mood.currentMood, currentEmotion: this.deps.mood.getCurrentEmotion() };
+      const prompt = generatePrompt('learn', context || '', moodOpts);
 
       if (selection && selection.length <= 1500) {
         startThinking();
@@ -329,7 +330,7 @@ export class InteractionManager {
       }
 
       if (!context || context.length < 10) {
-        const rp = generatePrompt('auto_companion', '', { dimensions: this.deps.mood.dimensions, personality: cfg.personality });
+        const rp = generatePrompt('auto_companion', '', { pad: this.deps.mood.pad, personality: cfg.personality, currentMood: this.deps.mood.currentMood, currentEmotion: this.deps.mood.getCurrentEmotion() });
         startThinking();
         this.generateAutoCompanionMessageLock = true;
         try {
@@ -367,7 +368,7 @@ export class InteractionManager {
   async prepareChatMessages(userMessage: string): Promise<any[]> {
     const cfg = this.deps.config();
     const messages: any[] = [];
-    messages.push({ role: 'system', content: generatePrompt('talk', userMessage, { dimensions: this.deps.mood.dimensions, personality: cfg.personality }) });
+    messages.push({ role: 'system', content: generatePrompt('talk', userMessage, { pad: this.deps.mood.pad, personality: cfg.personality, currentMood: this.deps.mood.currentMood, currentEmotion: this.deps.mood.getCurrentEmotion() }) });
 
     if (cfg.conversationHistory && cfg.conversationHistory.length > 0) {
       const maxHistoryMessages = Math.min(cfg.shortTermMemory * 2, cfg.conversationHistory.length);

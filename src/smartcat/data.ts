@@ -37,14 +37,15 @@ export function defaultMemoryStream(): MemoryStream {
   };
 }
 
-/** 默认全量数据（config 默认 + mood/人格成长默认 + 记忆流默认） */
+/** 默认全量数据（config 默认 + PAD 心情默认 + 人格成长默认 + 记忆流默认） */
 export function defaultSmartCatData(): SmartCatData {
   return {
     config: defaultConfig(),
     mood: {
-      dimensions: { happiness: 75, energy: 65, curiosity: 60, affection: 50, focus: 80, creativity: 70, productivity: 75, relaxation: 60 },
+      pad: { pleasure: 55, arousal: 50, dominance: 50 },
       lastUpdate: 0,
       lastMood: 'neutral',
+      currentEmotion: null,
     },
     personalityGrowth: {
       traits: { playfulness: 50, sociability: 50, independence: 50, curiosity: 50 },
@@ -52,32 +53,42 @@ export function defaultSmartCatData(): SmartCatData {
       lastSave: 0,
       version: '1.0',
     },
-    emotionalMemory: null,
-    timeEmotion: null,
     editingData: null,
     memory: defaultMemoryStream(),
   };
 }
 
-/** 归一化（config 走 normalizeConfig；memory 校验 stream 数组，非法条目过滤） */
+/** 归一化（config 走 normalizeConfig；memory 校验 stream 数组，非法条目过滤；
+ *  mood 兼容旧 8 维字段 → 投影为 PAD 三轴兜底（旧数据直读，无迁移）） */
 export function normalizeData(raw: any): SmartCatData {
   const def = defaultSmartCatData();
   if (!raw || typeof raw !== 'object') return def;
   const stream = Array.isArray(raw.memory?.stream)
     ? raw.memory.stream.filter((m: any) => m && typeof m === 'object' && typeof m.id === 'string' && typeof m.description === 'string')
     : [];
+  // 旧 8 维（happiness/energy...）→ PAD 投影（pleasure=hy+aff、arousal=energy+curiosity、dominance=focus+productivity+creativity）
+  const oldDim = raw.mood?.dimensions || {};
+  const pick = (k: string, fb: number) => (typeof oldDim[k] === 'number' ? (oldDim[k] as number) : fb);
+  const pad = raw.mood?.pad && typeof raw.mood.pad.pleasure === 'number'
+    ? { ...def.mood.pad, ...raw.mood.pad }
+    : oldDim.happiness !== undefined
+      ? {
+          pleasure: Math.min(100, Math.round(pick('happiness', 55) * 0.6 + pick('affection', 50) * 0.4)),
+          arousal: Math.min(100, Math.round(pick('energy', 50) * 0.6 + pick('curiosity', 50) * 0.4)),
+          dominance: Math.min(100, Math.round(pick('focus', 50) * 0.4 + pick('productivity', 50) * 0.3 + pick('creativity', 50) * 0.3)),
+        }
+      : def.mood.pad;
   return {
     config: normalizeConfig(raw.config || raw), // 兼容旧布局：整个文件即 config
     mood: {
-      dimensions: { ...def.mood.dimensions, ...(raw.mood?.dimensions || {}) },
+      pad,
       lastUpdate: typeof raw.mood?.lastUpdate === 'number' ? raw.mood.lastUpdate : def.mood.lastUpdate,
       lastMood: typeof raw.mood?.lastMood === 'string' ? raw.mood.lastMood : def.mood.lastMood,
+      currentEmotion: typeof raw.mood?.currentEmotion === 'string' ? raw.mood.currentEmotion : null,
     },
     personalityGrowth: raw.personalityGrowth
       ? { ...def.personalityGrowth, ...raw.personalityGrowth }
       : def.personalityGrowth,
-    emotionalMemory: raw.emotionalMemory ?? def.emotionalMemory,
-    timeEmotion: raw.timeEmotion ?? def.timeEmotion,
     editingData: raw.editingData ?? def.editingData,
     memory: {
       version: 1,
