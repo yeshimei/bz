@@ -376,19 +376,19 @@ describe('抽屉（统一手势组件接入）', () => {
     const vault = new MockVault();
     vault.files.set(
       '我的/影视/《想看片》.md',
-      ['---', 'tags: [电影]', '状态: 0', '评分: -1', '---'].join('\n')
+      ['---', 'tags: [电影]', '评分: -1', '---'].join('\n')
     );
     vault.files.set(
       '我的/影视/《在看片》.md',
-      ['---', 'tags: [美剧]', '状态: 1', '评分: 0', '---'].join('\n')
+      ['---', 'tags: [美剧]', '评分: 0', '---'].join('\n')
     );
     vault.files.set(
       '我的/影视/《已看片》.md',
-      ['---', 'tags: [电影]', '状态: 2', '评分: 4.5', '观影日期: 2025-01-01T10:00:00', '影评: 好片', '---'].join('\n')
+      ['---', 'tags: [电影]', '评分: 4.5', '观影日期: 2025-01-01T10:00:00', '影评: 好片', '---'].join('\n')
     );
     vault.files.set(
       '我的/影视/《已看无评分》.md',
-      ['---', 'tags: [电影]', '状态: 2', '评分: 0', '---'].join('\n')
+      ['---', 'tags: [电影]', '---'].join('\n')
     );
     return vault;
   }
@@ -438,7 +438,7 @@ describe('抽屉（统一手势组件接入）', () => {
     expect(head.textContent).toContain('想看');
   });
 
-  it('点抽屉「标记在看」→ frontmatter 状态=1 评分=0', async () => {
+  it('点抽屉「标记在看」→ 只写评分 0（状态字段不存在，状态由评分推断）', async () => {
     const vault = setupVault();
     const app = makeApp(vault);
     const items = rebuildItems(app);
@@ -451,12 +451,12 @@ describe('抽屉（统一手势组件接入）', () => {
     const markBtn = [...sheet.querySelectorAll('.bz-item-sheet-item')].find((b) => b.textContent!.includes('标记在看')) as HTMLElement;
     markBtn.click();
     await vi.advanceTimersByTimeAsync(50);
-    expect(vault.files.get('我的/影视/《想看片》.md')).toContain('状态: 1');
     expect(vault.files.get('我的/影视/《想看片》.md')).toContain('评分: 0');
+    expect(vault.files.get('我的/影视/《想看片》.md')).not.toContain('状态');
     expect(hasNotice('已标记在看')).toBe(true);
   });
 
-  it('在看条目点「标记已看」→ 直改标记不弹窗；抽屉保持并动态刷新为已看动作', async () => {
+  it('在看条目点「标记已看」→ 直改标记不弹窗：评分写默认 3.5，抽屉保持并动态刷新为已看动作', async () => {
     const vault = setupVault();
     const app = makeApp(vault);
     const items = rebuildItems(app);
@@ -470,14 +470,19 @@ describe('抽屉（统一手势组件接入）', () => {
     const markBtn = [...sheet.querySelectorAll('.bz-item-sheet-item')].find((b) => b.textContent!.includes('标记已看')) as HTMLElement;
     markBtn.click(); // keepOpen：抽屉不关闭
     await vi.advanceTimersByTimeAsync(50);
-    expect(vault.files.get('我的/影视/《在看片》.md')).toContain('状态: 2');
-    expect(vault.files.get('我的/影视/《在看片》.md')).toContain('评分: 0'); // 评分保持无
+    expect(vault.files.get('我的/影视/《在看片》.md')).toContain('评分: 3.5');
+    expect(vault.files.get('我的/影视/《在看片》.md')).not.toContain('状态');
     expect(hasNotice('已标记已看')).toBe(true);
-    // 抽屉保持打开，动作动态刷新为已看态（评分/写影评），不再有标记已看
+    // 抽屉保持打开，动作动态刷新为已看态（改分/写影评），不再有标记已看
     expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
-    expect(sheet.textContent).toContain('评分');
+    expect(sheet.textContent).toContain('改分');
     expect(sheet.textContent).toContain('写影评');
     expect(sheet.textContent).not.toContain('标记已看');
+    // 头部同步刷新：在看徽章消失，出现评分星星（状态展示区随动作联动）
+    const sheetHead = sheet.querySelector('.bz-item-sheet-head') as HTMLElement;
+    expect(sheetHead.querySelector('.bz-movie-badge--accent')).toBeNull();
+    expect(sheetHead.querySelector('.bz-movie-stars')).not.toBeNull();
+    expect(sheetHead.textContent).toContain('⭐');
   });
 
   it('已看条目按有无评分显示「改分」/「评分」；评分窗为滑块+实时数值、无日期输入、无取消', async () => {
@@ -502,6 +507,9 @@ describe('抽屉（统一手势组件接入）', () => {
     expect(modal.textContent).toContain('改分');
     const slider = modal.querySelector('input[type="range"]') as HTMLInputElement;
     expect(slider).not.toBeNull();
+    expect(slider.min).toBe('1');
+    expect(slider.max).toBe('6');
+    expect(slider.step).toBe('0.1');
     expect(slider.value).toBe('4.5'); // 预填当前评分
     expect(modal.querySelector('input[placeholder="评分（0.1~5）"]')).toBeNull(); // 滑块取代数字输入
     expect(modal.querySelector('input[type="datetime-local"]')).toBeNull(); // 无日期输入
@@ -568,7 +576,7 @@ describe('抽屉（统一手势组件接入）', () => {
     (modal.querySelector('.bz-movie-tiny-confirm') as HTMLElement).click();
     await vi.advanceTimersByTimeAsync(50);
     const fileContent = vault.files.get('我的/影视/《已看无评分》.md')!;
-    expect(fileContent).toContain('状态: 2');
+    expect(fileContent).not.toContain('状态'); // 状态字段已废除
     expect(fileContent).toContain('评分: 3.5'); // 滑块默认 3.5
     expect(fileContent).toMatch(/观影日期: \d{4}-\d{2}-\d{2}/); // 默认当年日期
   });

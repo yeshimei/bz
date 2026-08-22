@@ -106,15 +106,12 @@ function parseAnalysisItem(fm: any, file: TFile): { item: any; d: Date | null; d
 
   const watchDate = fm['观影日期'] ? fm['观影日期'].toString() : null;
   const rating = fm['评分'] !== undefined ? Number(fm['评分']) : null;
+  // 状态由评分推断（无独立状态字段）：-1=想看 / 0=在看 / >0=已看 / 无评分按已看
   let status: number;
-  if (fm['状态'] !== undefined) {
-    status = Number(fm['状态']);
-  } else {
-    if (rating === -1) status = STATUS_WANT;
-    else if (rating === 0) status = STATUS_WATCHING;
-    else if (rating !== null && rating > 0) status = STATUS_WATCHED;
-    else status = STATUS_WATCHED;
-  }
+  if (rating === -1) status = STATUS_WANT;
+  else if (rating === 0) status = STATUS_WATCHING;
+  else if (rating !== null && rating > 0) status = STATUS_WATCHED;
+  else status = STATUS_WATCHED;
   const d = new Date(watchDate as string);
   return {
     item: { file, name, typeTag, group, watchDate, rating, status },
