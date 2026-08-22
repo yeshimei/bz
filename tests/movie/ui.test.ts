@@ -240,6 +240,12 @@ describe('添加/编辑弹窗', () => {
     expect(ratingSlider.value).toBe('3.5');
     expect(ratingSlider.parentElement!.style.display).toBe('block');
     expect(overlay.querySelector('input[type="datetime-local"]')).toBeNull();
+    // 滑块对应分数实时显示（初始 3.5，拖动更新）
+    const ratingValueEl = ratingSlider.parentElement!.querySelector('.bz-movie-rating-value') as HTMLElement;
+    expect(ratingValueEl.textContent).toBe('3.5');
+    ratingSlider.value = '5.2';
+    ratingSlider.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(ratingValueEl.textContent).toBe('5.2');
     // 切到想看 → 评分隐藏
     statusBtns[0].click();
     expect(ratingSlider.parentElement!.style.display).toBe('none');
