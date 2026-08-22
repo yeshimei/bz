@@ -49,6 +49,9 @@ export class MemorySystem {
   private pendingSinceReflect = 0;
   private reflectionTimer: ReturnType<typeof setInterval> | null = null;
   private reflecting = false;
+  /** 反思失败退避（空转守卫：AI 未配置/调用失败后 5 分钟不重试，指数递增至 30 分钟） */
+  private reflectBackoffUntil = 0;
+  private reflectBackoffMs = 5 * 60 * 1000;
   /** 语义模式状态：null=未探测 */
   private ollamaAvailable: boolean | null = null;
   private dim = 0;
@@ -389,11 +392,18 @@ export class MemorySystem {
     }
   }
 
-  /** 触发条件：距上次反思 ≥24h 或 新增 ≥reflectionMinNew 条（从未反思只靠新增计数） */
+  /** 触发条件：距上次反思 ≥24h 或 新增 ≥reflectionMinNew 条（从未反思只靠新增计数）；失败退避期不触发 */
   private shouldReflect(now: number): boolean {
+    if (now < this.reflectBackoffUntil) return false;
     const last = this.dataProvider().memory.reflection.lastReflectAt || 0;
     if (!last) return this.pendingSinceReflect >= MEMORY_CONFIG.reflectionMinNew;
     return now - last >= MEMORY_CONFIG.reflectionInterval || this.pendingSinceReflect >= MEMORY_CONFIG.reflectionMinNew;
+  }
+
+  /** 反思失败：指数退避（5min → 10min → 20min → 30min 封顶），期间不再触发也不再落盘 */
+  private backoffReflection(): void {
+    this.reflectBackoffUntil = Date.now() + this.reflectBackoffMs;
+    this.reflectBackoffMs = Math.min(this.reflectBackoffMs * 2, 30 * 60 * 1000);
   }
 
   async maybeReflect(): Promise<boolean> {
@@ -416,7 +426,8 @@ export class MemorySystem {
     const data = this.dataProvider();
     const now = Date.now();
     // evidence：最近 evidenceWindow 条内 importance 前 evidenceTop 条
-    const recent = this.stream.slice(-MEMORY_CONFIG.evidenceWindow);
+    // 红队 B P1-1：insight 禁止作 evidence（解自引用膨胀——小橘自己的洞察不再被当用户事实二次加工）
+    const recent = this.stream.slice(-MEMORY_CONFIG.evidenceWindow).filter((m) => m.type !== 'insight');
     const evidence = [...recent].sort((a, b) => (b.importance ?? 0) - (a.importance ?? 0)).slice(0, MEMORY_CONFIG.evidenceTop);
     if (evidence.length < 2) return; // 记忆太少不反思
 
@@ -444,7 +455,14 @@ export class MemorySystem {
       }
     } catch (e) { /* 反思调用失败 → 无产出，保持待反思 */ }
 
+    if (!insights.length) {
+      // 红队 B P1-2：AI 未配置/调用失败 → 指数退避（5min→30min 封顶），期间不触发不写盘
+      this.backoffReflection();
+      return;
+    }
     if (insights.length) {
+      this.reflectBackoffUntil = 0; // 成功重置退避（含 30min 封顶期）
+      this.reflectBackoffMs = 5 * 60 * 1000;
       for (const ins of insights) {
         const evidenceIds = ins.evidence
           .map((n) => evidence[n - 1]?.id)
@@ -460,9 +478,9 @@ export class MemorySystem {
           await this.onReflect(insights);
         } catch (e) { /* 成长失败不影响记忆流 */ }
       }
+      data.memory.lastUpdated = new Date().toISOString();
+      await this.dataSaver(data); // 红队 B P1-2：仅产出时落盘（失败退避期不空转写盘）
     }
-    data.memory.lastUpdated = new Date().toISOString();
-    await this.dataSaver(data);
   }
 
   // ---------------- 状态与格式化 ----------------

@@ -227,15 +227,66 @@ describe('反思（Reflection）', () => {
     expect(data.memory.reflection.count).toBe(1);
   });
 
-  it('AI 未配置 → 反思无产出（不写洞察、不推进 lastReflectAt）', async () => {
+  it('AI 未配置 → 反思无产出（不写洞察、不推进 lastReflectAt、进入退避不落盘）', async () => {
     const m = make();
     await m.addObservation('用户说：a', { importance: 0.5 });
     await m.addObservation('用户说：b', { importance: 0.5 });
     const streamBefore = data.memory.stream.length;
+    (saver as any).mockClear(); // 清掉 addObservation 的落盘计数，只测 reflect 自身是否落盘
     await m.reflect();
     expect(data.memory.stream.length).toBe(streamBefore);
     expect(data.memory.reflection.lastReflectAt).toBe(0);
     expect(data.memory.reflection.count).toBe(0);
+    // 红队 B P1-2 空转守卫：失败进入退避（5min 起），退避期内不触发、不落盘
+    expect((m as any).reflectBackoffUntil).toBeGreaterThan(Date.now());
+    expect((m as any).shouldReflect(Date.now())).toBe(false);
+    expect(saver).not.toHaveBeenCalled();
+  });
+
+  it('反思成功重置退避（下次失败重新 5min）', async () => {
+    const m = make({ ai: true });
+    await m.addObservation('a', { importance: 0.5 });
+    await m.addObservation('b', { importance: 0.5 });
+    (m as any).reflectBackoffUntil = Date.now() + 30 * 60 * 1000;
+    (m as any).reflectBackoffMs = 30 * 60 * 1000;
+    // 成功路径：fetch mock 返回 insights
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content: JSON.stringify({ insights: [{ text: '总结', evidence: [1] }] }) } }],
+      }),
+    }));
+    (globalThis as any).fetch = fetchMock;
+    (globalThis as any).fetch = fetchMock;
+    await m.reflect();
+    expect((m as any).reflectBackoffMs).toBe(5 * 60 * 1000);
+    expect((m as any).reflectBackoffUntil).toBe(0); // 退避期已在成功时被覆盖为未来？——见实现
+    expect(data.memory.reflection.count).toBe(1);
+  });
+
+  it('evidence 过滤 insight：小橘自己的洞察不作下一次反思素材（白名单 P1-1）', async () => {
+    const m = make({ ai: true });
+    await m.addObservation('用户说：在学日语', { importance: 0.9 });
+    await m.addObservation('用户说：周末去图书馆', { importance: 0.8 });
+    // 先产出一条 insight
+    const f1 = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ choices: [{ message: { content: JSON.stringify({ insights: [{ text: '用户近期学习投入', evidence: [1, 2] }] }) } }] }),
+    }));
+    (globalThis as any).fetch = f1;
+    await m.reflect();
+    const insightCount = data.memory.stream.filter((x) => x.type === 'insight').length;
+    expect(insightCount).toBe(1);
+    // 第二次反思：evidence 应只含 observation，不含 insight
+    const f2 = vi.fn(async (url: string, init?: any) => {
+      const body = JSON.parse((init as any).body);
+      const promptText = body.messages[1].content as string;
+      return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify({ insights: [{ text: '再总结', evidence: [1] }] }) } }] }) };
+    });
+    (globalThis as any).fetch = f2;
+    await m.reflect();
+    const promptText = (f2.mock.calls[0][1] as any).body as string;
+    expect(promptText).not.toContain('用户近期学习投入'); // insight 文本未进反思 prompt
   });
 
   it('shouldReflect：新增 ≥20 条触发（pendingSinceReflect）', async () => {

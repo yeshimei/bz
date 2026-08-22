@@ -34,6 +34,11 @@ describe('observationText（隐私分级观察：不读私人正文/不引正文
     expect(t).not.toContain('第一条正文秘密');
   });
 
+  it('diary：无标题块不谎报「写了 1 条」（红队 B P2-1，空/格式不符跳过）', async () => {
+    const t = await observationText(appOf('只有正文没有标题块\n第二行\n'), {} as any, 'diary');
+    expect(t).toBeNull();
+  });
+
   it('clipping：取 frontmatter 的 AI summary（auto-summary 产物，非私人正文）', async () => {
     const t = await observationText(appOf('---\nsite: 微信公众号\nsummary: 这是自动生成的中文摘要内容\n---\n正文……'), {} as any, 'clipping');
     expect(t).toContain('这是自动生成的中文摘要内容');
