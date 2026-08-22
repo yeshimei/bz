@@ -34,6 +34,12 @@ describe('normalizeConfig', () => {
     expect(normalizeConfig({ shortTermMemory: 100 }).shortTermMemory).toBe(100);
   });
 
+  it('noteSource 默认开（ticket 025：日记/闪念计入信任 + 笔记库内容来源）', () => {
+    expect(defaultConfig().noteSource).toBe(true);
+    expect(normalizeConfig({}).noteSource).toBe(true);
+    expect(normalizeConfig({ noteSource: false }).noteSource).toBe(false);
+  });
+
   it('外观非法 → 回退默认（预设人格校验已移除）', () => {
     expect(normalizeConfig({ appearance: 'pink' }).appearance).toBe('orange');
     expect(normalizeConfig({ appearance: 'neon' }).appearance).toBe('neon');

@@ -20,6 +20,7 @@ import { getSmartCatMessage } from './messages';
 import { generatePrompt } from './prompts';
 import { callChat, isAIConfigured } from './api';
 import { generateBookDescription, hasBookTag } from './content';
+import { classifyPath, observationText } from './context-source';
 import type { SmartCatData, SmartCatConfig } from './types';
 import type { SmartcatPanels } from './ui';
 
@@ -36,6 +37,9 @@ let interaction: InteractionManager | null = null;
 let mobileAdapter: MobileInputAdapter | null = null;
 let panels: SmartcatPanels | null = null;
 let fileOpenRef: any = null;
+let vaultRefs: any[] = [];
+/** vault 活动去弹跳：同一路径 10 分钟内只计一次（防自动保存连发；非严格只读不影响数据） */
+const lastActivity = new Map<string, number>();
 let visibilityCleanup: (() => void) | null = null;
 let followTimer: ReturnType<typeof setInterval> | null = null;
 let greetTimer: ReturnType<typeof setTimeout> | null = null;
@@ -192,6 +196,35 @@ export async function ensureSmartCat(app: App): Promise<void> {
     eventSystem.emit('fileOpened', { file });
     void generateBookReview();
   });
+
+  // 笔记库接入（ADR-0024 决策，ticket 025）：vault create/modify（实时事件，不扫存量）
+  //   → ① 写日记/闪念计入信任成长（轻质量 0.15）② 笔记库内容 → 小橘信息观察（隐私分级）
+  const onVaultActivity = async (file: any) => {
+    if (!file || !file.path || !data || !personalityGrowth || !memorySystem || !appRef) return;
+    const kind = classifyPath(file.path);
+    if (!kind || !data.config.noteSource) return;
+    const now = Date.now();
+    const last = lastActivity.get(file.path) || 0;
+    if (now - last < 10 * 60 * 1000) return;          // 同一路径 10 分钟去弹跳
+    lastActivity.set(file.path, now);
+    if (lastActivity.size > 300) {
+      const first = lastActivity.keys().next().value;
+      if (first !== undefined) lastActivity.delete(first);
+    }
+    if (kind === 'diary' || kind === 'flash') {
+      personalityGrowth.developBasedOnInteraction(kind, 0.3, 0.02, 0.15).catch(() => {});
+    }
+    try {
+      const text = await observationText(appRef, file as any, kind);
+      // 隐私红线（红队结论）：vault 内容观察一律本地规则打分（固定 importance + 词法情绪），
+      // 不走 LLM——记忆层不得成为把笔记内容外发给云端 AI 的管道
+      if (text) await memorySystem.addObservation(text, { source: kind, importance: 0.55, emotion: memorySystem.detectEmotion(text) });
+    } catch { /* 读取失败静默（不打断主流程） */ }
+  };
+  if (app.vault && typeof (app.vault as any).on === 'function') {
+    vaultRefs.push((app.vault as any).on('create', onVaultActivity));
+    vaultRefs.push((app.vault as any).on('modify', onVaultActivity));
+  }
 
   // visibilitychange → 欢迎回来（离开超 60s 才允许）
   visibilityCleanup = setupVisibilityCheck({
@@ -490,6 +523,13 @@ export function unloadSmartCat(): void {
     } catch (e) { /* 忽略 */ }
     fileOpenRef = null;
   }
+  if (vaultRefs.length && appRef) {
+    for (const ref of vaultRefs) {
+      try { (appRef.vault as any).offref(ref); } catch (e) { /* 忽略 */ }
+    }
+    vaultRefs = [];
+  }
+  lastActivity.clear();
   if (visibilityCleanup) {
     visibilityCleanup();
     visibilityCleanup = null;
