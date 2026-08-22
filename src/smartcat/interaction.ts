@@ -5,7 +5,6 @@
  * 全部命令/面板操作经回调注入（index 组装，避免模块间循环依赖）。
  */
 import { eventSystem, startThinking, stopThinking, stopAllThinking } from './state';
-import { isMobileEnv } from '../core/mobile';
 import { EVENTS } from './types';
 import { getSmartCatMessage } from './messages';
 import { generatePrompt } from './prompts';
@@ -14,7 +13,6 @@ import { hasBookTag, getCursorContext, getViewportContent, getCurrentNoteContext
 import { CAT_CONTAINER_ID } from './ui';
 import type { BubbleManager } from './bubble';
 import type { MoodSystem } from './mood';
-import type { VoiceCommandSystem } from './voice';
 import type { SmartCatConfig } from './types';
 
 export interface InteractionDeps {
@@ -22,7 +20,6 @@ export interface InteractionDeps {
   saveConfig: (c: SmartCatConfig) => Promise<SmartCatDataLike>;
   bubble: BubbleManager;
   mood: MoodSystem;
-  voice: VoiceCommandSystem;
   openChat: () => void;
   closeChat: () => void;
   openSettings: () => void;
@@ -172,7 +169,7 @@ export class InteractionManager {
     eventSystem.emit('mouseUp', { x: endX, y: endY });
   }
 
-  /** 点触连击（原 handleTap：单击抚摸、双击聊天、三击语音、五击设置） */
+  /** 点触连击（原 handleTap：单击抚摸、双击聊天、五击设置；三击语音已删 2026-08-23） */
   private handleTap(): void {
     this.tapCount++;
     if (this.tapCount === 1) {
@@ -190,16 +187,8 @@ export class InteractionManager {
         this.resetTapState();
       }, 300);
     } else if (this.tapCount === 3) {
-      if (this.tapTimer) clearTimeout(this.tapTimer);
-      this.clearLongPressTimer();
-      this.tapTimer = setTimeout(() => {
-        if (isMobileEnv()) {
-          this.deps.voice.toggleSpeechRecognition();
-        } else {
-          this.deps.bubble.showBubble('语音识别在桌面端会闪退，暂不支持哦～');
-        }
-        this.resetTapState();
-      }, 300);
+      // 语音模块已删（用户拍板）——三击无动作，直接复位
+      this.resetTapState();
     } else if (this.tapCount === 5) {
       if (this.tapTimer) clearTimeout(this.tapTimer);
       this.clearLongPressTimer();
@@ -263,9 +252,7 @@ export class InteractionManager {
       }, 500);
     }
     eventSystem.emit(EVENTS.PET_INTERACTION);
-    // ADR-0023：抚摸 → 性格微移（warmth/others_trust 成长 + PAD 调节）
-    this.deps.mood.handleInteraction('pet', 1);
-    this.deps.onInteraction?.('pet', 1);
+    // 2026-08-23 用户拍板：抚摸=纯互动信号，不持久影响信任/心情/人格（原 ADR-0023 性格微移已移除）
   }
 
   /** 陪伴定时器（原 startCompanionMode：speakInterval 分钟 × 概率；启动 1s 后欢迎/引导气泡） */
