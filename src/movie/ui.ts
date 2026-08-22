@@ -40,7 +40,8 @@ export function renderAll(displayItems: any[], container: HTMLElement, app: App)
       background: var(--background-secondary); cursor: pointer;
       transition: background 0.2s;
     `;
-    // 手势收敛：长按卡片弹抽屉（统一动作），其余手势（双击打开等）已移除
+    // 手势：长按卡片弹抽屉（统一动作）；双击整卡打开影视笔记（2026-08-22 用户决策回加，
+    // ticket 69 手势收敛曾移除双击；与抽屉/右键「打开」同路径 openMovieNote）
 
     if (item.poster) {
       const posterFile = app.vault.getAbstractFileByPath(item.poster);
@@ -143,6 +144,19 @@ export function renderAll(displayItems: any[], container: HTMLElement, app: App)
 
     card.appendChild(infoDiv);
     attachMovieActions(card, item, app);
+
+    // 双击整卡 → 打开影视笔记（300ms 内两次单击；单击无操作防误触——沿用剪藏回退双击先例）
+    let lastCardClick = 0;
+    card.addEventListener('click', (e) => {
+      const now = Date.now();
+      if (lastCardClick && now - lastCardClick < 300) {
+        e.stopPropagation();
+        e.preventDefault();
+        openMovieNote(item, app);
+      }
+      lastCardClick = now;
+    });
+
     container.appendChild(card);
   });
 
