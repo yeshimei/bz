@@ -44,7 +44,8 @@ export async function observationText(app: App, file: TAbstractFile, kind: Activ
     case 'diary': { // 隐私：仅条目标题（emoji+HH:mm）计数，不读正文句子
       const txt = await readHead(400);
       const blocks = txt.split('\n').filter((l) => /^#\s+.*?\s+\d{1,2}:\d{2}\s*$/.test(l)).length;
-      return '你今天写了 ' + Math.max(1, blocks) + ' 条日记记录';
+      // 红队 B P2-1：0 条不谎报「写了 1 条」（空/格式不符文件跳过）
+      return blocks >= 1 ? '你今天写了 ' + blocks + ' 条日记记录' : null;
     }
     case 'clipping': {
       const top = await readHead(12);

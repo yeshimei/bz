@@ -139,11 +139,19 @@ describe('MoodSystem 持久化', () => {
 });
 
 describe('MoodSystem 衰减与互动', () => {
-  it('startAutoDecay 60s 衰减：interval 运行并保存', async () => {
+  it('startAutoDecay 空转守卫：60s 微小变化不落盘，累计 ≥0.5 才落盘', async () => {
     vi.useFakeTimers();
     const m = make();
+    (m as any).lastSavedPad = null;
     m.startAutoDecay();
+    // 首 tick 前无基准 → 落盘一次建立基线
     await vi.advanceTimersByTimeAsync(60000);
+    (saver as any).mockClear();
+    // 单次 60s 变化 ≤0.03 ≪ 0.5 → 空转不落盘
+    await vi.advanceTimersByTimeAsync(60000);
+    expect(saver).not.toHaveBeenCalled();
+    // 累计 30 分钟（~1.0 轴变化）→ 触发落盘
+    await vi.advanceTimersByTimeAsync(29 * 60000);
     expect(saver).toHaveBeenCalled();
     vi.useRealTimers();
   }, 10000);
