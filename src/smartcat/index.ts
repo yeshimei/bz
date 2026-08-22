@@ -1,7 +1,8 @@
 /**
  * smartcat 域入口（小橘陪伴猫）
  * ensureSmartCat 幂等懒加载：挂载猫容器 + 装配全部子系统 + 常驻监听
- * （file-open 书评 / visibilitychange 欢迎回来 / 跟随（30 分钟空闲靠近鼠标）/ 记忆固化）。
+ * （file-open 书评 / visibilitychange 欢迎回来 / 记忆固化）。跟随（原 30 分钟空闲
+ * 靠近鼠标）按用户要求已删除。
  * unloadSmartCat 全量清理。命令回调：open（召唤显示）/ chat（聊天）/ hide（隐藏）。
  */
 import type { App } from 'obsidian';
@@ -38,8 +39,6 @@ let mobileAdapter: MobileInputAdapter | null = null;
 let panels: SmartcatPanels | null = null;
 let fileOpenRef: any = null;
 let visibilityCleanup: (() => void) | null = null;
-let followTimer: ReturnType<typeof setInterval> | null = null;
-let lastPetTime = Date.now();
 
 const dataProvider = (): SmartCatData => {
   if (!data) throw new Error('smartcat: 数据未加载');
@@ -175,67 +174,7 @@ export async function ensureSmartCat(app: App): Promise<void> {
     },
   });
 
-  // 跟随：30 分钟空闲 → 靠近鼠标位置（原 SmartCatPluginFollow 逻辑并入）
-  (window as any).mousePosition = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-  document.addEventListener('mousemove', windowMouseMove);
-  followTimer = setInterval(() => {
-    if (Date.now() - lastPetTime >= 30 * 60 * 1000 && !(interaction as any)?.isDragging) {
-      triggerCatMovement();
-    }
-  }, 30000);
-
   eventSystem.emit('appInitialized');
-}
-
-function windowMouseMove(e: MouseEvent): void {
-  (window as any).mousePosition = { x: e.clientX, y: e.clientY };
-}
-
-/** 跟随移动（原 PluginFollow.moveCatTo：百分比定位 + 跑步/走路动画 + 3s 后回原位） */
-function triggerCatMovement(): void {
-  const container = document.getElementById('smart-companion-cat');
-  if (!container) return;
-  if ((container as any).isMoving) return;
-  (container as any).isMoving = true;
-  const original = { x: 50, y: 100 };
-  const mouse = (window as any).mousePosition || { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-  const mouseX = (mouse.x / window.innerWidth) * 100;
-  const mouseY = (mouse.y / window.innerHeight) * 100;
-  const offset = 5 + Math.random() * 10;
-  const randomAngle = Math.random() * Math.PI * 2;
-  const targetX = Math.max(5, Math.min(95, mouseX + Math.cos(randomAngle) * offset));
-  const targetY = Math.max(5, Math.min(95, mouseY + Math.sin(randomAngle) * offset));
-  const currentX = parseFloat(container.style.left) || 50;
-  const currentY = parseFloat(container.style.top) || 100;
-  const distance = Math.sqrt(Math.pow(targetX - currentX, 2) + Math.pow(targetY - currentY, 2));
-  const duration = Math.max(2000, Math.min(5000, distance * 50));
-  container.classList.add(distance > 10 ? 'cat-running' : 'cat-walking');
-  container.style.transition = `left ${duration}ms ease-out, top ${duration}ms ease-out`;
-  container.style.left = targetX + '%';
-  container.style.top = targetY + '%';
-  setTimeout(() => {
-    container.classList.remove('cat-running', 'cat-walking');
-    bubbleManager!.showBubble(getSmartCatMessage('LITTLE_ORANGE_COMPLAINTS'));
-    lastPetTime = Date.now();
-    (container as any).isMoving = false;
-    setTimeout(() => {
-      if ((container as any).isMoving) return;
-      (container as any).isMoving = true;
-      container.classList.add('cat-walking');
-      const returnDuration = 4000;
-      container.style.transition = `left ${returnDuration}ms ease-in-out, top ${returnDuration}ms ease-in-out`;
-      container.style.left = original.x + '%';
-      container.style.top = original.y + '%';
-      setTimeout(() => {
-        container.classList.remove('cat-walking');
-        (container as any).isMoving = false;
-        setTimeout(() => {
-          container.style.left = original.x + '%';
-          container.style.top = original.y + '%';
-        }, 100);
-      }, returnDuration);
-    }, 3000);
-  }, duration);
 }
 
 /** 书评（原 ContentMonitor.generateBookReview：book 标签笔记首次打开一句话评价） */
@@ -441,11 +380,6 @@ export function unloadSmartCat(): void {
     visibilityCleanup();
     visibilityCleanup = null;
   }
-  if (followTimer) {
-    clearInterval(followTimer);
-    followTimer = null;
-  }
-  document.removeEventListener('mousemove', windowMouseMove);
   animation?.dispose();
   memorySystem?.stopScheduler();
   moodSystem?.dispose();

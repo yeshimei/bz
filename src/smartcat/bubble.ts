@@ -98,8 +98,6 @@ export class BubbleManager {
     bubblesContainer.appendChild(bubble);
 
     const allBubbles = Array.from(bubblesContainer.querySelectorAll<HTMLElement>('.cat-bubble'));
-    const newBubbleIndex = allBubbles.length - 1;
-    this.pushExistingBubbles(allBubbles, newBubbleIndex);
 
     void bubble.offsetWidth;
     bubble.classList.add('show');
@@ -157,17 +155,6 @@ export class BubbleManager {
     const charInterval = Math.max(30, Math.min(150, typingDuration / charCount));
 
     return { baseDisplayDuration, typingDuration, displayDuration, charInterval };
-  }
-
-  /** 推挤已有气泡（原 pushExistingBubbles：前置气泡上移 68/个） */
-  pushExistingBubbles(allBubbles: HTMLElement[], newBubbleIndex: number): void {
-    allBubbles.forEach((existingBubble, index) => {
-      if (index < newBubbleIndex) {
-        const pushHeight = (newBubbleIndex - index) * 68;
-        existingBubble.style.transform = `translateY(-${pushHeight}px)`;
-        existingBubble.style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-      }
-    });
   }
 
   /** 打字机效果（原 startTypingEffect 逐字：逐字 setInterval、完成清 interval、display 移除、队列推进、总超时兜底） */
@@ -296,11 +283,7 @@ export class BubbleManager {
       const bubblesContainer = document.querySelector('#cat-bubbles-container');
       if (bubblesContainer && bubble.parentNode === bubblesContainer) {
         bubblesContainer.removeChild(bubble);
-        const remainingBubbles = Array.from(bubblesContainer.querySelectorAll('.cat-bubble.show'));
-        remainingBubbles.forEach((b, index) => {
-          (b as HTMLElement).style.transform = `translateY(-${index * 68}px)`;
-          (b as HTMLElement).style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-        });
+        // 剩余气泡由 flex 自然重排，不再手动 transform 推挤（同推挤机制废弃原因）
       }
       this.isCurrentBubbleTyping = false;
       this.currentBubble = null;
