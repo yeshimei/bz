@@ -40,6 +40,8 @@ let fileOpenRef: any = null;
 let vaultRefs: any[] = [];
 /** vault 活动去弹跳：同一路径 10 分钟内只计一次（防自动保存连发；非严格只读不影响数据） */
 const lastActivity = new Map<string, number>();
+/** 机械去簇（红队 B P1-4）：1 分钟内 ≥5 个不同路径 = 批量导入/同步，折叠为机械事件（不计信任成长） */
+const batchWindow: { path: string; t: number }[] = [];
 let visibilityCleanup: (() => void) | null = null;
 let followTimer: ReturnType<typeof setInterval> | null = null;
 let greetTimer: ReturnType<typeof setTimeout> | null = null;
@@ -211,8 +213,16 @@ export async function ensureSmartCat(app: App): Promise<void> {
       const first = lastActivity.keys().next().value;
       if (first !== undefined) lastActivity.delete(first);
     }
+    // 机械去簇：1 分钟内不同路径 ≥5 条 → 批量导入/同步，折叠为一次机械事件（不计信任、观察合并）
+    const since = now - 60 * 1000;
+    while (batchWindow.length && batchWindow[0].t < since) batchWindow.shift();
+    batchWindow.push({ path: file.path, t: now });
+    const distinct = new Set(batchWindow.map((b) => b.path)).size;
+    const mechanical = distinct >= 5;
     if (kind === 'diary' || kind === 'flash') {
-      personalityGrowth.developBasedOnInteraction(kind, 0.3, 0.02, 0.15).catch(() => {});
+      if (!mechanical) {
+        personalityGrowth.developBasedOnInteraction(kind, 0.3, 0.02, 0.15).catch(() => {});
+      }
     }
     try {
       const text = await observationText(appRef, file as any, kind);

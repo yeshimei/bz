@@ -140,7 +140,9 @@ export class MoodSystem {
 
   // ---------------- 衰减 ----------------
 
-  /** 自动衰减（60s；PAD 三轴各自速率 ÷ 人格乘数） */
+  /** 自动衰减（60s 空转守卫：PAD 三轴各自速率 ÷ 人格乘数；仅当任一轴累计变化 ≥0.5 才落盘） */
+  private lastSavedPad: PadDimensions | null = null;
+
   startAutoDecay(): void {
     if (this.decayTimer) clearInterval(this.decayTimer);
     const baseDecayRates: Record<string, number> = {
@@ -154,7 +156,13 @@ export class MoodSystem {
         const old = this.pad[axis as keyof PadDimensions] || 50;
         this.pad[axis as keyof PadDimensions] = Math.max(0, Math.round((old + adjustedRate) * 10) / 10);
       }
-      void this.saveMoodState();
+      // 红队 B P1-3：无事件也每 60s 全量写盘 → 改为任一轴相对上次落盘变化 ≥0.5 才写
+      const lp = this.lastSavedPad;
+      const dirty = !lp || (['pleasure', 'arousal', 'dominance'] as const).some((ax) => Math.abs((this.pad[ax] || 0) - (lp[ax] || 0)) >= 0.5);
+      if (dirty) {
+        this.lastSavedPad = { ...this.pad };
+        void this.saveMoodState();
+      }
     }, 60000);
   }
 
