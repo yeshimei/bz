@@ -497,13 +497,58 @@ export class MemorySystem {
     };
   }
 
-  /** 格式化记忆供 prompt（原 formatMemoriesForPrompt 语义） */
+  /** 格式化记忆供 prompt（增强：带来源中文标签 + 相对时间，小橘能感知「什么时候·从哪来」） */
   formatMemoriesForPrompt(memories: MemoryStreamEntry[]): string {
     return memories
       .map((memory, index) => {
         const content = typeof memory.description === 'string' ? memory.description : JSON.stringify(memory.description);
-        return `${index + 1}. [${memory.type}] ${content.substring(0, 200)}...`;
+        const label = sourceLabel(memory.source);
+        const time = memory.created ? formatRelativeTime(memory.created) : '';
+        const meta = [label, time].filter(Boolean).join('·');
+        return `${index + 1}. [${memory.type}${meta ? `（${meta}）` : ''}] ${content.substring(0, 200)}...`;
       })
       .join('\n');
   }
+}
+
+/** 观察来源中文标签（prompt 友好；域事件 domain:<key> 映射到域中文名） */
+export const SOURCE_LABELS: Record<string, string> = {
+  chat: '聊天', diary: '日记', flash: '闪念', clipping: '剪藏', movie: '影视',
+  reading: '书库', poem: '现代诗', letter: '信', reflection: '反省',
+  'domain:memo': '备忘录', 'domain:pomodoro': '番茄钟', 'domain:news': '聚合讯',
+  'domain:quiz': '做题', 'domain:review': '复习', 'domain:favorites': '收藏', 'domain:belongings': '归物',
+};
+
+/** 来源 → 中文（未知来源回显原值；domain:<key> 查域表） */
+export function sourceLabel(source?: string): string {
+  if (!source) return '';
+  if (source.startsWith('domain:')) {
+    return SOURCE_LABELS[source] || source.replace(/^domain:/, '');
+  }
+  return SOURCE_LABELS[source] || source;
+}
+
+/** 相对时间（prompt 友好）：1 分钟内=刚刚；分钟/小时/天；超 7 天=月日 */
+export function formatRelativeTime(iso: string, now = Date.now()): string {
+  const t = new Date(iso).getTime();
+  if (!Number.isFinite(t)) return '';
+  const diff = Math.max(0, now - t);
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return '刚刚';
+  if (min < 60) return `${min} 分钟前`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h} 小时前`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d} 天前`;
+  const dt = new Date(t);
+  return `${dt.getMonth() + 1} 月 ${dt.getDate()} 日`;
+}
+
+/** 检索 query 组装：用户消息 + 当前情绪 + 当前时段（缺省项自动省略；供聊天 RAG 用，mock 友好） */
+export function buildRetrieveQuery(userMessage: string, emotion?: string | null, hour = new Date().getHours()): string {
+  const parts: string[] = [userMessage.trim()];
+  if (emotion && emotion.trim()) parts.push(`当前情绪：${emotion.trim()}`);
+  const period = hour >= 5 && hour < 12 ? '早晨' : hour >= 12 && hour < 18 ? '下午' : hour >= 18 && hour < 23 ? '晚上' : '深夜';
+  parts.push(`时段：${period}`);
+  return parts.filter(Boolean).join(' ');
 }
