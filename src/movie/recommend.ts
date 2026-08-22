@@ -126,8 +126,36 @@ export function parseRecommendJson(raw: string): any[] | null {
   }
 }
 
-/** 打开 AI 推荐弹窗 */
-export async function openRecommendModal(app: App): Promise<void> {
+/**
+ * AI 荐片（动态通知模式）：点击发进度通知（不弹窗、不阻塞，用户可继续干别的），
+ * 完成后通知原地更新为成功，并自动弹出推荐结果界面。遮罩点击/ESC 关闭。
+ */
+export async function runAIRecommend(app: App): Promise<void> {
+  const handle = notify('AI 荐片分析中…', { type: 'progress' });
+  try {
+    const profile = buildTasteProfile();
+    const allNames = M.items.map((i) => i.name);
+    const prompt = buildRecommendPrompt(profile, profile.recent, allNames);
+    handle.setMessage(`已分析 ${profile.total} 部观影历史，正在生成推荐…`);
+    const ai = createAI();
+    const raw = await ai.json(prompt, {});
+    const parsed = parseRecommendJson(raw);
+    if (!parsed || parsed.length === 0) {
+      handle.setType('error');
+      handle.setMessage('AI 荐片失败：返回格式无法解析');
+      return;
+    }
+    handle.setType('success');
+    handle.setMessage(`AI 荐片完成，已推荐 ${parsed.length} 部`);
+    showRecommendResult(app, parsed);
+  } catch (e: any) {
+    handle.setType('error');
+    handle.setMessage('AI 荐片失败：' + (e.message || e));
+  }
+}
+
+/** 展示推荐结果界面（AI 完成后弹出；渲染推荐卡，含「加入想看」） */
+export function showRecommendResult(app: App, list: any[]): void {
   if (M.recommendOverlay) {
     M.recommendOverlay.remove();
     M.recommendOverlay = null;
@@ -153,7 +181,7 @@ export async function openRecommendModal(app: App): Promise<void> {
     display: flex; justify-content: space-between; align-items: center;
     padding: 12px 20px; flex-shrink: 0; border-bottom: 1px solid var(--background-modifier-border);
   `;
-  header.innerHTML = '<span style="font-size:1.1rem;font-weight:600;">🤖 AI 推荐</span>';
+  header.innerHTML = '<span style="font-size:1.1rem;font-weight:600;">🤖 AI 荐片</span>';
 
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '✕ 关闭';
@@ -165,16 +193,11 @@ export async function openRecommendModal(app: App): Promise<void> {
   });
   header.appendChild(closeBtn);
 
-  const statusEl = document.createElement('div');
-  statusEl.style.cssText = 'color: var(--text-muted); font-size: 0.9rem; padding: 16px 20px;';
-  statusEl.textContent = '🧠 正在分析你的观影历史…';
-
   const listContainer = document.createElement('div');
   listContainer.style.cssText = 'flex:1; overflow-y:auto; padding: 0 20px 20px;';
   listContainer.className = 'recommend-list';
 
   modal.appendChild(header);
-  modal.appendChild(statusEl);
   modal.appendChild(listContainer);
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
@@ -187,28 +210,7 @@ export async function openRecommendModal(app: App): Promise<void> {
     }
   });
 
-  try {
-    const profile = buildTasteProfile();
-    const allNames = M.items.map((i) => i.name);
-    const recent = profile.recent;
-    const prompt = buildRecommendPrompt(profile, recent, allNames);
-    statusEl.textContent = `🧠 已分析 ${profile.total} 部观影历史，正在生成推荐…`;
-
-    const ai = createAI();
-    const raw = await ai.json(prompt, {});
-    const parsed = parseRecommendJson(raw);
-
-    if (!parsed || parsed.length === 0) {
-      statusEl.textContent = '⚠️ AI 返回格式无法解析：' + String(raw).slice(0, 200);
-      return;
-    }
-
-    statusEl.style.display = 'none';
-    renderRecommendList(listContainer, parsed);
-  } catch (e: any) {
-    statusEl.textContent = '❌ 生成失败：' + (e.message || e);
-    console.error(e);
-  }
+  renderRecommendList(listContainer, list);
 }
 
 /** 渲染推荐列表 */
