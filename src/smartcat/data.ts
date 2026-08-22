@@ -7,7 +7,8 @@
 import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
 import { defaultConfig, normalizeConfig } from './config';
-import type { SmartCatData, MemoryStream } from './types';
+import { randomOceanSeed, characterSeed, DEFAULT_TRAITS, DEFAULT_OCEAN } from './character';
+import type { SmartCatData, MemoryStream, PersonalityGrowthData } from './types';
 
 export const SMARTCAT_FILE = 'smartcat.json';
 /** 记忆向量文件（bge-m3 1024 维 float32 平铺，dim uint32 LE 头；行序对齐 stream） */
@@ -37,7 +38,7 @@ export function defaultMemoryStream(): MemoryStream {
   };
 }
 
-/** 默认全量数据（config 默认 + PAD 心情默认 + 人格成长默认 + 记忆流默认） */
+/** 默认全量数据（config 默认 + PAD 心情默认 + 性格成长默认（MATE）+ 记忆流默认） */
 export function defaultSmartCatData(): SmartCatData {
   return {
     config: defaultConfig(),
@@ -47,14 +48,23 @@ export function defaultSmartCatData(): SmartCatData {
       lastMood: 'neutral',
       currentEmotion: null,
     },
-    personalityGrowth: {
-      traits: { playfulness: 50, sociability: 50, independence: 50, curiosity: 50 },
-      growthHistory: [],
-      lastSave: 0,
-      version: '1.0',
-    },
+    personalityGrowth: defaultPersonalityGrowth(),
     editingData: null,
     memory: defaultMemoryStream(),
+  };
+}
+
+/** 默认性格成长（MATE：OCEAN 随机种子 + 30 特质 seed + 空统计） */
+export function defaultPersonalityGrowth(): PersonalityGrowthData {
+  const ocean = randomOceanSeed();
+  return {
+    ocean,
+    traits: characterSeed(ocean),
+    relationship: { trust: 0.5, attachment: 0.5 },
+    behaviorStats: { interactionCount: 0, emotionalTone: 0, preferredHour: 12, sessionCount: 0 },
+    growthHistory: [],
+    lastSave: 0,
+    version: '2.0',
   };
 }
 
@@ -86,9 +96,7 @@ export function normalizeData(raw: any): SmartCatData {
       lastMood: typeof raw.mood?.lastMood === 'string' ? raw.mood.lastMood : def.mood.lastMood,
       currentEmotion: typeof raw.mood?.currentEmotion === 'string' ? raw.mood.currentEmotion : null,
     },
-    personalityGrowth: raw.personalityGrowth
-      ? { ...def.personalityGrowth, ...raw.personalityGrowth }
-      : def.personalityGrowth,
+    personalityGrowth: normalizePersonalityGrowth(raw.personalityGrowth || def.personalityGrowth, def.personalityGrowth),
     editingData: raw.editingData ?? def.editingData,
     memory: {
       version: 1,
@@ -99,6 +107,47 @@ export function normalizeData(raw: any): SmartCatData {
         count: typeof raw.memory?.reflection?.count === 'number' ? raw.memory.reflection.count : 0,
       },
     },
+  };
+}
+
+/** 归一化性格成长：新结构字段逐项兜底；旧 4 维 traits（playfulness 等）映射进 behavioral 群组 */
+export function normalizePersonalityGrowth(raw: any, def: PersonalityGrowthData): PersonalityGrowthData {
+  if (!raw || typeof raw !== 'object') return def;
+  const traits = { ...DEFAULT_TRAITS, ...(raw.traits && typeof raw.traits === 'object' ? raw.traits : {}) };
+  // 旧 4 维兼容：playfulness→dopamine/humor、sociability→warmth/oxytocin、independence→avoidance、curiosity→creativity
+  if (raw.traits && typeof raw.traits.playfulness === 'number') {
+    traits.dopamine = Math.min(0.9, Math.max(0.1, (raw.traits.playfulness / 100 + 0.5) / 2));
+    traits.humor = Math.min(0.9, Math.max(0.1, (raw.traits.playfulness / 100 + 0.5) / 2));
+  }
+  if (raw.traits && typeof raw.traits.sociability === 'number') {
+    traits.warmth = Math.min(0.9, Math.max(0.1, (raw.traits.sociability / 100 + 0.5) / 2));
+    traits.oxytocin = Math.min(0.9, Math.max(0.1, (raw.traits.sociability / 100 + 0.5) / 2));
+  }
+  if (raw.traits && typeof raw.traits.independence === 'number') {
+    traits.def_avoidance = Math.min(0.9, Math.max(0.1, 1 - (raw.traits.independence / 100 + 0.5) / 2));
+  }
+  if (raw.traits && typeof raw.traits.curiosity === 'number') {
+    traits.creativity = Math.min(0.9, Math.max(0.1, (raw.traits.curiosity / 100 + 0.5) / 2));
+  }
+  return {
+    ocean: {
+      ...DEFAULT_OCEAN,
+      ...(raw.ocean && typeof raw.ocean === 'object' ? raw.ocean : {}),
+    },
+    traits,
+    relationship: {
+      trust: typeof raw.relationship?.trust === 'number' ? raw.relationship.trust : 0.5,
+      attachment: typeof raw.relationship?.attachment === 'number' ? raw.relationship.attachment : 0.5,
+    },
+    behaviorStats: {
+      interactionCount: typeof raw.behaviorStats?.interactionCount === 'number' ? raw.behaviorStats.interactionCount : 0,
+      emotionalTone: typeof raw.behaviorStats?.emotionalTone === 'number' ? raw.behaviorStats.emotionalTone : 0,
+      preferredHour: typeof raw.behaviorStats?.preferredHour === 'number' ? raw.behaviorStats.preferredHour : 12,
+      sessionCount: typeof raw.behaviorStats?.sessionCount === 'number' ? raw.behaviorStats.sessionCount : 0,
+    },
+    growthHistory: Array.isArray(raw.growthHistory) ? raw.growthHistory : [],
+    lastSave: typeof raw.lastSave === 'number' ? raw.lastSave : 0,
+    version: '2.0',
   };
 }
 

@@ -7,7 +7,7 @@
 import type { App } from 'obsidian';
 import { notice } from '../core/notice';
 import { getSettings, saveSettings } from '../core/settings-provider';
-import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath } from './data';
+import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath, defaultPersonalityGrowth } from './data';
 import { eventSystem, setSmartcatApp, setupVisibilityCheck, __resetVisibilityForTests } from './state';
 import { mountCatContainer, unmountCatContainer, applyAppearance, createChatPanel, showChatPanel, hideChatPanel, openSmartcatSettings } from './ui';
 import { BubbleManager, EmojiProcessor } from './bubble';
@@ -91,10 +91,12 @@ export async function ensureSmartCat(app: App): Promise<void> {
   // ADR-0021：init = 探测 Ollama + 加载向量 + 反思调度（取代原 24h 固化调度）
   await memorySystem.init();
   if (!initialized) return; // 竞态守卫 2：init 期间被 unload 则丢弃装配
-  // 反思驱动人格（心情重构：洞察 → PersonalityGrowth.applyReflectionInsights）
+  // 反思驱动人格（ADR-0023：洞察 → existential 成长 + 行为周统计深更新）
   memorySystem.onReflect = async (insights) => {
-    if (personalityGrowth && insights && insights.length) {
-      await personalityGrowth.applyReflectionInsights(insights);
+    if (personalityGrowth) {
+      if (insights && insights.length) await personalityGrowth.applyReflectionInsights(insights);
+      // MATE character_from_experience：反思时把累积行为统计折算进 traits（周深更新）
+      await personalityGrowth.applyWeeklyExperience();
     }
   };
 
@@ -132,8 +134,7 @@ export async function ensureSmartCat(app: App): Promise<void> {
     },
     casualChat: async (message) => {
       try {
-        const personality = getConfig().personality;
-        const prompt = generatePrompt('casual_chat', message, { pad: moodSystem!.pad, personality, currentMood: moodSystem!.currentMood, currentEmotion: moodSystem!.getCurrentEmotion() });
+        const prompt = generatePrompt('casual_chat', message, { pad: moodSystem!.pad, data, currentMood: moodSystem!.currentMood, currentEmotion: moodSystem!.getCurrentEmotion() });
         const response = await callChat([
           { role: 'system', content: prompt },
           { role: 'user', content: `用户说："${message}"。请用简短的一句话回复。` },
@@ -168,6 +169,14 @@ export async function ensureSmartCat(app: App): Promise<void> {
         return memories.length ? memorySystem.formatMemoriesForPrompt(memories) : '';
       } catch (e) {
         return '';
+      }
+    },
+    // ADR-0023：prompt 状态向量数据（性格系统 traits/OCEAN）
+    characterData: () => data,
+    // ADR-0023：互动回流 → 性格微移 + 行为统计（MATE character_transition）
+    onInteraction: (type: string, intensity = 1) => {
+      if (personalityGrowth) {
+        personalityGrowth.developBasedOnInteraction(type, intensity).catch(() => {});
       }
     },
   });
@@ -274,10 +283,9 @@ async function generateBookReview(): Promise<void> {
     if (!hasBookTag()) return;
     const bookDescription = generateBookDescription();
     if (!bookDescription) return;
-    const cfg = getConfig();
     const prompt = generatePrompt('book_review', `请基于以下书籍数据给出简短评价：${bookDescription}`, {
       pad: moodSystem.pad,
-      personality: cfg.personality,
+      data,
       currentMood: moodSystem.currentMood,
       currentEmotion: moodSystem.getCurrentEmotion(),
     });
@@ -359,6 +367,17 @@ function openSettings(): void {
       (getSettings() as any).smartcatMobileDefaultFullscreen = v;
       await saveSettings();
     },
+    // ADR-0023：人格成长可视化 + 重置
+    getPersonalityGrowth: () => {
+      return data ? data.personalityGrowth : null;
+    },
+    resetPersonalityGrowth: async () => {
+      if (!data || !appRef) return;
+      const fresh = defaultPersonalityGrowth();
+      // 保留已有 30 特质成长历史？重置 = 回新种子（MATE：重置出生）
+      data.personalityGrowth = fresh;
+      await saveSmartCatData(appRef, data);
+    },
   });
   if (interaction) {
     interaction.isSettingsOpen = true;
@@ -426,7 +445,11 @@ async function sendChatMessage(message: string): Promise<void> {
     await dataSaver(data);
     // 记忆流（ADR-0021）：对话写入 observation（写入面最小化——仅聊天接入；importance LLM 打分，
     // AI 未配置降级规则分；Ollama 可用时同期写向量）
-    await memorySystem!.addObservation(`用户说：${message}`, { source: 'chat' });
+    const mem = await memorySystem!.addObservation(`用户说：${message}`, { source: 'chat' });
+    // ADR-0022/0023：聊天情绪 → 瞬时情绪（registerEmotion 接线，上一轮空转修复）
+    if (mem.emotion) moodSystem?.registerEmotion(mem.emotion);
+    // ADR-0023：聊天 → 性格微移 + 行为统计（tickBehaviorStats；情绪强度近似取消息长度）
+    personalityGrowth!.developBasedOnInteraction('talk', 1, Math.min(0.8, message.length / 200)).catch(() => {});
   } catch (error) {
     const indicator = chatMessages.querySelector('#typing-indicator');
     if (indicator) indicator.remove();

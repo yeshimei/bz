@@ -9,8 +9,7 @@ export type Appearance =
   | 'neon' | 'galaxy' | 'liquidMetal' | 'fire' | 'crystal'
   | 'cyberpunk' | 'rainbow' | 'hologram';
 
-/** 性格枚举（5 种；UI 无 custom 项，customPersonality 仅兜底路径读取） */
-export type Personality = 'lively' | 'quiet' | 'wise' | 'cute' | 'mentor';
+/** 性格枚举已废弃（预设人格退役，ADR-0023 对齐 MATE：OCEAN+30 特质成长） */
 
 /** 离散心情状态（MOOD_MAP 5 级；currentMood 初始 'content' 不在枚举内，按原样保留） */
 export type MoodLevel = 'excellent' | 'good' | 'neutral' | 'low' | 'poor';
@@ -44,8 +43,6 @@ export interface ChatMessage {
 export interface SmartCatConfig {
   appearance: Appearance;
   customColors: { primary: string; secondary: string };
-  personality: Personality;
-  customPersonality: string;
   speakInterval: number;
   speakProbability: number;
   responseSensitivity: string;
@@ -63,9 +60,49 @@ export interface MoodData {
   currentEmotion: string | null;
 }
 
-/** 人格成长（原 localStorage 'smart-cat-personality-growth'） */
+/** OCEAN 五因素人格（0-1，出生随机种子；MATE character_seed 输入） */
+export interface OceanProfile {
+  openness: number;
+  conscientiousness: number;
+  extraversion: number;
+  agreeableness: number;
+  neuroticism: number;
+}
+
+/** 30 特质性格（MATE 论文 Table 2，9 临床群组全量；0-1，logistic 饱和
+ *  冲突键名加群组前缀：def_avoidance/beh_depth/exist_depth） */
+export interface CharacterTraits {
+  // attachment (Bowlby)
+  anxiety: number; avoidance: number; separation_tol: number;
+  // coreBeliefs (Young)
+  self_worth: number; world_safety: number; others_trust: number;
+  // cognitive
+  reflectiveness: number; analytical: number; creativity: number;
+  // defense (Vaillant)
+  humor: number; intellectual: number; def_avoidance: number; support: number;
+  // selfConcept (Rotter/Bandura)
+  locus_control: number; self_esteem: number; self_efficacy: number;
+  // values (Schwartz)
+  enhancement: number; transcendence: number; change: number; conservation: number;
+  // behavioral
+  warmth: number; directness: number; beh_depth: number; conflict: number; optimism: number;
+  // neuro (Cloninger)
+  serotonin: number; dopamine: number; oxytocin: number; cortisol: number;
+  // existential (Yalom)——出生 0.0，仅反思成长
+  exist_depth: number; familiarity: number; concern: number;
+}
+
+/** 性格成长（对齐 MATE：OCEAN 种子 + 30 特质 + 关系张量 + 周统计） */
 export interface PersonalityGrowthData {
-  traits: { playfulness: number; sociability: number; independence: number; curiosity: number };
+  ocean: OceanProfile;
+  traits: CharacterTraits;
+  relationship: { trust: number; attachment: number };
+  behaviorStats: {
+    interactionCount: number;
+    emotionalTone: number;        // 累计情绪基调 -1..1
+    preferredHour: number;        // 活跃时段众数 0-23
+    sessionCount: number;
+  };
   growthHistory: any[];
   lastSave: number;
   version: string;

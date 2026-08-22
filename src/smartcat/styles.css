@@ -768,3 +768,55 @@
   0%, 100% { transform: translateY(0) rotate(0deg); }
   50% { transform: translateY(-2px) rotate(3deg); }
 }
+
+/* ===== ADR-0023 人格成长可视化（设置弹窗内） ===== */
+.bz-sc-personality-panel {
+  background: var(--background-secondary);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 4px 0 12px;
+  font-size: 12px;
+}
+.bz-sc-personality-title {
+  font-weight: 600;
+  color: var(--text-normal);
+  margin-bottom: 8px;
+}
+.bz-sc-personality-section {
+  color: var(--text-muted);
+  font-size: 11px;
+  margin: 8px 0 4px;
+  letter-spacing: 0.5px;
+}
+.bz-sc-trait-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 3px 0;
+}
+.bz-sc-trait-name {
+  width: 64px;
+  text-align: right;
+  color: var(--text-normal);
+  flex-shrink: 0;
+}
+.bz-sc-trait-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--background-modifier-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.bz-sc-trait-fill {
+  height: 100%;
+  background: var(--interactive-accent);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+.bz-sc-trait-val {
+  width: 28px;
+  text-align: right;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
