@@ -138,20 +138,24 @@ describe('剪藏本面板', () => {
     expect(document.querySelector('.article-entry-card')!.textContent).toContain('机器学习入门');
   });
 
-  it('单击卡片 → openLinkText 跳转并隐藏面板（ticket 69 单击直开）', async () => {
+  it('双击卡片 → openLinkText 跳转并隐藏面板（用户反馈回退：双击打开，单击无操作）', async () => {
     const { vault, app } = await setup();
     vault.files.set('我的/文章/A.md', makeArticleMd('https://zhihu.com/a', '知乎', 'A', '2025-06-02T08:00:00.000Z'));
     await initArticleView(true);
     await new Promise((r) => setTimeout(r, 20));
 
     const card = document.querySelector('.article-entry-card') as HTMLElement;
+    // 单击无操作
     card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(app.workspace.openLinkText).not.toHaveBeenCalled();
+    // 双击打开
+    card.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     expect(app.workspace.openLinkText).toHaveBeenCalledWith('我的/文章/A.md', '', false, { active: true });
     expect((document.getElementById('article-view-mask') as HTMLElement).style.visibility).toBe('hidden');
     expect((document.getElementById('article-view-popup') as HTMLElement).style.visibility).toBe('hidden');
   });
 
-  it('桌面端：右键弹跟手菜单（打开/复制双链/复制原文链接/删除）；单击仍直接打开文章', async () => {
+  it('桌面端：右键弹跟手菜单（打开/复制双链/复制原文链接/删除）；双击仍打开文章', async () => {
     const { vault, app } = await setup();
     vault.files.set('我的/文章/A.md', makeArticleMd('https://zhihu.com/a', '知乎', 'A', '2025-06-02T08:00:00.000Z'));
     await initArticleView(true);
@@ -167,8 +171,8 @@ describe('剪藏本面板', () => {
     const labels = [...menu.querySelectorAll('.bz-item-menu-label')].map((el) => el.textContent);
     expect(labels).toEqual(['打开', '复制双链', '复制原文链接', '删除']);
 
-    // 单击仍直接打开（与右键互不干扰）
-    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    // 双击打开（与右键互不干扰）
+    card.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     expect(app.workspace.openLinkText).toHaveBeenCalledWith('我的/文章/A.md', '', false, { active: true });
   });
 
