@@ -21,7 +21,8 @@ import { callChat, isAIConfigured } from './api';
 import { generateBookDescription, hasBookTag } from './content';
 import { classifyPath, observationText } from './context-source';
 import { DOMAIN_FILES, snapshotDomains } from './domain-source';
-import type { SmartCatData, SmartCatConfig } from './types';
+import { buildRhythmProfile, isActiveNow, describeRhythm, periodText, isoWeekKey } from './rhythm';
+import type { SmartCatData, SmartCatConfig, ProactiveCareState } from './types';
 import type { SmartcatPanels } from './ui';
 
 let initialized = false;
@@ -45,6 +46,8 @@ let visibilityCleanup: (() => void) | null = null;
 let followTimer: ReturnType<typeof setInterval> | null = null;
 let greetTimer: ReturnType<typeof setTimeout> | null = null;
 let lastPetTime = Date.now();
+/** 主动关心调度（2026-08-23：作息模型判定时机，每周 ≤ proactiveWeeklyCap 次温和搭话） */
+let proactiveTimer: ReturnType<typeof setInterval> | null = null;
 
 const dataProvider = (): SmartCatData => {
   if (!data) throw new Error('smartcat: 数据未加载');
@@ -238,11 +241,83 @@ export async function ensureSmartCat(app: App): Promise<void> {
     }
   }, 30000);
 
+  // 主动关心（2026-08-23：作息模型 + 每周 ≤2 次温和搭话；每 10 分钟检查一次）
+  startProactiveCare();
+
   eventSystem.emit('appInitialized');
 }
 
 function windowMouseMove(e: MouseEvent): void {
   (window as any).mousePosition = { x: e.clientX, y: e.clientY };
+}
+
+// ---------------- 主动关心（作息模型判定时机，2026-08-23 用户拍板） ----------------
+
+/** 读取主动关心状态（editingData 可空/旧数据无 → 默认） */
+function getProactiveState(): ProactiveCareState {
+  const d = dataProvider();
+  const s = (d.editingData?.proactiveCare || {}) as Partial<ProactiveCareState>;
+  const week = isoWeekKey();
+  // 跨周：重置计数（周键变化即新周）
+  if (s.week !== week) return { week, count: 0, lastAt: typeof s.lastAt === 'number' ? s.lastAt : 0 };
+  return { week, count: typeof s.count === 'number' ? s.count : 0, lastAt: typeof s.lastAt === 'number' ? s.lastAt : 0 };
+}
+
+/** 主动关心调度：每 10 分钟检查；时机 = 距上次 ≥2 天 + 本周未超上限 + 当前在用户活跃时段 */
+function startProactiveCare(): void {
+  if (proactiveTimer) clearInterval(proactiveTimer);
+  proactiveTimer = setInterval(() => {
+    void maybeProactiveCare();
+  }, 10 * 60 * 1000);
+}
+
+/** 温和主动搭话（LLM 生成一句关心；AI 未配置/失败 → 模板兜底，不落盘任何状态外数据） */
+async function maybeProactiveCare(): Promise<void> {
+  if (!data || !bubbleManager || !moodSystem || !memorySystem || !personalityGrowth) return;
+  const cfg = data.config;
+  if (!cfg.proactiveCare) return;
+  if (!memorySystem || data.memory.stream.length < 3) return; // 记忆太少还不知道你
+  const st = getProactiveState();
+  if (st.count >= Math.max(1, cfg.proactiveWeeklyCap || 2)) return;
+  const since = Date.now() - st.lastAt;
+  if (since < 2 * 24 * 60 * 60 * 1000) return; // 至少隔 2 天
+  // 作息模型：当前是否用户活跃时段（无数据 → 保守不打扰）
+  const profile = buildRhythmProfile(data.memory.stream, 30, Date.now());
+  if (!profile.total || !isActiveNow(profile)) return;
+  // 随时间推移接近用户活跃峰再触发（10 分钟粒度已够，无需再等）
+  try {
+    if (!(await isAIConfigured())) {
+      // 模板兜底（不打扰打破：仍走活跃时段判定）
+      const templates = [
+        `我看了下你的记录，你通常在${describeRhythm(profile)}最活跃。这段时间你也总是很认真。`,
+        `刚才我翻了下脑海里的记忆，想起你最近在忙的事。${periodText()}了，照顾好自己。`,
+        `喵~ 我记住你${periodText()}也常出现。有什么想和我说的吗？`,
+      ];
+      bubbleManager.showBubble(templates[Math.floor(Math.random() * templates.length)]);
+    } else {
+      // 近 3 条记忆做引子 + 作息描述 → LLM 温和关心
+      const recent = data.memory.stream.slice(-3).map((m) => m.description).join('；');
+      const prompt = generatePrompt('auto_companion', '', {
+        pad: moodSystem.pad,
+        data,
+        currentMood: moodSystem.currentMood,
+        currentEmotion: moodSystem.getCurrentEmotion(),
+      });
+      const response = await callChat([
+        { role: 'system', content: prompt },
+        { role: 'user', content: `你主动关心用户一次（温和、简短、像老朋友）：用户的活跃时段是${describeRhythm(profile)}，最近记忆有：${recent}。` },
+      ]);
+      if (response) bubbleManager.showBubble(response);
+      else bubbleManager.showBubble('喵~ 我注意到你最近常在深夜写东西，记得照顾好自己。');
+    }
+    // 记录本次主动（写回 editingData，不新增顶层字段）
+    const d = dataProvider();
+    const next: ProactiveCareState = { week: isoWeekKey(), count: st.count + 1, lastAt: Date.now() };
+    d.editingData = { ...(d.editingData || {}), proactiveCare: next };
+    await dataSaver(d);
+  } catch (e) {
+    /* 主动失败静默（不打扰） */
+  }
 }
 
 /** 跟随移动（原 PluginFollow.moveCatTo：百分比定位 + 跑步/走路动画 + 3s 后回原位） */
@@ -522,6 +597,10 @@ export function unloadSmartCat(): void {
   if (followTimer) {
     clearInterval(followTimer);
     followTimer = null;
+  }
+  if (proactiveTimer) {
+    clearInterval(proactiveTimer);
+    proactiveTimer = null;
   }
   if (greetTimer) {
     clearTimeout(greetTimer);

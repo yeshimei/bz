@@ -36,6 +36,16 @@ export interface ChatMessage {
   timestamp?: string;
 }
 
+/** 主动关心状态（存 data.editingData.proactiveCare；不进 config——属运行状态） */
+export interface ProactiveCareState {
+  /** 本周 ISO 周键（如 2026-W34） */
+  week: string;
+  /** 本周已主动次数 */
+  count: number;
+  /** 上次主动时间戳 */
+  lastAt: number;
+}
+
 /**
  * 域配置（原 localStorage 'smart-cat-config' 全字段；
  * apiKey 不迁移——AI 走 bz core/ai，用户拍板）
@@ -52,6 +62,10 @@ export interface SmartCatConfig {
   shortTermMemory: number;
   /** 笔记库接入总开关（ADR-0024 决策：写日记/闪念计入信任成长 + 笔记库内容 = 信息来源；默认开） */
   noteSource: boolean;
+  /** 主动关心开关（2026-08-23 用户拍板：每周温和主动搭话；默认开） */
+  proactiveCare: boolean;
+  /** 每周主动上限（1-7，默认 2） */
+  proactiveWeeklyCap: number;
 }
 
 /** 心情持久化（PAD 三维 + 5 档显示位 + 瞬时情绪；情绪标注经记忆条目/currentEmotion） */
