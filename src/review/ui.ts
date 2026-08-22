@@ -1,5 +1,6 @@
 /**
  * 复习计划 UI（ticket 16 修正版：对齐源码 UIManager + Renderer，常驻 DOM + display 切换）
+ * 统一抽屉（桌面右键/移动长按）：开始复习/打开原文/移出；双击名称打开对应笔记（用户拍板保留）。
  */
 import type { App } from 'obsidian';
 import { Setting } from 'obsidian';
@@ -8,6 +9,13 @@ import { getApp } from '../core/app';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
+import {
+  attachItemActions,
+  registerSheetCompanion,
+  unregisterSheetCompanion,
+  closeItemMenu,
+  type ItemAction,
+} from '../core/item-actions';
 import { FSRS, FSRS_FIRST_TEXTS, LADDER_MAX, TOTAL_STAGES } from './fsrs';
 import type { Rating } from './fsrs';
 import type { ReviewItem } from './data';
@@ -309,6 +317,8 @@ export class UIManager {
     div.style.display = 'block';
     div.querySelectorAll('.diff-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
+        // 抽屉来源打开时注册过附属浮层：关闭前注销（非抽屉路径 unregister 未注册元素为 no-op）
+        unregisterSheetCompanion(div);
         div.remove();
         const diff = (btn as HTMLElement).dataset.diff;
         if (diff !== 'cancel' && diff && onSelect) onSelect(diff);
@@ -317,6 +327,7 @@ export class UIManager {
     setTimeout(() => {
       const handler = (e: MouseEvent) => {
         if (!div.contains(e.target as Node)) {
+          unregisterSheetCompanion(div);
           div.remove();
           document.removeEventListener('click', handler);
         }
@@ -381,14 +392,10 @@ export class UIManager {
     content.className = 'review-content';
     content.textContent = item.name.replace(/^《|》$/g, '');
     content.title = item.filePath;
-    content.onclick = async () => {
-      this.hideMain();
-      const file = app.vault.getAbstractFileByPath(item.filePath);
-      if (file) {
-        const leaf = app.workspace.getLeaf();
-        await leaf.openFile(file as any);
-      } else notice('文件已删除', 'success');
-    };
+    // 双击打开对应笔记（用户拍板保留双击；单击打开收敛进抽屉）
+    content.addEventListener('dblclick', () => {
+      void this.openItemFile(item);
+    });
     card.appendChild(content);
 
     const meta = document.createElement('div');
@@ -396,30 +403,11 @@ export class UIManager {
 
     const stageTag = document.createElement('span');
     stageTag.className = 'review-tag';
-    if (item.completed) {
-      stageTag.textContent = '✅ 已完成';
-      stageTag.classList.add('completed');
-    } else if (item.isOverdue) {
-      stageTag.textContent = item.phase === 'fsrs' ? '⚠️ 逾期 (FSRS)' : `⚠️ 逾期 (${FSRS_FIRST_TEXTS[(item.currentStage || 1) - 1]})`;
-      stageTag.classList.add('overdue');
-    } else if (item.phase === 'fsrs') {
-      stageTag.textContent = `FSRS Lv.${item.stage - LADDER_MAX + 1}`;
-    } else {
-      stageTag.textContent = `${item.currentStage}/${TOTAL_STAGES} ${FSRS_FIRST_TEXTS[(item.currentStage || 1) - 1]}`;
-    }
-    if (!item.isCompleted) {
-      stageTag.onclick = (e) => {
-        e.stopPropagation();
-        this.showDifficultyDialog(item, async (diff) => {
-          const { reviewApp } = await import('./app');
-          await reviewApp.markReview(item.filePath, diff as Rating);
-          await this.refreshPanel();
-          await reviewApp.applyReviewStyles(app);
-        });
-      };
-    }
+    stageTag.textContent = this.stageLabel(item);
+    if (item.completed) stageTag.classList.add('completed');
+    else if (item.isOverdue) stageTag.classList.add('overdue');
+    // 点击评分收敛进抽屉「开始复习」（用户拍板）
     meta.appendChild(stageTag);
-
     if ((item.averageConfidence || 0) > 0 && item.phase !== 'fsrs') {
       const conf = document.createElement('span');
       conf.className = 'review-tag';
@@ -450,10 +438,32 @@ export class UIManager {
 
     const timeSpan = document.createElement('span');
     timeSpan.className = 'review-time';
-    if (item.isCompleted) timeSpan.textContent = '✅ 完成';
-    else if (item.nextReviewDate) {
-      const now = new Date();
-      const diff = new Date(item.nextReviewDate).getTime() - now.getTime();
+    timeSpan.textContent = this.dueLabel(item);
+    // 长按移出收敛进抽屉（用户拍板）
+    meta.appendChild(timeSpan);
+
+    card.appendChild(meta);
+
+    // 统一抽屉（桌面右键/移动长按）：开始复习 → 打开原文 → 移出
+    this.attachDrawerActions(card, item);
+    return card;
+  }
+
+  /** 阶段标签文本（卡片标签与抽屉头部共用） */
+  private stageLabel(item: ReviewItem): string {
+    if (item.completed) return '✅ 已完成';
+    if (item.isOverdue) {
+      return item.phase === 'fsrs' ? '⚠️ 逾期 (FSRS)' : `⚠️ 逾期 (${FSRS_FIRST_TEXTS[(item.currentStage || 1) - 1]})`;
+    }
+    if (item.phase === 'fsrs') return `FSRS Lv.${item.stage - LADDER_MAX + 1}`;
+    return `${item.currentStage}/${TOTAL_STAGES} ${FSRS_FIRST_TEXTS[(item.currentStage || 1) - 1]}`;
+  }
+
+  /** 到期时间文本（卡片时间与抽屉头部共用） */
+  private dueLabel(item: ReviewItem): string {
+    if (item.isCompleted) return '✅ 完成';
+    if (item.nextReviewDate) {
+      const diff = new Date(item.nextReviewDate).getTime() - Date.now();
       if (diff > 0) {
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -462,39 +472,101 @@ export class UIManager {
         if (days > 0) text = `${days}d`;
         else if (hours > 0) text = `${hours}h`;
         else text = `${mins}m`;
-        timeSpan.textContent = `⏳ ${text}`;
-      } else timeSpan.textContent = '📅 逾期';
-    } else timeSpan.textContent = '⏳ 待定';
+        return `⏳ ${text}`;
+      }
+      return '📅 逾期';
+    }
+    return '⏳ 待定';
+  }
 
-    // 长按移出（绑定 timeSpan，源码 L438-456）
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    const start = (e: MouseEvent | TouchEvent) => {
-      if ('button' in e && e.button !== 0) return;
-      timer = setTimeout(() => {
+  /** 打开对应笔记文件（双击名称与抽屉「打开原文」共用） */
+  private async openItemFile(item: ReviewItem): Promise<void> {
+    this.hideMain();
+    const file = this.app.vault.getAbstractFileByPath(item.filePath);
+    if (file) {
+      const leaf = this.app.workspace.getLeaf();
+      await leaf.openFile(file as any);
+    } else notice('文件已删除', 'success');
+  }
+
+  /** 卡片挂统一抽屉 + 头部（🔁 名称 + 阶段 · 到期） */
+  private attachDrawerActions(card: HTMLElement, item: ReviewItem): void {
+    const actions: ItemAction[] = [];
+
+    // 开始复习（未完成；keepOpen + companion 难度弹窗，选完难度关抽屉——列表已重绘）
+    if (!item.isCompleted && !item.completed) {
+      actions.push({
+        icon: 'play',
+        label: '开始复习',
+        keepOpen: true,
+        onClick: () => {
+          this.showDifficultyDialog(item, async (diff) => {
+            const { reviewApp } = await import('./app');
+            await reviewApp.markReview(item.filePath, diff as Rating);
+            await this.refreshPanel();
+            await reviewApp.applyReviewStyles(this.app);
+            closeItemMenu(); // 复习已记录、列表重绘，抽屉数据陈旧直接关闭
+          });
+          // 难度弹窗作为附属浮层叠在抽屉上（内部点击不误关抽屉）
+          const dlg = document.querySelector('.difficulty-dialog');
+          if (dlg) registerSheetCompanion(dlg as HTMLElement);
+        },
+      });
+    }
+
+    // 打开原文（与名称双击同路径）
+    actions.push({
+      icon: 'file-text',
+      label: '打开原文',
+      onClick: () => {
+        void this.openItemFile(item);
+      },
+    });
+
+    // 移出复习计划（danger：先收抽屉再确认）
+    actions.push({
+      icon: 'trash-2',
+      label: '移出复习计划',
+      kind: 'danger',
+      onClick: () => {
         this.showConfirm('移出复习计划', `确定移出“${item.name}”？`, async () => {
           await this.dataManager.removeItem(item.filePath);
           await this.refreshPanel();
           const { reviewApp } = await import('./app');
-          await reviewApp.applyReviewStyles(app);
+          await reviewApp.applyReviewStyles(this.app);
         });
-      }, 500);
-    };
-    const cancel = () => {
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
-      }
-    };
-    timeSpan.addEventListener('mousedown', start);
-    timeSpan.addEventListener('mouseup', cancel);
-    timeSpan.addEventListener('mouseleave', cancel);
-    timeSpan.addEventListener('touchstart', start);
-    timeSpan.addEventListener('touchend', cancel);
-    timeSpan.addEventListener('touchmove', cancel);
-    meta.appendChild(timeSpan);
+      },
+    });
 
-    card.appendChild(meta);
-    return card;
+    attachItemActions(card, actions, { sheetHead: this.buildSheetHead(item) });
+  }
+
+  /** 抽屉头部：🔁 + 名称；小字=阶段 · 到期 */
+  private buildSheetHead(item: ReviewItem): HTMLElement {
+    const head = document.createElement('div');
+    head.className = 'bz-item-sheet-entry';
+    const body = document.createElement('div');
+    body.style.cssText = 'display:flex; align-items:flex-start; gap:10px;';
+
+    const emoji = document.createElement('span');
+    emoji.className = 'bz-item-sheet-emoji';
+    emoji.textContent = '🔁';
+    body.appendChild(emoji);
+
+    const info = document.createElement('div');
+    info.style.cssText = 'flex:1; min-width:0;';
+    const title = document.createElement('div');
+    title.className = 'bz-item-sheet-title';
+    title.textContent = item.name.replace(/^《|》$/g, '');
+    info.appendChild(title);
+    const sub = document.createElement('div');
+    sub.className = 'bz-item-sheet-sub';
+    sub.textContent = `${this.stageLabel(item)} · ${this.dueLabel(item)}`;
+    info.appendChild(sub);
+
+    body.appendChild(info);
+    head.appendChild(body);
+    return head;
   }
 
   /** 销毁（卸载清理） */

@@ -7,6 +7,7 @@ import { resetObsidianMocks, Platform as MockPlatform } from '../mock-obsidian-e
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { closeSettingsModal } from '../../src/core/settings-modal';
+import { closeItemMenu } from '../../src/core/item-actions';
 import { ReviewDataManager, REVIEW_FILE_PATH } from '../../src/review/data';
 import { UIManager } from '../../src/review/ui';
 import { reviewApp } from '../../src/review/app';
@@ -241,7 +242,7 @@ describe('UIManager', () => {
     ui.destroy();
   });
 
-  it('长按 timeSpan 500ms → 移出确认', async () => {
+  it('右键卡片 → 菜单「移出复习计划」→ 确认弹窗', async () => {
     const vault = new MockVault();
     seed(vault);
     const app = makeApp(vault);
@@ -251,12 +252,85 @@ describe('UIManager', () => {
     ui.showMain();
     await ui.refreshPanel();
     const container = document.getElementById('review-entries-container')!;
-    const timeSpan = container.querySelector('.review-time') as HTMLElement;
-    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
-    timeSpan.dispatchEvent(new MouseEvent('mousedown', { button: 0 }));
-    await vi.advanceTimersByTimeAsync(550);
-    vi.useRealTimers();
+    const card = container.querySelector('.review-card') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
+    const removeItem = [...document.querySelectorAll('.bz-item-menu-item')].find(
+      (b) => b.textContent!.includes('移出复习计划')
+    ) as HTMLElement;
+    expect(removeItem).toBeTruthy();
+    removeItem.click();
+    await new Promise((r) => setTimeout(r, 10));
     expect(document.getElementById('confirm-title')!.textContent).toBe('移出复习计划');
+    ui.destroy();
+  });
+
+  it('抽屉（移动端长按）：头部🔁名称+阶段·到期；未完成动作=开始复习/打开原文/移出；点开始复习弹难度窗', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    const ui = new UIManager(app, dm);
+    ui.showMain();
+    await ui.refreshPanel();
+    const card = document.querySelector('#review-entries-container .review-card') as HTMLElement;
+
+    MockPlatform.isMobile = true;
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 60, clientY: 60 }));
+    await vi.advanceTimersByTimeAsync(550);
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    vi.useRealTimers();
+    await new Promise((r) => setTimeout(r, 10));
+
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet).not.toBeNull();
+    // 头部：🔁 + 名称 + 阶段·到期小字
+    expect(sheet.querySelector('.bz-item-sheet-emoji')!.textContent).toBe('🔁');
+    expect(sheet.querySelector('.bz-item-sheet-sub')!.textContent).toContain('逾期');
+    // 动作清单
+    const labels = [...sheet.querySelectorAll('.bz-item-sheet-label')].map((e) => e.textContent);
+    expect(labels).toEqual(['开始复习', '打开原文', '移出复习计划']);
+
+    // 点「开始复习」→ 难度弹窗（companion 叠抽屉）
+    const startItem = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('开始复习')
+    ) as HTMLElement;
+    startItem.click();
+    await new Promise((r) => setTimeout(r, 10));
+    const dlg = document.querySelector('.difficulty-dialog') as HTMLElement;
+    expect(dlg).not.toBeNull();
+    expect(dlg.textContent).toContain('标记复习');
+    expect(document.querySelector('.bz-item-sheet')).not.toBeNull(); // 抽屉保持
+
+    // 点「取消」难度窗 → 抽屉仍在
+    const cancelBtn = [...dlg.querySelectorAll('.diff-btn')].find((b) => b.textContent!.includes('取消')) as HTMLElement;
+    cancelBtn.click();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
+
+    closeItemMenu();
+    MockPlatform.isMobile = false;
+    ui.destroy();
+  });
+
+  it('双击名称打开对应笔记（保留手势）', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const app = makeApp(vault);
+    const openFile = vi.fn().mockResolvedValue(undefined);
+    (app.workspace as any).getLeaf = () => ({ openFile });
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    const ui = new UIManager(app, dm);
+    ui.showMain();
+    await ui.refreshPanel();
+    const content = document.querySelector('#review-entries-container .review-content') as HTMLElement;
+    content.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 10));
+    expect(ui.mask!.style.display).toBe('none'); // 主面板隐藏
+    expect(openFile).toHaveBeenCalled();
     ui.destroy();
   });
 });
