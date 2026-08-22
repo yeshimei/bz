@@ -3,7 +3,7 @@
  * 生成聊天/书评/自动陪伴的 system prompt；字数公式与模板逐字保留。
  * currentPersonality 原版恒 undefined（只读不写，铁律 4 保留）→ 本版显式接 config.personality 回落 lively。
  */
-import type { MoodDimensions, Personality } from './types';
+import type { PadDimensions, Personality } from './types';
 import { getPersonalityPrompt } from './config';
 
 export type InteractionType =
@@ -22,7 +22,7 @@ const MAX_WORD_LIMITS = {
 } as const;
 
 /** 计算动态最大字数（原 calculateMaxWordLimit 逐字；缺省人格 lively） */
-export function calculateMaxWordLimit(interactionType: string, userMessageLength = 0, dimensions?: MoodDimensions | null, personality?: Personality): number {
+export function calculateMaxWordLimit(interactionType: string, userMessageLength = 0, pad?: PadDimensions | null, personality?: Personality): number {
   try {
     let maxWords: number = MAX_WORD_LIMITS.baseMax;
     const p = personality || 'lively';
@@ -32,8 +32,8 @@ export function calculateMaxWordLimit(interactionType: string, userMessageLength
     maxWords *= interactionWeight;
     const userMessageFactor = Math.min(1.2, 1 + (userMessageLength / 100) * 0.2);
     maxWords *= userMessageFactor;
-    if (dimensions) {
-      const moodFactor = calculateMoodFactor(dimensions);
+    if (pad) {
+      const moodFactor = calculateMoodFactor(pad);
       maxWords *= moodFactor;
     }
     maxWords = Math.min(MAX_WORD_LIMITS.absoluteMax, Math.round(maxWords)) as number;
@@ -43,13 +43,13 @@ export function calculateMaxWordLimit(interactionType: string, userMessageLength
   }
 }
 
-/** 心情影响因子（原 calculateMoodFactor 逐字） */
-export function calculateMoodFactor(dimensions: MoodDimensions): number {
+/** 心情影响因子（PAD 版：愉悦高话多、唤醒低话少） */
+export function calculateMoodFactor(pad: PadDimensions): number {
   let moodFactor = 1.0;
-  if (dimensions.happiness > 70) moodFactor *= 1.1;
-  if (dimensions.energy < 30) moodFactor *= 0.9;
-  if (dimensions.curiosity > 70) moodFactor *= 1.1;
-  if (dimensions.creativity > 70) moodFactor *= 1.15;
+  if (pad.pleasure > 70) moodFactor *= 1.1;
+  if (pad.arousal < 30) moodFactor *= 0.9;
+  if (pad.pleasure < 30) moodFactor *= 0.9;
+  if (pad.dominance > 70) moodFactor *= 1.05;
   return moodFactor;
 }
 
@@ -82,44 +82,36 @@ export function getMoodEmoji(value: number, high: string, mid: string, low: stri
   return low;
 }
 
-/** 心情详情块（原 formatMoodDetails 逐字结构） */
-export function formatMoodDetails(dimensions: MoodDimensions): string {
-  if (!dimensions) return '### 心情状态\n暂时无法获取详细心情数据';
-  const d = dimensions;
+/** 心情详情块（PAD 版：三维 + 5 档 + 瞬时情绪；供聊天 system prompt 注入） */
+export function formatMoodDetails(pad: PadDimensions, currentMood?: string, currentEmotion?: string | null): string {
+  if (!pad) return '### 心情状态\n暂时无法获取详细心情数据';
+  const d = pad;
   const highlights = getMoodHighlights(d);
   return `### 心情状态分析
 ${highlights}
 
-详细维度：
-- 愉悦度：${Math.round(d.happiness)}/100 ${getMoodEmoji(d.happiness, '😊', '😐', '😔')}
-- 活力值：${Math.round(d.energy)}/100 ${getMoodEmoji(d.energy, '⚡', '🔋', '😴')}
-- 好奇心：${Math.round(d.curiosity)}/100 ${getMoodEmoji(d.curiosity, '🔍', '🤔', '😑')}
-- 亲密度：${Math.round(d.affection)}/100 ${getMoodEmoji(d.affection, '💕', '❤️', '💔')}
-- 专注度：${Math.round(d.focus)}/100 ${getMoodEmoji(d.focus, '🎯', '📝', '🌫️')}
-- 创造力：${Math.round(d.creativity)}/100 ${getMoodEmoji(d.creativity, '🎨', '💡', '📚')}
-- 生产力：${Math.round(d.productivity)}/100 ${getMoodEmoji(d.productivity, '🚀', '📈', '📉')}
-- 放松度：${Math.round(d.relaxation)}/100 ${getMoodEmoji(d.relaxation, '🌿', '☕', '😣')}`;
+详细维度（PAD）：
+- 愉悦度：${Math.round(d.pleasure)}/100 ${getMoodEmoji(d.pleasure, '😊', '😐', '😔')}
+- 唤醒度：${Math.round(d.arousal)}/100 ${getMoodEmoji(d.arousal, '⚡', '🔋', '😴')}
+- 支配度：${Math.round(d.dominance)}/100 ${getMoodEmoji(d.dominance, '👑', '🧭', '🌊')}
+- 整体心情：${currentMood ? MOOD_STATE_TEXT[currentMood] || currentMood : '平静'}
+${currentEmotion ? `- 当前情绪：${currentEmotion}` : ''}`;
 }
 
-/** 心情亮点（原 getMoodHighlights 逐字） */
-export function getMoodHighlights(dimensions: MoodDimensions): string[] {
+/** 5 档心情文案（供 formatMoodDetails；与 MOOD_MAP.state 对齐的纯文本版） */
+const MOOD_STATE_TEXT: Record<string, string> = {
+  excellent: '超开心', good: '心情好', neutral: '平常心', low: '小低落', poor: '不开心',
+};
+
+/** 心情亮点（PAD 版：愉悦/唤醒/支配三轴阈值得出） */
+export function getMoodHighlights(pad: PadDimensions): string[] {
   const highlights: string[] = [];
-  if (dimensions.happiness > 80) highlights.push('当前非常开心');
-  else if (dimensions.happiness < 30) highlights.push('心情有些低落');
-  if (dimensions.energy > 80) highlights.push('精力充沛');
-  else if (dimensions.energy < 30) highlights.push('有些疲惫');
-  if (dimensions.curiosity > 80) highlights.push('充满好奇');
-  else if (dimensions.curiosity < 30) highlights.push('兴致不高');
-  if (dimensions.affection > 80) highlights.push('非常依恋');
-  else if (dimensions.affection < 30) highlights.push('有些疏离');
-  if (dimensions.focus > 80) highlights.push('高度专注');
-  else if (dimensions.focus < 30) highlights.push('难以集中');
-  if (dimensions.creativity > 80) highlights.push('灵感充沛');
-  else if (dimensions.creativity < 30) highlights.push('创意枯竭');
-  if (dimensions.productivity > 80) highlights.push('高效产出');
-  else if (dimensions.productivity < 30) highlights.push('效率低下');
-  if (dimensions.relaxation > 80) highlights.push('身心放松');
-  else if (dimensions.relaxation < 30) highlights.push('有些紧绷');
+  if (pad.pleasure > 80) highlights.push('当前非常开心');
+  else if (pad.pleasure < 30) highlights.push('心情有些低落');
+  if (pad.arousal > 80) highlights.push('精力充沛');
+  else if (pad.arousal < 30) highlights.push('有些疲惫');
+  if (pad.dominance > 80) highlights.push('掌控感强');
+  else if (pad.dominance < 30) highlights.push('有些无力感');
   return highlights;
 }
 
@@ -156,13 +148,13 @@ export function getResponseRequirements(interactionType: string, maxWords: numbe
 ${base.map((b) => `- ${b}`).join('\n')}`;
 }
 
-/** 生成 prompt 主方法（原 generatePrompt 逐字模板结构） */
+/** 生成 prompt 主方法（原 generatePrompt 逐字模板结构；dimensions → pad） */
 export function generatePrompt(
   interactionType: InteractionType,
   userMessage = '',
-  opts: { dimensions?: MoodDimensions | null; personality?: Personality; currentMood?: string } = {},
+  opts: { pad?: PadDimensions | null; personality?: Personality; currentMood?: string; currentEmotion?: string | null } = {},
 ): string {
-  const maxWords = calculateMaxWordLimit(interactionType, userMessage.length, opts.dimensions, opts.personality);
+  const maxWords = calculateMaxWordLimit(interactionType, userMessage.length, opts.pad, opts.personality);
   const personality = opts.personality || 'lively';
   const prompt = `# 角色设定
 你是一只智能陪伴猫咪"小橘"，具有以下特性：
@@ -181,7 +173,7 @@ export function generatePrompt(
 请确保回复长度不超过${maxWords}字，保持内容质量的同时控制字数。
 
 ## 当前状态详情
-${opts.dimensions ? formatMoodDetails(opts.dimensions) : ''}
+${opts.pad ? formatMoodDetails(opts.pad, opts.currentMood, opts.currentEmotion) : ''}
 - 当前人格：${personalityName(personality)}
 
 ## 回复要求
