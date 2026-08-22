@@ -14,6 +14,8 @@ import { escManager } from '../../src/core/esc-manager';
 import { openMovieManager, ensureMovie, unloadMovie } from '../../src/movie/index';
 import { closeEditModal } from '../../src/movie/ui';
 import { setSettingsProvider } from '../../src/core/settings-provider';
+import { setApp } from '../../src/core/app';
+import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 
 function makeApp(vault: MockVault, extra: any = {}) {
   const app = mockAppWithVault(vault);
@@ -395,7 +397,7 @@ describe('抽屉（统一手势组件接入）', () => {
     );
     vault.files.set(
       '我的/影视/《已看片》.md',
-      ['---', 'tags: [电影]', '评分: 4.5', '观影日期: 2025-01-01T10:00:00', '影评: 好片', '---'].join('\n')
+      ['---', 'tags: [电影]', '评分: 4.5', '观影日期: 2025-01-01T10:00:00', '影评: 好片', '导演: 诺兰', '主演: A/B', '类型: 科幻', '豆瓣评分: 8.9', '片长: 148', '---'].join('\n')
     );
     vault.files.set(
       '我的/影视/《已看无评分》.md',
@@ -651,6 +653,86 @@ describe('抽屉（统一手势组件接入）', () => {
     openEditModal(item, app as any);
     expect([...document.querySelectorAll('input')].some((i) => (i as HTMLInputElement).placeholder === '季集（可选）')).toBe(false);
     closeEditModal();
+  });
+
+  it('详情：有豆瓣抓取数据才显示并弹窗展示字段；无数据条目不显示', async () => {
+    const vault = setupVault();
+    const app = makeApp(vault);
+    const items = rebuildItems(app);
+    const c = document.createElement('div');
+    document.body.appendChild(c);
+    renderAll(items, c, app);
+    // 想看片无详情字段 → 抽屉无「详情」
+    openSheetCard(findCard(c, '想看片'));
+    let sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet.textContent).not.toContain('详情');
+    document.querySelector('.bz-item-sheet-mask')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await vi.advanceTimersByTimeAsync(10);
+    // 已看片有导演/主演/豆瓣 → 详情显示并弹窗展示
+    openSheetCard(findCard(c, '已看片'));
+    sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    const detailBtn = [...sheet.querySelectorAll('.bz-item-sheet-item')].find((b) => b.textContent!.includes('详情')) as HTMLElement;
+    expect(detailBtn).toBeTruthy();
+    detailBtn.click();
+    const modal = document.querySelector('.bz-movie-tiny-modal') as HTMLElement;
+    expect(modal).not.toBeNull();
+    expect(modal.textContent).toContain('《已看片》');
+    expect(modal.textContent).toContain('导演');
+    expect(modal.textContent).toContain('诺兰');
+    expect(modal.textContent).toContain('豆瓣评分');
+    expect(modal.textContent).toContain('8.9');
+    // 遮罩点击关闭详情窗（抽屉保持）
+    (document.querySelector('.bz-movie-tiny-mask') as HTMLElement).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(document.querySelector('.bz-movie-tiny-modal')).toBeNull();
+    expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
+  });
+
+  it('复制双链：点击后剪贴板写入 [[《片名》]]', async () => {
+    const vault = setupVault();
+    const app = makeApp(vault);
+    const items = rebuildItems(app);
+    const c = document.createElement('div');
+    document.body.appendChild(c);
+    renderAll(items, c, app);
+    openSheetCard(findCard(c, '已看片'));
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    const writeSpy = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+    const linkBtn = [...sheet.querySelectorAll('.bz-item-sheet-item')].find((b) => b.textContent!.includes('复制双链')) as HTMLElement;
+    linkBtn.click();
+    await vi.advanceTimersByTimeAsync(50);
+    expect(writeSpy).toHaveBeenCalledWith('[[《已看片》]]');
+    expect(hasNotice(/已复制双链/)).toBe(true);
+  });
+
+  it('找同类：AI 报告窗生成推荐卡（复用「加入想看」）', async () => {
+    const vault = setupVault();
+    const app = makeApp(vault);
+    const items = rebuildItems(app);
+    const c = document.createElement('div');
+    document.body.appendChild(c);
+    renderAll(items, c, app);
+    const raw = '[{"title":"星际穿越","year":"2014","type":"电影","director":"诺兰","reason":"同为诺兰科幻杰作"}]';
+    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'test-key' }) as any);
+    resetAIProviderCache();
+    setApp(app as any);
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('no net')));
+    const { requestUrl } = await import('obsidian');
+    (requestUrl as any).mockResolvedValue({ status: 200, text: JSON.stringify({ choices: [{ message: { content: raw } }] }) });
+
+    openSheetCard(findCard(c, '已看片'));
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    const simBtn = [...sheet.querySelectorAll('.bz-item-sheet-item')].find((b) => b.textContent!.includes('找同类')) as HTMLElement;
+    simBtn.click();
+    await vi.advanceTimersByTimeAsync(50);
+    const modal = document.querySelector('.bz-movie-similar-modal') as HTMLElement;
+    expect(modal).not.toBeNull();
+    expect(modal.textContent).toContain('找同类 ·《已看片》');
+    await vi.advanceTimersByTimeAsync(0);
+    const list = modal.querySelector('.bz-movie-similar-list') as HTMLElement;
+    expect(list.textContent).toContain('星际穿越');
+    expect(list.textContent).toContain('导演：诺兰');
+    expect(list.textContent).toContain('💡 同为诺兰科幻杰作');
+    expect(list.textContent).toContain('加入想看');
   });
 });
 
