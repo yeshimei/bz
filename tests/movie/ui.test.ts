@@ -220,7 +220,7 @@ describe('添加/编辑弹窗', () => {
     M.appRef = makeApp(vault);
   });
 
-  it('openAddModal：标题/13 标签按钮组/状态按钮组/联动显隐', () => {
+  it('openAddModal：标题/13 标签按钮组/状态按钮组/联动显隐；评分为滑块、无日期字段', () => {
     openAddModal(M.appRef as any);
     const overlay = M.addOverlay!;
     expect(overlay.textContent).toContain('添加影视');
@@ -231,13 +231,18 @@ describe('添加/编辑弹窗', () => {
     // 状态按钮组（想看/在看/已看）
     const statusBtns = [...overlay.querySelectorAll('button')].filter((b) => ['想看', '在看', '已看'].includes(b.textContent!));
     expect(statusBtns.length).toBe(3);
-    // 默认已看 → 评分/影评显示
-    const inputs = [...overlay.querySelectorAll('input')];
-    const ratingInput = inputs.find((i) => (i as HTMLInputElement).placeholder === '评分（0.1~5）') as HTMLInputElement;
-    expect(ratingInput.parentElement!.style.display).toBe('flex');
+    // 默认已看 → 评分滑块显示（1~6 · 0.1 步进），无日期输入框
+    const ratingSlider = [...overlay.querySelectorAll('input')].find((i) => (i as HTMLInputElement).type === 'range') as HTMLInputElement;
+    expect(ratingSlider).not.toBeNull();
+    expect(ratingSlider.min).toBe('1');
+    expect(ratingSlider.max).toBe('6');
+    expect(ratingSlider.step).toBe('0.1');
+    expect(ratingSlider.value).toBe('3.5');
+    expect(ratingSlider.parentElement!.style.display).toBe('block');
+    expect(overlay.querySelector('input[type="datetime-local"]')).toBeNull();
     // 切到想看 → 评分隐藏
     statusBtns[0].click();
-    expect(ratingInput.parentElement!.style.display).toBe('none');
+    expect(ratingSlider.parentElement!.style.display).toBe('none');
   });
 
   it('openAddModal：标题实时检测已存在 → 输入框下方提示', () => {
@@ -279,8 +284,8 @@ describe('添加/编辑弹窗', () => {
     const overlay = M.addOverlay!;
     const nameInput = overlay.querySelector('input[placeholder="名称"]') as HTMLInputElement;
     nameInput.value = '新片';
-    const ratingInput = [...overlay.querySelectorAll('input')].find((i) => (i as HTMLInputElement).placeholder === '评分（0.1~5）') as HTMLInputElement;
-    ratingInput.value = '4';
+    const ratingSlider = [...overlay.querySelectorAll('input')].find((i) => (i as HTMLInputElement).type === 'range') as HTMLInputElement;
+    ratingSlider.value = '4';
     const confirmBtn = [...overlay.querySelectorAll('button')].find((b) => b.textContent === '确定')!;
     confirmBtn.click();
     await vi.advanceTimersByTimeAsync(0);
@@ -500,9 +505,9 @@ describe('抽屉（统一手势组件接入）', () => {
     expect(sheet.textContent).toContain('改分');
     expect(sheet.textContent).toContain('改影评');
     expect(sheet.textContent).not.toContain('评分\n'); // 无「评分」标签（仅子串保护）
-    // 改分小字 = 当前分数（动态数据）
+    // 改分小字 = 当前分数（动态数据，不带星标）
     const rateItem0 = [...sheet.querySelectorAll('.bz-item-sheet-item')].find((b) => b.textContent!.includes('改分')) as HTMLElement;
-    expect((rateItem0.querySelector('.bz-item-sheet-item-sub') as HTMLElement).textContent).toBe('⭐4.5');
+    expect((rateItem0.querySelector('.bz-item-sheet-item-sub') as HTMLElement).textContent).toBe('4.5');
     // 打开评分窗：滑块 + 数值
     const rateBtn = rateItem0;
     rateBtn.click();
