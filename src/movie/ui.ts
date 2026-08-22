@@ -432,14 +432,22 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
     updateInputVisibility();
   }).container;
 
-  // 评分 / 观影日期 / 影评（季集字段已移除：生成与编辑均不再提供）
-  const ratingRow = createFieldRow({ type: 'number', placeholder: '评分（0.1~5）', min: '0.1', max: '5', step: '0.1', extraCss: 'width: 100%;' });
-  const dateRow = createFieldRow({ type: 'datetime-local', placeholder: '观影日期', step: '1', value: localNowFormat(), extraCss: 'text-indent: 8px;' });
+  // 评分滑块（1~6 · 0.1 步进，默认 3.5）与影评（季集已移除；无日期字段——保存时默认当前日期）
+  const ratingContainer = document.createElement('div');
+  ratingContainer.style.cssText = 'display: none;'; // 仅已看状态下显示
+  const ratingSlider = document.createElement('input');
+  ratingSlider.type = 'range';
+  ratingSlider.min = '1';
+  ratingSlider.max = '6';
+  ratingSlider.step = '0.1';
+  ratingSlider.value = '3.5';
+  ratingSlider.className = 'bz-movie-rating-slider';
+  ratingContainer.appendChild(ratingSlider);
   const reviewRow = createTextareaRow('影评（可选）', 3);
 
   function updateInputVisibility() {
     const showRatingReview = selectedStatus === STATUS_WATCHED;
-    ratingRow.container.style.display = showRatingReview ? 'flex' : 'none';
+    ratingContainer.style.display = showRatingReview ? 'block' : 'none';
     reviewRow.container.style.display = showRatingReview ? 'flex' : 'none';
   }
 
@@ -494,19 +502,12 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
     let ratingValue: number;
     if (selectedStatus === STATUS_WANT) ratingValue = -1;
     else if (selectedStatus === STATUS_WATCHING) ratingValue = 0;
-    else if (selectedStatus === STATUS_WATCHED) {
-      const inputRating = parseFloat(ratingRow.input.value);
-      if (isNaN(inputRating) || inputRating <= 0) {
-        notice('已看状态请填写大于 0 的评分');
-        return;
-      }
-      ratingValue = inputRating;
-    } else {
-      ratingValue = -1;
+    else {
+      ratingValue = parseFloat(ratingSlider.value); // 滑块必有值（1~6），无需校验
     }
 
-    const now = new Date();
-    const watchDateValue = (dateRow.input.value || localNowFormat()).replace('T', ' ');
+    // 无日期字段：观影日期默认当前日期
+    const watchDateValue = localNowFormat().replace('T', ' ');
     const reviewText = reviewRow.textarea.value.trim();
 
     let fileContent = `---\ntags:\n- ${selectedTag}\n观影日期: ${watchDateValue}\n评分: ${ratingValue}\n`;
@@ -536,8 +537,7 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
   addModal.appendChild(dupHint);
   addModal.appendChild(typeContainer);
   addModal.appendChild(statusContainer);
-  addModal.appendChild(ratingRow.container);
-  addModal.appendChild(dateRow.container);
+  addModal.appendChild(ratingContainer);
   addModal.appendChild(reviewRow.container);
   addModal.appendChild(btnRow);
 
@@ -1526,7 +1526,7 @@ function attachMovieActions(card: HTMLElement, item: MovieItem, app: App): void 
         icon: 'star',
         label: hasRating ? '改分' : '评分',
         title: hasRating ? '改分' : '评分',
-        sub: hasRating ? `⭐${Number(item.rating).toFixed(1)}` : undefined,
+        sub: hasRating ? Number(item.rating).toFixed(1) : undefined,
         keepOpen: true,
         onClick: () => openRateModal(item, app, hasRating ? '改分' : '评分', rebuild),
       });
