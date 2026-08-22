@@ -11,7 +11,7 @@ import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath } from './data'
 import { eventSystem, setSmartcatApp, setupVisibilityCheck, __resetVisibilityForTests } from './state';
 import { mountCatContainer, unmountCatContainer, applyAppearance, createChatPanel, showChatPanel, hideChatPanel, openSmartcatSettings } from './ui';
 import { BubbleManager, EmojiProcessor } from './bubble';
-import { MoodSystem, EmotionalMemory, PersonalityGrowth } from './mood';
+import { MoodSystem, PersonalityGrowth } from './mood';
 import { MemorySystem } from './memory';
 import { SmartCatAnimation } from './animation';
 import { VoiceCommandSystem } from './voice';
@@ -28,7 +28,6 @@ let appRef: App | null = null;
 let data: SmartCatData | null = null;
 let bubbleManager: BubbleManager | null = null;
 let moodSystem: MoodSystem | null = null;
-let emotionalMemory: EmotionalMemory | null = null;
 let personalityGrowth: PersonalityGrowth | null = null;
 let memorySystem: MemorySystem | null = null;
 let animation: SmartCatAnimation | null = null;
@@ -87,12 +86,17 @@ export async function ensureSmartCat(app: App): Promise<void> {
   // ---- 子系统装配（顺序与原 SmartCompanionApp 一致） ----
   bubbleManager = new BubbleManager();
   moodSystem = new MoodSystem(app, dataProvider, dataSaver);
-  emotionalMemory = new EmotionalMemory(app, dataProvider, dataSaver);
   personalityGrowth = new PersonalityGrowth(dataProvider, dataSaver);
   memorySystem = new MemorySystem(app, dataProvider, dataSaver);
   // ADR-0021：init = 探测 Ollama + 加载向量 + 反思调度（取代原 24h 固化调度）
   await memorySystem.init();
   if (!initialized) return; // 竞态守卫 2：init 期间被 unload 则丢弃装配
+  // 反思驱动人格（心情重构：洞察 → PersonalityGrowth.applyReflectionInsights）
+  memorySystem.onReflect = async (insights) => {
+    if (personalityGrowth && insights && insights.length) {
+      await personalityGrowth.applyReflectionInsights(insights);
+    }
+  };
 
   // 猫容器 + 皮肤 + 动画 + 指示器
   const container = mountCatContainer()!;
@@ -129,7 +133,7 @@ export async function ensureSmartCat(app: App): Promise<void> {
     casualChat: async (message) => {
       try {
         const personality = getConfig().personality;
-        const prompt = generatePrompt('casual_chat', message, { dimensions: moodSystem!.dimensions, personality });
+        const prompt = generatePrompt('casual_chat', message, { pad: moodSystem!.pad, personality, currentMood: moodSystem!.currentMood, currentEmotion: moodSystem!.getCurrentEmotion() });
         const response = await callChat([
           { role: 'system', content: prompt },
           { role: 'user', content: `用户说："${message}"。请用简短的一句话回复。` },
@@ -272,8 +276,10 @@ async function generateBookReview(): Promise<void> {
     if (!bookDescription) return;
     const cfg = getConfig();
     const prompt = generatePrompt('book_review', `请基于以下书籍数据给出简短评价：${bookDescription}`, {
-      dimensions: moodSystem.dimensions,
+      pad: moodSystem.pad,
       personality: cfg.personality,
+      currentMood: moodSystem.currentMood,
+      currentEmotion: moodSystem.getCurrentEmotion(),
     });
     const response = await callChat([
       { role: 'system', content: prompt },
@@ -488,7 +494,6 @@ export function unloadSmartCat(): void {
   __resetVisibilityForTests();
   bubbleManager = null;
   moodSystem = null;
-  emotionalMemory = null;
   personalityGrowth = null;
   memorySystem = null;
   animation = null;

@@ -43,6 +43,8 @@ export class MemorySystem {
   app: App;
   dataProvider: () => SmartCatData;
   dataSaver: (data: SmartCatData) => Promise<void>;
+  /** 反思完成回调（心情重构：index 接 PersonalityGrowth 反思驱动） */
+  onReflect: ((insights: { text: string }[]) => void | Promise<void>) | null = null;
   /** 反思新增计数（距上次反思） */
   private pendingSinceReflect = 0;
   private reflectionTimer: ReturnType<typeof setInterval> | null = null;
@@ -72,17 +74,20 @@ export class MemorySystem {
 
   // ---------------- 记忆写入 ----------------
 
-  /** 添加观察记忆（聊天对话等）；importance 走 LLM 打分（未配置降级规则分） */
-  async addObservation(description: string, opts: { source?: string; manuallyMarked?: boolean; importance?: number } = {}): Promise<MemoryStreamEntry> {
-    const importance = opts.importance ?? await this.scoreImportance(description, opts);
+  /** 添加观察记忆（聊天对话等）；importance+emotion 走 LLM 打分（未配置降级规则分/词法情绪） */
+  async addObservation(description: string, opts: { source?: string; manuallyMarked?: boolean; importance?: number; emotion?: string } = {}): Promise<MemoryStreamEntry> {
+    const score = opts.importance !== undefined
+      ? { importance: opts.importance, emotion: opts.emotion }
+      : await this.scoreImportanceAndEmotion(description, opts);
     const memory: MemoryStreamEntry = {
       id: `memory_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       created: new Date().toISOString(),
       lastAccessed: new Date().toISOString(),
       description,
-      importance,
+      importance: score.importance,
       type: 'observation',
       source: opts.source,
+      emotion: score.emotion,
     };
     this.stream.push(memory);
     this.enforceStreamLimit();
@@ -93,7 +98,7 @@ export class MemorySystem {
   }
 
   /** 添加洞察记忆（反思产物；importance 固定高值可由调用方传入） */
-  async addInsight(description: string, evidenceIds: string[], importance = 0.75): Promise<MemoryStreamEntry> {
+  async addInsight(description: string, evidenceIds: string[], importance = 0.75, emotion?: string): Promise<MemoryStreamEntry> {
     const memory: MemoryStreamEntry = {
       id: `insight_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       created: new Date().toISOString(),
@@ -103,6 +108,7 @@ export class MemorySystem {
       type: 'insight',
       evidenceIds,
       source: 'reflection',
+      emotion,
     };
     this.stream.push(memory);
     this.enforceStreamLimit();
@@ -123,27 +129,51 @@ export class MemorySystem {
     }
   }
 
-  // ---------------- importance 打分 ----------------
+  // ---------------- importance + emotion 打分 ----------------
 
-  /** importance 打分：LLM 0-10 → 0-1；失败/未配置降级规则分 */
-  async scoreImportance(description: string, opts: { manuallyMarked?: boolean } = {}): Promise<number> {
+  /** 打分（LLM 顺带情绪）：{score 0-10→0-1, emotion}；失败/未配置降级规则分 + 词法情绪 */
+  async scoreImportanceAndEmotion(description: string, opts: { manuallyMarked?: boolean } = {}): Promise<{ importance: number; emotion?: string }> {
     try {
       if (await isAIConfigured()) {
         const r = await callChatJson([
           {
             role: 'system',
             content:
-              '你是小橘，一只陪伴猫咪。请评估下面这条关于用户的记忆的重要程度：' +
-              '0=极其琐碎（如买了杯奶茶），10=极其重要（如考上了理想学校）。' +
-              '只返回 JSON：{"score": 0到10之间的数字}',
+              '你是小橘，一只陪伴猫咪。请评估下面这条关于用户的记忆：' +
+              '1) 重要程度 0=极其琐碎（如买了杯奶茶），10=极其重要（如考上了理想学校）；' +
+              '2) 情绪倾向（从 happy/sad/curious/sleepy/playful/focused/calm/upset 中选一个最贴切的）。' +
+              '只返回 JSON：{"score": 0到10之间的数字, "emotion": "情绪"}',
           },
           { role: 'user', content: `记忆：${description}` },
-        ], 120);
+        ], 150);
         const s = Number(r?.score);
-        if (Number.isFinite(s)) return Math.min(1, Math.max(0, s / 10));
+        const emotion = typeof r?.emotion === 'string' && r.emotion.trim() ? r.emotion.trim() : undefined;
+        if (Number.isFinite(s)) {
+          return { importance: Math.min(1, Math.max(0, s / 10)), emotion: emotion || this.detectEmotion(description) };
+        }
       }
-    } catch (e) { /* 降级规则分 */ }
-    return this.ruleImportance(description, opts);
+    } catch (e) { /* 降级规则分 + 词法情绪 */ }
+    return { importance: this.ruleImportance(description, opts), emotion: this.detectEmotion(description) };
+  }
+
+  /** 词法情绪标注（关键词表；LLM 未配置/失败的兜底，原 detectEmotion 语义） */
+  detectEmotion(content: string): string {
+    if (typeof content !== 'string' || !content) return 'calm';
+    const text = content.toLowerCase();
+    const emotionKeywords: Record<string, string[]> = {
+      happy: ['开心', '高兴', '喜欢', '爱', '很好', '不错', '棒', '优秀', '惊喜', '哈哈', '开心'],
+      sad: ['难过', '伤心', '哭', '失望', '痛苦', '低落', '烦', '郁闷'],
+      upset: ['生气', '愤怒', '讨厌', '糟糕', '气死'],
+      curious: ['好奇', '奇怪', '为什么', '怎么', '探索', '研究'],
+      playful: ['玩', '游戏', '好玩', '有趣', '轻松'],
+      sleepy: ['困', '累', '睡着', '熬夜', '疲惫'],
+      focused: ['专注', '工作', '写', '学', '复习', '练习'],
+      calm: ['平静', '放松', '休息', '冥想'],
+    };
+    for (const [emotion, keywords] of Object.entries(emotionKeywords)) {
+      if (keywords.some((k) => text.includes(k))) return emotion;
+    }
+    return 'calm';
   }
 
   /** 规则 importance（原 calculateImportance 语义：0.5 + 词数 + 情绪强度 + 手动标记） */
@@ -424,6 +454,12 @@ export class MemorySystem {
       data.memory.reflection.lastReflectAt = now;
       data.memory.reflection.count = (data.memory.reflection.count || 0) + 1;
       this.pendingSinceReflect = 0;
+      // 反思驱动人格（心情重构：洞察 → PersonalityGrowth）
+      if (this.onReflect) {
+        try {
+          await this.onReflect(insights);
+        } catch (e) { /* 成长失败不影响记忆流 */ }
+      }
     }
     data.memory.lastUpdated = new Date().toISOString();
     await this.dataSaver(data);

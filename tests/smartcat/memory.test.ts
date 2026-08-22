@@ -62,23 +62,39 @@ describe('importance 打分', () => {
     expect(manual).toBeGreaterThanOrEqual(0.8);
   });
 
-  it('AI 配置时 scoreImportance 走 LLM（mock fetch JSON）→ 0-10 归一 0-1', async () => {
+  it('AI 配置时打分走 LLM（mock fetch {score, emotion}）→ 0-10 归一 + 情绪标注', async () => {
     const m = make({ ai: true });
     const fetchMock = vi.fn(async () => ({
       ok: true,
-      json: async () => ({ choices: [{ message: { content: '{"score": 8}' } }] }),
+      json: async () => ({ choices: [{ message: { content: '{"score": 8, "emotion": "happy"}' } }] }),
     }));
     (globalThis as any).fetch = fetchMock;
-    const s = await m.scoreImportance('用户说：考上了理想学校');
-    expect(s).toBeCloseTo(0.8, 5);
+    const r = await m.scoreImportanceAndEmotion('用户说：考上了理想学校');
+    expect(r.importance).toBeCloseTo(0.8, 5);
+    expect(r.emotion).toBe('happy');
   });
 
-  it('LLM 打分失败 → 规则分兜底（降级链）', async () => {
+  it('LLM 打分失败 → 规则分兜底 + 词法情绪（降级链）', async () => {
     const m = make({ ai: true });
     const fetchMock = vi.fn(async () => ({ ok: false, status: 500 }));
     (globalThis as any).fetch = fetchMock;
-    const s = await m.scoreImportance('短', {});
-    expect(s).toBeCloseTo(0.502, 3);
+    const r = await m.scoreImportanceAndEmotion('短', {});
+    expect(r.importance).toBeCloseTo(0.502, 3);
+    expect(r.emotion).toBeDefined(); // 词法兜底有值
+  });
+
+  it('词法情绪检测：中文关键词命中', () => {
+    const m = make();
+    expect(m.detectEmotion('今天好开心呀')).toBe('happy');
+    expect(m.detectEmotion('感觉好难过')).toBe('sad');
+    expect(m.detectEmotion('随便聊聊')).toBe('calm');
+  });
+
+  it('addObservation 写入 emotion 字段（显式传）', async () => {
+    const m = make();
+    const mem = await m.addObservation('用户说：周末去爬山', { importance: 0.5, emotion: 'happy', source: 'chat' });
+    expect(mem.emotion).toBe('happy');
+    expect(data.memory.stream[0].emotion).toBe('happy');
   });
 });
 

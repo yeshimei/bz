@@ -15,16 +15,11 @@ export type Personality = 'lively' | 'quiet' | 'wise' | 'cute' | 'mentor';
 /** 离散心情状态（MOOD_MAP 5 级；currentMood 初始 'content' 不在枚举内，按原样保留） */
 export type MoodLevel = 'excellent' | 'good' | 'neutral' | 'low' | 'poor';
 
-/** 心情 8 维 */
-export interface MoodDimensions {
-  happiness: number;
-  energy: number;
-  curiosity: number;
-  affection: number;
-  focus: number;
-  creativity: number;
-  productivity: number;
-  relaxation: number;
+/** 心情 PAD 三维（Mehrabian PAD 模型：愉悦/唤醒/支配，0-100；社区对齐，ADR-0021 后心情重构） */
+export interface PadDimensions {
+  pleasure: number;
+  arousal: number;
+  dominance: number;
 }
 
 /** 负面状态 4 项（只展示，原版从不写入） */
@@ -60,11 +55,12 @@ export interface SmartCatConfig {
   shortTermMemory: number;
 }
 
-/** 心情持久化（原 localStorage 'smart-cat-mood-data'） */
+/** 心情持久化（PAD 三维 + 5 档显示位 + 瞬时情绪；情绪标注经记忆条目/currentEmotion） */
 export interface MoodData {
-  dimensions: MoodDimensions;
+  pad: PadDimensions;
   lastUpdate: number;
   lastMood: string;
+  currentEmotion: string | null;
 }
 
 /** 人格成长（原 localStorage 'smart-cat-personality-growth'） */
@@ -88,6 +84,7 @@ export interface MemoryStreamEntry {
   type: 'observation' | 'insight'; // 观察 / 反思洞察
   evidenceIds?: string[]; // 仅 insight：由哪些记忆归纳而来（溯源）
   source?: string;        // 写入来源（如 'chat'）
+  emotion?: string;       // 情绪标注（LLM 顺带/词法兜底；情感记忆并入记忆流）
 }
 
 /** 记忆流（单层，检索时分级；ADR-0021 取代原四层） */
@@ -106,8 +103,6 @@ export interface SmartCatData {
   config: SmartCatConfig;
   mood: MoodData;
   personalityGrowth: PersonalityGrowthData;
-  emotionalMemory: any;
-  timeEmotion: any;
   editingData: any;
   memory: MemoryStream;
 }
