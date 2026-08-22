@@ -57,6 +57,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-bili-open',
   'bz-attach-move',
   'bz-encrypt-open', 'bz-encrypt-lock',
+  'bz-smartcat-open', 'bz-smartcat-chat', 'bz-smartcat-hide',
   'bz-diary-open',
 ];
 

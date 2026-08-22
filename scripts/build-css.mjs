@@ -39,6 +39,7 @@ const SOURCES = [
   "src/attach/styles.css",
   "src/encrypt/styles.css",
   "src/movie/styles.css",
+  "src/smartcat/styles.css",
 ];
 
 const HEADER = [
@@ -58,7 +59,7 @@ export function buildStyles() {
     if (!fs.existsSync(file)) {
       throw new Error(`样式源缺失：${rel}（聚合清单见 scripts/build-css.mjs SOURCES）`);
     }
-    // 行尾统一 CRLF：与仓库工作区惯例一致，避免混合行尾造成 git 状态假差异
+// 行尾统一 CRLF：与仓库工作区惯例一致，避免混合行尾造成 git 状态假差异
     let text = fs.readFileSync(file, "utf8").replace(/\r?\n/g, "\r\n");
     if (!text.endsWith("\n")) text += "\r\n";
     parts.push(text);
