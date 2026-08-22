@@ -2,7 +2,7 @@
  * smartcat 气泡测试（UI 层）：队列、打字机、计时、单击固定、双击转聊、上限 4。
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { BubbleManager, EmojiProcessor } from '../../src/smartcat/bubble';
+import { BubbleManager } from '../../src/smartcat/bubble';
 import { __resetVisibilityForTests, setPageVisible, eventSystem } from '../../src/smartcat/state';
 
 function mountContainer(): HTMLElement {
@@ -16,23 +16,6 @@ function mountContainer(): HTMLElement {
 beforeEach(() => {
   document.body.innerHTML = '';
   __resetVisibilityForTests();
-});
-
-describe('EmojiProcessor', () => {
-  it('提取首个未用 emoji；去重后返回最后一个', () => {
-    const p = new EmojiProcessor();
-    expect(p.process('你好 🐟 再见')).toBe('🐟');
-    expect(p.process('👋 hello')).toBe('👋');
-    expect(p.process('👋 again')).toBe('👋'); // 已返回过 → 返回最后一个
-    expect(p.process('no emoji')).toBeNull();
-  });
-
-  it('reset 清空已返回记录', () => {
-    const p = new EmojiProcessor();
-    p.process('🐟');
-    p.reset();
-    expect(p.process('🐟')).toBe('🐟');
-  });
 });
 
 describe('BubbleManager.showBubble', () => {

@@ -1,8 +1,9 @@
 /**
- * 气泡管理器（移植自 SmartCat.js BubbleManager + EmojiProcessor）
- * 行为保留：队列 + 打字机效果 + 计时/固定/双击转聊天 + 上限 4 推挤；
- * 错误处理：typewriter 依赖的交互目标在 emit 后处理（bubbleToChat 事件）。
- * emoji 抽离仍可独立用（种类跟踪去重、返回首个未用）。
+ * 气泡管理器（移植自 SmartCat.js BubbleManager）
+ * 行为保留：队列 + 打字机效果 + 计时/固定/双击转聊天 + 上限 4；
+ * 堆叠由 #cat-bubbles-container 的 flex 布局自然承担（原 transform 推挤已废弃）。
+ * 原 emoji 抽离到独立指示器已按用户要求删除——emoji 直接留在气泡文本里显示
+ * （原 EmojiProcessor 类一并移除）。
  */
 import { eventSystem, isPageVisible } from './state';
 import { EVENTS } from './types';
@@ -13,39 +14,6 @@ export interface BubbleData {
   message: string;
   duration: BubbleDuration;
   timestamp: number;
-}
-
-/** emoji 抽离（原 EmojiProcessor：文本首 emoji → 心情指示器；track returned 去重） */
-export class EmojiProcessor {
-  private returnedEmojis = new Set<string>();
-  private emojiRegex = /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F900}-\u{1F9FF}\u{1F1E0}-\u{1F1FF}]/gu;
-
-  process(text: string): string | null {
-    if (!text || typeof text !== 'string') return null;
-    const matches = text.match(this.emojiRegex);
-    if (!matches || matches.length === 0) return null;
-    const uniqueEmojis: string[] = [];
-    const seen = new Set<string>();
-    for (const emoji of matches) {
-      if (!seen.has(emoji)) {
-        seen.add(emoji);
-        uniqueEmojis.push(emoji);
-      }
-    }
-    for (const emoji of uniqueEmojis) {
-      if (!this.returnedEmojis.has(emoji)) {
-        this.returnedEmojis.add(emoji);
-        return emoji;
-      }
-    }
-    const lastEmoji = uniqueEmojis[uniqueEmojis.length - 1];
-    this.returnedEmojis.add(lastEmoji);
-    return lastEmoji;
-  }
-
-  reset(): void {
-    this.returnedEmojis.clear();
-  }
 }
 
 export interface BubbleTiming {
@@ -60,19 +28,10 @@ export class BubbleManager {
   isCurrentBubbleTyping = false;
   currentBubble: HTMLElement | null = null;
   private bubbleClickState = { firstClickTimestamp: 0, clickTimeout: null as ReturnType<typeof setTimeout> | null, isPermanent: false };
-  /** emoji 抽离后投递给心情指示器（index 注入，避免循环依赖） */
-  onEmojiDetached: ((icon: string) => void) | null = null;
 
-  /** 显示气泡（原 showBubble：不可见直接返回；emoji 抽离 → showCustomMood；入队；非打字中处理队列） */
+  /** 显示气泡（原 showBubble：不可见直接返回；入队；非打字中处理队列） */
   showBubble(message: string, duration: BubbleDuration = null): void {
     if (!isPageVisible) return;
-    if (this.onEmojiDetached) {
-      const icon = new EmojiProcessor().process(message);
-      if (icon) {
-        message = message.replace(icon, '');
-        this.onEmojiDetached(icon);
-      }
-    }
     this.bubbleQueue.push({ message, duration, timestamp: Date.now() });
     if (!this.isCurrentBubbleTyping) this.processBubbleQueue();
     eventSystem.emit(EVENTS.BUBBLE_QUEUED, { message, duration });

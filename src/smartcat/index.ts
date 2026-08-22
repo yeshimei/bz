@@ -11,7 +11,7 @@ import { getSettings, saveSettings } from '../core/settings-provider';
 import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath } from './data';
 import { eventSystem, setSmartcatApp, setupVisibilityCheck, __resetVisibilityForTests } from './state';
 import { mountCatContainer, unmountCatContainer, applyAppearance, createChatPanel, showChatPanel, hideChatPanel, openSmartcatSettings } from './ui';
-import { BubbleManager, EmojiProcessor } from './bubble';
+import { BubbleManager } from './bubble';
 import { MoodSystem, EmotionalMemory, PersonalityGrowth } from './mood';
 import { MemorySystem } from './memory';
 import { SmartCatAnimation } from './animation';
@@ -87,14 +87,6 @@ export async function ensureSmartCat(app: App): Promise<void> {
   animation.initialize();
   // 100ms 后问候（原 SmartCatAnimation module.exports greet）
   setTimeout(() => animation!.greet(), 100);
-
-  // 气泡 emoji 抽离 → 心情指示器（原 moodIndicator.showCustomMood 语义：挂 mood-emoji 数据 + 5s 隐藏）
-  bubbleManager.onEmojiDetached = (icon: string) => {
-    if (container) container.dataset.moodEmoji = icon;
-    setTimeout(() => {
-      if (container) delete container.dataset.moodEmoji;
-    }, 5000);
-  };
 
   // 语音
   voiceSystem = new VoiceCommandSystem({

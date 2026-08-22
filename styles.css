@@ -3338,20 +3338,6 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
     border-top-color: rgba(30, 30, 30, 0.95);
   }
 }
-/* 心情 emoji 指示（原 moodIndicator：气泡顶部 5s） */
-#smart-companion-cat[data-mood-emoji]::before {
-  content: attr(data-mood-emoji);
-  position: absolute;
-  top: -22px;
-  right: 0;
-  font-size: 18px;
-  animation: moodEmojiPop 0.3s ease-out;
-  z-index: 10001;
-}
-@keyframes moodEmojiPop {
-  from { transform: scale(0.3); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
 
 /* 动画承载类（animation.ts 用 CSS 变量设置一次性动画名/时长） */
 #smart-companion-cat .bz-sc-anim {
