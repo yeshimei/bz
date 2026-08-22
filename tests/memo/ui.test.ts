@@ -413,7 +413,7 @@ describe('备忘录面板', () => {
     await vi.advanceTimersByTimeAsync(10);
     openSheetCard(cardBy('带笔记和到期'));
     sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
-    expect(subOf(sheet, '跳转关联笔记')).toBe('笔记A.md');
+    expect(subOf(sheet, '跳转关联笔记')).toBe('笔记A');
     expect(subOf(sheet, '标记完成')).toContain('已过期'); // 2025-06-14 相对当前必过期
     expect(subOf(sheet, '延后 1 天')).toBe('06-15 12:00');
     expect(subOf(sheet, '延后 3 天')).toBe('06-17 12:00');
