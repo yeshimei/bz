@@ -1334,11 +1334,18 @@ function openMovieNote(item: MovieItem, app: App): void {
   closeOverlay();
 }
 
-/** 快捷状态流转（想看 → 在看 / 在看 → 已看 直改标记；已看不写评分，保持无评分态） */
+/** 写评分时的默认分值（标记已看直改默认分；与评分窗滑块初始值一致） */
+const DEFAULT_RATING = 3.5;
+
+/**
+ * 快捷状态流转（想看 → 在看 / 在看 → 已看 直改标记，不弹窗）。
+ * 状态由评分推断（无独立状态字段）：想看=-1 / 在看=0 / 已看=>0。
+ * 标记在看 → 评分 0；标记已看 → 默认评分 3.5（抽屉保持，可随即「改分」）。
+ */
 async function setMovieStatus(item: MovieItem, status: number, app: App): Promise<void> {
+  const ratingValue = status === STATUS_WATCHING ? 0 : status === STATUS_WATCHED ? DEFAULT_RATING : -1;
   await app.fileManager.processFrontMatter(item.file, (fm: Record<string, any>) => {
-    fm['状态'] = status;
-    if (status === STATUS_WATCHING) fm['评分'] = 0;
+    fm['评分'] = ratingValue;
   });
   notice(status === STATUS_WATCHED ? '已标记已看' : '已标记在看', 'success');
   refreshDataAndView(app);
@@ -1354,7 +1361,7 @@ function closeMovieTinyModal(mask: HTMLElement, modalEsc: { unregister: () => vo
 /**
  * 评分窗（评分 / 改分 共用）：滑块拖动 + 实时数值；遮罩点击/ESC 关闭，无取消按钮。
  * 无日期输入：默认当年日期（已有观影日期则保留，改分不覆盖）。
- * 确认：状态=已看、评分、观影日期 一并写入 frontmatter。
+ * 确认：评分、观影日期 写入 frontmatter（已看状态由评分 >0 表达，不写状态字段）。
  */
 export function openRateModal(item: MovieItem, app: App, title: string, onDone?: () => void): void {
   const mask = document.createElement('div');
@@ -1369,11 +1376,11 @@ export function openRateModal(item: MovieItem, app: App, title: string, onDone?:
   const hasRating = item.rating !== null && item.rating > 0;
   const slider = document.createElement('input');
   slider.type = 'range';
-  slider.min = '0.5';
-  slider.max = '5';
-  slider.step = '0.5';
+  slider.min = '1';
+  slider.max = '6';
+  slider.step = '0.1';
   slider.className = 'bz-movie-rating-slider';
-  slider.value = String(hasRating ? item.rating : 3.5);
+  slider.value = String(hasRating ? item.rating : DEFAULT_RATING);
 
   const valueLabel = document.createElement('div');
   valueLabel.className = 'bz-movie-rating-value';
@@ -1398,7 +1405,6 @@ export function openRateModal(item: MovieItem, app: App, title: string, onDone?:
     // 无日期输入：新评分默认当年日期；已有观影日期保留（改分不覆盖旧日期）
     const watchDate = item.watchDate || localNowFormat().replace('T', ' ');
     await app.fileManager.processFrontMatter(item.file, (fm: Record<string, any>) => {
-      fm['状态'] = STATUS_WATCHED;
       fm['评分'] = ratingVal;
       fm['观影日期'] = watchDate;
     });
@@ -1496,6 +1502,8 @@ function confirmDeleteMovie(item: MovieItem, app: App): void {
  * 已看=评分/改分（滑块窗）+ 写/改影评（影评窗），评分与影评按有无内容切换文案。
  */
 function attachMovieActions(card: HTMLElement, item: MovieItem, app: App): void {
+  // 状态/评分/影评变化后：动作列表 + 头部信息一并刷新（抽屉保持）
+  const rebuild = () => refreshItemSheet(buildActions(), buildMovieSheetHead(item, app));
   const buildActions = (): ItemAction[] => {
     const acts: ItemAction[] = [];
     acts.push({ icon: 'external-link', label: '打开', title: '打开影视笔记', onClick: () => openMovieNote(item, app) });
@@ -1509,7 +1517,7 @@ function attachMovieActions(card: HTMLElement, item: MovieItem, app: App): void 
           void setMovieStatus(item, STATUS_WATCHING, app).then(() => {
             item.status = STATUS_WATCHING;
             item.rating = 0;
-            refreshItemSheet(buildActions());
+            rebuild();
           }),
       });
     } else if (item.status === STATUS_WATCHING) {
@@ -1521,7 +1529,8 @@ function attachMovieActions(card: HTMLElement, item: MovieItem, app: App): void 
         onClick: () =>
           void setMovieStatus(item, STATUS_WATCHED, app).then(() => {
             item.status = STATUS_WATCHED;
-            refreshItemSheet(buildActions());
+            item.rating = DEFAULT_RATING; // 与落盘一致：已看 = 有评分，抽屉刷新显示「改分」
+            rebuild();
           }),
       });
     } else {
@@ -1532,14 +1541,14 @@ function attachMovieActions(card: HTMLElement, item: MovieItem, app: App): void 
         label: hasRating ? '改分' : '评分',
         title: hasRating ? '改分' : '评分',
         keepOpen: true,
-        onClick: () => openRateModal(item, app, hasRating ? '改分' : '评分', () => refreshItemSheet(buildActions())),
+        onClick: () => openRateModal(item, app, hasRating ? '改分' : '评分', rebuild),
       });
       acts.push({
         icon: 'message-square',
         label: item.review ? '改影评' : '写影评',
         title: item.review ? '改影评' : '写影评',
         keepOpen: true,
-        onClick: () => openReviewModal(item, app, item.review ? '改影评' : '写影评', () => refreshItemSheet(buildActions())),
+        onClick: () => openReviewModal(item, app, item.review ? '改影评' : '写影评', rebuild),
       });
     }
     acts.push({ icon: 'pencil', label: '编辑', title: '编辑影视信息', onClick: () => openEditModal(item, app) });

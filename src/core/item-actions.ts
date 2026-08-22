@@ -76,6 +76,8 @@ let popupEl: HTMLElement | null = null;
 let sheetMask: HTMLElement | null = null;
 /** 底部抽屉功能项区容器（动态刷新用：域内动作变化后重建，抽屉保持不关） */
 let sheetBodyEl: HTMLElement | null = null;
+/** 底部抽屉头部容器（动态刷新用：状态变化后头部信息同步更新） */
+let sheetHeadEl: HTMLElement | null = null;
 /** 附属浮层（抽屉之上的域内小弹窗，如评分窗/影评窗）：点击其中不触发「外部点击关闭抽屉」 */
 const sheetCompanions = new Set<HTMLElement>();
 let menuEsc: ReturnType<typeof escManager.register> | null = null;
@@ -164,6 +166,7 @@ export function closeItemMenu(): void {
     popupEl = null;
   }
   sheetBodyEl = null;
+  sheetHeadEl = null;
   suppressNextClick = false;
   residualClickArmed = false;
   touchSettlePending = false;
@@ -290,14 +293,20 @@ function buildSheetItem(a: ItemAction): HTMLElement {
 }
 
 /**
- * 动态刷新当前抽屉的功能项（域内动作变化后调用，如状态流转后动作列表重排）：
- * 保留头部与遮罩，仅重建功能项区，抽屉不关闭。
+ * 动态刷新当前抽屉（域内动作变化后调用，如状态流转后动作列表重排 + 头部同步）：
+ * 保留遮罩与抽屉骨架，重建功能项区与头部，抽屉不关闭。
+ * @param actions 新动作列表
+ * @param head 新头部内容（未传则头部保持不变）
  */
-export function refreshItemSheet(actions: ItemAction[]): void {
+export function refreshItemSheet(actions: ItemAction[], head?: HTMLElement): void {
   if (!popupEl || popupEl.classList.contains('bz-item-sheet') === false || !sheetBodyEl) return;
   sheetBodyEl.innerHTML = '';
   for (const a of actions) {
     sheetBodyEl.appendChild(buildSheetItem(a));
+  }
+  if (head && sheetHeadEl) {
+    sheetHeadEl.innerHTML = '';
+    sheetHeadEl.appendChild(head);
   }
 }
 
@@ -313,6 +322,7 @@ export function openItemSheet(actions: ItemAction[], opts?: ItemActionsOptions, 
     head.className = 'bz-item-sheet-head';
     head.appendChild(opts.sheetHead);
     sheet.appendChild(head);
+    sheetHeadEl = head;
   } else if (opts?.sheetTitle) {
     const head = document.createElement('div');
     head.className = 'bz-item-sheet-head';
@@ -327,6 +337,7 @@ export function openItemSheet(actions: ItemAction[], opts?: ItemActionsOptions, 
       head.appendChild(subEl);
     }
     sheet.appendChild(head);
+    sheetHeadEl = head;
   }
   // 功能项区：项多时内部滚动（最大 70vh，隐藏滚动条，styles.css）
   const body = document.createElement('div');
