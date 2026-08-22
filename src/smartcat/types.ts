@@ -131,7 +131,14 @@ export interface MemoryStream {
   version: number;
   lastUpdated: string;
   stream: MemoryStreamEntry[];
-  reflection: { lastReflectAt: number; count: number };
+  reflection: {
+    lastReflectAt: number;
+    count: number;
+    /** 睡前巩固（digest）：上次日小结时间戳（2026-08-23 增强，可选字段旧数据直读） */
+    lastDigestAt?: number;
+    /** 睡前巩固次数 */
+    digestCount?: number;
+  };
 }
 
 /**
