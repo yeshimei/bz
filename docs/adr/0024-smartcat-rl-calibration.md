@@ -100,3 +100,16 @@
 测试：新增 domain-source.test.ts（6 测试）、context-source 重写（12 测试），1288 全绿；已构建部署。
 
 **隐私语义变更说明**：此前「笔记内容不发给云端」改为「笔记内容参与 AI 打分与反思」（用户主动配置 AI 后生效，未配置时仍本地规则分兜底）。密码本/保险箱永不接入不变；机械去簇（批量导入不进信任、观察降权）不变。
+
+## 用户追加决策 5（2026-08-23，ticket 030-033：「更懂你」四方向增强，全部自主采纳）
+
+用户在对话 RAG / 睡前巩固 / 作息模型 / 周报告四个方向拍板「做」，本轮全部实现（其中 030 RAG 已接线，本轮增强；031 反思已有雏形，本轮补每日小结）：
+
+1. **ticket 030 对话 RAG 增强**（memory.ts + interaction.ts）：检索 query 结合用户消息 + 当前情绪 + 时段（`buildRetrieveQuery`）；注入格式带来源中文标签（`SOURCE_LABELS`，含 domain: 域名映射）与相对时间（`formatRelativeTime`：分钟/小时/天/月日）；
+2. **ticket 031 睡前巩固「小橘做梦」**（memory.ts）：距上次日小结 ≥18h 且期间新增观察 ≥3 条 → LLM 把当日观察归纳 `digestCount` 条【今日小结】写回流（source `digest`，evidenceIds 溯源），复用 `onReflect` 驱动人格微漂移（existential +0.01 级）；失败复用反思退避（5min→30min）不空转不落盘；`memory.reflection` 新增可选字段 `lastDigestAt/digestCount`（旧数据直读）；
+3. **ticket 032 作息模型 + 主动关心**（新 `rhythm.ts` + index）：从记忆流 created 统计最近 30 天 24h 活跃分布（`buildRhythmProfile`，活跃小时 = 计数 ≥ 均值 0.75 倍，过稀退化 top6），`isActiveNow` 判定时机；每周 ≤ `proactiveWeeklyCap`（默认 2）次温和主动搭话（距上次 ≥2 天；AI 配置 LLM 生成/未配置模板兜底，结合用户活跃时段文本）；状态存 `editingData.proactiveCare`（周键 `isoWeekKey` 跨周重置）；设置弹窗「主动关心」开关；
+4. **ticket 033 每周懂你报告**（新 `report.ts` + index + ui）：每周二起本周观察 ≥3 条时生成（周窗口 `weekWindow` 周一起算；`buildWeeklyReportData` 统计条数/来源分布/情绪分布/高重要记忆/PAD → `generateWeeklyReport` LLM 个性化总结，未配置降级统计文本）→ 写回流（source `weekly-report`）→ 气泡导语 + 设置弹窗「查看本周报告」弹窗全文；状态存 `editingData.weeklyReport`。
+
+测试：新增 rhythm.test.ts（11）/report.test.ts（7）+ memory digest 5/RAG 增强 4/config 扩展 1，**1312 全绿（94 文件）**；已构建部署（main.js 特征串：当前情绪/今日小结/主动关心/本周懂你报告 命中）。
+
+**取舍说明**：① 主动关心默认开（用户要的正是低频温和陪伴），可在设置关掉，频率上限 2 次/周不打扰；② 日小结/周报告都是 LLM 生成，未配置 AI 时降级为本地统计文本，不阻塞；③ 三击无动作、抚摸纯信号等上轮拍板保持不变。
