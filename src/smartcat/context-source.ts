@@ -1,68 +1,141 @@
 /**
- * 笔记库接入（ADR-0024 产品决策，ticket 025）：
- *  1) 写日记/闪念 → 计入信任成长（开发基于互动，轻质量 0.15）；
- *  2) 笔记库内容 = 小橘信息来源（隐私分级观察，只读、实时 vault 事件驱动）。
- * 隐私分级：flash=闪念标题/首行（内容本身就是要记的）；clipping=剪藏 frontmatter 的
- *  AI summary（auto-summary 产物，非私人正文）；movie=片名+评分（元数据）；diary=**不读正文**，
- *  仅条目标题时刻计数汇总。
+ * 笔记库接入（ADR-0024/025 + 2026-08-23 用户拍板扩展）：
+ *  1) 写日记/闪念 → 计入信任成长（轻质量 0.15）；
+ *  2) 笔记库内容 = 小橘信息来源（全内容读取 + LLM 云端打分 + 词法情绪，用户拍板放开隐私边界）。
+ * 接入面（用户 2026-08-23 拍板，context-source → index onVaultActivity + onDomainActivity）：
+ *  - diary 日记：读正文，标记关键词和情绪，影响小橘情绪
+ *  - flash 闪念：取完整内容，让小橘记住都写过什么
+ *  - clipping 剪藏：记住完整的 AI 摘要
+ *  - movie 影视：读影评完整正文
+ *  - reading 书库：weve epub 划线（<span class="__comment cm-highlight">）、想法/书评（==dialogue== / bookReview）
+ *  - poem 现代诗 / letter 信 / reflection 反省：完整内容
+ *  - 域事件（memo/pomodoro/news/quiz/review/favorites/belongings）：CONFIG/STORAGE JSON 监听感知
  */
 import type { App, TAbstractFile } from 'obsidian';
 import { DIARY_DIRECTORY } from '../diary/config';
 
-export type ActivityKind = 'diary' | 'flash' | 'clipping' | 'movie' | 'reading' | null;
+export type ActivityKind = 'diary' | 'flash' | 'clipping' | 'movie' | 'reading' | 'poem' | 'letter' | 'reflection' | 'domain' | null;
 
 /** 默认 flash（卡片盒）目录（flash 域 ALLOW_PATHS 默认含卡片盒；可配目录后续扩展） */
 const FLASH_DIR = '卡片盒';
 
-/** 路径分类（只认 .md；日志目录经 diary/config 动态目录） */
+/** 路径分类（只认 .md；日志目录经 diary/config 动态目录；现代诗/信/反省/书库/影视按目录） */
 export function classifyPath(path: string | null | undefined): ActivityKind {
   if (!path || !path.endsWith('.md')) return null;
   const p = path.replace(/\\/g, '/');
   const diaryDir = (DIARY_DIRECTORY || '我的/日记').replace(/\/+$/, '');
-  if (p.startsWith(diaryDir + '/')) return 'diary';
+  if (p.startsWith(diaryDir + '/') || p.startsWith('我的/日记/')) return 'diary';
   if (p.startsWith(FLASH_DIR + '/')) return 'flash';
   if (p.startsWith('归档/网页剪藏')) return 'clipping';
   if (p.startsWith('我的/影视')) return 'movie';
   if (p.startsWith('书库')) return 'reading';
+  if (p.startsWith('我的/现代诗')) return 'poem';
+  if (p.startsWith('我的/信')) return 'letter';
+  if (p.startsWith('我的/反省')) return 'reflection';
   return null;
 }
 
-/** 隐私分级观察文本（失败/无内容返回 null，调用方静默） */
+/** 关键词提取（用户拍板：日记标记关键词；中文轻量切分：词块 + 2-4 字 n-gram 双通道高频） */
+export function extractKeywords(text: string, max = 5): string[] {
+  if (!text) return [];
+  const freq = new Map<string, number>();
+  const bump = (w: string, wgt: number) => {
+    if (w.length < 2 || w.length > 8) return;
+    if (/^[\dA-Za-z]+$/.test(w) && w.length > 6) return; // 过长的纯字母数字跳过
+    freq.set(w, (freq.get(w) || 0) + wgt);
+  };
+  // 通道一：按标点/空白切分的词块（含中文连续段整体）
+  const stops = /[，。！？；：、\s\n（）()《》「」"'“”‘’\-—…·]/g;
+  for (const w of text.replace(stops, ' ').split(/\s+/)) if (w) bump(w, 1);
+  // 通道二：2-4 字 n-gram（覆盖未分词的中文）
+  const flat = text.replace(stops, '');
+  for (let i = 0; i + 2 <= flat.length; i++) {
+    for (let len = 4; len >= 2; len--) {
+      if (i + len > flat.length) continue;
+      const g = flat.slice(i, i + len);
+      if (/^[\dA-Za-z]+$/.test(g)) continue;
+      bump(g, len === 2 ? 0.4 : len === 3 ? 0.7 : 1);
+    }
+  }
+  const STOPS = new Set(['没有', '什么', '一个', '可以', '我们', '你们', '他们', '她们', '因为', '所以', '但是', '就是', '自己', '今天', '昨天', '明天', '还是', '已经', '这个', '那个', '时候', '现在', '觉得', '有点', '真的', '然后', '如果', '一直', '起来', '下来', '这样', '知道', '生活', '东西']);
+  return [...freq.entries()]
+    .filter(([k]) => !STOPS.has(k) && k.trim().length >= 2)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, max)
+    .map(([k]) => k);
+}
+
+/** 情绪标记提示词辅助（返回给 LLM 的情绪清单），词法情绪由 memory.detectEmotion 兜底 */
+export const EMOTION_LIST = 'happy/sad/upset/curious/playful/sleepy/focused/calm';
+
+/** 隐私分级观察文本（2026-08-23 用户拍板：全内容读取；失败/无内容返回 null，调用方静默） */
 export async function observationText(app: App, file: TAbstractFile, kind: ActivityKind): Promise<string | null> {
   if (!kind) return null;
-  const readHead = async (n: number): Promise<string> => {
+  const readAll = async (): Promise<string> => {
     try {
       const c = await app.vault.read(file as any);
-      return c.split('\n').slice(0, n).join('\n');
+      return c || '';
     } catch { return ''; }
   };
   switch (kind) {
     case 'flash': {
-      const head = (await readHead(6)).split('\n')[0]?.trim() || '';
-      return head ? '你在卡片盒记下一条闪念：「' + head.slice(0, 40) + '」' : null;
+      // 用户拍板：闪念取完整内容（原只首行 ≤40）
+      const full = (await readAll()).trim();
+      return full ? '你在卡片盒记下闪念：' + full.slice(0, 300) : null;
     }
-    case 'diary': { // 隐私：仅条目标题（emoji+HH:mm）计数，不读正文句子
-      const txt = await readHead(400);
-      const blocks = txt.split('\n').filter((l) => /^#\s+.*?\s+\d{1,2}:\d{2}\s*$/.test(l)).length;
-      // 红队 B P2-1：0 条不谎报「写了 1 条」（空/格式不符文件跳过）
-      return blocks >= 1 ? '你今天写了 ' + blocks + ' 条日记记录' : null;
+    case 'diary': {
+      // 用户拍板：日记读正文，标记关键词和情绪，影响小橘情绪
+      const full = (await readAll()).trim();
+      if (!full) return null;
+      const kws = extractKeywords(full);
+      const kw = kws.length ? '（关键词：' + kws.join('、') + '）' : '';
+      return '你写了日记：' + full.slice(0, 300) + kw;
     }
     case 'clipping': {
-      const top = await readHead(12);
+      // 用户拍板：记住完整的 AI 摘要
+      const top = await readAll();
+      // 优先 frontmatter summary；无则取全文摘要段（auto-summary 写 frontmatter，正文多为原文）
       const m = top.match(/^summary\s*[:：]\s*(.+)$/m);
-      return m ? '你剪藏了：' + m[1].trim().slice(0, 60) : null;
+      if (m) return '你剪藏了：' + m[1].trim().slice(0, 300);
+      return top ? '你剪藏了一篇文章：' + top.replace(/^---[\s\S]*?---\s*/, '').trim().slice(0, 200) : null;
     }
     case 'movie': {
-      const top = await readHead(12);
+      // 用户拍板：读影评完整正文（原只片名+评分）
+      const top = await readAll();
       const name = String((file as any).basename || '').replace(/^《(.+?)》.*$/, '$1');
+      const body = top.replace(/^---[\s\S]*?---\s*/, '').trim() || '';
       const sc = top.match(/^评分\s*[:：]\s*(\d+)/m);
-      if (name && name !== String((file as any).basename || '')) {
-        return '你的影视库更新了《' + name.slice(0, 30) + '》' + (sc ? '（评分 ' + sc[1] + '）' : '');
-      }
-      return '你的影视库有了新记录';
+      const head = name && name !== String((file as any).basename || '') ? '《' + name + '》' : '影视';
+      return '你看了' + head + (sc ? '（评分 ' + sc[1] + '）' : '') + '，影评：' + body.slice(0, 300);
     }
-    case 'reading':
-      return '书库笔记有更新，你的阅读在推进';
+    case 'reading': {
+      // 用户拍板：书库记划线、想法、书评（weve epub）
+      const top = await readAll();
+      if (!top) return null;
+      const highlights = [...top.matchAll(/<span class="__comment cm-highlight"[^>]*>(.*?)<\/span>/g)].map((x) => x[1]).slice(0, 3);
+      const dialogues = [...top.matchAll(/==dialogue==\s*\n([\s\S]*?)(?=\n==|$)/g)].map((x) => x[1].trim()).filter(Boolean).slice(0, 2);
+      const review = top.match(/bookReview\s*[:：]\s*(.+)$/m)?.[1]?.trim();
+      const name = String((file as any).basename || '').replace(/\.md$/, '');
+      const parts: string[] = [];
+      if (highlights.length) parts.push('划线：' + highlights.join('；').slice(0, 200));
+      if (dialogues.length) parts.push('想法：' + dialogues.join('；').slice(0, 200));
+      if (review) parts.push('书评：' + review.slice(0, 120));
+      return parts.length ? '你读了《' + name + '》，' + parts.join('；') : '书库笔记《' + name + '》有更新';
+    }
+    case 'poem': {
+      const full = (await readAll()).trim();
+      return full ? '你写了现代诗：' + full.replace(/^---[\s\S]*?---\s*/, '').slice(0, 300) : null;
+    }
+    case 'letter': {
+      const full = (await readAll()).trim();
+      return full ? '你写了一封信：' + full.replace(/^---[\s\S]*?---\s*/, '').slice(0, 300) : null;
+    }
+    case 'reflection': {
+      const full = (await readAll()).trim();
+      return full ? '你写下了反省：' + full.replace(/^---[\s\S]*?---\s*/, '').slice(0, 300) : null;
+    }
+    case 'domain':
+      return null; // 域事件由 index onDomainActivity 直接构造观察文本
   }
   return null;
 }
