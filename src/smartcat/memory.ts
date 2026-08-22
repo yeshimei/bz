@@ -21,12 +21,14 @@ export const MEMORY_CONFIG = {
   maxStream: 500,
   /** 检索返回条数 */
   retrievalTopN: 10,
-  /** GA 三因子权重（RL 校准 ADR-0024：真实库配方 αR=0.5/αI=0.73/αRel=0.5，原均 1.0） */
-  alphaRecency: 0.5,
-  alphaImportance: 0.73,
-  alphaRelevance: 0.5,
-  /** recency 指数衰减系数（RL 校准 ADR-0024：0.995 → 0.986） */
-  decay: 0.986,
+  /** GA 三因子权重（RL 校准 ADR-0024：真实库配方 αR=0.5/αI=0.73/αRel=0.5，原均 1.0；
+ *  2026-08-23 进化第 3 轮重标定——rMem 接回周检索项（红队 C C3.3 治 α 死参数）后，
+ *  检索参数首次进入优化目标，RL 学到 αR=0.66/αI=0.95/αRel=1.5：相关度权重上调最猛） */
+  alphaRecency: 0.66,
+  alphaImportance: 0.95,
+  alphaRelevance: 1.5,
+  /** recency 指数衰减系数（RL 校准 ADR-0024：0.995 → 0.986 → 0.982 进化第 3 轮） */
+  decay: 0.982,
   /** 反思：距上次至少间隔（ms） */
   reflectionInterval: 24 * 60 * 60 * 1000,
   /** 反思：新增记忆达到该条数也触发 */

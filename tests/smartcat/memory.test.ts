@@ -324,11 +324,11 @@ describe('状态与格式化', () => {
   });
 });
 
-describe('RL 校准配置（ADR-0024）', () => {
-  it('MEMORY_CONFIG 三因子权重与 decay 为真实库配方（0.5/0.73/0.5/0.986）', () => {
-    expect(MEMORY_CONFIG.alphaRecency).toBe(0.5);
-    expect(MEMORY_CONFIG.alphaImportance).toBe(0.73);
-    expect(MEMORY_CONFIG.alphaRelevance).toBe(0.5);
-    expect(MEMORY_CONFIG.decay).toBe(0.986);
+describe('RL 校准配置（ADR-0024 + 进化第 3 轮）', () => {
+  it('MEMORY_CONFIG 三因子权重与 decay 为真实库配方（0.66/0.95/1.5/0.982：rMem 接回检索项后的重标定）', () => {
+    expect(MEMORY_CONFIG.alphaRecency).toBe(0.66);
+    expect(MEMORY_CONFIG.alphaImportance).toBe(0.95);
+    expect(MEMORY_CONFIG.alphaRelevance).toBe(1.5);
+    expect(MEMORY_CONFIG.decay).toBe(0.982);
   });
 });
