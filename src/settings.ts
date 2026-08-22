@@ -283,6 +283,12 @@ export default interface BzSettings {
   pomodoroMobileDefaultFullscreen: boolean;
   /** 保险箱：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   encryptMobileDefaultFullscreen: boolean;
+
+  // ===== 🐱 小橘陪伴猫（smartcat 域：桌面宠物 + AI 陪伴）=====
+  /** 常驻域开关：开启后 onLayoutReady 启动小橘（猫容器 + 自言自语/心情/动画等常驻行为） */
+  smartcatEnabled: boolean;
+  /** 小橘聊天面板：移动端默认全屏（默认关——原居中卡 320px） */
+  smartcatMobileDefaultFullscreen: boolean;
 }
 
 export const DEFAULT_SETTINGS: BzSettings = {
@@ -442,4 +448,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   reviewMobileDefaultFullscreen: true,
   pomodoroMobileDefaultFullscreen: false,
   encryptMobileDefaultFullscreen: true,
+
+  // 小橘陪伴猫（smartcat 域）
+  smartcatEnabled: true,
+  smartcatMobileDefaultFullscreen: false,
 };
