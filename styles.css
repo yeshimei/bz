@@ -2866,9 +2866,12 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }
 .bz-movie-tiny-title { font-size: 15px; font-weight: 600; color: var(--text-normal); }
-/* 评分滑块（评分/改分窗）：拖动 + 实时数值 */
+/* 评分滑块（评分/改分窗）：拖动 + 实时数值；100% 占满弹窗宽度（抗 Obsidian 默认 range 样式） */
 .bz-movie-rating-slider {
-  width: 100%; accent-color: var(--interactive-accent); margin: 4px 0 2px;
+  width: 100% !important;
+  display: block;
+  accent-color: var(--interactive-accent);
+  margin: 4px 0 2px;
 }
 .bz-movie-rating-value {
   font-size: 22px; font-weight: 600; color: var(--text-normal);
