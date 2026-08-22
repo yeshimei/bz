@@ -10,6 +10,12 @@
  */
 import { Setting } from 'obsidian';
 import { notice, createIconBtn, longPress } from '../core/dom';
+import {
+  attachItemActions,
+  registerSheetCompanion,
+  unregisterSheetCompanion,
+  type ItemAction,
+} from '../core/item-actions';
 import { escManager } from '../core/esc-manager';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
@@ -212,10 +218,10 @@ function renderBookCard(app: any, item: BookItem, settings: any): HTMLElement {
   const card = document.createElement('div');
   card.className = 'bz-lib-card';
 
-  // ---- 封面区域（单击打开读书笔记） ----
+  // ---- 封面区域（双击转跳书籍：md 开原笔记 / EPUB 开阅读器；单击读书笔记收敛进抽屉） ----
   const coverWrapper = document.createElement('div');
   coverWrapper.className = 'bz-lib-cover';
-  coverWrapper.title = item.isEpub ? '单击在阅读器中打开' : '单击打开读书笔记';
+  coverWrapper.title = '双击在阅读器/原文中打开';
 
   if (item.cover) {
     const coverFile = app.vault.getAbstractFileByPath(item.cover);
@@ -233,23 +239,12 @@ function renderBookCard(app: any, item: BookItem, settings: any): HTMLElement {
     coverWrapper.appendChild(noCover);
   }
 
-  coverWrapper.addEventListener('click', (e) => {
+  // 双击转跳书籍（用户拍板保留）：md → 打开原笔记；EPUB → 打开阅读器
+  coverWrapper.addEventListener('dblclick', (e) => {
     e.stopPropagation();
-    if (item.isEpub) {
-      showEpubBookNotes(app, item);
-      return;
-    }
-    showBookNotes(app, item.file.path);
+    app.workspace.openLinkText(item.file.path, '', false);
+    libraryOverlay!.style.visibility = 'hidden';
   });
-
-  // EPUB：双击封面 → 打开阅读器（与标题行单击一致）；单击 → 读书笔记
-  if (item.isEpub) {
-    coverWrapper.addEventListener('dblclick', (e) => {
-      e.stopPropagation();
-      app.workspace.openLinkText(item.file.path, '', false);
-      libraryOverlay!.style.visibility = 'hidden';
-    });
-  }
 
   card.appendChild(coverWrapper);
 
@@ -257,18 +252,12 @@ function renderBookCard(app: any, item: BookItem, settings: any): HTMLElement {
   const infoDiv = document.createElement('div');
   infoDiv.className = 'bz-lib-info';
 
-  // 标题行（标题单击打开原笔记）
+  // 标题行（打开原文收敛进抽屉，仅展示）
   const titleRow = document.createElement('div');
   titleRow.className = 'bz-lib-title-row';
   const titleEl = document.createElement('div');
   titleEl.className = 'bz-lib-title';
   titleEl.textContent = item.title;
-  titleEl.title = '单击打开原笔记';
-  titleEl.addEventListener('click', (e) => {
-    e.stopPropagation();
-    app.workspace.openLinkText(item.file.path, '', false);
-    libraryOverlay!.style.visibility = 'hidden';
-  });
 
   const statusBadge = document.createElement('span');
   statusBadge.className = `bz-lib-badge bz-lib-badge--${item.status}`;
@@ -342,7 +331,69 @@ function renderBookCard(app: any, item: BookItem, settings: any): HTMLElement {
   }
 
   card.appendChild(infoDiv);
+
+  // 统一抽屉（桌面右键/移动长按）：打开原文 → 读书笔记
+  attachItemActions(card, buildBookActions(app, item), { sheetHead: buildBookSheetHead(item) });
   return card;
+}
+
+/** 书库抽屉动作：打开原文（md 笔记 / EPUB 阅读器）→ 读书笔记（companion 弹窗） */
+function buildBookActions(app: any, item: BookItem): ItemAction[] {
+  const acts: ItemAction[] = [];
+
+  // 打开原文（与封面双击同路径）
+  acts.push({
+    icon: 'book-open',
+    label: '打开原文',
+    onClick: () => {
+      app.workspace.openLinkText(item.file.path, '', false);
+      if (libraryOverlay) libraryOverlay.style.visibility = 'hidden';
+    },
+  });
+
+  // 读书笔记（md 划线/批注弹窗；EPUB 划线/想法弹窗；companion 叠抽屉）
+  acts.push({
+    icon: 'highlighter',
+    label: '读书笔记',
+    onClick: () => {
+      if (item.isEpub) showEpubBookNotes(app, item);
+      else showBookNotes(app, item.file.path);
+    },
+  });
+
+  return acts;
+}
+
+/** 书库抽屉头部：📖 + 书名；小字=作者 · 状态 · 进度 */
+function buildBookSheetHead(item: BookItem): HTMLElement {
+  const head = document.createElement('div');
+  head.className = 'bz-item-sheet-entry';
+  const body = document.createElement('div');
+  body.style.cssText = 'display:flex; align-items:flex-start; gap:10px;';
+
+  const emoji = document.createElement('span');
+  emoji.className = 'bz-item-sheet-emoji';
+  emoji.textContent = '📖';
+  body.appendChild(emoji);
+
+  const info = document.createElement('div');
+  info.style.cssText = 'flex:1; min-width:0;';
+  const title = document.createElement('div');
+  title.className = 'bz-item-sheet-title';
+  title.textContent = item.title;
+  info.appendChild(title);
+  const subParts: string[] = [];
+  if (item.author) subParts.push(`✍️ ${item.author}`);
+  subParts.push(item.status);
+  if (item.readingProgress > 0) subParts.push(`${item.readingProgress}%`);
+  const sub = document.createElement('div');
+  sub.className = 'bz-item-sheet-sub';
+  sub.textContent = subParts.join(' · ');
+  info.appendChild(sub);
+
+  body.appendChild(info);
+  head.appendChild(body);
+  return head;
 }
 
 // ============ 筛选弹窗 ============
@@ -652,6 +703,8 @@ export function showEpubBookNotes(app: any, item: BookItem) {
 function createBookNotesModal(title: string, onClose: () => void): { overlay: HTMLElement; contentContainer: HTMLElement } {
   const overlay = document.createElement('div');
   overlay.className = 'bz-lib-overlay bz-lib-overlay--1200';
+  // 抽屉来源打开时：笔记弹窗作为附属浮层叠在抽屉上（内部点击不误关抽屉）
+  registerSheetCompanion(overlay);
 
   const modal = document.createElement('div');
   modal.className = 'bz-lib-modal bz-lib-modal--full-lg';
@@ -683,6 +736,7 @@ function createBookNotesModal(title: string, onClose: () => void): { overlay: HT
 
 function closeBookNotesModal() {
   if (bookNotesOverlay) {
+    unregisterSheetCompanion(bookNotesOverlay);
     bookNotesOverlay.remove();
     bookNotesOverlay = null;
   }
@@ -690,6 +744,7 @@ function closeBookNotesModal() {
 
 function closeEpubBookNotesModal() {
   if (epubBookNotesOverlay) {
+    unregisterSheetCompanion(epubBookNotesOverlay);
     epubBookNotesOverlay.remove();
     epubBookNotesOverlay = null;
   }
