@@ -111,3 +111,22 @@ describe('formatStateVector（MATE §7 压缩注入）', () => {
     expect(s).toMatch(/PAD=\[[+-]?\d\.\d{2}/);
   });
 });
+
+describe('RL 校准常量（ADR-0024）', () => {
+  it('温暖增益与侵蚀均为校准值（0.0082×quality / 0.0029），敌意仍 -0.04', () => {
+    expect(trustUpdate(0.5, { warm: true })).toBeCloseTo(0.5 + 0.0082 * 0.5, 6);
+    expect(trustUpdate(0.5, { hostile: true })).toBeCloseTo(0.46, 5);
+    expect(trustUpdate(0.5, {})).toBeCloseTo(0.5 - 0.0029, 6);
+  });
+
+  it('trustCap 饱和钩子：设置上限后越过即封顶；未设置保持单调上升', () => {
+    expect(trustUpdate(0.9, { warm: true, trustCap: 0.85 })).toBe(0.85);
+    expect(trustUpdate(0.9, { warm: true })).toBeGreaterThan(0.9);
+  });
+
+  it('characterTransition 默认 δbase 为校准值（0.00083：慢速微移但仍单调成长）', () => {
+    const t = characterTransition({ ...DEFAULT_TRAITS }, { emotionIntensity: 1, trust: 0.5 });
+    expect(t.warmth).toBeGreaterThan(DEFAULT_TRAITS.warmth);
+    expect(t.warmth - DEFAULT_TRAITS.warmth).toBeLessThan(0.05);
+  });
+});

@@ -21,12 +21,12 @@ export const MEMORY_CONFIG = {
   maxStream: 500,
   /** 检索返回条数 */
   retrievalTopN: 10,
-  /** GA 三因子权重（论文默认 α1=α2=α3=1.0） */
-  alphaRecency: 1.0,
-  alphaImportance: 1.0,
-  alphaRelevance: 1.0,
-  /** recency 指数衰减系数 */
-  decay: 0.995,
+  /** GA 三因子权重（RL 校准 ADR-0024：真实库配方 αR=0.5/αI=0.73/αRel=0.5，原均 1.0） */
+  alphaRecency: 0.5,
+  alphaImportance: 0.73,
+  alphaRelevance: 0.5,
+  /** recency 指数衰减系数（RL 校准 ADR-0024：0.995 → 0.986） */
+  decay: 0.986,
   /** 反思：距上次至少间隔（ms） */
   reflectionInterval: 24 * 60 * 60 * 1000,
   /** 反思：新增记忆达到该条数也触发 */

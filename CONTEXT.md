@@ -189,6 +189,7 @@ _Avoid_: 情感记忆（EmotionalMemory 类已删除，语义并入记忆流 emo
 _Avoid_: 预设人格（5 选 1 已废弃）、personalityGrowth 无人调用（已接线）
 
 **记忆流 (Memory Stream)**: 小橘的单层记忆（ADR-0021，取代原「分层记忆」四层）——`smartcat.json` memory 段改为 `{version, lastUpdated, stream: MemoryStreamEntry[], reflection}`，`MemoryStreamEntry = {id, created, lastAccessed, description, importance(0-1), type:'observation'|'insight', evidenceIds?, source?, emotion?}`；检索时按 GA 三因子 `α1·0.995^小时 + α2·importance + α3·relevance` 分级取 top 10；写入时 LLM 打分（AI 未配置降级规则分）并顺带标注情绪（词法兜底）；反思每 24h 或新增≥20 条触发，LLM 归纳 3 条洞察写回流（带 evidenceIds 溯源）并经 onReflect 喂人格成长；上限 500 条淘汰「importance×使用度」最低；bge-m3 向量存独立 smartcat-memory-vectors.vec（豁免单 json），Ollama 不可用降级词法。旧四层与迁移路径已删除（无数据产生，用户拍板）。
+**RL 校准配方 (RL Calibration)**: 正式强化学习收敛后的动力学默认值（ADR-0024，2026-08-23）——以「真实库事件流（过去 365 天真实使用）」环境最优配方为生产新默认：`characterTransition` 默认 δbase 0.003→0.00083（合成配方 0.0096 作对照）、`trustUpdate` 温暖增益 0.01→0.0082/侵蚀 0.003→0.0029、记忆流 GA 三因子 α 1.0→0.5/0.73/0.5、decay 0.995→0.986；`TRUST_CAP` 信任饱和上限钩子（默认 null 不饱和，产品决策项）；模拟器独有旋钮（effectScale/emoGain/charSens/decayScale）不迁移生产。
 _Avoid_: 记忆文件、memories 目录、四层（已废弃）；迁移（已删除）
 
 ### 移动端窗口（ticket 68，跨域）

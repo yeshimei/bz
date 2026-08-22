@@ -15,7 +15,7 @@
  */
 import type { App } from 'obsidian';
 import type { PadDimensions, SmartCatData } from './types';
-import { characterTransition, trustUpdate, characterFromExperience } from './character';
+import { characterTransition, trustUpdate, characterFromExperience, TRUST_CAP } from './character';
 
 /** 5 档离散心情（显示层；PAD 原型最近邻判档） */
 export const MOOD_MAP: Record<string, { emoji: string; state: string; prototype: [number, number, number] }> = {
@@ -259,7 +259,7 @@ export class PersonalityGrowth {
     if (interactionType === 'pet' || interactionType === 'learn') {
       g.traits = characterTransition(g.traits, { emotionIntensity: 0.2, trust: g.relationship.trust });
     }
-    g.relationship.trust = trustUpdate(g.relationship.trust, { warm: interactionType === 'pet' || interactionType !== 'click' });
+    g.relationship.trust = trustUpdate(g.relationship.trust, { warm: interactionType === 'pet' || interactionType !== 'click', trustCap: TRUST_CAP ?? undefined });
     // 活跃时段统计（按当时钟点滚一个众数近似）
     this.tickBehaviorStats(interactionType);
     g.growthHistory.push({
