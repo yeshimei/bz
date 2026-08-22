@@ -92,6 +92,18 @@ export function characterSeed(ocean: OceanProfile): CharacterTraits {
   return t;
 }
 
+/**
+ * RL 校准配方（ADR-0024，2026-08-23 正式训练收敛）
+ * 生产采用 = 真实库事件流（过去 365 天真实使用）环境最优配方；合成配方对照存档 ADR-0024。
+ *   - CHARACTER_DELTA_BASE：0.003 → 0.00083（真实交互稀疏，δ 收敛；合成对照 0.0096）
+ *   - TRUST_WARM_GAIN / TRUST_ERODE_GAIN：0.01/0.003 → 0.0082/0.0029（≈0.01×0.824、0.003×0.973）
+ *   - TRUST_CAP：信任饱和上限钩子（产品决策项；null=保持单调上升现状，设置后信任封顶）
+ */
+export const CHARACTER_DELTA_BASE = 0.00083;
+export const TRUST_WARM_GAIN = 0.0082;
+export const TRUST_ERODE_GAIN = 0.0029;
+export const TRUST_CAP: number | null = null;
+
 /** logistic saturation：x + δ(1−x)，永不达 1.0（MATE §3.2） */
 export function softUpdate(x: number, delta: number): number {
   const clamped = Math.min(0.999, Math.max(0.001, x));
@@ -107,7 +119,7 @@ export function characterTransition(
 ): CharacterTraits {
   const I = opts.emotionIntensity ?? 0;
   const trust = opts.trust ?? 0.5;
-  const delta = (opts.deltaBase ?? 0.003) * I * (1 + (1 - trust));
+  const delta = (opts.deltaBase ?? CHARACTER_DELTA_BASE) * I * (1 + (1 - trust));
   if (delta <= 0) return { ...traits };
   const out = { ...traits };
   // 正向微移核心成长特质（warmth/self_worth/others_trust/depth 缓慢积累）
@@ -119,11 +131,12 @@ export function characterTransition(
 /** trust 微积分（MATE §3.3 关系张量精简版：体验温度 + 交互质量）
  *  温暖时升、忽冷忽热降（饱和式冷处理），单事件降幅有界
  */
-export function trustUpdate(current: number, opts: { warm?: boolean; hostile?: boolean; quality?: number }): number {
+export function trustUpdate(current: number, opts: { warm?: boolean; hostile?: boolean; quality?: number; trustCap?: number }): number {
   let v = current;
-  if (opts.hostile) v -= 0.04;                 // 敌意/回绝：明确降
-  else if (opts.warm) v += 0.01 * (opts.quality ?? 0.5); // 温暖互动：缓升
-  else v -= 0.003;                              // 冷淡/无回应：轻微侵蚀
+  if (opts.hostile) v -= 0.04;                          // 敌意/回绝：明确降
+  else if (opts.warm) v += TRUST_WARM_GAIN * (opts.quality ?? 0.5); // 温暖互动：缓升（ADR-0024 校准增益）
+  else v -= TRUST_ERODE_GAIN;                           // 冷淡/无回应：轻微侵蚀（ADR-0024 校准）
+  if (opts.trustCap != null && v > opts.trustCap) v = opts.trustCap; // 信任饱和钩子（ADR-0024，默认 TRUST_CAP=null 不启用）
   return Math.min(0.999, Math.max(0.05, v));
 }
 
