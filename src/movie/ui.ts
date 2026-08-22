@@ -12,9 +12,10 @@ import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
 import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, getTypeColor, getStarRating, TYPE_GROUPS, ALL_TAGS, getGroupForTag } from './constants';
 import { M, takeHomeFilmStatus, type MovieItem } from './state';
 import { getDisplayItems, refreshDataAndView, rebuildItems } from './data';
+import { createAI } from '../core/ai';
 import { attachItemActions, refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, type ItemAction } from '../core/item-actions';
 import { confirm } from '../core/confirm';
-import { openRecommendModal } from './recommend';
+import { openRecommendModal, parseRecommendJson, quickAddWant, renderRecommendList } from './recommend';
 import { watchPosterFetch } from './poster-watch';
 import { openAnalysisModal } from './analysis';
 
@@ -1489,6 +1490,143 @@ function confirmDeleteMovie(item: MovieItem, app: App): void {
   });
 }
 
+// ===== 详情（有豆瓣抓取数据才显示） =====
+
+/** 汇总条目详情字段（frontmatter 优先、条目解析兜底）；无任何字段返回空对象 */
+function getMovieDetails(item: MovieItem, app: App): Record<string, string> {
+  const fm = app.metadataCache.getFileCache(item.file)?.frontmatter ?? {};
+  const str = (v: unknown) => (v === undefined || v === null ? '' : String(v));
+  const pairs: [string, string][] = [
+    ['类型', str(fm['类型'] ?? item.genre ?? '')],
+    ['导演', str(item.director ?? fm['导演'] ?? '')],
+    ['主演', str(item.actors ?? fm['主演'] ?? '')],
+    ['制片国家/地区', str(item.region ?? fm['制片国家/地区'] ?? '')],
+    ['上映日期', str(fm['上映日期'] ?? '')],
+    ['片长', str(fm['片长'] ?? '')],
+    ['豆瓣评分', fm['豆瓣评分'] !== undefined ? str(fm['豆瓣评分']) : ''],
+  ];
+  const out: Record<string, string> = {};
+  for (const [k, v] of pairs) {
+    if (v && v !== 'undefined') out[k] = v;
+  }
+  return out;
+}
+
+/** 详情窗：展示豆瓣抓取的细节字段；遮罩点击/ESC 关闭，无取消按钮 */
+function openDetailModal(item: MovieItem, app: App, details: Record<string, string>): void {
+  const mask = document.createElement('div');
+  mask.className = 'bz-movie-tiny-mask';
+  const modal = document.createElement('div');
+  modal.className = 'bz-movie-tiny-modal';
+
+  const t = document.createElement('div');
+  t.className = 'bz-movie-tiny-title';
+  t.textContent = `《${item.name}》`;
+
+  const body = document.createElement('div');
+  for (const [k, v] of Object.entries(details)) {
+    const row = document.createElement('div');
+    row.className = 'bz-movie-detail-row';
+    const label = document.createElement('span');
+    label.className = 'bz-movie-detail-label';
+    label.textContent = k;
+    const value = document.createElement('span');
+    value.className = 'bz-movie-detail-value';
+    value.textContent = v;
+    row.appendChild(label);
+    row.appendChild(value);
+    body.appendChild(row);
+  }
+  modal.appendChild(t);
+  modal.appendChild(body);
+
+  const modalEsc = escManager.register('bz-movie-detail', {
+    isVisible: () => mask.isConnected,
+    close: () => closeMovieTinyModal(mask, modalEsc),
+  });
+  mask.addEventListener('click', (e) => {
+    if (e.target === mask) closeMovieTinyModal(mask, modalEsc);
+  });
+  mask.appendChild(modal);
+  registerSheetCompanion(mask);
+  document.body.appendChild(mask);
+}
+
+// ===== 复制双链 =====
+
+async function copyMovieLink(item: MovieItem): Promise<void> {
+  const link = `[[《${item.name}》]]`;
+  await navigator.clipboard.writeText(link);
+  notice(`已复制双链：${link}`, 'success');
+}
+
+// ===== 找同类（AI 生成报告） =====
+
+/** 找同类提示词：以基准影片 + 已看库为输入，要求推荐未看过的同类佳作 */
+function buildSimilarPrompt(item: MovieItem, watched: MovieItem[]): string {
+  const self = `片名《${item.name}》（${item.typeTag || '未知类型'}${item.rating !== null && item.rating > 0 ? `，我的评分 ${item.rating}` : ''}${item.review ? `，我的影评「${item.review.slice(0, 80)}」` : ''}${item.director ? `，导演 ${item.director}` : ''}）`;
+  const list = watched
+    .map((i) => `${i.name}（${i.typeTag || ''}${i.rating !== null && i.rating > 0 ? `，评分${i.rating}` : ''}）`)
+    .join('、');
+  return `你是资深影视推荐官。以下是我的影视库里的「基准影片」和我「已看过的影片清单」。
+基准影片：${self}
+我已看过：${list || '（暂无）'}
+请推荐 3~5 部与基准影片气质相近、但我还没看过的同类佳作（可从真实世界影视中挑选），结合我的观影口味说明理由。
+严格输出 JSON 数组（不要输出其他内容）：[{"title":"片名","year":"年份","type":"类型","director":"导演","reason":"为何与基准影片同类、为何适合我"}]`;
+}
+
+/** 找同类报告窗：调 AI 生成推荐，展示推荐卡（含「加入想看」）；遮罩点击/ESC 关闭 */
+async function openSimilarModal(item: MovieItem, app: App): Promise<void> {
+  const mask = document.createElement('div');
+  mask.className = 'bz-movie-tiny-mask';
+  const modal = document.createElement('div');
+  modal.className = 'bz-movie-similar-modal';
+
+  const t = document.createElement('div');
+  t.className = 'bz-movie-tiny-title';
+  t.textContent = `找同类 ·《${item.name}》`;
+
+  const statusEl = document.createElement('div');
+  statusEl.className = 'bz-movie-similar-status';
+  statusEl.textContent = `🧠 正在分析《${item.name}》…`;
+
+  const listContainer = document.createElement('div');
+  listContainer.className = 'bz-movie-similar-list';
+
+  modal.appendChild(t);
+  modal.appendChild(statusEl);
+  modal.appendChild(listContainer);
+
+  const modalEsc = escManager.register('bz-movie-similar', {
+    isVisible: () => mask.isConnected,
+    close: () => closeMovieTinyModal(mask, modalEsc),
+  });
+  mask.addEventListener('click', (e) => {
+    if (e.target === mask) closeMovieTinyModal(mask, modalEsc);
+  });
+  mask.appendChild(modal);
+  registerSheetCompanion(mask);
+  document.body.appendChild(mask);
+
+  try {
+    const watched = M.items.filter((i) => i.status === STATUS_WATCHED && i.name !== item.name);
+    statusEl.textContent = `🧠 已读取 ${M.items.length} 部影视（含 ${watched.length} 部已看），正在生成同类报告…`;
+    const ai = createAI();
+    const raw = await ai.json(buildSimilarPrompt(item, watched), {});
+    const parsed = parseRecommendJson(raw);
+    if (!parsed || parsed.length === 0) {
+      statusEl.textContent = '⚠️ AI 返回格式无法解析：' + String(raw).slice(0, 200);
+      return;
+    }
+    statusEl.style.display = 'none';
+    listContainer.innerHTML = '';
+    renderRecommendList(listContainer, parsed); // 复用推荐卡渲染（含「加入想看」）
+  } catch (e: any) {
+    statusEl.textContent = '❌ 生成失败：' + (e.message || e);
+    console.error(e);
+  }
+}
+
 /**
  * 挂统一操作（桌面 hover 条 + 移动端抽屉）：
  * 打开 > 状态流转 >（已看）评分/影评 > 编辑 > 删除。
@@ -1501,6 +1639,31 @@ function attachMovieActions(card: HTMLElement, item: MovieItem, app: App): void 
   const buildActions = (): ItemAction[] => {
     const acts: ItemAction[] = [];
     acts.push({ icon: 'external-link', label: '打开', title: '打开影视笔记', onClick: () => openMovieNote(item, app) });
+    // 详情：有豆瓣抓取数据（类型/导演/主演/地区/上映日期/片长/豆瓣评分任一）才显示
+    const details = getMovieDetails(item, app);
+    if (Object.keys(details).length > 0) {
+      acts.push({
+        icon: 'info',
+        label: '详情',
+        title: '详情',
+        keepOpen: true,
+        onClick: () => openDetailModal(item, app, details),
+      });
+    }
+    acts.push({
+      icon: 'link',
+      label: '复制双链',
+      title: '复制双链',
+      keepOpen: true,
+      onClick: () => void copyMovieLink(item),
+    });
+    acts.push({
+      icon: 'sparkles',
+      label: '找同类',
+      title: '找同类（AI 报告）',
+      keepOpen: true,
+      onClick: () => void openSimilarModal(item, app),
+    });
     if (item.status === STATUS_WANT) {
       acts.push({
         icon: 'eye',
