@@ -1,0 +1,31 @@
+/* ==================== 番茄钟域样式（src/pomodoro/styles.css） ==================== */
+/* ==================== 番茄钟状态栏（pomodoro，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
+    .pomodoro-statusbar { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+    .pomodoro-statusbar .pomodoro-statusbar-icon { display: inline-flex; align-items: center; }
+    .pomodoro-statusbar-idle { opacity: 0.45; }
+  
+
+/* ==================== 番茄钟弹窗（pomodoro，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
+    #pomodoro-mask { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.45); }
+    #pomodoro-popup { width: 320px; padding: 24px; border-radius: 16px; background: var(--background-primary); box-shadow: 0 8px 40px rgba(0,0,0,0.3); text-align: center; position: relative; }
+    #pomodoro-ring-svg { width: 160px; height: 160px; margin: 8px auto; display: block; }
+    .pomodoro-ring-track { fill: none; stroke: var(--background-modifier-border); stroke-width: 8; }
+    .pomodoro-ring-progress { fill: none; stroke: var(--interactive-accent); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+    #pomodoro-phase { font-size: 15px; color: var(--text-muted); margin-top: 8px; }
+    #pomodoro-time { font-size: 42px; font-weight: 600; color: var(--text-normal); font-variant-numeric: tabular-nums; }
+    .pomodoro-controls { display: flex; gap: 8px; justify-content: center; margin-top: 16px; }
+    .pomodoro-btn { padding: 6px 14px; border-radius: 8px; background: var(--background-secondary); color: var(--text-normal); cursor: pointer; font-size: 14px; }
+    .pomodoro-btn:hover:not(:disabled) { background: var(--background-modifier-hover); }
+    .pomodoro-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .pomodoro-btn-primary { background: var(--interactive-accent); color: var(--text-on-accent); }
+    .pomodoro-btn-primary:hover:not(:disabled) { background: var(--interactive-accent-hover); }
+    #pomodoro-btn-settings { position: absolute; top: 16px; right: 16px; padding: 6px; background: none; border-radius: 8px; color: var(--text-muted); transition: opacity 0.2s; }
+    #pomodoro-btn-settings:hover { color: var(--text-normal); background: var(--background-modifier-hover); }
+    #pomodoro-btn-settings.pomodoro-settings-hidden { opacity: 0; pointer-events: none; }
+    .pomodoro-stats { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--background-modifier-border); }
+    #pomodoro-today { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+    .pomodoro-week { display: flex; gap: 6px; justify-content: center; align-items: flex-end; }
+    .pomodoro-stat-day { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .pomodoro-stat-col { display: flex; align-items: flex-end; height: 40px; }
+    .pomodoro-stat-bar { width: 10px; border-radius: 3px 3px 0 0; background: var(--interactive-accent); min-height: 2px; }
+    .pomodoro-stat-label { font-size: 9px; color: var(--text-faint); }
