@@ -171,6 +171,20 @@ _Avoid_: 搬附件、整理附件、资源整理
 **链接改写 (Link Rewrite)**: 附件搬移全库引用被移动附件的 wikilink / Markdown 链接自动更新，由 **Obsidian 内建 `app.fileManager.renameFile`** 完成（ADR-0014）——移动文件的同时按 Obsidian 自身消歧规则更新全库指向它的链接，插件不自研全库改写（v1 自研全库扫描 + 逐个 modify 因大库卡顿弃用）。插件自研解析逻辑仅用于「收集当前笔记附件」与「算去重后的目标路径」。
 _Avoid_: 链接修复、改链接（泛指时）
 
+### 小橘域（smartcat，桌面宠物猫）
+
+**小橘 (SmartCat)**: bz 的桌面宠物猫 + 笔记 AI 陪伴域（命令 `bz-smartcat-open/chat/hide`；数据 `CONFIG/STORAGE/smartcat.json`）——CSS 绘制猫本体悬浮页角（13 种外观皮肤、5 种性格），气泡对话框（打字机/点按固定/双击转聊天），基于当前笔记上下文 + 对话历史 + 心情维度的 AI 聊天（DeepSeek，AI 走 bz core/ai，无独立 apiKey），常驻行为（自言自语/心情衰减/动画状态机/书评/欢迎回来/30 分钟空闲跟随鼠标）。**用户拍板三项**：① AI 走 bz 内置；② 所有数据一个 json（原 localStorage 3 key + 原 CONFIG/SMART CAT 3 文件 + 原 memories 4 层一次性迁移），apiKey 不迁移；③ 面板样式布局统一 bz（聊天面板 bz-win-head + 移动端全屏开关，设置走 ⚙️ 域设置弹窗）。
+_Avoid_: 猫咪、宠物、陪伴猫（指本域时）
+
+**猫本体 (Cat Container)**: `#smart-companion-cat` 悬浮容器（id 保留原 SmartCat 外部约定），内部 DOM 结构（#cat-body/.cat-eye/.cat-ear/.cat-tail 等）与气泡/思考/语音指示器。皮肤 = 容器上的 `skin-<外观>` 类（13 种），动画 = CSS 变量驱动的一次性动画（`.bz-sc-anim` + `--bz-sc-anim-name/-dur`）与心情组合类（`.bz-sc-mood-*`）；156 个 keyframes 静态收敛在 `src/smartcat/styles.css`。
+_Avoid_: 皮肤内联样式、运行时注入（铁律 9 禁区）
+
+**心情维度 (Mood Dimension)**: 8 维连续值（happiness/energy/curiosity/affection/focus/creativity/productivity/relaxation，0-100），60s 自动衰减 + 人格乘数/抵抗力 + 互动影响；`currentMood` 恒为持久化 lastMood 或 'content'（`calculateCompositeMood` 不接线，铁律 4 保留原版"状态机死着"缺陷）。
+_Avoid_: 心情状态机（指离散 5 档时）
+
+**分层记忆 (Hierarchical Memory)**: 短期/长期/永久/索引 4 层（原 CONFIG/SMART_CAT/memories/*.json 收敛进 smartcat.json memory 字段）——短期 100 条截尾、importance≥0.7 固化进长期（24h 调度）、检索 relevance≥0.7 至多 10 条；聊天对话同时写入短期记忆（原版未接线的 formatMemoriesForPrompt 接入聊天上下文）。
+_Avoid_: 记忆文件、memories 目录（已收敛单 json）
+
 ### 移动端窗口（ticket 68，跨域）
 
 **移动端默认全屏 (Mobile Default Fullscreen)**: bz 的跨域设置（ticket 68，ADR-0019）——13 个有主窗口的域各一项布尔开关（键 `<域前缀>MobileDefaultFullscreen`，落 data.json），**仅移动端（`Platform.isMobile`）显示与生效**，桌面端不显示不受影响。语义：≤768px 时 **开=真全屏**（主窗口覆盖整个视口 100vw×100vh、去圆角、头部避让安全区、底部 env(safe-area-inset-bottom)，统一类 `.bz-win-mfs`），**关=常规卡**（95%/90vh 圆角卡）；只决定每次打开的**初始形态**，窗口内无手动切换按钮。多窗口域（影视主面板+影视分析、书库主面板+读书笔记）一并对控制，筛选/批注等小弹窗不纳入。默认值=行为保持（原移动端即全屏的 11 域默认开——日记/归物本/剪藏本/聚合讯/密码本/收藏本/书库/阅读报告/影视/复习/保险箱；原居中卡的 2 域默认关——备忘录/番茄钟）。做题家、入口页不设此开关（用户拍板）。
