@@ -12,10 +12,9 @@ import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
 import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, getTypeColor, getStarRating, TYPE_GROUPS, ALL_TAGS, getGroupForTag } from './constants';
 import { M, takeHomeFilmStatus, type MovieItem } from './state';
 import { getDisplayItems, refreshDataAndView, rebuildItems } from './data';
-import { createAI } from '../core/ai';
 import { attachItemActions, refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, type ItemAction } from '../core/item-actions';
 import { confirm } from '../core/confirm';
-import { parseRecommendJson, quickAddWant, renderRecommendList, runAIRecommend } from './recommend';
+import { runAIRecommend, runSimilarRecommend } from './recommend';
 import { watchPosterFetch } from './poster-watch';
 import { openAnalysisModal } from './analysis';
 
@@ -1042,10 +1041,7 @@ export function createOverlay(app: App, statusType?: string): void {
     return btn;
   };
 
-  const recommendBtn = mkBtn('🤖', 'AI 荐片', 'var(--text-normal)', (e) => {
-    e.stopPropagation();
-    void runAIRecommend(app);
-  });
+  // 抽屉内已有「AI 荐片」动作，头部不再放 AI 推荐图标（用户决策）
 
   const analysisBtn = mkBtn('📊', '影视数据分析', 'var(--text-normal)', (e) => {
     e.stopPropagation();
@@ -1174,7 +1170,6 @@ export function createOverlay(app: App, statusType?: string): void {
 
   headerButtons.appendChild(addBtn);
   headerButtons.appendChild(searchBtn);
-  headerButtons.appendChild(recommendBtn);
   headerButtons.appendChild(analysisBtn);
   headerButtons.appendChild(filterBtn);
   headerButtons.appendChild(settingsBtn);
@@ -1560,72 +1555,6 @@ async function copyMovieLink(item: MovieItem): Promise<void> {
   notice(`已复制双链：${link}`, 'success');
 }
 
-// ===== 找同类（AI 生成报告） =====
-
-/** 找同类提示词：以基准影片 + 已看库为输入，要求推荐未看过的同类佳作 */
-function buildSimilarPrompt(item: MovieItem, watched: MovieItem[]): string {
-  const self = `片名《${item.name}》（${item.typeTag || '未知类型'}${item.rating !== null && item.rating > 0 ? `，我的评分 ${item.rating}` : ''}${item.review ? `，我的影评「${item.review.slice(0, 80)}」` : ''}${item.director ? `，导演 ${item.director}` : ''}）`;
-  const list = watched
-    .map((i) => `${i.name}（${i.typeTag || ''}${i.rating !== null && i.rating > 0 ? `，评分${i.rating}` : ''}）`)
-    .join('、');
-  return `你是资深影视推荐官。以下是我的影视库里的「基准影片」和我「已看过的影片清单」。
-基准影片：${self}
-我已看过：${list || '（暂无）'}
-请推荐 3~5 部与基准影片气质相近、但我还没看过的同类佳作（可从真实世界影视中挑选），结合我的观影口味说明理由。
-严格输出 JSON 数组（不要输出其他内容）：[{"title":"片名","year":"年份","type":"类型","director":"导演","reason":"为何与基准影片同类、为何适合我"}]`;
-}
-
-/** 找同类报告窗：调 AI 生成推荐，展示推荐卡（含「加入想看」）；遮罩点击/ESC 关闭 */
-async function openSimilarModal(item: MovieItem, app: App): Promise<void> {
-  const mask = document.createElement('div');
-  mask.className = 'bz-movie-tiny-mask';
-  const modal = document.createElement('div');
-  modal.className = 'bz-movie-similar-modal';
-
-  const t = document.createElement('div');
-  t.className = 'bz-movie-tiny-title';
-  t.textContent = `找同类 ·《${item.name}》`;
-
-  const statusEl = document.createElement('div');
-  statusEl.className = 'bz-movie-similar-status';
-  statusEl.textContent = `🧠 正在分析《${item.name}》…`;
-
-  const listContainer = document.createElement('div');
-  listContainer.className = 'bz-movie-similar-list';
-
-  modal.appendChild(t);
-  modal.appendChild(statusEl);
-  modal.appendChild(listContainer);
-
-  const modalEsc = escManager.register('bz-movie-similar', {
-    isVisible: () => mask.isConnected,
-    close: () => closeMovieTinyModal(mask, modalEsc),
-  });
-  mask.addEventListener('click', (e) => {
-    if (e.target === mask) closeMovieTinyModal(mask, modalEsc);
-  });
-  mask.appendChild(modal);
-  registerSheetCompanion(mask);
-  document.body.appendChild(mask);
-
-  try {
-    const watched = M.items.filter((i) => i.status === STATUS_WATCHED && i.name !== item.name);
-    statusEl.textContent = `🧠 已读取 ${M.items.length} 部影视（含 ${watched.length} 部已看），正在生成同类报告…`;
-    const ai = createAI();
-    const raw = await ai.json(buildSimilarPrompt(item, watched), {});
-    const parsed = parseRecommendJson(raw);
-    if (!parsed || parsed.length === 0) {
-      statusEl.textContent = '⚠️ AI 返回格式无法解析：' + String(raw).slice(0, 200);
-      return;
-    }
-    statusEl.style.display = 'none';
-    listContainer.innerHTML = '';
-    renderRecommendList(listContainer, parsed); // 复用推荐卡渲染（含「加入想看」）
-  } catch (e: any) {
-    statusEl.textContent = '❌ 生成失败：' + (e.message || e);
-    console.error(e);
-  }
-}
 
 /**
  * 挂统一操作（桌面 hover 条 + 移动端抽屉）：
@@ -1706,9 +1635,8 @@ function attachMovieActions(card: HTMLElement, item: MovieItem, app: App): void 
     acts.push({
       icon: 'sparkles',
       label: '找同类',
-      title: '找同类（AI 报告）',
-      keepOpen: true,
-      onClick: () => void openSimilarModal(item, app),
+      title: '找同类（AI 分析）',
+      onClick: () => void runSimilarRecommend(item, app),
     });
     acts.push({
       icon: 'bot',

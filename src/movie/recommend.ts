@@ -111,7 +111,7 @@ tags:
   }
 }
 
-/** 解析 AI 返回 JSON */
+/** 解析 AI 返回 JSON（兼容裸数组 / recommendations / similar / similar_movies / suggestions / items / movies 键） */
 export function parseRecommendJson(raw: string): any[] | null {
   try {
     let cleaned = raw.trim();
@@ -119,7 +119,11 @@ export function parseRecommendJson(raw: string): any[] | null {
     if (codeBlockMatch) cleaned = codeBlockMatch[1].trim();
     const data = JSON.parse(cleaned);
     if (Array.isArray(data)) return data;
-    if (data && Array.isArray(data.recommendations)) return data.recommendations;
+    if (data && typeof data === 'object') {
+      for (const key of ['recommendations', 'similar', 'similar_movies', 'suggestions', 'items', 'movies']) {
+        if (Array.isArray(data[key]) && data[key].length > 0) return data[key];
+      }
+    }
     return null;
   } catch {
     return null;
@@ -129,9 +133,10 @@ export function parseRecommendJson(raw: string): any[] | null {
 /**
  * AI 荐片（动态通知模式）：点击发进度通知（不弹窗、不阻塞，用户可继续干别的），
  * 完成后通知原地更新为成功，并自动弹出推荐结果界面。遮罩点击/ESC 关闭。
+ * 动态消息与「找同类」同一套文案模板（仅标题区分）。
  */
 export async function runAIRecommend(app: App): Promise<void> {
-  const handle = notify('AI 荐片分析中…', { type: 'progress' });
+  const handle = notify('AI 分析中…', { type: 'progress' });
   try {
     const profile = buildTasteProfile();
     const allNames = M.items.map((i) => i.name);
@@ -142,20 +147,62 @@ export async function runAIRecommend(app: App): Promise<void> {
     const parsed = parseRecommendJson(raw);
     if (!parsed || parsed.length === 0) {
       handle.setType('error');
-      handle.setMessage('AI 荐片失败：返回格式无法解析');
+      handle.setMessage('AI 分析失败：返回格式无法解析');
       return;
     }
     handle.setType('success');
-    handle.setMessage(`AI 荐片完成，已推荐 ${parsed.length} 部`);
-    showRecommendResult(app, parsed);
+    handle.setMessage(`AI 分析完成，共推荐 ${parsed.length} 部`);
+    showResultWindow(app, '🤖 AI 荐片', parsed);
   } catch (e: any) {
     handle.setType('error');
-    handle.setMessage('AI 荐片失败：' + (e.message || e));
+    handle.setMessage('AI 分析失败：' + (e.message || e));
   }
 }
 
-/** 展示推荐结果界面（AI 完成后弹出；渲染推荐卡，含「加入想看」） */
-export function showRecommendResult(app: App, list: any[]): void {
+/**
+ * 找同类（动态通知模式）：以基准影片 + 已看库调 AI，点击只发进度通知，
+ * 完成后自动弹出结果窗口（与 AI 荐片同一窗口与消息模板）。
+ */
+export async function runSimilarRecommend(item: any, app: App): Promise<void> {
+  const handle = notify('AI 分析中…', { type: 'progress' });
+  try {
+    const watched = M.items.filter((i) => i.status === STATUS_WATCHED && i.name !== item.name);
+    handle.setMessage(`已分析 ${M.items.length} 部影视，正在生成同类推荐…`);
+    const ai = createAI();
+    const raw = await ai.json(buildSimilarPrompt(item, watched), {});
+    const parsed = parseRecommendJson(raw);
+    if (!parsed || parsed.length === 0) {
+      handle.setType('error');
+      handle.setMessage('AI 分析失败：返回格式无法解析');
+      return;
+    }
+    handle.setType('success');
+    handle.setMessage(`AI 分析完成，共推荐 ${parsed.length} 部`);
+    showResultWindow(app, `找同类 ·《${item.name}》`, parsed);
+  } catch (e: any) {
+    handle.setType('error');
+    handle.setMessage('AI 分析失败：' + (e.message || e));
+  }
+}
+
+/** 找同类提示词：以基准影片 + 已看库为输入，要求推荐未看过的同类佳作（输出结构与其他 AI 保持一致） */
+export function buildSimilarPrompt(item: any, watched: any[]): string {
+  const self = `片名《${item.name}》（${item.typeTag || '未知类型'}${item.rating !== null && item.rating > 0 ? `，我的评分 ${item.rating}` : ''}${item.review ? `，我的影评「${item.review.slice(0, 80)}」` : ''}${item.director ? `，导演 ${item.director}` : ''}）`;
+  const list = watched
+    .map((i) => `${i.name}（${i.typeTag || ''}${i.rating !== null && i.rating > 0 ? `，评分${i.rating}` : ''}）`)
+    .join('、');
+  return `你是资深影视推荐官。以下是我的影视库里的「基准影片」和我「已看过的影片清单」。
+基准影片：${self}
+我已看过：${list || '（暂无）'}
+请推荐 3~5 部与基准影片气质相近、但我还没看过的同类佳作（可从真实世界影视中挑选），结合我的观影口味说明理由。
+严格输出 JSON（不要输出其他内容）：{"recommendations":[{"title":"片名","year":"年份","type":"类型","director":"导演","reason":"为何与基准影片同类、为何适合我"}]}`;
+}
+
+/**
+ * 统一推荐结果窗口（AI 荐片 / 找同类共用）：居中卡片、头部行 + ✕ 关闭（bz-win-close）、
+ * 内容区滚动隐藏滚动条；遮罩点击/ESC 关闭。与主窗口视觉规范一致。
+ */
+export function showResultWindow(app: App, title: string, list: any[]): void {
   if (M.recommendOverlay) {
     M.recommendOverlay.remove();
     M.recommendOverlay = null;
@@ -170,32 +217,31 @@ export function showRecommendResult(app: App, list: any[]): void {
 
   const modal = document.createElement('div');
   modal.style.cssText = `
-    background: var(--background-primary); border-radius: 12px;
-    width: 100%; max-width: 520px; max-height: 80vh;
+    background: var(--background-primary); border-radius: 14px;
+    width: min(94vw, 680px);
+    max-height: 84vh;
     display: flex; flex-direction: column; overflow: hidden;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.28);
   `;
 
   const header = document.createElement('div');
-  header.style.cssText = `
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 12px 20px; flex-shrink: 0; border-bottom: 1px solid var(--background-modifier-border);
-  `;
-  header.innerHTML = '<span style="font-size:1.1rem;font-weight:600;">🤖 AI 荐片</span>';
-
+  header.className = 'bz-win-head';
+  const titleEl = document.createElement('span');
+  titleEl.style.cssText = 'font-size: 1.05rem; font-weight: 600;';
+  titleEl.textContent = title;
   const closeBtn = document.createElement('button');
-  closeBtn.textContent = '✕ 关闭';
+  closeBtn.textContent = '✕';
   closeBtn.className = 'bz-win-close';
-  closeBtn.style.cssText = 'background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:.9rem;box-shadow:none;';
   closeBtn.addEventListener('click', () => {
     overlay.remove();
     M.recommendOverlay = null;
   });
+  header.appendChild(titleEl);
   header.appendChild(closeBtn);
 
   const listContainer = document.createElement('div');
-  listContainer.style.cssText = 'flex:1; overflow-y:auto; padding: 0 20px 20px;';
   listContainer.className = 'recommend-list';
+  listContainer.style.cssText = 'flex:1; overflow-y:auto; padding: 14px 16px 18px; scrollbar-width: none;';
 
   modal.appendChild(header);
   modal.appendChild(listContainer);
@@ -213,21 +259,22 @@ export function showRecommendResult(app: App, list: any[]): void {
   renderRecommendList(listContainer, list);
 }
 
+
 /** 渲染推荐列表 */
 export function renderRecommendList(container: HTMLElement, list: any[]): void {
   container.innerHTML = '';
   list.forEach((rec) => {
     const card = document.createElement('div');
     card.style.cssText = `
-      background: var(--background-secondary); border-radius: 8px;
-      padding: 12px 16px; margin-bottom: 10px;
+      background: var(--background-secondary); border-radius: 10px;
+      padding: 14px 16px; margin-bottom: 12px;
     `;
 
     const titleRow = document.createElement('div');
-    titleRow.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:6px;';
+    titleRow.style.cssText = 'display:flex; align-items:baseline; gap:8px; margin-bottom:6px; flex-wrap:wrap;';
     const title = document.createElement('span');
     title.textContent = rec.title || '?';
-    title.style.cssText = 'font-weight:600; font-size:1rem;';
+    title.style.cssText = 'font-weight:600; font-size:0.95rem;';
     const year = document.createElement('span');
     year.textContent = rec.year || '';
     year.style.cssText = 'color:var(--text-muted); font-size:.8rem;';
@@ -251,7 +298,7 @@ export function renderRecommendList(container: HTMLElement, list: any[]): void {
 
     const reason = document.createElement('div');
     reason.textContent = '💡 ' + (rec.reason || '');
-    reason.style.cssText = 'color:var(--text-muted); font-size:.8rem;';
+    reason.style.cssText = 'color:var(--text-muted); font-size:.8rem; line-height:1.6;';
 
     card.appendChild(titleRow);
     card.appendChild(director);
