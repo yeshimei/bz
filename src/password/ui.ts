@@ -3,6 +3,7 @@
  * DOM id/类名与源码一致：pw-mask/pw-popup/pw-entries-container/pw-add-mask/
  * pw-add-popup/pw-add-* / pw-entry-card / pw-search-container / pw-suggestions。
  * 主密码流程：首次设置（再次输入确认）→ 解锁 → 加密驱动（showPasswordDialog）。
+ * 统一抽屉（桌面右键/移动长按）：复制账号/复制密码/编辑/删除；卡片保留平台链接点击与 👁 显隐（用户拍板）。
  */
 import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
@@ -10,6 +11,13 @@ import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { confirm } from '../core/confirm';
 import { createIconBtn } from '../core/dom';
+import {
+  attachItemActions,
+  registerSheetCompanion,
+  unregisterSheetCompanion,
+  closeItemMenu,
+  type ItemAction,
+} from '../core/item-actions';
 import { formatRelativeTime } from '../core/utils';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
@@ -21,29 +29,6 @@ interface UIConfig {
   charset: string;
   length: string;
   securityMode: boolean;
-}
-
-/** 长按 500ms 触发（createCard 拆分：日期删除/备注编辑/密码区编辑共用） */
-function attachLongPress(el: HTMLElement, onLongPress: () => void): void {
-  let timer: any = null;
-  const start = () => {
-    timer = setTimeout(() => {
-      timer = null;
-      onLongPress();
-    }, 500);
-  };
-  const cancel = () => {
-    if (timer) {
-      clearTimeout(timer);
-      timer = null;
-    }
-  };
-  el.addEventListener('mousedown', start);
-  el.addEventListener('mouseup', cancel);
-  el.addEventListener('mouseleave', cancel);
-  el.addEventListener('touchstart', start);
-  el.addEventListener('touchend', cancel);
-  el.addEventListener('touchmove', cancel);
 }
 
 export class UIManager {
@@ -67,6 +52,8 @@ export class UIManager {
   editingId: string | null = null;
   searchKeyword = '';
   pendingPassword: string | null = null;
+  /** 抽屉来源的编辑（保存成功后关抽屉，与收藏本/归物本同决策） */
+  sheetEditPending = false;
   // 内部标志
   _initialized = false;
   // 添加弹窗引用
@@ -308,13 +295,7 @@ export class UIManager {
     const accountSpan = document.createElement('span');
     accountSpan.className = 'pw-account';
     accountSpan.textContent = item.account || '(无账号)';
-    accountSpan.onclick = (e) => {
-      e.stopPropagation();
-      if (item.account) {
-        navigator.clipboard.writeText(item.account);
-        notice('账号已复制', 'success');
-      }
-    };
+    // 复制账号收敛进抽屉动作（用户拍板）；卡片仅展示
     accountWrapper.appendChild(accountSpan);
     top.appendChild(accountWrapper);
 
@@ -334,13 +315,7 @@ export class UIManager {
     };
     updateDisplay();
 
-    passwordSpan.onclick = (e) => {
-      e.stopPropagation();
-      if (item.password) {
-        navigator.clipboard.writeText(item.password);
-        notice('密码已复制', 'success');
-      }
-    };
+    // 复制密码收敛进抽屉动作（用户拍板）；卡片仅展示（👁 显隐保留）
 
     const eyeSpan = document.createElement('span');
     eyeSpan.className = 'pw-eye';
@@ -369,18 +344,7 @@ export class UIManager {
     const dateSpan = document.createElement('span');
     dateSpan.className = 'pw-date';
     dateSpan.textContent = formatRelativeTime(item.createdAt);
-    // 长按删除
-    attachLongPress(dateSpan, () => {
-      this.showConfirm('删除密码条目', `确定删除账号 "${item.account}" 吗？`, async () => {
-        try {
-          await this.dataManager.deleteItem(item.id);
-          await this.renderList();
-          notice('已删除', 'success');
-        } catch (e: any) {
-          notice('删除失败：' + e.message, 'error');
-        }
-      });
-    });
+    // 删除收敛进抽屉动作（用户拍板）
 
     top.appendChild(dateSpan);
     card.appendChild(top);
@@ -390,15 +354,99 @@ export class UIManager {
       noteSpan = document.createElement('div');
       noteSpan.className = 'pw-note hidden';
       noteSpan.textContent = item.note || '(备注隐藏)';
-      // 长按编辑
-      attachLongPress(noteSpan, () => this.openAddDialog(item));
       card.appendChild(noteSpan);
     }
 
-    // 长按密码区域编辑
-    attachLongPress(passwordArea, () => this.openAddDialog(item));
+    // 统一抽屉（桌面右键/移动长按）：复制账号 → 复制密码 → 编辑 → 删除
+    this.attachDrawerActions(card, item);
 
     return card;
+  }
+
+  /** 卡片挂统一抽屉 + 头部（平台/账号 · 创建时间） */
+  private attachDrawerActions(card: HTMLDivElement, item: PasswordEntry): void {
+    const actions: ItemAction[] = [];
+
+    actions.push({
+      icon: 'copy',
+      label: '复制账号',
+      onClick: () => {
+        if (item.account) {
+          navigator.clipboard.writeText(item.account);
+          notice('账号已复制', 'success');
+        }
+      },
+    });
+
+    actions.push({
+      icon: 'key',
+      label: '复制密码',
+      onClick: () => {
+        if (item.password) {
+          navigator.clipboard.writeText(item.password);
+          notice('密码已复制', 'success');
+        }
+      },
+    });
+
+    // 编辑（keepOpen：编辑弹窗叠抽屉；保存后关抽屉）
+    actions.push({
+      icon: 'pencil',
+      label: '编辑',
+      keepOpen: true,
+      onClick: () => {
+        this.sheetEditPending = true;
+        this.openAddDialog(item);
+      },
+    });
+
+    // 删除（danger：先收抽屉再确认）
+    actions.push({
+      icon: 'trash-2',
+      label: '删除',
+      kind: 'danger',
+      onClick: () => {
+        this.showConfirm('删除密码条目', `确定删除账号 "${item.account}" 吗？`, async () => {
+          try {
+            await this.dataManager.deleteItem(item.id);
+            await this.renderList();
+            notice('已删除', 'success');
+          } catch (e: any) {
+            notice('删除失败：' + e.message, 'error');
+          }
+        });
+      },
+    });
+
+    attachItemActions(card, actions, { sheetHead: this.buildSheetHead(item) });
+  }
+
+  /** 抽屉头部：平台名 + 账号；小字=创建时间 */
+  private buildSheetHead(item: PasswordEntry): HTMLElement {
+    const head = document.createElement('div');
+    head.className = 'bz-item-sheet-entry';
+    const body = document.createElement('div');
+    body.style.cssText = 'display:flex; align-items:flex-start; gap:10px;';
+
+    const emoji = document.createElement('span');
+    emoji.className = 'bz-item-sheet-emoji';
+    emoji.textContent = '🔑';
+    body.appendChild(emoji);
+
+    const info = document.createElement('div');
+    info.style.cssText = 'flex:1; min-width:0;';
+    const title = document.createElement('div');
+    title.className = 'bz-item-sheet-title';
+    title.textContent = item.platform || item.account || '密码条目';
+    info.appendChild(title);
+    const sub = document.createElement('div');
+    sub.className = 'bz-item-sheet-sub';
+    sub.textContent = `${item.account || ''}${item.account ? ' · ' : ''}${formatRelativeTime(item.createdAt)}`;
+    info.appendChild(sub);
+
+    body.appendChild(info);
+    head.appendChild(body);
+    return head;
   }
 
   // ---------- 添加/编辑对话框 ----------
@@ -470,7 +518,10 @@ export class UIManager {
           await this.dataManager.addItem({ platform, url, account, password, note });
         }
         await this.renderList();
+        // 抽屉来源的编辑：保存成功后关抽屉（用户拍板）
+        const fromSheet = this.sheetEditPending;
         this.closeAddDialog();
+        if (fromSheet) closeItemMenu();
         notice('已保存', 'success');
       } catch (e: any) {
         notice('保存失败：' + e.message, 'error');
@@ -604,6 +655,8 @@ export class UIManager {
       return;
     }
     if (!this.addMask) this.createAddDialog();
+    // 抽屉来源的编辑：注册附属浮层（弹窗内点击不误关抽屉）
+    if (this.sheetEditPending) registerSheetCompanion(this.addMask!);
     this.editingId = editItem ? editItem.id : null;
     if (editItem) {
       this._addTitle.textContent = '编辑密码条目';
@@ -635,6 +688,11 @@ export class UIManager {
     if (this.addPopup) this.addPopup.style.display = 'none';
     this.editingId = null;
     this.pendingPassword = null;
+    // 抽屉编辑标志清理 + 注销附属浮层（取消/遮罩/ESC 路径，抽屉保持）
+    if (this.sheetEditPending && this.addMask) {
+      this.sheetEditPending = false;
+      unregisterSheetCompanion(this.addMask);
+    }
   }
 
   // ---------- 确认对话框（代理到 core confirm） ----------
