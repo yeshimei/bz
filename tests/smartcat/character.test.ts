@@ -119,8 +119,20 @@ describe('RL 校准常量（ADR-0024）', () => {
     expect(trustUpdate(0.5, {})).toBeCloseTo(0.5 - 0.0029, 6);
   });
 
-  it('trustCap 饱和钩子：设置上限后越过即封顶；未设置保持单调上升', () => {
-    expect(trustUpdate(0.9, { warm: true, trustCap: 0.85 })).toBe(0.85);
+  it('trustCap 软收拢（ADR-0024 用户拍板）：v = cap + K(v−cap)，双向收拢（低侧也向 cap 靠）', () => {
+    // 高于 cap：0.9 + warm(0.007) = 0.9041 → 软收拢 0.85+0.98×0.0541 = 0.9030（略降，非一刀切 clamp 到 0.85）
+    const v = trustUpdate(0.9, { warm: true, trustCap: 0.85 });
+    expect(v).toBeCloseTo(0.85 + 0.98 * ((0.9 + 0.0082 * 0.5) - 0.85), 6);
+    expect(v).toBeLessThan(0.91);
+    expect(v).toBeGreaterThan(0.85);
+    // 低于 cap：0.5 + gain(0.0041)=0.5041 → 软收拢向 0.85 靠拢（0.85+0.98×(−0.3459)=0.5110）
+    const low = trustUpdate(0.5, { warm: true, trustCap: 0.85 });
+    expect(low).toBeCloseTo(0.85 + 0.98 * ((0.5 + 0.0082 * 0.5) - 0.85), 6);
+    // 长序列（轻质量 0.15 语义，gain=0.00123）：平衡点 v* = cap + 49·gain ≈ 0.910
+    let x = 0.5;
+    for (let i = 0; i < 5000; i++) x = trustUpdate(x, { warm: true, quality: 0.15, trustCap: 0.85 });
+    expect(x).toBeCloseTo(0.85 + 49 * (0.0082 * 0.15), 2); // ≈0.9103（真实库验收实测 91%）
+    // 未设置 cap：保持单调上升（不封顶）
     expect(trustUpdate(0.9, { warm: true })).toBeGreaterThan(0.9);
   });
 

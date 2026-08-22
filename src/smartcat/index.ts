@@ -224,6 +224,12 @@ export async function ensureSmartCat(app: App): Promise<void> {
         personalityGrowth.developBasedOnInteraction(kind, 0.3, 0.02, 0.15).catch(() => {});
       }
     }
+    // PAD 生产补接线（2026-08-23 用户拍板，红队 C G1/G2 消除 sim 专属通道假阳性）：
+    // vault 正向活动轻量影响心情——用生产 EFFECTS 表（不改公式，仅接线），强度 VAULT_PAD_GAIN=0.5
+    if (!mechanical && moodSystem) {
+      const padType = kind === 'diary' ? 'note_create' : kind === 'flash' ? 'note_edit' : 'note_read';
+      moodSystem.handleInteraction(padType as any, 0.5);
+    }
     try {
       const text = await observationText(appRef, file as any, kind);
       // 隐私红线（红队结论）：vault 内容观察一律本地规则打分（固定 importance + 词法情绪），
