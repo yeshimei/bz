@@ -182,8 +182,8 @@ _Avoid_: 皮肤内联样式、运行时注入（铁律 9 禁区）
 **心情维度 (Mood Dimension)**: 8 维连续值（happiness/energy/curiosity/affection/focus/creativity/productivity/relaxation，0-100），60s 自动衰减 + 人格乘数/抵抗力 + 互动影响；`currentMood` 恒为持久化 lastMood 或 'content'（`calculateCompositeMood` 不接线，铁律 4 保留原版"状态机死着"缺陷）。
 _Avoid_: 心情状态机（指离散 5 档时）
 
-**分层记忆 (Hierarchical Memory)**: 短期/长期/永久/索引 4 层（原 CONFIG/SMART_CAT/memories/*.json 收敛进 smartcat.json memory 字段）——短期 100 条截尾、importance≥0.7 固化进长期（24h 调度）、检索 relevance≥0.7 至多 10 条；聊天对话同时写入短期记忆（原版未接线的 formatMemoriesForPrompt 接入聊天上下文）。
-_Avoid_: 记忆文件、memories 目录（已收敛单 json）
+**记忆流 (Memory Stream)**: 小橘的单层记忆（ADR-0021，取代原「分层记忆」四层）——`smartcat.json` memory 段改为 `{version, lastUpdated, stream: MemoryStreamEntry[], reflection}`，`MemoryStreamEntry = {id, created, lastAccessed, description, importance(0-1), type:'observation'|'insight', evidenceIds?, source?}`；检索时按 GA 三因子 `α1·0.995^小时 + α2·importance + α3·relevance` 分级取 top 10；写入时 LLM 打分（AI 未配置降级规则分）；反思每 24h 或新增≥20 条触发，LLM 归纳 3 条洞察写回流（带 evidenceIds 溯源）；上限 500 条淘汰「importance×使用度」最低；bge-m3 向量存独立 smartcat-memory-vectors.vec（豁免单 json），Ollama 不可用降级词法。旧四层与迁移路径已删除（无数据产生，用户拍板）。
+_Avoid_: 记忆文件、memories 目录、四层（已废弃）；迁移（已删除）
 
 ### 移动端窗口（ticket 68，跨域）
 

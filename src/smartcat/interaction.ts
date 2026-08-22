@@ -28,6 +28,8 @@ export interface InteractionDeps {
   openSettings: () => void;
   closeSettings: () => void;
   onAppearanceChanged: (appearance: string) => void;
+  /** 记忆流检索（ADR-0021：聊天上下文注入相关记忆；index 注入，避免顶层互访） */
+  retrieveMemories?: (query: string) => Promise<string>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -382,6 +384,17 @@ export class InteractionManager {
       else contentContext = getCursorContext(cfg.contextLength, cfg.contextSplitRatio);
       if (!contentContext) contentContext = getViewportContent();
       if (contentContext) contextMessage += `- 当前内容：${contentContext}\n`;
+    }
+    // ADR-0021：相关记忆注入（记忆流三因子检索；未接线的降级 = 无记忆段）
+    if (this.deps.retrieveMemories) {
+      try {
+        const memoriesText = await this.deps.retrieveMemories(userMessage);
+        if (memoriesText) {
+          contextMessage += '\n### 相关记忆（小橘记得的事）\n' + memoriesText + '\n';
+        }
+      } catch (e) {
+        /* 记忆检索失败不阻断聊天 */
+      }
     }
     const finalUserMessage = contextMessage + `\n用户最新消息：${userMessage}`;
     messages.push({ role: 'user', content: finalUserMessage });

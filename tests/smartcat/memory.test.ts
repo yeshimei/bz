@@ -1,129 +1,258 @@
 /**
- * smartcat 分层记忆测试：短期截断/重要性/固化/检索/索引/清理。
+ * smartcat 记忆流测试（ADR-0021）：单层记忆流写入/importance 打分（规则+LLM mock）/
+ * 三因子检索（词法/语义）/自增强 lastAccessed/500 上限/反思调度/降级链。
  */
-import { describe, it, expect, vi } from 'vitest';
-import { MemorySystem, MEMORY_CONFIG, RETRIEVAL_MAX, RETRIEVAL_THRESHOLD } from '../../src/smartcat/memory';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { MemorySystem, MEMORY_CONFIG } from '../../src/smartcat/memory';
 import { defaultSmartCatData } from '../../src/smartcat/data';
+import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
+import { requestUrl } from '../mock-obsidian-entry';
 import type { SmartCatData } from '../../src/smartcat/types';
 
 let data: SmartCatData;
 let saver: ReturnType<typeof vi.fn<(d: SmartCatData) => Promise<void>>>;
 
-function make(): MemorySystem {
+function make(opts: { ai?: boolean } = {}): MemorySystem {
   data = defaultSmartCatData();
   saver = vi.fn<(d: SmartCatData) => Promise<void>>(async (d) => { data = d; });
-  return new MemorySystem({} as any, () => data, saver);
+  resetAIProviderCache();
+  if (opts.ai) setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'sk-test' }));
+  else setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: '' }));
+  const m = new MemorySystem({ vault: { adapter: {} } } as any, () => data, saver);
+  (m as any).ollamaAvailable = false; // 测试默认词法模式（不探测网络）
+  return m;
 }
 
-describe('addShortTermMemory', () => {
-  it('加入短期记忆 + 索引更新 + 落盘', async () => {
+beforeEach(() => {
+  (globalThis as any).fetch = undefined;
+  vi.mocked(requestUrl).mockReset();
+});
+
+afterEach(() => {
+  delete (globalThis as any).fetch;
+});
+
+describe('addObservation 写入', () => {
+  it('追加 observation 到 stream + importance（AI 未配置 → 规则分）+ 落盘', async () => {
     const m = make();
-    const mem = await m.addShortTermMemory('用户说：今天开始学 TypeScript', {});
+    const mem = await m.addObservation('用户说：今天开始学 TypeScript', { source: 'chat' });
     expect(mem.id).toMatch(/^memory_/);
-    expect(data.memory.shortTerm.memories.length).toBe(1);
-    expect(data.memory.index.timeIndex).toBeDefined();
+    expect(mem.type).toBe('observation');
+    expect(mem.source).toBe('chat');
+    expect(data.memory.stream.length).toBe(1);
+    expect(mem.importance).toBeGreaterThan(0);
     expect(saver).toHaveBeenCalled();
   });
 
-  it('超 100 条截尾（保留最新）', async () => {
+  it('显式 importance 优先（跳过 LLM/规则打分）', async () => {
     const m = make();
-    for (let i = 0; i < 105; i++) await m.addShortTermMemory(`消息 ${i}`, {});
-    expect(data.memory.shortTerm.memories.length).toBe(MEMORY_CONFIG.maxShortTerm);
+    const mem = await m.addObservation('x', { importance: 0.9 });
+    expect(mem.importance).toBe(0.9);
   });
+});
 
-  it('calculateImportance：词数/情感/手动标记', () => {
+describe('importance 打分', () => {
+  it('ruleImportance：词数/情感强度/手动标记（原 calculateImportance 语义）', () => {
     const m = make();
-    const base = m.calculateImportance('短', {});
-    // 原版 split(/\s+/)：单字 1 词 → 0.5 + min(1/500, 0.3) = 0.502
+    const base = m.ruleImportance('短', {});
     expect(base).toBeCloseTo(0.502, 3);
-    const withEmotion = m.calculateImportance('我非常开心今天', {});
+    const withEmotion = m.ruleImportance('我非常开心今天', {});
     expect(withEmotion).toBeGreaterThan(0.5);
-    const manual = m.calculateImportance('x', { manuallyMarked: true });
+    const manual = m.ruleImportance('x', { manuallyMarked: true });
     expect(manual).toBeGreaterThanOrEqual(0.8);
   });
+
+  it('AI 配置时 scoreImportance 走 LLM（mock fetch JSON）→ 0-10 归一 0-1', async () => {
+    const m = make({ ai: true });
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ choices: [{ message: { content: '{"score": 8}' } }] }),
+    }));
+    (globalThis as any).fetch = fetchMock;
+    const s = await m.scoreImportance('用户说：考上了理想学校');
+    expect(s).toBeCloseTo(0.8, 5);
+  });
+
+  it('LLM 打分失败 → 规则分兜底（降级链）', async () => {
+    const m = make({ ai: true });
+    const fetchMock = vi.fn(async () => ({ ok: false, status: 500 }));
+    (globalThis as any).fetch = fetchMock;
+    const s = await m.scoreImportance('短', {});
+    expect(s).toBeCloseTo(0.502, 3);
+  });
 });
 
-describe('consolidateMemories 固化', () => {
-  it('importance>=0.7 短期 → 长期（新 id + summary + consolidationScore）', async () => {
+describe('三因子检索（词法模式）', () => {
+  async function seed(m: MemorySystem, entries: { desc: string; importance: number }[]): Promise<void> {
+    for (const e of entries) await m.addObservation(e.desc, { importance: e.importance, source: 'chat' });
+  }
+
+  it('相关度高 → 返回 top N（默认 10 内）', async () => {
     const m = make();
-    await m.addShortTermMemory('这是一条非常重要的学习记忆，包含很多内容', { isRepetitive: false });
-    // 手动拉高重要性
-    data.memory.shortTerm.memories[0].metadata.importance = 0.9;
-    const longBefore = data.memory.longTerm.memories.length;
-    await m.consolidateMemories();
-    expect(data.memory.longTerm.memories.length).toBe(longBefore + 1);
-    expect(data.memory.longTerm.memories[0].summary).toBeDefined();
-    expect(data.memory.longTerm.memories[0].metadata.consolidationScore).toBeDefined();
+    await seed(m, [{ desc: '用户说：我喜欢 TypeScript 类型系统', importance: 0.8 }]);
+    const results = await m.retrieve('TypeScript');
+    expect(results.length).toBe(1);
+    expect(results[0].description).toContain('TypeScript');
   });
 
-  it('低于阈值记忆不固化', async () => {
+  it('无相关关键词 → GA 无阈值：仍返回（recency/importance 支撑）且相关度为 0', async () => {
     const m = make();
-    await m.addShortTermMemory('普通消息', {});
-    data.memory.shortTerm.memories[0].metadata.importance = 0.3;
-    await m.consolidateMemories();
-    expect(data.memory.longTerm.memories.length).toBe(0);
+    await seed(m, [{ desc: '无关内容 AAAA BBBB', importance: 0.9 }]);
+    const results = await m.retrieve('完全不存在关键词xyz');
+    expect(results.length).toBe(1); // GA 语义：无相关过滤，取 top N
+    expect(m.lexicalRelevance(results[0], '完全不存在关键词xyz')).toBe(0);
   });
 
-  it('超 500 删最不重要', async () => {
+  it('importance 参与加权：同相关性下高分优先', async () => {
     const m = make();
-    for (let i = 0; i < 502; i++) {
-      data.memory.shortTerm.memories.push({
-        id: `mem${i}`, timestamp: new Date().toISOString(), type: 'conversation', content: `内容${i}`,
-        metadata: { importance: 0.9, topics: [], emotion: 'neutral' }, usage: {},
+    await seed(m, [
+      { desc: '用户说：TypeScript 项目上线了', importance: 0.3 },
+      { desc: '用户说：TypeScript 类型系统非常棒', importance: 0.95 },
+    ]);
+    const results = await m.retrieve('TypeScript');
+    expect(results.length).toBe(2);
+    expect(results[0].importance).toBe(0.95);
+  });
+
+  it('relevance 参与加权：关键词命中多的优先（同 importance）', async () => {
+    const m = make();
+    await seed(m, [
+      { desc: '用户说：今天天气很好', importance: 0.5 },
+      { desc: '用户说：TypeScript 和 TypeScript 的类型', importance: 0.5 },
+    ]);
+    const results = await m.retrieve('TypeScript');
+    expect(results[0].description).toContain('TypeScript 和');
+  });
+
+  it('检索更新 lastAccessed（自增强）', async () => {
+    const m = make();
+    await seed(m, [{ desc: '用户说：记得买牛奶', importance: 0.6 }]);
+    const before = data.memory.stream[0].lastAccessed;
+    await m.retrieve('牛奶');
+    const after = data.memory.stream[0].lastAccessed;
+    expect(new Date(after).getTime()).toBeGreaterThanOrEqual(new Date(before).getTime());
+  });
+});
+
+describe('三因子检索（语义模式）', () => {
+  function semanticMake(): MemorySystem {
+    const m = make();
+    (m as any).ollamaAvailable = true;
+    (m as any).dim = 2;
+    const v = new Float64Array([1, 0, 0, 1]); // id1=[1,0] id2=[0,1]
+    (m as any).vectors = v;
+    (m as any).vectorIndexMap = new Map([['m1', 0], ['m2', 1]]);
+    return m;
+  }
+
+  it('余弦相关度：query 向量方向一致优先', async () => {
+    const m = semanticMake();
+    data.memory.stream.push(
+      { id: 'm1', created: new Date().toISOString(), lastAccessed: new Date().toISOString(), description: '用户说：喜欢咖啡', importance: 0.5, type: 'observation' },
+      { id: 'm2', created: new Date().toISOString(), lastAccessed: new Date().toISOString(), description: '用户说：喜欢跑步', importance: 0.5, type: 'observation' },
+    );
+    // mock query embedding → [1,0]（与 m1 语义一致）
+    const queryVec = [1, 0];
+    const s1 = m.semanticRelevance('m1', queryVec);
+    const s2 = m.semanticRelevance('m2', queryVec);
+    expect(s1).toBeGreaterThan(s2);
+    expect(s1).toBeCloseTo(1, 5);
+    expect(s2).toBeCloseTo(0, 5);
+  });
+});
+
+describe('上限与淘汰', () => {
+  it('超 500 条淘汰 importance 最低', async () => {
+    const m = make();
+    for (let i = 0; i < MEMORY_CONFIG.maxStream + 20; i++) {
+      data.memory.stream.push({
+        id: `mem${i}`,
+        created: new Date().toISOString(),
+        lastAccessed: new Date().toISOString(),
+        description: `内容${i}`,
+        importance: i === 0 ? 0.05 : 0.5,
+        type: 'observation',
       });
     }
-    data.memory.shortTerm.memories.length = MEMORY_CONFIG.maxShortTerm + 400; // 直灌超限
-    await m.consolidateMemories();
-    expect(data.memory.longTerm.memories.length).toBeLessThanOrEqual(MEMORY_CONFIG.maxLongTerm);
+    data.memory.stream.length = MEMORY_CONFIG.maxStream + 20;
+    // 触发淘汰（走 addObservation 推一条）
+    await m.addObservation('新记忆', { importance: 0.9 });
+    expect(data.memory.stream.length).toBe(MEMORY_CONFIG.maxStream);
+    expect(data.memory.stream.some((x) => x.id === 'mem0')).toBe(false);
   });
 });
 
-describe('retrieveRelevantMemories 检索', () => {
-  it('关键词命中高相关 → 返回且最多 10 条', async () => {
-    const m = make();
-    await m.addShortTermMemory('用户说：我喜欢 TypeScript 类型系统', {});
-    const results = await m.retrieveRelevantMemories('TypeScript');
-    expect(Array.isArray(results)).toBe(true);
-    expect(results.length).toBeLessThanOrEqual(RETRIEVAL_MAX);
+describe('反思（Reflection）', () => {
+  it('记忆太少（<2 条）不反思', async () => {
+    const m = make({ ai: true });
+    await m.addObservation('只有一条', { importance: 0.5 });
+    await m.reflect();
+    expect(data.memory.stream.length).toBe(1);
+    expect(data.memory.reflection.lastReflectAt).toBe(0);
   });
 
-  it('无相关 → 空数组', async () => {
+  it('AI 配置时反思生成洞察写回流（带 evidenceIds）', async () => {
+    const m = make({ ai: true });
+    await m.addObservation('用户说：这周要考六级', { importance: 0.9 });
+    await m.addObservation('用户说：项目下周上线', { importance: 0.8 });
+    await m.addObservation('用户说：在背单词', { importance: 0.7 });
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content: JSON.stringify({ insights: [{ text: '用户最近压力很大', evidence: [1, 2] }] }) } }],
+      }),
+    }));
+    (globalThis as any).fetch = fetchMock;
+    await m.reflect();
+    const insights = data.memory.stream.filter((x) => x.type === 'insight');
+    expect(insights.length).toBe(1);
+    expect(insights[0].description).toBe('用户最近压力很大');
+    expect(insights[0].evidenceIds!.length).toBe(2);
+    expect(data.memory.reflection.count).toBe(1);
+  });
+
+  it('AI 未配置 → 反思无产出（不写洞察、不推进 lastReflectAt）', async () => {
     const m = make();
-    await m.addShortTermMemory('无关内容 AAAA BBBB', {});
-    const results = await m.retrieveRelevantMemories('完全不存在关键词xyz');
-    expect(results).toEqual([]);
+    await m.addObservation('用户说：a', { importance: 0.5 });
+    await m.addObservation('用户说：b', { importance: 0.5 });
+    const streamBefore = data.memory.stream.length;
+    await m.reflect();
+    expect(data.memory.stream.length).toBe(streamBefore);
+    expect(data.memory.reflection.lastReflectAt).toBe(0);
+    expect(data.memory.reflection.count).toBe(0);
+  });
+
+  it('shouldReflect：新增 ≥20 条触发（pendingSinceReflect）', async () => {
+    const m = make();
+    const before = data.memory.reflection.lastReflectAt;
+    for (let i = 0; i < MEMORY_CONFIG.reflectionMinNew; i++) {
+      await m.addObservation(`消息 ${i}`, { importance: 0.3 });
+    }
+    expect((m as any).pendingSinceReflect).toBe(MEMORY_CONFIG.reflectionMinNew);
+    expect((m as any).shouldReflect(Date.now())).toBe(true);
+    // 复盘：不满 20 条且距上次未超 24h → false
+    const m2 = make();
+    await m2.addObservation('一条', { importance: 0.3 });
+    expect((m2 as any).shouldReflect(Date.now())).toBe(false);
+    const _ = before; // 保留引用避免 lint
   });
 });
 
-describe('cleanupExpiredMemories 清理', () => {
-  it('30 天未用且 importance<0.3 删除', async () => {
+describe('状态与格式化', () => {
+  it('getSystemStatus 计数正确', async () => {
     const m = make();
-    data.memory.longTerm.memories.push({
-      id: 'old', timestamp: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString(),
-      type: 'conversation', content: '旧', metadata: { importance: 0.1 }, usage: {},
-    });
-    data.memory.longTerm.memories.push({
-      id: 'keep', timestamp: new Date().toISOString(),
-      type: 'conversation', content: '新', metadata: { importance: 0.9 }, usage: {},
-    });
-    await m.cleanupExpiredMemories();
-    expect(data.memory.longTerm.memories.some((x: any) => x.id === 'old')).toBe(false);
-    expect(data.memory.longTerm.memories.some((x: any) => x.id === 'keep')).toBe(true);
-  });
-});
-
-describe('getSystemStatus / formatMemoriesForPrompt', () => {
-  it('状态计数正确', async () => {
-    const m = make();
-    await m.addShortTermMemory('abc');
+    await m.addObservation('abc', { importance: 0.5 });
     const s = m.getSystemStatus();
-    expect(s.shortTermCount).toBe(1);
+    expect(s.streamCount).toBe(1);
+    expect(s.insightCount).toBe(0);
+    expect(s.reflectionCount).toBe(0);
+    expect(s.semanticMode).toBe(false);
   });
 
-  it('formatMemoriesForPrompt 带 [layer] 前缀与 200 字符截断', async () => {
+  it('formatMemoriesForPrompt 带 [type] 前缀与 200 字符截断', async () => {
     const m = make();
-    const text = m.formatMemoriesForPrompt([{ layer: 'shortTerm', content: 'hello world'.repeat(50) }]);
-    expect(text).toContain('[shortTerm]');
+    const text = m.formatMemoriesForPrompt([{ id: 'x', created: '', lastAccessed: '', description: 'hello world'.repeat(50), importance: 0.5, type: 'observation' } as any]);
+    expect(text).toContain('[observation]');
     expect(text.length).toBeLessThan(300);
   });
 });

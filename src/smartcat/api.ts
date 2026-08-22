@@ -11,6 +11,29 @@ import type { ChatMessage } from './types';
 
 /** 调 DeepSeek 多轮（走 bz provider；override 可指定，一般留空跟随 bz 设置） */
 export async function callChat(messages: ChatMessage[], override?: string | { endpoint?: string; apiKey?: string; model?: string }): Promise<string> {
+  return (await callCompletions(messages, override, {})).content;
+}
+
+/**
+ * 结构化 JSON 通道（ADR-0021：importance 打分/反思需要 response_format）
+ * 返回解析后的对象；解析失败抛错（调用方降级）。
+ */
+export async function callChatJson(messages: ChatMessage[], maxTokens = 300): Promise<any> {
+  const r = await callCompletions(messages, undefined, { response_format: { type: 'json_object' }, max_tokens: maxTokens });
+  try {
+    const trimmed = (r.content || '').trim();
+    return JSON.parse(trimmed);
+  } catch (e: any) {
+    throw new Error(`JSON 解析失败: ${e.message}`);
+  }
+}
+
+/** 统一请求（fetch 优先 → requestUrl 兜底；body 可扩展） */
+async function callCompletions(
+  messages: ChatMessage[],
+  override?: string | { endpoint?: string; apiKey?: string; model?: string },
+  extra: Record<string, any> = {},
+): Promise<{ content: string }> {
   const provider = await getAIProvider(override);
   const model = provider.model || 'deepseek-chat';
   const body: Record<string, any> = {
@@ -19,6 +42,7 @@ export async function callChat(messages: ChatMessage[], override?: string | { en
     max_tokens: 300,
     temperature: 0.7,
     stream: false,
+    ...extra,
   };
   try {
     // 无 CORS 头服务直接 requestUrl；否则 fetch 失败再 fallback
@@ -36,7 +60,7 @@ export async function callChat(messages: ChatMessage[], override?: string | { en
 }
 
 /** fetch（原版 fetch 语义；非 SSE 直接读 JSON content） */
-async function streamCompatFetch(endpoint: string, apiKey: string, body: any): Promise<string> {
+async function streamCompatFetch(endpoint: string, apiKey: string, body: any): Promise<{ content: string }> {
   const resp = await fetch(`${endpoint}/chat/completions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
@@ -53,11 +77,11 @@ async function streamCompatFetch(endpoint: string, apiKey: string, body: any): P
   const data: any = await resp.json();
   const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
   if (content === undefined || content === null) throw new Error(`API ${resp.status}: 响应缺少 content`);
-  return content;
+  return { content };
 }
 
 /** requestUrl 非流式（Obsidian 官方 API，无 CORS 限制） */
-async function nonStreamRequest(endpoint: string, apiKey: string, body: any): Promise<string> {
+async function nonStreamRequest(endpoint: string, apiKey: string, body: any): Promise<{ content: string }> {
   const resp: any = await requestUrl({
     url: `${endpoint}/chat/completions`,
     method: 'POST',
@@ -69,7 +93,7 @@ async function nonStreamRequest(endpoint: string, apiKey: string, body: any): Pr
   if (errMsg) throw new Error(`API ${resp.status}: ${errMsg}`);
   const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
   if (content === undefined || content === null) throw new Error(`API ${resp.status}: 响应缺少 content`);
-  return content;
+  return { content };
 }
 
 /** 是否已配置 AI（data.json 或 QuickAdd 回退可解析）——未配置给引导文案 */
