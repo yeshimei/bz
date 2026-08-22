@@ -1,9 +1,9 @@
 /**
  * 剪藏本（ticket 08）：文章展示面板——搜索、站点过滤（单选）、排序、
  * 反链显示、vault modify 自动刷新、滚动加载。
- * ticket 69 手势重构：单击整卡打开文章（五域首例单击直开）+ 统一抽屉
- * （打开/复制双链/复制原文链接/删除；桌面右键 → 跟手菜单，移动端长按 → 底部抽屉，全局组件承载）；
- * 移除旧「双击跳转」与「长按日期删除」。
+ * ticket 69 手势重构：统一抽屉（桌面右键 → 跟手菜单、移动端长按 → 底部抽屉，
+ * 打开/复制双链/复制原文链接/删除，全局组件承载）＋**双击整卡打开文章**（用户反馈回退单击直开）；
+ * 移除旧「长按日期删除」。头部两行=标题+简介（摘要两行省略号截断）。
  */
 import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
@@ -640,9 +640,9 @@ function createArticleCard(article: ArticleEntry): HTMLElement {
   card.appendChild(buildSummaryEl(article));
   card.appendChild(buildMetaRow(article, true));
 
-  // 单击整卡打开文章（ticket 69：五域首例单击直开）。反链📌自带 stopPropagation 不受影响；
-  // 长按松手的残余/合成 click 由 item-actions 文档捕获层吞掉，不会误触打开。
-  card.addEventListener('click', () => {
+  // 双击整卡打开文章（用户反馈回退：单击直开误触多，改回双击；单击无操作）。
+  // 反链📌自带 stopPropagation 不受影响；长按松手的残余/合成 click 由 item-actions 文档捕获层吞掉。
+  card.addEventListener('dblclick', () => {
     jumpToArticle(article);
   });
 
