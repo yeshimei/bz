@@ -147,11 +147,11 @@ describe('MoodSystem 衰减与互动', () => {
     // 首 tick 前无基准 → 落盘一次建立基线
     await vi.advanceTimersByTimeAsync(60000);
     (saver as any).mockClear();
-    // 单次 60s 变化 ≤0.03 ≪ 0.5 → 空转不落盘
+    // 单次 60s 指数回摆（λ=0.07/h，默认 pad 距吸引子仅 ~4）变化 ≪0.5 → 空转不落盘
     await vi.advanceTimersByTimeAsync(60000);
     expect(saver).not.toHaveBeenCalled();
-    // 累计 30 分钟（~1.0 轴变化）→ 触发落盘
-    await vi.advanceTimersByTimeAsync(29 * 60000);
+    // 累计 2 小时（~0.5 轴变化）→ 触发落盘
+    await vi.advanceTimersByTimeAsync(2 * 60 * 60000);
     expect(saver).toHaveBeenCalled();
     vi.useRealTimers();
   }, 10000);
@@ -182,17 +182,20 @@ describe('PersonalityGrowth（MATE ADR-0023）', () => {
     expect(data.personalityGrowth.growthHistory[0].source).toBe('interaction');
   });
 
-  it('写日记/闪念计入信任成长：轻质量 0.15（ticket 025，ADR-0024 决策）', async () => {
+  it('写日记/闪念计入信任成长：轻质量 0.15（ticket 025，ADR-0024 决策；软收拢下增量=向 cap 收拢 2%+gain）', async () => {
     const pg = new PersonalityGrowth(() => data, saver);
     const before = data.personalityGrowth.relationship.trust;
     await pg.developBasedOnInteraction('diary', 0.3, 0.02, 0.15);
-    expect(data.personalityGrowth.relationship.trust - before).toBeCloseTo(0.0082 * 0.15, 6);
-    expect(data.personalityGrowth.relationship.trust).toBeGreaterThan(before);
-    // 默认 quality 仍为 0.5（既有聊天/抚摸路径不变）
+    const delta = data.personalityGrowth.relationship.trust - before;
+    expect(delta).toBeGreaterThan(0);
+    // 0.5 → 软收拢 0.85：0.85 + 0.98×((0.5+0.00123)−0.85) = 0.5082（低侧向 cap 收拢）
+    expect(data.personalityGrowth.relationship.trust - before).toBeCloseTo(0.85 + 0.98 * ((before + 0.0082 * 0.15) - 0.85) - before, 6);
+    // 默认 quality 仍为 0.5（既有聊天/抚摸路径不变）：gain 更大 → 收拢后更高
     const pg2 = new PersonalityGrowth(() => data, saver);
     const before2 = data.personalityGrowth.relationship.trust;
     await pg2.developBasedOnInteraction('pet', 1);
-    expect(data.personalityGrowth.relationship.trust - before2).toBeGreaterThan(0.0082 * 0.15);
+    expect(data.personalityGrowth.relationship.trust - before2).toBeGreaterThan(0);
+    expect(pg2.dataProvider().personalityGrowth.relationship.trust - before2).toBeGreaterThan(delta);
   });
 
   it('tickBehaviorStats：互动计数 + 活跃时段记录', async () => {
