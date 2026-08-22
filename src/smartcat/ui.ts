@@ -209,6 +209,8 @@ export function openSmartcatSettings(opts: {
   setMobileFullscreen: (v: boolean) => Promise<void>;
   getPersonalityGrowth?: () => any;
   resetPersonalityGrowth?: () => Promise<void>;
+  /** 最近一周懂你报告（index 从记忆流取；无 → 提示尚未生成） */
+  getWeeklyReport?: () => string | null;
 }): void {
   const config = opts.getConfig();
   openSettingsModal({
@@ -331,6 +333,19 @@ export function openSmartcatSettings(opts: {
           })
         );
 
+      // 每周懂你报告（2026-08-23：查看最近一份；弹窗展示全文）
+      if (opts.getWeeklyReport) {
+        new Setting(el)
+          .setName('每周懂你报告')
+          .setDesc('小橘每周总结你的一周：心情、主题、学到的你')
+          .addButton((btn: any) => {
+            btn.setButtonText('查看本周报告').onClick(() => {
+              const report = opts.getWeeklyReport?.() ?? null;
+              openWeeklyReportModal(report);
+            });
+          });
+      }
+
       if (isMobileEnv()) {
         new Setting(el)
           .setName('移动端默认全屏')
@@ -352,4 +367,48 @@ function skinLabel(skin: Appearance): string {
     crystal: '水晶透明', cyberpunk: '赛博朋克', rainbow: '彩虹渐变', hologram: '全息投影',
   };
   return labels[skin] || skin;
+}
+
+/** 每周懂你报告弹窗（bz 主窗口规范：createOverlay + .bz-win-head + ESC/遮罩关闭） */
+function openWeeklyReportModal(report: string | null): void {
+  const { mask, popup } = createOverlay({
+    maskId: 'smartcat-report-mask',
+    popupId: 'smartcat-report-panel',
+    zIndex: 9997,
+    onMaskClick: () => close(),
+    width: '88%',
+    maxWidth: 420,
+  });
+  const header = document.createElement('div');
+  header.className = 'bz-win-head';
+  header.innerHTML = `
+    <h3 style="margin:0;font-size:18px;font-weight:600;color:var(--text-normal);">小橘的懂你报告</h3>
+    <div>
+      <button id="smartcat-report-close" class="bz-win-close" title="关闭" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0;width:21px;height:25px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">❌</button>
+    </div>
+  `;
+  popup.appendChild(header);
+  const body = document.createElement('div');
+  body.className = 'bz-sc-report-body';
+  body.style.cssText = 'padding:12px 24px 20px;font-size:14px;line-height:1.7;color:var(--text-normal);white-space:pre-wrap;max-height:52vh;overflow-y:auto;';
+  body.textContent = report
+    ? report.replace(/^【本周懂你报告】/, '')
+    : '本周报告还没生成。小橘会在每周二（本周有观察后）自动总结你的这一周，也可以多写写日记/闪念让我更懂你。';
+  popup.appendChild(body);
+  document.body.appendChild(mask);
+  document.body.appendChild(popup);
+  mask.style.display = 'block';
+  popup.style.display = 'flex';
+  popup.style.maxHeight = '60vh';
+  popup.style.flexDirection = 'column';
+  const close = () => {
+    mask.remove();
+    popup.remove();
+    handle.unregister();
+  };
+  header.querySelector('#smartcat-report-close')!.addEventListener('click', close);
+  const handle = escManager.register('smartcat-report', {
+    isVisible: () => popup.isConnected,
+    close,
+  });
 }
