@@ -3,11 +3,11 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, hasNotice } from '../mock-obsidian-entry';
 import { M, resetMovieState } from '../../src/movie/state';
 import { rebuildItems } from '../../src/movie/data';
 import {
-  buildTasteProfile, buildRecommendPrompt, quickAddWant, parseRecommendJson, openRecommendModal, renderRecommendList,
+  buildTasteProfile, buildRecommendPrompt, quickAddWant, parseRecommendJson, runAIRecommend, renderRecommendList,
 } from '../../src/movie/recommend';
 import { STATUS_WATCHED } from '../../src/movie/constants';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
@@ -123,7 +123,7 @@ describe('quickAddWant', () => {
   });
 });
 
-describe('openRecommendModal', () => {
+describe('runAIRecommend（动态通知模式）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     resetMovieState();
@@ -135,7 +135,7 @@ describe('openRecommendModal', () => {
     rebuildItems(M.appRef as any);
   });
 
-  it('AI 成功 → 隐藏 status，渲染推荐卡', async () => {
+  it('AI 成功 → 先发进度通知（不弹窗），完成后更新为成功并弹出结果界面', async () => {
     const raw = '{"recommendations":[{"title":"星际穿越","year":"2014","director":"诺兰","type":"电影","reason":"你偏爱诺兰导演的科幻风格"}]}';
     setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'test-key' }));
     resetAIProviderCache();
@@ -144,42 +144,47 @@ describe('openRecommendModal', () => {
     const { requestUrl } = await import('obsidian');
     (requestUrl as any).mockResolvedValue({ status: 200, text: JSON.stringify({ choices: [{ message: { content: raw } }] }) });
 
-    await openRecommendModal(M.appRef as any);
-    const statusEl = [...document.querySelectorAll('div')].find((d) => d.textContent === '🧠 正在分析你的观影历史…');
-    // 弹窗存在
-    const modal = [...document.querySelectorAll('div')].find((d) => d.textContent?.includes('🤖 AI 推荐'));
+    const promise = runAIRecommend(M.appRef as any);
+    // 未完成：不弹窗，仅见进度通知（自绘 toast）
+    expect(M.recommendOverlay).toBeNull();
+    const progressEl = document.querySelector('.bz-notice--progress') as HTMLElement;
+    expect(progressEl).not.toBeNull();
+    expect(progressEl.textContent).toContain('推荐'); // 进度通知（文本已进入分析阶段）
+    await promise;
+    // 完成：通知更新为成功 + 结果界面自动弹出
+    expect(document.querySelector('.bz-notice--progress')).toBeNull();
+    expect((document.querySelector('.bz-notice--success') as HTMLElement).textContent).toContain('AI 荐片完成');
+    const modal = [...document.querySelectorAll('div')].find((d) => d.textContent?.includes('🤖 AI 荐片'));
     expect(modal).toBeDefined();
-    // status 已隐藏
     const list = document.querySelector('.recommend-list') as HTMLElement;
-    expect(list).not.toBeNull();
     expect(list.textContent).toContain('星际穿越');
     expect(list.textContent).toContain('导演：诺兰');
     expect(list.textContent).toContain('💡 你偏爱诺兰导演');
     expect(list.textContent).toContain('加入想看');
   });
 
-  it('AI 失败 → ❌ 生成失败', async () => {
+  it('AI 失败 → 通知更新为错误，不弹结果界面', async () => {
     setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'test-key' }));
     resetAIProviderCache();
     setApp(M.appRef as any);
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('no net')));
     const { requestUrl } = await import('obsidian');
     (requestUrl as any).mockRejectedValue(new Error('网络错误'));
-    await openRecommendModal(M.appRef as any);
-    const statusEl = [...document.querySelectorAll('div')].find((d) => d.textContent?.startsWith('❌ 生成失败'));
-    expect(statusEl).toBeDefined();
+    await runAIRecommend(M.appRef as any);
+    expect((document.querySelector('.bz-notice--error') as HTMLElement).textContent).toContain('AI 荐片失败');
+    expect(M.recommendOverlay).toBeNull();
   });
 
-  it('格式无法解析 → ⚠️ 提示', async () => {
+  it('格式无法解析 → 通知错误提示', async () => {
     setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'test-key' }));
     resetAIProviderCache();
     setApp(M.appRef as any);
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('no net')));
     const { requestUrl } = await import('obsidian');
     (requestUrl as any).mockResolvedValue({ status: 200, text: JSON.stringify({ choices: [{ message: { content: '不是 JSON' } }] }) });
-    await openRecommendModal(M.appRef as any);
-    const statusEl = [...document.querySelectorAll('div')].find((d) => d.textContent?.startsWith('⚠️ AI 返回格式无法解析'));
-    expect(statusEl).toBeDefined();
+    await runAIRecommend(M.appRef as any);
+    expect((document.querySelector('.bz-notice--error') as HTMLElement).textContent).toContain('AI 荐片失败');
+    expect(M.recommendOverlay).toBeNull();
   });
 
   it('renderRecommendList：加入想看按钮触发 quickAddWant', async () => {

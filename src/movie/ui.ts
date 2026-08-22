@@ -15,7 +15,7 @@ import { getDisplayItems, refreshDataAndView, rebuildItems } from './data';
 import { createAI } from '../core/ai';
 import { attachItemActions, refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, type ItemAction } from '../core/item-actions';
 import { confirm } from '../core/confirm';
-import { openRecommendModal, parseRecommendJson, quickAddWant, renderRecommendList } from './recommend';
+import { parseRecommendJson, quickAddWant, renderRecommendList, runAIRecommend } from './recommend';
 import { watchPosterFetch } from './poster-watch';
 import { openAnalysisModal } from './analysis';
 
@@ -1042,9 +1042,9 @@ export function createOverlay(app: App, statusType?: string): void {
     return btn;
   };
 
-  const recommendBtn = mkBtn('🤖', 'AI 推荐', 'var(--text-normal)', (e) => {
+  const recommendBtn = mkBtn('🤖', 'AI 荐片', 'var(--text-normal)', (e) => {
     e.stopPropagation();
-    openRecommendModal(app);
+    void runAIRecommend(app);
   });
 
   const analysisBtn = mkBtn('📊', '影视数据分析', 'var(--text-normal)', (e) => {
@@ -1639,31 +1639,7 @@ function attachMovieActions(card: HTMLElement, item: MovieItem, app: App): void 
   const buildActions = (): ItemAction[] => {
     const acts: ItemAction[] = [];
     acts.push({ icon: 'external-link', label: '打开', title: '打开影视笔记', onClick: () => openMovieNote(item, app) });
-    // 详情：有豆瓣抓取数据（类型/导演/主演/地区/上映日期/片长/豆瓣评分任一）才显示
-    const details = getMovieDetails(item, app);
-    if (Object.keys(details).length > 0) {
-      acts.push({
-        icon: 'info',
-        label: '详情',
-        title: '详情',
-        keepOpen: true,
-        onClick: () => openDetailModal(item, app, details),
-      });
-    }
-    acts.push({
-      icon: 'link',
-      label: '复制双链',
-      title: '复制双链',
-      keepOpen: true,
-      onClick: () => void copyMovieLink(item),
-    });
-    acts.push({
-      icon: 'sparkles',
-      label: '找同类',
-      title: '找同类（AI 报告）',
-      keepOpen: true,
-      onClick: () => void openSimilarModal(item, app),
-    });
+    // 状态流转/评分/影评靠前（紧跟打开）：
     if (item.status === STATUS_WANT) {
       acts.push({
         icon: 'eye',
@@ -1709,6 +1685,37 @@ function attachMovieActions(card: HTMLElement, item: MovieItem, app: App): void 
         onClick: () => openReviewModal(item, app, item.review ? '改影评' : '写影评', rebuild),
       });
     }
+    // 详情：有豆瓣抓取数据（类型/导演/主演/地区/上映日期/片长/豆瓣评分任一）才显示
+    const details = getMovieDetails(item, app);
+    if (Object.keys(details).length > 0) {
+      acts.push({
+        icon: 'info',
+        label: '详情',
+        title: '详情',
+        keepOpen: true,
+        onClick: () => openDetailModal(item, app, details),
+      });
+    }
+    acts.push({
+      icon: 'link',
+      label: '复制双链',
+      title: '复制双链',
+      keepOpen: true,
+      onClick: () => void copyMovieLink(item),
+    });
+    acts.push({
+      icon: 'sparkles',
+      label: '找同类',
+      title: '找同类（AI 报告）',
+      keepOpen: true,
+      onClick: () => void openSimilarModal(item, app),
+    });
+    acts.push({
+      icon: 'bot',
+      label: 'AI 荐片',
+      title: 'AI 荐片（口味推荐）',
+      onClick: () => void runAIRecommend(app),
+    });
     acts.push({
       icon: 'trash-2',
       label: '删除',

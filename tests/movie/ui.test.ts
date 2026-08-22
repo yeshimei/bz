@@ -114,13 +114,14 @@ describe('createOverlay 主界面', () => {
     expect(buttons.length).toBeGreaterThanOrEqual(5);
   });
 
-  it('🤖 AI 推荐按钮触发推荐弹窗', () => {
+  it('🤖 AI 荐片：点击发进度通知不弹窗（完成后通知更新成功并自动弹结果）', async () => {
+    // 无 AI mock 时点击后仅出现进度通知，不带遮罩弹窗（动态通知模式）
     createOverlay(M.appRef as any);
     const overlay = document.getElementById('__yin_ying__')!;
     const recommendBtn = [...overlay.querySelectorAll('button')].find((b) => b.textContent === '🤖')!;
     expect(recommendBtn).toBeTruthy();
     recommendBtn.click();
-    expect(M.recommendOverlay).not.toBeNull();
+    expect(M.recommendOverlay).toBeNull(); // 不立即弹窗
   });
 
   it('搜索输入防抖 300ms 后过滤渲染', async () => {
