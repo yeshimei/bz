@@ -185,8 +185,8 @@ _Avoid_: 心情维度（8 维，已废弃）、心情状态机（指断线 5 档
 **情绪 (Emotion)**: 小橘的瞬时情绪层（三层模型：情绪→心情→人格）——`mood.currentEmotion` 记录最近的情绪标签（happy/sad/curious/sleepy/playful/focused/calm/upset），由事件/记忆标注；记忆流条目 `emotion` 字段承载情绪归属（LLM 顺带 + 词法兜底）。情绪不直接改写 PAD，由记忆承载、经 prompt 注入影响回复。
 _Avoid_: 情感记忆（EmotionalMemory 类已删除，语义并入记忆流 emotion 字段）
 
-**人格成长 (Personality Growth)**: 小橘的长期人格层——`personalityGrowth.traits`（playfulness/sociability/independence/curiosity 0-100）+ growthHistory；**反思驱动主 + 互动驱动辅**：记忆流反思洞察经 `applyReflectionInsights` 按关键字调整特质（source=reflection），互动经 `developBasedOnInteraction`（source=interaction）；人格乘数调制心情衰减。
-_Avoid_: personalityGrowth 无人调用（已接线）
+**人格成长 (Personality Growth)**: 小橘的长期人格层（ADR-0023 对齐 MATE：预设 5 选 1 已删除）——`personalityGrowth` 结构为 `{ocean(OCEAN 五因素 0-1，出生随机 N(0.5,0.15) 落盘一次), traits(30 项 0-1，9 临床群组，logistic 饱和 x+δ(1-x) 永不达 1), relationship(trust/attachment 0-1), behaviorStats(互动计数/情绪基调/活跃时段), growthHistory}`；成长三路：`character_transition`（每条互动微移 δ=δbase×情绪强度×近因(1+(1-trust))）、`character_from_experience`（反思时周统计深更新 δ≤0.01）、`applyReflectionInsights`（洞察 → existential 群组成长）；人格经 `getCharacterModulators` 调制 PAD 心情（成长真的改变心情波动）。设置弹窗展示 OCEAN+关键特质条形，可重置成长。
+_Avoid_: 预设人格（5 选 1 已废弃）、personalityGrowth 无人调用（已接线）
 
 **记忆流 (Memory Stream)**: 小橘的单层记忆（ADR-0021，取代原「分层记忆」四层）——`smartcat.json` memory 段改为 `{version, lastUpdated, stream: MemoryStreamEntry[], reflection}`，`MemoryStreamEntry = {id, created, lastAccessed, description, importance(0-1), type:'observation'|'insight', evidenceIds?, source?, emotion?}`；检索时按 GA 三因子 `α1·0.995^小时 + α2·importance + α3·relevance` 分级取 top 10；写入时 LLM 打分（AI 未配置降级规则分）并顺带标注情绪（词法兜底）；反思每 24h 或新增≥20 条触发，LLM 归纳 3 条洞察写回流（带 evidenceIds 溯源）并经 onReflect 喂人格成长；上限 500 条淘汰「importance×使用度」最低；bge-m3 向量存独立 smartcat-memory-vectors.vec（豁免单 json），Ollama 不可用降级词法。旧四层与迁移路径已删除（无数据产生，用户拍板）。
 _Avoid_: 记忆文件、memories 目录、四层（已废弃）；迁移（已删除）

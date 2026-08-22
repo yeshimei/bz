@@ -21,11 +21,12 @@ beforeEach(() => {
   vi.useRealTimers();
 });
 
-describe('MoodSystem.updatePad（PAD 三轴）', () => {
-  it('愉悦加分：pleasure +8 → 63（默认 55）', () => {
+describe('MoodSystem.updatePad（PAD 三轴，性格调制后）', () => {
+  it('愉悦加分：pleasure 上升（默认 55，性格乘数使增量 ≠8）', () => {
     const m = make();
     m.updatePad('pleasure', 8, 'pet');
-    expect(m.pad.pleasure).toBe(63);
+    expect(m.pad.pleasure).toBeGreaterThan(55);
+    expect(m.pad.pleasure).toBeLessThanOrEqual(63);
   });
 
   it('边界 clamp 0-100', () => {
@@ -42,11 +43,12 @@ describe('MoodSystem.updatePad（PAD 三轴）', () => {
     expect(m.pad.pleasure).toBe(55);
   });
 
-  it('人格抵抗力：lively pleasure 负向 ×0.8', () => {
+  it('负向抵抗力：默认 traits 下 pleasure 负向有缓冲（变化幅度 < 原始值）', () => {
     const m = make();
     m.updatePad('pleasure', -10, 'x');
-    // lively 抵抗力 0.8 → -8
-    expect(m.pad.pleasure).toBe(47);
+    // 无性格调制时 -10；有性格抵抗力时跌幅 <10
+    expect(m.pad.pleasure).toBeGreaterThan(45);
+    expect(m.pad.pleasure).toBeLessThan(55);
   });
 
   it('重要变化（|adjusted|>=1）触发保存', () => {
@@ -155,33 +157,52 @@ describe('MoodSystem 衰减与互动', () => {
   });
 });
 
-describe('PersonalityGrowth', () => {
+describe('PersonalityGrowth（MATE ADR-0023）', () => {
   beforeEach(() => {
     data = defaultSmartCatData();
     saver = vi.fn<(d: SmartCatData) => Promise<void>>(async (d) => { data = d; });
   });
 
-  it('pet 互动成长：sociability +1、independence -0.5', async () => {
+  it('pet 互动 → character_transition 微移（warmth 成长 + trust 上升）', async () => {
+    const pg = new PersonalityGrowth(() => data, saver);
+    const beforeWarmth = data.personalityGrowth.traits.warmth;
+    const beforeTrust = data.personalityGrowth.relationship.trust;
+    await pg.developBasedOnInteraction('pet', 1);
+    expect(data.personalityGrowth.traits.warmth).toBeGreaterThan(beforeWarmth);
+    expect(data.personalityGrowth.relationship.trust).toBeGreaterThan(beforeTrust);
+    expect(data.personalityGrowth.growthHistory.length).toBe(1);
+    expect(data.personalityGrowth.growthHistory[0].source).toBe('interaction');
+  });
+
+  it('tickBehaviorStats：互动计数 + 活跃时段记录', async () => {
     const pg = new PersonalityGrowth(() => data, saver);
     await pg.developBasedOnInteraction('pet', 1);
-    expect(data.personalityGrowth.traits.sociability).toBe(51);
-    expect(data.personalityGrowth.traits.independence).toBe(49.5);
-    expect(data.personalityGrowth.growthHistory.length).toBe(1);
+    expect(data.personalityGrowth.behaviorStats.interactionCount).toBe(1);
+    expect(data.personalityGrowth.behaviorStats.preferredHour).toBe(new Date().getHours());
   });
 
-  it('getPersonalityInfluence 按特质计算乘数', () => {
+  it('applyWeeklyExperience：周统计折算进 traits（δ≤0.01 深更新，计数清零）', async () => {
     const pg = new PersonalityGrowth(() => data, saver);
-    const infl = pg.getPersonalityInfluence();
-    expect(infl.happinessMultiplier).toBe(1);
-    expect(infl.decayResistance).toBeCloseTo(1, 5);
+    for (let i = 0; i < 20; i++) await pg.developBasedOnInteraction('pet', 1);
+    const before = data.personalityGrowth.traits.warmth;
+    await pg.applyWeeklyExperience();
+    expect(data.personalityGrowth.traits.warmth).toBeGreaterThanOrEqual(before);
+    expect(data.personalityGrowth.behaviorStats.interactionCount).toBe(0);
   });
 
-  it('反思驱动：洞察含学习关键字 → curiosity +1', async () => {
+  it('反思驱动：洞察含自我/关于我 → exist_depth 成长（仅反思渠道）', async () => {
     const pg = new PersonalityGrowth(() => data, saver);
-    const before = data.personalityGrowth.traits.curiosity;
-    await pg.applyReflectionInsights([{ text: '用户热爱学习和阅读' }]);
-    expect(data.personalityGrowth.traits.curiosity).toBe(before + 1);
+    const before = data.personalityGrowth.traits.exist_depth;
+    await pg.applyReflectionInsights([{ text: '用户认识到自己是个喜欢深夜写作的人' }]);
+    expect(data.personalityGrowth.traits.exist_depth).toBeGreaterThan(before);
     expect(data.personalityGrowth.growthHistory.some((h: any) => h.source === 'reflection')).toBe(true);
+  });
+
+  it('反思驱动：情绪温暖洞察 → oxytocin 成长', async () => {
+    const pg = new PersonalityGrowth(() => data, saver);
+    const before = data.personalityGrowth.traits.oxytocin;
+    await pg.applyReflectionInsights([{ text: '用户和小橘之间建立了温暖信任的陪伴关系' }]);
+    expect(data.personalityGrowth.traits.oxytocin).toBeGreaterThan(before);
   });
 
   it('反思驱动：无匹配关键字 → 不改变量（空洞察安全）', async () => {
