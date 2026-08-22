@@ -10,7 +10,13 @@ import type { NoticeHandle } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { confirm } from '../core/confirm';
-import { createIconBtn, createOverlay, longPress } from '../core/dom';
+import { createIconBtn, createOverlay } from '../core/dom';
+import {
+  attachItemActions,
+  registerSheetCompanion,
+  unregisterSheetCompanion,
+  type ItemAction,
+} from '../core/item-actions';
 import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { getSettings, tryGetSettings, saveSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
@@ -778,10 +784,67 @@ export class UIManager {
     top.appendChild(titleBox);
     card.appendChild(top);
     card.appendChild(meta);
-    // 手势触发（同其他面板）：单击 → 打开预览；长按 → 弹确认还原
-    card.addEventListener('click', () => void this.openPreview(note));
-    longPress(card, () => this.confirmRestore(note));
+    // 手势（用户拍板）：双击 → 预览（原单击改双击防误触）；还原收敛进抽屉
+    card.addEventListener('dblclick', () => void this.openPreview(note));
+    // 统一抽屉（桌面右键/移动长按）：预览 → 还原
+    this.attachDrawerActions(card, note);
     return card;
+  }
+
+  /** 卡片挂统一抽屉 + 头部（🔒 标题 · 时间·附件数） */
+  private attachDrawerActions(card: HTMLElement, note: SafeNote): void {
+    const actions: ItemAction[] = [];
+
+    // 预览（keepOpen：预览窗叠抽屉，关闭预览后可继续还原等操作）
+    actions.push({
+      icon: 'eye',
+      label: '预览',
+      keepOpen: true,
+      onClick: () => {
+        if (this.previewMask) registerSheetCompanion(this.previewMask);
+        void this.openPreview(note);
+      },
+    });
+
+    // 还原（danger：先收抽屉再确认；还原成功即删镜像取出）
+    actions.push({
+      icon: 'undo-2',
+      label: '还原',
+      kind: 'danger',
+      onClick: () => {
+        this.confirmRestore(note);
+      },
+    });
+
+    attachItemActions(card, actions, { sheetHead: this.buildSheetHead(note) });
+  }
+
+  /** 抽屉头部：🔒 + 标题；小字=时间 · 附件数 */
+  private buildSheetHead(note: SafeNote): HTMLElement {
+    const head = document.createElement('div');
+    head.className = 'bz-item-sheet-entry';
+    const body = document.createElement('div');
+    body.style.cssText = 'display:flex; align-items:flex-start; gap:10px;';
+
+    const emoji = document.createElement('span');
+    emoji.className = 'bz-item-sheet-emoji';
+    emoji.textContent = '🔒';
+    body.appendChild(emoji);
+
+    const info = document.createElement('div');
+    info.style.cssText = 'flex:1; min-width:0;';
+    const title = document.createElement('div');
+    title.className = 'bz-item-sheet-title';
+    title.textContent = note.title;
+    info.appendChild(title);
+    const sub = document.createElement('div');
+    sub.className = 'bz-item-sheet-sub';
+    sub.textContent = `${formatRelativeTime(note.createdAt)} · ${note.attachments.length} 个附件`;
+    info.appendChild(sub);
+
+    body.appendChild(info);
+    head.appendChild(body);
+    return head;
   }
 
   confirmRestore(note: SafeNote) {
@@ -1053,6 +1116,8 @@ export class UIManager {
   closePreview() {
     // 释放本次预览产生的全部 Blob URL（防内存泄漏）
     this.revokePreviewUrls();
+    // 抽屉来源打开时注册过附属浮层：关闭预览注销（常驻元素，非抽屉路径 unregister 为 no-op）
+    if (this.previewMask) unregisterSheetCompanion(this.previewMask);
     if (this.previewMask) this.previewMask.style.display = 'none';
     if (this.previewPopup) this.previewPopup.style.display = 'none';
   }

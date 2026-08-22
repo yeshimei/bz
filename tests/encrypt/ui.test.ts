@@ -150,34 +150,37 @@ describe('UIManager 主面板', () => {
     document.body.innerHTML = '';
   });
 
-  it('show 渲染笔记卡片（标题/附件数），无预览/还原按钮，单击开预览', async () => {
+  it('show 渲染笔记卡片（标题/附件数），无预览/还原按钮，双击开预览（单击不再触发）', async () => {
     ui.show();
     const list = document.getElementById('bz-encrypt-list')!;
     expect(list.querySelectorAll('.bz-encrypt-card').length).toBe(1);
     expect(list.textContent).toContain('2025-06-01');
     expect(list.textContent).toContain('1 个附件');
-    // 卡片内无「预览」/「还原」按钮（改手势触发）
+    // 卡片内无「预览」/「还原」按钮（动作在抽屉）
     expect([...list.querySelectorAll('button')].some((b) => b.textContent === '预览')).toBe(false);
     expect([...list.querySelectorAll('button')].some((b) => b.textContent === '还原')).toBe(false);
-    // 单击卡片 → 打开预览窗
-    (list.querySelector('.bz-encrypt-card') as HTMLElement).click();
+    const card = list.querySelector('.bz-encrypt-card') as HTMLElement;
+    // 单击不触发
+    card.click();
+    await new Promise((r) => setTimeout(r, 30));
+    expect(document.getElementById('bz-encrypt-preview-popup')!.style.display).toBe('none');
+    // 双击 → 打开预览窗
+    card.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
     await waitFor(() => document.getElementById('bz-encrypt-preview-popup')!.style.display === 'flex');
     expect(document.getElementById('bz-encrypt-preview-popup')!.textContent).toContain('2025-06-01');
   });
 
-  it('回归：触屏短按卡片 → 浏览器自然派发 click → 打开预览窗（touchstart 被动监听不再吞掉单击）', async () => {
+  it('触屏短按卡片 → 不再打开预览（单击收敛，防误触）', async () => {
     ui.show();
     const card = document.querySelector('.bz-encrypt-card') as HTMLElement;
-    // 模拟触屏：touchstart（被动监听，不再 preventDefault——滚动与单击都正常）
     const ts = new TouchEvent('touchstart', { bubbles: true, cancelable: true });
     Object.defineProperty(ts, 'touches', { value: [{ clientX: 30, clientY: 30 }] });
     card.dispatchEvent(ts);
-    await new Promise((r) => setTimeout(r, 60)); // 短按（< 500ms 长按阈值）
+    await new Promise((r) => setTimeout(r, 60));
     card.dispatchEvent(new TouchEvent('touchend', { bubbles: true }));
-    // 合成 click（jsdom 不自动派发，手动模拟浏览器行为）→ 预览窗打开
     card.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-    await waitFor(() => document.getElementById('bz-encrypt-preview-popup')!.style.display === 'flex');
-    expect(document.getElementById('bz-encrypt-preview-popup')!.textContent).toContain('2025-06-01');
+    await new Promise((r) => setTimeout(r, 60));
+    expect(document.getElementById('bz-encrypt-preview-popup')!.style.display).toBe('none');
   });
 
   it('单击卡片 → 先同步弹出预览窗骨架，再异步填充正文（标题 + 图片）', async () => {
@@ -194,11 +197,16 @@ describe('UIManager 主面板', () => {
     expect(popup.style.display).toBe('none');
   });
 
-  it('长按卡片 → 确认弹窗 → 确认后取出即删（正文写回、条目移除）', async () => {
+  it('右键卡片 → 抽屉动作「还原」→ 确认后取出即删（正文写回、条目移除）', async () => {
     ui.show();
     const card = document.querySelector('.bz-encrypt-card') as HTMLElement;
-    card.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
-    await new Promise((r) => setTimeout(r, 620)); // 长按 500ms 后触发
+    card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
+    const restoreItem = [...document.querySelectorAll('.bz-item-menu-item')].find(
+      (b) => b.textContent!.includes('还原')
+    ) as HTMLElement;
+    expect(restoreItem).toBeTruthy();
+    restoreItem.click();
+    await new Promise((r) => setTimeout(r, 20));
     const confirmMask = document.getElementById('__shared_confirm_mask__')!;
     expect(confirmMask.textContent).toContain('还原');
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
@@ -346,7 +354,7 @@ describe('预览窗混排与还原打开', () => {
     }
   });
 
-  it('长按还原成功 → 打开该笔记（openLinkText）并关闭保险箱面板', async () => {
+  it('抽屉「还原」成功 → 打开该笔记（openLinkText）并关闭保险箱面板', async () => {
     const app = setup(vault, CONFIG);
     const openLinkText = vi.fn();
     (app.workspace as any).openLinkText = openLinkText;
@@ -358,8 +366,12 @@ describe('预览窗混排与还原打开', () => {
     });
     ui.show();
     const card = document.querySelector('.bz-encrypt-card') as HTMLElement;
-    card.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
-    await new Promise((r) => setTimeout(r, 620));
+    card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
+    const restoreItem = [...document.querySelectorAll('.bz-item-menu-item')].find(
+      (b) => b.textContent!.includes('还原')
+    ) as HTMLElement;
+    restoreItem.click();
+    await new Promise((r) => setTimeout(r, 20));
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
     await waitFor(() => openLinkText.mock.calls.length > 0);
     expect(openLinkText).toHaveBeenCalledWith('我的/日记/x.md', '我的/日记/x.md');
