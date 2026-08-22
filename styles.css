@@ -3005,7 +3005,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 /* 猫本体容器：fixed 右下角悬浮（原 SmartCatUI createCatContainer 内联；收敛静态） */
 #smart-companion-cat {
   position: fixed;
-  bottom: -6px;
+  bottom: -10px;
   left: 50%;
   transform: translateX(-50%);
   width: 50px;
@@ -3038,21 +3038,20 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   border-radius: 50%;
 }
 #smart-companion-cat .cat-ear-left {
-  left: 9px;
+  left: 10px;
   transform: rotate(-15deg);
 }
 #smart-companion-cat .cat-ear-right {
-  right: 9px;
+  right: 10px;
   transform: rotate(15deg);
 }
-/* 脸 */
+/* 脸（原版无宽高：shrink-to-fit 宽度≈0，眼睛以 12px 分居 body 中心两侧；
+   勿加 width——会把两只 5px 眼睛挤在中间重叠成"一只正中的眼"） */
 #smart-companion-cat .cat-face {
   position: absolute;
   top: 8px;
   left: 50%;
   transform: translateX(-50%);
-  width: 30px;
-  height: 22px;
 }
 /* 眼睛 */
 #smart-companion-cat .cat-eye {
@@ -3268,18 +3267,21 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   animation: voiceIndicatorPulse 1.5s ease-in-out infinite;
 }
 
-/* 气泡容器与气泡（原 cat-bubbles-container / cat-bubble；堆叠 transform 动态计算保留内联） */
+/* 气泡容器与气泡（原 cat-bubbles-container / cat-bubble；堆叠 transform 动态计算保留内联）
+   用户反馈原 65px 太靠下 → 上移 95px，气泡浮在猫头顶上方更明显 */
 #smart-companion-cat .cat-bubbles-container {
   position: absolute;
-  bottom: 65px;
+  bottom: 95px;
   right: 0;
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
   align-items: flex-end;
   gap: 8px;
   pointer-events: none;
   max-height: 300px;
   overflow: visible;
+  z-index: 10001;
 }
 #smart-companion-cat .cat-bubble {
   position: relative;
@@ -3288,8 +3290,14 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   color: #2c3e50;
   padding: 12px 16px;
   border-radius: 16px;
+  font-size: 13px;
   max-width: 300px;
   min-width: 175px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui;
+  line-height: 1.4;
+  word-wrap: break-word;
   z-index: 10001;
   opacity: 0;
   transform: translateY(10px) scale(0.95);
@@ -3319,6 +3327,17 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   box-shadow: 3px 1px 5px rgba(0, 0, 0, 0.15), 0 0 0 2px #4CAF50;
   transition: box-shadow 0.3s ease;
 }
+/* 暗色模式适配（原 prefers-color-scheme: dark：气泡深色化） */
+@media (prefers-color-scheme: dark) {
+  #smart-companion-cat .cat-bubble {
+    background: rgba(30, 30, 30, 0.95);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  #smart-companion-cat .cat-bubble::after {
+    border-top-color: rgba(30, 30, 30, 0.95);
+  }
+}
 /* 心情 emoji 指示（原 moodIndicator：气泡顶部 5s） */
 #smart-companion-cat[data-mood-emoji]::before {
   content: attr(data-mood-emoji);
@@ -3346,9 +3365,12 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 #smart-companion-cat .bz-sc-anim-tail-base { animation: tailFlick 7s ease-in-out infinite; }
 #smart-companion-cat .bz-sc-anim-eye-base { animation: blinkSlow 5s ease-in-out infinite; }
 
-/* 心情组合动画（原 applyMoodAnimations 各 mood 组合） */
+/* 心情组合动画（原 applyMoodAnimations 各 mood 组合；类加在 .cat-body 上） */
 #smart-companion-cat .bz-sc-mood-happy { animation: happyBounce 4s ease-in-out infinite, gentleSway 6s ease-in-out infinite; }
+#smart-companion-cat .bz-sc-mood-happy .cat-tail { animation: tailWagHappy 3s ease-in-out infinite; }
+#smart-companion-cat .bz-sc-mood-happy .cat-eye { animation: blinkQuick 3s ease-in-out infinite, eyesSparkle 5s ease-in-out infinite; }
 #smart-companion-cat .bz-sc-mood-curious { animation: curiousTilt 5s ease-in-out infinite; }
+#smart-companion-cat .bz-sc-mood-curious .cat-eye { animation: blinkSlow 4s ease-in-out infinite, eyesWiden 6s ease-in-out infinite; }
 #smart-companion-cat .bz-sc-mood-sleepy { animation: sleepySway 8s ease-in-out infinite; }
 #smart-companion-cat .bz-sc-mood-sleepy .cat-ear,
 #smart-companion-cat .bz-sc-mood-sleepy .cat-tail { animation: none; }
@@ -3359,8 +3381,6 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 #smart-companion-cat .bz-sc-mood-playful { animation: playfulHop 3s ease-in-out infinite; }
 #smart-companion-cat .bz-sc-mood-playful .cat-tail { animation: tailFlick 2s ease-in-out infinite; }
 #smart-companion-cat .bz-sc-mood-playful .cat-eye { animation: blinkQuick 3s ease-in-out infinite; }
-#smart-companion-cat.bz-sc-mood-happy .cat-tail,
-#smart-companion-cat .bz-sc-mood-happy .cat-eye { animation: tailWagHappy 3s ease-in-out infinite, blinkQuick 3s ease-in-out infinite; }
 
 /* 聊天面板（bz 主窗口：chat-panel 由 createOverlay 生成；样式走 bz-overlay + 头行） */
 #chat-panel {
