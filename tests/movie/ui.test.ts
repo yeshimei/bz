@@ -412,7 +412,7 @@ describe('抽屉（统一手势组件接入）', () => {
     vi.useRealTimers();
   });
 
-  it('长按想看条目 → 动作（打开/标记在看/编辑/删除），无评分影评项；头部名称与徽章', () => {
+  it('长按想看条目 → 动作（打开/标记在看/删除，无编辑/写影评），无评分影评项；头部名称与徽章', () => {
     const vault = setupVault();
     const app = makeApp(vault);
     const items = rebuildItems(app);
@@ -424,9 +424,10 @@ describe('抽屉（统一手势组件接入）', () => {
     openSheetCard(card);
     const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
     expect(sheet).not.toBeNull();
-    for (const label of ['打开', '标记在看', '编辑', '删除']) {
+    for (const label of ['打开', '标记在看', '删除']) {
       expect(sheet.textContent).toContain(label);
     }
+    expect(sheet.textContent).not.toContain('编辑'); // 编辑动作已移除
     // 评分/影评只在已看显示
     expect(sheet.textContent).not.toContain('标记已看');
     expect(sheet.textContent).not.toContain('评分');
@@ -499,8 +500,11 @@ describe('抽屉（统一手势组件接入）', () => {
     expect(sheet.textContent).toContain('改分');
     expect(sheet.textContent).toContain('改影评');
     expect(sheet.textContent).not.toContain('评分\n'); // 无「评分」标签（仅子串保护）
+    // 改分小字 = 当前分数（动态数据）
+    const rateItem0 = [...sheet.querySelectorAll('.bz-item-sheet-item')].find((b) => b.textContent!.includes('改分')) as HTMLElement;
+    expect((rateItem0.querySelector('.bz-item-sheet-item-sub') as HTMLElement).textContent).toBe('⭐4.5');
     // 打开评分窗：滑块 + 数值
-    const rateBtn = [...sheet.querySelectorAll('.bz-item-sheet-item')].find((b) => b.textContent!.includes('改分')) as HTMLElement;
+    const rateBtn = rateItem0;
     rateBtn.click();
     let modal = document.querySelector('.bz-movie-tiny-modal') as HTMLElement;
     expect(modal).not.toBeNull();
