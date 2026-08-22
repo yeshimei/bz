@@ -75,27 +75,27 @@ export interface PersonalityGrowthData {
   version: string;
 }
 
-/** 分层记忆索引条目 */
-export interface MemoryIndexStats {
-  layer: string;
-  accessCount: number;
-  lastAccessed: string | null;
-  importance: number;
+/**
+ * 记忆流条目（GA Memory Object 的 TS 结构，ADR-0021）
+ * 单层记忆：所有观察/洞察同构追加入 stream，检索时按三因子分级。
+ */
+export interface MemoryStreamEntry {
+  id: string;
+  created: string;        // ISO 创建时间
+  lastAccessed: string;   // ISO 最近被检索到时间（检索时更新，自增强）
+  description: string;    // 内容本体（一句话）
+  importance: number;     // 0-1（写入时 LLM 打分 0-10 归一；未配置 AI 时规则打分）
+  type: 'observation' | 'insight'; // 观察 / 反思洞察
+  evidenceIds?: string[]; // 仅 insight：由哪些记忆归纳而来（溯源）
+  source?: string;        // 写入来源（如 'chat'）
 }
 
-/** 记忆层（原 CONFIG/SMART CAT/memories/{layer}.json 结构） */
-export interface MemoryLayer {
-  version: string;
+/** 记忆流（单层，检索时分级；ADR-0021 取代原四层） */
+export interface MemoryStream {
+  version: number;
   lastUpdated: string;
-  memories: any[];
-  maxSize?: number;
-  sessionId?: string;
-  consolidationCount?: number;
-  protected?: boolean;
-  timeIndex?: Record<string, string[]>;
-  topicIndex?: Record<string, string[]>;
-  emotionIndex?: Record<string, string[]>;
-  usageStats?: Record<string, MemoryIndexStats>;
+  stream: MemoryStreamEntry[];
+  reflection: { lastReflectAt: number; count: number };
 }
 
 /**
@@ -109,12 +109,7 @@ export interface SmartCatData {
   emotionalMemory: any;
   timeEmotion: any;
   editingData: any;
-  memory: {
-    shortTerm: MemoryLayer;
-    longTerm: MemoryLayer;
-    permanent: MemoryLayer;
-    index: MemoryLayer;
-  };
+  memory: MemoryStream;
 }
 
 /** 域事件名（原 EVENT constants，保留全部） */

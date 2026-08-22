@@ -1,11 +1,12 @@
 /**
- * smartcat 数据层测试：smartcat.json 读写 + 一次性迁移（localStorage/旧文件）+ apiKey 忽略。
+ * smartcat 数据层测试：smartcat.json 读写 + 记忆流结构归一化 + .vec 路径。
+ * ADR-0021：迁移路径已删除——旧 localStorage/旧文件一律不再读取（无数据产生）。
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath, defaultSmartCatData, normalizeData } from '../../src/smartcat/data';
+import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath, getSmartcatVecPath, defaultSmartCatData, defaultMemoryStream, normalizeData } from '../../src/smartcat/data';
 
 function baseApp(vault: MockVault) {
   const app: any = mockAppWithVault(vault);
@@ -18,20 +19,24 @@ beforeEach(() => {
   (globalThis as any).localStorage = undefined;
 });
 
-describe('smartcat.json 路径', () => {
-  it('跟随 storagePath（默认 CONFIG/STORAGE/smartcat.json）', () => {
+describe('路径', () => {
+  it('smartcat.json 跟随 storagePath（默认 CONFIG/STORAGE/smartcat.json）', () => {
     expect(getSmartcatFilePath()).toBe('CONFIG/STORAGE/smartcat.json');
+  });
+
+  it('记忆向量文件同目录（ADR-0021：.vec 豁免单 json）', () => {
+    expect(getSmartcatVecPath()).toBe('CONFIG/STORAGE/smartcat-memory-vectors.vec');
   });
 });
 
 describe('loadSmartCatData', () => {
-  it('文件不存在且无旧数据 → 默认数据 + 落盘', async () => {
+  it('文件不存在 → 默认数据（不建文件、不迁移）', async () => {
     const vault = new MockVault();
     const app = baseApp(vault);
     const d = await loadSmartCatData(app);
     expect(d.config.appearance).toBe('orange');
     expect(d.config.conversationHistory).toEqual([]);
-    // 迁移写盘（无旧数据 → 不迁移，不建文件）
+    expect(d.memory.stream).toEqual([]);
     expect(vault.files.has('CONFIG/STORAGE/smartcat.json')).toBe(false);
   });
 
@@ -39,12 +44,13 @@ describe('loadSmartCatData', () => {
     const vault = new MockVault();
     vault.files.set('CONFIG/STORAGE/smartcat.json', JSON.stringify({
       config: { appearance: 'neon', personality: 'mentor', shortTermMemory: 99, conversationHistory: [] },
+      memory: { stream: [{ id: 'm1', created: '2026-01-01', lastAccessed: '2026-01-01', description: '用户说：你好', importance: 0.8, type: 'observation' }] },
     }));
     const app = baseApp(vault);
     const d = await loadSmartCatData(app);
     expect(d.config.appearance).toBe('neon');
-    expect(d.config.personality).toBe('mentor');
-    expect(d.config.shortTermMemory).toBe(99);
+    expect(d.memory.stream.length).toBe(1);
+    expect(d.memory.stream[0].importance).toBe(0.8);
   });
 
   it('坏 JSON → 默认数据', async () => {
@@ -64,6 +70,7 @@ describe('saveSmartCatData', () => {
     expect(vault.files.has('CONFIG/STORAGE/smartcat.json')).toBe(true);
     const parsed = JSON.parse(vault.files.get('CONFIG/STORAGE/smartcat.json')!);
     expect(parsed.config.appearance).toBe('orange');
+    expect(parsed.memory.stream).toEqual([]);
   });
 
   it('保存（存在 → modify）', async () => {
@@ -78,54 +85,34 @@ describe('saveSmartCatData', () => {
   });
 });
 
-describe('legacy 迁移（一次性）', () => {
-  beforeEach(() => {
-    (globalThis as any).localStorage = {
-      getItem: vi.fn(() => null),
-      setItem: vi.fn(),
-      removeItem: vi.fn(),
-    };
-  });
-
-  it('localStorage smart-cat-config → 迁移进 json（apiKey 忽略）', async () => {
-    (globalThis as any).localStorage.getItem.mockImplementation((k: string) => {
-      if (k === 'smart-cat-config') {
-        return JSON.stringify({ appearance: 'fire', apiKey: 'sk-secret', personality: 'cute', conversationHistory: [] });
-      }
-      return null;
-    });
-    const vault = new MockVault();
-    const app = baseApp(vault);
-    const d = await loadSmartCatData(app);
-    expect(d.config.appearance).toBe('fire');
-    expect(d.config.personality).toBe('cute');
-    expect((d.config as any).apiKey).toBeUndefined();
-    expect(vault.files.has('CONFIG/STORAGE/smartcat.json')).toBe(true);
-  });
-
-  it('旧 vault 情感记忆文件迁移', async () => {
-    const legacy = { version: '2.0', memories: [{ id: 'm1' }] };
-    const vault = new MockVault();
-    vault.files.set('CONFIG/SMART CAT/smart-cat-emotional-memory.json', JSON.stringify(legacy));
-    const app = baseApp(vault);
-    const d = await loadSmartCatData(app);
-    expect(d.emotionalMemory).toEqual(legacy);
-  });
-
-  it('旧 memories 四层迁移', async () => {
-    const vault = new MockVault();
-    vault.files.set('CONFIG/SMART_CAT/memories/short_term.json', JSON.stringify({ version: '1.0', memories: [{ id: 's1' }] }));
-    const app = baseApp(vault);
-    const d = await loadSmartCatData(app);
-    expect(d.memory.shortTerm.memories.length).toBe(1);
-    expect(d.memory.longTerm.memories).toEqual([]);
-  });
-});
-
-describe('normalizeData', () => {
+describe('normalizeData（记忆流，ADR-0021）', () => {
   it('旧布局（整个文件即 config）兼容', () => {
     const d = normalizeData({ appearance: 'galaxy', contextLength: 200 });
     expect(d.config.appearance).toBe('galaxy');
     expect(d.config.contextLength).toBe(200);
+  });
+
+  it('memory.stream 过滤非法条目（id/description 缺失丢弃）', () => {
+    const d = normalizeData({ memory: { stream: [
+      { id: 'ok', description: '合法', importance: 0.5, type: 'observation' },
+      { id: 'no-desc' },
+      null,
+      'string',
+    ] } });
+    expect(d.memory.stream.length).toBe(1);
+    expect(d.memory.stream[0].id).toBe('ok');
+  });
+
+  it('旧四层字段（shortTerm 等）不再读取——无迁移，stream 空（ADR-0021）', () => {
+    const d = normalizeData({ memory: { shortTerm: { memories: [{ id: 's1' }] }, longTerm: { memories: [] } } });
+    expect(d.memory.stream).toEqual([]);
+    expect((d.memory as any).shortTerm).toBeUndefined();
+  });
+
+  it('defaultMemoryStream 结构完整（version/stream/reflection）', () => {
+    const m = defaultMemoryStream();
+    expect(m.version).toBe(1);
+    expect(m.stream).toEqual([]);
+    expect(m.reflection).toEqual({ lastReflectAt: 0, count: 0 });
   });
 });

@@ -1,31 +1,57 @@
 /**
- * 分层记忆系统（移植自 SmartCatMemorySystem.js HierarchicalMemorySystem）
- * 存储收敛进 smartcat.json（用户拍板：所有数据单 json）——原 4 层文件
- * CONFIG/SMART_CAT/memories/*.json 改为 data.memory 四层对象；字段结构沿用
- * （version/lastUpdated/memories + 层特异字段），旧数据一次性迁移由 data.ts 负责。
- * 修复原版 app 注入时序缺陷（构造后 init 已挂 app；原版此 bug 导致从未落盘，铁律 4 之外的功能性修复）。
- * 原检索每次从磁盘重读——本版直接读内存层（本质等价，行为更一致）。
+ * 记忆流系统（ADR-0021，重构自原 SmartCatMemorySystem.js HierarchicalMemorySystem）
+ * 单层记忆流（Memory Stream）：所有观察/洞察同构追加入 stream，检索时按
+ * GA 三因子评分分级（recency × importance × relevance），取代原四层固化。
+ *
+ * 核心机制（对齐 Generative Agents 论文）：
+ *  1. 记忆对象 = { id, created, lastAccessed, description, importance, type, evidenceIds? }
+ *  2. 检索评分 = α1·decay^小时 + α2·importance + α3·relevance（默认 α 全 1.0）
+ *  3. 写入时 LLM 打分 importance（0-10 归一 0-1；AI 未配置降级规则分）
+ *  4. 反思（Reflection）：24h 或新增 ≥20 条触发，LLM 归纳 3 条洞察写回流（可溯源）
+ *  5. 上限 500 条，淘汰 importance 最低者；bge-m3 语义检索，Ollama 不可用降级词法
  */
 import type { App } from 'obsidian';
-import type { SmartCatData, MemoryLayer } from './types';
+import { getSmartcatVecPath } from './data';
+import { callChatJson, isAIConfigured } from './api';
+import { getEmbedding, checkRemoteOllama } from '../flash/ollama';
+import type { SmartCatData, MemoryStreamEntry } from './types';
 
 export const MEMORY_CONFIG = {
-  maxShortTerm: 100,
-  maxLongTerm: 500,
-  importanceThreshold: 0.7,
-  consolidationInterval: 24 * 60 * 60 * 1000, // 24 小时
-};
-
-/** 相关度阈值与上限（原 retrieveRelevantMemories 语义） */
-export const RETRIEVAL_THRESHOLD = 0.7;
-export const RETRIEVAL_MAX = 10;
+  /** 记忆流上限（软上限，超出淘汰 importance 最低） */
+  maxStream: 500,
+  /** 检索返回条数 */
+  retrievalTopN: 10,
+  /** GA 三因子权重（论文默认 α1=α2=α3=1.0） */
+  alphaRecency: 1.0,
+  alphaImportance: 1.0,
+  alphaRelevance: 1.0,
+  /** recency 指数衰减系数 */
+  decay: 0.995,
+  /** 反思：距上次至少间隔（ms） */
+  reflectionInterval: 24 * 60 * 60 * 1000,
+  /** 反思：新增记忆达到该条数也触发 */
+  reflectionMinNew: 20,
+  /** 反思：evidence 取最近 N 条内 */
+  evidenceWindow: 100,
+  /** 反思：evidence 取 importance 前 N 条 */
+  evidenceTop: 50,
+  /** 反思：一次生成洞察条数 */
+  insightCount: 3,
+} as const;
 
 export class MemorySystem {
   app: App;
-  /** 允许外部注入 data 读写（bypass 循环依赖：index 持有 data 引用） */
   dataProvider: () => SmartCatData;
   dataSaver: (data: SmartCatData) => Promise<void>;
-  private consolidationTimer: ReturnType<typeof setInterval> | null = null;
+  /** 反思新增计数（距上次反思） */
+  private pendingSinceReflect = 0;
+  private reflectionTimer: ReturnType<typeof setInterval> | null = null;
+  private reflecting = false;
+  /** 语义模式状态：null=未探测 */
+  private ollamaAvailable: boolean | null = null;
+  private dim = 0;
+  /** 已加载向量（行序对齐 stream；仅语义模式用） */
+  private vectors: Float64Array | null = null;
 
   constructor(app: App, dataProvider: () => SmartCatData, dataSaver: (data: SmartCatData) => Promise<void>) {
     this.app = app;
@@ -33,76 +59,102 @@ export class MemorySystem {
     this.dataSaver = dataSaver;
   }
 
-  get memory(): { shortTerm: MemoryLayer; longTerm: MemoryLayer; permanent: MemoryLayer; index: MemoryLayer } {
-    return this.dataProvider().memory;
+  get stream(): MemoryStreamEntry[] {
+    return this.dataProvider().memory.stream;
   }
 
-  /** 启动固化调度（24h；幂等先清旧） */
-  startConsolidationScheduler(): void {
-    if (this.consolidationTimer) clearInterval(this.consolidationTimer);
-    this.consolidationTimer = setInterval(() => {
-      void this.consolidateMemories();
-    }, MEMORY_CONFIG.consolidationInterval);
+  /** 初始化：探测 Ollama + 加载向量 + 启动反思调度 */
+  async init(): Promise<void> {
+    await this.probeSemantic();
+    await this.loadVectors();
+    this.startReflectionScheduler();
   }
 
-  stopScheduler(): void {
-    if (this.consolidationTimer) {
-      clearInterval(this.consolidationTimer);
-      this.consolidationTimer = null;
-    }
-  }
+  // ---------------- 记忆写入 ----------------
 
-  /** 添加短期记忆（conversation 内容；维护上限 slice(-100)；更新索引） */
-  async addShortTermMemory(conversation: string, metadata: Record<string, any> = {}): Promise<any> {
-    const memory = {
-      id: this.generateMemoryId(),
-      timestamp: new Date().toISOString(),
-      type: 'conversation',
-      content: conversation,
-      metadata: {
-        importance: this.calculateImportance(conversation, metadata),
-        emotion: this.detectEmotion(conversation),
-        topics: this.extractTopics(conversation),
-        ...metadata,
-      },
-      usage: { accessCount: 0, lastAccessed: null, relevanceScore: 1.0 },
+  /** 添加观察记忆（聊天对话等）；importance 走 LLM 打分（未配置降级规则分） */
+  async addObservation(description: string, opts: { source?: string; manuallyMarked?: boolean; importance?: number } = {}): Promise<MemoryStreamEntry> {
+    const importance = opts.importance ?? await this.scoreImportance(description, opts);
+    const memory: MemoryStreamEntry = {
+      id: `memory_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      created: new Date().toISOString(),
+      lastAccessed: new Date().toISOString(),
+      description,
+      importance,
+      type: 'observation',
+      source: opts.source,
     };
-    const layer = this.memory.shortTerm;
-    layer.memories.push(memory);
-    if (layer.memories.length > MEMORY_CONFIG.maxShortTerm) {
-      layer.memories = layer.memories.slice(-MEMORY_CONFIG.maxShortTerm);
-    }
-    layer.lastUpdated = new Date().toISOString();
-    await this.updateMemoryIndex(memory, 'shortTerm');
+    this.stream.push(memory);
+    this.enforceStreamLimit();
+    this.pendingSinceReflect++;
     await this.dataSaver(this.dataProvider());
+    await this.appendVector(memory);
     return memory;
   }
 
-  /** 计算重要性（原 calculateImportance 逐字） */
-  calculateImportance(conversation: string, metadata: Record<string, any>): number {
-    let score = 0.5;
-    const content = typeof conversation === 'string' ? conversation : JSON.stringify(conversation);
-    const wordCount = content.split(/\s+/).length;
-    score += Math.min(wordCount / 500, 0.3);
-    const emotionIntensity = this.calculateEmotionIntensity(content);
-    score += emotionIntensity * 0.2;
-    if (metadata.manuallyMarked) score += 0.3;
-    if (metadata.isRepetitive) score += 0.1;
-    return Math.min(Math.max(score, 0), 1);
+  /** 添加洞察记忆（反思产物；importance 固定高值可由调用方传入） */
+  async addInsight(description: string, evidenceIds: string[], importance = 0.75): Promise<MemoryStreamEntry> {
+    const memory: MemoryStreamEntry = {
+      id: `insight_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      created: new Date().toISOString(),
+      lastAccessed: new Date().toISOString(),
+      description,
+      importance,
+      type: 'insight',
+      evidenceIds,
+      source: 'reflection',
+    };
+    this.stream.push(memory);
+    this.enforceStreamLimit();
+    this.pendingSinceReflect++;
+    await this.dataSaver(this.dataProvider());
+    await this.appendVector(memory);
+    return memory;
   }
 
-  /** 检测情感（原 detectEmotion 关键词表逐字） */
-  detectEmotion(content: string): string {
-    const text = content.toLowerCase();
-    const emotionKeywords: Record<string, string[]> = {
-      positive: ['开心', '高兴', '喜欢', '爱', '很好', '不错', '棒', '优秀', '惊喜'],
-      negative: ['难过', '生气', '愤怒', '讨厌', '不好', '糟糕', '失望', '烦恼', '痛苦'],
-      neutral: ['知道', '了解', '明白', '思考', '考虑', '可能', '应该'],
-    };
-    for (const [emotion, keywords] of Object.entries(emotionKeywords)) {
-      if (keywords.some((k) => text.includes(k))) return emotion;
+  /** 超出上限淘汰 importance 最低（不足 1 条不淘汰） */
+  private enforceStreamLimit(): void {
+    while (this.stream.length > MEMORY_CONFIG.maxStream) {
+      let minIdx = 0;
+      this.stream.forEach((m, i) => {
+        if ((m.importance ?? 0) < (this.stream[minIdx].importance ?? 0)) minIdx = i;
+      });
+      this.stream.splice(minIdx, 1);
     }
-    return 'neutral';
+  }
+
+  // ---------------- importance 打分 ----------------
+
+  /** importance 打分：LLM 0-10 → 0-1；失败/未配置降级规则分 */
+  async scoreImportance(description: string, opts: { manuallyMarked?: boolean } = {}): Promise<number> {
+    try {
+      if (await isAIConfigured()) {
+        const r = await callChatJson([
+          {
+            role: 'system',
+            content:
+              '你是小橘，一只陪伴猫咪。请评估下面这条关于用户的记忆的重要程度：' +
+              '0=极其琐碎（如买了杯奶茶），10=极其重要（如考上了理想学校）。' +
+              '只返回 JSON：{"score": 0到10之间的数字}',
+          },
+          { role: 'user', content: `记忆：${description}` },
+        ], 120);
+        const s = Number(r?.score);
+        if (Number.isFinite(s)) return Math.min(1, Math.max(0, s / 10));
+      }
+    } catch (e) { /* 降级规则分 */ }
+    return this.ruleImportance(description, opts);
+  }
+
+  /** 规则 importance（原 calculateImportance 语义：0.5 + 词数 + 情绪强度 + 手动标记） */
+  ruleImportance(description: string, opts: { manuallyMarked?: boolean } = {}): number {
+    let score = 0.5;
+    const content = typeof description === 'string' ? description : JSON.stringify(description);
+    const wordCount = content.split(/\s+/).length;
+    score += Math.min(wordCount / 500, 0.3);
+    score += this.calculateEmotionIntensity(content) * 0.2;
+    if (opts.manuallyMarked) score += 0.3;
+    return Math.min(Math.max(score, 0), 1);
   }
 
   /** 情感强度（原 calculateEmotionIntensity 逐字） */
@@ -125,197 +177,277 @@ export class MemorySystem {
     return 0;
   }
 
-  /** 主题提取（原 10 主题词，最多 3 个） */
-  extractTopics(content: string): string[] {
-    const commonTopics = ['学习', '工作', '生活', '技术', '阅读', '写作', '思考', '计划', '问题', '解决方案'];
-    const text = content.toLowerCase();
-    return commonTopics.filter((t) => text.includes(t.toLowerCase())).slice(0, 3);
-  }
+  // ---------------- 检索（GA 三因子） ----------------
 
-  /** 记忆固化（短期 importance>=0.7 → 长期；超限删最不重要；短期移除） */
-  async consolidateMemories(): Promise<void> {
-    const { shortTerm, longTerm } = this.memory;
-    const important = shortTerm.memories.filter((m) => (m.metadata?.importance || 0) >= MEMORY_CONFIG.importanceThreshold);
-    for (const memory of important) {
-      const summary = this.generateMemorySummary(memory);
-      const longTermMemory: any = {
-        ...memory,
-        id: this.generateMemoryId(),
-        originalShortTermId: memory.id,
-        summary,
-        consolidatedAt: new Date().toISOString(),
-        metadata: {
-          ...memory.metadata,
-          consolidationScore: this.calculateConsolidationScore(memory),
-        },
-      };
-      longTerm.memories.push(longTermMemory);
-      if (longTerm.memories.length > MEMORY_CONFIG.maxLongTerm) {
-        this.removeLeastImportantLongTermMemory();
-      }
-      shortTerm.memories = shortTerm.memories.filter((m) => m.id !== memory.id);
+  /** 检索相关记忆：三因子评分 → 降序 → top N；更新 lastAccessed（自增强） */
+  async retrieve(query: string, topN = MEMORY_CONFIG.retrievalTopN): Promise<MemoryStreamEntry[]> {
+    const now = Date.now();
+    const useSemantic = await this.useSemanticMode();
+    let queryVec: number[] | null = null;
+    if (useSemantic && query.trim()) {
+      queryVec = await this.queryEmbeddingSafe(query);
     }
-    longTerm.consolidationCount = (longTerm.consolidationCount || 0) + important.length;
-    longTerm.lastUpdated = new Date().toISOString();
-    shortTerm.lastUpdated = new Date().toISOString();
-    await this.dataSaver(this.dataProvider());
-  }
-
-  /** 记忆摘要（原 generateMemorySummary 逐字：句子 10-200 字取前 3） */
-  generateMemorySummary(memory: any): any {
-    const content = typeof memory.content === 'string' ? memory.content : JSON.stringify(memory.content);
-    const sentences = content.split(/[.!?。！？]+/).filter((s: string) => s.trim().length > 0);
-    const keySentences = sentences
-      .filter((s: string) => s.length > 10 && s.length < 200)
-      .slice(0, 3);
-    return { keyPoints: keySentences, topics: memory.metadata?.topics, emotion: memory.metadata?.emotion, wordCount: content.length };
-  }
-
-  /** 固化分（原 calculateConsolidationScore 逐字） */
-  calculateConsolidationScore(memory: any): number {
-    let score = memory.metadata?.importance || 0;
-    const usage = this.memory.index.usageStats?.[memory.id];
-    if (usage) score += Math.min(usage.accessCount * 0.1, 0.3);
-    const ageInDays = (Date.now() - new Date(memory.timestamp).getTime()) / (24 * 60 * 60 * 1000);
-    score += Math.max(0, (7 - ageInDays) * 0.05);
-    return Math.min(Math.max(score, 0), 1);
-  }
-
-  /** 删最不重要长期记忆（importance * consolidationScore 最小） */
-  removeLeastImportantLongTermMemory(): void {
-    const { longTerm } = this.memory;
-    if (!longTerm.memories.length) return;
-    let minImportance = 1;
-    let minIndex = -1;
-    longTerm.memories.forEach((memory: any, index: number) => {
-      const importance = (memory.metadata?.importance || 0) * (memory.metadata?.consolidationScore || 0.5);
-      if (importance < minImportance) {
-        minImportance = importance;
-        minIndex = index;
-      }
+    const scored = this.stream.map((m) => {
+      const hours = (now - new Date(m.lastAccessed || m.created).getTime()) / 3.6e6;
+      const recency = Math.pow(MEMORY_CONFIG.decay, Math.max(0, hours));
+      const importance = m.importance ?? 0;
+      const relevance = queryVec && m.id ? this.semanticRelevance(m.id, queryVec) : this.lexicalRelevance(m, query);
+      return { m, score: MEMORY_CONFIG.alphaRecency * recency + MEMORY_CONFIG.alphaImportance * importance + MEMORY_CONFIG.alphaRelevance * relevance };
     });
-    if (minIndex !== -1) longTerm.memories.splice(minIndex, 1);
-  }
-
-  /** 检索相关记忆（三层合并 → relevance 降序 → >=0.7 → 至多 10 条；更新使用统计） */
-  async retrieveRelevantMemories(query: string, _context: Record<string, any> = {}): Promise<any[]> {
-    const results: any[] = [];
-    for (const layer of ['shortTerm', 'longTerm', 'permanent'] as const) {
-      results.push(...this.searchInLayer(layer, query));
-    }
-    results.sort((a, b) => b.relevance - a.relevance);
-    const filtered = results.filter((m) => m.relevance >= RETRIEVAL_THRESHOLD);
-    filtered.forEach((memory) => {
-      void this.updateUsageStats(memory.id);
-    });
-    return filtered.slice(0, RETRIEVAL_MAX);
-  }
-
-  /** 层内检索（原 searchInLayer 语义；内存层直接读） */
-  searchInLayer(layer: 'shortTerm' | 'longTerm' | 'permanent', query: string): any[] {
-    const memories = this.memory[layer].memories || [];
-    const results: any[] = [];
-    for (const memory of memories) {
-      const relevance = this.calculateRelevance(memory, query);
-      if (relevance > 0) results.push({ ...memory, layer, relevance });
-    }
-    return results;
-  }
-
-  /** 相关度（原 calculateRelevance 逐字：关键词×0.4 + 主题×0.3 + 时间衰减×0.2 + 使用×0.05） */
-  calculateRelevance(memory: any, query: string): number {
-    let relevance = 0;
-    const content = typeof memory.content === 'string' ? memory.content : JSON.stringify(memory.content);
-    const queryKeywords = query.toLowerCase().split(/\s+/);
-    let keywordMatches = 0;
-    queryKeywords.forEach((kw) => {
-      if (content.toLowerCase().includes(kw)) keywordMatches++;
-    });
-    relevance += (keywordMatches / Math.max(queryKeywords.length, 1)) * 0.4;
-    if (memory.metadata?.topics) {
-      const topicMatches = memory.metadata.topics.filter((t: string) => query.toLowerCase().includes(t.toLowerCase())).length;
-      relevance += (topicMatches / Math.max(memory.metadata.topics.length, 1)) * 0.3;
-    }
-    const memoryAge = Date.now() - new Date(memory.timestamp).getTime();
-    const ageInDays = memoryAge / (24 * 60 * 60 * 1000);
-    const timeRelevance = Math.max(0, 1 - ageInDays / 30);
-    relevance += timeRelevance * 0.2;
-    const usage = this.memory.index.usageStats?.[memory.id];
-    if (usage) relevance += Math.min(usage.accessCount * 0.05, 0.1);
-    return Math.min(Math.max(relevance, 0), 1);
-  }
-
-  /** 更新使用统计（accessCount++，落盘） */
-  async updateUsageStats(memoryId: string): Promise<void> {
-    if (this.memory.index.usageStats?.[memoryId]) {
-      this.memory.index.usageStats[memoryId].accessCount++;
-      this.memory.index.usageStats[memoryId].lastAccessed = new Date().toISOString();
-      this.memory.index.lastUpdated = new Date().toISOString();
+    scored.sort((a, b) => b.score - a.score);
+    const top = scored.slice(0, topN).map((s) => s.m);
+    const touched = top.filter((m) => m.id);
+    if (touched.length) {
+      const lastAccessed = new Date().toISOString();
+      touched.forEach((m) => { m.lastAccessed = lastAccessed; });
       await this.dataSaver(this.dataProvider());
     }
+    return top;
   }
 
-  /** 更新索引（时间/主题/情感/usageStats） */
-  async updateMemoryIndex(memory: any, layer: string): Promise<void> {
-    const index = this.memory.index;
-    const dateKey = new Date(memory.timestamp).toISOString().split('T')[0];
-    (index.timeIndex ||= {})[dateKey] ||= [];
-    index.timeIndex![dateKey].push(memory.id);
-    if (memory.metadata?.topics?.length) {
-      memory.metadata.topics.forEach((topic: string) => {
-        (index.topicIndex ||= {})[topic] ||= [];
-        index.topicIndex![topic].push(memory.id);
-      });
-    }
-    if (memory.metadata?.emotion) {
-      (index.emotionIndex ||= {})[memory.metadata.emotion] ||= [];
-      index.emotionIndex![memory.metadata.emotion].push(memory.id);
-    }
-    (index.usageStats ||= {})[memory.id] = {
-      layer,
-      accessCount: 0,
-      lastAccessed: null,
-      importance: memory.metadata?.importance || 0,
-    };
-    index.lastUpdated = new Date().toISOString();
+  /** 词法相关度（无时间项——时间归 recency；关键词×0.7 + 主题命中×0.3 归一） */
+  lexicalRelevance(memory: MemoryStreamEntry, query: string): number {
+    if (!query.trim()) return 0;
+    const content = memory.description.toLowerCase();
+    const queryKeywords = query.toLowerCase().split(/\s+/).filter((k) => k.length > 0);
+    if (!queryKeywords.length) return 0;
+    let hit = 0;
+    for (const kw of queryKeywords) if (content.includes(kw)) hit++;
+    return Math.min(1, (hit / queryKeywords.length) * 0.7 + (content.includes(query.toLowerCase()) ? 0.3 : 0));
   }
 
-  /** 清理过期（原 cleanupExpiredMemories：长期 30 天未用且 importance<0.3 删除） */
-  async cleanupExpiredMemories(): Promise<void> {
+  // ---------------- 语义模式（bge-m3 via Ollama） ----------------
+
+  private async probeSemantic(): Promise<boolean> {
+    if (this.ollamaAvailable !== null) return this.ollamaAvailable;
+    try {
+      const { buildConfig } = await import('../flash/config');
+      this.ollamaAvailable = await checkRemoteOllama(buildConfig().OLLAMA_URL);
+    } catch {
+      this.ollamaAvailable = false;
+    }
+    return this.ollamaAvailable;
+  }
+
+  private async useSemanticMode(): Promise<boolean> {
+    const ok = await this.probeSemantic();
+    return ok && this.dim > 0 && !!this.vectors;
+  }
+
+  private async queryEmbeddingSafe(query: string): Promise<number[] | null> {
+    try {
+      const vec = await getEmbedding(query, true);
+      if (!vec.length) return null;
+      if (!this.dim) this.dim = vec.length;
+      return vec;
+    } catch {
+      return null;
+    }
+  }
+
+  /** 记忆语义相关度（余弦；向量缺失 → 0） */
+  semanticRelevance(memoryId: string, queryVec: number[]): number {
+    const vectors = this.vectors;
+    if (!vectors || !this.dim) return 0;
+    const idx = this.memoryVectorIndex(memoryId);
+    if (idx < 0) return 0;
+    const memVec = vectors.subarray(idx * this.dim, (idx + 1) * this.dim);
+    if (!memVec.length || !queryVec.length) return 0;
+    let dot = 0, a = 0, b = 0;
+    for (let i = 0; i < this.dim; i++) {
+      dot += memVec[i] * (queryVec[i] ?? 0);
+      a += memVec[i] * memVec[i];
+      b += (queryVec[i] ?? 0) * (queryVec[i] ?? 0);
+    }
+    const denom = Math.sqrt(a) * Math.sqrt(b);
+    return denom === 0 ? 0 : Math.max(0, dot / denom);
+  }
+
+  /** 记忆在向量文件中的行序（appendVector 维护 id→行序映射） */
+  private memoryVectorIndex(memoryId: string): number {
+    return this.vectorIndexMap ? (this.vectorIndexMap.get(memoryId) ?? -1) : -1;
+  }
+
+  // ---------------- 向量文件（smartcat-memory-vectors.vec） ----------------
+
+  private vectorIndexMap: Map<string, number> | null = null;
+
+  /** 加载向量文件（dim uint32 LE + float32 平铺；无文件 → 清空） */
+  async loadVectors(): Promise<void> {
+    this.vectors = null;
+    this.dim = 0;
+    this.vectorIndexMap = null;
+    try {
+      const buf = await this.app.vault.adapter.readBinary(getSmartcatVecPath());
+      const arr = new Uint8Array(buf);
+      if (arr.length < 8) return;
+      const dim = new DataView(arr.buffer, arr.byteOffset, 4).getUint32(0, true);
+      if (dim <= 0 || dim > 10000) return;
+      this.dim = dim;
+      const payload = arr.slice(4);
+      const count = Math.floor(payload.byteLength / 4 / dim);
+      const f32 = new Float32Array(payload.buffer, payload.byteOffset, count * dim);
+      this.vectors = new Float64Array(f32);
+      // 行序映射：与 stream 顺序对齐（stream 可能已变化，重建映射）
+      this.rebuildIndexMap();
+    } catch {
+      /* 无文件 → 空 */
+    }
+  }
+
+  /** 重建 id→行序 映射（stream 顺序即向量行序） */
+  private rebuildIndexMap(): void {
+    const map = new Map<string, number>();
+    this.stream.forEach((m, i) => { if (m.id) map.set(m.id, i); });
+    this.vectorIndexMap = map;
+  }
+
+  /** 追加记忆向量（语义模式可用时；失败静默——检索会回退词法） */
+  private async appendVector(memory: MemoryStreamEntry): Promise<void> {
+    const ok = await this.probeSemantic();
+    if (!ok) return;
+    try {
+      const vec = await getEmbedding(memory.description, false);
+      if (!vec.length) return;
+      if (!this.dim) this.dim = vec.length;
+      // 追加到内存向量（行序 = stream 最后一条）
+      if (!this.vectors) this.vectors = new Float64Array(0);
+      const merged = new Float64Array(this.vectors.length + this.dim);
+      merged.set(this.vectors, 0);
+      for (let i = 0; i < this.dim; i++) merged[this.vectors.length + i] = vec[i] ?? 0;
+      this.vectors = merged;
+      if (!this.vectorIndexMap) this.vectorIndexMap = new Map();
+      const idx = this.stream.length - 1;
+      this.vectorIndexMap.set(memory.id, idx);
+      await this.persistVectors();
+    } catch {
+      /* 降级词法 */
+    }
+  }
+
+  /** 向量落盘（全量重写：dim 头 + float32 平铺） */
+  private async persistVectors(): Promise<void> {
+    if (!this.vectors || !this.dim) return;
+    try {
+      const f64 = this.vectors;
+      const header = new Uint8Array(4);
+      new DataView(header.buffer).setUint32(0, this.dim, true);
+      const payload = new Float32Array(f64);
+      const data = new Uint8Array(4 + payload.byteLength);
+      data.set(header, 0);
+      data.set(new Uint8Array(payload.buffer, payload.byteOffset, payload.byteLength), 4);
+      await this.app.vault.adapter.writeBinary(getSmartcatVecPath(), data.buffer as ArrayBuffer);
+    } catch {
+      /* 落盘失败静默 */
+    }
+  }
+
+  // ---------------- 反思（Reflection） ----------------
+
+  /** 反思调度（每 30s 检查一次；24h 或新增 ≥20 条触发） */
+  startReflectionScheduler(): void {
+    if (this.reflectionTimer) clearInterval(this.reflectionTimer);
+    this.reflectionTimer = setInterval(() => {
+      void this.maybeReflect();
+    }, 30 * 1000);
+  }
+
+  stopScheduler(): void {
+    if (this.reflectionTimer) {
+      clearInterval(this.reflectionTimer);
+      this.reflectionTimer = null;
+    }
+  }
+
+  /** 触发条件：距上次反思 ≥24h 或 新增 ≥reflectionMinNew 条（从未反思只靠新增计数） */
+  private shouldReflect(now: number): boolean {
+    const last = this.dataProvider().memory.reflection.lastReflectAt || 0;
+    if (!last) return this.pendingSinceReflect >= MEMORY_CONFIG.reflectionMinNew;
+    return now - last >= MEMORY_CONFIG.reflectionInterval || this.pendingSinceReflect >= MEMORY_CONFIG.reflectionMinNew;
+  }
+
+  async maybeReflect(): Promise<boolean> {
+    if (this.reflecting) return false;
+    if (!this.shouldReflect(Date.now())) return false;
+    this.reflecting = true;
+    try {
+      await this.reflect();
+      return true;
+    } finally {
+      this.reflecting = false;
+    }
+  }
+
+  /** 反思主流程：evidence → LLM 归纳 3 条洞察 → 写回流（带 evidenceIds）
+   *  无产出（AI 未配置/调用失败/证据不足）时不推进 lastReflectAt——保持待反思状态，
+   *  配置 AI 后可由 pending 计数立即再触发。
+   */
+  async reflect(): Promise<void> {
+    const data = this.dataProvider();
     const now = Date.now();
-    const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
-    const { longTerm } = this.memory;
-    longTerm.memories = (longTerm.memories || []).filter((memory: any) => {
-      const usage = this.memory.index.usageStats?.[memory.id];
-      const lastUsed = usage && usage.lastAccessed ? new Date(usage.lastAccessed).getTime() : new Date(memory.timestamp).getTime();
-      const isExpired = lastUsed < thirtyDaysAgo && (memory.metadata?.importance || 0) < 0.3;
-      return !isExpired;
-    });
-    longTerm.lastUpdated = new Date().toISOString();
-    await this.dataSaver(this.dataProvider());
+    // evidence：最近 evidenceWindow 条内 importance 前 evidenceTop 条
+    const recent = this.stream.slice(-MEMORY_CONFIG.evidenceWindow);
+    const evidence = [...recent].sort((a, b) => (b.importance ?? 0) - (a.importance ?? 0)).slice(0, MEMORY_CONFIG.evidenceTop);
+    if (evidence.length < 2) return; // 记忆太少不反思
+
+    const numbered = evidence.map((m, i) => `${i + 1}. ${m.description}`).join('\n');
+    const prompt =
+      `你是小橘，一只陪伴猫咪。下面是关于用户的一些记忆（编号 1-${evidence.length}）：\n` +
+      numbered +
+      '\n\n请归纳出最重要的 ' + MEMORY_CONFIG.insightCount + ' 条高阶结论（关于用户的喜好/性格/习惯/关系），' +
+      '每条必须引用 1 条以上记忆编号作为依据。只返回 JSON：' +
+      `{"insights":[{"text":"结论","evidence":[编号]}]}`;
+
+    let insights: { text: string; evidence: number[] }[] = [];
+    try {
+      if (await isAIConfigured()) {
+        const r = await callChatJson([
+          { role: 'system', content: '你是辅助归纳记忆的助手，只输出合法 JSON。' },
+          { role: 'user', content: prompt },
+        ], 800);
+        if (Array.isArray(r?.insights)) {
+          insights = r.insights
+            .filter((x: any) => x && typeof x.text === 'string' && x.text.trim())
+            .slice(0, MEMORY_CONFIG.insightCount)
+            .map((x: any) => ({ text: x.text.trim(), evidence: Array.isArray(x.evidence) ? x.evidence.map(Number) : [] }));
+        }
+      }
+    } catch (e) { /* 反思调用失败 → 无产出，保持待反思 */ }
+
+    if (insights.length) {
+      for (const ins of insights) {
+        const evidenceIds = ins.evidence
+          .map((n) => evidence[n - 1]?.id)
+          .filter((id): id is string => !!id);
+        await this.addInsight(ins.text, evidenceIds);
+      }
+      data.memory.reflection.lastReflectAt = now;
+      data.memory.reflection.count = (data.memory.reflection.count || 0) + 1;
+      this.pendingSinceReflect = 0;
+    }
+    data.memory.lastUpdated = new Date().toISOString();
+    await this.dataSaver(data);
   }
 
-  /** 系统状态（原 getSystemStatus 语义） */
+  // ---------------- 状态与格式化 ----------------
+
+  /** 系统状态（记忆流计数/洞察数/反思次数/语义模式） */
   getSystemStatus(): any {
     return {
-      shortTermCount: this.memory.shortTerm.memories.length,
-      longTermCount: this.memory.longTerm.memories.length,
-      permanentCount: this.memory.permanent.memories.length,
-      lastConsolidation: this.memory.longTerm.consolidationCount || 0,
+      streamCount: this.stream.length,
+      insightCount: this.stream.filter((m) => m.type === 'insight').length,
+      reflectionCount: this.dataProvider().memory.reflection.count || 0,
+      semanticMode: this.ollamaAvailable === true && this.dim > 0,
     };
   }
 
-  /** 格式化记忆供 prompt（原 formatMemoriesForPrompt 逐字） */
-  formatMemoriesForPrompt(memories: any[]): string {
+  /** 格式化记忆供 prompt（原 formatMemoriesForPrompt 语义） */
+  formatMemoriesForPrompt(memories: MemoryStreamEntry[]): string {
     return memories
       .map((memory, index) => {
-        const content = typeof memory.content === 'string' ? memory.content : JSON.stringify(memory.content);
-        return `${index + 1}. [${memory.layer}] ${content.substring(0, 200)}...`;
+        const content = typeof memory.description === 'string' ? memory.description : JSON.stringify(memory.description);
+        return `${index + 1}. [${memory.type}] ${content.substring(0, 200)}...`;
       })
       .join('\n');
-  }
-
-  private generateMemoryId(): string {
-    return `memory_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 }
