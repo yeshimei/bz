@@ -1,7 +1,9 @@
 /**
  * 归物本 UI（归物本.js 逐字移植）
  * 主面板：__gui_wu_ben__（visibility 控制，不销毁）；弹窗 z-index：add=10000/edit=10001/delete=10002/sort=10003；
- * 长按 600ms 删除 / 单击 <500ms 编辑；MutationObserver 主题变化重渲染。
+ * 统一抽屉（桌面右键/移动长按）：状态流转 + 编辑 + 删除（用户拍板，替换原手写 pointerdown 长按删除/单击编辑）；
+ * 刷新：右上角 ⏳ 按钮已移除 → 打开期间监听 belongings.json 变更自动刷新（用户拍板）；
+ * MutationObserver 主题变化重渲染。
  */
 import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
@@ -11,7 +13,15 @@ import { formatRelativeTime } from '../core/utils';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
-import { loadDatabase, saveDatabase, calculateDailyCost, calculateDaysUsed } from './data';
+import {
+  attachItemActions,
+  refreshItemSheet,
+  registerSheetCompanion,
+  unregisterSheetCompanion,
+  closeItemMenu,
+  type ItemAction,
+} from '../core/item-actions';
+import { loadDatabase, saveDatabase, calculateDailyCost, calculateDaysUsed, getDataFilePath } from './data';
 import type { BelongingsDatabase, BelongingsItem } from './types';
 
 // ----- 类型 -----
@@ -40,6 +50,10 @@ interface FormField {
 // ----- 模块状态（原脚本全局变量） -----
 let database: BelongingsDatabase | null = null;
 let listContainer: HTMLDivElement | null = null;
+/** 抽屉来源的编辑（保存成功后关抽屉，与收藏本 Q8 同决策） */
+let sheetEditPending = false;
+/** 数据文件变更监听（打开期间注册，关闭注销——用户拍板"自动刷新"） */
+let autoRefreshOff: (() => void) | null = null;
 let sortField = 'purchase_date'; // 默认按购买日期
 let sortOrder = 'desc'; // 降序
 let isDarkMode = false;
@@ -74,8 +88,8 @@ function render() {
 
   listContainer.innerHTML = html;
 
-  // 为每个物品卡片绑定事件
-  bindCardEvents();
+  // 为每个物品卡片挂统一抽屉
+  bindCardDrawers();
 }
 
 /** 排序：按当前 sortField/sortOrder 返回排序后的物品 */
@@ -196,45 +210,100 @@ function buildItemGroupsHtml(
     }).join('')}`;
 }
 
-/** 为物品卡片绑定长按删除 / 单击编辑事件 */
-function bindCardEvents(): void {
+/** 为物品卡片挂统一抽屉（桌面右键菜单 / 移动长按抽屉）：状态流转 + 编辑 + 删除 */
+function bindCardDrawers(): void {
   if (!listContainer) return;
-  listContainer.querySelectorAll('[data-id]').forEach((card) => {
-    const id = (card as HTMLElement).dataset.id!;
-
-    card.addEventListener('pointerdown', () => {
-      const startTime = Date.now();
-      let longPressTriggered = false;
-
-      const timer = setTimeout(() => {
-        longPressTriggered = true;
-        deleteItemById(id); // 长按删除
-      }, 600);
-
-      const onPointerUp = () => {
-        clearTimeout(timer);
-        if (!longPressTriggered) {
-          const elapsed = Date.now() - startTime;
-          if (elapsed < 500) {
-            // 单击（小于500ms视为单击）
-            editItemById(id);
-          }
-        }
-        // 清理一次性监听
-        card.removeEventListener('pointerup', onPointerUp);
-        card.removeEventListener('pointerleave', onPointerLeave);
-      };
-
-      const onPointerLeave = () => {
-        clearTimeout(timer);
-        card.removeEventListener('pointerup', onPointerUp);
-        card.removeEventListener('pointerleave', onPointerLeave);
-      };
-
-      card.addEventListener('pointerup', onPointerUp);
-      card.addEventListener('pointerleave', onPointerLeave);
-    });
+  listContainer.querySelectorAll('[data-id]').forEach((cardEl) => {
+    const id = (cardEl as HTMLElement).dataset.id!;
+    const item = database!.items[id];
+    if (!item) return;
+    const rebuild = () => refreshItemSheet(buildActions(item, rebuild), buildSheetHead(item));
+    attachItemActions(cardEl as HTMLElement, buildActions(item, rebuild), { sheetHead: buildSheetHead(item) });
   });
+}
+
+/** 归物本抽屉动作：4 状态流转（当前状态不显示，keepOpen）→ 编辑 → 删除 */
+function buildActions(item: BelongingsItem, rebuild: () => void): ItemAction[] {
+  const acts: ItemAction[] = [];
+  const STATUS_ICONS: Record<string, any> = {
+    使用中: 'check-circle',
+    闲置: 'package',
+    已转卖: 'banknote',
+    已丢弃: 'archive',
+  };
+
+  // 状态流转（归物本特色：常用操作，比进编辑改下拉快）
+  for (const s of ['使用中', '闲置', '已转卖', '已丢弃']) {
+    if (s === item.current_status) continue; // 当前状态不显示（头部已示）
+    acts.push({
+      icon: STATUS_ICONS[s],
+      label: `标记为${s}`,
+      keepOpen: true,
+      onClick: () => {
+        void (async () => {
+          item.current_status = s;
+          item.last_updated = new Date().toISOString();
+          await saveDatabase(database!);
+          render();
+          rebuild();
+        })();
+      },
+    });
+  }
+
+  // 编辑（keepOpen：编辑弹窗叠抽屉；保存后关抽屉）
+  acts.push({
+    icon: 'pencil',
+    label: '编辑',
+    keepOpen: true,
+    onClick: () => {
+      sheetEditPending = true;
+      void editItemById(item.id);
+    },
+  });
+
+  // 删除（danger：点删除先收抽屉再弹确认）
+  acts.push({
+    icon: 'trash-2',
+    label: '删除',
+    kind: 'danger',
+    onClick: () => {
+      void deleteItemById(item.id);
+    },
+  });
+
+  return acts;
+}
+
+/** 抽屉头部：分类 emoji + 名称 + 小字行（分类名 · 价格 · 天数），复用通用头部类 */
+function buildSheetHead(item: BelongingsItem): HTMLElement {
+  const head = document.createElement('div');
+  head.className = 'bz-item-sheet-entry';
+  const body = document.createElement('div');
+  body.style.cssText = 'display:flex; align-items:flex-start; gap:10px;';
+
+  const catIcon = database!.categoryIcons[item.category] || '📦';
+  const emoji = document.createElement('span');
+  emoji.className = 'bz-item-sheet-emoji';
+  emoji.textContent = catIcon;
+  body.appendChild(emoji);
+
+  const info = document.createElement('div');
+  info.style.cssText = 'flex:1; min-width:0;';
+  const title = document.createElement('div');
+  title.className = 'bz-item-sheet-title';
+  title.textContent = item.name;
+  info.appendChild(title);
+  const sub = document.createElement('div');
+  sub.className = 'bz-item-sheet-sub';
+  const catName = item.category.replace(/^[^ ]+ /, '');
+  const days = calculateDaysUsed(item.purchase_date);
+  sub.textContent = `${catName} · ￥${item.purchase_price.toFixed(2)} · 已用 ${days} 天`;
+  info.appendChild(sub);
+
+  body.appendChild(info);
+  head.appendChild(body);
+  return head;
 }
 
 
@@ -537,6 +606,14 @@ function createModalShell(
   return { overlay, modal, palette, resolve: resolveFn, promise };
 }
 
+/** 编辑弹窗关闭路径统一清理：清抽屉编辑标志 + 注销附属浮层（取消/遮罩/ESC，抽屉保持） */
+function closeSheetEditState(overlay: HTMLElement): void {
+  if (sheetEditPending) {
+    sheetEditPending = false;
+    unregisterSheetCompanion(overlay);
+  }
+}
+
 /** 编辑物品（单击卡片触发） */
 function editItemById(id: string): Promise<void> {
   const item = database!.items[id];
@@ -548,6 +625,8 @@ function editItemById(id: string): Promise<void> {
   // ----- 创建独立编辑弹窗 -----
   return new Promise((resolve) => {
     const { overlay, modal, palette, resolve: done } = createModalShell(10001, 480, '编辑物品');
+    // 抽屉来源的编辑：注册附属浮层（弹窗内点击不误关抽屉）
+    if (sheetEditPending) registerSheetCompanion(overlay);
 
     // 表单字段（预填当前值）
     const fields: FormField[] = [
@@ -573,6 +652,7 @@ function editItemById(id: string): Promise<void> {
 
     const cancelBtn = createSecondaryButton('取消', palette, () => {
       document.body.removeChild(overlay);
+      closeSheetEditState(overlay);
       done();
     });
 
@@ -600,6 +680,11 @@ function editItemById(id: string): Promise<void> {
       if (document.body.contains(overlay)) {
         document.body.removeChild(overlay);
       }
+      // 抽屉来源的编辑：保存成功后关抽屉（用户拍板）
+      if (sheetEditPending) {
+        closeSheetEditState(overlay);
+        closeItemMenu();
+      }
       done();
       resolve();
     });
@@ -613,6 +698,7 @@ function editItemById(id: string): Promise<void> {
       isVisible: () => overlay.isConnected,
       close: () => {
         if (document.body.contains(overlay)) document.body.removeChild(overlay);
+        closeSheetEditState(overlay);
         done();
       },
     });
@@ -621,6 +707,7 @@ function editItemById(id: string): Promise<void> {
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
         document.body.removeChild(overlay);
+        closeSheetEditState(overlay);
         done();
         resolve();
       }
@@ -900,6 +987,29 @@ export function addItem(): Promise<void> {
   });
 }
 
+/** 打开期间监听数据文件变更自动刷新（用户拍板：去 ⏳ 按钮改实时）；面板隐藏时注销 */
+function startAutoRefresh(): void {
+  stopAutoRefresh();
+  const app = getApp();
+  const off = app.vault.on('modify', (file: any) => {
+    if (file && file.path === getDataFilePath()) {
+      void (async () => {
+        database = await loadDatabase();
+        render();
+      })();
+    }
+  });
+  autoRefreshOff = () => app.vault.offref(off);
+}
+
+/** 停止数据文件变更监听（幂等） */
+function stopAutoRefresh(): void {
+  if (autoRefreshOff) {
+    autoRefreshOff();
+    autoRefreshOff = null;
+  }
+}
+
 // ----- 创建主弹窗 -----
 export async function openBelongingsPanel(): Promise<void> {
   const app = getApp();
@@ -912,6 +1022,7 @@ export async function openBelongingsPanel(): Promise<void> {
     // 重新加载数据并渲染
     database = await loadDatabase();
     render();
+    startAutoRefresh();
     return;
   }
 
@@ -1002,19 +1113,6 @@ export async function openBelongingsPanel(): Promise<void> {
     });
   });
 
-  const refreshBtn = document.createElement('button');
-  refreshBtn.textContent = '⏳';
-  refreshBtn.style.cssText = ` background: none; border: none; font-size: .7rem;
-    cursor: pointer; color: var(--text-muted);
-    box-shadow: none;
-    padding: 0;
-    margin-left: 3px;`;
-  refreshBtn.addEventListener('click', async () => {
-    database = await loadDatabase();
-    render();
-    notice('已刷新', 'success');
-  });
-
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '❌';
   closeBtn.className = 'bz-win-close';
@@ -1025,10 +1123,10 @@ export async function openBelongingsPanel(): Promise<void> {
     margin-left: 3px;`;
   closeBtn.addEventListener('click', () => {
     (overlay as HTMLElement).style.visibility = 'hidden';
+    stopAutoRefresh();
   });
 
   headerButtons.appendChild(addBtn);
-  headerButtons.appendChild(refreshBtn);
   headerButtons.appendChild(sortBtn);
   headerButtons.appendChild(settingsBtn);
   headerButtons.appendChild(closeBtn);
@@ -1045,7 +1143,10 @@ export async function openBelongingsPanel(): Promise<void> {
 
   // 点击外部关闭
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) overlay.style.visibility = 'hidden';
+    if (e.target === overlay) {
+      overlay.style.visibility = 'hidden';
+      stopAutoRefresh();
+    }
   });
   // ESC 关闭（全局注册表，同 ID 去重）
   escManager.register('belongings', {
@@ -1056,11 +1157,13 @@ export async function openBelongingsPanel(): Promise<void> {
     close: () => {
       const el = document.getElementById('__gui_wu_ben__');
       if (el) el.style.visibility = 'hidden';
+      stopAutoRefresh();
     },
   });
 
   // 初次渲染
   render();
+  startAutoRefresh();
 
   // 主题变化监听
   const themeObserver = new MutationObserver(() => {
@@ -1078,6 +1181,7 @@ export async function addBelongingsItemCommand(): Promise<void> {
 
 /** 卸载清理：移除主面板 DOM */
 export function cleanupBelongings(): void {
+  stopAutoRefresh();
   const el = document.getElementById('__gui_wu_ben__');
   if (el) el.remove();
   listContainer = null;
