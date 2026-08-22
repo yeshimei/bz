@@ -29,6 +29,11 @@ function longPressOpen(card: HTMLElement) {
   card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 }
 
+/** 桌面右键开菜单（同步，无补发 click） */
+function rightClickOpen(card: HTMLElement) {
+  card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 100, clientY: 100 }));
+}
+
 /** 长按打开浮层（自带 fake timers 包裹）+ 等待一拍 */
 async function openByLongPress(card: HTMLElement) {
   vi.useFakeTimers();
@@ -219,18 +224,16 @@ describe('收藏本面板', () => {
     expect(data[0].llmConfig).toEqual({ apiKeys: 'sk-abc', balanceUrl: '' });
   });
 
-  it('编辑模式：长按卡片→动作「编辑」→ 回填 + saveBtn「更新」+ 保留 created', async () => {
+  it('编辑模式：右键卡片→动作「编辑」→ 回填 + saveBtn「更新」+ 保留 created', async () => {
     const { ui, dm } = await setup();
     await dm.add(makeItem({ id: '7', title: '原标题', tags: ['GitHub', '网站'] }));
     ui.build();
     ui.show();
     await new Promise((r) => setTimeout(r, 20));
 
-    // 整卡长按 → 跟手菜单 → 编辑（fake timers）
-    vi.useFakeTimers();
+    // 整卡右键 → 跟手菜单 → 编辑
     const card = document.querySelector('#fav-entries-container .fav-card') as HTMLElement;
-    longPressOpen(card);
-    vi.useRealTimers();
+    rightClickOpen(card);
     await new Promise((r) => setTimeout(r, 10));
 
     clickAction('编辑');
@@ -250,17 +253,15 @@ describe('收藏本面板', () => {
     expect(hasNotice('收藏已更新')).toBe(true);
   });
 
-  it('删除：长按卡片→动作「删除」→ confirm 确认删除', async () => {
+  it('删除：右键卡片→动作「删除」→ confirm 确认删除', async () => {
     const { ui, dm } = await setup();
     await dm.add(makeItem());
     ui.build();
     ui.show();
     await new Promise((r) => setTimeout(r, 20));
 
-    vi.useFakeTimers();
     const card = document.querySelector('#fav-entries-container .fav-card') as HTMLElement;
-    longPressOpen(card);
-    vi.useRealTimers();
+    rightClickOpen(card);
     await new Promise((r) => setTimeout(r, 10));
 
     clickAction('删除');
