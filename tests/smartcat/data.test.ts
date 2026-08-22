@@ -109,10 +109,10 @@ describe('normalizeData（记忆流，ADR-0021）', () => {
     expect((d.memory as any).shortTerm).toBeUndefined();
   });
 
-  it('defaultMemoryStream 结构完整（version/stream/reflection）', () => {
+  it('defaultMemoryStream 结构完整（version/stream/reflection + digest 字段）', () => {
     const m = defaultMemoryStream();
     expect(m.version).toBe(1);
     expect(m.stream).toEqual([]);
-    expect(m.reflection).toEqual({ lastReflectAt: 0, count: 0 });
+    expect(m.reflection).toEqual({ lastReflectAt: 0, count: 0, lastDigestAt: 0, digestCount: 0 });
   });
 });

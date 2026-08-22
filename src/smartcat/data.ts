@@ -34,7 +34,7 @@ export function defaultMemoryStream(): MemoryStream {
     version: 1,
     lastUpdated: new Date().toISOString(),
     stream: [],
-    reflection: { lastReflectAt: 0, count: 0 },
+    reflection: { lastReflectAt: 0, count: 0, lastDigestAt: 0, digestCount: 0 },
   };
 }
 
@@ -105,6 +105,8 @@ export function normalizeData(raw: any): SmartCatData {
       reflection: {
         lastReflectAt: typeof raw.memory?.reflection?.lastReflectAt === 'number' ? raw.memory.reflection.lastReflectAt : 0,
         count: typeof raw.memory?.reflection?.count === 'number' ? raw.memory.reflection.count : 0,
+        lastDigestAt: typeof raw.memory?.reflection?.lastDigestAt === 'number' ? raw.memory.reflection.lastDigestAt : 0,
+        digestCount: typeof raw.memory?.reflection?.digestCount === 'number' ? raw.memory.reflection.digestCount : 0,
       },
     },
   };
