@@ -114,6 +114,17 @@ describe('右键跟手菜单（桌面主路径）', () => {
     expect(menu.style.top).toBe('112px');
   });
 
+  it('菜单不渲染右侧小字（sub 仅移动端抽屉显示）：带 sub 的动作在菜单仅图标 + 文案', () => {
+    const card = makeCard();
+    attachItemActions(card, [...ACTIONS, { icon: 'file-text', label: '字数', sub: '123 字', onClick: () => {} }]);
+    rightClickOn(card);
+    const menu = document.querySelector('.bz-item-menu') as HTMLElement;
+    expect(menu).not.toBeNull();
+    expect(menu.querySelector('.bz-item-menu-item-sub')).toBeNull();
+    expect(menu.textContent).not.toContain('123 字');
+    expect(menu.textContent).toContain('字数');
+  });
+
   it('菜单防溢出：右下放不下 → 翻到锚点左/上方，并夹紧视口边界', () => {
     const origW = window.innerWidth;
     const origH = window.innerHeight;
