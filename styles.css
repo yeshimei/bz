@@ -1240,6 +1240,8 @@ button.news-close-btn {
             margin: 18px 0;
             cursor: pointer;
             transition: background 0.15s;
+            -webkit-user-select: none;
+            user-select: none; /* 列表禁止选字/复制：单击整卡打开文章、移动端长按弹抽屉（ticket 69），不出现系统选字菜单 */
         }
         .article-entry-card:hover {
             background: var(--background-secondary);
@@ -1273,6 +1275,14 @@ button.news-close-btn {
             line-height: 1.7;
             font-size: 14px;
             padding: 10px 0;
+        }
+        /* 抽屉头部简介：两行截断（用户拍板：头部只显示标题+简介两行，超出省略号） */
+        .bz-item-sheet-head .article-entry-summary {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            padding: 6px 0 0;
         }
         .article-site-btn {
             border-radius: 20px;

@@ -35,7 +35,7 @@ _Avoid_: 待办列表、任务
 
 **归物本 (Belongings)**: 物品登记管理，数据目录 `CONFIG/STORAGE`（可配置）。
 
-**剪藏本 (Clipping)**: `我的/文章` 的剪藏文章展示面板——搜索、站点过滤、排序、双击跳转、长按删除、反链笔记名显示（metadataCache.getBacklinksForFile）。
+**剪藏本 (Clipping)**: `我的/文章` 的剪藏文章展示面板——搜索、站点过滤、排序、反链笔记名显示（metadataCache.getBacklinksForFile）。交互（ticket 69 重构）：**单击整卡直接打开**文章（五域首例单击直开）、**移动端长按整卡弹统一抽屉**（打开/复制双链/复制原文链接/删除）；反链📌保留列表直点跳转；桌面右键弹跟手菜单（全局组件）。
 
 **聚合讯 (News Aggregator)**: 抓取新闻写入 `归档/网页剪藏`（CLIP_DIR），管理 `CONFIG/STORAGE/news.json`、`news-stats.json`；把 `dataviewjs` 代码块（`dv.view('CONFIG/SCRIPTS/DataView/摘要')`）写进笔记由 **Dataview 插件**渲染。
 
@@ -195,6 +195,9 @@ _Avoid_: 整文件覆盖还原（日记条目是日期文件里的一个块，�
 **Q3 / __utils**: QuickAdd 共享脚本（`CONFIG/SCRIPTS/Quickadd/Q/Q3.js`，1034 行），挂载 `window.__utils`，21 个导出：escManager、confirm、notice、generateId、jsonStore、longPress、injectStyles、createSiteIcon、createIconBtn、formatRelativeTime、formatFileSize、displayChangelog、checkAndShowChangelog、AIService、createAI、extractUrlAndDisplay、getPlatformName、getCurrentNoteInfo、getCurrentCursorPosition、fetchPageTitle、createOverlay。**新插件移植后为内部共享层（core），不再挂 window**。
 
 **jsonStore**: Q3 提供的 JSON 文件存储工具（不存在自动建目录建文件返回 `[]`，解析失败重置 `[]`；写 = 存在 modify / 不存在 create；**原实现无锁**），备忘录/归物本/密码本/复习计划等均使用 `CONFIG/STORAGE/*.json`。
+
+**条目抽屉 (Item Sheet)**: 跨域统一的条目操作浮层（`core/item-actions.ts`）——移动端长按卡片滑出底部抽屉（遮罩 + 顶部条目信息 + 功能项逐行；顶部精简两行（标题+简介，两行省略号截断）），桌面端右键弹跟手菜单（fbf7830 全局方案，preventDefault 拦原生右键、longPressFilter 让位区放行）。动作随域定义；keepOpen 动作执行后抽屉保持并由域动态刷新；附属浮层（评分/影评等小弹窗）叠于抽屉之上。已接入域：备忘录、日记本、影视、收藏本、剪藏本。两种特例：剪藏本是唯一「单击整卡直接打开」的域（ticket 69，Q7a）；且其桌面端浮层关闭（`desktopActions=false`，右键菜单统一方案落地前接受空窗）。
+_Avoid_: 长按菜单、底部菜单（泛指时）、右键菜单（桌面端尚未实现的形态）
 
 **AIService / createAI**: Q3 的 AI 服务抽象——provider 可选 deepseek / opencode-go，key 存于 QuickAdd 宏设置（`aiProvider`、`opencodeGoApiKey`），支持 override 对象（endpoint/apiKey/model）；插件化后迁移至插件设置。
 
