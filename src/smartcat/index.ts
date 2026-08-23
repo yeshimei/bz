@@ -584,9 +584,19 @@ function openSettings(): void {
   openSmartcatSettings({
     getConfig,
     saveConfig,
+    // 弹窗关闭（遮罩/✕/ESC）复位交互锁——否则移动端长按开设置再关掉后，
+    // isSettingsOpen 卡在 true，触摸拖拽全部早退，小橘再也拖不动
+    onClose: () => {
+      if (interaction) interaction.isSettingsOpen = false;
+    },
     settingsKeys: {
       enabled: true,
       mobileFullscreen: (getSettings() as any).smartcatMobileDefaultFullscreen === true,
+    },
+    // 平铺色块换肤即时生效
+    onAppearanceChanged: (appearance) => {
+      const c = mountCatContainer();
+      if (c) applyAppearance(c, appearance);
     },
     setMobileFullscreen: async (v) => {
       (getSettings() as any).smartcatMobileDefaultFullscreen = v;
