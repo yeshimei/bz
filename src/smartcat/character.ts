@@ -57,9 +57,8 @@ export function randomOceanSeed(): OceanProfile {
   const clamp = (v: number) => Math.min(0.9, Math.max(0.1, v));
   const g = (): number => {
     // Box-Muller 近似正态
-    const u = Math.random || (() => 0.5);
-    const r1 = Math.max(1e-9, u());
-    const r2 = Math.max(1e-9, u());
+    const r1 = Math.max(1e-9, Math.random());
+    const r2 = Math.max(1e-9, Math.random());
     return clamp(0.5 + 0.15 * Math.sqrt(-2 * Math.log(r1)) * Math.cos(2 * Math.PI * r2));
   };
   return {
@@ -101,11 +100,24 @@ export function characterSeed(ocean: OceanProfile): CharacterTraits {
  *     RL 预演 reward 0.616→0.823；软收拢更平滑且平衡点留「情感余温」，见 trustUpdate）
  */
 export const CHARACTER_DELTA_BASE = 0.00083;
+/** 深更新/反思增益缩放（ticket 072）：characterFromExperience 与反思洞察的 MATE 原始 δ
+ *  按 δbase 同源比例（≈1/12，对齐 RL 把 δbase 0.0096 收敛到 0.00083 的量纲修正）缩放——
+ *  真实库交互稀疏下原值会让核心特质每次深更新顶格 +0.01、数月内饱和到 0.99 */
+export const DEEP_DELTA_SCALE = 1 / 12;
 export const TRUST_WARM_GAIN = 0.0082;
 export const TRUST_ERODE_GAIN = 0.0029;
 export const TRUST_CAP: number | null = 0.85;
-/** 软收拢系数（红队 C §5.1）：每信任事件向 cap 收拢 2%，平衡点 v* = cap + K/(1−K)·gain ≈ cap + 49·gain */
-export const TRUST_SOFT_K = 0.98;
+/**
+ * 软收拢系数（ticket 072 修复：0.98 → 0.85）：v = cap + K·(v−cap) 的不动点为
+ * v* = cap + gain/(1−K)。旧 K=0.98 的不动点 = cap + 49·gain，在现校准增益下越过硬顶
+ * （聊天档 q=0.5 → v*≈1.05 撞 0.999 饱和；轻质量档 q=0.15 → ≈0.91），TRUST_CAP=0.85 形同虚设；
+ * K=0.85 后聊天档 v*≈cap+0.03、轻质量档 ≈cap+0.01——「cap + 情感余温」的用户拍板语义真实生效，
+ * 且已饱和的存量 trust 会被收拢缓慢拉回。
+ */
+export const TRUST_SOFT_K = 0.85;
+/** 依恋对信任的慢跟随系数（ticket 072：attachment 此前全库无写入点，恒 0.5 死维度；
+ *  attachment += (trust − attachment) × ATTACHMENT_FOLLOW——信任的滞后长期均值） */
+export const ATTACHMENT_FOLLOW = 0.01;
 
 /** logistic saturation：x + δ(1−x)，永不达 1.0（MATE §3.2） */
 export function softUpdate(x: number, delta: number): number {
@@ -133,8 +145,8 @@ export function characterTransition(
 
 /** trust 微积分（MATE §3.3 关系张量精简版：体验温度 + 交互质量）
  *  温暖时升、忽冷忽热降（饱和式冷处理），单事件降幅有界
- *  ADR-0024 软收拢：设置 trustCap 时 v = cap + K·(v−cap)（指数趋近，非一刀切硬钳，
- *  平衡点 v* = cap + 49·gain，终态几乎就是 cap + 微量「情感余温」）
+ *  ADR-0024 软收拢：设置 trustCap 时 v = cap + K·(v−cap)（指数趋近，非一刀切硬钳；
+ *  ticket 072 校正 K=0.85——不动点 v* = cap + gain/(1−K)，见 TRUST_SOFT_K 注释）
  *  ADR-0025 增 neutral：中性事件（click/note_*）不动 trust（原语义非 warm 即侵蚀，
  *  使侵蚀分支在真实调用下成死代码——中性交互不该「冷处理」用户）
  */
@@ -149,16 +161,19 @@ export function trustUpdate(current: number, opts: { warm?: boolean; hostile?: b
   return Math.min(0.999, Math.max(0.05, v));
 }
 
-/** character_from_experience：周统计深更新（MATE §3.2，δ≤0.01） */
+/** character_from_experience：周统计深更新（MATE §3.2；ticket 072 增 opts.scale——
+ *  生产传 DEEP_DELTA_SCALE 与 δbase 量纲对齐，纯函数默认 scale=1 保持原语义/测试兼容） */
 export function characterFromExperience(
   traits: CharacterTraits,
   stats: { interactionCount?: number; emotionalTone?: number; preferredHour?: number },
+  opts?: { scale?: number },
 ): CharacterTraits {
   const out = { ...traits };
   const n = stats.interactionCount ?? 0;
   if (n <= 0) return out;
   const tone = stats.emotionalTone ?? 0;   // -1..1（正=温暖记忆多）
-  const sat = (k: keyof CharacterTraits, delta: number) => { out[k] = softUpdate(traits[k], delta); };
+  const scale = opts?.scale ?? 1;
+  const sat = (k: keyof CharacterTraits, delta: number) => { out[k] = softUpdate(traits[k], delta * scale); };
   // 高频互动 → sociability 类特质成长（warmth/others_trust）
   sat('warmth', Math.min(0.01, 0.005 + n * 0.0005));
   sat('others_trust', Math.min(0.01, 0.003 + n * 0.0003));
@@ -169,6 +184,21 @@ export function characterFromExperience(
   if (stats.preferredHour !== undefined && (stats.preferredHour >= 22 || stats.preferredHour < 5)) {
     sat('dopamine', 0.006);
     sat('creativity', 0.004);
+  }
+  return out;
+}
+
+/**
+ * 特质向出生种子回归（ticket 072）：全系统此前只有上升通道（微移/深更新/反思全为正向），
+ * 长期单调趋满会抹平个体差异；每次深更新后向 characterSeed(ocean) 微量回拉，
+ * 让长期演化收敛到「出生种子 ± 经历」而非共同天花板。
+ * existential 群组除外——出生 0 且仅反思渠道，回归会抵消其设计成长弧。
+ */
+export function characterHomeostasis(traits: CharacterTraits, seed: CharacterTraits, pull = 0.0005): CharacterTraits {
+  const out = { ...traits };
+  const skip: (keyof CharacterTraits)[] = ['exist_depth', 'familiarity', 'concern'];
+  for (const k of Object.keys(out) as (keyof CharacterTraits)[]) {
+    if (!skip.includes(k)) out[k] = out[k] + (seed[k] - out[k]) * pull;
   }
   return out;
 }

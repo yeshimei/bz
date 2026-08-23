@@ -15,9 +15,14 @@
  */
 import type { App } from 'obsidian';
 import type { PadDimensions, SmartCatData } from './types';
-import { characterTransition, trustUpdate, characterFromExperience, TRUST_CAP } from './character';
+import { characterTransition, trustUpdate, characterFromExperience, characterSeed, characterHomeostasis, TRUST_CAP, DEEP_DELTA_SCALE, ATTACHMENT_FOLLOW } from './character';
 import { buildRhythmProfile } from './rhythm';
 import { emotionToVAD } from './cognitive';
+
+/** 周深更新的互动样本门槛（ticket 072）：此前 applyWeeklyExperience 挂在反思/日小结节奏上
+ *  （≥20 条观察即触发），每次都把 warmth 等顶格 +0.01——「周」更新实际按天甚至按小时跑。
+ *  互动计数不足此门槛时深更新整体跳过（不成长/不清零/不留痕）。 */
+export const WEEKLY_MIN_INTERACTIONS = 50;
 
 /** 5 档离散心情（显示层；PAD 原型最近邻判档） */
 export const MOOD_MAP: Record<string, { emoji: string; state: string; prototype: [number, number, number] }> = {
@@ -270,10 +275,11 @@ export class MoodSystem {
     return m ? this.currentMood : 'neutral';
   }
 
-  /** 互动心情影响（PAD 版效果表；原 8 维 handleInteraction 语义迁移） */
+  /** 互动心情影响（PAD 版效果表；原 8 维 handleInteraction 语义迁移）
+   *  ticket 072 用户拍板：撸猫（pet）退出一切数据面——效果表删除 pet 行，
+   *  即使有调用方误传 'pet' 也是无操作（派发端 interaction.showPetMessage 已只留视觉反馈） */
   handleInteraction(type: string, intensity = 1): void {
     const effects: Record<string, Record<string, number>> = {
-      pet: { pleasure: 6, arousal: 2, dominance: 1 },
       click: { arousal: 3, pleasure: 2 },
       learn: { arousal: 4, dominance: 3 },
       note_create: { pleasure: 3, dominance: 6, arousal: 3 },
@@ -317,19 +323,24 @@ export class PersonalityGrowth {
    *  trustQuality：温暖互动的信任增益质量系数（默认 0.5；写日记/闪念以轻质量 0.15 计入，
    *  ADR-0024 产品决策——不聊天时陪伴也能在「共享生活」中生长） */
   async developBasedOnInteraction(interactionType: string, intensity: number, emotionIntensity = 0, trustQuality = 0.5): Promise<void> {
+    // ticket 072 用户拍板：撸猫（pet）退出一切数据面（纯互动信号，只留气泡/动画）——
+    // 数据层结构化兜底：任何入口误传 'pet' 都不写特质/信任/统计/历史
+    if (interactionType === 'pet') return;
     const data = this.dataProvider();
     const g = data.personalityGrowth;
     const I = Math.max(emotionIntensity, intensity * 0.2);
     g.traits = characterTransition(g.traits, { emotionIntensity: I, trust: g.relationship.trust });
-    // 互动类型有情绪价（pet/learn 温暖；note 专注）
-    if (interactionType === 'pet' || interactionType === 'learn') {
+    // 互动类型有情绪价（learn 温暖；note 专注）
+    if (interactionType === 'learn') {
       g.traits = characterTransition(g.traits, { emotionIntensity: 0.2, trust: g.relationship.trust });
     }
-    // ADR-0025 修「warm 恒真」：温暖=pet/learn/talk/diary/flash（写日记/闪念轻质量温暖），
+    // ADR-0025 修「warm 恒真」：温暖=learn/talk/diary/flash（写日记/闪念轻质量温暖），
     // 中性=click/note_*（不升温不侵蚀，原表达式 `pet || !== click` 使侵蚀分支成为死代码）
-    const warm = interactionType === 'pet' || interactionType === 'learn' || interactionType === 'talk' || interactionType === 'diary' || interactionType === 'flash';
+    const warm = interactionType === 'learn' || interactionType === 'talk' || interactionType === 'diary' || interactionType === 'flash';
     const neutral = interactionType === 'click' || interactionType.startsWith('note_');
     g.relationship.trust = trustUpdate(g.relationship.trust, { warm, neutral, quality: trustQuality, trustCap: TRUST_CAP ?? undefined });
+    // ticket 072：依恋慢跟随信任（attachment 此前全库无写入点，恒 0.5 死维度）
+    g.relationship.attachment = Math.min(0.999, Math.max(0.05, g.relationship.attachment + (g.relationship.trust - g.relationship.attachment) * ATTACHMENT_FOLLOW));
     // 活跃时段统计（按当时钟点滚一个众数近似）
     this.tickBehaviorStats(interactionType);
     g.growthHistory.push({
@@ -340,16 +351,21 @@ export class PersonalityGrowth {
     await this.dataSaver(data);
   }
 
-  /** 周统计深更新（MATE character_from_experience：δ≤0.01，对积累的 behaviorStats 折算） */
+  /** 周统计深更新（MATE character_from_experience：δ≤0.01，对积累的 behaviorStats 折算）
+   *  ticket 072 三修：① WEEKLY_MIN_INTERACTIONS 样本门槛（不再被反思节奏拖着高频空转）；
+   *  ② 深更新增益 ×DEEP_DELTA_SCALE（与 δbase 同源量纲，防核心特质数月饱和）；
+   *  ③ characterHomeostasis 向出生种子微量回归（全系统首个下降通道，保个体分化） */
   async applyWeeklyExperience(): Promise<void> {
     const data = this.dataProvider();
     const g = data.personalityGrowth;
     const s = g.behaviorStats;
+    if ((s.interactionCount || 0) < WEEKLY_MIN_INTERACTIONS) return;
     g.traits = characterFromExperience(g.traits, {
       interactionCount: s.interactionCount,
       emotionalTone: s.emotionalTone,
       preferredHour: s.preferredHour,
-    });
+    }, { scale: DEEP_DELTA_SCALE });
+    g.traits = characterHomeostasis(g.traits, characterSeed(g.ocean));
     // 周统计清零（深更新后）
     s.interactionCount = 0;
     s.emotionalTone = 0;
@@ -360,24 +376,28 @@ export class PersonalityGrowth {
     await this.dataSaver(data);
   }
 
-  /** 反思驱动：洞察 → existential 群组成长（depth/familiarity/concern 仅此渠道，MATE §3.2） */
+  /** 反思驱动：洞察 → existential 群组成长（depth/familiarity/concern 仅此渠道，MATE §3.2）
+   *  ticket 072：增益 ×DEEP_DELTA_SCALE（反思高频下原值会让 existential 数月内顶格）；
+   *  关键词删裸「我」（「我们」等子串误伤）；钳制边界对齐 softUpdate 域 */
   async applyReflectionInsights(insights: { text: string }[]): Promise<void> {
     if (!Array.isArray(insights) || !insights.length) return;
     const data = this.dataProvider();
     const g = data.personalityGrowth;
     const changes: Record<string, number> = {};
+    const d1 = 0.01 * DEEP_DELTA_SCALE;
+    const d2 = 0.005 * DEEP_DELTA_SCALE;
     for (const ins of insights) {
       const text = (ins.text || '').toLowerCase();
-      if (/自我|自己|我|about me|self/.test(text)) (changes.exist_depth = (changes.exist_depth || 0) + 0.01);
-      if (/熟悉|习惯|偏好|重复/.test(text)) (changes.familiarity = (changes.familiarity || 0) + 0.01);
-      if (/担心|焦虑|在意|关心/.test(text)) (changes.concern = (changes.concern || 0) + 0.01);
-      if (/学习|好奇|探索|阅读/.test(text)) (changes.creativity = (changes.creativity || 0) + 0.005);
-      if (/温暖|信任|亲近|陪伴/.test(text)) (changes.oxytocin = (changes.oxytocin || 0) + 0.005);
+      if (/自我|自己|about me|self/.test(text)) (changes.exist_depth = (changes.exist_depth || 0) + d1);
+      if (/熟悉|习惯|偏好|重复/.test(text)) (changes.familiarity = (changes.familiarity || 0) + d1);
+      if (/担心|焦虑|在意|关心/.test(text)) (changes.concern = (changes.concern || 0) + d1);
+      if (/学习|好奇|探索|阅读/.test(text)) (changes.creativity = (changes.creativity || 0) + d2);
+      if (/温暖|信任|亲近|陪伴/.test(text)) (changes.oxytocin = (changes.oxytocin || 0) + d2);
     }
     if (!Object.keys(changes).length) return;
     for (const [trait, delta] of Object.entries(changes)) {
       if (Object.prototype.hasOwnProperty.call(g.traits, trait)) {
-        g.traits[trait] = Math.min(0.99, Math.max(0.01, g.traits[trait] + delta));
+        g.traits[trait] = Math.min(0.999, Math.max(0.001, g.traits[trait] + delta));
       }
     }
     g.growthHistory.push({
@@ -388,7 +408,10 @@ export class PersonalityGrowth {
     await this.dataSaver(data);
   }
 
-  /** 行为统计（MATE behaviorStats：时段众数 + 情绪基调 EMA + 计数） */
+  /** 行为统计（MATE behaviorStats：时段众数 + 情绪基调累计 + 计数）
+   *  ticket 072 修「主线使用被计为负面」：基调表扩到全部类型——旧表只有 pet/learn 正、
+   *  click 零、其余 -0.01，导致 talk/diary/flash 全部落负分支（越用越神经质）。
+   *  新表：learn 正、diary/flash 轻正、talk/click/note_* 中性、未知类型才轻微侵蚀。 */
   tickBehaviorStats(interactionType: string): void {
     const g = this.dataProvider().personalityGrowth;
     const s = g.behaviorStats;
@@ -398,16 +421,25 @@ export class PersonalityGrowth {
     // 无记忆数据（还没观察过）时兜底当前小时（旧行为，mood 测试保持）
     const profile = buildRhythmProfile(this.dataProvider().memory.stream || [], 30, Date.now());
     s.preferredHour = profile.total > 0 ? profile.peakHour : hour;
-    // 互动类型 → 情绪基调微调（pet/learn 正，click 中性）
-    const tone = interactionType === 'pet' || interactionType === 'learn' ? 0.02 : interactionType === 'click' ? 0 : -0.01;
+    const tone = interactionType === 'learn' ? 0.02
+      : interactionType === 'diary' || interactionType === 'flash' ? 0.01
+        : interactionType === 'talk' || interactionType === 'click' || interactionType.startsWith('note_') ? 0
+          : -0.01;
     s.emotionalTone = Math.min(1, Math.max(-1, (s.emotionalTone || 0) + tone * 0.2));
   }
 
+  /** 历史 trim（ticket 072 改多样性保留）：互动事件高频、极易刷掉反思/周更新记录
+   *  （面板成长轨迹随之失真）——互动只留最近 30 条、稀少来源保留 60 条；
+   *  组合超限即重建（仅判总量会裁一次后又重新积攒互动），按时间归位。 */
   private trimHistory(): void {
     const data = this.dataProvider();
-    if (data.personalityGrowth.growthHistory.length > 100) {
-      data.personalityGrowth.growthHistory = data.personalityGrowth.growthHistory.slice(-50);
-    }
+    const h = data.personalityGrowth.growthHistory;
+    const interactions = h.filter((e) => e && e.source === 'interaction');
+    if (h.length <= 100 && interactions.length <= 30) return;
+    const others = h.filter((e) => e && e.source !== 'interaction').slice(-60);
+    data.personalityGrowth.growthHistory = [...others, ...interactions.slice(-30)].sort(
+      (a, b) => (a?.timestamp || 0) - (b?.timestamp || 0),
+    );
   }
 
   getGrowthHistory(): any[] {
