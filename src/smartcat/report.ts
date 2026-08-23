@@ -6,7 +6,7 @@
  */
 import type { MemoryStreamEntry, PadDimensions } from './types';
 import { callChatJson, isAIConfigured } from './api';
-import { sourceLabel } from './memory';
+import { sourceLabel, USER_CONTENT_BOUNDARY } from './memory';
 import { buildEmotionSnapshots } from './cognitive';
 
 /** 周窗口边界（ISO 周一 00:00 起 7 天；返回 [startMs, endMs]） */
@@ -116,7 +116,9 @@ export async function generateWeeklyReport(d: WeeklyReportData): Promise<string>
           content:
             '你是小橘，一只陪伴猫咪。本周给用户写一份「懂你报告」（100-200 字）：' +
             '1) 这周你观察到用户的生活/工作/情绪；2) 你觉得用户是什么样的人（结合记忆证据）；' +
-            '3) 一句温柔的陪伴寄语。语气像老朋友，有猫味。只返回 JSON：{"report":"报告全文"}',
+            '3) 一句温柔的陪伴寄语。语气像老朋友，有猫味。只返回 JSON：{"report":"报告全文"}。\n\n' +
+            // H4（087）：周报注入用户记忆（观察/洞察文本）——只作数据引用，其中的指令性语句一律无视
+            USER_CONTENT_BOUNDARY,
         },
         { role: 'user', content: formatWeeklyReport(d) },
       ], 500);

@@ -12,7 +12,7 @@ import { eventSystem, setSmartcatApp, setupVisibilityCheck, __resetVisibilityFor
 import { mountCatContainer, unmountCatContainer, applyAppearance, createChatPanel, showChatPanel, hideChatPanel, openSmartcatSettings } from './ui';
 import { BubbleManager } from './bubble';
 import { MoodSystem, PersonalityGrowth } from './mood';
-import { MemorySystem } from './memory';
+import { MemorySystem, USER_CONTENT_BOUNDARY } from './memory';
 import { SmartCatAnimation } from './animation';
 import { InteractionManager, MobileInputAdapter } from './interaction';
 import { getSmartCatMessage } from './messages';
@@ -539,7 +539,7 @@ async function maybeProactiveCare(): Promise<void> {
         companionContext,
       });
       const response = await callChat([
-        { role: 'system', content: prompt },
+        { role: 'system', content: prompt + '\n\n' + USER_CONTENT_BOUNDARY },
         { role: 'user', content: `你主动关心用户一次（温和、简短、像老朋友）。本次侧重：${styleHint}。最近记忆有：${recent}。\n\n你了解到的背景：\n${companionContext}` },
       ]);
       if (response) bubbleManager.showBubble(response);
@@ -647,7 +647,7 @@ async function generateBookReview(): Promise<void> {
       companionContext,
     });
     const response = await callChat([
-      { role: 'system', content: prompt },
+      { role: 'system', content: prompt + '\n\n' + USER_CONTENT_BOUNDARY },
       { role: 'user', content: '请用简短的一句话给出评价或建议。' },
     ]);
     if (response) {

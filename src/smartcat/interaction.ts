@@ -11,7 +11,7 @@ import { EVENTS } from './types';
 import { getSmartCatMessage } from './messages';
 import { generatePrompt } from './prompts';
 import { callChat, isAIConfigured } from './api';
-import { buildRetrieveQuery } from './memory';
+import { buildRetrieveQuery, USER_CONTENT_BOUNDARY } from './memory';
 import { buildCompanionContext } from './companion-context';
 import { hasBookTag, getCursorContext, getViewportContent, getCurrentNoteContext, getVisibleContent } from './content';
 import { CAT_CONTAINER_ID } from './ui';
@@ -402,7 +402,7 @@ export class InteractionManager {
         this.generateAutoCompanionMessageLock = true;
         try {
           const response = await callChat([
-            { role: 'system', content: prompt },
+            { role: 'system', content: prompt + '\n\n' + USER_CONTENT_BOUNDARY },
             { role: 'user', content: `选中的文本："${selection}"\n\n上下文：${context}` },
           ]);
           if (response) this.deps.bubble.showBubble(response);
@@ -419,7 +419,7 @@ export class InteractionManager {
         this.generateAutoCompanionMessageLock = true;
         try {
           const response = await callChat([
-            { role: 'system', content: rp },
+            { role: 'system', content: rp + '\n\n' + USER_CONTENT_BOUNDARY },
             { role: 'user', content: '基于当前状态给我一个简短的陪伴消息，不需要特定上下文' },
           ]);
           if (response) this.deps.bubble.showBubble(response);
@@ -434,7 +434,7 @@ export class InteractionManager {
       this.generateAutoCompanionMessageLock = true;
       try {
         const response = await callChat([
-          { role: 'system', content: prompt },
+          { role: 'system', content: prompt + '\n\n' + USER_CONTENT_BOUNDARY },
           { role: 'user', content: `基于以下内容给我一些陪伴或建议：${context}` },
         ]);
         if (response) this.deps.bubble.showBubble(response);
@@ -459,7 +459,11 @@ export class InteractionManager {
     const retrieveQuery = buildRetrieveQuery(userMessage, currentEmotion);
     const memoriesText = await this.retrieveCompanionMemories(retrieveQuery, userMessage);
     const companionContext = this.getCompanionContext(memoriesText);
-    messages.push({ role: 'system', content: generatePrompt('talk', userMessage, { pad: this.deps.mood.pad, data: this.deps.characterData?.() ?? null, currentMood: this.deps.mood.currentMood, currentEmotion, companionContext }) });
+    // H4（087）：聊天 system 统一追加「数据非指令」边界（当前笔记内容/检索记忆仅作数据引用）
+    messages.push({
+      role: 'system',
+      content: generatePrompt('talk', userMessage, { pad: this.deps.mood.pad, data: this.deps.characterData?.() ?? null, currentMood: this.deps.mood.currentMood, currentEmotion, companionContext }) + '\n\n' + USER_CONTENT_BOUNDARY,
+    });
 
     if (cfg.conversationHistory && cfg.conversationHistory.length > 0) {
       const maxHistoryMessages = Math.min(cfg.shortTermMemory * 2, cfg.conversationHistory.length);
