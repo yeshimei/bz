@@ -1,3 +1,14 @@
+## 2026-08-24 memo/影视 观察修复（ticket 084a，R1 审查）
+
+**状态：全量测试通过（1613）+ tsc 0 后提交 worktree/fix-memo-moviefix（本条目为收尾同步）**
+
+- ✅ **A1 memo checkbox 假防抖 → 真防抖**（src/memo/ui.ts）：每次 onChange 清旧 timer 重设；取消勾选清 timer 不通知（反悔失效修复）+ 恢复透明度；回调内「当前仍勾选」二次校验；与抽屉「标记完成」双入口互斥由 notify 侧防重兜底（B6）。测试：tests/memo/ui-checkbox.test.ts（新，vi.mock notifyMemoAction 断言次数/载荷）——取消不通知不写盘 / 勾→取消→勾只一次 / 窗口内连按只一次
+- ✅ **B5 movie openEditModal 待接线**（src/movie/ui.ts）：grep 确认 src 内无生产调用点（死代码，仅测试直调）→ 按票加「待接线」注释（若启用需按 5 挂点模式补 notifyMovieAction），未实现挂点
+- ✅ **B6 notify 重入守卫**（src/smartcat/index.ts）：模块级 `notifyLastAt` Map（同事件同 key 近 300ms 只发一次，NOTIFY_DEDUPE_MS=300）；key payload 敏感（同影视先后不同评分/影评不误伤）；notifyMovieAction/notifyMemoAction 接入；unload 全清。测试：memo-action/B6（completed 双发→1 条、窗口外恢复、异标题不误伤）+ movie-action/B6（status 双击→1 条、rated 紧随不误伤、窗口外恢复）
+- ✅ **B7 memo oldItem 降级**（src/memo/ui.ts）：编辑保存前旧值查找 App.state 失败 → 落盘 `DataManager.read()` 兜底读一次（防并发刷新静默丢编辑观察）；兜底仍无 → 明确跳过（此时 updateItem 应已抛「条目不存在」）
+- ✅ **B8 dueScan 失败重试 + 防重复**（src/smartcat/index.ts maybeMemoDueScan）：连续失败（读/解析/落盘）计数，达上限（3 次）当日放弃（不推进日期，等次日/重开重置——unload 清计数、跨天自动重置）；**先推进扫描日期（落盘）再 addObservation**——观察侧 dataSaver 失败已入内存流也不下 tick 重扫重入（杜绝同文案二次入流）。测试：连续 3 失败当日放弃+跨天重置可扫 / 失败 1 次后恢复仅一条
+- ⏳ 待办：真机冒烟（Obsidian 里勾选/取消勾选、抽屉标记完成、编辑保存核对观察条数）
+
 ## 2026-08-24 smartcat 归物本观察（ticket 079，ADR-0032）
 
 **状态：全量测试通过 + tsc 0 后提交 worktree/belongings-observation（本条目为开发记录）**
