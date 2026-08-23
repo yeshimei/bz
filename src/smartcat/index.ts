@@ -20,6 +20,7 @@ import { generatePrompt } from './prompts';
 import { callChat, isAIConfigured } from './api';
 import { generateBookDescription, hasBookTag } from './content';
 import { classifyPath, observationText } from './context-source';
+import { parseMovieFileContent, movieCreatedObservation, movieChangedObservation, movieDeletedObservation, movieNameOf, isMoviePath, MOVIE_DIR_PREFIX, type MovieSnapshot } from './movie-source';
 import { DOMAIN_FILES, snapshotDomains } from './domain-source';
 import { buildRhythmProfile, isActiveNow, describeRhythm, periodText, isoWeekKey } from './rhythm';
 import { buildWeeklyReportData, generateWeeklyReport, weekWindow } from './report';
@@ -192,6 +193,8 @@ export async function ensureSmartCat(app: App): Promise<void> {
     if (!file || !file.path || !data || !personalityGrowth || !memorySystem || !appRef) return;
     const kind = classifyPath(file.path);
     if (!kind || !data.config.noteSource) return;
+    // 影视动作感知观察（ticket 074）：快照 diff，豁免 10 分钟去弹跳（连续操作逐条观察）
+    if (kind === 'movie') { await observeMovieFile(file); return; }
     const now = Date.now();
     const last = lastActivity.get(file.path) || 0;
     if (now - last < 10 * 60 * 1000) return;          // 同一路径 10 分钟去弹跳
@@ -224,8 +227,11 @@ export async function ensureSmartCat(app: App): Promise<void> {
     } catch { /* 读取失败静默（不打断主流程） */ }
   };
   if (app.vault && typeof (app.vault as any).on === 'function') {
+    // 影视动作感知观察（ticket 074）：先建既有影视快照（不产出观察），再挂监听防 create 漏判
+    await snapshotMovies(appRef);
     vaultRefs.push((app.vault as any).on('create', onVaultActivity));
     vaultRefs.push((app.vault as any).on('modify', onVaultActivity));
+    vaultRefs.push((app.vault as any).on('delete', onMovieDelete));
   }
 
   // 域 JSON 感知（2026-08-23 用户拍板：CONFIG/STORAGE 域数据 modify → 观察；懒启动探测）
@@ -779,6 +785,9 @@ export function unloadSmartCat(): void {
   domainReader = null;
   domainPrev.clear();
   domainObserved.clear();
+  moviePrev.clear();
+  movieBodyThrottle.clear();
+  movieSnapshotDone = false;
   mobileAdapter?.destroy();
   if (panels) {
     panels.dispose();
@@ -801,6 +810,69 @@ export function unloadSmartCat(): void {
 /** 测试辅助：获取内部实例引用 */
 export function __getSmartcatInternals(): any {
   return { data, bubbleManager, moodSystem, memorySystem, animation, interaction, panels, initialized };
+}
+
+// ---------------- 影视动作感知观察（ticket 074，ADR-0026） ----------------
+
+/** 影视快照 prev（路径 → 快照；会话内快照驱动 create/modify/delete diff，不落盘） */
+const moviePrev = new Map<string, MovieSnapshot>();
+/** 正文观察节流（路径 → 上次正文观察时间；防编辑器自动保存连发） */
+const movieBodyThrottle = new Map<string, number>();
+/** 正文观察最小间隔（与旧 10 分钟去弹跳一致） */
+const MOVIE_BODY_INTERVAL = 10 * 60 * 1000;
+/** 首快照完成标记（幂等） */
+let movieSnapshotDone = false;
+
+/** 影视首快照：扫描 我的/影视/*.md 建 prev（不产出观察；幂等；单文件失败跳过） */
+async function snapshotMovies(app: App): Promise<void> {
+  if (movieSnapshotDone) return;
+  movieSnapshotDone = true;
+  try {
+    const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(MOVIE_DIR_PREFIX + '/'));
+    for (const f of files) {
+      try {
+        const content = await app.vault.read(f);
+        moviePrev.set(f.path, { path: f.path, name: movieNameOf(f.basename || ''), ...parseMovieFileContent(content) });
+      } catch { /* 单文件失败跳过 */ }
+    }
+  } catch { /* 快照失败静默（后续以 create 事件修正） */ }
+}
+
+/** 影视 create/modify 观察（ticket 074）：快照 diff → 动作文案 → 记忆流；正文观察单独节流 */
+async function observeMovieFile(file: any): Promise<void> {
+  if (!appRef || !memorySystem) return;
+  const path = file.path;
+  let content = '';
+  try { content = await appRef.vault.read(file); } catch { return; }
+  const snap: MovieSnapshot = { path, name: movieNameOf(file.basename || ''), ...parseMovieFileContent(content) };
+  const prev = moviePrev.get(path);
+  if (!prev) {
+    moviePrev.set(path, snap);
+    const text = movieCreatedObservation(snap);
+    if (text) await memorySystem.addObservation(text, { source: 'movie' });
+    return;
+  }
+  moviePrev.set(path, snap);
+  const obs = movieChangedObservation(prev, snap);
+  if (!obs) return;
+  if (obs.body) {
+    const last = movieBodyThrottle.get(path) || 0;
+    const now = Date.now();
+    if (now - last < MOVIE_BODY_INTERVAL) return; // 正文连续编辑节流（prev 已更新，不重复观察）
+    movieBodyThrottle.set(path, now);
+  }
+  await memorySystem.addObservation(obs.text, { source: 'movie' });
+}
+
+/** 影视删除观察（ticket 074）：仅会话内有快照才观察（防旧文件删除噪音） */
+async function onMovieDelete(file: any): Promise<void> {
+  if (!appRef || !memorySystem || !file?.path) return;
+  if (!isMoviePath(file.path)) return;
+  const prev = moviePrev.get(file.path);
+  if (!prev) return;
+  moviePrev.delete(file.path);
+  movieBodyThrottle.delete(file.path);
+  await memorySystem.addObservation(movieDeletedObservation(prev), { source: 'movie' });
 }
 
 /** 域 JSON 感知状态（domain-source.ts 提供 extract 纯函数；此处管理监听生命周期） */
