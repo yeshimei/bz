@@ -147,6 +147,10 @@ export interface MemoryStreamEntry {
   emotion?: string;       // 情绪标注（LLM 顺带/词法兜底；情感记忆并入记忆流）
   credibility?: number;   // 观察可信度 0-1（ADR-0036：来源档位基准 + LLM 可覆盖；旧数据无该字段 → 0.5 中性）
   suspicious?: boolean;   // 注入特征命中标记（H4/087：数据非指令边界——detectInjection 命中置真，只记录不阻断；可选字段旧数据容忍）
+  // ---- 洞察版本化（092 方向二，ADR-0039）：以下三项全部可选，旧数据零迁移容忍 ----
+  theme?: string;         // 主题键（受限枚举 工作|兴趣|关系|健康|环境；LLM 打标解析失败回退词法映射；仅 insight 使用）
+  supersededBy?: string;  // 被哪条洞察取代（真实 insight id；'manual'=人工废弃标记）；有值即视为已废弃，检索排序前剔除
+  pinned?: boolean;       // 人工固定（dashboard「固定」修正信号）：固定后不被自动 supersede
 }
 
 /** 记忆流（单层，检索时分级；ADR-0021 取代原四层） */

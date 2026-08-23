@@ -16,6 +16,7 @@ import { getSmartcatVecPath, touchPresence } from './data';
 import { callChatJson, isAIConfigured } from './api';
 import { getEmbedding, checkRemoteOllama } from '../flash/ollama';
 import { EMOTION_VAD } from './cognitive';
+import { isSupersededInsight, resolveTheme, buildReflectCandidates, applySupersede } from './insight-version';
 import type { SmartCatData, MemoryStreamEntry, CloudScoringMode } from './types';
 
 export const MEMORY_CONFIG = {
@@ -196,8 +197,9 @@ export class MemorySystem {
     }
     return memory;
   }
-  /** 添加洞察记忆（反思产物；importance 固定高值可由调用方传入；source 默认 reflection，日小结传 digest） */
-  async addInsight(description: string, evidenceIds: string[], importance = 0.75, emotion?: string, source = 'reflection'): Promise<MemoryStreamEntry> {
+  /** 添加洞察记忆（反思产物；importance 固定高值可由调用方传入；source 默认 reflection，日小结传 digest；
+   *  092 方向二：theme 为受限枚举主题键（工作|兴趣|关系|健康|环境），可选——由 reflect 解析后传入） */
+  async addInsight(description: string, evidenceIds: string[], importance = 0.75, emotion?: string, source = 'reflection', theme?: string): Promise<MemoryStreamEntry> {
     const memory: MemoryStreamEntry = {
       id: `insight_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       created: new Date().toISOString(),
@@ -209,6 +211,7 @@ export class MemorySystem {
       source,
       emotion,
     };
+    if (typeof theme === 'string' && theme) memory.theme = theme; // 可选字段：空/缺省不写（旧数据零迁移）
     this.stream.push(memory);
     this.pendingSinceReflect++;
     await this.dataSaver(this.dataProvider());
@@ -337,7 +340,10 @@ export class MemorySystem {
       queryVec = await this.queryEmbeddingSafe(query);
     }
     const lexicalQ = (opts.lexicalQuery != null ? opts.lexicalQuery : query).trim();
-    const scored = this.stream.map((m) => {
+    // 092 方向二（ADR-0039）：已废弃洞察（supersededBy 有值）**排序前剔除**——不进 GA 加法分空间，
+    // 也不挤占 topN 名额；topN=10 与三处调用点是冻结契约，剔除只发生在排序管线内部
+    const pool = this.stream.filter((m) => !isSupersededInsight(m));
+    const scored = pool.map((m) => {
       const hours = (now - new Date(m.lastAccessed || m.created).getTime()) / 3.6e6;
       const recency = Math.pow(MEMORY_CONFIG.decay, Math.max(0, hours));
       const importance = m.importance ?? 0;
@@ -541,6 +547,7 @@ export class MemorySystem {
   }
 
   /** 反思主流程：evidence → LLM 归纳 3 条洞察 → 写回流（带 evidenceIds）
+   *  092 方向二：候选既有洞察通道参照防重复 + 每条带主题键 + 顶层 {supersede} 写点（最多 1 个/批次）
    *  无产出（AI 未配置/调用失败/证据不足）时不推进 lastReflectAt——保持待反思状态，
    *  配置 AI 后可由 pending 计数立即再触发。
    */
@@ -559,14 +566,23 @@ export class MemorySystem {
     if (evidence.length < 2) return; // 记忆太少不反思
 
     const numbered = evidence.map((m, i) => `${i + 1}. ${m.description}`).join('\n');
+    // 092 方向二：候选既有洞察通道（防重复结论参照）——主题索引 + Top-N 相似 insight，
+    // 独立 token 预算（只注入候选编号+描述前 N 字）；构造为纯函数且防御式不抛错，
+    // 再兜一层 try/catch 裁剪为空块（异常不整轮失败，也不走反思退避通道）
+    let candidates = { block: '', count: 0, indexMap: new Map<number, string>() };
+    try {
+      candidates = buildReflectCandidates(this.stream, evidence.map((m) => m.description || '').join(' '));
+    } catch { /* 候选通道失败 → 空块，反思照常进行 */ }
     const prompt =
       `你是小橘，一只陪伴猫咪。下面是关于用户的一些记忆（编号 1-${evidence.length}）：\n` +
       numbered +
       '\n\n请归纳出最重要的 ' + MEMORY_CONFIG.insightCount + ' 条高阶结论（关于用户的喜好/性格/习惯/关系），' +
-      '每条必须引用 1 条以上记忆编号作为依据。只返回 JSON：' +
-      `{"insights":[{"text":"结论","evidence":[编号]}]}`;
+      '每条必须引用 1 条以上记忆编号作为依据；每条再标注一个主题（从 工作/兴趣/关系/健康/环境 中选最贴切的）。只返回 JSON：' +
+      `{"insights":[{"text":"结论","evidence":[编号],"theme":"工作"}]}` +
+      candidates.block;
 
-    let insights: { text: string; evidence: number[] }[] = [];
+    let insights: { text: string; evidence: number[]; theme?: string }[] = [];
+    let supersedeRef: unknown = null;
     try {
       if (await isAIConfigured()) {
         const r = await callChatJson([
@@ -577,8 +593,16 @@ export class MemorySystem {
           insights = r.insights
             .filter((x: any) => x && typeof x.text === 'string' && x.text.trim())
             .slice(0, MEMORY_CONFIG.insightCount)
-            .map((x: any) => ({ text: x.text.trim(), evidence: Array.isArray(x.evidence) ? x.evidence.map(Number) : [] }));
+            .map((x: any) => ({
+              text: x.text.trim(),
+              evidence: Array.isArray(x.evidence) ? x.evidence.map(Number) : [],
+              // 092：主题键受限枚举校验，解析失败回退词法关键词映射（两路皆空 → undefined 不强标）
+              theme: resolveTheme(x.theme, typeof x.text === 'string' ? x.text : ''),
+            }));
         }
+        // 092：supersede 写点——LLM 输出顶层 {supersede: 候选编号|insightId}，最多取 1 个/批次；
+        // 校验（存在/type=insight/pinned/幂等/环形）在 applySupersede 内部，非法静默拒绝
+        if (r && r.supersede !== undefined && r.supersede !== null) supersedeRef = r.supersede;
       }
     } catch (e) { /* 反思调用失败 → 无产出，保持待反思 */ }
 
@@ -590,11 +614,17 @@ export class MemorySystem {
     if (insights.length) {
       this.reflectBackoffUntil = 0; // 成功重置退避（含 30min 封顶期）
       this.reflectBackoffMs = 5 * 60 * 1000;
+      let firstNewInsightId: string | null = null;
       for (const ins of insights) {
         const evidenceIds = ins.evidence
           .map((n) => evidence[n - 1]?.id)
           .filter((id): id is string => !!id);
-        await this.addInsight(ins.text, evidenceIds);
+        const added = await this.addInsight(ins.text, evidenceIds, 0.75, undefined, 'reflection', ins.theme);
+        if (!firstNewInsightId) firstNewInsightId = added.id;
+      }
+      // 092：supersede 写点——本批次第一条新洞察作为后继；目标校验失败静默（异常裁剪不整轮失败）
+      if (supersedeRef !== null && firstNewInsightId) {
+        try { applySupersede(this.stream, supersedeRef, firstNewInsightId, candidates.indexMap); } catch { /* 非法引用忽略 */ }
       }
       data.memory.reflection.lastReflectAt = now;
       data.memory.reflection.count = (data.memory.reflection.count || 0) + 1;
@@ -704,9 +734,11 @@ export class MemorySystem {
     };
   }
 
-  /** 格式化记忆供 prompt（增强：带来源中文标签 + 相对时间，小橘能感知「什么时候·从哪来」） */
+  /** 格式化记忆供 prompt（增强：带来源中文标签 + 相对时间，小橘能感知「什么时候·从哪来」）
+   *  092 方向二：已废弃洞察前置剔除（第二道闸——即使调用方绕过 retrieve 直传列表也不进 prompt） */
   formatMemoriesForPrompt(memories: MemoryStreamEntry[]): string {
     return memories
+      .filter((memory) => !isSupersededInsight(memory))
       .map((memory, index) => {
         const content = typeof memory.description === 'string' ? memory.description : JSON.stringify(memory.description);
         const label = sourceLabel(memory.source);

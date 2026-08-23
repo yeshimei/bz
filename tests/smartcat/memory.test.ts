@@ -677,8 +677,11 @@ describe('反思（Reflection）', () => {
     });
     (globalThis as any).fetch = f2;
     await m.reflect();
-    const promptText = (f2.mock.calls[0][1] as any).body as string;
-    expect(promptText).not.toContain('用户近期学习投入'); // insight 文本未进反思 prompt
+    // 092 方向二：洞察文本经「既有洞察参照块」（标注段）进 prompt 防重复结论，属新契约；
+    // P1-1 原意收窄断言——洞察仍不得进入编号 evidence 段（JSON 指令与参照块之前的正文）
+    const body2 = JSON.parse((f2.mock.calls[0][1] as any).body);
+    const promptText = body2.messages[1].content as string;
+    expect(promptText.split('你既有的相关洞察')[0]).not.toContain('用户近期学习投入');
   });
 
   it('shouldReflect：新增 ≥20 条触发（pendingSinceReflect）', async () => {

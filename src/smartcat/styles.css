@@ -1007,6 +1007,37 @@
   background: rgba(var(--color-orange-rgb), 0.15);
   color: var(--color-orange);
 }
+/* 洞察版本化（092，ADR-0039）：DDID 短索引 / 固定·废弃徽章 / 人工修正按钮 */
+.bz-sc-dash-insight-id {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.bz-sc-dash-badge-pinned {
+  background: var(--background-primary-alt);
+  color: var(--color-green);
+}
+.bz-sc-dash-badge-superseded {
+  background: var(--background-primary-alt);
+  color: var(--color-red);
+}
+.bz-sc-dash-insight-actions {
+  display: inline-flex;
+  gap: 4px;
+}
+.bz-sc-dash-mini-btn {
+  font-size: 11px;
+  line-height: 1.5;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--background-modifier-border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.bz-sc-dash-mini-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
 .bz-sc-dash-list {
   display: flex;
   flex-direction: column;
