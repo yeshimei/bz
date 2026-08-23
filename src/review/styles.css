@@ -2,10 +2,6 @@
 /* ==================== 复习计划（review，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
       #review-mask { backdrop-filter: blur(2px); }
       #review-popup { animation: slideUp 0.3s ease-out; }
-      @keyframes slideUp {
-        from { opacity:0; transform: translate(-50%, -40%); }
-        to { opacity:1; transform: translate(-50%, -50%); }
-      }
       #review-popup button:hover { background: var(--background-secondary); }
       @media (max-width: 768px) {
         /* 原强制全屏头排 34px 已废止（ticket 68：真全屏头排避让统一走 .bz-win-mfs） */

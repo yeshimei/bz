@@ -751,3 +751,11 @@ button.news-close-btn {
   border-radius: 6px;
 }
 
+/* ==================== 跨域共用动画 ==================== */
+/* slideUp 弹窗上滑入场：原 diary/memo/clipping/password/review 五处同名定义（拆分前单体
+   遗留，语义一致仅格式差异），去重收敛为此一份；news 用独立 newsSlideUp 不在此列。 */
+@keyframes slideUp {
+    from { opacity: 0; transform: translate(-50%, -40%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
+

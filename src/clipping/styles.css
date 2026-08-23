@@ -132,21 +132,9 @@
             }
 
             /* 弹窗全屏已废止（ticket 68：真全屏统一走 .bz-win-mfs 类） */
-    .article-sites-scroll {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-    }
-    .article-entry-title {
-        font-size: 15px;
-    }
-    #article-view-popup .article-entry-card {
-        padding: 14px 16px;
-    }
+            #article-view-popup .article-entry-card {
+                padding: 14px 16px;
+            }
         }
-        @keyframes slideUp {
-            from { opacity:0; transform:translate(-50%, -40%); }
-            to { opacity:1; transform:translate(-50%, -50%); }
-        }
-    
 .article-sites-scroll::-webkit-scrollbar { display:none; }
 
