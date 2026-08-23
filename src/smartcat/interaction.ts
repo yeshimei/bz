@@ -1,7 +1,8 @@
 /**
  * 交互管理器（移植自 SmartCat.js InteractionManager）
  * 点触：单击=宠物消息、双击=聊天、三击=语音（桌面提示禁用）、五击=设置、长按=设置；
- * 拖拽（鼠标/触屏）；陪伴定时器（自言自语）；聊天（多轮+上下文）；书评消息。
+ * 拖拽（鼠标/触屏）——设置/聊天面板开着时依旧可拖动（仅抑制点触/长按手势，2026-08-23 用户拍板）；
+ * 陪伴定时器（自言自语）；聊天（多轮+上下文）；书评消息。
  * 全部命令/面板操作经回调注入（index 组装，避免模块间循环依赖）。
  */
 import { eventSystem, startThinking, stopThinking, stopAllThinking } from './state';
@@ -72,6 +73,11 @@ export class InteractionManager {
     return document.getElementById(CAT_CONTAINER_ID) as HTMLElement;
   }
 
+  /** 设置/聊天面板是否打开——只抑制点触/长按手势，不再锁拖拽（用户拍板：面板开着小橘依旧可移动，不定死） */
+  private get panelOpen(): boolean {
+    return this.isSettingsOpen || this.isChatOpen;
+  }
+
   /** setupInteractions（原：滑块/拖拽/事件/配置回填/陪伴启动） */
   setupInteractions(): void {
     this.setupMovement();
@@ -89,7 +95,6 @@ export class InteractionManager {
   }
 
   private handleTouchStart(e: any): void {
-    if (this.isSettingsOpen || this.isChatOpen) return;
     e.preventDefault();
     const touch = e.touches[0];
     this.tapStartX = touch.clientX;
@@ -100,12 +105,13 @@ export class InteractionManager {
     this.initialLeft = parseFloat(computedStyle.left) || (window.innerWidth - this.catContainer.offsetWidth) / 2;
     this.initialTop = parseFloat(computedStyle.top) || window.innerHeight - this.catContainer.offsetHeight;
     this.catContainer.style.transition = 'none';
-    this.startLongPressTimer();
     eventSystem.emit('touchStarted', { x: this.startX, y: this.startY });
+    // 面板开着仍可拖动（拖拽基准照记）；仅不再触发长按开设置
+    if (this.panelOpen) return;
+    this.startLongPressTimer();
   }
 
   private handleTouchMove(e: any): void {
-    if (this.isSettingsOpen || this.isChatOpen) return;
     e.preventDefault();
     this.clearLongPressTimer();
     const touch = e.touches[0];
@@ -125,7 +131,8 @@ export class InteractionManager {
     const endX = touch.clientX;
     const endY = touch.clientY;
     const moveDistance = Math.sqrt(Math.pow(endX - this.tapStartX, 2) + Math.pow(endY - this.tapStartY, 2));
-    if (moveDistance < this.tapThreshold && !this.isDragging) this.handleTap();
+    // 面板开着不触发点触手势（防误触再开聊天/设置），位置清理照常
+    if (!this.panelOpen && moveDistance < this.tapThreshold && !this.isDragging) this.handleTap();
     this.isDragging = false;
     this.catContainer.style.transition = 'all 0.3s ease';
     const rect = this.catContainer.getBoundingClientRect();
@@ -137,7 +144,6 @@ export class InteractionManager {
   }
 
   private handleMouseDown(e: any): void {
-    if (this.isSettingsOpen || this.isChatOpen) return;
     this.tapStartX = e.clientX;
     this.tapStartY = e.clientY;
     this.startX = e.clientX;
@@ -146,15 +152,17 @@ export class InteractionManager {
     this.initialLeft = parseFloat(computedStyle.left) || (window.innerWidth - this.catContainer.offsetWidth) / 2;
     this.initialTop = parseFloat(computedStyle.top) || window.innerHeight - this.catContainer.offsetHeight;
     this.catContainer.style.transition = 'none';
-    this.startLongPressTimer();
     this.isMousePressed = true;
     document.addEventListener('mousemove', this.boundMouseMove);
     document.addEventListener('mouseup', this.boundMouseUp);
     eventSystem.emit('mouseDown', { x: this.startX, y: this.startY });
+    // 面板开着仍可拖动（拖拽基准照记）；仅不再触发长按开设置
+    if (this.panelOpen) return;
+    this.startLongPressTimer();
   }
 
   private handleMouseMove(e: any): void {
-    if (!this.isMousePressed || this.isSettingsOpen || this.isChatOpen) return;
+    if (!this.isMousePressed) return;
     this.clearLongPressTimer();
     const deltaX = e.clientX - this.startX;
     const deltaY = e.clientY - this.startY;
@@ -171,7 +179,8 @@ export class InteractionManager {
     const endX = e.clientX;
     const endY = e.clientY;
     const moveDistance = Math.sqrt(Math.pow(endX - this.tapStartX, 2) + Math.pow(endY - this.tapStartY, 2));
-    if (moveDistance < this.tapThreshold && !this.isDragging) this.handleTap();
+    // 面板开着不触发点触手势（防误触再开聊天/设置）
+    if (!this.panelOpen && moveDistance < this.tapThreshold && !this.isDragging) this.handleTap();
     this.isMousePressed = false;
     this.isDragging = false;
     this.catContainer.style.transition = 'all 0.3s ease';
