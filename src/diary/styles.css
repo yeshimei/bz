@@ -100,18 +100,6 @@
     }
 }
 
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translate(-50%, -40%);
-    }
-
-    to {
-        opacity: 1;
-        transform: translate(-50%, -50%);
-    }
-}
-
 /* 移动端标签选择器优化 */
 @media (max-width: 768px) {
     .diary-tag-selector-popup {

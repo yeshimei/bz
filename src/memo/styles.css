@@ -2,10 +2,6 @@
 /* ==================== 备忘录（memo，ticket 57 样式收敛：原 TODOCSS 注入 + 内联样式提取，视觉逐字等价） ==================== */
 #todo-mask { backdrop-filter: blur(2px); }
 #todo-popup { animation: slideUp 0.3s ease-out; }
-@keyframes slideUp {
-    from { opacity:0; transform: translate(-50%, -40%); }
-    to { opacity:1; transform: translate(-50%, -50%); }
-}
 #todo-entries-container::-webkit-scrollbar { width: 6px; }
 #todo-entries-container::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
 #add-todo-due-input { color-scheme: light dark; }

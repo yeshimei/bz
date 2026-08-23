@@ -757,6 +757,14 @@ button.news-close-btn {
   border-radius: 6px;
 }
 
+/* ==================== 跨域共用动画 ==================== */
+/* slideUp 弹窗上滑入场：原 diary/memo/clipping/password/review 五处同名定义（拆分前单体
+   遗留，语义一致仅格式差异），去重收敛为此一份；news 用独立 newsSlideUp 不在此列。 */
+@keyframes slideUp {
+    from { opacity: 0; transform: translate(-50%, -40%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
 /* ==================== 日记本域样式（src/diary/styles.css） ==================== */
 /* ==================== 日记本（diary-notebook 合并） ==================== */
 /* 添加日记弹窗样式 */
@@ -856,18 +864,6 @@ button.news-close-btn {
 
     to {
         opacity: 1;
-    }
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translate(-50%, -40%);
-    }
-
-    to {
-        opacity: 1;
-        transform: translate(-50%, -50%);
     }
 }
 
@@ -1411,10 +1407,6 @@ button.news-close-btn {
 /* ==================== 备忘录（memo，ticket 57 样式收敛：原 TODOCSS 注入 + 内联样式提取，视觉逐字等价） ==================== */
 #todo-mask { backdrop-filter: blur(2px); }
 #todo-popup { animation: slideUp 0.3s ease-out; }
-@keyframes slideUp {
-    from { opacity:0; transform: translate(-50%, -40%); }
-    to { opacity:1; transform: translate(-50%, -50%); }
-}
 #todo-entries-container::-webkit-scrollbar { width: 6px; }
 #todo-entries-container::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
 #add-todo-due-input { color-scheme: light dark; }
@@ -1962,32 +1954,16 @@ button.news-close-btn {
             }
 
             /* 弹窗全屏已废止（ticket 68：真全屏统一走 .bz-win-mfs 类） */
-    .article-sites-scroll {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-    }
-    .article-entry-title {
-        font-size: 15px;
-    }
-    #article-view-popup .article-entry-card {
-        padding: 14px 16px;
-    }
+            #article-view-popup .article-entry-card {
+                padding: 14px 16px;
+            }
         }
-        @keyframes slideUp {
-            from { opacity:0; transform:translate(-50%, -40%); }
-            to { opacity:1; transform:translate(-50%, -50%); }
-        }
-    
 .article-sites-scroll::-webkit-scrollbar { display:none; }
 
 /* ==================== 密码本域样式（src/password/styles.css） ==================== */
 /* ==================== 密码本（password，ticket 60 收敛：原 PW_STYLES 运行时注入，逐字搬运） ==================== */
     #pw-mask { backdrop-filter: blur(2px); }
     #pw-popup { animation: slideUp 0.3s ease-out; }
-    @keyframes slideUp {
-        from { opacity:0; transform: translate(-50%, -40%); }
-        to { opacity:1; transform: translate(-50%, -50%); }
-    }
     #pw-entries-container::-webkit-scrollbar { width: 6px; }
     #pw-entries-container::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
 
@@ -2237,10 +2213,6 @@ button.news-close-btn {
 /* ==================== 复习计划（review，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
       #review-mask { backdrop-filter: blur(2px); }
       #review-popup { animation: slideUp 0.3s ease-out; }
-      @keyframes slideUp {
-        from { opacity:0; transform: translate(-50%, -40%); }
-        to { opacity:1; transform: translate(-50%, -50%); }
-      }
       #review-popup button:hover { background: var(--background-secondary); }
       @media (max-width: 768px) {
         /* 原强制全屏头排 34px 已废止（ticket 68：真全屏头排避让统一走 .bz-win-mfs） */

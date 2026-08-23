@@ -2,10 +2,6 @@
 /* ==================== 密码本（password，ticket 60 收敛：原 PW_STYLES 运行时注入，逐字搬运） ==================== */
     #pw-mask { backdrop-filter: blur(2px); }
     #pw-popup { animation: slideUp 0.3s ease-out; }
-    @keyframes slideUp {
-        from { opacity:0; transform: translate(-50%, -40%); }
-        to { opacity:1; transform: translate(-50%, -50%); }
-    }
     #pw-entries-container::-webkit-scrollbar { width: 6px; }
     #pw-entries-container::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
 
