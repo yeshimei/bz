@@ -17,6 +17,7 @@ import { confirm } from '../core/confirm';
 import { runAIRecommend, runSimilarRecommend } from './recommend';
 import { watchPosterFetch } from './poster-watch';
 import { openAnalysisModal } from './analysis';
+import { notifyMovieAction } from '../smartcat';
 
 /** 渲染卡片列表（分页，源码 L279-426 逐字） */
 export function renderAll(displayItems: any[], container: HTMLElement, app: App): void {
@@ -538,6 +539,14 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
 
     try {
       const newFile = await app.vault.create(filePath, fileContent);
+      // ticket 074（方法监听）：创建动作观察（smartcat；未初始化/关闭时静默）
+      notifyMovieAction({
+        kind: 'created',
+        name,
+        status: selectedStatus === STATUS_WANT ? 'want' : selectedStatus === STATUS_WATCHING ? 'watching' : 'watched',
+        rating: ratingValue,
+        review: reviewText || null,
+      });
       closeAddModal();
       closeOverlay();
       refreshDataAndView(app);
@@ -1354,6 +1363,13 @@ async function setMovieStatus(item: MovieItem, status: number, app: App): Promis
     fm['评分'] = ratingValue;
     fm['观影日期'] = watchDate;
   });
+  // ticket 074（方法监听）：状态流转观察（from = 改前状态，setMovieStatus 不就地更新 item.status）
+  notifyMovieAction({
+    kind: 'status',
+    name: item.name,
+    from: item.status === STATUS_WANT ? 'want' : item.status === STATUS_WATCHING ? 'watching' : 'watched',
+    to: status === STATUS_WANT ? 'want' : status === STATUS_WATCHING ? 'watching' : 'watched',
+  });
   item.watchDate = watchDate; // 本地同步：抽屉头部相对时间即时刷新
   notice(status === STATUS_WATCHED ? '已标记已看' : '已标记在看', 'success');
   refreshDataAndView(app);
@@ -1416,6 +1432,8 @@ export function openRateModal(item: MovieItem, app: App, title: string, onDone?:
       fm['评分'] = ratingVal;
       fm['观影日期'] = watchDate;
     });
+    // ticket 074（方法监听）：评分/改分观察（from = 改前评分，改前无分 → 首次评分）
+    notifyMovieAction({ kind: 'rated', name: item.name, fromRating: item.rating, toRating: ratingVal });
     notice('已更新影视信息', 'success');
     item.rating = ratingVal;
     item.watchDate = watchDate;
@@ -1469,6 +1487,8 @@ export function openReviewModal(item: MovieItem, app: App, title: string, onDone
       if (reviewText) fm['影评'] = reviewText;
       else delete fm['影评'];
     });
+    // ticket 074（方法监听）：影评 写/改/删 观察（from = 改前影评，text 空 = 删除）
+    notifyMovieAction({ kind: 'review', name: item.name, fromReview: item.review, toReview: reviewText || null });
     notice(reviewText ? '已保存影评' : '已删除影评', 'success');
     closeMovieTinyModal(mask, modalEsc);
     refreshDataAndView(app);
@@ -1497,6 +1517,8 @@ function confirmDeleteMovie(item: MovieItem, app: App): void {
     confirmText: '删除',
     onConfirm: async () => {
       await app.vault.delete(item.file);
+      // ticket 074（方法监听）：删除影视观察
+      notifyMovieAction({ kind: 'deleted', name: item.name });
       notice('影视已删除', 'success');
       refreshDataAndView(app);
     },
