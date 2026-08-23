@@ -203,10 +203,10 @@ export async function ensureSmartCat(app: App): Promise<void> {
   if (!initialized) return; // 竞态守卫 2：init 期间被 unload 则丢弃装配
   // ticket 075：每日到期扫描并入反射调度（30s tick 检查，当天已扫过跳过不空转）
   memorySystem.onSchedulerTick = () => { void maybeMemoDueScan(); };
-  // 反思驱动人格（ADR-0023：洞察 → existential 成长 + 行为周统计深更新）
-  memorySystem.onReflect = async (insights) => {
+  // 反思驱动人格（ADR-0023：洞察 → 特质归因成长 + 行为周统计深更新；ticket 091 origin 透传给归因来源约束）
+  memorySystem.onReflect = async (insights, meta) => {
     if (personalityGrowth) {
-      if (insights && insights.length) await personalityGrowth.applyReflectionInsights(insights);
+      if (insights && insights.length) await personalityGrowth.applyReflectionInsights(insights, { origin: meta?.origin });
       // MATE character_from_experience：反思时把累积行为统计折算进 traits（周深更新）
       await personalityGrowth.applyWeeklyExperience();
     }
