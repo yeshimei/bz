@@ -241,3 +241,14 @@
 - ✅ **实现要点**：`src/smartcat/dashboard.ts`（纯函数层可测 + createOverlay/.bz-win-head/escManager 主窗口规范）；数据经 loadSmartCatData 现读，与常驻猫实例解耦（smartcatEnabled=false 也可看）；面板只读不写盘（铁律 1）；mood.ts 抽纯函数 `moodLevelFromPad`（computeMoodLevel 委托，行为不变）
 - ✅ **主窗口规范三件事**：settings.ts 新键 `smartcatDashboardMobileDefaultFullscreen`（默认 false=常规卡）；打开路径 applyMobileWindowFullscreen；小橘设置弹窗挂「移动端默认全屏（数据面板）」行（仅移动端显示）
 - ✅ **清理接线**：unloadSmartCat 调 closeSmartcatDashboard()（DOM + ESC 句柄）；smoke 命令清单 +1（38 命令）
+
+## 2026-08-23 smartcat 影视动作感知观察完成（ticket 074）
+
+**状态：全量 1436 测试通过（101 文件），tsc 0 错误；含新 movie-source 18 个测试**
+
+- ✅ **影视观察从「固定句式」改「动作感知」**：新模块 `src/smartcat/movie-source.ts`（纯函数可测）——`我的/影视` create/modify/delete 走快照 diff（prev 存每条影视 {rating, review, watchDate, body}），状态仍由 frontmatter `评分` 推断（-1/0/>0，数据格式零改动）
+- ✅ **文案分动作**（ticket 表）：加入想看/开始看/看完了（含评分影评合并）/想看→在看/改回想看/从在看改回想看/从已看改为在看/评了 N 分/评分从 A 改为 B/写·改·删影评/正文记内容（≤300）/删除影视；优先级 状态>评分>影评>正文，一次一条
+- ✅ **修复两处提取缺陷**：UI 影评（frontmatter `影评` 字段）现在能观察（原只读正文本体全丢）；正文剥「纯双链嵌入行」（首行海报位 `![[CONFIG/MOVIE POSTER/…]]`，线上两条「影评：![[…jpg]]」垃圾记忆根因）
+- ✅ **事件缺口补齐**：movie 豁免 10 分钟去弹跳（连续操作逐条观察，正文观察单独 10 分钟节流防自动保存连发）；补挂 vault delete 监听（有快照才观察）；首快照在 ensure 时建（不产出），先快照再挂监听；仅海报/豆瓣字段变化的 modify（外部海报脚本补写）天然无 diff 不观察
+- ✅ **文档**：spec.md 影视 US 36 + 事件监听清单行；ADR-0026（Context/Options/Consequences）；CONTEXT.md 记忆流词条补影视动作感知观察
+- ⏳ 待办：手动冒烟（真实 Obsidian 操作影视验证观察文本）；日记观察细化待用户另行拍板（ticket 074 仅影视）
