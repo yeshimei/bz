@@ -12,7 +12,7 @@
  *     历史记忆越长小橘越懂你，不淘汰；bge-m3 语义检索，Ollama 不可用降级词法
  */
 import type { App } from 'obsidian';
-import { getSmartcatVecPath } from './data';
+import { getSmartcatVecPath, touchPresence } from './data';
 import { callChatJson, isAIConfigured } from './api';
 import { getEmbedding, checkRemoteOllama } from '../flash/ollama';
 import type { SmartCatData, MemoryStreamEntry, CloudScoringMode } from './types';
@@ -129,6 +129,8 @@ export class MemorySystem {
     };
     this.stream.push(memory);
     this.pendingSinceReflect++;
+    // ticket 088：观察成功写入 = 用户在场（刷新 editingData.lastPresenceAt，随本 dataSaver 落盘，不新增独立写盘）
+    touchPresence(this.dataProvider());
     await this.dataSaver(this.dataProvider());
     await this.appendVector(memory);
     // ADR-0025：观察钩子（情绪共振/瞬时情绪由 index 接线）
