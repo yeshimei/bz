@@ -454,3 +454,16 @@
 - ✅ **兼容冻结**：smartcat.json 既有字段零改动；theme/supersededBy/pinned 全可选旧数据容忍；mood.ts 未触碰；retrieve() 调用方零改动
 - ⚠ 必要偏差：memory.test.ts「evidence 过滤 insight」1 处断言收窄（候选通道按票要求把洞察文本以标注参照块进 prompt；P1-1 原意「不作编号 evidence 素材」保留并照测）
 - 📄 文档：ADR-0039；CONTEXT.md 记忆流字段表 + 洞察版本化词条；spec.md Further Notes 追加一行；issue 092 status done
+
+## 2026-08-24 单一缺席状态机完成（ticket 093，ADR-0040，方向三+七 合并）
+**状态：全量 1752 测试通过（120 文件，-maxWorkers=4）+ tsc 0 错误；新增 tests/smartcat/absence.test.ts 36 用例；提交 absence-state-machine 分支**
+
+- ✅ **单一状态机（杜绝双写）**：新模块 `src/smartcat/absence.ts`——editingData.absenceState={phase,since} 三态环 normal→missing→reunion→normal；迁移表纯函数 evalAbsenceTick/evalAbsencePresence 全库唯一，天数换算委托 data.getAbsenceDays（H5 单一口径不自造）
+- ✅ **时序分窗（同日不抵消）**：normal 入边要求距 lastPresenceAt ≥24h（<24h 只走重逢分支）；missing 缺席回落静默自愈不补发；reunion 保持 24h 窗口内不再评估缺席——牵挂先落账、重逢喜悦等真回来单独成账
+- ✅ **PAD 幅度重规格**：absencePadDelta 域 [1.0,1.8]（下限=updatePad 落盘阈值 1.0 保证可验证效果，上限对齐 handleInteraction 最小行量级）+ 每轴 ≤0.5×共振帽（emotionResonanceDelta 锚点情绪三轴最大绝对值为基数；出厂 safe：miss=lonely→1.05、reunion=happy→压到下限 1.0）；不取整防 1.05 类边界浮点翻档
+- ✅ **selfEvents 表达层**：环形缓冲 ≤20 持久化 editingData.selfEvents；dashboard 总览新增「缺席状态」卡（阶段+距上次在场 N 天+最近事件相对时间），类名沿用 bz-sc-dash-* 零新增样式
+- ✅ **lazyAttachment 读视图**：半衰 14 天指数衰减 + 地板 0.05、视图永不高于存储基线、now 注入/缺省容忍；computeDashboardStats 依恋项切换该视图，存储零漂移（旧数据无 lastPresenceAt 原样返回）
+- ✅ **画像砍掉选择器**：safe/anxious/avoidant 三套参数为 absence.ts 出厂内部常量候选（missingDays/锚点情绪互异），当前启用 safe，不进设置面板
+- ✅ **触发源接线**：memorySystem.onSchedulerTick 并入心跳（复用既有 30s tick 不自建定时器）；新增 MemorySystem.onPresence 钩子（addObservation→touchPresence 后触发，覆盖全部观察路径）；聊天 sendChatMessage / 主动关心 touchPresence 后直呼信号；unload 置空
+- ✅ **兼容冻结**：smartcat.json 仅 editingData 内可选字段 absenceState/selfEvents（旧数据零迁移容忍）；无 LLM 调用、设置面板零新项、trust/attachment 写盘衰减未触碰（范围裁定随 089 PARKED）
+- 📝 文档：ADR-0040；spec.md Further Notes 追加一行；CONTEXT.md 新增「缺席状态机」词条；issue 093 status done

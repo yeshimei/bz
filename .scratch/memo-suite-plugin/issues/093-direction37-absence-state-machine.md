@@ -1,6 +1,6 @@
 # ticket 093 —— 方向三+七 合并：单一缺席状态机（086 v4）
 
-状态：**READY-FOR-AGENT**
+状态：**done**（2026-08-24，分支 absence-state-machine 落地：单一状态机 editingData.absenceState 三态环 + selfEvents 环形 ≤20 + PAD 幅度域 [1.0,1.8]+0.5×共振帽 + 时序分窗同日不抵消 + lazyAttachment 读侧惰性视图 + onPresence 钩子；测试 tests/smartcat/absence.test.ts 36 用例，全量 1752 绿 + tsc 0；ADR-0040）
 父文档：086-intelligence-evolution-proposal.md v4「方向三」「方向七」（绿队C 裁决合并）
 基线：以合并时 master HEAD 为准（≥6419c06）；开工前先 git log 确认
 日期：2026-08-24

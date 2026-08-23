@@ -23,6 +23,7 @@ import { MOOD_MAP, moodLevelFromPad } from './mood';
 import { TRAIT_GROUPS } from './character';
 import { sourceLabel, formatRelativeTime } from './memory';
 import { buildInsightShortIndex, isSupersededInsight, MANUAL_SUPERSEDED_BY } from './insight-version';
+import { lazyAttachment, buildAbsenceCard } from './absence'; // ticket 093：读侧依恋视图 + 缺席状态卡
 import {
   analyzeEmotionTrend,
   buildEmotionSnapshots,
@@ -121,7 +122,9 @@ export function computeDashboardStats(data: SmartCatData): DashboardStats {
     interactionCount: g.behaviorStats?.interactionCount || 0,
     sessionCount: g.behaviorStats?.sessionCount || 0,
     trust: g.relationship?.trust ?? 0.5,
-    attachment: g.relationship?.attachment ?? 0.5,
+    // ticket 093（方向七裁决）：依恋展示走读侧惰性视图——分离衰减只影响读取视图，
+    // 不写盘不漂移；旧数据无 lastPresenceAt → 原样返回存储基线（缺省容忍）
+    attachment: lazyAttachment(g.relationship?.attachment ?? 0.5, data.editingData?.lastPresenceAt, Date.now()),
     emotionalTone: g.behaviorStats?.emotionalTone || 0,
   };
 }
@@ -309,6 +312,9 @@ function renderOverview(pane: HTMLElement, data: SmartCatData): void {
   hero.appendChild(emoji);
   hero.appendChild(main);
   pane.appendChild(hero);
+
+  // ticket 093：缺席状态卡（自我事件直接呈现——表达先于数值，体验原则 3）
+  pane.appendChild(buildAbsenceCard(data));
 
   // PAD 三轴
   const padCard = card('心情潮汐（PAD 三维）');

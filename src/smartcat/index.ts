@@ -39,6 +39,7 @@ import { buildWeeklyReportData, generateWeeklyReport, weekWindow } from './repor
 import { buildCompanionContext } from './companion-context';
 import { analyzeEmotionTrend, buildEmotionSnapshots, describeEmotionTrend, checkContradiction, extractStoredFacts, initBanditArm, sampleThompson, updateBandit } from './cognitive';
 import { openSmartcatDashboard, closeSmartcatDashboard } from './dashboard';
+import { AbsenceSystem } from './absence';
 import type { SmartCatData, SmartCatConfig, ProactiveCareState } from './types';
 import type { BanditArmParams } from './cognitive';
 import type { SmartcatPanels } from './ui';
@@ -53,6 +54,7 @@ let bubbleManager: BubbleManager | null = null;
 let moodSystem: MoodSystem | null = null;
 let personalityGrowth: PersonalityGrowth | null = null;
 let memorySystem: MemorySystem | null = null;
+let absenceSystem: AbsenceSystem | null = null; // 缺席状态机（ticket 093，ADR-0040）
 let animation: SmartCatAnimation | null = null;
 let interaction: InteractionManager | null = null;
 let mobileAdapter: MobileInputAdapter | null = null;
@@ -202,7 +204,12 @@ export async function ensureSmartCat(app: App): Promise<void> {
   await memorySystem.init();
   if (!initialized) return; // 竞态守卫 2：init 期间被 unload 则丢弃装配
   // ticket 075：每日到期扫描并入反射调度（30s tick 检查，当天已扫过跳过不空转）
-  memorySystem.onSchedulerTick = () => { void maybeMemoDueScan(); };
+  // ticket 093：缺席状态机挂同一调度心跳（复用既有 30s tick，不自建定时器）——
+  // 检查 lastPresenceAt 距今 → normal→missing 迁移；重逢由在场信号钩子触发
+  absenceSystem = new AbsenceSystem(dataProvider, dataSaver, moodSystem);
+  memorySystem.onSchedulerTick = () => { void maybeMemoDueScan(); void absenceSystem?.onSchedulerTick(); };
+  // ticket 093：重逢判定 = 在场信号（观察路径统一经 addObservation→touchPresence 后到此）+ phase ≠ normal
+  memorySystem.onPresence = () => { void absenceSystem?.onPresenceSignal(); };
   // 反思驱动人格（ADR-0023：洞察 → 特质归因成长 + 行为周统计深更新；ticket 091 origin 透传给归因来源约束）
   memorySystem.onReflect = async (insights, meta) => {
     if (personalityGrowth) {
@@ -554,6 +561,8 @@ async function maybeProactiveCare(): Promise<void> {
     const d = dataProvider();
     // ticket 088：主动关心触发 = 用户在场（刷新 editingData.lastPresenceAt，随下方既有 dataSaver 落盘）
     touchPresence(d);
+    // ticket 093：在场信号 → 缺席状态机（重逢评估；钩子内部有迁移才落盘）
+    void absenceSystem?.onPresenceSignal();
     const next: ProactiveCareState = { week: isoWeekKey(), count: st.count + 1, lastAt: Date.now() };
     d.editingData = { ...(d.editingData || {}), proactiveCare: next };
     markProactiveArm(armId);
@@ -793,6 +802,8 @@ async function sendChatMessage(message: string): Promise<void> {
   // ticket 088：用户发消息本身即「在场」（刷新 editingData.lastPresenceAt 内存字段；
   // 成功路径随既有 dataSaver 落盘，AI 失败也已在场——不新增独立写盘）
   touchPresence(data);
+  // ticket 093：在场信号 → 缺席状态机（重逢判定 = 在场 + phase ≠ normal）
+  void absenceSystem?.onPresenceSignal();
   // Bandit reward 回填（ticket 035）：用户主动发消息 = 对上次主动关心的回应
   void rewardProactiveArm();
 
@@ -958,6 +969,7 @@ export function unloadSmartCat(): void {
   __resetVisibilityForTests();
   bubbleManager = null;
   moodSystem = null;
+  absenceSystem = null; // 缺席状态机（ticket 093）：无自有定时器，随装配整体置空
   personalityGrowth = null;
   memorySystem = null;
   animation = null;
@@ -969,7 +981,7 @@ export function unloadSmartCat(): void {
 
 /** 测试辅助：获取内部实例引用 */
 export function __getSmartcatInternals(): any {
-  return { data, bubbleManager, moodSystem, memorySystem, animation, interaction, panels, initialized };
+  return { data, bubbleManager, moodSystem, memorySystem, absenceSystem, animation, interaction, panels, initialized };
 }
 
 // ------------- 影视动作观察（ticket 074 修订：方法监听，ADR-0026） -------------

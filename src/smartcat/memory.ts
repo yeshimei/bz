@@ -114,6 +114,8 @@ export class MemorySystem {
   onObservation: ((memory: MemoryStreamEntry) => void | Promise<void>) | null = null;
   /** 反射调度 tick 钩子（ticket 075：index 挂每日 memo 到期扫描；每次 30s tick 触发，失败静默） */
   onSchedulerTick: (() => void | Promise<void>) | null = null;
+  /** 在场信号钩子（ticket 093：addObservation 刷新 lastPresenceAt 后同步通知缺席状态机评估重逢；失败静默） */
+  onPresence: (() => void | Promise<void>) | null = null;
   /** 聊天记忆去重窗口（近 N 条同内容跳过） */
   private static readonly dedupeWindow = 20;
   /** 聊天记忆保留阈值（非 calm 情绪或 importance≥0.55 才落库） */
@@ -187,6 +189,10 @@ export class MemorySystem {
     this.pendingSinceReflect++;
     // ticket 088：观察成功写入 = 用户在场（刷新 editingData.lastPresenceAt，随本 dataSaver 落盘，不新增独立写盘）
     touchPresence(this.dataProvider());
+    // ticket 093：在场信号 → 缺席状态机（重逢判定 = 在场 + phase ≠ normal；钩子失败静默）
+    if (this.onPresence) {
+      try { void this.onPresence(); } catch { /* 钩子失败静默 */ }
+    }
     await this.dataSaver(this.dataProvider());
     await this.appendVector(memory);
     // ADR-0025：观察钩子（情绪共振/瞬时情绪由 index 接线）
