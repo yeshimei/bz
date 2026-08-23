@@ -21,16 +21,8 @@ export const DOMAIN_FILES: Record<string, DomainExtractor> = {
       return newOnes.length ? '你用番茄钟完成了一段专注（+ ' + newOnes.length + ' 次）' : null;
     },
   },
-  news: {
-    file: 'CONFIG/STORAGE/news-stats.json',
-    extract: (raw) => {
-      const byDate = raw?.byDate;
-      if (!byDate) return null;
-      const today = new Date().toISOString().slice(0, 10);
-      const n = byDate[today];
-      return n ? '你浏览了今天的资讯（' + n + ' 条）' : null;
-    },
-  },
+  // news 已移除（ticket 076）：聚合讯观察改为逐篇三态方法监听（news-source/notifyNewsRead），
+  // 「你浏览了今天的资讯（N 条）」计数观察不再产。
   quiz: {
     file: 'CONFIG/STORAGE/quiz.json',
     extract: (raw, prev) => {
