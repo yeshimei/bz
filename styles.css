@@ -582,14 +582,6 @@ button.news-close-btn {
   font-weight: 600;
   color: var(--text-normal);
 }
-.bz-settings-close {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  color: var(--text-muted);
-  padding: 0 4px;
-}
 /* 设置弹窗内容区/空态（原 core/settings-modal.ts 内联；max-height 滚动为功能性） */
 .bz-settings-content {
   padding: 12px 16px 16px;
