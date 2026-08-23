@@ -112,6 +112,7 @@ Feature: memo-suite-plugin
 31. 作为用户，我希望书库可生成阅读数据分析报告（互调 `bz-reading-report-open`），以便一键出报告。
 32. 作为用户，我希望读书笔记弹窗（📚《书》的读书笔记：高亮 ❝ 列表 + 日期 + 评论，支持跳转/编辑/删除）与原脚本一致，以便精读管理。
 33. 作为用户，我希望书目卡片显示阅读进度（📊 %）、阅读时间（⏱️ 格式化）、文件大小（📦）、作者（✍️）、🧮 统计按钮，以便与原脚本一致。
+34. 作为用户，我希望小橘能感知书库的 epub 阅读（weave 读书数据：开始读/读完/划重点/写想法/阅读时长），以便陪伴记忆细致准确。（2026-08-25 用户拍板，ticket 081，ADR-0034：**weave-data.json 数据文件监听**——书库 UI 纯只读、阅读数据由外部 weave-epub-reader 落盘，`DOMAIN_FILES.library` 接入 `libraryWeaveExtract` 盲通道 diff（extract 返回升级 `string | string[] | null`，单次保存多事件各产一条）；**书库 md 事件通道对 reading 短路**——手写书评/划线全文不再产观察，防双记录；进度百分比本身不观察）
 
 ### 影视（Movies）与影视数据分析（Movie Analytics）
 
@@ -238,6 +239,7 @@ Feature: memo-suite-plugin
 - smartcat 备忘录观察（ticket 075，ADR-0028）：**事件通道 domain-source memo extract 移除**（memo.json JSON 事件不再收，防双记录），观察只来自 memo 域 UI 确认回调的 
 otifyMemoAction（方法监听，一次动作一条）+ **每日到期扫描**（并入 30s 反射调度 tick，读 memo.json 合并一条「你有 N 个待办今天到期：…」，editingData.dueScan 当天去重跨重启）
 - smartcat 聚合讯观察（ticket 076，ADR-0029）：**逐篇三态方法监听**（news 域 reader 动作经 `markAsRead`/`saveToClip` 调 `notifyNewsRead`/`notifyNewsSaved`）+ 保存联动 auto-summary——待补全登记（内存表：剪藏路径 → {标题, 平台, 时长分, 定时器}），`onVaultActivity` 对 clipping **短路**（不再产「你剪藏了」），唯一例外：命中登记的该剪藏 modify → 读 frontmatter summary/tags → 补全完整保存观察并移除登记；2 分钟降级定时器兜底；`DOMAIN_FILES.news` 已移除（「你浏览了今天的资讯」不再产）
+- smartcat 书库观察（ticket 081，ADR-0034）：**weave-data.json 数据文件监听**——外部 weave-epub-reader 落盘（bz 书库 UI 纯只读），`DOMAIN_FILES.library` 接入盲通道 extract（`libraryWeaveExtract` 按书 diff，extract 返回升级 `string | string[] | null` 支持单次保存多条）；五类观察：开始读（percent 首次 >0，进度不观察）/读完了（stats.completedTime 首次出现）/划重点计数/写想法计数/阅读时长（sessions 新增求和向上取整分钟，最小 1）；prev 按 bookId 记账 `lib:<id>:started/done/hl/ex/sess`，标题取 meta.title 无标题跳过；`onVaultActivity` 对 kind==='reading' 短路（书库 md 通道停用防双记录，context-source reading 分支保留不触发）
 ### 设置页
 
 - **设置归属模型（ADR-0009，2025 用户决策）**：设置两分——全局项留 Obsidian 设置页（单页平铺，无 tab，只含「🤖 AI」「📂 数据存储路径」两区块），域行为项进各功能主面板右上角 ⚙️ 域设置弹窗；筛选/排序弹窗统一挂 🔀（影视「筛选与排序」、书库「视图与筛选」），⚙️ 只表示真设置；AI Agent 4 项设置不暴露（字段保留，运行时读旧值、默认值兜底）；入口页不新增设置（编辑模式控件即入口，移动端列数由列数控件按平台读写）

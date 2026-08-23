@@ -5,10 +5,31 @@
 import { describe, it, expect } from 'vitest';
 import { DOMAIN_FILES, snapshotDomains } from '../../src/smartcat/domain-source';
 
-describe('DOMAIN_FILES（6 域新增感知；memo 与 news 均已移除）', () => {
+describe('DOMAIN_FILES（6 域感知：library/pomodoro/quiz/review/favorites/belongings；memo 与 news 均已移除）', () => {
   it('memo 不再有 extract（ticket 075 移除）、news 不再有 extract（ticket 076 移除），防双记录', () => {
     expect(DOMAIN_FILES.memo).toBeUndefined();
     expect(DOMAIN_FILES.news).toBeUndefined();
+  });
+
+  it('library（ticket 081）：weave-data.json 数据文件监听，extract 返回数组（单次保存多条观察）', () => {
+    expect(DOMAIN_FILES.library.file).toBe('CONFIG/STORAGE/weave-data.json');
+    const prev = new Map<string, string>();
+    const texts = DOMAIN_FILES.library.extract(
+      {
+        books: {
+          b1: {
+            meta: { title: 'X' },
+            reading: { position: { percent: 1 }, stats: { completedTime: 1 }, sessions: [{ durationSeconds: 300 }] },
+            notes: { highlights: [{}], excerpts: [{}] },
+          },
+        },
+      },
+      prev,
+    );
+    expect(Array.isArray(texts)).toBe(true);
+    expect(texts).toEqual(['你开始读《X》', '你读完了《X》', '你在《X》划了条重点', '你在《X》写了条想法', '你读了《X》约 5 分钟']);
+    // 现有各域仍返回 string（数组兼容不影响单条域）
+    expect(typeof DOMAIN_FILES.pomodoro.extract({ history: [{ ts: 1 }] }, new Map())).toBe('string');
   });
 
   it('pomodoro：新增 ts 记录产出「专注」观察', () => {
