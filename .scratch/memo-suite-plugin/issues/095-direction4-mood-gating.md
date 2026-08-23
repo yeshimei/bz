@@ -1,6 +1,6 @@
 # ticket 095 —— 方向四：心情门控（086 v4 裁决：限范围修，输出维度换）
 
-状态：**READY-FOR-AGENT**（开放点默认值已定，标注「晨起可调」处可改）
+状态：**done**（2026-08-24 实现：ADR-0042；quiet-gate.ts 纯函数层 + 60s 钩子/30 分钟心跳采样接线 + 温和话术映射与每日问候豁免 + loadMoodState 归中性；mood-gating.test.ts 40 用例，全量 1810 绿 + tsc 0 错误）
 父文档：086-intelligence-evolution-proposal.md v4「方向四」
 基线：以合并时 master HEAD 为准；开工前先 git log 确认
 日期：2026-08-24

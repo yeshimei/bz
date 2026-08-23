@@ -477,3 +477,15 @@
 - ✅ **兼容冻结**：smartcat.json 仅加 editingData.dossierEvents / dossierScanKey 可选字段（旧数据零迁移容忍）；信任数值完全不动；无新命令、无新设置项
 - ✅ **测试**：dossier.test.ts 18 用例（白名单映射与负面排除/幂等/环形截断/editingData 兼容/防御归一/陪伴天数/deriveTimeline 空表兜底+排序+聚合/情绪变化日多数判定+断链跳过+并列确定性/叙事决策与推进独立性/LLM 三态/H4 边界/UI 区块渲染+当日备忘+空态）；既有测试全量保留回归
 - ✅ **文档**：ADR-0041；CONTEXT.md 关系史沉淀词条；spec.md Further Notes 追加一行；issue 094 status done
+## 2026-08-24 心情门控完成（ticket 095，ADR-0042，方向四「限范围修：输出维度换」）
+**状态：全量 1810 测试通过（122 文件，--maxWorkers=4；首跑 library-source 2 用例为文档在案环境抖动，单文件重跑绿+复跑全量绿）+ tsc 0 错误；新增 tests/smartcat/mood-gating.test.ts 40 用例；提交 mood-gating 分支**
+
+- ✅ **安静陪伴期判定（设计 3+5）**：新模块 `src/smartcat/quiet-gate.ts`——门控输入 = analyzeEmotionTrend 的 EMA valence（趋势漂移，非瞬时 PAD）；窗口采样器固定挂既有循环：60s PAD 衰减循环经新增 MoodSystem.onDecayTick 钩子补采样 + 30 分钟趋势心跳（maybeTrendDrift）喂入，不新建定时器；采样最小间隔 10 分钟去重 + 环形 ≤5 条；判定 = 「窗口内多数采样低于阈值」（进 ≥3 样本且最近 ≤5 条低值严格多数 / 出最近 3 条非低 ≥2）——防抖落地形态替代 v3 hysteresis
+- ✅ **quietMode 状态机持久化（设计 6）**：editingData.quietMode={on,since} 可选字段零迁移；迁移表纯函数 evalQuietTransition（enter/exit/timeout 三态原因），静默超时默认 48h 自动退出兜底（防情绪数据断供永久静默）；QuietGateSystem 薄壳对齐 AbsenceSystem 先例（无自有定时器，仅迁移时落盘）
+- ✅ **输出维度换（设计 1）**：平静期 Bandit 选臂照旧、reward 口径零改动——模板兜底路换 GENTLE_TEMPLATES_BY_ARM 子集、LLM 路换 gentleStyleFor 风格指令（任意臂都落在温和子集）；主动间隔 2 天 → 3~4 天（QUIET_PROACTIVE_INTERVAL_DAYS=3.5 默认，晨起可调常量）
+- ✅ **每日 1 次温和问候豁免（设计 2+7）**：安静期每天至多一条纯本地问候（语料池含提案点名「今天还好吗」，按本地日历日键去重）——不计 proactiveCare.count、不标 pendingArm 不领 reward、零 LLM；与 Bandit 主动共享间隔/作息闸门且发出即刷新 lastAt 占槽顺延——任一周外发触点 ≤⌊7/3.5⌋=2，打扰总量守恒（体验原则 1）
+- ✅ **loadMoodState 接线（设计 4）**：原死代码激活并在 ensureSmartCat 装配调用——新鲜 <24h 合并持久化 PAD / 恰 24h 边界或陈旧归中性基线 / lastUpdate 缺失非法归中性缺省（防重启假情绪；不主动写盘随衰减基线自愈）
+- ✅ **兼容冻结**：smartcat.json 仅加 editingData.quietMode/gentleGreeting 可选字段（旧数据容忍）；ceBandit 结构/reward 口径/proactiveWeeklyCap 全不动；设置面板零新项、无新命令、无新 LLM 调用
+- ⚠ 必要偏差：mood.test.ts「loadMoodState 超 24h」1 处断言收窄（55 保持默认 → 50 归中性）——票面设计 4 明文「24h 陈旧归中性」，旧语义在构造函数已复制 saved.pad 的前提下恒 no-op 死分支
+- ✅ **测试**：mood-gating.test.ts 40 用例（窗口边界样本数/多数表决/阈值严格性/采样去重跨源/迁移表含恰 48h 边界与趋势优先/臂→子集映射 rng 注入/日键/loadMoodState 四态/QuietGateSystem 集成八例/ensure 装配钩子冒烟/豁免端到端——周上限已满仍发问候但 count 不动 pendingArm 不标、安静期 3 天不发、非安静期正常计数路径）；既有 mood/interaction 测试全量保留回归
+- 📄 文档：ADR-0042；CONTEXT.md 心情门控词条；spec.md Further Notes 追加一行；issue 095 status done

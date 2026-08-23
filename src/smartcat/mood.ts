@@ -86,6 +86,8 @@ export class MoodSystem {
   moodHistory: any[] = [];
   lastInteractionTime = Date.now();
   private decayTimer: ReturnType<typeof setInterval> | null = null;
+  /** 心情门控采样钩子（ticket 095 设计 3）：60s 衰减循环每 tick 通知窗口采样器（fire-and-forget；可空） */
+  onDecayTick?: (() => void) | null = null;
 
   constructor(app: App, dataProvider: () => SmartCatData, dataSaver: (data: SmartCatData) => Promise<void>) {
     this.app = app;
@@ -232,6 +234,11 @@ export class MoodSystem {
         this.lastSavedPad = { ...this.pad };
         void this.saveMoodState();
       }
+      // ticket 095 设计 3：窗口采样器固定挂本循环（不新建定时器）；采样失败不影响衰减
+      try {
+        const hook = this.onDecayTick;
+        if (hook) hook();
+      } catch { /* 门控采样失败不影响衰减 */ }
     }, 60000);
   }
 
@@ -251,13 +258,24 @@ export class MoodSystem {
     await this.dataSaver(data);
   }
 
-  /** 加载（24h 内合并 PAD；超时保持默认不覆写存储） */
+  /** 中性 PAD 基线（ticket 095 设计 4：24h 陈旧/无数据缺省归此——防重启假情绪） */
+  static readonly NEUTRAL_PAD: PadDimensions = { pleasure: 50, arousal: 50, dominance: 50 };
+
+  /**
+   * 加载（ticket 095 设计 4 接线，原死代码激活）：
+   * lastUpdate 在 24h 内 → 合并持久化 PAD；超时/缺失/非法 → 归中性基线
+   * （防重启假情绪；不主动写盘——随既有 60s 衰减落盘基线自愈）。
+   */
   loadMoodState(): void {
     const data = this.dataProvider();
     const saved = data.mood;
-    const hoursDiff = (Date.now() - saved.lastUpdate) / (1000 * 60 * 60);
-    if (hoursDiff < 24) {
+    const hoursDiff = typeof saved.lastUpdate === 'number' && Number.isFinite(saved.lastUpdate)
+      ? (Date.now() - saved.lastUpdate) / (1000 * 60 * 60)
+      : NaN;
+    if (Number.isFinite(hoursDiff) && hoursDiff < 24) {
       this.pad = { ...this.pad, ...saved.pad };
+    } else {
+      this.pad = { ...MoodSystem.NEUTRAL_PAD };
     }
     this.currentMood = this.computeMoodLevel();
     this.ensureMoodClassApplied();

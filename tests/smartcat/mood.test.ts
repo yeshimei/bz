@@ -195,12 +195,14 @@ describe('MoodSystem 持久化', () => {
     expect(m.pad.pleasure).toBe(42);
   });
 
-  it('loadMoodState：超 24h 不覆写（保持默认）', () => {
+  it('loadMoodState：超 24h 陈旧归中性基线（ticket 095 设计 4，防重启假情绪）', () => {
     const m = make();
     data.mood.pad = { pleasure: 10, arousal: 10, dominance: 10 };
     data.mood.lastUpdate = Date.now() - 25 * 60 * 60 * 1000;
     m.loadMoodState();
-    expect(m.pad.pleasure).toBe(55);
+    expect(m.pad.pleasure).toBe(50);
+    expect(m.pad.arousal).toBe(50);
+    expect(m.pad.dominance).toBe(50);
   });
 });
 
