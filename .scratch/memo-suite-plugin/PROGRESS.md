@@ -1,3 +1,14 @@
+## 2026-08-24 smartcat 归物本观察（ticket 079，ADR-0032）
+
+**状态：全量测试通过 + tsc 0 后提交 worktree/belongings-observation（本条目为开发记录）**
+
+- ✅ **方法监听（先例 ADR-0027/0028/0029）**：归物本观察从 blind 计数渠道（domain-source `belongings` extract「你登记了一件新物品」——无名称、只增不减、编辑/状态流转不反映、删除失真）改方法监听——belongings 域 UI 四个确认回调（添加保存 / 编辑保存 / 抽屉状态流转 / 删除确认）调 `notifyBelongingsAction(事件)` → `buildBelongingsActionText`（新 `src/smartcat/belongings-source.ts` 文案构造纯函数）→ 记忆流（source belongings）；未初始化/noteSource 关静默，即时同步无 timer/map
+- ✅ **文案表（用户 2026-08-24 拍板）**：添加=键值式完整信息按序有才加（`你登记了新物品《X》` + `：分类（category 原文含 emoji）、价格 ￥X、购买于 YYYY-MM-DD、状态 <值>（仅非「使用中」才写，表单默认使用中避免噪音）、描述「…」`）；状态流转=4 态动词化不防抖（→闲置 `你把《X》标记为闲置`/→已转卖 `你转卖了《X》`/→已丢弃 `你丢弃了《X》`/→使用中 `你重新用起了《X》`）；编辑=α 变化列表（弹窗打开 `const snapshot = { ...item }` 快照——保存直接改 item 引用；`belongingsEditChanges` 比较名称/分类/价格/购买日期/状态/描述，不参与 id/created_date/last_updated；变化项「改了名称/分类/价格/购买日期/状态/描述」'、' 分隔；全不变只发主句不带尾冒号）；删除=`你删除了物品《X》`
+- ✅ **防双记录**：`onVaultActivity` 对 `kind === 'belongings'` 短路（ActivityKind union 补 belongings 成员，classifyPath 对 belongings.json 恒 null 故为防御性代码，对齐影视先例）；`DOMAIN_FILES.belongings` extract 移除（「你登记了一件新物品」不再产）
+- ✅ **测试**：tests/smartcat/belongings-source.test.ts（文案构造 22 用例：添加 5/编辑变化 9/编辑文案 2/状态 4/删除 1/分发 1）+ domain-source.test.ts 断言 `DOMAIN_FILES.belongings === undefined` + tests/belongings/ui.test.ts 挂点 5 用例（add/edit×2/status/delete 通知——`vi.mock` barrel notifyBelongingsAction 断言载荷，`belongingsEditChanges` 走真实纯函数）
+- ✅ **文档**：ADR-0032、CONTEXT.md 归物本动作观察词条、spec.md 归物本小节 US 19、本条目；兼容冻结未动 belongings.json 格式/UI 结构/命令/文案
+- ⏳ 待办：真机冒烟（Obsidian 里走一遍 4 处动作核对观察文本）
+
 # bz 进度（上下文压缩恢复点）
 
 ## 2026-08-23 smartcat 备忘录观察（ticket 075，ADR-0028）

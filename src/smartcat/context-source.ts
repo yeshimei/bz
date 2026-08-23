@@ -14,7 +14,7 @@
 import type { App, TAbstractFile } from 'obsidian';
 import { DIARY_DIRECTORY } from '../diary/config';
 
-export type ActivityKind = 'diary' | 'flash' | 'clipping' | 'movie' | 'reading' | 'poem' | 'letter' | 'reflection' | 'domain' | null;
+export type ActivityKind = 'diary' | 'flash' | 'clipping' | 'movie' | 'belongings' | 'reading' | 'poem' | 'letter' | 'reflection' | 'domain' | null;
 
 /** 默认 flash（卡片盒）目录（flash 域 ALLOW_PATHS 默认含卡片盒；可配目录后续扩展） */
 const FLASH_DIR = '卡片盒';

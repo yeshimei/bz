@@ -10,6 +10,11 @@ import { closeItemMenu } from '../../src/core/item-actions';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices, Platform } from '../mock-obsidian-entry';
 
+// ticket 079：smartcat 方法监听挂点测试——mock 掉 barrel 的 notifyBelongingsAction（断言调用载荷），
+// belongingsEditChanges 走真实纯函数（ui.ts 从 belongings-source 子模块直接引入，不受 mock 影响）
+const smartcatMocks = vi.hoisted(() => ({ notifyBelongingsAction: vi.fn() }));
+vi.mock('../../src/smartcat', () => ({ notifyBelongingsAction: smartcatMocks.notifyBelongingsAction }));
+
 /** 桌面右键开菜单（已有卡片挂统一抽屉） */
 function rightClickOpen(card: HTMLElement) {
   card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
@@ -354,5 +359,154 @@ describe('排序弹窗', () => {
     cards = overlay.querySelectorAll('[data-id]');
     expect((cards[0] as HTMLElement).dataset.id).toBe('item_1'); // 拼音序：机械键盘(ji) < 旧手机(jiu)
     vi.useRealTimers();
+  });
+});
+
+describe('smartcat 方法监听挂点（ticket 079）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    vault = new MockVault();
+    document.body.innerHTML = '';
+    localStorage.clear();
+    cleanupBelongings();
+    setup(vault);
+    smartcatMocks.notifyBelongingsAction.mockClear();
+  });
+
+  afterEach(() => {
+    Platform.isMobile = false;
+    vi.useRealTimers();
+    closeItemMenu();
+    cleanupBelongings();
+  });
+
+  it('添加保存成功 → notify add（item 完整载荷）', async () => {
+    seed(vault);
+    await addBelongingsItemCommand();
+    const modal = [...document.querySelectorAll('div')].find(
+      (d) => d.style.zIndex === '10000' && d.style.display === 'flex'
+    ) as HTMLElement;
+    const nameInput = modal.querySelector('input') as HTMLInputElement;
+    nameInput.value = '新耳机';
+    // 分类 search-select：表单字段顺序 name → category（第 2 个 input）
+    const inputs = modal.querySelectorAll('input');
+    (inputs[1] as HTMLInputElement).value = '🎧 蓝牙耳机';
+    const numberInputs = modal.querySelectorAll('input[type="number"]');
+    (numberInputs[0] as HTMLInputElement).value = '299';
+    const submit = [...modal.querySelectorAll('button')].find((b) => b.textContent === '✅ 保存')!;
+    submit.click();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(smartcatMocks.notifyBelongingsAction).toHaveBeenCalledTimes(1);
+    expect(smartcatMocks.notifyBelongingsAction).toHaveBeenCalledWith({
+      kind: 'add',
+      item: expect.objectContaining({ name: '新耳机', category: '🎧 蓝牙耳机', purchase_price: 299, current_status: '使用中' }),
+    });
+  });
+
+  it('编辑保存成功 → notify edit（snapshot vs 保存后 changes）', async () => {
+    seed(vault);
+    await openBelongingsPanel();
+    const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
+    const card = overlay.querySelector('[data-id="item_1"]') as HTMLElement;
+
+    rightClickOpen(card);
+    const editItem = [...document.querySelectorAll('.bz-item-menu-item')].find(
+      (b) => b.textContent!.includes('编辑')
+    ) as HTMLElement;
+    editItem.click();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const editModal = [...document.querySelectorAll('div')].find(
+      (d) => d.style.zIndex === '10001'
+    ) as HTMLElement;
+    expect(editModal.textContent).toContain('机械键盘');
+    const nameInput = editModal.querySelector('input') as HTMLInputElement;
+    nameInput.value = '机械键盘 Pro';
+    const statusSelect = [...editModal.querySelectorAll('select')].find(
+      (s) => (s as HTMLSelectElement).value === '使用中'
+    ) as HTMLSelectElement;
+    statusSelect.value = '闲置';
+    const save = [...editModal.querySelectorAll('button')].find((b) => b.textContent === '💾 保存')!;
+    save.click();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(smartcatMocks.notifyBelongingsAction).toHaveBeenCalledWith({
+      kind: 'edit',
+      title: '机械键盘 Pro',
+      changes: ['改了名称', '改了状态'],
+    });
+  });
+
+  it('编辑全不改 → notify edit（空 changes，仍发主句）', async () => {
+    seed(vault);
+    await openBelongingsPanel();
+    const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
+    const card = overlay.querySelector('[data-id="item_1"]') as HTMLElement;
+
+    rightClickOpen(card);
+    const editItem = [...document.querySelectorAll('.bz-item-menu-item')].find(
+      (b) => b.textContent!.includes('编辑')
+    ) as HTMLElement;
+    editItem.click();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const editModal = [...document.querySelectorAll('div')].find(
+      (d) => d.style.zIndex === '10001'
+    ) as HTMLElement;
+    const save = [...editModal.querySelectorAll('button')].find((b) => b.textContent === '💾 保存')!;
+    save.click();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(smartcatMocks.notifyBelongingsAction).toHaveBeenCalledWith({
+      kind: 'edit',
+      title: '机械键盘',
+      changes: [],
+    });
+  });
+
+  it('抽屉状态流转 → notify status（4 态动词化）', async () => {
+    Platform.isMobile = true;
+    seed(vault);
+    await openBelongingsPanel();
+    const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
+    const card = overlay.querySelector('[data-id="item_2"]') as HTMLElement; // 旧手机（闲置）
+
+    vi.useFakeTimers();
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 60, clientY: 60 }));
+    vi.advanceTimersByTime(550);
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    vi.useRealTimers();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect(sheet).not.toBeNull();
+    const useItem = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
+      (b) => b.textContent!.includes('标记为使用中')
+    ) as HTMLElement;
+    useItem.click();
+    await new Promise((r) => setTimeout(r, 30));
+    expect(smartcatMocks.notifyBelongingsAction).toHaveBeenCalledWith({ kind: 'status', title: '旧手机', status: '使用中' });
+  });
+
+  it('删除确认 → notify delete（仅标题）', async () => {
+    seed(vault);
+    await openBelongingsPanel();
+    const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
+    const card = overlay.querySelector('[data-id="item_2"]') as HTMLElement;
+
+    rightClickOpen(card);
+    const delItem = [...document.querySelectorAll('.bz-item-menu-item')].find(
+      (b) => b.textContent!.includes('删除')
+    ) as HTMLElement;
+    delItem.click();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const confirmModal = [...document.querySelectorAll('div')].find(
+      (d) => d.style.zIndex === '10002'
+    ) as HTMLElement;
+    const delBtn = [...confirmModal.querySelectorAll('button')].find((b) => b.textContent === '🗑 删除')!;
+    delBtn.click();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(smartcatMocks.notifyBelongingsAction).toHaveBeenCalledWith({ kind: 'delete', title: '旧手机' });
   });
 });
