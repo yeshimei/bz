@@ -263,3 +263,14 @@
 - ✅ **放弃观察**（用户拍板）：手改 frontmatter（含回退想看）、正文记内容、文件手动删除/重命名——影视域感知只剩 UI 操作
 - ✅ **文档**：ADR-0027（supersedes 0026）；ticket 074 补修订 2；CONTEXT.md / spec.md 同步（正文本体观察、海报双链剥除验证随事件方案移除）
 - ⏳ 待办：真机冒烟（UI 操作一条对一条核对观察文本）
+
+## 2026-08-23 smartcat 聚合讯观察完成（ticket 076，ADR-0029）
+
+**状态：全量 1442 测试通过（104 文件），tsc 0 错误；新增 news-source 纯函数 7 用例 + news-action 集成 6 用例（domain-source news 用例裁剪 1）**
+
+- ✅ **聚合讯观察从「按天计数」改为逐篇三态**：render 渲染当前文章记录 openedAt；markAsRead（saveToClip/skipArticle 共用）算停留时长 → 三态判定（保存优先不看时长；跳过 ≥2 分钟升「阅读」；时长取整分钟 ≥1）→ notifyNewsRead（source news），文案构造集中新模块 src/smartcat/news-source.ts（movie-source 同款纯函数）
+- ✅ **保存联动 auto-summary（方案 a 定稿）**：notifyNewsSaved(evt, 剪藏路径) 登记待补全表（内存，剪藏路径 → {标题, 平台, 时长分, 定时器}）；auto-summary 写回 frontmatter 的剪藏 modify 命中 → 读 summary/tags → 补全完整保存观察（你保存了《X》（Y·读了 N 分钟）：摘要 #标签）并移除登记（clearTimeout）；2 分钟降级定时器兜底（未等到 → 读 frontmatter 兜底后产无摘要保存观察）；补全/降级与近 20 条同文案防重（保存瞬间立即形态已产则跳过）
+- ✅ **剪藏观察整体停用**：onVaultActivity 对 classifyPath==='clipping' 短路（不再产「你剪藏了」），唯一例外=命中登记的补全；DOMAIN_FILES.news 移除（「你浏览了今天的资讯」不再产，domain-source 测试同步裁剪）
+- ✅ **数据零改动**：news.json / news-stats.json / smartcat.json / 剪藏 frontmatter 均保持既有格式（时长仅观察携带，待补全表内存态不落盘）
+- ✅ **文档**：ADR-0029（Context/Options/Consequences）；spec.md 聚合讯 US 29 + 事件监听清单行；CONTEXT.md 记忆流词条补聚合讯观察；ticket 076 落盘（含实现记录）
+- ⏳ 待办：真机冒烟（真实 Obsidian 保存剪藏 → auto-summary 写回 → 观察文本核对；注意 auto-summary 缺 title 重命名后补全落空走 2 分钟降级为已知边界）

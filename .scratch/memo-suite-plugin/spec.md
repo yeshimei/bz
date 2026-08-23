@@ -88,6 +88,7 @@ Feature: memo-suite-plugin
 26. 作为用户，我希望阅读器内的摘要以 markdown 渲染（renderMarkdown），以便排版与原脚本一致。
 27. 作为用户，我希望聚合讯的约 196 行注入样式（弹窗/列表/统计）原样保留，以便视觉一致。
 28. 作为用户，我希望阅读器显示作者（👤）与日期（📅）、全部读完显示完成态（renderDoneState），以便与原脚本一致。
+29. 作为用户，我希望小橘能感知聚合讯逐篇阅读（打开记时长；下一篇/保存时按三态判定——保存优先、跳过 ≥2 分钟升阅读，时长取整分钟），保存联动 auto-summary（登记待补全 → 剪藏 modify 补全完整保存观察 / 2 分钟降级），以便陪伴记忆细致准确。（2026-08-23 用户拍板，ticket 076，ADR-0029：**逐篇三态方法监听**——news 域 reader 动作调 `notifyNewsRead`/`notifyNewsSaved`，文案构造集中 `news-source.ts` 纯函数；剪藏事件观察整体停用、domain:news 计数观察移除；news.json/news-stats.json/smartcat.json 零改动，时长仅观察携带）
 
 ### 收藏本（Favorites）
 
@@ -234,6 +235,7 @@ Feature: memo-suite-plugin
 - AIAgent：vault.on rename/delete/create/open 同步备忘录/收藏本
 - 闪念：workspace 光标/活动文件事件驱动右侧窄窗
 - smartcat 影视观察（ticket 074，ADR-0027）：**事件通道短路**（movie 文件 create/modify 不观察），观察只来自 movie 域 UI 确认回调的 `notifyMovieAction`（方法监听，一次动作一条）
+- smartcat 聚合讯观察（ticket 076，ADR-0029）：**逐篇三态方法监听**（news 域 reader 动作经 `markAsRead`/`saveToClip` 调 `notifyNewsRead`/`notifyNewsSaved`）+ 保存联动 auto-summary——待补全登记（内存表：剪藏路径 → {标题, 平台, 时长分, 定时器}），`onVaultActivity` 对 clipping **短路**（不再产「你剪藏了」），唯一例外：命中登记的该剪藏 modify → 读 frontmatter summary/tags → 补全完整保存观察并移除登记；2 分钟降级定时器兜底；`DOMAIN_FILES.news` 已移除（「你浏览了今天的资讯」不再产）
 
 ### 设置页
 

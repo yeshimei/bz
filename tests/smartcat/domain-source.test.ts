@@ -4,7 +4,7 @@
 import { describe, it, expect } from 'vitest';
 import { DOMAIN_FILES, snapshotDomains } from '../../src/smartcat/domain-source';
 
-describe('DOMAIN_FILES（7 域新增感知）', () => {
+describe('DOMAIN_FILES（6 域新增感知；news 已移除，ticket 076）', () => {
   it('memo：新增已完成待办产出观察，重复不产出；新条目才再产出', () => {
     const prev = new Map<string, string>();
     const ex = DOMAIN_FILES.memo.extract;
@@ -21,15 +21,6 @@ describe('DOMAIN_FILES（7 域新增感知）', () => {
     expect(DOMAIN_FILES.pomodoro.extract({ history: [] }, prev)).toBeNull();
   });
 
-  it('news：今日 byDate 计数产出（仅当天，前日不重复）', () => {
-    const prev = new Map<string, string>();
-    const today = new Date().toISOString().slice(0, 10);
-    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-    const t = DOMAIN_FILES.news.extract({ byDate: { [today]: 3, [yesterday]: 5 } }, prev);
-    expect(t).toContain('3 条');
-    expect(DOMAIN_FILES.news.extract({ byDate: { [yesterday]: 5 } }, prev)).toBeNull();
-  });
-
   it('quiz/review/favorites/belongings：数量增长才产出', () => {
     const prev = new Map<string, string>();
     expect(DOMAIN_FILES.quiz.extract([{ lastCorrect: 1 }], prev)).toContain('做了几道题');
@@ -43,7 +34,6 @@ describe('DOMAIN_FILES（7 域新增感知）', () => {
   it('非数组/无数据 → null（不产出噪音）', () => {
     const prev = new Map<string, string>();
     expect(DOMAIN_FILES.memo.extract(null, prev)).toBeNull();
-    expect(DOMAIN_FILES.news.extract({}, prev)).toBeNull();
     expect(DOMAIN_FILES.belongings.extract(null, prev)).toBeNull();
     expect(DOMAIN_FILES.pomodoro.extract({ history: 'x' }, prev)).toBeNull();
   });

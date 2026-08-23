@@ -10,6 +10,9 @@ import { escManager } from '../core/esc-manager';
 import { createSiteIcon } from '../core/dom';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
+// 聚合讯观察（ticket 076，ADR-0029）：方法监听挂点（域内 import 之后，对齐影视 movie/ui）
+import { notifyNewsRead, notifyNewsSaved } from '../smartcat';
+import type { NewsReadEvent } from '../smartcat/news-source';
 
 // ---------- 常量 ----------
 const NEWS_JSON_PATH = 'CONFIG/STORAGE/news.json';
@@ -30,6 +33,8 @@ let popup: HTMLElement | null = null;
 let mask: HTMLElement | null = null;
 let container: HTMLElement | null = null;
 let stats: any = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+/** ticket 076：当前文章打开时刻（render 渲染当前文章时记录；下一篇/保存时算停留时长） */
+let openedAt = 0;
 
 // ---------- CSS（≈196 行，与源码逐字一致；已同步 styles/news.css） ----------
 // ---------- 创建弹窗 ----------
@@ -122,6 +127,9 @@ export function render() {
   }
 
   const a = articles[currentIndex];
+
+  // ticket 076：文章刷新（打开/下一篇）→ 重置打开时刻（停留时长从此刻起算）
+  openedAt = Date.now();
 
   // 固定头部（标题 + 元信息，不随滚动）
   const header = document.createElement('div');
@@ -331,7 +339,9 @@ ${body}`;
     notice(`已保存：${cleanTitle}`, 'success');
     hide();
     app.workspace.openLinkText(filePath, filePath, true);
-    markAsRead('saved');
+    const evt = markAsRead('saved'); // 内部发 notifyNewsRead（保存立即形态），避免双通知
+    // ticket 076：保存联动 auto-summary——登记待补全（smartcat 订阅该剪藏 modify 补全 / 2 分钟降级）
+    if (evt) notifyNewsSaved(evt, filePath);
   } catch (e: any) {
     notice(`保存失败：${e.message}`, 'error');
   }
@@ -340,9 +350,18 @@ ${body}`;
 // ---------- 下一篇 / 标记已读 ----------
 export function skipArticle() { markAsRead('skipped'); }
 
-export function markAsRead(action: string) {
+export function markAsRead(action: string): NewsReadEvent | null {
   const a = articles[currentIndex];
+  let evt: NewsReadEvent | null = null;
   if (a) {
+    // ticket 076：打开到动作的停留时长 → 三态判定（保存优先，不看时长；跳过 ≥2 分钟升「阅读」）
+    const now = Date.now();
+    const durationSec = openedAt ? now - openedAt : 0;
+    const durationMin = Math.max(1, Math.round(durationSec / 60));
+    const state: NewsReadEvent['state'] = action === 'saved' ? 'saved' : (durationSec >= 120 ? 'read' : 'skipped');
+    evt = { title: a.title, platform: a.platform, state, durationMin };
+    // 逐篇观察统一在此发（含保存的立即形态）；smartcat 未初始化 / noteSource 关时静默
+    notifyNewsRead(evt);
     a.read = true;
     delete a.body;
     recordStat(action, a);
@@ -353,6 +372,7 @@ export function markAsRead(action: string) {
   render();
   void saveArticles();
   void checkNewArticles(prevTotal);
+  return evt;
 }
 
 export async function checkNewArticles(prevTotal: number) {
