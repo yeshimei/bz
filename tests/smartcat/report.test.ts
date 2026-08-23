@@ -52,6 +52,21 @@ describe('buildWeeklyReportData', () => {
     expect(d.emotionDist).toEqual({ happy: 2, sad: 1 });
     expect(d.topMemories.length).toBe(3);
   });
+
+  it('padAvg 取周内观察情绪 VAD 均值（happy+sad → 愉悦中性偏上），无情绪样本回退当前 PAD（ADR-0025）', () => {
+    const now = new Date('2026-08-23T12:00:00').getTime();
+    const happy = buildWeeklyReportData([obs('a', 0, now, { emotion: 'happy' })], { pleasure: 60, arousal: 50, dominance: 55 }, now);
+    // happy: valence 0.8 → pleasure 50+36=86
+    expect(happy.padAvg.pleasure).toBe(86);
+    const mix = buildWeeklyReportData(
+      [obs('a', 0, now, { emotion: 'happy' }), obs('b', 1, now, { emotion: 'sad' })],
+      { pleasure: 60, arousal: 50, dominance: 55 }, now,
+    );
+    // (0.8 + -0.7)/2 = 0.05 → pleasure 50+2.25=52
+    expect(mix.padAvg.pleasure).toBe(52);
+    const fallback = buildWeeklyReportData([obs('a', 0, now)], { pleasure: 60, arousal: 50, dominance: 55 }, now);
+    expect(fallback.padAvg).toEqual({ pleasure: 60, arousal: 50, dominance: 55 });
+  });
 });
 
 describe('formatWeeklyReport', () => {
@@ -67,7 +82,7 @@ describe('formatWeeklyReport', () => {
     const t = formatWeeklyReport(d);
     expect(t).toContain('小橘观察到 2 条记忆');
     expect(t).toContain('聊天');
-    expect(t).toContain('愉悦 60');
+    expect(t).toContain('愉悦 86'); // padAvg 由周内情绪（happy）推导，不再抄当前 PAD
   });
 });
 

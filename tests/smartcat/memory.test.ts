@@ -36,18 +36,72 @@ describe('addObservation 写入', () => {
   it('追加 observation 到 stream + importance（AI 未配置 → 规则分）+ 落盘', async () => {
     const m = make();
     const mem = await m.addObservation('用户说：今天开始学 TypeScript', { source: 'chat' });
-    expect(mem.id).toMatch(/^memory_/);
-    expect(mem.type).toBe('observation');
-    expect(mem.source).toBe('chat');
+    expect(mem).not.toBeNull();
+    expect(mem!.id).toMatch(/^memory_/);
+    expect(mem!.type).toBe('observation');
+    expect(mem!.source).toBe('chat');
     expect(data.memory.stream.length).toBe(1);
-    expect(mem.importance).toBeGreaterThan(0);
+    expect(mem!.importance).toBeGreaterThan(0);
     expect(saver).toHaveBeenCalled();
   });
 
   it('显式 importance 优先（跳过 LLM/规则打分）', async () => {
     const m = make();
     const mem = await m.addObservation('x', { importance: 0.9 });
-    expect(mem.importance).toBe(0.9);
+    expect(mem).not.toBeNull();
+    expect(mem!.importance).toBe(0.9);
+  });
+});
+
+describe('聊天记忆去重限流 + 观察钩子（ADR-0025）', () => {
+  it('opts.dedupe：近 20 条同内容重复 → 短路不落库（省一次 LLM 打分）', async () => {
+    const m = make();
+    const first = await m.addObservation('用户说：我今天很开心', { source: 'chat', dedupe: true, importance: 0.7 });
+    expect(first).not.toBeNull();
+    const dup = await m.addObservation('用户说：我今天很开心', { source: 'chat', dedupe: true });
+    expect(dup).toBeNull();
+    expect(data.memory.stream.length).toBe(1);
+  });
+
+  it('opts.dedupe：低价值（calm + importance<0.55）→ 不落库；带情绪 → 落库', async () => {
+    const m = make();
+    const calmLow = await m.addObservation('用户说：嗯嗯', { source: 'chat', dedupe: true, emotion: 'calm', importance: 0.3 });
+    expect(calmLow).toBeNull();
+    expect(data.memory.stream.length).toBe(0);
+    const emotional = await m.addObservation('用户说：今天被领导骂了，好难过', { source: 'chat', dedupe: true, emotion: 'sad', importance: 0.5 });
+    expect(emotional).not.toBeNull();
+    expect(data.memory.stream.length).toBe(1);
+    const highImp = await m.addObservation('用户说：项目下周上线', { source: 'chat', dedupe: true, emotion: 'calm', importance: 0.6 });
+    expect(highImp).not.toBeNull();
+    expect(data.memory.stream.length).toBe(2);
+  });
+
+  it('opts.dedupe=undefined：不截流（既有路径保持——日记/域观察全量落库）', async () => {
+    const m = make();
+    await m.addObservation('普通记录', { source: 'diary' });
+    expect(data.memory.stream.length).toBe(1);
+  });
+
+  it('onObservation 钩子：每条 observation 写入后触发（带 emotion）', async () => {
+    const m = make();
+    const seen: string[] = [];
+    m.onObservation = (mem) => { seen.push(mem.emotion || ''); };
+    await m.addObservation('用户说：周末去爬山', { importance: 0.5, emotion: 'happy', source: 'chat' });
+    await m.addObservation('用户说：加班到很晚', { source: 'chat' }); // AI 未配置 → 词法兜底
+    expect(seen).toEqual(['happy', 'calm']);
+  });
+
+  it('retrieve lexicalQuery：词法模式用纯用户消息打分（情绪/时段索引词不再稀释命中率）', async () => {
+    const m = make();
+    m.lexicalRelevance = (mem, q) => (mem.description as string).includes(q) ? 0.9 : 0;
+    await m.addObservation('用户说：TypeScript 项目上线了', { importance: 0.3, source: 'chat' });
+    await m.addObservation('用户说：今天天气真好', { importance: 0.5, source: 'chat' });
+    // 无 lexicalQuery → 完整 query（含情绪/时段词）命中率为 0 → 高分记忆排前
+    const r1 = await m.retrieve('TypeScript 当前情绪：happy 时段：晚上');
+    expect(r1[0].description).toContain('天气真好');
+    // 有 lexicalQuery（纯用户消息）→ TypeScript 记忆相关性 0.9，排到前面
+    const r2 = await m.retrieve('TypeScript 当前情绪：happy 时段：晚上', undefined, { lexicalQuery: 'TypeScript' });
+    expect(r2[0].description).toContain('TypeScript');
   });
 });
 
@@ -93,7 +147,8 @@ describe('importance 打分', () => {
   it('addObservation 写入 emotion 字段（显式传）', async () => {
     const m = make();
     const mem = await m.addObservation('用户说：周末去爬山', { importance: 0.5, emotion: 'happy', source: 'chat' });
-    expect(mem.emotion).toBe('happy');
+    expect(mem).not.toBeNull();
+    expect(mem!.emotion).toBe('happy');
     expect(data.memory.stream[0].emotion).toBe('happy');
   });
 });

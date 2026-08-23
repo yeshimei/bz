@@ -135,12 +135,16 @@ export function characterTransition(
  *  温暖时升、忽冷忽热降（饱和式冷处理），单事件降幅有界
  *  ADR-0024 软收拢：设置 trustCap 时 v = cap + K·(v−cap)（指数趋近，非一刀切硬钳，
  *  平衡点 v* = cap + 49·gain，终态几乎就是 cap + 微量「情感余温」）
+ *  ADR-0025 增 neutral：中性事件（click/note_*）不动 trust（原语义非 warm 即侵蚀，
+ *  使侵蚀分支在真实调用下成死代码——中性交互不该「冷处理」用户）
  */
-export function trustUpdate(current: number, opts: { warm?: boolean; hostile?: boolean; quality?: number; trustCap?: number }): number {
+export function trustUpdate(current: number, opts: { warm?: boolean; hostile?: boolean; neutral?: boolean; quality?: number; trustCap?: number }): number {
   let v = current;
   if (opts.hostile) v -= 0.04;                          // 敌意/回绝：明确降
   else if (opts.warm) v += TRUST_WARM_GAIN * (opts.quality ?? 0.5); // 温暖互动：缓升（ADR-0024 校准增益）
-  else v -= TRUST_ERODE_GAIN;                           // 冷淡/无回应：轻微侵蚀（ADR-0024 校准）
+  else if (!opts.neutral) v -= TRUST_ERODE_GAIN;        // 冷淡/无回应：轻微侵蚀（无标记保持原语义）
+  // 中性事件（click/note_*）彻底不动 trust——跳过软收拢（连 cap 收敛也不应改变中性事件的 trust）
+  if (opts.neutral) return Math.min(0.999, Math.max(0.05, v));
   if (opts.trustCap != null) v = opts.trustCap + TRUST_SOFT_K * (v - opts.trustCap); // 软收拢（用户拍板 0.85）
   return Math.min(0.999, Math.max(0.05, v));
 }

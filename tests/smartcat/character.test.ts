@@ -78,6 +78,13 @@ describe('trust 演化', () => {
     expect(trustUpdate(0.5, {})).toBeLessThan(0.5);
     expect(trustUpdate(0.05, { hostile: true })).toBeGreaterThanOrEqual(0.05); // 下限兜底
   });
+
+  it('中性事件（ADR-0025 neutral）不动 trust——click/note_* 不再被当成「冷处理」侵蚀', () => {
+    expect(trustUpdate(0.5, { neutral: true })).toBe(0.5);
+    // 未标记（冷淡/无回应）仍保持侵蚀，敌意仍明确降
+    expect(trustUpdate(0.5, {})).toBeLessThan(0.5);
+    expect(trustUpdate(0.5, { hostile: true })).toBeLessThan(0.5);
+  });
 });
 
 describe('character_from_experience（周深更新）', () => {
