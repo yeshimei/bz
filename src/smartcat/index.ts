@@ -23,7 +23,9 @@ import { classifyPath, observationText } from './context-source';
 import { DOMAIN_FILES, snapshotDomains } from './domain-source';
 import { buildRhythmProfile, isActiveNow, describeRhythm, periodText, isoWeekKey } from './rhythm';
 import { buildWeeklyReportData, generateWeeklyReport, weekWindow } from './report';
+import { analyzeEmotionTrend, buildEmotionSnapshots, describeEmotionTrend, checkContradiction, extractStoredFacts, initBanditArm, sampleThompson, updateBandit } from './cognitive';
 import type { SmartCatData, SmartCatConfig, ProactiveCareState } from './types';
+import type { BanditArmParams } from './cognitive';
 import type { SmartcatPanels } from './ui';
 
 let initialized = false;
@@ -276,6 +278,62 @@ function getProactiveState(): ProactiveCareState {
   return { week, count: typeof s.count === 'number' ? s.count : 0, lastAt: typeof s.lastAt === 'number' ? s.lastAt : 0 };
 }
 
+// ---------------- Bandit 选臂（ticket 035：Thompson 自适应主动关心策略） ----------------
+
+/** Bandit 臂：3 类话术（context 特征 [mood(0-1), hour(0-1)]，reward = 用户是否回应） */
+const BANDIT_ARMS = ['empathy', 'life', 'vault'];
+const BANDIT_DIM = 2;
+
+/** 读取 Bandit 臂参数（无 → 初始化平坦先验；持久化于 editingData.ceBandit，不新增顶层字段） */
+function getBanditArms(): BanditArmParams[] {
+  const d = dataProvider();
+  const raw = (d.editingData?.ceBandit || {}) as Record<string, any>;
+  return BANDIT_ARMS.map((id) => {
+    const p = raw[id];
+    return p ? { ...initBanditArm(id, BANDIT_DIM, 1), ...p } : initBanditArm(id, BANDIT_DIM, 1);
+  });
+}
+
+/** 保存 Bandit 臂参数 */
+async function saveBanditArm(arm: BanditArmParams): Promise<void> {
+  const d = dataProvider();
+  const raw = (d.editingData?.ceBandit || {}) as Record<string, any>;
+  d.editingData = { ...(d.editingData || {}), ceBandit: { ...raw, [arm.actionId]: arm } };
+  await dataSaver(d);
+}
+
+/** 当前上下文特征（mood 愉悦归一 0-1；hour 归一 0-1）——Bandit 据此选臂 */
+function banditContext(): number[] {
+  const pad = moodSystem?.pad || { pleasure: 55, arousal: 50, dominance: 50 };
+  const hourNorm = new Date().getHours() / 24;
+  return [pad.pleasure / 100, hourNorm];
+}
+
+/** 主动关心后：标记 pending arm（等待用户回应与否回填 reward） */
+function markProactiveArm(armId: string): void {
+  const d = dataProvider();
+  const s = (d.editingData?.ceBandit || {}) as Record<string, any>;
+  d.editingData = { ...(d.editingData || {}), ceBandit: { ...s, pendingArm: armId, pendingAt: Date.now() } };
+  void dataSaver(d);
+}
+
+/** 用户回应（聊天消息）时：回填上次主动关心的 reward（10 分钟内回应 = 1，超时 = 0） */
+async function rewardProactiveArm(): Promise<void> {
+  const d = dataProvider();
+  const s = (d.editingData?.ceBandit || {}) as Record<string, any>;
+  const armId = s.pendingArm as string | undefined;
+  const at = s.pendingAt as number | undefined;
+  if (!armId || !at) return;
+  const responded = Date.now() - at < 10 * 60 * 1000;
+  const arm = getBanditArms().find((a) => a.actionId === armId);
+  if (arm) {
+    const updated = updateBandit(arm, banditContext(), responded ? 1 : 0);
+    await saveBanditArm(updated);
+  }
+  d.editingData = { ...(d.editingData || {}), ceBandit: { ...(d.editingData?.ceBandit || {}), pendingArm: undefined, pendingAt: undefined } };
+  await dataSaver(d);
+}
+
 /** 主动关心调度：每 10 分钟检查；时机 = 距上次 ≥2 天 + 本周未超上限 + 当前在用户活跃时段 */
 function startProactiveCare(): void {
   if (proactiveTimer) clearInterval(proactiveTimer);
@@ -284,7 +342,7 @@ function startProactiveCare(): void {
   }, 10 * 60 * 1000);
 }
 
-/** 温和主动搭话（LLM 生成一句关心；AI 未配置/失败 → 模板兜底，不落盘任何状态外数据） */
+/** 温和主动搭话（LLM 生成一句关心；AI 未配置/失败 → 模板兜底；Bandit 选臂决定话术风格） */
 async function maybeProactiveCare(): Promise<void> {
   if (!data || !bubbleManager || !moodSystem || !memorySystem || !personalityGrowth) return;
   const cfg = data.config;
@@ -297,19 +355,33 @@ async function maybeProactiveCare(): Promise<void> {
   // 作息模型：当前是否用户活跃时段（无数据 → 保守不打扰）
   const profile = buildRhythmProfile(data.memory.stream, 30, Date.now());
   if (!profile.total || !isActiveNow(profile)) return;
-  // 随时间推移接近用户活跃峰再触发（10 分钟粒度已够，无需再等）
+  // Bandit 选臂（ticket 035）：从 3 类话术中按 mood+hour 上下文 Thompson 采样
+  const chosen = sampleThompson(getBanditArms(), banditContext());
+  const armId = chosen?.actionId ?? BANDIT_ARMS[0];
   try {
     if (!(await isAIConfigured())) {
-      // 模板兜底（不打扰打破：仍走活跃时段判定）
-      const templates = [
-        `我看了下你的记录，你通常在${describeRhythm(profile)}最活跃。这段时间你也总是很认真。`,
-        `刚才我翻了下脑海里的记忆，想起你最近在忙的事。${periodText()}了，照顾好自己。`,
-        `喵~ 我记住你${periodText()}也常出现。有什么想和我说的吗？`,
-      ];
-      bubbleManager.showBubble(templates[Math.floor(Math.random() * templates.length)]);
+      // 模板兜底（按臂分类）
+      const templates: Record<string, string[]> = {
+        empathy: [
+          `我看记录你最近情绪有些波动，${describeEmotionTrend(analyzeEmotionTrend(buildEmotionSnapshots(data.memory.stream)))}。想说的时候我都在。`,
+          `喵~ 感觉你这阵子心情起伏不小，要不要和我说说？`,
+        ],
+        life: [
+          `我看了下你的记录，你通常在${describeRhythm(profile)}最活跃。这段时间你也总是很认真。`,
+          `刚才我翻了下脑海里的记忆，想起你最近在忙的事。${periodText()}了，照顾好自己。`,
+        ],
+        vault: [
+          `喵~ 我记住你${periodText()}也常出现。最近记了什么新想法吗？`,
+          `我注意到你这几天的笔记很密集，是不是在忙什么大计划？`,
+        ],
+      };
+      const pool = templates[armId] || templates.life;
+      bubbleManager.showBubble(pool[Math.floor(Math.random() * pool.length)]);
     } else {
-      // 近 3 条记忆做引子 + 作息描述 → LLM 温和关心
+      // 近 3 条记忆做引子 + 作息描述 + 情绪趋势 → LLM 温和关心（按臂给风格指令）
       const recent = data.memory.stream.slice(-3).map((m) => m.description).join('；');
+      const emotionTrend = describeEmotionTrend(analyzeEmotionTrend(buildEmotionSnapshots(data.memory.stream)));
+      const styleHint = armId === 'empathy' ? '侧重共情，接住用户的情绪' : armId === 'vault' ? '侧重内容，聊他最近的笔记' : '侧重生活，像老朋友寒暄';
       const prompt = generatePrompt('auto_companion', '', {
         pad: moodSystem.pad,
         data,
@@ -318,15 +390,16 @@ async function maybeProactiveCare(): Promise<void> {
       });
       const response = await callChat([
         { role: 'system', content: prompt },
-        { role: 'user', content: `你主动关心用户一次（温和、简短、像老朋友）：用户的活跃时段是${describeRhythm(profile)}，最近记忆有：${recent}。` },
+        { role: 'user', content: `你主动关心用户一次（温和、简短、像老朋友）。本次侧重：${styleHint}。当前情绪趋势：${emotionTrend}。用户的活跃时段是${describeRhythm(profile)}，最近记忆有：${recent}。` },
       ]);
       if (response) bubbleManager.showBubble(response);
       else bubbleManager.showBubble('喵~ 我注意到你最近常在深夜写东西，记得照顾好自己。');
     }
-    // 记录本次主动（写回 editingData，不新增顶层字段）
+    // 记录本次主动（写回 editingData，不新增顶层字段）+ 标记 Bandit pending arm
     const d = dataProvider();
     const next: ProactiveCareState = { week: isoWeekKey(), count: st.count + 1, lastAt: Date.now() };
     d.editingData = { ...(d.editingData || {}), proactiveCare: next };
+    markProactiveArm(armId);
     await dataSaver(d);
   } catch (e) {
     /* 主动失败静默（不打扰） */
@@ -569,6 +642,9 @@ async function sendChatMessage(message: string): Promise<void> {
   const chatMessages = panels.chatMessages;
   const chatInput = panels.chatInput;
 
+  // Bandit reward 回填（ticket 035）：用户主动发消息 = 对上次主动关心的回应
+  void rewardProactiveArm();
+
   const userMessageEl = document.createElement('div');
   userMessageEl.className = 'message user-message';
   userMessageEl.textContent = message;
@@ -584,7 +660,20 @@ async function sendChatMessage(message: string): Promise<void> {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 
   try {
-    const messages = await interaction.prepareChatMessages(message);
+    // 元认知矛盾检测（ticket 035）：当前消息 vs 记忆流用户事实 → 命中则给回复加提醒
+    let contradictionHint = '';
+    try {
+      const facts = extractStoredFacts(data.memory.stream);
+      const cr = checkContradiction(message, facts);
+      if (cr.detected && cr.detail.length) contradictionHint = '\n\n（小橘注意到：' + cr.detail[0] + '——你是不是改变主意了？）';
+    } catch { /* 矛盾检测失败不阻断 */ }
+    // 情绪趋势注入（ticket 035）：格式化后拼进 user 上下文尾
+    let emotionContext = '';
+    try {
+      const trend = analyzeEmotionTrend(buildEmotionSnapshots(data.memory.stream));
+      if (trend.count > 0) emotionContext = '\n用户近期情绪趋势：' + describeEmotionTrend(trend);
+    } catch { /* 无情绪数据跳过 */ }
+    const messages = await interaction.prepareChatMessages(message + emotionContext + contradictionHint);
     const response = await callChat(messages);
     const indicator = chatMessages.querySelector('#typing-indicator');
     if (indicator) indicator.remove();
