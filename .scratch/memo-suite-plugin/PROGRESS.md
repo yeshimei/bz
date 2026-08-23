@@ -332,3 +332,14 @@
 - ✅ **测试**：tests/smartcat/favorites-source.test.ts（文案构造全动作 + 字段比较边界，11 用例）+ tests/favorites/ui.test.ts 挂点 5 用例（add/edit/delete/置顶不列/失败不通知，vi.mock notifyFavoritesAction 断言调用参数）+ tests/smartcat/domain-source.test.ts（favorites undefined 断言 + 快照裁剪）
 - ✅ **文档**：ADR-0031（Context/Options/Consequences）；spec.md 收藏本 US 28 + 事件监听清单行；CONTEXT.md 记忆流词条补收藏本观察
 - ⏳ 待办：真机冒烟（Obsidian 里添加/编辑/删除收藏各一次核对观察文本）
+
+## 2026-08-24 番茄钟专注完成观察完成（ticket 080，ADR-0033）
+
+**状态：全量 1473 测试通过（108 文件），tsc 0 错误；新增 pomodoro-source 纯函数 3 用例 + pomodoro-action 挂点 7 用例（domain-source pomodoro 用例移除 1）**
+
+- ✅ **番茄钟从盲事件渠道改方法监听（用户 2026-08-24 拍板：只观察「专注完成」）**：新模块 `src/smartcat/pomodoro-source.ts`（纯函数可测）——`PomodoroActionEvent` union（`{kind:'focus-done', minutes}`）+ `buildPomodoroActionText` → `你用番茄钟完成了 X 分钟专注`（X = `durations().workMin`，设置预设/自定义/默认 25）
+- ✅ **唯一挂点**：`src/pomodoro/ui.ts` `applyAction` 的 phase-completed 分支内，`completedPhase === 'focus'` 且 `historyEntry` 存在（tick 自然完成、写 history 路径）→ `notifyPomodoroAction({kind:'focus-done', minutes: durations().workMin})`；不随 `action === 'tick'` 条件写死（skip 无 historyEntry 天然排除）；start/pause/resume/reset/skip/休息完成一律不通知
+- ✅ **事件通道关停**：`smartcat/index` 导出 `notifyPomodoroAction`（未初始化/noteSource 关静默，source 'pomodoro' 入流）；`onVaultActivity` 对 `kind==='pomodoro'` 短路（`classifyPath` 补 pomodoro.json 分类，防域 JSON 事件双记录，对齐 movie 先例）；`DOMAIN_FILES.pomodoro` extract 移除（「你用番茄钟完成了一段专注（+ N 次）」计数观察不再产）
+- ✅ **兼容冻结**：pomodoro.json 格式/状态机/UI 结构/命令/文案零改动，仅加 notify 挂点；无 timer/map 需清理
+- ✅ **文档**：ADR-0033（Context/Options/Consequences）；spec.md 番茄钟 US 13；CONTEXT.md 记忆流词条补番茄钟专注完成观察
+- ⏳ 待办：真机冒烟（真实 Obsidian 专注自然完成 → 小橘气泡核对「你用番茄钟完成了 25 分钟专注」）

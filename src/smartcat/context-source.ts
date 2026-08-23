@@ -14,17 +14,20 @@
 import type { App, TAbstractFile } from 'obsidian';
 import { DIARY_DIRECTORY } from '../diary/config';
 
-// 'favorites'/'belongings' 加入联合仅供 onVaultActivity 防御性短接（ticket 078/079 方法监听：
-// 收藏本/归物本是 JSON 数据域，classifyPath 只认 .md 不产该值，类型成员零运行时影响）
-export type ActivityKind = 'diary' | 'flash' | 'clipping' | 'movie' | 'reading' | 'poem' | 'letter' | 'reflection' | 'domain' | 'favorites' | 'belongings' | null;
+// 'favorites'/'belongings'/'pomodoro' 加入联合仅供 onVaultActivity 防御性短接（ticket 078/079/080 方法监听：
+// 收藏本/归物本/番茄钟是 JSON 数据域，classifyPath 对 .md 外的 JSON 显式短路，类型成员零运行时影响）
+export type ActivityKind = 'diary' | 'flash' | 'clipping' | 'movie' | 'reading' | 'poem' | 'letter' | 'reflection' | 'domain' | 'favorites' | 'belongings' | 'pomodoro' | null;
 
 /** 默认 flash（卡片盒）目录（flash 域 ALLOW_PATHS 默认含卡片盒；可配目录后续扩展） */
 const FLASH_DIR = '卡片盒';
 
 /** 路径分类（只认 .md；日志目录经 diary/config 动态目录；现代诗/信/反省/书库/影视按目录） */
 export function classifyPath(path: string | null | undefined): ActivityKind {
-  if (!path || !path.endsWith('.md')) return null;
+  if (!path) return null;
   const p = path.replace(/\\/g, '/');
+  // 番茄钟已改方法监听（ticket 080）：pomodoro.json 的 vault 事件显式短路（防域 JSON 事件双记录，对齐 movie 先例）
+  if (p === 'CONFIG/STORAGE/pomodoro.json') return 'pomodoro';
+  if (!p.endsWith('.md')) return null;
   const diaryDir = (DIARY_DIRECTORY || '我的/日记').replace(/\/+$/, '');
   if (p.startsWith(diaryDir + '/') || p.startsWith('我的/日记/')) return 'diary';
   if (p.startsWith(FLASH_DIR + '/')) return 'flash';
@@ -136,6 +139,8 @@ export async function observationText(app: App, file: TAbstractFile, kind: Activ
       const full = (await readAll()).trim();
       return full ? '你写下了反省：' + full.replace(/^---[\s\S]*?---\s*/, '').slice(0, 300) : null;
     }
+    case 'pomodoro':
+      return null; // 番茄钟观察走方法监听（ticket 080），事件通道短路于 onVaultActivity，不取文本
     case 'domain':
       return null; // 域事件由 index onDomainActivity 直接构造观察文本
   }

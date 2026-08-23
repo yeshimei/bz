@@ -3,6 +3,7 @@
  * 独立模块供 index 调用 + 单测覆盖；extract 纯函数：prev 记录已见状态（首次快照不产出）。
  * ticket 075：memo 项移除——备忘录改走方法监听（notifyMemoAction），防 JSON 事件通道双记录。
  * ticket 079：belongings 项移除——归物本改走方法监听（notifyBelongingsAction），防双记录。
+ * ticket 080：pomodoro 项移除——番茄钟改走方法监听（notifyPomodoroAction），防 JSON 事件通道双记录。
  */
 
 export interface DomainExtractor {
@@ -11,17 +12,8 @@ export interface DomainExtractor {
 }
 
 export const DOMAIN_FILES: Record<string, DomainExtractor> = {
-  pomodoro: {
-    file: 'CONFIG/STORAGE/pomodoro.json',
-    extract: (raw, prev) => {
-      const h = raw?.history;
-      if (!Array.isArray(h)) return null;
-      const fresh = h.filter((x) => typeof x?.ts === 'number').map((x) => String(x.ts));
-      const newOnes = fresh.filter((t) => !prev.has('pomo:' + t));
-      newOnes.forEach((t) => prev.set('pomo:' + t, '1'));
-      return newOnes.length ? '你用番茄钟完成了一段专注（+ ' + newOnes.length + ' 次）' : null;
-    },
-  },
+  // 番茄钟已移除（ticket 080）：改走方法监听（pomodoro-source/notifyPomodoroAction），
+  // 「你用番茄钟完成了一段专注（+ N 次）」计数观察不再产。
   // news 已移除（ticket 076）：聚合讯观察改为逐篇三态方法监听（news-source/notifyNewsRead），
   // 「你浏览了今天的资讯（N 条）」计数观察不再产。
   quiz: {
