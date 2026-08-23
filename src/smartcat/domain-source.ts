@@ -3,19 +3,20 @@
  * 独立模块供 index 调用 + 单测覆盖；extract 纯函数：prev 记录已见状态（首次快照不产出）。
  * ticket 075：memo 项移除——备忘录改走方法监听（notifyMemoAction），防 JSON 事件通道双记录。
  * ticket 081：library 项接入——weave-data.json 数据文件监听（书库 UI 零写操作，阅读数据由外部
- * Weave EPUB Reader 落盘；extract 返回数组 = 单次保存多条观察，见 library-source.ts）。
+ * Weave EPUB Reader 落盘；extract 返回结构化 diff（LibraryWeaveDiff）：书架/时长事件即时入流，
+ * 划线/想法事件由 index 层 5 分钟防抖合并，见 library-source.ts 与 index.ts）。
  */
-import { libraryWeaveExtract } from './library-source';
+import { libraryWeaveExtract, type LibraryWeaveDiff } from './library-source';
 
 export interface DomainExtractor {
   file: string;
-  /** 返回 null = 无变化；string = 单条观察；string[] = 单次保存多条观察（library 用） */
-  extract: (raw: any, prev: Map<string, string>) => string | string[] | null;
+  /** 返回 null = 无变化；string/string[] = 观察文本（原各域）；LibraryWeaveDiff = library 结构化 diff（index 层区分即时/防抖） */
+  extract: (raw: any, prev: Map<string, string>) => string | string[] | LibraryWeaveDiff | null;
 }
 
 export const DOMAIN_FILES: Record<string, DomainExtractor> = {
   library: {
-    // ticket 081：weave-data.json 数据文件监听先例——外部插件写库，bz 侧盲通道 diff（library-source.ts）
+    // ticket 081：weave-data.json 数据文件监听先例——外部插件写库，bz 侧盲通道 diff（library-source.ts；v2 结构化 diff）
     file: 'CONFIG/STORAGE/weave-data.json',
     extract: libraryWeaveExtract,
   },

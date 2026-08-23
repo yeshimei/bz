@@ -35,3 +35,28 @@ Status: accepted（2026-08-25，ticket 081，用户拍板「只有 epub」）
 - 行为变更：书库 md 修改不再产观察（手写书评不再被记忆）——旧记忆不迁移（兼容冻结）。
 - 数据零改动：weave-data.json、书库 md、smartcat.json 均原样；prev 仅内存态（`domainPrev`，随 unload 清理）。
 - 数据文件监听先例：本票是 DOMAIN_FILES 中第一个「外部插件写库」的盲通道 diff（原各域均为 bz 自身写 CONFIG/STORAGE JSON）——后续外部数据源接入可复用该模式。
+
+## v2 修订（2026-08-24 用户追加拍板，本条取代上文对应条目）
+
+书架增删、时长带进度、划线/想法带内容 + 5 分钟防抖合并（v1 的「开始读=percent 首次 >0」「时长无进度」「划线/想法纯计数」相应作废）：
+
+### Decisions（v2）
+
+- **extract 改为结构化 diff**：`libraryWeaveDiff(raw, prev): LibraryWeaveDiff | null`（`libraryWeaveExtract` 为同函数别名，`DOMAIN_FILES.library.extract` 指向它）——`{ added, removed, started, done, sessions, highlightEvents, excerptEvents }` 各为原始事件数组；`DomainExtractor.extract` 类型升级为 `string | string[] | LibraryWeaveDiff | null`（其余域仍返回 string/null 兼容）。**extract 保持无状态纯函数**（prev 仍为唯一状态源），防抖 pending 放 index 层内存。
+- **书架增删三态**：
+  - 加入书架：books 新条目且 `percent === 0` → `你把《X》加入了书架`；
+  - 开始读：books 新条目且 `percent > 0`（导入即读）→ `你开始读《X》`（**读覆盖加入，不双发**）；
+  - 移出书架：books 条目从字典**消失** → 统一 `你把《X》移出了书架`（**移除/删除合并只写「移除」**，无文件存在性判断、无 vault delete 监听）；prev 清理该书全部键，重新加入视为新书。
+- **时长带进度**：`你读了《X》约 N 分钟（读到 NN%）`——percent 取当次保存的 `reading.position.percent`（整数；1.0/≤1 刻度归一 → ×100，>1 视为 0-100 直接四舍五入）；时长事件**不受防抖限制，独立即时发**。
+- **划重点/写想法带内容 + 5 分钟防抖合并**：
+  - 内容文本实测字段：highlight 元素为 `text`（划线原文）+ `commentText`（想法/批注），**无 quoteText**（bz 生产链 `src/library/epub-notes.ts` 实证）；excerpts 元素无样例数据，按 `commentText → text → quoteText → quote` 多级回退提取（想法 = 批注/评论文本优先）；
+  - 新增项无内容文本的被过滤，全部无内容则该事件不发（文案骨架要求「：「内容」」）；
+  - **per-book 独立 5 分钟窗口**（option: bookId → pending，index 层内存）：窗口内该书再出现划线/想法 → 追加内容并重置计时；超时结算为一条入流（组稿纯函数 `buildLibraryNoteText`：划线 1 条「划了条重点：「c1」」/多条「划了 N 条重点：「c1」、「c2」」；划线+想法「…；写了条想法：「e1」」；只有想法同理）；
+  - unload 清定时器 + 表；测试钩子 `__setLibraryDebounceMsForTests` / `__getLibraryPendingForTests`。
+- **prev 记账（v2）**：`lib:<id>:had/done`（0/1）、`pct`（百分比整数）、`hl/ex/sess`（计数）、`title`（移出文案存档——v2 追加，removed 需要）；旧条目 percent 前进仍不观察。
+
+### Consequences（v2）
+
+- 观察语义从「计数」细化为「带内容的书架/时长/划线想法事件」；划线/想法防抖合并避免划一段存一次刷屏（对齐日记 per-entry 计时模型，窗口 5 分钟）。
+- diff 消费分流：书架/读完/时长即时 `addObservation`（source `domain:library`）；划线/想法经 pending 结算后再入流（同 source）。
+- 已知边界：excerpts（想法）元素字段为本票时点实测无样例，按多级回退实现；weave 格式变更需重新适配。

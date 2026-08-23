@@ -11,24 +11,33 @@ describe('DOMAIN_FILES（6 域感知：library/pomodoro/quiz/review/favorites/be
     expect(DOMAIN_FILES.news).toBeUndefined();
   });
 
-  it('library（ticket 081）：weave-data.json 数据文件监听，extract 返回数组（单次保存多条观察）', () => {
+  it('library（ticket 081 v2）：weave-data.json 数据文件监听，extract 返回结构化 diff（书架/时长/划线想法）', () => {
     expect(DOMAIN_FILES.library.file).toBe('CONFIG/STORAGE/weave-data.json');
     const prev = new Map<string, string>();
-    const texts = DOMAIN_FILES.library.extract(
+    const ret = DOMAIN_FILES.library.extract(
       {
         books: {
           b1: {
             meta: { title: 'X' },
             reading: { position: { percent: 1 }, stats: { completedTime: 1 }, sessions: [{ durationSeconds: 300 }] },
-            notes: { highlights: [{}], excerpts: [{}] },
+            notes: { highlights: [{ text: 'c1' }], excerpts: [{ commentText: 'e1' }] },
           },
         },
       },
       prev,
     );
-    expect(Array.isArray(texts)).toBe(true);
-    expect(texts).toEqual(['你开始读《X》', '你读完了《X》', '你在《X》划了条重点', '你在《X》写了条想法', '你读了《X》约 5 分钟']);
-    // 现有各域仍返回 string（数组兼容不影响单条域）
+    // v2：结构化 diff 而非文本数组——started（读覆盖加入无 added）、done、sessions 带进度、划线/想法事件
+    expect(ret).not.toBeNull();
+    expect(Array.isArray(ret)).toBe(false);
+    const diff = ret as any;
+    expect(diff.started).toHaveLength(1);
+    expect(diff.started[0].title).toBe('X');
+    expect(diff.added).toHaveLength(0);
+    expect(diff.done[0].title).toBe('X');
+    expect(diff.sessions[0]).toMatchObject({ title: 'X', minutes: 5, percent: 100 });
+    expect(diff.highlightEvents[0].texts).toEqual(['c1']);
+    expect(diff.excerptEvents[0].texts).toEqual(['e1']);
+    // 现有各域仍返回 string（diff 联合不影响单条域）
     expect(typeof DOMAIN_FILES.pomodoro.extract({ history: [{ ts: 1 }] }, new Map())).toBe('string');
   });
 

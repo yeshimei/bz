@@ -4,11 +4,13 @@
 
 **状态：全量测试通过 + tsc 0 后提交 worktree/library-observation（本条目为文档同步）**
 
-- ✅ **数据文件监听先例**：书库 UI 纯只读展示，阅读数据由外部 weave-epub-reader 落盘 `CONFIG/STORAGE/weave-data.json`——`DOMAIN_FILES.library` 接入盲通道 extract 纯函数 `libraryWeaveExtract`（新 `src/smartcat/library-source.ts`）；**extract 返回类型升级 `string | string[] | null`**（数组=单次保存多条观察，index onDomainActivity 逐条 `addObservation`，source `domain:library`；现有域 string/null 兼容）
-- ✅ **五类观察**（按书迭代，单书顺序 开始读→读完→划重点→想法→时长）：开始读=percent 首次 >0（进度本身不观察）；读完了=stats.completedTime 首次出现；划重点=highlights 增 n（n=1「划了条重点」/n>1「划了 n 条重点」）；想法=excerpts 增 n 同理；阅读时长=sessions 新增 durationSeconds 求和→向上取整分钟（`你读了《X》约 N 分钟`，Math.max(1,N) 防 0）
-- ✅ **prev 记账**：`lib:<bookId>:started/done/hl/ex/sess`（0/1 或计数），首次快照（snapshotDomains）只记状态不产出（丢弃 extract 返回值）；标题取 meta.title，无标题的书跳过
+- ✅ **数据文件监听先例**：书库 UI 纯只读展示，阅读数据由外部 weave-epub-reader 落盘 `CONFIG/STORAGE/weave-data.json`——`DOMAIN_FILES.library` 接入盲通道 extract（新 `src/smartcat/library-source.ts`）；**v2 结构化 diff**：`libraryWeaveDiff(raw, prev): LibraryWeaveDiff | null`（`{added, removed, started, done, sessions, highlightEvents, excerptEvents}`；`libraryWeaveExtract` 同函数别名；`DomainExtractor.extract` 类型 `string | string[] | LibraryWeaveDiff | null`，现有域 string/null 兼容）；index onDomainActivity 对 library 分流——书架/读完/时长即时 `addObservation`（source `domain:library`），划线/想法走防抖
+- ✅ **书架增删三态（v2）**：新书 percent==0 →「你把《X》加入了书架」；新书 percent>0 →「你开始读《X》」（读覆盖加入不双发）；books 条目消失 →「你把《X》移出了书架」（移除/删除合并只写「移除」，无文件存在性判断、无 vault delete 监听；prev 清理该书全部键，重新加入视为新书）；旧条目 percent 前进不观察（进度不观察）；读完了=stats.completedTime 首次出现（即时）
+- ✅ **时长带进度（v2）**：「你读了《X》约 N 分钟（读到 NN%）」——sessions 新增 durationSeconds 求和向上取整（最小 1），percent 取当次保存值（归一：1.0→100，>1 直接四舍五入）；**不受防抖限制独立即时发**
+- ✅ **划线/想法带内容 + 5 分钟防抖（v2）**：highlight 实测字段 `text`（划线原文）+`commentText`（想法/批注，无 quoteText）、excerpts 按 commentText→text 多级回退；新增项无内容过滤（全空事件不发）；**防抖 pending 放 index 层内存**（per-book timer map `libraryPendingNotes`，对齐 diary timers/newsPendingSaves）：窗口内追加内容重置计时、超时结算一条（`buildLibraryNoteText`：划了条/N 条重点「…」、「…」；划线+想法「；」拼接；只有想法同理）；unload 清定时器表 + 测试钩子 `__setLibraryDebounceMsForTests`/`__getLibraryPendingForTests`
+- ✅ **prev 记账（v2）**：`lib:<bookId>:had/done`（0/1）+ `pct`（百分比整数）+ `hl/ex/sess`（计数）+ `title`（移出文案存档，v2 追加）；首次快照（snapshotDomains）只记状态不产出（丢弃 extract 返回值）；标题取 meta.title，无标题的书跳过
 - ✅ **md 通道短路**：`onVaultActivity` clipping/movie 同区加 `if (kind === 'reading') return;`——书库 md（手写书评/划线全文）不再产观察，防双记录；context-source reading 分支保留不删（短路在最前不再触发）
-- ✅ **测试**：tests/smartcat/library-source.test.ts 新建（extract 全场景 + 首快照 + md 短路集成）；domain-source.test.ts 补 library 条目/数组兼容断言
+- ✅ **测试（v2）**：tests/smartcat/library-source.test.ts（书架三态/读覆盖/时长带进度/划线想法内容/防抖合并集成（注入短时长 + waitFor 轮询对齐 diary 稳健性）/unload 清理，24 用例）+ domain-source.test.ts（library diff 断言 + 数组兼容）；**全量 1489 绿 + tsc 0**
 - ⏳ 待办：真机冒烟（Obsidian 里用 Weave 读 epub 核对开始读/读完/划线/想法/时长观察）
 
 ## 2026-08-23 smartcat 备忘录观察（ticket 075，ADR-0028）
