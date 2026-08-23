@@ -1,7 +1,7 @@
 /**
  * 通用设置弹窗（ADR-0009 域设置弹窗）：各功能主面板右上角 ⚙️ 打开的功能专属设置弹窗。
  * 单例管理：同一时刻至多一个设置弹窗；重复调用先关闭旧弹窗（toggle 语义）。
- * 结构：mask + popup（标题栏 + 可滚动设置区），点击遮罩 / ✕ / Esc 关闭。
+ * 结构：mask + popup（标题栏 + 可滚动设置区），点击遮罩 / Esc 关闭（不放右上角关闭按钮）。
  * build 回调内用 obsidian Setting 挂设置项；未挂任何 .setting-item 时显示空态。
  */
 import { Setting } from 'obsidian';
@@ -18,7 +18,7 @@ export interface SettingsModalOptions {
   /** 空态二级说明 */
   emptyDesc?: string;
   /**
-   * 关闭回调：遮罩点击 / ✕ / Esc / 被新弹窗顶替时触发（dispose 后调用一次）。
+   * 关闭回调：遮罩点击 / Esc / 被新弹窗顶替时触发（dispose 后调用一次）。
    * 域内用它复位打开时置位的状态（如 smartcat 的交互锁——否则移动端长按开设置
    * 再关闭后，isSettingsOpen 卡在 true，拖拽永久失效）。
    */
@@ -54,12 +54,8 @@ export function openSettingsModal(opts: SettingsModalOptions): void {
   const title = document.createElement('h3');
   title.className = 'bz-settings-title';
   title.textContent = opts.title;
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '✕';
-  closeBtn.className = 'bz-settings-close';
-  closeBtn.addEventListener('click', () => closeSettingsModal());
+  // 不放右上角关闭按钮（用户拍板 2026-08：弹窗不放关闭按钮，靠遮罩 + ESC，与主窗口规范一致）
   header.appendChild(title);
-  header.appendChild(closeBtn);
 
   const content = document.createElement('div');
   content.className = 'bz-settings-content';

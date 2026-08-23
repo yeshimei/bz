@@ -1,6 +1,6 @@
 /**
  * 域设置弹窗测试（ADR-0009）：
- * 1) core/settings-modal 机制——打开/标题/build/空态/✕/遮罩/Esc/幂等替换；
+ * 1) core/settings-modal 机制——打开/标题/build/空态/无右上角关闭按钮/遮罩/Esc/幂等替换；
  * 2) 备忘录面板 ⚙️ 交互（toggle 写回设置）；
  * 3) 归物本（空弹窗 + 排序按钮改 🔀）、收藏本（空弹窗）。
  */
@@ -61,11 +61,11 @@ describe('core settings-modal 机制', () => {
     expect(popup.querySelector('.setting-item')).toBeNull();
   });
 
-  it('✕ 关闭', () => {
+  it('不渲染右上角关闭按钮（关闭只走遮罩/Esc，用户拍板）', () => {
     openSettingsModal({ title: '测试设置', build: () => {} });
-    const closeBtn = [...document.querySelectorAll('button')].find((b) => b.textContent === '✕')!;
-    closeBtn.click();
-    expect(document.getElementById('bz-settings-modal-mask')).toBeNull();
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    expect([...popup.querySelectorAll('button')].some((b) => b.textContent === '✕')).toBe(false);
+    expect(popup.querySelector('.bz-settings-close')).toBeNull();
   });
 
   it('点击遮罩关闭', () => {
@@ -99,11 +99,10 @@ describe('core settings-modal 机制', () => {
     expect(closed).toBe(1);
   });
 
-  it('onClose：✕ 与 Esc 关闭均触发；无 onClose 不报错', () => {
+  it('onClose：遮罩与 Esc 关闭均触发；无 onClose 不报错', () => {
     let closed = 0;
     openSettingsModal({ title: '回调测试', build: () => {}, onClose: () => { closed++; } });
-    const closeBtn = [...document.querySelectorAll('button')].find((b) => b.textContent === '✕')!;
-    closeBtn.click();
+    document.getElementById('bz-settings-modal-mask')!.click();
     expect(closed).toBe(1);
     openSettingsModal({ title: '回调测试2', build: () => {}, onClose: () => { closed++; } });
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
