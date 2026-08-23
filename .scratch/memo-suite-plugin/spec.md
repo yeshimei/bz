@@ -26,6 +26,10 @@ Feature: memo-suite-plugin
 7. 作为用户，我希望插件不注册任何默认快捷键，以便不干扰我已有的热键方案。
 8. 作为开发者，我希望 core 层有完整测试覆盖（escManager/jsonStore/AIService/样式注入），以便后续域移植有可信底座。
 
+### 日记本（Diary，已迁）
+
+25. 作为用户，我希望小橘能感知日记本每条日记的写入与删除（每条独立 10 分钟静置结算：首次有字才生成、累计字数 >50 才追加更新观察、删除时原观察保留并追加删除观察），以便陪伴记忆细致准确。（2026-08-23 用户拍板，ticket 077，ADR-0030：**per-entry 独立 10 分钟结算**——vault create/modify/delete 监听 `我的/日记/*.md`（classifyPath==='diary' 走新链路，替换原 observationText 快照分支；原 diary 10 分钟去弹跳/信任成长不再执行，其它 kind 不动），per-entry 计时表 + 重启基线内存态不落盘（smartcat.json 零改动）；首落正文**有字（非空）**才生成「你在 <date> <time> 写了一篇日记（分类：…）：<正文全量不截断>」，空标题记已见防「标题即存」（补正文后走首落）；已有观察按「累计字数 = 每次结算累加（当前长度 − 上次生成基线），中文按字符数」**>50 才生成更新观察**（「你更新了日记（<date> <time>）：<新正文>」，分类有变化也更新进括号）并重置基线/累计，≤50 不生成但计入累计；删除（文件 delete / 条目块消失的 modify diff）→ 原观察保留 + 追加「你删除了 <date> <time> 的日记」（从未跟踪过的文件删除 → 文件级单条兜底「你删除了 <date> 的日记」）；重启 ensure 对当日文件建基线快照（不产出，防旧条目被当首次）；emoji→分类 import diary/config 的 emojiToTagMap（单向域间 import）；source 'diary' 恒 LLM（AI 未配置降级本地规则分 + 词法情绪））
+
 ### 备忘录（Todo）
 
 9. 作为用户，我希望打开「备忘录」面板（ribbon 主入口）后界面与原脚本一致（#todo-popup 弹窗、场景分类筛选），以便沿用使用习惯。
@@ -238,6 +242,7 @@ Feature: memo-suite-plugin
 - smartcat 备忘录观察（ticket 075，ADR-0028）：**事件通道 domain-source memo extract 移除**（memo.json JSON 事件不再收，防双记录），观察只来自 memo 域 UI 确认回调的 
 otifyMemoAction（方法监听，一次动作一条）+ **每日到期扫描**（并入 30s 反射调度 tick，读 memo.json 合并一条「你有 N 个待办今天到期：…」，editingData.dueScan 当天去重跨重启）
 - smartcat 聚合讯观察（ticket 076，ADR-0029）：**逐篇三态方法监听**（news 域 reader 动作经 `markAsRead`/`saveToClip` 调 `notifyNewsRead`/`notifyNewsSaved`）+ 保存联动 auto-summary——待补全登记（内存表：剪藏路径 → {标题, 平台, 时长分, 定时器}），`onVaultActivity` 对 clipping **短路**（不再产「你剪藏了」），唯一例外：命中登记的该剪藏 modify → 读 frontmatter summary/tags → 补全完整保存观察并移除登记；2 分钟降级定时器兜底；`DOMAIN_FILES.news` 已移除（「你浏览了今天的资讯」不再产）
+- smartcat 日记观察（ticket 077，ADR-0030）：**vault create/modify/delete 监听 diary 目录（per-entry 独立 10 分钟结算新链路）**——`onVaultActivity` 对 classifyPath==='diary' 走新链路（替换 observationText diary 分支；原 diary 10 分钟去弹跳/信任成长不再执行，其它 kind 不动）：该条任何修改重置其计时，静置到期读文件解析结算（首落有字才生成、累计 >50 才更新、≤50 计入累计）；重启 ensure 当日文件建基线快照（不产出）；删除：vault delete 按跟踪快照逐条追加删除观察（从未跟踪过 → 文件级单条兜底）、条目级删除（md 块消失）由 modify 全量快照 diff 发现 → 追加删除观察 + 清该条计时；observationText diary 分支保留不动（兼容冻结）
 ### 设置页
 
 - **设置归属模型（ADR-0009，2025 用户决策）**：设置两分——全局项留 Obsidian 设置页（单页平铺，无 tab，只含「🤖 AI」「📂 数据存储路径」两区块），域行为项进各功能主面板右上角 ⚙️ 域设置弹窗；筛选/排序弹窗统一挂 🔀（影视「筛选与排序」、书库「视图与筛选」），⚙️ 只表示真设置；AI Agent 4 项设置不暴露（字段保留，运行时读旧值、默认值兜底）；入口页不新增设置（编辑模式控件即入口，移动端列数由列数控件按平台读写）

@@ -22,6 +22,8 @@ import { generateBookDescription, hasBookTag } from './content';
 import { classifyPath, observationText } from './context-source';
 import { buildMovieActionText, type MovieActionEvent } from './movie-source';
 import { buildMemoActionText, memoDueObservation, type MemoActionEvent, type MemoDueLike } from './memo-source';
+import { parseDiaryFile, decideDiarySettle, diaryDeleteText, diaryDeleteFileText, type DiaryEntryLike } from './diary-source';
+import { DIARY_DIRECTORY } from '../diary/config';
 
 import { buildNewsReadText, buildNewsSavedFullText, type NewsReadEvent } from './news-source';
 import { DOMAIN_FILES, snapshotDomains } from './domain-source';
@@ -60,6 +62,29 @@ interface NewsPendingSave { title: string; platform: string; durationMin: number
 const newsPendingSaves = new Map<string, NewsPendingSave>();
 /** 保存降级等待时长（ms；默认 2 分钟，测试可注入缩短） */
 let newsSaveTimeoutMs = 2 * 60 * 1000;
+/** 日记观察计时表（ticket 077，ADR-0030）：key = `${filePath}\u0001${date}\u0001${time}` → 该条结算状态。
+ *  「每条日记独立 10 分钟结算」：该条任何修改重置其计时；静置到期 → 结算产出观察（首落有字/累计 >50 更新）。
+ *  内存态不落盘（smartcat.json 零改动）；unload 全清。 */
+interface DiaryTimerState {
+  timer: ReturnType<typeof setTimeout> | null;
+  /** 该条是否已结算产出过首次观察（重启基线有字条目视为已见——防重启后旧条目被当首次） */
+  generated: boolean;
+  /** 上次生成时的正文基线（累计字数差的基准） */
+  baseline: string;
+  /** 上次生成时的分类（更新观察括号内分类变化判断用） */
+  baselineTags: string[];
+  /** 自上次生成以来累计字数差（每次结算累加；生成更新观察后归零） */
+  accum: number;
+  /** 上次生成时间（毫秒时间戳；未生成过为 0） */
+  lastGeneratedAt: number;
+}
+const diaryTimers = new Map<string, DiaryTimerState>();
+/** 日记文件最近一次快照（diff 变更/删除用）：filePath → Map(entryKey → {body, tags})；内存态 */
+const diaryTracked = new Map<string, Map<string, { body: string; tags: string[] }>>();
+/** 结算静置时长（默认 10 分钟；测试可注入缩短） */
+let diarySettleMs = 10 * 60 * 1000;
+/** 条目 key 分隔符（filePath / date / time 三段，控制字符防与路径字符冲突） */
+const DIARY_KEY_SEP = '\u0001';
 let visibilityCleanup: (() => void) | null = null;
 let greetTimer: ReturnType<typeof setTimeout> | null = null;
 /** 主动关心调度（2026-08-23：作息模型判定时机，每周 ≤ proactiveWeeklyCap 次温和搭话） */
@@ -212,6 +237,14 @@ export async function ensureSmartCat(app: App): Promise<void> {
     }
     // 影视动作改由方法监听（ticket 074 修订）：事件通道短路，防 UI 动作双记录
     if (kind === 'movie') return;
+    // 日记观察改走新链路（ticket 077，ADR-0030）：每条日记独立 10 分钟结算——
+    // 替换原 observationText 快照分支；原日记 10 分钟去弹跳、信任成长 developBasedOnInteraction 不再执行；
+    // PAD 正向轻推（红队 C 接线，diary→note_create）照旧保留（新链路自带 per-entry 计时，无需机械去簇防批量）。
+    if (kind === 'diary') {
+      if (moodSystem) moodSystem.handleInteraction('note_create' as any, 0.5);
+      await handleDiaryVaultActivity(file);
+      return;
+    }
     const now = Date.now();
     const last = lastActivity.get(file.path) || 0;
     if (now - last < 10 * 60 * 1000) return;          // 同一路径 10 分钟去弹跳
@@ -226,15 +259,17 @@ export async function ensureSmartCat(app: App): Promise<void> {
     batchWindow.push({ path: file.path, t: now });
     const distinct = new Set(batchWindow.map((b) => b.path)).size;
     const mechanical = distinct >= 5;
-    if (kind === 'diary' || kind === 'flash') {
+    // 信任成长：仅 flash（diary 已走 ticket 077 新链路，早退于上——不再计入信任成长）
+    if (kind === 'flash') {
       if (!mechanical) {
         personalityGrowth.developBasedOnInteraction(kind, 0.3, 0.02, 0.15).catch(() => {});
       }
     }
     // PAD 生产补接线（2026-08-23 用户拍板，红队 C G1/G2 消除 sim 专属通道假阳性）：
     // vault 正向活动轻量影响心情——用生产 EFFECTS 表（不改公式，仅接线），强度 VAULT_PAD_GAIN=0.5
+    // （diary 的 note_create 轻推已在早退分支内照旧执行）
     if (!mechanical && moodSystem) {
-      const padType = kind === 'diary' ? 'note_create' : kind === 'flash' ? 'note_edit' : 'note_read';
+      const padType = kind === 'flash' ? 'note_edit' : 'note_read';
       moodSystem.handleInteraction(padType as any, 0.5);
     }
     try {
@@ -243,9 +278,15 @@ export async function ensureSmartCat(app: App): Promise<void> {
       if (text) await memorySystem.addObservation(text, { source: kind });
     } catch { /* 读取失败静默（不打断主流程） */ }
   };
+  // 日记重启基线（ticket 077）：监听挂载前先对日记目录当日文件建快照（不产出观察，
+  // 防重启后旧条目被当首次——已有正文条目记「已见」，后续改动走更新分支）
+  await buildDiaryBaseline();
+  if (!initialized) return; // 竞态守卫 3：基线扫描期间被 unload 则停止装配
   if (app.vault && typeof (app.vault as any).on === 'function') {
     vaultRefs.push((app.vault as any).on('create', onVaultActivity));
     vaultRefs.push((app.vault as any).on('modify', onVaultActivity));
+    // 文件删除感知（ticket 077）：diary 目录文件删除 → 追加删除观察（原观察全部保留）
+    vaultRefs.push((app.vault as any).on('delete', onVaultDelete));
   }
 
   // 域 JSON 感知（2026-08-23 用户拍板：CONFIG/STORAGE 域数据 modify → 观察；懒启动探测）
@@ -775,6 +816,13 @@ export function unloadSmartCat(): void {
   for (const reg of newsPendingSaves.values()) clearTimeout(reg.timer);
   newsPendingSaves.clear();
   newsSaveTimeoutMs = 2 * 60 * 1000;
+  // 日记观察计时表（ticket 077）：定时器全清 + 快照/计时表清空 + 结算时长复位
+  for (const st of diaryTimers.values()) {
+    if (st.timer) clearTimeout(st.timer);
+  }
+  diaryTimers.clear();
+  diaryTracked.clear();
+  diarySettleMs = 10 * 60 * 1000;
   if (visibilityCleanup) {
     visibilityCleanup();
     visibilityCleanup = null;
@@ -1007,6 +1055,174 @@ export function parseClipFrontmatter(content: string): { summary: string; tags: 
 /** 测试辅助：注入降级等待时长 / 读取待补全登记表 */
 export function __setNewsSaveTimeoutForTests(ms: number): void { newsSaveTimeoutMs = ms; }
 export function __getNewsPendingSavesForTests(): ReadonlyMap<string, NewsPendingSave> { return newsPendingSaves; }
+
+// ------------- 日记观察（ticket 077：每条独立 10 分钟结算，ADR-0030） -------------
+// 纯 smartcat 侧，不改 diary 域：vault create/modify/delete 监听日记目录（classifyPath==='diary'），
+// 每条日记（`# <emoji 序列> HH:mm` 块）持独立 10 分钟计时；该条任何修改重置其计时；
+// 静置到期 → 读文件 → 解析 → 对该条结算（首落有字才生成 / 已有则累计 >50 才更新）；
+// 删除（文件 delete / 条目块消失）→ 原观察保留、追加删除观察。计时表/基线均内存态不落盘。
+
+/** 条目 key（filePath + date + time 三段拼接；date = 文件名日期） */
+function diaryEntryKey(filePath: string, date: string, time: string): string {
+  return filePath + DIARY_KEY_SEP + date + DIARY_KEY_SEP + time;
+}
+
+/** 从日记文件路径取日期（`YYYY-MM-DD.md` 文件名 → 'YYYY-MM-DD'；非日期命名返回 null——不跟踪） */
+function diaryFileDate(filePath: string): string | null {
+  const base = (filePath || '').replace(/\\/g, '/').split('/').pop() || '';
+  const m = base.match(/^(\d{4}-\d{2}-\d{2})\.md$/);
+  return m ? m[1] : null;
+}
+
+/** 今日日期（YYYY-MM-DD，本地时区；对齐 memoTodayStr 语义） */
+function diaryTodayStr(now: Date = new Date()): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}`;
+}
+
+/** 重启基线（ticket 077）：ensure 时对日记目录当日文件建快照（不产出观察，防重启后旧条目被当首次）：
+ *  有字条目记「已见」（generated=true，后续改动走更新分支）；无字（标题即存）待首落；不装计时器（事件才起动）。 */
+async function buildDiaryBaseline(): Promise<void> {
+  if (!appRef) return;
+  const app = appRef;
+  const dir = (DIARY_DIRECTORY || '我的/日记').replace(/\/+$/, '');
+  const today = diaryTodayStr();
+  const filePath = `${dir}/${today}.md`;
+  const file = app.vault.getAbstractFileByPath(filePath);
+  if (!file) return;
+  let content = '';
+  try { content = await app.vault.read(file as any); } catch { return; }
+  const tracked = new Map<string, { body: string; tags: string[] }>();
+  for (const e of parseDiaryFile(content)) {
+    tracked.set(`${today}${DIARY_KEY_SEP}${e.time}`, { body: e.body, tags: e.tags });
+    const key = diaryEntryKey(filePath, today, e.time);
+    if (!diaryTimers.has(key)) {
+      diaryTimers.set(key, { timer: null, generated: e.body.length > 0, baseline: e.body, baselineTags: e.tags, accum: 0, lastGeneratedAt: 0 });
+    }
+  }
+  diaryTracked.set(filePath, tracked);
+}
+
+/** 重置某条独立计时（10 分钟静置后结算）；该条无记录则按新条目初始化（generated=false 待首落） */
+function resetDiaryTimer(filePath: string, date: string, time: string): void {
+  const key = diaryEntryKey(filePath, date, time);
+  const st = diaryTimers.get(key) || { timer: null, generated: false, baseline: '', baselineTags: [], accum: 0, lastGeneratedAt: 0 };
+  if (st.timer) clearTimeout(st.timer);
+  st.timer = setTimeout(() => { void settleDiaryEntry(filePath, date, time); }, diarySettleMs);
+  diaryTimers.set(key, st);
+}
+
+/** 移除某条计时（清定时器 + 删记录） */
+function dropDiaryTimer(filePath: string, date: string, time: string): void {
+  const key = diaryEntryKey(filePath, date, time);
+  const st = diaryTimers.get(key);
+  if (st?.timer) clearTimeout(st.timer);
+  diaryTimers.delete(key);
+}
+
+/** 计时到期结算：读文件 → 解析 → 对该条按判定纯函数产出（首落有字 → 新增观察；已有且累计 >50 → 新增更新观察）；
+ *  结算期间该条被再次修改（计时已重置）或 unload 清理 → 放弃本次（交给新计时）。 */
+async function settleDiaryEntry(filePath: string, date: string, time: string): Promise<void> {
+  const mem = memorySystem;
+  if (!appRef || !mem || !data?.config?.noteSource) return;
+  const key = diaryEntryKey(filePath, date, time);
+  const st = diaryTimers.get(key);
+  if (!st) return;
+  st.timer = null; // 结算中：防重入（若期间被重设计时，其新 timer 会覆盖此 null）
+  let entry: DiaryEntryLike | null = null;
+  try {
+    const file = appRef.vault.getAbstractFileByPath(filePath);
+    if (file) entry = parseDiaryFile(await appRef.vault.read(file as any)).find((e) => e.time === time) || null;
+  } catch { entry = null; }
+  // 竞态守卫：结算读文件期间该条被重置（st.timer 非空 → 新计时已接棒）或 unload（表已清）→ 放弃本次结算
+  if (diaryTimers.get(key) !== st || st.timer !== null) return;
+  if (!entry) {
+    // 结算时条目已消失（modify diff 未及感知的竞态）→ 兜底删除观察 + 清记录
+    appendDiaryDeleteObservation(date, time);
+    diaryTimers.delete(key);
+    return;
+  }
+  const settled = decideDiarySettle(entry, date, {
+    generated: st.generated, baseline: st.baseline, baselineTags: st.baselineTags, accum: st.accum,
+  });
+  if (settled.text) {
+    // fire-and-forget：addObservation 的 appendVector（探测 Ollama）尾段在无向量环境可能不 resolve，
+    // 结算状态须立即推进（对齐 notifyMovieAction 等既有 fire-and-forget 模式）
+    void mem.addObservation(settled.text, { source: 'diary' });
+    st.lastGeneratedAt = Date.now();
+  }
+  // 结算状态推进会话内生效（首落已见 / 基线更新 / 累计推进——本次补写 ≤50 也计入下次结算）
+  st.generated = settled.next.generated;
+  st.baseline = settled.next.baseline;
+  st.baselineTags = settled.next.baselineTags;
+  st.accum = settled.next.accum;
+}
+
+/** 追加一条删除观察（原观察全部保留，删除观察只是追加；fire-and-forget 防阻塞事件链） */
+function appendDiaryDeleteObservation(date: string, time: string): void {
+  const mem = memorySystem;
+  if (!mem || !data?.config?.noteSource) return;
+  void mem.addObservation(diaryDeleteText(date, time), { source: 'diary' });
+}
+
+/** 日记 create/modify 新链路（ticket 077）：diff 出变化的条目重置其独立计时；
+ *  上次快照存在、这次消失的条目 → 追加删除观察 + 清该条计时（条目级删除感知的最小可靠方案：以每次
+ *  modify 的全量解析快照 diff 实现，比正文子串匹配更稳——条目按 (日期, 时间) key 唯一标识）。 */
+async function handleDiaryVaultActivity(file: any): Promise<void> {
+  if (!appRef || !memorySystem || !data?.config?.noteSource) return;
+  const filePath = file?.path;
+  if (!filePath) return;
+  const date = diaryFileDate(filePath);
+  if (!date) return; // 非日期命名文件不跟踪（观察文案需要日期）
+  let content = '';
+  try { content = await appRef.vault.read(file as any); } catch { return; }
+  const entries = parseDiaryFile(content);
+  const prev = diaryTracked.get(filePath) || new Map<string, { body: string; tags: string[] }>();
+  const cur = new Map<string, { body: string; tags: string[] }>();
+  for (const e of entries) cur.set(`${date}${DIARY_KEY_SEP}${e.time}`, { body: e.body, tags: e.tags });
+  // 条目级删除：上次快照有、现在消失 → 追加删除观察 + 清该条计时
+  for (const key of prev.keys()) {
+    if (!cur.has(key)) {
+      const time = key.split(DIARY_KEY_SEP).pop()!;
+      appendDiaryDeleteObservation(date, time);
+      dropDiaryTimer(filePath, date, time);
+    }
+  }
+  // 新增/变化条目 → 重置该条独立计时（各条目互不影响，另起 10 分钟）
+  for (const [key, curVal] of cur) {
+    const prevVal = prev.get(key);
+    const changed = !prevVal || prevVal.body !== curVal.body || prevVal.tags.join(',') !== curVal.tags.join(',');
+    if (changed) resetDiaryTimer(filePath, date, key.split(DIARY_KEY_SEP).pop()!);
+  }
+  diaryTracked.set(filePath, cur);
+}
+
+/** 文件删除感知（ticket 077）：diary 目录文件删除 → 按跟踪快照逐条追加删除观察（日期+时间完整）；
+ *  从未跟踪过该文件（无法读出条目）→ 文件级单条兜底删除观察（仅日期）。 */
+async function onVaultDelete(file: any): Promise<void> {
+  if (!file?.path || !initialized || !appRef || !memorySystem || !data?.config?.noteSource) return;
+  if (classifyPath(file.path) !== 'diary') return;
+  const filePath = file.path;
+  const tracked = diaryTracked.get(filePath);
+  const mem = memorySystem;
+  if (tracked && tracked.size > 0) {
+    for (const key of tracked.keys()) {
+      const [date, time] = key.split(DIARY_KEY_SEP);
+      appendDiaryDeleteObservation(date, time);
+      dropDiaryTimer(filePath, date, time);
+    }
+  } else {
+    const date = diaryFileDate(filePath);
+    if (!date) return;
+    // 文件级兜底（fire-and-forget，防阻塞 vault 事件链）
+    void mem.addObservation(diaryDeleteFileText(date), { source: 'diary' });
+  }
+  diaryTracked.delete(filePath);
+}
+
+/** 测试辅助：注入结算静置时长 / 读取日记计时表 */
+export function __setDiarySettleMsForTests(ms: number): void { diarySettleMs = ms; }
+export function __getDiaryTimersForTests(): ReadonlyMap<string, DiaryTimerState> { return diaryTimers; }
 
 /** 域 JSON 感知状态（domain-source.ts 提供 extract 纯函数；此处管理监听生命周期） */
 const domainPrev = new Map<string, string>();

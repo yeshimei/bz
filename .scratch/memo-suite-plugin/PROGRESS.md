@@ -296,3 +296,16 @@
 - ✅ **数据零改动**：news.json / news-stats.json / smartcat.json / 剪藏 frontmatter 均保持既有格式（时长仅观察携带，待补全表内存态不落盘）
 - ✅ **文档**：ADR-0029（Context/Options/Consequences）；spec.md 聚合讯 US 29 + 事件监听清单行；CONTEXT.md 记忆流词条补聚合讯观察；ticket 076 落盘（含实现记录）
 - ⏳ 待办：真机冒烟（真实 Obsidian 保存剪藏 → auto-summary 写回 → 观察文本核对；注意 auto-summary 缺 title 重命名后补全落空走 2 分钟降级为已知边界）
+
+## 2026-08-23 smartcat 日记观察完成（ticket 077，ADR-0030）
+
+**状态：新增 diary-source 纯函数 14 用例 + diary-action 集成 10 用例（全量门禁见提交）**
+
+- ✅ **日记观察从「observationText 快照 + 10 分钟去弹跳」改为每条独立 10 分钟结算**：`onVaultActivity` 对 classifyPath==='diary' 走新链路（替换 observationText diary 分支；原 diary 10 分钟去弹跳/信任成长 developBasedOnInteraction 不再执行，其它 kind 不动，PAD 正向轻推照旧）——vault create/modify/delete 监听 `我的/日记/*.md`（纯 smartcat 侧不改 diary 域），per-entry 计时表（内存态，key=`文件路径\u0001日期\u0001HH:mm` → {timer, generated, 上次生成正文基线, 上次生成分类, 累计字数, 上次生成时间}），该条任何修改（正文/分类变化 diff）重置其计时、各条互不影响；静置到期 → 读文件解析 → 结算判定纯函数（`src/smartcat/diary-source.ts`）：首落**有字才生成**（空标题记已见防「标题即存」，补正文后走首落）；已有则累计字数（当前长度 − 上次生成基线，每次结算累加，中文按字符数）**>50 才生成更新观察**并重置基线/累计（≤50 不生成但计入累计——对齐 ticket「60→75 累计 +15；大改到 130 累计 +85 >50 → 更新」）
+- ✅ **文案**（用户八轮拍板，正文全量不截断）：首次 `你在 <date> <time> 写了一篇日记（分类：<c1>、<c2>）：<正文>`；更新 `你更新了日记（<date> <time>）：<新正文>`（分类有变化也更新进括号 `，分类：<c>`）；删除 `你删除了 <date> <time> 的日记`（原观察保留）；文件级兜底（从未跟踪过的文件删除）`你删除了 <date> 的日记`
+- ✅ **删除感知**：补挂 vault delete 监听（diary 目录）→ 按跟踪快照逐条追加删除观察 + 清计时（从未跟踪过 → 文件级单条兜底）；条目级删除（md 块消失）由 modify 全量快照 diff 发现「上次快照条目消失」→ 追加删除观察（最小可靠方案，条目按 日期+时间 key 唯一标识）
+- ✅ **重启基线**：ensure 时对日记目录当日文件建快照（有字条目记已见、不产出观察，防重启后旧条目被当首次）；基线先于监听挂载（竞态守卫）
+- ✅ **关键修复**：结算/删除观察 fire-and-forget（addObservation 尾部 appendVector 探测 Ollama 在无向量环境不 resolve，await 会阻塞事件链与结算状态提交——对齐 movie/memo/news 既有 fire-and-forget 模式）
+- ✅ **映射与情绪**：emoji→分类 import diary/config 的 emojiToTagMap（单向域间 import，无环，避免两套表漂移）；source 'diary' 恒 LLM（AI 未配置降级本地规则分 + 词法情绪）；observationText diary 分支保留不动（兼容冻结，context-source 既有测试不破坏）
+- ✅ **文档**：ADR-0030（Context/Options/Consequences，含条目级删除感知取舍、重启基线防首次、文件级兜底缺 HH:mm 等已知边界）；spec.md 日记本 US 25 + 事件监听清单行；CONTEXT.md 记忆流词条补日记逐条观察
+- ⏳ 待办：真机冒烟（真实 Obsidian 写/改/删日记 → 10 分钟静置 → 观察文本核对，重点验证条目级删除感知与重启基线）
