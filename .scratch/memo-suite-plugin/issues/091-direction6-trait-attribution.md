@@ -1,6 +1,6 @@
 # ticket 091 —— 方向六：特质归因学习（086 v4）
 
-状态：**READY-FOR-AGENT**
+状态：**done**（2026-08-24，分支 trait-attribution 落地：LLM 归因主+词法兜底 mode 标记 / ≤2 截断 / digest 排除 existential / existential ×0.5 / none 不硬挑 / H4 继承 + 独立退避 editingData.traitAttribution；测试 tests/smartcat/trait-attribution.test.ts 23 用例，全量 1688 绿 + tsc 0；ADR-0038）
 父文档：086-intelligence-evolution-proposal.md v4「方向六」（裁决：值得做，改动小）
 基线：master 6419c06（含 087 H4 安全契约、088 lastPresenceAt）
 日期：2026-08-24
@@ -49,3 +49,12 @@ LLM 调用（一条洞察一批，≤2 条），替代纯词法路径；LLM 失�
 - npm test 默认并发下 library-source/memo-action 时序用例偶发 flake（已知环境问题）：
   单文件重跑绿 + `--maxWorkers=4` 全量绿即可判定通过
 - 完成门禁：npm test 全绿 + npx tsc --noEmit 0 错误 + diff 自审
+
+## 实现记录（2026-08-24）
+
+- mood.ts：归因常量/纯函数（parseLLMAttributions 校验 {trait,quote}|{trait:none}、越权词表/digest 禁选/quote 原文子串校验逐条裁剪；
+  planLexicalAttributions 词表逐字保留 + 批次约束）；applyReflectionInsights 重构为批量一次 LLM + 整批回落词法，
+  growthHistory 每归因一条留痕 attribution{mode, quote?}；独立退避 editingData.traitAttribution（5min→30min 指数、成功重置、失败即落盘跨重启生效）
+- memory.ts：onReflect 增加 meta.origin（reflection|digest），reflect/digest 分别透传
+- index.ts：接线把 origin 传给 applyReflectionInsights
+- 文档：ADR-0038、spec.md 一行、PROGRESS.md 小节、CONTEXT.md 特质归因词条

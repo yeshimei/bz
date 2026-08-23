@@ -106,8 +106,9 @@ export class MemorySystem {
   app: App;
   dataProvider: () => SmartCatData;
   dataSaver: (data: SmartCatData) => Promise<void>;
-  /** 反思完成回调（心情重构：index 接 PersonalityGrowth 反思驱动） */
-  onReflect: ((insights: { text: string }[]) => void | Promise<void>) | null = null;
+  /** 反思完成回调（心情重构：index 接 PersonalityGrowth 反思驱动）
+   *  ticket 091：meta.origin 区分反思/日小结——特质归因来源约束（digest 只允许非 existential）依赖它 */
+  onReflect: ((insights: { text: string }[], meta?: { origin: 'reflection' | 'digest' }) => void | Promise<void>) | null = null;
   /** 观察回调（ADR-0025：index 接情绪共振 + 瞬时情绪；每条 observation 写入后触发） */
   onObservation: ((memory: MemoryStreamEntry) => void | Promise<void>) | null = null;
   /** 反射调度 tick 钩子（ticket 075：index 挂每日 memo 到期扫描；每次 30s tick 触发，失败静默） */
@@ -598,10 +599,10 @@ export class MemorySystem {
       data.memory.reflection.lastReflectAt = now;
       data.memory.reflection.count = (data.memory.reflection.count || 0) + 1;
       this.pendingSinceReflect = 0;
-      // 反思驱动人格（心情重构：洞察 → PersonalityGrowth）
+      // 反思驱动人格（心情重构：洞察 → PersonalityGrowth；ticket 091 带来源元数据）
       if (this.onReflect) {
         try {
-          await this.onReflect(insights);
+          await this.onReflect(insights, { origin: 'reflection' });
         } catch (e) { /* 成长失败不影响记忆流 */ }
       }
       data.memory.lastUpdated = new Date().toISOString();
@@ -681,10 +682,10 @@ export class MemorySystem {
     }
     data.memory.reflection.lastDigestAt = now;
     data.memory.reflection.digestCount = (data.memory.reflection.digestCount || 0) + 1;
-    // 睡前巩固也驱动人格（极轻微：洞察 → existential 成长；onReflect 钩子复用）
+    // 睡前巩固也驱动人格（极轻微：洞察 → 特质成长；onReflect 钩子复用；ticket 091 origin=digest）
     if (this.onReflect) {
       try {
-        await this.onReflect(digests.map((d) => ({ text: d.text })));
+        await this.onReflect(digests.map((d) => ({ text: d.text })), { origin: 'digest' });
       } catch (e) { /* 成长失败不影响记忆流 */ }
     }
     data.memory.lastUpdated = new Date().toISOString();

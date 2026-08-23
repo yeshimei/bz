@@ -430,3 +430,15 @@
 - ✅ **文档**：ADR-0035（v1→v4 定稿全量）；CONTEXT.md 三域逐篇观察词条；spec.md 事件监听 + Further Notes；ticket 083 Status done；082 先例无涉（本票不碰 domain-source）
 - ✅ **兼容冻结**：卡片盒/我的/现代诗/我的/信 的 md 与 flash/poem/letter 域代码零改动；smartcat.json 零改动（计时/基线内存态）
 - ⏳ 待办：真机冒烟（Obsidian 里新建/修改/删除各一条卡片盒与信，核对首落日期、diff 摘要与 10 分钟静置）
+
+## 2026-08-24 特质归因学习完成（ticket 091，方向六，ADR-0038）
+
+**状态：全量 1688 测试通过（118 文件）+ tsc 0 错误，提交 worktree/trait-attribution**
+
+- ✅ **LLM 归因主 + 词法兜底双模式（mood.ts）**：新增 TRAIT_ATTRIBUTION_CANDIDATES/EXISTENTIAL_TRAITS/MAX_ATTRIBUTIONS_PER_BATCH 常量与 parseLLMAttributions/planLexicalAttributions 纯函数；applyReflectionInsights 重构为批量一次 LLM 归因（一条洞察一批），失败/超时/结构异常整批回落词法；growthHistory 每个被归因洞察单独留痕 `attribution{mode, quote?}`——llm 必带原文子串校验的 quote 依据，词法兜底无 quote（不产伪解释）
+- ✅ **v4 四约束**：每批 ≤2 按洞察顺序截断；digest 来源只允许非 existential；existential 群组 ×0.5 降频（量级沿用 0.01/0.005×DEEP_DELTA_SCALE）；LLM none 不硬挑；候选限 5 白名单
+- ✅ **H4 继承 + 独立退避**：system prompt 追加 USER_CONTENT_BOUNDARY（memory.ts 导出）；响应逐条裁剪不整轮失败；editingData.traitAttribution={backoffUntil,backoffMs} 指数递增 30min 封顶成功重置跨重启生效，不共享 reflectBackoffUntil
+- ✅ **链路透传**：memory.onReflect 增加 meta.origin('reflection'|'digest')，index 接线原样传给 applyReflectionInsights
+- ✅ **测试**：tests/smartcat/trait-attribution.test.ts（23 用例：mode 标记/≤2 截断/digest 排除/×0.5 与钳制/none 不硬挑/回落词法/退避窗口零请求/quote 校验纯函数/H4 边界断言/onReflect origin 透传）；既有 mood/memory 测试全量保留回归绿
+- ✅ **文档**：ADR-0038；spec.md 追加一行；CONTEXT.md 人格成长词条更新 + 特质归因新词条
+- ⏳ 待办：真机冒烟（Obsidian 配 AI 后跑一轮反思，核 growthHistory attribution 字段与面板展示）
