@@ -64,8 +64,21 @@ const lastActivity = new Map<string, number>();
 /** 机械去簇（红队 B P1-4）：1 分钟内 ≥5 个不同路径 = 批量导入/同步，折叠为机械事件（不计信任成长） */
 const batchWindow: { path: string; t: number }[] = [];
 /** 聚合讯保存待补全登记（ticket 076，方案 a）：剪藏路径 → 登记（内存态不落盘）；
- *  auto-summary 写回 frontmatter 的剪藏 modify 命中 → 补全完整保存观察并移除；2 分钟降级定时器兜底。 */
-interface NewsPendingSave { title: string; platform: string; durationMin: number; timer: ReturnType<typeof setTimeout>; }
+ *  auto-summary 写回 frontmatter 的剪藏 modify 命中 → 补全完整保存观察并移除；2 分钟降级定时器兜底。
+ *  ticket 084b：登记追加 baseName/link（rename 反查锚点）——剪藏 frontmatter 无 title →
+ *  auto-summary renameToTitle 必改文件路径，登记键（原路径）将永久失效；
+ *  补全/降级按 link（URL 唯一）或 baseName 反查改名后新路径，AI 摘要/标签才能进记忆流。 */
+interface NewsPendingSave {
+  title: string;
+  platform: string;
+  durationMin: number;
+  /** 剪藏原文件名去 .md（saveToClip 写入路径的 cleanTitle；rename 后 basename 反查兜底） */
+  baseName: string;
+  /** 剪藏 frontmatter link（URL 唯一标识原文：renameToTitle 只改文件名不碰 link，改名后反查主锚点；
+   *  登记时异步读取，读失败为空串 → 走 baseName 兜底） */
+  link: string;
+  timer: ReturnType<typeof setTimeout>;
+}
 const newsPendingSaves = new Map<string, NewsPendingSave>();
 /** 保存降级等待时长（ms；默认 2 分钟，测试可注入缩短） */
 let newsSaveTimeoutMs = 2 * 60 * 1000;
@@ -1080,9 +1093,11 @@ export function notifyNewsRead(evt: NewsReadEvent): void {
 }
 
 /** 保存登记待补全（方案 a）：news 保存成功路径调用（saveToClip → notifyNewsSaved(evt, 剪藏路径)）。
- *  登记 {标题, 平台, 时长分} 进内存表并启动 2 分钟降级定时器：
+ *  登记 {标题, 平台, 时长分, 剪藏 baseName, link} 进内存表并启动 2 分钟降级定时器：
  *  命中 auto-summary 写回的剪藏 modify → 补全完整保存观察并移除登记（clearTimeout）；
- *  定时器兜底（到时无提交）→ 降级产出保存观察并移除登记。未初始化 / noteSource 关 → 静默。 */
+ *  定时器兜底（到时无提交）→ 降级产出保存观察并移除登记。未初始化 / noteSource 关 → 静默。
+ *  ticket 084b：剪藏 frontmatter 无 title → auto-summary renameToTitle 必改名，登记键（原路径）
+ *  会失效；补全/降级靠登记 baseName/link 反查新路径（见 complete/degradePendingNewsSave）。 */
 export function notifyNewsSaved(evt: NewsReadEvent, clipPath: string): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
   const prev = newsPendingSaves.get(clipPath);
@@ -1090,7 +1105,14 @@ export function notifyNewsSaved(evt: NewsReadEvent, clipPath: string): void {
   const timer = setTimeout(() => {
     void degradePendingNewsSave(clipPath);
   }, newsSaveTimeoutMs);
-  newsPendingSaves.set(clipPath, { title: evt.title, platform: evt.platform, durationMin: evt.durationMin, timer });
+  const baseName = clipPath.split('/').pop()?.replace(/\.md$/i, '') || evt.title;
+  newsPendingSaves.set(clipPath, { title: evt.title, platform: evt.platform, durationMin: evt.durationMin, baseName, link: '', timer });
+  // ticket 084b：异步登记 frontmatter link（rename 后反查主锚点；saveToClip 已创建文件读必成功，
+  // 读失败留空走 baseName 兜底；unload 清表后该 then 自然空转）
+  void readClipFrontmatterOrEmpty(clipPath).then((fm) => {
+    const reg = newsPendingSaves.get(clipPath);
+    if (reg && fm.link) reg.link = fm.link;
+  });
 }
 
 /** 移除待补全登记（clearTimeout + 删除） */
@@ -1100,24 +1122,89 @@ function removePendingNewsSave(clipPath: string): void {
   newsPendingSaves.delete(clipPath);
 }
 
-/** 剪藏 modify 补全（onVaultActivity clipping 短路分支）：命中登记 → 读 frontmatter summary/tags → 完整保存观察 → 移除登记 */
+/** 剪藏 modify 补全（onVaultActivity clipping 短路分支）：命中登记 → 读 frontmatter summary/tags → 完整保存观察 → 移除登记。
+ *  ticket 084b 二次匹配：事件路径 ≠ 登记键（auto-summary renameToTitle 改名后 modify 带新路径）时，
+ *  按事件文件 frontmatter link / 文件名反查登记表，改名场景同样补全命中。 */
 async function completePendingNewsSave(file: any): Promise<void> {
-  const reg = newsPendingSaves.get(file?.path);
-  if (!reg) return;
-  removePendingNewsSave(file.path);
+  const path = file?.path;
+  let reg = newsPendingSaves.get(path);
+  let regPath = path;
   const fm = await readClipFrontmatterOrEmpty(file);
+  if (!reg) {
+    // 键未命中 → 事件文件反查登记（link/文件名两路；无匹配 → 普通剪藏 modify，短路不产观察）
+    const hit = reverseLookupPendingNewsSave(file, fm);
+    if (!hit) return;
+    reg = hit.reg;
+    regPath = hit.clipPath;
+  }
+  removePendingNewsSave(regPath);
   const text = buildNewsSavedFullText(reg.title, reg.platform, reg.durationMin, fm.summary || null, fm.tags.length ? fm.tags : null);
   await addNewsSaveObservation(text);
 }
 
-/** 降级：登记后 2 分钟未等到 auto-summary → 读剪藏 frontmatter（错过 modify 事件兜底）→ 产出保存观察并移除登记 */
+/** 二次匹配（ticket 084b）：事件文件与登记键不一致时反查登记表——frontmatter link 一致（URL 唯一，
+ *  renameToTitle 只改文件名不碰 link）优先；其次文件名 baseName 一致（AI 标题与原 cleanTitle 相同的
+ *  未改名场景，或目录级移动）。返回命中登记的键（原剪藏路径）与登记本身。 */
+function reverseLookupPendingNewsSave(file: any, fm: { summary: string; tags: string[]; link: string }): { reg: NewsPendingSave; clipPath: string } | null {
+  const path = file?.path;
+  if (!path || newsPendingSaves.size === 0) return null;
+  const base = path.split('/').pop()?.replace(/\.md$/i, '') || '';
+  let baseHit: { reg: NewsPendingSave; clipPath: string } | null = null;
+  for (const [clipPath, reg] of newsPendingSaves) {
+    if (clipPath === path) continue; // 键已在上层命中
+    if (fm.link && reg.link === fm.link) return { reg, clipPath };
+    if (!baseHit && base && reg.baseName === base) baseHit = { reg, clipPath };
+  }
+  return baseHit;
+}
+
+/** 降级：登记后 2 分钟未等到 auto-summary → 读剪藏 frontmatter（错过 modify 事件兜底）→ 产出保存观察并移除登记。
+ *  ticket 084b：原路径读无摘要（auto-summary renameToTitle 已改名，原路径不存在）→
+ *  按登记 baseName/link 全剪藏目录反查改名后新路径再读，AI 摘要/标签不再被改名吞掉。 */
 async function degradePendingNewsSave(clipPath: string): Promise<void> {
   const reg = newsPendingSaves.get(clipPath);
   if (!reg) return; // 已被补全移除
   removePendingNewsSave(clipPath);
-  const fm = await readClipFrontmatterOrEmpty(clipPath);
+  let fm = await readClipFrontmatterOrEmpty(clipPath);
+  if (!fm.summary && fm.tags.length === 0) {
+    const moved = await locateRenamedClip(reg, clipPath);
+    if (moved) fm = await readClipFrontmatterOrEmpty(moved);
+  }
   const text = buildNewsSavedFullText(reg.title, reg.platform, reg.durationMin, fm.summary || null, fm.tags.length ? fm.tags : null);
   await addNewsSaveObservation(text);
+}
+
+/** 剪藏目录内反查改名后新文件（ticket 084b）：枚举 `归档/网页剪藏/` 下 .md，
+ *  优先 frontmatter link 与登记一致（renameToTitle 改名场景），其次文件名 baseName 与登记一致；
+ *  逐一读 frontmatter 判定，防误配其他剪藏。返回新路径，找不到返回 null（维持原降级语义：空摘要）。 */
+async function locateRenamedClip(reg: NewsPendingSave, clipPath: string): Promise<string | null> {
+  if (!appRef || !reg.baseName) return null;
+  let candidates: any[] = [];
+  try {
+    if (typeof appRef.vault.getFiles === 'function') {
+      candidates = appRef.vault.getFiles().filter((f: any) => {
+        const p = String(f?.path || '');
+        return p !== clipPath && p.startsWith('归档/网页剪藏/') && p.endsWith('.md');
+      });
+    }
+  } catch {
+    return null; // 枚举失败按无候选（维持原降级语义）
+  }
+  // 1) frontmatter link 完全匹配（URL 唯一标识原文；renameToTitle 保留 link 字段）
+  if (reg.link) {
+    for (const c of candidates) {
+      try {
+        if ((await readClipFrontmatterOrEmpty(c)).link === reg.link) return String(c.path);
+      } catch { /* 单个候选读取失败跳过 */ }
+    }
+  }
+  // 2) 文件名 baseName 完全匹配（未改名兜底；原路径已试过，此处只收其他同 basename 文件）
+  for (const c of candidates) {
+    const p = String(c?.path || '');
+    const base = p.split('/').pop()?.replace(/\.md$/i, '') || '';
+    if (base === reg.baseName) return p;
+  }
+  return null;
 }
 
 /** 保存联动产出防重复：与近 20 条同文案（保存瞬间 notifyNewsRead 已产的立即形态）→ 跳过，防双条入流 */
@@ -1129,9 +1216,9 @@ async function addNewsSaveObservation(text: string): Promise<void> {
   await mem.addObservation(text, { source: 'news' });
 }
 
-/** 读剪藏 frontmatter 的 summary/tags（auto-summary 产物原样处理；正则轻量解析，兼容 list 与 inline 数组两式） */
-async function readClipFrontmatterOrEmpty(fileOrPath: any): Promise<{ summary: string; tags: string[] }> {
-  const empty = { summary: '', tags: [] as string[] };
+/** 读剪藏 frontmatter 的 link/summary/tags（auto-summary 产物原样处理；正则轻量解析，兼容 list 与 inline 数组两式） */
+async function readClipFrontmatterOrEmpty(fileOrPath: any): Promise<{ summary: string; tags: string[]; link: string }> {
+  const empty = { summary: '', tags: [] as string[], link: '' };
   if (!appRef) return empty;
   let content = '';
   try {
@@ -1144,9 +1231,10 @@ async function readClipFrontmatterOrEmpty(fileOrPath: any): Promise<{ summary: s
   return parseClipFrontmatter(content);
 }
 
-/** frontmatter summary/tags 轻量解析（正则；兼容 `  - ` list 与 `["a","b"]` inline 两式） */
-export function parseClipFrontmatter(content: string): { summary: string; tags: string[] } {
-  const out: { summary: string; tags: string[] } = { summary: '', tags: [] };
+/** frontmatter link/summary/tags 轻量解析（正则；兼容 `  - ` list 与 `["a","b"]` inline 两式）。
+ *  link 为 rename 反查主锚点（ticket 084b）：剪藏模板 `link: "URL"`，renameToTitle 只改文件名不碰 link。 */
+export function parseClipFrontmatter(content: string): { summary: string; tags: string[]; link: string } {
+  const out: { summary: string; tags: string[]; link: string } = { summary: '', tags: [], link: '' };
   const fm = content.match(/^\s*---\s*\n([\s\S]*?)\n\s*---\s*\n/);
   if (!fm) return out;
   const tags: string[] = [];
@@ -1175,6 +1263,9 @@ export function parseClipFrontmatter(content: string): { summary: string; tags: 
     }
     if (trimmed.startsWith('summary:') || trimmed.startsWith('summary：')) {
       out.summary = trimmed.slice(trimmed.indexOf(':') + 1).trim().replace(/^["']|["']$/g, '');
+    }
+    if (trimmed.startsWith('link:')) {
+      out.link = trimmed.slice(trimmed.indexOf(':') + 1).trim().replace(/^["']|["']$/g, '');
     }
   }
   out.tags = tags;
