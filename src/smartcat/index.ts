@@ -1475,6 +1475,9 @@ const domainPrev = new Map<string, string>();
 const domainObserved = new Set<string>();
 let domainReader: (() => void) | null = null;
 
+/** noteSource 开关守卫（ticket 084c A3，对齐 onVaultActivity / notifyXxxAction 先例）：关 → 书库观察整链静默（不产即时/防抖） */
+const watchEnabled = (): boolean => !!(data?.config?.noteSource);
+
 /** 书库划线/想法事件入 pending（ticket 081 v2）：per-book 独立 5 分钟窗口，追加内容 + 重置计时；超时结算一条 */
 function pushLibraryPending(id: string, title: string, more: { highlights?: string[]; excerpts?: string[] }): void {
   let p = libraryPendingNotes.get(id);
@@ -1489,17 +1492,21 @@ function pushLibraryPending(id: string, title: string, more: { highlights?: stri
   p.timer = setTimeout(() => { void settleLibraryPending(id); }, libraryDebounceMs);
 }
 
-/** 书库防抖窗口结算（ticket 081 v2）：组稿一条入流并移除 pending */
+/** 书库防抖窗口结算（ticket 081 v2）：组稿一条入流并移除 pending。
+ *  noteSource 关（A3）→ 已挂 pending 的结算也不产（内容丢弃防晚到入流，防抖表照常清）。 */
 async function settleLibraryPending(id: string): Promise<void> {
   const p = libraryPendingNotes.get(id);
   if (!p) return;
   libraryPendingNotes.delete(id);
+  if (!watchEnabled() || !memorySystem) return;
   const text = buildLibraryNoteText(p.title, p.highlights, p.excerpts);
-  if (text && memorySystem) await memorySystem.addObservation(text, { source: 'domain:library' });
+  if (text) await memorySystem.addObservation(text, { source: 'domain:library' });
 }
 
-/** library 结构化 diff 消费（ticket 081 v2）：书架增删/读完/时长即时入流；划线/想法走 5 分钟防抖 */
+/** library 结构化 diff 消费（ticket 081 v2）：书架增删/读完/时长即时入流；划线/想法走 5 分钟防抖。
+ *  noteSource 关（A3）→ 即时事件与防抖档案均不产。 */
 async function consumeLibraryDiff(diff: LibraryWeaveDiff, mem: any): Promise<void> {
+  if (!watchEnabled()) return;
   for (const e of diff.added) await mem.addObservation('你把《' + e.title + '》加入了书架', { source: 'domain:library' });
   for (const e of diff.started) await mem.addObservation('你开始读《' + e.title + '》', { source: 'domain:library' });
   for (const e of diff.done) await mem.addObservation('你读完了《' + e.title + '》', { source: 'domain:library' });
@@ -1511,7 +1518,8 @@ async function consumeLibraryDiff(diff: LibraryWeaveDiff, mem: any): Promise<voi
   for (const e of diff.excerptEvents) pushLibraryPending(e.id, e.title, { excerpts: e.texts });
 }
 
-/** 域 JSON 观察接入（2026-08-23 用户拍板：CONFIG/STORAGE 域数据 modify → 观察；懒启动探测已有数据文件） */
+/** 域 JSON 观察接入（2026-08-23 用户拍板：CONFIG/STORAGE 域数据 modify → 观察；懒启动探测已有数据文件）。
+ *  noteSource 关（A3）→ modify 监听照挂、事件逐个短接静默（对齐 onVaultActivity：开关可随时切换）。 */
 async function onDomainActivity(): Promise<void> {
   if (!appRef || !memorySystem) return;
   const app = appRef;
@@ -1522,6 +1530,7 @@ async function onDomainActivity(): Promise<void> {
   if (!domainReader) {
     const ref = (app.vault as any).on?.('modify', async (file: any) => {
       if (!file?.path) return;
+      if (!watchEnabled()) return; // noteSource 关（ticket 084c A3）→ 域数据 modify 不产（对齐 onVaultActivity 短接）
       const key = Object.keys(DOMAIN_FILES).find((k) => DOMAIN_FILES[k].file === file.path);
       if (!key || !domainObserved.has(key)) return;
       let raw: any = null;
