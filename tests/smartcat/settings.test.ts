@@ -64,16 +64,19 @@ describe('移动端长按设置 → 关闭 → 拖拽恢复', () => {
     expect(document.getElementById('bz-settings-modal-popup')).not.toBeNull();
     expect(internals.interaction.isSettingsOpen).toBe(true);
 
-    // 弹窗开着时无法拖拽（触摸全部早退）
+    // 弹窗开着仍可拖拽（用户拍板：面板不锁拖拽）
     touch(cat, 'touchstart', 100, 100);
     touch(cat, 'touchmove', 160, 140);
-    expect(cat.style.left).toBe('');
+    expect(cat.style.left).not.toBe('');
+    const l0 = parseFloat(cat.style.left);
+    touch(cat, 'touchmove', 220, 140);
+    expect(parseFloat(cat.style.left)).toBeGreaterThan(l0);
 
     // 点遮罩关闭 → onClose 复位交互锁
     document.getElementById('bz-settings-modal-mask')!.click();
     expect(internals.interaction.isSettingsOpen).toBe(false);
 
-    // 拖拽恢复：位置随手指变化
+    // 关闭后拖拽照常：位置随手指变化
     touch(cat, 'touchstart', 100, 100);
     touch(cat, 'touchmove', 160, 140);
     expect(cat.style.left).not.toBe('');
