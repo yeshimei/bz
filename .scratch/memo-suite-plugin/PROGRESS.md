@@ -10,6 +10,14 @@
 - ✅ **文档**：ADR-0036、CONTEXT.md 记忆流词条补 credibility（字段/档位表/GA 四因子/evidence 排序键/共振缩量）、spec.md 番茄钟区新增 US 14 + 事件监听小节补充 bullet、本条目；兼容冻结未动 smartcat.json 数据格式/观察文案/命令
 - ⏳ 待办：真机冒烟（Obsidian 里核对日记/收藏/跳过/移出书架等动作的 credibility 落库与检索/反思表现）；αc=0.3 与档位值后续按真实使用数据校准
 
+### 085 追加拍板（2026-08-24 用户三连拍板，实现 rev2）
+
+- ✅ **记忆流取消上限**：`MEMORY_CONFIG.maxStream` 移除、`enforceStreamLimit` 删除（addObservation/addInsight 不再调用），任何长度记忆全量保留——理由：检索走向量库 top-N 相关召回（retrieve 只把 topN 条拼进 prompt），不会把全量记忆发给在线 AI 浪费 token，历史记忆越长小橘越懂你，不淘汰；性能边界记入 ADR-0036（stream/vec 随年月增长可接受、retrieve O(n) 毫秒级、反思/日小结只取最近窗口不受总量影响）；memory.ts 头部注释「上限 500 条淘汰」同步改「无上限」；测试「上限与淘汰」改写为「无上限：520 条全量保留 + maxStream 已移除」断言
+- ✅ **不做入流门槛**：「importance×credibility<0.25 不入流」明确不做——所有观察照常入流，靠检索 GA 加权/反思 evidence 排序/情绪共振 scale 区分影响力；ADR-0036 记录
+- ✅ **书库划线/想法权重上调**（ruleCredibility domain:library 按 description 关键词细分，集中 memory.ts 零域改动，未走 consumeLibraryDiff 透传）：想法（excerpts 亲笔批注「写了条/N 条想法」）→ **0.75**（与 memo/favorites 明确意图同级）；划线（highlights「划了条/N 条重点」）0.45 → **0.70**（主动标记重要内容的认知投入）；书架加入/开始读/时长/读完维持 0.60；移出书架维持 0.45→负向降 0.30；测试补细分文案（划了 N 条/写了 N 条想法），LLM 非法回落用例同步改档（0.45→0.75）
+- ✅ **文档同步**：ADR-0036 追加拍板节、ADR-0021 修订注记、CONTEXT.md 记忆流词条、spec.md US 14 + 事件监听 bullet 更新、本小节；测试全绿 + tsc 0
+
+
 ## 2026-08-24 smartcat 归物本观察（ticket 079，ADR-0032）
 
 **状态：全量测试通过 + tsc 0 后提交 worktree/belongings-observation（本条目为开发记录）**

@@ -1,14 +1,15 @@
 /**
  * 记忆流系统（ADR-0021，重构自原 SmartCatMemorySystem.js HierarchicalMemorySystem）
  * 单层记忆流（Memory Stream）：所有观察/洞察同构追加入 stream，检索时按
- * GA 三因子评分分级（recency × importance × relevance），取代原四层固化。
+ * GA 四因子评分分级（recency × importance × relevance + αc·credibility），取代原四层固化。
  *
  * 核心机制（对齐 Generative Agents 论文）：
- *  1. 记忆对象 = { id, created, lastAccessed, description, importance, type, evidenceIds? }
- *  2. 检索评分 = α1·decay^小时 + α2·importance + α3·relevance（默认 α 全 1.0）
+ *  1. 记忆对象 = { id, created, lastAccessed, description, importance, type, evidenceIds?, credibility? }
+ *  2. 检索评分 = α1·decay^小时 + α2·importance + α3·relevance + αc·credibility（默认 α 全 1.0）
  *  3. 写入时 LLM 打分 importance（0-10 归一 0-1；AI 未配置降级规则分）
  *  4. 反思（Reflection）：24h 或新增 ≥20 条触发，LLM 归纳 3 条洞察写回流（可溯源）
- *  5. 上限 500 条，淘汰 importance 最低者；bge-m3 语义检索，Ollama 不可用降级词法
+ *  5. 无上限（085 追加拍板）：检索走向量库 top-N 相关召回，不把全量记忆发给在线 AI——
+ *     历史记忆越长小橘越懂你，不淘汰；bge-m3 语义检索，Ollama 不可用降级词法
  */
 import type { App } from 'obsidian';
 import { getSmartcatVecPath } from './data';
@@ -17,8 +18,6 @@ import { getEmbedding, checkRemoteOllama } from '../flash/ollama';
 import type { SmartCatData, MemoryStreamEntry, CloudScoringMode } from './types';
 
 export const MEMORY_CONFIG = {
-  /** 记忆流上限（软上限，超出淘汰 importance 最低） */
-  maxStream: 500,
   /** 检索返回条数 */
   retrievalTopN: 10,
   /** GA 三因子权重（RL 校准 ADR-0024：真实库配方 αR=0.5/αI=0.73/αRel=0.5，原均 1.0；
@@ -129,7 +128,6 @@ export class MemorySystem {
       credibility: score.credibility,
     };
     this.stream.push(memory);
-    this.enforceStreamLimit();
     this.pendingSinceReflect++;
     await this.dataSaver(this.dataProvider());
     await this.appendVector(memory);
@@ -155,22 +153,10 @@ export class MemorySystem {
       emotion,
     };
     this.stream.push(memory);
-    this.enforceStreamLimit();
     this.pendingSinceReflect++;
     await this.dataSaver(this.dataProvider());
     await this.appendVector(memory);
     return memory;
-  }
-
-  /** 超出上限淘汰 importance 最低（不足 1 条不淘汰） */
-  private enforceStreamLimit(): void {
-    while (this.stream.length > MEMORY_CONFIG.maxStream) {
-      let minIdx = 0;
-      this.stream.forEach((m, i) => {
-        if ((m.importance ?? 0) < (this.stream[minIdx].importance ?? 0)) minIdx = i;
-      });
-      this.stream.splice(minIdx, 1);
-    }
   }
 
   // ---------------- importance + emotion 打分 ----------------
@@ -675,8 +661,10 @@ export class MemorySystem {
  * 观察可信度基准分（ADR-0036，ticket 085）：来源档位表 + 负向词降档，纯函数。
  * 档位：高 0.9 亲笔心迹（diary/reflection/flash/letter/poem）；中高 0.75 明确 UI 意图
  * （memo/favorites/belongings）；中 0.6 行为动作（movie/pomodoro/domain:library 书架/时长/done）；
- * 中低 0.45 停留/标记可误触（news、domain:library 划线/想法/移出）；低 0.3 负向/移除信号
+ * 中低 0.45 停留/标记可误触（news、domain:library 移出）；低 0.3 负向/移除信号
  * （news 跳过、移出书架——由 0.45 中低档 −0.15 降档得出）；未知来源缺省 0.5 中性（对齐旧数据无字段兜底）。
+ * 085 追加拍板：domain:library 内部细分——想法（excerpts 亲笔批注）0.75、划线（highlights 主动标记投入）0.70、
+ * 书架加入/时长/读完 0.60、移出 0.45→0.30。
  * 描述含「跳过/移出/移除/删除/删掉/取消」等负向词 → 来源档基础 −0.15（下限 0.25）。
  */
 export const CREDIBILITY_TIERS: Record<string, number> = {
@@ -689,14 +677,20 @@ export const CREDIBILITY_TIERS: Record<string, number> = {
 /** 负向词集（「跳过」等；命中 → 来源档基础 −0.15，下限 0.25） */
 const CREDIBILITY_NEGATIVE_WORDS = ['跳过', '移出', '移除', '删除', '删掉', '取消'];
 
-/** 观察可信度（0-1）：来源档位基准 + 负向词降档；domain:library 按描述区分书架/划线(重点)/想法/移出语义 */
+/** 观察可信度（0-1）：来源档位基准 + 负向词降档；domain:library 按描述关键词细分
+ *  （「想法」→0.75 亲笔批注、「划了/划线/重点」→0.70 主动标记、「移出/移除」→0.45 经负向词降档→0.30、
+ *   其余书架/开始读/读完/时长 →0.60） */
 export function ruleCredibility(source: string | undefined, description: string): number {
   const text = typeof description === 'string' ? description : String(description ?? '');
   let base: number;
   if (source === 'domain:library') {
-    // 书架/时长/done → 中 0.6；划重点/想法/移出 → 中低 0.45（移出再经负向词降档 → 低 0.3；
-    // 实际文案为「划了条重点」——划线与重点同查）
-    base = /划线|重点|想法|移出|移除/.test(text) ? 0.45 : 0.6;
+    // 想法（excerpts 亲笔批注文字）≈ 明确 UI 意图 0.75；划线（highlights 主动标记重要内容）0.70；
+    // 移出书架 0.45（负向信号，再经通用负向词降档 → 低 0.30）；书架加入/开始读/读完/时长 0.60。
+    // 划线关键词取「划了|划线|重点」并集：实际文案「划了条/划了 N 条重点」，「划重点」「划线」字样亦命中
+    if (text.includes('想法')) base = 0.75;
+    else if (/划了|划线|重点/.test(text)) base = 0.70;
+    else if (/移出|移除/.test(text)) base = 0.45;
+    else base = 0.6;
   } else {
     base = source !== undefined && Object.prototype.hasOwnProperty.call(CREDIBILITY_TIERS, source)
       ? CREDIBILITY_TIERS[source]

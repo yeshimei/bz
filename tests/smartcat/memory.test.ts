@@ -166,18 +166,22 @@ describe('观察可信度 credibility（085，ADR-0036）', () => {
     expect(ruleCredibility('memo', '你添加了待办「买菜」')).toBe(0.75);
     expect(ruleCredibility('favorites', '你收藏了《TypeScript 指南》')).toBe(0.75);
     expect(ruleCredibility('belongings', '你登记了新物品《耳机》')).toBe(0.75);
-    // 中 0.6：行为动作（影视/番茄钟/书库书架·时长·done）
+    // 中 0.6：行为动作（影视/番茄钟/书库书架·开始读·时长·done）
     expect(ruleCredibility('movie', '你加入了想看《星际穿越》')).toBe(0.6);
     expect(ruleCredibility('pomodoro', '你用番茄钟完成了 25 分钟专注')).toBe(0.6);
     expect(ruleCredibility('domain:library', '你把《X》加入了书架')).toBe(0.6);
     expect(ruleCredibility('domain:library', '你开始读《X》')).toBe(0.6);
     expect(ruleCredibility('domain:library', '你读完了《X》')).toBe(0.6);
     expect(ruleCredibility('domain:library', '你读了《X》约 30 分钟（读到 60%）')).toBe(0.6);
-    // 中低 0.45：停留/标记可误触（聚合讯阅读/保存、书库划线/想法）
+    // 085 追加拍板：domain:library 内部细分——划线（highlights 主动标记投入）0.70、想法（excerpts 亲笔批注）0.75
+    expect(ruleCredibility('domain:library', '你在《X》划了条重点：「这句真好」')).toBe(0.7);
+    expect(ruleCredibility('domain:library', '你在《X》划了 2 条重点：「a」、「b」')).toBe(0.7);
+    expect(ruleCredibility('domain:library', '你在《X》划重点：「好句」')).toBe(0.7); // 「重点」关键词命中
+    expect(ruleCredibility('domain:library', '你在《X》写了条想法：「有启发」')).toBe(0.75);
+    expect(ruleCredibility('domain:library', '你在《X》写了 3 条想法：「a」、「b」、「c」')).toBe(0.75);
+    // 中低 0.45：停留/标记可误触（聚合讯阅读/保存）
     expect(ruleCredibility('news', '你阅读了《X》（平台·读了 2 分钟）')).toBe(0.45);
     expect(ruleCredibility('news', '你保存了《X》（平台·读了 5 分钟）')).toBe(0.45);
-    expect(ruleCredibility('domain:library', '你在《X》划了条重点：「这句真好」')).toBe(0.45);
-    expect(ruleCredibility('domain:library', '你在《X》写了条想法：「有启发」')).toBe(0.45);
     // 未知来源（chat/undefined）缺省 0.5 中性（对齐旧数据无字段兜底）
     expect(ruleCredibility('chat', '用户说：今天好累')).toBe(0.5);
     expect(ruleCredibility(undefined, '未知来源的内容')).toBe(0.5);
@@ -235,7 +239,7 @@ describe('观察可信度 credibility（085，ADR-0036）', () => {
     }));
     (globalThis as any).fetch = fetchMock3;
     const r3 = await m.scoreImportanceAndEmotion('你在《X》写了条想法：「感悟」', { source: 'domain:library' });
-    expect(r3.credibility).toBe(0.45);
+    expect(r3.credibility).toBe(0.75); // 想法档（085 追加拍板上调）
   });
 
   it('addObservation 写入 credibility（来源档位 / 显式 opts 覆盖）', async () => {
@@ -420,10 +424,10 @@ describe('三因子检索（语义模式）', () => {
   });
 });
 
-describe('上限与淘汰', () => {
-  it('超 500 条淘汰 importance 最低', async () => {
+describe('无上限（085 追加拍板：取消淘汰，历史记忆越长越懂你）', () => {
+  it('超 500 条仍全量保留（检索走向量库 top-N 相关召回，不把全量记忆发在线 AI）', async () => {
     const m = make();
-    for (let i = 0; i < MEMORY_CONFIG.maxStream + 20; i++) {
+    for (let i = 0; i < 520; i++) {
       data.memory.stream.push({
         id: `mem${i}`,
         created: new Date().toISOString(),
@@ -433,11 +437,11 @@ describe('上限与淘汰', () => {
         type: 'observation',
       });
     }
-    data.memory.stream.length = MEMORY_CONFIG.maxStream + 20;
-    // 触发淘汰（走 addObservation 推一条）
+    expect(data.memory.stream.length).toBe(520); // 无淘汰触发
     await m.addObservation('新记忆', { importance: 0.9 });
-    expect(data.memory.stream.length).toBe(MEMORY_CONFIG.maxStream);
-    expect(data.memory.stream.some((x) => x.id === 'mem0')).toBe(false);
+    expect(data.memory.stream.length).toBe(521); // 追加后仍全量
+    expect(data.memory.stream.some((x) => x.id === 'mem0')).toBe(true); // 低 importance 也不删
+    expect((MEMORY_CONFIG as any).maxStream).toBeUndefined(); // 上限常量已移除
   });
 });
 
