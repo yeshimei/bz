@@ -1,0 +1,250 @@
+/**
+ * 小橘数据面板测试（ticket 071）：纯函数层（统计/情绪时间线/分布/成长轨迹/标签表完整性）
+ * + UI 层（jsdom：四页签渲染、页签切换、关闭/遮罩、幂等重开、只读不写盘）。
+ */
+import { describe, it, expect, beforeEach } from 'vitest';
+import { MockVault, mockAppWithVault } from '../mock-vault';
+import { setApp } from '../../src/core/app';
+import { setSettingsProvider } from '../../src/core/settings-provider';
+import { resetObsidianMocks } from '../mock-obsidian-entry';
+import {
+  computeDashboardStats,
+  buildEmotionTimeline,
+  buildEmotionDistribution,
+  buildSourceDistribution,
+  distributionRows,
+  buildGrowthTrail,
+  emotionLabel,
+  truncateText,
+  OCEAN_LABELS,
+  TRAIT_LABELS,
+  TRAIT_GROUP_LABELS,
+  openSmartcatDashboard,
+  closeSmartcatDashboard,
+} from '../../src/smartcat/dashboard';
+import { DEFAULT_TRAITS } from '../../src/smartcat/character';
+import { moodLevelFromPad, MOOD_MAP } from '../../src/smartcat/mood';
+import { getSmartcatFilePath, defaultSmartCatData } from '../../src/smartcat/data';
+import type { SmartCatData } from '../../src/smartcat/types';
+
+/** 构造面板夹具（PAD 心情好档原型点 + 2 观察 1 洞察 + 成长轨迹两条） */
+function fixtureData(): SmartCatData {
+  const d = defaultSmartCatData();
+  d.mood.pad = { pleasure: 70, arousal: 62, dominance: 55 };
+  d.mood.currentEmotion = 'happy';
+  d.mood.lastUpdate = Date.now() - 5 * 60 * 1000;
+  d.personalityGrowth.relationship.trust = 0.72;
+  d.personalityGrowth.relationship.attachment = 0.61;
+  d.personalityGrowth.behaviorStats.interactionCount = 12;
+  d.personalityGrowth.behaviorStats.emotionalTone = 0.25;
+  d.personalityGrowth.growthHistory = [
+    { timestamp: Date.now() - 3600 * 1000, source: 'interaction', interactionType: 'pet', intensity: 1 },
+    { timestamp: Date.now() - 7200 * 1000, source: 'reflection', insights: [{ text: 'a' }, { text: 'b' }] },
+    { timestamp: NaN, source: 'bad' }, // 非法时间应被过滤
+  ];
+  d.memory.reflection.count = 3;
+  d.memory.reflection.digestCount = 2;
+  d.memory.reflection.lastReflectAt = Date.now() - 60 * 1000;
+  const iso = (agoMin: number) => new Date(Date.now() - agoMin * 60 * 1000).toISOString();
+  d.memory.stream = [
+    { id: 'm1', created: iso(10), lastAccessed: iso(10), description: '用户说：今天完成了复习计划，很开心', importance: 0.8, type: 'observation', source: 'chat', emotion: 'happy' },
+    { id: 'm2', created: iso(30), lastAccessed: iso(30), description: '你写了日记：最近有点低落', importance: 0.6, type: 'observation', source: 'diary', emotion: 'sad' },
+    { id: 'i1', created: iso(5), lastAccessed: iso(5), description: '【洞察】用户坚持复习', importance: 0.75, type: 'insight', source: 'reflection', evidenceIds: ['m1'] },
+    { id: 'm3', created: iso(20), lastAccessed: iso(20), description: '无情绪标注的观察', importance: 0.4, type: 'observation', source: 'flash' },
+  ];
+  return d;
+}
+
+function makeApp(fixture: SmartCatData) {
+  const vault = new MockVault();
+  vault.create(getSmartcatFilePath(), JSON.stringify(fixture));
+  const app = mockAppWithVault(vault);
+  setApp(app);
+  setSettingsProvider(() => ({
+    storagePath: 'CONFIG/STORAGE',
+    smartcatEnabled: true,
+    smartcatMobileDefaultFullscreen: false,
+    smartcatDashboardMobileDefaultFullscreen: false,
+  }) as any);
+  return { app, vault };
+}
+
+describe('dashboard 纯函数', () => {
+  it('computeDashboardStats 聚合各段统计（观察/洞察分计 + 关系张量兜底）', () => {
+    const st = computeDashboardStats(fixtureData());
+    expect(st.streamCount).toBe(4);
+    expect(st.observationCount).toBe(3);
+    expect(st.insightCount).toBe(1);
+    expect(st.reflectionCount).toBe(3);
+    expect(st.digestCount).toBe(2);
+    expect(st.interactionCount).toBe(12);
+    expect(st.trust).toBeCloseTo(0.72);
+    expect(st.attachment).toBeCloseTo(0.61);
+    // 空数据兜底
+    const empty = computeDashboardStats(defaultSmartCatData());
+    expect(empty.streamCount).toBe(0);
+    expect(empty.trust).toBeCloseTo(0.5);
+  });
+
+  it('moodLevelFromPad 原型最近邻判档（中性点→平常心，好档原型→心情好）', () => {
+    expect(moodLevelFromPad({ pleasure: 50, arousal: 50, dominance: 50 })).toBe('neutral');
+    expect(moodLevelFromPad({ pleasure: 70, arousal: 62, dominance: 55 })).toBe('good');
+    expect(MOOD_MAP.good.state).toBe('心情好');
+  });
+
+  it('buildEmotionTimeline 仅带情绪条目、新→旧排序、截断 limit', () => {
+    const d = fixtureData();
+    const tl = buildEmotionTimeline(d.memory.stream, 20);
+    expect(tl.length).toBe(2); // m1 happy / m2 sad（m3 无情绪、i1 无情绪）
+    expect(tl[0].emotion).toBe('happy');
+    expect(tl[1].emotion).toBe('sad');
+    expect(tl[0].time).toBeGreaterThanOrEqual(tl[1].time);
+    expect(buildEmotionTimeline(d.memory.stream, 1).length).toBe(1);
+  });
+
+  it('buildEmotionDistribution 只计观察；buildSourceDistribution 中文归并', () => {
+    const d = fixtureData();
+    expect(buildEmotionDistribution(d.memory.stream)).toEqual({ happy: 1, sad: 1 });
+    const rows = distributionRows(buildSourceDistribution(d.memory.stream));
+    const labels = rows.map((r) => r.label);
+    expect(labels).toContain('聊天');
+    expect(labels).toContain('日记');
+    expect(labels).toContain('闪念');
+    expect(rows[0].count).toBeGreaterThanOrEqual(rows[rows.length - 1].count); // 降序
+  });
+
+  it('buildGrowthTrail 时间倒序、来源中文化、非法时间过滤、详情摘要', () => {
+    const trail = buildGrowthTrail(fixtureData().personalityGrowth.growthHistory, 10);
+    expect(trail.length).toBe(2); // NaN 时间被过滤
+    expect(trail[0].sourceText).toBe('互动微移');
+    expect(trail[0].detail).toBe('pet');
+    expect(trail[1].sourceText).toBe('反思成长');
+    expect(trail[1].detail).toBe('2 条洞察');
+    expect(trail[0].time).toBeGreaterThanOrEqual(trail[1].time);
+  });
+
+  it('标签表完整性：TRAIT_LABELS 与 30 特质一一对应；OCEAN 五轴；群组九个', () => {
+    expect(Object.keys(TRAIT_LABELS).sort()).toEqual(Object.keys(DEFAULT_TRAITS).sort());
+    expect(Object.keys(OCEAN_LABELS).length).toBe(5);
+    expect(Object.keys(TRAIT_GROUP_LABELS).length).toBe(9);
+  });
+
+  it('emotionLabel 已知词中文化、未知词回显；truncateText 截断加省略号', () => {
+    expect(emotionLabel('happy')).toBe('开心');
+    expect(emotionLabel('mysterious')).toBe('mysterious');
+    expect(truncateText('一二三四五', 3)).toBe('一二三…');
+    expect(truncateText('abc', 5)).toBe('abc');
+  });
+});
+
+describe('openSmartcatDashboard UI', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+    closeSmartcatDashboard();
+  });
+
+  it('打开渲染头行 + 四页签 + 总览英雄区（当前心情与瞬时情绪）', async () => {
+    const { app } = makeApp(fixtureData());
+    await openSmartcatDashboard(app as any);
+    const popup = document.getElementById('smartcat-dashboard-panel');
+    expect(popup).not.toBeNull();
+    expect(document.getElementById('smartcat-dashboard-mask')).not.toBeNull();
+    expect(popup!.querySelector('.bz-win-head')).not.toBeNull();
+    expect(popup!.querySelector('#smartcat-dash-close')).not.toBeNull();
+    expect(popup!.querySelector('#smartcat-dash-refresh')).not.toBeNull();
+    expect(popup!.querySelectorAll('.bz-sc-dash-tab').length).toBe(4);
+    const overview = popup!.querySelector('[data-pane="overview"]') as HTMLElement;
+    expect(overview.style.display).not.toBe('none');
+    expect(overview.textContent).toContain('心情好');
+    expect(overview.textContent).toContain('瞬时情绪：开心');
+    // PAD 条与相处统计
+    expect(overview.textContent).toContain('愉悦');
+    expect(overview.textContent).toContain('信任');
+  }, 15000);
+
+  it('页签切换：记忆页显示记忆列表（观察/洞察徽章），总览隐藏', async () => {
+    const { app } = makeApp(fixtureData());
+    await openSmartcatDashboard(app as any);
+    const popup = document.getElementById('smartcat-dashboard-panel')!;
+    const memTab = popup.querySelector('[data-tab="memory"]') as HTMLElement;
+    memTab.click();
+    const memPane = popup.querySelector('[data-pane="memory"]') as HTMLElement;
+    const overviewPane = popup.querySelector('[data-pane="overview"]') as HTMLElement;
+    expect(memPane.style.display).not.toBe('none');
+    expect(overviewPane.style.display).toBe('none');
+    expect(memPane.querySelectorAll('.bz-sc-dash-memory').length).toBe(4);
+    expect(memPane.querySelectorAll('.bz-sc-dash-badge.insight').length).toBe(1);
+    expect(memPane.textContent).toContain('聊天');
+  }, 15000);
+
+  it('人格页签：OCEAN + 特质分组 + 成长轨迹渲染', async () => {
+    const { app } = makeApp(fixtureData());
+    await openSmartcatDashboard(app as any);
+    const popup = document.getElementById('smartcat-dashboard-panel')!;
+    (popup.querySelector('[data-tab="personality"]') as HTMLElement).click();
+    const pane = popup.querySelector('[data-pane="personality"]') as HTMLElement;
+    expect(pane.textContent).toContain('开放性');
+    expect(pane.textContent).toContain('依恋（Bowlby）');
+    expect(pane.textContent).toContain('存在感（Yalom');
+    expect(pane.querySelectorAll('.bz-sc-dash-trail-row').length).toBe(2);
+    expect(pane.textContent).toContain('互动微移');
+  }, 15000);
+
+  it('情绪页签：趋势文本 + 时间线圆点行', async () => {
+    const { app } = makeApp(fixtureData());
+    await openSmartcatDashboard(app as any);
+    const popup = document.getElementById('smartcat-dashboard-panel')!;
+    (popup.querySelector('[data-tab="emotion"]') as HTMLElement).click();
+    const pane = popup.querySelector('[data-pane="emotion"]') as HTMLElement;
+    expect(pane.textContent).toContain('情绪趋势');
+    expect(pane.querySelectorAll('.bz-sc-dash-tl-item').length).toBe(2);
+    expect(pane.querySelectorAll('.bz-sc-dash-tl-item.pos').length).toBe(1);
+    expect(pane.querySelectorAll('.bz-sc-dash-tl-item.neg').length).toBe(1);
+  }, 15000);
+
+  it('关闭按钮移除 DOM；遮罩点击关闭；重复打开幂等（仅一实例）', async () => {
+    const { app } = makeApp(fixtureData());
+    await openSmartcatDashboard(app as any);
+    let popup = document.getElementById('smartcat-dashboard-panel')!;
+    (popup.querySelector('#smartcat-dash-close') as HTMLElement).click();
+    expect(document.getElementById('smartcat-dashboard-panel')).toBeNull();
+    expect(document.getElementById('smartcat-dashboard-mask')).toBeNull();
+
+    // 遮罩点击关闭
+    await openSmartcatDashboard(app as any);
+    const mask = document.getElementById('smartcat-dashboard-mask')!;
+    mask.click(); // e.target === mask
+    expect(document.getElementById('smartcat-dashboard-panel')).toBeNull();
+
+    // 幂等重开
+    await openSmartcatDashboard(app as any);
+    await openSmartcatDashboard(app as any);
+    expect(document.querySelectorAll('#smartcat-dashboard-panel').length).toBe(1);
+  }, 15000);
+
+  it('刷新按钮：重读数据且保持 DOM（面板只读，不写盘）', async () => {
+    const { app, vault } = makeApp(fixtureData());
+    const writesBefore = vault.modifiedPaths.length;
+    await openSmartcatDashboard(app as any);
+    expect(vault.modifiedPaths.length).toBe(writesBefore); // 打开不写盘
+    const popup = document.getElementById('smartcat-dashboard-panel')!;
+    (popup.querySelector('#smartcat-dash-refresh') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(document.getElementById('smartcat-dashboard-panel')).not.toBeNull();
+    expect(vault.modifiedPaths.length).toBe(writesBefore); // 刷新也不写盘
+  }, 15000);
+
+  it('空数据（无 smartcat.json）：默认数据渲染空态文案不抛错', async () => {
+    const vault = new MockVault();
+    const app = mockAppWithVault(vault);
+    setApp(app);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', smartcatDashboardMobileDefaultFullscreen: false }) as any);
+    await openSmartcatDashboard(app as any);
+    const popup = document.getElementById('smartcat-dashboard-panel')!;
+    expect(popup.textContent).toContain('平常心'); // 默认 PAD 50/50/50 → 中性档
+    (popup.querySelector('[data-tab="memory"]') as HTMLElement).click();
+    const memPane = popup.querySelector('[data-pane="memory"]') as HTMLElement;
+    expect(memPane.textContent).toContain('还没有记忆');
+  }, 15000);
+});

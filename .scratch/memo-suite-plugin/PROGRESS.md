@@ -223,3 +223,13 @@
 - ✅ **主页磁贴播种**：main.onload `ensureAttachSeed` 幂等，desktop+mobile 各 `placeAtEnd` 末尾追加 1×1，写 launcher.json（失败静默）；smoke 登记 `bz-attach-move`
 - ✅ **文档/规范**：spec.md 命令 id 全清单 + 决策条目；CONTEXT.md 新增「附件/附件搬移/链接改写」术语；ADR-0014（改用 fileManager.renameFile，弃用 v1 自研改写）；测试 data 15 + ui 8
 
+
+
+## 2026-08-23 小橘数据面板完成（ticket 071）
+
+**状态：全量 1349 测试通过（97 文件），tsc 通过；含新面板 14 个测试**
+
+- ✅ **ticket 071 smartcat 数据面板**：新命令 `bz-smartcat-dashboard`（中文名「小橘数据面板」，icon activity）——只读可视化 smartcat.json 全量状态，四页签（总览/情绪/人格/记忆）：当前心情 5 档英雄区 + PAD 三轴、情绪趋势/波动度（VAD+EMA 复用 cognitive）+ 分布 + 演变时间线、OCEAN 出生种子 + 30 特质九群组 + 关系张量（信任/依恋/情绪基调）+ 成长轨迹、记忆流统计 + 作息分布 24h 直方图 + 来源分布 + 最近记忆列表；🔄 刷新现读现渲染
+- ✅ **实现要点**：`src/smartcat/dashboard.ts`（纯函数层可测 + createOverlay/.bz-win-head/escManager 主窗口规范）；数据经 loadSmartCatData 现读，与常驻猫实例解耦（smartcatEnabled=false 也可看）；面板只读不写盘（铁律 1）；mood.ts 抽纯函数 `moodLevelFromPad`（computeMoodLevel 委托，行为不变）
+- ✅ **主窗口规范三件事**：settings.ts 新键 `smartcatDashboardMobileDefaultFullscreen`（默认 false=常规卡）；打开路径 applyMobileWindowFullscreen；小橘设置弹窗挂「移动端默认全屏（数据面板）」行（仅移动端显示）
+- ✅ **清理接线**：unloadSmartCat 调 closeSmartcatDashboard()（DOM + ESC 句柄）；smoke 命令清单 +1（38 命令）

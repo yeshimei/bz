@@ -289,6 +289,8 @@ export default interface BzSettings {
   smartcatEnabled: boolean;
   /** 小橘聊天面板：移动端默认全屏（默认关——原居中卡 320px） */
   smartcatMobileDefaultFullscreen: boolean;
+  /** 小橘数据面板：移动端默认全屏（ticket 071，默认关=常规卡 720px） */
+  smartcatDashboardMobileDefaultFullscreen: boolean;
 }
 
 export const DEFAULT_SETTINGS: BzSettings = {
@@ -452,4 +454,5 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 小橘陪伴猫（smartcat 域）
   smartcatEnabled: true,
   smartcatMobileDefaultFullscreen: false,
+  smartcatDashboardMobileDefaultFullscreen: false,
 };
