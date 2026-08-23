@@ -144,6 +144,26 @@ describe('extractStoredFacts（观察 → 用户事实）', () => {
     expect(facts[1].predicate).toContain('讨厌');
   });
 
+  it('ADR-0025 补动词：看了/读了/记下 同样抽取（影视/书库/闪念源）', () => {
+    const facts = extractStoredFacts([
+      { description: '你看了《海边的卡夫卡》，影评：我喜欢这本书的孤独感', importance: 0.8 },
+      { description: '你读了《瓦尔登湖》，划线：我认定简单生活是对的', importance: 0.7 },
+      { description: '你在卡片盒记下闪念：我决定开始写日记', importance: 0.65 },
+    ]);
+    expect(facts.length).toBe(3);
+    expect(facts[0].predicate).toContain('喜欢');
+    expect(facts[1].predicate).toContain('认定');
+    expect(facts[2].predicate).toContain('决定');
+  });
+
+  it('尾部元信息（关键词…）剥离后再存对象', () => {
+    const facts = extractStoredFacts([
+      { description: '你写了日记：我喜欢编程（关键词：工作、学习）', importance: 0.8 },
+    ]);
+    expect(facts.length).toBe(1);
+    expect(facts[0].object).toBe('编程');
+  });
+
   it('无匹配 → 空数组', () => {
     expect(extractStoredFacts([{ description: '普通记录', importance: 0.5 }])).toEqual([]);
   });

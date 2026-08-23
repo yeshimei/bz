@@ -260,16 +260,18 @@ export function extractStoredFacts(
   entries: { description: string; importance?: number }[],
 ): StoredFact[] {
   const facts: StoredFact[] = [];
-  // 常见模板：「用户说：我喜欢 X」「…不喜欢 X」（小橘观察多为「你写了日记：…」）
-  // 宽松匹配：「你(写了|说)……(我喜欢|讨厌|爱|认定) X」——中间允许前缀词（如「日记：」「早起时」）
-  const pattern = /(?:用户|你)(?:说|写下|写了|觉得|认为).{0,12}?(我喜欢|我爱|我讨厌|我认定|我是|我决定)(.{1,20})/;
+  // 常见模板：「用户说：我喜欢 X」「…不喜欢 X」（小橘观察多为「你写了日记：…」「你看了《X》，影评：…」）
+  // 宽松匹配：「你(在…)?(写了|说了|看了|读了|记下|剪藏了)……(我喜欢|讨厌|爱|认定) X」——中间允许前缀词（如「日记：」「影评：」）
+  // ADR-0025 补动词与「在…记下」前缀（闪念源），覆盖书库/影视/闪念/信/反省观察源
+  const pattern = /(?:用户|你)(?:在[^，。：:]{0,8}?)?(?:说|说了|写下|写了|觉得|认为|看(?:过|了)|读(?:过|了)|剪藏了|记下).{0,14}?(我喜欢|我爱|我讨厌|我认定|我是|我决定)(.{1,20})/;
   for (const e of entries) {
     const m = e.description.match(pattern);
     if (m && m[2]) {
       facts.push({
         subject: '用户',
         predicate: m[1],
-        object: m[2].replace(/[，。！？、\s]$/, ''),
+        // 观察文本尾部常带「（关键词：…）」等元信息或句尾标点——剥离后再存
+        object: m[2].replace(/[（(].*$/, '').replace(/[，。！？、\s]$/, ''),
         confidence: e.importance ?? 0.6,
       });
     }

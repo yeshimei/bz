@@ -4,7 +4,7 @@
  * 互动效果表、PersonalityGrowth（互动驱动 + 反思驱动）。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { MoodSystem, PersonalityGrowth, MOOD_MAP } from '../../src/smartcat/mood';
+import { MoodSystem, PersonalityGrowth, MOOD_MAP, emotionResonanceDelta } from '../../src/smartcat/mood';
 import { defaultSmartCatData } from '../../src/smartcat/data';
 import type { SmartCatData } from '../../src/smartcat/types';
 
@@ -93,6 +93,53 @@ describe('PAD → 5 档（原型最近邻，断线解除）', () => {
     expect(MOOD_MAP.excellent.emoji).toBe('😻');
     expect(MOOD_MAP.poor.state).toBe('不开心');
     expect(MOOD_MAP.excellent.prototype.length).toBe(3);
+  });
+});
+
+describe('温和共振（ADR-0025：情绪 → PAD 小步差量）', () => {
+  it('emotionResonanceDelta：sad 负向（负面增益>正面）、happy 正向、calm/neutral 趋近 0', () => {
+    const sad = emotionResonanceDelta('sad');
+    const happy = emotionResonanceDelta('happy');
+    const calm = emotionResonanceDelta('calm');
+    const neutral = emotionResonanceDelta('neutral');
+    expect(sad.pleasure).toBeLessThan(0);
+    expect(happy.pleasure).toBeGreaterThan(0);
+    expect(Math.abs(sad.pleasure)).toBeGreaterThan(happy.pleasure); // 共情：负面略强
+    expect(Math.abs(calm.pleasure)).toBeLessThan(1);
+    expect(Math.abs(neutral.pleasure)).toBe(0);
+  });
+
+  it('applyEmotionResonance：sad 后 PAD 下降；registerEmotion 独立同步瞬时情绪', () => {
+    const m = make();
+    m.applyEmotionResonance('sad');
+    expect(m.pad.pleasure).toBeLessThan(55);
+    m.registerEmotion('sad');
+    expect(data.mood.currentEmotion).toBe('sad');
+    expect(saver).toHaveBeenCalled();
+  });
+
+  it('applyEmotionResonance：开心提升愉悦；calm 不误动心情（差量极小）', () => {
+    const m = make();
+    m.applyEmotionResonance('happy');
+    expect(m.pad.pleasure).toBeGreaterThan(55);
+    const before = m.pad.pleasure;
+    m.applyEmotionResonance('calm');
+    expect(Math.abs(m.pad.pleasure - before)).toBeLessThan(2);
+  });
+
+  it('applyTrendDrift：declining → 愉悦/支配温和下降；improving → 愉悦回升；高波动 → 唤醒微升', () => {
+    const m = make();
+    m.pad = { pleasure: 60, arousal: 50, dominance: 55 };
+    m.applyTrendDrift({ trend: 'declining', volatility: 0.3 });
+    expect(m.pad.pleasure).toBeLessThan(60);
+    expect(m.pad.dominance).toBeLessThan(55);
+    m.pad = { pleasure: 50, arousal: 50, dominance: 50 };
+    m.applyTrendDrift({ trend: 'improving', volatility: 0.3 });
+    expect(m.pad.pleasure).toBeGreaterThan(50);
+    m.pad = { pleasure: 50, arousal: 50, dominance: 50 };
+    m.applyTrendDrift({ trend: 'stable', volatility: 0.8 });
+    expect(m.pad.arousal).toBeGreaterThan(50);
+    expect(m.pad.pleasure).toBe(50);
   });
 });
 
@@ -236,5 +283,38 @@ describe('PersonalityGrowth（MATE ADR-0023）', () => {
     expect(data.personalityGrowth.traits).toEqual(before);
     await pg.applyReflectionInsights([{ text: '与情感无关的描述' }]);
     expect(data.personalityGrowth.traits).toEqual(before);
+  });
+
+  it('preferredHour 真众数（ADR-0025）：有记忆数据时取近 30 天创建小时峰值，不再覆盖为最后小时', async () => {
+    const pg = new PersonalityGrowth(() => data, saver);
+    // 造 20 条 23 点创建的记忆（峰在 23 点）
+    const now = Date.now();
+    for (let i = 0; i < 20; i++) {
+      const d = new Date(now - i * 3600e3);
+      d.setHours(23, Math.floor(Math.random() * 60), 0, 0);
+      data.memory.stream.push({
+        id: `mem${i}`, created: d.toISOString(), lastAccessed: d.toISOString(),
+        description: `记忆${i}`, importance: 0.5, type: 'observation',
+      });
+    }
+    await pg.developBasedOnInteraction('pet', 1);
+    expect(data.personalityGrowth.behaviorStats.preferredHour).toBe(23);
+  });
+
+  it('preferredHour 兜底（ADR-0025）：无记忆数据时保持当前小时（旧行为不变）', async () => {
+    const pg = new PersonalityGrowth(() => data, saver);
+    await pg.developBasedOnInteraction('pet', 1);
+    expect(data.personalityGrowth.behaviorStats.preferredHour).toBe(new Date().getHours());
+  });
+
+  it('click/note_* 中性交互不动 trust（ADR-0025 修 warm 恒真）， chat/diary/flash 温暖上升', async () => {
+    const pg = new PersonalityGrowth(() => data, saver);
+    const before = data.personalityGrowth.relationship.trust;
+    await pg.developBasedOnInteraction('click', 1);
+    expect(data.personalityGrowth.relationship.trust).toBe(before);
+    await pg.developBasedOnInteraction('note_read', 1);
+    expect(data.personalityGrowth.relationship.trust).toBe(before);
+    await pg.developBasedOnInteraction('talk', 1);
+    expect(data.personalityGrowth.relationship.trust).toBeGreaterThan(before);
   });
 });

@@ -16,6 +16,8 @@
 import type { App } from 'obsidian';
 import type { PadDimensions, SmartCatData } from './types';
 import { characterTransition, trustUpdate, characterFromExperience, TRUST_CAP } from './character';
+import { buildRhythmProfile } from './rhythm';
+import { emotionToVAD } from './cognitive';
 
 /** 5 档离散心情（显示层；PAD 原型最近邻判档） */
 export const MOOD_MAP: Record<string, { emoji: string; state: string; prototype: [number, number, number] }> = {
@@ -28,6 +30,28 @@ export const MOOD_MAP: Record<string, { emoji: string; state: string; prototype:
 
 /** PAD 原型顺序（判档用） */
 const MOOD_KEYS = ['excellent', 'good', 'neutral', 'low', 'poor'] as const;
+
+/**
+ * 温和共振增益（ADR-0025，用户拍板推翻「情绪不直接改写 PAD」）：
+ * 观察/聊天情绪 → PAD 小步差量——负面略强于正面（共情），calm/neutral 趋近 0（不误动心情）。
+ * 差量随后走既有 updatePad：人格乘数/抵抗力 + 60s 指数衰减回基线 50，不会成为用户情绪镜子。
+ */
+export const EMOTION_RESONANCE_GAIN = { positive: 4, negative: 6, arousal: 2.5, dominance: 2 } as const;
+
+/** 情绪 → PAD 差量（纯函数；测试友好）：
+ *  pleasure = 愉悦度（valence 距中性 0.35 起算，负面增益 6 > 正面 4）；
+ *  arousal = (唤醒 − 0.4) × 5（calm/sad/sleepy 稍降、excited/anxious 稍升）；
+ *  dominance = (支配 − 0.5) × 4（低落类情绪连带支配感下降）。 */
+export function emotionResonanceDelta(emotion: string): { pleasure: number; arousal: number; dominance: number } {
+  const vad = emotionToVAD(emotion);
+  const p = vad.valence >= 0
+    ? Math.max(0, vad.valence - 0.35) * EMOTION_RESONANCE_GAIN.positive
+    : Math.min(0, vad.valence + 0.25) * EMOTION_RESONANCE_GAIN.negative;
+  const a = (vad.arousal - 0.4) * 5;
+  const d = (vad.dominance - 0.5) * 4;
+  const r = (x: number) => Math.round(x * 10) / 10;
+  return { pleasure: r(p), arousal: r(a), dominance: r(d) };
+}
 
 export class MoodSystem {
   app: App;
@@ -87,6 +111,27 @@ export class MoodSystem {
     const data = this.dataProvider();
     data.mood.currentEmotion = emotion;
     void this.saveMoodState();
+  }
+
+  /** 温和共振（ADR-0025）：观察/聊天情绪 → PAD 差量（走 updatePad，人格调制+衰减生效） */
+  applyEmotionResonance(emotion: string): boolean {
+    const deltas = emotionResonanceDelta(emotion);
+    if (Math.abs(deltas.pleasure) < 0.01 && Math.abs(deltas.arousal) < 0.01 && Math.abs(deltas.dominance) < 0.01) return false;
+    this.updatePad('pleasure', deltas.pleasure, 'emotion:' + emotion);
+    this.updatePad('arousal', deltas.arousal, 'emotion:' + emotion);
+    this.updatePad('dominance', deltas.dominance, 'emotion:' + emotion);
+    return true;
+  }
+
+  /** 情绪趋势回写（ADR-0025）：declining 温和低落 / improving 温和转好 / 高波动唤醒微升 */
+  applyTrendDrift(trend: { trend: 'improving' | 'stable' | 'declining'; volatility: number }): void {
+    if (trend.trend === 'declining') {
+      this.updatePad('pleasure', -1.5, 'trend');
+      this.updatePad('dominance', -1, 'trend');
+    } else if (trend.trend === 'improving') {
+      this.updatePad('pleasure', 1.5, 'trend');
+    }
+    if (trend.volatility >= 0.5) this.updatePad('arousal', 0.8, 'trend');
   }
 
   /** 当前瞬时情绪（无则 null） */
@@ -276,7 +321,11 @@ export class PersonalityGrowth {
     if (interactionType === 'pet' || interactionType === 'learn') {
       g.traits = characterTransition(g.traits, { emotionIntensity: 0.2, trust: g.relationship.trust });
     }
-    g.relationship.trust = trustUpdate(g.relationship.trust, { warm: interactionType === 'pet' || interactionType !== 'click', quality: trustQuality, trustCap: TRUST_CAP ?? undefined });
+    // ADR-0025 修「warm 恒真」：温暖=pet/learn/talk/diary/flash（写日记/闪念轻质量温暖），
+    // 中性=click/note_*（不升温不侵蚀，原表达式 `pet || !== click` 使侵蚀分支成为死代码）
+    const warm = interactionType === 'pet' || interactionType === 'learn' || interactionType === 'talk' || interactionType === 'diary' || interactionType === 'flash';
+    const neutral = interactionType === 'click' || interactionType.startsWith('note_');
+    g.relationship.trust = trustUpdate(g.relationship.trust, { warm, neutral, quality: trustQuality, trustCap: TRUST_CAP ?? undefined });
     // 活跃时段统计（按当时钟点滚一个众数近似）
     this.tickBehaviorStats(interactionType);
     g.growthHistory.push({
@@ -335,14 +384,16 @@ export class PersonalityGrowth {
     await this.dataSaver(data);
   }
 
-  /** 行为统计（MATE behaviorStats：时段众数近似 + 情绪基调 EMA + 计数） */
+  /** 行为统计（MATE behaviorStats：时段众数 + 情绪基调 EMA + 计数） */
   tickBehaviorStats(interactionType: string): void {
     const g = this.dataProvider().personalityGrowth;
     const s = g.behaviorStats;
     s.interactionCount = (s.interactionCount || 0) + 1;
     const hour = new Date().getHours();
-    // preferredHour：简单滚众（出现最多的时段）
-    s.preferredHour = hour;
+    // ADR-0025 修「假众数」：preferredHour 由近 30 天记忆创建小时直方图峰值（复用作息画像）给出；
+    // 无记忆数据（还没观察过）时兜底当前小时（旧行为，mood 测试保持）
+    const profile = buildRhythmProfile(this.dataProvider().memory.stream || [], 30, Date.now());
+    s.preferredHour = profile.total > 0 ? profile.peakHour : hour;
     // 互动类型 → 情绪基调微调（pet/learn 正，click 中性）
     const tone = interactionType === 'pet' || interactionType === 'learn' ? 0.02 : interactionType === 'click' ? 0 : -0.01;
     s.emotionalTone = Math.min(1, Math.max(-1, (s.emotionalTone || 0) + tone * 0.2));

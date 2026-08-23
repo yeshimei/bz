@@ -23,6 +23,7 @@ import { classifyPath, observationText } from './context-source';
 import { DOMAIN_FILES, snapshotDomains } from './domain-source';
 import { buildRhythmProfile, isActiveNow, describeRhythm, periodText, isoWeekKey } from './rhythm';
 import { buildWeeklyReportData, generateWeeklyReport, weekWindow } from './report';
+import { buildCompanionContext } from './companion-context';
 import { analyzeEmotionTrend, buildEmotionSnapshots, describeEmotionTrend, checkContradiction, extractStoredFacts, initBanditArm, sampleThompson, updateBandit } from './cognitive';
 import type { SmartCatData, SmartCatConfig, ProactiveCareState } from './types';
 import type { BanditArmParams } from './cognitive';
@@ -118,6 +119,15 @@ export async function ensureSmartCat(app: App): Promise<void> {
     }
   };
 
+  // ADR-0025 情绪闭环 A 面：每条观察（日记/闪念/聊天/域事件…）→ 瞬时情绪 + 温和共振进 PAD
+  memorySystem.onObservation = (m) => {
+    if (!moodSystem || !m?.emotion) return;
+    try {
+      moodSystem.registerEmotion(m.emotion);
+      moodSystem.applyEmotionResonance(m.emotion);
+    } catch (e) { /* 共振失败不影响记忆主流程 */ }
+  };
+
   // 猫容器 + 皮肤 + 动画 + 指示器
   const container = mountCatContainer()!;
   applyAppearance(container, data.config.appearance);
@@ -140,10 +150,11 @@ export async function ensureSmartCat(app: App): Promise<void> {
       applyAppearance(mountCatContainer()!, appearance as any);
     },
     // ADR-0021：记忆流检索注入聊天上下文（格式化后返回；失败返回空串）
-    retrieveMemories: async (query: string) => {
+    // ADR-0025：第二参 lexicalQuery 供词法降级模式（纯用户消息，免「情绪/时段」噪音）
+    retrieveMemories: async (query: string, lexicalQuery?: string) => {
       if (!memorySystem) return '';
       try {
-        const memories = await memorySystem.retrieve(query);
+        const memories = await memorySystem.retrieve(query, undefined, { lexicalQuery });
         return memories.length ? memorySystem.formatMemoriesForPrompt(memories) : '';
       } catch (e) {
         return '';
@@ -226,11 +237,22 @@ export async function ensureSmartCat(app: App): Promise<void> {
       if (hour >= 5 && hour < 12) timeBasedMessages = ['早晨好！新的一天开始啦！🌅', '早安！今天也要元气满满哦！', '清晨的阳光迎接你的归来~', '早上好！思维最清晰的时刻到了！'];
       else if (hour >= 12 && hour < 18) timeBasedMessages = ['下午好！继续上午的创作吧！', '午安~ 休息后思路更清晰！', '下午时光，正是创作好时节~', '日正当中，灵感正盛！'];
       else timeBasedMessages = ['晚上好！宁静的夜晚适合思考~', '晚安前的创作时间到了！', '星空下的灵感特别美丽~', '夜晚是思维最活跃的时候呢！'];
+      let msg: string;
       if (Math.random() > 0.5) {
-        bubbleManager!.showBubble(timeBasedMessages[Math.floor(Math.random() * timeBasedMessages.length)]);
+        msg = timeBasedMessages[Math.floor(Math.random() * timeBasedMessages.length)];
       } else {
-        bubbleManager!.showBubble(getSmartCatMessage('WELCOME_BACK_MESSAGES'));
+        msg = getSmartCatMessage('WELCOME_BACK_MESSAGES');
       }
+      // ADR-0025 B 面：欢迎回来也「懂你」——作息有数据时掺入作息感知话
+      if (data && data.memory.stream.length >= 3 && Math.random() > 0.6) {
+        try {
+          const profile = buildRhythmProfile(data.memory.stream, 30, Date.now());
+          if (profile.total >= 3) {
+            msg = `我注意到你通常在${describeRhythm(profile)}最活跃。欢迎回来，我一直在哦~`;
+          }
+        } catch { /* 作息失败用原消息 */ }
+      }
+      bubbleManager!.showBubble(msg);
     },
   });
 
@@ -239,6 +261,8 @@ export async function ensureSmartCat(app: App): Promise<void> {
   // 每周懂你报告（2026-08-23：每周一检查，有观察则生成写回流 + 气泡展示）
   startWeeklyReport();
   void maybeWeeklyReport();
+  // 情绪趋势回写心情（ADR-0025 A 面：30 分钟节流，declining/improving/高波动温和漂移 PAD）
+  startTrendDrift();
 
   eventSystem.emit('appInitialized');
 }
@@ -356,19 +380,31 @@ async function maybeProactiveCare(): Promise<void> {
       const pool = templates[armId] || templates.life;
       bubbleManager.showBubble(pool[Math.floor(Math.random() * pool.length)]);
     } else {
-      // 近 3 条记忆做引子 + 作息描述 + 情绪趋势 → LLM 温和关心（按臂给风格指令）
+      // 近 3 条记忆做引子 + 懂你上下文块（作息/趋势/关系/检索记忆）→ LLM 温和关心（按臂给风格指令）
       const recent = data.memory.stream.slice(-3).map((m) => m.description).join('；');
-      const emotionTrend = describeEmotionTrend(analyzeEmotionTrend(buildEmotionSnapshots(data.memory.stream)));
       const styleHint = armId === 'empathy' ? '侧重共情，接住用户的情绪' : armId === 'vault' ? '侧重内容，聊他最近的笔记' : '侧重生活，像老朋友寒暄';
+      // ADR-0025 B 面：与聊天同源的「懂你上下文」
+      let memoriesText = '';
+      try {
+        const mems = await memorySystem.retrieve('', undefined);
+        memoriesText = mems.length ? memorySystem.formatMemoriesForPrompt(mems) : '';
+      } catch { /* 检索失败用空 */ }
+      const companionContext = buildCompanionContext({
+        stream: data.memory.stream,
+        relationship: data.personalityGrowth?.relationship ?? null,
+        emotion: moodSystem.getCurrentEmotion(),
+        memoriesText,
+      });
       const prompt = generatePrompt('auto_companion', '', {
         pad: moodSystem.pad,
         data,
         currentMood: moodSystem.currentMood,
         currentEmotion: moodSystem.getCurrentEmotion(),
+        companionContext,
       });
       const response = await callChat([
         { role: 'system', content: prompt },
-        { role: 'user', content: `你主动关心用户一次（温和、简短、像老朋友）。本次侧重：${styleHint}。当前情绪趋势：${emotionTrend}。用户的活跃时段是${describeRhythm(profile)}，最近记忆有：${recent}。` },
+        { role: 'user', content: `你主动关心用户一次（温和、简短、像老朋友）。本次侧重：${styleHint}。最近记忆有：${recent}。\n\n你了解到的背景：\n${companionContext}` },
       ]);
       if (response) bubbleManager.showBubble(response);
       else bubbleManager.showBubble('喵~ 我注意到你最近常在深夜写东西，记得照顾好自己。');
@@ -382,6 +418,30 @@ async function maybeProactiveCare(): Promise<void> {
   } catch (e) {
     /* 主动失败静默（不打扰） */
   }
+}
+
+// ---------------- 情绪趋势回写心情（ADR-0025 A 面：近 48h 趋势 → PAD 温和漂移） ----------------
+
+let trendDriftTimer: ReturnType<typeof setInterval> | null = null;
+
+/** 趋势回写调度（每 30 分钟检查；观察情绪样本 ≥3 才动） */
+function startTrendDrift(): void {
+  if (trendDriftTimer) clearInterval(trendDriftTimer);
+  trendDriftTimer = setInterval(() => {
+    void maybeTrendDrift();
+  }, 30 * 60 * 1000);
+}
+
+/** 近 48h 观察情绪序列 → 趋势/波动 → applyTrendDrift（温和回写；样本太少不动） */
+async function maybeTrendDrift(): Promise<void> {
+  if (!data || !moodSystem) return;
+  const since = Date.now() - 48 * 60 * 60 * 1000;
+  const recent = data.memory.stream.filter((m) => m.type === 'observation' && m.emotion && new Date(m.created).getTime() >= since);
+  if (recent.length < 3) return;
+  try {
+    const trend = analyzeEmotionTrend(buildEmotionSnapshots(recent));
+    moodSystem.applyTrendDrift(trend);
+  } catch (e) { /* 趋势回写失败静默 */ }
 }
 
 // ---------------- 每周懂你报告（2026-08-23「懂你」增强：⑦） ----------------
@@ -437,11 +497,18 @@ async function generateBookReview(): Promise<void> {
     if (!hasBookTag()) return;
     const bookDescription = generateBookDescription();
     if (!bookDescription) return;
+    // ADR-0025 B 面：书评也带「懂你上下文」（作息/趋势/关系；不额外检索记忆省一次调用）
+    const companionContext = buildCompanionContext({
+      stream: data.memory.stream,
+      relationship: data.personalityGrowth?.relationship ?? null,
+      emotion: moodSystem.getCurrentEmotion(),
+    });
     const prompt = generatePrompt('book_review', `请基于以下书籍数据给出简短评价：${bookDescription}`, {
       pad: moodSystem.pad,
       data,
       currentMood: moodSystem.currentMood,
       currentEmotion: moodSystem.getCurrentEmotion(),
+      companionContext,
     });
     const response = await callChat([
       { role: 'system', content: prompt },
@@ -621,11 +688,10 @@ async function sendChatMessage(message: string): Promise<void> {
     data.config.conversationHistory.push({ role: 'user', content: message, timestamp: new Date().toISOString() });
     data.config.conversationHistory.push({ role: 'assistant', content: response, timestamp: new Date().toISOString() });
     await dataSaver(data);
-    // 记忆流（ADR-0021）：对话写入 observation（写入面最小化——仅聊天接入；importance LLM 打分，
-    // AI 未配置降级规则分；Ollama 可用时同期写向量）
-    const mem = await memorySystem!.addObservation(`用户说：${message}`, { source: 'chat' });
-    // ADR-0022/0023：聊天情绪 → 瞬时情绪（registerEmotion 接线，上一轮空转修复）
-    if (mem.emotion) moodSystem?.registerEmotion(mem.emotion);
+    // ADR-0021/0025：对话写入 observation（dedupe=聊天去重限流：近 20 条内重复跳过；
+    //  非 calm 情绪或 importance≥0.55 才落库，低价值「用户说：X」不稀释记忆流）；
+    //  情绪共振/瞬时情绪由 memorySystem.onObservation 钩子统一处理（不再此处手动 registerEmotion）
+    await memorySystem!.addObservation(`用户说：${message}`, { source: 'chat', dedupe: true });
     // ADR-0023：聊天 → 性格微移 + 行为统计（tickBehaviorStats；情绪强度近似取消息长度）
     personalityGrowth!.developBasedOnInteraction('talk', 1, Math.min(0.8, message.length / 200)).catch(() => {});
   } catch (error) {
@@ -686,6 +752,10 @@ export function unloadSmartCat(): void {
   if (weeklyReportTimer) {
     clearInterval(weeklyReportTimer);
     weeklyReportTimer = null;
+  }
+  if (trendDriftTimer) {
+    clearInterval(trendDriftTimer);
+    trendDriftTimer = null;
   }
   if (greetTimer) {
     clearTimeout(greetTimer);

@@ -55,6 +55,12 @@ export class MemorySystem {
   dataSaver: (data: SmartCatData) => Promise<void>;
   /** 反思完成回调（心情重构：index 接 PersonalityGrowth 反思驱动） */
   onReflect: ((insights: { text: string }[]) => void | Promise<void>) | null = null;
+  /** 观察回调（ADR-0025：index 接情绪共振 + 瞬时情绪；每条 observation 写入后触发） */
+  onObservation: ((memory: MemoryStreamEntry) => void | Promise<void>) | null = null;
+  /** 聊天记忆去重窗口（近 N 条同内容跳过） */
+  private static readonly dedupeWindow = 20;
+  /** 聊天记忆保留阈值（非 calm 情绪或 importance≥0.55 才落库） */
+  private static readonly chatKeepImportance = 0.55;
   /** 反思新增计数（距上次反思） */
   private pendingSinceReflect = 0;
   private reflectionTimer: ReturnType<typeof setInterval> | null = null;
@@ -89,11 +95,23 @@ export class MemorySystem {
 
   // ---------------- 记忆写入 ----------------
 
-  /** 添加观察记忆（聊天对话等）；importance+emotion 走 LLM 打分（未配置降级规则分/词法情绪） */
-  async addObservation(description: string, opts: { source?: string; manuallyMarked?: boolean; importance?: number; emotion?: string } = {}): Promise<MemoryStreamEntry> {
+  /** 添加观察记忆（聊天对话等）；importance+emotion 走 LLM 打分（未配置降级规则分/词法情绪）
+   *  ADR-0025：opts.dedupe=true 时先做近 N 条同内容去重（短路，省一次 LLM 打分），
+   *  再按「非 calm 情绪 or importance≥聊天保留阈值」限流——返回 null 表示未落库。 */
+  async addObservation(description: string, opts: { source?: string; manuallyMarked?: boolean; importance?: number; emotion?: string; dedupe?: boolean } = {}): Promise<MemoryStreamEntry | null> {
+    if (opts.dedupe) {
+      const norm = (description || '').trim();
+      const recent = this.stream.slice(-MemorySystem.dedupeWindow);
+      if (recent.some((m) => (m.description || '').trim() === norm)) return null;
+    }
     const score = opts.importance !== undefined
       ? { importance: opts.importance, emotion: opts.emotion }
       : await this.scoreImportanceAndEmotion(description, opts);
+    if (opts.dedupe) {
+      const emo = score.emotion;
+      const keep = (emo && emo !== 'calm') || (score.importance ?? 0) >= MemorySystem.chatKeepImportance;
+      if (!keep) return null;
+    }
     const memory: MemoryStreamEntry = {
       id: `memory_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       created: new Date().toISOString(),
@@ -109,9 +127,14 @@ export class MemorySystem {
     this.pendingSinceReflect++;
     await this.dataSaver(this.dataProvider());
     await this.appendVector(memory);
+    // ADR-0025：观察钩子（情绪共振/瞬时情绪由 index 接线）
+    if (this.onObservation) {
+      try {
+        await this.onObservation(memory);
+      } catch { /* 钩子失败不影响记忆主流程 */ }
+    }
     return memory;
   }
-
   /** 添加洞察记忆（反思产物；importance 固定高值可由调用方传入；source 默认 reflection，日小结传 digest） */
   async addInsight(description: string, evidenceIds: string[], importance = 0.75, emotion?: string, source = 'reflection'): Promise<MemoryStreamEntry> {
     const memory: MemoryStreamEntry = {
@@ -224,19 +247,22 @@ export class MemorySystem {
 
   // ---------------- 检索（GA 三因子） ----------------
 
-  /** 检索相关记忆：三因子评分 → 降序 → top N；更新 lastAccessed（自增强） */
-  async retrieve(query: string, topN = MEMORY_CONFIG.retrievalTopN): Promise<MemoryStreamEntry[]> {
+    /** 检索相关记忆：三因子评分 → 降序 → top N；更新 lastAccessed（自增强）
+   *  ADR-0025：opts.lexicalQuery 供词法降级模式使用（纯用户消息，不带「情绪/时段」索引词——
+   *  语义模式仍用完整 query 受益于情绪/时段上下文；词法模式免去噪音 token 稀释命中率） */
+  async retrieve(query: string, topN = MEMORY_CONFIG.retrievalTopN, opts: { lexicalQuery?: string } = {}): Promise<MemoryStreamEntry[]> {
     const now = Date.now();
     const useSemantic = await this.useSemanticMode();
     let queryVec: number[] | null = null;
     if (useSemantic && query.trim()) {
       queryVec = await this.queryEmbeddingSafe(query);
     }
+    const lexicalQ = (opts.lexicalQuery != null ? opts.lexicalQuery : query).trim();
     const scored = this.stream.map((m) => {
       const hours = (now - new Date(m.lastAccessed || m.created).getTime()) / 3.6e6;
       const recency = Math.pow(MEMORY_CONFIG.decay, Math.max(0, hours));
       const importance = m.importance ?? 0;
-      const relevance = queryVec && m.id ? this.semanticRelevance(m.id, queryVec) : this.lexicalRelevance(m, query);
+      const relevance = queryVec && m.id ? this.semanticRelevance(m.id, queryVec) : this.lexicalRelevance(m, lexicalQ);
       return { m, score: MEMORY_CONFIG.alphaRecency * recency + MEMORY_CONFIG.alphaImportance * importance + MEMORY_CONFIG.alphaRelevance * relevance };
     });
     scored.sort((a, b) => b.score - a.score);
