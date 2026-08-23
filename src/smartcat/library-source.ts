@@ -4,6 +4,10 @@
  * v2（用户 2026-08-24 追加拍板）：书架增删三态（加入/开始读/移出）、时长带进度、
  * 划线/想法带内容（实测字段：highlight.text = 划线原文、highlight.commentText = 想法/批注，无 quoteText）
  * + index 层 per-book 5 分钟防抖合并。
+ * v3（ticket 084c A4）：hl/ex 由 length 计数游标改**内容指纹记账**——prev 存「已见指纹集合」
+ * （每条文氏 text+commentText 指纹；集合 join 成一串存 Map<string,string> 契约）而非计数。
+ * bz deleteEpubNote 删划线直改 weave-data → 删除只缩小集合不影响判新增：再新增只发新内容，
+ * 同内容划两条只产一次（防旧内容重发）。
  * 本模块全部纯函数（无状态）：libraryWeaveDiff 产结构化 diff；index 层消费——书架/时长/读完即时入流，
  * 划线/想法事件走防抖 pending（见 index.ts）；组稿纯函数 buildLibraryNoteText 供结算用。
  * 首次快照（snapshotDomains）调用只记状态不产出（由调用方丢弃返回值实现）。
@@ -38,9 +42,38 @@ export interface LibraryWeaveDiff {
 const PREF = 'lib:';
 const HAD_SUFFIX = ':had';
 
-/** prev 键：lib:<bookId>:<k>（had/done 0/1、pct 百分比整数、hl/ex/sess 计数、title 标题存档） */
+/** prev 键：lib:<bookId>:<k>（had/done 0/1、pct 百分比整数、hl/ex 已见指纹集合串、sess 计数、title 标题存档） */
 function libKey(bookId: string, k: string): string {
   return PREF + bookId + ':' + k;
+}
+
+/** 指纹内部分隔符（text 与 commentText 拼接，控制字符防与正文冲突） */
+const FP_INNER_SEP = '\u0001';
+/** 指纹集合 → prev 字符串的分隔符（集合元素 join 成一串） */
+const FP_SET_SEP = '\u0002';
+
+/**
+ * 划线/想法条目内容指纹（A4）：text+commentText 原文 trim 后拼接。同内容（同 text 同 commentText）
+ * 指纹相同 → 已见集合去重，「划两条同内容」只产一次；删除只把条目移出，已见指纹保留 → 再新增只发新指纹。
+ */
+function itemFingerprint(item: any): string {
+  if (!item || typeof item !== 'object') return '';
+  const text = typeof item.text === 'string' ? item.text.trim() : '';
+  const comment = typeof item.commentText === 'string' ? item.commentText.trim() : '';
+  return text + FP_INNER_SEP + comment;
+}
+
+/** prev 字符串 → 已见指纹集合（''/undefined → 空集合） */
+function seenFingerprints(value: string | undefined): Set<string> {
+  const seen = new Set<string>();
+  if (!value) return seen;
+  for (const fp of value.split(FP_SET_SEP)) if (fp) seen.add(fp);
+  return seen;
+}
+
+/** 已见指纹集合 → prev 字符串（排序 join：同集合恒等串，删条目不改变其余指纹的串） */
+function fingerprintValue(seen: Set<string>): string {
+  return [...seen].sort().join(FP_SET_SEP);
 }
 
 /** percent 归一：1.0 → 100（p<=1 视为 0-1 刻度 ×100，p>1 视为 0-100 直接四舍五入；与 items.ts 语义一致） */
@@ -78,7 +111,7 @@ function knownBookIds(prev: Map<string, string>): string[] {
 
 /**
  * weave-data.json diff → 结构化原始事件；raw/books 非对象 → null；一次啥都没变 → null。
- * prev 记账：had/done（0/1）、pct（百分比整数）、hl/ex/sess（计数）、title（removed 文案存档）；
+ * prev 记账：had/done（0/1）、pct（百分比整数）、hl/ex（已见指纹集合串，A4）、sess（计数）、title（removed 文案存档）；
  * 条目移出书架时清理该书全部 prev 键（重新加入视为新书）。
  */
 export function libraryWeaveDiff(raw: any, prev: Map<string, string>): LibraryWeaveDiff | null {
@@ -124,23 +157,35 @@ export function libraryWeaveDiff(raw: any, prev: Map<string, string>): LibraryWe
     }
     prev.set(libKey(bookId, 'sess'), String(sessions.length));
 
-    // 4) 划重点：highlights 新增 → 取新增各条划线内容文本（无内容的项过滤；全为空不发该事件）
+    // 4) 划重点：highlights 新增 → 按内容指纹记账（A4，ticket 084c）：新增 = 现在条目指纹不在
+    //    prev 已见集合者（删除不影响判新增）；同内容（text+commentText 同）划多条只产一次；
+    //    无内容的项跳过（不记账不产）；提取内容文本（无内容的项过滤；全为空不发该事件）
     const hl = Array.isArray(notes.highlights) ? notes.highlights : [];
-    const prevHl = Number(prev.get(libKey(bookId, 'hl')) || 0);
-    if (hl.length > prevHl) {
-      const texts = hl.slice(prevHl).map((h: any) => extractItemText(h, false)).filter(Boolean);
-      if (texts.length) diff.highlightEvents.push({ ...event, texts });
+    const seenHl = seenFingerprints(prev.get(libKey(bookId, 'hl')));
+    const hlFresh: string[] = [];
+    for (const h of hl) {
+      const fp = itemFingerprint(h);
+      if (!fp || seenHl.has(fp)) continue;
+      seenHl.add(fp);
+      const t = extractItemText(h, false);
+      if (t) hlFresh.push(t);
     }
-    prev.set(libKey(bookId, 'hl'), String(hl.length));
+    if (hlFresh.length) diff.highlightEvents.push({ ...event, texts: hlFresh });
+    prev.set(libKey(bookId, 'hl'), fingerprintValue(seenHl));
 
-    // 5) 写想法：excerpts 新增 → 取新增各条想法内容文本（想法 = 批注/评论文本优先）
+    // 5) 写想法：excerpts 新增 → 同上指纹记账（想法 = 批注/评论文本优先）
     const ex = Array.isArray(notes.excerpts) ? notes.excerpts : [];
-    const prevEx = Number(prev.get(libKey(bookId, 'ex')) || 0);
-    if (ex.length > prevEx) {
-      const texts = ex.slice(prevEx).map((e: any) => extractItemText(e, true)).filter(Boolean);
-      if (texts.length) diff.excerptEvents.push({ ...event, texts });
+    const seenEx = seenFingerprints(prev.get(libKey(bookId, 'ex')));
+    const exFresh: string[] = [];
+    for (const e of ex) {
+      const fp = itemFingerprint(e);
+      if (!fp || seenEx.has(fp)) continue;
+      seenEx.add(fp);
+      const t = extractItemText(e, true);
+      if (t) exFresh.push(t);
     }
-    prev.set(libKey(bookId, 'ex'), String(ex.length));
+    if (exFresh.length) diff.excerptEvents.push({ ...event, texts: exFresh });
+    prev.set(libKey(bookId, 'ex'), fingerprintValue(seenEx));
 
     prev.set(libKey(bookId, 'pct'), String(percent));
     prev.set(libKey(bookId, 'title'), title);
