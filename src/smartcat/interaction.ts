@@ -10,6 +10,7 @@ import { getSmartCatMessage } from './messages';
 import { generatePrompt } from './prompts';
 import { callChat, isAIConfigured } from './api';
 import { buildRetrieveQuery } from './memory';
+import { buildCompanionContext } from './companion-context';
 import { hasBookTag, getCursorContext, getViewportContent, getCurrentNoteContext, getVisibleContent } from './content';
 import { CAT_CONTAINER_ID } from './ui';
 import type { BubbleManager } from './bubble';
@@ -26,8 +27,9 @@ export interface InteractionDeps {
   openSettings: () => void;
   closeSettings: () => void;
   onAppearanceChanged: (appearance: string) => void;
-  /** 记忆流检索（ADR-0021：聊天上下文注入相关记忆；index 注入，避免顶层互访） */
-  retrieveMemories?: (query: string) => Promise<string>;
+  /** 记忆流检索（ADR-0021：聊天上下文注入相关记忆；index 注入，避免顶层互访）
+   *  ADR-0025：第二参 lexicalQuery 供词法降级模式使用（纯用户消息，避免「情绪/时段」噪音） */
+  retrieveMemories?: (query: string, lexicalQuery?: string) => Promise<string>;
   /** 性格数据（ADR-0023：prompt 状态向量用；index 注入 data.personalityGrowth） */
   characterData?: () => any;
   /** 互动回流（ADR-0023：每种互动触发性格微移；index 接 PersonalityGrowth.developBasedOnInteraction） */
@@ -57,6 +59,27 @@ export class InteractionManager {
 
   constructor(deps: InteractionDeps) {
     this.deps = deps;
+  }
+
+  /** 懂你上下文块（ADR-0025）：作息/情绪趋势/关系/相关记忆统一注入各 AI 通道 */
+  private getCompanionContext(memoriesText = ''): string {
+    const d = this.deps.characterData?.() ?? null;
+    return buildCompanionContext({
+      stream: d?.memory?.stream ?? [],
+      relationship: d?.personalityGrowth?.relationship ?? null,
+      emotion: d?.mood?.currentEmotion ?? null,
+      memoriesText,
+    });
+  }
+
+  /** 检索相关记忆（词法降级用 query——失败返回空串，不阻断主流程） */
+  private async retrieveCompanionMemories(query: string, lexicalQuery?: string): Promise<string> {
+    if (!this.deps.retrieveMemories) return '';
+    try {
+      return await this.deps.retrieveMemories(query, lexicalQuery ?? query);
+    } catch {
+      return '';
+    }
   }
 
   get catContainer(): HTMLElement {
@@ -295,6 +318,10 @@ export class InteractionManager {
       return;
     }
     try {
+      // ADR-0025：自言自语也携带「懂你上下文」（作息/趋势/关系/相关记忆）
+      const memoriesText = await this.retrieveCompanionMemories('');
+      const companionContext = this.getCompanionContext(memoriesText);
+
       let context: string | null;
       if (hasBookTag()) {
         context = getVisibleContent();
@@ -305,7 +332,7 @@ export class InteractionManager {
       if (!context) context = getViewportContent();
 
       const selection = window.getSelection ? (window.getSelection()?.toString() || '').trim() : '';
-      const moodOpts = { pad: this.deps.mood.pad, data: this.deps.characterData?.() ?? null, currentMood: this.deps.mood.currentMood, currentEmotion: this.deps.mood.getCurrentEmotion() };
+      const moodOpts = { pad: this.deps.mood.pad, data: this.deps.characterData?.() ?? null, currentMood: this.deps.mood.currentMood, currentEmotion: this.deps.mood.getCurrentEmotion(), companionContext };
       const prompt = generatePrompt('learn', context || '', moodOpts);
 
       if (selection && selection.length <= 1500) {
@@ -325,7 +352,7 @@ export class InteractionManager {
       }
 
       if (!context || context.length < 10) {
-        const rp = generatePrompt('auto_companion', '', { pad: this.deps.mood.pad, data: this.deps.characterData?.() ?? null, currentMood: this.deps.mood.currentMood, currentEmotion: this.deps.mood.getCurrentEmotion() });
+        const rp = generatePrompt('auto_companion', '', { pad: this.deps.mood.pad, data: this.deps.characterData?.() ?? null, currentMood: this.deps.mood.currentMood, currentEmotion: this.deps.mood.getCurrentEmotion(), companionContext });
         startThinking();
         this.generateAutoCompanionMessageLock = true;
         try {
@@ -359,11 +386,18 @@ export class InteractionManager {
     }
   }
 
-  /** 聊天消息组装（原 prepareChatMessages：system prompt + 历史 + 上下文 + 用户消息） */
+  /** 聊天消息组装（原 prepareChatMessages：system prompt + 历史 + 上下文 + 用户消息）
+   *  ADR-0025：system prompt 携带「懂你上下文块」（作息/趋势/关系/检索记忆），
+   *  用户消息保留当前笔记上下文；记忆注入不再拼在 user 尾部。 */
   async prepareChatMessages(userMessage: string): Promise<any[]> {
     const cfg = this.deps.config();
     const messages: any[] = [];
-    messages.push({ role: 'system', content: generatePrompt('talk', userMessage, { pad: this.deps.mood.pad, data: this.deps.characterData?.() ?? null, currentMood: this.deps.mood.currentMood, currentEmotion: this.deps.mood.getCurrentEmotion() }) });
+    const currentEmotion = this.deps.mood.getCurrentEmotion();
+    // 检索记忆（语义 query 含情绪/时段；词法降级用纯用户消息，避免噪音 token 稀释命中率）
+    const retrieveQuery = buildRetrieveQuery(userMessage, currentEmotion);
+    const memoriesText = await this.retrieveCompanionMemories(retrieveQuery, userMessage);
+    const companionContext = this.getCompanionContext(memoriesText);
+    messages.push({ role: 'system', content: generatePrompt('talk', userMessage, { pad: this.deps.mood.pad, data: this.deps.characterData?.() ?? null, currentMood: this.deps.mood.currentMood, currentEmotion, companionContext }) });
 
     if (cfg.conversationHistory && cfg.conversationHistory.length > 0) {
       const maxHistoryMessages = Math.min(cfg.shortTermMemory * 2, cfg.conversationHistory.length);
@@ -380,19 +414,6 @@ export class InteractionManager {
       else contentContext = getCursorContext(cfg.contextLength, cfg.contextSplitRatio);
       if (!contentContext) contentContext = getViewportContent();
       if (contentContext) contextMessage += `- 当前内容：${contentContext}\n`;
-    }
-    // ADR-0021：相关记忆注入（记忆流三因子检索；未接线的降级 = 无记忆段）
-    // 2026-08 增强：query 结合用户消息 + 当前情绪 + 时段，检索更贴合当下状态
-    if (this.deps.retrieveMemories) {
-      try {
-        const retrieveQuery = buildRetrieveQuery(userMessage, this.deps.mood.getCurrentEmotion());
-        const memoriesText = await this.deps.retrieveMemories(retrieveQuery);
-        if (memoriesText) {
-          contextMessage += '\n### 相关记忆（小橘记得的事，含来源与时间）\n' + memoriesText + '\n';
-        }
-      } catch (e) {
-        /* 记忆检索失败不阻断聊天 */
-      }
     }
     const finalUserMessage = contextMessage + `\n用户最新消息：${userMessage}`;
     messages.push({ role: 'user', content: finalUserMessage });

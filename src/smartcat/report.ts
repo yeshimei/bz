@@ -7,6 +7,7 @@
 import type { MemoryStreamEntry, PadDimensions } from './types';
 import { callChatJson, isAIConfigured } from './api';
 import { sourceLabel } from './memory';
+import { buildEmotionSnapshots } from './cognitive';
 
 /** 周窗口边界（ISO 周一 00:00 起 7 天；返回 [startMs, endMs]） */
 export function weekWindow(now = Date.now()): [number, number] {
@@ -56,6 +57,20 @@ export function buildWeeklyReportData(stream: MemoryStreamEntry[], pad: PadDimen
     .filter((m) => m.type === 'observation')
     .sort((a, b) => (b.importance ?? 0) - (a.importance ?? 0))
     .slice(0, 5);
+  // ADR-0025 修「padAvg 抄当前值」：取周内观察情绪 VAD 均值映射 PAD（无情绪样本回退当前 PAD）
+  let padAvg: WeeklyReportData['padAvg'] = { pleasure: pad.pleasure, arousal: pad.arousal, dominance: pad.dominance };
+  const snaps = buildEmotionSnapshots(week);
+  if (snaps.length) {
+    const v = snaps.reduce((s, x) => s + x.valence, 0) / snaps.length;
+    const a = snaps.reduce((s, x) => s + x.arousal, 0) / snaps.length;
+    const dm = snaps.reduce((s, x) => s + x.dominance, 0) / snaps.length;
+    const clamp = (x: number) => Math.min(100, Math.max(0, Math.round(x)));
+    padAvg = {
+      pleasure: clamp(50 + v * 45),
+      arousal: clamp(50 + (a - 0.5) * 80),
+      dominance: clamp(50 + (dm - 0.5) * 80),
+    };
+  }
   return {
     window: [start, end],
     total: week.length,
@@ -64,7 +79,7 @@ export function buildWeeklyReportData(stream: MemoryStreamEntry[], pad: PadDimen
     sourceDist,
     emotionDist,
     topMemories,
-    padAvg: { pleasure: pad.pleasure, arousal: pad.arousal, dominance: pad.dominance },
+    padAvg,
   };
 }
 

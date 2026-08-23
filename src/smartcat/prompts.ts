@@ -93,7 +93,8 @@ export function fallbackPersonalityPrompt(): string {
   return getCharacterDescription();
 }
 
-/** 生成 prompt 主方法（MATE：注入状态向量 + traits 推导字数/描述） */
+/** 生成 prompt 主方法（MATE：注入状态向量 + traits 推导字数/描述；
+   *  ADR-0025：companionContext 携带「懂你上下文块」——作息/情绪趋势/关系/相关记忆） */
 export function generatePrompt(
   interactionType: InteractionType,
   userMessage = '',
@@ -102,6 +103,7 @@ export function generatePrompt(
     data?: SmartCatData | null;
     currentMood?: string;
     currentEmotion?: string | null;
+    companionContext?: string;
   } = {},
 ): string {
   const traits = opts.data?.personalityGrowth?.traits;
@@ -122,6 +124,7 @@ ${getCharacterDescription(traits)}
 ## 当前状态详情
 ${opts.pad ? formatMoodDetails(opts.pad, opts.currentMood, opts.currentEmotion) : ''}
 ${opts.data ? '\n## 内核状态向量（只读参考，勿复述）\n' + formatStateVector(opts.data.personalityGrowth, opts.pad || { pleasure: 55, arousal: 50, dominance: 50 }, opts.currentEmotion ?? null) : ''}
+${opts.companionContext ? '\n## 你了解的用户（背景知识：作息/情绪趋势/关系/相关记忆。自然地用在表达里，不要逐条复述）\n' + opts.companionContext : ''}
 
 ## 回复要求
 ${getResponseRequirements(interactionType, maxWords)}
