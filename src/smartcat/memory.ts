@@ -14,7 +14,7 @@ import type { App } from 'obsidian';
 import { getSmartcatVecPath } from './data';
 import { callChatJson, isAIConfigured } from './api';
 import { getEmbedding, checkRemoteOllama } from '../flash/ollama';
-import type { SmartCatData, MemoryStreamEntry } from './types';
+import type { SmartCatData, MemoryStreamEntry, CloudScoringMode } from './types';
 
 export const MEMORY_CONFIG = {
   /** 记忆流上限（软上限，超出淘汰 importance 最低） */
@@ -169,8 +169,26 @@ export class MemorySystem {
 
   // ---------------- importance + emotion 打分 ----------------
 
-  /** 打分（LLM 顺带情绪）：{score 0-10→0-1, emotion}；失败/未配置降级规则分 + 词法情绪 */
-  async scoreImportanceAndEmotion(description: string, opts: { manuallyMarked?: boolean } = {}): Promise<{ importance: number; emotion?: string }> {
+  /** 云端 LLM 打分判定（ADR-0025 追加决策，2026-08-23 用户拍板「智能」默认；纯函数可测）：
+   *  - all：全部走 LLM（现状）；local：全本地（规则分+词法情绪，零在线调用）；
+   *  - diary：仅日记恒 LLM；
+   *  - smart（默认）：日记/反省/闪念恒 LLM（心迹类，保「懂你」质量）；剪藏/影评/书库/诗/信 ≥30 字走 LLM
+   *    （长内容才值得语义打分）；聊天/域 JSON/其余恒本地（即时信息规则分足够，省大头调用）。 */
+  shouldCloudScore(description: string, source: string | undefined, mode: CloudScoringMode): boolean {
+    if (mode === 'all') return true;
+    if (mode === 'local') return false;
+    if (mode === 'diary') return source === 'diary';
+    if (source === 'diary' || source === 'reflection' || source === 'flash') return true;
+    const longContent = ['clipping', 'movie', 'reading', 'poem', 'letter'];
+    return source !== undefined && longContent.includes(source) && (description || '').trim().length >= 30;
+  }
+
+  /** 打分（LLM 顺带情绪）：{score 0-10→0-1, emotion}；智能档位（config.cloudScoring）先本地规则分+词法情绪，
+   *  命中「值得 LLM」判定且 AI 配置才升级调 LLM；失败/未配置回落本地（降级链完整） */
+  async scoreImportanceAndEmotion(description: string, opts: { manuallyMarked?: boolean; source?: string } = {}): Promise<{ importance: number; emotion?: string }> {
+    const local = { importance: this.ruleImportance(description, opts), emotion: this.detectEmotion(description) };
+    const mode = (this.dataProvider().config as any)?.cloudScoring ?? 'smart';
+    if (!this.shouldCloudScore(description, opts.source, mode as CloudScoringMode)) return local;
     try {
       if (await isAIConfigured()) {
         const r = await callChatJson([
@@ -191,7 +209,7 @@ export class MemorySystem {
         }
       }
     } catch (e) { /* 降级规则分 + 词法情绪 */ }
-    return { importance: this.ruleImportance(description, opts), emotion: this.detectEmotion(description) };
+    return local;
   }
 
   /** 词法情绪标注（关键词表；LLM 未配置/失败的兜底，原 detectEmotion 语义） */

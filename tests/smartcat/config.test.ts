@@ -48,6 +48,15 @@ describe('normalizeConfig', () => {
     expect(normalizeConfig({ proactiveWeeklyCap: 9 }).proactiveWeeklyCap).toBe(2); // 越界回默认
   });
 
+  it('云端打分范围默认智能、非法回退（ADR-0025 追加决策：智能=日记/反省/闪念恒 LLM，聊天/域事件本地）', () => {
+    expect(defaultConfig().cloudScoring).toBe('smart');
+    expect(normalizeConfig({}).cloudScoring).toBe('smart');
+    expect(normalizeConfig({ cloudScoring: 'diary' }).cloudScoring).toBe('diary');
+    expect(normalizeConfig({ cloudScoring: 'all' }).cloudScoring).toBe('all');
+    expect(normalizeConfig({ cloudScoring: 'local' }).cloudScoring).toBe('local');
+    expect(normalizeConfig({ cloudScoring: 'bogus' }).cloudScoring).toBe('smart'); // 非法回默认
+  });
+
   it('外观非法 → 回退默认（预设人格校验已移除）', () => {
     expect(normalizeConfig({ appearance: 'pink' }).appearance).toBe('orange');
     expect(normalizeConfig({ appearance: 'neon' }).appearance).toBe('neon');
