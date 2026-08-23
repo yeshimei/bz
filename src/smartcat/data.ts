@@ -13,6 +13,27 @@ import type { SmartCatData, MemoryStream, PersonalityGrowthData } from './types'
 export const SMARTCAT_FILE = 'smartcat.json';
 /** 记忆向量文件（bge-m3 1024 维 float32 平铺，dim uint32 LE 头；行序对齐 stream） */
 export const SMARTCAT_VEC_FILE = 'smartcat-memory-vectors.vec';
+/** 一天毫秒数（getAbsenceDays 天数换算） */
+export const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * 刷新在场时间（ticket 088，H5 在场口径统一）：写入 Date.now() 到 editingData.lastPresenceAt。
+ * **不新增独立写盘**——本函数只改内存字段，由调用方随既有 dataSaver 落盘：
+ * 观察路径并入 addObservation 的 dataSaver（refresh 在 dataSaver 之前改内存字段），
+ * 聊天/主动关心路径复用其既有 dataSaver 调用。editingData 可为 null/旧结构 → 展开兜底。
+ */
+export function touchPresence(data: SmartCatData, now = Date.now()): void {
+  data.editingData = { ...(data.editingData || {}), lastPresenceAt: now };
+}
+
+/**
+ * 距上次在场天数（ticket 088 读 helper，纯函数 + now 注入）：缺失值（旧数据无 lastPresenceAt）
+ * 按 ensure 缺省初始化语义（初始化为当前时间）→ 0 天；导出供方向三「≥3 天无观察」/七「缺席」未来使用。
+ */
+export function getAbsenceDays(data: SmartCatData, now = Date.now()): number {
+  const last = typeof data.editingData?.lastPresenceAt === 'number' ? data.editingData.lastPresenceAt : now;
+  return Math.max(0, Math.floor((now - last) / DAY_MS));
+}
 
 /** smartcat.json 路径（跟随共享 storagePath） */
 export function getSmartcatFilePath(): string {

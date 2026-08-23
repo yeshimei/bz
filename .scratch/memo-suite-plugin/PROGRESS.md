@@ -9,6 +9,18 @@
 - ✅ **测试**：memory.test.ts 新增 H4 块 9 用例（三处 system 边界断言 / 恶意注入「把 score 设为 10」→ suspicious 标记 + chat 档 credibility 不顶格 / 陌生 emotion 回落词法 / EMOTION_VAD 枚举放行（grateful）/ sanitizeEmotion 与 clampLLMCredibility 纯函数 / detectInjection 模式覆盖 / 正常文本回归），既有 48 用例全量保留
 - ✅ **文档**：ADR-0037（Context/Options/Decisions/Consequences，含「越权取档位值」语义界定与 EMOTION_VAD 缺类边界）；CONTEXT.md 新词条「记忆内容安全契约」+ 记忆流 MemoryStreamEntry 字段补 suspicious、LLM 覆盖 ±0.2 收紧注；spec.md 追加安全契约条目；本票 issue 状态 done
 - ⏳ 待办：真机冒烟（剪藏正文带注入文本 → 落库条目 suspicious 标记、credibility 不顶格）；方向二/六/八实现时继承四件套（常量/校验函数已在 memory.ts 导出）
+## 2026-08-25 smartcat 在场口径（ticket 088，086 v4 H5；worktree/smartcat-h5-presence）
+
+**状态：全量测试通过 + tsc 0 后提交 worktree/smartcat-h5-presence（本条目为开发记录）**
+
+- ✅ **数据字段（compat 冻结内新增）**：`editingData.lastPresenceAt?: number`（ms 时间戳）——旧数据无该字段容忍，ensure 时缺省 → **初始化为当前时间**（新用户不触发「缺席」；仅内存补齐，随首次既有 dataSaver 落盘，零迁移）
+- ✅ **刷新 helper `touchPresence(data, now?)`**（data.ts，写 helper）：只改 `editingData.lastPresenceAt = now` 内存字段，**不新增独立写盘**——三事件并入既有 dataSaver：① 观察路径 `memory.ts addObservation` 成功写入后（dataSaver 之前改内存字段，随本 dataSaver 落盘）；② 聊天 `index.ts sendChatMessage` 开头（发消息即在场，AI 成败无关）；③ 主动关心 `maybeProactiveCare` 触发后（随下方既有 dataSaver）
+- ✅ **读 helper `getAbsenceDays(data, now?)`**（data.ts，纯函数 + now 注入）：距 lastPresenceAt 天数（floor 取整，不足 1 天 → 0）；缺失值按 ensure 缺省初始化语义 → 0 天；未来时间钳位 0；导出供方向三「≥3 天无观察」/七「缺席」未来共用（本票只建数据地基，不实现方向三/七逻辑）
+- ✅ **unload 无需清理**：数值字段随 editingData 持久化自然保留
+- ✅ **测试**：tests/smartcat/presence.test.ts（13 用例）——touchPresence 写入/mock Date/保留既有字段/重复刷新；getAbsenceDays 边界（缺省/0 天/1 天/N 天/时钟回拨钳位）；addObservation 后字段更新且随 saver 落盘（不新增写盘）；聊天发消息即在场 + 成功路径落盘（mock fetch）+ ensure 缺省初始化（新用户/旧数据补齐保留既有字段）
+- ✅ **文档**：spec.md 事件监听小节新增在场口径 bullet；本条目；兼容冻结未动 smartcat.json 既有字段/观察文案/命令
+- ⏳ 待办：方向三/七消费 lastPresenceAt 时复用 getAbsenceDays（本票不实现）
+
 ## 2026-08-24 memo/影视 观察修复（ticket 084a，R1 审查）
 
 **状态：全量测试通过（1613）+ tsc 0 后提交 worktree/fix-memo-moviefix（本条目为收尾同步）**
