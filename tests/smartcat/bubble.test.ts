@@ -2,7 +2,7 @@
  * smartcat 气泡测试（UI 层）：队列、打字机、计时、单击固定、双击转聊、上限 4。
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { BubbleManager } from '../../src/smartcat/bubble';
+import { BubbleManager, computeBubbleShift } from '../../src/smartcat/bubble';
 import { __resetVisibilityForTests, setPageVisible, eventSystem } from '../../src/smartcat/state';
 
 function mountContainer(): HTMLElement {
@@ -114,5 +114,57 @@ describe('calculateBubbleTiming', () => {
     const b = new BubbleManager();
     const t = b.calculateBubbleTiming('消息', '🎓' as any);
     expect(typeof t.baseDisplayDuration).not.toBe('string');
+  });
+});
+
+describe('气泡视口夹紧（2026-08-23：检测屏幕边缘，不出屏）', () => {
+  it('computeBubbleShift 纯函数：右超界负位移、左超界正位移、未超界为 0', () => {
+    const vw = 1024; // jsdom 默认视口宽
+    expect(computeBubbleShift({ left: 900, right: 1300 }, vw)).toBe(-284); // -(1300-(1024-8))
+    expect(computeBubbleShift({ left: -100, right: 200 }, vw)).toBe(108); // 8-(-100)
+    expect(computeBubbleShift({ left: 300, right: 600 }, vw)).toBe(0);
+    expect(computeBubbleShift({ left: 500, right: 500 }, vw)).toBe(0); // 无布局信息
+  });
+
+  it('clampBubbleToViewport：超界位移写入 --bz-sc-shift，宽度增长时在旧值上累计', () => {
+    vi.useFakeTimers();
+    try {
+      mountContainer();
+      const b = new BubbleManager();
+      b.showBubble('喵呜~ 你好呀！');
+      const bubble = document.querySelector('.cat-bubble') as HTMLElement;
+      const rectSpy = vi.spyOn(bubble, 'getBoundingClientRect').mockReturnValue({ left: 900, right: 1200 } as any);
+      b.clampBubbleToViewport(bubble);
+      expect(bubble.style.getPropertyValue('--bz-sc-shift')).toBe('-184px');
+      // 打字变宽：模拟真实测量（矩形含已应用的 -184px 位移）——未偏移矩形 {700,1300} 偏移后为 {516,1116}
+      rectSpy.mockReturnValue({ left: 516, right: 1116 } as any);
+      b.clampBubbleToViewport(bubble);
+      expect(bubble.style.getPropertyValue('--bz-sc-shift')).toBe('-284px'); // -184 + -(1116-1016)
+      // 回到可视区内：不再追加位移
+      rectSpy.mockReturnValue({ left: 400, right: 700 } as any);
+      b.clampBubbleToViewport(bubble);
+      expect(bubble.style.getPropertyValue('--bz-sc-shift')).toBe('-284px');
+      rectSpy.mockRestore();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('显示与打字节拍都会触发夹紧（show 后 + 每个打字 tick）', () => {
+    vi.useFakeTimers();
+    try {
+      mountContainer();
+      const b = new BubbleManager();
+      const clampCalls: unknown[] = [];
+      (b as any).clampBubbleToViewport = (bubble: HTMLElement) => clampCalls.push(bubble);
+      b.showBubble('喵呜~ 喵呜~ 喵呜~');
+      const bubble = document.querySelector('.cat-bubble') as HTMLElement;
+      expect(clampCalls.length).toBe(1); // show 时首测
+      vi.advanceTimersByTime(300); // 若干打字节拍
+      expect(clampCalls.length).toBeGreaterThan(1);
+      expect((clampCalls[0] as HTMLElement)).toBe(bubble);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

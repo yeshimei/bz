@@ -2,7 +2,9 @@
  * smartcat 设置弹窗测试（UI 层）：
  * 1) 移动端长按开设置 → 关闭（遮罩）→ 拖拽恢复（回归：onClose 复位 isSettingsOpen 交互锁）；
  * 2) 外观平铺色块选择器（13 皮肤、active 跟随、点击落盘并即时换肤）；
- * 3) 人格成长数据列表仅桌面端显示（2026-08-23 用户拍板：移动端删除）。
+ * 3) 人格成长数据列表桌面/移动同套显示（2026-08-23 合并一套拍板，推翻原「移动端删除」差异）；
+ * 4) 设置弹窗移动端全屏跟随 smartcatMobileDefaultFullscreen（与聊天/数据面板同一开关）；
+ * 5) 「打开数据面板」行替换原「每周懂你报告」（周报移入数据面板「报告」页签）。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -12,6 +14,7 @@ import { resetObsidianMocks, Platform } from '../mock-obsidian-entry';
 import { ensureSmartCat, unloadSmartCat, __getSmartcatInternals } from '../../src/smartcat/index';
 import { openSmartcatSettings } from '../../src/smartcat/ui';
 import { CAT_CONTAINER_ID } from '../../src/smartcat/ui';
+import { closeSettingsModal } from '../../src/core/settings-modal';
 
 let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
 
@@ -87,13 +90,13 @@ describe('移动端长按设置 → 关闭 → 拖拽恢复', () => {
 });
 
 describe('外观平铺色块选择器', () => {
-  function openWith(config: any, hooks: { saves: any[]; appearances: string[] }) {
+  function openWith(config: any, hooks: { saves: any[]; appearances: string[] }, keys?: { mobileFullscreen: boolean }) {
     openSmartcatSettings({
       getConfig: () => config,
       saveConfig: async (c) => {
         hooks.saves.push(JSON.parse(JSON.stringify(c)));
       },
-      settingsKeys: { enabled: true, mobileFullscreen: false },
+      settingsKeys: { enabled: true, mobileFullscreen: keys?.mobileFullscreen ?? false },
       setMobileFullscreen: async () => {},
       getPersonalityGrowth: () => ({
         ocean: { openness: 0.6, conscientiousness: 0.5, extraversion: 0.4, agreeableness: 0.7, neuroticism: 0.3 },
@@ -134,18 +137,72 @@ describe('外观平铺色块选择器', () => {
     expect(hooks.saves.length).toBe(1);
   });
 
-  it('人格成长数据列表仅桌面端显示；移动端只剩其余设置项', () => {
+  it('人格成长数据列表桌面/移动同套显示（2026-08-23 合并一套）', () => {
     const hooks = { saves: [] as any[], appearances: [] as string[] };
     // 桌面端：有人格面板
     Platform.isMobile = false;
     openWith(baseConfig(), hooks);
     expect(document.querySelector('.bz-sc-personality-panel')).not.toBeNull();
-    // 移动端：无人格面板（含重置按钮），皮肤网格仍在
+    expect(document.querySelector('.setting-item[data-name="重置成长"]')).not.toBeNull();
+    // 移动端：同样有人格面板与重置行（分端差异已删除），皮肤网格仍在
+    closeSettingsModal();
     document.body.innerHTML = '';
     Platform.isMobile = true;
     openWith(baseConfig(), hooks);
-    expect(document.querySelector('.bz-sc-personality-panel')).toBeNull();
+    expect(document.querySelector('.bz-sc-personality-panel')).not.toBeNull();
+    expect(document.querySelector('.setting-item[data-name="重置成长"]')).not.toBeNull();
     expect(document.querySelector('.bz-sc-skin-grid')).not.toBeNull();
-    expect(document.body.textContent).not.toContain('重置成长');
+  });
+
+  it('设置弹窗移动端全屏跟随 smartcatMobileDefaultFullscreen（与聊天/数据面板同一开关）', () => {
+    const hooks = { saves: [] as any[], appearances: [] as string[] };
+    const config = baseConfig();
+    // 移动端 + 开关开 → 弹窗挂 bz-win-mfs
+    Platform.isMobile = true;
+    openWith(config, hooks, { mobileFullscreen: true });
+    expect(document.getElementById('bz-settings-modal-popup')!.classList.contains('bz-win-mfs')).toBe(true);
+    // 开关关 → 不挂类（常规卡）
+    closeSettingsModal();
+    document.body.innerHTML = '';
+    openWith(config, hooks, { mobileFullscreen: false });
+    expect(document.getElementById('bz-settings-modal-popup')!.classList.contains('bz-win-mfs')).toBe(false);
+    // 桌面端恒不挂类
+    closeSettingsModal();
+    document.body.innerHTML = '';
+    Platform.isMobile = false;
+    openWith(config, hooks, { mobileFullscreen: true });
+    expect(document.getElementById('bz-settings-modal-popup')!.classList.contains('bz-win-mfs')).toBe(false);
+  });
+
+  it('「打开数据面板」行替换原「每周懂你报告」；点击关弹窗并回调', async () => {
+    const hooks = { saves: [] as any[], appearances: [] as string[] };
+    let dashboardOpened = 0;
+    Platform.isMobile = false;
+    openSmartcatSettings({
+      getConfig: () => baseConfig(),
+      saveConfig: async (c) => {
+        hooks.saves.push(JSON.parse(JSON.stringify(c)));
+      },
+      settingsKeys: { enabled: true, mobileFullscreen: false },
+      setMobileFullscreen: async () => {},
+      getPersonalityGrowth: () => null,
+      onOpenDashboard: () => {
+        dashboardOpened++;
+        closeSettingsModal();
+      },
+    });
+    // 原周报行已不在（mock Setting 契约：行名存 dataset.name）
+    expect(document.querySelector('.setting-item[data-name="每周懂你报告"]')).toBeNull();
+    // 新入口存在，按钮文本正确
+    const dashRow = document.querySelector('.setting-item[data-name="打开数据面板"]') as HTMLElement | null;
+    expect(dashRow).not.toBeNull();
+    const btn = (dashRow as any).__setting.controls[0];
+    expect(btn.text).toBe('打开数据面板');
+    // 触发：关设置弹窗 + 打开数据面板回调
+    btn.trigger();
+    await new Promise((r) => setTimeout(r, 5));
+    expect(dashboardOpened).toBe(1);
+    // 点击后弹窗已关（onClose 复位交互锁路径）
+    expect(document.getElementById('bz-settings-modal-popup')).toBeNull();
   });
 });

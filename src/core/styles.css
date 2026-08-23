@@ -631,6 +631,12 @@ button.news-close-btn {
   .news-popup.bz-win-mfs > div:first-child {
     padding-top: 0 !important;
   }
+  /* 域设置弹窗真全屏（smartcat 2026-08-23 合并一套接入）：内容区放开 65vh 上限、flex 撑满 */
+  .bz-win-mfs .bz-settings-content {
+    max-height: none !important;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
 }
 
 /* ==================== 统一右键菜单 / 长按抽屉（core/item-actions，手势统一） ==================== */
