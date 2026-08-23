@@ -22,6 +22,7 @@ import { generateBookDescription, hasBookTag } from './content';
 import { classifyPath, observationText } from './context-source';
 import { buildMovieActionText, type MovieActionEvent } from './movie-source';
 import { buildMemoActionText, memoDueObservation, type MemoActionEvent, type MemoDueLike } from './memo-source';
+import { buildBelongingsActionText, type BelongingsActionEvent } from './belongings-source';
 
 import { buildNewsReadText, buildNewsSavedFullText, type NewsReadEvent } from './news-source';
 import { DOMAIN_FILES, snapshotDomains } from './domain-source';
@@ -212,6 +213,8 @@ export async function ensureSmartCat(app: App): Promise<void> {
     }
     // 影视动作改由方法监听（ticket 074 修订）：事件通道短路，防 UI 动作双记录
     if (kind === 'movie') return;
+    // 归物本动作改由方法监听（ticket 079）：事件通道短路，防 UI 动作双记录
+    if (kind === 'belongings') return;
     const now = Date.now();
     const last = lastActivity.get(file.path) || 0;
     if (now - last < 10 * 60 * 1000) return;          // 同一路径 10 分钟去弹跳
@@ -1007,6 +1010,17 @@ export function parseClipFrontmatter(content: string): { summary: string; tags: 
 /** 测试辅助：注入降级等待时长 / 读取待补全登记表 */
 export function __setNewsSaveTimeoutForTests(ms: number): void { newsSaveTimeoutMs = ms; }
 export function __getNewsPendingSavesForTests(): ReadonlyMap<string, NewsPendingSave> { return newsPendingSaves; }
+
+// ------------- 归物本动作观察（ticket 079：方法监听，ADR-0032） -------------
+
+/** 归物本动作观察入口：belongings 域 UI 确认回调调用（fire-and-forget）。
+ *  未初始化 / 未启用（noteSource 关）→ 静默；文案构造见 belongings-source.buildBelongingsActionText。
+ *  即时同步观察：无 timer/map 需清理。 */
+export function notifyBelongingsAction(evt: BelongingsActionEvent): void {
+  if (!initialized || !memorySystem || !data?.config?.noteSource) return;
+  const text = buildBelongingsActionText(evt);
+  if (text) void memorySystem.addObservation(text, { source: 'belongings' });
+}
 
 /** 域 JSON 感知状态（domain-source.ts 提供 extract 纯函数；此处管理监听生命周期） */
 const domainPrev = new Map<string, string>();
