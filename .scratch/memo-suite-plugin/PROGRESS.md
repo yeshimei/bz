@@ -1,5 +1,16 @@
 # bz 进度（上下文压缩恢复点）
 
+## 2026-08-23 smartcat 备忘录观察（ticket 075，ADR-0028）
+
+**状态：全量测试通过 + tsc 0 后提交 worktree/memo-observation（本条目为文档同步）**
+
+- ✅ **方法监听（同影视样板 ADR-0027）**：观察只来自 memo UI 确认回调——`notifyMemoAction(事件)` → `buildMemoActionText`（memo-source 文案构造纯函数）→ 记忆流（source memo）。8 处挂点：_handleAddSave 添加/编辑分支、卡片复选框完成（去抖 300ms 内、notify 放 completeItem 调用处）、抽屉标记完成、恢复未完成、延后 1/3 天、切换优先级、删除确认
+- ✅ **文案表（用户拍板）**：添加=键值式（场景→脚本→课程→优先级→截止→笔记，有才加）；编辑=α 合并一次保存一条（标题变→「你编辑了待办「新标题」」+（变更列表），仅标题变→「你改题为「新标题」」，标题没变→「你更新了待办「X」：…」，无变化不产出）；完成/恢复/延后/优先级切换/删除仅标题
+- ✅ **每日到期扫描合并一条**：并入 30s 反射调度 tick（当天已扫过跳过不空转）——读 memo.json（vault.read，不动 memo 域）→ memoDueObservation（今天到期且未完成，≤5 截断多出「等 N 个」，N=0 不产出）→ 合并一条「你有 N 个待办今天到期：…」→ addObservation；扫描日期持久化 `editingData.dueScan = {date: 'YYYY-MM-DD'}`（同 proactiveCare 先例，跨重启去重）
+- ✅ **防双记录**：domain-source.ts 移除 memo extract（JSON 事件通道不再收 memo），`unloadSmartCat` 随反射调度 stopScheduler 清理（无独立 timer）
+- ✅ **测试**：tests/smartcat/memo-source.test.ts（文案构造全动作 + 到期扫描截断/日期语义，14 用例）+ memo-action.test.ts（notify 集成 4 + 扫描去重 4，8 用例）+ domain-source.test.ts 改正（memo 移除，6 用例）
+- ⏳ 待办：真机冒烟（Obsidian 里走一遍 8 处动作核对观察文本）
+
 - **影视抽屉标记已看并列 + 标记在看/已看更新观影日期（用户需求，2026-08-23；git worktree worktree/movie-drawer-mark-watched 开发）**：① 抽屉**想看态动作并列「标记在看」「标记已看」**（标记已看在其下方，可不经在看直跳已看；在看态「标记已看」保留）——attachMovieActions WANT 分支新增 check-circle「标记已看」keepOpen 动作，与在看→已看同走 setMovieStatus(STATUS_WATCHED)（评分默认 3.5）；② **标记在看与标记已看都写观影日期 = 当前日期**——setMovieStatus 统一写 `fm['观影日期'] = localNowFormat().replace('T',' ')` 并本地同步 item.watchDate（抽屉头部相对时间即时刷新）；③ 用户澄清「归档同步」系误解——抽屉内评分/改影评/改分本就写 frontmatter，列表经 vault modify 自动刷新，无需改动。**测试**：tests/movie/ui.test.ts 想看抽屉断言改「含标记已看且排在看下方」、标记在看用例补观影日期=当前日期、新增「想看直跳已看」用例（评分 3.5+日期+抽屉刷新已看动作）、在看→已看用例补日期断言；spec US 27 补充决策。**全量测试绿 + tsc 0 后合并 master 构建部署**。
 
 - **聚合讯/阅读报告移动端全屏跟随上游域 + 移除 ⚙️ 入口（用户反馈「跟随剪藏本/书库」，2026-08；git worktree worktree/report-settings-follow）**：① 聚合讯 `show()` 改读剪藏本 `clippingMobileDefaultFullscreen`，阅读报告弹窗改读书库 `libraryMobileDefaultFullscreen`（影视报告 analysis.ts 本就随影视键且无 ⚙️，未动）；② 删除聚合讯弹窗 `.news-settings-btn`（⚙️「聚合讯设置」弹窗整块）与阅读报告头部 ⚙️（「阅读报告设置」弹窗整块）及样式（src/news/styles.css 设置入口块 + src/core/styles.css 头行按钮组两处选择器摘除）；③ settings.ts 删 `newsMobileDefaultFullscreen`/`readingReportMobileDefaultFullscreen` 键（接口 + DEFAULT_SETTINGS；独立开关域 13→11，旧 data.json 残留值忽略）；④ 文档同步：spec.md 设置总表、CONTEXT.md 移动端窗口词条、ADR-0019 修订第 6 条、本条；⑤ 测试：tests/news/reader.test.ts 改「无 ⚙️ + 桌面不受剪藏本键影响 + 移动端跟随剪藏本开/关」，tests/core/mobile.test.ts 默认值表 13→11 并断言两独立键已删。全量测试绿 + tsc 0 后合并 master 构建部署。
@@ -38,6 +49,17 @@
 - **ticket 61 代码体检（用户要求全面体检后逐项落地）**：① P0 清理——删 core/ai.ts 两处「AI 请求结果」调试 console.log、favorites/app.ts「📌 收藏管理器已初始化」残留日志。② **tsc 25 预存错误清零**（src/flash/vector-store.ts:83 ArrayBuffer 断言 + 测试 24 处：Element→HTMLElement、setSettingsProvider 补 as any、MockVault.file 返回 any、MovieM.entries 断言）——`npx tsc --noEmit` 从此 0 错误可作门禁。③ **core 层样式收敛（ticket 60 延伸）**——notice.ts NOTICE_CSS 262 行、settings-modal SETTINGS_MODAL_CSS 14 行移入 styles.css，confirm.ts 全内联改 `#__shared_confirm_*` id 选择器（popup 新增 id `__shared_confirm_popup__`，mask/按钮 id 不变），dom.ts createOverlay/createIconBtn/createSiteIcon 视觉改类名（bz-overlay-mask/bz-overlay-popup/bz-icon-btn/bz-icon-btn--close/bz-site-icon，hover 移 CSS :hover），settings-modal 头部/内容/空态类名化（bz-settings-*）；删除废弃导出 injectStyles（无调用方 + 测试同步删，1200→1199 测试）；测试视觉断言改类名断言（notice「不再注入 style」/dom「bz-icon-btn 类」）。④ **工具函数收敛**——escapeHtml 统一到 core（补 `"`/`'` 转义，删本地副本）；新增 core pad2 替换 9 文件 13 处 `padStart(2,'0')`（belongings/report/stats/movie×2/diary×2/pomodoro×3）。⑤ **P3 大函数拆分（9 个，行为不变）**——favorites _renderCard 338→3 函数、movie openAddModal 262→createTagGroup/createStatusGroup/createFieldRow/createTextareaRow、movie openFilterModal→renderFilterSettings、memo createAddDialog 304→AddDialogCtx/_buildSceneButtons/_handleAddSave、movie analysis buildAnalysisData 215→5 纯函数、library renderLibraryList→renderBookCard + showBookNotes→renderBookNoteNode/renderHighlightBlock、password createCard→attachLongPress、quiz renderModal→_buildOptionButtons/cleanOptionText、review createMainUI→_bindHeaderEvents/_buildSettingsItems。⑥ flash 4 未接线文件（float-window/reference-panel/chat-panel/mobile-panel）头部加 ⚠️ WIP 标注（ticket 18 未接线，index.ts 仍占位）。**遗留**：域层内联样式仍多（reading-report 234/movie 76/library 63/belongings 60 处 cssText），属 ticket 60 式整域工程，待后续 ticket。
 
 # bz 进度（上下文压缩恢复点）
+
+## 2026-08-23 smartcat 备忘录观察（ticket 075，ADR-0028）
+
+**状态：全量测试通过 + tsc 0 后提交 worktree/memo-observation（本条目为文档同步）**
+
+- ✅ **方法监听（同影视样板 ADR-0027）**：观察只来自 memo UI 确认回调——`notifyMemoAction(事件)` → `buildMemoActionText`（memo-source 文案构造纯函数）→ 记忆流（source memo）。8 处挂点：_handleAddSave 添加/编辑分支、卡片复选框完成（去抖 300ms 内、notify 放 completeItem 调用处）、抽屉标记完成、恢复未完成、延后 1/3 天、切换优先级、删除确认
+- ✅ **文案表（用户拍板）**：添加=键值式（场景→脚本→课程→优先级→截止→笔记，有才加）；编辑=α 合并一次保存一条（标题变→「你编辑了待办「新标题」」+（变更列表），仅标题变→「你改题为「新标题」」，标题没变→「你更新了待办「X」：…」，无变化不产出）；完成/恢复/延后/优先级切换/删除仅标题
+- ✅ **每日到期扫描合并一条**：并入 30s 反射调度 tick（当天已扫过跳过不空转）——读 memo.json（vault.read，不动 memo 域）→ memoDueObservation（今天到期且未完成，≤5 截断多出「等 N 个」，N=0 不产出）→ 合并一条「你有 N 个待办今天到期：…」→ addObservation；扫描日期持久化 `editingData.dueScan = {date: 'YYYY-MM-DD'}`（同 proactiveCare 先例，跨重启去重）
+- ✅ **防双记录**：domain-source.ts 移除 memo extract（JSON 事件通道不再收 memo），`unloadSmartCat` 随反射调度 stopScheduler 清理（无独立 timer）
+- ✅ **测试**：tests/smartcat/memo-source.test.ts（文案构造全动作 + 到期扫描截断/日期语义，14 用例）+ memo-action.test.ts（notify 集成 4 + 扫描去重 4，8 用例）+ domain-source.test.ts 改正（memo 移除，6 用例）
+- ⏳ 待办：真机冒烟（Obsidian 里走一遍 8 处动作核对观察文本）
 
 
 

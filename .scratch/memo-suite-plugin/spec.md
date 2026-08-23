@@ -47,6 +47,7 @@ Feature: memo-suite-plugin
 20. 作为用户，我希望截止时间输入支持清除（dueClear）、位置按钮（posBtn），以便与原脚本交互一致。（ticket 59：clipboardFocusHandler 已删除）
 21. 作为用户，我希望到期/过期待办自动置顶（已过期红色、今日到期橙色），启动时与打开笔记时触发到期提醒，以便不错过任务。
 22. 作为用户，我希望长按 #标签 直接编辑待办全部信息（内容/场景/优先级等），公开课场景标签不重复显示，以便与原脚本一致。
+23. 作为用户，我希望小橘能感知备忘录的 UI 操作（添加/编辑/完成/恢复/延后/优先级/删除）与每日到期待办，以便陪伴记忆细致准确。（2026-08-23 用户拍板，ticket 075：**方法监听**——memo UI 确认回调调 `notifyMemoAction`，文案构造集中 `src/smartcat/memo-source.ts` 纯函数；添加=详细键值式（场景/脚本/课程/优先级/截止/笔记，有才加），编辑=方案 α 一次保存一条变更摘要，其余动作仅标题；**每日到期扫描**——每天一次、合并一条「你有 N 个待办今天到期：…」，日期持久化 `editingData.dueScan` 跨重启去重；AIAgent 同步等非 UI 写入不收；domain-source memo extract 移除）
 
 ### 归物本（Belongings）
 
@@ -88,6 +89,7 @@ Feature: memo-suite-plugin
 26. 作为用户，我希望阅读器内的摘要以 markdown 渲染（renderMarkdown），以便排版与原脚本一致。
 27. 作为用户，我希望聚合讯的约 196 行注入样式（弹窗/列表/统计）原样保留，以便视觉一致。
 28. 作为用户，我希望阅读器显示作者（👤）与日期（📅）、全部读完显示完成态（renderDoneState），以便与原脚本一致。
+29. 作为用户，我希望小橘能感知聚合讯的逐篇阅读三态与时长，保存文章联动 AI 摘要，以便陪伴记忆细致准确。（2026-08-23 用户拍板，ticket 076：逐篇三态——阅读/跳过/保存（保存优先于时长判定；下一篇按停留 ≥2 分钟=阅读、<2 分钟=跳过），带时长（N 分钟）/平台/标题；保存联动 auto-summary：保存时不立即产观察，订阅剪藏 frontmatter summary/tags 写回后产出「你保存了《标题》（平台·N 分钟）：摘要 #tags」，2 分钟未等到降级为无摘要；**剪藏事件观察整体停用**（onVaultActivity clipping 短路，仅命中待补全登记才产出）；domain:news 计数观察移除）
 
 ### 收藏本（Favorites）
 
@@ -234,6 +236,8 @@ Feature: memo-suite-plugin
 - AIAgent：vault.on rename/delete/create/open 同步备忘录/收藏本
 - 闪念：workspace 光标/活动文件事件驱动右侧窄窗
 - smartcat 影视观察（ticket 074，ADR-0027）：**事件通道短路**（movie 文件 create/modify 不观察），观察只来自 movie 域 UI 确认回调的 `notifyMovieAction`（方法监听，一次动作一条）
+- smartcat 备忘录观察（ticket 075，ADR-0028）：**事件通道 domain-source memo extract 移除**（memo.json JSON 事件不再收，防双记录），观察只来自 memo 域 UI 确认回调的 
+otifyMemoAction（方法监听，一次动作一条）+ **每日到期扫描**（并入 30s 反射调度 tick，读 memo.json 合并一条「你有 N 个待办今天到期：…」，editingData.dueScan 当天去重跨重启）
 
 ### 设置页
 
