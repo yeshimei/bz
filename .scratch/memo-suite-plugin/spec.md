@@ -60,6 +60,7 @@ Feature: memo-suite-plugin
 16. 作为用户，我希望归物本支持自定义分类（customCategories 设置）与排序弹窗（按分类/时间等排序，showSortModal 语义），以便整理物品。
 17. 作为用户，我希望归物本有统计显示（按分类统计等），以便掌握物品分布。
 18. 作为用户，我希望物品卡片支持点击展开详情/操作、列表有刷新按钮（refreshBtn），以便与原脚本交互一致。
+19. 作为用户，我希望小橘能感知归物本的 UI 操作（添加/编辑/状态流转/删除），以便陪伴记忆细致准确。（2026-08-24 用户拍板，ticket 079，ADR-0032：**方法监听**——belongings 域 UI 四个确认回调调 `notifyBelongingsAction`，文案构造集中 `src/smartcat/belongings-source.ts` 纯函数；添加=键值式完整信息按序有才加（`你登记了新物品《X》` + 分类（category 原文含 emoji）/价格 ￥X/购买于 YYYY-MM-DD/状态（仅非「使用中」才写）/描述「…」），编辑=α 变化列表（弹窗打开 `{...item}` 快照比较名称/分类/价格/购买日期/状态/描述，变化项「改了名称/分类/价格/购买日期/状态/描述」，全不变只发主句不带尾冒号），状态流转=4 态动词化不防抖（→闲置标记为/→已转卖转卖了/→已丢弃丢弃了/→使用中重新用起了），删除=仅标题；`onVaultActivity` 对 belongings 短路 + `DOMAIN_FILES.belongings` extract 移除防双记录；belongings.json 数据零改动）
 
 ### 密码本（Password Vault）
 

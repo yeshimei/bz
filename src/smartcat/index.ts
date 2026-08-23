@@ -25,6 +25,8 @@ import { buildMemoActionText, memoDueObservation, type MemoActionEvent, type Mem
 import { parseDiaryFile, decideDiarySettle, diaryDeleteText, diaryDeleteFileText, type DiaryEntryLike } from './diary-source';
 import { DIARY_DIRECTORY } from '../diary/config';
 
+import { buildBelongingsActionText, type BelongingsActionEvent } from './belongings-source';
+
 import { buildNewsReadText, buildNewsSavedFullText, type NewsReadEvent } from './news-source';
 import { buildFavoritesActionText, type FavoritesActionEvent } from './favorites-source';
 import { DOMAIN_FILES, snapshotDomains } from './domain-source';
@@ -249,6 +251,9 @@ export async function ensureSmartCat(app: App): Promise<void> {
 
     // 收藏本动作改由方法监听（ticket 078）：favorites 是 JSON 数据域本不产 vault 事件，防御性短接
     if (kind === 'favorites') return;
+
+    // 归物本动作改由方法监听（ticket 079）：事件通道短路，防 UI 动作双记录
+    if (kind === 'belongings') return;
     const now = Date.now();
     const last = lastActivity.get(file.path) || 0;
     if (now - last < 10 * 60 * 1000) return;          // 同一路径 10 分钟去弹跳
@@ -1236,6 +1241,16 @@ export function notifyFavoritesAction(evt: FavoritesActionEvent): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
   const text = buildFavoritesActionText(evt);
   if (text) void memorySystem.addObservation(text, { source: 'favorites' });
+
+// ------------- 归物本动作观察（ticket 079：方法监听，ADR-0032） -------------
+
+/** 归物本动作观察入口：belongings 域 UI 确认回调调用（fire-and-forget）。
+ *  未初始化 / 未启用（noteSource 关）→ 静默；文案构造见 belongings-source.buildBelongingsActionText。
+ *  即时同步观察：无 timer/map 需清理。 */
+export function notifyBelongingsAction(evt: BelongingsActionEvent): void {
+  if (!initialized || !memorySystem || !data?.config?.noteSource) return;
+  const text = buildBelongingsActionText(evt);
+  if (text) void memorySystem.addObservation(text, { source: 'belongings' });
 }
 
 /** 域 JSON 感知状态（domain-source.ts 提供 extract 纯函数；此处管理监听生命周期） */
