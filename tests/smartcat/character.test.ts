@@ -6,7 +6,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
   randomOceanSeed, characterSeed, characterTransition, softUpdate, trustUpdate,
-  characterFromExperience, formatStateVector, DEFAULT_TRAITS, DEFAULT_OCEAN,
+  characterFromExperience, characterHomeostasis, formatStateVector, DEFAULT_TRAITS, DEFAULT_OCEAN,
+  TRUST_SOFT_K, DEEP_DELTA_SCALE,
 } from '../../src/smartcat/character';
 import { defaultPersonalityGrowth } from '../../src/smartcat/data';
 
@@ -104,6 +105,34 @@ describe('character_from_experience（周深更新）', () => {
     const t = characterFromExperience({ ...DEFAULT_TRAITS }, { interactionCount: 10, emotionalTone: 0, preferredHour: 23 });
     expect(t.dopamine).toBeGreaterThan(DEFAULT_TRAITS.dopamine);
   });
+
+  it('scale 缩放（ticket 072）：δ 按 DEEP_DELTA_SCALE 同比缩小（softUpdate 对 δ 线性）', () => {
+    const s = { interactionCount: 100, emotionalTone: 0.5, preferredHour: 12 };
+    const full = characterFromExperience({ ...DEFAULT_TRAITS }, s);
+    const scaled = characterFromExperience({ ...DEFAULT_TRAITS }, s, { scale: DEEP_DELTA_SCALE });
+    const ratio = (full.warmth - DEFAULT_TRAITS.warmth) / (scaled.warmth - DEFAULT_TRAITS.warmth);
+    expect(ratio).toBeCloseTo(1 / DEEP_DELTA_SCALE, 5);
+    expect(scaled.warmth - DEFAULT_TRAITS.warmth).toBeLessThan(0.001); // 不再单次顶格 +0.01
+  });
+});
+
+describe('characterHomeostasis（ticket 072 种子回归）', () => {
+  it('高于种子的特质回拉、低于种子的补升；existential 群组不动（仅反思渠道的成长弧不被抵消）', () => {
+    const seed = characterSeed(DEFAULT_OCEAN);
+    const t = { ...seed, warmth: 0.9, anxiety: 0.2, exist_depth: 0.4 };
+    const out = characterHomeostasis(t, seed);
+    expect(out.warmth).toBeLessThan(0.9);
+    expect(out.warmth).toBeGreaterThan(seed.warmth); // pull 微小，只回拉不跳变
+    expect(out.anxiety).toBeGreaterThan(0.2);
+    expect(out.exist_depth).toBe(0.4);
+    expect((out as any).familiarity).toBe((t as any).familiarity);
+  });
+
+  it('特质等于种子时为恒等变换（出生即平衡点）', () => {
+    const seed = characterSeed(DEFAULT_OCEAN);
+    const out = characterHomeostasis({ ...seed }, seed);
+    expect(out).toEqual(seed);
+  });
 });
 
 describe('formatStateVector（MATE §7 压缩注入）', () => {
@@ -127,18 +156,23 @@ describe('RL 校准常量（ADR-0024）', () => {
   });
 
   it('trustCap 软收拢（ADR-0024 用户拍板）：v = cap + K(v−cap)，双向收拢（低侧也向 cap 靠）', () => {
-    // 高于 cap：0.9 + warm(0.007) = 0.9041 → 软收拢 0.85+0.98×0.0541 = 0.9030（略降，非一刀切 clamp 到 0.85）
+    // 高于 cap：0.9 + warm(0.0041) = 0.9041 → 软收拢 0.85+0.85×0.0541 = 0.8960（略降，非一刀切 clamp 到 0.85）
     const v = trustUpdate(0.9, { warm: true, trustCap: 0.85 });
-    expect(v).toBeCloseTo(0.85 + 0.98 * ((0.9 + 0.0082 * 0.5) - 0.85), 6);
+    expect(v).toBeCloseTo(0.85 + TRUST_SOFT_K * ((0.9 + 0.0082 * 0.5) - 0.85), 6);
     expect(v).toBeLessThan(0.91);
     expect(v).toBeGreaterThan(0.85);
-    // 低于 cap：0.5 + gain(0.0041)=0.5041 → 软收拢向 0.85 靠拢（0.85+0.98×(−0.3459)=0.5110）
+    // 低于 cap：0.5 + gain(0.0041)=0.5041 → 软收拢向 0.85 靠拢（0.85+0.85×(−0.3459)=0.5560）
     const low = trustUpdate(0.5, { warm: true, trustCap: 0.85 });
-    expect(low).toBeCloseTo(0.85 + 0.98 * ((0.5 + 0.0082 * 0.5) - 0.85), 6);
-    // 长序列（轻质量 0.15 语义，gain=0.00123）：平衡点 v* = cap + 49·gain ≈ 0.910
+    expect(low).toBeCloseTo(0.85 + TRUST_SOFT_K * ((0.5 + 0.0082 * 0.5) - 0.85), 6);
+    // 长序列（轻质量 0.15，gain=0.00123）：平衡点 v* = cap + gain/(1−K) ≈ 0.858（ticket 072 校正后 cap 真实生效）
     let x = 0.5;
     for (let i = 0; i < 5000; i++) x = trustUpdate(x, { warm: true, quality: 0.15, trustCap: 0.85 });
-    expect(x).toBeCloseTo(0.85 + 49 * (0.0082 * 0.15), 2); // ≈0.9103（真实库验收实测 91%）
+    expect(x).toBeCloseTo(0.85 + (0.0082 * 0.15) / (1 - TRUST_SOFT_K), 2);
+    // 长序列（聊天档 0.5）：v* ≈ cap + 0.027 ≈ 0.877——存量饱和值（旧版钉死 0.999）被收拢缓慢拉回
+    let y = 0.999;
+    for (let i = 0; i < 5000; i++) y = trustUpdate(y, { warm: true, quality: 0.5, trustCap: 0.85 });
+    expect(y).toBeCloseTo(0.85 + (0.0082 * 0.5) / (1 - TRUST_SOFT_K), 2);
+    expect(y).toBeLessThan(0.9);
     // 未设置 cap：保持单调上升（不封顶）
     expect(trustUpdate(0.9, { warm: true })).toBeGreaterThan(0.9);
   });
