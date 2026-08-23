@@ -101,6 +101,7 @@ Feature: memo-suite-plugin
 25. 作为用户，我希望收藏支持置顶（📌 置顶）、编辑收藏、标签 emoji 显示、空态（暂无收藏 🎉），以便与原脚本一致。
 26. 作为用户，我希望余额查询保留：API Keys（每行一个，第一个用于余额查询）、余额查询 URL（完整 URL）、自动从返回对象查找余额数字、查询中/刷新中/错误状态显示与刷新，以便监控 API 配额。
 27. 作为用户，我希望大模型配置弹窗（🧠：API Keys 输入）与 AI 整理加载态（⏳ AI 整理中…），以便配置与反馈与原脚本一致。
+28. 作为用户，我希望小橘能感知收藏本的 UI 操作（添加/编辑/删除），以便陪伴记忆细致准确。（2026-08-23 用户拍板，ticket 078，ADR-0031：**方法监听**——favorites 域 UI 确认回调（`_saveNewItem` 添加/编辑分支、`_deleteItem`）调 `notifyFavoritesAction`，文案构造集中 `src/smartcat/favorites-source.ts` 纯函数；添加=键值式（分类（tags 全列顿号）/简介「…」/链接 url 原文/已置顶，有才加、未置顶不写），编辑=α 变化列表只列真正变化（title/description/url/tags，tags 数组 join 比较；pinned/created/id/type/llmConfig/balance* 不参与，置顶变化也不列），删除仅标题；置顶抽屉动作不观察；domain-source favorites extract 移除——「你收藏了一条新资源」不再产）
 
 ### 书库（Library）与阅读数据分析报告（Reading Analytics）
 
@@ -243,6 +244,7 @@ Feature: memo-suite-plugin
 otifyMemoAction（方法监听，一次动作一条）+ **每日到期扫描**（并入 30s 反射调度 tick，读 memo.json 合并一条「你有 N 个待办今天到期：…」，editingData.dueScan 当天去重跨重启）
 - smartcat 聚合讯观察（ticket 076，ADR-0029）：**逐篇三态方法监听**（news 域 reader 动作经 `markAsRead`/`saveToClip` 调 `notifyNewsRead`/`notifyNewsSaved`）+ 保存联动 auto-summary——待补全登记（内存表：剪藏路径 → {标题, 平台, 时长分, 定时器}），`onVaultActivity` 对 clipping **短路**（不再产「你剪藏了」），唯一例外：命中登记的该剪藏 modify → 读 frontmatter summary/tags → 补全完整保存观察并移除登记；2 分钟降级定时器兜底；`DOMAIN_FILES.news` 已移除（「你浏览了今天的资讯」不再产）
 - smartcat 日记观察（ticket 077，ADR-0030）：**vault create/modify/delete 监听 diary 目录（per-entry 独立 10 分钟结算新链路）**——`onVaultActivity` 对 classifyPath==='diary' 走新链路（替换 observationText diary 分支；原 diary 10 分钟去弹跳/信任成长不再执行，其它 kind 不动）：该条任何修改重置其计时，静置到期读文件解析结算（首落有字才生成、累计 >50 才更新、≤50 计入累计）；重启 ensure 当日文件建基线快照（不产出）；删除：vault delete 按跟踪快照逐条追加删除观察（从未跟踪过 → 文件级单条兜底）、条目级删除（md 块消失）由 modify 全量快照 diff 发现 → 追加删除观察 + 清该条计时；observationText diary 分支保留不动（兼容冻结）
+- smartcat 收藏本观察（ticket 078，ADR-0031）：**方法监听**（favorites 域 UI 确认回调经 `_saveNewItem` 添加/编辑分支、`_deleteItem` 调 `notifyFavoritesAction`，文案构造集中 `favorites-source.ts` 纯函数——添加键值式有才加、编辑 α 变化列表只列真正变化（title/description/url/tags）、删除仅标题）；置顶抽屉动作不观察（置顶变化不列入编辑变化列表）；`onVaultActivity` 对 favorites 防御性短接 + `DOMAIN_FILES.favorites` 已移除（「你收藏了一条新资源」计数观察不再产）
 ### 设置页
 
 - **设置归属模型（ADR-0009，2025 用户决策）**：设置两分——全局项留 Obsidian 设置页（单页平铺，无 tab，只含「🤖 AI」「📂 数据存储路径」两区块），域行为项进各功能主面板右上角 ⚙️ 域设置弹窗；筛选/排序弹窗统一挂 🔀（影视「筛选与排序」、书库「视图与筛选」），⚙️ 只表示真设置；AI Agent 4 项设置不暴露（字段保留，运行时读旧值、默认值兜底）；入口页不新增设置（编辑模式控件即入口，移动端列数由列数控件按平台读写）

@@ -26,6 +26,7 @@ import { parseDiaryFile, decideDiarySettle, diaryDeleteText, diaryDeleteFileText
 import { DIARY_DIRECTORY } from '../diary/config';
 
 import { buildNewsReadText, buildNewsSavedFullText, type NewsReadEvent } from './news-source';
+import { buildFavoritesActionText, type FavoritesActionEvent } from './favorites-source';
 import { DOMAIN_FILES, snapshotDomains } from './domain-source';
 import { buildRhythmProfile, isActiveNow, describeRhythm, periodText, isoWeekKey } from './rhythm';
 import { buildWeeklyReportData, generateWeeklyReport, weekWindow } from './report';
@@ -245,6 +246,9 @@ export async function ensureSmartCat(app: App): Promise<void> {
       await handleDiaryVaultActivity(file);
       return;
     }
+
+    // 收藏本动作改由方法监听（ticket 078）：favorites 是 JSON 数据域本不产 vault 事件，防御性短接
+    if (kind === 'favorites') return;
     const now = Date.now();
     const last = lastActivity.get(file.path) || 0;
     if (now - last < 10 * 60 * 1000) return;          // 同一路径 10 分钟去弹跳
@@ -1223,6 +1227,16 @@ async function onVaultDelete(file: any): Promise<void> {
 /** 测试辅助：注入结算静置时长 / 读取日记计时表 */
 export function __setDiarySettleMsForTests(ms: number): void { diarySettleMs = ms; }
 export function __getDiaryTimersForTests(): ReadonlyMap<string, DiaryTimerState> { return diaryTimers; }
+
+// ------------- 收藏本动作观察（ticket 078：方法监听，ADR-0031） -------------
+
+/** 收藏本动作观察入口：favorites 域 UI 确认回调调用（fire-and-forget）。
+ *  未初始化 / 未启用（noteSource 关）→ 静默；文案构造见 favorites-source.buildFavoritesActionText。 */
+export function notifyFavoritesAction(evt: FavoritesActionEvent): void {
+  if (!initialized || !memorySystem || !data?.config?.noteSource) return;
+  const text = buildFavoritesActionText(evt);
+  if (text) void memorySystem.addObservation(text, { source: 'favorites' });
+}
 
 /** 域 JSON 感知状态（domain-source.ts 提供 extract 纯函数；此处管理监听生命周期） */
 const domainPrev = new Map<string, string>();

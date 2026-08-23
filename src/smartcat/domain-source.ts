@@ -47,18 +47,8 @@ export const DOMAIN_FILES: Record<string, DomainExtractor> = {
       return null;
     },
   },
-  favorites: {
-    file: 'CONFIG/STORAGE/favorites.json',
-    extract: (raw, prev) => {
-      if (!Array.isArray(raw)) return null;
-      const fresh = raw.length;
-      if (fresh > (Number(prev.get('favN') || 0))) {
-        prev.set('favN', String(fresh));
-        return '你收藏了一条新资源';
-      }
-      return null;
-    },
-  },
+  // favorites 已移除（ticket 078）：收藏本观察改走方法监听（favorites-source/notifyFavoritesAction）——
+  // 「你收藏了一条新资源」无标题计数观察不再产（只增不减、删除后计数失真问题随之解除）。
   belongings: {
     file: 'CONFIG/STORAGE/belongings.json',
     extract: (raw, prev) => {
