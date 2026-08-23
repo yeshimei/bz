@@ -1,6 +1,7 @@
 /**
  * 域 JSON 感知（2026-08-23 用户拍板扩展）：CONFIG/STORAGE 下各域数据文件的新增条目 → 观察文本。
  * 独立模块供 index 调用 + 单测覆盖；extract 纯函数：prev 记录已见状态（首次快照不产出）。
+ * ticket 075：memo 项移除——备忘录改走方法监听（notifyMemoAction），防 JSON 事件通道双记录。
  */
 
 export interface DomainExtractor {
@@ -9,17 +10,6 @@ export interface DomainExtractor {
 }
 
 export const DOMAIN_FILES: Record<string, DomainExtractor> = {
-  memo: {
-    file: 'CONFIG/STORAGE/memo.json',
-    extract: (raw, prev) => {
-      if (!Array.isArray(raw)) return null;
-      const total = raw.filter((it) => it?.completed || it?.created).length;
-      const seen = Number(prev.get('memoTotal') || 0);
-      if (total <= seen) return null;
-      prev.set('memoTotal', String(total));
-      return '你完成了一项待办' + (total > 1 ? '（累计 ' + total + ' 件）' : '');
-    },
-  },
   pomodoro: {
     file: 'CONFIG/STORAGE/pomodoro.json',
     extract: (raw, prev) => {

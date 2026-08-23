@@ -57,6 +57,8 @@ export class MemorySystem {
   onReflect: ((insights: { text: string }[]) => void | Promise<void>) | null = null;
   /** 观察回调（ADR-0025：index 接情绪共振 + 瞬时情绪；每条 observation 写入后触发） */
   onObservation: ((memory: MemoryStreamEntry) => void | Promise<void>) | null = null;
+  /** 反射调度 tick 钩子（ticket 075：index 挂每日 memo 到期扫描；每次 30s tick 触发，失败静默） */
+  onSchedulerTick: (() => void | Promise<void>) | null = null;
   /** 聊天记忆去重窗口（近 N 条同内容跳过） */
   private static readonly dedupeWindow = 20;
   /** 聊天记忆保留阈值（非 calm 情绪或 importance≥0.55 才落库） */
@@ -433,12 +435,15 @@ export class MemorySystem {
 
   // ---------------- 反思（Reflection） ----------------
 
-  /** 反思调度（每 30s 检查一次；24h 或新增 ≥20 条触发反思；睡前巩固 digest 同循环） */
+  /** 反思调度（每 30s 检查一次；24h 或新增 ≥20 条触发反思；睡前巩固 digest 同循环；ticket 075：memo 到期扫描挂 tick 钩子） */
   startReflectionScheduler(): void {
     if (this.reflectionTimer) clearInterval(this.reflectionTimer);
     this.reflectionTimer = setInterval(() => {
       void this.maybeReflect();
       this.maybeDigest();
+      if (this.onSchedulerTick) {
+        try { void this.onSchedulerTick(); } catch (e) { /* tick 钩子失败静默 */ }
+      }
     }, 30 * 1000);
   }
 
@@ -650,7 +655,7 @@ export class MemorySystem {
 
 /** 观察来源中文标签（prompt 友好；域事件 domain:<key> 映射到域中文名） */
 export const SOURCE_LABELS: Record<string, string> = {
-  chat: '聊天', diary: '日记', flash: '闪念', clipping: '剪藏', movie: '影视',
+  chat: '聊天', diary: '日记', flash: '闪念', clipping: '剪藏', movie: '影视', memo: '备忘录',
   reading: '书库', poem: '现代诗', letter: '信', reflection: '反省',
   'domain:memo': '备忘录', 'domain:pomodoro': '番茄钟', 'domain:news': '聚合讯',
   'domain:quiz': '做题', 'domain:review': '复习', 'domain:favorites': '收藏', 'domain:belongings': '归物',

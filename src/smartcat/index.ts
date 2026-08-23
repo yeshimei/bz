@@ -6,7 +6,7 @@
  */
 import type { App } from 'obsidian';
 import { notice } from '../core/notice';
-import { getSettings, saveSettings } from '../core/settings-provider';
+import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath, defaultPersonalityGrowth } from './data';
 import { eventSystem, setSmartcatApp, setupVisibilityCheck, __resetVisibilityForTests } from './state';
 import { mountCatContainer, unmountCatContainer, applyAppearance, createChatPanel, showChatPanel, hideChatPanel, openSmartcatSettings } from './ui';
@@ -21,6 +21,7 @@ import { callChat, isAIConfigured } from './api';
 import { generateBookDescription, hasBookTag } from './content';
 import { classifyPath, observationText } from './context-source';
 import { buildMovieActionText, type MovieActionEvent } from './movie-source';
+import { buildMemoActionText, memoDueObservation, type MemoActionEvent, type MemoDueLike } from './memo-source';
 import { DOMAIN_FILES, snapshotDomains } from './domain-source';
 import { buildRhythmProfile, isActiveNow, describeRhythm, periodText, isoWeekKey } from './rhythm';
 import { buildWeeklyReportData, generateWeeklyReport, weekWindow } from './report';
@@ -115,6 +116,8 @@ export async function ensureSmartCat(app: App): Promise<void> {
   // ADR-0021：init = 探测 Ollama + 加载向量 + 反思调度（取代原 24h 固化调度）
   await memorySystem.init();
   if (!initialized) return; // 竞态守卫 2：init 期间被 unload 则丢弃装配
+  // ticket 075：每日到期扫描并入反射调度（30s tick 检查，当天已扫过跳过不空转）
+  memorySystem.onSchedulerTick = () => { void maybeMemoDueScan(); };
   // 反思驱动人格（ADR-0023：洞察 → existential 成长 + 行为周统计深更新）
   memorySystem.onReflect = async (insights) => {
     if (personalityGrowth) {
@@ -775,7 +778,7 @@ export function unloadSmartCat(): void {
     greetTimer = null;
   }
   animation?.dispose();
-  memorySystem?.stopScheduler();
+  memorySystem?.stopScheduler(); // 反思调度（含 ticket 075 memo 到期扫描 tick）一并停止
   moodSystem?.dispose();
   interaction?.dispose();
   domainReader?.();
@@ -814,6 +817,61 @@ export function notifyMovieAction(evt: MovieActionEvent): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
   const text = buildMovieActionText(evt);
   if (text) void memorySystem.addObservation(text, { source: 'movie' });
+}
+
+// ------------- 备忘录动作观察（ticket 075：方法监听 + 每日到期扫描） -------------
+
+/** 备忘录动作观察入口：memo 域 UI 确认回调调用（fire-and-forget）。
+ *  未初始化 / 未启用（noteSource 关）→ 静默；文案构造见 memo-source.buildMemoActionText。 */
+export function notifyMemoAction(evt: MemoActionEvent): void {
+  if (!initialized || !memorySystem || !data?.config?.noteSource) return;
+  const text = buildMemoActionText(evt);
+  if (text) void memorySystem.addObservation(text, { source: 'memo' });
+}
+
+/** memo.json 路径（跟随共享 storagePath，同 getSmartcatFilePath 目录规则） */
+function getMemoDataPath(): string {
+  const s = tryGetSettings() as any;
+  const dir = ((s && s.storagePath) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
+  return `${dir}/memo.json`;
+}
+
+/** 今日日期（YYYY-MM-DD，本地时区；对齐 memo due.ts getTodayStr 语义；now 可注入供测试跨天） */
+function memoTodayStr(now: Date = new Date()): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}`;
+}
+
+/** 到期扫描状态（editingData.dueScan = { date: 'YYYY-MM-DD' }；同 proactiveCare 先例，旧数据缺省容忍） */
+function getDueScanState(): { date: string } {
+  const d = dataProvider();
+  const s = (d.editingData?.dueScan || {}) as Partial<{ date: string }>;
+  return { date: typeof s.date === 'string' ? s.date : '' };
+}
+
+/** 每日到期扫描（并入 30s 反射调度 tick；用户拍板：每天只扫一次，合并成一条观察）：
+ *  当天已扫过跳过（不空转）；读 memo.json（vault.read，不动 memo 域）→ memoDueObservation
+ *  （今天到期且未完成，≤5 截断合并一条）→ addObservation(source 'memo')；
+ *  扫描日期持久化 editingData.dueScan（跨重启去重；旧数据无该字段容忍）。
+ *  now 可注入（集成测试模拟跨天用；生产由调度以实际时间调用）。 */
+export async function maybeMemoDueScan(now: Date = new Date()): Promise<void> {
+  if (!initialized || !appRef || !memorySystem || !data?.config?.noteSource) return;
+  const today = memoTodayStr(now);
+  if (getDueScanState().date === today) return; // 当天已扫过
+  try {
+    const file = appRef.vault.getAbstractFileByPath(getMemoDataPath());
+    if (!file) return; // memo 域未启用（无 memo.json）：静默，不推进扫描日期（等 memo 数据出现再扫）
+    const raw = JSON.parse(await appRef.vault.read(file as any));
+    const items: MemoDueLike[] = Array.isArray(raw) ? (raw as any[]) : [];
+    const text = memoDueObservation(items, now);
+    if (text) await memorySystem.addObservation(text, { source: 'memo' });
+    // 推进扫描日期（无论有无产出——当天已扫过，跨重启不再重扫）
+    const d = dataProvider();
+    d.editingData = { ...(d.editingData || {}), dueScan: { date: today } };
+    await dataSaver(d);
+  } catch (e) {
+    /* 读取/解析失败静默：不推进日期（下次 tick 重试） */
+  }
 }
 
 /** 域 JSON 感知状态（domain-source.ts 提供 extract 纯函数；此处管理监听生命周期） */
