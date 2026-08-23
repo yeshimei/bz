@@ -1,6 +1,6 @@
 # ticket 094 —— 方向八：关系史沉淀（086 v4）
 
-状态：**READY-FOR-AGENT**
+状态：**done**（2026-08-24，worktree/dossier-timeline）
 父文档：086-intelligence-evolution-proposal.md v4「方向八」（裁决：砍负面低谷展示，只留正性）
 基线：以合并时 master HEAD 为准（≥6419c06）；开工前先 git log 确认
 日期：2026-08-24

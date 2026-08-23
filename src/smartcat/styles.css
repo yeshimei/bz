@@ -1136,3 +1136,30 @@
   .bz-sc-dash-body { padding: 6px 14px 14px; }
   .bz-sc-dash-tabs { padding: 0 14px; }
 }
+
+/* 「一起的日子」（ticket 094：关系史时间线区块；样式收敛本域 styles.css） */
+.bz-sc-dash-dossier-summary {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.bz-sc-dash-dossier-tl {
+  display: flex;
+  flex-direction: column;
+}
+.bz-sc-dash-dossier-week {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.bz-sc-dash-dossier-week:last-child { border-bottom: none; }
+.bz-sc-dash-dossier-narrative { margin-top: 10px; }
+.bz-sc-dash-dossier-narrative .bz-sc-dash-report-text { white-space: pre-wrap; }
+.bz-sc-dash-dossier-moments {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}

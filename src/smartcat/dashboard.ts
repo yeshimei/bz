@@ -31,6 +31,13 @@ import {
   emotionToVAD,
 } from './cognitive';
 import { buildRhythmProfile, describeRhythm } from './rhythm';
+import {
+  getDossierEvents,
+  deriveTimeline,
+  countCompanionDays,
+  detectEmotionShiftDays,
+  buildDossierNarratives,
+} from './dossier';
 import type { SmartCatData, MemoryStreamEntry, CharacterTraits, OceanProfile } from './types';
 
 // ---------------- 中文标签表 ----------------
@@ -290,7 +297,29 @@ const TAB_LABELS: Record<PaneKey, string> = {
   report: '报告',
 };
 
-function renderOverview(pane: HTMLElement, data: SmartCatData): void {
+/** memo.json 当日备忘标题表（「一起的日子」关键时刻用；dayKey → titles；读失败静默空表——零新增持久化） */
+async function loadMemoTitlesByDay(app: App): Promise<Map<string, string[]>> {
+  const map = new Map<string, string[]>();
+  try {
+    const s = tryGetSettings() as any;
+    const dir = ((s && s.storagePath) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
+    const f = app.vault.getAbstractFileByPath(`${dir}/memo.json`);
+    if (!f) return map;
+    const raw = JSON.parse(await app.vault.read(f as any));
+    for (const it of Array.isArray(raw) ? raw : []) {
+      if (!it || typeof it.title !== 'string' || !it.title) continue;
+      const created = typeof it.created === 'string' ? it.created : '';
+      const dk = created.slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dk)) continue;
+      const arr = map.get(dk);
+      if (arr) arr.push(it.title);
+      else map.set(dk, [it.title]);
+    }
+  } catch (e) { /* 备忘读取失败静默（关键时刻只少备忘行） */ }
+  return map;
+}
+
+function renderOverview(pane: HTMLElement, data: SmartCatData, memoTitles: Map<string, string[]>): void {
   pane.innerHTML = '';
   const pad = data.mood?.pad || { pleasure: 50, arousal: 50, dominance: 50 };
   const level = moodLevelFromPad(pad);
@@ -341,6 +370,65 @@ function renderOverview(pane: HTMLElement, data: SmartCatData): void {
   const statCard = card('相处数据');
   statCard.body.appendChild(stats);
   pane.appendChild(statCard.root);
+
+  // 「一起的日子」（ticket 094 方向八：事件表重放 + 低活跃兜底 + 情绪标签变化日）
+  pane.appendChild(buildDossierCard(data, memoTitles));
+}
+
+/**
+ * 「一起的日子」区块（ticket 094 设计第 8 条）：
+ * 时间线 = deriveTimeline(dossierEvents) 纯函数重放（周聚合模板文案，最新在前）；
+ * 首行恒为兜底统计（陪伴天数 + 正性事件计数，低活跃也有内容）；附最新叙事（可选 LLM 产物）
+ * 与关键时刻（情绪标签变化日 + 当日备忘）。只读不写。
+ */
+function buildDossierCard(data: SmartCatData, memoTitles: Map<string, string[]>): HTMLElement {
+  const dossierCard = card('一起的日子');
+  const stream = data.memory?.stream || [];
+  const events = getDossierEvents(data);
+  const rows = deriveTimeline(events, { companionDays: countCompanionDays(stream) });
+  // 兜底统计行（恒在）
+  const summary = rows.find((r) => r.kind === 'summary');
+  if (summary) dossierCard.body.appendChild(el('div', 'bz-sc-dash-dossier-summary', summary.lines[0]));
+  // 周时间线（截前 8 周）
+  const weekRows = rows.filter((r) => r.kind === 'week').slice(0, 8);
+  if (weekRows.length) {
+    const wrap = el('div', 'bz-sc-dash-dossier-tl');
+    for (const r of weekRows) {
+      const item = el('div', 'bz-sc-dash-dossier-week');
+      item.appendChild(el('span', 'bz-sc-dash-tl-time', r.title));
+      item.appendChild(el('span', 'bz-sc-dash-tl-desc', r.lines.join(' ')));
+      wrap.appendChild(item);
+    }
+    dossierCard.body.appendChild(wrap);
+  }
+  // 最新叙事摘要（可选 LLM 润色产物；无则省略整行）
+  const narratives = buildDossierNarratives(stream);
+  if (narratives.length) {
+    const nRow = el('div', 'bz-sc-dash-dossier-narrative');
+    nRow.appendChild(el('div', 'bz-sc-dash-group-title', '小橘的记忆'));
+    nRow.appendChild(el('div', 'bz-sc-dash-report-text', truncateText(narratives[0].text, 160)));
+    dossierCard.body.appendChild(nRow);
+  }
+  // 关键时刻：情绪标签变化日 + 当日备忘（现算现显，零新增持久化）
+  const shifts = detectEmotionShiftDays(stream).slice(-3).reverse();
+  if (shifts.length) {
+    const kt = el('div', 'bz-sc-dash-dossier-moments');
+    kt.appendChild(el('div', 'bz-sc-dash-group-title', '关键时刻'));
+    for (const s of shifts) {
+      const row = el('div', 'bz-sc-dash-trail-row');
+      row.appendChild(el('span', 'bz-sc-dash-tl-time', s.dayKey));
+      row.appendChild(el('span', 'bz-sc-dash-badge bz-sc-dash-badge-growth', `情绪转向「${emotionLabel(s.emotion)}」`));
+      const memos = memoTitles.get(s.dayKey) || [];
+      row.appendChild(el('span', 'bz-sc-dash-tl-desc', memos.length ? truncateText(memos.join('、'), 40) : '当日无备忘'));
+      kt.appendChild(row);
+    }
+    dossierCard.body.appendChild(kt);
+  }
+  // 空态（无事件无变化日无叙事才出现；统计行仍在，不算空）
+  if (!events.length && !shifts.length && !narratives.length) {
+    dossierCard.body.appendChild(emptyHint('还没有值得纪念的大事小事——读完一本书、写一封信、给一部电影打分，都会留在这里。'));
+  }
+  return dossierCard.root;
 }
 
 function renderEmotion(pane: HTMLElement, data: SmartCatData): void {
@@ -650,6 +738,8 @@ interface DashboardState {
   tabs: Record<PaneKey, HTMLElement>;
   activeTab: PaneKey;
   escHandle: { unregister: () => void };
+  /** 当日备忘标题表（「一起的日子」关键时刻用；打开/刷新时现读） */
+  memoTitles: Map<string, string[]>;
 }
 
 let dashState: DashboardState | null = null;
@@ -667,7 +757,7 @@ function activateTab(key: PaneKey): void {
 /** 重渲染全部页签（打开/刷新共用；数据现读现渲染） */
 function renderPanes(data: SmartCatData): void {
   if (!dashState) return;
-  renderOverview(dashState.panes.overview, data);
+  renderOverview(dashState.panes.overview, data, dashState.memoTitles);
   renderEmotion(dashState.panes.emotion, data);
   renderPersonality(dashState.panes.personality, data);
   renderMemory(dashState.panes.memory, data);
@@ -738,7 +828,9 @@ export async function openSmartcatDashboard(app: App): Promise<void> {
   document.body.appendChild(mask);
   document.body.appendChild(popup);
 
-  dashState = { app, mask, popup, panes, tabs, activeTab: 'overview', escHandle: null as any };
+  // 当日备忘标题表现读（094「一起的日子」关键时刻；失败静默空表）
+  const memoTitles = await loadMemoTitlesByDay(app);
+  dashState = { app, mask, popup, panes, tabs, activeTab: 'overview', escHandle: null as any, memoTitles };
   renderPanes(data);
   activateTab('overview');
 
@@ -754,6 +846,7 @@ export async function openSmartcatDashboard(app: App): Promise<void> {
     if (!dashState) return;
     try {
       const fresh = await loadSmartCatData(dashState.app);
+      dashState.memoTitles = await loadMemoTitlesByDay(dashState.app); // 当日备忘同步现读（094）
       renderPanes(fresh);
       notice('小橘数据已刷新', 'success');
     } catch (e) {

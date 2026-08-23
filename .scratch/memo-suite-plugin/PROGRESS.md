@@ -467,3 +467,13 @@
 - ✅ **触发源接线**：memorySystem.onSchedulerTick 并入心跳（复用既有 30s tick 不自建定时器）；新增 MemorySystem.onPresence 钩子（addObservation→touchPresence 后触发，覆盖全部观察路径）；聊天 sendChatMessage / 主动关心 touchPresence 后直呼信号；unload 置空
 - ✅ **兼容冻结**：smartcat.json 仅 editingData 内可选字段 absenceState/selfEvents（旧数据零迁移容忍）；无 LLM 调用、设置面板零新项、trust/attachment 写盘衰减未触碰（范围裁定随 089 PARKED）
 - 📝 文档：ADR-0040；spec.md Further Notes 追加一行；CONTEXT.md 新增「缺席状态机」词条；issue 093 status done
+## 2026-08-24 关系史沉淀完成（ticket 094，方向八，ADR-0041）
+**状态：全量 1734 测试（新增 tests/smartcat/dossier.test.ts 18 用例）+ tsc 0 错误；提交 worktree/dossier-timeline**
+
+- ✅ **事件级即写**：`src/smartcat/dossier.ts` 新纯函数层——`dossierEventFromMemory` 正性白名单判别（domain:library 读完书→book / letter、poem 首落→letter、poem / movie 打分→movie / diary 首落→diary，匹配各 source 模块用户拍板固定句式，删除/更新/diff 句式天然不命中=只留正性）；`appendDossierEvent` 即写 editingData.dossierEvents（eventId=记忆条目 id 幂等去重、环形 ≤200 保最新、editingData null 兜底展开既有字段全保留）；index.ts onObservation 钩子头部接线（失败静默，写入后随既有 dataSaver 链路补落盘）
+- ✅ **时间线重建**：`deriveTimeline(events, {companionDays})` 纯函数重放事件表（不反查记忆流）——首行恒为兜底统计（陪伴天数=countCompanionDays 观察去重日 + 正性事件计数）、ISO 周聚合模板文案（读完了《X》、写了 N 封信等，零 LLM 默认）、最新在前
+- ✅ **dashboard「一起的日子」区块**（总览页签底部）：周时间线（截前 8 周）+ 最新叙事（source=dossier 洞察去前缀）+ 关键时刻（detectEmotionShiftDays 情绪标签变化日 = 当日多数标签≠前一有标注日 + 当日备忘 memo.json 现读 loadMemoTitlesByDay 失败静默——零新增持久化）+ 空态引导文案；样式收敛 src/smartcat/styles.css（bz-sc-dash-dossier-*）
+- ✅ **每周叙事独立退避**：maybeDossierNarrative 每小时检查——shouldScanDossierNarrative 纯决策（本周未生成且本周窗口有正性事件）→ generateDossierNarrative 可选 LLM 润色（H4 继承 USER_CONTENT_BOUNDARY + 输入 1200 字符裁剪；未配置/失败/空回包一律空串静默）→ 成功 addInsight 写回流 source=dossier + advanceDossierScanKey 推进 editingData.dossierScanKey（只动该字段）；失败 30 分钟内存退避（dossierRetryAt 不落盘），完全不共享 reflectBackoffUntil/weeklyReport；unload 全清
+- ✅ **兼容冻结**：smartcat.json 仅加 editingData.dossierEvents / dossierScanKey 可选字段（旧数据零迁移容忍）；信任数值完全不动；无新命令、无新设置项
+- ✅ **测试**：dossier.test.ts 18 用例（白名单映射与负面排除/幂等/环形截断/editingData 兼容/防御归一/陪伴天数/deriveTimeline 空表兜底+排序+聚合/情绪变化日多数判定+断链跳过+并列确定性/叙事决策与推进独立性/LLM 三态/H4 边界/UI 区块渲染+当日备忘+空态）；既有测试全量保留回归
+- ✅ **文档**：ADR-0041；CONTEXT.md 关系史沉淀词条；spec.md Further Notes 追加一行；issue 094 status done
