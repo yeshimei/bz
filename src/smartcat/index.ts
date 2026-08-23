@@ -36,6 +36,7 @@ import { DOMAIN_FILES, snapshotDomains } from './domain-source';
 import { buildLibraryNoteText, type LibraryWeaveDiff } from './library-source';
 import { buildRhythmProfile, isActiveNow, describeRhythm, periodText, isoWeekKey } from './rhythm';
 import { buildWeeklyReportData, generateWeeklyReport, weekWindow } from './report';
+import { appendDossierEvent, getDossierEvents, shouldScanDossierNarrative, buildNarrativeInput, generateDossierNarrative, advanceDossierScanKey } from './dossier';
 import { buildCompanionContext } from './companion-context';
 import { analyzeEmotionTrend, buildEmotionSnapshots, describeEmotionTrend, checkContradiction, extractStoredFacts, initBanditArm, sampleThompson, updateBandit } from './cognitive';
 import { openSmartcatDashboard, closeSmartcatDashboard } from './dashboard';
@@ -214,6 +215,11 @@ export async function ensureSmartCat(app: App): Promise<void> {
 
   // ADR-0025 情绪闭环 A 面：每条观察（日记/闪念/聊天/域事件…）→ 瞬时情绪 + 温和共振进 PAD
   memorySystem.onObservation = (m) => {
+    // 094 方向八：dossier 事件级即写（正性白名单来源 / eventId 幂等 / 环形 ≤200）；
+    // 失败静默不影响情绪主流程；写入后随既有 dataSaver 链路补一次落盘（不新增独立调度）
+    try {
+      if (appendDossierEvent(dataProvider(), m)) void dataSaver(dataProvider());
+    } catch { /* 事件表失败不影响主流程 */ }
     if (!moodSystem || !m?.emotion) return;
     try {
       moodSystem.registerEmotion(m.emotion);
@@ -402,6 +408,9 @@ export async function ensureSmartCat(app: App): Promise<void> {
   // 每周懂你报告（2026-08-23：每周一检查，有观察则生成写回流 + 气泡展示）
   startWeeklyReport();
   void maybeWeeklyReport();
+  // 关系史叙事扫描（ticket 094：独立周键退避，成功才推进 dossierScanKey）
+  startDossierScan();
+  void maybeDossierNarrative();
   // 情绪趋势回写心情（ADR-0025 A 面：30 分钟节流，declining/improving/高波动温和漂移 PAD）
   startTrendDrift();
 
@@ -626,6 +635,46 @@ async function maybeWeeklyReport(): Promise<void> {
     await dataSaver(d);
   } catch (e) {
     /* 周报失败静默（下周再试；不推进状态） */
+  }
+}
+
+// ---------------- 关系史叙事扫描（ticket 094 方向八：独立周键退避，不共享 reflectBackoffUntil） ----------------
+
+/** 叙事扫描调度（每小时检查；本周未生成且本周有正性事件才尝试，AI 未配置静默跳过） */
+let dossierTimer: ReturnType<typeof setInterval> | null = null;
+/** 叙事失败内存退避（30 分钟；不落盘——重启即重置，周键才是持久化去重位） */
+let dossierRetryAt = 0;
+/** 叙事生成进行中锁（防 ensure 即扫与小时 tick 并发双发） */
+let dossierScanning = false;
+
+function startDossierScan(): void {
+  if (dossierTimer) clearInterval(dossierTimer);
+  dossierTimer = setInterval(() => { void maybeDossierNarrative(); }, 60 * 60 * 1000);
+}
+
+/** 生成本周关系史叙事（成功 → 洞察写回流 source=dossier + 推进 editingData.dossierScanKey；
+ *  LLM 未配置/失败/空回包静默不推进周键（下轮小时检查再试，对齐周报先例）；
+ *  写回流/落盘异常走 30 分钟内存退避——独立于 MemorySystem.reflectBackoffUntil / weeklyReport 状态） */
+async function maybeDossierNarrative(): Promise<void> {
+  if (!data || !memorySystem || dossierScanning) return;
+  dossierScanning = true;
+  try {
+    const weekKey = isoWeekKey();
+    const scanRaw = data.editingData?.dossierScanKey;
+    const scanKey = typeof scanRaw === 'string' ? scanRaw : '';
+    const events = getDossierEvents(data);
+    if (!shouldScanDossierNarrative(scanKey, weekKey, events, Date.now())) return;
+    if (Date.now() < dossierRetryAt) return; // 失败退避窗口内不重试
+    const text = await generateDossierNarrative(buildNarrativeInput(events, Date.now()));
+    if (!text) return; // AI 未配置 / 失败静默（不推进周键）
+    await memorySystem.addInsight(`【一起的日子】${text}`, [], 0.6, undefined, 'dossier');
+    advanceDossierScanKey(dataProvider(), weekKey);
+    await dataSaver(dataProvider());
+  } catch (e) {
+    // 写路径失败静默 + 独立内存退避
+    dossierRetryAt = Date.now() + 30 * 60 * 1000;
+  } finally {
+    dossierScanning = false;
   }
 }
 
@@ -932,6 +981,12 @@ export function unloadSmartCat(): void {
     clearInterval(weeklyReportTimer);
     weeklyReportTimer = null;
   }
+  // 关系史叙事扫描调度（ticket 094）
+  if (dossierTimer) {
+    clearInterval(dossierTimer);
+    dossierTimer = null;
+  }
+  dossierRetryAt = 0;
   if (trendDriftTimer) {
     clearInterval(trendDriftTimer);
     trendDriftTimer = null;
