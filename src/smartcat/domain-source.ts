@@ -2,6 +2,7 @@
  * 域 JSON 感知（2026-08-23 用户拍板扩展）：CONFIG/STORAGE 下各域数据文件的新增条目 → 观察文本。
  * 独立模块供 index 调用 + 单测覆盖；extract 纯函数：prev 记录已见状态（首次快照不产出）。
  * ticket 075：memo 项移除——备忘录改走方法监听（notifyMemoAction），防 JSON 事件通道双记录。
+ * ticket 079：belongings 项移除——归物本改走方法监听（notifyBelongingsAction），防双记录。
  */
 
 export interface DomainExtractor {
@@ -47,21 +48,10 @@ export const DOMAIN_FILES: Record<string, DomainExtractor> = {
       return null;
     },
   },
-  // favorites 已移除（ticket 078）：收藏本观察改走方法监听（favorites-source/notifyFavoritesAction）——
+// favorites 已移除（ticket 078）：收藏本观察改走方法监听（favorites-source/notifyFavoritesAction）——
   // 「你收藏了一条新资源」无标题计数观察不再产（只增不减、删除后计数失真问题随之解除）。
-  belongings: {
-    file: 'CONFIG/STORAGE/belongings.json',
-    extract: (raw, prev) => {
-      const items = raw?.items || raw;
-      if (!items || typeof items !== 'object') return null;
-      const n = Object.keys(items).length;
-      if (n > (Number(prev.get('belN') || 0))) {
-        prev.set('belN', String(n));
-        return '你登记了一件新物品';
-      }
-      return null;
-    },
-  },
+  // belongings 已移除（ticket 079）：归物本改走方法监听（notifyBelongingsAction），
+  // 「你登记了一件新物品」计数观察不再产（无名称、只增不减、状态流转/编辑不反映、删除失真）。
 };
 
 /** 遍历所有域：首次快照（记录当前状态，不产出观察）；返回已存在数据文件的域列表 */

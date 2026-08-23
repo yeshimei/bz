@@ -14,9 +14,9 @@
 import type { App, TAbstractFile } from 'obsidian';
 import { DIARY_DIRECTORY } from '../diary/config';
 
-// 'favorites' 加入联合仅供 onVaultActivity 防御性短接（ticket 078 方法监听：收藏本是 JSON 数据域，
-// classifyPath 只认 .md 不产该值，类型成员零运行时影响）
-export type ActivityKind = 'diary' | 'flash' | 'clipping' | 'movie' | 'reading' | 'poem' | 'letter' | 'reflection' | 'domain' | 'favorites' | null;
+// 'favorites'/'belongings' 加入联合仅供 onVaultActivity 防御性短接（ticket 078/079 方法监听：
+// 收藏本/归物本是 JSON 数据域，classifyPath 只认 .md 不产该值，类型成员零运行时影响）
+export type ActivityKind = 'diary' | 'flash' | 'clipping' | 'movie' | 'reading' | 'poem' | 'letter' | 'reflection' | 'domain' | 'favorites' | 'belongings' | null;
 
 /** 默认 flash（卡片盒）目录（flash 域 ALLOW_PATHS 默认含卡片盒；可配目录后续扩展） */
 const FLASH_DIR = '卡片盒';
