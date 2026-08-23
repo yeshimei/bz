@@ -5,16 +5,25 @@
  * ticket 079：belongings 项移除——归物本改走方法监听（notifyBelongingsAction），防双记录。
  * ticket 080：pomodoro 项移除——番茄钟改走方法监听（notifyPomodoroAction），防 JSON 事件通道双记录。
  * ticket 082：quiz/review 项移除——用户拍板去掉这两个盲通道计数观察（「你做了几道题」/「完成复习」不再产）。
- * 至此原 JSON 盲通道全清空；ticket 081（书库 weave-data.json 数据文件监听）合并后重新注入 library 条目。
+ * ticket 081：library 唯一条目——weave-data.json 数据文件监听（书库 UI 零写操作，阅读数据由外部
+ * Weave EPUB Reader 落盘；extract 返回结构化 diff（LibraryWeaveDiff）：书架/时长事件即时入流，
+ * 划线/想法事件由 index 层 5 分钟防抖合并，见 library-source.ts 与 index.ts）。
  */
+import { libraryWeaveExtract, type LibraryWeaveDiff } from './library-source';
 
 export interface DomainExtractor {
   file: string;
-  extract: (raw: any, prev: Map<string, string>) => string | null;
+  /** 返回 null = 无变化；string/string[] = 观察文本（原各域）；LibraryWeaveDiff = library 结构化 diff（index 层区分即时/防抖） */
+  extract: (raw: any, prev: Map<string, string>) => string | string[] | LibraryWeaveDiff | null;
 }
 
 export const DOMAIN_FILES: Record<string, DomainExtractor> = {
-  // 全部盲通道已移除（见头部注释），等待 ticket 081 library 条目注入。
+  library: {
+    // ticket 081：weave-data.json 数据文件监听先例——外部插件写库，bz 侧盲通道 diff（library-source.ts；v2 结构化 diff）
+    file: 'CONFIG/STORAGE/weave-data.json',
+    extract: libraryWeaveExtract,
+  },
+  // 其余盲通道全部移除（见头部注释）：memo/news/favorites/belongings/pomodoro/quiz/review 不再产计数观察。
 };
 
 /** 遍历所有域：首次快照（记录当前状态，不产出观察）；返回已存在数据文件的域列表 */
