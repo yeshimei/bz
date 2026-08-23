@@ -137,3 +137,77 @@ describe('smartcat 桌面拖拽', () => {
     expect(parseFloat(cat.style.top)).toBe(t);
   });
 });
+
+/** jsdom 无 TouchEvent：派发带 touches 的普通 Event */
+function touch(target: EventTarget, type: string, x: number, y: number): void {
+  const e: any = new Event(type, { bubbles: true });
+  e.touches = [{ clientX: x, clientY: y }];
+  e.changedTouches = [{ clientX: x, clientY: y }];
+  target.dispatchEvent(e);
+}
+
+describe('面板开着小橘仍可拖动（不定死）', () => {
+  it('设置弹窗打开：鼠标拖拽正常；长按与连击手势被抑制', () => {
+    const deps = makeDeps() as unknown as { openSettings: () => void } & InteractionDeps;
+    const openSettings = vi.fn();
+    deps.openSettings = openSettings;
+    manager = new InteractionManager(deps as unknown as InteractionDeps);
+    manager.setupInteractions();
+    manager.isSettingsOpen = true;
+    const cat = document.getElementById(CAT_CONTAINER_ID)!;
+    // 按住超过长按阈值：不触发 openSettings
+    mouse(cat, 'mousedown', 200, 200);
+    vi.advanceTimersByTime(900);
+    expect(openSettings).not.toHaveBeenCalled();
+    // 但拖拽照常工作
+    mouse(document, 'mousemove', 260, 180);
+    expect(cat.style.left).not.toBe('');
+    const l1 = parseFloat(cat.style.left);
+    mouse(document, 'mousemove', 300, 180);
+    expect(parseFloat(cat.style.left)).toBeGreaterThan(l1);
+    mouse(document, 'mouseup', 300, 180);
+    // 原地点击不进连击计数
+    mouse(cat, 'mousedown', 300, 180);
+    mouse(document, 'mouseup', 300, 180);
+    expect((manager as unknown as { tapCount: number }).tapCount).toBe(0);
+  });
+
+  it('聊天面板打开：触摸拖拽正常；双击不再重复开聊天', () => {
+    const deps = makeDeps() as unknown as { openChat: () => void } & InteractionDeps;
+    const openChat = vi.fn();
+    deps.openChat = openChat;
+    manager = new InteractionManager(deps as unknown as InteractionDeps);
+    manager.setupInteractions();
+    manager.isChatOpen = true;
+    const cat = document.getElementById(CAT_CONTAINER_ID)!;
+    touch(cat, 'touchstart', 100, 100);
+    touch(cat, 'touchmove', 160, 140);
+    expect(cat.style.left).not.toBe('');
+    touch(cat, 'touchend', 160, 140);
+    // 快速双击（无位移）：不触发 handleTap → 不重复开聊天
+    touch(cat, 'touchstart', 160, 140);
+    touch(cat, 'touchend', 160, 140);
+    touch(cat, 'touchstart', 160, 140);
+    touch(cat, 'touchend', 160, 140);
+    vi.advanceTimersByTime(700);
+    expect(openChat).not.toHaveBeenCalled();
+    expect((manager as unknown as { tapCount: number }).tapCount).toBe(0);
+  });
+
+  it('面板全关后手势恢复：双击正常打开聊天', () => {
+    const deps = makeDeps() as unknown as { openChat: () => void } & InteractionDeps;
+    const openChat = vi.fn();
+    deps.openChat = openChat;
+    manager = new InteractionManager(deps as unknown as InteractionDeps);
+    manager.setupInteractions();
+    manager.isSettingsOpen = true;
+    manager.isSettingsOpen = false; // 开又关，确保状态复位路径无残留
+    const cat = document.getElementById(CAT_CONTAINER_ID)!;
+    touch(cat, 'touchstart', 100, 100);
+    touch(cat, 'touchend', 100, 100);
+    touch(cat, 'touchstart', 100, 100);
+    touch(cat, 'touchend', 100, 100);
+    vi.advanceTimersByTime(700);
+    expect(openChat).toHaveBeenCalledTimes(1);
+  });
+});
