@@ -272,15 +272,18 @@
 }
 
 /* 气泡容器与气泡（原 cat-bubbles-container / cat-bubble；堆叠 transform 动态计算保留内联）
-   用户反馈原 65px 太靠下 → 上移 95px，气泡浮在猫头顶上方更明显 */
+   用户反馈原 65px 太靠下 → 上移 95px，气泡浮在猫头顶上方更明显；
+   2026-08-23 修偏移：容器锚头顶正上方水平居中（原右对齐——移动端容器比猫体宽时气泡整体偏右），
+   水平夹紧由 bubble.ts 检测屏幕边缘后写 --bz-sc-shift（气泡永不超出视口，见同节 transform）。 */
 #smart-companion-cat .cat-bubbles-container {
   position: absolute;
   bottom: 95px;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  align-items: flex-end;
+  align-items: center;
   gap: 8px;
   pointer-events: none;
   max-height: 300px;
@@ -295,7 +298,7 @@
   padding: 12px 16px;
   border-radius: 16px;
   font-size: 13px;
-  max-width: 300px;
+  max-width: min(300px, calc(100vw - 16px));
   min-width: 175px;
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
@@ -304,23 +307,24 @@
   word-wrap: break-word;
   z-index: 10001;
   opacity: 0;
-  transform: translateY(10px) scale(0.95);
+  transform: translateX(var(--bz-sc-shift, 0px)) translateY(10px) scale(0.95);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
 }
 #smart-companion-cat .cat-bubble.show {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translateX(var(--bz-sc-shift, 0px)) translateY(0) scale(1);
 }
 #smart-companion-cat .cat-bubble.hide {
   opacity: 0;
-  transform: translateY(10px) scale(0.95);
+  transform: translateX(var(--bz-sc-shift, 0px)) translateY(10px) scale(0.95);
 }
 #smart-companion-cat .cat-bubble::after {
   content: '';
   position: absolute;
   bottom: -6px;
-  right: 12px;
+  left: 50%;
+  transform: translateX(-50%);
   width: 0;
   height: 0;
   border-left: 6px solid transparent;
@@ -443,18 +447,21 @@
   justify-content: center;
 }
 
-/* 移动端适配（≤768px：猫 70px、气泡 280px、面板 95vw） */
+/* 移动端适配（≤768px：猫 70px、气泡 280px、面板 95vw）
+   猫体水平居中（margin auto 不与 transform 动画冲突）——修「头顶指示/气泡偏移」根因：
+   容器加宽到 70px 后猫体仍按文档流贴左，50% 锚点（指示器/气泡）落在头右侧 10px 处 */
 @media (max-width: 768px) {
   #smart-companion-cat {
     width: 70px;
     height: 70px;
   }
   #smart-companion-cat .cat-body {
+    margin: 0 auto;
     transform: scale(1.2);
     transform-origin: bottom center;
   }
   #smart-companion-cat .cat-bubble {
-    max-width: 280px;
+    max-width: min(280px, calc(100vw - 16px));
   }
 }
 
@@ -941,6 +948,14 @@
   font-size: 13px;
   line-height: 1.7;
   color: var(--text-normal);
+}
+/* 报告页签：懂你报告全文（2026-08-23 从设置弹窗移入，保留换行） */
+.bz-sc-dash-report-text {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text-normal);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 .bz-sc-dash-trend-meta {
   font-size: 11px;

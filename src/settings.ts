@@ -284,10 +284,12 @@ export default interface BzSettings {
   // ===== 🐱 小橘陪伴猫（smartcat 域：桌面宠物 + AI 陪伴）=====
   /** 常驻域开关：开启后 onLayoutReady 启动小橘（猫容器 + 自言自语/心情/动画等常驻行为） */
   smartcatEnabled: boolean;
-  /** 小橘聊天面板：移动端默认全屏（默认关——原居中卡 320px） */
+  /**
+   * 小橘主窗口：移动端默认全屏（默认关——原居中卡）。
+   * 2026-08-23 合并一套（用户拍板）：聊天/设置/数据面板三窗共用本开关；
+   * 原独立键 smartcatDashboardMobileDefaultFullscreen（ticket 071）删除，旧值残留忽略。
+   */
   smartcatMobileDefaultFullscreen: boolean;
-  /** 小橘数据面板：移动端默认全屏（ticket 071，默认关=常规卡 720px） */
-  smartcatDashboardMobileDefaultFullscreen: boolean;
 }
 
 export const DEFAULT_SETTINGS: BzSettings = {
@@ -447,8 +449,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   pomodoroMobileDefaultFullscreen: false,
   encryptMobileDefaultFullscreen: true,
 
-  // 小橘陪伴猫（smartcat 域）
+  // 小橘陪伴猫（smartcat 域；移动端默认全屏键聊天/设置/数据面板共用，2026-08-23 合并一套）
   smartcatEnabled: true,
   smartcatMobileDefaultFullscreen: false,
-  smartcatDashboardMobileDefaultFullscreen: false,
 };

@@ -1,6 +1,6 @@
 /**
- * 小橘数据面板测试（ticket 071）：纯函数层（统计/情绪时间线/分布/成长轨迹/标签表完整性）
- * + UI 层（jsdom：四页签渲染、页签切换、关闭/遮罩、幂等重开、只读不写盘）。
+ * 小橘数据面板测试（ticket 071）：纯函数层（统计/情绪时间线/分布/成长轨迹/周报收集/标签表完整性）
+ * + UI 层（jsdom：五页签渲染、页签切换、报告页签、关闭/遮罩、幂等重开、只读不写盘）。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -14,6 +14,7 @@ import {
   buildSourceDistribution,
   distributionRows,
   buildGrowthTrail,
+  buildWeeklyReports,
   emotionLabel,
   truncateText,
   OCEAN_LABELS,
@@ -63,8 +64,8 @@ function makeApp(fixture: SmartCatData) {
   setSettingsProvider(() => ({
     storagePath: 'CONFIG/STORAGE',
     smartcatEnabled: true,
+    // 2026-08-23 合并一套：数据面板跟随聊天/设置面板共用的开关（原 dashboard 独立键已删）
     smartcatMobileDefaultFullscreen: false,
-    smartcatDashboardMobileDefaultFullscreen: false,
   }) as any);
   return { app, vault };
 }
@@ -129,6 +130,24 @@ describe('dashboard 纯函数', () => {
     expect(Object.keys(TRAIT_GROUP_LABELS).length).toBe(9);
   });
 
+  it('buildWeeklyReports 收集 weekly-report 洞察：新→旧、去前缀、过滤非法与空文本', () => {
+    const iso = (agoH: number) => new Date(Date.now() - agoH * 3600 * 1000).toISOString();
+    const stream = [
+      { id: 'w1', created: iso(1), lastAccessed: iso(1), description: '【本周懂你报告】这周你写了三篇日记。', importance: 0.8, type: 'insight', source: 'weekly-report' },
+      { id: 'r1', created: iso(2), lastAccessed: iso(2), description: '【洞察】反思产物不算报告', importance: 0.7, type: 'insight', source: 'reflection' },
+      { id: 'w2', created: iso(24 * 8), lastAccessed: iso(24 * 8), description: '上周你专注复习。', importance: 0.8, type: 'insight', source: 'weekly-report' },
+      { id: 'w3', created: iso(3), lastAccessed: iso(3), description: '', importance: 0.8, type: 'insight', source: 'weekly-report' }, // 空文本过滤
+      { id: 'o1', created: iso(4), lastAccessed: iso(4), description: '普通观察', importance: 0.5, type: 'observation', source: 'chat' },
+    ] as any[];
+    const rows = buildWeeklyReports(stream);
+    expect(rows.length).toBe(2);
+    expect(rows[0].text).toBe('这周你写了三篇日记。'); // 新的在前 + 前缀已剥
+    expect(rows[1].text).toBe('上周你专注复习。');
+    expect(rows[0].time).toBeGreaterThanOrEqual(rows[1].time);
+    // 空流/缺段兜底
+    expect(buildWeeklyReports([])).toEqual([]);
+  });
+
   it('emotionLabel 已知词中文化、未知词回显；truncateText 截断加省略号', () => {
     expect(emotionLabel('happy')).toBe('开心');
     expect(emotionLabel('mysterious')).toBe('mysterious');
@@ -144,7 +163,7 @@ describe('openSmartcatDashboard UI', () => {
     closeSmartcatDashboard();
   });
 
-  it('打开渲染头行 + 四页签 + 总览英雄区（当前心情与瞬时情绪）', async () => {
+  it('打开渲染头行 + 五页签 + 总览英雄区（当前心情与瞬时情绪）', async () => {
     const { app } = makeApp(fixtureData());
     await openSmartcatDashboard(app as any);
     const popup = document.getElementById('smartcat-dashboard-panel');
@@ -153,7 +172,7 @@ describe('openSmartcatDashboard UI', () => {
     expect(popup!.querySelector('.bz-win-head')).not.toBeNull();
     expect(popup!.querySelector('#smartcat-dash-close')).not.toBeNull();
     expect(popup!.querySelector('#smartcat-dash-refresh')).not.toBeNull();
-    expect(popup!.querySelectorAll('.bz-sc-dash-tab').length).toBe(4);
+    expect(popup!.querySelectorAll('.bz-sc-dash-tab').length).toBe(5);
     const overview = popup!.querySelector('[data-pane="overview"]') as HTMLElement;
     expect(overview.style.display).not.toBe('none');
     expect(overview.textContent).toContain('心情好');
@@ -203,6 +222,39 @@ describe('openSmartcatDashboard UI', () => {
     expect(pane.querySelectorAll('.bz-sc-dash-tl-item.neg').length).toBe(1);
   }, 15000);
 
+  /** 带两期周报的夹具（报告页签专用；不动共享 fixtureData 以免影响既有计数断言） */
+  function fixtureWithReports(): SmartCatData {
+    const d = fixtureData();
+    d.memory.stream.push(
+      { id: 'wr1', created: new Date(Date.now() - 3600 * 1000).toISOString(), lastAccessed: new Date(Date.now() - 3600 * 1000).toISOString(), description: '【本周懂你报告】这周你写了三篇日记，心情整体向上。', importance: 0.8, type: 'insight', source: 'weekly-report' },
+      { id: 'wr2', created: new Date(Date.now() - 8 * 24 * 3600 * 1000).toISOString(), lastAccessed: new Date(Date.now() - 8 * 24 * 3600 * 1000).toISOString(), description: '【本周懂你报告】上周你的主题是复习计划。', importance: 0.8, type: 'insight', source: 'weekly-report' },
+    );
+    return d;
+  }
+
+  it('报告页签（2026-08-23 周报移入）：最新一期全文 + 历史报告列表', async () => {
+    const { app } = makeApp(fixtureWithReports());
+    await openSmartcatDashboard(app as any);
+    const popup = document.getElementById('smartcat-dashboard-panel')!;
+    (popup.querySelector('[data-tab="report"]') as HTMLElement).click();
+    const pane = popup.querySelector('[data-pane="report"]') as HTMLElement;
+    // 最新一期全文（去前缀）
+    expect(pane.textContent).toContain('本周懂你报告');
+    expect(pane.textContent).toContain('这周你写了三篇日记，心情整体向上。');
+    // 历史：第二期在列
+    expect(pane.textContent).toContain('上周你的主题是复习计划。');
+    expect(pane.querySelectorAll('.bz-sc-dash-memory').length).toBe(1);
+  }, 15000);
+
+  it('报告页签空态：无周报时给生成时机提示不抛错', async () => {
+    const { app } = makeApp(fixtureData());
+    await openSmartcatDashboard(app as any);
+    const popup = document.getElementById('smartcat-dashboard-panel')!;
+    (popup.querySelector('[data-tab="report"]') as HTMLElement).click();
+    const pane = popup.querySelector('[data-pane="report"]') as HTMLElement;
+    expect(pane.textContent).toContain('本周报告还没生成');
+  }, 15000);
+
   it('关闭按钮移除 DOM；遮罩点击关闭；重复打开幂等（仅一实例）', async () => {
     const { app } = makeApp(fixtureData());
     await openSmartcatDashboard(app as any);
@@ -239,7 +291,7 @@ describe('openSmartcatDashboard UI', () => {
     const vault = new MockVault();
     const app = mockAppWithVault(vault);
     setApp(app);
-    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', smartcatDashboardMobileDefaultFullscreen: false }) as any);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', smartcatMobileDefaultFullscreen: false }) as any);
     await openSmartcatDashboard(app as any);
     const popup = document.getElementById('smartcat-dashboard-panel')!;
     expect(popup.textContent).toContain('平常心'); // 默认 PAD 50/50/50 → 中性档

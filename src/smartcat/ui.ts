@@ -3,13 +3,16 @@
  * 铁律 9 收敛：13 皮肤的全部视觉（渐变/辉光/动画）静态进 styles.css
  * （.bz-sc-skin-orange 等类），本模块只切换类；猫容器 id 保留 #smart-companion-cat（外部约定）。
  * 面板（聊天/设置）走 bz 主窗口规范：createOverlay + escManager + .bz-win-head +
- * applyMobileWindowFullscreen + openSettingsModal（用户拍板：面板样式统一 bz）。
+ * applyMobileWindowFullscreen + openSettingsModal（用户拍板：面板样式统一 bz；
+ * 2026-08-23 二次拍板：聊天/设置/数据面板桌面与移动合并一套——同一组件、
+ * 同一个「移动端默认全屏」开关（smartcatMobileDefaultFullscreen），聊天头行不放 ⚙️，
+ * 设置统一由小橘本体长按打开）。
  */
 import { Setting } from 'obsidian';
 import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
-import { openSettingsModal } from '../core/settings-modal';
+import { closeSettingsModal, openSettingsModal } from '../core/settings-modal';
 import { notice } from '../core/notice';
 import type { Appearance } from './types';
 
@@ -96,12 +99,12 @@ export interface SmartcatPanels {
 }
 
 /**
- * 创建聊天面板（bz 主窗口规范：createOverlay + .bz-win-head + ⚙️设置 + ❌关闭 + ESC）
- * 设置走 openSettingsModal（⚙️）；移动端默认全屏由 index 每次打开调用 applyMobileWindowFullscreen。
+ * 创建聊天面板（bz 主窗口规范：createOverlay + .bz-win-head + ❌关闭 + ESC）
+ * 2026-08-23 用户拍板：头行不放 ⚙️ 设置图标——设置统一由小橘本体长按打开；
+ * 移动端默认全屏由 index 每次打开调用 applyMobileWindowFullscreen。
  */
 export function createChatPanel(opts: {
   onSend: (message: string) => void;
-  onSettings: () => void;
   onClose: () => void;
 }): SmartcatPanels {
   const { mask, popup } = createOverlay({
@@ -120,7 +123,6 @@ export function createChatPanel(opts: {
   header.innerHTML = `
     <h3 style="margin:0;font-size:18px;font-weight:600;color:var(--text-normal);">小橘聊天</h3>
     <div>
-      <button id="smartcat-btn-settings" title="设置" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">⚙️</button>
       <button id="smartcat-btn-close" class="bz-win-close" title="关闭" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0;width:21px;height:25px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">❌</button>
     </div>
   `;
@@ -159,7 +161,6 @@ export function createChatPanel(opts: {
   mask.style.display = 'none';
   popup.style.display = 'none';
 
-  header.querySelector('#smartcat-btn-settings')!.addEventListener('click', () => opts.onSettings());
   header.querySelector('#smartcat-btn-close')!.addEventListener('click', () => opts.onClose());
   const handle = escManager.register('smartcat-chat', {
     isVisible: () => popup.style.display === 'flex',
@@ -201,6 +202,9 @@ export interface SettingsModalBuildResult {
 /**
  * 打开 smartcat 域设置弹窗（bz openSettingsModal；外观/人格成长可视化/间隔/概率/记忆量/
  * 上下文长度/比例 + 移动端全屏）。ADR-0023：预设「性格」下拉删除 → OCEAN+traits 可视化。
+ * 2026-08-23 合并一套：① 弹窗与聊天面板共用同一「移动端默认全屏」开关（打开即应用）；
+ * ② 人格成长可视化不再分端（桌面/移动同内容）；③ 「每周懂你报告」入口换成
+ * 「打开数据面板」（周报全文移入数据面板「报告」页签）。
  */
 export function openSmartcatSettings(opts: {
   getConfig: () => any;
@@ -211,11 +215,8 @@ export function openSmartcatSettings(opts: {
   onClose?: () => void;
   getPersonalityGrowth?: () => any;
   resetPersonalityGrowth?: () => Promise<void>;
-  /** 最近一周懂你报告（index 从记忆流取；无 → 提示尚未生成） */
-  getWeeklyReport?: () => string | null;
-  /** 数据面板移动端全屏（ticket 071：bz-smartcat-dashboard 主窗口设置行，仅移动端显示） */
-  getDashboardMobileFullscreen?: () => boolean;
-  setDashboardMobileFullscreen?: (v: boolean) => Promise<void>;
+  /** 「打开数据面板」按钮回调（index 注入：关设置弹窗 → openSmartcatDashboard） */
+  onOpenDashboard?: () => void;
   /** 选皮肤即时生效（换色块后立刻切猫容器皮肤类，不必重载插件） */
   onAppearanceChanged?: (appearance: Appearance) => void;
 }): void {
@@ -252,9 +253,10 @@ export function openSmartcatSettings(opts: {
       }
       el.appendChild(grid);
 
-      // ADR-0023：人格成长可视化（OCEAN 5 轴 + 关键特质条形）；2026-08-23 用户拍板：移动端不显示人格数据列表
+      // ADR-0023：人格成长可视化（OCEAN 5 轴 + 关键特质条形）
+      // 2026-08-23 合并一套：桌面/移动同内容（原「移动端不显示」分端差异删除）
       const g = opts.getPersonalityGrowth?.();
-      if (g && !isMobileEnv()) {
+      if (g) {
         const panelEl = el.createDiv({ cls: 'bz-sc-personality-panel' });
         const bar = (label: string, v: number) =>
           `<div class="bz-sc-trait-row"><span class="bz-sc-trait-name">${label}</span>` +
@@ -373,35 +375,24 @@ export function openSmartcatSettings(opts: {
           });
         });
 
-      // 每周懂你报告（2026-08-23：查看最近一份；弹窗展示全文）
-      if (opts.getWeeklyReport) {
+      // 数据面板入口（2026-08-23 用户拍板：原「每周懂你报告」行替换——周报全文移入数据面板「报告」页签）
+      if (opts.onOpenDashboard) {
         new Setting(el)
-          .setName('每周懂你报告')
-          .setDesc('小橘每周总结你的一周：心情、主题、学到的你')
+          .setName('打开数据面板')
+          .setDesc('查看小橘的全量状态与每周懂你报告（心情/情绪/人格/记忆/报告）')
           .addButton((btn: any) => {
-            btn.setButtonText('查看本周报告').onClick(() => {
-              const report = opts.getWeeklyReport?.() ?? null;
-              openWeeklyReportModal(report);
+            btn.setButtonText('打开数据面板').onClick(() => {
+              closeSettingsModal();
+              opts.onOpenDashboard!();
             });
           });
       }
 
-      // 数据面板移动端全屏（ticket 071：仅移动端显示，主窗口规范三件事之三）
-      if (isMobileEnv() && opts.setDashboardMobileFullscreen) {
-        new Setting(el)
-          .setName('移动端默认全屏（数据面板）')
-          .setDesc('移动端打开小橘数据面板时默认全屏显示（≤768px；关=常规卡）')
-          .addToggle((toggle: any) =>
-            toggle.setValue(opts.getDashboardMobileFullscreen?.() === true).onChange(async (v: boolean) => {
-              await opts.setDashboardMobileFullscreen!(v);
-            })
-          );
-      }
-
       if (isMobileEnv()) {
+        // 移动端默认全屏（聊天/设置/数据面板共用同一开关，2026-08-23 合并一套）
         new Setting(el)
           .setName('移动端默认全屏')
-          .setDesc('移动端打开聊天面板时默认全屏显示（≤768px；关=常规卡）')
+          .setDesc('移动端打开小橘聊天/设置/数据面板时默认全屏显示（≤768px；关=常规卡）')
           .addToggle((toggle: any) =>
             toggle.setValue(!!opts.settingsKeys.mobileFullscreen).onChange(async (v: boolean) => {
               await opts.setMobileFullscreen(v);
@@ -410,6 +401,9 @@ export function openSmartcatSettings(opts: {
       }
     },
   });
+
+  // 设置弹窗跟随同一「移动端默认全屏」开关（与聊天面板一套；桌面端 applyMobileWindowFullscreen 内部直接摘类）
+  applyMobileWindowFullscreen(document.getElementById('bz-settings-modal-popup'), !!opts.settingsKeys.mobileFullscreen);
 }
 
 function skinLabel(skin: Appearance): string {
@@ -419,48 +413,4 @@ function skinLabel(skin: Appearance): string {
     crystal: '水晶透明', cyberpunk: '赛博朋克', rainbow: '彩虹渐变', hologram: '全息投影',
   };
   return labels[skin] || skin;
-}
-
-/** 每周懂你报告弹窗（bz 主窗口规范：createOverlay + .bz-win-head + ESC/遮罩关闭） */
-function openWeeklyReportModal(report: string | null): void {
-  const { mask, popup } = createOverlay({
-    maskId: 'smartcat-report-mask',
-    popupId: 'smartcat-report-panel',
-    zIndex: 9997,
-    onMaskClick: () => close(),
-    width: '88%',
-    maxWidth: 420,
-  });
-  const header = document.createElement('div');
-  header.className = 'bz-win-head';
-  header.innerHTML = `
-    <h3 style="margin:0;font-size:18px;font-weight:600;color:var(--text-normal);">小橘的懂你报告</h3>
-    <div>
-      <button id="smartcat-report-close" class="bz-win-close" title="关闭" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0;width:21px;height:25px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">❌</button>
-    </div>
-  `;
-  popup.appendChild(header);
-  const body = document.createElement('div');
-  body.className = 'bz-sc-report-body';
-  body.style.cssText = 'padding:12px 24px 20px;font-size:14px;line-height:1.7;color:var(--text-normal);white-space:pre-wrap;max-height:52vh;overflow-y:auto;';
-  body.textContent = report
-    ? report.replace(/^【本周懂你报告】/, '')
-    : '本周报告还没生成。小橘会在每周二（本周有观察后）自动总结你的这一周，也可以多写写日记/闪念让我更懂你。';
-  popup.appendChild(body);
-  document.body.appendChild(mask);
-  document.body.appendChild(popup);
-  mask.style.display = 'block';
-  popup.style.display = 'flex';
-  popup.style.maxHeight = '60vh';
-  popup.style.flexDirection = 'column';
-  const close = () => {
-    mask.remove();
-    popup.remove();
-    handle.unregister();
-  };
-  header.querySelector('#smartcat-report-close')!.addEventListener('click', close);
-  const handle = escManager.register('smartcat-report', {
-    isVisible: () => popup.isConnected,
-    close,
-  });
 }
