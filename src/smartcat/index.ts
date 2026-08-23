@@ -21,6 +21,7 @@ import { callChat, isAIConfigured } from './api';
 import { generateBookDescription, hasBookTag } from './content';
 import { classifyPath, observationText } from './context-source';
 import { buildMovieActionText, type MovieActionEvent } from './movie-source';
+import { buildNewsReadText, buildNewsSavedFullText, type NewsReadEvent } from './news-source';
 import { DOMAIN_FILES, snapshotDomains } from './domain-source';
 import { buildRhythmProfile, isActiveNow, describeRhythm, periodText, isoWeekKey } from './rhythm';
 import { buildWeeklyReportData, generateWeeklyReport, weekWindow } from './report';
@@ -51,6 +52,12 @@ let vaultRefs: any[] = [];
 const lastActivity = new Map<string, number>();
 /** 机械去簇（红队 B P1-4）：1 分钟内 ≥5 个不同路径 = 批量导入/同步，折叠为机械事件（不计信任成长） */
 const batchWindow: { path: string; t: number }[] = [];
+/** 聚合讯保存待补全登记（ticket 076，方案 a）：剪藏路径 → 登记（内存态不落盘）；
+ *  auto-summary 写回 frontmatter 的剪藏 modify 命中 → 补全完整保存观察并移除；2 分钟降级定时器兜底。 */
+interface NewsPendingSave { title: string; platform: string; durationMin: number; timer: ReturnType<typeof setTimeout>; }
+const newsPendingSaves = new Map<string, NewsPendingSave>();
+/** 保存降级等待时长（ms；默认 2 分钟，测试可注入缩短） */
+let newsSaveTimeoutMs = 2 * 60 * 1000;
 let visibilityCleanup: (() => void) | null = null;
 let greetTimer: ReturnType<typeof setTimeout> | null = null;
 /** 主动关心调度（2026-08-23：作息模型判定时机，每周 ≤ proactiveWeeklyCap 次温和搭话） */
@@ -193,6 +200,12 @@ export async function ensureSmartCat(app: App): Promise<void> {
     if (!file || !file.path || !data || !personalityGrowth || !memorySystem || !appRef) return;
     const kind = classifyPath(file.path);
     if (!kind || !data.config.noteSource) return;
+    // 聚合讯保存联动补全（ticket 076）：剪藏观察整体停用（不再产「你剪藏了」）；
+    // 唯一例外——命中待补全登记的该剪藏 modify → 只做补全产出（先判补全，未命中则 return）。
+    if (kind === 'clipping') {
+      await completePendingNewsSave(file);
+      return;
+    }
     // 影视动作改由方法监听（ticket 074 修订）：事件通道短路，防 UI 动作双记录
     if (kind === 'movie') return;
     const now = Date.now();
@@ -754,6 +767,10 @@ export function unloadSmartCat(): void {
     vaultRefs = [];
   }
   lastActivity.clear();
+  // 聚合讯保存待补全登记（ticket 076）：定时器全清 + 表清空 + 降级等待复位
+  for (const reg of newsPendingSaves.values()) clearTimeout(reg.timer);
+  newsPendingSaves.clear();
+  newsSaveTimeoutMs = 2 * 60 * 1000;
   if (visibilityCleanup) {
     visibilityCleanup();
     visibilityCleanup = null;
@@ -815,6 +832,122 @@ export function notifyMovieAction(evt: MovieActionEvent): void {
   const text = buildMovieActionText(evt);
   if (text) void memorySystem.addObservation(text, { source: 'movie' });
 }
+
+// ------------- 聚合讯观察（ticket 076：逐篇三态 + 时长 + 保存联动 auto-summary，ADR-0029） -------------
+
+/** 聚合讯逐篇观察入口：news 域 reader 方法监听调用（markAsRead 统一发，fire-and-forget）。
+ *  未初始化 / 未启用（noteSource 关）→ 静默；文案构造见 news-source.buildNewsReadText。 */
+export function notifyNewsRead(evt: NewsReadEvent): void {
+  if (!initialized || !memorySystem || !data?.config?.noteSource) return;
+  const text = buildNewsReadText(evt.state, evt.title, evt.platform, evt.durationMin);
+  if (text) void memorySystem.addObservation(text, { source: 'news' });
+}
+
+/** 保存登记待补全（方案 a）：news 保存成功路径调用（saveToClip → notifyNewsSaved(evt, 剪藏路径)）。
+ *  登记 {标题, 平台, 时长分} 进内存表并启动 2 分钟降级定时器：
+ *  命中 auto-summary 写回的剪藏 modify → 补全完整保存观察并移除登记（clearTimeout）；
+ *  定时器兜底（到时无提交）→ 降级产出保存观察并移除登记。未初始化 / noteSource 关 → 静默。 */
+export function notifyNewsSaved(evt: NewsReadEvent, clipPath: string): void {
+  if (!initialized || !memorySystem || !data?.config?.noteSource) return;
+  const prev = newsPendingSaves.get(clipPath);
+  if (prev) clearTimeout(prev.timer); // 同路径重复保存（覆盖）→ 重置等待
+  const timer = setTimeout(() => {
+    void degradePendingNewsSave(clipPath);
+  }, newsSaveTimeoutMs);
+  newsPendingSaves.set(clipPath, { title: evt.title, platform: evt.platform, durationMin: evt.durationMin, timer });
+}
+
+/** 移除待补全登记（clearTimeout + 删除） */
+function removePendingNewsSave(clipPath: string): void {
+  const reg = newsPendingSaves.get(clipPath);
+  if (reg) clearTimeout(reg.timer);
+  newsPendingSaves.delete(clipPath);
+}
+
+/** 剪藏 modify 补全（onVaultActivity clipping 短路分支）：命中登记 → 读 frontmatter summary/tags → 完整保存观察 → 移除登记 */
+async function completePendingNewsSave(file: any): Promise<void> {
+  const reg = newsPendingSaves.get(file?.path);
+  if (!reg) return;
+  removePendingNewsSave(file.path);
+  const fm = await readClipFrontmatterOrEmpty(file);
+  const text = buildNewsSavedFullText(reg.title, reg.platform, reg.durationMin, fm.summary || null, fm.tags.length ? fm.tags : null);
+  await addNewsSaveObservation(text);
+}
+
+/** 降级：登记后 2 分钟未等到 auto-summary → 读剪藏 frontmatter（错过 modify 事件兜底）→ 产出保存观察并移除登记 */
+async function degradePendingNewsSave(clipPath: string): Promise<void> {
+  const reg = newsPendingSaves.get(clipPath);
+  if (!reg) return; // 已被补全移除
+  removePendingNewsSave(clipPath);
+  const fm = await readClipFrontmatterOrEmpty(clipPath);
+  const text = buildNewsSavedFullText(reg.title, reg.platform, reg.durationMin, fm.summary || null, fm.tags.length ? fm.tags : null);
+  await addNewsSaveObservation(text);
+}
+
+/** 保存联动产出防重复：与近 20 条同文案（保存瞬间 notifyNewsRead 已产的立即形态）→ 跳过，防双条入流 */
+async function addNewsSaveObservation(text: string): Promise<void> {
+  const mem = memorySystem;
+  if (!mem) return;
+  const norm = text.trim();
+  if (mem.stream.slice(-20).some((m) => (m.description || '').trim() === norm)) return;
+  await mem.addObservation(text, { source: 'news' });
+}
+
+/** 读剪藏 frontmatter 的 summary/tags（auto-summary 产物原样处理；正则轻量解析，兼容 list 与 inline 数组两式） */
+async function readClipFrontmatterOrEmpty(fileOrPath: any): Promise<{ summary: string; tags: string[] }> {
+  const empty = { summary: '', tags: [] as string[] };
+  if (!appRef) return empty;
+  let content = '';
+  try {
+    const f = typeof fileOrPath === 'string' ? appRef.vault.getAbstractFileByPath(fileOrPath) : fileOrPath;
+    if (!f) return empty;
+    content = await appRef.vault.read(f);
+  } catch {
+    return empty; // 读取失败按无摘要降级
+  }
+  return parseClipFrontmatter(content);
+}
+
+/** frontmatter summary/tags 轻量解析（正则；兼容 `  - ` list 与 `["a","b"]` inline 两式） */
+export function parseClipFrontmatter(content: string): { summary: string; tags: string[] } {
+  const out: { summary: string; tags: string[] } = { summary: '', tags: [] };
+  const fm = content.match(/^\s*---\s*\n([\s\S]*?)\n\s*---\s*\n/);
+  if (!fm) return out;
+  const tags: string[] = [];
+  let inTags = false;
+  for (const line of fm[1].split('\n')) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('tags:')) {
+      const inline = trimmed.slice(5).trim();
+      if (inline.startsWith('[')) {
+        try {
+          const arr = JSON.parse(inline);
+          if (Array.isArray(arr)) tags.push(...arr.map((t: any) => String(t ?? '').trim()).filter(Boolean));
+        } catch { /* inline 解析失败走 list */ }
+      } else {
+        inTags = true;
+      }
+      continue;
+    }
+    if (inTags) {
+      if (/^\s*-/.test(line)) {
+        const v = line.replace(/^\s*-\s*/, '').trim().replace(/^["']|["']$/g, '');
+        if (v) tags.push(v);
+      } else {
+        inTags = false; // 离开 tags 列表块
+      }
+    }
+    if (trimmed.startsWith('summary:') || trimmed.startsWith('summary：')) {
+      out.summary = trimmed.slice(trimmed.indexOf(':') + 1).trim().replace(/^["']|["']$/g, '');
+    }
+  }
+  out.tags = tags;
+  return out;
+}
+
+/** 测试辅助：注入降级等待时长 / 读取待补全登记表 */
+export function __setNewsSaveTimeoutForTests(ms: number): void { newsSaveTimeoutMs = ms; }
+export function __getNewsPendingSavesForTests(): ReadonlyMap<string, NewsPendingSave> { return newsPendingSaves; }
 
 /** 域 JSON 感知状态（domain-source.ts 提供 extract 纯函数；此处管理监听生命周期） */
 const domainPrev = new Map<string, string>();
