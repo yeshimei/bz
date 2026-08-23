@@ -458,6 +458,60 @@
   }
 }
 
+/* 皮肤平铺选择器（设置弹窗「外观」：13 皮肤平铺，色块对应各皮肤主渐变） */
+.bz-sc-skin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 8px;
+  padding: 4px 0 12px;
+}
+.bz-sc-skin-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 8px 4px 6px;
+  cursor: pointer;
+}
+.bz-sc-skin-item:hover { background: var(--background-modifier-hover); }
+.bz-sc-skin-item.active {
+  border-color: var(--interactive-accent);
+  background: var(--background-modifier-hover);
+}
+.bz-sc-skin-swatch {
+  width: 34px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+}
+.bz-sc-skin-name {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.bz-sc-skin-item.active .bz-sc-skin-name {
+  color: var(--text-normal);
+  font-weight: 600;
+}
+/* 各皮肤色块（逐字对应上方 .skin-* 猫体主渐变） */
+.bz-sc-skin-swatch-orange { background: linear-gradient(135deg, #FF6B35, #F7931E); }
+.bz-sc-skin-swatch-gray { background: linear-gradient(135deg, #95A5A6, #7F8C8D); }
+.bz-sc-skin-swatch-black { background: linear-gradient(135deg, #2C3E50, #34495E); }
+.bz-sc-skin-swatch-white { background: linear-gradient(135deg, #ECF0F1, #BDC3C7); }
+.bz-sc-skin-swatch-calico { background: linear-gradient(135deg, #E74C3C, #F39C12); }
+.bz-sc-skin-swatch-neon { background: linear-gradient(135deg, #00FFFF, #FF00FF); }
+.bz-sc-skin-swatch-galaxy { background: radial-gradient(circle at 30% 30%, #1a1a2e, #16213e, #0f3460); }
+.bz-sc-skin-swatch-liquidMetal { background: linear-gradient(135deg, #ecf0f1 0%, #bdc3c7 25%, #95a5a6 50%, #7f8c8d 75%, #34495e 100%); }
+.bz-sc-skin-swatch-fire { background: linear-gradient(135deg, #ff6b35 0%, #f7931e 25%, #ff8c00 50%, #ff4500 75%, #dc143c 100%); }
+.bz-sc-skin-swatch-crystal { background: linear-gradient(135deg, rgba(255,255,255,0.85), rgba(179,217,255,0.5)); }
+.bz-sc-skin-swatch-cyberpunk { background: linear-gradient(135deg, #00ff88 0%, #0088ff 50%, #ff0088 100%); }
+.bz-sc-skin-swatch-rainbow { background: linear-gradient(135deg, #ff6b6b 0%, #ffa726 16.66%, #ffee58 33.33%, #4ecdc4 50%, #45b7d1 66.66%, #96ceb4 83.33%, #ff6b6b 100%); }
+.bz-sc-skin-swatch-hologram { background: linear-gradient(135deg, rgba(0,255,255,0.65), rgba(255,0,255,0.65), rgba(255,255,0,0.65)); }
+
 /* keyframes（原 SmartCatStyles.js 156 个搬运核心；移动/语音/基础/皮肤动画） */
 @keyframes catFloat {
   0%, 100% { transform: translateY(0); }
