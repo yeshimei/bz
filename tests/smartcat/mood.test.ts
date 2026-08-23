@@ -1,9 +1,10 @@
 /**
- * smartcat 心情系统测试：维度更新（人格乘数/抵抗力/energy 下限/边界/微变化）、
- * 衰减率、持久化（saveMoodState/loadMoodState 24h 语义）、人格成长互动。
+ * smartcat 心情系统测试（PAD 重构版）：PAD 三轴更新（人格乘数/抵抗力/clamp/微变化）、
+ * 原型最近邻判档（断线解除）、registerEmotion、持久化（24h 语义）、衰减、
+ * 互动效果表、PersonalityGrowth（互动驱动 + 反思驱动）。
  */
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { MoodSystem, EmotionalMemory, PersonalityGrowth, MOOD_MAP } from '../../src/smartcat/mood';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { MoodSystem, PersonalityGrowth, MOOD_MAP } from '../../src/smartcat/mood';
 import { defaultSmartCatData } from '../../src/smartcat/data';
 import type { SmartCatData } from '../../src/smartcat/types';
 
@@ -11,191 +12,229 @@ let data: SmartCatData;
 let saver: ReturnType<typeof vi.fn<(d: SmartCatData) => Promise<void>>>;
 
 function make() {
-  freshData();
-  const app = {} as any;
-  return new MoodSystem(app, () => data, saver);
-}
-
-/** 重置 data/saver（EmotionalMemory/PersonalityGrowth 测试用） */
-function freshData() {
   data = defaultSmartCatData();
   saver = vi.fn<(d: SmartCatData) => Promise<void>>(async (d) => { data = d; });
-  return data;
+  return new MoodSystem({} as any, () => data, saver);
 }
 
 beforeEach(() => {
   vi.useRealTimers();
-  freshData();
 });
 
-describe('MoodSystem.updateMood', () => {
-  it('常规加分：happiness +8 → 83（原默认 75）', () => {
+describe('MoodSystem.updatePad（PAD 三轴，性格调制后）', () => {
+  it('愉悦加分：pleasure 上升（默认 55，性格乘数使增量 ≠8）', () => {
     const m = make();
-    m.updateMood('happiness', 8, 'pet');
-    expect(m.dimensions.happiness).toBe(83);
+    m.updatePad('pleasure', 8, 'pet');
+    expect(m.pad.pleasure).toBeGreaterThan(55);
+    expect(m.pad.pleasure).toBeLessThanOrEqual(63);
   });
 
   it('边界 clamp 0-100', () => {
     const m = make();
-    m.updateMood('happiness', 200, 'x');
-    expect(m.dimensions.happiness).toBe(100);
-    m.updateMood('happiness', -500, 'x');
-    expect(m.dimensions.happiness).toBe(0);
-  });
-
-  it('energy 下限强制 5（原 L2220-2222）', () => {
-    const m = make();
-    m.updateMood('energy', -1000, 'x');
-    expect(m.dimensions.energy).toBe(5);
-  });
-
-  it('未知维度按 50 初始化后更新', () => {
-    const m = make();
-    m.updateMood('magic', 10, 'x');
-    expect((m.dimensions as any).magic).toBe(60);
+    m.updatePad('pleasure', 200, 'x');
+    expect(m.pad.pleasure).toBe(100);
+    m.updatePad('pleasure', -500, 'x');
+    expect(m.pad.pleasure).toBe(0);
   });
 
   it('微变化（<0.01）不写入', () => {
     const m = make();
-    m.updateMood('happiness', 0.005, 'x');
-    expect(m.dimensions.happiness).toBe(75);
+    m.updatePad('pleasure', 0.005, 'x');
+    expect(m.pad.pleasure).toBe(55);
   });
 
-  it('人格抵抗力：lively happiness 负向 ×0.8', () => {
+  it('负向抵抗力：默认 traits 下 pleasure 负向有缓冲（变化幅度 < 原始值）', () => {
     const m = make();
-    m.updateMood('happiness', -10, 'x');
-    // lively 抵抗力 0.8 → -8
-    expect(m.dimensions.happiness).toBe(67);
+    m.updatePad('pleasure', -10, 'x');
+    // 无性格调制时 -10；有性格抵抗力时跌幅 <10
+    expect(m.pad.pleasure).toBeGreaterThan(45);
+    expect(m.pad.pleasure).toBeLessThan(55);
   });
 
   it('重要变化（|adjusted|>=1）触发保存', () => {
     const m = make();
-    m.updateMood('happiness', 8, 'pet');
+    m.updatePad('pleasure', 8, 'pet');
     expect(saver).toHaveBeenCalled();
   });
 
   it('历史记录 200 条截断到 100', () => {
     const m = make();
-    for (let i = 0; i < 250; i++) m.updateMood('happiness', 1, 'x');
+    for (let i = 0; i < 250; i++) m.updatePad('pleasure', 1, 'x');
     expect(m.moodHistory.length).toBeLessThanOrEqual(100);
   });
 });
 
-describe('MoodSystem 持久化', () => {
-  it('saveMoodState 写 dimensions/lastUpdate/lastMood', async () => {
+describe('PAD → 5 档（原型最近邻，断线解除）', () => {
+  it('computeMoodLevel：PAD 落在 excellent 原型附近 → excellent', () => {
     const m = make();
-    m.dimensions.happiness = 88;
-    m.currentMood = 'content';
-    await m.saveMoodState();
-    expect(data.mood.dimensions.happiness).toBe(88);
-    expect(data.mood.lastUpdate).toBeGreaterThan(0);
-    expect(data.mood.lastMood).toBe('content');
+    m.pad = { pleasure: 88, arousal: 75, dominance: 62 };
+    expect(m.computeMoodLevel()).toBe('excellent');
   });
 
-  it('loadMoodState：24h 内合并持久化维度（原语义）', () => {
+  it('低愉悦低唤醒 → poor', () => {
     const m = make();
-    data.mood.dimensions.happiness = 42;
-    data.mood.lastUpdate = Date.now();
-    data.mood.lastMood = 'good';
-    m.loadMoodState();
-    expect(m.dimensions.happiness).toBe(42);
+    m.pad = { pleasure: 15, arousal: 20, dominance: 35 };
+    expect(m.computeMoodLevel()).toBe('poor');
+  });
+
+  it('updatePad 后 currentMood 实时跟随（不再恒为 lastMood，断线解除）', () => {
+    const m = make();
+    expect(m.currentMood).toBe('neutral'); // 默认 55/50/50 距 neutral 最近
+    m.updatePad('pleasure', 30, 'x'); // → 85/50/50 → good
     expect(m.currentMood).toBe('good');
+    m.pad = { pleasure: 10, arousal: 15, dominance: 30 };
+    m.updatePad('pleasure', 5, 'x');
+    expect(m.currentMood).toBe('poor');
+  });
+
+  it('MOOD_MAP 5 级原型坐标存在（PAD 三维）', () => {
+    const keys = Object.keys(MOOD_MAP).sort();
+    expect(keys).toEqual(['excellent', 'good', 'low', 'neutral', 'poor']);
+    expect(MOOD_MAP.excellent.emoji).toBe('😻');
+    expect(MOOD_MAP.poor.state).toBe('不开心');
+    expect(MOOD_MAP.excellent.prototype.length).toBe(3);
+  });
+});
+
+describe('registerEmotion（瞬时情绪）', () => {
+  it('写入 currentEmotion 并落盘', async () => {
+    const m = make();
+    m.registerEmotion('curious');
+    expect(data.mood.currentEmotion).toBe('curious');
+    expect(m.getCurrentEmotion()).toBe('curious');
+    expect(saver).toHaveBeenCalled();
+  });
+
+  it('无情绪时返回 null（不误判）', () => {
+    const m = make();
+    expect(m.getCurrentEmotion()).toBeNull();
+  });
+});
+
+describe('MoodSystem 持久化', () => {
+  it('saveMoodState 写 pad/lastUpdate/lastMood', async () => {
+    const m = make();
+    m.pad.pleasure = 88;
+    await m.saveMoodState();
+    expect(data.mood.pad.pleasure).toBe(88);
+    expect(data.mood.lastUpdate).toBeGreaterThan(0);
+    expect(data.mood.lastMood).toBe(m.currentMood);
+  });
+
+  it('loadMoodState：24h 内合并持久化 PAD', () => {
+    const m = make();
+    data.mood.pad = { pleasure: 42, arousal: 40, dominance: 45 };
+    data.mood.lastUpdate = Date.now();
+    m.loadMoodState();
+    expect(m.pad.pleasure).toBe(42);
   });
 
   it('loadMoodState：超 24h 不覆写（保持默认）', () => {
     const m = make();
-    data.mood.dimensions.happiness = 10;
+    data.mood.pad = { pleasure: 10, arousal: 10, dominance: 10 };
     data.mood.lastUpdate = Date.now() - 25 * 60 * 60 * 1000;
     m.loadMoodState();
-    expect(m.dimensions.happiness).toBe(75);
-  });
-});
-
-describe('MoodSystem 心情枚举与 emoji', () => {
-  it('MOOD_MAP 5 级枚举', () => {
-    expect(Object.keys(MOOD_MAP).sort()).toEqual(['excellent', 'good', 'low', 'neutral', 'poor']);
-    expect(MOOD_MAP.excellent.emoji).toBe('😻');
-    expect(MOOD_MAP.poor.state).toBe('不开心');
-  });
-
-  it('getCurrentMoodEmoji：content 未命中回落 neutral emoji（铁律 4 状态死着）', () => {
-    const m = make();
-    expect(m.currentMood).toBe('content'); // 初始（持久化 lastMood 为 neutral 时回落 content）
-    expect(m.getCurrentMoodEmoji()).toBe('😼');
-  });
-
-  it('getOverallMood：content → neutral 兜底', () => {
-    const m = make();
-    expect(m.getOverallMood()).toBe('neutral');
+    expect(m.pad.pleasure).toBe(55);
   });
 });
 
 describe('MoodSystem 衰减与互动', () => {
-  it('startAutoDecay 60s 衰减：interval 运行并保存（单周期 0.02 被 round(×10)/10 吞掉，原版同款）', async () => {
+  it('startAutoDecay 空转守卫：60s 微小变化不落盘，累计 ≥0.5 才落盘', async () => {
     vi.useFakeTimers();
     const m = make();
+    (m as any).lastSavedPad = null;
     m.startAutoDecay();
-    await vi.advanceTimersByTimeAsync(60000); // 1 个周期
-    expect(saver).toHaveBeenCalled();
-    // 10 周期后仍因舍入保持 75（原版行为），但不抛错
-    m.dimensions.happiness = 74.95; // 直接置小值验证下次衰减写入
+    // 首 tick 前无基准 → 落盘一次建立基线
     await vi.advanceTimersByTimeAsync(60000);
-    expect(m.dimensions.happiness).toBeLessThanOrEqual(74.95);
+    (saver as any).mockClear();
+    // 单次 60s 指数回摆（λ=0.07/h，默认 pad 距吸引子仅 ~4）变化 ≪0.5 → 空转不落盘
+    await vi.advanceTimersByTimeAsync(60000);
+    expect(saver).not.toHaveBeenCalled();
+    // 累计 2 小时（~0.5 轴变化）→ 触发落盘
+    await vi.advanceTimersByTimeAsync(2 * 60 * 60000);
+    expect(saver).toHaveBeenCalled();
+    vi.useRealTimers();
   }, 10000);
 
-  it('handleInteraction：pet 加 happiness/affection/energy', () => {
+  it('handleInteraction：pet 加 pleasure/arousal/dominance', () => {
     const m = make();
     m.handleInteraction('pet', 1);
-    expect(m.dimensions.happiness).toBeGreaterThan(75);
-    expect(m.dimensions.affection).toBeGreaterThan(50);
+    expect(m.pad.pleasure).toBeGreaterThan(55);
+    expect(m.pad.arousal).toBeGreaterThan(50);
+    expect(m.pad.dominance).toBeGreaterThan(50);
   });
 });
 
-describe('EmotionalMemory.recordMemory', () => {
-  it('重要性低于阈值 → 不记录', async () => {
-    const app = {} as any;
-    const emo = new EmotionalMemory(app, () => data, saver);
-    const r = await emo.recordMemory({ interactionType: 'click' }, [{ dimension: 'happiness', change: 0.5 }], 0.1);
-    expect(r).toBeNull();
-    expect(emo.store.memories.length).toBe(0);
+describe('PersonalityGrowth（MATE ADR-0023）', () => {
+  beforeEach(() => {
+    data = defaultSmartCatData();
+    saver = vi.fn<(d: SmartCatData) => Promise<void>>(async (d) => { data = d; });
   });
 
-  it('重要记忆记录 + 统计更新 + 标签', async () => {
-    const app = {} as any;
-    const emo = new EmotionalMemory(app, () => data, saver);
-    const r = await emo.recordMemory(
-      { interactionType: 'pet', tags: ['x'] },
-      [{ dimension: 'happiness', change: 8 }, { dimension: 'affection', change: 6 }],
-      0.8
-    );
-    expect(r).not.toBeNull();
-    expect(emo.store.memories.length).toBe(1);
-    expect(emo.store.statistics.totalMemories).toBe(1);
-    expect(emo.store.memories[0].tags).toContain('interaction_pet');
+  it('pet 互动 → character_transition 微移（warmth 成长 + trust 上升）', async () => {
+    const pg = new PersonalityGrowth(() => data, saver);
+    const beforeWarmth = data.personalityGrowth.traits.warmth;
+    const beforeTrust = data.personalityGrowth.relationship.trust;
+    await pg.developBasedOnInteraction('pet', 1);
+    expect(data.personalityGrowth.traits.warmth).toBeGreaterThan(beforeWarmth);
+    expect(data.personalityGrowth.relationship.trust).toBeGreaterThan(beforeTrust);
+    expect(data.personalityGrowth.growthHistory.length).toBe(1);
+    expect(data.personalityGrowth.growthHistory[0].source).toBe('interaction');
   });
 
-  it('同 key 去重（session 内）', async () => {
-    const app = {} as any;
-    const emo = new EmotionalMemory(app, () => data, saver);
-    await emo.recordMemory({ interactionType: 'pet' }, [{ dimension: 'happiness', change: 8 }], 0.8);
-    const r2 = await emo.recordMemory({ interactionType: 'pet' }, [{ dimension: 'happiness', change: 8 }], 0.8);
-    expect(r2).toBeNull();
+  it('写日记/闪念计入信任成长：轻质量 0.15（ticket 025，ADR-0024 决策；软收拢下增量=向 cap 收拢 2%+gain）', async () => {
+    const pg = new PersonalityGrowth(() => data, saver);
+    const before = data.personalityGrowth.relationship.trust;
+    await pg.developBasedOnInteraction('diary', 0.3, 0.02, 0.15);
+    const delta = data.personalityGrowth.relationship.trust - before;
+    expect(delta).toBeGreaterThan(0);
+    // 0.5 → 软收拢 0.85：0.85 + 0.98×((0.5+0.00123)−0.85) = 0.5082（低侧向 cap 收拢）
+    expect(data.personalityGrowth.relationship.trust - before).toBeCloseTo(0.85 + 0.98 * ((before + 0.0082 * 0.15) - 0.85) - before, 6);
+    // 默认 quality 仍为 0.5（既有聊天/抚摸路径不变）：gain 更大 → 收拢后更高
+    const pg2 = new PersonalityGrowth(() => data, saver);
+    const before2 = data.personalityGrowth.relationship.trust;
+    await pg2.developBasedOnInteraction('pet', 1);
+    expect(data.personalityGrowth.relationship.trust - before2).toBeGreaterThan(0);
+    expect(pg2.dataProvider().personalityGrowth.relationship.trust - before2).toBeGreaterThan(delta);
   });
-});
 
-describe('PersonalityGrowth', () => {
-  it('pet 互动成长：sociability +1、independence -0.5', async () => {
+  it('tickBehaviorStats：互动计数 + 活跃时段记录', async () => {
     const pg = new PersonalityGrowth(() => data, saver);
     await pg.developBasedOnInteraction('pet', 1);
-    expect(data.personalityGrowth.traits.sociability).toBe(51);
-    expect(data.personalityGrowth.traits.independence).toBe(49.5);
-    expect(data.personalityGrowth.growthHistory.length).toBe(1);
+    expect(data.personalityGrowth.behaviorStats.interactionCount).toBe(1);
+    expect(data.personalityGrowth.behaviorStats.preferredHour).toBe(new Date().getHours());
   });
 
-  it('getPersonalityInfluence 按特质计算乘数', () => {
+  it('applyWeeklyExperience：周统计折算进 traits（δ≤0.01 深更新，计数清零）', async () => {
     const pg = new PersonalityGrowth(() => data, saver);
-    const infl = pg.getPersonalityInfluence();
-    expect(infl.happinessMultiplier).toBe(1);
-    expect(infl.decayResistance).toBe(1);
+    for (let i = 0; i < 20; i++) await pg.developBasedOnInteraction('pet', 1);
+    const before = data.personalityGrowth.traits.warmth;
+    await pg.applyWeeklyExperience();
+    expect(data.personalityGrowth.traits.warmth).toBeGreaterThanOrEqual(before);
+    expect(data.personalityGrowth.behaviorStats.interactionCount).toBe(0);
+  });
+
+  it('反思驱动：洞察含自我/关于我 → exist_depth 成长（仅反思渠道）', async () => {
+    const pg = new PersonalityGrowth(() => data, saver);
+    const before = data.personalityGrowth.traits.exist_depth;
+    await pg.applyReflectionInsights([{ text: '用户认识到自己是个喜欢深夜写作的人' }]);
+    expect(data.personalityGrowth.traits.exist_depth).toBeGreaterThan(before);
+    expect(data.personalityGrowth.growthHistory.some((h: any) => h.source === 'reflection')).toBe(true);
+  });
+
+  it('反思驱动：情绪温暖洞察 → oxytocin 成长', async () => {
+    const pg = new PersonalityGrowth(() => data, saver);
+    const before = data.personalityGrowth.traits.oxytocin;
+    await pg.applyReflectionInsights([{ text: '用户和小橘之间建立了温暖信任的陪伴关系' }]);
+    expect(data.personalityGrowth.traits.oxytocin).toBeGreaterThan(before);
+  });
+
+  it('反思驱动：无匹配关键字 → 不改变量（空洞察安全）', async () => {
+    const pg = new PersonalityGrowth(() => data, saver);
+    const before = { ...data.personalityGrowth.traits };
+    await pg.applyReflectionInsights([]);
+    expect(data.personalityGrowth.traits).toEqual(before);
+    await pg.applyReflectionInsights([{ text: '与情感无关的描述' }]);
+    expect(data.personalityGrowth.traits).toEqual(before);
   });
 });

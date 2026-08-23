@@ -5,16 +5,15 @@
  * 全部命令/面板操作经回调注入（index 组装，避免模块间循环依赖）。
  */
 import { eventSystem, startThinking, stopThinking, stopAllThinking } from './state';
-import { isMobileEnv } from '../core/mobile';
 import { EVENTS } from './types';
 import { getSmartCatMessage } from './messages';
 import { generatePrompt } from './prompts';
 import { callChat, isAIConfigured } from './api';
+import { buildRetrieveQuery } from './memory';
 import { hasBookTag, getCursorContext, getViewportContent, getCurrentNoteContext, getVisibleContent } from './content';
 import { CAT_CONTAINER_ID } from './ui';
 import type { BubbleManager } from './bubble';
 import type { MoodSystem } from './mood';
-import type { VoiceCommandSystem } from './voice';
 import type { SmartCatConfig } from './types';
 
 export interface InteractionDeps {
@@ -22,12 +21,17 @@ export interface InteractionDeps {
   saveConfig: (c: SmartCatConfig) => Promise<SmartCatDataLike>;
   bubble: BubbleManager;
   mood: MoodSystem;
-  voice: VoiceCommandSystem;
   openChat: () => void;
   closeChat: () => void;
   openSettings: () => void;
   closeSettings: () => void;
   onAppearanceChanged: (appearance: string) => void;
+  /** 记忆流检索（ADR-0021：聊天上下文注入相关记忆；index 注入，避免顶层互访） */
+  retrieveMemories?: (query: string) => Promise<string>;
+  /** 性格数据（ADR-0023：prompt 状态向量用；index 注入 data.personalityGrowth） */
+  characterData?: () => any;
+  /** 互动回流（ADR-0023：每种互动触发性格微移；index 接 PersonalityGrowth.developBasedOnInteraction） */
+  onInteraction?: (type: string, intensity?: number) => void;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -166,7 +170,7 @@ export class InteractionManager {
     eventSystem.emit('mouseUp', { x: endX, y: endY });
   }
 
-  /** 点触连击（原 handleTap：单击抚摸、双击聊天、三击语音、五击设置） */
+  /** 点触连击（原 handleTap：单击抚摸、双击聊天、五击设置；三击语音已删 2026-08-23） */
   private handleTap(): void {
     this.tapCount++;
     if (this.tapCount === 1) {
@@ -184,16 +188,8 @@ export class InteractionManager {
         this.resetTapState();
       }, 300);
     } else if (this.tapCount === 3) {
-      if (this.tapTimer) clearTimeout(this.tapTimer);
-      this.clearLongPressTimer();
-      this.tapTimer = setTimeout(() => {
-        if (isMobileEnv()) {
-          this.deps.voice.toggleSpeechRecognition();
-        } else {
-          this.deps.bubble.showBubble('语音识别在桌面端会闪退，暂不支持哦～');
-        }
-        this.resetTapState();
-      }, 300);
+      // 语音模块已删（用户拍板）——三击无动作，直接复位
+      this.resetTapState();
     } else if (this.tapCount === 5) {
       if (this.tapTimer) clearTimeout(this.tapTimer);
       this.clearLongPressTimer();
@@ -257,6 +253,7 @@ export class InteractionManager {
       }, 500);
     }
     eventSystem.emit(EVENTS.PET_INTERACTION);
+    // 2026-08-23 用户拍板：抚摸=纯互动信号，不持久影响信任/心情/人格（原 ADR-0023 性格微移已移除）
   }
 
   /** 陪伴定时器（原 startCompanionMode：speakInterval 分钟 × 概率；启动 1s 后欢迎/引导气泡） */
@@ -308,7 +305,8 @@ export class InteractionManager {
       if (!context) context = getViewportContent();
 
       const selection = window.getSelection ? (window.getSelection()?.toString() || '').trim() : '';
-      const prompt = generatePrompt('learn', context || '', { dimensions: this.deps.mood.dimensions, personality: cfg.personality });
+      const moodOpts = { pad: this.deps.mood.pad, data: this.deps.characterData?.() ?? null, currentMood: this.deps.mood.currentMood, currentEmotion: this.deps.mood.getCurrentEmotion() };
+      const prompt = generatePrompt('learn', context || '', moodOpts);
 
       if (selection && selection.length <= 1500) {
         startThinking();
@@ -327,7 +325,7 @@ export class InteractionManager {
       }
 
       if (!context || context.length < 10) {
-        const rp = generatePrompt('auto_companion', '', { dimensions: this.deps.mood.dimensions, personality: cfg.personality });
+        const rp = generatePrompt('auto_companion', '', { pad: this.deps.mood.pad, data: this.deps.characterData?.() ?? null, currentMood: this.deps.mood.currentMood, currentEmotion: this.deps.mood.getCurrentEmotion() });
         startThinking();
         this.generateAutoCompanionMessageLock = true;
         try {
@@ -365,7 +363,7 @@ export class InteractionManager {
   async prepareChatMessages(userMessage: string): Promise<any[]> {
     const cfg = this.deps.config();
     const messages: any[] = [];
-    messages.push({ role: 'system', content: generatePrompt('talk', userMessage, { dimensions: this.deps.mood.dimensions, personality: cfg.personality }) });
+    messages.push({ role: 'system', content: generatePrompt('talk', userMessage, { pad: this.deps.mood.pad, data: this.deps.characterData?.() ?? null, currentMood: this.deps.mood.currentMood, currentEmotion: this.deps.mood.getCurrentEmotion() }) });
 
     if (cfg.conversationHistory && cfg.conversationHistory.length > 0) {
       const maxHistoryMessages = Math.min(cfg.shortTermMemory * 2, cfg.conversationHistory.length);
@@ -382,6 +380,19 @@ export class InteractionManager {
       else contentContext = getCursorContext(cfg.contextLength, cfg.contextSplitRatio);
       if (!contentContext) contentContext = getViewportContent();
       if (contentContext) contextMessage += `- 当前内容：${contentContext}\n`;
+    }
+    // ADR-0021：相关记忆注入（记忆流三因子检索；未接线的降级 = 无记忆段）
+    // 2026-08 增强：query 结合用户消息 + 当前情绪 + 时段，检索更贴合当下状态
+    if (this.deps.retrieveMemories) {
+      try {
+        const retrieveQuery = buildRetrieveQuery(userMessage, this.deps.mood.getCurrentEmotion());
+        const memoriesText = await this.deps.retrieveMemories(retrieveQuery);
+        if (memoriesText) {
+          contextMessage += '\n### 相关记忆（小橘记得的事，含来源与时间）\n' + memoriesText + '\n';
+        }
+      } catch (e) {
+        /* 记忆检索失败不阻断聊天 */
+      }
     }
     const finalUserMessage = contextMessage + `\n用户最新消息：${userMessage}`;
     messages.push({ role: 'user', content: finalUserMessage });

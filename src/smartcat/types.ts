@@ -9,22 +9,16 @@ export type Appearance =
   | 'neon' | 'galaxy' | 'liquidMetal' | 'fire' | 'crystal'
   | 'cyberpunk' | 'rainbow' | 'hologram';
 
-/** 性格枚举（5 种；UI 无 custom 项，customPersonality 仅兜底路径读取） */
-export type Personality = 'lively' | 'quiet' | 'wise' | 'cute' | 'mentor';
+/** 性格枚举已废弃（预设人格退役，ADR-0023 对齐 MATE：OCEAN+30 特质成长） */
 
 /** 离散心情状态（MOOD_MAP 5 级；currentMood 初始 'content' 不在枚举内，按原样保留） */
 export type MoodLevel = 'excellent' | 'good' | 'neutral' | 'low' | 'poor';
 
-/** 心情 8 维 */
-export interface MoodDimensions {
-  happiness: number;
-  energy: number;
-  curiosity: number;
-  affection: number;
-  focus: number;
-  creativity: number;
-  productivity: number;
-  relaxation: number;
+/** 心情 PAD 三维（Mehrabian PAD 模型：愉悦/唤醒/支配，0-100；社区对齐，ADR-0021 后心情重构） */
+export interface PadDimensions {
+  pleasure: number;
+  arousal: number;
+  dominance: number;
 }
 
 /** 负面状态 4 项（只展示，原版从不写入） */
@@ -42,6 +36,16 @@ export interface ChatMessage {
   timestamp?: string;
 }
 
+/** 主动关心状态（存 data.editingData.proactiveCare；不进 config——属运行状态） */
+export interface ProactiveCareState {
+  /** 本周 ISO 周键（如 2026-W34） */
+  week: string;
+  /** 本周已主动次数 */
+  count: number;
+  /** 上次主动时间戳 */
+  lastAt: number;
+}
+
 /**
  * 域配置（原 localStorage 'smart-cat-config' 全字段；
  * apiKey 不迁移——AI 走 bz core/ai，用户拍板）
@@ -49,8 +53,6 @@ export interface ChatMessage {
 export interface SmartCatConfig {
   appearance: Appearance;
   customColors: { primary: string; secondary: string };
-  personality: Personality;
-  customPersonality: string;
   speakInterval: number;
   speakProbability: number;
   responseSensitivity: string;
@@ -58,44 +60,99 @@ export interface SmartCatConfig {
   contextSplitRatio: number;
   conversationHistory: ChatMessage[];
   shortTermMemory: number;
+  /** 笔记库接入总开关（ADR-0024 决策：写日记/闪念计入信任成长 + 笔记库内容 = 信息来源；默认开） */
+  noteSource: boolean;
+  /** 主动关心开关（2026-08-23 用户拍板：每周温和主动搭话；默认开） */
+  proactiveCare: boolean;
+  /** 每周主动上限（1-7，默认 2） */
+  proactiveWeeklyCap: number;
 }
 
-/** 心情持久化（原 localStorage 'smart-cat-mood-data'） */
+/** 心情持久化（PAD 三维 + 5 档显示位 + 瞬时情绪；情绪标注经记忆条目/currentEmotion） */
 export interface MoodData {
-  dimensions: MoodDimensions;
+  pad: PadDimensions;
   lastUpdate: number;
   lastMood: string;
+  currentEmotion: string | null;
 }
 
-/** 人格成长（原 localStorage 'smart-cat-personality-growth'） */
+/** OCEAN 五因素人格（0-1，出生随机种子；MATE character_seed 输入） */
+export interface OceanProfile {
+  openness: number;
+  conscientiousness: number;
+  extraversion: number;
+  agreeableness: number;
+  neuroticism: number;
+}
+
+/** 30 特质性格（MATE 论文 Table 2，9 临床群组全量；0-1，logistic 饱和
+ *  冲突键名加群组前缀：def_avoidance/beh_depth/exist_depth） */
+export interface CharacterTraits {
+  // attachment (Bowlby)
+  anxiety: number; avoidance: number; separation_tol: number;
+  // coreBeliefs (Young)
+  self_worth: number; world_safety: number; others_trust: number;
+  // cognitive
+  reflectiveness: number; analytical: number; creativity: number;
+  // defense (Vaillant)
+  humor: number; intellectual: number; def_avoidance: number; support: number;
+  // selfConcept (Rotter/Bandura)
+  locus_control: number; self_esteem: number; self_efficacy: number;
+  // values (Schwartz)
+  enhancement: number; transcendence: number; change: number; conservation: number;
+  // behavioral
+  warmth: number; directness: number; beh_depth: number; conflict: number; optimism: number;
+  // neuro (Cloninger)
+  serotonin: number; dopamine: number; oxytocin: number; cortisol: number;
+  // existential (Yalom)——出生 0.0，仅反思成长
+  exist_depth: number; familiarity: number; concern: number;
+}
+
+/** 性格成长（对齐 MATE：OCEAN 种子 + 30 特质 + 关系张量 + 周统计） */
 export interface PersonalityGrowthData {
-  traits: { playfulness: number; sociability: number; independence: number; curiosity: number };
+  ocean: OceanProfile;
+  traits: CharacterTraits;
+  relationship: { trust: number; attachment: number };
+  behaviorStats: {
+    interactionCount: number;
+    emotionalTone: number;        // 累计情绪基调 -1..1
+    preferredHour: number;        // 活跃时段众数 0-23
+    sessionCount: number;
+  };
   growthHistory: any[];
   lastSave: number;
   version: string;
 }
 
-/** 分层记忆索引条目 */
-export interface MemoryIndexStats {
-  layer: string;
-  accessCount: number;
-  lastAccessed: string | null;
-  importance: number;
+/**
+ * 记忆流条目（GA Memory Object 的 TS 结构，ADR-0021）
+ * 单层记忆：所有观察/洞察同构追加入 stream，检索时按三因子分级。
+ */
+export interface MemoryStreamEntry {
+  id: string;
+  created: string;        // ISO 创建时间
+  lastAccessed: string;   // ISO 最近被检索到时间（检索时更新，自增强）
+  description: string;    // 内容本体（一句话）
+  importance: number;     // 0-1（写入时 LLM 打分 0-10 归一；未配置 AI 时规则打分）
+  type: 'observation' | 'insight'; // 观察 / 反思洞察
+  evidenceIds?: string[]; // 仅 insight：由哪些记忆归纳而来（溯源）
+  source?: string;        // 写入来源（如 'chat'）
+  emotion?: string;       // 情绪标注（LLM 顺带/词法兜底；情感记忆并入记忆流）
 }
 
-/** 记忆层（原 CONFIG/SMART CAT/memories/{layer}.json 结构） */
-export interface MemoryLayer {
-  version: string;
+/** 记忆流（单层，检索时分级；ADR-0021 取代原四层） */
+export interface MemoryStream {
+  version: number;
   lastUpdated: string;
-  memories: any[];
-  maxSize?: number;
-  sessionId?: string;
-  consolidationCount?: number;
-  protected?: boolean;
-  timeIndex?: Record<string, string[]>;
-  topicIndex?: Record<string, string[]>;
-  emotionIndex?: Record<string, string[]>;
-  usageStats?: Record<string, MemoryIndexStats>;
+  stream: MemoryStreamEntry[];
+  reflection: {
+    lastReflectAt: number;
+    count: number;
+    /** 睡前巩固（digest）：上次日小结时间戳（2026-08-23 增强，可选字段旧数据直读） */
+    lastDigestAt?: number;
+    /** 睡前巩固次数 */
+    digestCount?: number;
+  };
 }
 
 /**
@@ -106,15 +163,8 @@ export interface SmartCatData {
   config: SmartCatConfig;
   mood: MoodData;
   personalityGrowth: PersonalityGrowthData;
-  emotionalMemory: any;
-  timeEmotion: any;
   editingData: any;
-  memory: {
-    shortTerm: MemoryLayer;
-    longTerm: MemoryLayer;
-    permanent: MemoryLayer;
-    index: MemoryLayer;
-  };
+  memory: MemoryStream;
 }
 
 /** 域事件名（原 EVENT constants，保留全部） */

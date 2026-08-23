@@ -1,27 +1,31 @@
 /**
  * smartcat 域入口（小橘陪伴猫）
  * ensureSmartCat 幂等懒加载：挂载猫容器 + 装配全部子系统 + 常驻监听
- * （file-open 书评 / visibilitychange 欢迎回来 / 记忆固化）。跟随（原 30 分钟空闲
- * 靠近鼠标）按用户要求已删除。
+ * （file-open 书评 / visibilitychange 欢迎回来 / 记忆固化）。
  * unloadSmartCat 全量清理。命令回调：open（召唤显示）/ chat（聊天）/ hide（隐藏）。
  */
 import type { App } from 'obsidian';
 import { notice } from '../core/notice';
 import { getSettings, saveSettings } from '../core/settings-provider';
-import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath } from './data';
+import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath, defaultPersonalityGrowth } from './data';
 import { eventSystem, setSmartcatApp, setupVisibilityCheck, __resetVisibilityForTests } from './state';
 import { mountCatContainer, unmountCatContainer, applyAppearance, createChatPanel, showChatPanel, hideChatPanel, openSmartcatSettings } from './ui';
 import { BubbleManager } from './bubble';
-import { MoodSystem, EmotionalMemory, PersonalityGrowth } from './mood';
+import { MoodSystem, PersonalityGrowth } from './mood';
 import { MemorySystem } from './memory';
 import { SmartCatAnimation } from './animation';
-import { VoiceCommandSystem } from './voice';
 import { InteractionManager, MobileInputAdapter } from './interaction';
 import { getSmartCatMessage } from './messages';
 import { generatePrompt } from './prompts';
 import { callChat, isAIConfigured } from './api';
 import { generateBookDescription, hasBookTag } from './content';
-import type { SmartCatData, SmartCatConfig } from './types';
+import { classifyPath, observationText } from './context-source';
+import { DOMAIN_FILES, snapshotDomains } from './domain-source';
+import { buildRhythmProfile, isActiveNow, describeRhythm, periodText, isoWeekKey } from './rhythm';
+import { buildWeeklyReportData, generateWeeklyReport, weekWindow } from './report';
+import { analyzeEmotionTrend, buildEmotionSnapshots, describeEmotionTrend, checkContradiction, extractStoredFacts, initBanditArm, sampleThompson, updateBandit } from './cognitive';
+import type { SmartCatData, SmartCatConfig, ProactiveCareState } from './types';
+import type { BanditArmParams } from './cognitive';
 import type { SmartcatPanels } from './ui';
 
 let initialized = false;
@@ -29,16 +33,31 @@ let appRef: App | null = null;
 let data: SmartCatData | null = null;
 let bubbleManager: BubbleManager | null = null;
 let moodSystem: MoodSystem | null = null;
-let emotionalMemory: EmotionalMemory | null = null;
 let personalityGrowth: PersonalityGrowth | null = null;
 let memorySystem: MemorySystem | null = null;
 let animation: SmartCatAnimation | null = null;
-let voiceSystem: VoiceCommandSystem | null = null;
 let interaction: InteractionManager | null = null;
 let mobileAdapter: MobileInputAdapter | null = null;
 let panels: SmartcatPanels | null = null;
 let fileOpenRef: any = null;
+let vaultRefs: any[] = [];
+/** vault 活动去弹跳：同一路径 10 分钟内只计一次（防自动保存连发；非严格只读不影响数据） */
+const lastActivity = new Map<string, number>();
+/** 机械去簇（红队 B P1-4）：1 分钟内 ≥5 个不同路径 = 批量导入/同步，折叠为机械事件（不计信任成长） */
+const batchWindow: { path: string; t: number }[] = [];
 let visibilityCleanup: (() => void) | null = null;
+let greetTimer: ReturnType<typeof setTimeout> | null = null;
+/** 主动关心调度（2026-08-23：作息模型判定时机，每周 ≤ proactiveWeeklyCap 次温和搭话） */
+let proactiveTimer: ReturnType<typeof setInterval> | null = null;
+/** 每周报告调度（每小时检查，10:00 触发生成） */
+let weeklyReportTimer: ReturnType<typeof setInterval> | null = null;
+/** 每周报告状态（editingData.weeklyReport） */
+interface WeeklyReportState { weekKey: string; at: number; }
+function getWeeklyReportState(): WeeklyReportState {
+  const d = dataProvider();
+  const s = (d.editingData?.weeklyReport || {}) as Partial<WeeklyReportState>;
+  return { weekKey: typeof s.weekKey === 'string' ? s.weekKey : '', at: typeof s.at === 'number' ? s.at : 0 };
+}
 
 const dataProvider = (): SmartCatData => {
   if (!data) throw new Error('smartcat: 数据未加载');
@@ -67,72 +86,76 @@ export async function ensureSmartCat(app: App): Promise<void> {
   setSmartcatApp(app);
 
   data = await loadSmartCatData(app);
+  // 竞态守卫：等待期间若被 unload（main 的 void ensureSmartCat 是 fire-and-forget），停止装配
+  if (!initialized) {
+    data = null;
+    return;
+  }
   // 用户拍板：所有数据单 json——首次无文件时也落盘一次（迁移或在空账本上建文件）
   if (!app.vault.getAbstractFileByPath(getSmartcatFilePath())) {
     await saveSmartCatData(app, data);
+  }
+  // 竞态守卫 1.5：首次落盘等待期间被 unload 则停止装配
+  if (!initialized) {
+    data = null;
+    return;
   }
 
   // ---- 子系统装配（顺序与原 SmartCompanionApp 一致） ----
   bubbleManager = new BubbleManager();
   moodSystem = new MoodSystem(app, dataProvider, dataSaver);
-  emotionalMemory = new EmotionalMemory(app, dataProvider, dataSaver);
   personalityGrowth = new PersonalityGrowth(dataProvider, dataSaver);
   memorySystem = new MemorySystem(app, dataProvider, dataSaver);
-  memorySystem.startConsolidationScheduler();
+  // ADR-0021：init = 探测 Ollama + 加载向量 + 反思调度（取代原 24h 固化调度）
+  await memorySystem.init();
+  if (!initialized) return; // 竞态守卫 2：init 期间被 unload 则丢弃装配
+  // 反思驱动人格（ADR-0023：洞察 → existential 成长 + 行为周统计深更新）
+  memorySystem.onReflect = async (insights) => {
+    if (personalityGrowth) {
+      if (insights && insights.length) await personalityGrowth.applyReflectionInsights(insights);
+      // MATE character_from_experience：反思时把累积行为统计折算进 traits（周深更新）
+      await personalityGrowth.applyWeeklyExperience();
+    }
+  };
 
   // 猫容器 + 皮肤 + 动画 + 指示器
   const container = mountCatContainer()!;
   applyAppearance(container, data.config.appearance);
   animation = new SmartCatAnimation(container);
   animation.initialize();
-  // 100ms 后问候（原 SmartCatAnimation module.exports greet）
-  setTimeout(() => animation!.greet(), 100);
+  // 100ms 后问候（原 SmartCatAnimation module.exports greet；定时器挂模块级供 unload 清理）
+  greetTimer = setTimeout(() => animation?.greet(), 100);
 
-  // 语音
-  voiceSystem = new VoiceCommandSystem({
-    openSettings: () => openSettings(),
-    openChat: () => openChat(),
-    closePanels: () => {
-      closeChat();
-      closeSettings();
-    },
-    startReview: () => {
-      try {
-        (app as any).commands?.executeCommandById?.('bz-review-open');
-        bubbleManager!.showBubble('开始复习笔记啦！加油哦～');
-      } catch (e) {
-        bubbleManager!.showBubble('复习计划功能暂不可用');
-      }
-    },
-    casualChat: async (message) => {
-      try {
-        const personality = getConfig().personality;
-        const prompt = generatePrompt('casual_chat', message, { dimensions: moodSystem!.dimensions, personality });
-        const response = await callChat([
-          { role: 'system', content: prompt },
-          { role: 'user', content: `用户说："${message}"。请用简短的一句话回复。` },
-        ]);
-        if (response) bubbleManager!.showBubble(response);
-      } catch (error) {
-        bubbleManager!.showBubble('语音回复失败，请稍后再试');
-      }
-    },
-  });
-  voiceSystem.onShowBubble = (msg) => bubbleManager!.showBubble(msg);
-
-  // 交互
+  // 交互（2026-08-23 用户拍板：删语音模块）
   interaction = new InteractionManager({
     config: getConfig,
     saveConfig,
     bubble: bubbleManager,
     mood: moodSystem,
-    voice: voiceSystem,
     openChat: () => openChat(),
     closeChat: () => closeChat(),
     openSettings: () => openSettings(),
     closeSettings: () => closeSettings(),
     onAppearanceChanged: (appearance) => {
       applyAppearance(mountCatContainer()!, appearance as any);
+    },
+    // ADR-0021：记忆流检索注入聊天上下文（格式化后返回；失败返回空串）
+    retrieveMemories: async (query: string) => {
+      if (!memorySystem) return '';
+      try {
+        const memories = await memorySystem.retrieve(query);
+        return memories.length ? memorySystem.formatMemoriesForPrompt(memories) : '';
+      } catch (e) {
+        return '';
+      }
+    },
+    // ADR-0023：prompt 状态向量数据（性格系统 traits/OCEAN）
+    characterData: () => data,
+    // ADR-0023：互动回流 → 性格微移 + 行为统计（MATE character_transition）
+    onInteraction: (type: string, intensity = 1) => {
+      if (personalityGrowth) {
+        personalityGrowth.developBasedOnInteraction(type, intensity).catch(() => {});
+      }
     },
   });
   interaction.setupInteractions();
@@ -147,6 +170,51 @@ export async function ensureSmartCat(app: App): Promise<void> {
     eventSystem.emit('fileOpened', { file });
     void generateBookReview();
   });
+
+  // 笔记库接入（ADR-0024 决策，ticket 025）：vault create/modify（实时事件，不扫存量）
+  //   → ① 写日记/闪念计入信任成长（轻质量 0.15）② 笔记库内容 → 小橘信息观察（隐私分级）
+  const onVaultActivity = async (file: any) => {
+    if (!file || !file.path || !data || !personalityGrowth || !memorySystem || !appRef) return;
+    const kind = classifyPath(file.path);
+    if (!kind || !data.config.noteSource) return;
+    const now = Date.now();
+    const last = lastActivity.get(file.path) || 0;
+    if (now - last < 10 * 60 * 1000) return;          // 同一路径 10 分钟去弹跳
+    lastActivity.set(file.path, now);
+    if (lastActivity.size > 300) {
+      const first = lastActivity.keys().next().value;
+      if (first !== undefined) lastActivity.delete(first);
+    }
+    // 机械去簇：1 分钟内不同路径 ≥5 条 → 批量导入/同步，折叠为一次机械事件（不计信任、观察合并）
+    const since = now - 60 * 1000;
+    while (batchWindow.length && batchWindow[0].t < since) batchWindow.shift();
+    batchWindow.push({ path: file.path, t: now });
+    const distinct = new Set(batchWindow.map((b) => b.path)).size;
+    const mechanical = distinct >= 5;
+    if (kind === 'diary' || kind === 'flash') {
+      if (!mechanical) {
+        personalityGrowth.developBasedOnInteraction(kind, 0.3, 0.02, 0.15).catch(() => {});
+      }
+    }
+    // PAD 生产补接线（2026-08-23 用户拍板，红队 C G1/G2 消除 sim 专属通道假阳性）：
+    // vault 正向活动轻量影响心情——用生产 EFFECTS 表（不改公式，仅接线），强度 VAULT_PAD_GAIN=0.5
+    if (!mechanical && moodSystem) {
+      const padType = kind === 'diary' ? 'note_create' : kind === 'flash' ? 'note_edit' : 'note_read';
+      moodSystem.handleInteraction(padType as any, 0.5);
+    }
+    try {
+      const text = await observationText(appRef, file as any, kind);
+      // 2026-08-23 用户拍板：所有内容走 LLM 云端打分 + 词法情绪（AI 未配置降级本地规则分）
+      if (text) await memorySystem.addObservation(text, { source: kind });
+    } catch { /* 读取失败静默（不打断主流程） */ }
+  };
+  if (app.vault && typeof (app.vault as any).on === 'function') {
+    vaultRefs.push((app.vault as any).on('create', onVaultActivity));
+    vaultRefs.push((app.vault as any).on('modify', onVaultActivity));
+  }
+
+  // 域 JSON 感知（2026-08-23 用户拍板：CONFIG/STORAGE 域数据 modify → 观察；懒启动探测）
+  void onDomainActivity();
 
   // visibilitychange → 欢迎回来（离开超 60s 才允许）
   visibilityCleanup = setupVisibilityCheck({
@@ -166,8 +234,199 @@ export async function ensureSmartCat(app: App): Promise<void> {
     },
   });
 
+  // 主动关心（2026-08-23：作息模型 + 每周 ≤2 次温和搭话；每 10 分钟检查一次）
+  startProactiveCare();
+  // 每周懂你报告（2026-08-23：每周一检查，有观察则生成写回流 + 气泡展示）
+  startWeeklyReport();
+  void maybeWeeklyReport();
+
   eventSystem.emit('appInitialized');
 }
+
+
+// ---------------- 主动关心（作息模型判定时机，2026-08-23 用户拍板） ----------------
+
+/** 读取主动关心状态（editingData 可空/旧数据无 → 默认） */
+function getProactiveState(): ProactiveCareState {
+  const d = dataProvider();
+  const s = (d.editingData?.proactiveCare || {}) as Partial<ProactiveCareState>;
+  const week = isoWeekKey();
+  // 跨周：重置计数（周键变化即新周）
+  if (s.week !== week) return { week, count: 0, lastAt: typeof s.lastAt === 'number' ? s.lastAt : 0 };
+  return { week, count: typeof s.count === 'number' ? s.count : 0, lastAt: typeof s.lastAt === 'number' ? s.lastAt : 0 };
+}
+
+// ---------------- Bandit 选臂（ticket 035：Thompson 自适应主动关心策略） ----------------
+
+/** Bandit 臂：3 类话术（context 特征 [mood(0-1), hour(0-1)]，reward = 用户是否回应） */
+const BANDIT_ARMS = ['empathy', 'life', 'vault'];
+const BANDIT_DIM = 2;
+
+/** 读取 Bandit 臂参数（无 → 初始化平坦先验；持久化于 editingData.ceBandit，不新增顶层字段） */
+function getBanditArms(): BanditArmParams[] {
+  const d = dataProvider();
+  const raw = (d.editingData?.ceBandit || {}) as Record<string, any>;
+  return BANDIT_ARMS.map((id) => {
+    const p = raw[id];
+    return p ? { ...initBanditArm(id, BANDIT_DIM, 1), ...p } : initBanditArm(id, BANDIT_DIM, 1);
+  });
+}
+
+/** 保存 Bandit 臂参数 */
+async function saveBanditArm(arm: BanditArmParams): Promise<void> {
+  const d = dataProvider();
+  const raw = (d.editingData?.ceBandit || {}) as Record<string, any>;
+  d.editingData = { ...(d.editingData || {}), ceBandit: { ...raw, [arm.actionId]: arm } };
+  await dataSaver(d);
+}
+
+/** 当前上下文特征（mood 愉悦归一 0-1；hour 归一 0-1）——Bandit 据此选臂 */
+function banditContext(): number[] {
+  const pad = moodSystem?.pad || { pleasure: 55, arousal: 50, dominance: 50 };
+  const hourNorm = new Date().getHours() / 24;
+  return [pad.pleasure / 100, hourNorm];
+}
+
+/** 主动关心后：标记 pending arm（等待用户回应与否回填 reward） */
+function markProactiveArm(armId: string): void {
+  const d = dataProvider();
+  const s = (d.editingData?.ceBandit || {}) as Record<string, any>;
+  d.editingData = { ...(d.editingData || {}), ceBandit: { ...s, pendingArm: armId, pendingAt: Date.now() } };
+  void dataSaver(d);
+}
+
+/** 用户回应（聊天消息）时：回填上次主动关心的 reward（10 分钟内回应 = 1，超时 = 0） */
+async function rewardProactiveArm(): Promise<void> {
+  const d = dataProvider();
+  const s = (d.editingData?.ceBandit || {}) as Record<string, any>;
+  const armId = s.pendingArm as string | undefined;
+  const at = s.pendingAt as number | undefined;
+  if (!armId || !at) return;
+  const responded = Date.now() - at < 10 * 60 * 1000;
+  const arm = getBanditArms().find((a) => a.actionId === armId);
+  if (arm) {
+    const updated = updateBandit(arm, banditContext(), responded ? 1 : 0);
+    await saveBanditArm(updated);
+  }
+  d.editingData = { ...(d.editingData || {}), ceBandit: { ...(d.editingData?.ceBandit || {}), pendingArm: undefined, pendingAt: undefined } };
+  await dataSaver(d);
+}
+
+/** 主动关心调度：每 10 分钟检查；时机 = 距上次 ≥2 天 + 本周未超上限 + 当前在用户活跃时段 */
+function startProactiveCare(): void {
+  if (proactiveTimer) clearInterval(proactiveTimer);
+  proactiveTimer = setInterval(() => {
+    void maybeProactiveCare();
+  }, 10 * 60 * 1000);
+}
+
+/** 温和主动搭话（LLM 生成一句关心；AI 未配置/失败 → 模板兜底；Bandit 选臂决定话术风格） */
+async function maybeProactiveCare(): Promise<void> {
+  if (!data || !bubbleManager || !moodSystem || !memorySystem || !personalityGrowth) return;
+  const cfg = data.config;
+  if (!cfg.proactiveCare) return;
+  if (!memorySystem || data.memory.stream.length < 3) return; // 记忆太少还不知道你
+  const st = getProactiveState();
+  if (st.count >= Math.max(1, cfg.proactiveWeeklyCap || 2)) return;
+  const since = Date.now() - st.lastAt;
+  if (since < 2 * 24 * 60 * 60 * 1000) return; // 至少隔 2 天
+  // 作息模型：当前是否用户活跃时段（无数据 → 保守不打扰）
+  const profile = buildRhythmProfile(data.memory.stream, 30, Date.now());
+  if (!profile.total || !isActiveNow(profile)) return;
+  // Bandit 选臂（ticket 035）：从 3 类话术中按 mood+hour 上下文 Thompson 采样
+  const chosen = sampleThompson(getBanditArms(), banditContext());
+  const armId = chosen?.actionId ?? BANDIT_ARMS[0];
+  try {
+    if (!(await isAIConfigured())) {
+      // 模板兜底（按臂分类）
+      const templates: Record<string, string[]> = {
+        empathy: [
+          `我看记录你最近情绪有些波动，${describeEmotionTrend(analyzeEmotionTrend(buildEmotionSnapshots(data.memory.stream)))}。想说的时候我都在。`,
+          `喵~ 感觉你这阵子心情起伏不小，要不要和我说说？`,
+        ],
+        life: [
+          `我看了下你的记录，你通常在${describeRhythm(profile)}最活跃。这段时间你也总是很认真。`,
+          `刚才我翻了下脑海里的记忆，想起你最近在忙的事。${periodText()}了，照顾好自己。`,
+        ],
+        vault: [
+          `喵~ 我记住你${periodText()}也常出现。最近记了什么新想法吗？`,
+          `我注意到你这几天的笔记很密集，是不是在忙什么大计划？`,
+        ],
+      };
+      const pool = templates[armId] || templates.life;
+      bubbleManager.showBubble(pool[Math.floor(Math.random() * pool.length)]);
+    } else {
+      // 近 3 条记忆做引子 + 作息描述 + 情绪趋势 → LLM 温和关心（按臂给风格指令）
+      const recent = data.memory.stream.slice(-3).map((m) => m.description).join('；');
+      const emotionTrend = describeEmotionTrend(analyzeEmotionTrend(buildEmotionSnapshots(data.memory.stream)));
+      const styleHint = armId === 'empathy' ? '侧重共情，接住用户的情绪' : armId === 'vault' ? '侧重内容，聊他最近的笔记' : '侧重生活，像老朋友寒暄';
+      const prompt = generatePrompt('auto_companion', '', {
+        pad: moodSystem.pad,
+        data,
+        currentMood: moodSystem.currentMood,
+        currentEmotion: moodSystem.getCurrentEmotion(),
+      });
+      const response = await callChat([
+        { role: 'system', content: prompt },
+        { role: 'user', content: `你主动关心用户一次（温和、简短、像老朋友）。本次侧重：${styleHint}。当前情绪趋势：${emotionTrend}。用户的活跃时段是${describeRhythm(profile)}，最近记忆有：${recent}。` },
+      ]);
+      if (response) bubbleManager.showBubble(response);
+      else bubbleManager.showBubble('喵~ 我注意到你最近常在深夜写东西，记得照顾好自己。');
+    }
+    // 记录本次主动（写回 editingData，不新增顶层字段）+ 标记 Bandit pending arm
+    const d = dataProvider();
+    const next: ProactiveCareState = { week: isoWeekKey(), count: st.count + 1, lastAt: Date.now() };
+    d.editingData = { ...(d.editingData || {}), proactiveCare: next };
+    markProactiveArm(armId);
+    await dataSaver(d);
+  } catch (e) {
+    /* 主动失败静默（不打扰） */
+  }
+}
+
+// ---------------- 每周懂你报告（2026-08-23「懂你」增强：⑦） ----------------
+
+/** 周报调度：每天 10:00 检查一次（新一周且本周有观察 → 生成） */
+function startWeeklyReport(): void {
+  if (weeklyReportTimer) clearInterval(weeklyReportTimer);
+  weeklyReportTimer = setInterval(() => {
+    const h = new Date().getHours();
+    if (h === 10) void maybeWeeklyReport();
+  }, 60 * 60 * 1000);
+}
+
+/** 生成本周报告（仅当新周 + 本周有观察；LLM/兜底 → 写回流 source weekly-report + 气泡展示 + 状态推进） */
+async function maybeWeeklyReport(): Promise<void> {
+  if (!data || !bubbleManager || !moodSystem || !memorySystem) return;
+  const st = getWeeklyReportState();
+  const weekKey = isoWeekKey();
+  if (st.weekKey === weekKey) return; // 本周已生成
+  const win = weekWindow(Date.now());
+  const [start] = win;
+  // 周一起算：只在本周窗口已至少过去 1 天且本周有观察时生成（周二起才可能）
+  if (Date.now() - start < 24 * 60 * 60 * 1000) return;
+  const weekEntries = data.memory.stream.filter((m) => {
+    const t = m.created ? new Date(m.created).getTime() : NaN;
+    return Number.isFinite(t) && t >= win[0] && t <= win[1] && m.type === 'observation';
+  });
+  if (weekEntries.length < 3) return; // 观察太少，本周报告无意义（下周再试）
+  try {
+    const report = buildWeeklyReportData(data.memory.stream, moodSystem.pad, Date.now());
+    const text = await generateWeeklyReport(report);
+    if (!text) return;
+    // 写回流（insight，source weekly-report，importance 高——记忆流可见但 insight 不作反思 evidence）
+    await memorySystem.addInsight(`【本周懂你报告】${text}`, [], 0.8, undefined, 'weekly-report');
+    // 气泡展示（隐藏超长：先给一句导语，全文在设置弹窗「查看报告」）
+    bubbleManager.showBubble(`喵~ 我读完这周关于你的记录了。${text.length > 60 ? text.substring(0, 60) + '……' : text}`);
+    const d = dataProvider();
+    d.editingData = { ...(d.editingData || {}), weeklyReport: { weekKey, at: Date.now() } as WeeklyReportState };
+    await dataSaver(d);
+  } catch (e) {
+    /* 周报失败静默（下周再试；不推进状态） */
+  }
+}
+
+
 
 /** 书评（原 ContentMonitor.generateBookReview：book 标签笔记首次打开一句话评价） */
 async function generateBookReview(): Promise<void> {
@@ -178,10 +437,11 @@ async function generateBookReview(): Promise<void> {
     if (!hasBookTag()) return;
     const bookDescription = generateBookDescription();
     if (!bookDescription) return;
-    const cfg = getConfig();
     const prompt = generatePrompt('book_review', `请基于以下书籍数据给出简短评价：${bookDescription}`, {
-      dimensions: moodSystem.dimensions,
-      personality: cfg.personality,
+      pad: moodSystem.pad,
+      data,
+      currentMood: moodSystem.currentMood,
+      currentEmotion: moodSystem.getCurrentEmotion(),
     });
     const response = await callChat([
       { role: 'system', content: prompt },
@@ -261,6 +521,25 @@ function openSettings(): void {
       (getSettings() as any).smartcatMobileDefaultFullscreen = v;
       await saveSettings();
     },
+    // ADR-0023：人格成长可视化 + 重置
+    getPersonalityGrowth: () => {
+      return data ? data.personalityGrowth : null;
+    },
+    resetPersonalityGrowth: async () => {
+      if (!data || !appRef) return;
+      const fresh = defaultPersonalityGrowth();
+      // 保留已有 30 特质成长历史？重置 = 回新种子（MATE：重置出生）
+      data.personalityGrowth = fresh;
+      await saveSmartCatData(appRef, data);
+    },
+    // 每周懂你报告（2026-08-23：最近一份 weekly-report 洞察，无则 null）
+    getWeeklyReport: () => {
+      if (!data || !memorySystem) return null;
+      const reports = data.memory.stream
+        .filter((m) => m.source === 'weekly-report' && m.type === 'insight')
+        .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime());
+      return reports.length ? reports[0].description : null;
+    },
   });
   if (interaction) {
     interaction.isSettingsOpen = true;
@@ -296,6 +575,9 @@ async function sendChatMessage(message: string): Promise<void> {
   const chatMessages = panels.chatMessages;
   const chatInput = panels.chatInput;
 
+  // Bandit reward 回填（ticket 035）：用户主动发消息 = 对上次主动关心的回应
+  void rewardProactiveArm();
+
   const userMessageEl = document.createElement('div');
   userMessageEl.className = 'message user-message';
   userMessageEl.textContent = message;
@@ -311,7 +593,20 @@ async function sendChatMessage(message: string): Promise<void> {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 
   try {
-    const messages = await interaction.prepareChatMessages(message);
+    // 元认知矛盾检测（ticket 035）：当前消息 vs 记忆流用户事实 → 命中则给回复加提醒
+    let contradictionHint = '';
+    try {
+      const facts = extractStoredFacts(data.memory.stream);
+      const cr = checkContradiction(message, facts);
+      if (cr.detected && cr.detail.length) contradictionHint = '\n\n（小橘注意到：' + cr.detail[0] + '——你是不是改变主意了？）';
+    } catch { /* 矛盾检测失败不阻断 */ }
+    // 情绪趋势注入（ticket 035）：格式化后拼进 user 上下文尾
+    let emotionContext = '';
+    try {
+      const trend = analyzeEmotionTrend(buildEmotionSnapshots(data.memory.stream));
+      if (trend.count > 0) emotionContext = '\n用户近期情绪趋势：' + describeEmotionTrend(trend);
+    } catch { /* 无情绪数据跳过 */ }
+    const messages = await interaction.prepareChatMessages(message + emotionContext + contradictionHint);
     const response = await callChat(messages);
     const indicator = chatMessages.querySelector('#typing-indicator');
     if (indicator) indicator.remove();
@@ -326,8 +621,13 @@ async function sendChatMessage(message: string): Promise<void> {
     data.config.conversationHistory.push({ role: 'user', content: message, timestamp: new Date().toISOString() });
     data.config.conversationHistory.push({ role: 'assistant', content: response, timestamp: new Date().toISOString() });
     await dataSaver(data);
-    // 记忆：对话进短期记忆（记忆系统接入聊天——原版未接线，bz 化后按 spec 接入）
-    await memorySystem!.addShortTermMemory(`用户说：${message}`, { isRepetitive: false });
+    // 记忆流（ADR-0021）：对话写入 observation（写入面最小化——仅聊天接入；importance LLM 打分，
+    // AI 未配置降级规则分；Ollama 可用时同期写向量）
+    const mem = await memorySystem!.addObservation(`用户说：${message}`, { source: 'chat' });
+    // ADR-0022/0023：聊天情绪 → 瞬时情绪（registerEmotion 接线，上一轮空转修复）
+    if (mem.emotion) moodSystem?.registerEmotion(mem.emotion);
+    // ADR-0023：聊天 → 性格微移 + 行为统计（tickBehaviorStats；情绪强度近似取消息长度）
+    personalityGrowth!.developBasedOnInteraction('talk', 1, Math.min(0.8, message.length / 200)).catch(() => {});
   } catch (error) {
     const indicator = chatMessages.querySelector('#typing-indicator');
     if (indicator) indicator.remove();
@@ -368,15 +668,37 @@ export function unloadSmartCat(): void {
     } catch (e) { /* 忽略 */ }
     fileOpenRef = null;
   }
+  if (vaultRefs.length && appRef) {
+    for (const ref of vaultRefs) {
+      try { (appRef.vault as any).offref(ref); } catch (e) { /* 忽略 */ }
+    }
+    vaultRefs = [];
+  }
+  lastActivity.clear();
   if (visibilityCleanup) {
     visibilityCleanup();
     visibilityCleanup = null;
+  }
+  if (proactiveTimer) {
+    clearInterval(proactiveTimer);
+    proactiveTimer = null;
+  }
+  if (weeklyReportTimer) {
+    clearInterval(weeklyReportTimer);
+    weeklyReportTimer = null;
+  }
+  if (greetTimer) {
+    clearTimeout(greetTimer);
+    greetTimer = null;
   }
   animation?.dispose();
   memorySystem?.stopScheduler();
   moodSystem?.dispose();
   interaction?.dispose();
-  voiceSystem?.destroy();
+  domainReader?.();
+  domainReader = null;
+  domainPrev.clear();
+  domainObserved.clear();
   mobileAdapter?.destroy();
   if (panels) {
     panels.dispose();
@@ -386,11 +708,9 @@ export function unloadSmartCat(): void {
   __resetVisibilityForTests();
   bubbleManager = null;
   moodSystem = null;
-  emotionalMemory = null;
   personalityGrowth = null;
   memorySystem = null;
   animation = null;
-  voiceSystem = null;
   interaction = null;
   mobileAdapter = null;
   appRef = null;
@@ -399,5 +719,32 @@ export function unloadSmartCat(): void {
 
 /** 测试辅助：获取内部实例引用 */
 export function __getSmartcatInternals(): any {
-  return { data, bubbleManager, moodSystem, memorySystem, animation, interaction, panels, voiceSystem, initialized };
+  return { data, bubbleManager, moodSystem, memorySystem, animation, interaction, panels, initialized };
+}
+
+/** 域 JSON 感知状态（domain-source.ts 提供 extract 纯函数；此处管理监听生命周期） */
+const domainPrev = new Map<string, string>();
+const domainObserved = new Set<string>();
+let domainReader: (() => void) | null = null;
+
+/** 域 JSON 观察接入（2026-08-23 用户拍板：CONFIG/STORAGE 域数据 modify → 观察；懒启动探测已有数据文件） */
+async function onDomainActivity(): Promise<void> {
+  if (!appRef || !memorySystem) return;
+  const app = appRef;
+  const mem = memorySystem;
+  // 首次快照：记录各域当前状态（不产出观察）
+  const found = await snapshotDomains(async (path) => JSON.parse(await app.vault.read(app.vault.getAbstractFileByPath(path) as any)), domainPrev);
+  found.forEach((k) => domainObserved.add(k));
+  if (!domainReader) {
+    const ref = (app.vault as any).on?.('modify', async (file: any) => {
+      if (!file?.path) return;
+      const key = Object.keys(DOMAIN_FILES).find((k) => DOMAIN_FILES[k].file === file.path);
+      if (!key || !domainObserved.has(key)) return;
+      let raw: any = null;
+      try { raw = JSON.parse(await app.vault.read(file)); } catch { return; }
+      const text = DOMAIN_FILES[key].extract(raw, domainPrev);
+      if (text) await mem.addObservation(text, { source: 'domain:' + key });
+    });
+    if (ref) domainReader = () => (app as any)?.vault?.offref?.(ref as any);
+  }
 }

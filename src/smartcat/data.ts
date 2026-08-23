@@ -1,14 +1,18 @@
 /**
- * smartcat 数据层（用户拍板：所有数据存在一个 json——CONFIG/STORAGE/smartcat.json）
- * 一次性迁移：首次加载缺失时读旧 localStorage 3 key + 旧 CONFIG/SMART CAT 3 文件 +
- * 旧 CONFIG/SMART_CAT/memories 4 层 → 合并写回单文件；旧数据源保留不删（防回滚）。
+ * smartcat 数据层（用户拍板：所有数据存在一个 json——CONFIG/STORAGE/smartcat.json；
+ * 向量豁免单 json，独立 smartcat-memory-vectors.vec，ADR-0021）。
+ * ADR-0021：删除原四层记忆与一次性迁移路径（无数据产生，用户拍板不做迁移兼容），
+ * memory 段改为单层记忆流 MemoryStream；旧 localStorage/旧文件一律不再读取。
  */
 import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
 import { defaultConfig, normalizeConfig } from './config';
-import type { SmartCatData } from './types';
+import { randomOceanSeed, characterSeed, DEFAULT_TRAITS, DEFAULT_OCEAN } from './character';
+import type { SmartCatData, MemoryStream, PersonalityGrowthData } from './types';
 
 export const SMARTCAT_FILE = 'smartcat.json';
+/** 记忆向量文件（bge-m3 1024 维 float32 平铺，dim uint32 LE 头；行序对齐 stream） */
+export const SMARTCAT_VEC_FILE = 'smartcat-memory-vectors.vec';
 
 /** smartcat.json 路径（跟随共享 storagePath） */
 export function getSmartcatFilePath(): string {
@@ -17,62 +21,139 @@ export function getSmartcatFilePath(): string {
   return `${dir}/${SMARTCAT_FILE}`;
 }
 
-/** 默认全量数据（config 默认 + mood/人格成长默认 + 记忆四层默认） */
+/** 记忆向量文件路径（与 smartcat.json 同目录） */
+export function getSmartcatVecPath(): string {
+  const s = tryGetSettings() as any;
+  const dir = ((s && s.storagePath) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
+  return `${dir}/${SMARTCAT_VEC_FILE}`;
+}
+
+/** 默认记忆流（空 stream + 反思元数据） */
+export function defaultMemoryStream(): MemoryStream {
+  return {
+    version: 1,
+    lastUpdated: new Date().toISOString(),
+    stream: [],
+    reflection: { lastReflectAt: 0, count: 0, lastDigestAt: 0, digestCount: 0 },
+  };
+}
+
+/** 默认全量数据（config 默认 + PAD 心情默认 + 性格成长默认（MATE）+ 记忆流默认） */
 export function defaultSmartCatData(): SmartCatData {
   return {
     config: defaultConfig(),
     mood: {
-      dimensions: { happiness: 75, energy: 65, curiosity: 60, affection: 50, focus: 80, creativity: 70, productivity: 75, relaxation: 60 },
+      pad: { pleasure: 55, arousal: 50, dominance: 50 },
       lastUpdate: 0,
       lastMood: 'neutral',
+      currentEmotion: null,
     },
-    personalityGrowth: {
-      traits: { playfulness: 50, sociability: 50, independence: 50, curiosity: 50 },
-      growthHistory: [],
-      lastSave: 0,
-      version: '1.0',
-    },
-    emotionalMemory: null,
-    timeEmotion: null,
+    personalityGrowth: defaultPersonalityGrowth(),
     editingData: null,
-    memory: {
-      shortTerm: { version: '1.0', lastUpdated: new Date().toISOString(), memories: [], maxSize: 100, sessionId: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` },
-      longTerm: { version: '1.0', lastUpdated: new Date().toISOString(), memories: [], maxSize: 500, consolidationCount: 0 },
-      permanent: { version: '1.0', lastUpdated: new Date().toISOString(), memories: [], protected: true },
-      index: { version: '1.0', lastUpdated: new Date().toISOString(), memories: [], timeIndex: {}, topicIndex: {}, emotionIndex: {}, usageStats: {} },
-    },
+    memory: defaultMemoryStream(),
   };
 }
 
-/** 归一化（config 走 normalizeConfig；其余字段类型兜底） */
+/** 默认性格成长（MATE：OCEAN 随机种子 + 30 特质 seed + 空统计） */
+export function defaultPersonalityGrowth(): PersonalityGrowthData {
+  const ocean = randomOceanSeed();
+  return {
+    ocean,
+    traits: characterSeed(ocean),
+    relationship: { trust: 0.5, attachment: 0.5 },
+    behaviorStats: { interactionCount: 0, emotionalTone: 0, preferredHour: 12, sessionCount: 0 },
+    growthHistory: [],
+    lastSave: 0,
+    version: '2.0',
+  };
+}
+
+/** 归一化（config 走 normalizeConfig；memory 校验 stream 数组，非法条目过滤；
+ *  mood 兼容旧 8 维字段 → 投影为 PAD 三轴兜底（旧数据直读，无迁移）） */
 export function normalizeData(raw: any): SmartCatData {
   const def = defaultSmartCatData();
   if (!raw || typeof raw !== 'object') return def;
+  const stream = Array.isArray(raw.memory?.stream)
+    ? raw.memory.stream.filter((m: any) => m && typeof m === 'object' && typeof m.id === 'string' && typeof m.description === 'string')
+    : [];
+  // 旧 8 维（happiness/energy...）→ PAD 投影（pleasure=hy+aff、arousal=energy+curiosity、dominance=focus+productivity+creativity）
+  const oldDim = raw.mood?.dimensions || {};
+  const pick = (k: string, fb: number) => (typeof oldDim[k] === 'number' ? (oldDim[k] as number) : fb);
+  const pad = raw.mood?.pad && typeof raw.mood.pad.pleasure === 'number'
+    ? { ...def.mood.pad, ...raw.mood.pad }
+    : oldDim.happiness !== undefined
+      ? {
+          pleasure: Math.min(100, Math.round(pick('happiness', 55) * 0.6 + pick('affection', 50) * 0.4)),
+          arousal: Math.min(100, Math.round(pick('energy', 50) * 0.6 + pick('curiosity', 50) * 0.4)),
+          dominance: Math.min(100, Math.round(pick('focus', 50) * 0.4 + pick('productivity', 50) * 0.3 + pick('creativity', 50) * 0.3)),
+        }
+      : def.mood.pad;
   return {
     config: normalizeConfig(raw.config || raw), // 兼容旧布局：整个文件即 config
     mood: {
-      dimensions: { ...def.mood.dimensions, ...(raw.mood?.dimensions || {}) },
+      pad,
       lastUpdate: typeof raw.mood?.lastUpdate === 'number' ? raw.mood.lastUpdate : def.mood.lastUpdate,
       lastMood: typeof raw.mood?.lastMood === 'string' ? raw.mood.lastMood : def.mood.lastMood,
+      currentEmotion: typeof raw.mood?.currentEmotion === 'string' ? raw.mood.currentEmotion : null,
     },
-    personalityGrowth: raw.personalityGrowth
-      ? { ...def.personalityGrowth, ...raw.personalityGrowth }
-      : def.personalityGrowth,
-    emotionalMemory: raw.emotionalMemory ?? def.emotionalMemory,
-    timeEmotion: raw.timeEmotion ?? def.timeEmotion,
+    personalityGrowth: normalizePersonalityGrowth(raw.personalityGrowth || def.personalityGrowth, def.personalityGrowth),
     editingData: raw.editingData ?? def.editingData,
-    memory: raw.memory
-      ? {
-          shortTerm: raw.memory.shortTerm || def.memory.shortTerm,
-          longTerm: raw.memory.longTerm || def.memory.longTerm,
-          permanent: raw.memory.permanent || def.memory.permanent,
-          index: raw.memory.index || def.memory.index,
-        }
-      : def.memory,
+    memory: {
+      version: 1,
+      lastUpdated: raw.memory?.lastUpdated || def.memory.lastUpdated,
+      stream,
+      reflection: {
+        lastReflectAt: typeof raw.memory?.reflection?.lastReflectAt === 'number' ? raw.memory.reflection.lastReflectAt : 0,
+        count: typeof raw.memory?.reflection?.count === 'number' ? raw.memory.reflection.count : 0,
+        lastDigestAt: typeof raw.memory?.reflection?.lastDigestAt === 'number' ? raw.memory.reflection.lastDigestAt : 0,
+        digestCount: typeof raw.memory?.reflection?.digestCount === 'number' ? raw.memory.reflection.digestCount : 0,
+      },
+    },
   };
 }
 
-/** 读取数据（不存在/坏 JSON → 尝试迁移旧数据，再默认数据） */
+/** 归一化性格成长：新结构字段逐项兜底；旧 4 维 traits（playfulness 等）映射进 behavioral 群组 */
+export function normalizePersonalityGrowth(raw: any, def: PersonalityGrowthData): PersonalityGrowthData {
+  if (!raw || typeof raw !== 'object') return def;
+  const traits = { ...DEFAULT_TRAITS, ...(raw.traits && typeof raw.traits === 'object' ? raw.traits : {}) };
+  // 旧 4 维兼容：playfulness→dopamine/humor、sociability→warmth/oxytocin、independence→avoidance、curiosity→creativity
+  if (raw.traits && typeof raw.traits.playfulness === 'number') {
+    traits.dopamine = Math.min(0.9, Math.max(0.1, (raw.traits.playfulness / 100 + 0.5) / 2));
+    traits.humor = Math.min(0.9, Math.max(0.1, (raw.traits.playfulness / 100 + 0.5) / 2));
+  }
+  if (raw.traits && typeof raw.traits.sociability === 'number') {
+    traits.warmth = Math.min(0.9, Math.max(0.1, (raw.traits.sociability / 100 + 0.5) / 2));
+    traits.oxytocin = Math.min(0.9, Math.max(0.1, (raw.traits.sociability / 100 + 0.5) / 2));
+  }
+  if (raw.traits && typeof raw.traits.independence === 'number') {
+    traits.def_avoidance = Math.min(0.9, Math.max(0.1, 1 - (raw.traits.independence / 100 + 0.5) / 2));
+  }
+  if (raw.traits && typeof raw.traits.curiosity === 'number') {
+    traits.creativity = Math.min(0.9, Math.max(0.1, (raw.traits.curiosity / 100 + 0.5) / 2));
+  }
+  return {
+    ocean: {
+      ...DEFAULT_OCEAN,
+      ...(raw.ocean && typeof raw.ocean === 'object' ? raw.ocean : {}),
+    },
+    traits,
+    relationship: {
+      trust: typeof raw.relationship?.trust === 'number' ? raw.relationship.trust : 0.5,
+      attachment: typeof raw.relationship?.attachment === 'number' ? raw.relationship.attachment : 0.5,
+    },
+    behaviorStats: {
+      interactionCount: typeof raw.behaviorStats?.interactionCount === 'number' ? raw.behaviorStats.interactionCount : 0,
+      emotionalTone: typeof raw.behaviorStats?.emotionalTone === 'number' ? raw.behaviorStats.emotionalTone : 0,
+      preferredHour: typeof raw.behaviorStats?.preferredHour === 'number' ? raw.behaviorStats.preferredHour : 12,
+      sessionCount: typeof raw.behaviorStats?.sessionCount === 'number' ? raw.behaviorStats.sessionCount : 0,
+    },
+    growthHistory: Array.isArray(raw.growthHistory) ? raw.growthHistory : [],
+    lastSave: typeof raw.lastSave === 'number' ? raw.lastSave : 0,
+    version: '2.0',
+  };
+}
+
+/** 读取数据（不存在/坏 JSON → 默认数据；无迁移） */
 export async function loadSmartCatData(app: App): Promise<SmartCatData> {
   const filePath = getSmartcatFilePath();
   const f = app.vault.getAbstractFileByPath(filePath);
@@ -83,9 +164,6 @@ export async function loadSmartCatData(app: App): Promise<SmartCatData> {
       return defaultSmartCatData();
     }
   }
-  // 首次：尝试迁移旧数据源
-  const migrated = await tryMigrateLegacy(app);
-  if (migrated) return migrated;
   return defaultSmartCatData();
 }
 
@@ -101,73 +179,4 @@ export async function saveSmartCatData(app: App, data: SmartCatData): Promise<vo
     if (d && !app.vault.getAbstractFileByPath(d)) await app.vault.createFolder(d);
     await app.vault.create(filePath, c);
   }
-}
-
-// ---------------- 一次性迁移 ----------------
-
-/** 读 localStorage（try/catch：jsdom/node 环境无 localStorage 安全返回） */
-function getLocal(key: string): any {
-  try {
-    const v = (typeof localStorage !== 'undefined' && localStorage.getItem(key)) || '';
-    return v ? JSON.parse(v) : null;
-  } catch (e) {
-    return null;
-  }
-}
-
-/** 读旧 vault 文件（不存在/坏 JSON → null） */
-async function readLegacy(app: App, path: string): Promise<any> {
-  try {
-    const f = app.vault.getAbstractFileByPath(path);
-    if (!f) return null;
-    return JSON.parse(await app.vault.read(f as any));
-  } catch (e) {
-    return null;
-  }
-}
-
-/**
- * 迁移旧数据（仅当目标 json 不存在时调用）：
- * localStorage 'smart-cat-config' / 'smart-cat-mood-data' / 'smart-cat-personality-growth'
- * + CONFIG/SMART CAT/{smart-cat-emotional-memory, smart-cat-time-emotion, smart-cat-editing-data}.json
- * + CONFIG/SMART_CAT/memories/{short_term, long_term, permanent, memory_index}.json
- * apiKey 忽略（AI 走 bz）。成功写盘返回 true。
- */
-export async function tryMigrateLegacy(app: App): Promise<SmartCatData | null> {
-  const cfg = getLocal('smart-cat-config');
-  const mood = getLocal('smart-cat-mood-data');
-  const pGrowth = getLocal('smart-cat-personality-growth');
-  const emo = await readLegacy(app, 'CONFIG/SMART CAT/smart-cat-emotional-memory.json');
-  const time = await readLegacy(app, 'CONFIG/SMART CAT/smart-cat-time-emotion.json');
-  const edit = await readLegacy(app, 'CONFIG/SMART CAT/smart-cat-editing-data.json');
-  const memDir = 'CONFIG/SMART_CAT/memories/';
-  const memLayers: Record<string, any> = {};
-  for (const layer of ['short_term', 'long_term', 'permanent', 'memory_index']) {
-    memLayers[layer] = await readLegacy(app, memDir + layer + '.json');
-  }
-  // 无任何旧数据 → 不迁移
-  if (!cfg && !mood && !pGrowth && !emo && !time && !edit &&
-      !memLayers.short_term && !memLayers.long_term && !memLayers.permanent && !memLayers.memory_index) {
-    return null;
-  }
-  const def = defaultSmartCatData();
-  const legacyCfg = cfg ? { ...cfg } : null;
-  // apiKey 忽略（AI 走 bz core/ai，用户拍板；旧值不迁移）
-  if (legacyCfg && legacyCfg.apiKey !== undefined) delete legacyCfg.apiKey;
-  const data: SmartCatData = normalizeData({
-    config: legacyCfg || def.config,
-    mood: mood || def.mood,
-    personalityGrowth: pGrowth || def.personalityGrowth,
-    emotionalMemory: emo || def.emotionalMemory,
-    timeEmotion: time || def.timeEmotion,
-    editingData: edit || def.editingData,
-    memory: {
-      shortTerm: memLayers.short_term || def.memory.shortTerm,
-      longTerm: memLayers.long_term || def.memory.longTerm,
-      permanent: memLayers.permanent || def.memory.permanent,
-      index: memLayers.memory_index || def.memory.index,
-    },
-  });
-  await saveSmartCatData(app, data);
-  return data;
 }
