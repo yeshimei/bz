@@ -96,12 +96,14 @@ export type DiarySettleResult =
 /**
  * 结算判定纯函数（ticket 077 规则）：
  * - 首落（该条尚无观察）：正文**有字（非空）**才生成首次观察；只有标题（正文空）→ 不生成（记已见，防「标题即存」）；
- * - 已有观察：累计字数差 = 当前正文长度 − 上次生成基线长度（中文按字符数），累加进 state.accum；
+ * - 已有观察：累计字数差 = 当前正文长度 − 上次生成基线长度（中文按字符数，**负值钳位 0**——删改不产生负累计，
+ *   ticket 084d B4 防删改后补写被长期压制），累加进 state.accum；
  *   `累计 >50` → 生成更新观察并重置基线/累计；`累计 ≤50` → 不生成（本次补写不进记忆，但计入累计，等下次结算）。
  * - 「累计」= 自上次生成以来每次结算累计的长度变化（如基线 60 字：结算 75 字累计 +15；大改 130 字累计 +15+70=85 >50 → 更新）。
  */
 export function decideDiarySettle(entry: DiaryEntryLike, date: string, state: DiarySettleState): DiarySettleResult {
-  const delta = diaryCharCount(entry.body) - diaryCharCount(state.baseline);
+  // B4（ticket 084d）：delta 钳位 ≥0——删改后的负差不再抵消补写（删 40 写 110 → 累计按补写推进而非净差 30）
+  const delta = Math.max(0, diaryCharCount(entry.body) - diaryCharCount(state.baseline));
   if (!state.generated) {
     if (!entry.body) return { kind: 'none', text: null, next: state };
     const text = diaryFirstText(date, entry.time, entry.tags, entry.body);
