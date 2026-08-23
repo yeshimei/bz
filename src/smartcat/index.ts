@@ -24,6 +24,7 @@ import { buildMovieActionText, type MovieActionEvent } from './movie-source';
 import { buildMemoActionText, memoDueObservation, type MemoActionEvent, type MemoDueLike } from './memo-source';
 
 import { buildNewsReadText, buildNewsSavedFullText, type NewsReadEvent } from './news-source';
+import { buildFavoritesActionText, type FavoritesActionEvent } from './favorites-source';
 import { DOMAIN_FILES, snapshotDomains } from './domain-source';
 import { buildRhythmProfile, isActiveNow, describeRhythm, periodText, isoWeekKey } from './rhythm';
 import { buildWeeklyReportData, generateWeeklyReport, weekWindow } from './report';
@@ -212,6 +213,8 @@ export async function ensureSmartCat(app: App): Promise<void> {
     }
     // 影视动作改由方法监听（ticket 074 修订）：事件通道短路，防 UI 动作双记录
     if (kind === 'movie') return;
+    // 收藏本动作改由方法监听（ticket 078）：favorites 是 JSON 数据域本不产 vault 事件，防御性短接
+    if (kind === 'favorites') return;
     const now = Date.now();
     const last = lastActivity.get(file.path) || 0;
     if (now - last < 10 * 60 * 1000) return;          // 同一路径 10 分钟去弹跳
@@ -1007,6 +1010,16 @@ export function parseClipFrontmatter(content: string): { summary: string; tags: 
 /** 测试辅助：注入降级等待时长 / 读取待补全登记表 */
 export function __setNewsSaveTimeoutForTests(ms: number): void { newsSaveTimeoutMs = ms; }
 export function __getNewsPendingSavesForTests(): ReadonlyMap<string, NewsPendingSave> { return newsPendingSaves; }
+
+// ------------- 收藏本动作观察（ticket 078：方法监听，ADR-0031） -------------
+
+/** 收藏本动作观察入口：favorites 域 UI 确认回调调用（fire-and-forget）。
+ *  未初始化 / 未启用（noteSource 关）→ 静默；文案构造见 favorites-source.buildFavoritesActionText。 */
+export function notifyFavoritesAction(evt: FavoritesActionEvent): void {
+  if (!initialized || !memorySystem || !data?.config?.noteSource) return;
+  const text = buildFavoritesActionText(evt);
+  if (text) void memorySystem.addObservation(text, { source: 'favorites' });
+}
 
 /** 域 JSON 感知状态（domain-source.ts 提供 extract 纯函数；此处管理监听生命周期） */
 const domainPrev = new Map<string, string>();

@@ -10,6 +10,15 @@ import { UIManager } from '../../src/favorites/ui';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices, requestUrl, Platform } from '../mock-obsidian-entry';
 import { closeItemMenu } from '../../src/core/item-actions';
+// ticket 078：收藏本 smartcat 观察挂点——mock notifyFavoritesAction，断言调用参数
+vi.mock('../../src/smartcat', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('../../src/smartcat')>();
+  return { ...mod, notifyFavoritesAction: vi.fn() };
+});
+import { notifyFavoritesAction } from '../../src/smartcat';
+
+/** notifyFavoritesAction mock（ticket 078 挂点断言用；每用例前清调用记录） */
+const mockNotify = vi.mocked(notifyFavoritesAction);
 
 function makeApp(vault: MockVault) {
   return {
@@ -547,5 +556,115 @@ describe('收藏本抽屉（统一手势组件接入）', () => {
     await tick(30);
     expect((await dm.getAll()).length).toBe(0);
     expect(hasNotice('已删除收藏')).toBe(true);
+  });
+});
+
+describe('收藏本 smartcat 观察挂点（ticket 078 方法监听）', () => {
+  beforeEach(() => {
+    mockNotify.mockClear();
+  });
+
+  afterEach(() => {
+    closeItemMenu();
+  });
+
+  it('添加挂点：保存成功后通知 {kind: add, item}（最终落盘的 data 对象）', async () => {
+    const { ui } = await setup();
+    ui.build();
+    ui.openAddDialog();
+    const typeBtns = [...document.querySelectorAll('.fav-type-btn')] as HTMLElement[];
+    typeBtns.find((b) => b.dataset.tag === 'GitHub')!.click();
+    ui.addTitleInput!.value = 'TokenLedger';
+    ui.addUrlInput!.value = 'https://github.com/zh667/TokenLedger';
+    ui.addDescInput!.value = '面向DeepSeek Harness的中继站点';
+    ui.addPinBtn!.click(); // 置顶
+    ui.addSaveBtn!.click();
+    await new Promise((r) => setTimeout(r, 20));
+
+    expect(mockNotify).toHaveBeenCalledTimes(1);
+    const evt: any = mockNotify.mock.calls[0][0]; // union 窄化靠运行期断言（kind === 'add'）
+    expect(evt.kind).toBe('add');
+    expect(evt.item).toMatchObject({
+      title: 'TokenLedger', url: 'https://github.com/zh667/TokenLedger',
+      description: '面向DeepSeek Harness的中继站点', tags: ['GitHub'], pinned: true,
+    });
+    expect(evt.item.id).toBeTruthy();
+  });
+
+  it('编辑挂点：保存成功后通知 {kind: edit, title, changes}（old vs data 变化列表）', async () => {
+    const { ui, dm } = await setup();
+    await dm.add(makeItem({ id: '7', title: '原标题', description: '旧简介', url: 'https://github.com/a/b', tags: ['GitHub', '网站'] }));
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const card = document.querySelector('#fav-entries-container .fav-card') as HTMLElement;
+    rightClickOpen(card);
+    await new Promise((r) => setTimeout(r, 10));
+    clickAction('编辑');
+    await new Promise((r) => setTimeout(r, 10));
+
+    ui.addTitleInput!.value = '改后标题';
+    ui.addDescInput!.value = '新简介';
+    ui.addSaveBtn!.click();
+    await new Promise((r) => setTimeout(r, 20));
+
+    expect(mockNotify).toHaveBeenCalledTimes(1);
+    expect(mockNotify).toHaveBeenCalledWith({ kind: 'edit', title: '改后标题', changes: ['改了标题', '改了简介'] });
+  });
+
+  it('编辑挂点：仅置顶翻转 → changes 空数组（置顶不参与比较，也不单独发观察）', async () => {
+    const { ui, dm } = await setup();
+    await dm.add(makeItem({ id: '7', title: '原标题' }));
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const card = document.querySelector('#fav-entries-container .fav-card') as HTMLElement;
+    rightClickOpen(card);
+    await new Promise((r) => setTimeout(r, 10));
+    clickAction('编辑');
+    await new Promise((r) => setTimeout(r, 10));
+
+    ui.addPinBtn!.click(); // 弹窗内切换置顶
+    ui.addSaveBtn!.click();
+    await new Promise((r) => setTimeout(r, 20));
+
+    expect(mockNotify).toHaveBeenCalledTimes(1);
+    expect(mockNotify).toHaveBeenCalledWith({ kind: 'edit', title: '原标题', changes: [] });
+  });
+
+  it('删除挂点：确认删除成功后通知 {kind: delete, title}', async () => {
+    const { ui, dm } = await setup();
+    await dm.add(makeItem());
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const card = document.querySelector('#fav-entries-container .fav-card') as HTMLElement;
+    rightClickOpen(card);
+    await new Promise((r) => setTimeout(r, 10));
+    clickAction('删除');
+    await new Promise((r) => setTimeout(r, 10));
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    await new Promise((r) => setTimeout(r, 20));
+
+    expect(mockNotify).toHaveBeenCalledTimes(1);
+    expect(mockNotify).toHaveBeenCalledWith({ kind: 'delete', title: '我的项目' });
+  });
+
+  it('保存失败（add 抛错）→ 不通知（挂点在 try 成功路径）', async () => {
+    const { ui, dm } = await setup();
+    ui.build();
+    ui.openAddDialog();
+    const typeBtns = [...document.querySelectorAll('.fav-type-btn')] as HTMLElement[];
+    typeBtns.find((b) => b.dataset.tag === 'GitHub')!.click();
+    ui.addTitleInput!.value = 'X';
+    vi.spyOn(dm, 'add').mockRejectedValue(new Error('磁盘错误'));
+    ui.addSaveBtn!.click();
+    await new Promise((r) => setTimeout(r, 20));
+
+    expect(mockNotify).not.toHaveBeenCalled();
+    expect(hasNotice('保存失败：磁盘错误')).toBe(true);
   });
 });

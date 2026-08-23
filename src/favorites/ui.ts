@@ -23,6 +23,8 @@ import { CONFIG } from './config';
 import { BalanceService, FavoritesAIService } from './ai';
 import type { DataManager } from './data';
 import type { FavoritesItem } from './types';
+import { notifyFavoritesAction } from '../smartcat';
+import { favoritesEditChanges } from '../smartcat/favorites-source';
 
 export class UIManager {
   dataManager: DataManager;
@@ -721,7 +723,10 @@ export class UIManager {
   }
 
   async _deleteItem(id: string) {
+    const item = this.currentItems.find((d) => d.id === id);
     await this.dataManager.delete(id);
+    // ticket 078（方法监听）：删除动作观察（先取 item 拿标题，删除成功后通知；数据缺失不通知）
+    if (item) notifyFavoritesAction({ kind: 'delete', title: item.title });
     await this.refreshData();
     notice('已删除收藏', 'success');
   }
@@ -1396,10 +1401,16 @@ GitHub 仓库信息（来自 GitHub API）：
           }
         }
         await this.dataManager.update(this.editingItemId, data);
+        // ticket 078（方法监听）：编辑动作观察（old vs data 生成 α 变化列表；old 缺失（并发删除）不通知）
+        if (old) {
+          notifyFavoritesAction({ kind: 'edit', title: data.title, changes: favoritesEditChanges(old, data) });
+        }
         notice('收藏已更新', 'success');
       } else {
         data.id = Date.now().toString();
         await this.dataManager.add(data);
+        // ticket 078（方法监听）：添加动作观察（用最终落盘的 data 对象）
+        notifyFavoritesAction({ kind: 'add', item: data });
         notice('收藏已添加', 'success');
       }
       const fromSheet = this._sheetEditPending; // 保存成功后关抽屉（用户拍板 Q8）
