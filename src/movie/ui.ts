@@ -1499,54 +1499,140 @@ function confirmDeleteMovie(item: MovieItem, app: App): void {
   });
 }
 
-// ===== 详情（有豆瓣抓取数据才显示） =====
+// ===== 详情（豆瓣字段 + 个人记录 + 简介/海报/豆瓣链接） =====
 
-/** 汇总条目详情字段（frontmatter 优先、条目解析兜底）；无任何字段返回空对象 */
-function getMovieDetails(item: MovieItem, app: App): Record<string, string> {
-  const fm = app.metadataCache.getFileCache(item.file)?.frontmatter ?? {};
-  const str = (v: unknown) => (v === undefined || v === null ? '' : String(v));
-  const pairs: [string, string][] = [
-    ['类型', str(fm['类型'] ?? item.genre ?? '')],
-    ['导演', str(item.director ?? fm['导演'] ?? '')],
-    ['主演', str(item.actors ?? fm['主演'] ?? '')],
-    ['制片国家/地区', str(item.region ?? fm['制片国家/地区'] ?? '')],
-    ['上映日期', str(fm['上映日期'] ?? '')],
-    ['片长', str(fm['片长'] ?? '')],
-    ['豆瓣评分', fm['豆瓣评分'] !== undefined ? str(fm['豆瓣评分']) : ''],
-  ];
-  const out: Record<string, string> = {};
-  for (const [k, v] of pairs) {
-    if (v && v !== 'undefined') out[k] = v;
-  }
-  return out;
+/** 详情数据：豆瓣字段行 / 豆瓣链接 / 我的记录行 / 简介 / 海报资源地址 */
+interface MovieDetailData {
+  rows: [string, string][];
+  doubanUrl: string | null;
+  mine: [string, string][];
+  synopsis: string | null;
+  posterUrl: string | null;
 }
 
-/** 详情窗：展示豆瓣抓取的细节字段；遮罩点击/ESC 关闭，无取消按钮 */
-function openDetailModal(item: MovieItem, app: App, details: Record<string, string>): void {
+/** 汇总条目详情（frontmatter 优先、条目解析兜底）；无任何内容返回 null */
+function collectMovieDetail(item: MovieItem, app: App): MovieDetailData | null {
+  const fm = app.metadataCache.getFileCache(item.file)?.frontmatter ?? {};
+  const str = (v: unknown) => {
+    if (v === undefined || v === null) return '';
+    const s = String(v).trim();
+    return s === 'undefined' ? '' : s;
+  };
+  // ISO 日期时间截取日期段（观影日期常带 T10:00:00 尾巴）
+  const datePart = (v: string | null) => (v ? (v.match(/^\d{4}-\d{2}-\d{2}/)?.[0] ?? v) : '');
+
+  const rows: [string, string][] = (
+    [
+      ['类型', str(fm['类型'] ?? item.genre)],
+      ['导演', str(item.director ?? fm['导演'])],
+      ['主演', str(item.actors ?? fm['主演'])],
+      ['制片国家/地区', str(item.region ?? fm['制片国家/地区'])],
+      ['上映日期', str(fm['上映日期'])],
+      ['片长', str(fm['片长'])],
+      ['季集', str(fm['季集'])],
+      ['豆瓣评分', fm['豆瓣评分'] !== undefined ? str(fm['豆瓣评分']) : ''],
+    ] as [string, string][]
+  ).filter(([, v]) => v !== '');
+
+  // 我的记录：观影日期 / 我的评分（仅已看态）/ 影评
+  const mine: [string, string][] = [];
+  if (datePart(item.watchDate)) mine.push(['观影日期', datePart(item.watchDate)]);
+  if (item.status === STATUS_WATCHED && item.rating !== null && item.rating > 0) mine.push(['我的评分', String(item.rating)]);
+  if (item.review) mine.push(['影评', item.review]);
+
+  const douban = str(fm['豆瓣链接']);
+  const synopsis = str(fm['简介']);
+  let posterUrl: string | null = null;
+  if (item.poster) {
+    const posterFile = app.vault.getAbstractFileByPath(item.poster);
+    if (posterFile && /\.(png|jpe?g|gif|webp)$/i.test(posterFile.name)) {
+      posterUrl = app.vault.getResourcePath(posterFile as TFile);
+    }
+  }
+
+  if (!rows.length && !mine.length && !douban && !synopsis && !posterUrl) return null;
+  return { rows, doubanUrl: /^https?:\/\//.test(douban) ? douban : null, mine, synopsis: synopsis || null, posterUrl };
+}
+
+/** 是否有值得弹窗的详情内容（海报不算——卡片已展示，仅随窗口附带） */
+function hasDetailContent(d: MovieDetailData): boolean {
+  return d.rows.length > 0 || d.mine.length > 0 || !!d.doubanUrl || !!d.synopsis;
+}
+
+/** 详情窗：海报横幅 + 豆瓣字段 + 豆瓣链接 + 我的记录 + 简介；遮罩点击/ESC 关闭，无取消按钮 */
+function openDetailModal(item: MovieItem, app: App): void {
+  const d = collectMovieDetail(item, app);
+  if (!d) return;
+
   const mask = document.createElement('div');
   mask.className = 'bz-movie-tiny-mask';
   const modal = document.createElement('div');
-  modal.className = 'bz-movie-tiny-modal';
+  modal.className = 'bz-movie-tiny-modal bz-movie-detail-modal';
 
   const t = document.createElement('div');
   t.className = 'bz-movie-tiny-title';
   t.textContent = `《${item.name}》`;
+  modal.appendChild(t);
+
+  if (d.posterUrl) {
+    const img = document.createElement('img');
+    img.className = 'bz-movie-detail-poster';
+    img.src = d.posterUrl;
+    img.alt = '';
+    modal.appendChild(img);
+  }
 
   const body = document.createElement('div');
-  for (const [k, v] of Object.entries(details)) {
+  /** label 左 / 值右字段行 */
+  const addRow = (label: string, value: HTMLElement): void => {
     const row = document.createElement('div');
     row.className = 'bz-movie-detail-row';
-    const label = document.createElement('span');
-    label.className = 'bz-movie-detail-label';
-    label.textContent = k;
-    const value = document.createElement('span');
-    value.className = 'bz-movie-detail-value';
-    value.textContent = v;
-    row.appendChild(label);
+    const l = document.createElement('span');
+    l.className = 'bz-movie-detail-label';
+    l.textContent = label;
+    value.classList.add('bz-movie-detail-value');
+    row.appendChild(l);
     row.appendChild(value);
     body.appendChild(row);
+  };
+  const textRow = (label: string, text: string): void => {
+    const v = document.createElement('span');
+    v.textContent = text;
+    addRow(label, v);
+  };
+  /** 分区小标题（我的记录 / 简介） */
+  const addSection = (title: string): void => {
+    const sec = document.createElement('div');
+    sec.className = 'bz-movie-detail-section';
+    sec.textContent = title;
+    body.appendChild(sec);
+  };
+
+  for (const [k, v] of d.rows) textRow(k, v);
+
+  if (d.doubanUrl) {
+    const a = document.createElement('a');
+    a.className = 'bz-movie-detail-link';
+    a.href = d.doubanUrl;
+    a.textContent = d.doubanUrl;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    addRow('豆瓣链接', a);
   }
-  modal.appendChild(t);
+
+  if (d.mine.length) {
+    addSection('我的记录');
+    for (const [k, v] of d.mine) textRow(k, v);
+  }
+
+  if (d.synopsis) {
+    addSection('简介');
+    const p = document.createElement('p');
+    p.className = 'bz-movie-detail-synopsis';
+    p.textContent = d.synopsis;
+    body.appendChild(p);
+  }
+
   modal.appendChild(body);
 
   const modalEsc = escManager.register('bz-movie-detail', {
@@ -1557,7 +1643,7 @@ function openDetailModal(item: MovieItem, app: App, details: Record<string, stri
     if (e.target === mask) closeMovieTinyModal(mask, modalEsc);
   });
   mask.appendChild(modal);
-  registerSheetCompanion(mask);
+  registerSheetCompanion(mask); // 抽屉保持时叠于其上：点击遮罩/按钮不触发抽屉关闭
   document.body.appendChild(mask);
 }
 
@@ -1628,15 +1714,15 @@ function attachMovieActions(card: HTMLElement, item: MovieItem, app: App): void 
         onClick: () => openReviewModal(item, app, item.review ? '改影评' : '写影评', rebuild),
       });
     }
-    // 详情：有豆瓣抓取数据（类型/导演/主演/地区/上映日期/片长/豆瓣评分任一）才显示
-    const details = getMovieDetails(item, app);
-    if (Object.keys(details).length > 0) {
+    // 详情：有豆瓣字段/简介/个人记录任一才显示（海报随窗口展示，不计入触发）
+    const details = collectMovieDetail(item, app);
+    if (details && hasDetailContent(details)) {
       acts.push({
         icon: 'info',
         label: '详情',
         title: '详情',
         keepOpen: true,
-        onClick: () => openDetailModal(item, app, details),
+        onClick: () => openDetailModal(item, app),
       });
     }
     acts.push({
