@@ -1342,15 +1342,19 @@ function openMovieNote(item: MovieItem, app: App): void {
 const DEFAULT_RATING = 3.5;
 
 /**
- * 快捷状态流转（想看 → 在看 / 在看 → 已看 直改标记，不弹窗）。
+ * 快捷状态流转（想看 → 在看 / 在看 → 已看 / 想看 → 已看 直改标记，不弹窗）。
  * 状态由评分推断（无独立状态字段）：想看=-1 / 在看=0 / 已看=>0。
  * 标记在看 → 评分 0；标记已看 → 默认评分 3.5（抽屉保持，可随即「改分」）。
+ * 标记在看与标记已看都写观影日期 = 当前日期（用户需求，2026-08-23）。
  */
 async function setMovieStatus(item: MovieItem, status: number, app: App): Promise<void> {
   const ratingValue = status === STATUS_WATCHING ? 0 : status === STATUS_WATCHED ? DEFAULT_RATING : -1;
+  const watchDate = localNowFormat().replace('T', ' ');
   await app.fileManager.processFrontMatter(item.file, (fm: Record<string, any>) => {
     fm['评分'] = ratingValue;
+    fm['观影日期'] = watchDate;
   });
+  item.watchDate = watchDate; // 本地同步：抽屉头部相对时间即时刷新
   notice(status === STATUS_WATCHED ? '已标记已看' : '已标记在看', 'success');
   refreshDataAndView(app);
 }
@@ -1657,10 +1661,11 @@ async function copyMovieLink(item: MovieItem): Promise<void> {
 
 
 /**
- * 挂统一操作（桌面 hover 条 + 移动端抽屉）：
- * 打开 > 状态流转 >（已看）评分/影评 > 编辑 > 删除。
- * 动作随状态动态：想看=标记在看；在看=标记已看（直改标记，抽屉保持并刷新为已看动作）；
- * 已看=评分/改分（滑块窗）+ 写/改影评（影评窗），评分与影评按有无内容切换文案。
+ * 挂统一操作（桌面右键 + 移动端抽屉）：
+ * 打开 > 状态流转 >（已看）评分/影评 > 删除。
+ * 动作随状态动态：想看=标记在看 + 标记已看（并列，可跳过在看直跳已看）；在看=标记已看
+ * （直改标记，抽屉保持并刷新为已看动作）；已看=评分/改分（滑块窗）+ 写/改影评（影评窗），
+ * 评分与影评按有无内容切换文案。标记在看/已看均把观影日期更新为当前日期。
  */
 function attachMovieActions(card: HTMLElement, item: MovieItem, app: App): void {
   // 状态/评分/影评变化后：动作列表 + 头部信息一并刷新（抽屉保持）
@@ -1679,6 +1684,19 @@ function attachMovieActions(card: HTMLElement, item: MovieItem, app: App): void 
           void setMovieStatus(item, STATUS_WATCHING, app).then(() => {
             item.status = STATUS_WATCHING;
             item.rating = 0;
+            rebuild();
+          }),
+      });
+      // 想看 → 已看 直跳（放「标记在看」下面，用户需求 2026-08-23）
+      acts.push({
+        icon: 'check-circle',
+        label: '标记已看',
+        title: '标记已看',
+        keepOpen: true,
+        onClick: () =>
+          void setMovieStatus(item, STATUS_WATCHED, app).then(() => {
+            item.status = STATUS_WATCHED;
+            item.rating = DEFAULT_RATING; // 与落盘一致：已看 = 有评分，抽屉刷新显示「改分」
             rebuild();
           }),
       });

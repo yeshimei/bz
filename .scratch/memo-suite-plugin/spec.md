@@ -114,7 +114,7 @@ Feature: memo-suite-plugin
 
 ### 影视（Movies）与影视数据分析（Movie Analytics）
 
-27. 作为用户，我希望影视管理（`我的/影视` 目录、frontmatter 读写 fileManager.processFrontMatter、类型/状态筛选、排序、添加/编辑/删除）与原脚本一致，以便管理观影记录。（2026-08-22 用户决策：卡片**双击打开对应影视笔记**——ticket 69 手势收敛曾移除双击，用户要求回加；单击无操作防误触，长按抽屉/右键菜单保留，「打开」与双击同路径 openMovieNote）
+27. 作为用户，我希望影视管理（`我的/影视` 目录、frontmatter 读写 fileManager.processFrontMatter、类型/状态筛选、排序、添加/编辑/删除）与原脚本一致，以便管理观影记录。（2026-08-22 用户决策：卡片**双击打开对应影视笔记**——ticket 69 手势收敛曾移除双击，用户要求回加；单击无操作防误触，长按抽屉/右键菜单保留，「打开」与双击同路径 openMovieNote。2026-08-23 用户决策：抽屉**想看态动作并列「标记在看」「标记已看」**（标记已看在其下方，可不经在看直跳已看；在看态仍有「标记已看」）；**标记在看与标记已看都会把观影日期更新为当前日期**；抽屉内评分/改影评/改分等写入 frontmatter 后列表经 vault modify 自动刷新同步）
 28. 作为用户，我希望影视.js 通过 `app.commands.executeCommandById('bz-movie-report')` 打开影视数据分析，以便互调链路与原来一致。
 29. 作为用户，我希望影视数据分析弹窗（状态分布、趋势等，目录路径语义改为模块共享）与原脚本一致，以便分析观影数据。
 30. 作为用户，我希望数据分析的图表组件完整保留：统计卡片（statCardHTML）、条形图（barChartHTML）、环形图（donutChartHTML）、软条图（softBarHTML）、排行榜（topListHTML）、评分对比（ratingCompareListHTML）、内联统计（statInlineHTML），以便视觉与原脚本一致。
