@@ -5,9 +5,10 @@
 import { describe, it, expect } from 'vitest';
 import { DOMAIN_FILES, snapshotDomains } from '../../src/smartcat/domain-source';
 
-describe('DOMAIN_FILES（6 域新增感知；memo 已移除）', () => {
-  it('memo 不再有 extract（ticket 075 移除，防双记录）', () => {
+describe('DOMAIN_FILES（6 域新增感知；memo 与 news 均已移除）', () => {
+  it('memo 不再有 extract（ticket 075 移除）、news 不再有 extract（ticket 076 移除），防双记录', () => {
     expect(DOMAIN_FILES.memo).toBeUndefined();
+    expect(DOMAIN_FILES.news).toBeUndefined();
   });
 
   it('pomodoro：新增 ts 记录产出「专注」观察', () => {
@@ -15,15 +16,6 @@ describe('DOMAIN_FILES（6 域新增感知；memo 已移除）', () => {
     expect(DOMAIN_FILES.pomodoro.extract({ history: [{ ts: 1111 }] }, prev)).toContain('番茄钟');
     expect(DOMAIN_FILES.pomodoro.extract({ history: [{ ts: 1111 }, { ts: 2222 }] }, prev)).toContain('+ 1 次');
     expect(DOMAIN_FILES.pomodoro.extract({ history: [] }, prev)).toBeNull();
-  });
-
-  it('news：今日 byDate 计数产出（仅当天，前日不重复）', () => {
-    const prev = new Map<string, string>();
-    const today = new Date().toISOString().slice(0, 10);
-    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-    const t = DOMAIN_FILES.news.extract({ byDate: { [today]: 3, [yesterday]: 5 } }, prev);
-    expect(t).toContain('3 条');
-    expect(DOMAIN_FILES.news.extract({ byDate: { [yesterday]: 5 } }, prev)).toBeNull();
   });
 
   it('quiz/review/favorites/belongings：数量增长才产出', () => {
@@ -38,8 +30,7 @@ describe('DOMAIN_FILES（6 域新增感知；memo 已移除）', () => {
 
   it('非数组/无数据 → null（不产出噪音）', () => {
     const prev = new Map<string, string>();
-    expect(DOMAIN_FILES.news.extract({}, prev)).toBeNull();
-    expect(DOMAIN_FILES.belongings.extract(null, prev)).toBeNull();
+expect(DOMAIN_FILES.belongings.extract(null, prev)).toBeNull();
     expect(DOMAIN_FILES.pomodoro.extract({ history: 'x' }, prev)).toBeNull();
   });
 });

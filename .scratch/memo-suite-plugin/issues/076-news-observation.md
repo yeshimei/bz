@@ -1,6 +1,6 @@
 # 076 — smartcat 聚合讯观察（逐篇三态 + 阅读时长 + 保存联动 auto-summary）
 
-Status: ready-for-agent（2026-08-23，用户多轮拍板定稿）
+Status: done（2026-08-23，用户多轮拍板定稿；实现完成：逐篇三态方法监听 + 保存联动 auto-summary 方案 a + 剪藏观察停用）
 
 ## 需求 → 观察流程（用户拍板）
 
@@ -24,7 +24,7 @@ Status: ready-for-agent（2026-08-23，用户多轮拍板定稿）
 
 ### 保存联动 auto-summary（方案 a，用户确认）
 
-1. news 保存瞬间：不立即产出观察；smartcat 登记 `{剪藏路径, 标题, 平台, 时长分}` 进**待补全表**（内存）。
+1. news 保存瞬间：`notifyNewsRead` 产「立即降级」形态 + smartcat 登记 `{剪藏路径, 标题, 平台, 时长分}` 进**待补全表**（内存）。
 2. auto-summary 异步生成 title/summary/tags 写回剪藏 frontmatter → smartcat 订阅剪藏 modify：命中待补全登记 → 读 frontmatter summary/tags → 产出完整保存观察 → 移除登记。
 3. **降级**：登记后 2 分钟未等到（AI 失败/超时）→ 产出无摘要的保存观察并移除登记（定时器）。
 - 标题一律用文章原标题（news 文章都有 title，auto-summary 不会重写）。
@@ -37,15 +37,15 @@ Status: ready-for-agent（2026-08-23，用户多轮拍板定稿）
 
 ## 接线
 
-- `src/news/reader.ts`：`markAsRead`/`saveToClip` 处（方法监听，挂 UI 动作）：记 `openedAt`（render 打开文章时）、算 duration → `notifyNewsRead({title, platform, state: 'read'|'skipped'|'saved', durationMin})`；保存时另登记待补全（或由 smartcat 侧统一登记——挂点传剪藏路径）。
-- `src/smartcat/news-source.ts`（新，movie-source 同款）：文案纯函数 `buildNewsReadText(state, title, platform, durationMin)`（含保存带摘要/标签格式）+ `buildNewsSavedFullText(title, platform, durationMin, summary, tags)`；`MemoActionEvent` 同级 `NewsReadEvent`。
-- `src/smartcat/index.ts`：`notifyNewsRead(evt)`（对齐 notifyMovieAction，source `news`）+ 保存待补全登记表（Map 剪藏路径 → 登记）+ 剪藏 modify 订阅（补全）+ 2 分钟降级定时器 + unload 清理；`onVaultActivity` clipping 短路（命中登记才补全）。
+- `src/news/reader.ts`：`markAsRead`/`saveToClip` 处（方法监听，挂 UI 动作）：记 `openedAt`（render 打开文章时）、算 duration → `notifyNewsRead({title, platform, state: 'read'|'skipped'|'saved', durationMin})`；保存时（saveToClip 成功路径）另 `notifyNewsSaved(evt, 剪藏路径)` 登记待补全（路径 = `${CLIP_DIR}/${cleanTitle}.md`，与写入一致）。
+- `src/smartcat/news-source.ts`（新，movie-source 同款）：文案纯函数 `buildNewsReadText(state, title, platform, durationMin)` + `buildNewsSavedFullText(title, platform, durationMin, summary, tags)`；`NewsReadEvent`。
+- `src/smartcat/index.ts`：`notifyNewsRead(evt)`（对齐 notifyMovieAction，source `news`）+ 保存待补全登记表（Map 剪藏路径 → 登记）+ 剪藏 modify 补全（onVaultActivity clipping 短路分支）+ 2 分钟降级定时器 + unload 清理；补全/降级与近 20 条同文案防重。
 - 平台值：文章 `platform` 字段原样（果壳科学人/知乎日报/知乎热榜…）。
 
 ## 测试
 
-- `tests/smartcat/news-source.test.ts`：buildNewsReadText 三态（阅读带分钟/跳过无时长/保存两种形态 + 摘要标签拼接）。
-- `tests/smartcat/news-action.test.ts`（集成，仿 movie-action.test.ts）：notifyNewsRead → stream 断言；保存登记 → 模拟剪藏 modify（frontmatter 带 summary/tags）→ 补全产出且只出一次；降级（2 分钟不到 summary，假 timer 推进）→ 无摘要产出。
+- `tests/smartcat/news-source.test.ts`：buildNewsReadText 三态（阅读带分钟/跳过无时长/保存）+ buildNewsSavedFullText（摘要+标签拼接/缺省省略）。
+- `tests/smartcat/news-action.test.ts`（集成，仿 movie-action.test.ts）：notifyNewsRead → stream 尾部断言（含 source 'news'）；notifyNewsSaved 登记 → 模拟剪藏 modify（frontmatter 带 summary/tags）→ 产出完整保存观察且登记移除（再触发不再产）；降级（注入短间隔替代 2 分钟假 timer，规避 memorySystem 反射调度 setInterval 与 fake timers 相互作用）→ 产出无摘要观察；noteSource 关静默。
 - `src/news/reader.ts` 挂点不破坏既有 news 测试；全量 npm test + tsc --noEmit。
 
 ## 文档
