@@ -28,6 +28,8 @@ import { getPlatformName } from '../core/utils';
 import { getDueStatus, formatDueText } from './due';
 import type { MemoItem, MemoPosition } from './types';
 import { App } from './app';
+// ticket 075（方法监听）：memo 动作观察（smartcat；未初始化/关闭时静默）
+import { notifyMemoAction } from '../smartcat';
 
 /** 内容输入框一行高（14px × 1.5 行高 + 上下 padding 16px） */
 const CONTENT_LINE_HEIGHT = 37;
@@ -553,6 +555,8 @@ export const UIManager = {
 
     const editingId = this.addEditingId;
     const dueValue = dueInput.value || null;
+    // ticket 075（方法监听）：编辑 α 合并需旧值——保存前从已加载列表取（或 showAddDialog 的 editItem）
+    const oldItem = editingId ? App.state.todoItems.find((i) => i.id === editingId) : undefined;
     try {
       if (editingId) {
         await DataManager.updateItem(editingId, {
@@ -567,6 +571,30 @@ export const UIManager = {
           coursePath,
           url: finalUrl,
         } as any);
+        // ticket 075（方法监听）：编辑动作观察（α 合并一条；无变化 memo-source 返回 null 不产出）
+        if (oldItem) {
+          notifyMemoAction({
+            kind: 'edited',
+            old: {
+              title: oldItem.title,
+              scene: oldItem.scene,
+              priority: oldItem.priority === 'important' ? 'important' : 'minor',
+              due: oldItem.due,
+              notePath: oldItem.notePath,
+              scriptName: oldItem.scriptName,
+              courseName: oldItem.courseName,
+            },
+            next: {
+              title: finalTitle,
+              scene,
+              priority: priority === 'important' ? 'important' : 'minor',
+              due: dueValue,
+              notePath,
+              scriptName,
+              courseName,
+            },
+          });
+        }
       } else {
         const newItem = {
           id: generateId('todo'),
@@ -584,6 +612,17 @@ export const UIManager = {
           url: finalUrl,
         };
         await DataManager.addItem(newItem as any);
+        // ticket 075（方法监听）：添加动作观察（键值式，有才加）
+        notifyMemoAction({
+          kind: 'added',
+          title: finalTitle,
+          scene,
+          priority: priority === 'important' ? 'important' : 'minor',
+          due: dueValue,
+          notePath,
+          scriptName,
+          courseName,
+        });
       }
       await App.loadData();
       App.refresh();
@@ -976,6 +1015,8 @@ export const Renderer = {
           card.style.opacity = '0.5';
           setTimeout(async () => {
             await DataManager.completeItem(item.id);
+            // ticket 075（方法监听）：完成观察（去抖 300ms 内，放 completeItem 调用处）
+            notifyMemoAction({ kind: 'completed', title: item.title });
             App.refresh();
           }, 300);
         }
@@ -1033,6 +1074,8 @@ export const Renderer = {
         sub: item.due ? formatDueText(item.due) : undefined, // 到期状态：剩 N 天/今天/已过期
         onClick: async () => {
           await DataManager.completeItem(item.id);
+          // ticket 075（方法监听）：完成观察
+          notifyMemoAction({ kind: 'completed', title: item.title });
           notice('已标记完成', 'success');
           App.refresh();
         },
@@ -1044,6 +1087,8 @@ export const Renderer = {
         title: '恢复未完成',
         onClick: async () => {
           await DataManager.updateItem(item.id, { completed: null } as any);
+          // ticket 075（方法监听）：恢复未完成观察
+          notifyMemoAction({ kind: 'restored', title: item.title });
           notice('已恢复未完成', 'success');
           App.refresh();
         },
@@ -1053,6 +1098,8 @@ export const Renderer = {
       const postpone = (days: number) => {
         const next = moment(item.due!.replace('T', ' ')).add(days, 'days').format('YYYY-MM-DD HH:mm');
         void DataManager.updateItem(item.id, { due: next } as any).then(() => {
+          // ticket 075（方法监听）：延后观察（带延后后的新截止）
+          notifyMemoAction({ kind: 'postponed', title: item.title, due: next });
           notice(`已延后 ${days} 天`, 'success');
           App.refresh();
         });
@@ -1070,7 +1117,10 @@ export const Renderer = {
       label: isImportant ? '转为次要' : '转为重要',
       title: '切换优先级',
       onClick: async () => {
-        await DataManager.updateItem(item.id, { priority: isImportant ? 'minor' : 'important' } as any);
+        const to = isImportant ? 'minor' : 'important';
+        await DataManager.updateItem(item.id, { priority: to } as any);
+        // ticket 075（方法监听）：切换优先级观察
+        notifyMemoAction({ kind: 'priority', title: item.title, to });
         notice(isImportant ? '已转为次要' : '已转为重要', 'success');
         App.refresh();
       },
@@ -1095,6 +1145,8 @@ export const Renderer = {
       onClick: () =>
         UIManager.showConfirm('删除备忘录', item.title, async () => {
           await DataManager.deleteItem(item.id);
+          // ticket 075（方法监听）：删除观察
+          notifyMemoAction({ kind: 'deleted', title: item.title });
           App.refresh();
         }),
     });
