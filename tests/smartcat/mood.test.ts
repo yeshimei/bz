@@ -5,6 +5,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MoodSystem, PersonalityGrowth, MOOD_MAP, emotionResonanceDelta } from '../../src/smartcat/mood';
+import { TRUST_SOFT_K, TRUST_CAP, trustUpdate } from '../../src/smartcat/character';
 import { defaultSmartCatData } from '../../src/smartcat/data';
 import type { SmartCatData } from '../../src/smartcat/types';
 
@@ -203,11 +204,14 @@ describe('MoodSystem 衰减与互动', () => {
     vi.useRealTimers();
   }, 10000);
 
-  it('handleInteraction：pet 加 pleasure/arousal/dominance', () => {
+  it('handleInteraction：pet 无操作（072 撸猫退出数据面），note_create 照常加成', () => {
     const m = make();
     m.handleInteraction('pet', 1);
+    expect(m.pad.pleasure).toBe(55);
+    expect(m.pad.arousal).toBe(50);
+    expect(m.pad.dominance).toBe(50);
+    m.handleInteraction('note_create', 1);
     expect(m.pad.pleasure).toBeGreaterThan(55);
-    expect(m.pad.arousal).toBeGreaterThan(50);
     expect(m.pad.dominance).toBeGreaterThan(50);
   });
 });
@@ -218,47 +222,83 @@ describe('PersonalityGrowth（MATE ADR-0023）', () => {
     saver = vi.fn<(d: SmartCatData) => Promise<void>>(async (d) => { data = d; });
   });
 
-  it('pet 互动 → character_transition 微移（warmth 成长 + trust 上升）', async () => {
+  it('撸猫（pet）退出一切数据面（ticket 072）：特质/信任/依恋/统计/历史/落盘全不动', async () => {
+    const pg = new PersonalityGrowth(() => data, saver);
+    const snapBefore = JSON.parse(JSON.stringify(data.personalityGrowth));
+    await pg.developBasedOnInteraction('pet', 1);
+    expect(data.personalityGrowth).toEqual(snapBefore);
+    expect(saver).not.toHaveBeenCalled();
+  });
+
+  it('talk 互动 → character_transition 微移（warmth 成长 + trust 上升 + 历史留痕）', async () => {
     const pg = new PersonalityGrowth(() => data, saver);
     const beforeWarmth = data.personalityGrowth.traits.warmth;
     const beforeTrust = data.personalityGrowth.relationship.trust;
-    await pg.developBasedOnInteraction('pet', 1);
+    await pg.developBasedOnInteraction('talk', 1);
     expect(data.personalityGrowth.traits.warmth).toBeGreaterThan(beforeWarmth);
     expect(data.personalityGrowth.relationship.trust).toBeGreaterThan(beforeTrust);
     expect(data.personalityGrowth.growthHistory.length).toBe(1);
     expect(data.personalityGrowth.growthHistory[0].source).toBe('interaction');
   });
 
-  it('写日记/闪念计入信任成长：轻质量 0.15（ticket 025，ADR-0024 决策；软收拢下增量=向 cap 收拢 2%+gain）', async () => {
+  it('依恋慢跟随信任（ticket 072）：attachment 从死值 0.5 向 trust 方向移动且小于 trust', async () => {
+    const pg = new PersonalityGrowth(() => data, saver);
+    await pg.developBasedOnInteraction('talk', 1);
+    const r = data.personalityGrowth.relationship;
+    expect(r.attachment).toBeGreaterThan(0.5);
+    expect(r.attachment).toBeLessThan(r.trust);
+  });
+
+  it('写日记/闪念计入信任成长：轻质量 0.15（ticket 025，ADR-0024 决策；软收拢 K=0.85 下增量=向 cap 收拢+gain）', async () => {
     const pg = new PersonalityGrowth(() => data, saver);
     const before = data.personalityGrowth.relationship.trust;
     await pg.developBasedOnInteraction('diary', 0.3, 0.02, 0.15);
     const delta = data.personalityGrowth.relationship.trust - before;
     expect(delta).toBeGreaterThan(0);
-    // 0.5 → 软收拢 0.85：0.85 + 0.98×((0.5+0.00123)−0.85) = 0.5082（低侧向 cap 收拢）
-    expect(data.personalityGrowth.relationship.trust - before).toBeCloseTo(0.85 + 0.98 * ((before + 0.0082 * 0.15) - 0.85) - before, 6);
-    // 默认 quality 仍为 0.5（既有聊天/抚摸路径不变）：gain 更大 → 收拢后更高
+    // 0.5 → 软收拢 K=0.85：0.85 + 0.85×((0.5+0.00123)−0.85) ≈ 0.5560（低侧向 cap 收拢）
+    expect(data.personalityGrowth.relationship.trust - before).toBeCloseTo(0.85 + TRUST_SOFT_K * ((before + 0.0082 * 0.15) - 0.85) - before, 6);
+    // 默认 quality 仍为 0.5（聊天路径不变）：正增长；ticket 072 后 K=0.85 单步增量被
+    // 「向 cap 收拢」主导（远低于 cap 时收拢项 >> gain），质量差异体现在平衡点高度而非单步增量
     const pg2 = new PersonalityGrowth(() => data, saver);
     const before2 = data.personalityGrowth.relationship.trust;
-    await pg2.developBasedOnInteraction('pet', 1);
+    await pg2.developBasedOnInteraction('learn', 1);
     expect(data.personalityGrowth.relationship.trust - before2).toBeGreaterThan(0);
-    expect(pg2.dataProvider().personalityGrowth.relationship.trust - before2).toBeGreaterThan(delta);
+    // 平衡点对比：轻质量档 v*≈cap+0.008，聊天档 v*≈cap+0.03——高质量恒收敛更高
+    let light = 0.5;
+    for (let i = 0; i < 3000; i++) light = trustUpdate(light, { warm: true, quality: 0.15, trustCap: TRUST_CAP ?? undefined });
+    let chat = 0.5;
+    for (let i = 0; i < 3000; i++) chat = trustUpdate(chat, { warm: true, quality: 0.5, trustCap: TRUST_CAP ?? undefined });
+    expect(chat).toBeGreaterThan(light);
+    expect(chat).toBeLessThan(0.9); // 软帽真实生效（旧 K=0.98 会双双顶到 0.999）
   });
 
   it('tickBehaviorStats：互动计数 + 活跃时段记录', async () => {
     const pg = new PersonalityGrowth(() => data, saver);
-    await pg.developBasedOnInteraction('pet', 1);
+    await pg.developBasedOnInteraction('talk', 1);
     expect(data.personalityGrowth.behaviorStats.interactionCount).toBe(1);
     expect(data.personalityGrowth.behaviorStats.preferredHour).toBe(new Date().getHours());
   });
 
-  it('applyWeeklyExperience：周统计折算进 traits（δ≤0.01 深更新，计数清零）', async () => {
+  it('applyWeeklyExperience：互动样本 <WEEKLY_MIN_INTERACTIONS 不深更新不清零不留痕（ticket 072 门槛）', async () => {
     const pg = new PersonalityGrowth(() => data, saver);
-    for (let i = 0; i < 20; i++) await pg.developBasedOnInteraction('pet', 1);
-    const before = data.personalityGrowth.traits.warmth;
+    for (let i = 0; i < 20; i++) await pg.developBasedOnInteraction('talk', 1);
+    const traitsBefore = { ...data.personalityGrowth.traits };
+    const countBefore = data.personalityGrowth.behaviorStats.interactionCount;
     await pg.applyWeeklyExperience();
-    expect(data.personalityGrowth.traits.warmth).toBeGreaterThanOrEqual(before);
+    expect(data.personalityGrowth.behaviorStats.interactionCount).toBe(countBefore);
+    expect(data.personalityGrowth.growthHistory.some((h: any) => h.source === 'weekly')).toBe(false);
+    expect(data.personalityGrowth.traits.warmth).toBe(traitsBefore.warmth);
+  });
+
+  it('applyWeeklyExperience：≥50 样本深更新——增益 ×DEEP_DELTA_SCALE 后微小、计数清零、历史留痕', async () => {
+    const pg = new PersonalityGrowth(() => data, saver);
+    for (let i = 0; i < 50; i++) await pg.developBasedOnInteraction('talk', 1);
+    const beforeWarmth = data.personalityGrowth.traits.warmth;
+    await pg.applyWeeklyExperience();
     expect(data.personalityGrowth.behaviorStats.interactionCount).toBe(0);
+    expect(data.personalityGrowth.traits.warmth).toBeGreaterThanOrEqual(beforeWarmth);
+    expect(data.personalityGrowth.traits.warmth - beforeWarmth).toBeLessThan(0.005); // 不再单次顶格 +0.01
+    expect(data.personalityGrowth.growthHistory.some((h: any) => h.source === 'weekly')).toBe(true);
   });
 
   it('反思驱动：洞察含自我/关于我 → exist_depth 成长（仅反思渠道）', async () => {
@@ -297,13 +337,13 @@ describe('PersonalityGrowth（MATE ADR-0023）', () => {
         description: `记忆${i}`, importance: 0.5, type: 'observation',
       });
     }
-    await pg.developBasedOnInteraction('pet', 1);
+    await pg.developBasedOnInteraction('talk', 1);
     expect(data.personalityGrowth.behaviorStats.preferredHour).toBe(23);
   });
 
   it('preferredHour 兜底（ADR-0025）：无记忆数据时保持当前小时（旧行为不变）', async () => {
     const pg = new PersonalityGrowth(() => data, saver);
-    await pg.developBasedOnInteraction('pet', 1);
+    await pg.developBasedOnInteraction('talk', 1);
     expect(data.personalityGrowth.behaviorStats.preferredHour).toBe(new Date().getHours());
   });
 
@@ -316,5 +356,28 @@ describe('PersonalityGrowth（MATE ADR-0023）', () => {
     expect(data.personalityGrowth.relationship.trust).toBe(before);
     await pg.developBasedOnInteraction('talk', 1);
     expect(data.personalityGrowth.relationship.trust).toBeGreaterThan(before);
+  });
+
+  it('基调表扩展（ticket 072）：diary/flash 轻正、talk/click/note_* 中性、未知类型轻微侵蚀', async () => {
+    const pg = new PersonalityGrowth(() => data, saver);
+    await pg.developBasedOnInteraction('diary', 1);
+    expect(data.personalityGrowth.behaviorStats.emotionalTone).toBeGreaterThan(0);
+    await pg.developBasedOnInteraction('flash', 1);
+    expect(data.personalityGrowth.behaviorStats.emotionalTone).toBeGreaterThan(0);
+    const t = data.personalityGrowth.behaviorStats.emotionalTone;
+    await pg.developBasedOnInteraction('talk', 1);
+    expect(data.personalityGrowth.behaviorStats.emotionalTone).toBe(t); // 中性不动
+    await pg.developBasedOnInteraction('mystery', 1);
+    expect(data.personalityGrowth.behaviorStats.emotionalTone).toBeLessThan(t); // 未知类型才轻微侵蚀
+  });
+
+  it('历史 trim 多样性保留（ticket 072）：互动刷屏时反思记录不被挤掉、互动只留最近 30 条', async () => {
+    const pg = new PersonalityGrowth(() => data, saver);
+    await pg.applyReflectionInsights([{ text: '用户喜欢深夜写作，习惯固定' }]);
+    for (let i = 0; i < 120; i++) await pg.developBasedOnInteraction('talk', 1);
+    const h = data.personalityGrowth.growthHistory;
+    expect(h.filter((x: any) => x.source === 'reflection').length).toBeGreaterThanOrEqual(1);
+    expect(h.filter((x: any) => x.source === 'interaction').length).toBeLessThanOrEqual(30);
+    expect(h.length).toBeLessThanOrEqual(90);
   });
 });
