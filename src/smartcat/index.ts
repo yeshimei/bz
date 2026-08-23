@@ -199,7 +199,8 @@ export async function ensureSmartCat(app: App): Promise<void> {
     if (!moodSystem || !m?.emotion) return;
     try {
       moodSystem.registerEmotion(m.emotion);
-      moodSystem.applyEmotionResonance(m.emotion);
+      // ADR-0036：共振差量 × 可信度——低可信度观察的情绪不猛推 PAD（旧条目无 credibility → 0.5 中性）
+      moodSystem.applyEmotionResonance(m.emotion, m.credibility ?? 0.5);
     } catch (e) { /* 共振失败不影响记忆主流程 */ }
   };
 

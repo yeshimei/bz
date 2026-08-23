@@ -3,7 +3,7 @@
  * 三因子检索（词法/语义）/自增强 lastAccessed/500 上限/反思调度/降级链。
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { MemorySystem, MEMORY_CONFIG, sourceLabel, formatRelativeTime, buildRetrieveQuery } from '../../src/smartcat/memory';
+import { MemorySystem, MEMORY_CONFIG, ruleCredibility, CREDIBILITY_TIERS, sourceLabel, formatRelativeTime, buildRetrieveQuery } from '../../src/smartcat/memory';
 import { defaultSmartCatData } from '../../src/smartcat/data';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { requestUrl } from '../mock-obsidian-entry';
@@ -151,6 +151,141 @@ describe('importance 打分', () => {
     expect(mem).not.toBeNull();
     expect(mem!.emotion).toBe('happy');
     expect(data.memory.stream[0].emotion).toBe('happy');
+  });
+});
+
+describe('观察可信度 credibility（085，ADR-0036）', () => {
+  it('ruleCredibility 档位表全覆盖（来源基准分）', () => {
+    // 高 0.9：亲笔心迹
+    expect(ruleCredibility('diary', '你在 2026-08-24 写了一篇日记：今天很开心')).toBe(0.9);
+    expect(ruleCredibility('reflection', '反省内容')).toBe(0.9);
+    expect(ruleCredibility('flash', '卡片盒内容')).toBe(0.9);
+    expect(ruleCredibility('letter', '一封信')).toBe(0.9);
+    expect(ruleCredibility('poem', '一首诗')).toBe(0.9);
+    // 中高 0.75：明确 UI 意图
+    expect(ruleCredibility('memo', '你添加了待办「买菜」')).toBe(0.75);
+    expect(ruleCredibility('favorites', '你收藏了《TypeScript 指南》')).toBe(0.75);
+    expect(ruleCredibility('belongings', '你登记了新物品《耳机》')).toBe(0.75);
+    // 中 0.6：行为动作（影视/番茄钟/书库书架·时长·done）
+    expect(ruleCredibility('movie', '你加入了想看《星际穿越》')).toBe(0.6);
+    expect(ruleCredibility('pomodoro', '你用番茄钟完成了 25 分钟专注')).toBe(0.6);
+    expect(ruleCredibility('domain:library', '你把《X》加入了书架')).toBe(0.6);
+    expect(ruleCredibility('domain:library', '你开始读《X》')).toBe(0.6);
+    expect(ruleCredibility('domain:library', '你读完了《X》')).toBe(0.6);
+    expect(ruleCredibility('domain:library', '你读了《X》约 30 分钟（读到 60%）')).toBe(0.6);
+    // 中低 0.45：停留/标记可误触（聚合讯阅读/保存、书库划线/想法）
+    expect(ruleCredibility('news', '你阅读了《X》（平台·读了 2 分钟）')).toBe(0.45);
+    expect(ruleCredibility('news', '你保存了《X》（平台·读了 5 分钟）')).toBe(0.45);
+    expect(ruleCredibility('domain:library', '你在《X》划了条重点：「这句真好」')).toBe(0.45);
+    expect(ruleCredibility('domain:library', '你在《X》写了条想法：「有启发」')).toBe(0.45);
+    // 未知来源（chat/undefined）缺省 0.5 中性（对齐旧数据无字段兜底）
+    expect(ruleCredibility('chat', '用户说：今天好累')).toBe(0.5);
+    expect(ruleCredibility(undefined, '未知来源的内容')).toBe(0.5);
+    // 档位表导出（CREDIBILITY_TIERS 供检索/反思外读）
+    expect(CREDIBILITY_TIERS.diary).toBe(0.9);
+    expect(CREDIBILITY_TIERS.news).toBe(0.45);
+  });
+
+  it('ruleCredibility 负向信号：news 跳过/移出书架 → 低档 0.3；其它来源负向词 −0.15（下限 0.25）', () => {
+    expect(ruleCredibility('news', '你跳过了《X》（平台）')).toBe(0.3);
+    expect(ruleCredibility('domain:library', '你把《X》移出了书架')).toBe(0.3);
+    expect(ruleCredibility('favorites', '你删除了收藏《X》')).toBeCloseTo(0.6, 10);
+    expect(ruleCredibility('memo', '你删除了待办「X」')).toBeCloseTo(0.6, 10);
+    expect(ruleCredibility('belongings', '你删除了物品《X》')).toBeCloseTo(0.6, 10);
+    expect(ruleCredibility('movie', '你删除了《X》的影视记录')).toBeCloseTo(0.45, 10);
+    expect(ruleCredibility('diary', '你删除了 2026-08-24 12:00 的日记')).toBeCloseTo(0.75, 10);
+    // 负向词降档单次 −0.15（多重负向不叠加）；下限 0.25 兜底
+    expect(ruleCredibility('news', '你跳过了《A》又跳过了《B》')).toBe(0.3);
+    expect(ruleCredibility('chat', '用户说：删除了所有记录')).toBeCloseTo(0.35, 10);
+    expect(ruleCredibility('chat', '用户说：移出了全部收藏')).toBe(0.35);
+  });
+
+  it('scoreImportanceAndEmotion 本地路径：credibility = 来源档位', async () => {
+    const m = make(); // AI 未配置 → 本地规则分
+    const r = await m.scoreImportanceAndEmotion('你收藏了《TokenLedger》', { source: 'favorites' });
+    expect(r.credibility).toBe(0.75);
+    const r2 = await m.scoreImportanceAndEmotion('用户说：今天天气不错', { source: 'chat' });
+    expect(r2.credibility).toBe(0.5);
+    const r3 = await m.scoreImportanceAndEmotion('你跳过了《X》（平台）', { source: 'news' });
+    expect(r3.credibility).toBe(0.3);
+  });
+
+  it('LLM 打分可覆盖 credibility（mock 返回第 3 项）；未返回 → 来源档位兜底', async () => {
+    const m = make({ ai: true });
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ choices: [{ message: { content: '{"score": 7, "emotion": "focused", "credibility": 9}' } }] }),
+    }));
+    (globalThis as any).fetch = fetchMock;
+    const r = await m.scoreImportanceAndEmotion('你写了日记：今天学 TypeScript', { source: 'diary' });
+    expect(r.importance).toBeCloseTo(0.7, 5);
+    expect(r.credibility).toBeCloseTo(0.9, 5); // LLM 9/10 覆盖来源档
+    // LLM 未返回 credibility → 来源档位兜底（省 token）
+    const fetchMock2 = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ choices: [{ message: { content: '{"score": 6, "emotion": "calm"}' } }] }),
+    }));
+    (globalThis as any).fetch = fetchMock2;
+    const r2 = await m.scoreImportanceAndEmotion('你读了《X》约 30 分钟（读到 60%）', { source: 'domain:library' });
+    expect(r2.credibility).toBe(0.6);
+    // 非法 credibility（NaN）→ 来源档位兜底
+    const fetchMock3 = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ choices: [{ message: { content: '{"score": 5, "emotion": "calm", "credibility": "abc"}' } }] }),
+    }));
+    (globalThis as any).fetch = fetchMock3;
+    const r3 = await m.scoreImportanceAndEmotion('你在《X》写了条想法：「感悟」', { source: 'domain:library' });
+    expect(r3.credibility).toBe(0.45);
+  });
+
+  it('addObservation 写入 credibility（来源档位 / 显式 opts 覆盖）', async () => {
+    const m = make();
+    const mem = await m.addObservation('你把《X》移出了书架', { source: 'domain:library' });
+    expect(mem!.credibility).toBe(0.3);
+    const mem2 = await m.addObservation('特殊观察', { source: 'chat', credibility: 0.8, importance: 0.6 });
+    expect(mem2!.credibility).toBe(0.8);
+    expect(data.memory.stream[1].credibility).toBe(0.8);
+    // 显式 importance 但未传 credibility → 来源档位
+    const mem3 = await m.addObservation('你收藏了《Y》', { source: 'favorites', importance: 0.9 });
+    expect(mem3!.credibility).toBe(0.75);
+  });
+
+  it('检索 GA 评分：同 importance/相关性下低 credibility 下沉（αc=0.3）', async () => {
+    const m = make();
+    await m.addObservation('用户说：TypeScript 很棒，继续学', { source: 'chat', importance: 0.5 });   // cred 0.5
+    await m.addObservation('你跳过了《TypeScript 导论》（聚合讯）', { source: 'news', importance: 0.5 }); // cred 0.3
+    const results = await m.retrieve('TypeScript');
+    expect(results.length).toBe(2);
+    expect(results[0].description).toContain('很棒');
+    expect(results[1].description).toContain('跳过');
+  });
+
+  it('反思 evidence：importance 相同 → credibility 高者优先入选（排序键 importance×(0.5+credibility×0.5)）', async () => {
+    const m = make({ ai: true });
+    await m.addObservation('你在卡片盒记下了「可信内容本体」', { source: 'flash', importance: 0.5 });  // cred 0.9
+    await m.addObservation('你阅读了《X》（平台·读了 1 分钟）', { source: 'news', importance: 0.5 });    // cred 0.45
+    let capturedPrompt = '';
+    const fetchMock = vi.fn(async (url: string, init?: any) => {
+      capturedPrompt = JSON.parse((init as any).body).messages[1].content as string;
+      const payload = { insights: [{ text: '结论', evidence: [1] }] };
+      return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify(payload) } }] }) };
+    });
+    (globalThis as any).fetch = fetchMock;
+    await m.reflect();
+    expect(capturedPrompt).toContain('1. 你在卡片盒记下了「可信内容本体」');
+    expect(capturedPrompt).toContain('2. 你阅读了《X》（平台·读了 1 分钟）');
+  });
+
+  it('旧数据无 credibility → 检索不崩且按 0.5 中性处理（不迁移字段）', async () => {
+    const m = make();
+    data.memory.stream.push(
+      { id: 'old1', created: new Date().toISOString(), lastAccessed: new Date().toISOString(), description: '用户说：老记忆一', importance: 0.4, type: 'observation' },
+      { id: 'old2', created: new Date().toISOString(), lastAccessed: new Date().toISOString(), description: '用户说：老记忆二', importance: 0.5, type: 'observation' },
+    );
+    const results = await m.retrieve('老记忆');
+    expect(results.length).toBe(2); // 不崩
+    expect(results[0].credibility).toBeUndefined(); // 字段零迁移
+    expect(results[0].importance).toBe(0.5); // 中性与否不影响 importance 排序
   });
 });
 

@@ -27,6 +27,8 @@ export const MEMORY_CONFIG = {
   alphaRecency: 0.66,
   alphaImportance: 0.95,
   alphaRelevance: 1.5,
+  /** 检索可信度权重（ADR-0036：第四项 + αc·credibility，低可信度记忆检索时下沉；0.3 起步可调） */
+  alphaCredibility: 0.3,
   /** recency 指数衰减系数（RL 校准 ADR-0024：0.995 → 0.986 → 0.982 进化第 3 轮） */
   decay: 0.982,
   /** 反思：距上次至少间隔（ms） */
@@ -97,17 +99,18 @@ export class MemorySystem {
 
   // ---------------- 记忆写入 ----------------
 
-  /** 添加观察记忆（聊天对话等）；importance+emotion 走 LLM 打分（未配置降级规则分/词法情绪）
+  /** 添加观察记忆（聊天对话等）；importance+emotion+credibility 走 LLM 打分（未配置降级规则分/词法情绪/来源档位）
    *  ADR-0025：opts.dedupe=true 时先做近 N 条同内容去重（短路，省一次 LLM 打分），
-   *  再按「非 calm 情绪 or importance≥聊天保留阈值」限流——返回 null 表示未落库。 */
-  async addObservation(description: string, opts: { source?: string; manuallyMarked?: boolean; importance?: number; emotion?: string; dedupe?: boolean } = {}): Promise<MemoryStreamEntry | null> {
+   *  再按「非 calm 情绪 or importance≥聊天保留阈值」限流——返回 null 表示未落库。
+   *  ADR-0036：opts.credibility 可显式透传（各域 notify 不必改——source 已够，除非特殊覆盖需求）。 */
+  async addObservation(description: string, opts: { source?: string; manuallyMarked?: boolean; importance?: number; emotion?: string; dedupe?: boolean; credibility?: number } = {}): Promise<MemoryStreamEntry | null> {
     if (opts.dedupe) {
       const norm = (description || '').trim();
       const recent = this.stream.slice(-MemorySystem.dedupeWindow);
       if (recent.some((m) => (m.description || '').trim() === norm)) return null;
     }
     const score = opts.importance !== undefined
-      ? { importance: opts.importance, emotion: opts.emotion }
+      ? { importance: opts.importance, emotion: opts.emotion, credibility: opts.credibility ?? ruleCredibility(opts.source, description) }
       : await this.scoreImportanceAndEmotion(description, opts);
     if (opts.dedupe) {
       const emo = score.emotion;
@@ -123,6 +126,7 @@ export class MemorySystem {
       type: 'observation',
       source: opts.source,
       emotion: score.emotion,
+      credibility: score.credibility,
     };
     this.stream.push(memory);
     this.enforceStreamLimit();
@@ -185,10 +189,11 @@ export class MemorySystem {
     return source !== undefined && longContent.includes(source) && (description || '').trim().length >= 30;
   }
 
-  /** 打分（LLM 顺带情绪）：{score 0-10→0-1, emotion}；智能档位（config.cloudScoring）先本地规则分+词法情绪，
-   *  命中「值得 LLM」判定且 AI 配置才升级调 LLM；失败/未配置回落本地（降级链完整） */
-  async scoreImportanceAndEmotion(description: string, opts: { manuallyMarked?: boolean; source?: string } = {}): Promise<{ importance: number; emotion?: string }> {
-    const local = { importance: this.ruleImportance(description, opts), emotion: this.detectEmotion(description) };
+  /** 打分（LLM 顺带情绪 + 可信度）：{score 0-10→0-1, emotion, credibility}；智能档位（config.cloudScoring）先本地
+   *  规则分+词法情绪+来源档位可信度，命中「值得 LLM」判定且 AI 配置才升级调 LLM；失败/未配置回落本地（降级链完整）。
+   *  ADR-0036：credibility 本地 = ruleCredibility（来源档位表）；LLM 返回第 3 项可覆盖（省 token——未返回仍按来源档位）。 */
+  async scoreImportanceAndEmotion(description: string, opts: { manuallyMarked?: boolean; source?: string } = {}): Promise<{ importance: number; emotion?: string; credibility: number }> {
+    const local = { importance: this.ruleImportance(description, opts), emotion: this.detectEmotion(description), credibility: ruleCredibility(opts.source, description) };
     const mode = (this.dataProvider().config as any)?.cloudScoring ?? 'smart';
     if (!this.shouldCloudScore(description, opts.source, mode as CloudScoringMode)) return local;
     try {
@@ -199,18 +204,25 @@ export class MemorySystem {
             content:
               '你是小橘，一只陪伴猫咪。请评估下面这条关于用户的记忆：' +
               '1) 重要程度 0=极其琐碎（如买了杯奶茶），10=极其重要（如考上了理想学校）；' +
-              '2) 情绪倾向（从 happy/sad/curious/sleepy/playful/focused/calm/upset 中选一个最贴切的）。' +
-              '只返回 JSON：{"score": 0到10之间的数字, "emotion": "情绪"}',
+              '2) 情绪倾向（从 happy/sad/curious/sleepy/playful/focused/calm/upset 中选一个最贴切的）；' +
+              '3) 可信度 0=很难确定是不是真的观察到的（如停留/误触），10=确定是你真实观察到的（如亲笔日记）。' +
+              '只返回 JSON：{"score": 0到10之间的数字, "emotion": "情绪", "credibility": 0到10之间的数字}',
           },
           { role: 'user', content: `记忆：${description}` },
         ], 150);
         const s = Number(r?.score);
         const emotion = typeof r?.emotion === 'string' && r.emotion.trim() ? r.emotion.trim() : undefined;
+        const cred = Number(r?.credibility);
         if (Number.isFinite(s)) {
-          return { importance: Math.min(1, Math.max(0, s / 10)), emotion: emotion || this.detectEmotion(description) };
+          return {
+            importance: Math.min(1, Math.max(0, s / 10)),
+            emotion: emotion || this.detectEmotion(description),
+            // ADR-0036：LLM 可信度可覆盖；未返回/非法 → 来源档位（省 token）
+            credibility: Number.isFinite(cred) ? Math.min(1, Math.max(0, cred / 10)) : ruleCredibility(opts.source, description),
+          };
         }
       }
-    } catch (e) { /* 降级规则分 + 词法情绪 */ }
+    } catch (e) { /* 降级规则分 + 词法情绪 + 来源档位可信度 */ }
     return local;
   }
 
@@ -283,7 +295,8 @@ export class MemorySystem {
       const recency = Math.pow(MEMORY_CONFIG.decay, Math.max(0, hours));
       const importance = m.importance ?? 0;
       const relevance = queryVec && m.id ? this.semanticRelevance(m.id, queryVec) : this.lexicalRelevance(m, lexicalQ);
-      return { m, score: MEMORY_CONFIG.alphaRecency * recency + MEMORY_CONFIG.alphaImportance * importance + MEMORY_CONFIG.alphaRelevance * relevance };
+      // ADR-0036：第四项 + αc·credibility（低可信度记忆检索时下沉；旧条目无字段 → 0.5 中性）
+      return { m, score: MEMORY_CONFIG.alphaRecency * recency + MEMORY_CONFIG.alphaImportance * importance + MEMORY_CONFIG.alphaRelevance * relevance + MEMORY_CONFIG.alphaCredibility * (m.credibility ?? 0.5) };
     });
     scored.sort((a, b) => b.score - a.score);
     const top = scored.slice(0, topN).map((s) => s.m);
@@ -489,8 +502,13 @@ export class MemorySystem {
     const now = Date.now();
     // evidence：最近 evidenceWindow 条内 importance 前 evidenceTop 条
     // 红队 B P1-1：insight 禁止作 evidence（解自引用膨胀——小橘自己的洞察不再被当用户事实二次加工）
+    // ADR-0036：排序键 importance × (0.5 + credibility×0.5)——低可信度观察少进反思结论（旧条目无字段 → 0.5 中性）
     const recent = this.stream.slice(-MEMORY_CONFIG.evidenceWindow).filter((m) => m.type !== 'insight');
-    const evidence = [...recent].sort((a, b) => (b.importance ?? 0) - (a.importance ?? 0)).slice(0, MEMORY_CONFIG.evidenceTop);
+    const evidence = [...recent].sort((a, b) => {
+      const wa = (a.importance ?? 0) * (0.5 + (a.credibility ?? 0.5) * 0.5);
+      const wb = (b.importance ?? 0) * (0.5 + (b.credibility ?? 0.5) * 0.5);
+      return wb - wa;
+    }).slice(0, MEMORY_CONFIG.evidenceTop);
     if (evidence.length < 2) return; // 记忆太少不反思
 
     const numbered = evidence.map((m, i) => `${i + 1}. ${m.description}`).join('\n');
@@ -651,6 +669,43 @@ export class MemorySystem {
       })
       .join('\n');
   }
+}
+
+/**
+ * 观察可信度基准分（ADR-0036，ticket 085）：来源档位表 + 负向词降档，纯函数。
+ * 档位：高 0.9 亲笔心迹（diary/reflection/flash/letter/poem）；中高 0.75 明确 UI 意图
+ * （memo/favorites/belongings）；中 0.6 行为动作（movie/pomodoro/domain:library 书架/时长/done）；
+ * 中低 0.45 停留/标记可误触（news、domain:library 划线/想法/移出）；低 0.3 负向/移除信号
+ * （news 跳过、移出书架——由 0.45 中低档 −0.15 降档得出）；未知来源缺省 0.5 中性（对齐旧数据无字段兜底）。
+ * 描述含「跳过/移出/移除/删除/删掉/取消」等负向词 → 来源档基础 −0.15（下限 0.25）。
+ */
+export const CREDIBILITY_TIERS: Record<string, number> = {
+  diary: 0.9, reflection: 0.9, flash: 0.9, letter: 0.9, poem: 0.9,
+  memo: 0.75, favorites: 0.75, belongings: 0.75,
+  movie: 0.6, pomodoro: 0.6,
+  news: 0.45,
+};
+
+/** 负向词集（「跳过」等；命中 → 来源档基础 −0.15，下限 0.25） */
+const CREDIBILITY_NEGATIVE_WORDS = ['跳过', '移出', '移除', '删除', '删掉', '取消'];
+
+/** 观察可信度（0-1）：来源档位基准 + 负向词降档；domain:library 按描述区分书架/划线(重点)/想法/移出语义 */
+export function ruleCredibility(source: string | undefined, description: string): number {
+  const text = typeof description === 'string' ? description : String(description ?? '');
+  let base: number;
+  if (source === 'domain:library') {
+    // 书架/时长/done → 中 0.6；划重点/想法/移出 → 中低 0.45（移出再经负向词降档 → 低 0.3；
+    // 实际文案为「划了条重点」——划线与重点同查）
+    base = /划线|重点|想法|移出|移除/.test(text) ? 0.45 : 0.6;
+  } else {
+    base = source !== undefined && Object.prototype.hasOwnProperty.call(CREDIBILITY_TIERS, source)
+      ? CREDIBILITY_TIERS[source]
+      : 0.5; // 未知来源（chat 等）中性 0.5，对齐旧数据无字段缺省
+  }
+  if (CREDIBILITY_NEGATIVE_WORDS.some((w) => text.includes(w))) {
+    base = Math.max(0.25, base - 0.15);
+  }
+  return Math.round(Math.max(0, Math.min(1, base)) * 10000) / 10000; // 四位小数去浮点残差（0.45−0.15=0.30000000000000004）
 }
 
 /** 观察来源中文标签（prompt 友好；域事件 domain:<key> 映射到域中文名） */
