@@ -336,6 +336,22 @@ export function openSmartcatSettings(opts: {
           })
         );
 
+      // 云端打分范围（ADR-0025 追加决策：智能默认——省在线调用、保日记/反省/闪念质量）
+      new Setting(el)
+        .setName('记忆打分范围')
+        .setDesc('云端 LLM 打分范围：智能=日记/反省/闪念恒 LLM、剪藏等长内容按 30 字、聊天/域事件本地；可切全部/仅日记/纯本地')
+        .addDropdown((dd: any) => {
+          dd.addOption('smart', '智能（推荐）');
+          dd.addOption('all', '全部（云端）');
+          dd.addOption('diary', '仅日记');
+          dd.addOption('local', '本地');
+          dd.setValue(config.cloudScoring || 'smart');
+          dd.onChange(async (v: string) => {
+            config.cloudScoring = v;
+            await opts.saveConfig(config);
+          });
+        });
+
       // 每周懂你报告（2026-08-23：查看最近一份；弹窗展示全文）
       if (opts.getWeeklyReport) {
         new Setting(el)
