@@ -12,7 +12,7 @@ import { eventSystem, setSmartcatApp, setupVisibilityCheck, __resetVisibilityFor
 import { mountCatContainer, unmountCatContainer, applyAppearance, createChatPanel, showChatPanel, hideChatPanel, openSmartcatSettings } from './ui';
 import { BubbleManager } from './bubble';
 import { MoodSystem, PersonalityGrowth } from './mood';
-import { MemorySystem, USER_CONTENT_BOUNDARY } from './memory';
+import { MemorySystem, USER_CONTENT_BOUNDARY, PROMPT_SLOTS } from './memory';
 import { SmartCatAnimation } from './animation';
 import { InteractionManager, MobileInputAdapter } from './interaction';
 import { getSmartCatMessage } from './messages';
@@ -269,11 +269,12 @@ export async function ensureSmartCat(app: App): Promise<void> {
     },
     // ADR-0021：记忆流检索注入聊天上下文（格式化后返回；失败返回空串）
     // ADR-0025：第二参 lexicalQuery 供词法降级模式（纯用户消息，免「情绪/时段」噪音）
+    // 096 方向一：retrieve topN=10 冻结不动，≤6 收缩只落 formatMemoriesForPrompt 的 maxEntries（槽位保留制，ADR-0043）
     retrieveMemories: async (query: string, lexicalQuery?: string) => {
       if (!memorySystem) return '';
       try {
         const memories = await memorySystem.retrieve(query, undefined, { lexicalQuery });
-        return memories.length ? memorySystem.formatMemoriesForPrompt(memories) : '';
+        return memories.length ? memorySystem.formatMemoriesForPrompt(memories, PROMPT_SLOTS.maxEntries) : '';
       } catch (e) {
         return '';
       }
@@ -578,11 +579,12 @@ export async function maybeProactiveCare(): Promise<void> {
       const styleHint = quiet
         ? gentleStyleFor(armId)
         : armId === 'empathy' ? '侧重共情，接住用户的情绪' : armId === 'vault' ? '侧重内容，聊他最近的笔记' : '侧重生活，像老朋友寒暄';
-      // ADR-0025 B 面：与聊天同源的「懂你上下文」
+      // ADR-0025 B 面：与聊天同源的「懂你上下文」（096 方向一：空 query 退化为 recency+importance，
+      // 槽位保留制收缩 ≤6 入 prompt——ADR-0043）
       let memoriesText = '';
       try {
         const mems = await memorySystem.retrieve('', undefined);
-        memoriesText = mems.length ? memorySystem.formatMemoriesForPrompt(mems) : '';
+        memoriesText = mems.length ? memorySystem.formatMemoriesForPrompt(mems, PROMPT_SLOTS.maxEntries) : '';
       } catch { /* 检索失败用空 */ }
       const companionContext = buildCompanionContext({
         stream: data.memory.stream,
