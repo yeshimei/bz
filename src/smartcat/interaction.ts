@@ -54,6 +54,15 @@ export class InteractionManager {
   private tapStartY = 0;
   private tapThreshold = 5;
   private generateAutoCompanionMessageLock = false;
+  /** 鼠标当前是否按住（handleMouseMove 守卫：松开后即使监听残留也不再跟随） */
+  private isMousePressed = false;
+  /**
+   * document 级拖拽监听的稳定引用。此前在 add/remove 处各写一次 `.bind(this)`，
+   * 两次 bind 生成不同函数，removeEventListener 永远匹配不上——松开鼠标后
+   * mousemove 监听残留，小橘会一直跟着光标走（桌面端拖拽后跟随 bug 根因）。
+   */
+  private boundMouseMove = this.handleMouseMove.bind(this);
+  private boundMouseUp = this.handleMouseUp.bind(this);
 
   constructor(deps: InteractionDeps) {
     this.deps = deps;
@@ -138,13 +147,14 @@ export class InteractionManager {
     this.initialTop = parseFloat(computedStyle.top) || window.innerHeight - this.catContainer.offsetHeight;
     this.catContainer.style.transition = 'none';
     this.startLongPressTimer();
-    document.addEventListener('mousemove', this.handleMouseMove.bind(this));
-    document.addEventListener('mouseup', this.handleMouseUp.bind(this));
+    this.isMousePressed = true;
+    document.addEventListener('mousemove', this.boundMouseMove);
+    document.addEventListener('mouseup', this.boundMouseUp);
     eventSystem.emit('mouseDown', { x: this.startX, y: this.startY });
   }
 
   private handleMouseMove(e: any): void {
-    if (this.isSettingsOpen || this.isChatOpen) return;
+    if (!this.isMousePressed || this.isSettingsOpen || this.isChatOpen) return;
     this.clearLongPressTimer();
     const deltaX = e.clientX - this.startX;
     const deltaY = e.clientY - this.startY;
@@ -162,10 +172,11 @@ export class InteractionManager {
     const endY = e.clientY;
     const moveDistance = Math.sqrt(Math.pow(endX - this.tapStartX, 2) + Math.pow(endY - this.tapStartY, 2));
     if (moveDistance < this.tapThreshold && !this.isDragging) this.handleTap();
+    this.isMousePressed = false;
     this.isDragging = false;
     this.catContainer.style.transition = 'all 0.3s ease';
-    document.removeEventListener('mousemove', this.handleMouseMove.bind(this));
-    document.removeEventListener('mouseup', this.handleMouseUp.bind(this));
+    document.removeEventListener('mousemove', this.boundMouseMove);
+    document.removeEventListener('mouseup', this.boundMouseUp);
     this.clearLongPressTimer();
     eventSystem.emit('mouseUp', { x: endX, y: endY });
   }
@@ -416,6 +427,11 @@ export class InteractionManager {
       clearInterval(this.companionInterval);
       this.companionInterval = null;
     }
+    // 摘除 document 级拖拽监听（卸载时若正按住拖拽，避免残留监听访问已移除的容器）
+    this.isMousePressed = false;
+    this.isDragging = false;
+    document.removeEventListener('mousemove', this.boundMouseMove);
+    document.removeEventListener('mouseup', this.boundMouseUp);
     if (this.tapTimer) clearTimeout(this.tapTimer);
     this.clearLongPressTimer();
     this.resetTapState();
