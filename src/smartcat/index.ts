@@ -41,6 +41,10 @@ import { buildCompanionContext } from './companion-context';
 import { analyzeEmotionTrend, buildEmotionSnapshots, describeEmotionTrend, checkContradiction, extractStoredFacts, initBanditArm, sampleThompson, updateBandit } from './cognitive';
 import { openSmartcatDashboard, closeSmartcatDashboard } from './dashboard';
 import { AbsenceSystem } from './absence';
+import {
+  QuietGateSystem, gentleGreeting, gentleGreetingAvailable, gentlePhraseFor, gentleStyleFor,
+  localDayKey, proactiveMinGapMs,
+} from './quiet-gate';
 import type { SmartCatData, SmartCatConfig, ProactiveCareState } from './types';
 import type { BanditArmParams } from './cognitive';
 import type { SmartcatPanels } from './ui';
@@ -56,6 +60,7 @@ let moodSystem: MoodSystem | null = null;
 let personalityGrowth: PersonalityGrowth | null = null;
 let memorySystem: MemorySystem | null = null;
 let absenceSystem: AbsenceSystem | null = null; // 缺席状态机（ticket 093，ADR-0040）
+let quietGateSystem: QuietGateSystem | null = null; // 心情门控（ticket 095，ADR-0042；无自有定时器）
 let animation: SmartCatAnimation | null = null;
 let interaction: InteractionManager | null = null;
 let mobileAdapter: MobileInputAdapter | null = null;
@@ -199,6 +204,12 @@ export async function ensureSmartCat(app: App): Promise<void> {
   // ---- 子系统装配（顺序与原 SmartCompanionApp 一致） ----
   bubbleManager = new BubbleManager();
   moodSystem = new MoodSystem(app, dataProvider, dataSaver);
+  // ticket 095 设计 4：接线原死代码 loadMoodState（新鲜合并 / 24h 陈旧归中性 / 无数据缺省中性，防重启假情绪）
+  moodSystem.loadMoodState();
+  // ticket 095 设计 3/5：心情门控窗口采样器——挂既有 60s PAD 衰减循环（钩子）+ 30 分钟趋势心跳
+  //（心跳喂入在 maybeTrendDrift），不新建循环；quietMode 状态机持久化于 editingData.quietMode
+  quietGateSystem = new QuietGateSystem(dataProvider, dataSaver);
+  moodSystem.onDecayTick = () => { void quietGateSystem?.onDecayTick(); };
   personalityGrowth = new PersonalityGrowth(dataProvider, dataSaver);
   memorySystem = new MemorySystem(app, dataProvider, dataSaver);
   // ADR-0021：init = 探测 Ollama + 加载向量 + 反思调度（取代原 24h 固化调度）
@@ -501,45 +512,72 @@ function startProactiveCare(): void {
   }, 10 * 60 * 1000);
 }
 
-/** 温和主动搭话（LLM 生成一句关心；AI 未配置/失败 → 模板兜底；Bandit 选臂决定话术风格） */
-async function maybeProactiveCare(): Promise<void> {
+/** 温和主动搭话（LLM 生成一句关心；AI 未配置/失败 → 模板兜底；Bandit 选臂决定话术风格）。
+ *  导出供测试驱动（对齐 maybeMemoDueScan 先例；生产仅 startProactiveCare 定时调用）。 */
+export async function maybeProactiveCare(): Promise<void> {
   if (!data || !bubbleManager || !moodSystem || !memorySystem || !personalityGrowth) return;
   const cfg = data.config;
   if (!cfg.proactiveCare) return;
   if (!memorySystem || data.memory.stream.length < 3) return; // 记忆太少还不知道你
   const st = getProactiveState();
-  if (st.count >= Math.max(1, cfg.proactiveWeeklyCap || 2)) return;
   const since = Date.now() - st.lastAt;
-  if (since < 2 * 24 * 60 * 60 * 1000) return; // 至少隔 2 天
-  // 作息模型：当前是否用户活跃时段（无数据 → 保守不打扰）
+  // ticket 095 设计 1：平静期主动间隔 2 天 → 3~4 天（默认 3.5，晨起可调）；非平静维持既有 2 天
+  const quiet = quietGateSystem?.isQuiet() ?? false;
+  if (since < proactiveMinGapMs(quiet)) return;
+  // 作息模型：当前是否用户活跃时段（无数据 → 保守不打扰）——温和问候豁免与 Bandit 主动共享本闸门
   const profile = buildRhythmProfile(data.memory.stream, 30, Date.now());
   if (!profile.total || !isActiveNow(profile)) return;
+  // ticket 095 设计 2+7：每日 1 次温和问候豁免——安静陪伴期优先占用本次调度槽位：
+  // 与 Bandit 主动共享间隔/作息闸门，发出即刷新 lastAt 顺延下一次 Bandit 主动（打扰总量守恒，
+  // 外发触点总量不超过既有间隔允许的每周 ≤2）；不计 proactive 计数、不标 pendingArm 不领 reward。
+  // 纯本地语料零 LLM；不 touchPresence（单向外发非用户在场信号，不喂缺席状态机重逢判定）。
+  if (quiet && gentleGreetingAvailable(data.editingData, Date.now())) {
+    bubbleManager.showBubble(gentleGreeting());
+    const d = dataProvider();
+    d.editingData = {
+      ...(d.editingData || {}),
+      gentleGreeting: { day: localDayKey(Date.now()), at: Date.now() },
+      // 只顺延 lastAt（占用调度槽位）；count 不动（豁免不占周上限）、pendingArm 不标（reward 口径不改）
+      proactiveCare: { week: isoWeekKey(), count: st.count, lastAt: Date.now() },
+    };
+    await dataSaver(d);
+    return;
+  }
+  if (st.count >= Math.max(1, cfg.proactiveWeeklyCap || 2)) return;
   // Bandit 选臂（ticket 035）：从 3 类话术中按 mood+hour 上下文 Thompson 采样
   const chosen = sampleThompson(getBanditArms(), banditContext());
   const armId = chosen?.actionId ?? BANDIT_ARMS[0];
   try {
     if (!(await isAIConfigured())) {
-      // 模板兜底（按臂分类）
-      const templates: Record<string, string[]> = {
-        empathy: [
-          `我看记录你最近情绪有些波动，${describeEmotionTrend(analyzeEmotionTrend(buildEmotionSnapshots(data.memory.stream)))}。想说的时候我都在。`,
-          `喵~ 感觉你这阵子心情起伏不小，要不要和我说说？`,
-        ],
-        life: [
-          `我看了下你的记录，你通常在${describeRhythm(profile)}最活跃。这段时间你也总是很认真。`,
-          `刚才我翻了下脑海里的记忆，想起你最近在忙的事。${periodText()}了，照顾好自己。`,
-        ],
-        vault: [
-          `喵~ 我记住你${periodText()}也常出现。最近记了什么新想法吗？`,
-          `我注意到你这几天的笔记很密集，是不是在忙什么大计划？`,
-        ],
-      };
-      const pool = templates[armId] || templates.life;
-      bubbleManager.showBubble(pool[Math.floor(Math.random() * pool.length)]);
+      // 模板兜底（按臂分类）；ticket 095 设计 1：平静期选中任意臂都落在「温和话术子集」
+      //（正常计数+reward 路径同样换输出维度——只换表达，不换 Bandit 口径）
+      if (quiet) {
+        bubbleManager.showBubble(gentlePhraseFor(armId));
+      } else {
+        const templates: Record<string, string[]> = {
+          empathy: [
+            `我看记录你最近情绪有些波动，${describeEmotionTrend(analyzeEmotionTrend(buildEmotionSnapshots(data.memory.stream)))}。想说的时候我都在。`,
+            `喵~ 感觉你这阵子心情起伏不小，要不要和我说说？`,
+          ],
+          life: [
+            `我看了下你的记录，你通常在${describeRhythm(profile)}最活跃。这段时间你也总是很认真。`,
+            `刚才我翻了下脑海里的记忆，想起你最近在忙的事。${periodText()}了，照顾好自己。`,
+          ],
+          vault: [
+            `喵~ 我记住你${periodText()}也常出现。最近记了什么新想法吗？`,
+            `我注意到你这几天的笔记很密集，是不是在忙什么大计划？`,
+          ],
+        };
+        const pool = templates[armId] || templates.life;
+        bubbleManager.showBubble(pool[Math.floor(Math.random() * pool.length)]);
+      }
     } else {
       // 近 3 条记忆做引子 + 懂你上下文块（作息/趋势/关系/检索记忆）→ LLM 温和关心（按臂给风格指令）
       const recent = data.memory.stream.slice(-3).map((m) => m.description).join('；');
-      const styleHint = armId === 'empathy' ? '侧重共情，接住用户的情绪' : armId === 'vault' ? '侧重内容，聊他最近的笔记' : '侧重生活，像老朋友寒暄';
+      // ticket 095 设计 1：平静期臂 → 温和风格指令子集（只换表达维度，不改选臂与 reward 口径）
+      const styleHint = quiet
+        ? gentleStyleFor(armId)
+        : armId === 'empathy' ? '侧重共情，接住用户的情绪' : armId === 'vault' ? '侧重内容，聊他最近的笔记' : '侧重生活，像老朋友寒暄';
       // ADR-0025 B 面：与聊天同源的「懂你上下文」
       let memoriesText = '';
       try {
@@ -602,6 +640,9 @@ async function maybeTrendDrift(): Promise<void> {
   try {
     const trend = analyzeEmotionTrend(buildEmotionSnapshots(recent));
     moodSystem.applyTrendDrift(trend);
+    // ticket 095 设计 3/5：30 分钟心跳把趋势漂移喂给心情门控（EMA valence 为门控输入，
+    // 非瞬时 PAD；窗口多数采样判定，迁移才落盘 editingData.quietMode）
+    void quietGateSystem?.onHeartbeat(trend.currentVad.valence);
   } catch (e) { /* 趋势回写失败静默 */ }
 }
 
@@ -1025,6 +1066,7 @@ export function unloadSmartCat(): void {
   bubbleManager = null;
   moodSystem = null;
   absenceSystem = null; // 缺席状态机（ticket 093）：无自有定时器，随装配整体置空
+  quietGateSystem = null; // 心情门控（ticket 095）：无自有定时器，随装配整体置空
   personalityGrowth = null;
   memorySystem = null;
   animation = null;
@@ -1036,7 +1078,7 @@ export function unloadSmartCat(): void {
 
 /** 测试辅助：获取内部实例引用 */
 export function __getSmartcatInternals(): any {
-  return { data, bubbleManager, moodSystem, memorySystem, absenceSystem, animation, interaction, panels, initialized };
+  return { data, bubbleManager, moodSystem, memorySystem, absenceSystem, quietGateSystem, animation, interaction, panels, initialized };
 }
 
 // ------------- 影视动作观察（ticket 074 修订：方法监听，ADR-0026） -------------
