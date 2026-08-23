@@ -684,6 +684,76 @@ describe('抽屉（统一手势组件接入）', () => {
     expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
   });
 
+  it('详情窗增强：海报横幅 + 季集/豆瓣链接/简介/我的记录分区展示', () => {
+    const vault = new MockVault();
+    vault.files.set(
+      '我的/影视/《全量片》.md',
+      ['---', 'tags: [电影]', '评分: 4.5', '观影日期: 2025-03-04T10:00:00', '影评: 年度最佳', '导演: 维伦纽瓦', '主演: A', '类型: 科幻', '豆瓣评分: 8.0', '片长: 164分钟', '季集: "11"', '豆瓣链接: https://movie.douban.com/subject/123/', '简介: 讲述记忆与身份的科幻史诗', '海报: CONFIG/MOVIE POSTER/p1.png', '---'].join('\n')
+    );
+    vault.files.set('CONFIG/MOVIE POSTER/p1.png', '<binary>');
+    (vault as any).getResourcePath = (f: any) => 'app://' + f.path;
+    const app = makeApp(vault);
+    const items = rebuildItems(app);
+    const c = document.createElement('div');
+    document.body.appendChild(c);
+    renderAll(items, c, app);
+    openSheetCard(findCard(c, '全量片'));
+    const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    const detailBtn = [...sheet.querySelectorAll('.bz-item-sheet-item')].find((b) => b.textContent!.includes('详情')) as HTMLElement;
+    expect(detailBtn).toBeTruthy();
+    detailBtn.click();
+    const modal = document.querySelector('.bz-movie-detail-modal') as HTMLElement;
+    expect(modal).not.toBeNull();
+    // 海报横幅
+    expect(modal.querySelector('.bz-movie-detail-poster')).not.toBeNull();
+    // 季集行
+    expect(modal.textContent).toContain('季集');
+    expect(modal.textContent).toContain('11');
+    // 豆瓣链接可点击外链
+    const link = modal.querySelector('.bz-movie-detail-link') as HTMLAnchorElement;
+    expect(link).not.toBeNull();
+    expect(link.href).toBe('https://movie.douban.com/subject/123/');
+    expect(link.target).toBe('_blank');
+    // 我的记录分区：观影日期截掉时间尾巴 / 我的评分 / 影评
+    expect(modal.textContent).toContain('我的记录');
+    expect(modal.textContent).toContain('2025-03-04');
+    expect(modal.textContent).not.toContain('T10:00:00');
+    expect(modal.textContent).toContain('我的评分');
+    expect(modal.textContent).toContain('4.5');
+    expect(modal.textContent).toContain('年度最佳');
+    // 简介分区
+    expect(modal.textContent).toContain('简介');
+    expect(modal.textContent).toContain('讲述记忆与身份的科幻史诗');
+  });
+
+  it('详情窗：仅有个人记录（无豆瓣字段）也显示并展示我的记录；纯想看不显示', () => {
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《手记片》.md', ['---', 'tags: [电影]', '评分: 3', '影评: 纯手记', '---'].join('\n'));
+    vault.files.set('我的/影视/《空想片》.md', ['---', 'tags: [电影]', '评分: -1', '---'].join('\n'));
+    const app = makeApp(vault);
+    const items = rebuildItems(app);
+    const c = document.createElement('div');
+    document.body.appendChild(c);
+    renderAll(items, c, app);
+    // 手记片：无豆瓣数据但有观影记录 → 详情显示我的记录
+    openSheetCard(findCard(c, '手记片'));
+    let sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    const detailBtn = [...sheet.querySelectorAll('.bz-item-sheet-item')].find((b) => b.textContent!.includes('详情')) as HTMLElement;
+    expect(detailBtn).toBeTruthy();
+    detailBtn.click();
+    const modal = document.querySelector('.bz-movie-detail-modal') as HTMLElement;
+    expect(modal).not.toBeNull();
+    expect(modal.textContent).not.toContain('导演'); // 无豆瓣字段不占位
+    expect(modal.textContent).toContain('我的记录');
+    expect(modal.textContent).toContain('纯手记');
+    (document.querySelector('.bz-movie-tiny-mask') as HTMLElement).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(document.querySelector('.bz-movie-detail-modal')).toBeNull();
+    // 空想片（仅 tags + 评分 -1）→ 无任何详情内容 → 无「详情」按钮
+    openSheetCard(findCard(c, '空想片'));
+    sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+    expect([...sheet.querySelectorAll('.bz-item-sheet-item')].some((b) => b.textContent!.includes('详情'))).toBe(false);
+  });
+
   it('复制双链：点击后剪贴板写入 [[《片名》]]', async () => {
     const vault = setupVault();
     const app = makeApp(vault);

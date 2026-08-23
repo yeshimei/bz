@@ -71,6 +71,26 @@
 .bz-movie-detail-value {
   color: var(--text-normal); word-break: break-all;
 }
+/* 影视详情窗（加宽滚动版）：海报横幅 + 分区标题 + 简介段落 + 豆瓣外链 */
+.bz-movie-tiny-modal.bz-movie-detail-modal {
+  width: 340px;
+  max-height: min(72vh, 560px);
+  overflow-y: auto;
+}
+.bz-movie-detail-poster {
+  width: 100%; max-height: 180px; object-fit: cover; object-position: center top;
+  border-radius: 8px; background: var(--background-modifier-border);
+}
+.bz-movie-detail-section {
+  margin-top: 10px; padding-top: 9px;
+  border-top: 1px solid var(--background-modifier-border);
+  font-size: 12px; font-weight: 600; color: var(--text-muted);
+}
+.bz-movie-detail-link { color: var(--text-accent); word-break: break-all; }
+.bz-movie-detail-synopsis {
+  margin: 4px 0 0; font-size: 13px; line-height: 1.7;
+  color: var(--text-normal); white-space: pre-wrap;
+}
 .bz-item-sheet-title {
   font-size: 14px; font-weight: 600; color: var(--text-normal);
   line-height: 1.4; word-break: break-word;
