@@ -2,6 +2,7 @@
  * smartcat 交互测试（UI 层）：桌面端拖拽——按住可拖动、松开后不再跟随光标。
  * 回归背景：此前 add/remove 处各写一次 `.bind(this)`，两次生成不同函数引用，
  * removeEventListener 永远匹配不上，导致松开鼠标后 mousemove 残留、小橘一直跟光标走。
+ * 手势统一（2026-08-23）：双击=聊天、长按=设置（五击已删）；拖出屏幕边缘松手回弹（四边统一）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { InteractionManager } from '../../src/smartcat/interaction';
@@ -13,6 +14,8 @@ function mountCat(): HTMLElement {
   if (existed) existed.remove();
   const c = document.createElement('div');
   c.id = CAT_CONTAINER_ID;
+  // 猫体结构（单击宠物消息路径会取 #cat-body 做缩放动画）
+  c.innerHTML = '<div id="cat-body"></div>';
   document.body.appendChild(c);
   return c;
 }
@@ -209,5 +212,133 @@ describe('面板开着小橘仍可拖动（不定死）', () => {
     touch(cat, 'touchend', 100, 100);
     vi.advanceTimersByTime(700);
     expect(openChat).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('手势统一（2026-08-23：双击=聊天、长按=设置，桌面/移动同套）', () => {
+  function withSpy<K extends keyof InteractionDeps>(key: K): { deps: InteractionDeps; spy: ReturnType<typeof vi.fn> } {
+    const spy = vi.fn();
+    const deps = makeDeps();
+    (deps as any)[key] = spy;
+    return { deps, spy };
+  }
+
+  it('双击立即打开聊天（不再等第二段 300ms 延时）', () => {
+    const { deps, spy } = withSpy('openChat');
+    manager = new InteractionManager(deps);
+    manager.setupInteractions();
+    const cat = document.getElementById(CAT_CONTAINER_ID)!;
+    mouse(cat, 'mousedown', 100, 100);
+    mouse(document, 'mouseup', 100, 100);
+    mouse(cat, 'mousedown', 100, 100);
+    mouse(document, 'mouseup', 100, 100);
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  it('五击不再触发设置（原五击手势已并入长按）', () => {
+    const { deps, spy } = withSpy('openSettings');
+    manager = new InteractionManager(deps);
+    manager.setupInteractions();
+    const cat = document.getElementById(CAT_CONTAINER_ID)!;
+    for (let i = 0; i < 5; i++) {
+      mouse(cat, 'mousedown', 100, 100);
+      mouse(document, 'mouseup', 100, 100);
+    }
+    vi.advanceTimersByTime(700);
+    expect(spy).not.toHaveBeenCalled();
+    // 连击计数已复位（≥3 即清零），后续单击重新从 1 计
+    mouse(cat, 'mousedown', 100, 100);
+    mouse(document, 'mouseup', 100, 100);
+    expect((manager as unknown as { tapCount: number }).tapCount).toBe(1);
+  });
+
+  it('按住 800ms 长按打开设置（鼠标路径）', () => {
+    const { deps, spy } = withSpy('openSettings');
+    manager = new InteractionManager(deps);
+    manager.setupInteractions();
+    const cat = document.getElementById(CAT_CONTAINER_ID)!;
+    mouse(cat, 'mousedown', 120, 120);
+    vi.advanceTimersByTime(799);
+    expect(spy).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(10);
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  it('触摸路径长按同样打开设置（与桌面同一实现）', () => {
+    const { deps, spy } = withSpy('openSettings');
+    manager = new InteractionManager(deps);
+    manager.setupInteractions();
+    const cat = document.getElementById(CAT_CONTAINER_ID)!;
+    touch(cat, 'touchstart', 90, 90);
+    vi.advanceTimersByTime(850);
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('拖出屏幕边缘松手回弹（四边统一；原仅移动端下边缘有弹出）', () => {
+  /** jsdom 无布局：给容器钉上真实感尺寸（offsetWidth/Height 走实例自有属性遮蔽原型 getter） */
+  function sizeCat(w: number, h: number): void {
+    const cat = document.getElementById(CAT_CONTAINER_ID)!;
+    Object.defineProperty(cat, 'offsetWidth', { value: w, configurable: true });
+    Object.defineProperty(cat, 'offsetHeight', { value: h, configurable: true });
+  }
+
+  it('拖到右缘外松手：过冲动画弹回完全可见（右缘内缩 EDGE_MARGIN）', () => {
+    sizeCat(50, 40);
+    manager = new InteractionManager(makeDeps());
+    manager.setupInteractions();
+    const cat = document.getElementById(CAT_CONTAINER_ID)!;
+    mouse(cat, 'mousedown', 500, 300);
+    // 拖拽中允许探出：clamp 在 vw-PEEK（1024-14=1010），此刻本体右缘已在屏外
+    mouse(document, 'mousemove', 2000, 300);
+    expect(parseFloat(cat.style.left)).toBe(1010);
+    mouse(document, 'mouseup', 2000, 300);
+    // 松手弹回 vw-w-MARGIN（1024-50-8=966）
+    expect(parseFloat(cat.style.left)).toBe(966);
+    expect(cat.style.transition).toContain('cubic-bezier');
+    // 动画结束恢复默认过渡
+    vi.advanceTimersByTime(600);
+    expect(cat.style.transition).toBe('');
+  });
+
+  it('拖到下缘外松手：弹回底部微收位（原移动端自动弹出行为保留并统一）', () => {
+    sizeCat(50, 40);
+    manager = new InteractionManager(makeDeps());
+    manager.setupInteractions();
+    const cat = document.getElementById(CAT_CONTAINER_ID)!;
+    touch(cat, 'touchstart', 300, 300);
+    touch(cat, 'touchmove', 300, 2000);
+    expect(parseFloat(cat.style.top)).toBe(754); // 拖拽中探出：vh-PEEK
+    touch(cat, 'touchend', 300, 2000);
+    expect(parseFloat(cat.style.top)).toBe(738); // 松手弹回：vh-h+BOTTOM_TUCK（默认蹲姿）
+    expect(cat.style.transition).toContain('cubic-bezier');
+  });
+
+  it('拖到左缘外松手：弹回左安全边距内', () => {
+    sizeCat(50, 40);
+    manager = new InteractionManager(makeDeps());
+    manager.setupInteractions();
+    const cat = document.getElementById(CAT_CONTAINER_ID)!;
+    mouse(cat, 'mousedown', 500, 300);
+    mouse(document, 'mousemove', -1000, 300);
+    expect(parseFloat(cat.style.left)).toBe(-36); // 探出左缘：-(w-PEEK)
+    mouse(document, 'mouseup', -1000, 300);
+    expect(parseFloat(cat.style.left)).toBe(8); // 回到 EDGE_MARGIN
+  });
+
+  it('未越界松手不施加回弹动画（位置与过渡均不动）', () => {
+    sizeCat(50, 40);
+    manager = new InteractionManager(makeDeps());
+    manager.setupInteractions();
+    const cat = document.getElementById(CAT_CONTAINER_ID)!;
+    mouse(cat, 'mousedown', 400, 300);
+    // 向上拖离底边（避免落在底边微收界外），全程在可视区内
+    mouse(document, 'mousemove', 420, 200);
+    const l = parseFloat(cat.style.left);
+    const t = parseFloat(cat.style.top);
+    mouse(document, 'mouseup', 420, 200);
+    expect(parseFloat(cat.style.left)).toBe(l);
+    expect(parseFloat(cat.style.top)).toBe(t);
+    expect(cat.style.transition).toBe('');
   });
 });

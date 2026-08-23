@@ -77,13 +77,13 @@ describe('openSmartCat / 命令回调', () => {
     expect(document.getElementById('smart-companion-cat')).not.toBeNull();
   }, 15000);
 
-  it('openSmartCatChat 打开聊天面板（bz-win-head 头行）', async () => {
+  it('openSmartCatChat 打开聊天面板（bz-win-head 头行；头行无 ⚙️——设置统一长按打开）', async () => {
     const { app } = makeApp();
     await openSmartCatChat(app);
     const chatPanel = document.getElementById('chat-panel');
     expect(chatPanel).not.toBeNull();
     expect(chatPanel!.querySelector('.bz-win-head')).not.toBeNull();
-    expect(chatPanel!.querySelector('#smartcat-btn-settings')).not.toBeNull();
+    expect(chatPanel!.querySelector('#smartcat-btn-settings')).toBeNull();
     expect(chatPanel!.querySelector('#smartcat-btn-close')).not.toBeNull();
     expect(chatPanel!.querySelector('.chat-messages')).not.toBeNull();
     expect(chatPanel!.querySelector('.chat-input')).not.toBeNull();

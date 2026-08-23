@@ -1,10 +1,11 @@
 /**
  * 小橘数据面板（ticket 071）：只读可视化 smartcat.json 全量状态——
- * 总览 / 情绪 / 人格 / 记忆 四页签，让用户全面直观看到小橘的具体状态以及演变过程：
+ * 总览 / 情绪 / 人格 / 记忆 / 报告 五页签，让用户全面直观看到小橘的具体状态以及演变过程：
  *  - 总览：当前心情 5 档（PAD 最近邻）+ 瞬时情绪 + PAD 三轴 + 相处统计；
  *  - 情绪：趋势/波动度（VAD+EMA，cognitive 纯函数复用）+ 情绪分布 + 演变时间线；
  *  - 人格：OCEAN 五因素 + 30 特质九群组 + 关系张量（感情：信任/依恋）+ 成长轨迹；
- *  - 记忆：记忆流统计 + 作息分布（24h 直方图）+ 来源分布 + 最近记忆列表。
+ *  - 记忆：记忆流统计 + 作息分布（24h 直方图）+ 来源分布 + 最近记忆列表；
+ *  - 报告（2026-08-23 用户拍板：每周懂你报告从设置弹窗移入）：最新一期全文 + 历史报告。
  * 数据经 loadSmartCatData 现读现渲染（与常驻猫实例解耦，smartcatEnabled=false 也可看）；
  * 面板只读，不写任何数据（铁律 1）。UI 走 bz 主窗口规范：createOverlay + .bz-win-head +
  * applyMobileWindowFullscreen + escManager；视觉样式全部静态进域内 styles.css（铁律 9，
@@ -203,6 +204,25 @@ export function buildGrowthTrail(history: any[], limit = 10): GrowthTrailRow[] {
     detail: r.detail,
   }));
 }
+
+/** 每周懂你报告行（记忆流 source=weekly-report 的洞察，新→旧；文本去【本周懂你报告】前缀） */
+export interface WeeklyReportRow {
+  time: number;
+  text: string;
+}
+
+/** 收集每周懂你报告（2026-08-23：从设置弹窗移入数据面板「报告」页签的数据源纯函数） */
+export function buildWeeklyReports(stream: MemoryStreamEntry[]): WeeklyReportRow[] {
+  return (Array.isArray(stream) ? stream : [])
+    .filter((m) => m.type === 'insight' && m.source === 'weekly-report')
+    .map((m) => {
+      const t = m.created ? new Date(m.created).getTime() : NaN;
+      const raw = typeof m.description === 'string' ? m.description : '';
+      return { time: Number.isFinite(t) ? t : 0, text: raw.replace(/^【本周懂你报告】/, '') };
+    })
+    .filter((r) => r.time > 0 && r.text)
+    .sort((a, b) => b.time - a.time);
+}
 // ---------------- DOM 构建辅助 ----------------
 
 function el(tag: string, cls?: string, text?: string): HTMLElement {
@@ -255,13 +275,14 @@ function emptyHint(text: string): HTMLElement {
 
 // ---------------- 四页签渲染 ----------------
 
-const PANE_KEYS = ['overview', 'emotion', 'personality', 'memory'] as const;
+const PANE_KEYS = ['overview', 'emotion', 'personality', 'memory', 'report'] as const;
 type PaneKey = (typeof PANE_KEYS)[number];
 const TAB_LABELS: Record<PaneKey, string> = {
   overview: '总览',
   emotion: '情绪',
   personality: '人格',
   memory: '记忆',
+  report: '报告',
 };
 
 function renderOverview(pane: HTMLElement, data: SmartCatData): void {
@@ -524,6 +545,43 @@ function renderMemory(pane: HTMLElement, data: SmartCatData): void {
   }
   pane.appendChild(listCard.root);
 }
+
+/** 报告页签（2026-08-23：每周懂你报告从设置弹窗移入——最新一期全文 + 历史报告） */
+function renderReport(pane: HTMLElement, data: SmartCatData): void {
+  pane.innerHTML = '';
+  const reports = buildWeeklyReports(data.memory?.stream || []);
+
+  // 最新一期全文
+  const latestCard = card('本周懂你报告');
+  if (reports.length) {
+    const body = el('div', 'bz-sc-dash-report-text', reports[0].text);
+    latestCard.body.appendChild(body);
+    latestCard.body.appendChild(el(
+      'div',
+      'bz-sc-dash-hint',
+      `生成于 ${formatRelativeTime(new Date(reports[0].time).toISOString())}；小橘每周二（本周有观察后）自动总结你的这一周。`,
+    ));
+  } else {
+    latestCard.body.appendChild(emptyHint('本周报告还没生成。小橘会在每周二（本周有观察后）自动总结你的这一周，多写写日记/闪念让我更懂你。'));
+  }
+  pane.appendChild(latestCard.root);
+
+  // 历史报告
+  const histCard = card('历史报告');
+  if (reports.length > 1) {
+    const wrap = el('div', 'bz-sc-dash-list');
+    for (const r of reports.slice(1)) {
+      const item = el('div', 'bz-sc-dash-memory');
+      item.appendChild(el('div', 'bz-sc-dash-memory-meta', formatRelativeTime(new Date(r.time).toISOString())));
+      item.appendChild(el('div', 'bz-sc-dash-memory-text', truncateText(r.text, 120)));
+      wrap.appendChild(item);
+    }
+    histCard.body.appendChild(wrap);
+  } else {
+    histCard.body.appendChild(emptyHint(reports.length ? '还没有更早的报告。' : '还没有历史报告。'));
+  }
+  pane.appendChild(histCard.root);
+}
 // ---------------- 面板开关（bz 主窗口规范） ----------------
 
 interface DashboardState {
@@ -555,6 +613,7 @@ function renderPanes(data: SmartCatData): void {
   renderEmotion(dashState.panes.emotion, data);
   renderPersonality(dashState.panes.personality, data);
   renderMemory(dashState.panes.memory, data);
+  renderReport(dashState.panes.report, data);
 }
 
 /**
@@ -625,8 +684,9 @@ export async function openSmartcatDashboard(app: App): Promise<void> {
   renderPanes(data);
   activateTab('overview');
 
-  // 移动端默认全屏（ticket 68 规范三件事之二：打开路径必经处应用）
-  applyMobileWindowFullscreen(popup, tryGetSettings().smartcatDashboardMobileDefaultFullscreen === true);
+  // 移动端默认全屏（ticket 68 规范三件事之二：打开路径必经处应用；
+  //  2026-08-23 合并一套：跟随聊天/设置面板共用的 smartcatMobileDefaultFullscreen 开关）
+  applyMobileWindowFullscreen(popup, tryGetSettings().smartcatMobileDefaultFullscreen === true);
 
   mask.style.display = 'block';
   popup.style.display = 'flex';

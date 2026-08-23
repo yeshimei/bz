@@ -1,6 +1,7 @@
 /**
  * 交互管理器（移植自 SmartCat.js InteractionManager）
- * 点触：单击=宠物消息、双击=聊天、三击=语音（桌面提示禁用）、五击=设置、长按=设置；
+ * 点触手势桌面/移动同套（2026-08-23 用户拍板统一）：单击=宠物消息、双击=聊天、长按=设置
+ * （三击语音已删、五击设置并入长按）；
  * 拖拽（鼠标/触屏）——设置/聊天面板开着时依旧可拖动（仅抑制点触/长按手势，2026-08-23 用户拍板）；
  * 陪伴定时器（自言自语）；聊天（多轮+上下文）；书评消息。
  * 全部命令/面板操作经回调注入（index 组装，避免模块间循环依赖）。
@@ -17,6 +18,17 @@ import { CAT_CONTAINER_ID } from './ui';
 import type { BubbleManager } from './bubble';
 import type { MoodSystem } from './mood';
 import type { SmartCatConfig } from './types';
+
+/** 拖拽越界参数：拖动中每边至少保留可见的像素（允许拖出边缘做「探出」效果） */
+const DRAG_PEEK = 14;
+/** 松手回弹后距屏幕左/右/上边缘的安全像素 */
+const EDGE_MARGIN = 8;
+/** 底边允许的微收像素：小橘默认姿态即 bottom:-10px（蹲在屏幕下缘，styles.css 同款），
+ *  松手回弹到底边内缩 10px 处而非强制完全可见——保留既定姿态（原移动端行为一致）。 */
+const BOTTOM_TUCK = 10;
+/** 回弹动画时长/缓动：过冲贝塞尔——与移动端原下边缘自动弹出同款手感 */
+const SPRING_MS = 450;
+const SPRING_EASING = 'cubic-bezier(0.34, 1.56, 0.64, 1)';
 
 export interface InteractionDeps {
   config: () => SmartCatConfig;
@@ -66,6 +78,8 @@ export class InteractionManager {
    */
   private boundMouseMove = this.handleMouseMove.bind(this);
   private boundMouseUp = this.handleMouseUp.bind(this);
+  /** 松手回弹动画计时器（springBackIntoViewport 结束后恢复默认过渡用） */
+  private springTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(deps: InteractionDeps) {
     this.deps = deps;
@@ -142,11 +156,7 @@ export class InteractionManager {
     const deltaY = touch.clientY - this.startY;
     const newLeft = this.initialLeft + deltaX;
     const newTop = this.initialTop + deltaY;
-    const maxX = window.innerWidth - this.catContainer.offsetWidth;
-    this.catContainer.style.left = Math.max(0, Math.min(newLeft, maxX)) + 'px';
-    this.catContainer.style.top = Math.max(0, Math.min(newTop, window.innerHeight - 10)) + 'px';
-    this.isDragging = true;
-    eventSystem.emit(EVENTS.CAT_DRAGGED, { x: newLeft, y: newTop });
+    this.applyDragPosition(newLeft, newTop);
   }
 
   private handleTouchEnd(e: any): void {
@@ -157,13 +167,54 @@ export class InteractionManager {
     // 面板开着不触发点触手势（防误触再开聊天/设置），位置清理照常
     if (!this.panelOpen && moveDistance < this.tapThreshold && !this.isDragging) this.handleTap();
     this.isDragging = false;
-    this.catContainer.style.transition = 'all 0.3s ease';
-    const rect = this.catContainer.getBoundingClientRect();
-    const windowHeight = window.innerHeight;
-    if (rect.bottom > windowHeight - 5) this.catContainer.style.top = windowHeight - rect.height + 10 + 'px';
-    if (rect.top < 10) this.catContainer.style.top = '10px';
+    this.springBackIntoViewport();
     this.clearLongPressTimer();
     eventSystem.emit('touchEnded', { x: endX, y: endY });
+  }
+
+  /**
+   * 拖拽中位置约束（桌面/移动统一）：允许小幅拖出屏幕边缘（每边至少保留 DRAG_PEEK 可见），
+   * 松手由 springBackIntoViewport 统一弹回——原仅移动端下边缘有回弹，四边推广（用户拍板）。
+   */
+  private applyDragPosition(newLeft: number, newTop: number): void {
+    const w = this.catContainer.offsetWidth;
+    const h = this.catContainer.offsetHeight;
+    const minLeft = -(w - DRAG_PEEK);
+    const minTop = -(h - DRAG_PEEK);
+    const maxLeft = window.innerWidth - DRAG_PEEK;
+    const maxTop = window.innerHeight - DRAG_PEEK;
+    this.catContainer.style.left = Math.max(minLeft, Math.min(newLeft, maxLeft)) + 'px';
+    this.catContainer.style.top = Math.max(minTop, Math.min(newTop, maxTop)) + 'px';
+    this.isDragging = true;
+    eventSystem.emit(EVENTS.CAT_DRAGGED, { x: newLeft, y: newTop });
+  }
+
+  /**
+   * 松手回弹：把拖出屏幕边缘的小橘以过冲动画弹回可视区（四边统一；原仅移动端下边缘有弹出）。
+   * 边界口径：左/右完全可见（内缩 EDGE_MARGIN），底边回到微收 BOTTOM_TUCK（默认蹲姿）。
+   */
+  springBackIntoViewport(): void {
+    const c = this.catContainer;
+    if (!c) return;
+    const curLeft = parseFloat(c.style.left);
+    const curTop = parseFloat(c.style.top);
+    if (Number.isNaN(curLeft) || Number.isNaN(curTop)) return; // 未拖拽过（无内联位置）无须修正
+    const w = c.offsetWidth || 0;
+    const h = c.offsetHeight || 0;
+    const maxLeft = Math.max(EDGE_MARGIN, window.innerWidth - w - EDGE_MARGIN);
+    const maxTop = Math.max(EDGE_MARGIN, window.innerHeight - h + BOTTOM_TUCK);
+    const targetLeft = Math.min(Math.max(curLeft, EDGE_MARGIN), maxLeft);
+    const targetTop = Math.min(Math.max(curTop, EDGE_MARGIN), maxTop);
+    if (Math.abs(targetLeft - curLeft) < 0.5 && Math.abs(targetTop - curTop) < 0.5) {
+      c.style.transition = ''; // 未越界：清掉 mousedown 的 none，恢复样式表默认过渡
+      return;
+    }
+    c.style.transition = `left ${SPRING_MS}ms ${SPRING_EASING}, top ${SPRING_MS}ms ${SPRING_EASING}`;
+    c.style.left = targetLeft + 'px';
+    c.style.top = targetTop + 'px';
+    if (this.springTimer) clearTimeout(this.springTimer);
+    // 动画结束恢复默认过渡（下次拖拽 start 仍会置 none，双保险）
+    this.springTimer = setTimeout(() => { c.style.transition = ''; }, SPRING_MS + 60);
   }
 
   private handleMouseDown(e: any): void {
@@ -191,11 +242,7 @@ export class InteractionManager {
     const deltaY = e.clientY - this.startY;
     const newLeft = this.initialLeft + deltaX;
     const newTop = this.initialTop + deltaY;
-    const maxX = window.innerWidth - this.catContainer.offsetWidth;
-    this.catContainer.style.left = Math.max(0, Math.min(newLeft, maxX)) + 'px';
-    this.catContainer.style.top = Math.max(0, Math.min(newTop, window.innerHeight - 10)) + 'px';
-    this.isDragging = true;
-    eventSystem.emit(EVENTS.CAT_DRAGGED, { x: newLeft, y: newTop });
+    this.applyDragPosition(newLeft, newTop);
   }
 
   private handleMouseUp(e: any): void {
@@ -206,14 +253,18 @@ export class InteractionManager {
     if (!this.panelOpen && moveDistance < this.tapThreshold && !this.isDragging) this.handleTap();
     this.isMousePressed = false;
     this.isDragging = false;
-    this.catContainer.style.transition = 'all 0.3s ease';
     document.removeEventListener('mousemove', this.boundMouseMove);
     document.removeEventListener('mouseup', this.boundMouseUp);
+    this.springBackIntoViewport();
     this.clearLongPressTimer();
     eventSystem.emit('mouseUp', { x: endX, y: endY });
   }
 
-  /** 点触连击（原 handleTap：单击抚摸、双击聊天、五击设置；三击语音已删 2026-08-23） */
+  /**
+   * 点触连击（2026-08-23 用户拍板统一，桌面/移动同套）：
+   * 单击=宠物消息、双击=聊天（立即开，不再等第二段延时）；设置统一走长按——
+   * 原三击语音已删、五击设置并入长按。
+   */
   private handleTap(): void {
     this.tapCount++;
     if (this.tapCount === 1) {
@@ -226,20 +277,11 @@ export class InteractionManager {
     } else if (this.tapCount === 2) {
       if (this.tapTimer) clearTimeout(this.tapTimer);
       this.clearLongPressTimer();
-      this.tapTimer = setTimeout(() => {
-        this.deps.openChat();
-        this.resetTapState();
-      }, 300);
-    } else if (this.tapCount === 3) {
-      // 语音模块已删（用户拍板）——三击无动作，直接复位
+      this.deps.openChat();
       this.resetTapState();
-    } else if (this.tapCount === 5) {
-      if (this.tapTimer) clearTimeout(this.tapTimer);
-      this.clearLongPressTimer();
-      this.tapTimer = setTimeout(() => {
-        this.deps.openSettings();
-        this.resetTapState();
-      }, 300);
+    } else {
+      // 三击及以上无动作（语音/五击手势均已删），直接复位
+      this.resetTapState();
     }
     eventSystem.emit(EVENTS.CAT_TAPPED, { count: this.tapCount });
   }
@@ -253,7 +295,7 @@ export class InteractionManager {
     this.clearLongPressTimer();
   }
 
-  /** 长按开设置（原 startLongPressTimer：800ms） */
+  /** 长按开设置（原 startLongPressTimer：800ms；桌面/移动统一入口——五击手势已并入） */
   private startLongPressTimer(): void {
     this.longPressTimer = setTimeout(() => {
       this.deps.openSettings();
@@ -464,6 +506,10 @@ export class InteractionManager {
     document.removeEventListener('mouseup', this.boundMouseUp);
     if (this.tapTimer) clearTimeout(this.tapTimer);
     this.clearLongPressTimer();
+    if (this.springTimer) {
+      clearTimeout(this.springTimer);
+      this.springTimer = null;
+    }
     this.resetTapState();
   }
 }
