@@ -24,6 +24,7 @@ import { buildMovieActionText, type MovieActionEvent } from './movie-source';
 import { buildMemoActionText, memoDueObservation, type MemoActionEvent, type MemoDueLike } from './memo-source';
 
 import { buildNewsReadText, buildNewsSavedFullText, type NewsReadEvent } from './news-source';
+import { buildPomodoroActionText, type PomodoroActionEvent } from './pomodoro-source';
 import { DOMAIN_FILES, snapshotDomains } from './domain-source';
 import { buildRhythmProfile, isActiveNow, describeRhythm, periodText, isoWeekKey } from './rhythm';
 import { buildWeeklyReportData, generateWeeklyReport, weekWindow } from './report';
@@ -212,6 +213,8 @@ export async function ensureSmartCat(app: App): Promise<void> {
     }
     // 影视动作改由方法监听（ticket 074 修订）：事件通道短路，防 UI 动作双记录
     if (kind === 'movie') return;
+    // 番茄钟观察改由方法监听（ticket 080）：事件通道短路，防 UI 动作双记录（对齐 movie 先例）
+    if (kind === 'pomodoro') return;
     const now = Date.now();
     const last = lastActivity.get(file.path) || 0;
     if (now - last < 10 * 60 * 1000) return;          // 同一路径 10 分钟去弹跳
@@ -1007,6 +1010,16 @@ export function parseClipFrontmatter(content: string): { summary: string; tags: 
 /** 测试辅助：注入降级等待时长 / 读取待补全登记表 */
 export function __setNewsSaveTimeoutForTests(ms: number): void { newsSaveTimeoutMs = ms; }
 export function __getNewsPendingSavesForTests(): ReadonlyMap<string, NewsPendingSave> { return newsPendingSaves; }
+
+// ------------- 番茄钟动作观察（ticket 080：方法监听） -------------
+
+/** 番茄钟动作观察入口：pomodoro 域 applyAction 专注自然完成时调用（fire-and-forget）。
+ *  未初始化 / 未启用（noteSource 关）→ 静默；文案构造见 pomodoro-source.buildPomodoroActionText。 */
+export function notifyPomodoroAction(evt: PomodoroActionEvent): void {
+  if (!initialized || !memorySystem || !data?.config?.noteSource) return;
+  const text = buildPomodoroActionText(evt);
+  if (text) void memorySystem.addObservation(text, { source: 'pomodoro' });
+}
 
 /** 域 JSON 感知状态（domain-source.ts 提供 extract 纯函数；此处管理监听生命周期） */
 const domainPrev = new Map<string, string>();
