@@ -24,9 +24,13 @@ import { DOMAIN_FILES, snapshotDomains } from './domain-source';
 import { buildRhythmProfile, isActiveNow, describeRhythm, periodText, isoWeekKey } from './rhythm';
 import { buildWeeklyReportData, generateWeeklyReport, weekWindow } from './report';
 import { analyzeEmotionTrend, buildEmotionSnapshots, describeEmotionTrend, checkContradiction, extractStoredFacts, initBanditArm, sampleThompson, updateBandit } from './cognitive';
+import { openSmartcatDashboard, closeSmartcatDashboard } from './dashboard';
 import type { SmartCatData, SmartCatConfig, ProactiveCareState } from './types';
 import type { BanditArmParams } from './cognitive';
 import type { SmartcatPanels } from './ui';
+
+// 小橘数据面板（ticket 071）：命令 bz-smartcat-dashboard 入口（只读可视化，main.ts 经此转发）
+export { openSmartcatDashboard, closeSmartcatDashboard };
 
 let initialized = false;
 let appRef: App | null = null;
@@ -540,6 +544,12 @@ function openSettings(): void {
         .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime());
       return reports.length ? reports[0].description : null;
     },
+    // 数据面板移动端全屏（ticket 071，主窗口规范三件事之三：域设置弹窗挂行，仅移动端显示）
+    getDashboardMobileFullscreen: () => (getSettings() as any).smartcatDashboardMobileDefaultFullscreen === true,
+    setDashboardMobileFullscreen: async (v) => {
+      (getSettings() as any).smartcatDashboardMobileDefaultFullscreen = v;
+      await saveSettings();
+    },
   });
   if (interaction) {
     interaction.isSettingsOpen = true;
@@ -704,6 +714,7 @@ export function unloadSmartCat(): void {
     panels.dispose();
     panels = null;
   }
+  closeSmartcatDashboard(); // 数据面板（ticket 071）：DOM + ESC 句柄一并清理
   unmountCatContainer();
   __resetVisibilityForTests();
   bubbleManager = null;

@@ -741,3 +741,298 @@
 #smart-companion-cat .bz-sc-anim[style*="--bz-sc-anim-name"] {
   animation: var(--bz-sc-anim-name) var(--bz-sc-anim-dur, 1000ms) cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+
+/* ==================== 小橘数据面板（ticket 071：#smartcat-dashboard-panel） ==================== */
+/* 布局骨架（页签/滚动体）；弹窗尺寸与显隐由 createOverlay + 功能性内联承接 */
+.bz-sc-dash-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.bz-sc-dash-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 0 7px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.bz-sc-dash-tab:hover { color: var(--text-normal); }
+.bz-sc-dash-tab.active {
+  color: var(--interactive-accent);
+  border-bottom-color: var(--interactive-accent);
+  font-weight: 600;
+}
+.bz-sc-dash-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 20px 18px;
+  min-height: 220px;
+}
+
+/* 卡片与分区标题 */
+.bz-sc-dash-card {
+  background: var(--background-secondary);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 10px 0;
+}
+.bz-sc-dash-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-normal);
+  margin-bottom: 8px;
+}
+.bz-sc-dash-group-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 10px 0 2px;
+}
+.bz-sc-dash-hint {
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+.bz-sc-dash-empty {
+  font-size: 12px;
+  color: var(--text-faint);
+  padding: 6px 0;
+}
+
+/* 英雄区（当前心情档位 + 瞬时情绪） */
+.bz-sc-dash-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.bz-sc-dash-hero-emoji {
+  font-size: 40px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.bz-sc-dash-hero-main { flex: 1; min-width: 0; }
+.bz-sc-dash-hero-state {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+.bz-sc-dash-hero-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.bz-sc-dash-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--background-modifier-hover);
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+/* 数值条行（PAD/OCEAN/特质/信任等通用） */
+.bz-sc-dash-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+}
+.bz-sc-dash-row-name {
+  flex: 0 0 72px;
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bz-sc-dash-row-name--sm { flex-basis: 56px; }
+.bz-sc-dash-row-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--background-modifier-border);
+  overflow: hidden;
+}
+.bz-sc-dash-row-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--interactive-accent);
+  transition: width 0.3s ease;
+}
+.bz-sc-dash-fill-warm { background: linear-gradient(90deg, #f7a04b, #ef7d43); }
+.bz-sc-dash-row-val {
+  flex: 0 0 34px;
+  text-align: right;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.bz-sc-dash-row-count {
+  flex: 0 0 44px;
+  text-align: right;
+  font-size: 11px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 趋势文本 / 统计块网格 */
+.bz-sc-dash-trend-text {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-normal);
+}
+.bz-sc-dash-trend-meta {
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-top: 4px;
+}
+.bz-sc-dash-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.bz-sc-dash-stat {
+  flex: 1 1 calc(25% - 8px);
+  min-width: 76px;
+  background: var(--background-primary);
+  border-radius: 8px;
+  padding: 8px 6px;
+  text-align: center;
+}
+.bz-sc-dash-stat-num {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-normal);
+  font-variant-numeric: tabular-nums;
+}
+.bz-sc-dash-stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* 徽章 / 记忆列表 / 成长轨迹 */
+.bz-sc-dash-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.bz-sc-dash-badge.observation {
+  background: rgba(var(--color-blue-rgb), 0.15);
+  color: var(--color-blue);
+}
+.bz-sc-dash-badge.insight {
+  background: rgba(var(--color-purple-rgb), 0.15);
+  color: var(--color-purple);
+}
+.bz-sc-dash-badge-growth {
+  background: rgba(var(--color-orange-rgb), 0.15);
+  color: var(--color-orange);
+}
+.bz-sc-dash-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bz-sc-dash-memory {
+  background: var(--background-primary);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.bz-sc-dash-memory-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-bottom: 3px;
+}
+.bz-sc-dash-memory-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-normal);
+  word-break: break-word;
+}
+.bz-sc-dash-trail-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 12px;
+}
+
+/* 情绪演变时间线（圆点色随情绪价正负） */
+.bz-sc-dash-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.bz-sc-dash-tl-item {
+  position: relative;
+  padding: 4px 0 4px 16px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.bz-sc-dash-tl-item::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 9px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.bz-sc-dash-tl-item.pos::before { background: var(--color-green); }
+.bz-sc-dash-tl-item.neg::before { background: var(--color-red); }
+.bz-sc-dash-tl-item.neu::before { background: var(--text-faint); }
+.bz-sc-dash-tl-time { color: var(--text-faint); margin-right: 6px; }
+.bz-sc-dash-tl-emo { font-weight: 600; margin-right: 6px; color: var(--text-normal); }
+.bz-sc-dash-tl-desc { color: var(--text-muted); }
+
+/* 作息分布（24h 直方图；柱高动态内联） */
+.bz-sc-dash-rhythm {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 64px;
+  padding-top: 4px;
+}
+.bz-sc-dash-rhythm-slot {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+}
+.bz-sc-dash-rhythm-col {
+  width: 100%;
+  min-height: 2px;
+  background: var(--background-modifier-border);
+  border-radius: 2px 2px 0 0;
+}
+.bz-sc-dash-rhythm-col.active { background: var(--interactive-accent); }
+.bz-sc-dash-rhythm-hours {
+  display: flex;
+  gap: 2px;
+  font-size: 9px;
+  color: var(--text-faint);
+  margin-top: 3px;
+}
+.bz-sc-dash-rhythm-hours span { flex: 1; text-align: left; }
+
+/* 移动端适配（≤768px：统计块两列、英雄区收紧） */
+@media (max-width: 768px) {
+  .bz-sc-dash-stat { flex: 1 1 calc(50% - 8px); }
+  .bz-sc-dash-hero-emoji { font-size: 34px; }
+  .bz-sc-dash-body { padding: 6px 14px 14px; }
+  .bz-sc-dash-tabs { padding: 0 14px; }
+}
