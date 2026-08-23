@@ -296,3 +296,16 @@
 - ✅ **数据零改动**：news.json / news-stats.json / smartcat.json / 剪藏 frontmatter 均保持既有格式（时长仅观察携带，待补全表内存态不落盘）
 - ✅ **文档**：ADR-0029（Context/Options/Consequences）；spec.md 聚合讯 US 29 + 事件监听清单行；CONTEXT.md 记忆流词条补聚合讯观察；ticket 076 落盘（含实现记录）
 - ⏳ 待办：真机冒烟（真实 Obsidian 保存剪藏 → auto-summary 写回 → 观察文本核对；注意 auto-summary 缺 title 重命名后补全落空走 2 分钟降级为已知边界）
+
+## 2026-08-23 smartcat 收藏本观察完成（ticket 078，ADR-0031）
+
+**状态：全量 1480 测试通过（107 文件），tsc 0 错误；新增 favorites-source 纯函数 11 用例 + favorites/ui 挂点 5 用例（domain-source favorites 用例移除/断言改）**
+
+- ✅ **收藏本观察从「无标题计数」改为 添加/编辑/删除 三动作方法监听**：favorites UI 三处成功路径挂点调 `notifyFavoritesAction`（`_saveNewItem` 添加分支 `{kind:'add', item: data}`（最终落盘对象）、编辑分支 old vs data 生成变化列表 `{kind:'edit', title, changes}`、`_deleteItem` `{kind:'delete', title}`（先取 item 拿标题））；文案构造集中新模块 src/smartcat/favorites-source.ts（movie-source/memo-source 同款纯函数）
+- ✅ **文案表（用户拍板）**：添加=键值式有才加（分类（tags 顿号全列）/简介「…」/链接 url 原文/已置顶（仅 pinned=true））；编辑=α 变化列表只列真正变化（title/description/url/tags，tags join 比较；pinned/created/id/type/llmConfig/balance* 不参与；无变化省略列表不发尾冒号），变化项顿号分隔（改了标题/改了简介/改了链接/改了分类）；删除仅标题
+- ✅ **置顶不观察**：置顶抽屉动作（置顶/取消置顶）不单独发观察，编辑里的置顶变化也不列入变化列表（挂点测试断言 changes 空数组）
+- ✅ **防双记录**：domain-source.ts 移除 favorites extract（「你收藏了一条新资源」不再产）；onVaultActivity 对 kind==='favorites' 防御性短接（ActivityKind 联合加 'favorites' 仅类型许可，classifyPath 只认 .md 不产该值）；无 timer/map 需清理
+- ✅ **数据零改动**：favorites.json / smartcat.json 保持既有格式；MemoryStreamEntry source 'favorites'
+- ✅ **测试**：tests/smartcat/favorites-source.test.ts（文案构造全动作 + 字段比较边界，11 用例）+ tests/favorites/ui.test.ts 挂点 5 用例（add/edit/delete/置顶不列/失败不通知，vi.mock notifyFavoritesAction 断言调用参数）+ tests/smartcat/domain-source.test.ts（favorites undefined 断言 + 快照裁剪）
+- ✅ **文档**：ADR-0031（Context/Options/Consequences）；spec.md 收藏本 US 28 + 事件监听清单行；CONTEXT.md 记忆流词条补收藏本观察
+- ⏳ 待办：真机冒烟（Obsidian 里添加/编辑/删除收藏各一次核对观察文本）
