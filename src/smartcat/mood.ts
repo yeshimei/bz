@@ -133,13 +133,19 @@ export class MoodSystem {
     void this.saveMoodState();
   }
 
-  /** 温和共振（ADR-0025）：观察/聊天情绪 → PAD 差量（走 updatePad，人格调制+衰减生效） */
-  applyEmotionResonance(emotion: string): boolean {
+  /** 温和共振（ADR-0025）：观察/聊天情绪 → PAD 差量（走 updatePad，人格调制+衰减生效）；
+   *  ADR-0036：可选第二参 scale = 记忆可信度（credibility，缺省 1）——低可信度观察的情绪差量 ×scale 缩量，不猛推 PAD */
+  applyEmotionResonance(emotion: string, scale = 1): boolean {
     const deltas = emotionResonanceDelta(emotion);
-    if (Math.abs(deltas.pleasure) < 0.01 && Math.abs(deltas.arousal) < 0.01 && Math.abs(deltas.dominance) < 0.01) return false;
-    this.updatePad('pleasure', deltas.pleasure, 'emotion:' + emotion);
-    this.updatePad('arousal', deltas.arousal, 'emotion:' + emotion);
-    this.updatePad('dominance', deltas.dominance, 'emotion:' + emotion);
+    const scaled = {
+      pleasure: deltas.pleasure * scale,
+      arousal: deltas.arousal * scale,
+      dominance: deltas.dominance * scale,
+    };
+    if (Math.abs(scaled.pleasure) < 0.01 && Math.abs(scaled.arousal) < 0.01 && Math.abs(scaled.dominance) < 0.01) return false;
+    this.updatePad('pleasure', scaled.pleasure, 'emotion:' + emotion);
+    this.updatePad('arousal', scaled.arousal, 'emotion:' + emotion);
+    this.updatePad('dominance', scaled.dominance, 'emotion:' + emotion);
     return true;
   }
 
