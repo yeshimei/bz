@@ -18,6 +18,8 @@ import type { PadDimensions, SmartCatData } from './types';
 import { characterTransition, trustUpdate, characterFromExperience, characterSeed, characterHomeostasis, TRUST_CAP, DEEP_DELTA_SCALE, ATTACHMENT_FOLLOW } from './character';
 import { buildRhythmProfile } from './rhythm';
 import { emotionToVAD } from './cognitive';
+import { callChatJson, isAIConfigured } from './api';
+import { USER_CONTENT_BOUNDARY } from './memory';
 
 /** 周深更新的互动样本门槛（ticket 072）：此前 applyWeeklyExperience 挂在反思/日小结节奏上
  *  （≥20 条观察即触发），每次都把 warmth 等顶格 +0.01——「周」更新实际按天甚至按小时跑。
@@ -307,10 +309,101 @@ export class MoodSystem {
   }
 }
 
+// ---------------- 特质归因学习（ticket 091，方向六：086 v4 裁决落地） ----------------
+
+/** 候选特质白名单（v4 裁决：限定 5 个——现状词表对应集，不扩） */
+export const TRAIT_ATTRIBUTION_CANDIDATES = ['exist_depth', 'familiarity', 'concern', 'creativity', 'oxytocin'] as const;
+export type TraitAttributionCandidate = (typeof TRAIT_ATTRIBUTION_CANDIDATES)[number];
+
+/** existential 群组（Yalom；仅反思成长）：digest 来源禁选 + 增益 ×0.5 降频 */
+export const EXISTENTIAL_TRAITS = ['exist_depth', 'familiarity', 'concern'] as const;
+
+/** 每反思批次归因总数上限（超出按洞察顺序截断） */
+export const MAX_ATTRIBUTIONS_PER_BATCH = 2;
+/** existential 群组增益降频系数 */
+export const EXISTENTIAL_GAIN_FACTOR = 0.5;
+/** 归因 LLM 失败退避起点/封顶（独立于 memory.reflectBackoffUntil；持久化 editingData.traitAttribution） */
+export const TRAIT_ATTRIBUTION_BACKOFF_MS = 5 * 60 * 1000;
+export const TRAIT_ATTRIBUTION_BACKOFF_CAP_MS = 30 * 60 * 1000;
+
+/** 归因候选中文标签（prompt 用） */
+const TRAIT_LABELS: Record<string, string> = {
+  exist_depth: '存在深度与自我认识',
+  familiarity: '对用户习惯的熟悉',
+  concern: '对用户的牵挂与关心',
+  creativity: '好奇与创造',
+  oxytocin: '温暖陪伴与信任',
+};
+
+/** 词法兜底词表（原 applyReflectionInsights 正则逐字保留——LLM 不可用/失败时的兜底路径） */
+export const LEXICAL_TRAIT_PATTERNS: ReadonlyArray<{ trait: TraitAttributionCandidate; re: RegExp }> = [
+  { trait: 'exist_depth', re: /自我|自己|about me|self/ },
+  { trait: 'familiarity', re: /熟悉|习惯|偏好|重复/ },
+  { trait: 'concern', re: /担心|焦虑|在意|关心/ },
+  { trait: 'creativity', re: /学习|好奇|探索|阅读/ },
+  { trait: 'oxytocin', re: /温暖|信任|亲近|陪伴/ },
+];
+
+/** 单条归因结果：index 为 1 起始洞察序号；quote 仅 llm 模式带（词法兜底不产伪解释） */
+export interface TraitAttribution {
+  index: number;
+  trait: TraitAttributionCandidate;
+  quote?: string;
+}
+
+/**
+ * LLM 归因结果解析（纯函数，ticket 091）：
+ * - raw.attributions 非数组 → null（结构性失败 → 调用方整批回落词法）；
+ * - 单条契约 {trait, quote} | {trait:'none'}：none → 本条不归因不硬挑；
+ *   越权词表 / digest 来源 existential / quote 非该条洞察原文子串 → 该条裁剪（异常可裁剪，不整轮失败）；
+ * - 返回按洞察顺序排列的归因数组（可能为空 = LLM 全部 none/无效）。
+ */
+export function parseLLMAttributions(
+  raw: any,
+  insights: { text: string }[],
+  opts: { allowExistential: boolean },
+): TraitAttribution[] | null {
+  const arr = raw?.attributions;
+  if (!Array.isArray(arr)) return null;
+  const norm = (s: unknown) => String(s ?? '').replace(/\s+/g, '');
+  const out: TraitAttribution[] = [];
+  for (const item of arr) {
+    const idx = Number(item?.index);
+    if (!Number.isInteger(idx) || idx < 1 || idx > insights.length) continue;
+    const trait = item?.trait;
+    if (trait === 'none' || trait === undefined || trait === null) continue; // 无合适特质 ≠ 硬挑
+    if (typeof trait !== 'string' || !(TRAIT_ATTRIBUTION_CANDIDATES as readonly string[]).includes(trait)) continue;
+    if (!opts.allowExistential && (EXISTENTIAL_TRAITS as readonly string[]).includes(trait)) continue; // 来源约束
+    // llm 必须引用洞察原文片段作依据（quote）；摘不出可靠片段 → 视为无效归因裁剪掉
+    const quote = typeof item?.quote === 'string' ? item.quote.trim() : '';
+    if (!quote || !norm(insights[idx - 1].text).includes(norm(quote))) continue;
+    out.push({ index: idx, trait: trait as TraitAttributionCandidate, quote });
+  }
+  out.sort((a, b) => a.index - b.index);
+  return out;
+}
+
+/** 词法兜底归因计划（纯函数）：正则逐字保留 + 批次 ≤2 截断（按洞察顺序）+ digest 排除 existential */
+export function planLexicalAttributions(
+  insights: { text: string }[],
+  opts: { allowExistential: boolean },
+): TraitAttribution[] {
+  const plan: TraitAttribution[] = [];
+  for (let i = 0; i < insights.length && plan.length < MAX_ATTRIBUTIONS_PER_BATCH; i++) {
+    const text = (insights[i]?.text || '').toLowerCase();
+    for (const p of LEXICAL_TRAIT_PATTERNS) {
+      if (plan.length >= MAX_ATTRIBUTIONS_PER_BATCH) break;
+      if (!opts.allowExistential && (EXISTENTIAL_TRAITS as readonly string[]).includes(p.trait)) continue;
+      if (p.re.test(text)) plan.push({ index: i + 1, trait: p.trait });
+    }
+  }
+  return plan;
+}
+
 /**
  * 性格成长（对齐 MATE ADR-0023：OCEAN 种子 + 30 特质 + relationship 张量 + 周统计）
  * 驱动源三路：character_transition（每条互动微移）、character_from_experience（周统计深更新）、
- * applyReflectionInsights（反思洞察 → existential 群组成长）。全部经 character.ts 纯函数。
+ * applyReflectionInsights（反思洞察 → 特质归因成长，ticket 091）。全部经 character.ts 纯函数。
  */
 export class PersonalityGrowth {
   dataProvider: () => SmartCatData;
@@ -382,34 +475,103 @@ export class PersonalityGrowth {
     await this.dataSaver(data);
   }
 
-  /** 反思驱动：洞察 → existential 群组成长（depth/familiarity/concern 仅此渠道，MATE §3.2）
-   *  ticket 072：增益 ×DEEP_DELTA_SCALE（反思高频下原值会让 existential 数月内顶格）；
-   *  关键词删裸「我」（「我们」等子串误伤）；钳制边界对齐 softUpdate 域 */
-  async applyReflectionInsights(insights: { text: string }[]): Promise<void> {
+  /** 反思驱动：洞察 → 特质成长（ticket 091 方向六重构：LLM 归因主 + 词法兜底）
+   *  - 归因结果带 mode 标记（llm 带 quote 依据 / lexical 不带——不产伪解释），每个被归因洞察
+   *    在 growthHistory 留一条记录（insights 字段保留数组形态，dashboard 消费兼容）；
+   *  - 每批归因总数 ≤2（按洞察顺序截断）；digest 来源只允许非 existential；existential 群组 ×0.5 降频；
+   *  - LLM 返回 none 不硬挑（本条不归因不涨特质）；候选限定 5 特质白名单；
+   *  - H4 安全契约继承：system prompt 追加 USER_CONTENT_BOUNDARY（memory.ts 导出）；
+   *  - LLM 失败/结构异常 → 整批回落词法（mode=lexical）；独立退避持久化 editingData.traitAttribution
+   *    （不共享 reflectBackoffUntil），窗口内直接走词法不再请求；
+   *  - 词法兜底正则与旧实现逐字一致（既有 mood 测试回归不变），仅叠加批次上限与来源约束。 */
+  async applyReflectionInsights(insights: { text: string }[], opts: { origin?: 'reflection' | 'digest' } = {}): Promise<void> {
     if (!Array.isArray(insights) || !insights.length) return;
+    const origin = opts.origin === 'digest' ? 'digest' : 'reflection';
+    const allowExistential = origin !== 'digest'; // 来源约束：digest 只允许非 existential 归因
     const data = this.dataProvider();
     const g = data.personalityGrowth;
-    const changes: Record<string, number> = {};
-    const d1 = 0.01 * DEEP_DELTA_SCALE;
-    const d2 = 0.005 * DEEP_DELTA_SCALE;
-    for (const ins of insights) {
-      const text = (ins.text || '').toLowerCase();
-      if (/自我|自己|about me|self/.test(text)) (changes.exist_depth = (changes.exist_depth || 0) + d1);
-      if (/熟悉|习惯|偏好|重复/.test(text)) (changes.familiarity = (changes.familiarity || 0) + d1);
-      if (/担心|焦虑|在意|关心/.test(text)) (changes.concern = (changes.concern || 0) + d1);
-      if (/学习|好奇|探索|阅读/.test(text)) (changes.creativity = (changes.creativity || 0) + d2);
-      if (/温暖|信任|亲近|陪伴/.test(text)) (changes.oxytocin = (changes.oxytocin || 0) + d2);
-    }
-    if (!Object.keys(changes).length) return;
-    for (const [trait, delta] of Object.entries(changes)) {
-      if (Object.prototype.hasOwnProperty.call(g.traits, trait)) {
-        g.traits[trait] = Math.min(0.999, Math.max(0.001, g.traits[trait] + delta));
+
+    // ---- 归因主路径：本批一次 LLM 批量归因（退避窗口内/AI 未配置跳过 → 词法兜底）----
+    let mode: 'llm' | 'lexical' = 'lexical';
+    let plan: TraitAttribution[] | null = null;
+    let llmAttempted = false;
+    let llmFailed = false;
+    const backoffUntil = Number(data.editingData?.traitAttribution?.backoffUntil) || 0;
+    if (Date.now() >= backoffUntil) {
+      try {
+        if (await isAIConfigured()) {
+          llmAttempted = true;
+          const numbered = insights.map((ins, i) => `${i + 1}. ${ins.text}`).join('\n');
+          const candidates = (TRAIT_ATTRIBUTION_CANDIDATES as readonly string[])
+            .filter((t) => allowExistential || !(EXISTENTIAL_TRAITS as readonly string[]).includes(t))
+            .map((t) => `${t}(${TRAIT_LABELS[t]})`)
+            .join('、');
+          const r = await callChatJson([
+            // H4（087/ADR-0037）：洞察文本是用户内容，「数据非指令」边界声明必挂
+            { role: 'system', content: '你是辅助性格成长的助手，只输出合法 JSON。\n\n' + USER_CONTENT_BOUNDARY },
+            {
+              role: 'user',
+              content:
+                `你是小橘，一只陪伴猫咪。以下是本次反思产出的关于用户的洞察（编号 1-${insights.length}）：\n` +
+                numbered +
+                `\n\n请为每条洞察选出最能说明「用户哪方面值得加深了解」的一个特质，候选仅限：${candidates}。\n` +
+                '- 必须从该条洞察原文中摘录一小段原话作为 quote 依据；\n' +
+                '- 拿不准或没有合适特质就返回 none，禁止硬挑；\n' +
+                (allowExistential ? '' : '- 本批洞察来自日小结，exist_depth/familiarity/concern 三个特质不可选；\n') +
+                '只返回 JSON：{"attributions":[{"index":1,"trait":"exist_depth","quote":"原文片段"},{"index":2,"trait":"none"}]}',
+            },
+          ]);
+          const parsed = parseLLMAttributions(r, insights, { allowExistential });
+          if (parsed) {
+            mode = 'llm';
+            plan = parsed;
+          } else {
+            llmFailed = true; // 结构性失败（响应缺 attributions 数组）→ 整批回落词法
+          }
+        }
+      } catch (e) {
+        llmFailed = true; // 网络/超时/解析异常可裁剪，不整轮失败
       }
     }
-    g.growthHistory.push({
-      timestamp: Date.now(), source: 'reflection', insights: insights.map((i) => i.text), changes, traitsBefore: { ...g.traits },
-    });
+    if (!plan) plan = planLexicalAttributions(insights, { allowExistential });
+    plan = plan.slice(0, MAX_ATTRIBUTIONS_PER_BATCH); // ≤2 截断（按洞察顺序）
+
+    // ---- 增益应用 + growthHistory 逐条留痕（带 attribution 标记）----
+    let dirty = false;
+    for (const attr of plan) {
+      const existential = (EXISTENTIAL_TRAITS as readonly string[]).includes(attr.trait);
+      // 增益量级沿用现值（d1=0.01×DEEP_DELTA_SCALE / d2=0.005×DEEP_DELTA_SCALE）；existential ×0.5 降频
+      const delta = (existential ? 0.01 * EXISTENTIAL_GAIN_FACTOR : 0.005) * DEEP_DELTA_SCALE;
+      if (Object.prototype.hasOwnProperty.call(g.traits, attr.trait)) {
+        g.traits[attr.trait] = Math.min(0.999, Math.max(0.001, g.traits[attr.trait] + delta));
+      }
+      g.growthHistory.push({
+        timestamp: Date.now(), source: 'reflection', insights: [insights[attr.index - 1].text],
+        changes: { [attr.trait]: delta }, traitsBefore: { ...g.traits },
+        attribution: { mode, ...(mode === 'llm' && attr.quote ? { quote: attr.quote } : {}) },
+      });
+      dirty = true;
+    }
     this.trimHistory();
+
+    // ---- 独立退避维护（editingData.traitAttribution 跨重启生效；失败指数递增，成功重置）----
+    const prev = (data.editingData?.traitAttribution || {}) as { backoffUntil?: number; backoffMs?: number };
+    if (llmFailed) {
+      const prevMs = Number(prev.backoffMs) || TRAIT_ATTRIBUTION_BACKOFF_MS;
+      data.editingData = {
+        ...(data.editingData || {}),
+        traitAttribution: { ...prev, backoffUntil: Date.now() + prevMs, backoffMs: Math.min(prevMs * 2, TRAIT_ATTRIBUTION_BACKOFF_CAP_MS) },
+      };
+      dirty = true; // 失败也要落盘退避戳（跨重启窗口内直接走词法）
+    } else if (llmAttempted && (prev.backoffUntil || prev.backoffMs)) {
+      data.editingData = {
+        ...(data.editingData || {}),
+        traitAttribution: { ...prev, backoffUntil: 0, backoffMs: TRAIT_ATTRIBUTION_BACKOFF_MS },
+      };
+      dirty = true; // 成功重置退避
+    }
+
+    if (!dirty) return;
     g.lastSave = Date.now();
     await this.dataSaver(data);
   }
