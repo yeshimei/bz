@@ -713,7 +713,8 @@ async function sendChatMessage(message: string): Promise<void> {
     //  情绪共振/瞬时情绪由 memorySystem.onObservation 钩子统一处理（不再此处手动 registerEmotion）
     await memorySystem!.addObservation(`用户说：${message}`, { source: 'chat', dedupe: true });
     // ADR-0023：聊天 → 性格微移 + 行为统计（tickBehaviorStats；情绪强度近似取消息长度）
-    personalityGrowth!.developBasedOnInteraction('talk', 1, Math.min(0.8, message.length / 200)).catch(() => {});
+    // ticket 072：强度上限 0.8→0.5（长度≠情绪浓度，粘贴长文不应拿满格人格微移）
+    personalityGrowth!.developBasedOnInteraction('talk', 1, Math.min(0.5, message.length / 200)).catch(() => {});
   } catch (error) {
     const indicator = chatMessages.querySelector('#typing-indicator');
     if (indicator) indicator.remove();
