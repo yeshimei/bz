@@ -7,7 +7,7 @@
 import type { App } from 'obsidian';
 import { notice } from '../core/notice';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
-import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath, defaultPersonalityGrowth } from './data';
+import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath, defaultPersonalityGrowth, touchPresence } from './data';
 import { eventSystem, setSmartcatApp, setupVisibilityCheck, __resetVisibilityForTests } from './state';
 import { mountCatContainer, unmountCatContainer, applyAppearance, createChatPanel, showChatPanel, hideChatPanel, openSmartcatSettings } from './ui';
 import { BubbleManager } from './bubble';
@@ -177,6 +177,11 @@ export async function ensureSmartCat(app: App): Promise<void> {
   if (!initialized) {
     data = null;
     return;
+  }
+  // ticket 088：在场口径缺省初始化——ensure 时 editingData 无 lastPresenceAt → 当前时间
+  // （新用户不触发「缺席」；旧数据容忍零迁移——仅内存补齐，随首次既有 dataSaver 落盘）
+  if (typeof data.editingData?.lastPresenceAt !== 'number') {
+    touchPresence(data);
   }
   // 用户拍板：所有数据单 json——首次无文件时也落盘一次（迁移或在空账本上建文件）
   if (!app.vault.getAbstractFileByPath(getSmartcatFilePath())) {
@@ -547,6 +552,8 @@ async function maybeProactiveCare(): Promise<void> {
     }
     // 记录本次主动（写回 editingData，不新增顶层字段）+ 标记 Bandit pending arm
     const d = dataProvider();
+    // ticket 088：主动关心触发 = 用户在场（刷新 editingData.lastPresenceAt，随下方既有 dataSaver 落盘）
+    touchPresence(d);
     const next: ProactiveCareState = { week: isoWeekKey(), count: st.count + 1, lastAt: Date.now() };
     d.editingData = { ...(d.editingData || {}), proactiveCare: next };
     markProactiveArm(armId);
@@ -783,6 +790,9 @@ async function sendChatMessage(message: string): Promise<void> {
   const chatMessages = panels.chatMessages;
   const chatInput = panels.chatInput;
 
+  // ticket 088：用户发消息本身即「在场」（刷新 editingData.lastPresenceAt 内存字段；
+  // 成功路径随既有 dataSaver 落盘，AI 失败也已在场——不新增独立写盘）
+  touchPresence(data);
   // Bandit reward 回填（ticket 035）：用户主动发消息 = 对上次主动关心的回应
   void rewardProactiveArm();
 

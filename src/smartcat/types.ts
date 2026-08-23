@@ -171,6 +171,9 @@ export interface SmartCatData {
   config: SmartCatConfig;
   mood: MoodData;
   personalityGrowth: PersonalityGrowthData;
+  /** 运行状态（不落 config 各域运行字段松散存放，兼容冻结保持 any）：
+   *  proactiveCare（主动关心周状态）/dueScan（memo 到期扫描日）/weeklyReport（周报告状态）/
+   *  ceBandit（Bandit 臂参数）/lastPresenceAt（在场口径，ticket 088：观察/聊天/主动关心统一刷新，旧数据缺省容忍） */
   editingData: any;
   memory: MemoryStream;
 }
