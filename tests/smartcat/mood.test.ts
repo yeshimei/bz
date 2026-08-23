@@ -128,6 +128,24 @@ describe('温和共振（ADR-0025：情绪 → PAD 小步差量）', () => {
     expect(Math.abs(m.pad.pleasure - before)).toBeLessThan(2);
   });
 
+  it('applyEmotionResonance scale（ADR-0036）：credibility 0.3 → 差量 ×0.3 缩量（低可信度不猛推 PAD）', () => {
+    // 共享同一份默认数据（性格调制一致），两系统同基线 55/50/50
+    const shared = defaultSmartCatData();
+    const a = new MoodSystem({} as any, () => shared, vi.fn<(d: SmartCatData) => Promise<void>>());
+    const b = new MoodSystem({} as any, () => shared, vi.fn<(d: SmartCatData) => Promise<void>>());
+    a.applyEmotionResonance('sad', 0.3);
+    b.applyEmotionResonance('sad'); // 缺省 scale=1（既有调用不受影响）
+    const dropA = 55 - a.pad.pleasure;
+    const dropB = 55 - b.pad.pleasure;
+    expect(dropA).toBeGreaterThan(0); // 低可信度仍小步共振，非归零
+    expect(dropB).toBeGreaterThan(dropA); // 缩量：跌幅更小
+    expect(dropA / dropB).toBeCloseTo(0.3, 1);
+    // calm ×低可信度更不误动心情
+    const before = a.pad.pleasure;
+    a.applyEmotionResonance('calm', 0.3);
+    expect(Math.abs(a.pad.pleasure - before)).toBeLessThan(2);
+  });
+
   it('applyTrendDrift：declining → 愉悦/支配温和下降；improving → 愉悦回升；高波动 → 唤醒微升', () => {
     const m = make();
     m.pad = { pleasure: 60, arousal: 50, dominance: 55 };
