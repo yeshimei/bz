@@ -4,6 +4,8 @@
  * ticket 075：memo 项移除——备忘录改走方法监听（notifyMemoAction），防 JSON 事件通道双记录。
  * ticket 079：belongings 项移除——归物本改走方法监听（notifyBelongingsAction），防双记录。
  * ticket 080：pomodoro 项移除——番茄钟改走方法监听（notifyPomodoroAction），防 JSON 事件通道双记录。
+ * ticket 082：quiz/review 项移除——用户拍板去掉这两个盲通道计数观察（「你做了几道题」/「完成复习」不再产）。
+ * 至此原 JSON 盲通道全清空；ticket 081（书库 weave-data.json 数据文件监听）合并后重新注入 library 条目。
  */
 
 export interface DomainExtractor {
@@ -12,38 +14,7 @@ export interface DomainExtractor {
 }
 
 export const DOMAIN_FILES: Record<string, DomainExtractor> = {
-  // 番茄钟已移除（ticket 080）：改走方法监听（pomodoro-source/notifyPomodoroAction），
-  // 「你用番茄钟完成了一段专注（+ N 次）」计数观察不再产。
-  // news 已移除（ticket 076）：聚合讯观察改为逐篇三态方法监听（news-source/notifyNewsRead），
-  // 「你浏览了今天的资讯（N 条）」计数观察不再产。
-  quiz: {
-    file: 'CONFIG/STORAGE/quiz.json',
-    extract: (raw, prev) => {
-      if (!Array.isArray(raw)) return null;
-      const done = raw.filter((it) => it?.lastCorrect || it?.correctCount).length;
-      if (done > (Number(prev.get('quizDone') || 0))) {
-        prev.set('quizDone', String(done));
-        return '你做了几道题，检验了一下理解';
-      }
-      return null;
-    },
-  },
-  review: {
-    file: 'CONFIG/STORAGE/review.json',
-    extract: (raw, prev) => {
-      if (!Array.isArray(raw)) return null;
-      const reviewed = raw.filter((it) => it?.nextReview || it?.lastReviewed).length;
-      if (reviewed > (Number(prev.get('reviewN') || 0))) {
-        prev.set('reviewN', String(reviewed));
-        return '你完成了一轮复习，复习计划在推进';
-      }
-      return null;
-    },
-  },
-// favorites 已移除（ticket 078）：收藏本观察改走方法监听（favorites-source/notifyFavoritesAction）——
-  // 「你收藏了一条新资源」无标题计数观察不再产（只增不减、删除后计数失真问题随之解除）。
-  // belongings 已移除（ticket 079）：归物本改走方法监听（notifyBelongingsAction），
-  // 「你登记了一件新物品」计数观察不再产（无名称、只增不减、状态流转/编辑不反映、删除失真）。
+  // 全部盲通道已移除（见头部注释），等待 ticket 081 library 条目注入。
 };
 
 /** 遍历所有域：首次快照（记录当前状态，不产出观察）；返回已存在数据文件的域列表 */
