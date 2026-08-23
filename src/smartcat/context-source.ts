@@ -8,7 +8,7 @@
  *  - clipping 剪藏：记住完整的 AI 摘要
  *  - movie 影视：读影评完整正文
  *  - reading 书库：weve epub 划线（<span class="__comment cm-highlight">）、想法/书评（==dialogue== / bookReview）
- *  - poem 现代诗 / letter 信 / reflection 反省：完整内容
+ *  - poem 现代诗 / letter 信：完整内容（reflection 反省观察 ticket 083 彻底移除——不再产任何反省观察）
  *  - 域事件（memo/pomodoro/news/quiz/review/favorites/belongings）：CONFIG/STORAGE JSON 监听感知
  */
 import type { App, TAbstractFile } from 'obsidian';
@@ -16,12 +16,12 @@ import { DIARY_DIRECTORY } from '../diary/config';
 
 // 'favorites'/'belongings'/'pomodoro' 加入联合仅供 onVaultActivity 防御性短接（ticket 078/079/080 方法监听：
 // 收藏本/归物本/番茄钟是 JSON 数据域，classifyPath 对 .md 外的 JSON 显式短路，类型成员零运行时影响）
-export type ActivityKind = 'diary' | 'flash' | 'clipping' | 'movie' | 'reading' | 'poem' | 'letter' | 'reflection' | 'domain' | 'favorites' | 'belongings' | 'pomodoro' | null;
+export type ActivityKind = 'diary' | 'flash' | 'clipping' | 'movie' | 'reading' | 'poem' | 'letter' | 'domain' | 'favorites' | 'belongings' | 'pomodoro' | null;
 
 /** 默认 flash（卡片盒）目录（flash 域 ALLOW_PATHS 默认含卡片盒；可配目录后续扩展） */
 const FLASH_DIR = '卡片盒';
 
-/** 路径分类（只认 .md；日志目录经 diary/config 动态目录；现代诗/信/反省/书库/影视按目录） */
+/** 路径分类（只认 .md；日志目录经 diary/config 动态目录；现代诗/信/书库/影视按目录） */
 export function classifyPath(path: string | null | undefined): ActivityKind {
   if (!path) return null;
   const p = path.replace(/\\/g, '/');
@@ -36,7 +36,6 @@ export function classifyPath(path: string | null | undefined): ActivityKind {
   if (p.startsWith('书库')) return 'reading';
   if (p.startsWith('我的/现代诗')) return 'poem';
   if (p.startsWith('我的/信')) return 'letter';
-  if (p.startsWith('我的/反省')) return 'reflection';
   return null;
 }
 
@@ -134,10 +133,6 @@ export async function observationText(app: App, file: TAbstractFile, kind: Activ
     case 'letter': {
       const full = (await readAll()).trim();
       return full ? '你写了一封信：' + full.replace(/^---[\s\S]*?---\s*/, '').slice(0, 300) : null;
-    }
-    case 'reflection': {
-      const full = (await readAll()).trim();
-      return full ? '你写下了反省：' + full.replace(/^---[\s\S]*?---\s*/, '').slice(0, 300) : null;
     }
     case 'pomodoro':
       return null; // 番茄钟观察走方法监听（ticket 080），事件通道短路于 onVaultActivity，不取文本
