@@ -33,12 +33,41 @@ export const EMOTION_VAD: Record<string, { valence: number; arousal: number; dom
   bored: { valence: -0.3, arousal: 0.1, dominance: 0.3 },
   confused: { valence: -0.3, arousal: 0.5, dominance: 0.2 },
   overwhelmed: { valence: -0.6, arousal: 0.8, dominance: 0.1 },
+  // ---- H3 情绪路前置重建（ticket 096）：补全词法/打分 prompt 已在用的 5 类——
+  // 此前缺键 → emotionToVAD 回 DEFAULT_VAD，'upset' 共振差量=0（现网 bug）。
+  // VAD 值按语义取（Russell circumplex + Mehrabian PAD），晨起可调：
+  curious: { valence: 0.4, arousal: 0.7, dominance: 0.5 },    // 好奇：正价中低、高唤醒、支配中性
+  sleepy: { valence: -0.1, arousal: 0.1, dominance: 0.4 },    // 困倦：价微负、唤醒极低、支配略降
+  playful: { valence: 0.7, arousal: 0.75, dominance: 0.6 },   // 玩闹：正价高、高唤醒、支配略升
+  focused: { valence: 0.3, arousal: 0.6, dominance: 0.7 },    // 专注：正价温和、唤醒中高、掌控感强
+  upset: { valence: -0.55, arousal: 0.7, dominance: 0.4 },    // 不满：负价、高唤醒、支配下降（弱于 angry）
 };
 const DEFAULT_VAD = { valence: 0, arousal: 0.3, dominance: 0.5 };
 
 /** 情绪 → VAD 坐标（未知情绪回默认） */
 export function emotionToVAD(emotion: string): { valence: number; arousal: number; dominance: number } {
   return EMOTION_VAD[emotion.toLowerCase()] ?? DEFAULT_VAD;
+}
+
+/**
+ * 两情绪的 VAD 连续亲和度（H3/096 方向一情绪路评分核心，纯函数；取代「8 标签硬匹配」）：
+ * 复用 emotionToVAD 取三维坐标，算余弦相似度——同/近情绪为正（完全相同=1），
+ * 「相反」情绪为负距离（如 happy vs sad ≈ -0.4，供「你上次难过时…」类联想召回），无关趋近 0。
+ * 值域 [-1, 1]；任一侧零向量/未知情绪回 DEFAULT_VAD 仍可算（防御式不抛错）。
+ */
+export function emotionAffinity(a: string, b: string): number {
+  const va = emotionToVAD(a);
+  const vb = emotionToVAD(b);
+  let dot = 0, na = 0, nb = 0;
+  for (const k of ['valence', 'arousal', 'dominance'] as const) {
+    dot += va[k] * vb[k];
+    na += va[k] * va[k];
+    nb += vb[k] * vb[k];
+  }
+  const denom = Math.sqrt(na) * Math.sqrt(nb);
+  if (denom === 0) return 0;
+  // 四位小数去浮点残差（cos 本身有界，不额外 clamp）
+  return Math.round((dot / denom) * 10000) / 10000;
 }
 
 /** 情绪快照（一条观察的情绪 → VAD + 强度） */
@@ -139,6 +168,8 @@ export function describeEmotionTrend(t: EmotionTrend): string {
     hopeful: '满怀希望', amused: '愉悦', loving: '有爱', neutral: '平常', sad: '难过', anxious: '焦虑',
     stressed: '压力大', angry: '生气', frustrated: '沮丧', fearful: '害怕', disappointed: '失望',
     lonely: '孤独', bored: '无聊', confused: '困惑', overwhelmed: '不堪重负',
+    // H3/096 补类中文名
+    curious: '好奇', sleepy: '困倦', playful: '玩闹', focused: '专注', upset: '不满',
   };
   const emo = emoZh[t.dominantEmotion] || t.dominantEmotion;
   const trendText = t.trend === 'improving' ? '正在转好' : t.trend === 'declining' ? '有些转差' : '平稳';

@@ -151,6 +151,7 @@ export interface MemoryStreamEntry {
   theme?: string;         // 主题键（受限枚举 工作|兴趣|关系|健康|环境；LLM 打标解析失败回退词法映射；仅 insight 使用）
   supersededBy?: string;  // 被哪条洞察取代（真实 insight id；'manual'=人工废弃标记）；有值即视为已废弃，检索排序前剔除
   pinned?: boolean;       // 人工固定（dashboard「固定」修正信号）：固定后不被自动 supersede
+  emotionBackfilledAt?: string; // H3/096：LLM 情绪追标时间戳（ISO）——只补无 emotion 的观察、绝不覆盖已有值；可选字段旧数据容忍
 }
 
 /** 记忆流（单层，检索时分级；ADR-0021 取代原四层） */
