@@ -7,9 +7,10 @@
  *  - 记忆：记忆流统计 + 作息分布（24h 直方图）+ 来源分布 + 最近记忆列表；
  *  - 报告（2026-08-23 用户拍板：每周懂你报告从设置弹窗移入）：最新一期全文 + 历史报告。
  * 数据经 loadSmartCatData 现读现渲染（与常驻猫实例解耦，smartcatEnabled=false 也可看）；
- * 面板只读，不写任何数据（铁律 1）。UI 走 bz 主窗口规范：createOverlay + .bz-win-head +
- * applyMobileWindowFullscreen + escManager；视觉样式全部静态进域内 styles.css（铁律 9，
- * 内联仅限显隐与动态高度/宽度）。命令入口：bz-smartcat-dashboard（main.ts COMMANDS 表）。
+ * 面板只读，唯二例外（092 方向二 v4 裁决：人工修正信号保留）——洞察行的「固定/废弃」按钮，
+ * 走 load-modify-save 最小写点（pinned / supersededBy='manual'）；其余一律不写。UI 走 bz 主窗口规范：
+ * createOverlay + .bz-win-head + applyMobileWindowFullscreen + escManager；视觉样式全部静态进域内
+ * styles.css（铁律 9，内联仅限显隐与动态高度/宽度）。命令入口：bz-smartcat-dashboard（main.ts COMMANDS 表）。
  */
 import type { App } from 'obsidian';
 import { notice } from '../core/notice';
@@ -17,10 +18,11 @@ import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
-import { loadSmartCatData } from './data';
+import { loadSmartCatData, saveSmartCatData } from './data';
 import { MOOD_MAP, moodLevelFromPad } from './mood';
 import { TRAIT_GROUPS } from './character';
 import { sourceLabel, formatRelativeTime } from './memory';
+import { buildInsightShortIndex, isSupersededInsight, MANUAL_SUPERSEDED_BY } from './insight-version';
 import {
   analyzeEmotionTrend,
   buildEmotionSnapshots,
@@ -523,6 +525,8 @@ function renderMemory(pane: HTMLElement, data: SmartCatData): void {
   if (stream.length) {
     const list = el('div', 'bz-sc-dash-list');
     const recent = [...stream].reverse().slice(0, 30);
+    // 092 方向二（ADR-0039）：DDID 展示层短索引——超长 insight_id 显示为 #N（不写盘、不影响数据层）
+    const shortIndex = buildInsightShortIndex(stream);
     for (const m of recent) {
       const item = el('div', 'bz-sc-dash-memory');
       const meta = el('div', 'bz-sc-dash-memory-meta');
@@ -531,10 +535,24 @@ function renderMemory(pane: HTMLElement, data: SmartCatData): void {
         `bz-sc-dash-badge ${m.type === 'insight' ? 'insight' : 'observation'}`,
         m.type === 'insight' ? '洞察' : '观察',
       ));
+      if (m.type === 'insight') {
+        const idx = m.id ? shortIndex.get(m.id) : undefined;
+        if (idx !== undefined) meta.appendChild(el('span', 'bz-sc-dash-insight-id', `#${idx}`));
+        if (m.pinned === true) meta.appendChild(el('span', 'bz-sc-dash-badge bz-sc-dash-badge-pinned', '已固定'));
+        if (isSupersededInsight(m)) {
+          meta.appendChild(el(
+            'span',
+            'bz-sc-dash-badge bz-sc-dash-badge-superseded',
+            m.supersededBy === MANUAL_SUPERSEDED_BY ? '已废弃（人工）' : '已废弃',
+          ));
+        }
+      }
       const src = sourceLabel(m.source);
       if (src) meta.appendChild(el('span', '', src));
       if (m.created) meta.appendChild(el('span', '', formatRelativeTime(m.created)));
       meta.appendChild(el('span', '', `重要度 ${Math.round((m.importance ?? 0) * 100)}`));
+      // 092 设计第 7 条：Dashboard「固定/废弃」人工修正保留（load-modify-save 最小写点）
+      if (m.type === 'insight' && m.id && dashState?.app) meta.appendChild(buildInsightActions(dashState.app, m));
       item.appendChild(meta);
       item.appendChild(el('div', 'bz-sc-dash-memory-text', truncateText(m.description, 80)));
       list.appendChild(item);
@@ -544,6 +562,40 @@ function renderMemory(pane: HTMLElement, data: SmartCatData): void {
     listCard.body.appendChild(emptyHint('还没有记忆——和小橘聊聊天、写写日记吧。'));
   }
   pane.appendChild(listCard.root);
+}
+
+// ---------------- 洞察人工修正（092 设计第 7 条） ----------------
+
+/** 洞察行「固定/废弃」动作按钮（面板唯二写点；load-modify-save 防并发覆盖他人改动） */
+function buildInsightActions(app: App, m: MemoryStreamEntry): HTMLElement {
+  const wrap = el('span', 'bz-sc-dash-insight-actions');
+  const pinBtn = el('button', 'bz-sc-dash-mini-btn', m.pinned === true ? '取消固定' : '固定');
+  pinBtn.addEventListener('click', () => { void persistInsightPatch(app, m.id as string, (t) => { t.pinned = !(t.pinned === true); }, m.pinned === true ? '已取消固定，该洞察恢复参与自动取代判定' : '已固定，该洞察不会被自动取代'); });
+  wrap.appendChild(pinBtn);
+  if (!isSupersededInsight(m)) {
+    const depBtn = el('button', 'bz-sc-dash-mini-btn', '废弃');
+    depBtn.addEventListener('click', () => { void persistInsightPatch(app, m.id as string, (t) => { t.supersededBy = MANUAL_SUPERSEDED_BY; }, '已废弃该洞察，检索时不再参与'); });
+    wrap.appendChild(depBtn);
+  }
+  return wrap;
+}
+
+/** 洞察字段最小写点：现读 → 改单条 → 落盘 → 重渲染；失败 toast 不抛错 */
+async function persistInsightPatch(app: App, id: string, patch: (m: MemoryStreamEntry) => void, okMsg: string): Promise<void> {
+  try {
+    const fresh = await loadSmartCatData(app);
+    const target = (fresh.memory?.stream || []).find((x) => x.id === id);
+    if (!target) {
+      notice('未找到该洞察', 'error');
+      return;
+    }
+    patch(target);
+    await saveSmartCatData(app, fresh);
+    notice(okMsg, 'success');
+    if (dashState) renderPanes(await loadSmartCatData(app)); // 现读现渲染保持一致
+  } catch (e) {
+    notice('操作失败，请重试', 'error');
+  }
 }
 
 /** 报告页签（2026-08-23：每周懂你报告从设置弹窗移入——最新一期全文 + 历史报告） */
