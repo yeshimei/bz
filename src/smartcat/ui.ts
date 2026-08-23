@@ -211,6 +211,9 @@ export function openSmartcatSettings(opts: {
   resetPersonalityGrowth?: () => Promise<void>;
   /** 最近一周懂你报告（index 从记忆流取；无 → 提示尚未生成） */
   getWeeklyReport?: () => string | null;
+  /** 数据面板移动端全屏（ticket 071：bz-smartcat-dashboard 主窗口设置行，仅移动端显示） */
+  getDashboardMobileFullscreen?: () => boolean;
+  setDashboardMobileFullscreen?: (v: boolean) => Promise<void>;
 }): void {
   const config = opts.getConfig();
   openSettingsModal({
@@ -344,6 +347,18 @@ export function openSmartcatSettings(opts: {
               openWeeklyReportModal(report);
             });
           });
+      }
+
+      // 数据面板移动端全屏（ticket 071：仅移动端显示，主窗口规范三件事之三）
+      if (isMobileEnv() && opts.setDashboardMobileFullscreen) {
+        new Setting(el)
+          .setName('移动端默认全屏（数据面板）')
+          .setDesc('移动端打开小橘数据面板时默认全屏显示（≤768px；关=常规卡）')
+          .addToggle((toggle: any) =>
+            toggle.setValue(opts.getDashboardMobileFullscreen?.() === true).onChange(async (v: boolean) => {
+              await opts.setDashboardMobileFullscreen!(v);
+            })
+          );
       }
 
       if (isMobileEnv()) {

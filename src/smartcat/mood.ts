@@ -29,6 +29,21 @@ export const MOOD_MAP: Record<string, { emoji: string; state: string; prototype:
 /** PAD 原型顺序（判档用） */
 const MOOD_KEYS = ['excellent', 'good', 'neutral', 'low', 'poor'] as const;
 
+/** PAD 三维 → 5 档（原型最近邻，纯函数；面板/测试无 MoodSystem 实例时复用） */
+export function moodLevelFromPad(pad: { pleasure: number; arousal: number; dominance: number }): string {
+  let best: string = 'neutral';
+  let bestDist = Infinity;
+  for (const key of MOOD_KEYS) {
+    const [ep, ea, ed] = MOOD_MAP[key].prototype;
+    const dist = Math.sqrt((pad.pleasure - ep) ** 2 + (pad.arousal - ea) ** 2 + (pad.dominance - ed) ** 2);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = key;
+    }
+  }
+  return best;
+}
+
 export class MoodSystem {
   app: App;
   dataProvider: () => SmartCatData;
@@ -96,20 +111,9 @@ export class MoodSystem {
 
   // ---------------- PAD → 5 档（原型最近邻，解除原 calculateCompositeMood 断线） ----------------
 
-  /** 计算 5 档：当前 PAD 到各原型欧氏距离，取最近档 */
+  /** 计算 5 档：当前 PAD 到各原型欧氏距离，取最近档（纯函数委托） */
   computeMoodLevel(): string {
-    const { pleasure: p, arousal: a, dominance: d } = this.pad;
-    let best: string = 'neutral';
-    let bestDist = Infinity;
-    for (const key of MOOD_KEYS) {
-      const [ep, ea, ed] = MOOD_MAP[key].prototype;
-      const dist = Math.sqrt((p - ep) ** 2 + (a - ea) ** 2 + (d - ed) ** 2);
-      if (dist < bestDist) {
-        bestDist = dist;
-        best = key;
-      }
-    }
-    return best;
+    return moodLevelFromPad(this.pad);
   }
 
   // ---------------- 性格调制（MATE traits → PAD，对齐 ADR-0023） ----------------
