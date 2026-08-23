@@ -1,3 +1,15 @@
+## 2026-08-24 smartcat 多路召回联想检索（ticket 096，ADR-0043，086 v4 方向一裁决 + H3 前置重建；worktree/multi-recall 通宵流水线收官票）
+
+**状态：H3 与方向一主体两个独立提交；全量测试 + tsc 0 后提交分支 multi-recall（基 c173986）**
+
+- ✅ **H3 前置（独立提交）**：① EMOTION_VAD 补 curious/sleepy/playful/focused/upset 五类（VAD 值语义取、注释标「晨起可调」）——'upset' 共振差量=0 现网 bug 回归锁解除（emotion-recall.test.ts）；② `emotionAffinity`/`vadAffinity` VAD 连续距离评分（余弦 ∈ [-1,1]，'相反'=负距离，取代 8 标签硬匹配的评分基础）；③ reflect 证据池 LLM 情绪追标：evidenceTop 窗口内无 emotion 的观察一次批量追标，写 `emotionBackfilledAt` 时间戳（只补不覆盖、失败裁剪不整轮失败、独立退避 emotionBackfillBackoffUntil/Ms 5min→30min 封顶与反思退避分离、H4 边界继承 USER_CONTENT_BOUNDARY + sanitizeEmotion 白名单）；④ 密度前置指标 `emotionDensityStats` 纯函数（观察条目情绪覆盖率 + 非 calm 占比——只汇报不门槛阻断）
+- ✅ **方向一主体（槽位保留制，ADR-0043）**：retrieve() topN=10 与三处调用点冻结不改、GA 公式权重不动；≤6 收缩只落 `formatMemoriesForPrompt(memories, maxEntries?)` 可选参数（聊天 retrieveMemories 与主动关心两处注入点传 PROMPT_SLOTS.maxEntries=6；不传保持既有全量行为向后兼容）
+- ✅ **槽位分配** `selectSlotMemories` 纯函数：语义 ≤4 席（GA 头部）+ 情绪 ≥1（|vadAffinity(记忆emotion, 当前PAD-VAD)| 最高者——同向反向皆可「相反也有价值」，rerank 非硬过滤；无候选/无 currentVad 让渡语义序）+ 时间 ≥1（周年 score2 > 星期几 score1，同类新近优先），剩余名额 GA 序回填，总数 ≤6，输出保序去重
+- ✅ **时间路只留两类强锚点**：`weekdayAnchorHit`（同星期几距今 [1,42] 天）+ `anniversaryAnchorHit`（往年同月日 ±3 天，逐年试算兼容闰日）；小时粒度砍掉（与 recency/作息画像冗余）
+- ✅ **空 query 分支显式定义**（代码注释 + ADR §O5）：无检索词时 relevance 恒 0，GA 退化为 αR·recency + αI·importance + αc·credibility——即既有 recency+importance 行为冻结；情绪/时间槽位修饰不依赖 query 照常生效
+- ✅ **ADR-0043** 写入三路权重归一化公式 S_final=(w_sem·GA+w_emo·|aff|+w_time·anchor)/(w_sem+w_emo+w_time) 与路由权重上限（默认 0.70/0.20/0.10 晨起可调；硬约束 w_emo≤0.35 且 w_time≤0.25——非语义两路合计不得过半，语义主路地位不可动摇）
+- ✅ **测试**：tests/smartcat/emotion-recall.test.ts 15 用例（H3）+ multi-recall.test.ts 20 用例（主体）；既有 memory.test.ts 仅 upset 白名单断言按 H3 新语义更新，其余全量保留
+
 ## 2026-08-24 smartcat 记忆内容安全契约（ticket 087，ADR-0037，086 v4 H4「记忆内容是指令注入面」红绿对抗硬伤）
 
 **状态：全量 1652 测试通过（116 文件）、tsc 0 错误；提交 worktree/smartcat-h4-security（DSH 任务流：不 merge/push）**

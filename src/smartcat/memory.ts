@@ -15,7 +15,7 @@ import type { App } from 'obsidian';
 import { getSmartcatVecPath, touchPresence } from './data';
 import { callChatJson, isAIConfigured } from './api';
 import { getEmbedding, checkRemoteOllama } from '../flash/ollama';
-import { EMOTION_VAD } from './cognitive';
+import { EMOTION_VAD, emotionToVAD, vadAffinity } from './cognitive';
 import { isSupersededInsight, resolveTheme, buildReflectCandidates, applySupersede } from './insight-version';
 import type { SmartCatData, MemoryStreamEntry, CloudScoringMode } from './types';
 
@@ -112,6 +112,140 @@ export const EMOTION_BACKFILL_CONFIG = {
   /** 每条描述注入 prompt 的截断长度（token 预算；情绪标注不需要全文） */
   clipChars: 80,
 } as const;
+
+// ---------------- 096 方向一：多路召回联想检索（槽位保留制 + 情绪/时间 rerank 修饰，ADR-0043） ----------------
+
+/**
+ * prompt 槽位参数（数值晨起可调；归一化公式与路由权重上限详见 ADR-0043）：
+ * 兼容冻结红线——retrieve() 签名/topN=10/三处调用点不动，GA 公式权重不动；
+ * ≤6 收缩只落 formatMemoriesForPrompt 的 maxEntries 参数（interaction/index 侧传入）。
+ */
+export const PROMPT_SLOTS = {
+  /** 入 prompt 总条数上限（语义 ≤4 + 情绪 ≥1 + 时间 ≥1） */
+  maxEntries: 6,
+  /** 语义席：GA 排序头部保留席位 */
+  semanticSeats: 4,
+  /** 情绪路保底席位（有带情绪候选才占用，无候选让渡给语义序） */
+  emotionSeats: 1,
+  /** 时间路保底席位（有锚点命中才占用，无命中让渡给语义序） */
+  timeSeats: 1,
+  /** 星期几锚点窗口（天）：同星期几且距今 [1, window] 天——太近被 recency 覆盖、太远不成「每逢周 X」模式 */
+  weekdayWindowDays: 42,
+  /** 周年锚点容差（±天）：去年同期 = 往年同月日 ±3 天 */
+  anniversaryToleranceDays: 3,
+} as const;
+
+/** 时间路强锚点①「星期几」（纯函数）：条目创建于同星期几、且距今天数 ∈ [1, windowDays] */
+export function weekdayAnchorHit(created: string, now = Date.now(), windowDays = PROMPT_SLOTS.weekdayWindowDays): boolean {
+  const t = new Date(created).getTime();
+  if (!Number.isFinite(t)) return false;
+  const ageDays = (now - t) / 86400000;
+  if (ageDays < 1 || ageDays > windowDays) return false;
+  return new Date(t).getDay() === new Date(now).getDay();
+}
+
+/** 时间路强锚点②「周年/去年同期」（纯函数）：往年同月日 ±toleranceDays 天内（严格早于今年；逐年试算兼容闰日） */
+export function anniversaryAnchorHit(created: string, now = Date.now(), toleranceDays = PROMPT_SLOTS.anniversaryToleranceDays): boolean {
+  const t = new Date(created).getTime();
+  if (!Number.isFinite(t)) return false;
+  const prev = new Date(t);
+  for (let years = 1; years <= 10; years++) {
+    const cand = new Date(prev);
+    cand.setFullYear(prev.getFullYear() + years);
+    const diffDays = Math.abs(cand.getTime() - now) / 86400000;
+    if (diffDays <= toleranceDays) return true;
+    if (cand.getTime() - now > toleranceDays * 86400000) break;
+  }
+  return false;
+}
+
+/** 心情 PAD(0-100) → VAD 域 [-1,1] 向量（50=中性 ↔ 0；情绪路 rerank 把当前 PAD 映射进 VAD 空间） */
+export function padToVadVector(pad: { pleasure: number; arousal: number; dominance: number }): { valence: number; arousal: number; dominance: number } {
+  const lin = (x: number) => Math.max(-1, Math.min(1, (Number.isFinite(x) ? x : 50) / 50 - 1));
+  return { valence: lin(pad?.pleasure), arousal: lin(pad?.arousal), dominance: lin(pad?.dominance) };
+}
+
+/** 时间锚点强度（选择排序用）：周年=2 > 星期几=1 > 未命中=0（周年是更强的人文锚点） */
+function timeAnchorScore(m: MemoryStreamEntry, now: number): number {
+  if (m.type !== 'observation' || !m.created) return 0;
+  if (anniversaryAnchorHit(m.created, now)) return 2;
+  if (weekdayAnchorHit(m.created, now)) return 1;
+  return 0;
+}
+
+/**
+ * 槽位保留选择（096 方向一核心，纯函数可测）：从 retrieve 的 topN 结果挑入 prompt 子集。
+ *  - 语义席：GA 排序头部前 semanticSeats 条（主路不动）；
+ *  - 情绪席：其余条目中「记忆 emotion 与当前 PAD-VAD 亲和度绝对值」最高者（同向/反向皆可——
+ *    「相反也有价值」；rerank 是修饰不是硬过滤，无带情绪候选或未提供当前 VAD 时席位让渡给语义序）；
+ *  - 时间席：其余条目中时间锚点命中者（周年 > 星期几，同类新近优先；小时粒度已砍——与作息画像冗余）；
+ *  - 保底席位后剩余名额按 GA 序回填，总数 ≤ maxEntries。
+ * 返回子集保持原 GA 相对顺序（rerank 是子集级成员修饰，不重排展示顺序、不进 GA 加法分空间）。
+ */
+export function selectSlotMemories(
+  memories: MemoryStreamEntry[],
+  opts: {
+    maxEntries?: number;
+    semanticSeats?: number;
+    emotionSeats?: number;
+    timeSeats?: number;
+    currentVad?: { valence: number; arousal: number; dominance: number } | null;
+    now?: number;
+  } = {},
+): MemoryStreamEntry[] {
+  const maxEntries = Math.max(0, Math.floor(opts.maxEntries ?? PROMPT_SLOTS.maxEntries));
+  const semanticSeats = Math.max(0, Math.floor(opts.semanticSeats ?? PROMPT_SLOTS.semanticSeats));
+  const emotionSeats = Math.max(0, Math.floor(opts.emotionSeats ?? PROMPT_SLOTS.emotionSeats));
+  const timeSeats = Math.max(0, Math.floor(opts.timeSeats ?? PROMPT_SLOTS.timeSeats));
+  const pool = Array.isArray(memories) ? memories.filter(Boolean) : [];
+  if (pool.length <= maxEntries) return pool.slice(); // 未超限不收缩（保序副本）
+
+  const byIndex = new Map<MemoryStreamEntry, number>();
+  pool.forEach((m, i) => byIndex.set(m, i));
+  const taken = new Set<MemoryStreamEntry>();
+
+  // ① 语义席：GA 头部
+  for (const m of pool.slice(0, semanticSeats)) taken.add(m);
+
+  // ② 情绪席：|affinity(emotion, currentVad)| 最高（相同/相反同权重）；平局取 GA 序更前者
+  //    （只认 observation——洞察无追标链路，不参与情绪/时间席）
+  const rest = pool.filter((m) => !taken.has(m));
+  const emoPicks: MemoryStreamEntry[] = [];
+  if (opts.currentVad && emotionSeats > 0) {
+    const ranked = rest
+      .filter((m) => m.type === 'observation' && m.emotion)
+      .map((m) => ({ m, aff: Math.abs(vadAffinity(emotionToVAD(m.emotion as string), opts.currentVad!)) }))
+      .sort((a, b) => b.aff - a.aff || (byIndex.get(a.m)! - byIndex.get(b.m)!));
+    for (const r of ranked) {
+      if (emoPicks.length >= emotionSeats) break;
+      emoPicks.push(r.m);
+      taken.add(r.m);
+    }
+  }
+
+  // ③ 时间席：锚点命中者，周年(2) > 星期几(1)，同类按新近
+  const afterEmo = pool.filter((m) => !taken.has(m));
+  const timePicks: MemoryStreamEntry[] = [];
+  if (timeSeats > 0) {
+    const now = opts.now ?? Date.now();
+    const ranked = afterEmo
+      .map((m) => ({ m, score: timeAnchorScore(m, now) }))
+      .filter((x) => x.score > 0)
+      .sort((a, b) => b.score - a.score || new Date(b.m.created).getTime() - new Date(a.m.created).getTime());
+    for (const r of ranked) {
+      if (timePicks.length >= timeSeats) break;
+      timePicks.push(r.m);
+      taken.add(r.m);
+    }
+  }
+
+  // ④ 剩余名额按 GA 序回填
+  for (const m of pool) {
+    if (taken.size >= maxEntries) break;
+    taken.add(m);
+  }
+  return pool.filter((m) => taken.has(m)); // 保持原 GA 相对顺序
+}
 
 export class MemorySystem {
   app: App;
@@ -359,6 +493,10 @@ export class MemorySystem {
       queryVec = await this.queryEmbeddingSafe(query);
     }
     const lexicalQ = (opts.lexicalQuery != null ? opts.lexicalQuery : query).trim();
+    // 096 方向一（空 query 分支显式定义，ADR-0043）：query 为空（无检索词）时 relevance 恒 0
+    // （词法空转 / 不取向量），GA 加法分退化为 αR·recency + αI·importance + αc·credibility——
+    // 即「recency+importance 现行为」。主动关心/自言自语等无检索词通道依赖此退化，行为冻结不变；
+    // 情绪/时间两路只作为 prompt 子集的槽位修饰（formatMemoriesForPrompt 层），不进本公式。
     // 092 方向二（ADR-0039）：已废弃洞察（supersededBy 有值）**排序前剔除**——不进 GA 加法分空间，
     // 也不挤占 topN 名额；topN=10 与三处调用点是冻结契约，剔除只发生在排序管线内部
     const pool = this.stream.filter((m) => !isSupersededInsight(m));
@@ -821,11 +959,24 @@ export class MemorySystem {
     };
   }
 
-  /** 格式化记忆供 prompt（增强：带来源中文标签 + 相对时间，小橘能感知「什么时候·从哪来」）
-   *  092 方向二：已废弃洞察前置剔除（第二道闸——即使调用方绕过 retrieve 直传列表也不进 prompt） */
-  formatMemoriesForPrompt(memories: MemoryStreamEntry[]): string {
-    return memories
-      .filter((memory) => !isSupersededInsight(memory))
+  /**
+   * 格式化记忆供 prompt（增强：带来源中文标签 + 相对时间，小橘能感知「什么时候·从哪来」）
+   * 092 方向二：已废弃洞察前置剔除（第二道闸——即使调用方绕过 retrieve 直传列表也不进 prompt）
+   * 096 方向一（ADR-0043）：可选 maxEntries 走槽位保留收缩——语义 ≤4 席 + 情绪 ≥1 + 时间 ≥1，总 ≤6；
+   * 情绪席按「记忆 emotion 与当前 PAD 的 VAD 亲和度 |cos|」rerank 挑选（非硬过滤），时间席只认
+   * 「星期几 / 周年」两类强锚点。不传 maxEntries 保持既有全量行为（向后兼容）。
+   */
+  formatMemoriesForPrompt(memories: MemoryStreamEntry[], maxEntries?: number): string {
+    const alive = memories.filter((memory) => !isSupersededInsight(memory));
+    const picked = maxEntries !== undefined && alive.length > maxEntries
+      ? selectSlotMemories(alive, {
+          maxEntries,
+          // 情绪路 rerank 输入：当前 PAD → VAD 向量（无 mood 数据时中性 50 兜底）
+          currentVad: padToVadVector(this.dataProvider().mood?.pad ?? { pleasure: 50, arousal: 50, dominance: 50 }),
+          now: Date.now(),
+        })
+      : alive;
+    return picked
       .map((memory, index) => {
         const content = typeof memory.description === 'string' ? memory.description : JSON.stringify(memory.description);
         const label = sourceLabel(memory.source);

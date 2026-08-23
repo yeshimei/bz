@@ -50,24 +50,33 @@ export function emotionToVAD(emotion: string): { valence: number; arousal: numbe
 }
 
 /**
- * 两情绪的 VAD 连续亲和度（H3/096 方向一情绪路评分核心，纯函数；取代「8 标签硬匹配」）：
- * 复用 emotionToVAD 取三维坐标，算余弦相似度——同/近情绪为正（完全相同=1），
- * 「相反」情绪为负距离（如 happy vs sad ≈ -0.4，供「你上次难过时…」类联想召回），无关趋近 0。
- * 值域 [-1, 1]；任一侧零向量/未知情绪回 DEFAULT_VAD 仍可算（防御式不抛错）。
+ * VAD 向量级连续亲和度（096 方向一情绪路 rerank 基础，纯函数）：三维余弦相似度 ∈ [-1, 1]。
+ * 零向量防御返回 0。emotionAffinity 的底层；当前心情 PAD 归一后的向量也可直接参与。
  */
-export function emotionAffinity(a: string, b: string): number {
-  const va = emotionToVAD(a);
-  const vb = emotionToVAD(b);
+export function vadAffinity(
+  a: { valence: number; arousal: number; dominance: number },
+  b: { valence: number; arousal: number; dominance: number },
+): number {
   let dot = 0, na = 0, nb = 0;
   for (const k of ['valence', 'arousal', 'dominance'] as const) {
-    dot += va[k] * vb[k];
-    na += va[k] * va[k];
-    nb += vb[k] * vb[k];
+    dot += a[k] * b[k];
+    na += a[k] * a[k];
+    nb += b[k] * b[k];
   }
   const denom = Math.sqrt(na) * Math.sqrt(nb);
   if (denom === 0) return 0;
   // 四位小数去浮点残差（cos 本身有界，不额外 clamp）
   return Math.round((dot / denom) * 10000) / 10000;
+}
+
+/**
+ * 两情绪的 VAD 连续亲和度（H3/096 方向一情绪路评分核心，纯函数；取代「8 标签硬匹配」）：
+ * 复用 emotionToVAD 取三维坐标算余弦相似度——同/近情绪为正（完全相同=1），
+ * 「相反」情绪为负距离（如 happy vs sad ≈ -0.4，供「你上次难过时…」类联想召回），无关趋近 0。
+ * 值域 [-1, 1]；未知情绪回 DEFAULT_VAD 仍可算（防御式不抛错）。
+ */
+export function emotionAffinity(a: string, b: string): number {
+  return vadAffinity(emotionToVAD(a), emotionToVAD(b));
 }
 
 /** 情绪快照（一条观察的情绪 → VAD + 强度） */
