@@ -3,10 +3,8 @@
  * 命令（show-reading-report）由 main.ts 裸注册；此处提供回调 + 幂等初始化。
  */
 import type { App } from 'obsidian';
-import { Setting } from 'obsidian';
-import { openSettingsModal } from '../core/settings-modal';
-import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
-import { getSettings, tryGetSettings, saveSettings } from '../core/settings-provider';
+import { applyMobileWindowFullscreen } from '../core/mobile';
+import { tryGetSettings } from '../core/settings-provider';
 import { getAllBookNotes, calculateReadingStats, getEpubBookNotes } from './stats';
 import { generateFullStatsReport } from './report';
 
@@ -108,50 +106,6 @@ export function showReportInPopup(htmlContent: string, isDarkMode: boolean) {
   closeButton.onmouseover = () => (closeButton.style.background = isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)');
   closeButton.onmouseout = () => (closeButton.style.background = 'none');
 
-  // 设置按钮（ADR-0009 域设置弹窗：移动端默认全屏；移动端专属——设置项仅移动端显示，桌面不出空弹窗入口）
-  if (isMobileEnv()) {
-    const settingsButton = document.createElement('button');
-    settingsButton.innerHTML = '⚙️';
-    settingsButton.title = '阅读报告设置';
-    settingsButton.style.cssText = `
-      background: none;
-      border: none;
-      font-size: 14px;
-      width: 24px;
-      height: 28px;
-      border-radius: 4px;
-      color: ${isDarkMode ? '#b0b0b0' : '#666'};
-      cursor: pointer;
-      padding: 0;
-      box-shadow: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    `;
-    settingsButton.onmouseover = () => (settingsButton.style.background = isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)');
-    settingsButton.onmouseout = () => (settingsButton.style.background = 'none');
-    settingsButton.addEventListener('click', () => {
-      openSettingsModal({
-        title: '阅读报告设置',
-        build: (el) => {
-          const s = getSettings();
-          if (isMobileEnv()) {
-            new Setting(el)
-              .setName('移动端默认全屏')
-              .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
-              .addToggle((toggle) =>
-                toggle.setValue(!!s.readingReportMobileDefaultFullscreen).onChange(async (v) => {
-                  s.readingReportMobileDefaultFullscreen = v;
-                  await saveSettings();
-                })
-              );
-          }
-        },
-      });
-    });
-    header.appendChild(settingsButton);
-  }
-
   const closeModal = () => {
     document.body.removeChild(modal);
     document.removeEventListener('keydown', handleKeydown);
@@ -173,8 +127,9 @@ export function showReportInPopup(htmlContent: string, isDarkMode: boolean) {
   content.appendChild(header);
   content.appendChild(scrollable);
   modal.appendChild(content);
-  // 移动端默认全屏：窗口内容根元素挂类（每次重建天然重挂）
-  applyMobileWindowFullscreen(content, tryGetSettings().readingReportMobileDefaultFullscreen === true);
+  // 移动端默认全屏跟随书库（用户拍板：阅读报告不设独立开关，与书库同键 libraryMobileDefaultFullscreen）；
+  // 窗口内容根元素挂类（每次重建天然重挂）
+  applyMobileWindowFullscreen(content, tryGetSettings().libraryMobileDefaultFullscreen === true);
   document.body.appendChild(modal);
 
   modal.addEventListener('click', (e) => {

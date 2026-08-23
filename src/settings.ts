@@ -257,25 +257,22 @@ export default interface BzSettings {
   // ===== 📱 移动端主窗口默认全屏（ticket 68，跨域，ADR-0019）=====
   // 仅移动端（Platform.isMobile）显示与生效；≤768px 开=真全屏（.bz-win-mfs）/关=95% 常规卡。
   // 只决定每次打开的初始形态；默认值=行为保持（原移动端即全屏→开，原居中卡→关）。
+  // 聚合讯跟随剪藏本键、阅读报告跟随书库键、影视分析随影视键（2026-08 用户拍板，不设独立开关）。
   /** 日记本：移动端默认全屏（默认开——原 ≤480px 即全屏，480-768 原抽屉形态） */
   diaryMobileDefaultFullscreen: boolean;
   /** 备忘录：移动端默认全屏（默认关——原移动端 95% 居中卡） */
   memoMobileDefaultFullscreen: boolean;
   /** 归物本：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   belongingsMobileDefaultFullscreen: boolean;
-  /** 剪藏本：移动端默认全屏（默认开——原 CSS !important 强制全屏） */
+  /** 剪藏本：移动端默认全屏（默认开——原 CSS !important 强制全屏；聚合讯跟随此键） */
   clippingMobileDefaultFullscreen: boolean;
-  /** 聚合讯：移动端默认全屏（默认开——原 ≤640px CSS 真全屏） */
-  newsMobileDefaultFullscreen: boolean;
   /** 密码本：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   passwordMobileDefaultFullscreen: boolean;
   /** 收藏本：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   favoritesMobileDefaultFullscreen: boolean;
-  /** 书库：移动端默认全屏（默认开——原 CSS ≤768 全屏主面板与读书笔记） */
+  /** 书库：移动端默认全屏（默认开——原 CSS ≤768 全屏主面板与读书笔记；阅读报告跟随此键） */
   libraryMobileDefaultFullscreen: boolean;
-  /** 阅读报告：移动端默认全屏（默认开——原 JS 内联强制全屏） */
-  readingReportMobileDefaultFullscreen: boolean;
-  /** 影视：移动端默认全屏（默认开——主面板与影视分析弹窗同控，原 JS 内联强制全屏） */
+  /** 影视：移动端默认全屏（默认开——主面板/影视分析/影视报告同控，原 JS 内联强制全屏） */
   movieMobileDefaultFullscreen: boolean;
   /** 复习计划：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   reviewMobileDefaultFullscreen: boolean;
@@ -436,16 +433,15 @@ export const DEFAULT_SETTINGS: BzSettings = {
   encryptAutoLoadOriginal: false,
   encryptSecurityMode: false,
 
-  // 移动端主窗口默认全屏（ticket 68：默认值=行为保持——原移动端即全屏→开，原居中卡→关）
+  // 移动端主窗口默认全屏（ticket 68：默认值=行为保持——原移动端即全屏→开，原居中卡→关；
+  // 聚合讯跟随剪藏本键、阅读报告跟随书库键，不设独立键）
   diaryMobileDefaultFullscreen: true,
   memoMobileDefaultFullscreen: false,
   belongingsMobileDefaultFullscreen: true,
   clippingMobileDefaultFullscreen: true,
-  newsMobileDefaultFullscreen: true,
   passwordMobileDefaultFullscreen: true,
   favoritesMobileDefaultFullscreen: true,
   libraryMobileDefaultFullscreen: true,
-  readingReportMobileDefaultFullscreen: true,
   movieMobileDefaultFullscreen: true,
   reviewMobileDefaultFullscreen: true,
   pomodoroMobileDefaultFullscreen: false,

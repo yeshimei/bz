@@ -193,25 +193,4 @@
 .news-close-btn:hover { background: var(--background-modifier-hover); }
 /* 关闭钮仅真全屏态显示（ticket 68） */
 .bz-win-mfs .news-close-btn { display: flex; align-items: center; justify-content: center; }
-/* 聚合讯设置入口（ticket 68）：仅移动端显示（设置项仅移动端存在，桌面无需入口） */
-.news-settings-btn {
-  display: none;
-  position: absolute;
-  top: 62px;
-  right: 40px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: none;
-  background: var(--background-secondary);
-  color: var(--text-muted);
-  font-size: 16px;
-  cursor: pointer;
-  z-index: 10;
-  line-height: 1;
-}
-.news-settings-btn:hover { background: var(--background-modifier-hover); }
-@media (max-width: 768px) {
-  .news-settings-btn { display: flex; align-items: center; justify-content: center; }
-}
 

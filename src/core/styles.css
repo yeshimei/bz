@@ -99,8 +99,7 @@
 .bz-lib-header-btns button,
 .bz-lib-modal-header button,
 .bz-encrypt-head-btns button,
-.news-close-btn,
-.news-settings-btn {
+.news-close-btn {
   width: 22px !important;
   height: 26px !important;
   font-size: 14px !important;
@@ -123,8 +122,7 @@
 .bz-lib-header-btns button:hover,
 .bz-lib-modal-header button:hover,
 .bz-encrypt-head-btns button:hover,
-.news-close-btn:hover,
-.news-settings-btn:hover {
+.news-close-btn:hover {
   background: var(--background-secondary) !important;
 }
 /* 番茄钟右上角设置钮：同头行按钮规格（absolute 定位保留） */
