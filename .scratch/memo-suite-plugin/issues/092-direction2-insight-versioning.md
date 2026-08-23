@@ -1,6 +1,6 @@
 # ticket 092 —— 方向二：洞察版本化（086 v4）
 
-状态：**READY-FOR-AGENT**
+状态：**done**（2026-08-24，分支 insight-versioning 落地；ADR-0039；supersede 选排序前剔除路径）
 父文档：086-intelligence-evolution-proposal.md v4「方向二」（裁决：值得做，机制补全）
 基线：master 6419c06
 日期：2026-08-24
