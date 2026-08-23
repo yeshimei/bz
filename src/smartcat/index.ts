@@ -32,6 +32,7 @@ import { buildFavoritesActionText, type FavoritesActionEvent } from './favorites
 
 import { buildPomodoroActionText, type PomodoroActionEvent } from './pomodoro-source';
 import { DOMAIN_FILES, snapshotDomains } from './domain-source';
+import { buildLibraryNoteText, type LibraryWeaveDiff } from './library-source';
 import { buildRhythmProfile, isActiveNow, describeRhythm, periodText, isoWeekKey } from './rhythm';
 import { buildWeeklyReportData, generateWeeklyReport, weekWindow } from './report';
 import { buildCompanionContext } from './companion-context';
@@ -90,6 +91,13 @@ const diaryTracked = new Map<string, Map<string, { body: string; tags: string[] 
 let diarySettleMs = 10 * 60 * 1000;
 /** 条目 key 分隔符（filePath / date / time 三段，控制字符防与路径字符冲突） */
 const DIARY_KEY_SEP = '\u0001';
+
+/** 书库划线/想法 5 分钟防抖合并（ticket 081 v2，对齐 diary timers / newsPendingSaves 先例）：
+ *  per-book 独立窗口（bookId → pending），窗口内再变化追加内容并重置；超时结算一条入流。 */
+interface LibraryPendingNote { title: string; highlights: string[]; excerpts: string[]; timer: ReturnType<typeof setTimeout>; }
+const libraryPendingNotes = new Map<string, LibraryPendingNote>();
+/** 书库防抖窗口时长（ms；默认 5 分钟，测试可注入缩短） */
+let libraryDebounceMs = 5 * 60 * 1000;
 let visibilityCleanup: (() => void) | null = null;
 let greetTimer: ReturnType<typeof setTimeout> | null = null;
 /** 主动关心调度（2026-08-23：作息模型判定时机，每周 ≤ proactiveWeeklyCap 次温和搭话） */
@@ -259,6 +267,10 @@ export async function ensureSmartCat(app: App): Promise<void> {
 
     // 番茄钟观察改由方法监听（ticket 080）：事件通道短路，防 UI 动作双记录（对齐 movie 先例）
     if (kind === 'pomodoro') return;
+
+    // 书库 md 通道短路（ticket 081）：划线/想法改由 weave-data.json 计数观察（防双记录；
+    // context-source 的 reading 分支保留不删，但从此不再被触发）
+    if (kind === 'reading') return;
     const now = Date.now();
     const last = lastActivity.get(file.path) || 0;
     if (now - last < 10 * 60 * 1000) return;          // 同一路径 10 分钟去弹跳
@@ -837,6 +849,11 @@ export function unloadSmartCat(): void {
   diaryTimers.clear();
   diaryTracked.clear();
   diarySettleMs = 10 * 60 * 1000;
+
+  // 书库划线/想法防抖 pending（ticket 081 v2）：定时器全清 + 表清空 + 窗口复位
+  for (const p of libraryPendingNotes.values()) clearTimeout(p.timer);
+  libraryPendingNotes.clear();
+  libraryDebounceMs = 5 * 60 * 1000;
   if (visibilityCleanup) {
     visibilityCleanup();
     visibilityCleanup = null;
@@ -1274,6 +1291,42 @@ const domainPrev = new Map<string, string>();
 const domainObserved = new Set<string>();
 let domainReader: (() => void) | null = null;
 
+/** 书库划线/想法事件入 pending（ticket 081 v2）：per-book 独立 5 分钟窗口，追加内容 + 重置计时；超时结算一条 */
+function pushLibraryPending(id: string, title: string, more: { highlights?: string[]; excerpts?: string[] }): void {
+  let p = libraryPendingNotes.get(id);
+  if (!p) {
+    p = { title, highlights: [], excerpts: [], timer: 0 as unknown as ReturnType<typeof setTimeout> };
+    libraryPendingNotes.set(id, p);
+  }
+  p.title = title; // 标题以最新保存为准
+  if (more.highlights?.length) p.highlights.push(...more.highlights);
+  if (more.excerpts?.length) p.excerpts.push(...more.excerpts);
+  clearTimeout(p.timer);
+  p.timer = setTimeout(() => { void settleLibraryPending(id); }, libraryDebounceMs);
+}
+
+/** 书库防抖窗口结算（ticket 081 v2）：组稿一条入流并移除 pending */
+async function settleLibraryPending(id: string): Promise<void> {
+  const p = libraryPendingNotes.get(id);
+  if (!p) return;
+  libraryPendingNotes.delete(id);
+  const text = buildLibraryNoteText(p.title, p.highlights, p.excerpts);
+  if (text && memorySystem) await memorySystem.addObservation(text, { source: 'domain:library' });
+}
+
+/** library 结构化 diff 消费（ticket 081 v2）：书架增删/读完/时长即时入流；划线/想法走 5 分钟防抖 */
+async function consumeLibraryDiff(diff: LibraryWeaveDiff, mem: any): Promise<void> {
+  for (const e of diff.added) await mem.addObservation('你把《' + e.title + '》加入了书架', { source: 'domain:library' });
+  for (const e of diff.started) await mem.addObservation('你开始读《' + e.title + '》', { source: 'domain:library' });
+  for (const e of diff.done) await mem.addObservation('你读完了《' + e.title + '》', { source: 'domain:library' });
+  for (const e of diff.removed) await mem.addObservation('你把《' + e.title + '》移出了书架', { source: 'domain:library' });
+  for (const e of diff.sessions) {
+    await mem.addObservation('你读了《' + e.title + '》约 ' + e.minutes + ' 分钟（读到 ' + e.percent + '%）', { source: 'domain:library' });
+  }
+  for (const e of diff.highlightEvents) pushLibraryPending(e.id, e.title, { highlights: e.texts });
+  for (const e of diff.excerptEvents) pushLibraryPending(e.id, e.title, { excerpts: e.texts });
+}
+
 /** 域 JSON 观察接入（2026-08-23 用户拍板：CONFIG/STORAGE 域数据 modify → 观察；懒启动探测已有数据文件） */
 async function onDomainActivity(): Promise<void> {
   if (!appRef || !memorySystem) return;
@@ -1289,9 +1342,24 @@ async function onDomainActivity(): Promise<void> {
       if (!key || !domainObserved.has(key)) return;
       let raw: any = null;
       try { raw = JSON.parse(await app.vault.read(file)); } catch { return; }
-      const text = DOMAIN_FILES[key].extract(raw, domainPrev);
-      if (text) await mem.addObservation(text, { source: 'domain:' + key });
+      // ticket 081：library 走结构化 diff（书架/时长即时，划线/想法防抖）；其余域 string/数组逐条入流
+      if (key === 'library') {
+        const diff = DOMAIN_FILES.library.extract(raw, domainPrev) as LibraryWeaveDiff | null;
+        if (diff) await consumeLibraryDiff(diff, mem);
+        return;
+      }
+      const texts = DOMAIN_FILES[key].extract(raw, domainPrev);
+      // type guard：library 的 LibraryWeaveDiff 已在上面分支处理；此处仅 string/数组
+      if (texts && (typeof texts === 'string' || Array.isArray(texts))) {
+        for (const t of (Array.isArray(texts) ? texts : [texts])) {
+          if (t) await mem.addObservation(t, { source: 'domain:' + key });
+        }
+      }
     });
     if (ref) domainReader = () => (app as any)?.vault?.offref?.(ref as any);
   }
 }
+
+/** 测试辅助：注入书库防抖窗口时长 / 读取划线想法 pending 表 */
+export function __setLibraryDebounceMsForTests(ms: number): void { libraryDebounceMs = ms; }
+export function __getLibraryPendingForTests(): ReadonlyMap<string, LibraryPendingNote> { return libraryPendingNotes; }

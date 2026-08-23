@@ -118,6 +118,7 @@ Feature: memo-suite-plugin
 31. 作为用户，我希望书库可生成阅读数据分析报告（互调 `bz-reading-report-open`），以便一键出报告。
 32. 作为用户，我希望读书笔记弹窗（📚《书》的读书笔记：高亮 ❝ 列表 + 日期 + 评论，支持跳转/编辑/删除）与原脚本一致，以便精读管理。
 33. 作为用户，我希望书目卡片显示阅读进度（📊 %）、阅读时间（⏱️ 格式化）、文件大小（📦）、作者（✍️）、🧮 统计按钮，以便与原脚本一致。
+34. 作为用户，我希望小橘能感知书库的 epub 阅读（weave 读书数据：加入书架/开始读/读完/移出书架/划重点/写想法/阅读时长），以便陪伴记忆细致准确。（2026-08-24 用户拍板 v2，ticket 081，ADR-0034：**weave-data.json 数据文件监听**——书库 UI 纯只读、阅读数据由外部 weave-epub-reader 落盘；`DOMAIN_FILES.library` 接入 `libraryWeaveDiff` 结构化 diff（extract 返回升级 `string | string[] | LibraryWeaveDiff | null`）；**书架增删三态**——新书 percent==0 加入书架 / percent>0 开始读（读覆盖加入不双发）/ 条目消失统一移出书架；**时长带进度**——「读了约 N 分钟（读到 NN%）」；**划线/想法带内容 + 5 分钟防抖合并**（per-book pending，内容文本：highlight.text/commentText 实测字段）；**书库 md 事件通道对 reading 短路**——手写书评/划线全文不再产观察，防双记录）
 
 ### 影视（Movies）与影视数据分析（Movie Analytics）
 
@@ -247,6 +248,8 @@ otifyMemoAction（方法监听，一次动作一条）+ **每日到期扫描**�
 - smartcat 聚合讯观察（ticket 076，ADR-0029）：**逐篇三态方法监听**（news 域 reader 动作经 `markAsRead`/`saveToClip` 调 `notifyNewsRead`/`notifyNewsSaved`）+ 保存联动 auto-summary——待补全登记（内存表：剪藏路径 → {标题, 平台, 时长分, 定时器}），`onVaultActivity` 对 clipping **短路**（不再产「你剪藏了」），唯一例外：命中登记的该剪藏 modify → 读 frontmatter summary/tags → 补全完整保存观察并移除登记；2 分钟降级定时器兜底；`DOMAIN_FILES.news` 已移除（「你浏览了今天的资讯」不再产）
 - smartcat 日记观察（ticket 077，ADR-0030）：**vault create/modify/delete 监听 diary 目录（per-entry 独立 10 分钟结算新链路）**——`onVaultActivity` 对 classifyPath==='diary' 走新链路（替换 observationText diary 分支；原 diary 10 分钟去弹跳/信任成长不再执行，其它 kind 不动）：该条任何修改重置其计时，静置到期读文件解析结算（首落有字才生成、累计 >50 才更新、≤50 计入累计）；重启 ensure 当日文件建基线快照（不产出）；删除：vault delete 按跟踪快照逐条追加删除观察（从未跟踪过 → 文件级单条兜底）、条目级删除（md 块消失）由 modify 全量快照 diff 发现 → 追加删除观察 + 清该条计时；observationText diary 分支保留不动（兼容冻结）
 - smartcat 收藏本观察（ticket 078，ADR-0031）：**方法监听**（favorites 域 UI 确认回调经 `_saveNewItem` 添加/编辑分支、`_deleteItem` 调 `notifyFavoritesAction`，文案构造集中 `favorites-source.ts` 纯函数——添加键值式有才加、编辑 α 变化列表只列真正变化（title/description/url/tags）、删除仅标题）；置顶抽屉动作不观察（置顶变化不列入编辑变化列表）；`onVaultActivity` 对 favorites 防御性短接 + `DOMAIN_FILES.favorites` 已移除（「你收藏了一条新资源」计数观察不再产）
+
+- smartcat 书库观察（ticket 081，ADR-0034）：**weave-data.json 数据文件监听**——外部 weave-epub-reader 落盘（bz 书库 UI 纯只读），`DOMAIN_FILES.library` 接入盲通道 extract；**v2 结构化 diff**（`libraryWeaveDiff` 返回 `{added, removed, started, done, sessions, highlightEvents, excerptEvents}`，`DomainExtractor.extract` 类型 `string | string[] | LibraryWeaveDiff | null`）——① **书架增删三态**：新书 percent==0「加入书架」/ percent>0「开始读」（读覆盖加入不双发）/ 条目消失「移出书架」（移除删除合并、无文件存在性判断、无 vault delete 监听，prev 清理重回视为新书）；② **读完了**：stats.completedTime 首次出现（即时）；③ **时长带进度**：sessions 新增求和向上取整分钟 + 当次 percent 归一（1.0→100 />1 取整），**独立即时发不受防抖限制**；④ **划线/想法带内容 + 5 分钟防抖**：highlight 实测字段 text/commentText（无 quoteText）、excerpts 多级回退；index 层 per-book pending（`libraryPendingNotes`，窗口内追加重置、超时结算一条，`buildLibraryNoteText` 组稿）；测试钩子 `__setLibraryDebounceMsForTests`/`__getLibraryPendingForTests`；⑤ **md 通道短路**：`onVaultActivity` 对 kind==='reading' return（书库 md 通道停用防双记录，context-source reading 分支保留不触发）；prev 按 bookId 记账 `lib:<id>:had/done/pct/hl/ex/sess/title`
 ### 设置页
 
 - **设置归属模型（ADR-0009，2025 用户决策）**：设置两分——全局项留 Obsidian 设置页（单页平铺，无 tab，只含「🤖 AI」「📂 数据存储路径」两区块），域行为项进各功能主面板右上角 ⚙️ 域设置弹窗；筛选/排序弹窗统一挂 🔀（影视「筛选与排序」、书库「视图与筛选」），⚙️ 只表示真设置；AI Agent 4 项设置不暴露（字段保留，运行时读旧值、默认值兜底）；入口页不新增设置（编辑模式控件即入口，移动端列数由列数控件按平台读写）
