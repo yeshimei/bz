@@ -327,10 +327,11 @@ describe('PersonalityGrowth（MATE ADR-0023）', () => {
 
   it('preferredHour 真众数（ADR-0025）：有记忆数据时取近 30 天创建小时峰值，不再覆盖为最后小时', async () => {
     const pg = new PersonalityGrowth(() => data, saver);
-    // 造 20 条 23 点创建的记忆（峰在 23 点）
+    // 造 20 条 23 点创建的记忆（峰在 23 点）——每天一条、从昨天起算：
+    // 原写法 now - i*h 再 setHours(23)，白天跑会把当日条目设到未来而被窗口过滤（时间敏感 flake）
     const now = Date.now();
     for (let i = 0; i < 20; i++) {
-      const d = new Date(now - i * 3600e3);
+      const d = new Date(now - (i + 1) * 24 * 3600e3);
       d.setHours(23, Math.floor(Math.random() * 60), 0, 0);
       data.memory.stream.push({
         id: `mem${i}`, created: d.toISOString(), lastAccessed: d.toISOString(),

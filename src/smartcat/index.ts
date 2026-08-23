@@ -556,7 +556,6 @@ function openChat(): void {
   if (!document.getElementById('chat-panel')) {
     panels = createChatPanel({
       onSend: (message) => void sendChatMessage(message),
-      onSettings: () => openSettings(),
       onClose: () => closeChat(),
     });
   }
@@ -578,7 +577,7 @@ function closeChat(): void {
   }
 }
 
-/** 打开设置弹窗（⚙️ / 长按 / 五击） */
+/** 打开设置弹窗（长按 / 双击手势统一后的唯一设置入口） */
 function openSettings(): void {
   if (!initialized) return;
   openSmartcatSettings({
@@ -613,19 +612,9 @@ function openSettings(): void {
       data.personalityGrowth = fresh;
       await saveSmartCatData(appRef, data);
     },
-    // 每周懂你报告（2026-08-23：最近一份 weekly-report 洞察，无则 null）
-    getWeeklyReport: () => {
-      if (!data || !memorySystem) return null;
-      const reports = data.memory.stream
-        .filter((m) => m.source === 'weekly-report' && m.type === 'insight')
-        .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime());
-      return reports.length ? reports[0].description : null;
-    },
-    // 数据面板移动端全屏（ticket 071，主窗口规范三件事之三：域设置弹窗挂行，仅移动端显示）
-    getDashboardMobileFullscreen: () => (getSettings() as any).smartcatDashboardMobileDefaultFullscreen === true,
-    setDashboardMobileFullscreen: async (v) => {
-      (getSettings() as any).smartcatDashboardMobileDefaultFullscreen = v;
-      await saveSettings();
+    // 「打开数据面板」（2026-08-23：原「每周懂你报告」行替换；周报全文在面板「报告」页签）
+    onOpenDashboard: () => {
+      if (appRef) void openSmartcatDashboard(appRef);
     },
   });
   if (interaction) {

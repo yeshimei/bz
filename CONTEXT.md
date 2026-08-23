@@ -173,8 +173,8 @@ _Avoid_: 链接修复、改链接（泛指时）
 
 ### 小橘域（smartcat，桌面宠物猫）
 
-**小橘 (SmartCat)**: bz 的桌面宠物猫 + 笔记 AI 陪伴域（命令 `bz-smartcat-open/chat/hide`；数据 `CONFIG/STORAGE/smartcat.json`）——CSS 绘制猫本体悬浮页角（13 种外观皮肤、5 种性格），气泡对话框（打字机/点按固定/双击转聊天），基于当前笔记上下文 + 对话历史 + 心情维度的 AI 聊天（DeepSeek，AI 走 bz core/ai，无独立 apiKey），常驻行为（自言自语/心情衰减/动画状态机/书评/欢迎回来）。**用户拍板三项**：① AI 走 bz 内置；② 所有数据一个 json（原 localStorage 3 key + 原 CONFIG/SMART CAT 3 文件 + 原 memories 4 层一次性迁移），apiKey 不迁移；③ 面板样式布局统一 bz（聊天面板 bz-win-head + 移动端全屏开关，设置走 ⚙️ 域设置弹窗）。原 30 分钟空闲跟随已按用户要求删除。
-_Avoid_: 猫咪、宠物、陪伴猫（指本域时）
+**小橘 (SmartCat)**: bz 的桌面宠物猫 + 笔记 AI 陪伴域（命令 `bz-smartcat-open/chat/hide/dashboard`；数据 `CONFIG/STORAGE/smartcat.json`）——CSS 绘制猫本体悬浮页角（13 种外观皮肤），气泡对话框（打字机/点按固定/双击转聊天），基于当前笔记上下文 + 对话历史 + PAD 心情的 AI 聊天（AI 走 bz core/ai，无独立 apiKey），常驻行为（自言自语/心情衰减/动画状态机/书评/欢迎回来）。**用户拍板三项**：① AI 走 bz 内置；② 所有数据一个 json（原 localStorage 3 key + 原 CONFIG/SMART CAT 3 文件 + 原 memories 4 层一次性迁移），apiKey 不迁移；③ 面板样式布局统一 bz（聊天面板 bz-win-head，设置走域设置弹窗）。原 30 分钟空闲跟随已按用户要求删除。**ticket 073 二次拍板（2026-08-23）**：手势桌面/移动统一同套——**双击=聊天、长按=设置**（五击设置已并入长按）；聊天头行不放 ⚙️（设置唯一入口=长按）；聊天/设置/数据面板三窗**合并一套**、共用 `smartcatMobileDefaultFullscreen` 一个「移动端默认全屏」开关（原数据面板独立键删除，旧值残留忽略）；设置弹窗「每周懂你报告」行替换为「打开数据面板」，周报全文移入数据面板「报告」页签；拖出屏幕边缘松手**过冲回弹**（四边统一，底边回到 bottom:-10px 默认蹲姿）；气泡检测屏幕边缘不出界（--bz-sc-shift 水平夹紧）。
+_Avoid_: 猫咪、宠物、陪伴猫（指本域时）；五击手势（已删）、数据面板独立全屏键（已删）
 
 **猫本体 (Cat Container)**: `#smart-companion-cat` 悬浮容器（id 保留原 SmartCat 外部约定），内部 DOM 结构（#cat-body/.cat-eye/.cat-ear/.cat-tail 等）与气泡/思考/语音指示器。皮肤 = 容器上的 `skin-<外观>` 类（13 种），动画 = CSS 变量驱动的一次性动画（`.bz-sc-anim` + `--bz-sc-anim-name/-dur`）与心情组合类（`.bz-sc-mood-*`）；156 个 keyframes 静态收敛在 `src/smartcat/styles.css`。
 _Avoid_: 皮肤内联样式、运行时注入（铁律 9 禁区）
