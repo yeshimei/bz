@@ -23,7 +23,7 @@ Status: accepted（2026-08-23，ticket 077，用户八轮拍板定稿）
   - 删除：`你删除了 <YYYY-MM-DD HH:mm> 的日记`（原观察全部保留，删除观察只追加）
   - 文件级兜底（整文件删除且从未跟踪过条目，时间信息不可得）：`你删除了 <YYYY-MM-DD> 的日记`
 - **emoji → 分类映射**：import `src/diary/config` 的 `emojiToTagMap`（单向域间 import，对齐 movie→smartcat 先例；diary/config 只依赖 diary/types，无环；若未来成环则内置映射表并注明来源）。分类语义对齐 diary/parser：标题行 emoji 序列逐个反查（主/二级都列），无命中回退「日记」。
-- **重启基线**：ensure 时对日记目录**当日文件**建快照（有字条目记「已见」generated=true，不产出观察）——防重启后旧条目被当首次；无字（标题即存）待首落。基线先于监听挂载完成（竞态守卫）。
+- **重启基线**：ensure 时对日记目录**当日 + 前 2 天**（当日、前 1 天、前 2 天）文件建快照（有字条目记「已见」generated=true，不产出观察）——防重启后旧条目被当首次（覆盖补写昨日/前日场景）；无字（标题即存）待首落。基线先于监听挂载完成（竞态守卫）。ticket 084d B3 扩窗（原仅当日）。
 - **删除感知**：补挂 `vault.on('delete')`（diary 目录）→ 按跟踪快照逐条追加删除观察 + 清计时；从未跟踪过的文件 → 文件级单条兜底观察。**条目级删除（md 内块被删）**：每次 modify 全量解析快照 diff，发现「上次快照存在、现在消失」的条目 → 追加删除观察 + 清该条计时（最小可靠方案：条目按 (日期, 时间) key 唯一标识，比正文子串匹配稳健）。
 - **观察写入 fire-and-forget**：结算/删除观察一律 `void memorySystem.addObservation(text, { source: 'diary' })`，不 await——`addObservation` 尾部 `appendVector`（探测 Ollama）在无向量环境可能不 resolve，若 await 会阻塞事件链并拖住结算状态提交（对齐 notifyMovieAction/notifyMemoAction/notifyNewsRead 既有 fire-and-forget 模式）。
 - **兼容冻结**：`我的/日记/*.md`、smartcat.json 零改动（计时表/基线内存态）；`MemoryStreamEntry.source === 'diary'`；context-source 的 observationText diary 分支**保留不动**（既有 context-source 测试不破坏）；旧「你写了日记：…（关键词：…）」记忆不迁移。
@@ -38,3 +38,7 @@ Status: accepted（2026-08-23，ticket 077，用户八轮拍板定稿）
   2. 重启基线无法区分「旧条目是否已产出观察」，一律视为已见——防重启后旧条目刷首次优先于首次文案准确性。
   3. 文件级删除兜底观察缺 HH:mm（信息不可得时以日期替代；条目级路径恒带 HH:mm）。
   4. `addObservation` 尾部向量落盘在无 Ollama 环境不 resolve——观察已入流、状态已提交（fire-and-forget），无功能影响。
+  5. **结算期 vault.read 瞬态失败（文件锁/IO 抖动）不判删除**——保留计时与状态等下轮事件；「真删除」判据为 `getAbstractFileByPath` 返回 null（ticket 084d B1 分离；settleNoteFile 同款）。
+  6. **重启基线窗口 = 当日 + 前 1 天 + 前 2 天**（ticket 084d B3；选改动最小方案，放弃按 mtime 扫描评估）；**更久远文件仍不基线**（防启动扫描开销）——补写 3 天前及更早日期文件仍可能整文件假首落重复入流（已知边界）。
+  7. **rename 迁移**（ticket 084d B2）：同观察目录内改名/移动 → diaryTimers/diaryTracked 路径 key 迁移；**移出 diary 目录** → 按旧跟踪逐条产删除观察 + 清理（对齐 delete 语义）；note 链路（卡片盒/现代诗/信）同款。
+  8. **累计字数差 delta 钳位 ≥0**（ticket 084d B4）：删改产生的负累计不再抵消后续补写（删 40 写 110 → 累计按补写推进而非净差 30），避免删改后补写被长期压制。

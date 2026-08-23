@@ -41,7 +41,7 @@ flash（卡片盒）/poem（现代诗）/letter（信）/reflection（反省）�
 - context-source 收敛：ActionKind 移除 'reflection'；classifyPath 8 类源；observationText 删 reflection 分支，flash/poem/letter 分支保留但仅剩理论可达（index 已短路）。
 - note-source 为纯函数层（文案/日期/正文提取/段落 diff/结算判定），无新域间依赖（frontmatter 正则轻量解析，对齐 smartcat 既有前端口吻，不引入 YAML 全子集）。
 - 已知边界/取舍（实现者在 ADR 说明）：
-  1. 同名文件（不同子目录）以 filePath 为 key，天然区分；rename 不在本票感知面（Obsidian rename 触发 create+delete，产生「删除+首落」两条——现行为）。
+  1. 同名文件（不同子目录）以 filePath 为 key，天然区分；rename 已补挂（ticket 084d B2，同款日记）：同观察目录内改名/移动 → noteTimers/noteTracked 路径 key 迁移（防「假删除 + 新路径重刷首落」）；**移出三域目录** → 按旧跟踪产删除观察 + 清理（对齐 delete 语义）。
   2. 重启基线把存量文件视为「已见」（generated=true）防首次误产；observed=false 保留「补首落」机会（v3：信/诗有日期时首次修改先补首落再 diff；flash/无日期诗直接 diff）。
   3. 结算时文件已消失（删除事件未及 diff 的竞态）→ 兜底删除观察（对齐日记 settle 兜底）；随后删除事件到达时 tracked 已清，不重复。
   4. 未跟踪文件删除跳过、无兜底文案（无日期/名称语义可兜）；信无 date / readonly 整文件不观察（含删除）。
