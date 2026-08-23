@@ -363,3 +363,17 @@
 - ✅ 移除 DOMAIN_FILES.quiz（「你做了几道题，检验了一下理解」）与 DOMAIN_FILES.review（「你完成了一轮复习，复习计划在推进」）——用户拍板这两个盲通道计数观察直接去掉，不改造方法监听
 - ✅ DOMAIN_FILES 全清空（memo/news/favorites/belongings/pomodoro/quiz/review 共 7 项全部退役：前 5 方法监听接管，后 2 去掉）；snapshotDomains/onDomainActivity 机制保留等待 ticket 081（书库 weave-data.json 数据文件监听）注入 library 条目
 - ✅ domain-source.test.ts 重写：断言全部 7 域 undefined + 空表 snapshot 返回空数组；CONTEXT.md/spec.md 同步
+## 2026-08-24 卡片盒/现代诗/信 改 per-file 10 分钟结算 + 段落 diff（ticket 083，ADR-0035；v1→v2→v3→v4 定稿）
+
+**状态：全量 1580 测试通过（114 文件）+ tsc 0 错误，提交 worktree/note-observation（本条目为开发记录）**
+
+- ✅ **v1 三域改日记模型**：flash（卡片盒）/poem（现代诗）/letter（信）从「observationText 快照截 300 字 + 10 分钟去弹跳」改**每篇文件独立 10 分钟结算**——新纯函数层 `src/smartcat/note-source.ts`（对齐 diary-source）：首落/删除文案（卡片盒体无「闪念」）、noteFileName（去 .md 保留原名含日期前缀标点）、首落有字门/空文件记已见补字后首落/正文全量不截断
+- ✅ **v2 差异观察（用户拍板推翻「更新带新全文」：长信太重）**：**修改 = 段落级 diff 摘要**——`noteDiffSummary` 纯函数（空行分段 → 段落级 LCS 配对 → 未配对旧段=删除（旧段号）/新段=新增（新段号）、相邻删增块字符重叠率 ≥0.5=修改段（旧段号）；每类最多 3 段超出「等 N 处<类名>」；删/增前 50 字、改段旧前 30 → 新前 30；同类「、」异类「；」，类序 删除→新增→修改）；**任何正文变化即产**（无累计阈值，小改动也发；10 分钟静置合并窗口内连续编辑）；文案 `你修改了卡片盒「X」：删除了第 3 段「…」、新增了第 5 段「…」`；`accum` 字段移除（NoteTimerState 同步）；纯空白/换行变化不产但基线推进（吸收空白）
+- ✅ **v3 真实日期**：新增 `parseNoteDate`/`formatNoteDate`（信 = frontmatter date，ISO/空格两式兼容；现代诗三层回退 frontmatter→YYMMDD 文件名→父目录年份+MMDD，派生 08:00 占位；卡片盒恒 null）；首落三句式（信/诗带日期、卡片盒无日期 `你在卡片盒记下了「X」：「…」`）；**信准入 = 有 frontmatter date 才跟踪**（无 date 的信不产任何观察）；**存量补首落**——noteTimers 增 `observed` 位（基线预置 false），存量信/诗首次修改先补带日期全文首落再产 diff（flash/无日期诗直接 diff）
+- ✅ **v4 readonly 准入**：信 frontmatter `readonly: true` 不观察（letterReadonly 纯函数；与「无 date 不观察」并列）
+- ✅ **reflection 彻底移除（v1 起）**：classifyPath 删 `我的/反省` 行；observationText 删 `case 'reflection'`；ActivityKind union 移除 'reflection' 成员（grep 确认无其它引用；onVaultActivity 的 reflection 防御性短路未加——union 已无该成员，加了触发 TS2367，以 tsc 0 为准取舍）；flash/poem/letter 的 observationText 分支保留代码但不再被触发（index 已短路）；原三域信任成长/机械去簇/10 分钟去弹跳不再执行（flash 死分支随 tsc 收敛删除，PAD 通用分支 flash→note_edit 收敛为 note_read）
+- ✅ **index 新链路（逐一对照日记 L1073-1240 移植）**：noteTimers（key=filePath → {timer,kind,generated,baseline,observed}）/noteTracked（{kind,body,date} 快照）/noteSettleMs（默认 10 分钟，测试可注入）；resetNoteTimer/dropNoteTimer/settleNoteFile（读文件 → 正文=去 frontmatter trim → 现场解析日期 → 补首落判定 → decideNoteSettle → fire-and-forget `void mem.addObservation`，竞态守卫；结算文件消失兜底删除）；handleNoteVaultActivity（正文 diff + 信准入早退）；onNoteVaultDelete 扩展分派（diary 保留 + 三域：有跟踪快照才追加删除观察，未跟踪跳过）；buildNoteBaseline（ensure 扫三目录全部 md + 信准入，有字记已见不产出不装计时器）；onVaultActivity 早退分支（PAD note_create 轻推保留）；unload 全清；测试钩子 __setNoteSettleMsForTests/__getNoteTimersForTests
+- ✅ **测试**：note-source.test.ts（首落三句式/删除/文件名/正文去 frontmatter/readonly/日期三层回退/段落 diff 删增改段+段号+截断 50/30+等 N 处+无变化 null+小改动触发/结算判定首落门+无日期跳过+正文变化即产+纯空白推进基线，28 用例）+ note-action.test.ts（60ms 注入：flash/信/诗首落带日期、信无 date/readonly 不观察、小改动 diff、窗口内连续编辑合并一次、删除跟踪与未跟踪、存量 flash 直接 diff、存量信先补首落再 diff、存量诗无日期只 diff、空文件不产、noteSource 关、unload，14 用例）+ context-source.test.ts 同步（reflection 不再分类、poem/letter 完整内容）
+- ✅ **文档**：ADR-0035（v1→v4 定稿全量）；CONTEXT.md 三域逐篇观察词条；spec.md 事件监听 + Further Notes；ticket 083 Status done；082 先例无涉（本票不碰 domain-source）
+- ✅ **兼容冻结**：卡片盒/我的/现代诗/我的/信 的 md 与 flash/poem/letter 域代码零改动；smartcat.json 零改动（计时/基线内存态）
+- ⏳ 待办：真机冒烟（Obsidian 里新建/修改/删除各一条卡片盒与信，核对首落日期、diff 摘要与 10 分钟静置）

@@ -1,11 +1,12 @@
 /**
- * 笔记库接入（ticket 025 → 2026-08-23 用户拍板扩展）：9 类源路径分类 + 全内容观察文本（LLM 云端打分 + 词法情绪）
+ * 笔记库接入（ticket 025 → 2026-08-23 用户拍板扩展 → ticket 083 收敛）：8 类源路径分类 + 全内容观察文本
+ * （LLM 云端打分 + 词法情绪）；reflection（反省）观察 ticket 083 彻底移除。
  */
 import { describe, it, expect } from 'vitest';
 import { classifyPath, observationText, extractKeywords } from '../../src/smartcat/context-source';
 
-describe('classifyPath（笔记库接入分类，2026-08-23 扩展 9 类源）', () => {
-  it('按目录识别 9 类源（diary/flash/clipping/movie/reading/poem/letter/reflection）', () => {
+describe('classifyPath（笔记库接入分类，2026-08-23 扩展 8 类源）', () => {
+  it('按目录识别 8 类源（diary/flash/clipping/movie/reading/poem/letter，reflection 已移除）', () => {
     expect(classifyPath('我的/日记/2026-08-23.md')).toBe('diary');
     expect(classifyPath('卡片盒/TDD.md')).toBe('flash');
     expect(classifyPath('归档/网页剪藏/xxx.md')).toBe('clipping');
@@ -13,7 +14,8 @@ describe('classifyPath（笔记库接入分类，2026-08-23 扩展 9 类源）',
     expect(classifyPath('书库/1984.md')).toBe('reading');
     expect(classifyPath('我的/现代诗/夜航.md')).toBe('poem');
     expect(classifyPath('我的/信/给未来的自己.md')).toBe('letter');
-    expect(classifyPath('我的/反省/2026-03.md')).toBe('reflection');
+    // ticket 083：反省彻底移除——不再分类（返回 null，不产任何反省观察）
+    expect(classifyPath('我的/反省/2026-03.md')).toBeNull();
   });
 
   it('非 md 与边界目录不识别（我的/日记本 不误判）', () => {
@@ -67,13 +69,13 @@ describe('observationText（2026-08-23 用户拍板：全内容读取）', () =>
     expect(t).toContain('值得一读');
   });
 
-  it('poem/letter/reflection：完整内容', async () => {
+  it('poem/letter：完整内容（reflection 分支已删——旧「你写下了反省」不再产，fallthrough 返回 null）', async () => {
     const poem = await observationText(appOf('---\n---\n黑夜给了我黑色的眼睛'), {} as any, 'poem');
     expect(poem).toContain('黑夜给了我黑色的眼睛');
     const letter = await observationText(appOf('亲爱的你，见字如面'), {} as any, 'letter');
     expect(letter).toContain('见字如面');
-    const refl = await observationText(appOf('今天反思：不该急躁'), {} as any, 'reflection');
-    expect(refl).toContain('不该急躁');
+    // ActivityKind 已移除 'reflection'：按任意旧 kind 调用不产出（switch 无该分支 → null）
+    expect(await observationText(appOf('今天反思：不该急躁'), {} as any, null)).toBeNull();
   });
 
   it('domain：返回 null（由 index onDomainActivity 构造观察）', async () => {
