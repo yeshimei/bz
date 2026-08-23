@@ -1,10 +1,11 @@
 /**
- * 卡片盒/现代诗/信 观察集成（ticket 083，ADR-0035；v1 + v2 + v3 + v4）：ensure 后模拟三域 create/modify/delete →
+ * 卡片盒/现代诗/信 观察集成（ticket 083，ADR-0035；v1 + v2 + v3 + v4）：ensure 后模拟三域 create/modify/delete/rename →
  * 每篇独立 10 分钟结算（测试注入 60ms 真实 timer，规避 fake timers 与反射调度相互作用）。
  * 覆盖：新建有字首落（flash 无日期 / 信 frontmatter date / 诗三层日期）/ 信无 date 或 readonly 不观察 /
  * 修改重置 + 段落 diff（小改动也产）/ 窗口内连续编辑合并一次 / 删除（有跟踪 → 删除观察；未跟踪 → 跳过）/
  * 存量基线（flash 直接 diff；存量信先补首落再 diff；存量诗无日期只 diff）/ 空文件不产（补字后首落）/
  * noteSource 关静默 / unload 清理。
+ * ticket 084d 同款修复：B1 settle 真删除 vs 瞬态读失败分离；B2 rename 计时/快照 key 迁移与移出目录删除。
  * 文案与 diff 纯函数单测见 note-source.test.ts。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -14,7 +15,7 @@ import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-p
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import {
   ensureSmartCat, unloadSmartCat, __getSmartcatInternals,
-  __setNoteSettleMsForTests, __getNoteTimersForTests,
+  __setNoteSettleMsForTests, __getNoteTimersForTests, __getNoteTrackedForTests,
 } from '../../src/smartcat/index';
 
 let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
@@ -261,5 +262,72 @@ describe('卡片盒/现代诗/信 观察（per-file 10 分钟结算，ticket 083
     expect(__getNoteTimersForTests().size).toBe(1);
     unloadSmartCat();
     expect(__getNoteTimersForTests().size).toBe(0);
+  });
+
+  it('B1：settle 时文件真删除（无 delete 事件）→ 兜底删除观察 + 清理', async () => {
+    const { app, vault } = makeApp();
+    await ensureSmartCat(app);
+    const path = '卡片盒/TDD.md';
+    vault.files.set(path, '内容');
+    vault.emit('modify', vault.file(path));
+    await flush(); // 计时已装（未到结算）
+    vault.files.delete(path); // 不 emit delete —— 只走 settle 的 getAbstractFileByPath null 兜底
+    await waitSettle();
+    const stream = readStream();
+    expect(stream.some((m) => m.description === '你删除了卡片盒「TDD」')).toBe(true);
+    expect(__getNoteTimersForTests().size).toBe(0);
+    expect(__getNoteTrackedForTests().has(path)).toBe(false);
+  });
+
+  it('B1：settle 瞬态读失败（vault.read 抛错）→ 保留计时记录，不产观察', async () => {
+    const { app, vault } = makeApp();
+    await ensureSmartCat(app);
+    const path = '卡片盒/TDD.md';
+    vault.files.set(path, '内容');
+    vault.emit('modify', vault.file(path));
+    await flush(); // 计时已装
+    const origRead = vault.read.bind(vault);
+    vault.read = async () => { throw new Error('transient io'); };
+    await waitSettle(); // settle 读失败 → 不产差异观察、保留记录
+    vault.read = origRead;
+    expect(readStream().length).toBe(0);
+    expect(__getNoteTimersForTests().has(path)).toBe(true);
+  });
+
+  it('B2：note 同目录 rename → noteTimers/noteTracked key 迁移（不产删除、不重刷首落）', async () => {
+    const { app, vault } = makeApp();
+    await ensureSmartCat(app);
+    const path = '卡片盒/A.md';
+    const newPath = '卡片盒/B.md'; // 仍在卡片盒目录
+    vault.files.set(path, '内容');
+    vault.emit('modify', vault.file(path));
+    await flush();
+    expect(__getNoteTimersForTests().has(path)).toBe(true);
+    await vault.rename(vault.file(path), newPath);
+    vault.emit('rename', vault.file(newPath), path);
+    await flush();
+    expect(readStream().length).toBe(0); // 无删除观察
+    const timers = __getNoteTimersForTests();
+    expect(timers.has(path)).toBe(false); // 旧 key 已迁移
+    expect(timers.has(newPath)).toBe(true);
+    expect(__getNoteTrackedForTests().has(newPath)).toBe(true);
+    expect(__getNoteTrackedForTests().has(path)).toBe(false);
+  });
+
+  it('B2：note rename 移出目录 → 按旧跟踪产删除观察 + 清理', async () => {
+    const { app, vault } = makeApp();
+    await ensureSmartCat(app);
+    const path = '卡片盒/A.md';
+    vault.files.set(path, '内容');
+    vault.emit('modify', vault.file(path));
+    await flush();
+    const outPath = '归档/A.md'; // classifyPath null（移出观察域）
+    await vault.rename(vault.file(path), outPath);
+    vault.emit('rename', vault.file(outPath), path);
+    await settle();
+    const stream = readStream();
+    expect(stream.some((m) => m.description === '你删除了卡片盒「A」')).toBe(true);
+    expect(__getNoteTimersForTests().size).toBe(0);
+    expect(__getNoteTrackedForTests().has(path)).toBe(false);
   });
 });
