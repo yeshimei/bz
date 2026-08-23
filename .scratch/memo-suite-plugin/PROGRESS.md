@@ -430,3 +430,15 @@
 - ✅ **文档**：ADR-0035（v1→v4 定稿全量）；CONTEXT.md 三域逐篇观察词条；spec.md 事件监听 + Further Notes；ticket 083 Status done；082 先例无涉（本票不碰 domain-source）
 - ✅ **兼容冻结**：卡片盒/我的/现代诗/我的/信 的 md 与 flash/poem/letter 域代码零改动；smartcat.json 零改动（计时/基线内存态）
 - ⏳ 待办：真机冒烟（Obsidian 里新建/修改/删除各一条卡片盒与信，核对首落日期、diff 摘要与 10 分钟静置）
+## 2026-08-24 洞察版本化完成（ticket 092，ADR-0039，方向二）
+
+**状态：全量 1693 测试通过（118 文件，--maxWorkers=4；首跑 library-source 2 用例为文档在案环境抖动，单文件重跑绿+复跑全量绿），tsc 0 错误；新增 tests/smartcat/insight-version.test.ts 28 用例**
+
+- ✅ **supersede 拍板路径 A（排序前剔除）**：`src/smartcat/insight-version.ts` 新纯函数层——`isSupersededInsight` 唯一口径（type=insight 且 supersededBy 非空）；memory.ts `retrieve()` pool 预过滤（topN=10 与三处调用点冻结契约零改动）+ `formatMemoriesForPrompt` 第二道闸；不删数据只剔除检索
+- ✅ **主题键受限枚举**：`INSIGHT_THEMES` 工作|兴趣|关系|健康|环境；`sanitizeInsightTheme` 白名单 + `lexicalTheme` 词法回退（THEME_KEYWORDS 五组关键词表）+ `resolveTheme` 主入口；reflect LLM 打标解析失败回词法、两路皆空不强标
+- ✅ **候选既有洞察通道**：`buildReflectCandidates` 纯函数——未废弃洞察按词法重叠+新近排序 Top-N（CANDIDATE_CONFIG topN12/clip40字/预算600字符封顶），注入行 `C1[工作] 描述片段`；防御式不抛错，reflect 侧再兜 try/catch 裁剪空块（不走反思退避通道）
+- ✅ **supersede 写点 + 校验链**：LLM 输出顶层 `{supersede: 编号|id}` 最多 1 个/批次；`applySupersede`——ref 反解→存在且 type=insight→自指拒绝→pinned 保护→幂等 no-op（同后继 true/异后继 false 先到先得）→`supersedeCreatesCycle` visited 集环形拒绝；生效写 supersededBy=本批第一条新洞察 id
+- ✅ **DDID 短索引 + dashboard 人工修正**：`buildInsightShortIndex` 展示层 #N 序号；dashboard 洞察行「固定/取消固定」「废弃」按钮（load-modify-save 最小写点，面板只读铁律 v4 裁决唯二例外）+ 已固定/已废弃（人工）徽章；styles.css 域内新增 .bz-sc-dash-mini-btn 等
+- ✅ **兼容冻结**：smartcat.json 既有字段零改动；theme/supersededBy/pinned 全可选旧数据容忍；mood.ts 未触碰；retrieve() 调用方零改动
+- ⚠ 必要偏差：memory.test.ts「evidence 过滤 insight」1 处断言收窄（候选通道按票要求把洞察文本以标注参照块进 prompt；P1-1 原意「不作编号 evidence 素材」保留并照测）
+- 📄 文档：ADR-0039；CONTEXT.md 记忆流字段表 + 洞察版本化词条；spec.md Further Notes 追加一行；issue 092 status done
