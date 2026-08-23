@@ -212,6 +212,9 @@ export async function ensureSmartCat(app: App): Promise<void> {
     }
     // 影视动作改由方法监听（ticket 074 修订）：事件通道短路，防 UI 动作双记录
     if (kind === 'movie') return;
+    // 书库 md 通道短路（ticket 081）：划线/想法改由 weave-data.json 计数观察（防双记录；
+    // context-source 的 reading 分支保留不删，但从此不再被触发）
+    if (kind === 'reading') return;
     const now = Date.now();
     const last = lastActivity.get(file.path) || 0;
     if (now - last < 10 * 60 * 1000) return;          // 同一路径 10 分钟去弹跳
@@ -1028,8 +1031,13 @@ async function onDomainActivity(): Promise<void> {
       if (!key || !domainObserved.has(key)) return;
       let raw: any = null;
       try { raw = JSON.parse(await app.vault.read(file)); } catch { return; }
-      const text = DOMAIN_FILES[key].extract(raw, domainPrev);
-      if (text) await mem.addObservation(text, { source: 'domain:' + key });
+      // ticket 081：extract 可返回数组（library 单次保存多条观察），逐条入流（string 兼容单条）
+      const texts = DOMAIN_FILES[key].extract(raw, domainPrev);
+      if (texts) {
+        for (const t of (Array.isArray(texts) ? texts : [texts])) {
+          if (t) await mem.addObservation(t, { source: 'domain:' + key });
+        }
+      }
     });
     if (ref) domainReader = () => (app as any)?.vault?.offref?.(ref as any);
   }
