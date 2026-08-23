@@ -21,6 +21,8 @@ export function defaultConfig(): SmartCatConfig {
     /** 主动关心（2026-08-23 用户拍板：每周 1-2 次温和主动搭话；作息模型判定时机） */
     proactiveCare: true,
     proactiveWeeklyCap: 2,
+    /** 云端打分范围（ADR-0025 追加决策：智能默认——省调用且保日记/反省/闪念质量） */
+    cloudScoring: 'smart',
   };
 }
 
@@ -38,6 +40,9 @@ export function normalizeConfig(raw: any): SmartCatConfig {
   if (typeof c.noteSource !== 'boolean') c.noteSource = def.noteSource;
   if (typeof c.proactiveCare !== 'boolean') c.proactiveCare = def.proactiveCare;
   if (typeof c.proactiveWeeklyCap !== 'number' || c.proactiveWeeklyCap < 0 || c.proactiveWeeklyCap > 7) c.proactiveWeeklyCap = def.proactiveWeeklyCap;
+  // 云端打分范围：非法值回退默认（ADR-0025 追加决策）
+  const cloudModes = ['all', 'smart', 'diary', 'local'];
+  if (!cloudModes.includes(c.cloudScoring as any)) c.cloudScoring = def.cloudScoring;
   // 外观不在合法表内回退默认（原版读任意字符串只是 CSS 类名不匹配，这里兜底防样式失效）
   const appearances: Appearance[] = ['orange','gray','black','white','calico','neon','galaxy','liquidMetal','fire','crystal','cyberpunk','rainbow','hologram'];
   if (!appearances.includes(c.appearance as Appearance)) c.appearance = def.appearance;

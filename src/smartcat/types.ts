@@ -46,6 +46,11 @@ export interface ProactiveCareState {
   lastAt: number;
 }
 
+/** 云端 LLM 打分范围（ADR-0025 追加决策，2026-08-23 用户拍板「智能」默认）：
+ *  all=全部走 LLM（现状）；smart=智能（日记/反省/闪念恒 LLM + 长内容 ≥30 字，聊天/域事件本地）；
+ *  diary=仅日记恒 LLM；local=全本地（规则分+词法情绪，零在线调用） */
+export type CloudScoringMode = 'all' | 'smart' | 'diary' | 'local';
+
 /**
  * 域配置（原 localStorage 'smart-cat-config' 全字段；
  * apiKey 不迁移——AI 走 bz core/ai，用户拍板）
@@ -66,6 +71,8 @@ export interface SmartCatConfig {
   proactiveCare: boolean;
   /** 每周主动上限（1-7，默认 2） */
   proactiveWeeklyCap: number;
+  /** 云端 LLM 打分范围（ADR-0025 追加决策：智能默认——聊天/域事件本地打分省调用，日记/反省/闪念恒 LLM 保质量） */
+  cloudScoring: CloudScoringMode;
 }
 
 /** 心情持久化（PAD 三维 + 5 档显示位 + 瞬时情绪；情绪标注经记忆条目/currentEmotion） */
