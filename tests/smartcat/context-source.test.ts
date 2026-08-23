@@ -1,0 +1,95 @@
+/**
+ * 笔记库接入（ticket 025 → 2026-08-23 用户拍板扩展）：9 类源路径分类 + 全内容观察文本（LLM 云端打分 + 词法情绪）
+ */
+import { describe, it, expect } from 'vitest';
+import { classifyPath, observationText, extractKeywords } from '../../src/smartcat/context-source';
+
+describe('classifyPath（笔记库接入分类，2026-08-23 扩展 9 类源）', () => {
+  it('按目录识别 9 类源（diary/flash/clipping/movie/reading/poem/letter/reflection）', () => {
+    expect(classifyPath('我的/日记/2026-08-23.md')).toBe('diary');
+    expect(classifyPath('卡片盒/TDD.md')).toBe('flash');
+    expect(classifyPath('归档/网页剪藏/xxx.md')).toBe('clipping');
+    expect(classifyPath('我的/影视/《楚门的世界》观后感.md')).toBe('movie');
+    expect(classifyPath('书库/1984.md')).toBe('reading');
+    expect(classifyPath('我的/现代诗/夜航.md')).toBe('poem');
+    expect(classifyPath('我的/信/给未来的自己.md')).toBe('letter');
+    expect(classifyPath('我的/反省/2026-03.md')).toBe('reflection');
+  });
+
+  it('非 md 与边界目录不识别（我的/日记本 不误判）', () => {
+    expect(classifyPath('CONFIG/STORAGE/memo.json')).toBeNull();
+    expect(classifyPath('我的/日记本/a.md')).toBeNull();
+    expect(classifyPath(null)).toBeNull();
+  });
+});
+
+describe('observationText（2026-08-23 用户拍板：全内容读取）', () => {
+  const appOf = (text: string) => ({ vault: { read: async () => text } }) as any;
+
+  it('flash：取完整内容（原只首行 ≤40）', async () => {
+    const t = await observationText(appOf('TDD 的实践总结\n第二行细节\n第三行'), { basename: 'TDD' } as any, 'flash');
+    expect(t).toContain('TDD 的实践总结');
+    expect(t).toContain('第二行细节'); // 全内容
+  });
+
+  it('diary：读正文 + 标记关键词（原只标题计数）', async () => {
+    const t = await observationText(appOf('# 🐈 20:57\n今天读完东野圭吾，心里有些失落'), {} as any, 'diary');
+    expect(t).toContain('你写了日记');
+    expect(t).toContain('今天读完东野圭吾'); // 正文进观察
+    expect(t).toContain('关键词'); // 关键词标记
+  });
+
+  it('diary：无正文返回 null（空文件跳过）', async () => {
+    const t = await observationText(appOf('   \n\n'), {} as any, 'diary');
+    expect(t).toBeNull();
+  });
+
+  it('clipping：记住完整 AI 摘要（原 ≤60 字截断）', async () => {
+    const t = await observationText(appOf('---\nsite: 微信公众号\nsummary: 这是自动生成的中文摘要内容，比较长的一段。\n---\n正文……'), {} as any, 'clipping');
+    expect(t).toContain('这是自动生成的中文摘要内容');
+  });
+
+  it('movie：读影评完整正文（原只片名+评分）', async () => {
+    const t = await observationText(appOf('---\n评分: 9\n---\n这是一段完整的影评正文，表达了对电影的思考。'), { basename: '《楚门的世界》观后感' } as any, 'movie');
+    expect(t).toContain('楚门的世界');
+    expect(t).toContain('9');
+    expect(t).toContain('完整的影评正文');
+  });
+
+  it('reading：提取划线（cm-highlight）与想法（==dialogue==）与书评', async () => {
+    const body = '---\ntitle: 1984\nbookReview: 值得一读的政治寓言\n---\n==dialogue==\n我的想法：极权下的自我\n<span class="__comment cm-highlight" data-id="x">这是划线的句子。</span>';
+    const t = await observationText(appOf(body), { basename: '1984' } as any, 'reading');
+    expect(t).toContain('划线');
+    expect(t).toContain('这是划线的句子');
+    expect(t).toContain('想法');
+    expect(t).toContain('我的想法');
+    expect(t).toContain('书评');
+    expect(t).toContain('值得一读');
+  });
+
+  it('poem/letter/reflection：完整内容', async () => {
+    const poem = await observationText(appOf('---\n---\n黑夜给了我黑色的眼睛'), {} as any, 'poem');
+    expect(poem).toContain('黑夜给了我黑色的眼睛');
+    const letter = await observationText(appOf('亲爱的你，见字如面'), {} as any, 'letter');
+    expect(letter).toContain('见字如面');
+    const refl = await observationText(appOf('今天反思：不该急躁'), {} as any, 'reflection');
+    expect(refl).toContain('不该急躁');
+  });
+
+  it('domain：返回 null（由 index onDomainActivity 构造观察）', async () => {
+    expect(await observationText(appOf('x'), {} as any, 'domain')).toBeNull();
+  });
+});
+
+describe('extractKeywords（日记关键词标记）', () => {
+  it('提取高频内容词', () => {
+    const kws = extractKeywords('东野圭吾的新书读完，东野圭吾总是让人上瘾。', 3);
+    expect(kws.length).toBeGreaterThan(0);
+    expect(kws.join('')).toContain('东野');
+  });
+
+  it('过滤虚词', () => {
+    const kws = extractKeywords('今天没有特别的事情，就是普通的一天。', 5);
+    expect(kws.some((k) => ['没有', '什么', '就是'].includes(k))).toBe(false);
+  });
+});

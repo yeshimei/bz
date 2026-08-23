@@ -10,6 +10,7 @@ import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
+import { notice } from '../core/notice';
 import type { Appearance } from './types';
 
 export const CAT_CONTAINER_ID = 'smart-companion-cat';
@@ -198,14 +199,18 @@ export interface SettingsModalBuildResult {
 }
 
 /**
- * 打开 smartcat 域设置弹窗（bz openSettingsModal；外观/性格/间隔/概率/记忆量/上下文长度/比例 + 移动端全屏）
- * 写回 data.config（smartcat.json）与 bz settings（移动端全屏）。
+ * 打开 smartcat 域设置弹窗（bz openSettingsModal；外观/人格成长可视化/间隔/概率/记忆量/
+ * 上下文长度/比例 + 移动端全屏）。ADR-0023：预设「性格」下拉删除 → OCEAN+traits 可视化。
  */
 export function openSmartcatSettings(opts: {
   getConfig: () => any;
   saveConfig: (config: any) => Promise<void>;
   settingsKeys: { enabled: boolean; mobileFullscreen: boolean };
   setMobileFullscreen: (v: boolean) => Promise<void>;
+  getPersonalityGrowth?: () => any;
+  resetPersonalityGrowth?: () => Promise<void>;
+  /** 最近一周懂你报告（index 从记忆流取；无 → 提示尚未生成） */
+  getWeeklyReport?: () => string | null;
 }): void {
   const config = opts.getConfig();
   openSettingsModal({
@@ -223,21 +228,39 @@ export function openSmartcatSettings(opts: {
           });
         });
 
-      new Setting(el)
-        .setName('性格')
-        .setDesc('对话语气')
-        .addDropdown((dd: any) => {
-          dd.addOption('lively', '活泼型');
-          dd.addOption('quiet', '安静型');
-          dd.addOption('wise', '智慧型');
-          dd.addOption('cute', '萌系型');
-          dd.addOption('mentor', '导师型');
-          dd.setValue(config.personality);
-          dd.onChange(async (v: string) => {
-            config.personality = v;
-            await opts.saveConfig(config);
-          });
-        });
+      // ADR-0023：人格成长可视化（OCEAN 5 轴 + 关键特质条形；替代预设 5 选 1）
+      const g = opts.getPersonalityGrowth?.();
+      if (g) {
+        const panelEl = el.createDiv({ cls: 'bz-sc-personality-panel' });
+        const bar = (label: string, v: number) =>
+          `<div class="bz-sc-trait-row"><span class="bz-sc-trait-name">${label}</span>` +
+          `<div class="bz-sc-trait-bar"><div class="bz-sc-trait-fill" style="width:${Math.round(Math.min(1, Math.max(0, v)) * 100)}%"></div></div>` +
+          `<span class="bz-sc-trait-val">${(v * 100).toFixed(0)}</span></div>`;
+        const oceanNames: Record<string, string> = {
+          openness: '开放', conscientiousness: '尽责', extraversion: '外向', agreeableness: '宜人', neuroticism: '敏感',
+        };
+        const keyTraits: Record<string, string> = {
+          warmth: '温暖', self_worth: '自我价值', others_trust: '信任他人',
+          anxiety: '焦虑', humor: '幽默', beh_depth: '深度', optimism: '乐观',
+        };
+        let html = '<div class="bz-sc-personality-title">人格成长（随相处自动演化）</div>';
+        html += '<div class="bz-sc-personality-section">OCEAN</div>';
+        for (const [k, name] of Object.entries(oceanNames)) html += bar(name, g.ocean?.[k] ?? 0.5);
+        html += '<div class="bz-sc-personality-section">关键特质</div>';
+        for (const [k, name] of Object.entries(keyTraits)) html += bar(name, g.traits?.[k] ?? 0.5);
+        panelEl.innerHTML = html;
+        if (opts.resetPersonalityGrowth) {
+          new Setting(el)
+            .setName('重置成长')
+            .setDesc('清空已演化的人格，回到新的 OCEAN 种子')
+            .addButton((btn: any) => {
+              btn.setButtonText('重置').onClick(async () => {
+                await opts.resetPersonalityGrowth!();
+                notice('人格已重置，请重新打开设置查看新种子', 'info');
+              });
+            });
+        }
+      }
 
       new Setting(el)
         .setName('自言自语间隔（分钟）')
@@ -299,6 +322,30 @@ export function openSmartcatSettings(opts: {
           });
         });
 
+      // 主动关心（2026-08-23 用户拍板：每周温和主动搭话；默认开）
+      new Setting(el)
+        .setName('主动关心')
+        .setDesc('按你的活跃时段，每周温和主动搭话 1-2 次（可关）')
+        .addToggle((toggle: any) =>
+          toggle.setValue(!!config.proactiveCare).onChange((v: boolean) => {
+            config.proactiveCare = v;
+            void opts.saveConfig(config);
+          })
+        );
+
+      // 每周懂你报告（2026-08-23：查看最近一份；弹窗展示全文）
+      if (opts.getWeeklyReport) {
+        new Setting(el)
+          .setName('每周懂你报告')
+          .setDesc('小橘每周总结你的一周：心情、主题、学到的你')
+          .addButton((btn: any) => {
+            btn.setButtonText('查看本周报告').onClick(() => {
+              const report = opts.getWeeklyReport?.() ?? null;
+              openWeeklyReportModal(report);
+            });
+          });
+      }
+
       if (isMobileEnv()) {
         new Setting(el)
           .setName('移动端默认全屏')
@@ -320,4 +367,48 @@ function skinLabel(skin: Appearance): string {
     crystal: '水晶透明', cyberpunk: '赛博朋克', rainbow: '彩虹渐变', hologram: '全息投影',
   };
   return labels[skin] || skin;
+}
+
+/** 每周懂你报告弹窗（bz 主窗口规范：createOverlay + .bz-win-head + ESC/遮罩关闭） */
+function openWeeklyReportModal(report: string | null): void {
+  const { mask, popup } = createOverlay({
+    maskId: 'smartcat-report-mask',
+    popupId: 'smartcat-report-panel',
+    zIndex: 9997,
+    onMaskClick: () => close(),
+    width: '88%',
+    maxWidth: 420,
+  });
+  const header = document.createElement('div');
+  header.className = 'bz-win-head';
+  header.innerHTML = `
+    <h3 style="margin:0;font-size:18px;font-weight:600;color:var(--text-normal);">小橘的懂你报告</h3>
+    <div>
+      <button id="smartcat-report-close" class="bz-win-close" title="关闭" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0;width:21px;height:25px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">❌</button>
+    </div>
+  `;
+  popup.appendChild(header);
+  const body = document.createElement('div');
+  body.className = 'bz-sc-report-body';
+  body.style.cssText = 'padding:12px 24px 20px;font-size:14px;line-height:1.7;color:var(--text-normal);white-space:pre-wrap;max-height:52vh;overflow-y:auto;';
+  body.textContent = report
+    ? report.replace(/^【本周懂你报告】/, '')
+    : '本周报告还没生成。小橘会在每周二（本周有观察后）自动总结你的这一周，也可以多写写日记/闪念让我更懂你。';
+  popup.appendChild(body);
+  document.body.appendChild(mask);
+  document.body.appendChild(popup);
+  mask.style.display = 'block';
+  popup.style.display = 'flex';
+  popup.style.maxHeight = '60vh';
+  popup.style.flexDirection = 'column';
+  const close = () => {
+    mask.remove();
+    popup.remove();
+    handle.unregister();
+  };
+  header.querySelector('#smartcat-report-close')!.addEventListener('click', close);
+  const handle = escManager.register('smartcat-report', {
+    isVisible: () => popup.isConnected,
+    close,
+  });
 }

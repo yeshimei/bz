@@ -1,28 +1,41 @@
 /**
- * 心情系统（移植自 SmartCatPluginMood.js：MoodSystem/PersonalityGrowth/
- * TimeEmotionSystem（精简）/PersonalityInfluenceSystem/EmotionalMemory 核心）
- * 铁律 4 缺陷保留：currentMood 恒为持久化 lastMood 或 'content'（calculateCompositeMood 不接）；
- * currentPersonality 原版只读不写恒 undefined → 本版显式读 config.personality（等价回落 lively）。
- * 存储全部收敛进 smartcat.json（data.mood / data.personalityGrowth / data.emotionalMemory / data.timeEmotion）。
+ * 心情系统重构（grilling 拍板：彻底对齐社区 PAD 三维模型）
+ * 三层：瞬时情绪（currentEmotion，事件/记忆标注）→ 心情（PAD 三维连续，
+ * 60s 衰减 + 人格调制 + 互动影响——「持续的潮」）→ 人格（PersonalityGrowth，
+ * 反思驱动主 + 互动驱动辅——「海底地形」）。
+ *
+ * 关键变化（相对原 SmartCatPluginMood.js）：
+ *  1. 8 维 → PAD 三维（pleasure/arousal/dominance，0-100）；
+ *  2. calculateCompositeMood 断线缺陷解除——currentMood 由 PAD 原型最近邻实时算出，
+ *     不再恒为持久化 lastMood（铁律 4 原缺陷，本轮用户拍板解除）；
+ *  3. EmotionalMemory 类删除——情感记忆并入记忆流（记忆条目 emotion 字段 + importance）；
+ *  4. PersonalityGrowth 接通：反思驱动（applyReflectionInsights）+ 互动驱动（原
+ *     developBasedOnInteraction 接线）；
+ *  5. 存储全部收敛进 smartcat.json（data.mood / data.personalityGrowth）。
  */
 import type { App } from 'obsidian';
-import type { MoodDimensions, SmartCatData, Personality } from './types';
+import type { PadDimensions, SmartCatData } from './types';
+import { characterTransition, trustUpdate, characterFromExperience, TRUST_CAP } from './character';
 
-export const MOOD_MAP: Record<string, { emoji: string; state: string }> = {
-  excellent: { emoji: '😻', state: '超开心' },
-  good: { emoji: '😸', state: '心情好' },
-  neutral: { emoji: '😼', state: '平常心' },
-  low: { emoji: '😿', state: '小低落' },
-  poor: { emoji: '🙀', state: '不开心' },
+/** 5 档离散心情（显示层；PAD 原型最近邻判档） */
+export const MOOD_MAP: Record<string, { emoji: string; state: string; prototype: [number, number, number] }> = {
+  excellent: { emoji: '😻', state: '超开心', prototype: [85, 72, 60] },
+  good: { emoji: '😸', state: '心情好', prototype: [70, 62, 55] },
+  neutral: { emoji: '😼', state: '平常心', prototype: [50, 50, 50] },
+  low: { emoji: '😿', state: '小低落', prototype: [30, 38, 45] },
+  poor: { emoji: '🙀', state: '不开心', prototype: [18, 22, 38] },
 };
+
+/** PAD 原型顺序（判档用） */
+const MOOD_KEYS = ['excellent', 'good', 'neutral', 'low', 'poor'] as const;
 
 export class MoodSystem {
   app: App;
   dataProvider: () => SmartCatData;
   dataSaver: (data: SmartCatData) => Promise<void>;
-  dimensions: MoodDimensions;
-  negativeStates = { boredom: 0, fatigue: 0, distraction: 0, loneliness: 0 };
-  stateThresholds = { critical: 80, warning: 60, normal: 30 };
+  /** PAD 三维（内存镜像 data.mood.pad） */
+  pad: PadDimensions;
+  /** 5 档显示位（由 PAD 原型最近邻实时算出，解除断线） */
   currentMood: string;
   moodHistory: any[] = [];
   lastInteractionTime = Date.now();
@@ -32,11 +45,8 @@ export class MoodSystem {
     this.app = app;
     this.dataProvider = dataProvider;
     this.dataSaver = dataSaver;
-    const d = this.dataProvider().mood.dimensions;
-    this.dimensions = { ...d };
-    this.currentMood = this.dataProvider().mood.lastMood && this.dataProvider().mood.lastMood !== 'neutral'
-      ? this.dataProvider().mood.lastMood
-      : 'content';
+    this.pad = { ...this.dataProvider().mood.pad };
+    this.currentMood = this.computeMoodLevel();
     this.init();
   }
 
@@ -45,88 +55,121 @@ export class MoodSystem {
     this.startAutoDecay();
   }
 
-  /** updateMood（原 L2194-2264 逐字：人格乘数/负向抵抗力/energy 下限/边界/微变化防卡/历史截断/重要保存） */
-  updateMood(dimension: string, change: number, reason = ''): void {
-    if (!this.dimensions) this.dimensions = { happiness: 50, energy: 50, curiosity: 50, affection: 50, focus: 50, creativity: 50, productivity: 50, relaxation: 50 };
-    if (!Object.prototype.hasOwnProperty.call(this.dimensions, dimension)) {
-      (this.dimensions as any)[dimension] = 50;
-    }
-    const personality = this.getCurrentPersonality();
-    const personalityEffects = this.getPersonalityEffects(personality);
-    const moodMultiplier = personalityEffects.moodMultipliers[dimension] || 1.0;
-    let adjustedChange = change * moodMultiplier;
+  // ---------------- PAD 更新 ----------------
+
+  /** 更新 PAD 某轴（性格调制：MATE traits → 乘数；clamp 0-100；变化微小不落盘） */
+  updatePad(axis: 'pleasure' | 'arousal' | 'dominance', change: number, reason = ''): void {
+    const character = this.getCharacterModulators();
+    const multiplier = character.padMultipliers[axis] || 1.0;
+    let adjusted = change * multiplier;
+    // 负向抵抗力（从性格 traits 推导：乐观/情绪稳定越抗跌）
     if (change < 0) {
-      const resistance = this.getPersonalityResistance(personality, dimension);
-      adjustedChange = change * resistance;
+      const resistance = character.resistance[axis] || 1.0;
+      adjusted = change * resistance;
     }
-    const oldValue = (this.dimensions as any)[dimension];
-    let newValue = oldValue + adjustedChange;
-    if (dimension === 'energy' && newValue < 5) newValue = 5;
-    newValue = Math.max(0, Math.min(100, newValue));
-    if (Math.abs(adjustedChange) > 0.1 && Math.abs(newValue - oldValue) < 0.1) {
-      if (oldValue > 99) newValue = 100;
-      else if (oldValue < 1) newValue = 1;
-      else newValue = oldValue + (adjustedChange > 0 ? 0.5 : -0.5);
+    const old = this.pad[axis];
+    let next = old + adjusted;
+    next = Math.max(0, Math.min(100, next));
+    if (Math.abs(adjusted) > 0.1 && Math.abs(next - old) < 0.1) {
+      next = old > 99 ? 100 : old < 1 ? 1 : old + (adjusted > 0 ? 0.5 : -0.5);
     }
-    if (Math.abs(newValue - oldValue) < 0.01) return;
-    (this.dimensions as any)[dimension] = Math.round(newValue * 10) / 10;
-    this.moodHistory.push({
-      dimension, originalChange: change, adjustedChange, reason,
-      timestamp: Date.now(), oldValue, newValue: (this.dimensions as any)[dimension],
-      personality, multiplierApplied: moodMultiplier,
-    });
+    if (Math.abs(next - old) < 0.01) return;
+    this.pad[axis] = Math.round(next * 10) / 10;
+    this.moodHistory.push({ axis, change, adjusted, reason, timestamp: Date.now(), oldValue: old, newValue: this.pad[axis] });
     if (this.moodHistory.length > 200) this.moodHistory = this.moodHistory.slice(-100);
-    if (Math.abs(adjustedChange) >= 1) void this.saveMoodState();
+    // 5 档由 PAD 实时推出（断线解除）
+    this.currentMood = this.computeMoodLevel();
+    if (Math.abs(adjusted) >= 1) void this.saveMoodState();
   }
 
-  /** 人格抵抗力表（原 getPersonalityResistance 逐字） */
-  getPersonalityResistance(personality: string, dimension: string): number {
-    const resistanceMap: Record<string, Record<string, number>> = {
-      lively: { happiness: 0.8, energy: 0.9, affection: 0.7, boredom: 0.6 },
-      quiet: { happiness: 1.2, energy: 1.1, focus: 0.9, relaxation: 1.3 },
-      wise: { curiosity: 0.8, focus: 1.2, creativity: 1.1 },
-      cute: { affection: 0.6, loneliness: 0.5, happiness: 0.8 },
-      mentor: { productivity: 1.3, focus: 1.2, energy: 1.1 },
+  /** 注册瞬时情绪（事件/记忆标注；记录但不改写 PAD，情绪由记忆承载） */
+  registerEmotion(emotion: string): void {
+    const data = this.dataProvider();
+    data.mood.currentEmotion = emotion;
+    void this.saveMoodState();
+  }
+
+  /** 当前瞬时情绪（无则 null） */
+  getCurrentEmotion(): string | null {
+    return this.dataProvider().mood.currentEmotion || null;
+  }
+
+  // ---------------- PAD → 5 档（原型最近邻，解除原 calculateCompositeMood 断线） ----------------
+
+  /** 计算 5 档：当前 PAD 到各原型欧氏距离，取最近档 */
+  computeMoodLevel(): string {
+    const { pleasure: p, arousal: a, dominance: d } = this.pad;
+    let best: string = 'neutral';
+    let bestDist = Infinity;
+    for (const key of MOOD_KEYS) {
+      const [ep, ea, ed] = MOOD_MAP[key].prototype;
+      const dist = Math.sqrt((p - ep) ** 2 + (a - ea) ** 2 + (d - ed) ** 2);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = key;
+      }
+    }
+    return best;
+  }
+
+  // ---------------- 性格调制（MATE traits → PAD，对齐 ADR-0023） ----------------
+
+  /** 从性格系统推导 PAD 乘数/抵抗力（OCEAN+traits → 心情动力学参数）
+   *  外向/多巴胺高 → 唤醒乘数高；乐观/血清素高 → 愉悦乘数高、抵抗力强；
+   *  神经质/皮质醇高 → 波动放大（乘数 >1）；依赖式焦虑 → 愉悦抵抗力弱
+   */
+  getCharacterModulators(): { padMultipliers: Record<string, number>; resistance: Record<string, number> } {
+    const g = this.dataProvider().personalityGrowth;
+    const t = g.traits;
+    const o = g.ocean;
+    const line = (v: number) => Math.min(1.5, Math.max(0.5, 0.5 + (v - 0.5) * 1.0));
+    const arousalM = line(t.dopamine) * (0.9 + o.extraversion * 0.2);
+    const pleasureM = line(t.serotonin + (t.optimism - 0.5) * 0.5) * (0.9 + o.agreeableness * 0.2);
+    const dominanceM = line(t.locus_control) * (0.9 + o.conscientiousness * 0.2);
+    // 神经质/皮质醇 → 负向抵抗力弱（容易大起大落）
+    const resistance = {
+      pleasure: Math.min(1.4, Math.max(0.6, 1.0 - t.cortisol * 0.3 + t.serotonin * 0.2 + o.neuroticism * -0.3)),
+      arousal: Math.min(1.4, Math.max(0.6, 1.0 - t.cortisol * 0.2 + o.neuroticism * -0.2)),
+      dominance: Math.min(1.4, Math.max(0.6, 1.0 - t.anxiety * 0.3 + t.self_efficacy * 0.3)),
     };
-    const map = resistanceMap[personality] || {};
-    return map[dimension] || 1.0;
-  }
-
-  /** 人格影响（原 PersonalityInfluenceSystem.getPersonalityEffects 语义：
-   * 8 维 moodMultipliers 表；lively 全 1.0 兜底） */
-  getPersonalityEffects(personality: string): { moodMultipliers: Record<string, number> } {
-    const tables: Record<string, Record<string, number>> = {
-      lively: { happiness: 1.0, energy: 1.0, curiosity: 1.0, affection: 1.0, focus: 1.0, creativity: 1.0, productivity: 1.0, relaxation: 1.0 },
-      quiet: { happiness: 1.1, energy: 0.95, curiosity: 1.0, affection: 1.0, focus: 1.15, creativity: 1.0, productivity: 1.0, relaxation: 1.1 },
-      wise: { happiness: 1.0, energy: 1.0, curiosity: 1.2, affection: 0.9, focus: 1.2, creativity: 1.05, productivity: 1.05, relaxation: 0.95 },
-      cute: { happiness: 1.15, energy: 1.0, curiosity: 1.0, affection: 1.2, focus: 0.9, creativity: 1.1, productivity: 0.95, relaxation: 1.0 },
-      mentor: { happiness: 0.95, energy: 1.1, curiosity: 1.05, affection: 0.95, focus: 1.15, creativity: 1.0, productivity: 1.25, relaxation: 0.9 },
+    return {
+      padMultipliers: { pleasure: pleasureM, arousal: arousalM, dominance: dominanceM },
+      resistance,
     };
-    return { moodMultipliers: tables[personality] || tables.lively };
   }
 
-  /** 当前人格（原版 currentPersonality 恒 undefined → 回落 lively；本版读 config.personality） */
-  getCurrentPersonality(): Personality {
-    const p = this.dataProvider().config.personality;
-    return (p as Personality) || 'lively';
-  }
+  // ---------------- 衰减 ----------------
 
-  /** 自动衰减（原 startAutoDecay：60s，率表 × 1/multiplier） */
+  /**
+   * 自动衰减（60s；指数回摆向中性基线 50，2026-08-23 用户拍板生产补接线后校准）
+   * 原线性 -0.02/min 向 0 无吸引子（空闲 1.7 天 pleasure 归 0），与 sim 指数回摆不一致；
+   * 统一为 DECAY_LAMBDA 半衰（pleasure 10h/arousal 7h/dominance 3.5h）：增益进多少、潮汐回多少。
+   */
+  private static readonly BASE_PAD_ATTRACT = { pleasure: 50, arousal: 50, dominance: 50 };
+  private static readonly DECAY_LAMBDA = { pleasure: 0.07, arousal: 0.10, dominance: 0.20 };
+  private lastSavedPad: PadDimensions | null = null;
+
   startAutoDecay(): void {
     if (this.decayTimer) clearInterval(this.decayTimer);
-    const baseDecayRates: Record<string, number> = {
-      happiness: -0.02, energy: -0.04, curiosity: -0.015, affection: -0.01,
-      focus: -0.03, creativity: -0.02, productivity: -0.025, relaxation: -0.015,
-    };
     this.decayTimer = setInterval(() => {
-      const effects = this.getPersonalityEffects(this.getCurrentPersonality());
-      for (const [dimension, rate] of Object.entries(baseDecayRates)) {
-        const multiplier = effects.moodMultipliers[dimension] || 1.0;
-        const adjustedRate = rate * (1 / multiplier);
-        const old = (this.dimensions as any)[dimension] || 50;
-        (this.dimensions as any)[dimension] = Math.max(0, Math.round((old + adjustedRate) * 10) / 10);
+      const mod = this.getCharacterModulators();
+      for (const [axis, lambda] of Object.entries(MoodSystem.DECAY_LAMBDA)) {
+        const multiplier = mod.padMultipliers[axis as keyof PadDimensions] || 1.0;
+        // 回摆速率 ÷ 人格乘数（高 dopamine/serotonin → 回落更慢，与 updatePad 增益同侧调制）
+        // dt=60s → 指数小时速率 λ（/h）折算到分钟：k=exp(−λ·dt/3600)
+        const k = Math.exp(-lambda / multiplier * (60 / 3600));
+        const attract = MoodSystem.BASE_PAD_ATTRACT[axis as keyof PadDimensions];
+        const old = this.pad[axis as keyof PadDimensions] || 50;
+        // 保留浮点精度（60s 微移 ~0.006，round 会吞掉回摆；落盘仍到 0.1 精度）
+        this.pad[axis as keyof PadDimensions] = Math.max(0, Math.min(100, attract + (old - attract) * k));
       }
-      void this.saveMoodState();
+      // 红队 B P1-3：无事件也每 60s 全量写盘 → 改为任一轴相对上次落盘变化 ≥0.5 才写
+      const lp = this.lastSavedPad;
+      const dirty = !lp || (['pleasure', 'arousal', 'dominance'] as const).some((ax) => Math.abs((this.pad[ax] || 0) - (lp[ax] || 0)) >= 0.5);
+      if (dirty) {
+        this.lastSavedPad = { ...this.pad };
+        void this.saveMoodState();
+      }
     }, 60000);
   }
 
@@ -137,28 +180,28 @@ export class MoodSystem {
     }
   }
 
-  /** 持久化（原 saveMoodState：{dimensions, lastUpdate, lastMood}） */
+  /** 持久化（{pad, lastUpdate, lastMood, currentEmotion}） */
   async saveMoodState(): Promise<void> {
     const data = this.dataProvider();
-    data.mood.dimensions = { ...this.dimensions };
+    data.mood.pad = { ...this.pad };
     data.mood.lastUpdate = Date.now();
     data.mood.lastMood = this.currentMood;
     await this.dataSaver(data);
   }
 
-  /** 加载（原 loadMoodState：24h 内合并维度 + lastMood；超时保持默认不覆写存储） */
+  /** 加载（24h 内合并 PAD；超时保持默认不覆写存储） */
   loadMoodState(): void {
     const data = this.dataProvider();
     const saved = data.mood;
     const hoursDiff = (Date.now() - saved.lastUpdate) / (1000 * 60 * 60);
     if (hoursDiff < 24) {
-      this.dimensions = { ...this.dimensions, ...saved.dimensions };
-      if (saved.lastMood) this.currentMood = saved.lastMood === 'content' ? 'content' : saved.lastMood;
+      this.pad = { ...this.pad, ...saved.pad };
     }
+    this.currentMood = this.computeMoodLevel();
     this.ensureMoodClassApplied();
   }
 
-  /** 表情类（原 ensureMoodClassApplied：给猫容器挂 mood-<mood> 类） */
+  /** 表情类（容器挂 mood-<mood> 类） */
   ensureMoodClassApplied(): void {
     const container = document.getElementById('smart-companion-cat');
     if (!container) return;
@@ -166,31 +209,35 @@ export class MoodSystem {
     container.classList.add(`mood-${this.currentMood}`);
   }
 
-  /** 当前心情 emoji（原 getCurrentMoodEmoji：MOOD_MAP 查表，未命中 neutral） */
+  /** 当前心情 emoji（MOOD_MAP 查表） */
   getCurrentMoodEmoji(): string {
     const m = MOOD_MAP[this.currentMood];
     return m ? m.emoji : '😼';
   }
 
-  /** 心情整体级别（MOOD_MAP key；content → neutral 兜底） */
+  /** 心情整体级别（MOOD_MAP key） */
   getOverallMood(): string {
     const m = MOOD_MAP[this.currentMood];
     return m ? this.currentMood : 'neutral';
   }
 
-  /** 互动心情影响（原 handleInteraction 定义：pet/click/learn/note_create/note_edit/note_read；原版无人调用，保留语义供 tapping 使用） */
+  /** 互动心情影响（PAD 版效果表；原 8 维 handleInteraction 语义迁移） */
   handleInteraction(type: string, intensity = 1): void {
     const effects: Record<string, Record<string, number>> = {
-      pet: { happiness: 8, affection: 6, energy: 2 },
-      click: { curiosity: 3, happiness: 2 },
-      learn: { curiosity: 6, focus: 4 },
-      note_create: { creativity: 8, productivity: 6, happiness: 3 },
-      note_edit: { focus: 6, creativity: 4, productivity: 5 },
-      note_read: { curiosity: 5, focus: 4, relaxation: 3 },
+      pet: { pleasure: 6, arousal: 2, dominance: 1 },
+      click: { arousal: 3, pleasure: 2 },
+      learn: { arousal: 4, dominance: 3 },
+      note_create: { pleasure: 3, dominance: 6, arousal: 3 },
+      note_edit: { dominance: 6, arousal: 2, pleasure: 1 },
+      note_read: { arousal: 4, pleasure: 2, dominance: 1 },
     };
     const eff = effects[type];
     if (eff) {
-      for (const [dim, change] of Object.entries(eff)) this.updateMood(dim, change * intensity, type);
+      for (const [axis, change] of Object.entries(eff)) {
+        if (axis === 'pleasure' || axis === 'arousal' || axis === 'dominance') {
+          this.updatePad(axis, change * intensity, type);
+        }
+      }
     }
   }
 
@@ -199,178 +246,11 @@ export class MoodSystem {
   }
 }
 
-/** 情感记忆（EmotionalMemory 移植精简：数据收敛进 data.emotionalMemory；保留统计/记录核心） */
-export class EmotionalMemory {
-  app: App;
-  dataProvider: () => SmartCatData;
-  dataSaver: (data: SmartCatData) => Promise<void>;
-  config = { retentionDays: 30, maxMemories: 500, significanceThreshold: 0.3, compressionEnabled: true, autoSaveInterval: 5 * 60 * 1000 };
-  private currentSession = { id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, startTime: Date.now(), processedInteractions: new Set<string>() };
-
-  constructor(app: App, dataProvider: () => SmartCatData, dataSaver: (data: SmartCatData) => Promise<void>) {
-    this.app = app;
-    this.dataProvider = dataProvider;
-    this.dataSaver = dataSaver;
-  }
-
-  get store(): any {
-    if (!this.dataProvider().emotionalMemory) (this.dataProvider() as any).emotionalMemory = this.defaultStore();
-    return this.dataProvider().emotionalMemory;
-  }
-
-  private defaultStore(): any {
-    return {
-      version: '2.0', lastUpdated: Date.now(), lastProcessed: { timestamp: 0, sessionId: null },
-      memories: [], associations: {},
-      statistics: { totalMemories: 0, memoryByType: {}, averageIntensity: 0, recentActivity: [] },
-      learning: { patterns: {}, preferences: {}, adaptations: {} },
-    };
-  }
-
-  /** 记录记忆（原 recordMemory 核心：去重/重要性阈值/记忆对象/关联/统计/上限压缩） */
-  async recordMemory(context: any, emotionalResponse: any[], intensity: number, options: Record<string, any> = {}): Promise<any | null> {
-    if (!Array.isArray(emotionalResponse)) return null;
-    const memoryKey = this.generateMemoryKey(context, emotionalResponse);
-    if (this.currentSession.processedInteractions.has(memoryKey)) return null;
-    const significance = this.calculateSignificance(emotionalResponse, intensity, context);
-    if (significance < this.config.significanceThreshold) return null;
-    const memory = {
-      id: `memory_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: Date.now(),
-      sessionId: this.currentSession.id,
-      context: this.normalizeContext(context),
-      emotionalResponse,
-      intensity,
-      significance,
-      tags: this.extractTags(context),
-      compressed: false,
-    };
-    this.store.memories.push(memory);
-    this.currentSession.processedInteractions.add(memoryKey);
-    this.updateStatistics();
-    if (this.store.memories.length > this.config.maxMemories) this.compressOldMemories();
-    this.store.lastUpdated = Date.now();
-    await this.dataSaver(this.dataProvider());
-    return memory;
-  }
-
-  /** 去重键（原 generateMemoryKey：context 前 2 标签 + 情感响应维符号串） */
-  generateMemoryKey(context: any, emotionalResponse: any[]): string {
-    const ctx = JSON.stringify({
-      type: context?.interactionType,
-      time: context?.timeOfDay,
-      tags: context?.tags?.slice(0, 2),
-    });
-    const respStr = emotionalResponse
-      .map((r: any) => `${r.dimension}_${Math.sign(r.change)}`)
-      .sort()
-      .join('|');
-    return `${ctx}|${respStr}`;
-  }
-
-  /** 标准化上下文（原 normalizeContext：string 兼容 JSON/raw） */
-  normalizeContext(context: any): any {
-    if (typeof context === 'string') {
-      try { context = JSON.parse(context); } catch (e) { context = { raw: context }; }
-    }
-    const now = new Date();
-    return {
-      interactionType: context?.interactionType || 'unknown',
-      intensity: context?.intensity || 1,
-      timestamp: context?.timestamp || now.getTime(),
-      timeOfDay: context?.timeOfDay || this.getTimeOfDay(now),
-      dayOfWeek: context?.dayOfWeek || now.getDay(),
-      userActivity: context?.userActivity || 'interaction',
-      noteAction: context?.noteAction,
-      noteTitle: context?.noteTitle,
-      contentType: context?.contentType,
-      tags: context?.tags || [],
-      emotionalStateBefore: context?.moodBefore || {},
-      rawContext: context,
-    };
-  }
-
-  getTimeOfDay(date: Date): string {
-    const hour = date.getHours();
-    if (hour >= 5 && hour < 8) return 'early_morning';
-    if (hour >= 8 && hour < 12) return 'morning';
-    if (hour >= 12 && hour < 14) return 'noon';
-    if (hour >= 14 && hour < 18) return 'afternoon';
-    if (hour >= 18 && hour < 22) return 'evening';
-    if (hour >= 22 && hour < 24) return 'night';
-    return 'late_night';
-  }
-
-  /** 标签提取（原 extractTags：时间/会话阶段/互动/笔记/内容/情感/环境） */
-  extractTags(context: any): string[] {
-    const tags: string[] = [];
-    const now = new Date();
-    const hour = now.getHours();
-    const dayOfWeek = now.getDay();
-    tags.push(`hour_${hour}`);
-    tags.push(`time_${this.getTimeOfDay(now)}`);
-    tags.push(dayOfWeek === 0 || dayOfWeek === 6 ? 'weekend' : 'weekday');
-    const sessionDuration = Date.now() - this.currentSession.startTime;
-    if (sessionDuration < 30 * 60 * 1000) tags.push('first_session');
-    else if (sessionDuration < 2 * 60 * 60 * 1000) tags.push('mid_session');
-    else tags.push('late_session');
-    if (context?.interactionType) tags.push(`interaction_${context.interactionType}`);
-    if (context?.noteAction) tags.push(`note_${context.noteAction}`);
-    if (context?.contentType) tags.push(`content_${context.contentType}`);
-    if (context?.emotionalStateBefore) this.addEmotionalStateTags(tags, context.emotionalStateBefore);
-    if (sessionDuration > 60 * 60 * 1000) tags.push('long_session');
-    if (sessionDuration < 5 * 60 * 1000) tags.push('quick_check');
-    if (context?.userActivity === 'focused_work') tags.push('focused_work');
-    if (context?.userActivity === 'organization') tags.push('organization');
-    return tags;
-  }
-
-  addEmotionalStateTags(tags: string[], state: any): void {
-    if (state.energy > 70) tags.push('high_energy');
-    else if (state.energy < 30) tags.push('low_energy');
-    if (state.happiness > 70) tags.push('happy');
-    else if (state.happiness < 30) tags.push('sad');
-    if (state.focus > 70) tags.push('focused');
-    else if (state.focus < 30) tags.push('distracted');
-    if (state.creativity > 70) tags.push('creative');
-    if (state.productivity > 70) tags.push('productive');
-  }
-
-  /** 重要性（原 calculateSignificance 逐字） */
-  calculateSignificance(emotionalResponse: any[], intensity: number, context: any): number {
-    let significance = 0;
-    const totalChange = emotionalResponse.reduce((sum: number, r: any) => sum + Math.abs(r.change), 0);
-    significance += totalChange * 0.3;
-    significance += intensity * 0.4;
-    const typeWeights: Record<string, number> = { pet: 0.8, note_create: 0.7, achievement: 0.9, learn: 0.6, note_edit: 0.5, note_read: 0.4, click: 0.2 };
-    significance += (typeWeights[context?.interactionType] || 0.3) * 0.3;
-    return Math.min(1, significance);
-  }
-
-  updateStatistics(): void {
-    const s = this.store.statistics;
-    s.totalMemories = this.store.memories.length;
-    s.memoryByType = {};
-    this.store.memories.forEach((m: any) => {
-      const t = m.context?.interactionType || 'unknown';
-      s.memoryByType[t] = (s.memoryByType[t] || 0) + 1;
-    });
-    s.averageIntensity = this.store.memories.length
-      ? this.store.memories.reduce((sum: number, m: any) => sum + (m.intensity || 0), 0) / this.store.memories.length
-      : 0;
-    s.recentActivity = this.store.memories.slice(-10).map((m: any) => ({ timestamp: m.timestamp, type: m.context?.interactionType }));
-  }
-
-  /** 压缩旧记忆（简版：保留一半最旧，标记 compressed） */
-  compressOldMemories(): void {
-    const half = Math.floor(this.store.memories.length / 2);
-    const compressed = this.store.memories.slice(0, half).map((m: any) => ({ ...m, compressed: true }));
-    this.store.memories = [...compressed, ...this.store.memories.slice(half)];
-    this.updateStatistics();
-  }
-}
-
-/** 人格成长（PersonalityGrowth 移植：traits + growthHistory，存 data.personalityGrowth） */
+/**
+ * 性格成长（对齐 MATE ADR-0023：OCEAN 种子 + 30 特质 + relationship 张量 + 周统计）
+ * 驱动源三路：character_transition（每条互动微移）、character_from_experience（周统计深更新）、
+ * applyReflectionInsights（反思洞察 → existential 群组成长）。全部经 character.ts 纯函数。
+ */
 export class PersonalityGrowth {
   dataProvider: () => SmartCatData;
   dataSaver: (data: SmartCatData) => Promise<void>;
@@ -384,42 +264,95 @@ export class PersonalityGrowth {
     return this.dataProvider().personalityGrowth.traits;
   }
 
-  /** 人格影响（原 getPersonalityInfluence 逐字） */
-  getPersonalityInfluence(): any {
-    const t = this.traits;
-    return {
-      happinessMultiplier: 1 + (t.playfulness - 50) * 0.01,
-      affectionMultiplier: 1 + (t.sociability - 50) * 0.015,
-      decayResistance: 1 - (t.independence - 50) * 0.005,
-      curiosityBoost: 1 + (t.curiosity - 50) * 0.01,
-    };
+  /** 互动驱动（MATE character_transition：δ=δbase×Σ|eᵢ|×近因；softUpdate 饱和）
+   *  trustQuality：温暖互动的信任增益质量系数（默认 0.5；写日记/闪念以轻质量 0.15 计入，
+   *  ADR-0024 产品决策——不聊天时陪伴也能在「共享生活」中生长） */
+  async developBasedOnInteraction(interactionType: string, intensity: number, emotionIntensity = 0, trustQuality = 0.5): Promise<void> {
+    const data = this.dataProvider();
+    const g = data.personalityGrowth;
+    const I = Math.max(emotionIntensity, intensity * 0.2);
+    g.traits = characterTransition(g.traits, { emotionIntensity: I, trust: g.relationship.trust });
+    // 互动类型有情绪价（pet/learn 温暖；note 专注）
+    if (interactionType === 'pet' || interactionType === 'learn') {
+      g.traits = characterTransition(g.traits, { emotionIntensity: 0.2, trust: g.relationship.trust });
+    }
+    g.relationship.trust = trustUpdate(g.relationship.trust, { warm: interactionType === 'pet' || interactionType !== 'click', quality: trustQuality, trustCap: TRUST_CAP ?? undefined });
+    // 活跃时段统计（按当时钟点滚一个众数近似）
+    this.tickBehaviorStats(interactionType);
+    g.growthHistory.push({
+      timestamp: Date.now(), interactionType, intensity, source: 'interaction', traitsBefore: { ...g.traits },
+    });
+    this.trimHistory();
+    g.lastSave = Date.now();
+    await this.dataSaver(data);
   }
 
-  /** 互动成长（原 developBasedOnInteraction 逐字） */
-  async developBasedOnInteraction(interactionType: string, intensity: number): Promise<void> {
-    const developmentEffects: Record<string, Record<string, number>> = {
-      pet: { sociability: 1, independence: -0.5 },
-      click: { curiosity: 0.5, playfulness: 0.3 },
-      learn: { curiosity: 1, independence: 0.3 },
-      note_create: { curiosity: 0.8, focus: 0.5 },
-      note_edit: { focus: 0.6, curiosity: 0.3 },
-      note_read: { curiosity: 0.4, focus: 0.2 },
-    };
-    const effects = developmentEffects[interactionType];
-    if (!effects) return;
-    const t = this.traits;
-    for (const [trait, change] of Object.entries(effects)) {
-      t[trait] = Math.max(0, Math.min(100, t[trait] as number + change * intensity));
-    }
+  /** 周统计深更新（MATE character_from_experience：δ≤0.01，对积累的 behaviorStats 折算） */
+  async applyWeeklyExperience(): Promise<void> {
     const data = this.dataProvider();
-    data.personalityGrowth.growthHistory.push({
-      timestamp: Date.now(), interactionType, effects, intensity, traitsBefore: { ...t },
+    const g = data.personalityGrowth;
+    const s = g.behaviorStats;
+    g.traits = characterFromExperience(g.traits, {
+      interactionCount: s.interactionCount,
+      emotionalTone: s.emotionalTone,
+      preferredHour: s.preferredHour,
     });
+    // 周统计清零（深更新后）
+    s.interactionCount = 0;
+    s.emotionalTone = 0;
+    s.sessionCount = 0;
+    g.growthHistory.push({ timestamp: Date.now(), source: 'weekly', traitsBefore: { ...g.traits } });
+    this.trimHistory();
+    g.lastSave = Date.now();
+    await this.dataSaver(data);
+  }
+
+  /** 反思驱动：洞察 → existential 群组成长（depth/familiarity/concern 仅此渠道，MATE §3.2） */
+  async applyReflectionInsights(insights: { text: string }[]): Promise<void> {
+    if (!Array.isArray(insights) || !insights.length) return;
+    const data = this.dataProvider();
+    const g = data.personalityGrowth;
+    const changes: Record<string, number> = {};
+    for (const ins of insights) {
+      const text = (ins.text || '').toLowerCase();
+      if (/自我|自己|我|about me|self/.test(text)) (changes.exist_depth = (changes.exist_depth || 0) + 0.01);
+      if (/熟悉|习惯|偏好|重复/.test(text)) (changes.familiarity = (changes.familiarity || 0) + 0.01);
+      if (/担心|焦虑|在意|关心/.test(text)) (changes.concern = (changes.concern || 0) + 0.01);
+      if (/学习|好奇|探索|阅读/.test(text)) (changes.creativity = (changes.creativity || 0) + 0.005);
+      if (/温暖|信任|亲近|陪伴/.test(text)) (changes.oxytocin = (changes.oxytocin || 0) + 0.005);
+    }
+    if (!Object.keys(changes).length) return;
+    for (const [trait, delta] of Object.entries(changes)) {
+      if (Object.prototype.hasOwnProperty.call(g.traits, trait)) {
+        g.traits[trait] = Math.min(0.99, Math.max(0.01, g.traits[trait] + delta));
+      }
+    }
+    g.growthHistory.push({
+      timestamp: Date.now(), source: 'reflection', insights: insights.map((i) => i.text), changes, traitsBefore: { ...g.traits },
+    });
+    this.trimHistory();
+    g.lastSave = Date.now();
+    await this.dataSaver(data);
+  }
+
+  /** 行为统计（MATE behaviorStats：时段众数近似 + 情绪基调 EMA + 计数） */
+  tickBehaviorStats(interactionType: string): void {
+    const g = this.dataProvider().personalityGrowth;
+    const s = g.behaviorStats;
+    s.interactionCount = (s.interactionCount || 0) + 1;
+    const hour = new Date().getHours();
+    // preferredHour：简单滚众（出现最多的时段）
+    s.preferredHour = hour;
+    // 互动类型 → 情绪基调微调（pet/learn 正，click 中性）
+    const tone = interactionType === 'pet' || interactionType === 'learn' ? 0.02 : interactionType === 'click' ? 0 : -0.01;
+    s.emotionalTone = Math.min(1, Math.max(-1, (s.emotionalTone || 0) + tone * 0.2));
+  }
+
+  private trimHistory(): void {
+    const data = this.dataProvider();
     if (data.personalityGrowth.growthHistory.length > 100) {
       data.personalityGrowth.growthHistory = data.personalityGrowth.growthHistory.slice(-50);
     }
-    data.personalityGrowth.lastSave = Date.now();
-    await this.dataSaver(data);
   }
 
   getGrowthHistory(): any[] {
