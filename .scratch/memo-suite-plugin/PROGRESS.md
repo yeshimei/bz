@@ -252,3 +252,14 @@
 - ✅ **事件缺口补齐**：movie 豁免 10 分钟去弹跳（连续操作逐条观察，正文观察单独 10 分钟节流防自动保存连发）；补挂 vault delete 监听（有快照才观察）；首快照在 ensure 时建（不产出），先快照再挂监听；仅海报/豆瓣字段变化的 modify（外部海报脚本补写）天然无 diff 不观察
 - ✅ **文档**：spec.md 影视 US 36 + 事件监听清单行；ADR-0026（Context/Options/Consequences）；CONTEXT.md 记忆流词条补影视动作感知观察
 - ⏳ 待办：手动冒烟（真实 Obsidian 操作影视验证观察文本）；日记观察细化待用户另行拍板（ticket 074 仅影视）
+
+## 2026-08-23 smartcat 影视观察改走方法监听（ticket 074 修订 2，ADR-0027）
+
+**状态：全量 1430 测试通过（102 文件），tsc 0 错误；movie-source 重构 8 用例 + 新增 movie-action 集成 4 用例**
+
+- ✅ **用户提出「不监听事件，监听方法」并拍板只走方法**：观察链路改为 movie 域 UI 确认回调 → `notifyMovieAction(事件)` → `buildMovieActionText`（movie-source 文案构造纯函数）→ 记忆流。五个挂点：openAddModal 确认/`setMovieStatus`/`openRateModal` 确认/`openReviewModal` 确认/`confirmDeleteMovie` 确认
+- ✅ **打字爆炸根治**：观察只来自 UI 确认动作，一次动作一条，零防抖/零节流/零定时器——逐字编辑的自动保存连发根本不在观察链路内（对比修订 1 拟定的事件防抖+节流方案：正文打字仍须事件通道，已弃）
+- ✅ **事件通道对影视短路**（`classifyPath==='movie'` 直接 return）：防「方法一条 + 事件一条」双记录；会连同放弃掉 observationText 的电影分支（保留代码不动，兼容冻结）
+- ✅ **放弃观察**（用户拍板）：手改 frontmatter（含回退想看）、正文记内容、文件手动删除/重命名——影视域感知只剩 UI 操作
+- ✅ **文档**：ADR-0027（supersedes 0026）；ticket 074 补修订 2；CONTEXT.md / spec.md 同步（正文本体观察、海报双链剥除验证随事件方案移除）
+- ⏳ 待办：真机冒烟（UI 操作一条对一条核对观察文本）

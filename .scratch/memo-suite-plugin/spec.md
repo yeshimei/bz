@@ -125,7 +125,7 @@ Feature: memo-suite-plugin
 33. 作为用户，我希望影视数据分析的分析口径配置（groups/buckets/genres/ageBuckets/eras/durBuckets/groupDur/reviewKeywords/series/yearRating 十组）保留为设置项，以便自定义分析维度。
 34. 作为用户，我希望 AI 推荐功能完整保留：基于观影历史构建口味画像（buildTasteProfile）→ AI 生成推荐（🧠 正在分析你的观影历史…）→ 推荐弹窗列表（含导演：、加入想看 按钮，quickAddWant 预填添加弹窗）→ 解析失败/生成失败错误提示（⚠️/❌），以便发现新片。
 35. 作为用户，我希望影视状态枚举（在看/想看/已看等）、类型分组/颜色映射（TYPE_GROUPS/TYPE_COLORS）、📊 数据分析入口、🤖 AI 推荐入口、⚙️ 设置弹窗，以便与原脚本一致。
-36. 作为用户，我希望小橘能感知影视的每一次具体操作（加入想看/开始看/看完了/状态回退/评分改分/写改删影评/正文记内容/删除），以便陪伴记忆细致准确。（2026-08-23 用户拍板，ticket 074：smartcat 对 `我的/影视` 做快照 diff——观察文本区分动作；UI 影评读 frontmatter `影评` 字段；正文剥首行海报双链、语义为「笔记里写了内容」；仅海报/豆瓣字段变化（外部海报脚本补写）不观察；movie 豁免 10 分钟去弹跳、补挂 delete，正文观察单独 10 分钟节流；状态仍由 frontmatter `评分` 推断（-1/0/>0），数据格式零改动）
+36. 作为用户，我希望小橘能感知影视的每一次 UI 操作（加入想看/开始看/看完了/状态流转/评分改分/写改删影评/删除），以便陪伴记忆细致准确。（2026-08-23 用户拍板，ticket 074：**方法监听（ADR-0027，取代事件 diff）**——movie 域 UI 确认回调调 `notifyMovieAction`，文案构造集中 `movie-source.ts` 纯函数；事件通道对影视短路防双记录；**手改 frontmatter（含回退想看）、正文记内容、自动保存连发一律不观察**（放弃，防逐字编辑刷屏）；状态=UI 枚举，数据格式零改动）
 
 ### 自动摘要（Auto Summary）
 
@@ -233,7 +233,7 @@ Feature: memo-suite-plugin
 - 自动摘要：vault.on('create') + workspace.on('file-open') 监听 `归档/网页剪藏`（目录前缀边界判断，防误触发；同一文件 1500ms 延迟窗口内去重；open 传 null 关闭时跳过）
 - AIAgent：vault.on rename/delete/create/open 同步备忘录/收藏本
 - 闪念：workspace 光标/活动文件事件驱动右侧窄窗
-- smartcat 影视观察（ticket 074）：vault create/modify/delete 监听 `我的/影视` → movie-source 快照 diff 动作观察（首快照不产出；正文观察 10 分钟节流；仅海报/豆瓣字段变化的 modify 不观察）
+- smartcat 影视观察（ticket 074，ADR-0027）：**事件通道短路**（movie 文件 create/modify 不观察），观察只来自 movie 域 UI 确认回调的 `notifyMovieAction`（方法监听，一次动作一条）
 
 ### 设置页
 
