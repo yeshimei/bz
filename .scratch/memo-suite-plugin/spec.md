@@ -477,3 +477,4 @@ otifyMemoAction（方法监听，一次动作一条）+ **每日到期扫描**�
 - 原脚本与 QuickAdd 环境在迁移期间并存：验收完成前用户可随时回退
 - core 层的 AIService/jsonStore 是 B站下载独立插件与后续任何脚本迁移的共享基础，移植时保持 Q3 语义逐字一致（changelog 已删除，ticket 61）
 - 闪念依赖 Ollama 服务，验收需用户本机 Ollama 运行（bge-m3 + qwen2.5 模型）
+- smartcat 盲通道清空（ticket 082，2026-08-24 用户拍板）：quiz/review 计数 extract 移除，DOMAIN_FILES 全清空——「你做了几道题」/「完成复习」不再产；原 7 项 JSON 盲通道全部退役（前 5 项方法监听接管，quiz/review 直接去掉）；机制保留待 081 library 注入

@@ -343,3 +343,10 @@
 - ✅ **兼容冻结**：pomodoro.json 格式/状态机/UI 结构/命令/文案零改动，仅加 notify 挂点；无 timer/map 需清理
 - ✅ **文档**：ADR-0033（Context/Options/Consequences）；spec.md 番茄钟 US 13；CONTEXT.md 记忆流词条补番茄钟专注完成观察
 - ⏳ 待办：真机冒烟（真实 Obsidian 专注自然完成 → 小橘气泡核对「你用番茄钟完成了 25 分钟专注」）
+## 2026-08-24 盲通道全清空（ticket 082，用户拍板去掉 quiz/review）
+
+**状态：删除 quiz/review 两个计数 extract，全量 1538 测试通过 + tsc 0 错误 + 构建部署**
+
+- ✅ 移除 DOMAIN_FILES.quiz（「你做了几道题，检验了一下理解」）与 DOMAIN_FILES.review（「你完成了一轮复习，复习计划在推进」）——用户拍板这两个盲通道计数观察直接去掉，不改造方法监听
+- ✅ DOMAIN_FILES 全清空（memo/news/favorites/belongings/pomodoro/quiz/review 共 7 项全部退役：前 5 方法监听接管，后 2 去掉）；snapshotDomains/onDomainActivity 机制保留等待 ticket 081（书库 weave-data.json 数据文件监听）注入 library 条目
+- ✅ domain-source.test.ts 重写：断言全部 7 域 undefined + 空表 snapshot 返回空数组；CONTEXT.md/spec.md 同步
