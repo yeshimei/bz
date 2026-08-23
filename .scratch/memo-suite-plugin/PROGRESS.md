@@ -9,6 +9,25 @@
 - ✅ **B8 dueScan 失败重试 + 防重复**（src/smartcat/index.ts maybeMemoDueScan）：连续失败（读/解析/落盘）计数，达上限（3 次）当日放弃（不推进日期，等次日/重开重置——unload 清计数、跨天自动重置）；**先推进扫描日期（落盘）再 addObservation**——观察侧 dataSaver 失败已入内存流也不下 tick 重扫重入（杜绝同文案二次入流）。测试：连续 3 失败当日放弃+跨天重置可扫 / 失败 1 次后恢复仅一条
 - ⏳ 待办：真机冒烟（Obsidian 里勾选/取消勾选、抽屉标记完成、编辑保存核对观察条数）
 
+## 2026-08-24 smartcat 观察可信度（ticket 085，ADR-0036）
+
+**状态：全量测试通过 + tsc 0 后提交 worktree/credibility（本条目为开发记录）**
+
+- ✅ **字段（compat 冻结内新增）**：`MemoryStreamEntry.credibility?: number`（0-1，smartcat.json 内存态新增可选字段）——旧数据无该字段宽容，加权处一律 `?? 0.5` 中性，零迁移不重写旧条目；`addInsight` 不写该字段（洞察按中性处理，与旧数据一致）
+- ✅ **来源档位表（memory.ts 纯函数 `ruleCredibility(source, description)`，未知来源缺省 0.5）**：diary/reflection/flash/letter/poem 0.9（亲笔心迹）；memo/favorites/belongings 0.75（明确 UI 意图）；movie/pomodoro 与 domain:library 书架/开始读/读完/时长 0.6（行为动作）；news 阅读/保存与 domain:library 划重点/想法 0.45（停留/标记可误触——实际文案「划了条重点」，正则「划线|重点|想法|移出|移除」同查）；news 跳过/移出书架 0.3（负向/移除 = 0.45 中低档 −0.15）；**负向词通用降档**——描述含「跳过/移出/移除/删除/删掉/取消」再 −0.15（下限 0.25，单次不叠加）；返回值四位小数取整去浮点残差
+- ✅ **打分链**：`scoreImportanceAndEmotion` 返回加 credibility（本地=ruleCredibility）；LLM prompt 加第 3 项「可信度 0-10」→ 返回合法数字覆盖、未返回/非法回落来源档位（省 token）；`shouldCloudScore` 不动；`addObservation` opts 增 `credibility?` 透传（各域 notify 零改动——source 已够）
+- ✅ **加权三处**：① 检索 GA 四因子 +`alphaCredibility`(0.3, MEMORY_CONFIG 常量起步可调)×credibility——低可信度记忆检索下沉；② 反思 evidence 排序键 `importance×(0.5+credibility×0.5)`——低可信度少进反思结论；③ 情绪共振 `applyEmotionResonance(emotion, scale=1)` 差量 ×(m.credibility ?? 0.5)（index onObservation 接线）——低可信度情绪不猛推 PAD；旧条目无字段全部 0.5 兜底不崩
+- ✅ **测试**：tests/smartcat/memory.test.ts 新增 8 用例（档位表全覆盖/负向词降档与下限/本地打分来源档位/LLM 覆盖与非法回落/addObservation 写入与显式覆盖/检索低可信下沉/反思 evidence 排序/旧数据 0.5 中性不迁移）+ mood.test.ts 新增 1 用例（共振 scale ×0.3 缩量，共享数据同性格调制下比值断言）；smartcat 域 85 全绿
+- ✅ **文档**：ADR-0036、CONTEXT.md 记忆流词条补 credibility（字段/档位表/GA 四因子/evidence 排序键/共振缩量）、spec.md 番茄钟区新增 US 14 + 事件监听小节补充 bullet、本条目；兼容冻结未动 smartcat.json 数据格式/观察文案/命令
+- ⏳ 待办：真机冒烟（Obsidian 里核对日记/收藏/跳过/移出书架等动作的 credibility 落库与检索/反思表现）；αc=0.3 与档位值后续按真实使用数据校准
+
+### 085 追加拍板（2026-08-24 用户三连拍板，实现 rev2）
+
+- ✅ **记忆流取消上限**：`MEMORY_CONFIG.maxStream` 移除、`enforceStreamLimit` 删除（addObservation/addInsight 不再调用），任何长度记忆全量保留——理由：检索走向量库 top-N 相关召回（retrieve 只把 topN 条拼进 prompt），不会把全量记忆发给在线 AI 浪费 token，历史记忆越长小橘越懂你，不淘汰；性能边界记入 ADR-0036（stream/vec 随年月增长可接受、retrieve O(n) 毫秒级、反思/日小结只取最近窗口不受总量影响）；memory.ts 头部注释「上限 500 条淘汰」同步改「无上限」；测试「上限与淘汰」改写为「无上限：520 条全量保留 + maxStream 已移除」断言
+- ✅ **不做入流门槛**：「importance×credibility<0.25 不入流」明确不做——所有观察照常入流，靠检索 GA 加权/反思 evidence 排序/情绪共振 scale 区分影响力；ADR-0036 记录
+- ✅ **书库划线/想法权重上调**（ruleCredibility domain:library 按 description 关键词细分，集中 memory.ts 零域改动，未走 consumeLibraryDiff 透传）：想法（excerpts 亲笔批注「写了条/N 条想法」）→ **0.75**（与 memo/favorites 明确意图同级）；划线（highlights「划了条/N 条重点」）0.45 → **0.70**（主动标记重要内容的认知投入）；书架加入/开始读/时长/读完维持 0.60；移出书架维持 0.45→负向降 0.30；测试补细分文案（划了 N 条/写了 N 条想法），LLM 非法回落用例同步改档（0.45→0.75）
+- ✅ **文档同步**：ADR-0036 追加拍板节、ADR-0021 修订注记、CONTEXT.md 记忆流词条、spec.md US 14 + 事件监听 bullet 更新、本小节；测试全绿 + tsc 0
+
 ## 2026-08-24 smartcat 归物本观察（ticket 079，ADR-0032）
 
 **状态：全量测试通过 + tsc 0 后提交 worktree/belongings-observation（本条目为开发记录）**

@@ -29,6 +29,7 @@ importance≥0.7 由 24h 调度固化进长期，「反思」层完全缺失。
    importance 前 50；一次 LLM 生成 3 条洞察（带证据编号）写回流（type=insight + evidenceIds）；
    可递归一级形成洞察树（观察→洞察→高层洞察，树深默认 2，可关）。AI 未配置时反思跳过。
 5. **记忆流上限 500 条**：超出淘汰 importance×使用度最低者（复用原 removeLeastImportance 评分思路）。
+   **【修订 085，ADR-0036 追加拍板】上限取消**：检索走向量库 top-N 相关召回不把全量记忆发在线 AI，历史记忆全量保留不淘汰。
 6. **向量存储豁免「单 json」**：bge-m3 向量存独立文件 `smartcat-memory-vectors.vec`
    （dim uint32 LE + float32 平铺，行序对齐 stream；flash 域同款格式），`smartcat.json` 不内联向量，
    保持小体积。Ollama 不可用（`checkRemoteOllama` 失败）→ 词法 relevance，插件永远可用。

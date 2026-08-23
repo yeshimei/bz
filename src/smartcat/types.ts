@@ -145,6 +145,7 @@ export interface MemoryStreamEntry {
   evidenceIds?: string[]; // 仅 insight：由哪些记忆归纳而来（溯源）
   source?: string;        // 写入来源（如 'chat'）
   emotion?: string;       // 情绪标注（LLM 顺带/词法兜底；情感记忆并入记忆流）
+  credibility?: number;   // 观察可信度 0-1（ADR-0036：来源档位基准 + LLM 可覆盖；旧数据无该字段 → 0.5 中性）
 }
 
 /** 记忆流（单层，检索时分级；ADR-0021 取代原四层） */
