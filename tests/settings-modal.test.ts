@@ -87,6 +87,39 @@ describe('core settings-modal 机制', () => {
     expect(popups.length).toBe(1);
     expect(popups[0].textContent).toContain('新弹窗');
   });
+
+  it('onClose：点遮罩关闭时触发一次', () => {
+    let closed = 0;
+    openSettingsModal({ title: '回调测试', build: () => {}, onClose: () => { closed++; } });
+    const mask = document.getElementById('bz-settings-modal-mask')!;
+    mask.click();
+    expect(closed).toBe(1);
+    // 关闭后遮罩已脱离 DOM，再次 click 不应重复触发
+    mask.click();
+    expect(closed).toBe(1);
+  });
+
+  it('onClose：✕ 与 Esc 关闭均触发；无 onClose 不报错', () => {
+    let closed = 0;
+    openSettingsModal({ title: '回调测试', build: () => {}, onClose: () => { closed++; } });
+    const closeBtn = [...document.querySelectorAll('button')].find((b) => b.textContent === '✕')!;
+    closeBtn.click();
+    expect(closed).toBe(1);
+    openSettingsModal({ title: '回调测试2', build: () => {}, onClose: () => { closed++; } });
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(closed).toBe(2);
+    // 无 onClose 的弹窗正常关闭
+    openSettingsModal({ title: '无回调', build: () => {} });
+    closeSettingsModal();
+    expect(document.getElementById('bz-settings-modal-mask')).toBeNull();
+  });
+
+  it('onClose：被新弹窗顶替时对旧弹窗触发', () => {
+    let oldClosed = 0;
+    openSettingsModal({ title: '旧弹窗', build: () => {}, onClose: () => { oldClosed++; } });
+    openSettingsModal({ title: '新弹窗', build: () => {} });
+    expect(oldClosed).toBe(1);
+  });
 });
 
 describe('备忘录面板 ⚙️ 设置弹窗', () => {

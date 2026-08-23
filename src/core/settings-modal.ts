@@ -17,15 +17,23 @@ export interface SettingsModalOptions {
   emptyText?: string;
   /** 空态二级说明 */
   emptyDesc?: string;
+  /**
+   * 关闭回调：遮罩点击 / ✕ / Esc / 被新弹窗顶替时触发（dispose 后调用一次）。
+   * 域内用它复位打开时置位的状态（如 smartcat 的交互锁——否则移动端长按开设置
+   * 再关闭后，isSettingsOpen 卡在 true，拖拽永久失效）。
+   */
+  onClose?: () => void;
 }
 
-let currentModal: { mask: HTMLElement; popup: HTMLElement; dispose: () => void } | null = null;
+let currentModal: { mask: HTMLElement; popup: HTMLElement; dispose: () => void; onClose?: () => void } | null = null;
 
-/** 关闭当前设置弹窗（无则静默） */
+/** 关闭当前设置弹窗（无则静默）；触发该弹窗的 onClose（至多一次） */
 export function closeSettingsModal(): void {
   if (currentModal) {
-    currentModal.dispose();
+    const m = currentModal;
     currentModal = null;
+    m.dispose();
+    m.onClose?.();
   }
 }
 
@@ -87,6 +95,7 @@ export function openSettingsModal(opts: SettingsModalOptions): void {
   currentModal = {
     mask,
     popup,
+    onClose: opts.onClose,
     dispose: () => {
       mask.remove();
       popup.remove();
