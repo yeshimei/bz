@@ -556,9 +556,15 @@ export const UIManager = {
     const editingId = this.addEditingId;
     const dueValue = dueInput.value || null;
     // ticket 075（方法监听）：编辑 α 合并需旧值——保存前从已加载列表取（或 showAddDialog 的 editItem）
-    const oldItem = editingId ? App.state.todoItems.find((i) => i.id === editingId) : undefined;
+    let oldItem = editingId ? App.state.todoItems.find((i) => i.id === editingId) : undefined;
     try {
       if (editingId) {
+        // ticket 084a B7：状态列表旧值缺失（并发刷新/其他入口改动）→ 落盘读一次兜底，
+        // 保证编辑观察不静默丢失；落盘也没有 → 见下方「明确跳过」注释
+        if (!oldItem) {
+          const disk = (await DataManager.read()) as any[];
+          oldItem = disk.find((d: any) => d.id === editingId);
+        }
         await DataManager.updateItem(editingId, {
           title: finalTitle,
           scene,
@@ -572,6 +578,7 @@ export const UIManager = {
           url: finalUrl,
         } as any);
         // ticket 075（方法监听）：编辑动作观察（α 合并一条；无变化 memo-source 返回 null 不产出）
+        // ticket 084a B7：兜底后仍无旧值（极窄竞态，此时 updateItem 应已抛错）→ 明确跳过编辑观察
         if (oldItem) {
           notifyMemoAction({
             kind: 'edited',
@@ -1009,17 +1016,32 @@ export const Renderer = {
       checkbox.type = 'checkbox';
       checkbox.checked = !!item.completed;
       checkbox.disabled = !!item.completed;
-      checkbox.onchange = async () => {
-        if (checkbox.checked) {
-          card.style.transition = 'opacity 0.3s';
-          card.style.opacity = '0.5';
-          setTimeout(async () => {
-            await DataManager.completeItem(item.id);
-            // ticket 075（方法监听）：完成观察（去抖 300ms 内，放 completeItem 调用处）
-            notifyMemoAction({ kind: 'completed', title: item.title });
-            App.refresh();
-          }, 300);
+      // ticket 084a A1：checkbox 真防抖——每次 onChange 清旧 timer 重设；
+      // 取消勾选清 timer 不通知（反悔失效修复）；回调内「当前仍勾选」二次校验；
+      // 与抽屉「标记完成」同条目互斥由 notify 侧近 300ms 防重兜底（B6，smartcat/index.ts）
+      let completeTimer: ReturnType<typeof setTimeout> | null = null;
+      checkbox.onchange = () => {
+        if (completeTimer) {
+          clearTimeout(completeTimer);
+          completeTimer = null;
         }
+        if (!checkbox.checked) {
+          // 取消勾选：清 timer 不通知，恢复卡片透明度
+          card.style.transition = '';
+          card.style.opacity = '';
+          return;
+        }
+        card.style.transition = 'opacity 0.3s';
+        card.style.opacity = '0.5';
+        completeTimer = setTimeout(async () => {
+          completeTimer = null;
+          // 二次校验：防抖窗口内已取消勾选 → 不误发完成通知
+          if (!checkbox.checked) return;
+          await DataManager.completeItem(item.id);
+          // ticket 075（方法监听）：完成观察（防抖到点且仍勾选才发；重复由 notify 侧防重拦截）
+          notifyMemoAction({ kind: 'completed', title: item.title });
+          App.refresh();
+        }, 300);
       };
       card.appendChild(checkbox);
     }

@@ -91,4 +91,25 @@ describe('notifyMovieAction（影视动作观察，方法监听）', () => {
     void vi; // 保持 vi 引用（测试风格一致性）
     expect(after).toBe(before);
   });
+
+  it('B6 防重：同事件同 key 近 300ms 只发一次（双击确认防重）；payload 不同不误伤', async () => {
+    const { app } = makeApp();
+    await ensureSmartCat(app);
+    const data: any = __getSmartcatInternals().data;
+    const before = data.memory.stream.length;
+    // 双击「已看」确认 → 重复 status 事件只入流一次
+    notifyMovieAction({ kind: 'status', name: '美丽人生', from: 'watching', to: 'watched' });
+    notifyMovieAction({ kind: 'status', name: '美丽人生', from: 'watching', to: 'watched' });
+    await settle();
+    expect(data.memory.stream.length).toBe(before + 1);
+    // payload 不同不误伤：紧随其后的改分事件正常入流（同 key 判定含 payload）
+    notifyMovieAction({ kind: 'rated', name: '美丽人生', fromRating: 4, toRating: 4.5 });
+    await settle();
+    expect(data.memory.stream.length).toBe(before + 2);
+    // 窗口外（>300ms）同事件可再次入流（防重不锁死）
+    await new Promise((r) => setTimeout(r, 320));
+    notifyMovieAction({ kind: 'status', name: '美丽人生', from: 'watching', to: 'watched' });
+    await settle();
+    expect(data.memory.stream.length).toBe(before + 3);
+  });
 });

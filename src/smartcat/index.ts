@@ -866,6 +866,9 @@ export function unloadSmartCat(): void {
     vaultRefs = [];
   }
   lastActivity.clear();
+  // ticket 084a B6/B8：通知防重时间表 + 到期扫描失败计数（重开即重置）
+  notifyLastAt.clear();
+  memoDueScanFail = { date: '', count: 0 };
   // 聚合讯保存待补全登记（ticket 076）：定时器全清 + 表清空 + 降级等待复位
   for (const reg of newsPendingSaves.values()) clearTimeout(reg.timer);
   newsPendingSaves.clear();
@@ -944,12 +947,55 @@ export function __getSmartcatInternals(): any {
 
 // ------------- 影视动作观察（ticket 074 修订：方法监听，ADR-0026） -------------
 
+// ------------- 通知防重（ticket 084a B6） -------------
+
+/** 通知侧轻量防重：同事件同 key 近 300ms 只发一次（双击确认、勾选完成与抽屉「标记完成」双入口等
+ *  重复触发）；模块级 Map（内存态不落盘，unload 全清）。payload 敏感——同一影视先后两次
+ *  不同评分/影评的事件互不误伤；仅完全相同的重复事件被拦截。 */
+const notifyLastAt = new Map<string, number>();
+const NOTIFY_DEDUPE_MS = 300;
+
+/** true = 近窗口内已发过同 key（本次丢弃）；false = 放行并记录本次时间 */
+function notifyDeduped(kind: string, discriminator: string): boolean {
+  const key = `${kind}\u0001${discriminator}`;
+  const now = Date.now();
+  const last = notifyLastAt.get(key) ?? 0;
+  if (now - last < NOTIFY_DEDUPE_MS) return true;
+  notifyLastAt.set(key, now);
+  return false;
+}
+
+/** 影视事件判别键（同事件同 key 判定） */
+function movieActionKey(evt: MovieActionEvent): string {
+  switch (evt.kind) {
+    case 'created': return `${evt.name}|${evt.status}`;
+    case 'status': return `${evt.name}|${evt.from}|${evt.to}`;
+    case 'rated': return `${evt.name}|${evt.fromRating}|${evt.toRating}`;
+    case 'review': return `${evt.name}|${evt.fromReview || ''}|${evt.toReview || ''}`;
+    case 'deleted': return evt.name;
+  }
+}
+
+/** 备忘录事件判别键（同事件同 key 判定） */
+function memoActionKey(evt: MemoActionEvent): string {
+  switch (evt.kind) {
+    case 'added': return evt.title;
+    case 'edited': return `${evt.old.title}|${evt.next.title}`;
+    case 'completed': case 'restored': case 'deleted': return evt.title;
+    case 'postponed': return `${evt.title}|${evt.due}`;
+    case 'priority': return `${evt.title}|${evt.to}`;
+  }
+}
+
 /** 影视动作观察入口：movie 域 UI 确认回调调用（fire-and-forget）。
  *  未初始化 / 未启用（noteSource 关）→ 静默；文案构造见 movie-source.buildMovieActionText。 */
 export function notifyMovieAction(evt: MovieActionEvent): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
   const text = buildMovieActionText(evt);
-  if (text) void memorySystem.addObservation(text, { source: 'movie' });
+  if (!text) return;
+  // B6（ticket 084a）：同事件同 key 近 300ms 防重（双击确认等重复触发）
+  if (notifyDeduped(evt.kind, movieActionKey(evt))) return;
+  void memorySystem.addObservation(text, { source: 'movie' });
 }
 
 // ------------- 备忘录动作观察（ticket 075：方法监听 + 每日到期扫描） -------------
@@ -959,7 +1005,10 @@ export function notifyMovieAction(evt: MovieActionEvent): void {
 export function notifyMemoAction(evt: MemoActionEvent): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
   const text = buildMemoActionText(evt);
-  if (text) void memorySystem.addObservation(text, { source: 'memo' });
+  if (!text) return;
+  // B6（ticket 084a）：同事件同 key 近 300ms 防重（勾选完成与抽屉「标记完成」双入口/双击等）
+  if (notifyDeduped(evt.kind, memoActionKey(evt))) return;
+  void memorySystem.addObservation(text, { source: 'memo' });
 }
 
 /** memo.json 路径（跟随共享 storagePath，同 getSmartcatFilePath 目录规则） */
@@ -982,28 +1031,41 @@ function getDueScanState(): { date: string } {
   return { date: typeof s.date === 'string' ? s.date : '' };
 }
 
+/** 到期扫描连续失败计数（ticket 084a B8）：同一天连续失败达上限 → 当日放弃（不推进日期，
+ *  下次 tick 直接跳过）；重开（unload 清空）或跨天（日期变化）自动重置。 */
+let memoDueScanFail = { date: '', count: 0 };
+const memoDueScanMaxFails = 3;
+
 /** 每日到期扫描（并入 30s 反射调度 tick；用户拍板：每天只扫一次，合并成一条观察）：
  *  当天已扫过跳过（不空转）；读 memo.json（vault.read，不动 memo 域）→ memoDueObservation
  *  （今天到期且未完成，≤5 截断合并一条）→ addObservation(source 'memo')；
  *  扫描日期持久化 editingData.dueScan（跨重启去重；旧数据无该字段容忍）。
+ *  B8：先推进扫描日期再观察——addObservation 内部 dataSaver 失败时观察已入内存流，
+ *  若下 tick 重扫会把同文案二次入流；日期先落盘 → 观察侧任何后续失败也跳过当天重扫（杜绝重复）；
+ *  读取/解析/落盘失败 → 记连续失败计数，达到上限当日放弃（不再每 30s 无限重试）。
  *  now 可注入（集成测试模拟跨天用；生产由调度以实际时间调用）。 */
 export async function maybeMemoDueScan(now: Date = new Date()): Promise<void> {
   if (!initialized || !appRef || !memorySystem || !data?.config?.noteSource) return;
   const today = memoTodayStr(now);
   if (getDueScanState().date === today) return; // 当天已扫过
+  // B8：跨天重置失败计数；连续失败达到上限 → 当日放弃（不推进日期，等次日/重开再扫）
+  if (memoDueScanFail.date !== today) memoDueScanFail = { date: today, count: 0 };
+  if (memoDueScanFail.count >= memoDueScanMaxFails) return;
   try {
     const file = appRef.vault.getAbstractFileByPath(getMemoDataPath());
     if (!file) return; // memo 域未启用（无 memo.json）：静默，不推进扫描日期（等 memo 数据出现再扫）
     const raw = JSON.parse(await appRef.vault.read(file as any));
     const items: MemoDueLike[] = Array.isArray(raw) ? (raw as any[]) : [];
     const text = memoDueObservation(items, now);
-    if (text) await memorySystem.addObservation(text, { source: 'memo' });
-    // 推进扫描日期（无论有无产出——当天已扫过，跨重启不再重扫）
+    // B8 防重复：先推进扫描日期（落盘）再观察——如上注释，任何后续失败也跳过当天重扫
     const d = dataProvider();
     d.editingData = { ...(d.editingData || {}), dueScan: { date: today } };
     await dataSaver(d);
+    if (text) await memorySystem.addObservation(text, { source: 'memo' });
+    memoDueScanFail = { date: today, count: 0 };
   } catch (e) {
-    /* 读取/解析失败静默：不推进日期（下次 tick 重试） */
+    /* 读取/解析/日期落盘失败：不推进日期，记连续失败计数——达到上限当日放弃（下次 tick 不再重试） */
+    memoDueScanFail = { date: today, count: memoDueScanFail.count + 1 };
   }
 }
 

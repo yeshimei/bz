@@ -94,6 +94,24 @@ describe('notifyMemoAction（备忘录动作观察，方法监听）', () => {
     unloadSmartCat();
     expect(() => notifyMemoAction({ kind: 'deleted', title: '写周报' })).not.toThrow();
   });
+
+  it('B6 防重：同事件同 key 近 300ms 只发一次（勾选完成与抽屉「标记完成」双入口互斥）', async () => {
+    const { app } = makeApp();
+    await ensureSmartCat(app);
+    const data: any = __getSmartcatInternals().data;
+    const before = data.memory.stream.length;
+    // checkbox 300ms 防抖到点 + 抽屉「标记完成」重复触发 → 同 key 只入流一次
+    notifyMemoAction({ kind: 'completed', title: '写周报' });
+    notifyMemoAction({ kind: 'completed', title: '写周报' });
+    await settle();
+    expect(data.memory.stream.length).toBe(before + 1);
+    // 窗口外（>300ms）同事件可再发；不同标题不误伤
+    await new Promise((r) => setTimeout(r, 350));
+    notifyMemoAction({ kind: 'completed', title: '买菜' });
+    notifyMemoAction({ kind: 'completed', title: '写周报' });
+    await settle();
+    expect(data.memory.stream.length).toBe(before + 3);
+  });
 });
 
 describe('maybeMemoDueScan（每日到期扫描）', () => {
@@ -158,5 +176,47 @@ describe('maybeMemoDueScan（每日到期扫描）', () => {
     await settle();
     expect(data.memory.stream.length).toBe(before);
     expect(data.editingData?.dueScan).toBeUndefined();
+  });
+
+  it('B8：连续 3 次读取失败 → 当日放弃（文件修复后同天不再扫）；跨天重置可再扫', async () => {
+    const { app, vault } = makeApp();
+    vault.files.set('CONFIG/STORAGE/memo.json', 'not-json'); // 读取解析失败路径
+    await ensureSmartCat(app);
+    const data: any = __getSmartcatInternals().data;
+    const before = data.memory.stream.length;
+    for (let i = 0; i < 3; i++) await maybeMemoDueScan(DAY1); // 连续失败 3 次
+    await settle();
+    expect(data.editingData?.dueScan).toBeUndefined(); // 失败不推进日期
+    // 文件恢复正常 + 同天第 4 次 → 当日放弃（不再扫，不产出不推进）
+    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
+      { id: '1', title: '写周报', due: '2026-08-26 18:00', completed: null }, // 属 DAY2 当天（跨天验证用）
+    ]));
+    await maybeMemoDueScan(DAY1);
+    await settle();
+    expect(data.memory.stream.length).toBe(before);
+    expect(data.editingData?.dueScan).toBeUndefined();
+    // 跨天（DAY2）→ 失败计数重置 → 正常扫描产出
+    const DAY2 = new Date(2026, 7, 26, 9, 0);
+    await maybeMemoDueScan(DAY2);
+    await settle();
+    expect(data.memory.stream[data.memory.stream.length - 1].description).toBe('你有 1 个待办今天到期：写周报（18:00）');
+    expect(data.editingData.dueScan).toEqual({ date: '2026-08-26' });
+  });
+
+  it('B8：失败 1 次后文件恢复 → 重试成功且仅一条（不重复入流）', async () => {
+    const { app, vault } = makeApp();
+    vault.files.set('CONFIG/STORAGE/memo.json', 'not-json');
+    await ensureSmartCat(app);
+    const data: any = __getSmartcatInternals().data;
+    await maybeMemoDueScan(DAY1); // 失败（计数 1）
+    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
+      { id: '1', title: '写周报', due: '2026-08-25 18:00', completed: null },
+    ]));
+    await maybeMemoDueScan(DAY1); // 重试成功
+    await settle();
+    expect(data.editingData.dueScan).toEqual({ date: '2026-08-25' });
+    const memoOnes = data.memory.stream.filter((m: any) => m.source === 'memo');
+    expect(memoOnes.length).toBe(1);
+    expect(memoOnes[0].description).toBe('你有 1 个待办今天到期：写周报（18:00）');
   });
 });

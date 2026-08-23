@@ -599,6 +599,11 @@ export function closeEditModal(): void {
   }
 }
 
+/** 【待接线】ticket 084a B5：影视编辑弹窗，当前无生产调用点（死代码，仅测试直调）。
+ *  本弹窗确认回调可改 状态/评分/观影日期/影评 但零 notifyMovieAction。
+ *  若未来启用：确认回调 processFrontMatter 落盘后，按电影名对齐 5 挂点模式补
+ *  notifyMovieAction({ kind: 'status' | 'rated' | 'review', name: item.name, ... })，
+ *  接线完成后再移除本注释（复用 300ms 防重，B6）。 */
 export function openEditModal(item: any, app: App): void {
   if (M.editOverlay) {
     closeEditModal();
