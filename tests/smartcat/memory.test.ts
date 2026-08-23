@@ -362,7 +362,7 @@ describe('H4 记忆内容安全契约（087，ADR-0037：数据非指令边界 +
     expect(sanitizeEmotion('Happy')).toBe('happy');
     expect(sanitizeEmotion('grateful')).toBe('grateful');
     expect(sanitizeEmotion('superhappy')).toBeUndefined();
-    expect(sanitizeEmotion('upset')).toBeUndefined(); // LLM 旧 8 类里的 upset 不在 EMOTION_VAD（H3 范围外）
+    expect(sanitizeEmotion('upset')).toBe('upset'); // H3/096：EMOTION_VAD 已补 upset 等 5 类，白名单放行
     expect(sanitizeEmotion('')).toBeUndefined();
     expect(sanitizeEmotion(null)).toBeUndefined();
     expect(sanitizeEmotion(123)).toBeUndefined();

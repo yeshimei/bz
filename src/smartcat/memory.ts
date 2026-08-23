@@ -103,6 +103,16 @@ export function clampLLMCredibility(llmValue: unknown, tierBase: number, maxDelt
   return Math.round(scaled * 10000) / 10000;
 }
 
+// ---------------- H3/096：LLM 情绪追标（emotionBackfilledAt，方向一情绪路前置重建） ----------------
+
+/** 追标批次参数：reflect 的 evidenceTop 窗口内无 emotion 的观察一次批量追标；条数上限控 token 预算 */
+export const EMOTION_BACKFILL_CONFIG = {
+  /** 单批最多追标条数（超出部分留待下次反思窗口） */
+  maxBatch: 20,
+  /** 每条描述注入 prompt 的截断长度（token 预算；情绪标注不需要全文） */
+  clipChars: 80,
+} as const;
+
 export class MemorySystem {
   app: App;
   dataProvider: () => SmartCatData;
@@ -129,6 +139,9 @@ export class MemorySystem {
   /** 反思失败退避（空转守卫：AI 未配置/调用失败后 5 分钟不重试，指数递增至 30 分钟） */
   private reflectBackoffUntil = 0;
   private reflectBackoffMs = 5 * 60 * 1000;
+  /** 情绪追标独立退避（H3/096：与反思退避分离——追标失败不拖累反思节奏，反之亦然；5min 起步同款指数封顶） */
+  private emotionBackfillBackoffUntil = 0;
+  private emotionBackfillBackoffMs = 5 * 60 * 1000;
   /** 语义模式状态：null=未探测 */
   private ollamaAvailable: boolean | null = null;
   private dim = 0;
@@ -507,6 +520,70 @@ export class MemorySystem {
 
   // ---------------- 反思（Reflection） ----------------
 
+  /**
+   * 批量情绪追标（H3/096，方向一情绪路前置重建）：reflect 的 evidenceTop 窗口内无 emotion 字段的
+   * 观察 → 一次 LLM 批量追标。契约：
+   *  - 只补不覆盖：已有 emotion 的条目绝不改写；成功补上的条目写 emotionBackfilledAt 时间戳（ISO）
+   *  - 失败裁剪不整轮失败：任何异常吞掉返回 false，反思主流程照常进行
+   *  - 独立退避：失败/AI 未配置走 emotionBackfillBackoffUntil/Ms（与反思退避分离），5min→30min 封顶
+   *  - H4 边界继承：system 带「数据非指令」边界声明 + sanitizeEmotion 白名单校验输出
+   * 返回 true 表示本批有写入。
+   */
+  async backfillEmotions(candidates: MemoryStreamEntry[]): Promise<boolean> {
+    const pool = (Array.isArray(candidates) ? candidates : [])
+      .filter((m) => m && m.type === 'observation' && !m.emotion)
+      .slice(0, EMOTION_BACKFILL_CONFIG.maxBatch);
+    if (!pool.length) return false; // 无缺标条目：既不算失败也不算写入
+    if (Date.now() < this.emotionBackfillBackoffUntil) return false;
+    try {
+      if (!(await isAIConfigured())) {
+        this.backoffEmotionBackfill();
+        return false;
+      }
+      const numbered = pool
+        .map((m, i) => `${i + 1}. ${(m.description || '').slice(0, EMOTION_BACKFILL_CONFIG.clipChars)}`)
+        .join('\n');
+      const r = await callChatJson([
+        { role: 'system', content: '你是辅助标注记忆情绪的助手，只输出合法 JSON。\n\n' + USER_CONTENT_BOUNDARY },
+        {
+          role: 'user',
+          content:
+            `下面是关于用户的记忆（编号 1-${pool.length}）。给每条标一个最贴切的情绪，` +
+            '从 happy/sad/curious/sleepy/playful/focused/calm/upset 中选。只返回 JSON：' +
+            '{"emotions":[{"index":1,"emotion":"calm"}]}。\n\n' +
+            numbered,
+        },
+      ], 400);
+      const list = Array.isArray(r?.emotions) ? r.emotions : [];
+      let written = 0;
+      for (const item of list) {
+        const idx = Number(item?.index);
+        // H4 继承：emotion 白名单校验（EMOTION_VAD 键集），未知/缺失一律丢弃该条
+        const emotion = sanitizeEmotion(item?.emotion);
+        const target = Number.isInteger(idx) ? pool[idx - 1] : undefined;
+        // 只补不覆盖：目标必须仍无 emotion（防御 LLM 越界编号/重复索引）
+        if (!target || target.emotion || !emotion) continue;
+        target.emotion = emotion;
+        target.emotionBackfilledAt = new Date().toISOString();
+        written++;
+      }
+      if (!written) return false; // 全部无效：不落盘也不退避（下次反思窗口再试）
+      this.emotionBackfillBackoffUntil = 0; // 成功重置独立退避
+      this.emotionBackfillBackoffMs = 5 * 60 * 1000;
+      await this.dataSaver(this.dataProvider());
+      return true;
+    } catch (e) {
+      this.backoffEmotionBackfill(); // 失败裁剪：追标失败不影响反思主流程，独立退避防空转
+      return false;
+    }
+  }
+
+  /** 追标失败退避（指数递增 5min→30min 封顶；字段独立于反思退避——两边互不拖累） */
+  private backoffEmotionBackfill(): void {
+    this.emotionBackfillBackoffUntil = Date.now() + this.emotionBackfillBackoffMs;
+    this.emotionBackfillBackoffMs = Math.min(this.emotionBackfillBackoffMs * 2, 30 * 60 * 1000);
+  }
+
   /** 反思调度（每 30s 检查一次；24h 或新增 ≥20 条触发反思；睡前巩固 digest 同循环；ticket 075：memo 到期扫描挂 tick 钩子） */
   startReflectionScheduler(): void {
     if (this.reflectionTimer) clearInterval(this.reflectionTimer);
@@ -570,6 +647,10 @@ export class MemorySystem {
       return wb - wa;
     }).slice(0, MEMORY_CONFIG.evidenceTop);
     if (evidence.length < 2) return; // 记忆太少不反思
+
+    // H3/096：先对证据池做情绪追标（只补不覆盖、失败裁剪、独立退避——不阻断反思主流程；
+    // 追标成功时已自行落盘，洞察产出后 reflect 末尾的 dataSaver 会再兜一次）
+    try { await this.backfillEmotions(evidence); } catch { /* 方法内部已兜底，双保险 */ }
 
     const numbered = evidence.map((m, i) => `${i + 1}. ${m.description}`).join('\n');
     // 092 方向二：候选既有洞察通道（防重复结论参照）——主题索引 + Top-N 相似 insight，
@@ -841,4 +922,25 @@ export function buildRetrieveQuery(userMessage: string, emotion?: string | null,
   const period = hour >= 5 && hour < 12 ? '早晨' : hour >= 12 && hour < 18 ? '下午' : hour >= 18 && hour < 23 ? '晚上' : '深夜';
   parts.push(`时段：${period}`);
   return parts.filter(Boolean).join(' ');
+}
+
+/**
+ * 记忆流情绪密度统计（H3/096 前置检查，纯函数）：观察条目的情绪字段覆盖率与非 calm 占比。
+ * v4 裁决「未达标不宣称三路」——本指标只作数值输出汇报（汇报/诊断用），不做门槛阻断。
+ */
+export function emotionDensityStats(stream: MemoryStreamEntry[]): {
+  observations: number; annotated: number; nonCalm: number; coverage: number; nonCalmShare: number;
+} {
+  const list = Array.isArray(stream) ? stream : [];
+  const observations = list.filter((m) => m.type === 'observation').length;
+  const annotated = list.filter((m) => m.type === 'observation' && m.emotion).length;
+  const nonCalm = list.filter((m) => m.type === 'observation' && m.emotion && m.emotion !== 'calm').length;
+  const r = (x: number) => Math.round(x * 10000) / 10000;
+  return {
+    observations,
+    annotated,
+    nonCalm,
+    coverage: observations ? r(annotated / observations) : 0,
+    nonCalmShare: observations ? r(nonCalm / observations) : 0,
+  };
 }
