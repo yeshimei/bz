@@ -207,6 +207,8 @@ export function openSmartcatSettings(opts: {
   saveConfig: (config: any) => Promise<void>;
   settingsKeys: { enabled: boolean; mobileFullscreen: boolean };
   setMobileFullscreen: (v: boolean) => Promise<void>;
+  /** 弹窗关闭回调（遮罩/✕/ESC）：index 用它复位 interaction.isSettingsOpen 交互锁 */
+  onClose?: () => void;
   getPersonalityGrowth?: () => any;
   resetPersonalityGrowth?: () => Promise<void>;
   /** 最近一周懂你报告（index 从记忆流取；无 → 提示尚未生成） */
@@ -214,26 +216,45 @@ export function openSmartcatSettings(opts: {
   /** 数据面板移动端全屏（ticket 071：bz-smartcat-dashboard 主窗口设置行，仅移动端显示） */
   getDashboardMobileFullscreen?: () => boolean;
   setDashboardMobileFullscreen?: (v: boolean) => Promise<void>;
+  /** 选皮肤即时生效（换色块后立刻切猫容器皮肤类，不必重载插件） */
+  onAppearanceChanged?: (appearance: Appearance) => void;
 }): void {
   const config = opts.getConfig();
   openSettingsModal({
     title: '小橘设置',
+    onClose: opts.onClose,
     build: (el) => {
+      // 外观：平铺色块选择器（13 皮肤，色块取自各皮肤主渐变；点击即换+落盘）
       new Setting(el)
         .setName('外观')
-        .setDesc('猫咪皮肤')
-        .addDropdown((dd: any) => {
-          for (const skin of SKINS) dd.addOption(skin, skinLabel(skin));
-          dd.setValue(config.appearance);
-          dd.onChange(async (v: string) => {
-            config.appearance = v;
-            await opts.saveConfig(config);
-          });
+        .setDesc('点击色块切换猫咪皮肤');
+      const grid = document.createElement('div');
+      grid.className = 'bz-sc-skin-grid';
+      for (const skin of SKINS) {
+        const item = document.createElement('button');
+        item.className = 'bz-sc-skin-item' + (skin === config.appearance ? ' active' : '');
+        item.dataset.skin = skin;
+        const swatch = document.createElement('span');
+        swatch.className = 'bz-sc-skin-swatch bz-sc-skin-swatch-' + skin;
+        const name = document.createElement('span');
+        name.className = 'bz-sc-skin-name';
+        name.textContent = skinLabel(skin);
+        item.appendChild(swatch);
+        item.appendChild(name);
+        item.addEventListener('click', async () => {
+          if (config.appearance === skin) return;
+          config.appearance = skin;
+          for (const n of Array.from(grid.querySelectorAll('.bz-sc-skin-item'))) n.classList.toggle('active', n === item);
+          await opts.saveConfig(config);
+          opts.onAppearanceChanged?.(skin);
         });
+        grid.appendChild(item);
+      }
+      el.appendChild(grid);
 
-      // ADR-0023：人格成长可视化（OCEAN 5 轴 + 关键特质条形；替代预设 5 选 1）
+      // ADR-0023：人格成长可视化（OCEAN 5 轴 + 关键特质条形）；2026-08-23 用户拍板：移动端不显示人格数据列表
       const g = opts.getPersonalityGrowth?.();
-      if (g) {
+      if (g && !isMobileEnv()) {
         const panelEl = el.createDiv({ cls: 'bz-sc-personality-panel' });
         const bar = (label: string, v: number) =>
           `<div class="bz-sc-trait-row"><span class="bz-sc-trait-name">${label}</span>` +
