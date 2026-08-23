@@ -87,6 +87,7 @@
 
 - 分支 master；提交格式 `bz: ticket NN <域> 完成——<要点>，N 测试`；chore/fix 用于杂务；每 ticket 一次提交（测试全绿后）。
 - **任务完成后必提交**：本 agent 每完成一个任务（ticket / 独立修复 / 文档改动）且测试全绿后，**立即 git 提交，不积压、不攒批**；工作区若有他人/并行未完成的改动，仅暂存本任务相关文件（`git add` 指定路径；settings.ts 之类被多任务共改的文件按 hunk 拆分暂存），其余改动原样保留，不得混入本提交。
+- **任务 worktree 流程（DSH）**：会话开始用 `worktree_create` 建任务 worktree（分支名统一 `worktree/` 开头自拟 slug，如 `worktree/smartcat-drag-fix`；路径 `<仓库>/.dsh-worktrees/worktree/<分支名>`），本任务全部改动在 worktree 内进行，不在主工作区散落。流程：worktree 内改代码/测试全绿 → 按上条提交到 `worktree/*` 分支 → **合并回主分支**：在主工作区（master 检出处）`git merge worktree/<名字>`（自动合并；主工作区他人未提交改动原样保留、不混入）→ 合并后在主工作区复跑目标测试，再走下条构建部署（纯文档改动可免）。收尾主动提醒用户清理，给两条命令二选一：`/worktree remove <名字> --force`（已合并完毕，强制删除该 worktree 与分支）或 `/worktree bring-back <名字>`（把改动并入主工作区并保留 checkout）。
 - **任务完成后必构建部署**：提交后运行 `npm run build`，产物直出插件目录（`E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`，esbuild.config.mjs 硬编码），随后核对插件目录 `main.js`/`styles.css` 时间戳为新且内容含本次变更（如 `Select-String` 特征串），确认部署完成；用户需在 Obsidian 重载插件后生效。
 - spec 驱动：`.scratch/memo-suite-plugin/spec.md`（59KB，命令 id 全清单/设置项总表/样式/降级链）是唯一事实源，先改 spec。
 - ticket 驱动：`.scratch/memo-suite-plugin/issues/NN-<slug>.md`（01-32），头部 `Status:` 记 triage（docs/agents/triage-labels.md）。
