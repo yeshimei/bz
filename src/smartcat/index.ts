@@ -1246,6 +1246,7 @@ export function notifyFavoritesAction(evt: FavoritesActionEvent): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
   const text = buildFavoritesActionText(evt);
   if (text) void memorySystem.addObservation(text, { source: 'favorites' });
+}
 
 // ------------- 归物本动作观察（ticket 079：方法监听，ADR-0032） -------------
 
@@ -1256,6 +1257,7 @@ export function notifyBelongingsAction(evt: BelongingsActionEvent): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
   const text = buildBelongingsActionText(evt);
   if (text) void memorySystem.addObservation(text, { source: 'belongings' });
+}
 
 // ------------- 番茄钟动作观察（ticket 080：方法监听） -------------
 
