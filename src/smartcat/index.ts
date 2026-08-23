@@ -23,6 +23,7 @@ import { classifyPath, observationText } from './context-source';
 import { buildMovieActionText, type MovieActionEvent } from './movie-source';
 import { buildMemoActionText, memoDueObservation, type MemoActionEvent, type MemoDueLike } from './memo-source';
 import { parseDiaryFile, decideDiarySettle, diaryDeleteText, diaryDeleteFileText, type DiaryEntryLike } from './diary-source';
+import { noteFirstText, noteDeleteText, noteFileName, noteBodyText, parseNoteDate, letterReadonly, decideNoteSettle, type NoteKind } from './note-source';
 import { DIARY_DIRECTORY } from '../diary/config';
 
 import { buildBelongingsActionText, type BelongingsActionEvent } from './belongings-source';
@@ -88,6 +89,26 @@ const diaryTimers = new Map<string, DiaryTimerState>();
 const diaryTracked = new Map<string, Map<string, { body: string; tags: string[] }>>();
 /** 结算静置时长（默认 10 分钟；测试可注入缩短） */
 let diarySettleMs = 10 * 60 * 1000;
+/** 卡片盒/现代诗/信 观察计时表（ticket 083，ADR-0035；v2 差异观察 + v3 真实日期 + v4 readonly 准入）：
+ *  key = filePath → 该篇结算状态。「每篇文件独立 10 分钟结算」（对齐日记模型，per-file 简化版）：
+ *  该篇任何修改重置计时；静置到期 → 结算产出观察（首落有字 / 正文有变化 → 段落 diff 摘要）。
+ *  内存态不落盘（smartcat.json 零改动）；unload 全清。 */
+interface NoteTimerState {
+  timer: ReturnType<typeof setTimeout> | null;
+  kind: NoteKind;
+  /** 是否已进入「已生成」分支（重启基线有字文件视为已见——防重启后旧文件被当首次；v2 无累计阈值） */
+  generated: boolean;
+  /** 上次结算时的正文基线（diff 基准；每次结算后推进到当前正文全文） */
+  baseline: string;
+  /** 首落是否已处理（产出或确定不产）。基线预置=false → 存量信/诗首次修改先补带日期首落再产 diff（v3）；
+   *  首落产出或无日期跳过（诗）后置 true。 */
+  observed: boolean;
+}
+const noteTimers = new Map<string, NoteTimerState>();
+/** 三域文件最近一次快照（modify diff / delete 感知、日期缓存）：filePath → {kind, body 全文, date}；内存态 */
+const noteTracked = new Map<string, { kind: NoteKind; body: string; date: string | null }>();
+/** 结算静置时长（默认 10 分钟；测试可注入缩短） */
+let noteSettleMs = 10 * 60 * 1000;
 /** 条目 key 分隔符（filePath / date / time 三段，控制字符防与路径字符冲突） */
 const DIARY_KEY_SEP = '\u0001';
 let visibilityCleanup: (() => void) | null = null;
@@ -250,6 +271,15 @@ export async function ensureSmartCat(app: App): Promise<void> {
       await handleDiaryVaultActivity(file);
       return;
     }
+    // 卡片盒/现代诗/信 观察改走新链路（ticket 083，ADR-0035）：每篇文件独立 10 分钟结算——
+    // 替换原 observationText 快照分支（flash/poem/letter 的 observationText 分支不再被触发）；
+    // 原三域 10 分钟去弹跳、机械去簇、信任成长不再执行；PAD 正向轻推（note_create）照旧保留
+    // （对齐日记分支写法：新链路自带 per-file 计时，无需机械去簇防批量）。
+    if (kind === 'flash' || kind === 'poem' || kind === 'letter') {
+      if (moodSystem) moodSystem.handleInteraction('note_create' as any, 0.5);
+      await handleNoteVaultActivity(file);
+      return;
+    }
 
     // 收藏本动作改由方法监听（ticket 078）：favorites 是 JSON 数据域本不产 vault 事件，防御性短接
     if (kind === 'favorites') return;
@@ -273,18 +303,13 @@ export async function ensureSmartCat(app: App): Promise<void> {
     batchWindow.push({ path: file.path, t: now });
     const distinct = new Set(batchWindow.map((b) => b.path)).size;
     const mechanical = distinct >= 5;
-    // 信任成长：仅 flash（diary 已走 ticket 077 新链路，早退于上——不再计入信任成长）
-    if (kind === 'flash') {
-      if (!mechanical) {
-        personalityGrowth.developBasedOnInteraction(kind, 0.3, 0.02, 0.15).catch(() => {});
-      }
-    }
+    // 信任成长：此点之后不再有 flash（ticket 083 已早退于上——flash/poem/letter 三域信任成长不再执行，
+    // 对齐日记 077 的处理；此处信任成长仅剩 reading 可达，flash 死分支随 tsc 收敛删除）
     // PAD 生产补接线（2026-08-23 用户拍板，红队 C G1/G2 消除 sim 专属通道假阳性）：
     // vault 正向活动轻量影响心情——用生产 EFFECTS 表（不改公式，仅接线），强度 VAULT_PAD_GAIN=0.5
-    // （diary 的 note_create 轻推已在早退分支内照旧执行）
+    // （diary/三域的 note_create 轻推已在早退分支内照旧执行；此处到达的 kind 仅剩 reading）
     if (!mechanical && moodSystem) {
-      const padType = kind === 'flash' ? 'note_edit' : 'note_read';
-      moodSystem.handleInteraction(padType as any, 0.5);
+      moodSystem.handleInteraction('note_read' as any, 0.5);
     }
     try {
       const text = await observationText(appRef, file as any, kind);
@@ -295,6 +320,9 @@ export async function ensureSmartCat(app: App): Promise<void> {
   // 日记重启基线（ticket 077）：监听挂载前先对日记目录当日文件建快照（不产出观察，
   // 防重启后旧条目被当首次——已有正文条目记「已见」，后续改动走更新分支）
   await buildDiaryBaseline();
+  // 卡片盒/现代诗/信 重启基线（ticket 083）：监听挂载前先对三目录全部 md 建快照（不产出观察，
+  // 防重启后旧文件被当首次——有字记「已见」，后续改动走更新分支；不装计时器，事件才起动）
+  await buildNoteBaseline();
   if (!initialized) return; // 竞态守卫 3：基线扫描期间被 unload 则停止装配
   if (app.vault && typeof (app.vault as any).on === 'function') {
     vaultRefs.push((app.vault as any).on('create', onVaultActivity));
@@ -837,6 +865,13 @@ export function unloadSmartCat(): void {
   diaryTimers.clear();
   diaryTracked.clear();
   diarySettleMs = 10 * 60 * 1000;
+  // 卡片盒/现代诗/信 观察计时表（ticket 083）：定时器全清 + 快照/计时表清空 + 结算时长复位
+  for (const st of noteTimers.values()) {
+    if (st.timer) clearTimeout(st.timer);
+  }
+  noteTimers.clear();
+  noteTracked.clear();
+  noteSettleMs = 10 * 60 * 1000;
   if (visibilityCleanup) {
     visibilityCleanup();
     visibilityCleanup = null;
@@ -1211,32 +1246,180 @@ async function handleDiaryVaultActivity(file: any): Promise<void> {
   diaryTracked.set(filePath, cur);
 }
 
-/** 文件删除感知（ticket 077）：diary 目录文件删除 → 按跟踪快照逐条追加删除观察（日期+时间完整）；
- *  从未跟踪过该文件（无法读出条目）→ 文件级单条兜底删除观察（仅日期）。 */
+/** 文件删除感知（ticket 077 + 083 分派）：diary 目录 → 按跟踪快照逐条追加删除观察（日期+时间完整），
+ * 从未跟踪过 → 文件级单条兜底（仅日期）；卡片盒/现代诗/信 → 有跟踪快照才追加删除观察（未跟踪无法知道内容，跳过）。 */
 async function onVaultDelete(file: any): Promise<void> {
   if (!file?.path || !initialized || !appRef || !memorySystem || !data?.config?.noteSource) return;
-  if (classifyPath(file.path) !== 'diary') return;
   const filePath = file.path;
-  const tracked = diaryTracked.get(filePath);
-  const mem = memorySystem;
-  if (tracked && tracked.size > 0) {
-    for (const key of tracked.keys()) {
-      const [date, time] = key.split(DIARY_KEY_SEP);
-      appendDiaryDeleteObservation(date, time);
-      dropDiaryTimer(filePath, date, time);
+  const kind = classifyPath(filePath);
+  if (kind === 'diary') {
+    const tracked = diaryTracked.get(filePath);
+    const mem = memorySystem;
+    if (tracked && tracked.size > 0) {
+      for (const key of tracked.keys()) {
+        const [date, time] = key.split(DIARY_KEY_SEP);
+        appendDiaryDeleteObservation(date, time);
+        dropDiaryTimer(filePath, date, time);
+      }
+    } else {
+      const date = diaryFileDate(filePath);
+      if (!date) return;
+      // 文件级兜底（fire-and-forget，防阻塞 vault 事件链）
+      void mem.addObservation(diaryDeleteFileText(date), { source: 'diary' });
     }
-  } else {
-    const date = diaryFileDate(filePath);
-    if (!date) return;
-    // 文件级兜底（fire-and-forget，防阻塞 vault 事件链）
-    void mem.addObservation(diaryDeleteFileText(date), { source: 'diary' });
+    diaryTracked.delete(filePath);
+    return;
   }
-  diaryTracked.delete(filePath);
+  if (kind === 'flash' || kind === 'poem' || kind === 'letter') {
+    const tracked = noteTracked.get(filePath);
+    if (tracked) {
+      // 有跟踪快照 → 追加删除观察（原观察全部保留；fire-and-forget 防阻塞事件链）+ 清计时
+      void memorySystem.addObservation(noteDeleteText(tracked.kind, noteFileName(filePath)), { source: tracked.kind });
+      dropNoteTimer(filePath);
+    }
+    noteTracked.delete(filePath);
+    return;
+  }
 }
 
 /** 测试辅助：注入结算静置时长 / 读取日记计时表 */
 export function __setDiarySettleMsForTests(ms: number): void { diarySettleMs = ms; }
 export function __getDiaryTimersForTests(): ReadonlyMap<string, DiaryTimerState> { return diaryTimers; }
+
+// ------------- 卡片盒/现代诗/信 观察（ticket 083：每篇独立 10 分钟结算，ADR-0035） -------------
+// 纯 smartcat 侧，不改 flash/poem/letter 域代码：vault create/modify/delete 监听三目录
+// （classifyPath ∈ {flash,poem,letter}，前缀匹配递归天然命中二级子目录），每篇 md 文件持独立 10 分钟计时；
+// 该篇任何修改重置计时；静置到期 → 读文件 → 对该篇结算（首落有字才生成 / 已有则累计 >50 才更新）；
+// 删除（文件 delete）→ 原观察保留、追加删除观察。计时表/基线均内存态不落盘。
+
+/** 判定路径是否命中三域观察（classifyPath 返回 'flash'/'poem'/'letter' 才跟踪；reflection 已彻底移除） */
+function observeNoteKind(filePath: string): NoteKind | null {
+  const kind = classifyPath(filePath);
+  if (kind === 'flash' || kind === 'poem' || kind === 'letter') return kind;
+  return null;
+}
+
+/** 重启基线（ticket 083，v3/v4 准入）：ensure 时对三目录全部 md 建快照（不产出观察，防重启后旧文件被当首次）：
+ *  有字记「已见」（generated=true，后续改动走 diff）；无字待首落；不装计时器（事件才起动）。
+ *  信准入（v3/v4）：有 frontmatter date 且无 readonly:true 才跟踪；现代诗/卡片盒无字段约束。
+ *  量级说明：一次 ensure 串行读三目录全部 md（实际实测 卡片盒 1506 + 现代诗 153 + 信 15 ≈ 1670 个），
+ *  一次性成本可接受（对齐 077「重启基线防首次误产」取舍）。 */
+async function buildNoteBaseline(): Promise<void> {
+  if (!appRef) return;
+  const app = appRef;
+  let files: any[] = [];
+  try { files = app.vault.getFiles?.() || []; } catch { return; }
+  for (const file of files) {
+    const filePath = String(file?.path || '');
+    if (!filePath.endsWith('.md')) continue;
+    const kind = observeNoteKind(filePath);
+    if (!kind) continue;
+    let content = '';
+    try { content = await app.vault.read(file as any); } catch { continue; }
+    const date = parseNoteDate(kind, content, filePath);
+    if (kind === 'letter' && (!date || letterReadonly(content))) continue; // 信准入：date 必须、readonly 禁 → 不跟踪
+    const body = noteBodyText(content);
+    if (!noteTimers.has(filePath)) {
+      noteTimers.set(filePath, { timer: null, kind, generated: body.length > 0, baseline: body, observed: false });
+    }
+    noteTracked.set(filePath, { kind, body, date });
+  }
+}
+
+/** 重置某篇独立计时（10 分钟静置后结算）；该篇无记录则按新文件初始化（generated=false 待首落，observed=false） */
+function resetNoteTimer(filePath: string, kind: NoteKind): void {
+  const st = noteTimers.get(filePath) || { timer: null, kind, generated: false, baseline: '', observed: false };
+  if (st.timer) clearTimeout(st.timer);
+  st.timer = setTimeout(() => { void settleNoteFile(filePath); }, noteSettleMs);
+  noteTimers.set(filePath, st);
+}
+
+/** 移除某篇计时（清定时器 + 删记录） */
+function dropNoteTimer(filePath: string): void {
+  const st = noteTimers.get(filePath);
+  if (st?.timer) clearTimeout(st.timer);
+  noteTimers.delete(filePath);
+}
+
+/** 计时到期结算：读文件 → 提取正文全文（去 frontmatter、trim，不截断）→ 现场解析日期 →
+ *  对该篇按判定纯函数产出（首落有字 → 新增观察；正文有变化 → 段落 diff 摘要观察）；
+ *  存量信/诗（generated 但从未出过首落）首次修改 → 先补带日期首落观察再产 diff（v3）；
+ *  结算期间该篇被再次修改（计时已重置）或 unload 清理 → 放弃本次（交给新计时）。 */
+async function settleNoteFile(filePath: string): Promise<void> {
+  const mem = memorySystem;
+  if (!appRef || !mem || !data?.config?.noteSource) return;
+  const st = noteTimers.get(filePath);
+  if (!st) return;
+  st.timer = null; // 结算中：防重入（若期间被重设计时，其新 timer 会覆盖此 null）
+  let content = '';
+  let fileExists = false;
+  try {
+    const file = appRef.vault.getAbstractFileByPath(filePath);
+    if (file) {
+      fileExists = true;
+      content = (await appRef.vault.read(file as any)) || '';
+    }
+  } catch { /* 读取失败视为文件不可读 */ }
+  // 竞态守卫：结算读文件期间该篇被重置（st.timer 非空 → 新计时已接棒）或 unload（表已清）→ 放弃本次结算
+  if (noteTimers.get(filePath) !== st || st.timer !== null) return;
+  if (!fileExists) {
+    // 结算时文件已消失（删除事件未及感知的竞态）→ 兜底删除观察 + 清记录（对齐日记 settle 兜底）
+    void mem.addObservation(noteDeleteText(st.kind, noteFileName(filePath)), { source: st.kind });
+    dropNoteTimer(filePath);
+    noteTracked.delete(filePath);
+    return;
+  }
+  const body = noteBodyText(content);
+  const date = parseNoteDate(st.kind, content, filePath);
+  const name = noteFileName(filePath);
+  // 存量补首落（v3）：generated（基线预置/已进入已生成分支）但从未出过首落 + 信/诗 + 有日期 + 有正文 →
+  // 先补「你在 <date> 写了一封信/一首现代诗「NAME」：<全文>」首落观察，再走下方 diff（两条观察一起产）。
+  // flash 无日期概念不补（卡片盒存量修改直接 diff，v2 规则 3）；诗无日期来源也不补（v3：差异观察不依赖日期）。
+  if (st.generated && !st.observed && (st.kind === 'letter' || st.kind === 'poem') && date && body) {
+    const first = noteFirstText(st.kind, name, body, date);
+    if (first) {
+      void mem.addObservation(first, { source: st.kind }); // fire-and-forget，对齐 diary 链路
+      st.observed = true;
+    }
+  }
+  const settled = decideNoteSettle(st.kind, name, body, {
+    generated: st.generated, baseline: st.baseline,
+  }, date);
+  if (settled.text) {
+    // fire-and-forget：addObservation 的 appendVector（探测 Ollama）尾段在无向量环境可能不 resolve，
+    // 结算状态须立即推进（对齐日记链路）
+    void mem.addObservation(settled.text, { source: st.kind });
+  }
+  // 结算状态推进会话内生效：基线恒推进到当前正文全文（v2：无累计）；observed——首落已产出或确定不产（无日期）置 true
+  st.generated = settled.next.generated;
+  st.baseline = settled.next.baseline;
+  if (settled.kind === 'first') st.observed = true;
+  else if (!st.observed && body && !date && st.generated) st.observed = true; // 无日期首落机会用尽（诗），防重复补首落尝试
+}
+
+/** 三域 create/modify 新链路（ticket 083，v3/v4 准入）：diff 出正文变化才重置该篇独立计时并更新快照；
+ *  文件不存在（modify 竞态）跳过；正文全量入快照（不截断）。
+ *  信准入：有 frontmatter date 且无 readonly:true 才跟踪（无 date/readonly 的信不产任何观察）。 */
+async function handleNoteVaultActivity(file: any): Promise<void> {
+  if (!appRef || !memorySystem || !data?.config?.noteSource) return;
+  const filePath = file?.path;
+  if (!filePath) return;
+  const kind = observeNoteKind(filePath);
+  if (!kind) return;
+  let content = '';
+  try { content = (await appRef.vault.read(file as any)) || ''; } catch { return; } // 文件不存在（竞态）跳过
+  const date = parseNoteDate(kind, content, filePath);
+  if (kind === 'letter' && (!date || letterReadonly(content))) return; // 信准入：无 date / readonly → 不跟踪不观察
+  const body = noteBodyText(content);
+  const prev = noteTracked.get(filePath);
+  if (prev && prev.body === body) return; // 正文未变（自动保存连发）→ 不重置计时
+  noteTracked.set(filePath, { kind, body, date });
+  resetNoteTimer(filePath, kind);
+}
+
+/** 测试辅助：注入结算静置时长 / 读取三域计时表 */
+export function __setNoteSettleMsForTests(ms: number): void { noteSettleMs = ms; }
+export function __getNoteTimersForTests(): ReadonlyMap<string, NoteTimerState> { return noteTimers; }
 
 // ------------- 收藏本动作观察（ticket 078：方法监听，ADR-0031） -------------
 
