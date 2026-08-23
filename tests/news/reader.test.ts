@@ -7,7 +7,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import {
   loadArticles, render, markAsRead, skipArticle, saveToClip,
-  loadStats, recordStat, renderMarkdown, toDatetime, init,
+  loadStats, recordStat, renderMarkdown, toDatetime, init, show,
 } from '../../src/news/reader';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, Platform as MockPlatform, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
@@ -194,7 +194,7 @@ function getVault(): MockVault {
   return _vault!;
 }
 
-describe('移动端默认全屏（ticket 68）', () => {
+describe('移动端默认全屏跟随剪藏本 + 移除 ⚙️ 入口（用户拍板）', () => {
   beforeEach(async () => {
     await setup();
     init(false);
@@ -206,22 +206,30 @@ describe('移动端默认全屏（ticket 68）', () => {
     MockPlatform.isMobile = false;
   });
 
-  it('窗口头部新增 ⚙️；设置弹窗仅移动端显示「移动端默认全屏」行', async () => {
+  it('头部无 ⚙️ 设置按钮；桌面端即使剪藏本开关开也不挂 bz-win-mfs', async () => {
+    setSettingsProvider(() => ({ clippingMobileDefaultFullscreen: true }) as any);
     await loadArticles();
     render();
-    const btn = document.querySelector('.news-settings-btn') as HTMLElement | null;
-    expect(btn).not.toBeNull();
-    // 桌面端：弹窗存在但无该行（设置项名在 dataset.name，与既有断言口径一致）
-    (btn as HTMLElement).click();
-    const settingNames = () =>
-      [...document.querySelectorAll('#bz-settings-modal-popup .setting-item')].map((el) => (el as HTMLElement).dataset.name);
-    const popup = document.getElementById('bz-settings-modal-popup')!;
-    expect(popup).not.toBeNull();
-    expect(popup.textContent).toContain('聚合讯设置');
-    expect(settingNames()).not.toContain('移动端默认全屏');
-    // 移动端：有该行（toggle 语义：再点先关旧再开新）
+    // ⚙️ 入口已删除（聚合讯不再设独立开关，跟随剪藏本键）
+    expect(document.querySelector('.news-settings-btn')).toBeNull();
+    show();
+    const popupEl = document.querySelector('.news-popup') as HTMLElement;
+    expect(popupEl).not.toBeNull();
+    expect(popupEl.classList.contains('bz-win-mfs')).toBe(false);
+  });
+
+  it('移动端：跟随剪藏本 clippingMobileDefaultFullscreen（开→bz-win-mfs；关→常规卡）', async () => {
     MockPlatform.isMobile = true;
-    (document.querySelector('.news-settings-btn') as HTMLElement).click();
-    expect(settingNames()).toContain('移动端默认全屏');
+    await loadArticles();
+    render();
+    const popupEl = document.querySelector('.news-popup') as HTMLElement;
+    // 关 → 常规卡
+    setSettingsProvider(() => ({ clippingMobileDefaultFullscreen: false }) as any);
+    show();
+    expect(popupEl.classList.contains('bz-win-mfs')).toBe(false);
+    // 开 → 真全屏
+    setSettingsProvider(() => ({ clippingMobileDefaultFullscreen: true }) as any);
+    show();
+    expect(popupEl.classList.contains('bz-win-mfs')).toBe(true);
   });
 });

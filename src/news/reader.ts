@@ -3,14 +3,13 @@
  * news.json / news-stats.json 统计、dataviewjs 代码块写入。
  * 源码：聚合讯.js 逐字移植（单篇渲染 DOM、文案、样式一致）。
  */
-import { Setting, TFile } from 'obsidian';
+import { TFile } from 'obsidian';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { createSiteIcon } from '../core/dom';
-import { openSettingsModal } from '../core/settings-modal';
-import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
-import { getSettings, tryGetSettings, saveSettings } from '../core/settings-provider';
+import { applyMobileWindowFullscreen } from '../core/mobile';
+import { tryGetSettings } from '../core/settings-provider';
 
 // ---------- 常量 ----------
 const NEWS_JSON_PATH = 'CONFIG/STORAGE/news.json';
@@ -51,32 +50,6 @@ function createMaskAndPopup() {
   closeBtn.innerHTML = '✕';
   closeBtn.onclick = (e) => { e.stopPropagation(); hide(); };
   popup.appendChild(closeBtn);
-
-  // 设置按钮（ADR-0009 域设置弹窗：移动端默认全屏等）
-  const settingsBtn = document.createElement('button');
-  settingsBtn.className = 'news-settings-btn';
-  settingsBtn.innerHTML = '⚙️';
-  settingsBtn.onclick = (e) => {
-    e.stopPropagation();
-    openSettingsModal({
-      title: '聚合讯设置',
-      build: (el) => {
-        const s = getSettings();
-        if (isMobileEnv()) {
-          new Setting(el)
-            .setName('移动端默认全屏')
-            .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
-            .addToggle((toggle) =>
-              toggle.setValue(!!s.newsMobileDefaultFullscreen).onChange(async (v) => {
-                s.newsMobileDefaultFullscreen = v;
-                await saveSettings();
-              })
-            );
-        }
-      },
-    });
-  };
-  popup.appendChild(settingsBtn);
 
   container = document.createElement('div');
   container.style.cssText = 'flex:1;display:flex;flex-direction:column;overflow:hidden;';
@@ -405,7 +378,8 @@ export async function saveArticles() {
 // ---------- 显示 / 隐藏 ----------
 export function show() {
   if (!popup) createMaskAndPopup();
-  applyMobileWindowFullscreen(popup, tryGetSettings().newsMobileDefaultFullscreen === true);
+  // 移动端默认全屏跟随剪藏本（用户拍板：聚合讯不设独立开关，与剪藏本同键 clippingMobileDefaultFullscreen）
+  applyMobileWindowFullscreen(popup, tryGetSettings().clippingMobileDefaultFullscreen === true);
   loadStats()
     .then(() => loadArticles())
     .then(() => {

@@ -1,6 +1,7 @@
 /**
  * 移动端主窗口默认全屏（ticket 68，ADR-0019）：
- * src/core/mobile.ts helper 行为 + DEFAULT_SETTINGS 13 键默认值（行为保持映射：11 开 2 关）。
+ * src/core/mobile.ts helper 行为 + DEFAULT_SETTINGS 11 键默认值（行为保持映射：9 开 2 关；
+ * 聚合讯/阅读报告不设独立键——跟随剪藏本/书库，2026-08 用户拍板）。
  */
 import { describe, it, expect, afterEach } from 'vitest';
 import { Platform as MockPlatform } from '../mock-obsidian-entry';
@@ -48,8 +49,8 @@ describe('isMobileEnv / applyMobileWindowFullscreen（ticket 68）', () => {
 });
 
 describe('DEFAULT_SETTINGS 移动端默认全屏默认值（行为保持映射，ticket 68）', () => {
-  it('13 键存在且默认值 = 原移动端行为（11 开 2 关）', () => {
-    const ON = ['diary', 'belongings', 'clipping', 'news', 'password', 'favorites', 'library', 'readingReport', 'movie', 'review', 'encrypt'];
+  it('11 键存在且默认值 = 原移动端行为（9 开 2 关）；聚合讯/阅读报告不设独立键', () => {
+    const ON = ['diary', 'belongings', 'clipping', 'password', 'favorites', 'library', 'movie', 'review', 'encrypt'];
     const OFF = ['memo', 'pomodoro'];
     for (const k of ON) {
       expect(DEFAULT_SETTINGS[`${k}MobileDefaultFullscreen`]).toBe(true);
@@ -59,9 +60,13 @@ describe('DEFAULT_SETTINGS 移动端默认全屏默认值（行为保持映射�
       expect(DEFAULT_SETTINGS[`${k}MobileDefaultFullscreen`]).toBe(false);
       expect(typeof DEFAULT_SETTINGS[`${k}MobileDefaultFullscreen`]).toBe('boolean');
     }
-    // 13 键一个不少（与已排除的做题家/入口页区分）
+    // 聚合讯跟随剪藏本键、阅读报告跟随书库键（2026-08 用户拍板）：独立键已删除
+    // （旧 data.json 残留值由接口收窄后自然忽略，不影响行为）
+    expect('newsMobileDefaultFullscreen' in DEFAULT_SETTINGS).toBe(false);
+    expect('readingReportMobileDefaultFullscreen' in DEFAULT_SETTINGS).toBe(false);
+    // 11 键一个不少（与已排除的做题家/入口页区分）
     const all = [...ON, ...OFF];
-    expect(all).toHaveLength(13);
+    expect(all).toHaveLength(11);
     for (const k of all) {
       expect(`${k}MobileDefaultFullscreen` in DEFAULT_SETTINGS).toBe(true);
     }
