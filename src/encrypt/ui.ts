@@ -249,10 +249,28 @@ export class UIManager {
   /** 缩略图按需加载产生的 Blob URL（预览窗关闭时统一 revoke，防泄漏） */
   private _previewUrls: string[] = [];
   _initialized = false;
+  /** 解锁连续失败次数（P2 节流：冷却 = min(2^(n-1) 秒, 8 秒)；成功复位） */
+  private unlockFailStreak = 0;
+  /** 当前冷却截止时间戳（ms）；早于此的尝试被拒绝并提示剩余等待 */
+  private unlockCooldownUntil = 0;
 
   constructor(dataManager: SafeManager, config: EncryptUIConfig) {
     this.dataManager = dataManager;
     this.config = config;
+  }
+
+  /** 解锁成功后复位节流状态 */
+  private resetUnlockThrottle() {
+    this.unlockFailStreak = 0;
+    this.unlockCooldownUntil = 0;
+  }
+
+  /** 登记一次密码错误：递增失败连击并按 1s/2s/4s…封顶 8s 设置下次可试时间，返回本次冷却秒数 */
+  private registerUnlockFailure(): number {
+    this.unlockFailStreak += 1;
+    const delaySec = Math.min(2 ** (this.unlockFailStreak - 1), 8);
+    this.unlockCooldownUntil = Date.now() + delaySec * 1000;
+    return delaySec;
   }
 
   // ---------- 创建 DOM ----------
@@ -670,8 +688,15 @@ export class UIManager {
             return;
           }
         } else {
+          // 冷却期内（P2 节流）：拒绝本次尝试并提示剩余等待
+          const remainMs = this.unlockCooldownUntil - Date.now();
+          if (remainMs > 0) {
+            notice(`尝试过于频繁，请再等 ${Math.ceil(remainMs / 1000)} 秒`, 'warning');
+            return;
+          }
           const success = await this.dataManager.unlock(pw);
           if (success) {
+            this.resetUnlockThrottle();
             document.body.removeChild(mask);
             resolve(true);
             notice('解锁成功', 'success');
@@ -689,6 +714,7 @@ export class UIManager {
                 onConfirm: () => {
                   void this.dataManager.unlock(pw, true).then((ok) => {
                     if (ok) {
+                      this.resetUnlockThrottle();
                       document.body.removeChild(mask);
                       resolve(true);
                       notice('已重设主密码（旧数据不可恢复）', 'warning');
@@ -703,6 +729,9 @@ export class UIManager {
               });
             } else {
               notice('密码错误，请重试', 'error');
+              // 连续失败递增冷却（1s/2s/4s…封顶 8s；成功复位），提示剩余等待（P2）
+              const delaySec = this.registerUnlockFailure();
+              notice(`${delaySec} 秒后可再次尝试`, 'warning');
               input.value = '';
               this.focusUnlockInput(input);
             }

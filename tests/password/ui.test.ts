@@ -115,21 +115,23 @@ describe('UIManager 主密码流程（统一走保险箱弹窗）', () => {
     expect(inputs.length).toBe(2); // 元素仍在 DOM
     expect((inputs[1] as HTMLInputElement).style.display).toBe('none'); // 解锁模式隐藏再次输入
 
-    // 错误密码 → 「密码错误，请重试」
+    // 错误密码 → 「密码错误，请重试」（+P2 节流的剩余等待提示）
     const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
     (inputs[0] as HTMLInputElement).value = 'wrong';
     confirmBtn.click();
     await new Promise((r) => setTimeout(r, 300));
     expect(dm.unlocked).toBe(false);
     expect(hasNotice('密码错误，请重试')).toBe(true);
+    expect(hasNotice(/1 秒后可再次尝试/)).toBe(true);
 
+    await new Promise((r) => setTimeout(r, 1100)); // 等失败冷却（P2 节流）结束再试
     // 正确密码 → 解锁成功
     (inputs[0] as HTMLInputElement).value = 'master123';
     confirmBtn.click();
     await p;
     expect(dm.unlocked).toBe(true);
     expect(hasNotice('解锁成功')).toBe(true);
-  });
+  }, 15000);
 
   it('安全模式：关闭面板整体上锁（保险箱与密码本同步）', async () => {
     const dm2 = new DataManager();
