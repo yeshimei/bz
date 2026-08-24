@@ -21,7 +21,7 @@ import {
 import { formatRelativeTime } from '../core/utils';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
-import { openSettingsModal } from '../core/settings-modal';
+import { createSettingsGroup, openSettingsModal } from '../core/settings-modal';
 import { ensureSafeUnlocked } from '../encrypt';
 import { DataManager, type PasswordEntry } from './data';
 
@@ -152,13 +152,16 @@ export class UIManager {
         }
       }
     });
-    // 密码本设置弹窗（ADR-0009：字符集 / 生成长度 / 安全模式）
+    // 密码本设置弹窗（ADR-0009 域设置弹窗；分组卡片重设计）
     const settingsBtn = createIconBtn('⚙️', '密码本设置', () => {
       openSettingsModal({
         title: '密码本设置',
+        maxWidth: 560,
         build: (el) => {
           const s = getSettings();
-          new Setting(el)
+          // ===== 生成组：字符集 + 长度 =====
+          const genGroup = createSettingsGroup(el, { icon: 'key-round', name: '生成' });
+          new Setting(genGroup)
             .setName('密码生成字符集')
             .setDesc('随机生成密码时使用的字符集')
             .addText((text) =>
@@ -167,28 +170,32 @@ export class UIManager {
                 await saveSettings();
               })
             );
-          new Setting(el)
+          new Setting(genGroup)
             .setName('密码生成长度')
-            .setDesc('随机生成密码的长度（数字）')
+            .setDesc('随机生成密码的字符个数')
             .addText((text) =>
               text.setValue(s.passwordLength || '').onChange(async (v) => {
                 s.passwordLength = v;
                 await saveSettings();
               })
             );
-          new Setting(el)
+          // ===== 安全组 =====
+          const secureGroup = createSettingsGroup(el, { icon: 'shield', name: '安全' });
+          new Setting(secureGroup)
             .setName('安全模式')
-            .setDesc('开启后，关闭密码本窗口立即整体上锁（保险箱与密码本共享解锁态）')
+            .setDesc('关闭密码本窗口时立即上锁，保险箱同步锁定')
             .addToggle((toggle) =>
               toggle.setValue(!!s.securityMode).onChange(async (v) => {
                 s.securityMode = v;
                 await saveSettings();
               })
             );
+          // ===== 移动端组（仅移动端显示） =====
           if (isMobileEnv()) {
-            new Setting(el)
+            const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
+            new Setting(mobileGroup)
               .setName('移动端默认全屏')
-              .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
+              .setDesc('移动端打开主窗口时默认全屏，关闭则显示常规卡片')
               .addToggle((toggle) =>
                 toggle.setValue(!!s.passwordMobileDefaultFullscreen).onChange(async (v) => {
                   s.passwordMobileDefaultFullscreen = v;
