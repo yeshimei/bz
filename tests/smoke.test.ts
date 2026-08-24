@@ -51,7 +51,6 @@ const EXPECTED_COMMAND_IDS = [
   'bz-movie-open', 'bz-movie-add', 'bz-movie-report',
   'bz-review-open', 'bz-review-start', 'bz-review-add', 'bz-review-remove', 'bz-review-overdue', 'bz-review-rate',
   'bz-review-again', 'bz-review-hard', 'bz-review-good', 'bz-review-easy',
-  'bz-quiz-update', 'bz-quiz-open',
   'bz-flash-open', 'bz-flash-chat',
   'bz-pomodoro-open',
   'bz-bili-open',
@@ -133,9 +132,7 @@ describe('bz 骨架冒烟', () => {
     // 已实现域：归物本命令真实打开弹窗（异步），同步调用不抛错
     const cmd1 = registeredCommands.find((c: any) => c.id === 'bz-belongings-add');
     expect(() => cmd1.callback()).not.toThrow();
-    // 已实现域：做题家/复习面板异步执行，同步调用不抛错
-    const cmd2 = registeredCommands.find((c: any) => c.id === 'bz-quiz-open');
-    expect(() => cmd2.callback()).not.toThrow();
+    // 已实现域：复习面板异步执行，同步调用不抛错（做题家命令已退役，ADR-0045）
     const cmd3 = registeredCommands.find((c: any) => c.id === 'bz-review-open');
     expect(() => cmd3.callback()).not.toThrow();
     expect(() => registeredCommands.find((c: any) => c.id === 'bz-review-add').callback()).not.toThrow();

@@ -6,6 +6,7 @@ import type { App } from 'obsidian';
 import { notice } from '../core/notice';
 import { confirm } from '../core/confirm';
 import { ReviewDataManager } from './data';
+import { ReviewWatcher } from './watch';
 import { UIManager } from './ui';
 import { reviewApp } from './app';
 import type { Rating } from './fsrs';
@@ -14,6 +15,7 @@ let initialized = false;
 let appRef: App | null = null;
 export let dataManager: ReviewDataManager | null = null;
 export let uiManager: UIManager | null = null;
+export let reviewWatcher: ReviewWatcher | null = null;
 let checkInterval: ReturnType<typeof setInterval> | null = null;
 
 /** 幂等初始化（对齐源码 entry：UI 构建 + 事件监听 + 2s 后首查 + 60s 周期） */
@@ -24,6 +26,7 @@ export function ensureReview(app: App): void {
   reviewApp.ensure(app);
   dataManager = new ReviewDataManager(app);
   uiManager = new UIManager(app, dataManager);
+  reviewWatcher = new ReviewWatcher(app, dataManager);
 
   setTimeout(() => {
     reviewApp.checkOverdueAndNotify();
@@ -37,22 +40,15 @@ export function ensureReview(app: App): void {
   (app.vault as any).on('modify', async (file: any) => {
     if (file.extension === 'md') await reviewApp.applyReviewStyles(app, file);
   });
-  (app.vault as any).on('rename', async (file: any, oldPath: string) => {
-    if (file.extension !== 'md') return;
-    if (oldPath === file.path) return;
-    try {
-      const items = await dataManager!.loadItems();
-      if (!items.some((i) => i.filePath === oldPath)) return;
-      const updated = await dataManager!.updateFilePath(oldPath, file.path, file.basename);
-      if (updated) {
-        console.log(`📂 复习计划：更新路径 ${oldPath} → ${file.path}`);
-        await uiManager!.refreshPanel();
-        await reviewApp.applyReviewStyles(app);
-      }
-    } catch (e) {
-      console.error('复习计划：处理重命名事件失败', e);
-      notice('复习计划路径更新失败', 'error');
-    }
+  // ticket 098：监听文件夹自动加入（create）+ 删除/改名/移动确认（delete/rename）
+  (app.vault as any).on('create', (file: any) => {
+    if (file.extension === 'md') void reviewWatcher?.onVaultCreate(file);
+  });
+  (app.vault as any).on('delete', (file: any) => {
+    if (file.extension === 'md') reviewWatcher?.onVaultDelete(file);
+  });
+  (app.vault as any).on('rename', (file: any, oldPath: string) => {
+    if (file.extension === 'md') reviewWatcher?.onVaultRename(file, oldPath);
   });
   (app.workspace as any).on('quit', () => {
     if (checkInterval) {
@@ -180,5 +176,7 @@ export function unloadReview(): void {
   uiManager?.destroy();
   uiManager = null;
   dataManager = null;
+  reviewWatcher?.destroy();
+  reviewWatcher = null;
   appRef = null;
 }
