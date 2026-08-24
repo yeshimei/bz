@@ -1,97 +1,92 @@
 # AGENTS.md — 包仔（bz）Obsidian 插件
 
-独立 Obsidian 插件，20 个功能域：日记本、备忘录、归物本、剪藏本、聚合讯、密码本、收藏本、书库、阅读报告、影视（含分析）、复习计划、做题家、闪念、自动摘要、AI Agent、入口页、番茄钟、B 站下载、附件搬移、保险箱（encrypt 域，原「加密保险箱」，ticket 68 更名——仅用户可见文案与文档，命令 id 与存储不动）。数据沿用既有格式（`CONFIG/STORAGE/*.json`、`我的/*.md`、frontmatter），旧数据直接可读。**项目语言：中文**（注释/提交/issue/文档）。
+独立 Obsidian 插件，20 功能域（详见领域清单）。数据沿用既有格式（`CONFIG/STORAGE/*.json`、`我的/*.md`、frontmatter），旧数据直接可读。**项目语言：中文**。
 
-## 命令
+## 环境
 
-- `npm install` 首次安装；`npm run dev` 监听重建；`npm run build` 生产构建；`npm test` vitest run；`npm run test:watch` 监听；`npx tsc --noEmit` 类型检查。
-- 产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`（esbuild.config.mjs 硬编码勿改）。测试经 vitest.config.ts alias 把 `obsidian` 替换为 `tests/mock-obsidian-entry.ts`。
+- E 盘是 exFAT：write 工具的原子写（硬链接）在 exFAT 上不支持。
 
-## 写盘规则（本工作区在 E:，exFAT，无硬链接）
+## 命令与构建
 
-- **新建文件一律用 `pwsh`**（推荐 `[IO.File]::WriteAllText($path, $content)`：UTF-8 无 BOM，5.1/7 通用）：`write` 工具新建走硬链接原子落盘，此卷不支持，必报 `EISDIR`（误导性文案，不是目录冲突；重试同路径必再挂）。
-- 若新建 `write`/`edit` 遇到 EISDIR：**同一步内改用 `pwsh` 完成该文件，不重试工具写入**（每个路径只尝试一次工具调用）。
-- **改已有文件不受限**（覆盖走 rename，exFAT 正常）：`edit`、对已存在文件的 `write` 照常使用。
-- 写中文/长文也经 `pwsh`，用 `[IO.File]::WriteAllText` 保持 UTF-8 无 BOM（勿用 `Set-Content` 默认编码，会带 BOM）。
+- `npm install` / `npm run dev` / `npm run build` / `npm test` / `npm run test:watch` / `npx tsc --noEmit`
+- 产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`（esbuild.config.mjs 硬编码）
+- 测试经 vitest alias 将 `obsidian` 替换为 `tests/mock-obsidian-entry.ts`
 
 ## 架构
 
-- `src/main.ts`：命令裸注册表、设置页、懒加载开关、onunload 清理（38 命令）
-- `src/core/`：共享层（不挂 window）——app/settings-provider/ai/json-store/esc-manager/confirm/utils/dom/changelog/notice（自绘 toast，ADR-0010）/settings-modal（域设置弹窗）
-- `src/<域>/`：index.ts + data + ui（+ state/types/config）；`src/diary/ui/` 已拆 panel/entries/dialogs/quote/datetime-picker/filter-shared/ui-settings
-- 其余：`src/settings.ts`（MemoSettings + DEFAULT_SETTINGS）；样式按域拆分——源在 `src/core/styles.css`（共享层/跨域）与 `src/<域>/styles.css`（各域），构建由 `scripts/build-css.mjs` 聚合生成根 `styles.css`（产物勿手改，ticket 70）；`docs/adr/`（0001-0020）；`CONTEXT.md`（术语表）；`.scratch/<feature>/`（spec.md + issues/NN-*.md）
-- **依赖方向（ADR-0002）**：`core ← config/state ← parser ← store ← ui ← main`。store 无 DOM；UI 刷新靠回调（onFullRefresh/onLightRefresh）订阅；UI 内部函数级引用环允许，但须在函数体内延迟解析，禁止模块顶层互访。
+- `src/main.ts`：命令裸注册表、设置页、懒加载、onunload（38 命令）
+- `src/core/`：共享层（不挂 window）——app/settings-provider/ai/json-store/esc-manager/confirm/utils/dom/changelog/notice（自绘 toast）/settings-modal
+- `src/<域>/`：index.ts + data + ui；`src/settings.ts`；`styles.css`（唯一样式收敛处）；`docs/adr/`；`CONTEXT.md`；`.scratch/<feature>/`
+- **依赖方向（ADR-0002）**：`core ← config/state ← parser ← store ← ui ← main`。store 无 DOM；UI 刷新靠回调订阅；禁止模块顶层互访，函数级引用环须函数体内延迟解析。
 
 ## 铁律
 
-1. **数据格式稳定**：`CONFIG/STORAGE/*.json` 字段、`我的/*` 格式、frontmatter 一律不改（改 = 用户数据损坏）。
-2. **命令裸注册**：id `bz-<域>-<动作>` 三段式（第 9 轮统一，如 bz-flash-open/bz-diary-write）；不设默认快捷键；只在 main.ts COMMANDS 表注册一次，域内不重复 addCommand；卸载全量 removeCommand。id 是外部裸调用约定（launcher.json/热键/主页.js），改名需同步。
-3. **DOM id/类名稳定**：外部依赖此约定（如 `#add-diary-mask`、`#todo-popup`），新增 UI 保持既有风格。
-4. **实现稳定性**：文案/CSS/公式（FSRS 幂律、香农多样性、基尼平衡）保持既有；已知缺陷不动（多选计数 bug、主演计数取单次、flash refresh 不清理已删文件向量条目）。
-5. **懒加载（ADR-0003）**：UI 域 `ensureXxx` 幂等初始化（首次命令触发）；事件常驻域（auto-summary/ai-agent/flash）按设置开关注册（ensureAutoSummary/ensureAIAgent/ensureFlashOnReady）。
-6. **域间共享**：经显式 import 或 core 层（getApp/getSettings/createAI），不挂 window（`__MOVIE_FOLDER_PATH` 为兼容遗留，勿新增）。
-7. **架构决策**：设置页单页（ADR-0009，仅 AI + 共享 storagePath，域设置走 ⚙️ 弹窗）；通知用自绘 toast（ADR-0010，`notice(msg, type?, duration?)`，不用原生 Notice）；外部依赖（ADR-0005/0006/0008/0011）——AI 配置在 data.json、聚合讯 dataviewjs 由 Dataview 渲染、闪念走 Ollama HTTP、B 站下载/海报抓取走外部 npm。
-8. **通知写法**：消息正文一律**不带 emoji 前缀**（类型图标即视觉前缀，重复）；新语义先查 `src/core/notice.ts` ICONS 表（11 类型：info/success/warning/error/pause/accept/delete/confirm/restore/skip/archive），确无匹配才新增（ICONS 项 + 颜色 class + 默认时长），不得把 emoji 写进正文；规范详见 CONTEXT.md「通知类型规范」。
-9. **样式按域拆分（ticket 70，取代 ticket 60 的「全收敛根 styles.css」）**：视觉样式源文件按域拆分——各域样式写 `src/<域>/styles.css`（diary/launcher/memo/news/clipping/password/favorites/review/quiz/pomodoro/library/attach/encrypt/movie），共享层/跨域样式（设置页分页、主窗口头部行统一规范、core 层 notice/settings-modal/confirm/dom、移动端主窗口默认全屏、统一右键菜单/长按抽屉）写 `src/core/styles.css`；构建由 `scripts/build-css.mjs` 按 SOURCES 清单顺序**聚合生成根 `styles.css`**（Obsidian 每插件只加载这一个文件；聚合产物勿手改，`npm run dev` 监听 src/**/*.css 自动重新聚合）；新增 UI 用类名（`bz-` 前缀，如 `.bz-tag`/`.bz-suggest-box`），新域样式文件在 SOURCES 清单对应位置插入；**禁止**运行时注入 `<style>`（`injectStyles`/`style.textContent`）与内联视觉样式（`style.cssText`/`style="..."`）；功能性内联仅限显隐（`display`）与动态计算（高度/滚动）；更早的 `styles/<域>.css`+`injectStyles` 注入模式依旧废止。
+1. **兼容性冻结**：数据格式（`CONFIG/STORAGE/*.json`、`我的/*`、frontmatter）、文案/CSS/公式、已知缺陷（多选计数 bug、主演计数取单次、flash refresh 不清理已删文件向量条目）一律不改。
+2. **命令注册单点**：id `bz-<域>-<动作>` 三段式；只在 main.ts COMMANDS 表注册一次，域内不重复 addCommand；卸载全量 removeCommand。id 是外部裸调用约定，改名需同步。
+3. **DOM 契约稳定**：外部依赖既有 id/类名，新增 UI 保持风格。
+4. **懒加载（ADR-0003）**：UI 域 `ensureXxx` 幂等初始化；事件常驻域（auto-summary/ai-agent/flash）按设置开关注册。
+5. **域间共享**：显式 import 或 core 层，不挂 window（`__MOVIE_FOLDER_PATH` 为遗留兼容，勿新增）。
+6. **架构决策**：设置页单页（域设置走 ⚙️ 弹窗）；通知用自绘 toast；AI 配置在 data.json，聚合讯 dataviewjs，闪念走 Ollama HTTP，B 站下载/海报抓取走外部 npm。
+7. **通知规范**：正文不带 emoji 前缀；新语义先查 `src/core/notice.ts` ICONS 表，确无匹配才新增；详见 CONTEXT.md「通知类型规范」。
+8. **样式收敛**：视觉样式一律写根 `styles.css`（构建自动复制），类名 `bz-` 前缀；禁止运行时注入 `<style>` 与内联视觉样式；功能性内联仅限显隐与动态计算。
 
-## 主窗口样式规范（ticket 68 定稿，新增主窗口/功能参考，简化版）
+## 主窗口样式规范
 
-**新主窗口接入三件事**（参考任一已接入域，如 src/review/ui.ts）：
-1. `src/settings.ts` 加 `<域前缀>MobileDefaultFullscreen` 布尔键 + DEFAULT_SETTINGS 默认值（行为保持：原移动端即全屏 → `true`，居中卡 → `false`）；
-2. 打开路径（每次打开必经处）调 `applyMobileWindowFullscreen(popup, tryGetSettings().<键> === true)`（`src/core/mobile.ts`）；
-3. ⚙️ 域设置弹窗 build 末尾挂「移动端默认全屏」行，仅 `if (isMobileEnv())` 显示（`src/core/mobile.ts`）。
+**新主窗口接入三件事**（参考 src/review/ui.ts）：
+1. `src/settings.ts` 加 `<域前缀>MobileDefaultFullscreen` 布尔键 + DEFAULT_SETTINGS 默认值（原移动端全屏→`true`，居中卡→`false`）；
+2. 打开路径调 `applyMobileWindowFullscreen(popup, tryGetSettings().<键> === true)`（src/core/mobile.ts）；
+3. ⚙️ 域设置弹窗 build 末尾挂「移动端默认全屏」行，仅 `if (isMobileEnv())` 显示。
 
-**统一视觉**（规则已成套写在 src/core/styles.css「主窗口头部行统一规范」节，新窗口自动继承，勿另写差异样式）：
-- 主窗口头部行容器加类 **`.bz-win-head`**——头行自动获得 `padding:16px 24px 10px`、两端对齐、间距 8；
-- 头行按钮**自动**统一为 22×26/14px、透明、无阴影无边框、圆角 4、hover 浅灰底；自定义按钮无需再写内联尺寸/背景（写了也会被 `!important` 统一覆盖）；
-- 关闭按钮一律挂类 **`.bz-win-close`**——自动 20×24/12px 且**非真全屏自动隐藏**（桌面/卡片靠点遮罩+ESC，真全屏 `.bz-win-mfs` 才显示），无需自己写 display 控制；
-- 按钮秩序：功能按钮 → **⚙️ 设置 → 关闭**（⚙️ 紧贴关闭正前）；
-- **弹窗/小窗口不放关闭按钮**，靠点遮罩 + ESC 关闭（mask 点击 + escManager 必配，勿做「仅按钮可关」的弹窗）；
-- 全屏顶部避让统一 `max(34px, env(safe-area-inset-top))`（src/core/styles.css 全局规则，新窗口勿自写 padding-top）。
+**统一视觉**：头部行用 `.bz-win-head`，关闭按钮用 `.bz-win-close`，按钮秩序：功能 → ⚙️ → 关闭；弹窗不放关闭按钮，靠 mask + ESC；全屏避让用全局规则。样式已集中 styles.css，勿另写差异。
 
-## 领域清单（src/<域>/，数据均在 CONFIG/STORAGE/，表内只写文件名）
+## 领域清单（数据均在 CONFIG/STORAGE/，表内只写文件名）
 
 | 域 | 数据 |
 |---|---|
-| diary 日记本（面板/写日记摘抄/标签筛选/滚轮日期） | `我的/日记/*.md` |
-| memo 备忘录（待办面板/Todo 弹窗/剪贴板监听/启动弹窗/到期通知） | memo.json |
-| belongings 归物本（物品登记，1226 分类已落盘 gen） | belongings.json |
-| clipping 剪藏本（双击打开/统一抽屉·桌面右键移动长按/站点过滤/反链直点） | `归档/网页剪藏/*.md` |
-| news 聚合讯（状态机/统计落盘/dataviewjs 渲染） | news.json |
-| password 密码本（AES-GCM/主密码状态机/生成器） | passwords.json |
-| favorites 收藏本（GitHub 收藏/AI 简介/余额 5 分钟缓存） | favorites.json |
-| library 书库（book 标签识别/笔记树/批注） | `书库/*.md`、`我的/读书笔记` |
-| reading-report 阅读报告（年度统计/热力图/习惯，纯函数） | metadataCache 统计 |
-| movie 影视（卡片/无限滚动/排序三键/AI 推荐/海报，含 movie-analysis） | `我的/影视/*.md` |
-| review 复习计划（FSRS v4 19 权重/阶梯 10 级/逾期轮询） | review.json |
-| quiz 做题家（三难度/单多选/复习联动） | quiz.json |
-| flash 闪念（窄窗吸附/向量检索 bge-m3/AI 对话，WIP 15 模块） | ai_completion_meta.json + *.vec |
-| auto-summary 自动摘要（常驻监听剪藏 → AI 摘要写 frontmatter） | 剪藏 frontmatter |
-| ai-agent AI Agent（笔记⇄备忘录/收藏本同步/AI 剪藏匹配） | ai-agent.json |
-| launcher 入口页（磁贴网格/编辑模式/手势/双平台配置） | launcher.json |
-| pomodoro 番茄钟（状态机/任务关联/设置弹窗/状态栏） | pomodoro.json |
-| attach 附件搬移（移动当前笔记附件到指定文件夹/仅同名才改名/全库改写链接） | —（搬当前笔记引用的 vault 附件，无 CONFIG/STORAGE 数据） |
-| bili-downloader 下载工具（B 站 web 工具，外部 npm） | —（外部） |
-| encrypt 保险箱（AES-GCM 清单容器加密/压缩预览/还原/提交式加密，ADR-0015~0018；原名「加密保险箱」，ticket 68 更名） | `CONFIG/.ENCRYPT/`（.safe.enc 清单 + .随机名.enc 密文镜像，不在 CONFIG/STORAGE） |
-| smartcat 小橘（桌面宠物猫 + 笔记 AI 陪伴：气泡/聊天/心情（PAD 三层：情绪/心情/人格，ADR-0022）/人格（MATE 30 特质+OCEAN 种子，ADR-0023）/记忆流（ADR-0021，单层 GA 三因子）/动画/语音/跟随/书评；AI 走 bz core/ai，数据单 json（向量豁免 .vec），样式域内 styles.css） | smartcat.json（config/mood(PAD)/personalityGrowth(OCEAN+30 特质)/editingData/memory 记忆流）+ smartcat-memory-vectors.vec |
+| diary | `我的/日记/*.md` |
+| memo | memo.json |
+| belongings | belongings.json |
+| clipping | `归档/网页剪藏/*.md` |
+| news | news.json |
+| password | passwords.json |
+| favorites | favorites.json |
+| library | `书库/*.md`、`我的/读书笔记` |
+| reading-report | metadataCache 统计 |
+| movie | `我的/影视/*.md` |
+| review | review.json |
+| quiz | quiz.json |
+| flash | ai_completion_meta.json + *.vec |
+| auto-summary | 剪藏 frontmatter |
+| ai-agent | ai-agent.json |
+| launcher | launcher.json |
+| pomodoro | pomodoro.json |
+| attach | —（搬当前笔记引用的 vault 附件） |
+| bili-downloader | —（外部） |
+| encrypt | `CONFIG/.ENCRYPT/`（.safe.enc + .随机名.enc） |
 
-## 测试
+## 测试与质量门禁
 
-- vitest + jsdom，pool: threads；mock-obsidian-entry.ts（Notice→getNoticeMessages/hasNotice/clearNotices/requestUrl/moment/Plugin/Setting）+ mock-vault.ts（内存文件树，files Map + modifiedPaths）+ setup.ts 补 jsdom API。
-- 注入：先 `setApp(mockApp)` + `setSettingsProvider(() => settings)` 再测；AI provider 缓存用 `resetAIProviderCache` 重置。
-- 分层：数据层/纯函数（parser/config/fsrs/crypto）+ UI 层（jsdom 交互、弹窗、长按、防抖、无限滚动）+ mock fetch（AI/余额/Ollama）。
-- 长异步（PBKDF2/crypto/网络）用真实 setTimeout；fake timers 用 `advanceTimersByTimeAsync`。
-- 新域必带数据层 + UI 层测试（tests/<域>/），smoke.test.ts（命令清单）同步更新；全量约 1212 测试。
+- 测试：Vitest + jsdom；新功能必须包含数据层+UI层测试，smoke.test.ts同步验证。
+- 异步按项目约定处理，依赖注入使用已有 test helper。
+- 完成门禁（必须全绿）：
+  - Ticket验收 + 契约不破坏
+  - npm test + tsc --noEmit
+  - 自审 + diff审查
+  - 构建验证通过
+  - 任一失败 → 修复重测
 
 ## Git / 工作流
 
-- 分支 master；提交格式 `bz: ticket NN <域> 完成——<要点>，N 测试`；chore/fix 用于杂务；每 ticket 一次提交（测试全绿后）。
-- **任务完成后必提交**：本 agent 每完成一个任务（ticket / 独立修复 / 文档改动）且测试全绿后，**立即 git 提交，不积压、不攒批**；工作区若有他人/并行未完成的改动，仅暂存本任务相关文件（`git add` 指定路径；settings.ts 之类被多任务共改的文件按 hunk 拆分暂存），其余改动原样保留，不得混入本提交。
-- **任务 worktree 流程（DSH）**：会话开始用 `worktree_create` 建任务 worktree（分支名统一 `worktree/` 开头自拟 slug，如 `worktree/smartcat-drag-fix`；路径 `<仓库>/.dsh-worktrees/worktree/<分支名>`），本任务全部改动在 worktree 内进行，不在主工作区散落。流程：worktree 内改代码/测试全绿 → 按上条提交到 `worktree/*` 分支 → **合并回主分支**：在主工作区（master 检出处）`git merge worktree/<名字>`（自动合并；主工作区他人未提交改动原样保留、不混入）→ 合并后在主工作区复跑目标测试，再走下条构建部署（纯文档改动可免）。收尾主动提醒用户清理，给两条命令二选一：`/worktree remove <名字> --force`（已合并完毕，强制删除该 worktree 与分支）或 `/worktree bring-back <名字>`（把改动并入主工作区并保留 checkout）。
-- **任务完成后必构建部署**：提交后运行 `npm run build`，产物直出插件目录（`E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`，esbuild.config.mjs 硬编码），随后核对插件目录 `main.js`/`styles.css` 时间戳为新且内容含本次变更（如 `Select-String` 特征串），确认部署完成；用户需在 Obsidian 重载插件后生效。
-- spec 驱动：`.scratch/memo-suite-plugin/spec.md`（59KB，命令 id 全清单/设置项总表/样式/降级链）是唯一事实源，先改 spec。
-- ticket 驱动：`.scratch/memo-suite-plugin/issues/NN-<slug>.md`（01-32），头部 `Status:` 记 triage（docs/agents/triage-labels.md）。
-- 进度恢复点：`.scratch/memo-suite-plugin/PROGRESS.md`，每次重要节点更新（含待提交架构深化）。
-- 新 ADR 写 `docs/adr/NNNN-<slug>.md`（Context/Options/Consequences）并同步 CONTEXT.md；用 CONTEXT.md 术语，勿自造，与 ADR 冲突须标注。
-
-
+- **分支与提交**：主分支 `master`，提交信息遵循 Conventional Commits。
+- **Worktree 流程（DSH）**  
+  1. 会话开始时，在主仓库**外部**创建 worktree：`../.dsh-worktrees/<分支名>`，分支名 `worktree/<slug>`。  
+  2. 所有改动限制在该 worktree 内。  
+  3. 测试全绿后提交到 `worktree/<slug>`。  
+  4. 切回主工作区（`master`），**先** `git fetch origin master`，**再** `git merge worktree/<slug>`
+  5. 合并后重新测试，构建并部署
+- **并行改动处理**：只暂存本任务相关文件。
+- **Spec 驱动开发**  
+  - 先更新 `.scratch/memo-suite-plugin/spec.md`。  
+  - 任务状态记录在 `issues/NN-*.md`。  
+  - 进度同步至 `PROGRESS.md`。  
+  - 新 ADR 放 `docs/adr/`，并同步更新 `CONTEXT.md`，术语沿用 `CONTEXT.md`，不自造。

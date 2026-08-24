@@ -1,3 +1,15 @@
+## 2026-08-26 复习/做题体验三改（ticket 099；worktree/review-quiz-ux 合并 master，构建部署）
+
+**状态：全量 1885 测试通过（126 文件）+ tsc 0 错误；fast-forward 合并 master，构建直出 vault（main.js 含 confirmBatchAddForFolder/bz-review-folder-mask 标记核对）**
+
+- ✅ **Q1 多选标签静默删除**：renderModal 删 `.quiz-multi-badge`「多选」徽标与 `.quiz-multi-hint`「本题为多选题，可多选」提示条两块渲染（src/quiz/ui.ts）+ styles.css 两样式块删除；多选交互（切换选中+提交答案）与计数逻辑（ADR-0044 解冻点）零改动。测试：tests/quiz/ui.test.ts describe 改「ticket 099」断言反转（无徽标/无提示条、提交按钮位置保留）
+- ✅ **split 崩溃修复（Q7 丙双保险）**：根因=待重做队列出题链 `regenerateQuestions` 返回题缺 notePath → renderModal 首题 `q.notePath!.split('/')` 崩（用户报错复现路径：评级未通过→复习此笔记→再次开始复习）；修法=①甲·regenerateQuestions 与 batchGenerateQuestions 对齐补 `{...q, notePath, _index}`（fresh/leftover 两链路统一 map）；②乙·renderModal 判空降级（无 notePath → 标题「📝 (n/N)」不显笔记名前缀）。测试：app.test.ts 新增 regenerateQuestions 双链路断言 + quiz/ui.test.ts 缺 notePath 开会话不崩用例
+- ✅ **Q10 重命名/移动自动更新**：onVaultRename 删 confirm 弹窗改直接 updateFilePath+notice+refresh（原「不更新→新路径写排除名单」分支删除——自动更新后 collectAutoaddCandidates 天然排除已加入路径，无需写排除）；watch.ts 头注释同步。测试：watch/index 两处 rename 用例改自动更新断言（无确认弹窗、跨目录移动跟随、计划外改名不产记录）
+- ✅ **Q11 监听文件夹交互改造**：① 设置页行改 chip 形态（`.bz-review-watch-chip` 名字+✕ 关闭标签，替代「监听目录 N」文本行+移除按钮）；② 「＋添加监听文件夹」打开新 ReviewFolderPicker 选择弹窗（仿 attach FolderSelectModal 形态：输入过滤+目录列表点选+取消/确定，bz-review-* 类名+escManager，样式收敛 src/review/styles.css）；③ 选择后立即 `confirmBatchAddForFolder` 确认存量收编（返回 Promise<boolean>：确认=批量全部加入+toast+true；**取消=false 什么都不做，不再写排除名单**）；④ 打开面板时的批量收编确认整体移除（promptBatchAddAll/promptBatchAddForFolder/batchPrompted 幂等机制删除：ui.showMain 调用块、app.ts 委托方法、watch 方法/字段/destroy 清理）；⑤ 无候选直接接受不弹窗
+- ✅ **Q12 增量 toast 保留**：onVaultCreate「已自动加入复习计划：X」现状不动
+- ✅ **Q9 撤销记录**：「标记待重做后自动抓题」体验优化整体不做（用户拍板只修 split bug），ADR-0044 重做语义零改动
+- ⏳ 待办：真机冒烟（多选题面无标签/提示；待重做再开始不报错且标题显示笔记名；改名/移动免确认自动跟随；监听文件夹选择弹窗+取消不落名单）
+
 ## 2026-08-24 smartcat 多路召回联想检索（ticket 096，ADR-0043，086 v4 方向一裁决 + H3 前置重建；worktree/multi-recall 通宵流水线收官票）
 
 **状态：H3 与方向一主体两个独立提交；全量测试 + tsc 0 后提交分支 multi-recall（基 c173986）**

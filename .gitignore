@@ -5,4 +5,5 @@ node_modules/
 coverage/
 viz/
 .scratch/
-x
+x.dsh-worktrees/
+.dsh-worktrees/
