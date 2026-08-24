@@ -101,6 +101,9 @@ describe('UIManager 解锁弹窗', () => {
     await new Promise((r) => setTimeout(r, 200));
     expect(dm.unlocked).toBe(false);
     expect(hasNotice('密码错误，请重试')).toBe(true);
+    // 连续失败节流（P2）：失败后进入 1 秒冷却并提示剩余等待
+    expect(hasNotice(/1 秒后可再次尝试/)).toBe(true);
+    await new Promise((r) => setTimeout(r, 1100)); // 等冷却结束再试
     (inputs[0] as HTMLInputElement).value = 'master123';
     confirmBtn.click();
     await p;
@@ -1029,9 +1032,77 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
     await new Promise((r) => setTimeout(r, 200));
     expect(hasNotice('密码错误，请重试')).toBe(true);
     expect(document.getElementById('__shared_confirm_mask__')).toBeNull(); // 无损坏确认
+    await new Promise((r) => setTimeout(r, 1100)); // 等失败节流冷却（P2）结束再试
     (inputs[0] as HTMLInputElement).value = 'pw';
     confirmBtn.click();
     expect(await p).toBe(true);
+  });
+
+  it('连续失败递增冷却：1s/2s/4s 封顶 8s；冷却期内拒绝尝试；成功后复位（P2）', async () => {
+    await dm.unlock('master123');
+    dm.lock();
+    const p = ui.showPasswordDialog();
+    await waitFor(() => !!findDialog());
+    const dialog = findDialog()!;
+    const inputs = dialog.querySelectorAll('input[type="password"]');
+    const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+    const unlockSpy = vi.spyOn(dm, 'unlock');
+    // 偏移时钟跳过秒级冷却等待（节流内部以 Date.now 计冷却截止）
+    const realNow = Date.now;
+    let offsetMs = 0;
+    const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => realNow() + offsetMs);
+    try {
+      let prevUntil = 0;
+      /** 轮询粒度容差内的冷却时长断言（真实时钟在等待期间会前进 ≤ 一个轮询间隔） */
+      const expectDelayNear = (delay: number, expectedMs: number) => {
+        expect(delay).toBeLessThanOrEqual(expectedMs);
+        expect(delay).toBeGreaterThan(expectedMs - 250);
+      };
+      /** 输错一次并等到本次冷却登记完成（unlock 为真实 PBKDF2 异步，以冷却字段推进为准） */
+      const failOnce = async (): Promise<number> => {
+        (inputs[0] as HTMLInputElement).value = 'wrong';
+        confirmBtn.click();
+        await waitFor(() => (ui as any).unlockCooldownUntil > prevUntil);
+        const delay = (ui as any).unlockCooldownUntil - (realNow() + offsetMs);
+        prevUntil = (ui as any).unlockCooldownUntil;
+        return delay;
+      };
+      // 失败 #1 → 冷却 1s 并提示剩余等待；冷却期内再点被拒（不再触发 unlock）
+      expectDelayNear(await failOnce(), 1000);
+      expect(hasNotice(/1 秒后可再次尝试/)).toBe(true);
+      (inputs[0] as HTMLInputElement).value = 'wrong'; // 失败分支已清空输入，重新填入再试
+      confirmBtn.click();
+      await new Promise((r) => setTimeout(r, 30));
+      expect(unlockSpy.mock.calls.length).toBe(1);
+      expect(hasNotice(/尝试过于频繁/)).toBe(true);
+      // 逐级递增：2s → 4s → 8s 封顶（连败第 5 次仍是 8s）
+      offsetMs += 1000;
+      expectDelayNear(await failOnce(), 2000);
+      offsetMs += 2000;
+      expectDelayNear(await failOnce(), 4000);
+      offsetMs += 4000;
+      expectDelayNear(await failOnce(), 8000);
+      offsetMs += 8000;
+      expectDelayNear(await failOnce(), 8000);
+      offsetMs += 8000; // 跳过第 5 次失败的冷却，再尝试正确密码
+      // 冷却结束后正确密码 → 解锁成功并复位节流
+      (inputs[0] as HTMLInputElement).value = 'master123';
+      confirmBtn.click();
+      await p;
+      expect(dm.unlocked).toBe(true);
+    } finally {
+      nowSpy.mockRestore();
+    }
+    // 复位证据：重新打开再次输错，从 1 秒重新起算（未累计到封顶值）
+    dm.lock();
+    const p2 = ui.showPasswordDialog();
+    await waitFor(() => !!findDialog());
+    const dialog2 = findDialog()!;
+    const inputs2 = dialog2.querySelectorAll('input[type="password"]');
+    const confirmBtn2 = [...dialog2.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+    (inputs2[0] as HTMLInputElement).value = 'wrong';
+    confirmBtn2.click();
+    await waitFor(() => hasNotice(/1 秒后可再次尝试/));
   });
 
   it('解锁弹窗：打开即自动聚焦密码输入框（移动端直接弹键盘）', async () => {
