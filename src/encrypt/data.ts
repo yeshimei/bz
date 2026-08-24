@@ -180,7 +180,10 @@ export function genNoteId(): string {
 const BLOB_CONCURRENCY = 3;
 
 /**
- * 受控并发 map：同时最多 limit 个任务，返回顺序与输入一致；任一 reject 立即整体 reject。
+ * 受控并发 map：同时最多 limit 个任务，返回顺序与输入一致。
+ * 任一 reject 时仍等其余 worker 全部收尾后才整体 reject（P1-7）：
+ * 失败方之外任务的副作用（如已写暂存镜像）此刻已全部完成并登记，
+ * 调用方 catch 才能一次性清理干净，不留并发残尾。
  * （UI 不可用场景/数据层无 DOM 依赖，直接在数据层实现）
  */
 export async function mapLimit<T, R>(
@@ -202,7 +205,9 @@ export async function mapLimit<T, R>(
       })()
     );
   }
-  await Promise.all(workers);
+  const settled = await Promise.allSettled(workers);
+  const firstReject = settled.find((s): s is PromiseRejectedResult => s.status === 'rejected');
+  if (firstReject) throw firstReject.reason;
   return out;
 }
 
@@ -463,11 +468,68 @@ export class SafeManager {
     }
   }
 
-  /** 写镜像密文文件（点前缀，adapter 直写磁盘） */
-  private async writeMirror(ref: string, ciphertext: string) {
-    const path = this.resolveRef(ref);
-    await this.ensureDirFor(path);
-    await this.adapter.write(path, ciphertext);
+  /**
+   * 原子覆盖写镜像密文（P0-1）：新密文先整体落暂存区，再 rename 换入正式位——
+   * 复用 writeStaged/promoteStaged（与 .safe.enc 三段式同款思想），任何一步失败
+   * （含 adapter.write 半写中断）正式位都保持旧完整密文，绝不出现半截文件。
+   * 换入序列：旧镜像先挪 `.bak`（rename 目标恒不存在）→ 暂存镜像搬入正位 → 删 `.bak`；
+   * 搬入失败回滚 `.bak`。无旧镜像时直接 promoteStaged（与 lockNote 提交同语义）。
+   */
+  private async replaceMirrorAtomic(ref: string, ciphertext: string): Promise<void> {
+    const finalPath = this.resolveRef(ref);
+    const stagedPath = this.stagingPath + '/' + ref;
+    const bakPath = finalPath + '.bak';
+    // 清上次残留（幂等）
+    try {
+      await this.adapter.remove(bakPath);
+    } catch (e) {
+      /* 幂等 */
+    }
+    try {
+      await this.adapter.remove(stagedPath);
+    } catch (e) {
+      /* 幂等 */
+    }
+    // 完整新密文先写暂存区：此步失败正式位未触碰
+    await this.writeStaged(ref, ciphertext);
+    const hasOld = await this.adapter.exists(finalPath);
+    if (!hasOld) {
+      try {
+        await this.promoteStaged(ref);
+      } catch (e) {
+        try {
+          await this.adapter.remove(stagedPath);
+        } catch (err) {
+          /* 幂等 */
+        }
+        throw e;
+      }
+      return;
+    }
+    // 旧镜像挪走 → 新密文换入正位 → 删旧
+    await this.adapter.rename(finalPath, bakPath);
+    try {
+      await this.promoteStaged(ref);
+    } catch (e) {
+      // 换入失败：旧镜像滚回正位（正式位保持旧完整密文），暂存清理；
+      // 回滚也失败时残留 .bak 留待体检/自愈视角兜底（此处尽力而为）
+      try {
+        await this.adapter.rename(bakPath, finalPath);
+      } catch (err) {
+        /* 回滚失败留待下次覆盖重试（判定以磁盘现状为准） */
+      }
+      try {
+        await this.adapter.remove(stagedPath);
+      } catch (err) {
+        /* 幂等 */
+      }
+      throw e;
+    }
+    try {
+      await this.adapter.remove(bakPath);
+    } catch (e) {
+      /* 幂等（残留 .bak 不影响读取，下次覆盖前会清） */
+    }
   }
 
   /** 读镜像密文文件 → base64 密文字符串（adapter，点前缀可用） */
@@ -576,6 +638,33 @@ export class SafeManager {
     } catch (e) {
       return [];
     }
+  }
+
+  /**
+   * 追加一条挂起标记（读-改-写；P1-6）：整写 `[id]` 覆盖会把并发另一笔已登记的
+   * 标记互吞掉（其半提交从此失去自愈线索），故先读现列表再追加写回。
+   */
+  private async addPending(id: string): Promise<void> {
+    const list = await this.readPending();
+    if (!list.includes(id)) list.push(id);
+    await this.ensureStagingDir();
+    await this.adapter.write(this.pendingPath, JSON.stringify(list));
+  }
+
+  /**
+   * 移除单条挂起标记（读-改-写；P1-6）：只摘除自己的 id，其余笔的标记原样保留；
+   * 列表清空则删除文件（对齐原「清除标记」语义，暂存区回归无标记状态）。
+   */
+  private async removePending(id: string): Promise<void> {
+    const list = await this.readPending();
+    const idx = list.indexOf(id);
+    if (idx !== -1) list.splice(idx, 1);
+    if (list.length === 0) {
+      if (await this.adapter.exists(this.pendingPath)) await this.adapter.remove(this.pendingPath);
+      return;
+    }
+    await this.ensureStagingDir();
+    await this.adapter.write(this.pendingPath, JSON.stringify(list));
   }
 
   /**
@@ -791,6 +880,30 @@ export class SafeManager {
   }
 
   /**
+   * 操作级互斥（P1-6）：lockNote/restoreNote 实例级串行的 promise 链尾。
+   * 并发调用按发起顺序排队；前序失败不断链（错误只回给其自己的调用方）。
+   */
+  private opQueue: Promise<unknown> = Promise.resolve();
+
+  private enqueueOp<T>(op: () => Promise<T>): Promise<T> {
+    const run = this.opQueue.then(op, op);
+    this.opQueue = run.catch(() => undefined);
+    return run;
+  }
+
+  /**
+   * 加锁一篇笔记（操作级互斥入口，P1-6）：实例级 promise 链串行——
+   * 并发 lockNote/restoreNote 按发起顺序排队执行，杜绝挂起标记/清单/暂存区的并发互吞。
+   */
+  lockNote(
+    input: LockNoteInput,
+    onProgress?: (p: EncryptProgress) => void,
+    onDeleteFailed?: (paths: string[]) => void
+  ): Promise<SafeNote> {
+    return this.enqueueOp(() => this.lockNoteSerial(input, onProgress, onDeleteFailed));
+  }
+
+  /**
    * 加锁一篇笔记：把当前笔记正文 + 双链附件移入保险箱（ADR-0018 提交式加密）。
    * 加密阶段密文流式写入暂存区 `.staging/`（不占内存、不进入数据文件夹正式布局）；
    * 全部加密成功后才进入提交序列：
@@ -802,7 +915,7 @@ export class SafeManager {
    * 原文件不动；清单先行已残留的挂起态由解锁自愈兜底。
    * onProgress：按文件回调（附件逐个 + 笔记本身），UI 驱动进度通知。
    */
-  async lockNote(
+  private async lockNoteSerial(
     input: LockNoteInput,
     onProgress?: (p: EncryptProgress) => void,
     onDeleteFailed?: (paths: string[]) => void
@@ -817,49 +930,46 @@ export class SafeManager {
     const attachments: SafeAttachment[] = [];
     const finalRefs: string[] = [];
     const stagedRefs: string[] = [];
+    let note: SafeNote | null = null;
+    let manifestSaved = false; // S2 是否落盘成功（P1-5：未落盘的失败在内存回退幽灵条目）
     try {
       // 附件加密并行（BLOB_CONCURRENCY=3）：每个 blob 独立 salt → 逐附件 PBKDF2(100k)，
       // 串行会让多附件明显变慢；进度按完成数上报（顺序不定，语义不变）。
       // 注意：回调只返回结果，由 mapLimit 按输入顺序归位——附件在清单中的顺序必须与输入一致
       //（直接被并发 push 会随完成顺序漂移，污染清单顺序与测试断言）。
       // 失败 → 整笔放弃：本次已写暂存镜像在 catch 里清理，原文件不动。
+      // refs 即时登记（P1-7）：每写完一个暂存镜像立刻入册，mapLimit 中途失败时
+      // catch 也能清理全部已写暂存（不再依赖成功返回后的结果归集填充）。
       const results = await mapLimit(input.attachments, BLOB_CONCURRENCY, async (a) => {
         const fp = await fingerprintOf(a.data);
         const enc = await CryptoService.encrypt(a.data, password);
         const blobRef = flatName();
         await this.writeStaged(blobRef, enc);
+        stagedRefs.push(blobRef);
+        finalRefs.push(blobRef);
         let hasPreview = false;
         let previewRef = '';
-        const refs: string[] = [blobRef];
         if (a.previewData) {
           const encP = await CryptoService.encrypt(a.previewData, password);
           previewRef = flatName();
           await this.writeStaged(previewRef, encP);
-          refs.push(previewRef);
+          stagedRefs.push(previewRef);
+          finalRefs.push(previewRef);
           hasPreview = true;
         }
         done += 1;
         onProgress?.({ done, total, current: a.path });
         return {
-          attachment: {
-            path: a.path,
-            kind: a.kind || 'image',
-            blobRef,
-            blobSize: enc.length,
-            fingerprint: fp,
-            hasPreview,
-            previewRef,
-          },
-          refs,
+          path: a.path,
+          kind: a.kind || 'image',
+          blobRef,
+          blobSize: enc.length,
+          fingerprint: fp,
+          hasPreview,
+          previewRef,
         };
       });
-      for (const r of results) {
-        attachments.push(r.attachment);
-        for (const ref of r.refs) {
-          stagedRefs.push(ref);
-          finalRefs.push(ref);
-        }
-      }
+      for (const r of results) attachments.push(r);
 
       done += 1;
       onProgress?.({ done, total, current: input.path });
@@ -869,7 +979,7 @@ export class SafeManager {
       await this.writeStaged(bodyRef, bodyCipher);
       stagedRefs.push(bodyRef);
       finalRefs.push(bodyRef);
-      const note: SafeNote = {
+      note = {
         id: genNoteId(),
         kind: input.kind || undefined,
         path: input.path,
@@ -880,17 +990,17 @@ export class SafeManager {
       };
 
       // ---- 提交序列（ADR-0018） ----
-      // S1 挂起标记（存在 ⇒ 可安全回滚；清除前绝不删除原文件）
-      await this.ensureStagingDir();
-      await this.adapter.write(this.pendingPath, JSON.stringify([note.id]));
+      // S1 挂起标记（存在 ⇒ 可安全回滚；清除前绝不删除原文件）——读-改-写追加（P1-6：整写会互吞并发笔标记）
+      await this.addPending(note.id);
       // S2 清单先行（提交点）：条目先于镜像文件写入清单
       this.manifest.notes.push(note);
       await this.saveManifest();
+      manifestSaved = true;
       // S3 暂存镜像搬入顶层（失败抛出 → 整笔放弃，挂起态留待解锁自愈）
       for (const ref of finalRefs) await this.promoteStaged(ref);
-      // S4 清除挂起标记（失败必须抛出：标记残留时绝不允许进入 S5 删原文件）
+      // S4 清除挂起标记（失败必须抛出：标记残留时绝不允许进入 S5 删原文件）——只摘自身 id（P1-6）
       try {
-        await this.adapter.remove(this.pendingPath);
+        await this.removePending(note.id);
       } catch (e) {
         throw new Error('清除挂起标记失败：' + (e as Error).message);
       }
@@ -923,19 +1033,36 @@ export class SafeManager {
           /* 幂等 */
         }
       }
+      // 清单尚未落盘成功（P1-5）：按 id 从内存清单回退本条目，防同会话内后续成功的
+      // saveManifest 把幽灵条目固化；已落盘（S2 成功后）的失败不回退——交由挂起标记
+      // 的自愈语义裁决（Q4-A：S4 前可自愈回滚，绝不在此处擅自改已提交清单）
+      if (!manifestSaved && note) {
+        const ghostId = note.id;
+        const idx = this.manifest.notes.findIndex((n) => n.id === ghostId);
+        if (idx !== -1) this.manifest.notes.splice(idx, 1);
+      }
       throw e;
     }
   }
 
   /**
-   * 还原（取出即删）一篇笔记：解原文 + 原质量附件写回原路径。
+   * 还原（取出即删）一篇笔记（操作级互斥入口，P1-6）：与 lockNote 共享同一串行链。
+   *
+   * 解原文 + 原质量附件写回原路径。
    * 原子语义（用户决策修订）：阶段一并行解密全部附件 + 正文并完成全部校验
    * （指纹冲突/目标被占/镜像缺失/解密失败），**任一失败 → 整体放弃，零落盘**；
    * 阶段二才批量写回明文（写回中途失败尽力回滚本次创建的文件）。
    * 全部成功（无冲突）后：删除本文全部加密镜像（正文+附件原始层/预览层）、从清单移除，彻底取出。
    * onProgress：按文件回调（附件逐个 + 笔记本身），UI 驱动进度通知。
    */
-  async restoreNote(
+  restoreNote(
+    noteId: string,
+    onProgress?: (p: EncryptProgress) => void
+  ): Promise<{ note: SafeNote; conflicts: string[]; removed: boolean; manifestSaveFailed?: boolean }> {
+    return this.enqueueOp(() => this.restoreNoteSerial(noteId, onProgress));
+  }
+
+  private async restoreNoteSerial(
     noteId: string,
     onProgress?: (p: EncryptProgress) => void
   ): Promise<{ note: SafeNote; conflicts: string[]; removed: boolean; manifestSaveFailed?: boolean }> {
@@ -1255,6 +1382,7 @@ export class SafeManager {
   /**
    * 更新条目正文镜像（覆盖同一 contentRef，不产生孤儿镜像；清单同步持久化）。
    * 供密码本整表（password-vault）等高频改写载荷用：重用既有镜像名，避免每次新镜像堆积。
+   * 覆盖走 replaceMirrorAtomic（P0-1）：暂存+rename 原子换入，任何写失败正式位保持旧完整密文。
    */
   async updateNotePayload(noteId: string, plainContent: string): Promise<void> {
     if (!this.unlocked || !this.password) throw new Error('未解锁，无法保存');
@@ -1262,10 +1390,10 @@ export class SafeManager {
     if (!note) throw new Error('未找到清单条目');
     const encrypted = await CryptoService.encrypt(plainContent, this.password);
     if (note.contentRef) {
-      await this.writeMirror(note.contentRef, encrypted); // 覆盖同一密文镜像
+      await this.replaceMirrorAtomic(note.contentRef, encrypted); // 原子覆盖同一密文镜像
     } else {
       const ref = flatName();
-      await this.writeMirror(ref, encrypted);
+      await this.replaceMirrorAtomic(ref, encrypted);
       note.contentRef = ref;
     }
     await this.saveManifest();
