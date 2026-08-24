@@ -434,7 +434,7 @@ export class MemorySystem {
     if (typeof content !== 'string' || !content) return 'calm';
     const text = content.toLowerCase();
     const emotionKeywords: Record<string, string[]> = {
-      happy: ['开心', '高兴', '喜欢', '爱', '很好', '不错', '棒', '优秀', '惊喜', '哈哈', '开心'],
+      happy: ['开心', '高兴', '喜欢', '爱', '很好', '不错', '棒', '优秀', '惊喜', '哈哈'],
       sad: ['难过', '伤心', '哭', '失望', '痛苦', '低落', '烦', '郁闷'],
       upset: ['生气', '愤怒', '讨厌', '糟糕', '气死'],
       curious: ['好奇', '奇怪', '为什么', '怎么', '探索', '研究'],
@@ -460,8 +460,8 @@ export class MemorySystem {
     return Math.min(Math.max(score, 0), 1);
   }
 
-  /** 情感强度（原 calculateEmotionIntensity 逐字） */
-  calculateEmotionIntensity(content: string): number {
+  /** 情感强度（原 calculateEmotionIntensity 逐字；仅 ruleImportance 内部使用） */
+  private calculateEmotionIntensity(content: string): number {
     const text = content.toLowerCase();
     const intensityWords: Record<string, string[]> = {
       high: ['非常', '特别', '极其', '超级', '十分', '真的'],
@@ -524,7 +524,6 @@ export class MemorySystem {
     if (!query.trim()) return 0;
     const content = memory.description.toLowerCase();
     const queryKeywords = query.toLowerCase().split(/\s+/).filter((k) => k.length > 0);
-    if (!queryKeywords.length) return 0;
     let hit = 0;
     for (const kw of queryKeywords) if (content.includes(kw)) hit++;
     return Math.min(1, (hit / queryKeywords.length) * 0.7 + (content.includes(query.toLowerCase()) ? 0.3 : 0));
@@ -836,33 +835,31 @@ export class MemorySystem {
       this.backoffReflection();
       return;
     }
-    if (insights.length) {
-      this.reflectBackoffUntil = 0; // 成功重置退避（含 30min 封顶期）
-      this.reflectBackoffMs = 5 * 60 * 1000;
-      let firstNewInsightId: string | null = null;
-      for (const ins of insights) {
-        const evidenceIds = ins.evidence
-          .map((n) => evidence[n - 1]?.id)
-          .filter((id): id is string => !!id);
-        const added = await this.addInsight(ins.text, evidenceIds, 0.75, undefined, 'reflection', ins.theme);
-        if (!firstNewInsightId) firstNewInsightId = added.id;
-      }
-      // 092：supersede 写点——本批次第一条新洞察作为后继；目标校验失败静默（异常裁剪不整轮失败）
-      if (supersedeRef !== null && firstNewInsightId) {
-        try { applySupersede(this.stream, supersedeRef, firstNewInsightId, candidates.indexMap); } catch { /* 非法引用忽略 */ }
-      }
-      data.memory.reflection.lastReflectAt = now;
-      data.memory.reflection.count = (data.memory.reflection.count || 0) + 1;
-      this.pendingSinceReflect = 0;
-      // 反思驱动人格（心情重构：洞察 → PersonalityGrowth；ticket 091 带来源元数据）
-      if (this.onReflect) {
-        try {
-          await this.onReflect(insights, { origin: 'reflection' });
-        } catch (e) { /* 成长失败不影响记忆流 */ }
-      }
-      data.memory.lastUpdated = new Date().toISOString();
-      await this.dataSaver(data); // 红队 B P1-2：仅产出时落盘（失败退避期不空转写盘）
+    this.reflectBackoffUntil = 0; // 成功重置退避（含 30min 封顶期）
+    this.reflectBackoffMs = 5 * 60 * 1000;
+    let firstNewInsightId: string | null = null;
+    for (const ins of insights) {
+      const evidenceIds = ins.evidence
+        .map((n) => evidence[n - 1]?.id)
+        .filter((id): id is string => !!id);
+      const added = await this.addInsight(ins.text, evidenceIds, 0.75, undefined, 'reflection', ins.theme);
+      if (!firstNewInsightId) firstNewInsightId = added.id;
     }
+    // 092：supersede 写点——本批次第一条新洞察作为后继；目标校验失败静默（异常裁剪不整轮失败）
+    if (supersedeRef !== null && firstNewInsightId) {
+      try { applySupersede(this.stream, supersedeRef, firstNewInsightId, candidates.indexMap); } catch { /* 非法引用忽略 */ }
+    }
+    data.memory.reflection.lastReflectAt = now;
+    data.memory.reflection.count = (data.memory.reflection.count || 0) + 1;
+    this.pendingSinceReflect = 0;
+    // 反思驱动人格（心情重构：洞察 → PersonalityGrowth；ticket 091 带来源元数据）
+    if (this.onReflect) {
+      try {
+        await this.onReflect(insights, { origin: 'reflection' });
+      } catch (e) { /* 成长失败不影响记忆流 */ }
+    }
+    data.memory.lastUpdated = new Date().toISOString();
+    await this.dataSaver(data); // 红队 B P1-2：仅产出时落盘（失败退避期不空转写盘）
   }
 
   // ---------------- 睡前巩固（Digest，2026-08-23「小橘做梦」） ----------------
@@ -948,16 +945,6 @@ export class MemorySystem {
   }
 
   // ---------------- 状态与格式化 ----------------
-
-  /** 系统状态（记忆流计数/洞察数/反思次数/语义模式） */
-  getSystemStatus(): any {
-    return {
-      streamCount: this.stream.length,
-      insightCount: this.stream.filter((m) => m.type === 'insight').length,
-      reflectionCount: this.dataProvider().memory.reflection.count || 0,
-      semanticMode: this.ollamaAvailable === true && this.dim > 0,
-    };
-  }
 
   /**
    * 格式化记忆供 prompt（增强：带来源中文标签 + 相对时间，小橘能感知「什么时候·从哪来」）

@@ -130,7 +130,7 @@ export const CANDIDATE_CONFIG = {
 } as const;
 
 /** 候选通道产出：block 直接拼进 reflect prompt（空列表 → ''）；indexMap 供 LLM 回传候选编号时反解真实 id */
-export interface ReflectCandidates {
+interface ReflectCandidates {
   block: string;
   count: number;
   indexMap: Map<number, string>;

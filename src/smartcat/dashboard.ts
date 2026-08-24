@@ -85,7 +85,7 @@ export const TRAIT_LABELS: Record<keyof CharacterTraits, string> = {
 };
 
 /** 记忆流词法情绪中文（detectEmotion 词表 8 类；LLM 打分可能给出表外词，回显原值） */
-export const EMOTION_LABELS: Record<string, string> = {
+const EMOTION_LABELS: Record<string, string> = {
   happy: '开心', sad: '难过', curious: '好奇', sleepy: '困倦',
   playful: '玩心', focused: '专注', calm: '平静', upset: '烦躁',
 };
@@ -196,7 +196,7 @@ export function distributionRows(dist: Record<string, number>): { label: string;
 }
 
 /** 标注覆盖率小字样本阈值（097 A3）：观察样本不足此数只报条数不显百分比（小样本不宣称比例） */
-export const EMOTION_COVERAGE_MIN_SAMPLES = 5;
+const EMOTION_COVERAGE_MIN_SAMPLES = 5;
 
 /**
  * 情绪页标注覆盖率文案（097 A3 纯函数）：复用 096 emotionDensityStats 口径，纯读展示零交互——
@@ -323,6 +323,27 @@ function statBlock(num: string | number, label: string): HTMLElement {
 
 function emptyHint(text: string): HTMLElement {
   return el('div', 'bz-sc-dash-empty', text);
+}
+
+/** 分布卡（情绪/来源两卡共用骨架）：rows 为降序计数行（调用方截前 N），行 = 小字名称条 + 计数；空表给提示 */
+function distributionCard(
+  title: string,
+  rows: { label: string; count: number }[],
+  opts: { unit: string; labelOf?: (label: string) => string; emptyText: string },
+): { root: HTMLElement; body: HTMLElement } {
+  const c = card(title);
+  if (rows.length) {
+    const max = rows[0].count;
+    for (const r of rows) {
+      const row = barRow(opts.labelOf ? opts.labelOf(r.label) : r.label, max > 0 ? r.count / max : 0);
+      (row.querySelector('.bz-sc-dash-row-name') as HTMLElement).classList.add('bz-sc-dash-row-name--sm');
+      row.appendChild(el('span', 'bz-sc-dash-row-count', `${r.count} ${opts.unit}`));
+      c.body.appendChild(row);
+    }
+  } else {
+    c.body.appendChild(emptyHint(opts.emptyText));
+  }
+  return c;
 }
 
 // ---------------- 四页签渲染 ----------------
@@ -498,20 +519,9 @@ function renderEmotion(pane: HTMLElement, data: SmartCatData): void {
   pane.appendChild(trendCard.root);
 
   // 情绪分布
-  const distRows = distributionRows(buildEmotionDistribution(stream)).slice(0, 8);
-  const distCard = card('情绪分布');
-  if (distRows.length) {
-    const max = distRows[0].count;
-    for (const r of distRows) {
-      const row = barRow(emotionLabel(r.label), max > 0 ? r.count / max : 0);
-      (row.querySelector('.bz-sc-dash-row-name') as HTMLElement).classList.add('bz-sc-dash-row-name--sm');
-      row.appendChild(el('span', 'bz-sc-dash-row-count', `${r.count} 次`));
-      distCard.body.appendChild(row);
-    }
-  } else {
-    distCard.body.appendChild(emptyHint('还没有带情绪标注的记忆——和小橘聊天、写日记都会有情绪记录。'));
-  }
-  pane.appendChild(distCard.root);
+  pane.appendChild(distributionCard('情绪分布', distributionRows(buildEmotionDistribution(stream)).slice(0, 8), {
+    unit: '次', labelOf: emotionLabel, emptyText: '还没有带情绪标注的记忆——和小橘聊天、写日记都会有情绪记录。',
+  }).root);
 
   // 演变时间线（新→旧）
   const tl = buildEmotionTimeline(stream, 20);
@@ -661,20 +671,9 @@ function renderMemory(pane: HTMLElement, data: SmartCatData): void {
   pane.appendChild(rhythmCard.root);
 
   // 来源分布
-  const srcRows = distributionRows(buildSourceDistribution(stream)).slice(0, 6);
-  const srcCard = card('记忆来源分布');
-  if (srcRows.length) {
-    const max = srcRows[0].count;
-    for (const r of srcRows) {
-      const row = barRow(r.label, max > 0 ? r.count / max : 0);
-      (row.querySelector('.bz-sc-dash-row-name') as HTMLElement).classList.add('bz-sc-dash-row-name--sm');
-      row.appendChild(el('span', 'bz-sc-dash-row-count', `${r.count} 条`));
-      srcCard.body.appendChild(row);
-    }
-  } else {
-    srcCard.body.appendChild(emptyHint('暂无观察来源。'));
-  }
-  pane.appendChild(srcCard.root);
+  pane.appendChild(distributionCard('记忆来源分布', distributionRows(buildSourceDistribution(stream)).slice(0, 6), {
+    unit: '条', emptyText: '暂无观察来源。',
+  }).root);
 
   // 最近记忆列表（新→旧，截前 30 条）
   const listCard = card('最近记忆');
