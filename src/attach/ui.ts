@@ -10,7 +10,7 @@ import { escManager } from '../core/esc-manager';
 import { collectResources, planMoves } from './data';
 
 /** 当前打开笔记；无则 null */
-export function getActiveNote(app: any): any | null {
+function getActiveNote(app: any): any | null {
   return app?.workspace?.getActiveFile?.() ?? null;
 }
 
