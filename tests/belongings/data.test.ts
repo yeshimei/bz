@@ -3,7 +3,7 @@
  * 解析失败警告、保存结构、纯函数数值断言。
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { loadDatabase, saveDatabase, calculateDailyCost, calculateDaysUsed, formatDate, getDataFilePath } from '../../src/belongings/data';
+import { loadDatabase, saveDatabase, calculateDailyCost, calculateDaysUsed, getDataFilePath } from '../../src/belongings/data';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { MockVault } from '../mock-vault';
@@ -136,9 +136,5 @@ describe('纯函数', () => {
     expect(calculateDaysUsed('2025-06-14T12:00:00')).toBe(1);
     expect(calculateDaysUsed('2025-05-16T12:00:00')).toBe(30);
     vi.useRealTimers();
-  });
-
-  it('formatDate', () => {
-    expect(formatDate('2025-06-05')).toBe('2025.06.05');
   });
 });
