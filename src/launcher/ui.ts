@@ -17,7 +17,7 @@ import {
 import { filterIcons, LUCIDE_ICONS } from './icons';
 
 /** 长按进入编辑模式的时长 */
-export const EDIT_LONG_PRESS_MS = 500;
+const EDIT_LONG_PRESS_MS = 500;
 /** 网格单元最小尺寸（移动端比例缩小下限） */
 const MIN_CELL = 44;
 /** 网格单元最大尺寸 */
@@ -66,7 +66,7 @@ export function setLauncherShowTextSetter(fn: (v: boolean) => void): void {
   showTextSetter = fn;
 }
 
-export function applyLauncherShowText(v: boolean): void {
+function applyLauncherShowText(v: boolean): void {
   if (showTextSetter) showTextSetter(v);
 }
 
@@ -74,7 +74,7 @@ export function setLauncherGestureSetter(fn: (v: string) => void): void {
   gestureSetter = fn;
 }
 
-export function applyLauncherGesture(v: string): void {
+function applyLauncherGesture(v: string): void {
   if (gestureSetter) gestureSetter(v);
 }
 
@@ -341,8 +341,15 @@ export class LauncherModal {
     this.columnSel = sel;
   }
 
-  /** 长按网格空白区域（非磁贴）进入编辑模式——空态无磁贴时的入口 */
-  private bindGridLongPress(): void {
+  /**
+   * 长按进入编辑模式计时器工厂：pointerdown 计时，移动超阈值/提前松开取消。
+   * 网格空白处与磁贴共用同一套判定，仅注册面不同。
+   */
+  private createLongPress(onFire: () => void): {
+    down: (e: PointerEvent) => void;
+    move: (e: PointerEvent) => void;
+    cancel: () => void;
+  } {
     let timer: number | null = null;
     let sx = 0;
     let sy = 0;
@@ -352,24 +359,34 @@ export class LauncherModal {
         timer = null;
       }
     };
+    return {
+      down: (e) => {
+        sx = e.clientX;
+        sy = e.clientY;
+        timer = window.setTimeout(() => {
+          timer = null;
+          onFire();
+        }, EDIT_LONG_PRESS_MS);
+      },
+      move: (e) => {
+        if (timer === null) return;
+        if (Math.abs(e.clientX - sx) > MOVE_CANCEL || Math.abs(e.clientY - sy) > MOVE_CANCEL) cancel();
+      },
+      cancel,
+    };
+  }
+
+  /** 长按网格空白区域（非磁贴）进入编辑模式——空态无磁贴时的入口 */
+  private bindGridLongPress(): void {
+    const lp = this.createLongPress(() => this.enterEdit());
     this.grid.addEventListener('pointerdown', (e) => {
       if (this.editing) return;
       if ((e.target as HTMLElement).closest('.launcher-tile')) return; // 磁贴上由 bindDrag 处理
-      sx = (e as PointerEvent).clientX;
-      sy = (e as PointerEvent).clientY;
-      timer = window.setTimeout(() => {
-        timer = null;
-        this.enterEdit();
-      }, EDIT_LONG_PRESS_MS);
+      lp.down(e);
     });
-    this.grid.addEventListener('pointermove', (e) => {
-      if (timer === null) return;
-      const dx = (e as PointerEvent).clientX - sx;
-      const dy = (e as PointerEvent).clientY - sy;
-      if (Math.abs(dx) > MOVE_CANCEL || Math.abs(dy) > MOVE_CANCEL) cancel();
-    });
-    this.grid.addEventListener('pointerup', cancel);
-    this.grid.addEventListener('pointerleave', cancel);
+    this.grid.addEventListener('pointermove', lp.move);
+    this.grid.addEventListener('pointerup', lp.cancel);
+    this.grid.addEventListener('pointerleave', lp.cancel);
   }
 
   close(): void {
@@ -605,35 +622,16 @@ export class LauncherModal {
 
   /** 长按检测：pointerdown 计时，移动超阈值/提前松开取消；触发后抑制随后的 click */
   private bindDrag(el: HTMLElement, tile: LauncherTile): void {
-    let timer: number | null = null;
-    let sx = 0;
-    let sy = 0;
-
-    const cancel = () => {
-      if (timer !== null) {
-        clearTimeout(timer);
-        timer = null;
-      }
-    };
+    const lp = this.createLongPress(() => this.enterEdit());
 
     el.addEventListener('pointerdown', (e) => {
       if (this.editing) return; // 编辑模式：拖拽由 startDrag 处理
-      sx = (e as PointerEvent).clientX;
-      sy = (e as PointerEvent).clientY;
-      timer = window.setTimeout(() => {
-        timer = null;
-        this.enterEdit();
-      }, EDIT_LONG_PRESS_MS);
+      lp.down(e);
     });
 
-    el.addEventListener('pointermove', (e) => {
-      if (timer === null) return;
-      const dx = (e as PointerEvent).clientX - sx;
-      const dy = (e as PointerEvent).clientY - sy;
-      if (Math.abs(dx) > MOVE_CANCEL || Math.abs(dy) > MOVE_CANCEL) cancel();
-    });
+    el.addEventListener('pointermove', lp.move);
 
-    const end = () => cancel();
+    const end = () => lp.cancel();
     el.addEventListener('pointerup', end);
     el.addEventListener('pointerleave', end);
     el.addEventListener('pointercancel', end);
@@ -800,7 +798,7 @@ export class LauncherModal {
     });
     addRow('🎨 选择图标', () => {
       close();
-      this.openIconDialog(tileId, (icon) => {
+      this.openIconDialog((icon) => {
         if (icon === null) delete tile.icon;
         else tile.icon = icon;
         this.save();
@@ -955,8 +953,7 @@ export class LauncherModal {
   // ===== 图标选择器 =====
 
   /** 打开图标选择器；onPick(iconName | null)：null = 恢复默认 */
-  openIconDialog(tileId: string, onPick: (icon: string | null) => void): void {
-    void tileId;
+  openIconDialog(onPick: (icon: string | null) => void): void {
     const { mask, popup } = this.buildPicker(ICON_MASK_ID, ICON_POPUP_ID, '选择图标');
     const input = document.createElement('input');
     input.type = 'text';
