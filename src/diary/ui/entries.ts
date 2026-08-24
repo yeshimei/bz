@@ -5,6 +5,7 @@
 import { Component, MarkdownRenderer } from 'obsidian';
 import { notice } from '../../core/notice';
 import { confirm } from '../../core/confirm';
+import { emitDomainEvent } from '../../core/domain-bus';
 import { attachItemActions, type ItemAction } from '../../core/item-actions';
 import { getApp } from '../app';
 import { BATCH_SIZE, DIARY_DIRECTORY, LETTER_DIRECTORY, MOVIE_DIRECTORY, getSubTagsOfPrimary, getTagEmoji } from '../config';
@@ -484,6 +485,8 @@ async function encryptFromSheet(entryId: string) {
       // 从 md 摘除原普通块（encryptEntry 不删整 md，块级移除由日记域处理）→ 重并加密版
       if (entry.id) await deleteEntry(entry.id);
       await reloadWithEncrypted();
+      // 动作埋点：加密移入保险箱成功（本期无消费者，emit 即可）
+      emitDomainEvent('diary:entry-encrypted', { entryId, date: entry.date, time: entry.time });
       notice('已加密移入保险箱', 'success');
     }
   } catch (e: any) {
@@ -516,6 +519,8 @@ async function decryptFromSheet(entryId: string) {
     // 主动重读该日期文件（还原块已在 md 内）：不依赖文件监听事件，还原条目立即进列表
     //（refreshFile 内含重并其余加密条目 + 全量刷新，与事件路径幂等）
     await refreshFile(`${DIARY_DIRECTORY}/${entry.date}.md`);
+    // 动作埋点：解密还原成功（本期无消费者，emit 即可）
+    emitDomainEvent('diary:entry-decrypted', { noteId: entry.noteId, date: entry.date, newTags });
     notice('已解密还原', 'success');
   } catch (e) {
     notice('解密失败', 'error');
@@ -576,8 +581,12 @@ export function showConfirm(entryId: string) {
         // 加密条目：永久删除保险箱密文（ADR-0017）
         await deleteEncryptedEntry(entry.noteId);
         await reloadWithEncrypted();
+        // 动作埋点：加密日记密文销毁（本期无消费者，emit 即可）
+        emitDomainEvent('diary:encrypted-purged', { noteId: entry.noteId });
       } else {
         await deleteEntry(entryId);
+        // 动作埋点：普通条目删除意图（结构性事实 file-vacated 由 store 在整文件删除时另发）
+        if (entry) emitDomainEvent('diary:entry-deleted', { date: entry.date, time: entry.time, wasEncrypted: false });
       }
       notice('日记条目已删除', 'success');
       hidePickers();

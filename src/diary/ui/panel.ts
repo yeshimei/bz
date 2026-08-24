@@ -7,7 +7,7 @@ import { pad2 } from '../../core/utils';
 import { notice } from '../../core/notice';
 import { escManager } from '../../core/esc-manager';
 import type { EscHandle } from '../../core/esc-manager';
-import { getApp } from '../app';
+import { onDomainEvent } from '../../core/domain-bus';
 import { getSettings, saveSettings, tryGetSettings } from '../../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../../core/mobile';
 import { openSettingsModal, createSettingsGroup } from '../../core/settings-modal';
@@ -409,6 +409,31 @@ export function toggleSearch() {
 let diaryEscHandle: EscHandle | null = null;
 let refreshCallbacksRegistered = false;
 let unlockListenerRegistered = false;
+/** 文件监听退订函数（模块级）：面板关闭复开由 fileListenerAttached 守卫防重复订阅 */
+let fileEventUnsubscribes: (() => void)[] = [];
+
+// ===== 文件监听（域事件总线换线） =====
+
+/**
+ * 订阅三条 modified 通道：面板同时展示日记/影视/信三类卡片（历史如此）。
+ * vault 裸事件由 core/obsidian-adapter 统一订阅并转译，此处只挂语义通道；
+ * isInternalUpdate 回环抑制留在订阅端 onFileChange 内部。先退订旧订阅再挂新，
+ * 防御 fileListenerAttached 被外部复位时重复叠加 handler。
+ */
+function attachFileChangeListeners(): void {
+  detachFileChangeListeners();
+  fileEventUnsubscribes = [
+    onDomainEvent('diary:file-modified', onFileChange),
+    onDomainEvent('movie:file-modified', onFileChange),
+    onDomainEvent('letter:file-modified', onFileChange),
+  ];
+}
+
+/** 退订文件监听（幂等，onDomainEvent 返回的退订函数本身可重复调用） */
+function detachFileChangeListeners(): void {
+  for (const off of fileEventUnsubscribes) off();
+  fileEventUnsubscribes = [];
+}
 
 /**
  * 初始化日记过滤器主入口（幂等：面板已存在时仅重新显示）
@@ -486,10 +511,10 @@ export async function init(plugin?: { registerEvent: (ref: unknown) => unknown }
   initScroll();
   await loadAll();
 
-  // 注册文件监听（自动刷新）
+  // 注册文件监听（自动刷新）：改走域事件总线三条 modified 通道
+  // （plugin 参数保留签名兼容；旧版在此注册 vault 裸事件引用，现由 adapter 统一接线）
   if (!state.events.fileListenerAttached) {
-    const ref = getApp().vault.on('modify', onFileChange as any);
-    if (plugin) plugin.registerEvent(ref);
+    attachFileChangeListeners();
     state.events.fileListenerAttached = true;
   }
   } catch (err: any) {

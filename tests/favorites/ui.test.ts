@@ -10,15 +10,11 @@ import { UIManager } from '../../src/favorites/ui';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices, requestUrl, Platform } from '../mock-obsidian-entry';
 import { closeItemMenu } from '../../src/core/item-actions';
-// ticket 078：收藏本 smartcat 观察挂点——mock notifyFavoritesAction，断言调用参数
-vi.mock('../../src/smartcat', async (importOriginal) => {
-  const mod = await importOriginal<typeof import('../../src/smartcat')>();
-  return { ...mod, notifyFavoritesAction: vi.fn() };
-});
-import { notifyFavoritesAction } from '../../src/smartcat';
-
-/** notifyFavoritesAction mock（ticket 078 挂点断言用；每用例前清调用记录） */
-const mockNotify = vi.mocked(notifyFavoritesAction);
+import { onDomainEvent } from '../../src/core/domain-bus';
+// ticket 078 观测点换线（域事件派发）：真实总线 + onDomainEvent('favorites', spy) 挂间谍，
+// 断言 UI 动作发出的载荷（挂点契约不变，只换观测点；ui.ts 不再 import smartcat barrel）。
+let mockNotify: import('vitest').Mock<(evt?: unknown) => void>;
+let offNotifySpy: () => void = () => {};
 
 function makeApp(vault: MockVault) {
   return {
@@ -559,16 +555,18 @@ describe('收藏本抽屉（统一手势组件接入）', () => {
   });
 });
 
-describe('收藏本 smartcat 观察挂点（ticket 078 方法监听）', () => {
+describe('收藏本 smartcat 观察挂点（ticket 078 域事件派发）', () => {
   beforeEach(() => {
-    mockNotify.mockClear();
+    mockNotify = vi.fn((_evt?: unknown) => {});
+    offNotifySpy = onDomainEvent('favorites', (evt) => mockNotify(evt));
   });
 
   afterEach(() => {
+    offNotifySpy();
     closeItemMenu();
   });
 
-  it('添加挂点：保存成功后通知 {kind: add, item}（最终落盘的 data 对象）', async () => {
+  it('添加挂点：保存成功后发 {kind: add, item}（最终落盘的 data 对象）', async () => {
     const { ui } = await setup();
     ui.build();
     ui.openAddDialog();

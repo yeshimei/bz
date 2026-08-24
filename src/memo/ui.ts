@@ -30,7 +30,7 @@ import { getDueStatus, formatDueText } from './due';
 import type { MemoItem } from './types';
 import { App } from './app';
 // ticket 075（方法监听）：memo 动作观察（smartcat；未初始化/关闭时静默）
-import { notifyMemoAction } from '../smartcat';
+import { emitDomainEvent } from '../core/domain-bus';
 
 /** 内容输入框一行高（14px × 1.5 行高 + 上下 padding 16px） */
 const CONTENT_LINE_HEIGHT = 37;
@@ -576,10 +576,10 @@ export const UIManager = {
           coursePath,
           url: finalUrl,
         } as any);
-        // ticket 075（方法监听）：编辑动作观察（α 合并一条；无变化 memo-source 返回 null 不产出）
+        // ticket 075（域事件派发）：编辑动作观察（α 合并一条；无变化 memo-source 返回 null 不产出）
         // ticket 084a B7：兜底后仍无旧值（极窄竞态，此时 updateItem 应已抛错）→ 明确跳过编辑观察
         if (oldItem) {
-          notifyMemoAction({
+          emitDomainEvent('memo', {
             kind: 'edited',
             old: {
               title: oldItem.title,
@@ -618,8 +618,8 @@ export const UIManager = {
           url: finalUrl,
         };
         await DataManager.addItem(newItem as any);
-        // ticket 075（方法监听）：添加动作观察（键值式，有才加）
-        notifyMemoAction({
+        // ticket 075（域事件派发）：添加动作观察（键值式，有才加）
+        emitDomainEvent('memo', {
           kind: 'added',
           title: finalTitle,
           scene,
@@ -1038,8 +1038,8 @@ export const Renderer = {
           // 二次校验：防抖窗口内已取消勾选 → 不误发完成通知
           if (!checkbox.checked) return;
           await DataManager.completeItem(item.id);
-          // ticket 075（方法监听）：完成观察（防抖到点且仍勾选才发；重复由 notify 侧防重拦截）
-          notifyMemoAction({ kind: 'completed', title: item.title });
+          // ticket 075（域事件派发）：完成观察（防抖到点且仍勾选才发；重复由 smartcat 订阅侧防重拦截）
+          emitDomainEvent('memo', { kind: 'completed', title: item.title });
           App.refresh();
         }, 300);
       };
@@ -1106,8 +1106,8 @@ export const Renderer = {
         sub: item.due ? formatDueText(item.due) : undefined, // 到期状态：剩 N 天/今天/已过期
         onClick: async () => {
           await DataManager.completeItem(item.id);
-          // ticket 075（方法监听）：完成观察
-          notifyMemoAction({ kind: 'completed', title: item.title });
+          // ticket 075（域事件派发）：完成观察
+          emitDomainEvent('memo', { kind: 'completed', title: item.title });
           notice('已标记完成', 'success');
           App.refresh();
         },
@@ -1119,8 +1119,8 @@ export const Renderer = {
         title: '恢复未完成',
         onClick: async () => {
           await DataManager.updateItem(item.id, { completed: null } as any);
-          // ticket 075（方法监听）：恢复未完成观察
-          notifyMemoAction({ kind: 'restored', title: item.title });
+          // ticket 075（域事件派发）：恢复未完成观察
+          emitDomainEvent('memo', { kind: 'restored', title: item.title });
           notice('已恢复未完成', 'success');
           App.refresh();
         },
@@ -1130,8 +1130,8 @@ export const Renderer = {
       const postpone = (days: number) => {
         const next = moment(item.due!.replace('T', ' ')).add(days, 'days').format('YYYY-MM-DD HH:mm');
         void DataManager.updateItem(item.id, { due: next } as any).then(() => {
-          // ticket 075（方法监听）：延后观察（带延后后的新截止）
-          notifyMemoAction({ kind: 'postponed', title: item.title, due: next });
+          // ticket 075（域事件派发）：延后观察（带延后后的新截止）
+          emitDomainEvent('memo', { kind: 'postponed', title: item.title, due: next });
           notice(`已延后 ${days} 天`, 'success');
           App.refresh();
         });
@@ -1151,8 +1151,8 @@ export const Renderer = {
       onClick: async () => {
         const to = isImportant ? 'minor' : 'important';
         await DataManager.updateItem(item.id, { priority: to } as any);
-        // ticket 075（方法监听）：切换优先级观察
-        notifyMemoAction({ kind: 'priority', title: item.title, to });
+        // ticket 075（域事件派发）：切换优先级观察
+        emitDomainEvent('memo', { kind: 'priority', title: item.title, to });
         notice(isImportant ? '已转为次要' : '已转为重要', 'success');
         App.refresh();
       },
@@ -1177,8 +1177,8 @@ export const Renderer = {
       onClick: () =>
         UIManager.showConfirm('删除备忘录', item.title, async () => {
           await DataManager.deleteItem(item.id);
-          // ticket 075（方法监听）：删除观察
-          notifyMemoAction({ kind: 'deleted', title: item.title });
+          // ticket 075（域事件派发）：删除观察
+          emitDomainEvent('memo', { kind: 'deleted', title: item.title });
           App.refresh();
         }),
     });
