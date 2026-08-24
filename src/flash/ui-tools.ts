@@ -20,8 +20,8 @@ export function jumpToChunk(file: any, chunkText: string, highlight = false): vo
           const text = ed.getValue();
           const idx = text.indexOf(chunkText);
           if (idx !== -1) {
-            const pos = ed.posToOffset ? { line: 0, ch: 0 } : null;
-            const from = pos ?? ed.offsetToPos(idx);
+            // P2：from 直接取 offsetToPos(idx)（原 posToOffset 恒真三元只会得到文档开头）
+            const from = ed.offsetToPos(idx);
             const to = ed.offsetToPos(idx + chunkText.length);
             ed.setSelection(from, to);
           }
