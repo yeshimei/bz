@@ -4,10 +4,22 @@
  * ticket 082：quiz/review 移除（盲通道计数观察全清空）
  * ticket 081：library 唯一条目——weave-data.json 数据文件监听（结构化 diff）
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { DOMAIN_FILES, snapshotDomains } from '../../src/smartcat/domain-source';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 
 describe('DOMAIN_FILES（唯一 library；memo/news/favorites/belongings/pomodoro/quiz/review 均已移除）', () => {
+  afterEach(() => {
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' } as any)); // 还原默认，防泄漏到同文件后续用例
+  });
+
+  it('file 路径注册期动态拼装：跟随 storagePath 设置（P2 硬编码路径修复）', () => {
+    setSettingsProvider(() => ({ storagePath: 'VAULT/CUSTOM' } as any));
+    expect(DOMAIN_FILES.library.file).toBe('VAULT/CUSTOM/weave-data.json');
+    // 尾斜杠归一
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE///' } as any));
+    expect(DOMAIN_FILES.library.file).toBe('CONFIG/STORAGE/weave-data.json');
+  });
   it('除 library 外全部 JSON 盲通道域均不再有 extract', () => {
     expect(DOMAIN_FILES.memo).toBeUndefined();
     expect(DOMAIN_FILES.news).toBeUndefined();

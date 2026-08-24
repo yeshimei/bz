@@ -10,8 +10,10 @@
  * 划线/想法事件由 index 层 5 分钟防抖合并，见 library-source.ts 与 index.ts）。
  */
 import { libraryWeaveExtract, type LibraryWeaveDiff } from './library-source';
+import { smartcatStorageDir } from './data';
 
 export interface DomainExtractor {
+  /** 数据文件路径（getter 注册期经 smartcatStorageDir() 动态拼装——跟随共享 storagePath 设置） */
   file: string;
   /** 返回 null = 无变化；string/string[] = 观察文本（原各域）；LibraryWeaveDiff = library 结构化 diff（index 层区分即时/防抖） */
   extract: (raw: any, prev: Map<string, string>) => string | string[] | LibraryWeaveDiff | null;
@@ -20,7 +22,8 @@ export interface DomainExtractor {
 export const DOMAIN_FILES: Record<string, DomainExtractor> = {
   library: {
     // ticket 081：weave-data.json 数据文件监听先例——外部插件写库，bz 侧盲通道 diff（library-source.ts；v2 结构化 diff）
-    file: 'CONFIG/STORAGE/weave-data.json',
+    // P2 硬编码路径修复：getter 动态拼装，跟随 storagePath 设置（默认仍 CONFIG/STORAGE）
+    get file(): string { return `${smartcatStorageDir()}/weave-data.json`; },
     extract: libraryWeaveExtract,
   },
   // 其余盲通道全部移除（见头部注释）：memo/news/favorites/belongings/pomodoro/quiz/review 不再产计数观察。

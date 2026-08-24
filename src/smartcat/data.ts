@@ -8,7 +8,7 @@ import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
 import { defaultConfig, normalizeConfig } from './config';
 import { randomOceanSeed, characterSeed, DEFAULT_TRAITS, DEFAULT_OCEAN } from './character';
-import type { SmartCatData, MemoryStream, PersonalityGrowthData } from './types';
+import type { SmartCatData, MemoryStream, MemoryStreamEntry, PersonalityGrowthData } from './types';
 
 export const SMARTCAT_FILE = 'smartcat.json';
 /** 记忆向量文件（bge-m3 1024 维 float32 平铺，dim uint32 LE 头；行序对齐 stream） */
@@ -39,6 +39,20 @@ export function getAbsenceDays(data: SmartCatData, now = Date.now()): number {
 export function smartcatStorageDir(): string {
   const s = tryGetSettings() as any;
   return ((s && s.storagePath) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
+}
+
+/**
+ * 洞察人工修正原位补丁（092 设计第 7 条 / P1-29 修正被回滚修复）：
+ * 在传入的数据对象上按 id 定位洞察并应用 pinned/supersededBy 类字段补丁。
+ * **必须经常驻实例通道调用**（内存对象 + 统一 dataSaver）——独立 load-modify-save 副本
+ * 落盘会回滚常驻侧后续任何保存。返回 false = 未找到该洞察。
+ */
+export function applyInsightPatch(data: SmartCatData, id: string, patch: (m: MemoryStreamEntry) => void): boolean {
+  const target = (data.memory?.stream || []).find((x) => x.id === id);
+  if (!target) return false;
+  patch(target);
+  data.memory.lastUpdated = new Date().toISOString();
+  return true;
 }
 
 /** smartcat.json 路径（跟随共享 storagePath） */

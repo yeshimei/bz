@@ -194,7 +194,8 @@ export function selectSlotMemories(
   } = {},
 ): MemoryStreamEntry[] {
   const maxEntries = Math.max(0, Math.floor(opts.maxEntries ?? PROMPT_SLOTS.maxEntries));
-  const semanticSeats = Math.max(0, Math.floor(opts.semanticSeats ?? PROMPT_SLOTS.semanticSeats));
+  // P2 契约边界（红队）：语义席钳制到总名额内——越界传入会使返回子集突破 maxEntries 上限
+  const semanticSeats = Math.min(Math.max(0, Math.floor(opts.semanticSeats ?? PROMPT_SLOTS.semanticSeats)), maxEntries);
   const emotionSeats = Math.max(0, Math.floor(opts.emotionSeats ?? PROMPT_SLOTS.emotionSeats));
   const timeSeats = Math.max(0, Math.floor(opts.timeSeats ?? PROMPT_SLOTS.timeSeats));
   const pool = Array.isArray(memories) ? memories.filter(Boolean) : [];
@@ -217,7 +218,8 @@ export function selectSlotMemories(
       .map((m) => ({ m, aff: Math.abs(vadAffinity(emotionToVAD(m.emotion as string), opts.currentVad!)) }))
       .sort((a, b) => b.aff - a.aff || (byIndex.get(a.m)! - byIndex.get(b.m)!));
     for (const r of ranked) {
-      if (emoPicks.length >= emotionSeats) break;
+      // P2 契约边界：保底席位同样受总名额硬约束（小 maxEntries 配置下不得突破）
+      if (emoPicks.length >= emotionSeats || taken.size >= maxEntries) break;
       emoPicks.push(r.m);
       taken.add(r.m);
     }
@@ -233,7 +235,7 @@ export function selectSlotMemories(
       .filter((x) => x.score > 0)
       .sort((a, b) => b.score - a.score || new Date(b.m.created).getTime() - new Date(a.m.created).getTime());
     for (const r of ranked) {
-      if (timePicks.length >= timeSeats) break;
+      if (timePicks.length >= timeSeats || taken.size >= maxEntries) break;
       timePicks.push(r.m);
       taken.add(r.m);
     }
@@ -353,6 +355,16 @@ export class MemorySystem {
   /** 添加洞察记忆（反思产物；importance 固定高值可由调用方传入；source 默认 reflection，日小结传 digest；
    *  092 方向二：theme 为受限枚举主题键（工作|兴趣|关系|健康|环境），可选——由 reflect 解析后传入） */
   async addInsight(description: string, evidenceIds: string[], importance = 0.75, emotion?: string, source = 'reflection', theme?: string): Promise<MemoryStreamEntry> {
+    const memory = this.makeInsightMemory(description, evidenceIds, importance, emotion, source, theme);
+    this.stream.push(memory);
+    this.pendingSinceReflect++;
+    await this.dataSaver(this.dataProvider());
+    await this.appendVector(memory);
+    return memory;
+  }
+
+  /** 构造洞察条目（纯构造不入流；P1-26 批量原子写与 addInsight 的唯一构造点，防两处字段漂移） */
+  private makeInsightMemory(description: string, evidenceIds: string[], importance = 0.75, emotion?: string, source = 'reflection', theme?: string): MemoryStreamEntry {
     const memory: MemoryStreamEntry = {
       id: `insight_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       created: new Date().toISOString(),
@@ -365,11 +377,15 @@ export class MemorySystem {
       emotion,
     };
     if (typeof theme === 'string' && theme) memory.theme = theme; // 可选字段：空/缺省不写（旧数据零迁移）
-    this.stream.push(memory);
-    this.pendingSinceReflect++;
-    await this.dataSaver(this.dataProvider());
-    await this.appendVector(memory);
     return memory;
+  }
+
+  /** P1-26：批量落盘失败的回滚——把本批条目从流中整体摘除（游标未推，下轮重跑不重复） */
+  private rollbackStreamEntries(entries: MemoryStreamEntry[]): void {
+    for (const m of entries) {
+      const i = this.stream.indexOf(m);
+      if (i >= 0) this.stream.splice(i, 1);
+    }
   }
 
   // ---------------- importance + emotion 打分 ----------------
@@ -615,7 +631,10 @@ export class MemorySystem {
     this.vectorIndexMap = map;
   }
 
-  /** 追加记忆向量（语义模式可用时；失败静默——检索会回退词法） */
+  /** 追加记忆向量（语义模式可用时；失败静默——检索会回退词法）。
+   *  P1-27 行错位修复：行号按该记忆在 stream 中的实际下标（indexOf）定位——
+   *  原实现取 await 交错后的 length-1，两条 addObservation 交错时会把映射指向别人的行；
+   *  中间若留空洞按零行补齐，保持「向量行序对齐 stream」不变量。 */
   private async appendVector(memory: MemoryStreamEntry): Promise<void> {
     const ok = await this.probeSemantic();
     if (!ok) return;
@@ -623,14 +642,19 @@ export class MemorySystem {
       const vec = await getEmbedding(memory.description, false);
       if (!vec.length) return;
       if (!this.dim) this.dim = vec.length;
-      // 追加到内存向量（行序 = stream 最后一条）
+      const idx = this.stream.indexOf(memory);
+      if (idx < 0) return; // 条目已被移除（unload/重载竞态）→ 不写入不登记
       if (!this.vectors) this.vectors = new Float64Array(0);
-      const merged = new Float64Array(this.vectors.length + this.dim);
-      merged.set(this.vectors, 0);
-      for (let i = 0; i < this.dim; i++) merged[this.vectors.length + i] = vec[i] ?? 0;
-      this.vectors = merged;
+      const rows = Math.floor(this.vectors.length / this.dim);
+      if (idx >= rows) {
+        // 目标行越过当前末尾：扩容并补零洞（交错期更晚提交的行先落位所致）
+        const grown = new Float64Array((idx + 1) * this.dim);
+        grown.set(this.vectors, 0);
+        this.vectors = grown;
+      }
+      const offset = idx * this.dim;
+      for (let i = 0; i < this.dim; i++) this.vectors[offset + i] = vec[i] ?? 0;
       if (!this.vectorIndexMap) this.vectorIndexMap = new Map();
-      const idx = this.stream.length - 1;
       this.vectorIndexMap.set(memory.id, idx);
       await this.persistVectors();
     } catch {
@@ -837,14 +861,24 @@ export class MemorySystem {
     }
     this.reflectBackoffUntil = 0; // 成功重置退避（含 30min 封顶期）
     this.reflectBackoffMs = 5 * 60 * 1000;
-    let firstNewInsightId: string | null = null;
-    for (const ins of insights) {
+    // P1-26 半批重复归纳修复：本批洞察先整批构造入流、单次 dataSaver 成功后才推进游标；
+    // 任一步失败整批回滚不入流、游标不推并进入退避（下轮整体重来，不残留半批重复）
+    const entries = insights.map((ins) => {
       const evidenceIds = ins.evidence
         .map((n) => evidence[n - 1]?.id)
         .filter((id): id is string => !!id);
-      const added = await this.addInsight(ins.text, evidenceIds, 0.75, undefined, 'reflection', ins.theme);
-      if (!firstNewInsightId) firstNewInsightId = added.id;
+      return this.makeInsightMemory(ins.text, evidenceIds, 0.75, undefined, 'reflection', ins.theme);
+    });
+    this.stream.push(...entries);
+    try {
+      await this.dataSaver(this.dataProvider());
+    } catch (e) {
+      this.rollbackStreamEntries(entries);
+      this.backoffReflection();
+      return;
     }
+    for (const m of entries) await this.appendVector(m); // 尽力而为（内部吞错），不影响已落盘批次
+    const firstNewInsightId: string | null = entries.length ? entries[0].id : null;
     // 092：supersede 写点——本批次第一条新洞察作为后继；目标校验失败静默（异常裁剪不整轮失败）
     if (supersedeRef !== null && firstNewInsightId) {
       try { applySupersede(this.stream, supersedeRef, firstNewInsightId, candidates.indexMap); } catch { /* 非法引用忽略 */ }
@@ -873,11 +907,21 @@ export class MemorySystem {
     return true;
   }
 
-  /** 触发条件：距上次日小结 ≥digestInterval 且期间新增观察 ≥digestMinNew；失败退避期不触发 */
+  /** 触发条件：距上次日小结 ≥digestInterval 且期间新增观察 ≥digestMinNew；失败退避期不触发。
+   *  P0-6 死锁修复：lastDigestAt=0（从未小结）原恒 false，注释宣称「等首次反思后再做日小结」
+   *  却没有任何路径能到达——改为「已反思过（lastReflectAt>0）且自上次反思以来新增观察 ≥digestMinNew」
+   *  即允许首次日小结（不等 18h 间隔——尚无上次小结可计）。 */
   private shouldDigest(now: number): boolean {
     if (now < this.reflectBackoffUntil) return false; // 与反思共用退避（AI 不可用不空转）
-    const last = this.dataProvider().memory.reflection.lastDigestAt || 0;
-    if (!last) return false; // 从未小结过：等首次反思后再做日小结（数据太少无意义）
+    const refl = this.dataProvider().memory.reflection;
+    const last = refl.lastDigestAt || 0;
+    if (!last) {
+      // 从未小结过：以「上次反思」为基线（连反思都没发生过 → 数据太少无意义，维持不触发）
+      const lastReflect = refl.lastReflectAt || 0;
+      if (!lastReflect) return false;
+      const sinceReflect = this.stream.filter((m) => m.type === 'observation' && m.source !== 'digest' && new Date(m.created).getTime() > lastReflect).length;
+      return sinceReflect >= MEMORY_CONFIG.digestMinNew;
+    }
     if (now - last < MEMORY_CONFIG.digestInterval) return false;
     // 距上次小结以来的新增观察数（observation 且创建时间 > last）
     const since = this.stream.filter((m) => m.type === 'observation' && m.source !== 'digest' && new Date(m.created).getTime() > last).length;
@@ -889,13 +933,16 @@ export class MemorySystem {
   async digest(): Promise<void> {
     const data = this.dataProvider();
     const now = Date.now();
-    const last = data.memory.reflection.lastDigestAt || 0;
+    const refl = data.memory.reflection;
+    // P0-6：lastDigestAt 未播种（首次日小结）→ 证据基线与 shouldDigest 同源取上次反思时间，
+    // 防把全量历史观察当候选；scope 同步用基线时间。
+    const base = refl.lastDigestAt || refl.lastReflectAt || 0;
     const candidates = this.stream
-      .filter((m) => m.type === 'observation' && m.source !== 'digest' && new Date(m.created).getTime() > last)
+      .filter((m) => m.type === 'observation' && m.source !== 'digest' && new Date(m.created).getTime() > base)
       .slice(-MEMORY_CONFIG.digestMaxEvidence);
     if (candidates.length < MEMORY_CONFIG.digestMinNew) return;
 
-    const scope = `过去一天（${new Date(last).toISOString().slice(0, 10)} 至 ${new Date(now).toISOString().slice(0, 10)}）`;
+    const scope = `过去一天（${new Date(base).toISOString().slice(0, 10)} 至 ${new Date(now).toISOString().slice(0, 10)}）`;
     const numbered = candidates.map((m, i) => `${i + 1}. ${m.description}`).join('\n');
     const prompt =
       `你是小橘，一只陪伴猫咪。以下是用户${scope}的记忆（编号 1-${candidates.length}）：\n` +
@@ -926,12 +973,22 @@ export class MemorySystem {
     }
     this.reflectBackoffUntil = 0;
     this.reflectBackoffMs = 5 * 60 * 1000;
-    for (const d of digests) {
+    // P1-26：同 reflect——整批构造入流、单次落盘成功才推进游标；失败整批回滚不入流（下轮整体重来）
+    const entries = digests.map((d) => {
       const evidenceIds = d.evidence
         .map((n) => candidates[n - 1]?.id)
         .filter((id): id is string => !!id);
-      await this.addInsight(`【今日小结】${d.text}`, evidenceIds, 0.7, undefined, 'digest');
+      return this.makeInsightMemory(`【今日小结】${d.text}`, evidenceIds, 0.7, undefined, 'digest');
+    });
+    this.stream.push(...entries);
+    try {
+      await this.dataSaver(this.dataProvider());
+    } catch (e) {
+      this.rollbackStreamEntries(entries);
+      this.backoffReflection();
+      return;
     }
+    for (const m of entries) await this.appendVector(m); // 尽力而为，不影响已落盘批次
     data.memory.reflection.lastDigestAt = now;
     data.memory.reflection.digestCount = (data.memory.reflection.digestCount || 0) + 1;
     // 睡前巩固也驱动人格（极轻微：洞察 → 特质成长；onReflect 钩子复用；ticket 091 origin=digest）

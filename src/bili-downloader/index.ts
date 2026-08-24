@@ -35,13 +35,23 @@ export function openBiliDownloader(): void {
     settled = true;
     notice(msg, type);
   };
+  // P2 缓冲防护：buf 只保留尾部 8KB 滑窗（防长时运行/刷屏输出把缓冲无界撑大）；
+  // 地址命中 settled 后移除 data 监听并短路匹配（不再做无谓的正则扫描）。
+  const BUF_CAP = 8 * 1024;
+  const trimBuf = (): void => { if (buf.length > BUF_CAP) buf = buf.slice(-BUF_CAP); };
   let buf = '';
-  child.stdout?.on('data', (d: Buffer) => {
+  const onData = (d: Buffer): void => {
     buf += String(d);
+    trimBuf();
+    if (settled) return; // 已命中地址：短路（监听移除前的残余事件也不再扫描）
     const m = buf.match(ADDR_RE);
-    if (m) done(`B站下载器已启动：${m[1]}`, 'success');
-  });
-  child.stderr?.on('data', (d: Buffer) => { buf += String(d); });
+    if (m) {
+      child.stdout?.removeListener?.('data', onData);
+      done(`B站下载器已启动：${m[1]}`, 'success');
+    }
+  };
+  child.stdout?.on('data', onData);
+  child.stderr?.on('data', (d: Buffer) => { buf += String(d); trimBuf(); });
   child.on('error', (e: Error) => {
     done(/ENOENT/.test(e.message) ? `未找到 bili-dl。${INSTALL_HINT}` : `启动失败：${e.message}`, 'error');
   });

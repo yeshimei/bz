@@ -83,7 +83,6 @@ export class MoodSystem {
   pad: PadDimensions;
   /** 5 档显示位（由 PAD 原型最近邻实时算出，解除断线） */
   currentMood: string;
-  moodHistory: any[] = [];
   lastInteractionTime = Date.now();
   private decayTimer: ReturnType<typeof setInterval> | null = null;
   /** 心情门控采样钩子（ticket 095 设计 3）：60s 衰减循环每 tick 通知窗口采样器（fire-and-forget；可空） */
@@ -123,8 +122,7 @@ export class MoodSystem {
     }
     if (Math.abs(next - old) < 0.01) return;
     this.pad[axis] = Math.round(next * 10) / 10;
-    this.moodHistory.push({ axis, change, adjusted, reason, timestamp: Date.now(), oldValue: old, newValue: this.pad[axis] });
-    if (this.moodHistory.length > 200) this.moodHistory = this.moodHistory.slice(-100);
+    // P2 死字段清理：原 moodHistory 推送点随字段一并删除（重构后全库零消费点）
     // 5 档由 PAD 实时推出（断线解除）
     this.currentMood = this.computeMoodLevel();
     if (Math.abs(adjusted) >= 1) void this.saveMoodState();

@@ -68,9 +68,23 @@ export class BubbleManager {
   }
 
   showBubbleInternal(message: string, duration: BubbleDuration = null): void {
-    if (!message) return;
+    if (!message) {
+      // 空消息不可显示：复位打字锁并继续推进队列（防队列头空消息把锁卡死）
+      this.isCurrentBubbleTyping = false;
+      this.currentBubble = null;
+      this.processBubbleQueue();
+      return;
+    }
     const bubblesContainer = document.querySelector('#cat-bubbles-container');
-    if (!bubblesContainer) return;
+    if (!bubblesContainer) {
+      // P1-28 气泡锁死修复：容器缺失早退必须复位 isCurrentBubbleTyping——否则 hide 期间入队的消息
+      // 把打字锁卡在 true，猫容器 remount 后队列永不推进；本条退回队首待容器恢复
+      // （openSmartCat 幂等 remount 后 processBubbleQueue）再消费；此处不递归处理防热循环。
+      this.isCurrentBubbleTyping = false;
+      this.currentBubble = null;
+      this.bubbleQueue.unshift({ message, duration, timestamp: Date.now() });
+      return;
+    }
 
     const bubble = document.createElement('div');
     bubble.className = 'cat-bubble';

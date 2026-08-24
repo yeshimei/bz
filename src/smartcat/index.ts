@@ -7,7 +7,7 @@
 import type { App } from 'obsidian';
 import { notice } from '../core/notice';
 import { getSettings, saveSettings } from '../core/settings-provider';
-import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath, smartcatStorageDir, defaultPersonalityGrowth, touchPresence } from './data';
+import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath, smartcatStorageDir, defaultPersonalityGrowth, touchPresence, applyInsightPatch } from './data';
 import { eventSystem, setSmartcatApp, setupVisibilityCheck, __resetVisibilityForTests } from './state';
 import { mountCatContainer, unmountCatContainer, applyAppearance, createChatPanel, showChatPanel, hideChatPanel, openSmartcatSettings } from './ui';
 import { BubbleManager } from './bubble';
@@ -39,7 +39,7 @@ import { buildWeeklyReportData, generateWeeklyReport, weekWindow } from './repor
 import { appendDossierEvent, getDossierEvents, shouldScanDossierNarrative, buildNarrativeInput, generateDossierNarrative, advanceDossierScanKey } from './dossier';
 import { buildCompanionContext } from './companion-context';
 import { analyzeEmotionTrend, buildEmotionSnapshots, describeEmotionTrend, checkContradiction, extractStoredFacts, initBanditArm, sampleThompson, updateBandit } from './cognitive';
-import { openSmartcatDashboard, closeSmartcatDashboard } from './dashboard';
+import { openSmartcatDashboard, closeSmartcatDashboard, registerInsightPatchChannel } from './dashboard';
 import { AbsenceSystem } from './absence';
 import {
   QuietGateSystem, gentleGreeting, gentleGreetingAvailable, gentlePhraseFor, gentleStyleFor,
@@ -245,6 +245,17 @@ export async function ensureSmartCat(app: App): Promise<void> {
       moodSystem.applyEmotionResonance(m.emotion, m.credibility ?? 0.5);
     } catch (e) { /* 共振失败不影响记忆主流程 */ }
   };
+
+  // P1-29：数据面板「固定/废弃」经常驻实例通道修改内存对象并统一 dataSaver 落盘
+  // （废弃独立 load-modify-save 副本——副本保存会回滚常驻侧后续任何未同步改动）
+  registerInsightPatchChannel({
+    apply: async (id, patch) => {
+      const d = dataProvider();
+      if (!applyInsightPatch(d, id, patch)) return false;
+      await dataSaver(d);
+      return true;
+    },
+  });
 
   // 猫容器 + 皮肤 + 动画 + 指示器
   const container = mountCatContainer()!;
@@ -759,6 +770,15 @@ async function generateBookReview(): Promise<void> {
 
 /** 打开（召唤/显示小橘） */
 export async function openSmartCat(app: App): Promise<void> {
+  // P1-28 召回不能修复：hide 后 initialized 仍 true → ensureSmartCat 幂等早退，猫容器永不重挂。
+  // 已初始化时幂等 remount（mountCatContainer 存在即复用）+ 重刷皮肤 + 推进气泡队列
+  // （容器缺失期入队的消息此刻消费；打字锁已在 showBubbleInternal 早退分支复位）。
+  if (initialized) {
+    const container = mountCatContainer();
+    if (container && data) applyAppearance(container, data.config.appearance);
+    bubbleManager?.processBubbleQueue();
+    return;
+  }
   await ensureSmartCat(app);
 }
 
@@ -1049,6 +1069,7 @@ export function unloadSmartCat(): void {
     panels = null;
   }
   closeSmartcatDashboard(); // 数据面板（ticket 071）：DOM + ESC 句柄一并清理
+  registerInsightPatchChannel(null); // P1-29：常驻通道随实例卸载一并清除
   unmountCatContainer();
   __resetVisibilityForTests();
   bubbleManager = null;
@@ -1475,6 +1496,9 @@ async function settleDiaryEntry(filePath: string, date: string, time: string): P
   if (!file) {
     appendDiaryDeleteObservation(date, time);
     diaryTimers.delete(key);
+    // P2 重复删除观察修复：同步跟踪快照——否则随后到达的 vault delete 事件按旧快照
+    // 再逐条产一遍删除观察（同一条日记两条「你删除了」）
+    diaryTracked.get(filePath)?.delete(`${date}${DIARY_KEY_SEP}${time}`);
     return;
   }
   let entry: DiaryEntryLike | null = null;
@@ -1489,6 +1513,8 @@ async function settleDiaryEntry(filePath: string, date: string, time: string): P
     // 结算时条目已消失（modify diff 未及感知的竞态）→ 兜底删除观察 + 清记录
     appendDiaryDeleteObservation(date, time);
     diaryTimers.delete(key);
+    // P2：同文件消失分支——同步跟踪快照，防在途 modify 事件的 diff 再产一条重复删除观察
+    diaryTracked.get(filePath)?.delete(`${date}${DIARY_KEY_SEP}${time}`);
     return;
   }
   const settled = decideDiarySettle(entry, date, {

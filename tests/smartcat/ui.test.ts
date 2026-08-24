@@ -97,6 +97,25 @@ describe('openSmartCat / 命令回调', () => {
     expect(document.getElementById('smart-companion-cat')).toBeNull();
     expect(document.getElementById('chat-panel')).toBeNull();
   }, 15000);
+
+  it('P1-28：hide→open 猫容器重新挂载（召回不能修复）+ 隐藏期入队消息被消费', async () => {
+    const { app } = makeApp();
+    await openSmartCat(app);
+    hideSmartCat();
+    expect(document.getElementById('smart-companion-cat')).toBeNull();
+    // 容器缺失期入队的气泡（打字锁已在早退分支复位、消息保留队首）
+    __getSmartcatInternals().bubbleManager.showBubble('隐藏期消息');
+    await openSmartCat(app);
+    // 幂等 remount：容器重新挂载 + 皮肤重刷 + 气泡队列推进
+    const container = document.getElementById('smart-companion-cat');
+    expect(container).not.toBeNull();
+    expect(container!.querySelector('#cat-bubbles-container')).not.toBeNull();
+    expect(container!.classList.contains('bz-sc-skin-orange')).toBe(true);
+    expect(document.querySelectorAll('.cat-bubble').length).toBe(1); // 隐藏期消息被消费
+    // 再次 open 幂等（不产生第二个容器）
+    await openSmartCat(app);
+    expect(document.querySelectorAll('#smart-companion-cat').length).toBe(1);
+  }, 15000);
 });
 
 describe('unloadSmartCat', () => {

@@ -3,7 +3,7 @@
  * 验证多轮 messages 请求体/模型参数/失败 fallback requestUrl。
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { callChat } from '../../src/smartcat/api';
+import { callChat, __setAICallTimeoutMsForTests } from '../../src/smartcat/api';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { setApp } from '../../src/core/app';
 import { requestUrl } from '../mock-obsidian-entry';
@@ -79,5 +79,35 @@ describe('callChat', () => {
     }));
     (globalThis as any).fetch = fetchMock;
     await expect(callChat([{ role: 'user', content: 'x' }])).rejects.toThrow(/Invalid API key/);
+  });
+
+  it('P2 超时：fetch 挂起 → 60s 窗口（测试注入缩短）reject 且 fallback requestUrl 同样超时走降级链报错', async () => {
+    __setAICallTimeoutMsForTests(20);
+    try {
+      const fetchMock = vi.fn(() => new Promise<any>(() => {})); // 永不 resolve（模拟挂起）
+      (globalThis as any).fetch = fetchMock;
+      vi.mocked(requestUrl).mockReturnValue(new Promise<any>(() => {}) as any);
+      await expect(callChat([{ role: 'user', content: 'x' }])).rejects.toThrow(/超时/);
+      // 两路径都尝试过：fetch 超时 → fallback requestUrl 也超时
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(requestUrl).toHaveBeenCalledTimes(1);
+    } finally {
+      __setAICallTimeoutMsForTests(60 * 1000); // 复位默认窗口
+    }
+  });
+
+  it('P2 超时：fallback requestUrl 成功则降级链正常返回（超时只淘汰挂起路径）', async () => {
+    __setAICallTimeoutMsForTests(20);
+    try {
+      (globalThis as any).fetch = () => new Promise<any>(() => {}); // 主路径挂起
+      vi.mocked(requestUrl).mockResolvedValue({
+        status: 200,
+        text: JSON.stringify({ choices: [{ message: { content: 'fallback ok' } }] }),
+      } as any);
+      const r = await callChat([{ role: 'user', content: 'hi' }]);
+      expect(r).toBe('fallback ok');
+    } finally {
+      __setAICallTimeoutMsForTests(60 * 1000);
+    }
   });
 });

@@ -2,10 +2,20 @@
  * 笔记库接入（ticket 025 → 2026-08-23 用户拍板扩展 → ticket 083 收敛）：8 类源路径分类 + 全内容观察文本
  * （LLM 云端打分 + 词法情绪）；reflection（反省）观察 ticket 083 彻底移除。
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { classifyPath, observationText, extractKeywords } from '../../src/smartcat/context-source';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 
 describe('classifyPath（笔记库接入分类，2026-08-23 扩展 8 类源）', () => {
+  afterEach(() => {
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' } as any)); // 还原默认
+  });
+
+  it('pomodoro.json 短路路径跟随 storagePath（P2 硬编码路径修复）', () => {
+    setSettingsProvider(() => ({ storagePath: 'X/Y' } as any));
+    expect(classifyPath('X/Y/pomodoro.json')).toBe('pomodoro');
+    expect(classifyPath('CONFIG/STORAGE/pomodoro.json')).toBeNull(); // 旧默认路径不再命中自定义设置
+  });
   it('按目录识别 8 类源（diary/flash/clipping/movie/reading/poem/letter，reflection 已移除）', () => {
     expect(classifyPath('我的/日记/2026-08-23.md')).toBe('diary');
     expect(classifyPath('卡片盒/TDD.md')).toBe('flash');

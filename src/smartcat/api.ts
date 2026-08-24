@@ -28,6 +28,21 @@ export async function callChatJson(messages: ChatMessage[], maxTokens = 300): Pr
   }
 }
 
+/** 单次 AI 调用超时（P2 fetch 无超时修复）：fetch/requestUrl 两路径统一 60s，超时 reject 走既有错误降级链 */
+export const AI_CALL_TIMEOUT_MS = 60 * 1000;
+let callTimeoutMs = AI_CALL_TIMEOUT_MS;
+/** 测试辅助：注入超时窗口（unload 无需恢复——模块级仅测试使用） */
+export function __setAICallTimeoutMsForTests(ms: number): void { callTimeoutMs = ms; }
+
+/** Promise 超时 race（到点 reject；settled 后清计时器） */
+function raceTimeout<T>(p: Promise<T>, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label}超时（${Math.round(callTimeoutMs / 1000)}s）`)), callTimeoutMs);
+  });
+  return Promise.race([p, timeout]).finally(() => { if (timer) clearTimeout(timer); }) as Promise<T>;
+}
+
 /** 统一请求（fetch 优先 → requestUrl 兜底；body 可扩展） */
 async function callCompletions(
   messages: ChatMessage[],
@@ -59,35 +74,51 @@ async function callCompletions(
   }
 }
 
-/** fetch（原版 fetch 语义；非 SSE 直接读 JSON content） */
+/** fetch（原版 fetch 语义；非 SSE 直接读 JSON content）。
+ *  P2：AbortController + setTimeout race（60s）——超时 abort 转可读错误，走既有降级链。 */
 async function streamCompatFetch(endpoint: string, apiKey: string, body: any): Promise<{ content: string }> {
-  const resp = await fetch(`${endpoint}/chat/completions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify(body),
-  });
-  if (!resp.ok) {
-    let msg = `API ${resp.status}`;
-    try {
-      const err = await resp.json();
-      if (err.error && err.error.message) msg = err.error.message;
-    } catch (e) { /* 保留状态码 */ }
-    throw new Error(msg);
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), callTimeoutMs);
+  try {
+    // race 兜底拒绝（含 mock fetch 不理会 signal 的场景）；abort 负责真正掐断底层连接
+    const resp = await raceTimeout(fetch(`${endpoint}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify(body),
+      signal: ac.signal,
+    } as any), 'AI 请求');
+    if (!resp.ok) {
+      let msg = `API ${resp.status}`;
+      try {
+        const err = await resp.json();
+        if (err.error && err.error.message) msg = err.error.message;
+      } catch (e) { /* 保留状态码 */ }
+      throw new Error(msg);
+    }
+    const data: any = await resp.json();
+    const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    if (content === undefined || content === null) throw new Error(`API ${resp.status}: 响应缺少 content`);
+    return { content };
+  } catch (e: any) {
+    // abort 超时 → 可读错误消息（外层 callCompletions 捕获后走 requestUrl fallback，fallback 同样有超时）
+    if (e && (e.name === 'AbortError' || /abort/i.test(String(e?.message || '')))) {
+      throw new Error(`AI 请求超时（${Math.round(callTimeoutMs / 1000)}s）`);
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
   }
-  const data: any = await resp.json();
-  const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-  if (content === undefined || content === null) throw new Error(`API ${resp.status}: 响应缺少 content`);
-  return { content };
 }
 
-/** requestUrl 非流式（Obsidian 官方 API，无 CORS 限制） */
+/** requestUrl 非流式（Obsidian 官方 API，无 CORS 限制）。
+ *  P2：requestUrl 无内建超时/中止——Promise race 60s 兜底（超时 reject 走既有错误链）。 */
 async function nonStreamRequest(endpoint: string, apiKey: string, body: any): Promise<{ content: string }> {
-  const resp: any = await requestUrl({
+  const resp: any = await raceTimeout(requestUrl({
     url: `${endpoint}/chat/completions`,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({ ...body, stream: false }),
-  });
+  }), 'AI 请求(fallback)');
   const data = JSON.parse(resp.text);
   const errMsg = (data.error && (data.error.message || data.error.type)) || (data.message && data.message);
   if (errMsg) throw new Error(`API ${resp.status}: ${errMsg}`);
