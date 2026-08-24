@@ -59,7 +59,11 @@ export class DataManager {
     } catch (e) {
       throw new Error('密码本数据损坏');
     }
-    this.pwData = Array.isArray(parsed) ? parsed : [];
+    // 脏数据防御（P2）：过滤 null / 非对象元素（半写/被篡改的整表 JSON），
+    // 不再让单个脏元素炸掉整表加载；对象条目缺失字段由下方归一化补齐
+    this.pwData = Array.isArray(parsed)
+      ? parsed.filter((x): x is PasswordEntry => !!x && typeof x === 'object' && !Array.isArray(x))
+      : [];
     // 确保每个条目有 id 和基本字段
     this.pwData = this.pwData.map((item: any) => {
       if (!item.id) item.id = `pw-${Date.now()}-${Math.random()}`;
