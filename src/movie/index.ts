@@ -4,8 +4,7 @@
  */
 import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
-import { M } from './state';
-import { STATUS_WATCHING, STATUS_WANT } from './constants';
+import { M, resetMovieState } from './state';
 import { rebuildItems } from './data';
 import { registerEscapeHandler, createOverlay, closeOverlay, renderList, openAddModal } from './ui';
 import { openAnalysisModal } from './analysis';
@@ -31,8 +30,8 @@ export function ensureMovie(app: App): void {
   (globalThis as any).__MOVIE_FOLDER_PATH = M.folderPath;
 }
 
-/** 应用默认视图设置：排序 / 类型筛选 / 状态筛选 */
-export function applyDefaultView(s: {
+/** 应用默认视图设置：排序 / 类型筛选 / 状态筛选（仅 ensureMovie 内部使用） */
+function applyDefaultView(s: {
   movieDefaultSort?: string;
   movieDefaultTypeFilter?: string;
   movieDefaultStatusFilter?: string;
@@ -102,6 +101,3 @@ export function unloadMovie(): void {
   autoRefreshRegistered = false;
   resetMovieState();
 }
-
-import { resetMovieState } from './state';
-export { STATUS_WATCHING, STATUS_WANT };

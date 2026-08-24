@@ -7,24 +7,10 @@ import type { App, TFile } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
+import { ALL_TAGS, getGroupForTag, STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED } from './constants';
 import { M } from './state';
 
 let analysisOverlay: HTMLElement | null = null;
-
-// 状态常量（与 data.ts 保持一致）
-const STATUS_WANT = 0;
-const STATUS_WATCHING = 1;
-const STATUS_WATCHED = 2;
-
-// 四类影视及其包含的具体标签
-const TYPE_GROUPS: Record<string, string[]> = {
-  '电影': ['电影'],
-  '剧集': ['国产剧', '美剧', '英剧', '德剧', '日剧', '韩剧'],
-  '动漫': ['日漫', '国漫', '美漫'],
-  '纪录片': ['纪录片'],
-  '公开课': ['公开课', 'TED'],
-};
-const ALL_TAGS = Object.values(TYPE_GROUPS).flat();
 
 // 类型颜色（浅色，环形图/图例用）
 const TYPE_COLORS: Record<string, string> = {
@@ -34,13 +20,6 @@ const TYPE_COLORS: Record<string, string> = {
   '纪录片': '#D8F3DC',
   '公开课': '#E6DFF5',
 };
-
-function getGroupForTag(tag: string): string | null {
-  for (const [group, tags] of Object.entries(TYPE_GROUPS)) {
-    if (tags.includes(tag)) return group;
-  }
-  return null;
-}
 
 const R6to10 = 10 / 6; // 个人6分制 → 10分制换算
 const REVIEW_KEYWORDS = ['好看', '喜欢', '推荐', '经典', '感动', '治愈', '失望', '无聊', '一般', '神作', '烂片', '封神', '震撼', '催泪', '熬夜', '二刷', '满分'];
@@ -106,11 +85,10 @@ function parseAnalysisItem(fm: any, file: TFile): { item: any; d: Date | null; d
 
   const watchDate = fm['观影日期'] ? fm['观影日期'].toString() : null;
   const rating = fm['评分'] !== undefined ? Number(fm['评分']) : null;
-  // 状态由评分推断（无独立状态字段）：-1=想看 / 0=在看 / >0=已看 / 无评分按已看
+  // 状态由评分推断（无独立状态字段）：-1=想看 / 0=在看 / 其余（>0 或无评分）=已看
   let status: number;
   if (rating === -1) status = STATUS_WANT;
   else if (rating === 0) status = STATUS_WATCHING;
-  else if (rating !== null && rating > 0) status = STATUS_WATCHED;
   else status = STATUS_WATCHED;
   const d = new Date(watchDate as string);
   return {

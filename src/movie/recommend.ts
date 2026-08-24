@@ -5,7 +5,7 @@ import type { App } from 'obsidian';
 import { pad2 } from '../core/utils';
 import { notice, notify } from '../core/notice';
 import { createAI } from '../core/ai';
-import { STATUS_WATCHED, STATUS_WANT } from './constants';
+import { STATUS_WATCHED } from './constants';
 import { refreshDataAndView } from './data';
 import { watchPosterFetch } from './poster-watch';
 import { M } from './state';
