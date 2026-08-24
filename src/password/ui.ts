@@ -42,12 +42,6 @@ export class UIManager {
   searchContainer: HTMLDivElement | null = null;
   addMask: HTMLDivElement | null = null;
   addPopup: HTMLDivElement | null = null;
-  confirmMask: HTMLDivElement | null = null;
-  confirmPopup: HTMLDivElement | null = null;
-  confirmTitleEl: HTMLElement | null = null;
-  confirmMessageEl: HTMLElement | null = null;
-  confirmBtn: HTMLButtonElement | null = null;
-  confirmCallback: (() => void) | null = null;
   // 状态
   editingId: string | null = null;
   searchKeyword = '';
@@ -103,8 +97,6 @@ export class UIManager {
 
     // 添加对话框
     this.createAddDialog();
-    // 确认对话框
-    this.createConfirmDialog();
 
     // 注册全局ESC
     this.registerEscape();
@@ -702,12 +694,10 @@ export class UIManager {
     }
   }
 
-  // ---------- 确认对话框（代理到 core confirm） ----------
-  createConfirmDialog() {}
+  // ---------- 确认（代理到 core confirm） ----------
   showConfirm(title: string, message: string, onConfirm: () => void) {
     confirm({ title: title || '确认', message: message || '', onConfirm });
   }
-  closeConfirm() {}
 
   // ---------- 解锁（统一走保险箱主密码弹窗：共享同一解锁态，不再自绘） ----------
   showPasswordDialog(): Promise<boolean> {
@@ -732,8 +722,7 @@ export class UIManager {
     escManager.register('pw', {
       isVisible: () => !!(this.mask && this.mask.style.display === 'block'),
       close: () => {
-        if (this.confirmMask && this.confirmMask.style.display === 'block') this.closeConfirm();
-        else if (this.addMask && this.addMask.style.display === 'block') this.closeAddDialog();
+        if (this.addMask && this.addMask.style.display === 'block') this.closeAddDialog();
         else if (this.mask && this.mask.style.display === 'block') this.hide();
       },
     });

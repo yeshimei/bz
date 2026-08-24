@@ -135,9 +135,4 @@ export class DataManager {
         (item.note || '').toLowerCase().includes(lower)
     );
   }
-
-  // 用于自检
-  getDataCopy(): PasswordEntry[] {
-    return JSON.parse(JSON.stringify(this.pwData));
-  }
 }
