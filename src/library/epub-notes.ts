@@ -2,7 +2,6 @@
  * 书库 EPUB 读书笔记（ADR-0013 扩展）：从 weave-data.json 直接渲染 划线+想法，按章节分组；
  * 双击跳原文（weave-cfi 深链），长按编辑想法/删除（bz 直改 weave-data.json，ADR 记录竞态例外）。
  */
-import { notice } from '../core/dom';
 import { DEFAULT_WEAVE_DATA_FILE, readWeaveDataAggregates, resolveWeaveDataPath } from './items';
 
 export interface EpubBookNote {

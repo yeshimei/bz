@@ -126,15 +126,9 @@ export function getBookItems(app: any): BookItem[] {
 /** 排序：title/author localeCompare('zh')；日期类有值在前无值排后；进度有值在前 */
 export function sortItemList(list: BookItem[], key: string, order: string): BookItem[] {
   const sorted = [...list];
-  if (key === 'title') {
+  if (key === 'title' || key === 'author') {
     sorted.sort((a, b) => {
-      const compare = a.title.localeCompare(b.title, 'zh');
-      return order === 'asc' ? compare : -compare;
-    });
-    return sorted;
-  } else if (key === 'author') {
-    sorted.sort((a, b) => {
-      const compare = a.author.localeCompare(b.author, 'zh');
+      const compare = a[key].localeCompare(b[key], 'zh');
       return order === 'asc' ? compare : -compare;
     });
     return sorted;
@@ -189,9 +183,9 @@ export function sortItemList(list: BookItem[], key: string, order: string): Book
 const DEFAULT_WEAVE_DATA_FILE = 'weave-data.json';
 export { DEFAULT_WEAVE_DATA_FILE };
 const COVER_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-const READING_SESSION_MIN_DURATION_SECONDS = 300;
 
-export function normalizeWeaveDataPath(value?: string): string {
+/** 归一化 Weave 数据目录（resolveWeaveDataPath 内部用）：去首尾斜杠，空值回落 CONFIG/STORAGE */
+function normalizeWeaveDataPath(value?: string): string {
   const raw = String(value || '').trim().replace(/^\/+|\/+$/g, '');
   return raw || 'CONFIG/STORAGE';
 }
