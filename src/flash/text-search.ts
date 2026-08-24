@@ -18,7 +18,7 @@ export function extractTerms(text: string): string[] {
   return terms;
 }
 
-export interface TextIndex {
+interface TextIndex {
   entries: { path: string; text: string }[];
   index: Map<string, Set<number>>; // term → docIdx
   docLen: number[];

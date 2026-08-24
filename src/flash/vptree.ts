@@ -18,7 +18,7 @@ export function normalizeVec(v: number[]): number[] {
   return v.map((x) => x / norm);
 }
 
-export interface VPNode {
+interface VPNode {
   idx: number;
   threshold: number;
   left: VPNode | null;

@@ -1,12 +1,10 @@
 /**
- * 闪念二进制工具（ticket 18，源码 MobileBuffer L36-75 逐字）
+ * 闪念二进制工具（ticket 18，源码 MobileBuffer L36-75 语义移植）
+ * 写 .vec 头部固定用本类（alloc 从 0 起，避免 Node Buffer 池偏移）。
  */
-export const HAS_BUFFER = typeof Buffer !== 'undefined';
-
-/** 移动端 Buffer 回退（无 node Buffer） */
 export class MobileBuffer {
   _data: Uint8Array;
-  _view: DataView;
+  private _view: DataView;
 
   constructor(data: Uint8Array) {
     this._data = data;
@@ -15,13 +13,6 @@ export class MobileBuffer {
 
   static alloc(size: number): MobileBuffer {
     return new MobileBuffer(new Uint8Array(size));
-  }
-
-  static from(arr: number[] | Uint8Array | string): MobileBuffer {
-    if (typeof arr === 'string') {
-      return new MobileBuffer(new TextEncoder().encode(arr));
-    }
-    return new MobileBuffer(arr instanceof Uint8Array ? arr : new Uint8Array(arr));
   }
 
   static concat(parts: (Uint8Array | MobileBuffer)[]): MobileBuffer {
@@ -36,26 +27,7 @@ export class MobileBuffer {
     return new MobileBuffer(out);
   }
 
-  get byteLength(): number {
-    return this._data.byteLength;
-  }
-
-  get buffer(): ArrayBuffer {
-    return this._data.buffer.slice(this._data.byteOffset, this._data.byteOffset + this._data.byteLength) as ArrayBuffer;
-  }
-
-  get byteOffset(): number {
-    return this._data.byteOffset;
-  }
-
-  readUInt32LE(offset: number): number {
-    return this._view.getUint32(offset, true);
-  }
-
   writeUInt32LE(value: number, offset: number): void {
     this._view.setUint32(offset, value, true);
   }
 }
-
-/** 安全 Buffer：有 node Buffer 用 Buffer，否则 MobileBuffer */
-export const SafeBuffer: typeof Buffer | typeof MobileBuffer = HAS_BUFFER ? Buffer : MobileBuffer;

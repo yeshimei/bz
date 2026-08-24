@@ -1,20 +1,12 @@
 /**
- * 闪念 AI 模块（ticket 18，源码 L748-765 逐字：DeepSeek 优先 → Ollama 回退）
+ * 闪念 AI 模块（ticket 18，源码 L748-765 语义：DeepSeek 优先 → Ollama 回退）
+ * deepseek 实例由接线方注入；未注入时恒走本地 Ollama。
  */
-import { createAI } from '../core/ai';
 import { buildConfig } from './config';
 import { ollamaChat } from './ollama';
 
-let _deepseek: any = null;
-
-export function initAI(): any {
-  const CONFIG = buildConfig();
-  _deepseek = createAI(undefined, CONFIG.DEEPSEEK_MODEL, {}, 16384);
-  return _deepseek;
-}
-
 export const AI = {
-  deepseek: _deepseek,
+  deepseek: null as any,
 
   async ask(prompt: string, useDeepSeek: boolean): Promise<string> {
     const CONFIG = buildConfig();

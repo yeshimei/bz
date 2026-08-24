@@ -3,23 +3,15 @@
  * meta.json v7 + vectors.vec（dim uint32 LE + float32 平铺）。
  */
 import type { App } from 'obsidian';
-import { buildConfig } from './config';
-import { MobileBuffer, SafeBuffer } from './binary';
-import { getEmbedding, getEmbeddingsBatch, checkRemoteOllama } from './ollama';
+import { buildConfig, IS_MOBILE } from './config';
+import { MobileBuffer } from './binary';
 import { smartChunk } from './chunk';
 import { euclideanSq, normalizeVec, vptree_build, vptree_search } from './vptree';
 import { TFIDF } from './tfidf';
-import { searchTextIndex, searchText, extractTerms } from './text-search';
-import { EMBED_BATCH_SIZE } from './ollama';
+import { searchTextIndex, searchText } from './text-search';
+import { checkRemoteOllama, EMBED_BATCH_SIZE, getEmbedding, getEmbeddingsBatch } from './ollama';
 
 const VECTOR_STORE_VERSION = 7;
-
-export interface FlashDoc {
-  path: string;
-  text: string;
-  chunks: string[];
-  mtime: number;
-}
 
 export class VectorStore {
   app: App;
@@ -258,8 +250,6 @@ export class VectorStore {
 
   /** 统一检索（IS_MOBILE → 文本索引） */
   async search(query: string, topK = 20): Promise<{ path: string; chunk: string; score: number }[]> {
-    const CONFIG = buildConfig();
-    const { IS_MOBILE } = await import('./config');
     if (IS_MOBILE) {
       return this.searchText(query, topK);
     }
@@ -277,7 +267,21 @@ export class VectorStore {
       entry.chunks.forEach((c) => docs.push({ path, text: c.text }));
     }
     this.textIdx = searchTextIndex(docs);
-    return searchText(query, this.textIdx, topK).map((r) => ({
+    return this.toChunkResults(searchText(query, this.textIdx, topK));
+  }
+
+  /** meta.notes → 全文库（整篇拼接，供 TF-IDF 构建；initMobile/searchMobile 共用） */
+  private collectDocs(): { path: string; text: string }[] {
+    const docs: { path: string; text: string }[] = [];
+    for (const [path, entry] of Object.entries(this.meta.notes)) {
+      docs.push({ path, text: entry.chunks.map((c) => c.text).join('') });
+    }
+    return docs;
+  }
+
+  /** 检索结果 → 附首段文本的结果（searchText / searchMobile tfidf 分支共用映射） */
+  private toChunkResults(results: { path: string; score: number }[]): { path: string; chunk: string; score: number }[] {
+    return results.map((r) => ({
       path: r.path,
       chunk: this.meta.notes[r.path]?.chunks[0]?.text || '',
       score: r.score,
@@ -287,10 +291,7 @@ export class VectorStore {
   /** 移动端初始化（远程优先 → TF-IDF → 文本） */
   async initMobile(): Promise<string> {
     const CONFIG = buildConfig();
-    const docs: { path: string; text: string }[] = [];
-    for (const [path, entry] of Object.entries(this.meta.notes)) {
-      docs.push({ path, text: entry.chunks.map((c) => c.text).join('') });
-    }
+    const docs = this.collectDocs();
     const remoteOk = await checkRemoteOllama(CONFIG.OLLAMA_REMOTE_URL);
     if (remoteOk) {
       this.mode = 'remote';
@@ -316,16 +317,8 @@ export class VectorStore {
       }
     }
     if (this.mode === 'tfidf') {
-      const docs: { path: string; text: string }[] = [];
-      for (const [path, entry] of Object.entries(this.meta.notes)) {
-        docs.push({ path, text: entry.chunks.map((c) => c.text).join('') });
-      }
-      this.tfidf.build(docs);
-      return this.tfidf.search(query, topK).map((r) => ({
-        path: r.path,
-        chunk: this.meta.notes[r.path]?.chunks[0]?.text || '',
-        score: r.score,
-      }));
+      this.tfidf.build(this.collectDocs());
+      return this.toChunkResults(this.tfidf.search(query, topK));
     }
     return this.searchText(query, topK);
   }
