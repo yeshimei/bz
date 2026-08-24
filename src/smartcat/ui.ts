@@ -12,7 +12,7 @@ import { Setting } from 'obsidian';
 import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
-import { closeSettingsModal, openSettingsModal } from '../core/settings-modal';
+import { closeSettingsModal, createSettingsGroup, openSettingsModal } from '../core/settings-modal';
 import { notice } from '../core/notice';
 import type { Appearance } from './types';
 
@@ -200,11 +200,14 @@ export interface SettingsModalBuildResult {
 }
 
 /**
- * 打开 smartcat 域设置弹窗（bz openSettingsModal；外观/人格成长可视化/间隔/概率/记忆量/
- * 上下文长度/比例 + 移动端全屏）。ADR-0023：预设「性格」下拉删除 → OCEAN+traits 可视化。
+ * 打开 smartcat 域设置弹窗（bz openSettingsModal；分组卡片方案 A：外观/可视化/互动/记忆 +
+ * 移动端全屏，2026-08 用户拍板）。ADR-0023：预设「性格」下拉删除 → OCEAN+traits 可视化。
  * 2026-08-23 合并一套：① 弹窗与聊天面板共用同一「移动端默认全屏」开关（打开即应用）；
  * ② 人格成长可视化不再分端（桌面/移动同内容）；③ 「每周懂你报告」入口换成
  * 「打开数据面板」（周报全文移入数据面板「报告」页签）。
+ * 分组：外观 palette（13 皮肤色块平铺）、可视化 bar-chart-3（人格成长+重置+数据面板）、
+ * 互动 message-circle（自言自语间隔/说话概率/主动关心）、记忆 archive（记忆量/上下文/打分）；
+ * 移动端 smartphone 组仅 isMobileEnv 显示。
  */
 export function openSmartcatSettings(opts: {
   getConfig: () => any;
@@ -223,12 +226,11 @@ export function openSmartcatSettings(opts: {
   const config = opts.getConfig();
   openSettingsModal({
     title: '小橘设置',
+    maxWidth: 560,
     onClose: opts.onClose,
     build: (el) => {
-      // 外观：平铺色块选择器（13 皮肤，色块取自各皮肤主渐变；点击即换+落盘）
-      new Setting(el)
-        .setName('外观')
-        .setDesc('点击色块切换猫咪皮肤');
+      // ===== 外观组（平铺色块选择器：13 皮肤，色块取自各皮肤主渐变；点击即换+落盘） =====
+      const lookGroup = createSettingsGroup(el, { icon: 'palette', name: '外观' });
       const grid = document.createElement('div');
       grid.className = 'bz-sc-skin-grid';
       for (const skin of SKINS) {
@@ -251,46 +253,63 @@ export function openSmartcatSettings(opts: {
         });
         grid.appendChild(item);
       }
-      el.appendChild(grid);
+      lookGroup.appendChild(grid);
 
-      // ADR-0023：人格成长可视化（OCEAN 5 轴 + 关键特质条形）
-      // 2026-08-23 合并一套：桌面/移动同内容（原「移动端不显示」分端差异删除）
+      // ===== 可视化组（ADR-0023 人格成长 OCEAN 5 轴 + 关键特质条形；2026-08-23 合并一套：
+      // 桌面/移动同内容，原「移动端不显示」分端差异删除；无成长数据且无数据面板入口时整组省略） =====
       const g = opts.getPersonalityGrowth?.();
-      if (g) {
-        const panelEl = el.createDiv({ cls: 'bz-sc-personality-panel' });
-        const bar = (label: string, v: number) =>
-          `<div class="bz-sc-trait-row"><span class="bz-sc-trait-name">${label}</span>` +
-          `<div class="bz-sc-trait-bar"><div class="bz-sc-trait-fill" style="width:${Math.round(Math.min(1, Math.max(0, v)) * 100)}%"></div></div>` +
-          `<span class="bz-sc-trait-val">${(v * 100).toFixed(0)}</span></div>`;
-        const oceanNames: Record<string, string> = {
-          openness: '开放', conscientiousness: '尽责', extraversion: '外向', agreeableness: '宜人', neuroticism: '敏感',
-        };
-        const keyTraits: Record<string, string> = {
-          warmth: '温暖', self_worth: '自我价值', others_trust: '信任他人',
-          anxiety: '焦虑', humor: '幽默', beh_depth: '深度', optimism: '乐观',
-        };
-        let html = '<div class="bz-sc-personality-title">人格成长（随相处自动演化）</div>';
-        html += '<div class="bz-sc-personality-section">OCEAN</div>';
-        for (const [k, name] of Object.entries(oceanNames)) html += bar(name, g.ocean?.[k] ?? 0.5);
-        html += '<div class="bz-sc-personality-section">关键特质</div>';
-        for (const [k, name] of Object.entries(keyTraits)) html += bar(name, g.traits?.[k] ?? 0.5);
-        panelEl.innerHTML = html;
-        if (opts.resetPersonalityGrowth) {
-          new Setting(el)
-            .setName('重置成长')
-            .setDesc('清空已演化的人格，回到新的 OCEAN 种子')
+      if (g || opts.onOpenDashboard) {
+        const vizGroup = createSettingsGroup(el, { icon: 'bar-chart-3', name: '可视化' });
+        if (g) {
+          const panelEl = vizGroup.createDiv({ cls: 'bz-sc-personality-panel' });
+          const bar = (label: string, v: number) =>
+            `<div class="bz-sc-trait-row"><span class="bz-sc-trait-name">${label}</span>` +
+            `<div class="bz-sc-trait-bar"><div class="bz-sc-trait-fill" style="width:${Math.round(Math.min(1, Math.max(0, v)) * 100)}%"></div></div>` +
+            `<span class="bz-sc-trait-val">${(v * 100).toFixed(0)}</span></div>`;
+          const oceanNames: Record<string, string> = {
+            openness: '开放', conscientiousness: '尽责', extraversion: '外向', agreeableness: '宜人', neuroticism: '敏感',
+          };
+          const keyTraits: Record<string, string> = {
+            warmth: '温暖', self_worth: '自我价值', others_trust: '信任他人',
+            anxiety: '焦虑', humor: '幽默', beh_depth: '深度', optimism: '乐观',
+          };
+          let html = '<div class="bz-sc-personality-title">人格成长：随相处自动演化</div>';
+          html += '<div class="bz-sc-personality-section">OCEAN</div>';
+          for (const [k, name] of Object.entries(oceanNames)) html += bar(name, g.ocean?.[k] ?? 0.5);
+          html += '<div class="bz-sc-personality-section">关键特质</div>';
+          for (const [k, name] of Object.entries(keyTraits)) html += bar(name, g.traits?.[k] ?? 0.5);
+          panelEl.innerHTML = html;
+          if (opts.resetPersonalityGrowth) {
+            new Setting(vizGroup)
+              .setName('重置成长')
+              .setDesc('清空已演化的人格，回到出生时的初始状态')
+              .addButton((btn: any) => {
+                btn.setButtonText('重置').onClick(async () => {
+                  await opts.resetPersonalityGrowth!();
+                  notice('人格已重置，请重新打开设置查看新种子', 'info');
+                });
+              });
+          }
+        }
+        // 数据面板入口（归可视化组；2026-08-23 用户拍板：周报全文移入数据面板「报告」页签）
+        if (opts.onOpenDashboard) {
+          new Setting(vizGroup)
+            .setName('打开数据面板')
+            .setDesc('查看小橘的状态全貌与每周懂你报告')
             .addButton((btn: any) => {
-              btn.setButtonText('重置').onClick(async () => {
-                await opts.resetPersonalityGrowth!();
-                notice('人格已重置，请重新打开设置查看新种子', 'info');
+              btn.setButtonText('打开数据面板').onClick(() => {
+                closeSettingsModal();
+                opts.onOpenDashboard!();
               });
             });
         }
       }
 
-      new Setting(el)
-        .setName('自言自语间隔（分钟）')
-        .setDesc('1-60，默认 5')
+      // ===== 互动组（陪伴说话节奏 + 主动关心） =====
+      const chatGroup = createSettingsGroup(el, { icon: 'message-circle', name: '互动' });
+      new Setting(chatGroup)
+        .setName('自言自语间隔')
+        .setDesc('小橘每隔多久主动说一句话，范围 1 到 60 分钟')
         .addSlider((sl: any) => {
           sl.setLimits(1, 60, 1);
           sl.setValue(config.speakInterval);
@@ -300,9 +319,9 @@ export function openSmartcatSettings(opts: {
           });
         });
 
-      new Setting(el)
+      new Setting(chatGroup)
         .setName('说话概率')
-        .setDesc('0.1-1，默认 0.3')
+        .setDesc('定时到来时小橘主动说话的概率，范围 0.1 到 1')
         .addSlider((sl: any) => {
           sl.setLimits(0.1, 1, 0.1);
           sl.setValue(config.speakProbability);
@@ -312,9 +331,11 @@ export function openSmartcatSettings(opts: {
           });
         });
 
-      new Setting(el)
-        .setName('短期记忆量（轮数）')
-        .setDesc('50-200，默认 50')
+      // ===== 记忆组（记忆量、上下文预算与打分范围） =====
+      const memGroup = createSettingsGroup(el, { icon: 'archive', name: '记忆' });
+      new Setting(memGroup)
+        .setName('短期记忆量')
+        .setDesc('保留最近多少轮对话作为短期记忆，范围 50 到 200')
         .addSlider((sl: any) => {
           sl.setLimits(50, 200, 10);
           sl.setValue(config.shortTermMemory);
@@ -324,9 +345,9 @@ export function openSmartcatSettings(opts: {
           });
         });
 
-      new Setting(el)
+      new Setting(memGroup)
         .setName('上下文字数限制')
-        .setDesc('0-1000，0=仅当前行')
+        .setDesc('上下文内容的最大字数，设为 0 时仅取当前行')
         .addSlider((sl: any) => {
           sl.setLimits(0, 1000, 50);
           sl.setValue(config.contextLength);
@@ -336,9 +357,9 @@ export function openSmartcatSettings(opts: {
           });
         });
 
-      new Setting(el)
+      new Setting(memGroup)
         .setName('上下文分布比例')
-        .setDesc('0.1-0.9（向上占比）')
+        .setDesc('光标上下的上下文分配比例，范围 0.1 到 0.9')
         .addSlider((sl: any) => {
           sl.setLimits(0.1, 0.9, 0.1);
           sl.setValue(config.contextSplitRatio);
@@ -348,10 +369,10 @@ export function openSmartcatSettings(opts: {
           });
         });
 
-      // 主动关心（2026-08-23 用户拍板：每周温和主动搭话；默认开）
-      new Setting(el)
+      // 主动关心（2026-08-23 用户拍板：每周温和主动搭话；默认开；归互动组）
+      new Setting(chatGroup)
         .setName('主动关心')
-        .setDesc('按你的活跃时段，每周温和主动搭话 1-2 次（可关）')
+        .setDesc('按你的活跃时段，每周温和地主动搭话一两次')
         .addToggle((toggle: any) =>
           toggle.setValue(!!config.proactiveCare).onChange((v: boolean) => {
             config.proactiveCare = v;
@@ -359,10 +380,10 @@ export function openSmartcatSettings(opts: {
           })
         );
 
-      // 云端打分范围（ADR-0025 追加决策：智能默认——省在线调用、保日记/反省/闪念质量）
-      new Setting(el)
+      // 云端打分范围（ADR-0025 追加决策：智能默认——省在线调用、保日记/反省/闪念质量；归记忆组）
+      new Setting(memGroup)
         .setName('记忆打分范围')
-        .setDesc('云端 LLM 打分范围：智能=日记/反省/闪念恒 LLM、剪藏等长内容按 30 字、聊天/域事件本地；可切全部/仅日记/纯本地')
+        .setDesc('记忆质量打分的范围，智能模式自动分配云端与本地')
         .addDropdown((dd: any) => {
           dd.addOption('smart', '智能（推荐）');
           dd.addOption('all', '全部（云端）');
@@ -375,24 +396,12 @@ export function openSmartcatSettings(opts: {
           });
         });
 
-      // 数据面板入口（2026-08-23 用户拍板：原「每周懂你报告」行替换——周报全文移入数据面板「报告」页签）
-      if (opts.onOpenDashboard) {
-        new Setting(el)
-          .setName('打开数据面板')
-          .setDesc('查看小橘的全量状态与每周懂你报告（心情/情绪/人格/记忆/报告）')
-          .addButton((btn: any) => {
-            btn.setButtonText('打开数据面板').onClick(() => {
-              closeSettingsModal();
-              opts.onOpenDashboard!();
-            });
-          });
-      }
-
       if (isMobileEnv()) {
         // 移动端默认全屏（聊天/设置/数据面板共用同一开关，2026-08-23 合并一套）
-        new Setting(el)
+        const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
+        new Setting(mobileGroup)
           .setName('移动端默认全屏')
-          .setDesc('移动端打开小橘聊天/设置/数据面板时默认全屏显示（≤768px；关=常规卡）')
+          .setDesc('移动端打开小橘窗口时默认全屏，关闭则显示常规卡片')
           .addToggle((toggle: any) =>
             toggle.setValue(!!opts.settingsKeys.mobileFullscreen).onChange(async (v: boolean) => {
               await opts.setMobileFullscreen(v);
