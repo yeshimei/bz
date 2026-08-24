@@ -18,6 +18,7 @@ import { openSettingsModal, createSettingsGroup } from '../core/settings-modal';
 import {
   formatRelativeTime,
   extractUrlAndDisplay,
+  escapeHtml,
   generateId,
   getCurrentNoteInfo,
   getCurrentCursorPosition,
@@ -101,9 +102,15 @@ function attachSuggestion<T>(
   };
   input.addEventListener('input', refresh);
   input.addEventListener('focus', refresh);
-  document.addEventListener('click', (e) => {
+  // P2 监听泄漏修复：引用化——容器脱离文档（弹窗销毁/重建）后首次点击自注销
+  const onDocClick = (e: MouseEvent): void => {
+    if (!container.isConnected) {
+      document.removeEventListener('click', onDocClick);
+      return;
+    }
     if (!container.contains(e.target as Node)) sugg.style.display = 'none';
-  });
+  };
+  document.addEventListener('click', onDocClick);
 }
 
 // ---------- 设置弹窗（ADR-0009 域设置弹窗，分组卡片，10 项 5 组） ----------
@@ -380,21 +387,21 @@ export const UIManager = {
     };
     this._buildSceneButtons(ctx);
 
-    // ---------- 脚本输入建议 ----------
+    // ---------- 脚本输入建议（P2：render 输出过 escapeHtml，scriptName 含 HTML 时按文本渲染） ----------
     attachSuggestion<string>(
       scriptInput, scriptSuggest, scriptContainer,
       () => this.scriptSuggestions,
       (val, s) => !val || s.toLowerCase().includes(val),
-      (s) => s,
+      (s) => escapeHtml(s),
       (s) => { scriptInput.value = s; }
     );
 
-    // ---------- 课程输入建议（渲染带 data-path，保存时回填 coursePath） ----------
+    // ---------- 课程输入建议（渲染带 data-path，保存时回填 coursePath；P2：name/path 过 escapeHtml——属性值转义引号） ----------
     attachSuggestion<{ name: string; path: string }>(
       courseInput, courseSuggest, courseContainer,
       () => this.courseSuggestions,
       (val, c) => !val || c.name.toLowerCase().includes(val),
-      (c) => `<span data-path="${c.path}">${c.name}</span>`,
+      (c) => `<span data-path="${escapeHtml(c.path)}">${escapeHtml(c.name)}</span>`,
       (c) => {
         courseInput.value = c.name;
         courseInput.dataset.coursePath = c.path;
@@ -789,7 +796,10 @@ export const UIManager = {
   // ---------- ESC ----------
   registerEscape() {
     escManager.register('bz', {
-      isVisible: () => !!(this.mask && this.mask.style.display === 'block'),
+      // P2：双窗口径（对照 favorites/ui.ts）——主面板可见 || 添加弹窗可见，否则仅开添加弹窗时 ESC 失灵
+      isVisible: () =>
+        !!(this.mask && this.mask.style.display === 'block') ||
+        !!(this.addMask && this.addMask.style.display === 'block'),
       close: () => {
         // 共享 confirm mask（重构后由 confirm 创建，不在 UIManager 里）
         const sharedMask = document.getElementById('__shared_confirm_mask__');
