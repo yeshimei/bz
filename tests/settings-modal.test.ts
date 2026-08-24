@@ -157,6 +157,10 @@ describe('分组卡片（2026-08 用户拍板方案 A：先落日记本）', () 
         s3.className = 'setting-item';
         box.appendChild(s3);
         body.appendChild(box);
+        // 纯操作行（review「添加监听文件夹」式）：挂豁免类不计入徽标
+        const actionRow = document.createElement('div');
+        actionRow.className = 'setting-item bz-setting-action-row';
+        body.appendChild(actionRow);
       },
     });
     const popup = document.getElementById('bz-settings-modal-popup')!;
@@ -179,12 +183,26 @@ describe('分组卡片（2026-08 用户拍板方案 A：先落日记本）', () 
         const s2 = document.createElement('div');
         s2.className = 'setting-item';
         b2.appendChild(s2);
+        // 纯自定义内容组（smartcat 皮肤网格式）：0 个 setting-item，徽标应隐藏
+        const b3 = createSettingsGroup(el, { icon: 'palette', name: '外观' });
+        b3.appendChild(document.createElement('div'));
       },
     });
     const popup = document.getElementById('bz-settings-modal-popup')!;
     const heads = [...popup.querySelectorAll('.bz-settings-group-name')].map((e) => e.textContent);
-    expect(heads).toEqual(['目录', '默认视图']);
-    expect(popup.querySelectorAll('.bz-settings-group').length).toBe(2);
+    expect(heads).toEqual(['目录', '默认视图', '外观']);
+    expect(popup.querySelectorAll('.bz-settings-group').length).toBe(3);
+    // 0 项组（纯自定义内容）徽标隐藏
+    const emptyCount = [...popup.querySelectorAll('.bz-settings-group')]
+      .find((g) => g.querySelector('.bz-settings-group-name')!.textContent === '外观')!
+      .querySelector('.bz-settings-group-count') as HTMLElement;
+    expect(emptyCount.style.display).toBe('none');
+    // 有项组徽标正常显示
+    const normalCount = [...popup.querySelectorAll('.bz-settings-group')]
+      .find((g) => g.querySelector('.bz-settings-group-name')!.textContent === '目录')!
+      .querySelector('.bz-settings-group-count') as HTMLElement;
+    expect(normalCount.style.display).toBe('');
+    expect(normalCount.textContent).toBe('1 项');
   });
 
   it('maxWidth 透传：传 560 时 popup 最大宽度为 560px，默认仍 400', () => {

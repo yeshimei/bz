@@ -66,14 +66,21 @@ function isItemHidden(el: HTMLElement): boolean {
   return false;
 }
 
-/** 回填分组卡片项数徽标（实际可见设置项数；隐藏项不计）。幂等；导出供域内动态显隐后刷新。 */
+/** 回填分组卡片项数徽标（实际可见设置项数；隐藏项与纯操作行不计）。幂等；导出供域内动态显隐后刷新。
+ *  纯操作行（如「添加监听文件夹」按钮行）复用 .setting-item 布局但非设置项，约定挂 bz-setting-action-row 豁免。
+ *  计数为 0 的组（纯自定义内容组，如 smartcat 皮肤网格）隐藏徽标，避免出现「0 项」。 */
 export function refreshSettingsGroupCounts(content: HTMLElement): void {
   content.querySelectorAll('.bz-settings-group').forEach((g) => {
     const body = g.querySelector('.bz-settings-group-body');
-    const countEl = g.querySelector('.bz-settings-group-count');
+    const countEl = g.querySelector('.bz-settings-group-count') as HTMLElement | null;
     if (!body || !countEl) return;
-    const n = [...body.querySelectorAll('.setting-item')].filter((el) => !isItemHidden(el as HTMLElement)).length;
+    const n = [...body.querySelectorAll('.setting-item')].filter((el) => {
+      const h = el as HTMLElement;
+      return !h.classList.contains('bz-setting-action-row') && !isItemHidden(h);
+    }).length;
     countEl.textContent = `${n} 项`;
+    // 功能性显隐（铁律 8 允许）：0 项组隐藏徽标
+    countEl.style.display = n > 0 ? '' : 'none';
   });
 }
 
