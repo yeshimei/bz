@@ -13,7 +13,7 @@ import { createSiteIcon } from '../core/dom';
 import { formatRelativeTime } from '../core/utils';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
-import { openSettingsModal } from '../core/settings-modal';
+import { openSettingsModal, createSettingsGroup } from '../core/settings-modal';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { ensureAutoSummary } from '../auto-summary';
 
@@ -200,22 +200,25 @@ function createHeader(): HTMLElement {
   refreshBtn.disabled = true;
   refreshBtn.style.opacity = '0.5';
 
-  // 剪藏本设置弹窗（ADR-0009：仅剪藏目录 / 每批加载数量 / 自动摘要开关三项）
+  // 剪藏本设置弹窗（ADR-0009 域设置弹窗；分组卡片重设计，2026-08 用户拍板方案 A）
   const settingsBtn = createIconButton('⚙️', '剪藏本设置', () => {
     openSettingsModal({
       title: '剪藏本设置',
+      maxWidth: 560,
       build: (el) => {
         const s = getSettings();
-        new Setting(el)
+        // ===== 基础组 =====
+        const basicGroup = createSettingsGroup(el, { icon: 'folder-open', name: '基础' });
+        new Setting(basicGroup)
           .setName('剪藏目录')
-          .setDesc('存放网页剪藏 markdown 文件的文件夹')
+          .setDesc('存放网页剪藏文章的文件夹')
           .addText((text) =>
             text.setValue(s.articleDirectory || '').onChange(async (v) => {
               s.articleDirectory = v;
               await saveSettings();
             })
           );
-        new Setting(el)
+        new Setting(basicGroup)
           .setName('每批加载数量')
           .setDesc('滚动加载时每批显示的条目数')
           .addText((text) =>
@@ -224,9 +227,11 @@ function createHeader(): HTMLElement {
               await saveSettings();
             })
           );
-        new Setting(el)
+        // ===== 智能组 =====
+        const smartGroup = createSettingsGroup(el, { icon: 'sparkles', name: '智能' });
+        new Setting(smartGroup)
           .setName('自动摘要')
-          .setDesc('监听剪藏目录新文件，AI 生成摘要写回 frontmatter（路径与剪藏目录一致）')
+          .setDesc('新剪藏的文章自动生成 AI 摘要')
           .addToggle((toggle) =>
             toggle.setValue(!!s.autoSummaryEnabled).onChange(async (v) => {
               s.autoSummaryEnabled = v;
@@ -234,10 +239,12 @@ function createHeader(): HTMLElement {
               if (v) ensureAutoSummary(app);
             })
           );
+        // ===== 移动端组（仅移动端显示） =====
         if (isMobileEnv()) {
-          new Setting(el)
+          const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
+          new Setting(mobileGroup)
             .setName('移动端默认全屏')
-            .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
+            .setDesc('移动端打开主窗口时默认全屏，关闭则显示常规卡片')
             .addToggle((toggle) =>
               toggle.setValue(!!s.clippingMobileDefaultFullscreen).onChange(async (v) => { s.clippingMobileDefaultFullscreen = v; await saveSettings(); })
             );
