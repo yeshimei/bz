@@ -5,6 +5,7 @@ import { MarkdownView as MarkdownViewFromObsidian, moment } from 'obsidian';
 import { pad2 } from '../../core/utils';
 import { notice } from '../../core/notice';
 import { confirm } from '../../core/confirm';
+import { emitDomainEvent } from '../../core/domain-bus';
 import { getApp } from '../app';
 import {
   DIARY_DIRECTORY,
@@ -425,6 +426,9 @@ export async function updateTags(entryId: string, newTags: string[]) {
 
   await writeFile(dateStr);
 
+  // 动作埋点：标签变更写盘成功（oldTags 已在函数开头捕获）
+  emitDomainEvent('diary:tags-changed', { entryId, date: entry.date, time: entry.time, from: oldTags, to: newTags });
+
   // 更新卡片上的 emoji 显示
   const emojiElement = document.querySelector(`#diary-entry-${CSS.escape(entryId)} .diary-emoji`);
   if (emojiElement) {
@@ -637,6 +641,8 @@ export async function saveNewEntry() {
 
   try {
     const newEntry = await addEntry(dateStr, timeStr, selTagNames, '');
+    // 动作埋点：新增保存成功（本期无消费者，emit 即可，不发通知不打日志）
+    emitDomainEvent('diary:entry-added', { date: dateStr, time: timeStr, tags: selTagNames, content: '' });
     mask.style.display = 'none';
     popup.style.display = 'none';
 

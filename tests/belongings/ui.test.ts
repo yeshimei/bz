@@ -9,11 +9,12 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { closeItemMenu } from '../../src/core/item-actions';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices, Platform } from '../mock-obsidian-entry';
+import { onDomainEvent } from '../../src/core/domain-bus';
 
-// ticket 079：smartcat 方法监听挂点测试——mock 掉 barrel 的 notifyBelongingsAction（断言调用载荷），
-// belongingsEditChanges 走真实纯函数（ui.ts 从 belongings-source 子模块直接引入，不受 mock 影响）
-const smartcatMocks = vi.hoisted(() => ({ notifyBelongingsAction: vi.fn() }));
-vi.mock('../../src/smartcat', () => ({ notifyBelongingsAction: smartcatMocks.notifyBelongingsAction }));
+// ticket 079 观测点换线（域事件派发）：真实总线 + onDomainEvent('belongings', spy) 挂间谍，
+// 断言 UI 动作发出的载荷（挂点契约不变）；belongingsEditChanges 走真实纯函数（子模块直连）。
+let belongingsSpy: (evt?: unknown) => void = () => {};
+let offBelongingsSpy: () => void = () => {};
 
 /** 桌面右键开菜单（已有卡片挂统一抽屉） */
 function rightClickOpen(card: HTMLElement) {
@@ -362,7 +363,7 @@ describe('排序弹窗', () => {
   });
 });
 
-describe('smartcat 方法监听挂点（ticket 079）', () => {
+describe('smartcat 域事件派发挂点（ticket 079）', () => {
   let vault: MockVault;
 
   beforeEach(() => {
@@ -371,17 +372,19 @@ describe('smartcat 方法监听挂点（ticket 079）', () => {
     localStorage.clear();
     cleanupBelongings();
     setup(vault);
-    smartcatMocks.notifyBelongingsAction.mockClear();
+    belongingsSpy = vi.fn((_evt?: unknown) => {});
+    offBelongingsSpy = onDomainEvent('belongings', (evt) => belongingsSpy(evt));
   });
 
   afterEach(() => {
+    offBelongingsSpy();
     Platform.isMobile = false;
     vi.useRealTimers();
     closeItemMenu();
     cleanupBelongings();
   });
 
-  it('添加保存成功 → notify add（item 完整载荷）', async () => {
+  it('添加保存成功 → 发 add 事件（item 完整载荷）', async () => {
     seed(vault);
     await addBelongingsItemCommand();
     const modal = [...document.querySelectorAll('div')].find(
@@ -397,14 +400,14 @@ describe('smartcat 方法监听挂点（ticket 079）', () => {
     const submit = [...modal.querySelectorAll('button')].find((b) => b.textContent === '✅ 保存')!;
     submit.click();
     await new Promise((r) => setTimeout(r, 20));
-    expect(smartcatMocks.notifyBelongingsAction).toHaveBeenCalledTimes(1);
-    expect(smartcatMocks.notifyBelongingsAction).toHaveBeenCalledWith({
+    expect(belongingsSpy).toHaveBeenCalledTimes(1);
+    expect(belongingsSpy).toHaveBeenCalledWith({
       kind: 'add',
       item: expect.objectContaining({ name: '新耳机', category: '🎧 蓝牙耳机', purchase_price: 299, current_status: '使用中' }),
     });
   });
 
-  it('编辑保存成功 → notify edit（snapshot vs 保存后 changes）', async () => {
+  it('编辑保存成功 → 发 edit 事件（snapshot vs 保存后 changes）', async () => {
     seed(vault);
     await openBelongingsPanel();
     const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
@@ -430,14 +433,14 @@ describe('smartcat 方法监听挂点（ticket 079）', () => {
     const save = [...editModal.querySelectorAll('button')].find((b) => b.textContent === '💾 保存')!;
     save.click();
     await new Promise((r) => setTimeout(r, 20));
-    expect(smartcatMocks.notifyBelongingsAction).toHaveBeenCalledWith({
+    expect(belongingsSpy).toHaveBeenCalledWith({
       kind: 'edit',
       title: '机械键盘 Pro',
       changes: ['改了名称', '改了状态'],
     });
   });
 
-  it('编辑全不改 → notify edit（空 changes，仍发主句）', async () => {
+  it('编辑全不改 → 发 edit 事件（空 changes，仍发主句）', async () => {
     seed(vault);
     await openBelongingsPanel();
     const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
@@ -456,14 +459,14 @@ describe('smartcat 方法监听挂点（ticket 079）', () => {
     const save = [...editModal.querySelectorAll('button')].find((b) => b.textContent === '💾 保存')!;
     save.click();
     await new Promise((r) => setTimeout(r, 20));
-    expect(smartcatMocks.notifyBelongingsAction).toHaveBeenCalledWith({
+    expect(belongingsSpy).toHaveBeenCalledWith({
       kind: 'edit',
       title: '机械键盘',
       changes: [],
     });
   });
 
-  it('抽屉状态流转 → notify status（4 态动词化）', async () => {
+  it('抽屉状态流转 → 发 status 事件（4 态动词化）', async () => {
     Platform.isMobile = true;
     seed(vault);
     await openBelongingsPanel();
@@ -485,10 +488,10 @@ describe('smartcat 方法监听挂点（ticket 079）', () => {
     ) as HTMLElement;
     useItem.click();
     await new Promise((r) => setTimeout(r, 30));
-    expect(smartcatMocks.notifyBelongingsAction).toHaveBeenCalledWith({ kind: 'status', title: '旧手机', status: '使用中' });
+    expect(belongingsSpy).toHaveBeenCalledWith({ kind: 'status', title: '旧手机', status: '使用中' });
   });
 
-  it('删除确认 → notify delete（仅标题）', async () => {
+  it('删除确认 → 发 delete 事件（仅标题）', async () => {
     seed(vault);
     await openBelongingsPanel();
     const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
@@ -507,7 +510,7 @@ describe('smartcat 方法监听挂点（ticket 079）', () => {
     const delBtn = [...confirmModal.querySelectorAll('button')].find((b) => b.textContent === '🗑 删除')!;
     delBtn.click();
     await new Promise((r) => setTimeout(r, 50));
-    expect(smartcatMocks.notifyBelongingsAction).toHaveBeenCalledWith({ kind: 'delete', title: '旧手机' });
+    expect(belongingsSpy).toHaveBeenCalledWith({ kind: 'delete', title: '旧手机' });
   });
 });
 
@@ -520,10 +523,12 @@ describe('修复回归（P0-7 层级 / P0-8 注入 / P1-38 回车双删 / P2 泄
     localStorage.clear();
     cleanupBelongings();
     setup(vault);
-    smartcatMocks.notifyBelongingsAction.mockClear();
+    belongingsSpy = vi.fn((_evt?: unknown) => {});
+    offBelongingsSpy = onDomainEvent('belongings', (evt) => belongingsSpy(evt));
   });
 
   afterEach(() => {
+    offBelongingsSpy();
     Platform.isMobile = false;
     vi.useRealTimers();
     closeItemMenu();
@@ -611,8 +616,8 @@ describe('修复回归（P0-7 层级 / P0-8 注入 / P1-38 回车双删 / P2 泄
     await new Promise((r) => setTimeout(r, 50));
 
     // 删除回调只执行一次（修复前原生激活 + 处理器 click 会双发）
-    expect(smartcatMocks.notifyBelongingsAction).toHaveBeenCalledTimes(1);
-    expect(smartcatMocks.notifyBelongingsAction).toHaveBeenCalledWith({ kind: 'delete', title: '机械键盘' });
+    expect(belongingsSpy).toHaveBeenCalledTimes(1);
+    expect(belongingsSpy).toHaveBeenCalledWith({ kind: 'delete', title: '机械键盘' });
     const data = JSON.parse(vault.files.get('CONFIG/STORAGE/belongings.json')!);
     expect(data.items['item_1']).toBeUndefined();
   });

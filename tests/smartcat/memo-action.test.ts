@@ -1,5 +1,5 @@
 /**
- * 备忘录动作观察集成（ticket 075 方法监听）：notifyMemoAction 事件 → 记忆流观察（source 'memo'）；
+ * 备忘录动作观察集成（ticket 075 域事件派发）：emitDomainEvent('memo', evt) → 记忆流观察（source 'memo'）；
  * noteSource 关闭时不观察；maybeMemoDueScan 每日到期扫描（editingData.dueScan 跨天去重）。
  * 文案构造单测见 memo-source.test.ts。
  */
@@ -8,7 +8,8 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
-import { ensureSmartCat, unloadSmartCat, notifyMemoAction, maybeMemoDueScan, __getSmartcatInternals } from '../../src/smartcat/index';
+import { emitDomainEvent } from '../../src/core/domain-bus';
+import { ensureSmartCat, unloadSmartCat, maybeMemoDueScan, __getSmartcatInternals } from '../../src/smartcat/index';
 import type { MemoEditSnapshot } from '../../src/smartcat/memo-source';
 
 let settings: any = { storagePath: 'CONFIG/STORAGE', smartcatEnabled: true, smartcatMobileDefaultFullscreen: false };
@@ -42,11 +43,11 @@ beforeEach(() => {
   unloadSmartCat();
 });
 
-describe('notifyMemoAction（备忘录动作观察，方法监听）', () => {
+describe('notifyMemoAction（备忘录动作观察，域事件派发）', () => {
   it('添加（键值式）→ 观察入流，source memo', async () => {
     const { app } = makeApp();
     await ensureSmartCat(app);
-    notifyMemoAction({ kind: 'added', title: '写周报', scene: '工作', priority: 'important', due: '2026-08-25 18:00', notePath: '书库/1984.md', scriptName: null, courseName: '算法' });
+    emitDomainEvent('memo', { kind: 'added', title: '写周报', scene: '工作', priority: 'important', due: '2026-08-25 18:00', notePath: '书库/1984.md', scriptName: null, courseName: '算法' });
     await settle();
     const stream: any[] = __getSmartcatInternals().data.memory.stream;
     expect(stream[stream.length - 1].description).toBe('你添加了待办「写周报」（场景：工作，课程：算法，优先级：重要，截止：08-25 18:00，笔记：1984.md）');
@@ -58,12 +59,12 @@ describe('notifyMemoAction（备忘录动作观察，方法监听）', () => {
     await ensureSmartCat(app);
     const old: MemoEditSnapshot = { title: '草稿', scene: '生活', priority: 'minor', due: '2026-08-25 18:00', notePath: null, scriptName: null, courseName: '旧课' };
     const next: MemoEditSnapshot = { title: '写周报', scene: '工作', priority: 'minor', due: '2026-08-25 18:00', notePath: '书库/1984.md', scriptName: null, courseName: '算法' };
-    notifyMemoAction({ kind: 'edited', old, next });
-    notifyMemoAction({ kind: 'completed', title: '写周报' });
-    notifyMemoAction({ kind: 'restored', title: '写周报' });
-    notifyMemoAction({ kind: 'postponed', title: '写周报', due: '2026-08-28 18:00' });
-    notifyMemoAction({ kind: 'priority', title: '写周报', to: 'important' });
-    notifyMemoAction({ kind: 'deleted', title: '写周报' });
+    emitDomainEvent('memo', { kind: 'edited', old, next });
+    emitDomainEvent('memo', { kind: 'completed', title: '写周报' });
+    emitDomainEvent('memo', { kind: 'restored', title: '写周报' });
+    emitDomainEvent('memo', { kind: 'postponed', title: '写周报', due: '2026-08-28 18:00' });
+    emitDomainEvent('memo', { kind: 'priority', title: '写周报', to: 'important' });
+    emitDomainEvent('memo', { kind: 'deleted', title: '写周报' });
     await settle();
     const stream: any[] = __getSmartcatInternals().data.memory.stream;
     const tail = stream.slice(-6).map((m) => m.description);
@@ -83,7 +84,7 @@ describe('notifyMemoAction（备忘录动作观察，方法监听）', () => {
     const data: any = __getSmartcatInternals().data;
     data.config.noteSource = false;
     const before = data.memory.stream.length;
-    notifyMemoAction({ kind: 'completed', title: '写周报' });
+    emitDomainEvent('memo', { kind: 'completed', title: '写周报' });
     await settle();
     expect(data.memory.stream.length).toBe(before);
   });
@@ -92,7 +93,7 @@ describe('notifyMemoAction（备忘录动作观察，方法监听）', () => {
     const { app } = makeApp();
     await ensureSmartCat(app);
     unloadSmartCat();
-    expect(() => notifyMemoAction({ kind: 'deleted', title: '写周报' })).not.toThrow();
+    expect(() => emitDomainEvent('memo', { kind: 'deleted', title: '写周报' })).not.toThrow();
   });
 
   it('B6 防重：同事件同 key 近 300ms 只发一次（勾选完成与抽屉「标记完成」双入口互斥）', async () => {
@@ -101,14 +102,14 @@ describe('notifyMemoAction（备忘录动作观察，方法监听）', () => {
     const data: any = __getSmartcatInternals().data;
     const before = data.memory.stream.length;
     // checkbox 300ms 防抖到点 + 抽屉「标记完成」重复触发 → 同 key 只入流一次
-    notifyMemoAction({ kind: 'completed', title: '写周报' });
-    notifyMemoAction({ kind: 'completed', title: '写周报' });
+    emitDomainEvent('memo', { kind: 'completed', title: '写周报' });
+    emitDomainEvent('memo', { kind: 'completed', title: '写周报' });
     await settle();
     expect(data.memory.stream.length).toBe(before + 1);
     // 窗口外（>300ms）同事件可再发；不同标题不误伤
     await new Promise((r) => setTimeout(r, 350));
-    notifyMemoAction({ kind: 'completed', title: '买菜' });
-    notifyMemoAction({ kind: 'completed', title: '写周报' });
+    emitDomainEvent('memo', { kind: 'completed', title: '买菜' });
+    emitDomainEvent('memo', { kind: 'completed', title: '写周报' });
     await settle();
     expect(data.memory.stream.length).toBe(before + 3);
   });

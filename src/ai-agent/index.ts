@@ -12,6 +12,7 @@ import type { App } from 'obsidian';
 import { createAI, type AIService } from '../core/ai';
 import { notice, notify } from '../core/notice';
 import { tryGetSettings } from '../core/settings-provider';
+import { onDomainEvent } from '../core/domain-bus';
 import { DataManager } from '../memo/data';
 import { ensureBz } from '../memo';
 import { getStoragePath } from '../favorites/config';
@@ -66,9 +67,9 @@ function isAIClipMatchEnabled(): boolean {
 }
 
 let initialized = false;
-let _app: App | null = null;
 let _ai: AIService | null = null;
-let _refs: any[] = [];
+/** 已注册订阅的退订函数集合（unload 统一调用：总线退订幂等无双清，workspace ref 包装成退订闭包防泄漏） */
+let _refs: (() => void)[] = [];
 /** 卸载标志（P2 队列加固）：置位后积压任务首行短路、去抖窗口内事件直接丢弃 */
 let _cancelled = false;
 /** 待清理的去抖器（unload 时清定时器） */
@@ -250,25 +251,38 @@ function createNoteSyncAgent(app: App, ai: AIService | null): void {
     }
   };
 
-  // P2：rename/create/file-open 同类事件按 DEBOUNCE_DELAY 合并去抖；delete 保持即时
+  // P2：rename/create/file-open 同类事件按 DEBOUNCE_DELAY 合并去抖；delete 保持即时。
+  // rename/create/delete 三条 vault 事件改经域事件总线通用兜底通道订阅（obsidian-adapter 恒发、
+  // 仅 md，载荷见 src/core/obsidian-adapter.ts）；isMd 的 watchedFolders 目录过滤保持在闭包内。
+
+  /** 总线载荷 → 现有闭包期望的伪 TFile 形状（{path, basename, extension:'md'}，rename 另附 oldPath） */
+  const pseudoFile = (path: string): any => ({
+    path,
+    basename: (path.split('/').pop() || '').replace(/\.md$/, ''),
+    extension: 'md',
+  });
+
   const flushRenames = createBatchFlusher<any>(async (batch) => {
     for (const ev of batch) {
       await syncSources(syncRename, ev);
     }
   });
   _flushers.push(flushRenames);
-  _refs.push(app.vault.on('rename', (file: any, oldPath: string) => {
+  _refs.push(onDomainEvent<{ oldPath: string; newPath: string }>('vault:md-renamed', (evt) => {
+    const file = pseudoFile(evt.newPath);
+    file.oldPath = evt.oldPath;
     if (!isMd(file)) return;
-    const oldTitle = (oldPath ?? '').split('/').pop()!.replace(/\.md$/, '');
+    const oldTitle = (evt.oldPath ?? '').split('/').pop()!.replace(/\.md$/, '');
     flushRenames({
-      oldPath,
+      oldPath: evt.oldPath,
       newPath: file.path,
       oldTitle,
       newTitle: file.basename,
     });
   }));
 
-  _refs.push(app.vault.on('delete', (file: any) => {
+  _refs.push(onDomainEvent<{ path: string }>('vault:md-deleted', (evt) => {
+    const file = pseudoFile(evt.path);
     if (!isMd(file)) return;
     enqueue(() => syncSources(syncDelete, file.path));
   }));
@@ -284,7 +298,8 @@ function createNoteSyncAgent(app: App, ai: AIService | null): void {
     }
   });
   _flushers.push(flushCreates);
-  _refs.push(app.vault.on('create', (file: any) => {
+  _refs.push(onDomainEvent<{ path: string }>('vault:md-created', (evt) => {
+    const file = pseudoFile(evt.path);
     if (!isMd(file)) return;
     flushCreates(file);
   }));
@@ -298,10 +313,16 @@ function createNoteSyncAgent(app: App, ai: AIService | null): void {
     }
   });
   _flushers.push(flushOpens);
-  _refs.push(app.workspace.on('file-open', (file: any) => {
+  // workspace.on('file-open') 保持原生订阅：域总线首期只收编 vault 事件，workspace 事件后续再迁
+  const openRef = app.workspace.on('file-open', (file: any) => {
     if (!isMd(file)) return;
     flushOpens(file);
-  }));
+  });
+  _refs.push(() => {
+    try {
+      (app.workspace as any).offref?.(openRef);
+    } catch (e) { /* 忽略 */ }
+  });
 }
 
 /** 幂等初始化（main.ts 按设置 aiAgentEnabled 开关注册） */
@@ -309,7 +330,6 @@ export async function ensureAIAgent(app: App): Promise<void> {
   if (initialized) return;
   initialized = true;
   _cancelled = false; // P2：重新启用后恢复任务受理
-  _app = app;
   // 依赖备忘录实例（AIAgent 与备忘录共享 memo.json，原 window.__memo 语义）
   await ensureBz(app);
   _ai = createAI();
@@ -326,17 +346,14 @@ export function unloadAIAgent(): void {
     } catch (e) { /* 忽略 */ }
   }
   _flushers = [];
-  if (_app) {
-    // 清理监听
-    for (const ref of _refs) {
-      try {
-        (_app.vault as any).offref(ref);
-      } catch (e) { /* 忽略 */ }
-    }
+  // 清理监听：总线退订函数与 workspace ref 退订闭包统一调用（总线退订幂等，重复卸载无双清风险）
+  for (const off of _refs) {
+    try {
+      off();
+    } catch (e) { /* 忽略 */ }
   }
   _refs = [];
   initialized = false;
-  _app = null;
   _ai = null;
   queue = Promise.resolve();
 }

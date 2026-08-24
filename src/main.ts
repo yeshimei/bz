@@ -11,6 +11,8 @@ import { closeItemMenu } from './core/item-actions';
 import { setApp, getApp } from './core/app';
 import { setAISettingsProvider, resetAIProviderCache } from './core/ai';
 import { setSettingsProvider, setSettingsSaver } from './core/settings-provider';
+import { clearDomainEvents } from './core/domain-bus';
+import { attachObsidianAdapter, detachObsidianAdapter } from './core/obsidian-adapter';
 import { setBzSettingsProvider, unloadBz, ensureBz } from './memo';
 
 import BzSettings, { DEFAULT_SETTINGS } from './settings';
@@ -177,6 +179,8 @@ export default class BzPlugin extends Plugin {
     // 日记本注入（diary-notebook 合并）
     setDiaryApp(this.app);
     applyDiarySettingsToRuntime(this.settings);
+    // 域事件总线地基：全插件唯一 vault 订阅点挂载（registerEvent 保证插件卸载时 Obsidian 自动清理引用）
+    attachObsidianAdapter(this.app, (ref) => this.registerEvent(ref as any));
 
     // 命令裸注册（ADR-0004：app.commands.addCommand 原样 id 注册——plugin.addCommand 会被 Obsidian 自动加插件前缀，主页.js 等外部裸 id 调用会失效）
     for (const c of COMMANDS) {
@@ -255,6 +259,9 @@ export default class BzPlugin extends Plugin {
     unloadNewsReader();
     unloadArticleView();
     unloadAutoSummary();
+    // 域事件总线收口：摘除 vault 订阅点 + 清空全部域事件订阅（总线为进程内单例，随插件卸载全量清空）
+    detachObsidianAdapter();
+    clearDomainEvents();
     if (this.unregisterGestures) {
       this.unregisterGestures();
       this.unregisterGestures = null;

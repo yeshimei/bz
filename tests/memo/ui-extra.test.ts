@@ -12,7 +12,8 @@ import { UIManager } from '../../src/memo/ui';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 
-vi.mock('../../src/smartcat', () => ({ notifyMemoAction: vi.fn() }));
+// 观测点换线注记：memo/ui 的 smartcat 观察已改 emitDomainEvent('memo', …) 派发，
+// 本文件不断言观察事件（无总线订阅者时 fire-and-forget 静默），原 smartcat barrel mock 随之移除。
 
 const SETTINGS = {
   todoFilePath: 'CONFIG/STORAGE',

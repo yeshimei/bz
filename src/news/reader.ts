@@ -10,8 +10,8 @@ import { escManager } from '../core/esc-manager';
 import { createSiteIcon } from '../core/dom';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
-// 聚合讯观察（ticket 076，ADR-0029）：方法监听挂点（域内 import 之后，对齐影视 movie/ui）
-import { notifyNewsRead, notifyNewsSaved } from '../smartcat';
+// 聚合讯观察（ticket 076，ADR-0029）：域事件派发挂点（域内 import 之后，对齐影视 movie/ui）
+import { emitDomainEvent } from '../core/domain-bus';
 import type { NewsReadEvent } from '../smartcat/news-source';
 
 // ---------- 常量 ----------
@@ -384,9 +384,9 @@ ${body}`;
     notice(`已保存：${cleanTitle}`, 'success');
     hide();
     app.workspace.openLinkText(filePath, filePath, true);
-    const evt = markAsRead('saved'); // 内部发 notifyNewsRead（保存立即形态），避免双通知
+    const evt = markAsRead('saved'); // 内部发 'news' 通道 read 事件（保存立即形态），避免双通知
     // ticket 076：保存联动 auto-summary——登记待补全（smartcat 订阅该剪藏 modify 补全 / 2 分钟降级）
-    if (evt) notifyNewsSaved(evt, filePath);
+    if (evt) emitDomainEvent('news', { kind: 'saved', evt, clipPath: filePath });
   } catch (e: any) {
     notice(`保存失败：${e.message}`, 'error');
   }
@@ -407,8 +407,8 @@ export function markAsRead(action: string): NewsReadEvent | null {
       const durationSec = (openedAt ? now - openedAt : 0) + accumMs;
       const durationMin = Math.max(1, Math.round(durationSec / 60000));
       evt = { title: a.title, platform: a.platform, state: 'saved', durationMin };
-      // 保存立即形态在此发（saveToClip 再经 notifyNewsSaved 登记 auto-summary 补全）；smartcat 未初始化 / noteSource 关时静默
-      notifyNewsRead(evt);
+      // 保存立即形态在此发（saveToClip 再经 'news' saved 入口登记 auto-summary 补全）；smartcat 未初始化 / noteSource 关时静默
+      emitDomainEvent('news', { kind: 'read', evt });
     }
     a.read = true;
     delete a.body;

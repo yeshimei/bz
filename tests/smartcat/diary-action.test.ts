@@ -12,6 +12,8 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { attachObsidianAdapter, detachObsidianAdapter } from '../../src/core/obsidian-adapter';
+import { clearDomainEvents } from '../../src/core/domain-bus';
 import {
   ensureSmartCat, unloadSmartCat, __getSmartcatInternals,
   __setDiarySettleMsForTests, __getDiaryTimersForTests, __getDiaryTrackedForTests,
@@ -32,6 +34,11 @@ function makeApp() {
     const idx = arr.indexOf(ref?.cb);
     if (idx >= 0) arr.splice(idx, 1);
   };
+  // 总线接线（对齐生产 main.ts 挂载）：vault 裸事件 → adapter 两路派发；
+  // 单例先摘再挂 + 清空订阅，防跨用例串线（ensureSmartCat 的总线订阅在其后注册，不受影响）
+  detachObsidianAdapter();
+  clearDomainEvents();
+  attachObsidianAdapter(app);
   return { app, vault };
 }
 

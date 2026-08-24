@@ -22,7 +22,7 @@ import { PRESETS, CUSTOM_PRESET_ID } from './config';
 import type { PomodoroState, HistoryEntry, Durations, PomodoroOptions, Phase, PomodoroAction, PomodoroEvent } from './state';
 import { transition, recover, createInitialState, phaseDurationSec } from './state';
 import { pad2 } from '../core/utils';
-import { notifyPomodoroAction } from '../smartcat';
+import { emitDomainEvent } from '../core/domain-bus';
 
 let dataManager: PomodoroDataManager | null = null;
 let state: PomodoroState = createInitialState();
@@ -214,11 +214,11 @@ function applyAction(action: PomodoroAction): void {
     if (r.event.historyEntry) history = history.concat(r.event.historyEntry);
     // 仅自然完成（tick 驱动）通知+响；skip（手动）静默
     if (action === 'tick') notifyPhaseComplete(r.event);
-    // 番茄钟观察（ticket 080 改方法监听）：专注自然完成（写 history 路径）才通知 smartcat。
+    // 番茄钟观察（ticket 080 改域事件派发）：专注自然完成（写 history 路径）才发事件给 smartcat。
     // historyEntry 仅 focus 自然完成产生（skip/休息完成天然排除），start/pause/reset 无本事件；
     // 不随 action === 'tick' 条件写死——以 historyEntry 存在判断（兼容冻结：只加通知挂点）。
     if (r.event.completedPhase === 'focus' && r.event.historyEntry) {
-      notifyPomodoroAction({ kind: 'focus-done', minutes: durations().workMin });
+      emitDomainEvent('pomodoro', { kind: 'focus-done', minutes: durations().workMin });
     }
   }
   // 暂停生效（含手动；forceFocus 下 transition 返回 none 不触发）才通知+响
