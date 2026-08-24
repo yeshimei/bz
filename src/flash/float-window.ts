@@ -5,7 +5,7 @@
  */
 import { Setting } from 'obsidian';
 import { getSettings, saveSettings } from '../core/settings-provider';
-import { openSettingsModal } from '../core/settings-modal';
+import { openSettingsModal, createSettingsGroup } from '../core/settings-modal';
 import { makeDraggable, makeResizable } from './ui-tools';
 
 export class FloatWindow {
@@ -76,13 +76,14 @@ export class FloatWindow {
     settingsBtn.style.cssText = 'background:none;border:none;cursor:pointer;box-shadow:none;font-size:.8rem;';
     settingsBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      // 闪念设置弹窗（ADR-0009：17 项全量）
+      // 闪念设置弹窗（ADR-0009：18 项全量分组卡片化，2026-08 分组卡片重设计）
       openSettingsModal({
         title: '闪念设置',
+        maxWidth: 560,
         build: (el) => {
           const s = getSettings() as any;
-          const textSetting = (name: string, desc: string, field: string) =>
-            new Setting(el)
+          const textSetting = (parent: HTMLElement, name: string, desc: string, field: string) =>
+            new Setting(parent)
               .setName(name)
               .setDesc(desc)
               .addText((text) =>
@@ -91,8 +92,8 @@ export class FloatWindow {
                   await saveSettings();
                 })
               );
-          const toggleSetting = (name: string, desc: string, field: string) =>
-            new Setting(el)
+          const toggleSetting = (parent: HTMLElement, name: string, desc: string, field: string) =>
+            new Setting(parent)
               .setName(name)
               .setDesc(desc)
               .addToggle((toggle) =>
@@ -101,24 +102,30 @@ export class FloatWindow {
                   await saveSettings();
                 })
               );
-          toggleSetting('启用', '常驻监听光标移动与笔记变更（向量检索/AI 对话）', 'flashEnabled');
-          textSetting('Ollama URL', '本地 Ollama 服务地址', 'OLLAMA_URL');
-          textSetting('Embedding 模型', '向量化模型', 'EMBEDDING_MODEL');
-          textSetting('元数据路径', '向量元数据 JSON 路径', 'META_PATH');
-          textSetting('向量文件路径', '二进制向量文件路径', 'VEC_PATH');
-          textSetting('参考结果数', '参考面板显示的匹配结果数', 'TOP_K');
-          textSetting('AI 检索结果数', 'AI 对话时检索的笔记数量', 'CHAT_TOP_K');
-          textSetting('段落最小长度', '短于此长度的段落将被跳过', 'CHUNK_MIN_LENGTH');
-          textSetting('允许的文件夹', '只处理这些文件夹下的笔记 (逗号分隔)', 'ALLOW_PATHS');
-          textSetting('并发数', 'Embedding 请求并发数', 'CONCURRENCY');
-          textSetting('上下文限制', 'AI 上下文限制', 'CONTEXT_LIMIT');
-          textSetting('防抖延迟', '光标变化后延迟多久触发搜索 (ms)', 'DEBOUNCE_DELAY');
-          textSetting('光标轮询间隔', '移动端光标轮询间隔 (ms)', 'CURSOR_POLL_INTERVAL');
-          textSetting('Ollama 对话模型', '用于 AI 对话的模型', 'OLLAMA_CHAT_MODEL');
-          textSetting('DeepSeek 模型', 'DeepSeek API 模型名称', 'DEEPSEEK_MODEL');
-          toggleSetting('默认使用 DeepSeek', 'AI 对话时默认勾选 DeepSeek', 'DEFAULT_USE_DEEPSEEK');
-          textSetting('最大历史记录', 'AI 聊天保留的对话轮数', 'MAX_HISTORY');
-          textSetting('远程 Ollama URL', '手机端使用的远程 Ollama 地址', 'OLLAMA_REMOTE_URL');
+          // ===== 基础组 =====
+          const baseGroup = createSettingsGroup(el, { icon: 'settings', name: '基础' });
+          toggleSetting(baseGroup, '启用', '常驻监听光标移动与笔记变更，触发向量检索和 AI 对话', 'flashEnabled');
+          textSetting(baseGroup, 'Ollama 服务地址', '本地 Ollama 服务的地址', 'OLLAMA_URL');
+          textSetting(baseGroup, 'Ollama 远程地址', '手机端使用的远程 Ollama 地址', 'OLLAMA_REMOTE_URL');
+          textSetting(baseGroup, 'Embedding 模型', '向量化所用模型名称', 'EMBEDDING_MODEL');
+          textSetting(baseGroup, '允许的文件夹', '只处理这些文件夹下的笔记，多个路径用逗号分隔', 'ALLOW_PATHS');
+          // ===== 检索组 =====
+          const searchGroup = createSettingsGroup(el, { icon: 'search', name: '检索' });
+          textSetting(searchGroup, '参考结果数', '参考面板显示的匹配结果数量', 'TOP_K');
+          textSetting(searchGroup, '段落最小长度', '短于此长度的段落将被跳过', 'CHUNK_MIN_LENGTH');
+          textSetting(searchGroup, '元数据路径', '向量元数据文件的保存路径', 'META_PATH');
+          textSetting(searchGroup, '向量文件路径', '二进制向量文件的保存路径', 'VEC_PATH');
+          textSetting(searchGroup, '并发数', '向量化请求的并发数量', 'CONCURRENCY');
+          textSetting(searchGroup, '防抖延迟', '光标变化后延迟触发的毫秒数', 'DEBOUNCE_DELAY');
+          textSetting(searchGroup, '光标轮询间隔', '移动端轮询光标的间隔毫秒数', 'CURSOR_POLL_INTERVAL');
+          // ===== 对话组 =====
+          const chatGroup = createSettingsGroup(el, { icon: 'message-circle', name: '对话' });
+          textSetting(chatGroup, '上下文限制', 'AI 对话可用的上下文长度上限', 'CONTEXT_LIMIT');
+          textSetting(chatGroup, 'AI 检索结果数', 'AI 对话时检索的笔记数量', 'CHAT_TOP_K');
+          textSetting(chatGroup, 'Ollama 对话模型', 'AI 对话时使用的模型名称', 'OLLAMA_CHAT_MODEL');
+          textSetting(chatGroup, 'DeepSeek 模型', 'DeepSeek 接口使用的模型名称', 'DEEPSEEK_MODEL');
+          toggleSetting(chatGroup, '默认使用 DeepSeek', 'AI 对话时默认勾选 DeepSeek', 'DEFAULT_USE_DEEPSEEK');
+          textSetting(chatGroup, '最大历史记录', 'AI 聊天保留的最大对话轮数', 'MAX_HISTORY');
         },
       });
     });
