@@ -5,8 +5,22 @@ import { buildConfig } from './config';
 
 export const EMBED_BATCH_SIZE = 64;
 
+/** Ollama HTTP 统一超时（P1-10）：Ollama 未启动/挂起时请求将永久 pending，卡死闪念链路 */
+export const OLLAMA_TIMEOUT_MS = 30000;
+
 async function httpFetch(url: string, opts: any): Promise<Response> {
-  return fetch(url, opts);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), OLLAMA_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...opts, signal: controller.signal });
+  } catch (e) {
+    if (controller.signal.aborted) {
+      throw new Error(`Ollama 无响应（超过 ${OLLAMA_TIMEOUT_MS / 1000}s 未应答）：${url}`);
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /** 单条嵌入（isQuery 时加检索前缀） */
