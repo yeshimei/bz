@@ -144,7 +144,7 @@ describe('UIManager 主密码流程（统一走保险箱弹窗）', () => {
     expect(hasNotice('安全模式：已自动上锁')).toBe(true);
   });
 
-  it('⚙️ 设置弹窗：字符集/生成长度/安全模式', async () => {
+  it('⚙️ 设置弹窗：分组卡片（生成/安全）+ 设置项清单', async () => {
     const dm2 = new DataManager();
     const ui2 = new UIManager(dm2, { charset: 'abc', length: '8', securityMode: false });
     ui2.ensureElements();
@@ -157,8 +157,43 @@ describe('UIManager 主密码流程（统一走保险箱弹窗）', () => {
     settingsBtn.click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect(popup.textContent).toContain('密码本设置');
-    const names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    // 分组卡片结构（桌面：生成/安全 2 组，移动端组不渲染），原生图标 + 徽标回填项数
+    const heads = [...popup.querySelectorAll('.bz-settings-group-head')];
+    expect(heads.map((el) => (el as HTMLElement).textContent!.trim())).toEqual(['生成2 项', '安全1 项']);
+    expect(heads.map((el) => el.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon'))).toEqual(['key-round', 'shield']);
+    const names = [...popup.querySelectorAll('.bz-settings-group-body .setting-item')].map(
+      (el) => (el as HTMLElement).dataset.name
+    );
     expect(names).toEqual(['密码生成字符集', '密码生成长度', '安全模式']);
+    // 文案规范：长度/安全模式描述已去掉符号写法
+    const settings = [...popup.querySelectorAll('.setting-item')].map((el) => (el as any).__setting);
+    expect(settings[1].desc).toBe('随机生成密码的字符个数');
+    expect(settings[2].desc).toBe('关闭密码本窗口时立即上锁，保险箱同步锁定');
+  });
+
+  it('⚙️ 设置弹窗（移动端）：追加「移动端」组（移动端默认全屏）', async () => {
+    Platform.isMobile = true;
+    const dm2 = new DataManager();
+    const ui2 = new UIManager(dm2, { charset: 'abc', length: '8', securityMode: false });
+    ui2.ensureElements();
+    setSettingsProvider(() => ({
+      passwordCharset: 'abc', passwordLength: '8', securityMode: false,
+    }) as any);
+    await getSafeManager().unlock('pw');
+    ui2.show();
+    const settingsBtn = [...document.querySelectorAll('button')].find((b) => b.title === '密码本设置')!;
+    settingsBtn.click();
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    const heads = [...popup.querySelectorAll('.bz-settings-group-head')];
+    expect(heads.map((el) => (el as HTMLElement).textContent!.trim())).toEqual(['生成2 项', '安全1 项', '移动端1 项']);
+    expect(heads.map((el) => el.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon'))).toEqual([
+      'key-round', 'shield', 'smartphone',
+    ]);
+    const names = [...popup.querySelectorAll('.bz-settings-group-body .setting-item')].map(
+      (el) => (el as HTMLElement).dataset.name
+    );
+    expect(names).toEqual(['密码生成字符集', '密码生成长度', '安全模式', '移动端默认全屏']);
+    Platform.isMobile = false;
   });
 });
 
