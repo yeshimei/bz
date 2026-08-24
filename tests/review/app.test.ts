@@ -378,6 +378,147 @@ describe('applyReviewStyles', () => {
     expect(inner.style.color).toBe('rgb(82, 196, 26)'); // #52c41a
     expect(inner.querySelector('.review-stage-badge')!.textContent).toBe('✅');
   });
+
+  it('ticket 100：文件树标记关闭 → 不染色不挂徽章', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      { id: '1', filePath: 'A.md', reviewStart: now.toISOString(), stage: 2, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() + 5 * 3600000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+    ]));
+    const treeItem = document.createElement('div');
+    treeItem.setAttribute('data-path', 'A.md');
+    const inner = document.createElement('div');
+    inner.className = 'tree-item-inner';
+    treeItem.appendChild(inner);
+    document.body.appendChild(treeItem);
+    setSettingsProvider(() => ({ reviewTreeBadge: false } as any));
+    const app = makeApp(vault);
+    setApp(app);
+    await reviewApp.applyReviewStyles(app, vault.file('A.md') as any);
+    expect(inner.style.color).toBe('');
+    expect(inner.querySelector('.review-stage-badge')).toBeNull();
+  });
+});
+
+describe('ticket 100：到期提醒 / 每日上限 / 间隔缩放', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+    (reviewApp as any).dataManager = null;
+    (reviewApp as any)._notifiedOverdue = new Set();
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    (reviewApp as any)._notifiedOverdue = new Set();
+  });
+
+  function seedOverdueWith(vault: MockVault, paths: string[]) {
+    const now = new Date();
+    const rows = paths.map((p, i) => ({
+      id: String(i), filePath: p, reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1,
+      difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0,
+      nextReviewDate: new Date(now.getTime() - 1000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false,
+    }));
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify(rows));
+  }
+
+  it('到期提醒：新增逾期弹聚合通知（晨报）；再次检查不重复弹；移出逾期后再逾期重现', async () => {
+    const noticeSpy = vi.spyOn(await import('../../src/core/notice'), 'notify');
+    const vault = new MockVault();
+    for (const p of ['A.md', 'B.md']) vault.files.set(p, '正文');
+    seedOverdueWith(vault, ['A.md', 'B.md']);
+    const app = makeApp(vault);
+    setApp(app);
+    setSettingsProvider(() => ({ enableAutoNotify: true } as any));
+    // 首次：两篇全新逾期 → 一条聚合通知
+    await reviewApp.checkOverdueAndNotify();
+    expect(noticeSpy).toHaveBeenCalledTimes(1);
+    const [msg] = noticeSpy.mock.calls[0];
+    expect(String(msg)).toContain('2 篇笔记到期待复习');
+    // 再次检查：无新逾期 → 不再弹
+    noticeSpy.mockClear();
+    await reviewApp.checkOverdueAndNotify();
+    expect(noticeSpy).not.toHaveBeenCalled();
+    // B 保持逾期，A 移出（nextReviewDate 推后）→ 集合剔除；A 再逾期 → 重新弹
+    seedOverdueWith(vault, ['B.md']);
+    await reviewApp.checkOverdueAndNotify();
+    noticeSpy.mockClear();
+    seedOverdueWith(vault, ['A.md', 'B.md']);
+    await reviewApp.checkOverdueAndNotify();
+    expect(noticeSpy).toHaveBeenCalledTimes(1);
+    expect(String(noticeSpy.mock.calls[0][0])).toContain('A');
+  });
+
+  it('超 3 篇截断「，等 M 篇」；单篇「X 到期待复习」', async () => {
+    const noticeSpy = vi.spyOn(await import('../../src/core/notice'), 'notify');
+    const vault = new MockVault();
+    for (const p of ['A.md', 'B.md', 'C.md', 'D.md', 'E.md']) vault.files.set(p, '正文');
+    seedOverdueWith(vault, ['A.md', 'B.md', 'C.md', 'D.md', 'E.md']);
+    const app = makeApp(vault);
+    setApp(app);
+    setSettingsProvider(() => ({ enableAutoNotify: true } as any));
+    await reviewApp.checkOverdueAndNotify();
+    const msg = String(noticeSpy.mock.calls[0][0]);
+    expect(msg).toContain('5 篇笔记到期待复习');
+    expect(msg).toContain('等 2 篇');
+    // 单篇
+    noticeSpy.mockClear();
+    (reviewApp as any)._notifiedOverdue = new Set();
+    seedOverdueWith(vault, ['F.md']);
+    vault.files.set('F.md', '正文');
+    await reviewApp.checkOverdueAndNotify();
+    const single = String(noticeSpy.mock.calls[0][0]);
+    expect(single).toBe('F 到期待复习');
+  });
+
+  it('到期提醒开关关 → 完全静默', async () => {
+    const noticeSpy = vi.spyOn(await import('../../src/core/notice'), 'notify');
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    seedOverdueWith(vault, ['A.md']);
+    const app = makeApp(vault);
+    setApp(app);
+    setSettingsProvider(() => ({ enableAutoNotify: false } as any));
+    await reviewApp.checkOverdueAndNotify();
+    expect(noticeSpy).not.toHaveBeenCalled();
+  });
+
+  it('每日复习上限：逾期队列截断；默认 0 不限', async () => {
+    const vault = new MockVault();
+    for (const p of ['A.md', 'B.md', 'C.md']) vault.files.set(p, '正文');
+    seedOverdueWith(vault, ['A.md', 'B.md', 'C.md']);
+    const app = makeApp(vault);
+    setApp(app);
+    setSettingsProvider(() => ({ reviewDailyLimit: 1, forceQuizForReview: false } as any));
+    const spy = vi.spyOn(reviewApp, 'reviewLoop').mockResolvedValue(undefined);
+    await reviewApp.autoJumpOverdue();
+    expect(spy).toHaveBeenCalledTimes(1);
+    const passed = spy.mock.calls[0][0] as any[];
+    expect(passed.length).toBe(1);
+  });
+
+  it('FSRS 间隔缩放：scale 2 翻倍；scale 0.5 减半（相对 scale 1 基准）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    const runWith = async (scale: number): Promise<number> => {
+      vault.files.set(REVIEW_FILE_PATH, JSON.stringify([{
+        id: '1', filePath: 'A.md', reviewStart: new Date(now.getTime() - 100 * 86400000).toISOString(), stage: 12, phase: 'fsrs', stability: 100, difficulty: 0.3, reviewHistory: [{ timestamp: new Date(now.getTime() - 30 * 86400000).toISOString() }], totalReviews: 1, averageConfidence: 0, nextReviewDate: now.toISOString(), lastReviewed: new Date(now.getTime() - 30 * 86400000).toISOString(), lastDifficulty: 'good', completed: false,
+      }]));
+      const app = makeApp(vault);
+      setApp(app);
+      setSettingsProvider(() => ({ reviewIntervalScale: scale } as any));
+      await reviewApp.markReview('A.md', 'good');
+      const items = await new ReviewDataManager(app).loadItems();
+      return new Date(items[0].nextReviewDate!).getTime() - now.getTime();
+    };
+    const base = await runWith(1);
+    const d2 = await runWith(2);
+    const dHalf = await runWith(0.5);
+    expect(Math.abs(d2 / base - 2)).toBeLessThan(0.05); // 翻倍
+    expect(Math.abs(dHalf / base - 0.5)).toBeLessThan(0.05); // 减半
+  });
 });
 describe('ticket 098：待重做 / 重做流程（ADR-0044）', () => {
   beforeEach(() => {

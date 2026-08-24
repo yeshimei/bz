@@ -19,6 +19,12 @@ export function isUnderFolder(folder: string, path: string): boolean {
   return path === f || path.startsWith(f + '/');
 }
 
+/** ticket 100：自动加入提醒合并窗口（3 秒；测试可注入短值） */
+export let REVIEW_AUTO_ADD_MERGE_MS = 3000;
+export function __setAutoAddMergeMsForTests(ms: number): void {
+  REVIEW_AUTO_ADD_MERGE_MS = ms;
+}
+
 export class ReviewWatcher {
   app: App;
   dataManager: ReviewDataManager;
@@ -26,6 +32,9 @@ export class ReviewWatcher {
   /** 删除确认防抖缓冲（多文件删除合并为一次确认） */
   private deleteQueue: string[] = [];
   private deleteTimer: ReturnType<typeof setTimeout> | null = null;
+  /** ticket 100：新笔记自动加入提醒合并缓冲（3 秒窗口收集，多条合并一条通知） */
+  private autoAddQueue: string[] = [];
+  private autoAddTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(app: App, dataManager: ReviewDataManager) {
     this.app = app;
@@ -68,7 +77,7 @@ export class ReviewWatcher {
     await saveSettings();
   }
 
-  /** vault create：监听目录内新建 md → 自动加入（未排除、未在计划） */
+  /** vault create：监听目录内新建 md → 自动加入（未排除、未在计划）；ticket 100：3 秒窗口合并提醒 + 开关 */
   async onVaultCreate(file: TFile): Promise<void> {
     if (file.extension !== 'md') return;
     if (!this.isWatched(file.path)) return;
@@ -76,7 +85,20 @@ export class ReviewWatcher {
     const items = await this.dataManager.loadItems();
     if (items.some((i) => i.filePath === file.path)) return;
     await this.dataManager.addItem(file.path, file.basename);
-    notice(`已自动加入复习计划：${file.basename}`, 'success');
+    // 提醒开关（默认开）：3 秒窗口内多条合并成一条通知
+    const s = tryGetSettings() as any;
+    if (s && s.reviewAutoAddNotice === false) return;
+    this.autoAddQueue.push(file.basename);
+    if (this.autoAddTimer) return;
+    this.autoAddTimer = setTimeout(() => {
+      this.autoAddTimer = null;
+      const batch = this.autoAddQueue;
+      this.autoAddQueue = [];
+      if (!batch.length) return;
+      const shown = batch.slice(0, 3).join('、');
+      const tail = batch.length > 3 ? ` 等 ${batch.length - 3} 篇` : '';
+      notice(batch.length > 1 ? `已自动加入复习计划：${shown}${tail}` : `已自动加入复习计划：${shown}`, 'success');
+    }, REVIEW_AUTO_ADD_MERGE_MS);
   }
 
   /** vault delete：计划内文件删除 → 防抖合并确认「同步移除复习记录？」 */
@@ -201,5 +223,10 @@ export class ReviewWatcher {
       this.deleteTimer = null;
     }
     this.deleteQueue = [];
+    if (this.autoAddTimer) {
+      clearTimeout(this.autoAddTimer);
+      this.autoAddTimer = null;
+    }
+    this.autoAddQueue = [];
   }
 }

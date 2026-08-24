@@ -7,11 +7,17 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { isUnderFolder, ReviewWatcher } from '../../src/review/watch';
+import { isUnderFolder, ReviewWatcher, __setAutoAddMergeMsForTests } from '../../src/review/watch';
 import { ReviewDataManager, REVIEW_FILE_PATH } from '../../src/review/data';
 
 function makeApp(vault: MockVault) {
   return mockAppWithVault(vault);
+}
+
+/** 通知测试 helper（自绘 toast 会被挂到 #bz-notice-container） */
+function lastNoticeText(): string {
+  const c = document.querySelector('#bz-notice-container');
+  return c ? c.textContent || '' : '';
 }
 
 describe('isUnderFolder', () => {
@@ -36,6 +42,7 @@ describe('ReviewWatcher 自动加入', () => {
     setApp(null as any);
     document.body.innerHTML = '';
     setSettingsProvider(() => ({}) as any);
+    __setAutoAddMergeMsForTests(50); // 测试注入短窗口
   });
 
   it('onVaultCreate：监听目录内新建自动加入；非监听/已排除/已在计划跳过', async () => {
@@ -70,6 +77,39 @@ describe('ReviewWatcher 自动加入', () => {
     await w.onVaultCreate({ path: '我的/复习/F.md', extension: 'md', basename: 'F' } as any);
     paths = (await dm.loadItems()).map((i) => i.filePath);
     expect(paths).not.toContain('我的/复习/F.md');
+  });
+
+  it('ticket 100：自动加入提醒——多条合并一条（3 秒窗口）；开关关 → 静默', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/复习/A.md', '正文');
+    const now = new Date();
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      { id: '1', filePath: '我的/复习/A.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() + 60000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+    ]));
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    const settings = makeSettings();
+    settings.reviewWatchedFolders = ['我的/复习'];
+    setSettingsProvider(() => settings as any);
+    const w = new ReviewWatcher(app, dm);
+
+    // 窗口内连续两篇 → 一条合并通知
+    await w.onVaultCreate({ path: '我的/复习/E.md', extension: 'md', basename: 'E' } as any);
+    await w.onVaultCreate({ path: '我的/复习/F.md', extension: 'md', basename: 'F' } as any);
+    await new Promise((r) => setTimeout(r, 80));
+    expect(lastNoticeText()).toContain('已自动加入复习计划：E、F');
+    // 单篇（下一窗口）→ 原文案
+    await w.onVaultCreate({ path: '我的/复习/G.md', extension: 'md', basename: 'G' } as any);
+    await new Promise((r) => setTimeout(r, 80));
+    expect(lastNoticeText()).toContain('已自动加入复习计划：G');
+    // 开关关 → 静默收编（数据仍加入、无通知）
+    (settings as any).reviewAutoAddNotice = false;
+    expect((await dm.loadItems()).some((i) => i.filePath === '我的/复习/H.md')).toBe(false);
+    await w.onVaultCreate({ path: '我的/复习/H.md', extension: 'md', basename: 'H' } as any);
+    expect((await dm.loadItems()).some((i) => i.filePath === '我的/复习/H.md')).toBe(true);
+    await new Promise((r) => setTimeout(r, 80));
+    expect(lastNoticeText()).not.toContain('已自动加入复习计划：H');
   });
 
   it('confirmBatchAddForFolder：确认 → 批量加入（报存量数与 toast）返回 true；取消 → 什么都不做返回 false（不写排除）', async () => {

@@ -81,9 +81,9 @@ _Avoid_: 抓海报、豆瓣补全、poster fetch
 
 **AI Agent**: 笔记 ⇄ 备忘录/收藏本 自动同步 + AI 剪藏匹配。常驻监听 vault 事件（rename/delete/create）。权限模型：非 AI 操作静默直改；仅 AI 剪藏匹配弹窗批准。
 
-**复习计划 (Review Plan)**: FSRS v4 算法驱动的复习管理，数据 `CONFIG/STORAGE/review.json`。可配置多个「监听文件夹」自动收编笔记；做题会话自动评级未通过（忘了/困难）时结果卡变唯一按钮「复习此笔记」并置「待重做」，重做到通过才进下篇（首次评级=唯一排期来源，ADR-0044）；「做题家」命令入口已退役（ADR-0045），仅作复习引擎。
+**复习计划 (Review Plan)**: FSRS v4 算法驱动的复习管理，数据 `CONFIG/STORAGE/review.json`。可配置多个「监听文件夹」自动收编笔记；做题会话自动评级未通过（忘了/困难）时结果卡变唯一按钮「复习此笔记」并置「待重做」，重做到通过才进下篇（首次评级=唯一排期来源，ADR-0044）；「做题家」命令入口已退役（ADR-0045），仅作复习引擎。ticket 100 起：**到期提醒**（enableAutoNotify，开启时插件启动即常驻轮询，有逾期笔记即弹聚合通知）；**每日复习上限**（reviewDailyLimit，一轮复习最多处理 N 篇逾期）；**复习间隔缩放**（reviewIntervalScale，FSRS 相位间隔乘系数，ADR-0046）；**文件树标记**（reviewTreeBadge，关闭则文件树不染色不挂徽章）；**自动加入提醒**（reviewAutoAddNotice，新笔记自动收编时 3 秒窗口合并一条通知）。
 
-**做题家 (Quiz Master)**: 统一题库 `CONFIG/STORAGE/quiz.json`，多选支持，完成状态记录，自动替换全完成的笔记。命令入口 `bz-quiz-open`/`bz-quiz-update` 已删除注册（ADR-0045），仅经复习计划「做题决定难度」驱动（startReviewSession/endReviewSession 契约）；多选答对计数已修复（ADR-0044 唯一解冻项）。
+**做题家 (Quiz Master)**: 统一题库 `CONFIG/STORAGE/quiz.json`，多选支持，完成状态记录，自动替换全完成的笔记。命令入口 `bz-quiz-open`/`bz-quiz-update` 已删除注册（ADR-0045），仅经复习计划「用做题测难度」驱动（startReviewSession/endReviewSession 契约）；多选答对计数已修复（ADR-0044 唯一解冻项）。
 
 **做题会话 (Quiz Session)**: 做题家对复习计划暴露的联动契约（`startReviewSession`/`endReviewSession` + `QuizReviewResults` 回调）。复习计划只经做题会话驱动做题家，禁止直接改写其内部状态（_reviewMode/currentQuestions 等）。
 

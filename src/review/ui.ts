@@ -143,33 +143,42 @@ export class UIManager {
     header.querySelector('#review-btn-close')!.addEventListener('click', () => this.hideMain());
   }
 
-  /** 复习设置弹窗项（_bindHeaderEvents 拆分）：检查间隔/逾期通知 + 做题家 5 项 */
+  /** 复习设置弹窗项（_bindHeaderEvents 拆分）：分组（到期提醒/复习方式+出题/复习节奏/自动化/界面），ticket 100 重构 */
   _buildSettingsItems(el: HTMLElement): void {
     const s = getSettings();
+    const group = (title: string): void => {
+      const h = document.createElement('div');
+      h.className = 'bz-settings-group-title';
+      h.textContent = title;
+      el.appendChild(h);
+    };
+
+    // ===== 到期提醒 =====
+    group('到期提醒');
     new Setting(el)
-      .setName('检查间隔（秒）')
-      .setDesc('逾期检查间隔，单位秒')
-      .addText((text) =>
-        text.setValue(s.autoCheckInterval || '').onChange(async (v) => {
-          s.autoCheckInterval = v;
-          await saveSettings();
-        })
-      );
-    new Setting(el)
-      .setName('启用逾期通知')
-      .setDesc('是否在逾期时弹出通知')
+      .setName('到期提醒')
+      .setDesc('有笔记到期待复习时自动弹出提醒')
       .addToggle((toggle) =>
         toggle.setValue(!!s.enableAutoNotify).onChange(async (v) => {
           s.enableAutoNotify = v;
           await saveSettings();
         })
       );
-    // 做题家 4 项容器：仅「做题决定难度」开启时动态显示（spec 2026-08-07 用户决策，仿 AI tab 隐藏模式）
-    const quizBox = document.createElement('div');
-    quizBox.id = 'review-quiz-settings';
     new Setting(el)
-      .setName('做题决定难度')
-      .setDesc('开启后，点击复习自动做题，根据正确率自动选择难度')
+      .setName('新笔记自动加入提醒')
+      .setDesc('新笔记被自动加入时弹出提示，多条合并成一条')
+      .addToggle((toggle) =>
+        toggle.setValue(s.reviewAutoAddNotice !== false).onChange(async (v) => {
+          s.reviewAutoAddNotice = v;
+          await saveSettings();
+        })
+      );
+
+    // ===== 复习方式 =====
+    group('复习方式');
+    new Setting(el)
+      .setName('用做题测难度')
+      .setDesc('开始复习即做题，按正确率自动定难度')
       .addToggle((toggle) =>
         toggle.setValue(!!s.forceQuizForReview).onChange(async (v) => {
           s.forceQuizForReview = v;
@@ -177,12 +186,15 @@ export class UIManager {
           quizBox.style.display = v ? '' : 'none';
         })
       );
+    // 出题子组：仅「用做题测难度」开启时显示（spec 2026-08-07 用户决策，仿 AI tab 隐藏模式）
+    const quizBox = document.createElement('div');
+    quizBox.id = 'review-quiz-settings';
     el.appendChild(quizBox);
     quizBox.style.display = s.forceQuizForReview ? '' : 'none';
-
+    group('出题');
     new Setting(quizBox)
       .setName('允许多选题')
-      .setDesc('若关闭，AI 只生成单选题')
+      .setDesc('开启后 AI 可能出多选题，关闭则只出单选题')
       .addToggle((toggle) =>
         toggle.setValue(!!s.enableMultipleChoice).onChange(async (v) => {
           s.enableMultipleChoice = v;
@@ -190,8 +202,8 @@ export class UIManager {
         })
       );
     new Setting(quizBox)
-      .setName('每笔记题目数量（0为自动）')
-      .setDesc('设为0则由AI决定，设为正整数则固定数量')
+      .setName('每篇笔记出题数量')
+      .setDesc('留空或填 0 由 AI 决定，填数字则每篇固定出题')
       .addText((text) =>
         text.setValue(s.questionsPerNote || '').onChange(async (v) => {
           s.questionsPerNote = v;
@@ -199,8 +211,8 @@ export class UIManager {
         })
       );
     new Setting(quizBox)
-      .setName('打乱题目顺序')
-      .setDesc('每次打开做题窗口时是否随机打乱题目')
+      .setName('打乱出题顺序')
+      .setDesc('做题时随机排列题目顺序')
       .addToggle((toggle) =>
         toggle.setValue(!!s.shuffleQuestions).onChange(async (v) => {
           s.shuffleQuestions = v;
@@ -208,8 +220,8 @@ export class UIManager {
         })
       );
     new Setting(quizBox)
-      .setName('题目难度')
-      .setDesc('生成题目时的难度等级')
+      .setName('出题难度')
+      .setDesc('AI 出题深浅，可选随机、简单、中等或困难')
       .addDropdown((dd) => {
         dd.addOption('random', '随机');
         dd.addOption('easy', '简单');
@@ -221,10 +233,35 @@ export class UIManager {
           await saveSettings();
         });
       });
+
+    // ===== 复习节奏 =====
+    group('复习节奏');
+    new Setting(el)
+      .setName('每日复习上限')
+      .setDesc('一轮复习最多处理这么多篇，不填表示不限制')
+      .addText((text) =>
+        text.setValue(String(s.reviewDailyLimit ?? 0)).onChange(async (v) => {
+          s.reviewDailyLimit = Number(v) > 0 ? Number(v) : 0;
+          await saveSettings();
+        })
+      );
+    new Setting(el)
+      .setName('复习间隔缩放')
+      .setDesc('数值越小复习越频繁，数值越大越宽松')
+      .addText((text) =>
+        text.setValue(String(s.reviewIntervalScale ?? 1)).onChange(async (v) => {
+          const n = Number(v);
+          s.reviewIntervalScale = n > 0 && n <= 5 ? n : 1;
+          await saveSettings();
+        })
+      );
+
+    // ===== 自动化＋界面 =====
+    group('自动化');
     // ticket 099：监听文件夹（多目录、递归）——文件夹选择弹窗添加 + chip 关闭标签
     new Setting(el)
       .setName('监听文件夹')
-      .setDesc('目录内未加入且未排除的 .md 自动进入复习计划（递归）；新增目录会先确认存量加入，取消则不添加');
+      .setDesc('文件夹里的新笔记自动加入复习计划，包括子文件夹');
     const watchBox = document.createElement('div');
     watchBox.id = 'review-watch-folders';
     el.appendChild(watchBox);
@@ -297,10 +334,21 @@ export class UIManager {
     };
     renderWatchRows();
 
+    // ===== 界面 =====
+    group('界面');
+    new Setting(el)
+      .setName('文件树标记')
+      .setDesc('在文件树中为复习笔记着色并标到期时间')
+      .addToggle((toggle) =>
+        toggle.setValue(s.reviewTreeBadge !== false).onChange(async (v) => {
+          s.reviewTreeBadge = v;
+          await saveSettings();
+        })
+      );
     if (isMobileEnv()) {
       new Setting(el)
         .setName('移动端默认全屏')
-        .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
+        .setDesc('移动端打开复习窗口时默认全屏显示')
         .addToggle((toggle) =>
           toggle.setValue(!!s.reviewMobileDefaultFullscreen).onChange(async (v) => {
             s.reviewMobileDefaultFullscreen = v;
