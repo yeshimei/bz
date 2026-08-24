@@ -159,11 +159,9 @@ export default interface BzSettings {
   /** 🚫 排除名单（不参与监听自动加入的笔记路径数组；手动移除/确认移除/批量取消/不更新落此名单） */
   reviewExcludedNotes: string[];
 
-  // ===== 🧩 入口页（3 项）=====
-  /** 桌面端网格列数（3-8，默认 6） */
-  launcherColumns: string;
-  /** 移动端网格列数（3-8，默认 4——移动端格子更大更透气） */
-  launcherMobileColumns: string;
+  // ===== 🧩 入口页（2 项）=====
+  // 列数自 launcher.json v3 起存储（桌面/移动独立配置，域内设置页可调），
+  // 旧 data.json 残留的 launcherColumns/launcherMobileColumns 死键已删除（P2：全仓 0 读）
   /** 显示磁贴文字（桌面端；关闭 = 全部磁贴仅显示图标） */
   launcherShowText: boolean;
   /** 移动端独立：显示磁贴文字（未设置 → 继承桌面端） */
@@ -395,8 +393,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
   reviewExcludedNotes: [],
 
   // 入口页
-  launcherColumns: '6',
-  launcherMobileColumns: '4',
   launcherShowText: true,
 
   // 手势触发（默认关闭；单选一个手势打开命令入口页）
