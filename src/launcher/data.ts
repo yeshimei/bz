@@ -42,20 +42,6 @@ export interface LauncherData {
   mobile: LauncherPlatformConfig;
 }
 
-/** v1 旧格式（仅桌面布局，无平台区分）——读取时自动归入 desktop */
-export interface LauncherDataV1 {
-  version: number;
-  tiles: LauncherTile[];
-}
-
-/** 档位清单（列×行，最大 2×2） */
-export const TILE_SIZES = [
-  { w: 1, h: 1 },
-  { w: 2, h: 1 },
-  { w: 1, h: 2 },
-  { w: 2, h: 2 },
-] as const;
-
 export const LAUNCHER_PATH = 'CONFIG/STORAGE/launcher.json';
 
 /** 校验单个磁贴字段合法 */
@@ -169,12 +155,12 @@ export function overlaps(a: LauncherTile, b: LauncherTile): boolean {
 }
 
 /** tile 是否越界（左/上越界与右/下越界均算） */
-export function outOfBounds(tile: LauncherTile, cols: number): boolean {
+function outOfBounds(tile: LauncherTile, cols: number): boolean {
   return tile.x < 0 || tile.y < 0 || tile.x + tile.w > cols;
 }
 
 /** 与指定区域重叠的磁贴（不含 ignoreId） */
-export function tilesInRegion(tiles: LauncherTile[], x: number, y: number, w: number, h: number, ignoreId?: string): LauncherTile[] {
+function tilesInRegion(tiles: LauncherTile[], x: number, y: number, w: number, h: number, ignoreId?: string): LauncherTile[] {
   const probe: LauncherTile = { id: ignoreId || '__probe__', commandId: '', x, y, w, h };
   return tiles.filter((t) => t.id !== ignoreId && overlaps(t, probe));
 }
