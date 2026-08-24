@@ -19,7 +19,7 @@ import {
 } from '../core/item-actions';
 import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { getSettings, tryGetSettings, saveSettings } from '../core/settings-provider';
-import { openSettingsModal } from '../core/settings-modal';
+import { openSettingsModal, createSettingsGroup } from '../core/settings-modal';
 import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
 import { SafeManager, base64ToBytes, bytesToBase64, type SafeNote, type SafeAttachment, type HealthReport, type HealthItem } from './data';
 import { compressImage, videoFrame } from './preview';
@@ -1134,11 +1134,14 @@ export class UIManager {
     };
     openSettingsModal({
       title: '保险箱设置',
+      maxWidth: 560,
       build: (el) => {
         const s = getSettings() as any;
-        new Setting(el)
+        // ===== 存储组 =====
+        const storeGroup = createSettingsGroup(el, { icon: 'folder-open', name: '存储' });
+        new Setting(storeGroup)
           .setName('保险箱根目录')
-          .setDesc('加密清单与点前缀密文镜像的存放目录（点前缀目录在 Obsidian 侧栏隐藏，防误删）')
+          .setDesc('加密清单与密文镜像的存放位置，点前缀目录在侧栏隐藏，防止误删')
           .addText((text) =>
             text.setValue(s.encryptRoot || 'CONFIG/.ENCRYPT').onChange(async (v) => {
               s.encryptRoot = v;
@@ -1146,9 +1149,11 @@ export class UIManager {
               warnReload();
             })
           );
-        new Setting(el)
+        // ===== 预览组 =====
+        const previewGroup = createSettingsGroup(el, { icon: 'image', name: '预览' });
+        new Setting(previewGroup)
           .setName('生成压缩预览')
-          .setDesc('加密时生成图片/视频压缩预览层（体积小但看得清）')
+          .setDesc('加密时生成图片和视频的压缩预览，体积小但足够清晰')
           .addToggle((toggle) =>
             toggle.setValue(!!s.encryptPreviewEnabled).onChange(async (v) => {
               s.encryptPreviewEnabled = v;
@@ -1156,9 +1161,9 @@ export class UIManager {
               warnReload();
             })
           );
-        new Setting(el)
-          .setName('预览目标长边（px）')
-          .setDesc('压缩/抽帧预览（省略图）的目标分辨率长边，越小预览打开越快；点击缩略图可加载原图/视频')
+        new Setting(previewGroup)
+          .setName('预览长边')
+          .setDesc('压缩预览的目标长边像素，默认 384，数值越小打开越快')
           .addText((text) =>
             text.setValue(String(s.encryptPreviewSize || '384')).onChange(async (v) => {
               s.encryptPreviewSize = v;
@@ -1166,9 +1171,9 @@ export class UIManager {
               warnReload();
             })
           );
-        new Setting(el)
+        new Setting(previewGroup)
           .setName('预览质量')
-          .setDesc('JPEG 压缩质量 0-1，模糊可接受时调低更省空间')
+          .setDesc('压缩图的 JPEG 质量，默认 0.5，调低更省空间，画质会变模糊')
           .addText((text) =>
             text.setValue(String(s.encryptPreviewQuality || '0.5')).onChange(async (v) => {
               s.encryptPreviewQuality = v;
@@ -1176,9 +1181,9 @@ export class UIManager {
               warnReload();
             })
           );
-        new Setting(el)
+        new Setting(previewGroup)
           .setName('预览自动加载原图')
-          .setDesc('预览窗打开后自动解密原始质量替换省略图（默认关，省流量/内存；开启后为每个附件逐个加载，视频同样替换为可播放）')
+          .setDesc('打开预览自动解密原图替换省略图，默认关闭，省流量和内存')
           .addToggle((toggle) =>
             toggle.setValue(!!s.encryptAutoLoadOriginal).onChange(async (v) => {
               s.encryptAutoLoadOriginal = v;
@@ -1186,7 +1191,9 @@ export class UIManager {
               warnReload();
             })
           );
-        new Setting(el)
+        // ===== 安全组 =====
+        const securityGroup = createSettingsGroup(el, { icon: 'shield', name: '安全' });
+        new Setting(securityGroup)
           .setName('安全模式')
           .setDesc('关闭保险箱面板立即自动上锁')
           .addToggle((toggle) =>
@@ -1196,10 +1203,12 @@ export class UIManager {
               warnReload();
             })
           );
+        // ===== 移动端组（仅移动端显示） =====
         if (isMobileEnv()) {
-          new Setting(el)
+          const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
+          new Setting(mobileGroup)
             .setName('移动端默认全屏')
-            .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
+            .setDesc('移动端打开主窗口时默认全屏，关闭则显示常规卡片')
             .addToggle((toggle) =>
               toggle.setValue(!!s.encryptMobileDefaultFullscreen).onChange(async (v) => {
                 s.encryptMobileDefaultFullscreen = v;
