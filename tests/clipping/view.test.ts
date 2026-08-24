@@ -10,9 +10,7 @@ import { initArticleView, applyArticleSettings, applyFilter, renderEmpty } from 
 import { MockVault } from '../mock-vault';
 import {
   resetObsidianMocks,
-  getNoticeMessages,
   hasNotice,
-  clearNotices,
   Platform as MockPlatform,
 } from '../mock-obsidian-entry';
 
