@@ -10,7 +10,7 @@ import {
   loadStats, recordStat, renderMarkdown, toDatetime, init, show,
 } from '../../src/news/reader';
 import { MockVault } from '../mock-vault';
-import { resetObsidianMocks, Platform as MockPlatform, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
+import { resetObsidianMocks, Platform as MockPlatform, hasNotice } from '../mock-obsidian-entry';
 // ticket 076 修订：隔离 smartcat——断言 reader 只对「保存」产观察（跳过不再调 notifyNewsRead）
 import { notifyNewsRead, notifyNewsSaved } from '../../src/smartcat';
 vi.mock('../../src/smartcat', () => ({ notifyNewsRead: vi.fn(), notifyNewsSaved: vi.fn() }));
