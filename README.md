@@ -1,85 +1,154 @@
 # 包仔（bz）
 
-一站式 Obsidian 个人信息管理插件，由 QuickAdd 脚本独立化而来，现包含 **21 个功能域 / 43 条命令**：主页、日记本、备忘录、归物本、剪藏本、聚合讯、密码本、收藏本、书库、阅读数据分析报告、影视、自动摘要、复习计划、做题家、闪念、AI Agent、番茄钟、B站下载器、附件搬移、保险箱、小橘陪伴猫。
+**包仔**是一个一站式 Obsidian 个人信息管理插件：日记、备忘录、收藏夹、观影记录、读书管理、间隔重复复习、专注计时……把日常记录与生活管理装进一个库里，还养了一只住在页角的桌宠猫「小橘」。
 
-**UI、文案、公式与数据格式保持既有约定（兼容性冻结）**：沿用 `CONFIG/STORAGE/*.json`、`我的/*.md` 与 frontmatter，旧数据直接可读、零迁移。
+- **21 个功能域**，全部从「主页」磁贴或命令面板一键进入
+- **桌面端 + 移动端**通用（要求 Obsidian ≥ 1.4.0）
+- **数据全在你自己的 vault 里**，除你主动配置的 AI 服务外，什么都不上传
+- 由 QuickAdd 脚本独立化而来，**老数据零迁移**，装上就能接着用
 
-## 功能域（21 个）
+## 快速上手
 
-| 域 | 命令（id） | 数据（零迁移） |
-|---|---|---|
-| 主页 | `bz-home` | `CONFIG/STORAGE/launcher.json`（磁贴入口 + 中键/手势） |
-| 日记本 | `bz-diary-open` / `bz-diary-write` | `我的/日记/*.md`（标签筛选、滚轮日期、摘抄引用、条目加密） |
-| 备忘录 | `bz-memo-open` / `bz-memo-add` | `CONFIG/STORAGE/memo.json` |
-| 归物本 | `bz-belongings-open` / `bz-belongings-add` | `CONFIG/STORAGE/belongings.json` |
-| 剪藏本 | `bz-clipping-open` | `归档/网页剪藏/*.md`（link + created frontmatter） |
-| 聚合讯 | `bz-news-open` | `CONFIG/STORAGE/news.json` |
-| 密码本 | `bz-pw-open` / `bz-pw-add` / `bz-pw-generate` | `CONFIG/STORAGE/passwords.json`（AES-GCM 加密） |
-| 收藏本 | `bz-favorites-open` / `bz-favorites-add` | `CONFIG/STORAGE/favorites.json` |
-| 书库 | `bz-library-open` / `bz-book-notes-open` | `书库/*.md`（book 标签）、`我的/读书笔记`（EPUB 条目，ADR-0013） |
-| 阅读数据分析报告 | `bz-reading-report-open` | metadataCache 统计（香农多样性、基尼平衡） |
-| 影视 | `bz-movie-open` / `bz-movie-add` / `bz-movie-report` | `我的/影视/*.md`（tags/评分/观影日期/豆瓣信息） |
-| 自动摘要 | （常驻，按设置开关） | 剪藏 frontmatter（新文自动 AI 摘要） |
-| 复习计划 | `bz-review-open` / `bz-review-start` / `bz-review-add` / `bz-review-remove` / `bz-review-overdue` / `bz-review-rate` / `bz-review-again` / `bz-review-hard` / `bz-review-good` / `bz-review-easy` | `CONFIG/STORAGE/review.json`（FSRS v4） |
-| 做题家 | （入口已退役，ADR-0045：仅复习流程内部引擎） | `CONFIG/STORAGE/quiz.json` |
-| 闪念 | `bz-flash-open` / `bz-flash-chat` | `CONFIG/STORAGE/ai_completion_meta.json` + `*.vec`（Ollama） |
-| AI Agent | （常驻，按设置开关） | `CONFIG/STORAGE/ai-agent.json`（跨域 AI 任务） |
-| 番茄钟 | `bz-pomodoro-open` | `CONFIG/STORAGE/pomodoro.json`（状态栏常驻倒计时） |
-| B站下载器 | `bz-bili-open` | —（外部 Web 工具，ADR-0011） |
-| 附件搬移 | `bz-attach-move` | —（搬当前笔记引用的 vault 附件，fileManager 自动改链） |
-| 保险箱 | `bz-encrypt-open` / `bz-encrypt-lock` | `CONFIG/.ENCRYPT/`（`.safe.enc` + `.随机名.enc`，正文+图片/视频附件） |
-| 小橘陪伴猫 | `bz-smartcat-open` / `bz-smartcat-chat` / `bz-smartcat-hide` / `bz-smartcat-dashboard` | `CONFIG/STORAGE/smartcat.json`（桌面宠物 + AI 陪伴） |
+1. 在 设置 → 第三方插件 中启用「包仔」。
+2. `Ctrl/Cmd + P` 打开命令面板，输入「主页」回车——所有功能都在这块磁贴墙里。
+3. 单击磁贴打开对应功能；**长按磁贴**进入编辑模式：拖动排序、调整大小（最大 2×2）、增删磁贴，还能把其他插件的命令也贴上来。
+4. 每个功能窗口右上角都有 **⚙️ 按钮**，打开该功能自己的设置；全局设置（AI、数据目录等）在 设置 → 包仔。
 
-## 关键设计
+## 功能总览
 
-- **命令裸注册**（ADR-0004）：命令 id 统一 `bz-<域>-<动作>`，不设默认快捷键（外部主页.js / 磁贴按裸 id 调用）；卸载时 `removeCommand` 全量清理。
-- **懒加载**（ADR-0003）：UI 域首次打开初始化（`ensureXxx` 幂等）；事件常驻域（自动摘要 / 闪念 / 复习轮询 / AI Agent / 番茄钟 / 小橘）按设置开关注册。
-- **依赖方向**（ADR-0002）：`core ← config/state ← parser ← store ← ui ← main`；store 无 DOM，UI 刷新靠回调订阅；模块顶层不互访、不挂 window。
-- **数据零迁移**：所有 JSON / 目录 / 字段名沿用既有格式，旧数据直接可读；已知文案、CSS、公式一律不改。
-- **AI 降级链**：AI 服务 DeepSeek → Ollama 本地；向量检索 远程 → TF-IDF → 全文；批量出题 批量 → 逐篇。
-- **外部工具**（独立 npm 包，插件不含其逻辑）：
-  - 影视海报/豆瓣信息抓取：`tools/obsidian-douban-poster`（`@jwbz/obsidian-douban-poster`，可 PM2 watcher 守护，每 15 秒串行抓取防限流，ADR-0006/0007）
-  - 聚合讯抓取：`tools/news-watcher`（`@jwbz/obsidian-news`，ADR-0008）
-  - B站下载器：`tools/bili-downloader`（`@jwbz/bili-downloader`，本地 Web：解析/分P/多 CDN 节点/ffmpeg 合并/whisper 字幕，ADR-0011）
-- **通知规范**：自绘 toast（`src/core/notice.ts`），正文不带 emoji 前缀；新语义先查 ICONS 表。
-- **移动端适配**：主窗口弹窗默认全屏（`styles.css` 全局避让，ADR-0019）；主页手势（双击/三击/下滑）可配。
+### ✍️ 记录与整理
 
-## 环境要求
+- **主页**：所有功能的磁贴入口。支持在设置里开启手势唤起（双击 / 三击 / 下滑，桌面与移动端可分别设置）。
+- **日记本**：写日记、按标签和日期浏览（滚轮切日期）、把选中文本一键存为摘抄引用、单条日记可加密隐藏；影视、信件条目也会聚合进日记流。
+- **备忘录**：待办事项管理。有重要或到期未完成的备忘时，启动和打开相关笔记会自动弹窗提醒；支持场景分类（剪藏 / 工作 / 学习 / 生活…）、优先级、多种排序与归档。
+- **归物本**：物品登记册——名称、分类、价格、购买日期、状态流转（使用中 / 闲置 / 已转卖 / 已丢弃）。
+- **剪藏本**：集中阅读剪藏目录里的网页剪藏文章（如用 Obsidian Web Clipper 存入的内容）。搜索、站点过滤、反链提示；桌面单击整卡直接打开，移动端长按弹出操作抽屉。
+- **收藏本**：链接收藏夹，内置 GitHub 🐙 / 桌面软件 💻 / 网站 🌐 / 大模型 🧠 等 9 类标签；大模型条目可查询 API 余额；添加时点 ✨ AI 整理可自动补全标题、简介和分类。
+- **密码本**：加密存储的密码管理与随机密码生成器（长度、字符集可调）；开启安全模式后，关闭窗口立即自动上锁。
 
-- Obsidian ≥ 1.4.0（manifest `minAppVersion`），桌面端 + 移动端均可（`isDesktopOnly: false`）
+### 📖 阅读与观影
+
+- **书库**：书架式读书管理。Markdown 书目笔记与 EPUB 电子书（读取 Weave 阅读数据）并列展示；读书笔记里可按章节回顾划线与想法，并能深链跳回原书位置。
+- **阅读分析报告**：基于整库阅读数据的年度统计、热力图与习惯分析，EPUB 书目一并计入。
+- **影视**：观影记录管理（想看 / 在看 / 已看、星级评分、观影日期），另有影视分析报告。配合外部抓取工具可自动补全豆瓣信息与海报。
+- **聚合讯**：资讯阅读流（果壳科学人、知乎日报，由外部抓取工具定时入库），看完可一键保存成剪藏笔记。
+
+### 🎯 学习与专注
+
+- **复习计划**：FSRS 间隔重复算法驱动的笔记复习。任意笔记可加入计划；设置「监听文件夹」后，目录里的新笔记自动收编；到期弹提醒、文件树里染色标记；一轮复习的篇数上限、间隔缩放都可调。复习时可选用「做题测难度」——AI 根据笔记出题（含多选题），按答题表现安排下次复习。
+- **番茄钟**：中央弹窗 + 状态栏倒计时。11 个科学预设 + 自定义时长、强制专注模式（禁暂停/跳过）、自动循环、声音提醒、窗口被遮挡时自动暂停。
+- **闪念**：屏幕右侧的速记窄窗，自动吸附缩起、悬停展开；写作时自动检索库内相关笔记作为参考（本地向量检索，需 Ollama）；「闪念对话」可与 AI 对话并让它引用你的笔记。
+- **自动摘要**：开启后监听剪藏目录，新剪藏自动生成 AI 摘要与标签写回 frontmatter。
+- **AI Agent**：后台常驻助手（可在设置关闭）——笔记改名 / 删除时自动同步备忘录与收藏本的引用；开启 AI 剪藏匹配后，会智能判断新剪藏该归到哪里（始终弹窗征求你批准）。
+
+### 🔒 安全与整理
+
+- **保险箱**：真·加密。把整篇笔记连同它引用的图片 / 视频一起移出 vault（原位置直接消失），以密文落盘在侧栏看不见的隐藏目录；需要时解锁还原回原位。附件密文自带压缩预览，看得清又不费流量；安全模式下关闭面板即自动上锁。
+- **附件搬移**：一条命令把当前笔记引用的全部附件搬到指定文件夹，全库指向它们的链接自动改写，同名冲突自动加序号。
+
+### 🐱 陪伴
+
+- **小橘陪伴猫**：趴在页角的 CSS 桌宠猫（13 种皮肤）。它会自己嘟囔、有心情起伏，会观察你写了日记、读完书、看完电影；双击它开始聊天（聊的是你的笔记生活），长按打开设置，「小橘数据面板」可以看它的记忆、心情和你们相处的时间线。
+
+<details>
+<summary><strong>全部命令一览</strong>（命令面板直接搜中文名即可）</summary>
+
+| 功能 | 命令 |
+|---|---|
+| 主页 | 主页 |
+| 日记本 | 日记本 · 写日记 |
+| 备忘录 | 备忘录 · 写备忘 |
+| 归物本 | 归物本 · 加物品 |
+| 剪藏本 | 剪藏本 |
+| 聚合讯 | 聚合讯 |
+| 密码本 | 密码本 · 加密码 · 生成随机密码 |
+| 收藏本 | 收藏本 · 加收藏 |
+| 书库 | 书库 · 读书笔记 |
+| 阅读分析 | 阅读分析报告 |
+| 影视 | 影视 · 写影视 · 影视分析报告 |
+| 复习计划 | 复习计划 · 开始复习 · 加入复习计划 · 移出复习计划 · 复习（跳转逾期）· 复习（选择难度）· 复习：忘了（Again）/ 困难（Hard）/ 一般（Good）/ 简单（Easy） |
+| 闪念 | 闪念 · 闪念对话 |
+| 番茄钟 | 番茄钟 |
+| B站下载器 | B站下载器 |
+| 附件搬移 | 移动附件 |
+| 保险箱 | 保险箱 · 加密当前笔记 |
+| 小橘 | 小橘 · 小橘聊天 · 隐藏小橘 · 小橘数据面板 |
+
+自动摘要与 AI Agent 没有独立命令：它们是后台常驻功能，在设置里开关。
+
+</details>
 
 ## 安装
 
-1. 构建：`npm install && npm run build` —— 产物自动输出到 vault 的 `.obsidian/plugins/bz/`（main.js / manifest.json / styles.css）
-2. Obsidian 设置 → 第三方插件 → 启用「包仔」
+要求 **Obsidian ≥ 1.4.0**，桌面端与移动端均可。
 
-> 仓库根目录同时内置构建产物（`main.js` / `manifest.json` / `styles.css`），也可直接下载或经 BRAT 安装。
-
-## 开发
+- **手动安装**：下载 `main.js`、`manifest.json`、`styles.css` 三个文件，放入 `<你的库>/.obsidian/plugins/bz/`，重启 Obsidian 后在第三方插件中启用「包仔」。（本仓库根目录自带最新构建产物，直接下载即可）
+- **BRAT 安装**：安装 BRAT 插件后，用 *Add Beta Plugin* 填入本仓库地址。
+- **从源码构建**：
 
 ```bash
-npm install        # 首次
-npm run dev        # 监听重建（产物直出 vault，含 src/**/styles.css 聚合）
-npm run build      # 一次性构建（production，minify + JS/CSS 聚合）
-npm test           # vitest 全量测试（纯函数层 + UI 层 jsdom + mock fetch）
-npx tsc --noEmit   # 类型检查
+pnpm install
+pnpm run build   # 产物直出 vault 的 .obsidian/plugins/bz/
 ```
 
-## 架构
+## AI 功能配置
 
-- `src/main.ts`：命令裸注册表（43 条）、设置页、懒加载装配、onunload 全量清理
-- `src/core/`：共享层（不挂 window）——app / settings-provider / ai / json-store / esc-manager / confirm / utils / dom / changelog / notice（自绘 toast）/ settings-modal / mobile
-- `src/<域>/`：每域独立（index 入口 + 数据层 + UI 层），`src/settings.ts` 单页设置（域设置走 ⚙️ 弹窗）
-- `src/diary/`：日记本（含条目加密，复用保险箱容器，ADR-0017）
-- `src/smartcat/`：小橘陪伴猫（OCEAN 人格 + PAD 情绪状态机、记忆流、行为观察、恋爱关系成长，ADR-0022~0043）
-- `styles.css`：唯一样式收敛处（构建自动聚合 `src/**/styles.css`），类名 `bz-` 前缀；禁止运行时注入 `<style>`
-- `tools/`：三个外部工具源码（douban-poster / news-watcher / bili-downloader）
-- `tests/`：mock-obsidian-entry（Notice/requestUrl/moment/Plugin）+ mock-vault（内存文件树 + frontmatter 解析）+ 每域测试
-- `docs/adr/`：43 个架构决策记录（ADR-0001 ~ 0043）；`CONTEXT.md` 为项目术语与约定总表
+在 **设置 → 包仔** 顶部选择 AI 服务商（opencode-go 或 DeepSeek）并填入 API Key。用到 AI 的功能：
 
-### 测试规模
+- 自动摘要、闪念对话、小橘聊天与自言自语
+- 收藏本的「✨ AI 整理」、复习计划的做题出题、AI Agent 的剪藏智能匹配
 
-1800+ 测试（125 个文件）覆盖：数据层/纯函数公式（FSRS 幂律、香农多样性、基尼平衡、AES-GCM、OJ 状态机）、jsdom UI 交互（弹窗/长按/防抖/无限滚动）、mock fetch（AI/余额查询/Ollama）、smartcat 行为链路（情绪/记忆/陪伴）。
+**不配 AI 也能正常使用插件**，只是上述功能不可用或降级运行。「闪念」的本地语义检索需要在本机跑 [Ollama](https://ollama.com)（默认地址 `http://localhost:11434`，嵌入模型 `bge-m3`）；没有 Ollama 时自动退回普通检索，不影响速记。
+
+## 数据存在哪里
+
+所有数据都在你的 vault 内，备份整个 vault 即备份一切：
+
+| 内容 | 位置 |
+|---|---|
+| 结构化数据（备忘录 / 归物 / 密码 / 收藏 / 复习 / 闪念索引等） | `CONFIG/STORAGE/*.json` |
+| 日记 | `我的/日记/*.md` |
+| 影视记录 | `我的/影视/*.md` |
+| 网页剪藏 | `归档/网页剪藏/*.md` |
+| 书库与读书笔记 | `书库/*.md`、`我的/读书笔记` |
+| 保险箱密文 | `CONFIG/.ENCRYPT/`（点前缀目录，侧栏不可见） |
+| 插件设置 | `.obsidian/plugins/bz/data.json` |
+
+> ⚠️ **主密码无法找回**：密码本、保险箱、加密日记条目共用同一把主密码。它不会存储在任何地方，遗忘意味着对应密文永久无法恢复，请务必牢记（建议存入独立的密码管理器）。
+
+## 移动端
+
+手机和平板上功能完整可用。每个主窗口在域设置的 ⚙️ 弹窗里有「**移动端默认全屏**」开关（仅移动端显示）：开启后窗口铺满全屏，关闭则为居中卡片。主页手势同样支持移动端，可单独配置。
+
+## 可选的外部工具
+
+以下功能依赖独立运行的辅助工具（均为独立 npm 包，源码在本仓库 `tools/` 下）。**不安装它们，插件其余功能完全不受影响**，只是对应能力缺失：
+
+| 工具 | 作用 |
+|---|---|
+| `@jwbz/obsidian-douban-poster` | 后台守护进程，为影视笔记自动抓取豆瓣信息与高清海报 |
+| `@jwbz/obsidian-news` | 定时抓取果壳科学人、知乎日报，供「聚合讯」阅读 |
+| `@jwbz/bili-downloader` | 本地网页版 B 站视频下载器（解析 / 分段 / 合并 / 字幕转文字），插件的「B站下载器」命令负责打开它 |
+
+安装与运行方法见 `tools/` 下各自目录内的说明文档。
+
+## 常见问题
+
+**我之前用的是 QuickAdd 脚本版本，需要迁移数据吗？**
+不需要。数据格式完全沿用，装上插件即无缝接管旧数据。
+
+**忘记主密码了怎么办？**
+无法找回，这是真加密的代价。重设主密码会生成全新空清单，旧密文永久无法恢复。
+
+**不想用任何 AI 功能可以吗？**
+可以。AI 只影响自动摘要、闪念对话、小橘聊天、AI 整理、做题出题这几处，其余全部功能照常工作。
+
+**为什么有些窗口在手机上是全屏、有些是卡片？**
+这是「移动端默认全屏」设置决定的，可在各域的 ⚙️ 设置里逐域调整。
+
+## 给开发者
+
+架构设计、术语表与决策记录见 [CONTEXT.md](CONTEXT.md) 与 [docs/adr/](docs/adr/)；开发与协作约定见 [AGENTS.md](AGENTS.md)。测试：`pnpm test`；类型检查：`pnpm exec tsc --noEmit`。
 
 ## License
 
