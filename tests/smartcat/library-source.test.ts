@@ -287,8 +287,9 @@ function makeApp() {
 }
 
 const settle = () => new Promise((r) => setTimeout(r, 100));
-/** 轮询等待条件成立（即时观察异步入流不稳定，用轮询替代固定等待；对齐 diary/news 测试稳健性先例） */
-const waitFor = (pred: () => boolean, timeout = 2000, step = 30) =>
+/** 轮询等待条件成立（即时观察异步入流不稳定，用轮询替代固定等待；对齐 diary/news 测试稳健性先例）。
+ *  默认 2000ms 在全量并发下会被拖超（waitFor timeout），放宽到 10000ms。 */
+const waitFor = (pred: () => boolean, timeout = 10000, step = 30) =>
   new Promise<void>((resolve, reject) => {
     const t0 = Date.now();
     const tick = () => {

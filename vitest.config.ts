@@ -14,6 +14,9 @@ export default defineConfig({
     setupFiles: ['tests/setup.ts'],
     // threads 池：Windows 下比默认 forks 进程池启动成本低（全量 ~32s → ~22s）
     pool: 'threads',
+    // 默认 5000ms 在全量并发下会假超时（单文件几百 ms 的用例被拖到 5s+，见 smartcat 域）。
+    // 放宽到 20s：只影响上限，不影响正常用例速度；真死循环仍会超时暴露。
+    testTimeout: 20000,
   },
   coverage: {
     provider: 'v8',
