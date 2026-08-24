@@ -154,18 +154,15 @@ export class BubbleManager {
     let currentText = '';
     let charIndex = 0;
     let isTypingComplete = false;
-    const typingStartTime = Date.now();
 
     const typingEffect = setInterval(() => {
       if (charIndex < message.length) {
         currentText += message[charIndex];
         bubble.textContent = currentText;
         charIndex++;
-        if (charIndex < message.length) bubble.textContent = currentText + '';
         // 文本增长会改变气泡宽度——每个打字节拍重测屏幕边缘（增量修正）
         this.clampBubbleToViewport(bubble);
       } else {
-        const actualTypingTime = Date.now() - typingStartTime;
         bubble.textContent = currentText;
         clearInterval(typingEffect);
         isTypingComplete = true;

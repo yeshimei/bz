@@ -69,9 +69,6 @@ export function extractKeywords(text: string, max = 5): string[] {
     .map(([k]) => k);
 }
 
-/** 情绪标记提示词辅助（返回给 LLM 的情绪清单），词法情绪由 memory.detectEmotion 兜底 */
-export const EMOTION_LIST = 'happy/sad/upset/curious/playful/sleepy/focused/calm';
-
 /** 隐私分级观察文本（2026-08-23 用户拍板：全内容读取；失败/无内容返回 null，调用方静默） */
 export async function observationText(app: App, file: TAbstractFile, kind: ActivityKind): Promise<string | null> {
   if (!kind) return null;

@@ -295,12 +295,6 @@ export class MoodSystem {
     return m ? m.emoji : '😼';
   }
 
-  /** 心情整体级别（MOOD_MAP key） */
-  getOverallMood(): string {
-    const m = MOOD_MAP[this.currentMood];
-    return m ? this.currentMood : 'neutral';
-  }
-
   /** 互动心情影响（PAD 版效果表；原 8 维 handleInteraction 语义迁移）
    *  ticket 072 用户拍板：撸猫（pet）退出一切数据面——效果表删除 pet 行，
    *  即使有调用方误传 'pet' 也是无操作（派发端 interaction.showPetMessage 已只留视觉反馈） */
@@ -626,9 +620,5 @@ export class PersonalityGrowth {
     data.personalityGrowth.growthHistory = [...others, ...interactions.slice(-30)].sort(
       (a, b) => (a?.timestamp || 0) - (b?.timestamp || 0),
     );
-  }
-
-  getGrowthHistory(): any[] {
-    return this.dataProvider().personalityGrowth.growthHistory || [];
   }
 }
