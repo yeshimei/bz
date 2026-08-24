@@ -2,8 +2,10 @@
  * 通用确认弹窗
  * 原实现来自 QuickAdd 环境的 Q3.js（window.__utils.confirm）。
  * 独立插件版：DOM 结构与原版一致（含 __shared_confirm_* id），并接入本地 escManager。
+ * 文案（title/message/confirmText/cancelText）一律 escapeHtml 后拼 HTML（P0-8 防注入）。
  */
 import { escManager } from './esc-manager';
+import { escapeHtml } from './utils';
 
 export interface ConfirmOptions {
   title?: string;
@@ -33,12 +35,14 @@ export function confirm(opts: ConfirmOptions) {
 
   const popup = document.createElement('div');
   popup.id = '__shared_confirm_popup__';
+  // P0-8：文案全部经 escapeHtml 再拼 HTML（title/message/okText/noText 均为纯文本语义），
+  // DOM 结构/id/类名不变
   popup.innerHTML =
-    '<h4>' + t + '</h4>' +
-    '<p>' + m + '</p>' +
+    '<h4>' + escapeHtml(t) + '</h4>' +
+    '<p>' + escapeHtml(m) + '</p>' +
     '<div class="confirm-actions">' +
-    '<button id="__shared_confirm_cancel__">' + noTxt + '</button>' +
-    '<button id="__shared_confirm_ok__">' + okTxt + '</button>' +
+    '<button id="__shared_confirm_cancel__">' + escapeHtml(noTxt) + '</button>' +
+    '<button id="__shared_confirm_ok__">' + escapeHtml(okTxt) + '</button>' +
     '</div>';
 
   mask.appendChild(popup);
