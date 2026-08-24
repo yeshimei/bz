@@ -3,6 +3,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { setApp } from '../../src/core/app';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 import { showReportInPopup, showReadingReport } from '../../src/reading-report/index';
 import { MockVault, parseFrontmatter } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
@@ -78,6 +79,8 @@ wordCount: 80000
 正文
 `);
     setApp(makeApp(vault));
+    // getAllBookNotes 经 deriveBookSettings 读取 bookTag 设置（P2 精确等值修复后）
+    setSettingsProvider(() => ({}) as any);
     showReadingReport(makeApp(vault) as any);
     await new Promise((r) => setTimeout(r, 20));
 

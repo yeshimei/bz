@@ -3,7 +3,7 @@
  * 源码：阅读数据分析报告.js（重复函数只保留最终版）
  */
 import { pad2 } from '../core/utils';
-import { readWeaveDataAggregates } from '../library/items';
+import { readWeaveDataAggregates, deriveBookSettings } from '../library/items';
 
 // ---------- 数据采集 ----------
 
@@ -24,7 +24,8 @@ function mapWeaveSessionToReport(session: any): any {
 
 function toIsoDate(timestamp: number | undefined): string | null {
   if (!Number.isFinite(timestamp) || !timestamp) return null;
-  return new Date(timestamp).toISOString().slice(0, 10);
+  const d = new Date(timestamp); // 本地时区 YYYY-MM-DD（原 UTC 切片会在时区边界偏移一天）
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
 /** 把 Weave 书籍聚合映射为报告书条目（frontmatter 口径与 md 书一致，缺 field 补缺省）。 */
@@ -87,6 +88,7 @@ export async function getEpubBookNotes(app: any): Promise<BookNoteEntry[]> {
 
 /** 获取所有带 book 标签的笔记 */
 export function getAllBookNotes(app: any): BookNoteEntry[] {
+  const { bookTag } = deriveBookSettings();
   const files = app.vault.getMarkdownFiles();
   const bookNotes: BookNoteEntry[] = [];
 
@@ -96,12 +98,13 @@ export function getAllBookNotes(app: any): BookNoteEntry[] {
       if (!cache || !cache.frontmatter) continue;
 
       const tags = cache.frontmatter.tags;
+      // 与 library/items.ts 口径对齐：数组项/整串精确等值（'ebook' 等子串不再误判）
       let isBook = false;
 
       if (typeof tags === 'string') {
-        isBook = tags.includes('book');
+        isBook = tags === bookTag;
       } else if (Array.isArray(tags)) {
-        isBook = tags.some((tag) => typeof tag === 'string' && tag.includes('book'));
+        isBook = tags.includes(bookTag);
       }
 
       if (isBook) {
@@ -489,16 +492,17 @@ export function analyzeTrendDirection(monthlyData: any[]): string {
 
 /** 分析阅读趋势（完整） */
 export function analyzeReadingTrends(stats: ReadingStats, bookNotes: BookNoteEntry[]) {
-  const monthlyData = getMonthlyTrendData(stats);
-  const recentMonths = monthlyData.slice(-6).reverse(); // 最近6个月
+  const monthlyData = getMonthlyTrendData(stats); // 升序（旧→新）
+  const ascendingRecent = monthlyData.slice(-6); // 统计口径：反转前的升序切片
+  const recentMonths = [...ascendingRecent].reverse(); // 最近6个月，仅供图表高亮展示（新→旧）
 
   return {
     recentMonths,
-    monthlyAvg: calculateMonthlyAverage(recentMonths),
-    currentMonth: getCurrentMonthStats(recentMonths),
-    quarterlyAvg: calculateQuarterlyAverage(recentMonths),
+    monthlyAvg: calculateMonthlyAverage(ascendingRecent),
+    currentMonth: getCurrentMonthStats(ascendingRecent),
+    quarterlyAvg: calculateQuarterlyAverage(ascendingRecent),
     completionRate: calculateCompletionRate(stats),
-    trendDirection: analyzeTrendDirection(recentMonths),
+    trendDirection: analyzeTrendDirection(ascendingRecent),
     focusScore: calculateFocusScore(bookNotes),
     focusLevel: getFocusLevel(bookNotes),
     consistencyDays: calculateConsistencyDays(stats),
@@ -604,7 +608,7 @@ export function processHeatmapData(readingSessions: any[]) {
 
   readingSessions.forEach((session) => {
     const date = new Date(session.start);
-    const dateKey = date.toISOString().split('T')[0];
+    const dateKey = `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`; // 本地时区日桶键
     const duration = session.duration || 0;
 
     if (!dailyData[dateKey]) {
@@ -1201,7 +1205,10 @@ function getBalanceDescription(categoryDistribution: any[]): string {
 
 /** 分析分类趋势（近 6 月完成书 top5） */
 function analyzeCategoryTrends(categorizedBooks: any[]) {
-  const recentBooks = categorizedBooks.filter((book) => book.completionDate && isRecentDate(book.completionDate)).slice(0, 10);
+  const recentBooks = categorizedBooks
+    .filter((book) => book.completionDate && isRecentDate(book.completionDate))
+    .sort((a, b) => new Date(b.completionDate).getTime() - new Date(a.completionDate).getTime()) // 最近完成优先，避免任意取样
+    .slice(0, 10);
 
   const recentCategories: Record<string, number> = {};
   recentBooks.forEach((book) => {

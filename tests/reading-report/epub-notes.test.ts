@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 阅读报告 EPUB 条目测试（ADR-0013 扩展）：getEpubBookNotes 从 weave-data.json 映射为报告 book-note 口径。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -20,6 +20,13 @@ function makeApp(vault: MockVault) {
     },
     workspace: {},
   } as any;
+}
+
+/** 本地时区 YYYY-MM-DD（与 P1-20 修复后 stats.toIsoDate 同口径，原 UTC 切片会在时区边界偏移一天） */
+function localIsoDate(ts: number): string {
+  const d = new Date(ts);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
 describe('getEpubBookNotes（ADR-0013 扩展）', () => {
@@ -64,8 +71,8 @@ describe('getEpubBookNotes（ADR-0013 扩展）', () => {
     expect(e.frontmatter.pages).toBe(Math.floor(60000 / 500)); // 120
     expect(e.frontmatter.highlights).toBe(1);
     expect(e.frontmatter.thinks).toBe(1);
-    expect(e.frontmatter.readingDate).toBe(new Date(1735000000000).toISOString().slice(0, 10));
-    expect(e.frontmatter.completionDate).toBe(new Date(1735600000000).toISOString().slice(0, 10));
+    expect(e.frontmatter.readingDate).toBe(localIsoDate(1735000000000)); // 本地时区日期（P1-20）
+    expect(e.frontmatter.completionDate).toBe(localIsoDate(1735600000000));
     expect(e.frontmatter.dialogue).toBe(0);
     expect(e.frontmatter.category).toBe('未分类');
   });
