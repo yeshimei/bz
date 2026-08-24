@@ -68,7 +68,7 @@ export class FavoritesAIService {
 }
 
 // ==================== 余额查询服务 ====================
-export interface BalanceResult {
+interface BalanceResult {
   balance: string;
   timestamp: number;
 }

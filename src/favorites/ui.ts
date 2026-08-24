@@ -181,7 +181,6 @@ export class UIManager {
       if (this.searchVisible) {
         this.searchInput!.focus();
       }
-      this.searchToggleBtn!.textContent = this.searchVisible ? '🔍' : '🔍';
       this.searchToggleBtn!.style.opacity = this.searchVisible ? '1' : '0.5';
     });
     this.searchToggleBtn.style.opacity = '0.5';
@@ -259,14 +258,9 @@ export class UIManager {
       const emoji = CONFIG.DEFAULT_TAGS.find((t) => t.tag === tag)?.emoji || '📌';
       // 所有按钮始终可见
       el.style.display = 'inline-flex';
-      if (this.selectedTag) {
-        // 选中分类后，只显示选中的标签名，其他显示标签名+计数
-        if (tag === this.selectedTag) {
-          el.innerHTML = `${emoji} ${tag}`;
-        } else {
-          const count = this.currentItems.filter((item) => item.tags && item.tags.includes(tag)).length;
-          el.innerHTML = `${emoji} ${tag} <span style="margin-left:4px;font-size:10px;opacity:0.8;">(${count})</span>`;
-        }
+      // 选中分类后，选中项只显示标签名；其余（含未选中任何分类时）显示标签名+计数
+      if (this.selectedTag && tag === this.selectedTag) {
+        el.innerHTML = `${emoji} ${tag}`;
       } else {
         const count = this.currentItems.filter((item) => item.tags && item.tags.includes(tag)).length;
         el.innerHTML = `${emoji} ${tag} <span style="margin-left:4px;font-size:10px;opacity:0.8;">(${count})</span>`;
@@ -748,14 +742,6 @@ export class UIManager {
     if (this.mask) this.mask.style.display = 'none';
     if (this.popup) this.popup.style.display = 'none';
     this._unregisterEscape();
-  }
-
-  toggle() {
-    if (this.isVisible) {
-      this.hide();
-    } else {
-      this.show();
-    }
   }
 
   // ---------- ESC 管理 ----------

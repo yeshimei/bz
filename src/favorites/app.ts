@@ -7,7 +7,6 @@ import { getStoragePath } from './config';
 import { DataManager } from './data';
 import { FavoritesAIService } from './ai';
 import { UIManager } from './ui';
-import type { FavoritesItem } from './types';
 
 export class FavoritesApp {
   static instance: FavoritesApp | null = null;
@@ -35,7 +34,7 @@ export class FavoritesApp {
     this.uiManager = new UIManager(
       this.dataManager,
       this.aiService,
-      (items: FavoritesItem[]) => { /* 可选的刷新回调 */ }
+      null
     );
     this.uiManager.build();
 
