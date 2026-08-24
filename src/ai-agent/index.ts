@@ -69,22 +69,72 @@ let initialized = false;
 let _app: App | null = null;
 let _ai: AIService | null = null;
 let _refs: any[] = [];
+/** 卸载标志（P2 队列加固）：置位后积压任务首行短路、去抖窗口内事件直接丢弃 */
+let _cancelled = false;
+/** 待清理的去抖器（unload 时清定时器） */
+let _flushers: { cancel(): void }[] = [];
 
-/** 任务队列：串行执行（防并发读写同一 JSON）；失败通知（去重防刷屏） */
+/** 任务队列：串行执行（防并发读写同一 JSON）；失败通知（去重防刷屏）。
+ *  P2：任务执行前检查 _cancelled，卸载后积压任务首行短路。 */
 let queue: Promise<any> = Promise.resolve();
 function enqueue(task: () => Promise<any> | void) {
-  queue = queue.then(task).catch((e) => {
-    console.error('[ai-agent]', e);
-    notify('备忘录同步失败，数据可能不一致', { type: 'error', dedupeKey: 'ai-agent-sync' });
+  queue = queue
+    .then(() => {
+      if (_cancelled) return;
+      return task();
+    })
+    .catch((e) => {
+      console.error('[ai-agent]', e);
+      notify('备忘录同步失败，数据可能不一致', { type: 'error', dedupeKey: 'ai-agent-sync' });
+    });
+}
+
+/** ai-agent 事件去抖延迟：复用既有 DEBOUNCE_DELAY 设置（字符串毫秒，缺省 300） */
+function debounceDelay(): number {
+  const s: any = tryGetSettings();
+  return Number(s && s.DEBOUNCE_DELAY) || 300;
+}
+
+/** P2 同类事件合并去抖：DEBOUNCE_DELAY 窗口内同型事件收集成批，静默期后作为单个
+ *  队列任务按序回放——既削队列峰值，又保留 rename 链（A→B→C）等顺序语义。 */
+function createBatchFlusher<T>(run: (batch: T[]) => Promise<void>): ((ev: T) => void) & { cancel(): void } {
+  let pending: T[] = [];
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const flush = () => {
+    timer = null;
+    if (_cancelled) {
+      pending = [];
+      return;
+    }
+    const batch = pending;
+    pending = [];
+    enqueue(() => run(batch));
+  };
+  const push = (ev: T): void => {
+    if (_cancelled) return;
+    pending.push(ev);
+    if (timer !== null) clearTimeout(timer);
+    timer = setTimeout(flush, debounceDelay());
+  };
+  return Object.assign(push, {
+    cancel(): void {
+      if (timer !== null) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      pending = [];
+    },
   });
 }
 
 // ---------- 剪藏归档（仅备忘录数据源） ----------
 
-/** 归档：更新条目 + 标记完成（成功通知；失败 ❌） */
+/** 归档：更新条目 + 标记完成（成功通知；失败 ❌）。
+ *  P1-25：显式回传 url——DataManager.updateItem 在传 title 未传 url 时会自动从标题提取
+ *  URL，剪藏标题通常不含链接，会把条目原网址抹成 null。 */
 async function archiveItem(item: any, file: any) {
   try {
-    await DataManager.updateItem(item.id, { title: file.basename, linkedNote: file.path } as any);
+    await DataManager.updateItem(item.id, { title: file.basename, linkedNote: file.path, url: item.url ?? null } as any);
     await DataManager.completeItem(item.id);
     notify('已归档到备忘录', { type: 'success' });
   } catch (e) {
@@ -200,17 +250,22 @@ function createNoteSyncAgent(app: App, ai: AIService | null): void {
     }
   };
 
+  // P2：rename/create/file-open 同类事件按 DEBOUNCE_DELAY 合并去抖；delete 保持即时
+  const flushRenames = createBatchFlusher<any>(async (batch) => {
+    for (const ev of batch) {
+      await syncSources(syncRename, ev);
+    }
+  });
+  _flushers.push(flushRenames);
   _refs.push(app.vault.on('rename', (file: any, oldPath: string) => {
     if (!isMd(file)) return;
     const oldTitle = (oldPath ?? '').split('/').pop()!.replace(/\.md$/, '');
-    enqueue(() =>
-      syncSources(syncRename, {
-        oldPath,
-        newPath: file.path,
-        oldTitle,
-        newTitle: file.basename,
-      })
-    );
+    flushRenames({
+      oldPath,
+      newPath: file.path,
+      oldTitle,
+      newTitle: file.basename,
+    });
   }));
 
   _refs.push(app.vault.on('delete', (file: any) => {
@@ -218,21 +273,34 @@ function createNoteSyncAgent(app: App, ai: AIService | null): void {
     enqueue(() => syncSources(syncDelete, file.path));
   }));
 
-  _refs.push(app.vault.on('create', (file: any) => {
-    if (!isMd(file)) return;
-    enqueue(async () => {
+  const flushCreates = createBatchFlusher<any>(async (batch) => {
+    for (const file of batch) {
       // 剪藏目录 → 匹配归档（URL 精确 / AI + 弹窗）
       if (file.path.startsWith(getClipFolder() + '/') && ai) {
         await handleClip(app, ai, file);
       }
       // 同名条目自动关联（仅收藏本）
       await autoLinkFavorites(file);
-    });
+    }
+  });
+  _flushers.push(flushCreates);
+  _refs.push(app.vault.on('create', (file: any) => {
+    if (!isMd(file)) return;
+    flushCreates(file);
   }));
 
+  const flushOpens = createBatchFlusher<any>(async (batch) => {
+    const seen = new Set<string>();
+    for (const file of batch) {
+      if (seen.has(file.path)) continue; // 同文件连开只关联一次
+      seen.add(file.path);
+      await autoLinkFavorites(file);
+    }
+  });
+  _flushers.push(flushOpens);
   _refs.push(app.workspace.on('file-open', (file: any) => {
     if (!isMd(file)) return;
-    enqueue(() => autoLinkFavorites(file));
+    flushOpens(file);
   }));
 }
 
@@ -240,6 +308,7 @@ function createNoteSyncAgent(app: App, ai: AIService | null): void {
 export async function ensureAIAgent(app: App): Promise<void> {
   if (initialized) return;
   initialized = true;
+  _cancelled = false; // P2：重新启用后恢复任务受理
   _app = app;
   // 依赖备忘录实例（AIAgent 与备忘录共享 memo.json，原 window.__memo 语义）
   await ensureBz(app);
@@ -247,8 +316,16 @@ export async function ensureAIAgent(app: App): Promise<void> {
   createNoteSyncAgent(app, _ai);
 }
 
-/** 卸载清理（main.ts onunload 调用）：移除监听 + 重置模块状态 */
+/** 卸载清理（main.ts onunload 调用）：移除监听 + 重置模块状态。
+ *  P2：置位 _cancelled 使积压任务首行短路，并丢弃去抖窗口内未回放的事件。 */
 export function unloadAIAgent(): void {
+  _cancelled = true;
+  for (const f of _flushers) {
+    try {
+      f.cancel();
+    } catch (e) { /* 忽略 */ }
+  }
+  _flushers = [];
   if (_app) {
     // 清理监听
     for (const ref of _refs) {

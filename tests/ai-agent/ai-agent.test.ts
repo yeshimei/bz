@@ -69,12 +69,15 @@ async function setup() {
   return { vault, app, vaultHandlers, wsHandlers };
 }
 
-/** 等待队列清空（fake timers 下用 advanceTimersByTimeAsync） */
+/** 等待队列清空（fake timers 下用 advanceTimersByTimeAsync）。
+ *  P2：rename/create/file-open 经 DEBOUNCE_DELAY（默认 300ms）合并去抖，先越过窗口再等队列。 */
 async function flushQueue() {
   if (vi.isFakeTimers()) {
+    await vi.advanceTimersByTimeAsync(400); // 覆盖去抖窗口
     await vi.advanceTimersByTimeAsync(60);
     await vi.advanceTimersByTimeAsync(0);
   } else {
+    await new Promise((r) => setTimeout(r, 400)); // 覆盖去抖窗口
     await new Promise((r) => setTimeout(r, 30));
     await new Promise((r) => setTimeout(r, 0));
   }
@@ -267,6 +270,38 @@ describe('事件同步（bz + favorites）', () => {
     const bz = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
     expect(bz[0]).toMatchObject({ linkedNote: '卡片盒/C.md', notePath: '卡片盒/C.md', title: 'C' });
   });
+
+  it('P2：同类事件合并去抖——file-open 连发在 DEBOUNCE_DELAY 窗口内不执行，窗口后单次回放', async () => {
+    const { vault, wsHandlers } = await setup();
+    vault.files.set('CONFIG/STORAGE/favorites.json', JSON.stringify([
+      { id: 'f1', title: '笔记X', linkedNote: null },
+    ], null, 2));
+    const file = { path: '卡片盒/笔记X.md', basename: '笔记X', extension: 'md' };
+    wsHandlers['file-open'][0](file);
+    wsHandlers['file-open'][0](file);
+    wsHandlers['file-open'][0](file);
+    // 窗口内（<300ms）：尚未回放，数据未动
+    await new Promise((r) => setTimeout(r, 60));
+    expect(JSON.parse(vault.files.get('CONFIG/STORAGE/favorites.json')!)[0].linkedNote).toBeNull();
+    expect(vault.modifiedPaths.filter((p) => p.endsWith('favorites.json'))).toHaveLength(0);
+    // 越过窗口：合并为单个队列任务按序回放
+    await flushQueue();
+    const fav = JSON.parse(vault.files.get('CONFIG/STORAGE/favorites.json')!);
+    expect(fav[0].linkedNote).toBe('卡片盒/笔记X.md');
+    expect(vault.modifiedPaths.filter((p) => p.endsWith('favorites.json'))).toHaveLength(1); // 只写一次
+  });
+
+  it('P2：卸载后积压任务短路——去抖窗口内卸载，事件不再回放、不落盘', async () => {
+    const { vault, wsHandlers } = await setup();
+    vault.files.set('CONFIG/STORAGE/favorites.json', JSON.stringify([
+      { id: 'f1', title: '笔记Y', linkedNote: null },
+    ], null, 2));
+    wsHandlers['file-open'][0]({ path: '卡片盒/笔记Y.md', basename: '笔记Y', extension: 'md' });
+    unloadAIAgent(); // 立即卸载：cancelled 置位 + 清去抖定时器
+    await new Promise((r) => setTimeout(r, 500)); // 越过本应触发的去抖窗口
+    expect(JSON.parse(vault.files.get('CONFIG/STORAGE/favorites.json')!)[0].linkedNote).toBeNull();
+    expect(vault.modifiedPaths.filter((p) => p.endsWith('favorites.json'))).toHaveLength(0);
+  });
 });
 
 describe('AI 剪藏匹配', () => {
@@ -304,6 +339,8 @@ describe('AI 剪藏匹配', () => {
     const bz = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
     expect(bz[0]).toMatchObject({ title: '文章1', linkedNote: '归档/网页剪藏/文章1.md' });
     expect(bz[0].completed).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/); // 已归档
+    // P1-25：显式回传 url——原网址不被 title 自动提取抹掉
+    expect(bz[0].url).toBe('https://example.com/article-1');
     expect(document.getElementById('clip-ok')).toBeNull(); // 无弹窗
     vi.useRealTimers();
   });
@@ -340,6 +377,8 @@ describe('AI 剪藏匹配', () => {
     const bz = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
     expect(bz[0]).toMatchObject({ title: '文章1', linkedNote: '归档/网页剪藏/文章1.md' });
     expect(bz[0].completed).not.toBeNull();
+    // P1-25：AI 匹配路径归档同样保留原 url（未被 title 提取抹成 null）
+    expect(bz[0].url).toBe('https://old.example.com/x');
     vi.useRealTimers();
   });
 
