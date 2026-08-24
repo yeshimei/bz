@@ -8,19 +8,19 @@ import { confirm } from '../../core/confirm';
 import { attachItemActions, type ItemAction } from '../../core/item-actions';
 import { getApp } from '../app';
 import { BATCH_SIZE, DIARY_DIRECTORY, MOVIE_DIRECTORY, getSubTagsOfPrimary, getTagEmoji } from '../config';
-import { deleteEntry, getIsProcessingRemainingFiles, refreshFile, reloadWithEncrypted } from '../store';
+import { deleteEntry, refreshFile, reloadWithEncrypted } from '../store';
 import { ENCRYPT_TAG, deleteEncryptedEntry, encryptEntry, isUnlocked, reclassifyEntry } from '../encrypt';
 import { ensureSafeUnlocked, getSafeManager } from '../../encrypt';
 import { collectNoteAttachmentPaths } from '../../encrypt/ui';
 import { state } from '../state';
-import type { DateFilter, DiaryEntry } from '../types';
+import type { DiaryEntry } from '../types';
 import { getContentRenderModeSetting } from './ui-settings';
 import { showTagPicker } from './dialogs';
 import { refreshSubTagsBar, updateTagCounts, updateTitleSuffix } from './filter-shared';
 
 // ===== 渲染 markdown（原 3531-3548） =====
 
-export async function renderMarkdown(content: string, container: HTMLElement, filePath: string | null) {
+async function renderMarkdown(content: string, container: HTMLElement, filePath: string | null) {
   if (!content) {
     container.innerHTML = '';
     return;
@@ -115,7 +115,7 @@ export function applyFilter(options: { skipTagCountUpdate?: boolean } = {}) {
 
 // ===== 渲染条目列表（原 1955-2029） =====
 
-export function renderEntries() {
+function renderEntries() {
   if (!state.ui.entriesContainer) {
     state.ui.entriesContainer = document.getElementById('__diary-entries-container__');
     if (!state.ui.entriesContainer) return;
@@ -173,14 +173,7 @@ export function renderEntries() {
 
   state.data.currentDisplayCount = endIndex;
 
-  if (getIsProcessingRemainingFiles()) {
-    const loadingHint = document.createElement('div');
-    loadingHint.className = 'loading-hint';
-    loadingHint.id = 'loading-hint';
-    loadingHint.textContent = '后台加载中，请稍候...';
-    loadingHint.style.cssText = 'text-align:center;color:var(--text-faint);padding:20px;font-size:14px;';
-    state.ui.scrollContainer.appendChild(loadingHint);
-  } else if (state.data.currentDisplayCount >= state.data.currentFilteredEntries.length) {
+  if (state.data.currentDisplayCount >= state.data.currentFilteredEntries.length) {
     const allLoaded = document.createElement('div');
     allLoaded.className = 'all-loaded-hint';
     allLoaded.textContent = '已显示所有日记';
@@ -422,7 +415,7 @@ export async function copyLink(entryId: string) {
 
 // ===== 复制正文（抽屉动作：主动复制，与列表禁选字不冲突） =====
 
-export async function copyEntryContent(entryId: string) {
+async function copyEntryContent(entryId: string) {
   const entry = state.data.originalDiaryEntries.find((e) => e.id === entryId);
   if (!entry) return;
   await navigator.clipboard.writeText(entry.content.trim());

@@ -242,13 +242,9 @@ describe('滚轮日期时间选择器（ticket 07）', () => {
 
 
 describe('设置读取（ticket 09 前置）', () => {
-  it('长按手势固定启用（用户确认保持默认启用）', async () => {
-    const { getEnableLongPressSetting } = await import('../../../src/diary/ui/panel');
-    expect(getEnableLongPressSetting()).toBe(true);
-  });
-
   it('applyUiSettings 生效', async () => {
-    const { applyUiSettings, getShowTagCountSetting } = await import('../../../src/diary/ui/panel');
+    const { applyUiSettings } = await import('../../../src/diary/ui/panel');
+    const { getShowTagCountSetting } = await import('../../../src/diary/ui/ui-settings');
     applyUiSettings({ showTagCount: false });
     expect(getShowTagCountSetting()).toBe(false);
   });

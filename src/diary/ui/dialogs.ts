@@ -7,15 +7,38 @@ import { notice } from '../../core/notice';
 import { confirm } from '../../core/confirm';
 import { getApp } from '../app';
 import { DIARY_DIRECTORY, getSortedTagsForAddDialog, getTagEmoji, getParentPrimaryTag, isSubTag } from '../config';
-import { parseNaturalTime } from '../parser';
+import { parseFlexibleDateTime } from '../parser';
 import { addEntry, writeFile, reloadWithEncrypted } from '../store';
 import { ENCRYPT_TAG, reclassifyEntry } from '../encrypt';
 import { diaryDataMap, state } from '../state';
 import { getJumpToEditAfterSaveSetting, getTagShowEmojiSetting, getUseFileDateTimeSetting } from './ui-settings';
-import { rebuildTags } from './filter-shared';
+import { rebuildTags, updateTitleSuffix } from './filter-shared';
 import { applyFilter as applyFilterFromDialogs, insertCard, jumpToEntry, removeCard, showConfirm as showConfirmFromDialogs } from './entries';
-import { updateTitleSuffix } from './filter-shared';
 import { createDateTimeControl, syncDateTime } from './datetime-picker';
+
+// ===== 类型选择按钮（类型选择器与写日记弹窗共用） =====
+
+/**
+ * 生成类型选择按钮（emoji + 标签，二级标签附父标签 emoji 角标）。
+ * showEmoji=false 时纯文字（类型选择器跟随 diaryTagShowEmoji 设置；
+ * 写日记弹窗保持始终显示 emoji 的既有行为，传 true）。
+ */
+function createTagOptionButton(tag: string, showEmoji: boolean): HTMLButtonElement {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'diary-tag-selector-btn';
+  btn.dataset.tag = tag;
+  let buttonText = showEmoji ? `${getTagEmoji(tag)} ${tag}` : `${tag}`;
+  if (isSubTag(tag)) {
+    const parentTag = getParentPrimaryTag(tag);
+    if (parentTag && showEmoji) {
+      buttonText += ` <span style="font-size: 12px;margin-left:4px;position: absolute;top: 0;right: 0;translate: 5px -5px;">${getTagEmoji(parentTag)}</span>`;
+    }
+  }
+  btn.innerHTML = buttonText;
+  btn.style.cssText = 'padding:6px 12px;border-radius:20px;background:var(--background-secondary);border:none;cursor:pointer;font-size:14px;color:var(--text-normal);position: relative;';
+  return btn;
+}
 
 // ===== 日期筛选弹窗（原 949-1129） =====
 
@@ -84,13 +107,9 @@ export function showDatePicker() {
 
   const years = getYears();
   let selectedYear: string | null = years.length ? years[0] : null;
-
-  if (state.data.currentDateFilter) {
-    if (state.data.currentDateFilter.month) {
-      selectedYear = state.data.currentDateFilter.year;
-    } else if (state.data.currentDateFilter.year) {
-      selectedYear = state.data.currentDateFilter.year;
-    }
+  // 当前筛选所在年份优先（DateFilter.year 恒存在）
+  if (state.data.currentDateFilter?.year) {
+    selectedYear = state.data.currentDateFilter.year;
   }
 
   renderDatePicker(content, years, selectedYear);
@@ -275,7 +294,7 @@ export function createTagPicker() {
 }
 
 /** 隐藏标签选择器弹窗 */
-export function hideTagPicker() {
+function hideTagPicker() {
   const mask = document.getElementById('diary-tag-selector-mask');
   const popup = document.getElementById('diary-tag-selector-popup');
   if (mask) mask.style.display = 'none';
@@ -342,22 +361,7 @@ export function showTagPicker(entryId: string) {
 
   // 生成按钮
   for (const tag of sortedTags) {
-    const button = document.createElement('button');
-    button.className = 'diary-tag-selector-btn';
-    button.dataset.tag = tag;
-    const emoji = getTagEmoji(tag);
-
-    // 标签按钮显示 emoji 开关（设置项 diaryTagShowEmoji，关=纯文字）
-    let buttonText = getTagShowEmojiSetting() ? `${emoji} ${tag}` : `${tag}`;
-    if (isSubTag(tag)) {
-      const parentTag = getParentPrimaryTag(tag);
-      if (parentTag && getTagShowEmojiSetting()) {
-        const parentEmoji = getTagEmoji(parentTag);
-        buttonText += ` <span style="font-size: 12px;margin-left:4px;position: absolute;top: 0;right: 0;translate: 5px -5px;">${parentEmoji}</span>`;
-      }
-    }
-    button.innerHTML = buttonText;
-    button.style.cssText = 'padding:6px 12px;border-radius:20px;background:var(--background-secondary);border:none;cursor:pointer;font-size:14px;color:var(--text-normal);position: relative;';
+    const button = createTagOptionButton(tag, getTagShowEmojiSetting());
 
     if (currentTagsSet.has(tag)) {
       button.classList.add('diary-active');
@@ -449,10 +453,6 @@ export async function updateTags(entryId: string, newTags: string[]) {
 
 // ===== 添加日记弹窗（原 3238-3478） =====
 
-export function createConfirmDialog() {
-  // 删除确认弹窗（代理到共享 confirm）
-}
-
 export function createAddDialog() {
   const existingMask = document.getElementById('add-diary-mask');
   const existingPopup = document.getElementById('add-diary-popup');
@@ -488,32 +488,13 @@ export function createAddDialog() {
   // 类型按钮（排序规则与 openAddDialog 一致：主标签平铺、有二级标签的主标签展开为二级；加密分类不在此提供）
   const allTags = getSortedTagsForAddDialog();
   for (const tag of allTags) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'diary-tag-selector-btn';
-    btn.dataset.tag = tag;
-    const emoji = getTagEmoji(tag);
-
-    // 构建按钮文本
-    let buttonText = `${emoji} ${tag}`;
-    // 如果是二级标签，在末尾添加父标签的 emoji（小字号提示）
-    if (isSubTag(tag)) {
-      const parentTag = getParentPrimaryTag(tag);
-      if (parentTag) {
-        const parentEmoji = getTagEmoji(parentTag);
-        buttonText += ` <span style="font-size: 12px;margin-left:4px;position: absolute;top: 0;right: 0;translate: 5px -5px;">${parentEmoji}</span>`;
-      }
-    }
-    btn.innerHTML = buttonText;
-
-    btn.style.cssText = 'padding:6px 12px;border-radius:20px;background:var(--background-secondary);border:none;cursor:pointer;font-size:14px;color:var(--text-normal);position: relative;';
+    const btn = createTagOptionButton(tag, true);
     btn.onclick = (e) => {
       e.preventDefault();
       btn.classList.toggle('diary-active');
     };
     typeContainer.appendChild(btn);
   }
-
 
 
   const buttonsContainer = document.createElement('div');
@@ -547,21 +528,7 @@ export function openAddDialog() {
     typeContainer.innerHTML = '';
     const sortedTags = getSortedTagsForAddDialog();
     for (const tag of sortedTags) {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'diary-tag-selector-btn';
-      btn.dataset.tag = tag;
-      const emoji = getTagEmoji(tag);
-      let buttonText = `${emoji} ${tag}`;
-      if (isSubTag(tag)) {
-        const parentTag = getParentPrimaryTag(tag);
-        if (parentTag) {
-          const parentEmoji = getTagEmoji(parentTag);
-          buttonText += ` <span style="font-size: 12px;margin-left:4px;position: absolute;top: 0;right: 0;translate: 5px -5px;">${parentEmoji}</span>`;
-        }
-      }
-      btn.innerHTML = buttonText;
-      btn.style.cssText = 'padding:6px 12px;border-radius:20px;background:var(--background-secondary);border:none;cursor:pointer;font-size:14px;color:var(--text-normal);position: relative;';
+      const btn = createTagOptionButton(tag, true);
       btn.onclick = (e) => {
         e.preventDefault();
         btn.classList.toggle('diary-active');
@@ -621,13 +588,10 @@ export async function saveNewEntry() {
     return;
   }
 
-  let targetMoment = parseNaturalTime(userInput);
+  let targetMoment = parseFlexibleDateTime(userInput);
   if (!targetMoment || !targetMoment.isValid()) {
-    targetMoment = moment(userInput, 'YYYY-MM-DD HH:mm', true);
-    if (!targetMoment.isValid()) {
-      notice('日期时间格式不正确');
-      return;
-    }
+    notice('日期时间格式不正确');
+    return;
   }
 
   const dateStr = targetMoment.format('YYYY-MM-DD');

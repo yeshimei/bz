@@ -11,18 +11,15 @@ import { getApp } from '../app';
 import { getSettings, saveSettings, tryGetSettings } from '../../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../../core/mobile';
 import { openSettingsModal, createSettingsGroup } from '../../core/settings-modal';
-import { applyDirectories } from '../config';
+import { applyDirectories, getPrimaryTagsConfig, getPrimaryTagsInDisplayOrder, getTagEmoji } from '../config';
 import { applyUiSettings, getDefaultDateFilterSetting, getDefaultSelectedTagSetting } from './ui-settings';
-import { getPrimaryTagsConfig, getPrimaryTagsInDisplayOrder, getSubTagsOfPrimary, getTagEmoji, isSubTag, getParentPrimaryTag } from '../config';
-import { state, setCurrentActiveParentForSub, getCurrentActiveParentForSub } from '../state';
+import { state } from '../state';
 import { loadAll, onFullRefresh, onLightRefresh, onProgress, onLoadingChange, onFileChange, clearEncryptedEntries, reloadWithEncrypted } from '../store';
 import { lockSafe, isUnlocked, onUnlockChange } from '../encrypt';
 import { applyFilter, cancelEdit, updateSticky, initScroll } from './entries';
 import { createTag, rebuildTags, refreshSubTagsBar } from './filter-shared';
-import { createTagPicker, createAddDialog, createConfirmDialog, createDatePicker, showDatePicker, openAddDialog } from './dialogs';
+import { createTagPicker, createAddDialog, createDatePicker, showDatePicker, openAddDialog } from './dialogs';
 import { registerOpenDialogCommand } from './quote';
-
-/** 面板内使用的标签配置访问器（由 ui-config 提供，避免直接依赖 config 的变更状态） */
 
 // ===== 进度条（原 202-237） =====
 
@@ -62,7 +59,7 @@ function hideProgress() {
 
 // ===== 主面板创建（原 744-864） =====
 
-export function createMaskAndPopup() {
+function createMaskAndPopup() {
   const existingMask = document.getElementById('diary-filter-mask');
   const existingPopup = document.getElementById('diary-tag-filter');
   if (existingMask) existingMask.remove();
@@ -147,14 +144,8 @@ export function createMaskAndPopup() {
 function closePanel() {
   if (state.ui.maskLayer) state.ui.maskLayer.style.visibility = 'hidden';
   if (state.ui.tagFilterPopup) state.ui.tagFilterPopup.style.visibility = 'hidden';
-  // 设置未注入时视为未解锁（防御：部分测试环境无设置提供者）
-  let unlocked = false;
-  try {
-    unlocked = isUnlocked();
-  } catch {
-    unlocked = false;
-  }
-  if (unlocked) {
+  // isUnlocked 自带降级链（未注入设置视为未解锁），不会抛错
+  if (isUnlocked()) {
     lockSafe();
     clearEncryptedEntries();
   }
@@ -179,145 +170,7 @@ function createHeader() {
 
   const buttonContainer = document.createElement('div');
   buttonContainer.style.cssText = 'display:flex;align-items:center;gap:8px;';
-  const settingsButton = createButton('⚙️', '日记本设置', () => {
-    // 日记本设置弹窗（ADR-0009 域设置弹窗；分组卡片重设计，2026-08 用户拍板方案 A）
-    openSettingsModal({
-      title: '日记本设置',
-      maxWidth: 560,
-      build: (el) => {
-        const s = getSettings() as any;
-        const doSave = async () => { await saveSettings(); };
-        // ===== 目录组 =====
-        const dirGroup = createSettingsGroup(el, { icon: 'folder-open', name: '目录' });
-        new Setting(dirGroup)
-          .setName('日记目录')
-          .setDesc('存放日记文件的文件夹路径')
-          .addText((text) =>
-            text.setValue(s.diaryDirectory || '').onChange(async (v) => {
-              s.diaryDirectory = v;
-              await doSave();
-              applyDirectories(s);
-            })
-          );
-        new Setting(dirGroup)
-          .setName('影视目录')
-          .setDesc('存放影视笔记的文件夹路径')
-          .addText((text) =>
-            text.setValue(s.movieDirectory || '').onChange(async (v) => {
-              s.movieDirectory = v;
-              await doSave();
-              applyDirectories(s);
-            })
-          );
-        new Setting(dirGroup)
-          .setName('信目录')
-          .setDesc('存放信件的文件夹路径')
-          .addText((text) =>
-            text.setValue(s.letterDirectory || '').onChange(async (v) => {
-              s.letterDirectory = v;
-              await doSave();
-              applyDirectories(s);
-            })
-          );
-        new Setting(dirGroup)
-          .setName('每批加载数量')
-          .setDesc('滚动加载时每批显示的条目数')
-          .addText((text) =>
-            text.setValue(s.diaryBatchSize || '').onChange(async (v) => {
-              s.diaryBatchSize = v;
-              await doSave();
-              applyDirectories(s);
-            })
-          );
-        // ===== 显示组 =====
-        const viewGroup = createSettingsGroup(el, { icon: 'eye', name: '显示' });
-        const uiChanged = () => {
-          applyUiSettings(s);
-          rebuildTags();
-          applyFilter();
-        };
-        new Setting(viewGroup)
-          .setName('显示标签计数')
-          .setDesc('在标签按钮上显示该标签包含的条目数量')
-          .addToggle((toggle) =>
-            toggle.setValue(!!s.showTagCount).onChange(async (v) => {
-              s.showTagCount = v;
-              await doSave();
-              uiChanged();
-            })
-          );
-        new Setting(viewGroup)
-          .setName('默认日期取自文件')
-          .setDesc('添加日记时默认日期取自当前打开的日记文件，否则用当前时间')
-          .addToggle((toggle) =>
-            toggle.setValue(!!s.useFileDateTime).onChange(async (v) => {
-              s.useFileDateTime = v;
-              await doSave();
-              uiChanged();
-            })
-          );
-        new Setting(viewGroup)
-          .setName('标签按钮显示表情')
-          .setDesc('筛选栏与写日记弹窗的标签按钮显示表情，关闭则显示文字')
-          .addToggle((toggle) =>
-            toggle.setValue(!!s.diaryTagShowEmoji).onChange(async (v) => {
-              s.diaryTagShowEmoji = v;
-              await doSave();
-              uiChanged();
-            })
-          );
-        const dropdownSetting = (parent: HTMLElement, name: string, desc: string, field: string, options: [string, string][]) =>
-          new Setting(parent)
-            .setName(name)
-            .setDesc(desc)
-            .addDropdown((dd) => {
-              for (const [value, label] of options) dd.addOption(value, label);
-              dd.setValue(s[field] || options[0][0]).onChange(async (v) => {
-                s[field] = v;
-                await doSave();
-                uiChanged();
-              });
-            });
-        dropdownSetting(viewGroup, '卡片内容渲染方式', '日记卡片内容按格式渲染或纯文本显示', 'diaryContentRenderMode', [
-          ['markdown', 'Markdown'],
-          ['plain', '纯文本'],
-        ]);
-        dropdownSetting(viewGroup, '标签排序', '筛选栏主标签按内置配置顺序或条目数量排序', 'diaryTagSortMode', [
-          ['fixed', '按固定顺序'],
-          ['count', '按条目数量'],
-        ]);
-        // ===== 默认视图组 =====
-        const defaultGroup = createSettingsGroup(el, { icon: 'monitor', name: '默认视图' });
-        dropdownSetting(defaultGroup, '面板默认日期筛选', '打开日记本面板时默认的日期范围', 'diaryDefaultDateFilter', [
-          ['all', '全部'],
-          ['this-month', '本月'],
-        ]);
-        dropdownSetting(defaultGroup, '默认选中标签', '打开面板时默认选中的主标签', 'diaryDefaultSelectedTag', [
-          ['', '全部'],
-          ...Object.keys(getPrimaryTagsConfig()).map((tag) => [tag, tag] as [string, string]),
-        ]);
-        new Setting(defaultGroup)
-          .setName('保存后进入编辑')
-          .setDesc('保存日记后直接进入编辑模式')
-          .addToggle((toggle) =>
-            toggle.setValue(!!s.diaryJumpToEditAfterSave).onChange(async (v) => {
-              s.diaryJumpToEditAfterSave = v;
-              await doSave();
-            })
-          );
-        // ===== 移动端组（仅移动端显示） =====
-        if (isMobileEnv()) {
-          const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
-          new Setting(mobileGroup)
-            .setName('移动端默认全屏')
-            .setDesc('移动端打开主窗口时默认全屏，关闭则显示常规卡片')
-            .addToggle((toggle) =>
-              toggle.setValue(!!s.diaryMobileDefaultFullscreen).onChange(async (v) => { s.diaryMobileDefaultFullscreen = v; await doSave(); })
-            );
-        }
-      },
-    });
-  });
+  const settingsButton = createButton('⚙️', '日记本设置', () => openDiarySettingsModal());
   const searchButton = createButton('🔍', '搜索日记', () => toggleSearch());
   searchButton.style.opacity = '0';
   searchButton.style.pointerEvents = 'none';
@@ -335,6 +188,134 @@ function createHeader() {
   header.appendChild(titleContainer);
   header.appendChild(buttonContainer);
   return header;
+}
+
+// ===== 日记本设置弹窗（ADR-0009 域设置弹窗；分组卡片重设计，2026-08 用户拍板方案 A） =====
+
+/** 通用下拉设置项（显示组/默认视图组共用）；onUiChanged 在保存后同步 UI 状态 */
+function dropdownSetting(
+  parent: HTMLElement,
+  s: any,
+  name: string,
+  desc: string,
+  field: string,
+  options: [string, string][],
+  onUiChanged?: () => void
+) {
+  return new Setting(parent)
+    .setName(name)
+    .setDesc(desc)
+    .addDropdown((dd) => {
+      for (const [value, label] of options) dd.addOption(value, label);
+      dd.setValue(s[field] || options[0][0]).onChange(async (v) => {
+        s[field] = v;
+        await saveSettings();
+        onUiChanged?.();
+      });
+    });
+}
+
+/** 目录组：日记/影视/信目录 + 每批加载数量 */
+function addDirectoryGroup(el: HTMLElement, s: any) {
+  const dirGroup = createSettingsGroup(el, { icon: 'folder-open', name: '目录' });
+  const textSetting = (name: string, desc: string, field: string) =>
+    new Setting(dirGroup)
+      .setName(name)
+      .setDesc(desc)
+      .addText((text) =>
+        text.setValue(s[field] || '').onChange(async (v) => {
+          s[field] = v;
+          await saveSettings();
+          applyDirectories(s);
+        })
+      );
+  textSetting('日记目录', '存放日记文件的文件夹路径', 'diaryDirectory');
+  textSetting('影视目录', '存放影视笔记的文件夹路径', 'movieDirectory');
+  textSetting('信目录', '存放信件的文件夹路径', 'letterDirectory');
+  textSetting('每批加载数量', '滚动加载时每批显示的条目数', 'diaryBatchSize');
+}
+
+/** 显示组变更联动：应用 UI 设置并重建标签栏与列表 */
+function uiSettingsChanged(s: any) {
+  applyUiSettings(s);
+  rebuildTags();
+  applyFilter();
+}
+
+/** 显示组：标签计数 / 默认日期取自文件 / 标签表情 / 渲染方式 / 标签排序 */
+function addViewGroup(el: HTMLElement, s: any) {
+  const viewGroup = createSettingsGroup(el, { icon: 'eye', name: '显示' });
+  const toggleSetting = (name: string, desc: string, field: string, syncUi: boolean) =>
+    new Setting(viewGroup)
+      .setName(name)
+      .setDesc(desc)
+      .addToggle((toggle) =>
+        toggle.setValue(!!s[field]).onChange(async (v) => {
+          s[field] = v;
+          await saveSettings();
+          if (syncUi) uiSettingsChanged(s);
+        })
+      );
+  toggleSetting('显示标签计数', '在标签按钮上显示该标签包含的条目数量', 'showTagCount', true);
+  toggleSetting('默认日期取自文件', '添加日记时默认日期取自当前打开的日记文件，否则用当前时间', 'useFileDateTime', true);
+  toggleSetting('标签按钮显示表情', '筛选栏与写日记弹窗的标签按钮显示表情，关闭则显示文字', 'diaryTagShowEmoji', true);
+  dropdownSetting(viewGroup, s, '卡片内容渲染方式', '日记卡片内容按格式渲染或纯文本显示', 'diaryContentRenderMode', [
+    ['markdown', 'Markdown'],
+    ['plain', '纯文本'],
+  ], () => uiSettingsChanged(s));
+  dropdownSetting(viewGroup, s, '标签排序', '筛选栏主标签按内置配置顺序或条目数量排序', 'diaryTagSortMode', [
+    ['fixed', '按固定顺序'],
+    ['count', '按条目数量'],
+  ], () => uiSettingsChanged(s));
+}
+
+/** 默认视图组：默认日期筛选 / 默认选中标签 / 保存后进入编辑 */
+function addDefaultViewGroup(el: HTMLElement, s: any) {
+  const defaultGroup = createSettingsGroup(el, { icon: 'monitor', name: '默认视图' });
+  dropdownSetting(defaultGroup, s, '面板默认日期筛选', '打开日记本面板时默认的日期范围', 'diaryDefaultDateFilter', [
+    ['all', '全部'],
+    ['this-month', '本月'],
+  ], () => uiSettingsChanged(s));
+  dropdownSetting(defaultGroup, s, '默认选中标签', '打开面板时默认选中的主标签', 'diaryDefaultSelectedTag', [
+    ['', '全部'],
+    ...Object.keys(getPrimaryTagsConfig()).map((tag) => [tag, tag] as [string, string]),
+  ], () => uiSettingsChanged(s));
+  new Setting(defaultGroup)
+    .setName('保存后进入编辑')
+    .setDesc('保存日记后直接进入编辑模式')
+    .addToggle((toggle) =>
+      toggle.setValue(!!s.diaryJumpToEditAfterSave).onChange(async (v) => {
+        s.diaryJumpToEditAfterSave = v;
+        await saveSettings();
+      })
+    );
+}
+
+/** 移动端组：仅移动端显示「移动端默认全屏」 */
+function addMobileGroup(el: HTMLElement, s: any) {
+  if (!isMobileEnv()) return;
+  const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
+  new Setting(mobileGroup)
+    .setName('移动端默认全屏')
+    .setDesc('移动端打开主窗口时默认全屏，关闭则显示常规卡片')
+    .addToggle((toggle) =>
+      toggle.setValue(!!s.diaryMobileDefaultFullscreen).onChange(async (v) => { s.diaryMobileDefaultFullscreen = v; await saveSettings(); })
+    );
+}
+
+/** 打开日记本设置弹窗 */
+function openDiarySettingsModal() {
+  openSettingsModal({
+    title: '日记本设置',
+    maxWidth: 560,
+    build: (el) => {
+      const s = getSettings() as any;
+      addDirectoryGroup(el, s);
+      addViewGroup(el, s);
+      addDefaultViewGroup(el, s);
+      addMobileGroup(el, s);
+    },
+  });
 }
 
 // ===== 通用按钮（原 1132-1141） =====
@@ -356,7 +337,7 @@ function createButton(text: string, title: string, onClick: () => void) {
 
 // ===== 标签栏（原 1144-1362） =====
 
-export function createTagBar() {
+function createTagBar() {
   const tagsContainer = document.createElement('div');
   tagsContainer.id = 'diary-tag-container';
   tagsContainer.style.cssText = 'padding:10px 24px;';
@@ -374,8 +355,8 @@ export function createTagBar() {
   return tagsContainer;
 }
 
-// ===== 设置读取（实现见 ui-settings.ts） =====
-export { applyUiSettings, getEnableLongPressSetting, getShowTagCountSetting, getUseFileDateTimeSetting } from './ui-settings';
+// ===== 设置读取（实现见 ui-settings.ts；applyUiSettings 由 main.ts 经此导入） =====
+export { applyUiSettings } from './ui-settings';
 // ===== 搜索（原 867-912） =====
 
 export function setLoadingState(loading: boolean) {
@@ -481,7 +462,6 @@ export async function init(plugin?: { registerEvent: (ref: unknown) => unknown }
   createAddDialog();
   createDatePicker();
   registerEscapeListener();
-
   // 默认视图（设置项 diaryDefaultDateFilter / diaryDefaultSelectedTag，重启生效）
   const defaultDateFilter = getDefaultDateFilterSetting();
   if (defaultDateFilter === 'this-month') {
@@ -508,12 +488,8 @@ export async function init(plugin?: { registerEvent: (ref: unknown) => unknown }
 
   // 注册文件监听（自动刷新）
   if (!state.events.fileListenerAttached) {
-    state.events.fileModifyHandler = onFileChange as any;
-    if (plugin) {
-      plugin.registerEvent(getApp().vault.on('modify', state.events.fileModifyHandler as any));
-    } else {
-      getApp().vault.on('modify', state.events.fileModifyHandler as any);
-    }
+    const ref = getApp().vault.on('modify', onFileChange as any);
+    if (plugin) plugin.registerEvent(ref);
     state.events.fileListenerAttached = true;
   }
   } catch (err: any) {
