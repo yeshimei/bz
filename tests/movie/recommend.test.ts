@@ -196,4 +196,36 @@ describe('runAIRecommend（动态通知模式）', () => {
     await new Promise((r) => setTimeout(r, 10));
     expect((M.appRef as any).vault.files.has('我的/影视/《盗梦空间》.md')).toBe(true);
   });
+
+  it('缺 title 条目：按钮禁用，点击不创建任何文件（P2）', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《A》.md', '---\ntags: [电影]\n---');
+    const app = mockAppWithVault(vault);
+    M.appRef = app;
+
+    // 渲染层：缺 title → 按钮禁用；title 空串/纯空白同样禁用
+    const container = document.createElement('div');
+    renderRecommendList(container, [
+      { year: '2010', director: '诺兰', type: '电影', reason: '无 title 键' },
+      { title: '   ', year: '2011', type: '电影', reason: '空白片名' },
+      { title: '正常片', year: '2012', type: '电影', reason: '' },
+    ]);
+    const btns = [...container.querySelectorAll('button')].filter((b) => b.textContent === '加入想看');
+    expect(btns.length).toBe(3);
+    expect(btns[0].disabled).toBe(true);
+    expect(btns[1].disabled).toBe(true);
+    expect(btns[2].disabled).toBe(false);
+
+    // 点击禁用按钮不触发建文件
+    btns[0].click();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(vault.files.size).toBe(1);
+
+    // 入口守卫双保险：quickAddWant 直接收空/缺名也不建文件
+    await quickAddWant(app, '', '电影');
+    await quickAddWant(app, '  ', '电影');
+    await quickAddWant(app, undefined as any, '电影');
+    expect(vault.files.size).toBe(1);
+    expect([...vault.files.keys()]).toEqual(['我的/影视/《A》.md']);
+  });
 });

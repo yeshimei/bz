@@ -68,6 +68,18 @@ describe('buildAnalysisData 数据采集', () => {
     expect(data.topRated[0].name).toBe('A');
   });
 
+  it('评分空值 → 已看（P2）：`评分:` 空串不再误判在看', () => {
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《空》.md', movieMd({ tags: ['电影'], '观影日期': '2025-06-01T20:00:00', 评分: '' }));
+    const data = buildAnalysisData(makeApp(vault));
+    expect(data.total).toBe(1);
+    expect(data.watched).toBe(1);
+    expect(data.watching).toBe(0);
+    expect(data.want).toBe(0);
+    // 空值不参与平均分统计
+    expect(data.ratingCount).toBe(0);
+  });
+
   it('片龄/片长/星期/打分习惯/影评关键词/系列/季集/年度评分', () => {
     const vault = new MockVault();
     vault.files.set('我的/影视/《A》.md', movieMd({

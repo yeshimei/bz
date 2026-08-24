@@ -81,12 +81,18 @@ export function buildRecommendPrompt(profile: any, recent: string[], allNames: s
 
 /** 一键加入想看（直接建笔记，不弹确认表单） */
 export async function quickAddWant(app: App, name: string, type: string): Promise<void> {
+  const trimmedName = typeof name === 'string' ? name.trim() : '';
+  if (!trimmedName) {
+    // AI 返回条目缺片名时不建文件（《.md》空名笔记），仅提示跳过
+    notice('推荐条目缺少片名，已跳过加入想看');
+    return;
+  }
   const tag = GROUP_DEFAULT_TAG[type] || '电影';
   let folderObj = app.vault.getAbstractFileByPath(M.folderPath);
   if (!folderObj) await app.vault.createFolder(M.folderPath);
-  const filePath = `${M.folderPath}/${`《${name}》`}.md`;
+  const filePath = `${M.folderPath}/${`《${trimmedName}》`}.md`;
   if (app.vault.getAbstractFileByPath(filePath)) {
-    notice(`影视「${name}」已在库中`);
+    notice(`影视「${trimmedName}」已在库中`);
     return;
   }
   const now = localNowFormat();
@@ -101,7 +107,7 @@ tags:
 
   try {
     const newFile = await app.vault.create(filePath, content);
-    notice(`已加入想看：${name}`, 'success');
+    notice(`已加入想看：${trimmedName}`, 'success');
     refreshDataAndView(app);
     // 常驻 progress 通知：外部 watcher 抓海报/豆瓣信息，海报字段填充后原地更新为已完成
     const handle = notify('正在获取海报和豆瓣信息…', { type: 'progress' });
@@ -289,10 +295,17 @@ export function renderRecommendList(container: HTMLElement, list: any[]): void {
     director.textContent = '导演：' + (rec.director || '');
     director.style.cssText = 'color:var(--text-muted); font-size:.8rem; margin-bottom:8px;';
 
+    // 缺片名条目禁用「加入想看」，避免创建《.md》空名笔记
+    const hasTitle = typeof rec.title === 'string' && !!rec.title.trim();
     const addBtn = document.createElement('button');
     addBtn.textContent = '加入想看';
+    if (!hasTitle) {
+      addBtn.disabled = true;
+      addBtn.title = '缺少片名，无法加入想看';
+    }
     addBtn.style.cssText = 'background:var(--interactive-accent); color:var(--text-on-accent); border:none; border-radius:4px; padding:4px 12px; cursor:pointer; font-size:.8rem; margin-bottom:8px;';
     addBtn.addEventListener('click', () => {
+      if (!hasTitle) return;
       if (M.appRef) quickAddWant(M.appRef, rec.title, rec.type);
     });
 

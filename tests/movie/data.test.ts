@@ -69,6 +69,18 @@ tags:
     expect(byName['D']).toBe(STATUS_WATCHED);
   });
 
+  it('评分空值 → 已看（P2）：`评分:` 空串不再经 Number(\'\')=0 误判在看', () => {
+    const vault = new MockVault();
+    vault.files.set('我的/影视/E.md', '---\ntags: [电影]\n评分: \n---'); // 空串
+    vault.files.set('我的/影视/F.md', '---\ntags: [电影]\n观影日期: 2025-06-01T10:00:00\n---'); // 无键（undefined 缺省行为不变）
+    const items = rebuildItems(makeApp(vault));
+    const byName = Object.fromEntries(items.map((i) => [i.name, i.status]));
+    expect(byName['E']).toBe(STATUS_WATCHED);
+    expect(items.find((i) => i.name === 'E')!.rating).toBeNull();
+    expect(byName['F']).toBe(STATUS_WATCHED);
+    expect(items.find((i) => i.name === 'F')!.rating).toBeNull();
+  });
+
   it('无类型标签/无 frontmatter 跳过；非本目录跳过；状态字段被忽略（按评分推断）', () => {
     const vault = new MockVault();
     vault.files.set('我的/影视/X.md', '---\ntags: [随笔]\n---');
