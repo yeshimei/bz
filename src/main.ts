@@ -7,6 +7,7 @@
 import { Plugin, PluginSettingTab, Setting } from 'obsidian';
 import { notice } from './core/notice';
 import { escManager } from './core/esc-manager';
+import { closeItemMenu } from './core/item-actions';
 import { setApp, getApp } from './core/app';
 import { setAISettingsProvider, resetAIProviderCache } from './core/ai';
 import { setSettingsProvider, setSettingsSaver } from './core/settings-provider';
@@ -16,15 +17,15 @@ import BzSettings, { DEFAULT_SETTINGS } from './settings';
 
 // 15 域（懒加载：首次命令/事件触发时 ensureXxx 幂等初始化）
 import { openBzPanel, createMemoItem } from './memo';
-import { addBelongingsItem, openBelongings } from './belongings';
-import { openArticleView } from './clipping';
-import { openNewsReader } from './news';
-import { openPasswordManager, addPasswordEntry, generatePassword } from './password';
-import { openFavoritesPanel, addFavoriteItem } from './favorites';
-import { openLibrary, openBookNotes } from './library';
+import { addBelongingsItem, openBelongings, unloadBelongings } from './belongings';
+import { openArticleView, unloadArticleView } from './clipping';
+import { openNewsReader, unloadNewsReader } from './news';
+import { openPasswordManager, addPasswordEntry, generatePassword, unloadPassword } from './password';
+import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorites';
+import { openLibrary, openBookNotes, unloadLibrary } from './library';
 import { showReadingReport } from './reading-report';
-import { openMovieManager, addMovieItem, openMovieReport } from './movie';
-import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart, ensureReview } from './review';
+import { openMovieManager, addMovieItem, openMovieReport, unloadMovie } from './movie';
+import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart, ensureReview, unloadReview } from './review';
 import { openFlashReference, openFlashChat } from './flash';
 import { openPomodoro, unloadPomodoro, ensurePomodoro } from './pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
@@ -36,7 +37,7 @@ import { openAttachMove, ensureAttachSeed, ATTACH_COMMAND_ID } from './attach';
 import { openEncrypt, encryptCurrentNote, unloadEncrypt, mountEncryptStatusBar, unmountEncryptStatusBar } from './encrypt';
 import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setLauncherGestureSetter, LauncherModal } from './launcher';
 import { registerGestureListeners } from './launcher/gestures';
-import { ensureAutoSummary } from './auto-summary';
+import { ensureAutoSummary, unloadAutoSummary } from './auto-summary';
 import { ensureAIAgent, unloadAIAgent } from './ai-agent';
 // 日记本（diary-notebook 合并）
 import { setApp as setDiaryApp } from './diary/app';
@@ -122,7 +123,11 @@ export default class BzPlugin extends Plugin {
     const loaded = await this.loadData();
     this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
     // ADR-0009 迁移：共享数据路径 storagePath 初始化（旧 7 字段废弃仅兼容保留）
-    if (!loaded || loaded.storagePath === undefined) this.migrateStoragePath();
+    let migrated = false;
+    if (!loaded || loaded.storagePath === undefined) {
+      this.migrateStoragePath();
+      migrated = true;
+    }
     // 手势设置迁移：旧 gestureDoubleTap/TripleTap/SwipeDown（string 'off'/命令 id 或 boolean）→ launcherGesture 单选
     const old = this.settings as any;
     const hasOldGesture =
@@ -143,7 +148,10 @@ export default class BzPlugin extends Plugin {
       delete old.gestureDoubleTap;
       delete old.gestureTripleTap;
       delete old.gestureSwipeDown;
+      migrated = true;
     }
+    // P2：迁移完成立即落盘——storagePath/手势结果写回 data.json，迁移 warning 不随每次启动重播
+    if (migrated) void this.saveSettings();
     setApp(this.app);
     // AI 设置注入（Q3 的 _q3Settings 语义 → 插件设置）
     setAISettingsProvider(() => this.settings);
@@ -217,6 +225,8 @@ export default class BzPlugin extends Plugin {
   }
 
   async onunload() {
+    // 统一右键菜单/长按抽屉浮层先收口（fix(main)：卸载接线补全）
+    closeItemMenu();
     // 清理裸注册命令（统一 bz- 前缀，必须显式 removeCommand）
     for (const id of this.registeredCommandIds) {
       try {
@@ -234,6 +244,17 @@ export default class BzPlugin extends Plugin {
     unloadLauncherPanel();
     unloadEncrypt();
     unloadSmartCat();
+    // 各域卸载清理补全（fix(main)：unload 函数均不内部触发 ensure，可无条件调用；
+    // 未初始化域调用为幂等空清理，不引起无谓装载）
+    unloadPassword();
+    unloadBelongings();
+    unloadFavorites();
+    unloadReview();
+    unloadMovie();
+    unloadLibrary();
+    unloadNewsReader();
+    unloadArticleView();
+    unloadAutoSummary();
     if (this.unregisterGestures) {
       this.unregisterGestures();
       this.unregisterGestures = null;
