@@ -174,16 +174,19 @@ describe('设置弹窗筛选', () => {
     setSettingsProvider(() => ({ movieFolderPath: '我的/影视', moviePageSize: '20' }) as any);
   });
 
-  it('⚙️ 影视设置弹窗：文件夹/每页 + 默认视图 3 项 + 评分显示', () => {
+  it('⚙️ 影视设置弹窗：分组卡片 目录/默认视图（桌面端无移动端组），徽标回填', () => {
     createOverlay(M.appRef as any);
     const settingsBtn = [...document.querySelectorAll('#__yin_ying__ button')].find((b) => (b as HTMLElement).title === '影视设置') as HTMLElement;
     settingsBtn.click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
-    const names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    // 分组卡片结构：目录/默认视图两组（移动端组桌面不渲染），原生图标 + 徽标回填项数；组头不是 .setting-item
+    const heads = [...popup.querySelectorAll('.bz-settings-group-head')];
+    expect(heads.map((el) => (el as HTMLElement).textContent!.trim())).toEqual(['目录2 项', '默认视图5 项']);
+    expect(heads.map((el) => el.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon'))).toEqual(['folder-open', 'monitor']);
+    const names = [...popup.querySelectorAll('.bz-settings-group-body .setting-item')].map((el) => (el as HTMLElement).dataset.name);
     expect(names).toEqual([
       '影视文件夹', '每页加载数量',
-      '默认视图', '默认排序', '默认类型筛选', '默认状态筛选',
-      '显示', '已看卡片评分显示', '海报抓取',
+      '默认排序', '默认类型筛选', '默认状态筛选', '已看卡片评分显示', '海报抓取',
     ]);
     closeFilterModal();
   });
@@ -352,7 +355,7 @@ describe('ESC 层级', () => {
     expect(M.currentOverlay).not.toBeNull();
   });
 
-  it('⚙️ 打开真设置弹窗（影视文件夹/每页加载数量/海报抓取提示）；🔀 为筛选弹窗', () => {
+  it('⚙️ 打开真设置弹窗（分组卡片 目录/默认视图）；🔀 为筛选弹窗', () => {
     setSettingsProvider(() => ({ movieFolderPath: '我的/影视', moviePageSize: '20' }) as any);
     createOverlay(M.appRef as any);
     // 🔀 筛选弹窗（原 ⚙️ 语义，ADR-0009）
@@ -366,10 +369,19 @@ describe('ESC 层级', () => {
     settingsBtn.click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect(popup.textContent).toContain('影视设置');
-    const names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    // 分组卡片：目录（文件夹/每页）+ 默认视图（排序/类型/状态/评分显示），桌面端无移动端组
+    expect([...popup.querySelectorAll('.bz-settings-group-name')].map((el) => el.textContent)).toEqual(['目录', '默认视图']);
+    const names = [...popup.querySelectorAll('.bz-settings-group-body .setting-item')].map((el) => (el as HTMLElement).dataset.name);
     expect(names).toContain('影视文件夹');
     expect(names).toContain('每页加载数量');
+    expect(names).toContain('默认排序');
+    expect(names).toContain('默认类型筛选');
+    expect(names).toContain('默认状态筛选');
+    expect(names).toContain('已看卡片评分显示');
+    // 海报抓取指引行（ADR-0007 外部工具，描述保留关键语义）
     expect(names).toContain('海报抓取');
+    // 桌面端不渲染移动端组
+    expect(popup.querySelector('.bz-settings-group-name')?.textContent).not.toBe('移动端');
   });
 });
 
