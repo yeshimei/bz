@@ -26,7 +26,9 @@ import { openPasswordManager, addPasswordEntry, generatePassword, unloadPassword
 import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorites';
 import { openLibrary, openBookNotes, unloadLibrary } from './library';
 import { showReadingReport } from './reading-report';
-import { openMovieManager, addMovieItem, openMovieReport, unloadMovie } from './movie';
+import { openMovieManager, addMovieItem, unloadMovie } from './movie';
+// 影视分析报告（独立域，ADR-0048）
+import { openMovieReport, unloadMovieReport } from './movie-report';
 import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart, ensureReview, unloadReview } from './review';
 import { openFlashReference, openFlashChat } from './flash';
 import { openPomodoro, unloadPomodoro, ensurePomodoro } from './pomodoro';
@@ -79,6 +81,7 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 影视
   { id: 'bz-movie-open', name: '影视', icon: 'film', callback: () => openMovieManager(getApp()) },
   { id: 'bz-movie-add', name: '写影视', icon: 'clapperboard', callback: () => addMovieItem(getApp()) },
+  // 影视分析报告（独立域，ADR-0048）
   { id: 'bz-movie-report', name: '影视分析报告', icon: 'clapperboard', callback: () => openMovieReport(getApp()) },
   // 复习计划（9 命令）
   { id: 'bz-review-open', name: '复习计划', icon: 'calendar', callback: () => openReviewPanel(getApp()) },
@@ -255,6 +258,7 @@ export default class BzPlugin extends Plugin {
     unloadFavorites();
     unloadReview();
     unloadMovie();
+    unloadMovieReport();
     unloadLibrary();
     unloadNewsReader();
     unloadArticleView();
