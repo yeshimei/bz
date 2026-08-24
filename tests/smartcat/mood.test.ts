@@ -58,10 +58,11 @@ describe('MoodSystem.updatePad（PAD 三轴，性格调制后）', () => {
     expect(saver).toHaveBeenCalled();
   });
 
-  it('历史记录 200 条截断到 100', () => {
+  it('死字段 moodHistory 已删除（消费点重构后不存在；大量更新不累积历史）', () => {
     const m = make();
     for (let i = 0; i < 250; i++) m.updatePad('pleasure', 1, 'x');
-    expect(m.moodHistory.length).toBeLessThanOrEqual(100);
+    expect((m as any).moodHistory).toBeUndefined();
+    expect(m.pad.pleasure).toBe(100); // 更新本身照常生效
   });
 });
 

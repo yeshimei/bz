@@ -268,7 +268,7 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     expect(__getDiaryTimersForTests().size).toBe(0);
   });
 
-  it('B1：settle 时文件真删除（无 delete 事件）→ 兜底删除观察 + 清计时', async () => {
+  it('B1：settle 时文件真删除（无 delete 事件）→ 兜底删除观察 + 清计时 + 同步跟踪快照（P2 防重复删除观察）', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const date = '2026-08-24';
@@ -281,6 +281,14 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     const stream = readStream();
     expect(stream.some((m) => m.description === '你删除了 2026-08-24 08:00 的日记')).toBe(true);
     expect(__getDiaryTimersForTests().size).toBe(0);
+    // P2：跟踪快照同步清理（该条不再挂快照上）
+    expect(__getDiaryTrackedForTests().get(path)?.has(`${date}\u000108:00`)).toBeFalsy();
+    // 随后 vault delete 事件到达：快照已无该条 → 只产文件级兜底一条，不重复逐条删除观察
+    vault.emit('delete', vault.file(path));
+    await settle();
+    const after = readStream();
+    expect(after.filter((m) => m.description === '你删除了 2026-08-24 08:00 的日记')).toHaveLength(1);
+    expect(after[after.length - 1].description).toBe('你删除了 2026-08-24 的日记'); // 文件级兜底
   });
 
   it('B1：settle 瞬态读失败（vault.read 抛错）→ 保留计时记录，不产删除观察', async () => {

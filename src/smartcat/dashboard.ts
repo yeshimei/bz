@@ -8,7 +8,7 @@
  *  - 报告（2026-08-23 用户拍板：每周懂你报告从设置弹窗移入）：最新一期全文 + 历史报告。
  * 数据经 loadSmartCatData 现读现渲染（与常驻猫实例解耦，smartcatEnabled=false 也可看）；
  * 面板只读，唯二例外（092 方向二 v4 裁决：人工修正信号保留）——洞察行的「固定/废弃」按钮，
- * 走 load-modify-save 最小写点（pinned / supersededBy='manual'）；其余一律不写。UI 走 bz 主窗口规范：
+ * 经常驻实例通道原位修正 + 统一 dataSaver 落盘（pinned / supersededBy='manual'；P1-29）；其余一律不写。UI 走 bz 主窗口规范：
  * createOverlay + .bz-win-head + applyMobileWindowFullscreen + escManager；视觉样式全部静态进域内
  * styles.css（铁律 9，内联仅限显隐与动态高度/宽度）。命令入口：bz-smartcat-dashboard（main.ts COMMANDS 表）。
  * 097 升级（纯展示层+口径统一，不改任何数据写入逻辑）：A1 成长轨迹归因徽标/LLM 引用原文；
@@ -24,7 +24,7 @@ import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
-import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath } from './data';
+import { loadSmartCatData, getSmartcatFilePath } from './data';
 import { MOOD_MAP, moodLevelFromPad } from './mood';
 import { TRAIT_GROUPS } from './character';
 import { sourceLabel, formatRelativeTime, emotionDensityStats } from './memory';
@@ -709,8 +709,8 @@ function renderMemory(pane: HTMLElement, data: SmartCatData): void {
       if (src) meta.appendChild(el('span', '', src));
       if (m.created) meta.appendChild(el('span', '', formatRelativeTime(m.created)));
       meta.appendChild(el('span', '', `重要度 ${Math.round((m.importance ?? 0) * 100)}`));
-      // 092 设计第 7 条：Dashboard「固定/废弃」人工修正保留（load-modify-save 最小写点）
-      if (m.type === 'insight' && m.id && dashState?.app) meta.appendChild(buildInsightActions(dashState.app, m));
+      // 092 设计第 7 条 + P1-29：Dashboard「固定/废弃」人工修正（经常驻实例通道写点）
+      if (m.type === 'insight' && m.id && dashState?.app) meta.appendChild(buildInsightActions(m));
       item.appendChild(meta);
       item.appendChild(el('div', 'bz-sc-dash-memory-text', truncateText(m.description, 80)));
       list.appendChild(item);
@@ -724,33 +724,50 @@ function renderMemory(pane: HTMLElement, data: SmartCatData): void {
 
 // ---------------- 洞察人工修正（092 设计第 7 条） ----------------
 
-/** 洞察行「固定/废弃」动作按钮（面板唯二写点；load-modify-save 防并发覆盖他人改动） */
-function buildInsightActions(app: App, m: MemoryStreamEntry): HTMLElement {
+/**
+ * 常驻实例补丁通道（P1-29 修正被回滚修复）：由 index 在 ensureSmartCat 装配时注册。
+ * 面板「固定/废弃」经它修改常驻内存对象并走统一 dataSaver——废弃独立 load-modify-save 副本
+ * （副本读盘改存会回滚常驻侧后续任何未同步改动：面板固定 → 常驻任意保存 → pinned 丢失）。
+ */
+interface InsightPatchChannel {
+  apply: (id: string, patch: (m: MemoryStreamEntry) => void) => Promise<boolean>;
+}
+let insightPatchChannel: InsightPatchChannel | null = null;
+
+/** 注册/清除常驻实例补丁通道（index ensure 注册；unloadSmartCat 清除；测试可注入替身） */
+export function registerInsightPatchChannel(channel: InsightPatchChannel | null): void {
+  insightPatchChannel = channel;
+}
+
+/** 洞察行「固定/废弃」动作按钮（面板唯二写点；经常驻实例通道原位修正 + 统一落盘） */
+function buildInsightActions(m: MemoryStreamEntry): HTMLElement {
   const wrap = el('span', 'bz-sc-dash-insight-actions');
   const pinBtn = el('button', 'bz-sc-dash-mini-btn', m.pinned === true ? '取消固定' : '固定');
-  pinBtn.addEventListener('click', () => { void persistInsightPatch(app, m.id as string, (t) => { t.pinned = !(t.pinned === true); }, m.pinned === true ? '已取消固定，该洞察恢复参与自动取代判定' : '已固定，该洞察不会被自动取代'); });
+  pinBtn.addEventListener('click', () => { void persistInsightPatch(m.id as string, (t) => { t.pinned = !(t.pinned === true); }, m.pinned === true ? '已取消固定，该洞察恢复参与自动取代判定' : '已固定，该洞察不会被自动取代'); });
   wrap.appendChild(pinBtn);
   if (!isSupersededInsight(m)) {
     const depBtn = el('button', 'bz-sc-dash-mini-btn', '废弃');
-    depBtn.addEventListener('click', () => { void persistInsightPatch(app, m.id as string, (t) => { t.supersededBy = MANUAL_SUPERSEDED_BY; }, '已废弃该洞察，检索时不再参与'); });
+    depBtn.addEventListener('click', () => { void persistInsightPatch(m.id as string, (t) => { t.supersededBy = MANUAL_SUPERSEDED_BY; }, '已废弃该洞察，检索时不再参与'); });
     wrap.appendChild(depBtn);
   }
   return wrap;
 }
 
-/** 洞察字段最小写点：现读 → 改单条 → 落盘 → 重渲染；失败 toast 不抛错 */
-async function persistInsightPatch(app: App, id: string, patch: (m: MemoryStreamEntry) => void, okMsg: string): Promise<void> {
+/** 洞察字段最小写点：经常驻实例通道原位修改 + 统一 dataSaver 落盘 → 重渲染；失败 toast 不抛错 */
+async function persistInsightPatch(id: string, patch: (m: MemoryStreamEntry) => void, okMsg: string): Promise<void> {
   try {
-    const fresh = await loadSmartCatData(app);
-    const target = (fresh.memory?.stream || []).find((x) => x.id === id);
-    if (!target) {
+    if (!insightPatchChannel) {
+      // 常驻实例未装配（smartcat 未启动）：不再退回 load-modify-save 副本写盘（P1-29）
+      notice('小橘未启动，无法修改洞察', 'error');
+      return;
+    }
+    const applied = await insightPatchChannel.apply(id, patch);
+    if (!applied) {
       notice('未找到该洞察', 'error');
       return;
     }
-    patch(target);
-    await saveSmartCatData(app, fresh);
     notice(okMsg, 'success');
-    if (dashState) renderPanes(await loadSmartCatData(app)); // 现读现渲染保持一致
+    if (dashState) renderPanes(await loadSmartCatData(dashState.app)); // 只读现读渲染保持一致
   } catch (e) {
     notice('操作失败，请重试', 'error');
   }

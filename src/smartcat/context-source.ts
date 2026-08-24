@@ -13,6 +13,7 @@
  */
 import type { App, TAbstractFile } from 'obsidian';
 import { DIARY_DIRECTORY } from '../diary/config';
+import { smartcatStorageDir } from './data';
 
 // 'favorites'/'belongings'/'pomodoro' 加入联合仅供 onVaultActivity 防御性短接（ticket 078/079/080 方法监听：
 // 收藏本/归物本/番茄钟是 JSON 数据域，classifyPath 对 .md 外的 JSON 显式短路，类型成员零运行时影响）
@@ -26,7 +27,8 @@ export function classifyPath(path: string | null | undefined): ActivityKind {
   if (!path) return null;
   const p = path.replace(/\\/g, '/');
   // 番茄钟已改方法监听（ticket 080）：pomodoro.json 的 vault 事件显式短路（防域 JSON 事件双记录，对齐 movie 先例）
-  if (p === 'CONFIG/STORAGE/pomodoro.json') return 'pomodoro';
+  // P2 硬编码路径修复：经 smartcatStorageDir() 动态拼装，跟随 storagePath 设置（默认仍 CONFIG/STORAGE）
+  if (p === `${smartcatStorageDir()}/pomodoro.json`) return 'pomodoro';
   if (!p.endsWith('.md')) return null;
   const diaryDir = (DIARY_DIRECTORY || '我的/日记').replace(/\/+$/, '');
   if (p.startsWith(diaryDir + '/') || p.startsWith('我的/日记/')) return 'diary';

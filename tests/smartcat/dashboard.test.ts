@@ -22,10 +22,11 @@ import {
   TRAIT_GROUP_LABELS,
   openSmartcatDashboard,
   closeSmartcatDashboard,
+  registerInsightPatchChannel,
 } from '../../src/smartcat/dashboard';
 import { DEFAULT_TRAITS } from '../../src/smartcat/character';
 import { moodLevelFromPad, MOOD_MAP } from '../../src/smartcat/mood';
-import { getSmartcatFilePath, defaultSmartCatData } from '../../src/smartcat/data';
+import { getSmartcatFilePath, defaultSmartCatData, applyInsightPatch, saveSmartCatData } from '../../src/smartcat/data';
 import type { SmartCatData } from '../../src/smartcat/types';
 
 /** 构造面板夹具（PAD 心情好档原型点 + 2 观察 1 洞察 + 成长轨迹两条） */
@@ -195,6 +196,42 @@ describe('openSmartcatDashboard UI', () => {
     expect(memPane.querySelectorAll('.bz-sc-dash-memory').length).toBe(4);
     expect(memPane.querySelectorAll('.bz-sc-dash-badge.insight').length).toBe(1);
     expect(memPane.textContent).toContain('聊天');
+  }, 15000);
+
+  it('P1-29：固定按钮经常驻实例通道落盘——常驻侧任意保存后 pinned 保持 true（不被副本回滚）', async () => {
+    const { app, vault } = makeApp(fixtureData());
+    // 模拟常驻实例通道（与 index ensureSmartCat 注册的 apply 同构）：改内存对象 + 统一 dataSaver
+    const resident = fixtureData();
+    registerInsightPatchChannel({
+      apply: async (id, patch) => {
+        if (!applyInsightPatch(resident, id, patch)) return false;
+        await saveSmartCatData(app as any, resident);
+        return true;
+      },
+    });
+    try {
+      await openSmartcatDashboard(app as any);
+      const popup = document.getElementById('smartcat-dashboard-panel')!;
+      (popup.querySelector('[data-tab="memory"]') as HTMLElement).click();
+      const pinBtn = popup.querySelector('[data-pane="memory"] .bz-sc-dash-insight-actions .bz-sc-dash-mini-btn') as HTMLButtonElement;
+      expect(pinBtn).not.toBeNull();
+      expect(pinBtn.textContent).toBe('固定');
+      pinBtn.click();
+      await new Promise((r) => setTimeout(r, 20)); // 异步写盘 + 重渲染
+      // 磁盘已写入 pinned=true
+      let onDisk = JSON.parse(vault.files.get(getSmartcatFilePath())!);
+      expect(onDisk.memory.stream.find((m: any) => m.id === 'i1').pinned).toBe(true);
+      // 常驻侧触发任意保存（如心情衰减/观察落盘）
+      resident.mood.pad.pleasure = 61;
+      await saveSmartCatData(app as any, resident);
+      onDisk = JSON.parse(vault.files.get(getSmartcatFilePath())!);
+      expect(onDisk.memory.stream.find((m: any) => m.id === 'i1').pinned).toBe(true); // 修正未被回滚
+      // 面板重渲染后按钮态翻转
+      const btn2 = document.querySelector('[data-pane="memory"] .bz-sc-dash-insight-actions .bz-sc-dash-mini-btn') as HTMLButtonElement;
+      expect(btn2.textContent).toBe('取消固定');
+    } finally {
+      registerInsightPatchChannel(null);
+    }
   }, 15000);
 
   it('人格页签：OCEAN + 特质分组 + 成长轨迹渲染', async () => {

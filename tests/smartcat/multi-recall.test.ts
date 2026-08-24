@@ -145,6 +145,12 @@ describe('槽位保留选择（selectSlotMemories 纯函数）', () => {
     expect(picked).toHaveLength(6); // 7 → 6
     expect(picked.some((m) => m.id === 'e_x')).toBe(true); // 唯一情绪候选占情绪席
   });
+
+  it('P2 契约边界：semanticSeats 越界传入时钳制到 maxEntries（返回子集永不突破总名额）', () => {
+    const picked = selectSlotMemories(plain10(), { maxEntries: 2, semanticSeats: 8, now: NOW });
+    expect(picked).toHaveLength(2); // 旧行为会返回 8 条突破上限
+    expect(picked.map((m) => m.id)).toEqual(['p0', 'p1']); // GA 头部按钳制后的席位数保留
+  });
 });
 
 describe('时间路强锚点（纯函数）', () => {

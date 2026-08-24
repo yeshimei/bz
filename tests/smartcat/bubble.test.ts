@@ -101,6 +101,34 @@ describe('BubbleManager.showBubble', () => {
   }, 10000);
 });
 
+describe('容器缺失恢复（P1-28 气泡锁死修复）', () => {
+  const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+  it('容器缺失入队：早退复位打字锁、消息退回队首；容器恢复后 processBubbleQueue 消费', async () => {
+    const b = new BubbleManager(); // 故意不挂猫容器（模拟 hide 后）
+    b.showBubble('隐藏期间的消息');
+    expect(b.isCurrentBubbleTyping).toBe(false); // 锁必须复位（旧实现卡死 true）
+    expect(b.bubbleQueue.length).toBe(1);        // 消息保留待容器恢复
+    mountContainer();                            // 容器恢复（openSmartCat remount 语义）
+    b.processBubbleQueue();
+    expect(document.querySelectorAll('.cat-bubble').length).toBe(1);
+    await sleep(400); // 打字节拍 ~100ms/字符 → 已有部分文本
+    expect((document.querySelector('.cat-bubble') as HTMLElement).textContent!.length).toBeGreaterThan(0);
+  }, 10000);
+
+  it('空消息不卡死打字锁：复位并继续推进队列（后续正常消息照常显示）', async () => {
+    mountContainer();
+    const b = new BubbleManager();
+    b.showBubble('');
+    b.showBubble('正常消息');
+    // 空消息被跳过，队列推进到正常消息（旧实现空消息早退把锁卡死，正常消息永不消费）
+    await sleep(100);
+    expect(document.querySelectorAll('.cat-bubble').length).toBe(1);
+    expect(b.isCurrentBubbleTyping).toBe(true); // 正在给「正常消息」打字
+    b.clearAllBubbles();
+  }, 10000);
+});
+
 describe('calculateBubbleTiming', () => {
   it('默认时长：1000 + 200/字符，上限 15000', () => {
     const b = new BubbleManager();

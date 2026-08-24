@@ -11,12 +11,12 @@ import {
   isSupersededInsight, supersedeCreatesCycle, applySupersede,
   buildReflectCandidates, buildInsightShortIndex,
 } from '../../src/smartcat/insight-version';
-import { defaultSmartCatData, getSmartcatFilePath } from '../../src/smartcat/data';
+import { defaultSmartCatData, getSmartcatFilePath, applyInsightPatch, saveSmartCatData } from '../../src/smartcat/data';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { openSmartcatDashboard, closeSmartcatDashboard } from '../../src/smartcat/dashboard';
+import { openSmartcatDashboard, closeSmartcatDashboard, registerInsightPatchChannel } from '../../src/smartcat/dashboard';
 import { requestUrl } from '../mock-obsidian-entry';
 import type { SmartCatData, MemoryStreamEntry } from '../../src/smartcat/types';
 
@@ -391,7 +391,21 @@ function storedData(vault: MockVault): SmartCatData {
 const flush = () => new Promise((r) => setTimeout(r, 20));
 
 describe('dashboard：DDID 短索引 + 固定/废弃按钮', () => {
-  afterEach(() => closeSmartcatDashboard());
+  afterEach(() => {
+    closeSmartcatDashboard();
+    registerInsightPatchChannel(null); // 清通道，防泄漏
+  });
+
+  /** 注册常驻实例补丁通道（P1-29：面板写点经常驻内存对象 + 统一 dataSaver，同 index 装配语义） */
+  function useResidentChannel(app: any, resident: SmartCatData): void {
+    registerInsightPatchChannel({
+      apply: async (id, patch) => {
+        if (!applyInsightPatch(resident, id, patch)) return false;
+        await saveSmartCatData(app as any, resident);
+        return true;
+      },
+    });
+  }
 
   it('洞察行显示 #N 短索引与固定/废弃状态徽章（仅展示层）', async () => {
     const { app } = makeUi(uiFixture());
@@ -407,11 +421,17 @@ describe('dashboard：DDID 短索引 + 固定/废弃按钮', () => {
 
   it('点击「固定」落盘 pinned=true 并重渲染为「取消固定」；再点还原 false', async () => {
     const { app, vault } = makeUi(uiFixture());
+    const resident = uiFixture(); // 常驻内存对象（与磁盘同构起点）
+    useResidentChannel(app, resident);
     await openSmartcatDashboard(app as any);
     (document.querySelector('[data-tab="memory"]') as HTMLElement).click();
     const row1 = [...document.querySelectorAll('.bz-sc-dash-memory')].find((r) => r.textContent!.includes('#1')) as HTMLElement;
     (row1.querySelector('.bz-sc-dash-mini-btn') as HTMLElement).click(); // 「固定」
     await flush();
+    expect(storedData(vault).memory.stream.find((m) => m.id === 'u-i1')!.pinned).toBe(true);
+    // P1-29 回归：常驻侧任意保存后 pinned 不被回滚
+    resident.mood.pad.pleasure = 61;
+    await saveSmartCatData(app as any, resident);
     expect(storedData(vault).memory.stream.find((m) => m.id === 'u-i1')!.pinned).toBe(true);
     const rowAfter = [...document.querySelectorAll('.bz-sc-dash-memory')].find((r) => r.textContent!.includes('#1')) as HTMLElement;
     expect(rowAfter.textContent).toContain('取消固定');
@@ -422,6 +442,7 @@ describe('dashboard：DDID 短索引 + 固定/废弃按钮', () => {
 
   it('点击「废弃」落盘 supersededBy=manual；已废弃行不再提供「废弃」按钮', async () => {
     const { app, vault } = makeUi(uiFixture());
+    useResidentChannel(app, uiFixture());
     await openSmartcatDashboard(app as any);
     (document.querySelector('[data-tab="memory"]') as HTMLElement).click();
     const row1 = [...document.querySelectorAll('.bz-sc-dash-memory')].find((r) => r.textContent!.includes('#1')) as HTMLElement;

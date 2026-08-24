@@ -746,13 +746,110 @@ describe('RAG 增强（2026-08：来源标签/相对时间/情绪时段 query）
 });
 
 describe('睡前巩固（Digest，2026-08-23 增强）', () => {
-  it('从未小结过 → 不触发（数据太少无意义）', async () => {
+  it('从未反思过（lastReflectAt=0）→ 不触发（数据太少无意义；P0-6 后仍保留的门槛）', async () => {
     const m = make({ ai: true });
     await m.addObservation('用户说：a', { importance: 0.5 });
     await m.addObservation('用户说：b', { importance: 0.5 });
     await m.addObservation('用户说：c', { importance: 0.5 });
+    expect(data.memory.reflection.lastReflectAt).toBe(0);
     expect((m as any).shouldDigest(Date.now())).toBe(false);
     expect(data.memory.reflection.digestCount).toBe(0);
+  });
+
+  it('P0-6 首次日小结解锁：首次反思达标后可触发一次 digest，之后 lastDigestAt 正常推进', async () => {
+    const m = make({ ai: true });
+    await m.addObservation('用户说：a', { importance: 0.5 });
+    await m.addObservation('用户说：b', { importance: 0.5 });
+    await m.addObservation('用户说：c', { importance: 0.5 });
+    // 反思前不触发（原死锁：lastDigestAt=0 恒 false）
+    expect((m as any).shouldDigest(Date.now())).toBe(false);
+    // 首次反思成功 → lastReflectAt 推进
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content: JSON.stringify({ insights: [{ text: '总结', evidence: [1] }] }) } }],
+      }),
+    }));
+    (globalThis as any).fetch = fetchMock;
+    await m.reflect();
+    expect(data.memory.reflection.lastReflectAt).toBeGreaterThan(0);
+    // 自上次反思新增 ≥digestMinNew 条 → 首次日小结解锁（无需等 18h——尚无上次小结可计）
+    await m.addObservation('用户说：d', { importance: 0.5 });
+    await m.addObservation('用户说：e', { importance: 0.5 });
+    await m.addObservation('用户说：f', { importance: 0.5 });
+    expect((m as any).shouldDigest(Date.now())).toBe(true);
+    // 执行首次日小结：写回流 + lastDigestAt 从 0 正常推进
+    (globalThis as any).fetch = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content: JSON.stringify({ digests: [{ text: '一天回顾', evidence: [1] }] }) } }],
+      }),
+    }));
+    await m.digest();
+    expect(data.memory.reflection.digestCount).toBe(1);
+    expect(data.memory.reflection.lastDigestAt).toBeGreaterThan(0);
+    expect(data.memory.stream.some((x) => x.type === 'insight' && x.source === 'digest')).toBe(true);
+    // 推进后走常规间隔闸门：刚小结完（<18h）不再触发
+    expect((m as any).shouldDigest(Date.now())).toBe(false);
+  });
+
+  it('P1-26 reflect 落盘失败：整批不入流、游标不推；恢复后重跑恰好一批不重复', async () => {
+    const m = make({ ai: true });
+    await m.addObservation('观察甲', { importance: 0.9 });
+    await m.addObservation('观察乙', { importance: 0.8 });
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content: JSON.stringify({ insights: [
+          { text: '结论一', evidence: [1] }, { text: '结论二', evidence: [2] }, { text: '结论三', evidence: [1] },
+        ] }) } }],
+      }),
+    }));
+    (globalThis as any).fetch = fetchMock;
+    // 注入批保存失败（等价原逐条写入时「第 k 条 save 失败」半批场景）
+    const realSaver = m.dataSaver.bind(m);
+    let fail = true;
+    m.dataSaver = async (d) => { if (fail) throw new Error('disk full'); return realSaver(d); };
+    await m.reflect();
+    fail = false;
+    expect(data.memory.stream.filter((x) => x.type === 'insight')).toHaveLength(0); // 无残留半批
+    expect(data.memory.reflection.lastReflectAt).toBe(0); // 游标未推
+    expect((m as any).reflectBackoffUntil).toBeGreaterThan(Date.now()); // 进入退避
+    // 恢复后重跑：恰好一批、无重复
+    await m.reflect();
+    const texts = data.memory.stream.filter((x) => x.type === 'insight').map((x) => x.description);
+    expect(texts).toEqual(['结论一', '结论二', '结论三']);
+    expect(new Set(texts).size).toBe(texts.length);
+    expect(data.memory.reflection.count).toBe(1);
+  });
+
+  it('P1-26 digest 落盘失败：小结不入流、lastDigestAt 不推；恢复后重跑一批不重复', async () => {
+    const m = make({ ai: true });
+    data.memory.reflection.lastDigestAt = Date.now() - 20 * 60 * 60 * 1000;
+    data.memory.reflection.digestCount = 1;
+    await m.addObservation('用户说：一', { importance: 0.6 });
+    await m.addObservation('用户说：二', { importance: 0.6 });
+    await m.addObservation('用户说：三', { importance: 0.6 });
+    (globalThis as any).fetch = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content: JSON.stringify({ digests: [
+          { text: '小结A', evidence: [1] }, { text: '小结B', evidence: [2] },
+        ] }) } }],
+      }),
+    }));
+    const realSaver = m.dataSaver.bind(m);
+    let fail = true;
+    m.dataSaver = async (d) => { if (fail) throw new Error('disk full'); return realSaver(d); };
+    await m.digest();
+    fail = false;
+    expect(data.memory.stream.filter((x) => x.source === 'digest')).toHaveLength(0); // 无残留
+    expect(data.memory.reflection.lastDigestAt).toBeLessThan(Date.now() - 10 * 60 * 60 * 1000); // 未推进
+    // 恢复后重跑：恰好一批
+    await m.digest();
+    const texts = data.memory.stream.filter((x) => x.source === 'digest').map((x) => x.description);
+    expect(texts).toEqual(['【今日小结】小结A', '【今日小结】小结B']);
+    expect(data.memory.reflection.digestCount).toBe(2);
   });
 
   it('距上次小结 <18h → 不触发；≥18h 且新增不足 3 条 → 不触发', async () => {

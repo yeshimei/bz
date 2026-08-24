@@ -69,4 +69,27 @@ describe('bili-downloader 启动命令', () => {
     child.emit('close', 0);
     expect(noticeText()).toBe(first);
   });
+
+  it('P2：地址命中后移除 stdout data 监听——后续数据不触发提示且不再扫描', () => {
+    const child = new FakeChild();
+    (window as any).require = () => ({ spawn: () => child });
+    openBiliDownloader();
+    child.stdout.emit('data', Buffer.from('地址: http://127.0.0.1:9901\n'));
+    const first = noticeText();
+    expect(child.stdout.listenerCount('data')).toBe(0); // 监听已解除
+    child.stdout.emit('data', Buffer.from('地址: http://127.0.0.1:9999\n')); // 残余事件短路
+    child.emit('close', 0);
+    expect(noticeText()).toBe(first); // 无重复提示
+  });
+
+  it('P2：buf 只保留尾部 8KB 滑窗（超长前导输出不无界增长，地址在尾部仍可解析）', () => {
+    const child = new FakeChild();
+    (window as any).require = () => ({ spawn: () => child });
+    openBiliDownloader();
+    child.stdout.emit('data', Buffer.alloc(20 * 1024, 97)); // 20KB 前导垃圾（'a'）
+    child.stdout.emit('data', Buffer.from('地址: http://127.0.0.1:9902\n'));
+    expect(noticeText()).toContain('http://127.0.0.1:9902');
+    child.emit('close', 0);
+    expect(noticeText()).toContain('B站下载器已启动');
+  });
 });
