@@ -5,7 +5,12 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
-import { ensureAutoSummary, isAutoSummaryInitialized, unloadAutoSummary } from '../../src/auto-summary/index';
+import {
+  ensureAutoSummary,
+  isAutoSummaryInitialized,
+  unloadAutoSummary,
+  stopAutoSummary,
+} from '../../src/auto-summary/index';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages } from '../mock-obsidian-entry';
 
@@ -187,5 +192,81 @@ describe('auto-summary 入口', () => {
     // 只有设置目录内的文件被处理（x.md 被 modify）
     expect(vault.modifiedPaths.some((p) => p.includes('我的/剪藏2/x.md'))).toBe(true);
     expect(vault.modifiedPaths.some((p) => p.includes('归档/网页剪藏/y.md'))).toBe(false);
+  });
+
+  it('stopAutoSummary（P1-22）：关闭 → 新建剪藏不触发 AI；再开启恢复监听与处理', async () => {
+    setSettingsProvider(() => ({}) as any); // 重置前面用例残留的 articleDirectory
+    const fetchSpy = mockAIResponse('{"summary":"S","tags":["a"]}');
+    ensureAutoSummary(makeApp(vault, workspace));
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(vault.listeners['create']).toHaveLength(1);
+
+    stopAutoSummary();
+    expect(vault.listeners['create']).toHaveLength(0); // 摘除 create 监听
+    expect(workspace.listeners['file-open']).toHaveLength(0); // 摘除 file-open 监听
+    expect(isAutoSummaryInitialized()).toBe(true); // initialized 保留以便再开启复用
+
+    // 关闭后新建剪藏 → 不触发 AI 流程
+    vault.files.set('归档/网页剪藏/off.md', `---\ntitle: "T"\n---\n\n${LONG_BODY}`);
+    vault.emit('create', vault.file('归档/网页剪藏/off.md'));
+    workspace.emit('file-open', vault.file('归档/网页剪藏/off.md'));
+    await vi.advanceTimersByTimeAsync(4000);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(vault.modifiedPaths).toHaveLength(0);
+
+    // 再开启 → 重新注册监听，恢复正常处理
+    ensureAutoSummary(makeApp(vault, workspace));
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(vault.listeners['create']).toHaveLength(1);
+    expect(workspace.listeners['file-open']).toHaveLength(1);
+    vault.emit('create', vault.file('归档/网页剪藏/off.md'));
+    await vi.advanceTimersByTimeAsync(1600);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(vault.files.get('归档/网页剪藏/off.md')).toContain('summary: "S"');
+  });
+
+  it('处理中集合（P2）：processFile 完成前重复触发直接忽略，完成后恢复可处理', async () => {
+    setSettingsProvider(() => ({}) as any); // 重置前面用例残留的 articleDirectory
+    const encoder = new TextEncoder();
+    const makeRes = (json: string) => ({
+      ok: true,
+      status: 200,
+      body: new ReadableStream({
+        start(controller) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: json } }] })}\n`));
+          controller.enqueue(encoder.encode('data: [DONE]\n'));
+          controller.close();
+        },
+      }),
+    });
+    let release!: (r: any) => void;
+    const gate = new Promise<any>((r) => { release = r; }); // AI 请求挂起
+    const fetchSpy = vi.fn().mockReturnValue(gate);
+    (global as any).fetch = fetchSpy;
+    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'sk-test' }));
+    resetAIProviderCache();
+
+    ensureAutoSummary(makeApp(vault, workspace));
+    await vi.advanceTimersByTimeAsync(2000);
+    vault.files.set('归档/网页剪藏/p.md', `---\ntitle: "T"\n---\n\n${LONG_BODY}`);
+
+    workspace.emit('file-open', vault.file('归档/网页剪藏/p.md'));
+    await vi.advanceTimersByTimeAsync(1500); // 进入 processFile，fetch 挂起
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    // 处理中再次触发（如再次 file-open）→ 直接忽略
+    workspace.emit('file-open', vault.file('归档/网页剪藏/p.md'));
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    // 放行 AI 响应 → 写回完成
+    release(makeRes('{"summary":"S","tags":["a"]}'));
+    await vi.advanceTimersByTimeAsync(100);
+    expect(vault.files.get('归档/网页剪藏/p.md')).toContain('summary: "S"');
+
+    // 完成后（字段已齐全）再次打开 → 不再请求 AI
+    workspace.emit('file-open', vault.file('归档/网页剪藏/p.md'));
+    await vi.advanceTimersByTimeAsync(1600);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 });

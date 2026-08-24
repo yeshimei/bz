@@ -113,22 +113,27 @@ export async function processFile(app: any, ai: AIService, file: any): Promise<v
       return;
     }
 
-    // 写回：只写缺失字段（不覆盖已有）
+    // AI 标题 → 重命名笔记文件（rename 只改路径不改内容；失败/无需改回退原 file）
     let targetFile = file;
-    const newFm = fm || {};
     if (missing.includes('title') && aiResult.title) {
-      newFm.title = aiResult.title;
       targetFile = await renameToTitle(app, file, aiResult.title);
     }
-    if (missing.includes('summary') && aiResult.summary) newFm.summary = aiResult.summary;
+
+    // 写回前重读目标文件最新内容（AI 处理期间可能被外部修改）：正文一律取磁盘最新，
+    // 仅将 AI 生成的目标字段合并进最新 frontmatter，防盲写覆盖并发追加（P1-21；rename 后对新路径生效）
+    const latest = await app.vault.read(targetFile);
+    const latestParsed = parseFrontmatter(latest);
+    const mergedFm: Record<string, any> = { ...(latestParsed.fm || {}) };
+    if (missing.includes('title') && aiResult.title) mergedFm.title = aiResult.title;
+    if (missing.includes('summary') && aiResult.summary) mergedFm.summary = aiResult.summary;
     if (missing.includes('tags') && Array.isArray(aiResult.tags) && aiResult.tags.length) {
-      newFm.tags = aiResult.tags;
+      mergedFm.tags = aiResult.tags;
     }
 
-    const newContent = buildFrontmatter(newFm) + '\n\n' + body;
+    const newContent = buildFrontmatter(mergedFm) + '\n\n' + latestParsed.body;
     await app.vault.modify(targetFile, newContent);
 
-    const msg = formatSummaryNotice(newFm);
+    const msg = formatSummaryNotice(mergedFm);
     if (msg && h) {
       h.setMessage(msg);
       h.setType('success');

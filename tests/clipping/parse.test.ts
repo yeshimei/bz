@@ -91,4 +91,18 @@ describe('parseArticleFile', () => {
     expect(entry!.hasBacklink).toBe(false);
     expect(entry!.backlinkSources).toEqual([]);
   });
+
+  it('created 为 "1750000000000" 这类值（P1-23）：解析为 Invalid Date 时回退当前时间，不再产出无效日期', async () => {
+    const before = Date.now();
+    vault.files.set(
+      '我的/文章/Bad.md',
+      ARTICLE_MD.replace('created: 2025-06-01T08:00:00.000Z', 'created: "1750000000000"')
+    );
+    setApp(makeApp(vault) as any);
+    const entry = await parseArticleFile(vault.file('我的/文章/Bad.md'));
+    expect(entry).not.toBeNull();
+    expect(isNaN(entry!.created.valueOf())).toBe(false); // 回退 new Date()，非 Invalid
+    expect(entry!.created.toISOString()).toBeDefined(); // toISOString 不抛 RangeError
+    expect(entry!.created.valueOf()).toBeGreaterThanOrEqual(before);
+  });
 });
