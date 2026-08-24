@@ -173,7 +173,7 @@ describe('UIManager', () => {
     ui.destroy();
   });
 
-  it('⚙️ 设置弹窗：分组 + 新文案（到期提醒/复习方式/复习节奏/自动化/界面），无检查间隔', async () => {
+  it('⚙️ 设置弹窗：分组卡片 + 新文案（检查提醒/做题家/复习节奏/自动化/界面），无检查间隔', async () => {
     const vault = new MockVault();
     seed(vault);
     const app = makeApp(vault);
@@ -192,30 +192,40 @@ describe('UIManager', () => {
     settingsBtn.click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect(popup.textContent).toContain('复习计划设置');
-    const names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    const names = () => [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
     // 无检查间隔（已删）
-    expect(names).not.toContain('检查间隔（秒）');
-    // 组标题
-    const groupTitles = [...popup.querySelectorAll('.bz-settings-group-title')].map((el) => el.textContent);
-    expect(groupTitles).toEqual(['到期提醒', '复习方式', '出题', '复习节奏', '自动化', '界面']);
-    // 到期提醒组
-    expect(names).toContain('到期提醒');
-    expect(names).toContain('新笔记自动加入提醒');
-    // 复习方式组（做题决定难度 → 用做题测难度）＋ 出题子组
-    expect(names).toContain('用做题测难度');
-    expect(names).toContain('允许多选题');
-    expect(names).toContain('每篇笔记出题数量');
-    expect(names).toContain('打乱出题顺序');
-    expect(names).toContain('出题难度');
+    expect(names()).not.toContain('检查间隔（秒）');
+    // 分组卡片头（组名；桌面端无「移动端」组）
+    const groupNames = [...popup.querySelectorAll('.bz-settings-group-name')].map((el) => el.textContent);
+    expect(groupNames).toEqual(['检查提醒', '做题家', '复习节奏', '自动化', '界面']);
+    // 检查提醒组
+    expect(names()).toContain('到期提醒');
+    expect(names()).toContain('新笔记加入提醒');
+    // 做题家组（用做题测难度 toggle + 出题子容器 4 项；forceQuizForReview 开 → 全部计入徽标）
+    expect(names()).toContain('用做题测难度');
+    expect(names()).toContain('允许多选题');
+    expect(names()).toContain('每篇笔记出题数量');
+    expect(names()).toContain('打乱出题顺序');
+    expect(names()).toContain('出题难度');
     // 复习节奏组
-    expect(names).toContain('每日复习上限');
-    expect(names).toContain('复习间隔缩放');
+    expect(names()).toContain('每日复习上限');
+    expect(names()).toContain('复习间隔缩放');
     // 界面组
-    expect(names).toContain('文件树标记');
+    expect(names()).toContain('文件树标记');
+    // 分组项数徽标（隐藏项不计；自动化组的「＋ 添加监听文件夹」操作行同为 .setting-item）
+    const badge = (groupName: string) =>
+      [...popup.querySelectorAll('.bz-settings-group')].find(
+        (g) => g.querySelector('.bz-settings-group-name')!.textContent === groupName
+      )!.querySelector('.bz-settings-group-count')!.textContent;
+    expect(badge('检查提醒')).toBe('2 项');
+    expect(badge('做题家')).toBe('5 项');
+    expect(badge('复习节奏')).toBe('2 项');
+    expect(badge('自动化')).toBe('2 项');
+    expect(badge('界面')).toBe('1 项');
     ui.destroy();
   });
 
-  it('⚙️ 设置弹窗：用做题测难度关闭 → 出题子组隐藏，开启 toggle 后显示', async () => {
+  it('⚙️ 设置弹窗：用做题测难度关闭 → 出题子容器隐藏，开启 toggle 后显示，做题家组徽标随显隐刷新', async () => {
     const vault = new MockVault();
     seed(vault);
     const app = makeApp(vault);
@@ -228,7 +238,13 @@ describe('UIManager', () => {
     const popup = document.getElementById('bz-settings-modal-popup')!;
     const quizBox = popup.querySelector('#review-quiz-settings') as HTMLElement;
     expect(quizBox.style.display).toBe('none');
-    // 用做题测难度 toggle 开启 → 出题子组显示
+    // 做题家组徽标：出题子容器隐藏时仅计 toggle → 1 项
+    const badge = () =>
+      [...popup.querySelectorAll('.bz-settings-group')].find(
+        (g) => g.querySelector('.bz-settings-group-name')!.textContent === '做题家'
+      )!.querySelector('.bz-settings-group-count')!.textContent;
+    expect(badge()).toBe('1 项');
+    // 用做题测难度 toggle 开启 → 出题子容器显示，徽标经 refreshSettingsGroupCounts 刷新 → 5 项
     const toggleSetting = [...popup.querySelectorAll('.setting-item')].find(
       (el) => (el as HTMLElement).dataset.name === '用做题测难度'
     ) as HTMLElement;
@@ -236,6 +252,7 @@ describe('UIManager', () => {
     toggle.trigger(true);
     await new Promise((r) => setTimeout(r, 20));
     expect(quizBox.style.display).toBe('');
+    expect(badge()).toBe('5 项');
     closeSettingsModal();
     ui.destroy();
   });

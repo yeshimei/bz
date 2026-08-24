@@ -8,7 +8,7 @@ import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
-import { openSettingsModal } from '../core/settings-modal';
+import { openSettingsModal, createSettingsGroup, refreshSettingsGroupCounts } from '../core/settings-modal';
 import { FolderSelectModal } from '../attach/ui';
 import {
   attachItemActions,
@@ -133,29 +133,24 @@ export class UIManager {
       this.refreshPanel();
     });
 
-    // 复习计划设置弹窗（ADR-0009：检查间隔/逾期通知 + 做题家 5 项）
+    // 复习计划设置弹窗（ADR-0009：检查提醒/做题家/复习节奏/自动化/界面/移动端；分组卡片重设计）
     header.querySelector('#review-btn-settings')!.addEventListener('click', () => {
       openSettingsModal({
         title: '复习计划设置',
+        maxWidth: 560,
         build: (el) => this._buildSettingsItems(el),
       });
     });
     header.querySelector('#review-btn-close')!.addEventListener('click', () => this.hideMain());
   }
 
-  /** 复习设置弹窗项（_bindHeaderEvents 拆分）：分组（到期提醒/复习方式+出题/复习节奏/自动化/界面），ticket 100 重构 */
+  /** 复习设置弹窗项（_bindHeaderEvents 拆分）：分组卡片（检查提醒/做题家/复习节奏/自动化/界面/移动端），ticket 100 文案 + ADR-0009 分组卡片重设计 */
   _buildSettingsItems(el: HTMLElement): void {
     const s = getSettings();
-    const group = (title: string): void => {
-      const h = document.createElement('div');
-      h.className = 'bz-settings-group-title';
-      h.textContent = title;
-      el.appendChild(h);
-    };
 
-    // ===== 到期提醒 =====
-    group('到期提醒');
-    new Setting(el)
+    // ===== 检查提醒组 =====
+    const notifyGroup = createSettingsGroup(el, { icon: 'bell', name: '检查提醒' });
+    new Setting(notifyGroup)
       .setName('到期提醒')
       .setDesc('有笔记到期待复习时自动弹出提醒')
       .addToggle((toggle) =>
@@ -164,8 +159,8 @@ export class UIManager {
           await saveSettings();
         })
       );
-    new Setting(el)
-      .setName('新笔记自动加入提醒')
+    new Setting(notifyGroup)
+      .setName('新笔记加入提醒')
       .setDesc('新笔记被自动加入时弹出提示，多条合并成一条')
       .addToggle((toggle) =>
         toggle.setValue(s.reviewAutoAddNotice !== false).onChange(async (v) => {
@@ -174,9 +169,9 @@ export class UIManager {
         })
       );
 
-    // ===== 复习方式 =====
-    group('复习方式');
-    new Setting(el)
+    // ===== 做题家组 =====
+    const quizGroup = createSettingsGroup(el, { icon: 'graduation-cap', name: '做题家' });
+    new Setting(quizGroup)
       .setName('用做题测难度')
       .setDesc('开始复习即做题，按正确率自动定难度')
       .addToggle((toggle) =>
@@ -184,14 +179,14 @@ export class UIManager {
           s.forceQuizForReview = v;
           await saveSettings();
           quizBox.style.display = v ? '' : 'none';
+          refreshSettingsGroupCounts(el);
         })
       );
-    // 出题子组：仅「用做题测难度」开启时显示（spec 2026-08-07 用户决策，仿 AI tab 隐藏模式）
+    // 出题子容器：仅「用做题测难度」开启时显示（spec 2026-08-07 用户决策，仿 AI tab 隐藏模式）
     const quizBox = document.createElement('div');
     quizBox.id = 'review-quiz-settings';
-    el.appendChild(quizBox);
+    quizGroup.appendChild(quizBox);
     quizBox.style.display = s.forceQuizForReview ? '' : 'none';
-    group('出题');
     new Setting(quizBox)
       .setName('允许多选题')
       .setDesc('开启后 AI 可能出多选题，关闭则只出单选题')
@@ -203,7 +198,7 @@ export class UIManager {
       );
     new Setting(quizBox)
       .setName('每篇笔记出题数量')
-      .setDesc('留空或填 0 由 AI 决定，填数字则每篇固定出题')
+      .setDesc('固定每篇笔记出题的数量')
       .addText((text) =>
         text.setValue(s.questionsPerNote || '').onChange(async (v) => {
           s.questionsPerNote = v;
@@ -221,7 +216,7 @@ export class UIManager {
       );
     new Setting(quizBox)
       .setName('出题难度')
-      .setDesc('AI 出题深浅，可选随机、简单、中等或困难')
+      .setDesc('控制 AI 出题深浅')
       .addDropdown((dd) => {
         dd.addOption('random', '随机');
         dd.addOption('easy', '简单');
@@ -234,18 +229,18 @@ export class UIManager {
         });
       });
 
-    // ===== 复习节奏 =====
-    group('复习节奏');
-    new Setting(el)
+    // ===== 复习节奏组 =====
+    const rhythmGroup = createSettingsGroup(el, { icon: 'timer', name: '复习节奏' });
+    new Setting(rhythmGroup)
       .setName('每日复习上限')
-      .setDesc('一轮复习最多处理这么多篇，不填表示不限制')
+      .setDesc('一轮最多复习的篇数，不填则不限制')
       .addText((text) =>
         text.setValue(String(s.reviewDailyLimit ?? 0)).onChange(async (v) => {
           s.reviewDailyLimit = Number(v) > 0 ? Number(v) : 0;
           await saveSettings();
         })
       );
-    new Setting(el)
+    new Setting(rhythmGroup)
       .setName('复习间隔缩放')
       .setDesc('数值越小复习越频繁，数值越大越宽松')
       .addText((text) =>
@@ -256,15 +251,15 @@ export class UIManager {
         })
       );
 
-    // ===== 自动化＋界面 =====
-    group('自动化');
+    // ===== 自动化组 =====
+    const autoGroup = createSettingsGroup(el, { icon: 'sliders-horizontal', name: '自动化' });
     // ticket 099：监听文件夹（多目录、递归）——文件夹选择弹窗添加 + chip 关闭标签
-    new Setting(el)
+    new Setting(autoGroup)
       .setName('监听文件夹')
       .setDesc('文件夹里的新笔记自动加入复习计划，包括子文件夹');
     const watchBox = document.createElement('div');
     watchBox.id = 'review-watch-folders';
-    el.appendChild(watchBox);
+    autoGroup.appendChild(watchBox);
     const renderWatchRows = () => {
       watchBox.innerHTML = '';
       const folders = s.reviewWatchedFolders || [];
@@ -334,9 +329,9 @@ export class UIManager {
     };
     renderWatchRows();
 
-    // ===== 界面 =====
-    group('界面');
-    new Setting(el)
+    // ===== 界面组 =====
+    const viewGroup = createSettingsGroup(el, { icon: 'eye', name: '界面' });
+    new Setting(viewGroup)
       .setName('文件树标记')
       .setDesc('在文件树中为复习笔记着色并标到期时间')
       .addToggle((toggle) =>
@@ -345,8 +340,10 @@ export class UIManager {
           await saveSettings();
         })
       );
+    // ===== 移动端组（仅移动端显示） =====
     if (isMobileEnv()) {
-      new Setting(el)
+      const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
+      new Setting(mobileGroup)
         .setName('移动端默认全屏')
         .setDesc('移动端打开复习窗口时默认全屏显示')
         .addToggle((toggle) =>
