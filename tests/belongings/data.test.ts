@@ -55,6 +55,33 @@ describe('loadDatabase', () => {
     warnSpy.mockRestore();
   });
 
+  it('P2 形状容错：内容为空对象 {} → 警告 Notice + 重置空库（不再产出残缺 db）', async () => {
+    setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
+    vault.files.set('CONFIG/STORAGE/belongings.json', '{}');
+    const warnSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const db = await loadDatabase();
+    expect(db.items).toEqual({});
+    expect(hasNotice(/数据文件解析失败/)).toBe(true);
+    warnSpy.mockRestore();
+  });
+
+  it('P2 形状容错：内容为数组/null 字面量 → 警告 Notice + 重置空库（非对象白屏防护）', async () => {
+    setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
+    const warnSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    // 数组
+    vault.files.set('CONFIG/STORAGE/belongings.json', '[{"id":"x"}]');
+    let db = await loadDatabase();
+    expect(db.items).toEqual({});
+    expect(hasNotice(/数据文件解析失败/)).toBe(true);
+    // null
+    clearNotices();
+    vault.files.set('CONFIG/STORAGE/belongings.json', 'null');
+    db = await loadDatabase();
+    expect(db.items).toEqual({});
+    expect(hasNotice(/数据文件解析失败/)).toBe(true);
+    warnSpy.mockRestore();
+  });
+
   it('读取已有数据（8 字段零迁移保留）', async () => {
     setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
     const existing = {
@@ -135,6 +162,14 @@ describe('纯函数', () => {
     vi.setSystemTime(new Date('2025-06-15T12:00:00'));
     expect(calculateDaysUsed('2025-06-14T12:00:00')).toBe(1);
     expect(calculateDaysUsed('2025-05-16T12:00:00')).toBe(30);
+    vi.useRealTimers();
+  });
+
+  it('P2 形状容错：无效日期 → 全价/0 天（不产出 NaN）', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2025-06-15T12:00:00'));
+    expect(calculateDailyCost(300, '')).toBe('300.00');
+    expect(calculateDaysUsed('')).toBe(0);
     vi.useRealTimers();
   });
 });

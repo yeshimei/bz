@@ -37,7 +37,12 @@ export async function loadDatabase(): Promise<BelongingsDatabase> {
   if (file) {
     try {
       const content = await app.vault.read(file as any);
-      db = JSON.parse(content);
+      const parsed = JSON.parse(content);
+      // P2 形状容错：解析结果须为非空对象，否则走既有失败 notice 路径（不再 TypeError 白屏）
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || Object.keys(parsed).length === 0) {
+        throw new Error('数据文件结构异常（非对象或空对象）');
+      }
+      db = parsed;
     } catch (error) {
       notice('数据文件解析失败，已重置为空', 'warning', 5000);
       console.error('数据文件解析错误:', error);
@@ -87,7 +92,8 @@ export function calculateDailyCost(price: number, purchaseDate: string): string 
   const now = new Date();
   const diffTime = Math.abs(now.getTime() - purchase.getTime());
   const diffDays = Math.ceil(diffTime / 86400000);
-  if (diffDays <= 0) return price.toFixed(2);
+  // P2 形状容错：无效日期（NaN）与当天购买同走全价，不产出 "NaN"
+  if (!(diffDays > 0)) return price.toFixed(2);
   const dailyCost = price / diffDays;
   return dailyCost < 0.01 ? dailyCost.toFixed(4) : dailyCost.toFixed(2);
 }
@@ -96,5 +102,7 @@ export function calculateDaysUsed(purchaseDate: string): number {
   const purchase = new Date(purchaseDate);
   const now = new Date();
   const diffTime = Math.abs(now.getTime() - purchase.getTime());
+  // P2 形状容错：无效日期按 0 天，不产出 NaN
+  if (!isFinite(diffTime)) return 0;
   return Math.ceil(diffTime / 86400000);
 }
