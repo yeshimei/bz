@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 性格系统测试（MATE ADR-0023 纯函数）：
  * OCEAN 随机种子/seed 映射/character_transition/softUpdate 饱和/trust 演化/

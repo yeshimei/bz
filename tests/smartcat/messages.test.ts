@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * smartcat 消息库测试：18 key 全集（1232 条）、随机选取、getPetMessage 映射。
  */

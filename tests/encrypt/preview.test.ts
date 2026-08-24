@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 加密保险箱预览层稳定性测试：预览生成永不挂起（"无限循环"回归防护）。
  * 空 src 立即返回 null；从不 resolve 的加载 Promise 会在超时后被拒绝——加密主流程绝不因预览卡死。

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 番茄钟动作观察文案纯函数（ticket 080 方法监听）：buildPomodoroActionText 事件 → 文本；
  * minutes 注入：默认 25 / 自定义如 50 / 边缘 1。

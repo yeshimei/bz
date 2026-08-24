@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * H3 情绪路前置重建测试（ticket 096，方向一前置）：
  *  - EMOTION_VAD 补全 5 类（curious/sleepy/playful/focused/upset）——upset 共振差量 ≠ 0 回归锁

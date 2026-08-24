@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 笔记库接入（ticket 025 → 2026-08-23 用户拍板扩展 → ticket 083 收敛）：8 类源路径分类 + 全内容观察文本
  * （LLM 云端打分 + 词法情绪）；reflection（反省）观察 ticket 083 彻底移除。

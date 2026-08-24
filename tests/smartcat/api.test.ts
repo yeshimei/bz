@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * smartcat AI 层测试：走 bz core/ai getAIProvider（mock settings），
  * 验证多轮 messages 请求体/模型参数/失败 fallback requestUrl。

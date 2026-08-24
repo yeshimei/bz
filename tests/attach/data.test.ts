@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 附件搬移域数据层测试（ticket 65）。
  * 注：链接更新已交给 Obsidian 内建 fileManager.renameFile（ADR-0014），
