@@ -594,6 +594,66 @@ button.news-close-btn {
   color: var(--text-muted);
 }
 
+/* ==================== 域设置弹窗：分组卡片（2026-08 用户拍板方案 A，先落日记本） ==================== */
+/* 分组卡片：圆角卡片 + 头部行（图标/组名/项数徽标）+ 设置项体；弹窗内相邻卡片间距 12px */
+.bz-settings-group {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  padding: 10px 14px 12px;
+  margin-bottom: 12px;
+}
+.bz-settings-group:last-child {
+  margin-bottom: 0;
+}
+.bz-settings-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  margin-bottom: 4px;
+}
+.bz-settings-group-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--background-modifier-active-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.bz-settings-group-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-normal);
+}
+.bz-settings-group-count {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-faint);
+  background: var(--background-modifier-hover);
+  border-radius: 10px;
+  padding: 1px 8px;
+  flex-shrink: 0;
+}
+/* 卡片内设置行：hover 只改背景色（用户拍板），不带动 padding/圆角跳动 */
+.bz-settings-group-body .setting-item {
+  border-bottom: none;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 0 -10px;
+  transition: background-color 0.15s ease;
+}
+.bz-settings-group-body .setting-item:hover {
+  background: var(--background-modifier-hover);
+}
+.bz-settings-group-body .setting-item:last-child {
+  margin-bottom: 0;
+}
+
 /* ==================== 移动端主窗口默认全屏（ticket 68，ADR-0019） ==================== */
 /* 统一 ≤768px 两态（废止原 480/640/768 乱断点）：开=真全屏（.bz-win-mfs）/ 关=常规卡（各域 ≤768 基规则） */
 @media (max-width: 768px) {

@@ -10,7 +10,7 @@ import type { EscHandle } from '../../core/esc-manager';
 import { getApp } from '../app';
 import { getSettings, saveSettings, tryGetSettings } from '../../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../../core/mobile';
-import { openSettingsModal } from '../../core/settings-modal';
+import { openSettingsModal, createSettingsGroup } from '../../core/settings-modal';
 import { applyDirectories } from '../config';
 import { applyUiSettings, getDefaultDateFilterSetting, getDefaultSelectedTagSetting } from './ui-settings';
 import { getPrimaryTagsConfig, getPrimaryTagsInDisplayOrder, getSubTagsOfPrimary, getTagEmoji, isSubTag, getParentPrimaryTag } from '../config';
@@ -180,84 +180,139 @@ function createHeader() {
   const buttonContainer = document.createElement('div');
   buttonContainer.style.cssText = 'display:flex;align-items:center;gap:8px;';
   const settingsButton = createButton('⚙️', '日记本设置', () => {
-    // 日记本设置弹窗（ADR-0009 域设置弹窗）
+    // 日记本设置弹窗（ADR-0009 域设置弹窗；分组卡片重设计，2026-08 用户拍板方案 A）
     openSettingsModal({
       title: '日记本设置',
+      maxWidth: 560,
       build: (el) => {
         const s = getSettings() as any;
-        const textSetting = (name: string, desc: string, field: string) =>
-          new Setting(el)
-            .setName(name)
-            .setDesc(desc)
-            .addText((text) =>
-              text.setValue(s[field] || '').onChange(async (v) => {
-                s[field] = v;
-                await saveSettings();
-                applyDirectories(s);
-              })
-            );
-        const toggleSetting = (name: string, desc: string, field: string) =>
-          new Setting(el)
-            .setName(name)
-            .setDesc(desc)
-            .addToggle((toggle) =>
-              toggle.setValue(!!s[field]).onChange(async (v) => {
-                s[field] = v;
-                await saveSettings();
-                applyUiSettings(s);
-                rebuildTags();
-                applyFilter();
-              })
-            );
-        const dropdownSetting = (name: string, desc: string, field: string, options: [string, string][]) =>
-          new Setting(el)
+        const doSave = async () => { await saveSettings(); };
+        // ===== 目录组 =====
+        const dirGroup = createSettingsGroup(el, { icon: '📂', name: '目录' });
+        new Setting(dirGroup)
+          .setName('日记目录')
+          .setDesc('存放日记文件的文件夹路径')
+          .addText((text) =>
+            text.setValue(s.diaryDirectory || '').onChange(async (v) => {
+              s.diaryDirectory = v;
+              await doSave();
+              applyDirectories(s);
+            })
+          );
+        new Setting(dirGroup)
+          .setName('影视目录')
+          .setDesc('存放影视笔记的文件夹路径')
+          .addText((text) =>
+            text.setValue(s.movieDirectory || '').onChange(async (v) => {
+              s.movieDirectory = v;
+              await doSave();
+              applyDirectories(s);
+            })
+          );
+        new Setting(dirGroup)
+          .setName('信目录')
+          .setDesc('存放信件的文件夹路径')
+          .addText((text) =>
+            text.setValue(s.letterDirectory || '').onChange(async (v) => {
+              s.letterDirectory = v;
+              await doSave();
+              applyDirectories(s);
+            })
+          );
+        new Setting(dirGroup)
+          .setName('每批加载数量')
+          .setDesc('滚动加载时每批显示的条目数')
+          .addText((text) =>
+            text.setValue(s.diaryBatchSize || '').onChange(async (v) => {
+              s.diaryBatchSize = v;
+              await doSave();
+              applyDirectories(s);
+            })
+          );
+        // ===== 显示组 =====
+        const viewGroup = createSettingsGroup(el, { icon: '👁️', name: '显示' });
+        const uiChanged = () => {
+          applyUiSettings(s);
+          rebuildTags();
+          applyFilter();
+        };
+        new Setting(viewGroup)
+          .setName('显示标签计数')
+          .setDesc('在标签按钮上显示该标签包含的条目数量')
+          .addToggle((toggle) =>
+            toggle.setValue(!!s.showTagCount).onChange(async (v) => {
+              s.showTagCount = v;
+              await doSave();
+              uiChanged();
+            })
+          );
+        new Setting(viewGroup)
+          .setName('默认日期取自文件')
+          .setDesc('添加日记时默认日期取自当前打开的日记文件，否则用当前时间')
+          .addToggle((toggle) =>
+            toggle.setValue(!!s.useFileDateTime).onChange(async (v) => {
+              s.useFileDateTime = v;
+              await doSave();
+              uiChanged();
+            })
+          );
+        new Setting(viewGroup)
+          .setName('标签按钮显示表情')
+          .setDesc('筛选栏与写日记弹窗的标签按钮显示表情，关闭则显示文字')
+          .addToggle((toggle) =>
+            toggle.setValue(!!s.diaryTagShowEmoji).onChange(async (v) => {
+              s.diaryTagShowEmoji = v;
+              await doSave();
+              uiChanged();
+            })
+          );
+        const dropdownSetting = (parent: HTMLElement, name: string, desc: string, field: string, options: [string, string][]) =>
+          new Setting(parent)
             .setName(name)
             .setDesc(desc)
             .addDropdown((dd) => {
               for (const [value, label] of options) dd.addOption(value, label);
               dd.setValue(s[field] || options[0][0]).onChange(async (v) => {
                 s[field] = v;
-                await saveSettings();
-                applyUiSettings(s);
-                rebuildTags();
-                applyFilter();
+                await doSave();
+                uiChanged();
               });
             });
-        textSetting('日记目录', '存放日记 markdown 文件的文件夹路径', 'diaryDirectory');
-        textSetting('影视目录', '存放影视笔记的文件夹路径（日记本用）', 'movieDirectory');
-        textSetting('信目录', '存放信件的文件夹路径', 'letterDirectory');
-        textSetting('每批加载数量', '滚动加载时每批显示的条目数', 'diaryBatchSize');
-        toggleSetting('显示标签计数', '在标签按钮上显示该标签包含的条目数量', 'showTagCount');
-        toggleSetting('使用文件日期作为默认日期', '开启后，添加日记时默认日期取自当前打开的日记文件的日期（若为日记文件）；关闭则使用当前时间', 'useFileDateTime');
-        // ===== 显示（第 9 轮设置扩展） =====
-        new Setting(el).setHeading().setName('显示');
-        toggleSetting('标签按钮显示 emoji', '筛选栏与写日记弹窗的标签按钮显示 emoji（关=纯文字）', 'diaryTagShowEmoji');
-        dropdownSetting('卡片内容渲染方式', '日记卡片内容按 Markdown 渲染或纯文本显示', 'diaryContentRenderMode', [
+        dropdownSetting(viewGroup, '卡片内容渲染方式', '日记卡片内容按格式渲染或纯文本显示', 'diaryContentRenderMode', [
           ['markdown', 'Markdown'],
           ['plain', '纯文本'],
         ]);
-        dropdownSetting('标签排序', '筛选栏主标签排序：内置配置顺序或按条目数量降序', 'diaryTagSortMode', [
+        dropdownSetting(viewGroup, '标签排序', '筛选栏主标签按内置配置顺序或条目数量排序', 'diaryTagSortMode', [
           ['fixed', '按固定顺序'],
           ['count', '按条目数量'],
         ]);
-        // ===== 默认视图（第 9 轮设置扩展） =====
-        new Setting(el).setHeading().setName('默认视图');
-        dropdownSetting('打开面板默认日期筛选', '打开日记本面板时默认的日期范围（重启生效）', 'diaryDefaultDateFilter', [
+        // ===== 默认视图组 =====
+        const defaultGroup = createSettingsGroup(el, { icon: '🖥️', name: '默认视图' });
+        dropdownSetting(defaultGroup, '面板默认日期筛选', '打开日记本面板时默认的日期范围', 'diaryDefaultDateFilter', [
           ['all', '全部'],
           ['this-month', '本月'],
         ]);
-        dropdownSetting('默认选中标签', '打开面板时默认选中的主标签（重启生效）', 'diaryDefaultSelectedTag', [
+        dropdownSetting(defaultGroup, '默认选中标签', '打开面板时默认选中的主标签', 'diaryDefaultSelectedTag', [
           ['', '全部'],
           ...Object.keys(getPrimaryTagsConfig()).map((tag) => [tag, tag] as [string, string]),
         ]);
-        toggleSetting('保存后立即进入编辑', '保存日记后直接进入编辑模式（关=保存后仅关闭弹窗）', 'diaryJumpToEditAfterSave');
-        // ===== 移动端 =====
+        new Setting(defaultGroup)
+          .setName('保存后进入编辑')
+          .setDesc('保存日记后直接进入编辑模式')
+          .addToggle((toggle) =>
+            toggle.setValue(!!s.diaryJumpToEditAfterSave).onChange(async (v) => {
+              s.diaryJumpToEditAfterSave = v;
+              await doSave();
+            })
+          );
+        // ===== 移动端组（仅移动端显示） =====
         if (isMobileEnv()) {
-          new Setting(el)
+          const mobileGroup = createSettingsGroup(el, { icon: '📱', name: '移动端' });
+          new Setting(mobileGroup)
             .setName('移动端默认全屏')
-            .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
+            .setDesc('移动端打开主窗口时默认全屏，关闭则显示常规卡片')
             .addToggle((toggle) =>
-              toggle.setValue(!!s.diaryMobileDefaultFullscreen).onChange(async (v) => { s.diaryMobileDefaultFullscreen = v; await saveSettings(); })
+              toggle.setValue(!!s.diaryMobileDefaultFullscreen).onChange(async (v) => { s.diaryMobileDefaultFullscreen = v; await doSave(); })
             );
         }
       },

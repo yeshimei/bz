@@ -5,7 +5,7 @@
  * 3) 归物本（空弹窗 + 排序按钮改 🔀）、收藏本（空弹窗）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { openSettingsModal, closeSettingsModal } from '../src/core/settings-modal';
+import { openSettingsModal, closeSettingsModal, createSettingsGroup } from '../src/core/settings-modal';
 import { setApp } from '../src/core/app';
 import { setSettingsProvider } from '../src/core/settings-provider';
 import { setBzSettingsProvider } from '../src/memo';
@@ -118,6 +118,82 @@ describe('core settings-modal 机制', () => {
     openSettingsModal({ title: '旧弹窗', build: () => {}, onClose: () => { oldClosed++; } });
     openSettingsModal({ title: '新弹窗', build: () => {} });
     expect(oldClosed).toBe(1);
+  });
+});
+
+describe('分组卡片（2026-08 用户拍板方案 A：先落日记本）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+    closeSettingsModal();
+  });
+
+  it('createSettingsGroup：head（图标+组名+徽标）+ body 容器，徽标初始 0 项', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const body = createSettingsGroup(host, { icon: '📂', name: '目录' });
+    expect(body.className).toBe('bz-settings-group-body');
+    const group = host.querySelector('.bz-settings-group')!;
+    expect(group.querySelector('.bz-settings-group-icon')!.textContent).toBe('📂');
+    expect(group.querySelector('.bz-settings-group-name')!.textContent).toBe('目录');
+    expect(group.querySelector('.bz-settings-group-count')!.textContent).toBe('0 项');
+  });
+
+  it('打开弹窗：build 内分组挂设置项后，徽标回填实际项数；平铺结构不受影响', () => {
+    openSettingsModal({
+      title: '分组测试',
+      build: (el) => {
+        const body = createSettingsGroup(el, { icon: '👁️', name: '显示' });
+        const s1 = document.createElement('div');
+        s1.className = 'setting-item';
+        body.appendChild(s1);
+        const s2 = document.createElement('div');
+        s2.className = 'setting-item bz-setting-hidden';
+        body.appendChild(s2);
+      },
+    });
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    const groups = popup.querySelectorAll('.bz-settings-group');
+    expect(groups.length).toBe(1);
+    // 隐藏项不计入徽标
+    expect(groups[0].querySelector('.bz-settings-group-count')!.textContent).toBe('1 项');
+    expect(popup.querySelector('.bz-settings-group-body .setting-item')).not.toBeNull();
+  });
+
+  it('多组连续创建：每组独立卡片，间距样式由 CSS 负责（结构断言）', () => {
+    openSettingsModal({
+      title: '多组测试',
+      build: (el) => {
+        const b1 = createSettingsGroup(el, { icon: '📂', name: '目录' });
+        const s1 = document.createElement('div');
+        s1.className = 'setting-item';
+        b1.appendChild(s1);
+        const b2 = createSettingsGroup(el, { icon: '🖥️', name: '默认视图' });
+        const s2 = document.createElement('div');
+        s2.className = 'setting-item';
+        b2.appendChild(s2);
+      },
+    });
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    const heads = [...popup.querySelectorAll('.bz-settings-group-name')].map((e) => e.textContent);
+    expect(heads).toEqual(['目录', '默认视图']);
+    expect(popup.querySelectorAll('.bz-settings-group').length).toBe(2);
+  });
+
+  it('maxWidth 透传：传 560 时 popup 最大宽度为 560px，默认仍 400', () => {
+    openSettingsModal({ title: '宽弹窗', build: () => {}, maxWidth: 560 });
+    const wide = document.getElementById('bz-settings-modal-popup')!;
+    expect(wide.style.maxWidth).toBe('560px');
+    closeSettingsModal();
+    openSettingsModal({ title: '默认弹窗', build: () => {} });
+    const normal = document.getElementById('bz-settings-modal-popup')!;
+    expect(normal.style.maxWidth).toBe('400px');
+  });
+
+  it('空态兼容：分组为空时仍显示空态文案（分组结构不破坏空态判断）', () => {
+    openSettingsModal({ title: '空分组', build: (el) => { createSettingsGroup(el, { icon: '📂', name: '目录' }); }, emptyText: '暂无可配置项' });
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    expect(popup.textContent).toContain('暂无可配置项');
   });
 });
 
