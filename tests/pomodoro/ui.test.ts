@@ -145,6 +145,7 @@ describe('ensurePomodoro（插件启动恢复）', () => {
     expect(frozen.state.paused).toBe(true);
     expect(frozen.state.endTime).toBeNull();
     expect(frozen.state.remaining).toBeGreaterThan(0);
+    expect(frozen.state.pausedBy).toBe('autopause'); // 冻结来源标记随落盘持久化（P1-4）
     // 恢复 visible → 自动继续
     Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
     document.dispatchEvent(new Event('visibilitychange'));
@@ -313,6 +314,73 @@ describe('番茄钟弹窗', () => {
     await openPomodoro(app);
     expect(document.querySelectorAll('#pomodoro-mask').length).toBe(1);
     expect(document.querySelectorAll('#pomodoro-popup').length).toBe(1);
+  });
+
+  it('并发打开：初始化窗口内二次调用复用同一 Promise，不产生双遮罩（P2）', async () => {
+    const vault = new MockVault();
+    const app = makeApp(vault);
+    setApp(app);
+    setSettingsProvider(() => ({}) as any);
+    // 延迟 vault.read 拉开初始化窗口：首个 openPomodoro 卡在 load 时第二个进入
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    (vault as any).read = async (f: any) => {
+      await gate;
+      return vault.files.get(f.path) ?? '';
+    };
+    const p1 = openPomodoro(app);
+    const p2 = openPomodoro(app);
+    release();
+    await Promise.all([p1, p2]);
+    expect(document.querySelectorAll('#pomodoro-mask').length).toBe(1);
+    expect(document.querySelectorAll('#pomodoro-popup').length).toBe(1);
+  });
+
+  it('P1-4：冻结态落盘 → 重启恢复后继续按钮可用且能继续（forceFocus 对 autopause 来源放行）', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      getPomodoroFilePath(),
+      JSON.stringify({
+        version: 1,
+        state: { phase: 'focus', endTime: null, remaining: 1200, paused: true, cycleFocusCount: 1, pausedBy: 'autopause' },
+        history: [],
+      })
+    );
+    const { app, vault: v } = setup(vault, { pomodoroForceFocus: true });
+    await openPomodoro(app);
+    const startBtn = el('pomodoro-btn-start') as HTMLButtonElement;
+    expect(startBtn.textContent).toContain('继续');
+    expect(startBtn.disabled).toBe(false); // 冻结来源放行开始/继续
+    // 重置/跳过仍维持锁定（仅放行开始/继续）
+    expect((el('pomodoro-btn-reset') as HTMLButtonElement).disabled).toBe(true);
+    expect((el('pomodoro-btn-skip') as HTMLButtonElement).disabled).toBe(true);
+    // 点击继续 → 恢复倒计时并重新锁定
+    startBtn.click();
+    expect(startBtn.textContent).toContain('暂停');
+    expect(startBtn.disabled).toBe(true);
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(el('pomodoro-time').textContent).toBe('19:58');
+    const raw = JSON.parse(v.files.get(getPomodoroFilePath())!);
+    expect(raw.state.paused).toBe(false);
+    expect(raw.state.endTime).not.toBeNull();
+    expect(raw.state.pausedBy).toBeUndefined(); // 标记随 resume 清除
+  });
+
+  it('P1-4：手动暂停态（无来源标记）重启后仍锁定', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      getPomodoroFilePath(),
+      JSON.stringify({
+        version: 1,
+        state: { phase: 'focus', endTime: null, remaining: 1200, paused: true, cycleFocusCount: 1 },
+        history: [],
+      })
+    );
+    const { app } = setup(vault, { pomodoroForceFocus: true });
+    await openPomodoro(app);
+    const startBtn = el('pomodoro-btn-start') as HTMLButtonElement;
+    expect(startBtn.textContent).toContain('继续');
+    expect(startBtn.disabled).toBe(true); // 手动暂停维持 forceFocus 锁定
   });
 
   it('关闭弹窗计时后台继续，重开显示正确剩余', async () => {

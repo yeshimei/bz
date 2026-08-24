@@ -17,14 +17,18 @@ export function playSound(kind: SoundKind, volume = 100): void {
   const w = (typeof window !== 'undefined' ? window : globalThis) as any;
   const AC = w.AudioContext || w.webkitAudioContext;
   if (!AC) return;
+  // 真静音：volume <= 0 直接不播（不建上下文、不振荡器）
+  if (volume <= 0) return;
   try {
     const cfg = SOUND_CONFIG[kind];
     const ctx = new AC();
+    // 浏览器自动播放策略兜底：上下文被挂起（如后台 tick 完成的非手势路径）先 resume 再播
+    if (ctx.state === 'suspended' && typeof ctx.resume === 'function') void ctx.resume();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'sine';
     osc.frequency.value = cfg.freq;
-    // 音量 0-100（默认最大）：钳制 1-100（0 音量给近静音峰值，exponential 不允许 0）；峰值 0.8（翻倍）
+    // 音量 0-100（默认最大）：钳制 1-100（0 已在上方真静音短路）；峰值 0.8（翻倍）
     const peak = 0.8 * (Math.max(1, Math.min(100, volume)) / 100);
     const t = ctx.currentTime;
     gain.gain.setValueAtTime(0.001, t);
