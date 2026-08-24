@@ -122,6 +122,27 @@ describe('runMove 执行编排（fileManager.renameFile）', () => {
     expect(vault.files.has('附件/a.png')).toBe(true);
     expect(hasNotice(/已移动 1 个资源到 附件，改名 0 个，链接未自动更新/)).toBe(true);
   });
+
+  it('回归（P2 口径）：部分移动失败 → moved 只计成功数，通知文案与实际一致', async () => {
+    const vault = new MockVault();
+    vault.create('笔记/章.md', '图：![[a.png]] 图：![[b.png]]');
+    vault.create('笔记/a.png', '');
+    vault.create('笔记/b.png', '');
+    const { app } = withRename(vault, '笔记/章.md');
+    // 注入：第二个附件移动失败
+    app.fileManager.renameFile = vi.fn(async (file: any, newPath: string) => {
+      if (file.path === '笔记/b.png') throw new Error('locked by user');
+      await vault.rename(file, newPath);
+    });
+
+    const summary = await runMove(app, vault.getAbstractFileByPath('笔记/章.md'), '附件');
+
+    // moved = 计划数 − 失败数 = 1（旧实现误报 moves.length=2）
+    expect(summary).toEqual({ moved: 1, renamed: 0, linksAuto: true });
+    expect(vault.files.has('附件/a.png')).toBe(true);
+    expect(vault.files.has('笔记/b.png')).toBe(true); // 失败的原文件未动
+    expect(hasNotice('已移动 1 个资源到 附件，改名 0 个，内部链接已自动更新，失败 1 个')).toBe(true);
+  });
 });
 
 describe('moveAttachments 命令入口', () => {
