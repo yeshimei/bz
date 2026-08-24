@@ -325,16 +325,6 @@ export function formatSessionDuration(seconds: number): string {
   }
 }
 
-/** 生成进度条 HTML */
-export function generateProgressBar(percentage: number, width = 200): string {
-  const progressWidth = Math.max(5, Math.min(100, percentage));
-  return `
-  <div style="width: ${width}px; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; display: inline-block; margin: 0 10px; vertical-align: middle;">
-  <div style="width: ${progressWidth}%; height: 100%; background: linear-gradient(90deg, #4CAF50, #45a049); border-radius: 4px;"></div>
-  </div>
-  `;
-}
-
 // ---------- 阅读习惯 ----------
 
 /** 分析阅读会话数据 */
@@ -439,7 +429,7 @@ export function analyzeSessionDurationDistribution(sessions: any[]) {
 // ---------- 趋势 ----------
 
 /** 获取月度趋势数据（最近 12 个月） */
-export function getMonthlyTrendData(stats: ReadingStats) {
+function getMonthlyTrendData(stats: ReadingStats) {
   const monthlyEntries = Object.entries(stats.monthlyStats)
     .sort((a, b) => a[0].localeCompare(b[0]))
     .slice(-12);
@@ -454,14 +444,14 @@ export function getMonthlyTrendData(stats: ReadingStats) {
 }
 
 /** 计算月度平均值 */
-export function calculateMonthlyAverage(monthlyData: any[]): string {
+function calculateMonthlyAverage(monthlyData: any[]): string {
   if (monthlyData.length === 0) return '0.0';
   const total = monthlyData.reduce((sum, data) => sum + data.booksRead, 0);
   return (total / monthlyData.length).toFixed(1);
 }
 
 /** 获取当前月统计 */
-export function getCurrentMonthStats(monthlyData: any[]) {
+function getCurrentMonthStats(monthlyData: any[]) {
   if (monthlyData.length === 0) return { books: 0, completed: 0 };
   const current = monthlyData[monthlyData.length - 1];
   return {
@@ -471,7 +461,7 @@ export function getCurrentMonthStats(monthlyData: any[]) {
 }
 
 /** 计算季度平均值 */
-export function calculateQuarterlyAverage(monthlyData: any[]): string {
+function calculateQuarterlyAverage(monthlyData: any[]): string {
   if (monthlyData.length < 3) return calculateMonthlyAverage(monthlyData);
   const lastThree = monthlyData.slice(-3);
   return calculateMonthlyAverage(lastThree);
@@ -543,7 +533,7 @@ export function calculateFocusScore(bookNotes: BookNoteEntry[]): number {
 }
 
 /** 获取专注度等级 */
-export function getFocusLevel(bookNotes: BookNoteEntry[]): string {
+function getFocusLevel(bookNotes: BookNoteEntry[]): string {
   const score = calculateFocusScore(bookNotes);
   if (score >= 80) return '高度专注';
   if (score >= 60) return '中等专注';
@@ -558,7 +548,7 @@ export function calculateConsistencyDays(stats: ReadingStats): number {
 }
 
 /** 获取连续性等级 */
-export function getConsistencyLevel(stats: ReadingStats): string {
+function getConsistencyLevel(stats: ReadingStats): string {
   const days = calculateConsistencyDays(stats);
   if (days >= 20) return '优秀';
   if (days >= 10) return '良好';
@@ -566,7 +556,7 @@ export function getConsistencyLevel(stats: ReadingStats): string {
 }
 
 /** 计算阅读效率 */
-export function calculateReadingEfficiency(stats: ReadingStats, bookNotes: BookNoteEntry[]) {
+function calculateReadingEfficiency(stats: ReadingStats, bookNotes: BookNoteEntry[]) {
   const completedBooks = bookNotes.filter((book) => book.frontmatter.completionDate);
   const totalReadingTime = stats.totalReadingTime / 3600000;
   const totalPages = bookNotes.reduce((sum, book) => sum + (parseInt(book.frontmatter.pages) || 0), 0);
@@ -579,7 +569,7 @@ export function calculateReadingEfficiency(stats: ReadingStats, bookNotes: BookN
 }
 
 /** 生成实用建议 */
-export function generatePracticalRecommendations(stats: ReadingStats, bookNotes: BookNoteEntry[]): string {
+function generatePracticalRecommendations(stats: ReadingStats, bookNotes: BookNoteEntry[]): string {
   const recommendations: string[] = [];
 
   const completionRate = parseFloat(calculateCompletionRate(stats));
@@ -668,7 +658,7 @@ export function processHeatmapData(readingSessions: any[]) {
 }
 
 /** 按月份分组数据 */
-export function groupByMonth(dailyData: Record<string, any>) {
+function groupByMonth(dailyData: Record<string, any>) {
   const monthlyData: Record<string, any> = {};
 
   Object.values(dailyData).forEach((day) => {
@@ -713,22 +703,6 @@ export function getHeatmapColor(level: number): string {
   return colors[level] || colors[0];
 }
 
-/** 生成单元格提示信息 */
-export function generateCellTooltip(cell: any): string {
-  const date = new Date(cell.date);
-  const dateStr = date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    weekday: 'long',
-  });
-
-  const durationHours = (cell.data.duration / 3600).toFixed(1);
-  const sessions = cell.data.sessions;
-
-  return `${dateStr}\n阅读时长: ${durationHours}小时\n会话次数: ${sessions}次`;
-}
-
 // ---------- 专注度（会话级） ----------
 
 /** 分析阅读专注度数据 */
@@ -759,7 +733,7 @@ export function analyzeReadingFocus(readingSessions: any[], bookNotes: BookNoteE
 }
 
 /** 分析会话专注度 */
-export function analyzeSessionFocus(sessions: any[]) {
+function analyzeSessionFocus(sessions: any[]) {
   const totalSessions = sessions.length;
   const completedSessions = sessions.filter((s) => s.type === 'completed').length;
   const totalDuration = sessions.reduce((sum, session) => sum + session.duration, 0);
@@ -799,7 +773,7 @@ export function analyzeSessionFocus(sessions: any[]) {
 }
 
 /** 分析专注时段模式 */
-export function analyzeFocusTimePatterns(sessions: any[]) {
+function analyzeFocusTimePatterns(sessions: any[]) {
   const timeSlots: Record<string, { count: number; totalDuration: number }> = {
     morning: { count: 0, totalDuration: 0 },    // 6-12
     afternoon: { count: 0, totalDuration: 0 },  // 12-18
@@ -846,7 +820,7 @@ export function analyzeFocusTimePatterns(sessions: any[]) {
 }
 
 /** 分析专注度趋势 */
-export function analyzeFocusTrend(sessions: any[]) {
+function analyzeFocusTrend(sessions: any[]) {
   if (sessions.length < 5) {
     return { trend: '数据不足', description: '需要更多会话数据进行趋势分析', icon: '➖' };
   }
@@ -953,7 +927,7 @@ export function calculateEfficiencyScore(bookNotes: BookNoteEntry[]): number {
 }
 
 /** 生成专注度提升建议 */
-export function generateFocusRecommendations(sessionAnalysis: any, timeAnalysis: any, consistencyAnalysis: any): string {
+function generateFocusRecommendations(sessionAnalysis: any, timeAnalysis: any, consistencyAnalysis: any): string {
   const recommendations: string[] = [];
 
   if (sessionAnalysis.avgDuration < 900) {
@@ -982,7 +956,7 @@ export function generateFocusRecommendations(sessionAnalysis: any, timeAnalysis:
 }
 
 /** 获取默认专注度数据（当无会话数据时） */
-export function getDefaultFocusData() {
+function getDefaultFocusData() {
   return {
     focusScore: 50,
     deepSessions: 0,
@@ -1062,7 +1036,7 @@ export function analyzeReadingSpeed(stats: ReadingStats) {
 }
 
 /** 生成月度速度趋势（模拟数据，源码语义保留） */
-export function generateMonthlySpeedTrend(stats: ReadingStats): string {
+function generateMonthlySpeedTrend(stats: ReadingStats): string {
   const monthlyData = Object.entries(stats.monthlyStats || {})
     .sort((a, b) => a[0].localeCompare(b[0]))
     .slice(-6);
@@ -1108,7 +1082,7 @@ export function generateMonthlySpeedTrend(stats: ReadingStats): string {
 // ---------- 类别 ----------
 
 /** 提取书籍分类并自动分类 */
-export function extractAndCategorizeBooks(bookNotes: BookNoteEntry[]) {
+function extractAndCategorizeBooks(bookNotes: BookNoteEntry[]) {
   const categorizedBooks: any[] = [];
   const autoCategorizedCount = 0;
 
@@ -1135,7 +1109,7 @@ export function extractAndCategorizeBooks(bookNotes: BookNoteEntry[]) {
 }
 
 /** 计算分类分布 */
-export function calculateCategoryDistribution(categorizedBooks: any[]) {
+function calculateCategoryDistribution(categorizedBooks: any[]) {
   const categoryCount: Record<string, number> = {};
 
   categorizedBooks.forEach((book) => {
@@ -1156,7 +1130,7 @@ export function calculateCategoryDistribution(categorizedBooks: any[]) {
 }
 
 /** 计算前3分类占比 */
-export function calculateTop3Percentage(categoryDistribution: any[]): number | string {
+function calculateTop3Percentage(categoryDistribution: any[]): number | string {
   if (categoryDistribution.length === 0) return 0;
 
   const top3Count = categoryDistribution.slice(0, 3).reduce((sum, cat) => sum + cat.count, 0);
@@ -1184,7 +1158,7 @@ export function calculateCategoryDiversity(categoryDistribution: any[], totalBoo
 }
 
 /** 获取多样性等级 */
-export function getDiversityLevel(categoryDistribution: any[], totalBooks: number): string {
+function getDiversityLevel(categoryDistribution: any[], totalBooks: number): string {
   const score = calculateCategoryDiversity(categoryDistribution, totalBooks);
 
   if (score >= 80) return '非常广泛';
@@ -1216,7 +1190,7 @@ export function calculateBalanceScore(categoryDistribution: any[]): number {
 }
 
 /** 获取平衡度描述 */
-export function getBalanceDescription(categoryDistribution: any[]): string {
+function getBalanceDescription(categoryDistribution: any[]): string {
   const balanceScore = calculateBalanceScore(categoryDistribution);
 
   if (balanceScore >= 80) return '非常均衡';
@@ -1226,7 +1200,7 @@ export function getBalanceDescription(categoryDistribution: any[]): string {
 }
 
 /** 分析分类趋势（近 6 月完成书 top5） */
-export function analyzeCategoryTrends(categorizedBooks: any[]) {
+function analyzeCategoryTrends(categorizedBooks: any[]) {
   const recentBooks = categorizedBooks.filter((book) => book.completionDate && isRecentDate(book.completionDate)).slice(0, 10);
 
   const recentCategories: Record<string, number> = {};
@@ -1243,7 +1217,7 @@ export function analyzeCategoryTrends(categorizedBooks: any[]) {
 }
 
 /** 判断是否为最近日期（6 个月内） */
-export function isRecentDate(dateString: string): boolean {
+function isRecentDate(dateString: string): boolean {
   try {
     const date = new Date(dateString);
     const sixMonthsAgo = new Date();
@@ -1255,7 +1229,7 @@ export function isRecentDate(dateString: string): boolean {
 }
 
 /** 生成分类建议 */
-export function generateCategoryRecommendations(categoryDistribution: any[], totalBooks: number): string[] {
+function generateCategoryRecommendations(categoryDistribution: any[], totalBooks: number): string[] {
   const recommendations: string[] = [];
   const diversityScore = calculateCategoryDiversity(categoryDistribution, totalBooks);
 
@@ -1415,7 +1389,7 @@ export function calculateInteractionScore(interactionData: any): number {
 }
 
 /** 计算参与度等级 */
-export function calculateEngagementLevel(interactionData: any, totalBooks: number): string {
+function calculateEngagementLevel(interactionData: any, totalBooks: number): string {
   const avgInteractionsPerBook = interactionData.totalInteractions / Math.max(totalBooks, 1);
 
   if (avgInteractionsPerBook >= 20) return '深度参与';
@@ -1440,7 +1414,7 @@ export function analyzeInteractionPattern(interactionData: any): string {
 }
 
 /** 获取模式描述 */
-export function getPatternDescription(interactionData: any): string {
+function getPatternDescription(interactionData: any): string {
   const pattern = analyzeInteractionPattern(interactionData);
   const descriptions: Record<string, string> = {
     标记型读者: '注重重点内容的标记和整理',
@@ -1454,7 +1428,7 @@ export function getPatternDescription(interactionData: any): string {
 }
 
 /** 分析思考深度 */
-export function analyzeThinkingDepth(interactionData: any): string {
+function analyzeThinkingDepth(interactionData: any): string {
   const thinkRatio = calculateThinkRatio(interactionData.totalHighlights, interactionData.totalThinks);
 
   if (thinkRatio >= 40) return '深度思考';
@@ -1464,7 +1438,7 @@ export function analyzeThinkingDepth(interactionData: any): string {
 }
 
 /** 获取思考描述 */
-export function getThinkingDescription(interactionData: any): string {
+function getThinkingDescription(interactionData: any): string {
   const depth = analyzeThinkingDepth(interactionData);
   const thinkRatio = calculateThinkRatio(interactionData.totalHighlights, interactionData.totalThinks);
   return `想法占比 ${thinkRatio}%，${depth}水平`;
@@ -1481,7 +1455,7 @@ export function analyzeConnectionLevel(interactionData: any): string {
 }
 
 /** 获取连接描述 */
-export function getConnectionDescription(interactionData: any): string {
+function getConnectionDescription(interactionData: any): string {
   const level = analyzeConnectionLevel(interactionData);
   const linkRatio = interactionData.totalHighlights > 0 ? Math.round((interactionData.totalOutlinks / interactionData.totalHighlights) * 100) : 0;
   return `链接密度 ${linkRatio}%，${level}水平`;
@@ -1509,7 +1483,7 @@ export function analyzeNotesInteractions(bookNotes: BookNoteEntry[]) {
 }
 
 /** 生成互动优化建议 */
-export function generateInteractionRecommendations(interactionData: any, totalBooks: number): string[] {
+function generateInteractionRecommendations(interactionData: any, totalBooks: number): string[] {
   const recommendations: string[] = [];
   const thinkRatio = calculateThinkRatio(interactionData.totalHighlights, interactionData.totalThinks);
   const avgInteractions = interactionData.totalInteractions / Math.max(totalBooks, 1);

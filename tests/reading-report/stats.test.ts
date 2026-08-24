@@ -4,7 +4,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
-  calculateReadingStats, formatReadingTime, formatSessionDuration, generateProgressBar,
+  calculateReadingStats, formatReadingTime, formatSessionDuration,
   calculateCompletionRate, analyzeTrendDirection, calculateFocusScore,
   calculateConsistencyDays, analyzeReadingSessions, analyzeReadingHabits,
   analyzeSessionDurationDistribution, processHeatmapData, calculateIntensityLevel,
@@ -82,12 +82,6 @@ describe('格式化', () => {
   it('formatSessionDuration：小时X分钟', () => {
     expect(formatSessionDuration(5400)).toBe('1小时30分钟');
     expect(formatSessionDuration(600)).toBe('10分钟');
-  });
-
-  it('generateProgressBar：宽度 clamp 5-100', () => {
-    expect(generateProgressBar(50)).toContain('width: 50%');
-    expect(generateProgressBar(0)).toContain('width: 5%');
-    expect(generateProgressBar(200)).toContain('width: 100%');
   });
 });
 
