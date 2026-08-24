@@ -171,7 +171,7 @@ describe('openSmartcatDashboard UI', () => {
     expect(document.getElementById('smartcat-dashboard-mask')).not.toBeNull();
     expect(popup!.querySelector('.bz-win-head')).not.toBeNull();
     expect(popup!.querySelector('#smartcat-dash-close')).not.toBeNull();
-    expect(popup!.querySelector('#smartcat-dash-refresh')).not.toBeNull();
+    expect(popup!.querySelector('#smartcat-dash-refresh')).toBeNull(); // 097 C1：手动刷新按钮已删
     expect(popup!.querySelectorAll('.bz-sc-dash-tab').length).toBe(5);
     const overview = popup!.querySelector('[data-pane="overview"]') as HTMLElement;
     expect(overview.style.display).not.toBe('none');
@@ -275,16 +275,15 @@ describe('openSmartcatDashboard UI', () => {
     expect(document.querySelectorAll('#smartcat-dashboard-panel').length).toBe(1);
   }, 15000);
 
-  it('刷新按钮：重读数据且保持 DOM（面板只读，不写盘）', async () => {
+  it('头行只剩标题与关闭按钮（097 C1：手动刷新已删，改 vault modify 防抖静默刷新）', async () => {
     const { app, vault } = makeApp(fixtureData());
     const writesBefore = vault.modifiedPaths.length;
     await openSmartcatDashboard(app as any);
     expect(vault.modifiedPaths.length).toBe(writesBefore); // 打开不写盘
     const popup = document.getElementById('smartcat-dashboard-panel')!;
-    (popup.querySelector('#smartcat-dash-refresh') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 10));
-    expect(document.getElementById('smartcat-dashboard-panel')).not.toBeNull();
-    expect(vault.modifiedPaths.length).toBe(writesBefore); // 刷新也不写盘
+    const headBtns = popup.querySelector('.bz-win-head div') as HTMLElement;
+    expect(headBtns.querySelectorAll('button').length).toBe(1); // 仅 ❌ 关闭
+    expect(headBtns.textContent).toBe('❌');
   }, 15000);
 
   it('空数据（无 smartcat.json）：默认数据渲染空态文案不抛错', async () => {

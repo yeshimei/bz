@@ -11,6 +11,12 @@
  * 走 load-modify-save 最小写点（pinned / supersededBy='manual'）；其余一律不写。UI 走 bz 主窗口规范：
  * createOverlay + .bz-win-head + applyMobileWindowFullscreen + escManager；视觉样式全部静态进域内
  * styles.css（铁律 9，内联仅限显隐与动态高度/宽度）。命令入口：bz-smartcat-dashboard（main.ts COMMANDS 表）。
+ * 097 升级（纯展示层+口径统一，不改任何数据写入逻辑）：A1 成长轨迹归因徽标/LLM 引用原文；
+ * A2 安静陪伴 chip；A3 情绪页标注覆盖率小字；B1 感情卡依恋切 lazyAttachment 读侧视图与总览口径对齐；
+ * B2 洞察行 theme chip + 已被推翻/已固定视觉态；C1 删除手动 🔄 刷新按钮，改 vault modify 命中
+ * smartcat.json/memo.json 后防抖 3s 的静默自动刷新（保持页签、失败保旧画面、绝不 toast；
+ * 本模块无 Component 宿主，监听以 vault.on 返回 EventRef 注册、close 时 offref 全量清理，
+ * 与 registerEvent 清理语义等价）。
  */
 import type { App } from 'obsidian';
 import { notice } from '../core/notice';
@@ -18,12 +24,13 @@ import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
-import { loadSmartCatData, saveSmartCatData } from './data';
+import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath } from './data';
 import { MOOD_MAP, moodLevelFromPad } from './mood';
 import { TRAIT_GROUPS } from './character';
-import { sourceLabel, formatRelativeTime } from './memory';
-import { buildInsightShortIndex, isSupersededInsight, MANUAL_SUPERSEDED_BY } from './insight-version';
+import { sourceLabel, formatRelativeTime, emotionDensityStats } from './memory';
+import { buildInsightShortIndex, isSupersededInsight, MANUAL_SUPERSEDED_BY, sanitizeInsightTheme } from './insight-version';
 import { lazyAttachment, buildAbsenceCard } from './absence'; // ticket 093：读侧依恋视图 + 缺席状态卡
+import { readQuietMode } from './quiet-gate'; // ticket 095：安静陪伴期状态（097 A2 chip 只读消费）
 import {
   analyzeEmotionTrend,
   buildEmotionSnapshots,
@@ -188,25 +195,56 @@ export function distributionRows(dist: Record<string, number>): { label: string;
     .sort((a, b) => b.count - a.count);
 }
 
-/** 成长轨迹行（growthHistory 归一：时间倒序截前 limit 条；来源中文化 + 详情摘要） */
+/** 标注覆盖率小字样本阈值（097 A3）：观察样本不足此数只报条数不显百分比（小样本不宣称比例） */
+export const EMOTION_COVERAGE_MIN_SAMPLES = 5;
+
+/**
+ * 情绪页标注覆盖率文案（097 A3 纯函数）：复用 096 emotionDensityStats 口径，纯读展示零交互——
+ * 观察样本 ≥5 条 → 「情绪标注覆盖 X%（非 calm 占比 Y%）」；<5 条只显示各计数不显百分比。
+ */
+export function describeEmotionCoverage(stream: MemoryStreamEntry[]): string {
+  const s = emotionDensityStats(stream);
+  if (s.observations < EMOTION_COVERAGE_MIN_SAMPLES) {
+    return `情绪标注：样本 ${s.observations} 条，已标注 ${s.annotated} 条（非 calm ${s.nonCalm} 条）`;
+  }
+  return `情绪标注覆盖 ${Math.round(s.coverage * 100)}%（非 calm 占比 ${Math.round(s.nonCalmShare * 100)}%）`;
+}
+
+/**
+ * 成长轨迹行（growthHistory 归一：时间倒序截前 limit 条；来源中文化 + 详情摘要）。
+ * 097 A1 扩展：mode/quote 出自 091 归因条目 attribution{mode,quote?}——
+ * mode 仅接受 'llm'|'lexical' 枚举（旧数据缺 attribution / 非法值 → undefined，行内不显归因徽标）；
+ * quote 仅 mode=llm 且非空字符串才有值（词法推断一律不带解释文案——不产伪解释）。
+ */
 export interface GrowthTrailRow {
   time: number;
   source: string;
   sourceText: string;
   detail: string;
+  /** 归因模式（缺 attribution 的旧数据 → undefined 不显示徽标） */
+  mode?: 'llm' | 'lexical';
+  /** LLM 引用原文片段（仅 llm 且非空；渲染截 ~30 字） */
+  quote?: string;
 }
 
 export function buildGrowthTrail(history: any[], limit = 10): GrowthTrailRow[] {
   const rows = (Array.isArray(history) ? history : [])
-    .map((h) => ({
-      time: typeof h?.timestamp === 'number' ? h.timestamp : NaN,
-      source: typeof h?.source === 'string' ? h.source : 'unknown',
-      detail: h?.interactionType
-        ? String(h.interactionType)
-        : Array.isArray(h?.insights)
-          ? `${h.insights.length} 条洞察`
-          : '',
-    }))
+    .map((h) => {
+      const attr = h?.attribution;
+      const mode: 'llm' | 'lexical' | undefined =
+        attr?.mode === 'llm' || attr?.mode === 'lexical' ? attr.mode : undefined;
+      return {
+        time: typeof h?.timestamp === 'number' ? h.timestamp : NaN,
+        source: typeof h?.source === 'string' ? h.source : 'unknown',
+        detail: h?.interactionType
+          ? String(h.interactionType)
+          : Array.isArray(h?.insights)
+            ? `${h.insights.length} 条洞察`
+            : '',
+        mode,
+        quote: mode === 'llm' && typeof attr?.quote === 'string' && attr.quote ? attr.quote : undefined,
+      };
+    })
     .filter((r) => Number.isFinite(r.time));
   rows.sort((a, b) => b.time - a.time);
   return rows.slice(0, Math.max(1, limit)).map((r) => ({
@@ -214,6 +252,8 @@ export function buildGrowthTrail(history: any[], limit = 10): GrowthTrailRow[] {
     source: r.source,
     sourceText: GROWTH_SOURCE_LABELS[r.source] || r.source,
     detail: r.detail,
+    mode: r.mode,
+    quote: r.quote,
   }));
 }
 
@@ -297,13 +337,18 @@ const TAB_LABELS: Record<PaneKey, string> = {
   report: '报告',
 };
 
+/** memo.json 路径（跟随共享 storagePath；loadMemoTitlesByDay 与 C1 自动刷新监听共用） */
+function memoDataPath(): string {
+  const s = tryGetSettings() as any;
+  const dir = ((s && s.storagePath) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
+  return `${dir}/memo.json`;
+}
+
 /** memo.json 当日备忘标题表（「一起的日子」关键时刻用；dayKey → titles；读失败静默空表——零新增持久化） */
 async function loadMemoTitlesByDay(app: App): Promise<Map<string, string[]>> {
   const map = new Map<string, string[]>();
   try {
-    const s = tryGetSettings() as any;
-    const dir = ((s && s.storagePath) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
-    const f = app.vault.getAbstractFileByPath(`${dir}/memo.json`);
+    const f = app.vault.getAbstractFileByPath(memoDataPath());
     if (!f) return map;
     const raw = JSON.parse(await app.vault.read(f as any));
     for (const it of Array.isArray(raw) ? raw : []) {
@@ -338,6 +383,10 @@ function renderOverview(pane: HTMLElement, data: SmartCatData, memoTitles: Map<s
   ));
   const emo = data.mood?.currentEmotion;
   main.appendChild(el('span', 'bz-sc-dash-chip', emo ? `瞬时情绪：${emotionLabel(emo)}` : '暂无瞬时情绪'));
+  // 安静陪伴期可见化（097 A2，095 quietMode 只读消费）：on 才渲染该元素（非 quiet 态不留占位）
+  if (readQuietMode(data.editingData).on) {
+    main.appendChild(el('span', 'bz-sc-dash-chip bz-sc-dash-chip-quiet', '安静陪伴中'));
+  }
   hero.appendChild(emoji);
   hero.appendChild(main);
   pane.appendChild(hero);
@@ -444,6 +493,8 @@ function renderEmotion(pane: HTMLElement, data: SmartCatData): void {
     'bz-sc-dash-trend-meta',
     `波动度 ${trend.volatility.toFixed(2)}（≥0.5 视为高波动）`,
   ));
+  // 标注覆盖率小字（097 A3）：复用 emotionDensityStats，meta 行下方纯读展示
+  trendCard.body.appendChild(el('div', 'bz-sc-dash-trend-meta', describeEmotionCoverage(stream)));
   pane.appendChild(trendCard.root);
 
   // 情绪分布
@@ -485,17 +536,23 @@ function renderPersonality(pane: HTMLElement, data: SmartCatData): void {
   pane.innerHTML = '';
   const g = data.personalityGrowth;
 
-  // 感情（关系张量）
-  const rel = g?.relationship || { trust: 0.5, attachment: 0.5 };
+  // 感情（关系张量）——口径统一（097 B1）：依恋改走与总览 computeDashboardStats 相同的
+  // lazyAttachment 读侧分离衰减视图（trust 无衰减语义仍直读基线）；只影响展示，绝不写盘
+  const relTrust = g?.relationship?.trust ?? 0.5;
+  const relAttachmentView = lazyAttachment(
+    g?.relationship?.attachment ?? 0.5,
+    data.editingData?.lastPresenceAt,
+    Date.now(),
+  );
   const relCard = card('感情（关系张量）');
-  relCard.body.appendChild(barRow('信任', rel.trust, 'warm'));
-  relCard.body.appendChild(barRow('依恋', rel.attachment, 'warm'));
+  relCard.body.appendChild(barRow('信任', relTrust, 'warm'));
+  relCard.body.appendChild(barRow('依恋', relAttachmentView, 'warm'));
   const tone = g?.behaviorStats?.emotionalTone || 0;
   relCard.body.appendChild(barRow('情绪基调', (tone + 1) / 2, 'warm'));
   relCard.body.appendChild(el(
     'div',
     'bz-sc-dash-hint',
-    `情绪基调 ${tone >= 0 ? '+' : ''}${tone.toFixed(2)}（-1 冷淡 ~ +1 温暖）；信任/依恋随相处缓慢生长。`,
+    `情绪基调 ${tone >= 0 ? '+' : ''}${tone.toFixed(2)}（-1 冷淡 ~ +1 温暖）；信任/依恋随相处缓慢生长；依恋已按缺席分离衰减（读侧视图，不写盘）。`,
   ));
   pane.appendChild(relCard.root);
 
@@ -534,7 +591,12 @@ function renderPersonality(pane: HTMLElement, data: SmartCatData): void {
       const row = el('div', 'bz-sc-dash-trail-row');
       row.appendChild(el('span', 'bz-sc-dash-tl-time', formatRelativeTime(new Date(r.time).toISOString())));
       row.appendChild(el('span', 'bz-sc-dash-badge bz-sc-dash-badge-growth', r.sourceText));
+      // 归因徽标（097 A1）：llm → 「LLM 归因」；lexical → 「词法推断」；旧数据无 attribution 不显示
+      if (r.mode === 'llm') row.appendChild(el('span', 'bz-sc-dash-badge bz-sc-dash-badge-attrib-llm', 'LLM 归因'));
+      else if (r.mode === 'lexical') row.appendChild(el('span', 'bz-sc-dash-badge bz-sc-dash-badge-attrib-lexical', '词法推断'));
       if (r.detail) row.appendChild(el('span', 'bz-sc-dash-tl-desc', truncateText(r.detail, 24)));
+      // 引用原文仅 mode=llm 且 quote 非空（buildGrowthTrail 已保证；词法推断一律无解释文案）
+      if (r.quote) row.appendChild(el('span', 'bz-sc-dash-tl-quote', truncateText(r.quote, 30)));
       trailCard.body.appendChild(row);
     }
   } else {
@@ -624,6 +686,9 @@ function renderMemory(pane: HTMLElement, data: SmartCatData): void {
     for (const m of recent) {
       const item = el('div', 'bz-sc-dash-memory');
       const meta = el('div', 'bz-sc-dash-memory-meta');
+      // 主题 chip（097 B2）：theme 经受限枚举校验（工作|兴趣|关系|健康|环境）才显示，置于行首
+      const theme = m.type === 'insight' ? sanitizeInsightTheme(m.theme) : undefined;
+      if (theme) meta.appendChild(el('span', 'bz-sc-dash-badge bz-sc-dash-badge-theme', theme));
       meta.appendChild(el(
         'span',
         `bz-sc-dash-badge ${m.type === 'insight' ? 'insight' : 'observation'}`,
@@ -632,13 +697,13 @@ function renderMemory(pane: HTMLElement, data: SmartCatData): void {
       if (m.type === 'insight') {
         const idx = m.id ? shortIndex.get(m.id) : undefined;
         if (idx !== undefined) meta.appendChild(el('span', 'bz-sc-dash-insight-id', `#${idx}`));
-        if (m.pinned === true) meta.appendChild(el('span', 'bz-sc-dash-badge bz-sc-dash-badge-pinned', '已固定'));
-        if (isSupersededInsight(m)) {
-          meta.appendChild(el(
-            'span',
-            'bz-sc-dash-badge bz-sc-dash-badge-superseded',
-            m.supersededBy === MANUAL_SUPERSEDED_BY ? '已废弃（人工）' : '已废弃',
-          ));
+        // 推翻/固定视觉态（097 B2）：supersededBy 非空 → 整行降透明度 + 描述删除线 + 徽标「已被推翻」；
+        // pinned → 徽标「已固定」；两者并存时 pinned 优先显示（人工保护盖过废弃视觉，行按活跃态呈现）
+        if (m.pinned === true) {
+          meta.appendChild(el('span', 'bz-sc-dash-badge bz-sc-dash-badge-pinned', '已固定'));
+        } else if (isSupersededInsight(m)) {
+          meta.appendChild(el('span', 'bz-sc-dash-badge bz-sc-dash-badge-superseded', '已被推翻'));
+          item.classList.add('bz-sc-dash-memory--superseded');
         }
       }
       const src = sourceLabel(m.source);
@@ -730,6 +795,9 @@ function renderReport(pane: HTMLElement, data: SmartCatData): void {
 }
 // ---------------- 面板开关（bz 主窗口规范） ----------------
 
+/** C1 自动刷新防抖窗口（ms）：vault modify 命中目标路径后，静默重读渲染前的合并等待 */
+const DASH_REFRESH_DEBOUNCE_MS = 3000;
+
 interface DashboardState {
   app: App;
   mask: HTMLElement;
@@ -740,6 +808,10 @@ interface DashboardState {
   escHandle: { unregister: () => void };
   /** 当日备忘标题表（「一起的日子」关键时刻用；打开/刷新时现读） */
   memoTitles: Map<string, string[]>;
+  /** C1 自动刷新：vault modify 事件引用（close 全量 offref 清理；幂等重开先 close 不泄漏） */
+  eventRefs: unknown[];
+  /** C1 自动刷新：防抖计时器句柄（close clearTimeout 清理） */
+  debounceTimer: number | null;
 }
 
 let dashState: DashboardState | null = null;
@@ -754,7 +826,7 @@ function activateTab(key: PaneKey): void {
   }
 }
 
-/** 重渲染全部页签（打开/刷新共用；数据现读现渲染） */
+/** 重渲染全部页签（打开/刷新共用；数据现读现渲染；不触碰页签显隐 → 刷新保持当前页签） */
 function renderPanes(data: SmartCatData): void {
   if (!dashState) return;
   renderOverview(dashState.panes.overview, data, dashState.memoTitles);
@@ -762,6 +834,44 @@ function renderPanes(data: SmartCatData): void {
   renderPersonality(dashState.panes.personality, data);
   renderMemory(dashState.panes.memory, data);
   renderReport(dashState.panes.report, data);
+}
+
+// ---------------- C1 事件驱动静默刷新（2026-08-24 用户拍板：去手动刷新按钮） ----------------
+
+/** 清理自动刷新监听与防抖计时器（closeSmartcatDashboard 唯一清理点，幂等可重复调） */
+function teardownAutoRefresh(): void {
+  if (!dashState) return;
+  if (dashState.debounceTimer !== null) {
+    window.clearTimeout(dashState.debounceTimer);
+    dashState.debounceTimer = null;
+  }
+  for (const ref of dashState.eventRefs) {
+    try {
+      (dashState.app.vault as any).offref?.(ref);
+    } catch (e) { /* 句柄可能已失效 */ }
+  }
+  dashState.eventRefs = [];
+}
+
+/** 防抖重排静默刷新（3s 窗口内连续 modify 合并为一次重读；面板已关闭则忽略） */
+function scheduleSilentRefresh(): void {
+  if (!dashState || !dashState.popup.isConnected) return;
+  if (dashState.debounceTimer !== null) window.clearTimeout(dashState.debounceTimer);
+  dashState.debounceTimer = window.setTimeout(() => { void runSilentRefresh(); }, DASH_REFRESH_DEBOUNCE_MS);
+}
+
+/** 静默重读渲染（保持当前页签；失败保持旧画面静默——连续失败也不 toast 打扰，绝不弹通知） */
+async function runSilentRefresh(): Promise<void> {
+  const st = dashState;
+  if (!st) return;
+  st.debounceTimer = null;
+  try {
+    const fresh = await loadSmartCatData(st.app);
+    const memoTitles = await loadMemoTitlesByDay(st.app); // 当日备忘同步现读（094）
+    if (dashState !== st || !st.popup.isConnected) return; // 刷新期间被关闭/重开 → 丢弃陈旧结果
+    st.memoTitles = memoTitles;
+    renderPanes(fresh);
+  } catch (e) { /* 读失败保旧画面静默（含关闭前最后一次失败：同样忽略） */ }
 }
 
 /**
@@ -789,18 +899,15 @@ export async function openSmartcatDashboard(app: App): Promise<void> {
   popup.style.maxHeight = '82vh';
   popup.style.flexDirection = 'column';
 
-  // 头行（按钮秩序：功能 🔄 → ❌ 关闭；样式由 .bz-win-head 统一规范承接）
+  // 头行（097 C1：手动 🔄 刷新按钮删除，id smartcat-dash-refresh 移除在票留档——面板私有 id 无外部
+  // 依赖方；头行只剩标题 + ❌ 关闭，样式由 .bz-win-head 统一规范承接）
   const header = document.createElement('div');
   header.className = 'bz-win-head';
   const title = el('h3', '', '小橘数据面板');
   const btns = el('div', '');
-  const refreshBtn = el('button', '', '🔄');
-  refreshBtn.id = 'smartcat-dash-refresh';
-  refreshBtn.title = '刷新数据';
   const closeBtn = el('button', 'bz-win-close', '❌');
   closeBtn.id = 'smartcat-dash-close';
   closeBtn.title = '关闭';
-  btns.appendChild(refreshBtn);
   btns.appendChild(closeBtn);
   header.appendChild(title);
   header.appendChild(btns);
@@ -830,7 +937,7 @@ export async function openSmartcatDashboard(app: App): Promise<void> {
 
   // 当日备忘标题表现读（094「一起的日子」关键时刻；失败静默空表）
   const memoTitles = await loadMemoTitlesByDay(app);
-  dashState = { app, mask, popup, panes, tabs, activeTab: 'overview', escHandle: null as any, memoTitles };
+  dashState = { app, mask, popup, panes, tabs, activeTab: 'overview', escHandle: null as any, memoTitles, eventRefs: [], debounceTimer: null };
   renderPanes(data);
   activateTab('overview');
 
@@ -841,19 +948,21 @@ export async function openSmartcatDashboard(app: App): Promise<void> {
   mask.style.display = 'block';
   popup.style.display = 'flex';
 
-  // 刷新：重读 smartcat.json 并重渲染（保持当前页签）
-  refreshBtn.addEventListener('click', async () => {
-    if (!dashState) return;
-    try {
-      const fresh = await loadSmartCatData(dashState.app);
-      dashState.memoTitles = await loadMemoTitlesByDay(dashState.app); // 当日备忘同步现读（094）
-      renderPanes(fresh);
-      notice('小橘数据已刷新', 'success');
-    } catch (e) {
-      notice('小橘数据读取失败', 'error');
-    }
-  });
   closeBtn.addEventListener('click', () => closeSmartcatDashboard());
+
+  // C1 事件驱动静默刷新：vault modify 命中 smartcat.json / memo.json → 防抖 3s 静默重读渲染
+  //（保持当前页签、不弹任何 toast；本模块无 Component 宿主，用 vault.on 的 EventRef 注册，
+  // closeSmartcatDashboard 统一 offref 清理——与 registerEvent(app.vault,'modify') 清理语义等价；
+  // 注册失败仅失去自动刷新，面板功能不受影响）
+  const watchPaths = [getSmartcatFilePath(), memoDataPath()];
+  const onVaultModify = (file: unknown): void => {
+    const p = typeof file === 'string' ? file : (file as any)?.path;
+    if (!p || !watchPaths.includes(p)) return; // 非目标路径不触发
+    scheduleSilentRefresh();
+  };
+  try {
+    dashState.eventRefs.push((app.vault as any).on('modify', onVaultModify));
+  } catch (e) { /* 老环境兜底：仅失去自动刷新 */ }
 
   const escHandle = escManager.register('smartcat-dashboard', {
     isVisible: () => !!dashState && dashState.popup.isConnected,
@@ -862,9 +971,10 @@ export async function openSmartcatDashboard(app: App): Promise<void> {
   dashState.escHandle = escHandle;
 }
 
-/** 关闭面板并解除 ESC（unloadSmartCat 全量清理时调用） */
+/** 关闭面板并解除 ESC + 全量清理自动刷新监听与防抖计时器（unloadSmartCat 全量清理时调用） */
 export function closeSmartcatDashboard(): void {
   if (!dashState) return;
+  teardownAutoRefresh();
   dashState.mask.remove();
   dashState.popup.remove();
   try {

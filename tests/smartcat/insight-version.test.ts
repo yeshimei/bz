@@ -400,8 +400,7 @@ describe('dashboard：DDID 短索引 + 固定/废弃按钮', () => {
     const pane = document.querySelector('[data-pane="memory"]') as HTMLElement;
     for (const n of ['#1', '#2', '#3', '#4']) expect(pane.textContent).toContain(n);
     expect(pane.textContent).toContain('已固定');
-    expect(pane.textContent).toContain('已废弃（人工）'); // manual 标记区分展示
-    expect(pane.textContent).toContain('已废弃');        // 自动废弃
+    expect(pane.textContent).toContain('已被推翻'); // 097 B2：废弃徽标统一「已被推翻」（人工/自动不再区分文案）
     // 观察行无短索引
     expect(pane.querySelectorAll('.bz-sc-dash-insight-id').length).toBe(4);
   }, 15000);
@@ -431,9 +430,9 @@ describe('dashboard：DDID 短索引 + 固定/废弃按钮', () => {
     await flush();
     const stored = storedData(vault).memory.stream.find((m) => m.id === 'u-i1')!;
     expect(stored.supersededBy).toBe(MANUAL_SUPERSEDED_BY);
-    // 重渲染后 #1 行显示已废弃（人工）且不再有「废弃」按钮
+    // 重渲染后 #1 行显示「已被推翻」（097 B2 文案）且不再有「废弃」按钮
     const rowAfter = [...document.querySelectorAll('.bz-sc-dash-memory')].find((r) => r.textContent!.includes('#1')) as HTMLElement;
-    expect(rowAfter.textContent).toContain('已废弃（人工）');
+    expect(rowAfter.textContent).toContain('已被推翻');
     expect([...rowAfter.querySelectorAll('.bz-sc-dash-mini-btn')].some((b) => b.textContent === '废弃')).toBe(false);
   }, 15000);
 
