@@ -1163,3 +1163,31 @@
   flex-direction: column;
   gap: 4px;
 }
+
+/* 数据面板 097（归因展示/安静期可见化/口径统一）：全部静态收敛本文件，bz-sc-dash- 前缀 */
+/* A1 成长轨迹归因徽标（llm 第二色调 / lexical 低调度）+ LLM 引用原文 */
+.bz-sc-dash-badge-attrib-llm {
+  background: rgba(var(--color-purple-rgb), 0.12);
+  color: var(--color-purple);
+}
+.bz-sc-dash-badge-attrib-lexical {
+  background: var(--background-primary-alt);
+  color: var(--text-muted);
+}
+.bz-sc-dash-tl-quote {
+  color: var(--text-faint);
+  font-style: italic;
+}
+/* A2 安静陪伴 chip（既有 chip 类 + 低调色变体） */
+.bz-sc-dash-chip-quiet {
+  background: rgba(var(--color-blue-rgb), 0.10);
+  color: var(--text-muted);
+  margin-left: 6px;
+}
+/* B2 洞察行主题 chip + 已被推翻行态（整行降透明度 + 描述删除线；pinned 行不加此态） */
+.bz-sc-dash-badge-theme {
+  background: rgba(var(--color-cyan-rgb), 0.15);
+  color: var(--color-cyan);
+}
+.bz-sc-dash-memory--superseded { opacity: 0.55; }
+.bz-sc-dash-memory--superseded .bz-sc-dash-memory-text { text-decoration: line-through; }

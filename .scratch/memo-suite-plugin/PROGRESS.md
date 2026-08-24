@@ -501,3 +501,14 @@
 - ⚠ 必要偏差：mood.test.ts「loadMoodState 超 24h」1 处断言收窄（55 保持默认 → 50 归中性）——票面设计 4 明文「24h 陈旧归中性」，旧语义在构造函数已复制 saved.pad 的前提下恒 no-op 死分支
 - ✅ **测试**：mood-gating.test.ts 40 用例（窗口边界样本数/多数表决/阈值严格性/采样去重跨源/迁移表含恰 48h 边界与趋势优先/臂→子集映射 rng 注入/日键/loadMoodState 四态/QuietGateSystem 集成八例/ensure 装配钩子冒烟/豁免端到端——周上限已满仍发问候但 count 不动 pendingArm 不标、安静期 3 天不发、非安静期正常计数路径）；既有 mood/interaction 测试全量保留回归
 - 📄 文档：ADR-0042；CONTEXT.md 心情门控词条；spec.md Further Notes 追加一行；issue 095 status done
+## 2026-08-24 数据面板升级完成（ticket 097：归因展示/安静期可见化/口径统一）
+**状态：全量 1857 测试通过（125 文件，--maxWorkers=4；library-source 时序抖动按协议单文件重跑绿后复跑全量绿）+ tsc 0 错误；新增 tests/smartcat/dashboard-097.test.ts 12 用例；提交 dashboard-upgrade 分支**
+
+- ✅ **A1 成长轨迹「为什么变了」**：buildGrowthTrail 扩展 mode/quote 字段（091 attribution 只读消费，缺 attribution/枚举外 mode 兼容丢弃）——llm 行「LLM 归因」徽标 + 引用原文截 30 字；lexical 行只显「词法推断」徽标，一律无解释文案（不产伪解释）
+- ✅ **A2 安静陪伴 chip**：renderOverview 英雄区 readQuietMode().on 时渲染「安静陪伴中」低调色 chip（bz-sc-dash-chip-quiet）；非 quiet 态不渲染不留占位
+- ✅ **A3 标注覆盖率小字**：describeEmotionCoverage 纯函数复用 096 emotionDensityStats——观察样本 ≥5 显「情绪标注覆盖 X%（非 calm 占比 Y%）」，<5 条只报各计数不显百分比；情绪趋势卡 meta 行下方纯读展示
+- ✅ **B1 感情卡口径统一**：依恋改走 lazyAttachment 读侧分离衰减视图与 computeDashboardStats 一致（trust 无衰减语义仍直读），hint 补「已按缺席分离衰减（读侧视图，不写盘）」；未反向改 computeDashboardStats
+- ✅ **B2 洞察行视觉态**：theme 经 sanitizeInsightTheme 受限枚举校验后行首 chip（脏数据不强显）；supersededBy 非空整行降透明度+描述删除线+徽标「已被推翻」；pinned 徽标「已固定」，并存时 pinned 优先显示（人工保护盖过废弃视觉）；固定/废弃按钮行为不变
+- ✅ **C1 自动刷新**：手动 🔄 按钮删除（smartcat-dash-refresh id 移除留档）；vault modify 命中 smartcat.json/memo.json 防抖 3s 静默重读渲染（保持当前页签、零 toast、窗口内重置合并、失败保旧画面）；closeSmartcatDashboard 全量 offref+clearTimeout，幂等重开无泄漏；escManager 与 mask 关闭路径未动
+- ⚠ 必要偏差：洞察废弃徽标文案按票 B2 统一为「已被推翻」（原「已废弃（人工）/已废弃」双文案取消，insight-version.test.ts 断言同步更新）；面板模块无 Component 宿主，监听以 vault.on EventRef + close offref 落地（与 registerEvent 清理语义等价）
+- 📄 文档：spec.md Further Notes 追加一行；issue 097 status done
