@@ -18,6 +18,8 @@ export const reviewApp = {
   _quizOverride: null as any | null,
   /** 连续复习单框通知（同键合并，动态更新消息） */
   _reviewNotice: null as NoticeHandle | null,
+  /** 已通知逾期的笔记路径（ticket 100：diff 记忆集合，避免重复刷屏） */
+  _notifiedOverdue: new Set<string>(),
 
   async getQuiz(): Promise<any> {
     if (this._quizOverride) return this._quizOverride;
@@ -97,7 +99,10 @@ export const reviewApp = {
     const t = (now.getTime() - new Date(item.lastReviewed || item.reviewStart).getTime()) / 86400000;
     const R = fsrs.R(t, S);
     const result = fsrs.nextInterval(S, D, rating, R);
-    const nextDate = new Date(now.getTime() + result.days * 86400000);
+    // ticket 100：复习间隔缩放（ADR-0046，用户拍板解冻）——FSRS 相位出题天数 × 系数；阶梯阶段固定表不受影响
+    const scale = (getSettings() as any).reviewIntervalScale ?? 1;
+    const scaledDays = Math.max(0.01, result.days * (Number(scale) > 0 ? Number(scale) : 1));
+    const nextDate = new Date(now.getTime() + scaledDays * 86400000);
 
     await dm.updateItem(filePath, (it) => {
       it.stability = Math.round(result.S * 100) / 100;
@@ -114,7 +119,7 @@ export const reviewApp = {
       else if (rating === 'good' || rating === 'easy') it.pendingRedo = false;
     });
 
-    const days = Math.round(result.days);
+    const days = Math.round(scaledDays);
     const rPct = Math.round(R * 100);
     notice(`R=${rPct}% → 下次复习：${days > 0 ? days + '天' : '1天'}后`, 'success');
   },
@@ -163,9 +168,16 @@ export const reviewApp = {
     }
     overdue.sort((a, b) => new Date(a.nextReviewDate as string).getTime() - new Date(b.nextReviewDate as string).getTime());
 
+    // ticket 100：每日复习上限（0=不限）——逾期队列截断，剩余留到下次；待重做队列不受限（重做是强制通过路径）
+    const dailyLimit = Number((getSettings() as any).reviewDailyLimit) || 0;
+    const limited = dailyLimit > 0 ? overdue.slice(0, dailyLimit) : overdue;
+    if (limited.length < overdue.length) {
+      notice(`本轮复习 ${limited.length} 篇，剩余 ${overdue.length - limited.length} 篇留到下次`, 'info');
+    }
+
     // 做题决定难度关闭 → 普通复习（跳转笔记，逐篇等待评级）
     if (!getSettings().forceQuizForReview) {
-      await this.reviewLoop(overdue, 0);
+      await this.reviewLoop(limited, 0);
       return;
     }
 
@@ -187,20 +199,20 @@ export const reviewApp = {
 
     if (quiz && quiz.ai) {
       const h = notify('正在批量生成题目…', { type: 'progress', dedupeKey: 'review-generate' });
-      const batchQuestions = await this.batchGenerateQuestions(overdue);
+      const batchQuestions = await this.batchGenerateQuestions(limited);
       const hasAny = Object.values(batchQuestions).some((qs) => (qs as any[]).length > 0);
       if (!hasAny) {
         h.setType('warning');
         h.setMessage('批量出题失败，改用普通复习');
-        await this.reviewLoop(overdue, 0);
+        await this.reviewLoop(limited, 0);
       } else {
         h.setType('success');
         h.setMessage('题目已生成，开始做题复习');
-        await this.quizReviewLoop(overdue, 0, batchQuestions);
+        await this.quizReviewLoop(limited, 0, batchQuestions);
       }
     } else {
       notify('做题家未初始化，已改用普通复习', { type: 'warning', dedupeKey: 'review-quiz-ai' });
-      await this.reviewLoop(overdue, 0);
+      await this.reviewLoop(limited, 0);
     }
   },
 
@@ -524,8 +536,9 @@ export const reviewApp = {
     notice('已加入复习计划，首次复习：1分钟后', 'success');
   },
 
-  /** 文件树染色 + 阶段徽标（源码 L719-772 逐字） */
+  /** 文件树染色 + 阶段徽标（源码 L719-772 逐字；ticket 100 加「文件树标记」开关） */
   async applyReviewStyles(app: App, changedFile?: TFile): Promise<void> {
+    if ((getSettings() as any).reviewTreeBadge === false) return; // ticket 100：关=清爽文件树（不染色不挂徽章）
     this.ensure(app);
     const dm = this.dataManager!;
     const allItems = await dm.loadItems();
@@ -594,10 +607,39 @@ export const reviewApp = {
     }
   },
 
-  /** 逾期检查（只刷新文件树染色，源码 L774-778） */
+  /**
+   * 到期提醒 + 染色刷新（ticket 100：原只刷染色，重写为 diff + 通知；染色职责保留）
+   * 每轮与已通知集合对比：新增逾期 → 弹聚合通知；移出逾期（评级/完成/挂起）从集合剔除 → 之后再次逾期重新提醒。
+   * 启动首查把存量逾期当新产生 → 晨报式汇总（Q1 拍板接受）。
+   */
   async checkOverdueAndNotify(): Promise<void> {
     try {
+      // 染色刷新保留（原 60s 轮询职责：逾期文件实时变红；是否染色由 reviewTreeBadge 决定）
       await this.applyReviewStyles(getApp());
+      if ((getSettings() as any).enableAutoNotify === false) return; // 通知开关关 → 不弹通知
+      this.ensure(getApp());
+      const dm = this.dataManager!;
+      const items = await dm.loadItems();
+      const overdueMap = new Map<string, ReviewItem>(
+        items.filter((i) => i.isOverdue && !i.completed && !i.isMissing).map((i) => [i.filePath, i])
+      );
+      const newly = [...overdueMap.entries()].filter(([p]) => !this._notifiedOverdue.has(p));
+      // 清掉已不再逾期的（评级/完成/挂起后）
+      for (const p of this._notifiedOverdue) {
+        if (!overdueMap.has(p)) this._notifiedOverdue.delete(p);
+      }
+      if (newly.length) {
+        for (const [p] of newly) this._notifiedOverdue.add(p);
+        const names = newly.map(([, i]) => i.name.replace(/^《|》$/g, ''));
+        const shown = names.slice(0, 3).join('、');
+        const tail = names.length > 3 ? `，等 ${names.length - 3} 篇` : '';
+        notify(
+          names.length > 1
+            ? `${names.length} 篇笔记到期待复习：${shown}${tail}`
+            : `${shown} 到期待复习`,
+          { type: 'info', dedupeKey: 'review-overdue-notice' }
+        );
+      }
     } catch (e) {
       console.error('复习计划检查出错:', e);
     }

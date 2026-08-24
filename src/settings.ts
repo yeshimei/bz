@@ -142,12 +142,18 @@ export default interface BzSettings {
   // ===== 🔁 复习计划 + 做题家（合并 tab；quiz/review 共用数据路径）=====
   /** 数据存储路径（review.json / quiz.json 所在目录）——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
   reviewStoragePath: string;
-  /** ⏱️ 检查间隔（秒） */
-  autoCheckInterval: string;
-  /** 🔔 启用逾期通知 */
+  /** 🔔 到期提醒（ticket 100：原「启用逾期通知」键名不动，真正生效——有逾期即弹） */
   enableAutoNotify: boolean;
-  /** 🎯 做题决定难度（开启时显示做题家选项） */
+  /** 🆕 新笔记自动加入提醒（ticket 100：自动收编时弹提示，多条合并一条；关=静默收编） */
+  reviewAutoAddNotice: boolean;
+  /** 🎯 用做题测难度（原「做题决定难度」，键名不动） */
   forceQuizForReview: boolean;
+  /** 🆕 每日复习上限（0=不限；一轮开始复习最多处理 N 篇逾期） */
+  reviewDailyLimit: number;
+  /** 🆕 复习间隔缩放（FSRS 相位出题天数 × 系数，0.1-5，默认 1；阶梯阶段不受影响）——ADR-0046 */
+  reviewIntervalScale: number;
+  /** 🆕 文件树标记（ticket 100：为复习笔记着色并标到期时间；关=清爽文件树） */
+  reviewTreeBadge: boolean;
   /** 🗂️ 监听文件夹（多个目录；目录内未加入且未排除的 .md 自动进入复习计划，递归） */
   reviewWatchedFolders: string[];
   /** 🚫 排除名单（不参与监听自动加入的笔记路径数组；手动移除/确认移除/批量取消/不更新落此名单） */
@@ -379,9 +385,12 @@ export const DEFAULT_SETTINGS: BzSettings = {
 
   // 复习计划（quiz/review 共用数据路径）
   reviewStoragePath: 'CONFIG/STORAGE',
-  autoCheckInterval: '60',
   enableAutoNotify: true,
+  reviewAutoAddNotice: true,
   forceQuizForReview: false,
+  reviewDailyLimit: 0,
+  reviewIntervalScale: 1,
+  reviewTreeBadge: true,
   reviewWatchedFolders: [],
   reviewExcludedNotes: [],
 

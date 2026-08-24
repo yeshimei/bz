@@ -24,7 +24,7 @@ import { openFavoritesPanel, addFavoriteItem } from './favorites';
 import { openLibrary, openBookNotes } from './library';
 import { showReadingReport } from './reading-report';
 import { openMovieManager, addMovieItem, openMovieReport } from './movie';
-import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart } from './review';
+import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart, ensureReview } from './review';
 import { openFlashReference, openFlashChat } from './flash';
 import { openPomodoro, unloadPomodoro, ensurePomodoro } from './pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
@@ -205,6 +205,8 @@ export default class BzPlugin extends Plugin {
       if (this.settings.autoSummaryEnabled) ensureAutoSummary(this.app);
       if (this.settings.aiAgentEnabled) ensureAIAgent(this.app);
       if (this.settings.flashEnabled) ensureFlashOnReady(this.app);
+      // 复习计划：到期提醒开启时常驻（ticket 100——监听/染色/轮询统一启动；否则懒加载）；enableAutoNotify 缺省视为开
+      if (this.settings.enableAutoNotify !== false) void ensureReview(this.app);
       // 番茄钟：启动即恢复（load+recover，正在倒计时则后台继续/按设置自动弹窗）
       void ensurePomodoro(this.app);
       // 小橘：启动即挂载（smartcatEnabled 开关；桌面宠物常驻）
