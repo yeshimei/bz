@@ -128,13 +128,13 @@ describe('分组卡片（2026-08 用户拍板方案 A：先落日记本）', () 
     closeSettingsModal();
   });
 
-  it('createSettingsGroup：head（图标+组名+徽标）+ body 容器，徽标初始 0 项', () => {
+  it('createSettingsGroup：head（原生图标+组名+徽标）+ body 容器，徽标初始 0 项', () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
-    const body = createSettingsGroup(host, { icon: '📂', name: '目录' });
+    const body = createSettingsGroup(host, { icon: 'folder-open', name: '目录' });
     expect(body.className).toBe('bz-settings-group-body');
     const group = host.querySelector('.bz-settings-group')!;
-    expect(group.querySelector('.bz-settings-group-icon')!.textContent).toBe('📂');
+    expect(group.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon')).toBe('folder-open');
     expect(group.querySelector('.bz-settings-group-name')!.textContent).toBe('目录');
     expect(group.querySelector('.bz-settings-group-count')!.textContent).toBe('0 项');
   });
@@ -143,19 +143,26 @@ describe('分组卡片（2026-08 用户拍板方案 A：先落日记本）', () 
     openSettingsModal({
       title: '分组测试',
       build: (el) => {
-        const body = createSettingsGroup(el, { icon: '👁️', name: '显示' });
+        const body = createSettingsGroup(el, { icon: 'eye', name: '显示' });
         const s1 = document.createElement('div');
         s1.className = 'setting-item';
         body.appendChild(s1);
         const s2 = document.createElement('div');
         s2.className = 'setting-item bz-setting-hidden';
         body.appendChild(s2);
+        // 父链隐藏容器（review 做题家式）同样不计入
+        const box = document.createElement('div');
+        box.style.display = 'none';
+        const s3 = document.createElement('div');
+        s3.className = 'setting-item';
+        box.appendChild(s3);
+        body.appendChild(box);
       },
     });
     const popup = document.getElementById('bz-settings-modal-popup')!;
     const groups = popup.querySelectorAll('.bz-settings-group');
     expect(groups.length).toBe(1);
-    // 隐藏项不计入徽标
+    // 隐藏项（含父链隐藏容器内）不计入徽标
     expect(groups[0].querySelector('.bz-settings-group-count')!.textContent).toBe('1 项');
     expect(popup.querySelector('.bz-settings-group-body .setting-item')).not.toBeNull();
   });
@@ -164,11 +171,11 @@ describe('分组卡片（2026-08 用户拍板方案 A：先落日记本）', () 
     openSettingsModal({
       title: '多组测试',
       build: (el) => {
-        const b1 = createSettingsGroup(el, { icon: '📂', name: '目录' });
+        const b1 = createSettingsGroup(el, { icon: 'folder-open', name: '目录' });
         const s1 = document.createElement('div');
         s1.className = 'setting-item';
         b1.appendChild(s1);
-        const b2 = createSettingsGroup(el, { icon: '🖥️', name: '默认视图' });
+        const b2 = createSettingsGroup(el, { icon: 'monitor', name: '默认视图' });
         const s2 = document.createElement('div');
         s2.className = 'setting-item';
         b2.appendChild(s2);
@@ -191,7 +198,7 @@ describe('分组卡片（2026-08 用户拍板方案 A：先落日记本）', () 
   });
 
   it('空态兼容：分组为空时仍显示空态文案（分组结构不破坏空态判断）', () => {
-    openSettingsModal({ title: '空分组', build: (el) => { createSettingsGroup(el, { icon: '📂', name: '目录' }); }, emptyText: '暂无可配置项' });
+    openSettingsModal({ title: '空分组', build: (el) => { createSettingsGroup(el, { icon: 'folder-open', name: '目录' }); }, emptyText: '暂无可配置项' });
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect(popup.textContent).toContain('暂无可配置项');
   });

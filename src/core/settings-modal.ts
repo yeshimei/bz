@@ -4,9 +4,9 @@
  * 结构：mask + popup（标题栏 + 可滚动设置区），点击遮罩 / Esc 关闭（不放右上角关闭按钮）。
  * build 回调内用 obsidian Setting 挂设置项；未挂任何 .setting-item 时显示空态。
  * 重设计（2026-08 用户拍板方案 A 分组卡片）：build 内可用 createSettingsGroup 建
- * 「分组卡片」（图标+组名+项数徽标头 + 设置项体）；弹窗打开后徽标自动回填。
+ * 「分组卡片」（原生图标+组名+项数徽标头 + 设置项体）；弹窗打开后徽标自动回填。
  */
-import { Setting } from 'obsidian';
+import { Setting, setIcon } from 'obsidian';
 import { createOverlay } from './dom';
 import { escManager } from './esc-manager';
 
@@ -29,8 +29,10 @@ export interface SettingsModalOptions {
   onClose?: () => void;
 }
 
-/** 建「分组卡片」：head（图标+组名+项数徽标）+ body（挂 Setting），返回 body。
- *  项数徽标由 openSettingsModal 在 build 后统一回填（隐藏项不计）。 */
+/** 建「分组卡片」：head（原生图标+组名+项数徽标）+ body（挂 Setting），返回 body。
+ *  icon 为 lucide 原生图标名（setIcon 渲染，如 folder-open/eye/monitor/smartphone）。
+ *  项数徽标由 openSettingsModal 在 build 后统一回填（隐藏项不计）；
+ *  动态显隐后可调 refreshSettingsGroupCounts 手动刷新。 */
 export function createSettingsGroup(container: HTMLElement, opts: { icon: string; name: string }): HTMLElement {
   const group = document.createElement('div');
   group.className = 'bz-settings-group';
@@ -38,7 +40,7 @@ export function createSettingsGroup(container: HTMLElement, opts: { icon: string
   head.className = 'bz-settings-group-head';
   const icon = document.createElement('span');
   icon.className = 'bz-settings-group-icon';
-  icon.textContent = opts.icon;
+  setIcon(icon, opts.icon);
   const name = document.createElement('span');
   name.className = 'bz-settings-group-name';
   name.textContent = opts.name;
@@ -53,16 +55,24 @@ export function createSettingsGroup(container: HTMLElement, opts: { icon: string
   return body;
 }
 
-/** 回填分组卡片项数徽标（build 完成后的实际可见设置项数；隐藏项不计）。幂等。 */
-function fillSettingsGroupCounts(content: HTMLElement): void {
+/** 设置项是否不可见：自身或任一祖先挂 bz-setting-hidden / 内联 display none（review 做题家容器、番茄钟自定义行等动态隐藏场景）。 */
+function isItemHidden(el: HTMLElement): boolean {
+  let cur: HTMLElement | null = el;
+  while (cur && cur !== document.body) {
+    if (cur.classList.contains('bz-setting-hidden')) return true;
+    if (cur.style.display === 'none') return true;
+    cur = cur.parentElement;
+  }
+  return false;
+}
+
+/** 回填分组卡片项数徽标（实际可见设置项数；隐藏项不计）。幂等；导出供域内动态显隐后刷新。 */
+export function refreshSettingsGroupCounts(content: HTMLElement): void {
   content.querySelectorAll('.bz-settings-group').forEach((g) => {
     const body = g.querySelector('.bz-settings-group-body');
     const countEl = g.querySelector('.bz-settings-group-count');
     if (!body || !countEl) return;
-    const n = [...body.querySelectorAll('.setting-item')].filter((el) => {
-      const h = el as HTMLElement;
-      return !h.classList.contains('bz-setting-hidden') && h.style.display !== 'none';
-    }).length;
+    const n = [...body.querySelectorAll('.setting-item')].filter((el) => !isItemHidden(el as HTMLElement)).length;
     countEl.textContent = `${n} 项`;
   });
 }
@@ -105,7 +115,7 @@ export function openSettingsModal(opts: SettingsModalOptions): void {
 
   opts.build(content);
   // 分组卡片项数徽标回填（build 后、空态判断前）
-  fillSettingsGroupCounts(content);
+  refreshSettingsGroupCounts(content);
 
   // 空态：build 未挂任何设置项（归物本/收藏本）
   if (!content.querySelector('.setting-item')) {
