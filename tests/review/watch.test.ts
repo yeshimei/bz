@@ -1,6 +1,6 @@
 /**
- * 复习计划监听器测试（ticket 098；ticket 099 修订）：isUnderFolder / 自动加入四态 /
- * 收编确认（取消=什么都不做）/ 删除确认移除/保留 / 改名自动更新
+ * 复习计划监听器测试（ticket 098；ticket 099 修订+追加）：isUnderFolder / 自动加入四态 /
+ * 收编确认（取消=什么都不做）/ 删除确认移除/保留 / 改名自动更新 / 移除目录清空其下排除记录
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -191,5 +191,27 @@ describe('ReviewWatcher 自动加入', () => {
     w.onVaultRename({ path: 'X-new.md', extension: 'md', basename: 'X-new' } as any, 'X.md');
     await new Promise((r) => setTimeout(r, 30));
     expect((await dm.loadItems()).some((i) => i.filePath === 'X-new.md')).toBe(false);
+  });
+
+  it('removeWatchedFolder（ticket 099 追加）：移除目录 + 清空其下排除记录（目录外保留）；返回清理条数', async () => {
+    const vault = new MockVault();
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    const settings = makeSettings();
+    settings.reviewWatchedFolders = ['我的/复习', '卡片盒'];
+    // 目录内两条排除（递归命中子路径）+ 目录外一条排除（须保留）
+    settings.reviewExcludedNotes = ['我的/复习/A.md', '我的/复习/子/B.md', '书库/C.md'];
+    setSettingsProvider(() => settings as any);
+    const w = new ReviewWatcher(app, dm);
+
+    const cleared = await w.removeWatchedFolder('我的/复习');
+    expect(cleared).toBe(2);
+    expect(settings.reviewWatchedFolders).toEqual(['卡片盒']);
+    expect(settings.reviewExcludedNotes).toEqual(['书库/C.md']);
+    // 移除不存在的目录 → 幂等，清理 0 条
+    const cleared2 = await w.removeWatchedFolder('不存在');
+    expect(cleared2).toBe(0);
+    expect(settings.reviewWatchedFolders).toEqual(['卡片盒']);
   });
 });

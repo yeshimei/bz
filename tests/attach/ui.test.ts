@@ -171,6 +171,38 @@ describe('FolderSelectModal 文件夹选择弹窗', () => {
     expect(document.getElementById('bz-attach-folder-mask')).toBeNull();
     modal.close();
   });
+
+  it('可配项（ticket 099 追加）：自定义标题/按钮/placeholder/initial；提供 initial 不读 attachLastFolder', () => {
+    const vault = new MockVault();
+    vault.create('卡片盒/复习/A.md', 'x');
+    const settings: any = { attachLastFolder: '归档' };
+    setSettingsProvider(() => settings as any);
+    const app = mockAppWithVault(vault) as any;
+    setApp(app as any);
+
+    let picked = '';
+    const modal = new FolderSelectModal(app, (f) => (picked = f), {
+      title: '选择监听文件夹',
+      okText: '确定',
+      placeholder: 'vault 内目录路径，如 卡片盒/复习',
+      initial: '',
+    });
+    modal.open();
+    const mask = document.getElementById('bz-attach-folder-mask')!;
+    expect(mask).not.toBeNull();
+    expect(mask.querySelector('.bz-attach-title')!.textContent).toBe('选择监听文件夹');
+    const input = document.querySelector('.bz-attach-input') as HTMLInputElement;
+    expect(input.placeholder).toBe('vault 内目录路径，如 卡片盒/复习');
+    expect(input.value).toBe(''); // initial='' → 不预填 attachLastFolder
+    // 点选目标目录（非首项「库根目录」）+ 确定回调（自定义按钮文案）
+    const target = [...mask.querySelectorAll('.bz-attach-folder-item')].find(
+      (el) => el.textContent === '卡片盒/复习'
+    ) as HTMLElement;
+    target.click();
+    (document.querySelector('.bz-attach-btn--primary') as HTMLButtonElement).click();
+    expect(picked).toBe('卡片盒/复习');
+    expect(document.getElementById('bz-attach-folder-mask')).toBeNull();
+  });
 });
 
 describe('ensureAttachSeed 主页磁贴播种', () => {

@@ -14,25 +14,39 @@ export function getActiveNote(app: any): any | null {
   return app?.workspace?.getActiveFile?.() ?? null;
 }
 
-/** 文件夹选择弹窗（自绘 DOM；onPick 回调选中的库内文件夹路径） */
+/** 文件夹选择弹窗可配项（ticket 099 追加：跨域复用参数面；缺省 = 附件搬移原行为） */
+export interface FolderSelectOptions {
+  /** 弹窗标题（默认「选择目标文件夹」） */
+  title?: string;
+  /** 确定按钮文案（默认「移动」） */
+  okText?: string;
+  /** 输入框 placeholder（默认「如：归档/附件（库内路径）」） */
+  placeholder?: string;
+  /** 初始输入值；提供时不读取 attachLastFolder 记忆（避免跨域串味） */
+  initial?: string;
+}
+
+/** 文件夹选择弹窗（自绘 DOM；onPick 回调选中的库内文件夹路径；z-index 200000 压一切弹窗） */
 export class FolderSelectModal {
   private app: any;
   private onPick: (folder: string) => void;
+  private opts: FolderSelectOptions;
   private mask: HTMLElement | null = null;
   private input: HTMLInputElement | null = null;
   private listEl: HTMLElement | null = null;
   private folders: string[] = [];
 
-  constructor(app: any, onPick: (folder: string) => void) {
+  constructor(app: any, onPick: (folder: string) => void, opts: FolderSelectOptions = {}) {
     this.app = app;
     this.onPick = onPick;
+    this.opts = opts;
   }
 
   open(): void {
     const old = document.getElementById('bz-attach-folder-mask');
     if (old) old.remove();
     const settings: any = getSettings?.();
-    const last = (settings && settings.attachLastFolder) || '';
+    const last = this.opts.initial !== undefined ? this.opts.initial : (settings && settings.attachLastFolder) || '';
 
     const mask = document.createElement('div');
     mask.id = 'bz-attach-folder-mask';
@@ -46,13 +60,13 @@ export class FolderSelectModal {
 
     const title = document.createElement('div');
     title.className = 'bz-attach-title';
-    title.textContent = '选择目标文件夹';
+    title.textContent = this.opts.title || '选择目标文件夹';
     popup.appendChild(title);
 
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'bz-attach-input';
-    input.placeholder = '如：归档/附件（库内路径）';
+    input.placeholder = this.opts.placeholder || '如：归档/附件（库内路径）';
     input.value = last;
     input.addEventListener('input', () => this.filter());
     this.input = input;
@@ -71,7 +85,7 @@ export class FolderSelectModal {
     cancel.onclick = () => this.close();
     const ok = document.createElement('button');
     ok.className = 'bz-attach-btn bz-attach-btn--primary';
-    ok.textContent = '移动';
+    ok.textContent = this.opts.okText || '移动';
     ok.onclick = () => this.submit();
     actions.appendChild(cancel);
     actions.appendChild(ok);

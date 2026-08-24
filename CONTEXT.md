@@ -87,10 +87,10 @@ _Avoid_: 抓海报、豆瓣补全、poster fetch
 
 **做题会话 (Quiz Session)**: 做题家对复习计划暴露的联动契约（`startReviewSession`/`endReviewSession` + `QuizReviewResults` 回调）。复习计划只经做题会话驱动做题家，禁止直接改写其内部状态（_reviewMode/currentQuestions 等）。
 
-**监听文件夹 (Watched Folder)**: 复习计划设置项（data.json `reviewWatchedFolders` 数组）——vault 内目录列表，目录内未加入且未排除的 .md 自动进入复习计划；新增目录时先弹「批量收编确认」报存量数量用户确认后才批量加入。递归生效。
+**监听文件夹 (Watched Folder)**: 复习计划设置项（data.json `reviewWatchedFolders` 数组）——vault 内目录列表，目录内未加入且未排除的 .md 自动进入复习计划；新增目录经文件夹选择弹窗选定后先确认存量收编（报存量数，取消则不添加）；移除目录时同步清除其下全部排除记录（二次添加可重新收编）。递归生效。
 _Avoid_: 复习目录、自动加入文件夹
 
-**排除笔记 (Excluded Note)**: 不参与监听自动加入的笔记（data.json `reviewExcludedNotes` 路径数组）——手动移出（监听目录内）、删除/改名确认「移除」或「不更新」、批量收编取消，四类表态都落此名单；手动 ➕/命令加入不受限。
+**排除笔记 (Excluded Note)**: 不参与监听自动加入的笔记（data.json `reviewExcludedNotes` 路径数组）——手动移出（监听目录内）、删除确认「移除」，两类表态落此名单（新增目录取消不写名单、改名自动跟随，均不再产生）；移除所属监听文件夹时其下记录一并清除。手动 ➕/命令加入不受限。
 _Avoid_: 黑名单、忽略列表
 
 **待重做 (Pending Redo)**: 做题会话首次评级 ∈ {忘了, 困难} 后 ReviewItem 上的可选标记（`pendingRedo`，旧数据零迁移）——置位即需重做到通过；重做队列 FIFO 优先于逾期队列；通过只清标记不写排期（ADR-0044）。
