@@ -667,19 +667,21 @@ export class UIManager {
       const balanceResults = await this.balanceService.fetchAllBalances(this.currentItems);
 
       // 批量更新，避免多次读写数据库
-      const updates: Record<string, { balance: string; balanceCacheTime: number }> = {};
+      const updates: Record<string, { balance: string; balanceCacheTime: number; balanceError?: string | null }> = {};
       let hasUpdates = false;
 
       for (const item of this.currentItems) {
         if (balanceResults[item.id]) {
           const result = balanceResults[item.id];
           if (result.balance && !result.cached) {
-            // 只更新非缓存的结果
+            // 只更新非缓存的结果（P1-36：成功即清错误态，防「余额查询失败」粘滞）
             item.balance = result.balance;
             item.balanceCacheTime = result.timestamp!;
+            item.balanceError = null;
             updates[item.id] = {
               balance: result.balance,
               balanceCacheTime: result.timestamp!,
+              balanceError: null,
             };
             hasUpdates = true;
           } else if (result.error) {
@@ -698,22 +700,28 @@ export class UIManager {
     }
   }
 
-  // 批量更新数据库
-  async _batchUpdate(updates: Record<string, { balance: string; balanceCacheTime: number }>) {
-    const data = await this.dataManager.read();
-    let modified = false;
-
-    for (let i = 0; i < data.length; i++) {
-      const item = data[i];
-      if (updates[item.id]) {
-        data[i] = { ...item, ...updates[item.id] };
+  // 批量更新数据库（P1-37：写前重读整库比对——读-写窗口内被其他写入者改过，
+  // 则基于最新值重新套用本批结果后再写，把丢更新窗口从秒级收窄到毫秒级）
+  async _batchUpdate(updates: Record<string, { balance: string; balanceCacheTime: number; balanceError?: string | null }>) {
+    const applyBatch = (data: FavoritesItem[]) => {
+      let modified = false;
+      const next = data.map((item) => {
+        if (!updates[item.id]) return item;
         modified = true;
-      }
-    }
+        return { ...item, ...updates[item.id] };
+      });
+      return modified ? next : null;
+    };
 
-    if (modified) {
-      await this.dataManager.write(data);
-    }
+    const snapshot = await this.dataManager.read();
+    const patched = applyBatch(snapshot);
+    if (!patched) return;
+
+    // 写前重读比对：内容变了 → 基于最新值重套本批结果再写
+    const latest = await this.dataManager.read();
+    const baseline =
+      JSON.stringify(snapshot) !== JSON.stringify(latest) ? (applyBatch(latest) ?? latest) : patched;
+    await this.dataManager.write(baseline);
   }
 
   async _deleteItem(id: string) {
@@ -772,7 +780,8 @@ export class UIManager {
       right: 0,
       bottom: 0,
       background: 'rgba(0,0,0,0.3)',
-      zIndex: 10001,
+      // P0-7：抬到抽屉遮罩(10999)/抽屉本体(11000)之上——抽屉来源的编辑弹窗（companion）不被遮罩倒挂压住
+      zIndex: 11100,
       display: 'none',
       alignItems: 'center',
       justifyContent: 'center',
@@ -796,6 +805,7 @@ export class UIManager {
       display: 'flex',
       flexDirection: 'column',
       gap: '12px',
+      zIndex: 11101, // P0-7：与 addMask 同抬（11100/11101 档）
     });
 
     // 标题
@@ -1384,6 +1394,19 @@ GitHub 仓库信息（来自 GitHub API）：
           ) {
             data.balance = old.balance;
             data.balanceCacheTime = old.balanceCacheTime;
+          } else if (old.llmConfig && !data.llmConfig) {
+            // P1-36：取消「大模型」标签 → 显式清空旧配置与余额状态（防幽灵查询与残留展示）
+            data.llmConfig = null;
+            data.balance = null;
+            data.balanceCacheTime = null;
+            data.balanceError = null;
+          } else if (old.llmConfig && data.llmConfig) {
+            // P1-36：更换 apiKeys/balanceUrl → 旧余额缓存一并失效置空（本次已查到新余额则以新值为准）
+            if (data.balance == null) {
+              data.balance = null;
+              data.balanceCacheTime = null;
+            }
+            if (!data.balanceError) data.balanceError = null; // 清继承的旧错误态
           }
         }
         await this.dataManager.update(this.editingItemId, data);
