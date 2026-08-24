@@ -5,7 +5,6 @@
 import type { App } from 'obsidian';
 import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
-import { getApp } from '../core/app';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal, createSettingsGroup, refreshSettingsGroupCounts } from '../core/settings-modal';
@@ -144,11 +143,19 @@ export class UIManager {
     header.querySelector('#review-btn-close')!.addEventListener('click', () => this.hideMain());
   }
 
-  /** 复习设置弹窗项（_bindHeaderEvents 拆分）：分组卡片（检查提醒/做题家/复习节奏/自动化/界面/移动端），ticket 100 文案 + ADR-0009 分组卡片重设计 */
+  /** 复习设置弹窗项：分组卡片编排（检查提醒/做题家/复习节奏/自动化/界面/移动端），ticket 100 文案 + ADR-0009 分组卡片重设计 */
   _buildSettingsItems(el: HTMLElement): void {
-    const s = getSettings();
+    const s = getSettings() as any;
+    this._addNotifySettings(el, s);
+    this._addQuizSettings(el, s);
+    this._addRhythmSettings(el, s);
+    this._addWatchFolderSettings(el, s);
+    this._addViewSettings(el, s);
+    this._addMobileSettings(el, s);
+  }
 
-    // ===== 检查提醒组 =====
+  /** 检查提醒组：到期提醒 / 新笔记加入提醒 */
+  private _addNotifySettings(el: HTMLElement, s: any): void {
     const notifyGroup = createSettingsGroup(el, { icon: 'bell', name: '检查提醒' });
     new Setting(notifyGroup)
       .setName('到期提醒')
@@ -168,8 +175,10 @@ export class UIManager {
           await saveSettings();
         })
       );
+  }
 
-    // ===== 做题家组 =====
+  /** 做题家组：用做题测难度（子项仅开启时显示）/ 多选题 / 题量 / 打乱 / 难度 */
+  private _addQuizSettings(el: HTMLElement, s: any): void {
     const quizGroup = createSettingsGroup(el, { icon: 'graduation-cap', name: '做题家' });
     new Setting(quizGroup)
       .setName('用做题测难度')
@@ -228,8 +237,10 @@ export class UIManager {
           await saveSettings();
         });
       });
+  }
 
-    // ===== 复习节奏组 =====
+  /** 复习节奏组：每日复习上限 / 复习间隔缩放 */
+  private _addRhythmSettings(el: HTMLElement, s: any): void {
     const rhythmGroup = createSettingsGroup(el, { icon: 'timer', name: '复习节奏' });
     new Setting(rhythmGroup)
       .setName('每日复习上限')
@@ -250,10 +261,11 @@ export class UIManager {
           await saveSettings();
         })
       );
+  }
 
-    // ===== 自动化组 =====
+  /** 自动化组（ticket 099）：监听文件夹——文件夹选择弹窗添加 + chip 关闭标签 */
+  private _addWatchFolderSettings(el: HTMLElement, s: any): void {
     const autoGroup = createSettingsGroup(el, { icon: 'sliders-horizontal', name: '自动化' });
-    // ticket 099：监听文件夹（多目录、递归）——文件夹选择弹窗添加 + chip 关闭标签
     new Setting(autoGroup)
       .setName('监听文件夹')
       .setDesc('文件夹里的新笔记自动加入复习计划，包括子文件夹');
@@ -263,7 +275,7 @@ export class UIManager {
     const renderWatchRows = () => {
       watchBox.innerHTML = '';
       const folders = s.reviewWatchedFolders || [];
-      folders.forEach((folder, idx) => {
+      folders.forEach((folder) => {
         const chip = document.createElement('span');
         chip.className = 'bz-review-watch-chip';
         const name = document.createElement('span');
@@ -329,8 +341,10 @@ export class UIManager {
       watchBox.appendChild(addRow);
     };
     renderWatchRows();
+  }
 
-    // ===== 界面组 =====
+  /** 界面组：文件树标记开关 */
+  private _addViewSettings(el: HTMLElement, s: any): void {
     const viewGroup = createSettingsGroup(el, { icon: 'eye', name: '界面' });
     new Setting(viewGroup)
       .setName('文件树标记')
@@ -341,19 +355,21 @@ export class UIManager {
           await saveSettings();
         })
       );
-    // ===== 移动端组（仅移动端显示） =====
-    if (isMobileEnv()) {
-      const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
-      new Setting(mobileGroup)
-        .setName('移动端默认全屏')
-        .setDesc('移动端打开复习窗口时默认全屏显示')
-        .addToggle((toggle) =>
-          toggle.setValue(!!s.reviewMobileDefaultFullscreen).onChange(async (v) => {
-            s.reviewMobileDefaultFullscreen = v;
-            await saveSettings();
-          })
-        );
-    }
+  }
+
+  /** 移动端组（仅移动端显示）：移动端默认全屏 */
+  private _addMobileSettings(el: HTMLElement, s: any): void {
+    if (!isMobileEnv()) return;
+    const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
+    new Setting(mobileGroup)
+      .setName('移动端默认全屏')
+      .setDesc('移动端打开复习窗口时默认全屏显示')
+      .addToggle((toggle) =>
+        toggle.setValue(!!s.reviewMobileDefaultFullscreen).onChange(async (v) => {
+          s.reviewMobileDefaultFullscreen = v;
+          await saveSettings();
+        })
+      );
   }
 
   showMain(): void {

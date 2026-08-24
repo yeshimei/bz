@@ -12,7 +12,6 @@ import { reviewApp } from './app';
 import type { Rating } from './fsrs';
 
 let initialized = false;
-let appRef: App | null = null;
 export let dataManager: ReviewDataManager | null = null;
 export let uiManager: UIManager | null = null;
 export let reviewWatcher: ReviewWatcher | null = null;
@@ -22,7 +21,6 @@ let checkInterval: ReturnType<typeof setInterval> | null = null;
 export function ensureReview(app: App): void {
   if (initialized) return;
   initialized = true;
-  appRef = app;
   reviewApp.ensure(app);
   dataManager = new ReviewDataManager(app);
   uiManager = new UIManager(app, dataManager);
@@ -178,5 +176,4 @@ export function unloadReview(): void {
   dataManager = null;
   reviewWatcher?.destroy();
   reviewWatcher = null;
-  appRef = null;
 }
