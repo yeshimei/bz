@@ -207,9 +207,9 @@ function createHeader(): HTMLElement {
       maxWidth: 560,
       build: (el) => {
         const s = getSettings();
-        // ===== 目录组 =====
-        const dirGroup = createSettingsGroup(el, { icon: 'folder-open', name: '目录' });
-        new Setting(dirGroup)
+        // ===== 基础组 =====
+        const basicGroup = createSettingsGroup(el, { icon: 'folder-open', name: '基础' });
+        new Setting(basicGroup)
           .setName('剪藏目录')
           .setDesc('存放网页剪藏文章的文件夹')
           .addText((text) =>
@@ -218,9 +218,7 @@ function createHeader(): HTMLElement {
               await saveSettings();
             })
           );
-        // ===== 加载组 =====
-        const loadGroup = createSettingsGroup(el, { icon: 'gauge', name: '加载' });
-        new Setting(loadGroup)
+        new Setting(basicGroup)
           .setName('每批加载数量')
           .setDesc('滚动加载时每批显示的条目数')
           .addText((text) =>
