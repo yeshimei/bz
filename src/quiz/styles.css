@@ -48,6 +48,15 @@
       .quiz-option-btn.selected { border-color:var(--interactive-accent); background:var(--background-modifier-hover); }
       .quiz-option-btn .check-mark { opacity:0; transition:opacity 0.2s; flex-shrink:0; }
       .quiz-option-btn.selected .check-mark { opacity:1; }
+      /* ticket 098：多选题徽标 + 提示条 */
+      .quiz-multi-badge {
+        display:inline-block; margin-left:8px; padding:0 8px; border-radius:12px;
+        font-size:11px; line-height:18px; background:var(--interactive-accent); color:var(--text-on-accent);
+      }
+      .quiz-multi-hint {
+        margin-bottom:12px; padding:6px 10px; border-radius:6px;
+        background:var(--background-secondary); color:var(--text-muted); font-size:12px;
+      }
       .quiz-submit-btn {
         margin-top:16px;
         padding:8px 20px;

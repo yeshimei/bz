@@ -166,13 +166,13 @@ describe('QuizMasterUI', () => {
     expect(btns[0].querySelector('.check-mark')).not.toBeNull();
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     submit.click();
-    // 源码缺陷：多选不递增 correctCount（逐字保留）
-    expect(ui.correctCount).toBe(0);
+    // ticket 098（ADR-0044）：多选计数 bug 解冻——答对递增 correctCount（唯一破铁律 1 项）
+    expect(ui.correctCount).toBe(1);
     expect(btns[0].classList.contains('correct')).toBe(true);
     await vi.advanceTimersByTimeAsync(900);
     vi.useRealTimers();
-    // 题目被 splice 移除 → 无题 → onComplete（total=correct+wrong=0 → accuracy 0）
-    expect(onComplete).toHaveBeenCalledTimes(1);
+    // 题目被 splice 移除 → 无题 → onComplete（计数修复后 accuracy=100）
+    expect(onComplete).toHaveBeenCalledWith({ correct: 1, wrong: 0, total: 1, accuracy: 100 });
   });
 
   it('多选答错：正确绿 + 错误选中红 + 下一题按钮', async () => {
@@ -305,5 +305,47 @@ describe('复习联动契约', () => {
     // 回调已消费后再结束 → 无回调 → 关闭弹窗
     ui.endReviewSession();
     expect(document.getElementById('quiz-popup')).toBeNull();
+  });
+});
+describe('ticket 098：多选 UI（提交位置/徽标/提示条）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    document.body.innerHTML = '';
+    QuizMasterUI.ai = { json: vi.fn() } as any;
+    QuizMasterUI.settings = { enableMultipleChoice: true, questionsPerNote: '0', shuffleQuestions: false, difficulty: 'random' };
+  });
+
+  it('提交按钮位于选项下方；多选标题徽标「多选」+ 提示条；单选不含', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '内容');
+    seedQuiz(vault, {
+      'A.md': [
+        { question: 'M?', options: ['甲', '乙', '丙', '丁'], correctIndices: [0, 2] },
+        { question: 'S?', options: ['甲', '乙', '丙', '丁'], correctIndices: [0] },
+      ],
+    });
+    const app = makeApp(vault);
+    setApp(app);
+    const ui = new QuizMasterUI();
+    await ui.startQuiz();
+    const popup = document.getElementById('quiz-popup')!;
+    // 多选：徽标 + 提示条
+    expect(popup.querySelector('.quiz-multi-badge')!.textContent).toBe('多选');
+    expect(popup.textContent).toContain('本题为多选题，可多选');
+    // 提交按钮位于最后一个选项之后（DOM 顺序）
+    const opts = popup.querySelectorAll('.quiz-option-btn');
+    const submit = popup.querySelector('.quiz-submit-btn') as HTMLElement;
+    // submit 与最后一个选项同容器且位于其后（compareDocumentPosition：FOLLOWING=4）
+    expect(opts[opts.length - 1].compareDocumentPosition(submit) & 4).toBeTruthy();
+    // 勾选正确项（0+2）→ 提交 → splice → 下一题（单选：无徽标/提示条/提交）
+    (opts[0] as HTMLElement).click();
+    (opts[2] as HTMLElement).click();
+    submit.click();
+    await new Promise((r) => setTimeout(r, 900));
+    const popup2 = document.getElementById('quiz-popup')!;
+    expect(popup2.querySelector('.quiz-multi-badge')).toBeNull();
+    expect(popup2.textContent).not.toContain('本题为多选题');
+    expect(popup2.querySelector('.quiz-submit-btn')).toBeNull();
   });
 });

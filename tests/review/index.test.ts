@@ -9,9 +9,10 @@ import {
   ensureReview, unloadReview, reviewAddCurrent, reviewRemoveCurrent,
   reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, dataManager, uiManager,
 } from '../../src/review/index';
-import { REVIEW_FILE_PATH } from '../../src/review/data';
+import { REVIEW_FILE_PATH, ReviewDataManager } from '../../src/review/data';
 import { reviewApp } from '../../src/review/app';
 import { setApp } from '../../src/core/app';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 
 function seed(vault: MockVault) {
   const now = new Date();
@@ -85,7 +86,7 @@ describe('ensureReview', () => {
     expect(spy).toHaveBeenCalled();
   });
 
-  it('vault rename：非 md 忽略；同路径忽略；命中计划更新路径', async () => {
+  it('vault rename：非 md 忽略；同路径忽略；命中计划 → 确认弹窗（更新/不更新，ticket 098）', async () => {
     const vault = new MockVault();
     seed(vault);
     const app = makeApp(vault);
@@ -98,8 +99,12 @@ describe('ensureReview', () => {
     // 同路径
     vault.emit('rename', vault.file('A.md'), 'A.md');
     expect(updSpy).not.toHaveBeenCalled();
-    // 命中计划：oldPath 是原路径（A.md 在计划中）
+    // 命中计划：弹确认窗 → 点「更新」→ updateFilePath + refresh
     vault.emit('rename', { path: 'A-new.md', extension: 'md', basename: 'A-new' }, 'A.md');
+    await new Promise((r) => setTimeout(r, 20));
+    expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
+    expect(document.getElementById('__shared_confirm_ok__')!.textContent).toBe('更新');
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 20));
     expect(updSpy).toHaveBeenCalledWith('A.md', 'A-new.md', 'A-new');
     expect(refreshSpy).toHaveBeenCalled();
@@ -199,5 +204,64 @@ describe('unloadReview', () => {
     unloadReview();
     expect(dataManager).toBeNull();
     expect(uiManager).toBeNull();
+  }, 10000);
+});
+describe('ticket 098：监听文件夹事件（create/delete）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+    unloadReview();
+    setSettingsProvider(() => ({} as any));
+  });
+
+  it('vault create：非监听跳过；监听目录内新建自动加入；已排除/已在计划跳过', async () => {
+    const vault = new MockVault();
+    seed(vault); // A.md 在计划
+    const app = makeApp(vault);
+    ensureReview(app);
+    // 非监听目录
+    vault.emit('create', { path: 'X.md', extension: 'md', basename: 'X' });
+    await new Promise((r) => setTimeout(r, 30));
+    let items = await new ReviewDataManager(app).loadItems();
+    expect(items.map((i) => i.filePath)).not.toContain('X.md');
+    // 监听目录内新建 → 自动加入
+    const settings = { reviewWatchedFolders: ['我的/复习'], reviewExcludedNotes: [] as string[] };
+    setSettingsProvider(() => settings as any);
+    vault.emit('create', { path: '我的/复习/Y.md', extension: 'md', basename: 'Y' });
+    await new Promise((r) => setTimeout(r, 30));
+    items = await new ReviewDataManager(app).loadItems();
+    expect(items.map((i) => i.filePath)).toContain('我的/复习/Y.md');
+    // 已排除 → 不加入
+    settings.reviewExcludedNotes = ['我的/复习/Z.md'];
+    vault.emit('create', { path: '我的/复习/Z.md', extension: 'md', basename: 'Z' });
+    await new Promise((r) => setTimeout(r, 30));
+    items = await new ReviewDataManager(app).loadItems();
+    expect(items.map((i) => i.filePath)).not.toContain('我的/复习/Z.md');
+    unloadReview();
+  });
+
+  it('vault delete：计划内文件删除 → 确认弹窗；点「移除」→ 记录删除；点「保留」→ 挂起保留', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const app = makeApp(vault);
+    ensureReview(app);
+    vault.emit('delete', { path: 'A.md', extension: 'md', basename: 'A' });
+    await new Promise((r) => setTimeout(r, 350)); // 防抖 300ms
+    const popup = document.getElementById('__shared_confirm_popup__')!;
+    expect(popup).not.toBeNull();
+    expect(popup.textContent).toContain('删除');
+    // 保留
+    (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 30));
+    let items = await new ReviewDataManager(app).loadItems();
+    expect(items.some((i) => i.filePath === 'A.md')).toBe(true);
+    // 再次删除 → 移除
+    vault.emit('delete', { path: 'A.md', extension: 'md', basename: 'A' });
+    await new Promise((r) => setTimeout(r, 350));
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 30));
+    items = await new ReviewDataManager(app).loadItems();
+    expect(items.some((i) => i.filePath === 'A.md')).toBe(false);
+    unloadReview();
   }, 10000);
 });

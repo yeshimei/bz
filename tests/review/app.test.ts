@@ -379,3 +379,232 @@ describe('applyReviewStyles', () => {
     expect(inner.querySelector('.review-stage-badge')!.textContent).toBe('✅');
   });
 });
+describe('ticket 098：待重做 / 重做流程（ADR-0044）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setSettingsProvider(() => ({ forceQuizForReview: true }) as any);
+    (reviewApp as any).dataManager = null;
+    (reviewApp as any)._quizOverride = null;
+    document.body.innerHTML = '';
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    (reviewApp as any)._quizOverride = null;
+  });
+
+  /** 复习会话 mock（契约：startReviewSession/endReviewSession/close + popup DOM） */
+  function makeQuizMock() {
+    const quiz: any = {
+      ai: {},
+      popup: null as any,
+      mask: null as any,
+      _cb: null as any,
+      startReviewSession(opts: any) {
+        this.popup = document.createElement('div');
+        this.popup.id = 'quiz-popup';
+        this.mask = document.createElement('div');
+        document.body.appendChild(this.mask);
+        document.body.appendChild(this.popup);
+        this._cb = opts.onComplete;
+      },
+      endReviewSession() {},
+      close() {
+        if (this.popup && this.popup.parentNode) this.popup.remove();
+        if (this.mask && this.mask.parentNode) this.mask.remove();
+        this.popup = null;
+        this.mask = null;
+      },
+      manager: {
+        getQuestionsForNote: async (_app: any, _path: string) => [],
+        saveQuestionsForNote: async () => {},
+      },
+      ensureQuestions: async () => {},
+    };
+    return quiz;
+  }
+
+  it('markReview(autoPending)：again/hard 置位，good/easy 清除', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    await seedOverdue(vault, { stage: 3 });
+    const app = makeApp(vault);
+    setApp(app);
+    await reviewApp.markReview('A.md', 'again', { autoPending: true });
+    expect((await new ReviewDataManager(app).loadItems())[0].pendingRedo).toBe(true);
+    await seedOverdue(vault, { stage: 3 });
+    await reviewApp.markReview('A.md', 'good', { autoPending: true });
+    expect((await new ReviewDataManager(app).loadItems())[0].pendingRedo).toBe(false);
+  });
+
+  it('markReview 手动路径：again/hard 不置位；good/easy 清除陈旧标记', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    await seedOverdue(vault, { stage: 3, pendingRedo: true });
+    const app = makeApp(vault);
+    setApp(app);
+    await reviewApp.markReview('A.md', 'good'); // 无 opts：good 清
+    expect((await new ReviewDataManager(app).loadItems())[0].pendingRedo).toBe(false);
+    await seedOverdue(vault, { stage: 3, pendingRedo: true });
+    await reviewApp.markReview('A.md', 'again'); // 无 opts：手动模式不置位
+    expect((await new ReviewDataManager(app).loadItems())[0].pendingRedo).toBe(true);
+  });
+
+  it('pendingRedoItems：FIFO（lastReviewed 升序）+ 排除挂起/已完成', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    vault.files.set('B.md', '正文');
+    vault.files.set('C.md', '正文');
+    vault.files.set('D.md', '正文');
+    const now = new Date();
+    const mk = (id: string, path: string, lastReviewed: string | null, pending: boolean, completed = false) => ({
+      id, filePath: path, reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3,
+      reviewHistory: [], totalReviews: 0, averageConfidence: 0,
+      nextReviewDate: new Date(now.getTime() - 1000).toISOString(), lastReviewed, lastDifficulty: 'hard', completed, pendingRedo: pending,
+    });
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      mk('A', 'A.md', new Date(now.getTime() - 60000).toISOString(), true),
+      mk('B', 'B.md', new Date(now.getTime() - 120000).toISOString(), true), // 更早 → FIFO 在前
+      mk('C', 'C.md', null, true, true), // completed → 排除
+      mk('D', 'D.md', null, false), // 未置位 → 排除
+    ]));
+    vault.files.delete('GONE.md');
+    vault.files.set(REVIEW_FILE_PATH, vault.files.get(REVIEW_FILE_PATH)! + '\n');
+    const raw = JSON.parse(vault.files.get(REVIEW_FILE_PATH)!);
+    raw.push({ id: 'E', filePath: 'GONE.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() - 1000).toISOString(), lastReviewed: now.toISOString(), lastDifficulty: 'hard', completed: false, pendingRedo: true });
+    vault.files.set('GONE.md', 'x'); // 文件缺失 → 挂起
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify(raw));
+    vault.files.delete('GONE.md');
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    const items = await dm.loadItems();
+    const pend = reviewApp.pendingRedoItems(items);
+    expect(pend.map((i) => i.id)).toEqual(['B', 'A']); // FIFO + 排除 E(挂起)/C(已完成)
+  });
+
+  it('quizReviewLoop 首次未通过：结果卡唯一按钮「复习此笔记」→ 点击关弹窗开笔记 + pendingRedo 置位', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    await seedOverdue(vault, { stage: 3 });
+    const app = makeApp(vault);
+    setApp(app);
+    const openFile = vi.fn().mockResolvedValue(undefined);
+    (app.workspace as any).getLeaf = () => ({ openFile });
+    const quiz = makeQuizMock();
+    (reviewApp as any)._quizOverride = quiz;
+    const dm = new ReviewDataManager(app);
+    const items = await dm.loadItems();
+    const p = reviewApp.quizReviewLoop(items.slice(0, 1), 0, { 'A.md': [{ question: 'Q', options: ['a', 'b', 'c', 'd'], correctIndices: [0] }] });
+    await new Promise((r) => setTimeout(r, 20));
+    // 答完（0% → again）
+    void quiz._cb({ correct: 0, wrong: 2, total: 2, accuracy: 0 });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(quiz.popup.innerHTML).toContain('复习此笔记');
+    expect(quiz.popup.querySelector('#quiz-next-note')).toBeNull();
+    expect(quiz.popup.querySelector('#quiz-end-review')).toBeNull();
+    expect((await dm.loadItems())[0].pendingRedo).toBe(true);
+    // 点「复习此笔记」→ 弹窗关闭 + 打开笔记 + 会话结束
+    quiz.popup.querySelector('#quiz-review-note')!.click();
+    await p;
+    expect(quiz.popup).toBeNull();
+    expect(openFile).toHaveBeenCalled();
+  });
+
+  it('redoReviewLoop：通过仅清标记不写 FSRS（markReview 不被调用）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    await seedOverdue(vault, { stage: 3, pendingRedo: true });
+    const app = makeApp(vault);
+    setApp(app);
+    const quiz = makeQuizMock();
+    (reviewApp as any)._quizOverride = quiz;
+    const regen = vi.spyOn(reviewApp, 'regenerateQuestions').mockResolvedValue([{ question: 'Q', options: ['a', 'b', 'c', 'd'], correctIndices: [0] }]);
+    const markSpy = vi.spyOn(reviewApp, 'markReview').mockResolvedValue(undefined);
+    const dm = new ReviewDataManager(app);
+    const items = await dm.loadItems();
+    const before = items[0].nextReviewDate;
+    const p = reviewApp.redoReviewLoop(items.slice(0, 1), 0);
+    await new Promise((r) => setTimeout(r, 20));
+    void quiz._cb({ correct: 2, wrong: 0, total: 2, accuracy: 100 });
+    await new Promise((r) => setTimeout(r, 50));
+    // 最后一篇 → 「完成复习」按钮
+    expect(quiz.popup.innerHTML).toContain('完成复习');
+    quiz.popup.querySelector('#quiz-next-note')!.click();
+    const result = await p;
+    expect(result).toEqual(['A.md']);
+    expect(markSpy).not.toHaveBeenCalled(); // 不写 FSRS
+    const after = (await dm.loadItems())[0];
+    expect(after.pendingRedo).toBe(false);
+    expect(after.nextReviewDate).toBe(before); // 排期未动
+    expect(regen).toHaveBeenCalledWith('A.md');
+  });
+
+  it('redoReviewLoop：失败不写数据、保持待重做、返回 null（会话中断）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    await seedOverdue(vault, { stage: 3, pendingRedo: true });
+    const app = makeApp(vault);
+    setApp(app);
+    const openFile = vi.fn().mockResolvedValue(undefined);
+    (app.workspace as any).getLeaf = () => ({ openFile });
+    const quiz = makeQuizMock();
+    (reviewApp as any)._quizOverride = quiz;
+    vi.spyOn(reviewApp, 'regenerateQuestions').mockResolvedValue([{ question: 'Q', options: ['a', 'b', 'c', 'd'], correctIndices: [0] }]);
+    const markSpy = vi.spyOn(reviewApp, 'markReview').mockResolvedValue(undefined);
+    const dm = new ReviewDataManager(app);
+    const items = await dm.loadItems();
+    const before = items[0].nextReviewDate;
+    const p = reviewApp.redoReviewLoop(items.slice(0, 1), 0);
+    await new Promise((r) => setTimeout(r, 20));
+    void quiz._cb({ correct: 0, wrong: 2, total: 2, accuracy: 0 });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(quiz.popup.innerHTML).toContain('复习此笔记');
+    quiz.popup.querySelector('#quiz-review-note')!.click();
+    const result = await p;
+    expect(result).toBeNull();
+    expect(markSpy).not.toHaveBeenCalled();
+    const after = (await dm.loadItems())[0];
+    expect(after.pendingRedo).toBe(true); // 保持待重做
+    expect(after.nextReviewDate).toBe(before); // 什么都不写
+    expect(openFile).toHaveBeenCalled();
+  });
+
+  it('autoJumpOverdue：待重做队列优先；全部通过后同会话剔除并继续逾期流程', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    vault.files.set('B.md', '正文');
+    const now = new Date();
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      { id: 'A', filePath: 'A.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() - 1000).toISOString(), lastReviewed: now.toISOString(), lastDifficulty: 'hard', completed: false, pendingRedo: true },
+      { id: 'B', filePath: 'B.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() - 1000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+    ]));
+    const app = makeApp(vault);
+    setApp(app);
+    const quiz = makeQuizMock();
+    quiz.manager.getQuestionsForNote = async (_a: any, p: string) => (p === 'B.md' ? [{ question: 'Q', options: ['a', 'b', 'c', 'd'], correctIndices: [0] }] : []);
+    (reviewApp as any)._quizOverride = quiz;
+    const redoSpy = vi.spyOn(reviewApp, 'redoReviewLoop').mockResolvedValue(['A.md']);
+    const qlSpy = vi.spyOn(reviewApp, 'quizReviewLoop').mockResolvedValue(undefined);
+    await reviewApp.autoJumpOverdue();
+    expect(redoSpy).toHaveBeenCalledWith(expect.any(Array), 0);
+    const overdueItems = qlSpy.mock.calls[0][0] as any[];
+    expect(overdueItems.map((i: any) => i.filePath)).toEqual(['B.md']); // A 已剔除
+  });
+
+  it('autoJumpOverdue：重做失败（null）→ 会话终止，不进逾期流程', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    await seedOverdue(vault, { pendingRedo: true });
+    const app = makeApp(vault);
+    setApp(app);
+    const quiz = makeQuizMock();
+    quiz.manager.getQuestionsForNote = async (_a: any, p: string) => (p === 'A.md' ? [{ question: 'Q', options: ['a', 'b', 'c', 'd'], correctIndices: [0] }] : []);
+    (reviewApp as any)._quizOverride = quiz;
+    vi.spyOn(reviewApp, 'redoReviewLoop').mockResolvedValue(null);
+    const qlSpy = vi.spyOn(reviewApp, 'quizReviewLoop').mockResolvedValue(undefined);
+    const rlSpy = vi.spyOn(reviewApp, 'reviewLoop').mockResolvedValue(undefined);
+    await reviewApp.autoJumpOverdue();
+    expect(qlSpy).not.toHaveBeenCalled();
+    expect(rlSpy).not.toHaveBeenCalled();
+  });
+});

@@ -28,7 +28,7 @@ export const reviewApp = {
     if (!this.dataManager) this.dataManager = new ReviewDataManager(app);
   },
 
-  async markReview(filePath: string, selectedDifficulty: Rating): Promise<void> {
+  async markReview(filePath: string, selectedDifficulty: Rating, opts?: { autoPending?: boolean }): Promise<void> {
     const app = getApp();
     this.ensure(app);
     const dm = this.dataManager!;
@@ -82,6 +82,10 @@ export const reviewApp = {
         }
         it.nextReviewDate = nextDate.toISOString();
         if (enteringFsrs) it.completed = false; // 进入 FSRS 不算完成
+
+        // ticket 098：做题会话自动评级未通过/通过联动待重做标记；其余路径 good/easy 清（ADR-0044）
+        if (opts?.autoPending) it.pendingRedo = rating === 'again' || rating === 'hard';
+        else if (rating === 'good' || rating === 'easy') it.pendingRedo = false;
       });
       notice(enteringFsrs ? `进入深度复习，${FSRS_FIRST_TEXTS[targetStage]}后复习` : `${FSRS_FIRST_TEXTS[targetStage]}后复习`, 'success');
       return;
@@ -104,6 +108,10 @@ export const reviewApp = {
       if (!it.reviewHistory) it.reviewHistory = [];
       it.reviewHistory.push({ timestamp: now.toISOString(), stage: currentStage + 1, rating, stability: Math.round(result.S * 100) / 100, R: Math.round(R * 100) });
       it.nextReviewDate = nextDate.toISOString();
+
+      // ticket 098：做题会话自动评级未通过/通过联动待重做标记；其余路径 good/easy 清（ADR-0044）
+      if (opts?.autoPending) it.pendingRedo = rating === 'again' || rating === 'hard';
+      else if (rating === 'good' || rating === 'easy') it.pendingRedo = false;
     });
 
     const days = Math.round(result.days);
@@ -116,7 +124,38 @@ export const reviewApp = {
     const app = getApp();
     this.ensure(app);
     const dm = this.dataManager!;
-    const items = await dm.loadItems();
+    let items = await dm.loadItems();
+
+    // ticket 098：待重做队列 FIFO 优先（ADR-0044）——全部通过后才进入逾期流程；中途失败/手动结束 → 本次会话终止
+    if (getSettings().forceQuizForReview) {
+      const pend = this.pendingRedoItems(items);
+      if (pend.length) {
+        let quiz: any = null;
+        try {
+          quiz = await this.getQuiz();
+        } catch {
+          /* ignore */
+        }
+        if (quiz && !quiz.ai) {
+          try {
+            const { ensureQuiz } = await import('../quiz');
+            ensureQuiz(app);
+          } catch {
+            /* ignore */
+          }
+        }
+        if (quiz && quiz.ai) {
+          const passed = await this.redoReviewLoop(pend, 0);
+          if (!passed) return;
+          const passedSet = new Set(passed);
+          // 本会话已重做通过的条目从逾期集剔除（防「1 分钟后」短间隔同会话循环）
+          items = items.filter((i) => !passedSet.has(i.filePath));
+        } else {
+          notify('做题家未初始化，跳过待重做队列', { type: 'warning', dedupeKey: 'review-quiz-ai' });
+        }
+      }
+    }
+
     const overdue = items.filter((i) => i.isOverdue && !i.isCompleted);
     if (!overdue.length) {
       notice('没有逾期笔记', 'success');
@@ -173,6 +212,124 @@ export const reviewApp = {
     return 'again';
   },
 
+  /** 待重做条目（文件存在、未完成；按进入顺序 = lastReviewed 升序 FIFO） */
+  pendingRedoItems(items: ReviewItem[]): ReviewItem[] {
+    return items
+      .filter((i) => i.pendingRedo && !i.isCompleted && i.file)
+      .sort(
+        (a, b) =>
+          new Date(a.lastReviewed || a.reviewStart).getTime() - new Date(b.lastReviewed || b.reviewStart).getTime()
+      );
+  },
+
+  /** 重做出题（ADR-0044/Q7-②）：清空旧题 → ensureQuestions 全新生成；失败或空题回退剩余错题 */
+  async regenerateQuestions(filePath: string): Promise<any[]> {
+    const quiz: any = await this.getQuiz();
+    if (!quiz || !quiz.ai) return [];
+    const leftover = (await quiz.manager.getQuestionsForNote(getApp(), filePath)) || [];
+    await quiz.manager.saveQuestionsForNote(getApp(), filePath, []);
+    await quiz.ensureQuestions([filePath]);
+    const fresh = (await quiz.manager.getQuestionsForNote(getApp(), filePath)) || [];
+    return fresh.length ? fresh : leftover;
+  },
+
+  /** 待重做队列复习（ADR-0044）：AI 全新出题 → 做题 → 通过仅清标记不写 FSRS；失败 → 「复习此笔记」中断会话 */
+  async redoReviewLoop(items: ReviewItem[], index: number): Promise<string[] | null> {
+    const app = getApp();
+    this.ensure(app);
+    if (index >= items.length) return items.map((i) => i.filePath);
+    const quiz: any = await this.getQuiz();
+    const item = items[index];
+    const questions = await this.regenerateQuestions(item.filePath);
+    if (!questions.length) {
+      notice('重做失败：无题目可用，保持待重做', 'warning');
+      return this.redoReviewLoop(items, index + 1);
+    }
+    return new Promise((resolve) => {
+      quiz.startReviewSession({
+        questions,
+        onComplete: async (results: any) => {
+          const rating = this.accuracyToRating(results.accuracy);
+          const failed = rating === 'again' || rating === 'hard';
+          if (!failed) {
+            // 通过：仅清待重做标记，不写任何 FSRS 数据（排期/历史保持首次评级结果——ADR-0044）
+            await this.dataManager!.updateItem(item.filePath, (it) => {
+              it.pendingRedo = false;
+            });
+            await this.applyReviewStyles(app);
+          }
+          const popup = quiz.popup;
+          if (!popup) {
+            resolve(failed ? null : await this.redoReviewLoop(items, index + 1));
+            return;
+          }
+          if (failed) {
+            popup.innerHTML = this.buildFailCard(item, results, rating);
+            await new Promise<void>((resolveClick) => {
+              popup.querySelector('#quiz-review-note')!.onclick = () => {
+                quiz.close();
+                resolveClick();
+              };
+            });
+            const file = app.vault.getAbstractFileByPath(item.filePath);
+            if (file) {
+              const leaf = app.workspace.getLeaf(false);
+              await leaf.openFile(file as TFile);
+            }
+            resolve(null);
+            return;
+          }
+          const isLast = index >= items.length - 1;
+          popup.innerHTML = this.buildPassCard(item, results, rating, {
+            nextLabel: isLast ? '' : `下一篇（${index + 2}/${items.length}）`,
+          });
+          const action = await new Promise<string>((resolveAction) => {
+            popup.querySelector('#quiz-next-note')!.onclick = () => resolveAction('next');
+            popup.querySelector('#quiz-end-review')!.onclick = () => resolveAction('end');
+          });
+          if (action === 'end') {
+            quiz.endReviewSession();
+            resolve(null);
+            return;
+          }
+          resolve(await this.redoReviewLoop(items, index + 1));
+        },
+      });
+    });
+  },
+
+  /** 未通过结果卡（ADR-0044）：唯一按钮「复习此笔记」→ 点击关弹窗 + 开笔记 + 会话中断 */
+  buildFailCard(item: ReviewItem, results: any, rating: Rating): string {
+    const ratingNames: Record<string, string> = { again: '忘了', hard: '困难', good: '一般', easy: '简单' };
+    const tagColors: Record<string, string> = { again: '#ff4757', hard: '#ff9f43', good: '#2ed573', easy: '#7bed9f' };
+    return `
+      <div style="text-align:center;padding:24px;">
+        <div style="font-size:18px;font-weight:600;margin-bottom:16px;color:var(--text-normal);">🎯 ${item.name.replace(/^《|》$/g, '')}</div>
+        <div style="font-size:40px;margin-bottom:16px;">${results.correct}/${results.total}</div>
+        <div style="font-size:14px;color:var(--text-muted);margin-bottom:12px;">✅ 答对 ${results.correct} 题　❌ 答错 ${results.wrong} 题</div>
+        <div style="display:inline-block;padding:6px 16px;border-radius:16px;font-size:14px;font-weight:500;background:${tagColors[rating]}22;color:${tagColors[rating]};margin-bottom:20px;">自动标记：${ratingNames[rating]}</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">本次复习未通过，请打开笔记复习；下次点「开始复习」将为这篇重新做题</div>
+      </div>
+      <button id="quiz-review-note" style="display:block;width:100%;padding:10px;border:none;border-radius:6px;background:var(--interactive-accent);color:var(--text-on-accent);cursor:pointer;font-size:13px;font-weight:500;">复习此笔记</button>
+    `;
+  },
+
+  /** 通过结果卡（重做复用视觉）：下一篇/完成复习/结束这次复习 */
+  buildPassCard(item: ReviewItem, results: any, rating: Rating, opts: { nextLabel?: string }): string {
+    const ratingNames: Record<string, string> = { again: '忘了', hard: '困难', good: '一般', easy: '简单' };
+    const tagColors: Record<string, string> = { again: '#ff4757', hard: '#ff9f43', good: '#2ed573', easy: '#7bed9f' };
+    return `
+      <div style="text-align:center;padding:24px;">
+        <div style="font-size:18px;font-weight:600;margin-bottom:16px;color:var(--text-normal);">🎯 ${item.name.replace(/^《|》$/g, '')}</div>
+        <div style="font-size:40px;margin-bottom:16px;">${results.correct}/${results.total}</div>
+        <div style="font-size:14px;color:var(--text-muted);margin-bottom:12px;">✅ 答对 ${results.correct} 题　❌ 答错 ${results.wrong} 题</div>
+        <div style="display:inline-block;padding:6px 16px;border-radius:16px;font-size:14px;font-weight:500;background:${tagColors[rating]}22;color:${tagColors[rating]};margin-bottom:20px;">自动标记：${ratingNames[rating]}</div>
+      </div>
+      <button id="quiz-next-note" style="display:block;width:100%;padding:10px;border:none;border-radius:6px;background:var(--interactive-accent);color:var(--text-on-accent);cursor:pointer;font-size:13px;font-weight:500;">${opts.nextLabel || '完成复习'}</button>
+      <button id="quiz-end-review" style="display:block;width:100%;padding:10px;margin-top:8px;border:1px solid var(--background-modifier-border);border-radius:6px;background:var(--background-secondary);color:var(--text-muted);cursor:pointer;font-size:13px;">结束这次复习</button>
+    `;
+  },
+
   /** 做题复习循环（源码 L587-657 逐字；经做题会话契约驱动做题家，不直写内部状态） */
   async quizReviewLoop(items: ReviewItem[], index: number, batchQuestions: Record<string, any[]>): Promise<void> {
     const app = getApp();
@@ -199,8 +356,29 @@ export const reviewApp = {
         const ratingNames: Record<string, string> = { again: '忘了', hard: '困难', good: '一般', easy: '简单' };
         const tagColors: Record<string, string> = { again: '#ff4757', hard: '#ff9f43', good: '#2ed573', easy: '#7bed9f' };
 
-        await this.markReview(item.filePath, rating);
+        // 首次评级照常写排期/历史（预期判断标准，ADR-0044）；未通过联动待重做标记
+        await this.markReview(item.filePath, rating, { autoPending: true });
         await this.applyReviewStyles(app);
+
+        // ticket 098：自动评级未通过（忘了/困难）→ 结果卡唯一按钮「复习此笔记」+ 强制打开笔记，本次会话中断
+        if (rating === 'again' || rating === 'hard') {
+          if (quiz.popup) {
+            quiz.popup.innerHTML = this.buildFailCard(item, results, rating);
+            await new Promise<void>((resolveClick) => {
+              quiz.popup!.querySelector('#quiz-review-note')!.onclick = () => {
+                quiz.close();
+                resolveClick();
+              };
+            });
+            const file = app.vault.getAbstractFileByPath(item.filePath);
+            if (file) {
+              const leaf = app.workspace.getLeaf(false);
+              await leaf.openFile(file as TFile);
+            }
+          }
+          resolve();
+          return;
+        }
 
         // 在弹窗内显示结果（弹窗不关闭）
         const popup = quiz.popup;
@@ -421,6 +599,13 @@ export const reviewApp = {
     } catch (e) {
       console.error('复习计划检查出错:', e);
     }
+  },
+
+  /** 监听文件夹存量收编确认（ticket 098；经 watcher 委托，打开复习面板时调用） */
+  async promptBatchAddAll(): Promise<void> {
+    const { reviewWatcher } = await import('./index');
+    if (!reviewWatcher) return;
+    await reviewWatcher.promptBatchAddAll();
   },
 
   /** 刷新面板（源码 refreshPanel） */

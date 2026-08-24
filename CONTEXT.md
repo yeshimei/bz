@@ -81,11 +81,26 @@ _Avoid_: 抓海报、豆瓣补全、poster fetch
 
 **AI Agent**: 笔记 ⇄ 备忘录/收藏本 自动同步 + AI 剪藏匹配。常驻监听 vault 事件（rename/delete/create）。权限模型：非 AI 操作静默直改；仅 AI 剪藏匹配弹窗批准。
 
-**复习计划 (Review Plan)**: FSRS v4 算法驱动的复习管理，数据 `CONFIG/STORAGE/review.json`，右上角图标调用做题家。
+**复习计划 (Review Plan)**: FSRS v4 算法驱动的复习管理，数据 `CONFIG/STORAGE/review.json`。可配置多个「监听文件夹」自动收编笔记；做题会话自动评级未通过（忘了/困难）时结果卡变唯一按钮「复习此笔记」并置「待重做」，重做到通过才进下篇（首次评级=唯一排期来源，ADR-0044）；「做题家」命令入口已退役（ADR-0045），仅作复习引擎。
 
-**做题家 (Quiz Master)**: 统一题库 `CONFIG/STORAGE/quiz.json`，多选支持，完成状态记录，自动替换全完成的笔记。
+**做题家 (Quiz Master)**: 统一题库 `CONFIG/STORAGE/quiz.json`，多选支持，完成状态记录，自动替换全完成的笔记。命令入口 `bz-quiz-open`/`bz-quiz-update` 已删除注册（ADR-0045），仅经复习计划「做题决定难度」驱动（startReviewSession/endReviewSession 契约）；多选答对计数已修复（ADR-0044 唯一解冻项）。
 
 **做题会话 (Quiz Session)**: 做题家对复习计划暴露的联动契约（`startReviewSession`/`endReviewSession` + `QuizReviewResults` 回调）。复习计划只经做题会话驱动做题家，禁止直接改写其内部状态（_reviewMode/currentQuestions 等）。
+
+**监听文件夹 (Watched Folder)**: 复习计划设置项（data.json `reviewWatchedFolders` 数组）——vault 内目录列表，目录内未加入且未排除的 .md 自动进入复习计划；新增目录时先弹「批量收编确认」报存量数量用户确认后才批量加入。递归生效。
+_Avoid_: 复习目录、自动加入文件夹
+
+**排除笔记 (Excluded Note)**: 不参与监听自动加入的笔记（data.json `reviewExcludedNotes` 路径数组）——手动移出（监听目录内）、删除/改名确认「移除」或「不更新」、批量收编取消，四类表态都落此名单；手动 ➕/命令加入不受限。
+_Avoid_: 黑名单、忽略列表
+
+**待重做 (Pending Redo)**: 做题会话首次评级 ∈ {忘了, 困难} 后 ReviewItem 上的可选标记（`pendingRedo`，旧数据零迁移）——置位即需重做到通过；重做队列 FIFO 优先于逾期队列；通过只清标记不写排期（ADR-0044）。
+_Avoid_: 困难标记、待复习
+
+**首次评级 (First Rating)**: 做题会话第一次结束的自动评级——本轮复习唯一的 FSRS 排期来源（ADR-0044）；后续重做的评级仅判定通过/未通过，不写任何 FSRS 数据。
+_Avoid_: 预期难度、期望评级
+
+**挂起记录 (Parked Record)**: 复习条目文件在 vault 中找不到（删除后保留、改名/移动后未更新路径）的保留态——列表以删除线展示，不计逾期、不进复习队列，文件恢复（同路径重建/路径更新）即复活；抽屉可手动移出清理。
+_Avoid_: 幽灵条目、孤儿记录
 
 **闪念 (Flash Thought)**: 右侧窄窗 · 自动吸附缩起 · 悬停展开 · 向量检索增强（Ollama bge-m3）· AI 对话（Ollama qwen2.5 / DeepSeek）。常驻监听光标移动。
 

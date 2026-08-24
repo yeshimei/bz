@@ -62,7 +62,6 @@ export class UIManager {
         <button id="review-btn-start" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">▶️</button>
         <button id="review-btn-search" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">🔍</button>
         <button id="review-btn-archive" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">📁</button>
-        <button id="review-btn-quiz" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">🎯</button>
         <button id="review-btn-settings" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">⚙️</button>
         <button id="review-btn-close" class="bz-win-close" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0;width:21px;height:25px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">❌</button>
       </div>
@@ -132,9 +131,7 @@ export class UIManager {
       btn.textContent = this.showArchived ? '📂' : '📁';
       this.refreshPanel();
     });
-    header.querySelector('#review-btn-quiz')!.addEventListener('click', () => {
-      (app as any).commands?.executeCommandById?.('bz-quiz-open');
-    });
+
     // 复习计划设置弹窗（ADR-0009：检查间隔/逾期通知 + 做题家 5 项）
     header.querySelector('#review-btn-settings')!.addEventListener('click', () => {
       openSettingsModal({
@@ -223,6 +220,50 @@ export class UIManager {
           await saveSettings();
         });
       });
+    // ticket 098：监听文件夹（多目录、递归）+ 批量收编确认
+    new Setting(el)
+      .setName('监听文件夹')
+      .setDesc('目录内未加入且未排除的 .md 自动进入复习计划（递归）；新增目录会先弹存量确认，取消则该批不再自动加入');
+    const watchBox = document.createElement('div');
+    watchBox.id = 'review-watch-folders';
+    el.appendChild(watchBox);
+    const renderWatchRows = () => {
+      watchBox.innerHTML = '';
+      const folders = s.reviewWatchedFolders || [];
+      folders.forEach((folder, idx) => {
+        new Setting(watchBox)
+          .setName(`监听目录 ${idx + 1}`)
+          .addText((t) =>
+            t
+              .setValue(folder || '')
+              .setPlaceholder('vault 内目录路径，如 卡片盒/复习')
+              .onChange(async (v) => {
+                s.reviewWatchedFolders[idx] = v.trim();
+                await saveSettings();
+              })
+          )
+          .addButton((b) =>
+            b.setButtonText('移除').onClick(async () => {
+              s.reviewWatchedFolders.splice(idx, 1);
+              await saveSettings();
+              renderWatchRows();
+            })
+          );
+      });
+      new Setting(watchBox)
+        .setName('')
+        .addButton((b) =>
+          b
+            .setButtonText('＋ 添加监听文件夹')
+            .onClick(async () => {
+              s.reviewWatchedFolders = [...(s.reviewWatchedFolders || []), ''];
+              await saveSettings();
+              renderWatchRows();
+            })
+        );
+    };
+    renderWatchRows();
+
     if (isMobileEnv()) {
       new Setting(el)
         .setName('移动端默认全屏')
@@ -244,12 +285,24 @@ export class UIManager {
     this.mask.style.display = 'block';
     this.popup.style.display = 'flex';
     this.refreshPanel();
-    // 自动更新题库（异步，不阻塞界面）
-    try {
-      (this.app as any).commands?.executeCommandById?.('bz-quiz-update');
-    } catch {
-      /* ignore */
-    }
+    // 自动更新题库（做题家命令入口已退役 → 模块直调，ADR-0045；异步不阻塞界面）
+    void (async () => {
+      try {
+        const { quizUpdate } = await import('../quiz');
+        await quizUpdate(this.app);
+      } catch {
+        /* ignore */
+      }
+    })();
+    // 监听文件夹存量收编确认（ticket 098：首次弹窗报存量，确认/取消后不重复打扰）
+    void (async () => {
+      try {
+        const { reviewApp } = await import('./app');
+        await reviewApp.promptBatchAddAll();
+      } catch {
+        /* ignore */
+      }
+    })();
   }
 
   hideMain(): void {
@@ -392,8 +445,14 @@ export class UIManager {
     content.className = 'review-content';
     content.textContent = item.name.replace(/^《|》$/g, '');
     content.title = item.filePath;
+    // ticket 098：挂起记录（文件不存在）→ 删除线
+    if (item.isMissing) content.classList.add('review-missing');
     // 双击打开对应笔记（用户拍板保留双击；单击打开收敛进抽屉）
     content.addEventListener('dblclick', () => {
+      if (item.isMissing) {
+        notice('文件已删除');
+        return;
+      }
       void this.openItemFile(item);
     });
     card.appendChild(content);
@@ -451,6 +510,7 @@ export class UIManager {
 
   /** 阶段标签文本（卡片标签与抽屉头部共用） */
   private stageLabel(item: ReviewItem): string {
+    if (item.isMissing) return '不存在';
     if (item.completed) return '✅ 已完成';
     if (item.isOverdue) {
       return item.phase === 'fsrs' ? '⚠️ 逾期 (FSRS)' : `⚠️ 逾期 (${FSRS_FIRST_TEXTS[(item.currentStage || 1) - 1]})`;
@@ -461,6 +521,7 @@ export class UIManager {
 
   /** 到期时间文本（卡片时间与抽屉头部共用） */
   private dueLabel(item: ReviewItem): string {
+    if (item.isMissing) return '文件缺失';
     if (item.isCompleted) return '✅ 完成';
     if (item.nextReviewDate) {
       const diff = new Date(item.nextReviewDate).getTime() - Date.now();
@@ -493,8 +554,8 @@ export class UIManager {
   private attachDrawerActions(card: HTMLElement, item: ReviewItem): void {
     const actions: ItemAction[] = [];
 
-    // 开始复习（未完成；keepOpen + companion 难度弹窗，选完难度关抽屉——列表已重绘）
-    if (!item.isCompleted && !item.completed) {
+    // 开始复习（未完成且文件存在；keepOpen + companion 难度弹窗，选完难度关抽屉——列表已重绘）
+    if (!item.isCompleted && !item.completed && !item.isMissing) {
       actions.push({
         icon: 'play',
         label: '开始复习',
