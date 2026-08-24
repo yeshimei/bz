@@ -20,7 +20,7 @@ import { syncPomodoroStatusBar } from './statusbar';
 import { todayCount, last7Days } from './stats';
 import { PRESETS, CUSTOM_PRESET_ID } from './config';
 import type { PomodoroState, HistoryEntry, Durations, PomodoroOptions, Phase, PomodoroAction, PomodoroEvent } from './state';
-import { transition, recover, createInitialState, DEFAULT_DURATIONS, phaseDurationSec } from './state';
+import { transition, recover, createInitialState, phaseDurationSec } from './state';
 import { pad2 } from '../core/utils';
 import { notifyPomodoroAction } from '../smartcat';
 
@@ -70,7 +70,17 @@ function phaseText(phase: Phase, count: number, d: Durations): string {
   return '🍅 番茄钟';
 }
 
-/** 阶段开始（手动开始/继续）：toast + 提示音（专注/短休/长休各一种，听声即知状态） */
+/** 阶段开始提示声（专注/短休/长休各一种，听声即知状态；声音开关关闭时静默） */
+function playPhaseSound(phase: Phase): void {
+  const s = tryGetSettings();
+  if (s.pomodoroSound !== false) {
+    const kind: SoundKind =
+      phase === 'focus' ? 'focus-start' : phase === 'long-break' ? 'long-break-start' : 'short-break-start';
+    playSound(kind, pomodoroVolume());
+  }
+}
+
+/** 阶段开始（手动开始/继续）：toast + 提示音 */
 function notifyPhaseStarted(phase: Phase): void {
   const d = durations();
   if (phase === 'focus') {
@@ -80,12 +90,7 @@ function notifyPhaseStarted(phase: Phase): void {
   } else {
     notice(`休息开始：${d.shortBreakMin} 分钟`, 'success');
   }
-  const s = tryGetSettings();
-  if (s.pomodoroSound !== false) {
-    const kind: SoundKind =
-      phase === 'focus' ? 'focus-start' : phase === 'long-break' ? 'long-break-start' : 'short-break-start';
-    playSound(kind, pomodoroVolume());
-  }
+  playPhaseSound(phase);
 }
 
 /** 暂停（手动）：toast + 提示音 */
@@ -104,13 +109,8 @@ function notifyPhaseComplete(e: Extract<PomodoroEvent, { type: 'phase-completed'
   } else {
     notice('休息结束：开始专注', 'success');
   }
-  // 声音 = 新阶段开始提示（专注/短休/长休各一声，听声即知状态，无需打开弹窗）
-  const s = tryGetSettings();
-  if (s.pomodoroSound !== false) {
-    const kind: SoundKind =
-      e.nextPhase === 'focus' ? 'focus-start' : e.nextPhase === 'long-break' ? 'long-break-start' : 'short-break-start';
-    playSound(kind, pomodoroVolume());
-  }
+  // 声音 = 新阶段开始提示（听声即知状态，无需打开弹窗）
+  playPhaseSound(e.nextPhase);
 }
 
 /** 提示音音量（0-100，默认最大；旧设置无字段 → 100） */
@@ -457,7 +457,7 @@ function openPomodoroSettings(): void {
 function bindEvents(): void {
   const startBtn = document.getElementById('pomodoro-btn-start')!;
   startBtn.addEventListener('click', () => applyAction(state.paused ? 'resume' : state.endTime !== null ? 'pause' : 'start'));
-  document.getElementById('pomodoro-btn-reset')!.addEventListener('click', resetPomodoro);
+  document.getElementById('pomodoro-btn-reset')!.addEventListener('click', () => applyAction('reset'));
   document.getElementById('pomodoro-btn-skip')!.addEventListener('click', () => applyAction('skip'));
   const settingsBtn = document.getElementById('pomodoro-btn-settings')!;
   // 设置入口：默认隐藏，hover 面板才显示（幽灵图标）
@@ -545,11 +545,6 @@ export async function ensurePomodoro(app: App): Promise<void> {
       if (s.pomodoroRestoreMode === 'popup') void openPomodoro(app);
     }
   }
-}
-
-/** 重置：当前阶段回满时长并停止（reset 按钮） */
-function resetPomodoro(): void {
-  applyAction('reset');
 }
 
 /** 关闭弹窗：移除 DOM，计时后台继续（tick 常驻） */
