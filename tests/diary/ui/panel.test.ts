@@ -266,9 +266,10 @@ describe('设置读取（ticket 09 前置）', () => {
     (settingsBtn as HTMLElement).click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect(popup.textContent).toContain('日记本设置');
-    // 分组卡片结构：3 组（目录/显示/默认视图；移动端组桌面不渲染），徽标回填项数
-    const groups = [...popup.querySelectorAll('.bz-settings-group-head')].map((el) => (el as HTMLElement).textContent!.trim());
-    expect(groups).toEqual(['📂目录4 项', '👁️显示5 项', '🖥️默认视图3 项']);
+    // 分组卡片结构：3 组（目录/显示/默认视图；移动端组桌面不渲染），原生图标 + 徽标回填项数
+    const heads = [...popup.querySelectorAll('.bz-settings-group-head')];
+    expect(heads.map((el) => (el as HTMLElement).textContent!.trim())).toEqual(['目录4 项', '显示5 项', '默认视图3 项']);
+    expect(heads.map((el) => el.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon'))).toEqual(['folder-open', 'eye', 'monitor']);
     const names = [...popup.querySelectorAll('.bz-settings-group-body .setting-item')].map((el) => (el as HTMLElement).dataset.name);
     expect(names).toEqual([
       '日记目录', '影视目录', '信目录', '每批加载数量',
