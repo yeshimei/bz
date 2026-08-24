@@ -576,26 +576,32 @@ describe('设置弹窗与新建默认值（第 9 轮设置扩展）', () => {
     vi.useRealTimers();
   });
 
-  it('⚙️ 设置弹窗含 9 项（提醒/显示/新建/场景分组）', async () => {
+  it('⚙️ 设置弹窗含 9 项（提醒/显示/新建/场景列表分组卡片）', async () => {
     const vault = new MockVault();
     await initApp(vault);
     UIManager.showMain(null, false);
     const settingsBtn = [...document.querySelectorAll('#todo-popup button')].find((b) => b.className === 'todo-btn-settings')!;
     (settingsBtn as HTMLElement).click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
-    const names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
-    // 9 项设置 + 4 个分组标题 = 13 个 setting-item
-    expect(names.length).toBe(13);
-    // 项名称（润色后的启动弹窗文案）
-    expect(names).toContain('启动时自动弹出');
-    expect(names).toContain('打开笔记自动提醒');
-    expect(names).toContain('默认排序方式');
-    expect(names).toContain('默认显示归档');
-    expect(names).toContain('到期时间格式');
-    expect(names).toContain('新条目默认优先级');
-    expect(names).toContain('新条目默认场景');
-    expect(names).toContain('完成后自动归档');
-    expect(names).toContain('场景');
+    // 分组卡片：4 个组头（桌面端无移动端组）+ 组内 9 项设置；组头不是 .setting-item
+    const heads = [...popup.querySelectorAll('.bz-settings-group-head')];
+    expect(heads.map((el) => el.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon'))).toEqual(['bell', 'eye', 'pencil-line', 'tags']);
+    expect([...popup.querySelectorAll('.bz-settings-group-name')].map((el) => el.textContent)).toEqual(['提醒', '显示', '新建', '场景列表']);
+    expect([...popup.querySelectorAll('.bz-settings-group-count')].map((el) => el.textContent)).toEqual(['2 项', '3 项', '3 项', '1 项']);
+    const names = [...popup.querySelectorAll('.bz-settings-group-body .setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    // 9 项设置
+    expect(names.length).toBe(9);
+    expect(names).toEqual([
+      '启动时自动弹出',
+      '打开笔记自动提醒',
+      '默认排序方式',
+      '默认显示归档',
+      '到期时间格式',
+      '新条目默认优先级',
+      '新条目默认场景',
+      '完成后自动归档',
+      '自定义场景列表',
+    ]);
     // 已删除：到期轮询（到期通知/到期检查间隔）与剪贴板监听/平台映射（ticket 59）
     expect(names).not.toContain('到期通知');
     expect(names).not.toContain('到期检查间隔（秒）');
