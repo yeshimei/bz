@@ -212,7 +212,7 @@ describe('UIManager', () => {
     expect(names()).toContain('复习间隔缩放');
     // 界面组
     expect(names()).toContain('文件树标记');
-    // 分组项数徽标（隐藏项不计；自动化组的「＋ 添加监听文件夹」操作行同为 .setting-item）
+    // 分组项数徽标（隐藏项不计；自动化组的「＋ 添加监听文件夹」为纯操作行，挂 bz-setting-action-row 豁免）
     const badge = (groupName: string) =>
       [...popup.querySelectorAll('.bz-settings-group')].find(
         (g) => g.querySelector('.bz-settings-group-name')!.textContent === groupName
@@ -220,7 +220,7 @@ describe('UIManager', () => {
     expect(badge('检查提醒')).toBe('2 项');
     expect(badge('做题家')).toBe('5 项');
     expect(badge('复习节奏')).toBe('2 项');
-    expect(badge('自动化')).toBe('2 项');
+    expect(badge('自动化')).toBe('1 项');
     expect(badge('界面')).toBe('1 项');
     ui.destroy();
   });
