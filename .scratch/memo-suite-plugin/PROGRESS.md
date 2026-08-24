@@ -1,3 +1,16 @@
+## 2026-08-26 复习计划设置重构（ticket 100；worktree/review-settings-ux 合并 master 5fb603f，构建部署未推送）
+
+**状态：全量 1890 绿（library-source 3 例历史并发 flaky 除外，单跑恒绿）+ tsc 0；fast-forward 合并 master + 产物入库 c55d935；本地领先 origin 4 笔（用户拍板暂不推送）**
+
+- ✅ **到期提醒真正生效**（原来「启用逾期通知」是假开关：enableAutoNotify 默认 true 但零消费点，checkOverdueAndNotify 只刷染色+轮询硬编码 60s 且仅在 ensureReview 懒加载后存在）：重写 checkOverdueAndNotify = 染色保留 + 差集通知（_notifiedOverdue 集合；新增逾期弹聚合通知、移出逾期剔除重现提醒）；启动首查=晨报汇总；main.ts onLayoutReady 按 enableAutoNotify!==false 常驻 ensureReview（ADR-0003 例外按设置注册，先例 auto-summary/ai-agent）
+- ✅ **删除死设置**：autoCheckInterval「检查间隔（秒）」零消费点，键退役（接口+默认值删，data.json 残留忽略先例）
+- ✅ **设置面板分组重构**：五组「到期提醒/复习方式(+出题子组，随用做题测难度显隐)/复习节奏/自动化/界面」+ `.bz-settings-group-title` 组头样式；文案全量白话化（标题零符号、描述一句大白话）；「做题决定难度」→「用做题测难度」（键 forceQuizForReview 不动）
+- ✅ **新选项 4 个**：① 每日复习上限 reviewDailyLimit（默认 0=不限；autoJumpOverdue 逾期队列 slice 截断，截断时 info 提示，待重做队列不受限）；② 复习间隔缩放 reviewIntervalScale（默认 1、范围 0.1-5；FSRS 相位间隔 × 系数，阶梯阶段固定表不受影响；ADR-0046 解冻声明——关键发现：幂律 d=0.9 不参与间隔计算，暴露「遗忘率」是假旋钮，改乘数最干净）；③ 文件树标记 reviewTreeBadge（默认开；applyReviewStyles 开头关判断）；④ 新笔记自动加入提醒 reviewAutoAddNotice（默认开；onVaultCreate 3 秒窗口合并一条通知，超 3 篇「等 M 篇」，关=静默收编；REVIEW_AUTO_ADD_MERGE_MS 测试可注入）
+- ✅ **测试**：app.test 到期提醒四态（晨报/去重/移出重现/开关关）+ 每天上限截断 + FSRS scale 翻倍减半（stage 12 关键：stage 9 会走阶梯分支）+ 文件树标记关闭；watch.test 合并通知三态；ui.test 分组标题+新文案+无检查间隔；settings 新键断言
+- ✅ **文档**：ADR-0046、CONTEXT.md 复习计划词条（新 4 设置项）+ 做题家词条「用做题测难度」、spec.md、issue 100
+- ⚠️ 遗留 flaky 3+1：library-source 3 例（并发下）+ memo/renderer-extra createDueTag 1 例（时间边界，单跑即挂——与 ticket 100 零关联，master 既有）
+- ⏳ 待办：真机冒烟（逾期弹通知/晨报、设置分组展示、每日上限截断、间隔缩放排期、无染色文件树、批量收编合并通知）；推送 4 笔待网络恢复
+
 ## 2026-08-26 复习/做题体验三改（ticket 099；worktree/review-quiz-ux 合并 master，构建部署）
 
 **状态：全量 1885 测试通过（126 文件）+ tsc 0 错误；fast-forward 合并 master，构建直出 vault（main.js 含 confirmBatchAddForFolder/bz-review-folder-mask 标记核对）**

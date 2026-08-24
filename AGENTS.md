@@ -90,7 +90,6 @@
      若 worktree 分支基点已过期产生分歧，先 `git rebase worktree/<slug>` 到最新 master 再 fast-forward 合并，或保留 merge commit。
   6. 合并后重新测试，构建并部署。
   7. 合并验证通过后**清理 worktree**：`git worktree remove ../.dsh-worktrees/<分支名>` + `git branch -d worktree/<slug>`（未完全合并时 `-d` 自动拒绝，勿用 `-D` 强删）。
-- **并行改动处理**：只暂存本任务相关文件。
 - **Spec 驱动开发**  
   - 先更新 `.scratch/memo-suite-plugin/spec.md`。  
   - 任务状态记录在 `issues/NN-*.md`。  

@@ -321,7 +321,7 @@ otifyMemoAction（方法监听，一次动作一条）+ **每日到期扫描**�
 | `window._bookSettings` | 书库 | 书库域模块状态 |
 | `window.__belongingsCommandRegistered`、`_newsCommandRegistered` 等 | 命令防重 | 插件生命周期管理（onload 注册一次/onunload 清理），不再需要标志位 |
 
-### 设置项总表（源码提取，按 ADR-0009 归属重排）
+### 设置项总表（源码提取，按 ADR-0009 归属重排；文案要求遵循 CONTEXT.md「设置项文案规范」——标题零符号直说用途、描述一句大白话无符号）
 
 **全局设置页（单页平铺，两区块）**：
 - **🤖 AI**：aiProvider（服务商下拉）、deepseekApiKey、opencodeGoApiKey（AI Agent 4 项不暴露：aiAgentEnabled/enableAIClipMatch/aiAgentWatchedFolders/aiAgentModel 字段保留，默认值兜底）
@@ -336,7 +336,7 @@ otifyMemoAction（方法监听，一次动作一条）+ **每日到期扫描**�
 - **收藏本**：1 项「移动端默认全屏」（仅移动端显示；桌面仍空态，见下跨域条目）
 - **书库**：libraryFolderPath、libraryNotePath、bookTag、showFileSize、showReadingTime、showHighlights、showThinks、showReview（showCategory 字段保留无 UI）
 - **影视**（6 项）：movieFolderPath、moviePageSize（海报抓取仅文字提示）、movieDefaultSort（默认排序 date-desc/…/name-desc）、movieDefaultTypeFilter（默认类型筛选，空=全部）、movieDefaultStatusFilter（默认状态筛选 全部/想看/在看/已看）、movieRatingDisplay（已看卡片评分 stars/number）
-- **复习计划（含做题家）**：autoCheckInterval、enableAutoNotify + 做题家 5 项（enableMultipleChoice、questionsPerNote、shuffleQuestions、difficulty、forceQuizForReview；做题家 4 项（除 forceQuizForReview）仅在其开启时动态显示）；**forceQuizForReview（做题决定难度）控制复习流程**：开启 → 开始复习（bz-review-start/跳转逾期）自动批量出题做题，正确率自动定级；关闭 → 普通复习（跳转笔记逐篇评级）；开启时做题家未初始化（ai 为 null）先 ensureQuiz 注入，出题失败/无题目 → 降级普通复习并警告
+- **复习计划（含做题家，ticket 100 重构后）**：enableAutoNotify（到期提醒，默认开——开启时插件启动即常驻轮询，有逾期笔记弹聚合通知）、reviewAutoAddNotice（新笔记自动加入提醒，默认开，3 秒窗口合并一条）、forceQuizForReview（用做题测难度，**做题家 4 项仅在其开启时显示**：enableMultipleChoice 允许多选题、questionsPerNote 每篇笔记出题数量、shuffleQuestions 打乱出题顺序、difficulty 出题难度）、reviewDailyLimit（每日复习上限，0=不限，逾期队列截断）、reviewIntervalScale（复习间隔缩放，默认 1、范围 0.1-5，FSRS 相位间隔乘系数，ADR-0046）、reviewWatchedFolders（监听文件夹 chip）、reviewTreeBadge（文件树标记，默认开）、reviewExcludedNotes（排除名单）；**autoCheckInterval（检查间隔）已于 ticket 100 删除**（死设置，data.json 残留忽略）。forceQuizForReview（用做题测难度）控制复习流程：开启 → 开始复习（bz-review-start/跳转逾期）自动批量出题做题，正确率自动定级；关闭 → 普通复习（跳转笔记逐篇评级）；开启时做题家未初始化（ai 为 null）先 ensureQuiz 注入，出题失败/无题目 → 降级普通复习并警告
 - **番茄钟（12 项）**：pomodoroPreset（12 档：11 预设+自定义）、pomodoroWorkMin/pomodoroShortBreakMin/pomodoroLongBreakMin（自定义时长，预设=自定义时动态显示）、pomodoroLongBreakInterval（N，默认 4）、pomodoroForceFocus（默认关）、pomodoroAutoCycle（默认关）、pomodoroAutoSkipBreak（默认关）、pomodoroSound（默认开）、pomodoroVolume（音量 0-100，默认 100 最大，设置弹窗 slider+试听）、pomodoroRestoreMode（启动恢复方式：background 后台继续 / popup 正在倒计时则自动弹窗；恢复继续弹「番茄钟继续：…还剩 mm:ss」通知）、pomodoroAutoPauseOnHide（后台自动暂停，默认开，ticket 62：窗口 hidden 时主番茄钟暂停、恢复自动继续；blur 不触发）。读书联动与目标选择已移除（ticket 63：pomodoroEpubAuto/pomodoroEpubMode 删除）
 - **闪念（17 项全量，含 AI 项）**：OLLAMA_URL、EMBEDDING_MODEL、META_PATH、VEC_PATH、TOP_K、CHAT_TOP_K、CHUNK_MIN_LENGTH、ALLOW_PATHS、CONCURRENCY、CONTEXT_LIMIT、DEBOUNCE_DELAY、CURSOR_POLL_INTERVAL、OLLAMA_CHAT_MODEL、DEEPSEEK_MODEL、DEFAULT_USE_DEEPSEEK、MAX_HISTORY、OLLAMA_REMOTE_URL
 
