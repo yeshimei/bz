@@ -68,6 +68,7 @@
 
 - 测试：Vitest + jsdom；新功能必须包含数据层+UI层测试，smoke.test.ts同步验证。
 - 异步按项目约定处理，依赖注入使用已有 test helper。
+- 全量测试已配置 `retry`（vitest.config.ts）：多个 worktree 并发跑测试时的 CPU 争抢抖动会被自动吸收；若仍出现失败，先排查是否为真 bug，**勿以「已知 flaky」豁免**。
 - 完成门禁（必须全绿）：
   - Ticket验收 + 契约不破坏
   - pnpm test + pnpm exec tsc --noEmit
@@ -77,14 +78,18 @@
 
 ## Git / 工作流
 
-- **分支与提交**：主分支 `master`，提交信息遵循 Conventional Commits。
-- **Worktree 流程（DSH）**  
-  1. 会话开始时，在主仓库**外部**创建 worktree：`../.dsh-worktrees/<分支名>`，分支名 `worktree/<slug>`。  
-  2. worktree 内依赖用 `pnpm install`（store 在 `D:\.pnpm-store\`，与仓库/worktree 同卷硬链接，秒级完成；首次在本机装过即无需再从网络拉取）。  
-  3. 所有改动限制在该 worktree 内。  
-  4. 测试全绿后提交到 `worktree/<slug>`。  
-  5. 切回主工作区（`master`），**先** `git fetch origin master`，**再** `git merge worktree/<slug>`
-  6. 合并后重新测试，构建并部署
+- **分支与提交**：主分支 `master`，提交信息遵循 Conventional Commits（`feat:`/`fix:`/`chore:` 等 + 简短说明，功能改动附 ticket 号）。
+- **Push**：master 有 remote（origin）且需要同步时，合并验证通过后 `git push origin master`；本地为准时可跳过，但不要在文档里写 fetch 却不 push。
+- **Worktree 流程（DSH）**
+  1. 创建 worktree 前先对齐基线：主仓库 `git fetch origin && git pull --ff-only origin master`（无 remote 则省略），再创建 `git worktree add ../.dsh-worktrees/<分支名> -b worktree/<slug>`——确保分支从**最新 master** 分叉，不基于过期基线。
+  2. worktree 内依赖用 `pnpm install`（store 在 `D:\.pnpm-store\`，与仓库/worktree 同卷硬链接，秒级完成；首次在本机装过即无需再从网络拉取）。
+  3. 所有改动限制在该 worktree 内。
+  4. 测试全绿后提交到 `worktree/<slug>`。
+  5. 切回主仓库，**先确认工作区干净**（未提交改动先 stash/提交），再合并：
+     `git pull --ff-only origin master` → `git merge worktree/<slug>`
+     若 worktree 分支基点已过期产生分歧，先 `git rebase worktree/<slug>` 到最新 master 再 fast-forward 合并，或保留 merge commit。
+  6. 合并后重新测试，构建并部署。
+  7. 合并验证通过后**清理 worktree**：`git worktree remove ../.dsh-worktrees/<分支名>` + `git branch -d worktree/<slug>`（未完全合并时 `-d` 自动拒绝，勿用 `-D` 强删）。
 - **并行改动处理**：只暂存本任务相关文件。
 - **Spec 驱动开发**  
   - 先更新 `.scratch/memo-suite-plugin/spec.md`。  
