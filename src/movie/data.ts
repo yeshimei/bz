@@ -38,11 +38,10 @@ export function rebuildItems(app: App): MovieItem[] {
       const watchDate = fm['观影日期']?.toString() ?? null;
       const rating = fm['评分'] !== undefined ? Number(fm['评分']) : null;
 
-      // 状态由评分推断（无独立状态字段）：-1=想看 / 0=在看 / >0=已看 / 无评分按已看
+      // 状态由评分推断（无独立状态字段）：-1=想看 / 0=在看 / 其余（>0 或无评分）=已看
       let status: number;
       if (rating === -1) status = STATUS_WANT;
       else if (rating === 0) status = STATUS_WATCHING;
-      else if ((rating ?? 0) > 0) status = STATUS_WATCHED;
       else status = STATUS_WATCHED;
 
       newItems.push({

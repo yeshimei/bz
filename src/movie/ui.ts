@@ -9,7 +9,7 @@ import { formatRelativeTime, pad2 } from '../core/utils';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { openSettingsModal, createSettingsGroup } from '../core/settings-modal';
 import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
-import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, getTypeColor, getStarRating, TYPE_GROUPS, ALL_TAGS, getGroupForTag } from './constants';
+import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, getTypeColor, getStarRating, ALL_TAGS, getGroupForTag } from './constants';
 import { M, takeHomeFilmStatus, type MovieItem } from './state';
 import { getDisplayItems, refreshDataAndView, rebuildItems } from './data';
 import { attachItemActions, refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, type ItemAction } from '../core/item-actions';
@@ -334,28 +334,6 @@ function createStatusGroup(initial: number, onChange: (status: number) => void):
   });
   container.appendChild(buttonGroup);
   return { container };
-}
-
-/** 字段输入行（季集/评分/观影日期共用）：返回 {container, input} */
-function createFieldRow(opts: { type: string; placeholder: string; min?: string; max?: string; step?: string; value?: string; extraCss?: string }): { container: HTMLElement; input: HTMLInputElement } {
-  const container = document.createElement('div');
-  container.style.cssText = 'display: flex; gap: 8px; align-items: center;';
-  const input = document.createElement('input');
-  input.type = opts.type;
-  input.placeholder = opts.placeholder;
-  if (opts.min) input.min = opts.min;
-  if (opts.max) input.max = opts.max;
-  if (opts.step) input.step = opts.step;
-  if (opts.value) input.value = opts.value;
-  input.style.cssText = `
-    flex: 1; padding: 6px 8px; border-radius: 6px;
-    border: 1px solid var(--background-modifier-border);
-    background: var(--background-primary); color: var(--text-normal);
-    font-size: 0.9rem;
-    ${opts.extraCss || ''}
-  `;
-  container.appendChild(input);
-  return { container, input };
 }
 
 /** 多行文本输入行（影评） */

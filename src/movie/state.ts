@@ -31,7 +31,6 @@ export interface MovieState {
   editOverlay: HTMLElement | null;
   recommendOverlay: HTMLElement | null;
   appRef: App | null;
-  quickAddApiRef: any;
   folderPath: string;
   renderListFn: (() => void) | null;
   loadedCount: number;
@@ -53,7 +52,6 @@ export const M: MovieState = {
   editOverlay: null,
   recommendOverlay: null,
   appRef: null,
-  quickAddApiRef: null,
   folderPath: '我的/影视',
   renderListFn: null,
   loadedCount: 0,
@@ -88,7 +86,6 @@ export function resetMovieState(): void {
   M.editOverlay = null;
   M.recommendOverlay = null;
   M.appRef = null;
-  M.quickAddApiRef = null;
   M.folderPath = '我的/影视';
   M.renderListFn = null;
   M.loadedCount = 0;
