@@ -23,6 +23,7 @@ import {
   Platform as MockPlatform,
 } from '../../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../../mock-vault';
+import * as domainBus from '../../../src/core/domain-bus';
 
 let vault: MockVault;
 let app: any;
@@ -272,14 +273,18 @@ describe('init 幂等重入与异常兜底', () => {
     expect(document.getElementById('diary-tag-filter')!.style.visibility).toBe('visible');
   });
 
-  it('注册文件监听失败 → 「日记本初始化失败」错误通知', async () => {
+  it('域事件总线订阅失败 → 「日记本初始化失败」错误通知（event-bus 换线后监听经 onDomainEvent 接线）', async () => {
     document.body.innerHTML = ''; // 强制走完整初始化路径
     state.events.fileListenerAttached = false;
-    vi.spyOn(app.vault, 'on').mockImplementation(() => {
-      throw new Error('监听挂了');
+    const busSpy = vi.spyOn(domainBus, 'onDomainEvent').mockImplementation(() => {
+      throw new Error('总线挂了');
     });
-    await init({ registerEvent: () => {} });
-    expect(hasNotice(/日记本初始化失败/)).toBe(true);
+    try {
+      await init({ registerEvent: () => {} });
+      expect(hasNotice(/日记本初始化失败/)).toBe(true);
+    } finally {
+      busSpy.mockRestore();
+    }
   });
 });
 
