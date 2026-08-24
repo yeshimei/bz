@@ -148,6 +148,10 @@ export default interface BzSettings {
   enableAutoNotify: boolean;
   /** 🎯 做题决定难度（开启时显示做题家选项） */
   forceQuizForReview: boolean;
+  /** 🗂️ 监听文件夹（多个目录；目录内未加入且未排除的 .md 自动进入复习计划，递归） */
+  reviewWatchedFolders: string[];
+  /** 🚫 排除名单（不参与监听自动加入的笔记路径数组；手动移除/确认移除/批量取消/不更新落此名单） */
+  reviewExcludedNotes: string[];
 
   // ===== 🧩 入口页（3 项）=====
   /** 桌面端网格列数（3-8，默认 6） */
@@ -378,6 +382,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   autoCheckInterval: '60',
   enableAutoNotify: true,
   forceQuizForReview: false,
+  reviewWatchedFolders: [],
+  reviewExcludedNotes: [],
 
   // 入口页
   launcherColumns: '6',

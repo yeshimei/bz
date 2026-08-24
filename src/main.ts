@@ -25,7 +25,6 @@ import { openLibrary, openBookNotes } from './library';
 import { showReadingReport } from './reading-report';
 import { openMovieManager, addMovieItem, openMovieReport } from './movie';
 import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart } from './review';
-import { quizUpdate, quizOpen } from './quiz';
 import { openFlashReference, openFlashChat } from './flash';
 import { openPomodoro, unloadPomodoro, ensurePomodoro } from './pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
@@ -89,9 +88,6 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-review-hard', name: '复习：困难（Hard）', icon: 'trending-up', callback: () => reviewMarkRating(getApp(), 'hard') },
   { id: 'bz-review-good', name: '复习：一般（Good）', icon: 'check', callback: () => reviewMarkRating(getApp(), 'good') },
   { id: 'bz-review-easy', name: '复习：简单（Easy）', icon: 'sparkles', callback: () => reviewMarkRating(getApp(), 'easy') },
-  // 做题家
-  { id: 'bz-quiz-update', name: '更新题库', icon: 'refresh-cw', callback: () => quizUpdate(getApp()) },
-  { id: 'bz-quiz-open', name: '做题家', icon: 'brain', callback: () => quizOpen(getApp()) },
   // 闪念
   { id: 'bz-flash-open', name: '闪念', icon: 'zap', callback: () => openFlashReference(getApp()) },
   { id: 'bz-flash-chat', name: '闪念对话', icon: 'message-circle', callback: () => openFlashChat(getApp()) },

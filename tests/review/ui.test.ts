@@ -460,3 +460,81 @@ describe('移动端默认全屏（ticket 68）', () => {
     ui.destroy();
   });
 });
+describe('ticket 098 UI：做题家图标移除 / 挂起记录删除线 / 监听文件夹设置行', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+    setApp(null as any);
+    setSettingsProvider(() => ({} as any));
+  });
+
+  it('主面板头部不再含 🎯 做题家按钮', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    const ui = new UIManager(app, dm);
+    expect(document.getElementById('review-btn-quiz')).toBeNull();
+    (ui as any).createMainUI();
+    expect(document.getElementById('review-btn-quiz')).toBeNull();
+    ui.destroy();
+  });
+
+  it('挂起记录（文件缺失）→ 删除线卡片；抽屉无「开始复习」', async () => {
+    const vault = new MockVault();
+    const now = new Date();
+    seed(vault, [
+      {
+        id: '3', filePath: 'GONE.md', name: 'GONE', reviewStart: now.toISOString(), stage: 0, phase: 'ladder',
+        stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0,
+        nextReviewDate: new Date(now.getTime() - 1000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false,
+      },
+    ]);
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    const ui = new UIManager(app, dm);
+    ui.showMain();
+    await ui.refreshPanel();
+    const container = document.getElementById('review-entries-container')!;
+    expect(container.textContent).toContain('不存在');
+    const contentEl = [...container.querySelectorAll('.review-content')].find((el) => el.textContent === 'GONE') as HTMLElement;
+    expect(contentEl).toBeTruthy();
+    expect(contentEl.classList.contains('review-missing')).toBe(true);
+    // 抽屉：无「开始复习」，保留「打开原文」「移出复习计划」
+    const card = contentEl.closest('.review-card') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 30, clientY: 30 }));
+    const labels = [...document.querySelectorAll('.bz-item-menu-item')].map((b) => b.textContent);
+    expect(labels).toContain('打开原文');
+    expect(labels).toContain('移出复习计划');
+    expect(labels).not.toContain('开始复习');
+    closeItemMenu();
+    ui.destroy();
+  });
+
+  it('⚙️ 设置弹窗：监听文件夹行（增删）+ 批量收编语义提示', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const app = makeApp(vault);
+    setApp(app);
+    setSettingsProvider(() => ({ reviewWatchedFolders: ['卡片盒'], reviewExcludedNotes: [] } as any));
+    const dm = new ReviewDataManager(app);
+    const ui = new UIManager(app, dm);
+    ui.showMain();
+    (document.getElementById('review-btn-settings') as HTMLElement).click();
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    const names = () => [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    expect(names()).toContain('监听文件夹');
+    expect(names()).toContain('监听目录 1');
+    // ＋ 添加监听文件夹 → 新增空行「监听目录 2」
+    const addRow = [...popup.querySelectorAll('.setting-item')].find(
+      (el: any) => el.__setting?.controls?.[0]?.text === '＋ 添加监听文件夹'
+    ) as HTMLElement;
+    (addRow as any).__setting.controls[0].trigger();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(names()).toContain('监听目录 2');
+    closeSettingsModal();
+    ui.destroy();
+  });
+});

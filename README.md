@@ -21,7 +21,7 @@
 | 影视 | `bz-movie-open` / `bz-movie-add` / `bz-movie-report` | `我的/影视/*.md`（tags/评分/观影日期/豆瓣信息） |
 | 自动摘要 | （常驻，按设置开关） | 剪藏 frontmatter（新文自动 AI 摘要） |
 | 复习计划 | `bz-review-open` / `bz-review-start` / `bz-review-add` / `bz-review-remove` / `bz-review-overdue` / `bz-review-rate` / `bz-review-again` / `bz-review-hard` / `bz-review-good` / `bz-review-easy` | `CONFIG/STORAGE/review.json`（FSRS v4） |
-| 做题家 | `bz-quiz-open` / `bz-quiz-update` | `CONFIG/STORAGE/quiz.json` |
+| 做题家 | （入口已退役，ADR-0045：仅复习流程内部引擎） | `CONFIG/STORAGE/quiz.json` |
 | 闪念 | `bz-flash-open` / `bz-flash-chat` | `CONFIG/STORAGE/ai_completion_meta.json` + `*.vec`（Ollama） |
 | AI Agent | （常驻，按设置开关） | `CONFIG/STORAGE/ai-agent.json`（跨域 AI 任务） |
 | 番茄钟 | `bz-pomodoro-open` | `CONFIG/STORAGE/pomodoro.json`（状态栏常驻倒计时） |
