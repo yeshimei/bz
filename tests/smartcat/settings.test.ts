@@ -4,7 +4,9 @@
  * 2) 外观平铺色块选择器（13 皮肤、active 跟随、点击落盘并即时换肤）；
  * 3) 人格成长数据列表桌面/移动同套显示（2026-08-23 合并一套拍板，推翻原「移动端删除」差异）；
  * 4) 设置弹窗移动端全屏跟随 smartcatMobileDefaultFullscreen（与聊天/数据面板同一开关）；
- * 5) 「打开数据面板」行替换原「每周懂你报告」（周报移入数据面板「报告」页签）。
+ * 5) 「打开数据面板」行替换原「每周懂你报告」（周报移入数据面板「报告」页签）；
+ * 6) 分组卡片结构（2026-08 方案 A：外观/可视化/互动/记忆 + 移动端）与文案规范（标题无括号、
+ *    描述一句话无禁用符号），旧标题行同步移除。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -204,5 +206,100 @@ describe('外观平铺色块选择器', () => {
     expect(dashboardOpened).toBe(1);
     // 点击后弹窗已关（onClose 复位交互锁路径）
     expect(document.getElementById('bz-settings-modal-popup')).toBeNull();
+  });
+});
+
+describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
+  function openWith(config: any, hooks: { saves: any[]; appearances: string[] }) {
+    openSmartcatSettings({
+      getConfig: () => config,
+      saveConfig: async (c) => {
+        hooks.saves.push(JSON.parse(JSON.stringify(c)));
+      },
+      settingsKeys: { enabled: true, mobileFullscreen: false },
+      setMobileFullscreen: async () => {},
+      getPersonalityGrowth: () => ({
+        ocean: { openness: 0.6, conscientiousness: 0.5, extraversion: 0.4, agreeableness: 0.7, neuroticism: 0.3 },
+        traits: { warmth: 0.6 },
+      }),
+      resetPersonalityGrowth: async () => {},
+      onAppearanceChanged: (skin) => hooks.appearances.push(skin),
+    });
+  }
+
+  it('桌面端四组：外观/可视化/互动/记忆，图标与项数徽标正确', () => {
+    const hooks = { saves: [] as any[], appearances: [] as string[] };
+    Platform.isMobile = false;
+    openWith(baseConfig(), hooks);
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    const heads = [...popup.querySelectorAll('.bz-settings-group')].map((g) => ({
+      icon: g.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon'),
+      name: g.querySelector('.bz-settings-group-name')!.textContent,
+      count: g.querySelector('.bz-settings-group-count')!.textContent,
+    }));
+    expect(heads).toEqual([
+      { icon: 'palette', name: '外观', count: '0 项' },
+      { icon: 'bar-chart-3', name: '可视化', count: '1 项' },
+      { icon: 'message-circle', name: '互动', count: '3 项' },
+      { icon: 'archive', name: '记忆', count: '4 项' },
+    ]);
+    // 外观组内为色块网格（无 Setting 行，不计徽标），可视化组内人格面板 + 重置成长
+    expect(popup.querySelector('.bz-settings-group-body .bz-sc-skin-grid')).not.toBeNull();
+    expect(popup.querySelector('.bz-settings-group-body .bz-sc-personality-panel')).not.toBeNull();
+    // 弹窗宽度 560（分组卡片方案）
+    expect(popup.style.maxWidth).toBe('560px');
+  });
+
+  it('文案规范：标题无括号、描述一句话且无禁用符号，旧标题行已移除', () => {
+    const hooks = { saves: [] as any[], appearances: [] as string[] };
+    Platform.isMobile = false;
+    openWith(baseConfig(), hooks);
+    // 旧标题（含括号）已不存在
+    expect(document.querySelector('.setting-item[data-name="自言自语间隔（分钟）"]')).toBeNull();
+    expect(document.querySelector('.setting-item[data-name="短期记忆量（轮数）"]')).toBeNull();
+    // 新标题与描述（键名不动，只改文案）
+    const interval = document.querySelector('.setting-item[data-name="自言自语间隔"]') as any;
+    expect(interval).not.toBeNull();
+    expect(interval.__setting.desc).toBe('小橘每隔多久主动说一句话，范围 1 到 60 分钟');
+    // 全部行：标题零符号（括号/等号），描述无、·/— 等禁用符号
+    for (const row of Array.from(document.querySelectorAll('.setting-item')) as any[]) {
+      expect(row.dataset.name).not.toMatch(/[（【=]/);
+      expect(row.__setting.desc).not.toMatch(/、|·|\/|—/);
+    }
+  });
+
+  it('移动端多出「移动端」组（smartphone 图标，1 项）', () => {
+    const hooks = { saves: [] as any[], appearances: [] as string[] };
+    Platform.isMobile = true;
+    openWith(baseConfig(), hooks);
+    const mobileGroup = [...document.querySelectorAll('.bz-settings-group')].find(
+      (g) => g.querySelector('.bz-settings-group-name')!.textContent === '移动端'
+    )! as HTMLElement;
+    expect(mobileGroup).not.toBeUndefined();
+    expect(mobileGroup.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon')).toBe('smartphone');
+    expect(mobileGroup.querySelector('.bz-settings-group-count')!.textContent).toBe('1 项');
+  });
+
+  it('无成长数据且有数据面板入口：可视化组仅「打开数据面板」1 项、无人格面板', () => {
+    const hooks = { saves: [] as any[], appearances: [] as string[] };
+    Platform.isMobile = false;
+    openSmartcatSettings({
+      getConfig: () => baseConfig(),
+      saveConfig: async (c) => {
+        hooks.saves.push(JSON.parse(JSON.stringify(c)));
+      },
+      settingsKeys: { enabled: true, mobileFullscreen: false },
+      setMobileFullscreen: async () => {},
+      getPersonalityGrowth: () => null,
+      onOpenDashboard: () => {},
+      onAppearanceChanged: (skin) => hooks.appearances.push(skin),
+    });
+    const viz = [...document.querySelectorAll('.bz-settings-group')].find(
+      (g) => g.querySelector('.bz-settings-group-name')!.textContent === '可视化'
+    )! as HTMLElement;
+    expect(viz).not.toBeUndefined();
+    expect(viz.querySelector('.bz-settings-group-count')!.textContent).toBe('1 项');
+    expect(viz.querySelector('.setting-item[data-name="打开数据面板"]')).not.toBeNull();
+    expect(viz.querySelector('.bz-sc-personality-panel')).toBeNull();
   });
 });
