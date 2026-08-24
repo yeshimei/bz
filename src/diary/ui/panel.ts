@@ -188,7 +188,7 @@ function createHeader() {
         const s = getSettings() as any;
         const doSave = async () => { await saveSettings(); };
         // ===== 目录组 =====
-        const dirGroup = createSettingsGroup(el, { icon: '📂', name: '目录' });
+        const dirGroup = createSettingsGroup(el, { icon: 'folder-open', name: '目录' });
         new Setting(dirGroup)
           .setName('日记目录')
           .setDesc('存放日记文件的文件夹路径')
@@ -230,7 +230,7 @@ function createHeader() {
             })
           );
         // ===== 显示组 =====
-        const viewGroup = createSettingsGroup(el, { icon: '👁️', name: '显示' });
+        const viewGroup = createSettingsGroup(el, { icon: 'eye', name: '显示' });
         const uiChanged = () => {
           applyUiSettings(s);
           rebuildTags();
@@ -287,7 +287,7 @@ function createHeader() {
           ['count', '按条目数量'],
         ]);
         // ===== 默认视图组 =====
-        const defaultGroup = createSettingsGroup(el, { icon: '🖥️', name: '默认视图' });
+        const defaultGroup = createSettingsGroup(el, { icon: 'monitor', name: '默认视图' });
         dropdownSetting(defaultGroup, '面板默认日期筛选', '打开日记本面板时默认的日期范围', 'diaryDefaultDateFilter', [
           ['all', '全部'],
           ['this-month', '本月'],
@@ -307,7 +307,7 @@ function createHeader() {
           );
         // ===== 移动端组（仅移动端显示） =====
         if (isMobileEnv()) {
-          const mobileGroup = createSettingsGroup(el, { icon: '📱', name: '移动端' });
+          const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
           new Setting(mobileGroup)
             .setName('移动端默认全屏')
             .setDesc('移动端打开主窗口时默认全屏，关闭则显示常规卡片')
