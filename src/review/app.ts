@@ -367,8 +367,6 @@ export const reviewApp = {
         questions,
         onComplete: async (results: any) => {
         const rating = this.accuracyToRating(results.accuracy);
-        const ratingNames: Record<string, string> = { again: '忘了', hard: '困难', good: '一般', easy: '简单' };
-        const tagColors: Record<string, string> = { again: '#ff4757', hard: '#ff9f43', good: '#2ed573', easy: '#7bed9f' };
 
         // 首次评级照常写排期/历史（预期判断标准，ADR-0044）；未通过联动待重做标记
         await this.markReview(item.filePath, rating, { autoPending: true });
@@ -394,24 +392,13 @@ export const reviewApp = {
           return;
         }
 
-        // 在弹窗内显示结果（弹窗不关闭）
+        // 在弹窗内显示结果（弹窗不关闭；结果卡与重做路径共用 buildPassCard）
         const popup = quiz.popup;
         if (popup) {
           const isLast = index >= items.length - 1;
-          popup.innerHTML = `
-            <div style="text-align:center;padding:24px;">
-              <div style="font-size:18px;font-weight:600;margin-bottom:16px;color:var(--text-normal);">🎯 ${item.name.replace(/^《|》$/g, '')}</div>
-              <div style="font-size:40px;margin-bottom:16px;">${results.correct}/${results.total}</div>
-              <div style="font-size:14px;color:var(--text-muted);margin-bottom:12px;">
-                ✅ 答对 ${results.correct} 题　❌ 答错 ${results.wrong} 题
-              </div>
-              <div style="display:inline-block;padding:6px 16px;border-radius:16px;font-size:14px;font-weight:500;background:${tagColors[rating]}22;color:${tagColors[rating]};margin-bottom:20px;">
-                自动标记：${ratingNames[rating]}
-              </div>
-            </div>
-            <button id="quiz-next-note" style="display:block;width:100%;padding:10px;border:none;border-radius:6px;background:var(--interactive-accent);color:var(--text-on-accent);cursor:pointer;font-size:13px;font-weight:500;">${isLast ? '完成复习' : `下一篇（${index + 2}/${items.length}）`}</button>
-            <button id="quiz-end-review" style="display:block;width:100%;padding:10px;margin-top:8px;border:1px solid var(--background-modifier-border);border-radius:6px;background:var(--background-secondary);color:var(--text-muted);cursor:pointer;font-size:13px;">结束这次复习</button>
-          `;
+          popup.innerHTML = this.buildPassCard(item, results, rating, {
+            nextLabel: isLast ? '' : `下一篇（${index + 2}/${items.length}）`,
+          });
 
           const action = await new Promise<string>((resolveAction) => {
             popup.querySelector('#quiz-next-note')!.onclick = () => resolveAction('next');
