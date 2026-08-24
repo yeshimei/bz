@@ -21,7 +21,7 @@ import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { getSettings, tryGetSettings, saveSettings } from '../core/settings-provider';
 import { openSettingsModal, createSettingsGroup } from '../core/settings-modal';
 import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
-import { SafeManager, base64ToBytes, bytesToBase64, type SafeNote, type SafeAttachment, type HealthReport, type HealthItem } from './data';
+import { SafeManager, base64ToBytes, bytesToBase64, type SafeNote, type SafeAttachment, type HealthReport, type HealthItem, type LockAttachmentInput } from './data';
 import { compressImage, videoFrame } from './preview';
 
 export interface EncryptUIConfig {
@@ -176,7 +176,7 @@ function findAttachment(target: string, attachments: SafeAttachment[]): SafeAtta
  * 有预览层 → 省略图 <img>；无 → 占位提示。点击 slot 由 bindMediaClicks 按需解密原始层，
  * 原地替换为原始质量图片/可播放视频（只加载被点的那一张，缩略图内转圈，不弹通知）。
  */
-export function mediaHtml(a: SafeAttachment | null | undefined, dataUrl: string | null | undefined): string {
+function mediaHtml(a: SafeAttachment | null | undefined, dataUrl: string | null | undefined): string {
   if (!a) return '';
   const alt = escapeHtml(a.path || '');
   const key = encodeURIComponent(a.path);
@@ -199,7 +199,7 @@ function progressKey() {
 }
 
 /** 创建顶部动态进度通知（progress 类型，不自动消失） */
-export function progressNotify(title: string): NoticeHandle | null {
+function progressNotify(title: string): NoticeHandle | null {
   try {
     return notify('0/0', { type: 'progress', title, dedupeKey: progressKey(), duration: -1 });
   } catch (e) {
@@ -215,7 +215,7 @@ export function truncateName(current: string, maxLen = 20): string {
 }
 
 /** 更新进度通知：左「已处理 N/总数」右「当前文件名（截断）」 */
-export function updateProgress(h: NoticeHandle | null, done: number, total: number, current: string) {
+function updateProgress(h: NoticeHandle | null, done: number, total: number, current: string) {
   if (!h) return;
   const base = `已处理 ${done}/${total}`;
   h.setMessage(`${base} · 当前：${truncateName(current)}`);
@@ -224,7 +224,7 @@ export function updateProgress(h: NoticeHandle | null, done: number, total: numb
 }
 
 /** 完成进度通知：转成功态并收起 */
-export function finishProgress(h: NoticeHandle | null, done: number, msg: string) {
+function finishProgress(h: NoticeHandle | null, done: number, msg: string) {
   if (!h) return;
   h.setMessage(`${msg}（${done} 个文件）`);
   h.setType('success');
@@ -1289,44 +1289,28 @@ export class EncryptAppController {
     }
   }
 
-  /** 加锁当前打开笔记（正文 + 双链图片/视频附件；执行前弹确认）。重入保护：处理中拒绝再次触发 */
-  async lockCurrentNote() {
-    if (this._locking) {
-      notice('正在加密当前笔记，请稍候');
-      return;
-    }
-    this._locking = true;
-    try {
-      const app = getApp();
-      const file = app.workspace.getActiveFile();
-      if (!file) {
-        notice('请先打开要加密的笔记');
-        return;
-      }
-      if (!this.dataManager.unlocked || !this.dataManager.password) {
-        notice('请先打开加密保险箱并解锁');
-        return;
-      }
-      const content = await app.vault.read(file);
-      // 附件引用：metadataCache.embeds（Obsidian 自带链接信息）为主 + 正则兜底（collectNoteAttachmentPaths）
-      const attPaths = collectNoteAttachmentPaths(app, file, content);
-    // 二次确认：正文与附件将移入保险箱（原路径消失），点确认才开始
-    const proceed = await new Promise<boolean>((resolve) => {
+  /** 二次确认：正文与附件将移入保险箱（原路径消失），点确认才开始 */
+  private confirmLockProceed(file: { basename: string }, attCount: number): Promise<boolean> {
+    return new Promise<boolean>((resolve) => {
       confirm({
         title: '加密到保险箱',
-        message: `把「${file.basename}」的正文${attPaths.length ? '与 ' + attPaths.length + ' 个附件' : ''}加密移入保险箱？加密后原笔记与附件将从原路径移出（保险箱内为密文）。`,
+        message: `把「${file.basename}」的正文${attCount ? '与 ' + attCount + ' 个附件' : ''}加密移入保险箱？加密后原笔记与附件将从原路径移出（保险箱内为密文）。`,
         confirmText: '加密',
         onConfirm: () => resolve(true),
         onCancel: () => resolve(false),
       });
     });
-    if (!proceed) return;
+  }
 
-    const attachments: any[] = [];
-    // 省略图固定档（无设置项）：长边 256 / 质量 0.45，预览只要看得清，点击缩略图加载原始质量
+  /**
+   * 读取附件原始内容并按设置生成预览层。
+   * Q3-A：任一附件读取失败 → 整笔放弃（返回 null，不落任何东西、原文件不动）；预览失败不算失败（可选增强）。
+   */
+  private async readAttachmentInputs(app: any, attPaths: string[]): Promise<LockAttachmentInput[] | null> {
+    const attachments: LockAttachmentInput[] = [];
+    // 预览档取构造时注入的设置快照（长边/质量，缺省 384/0.5）
     const size = this.config.previewSize || 384;
     const quality = this.config.previewQuality || 0.5;
-    // Q3-A：任一附件读取失败 → 整笔放弃（不落任何东西、原文件不动）；预览失败不算失败（可选增强）
     for (const p of attPaths) {
       try {
         const f = app.vault.getAbstractFileByPath(p);
@@ -1349,33 +1333,59 @@ export class EncryptAppController {
         attachments.push({ path: p, kind: kindOf(p), data, previewData });
       } catch (e: any) {
         notice('加密失败：附件读取失败（' + p + '）', 'error');
-        return;
+        return null;
       }
     }
-    const h = progressNotify('加密 ' + file.basename);
-    try {
-      await this.dataManager.lockNote(
-        {
-          path: file.path,
-          title: file.basename,
-          content,
-          attachments,
-        },
-        (p) => updateProgress(h, p.done, p.total, p.current),
-        (failed) => {
-          // Q4-A：删原文件失败仅提示、不回滚（冗余原文件可见、可手动删除）
-          if (failed.length) {
-            notice(failed.length + ' 个原文件删除失败（已保留在原位置，可手动删除）', 'warning');
-          }
-        }
-      );
-      // 主动打开加密保险箱面板，展示刚加密的条目（无独立完成 toast，进度通知已显示完成）
-      const total = attachments.length + 1;
-      finishProgress(h, total, '加密完成');
-      this.uiManager.show();
-    } catch (e: any) {
-      notice('加密失败：' + e.message, 'error');
+    return attachments;
+  }
+
+  /** 加锁当前打开笔记（正文 + 双链图片/视频附件；执行前弹确认）。重入保护：处理中拒绝再次触发 */
+  async lockCurrentNote() {
+    if (this._locking) {
+      notice('正在加密当前笔记，请稍候');
+      return;
     }
+    this._locking = true;
+    try {
+      const app = getApp();
+      const file = app.workspace.getActiveFile();
+      if (!file) {
+        notice('请先打开要加密的笔记');
+        return;
+      }
+      if (!this.dataManager.unlocked || !this.dataManager.password) {
+        notice('请先打开加密保险箱并解锁');
+        return;
+      }
+      const content = await app.vault.read(file);
+      // 附件引用：metadataCache.embeds（Obsidian 自带链接信息）为主 + 正则兜底（collectNoteAttachmentPaths）
+      const attPaths = collectNoteAttachmentPaths(app, file, content);
+      if (!(await this.confirmLockProceed(file, attPaths.length))) return;
+      const attachments = await this.readAttachmentInputs(app, attPaths);
+      if (!attachments) return;
+      const h = progressNotify('加密 ' + file.basename);
+      try {
+        await this.dataManager.lockNote(
+          {
+            path: file.path,
+            title: file.basename,
+            content,
+            attachments,
+          },
+          (p) => updateProgress(h, p.done, p.total, p.current),
+          (failed) => {
+            // Q4-A：删原文件失败仅提示、不回滚（冗余原文件可见、可手动删除）
+            if (failed.length) {
+              notice(failed.length + ' 个原文件删除失败（已保留在原位置，可手动删除）', 'warning');
+            }
+          }
+        );
+        // 主动打开加密保险箱面板，展示刚加密的条目（无独立完成 toast，进度通知已显示完成）
+        finishProgress(h, attachments.length + 1, '加密完成');
+        this.uiManager.show();
+      } catch (e: any) {
+        notice('加密失败：' + e.message, 'error');
+      }
     } finally {
       this._locking = false;
     }
