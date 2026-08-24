@@ -6,8 +6,8 @@
  */
 import type { App } from 'obsidian';
 import { notice } from '../core/notice';
-import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
-import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath, defaultPersonalityGrowth, touchPresence } from './data';
+import { getSettings, saveSettings } from '../core/settings-provider';
+import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath, smartcatStorageDir, defaultPersonalityGrowth, touchPresence } from './data';
 import { eventSystem, setSmartcatApp, setupVisibilityCheck, __resetVisibilityForTests } from './state';
 import { mountCatContainer, unmountCatContainer, applyAppearance, createChatPanel, showChatPanel, hideChatPanel, openSmartcatSettings } from './ui';
 import { BubbleManager } from './bubble';
@@ -257,16 +257,10 @@ export async function ensureSmartCat(app: App): Promise<void> {
   // 交互（2026-08-23 用户拍板：删语音模块）
   interaction = new InteractionManager({
     config: getConfig,
-    saveConfig,
     bubble: bubbleManager,
     mood: moodSystem,
     openChat: () => openChat(),
-    closeChat: () => closeChat(),
     openSettings: () => openSettings(),
-    closeSettings: () => closeSettings(),
-    onAppearanceChanged: (appearance) => {
-      applyAppearance(mountCatContainer()!, appearance as any);
-    },
     // ADR-0021：记忆流检索注入聊天上下文（格式化后返回；失败返回空串）
     // ADR-0025：第二参 lexicalQuery 供词法降级模式（纯用户消息，免「情绪/时段」噪音）
     // 096 方向一：retrieve topN=10 冻结不动，≤6 收缩只落 formatMemoriesForPrompt 的 maxEntries（槽位保留制，ADR-0043）
@@ -281,12 +275,6 @@ export async function ensureSmartCat(app: App): Promise<void> {
     },
     // ADR-0023：prompt 状态向量数据（性格系统 traits/OCEAN）
     characterData: () => data,
-    // ADR-0023：互动回流 → 性格微移 + 行为统计（MATE character_transition）
-    onInteraction: (type: string, intensity = 1) => {
-      if (personalityGrowth) {
-        personalityGrowth.developBasedOnInteraction(type, intensity).catch(() => {});
-      }
-    },
   });
   interaction.setupInteractions();
 
@@ -1147,11 +1135,9 @@ export function notifyMemoAction(evt: MemoActionEvent): void {
   void memorySystem.addObservation(text, { source: 'memo' });
 }
 
-/** memo.json 路径（跟随共享 storagePath，同 getSmartcatFilePath 目录规则） */
+/** memo.json 路径（跟随共享 storagePath，同 smartcatStorageDir 目录规则） */
 function getMemoDataPath(): string {
-  const s = tryGetSettings() as any;
-  const dir = ((s && s.storagePath) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
-  return `${dir}/memo.json`;
+  return `${smartcatStorageDir()}/memo.json`;
 }
 
 /** 今日日期（YYYY-MM-DD，本地时区；对齐 memo due.ts getTodayStr 语义；now 可注入供测试跨天） */

@@ -80,7 +80,7 @@ export function emotionAffinity(a: string, b: string): number {
 }
 
 /** 情绪快照（一条观察的情绪 → VAD + 强度） */
-export interface EmotionSnapshot {
+interface EmotionSnapshot {
   emotion: string;
   valence: number;
   arousal: number;
@@ -110,7 +110,7 @@ export function buildEmotionSnapshots(
 }
 
 /** 情绪趋势结果（借鉴库 detectTrend/calculateVolatility/findDominantEmotion） */
-export interface EmotionTrend {
+interface EmotionTrend {
   /** 最近 N 条主导情绪（众数） */
   dominantEmotion: string;
   /** 趋势：improving 转好 / stable 平稳 / declining 转差 */
@@ -261,7 +261,7 @@ export function updateBandit(arm: BanditArmParams, context: number[], reward: nu
 // ═══════════════ ③ 元认知矛盾检测（当前话语 vs 存储事实） ═══════════════
 
 /** 存储事实（小橘从记忆流提炼的用户事实） */
-export interface StoredFact {
+interface StoredFact {
   subject: string;
   predicate: string;
   object: string;

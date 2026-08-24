@@ -35,18 +35,20 @@ export function getAbsenceDays(data: SmartCatData, now = Date.now()): number {
   return Math.max(0, Math.floor((now - last) / DAY_MS));
 }
 
+/** 共享存储目录（跟随共享 storagePath；域内各 JSON 路径拼装的公共前缀） */
+export function smartcatStorageDir(): string {
+  const s = tryGetSettings() as any;
+  return ((s && s.storagePath) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
+}
+
 /** smartcat.json 路径（跟随共享 storagePath） */
 export function getSmartcatFilePath(): string {
-  const s = tryGetSettings() as any;
-  const dir = ((s && s.storagePath) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
-  return `${dir}/${SMARTCAT_FILE}`;
+  return `${smartcatStorageDir()}/${SMARTCAT_FILE}`;
 }
 
 /** 记忆向量文件路径（与 smartcat.json 同目录） */
 export function getSmartcatVecPath(): string {
-  const s = tryGetSettings() as any;
-  const dir = ((s && s.storagePath) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
-  return `${dir}/${SMARTCAT_VEC_FILE}`;
+  return `${smartcatStorageDir()}/${SMARTCAT_VEC_FILE}`;
 }
 
 /** 默认记忆流（空 stream + 反思元数据） */

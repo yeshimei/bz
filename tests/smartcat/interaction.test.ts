@@ -23,14 +23,10 @@ function mountCat(): HTMLElement {
 function makeDeps(): InteractionDeps {
   return {
     config: () => ({ speakInterval: 5, speakProbability: 0, appearance: 'orange' }) as never,
-    saveConfig: async (c) => c,
     bubble: { showBubble: () => {} },
     mood: { pad: {}, currentMood: 'calm', getCurrentMoodEmoji: () => '😺', getCurrentEmotion: () => 'calm' },
     openChat: () => {},
-    closeChat: () => {},
     openSettings: () => {},
-    closeSettings: () => {},
-    onAppearanceChanged: () => {},
   } as unknown as InteractionDeps;
 }
 

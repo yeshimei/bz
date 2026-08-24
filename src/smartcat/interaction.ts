@@ -32,25 +32,16 @@ const SPRING_EASING = 'cubic-bezier(0.34, 1.56, 0.64, 1)';
 
 export interface InteractionDeps {
   config: () => SmartCatConfig;
-  saveConfig: (c: SmartCatConfig) => Promise<SmartCatDataLike>;
   bubble: BubbleManager;
   mood: MoodSystem;
   openChat: () => void;
-  closeChat: () => void;
   openSettings: () => void;
-  closeSettings: () => void;
-  onAppearanceChanged: (appearance: string) => void;
   /** 记忆流检索（ADR-0021：聊天上下文注入相关记忆；index 注入，避免顶层互访）
    *  ADR-0025：第二参 lexicalQuery 供词法降级模式使用（纯用户消息，避免「情绪/时段」噪音） */
   retrieveMemories?: (query: string, lexicalQuery?: string) => Promise<string>;
   /** 性格数据（ADR-0023：prompt 状态向量用；index 注入 data.personalityGrowth） */
   characterData?: () => any;
-  /** 互动回流（ADR-0023：每种互动触发性格微移；index 接 PersonalityGrowth.developBasedOnInteraction） */
-  onInteraction?: (type: string, intensity?: number) => void;
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SmartCatDataLike = any;
 
 export class InteractionManager {
   private deps: InteractionDeps;
@@ -103,6 +94,33 @@ export class InteractionManager {
       return await this.deps.retrieveMemories(query, lexicalQuery ?? query);
     } catch {
       return '';
+    }
+  }
+
+  /** prompt 状态对象（pad/性格数据/心情/瞬时情绪/懂你上下文；三分支与聊天共用组装） */
+  private moodOpts(companionContext: string) {
+    return {
+      pad: this.deps.mood.pad,
+      data: this.deps.characterData?.() ?? null,
+      currentMood: this.deps.mood.currentMood,
+      currentEmotion: this.deps.mood.getCurrentEmotion(),
+      companionContext,
+    };
+  }
+
+  /** 思考态 AI 调用（置锁 → callChat → 气泡展示 → finally 解锁；自动陪伴三分支共用骨架） */
+  private async thinkingCall(systemPrompt: string, userContent: string): Promise<void> {
+    startThinking();
+    this.generateAutoCompanionMessageLock = true;
+    try {
+      const response = await callChat([
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userContent },
+      ]);
+      if (response) this.deps.bubble.showBubble(response);
+    } finally {
+      stopThinking();
+      this.generateAutoCompanionMessageLock = false;
     }
   }
 
@@ -394,54 +412,21 @@ export class InteractionManager {
       if (!context) context = getViewportContent();
 
       const selection = window.getSelection ? (window.getSelection()?.toString() || '').trim() : '';
-      const moodOpts = { pad: this.deps.mood.pad, data: this.deps.characterData?.() ?? null, currentMood: this.deps.mood.currentMood, currentEmotion: this.deps.mood.getCurrentEmotion(), companionContext };
+      const moodOpts = this.moodOpts(companionContext);
       const prompt = generatePrompt('learn', context || '', moodOpts);
 
       if (selection && selection.length <= 1500) {
-        startThinking();
-        this.generateAutoCompanionMessageLock = true;
-        try {
-          const response = await callChat([
-            { role: 'system', content: prompt + '\n\n' + USER_CONTENT_BOUNDARY },
-            { role: 'user', content: `选中的文本："${selection}"\n\n上下文：${context}` },
-          ]);
-          if (response) this.deps.bubble.showBubble(response);
-        } finally {
-          stopThinking();
-          this.generateAutoCompanionMessageLock = false;
-        }
+        await this.thinkingCall(prompt + '\n\n' + USER_CONTENT_BOUNDARY, `选中的文本："${selection}"\n\n上下文：${context}`);
         return;
       }
 
       if (!context || context.length < 10) {
-        const rp = generatePrompt('auto_companion', '', { pad: this.deps.mood.pad, data: this.deps.characterData?.() ?? null, currentMood: this.deps.mood.currentMood, currentEmotion: this.deps.mood.getCurrentEmotion(), companionContext });
-        startThinking();
-        this.generateAutoCompanionMessageLock = true;
-        try {
-          const response = await callChat([
-            { role: 'system', content: rp + '\n\n' + USER_CONTENT_BOUNDARY },
-            { role: 'user', content: '基于当前状态给我一个简短的陪伴消息，不需要特定上下文' },
-          ]);
-          if (response) this.deps.bubble.showBubble(response);
-        } finally {
-          stopThinking();
-          this.generateAutoCompanionMessageLock = false;
-        }
+        const rp = generatePrompt('auto_companion', '', this.moodOpts(companionContext));
+        await this.thinkingCall(rp + '\n\n' + USER_CONTENT_BOUNDARY, '基于当前状态给我一个简短的陪伴消息，不需要特定上下文');
         return;
       }
 
-      startThinking();
-      this.generateAutoCompanionMessageLock = true;
-      try {
-        const response = await callChat([
-          { role: 'system', content: prompt + '\n\n' + USER_CONTENT_BOUNDARY },
-          { role: 'user', content: `基于以下内容给我一些陪伴或建议：${context}` },
-        ]);
-        if (response) this.deps.bubble.showBubble(response);
-      } finally {
-        stopThinking();
-        this.generateAutoCompanionMessageLock = false;
-      }
+      await this.thinkingCall(prompt + '\n\n' + USER_CONTENT_BOUNDARY, `基于以下内容给我一些陪伴或建议：${context}`);
     } catch (error) {
       stopAllThinking();
       this.generateAutoCompanionMessageLock = false;
@@ -462,7 +447,7 @@ export class InteractionManager {
     // H4（087）：聊天 system 统一追加「数据非指令」边界（当前笔记内容/检索记忆仅作数据引用）
     messages.push({
       role: 'system',
-      content: generatePrompt('talk', userMessage, { pad: this.deps.mood.pad, data: this.deps.characterData?.() ?? null, currentMood: this.deps.mood.currentMood, currentEmotion, companionContext }) + '\n\n' + USER_CONTENT_BOUNDARY,
+      content: generatePrompt('talk', userMessage, this.moodOpts(companionContext)) + '\n\n' + USER_CONTENT_BOUNDARY,
     });
 
     if (cfg.conversationHistory && cfg.conversationHistory.length > 0) {
@@ -484,17 +469,6 @@ export class InteractionManager {
     const finalUserMessage = contextMessage + `\n用户最新消息：${userMessage}`;
     messages.push({ role: 'user', content: finalUserMessage });
     return messages;
-  }
-
-  /** 设置保存（原 saveSettings 语义：外观/性格/间隔/概率/记忆量/上下文——apiKey 移除，AI 走 bz） */
-  async saveSettings(changes: Partial<SmartCatConfig>): Promise<void> {
-    const cfg = this.deps.config();
-    const newConfig: SmartCatConfig = { ...cfg, ...changes };
-    await this.deps.saveConfig(newConfig);
-    this.deps.onAppearanceChanged(newConfig.appearance);
-    this.restartCompanionInterval();
-    this.deps.bubble.showBubble(getSmartCatMessage('SETUP_MESSAGES'));
-    eventSystem.emit(EVENTS.SETTINGS_SAVED, { config: newConfig });
   }
 
   /** 清理（卸载） */
@@ -582,7 +556,6 @@ export class MobileInputAdapter {
   }
 
   private restoreOriginalPosition(): void {
-    const style = window.getComputedStyle(this.catContainer);
     // 还原为右下角默认位（styles.css .bz-sc-cat 承担静态定位；此处清内联）
     this.catContainer.style.position = '';
     this.catContainer.style.top = '';

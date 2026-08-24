@@ -3,6 +3,11 @@
  * 组织结构：SMART_CAT_MESSAGES（通用 7 key）/ SMART_CAT_MOOD_MESSAGES（6 key，无消费方，保留原样）
  * / SMART_CAT_PET_MESSAGES（抚摸分级 5 key，getPetMessage 使用）。
  * 接口：getSmartCatMessage(key) 与 getPetMessage(moodState) 随机取一条（原 window.smartCat 语义）。
+ * 【消费现状盘点（wt-bili-smartcat 审查留档，数据冻结不删）】生产实际取用仅
+ * SMART_CAT_MESSAGES 的 PET/CONNECTED/SETUP/WELCOME_BACK/THINKING_IN_PROGRESS 5 组；
+ * LITTLE_ORANGE_COMPLAINTS、THINKING_MESSAGES 两组与 SMART_CAT_MOOD_MESSAGES 全部、
+ * getPetMessage→PET_MOOD_KEYS→SMART_CAT_PET_MESSAGES 链路（约 450 条文案）当前零消费，
+ * 属移植完整性保留 + 文案冻结范围，后续如需裁剪须连 messages.test.ts 断言一并裁决。
  */
 
 export const SMART_CAT_MESSAGES = {

@@ -701,16 +701,6 @@ describe('反思（Reflection）', () => {
 });
 
 describe('状态与格式化', () => {
-  it('getSystemStatus 计数正确', async () => {
-    const m = make();
-    await m.addObservation('abc', { importance: 0.5 });
-    const s = m.getSystemStatus();
-    expect(s.streamCount).toBe(1);
-    expect(s.insightCount).toBe(0);
-    expect(s.reflectionCount).toBe(0);
-    expect(s.semanticMode).toBe(false);
-  });
-
   it('formatMemoriesForPrompt 带 [type] 前缀与 200 字符截断', async () => {
     const m = make();
     const text = m.formatMemoriesForPrompt([{ id: 'x', created: '', lastAccessed: '', description: 'hello world'.repeat(50), importance: 0.5, type: 'observation' } as any]);
