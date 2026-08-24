@@ -4,7 +4,6 @@
  * ticket 59：到期轮询合并入启动自动弹窗（hasPendingUrgent 已覆盖到期条件），剪贴板监听删除。
  */
 import { getApp } from '../core/app';
-import { notice } from '../core/notice';
 import { UIManager, Renderer } from './ui';
 import { DataManager, type BzSettingsLike } from './data';
 import { getDueStatus } from './due';
@@ -44,7 +43,6 @@ export const App = {
 
     UIManager.createMainUI();
     UIManager.createAddDialog();
-    UIManager.createConfirmDialog();
     UIManager.registerEscape();
 
     this.ensureFileOpenListener(settings.openNoteReminder !== false);

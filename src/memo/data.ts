@@ -35,7 +35,7 @@ export interface BzSettingsLike {
 }
 
 /** 默认场景（DEFAULTSCENARIOS） */
-export const DEFAULTSCENARIOS = ['剪藏', '工作', '学习', '生活', '代码', '公开课'];
+const DEFAULTSCENARIOS = ['剪藏', '工作', '学习', '生活', '代码', '公开课'];
 
 /** 场景列表解析：逗号分隔 → 去空/去重，空结果回退内置默认 */
 export function parseScenarios(raw: string | undefined): string[] {

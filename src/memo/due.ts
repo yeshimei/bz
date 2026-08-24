@@ -6,11 +6,13 @@
  */
 import moment from 'moment';
 
-export function getNowStr(): string {
+/** 当前时刻（'YYYY-MM-DD HH:mm'，getDueStatus 内部用） */
+function getNowStr(): string {
   return moment().format('YYYY-MM-DD HH:mm');
 }
 
-export function getTodayStr(): string {
+/** 今日日期（YYYY-MM-DD） */
+function getTodayStr(): string {
   return moment().format('YYYY-MM-DD');
 }
 
@@ -40,7 +42,6 @@ export function formatDueText(due: string, mode: 'relative' | 'absolute' = 'rela
   // 绝对格式：固定 MM/DD HH:mm + 状态后缀
   if (mode === 'absolute') {
     if (status === 'overdue') return `${dateStr} ${timeStr} 已过期`;
-    if (status === 'today') return `${dateStr} ${timeStr} 到期`;
     return `${dateStr} ${timeStr} 到期`;
   }
 

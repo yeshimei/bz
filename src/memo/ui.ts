@@ -22,11 +22,11 @@ import {
   getCurrentNoteInfo,
   getCurrentCursorPosition,
   fetchPageTitle,
+  getPlatformName,
 } from '../core/utils';
 import { DataManager } from './data';
-import { getPlatformName } from '../core/utils';
 import { getDueStatus, formatDueText } from './due';
-import type { MemoItem, MemoPosition } from './types';
+import type { MemoItem } from './types';
 import { App } from './app';
 // ticket 075（方法监听）：memo 动作观察（smartcat；未初始化/关闭时静默）
 import { notifyMemoAction } from '../smartcat';
@@ -108,19 +108,10 @@ function attachSuggestion<T>(
 
 // ---------- 设置弹窗（ADR-0009 域设置弹窗，分组卡片，10 项 5 组） ----------
 
-/** 设置项辅助：toggle / text / textArea / dropdown 四类，写回设置并保存，支持副作用 */
+/** 设置项辅助：toggle / textArea / dropdown 三类，写回设置并保存，支持副作用 */
 function settingToggle(el: HTMLElement, name: string, desc: string, get: boolean, key: keyof any, after?: () => void) {
   new Setting(el).setName(name).setDesc(desc).addToggle((toggle) =>
     toggle.setValue(get).onChange(async (v) => {
-      (getSettings() as any)[key] = v;
-      await saveSettings();
-      after?.();
-    })
-  );
-}
-function settingText(el: HTMLElement, name: string, desc: string, placeholder: string, get: string, key: keyof any, after?: () => void) {
-  new Setting(el).setName(name).setDesc(desc).addText((text) =>
-    text.setPlaceholder(placeholder).setValue(get).onChange(async (v) => {
       (getSettings() as any)[key] = v;
       await saveSettings();
       after?.();
@@ -169,7 +160,6 @@ export const UIManager = {
   addMask: null as HTMLDivElement | null,
   addPopup: null as HTMLDivElement | null,
   addEditingId: null as string | null,
-  escapeRegistered: false,
   // 私有建议数据（避免全局污染）
   scriptSuggestions: [] as string[],
   courseSuggestions: [] as { name: string; path: string }[],
@@ -792,11 +782,9 @@ export const UIManager = {
   },
 
   // ---------- 确认对话框（代理到 core confirm） ----------
-  createConfirmDialog() {},
   showConfirm(title: string, msg: string, onConfirm: () => void) {
     confirm({ title: title || '确认删除', message: msg || '', onConfirm });
   },
-  hideConfirm() {},
 
   // ---------- ESC ----------
   registerEscape() {
@@ -1060,8 +1048,18 @@ export const Renderer = {
 
     card.appendChild(meta);
 
-    // 统一操作条/长按浮层（手势统一）：打开 > 跳转笔记 > 完成状态 > 延后 > 编辑 > 优先级 > 复制 > 删除
-    // 各项按条件显示：只有条目具备对应数据才出现（如「跳转关联笔记」仅绑定位置时显示）
+    // 统一操作条/长按浮层（手势统一）：动作构建拆至 buildCardActions
+    attachItemActions(card, this.buildCardActions(item), {
+      sheetHead: this.buildSheetHead(item),
+      // 列表禁止选字/复制：长按整卡任何位置都弹抽屉（user-select:none 由 styles.css 承担）
+    });
+
+    return card;
+  },
+
+  /** 卡片操作条动作（createCard 拆分）：打开 > 跳转笔记 > 完成状态 > 延后 > 编辑 > 优先级 > 复制 > 删除；
+   * 各项按条件显示：只有条目具备对应数据才出现（如「跳转关联笔记」仅绑定位置时显示） */
+  buildCardActions(item: MemoItem): ItemAction[] {
     const actions: ItemAction[] = [];
     if (item.linkedNote || item.url) {
       let openSub: string | undefined;
@@ -1174,12 +1172,7 @@ export const Renderer = {
           App.refresh();
         }),
     });
-    attachItemActions(card, actions, {
-      sheetHead: this.buildSheetHead(item),
-      // 列表禁止选字/复制：长按整卡任何位置都弹抽屉（user-select:none 由 styles.css 承担）
-    });
-
-    return card;
+    return actions;
   },
 
   createCourseTag(item: MemoItem): HTMLElement {
