@@ -40,6 +40,25 @@ export async function loadActiveItems(app: App): Promise<any[]> {
   return items.filter((f: any) => f && !f.completed);
 }
 
+/** 题目同一性判断（P0-2 稳定定位）：question + options 逐项相等，correctIndices 视为集合 */
+export function sameQuestion(
+  a: Pick<QuizQuestion, 'question' | 'options' | 'correctIndices'>,
+  b: Pick<QuizQuestion, 'question' | 'options' | 'correctIndices'>
+): boolean {
+  if (a.question !== b.question) return false;
+  if (a.options.length !== b.options.length) return false;
+  for (let i = 0; i < a.options.length; i++) {
+    if (a.options[i] !== b.options[i]) return false;
+  }
+  const sa = [...a.correctIndices].sort();
+  const sb = [...b.correctIndices].sort();
+  if (sa.length !== sb.length) return false;
+  for (let i = 0; i < sa.length; i++) {
+    if (sa[i] !== sb[i]) return false;
+  }
+  return true;
+}
+
 export class QuizManager {
   /** 加载（源码 L33-35；损坏 → {notes:{}}） */
   async loadQuiz(app: App): Promise<{ notes: Record<string, QuizQuestion[]> }> {
@@ -69,14 +88,24 @@ export class QuizManager {
     await this.saveQuiz(app, quiz);
   }
 
-  /** 源码 L51-57：splice，不删空键 */
-  async removeQuestion(app: App, notePath: string, questionIndex: number): Promise<void> {
+  /** 源码 L51-57 splice 语义 + P0-2 稳定定位改造：
+   *  会话期 _index 是开考时的快照，题库并发变化（同笔记多题先后答对、复习重出题等）
+   *  后按快照下标会删错行/漏删；改为按题目生成标识（question+options+correctIndices，
+   *  correctIndices 顺序不敏感）在存储数组内定位。
+   *  同内容多题：每次删除首个匹配＝按未答优先逐个消费。
+   *  目标题已不在库中（并发刷新等）→ 终态已达成，静默成功；空键仍保留（源码语义）。 */
+  async removeQuestion(
+    app: App,
+    notePath: string,
+    target: Pick<QuizQuestion, 'question' | 'options' | 'correctIndices'>
+  ): Promise<void> {
     const quiz = await this.loadQuiz(app);
     const list = quiz.notes[notePath];
-    if (list && list[questionIndex]) {
-      list.splice(questionIndex, 1);
-      await this.saveQuiz(app, quiz);
-    }
+    if (!list) return;
+    const idx = list.findIndex((q) => sameQuestion(q, target));
+    if (idx === -1) return;
+    list.splice(idx, 1);
+    await this.saveQuiz(app, quiz);
   }
 
   /** 源码 L59-72：遍历补 notePath/_index */

@@ -137,9 +137,14 @@ ${truncated}`;
       if (!Array.isArray(qs)) continue;
       const valid: QuizQuestion[] = [];
       for (const q of qs as any[]) {
-        if (q.question && Array.isArray(q.options) && q.options.length === 4 && Array.isArray(q.correctIndices) && q.correctIndices.length > 0) {
-          valid.push(q);
+        if (!q.question || !Array.isArray(q.options) || q.options.length !== 4 || !Array.isArray(q.correctIndices)) {
+          continue;
         }
+        // P2：与单篇 generate 对齐——correctIndices 越界项剔除（须为 0~3 的数字），
+        // 剔除后无有效索引则丢弃该题
+        const indices = q.correctIndices.filter((i: any) => typeof i === 'number' && i >= 0 && i <= 3);
+        if (!indices.length) continue;
+        valid.push({ ...q, correctIndices: indices });
       }
       if (valid.length) out[noteId] = valid;
     }

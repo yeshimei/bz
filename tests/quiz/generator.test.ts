@@ -103,4 +103,24 @@ describe('generateBatch', () => {
     // 提示词含规则
     expect(ai.json.mock.calls[0][0]).toContain('===== 笔记ID:A.md =====');
   });
+
+  it('P2：correctIndices 越界项剔除，整题无有效索引则丢弃（与单篇 generate 对齐）', async () => {
+    const g = mkGen();
+    const raw = JSON.stringify({
+      'A.md': [
+        { question: 'OK', options: ['a', 'b', 'c', 'd'], correctIndices: [0] },
+        { question: '全越界', options: ['a', 'b', 'c', 'd'], correctIndices: [9, -1] }, // 整题丢弃
+        { question: '部分越界', options: ['a', 'b', 'c', 'd'], correctIndices: [2, 7] }, // 剔除后剩 [2]
+        { question: '空索引', options: ['a', 'b', 'c', 'd'], correctIndices: [] }, // 无效结构丢弃
+      ],
+      'B.md': [
+        { question: '非数字索引', options: ['a', 'b', 'c', 'd'], correctIndices: ['0' as any] }, // 丢弃
+      ],
+    });
+    const ai = { json: vi.fn().mockResolvedValue(raw) };
+    const r = await g.generateBatch([{ id: 'A.md', content: 'x' }], ai as any, true, 1, 'random');
+    expect(r['A.md'].map((q) => q.question)).toEqual(['OK', '部分越界']);
+    expect(r['A.md'][1].correctIndices).toEqual([2]);
+    expect(r['B.md']).toBeUndefined();
+  });
 });

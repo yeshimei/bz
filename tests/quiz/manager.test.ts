@@ -34,18 +34,61 @@ describe('QuizManager', () => {
     expect(all[1]._index).toBe(1);
   });
 
-  it('removeQuestion splice 但不删空键（源码语义）', async () => {
+  it('removeQuestion 稳定定位（P0-2）：按题目内容定位删除，不依赖下标；空键保留', async () => {
     const vault = new MockVault();
     const app = mockAppWithVault(vault);
     setApp(app);
     const qm = new QuizManager();
     await qm.saveQuestionsForNote(app, 'A.md', [
       { question: 'Q1', options: ['a', 'b', 'c', 'd'], correctIndices: [0] },
+      { question: 'Q2', options: ['a', 'b', 'c', 'd'], correctIndices: [1] },
     ]);
-    await qm.removeQuestion(app, 'A.md', 0);
+    // 按内容删 Q2（若按快照下标 0 会误删 Q1）
+    await qm.removeQuestion(app, 'A.md', { question: 'Q2', options: ['a', 'b', 'c', 'd'], correctIndices: [1] });
+    const raw = JSON.parse(vault.files.get(QUIZ_FILE_PATH)!);
+    expect(raw.notes['A.md']).toHaveLength(1);
+    expect(raw.notes['A.md'][0].question).toBe('Q1');
+    // 删最后一题 → 空数组键保留（源码语义）
+    await qm.removeQuestion(app, 'A.md', { question: 'Q1', options: ['a', 'b', 'c', 'd'], correctIndices: [0] });
     const quiz = await qm.loadQuiz(app);
-    expect(quiz.notes['A.md']).toEqual([]); // 空数组键保留
+    expect(quiz.notes['A.md']).toEqual([]);
     expect(await qm.getUncompletedQuestions(app)).toHaveLength(0);
+  });
+
+  it('removeQuestion：correctIndices 顺序不敏感；目标不在库中 → 静默成功（终态已达成）', async () => {
+    const vault = new MockVault();
+    const app = mockAppWithVault(vault);
+    setApp(app);
+    const qm = new QuizManager();
+    await qm.saveQuestionsForNote(app, 'A.md', [
+      { question: 'M', options: ['a', 'b', 'c', 'd'], correctIndices: [0, 2] },
+    ]);
+    await qm.removeQuestion(app, 'A.md', { question: 'M', options: ['a', 'b', 'c', 'd'], correctIndices: [2, 0] });
+    expect((await qm.loadQuiz(app)).notes['A.md']).toEqual([]);
+    // 再删一次：库中已无此题 → 不抛错、不写盘
+    const before = vault.files.get(QUIZ_FILE_PATH);
+    await qm.removeQuestion(app, 'A.md', { question: 'M', options: ['a', 'b', 'c', 'd'], correctIndices: [0, 2] });
+    expect(vault.files.get(QUIZ_FILE_PATH)).toBe(before);
+    // 未知 notePath 同样安全
+    await expect(qm.removeQuestion(app, 'X.md', { question: 'M', options: ['a', 'b', 'c', 'd'], correctIndices: [0] })).resolves.toBeUndefined();
+  });
+
+  it('removeQuestion：同内容多题逐次删除首个匹配（未答优先消费）', async () => {
+    const vault = new MockVault();
+    const app = mockAppWithVault(vault);
+    setApp(app);
+    const qm = new QuizManager();
+    await qm.saveQuestionsForNote(app, 'A.md', [
+      { question: '同文?', options: ['a', 'b', 'c', 'd'], correctIndices: [0] },
+      { question: '同文?', options: ['a', 'b', 'c', 'd'], correctIndices: [0] },
+    ]);
+    const target = { question: '同文?', options: ['a', 'b', 'c', 'd'], correctIndices: [0] };
+    await qm.removeQuestion(app, 'A.md', target);
+    let raw = JSON.parse(vault.files.get(QUIZ_FILE_PATH)!);
+    expect(raw.notes['A.md']).toHaveLength(1); // 只消费一份
+    await qm.removeQuestion(app, 'A.md', target);
+    raw = JSON.parse(vault.files.get(QUIZ_FILE_PATH)!);
+    expect(raw.notes['A.md']).toEqual([]); // 第二份也被消费
   });
 
   it('loadQuiz 损坏 → {notes:{}}', async () => {
