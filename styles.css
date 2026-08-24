@@ -2215,20 +2215,7 @@ button.news-close-btn {
       .bz-review-watch-name { font-size:12px; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
       .bz-review-watch-close { background:none; border:none; cursor:pointer; color:var(--text-faint); font-size:11px; line-height:1; padding:2px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:none !important; }
       .bz-review-watch-close:hover { color:var(--text-error, #ff4757); background:var(--background-modifier-hover); }
-      /* ticket 099：监听文件夹选择弹窗（仿附件搬移 FolderSelectModal 形态） */
-      .bz-review-folder-mask { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:10020; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(2px); }
-      .bz-review-folder-popup { background:var(--background-primary); border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.3); padding:20px; width:90%; max-width:420px; max-height:70vh; overflow-y:auto; }
-      .bz-review-folder-title { font-size:16px; font-weight:600; margin-bottom:14px; color:var(--text-normal); }
-      .bz-review-folder-input { width:100%; box-sizing:border-box; padding:8px 12px; border-radius:6px; border:1px solid var(--background-modifier-border); background:var(--background-secondary); color:var(--text-normal); font-size:14px; outline:none; margin-bottom:10px; }
-      .bz-review-folder-input:focus { border-color:var(--interactive-accent); }
-      .bz-review-folder-list { max-height:280px; overflow-y:auto; border:1px solid var(--background-modifier-border); border-radius:6px; margin-bottom:14px; }
-      .bz-review-folder-item { padding:8px 12px; font-size:13px; color:var(--text-normal); cursor:pointer; border-bottom:1px solid var(--background-modifier-border); }
-      .bz-review-folder-item:last-child { border-bottom:none; }
-      .bz-review-folder-item:hover { background:var(--background-modifier-hover); }
-      .bz-review-folder-actions { display:flex; gap:10px; justify-content:flex-end; }
-      .bz-review-folder-btn { padding:7px 18px; border:none; border-radius:6px; background:var(--background-secondary); color:var(--text-normal); cursor:pointer; font-size:13px; box-shadow:none !important; }
-      .bz-review-folder-btn--primary { background:var(--interactive-accent); color:var(--text-on-accent); }
-    
+
 
 /* ==================== 做题家域样式（src/quiz/styles.css） ==================== */
 /* ==================== 做题家（quiz，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
