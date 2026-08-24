@@ -748,7 +748,9 @@ button.news-close-btn {
 /* 移动端底部抽屉（长按卡片弹出，参照 B 站/网易云：遮罩 + 底部滑入 + 顶部选中条目信息） */
 .bz-item-sheet-mask {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  z-index: 10999; /* 高于各域主面板（999x），低于抽屉本体（11000）——遮罩必须完整盖住主面板 */
+  /* 家族表见 core/settings-modal.ts openSettingsModal 注释：999x 主面板族 / 10001-10060 域模态旧档 /
+     10050 设置弹窗 / 10999-11000 统一抽屉（此处遮罩）/ 11100+ companion（须 >11000）/ 12000 movie 小窗 / 200000 attach 选择器 */
+  z-index: 10999; /* 遮罩必须完整盖住主面板 */
   background: rgba(0, 0, 0, 0.4);
   animation: bz-mask-in 0.18s ease-out;
   transition: opacity 0.2s ease; /* 下滑关闭时同步淡出 */
