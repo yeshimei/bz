@@ -222,7 +222,8 @@ export const reviewApp = {
       );
   },
 
-  /** 重做出题（ADR-0044/Q7-②）：清空旧题 → ensureQuestions 全新生成；失败或空题回退剩余错题 */
+  /** 重做出题（ADR-0044/Q7-②）：清空旧题 → ensureQuestions 全新生成；失败或空题回退剩余错题
+   *  ticket 099：与 batchGenerateQuestions 对齐补 notePath/_index（renderModal 需要；缺失曾致 split 崩溃） */
   async regenerateQuestions(filePath: string): Promise<any[]> {
     const quiz: any = await this.getQuiz();
     if (!quiz || !quiz.ai) return [];
@@ -230,7 +231,8 @@ export const reviewApp = {
     await quiz.manager.saveQuestionsForNote(getApp(), filePath, []);
     await quiz.ensureQuestions([filePath]);
     const fresh = (await quiz.manager.getQuestionsForNote(getApp(), filePath)) || [];
-    return fresh.length ? fresh : leftover;
+    const picked = fresh.length ? fresh : leftover;
+    return picked.map((q: any, i: number) => ({ ...q, notePath: filePath, _index: i }));
   },
 
   /** 待重做队列复习（ADR-0044）：AI 全新出题 → 做题 → 通过仅清标记不写 FSRS；失败 → 「复习此笔记」中断会话 */
@@ -599,13 +601,6 @@ export const reviewApp = {
     } catch (e) {
       console.error('复习计划检查出错:', e);
     }
-  },
-
-  /** 监听文件夹存量收编确认（ticket 098；经 watcher 委托，打开复习面板时调用） */
-  async promptBatchAddAll(): Promise<void> {
-    const { reviewWatcher } = await import('./index');
-    if (!reviewWatcher) return;
-    await reviewWatcher.promptBatchAddAll();
   },
 
   /** 刷新面板（源码 refreshPanel） */

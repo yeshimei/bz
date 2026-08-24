@@ -1,6 +1,6 @@
 /**
- * 复习计划监听器测试（ticket 098）：isUnderFolder / 自动加入四态 / 批量收编确认 /
- * 删除确认移除/保留 / 改名确认更新/不更新（新路径排除）
+ * 复习计划监听器测试（ticket 098；ticket 099 修订）：isUnderFolder / 自动加入四态 /
+ * 收编确认（取消=什么都不做）/ 删除确认移除/保留 / 改名自动更新
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -72,7 +72,7 @@ describe('ReviewWatcher 自动加入', () => {
     expect(paths).not.toContain('我的/复习/F.md');
   });
 
-  it('promptBatchAddForFolder：确认 → 批量加入（报存量数与 toast）；取消 → 写排除名单', async () => {
+  it('confirmBatchAddForFolder：确认 → 批量加入（报存量数与 toast）返回 true；取消 → 什么都不做返回 false（不写排除）', async () => {
     const vault = new MockVault();
     vault.files.set('我的/复习/A.md', '正文');
     vault.files.set('我的/复习/B.md', '正文');
@@ -89,25 +89,45 @@ describe('ReviewWatcher 自动加入', () => {
     setSettingsProvider(() => settings as any);
     const w = new ReviewWatcher(app, dm);
 
-    // 确认路径
-    await w.promptBatchAddForFolder('我的/复习');
+    // 确认路径：弹窗出现 → 点「加入」→ 批量加入 + 返回 true
+    const confirmedP = w.confirmBatchAddForFolder('我的/复习');
+    await new Promise((r) => setTimeout(r, 20));
     const popup = document.getElementById('__shared_confirm_popup__')!;
     expect(popup).not.toBeNull();
     expect(popup.textContent).toContain('2 篇'); // A 已在计划 → 候选 B,C
     (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 20));
+    expect(await confirmedP).toBe(true);
     const paths = (await dm.loadItems()).map((i) => i.filePath);
     expect(paths).toContain('我的/复习/B.md');
     expect(paths).toContain('我的/复习/C.md');
-    // 取消路径：候选写排除名单
-    settings.reviewExcludedNotes = [];
+    // 取消路径：什么都不做（返回 false，不写排除名单）
     const raw = JSON.parse(vault.files.get(REVIEW_FILE_PATH)!);
     vault.files.set(REVIEW_FILE_PATH, JSON.stringify(raw.filter((r: any) => r.filePath !== '我的/复习/B.md' && r.filePath !== '我的/复习/C.md')));
     const w2 = new ReviewWatcher(app, dm);
-    await w2.promptBatchAddForFolder('我的/复习');
+    const confirmedP2 = w2.confirmBatchAddForFolder('我的/复习');
+    await new Promise((r) => setTimeout(r, 20));
     (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 20));
-    expect(settings.reviewExcludedNotes).toEqual(['我的/复习/B.md', '我的/复习/C.md']);
+    expect(await confirmedP2).toBe(false);
+    expect(settings.reviewExcludedNotes).toEqual([]);
+  });
+
+  it('confirmBatchAddForFolder：无存量候选 → 直接接受（true，不弹窗）', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/复习/A.md', '正文');
+    const now = new Date();
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      { id: '1', filePath: '我的/复习/A.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() + 60000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+    ]));
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    setSettingsProvider(() => ({ reviewWatchedFolders: ['我的/复习'], reviewExcludedNotes: [] } as any));
+    const w = new ReviewWatcher(app, dm);
+    const confirmed = await w.confirmBatchAddForFolder('我的/复习');
+    expect(confirmed).toBe(true);
+    expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
   });
 
   it('onVaultDelete：确认移除 → 记录删除 + 监听目录内写排除；保留 → 挂起不动', async () => {
@@ -141,7 +161,7 @@ describe('ReviewWatcher 自动加入', () => {
     expect(settings.reviewExcludedNotes).toContain('我的/复习/A.md');
   }, 10000);
 
-  it('onVaultRename：确认更新 → updateFilePath 跟随；不更新 → 新路径写排除（挂起）', async () => {
+  it('onVaultRename：自动更新路径（ticket 099：无确认弹窗）；计划外改名不操作', async () => {
     const vault = new MockVault();
     vault.files.set('我的/复习/A.md', '正文');
     const now = new Date();
@@ -156,21 +176,20 @@ describe('ReviewWatcher 自动加入', () => {
     setSettingsProvider(() => settings as any);
     const w = new ReviewWatcher(app, dm);
 
-    // 更新
+    // 计划内改名 → 自动更新，无需点击确认
     w.onVaultRename({ path: '我的/复习/A-new.md', extension: 'md', basename: 'A-new' } as any, '我的/复习/A.md');
-    await new Promise((r) => setTimeout(r, 20));
-    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 30));
+    expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
     const items = await dm.loadItems();
     expect(items.some((i) => i.filePath === '我的/复习/A-new.md')).toBe(true);
-    // 不更新 → 新路径排除 + 记录仍挂旧路径
-    const raw2 = JSON.parse(vault.files.get(REVIEW_FILE_PATH)!);
-    vault.files.set(REVIEW_FILE_PATH, JSON.stringify(raw2.map((r: any) => ({ ...r, filePath: '我的/复习/A.md' }))));
-    w.onVaultRename({ path: '我的/复习/B-new.md', extension: 'md', basename: 'B-new' } as any, '我的/复习/A.md');
-    await new Promise((r) => setTimeout(r, 20));
-    (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
+    // 移动（跨目录）→ 同样自动跟随
+    w.onVaultRename({ path: '归档/A-new.md', extension: 'md', basename: 'A-new' } as any, '我的/复习/A-new.md');
     await new Promise((r) => setTimeout(r, 30));
-    expect(settings.reviewExcludedNotes).toContain('我的/复习/B-new.md');
-    expect((await dm.loadItems()).some((i) => i.filePath === '我的/复习/A.md')).toBe(true);
+    const items2 = await dm.loadItems();
+    expect(items2.some((i) => i.filePath === '归档/A-new.md')).toBe(true);
+    // 不在计划的文件改名 → 不产生任何记录
+    w.onVaultRename({ path: 'X-new.md', extension: 'md', basename: 'X-new' } as any, 'X.md');
+    await new Promise((r) => setTimeout(r, 30));
+    expect((await dm.loadItems()).some((i) => i.filePath === 'X-new.md')).toBe(false);
   });
 });

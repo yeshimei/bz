@@ -1,8 +1,9 @@
 /**
- * 复习计划监听器（ticket 098）：
- *  - 监听文件夹自动加入（批量收编确认 + 新建自动加入 + 排除名单）
+ * 复习计划监听器（ticket 098；ticket 099 修订）：
+ *  - 监听文件夹自动加入（新建自动加入 + 排除名单）
  *  - 删除计划内文件 → 确认「是否同步移除复习记录？」
- *  - 重命名/移动计划内文件 → 确认「是否更新文件名/路径？」（不更新 → 新路径写排除名单）
+ *  - 重命名/移动计划内文件 → 自动更新路径（不再确认，ticket 099）
+ *  - 监听文件夹添加：选择弹窗后立即确认存量收编（取消=什么都不做，不再写排除名单，ticket 099）
  * 依赖方向：store 层（confirm 为 core，无其它域 DOM）；经 index.ts 事件接线；refresh 函数体延迟解析。
  */
 import type { App, TFile } from 'obsidian';
@@ -22,8 +23,6 @@ export class ReviewWatcher {
   app: App;
   dataManager: ReviewDataManager;
 
-  /** 已做过批量收编提示的目录（内存幂等，防每次开面板重弹） */
-  private batchPrompted = new Set<string>();
   /** 删除确认防抖缓冲（多文件删除合并为一次确认） */
   private deleteQueue: string[] = [];
   private deleteTimer: ReturnType<typeof setTimeout> | null = null;
@@ -117,31 +116,18 @@ export class ReviewWatcher {
     })();
   }
 
-  /** vault rename：计划内文件改名/移动 → 确认「更新文件名/路径？」；不更新 → 新路径写排除名单 */
+  /** vault rename：计划内文件改名/移动 → 自动更新路径（ticket 099：不再弹确认） */
   onVaultRename(file: TFile, oldPath: string): void {
     void (async () => {
       if (file.extension !== 'md') return;
       if (oldPath === file.path) return;
       const items = await this.dataManager.loadItems();
       if (!items.some((i) => i.filePath === oldPath)) return;
-      confirm({
-        title: '笔记已重命名/移动',
-        message: `「${oldPath.split('/').pop()}」→「${file.path.split('/').pop()}」，是否更新复习计划里的文件名/路径？不更新则记录挂起（列表现删除线），文件回到原路径后恢复。`,
-        confirmText: '更新',
-        cancelText: '不更新',
-        onConfirm: async () => {
-          const updated = await this.dataManager.updateFilePath(oldPath, file.path, file.basename);
-          if (updated) {
-            notice('已更新复习计划路径', 'success');
-            await this.refresh();
-          }
-        },
-        onCancel: async () => {
-          // 不更新 → 新路径排除（防监听器把它当新文件又建一条记录）
-          if (this.isWatched(file.path)) await this.excludePaths([file.path]);
-          await this.refresh();
-        },
-      });
+      const updated = await this.dataManager.updateFilePath(oldPath, file.path, file.basename);
+      if (updated) {
+        notice('已更新复习计划路径', 'success');
+        await this.refresh();
+      }
     })();
   }
 
@@ -155,43 +141,34 @@ export class ReviewWatcher {
       .filter((p) => !this.isExcluded(p));
   }
 
-  /** 目录存量批量收编确认：确认 → 批量加入；取消 → 这批文件写排除名单（Q7） */
-  async promptBatchAddForFolder(folder: string): Promise<void> {
+  /** 选择监听文件夹后的存量收编确认（ticket 099）：确认 → 批量全部加入并返回 true；取消 → 什么都不做返回 false（不写排除名单） */
+  async confirmBatchAddForFolder(folder: string): Promise<boolean> {
     const items = await this.dataManager.loadItems();
     const candidates = this.collectAutoaddCandidates(folder, items);
-    if (!candidates.length) return;
-    this.batchPrompted.add(folder);
-    confirm({
-      title: '批量加入复习计划',
-      message: `监听文件夹「${folder}」下有 ${candidates.length} 篇笔记未加入复习计划，是否加入？（取消后这些笔记不再自动加入）`,
-      confirmText: '加入',
-      cancelText: '取消',
-      onConfirm: async () => {
-        let ok = 0;
-        for (const p of candidates) {
-          try {
-            await this.dataManager.addItem(p, p.split('/').pop()!.replace(/\.md$/, ''));
-            ok++;
-          } catch {
-            /* 并发已加入 → 跳过 */
+    if (!candidates.length) return true; // 无存量候选：直接接受
+    return new Promise<boolean>((resolve) => {
+      confirm({
+        title: '批量加入复习计划',
+        message: `监听文件夹「${folder}」下有 ${candidates.length} 篇笔记未加入复习计划，是否一并加入？`,
+        confirmText: '加入',
+        cancelText: '取消',
+        onConfirm: async () => {
+          let ok = 0;
+          for (const p of candidates) {
+            try {
+              await this.dataManager.addItem(p, p.split('/').pop()!.replace(/\.md$/, ''));
+              ok++;
+            } catch {
+              /* 并发已加入 → 跳过 */
+            }
           }
-        }
-        notice(`已加入 ${ok} 篇笔记到复习计划`, 'success');
-        await this.refresh();
-      },
-      onCancel: async () => {
-        await this.excludePaths(candidates);
-        notice(`已跳过 ${candidates.length} 篇，不再自动加入`, 'info');
-      },
+          notice(`已加入 ${ok} 篇笔记到复习计划`, 'success');
+          await this.refresh();
+          resolve(true);
+        },
+        onCancel: () => resolve(false),
+      });
     });
-  }
-
-  /** 打开复习面板时：对未提示过的监听目录做存量收编确认（幂等） */
-  async promptBatchAddAll(): Promise<void> {
-    for (const folder of this.watchedFolders) {
-      if (this.batchPrompted.has(folder)) continue;
-      await this.promptBatchAddForFolder(folder);
-    }
   }
 
   private async refresh(): Promise<void> {
@@ -208,6 +185,5 @@ export class ReviewWatcher {
       this.deleteTimer = null;
     }
     this.deleteQueue = [];
-    this.batchPrompted.clear();
   }
 }

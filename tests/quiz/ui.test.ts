@@ -307,7 +307,7 @@ describe('复习联动契约', () => {
     expect(document.getElementById('quiz-popup')).toBeNull();
   });
 });
-describe('ticket 098：多选 UI（提交位置/徽标/提示条）', () => {
+describe('ticket 099：多选 UI（无徽标/无提示条，提交位置保留）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     setApp(null as any);
@@ -316,7 +316,7 @@ describe('ticket 098：多选 UI（提交位置/徽标/提示条）', () => {
     QuizMasterUI.settings = { enableMultipleChoice: true, questionsPerNote: '0', shuffleQuestions: false, difficulty: 'random' };
   });
 
-  it('提交按钮位于选项下方；多选标题徽标「多选」+ 提示条；单选不含', async () => {
+  it('多选不显示「多选」徽标与提示条；提交按钮位于选项下方；单选不受影响', async () => {
     const vault = new MockVault();
     vault.files.set('A.md', '内容');
     seedQuiz(vault, {
@@ -330,15 +330,17 @@ describe('ticket 098：多选 UI（提交位置/徽标/提示条）', () => {
     const ui = new QuizMasterUI();
     await ui.startQuiz();
     const popup = document.getElementById('quiz-popup')!;
-    // 多选：徽标 + 提示条
-    expect(popup.querySelector('.quiz-multi-badge')!.textContent).toBe('多选');
-    expect(popup.textContent).toContain('本题为多选题，可多选');
+    // ticket 099：多选静默——无徽标、无提示条
+    expect(popup.querySelector('.quiz-multi-badge')).toBeNull();
+    expect(popup.textContent).not.toContain('本题为多选题');
+    // 标题仍显示笔记名与题号
+    expect(popup.textContent).toContain('📝 A (1/2)');
     // 提交按钮位于最后一个选项之后（DOM 顺序）
     const opts = popup.querySelectorAll('.quiz-option-btn');
     const submit = popup.querySelector('.quiz-submit-btn') as HTMLElement;
     // submit 与最后一个选项同容器且位于其后（compareDocumentPosition：FOLLOWING=4）
     expect(opts[opts.length - 1].compareDocumentPosition(submit) & 4).toBeTruthy();
-    // 勾选正确项（0+2）→ 提交 → splice → 下一题（单选：无徽标/提示条/提交）
+    // 勾选正确项（0+2）→ 提交 → splice → 下一题（单选：同样无徽标/提示条/提交）
     (opts[0] as HTMLElement).click();
     (opts[2] as HTMLElement).click();
     submit.click();
@@ -347,5 +349,25 @@ describe('ticket 098：多选 UI（提交位置/徽标/提示条）', () => {
     expect(popup2.querySelector('.quiz-multi-badge')).toBeNull();
     expect(popup2.textContent).not.toContain('本题为多选题');
     expect(popup2.querySelector('.quiz-submit-btn')).toBeNull();
+  });
+
+  it('题目缺 notePath → 标题降级不崩溃（待重做队列曾致 split 报错）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '内容');
+    seedQuiz(vault, {
+      'A.md': [{ question: 'NP?', options: ['a', 'b', 'c', 'd'], correctIndices: [0] }],
+    });
+    const app = makeApp(vault);
+    setApp(app);
+    const ui = new QuizMasterUI();
+    // 直接以缺 notePath 的题开复习会话（模拟旧数据/异常链路）
+    ui.startReviewSession({
+      questions: [{ question: 'NP?', options: ['a', 'b', 'c', 'd'], correctIndices: [0] } as any],
+      onComplete: null,
+    });
+    const popup = document.getElementById('quiz-popup')!;
+    expect(popup.textContent).toContain('NP?');
+    expect(popup.textContent).toContain('(1/1)');
+    ui.close();
   });
 });
