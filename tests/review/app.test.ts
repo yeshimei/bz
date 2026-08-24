@@ -778,4 +778,101 @@ describe('ticket 098：待重做 / 重做流程（ADR-0044）', () => {
     expect(qlSpy).not.toHaveBeenCalled();
     expect(rlSpy).not.toHaveBeenCalled();
   });
+
+  it('P1-3 回归：redoReviewLoop 无题跳过项不入返回集合（留在逾期队列可进普通复习）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    vault.files.set('B.md', '正文');
+    const now = new Date();
+    const mkRow = (id: string, p: string) => ({
+      id, filePath: p, name: p, reviewStart: now.toISOString(), stage: 3, phase: 'ladder', stability: 1, difficulty: 0.3,
+      reviewHistory: [], totalReviews: 0, averageConfidence: 0,
+      nextReviewDate: new Date(now.getTime() - 1000).toISOString(), lastReviewed: now.toISOString(),
+      lastDifficulty: 'hard', completed: false, pendingRedo: true,
+    });
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([mkRow('A', 'A.md'), mkRow('B', 'B.md')]));
+    const app = makeApp(vault);
+    setApp(app);
+    const quiz = makeQuizMock();
+    (reviewApp as any)._quizOverride = quiz;
+    // A 无题跳过；B 正常通过
+    vi.spyOn(reviewApp, 'regenerateQuestions').mockImplementation(async (p: any) =>
+      p === 'A.md' ? [] : [{ question: 'Q', options: ['a', 'b', 'c', 'd'], correctIndices: [0] }]
+    );
+    const dm = new ReviewDataManager(app);
+    const items = await dm.loadItems();
+    const pr = reviewApp.redoReviewLoop(items, 0);
+    await new Promise((r) => setTimeout(r, 20));
+    void quiz._cb({ correct: 2, wrong: 0, total: 2, accuracy: 100 });
+    await new Promise((r) => setTimeout(r, 50));
+    quiz.popup.querySelector('#quiz-next-note')!.click(); // B 是最后一篇 → 完成复习
+    const result = await pr;
+    // 返回集合只含通过的 B，跳过的 A 不在其中
+    expect(result).toEqual(['B.md']);
+    const after = await dm.loadItems();
+    expect(after.find((i) => i.filePath === 'A.md')!.pendingRedo).toBe(true); // A 保持待重做
+    expect(after.find((i) => i.filePath === 'B.md')!.pendingRedo).toBe(false);
+  });
+});
+
+describe('P1-2 回归：reviewLoop 活动文件切走收尾', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setSettingsProvider(() => ({ forceQuizForReview: false }) as any);
+    (reviewApp as any).dataManager = null;
+    (reviewApp as any)._quizOverride = null;
+    (reviewApp as any)._reviewNotice = null;
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    (reviewApp as any)._reviewNotice = null;
+  });
+
+  it('切走后常驻通知 warning 收尾并置空（与超时分支同样收尾）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    const item = {
+      id: '1', filePath: 'A.md', name: 'A', reviewStart: now.toISOString(), stage: 0, phase: 'ladder',
+      stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0,
+      nextReviewDate: new Date(now.getTime() - 1000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false,
+    } as any;
+    const app = makeApp(vault);
+    (app.workspace as any).getLeaf = () => ({ openFile: vi.fn().mockResolvedValue(undefined) });
+    (app.workspace as any).getActiveFile = () => ({ path: 'OTHER.md' }); // 已切走
+    setApp(app);
+    const handle = { setType: vi.fn(), setMessage: vi.fn(), hide: vi.fn() };
+    const notifySpy = vi.spyOn(await import('../../src/core/notice'), 'notify').mockReturnValue(handle as any);
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
+    await reviewApp.reviewLoop([item], 0);
+    await vi.advanceTimersByTimeAsync(1100); // 首个 1s 轮询即检测到切走
+    vi.useRealTimers();
+    expect(handle.setMessage).toHaveBeenCalledWith('已切换到其他笔记，本轮复习中断');
+    expect(handle.setType).toHaveBeenCalledWith('warning');
+    expect((reviewApp as any)._reviewNotice).toBeNull();
+  });
+
+  it('正常在目标笔记上复习 → 通知不收尾（保持「复习中」）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    const item = {
+      id: '1', filePath: 'A.md', name: 'A', reviewStart: now.toISOString(), stage: 0, phase: 'ladder',
+      stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0,
+      nextReviewDate: new Date(now.getTime() - 1000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false,
+    } as any;
+    const app = makeApp(vault);
+    (app.workspace as any).getLeaf = () => ({ openFile: vi.fn().mockResolvedValue(undefined) });
+    (app.workspace as any).getActiveFile = () => ({ path: 'A.md' });
+    setApp(app);
+    const handle = { setType: vi.fn(), setMessage: vi.fn(), hide: vi.fn() };
+    vi.spyOn(await import('../../src/core/notice'), 'notify').mockReturnValue(handle as any);
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
+    await reviewApp.reviewLoop([item], 0);
+    await vi.advanceTimersByTimeAsync(1100);
+    vi.useRealTimers();
+    expect(handle.setType).not.toHaveBeenCalledWith('warning');
+    expect((reviewApp as any)._reviewNotice).not.toBeNull();
+    (reviewApp as any)._reviewNotice = null;
+  });
 });

@@ -2,7 +2,7 @@
  * 复习计划入口（ticket 16 修正版：对齐源码 entry，含 4 快捷命令与完整事件监听）
  * 命令（review-*）由 main.ts 裸注册（含 review-mark-again/hard/good/easy）。
  */
-import type { App } from 'obsidian';
+import type { App, EventRef } from 'obsidian';
 import { notice } from '../core/notice';
 import { confirm } from '../core/confirm';
 import { ReviewDataManager } from './data';
@@ -16,6 +16,14 @@ export let dataManager: ReviewDataManager | null = null;
 export let uiManager: UIManager | null = null;
 export let reviewWatcher: ReviewWatcher | null = null;
 let checkInterval: ReturnType<typeof setInterval> | null = null;
+/** P2：ensureReview 注册的全部事件引用（unload 统一 offref，防卸载后监听残留双触发） */
+let eventRefs: { source: any; ref: EventRef }[] = [];
+
+/** 注册即记账（offref 语义：真实 Obsidian 与测试 mock 均按 ref 注销） */
+function listen(source: any, event: string, cb: (...args: any[]) => void): void {
+  const ref = source.on(event, cb);
+  if (ref) eventRefs.push({ source, ref });
+}
 
 /** 幂等初始化（对齐源码 entry：UI 构建 + 事件监听 + 2s 后首查 + 60s 周期） */
 export function ensureReview(app: App): void {
@@ -32,23 +40,23 @@ export function ensureReview(app: App): void {
   }, 2000);
 
   // 事件监听（源码 L864-879 逐字）
-  (app.metadataCache as any).on('resolved', async () => {
+  listen(app.metadataCache as any, 'resolved', async () => {
     await reviewApp.applyReviewStyles(app);
   });
-  (app.vault as any).on('modify', async (file: any) => {
+  listen(app.vault as any, 'modify', async (file: any) => {
     if (file.extension === 'md') await reviewApp.applyReviewStyles(app, file);
   });
   // ticket 098：监听文件夹自动加入（create）+ 删除/改名/移动确认（delete/rename）
-  (app.vault as any).on('create', (file: any) => {
+  listen(app.vault as any, 'create', (file: any) => {
     if (file.extension === 'md') void reviewWatcher?.onVaultCreate(file);
   });
-  (app.vault as any).on('delete', (file: any) => {
+  listen(app.vault as any, 'delete', (file: any) => {
     if (file.extension === 'md') reviewWatcher?.onVaultDelete(file);
   });
-  (app.vault as any).on('rename', (file: any, oldPath: string) => {
+  listen(app.vault as any, 'rename', (file: any, oldPath: string) => {
     if (file.extension === 'md') reviewWatcher?.onVaultRename(file, oldPath);
   });
-  (app.workspace as any).on('quit', () => {
+  listen(app.workspace as any, 'quit', () => {
     if (checkInterval) {
       clearInterval(checkInterval);
       checkInterval = null;
@@ -171,6 +179,15 @@ export function unloadReview(): void {
     clearInterval(checkInterval);
     checkInterval = null;
   }
+  // P2：全部 EventRef 统一 offref，防卸载后旧监听残留（再 ensure 后事件双触发）
+  for (const { source, ref } of eventRefs) {
+    try {
+      source.offref?.(ref);
+    } catch (e) {
+      /* 单个注销失败不阻断其余清理 */
+    }
+  }
+  eventRefs = [];
   uiManager?.destroy();
   uiManager = null;
   dataManager = null;
