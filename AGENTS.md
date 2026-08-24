@@ -8,7 +8,7 @@
 
 ## 命令与构建
 
-- `npm install` / `npm run dev` / `npm run build` / `npm test` / `npm run test:watch` / `npx tsc --noEmit`
+- `pnpm install` / `pnpm run dev` / `pnpm run build` / `pnpm test` / `pnpm run test:watch` / `pnpm exec tsc --noEmit`（依赖管理已迁移 pnpm，勿用 npm 装依赖）
 - 产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`（esbuild.config.mjs 硬编码）
 - 测试经 vitest alias 将 `obsidian` 替换为 `tests/mock-obsidian-entry.ts`
 
@@ -70,7 +70,7 @@
 - 异步按项目约定处理，依赖注入使用已有 test helper。
 - 完成门禁（必须全绿）：
   - Ticket验收 + 契约不破坏
-  - npm test + tsc --noEmit
+  - pnpm test + pnpm exec tsc --noEmit
   - 自审 + diff审查
   - 构建验证通过
   - 任一失败 → 修复重测
@@ -80,10 +80,11 @@
 - **分支与提交**：主分支 `master`，提交信息遵循 Conventional Commits。
 - **Worktree 流程（DSH）**  
   1. 会话开始时，在主仓库**外部**创建 worktree：`../.dsh-worktrees/<分支名>`，分支名 `worktree/<slug>`。  
-  2. 所有改动限制在该 worktree 内。  
-  3. 测试全绿后提交到 `worktree/<slug>`。  
-  4. 切回主工作区（`master`），**先** `git fetch origin master`，**再** `git merge worktree/<slug>`
-  5. 合并后重新测试，构建并部署
+  2. worktree 内依赖用 `pnpm install`（store 在 `D:\.pnpm-store\`，与仓库/worktree 同卷硬链接，秒级完成；首次在本机装过即无需再从网络拉取）。  
+  3. 所有改动限制在该 worktree 内。  
+  4. 测试全绿后提交到 `worktree/<slug>`。  
+  5. 切回主工作区（`master`），**先** `git fetch origin master`，**再** `git merge worktree/<slug>`
+  6. 合并后重新测试，构建并部署
 - **并行改动处理**：只暂存本任务相关文件。
 - **Spec 驱动开发**  
   - 先更新 `.scratch/memo-suite-plugin/spec.md`。  
