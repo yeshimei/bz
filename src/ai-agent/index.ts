@@ -22,6 +22,7 @@ import {
   loadJSON,
   saveJSON,
   CLIP_FOLDER,
+  inFolders,
 } from './sync';
 import { showClipConfirmDialog } from './dialog';
 
@@ -180,7 +181,7 @@ async function handleClip(app: App, ai: AIService, file: any) {
 
 // ---------- 事件编排 ----------
 
-function createNoteSyncAgent(app: App, ai: AIService | null): () => void {
+function createNoteSyncAgent(app: App, ai: AIService | null): void {
   // 对两个数据源执行同步函数，有变化才写回
   async function syncSources(fn: (items: any[], ...args: any[]) => boolean, ...args: any[]) {
     for (const path of [getMemoPath(), getFavoritesPath()]) {
@@ -189,7 +190,15 @@ function createNoteSyncAgent(app: App, ai: AIService | null): () => void {
     }
   }
 
-  const isMd = (file: any) => file && file.extension === 'md' && getWatchedFolders().some((f) => file.path.startsWith(f + '/') || file.path === f);
+  const isMd = (file: any) => file && file.extension === 'md' && inFolders(file.path, getWatchedFolders());
+
+  /** 收藏本：同名未关联条目自动关联（create / file-open 共用） */
+  const autoLinkFavorites = async (file: any) => {
+    const items = await loadJSON(app, getFavoritesPath());
+    if (syncAutoLink(items, file.basename, file.path)) {
+      await saveJSON(app, getFavoritesPath(), items);
+    }
+  };
 
   _refs.push(app.vault.on('rename', (file: any, oldPath: string) => {
     if (!isMd(file)) return;
@@ -217,31 +226,14 @@ function createNoteSyncAgent(app: App, ai: AIService | null): () => void {
         await handleClip(app, ai, file);
       }
       // 同名条目自动关联（仅收藏本）
-      const items = await loadJSON(app, getFavoritesPath());
-      if (syncAutoLink(items, file.basename, file.path)) {
-        await saveJSON(app, getFavoritesPath(), items);
-      }
+      await autoLinkFavorites(file);
     });
   }));
 
   _refs.push(app.workspace.on('file-open', (file: any) => {
     if (!isMd(file)) return;
-    enqueue(async () => {
-      const items = await loadJSON(app, getFavoritesPath());
-      if (syncAutoLink(items, file.basename, file.path)) {
-        await saveJSON(app, getFavoritesPath(), items);
-      }
-    });
+    enqueue(() => autoLinkFavorites(file));
   }));
-
-  return () => {
-    for (const ref of _refs) {
-      try {
-        (app.vault as any).offref(ref);
-      } catch (e) { /* 忽略 */ }
-    }
-    _refs = [];
-  };
 }
 
 /** 幂等初始化（main.ts 按设置 aiAgentEnabled 开关注册） */
@@ -253,10 +245,6 @@ export async function ensureAIAgent(app: App): Promise<void> {
   await ensureBz(app);
   _ai = createAI();
   createNoteSyncAgent(app, _ai);
-}
-
-export function isAIAgentInitialized(): boolean {
-  return initialized;
 }
 
 /** 卸载清理（main.ts onunload 调用）：移除监听 + 重置模块状态 */
