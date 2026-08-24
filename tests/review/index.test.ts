@@ -86,7 +86,7 @@ describe('ensureReview', () => {
     expect(spy).toHaveBeenCalled();
   });
 
-  it('vault rename：非 md 忽略；同路径忽略；命中计划 → 确认弹窗（更新/不更新，ticket 098）', async () => {
+  it('vault rename：非 md 忽略；同路径忽略；命中计划 → 自动更新路径（ticket 099：无确认弹窗）', async () => {
     const vault = new MockVault();
     seed(vault);
     const app = makeApp(vault);
@@ -99,13 +99,10 @@ describe('ensureReview', () => {
     // 同路径
     vault.emit('rename', vault.file('A.md'), 'A.md');
     expect(updSpy).not.toHaveBeenCalled();
-    // 命中计划：弹确认窗 → 点「更新」→ updateFilePath + refresh
+    // 命中计划 → 直接自动更新 + refresh（无确认弹窗）
     vault.emit('rename', { path: 'A-new.md', extension: 'md', basename: 'A-new' }, 'A.md');
     await new Promise((r) => setTimeout(r, 20));
-    expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
-    expect(document.getElementById('__shared_confirm_ok__')!.textContent).toBe('更新');
-    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 20));
+    expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
     expect(updSpy).toHaveBeenCalledWith('A.md', 'A-new.md', 'A-new');
     expect(refreshSpy).toHaveBeenCalled();
   });

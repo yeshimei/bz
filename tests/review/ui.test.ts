@@ -513,7 +513,7 @@ describe('ticket 098 UI：做题家图标移除 / 挂起记录删除线 / 监听
     ui.destroy();
   });
 
-  it('⚙️ 设置弹窗：监听文件夹行（增删）+ 批量收编语义提示', async () => {
+  it('⚙️ 设置弹窗：监听文件夹 chip（名字+关闭标签）+ 添加按钮打开文件夹选择弹窗', async () => {
     const vault = new MockVault();
     seed(vault);
     const app = makeApp(vault);
@@ -526,15 +526,51 @@ describe('ticket 098 UI：做题家图标移除 / 挂起记录删除线 / 监听
     const popup = document.getElementById('bz-settings-modal-popup')!;
     const names = () => [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
     expect(names()).toContain('监听文件夹');
-    expect(names()).toContain('监听目录 1');
-    // ＋ 添加监听文件夹 → 新增空行「监听目录 2」
-    const addRow = [...popup.querySelectorAll('.setting-item')].find(
-      (el: any) => el.__setting?.controls?.[0]?.text === '＋ 添加监听文件夹'
-    ) as HTMLElement;
-    (addRow as any).__setting.controls[0].trigger();
+    // 已有监听目录 → chip 形态（名字 + ✕ 关闭标签）
+    const watchBox = popup.querySelector('#review-watch-folders')!;
+    expect(watchBox.querySelector('.bz-review-watch-name')!.textContent).toBe('卡片盒');
+    const chipClose = watchBox.querySelector('.bz-review-watch-close') as HTMLElement;
+    expect(chipClose).not.toBeNull();
+    // ✕ 关闭标签移除该目录
+    chipClose.click();
     await new Promise((r) => setTimeout(r, 20));
-    expect(names()).toContain('监听目录 2');
+    expect(popup.querySelector('#review-watch-folders .bz-review-watch-chip')).toBeNull();
+    // ＋ 添加监听文件夹 → 打开文件夹选择弹窗
+    const addBtn = [...popup.querySelectorAll('#review-watch-folders button')].find(
+      (b) => b.textContent === '＋ 添加监听文件夹'
+    ) as HTMLElement;
+    expect(addBtn).toBeTruthy();
+    addBtn.click();
+    await new Promise((r) => setTimeout(r, 30));
+    expect(document.getElementById('bz-review-folder-mask')).not.toBeNull();
     closeSettingsModal();
     ui.destroy();
+  });
+
+  it('ReviewFolderPicker：输入过滤 + 点选回填 + 确定回调', async () => {
+    const vault = new MockVault();
+    vault.files.set('卡片盒/复习/A.md', '');
+    vault.files.set('书库/B.md', '');
+    const app = makeApp(vault);
+    setApp(app);
+    let picked: string | null = null;
+    const { ReviewFolderPicker } = await import('../../src/review/ui');
+    new ReviewFolderPicker(app, (f) => (picked = f)).open();
+    const mask = document.getElementById('bz-review-folder-mask')!;
+    expect(mask).not.toBeNull();
+    const items = () => [...mask.querySelectorAll('.bz-review-folder-item')].map((el) => el.textContent);
+    expect(items()).toContain('卡片盒/复习');
+    // 输入过滤
+    const input = mask.querySelector('.bz-review-folder-input') as HTMLInputElement;
+    input.value = '卡片';
+    input.dispatchEvent(new Event('input'));
+    expect(items()).toEqual(['卡片盒/复习']);
+    // 点选回填 + 确定
+    (mask.querySelector('.bz-review-folder-item') as HTMLElement).click();
+    expect(input.value).toBe('卡片盒/复习');
+    (mask.querySelector('.bz-review-folder-btn--primary') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(picked).toBe('卡片盒/复习');
+    expect(document.getElementById('bz-review-folder-mask')).toBeNull();
   });
 });

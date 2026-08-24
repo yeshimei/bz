@@ -9,6 +9,7 @@ import { getApp } from '../core/app';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
+import { escManager } from '../core/esc-manager';
 import {
   attachItemActions,
   registerSheetCompanion,
@@ -220,10 +221,10 @@ export class UIManager {
           await saveSettings();
         });
       });
-    // ticket 098：监听文件夹（多目录、递归）+ 批量收编确认
+    // ticket 099：监听文件夹（多目录、递归）——文件夹选择弹窗添加 + chip 关闭标签
     new Setting(el)
       .setName('监听文件夹')
-      .setDesc('目录内未加入且未排除的 .md 自动进入复习计划（递归）；新增目录会先弹存量确认，取消则该批不再自动加入');
+      .setDesc('目录内未加入且未排除的 .md 自动进入复习计划（递归）；新增目录会先确认存量加入，取消则不添加');
     const watchBox = document.createElement('div');
     watchBox.id = 'review-watch-folders';
     el.appendChild(watchBox);
@@ -231,36 +232,58 @@ export class UIManager {
       watchBox.innerHTML = '';
       const folders = s.reviewWatchedFolders || [];
       folders.forEach((folder, idx) => {
-        new Setting(watchBox)
-          .setName(`监听目录 ${idx + 1}`)
-          .addText((t) =>
-            t
-              .setValue(folder || '')
-              .setPlaceholder('vault 内目录路径，如 卡片盒/复习')
-              .onChange(async (v) => {
-                s.reviewWatchedFolders[idx] = v.trim();
-                await saveSettings();
-              })
-          )
-          .addButton((b) =>
-            b.setButtonText('移除').onClick(async () => {
-              s.reviewWatchedFolders.splice(idx, 1);
-              await saveSettings();
-              renderWatchRows();
-            })
-          );
+        const chip = document.createElement('span');
+        chip.className = 'bz-review-watch-chip';
+        const name = document.createElement('span');
+        name.className = 'bz-review-watch-name';
+        name.textContent = folder;
+        const close = document.createElement('button');
+        close.className = 'bz-review-watch-close';
+        close.setAttribute('aria-label', `移除监听文件夹 ${folder}`);
+        close.textContent = '✕';
+        close.onclick = async () => {
+          s.reviewWatchedFolders.splice(idx, 1);
+          await saveSettings();
+          renderWatchRows();
+        };
+        chip.appendChild(name);
+        chip.appendChild(close);
+        watchBox.appendChild(chip);
       });
-      new Setting(watchBox)
-        .setName('')
-        .addButton((b) =>
-          b
-            .setButtonText('＋ 添加监听文件夹')
-            .onClick(async () => {
-              s.reviewWatchedFolders = [...(s.reviewWatchedFolders || []), ''];
-              await saveSettings();
-              renderWatchRows();
-            })
-        );
+      const addRow = document.createElement('div');
+      addRow.className = 'setting-item';
+      addRow.style.cssText = 'border:none;padding:8px 0;';
+      const ctl = document.createElement('div');
+      ctl.className = 'setting-item-control';
+      const addBtn = document.createElement('button');
+      addBtn.className = 'mod-cta';
+      addBtn.textContent = '＋ 添加监听文件夹';
+      addBtn.onclick = () => {
+        void (async () => {
+          const { ReviewWatcher } = await import('./watch');
+          const watcher = new ReviewWatcher(this.app, this.dataManager);
+          new ReviewFolderPicker(this.app, async (picked) => {
+            const folder = picked.trim().replace(/^\/+|\/+$/g, '');
+            if (!folder) {
+              notice('未选择文件夹', 'warning');
+              return;
+            }
+            if ((s.reviewWatchedFolders || []).includes(folder)) {
+              notice('该文件夹已在监听列表', 'info');
+              return;
+            }
+            // 选择后立即确认存量收编：取消=什么都不做（不添加目录、不写排除名单）
+            const confirmed = await watcher.confirmBatchAddForFolder(folder);
+            if (!confirmed) return;
+            s.reviewWatchedFolders = [...(s.reviewWatchedFolders || []), folder];
+            await saveSettings();
+            renderWatchRows();
+          }).open();
+        })();
+      };
+      ctl.appendChild(addBtn);
+      addRow.appendChild(ctl);
+      watchBox.appendChild(addRow);
     };
     renderWatchRows();
 
@@ -290,15 +313,6 @@ export class UIManager {
       try {
         const { quizUpdate } = await import('../quiz');
         await quizUpdate(this.app);
-      } catch {
-        /* ignore */
-      }
-    })();
-    // 监听文件夹存量收编确认（ticket 098：首次弹窗报存量，确认/取消后不重复打扰）
-    void (async () => {
-      try {
-        const { reviewApp } = await import('./app');
-        await reviewApp.promptBatchAddAll();
       } catch {
         /* ignore */
       }
@@ -643,5 +657,127 @@ export class UIManager {
     this.confirmMask = null;
     this.confirmPopup = null;
     this.entriesContainer = null;
+  }
+}
+
+/**
+ * 监听文件夹选择弹窗（ticket 099）：仿附件搬移 FolderSelectModal 形态——
+ * 输入过滤 + 目录列表点选 + 取消/确定；自绘 DOM（铁律 9：bz-review-* 类名，样式收敛 src/review/styles.css）。
+ * onPick 回调选中的库内文件夹路径（可为空串=库根目录）。
+ */
+export class ReviewFolderPicker {
+  private app: any;
+  private onPick: (folder: string) => void;
+  private mask: HTMLElement | null = null;
+  private input: HTMLInputElement | null = null;
+  private listEl: HTMLElement | null = null;
+  private folders: string[] = [];
+
+  constructor(app: any, onPick: (folder: string) => void) {
+    this.app = app;
+    this.onPick = onPick;
+  }
+
+  open(): void {
+    const old = document.getElementById('bz-review-folder-mask');
+    if (old) old.remove();
+
+    const mask = document.createElement('div');
+    mask.id = 'bz-review-folder-mask';
+    mask.className = 'bz-review-folder-mask';
+    mask.onclick = (e) => {
+      if (e.target === mask) this.close();
+    };
+
+    const popup = document.createElement('div');
+    popup.className = 'bz-review-folder-popup';
+
+    const title = document.createElement('div');
+    title.className = 'bz-review-folder-title';
+    title.textContent = '选择监听文件夹';
+    popup.appendChild(title);
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'bz-review-folder-input';
+    input.placeholder = 'vault 内目录路径，如 卡片盒/复习';
+    input.addEventListener('input', () => this.filter());
+    this.input = input;
+    popup.appendChild(input);
+
+    const list = document.createElement('div');
+    list.className = 'bz-review-folder-list';
+    this.listEl = list;
+    popup.appendChild(list);
+
+    const actions = document.createElement('div');
+    actions.className = 'bz-review-folder-actions';
+    const cancel = document.createElement('button');
+    cancel.className = 'bz-review-folder-btn';
+    cancel.textContent = '取消';
+    cancel.onclick = () => this.close();
+    const ok = document.createElement('button');
+    ok.className = 'bz-review-folder-btn bz-review-folder-btn--primary';
+    ok.textContent = '确定';
+    ok.onclick = () => this.submit();
+    actions.appendChild(cancel);
+    actions.appendChild(ok);
+    popup.appendChild(actions);
+
+    mask.appendChild(popup);
+    document.body.appendChild(mask);
+    this.mask = mask;
+    escManager.register('bz-review-folder', {
+      isVisible: () => !!this.mask && this.mask.isConnected,
+      close: () => this.close(),
+    });
+    input.focus();
+
+    this.refreshFolders();
+    this.filter();
+  }
+
+  refreshFolders(): void {
+    const set = new Set<string>();
+    const files =
+      this.app?.vault?.getFiles?.() ?? this.app?.vault?.getMarkdownFiles?.() ?? [];
+    for (const f of files) {
+      const idx = f.path.lastIndexOf('/');
+      if (idx !== -1) set.add(f.path.slice(0, idx));
+    }
+    set.add('');
+    this.folders = [...set].sort();
+  }
+
+  filter(): void {
+    if (!this.listEl) return;
+    const q = (this.input?.value || '').trim().toLowerCase();
+    // 输入恰好等于某个目录 → 视为「已选中」，显示完整列表
+    const exact = !!q && this.folders.some((f) => f === q);
+    this.listEl.textContent = '';
+    for (const folder of this.folders) {
+      if (q && !exact && !folder.toLowerCase().includes(q)) continue;
+      const item = document.createElement('div');
+      item.className = 'bz-review-folder-item';
+      item.textContent = folder === '' ? '（库根目录）' : folder;
+      item.addEventListener('click', () => {
+        if (this.input) this.input.value = folder;
+        this.filter();
+      });
+      this.listEl.appendChild(item);
+    }
+  }
+
+  submit(): void {
+    const folder = (this.input?.value || '').trim().replace(/^\/+|\/+$/g, '');
+    this.close();
+    this.onPick(folder);
+  }
+
+  close(): void {
+    if (this.mask) {
+      this.mask.remove();
+      this.mask = null;
+    }
   }
 }

@@ -510,6 +510,36 @@ describe('ticket 098：待重做 / 重做流程（ADR-0044）', () => {
     expect(openFile).toHaveBeenCalled();
   });
 
+  it('regenerateQuestions：返回题补 notePath/_index（ticket 099：缺失曾致 renderModal split 崩溃）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const app = makeApp(vault);
+    setApp(app);
+    // 新题链路：清空 → ensureQuestions → 读回 fresh
+    const fresh = [{ question: 'F', options: ['a', 'b', 'c', 'd'], correctIndices: [0] }];
+    (reviewApp as any)._quizOverride = {
+      ai: {},
+      ensureQuestions: async () => {},
+      manager: {
+        getQuestionsForNote: vi.fn(async (_app: any, path: string) => (path === 'A.md' ? [...fresh] : [])),
+        saveQuestionsForNote: async () => {},
+      },
+    };
+    const out = await reviewApp.regenerateQuestions('A.md');
+    expect(out).toHaveLength(1);
+    expect(out[0].notePath).toBe('A.md');
+    expect(out[0]._index).toBe(0);
+    // 回退链路：新题为空 → 用 leftover 旧题，同样补 notePath/_index
+    const leftover = [{ question: 'L', options: ['a', 'b', 'c', 'd'], correctIndices: [1] }];
+    let call = 0;
+    (reviewApp as any)._quizOverride.manager.getQuestionsForNote = async () => (call++ === 0 ? [...leftover] : []);
+    const out2 = await reviewApp.regenerateQuestions('A.md');
+    expect(out2[0].question).toBe('L');
+    expect(out2[0].notePath).toBe('A.md');
+    expect(out2[0]._index).toBe(0);
+    (reviewApp as any)._quizOverride = null;
+  });
+
   it('redoReviewLoop：通过仅清标记不写 FSRS（markReview 不被调用）', async () => {
     const vault = new MockVault();
     vault.files.set('A.md', '正文');

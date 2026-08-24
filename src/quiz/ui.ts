@@ -311,26 +311,12 @@ export class QuizMasterUI {
     // 使用固定的总题数 this.totalQuestions；题号 = 已消费题数 + 1：
     // 答对走 splice（currentIndex 不增、剩余长度减 1），答错走 currentIndex++，
     // 两路相加即已做题数——不依赖 correct/wrong 计数（多选计数为已知缺陷）
-    const noteName = q.notePath!.split('/').pop()!.replace('.md', '');
+    // ticket 099：notePath 判空降级（待重做队列曾缺 notePath → q.notePath!.split 崩溃）
+    const noteName = q.notePath ? q.notePath.split('/').pop()!.replace('.md', '') : '';
     const doneCount = this.currentIndex + (this.totalQuestions - this.currentQuestions.length);
-    title.textContent = `📝 ${noteName} (${doneCount + 1}/${this.totalQuestions})`;
-    // ticket 098：多选题标题徽标（左上角提醒题型）
-    if (q.correctIndices.length > 1) {
-      const badge = document.createElement('span');
-      badge.className = 'quiz-multi-badge';
-      badge.textContent = '多选';
-      title.appendChild(badge);
-    }
+    title.textContent = noteName ? `📝 ${noteName} (${doneCount + 1}/${this.totalQuestions})` : `📝 (${doneCount + 1}/${this.totalQuestions})`;
     header.appendChild(title);
     popup.appendChild(header);
-
-    // ticket 098：多选题提示条
-    if (q.correctIndices.length > 1) {
-      const hint = document.createElement('div');
-      hint.className = 'quiz-multi-hint';
-      hint.textContent = '本题为多选题，可多选';
-      popup.appendChild(hint);
-    }
 
     // 题目
     const questionDiv = document.createElement('div');
