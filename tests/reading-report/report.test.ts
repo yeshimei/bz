@@ -149,6 +149,24 @@ describe('report 生成函数', () => {
     expect(cell4).toContain('阅读时长: 5.0小时');
   });
 
+  it('generateMonthHeatmap：历史月份空白格不再是未来日期（P2）', () => {
+    // 远古月份：全部空白格应为「无阅读记录」而非「未来日期」
+    const past = generateMonthHeatmap({ dailyData: {} }, '2000-01');
+    expect(past).not.toContain('未来日期');
+    expect(past).toContain('无阅读记录');
+    // 未来月份仍标未来
+    const upcoming = generateMonthHeatmap({ dailyData: {} }, '2999-12');
+    expect(upcoming).toContain('未来日期');
+    expect(upcoming).not.toContain('无阅读记录');
+  });
+
+  it('generateHeatmapCell：nodata 历史空白格 tooltip 非未来文案（P2）', () => {
+    const cell = generateHeatmapCell({ type: 'nodata', date: '2000-01-15' });
+    expect(cell).not.toContain('未来日期');
+    expect(cell).toContain('无阅读记录');
+    expect(cell).toContain('#f8f9fa'); // 与 future 同为浅灰底
+  });
+
   it('generateReadingFocusAnalysis：专注度指标卡', () => {
     const html = generateReadingFocusAnalysis(stats, books);
     expect(html).toContain('深度会话');

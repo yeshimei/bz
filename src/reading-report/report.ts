@@ -528,6 +528,10 @@ export function generateMonthHeatmap(monthData: any, monthKey: string): string {
   const weekRows: any[][] = [];
   let currentWeek: any[] = [];
 
+  // 只有今天之后的日期才算「未来」；历史月份的空白格不是未来日期
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
+
   for (let i = 0; i < firstWeekday; i++) {
     currentWeek.push({ type: 'empty' });
   }
@@ -535,9 +539,10 @@ export function generateMonthHeatmap(monthData: any, monthKey: string): string {
   for (let day = 1; day <= daysInMonth; day++) {
     const dateKey = `${year}-${pad2(month)}-${pad2(day)}`;
     const dayData = monthData.dailyData[dateKey];
+    const isFuture = new Date(parseInt(year), parseInt(month) - 1, day) > todayEnd;
 
     currentWeek.push({
-      type: dayData ? 'data' : 'future',
+      type: dayData ? 'data' : isFuture ? 'future' : 'nodata',
       date: dateKey,
       data: dayData,
       day,
@@ -592,6 +597,14 @@ export function generateHeatmapCell(cell: any): string {
     background: #f8f9fa; border-radius: 2px;
     @media (max-width: 768px) { width: ${mobileSize}; height: ${mobileSize}; }"
     title="${cell.date} - 未来日期"></div>`;
+  }
+
+  if (cell.type === 'nodata') {
+    // 历史月份无阅读记录的空白格（非未来日期）
+    return `<div style="width: ${baseSize}; height: ${baseSize};
+    background: #f8f9fa; border-radius: 2px;
+    @media (max-width: 768px) { width: ${mobileSize}; height: ${mobileSize}; }"
+    title="${cell.date} - 无阅读记录"></div>`;
   }
 
   const durationHours = cell.data.duration / 3600;

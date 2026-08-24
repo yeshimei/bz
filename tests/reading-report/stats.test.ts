@@ -12,10 +12,19 @@ import {
   calculateThinkRatio, calculateInteractionScore, calculateCategoryDiversity,
   calculateBalanceScore, getSuggestedCategories, analyzeInteractionPattern,
   analyzeConnectionLevel, extractNotesInteractions, getAllBookNotes,
+  analyzeReadingTrends, analyzeReadingCategories,
 } from '../../src/reading-report/stats';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 
 function book(fm: Record<string, any>): any {
   return { file: { name: 'x.md' }, frontmatter: fm, cache: null };
+}
+
+/** 本地时区 YYYY-MM-DD（与修复后 toIsoDate / 热力图日桶同口径） */
+function localIsoDate(ts: number): string {
+  const d = new Date(ts);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
 describe('calculateReadingStats', () => {
@@ -153,6 +162,14 @@ describe('热力图', () => {
     expect(r.monthlyData['2025-06'].sessions).toBe(4);
   });
 
+  it('processHeatmapData：日桶键为本地时区日期（P1-20 UTC 偏移修复）', () => {
+    // 本地构造 2024-12-24 07:30（UTC+8 下对应 2024-12-23T23:30Z，旧 UTC 切片会错桶到前一天）
+    const start = new Date(2024, 11, 24, 7, 30).getTime();
+    const r = processHeatmapData([{ start, duration: 600 }]);
+    expect(Object.keys(r.dailyData)).toEqual([localIsoDate(start)]);
+    expect(Object.keys(r.dailyData)).toContain('2024-12-24');
+  });
+
   it('calculateIntensityLevel 分级', () => {
     expect(calculateIntensityLevel(5)).toBe(4);
     expect(calculateIntensityLevel(2)).toBe(3);
@@ -233,26 +250,98 @@ describe('类别与互动', () => {
     expect(r.booksWithInteractions).toBe(1);
     expect(r.avgHighlightsPerBook).toBe('10.0');
   });
+
+  it('analyzeReadingCategories.categoryTrends：按完成日期倒序取最近 10 本（P2 任意取样修复）', () => {
+    // 本地时区 ISO 日期（n 天前）
+    const isoDaysAgo = (n: number): string => {
+      const d = new Date();
+      d.setDate(d.getDate() - n);
+      const p = (v: number) => String(v).padStart(2, '0');
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    };
+    // i=0 最旧（170 天前）… i=11 最新（60 天前），全部在近 6 月内；前两本属「远类」
+    // 输入顺序故意打乱：旧实现的 slice(0,10) 取的是输入前 10（含 2 本远类），新实现取日期最近 10 本
+    const order = [5, 0, 8, 2, 11, 1, 9, 3, 7, 10, 4, 6];
+    const notes = order.map((i) =>
+      book({ category: i <= 1 ? '远类' : '近类', completionDate: isoDaysAgo(170 - i * 10), readingProgress: 100 })
+    );
+    const r = analyzeReadingCategories(notes);
+    expect(r.categoryTrends).toEqual([{ name: '近类', count: 10 }]);
+  });
+});
+
+describe('analyzeReadingTrends 趋势修复（P1-17）', () => {
+  /** 6 个月升序月度数据（2025-01 → 2025-06） */
+  function makeStats(booksReadAsc: number[]): any {
+    const monthlyStats: Record<string, any> = {};
+    ['01', '02', '03', '04', '05', '06'].forEach((m, i) => {
+      monthlyStats[`2025-${m}`] = {
+        booksRead: booksReadAsc[i], booksCompleted: 0,
+        totalReadingTime: 0, totalHighlights: 0, readingProgress: 0,
+      };
+    });
+    return { monthlyStats, readBooks: 0, readingBooks: 0 };
+  }
+
+  it('升序 [1,1,1,2,2,9]：本月=9、季均≈4.33、方向 ↑；recentMonths 反转仅供图表', () => {
+    const t = analyzeReadingTrends(makeStats([1, 1, 1, 2, 2, 9]), []);
+    expect(t.currentMonth.books).toBe(9);
+    expect(t.quarterlyAvg).toBe('4.3'); // (2+2+9)/3 ≈ 4.33
+    expect(t.monthlyAvg).toBe('2.7');   // 16/6 ≈ 2.67
+    expect(t.trendDirection).toBe('↑');
+    // 组合层：图表数据仍是反转后的新→旧，统计字段不受反转影响
+    expect(t.recentMonths.map((m: any) => m.month)).toEqual([
+      '2025-06', '2025-05', '2025-04', '2025-03', '2025-02', '2025-01',
+    ]);
+    expect(t.recentMonths.map((m: any) => m.booksRead)).toEqual([9, 2, 2, 1, 1, 1]);
+  });
+
+  it('反向样例 [9,2,2,1,1,1]：本月=1、方向 ↓（旧实现会给出全反结论）', () => {
+    const t = analyzeReadingTrends(makeStats([9, 2, 2, 1, 1, 1]), []);
+    expect(t.currentMonth.books).toBe(1);
+    expect(t.trendDirection).toBe('↓');
+  });
 });
 
 describe('getAllBookNotes 集成', () => {
-  it('mock vault：tags 含 book 才收集', () => {
+  it('mock vault：tags 数组项/整串精确等值 bookTag（子串不再误判，P2）', () => {
+    setSettingsProvider(() => ({}) as any); // bookTag 缺省 'book'
     const files = [
-      { path: '书库/A.md' },
-      { path: '书库/B.md' },
-      { path: 'Inbox/C.md' },
+      { path: '书库/A.md' },   // ['book'] → 收
+      { path: '书库/B.md' },   // 'book' 整串 → 收
+      { path: 'Inbox/C.md' },  // ['note'] → 不收
+      { path: '书库/D.md' },   // ['ebook'] 子串 → 不收（P2 回归）
+      { path: '书库/E.md' },   // 'book,note' 复合串 → 不收（与 library/items.ts 口径对齐）
     ];
     const app = {
       vault: { getMarkdownFiles: () => files },
       metadataCache: {
         getFileCache: (f: any) => {
-          const tags = f.path.includes('A') ? ['book'] : f.path.includes('B') ? 'book,note' : ['note'];
+          const tags =
+            f.path.includes('A') ? ['book'] :
+            f.path.includes('B') ? 'book' :
+            f.path.includes('D') ? ['ebook'] :
+            f.path.includes('E') ? 'book,note' : ['note'];
           return { frontmatter: { tags } };
         },
       },
     };
     const r = getAllBookNotes(app as any);
-    expect(r.length).toBe(2);
     expect(r.map((b) => b.file.path)).toEqual(['书库/A.md', '书库/B.md']);
+  });
+
+  it('读取 bookTag 设置：自定义标签精确等值', () => {
+    setSettingsProvider(() => ({ bookTag: '读书' }) as any);
+    const files = [{ path: '书库/A.md' }, { path: '书库/B.md' }];
+    const app = {
+      vault: { getMarkdownFiles: () => files },
+      metadataCache: {
+        getFileCache: (f: any) => ({
+          frontmatter: { tags: f.path.includes('A') ? ['读书'] : ['book'] },
+        }),
+      },
+    };
+    const r = getAllBookNotes(app as any);
+    expect(r.map((b) => b.file.path)).toEqual(['书库/A.md']);
   });
 });
