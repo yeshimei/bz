@@ -61,6 +61,8 @@ export class QuizMasterUI {
   totalQuestions = 0;
 
   generator = new QuestionGenerator();
+  /** ticket 098:多选提交按钮暂存（renderModal 选项后补挂，保证位于选项下方） */
+  _pendingSubmitBtn: HTMLElement | null = null;
 
   constructor() {
   }
@@ -290,6 +292,7 @@ export class QuizMasterUI {
   /** 渲染单题（源码 L514-676 逐字） */
   renderModal(q: QuizQuestion): void {
     this.close();
+    this._pendingSubmitBtn = null;
 
     const mask = document.createElement('div');
     mask.id = 'quiz-mask';
@@ -311,8 +314,23 @@ export class QuizMasterUI {
     const noteName = q.notePath!.split('/').pop()!.replace('.md', '');
     const doneCount = this.currentIndex + (this.totalQuestions - this.currentQuestions.length);
     title.textContent = `📝 ${noteName} (${doneCount + 1}/${this.totalQuestions})`;
+    // ticket 098：多选题标题徽标（左上角提醒题型）
+    if (q.correctIndices.length > 1) {
+      const badge = document.createElement('span');
+      badge.className = 'quiz-multi-badge';
+      badge.textContent = '多选';
+      title.appendChild(badge);
+    }
     header.appendChild(title);
     popup.appendChild(header);
+
+    // ticket 098：多选题提示条
+    if (q.correctIndices.length > 1) {
+      const hint = document.createElement('div');
+      hint.className = 'quiz-multi-hint';
+      hint.textContent = '本题为多选题，可多选';
+      popup.appendChild(hint);
+    }
 
     // 题目
     const questionDiv = document.createElement('div');
@@ -326,8 +344,13 @@ export class QuizMasterUI {
     const selectedIndices = new Set<number>();
     const answeredRef = { value: false };
 
-    const optionElements = this._buildOptionButtons(q, answeredRef, selectedIndices, popup);
+    const optionElements = this._buildOptionButtons(q, answeredRef, selectedIndices, optionsContainer);
     optionElements.forEach((el) => optionsContainer.appendChild(el));
+    // ticket 098：提交按钮位于选项下方（暂存按钮在选项之后补挂，原 append 顺序在选项上方）
+    if (this._pendingSubmitBtn) {
+      optionsContainer.appendChild(this._pendingSubmitBtn);
+      this._pendingSubmitBtn = null;
+    }
     popup.appendChild(optionsContainer);
 
     mask.appendChild(popup);
@@ -342,7 +365,7 @@ export class QuizMasterUI {
   }
 
   /** 选项按钮组构建与答题逻辑（renderModal 拆分）：单选即点即判 / 多选切换 + 提交 */
-  _buildOptionButtons(q: QuizQuestion, answeredRef: { value: boolean }, selectedIndices: Set<number>, popup: HTMLElement): HTMLElement[] {
+  _buildOptionButtons(q: QuizQuestion, answeredRef: { value: boolean }, selectedIndices: Set<number>, optionsContainer: HTMLElement): HTMLElement[] {
     const optionLabels = ['A', 'B', 'C', 'D'];
     const isSingle = q.correctIndices.length === 1;
     const app = getApp();
@@ -389,7 +412,7 @@ export class QuizMasterUI {
               if (i === q.correctIndices[0]) b.classList.add('correct');
               if (i === idx) b.classList.add('wrong');
             });
-            this.addNextButton(popup);
+            this.addNextButton(optionsContainer);
           }
         } else {
           // 多选：切换选中
@@ -427,7 +450,8 @@ export class QuizMasterUI {
         });
 
         if (isCorrect) {
-          // 源码缺陷：多选正确不递增 correctCount（逐字保留）
+          // ticket 098（ADR-0044）：多选计数 bug 解冻——答对也递增 correctCount（唯一破铁律 1 项）
+          this.correctCount++;
           this.manager
             .removeQuestion(app, q.notePath!, q._index!)
             .then(() => {
@@ -443,10 +467,10 @@ export class QuizMasterUI {
               optionElements.forEach((b) => b.classList.remove('disabled'));
             });
         } else {
-          this.addNextButton(popup);
+          this.addNextButton(optionsContainer);
         }
       };
-      popup.appendChild(submitBtn);
+      this._pendingSubmitBtn = submitBtn; // 由 renderModal 在选项之后补挂（ticket 098）
     }
 
     return optionElements;

@@ -11,6 +11,8 @@
       #review-entries-container::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
       .review-card { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--background-modifier-border); }
       .review-card .review-content { flex:1; font-size:15px; color:var(--text-normal); cursor:pointer; }
+      /* ticket 098：挂起记录（文件不存在）删除线 */
+      .review-card .review-content.review-missing { text-decoration: line-through; color: var(--text-faint); }
       .review-card .review-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
       .review-tag { padding:0 8px; border-radius:12px; font-size:11px; background:var(--background-secondary); color:var(--text-muted); line-height:20px; white-space:nowrap; cursor:pointer; transition:background 0.2s; }
       .review-tag.overdue { background:#ff4757; color:white; }

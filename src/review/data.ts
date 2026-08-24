@@ -32,6 +32,10 @@ export interface ReviewItem {
   lastReviewed: string | null; // ISO
   lastDifficulty: string | null;
   completed: boolean;
+  /** 待重做（做题会话首次评级 ∈ {忘了,困难} 置位；重做通过只清标记不写 FSRS——ADR-0044） */
+  pendingRedo?: boolean;
+  /** 运行时：文件在 vault 中不存在（挂起记录，列表删除线展示） */
+  isMissing?: boolean;
   // 兼容旧字段（读取时映射）
   reviewStage?: number;
   // 运行时
@@ -57,7 +61,18 @@ export class ReviewDataManager {
 
     for (const item of items) {
       const file = this.app.vault.getAbstractFileByPath(item.filePath);
-      if (!file) continue;
+      if (!file) {
+        // 挂起记录（ticket 098）：文件不存在 → 保留条目（挂起，列表删除线展示、不计逾期、不进复习队列）
+        item.file = null as any;
+        item.isMissing = true;
+        item.name = item.name || item.filePath.split('/').pop()?.replace(/\.md$/, '') || item.filePath;
+        item.isCompleted = item.completed || false;
+        item.isOverdue = false;
+        item.currentStage = (item.stage ?? (item.reviewStage || 1) - 1) + 1;
+        item.totalStages = TOTAL_STAGES;
+        valid.push(item);
+        continue;
+      }
       item.file = file as TFile;
       item.name = (file as TFile).basename;
       // 向后兼容：旧数据用 reviewStage，新数据用 stage

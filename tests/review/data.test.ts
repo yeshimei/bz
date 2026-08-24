@@ -64,14 +64,14 @@ describe('ReviewDataManager', () => {
       { id: '1', filePath: 'A.md', reviewStage: 3, reviewStart: now.toISOString(), reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() - 1000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
       // 新格式 fsrs：stage=12
       { id: '2', filePath: 'B.md', reviewStart: now.toISOString(), stage: 12, phase: 'fsrs', stability: 2.5, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() + 1000000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
-      // 文件不存在 → 跳过
+      // 文件不存在 → 挂起记录（ticket 098：保留展示为删除线，不计逾期）
       { id: '3', filePath: 'GONE.md', reviewStart: now.toISOString(), stage: 0, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: now.toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
     ]));
     const app = makeApp(vault);
     setApp(app);
     const dm = new ReviewDataManager(app);
     const items = await dm.loadItems();
-    expect(items.length).toBe(2);
+    expect(items.length).toBe(3);
     const a = items.find((i) => i.id === '1')!;
     expect(a.stage).toBe(2);
     expect(a.stability).toBe(1);
@@ -84,6 +84,10 @@ describe('ReviewDataManager', () => {
     const b = items.find((i) => i.id === '2')!;
     expect(b.phase).toBe('fsrs');
     expect(b.isOverdue).toBe(false);
+    const gone = items.find((i) => i.id === '3')!;
+    expect(gone.isMissing).toBe(true);
+    expect(gone.isOverdue).toBe(false);
+    expect(gone.name).toBe('GONE');
   });
 
   it('updateItem(filePath, fn) 缺失 → 抛「条目不存在」', async () => {
@@ -161,5 +165,42 @@ describe('数据文件路径设置', () => {
     expect(getReviewFilePath()).toBe('自定义/数据/review.json');
     setSettingsProvider(() => ({} as any));
     expect(getReviewFilePath()).toBe('CONFIG/STORAGE/review.json');
+  });
+});
+describe('ticket 098：pendingRedo / 挂起记录语义', () => {
+  it('loadItems 透传 pendingRedo（可选字段零迁移）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      { id: '1', filePath: 'A.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() + 60000).toISOString(), lastReviewed: now.toISOString(), lastDifficulty: 'hard', completed: false, pendingRedo: true },
+    ]));
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    const items = await dm.loadItems();
+    expect(items[0].pendingRedo).toBe(true);
+    // 落盘保留字段
+    await dm.updateItem('A.md', (it) => { it.pendingRedo = false; });
+    const raw = JSON.parse(vault.files.get(REVIEW_FILE_PATH)!);
+    expect(raw[0].pendingRedo).toBe(false);
+  });
+
+  it('挂起记录（isMissing）不计逾期、getOverdueCount 排除', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      { id: '1', filePath: 'A.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() - 1000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+      { id: '2', filePath: 'GONE.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() - 1000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+    ]));
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    const items = await dm.loadItems();
+    const missing = items.find((i) => i.filePath === 'GONE.md')!;
+    expect(missing.isMissing).toBe(true);
+    expect(missing.isOverdue).toBe(false);
+    expect(dm.getOverdueCount(items)).toBe(1); // 仅 A.md 计逾期
   });
 });
