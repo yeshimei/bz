@@ -24,7 +24,11 @@ export const escManager = (() => {
         if (L.isVisible()) {
           L.close();
           e.preventDefault();
-          e.stopPropagation();
+          // stopImmediatePropagation（非仅 stopPropagation）：命中可见层处理后，
+          // 同 document 节点上其余 keydown 监听（含后注册的私挂监听）不得再响应
+          // 同一次 ESC，杜绝「一层 ESC、两层同关」的双触发。
+          // 立约：禁止在域内私挂 document 级 ESC 监听，一律走 escManager 注册层级。
+          e.stopImmediatePropagation();
           return;
         }
       } catch (err) {
