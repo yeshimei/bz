@@ -6,7 +6,14 @@ import { pad2 } from '../../core/utils';
 import { notice } from '../../core/notice';
 import { confirm } from '../../core/confirm';
 import { getApp } from '../app';
-import { DIARY_DIRECTORY, getSortedTagsForAddDialog, getTagEmoji, getParentPrimaryTag, isSubTag } from '../config';
+import {
+  DIARY_DIRECTORY,
+  getSortedTagsForAddDialog,
+  getSubTagsOfPrimary,
+  getTagEmoji,
+  getParentPrimaryTag,
+  isSubTag,
+} from '../config';
 import { parseFlexibleDateTime } from '../parser';
 import { addEntry, writeFile, reloadWithEncrypted } from '../store';
 import { ENCRYPT_TAG, reclassifyEntry } from '../encrypt';
@@ -406,7 +413,11 @@ export async function updateTags(entryId: string, newTags: string[]) {
 
   const dateStr = entry.date;
   const entries = diaryDataMap?.get(dateStr) ?? null;
-  const targetEntry = entries?.find((e) => e.time === entry.time);
+  // 稳定定位（P1-12）：行号优先，同 time 多条不再改错位置；旧行号失配时回退「该时间仅一条」
+  const sameTime = entries?.filter((e) => e.time === entry.time) ?? [];
+  const targetEntry =
+    entries?.find((e) => e.time === entry.time && e.lineNumber === entry.lineNumber) ??
+    (sameTime.length === 1 ? sameTime[0] : undefined);
   if (targetEntry) {
     targetEntry.tags = newTags;
     targetEntry.emoji = entry.emoji;
@@ -571,6 +582,33 @@ export function openAddDialog() {
 }
 
 /** 保存新日记条目（原 3428-3478） */
+
+// P1-14：插入当前视图的条件与 applyFilter 同源求值——
+// 标签筛选（含主标签→二级标签展开）+ 日期筛选 + 搜索关键词
+function matchesCurrentTagFilter(tags: string[]): boolean {
+  if (state.data.selectedTags.size === 0) return true;
+  for (const tag of state.data.selectedTags) {
+    const subTags = getSubTagsOfPrimary(tag);
+    if (subTags && subTags.length > 0) {
+      if (tags.includes(tag) || tags.some((t) => subTags.some((sub) => sub.tag === t))) return true;
+    } else if (tags.includes(tag)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function matchesCurrentSearch(entry: { content: string; tags: string[]; time: string; date: string }): boolean {
+  if (!state.data.currentSearchKeyword) return true;
+  const lowerKeyword = state.data.currentSearchKeyword.toLowerCase();
+  return (
+    entry.content.toLowerCase().includes(lowerKeyword) ||
+    entry.tags.some((tag) => tag.toLowerCase().includes(lowerKeyword)) ||
+    entry.time.toLowerCase().includes(lowerKeyword) ||
+    entry.date.includes(state.data.currentSearchKeyword)
+  );
+}
+
 export async function saveNewEntry() {
   const datetimeInput = document.getElementById('add-diary-datetime') as HTMLInputElement | null;
   const mask = document.getElementById('add-diary-mask');
@@ -609,7 +647,8 @@ export async function saveNewEntry() {
 
     if (
       newEntry &&
-      (!selTagNames.length || newEntry.tags.some((tag) => selTagNames.includes(tag))) &&
+      matchesCurrentTagFilter(newEntry.tags) &&
+      matchesCurrentSearch(newEntry) &&
       (!state.data.currentDateFilter ||
         (state.data.currentDateFilter.month
           ? newEntry.date.startsWith(`${state.data.currentDateFilter.year}-${state.data.currentDateFilter.month}`)

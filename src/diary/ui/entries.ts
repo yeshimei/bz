@@ -7,7 +7,7 @@ import { notice } from '../../core/notice';
 import { confirm } from '../../core/confirm';
 import { attachItemActions, type ItemAction } from '../../core/item-actions';
 import { getApp } from '../app';
-import { BATCH_SIZE, DIARY_DIRECTORY, MOVIE_DIRECTORY, getSubTagsOfPrimary, getTagEmoji } from '../config';
+import { BATCH_SIZE, DIARY_DIRECTORY, LETTER_DIRECTORY, MOVIE_DIRECTORY, getSubTagsOfPrimary, getTagEmoji } from '../config';
 import { deleteEntry, refreshFile, reloadWithEncrypted } from '../store';
 import { ENCRYPT_TAG, deleteEncryptedEntry, encryptEntry, isUnlocked, reclassifyEntry } from '../encrypt';
 import { ensureSafeUnlocked, getSafeManager } from '../../encrypt';
@@ -26,14 +26,14 @@ async function renderMarkdown(content: string, container: HTMLElement, filePath:
     return;
   }
   container.innerHTML = '';
-  // 如果没有文件路径，或者文件不存在，直接使用 innerHTML 渲染 HTML 标签
+  // P2：无文件路径或文件缺失时不再 innerHTML 原文（防注入），降级为纯文本
   if (!filePath) {
-    container.innerHTML = content;
+    container.textContent = content;
     return;
   }
   const file = getApp().vault.getAbstractFileByPath(filePath) as any;
   if (!file) {
-    container.innerHTML = content;
+    container.textContent = content;
     return;
   }
   await MarkdownRenderer.render(getApp(), content, container, file.path, new Component());
@@ -124,6 +124,7 @@ function renderEntries() {
   if (state.data.currentDisplayCount === 0) state.ui.entriesContainer.innerHTML = '';
 
   if (!state.data.currentFilteredEntries || state.data.currentFilteredEntries.length === 0) {
+    state.data.isLoadingMore = false; // P2：早退前复位，避免滚动加载永久卡死
     if (state.data.currentDisplayCount === 0) {
       const emptyMessage = document.createElement('div');
       emptyMessage.textContent = state.data.selectedTags.size > 0 ? '没有找到匹配标签的日记内容' : '没有找到日记内容';
@@ -137,7 +138,10 @@ function renderEntries() {
   const endIndex = Math.min(startIndex + BATCH_SIZE, state.data.currentFilteredEntries.length);
   const batchToShow = state.data.currentFilteredEntries.slice(startIndex, endIndex);
 
-  if (batchToShow.length === 0) return;
+  if (batchToShow.length === 0) {
+    state.data.isLoadingMore = false; // P2：早退前复位，避免滚动加载永久卡死
+    return;
+  }
 
   if (!state.ui.scrollContainer) {
     state.ui.scrollContainer = document.createElement('div');
@@ -211,6 +215,14 @@ function getEntryAttachmentCount(entry: DiaryEntry): number {
   }
   const datePath = `${DIARY_DIRECTORY}/${entry.date}.md`;
   return collectNoteAttachmentPaths(getApp(), datePath, entry.content || '').length;
+}
+
+/** 特殊条目（影视/信）：id 前缀 movie-/letter- 或来源文件路径含目录（P1-16/P2-9 分流共用） */
+export function isSpecialEntry(entry: DiaryEntry): boolean {
+  return (
+    (!!entry.id && (entry.id.startsWith('movie-') || entry.id.startsWith('letter-'))) ||
+    (!!entry.filename && entry.filename.includes('/'))
+  );
 }
 
 /**
@@ -317,6 +329,8 @@ export function createEntryCard(entry: DiaryEntry) {
   // 统一操作条/长按浮层（手势统一）：
   // 非加密：打开 > 复制双链 > 复制正文 > 改标签 > 加密 > 删除；加密：解密 > 改分类 > 删除
   // 加密/解密：小字只带附件数（无附件不显示），已解锁时图标+小字换强调色（未解锁保持默认外观）
+  // P1-16：影视/信等特殊条目无日记专属动作（改标签/加密/删除），保留 打开/双击/复制双链/复制正文
+  const special = isSpecialEntry(entry);
   const actions: ItemAction[] = [];
   if (!entry.encrypted) {
     actions.push({ icon: 'external-link', label: '打开', title: '打开原文', onClick: () => void jumpToEntry(entry) });
@@ -328,16 +342,18 @@ export function createEntryCard(entry: DiaryEntry) {
       sub: `${entry.content.trim().length} 字`,
       onClick: () => void copyEntryContent(entry.id!),
     });
-    actions.push({ icon: 'tag', label: '改标签', title: '改标签', onClick: () => showTagPicker(entry.id!) });
-    const attCount = getEntryAttachmentCount(entry);
-    actions.push({
-      icon: 'lock',
-      label: '加密',
-      title: '加密（移入保险箱）',
-      sub: attCount > 0 ? `${attCount} 附件` : undefined,
-      tone: isUnlocked() ? 'accent' : undefined,
-      onClick: () => void encryptFromSheet(entry.id!),
-    });
+    if (!special) {
+      actions.push({ icon: 'tag', label: '改标签', title: '改标签', onClick: () => showTagPicker(entry.id!) });
+      const attCount = getEntryAttachmentCount(entry);
+      actions.push({
+        icon: 'lock',
+        label: '加密',
+        title: '加密（移入保险箱）',
+        sub: attCount > 0 ? `${attCount} 附件` : undefined,
+        tone: isUnlocked() ? 'accent' : undefined,
+        onClick: () => void encryptFromSheet(entry.id!),
+      });
+    }
   } else {
     const attCount = getEntryAttachmentCount(entry);
     actions.push({
@@ -350,13 +366,15 @@ export function createEntryCard(entry: DiaryEntry) {
     });
     actions.push({ icon: 'tag', label: '改分类', title: '改分类（解密）', onClick: () => showTagPicker(entry.id!) });
   }
-  actions.push({
-    icon: 'trash-2',
-    label: '删除',
-    title: '删除',
-    kind: 'danger',
-    onClick: () => showConfirm(entry.id!),
-  });
+  if (!special) {
+    actions.push({
+      icon: 'trash-2',
+      label: '删除',
+      title: '删除',
+      kind: 'danger',
+      onClick: () => showConfirm(entry.id!),
+    });
+  }
   attachItemActions(entryCard, actions, { sheetHead: buildSheetHead(entry) });
 
   return entryCard;
@@ -377,6 +395,21 @@ export async function jumpToEntry(entry: DiaryEntry, mode: 'select' | 'edit' = '
     }
     await getApp().workspace.openLinkText(file.path, '', false, { active: true });
     // 关闭日记本弹窗
+    if (state.ui.maskLayer) state.ui.maskLayer.style.visibility = 'hidden';
+    if (state.ui.tagFilterPopup) state.ui.tagFilterPopup.style.visibility = 'hidden';
+    return;
+  }
+
+  // P2-9：信条目分流——整文件即条目，直接打开原文件（无标题锚点可跳）
+  const isLetterEntry =
+    (entry.id && entry.id.startsWith('letter-')) || (entry.filename && entry.filename.startsWith(LETTER_DIRECTORY));
+  if (isLetterEntry) {
+    const file = getApp().vault.getAbstractFileByPath(entry.filename) as any;
+    if (!file) {
+      notice('找不到信文件');
+      return;
+    }
+    await getApp().workspace.openLinkText(file.path, '', false, { active: true });
     if (state.ui.maskLayer) state.ui.maskLayer.style.visibility = 'hidden';
     if (state.ui.tagFilterPopup) state.ui.tagFilterPopup.style.visibility = 'hidden';
     return;
@@ -408,7 +441,10 @@ export async function jumpToEntry(entry: DiaryEntry, mode: 'select' | 'edit' = '
 export async function copyLink(entryId: string) {
   const entry = state.data.originalDiaryEntries.find((e) => e.id === entryId);
   if (!entry) return;
-  const link = `[[${entry.filename}#${entry.emoji} ${entry.time}]]`;
+  // P2-9：影视/信条目用真实文件路径生成双链（无日记标题锚点）；普通日记保持 日期文件#标题 锚点
+  const link = isSpecialEntry(entry)
+    ? `[[${entry.filename.replace(/\.md$/, '')}]]`
+    : `[[${DIARY_DIRECTORY}/${entry.filename}#${entry.emoji} ${entry.time}]]`;
   await navigator.clipboard.writeText(link);
   notice(`已复制双链引用：${link}`, 'success');
 }
@@ -574,9 +610,12 @@ export function insertCard(entry: DiaryEntry) {
     const cards = targetSection.querySelectorAll('.diary-entry-card');
     let inserted = false;
     for (let i = 0; i < cards.length; i++) {
-      const cardTime =
-        (cards[i] as HTMLElement).querySelector('.diary-entry-content')?.getAttribute('data-entry-id')?.split('-').slice(1, -1).join('-') ?? '';
-      if (entry.time > cardTime) {
+      // P1-15：时间比较用条目数据的真实时间源（卡片 id → 数据条目），不再错误解析 data-entry-id 六段式
+      const cardId = (cards[i] as HTMLElement).id.replace(/^diary-entry-/, '');
+      const existing =
+        state.data.currentFilteredEntries.find((e) => e.id === cardId) ??
+        state.data.originalDiaryEntries.find((e) => e.id === cardId);
+      if (existing && entry.timeValue > existing.timeValue) {
         targetSection.insertBefore(entryCard, cards[i]);
         inserted = true;
         break;

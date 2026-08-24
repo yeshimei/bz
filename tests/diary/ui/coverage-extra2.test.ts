@@ -7,12 +7,13 @@ import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { setApp } from '../../../src/diary/app';
 import { applyDirectories, resetTagsConfig } from '../../../src/diary/config';
 import { init, toggleSearch, setLoadingState, showDiaryPanel } from '../../../src/diary/ui/panel';
-import { openAddDialog, saveNewEntry } from '../../../src/diary/ui/dialogs';
+import { openAddDialog, saveNewEntry, updateTags } from '../../../src/diary/ui/dialogs';
 import { createDateTimeControl } from '../../../src/diary/ui/datetime-picker';
 import { registerOpenDialogCommand } from '../../../src/diary/ui/quote';
+import { createEntryCard } from '../../../src/diary/ui/entries';
 import { updateTagCounts, updateSubTagsCounts, rebuildTags, createTag } from '../../../src/diary/ui/filter-shared';
 import { applyUiSettings } from '../../../src/diary/ui/ui-settings';
-import { state } from '../../../src/diary/state';
+import { setDiaryDataMap, state } from '../../../src/diary/state';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from '../../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../../mock-vault';
 import * as storeModule from '../../../src/diary/store';
@@ -276,5 +277,100 @@ describe('panel toggle/加载态', () => {
   it('showDiaryPanel 显示面板', async () => {
     await showDiaryPanel();
     expect(document.getElementById('diary-tag-filter')!.style.visibility).toBe('visible');
+  });
+});
+
+// ===== 修复回归（fx-diary-review） =====
+
+describe('saveNewEntry 插入条件求值（P1-14 回归）', () => {
+  it('标签筛选不匹配不入 filteredEntries；匹配（含二级标签展开）与无筛选才插入', async () => {
+    openAddDialog();
+    selectTag('日记');
+    const dt = document.getElementById('add-diary-datetime') as HTMLInputElement;
+    state.data.currentFilteredEntries = [];
+
+    // 选中「书」筛选：新条目标签为 日记 → 不插入
+    state.data.selectedTags.clear();
+    state.data.selectedTags.add('书');
+    dt.value = '2024-01-05 10:30';
+    await saveNewEntry();
+    expect(state.data.currentFilteredEntries.some((e) => e.date === '2024-01-05')).toBe(false);
+
+    // 选中「日记」→ 匹配插入
+    state.data.selectedTags.clear();
+    state.data.selectedTags.add('日记');
+    dt.value = '2024-01-06 10:30';
+    await saveNewEntry();
+    expect(state.data.currentFilteredEntries.some((e) => e.date === '2024-01-06')).toBe(true);
+
+    // 主标签「旅游」筛选 + 二级标签「四川」条目 → 展开匹配，插入
+    selectTag('日记'); // 取消
+    selectTag('四川');
+    state.data.selectedTags.clear();
+    state.data.selectedTags.add('旅游');
+    dt.value = '2024-01-07 10:30';
+    await saveNewEntry();
+    expect(state.data.currentFilteredEntries.some((e) => e.date === '2024-01-07')).toBe(true);
+
+    // 搜索关键词不匹配 → 不插入；清空关键词恢复插入
+    state.data.selectedTags.clear();
+    state.data.currentSearchKeyword = '绝不匹配的暗号XYZ';
+    dt.value = '2024-01-08 10:30';
+    await saveNewEntry();
+    expect(state.data.currentFilteredEntries.some((e) => e.date === '2024-01-08')).toBe(false);
+    state.data.currentSearchKeyword = '';
+    dt.value = '2024-01-09 10:30';
+    await saveNewEntry();
+    expect(state.data.currentFilteredEntries.some((e) => e.date === '2024-01-09')).toBe(true);
+  });
+});
+
+describe('updateTagCounts 与 createTag 同源（P1-13 回归）', () => {
+  it('关表情开关后重写按钮不复活 emoji', () => {
+    applyUiSettings({ diaryTagShowEmoji: true });
+    rebuildTags();
+    const container = document.getElementById('diary-tag-container')!;
+    const btn = container.querySelector('[data-tag="日记"]') as HTMLElement;
+    expect(btn.textContent!.trim().startsWith('📖')).toBe(true);
+    applyUiSettings({ diaryTagShowEmoji: false });
+    updateTagCounts(); // 模拟 applyFilter 后的计数刷新
+    expect(btn.innerHTML.startsWith('📖')).toBe(false);
+    expect(btn.textContent).toContain('日记');
+    expect(btn.textContent).toMatch(/\(\d+\)/); // 计数仍在
+    applyUiSettings({ diaryTagShowEmoji: true });
+  });
+
+  it('锁定态加密按钮重写后保持 🔒、无计数与 bz-encrypt-locked 样式', () => {
+    rebuildTags();
+    const container = document.getElementById('diary-tag-container')!;
+    const enc = container.querySelector('[data-tag="加密"]') as HTMLElement;
+    expect(enc.classList.contains('bz-encrypt-locked')).toBe(true);
+    expect(enc.textContent).toContain('🔒');
+    expect(enc.textContent).not.toMatch(/\(\d+\)/);
+    updateTagCounts(); // 模拟搜索/筛选后的计数刷新
+    expect(enc.classList.contains('bz-encrypt-locked')).toBe(true);
+    expect(enc.textContent).toContain('🔒');
+    expect(enc.textContent).not.toMatch(/\(\d+\)/);
+  });
+});
+
+describe('updateTags 稳定定位（P1-12 回归）', () => {
+  it('同分钟两条改第二条标签写对位置', async () => {
+    setDiaryDataMap(null);
+    vault.files.set('我的/日记/2024-01-01.md', '# 📖 10:00\n第一条\n\n# 📖 10:00\n第二条\n');
+    await storeModule.loadAll();
+    const pair = state.data.originalDiaryEntries.filter((e) => e.date === '2024-01-01' && e.time === '10:00');
+    expect(pair.length).toBe(2);
+    const card = createEntryCard(pair[1]);
+    card.id = `diary-entry-${pair[1].id}`;
+    document.body.appendChild(card);
+    await updateTags(pair[1].id!, ['书']);
+    const disk = vault.files.get('我的/日记/2024-01-01.md')!;
+    expect(disk).toContain('# 📕 10:00');
+    expect(disk).toContain('# 📖 10:00');
+    // 📕 标题后必须是第二条的内容（旧逻辑按 time 匹配会改到第一条头上）
+    const afterBook = disk.slice(disk.indexOf('# 📕 10:00'));
+    expect(afterBook).toContain('第二条');
+    expect(afterBook).not.toContain('第一条');
   });
 });
