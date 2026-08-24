@@ -40,7 +40,6 @@ let openedAt = 0;
 let accumMs = 0;
 let renderedKey = '';
 
-// ---------- CSS（≈196 行，与源码逐字一致；已同步 styles/news.css） ----------
 // ---------- 创建弹窗 ----------
 function createMaskAndPopup() {
   // 防御：DOM 被外部清空（测试/热更新）后重建
@@ -443,7 +442,6 @@ export function init(showImmediately: boolean) {
 
 /** 卸载清理（main.ts onunload 可调用） */
 export function unloadNews(): void {
-  ['news-mask', 'news-popup'].forEach(() => {});
   const masks = document.querySelectorAll('.news-mask');
   const popups = document.querySelectorAll('.news-popup');
   masks.forEach((el) => el.remove());
