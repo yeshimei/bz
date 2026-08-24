@@ -174,7 +174,7 @@ export class QuizMasterUI {
 
   /** 加载提示（源码 L401-418 逐字） */
   showLoadingPopup(message: string): void {
-    this.close(); // 关闭可能存在的弹窗
+    this._teardownModal(); // 只关可能存在的弹窗 DOM（不走 close 的复习结算语义）
     const mask = document.createElement('div');
     mask.id = 'quiz-mask';
     mask.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:10010;display:flex;align-items:center;justify-content:center;';
@@ -210,6 +210,8 @@ export class QuizMasterUI {
       return;
     }
 
+    // P1-1：入口统一清理上次会话残留回调，避免普通做题误触发旧复习 onComplete
+    this.onComplete = null;
     this._generating = true;
     const app = getApp();
     try {
@@ -223,6 +225,7 @@ export class QuizMasterUI {
           const activeItems = await loadActiveItems(app);
           if (!activeItems.length) {
             this.closeLoading();
+            notice('没有活跃笔记，无法生成题目', 'warning'); // P2：不再静默收尾
             return;
           }
 
@@ -284,7 +287,7 @@ export class QuizMasterUI {
 
   /** 渲染单题（源码 L514-676 逐字） */
   renderModal(q: QuizQuestion): void {
-    this.close();
+    this._teardownModal(); // 换题过渡：只拆 DOM，不触发 close 的复习结算语义
     this._pendingSubmitBtn = null;
 
     const mask = document.createElement('div');
@@ -366,8 +369,7 @@ export class QuizMasterUI {
           const isCorrect = idx === q.correctIndices[0];
 
           if (isCorrect) {
-            // 答对：删除该题
-            this.correctCount++;
+            // 答对：删除该题（计数在 _answerCorrect 持久化成功后递增）
             this._answerCorrect(q, app, () => {
               answeredRef.value = false;
               optionElements.forEach((b) => b.classList.remove('disabled'));
@@ -421,8 +423,8 @@ export class QuizMasterUI {
         });
 
         if (isCorrect) {
-          // ticket 098（ADR-0044）：多选计数 bug 解冻——答对也递增 correctCount（唯一破铁律 1 项）
-          this.correctCount++;
+          // ticket 098（ADR-0044）：多选计数 bug 解冻——答对也递增 correctCount（唯一破铁律 1 项；
+          // 递增时机在 _answerCorrect 持久化成功后，失败恢复作答态不重复计）
           this._answerCorrect(q, app, () => {
             answeredRef.value = false;
             submitBtn.disabled = false;
@@ -438,11 +440,14 @@ export class QuizMasterUI {
     return optionElements;
   }
 
-  /** 答对公共链路：删题 → splice 出当前题 → （单选补高亮）→ 800ms 后下一题；失败通知并恢复作答状态 */
+  /** 答对公共链路：稳定定位删题 → 计数 → splice 出当前题 → （单选补高亮）→ 800ms 后下一题；
+   *  删除按题目内容在存储数组定位（P0-2），不再依赖会话期 _index 快照；
+   *  持久化成功后才计数（P2：失败恢复作答态时不重复计数），失败通知并恢复作答状态。 */
   private _answerCorrect(q: QuizQuestion, app: App, onFailRestore: () => void, onSplice?: () => void): void {
     this.manager
-      .removeQuestion(app, q.notePath!, q._index!)
+      .removeQuestion(app, q.notePath!, { question: q.question, options: q.options, correctIndices: q.correctIndices })
       .then(() => {
+        this.correctCount++;
         this.currentQuestions.splice(this.currentIndex, 1);
         onSplice?.();
         setTimeout(() => {
@@ -516,10 +521,23 @@ export class QuizMasterUI {
     popup.appendChild(nextBtn);
   }
 
-  close(): void {
+  /** 仅拆除弹窗 DOM（换题/加载等内部过渡用，不走结算语义） */
+  private _teardownModal(): void {
     if (this.mask && this.mask.parentNode) this.mask.remove();
     this.mask = null;
     this.popup = null;
+  }
+
+  /** 关闭弹窗。P1-1：复习模式下回调未被消费时（如答题中途 ESC），按 finishQuiz 语义
+   *  先结算再关闭——否则复习域外层 Promise 将永久悬挂；total=0 按 ADR-0044 评 again 属既定语义。
+   *  回调已消费（正常完成/已结算）或非复习模式 → 纯关闭。 */
+  close(): void {
+    if (this._reviewMode && this.onComplete) {
+      const cb = this.onComplete;
+      this.onComplete = null;
+      cb(this._buildResults());
+    }
+    this._teardownModal();
   }
 
   /** 做题结束（源码 L723-735：回调优先，否则关闭） */
