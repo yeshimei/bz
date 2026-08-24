@@ -247,17 +247,18 @@ export const reviewApp = {
     return picked.map((q: any, i: number) => ({ ...q, notePath: filePath, _index: i }));
   },
 
-  /** 待重做队列复习（ADR-0044）：AI 全新出题 → 做题 → 通过仅清标记不写 FSRS；失败 → 「复习此笔记」中断会话 */
-  async redoReviewLoop(items: ReviewItem[], index: number): Promise<string[] | null> {
+  /** 待重做队列复习（ADR-0044）：AI 全新出题 → 做题 → 通过仅清标记不写 FSRS；失败 → 「复习此笔记」中断会话
+   *  P1-3：passed 逐步累积，无题跳过项不入返回集合（留在逾期队列可进普通复习） */
+  async redoReviewLoop(items: ReviewItem[], index: number, passed: string[] = []): Promise<string[] | null> {
     const app = getApp();
     this.ensure(app);
-    if (index >= items.length) return items.map((i) => i.filePath);
+    if (index >= items.length) return passed;
     const quiz: any = await this.getQuiz();
     const item = items[index];
     const questions = await this.regenerateQuestions(item.filePath);
     if (!questions.length) {
       notice('重做失败：无题目可用，保持待重做', 'warning');
-      return this.redoReviewLoop(items, index + 1);
+      return this.redoReviewLoop(items, index + 1, passed);
     }
     return new Promise((resolve) => {
       quiz.startReviewSession({
@@ -271,10 +272,11 @@ export const reviewApp = {
               it.pendingRedo = false;
             });
             await this.applyReviewStyles(app);
+            passed.push(item.filePath);
           }
           const popup = quiz.popup;
           if (!popup) {
-            resolve(failed ? null : await this.redoReviewLoop(items, index + 1));
+            resolve(failed ? null : await this.redoReviewLoop(items, index + 1, passed));
             return;
           }
           if (failed) {
@@ -306,7 +308,7 @@ export const reviewApp = {
             resolve(null);
             return;
           }
-          resolve(await this.redoReviewLoop(items, index + 1));
+          resolve(await this.redoReviewLoop(items, index + 1, passed));
         },
       });
     });
@@ -488,6 +490,12 @@ export const reviewApp = {
       const activeFile = app.workspace.getActiveFile();
       if (!activeFile || activeFile.path !== item.filePath) {
         clearInterval(interval);
+        // P1-2：活动文件切走 = 本轮连续复习中断，与超时分支同样收尾常驻通知
+        if (this._reviewNotice) {
+          this._reviewNotice.setMessage('已切换到其他笔记，本轮复习中断');
+          this._reviewNotice.setType('warning');
+          this._reviewNotice = null;
+        }
         return;
       }
       const updatedItems = await dm.loadItems();

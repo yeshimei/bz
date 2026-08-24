@@ -586,4 +586,20 @@ describe('ticket 098 UI：做题家图标移除 / 挂起记录删除线 / 监听
     closeSettingsModal();
     ui.destroy();
   });
+
+  it('P2 回归：destroy 注销 document keydown（ESC 处理器不残留）', () => {
+    const vault = new MockVault();
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    const ui = new UIManager(app, dm);
+    ui.showMain();
+    const hideSpy = vi.spyOn(ui, 'hideMain');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(hideSpy).toHaveBeenCalledTimes(1); // 存活期 ESC 生效
+    ui.destroy(); // destroy 内部也会调 hideMain，清空后再验证
+    hideSpy.mockClear();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(hideSpy).not.toHaveBeenCalled(); // 旧逻辑残留监听会再次触发
+  });
 });

@@ -26,14 +26,26 @@ function seed(vault: MockVault) {
   ]));
 }
 
-/** 事件收集型 app（metadataCache/vault/workspace 均可注册与触发） */
+/** 事件收集型 app（metadataCache/vault/workspace 均可注册与触发；ref 携带 event/cb 以支持 offref 注销） */
 function makeApp(vault: MockVault) {
   const app: any = mockAppWithVault(vault);
   setApp(app);
   const meta: Record<string, Function[]> = {};
   const ws: Record<string, Function[]> = {};
-  app.metadataCache.on = (ev: string, cb: any) => { (meta[ev] ||= []).push(cb); return { ref: 'm' }; };
-  app.workspace.on = (ev: string, cb: any) => { (ws[ev] ||= []).push(cb); return { ref: 'w' }; };
+  app.metadataCache.on = (ev: string, cb: any) => { (meta[ev] ||= []).push(cb); return { event: ev, cb }; };
+  app.metadataCache.offref = (ref: any) => {
+    if (!ref || !ref.event) return;
+    const arr = meta[ref.event] || [];
+    const idx = arr.indexOf(ref.cb);
+    if (idx >= 0) arr.splice(idx, 1);
+  };
+  app.workspace.on = (ev: string, cb: any) => { (ws[ev] ||= []).push(cb); return { event: ev, cb }; };
+  app.workspace.offref = (ref: any) => {
+    if (!ref || !ref.event) return;
+    const arr = ws[ref.event] || [];
+    const idx = arr.indexOf(ref.cb);
+    if (idx >= 0) arr.splice(idx, 1);
+  };
   app.metaListeners = meta;
   app.wsListeners = ws;
   app.emitMeta = (ev: string, ...args: any[]) => { for (const cb of meta[ev] || []) void cb(...args); };
@@ -202,6 +214,42 @@ describe('unloadReview', () => {
     expect(dataManager).toBeNull();
     expect(uiManager).toBeNull();
   }, 10000);
+
+  it('P2 回归：unload 全量 offref；再 ensure 无旧监听残留（事件不双触发）', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const app = makeApp(vault);
+    ensureReview(app);
+    expect(vault.listeners.modify!.length).toBe(1);
+    expect(vault.listeners.create!.length).toBe(1);
+    expect(vault.listeners.delete!.length).toBe(1);
+    expect(vault.listeners.rename!.length).toBe(1);
+    expect(app.metaListeners.resolved!.length).toBe(1);
+    expect(app.wsListeners.quit!.length).toBe(1);
+    unloadReview();
+    // 全部 EventRef 注销
+    expect(vault.listeners.modify ?? []).toHaveLength(0);
+    expect(vault.listeners.create ?? []).toHaveLength(0);
+    expect(vault.listeners.delete ?? []).toHaveLength(0);
+    expect(vault.listeners.rename ?? []).toHaveLength(0);
+    expect(app.metaListeners.resolved ?? []).toHaveLength(0);
+    expect(app.wsListeners.quit ?? []).toHaveLength(0);
+    // 再 ensure：同一事件只触发一次（无历史残留双触发）
+    const styleSpy = vi.spyOn(reviewApp, 'applyReviewStyles').mockResolvedValue(undefined);
+    vi.spyOn(reviewApp, 'checkOverdueAndNotify').mockResolvedValue(undefined); // 屏蔽陈旧 2s 首查定时器
+    ensureReview(app);
+    app.emitMeta('resolved');
+    await new Promise((r) => setTimeout(r, 20));
+    styleSpy.mockClear(); // 清掉可能的跨测试陈旧定时器污染，改为增量断言
+    app.emitMeta('resolved');
+    await new Promise((r) => setTimeout(r, 20));
+    expect(styleSpy).toHaveBeenCalledTimes(1);
+    styleSpy.mockClear();
+    vault.emit('modify', vault.file('A.md'));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(styleSpy).toHaveBeenCalledTimes(1);
+    unloadReview();
+  });
 });
 describe('ticket 098：监听文件夹事件（create/delete）', () => {
   beforeEach(() => {

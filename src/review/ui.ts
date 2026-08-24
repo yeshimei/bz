@@ -31,6 +31,8 @@ export class UIManager {
   confirmPopup: HTMLElement | null = null;
   confirmCallback: (() => void) | null = null;
   escapeRegistered = false;
+  /** P2：keydown 引用（destroy 注销，防卸载后 ESC 处理器残留） */
+  private escapeHandler: ((e: KeyboardEvent) => void) | null = null;
   searchInput: HTMLInputElement | null = null;
   showArchived = false;
 
@@ -478,7 +480,7 @@ export class UIManager {
   registerEscape(): void {
     if (this.escapeRegistered) return;
     this.escapeRegistered = true;
-    document.addEventListener('keydown', (e) => {
+    this.escapeHandler = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       if (this.confirmMask?.style.display === 'block') {
         this.hideConfirm();
@@ -489,7 +491,8 @@ export class UIManager {
         this.hideMain();
         e.preventDefault();
       }
-    });
+    };
+    document.addEventListener('keydown', this.escapeHandler);
   }
 
   /** 刷新列表（源码 App.refreshPanel → Renderer.render） */
@@ -720,6 +723,12 @@ export class UIManager {
   destroy(): void {
     this.hideMain();
     this.hideConfirm();
+    // P2：注销 document keydown（ESC 处理器），防卸载后残留
+    if (this.escapeHandler) {
+      document.removeEventListener('keydown', this.escapeHandler);
+      this.escapeHandler = null;
+    }
+    this.escapeRegistered = false;
     if (this.mask) this.mask.remove();
     if (this.popup) this.popup.remove();
     if (this.confirmMask) this.confirmMask.remove();
