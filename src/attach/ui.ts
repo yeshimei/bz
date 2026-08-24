@@ -213,10 +213,12 @@ export async function runMove(app: any, note: any, destFolder: string): Promise<
 
     const linksAuto = !!fmRename;
     const renamedCount = moves.filter((m) => m.renamed).length;
+    // 成功数口径（P2）：moved = 计划数 − 失败数，通知文案与实际一致
+    const movedCount = moves.length - failed;
     const failTail = failed ? `，失败 ${failed} 个` : '';
     const linkTail = linksAuto ? '，内部链接已自动更新' : '，链接未自动更新';
-    notice(`已移动 ${moves.length} 个资源到 ${dest}，改名 ${renamedCount} 个${linkTail}${failTail}`, linksAuto && failed === 0 ? 'success' : 'warning');
-    return { moved: moves.length, renamed: renamedCount, linksAuto };
+    notice(`已移动 ${movedCount} 个资源到 ${dest}，改名 ${renamedCount} 个${linkTail}${failTail}`, linksAuto && failed === 0 ? 'success' : 'warning');
+    return { moved: movedCount, renamed: renamedCount, linksAuto };
   } catch (e) {
     console.error('[附件搬移] 失败:', e);
     notice('附件搬移失败，已中止（原文件未改动）', 'error');
