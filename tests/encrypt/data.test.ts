@@ -4,7 +4,7 @@
  * 清单加密存储、平铺点前缀密文镜像、指纹冲突安全、崩溃幂等。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { SafeManager, fingerprintOf, flatName, mapLimit, type HealthProgress } from '../../src/encrypt/data';
+import { SafeManager, fingerprintOf, flatName, mapLimit, type HealthProgress, type SafeNote } from '../../src/encrypt/data';
 import { CryptoService, clearCryptoKeyCache } from '../../src/password/crypto';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
@@ -529,6 +529,65 @@ describe('SafeManager 提交式加密（ADR-0018）', () => {
     expect(sm.manifest.notes.length).toBe(0);
   });
 
+  it('回归（P1-7）：附件一败两成 → catch 清理覆盖全部已登记暂存，暂存区零残留', async () => {
+    makeApp(vault);
+    vault.create('我的/日记/2025-06-01.md', '# 日记');
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const realEncrypt = CryptoService.encrypt.bind(CryptoService);
+    const spy = vi.spyOn(CryptoService, 'encrypt').mockImplementation(async (data: string, pw: string) => {
+      if (data === 'BAD') throw new Error('boom-BAD');
+      return realEncrypt(data, pw);
+    });
+    try {
+      await expect(
+        sm.lockNote({
+          path: '我的/日记/2025-06-01.md',
+          title: '2025-06-01',
+          content: '# 正文',
+          attachments: [
+            { path: '我的/a.png', data: 'QUJDREVGRw==' },
+            { path: '我的/b.png', data: 'BAD' },
+            { path: '我的/c.png', data: 'REVGSElK' },
+          ],
+        })
+      ).rejects.toThrow('boom-BAD');
+    } finally {
+      spy.mockRestore();
+    }
+    // 原文件未动、清单无条目
+    expect(vault.files.get('我的/日记/2025-06-01.md')).toBe('# 日记');
+    expect(sm.manifest.notes.length).toBe(0);
+    // 顶层仅清单本体（两笔成功附件的镜像未搬入）；暂存区零残留（即时登记 → catch 全量收走）
+    const topLevelEnc = [...vault.files.keys()].filter(
+      (p) => p.startsWith('CONFIG/.ENCRYPT/') && !p.includes('/.staging/') && p.endsWith('.enc')
+    );
+    expect(topLevelEnc).toEqual(['CONFIG/.ENCRYPT/.safe.enc']);
+    expect([...vault.files.keys()].some((p) => p.startsWith('CONFIG/.ENCRYPT/.staging/'))).toBe(false);
+  });
+
+  it('回归（P1-5）：saveManifest 注入失败 → 清单无幽灵条目，同会话后续成功保存不固化', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    // 第一笔：清单落盘阶段注入失败
+    const spy = vi.spyOn(sm, 'saveManifest').mockRejectedValueOnce(new Error('disk error'));
+    try {
+      await expect(lockSample(sm, { content: '# 第一笔（落盘失败）' })).rejects.toThrow('disk error');
+    } finally {
+      spy.mockRestore();
+    }
+    // 内存清单已回退：无幽灵条目
+    expect(sm.manifest.notes.length).toBe(0);
+    // 同会话后续成功保存不会把幽灵条目固化：第二笔正常入库后重开只见这一笔
+    await lockSample(sm, { notePath: '我的/日记/2025-06-02.md', content: '# 第二笔（成功）' });
+    sm.lock();
+    const sm2 = new SafeManager('CONFIG/.ENCRYPT');
+    await sm2.unlock('pw');
+    expect(sm2.manifest.notes.length).toBe(1);
+    expect(await sm2.decryptNoteBody(sm2.manifest.notes[0])).toContain('第二笔');
+  });
+
   it('自愈回滚：解锁时丢弃挂起半提交条目、删除已搬入镜像、清空暂存与标记', async () => {
     makeApp(vault);
     const sm = new SafeManager('CONFIG/.ENCRYPT');
@@ -780,6 +839,24 @@ describe('SafeManager mapLimit 受控并发', () => {
       })
     ).rejects.toThrow('boom');
   });
+
+  it('回归（P1-7）：单任务失败时等其余任务全部完成后才整体 reject（allSettled 收敛）', async () => {
+    const completed: number[] = [];
+    // 任务 1 立即失败；任务 2/3 各需 15ms 才完成——旧实现（Promise.all）会在它们收尾前就 reject
+    const err = await mapLimit([1, 2, 3], 3, async (x) => {
+      if (x === 1) throw new Error('boom');
+      await new Promise((r) => setTimeout(r, 15));
+      completed.push(x);
+      return x;
+    }).then(
+      () => null,
+      (e) => e
+    );
+    expect(err).toBeInstanceOf(Error);
+    expect((err as Error).message).toBe('boom');
+    // reject 抛给调用方时，其余任务的副作用已全部完成（catch 可一次性清理）
+    expect([...completed].sort()).toEqual([2, 3]);
+  });
 });
 
 describe('SafeManager 清单损坏与首设回滚（雷 1/4）', () => {
@@ -956,6 +1033,8 @@ describe('SafeManager password-vault 载荷（路线 B：密码本合并至保�
     // 同一镜像名被覆盖：无新镜像、无孤儿
     expect(sm.manifest.notes[0].contentRef).toBe(ref);
     expect(vault.files.has('CONFIG/.ENCRYPT/' + ref)).toBe(true);
+    // 原子换入（P0-1）成功后无 .bak 残留副本
+    expect(vault.files.has('CONFIG/.ENCRYPT/' + ref + '.bak')).toBe(false);
     const topLevel = [...vault.files.keys()].filter(
       (p) => p.startsWith('CONFIG/.ENCRYPT/') && !p.includes('/.staging/') && p.endsWith('.enc')
     ).length;
@@ -974,6 +1053,70 @@ describe('SafeManager password-vault 载荷（路线 B：密码本合并至保�
     await expect(sm.updateNotePayload('enc-x', '[]')).rejects.toThrow('未解锁');
     await sm.unlock('pw');
     await expect(sm.updateNotePayload('enc-x', '[]')).rejects.toThrow('未找到清单条目');
+  });
+
+  it('回归（P0-1）暂存写入失败：正式位保持旧完整密文、无半截文件、无 .bak/暂存残留', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await sm.lockNote({
+      path: 'CONFIG/.ENCRYPT/passwords',
+      title: '密码本',
+      kind: 'password-vault',
+      content: '[{"id":"old"}]',
+      attachments: [],
+    });
+    const refPath = 'CONFIG/.ENCRYPT/' + note.contentRef;
+    const oldCipher = vault.files.get(refPath)!;
+    // 注入：所有 adapter.write 失败（模拟磁盘满/半写中断）——新密文尚未换入即失败
+    const spy = vi.spyOn(vault.adapter, 'write').mockRejectedValue(new Error('disk full'));
+    try {
+      await expect(sm.updateNotePayload(note.id, '[{"id":"new"}]')).rejects.toThrow('disk full');
+    } finally {
+      spy.mockRestore();
+    }
+    // 正式位仍是旧完整密文，可解密为旧数据
+    expect(vault.files.get(refPath)).toBe(oldCipher);
+    expect(await sm.decryptNoteBody(sm.manifest.notes[0])).toBe('[{"id":"old"}]');
+    // 无半截文件/换入残留副本；暂存区零残留
+    expect(vault.files.has(refPath + '.bak')).toBe(false);
+    expect([...vault.files.keys()].some((p) => p.startsWith('CONFIG/.ENCRYPT/.staging/'))).toBe(false);
+    // 恢复后可正常覆盖写入新数据
+    await sm.updateNotePayload(note.id, '[{"id":"new"}]');
+    expect(await sm.decryptNoteBody(sm.manifest.notes[0])).toBe('[{"id":"new"}]');
+  });
+
+  it('回归（P0-1）换入（rename）失败：旧镜像回滚正位、内容仍可解密为旧数据', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const note = await sm.lockNote({
+      path: 'CONFIG/.ENCRYPT/passwords',
+      title: '密码本',
+      kind: 'password-vault',
+      content: '[{"id":"old"}]',
+      attachments: [],
+    });
+    const refPath = 'CONFIG/.ENCRYPT/' + note.contentRef;
+    const oldCipher = vault.files.get(refPath)!;
+    // 注入：仅「暂存镜像→顶层正位」的换入 rename 失败（旧镜像挪走成功；回滚路径不拦）
+    const realRename = vault.adapter.rename.bind(vault.adapter);
+    const spy = vi.spyOn(vault.adapter, 'rename').mockImplementation(async (from: string, to: string) => {
+      void to;
+      if (/\/\.staging\//.test(from)) throw new Error('promote failed');
+      return realRename(from, to);
+    });
+    try {
+      await expect(sm.updateNotePayload(note.id, '[{"id":"new"}]')).rejects.toThrow('promote failed');
+    } finally {
+      spy.mockRestore();
+    }
+    // 正式位回滚为旧完整密文
+    expect(vault.files.get(refPath)).toBe(oldCipher);
+    expect(await sm.decryptNoteBody(sm.manifest.notes[0])).toBe('[{"id":"old"}]');
+    // .bak 已滚回正位（无残留）、暂存区零残留
+    expect(vault.files.has(refPath + '.bak')).toBe(false);
+    expect([...vault.files.keys()].some((p) => p.startsWith('CONFIG/.ENCRYPT/.staging/'))).toBe(false);
   });
 });
 
@@ -1141,5 +1284,98 @@ describe('SafeManager 原子还原（优化五：全部成功才落盘）', () =
       spy.mockRestore();
       void origSave;
     }
+  });
+});
+
+describe('SafeManager 操作级互斥与挂起标记读改写（P1-6）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    vault = new MockVault();
+  });
+
+  it('挂起标记读-改-写：先前半提交笔的标记不被后续成功笔的清除吞掉，解锁自愈仍可回滚', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    // 笔 A：注入「暂存镜像→顶层」搬入失败（S3 崩溃现场）→ 清单已提交 + 挂起标记残留
+    const realRename = vault.adapter.rename.bind(vault.adapter);
+    const spyRename = vi.spyOn(vault.adapter, 'rename').mockImplementation(async (from: string, to: string) => {
+      void to;
+      if (/\/\.staging\//.test(from)) throw new Error('crash-S3');
+      return realRename(from, to);
+    });
+    try {
+      await expect(
+        lockSample(sm, { content: '# A（半提交）', attachments: [{ path: '我的/pic.png', data: 'QUJDREVGRw==' }] })
+      ).rejects.toThrow('crash-S3');
+    } finally {
+      spyRename.mockRestore();
+    }
+    const noteA = sm.manifest.notes[0];
+    expect(noteA).toBeTruthy(); // 清单已先行提交（S2 成功、S3 失败 → 不回退，留待自愈）
+    expect(JSON.parse(vault.files.get('CONFIG/.ENCRYPT/.staging/pending.json')!)).toEqual([noteA.id]);
+    // 笔 B 正常完成：其 S4 只摘除自己的 id，A 的标记原样保留（旧实现整写/整删会互吞）
+    await lockSample(sm, { notePath: '我的/日记/b.md', content: '# B（成功）', attachments: [] });
+    expect(JSON.parse(vault.files.get('CONFIG/.ENCRYPT/.staging/pending.json')!)).toEqual([noteA.id]);
+    // 自愈视角收敛：解锁后 A 被回滚、B 完好；无孤儿无 dead-entry，暂存与标记清空
+    sm.lock();
+    const sm2 = new SafeManager('CONFIG/.ENCRYPT');
+    await sm2.unlock('pw');
+    expect(sm2.manifest.notes.length).toBe(1);
+    expect(await sm2.decryptNoteBody(sm2.manifest.notes[0])).toContain('# B');
+    const report = await sm2.scanHealth();
+    expect(report.items.some((i) => i.cat === 'orphan-file')).toBe(false);
+    expect(report.items.some((i) => i.cat === 'dead-entry')).toBe(false);
+    expect([...vault.files.keys()].some((p) => p.startsWith('CONFIG/.ENCRYPT/.staging/'))).toBe(false);
+  });
+
+  it('操作级互斥：并发两笔 lockNote 串行执行——一成一败后两方意图均完整（无孤儿无幽灵）', async () => {
+    makeApp(vault);
+    vault.create('我的/x.md', '# X 原文');
+    vault.create('我的/y.md', '# Y 原文');
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const realEncrypt = CryptoService.encrypt.bind(CryptoService);
+    const order: string[] = [];
+    const spy = vi.spyOn(CryptoService, 'encrypt').mockImplementation(async (data: string, pw: string) => {
+      order.push(data);
+      if (data === 'BAD-Y') throw new Error('boom-Y');
+      return realEncrypt(data, pw);
+    });
+    try {
+      const pX = sm.lockNote({
+        path: '我的/x.md',
+        title: 'X',
+        content: '# X 密文',
+        attachments: [{ path: '我的/x.png', data: 'GOOD-X' }],
+      });
+      const pY = sm.lockNote({
+        path: '我的/y.md',
+        title: 'Y',
+        content: '# Y 密文',
+        attachments: [{ path: '我的/y.png', data: 'BAD-Y' }],
+      });
+      const noteX: SafeNote = await pX;
+      await expect(pY).rejects.toThrow('boom-Y');
+      expect(noteX.title).toBe('X');
+    } finally {
+      spy.mockRestore();
+    }
+    // 串行证据：X 的全部加密（附件+正文）先于 Y 的任何加密发生
+    expect(order.indexOf('BAD-Y')).toBeGreaterThan(order.indexOf('# X 密文'));
+    // X 已完整提交：原文件删除、清单恰一条目；Y 整笔放弃：原文件未动
+    expect(vault.files.has('我的/x.md')).toBe(false);
+    expect(vault.files.get('我的/y.md')).toBe('# Y 原文');
+    expect(sm.manifest.notes.length).toBe(1);
+    // 自愈视角：重开解锁后仅 X 可读，无孤儿无 dead-entry，暂存与挂起标记零残留
+    sm.lock();
+    const sm2 = new SafeManager('CONFIG/.ENCRYPT');
+    await sm2.unlock('pw');
+    expect(sm2.manifest.notes.length).toBe(1);
+    expect(await sm2.decryptNoteBody(sm2.manifest.notes[0])).toContain('# X 密文');
+    const report = await sm2.scanHealth();
+    expect(report.items.length).toBe(0);
+    expect([...vault.files.keys()].some((p) => p.startsWith('CONFIG/.ENCRYPT/.staging/'))).toBe(false);
   });
 });
