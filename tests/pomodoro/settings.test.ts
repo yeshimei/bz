@@ -1,5 +1,5 @@
 /**
- * 番茄钟设置测试（ticket 31）：settings 结构 + ⚙️ 设置弹窗（9 项/12 档/动态显隐/保存）+ 设置生效
+ * 番茄钟设置测试（ticket 31）：settings 结构 + ⚙️ 设置弹窗（12 项/12 档/分组卡片/动态显隐/保存）+ 设置生效
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -79,7 +79,7 @@ describe('⚙️ 设置弹窗', () => {
     vi.useRealTimers();
   });
 
-  it('打开设置弹窗：12 个设置项（9 常用 + 音量等）', async () => {
+  it('打开设置弹窗：分组卡片（时间方案/行为）+ 12 个设置项', async () => {
     const settings = { ...DEFAULT_SETTINGS } as any;
     const { app } = setup(settings);
     await openPomodoro(app);
@@ -89,10 +89,22 @@ describe('⚙️ 设置弹窗', () => {
     expect(itemByName('预设方案')).not.toBeUndefined();
     expect(itemByName('长休息间隔')).not.toBeUndefined();
     expect(itemByName('声音提醒')).not.toBeUndefined();
-    expect(itemByName('音量')).not.toBeUndefined();
+    expect(itemByName('提示音音量')).not.toBeUndefined();
     expect(itemByName('打开时恢复方式')).not.toBeUndefined();
     expect(itemByName('后台自动暂停')).not.toBeUndefined();
     expect(itemByName('读书自动番茄钟')).toBeUndefined(); // ticket 63 移除
+    // 分组卡片结构：桌面 2 组（时间方案/行为；移动端组桌面不渲染），原生图标 + 徽标
+    // （classic 时自定义三行隐藏 → 时间方案 2 项：预设方案 + 长休息间隔）
+    const heads = [...document.querySelectorAll('#bz-settings-modal-popup .bz-settings-group-head')];
+    expect(heads.map((h) => (h as HTMLElement).textContent!.trim())).toEqual(['时间方案2 项', '行为7 项']);
+    expect(heads.map((h) => h.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon'))).toEqual(['timer', 'sliders-horizontal']);
+    const names = [...document.querySelectorAll('#bz-settings-modal-popup .bz-settings-group-body .setting-item')].map(
+      (it) => (it as HTMLElement).dataset.name
+    );
+    expect(names).toEqual([
+      '预设方案', '工作时长', '短休息时长', '长休息时长', '长休息间隔',
+      '强制专注模式', '自动循环', '自动跳过休息', '声音提醒', '后台自动暂停', '提示音音量', '打开时恢复方式',
+    ]);
   });
 
   it('预设下拉 12 档（11 预设 + 自定义，阅读沉浸已移除）', async () => {
@@ -107,21 +119,30 @@ describe('⚙️ 设置弹窗', () => {
     expect((dd.options as any).reading).toBeUndefined(); // 阅读沉浸预设已移除
   });
 
-  it('自定义时长动态显隐：classic 隐藏 / 切 custom 显示', async () => {
+  it('自定义时长动态显隐：classic 隐藏 / 切 custom 显示，徽标随显隐刷新', async () => {
     const settings = { ...DEFAULT_SETTINGS } as any;
     const { app } = setup(settings);
     await openPomodoro(app);
     el('pomodoro-btn-settings').click();
-    const workRow = itemByName('工作时长（分钟）');
+    const workRow = itemByName('工作时长');
     expect(workRow.classList.contains('bz-setting-hidden')).toBe(true); // classic 非自定义
+    // 各组徽标：时间方案 2 项（自定义三行隐藏），行为 7 项
+    const countOf = (groupName: string) =>
+      [...document.querySelectorAll('#bz-settings-modal-popup .bz-settings-group-head')]
+        .find((h) => h.querySelector('.bz-settings-group-name')!.textContent === groupName)!
+        .querySelector('.bz-settings-group-count')!.textContent;
+    expect(countOf('时间方案')).toBe('2 项');
+    expect(countOf('行为')).toBe('7 项');
     const dd = itemByName('预设方案').__setting.controls[0];
     dd.trigger(CUSTOM_PRESET_ID);
     expect(workRow.classList.contains('bz-setting-hidden')).toBe(false);
-    expect(itemByName('短休息时长（分钟）').classList.contains('bz-setting-hidden')).toBe(false);
-    expect(itemByName('长休息时长（分钟）').classList.contains('bz-setting-hidden')).toBe(false);
+    expect(itemByName('短休息时长').classList.contains('bz-setting-hidden')).toBe(false);
+    expect(itemByName('长休息时长').classList.contains('bz-setting-hidden')).toBe(false);
+    expect(countOf('时间方案')).toBe('5 项'); // 自定义三行显示 → 徽标刷新
     // 保存通道触发
     dd.trigger('flow');
     expect(workRow.classList.contains('bz-setting-hidden')).toBe(true);
+    expect(countOf('时间方案')).toBe('2 项');
   });
 
   it('变更即保存：改长休息间隔 → settings 对象更新 + saveSettings 调用', async () => {
@@ -145,7 +166,7 @@ describe('⚙️ 设置弹窗', () => {
     const { app, saves } = setup(settings);
     await openPomodoro(app);
     el('pomodoro-btn-settings').click();
-    const row = itemByName('音量');
+    const row = itemByName('提示音音量');
     expect(row).not.toBeUndefined();
     const controls = row.__setting.controls;
     const slider = controls[0];
