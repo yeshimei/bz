@@ -6,11 +6,14 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import {
-  loadArticles, render, markAsRead, skipArticle, saveToClip,
+  loadArticles, render, markAsRead, skipArticle, saveToClip, hide,
   loadStats, recordStat, renderMarkdown, toDatetime, init, show,
 } from '../../src/news/reader';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, Platform as MockPlatform, getNoticeMessages, hasNotice, clearNotices } from '../mock-obsidian-entry';
+// ticket 076 修订：隔离 smartcat——断言 reader 只对「保存」产观察（跳过不再调 notifyNewsRead）
+import { notifyNewsRead, notifyNewsSaved } from '../../src/smartcat';
+vi.mock('../../src/smartcat', () => ({ notifyNewsRead: vi.fn(), notifyNewsSaved: vi.fn() }));
 
 function makeApp(vault: MockVault) {
   return {
@@ -58,6 +61,7 @@ async function setup() {
 
 describe('聚合讯阅读流', () => {
   beforeEach(async () => {
+    vi.clearAllMocks();
     await setup();
     init(false);
   });
@@ -92,6 +96,48 @@ describe('聚合讯阅读流', () => {
     const saved = JSON.parse((getVault().files as Map<string, string>).get('CONFIG/STORAGE/news.json')!);
     expect(saved[0].read).toBe(true);
     expect(saved[0].body).toBeUndefined(); // delete a.body
+  });
+
+  it('跳过：不再产生观察（notifyNewsRead/notifyNewsSaved 均不调用），域统计照记', async () => {
+    await loadStats(); // 重置模块级 stats（防跨用例串扰）后再动作
+    await loadArticles();
+    render();
+    skipArticle();
+    expect(notifyNewsRead).not.toHaveBeenCalled();
+    expect(notifyNewsSaved).not.toHaveBeenCalled();
+    const stats = JSON.parse((getVault().files as Map<string, string>).get('CONFIG/STORAGE/news-stats.json')!);
+    expect(stats.totalSkipped).toBe(1);
+  });
+
+  it('保存：仅产保存观察（ticket 076 修订：三态 → 仅保存），时长取整分钟 ≥1', async () => {
+    await loadArticles();
+    render();
+    markAsRead('saved');
+    expect(notifyNewsRead).toHaveBeenCalledTimes(1);
+    expect(notifyNewsRead).toHaveBeenCalledWith(expect.objectContaining({ title: '第一篇新闻', platform: '知乎日报', state: 'saved', durationMin: 1 }));
+    expect(notifyNewsSaved).not.toHaveBeenCalled(); // 仅 saveToClip 流程登记补全，直接 markAsRead 不发
+  });
+
+  it('阅读时长：打开起算 → 关闭暂停 → 重开同篇续算 → 下一篇后重置（仅保存带时长）', async () => {
+    vi.useFakeTimers();
+    try {
+      await loadArticles();
+      render();                                              // 打开第一篇 → 起算
+      vi.setSystemTime(Date.now() + 3 * 60 * 1000);          // 读 3 分钟
+      hide();                                                // 关闭 → 暂停
+      vi.setSystemTime(Date.now() + 2 * 60 * 60 * 1000);     // 关着 2 小时（不计入）
+      render();                                              // 重开同篇 → 续算
+      vi.setSystemTime(Date.now() + 1 * 60 * 1000);          // 再读 1 分钟
+      markAsRead('saved');                                   // 累计 4 分钟
+      expect(notifyNewsRead).toHaveBeenLastCalledWith(expect.objectContaining({ state: 'saved', durationMin: 4 }));
+      // 内部 render 已切到下一篇 → 累计清零
+      vi.setSystemTime(Date.now() + 5 * 60 * 1000);          // 下一篇读 5 分钟
+      markAsRead('saved');
+      const calls = vi.mocked(notifyNewsRead).mock.calls;
+      expect(calls[calls.length - 1][0]).toMatchObject({ title: '第二篇新闻', state: 'saved', durationMin: 5 });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('读完所有文章 → 完成态 renderDoneState（今日阅读/累计保存/总计）', async () => {

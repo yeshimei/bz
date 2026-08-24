@@ -1207,10 +1207,11 @@ export async function maybeMemoDueScan(now: Date = new Date()): Promise<void> {
   }
 }
 
-// ------------- 聚合讯观察（ticket 076：逐篇三态 + 时长 + 保存联动 auto-summary，ADR-0029） -------------
+// ------------- 聚合讯观察（ticket 076：2026-08-25 修订——仅保存 + 累计可视时长，ADR-0029） -------------
 
-/** 聚合讯逐篇观察入口：news 域 reader 方法监听调用（markAsRead 统一发，fire-and-forget）。
- *  未初始化 / 未启用（noteSource 关）→ 静默；文案构造见 news-source.buildNewsReadText。 */
+/** 聚合讯观察入口：news 域 reader 保存路径调用（markAsRead('saved') 发，fire-and-forget）。
+ *  2026-08-25 用户拍板：跳过/阅读不再产生观察，仅保存发（立即形态，auto-summary 补全走
+ *  notifyNewsSaved）；文案构造见 news-source.buildNewsReadText；未初始化/未启用（noteSource 关）→ 静默。 */
 export function notifyNewsRead(evt: NewsReadEvent): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
   const text = buildNewsReadText(evt.state, evt.title, evt.platform, evt.durationMin);
