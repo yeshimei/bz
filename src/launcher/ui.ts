@@ -119,6 +119,8 @@ export class LauncherModal {
   private editing = false;
   private escHandle: { unregister: () => void } | null = null;
   private suppressClick = false;
+  /** 进行中拖拽的 document 级监听解绑引用（prepDrag 预判期与 startDrag 拖拽期共用；close/unload 时调用防悬空监听） */
+  private detachDragListeners: (() => void) | null = null;
   /** 窗口缩放 → 网格单元重算 + 磁贴内容缩放（箭头函数保证 removeEventListener 同引用） */
   private onResize = () => {
     this.applyColumns();
@@ -226,7 +228,7 @@ export class LauncherModal {
     this.grid.style.gridAutoRows = this.cellSize() + 'px';
   }
 
-  /** 列数：桌面/移动端各自配置（launcher.json 内，3-8；缺省桌面 6 / 移动 4） */
+  /** 列数：桌面/移动端各自配置（launcher.json 内，3-8；缺省均为 6，与 data.ts 清洗兜底一致） */
   columns(): number {
     return this.platform().columns;
   }
@@ -390,6 +392,11 @@ export class LauncherModal {
   }
 
   close(): void {
+    // 拖拽进行中 → 先解绑 document 级监听（弹窗即将整体移除，避免悬空引用继续改布局）
+    if (this.detachDragListeners) {
+      this.detachDragListeners();
+      this.detachDragListeners = null;
+    }
     if (this.escHandle) {
       this.escHandle.unregister();
       this.escHandle = null;
@@ -643,23 +650,30 @@ export class LauncherModal {
     });
   }
 
-  /** 编辑模式点击预判：位移超阈值 → 进入拖拽；未移动 → 由 click 触发操作菜单 */
+  /** 编辑模式点击预判：位移超阈值 → 进入拖拽；未移动 → 由 click 触发操作菜单。
+   *  document 级监听登记到 detachDragListeners（关闭/卸载时兜底解绑）；pointercancel 视为放弃预判。 */
   private prepDrag(tile: LauncherTile, e: PointerEvent): void {
     e.stopPropagation();
     const startX = e.clientX;
     const startY = e.clientY;
+    let detach: () => void;
     const move = (ev: PointerEvent) => {
       if (Math.abs(ev.clientX - startX) <= MOVE_CANCEL && Math.abs(ev.clientY - startY) <= MOVE_CANCEL) return;
-      document.removeEventListener('pointermove', move);
-      document.removeEventListener('pointerup', up);
+      detach();
       this.startDrag(tile, ev, startX, startY);
     };
-    const up = () => {
+    const up = () => detach();
+    const cancel = () => detach(); // 系统打断 → 放弃本次预判（尚未开始拖拽，无需回弹）
+    detach = () => {
       document.removeEventListener('pointermove', move);
       document.removeEventListener('pointerup', up);
+      document.removeEventListener('pointercancel', cancel);
+      if (this.detachDragListeners === detach) this.detachDragListeners = null;
     };
     document.addEventListener('pointermove', move);
     document.addEventListener('pointerup', up);
+    document.addEventListener('pointercancel', cancel);
+    this.detachDragListeners = detach;
   }
 
   // ===== 安卓式拖拽（实时让位重排）=====
@@ -728,9 +742,9 @@ export class LauncherModal {
       }
     };
 
+    let detach: () => void;
     const up = (ev: PointerEvent) => {
-      document.removeEventListener('pointermove', move);
-      document.removeEventListener('pointerup', up);
+      detach();
       ph.remove();
       const left = ev.clientX - offX - gridRect.left;
       const top = ev.clientY - offY - gridRect.top;
@@ -754,9 +768,29 @@ export class LauncherModal {
         }, 0);
       }
     };
-
+    // pointercancel（来电/系统手势抢占等）：等同放弃拖拽 → 解绑监听并回弹原布局
+    const onCancel = () => {
+      detach();
+      ph.remove();
+      this.setTiles(original);
+      this.render();
+      if (dragMoved) {
+        this.suppressClick = true;
+        setTimeout(() => {
+          this.suppressClick = false;
+        }, 0);
+      }
+    };
+    detach = () => {
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', up);
+      document.removeEventListener('pointercancel', onCancel);
+      if (this.detachDragListeners === detach) this.detachDragListeners = null;
+    };
     document.addEventListener('pointermove', move);
     document.addEventListener('pointerup', up);
+    document.addEventListener('pointercancel', onCancel);
+    this.detachDragListeners = detach;
     // 立即处理当前指针位置（首个移动事件来自 prepDrag 转发）
     move(e);
   }
