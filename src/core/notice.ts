@@ -3,7 +3,8 @@
  *
  * 设计决策（grilling 会话敲定 + 修订）：
  * - 位置：桌面端右上角、从右侧滑入；移动端（max-width 768px）顶部居中、从上往下
- * - 堆叠 + 上限 5 条（超出挤掉最旧）
+ * - 堆叠 + 上限 5 条（超出挤掉最旧；常驻帧 duration<=0 / progress 默认不参与驱逐——P1-33：
+ *   连续任务的常驻句柄不会被后续 toast 挤掉，setMessage/setType 始终有效）
  * - z-index 100000（最顶，盖过 Obsidian 全部 UI 层）
  * - 类型图标用 emoji（info ℹ️ / success ✅ / warning ⚠️ / error ❌ / pause ⏸️ / accept ✨ /
  *   delete 🗑️ / confirm ✓ / restore ↩️ / skip 🚫 / archive 📁 / progress 转圈）；
@@ -158,6 +159,8 @@ interface InternalNotice {
   iconEl: HTMLElement;
   variant: NoticeVariant;
   isProgress: boolean;
+  /** 常驻帧（无自动消失计时且语义为常驻）：堆叠挤兑时不被驱逐（P1-33）；随 armTimer 更新 */
+  persistent: boolean;
 }
 
 /** 当前存活通知（最旧在前），用于堆叠上限挤兑 */
@@ -177,10 +180,18 @@ function removeInternal(n: InternalNotice): void {
 }
 
 function evictOldest(): void {
-  while (live.length >= MAX_VISIBLE) {
-    const oldest = live[0];
+  // 为即将入栈的新通知腾位：最多驱逐「超员数 + 1」条最旧的可驱逐帧。
+  // 常驻帧跳过不驱逐（P1-33）；配额封顶防止常驻帧滞留时循环吞掉全部普通帧。
+  let quota = live.length - MAX_VISIBLE + 1;
+  for (let i = 0; quota > 0 && i < live.length; ) {
+    const candidate = live[i];
+    if (candidate.persistent) {
+      i++;
+      continue;
+    }
     // 最旧通知直接移除（不播退出动画，保证不刷屏）
-    removeInternal(oldest);
+    removeInternal(candidate);
+    quota--;
   }
 }
 
@@ -227,21 +238,27 @@ function hideNow(n: InternalNotice): void {
   }
 }
 
-/** 按类型/显式 duration 设定自动消失计时；duration <= 0 或 progress 默认 = 常驻 */
+/** 按类型/显式 duration 设定自动消失计时；duration <= 0 或 progress 默认 = 常驻（persistent，不参与堆叠驱逐） */
 function armTimer(n: InternalNotice, kind: NoticeKind, explicitDuration?: number): void {
   if (n.timer !== null) {
     window.clearTimeout(n.timer);
     n.timer = null;
   }
+  n.persistent = false;
   if (kind === 'progress') {
     // progress 默认常驻；显式 duration > 0 才计时
     if (explicitDuration !== undefined && explicitDuration > 0) {
       n.timer = window.setTimeout(() => hideNow(n), explicitDuration);
+    } else {
+      n.persistent = true;
     }
     return;
   }
   const dur = explicitDuration !== undefined ? explicitDuration : defaultDuration(kind);
-  if (dur <= 0) return; // <= 0 = 常驻
+  if (dur <= 0) {
+    n.persistent = true; // <= 0 = 常驻
+    return;
+  }
   n.timer = window.setTimeout(() => hideNow(n), dur);
 }
 
@@ -333,7 +350,7 @@ export function notify(msg: string, opts?: NoticeOptions): NoticeHandle {
     el.appendChild(progressEl);
   }
 
-  const n: InternalNotice = { el, timer: null, msgEl, progressEl, iconEl: icon, variant, isProgress };
+  const n: InternalNotice = { el, timer: null, msgEl, progressEl, iconEl: icon, variant, isProgress, persistent: false };
 
   // 操作按钮（可选）
   if (opts && opts.action) {

@@ -3,7 +3,7 @@
  * 覆盖：四种类型 / 时长规则 / 点击关闭 / 动态消息 / 进度条 / 操作按钮 / 堆叠上限。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { notify } from '../../src/core/notice';
+import { notify, __resetNoticeForTests } from '../../src/core/notice';
 
 function visibleNotices(): HTMLElement[] {
   return Array.from(document.querySelectorAll('.bz-notice')) as HTMLElement[];
@@ -12,6 +12,8 @@ function visibleNotices(): HTMLElement[] {
 describe('通知系统', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    // 清空模块级存活/去重状态（前一用例残留的常驻帧会污染堆叠计数断言）
+    __resetNoticeForTests();
     document.body.innerHTML = '';
   });
 
@@ -271,6 +273,48 @@ describe('通知系统', () => {
       await vi.advanceTimersByTimeAsync(30000);
       notify('窗口后触发', { dedupeKey: 'test-gone' });
       expect(visibleNotices()).toHaveLength(1);
+    });
+  });
+
+  describe('常驻帧不被堆叠挤出（P1-33）', () => {
+    it('常驻 progress 句柄在 5 条普通 toast 入栈后 setMessage/setType 仍生效且元素在文档中', async () => {
+      const h = notify('正在同步', { type: 'progress' }); // progress 默认常驻（不自动消失）
+      for (let i = 1; i <= 5; i++) notify('第 ' + i + ' 条');
+      // 上限 5 维持：常驻帧豁免驱逐，普通帧照常轮换（最旧的「第 1 条」被挤掉，常驻留下）
+      expect(visibleNotices()).toHaveLength(5);
+      expect(h.el.isConnected).toBe(true);
+      const msgs = visibleNotices().map((el) => el.querySelector('.bz-notice-msg')!.textContent);
+      expect(msgs).not.toContain('第 1 条');
+      expect(msgs).toContain('第 5 条');
+      // 句柄动态能力保持有效
+      h.setMessage('同步到 50%');
+      expect(h.el.querySelector('.bz-notice-msg')!.textContent).toBe('同步到 50%');
+      h.setProgress(50);
+      expect(h.el.querySelector('.bz-notice-progress')).not.toBeNull();
+      // setType 接管计时（progress → success 后按默认时长自动消失）
+      h.setType('success');
+      expect(h.el.classList.contains('bz-notice--success')).toBe(true);
+      await vi.advanceTimersByTimeAsync(3400);
+      expect(h.el.isConnected).toBe(false);
+    });
+
+    it('duration<=0 的常驻 info 帧同样不被挤出', () => {
+      const h = notify('常驻任务', { duration: 0 });
+      for (let i = 1; i <= 5; i++) notify('普通 ' + i);
+      expect(visibleNotices()).toHaveLength(5);
+      expect(h.el.isConnected).toBe(true);
+      const msgs = visibleNotices().map((el) => el.querySelector('.bz-notice-msg')!.textContent);
+      expect(msgs).not.toContain('普通 1');
+      expect(msgs).toContain('普通 5');
+      h.setMessage('仍在运行');
+      expect(h.el.querySelector('.bz-notice-msg')!.textContent).toBe('仍在运行');
+      // 推进很久也不消失（无计时器），直到主动 hide
+      h.hide();
+    });
+
+    it('全部为常驻帧时不再挤兑（跳过驱逐，允许超上限）', () => {
+      for (let i = 1; i <= 7; i++) notify('常驻 ' + i, { duration: 0 });
+      expect(visibleNotices()).toHaveLength(7);
     });
   });
 });
