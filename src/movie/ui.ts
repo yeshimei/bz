@@ -7,7 +7,7 @@ import { notice, notify } from '../core/notice';
 import { escManager } from '../core/esc-manager';
 import { formatRelativeTime, pad2 } from '../core/utils';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
-import { openSettingsModal } from '../core/settings-modal';
+import { openSettingsModal, createSettingsGroup } from '../core/settings-modal';
 import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
 import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, getTypeColor, getStarRating, TYPE_GROUPS, ALL_TAGS, getGroupForTag } from './constants';
 import { M, takeHomeFilmStatus, type MovieItem } from './state';
@@ -1082,14 +1082,17 @@ export function createOverlay(app: App, statusType?: string): void {
     openFilterModal();
   });
 
-  // 影视设置弹窗（ADR-0009 域设置弹窗）
+  // 影视设置弹窗（ADR-0009 域设置弹窗；分组卡片重设计 + ticket 100 文案规范）
   const settingsBtn = mkBtn('⚙️', '影视设置', 'var(--text-normal)', (e) => {
     e.stopPropagation();
     openSettingsModal({
       title: '影视设置',
+      maxWidth: 560,
       build: (el) => {
         const s = getSettings();
-        new Setting(el)
+        // ===== 目录组 =====
+        const dirGroup = createSettingsGroup(el, { icon: 'folder-open', name: '目录' });
+        new Setting(dirGroup)
           .setName('影视文件夹')
           .setDesc('存放影视笔记的文件夹路径')
           .addText((text) =>
@@ -1098,20 +1101,20 @@ export function createOverlay(app: App, statusType?: string): void {
               await saveSettings();
             })
           );
-        new Setting(el)
+        new Setting(dirGroup)
           .setName('每页加载数量')
-          .setDesc('列表初始加载及每次滚动加载的条数')
+          .setDesc('列表首次加载和滚动加载时显示的条数')
           .addText((text) =>
             text.setValue(s.moviePageSize || '').onChange(async (v) => {
               s.moviePageSize = v;
               await saveSettings();
             })
           );
-        // ===== 默认视图（第 9 轮设置扩展） =====
-        new Setting(el).setHeading().setName('默认视图');
-        new Setting(el)
+        // ===== 默认视图组 =====
+        const viewGroup = createSettingsGroup(el, { icon: 'monitor', name: '默认视图' });
+        new Setting(viewGroup)
           .setName('默认排序')
-          .setDesc('打开影视列表时的默认排序（重启生效）')
+          .setDesc('打开影视列表时默认的排序方式')
           .addDropdown((dd) =>
             dd
               .addOption('date-desc', '日期↓')
@@ -1126,9 +1129,9 @@ export function createOverlay(app: App, statusType?: string): void {
                 await saveSettings();
               })
           );
-        new Setting(el)
+        new Setting(viewGroup)
           .setName('默认类型筛选')
-          .setDesc('打开影视列表时默认选中的类型（重启生效）')
+          .setDesc('打开影视列表时默认选中的类型')
           .addDropdown((dd) => {
             dd.addOption('', '全部');
             for (const tag of ALL_TAGS) dd.addOption(tag, tag);
@@ -1137,9 +1140,9 @@ export function createOverlay(app: App, statusType?: string): void {
               await saveSettings();
             });
           });
-        new Setting(el)
+        new Setting(viewGroup)
           .setName('默认状态筛选')
-          .setDesc('打开影视列表时默认选中的状态（重启生效）')
+          .setDesc('打开影视列表时默认选中的状态')
           .addDropdown((dd) =>
             dd
               .addOption('全部', '全部')
@@ -1152,11 +1155,9 @@ export function createOverlay(app: App, statusType?: string): void {
                 await saveSettings();
               })
           );
-        // ===== 显示（第 9 轮设置扩展） =====
-        new Setting(el).setHeading().setName('显示');
-        new Setting(el)
+        new Setting(viewGroup)
           .setName('已看卡片评分显示')
-          .setDesc('已看条目评分的显示方式：星星串或 ⭐数字')
+          .setDesc('已看条目评分以星星串或数字显示')
           .addDropdown((dd) =>
             dd
               .addOption('stars', '星星串')
@@ -1167,11 +1168,16 @@ export function createOverlay(app: App, statusType?: string): void {
                 await saveSettings();
               })
           );
-        new Setting(el).setName('海报抓取').setDesc('影视海报与豆瓣信息抓取由独立脚本 @jwbz/obsidian-douban-poster 提供。');
+        // 海报抓取指引（ADR-0007：外部工具承担；描述去包名细节，详见 README/ADR）
+        new Setting(viewGroup)
+          .setName('海报抓取')
+          .setDesc('海报与豆瓣信息由独立的外部工具提供，需另行安装运行');
+        // ===== 移动端组（仅移动端显示） =====
         if (isMobileEnv()) {
-          new Setting(el)
+          const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
+          new Setting(mobileGroup)
             .setName('移动端默认全屏')
-            .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
+            .setDesc('移动端打开主窗口时默认全屏，关闭则显示常规卡片')
             .addToggle((toggle) =>
               toggle.setValue(!!s.movieMobileDefaultFullscreen).onChange(async (v) => {
                 s.movieMobileDefaultFullscreen = v;
