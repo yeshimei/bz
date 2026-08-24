@@ -203,4 +203,61 @@ describe('processFile', () => {
     expect(getNoticeMessages()).toHaveLength(1);
     expect(getNoticeMessages()[0]).toBe('摘要生成失败，请重试');
   });
+
+  it('AI 处理期间外部追加（P1-21）：写回基于最新读——自定义 frontmatter 与正文段落保留，摘要字段已更新', async () => {
+    let release!: (v: string) => void;
+    const ai = {
+      prompt: vi.fn().mockImplementation(() => new Promise<string>((r) => { release = r; })),
+    } as any;
+    const path = '归档/网页剪藏/a.md';
+    vault.files.set(path, `---\nlink: "https://x.com/a"\ncustom: "保留我"\n---\n\n${LONG_BODY}`);
+
+    const running = processFile(makeApp(vault), ai, vault.file(path));
+    await new Promise((r) => setTimeout(r, 0)); // 推进到 AI 调用挂起点
+    expect(ai.prompt).toHaveBeenCalledTimes(1);
+
+    // AI 处理期间：外部追加正文段落与自定义 frontmatter 字段
+    vault.files.set(
+      path,
+      `---\nlink: "https://x.com/a"\ncustom: "保留我"\nadded: "外部字段"\n---\n\n${LONG_BODY}\n\n外部追加的段落`
+    );
+
+    release('{"title":"新标题","summary":"摘要内容","tags":["AI"]}'); // rename → 新路径 a.md → 新标题.md
+    await running;
+
+    const out = vault.files.get('归档/网页剪藏/新标题.md')!;
+    // 目标字段已更新
+    expect(out).toContain('title: "新标题"');
+    expect(out).toContain('summary: "摘要内容"');
+    expect(out).toContain('  - "AI"');
+    // 外部并发修改全部保留（frontmatter 自定义字段 + 磁盘最新正文）
+    expect(out).toContain('custom: "保留我"');
+    expect(out).toContain('added: "外部字段"');
+    expect(out).toContain('外部追加的段落');
+    expect(out).toContain('link: "https://x.com/a"');
+  });
+
+  it('无重命名场景同样基于最新读合并（P1-21）：已有 title 只缺 summary，外部追加不被覆盖', async () => {
+    let release!: (v: string) => void;
+    const ai = {
+      prompt: vi.fn().mockImplementation(() => new Promise<string>((r) => { release = r; })),
+    } as any;
+    const path = '归档/网页剪藏/b.md';
+    vault.files.set(path, `---\ntitle: "已有标题"\n---\n\n${LONG_BODY}`);
+
+    const running = processFile(makeApp(vault), ai, vault.file(path));
+    await new Promise((r) => setTimeout(r, 0));
+    vault.files.set(path, `---\ntitle: "已有标题"\nnote: "用户笔记"\n---\n\n${LONG_BODY}\n\n用户新增段落`);
+
+    release('{"summary":"新摘要"}');
+    await running;
+
+    const out = vault.files.get(path)!;
+    expect(out).toContain('title: "已有标题"'); // 不覆盖已有
+    expect(out).toContain('summary: "新摘要"');
+    expect(out).toContain('note: "用户笔记"'); // 外部 frontmatter 保留
+    expect(out).toContain('用户新增段落'); // 正文取磁盘最新
+    expect(getNoticeMessages()).toHaveLength(1);
+    expect(getNoticeMessages()[0]).toBe('《已有标题》\n\n新摘要');
+  });
 });

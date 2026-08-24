@@ -24,6 +24,10 @@ const PLATFORM_DOMAIN: Record<string, string> = { '果壳': 'guokr.com', '知乎
 const esc = (s: any) =>
   String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+/** frontmatter 双引号标量转义：引号 → \"、换行 → 空格，防破坏 YAML 结构（P1-24 全字段推广） */
+const yamlEscape = (v: any): string =>
+  String(v ?? '').replace(/"/g, '\\"').replace(/[\r\n]+/g, ' ');
+
 // ---------- 模块状态 ----------
 let allArticles: any[] = [];
 let articles: any[] = [];
@@ -104,18 +108,51 @@ export function recordStat(action: string, article: any) {
 }
 
 // ---------- 数据 ----------
+/** 文章稳定标识（优先 url，其次 title+date）：双写者合并与游标锚定共用 */
+function articleKeyOf(a: any): string {
+  if (a && a.url) return 'url:' + String(a.url);
+  return 'td:' + String((a && a.title) || '') + '|' + String((a && a.date) || '');
+}
+
+/**
+ * 双写者合并：以磁盘为基底，同标识项用内存版本覆盖（携带 read 标记等处理状态），
+ * 磁盘上多出的外部追加项原样保留，内存新增项防御性追加。
+ */
+export function mergeWithDisk(memory: any[], disk: any[]): any[] {
+  const memByKey = new Map(memory.map((a: any) => [articleKeyOf(a), a]));
+  const merged = disk.map((d: any) => memByKey.get(articleKeyOf(d)) ?? d);
+  const diskKeys = new Set(disk.map((d: any) => articleKeyOf(d)));
+  for (const m of memory) {
+    if (!diskKeys.has(articleKeyOf(m))) merged.push(m);
+  }
+  return merged;
+}
+
 export async function loadArticles() {
   const app = getApp();
   const af = app.vault.getAbstractFileByPath(NEWS_JSON_PATH);
   if (!af) { allArticles = []; articles = []; batchTotal = 0; return; }
+  const prevCurrent = articles[currentIndex]; // 重载前当前篇，用于游标锚定
   try {
     allArticles = JSON.parse(await app.vault.read(af as TFile));
     articles = allArticles.filter((a: any) => !a.read);
     batchTotal = articles.length;
   } catch (e) {
+    // 崩溃半截 JSON：保留磁盘旧文件不动、按空列表返回并告警（后续 saveArticles 不覆写）
+    console.warn('[聚合讯] news.json 解析失败，按空列表处理', e);
     allArticles = []; articles = []; batchTotal = 0;
   }
-  if (currentIndex >= articles.length) currentIndex = Math.max(0, articles.length - 1);
+  // 游标锚定：优先按上一当前篇的稳定标识定位新索引，找不到再夹取边界
+  const anchored = anchorCursor(prevCurrent, articles);
+  if (anchored >= 0) currentIndex = anchored;
+  else if (currentIndex >= articles.length) currentIndex = Math.max(0, articles.length - 1);
+}
+
+/** 按上一当前篇的稳定标识在新列表中定位索引；找不到返回 -1（由调用方夹取边界） */
+function anchorCursor(prev: any, list: any[]): number {
+  if (!prev) return -1;
+  const key = articleKeyOf(prev);
+  return list.findIndex((x: any) => articleKeyOf(x) === key);
 }
 
 // ---------- 渲染 ----------
@@ -317,19 +354,19 @@ export async function saveToClip() {
     if (!ok) return;
   }
 
-  const tagsYaml = (a.tags || []).map((t: string) => `  - "${t}"`).join('\n');
+  const tagsYaml = (a.tags || []).map((t: string) => `  - "${yamlEscape(t)}"`).join('\n');
   const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
   const pubDate = a.date ? toDatetime(a.date) : '';
   const body = (a.body || '').replace(/^\s*---[\s\S]*?---\s*/m, '').replace(/^\s*```dataviewjs[\s\S]*?```\s*/m, '').trim();
 
   const md = `---
-link: "${a.url || ''}"
-author: "${a.author || ''}"
-site: "${a.platform || ''}"
-summary: "${(a.summary || '').replace(/"/g, '\\"').replace(/[\r\n]+/g, ' ')}"
+link: "${yamlEscape(a.url || '')}"
+author: "${yamlEscape(a.author || '')}"
+site: "${yamlEscape(a.platform || '')}"
+summary: "${yamlEscape(a.summary || '')}"
 tags:
 ${tagsYaml}
-date: "${pubDate}"
+date: "${yamlEscape(pubDate)}"
 created: ${now}
 ---
 \`\`\`dataviewjs
@@ -379,7 +416,11 @@ export function markAsRead(action: string): NewsReadEvent | null {
   }
   const prevTotal = allArticles.length;
   articles = allArticles.filter((x: any) => !x.read);
-  if (currentIndex >= articles.length) currentIndex = Math.max(0, articles.length - 1);
+  // 游标锚定：当前篇已标读必然不在新未读列表（找不到 → 夹取边界，行为同旧逻辑）；
+  // 若后续出现磁盘同步已读等场景则按标识定位不漂移
+  const anchored = anchorCursor(a, articles);
+  if (anchored >= 0) currentIndex = anchored;
+  else if (currentIndex >= articles.length) currentIndex = Math.max(0, articles.length - 1);
   render();
   void saveArticles();
   void checkNewArticles(prevTotal);
@@ -402,7 +443,20 @@ export async function saveArticles() {
   const app = getApp();
   try {
     const af = app.vault.getAbstractFileByPath(NEWS_JSON_PATH);
-    if (af) await app.vault.modify(af as TFile, JSON.stringify(allArticles, null, 2));
+    if (!af) return;
+    // 双写者防丢：写前重读磁盘，合并外部追加项（P0-5）；磁盘解析失败不覆写防清盘
+    let disk: any;
+    try {
+      disk = JSON.parse(await app.vault.read(af as TFile));
+    } catch (e) {
+      console.warn('[聚合讯] news.json 解析失败，跳过本次写回以防覆盖', e);
+      return;
+    }
+    if (!Array.isArray(disk)) {
+      console.warn('[聚合讯] news.json 内容异常（非数组），跳过本次写回以防覆盖');
+      return;
+    }
+    await app.vault.modify(af as TFile, JSON.stringify(mergeWithDisk(allArticles, disk), null, 2));
   } catch (e) { /* 忽略 */ }
 }
 

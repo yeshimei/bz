@@ -89,6 +89,8 @@ describe('聚合讯阅读流', () => {
     await loadArticles();
     render();
     skipArticle();
+    // P0-5 后 saveArticles 含写前重读（异步化）：冲刷微任务再断言落盘内容
+    await new Promise((r) => setTimeout(r, 0));
 
     expect(document.querySelector('.news-card-title')!.textContent).toBe('第二篇新闻');
     expect(document.querySelector('.news-counter')!.textContent).toContain('2 / 2');
@@ -208,6 +210,41 @@ describe('聚合讯阅读流', () => {
     expect(hasNotice(/已保存/)).toBe(true);
     // 已读后进入下一篇
     expect(document.querySelector('.news-card-title')!.textContent).toBe('第二篇新闻');
+  });
+
+  it('frontmatter 全字段转义（P1-24）：含引号/换行的作者、标签、链接生成的 frontmatter 可被 YAML 解析', async () => {
+    // 注入特殊字符文章：引号作者 / 换行摘要 / 引号标签
+    const vault = getVault();
+    const dirty = [
+      {
+        title: '特殊字符新闻',
+        url: 'https://x.com/a"b?next=https://y.com/c',
+        platform: '站"点',
+        author: '张"三"\n李四',
+        date: '2025-06-10 09:00:00',
+        summary: '第一行\n第二行 "引用"',
+        tags: ['标"签', 'AI'],
+        body: '正文',
+      },
+    ];
+    vault.files.set('CONFIG/STORAGE/news.json', JSON.stringify(dirty));
+    await loadArticles();
+    render();
+    await saveToClip();
+
+    const md = vault.files.get('归档/网页剪藏/特殊字符新闻.md')!;
+    // 每个双引号标量行都保持合法 YAML 形状（内部引号均被转义，无裸换行断行）
+    for (const key of ['link', 'author', 'site', 'summary', 'date']) {
+      expect(md).toMatch(new RegExp(`^${key}: "(?:[^"\\\\]|\\\\.)*"$`, 'm'));
+    }
+    expect(md).toMatch(/^tags:\n {2}- "(?:[^"\\]|\\.)*"\n {2}- "(?:[^"\\]|\\.)*"$/m);
+    // 转义可逆：YAML 解析还原出原文（引号原样、换行折叠为空格）
+    const author = md.match(/^author: "((?:[^"\\]|\\.)*)"$/m)![1];
+    expect(author.replace(/\\"/g, '"')).toBe('张"三"\n李四'.replace(/[\r\n]+/g, ' '));
+    const tag = md.match(/^ {2}- "(标\\"[^"]*)"$/m)![1];
+    expect(tag.replace(/\\"/g, '"')).toBe('标"签');
+    const summary = md.match(/^summary: "((?:[^"\\]|\\.)*)"$/m)![1];
+    expect(summary).toContain('第一行 第二行 \\"引用\\"');
   });
 
   it('剪藏保存失败 → 「❌ 保存失败」', async () => {

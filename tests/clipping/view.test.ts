@@ -6,13 +6,19 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { initArticleView, applyArticleSettings, applyFilter, renderEmpty } from '../../src/clipping/view';
+import { initArticleView, applyArticleSettings, applyFilter, renderEmpty, unloadClipping } from '../../src/clipping/view';
 import { MockVault } from '../mock-vault';
 import {
   resetObsidianMocks,
   hasNotice,
   Platform as MockPlatform,
 } from '../mock-obsidian-entry';
+// 隔离 auto-summary：断言开关 ON/OFF 分别调用 ensure/stop（P1-22）
+vi.mock('../../src/auto-summary', () => ({
+  ensureAutoSummary: vi.fn(),
+  stopAutoSummary: vi.fn(),
+}));
+import { ensureAutoSummary, stopAutoSummary } from '../../src/auto-summary';
 
 function makeArticleMd(link: string, site: string, title: string, created: string, extra = '') {
   return `---
@@ -367,5 +373,129 @@ describe('剪藏本面板', () => {
       '滚动加载时每批显示的条目数',
       '新剪藏的文章自动生成 AI 摘要',
     ]);
+  });
+});
+
+describe('剪藏本修复回归（P0-8/P1-22/P1-23/P2）', () => {
+  afterEach(() => {
+    // 摘除 vault 监听并重置 fileListenerAttached，防跨用例模块状态残留
+    unloadClipping();
+    vi.clearAllMocks();
+    vi.useRealTimers();
+  });
+
+  it('站点栏注入（P0-8）：站点名含 <img …> 渲染为纯文本，计数 span 结构与类名不变', async () => {
+    const { vault } = await setup();
+    const evil = '<img src=x onerror=alert(1)>';
+    vault.files.set('我的/文章/A.md', makeArticleMd('无效链接', evil, 'A', '2025-06-02T08:00:00.000Z'));
+    await initArticleView(true);
+    await new Promise((r) => setTimeout(r, 20));
+
+    const btn = [...document.querySelectorAll('.article-site-btn')].find(
+      (b) => (b as HTMLElement).dataset.site === evil
+    ) as HTMLElement;
+    expect(btn).toBeDefined();
+    expect(btn.querySelector('img')).toBeNull(); // 未被解析为元素（link 无效无 favicon，断言干净）
+    expect(btn.innerHTML).not.toContain('<img'); // 无真实 img 标签
+    expect(btn.textContent).toContain(evil); // 原样文本呈现
+    const countSpan = btn.querySelector('.count');
+    expect(countSpan).not.toBeNull(); // 计数 span 结构/类名不变
+    expect(countSpan!.textContent).toBe('(1)');
+  });
+
+  it('自动摘要开关（P1-22）：OFF 调 stopAutoSummary、ON 调 ensureAutoSummary', async () => {
+    const { vault } = await setup();
+    vault.files.set('我的/文章/A.md', makeArticleMd('https://x.com/a', '站', 'A', '2025-06-02T08:00:00.000Z'));
+    await initArticleView(true);
+    await new Promise((r) => setTimeout(r, 20));
+    vi.mocked(ensureAutoSummary).mockClear();
+    vi.mocked(stopAutoSummary).mockClear();
+
+    const settingsBtn = [...document.querySelectorAll('button')].find((b) => b.title === '剪藏本设置')!;
+    settingsBtn.click();
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    const item = [...popup.querySelectorAll('.setting-item')].find(
+      (el) => (el as HTMLElement).dataset.name === '自动摘要'
+    ) as HTMLElement;
+    const toggle = (item as any).__setting.controls.find((c: any) => typeof c.trigger === 'function');
+
+    toggle.trigger(false); // OFF → 摘除监听
+    await Promise.resolve();
+    expect(stopAutoSummary).toHaveBeenCalledTimes(1);
+    expect(ensureAutoSummary).not.toHaveBeenCalled();
+
+    toggle.trigger(true); // ON → 恢复
+    await Promise.resolve();
+    expect(ensureAutoSummary).toHaveBeenCalledWith(expect.objectContaining({ commands: expect.anything() }));
+  });
+
+  it('created 为 "1750000000000" 这类值（P1-23）：不再抛 RangeError 卡死面板，列表正常渲染', async () => {
+    const { vault } = await setup();
+    vault.files.set('我的/文章/Bad.md', makeArticleMd('https://x.com/b', '站', 'Bad', '"1750000000000"'));
+    vault.files.set('我的/文章/Good.md', makeArticleMd('https://x.com/g', '站', 'Good', '2025-06-02T08:00:00.000Z'));
+    await initArticleView(true);
+    await new Promise((r) => setTimeout(r, 20));
+
+    // 两张卡都渲染（Invalid Date 回退当前时间，不中断整表加载）
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(2);
+    const badCard = [...document.querySelectorAll('.article-entry-card')].find(
+      (c) => c.querySelector('.article-entry-title')!.textContent === 'Bad'
+    ) as HTMLElement;
+    const metaRow = badCard.querySelector('.article-entry-meta')!;
+    expect(metaRow.textContent).toContain('站'); // meta 行正常构建
+    // dataset.created 合法 ISO 或缺省（容错不抛错），相对时间文案存在
+    const lastMeta = metaRow.lastElementChild as HTMLElement;
+    if (lastMeta.dataset.created) {
+      expect(() => new Date(lastMeta.dataset.created!).toISOString()).not.toThrow();
+    }
+  });
+
+  it('删除含引号路径的文章（P2）：findCardByPath 遍历 dataset 比对，不再抛 DOMException', async () => {
+    const { vault } = await setup();
+    vault.files.set('我的/文章/含"引"号.md', makeArticleMd('https://x.com/a', '知乎', '标题X', '2025-06-02T08:00:00.000Z'));
+    await initArticleView(true);
+    await new Promise((r) => setTimeout(r, 20));
+
+    const card = document.querySelector('.article-entry-card') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true }));
+    // 菜单能弹出 = buildArticleActions→findCardByPath 未抛 DOMException
+    const menu = document.querySelector('.bz-item-menu') as HTMLElement;
+    expect(menu).not.toBeNull();
+    const deleteItem = menu.querySelector('.bz-item-menu-item--danger') as HTMLElement;
+    deleteItem.click();
+    expect(document.body.textContent).toContain('确认删除');
+    const confirmBtn = [...document.querySelectorAll('.setting-item, button')].find(
+      (el) => el.tagName === 'BUTTON' && el.textContent === '删除'
+    ) as HTMLButtonElement;
+    confirmBtn.click();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(vault.files.has('我的/文章/含"引"号.md')).toBe(false);
+    expect(hasNotice(/已删除/)).toBe(true);
+  });
+
+  it('vault modify 目录边界（P2）：前缀同名目录不误触发刷新；目录内正常防抖刷新', async () => {
+    const { vault } = await setup();
+    vault.files.set('我的/文章/A.md', makeArticleMd('https://x.com/a', '站', 'A', '2025-06-02T08:00:00.000Z'));
+    await initArticleView(true);
+    await new Promise((r) => setTimeout(r, 20));
+    // 清空前面用例残留的搜索关键字（refreshData→applyFilter 会用到），保证刷新结果只由目录内容决定
+    const searchInput = document.getElementById('article-search-input') as HTMLInputElement;
+    searchInput.value = '';
+    searchInput.dispatchEvent(new Event('input'));
+    await new Promise((r) => setTimeout(r, 350)); // 等防抖把 currentSearchKeyword 清空
+    const scBefore = document.querySelector('.article-scroll-container');
+
+    // 「我的/文章备选」（前缀同名但非同目录）modify → 不刷新（补 '/' 边界后 startsWith 不命中）
+    vault.emit('modify', vault.file('我的/文章备选/x.md'));
+    await new Promise((r) => setTimeout(r, 350));
+    expect(document.querySelector('.article-scroll-container')).toBe(scBefore);
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(1);
+
+    // 目录内 modify → 防抖 300ms 后 refreshData 重渲染（scrollContainer 重建）
+    vault.files.set('我的/文章/B.md', makeArticleMd('https://x.com/b', '站', 'B', '2025-06-03T08:00:00.000Z'));
+    vault.emit('modify', vault.file('我的/文章/B.md'));
+    await new Promise((r) => setTimeout(r, 400));
+    expect(document.querySelector('.article-scroll-container')).not.toBe(scBefore);
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(2);
   });
 });

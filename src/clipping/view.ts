@@ -15,7 +15,7 @@ import { getSettings, saveSettings, tryGetSettings } from '../core/settings-prov
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal, createSettingsGroup } from '../core/settings-modal';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
-import { ensureAutoSummary } from '../auto-summary';
+import { ensureAutoSummary, stopAutoSummary } from '../auto-summary';
 
 // ---------- 模块状态 ----------
 let articlePopup: HTMLElement | null = null;
@@ -237,6 +237,7 @@ function createHeader(): HTMLElement {
               s.autoSummaryEnabled = v;
               await saveSettings();
               if (v) ensureAutoSummary(app);
+              else stopAutoSummary(); // 关闭：摘除监听（initialized 保留，再开启复用注册）
             })
           );
         // ===== 移动端组（仅移动端显示） =====
@@ -371,6 +372,11 @@ export async function parseArticleFile(file: any): Promise<ArticleEntry | null> 
     const content = await app.vault.read(file);
     const title = file.basename;
 
+    // created 解析失败（如 "1750000000000" 这类值）→ Invalid Date 会在 toISOString 抛
+    // RangeError 卡死整个列表渲染；回退当前时间（P1-23）
+    let created = new Date(fm.created);
+    if (isNaN(created.valueOf())) created = new Date();
+
     // 检测反链（被其他笔记引用）
     const backlinks = (app.metadataCache as any).getBacklinksForFile(file);
     const hasBacklink = backlinks && (backlinks as any).data.size > 0;
@@ -384,7 +390,7 @@ export async function parseArticleFile(file: any): Promise<ArticleEntry | null> 
       site: fm.site || '未知',
       summary: fm.summary || '',
       tags: Array.isArray(fm.tags) ? (fm.tags as string[]) : fm.tags ? [fm.tags as string] : [],
-      created: new Date(fm.created),
+      created,
       title,
       rawContent: content,
       hasBacklink,
@@ -564,7 +570,9 @@ function buildMetaRow(article: ArticleEntry, interactive: boolean): HTMLElement 
   // -------- 日期（右对齐） --------
   const dateSpan = document.createElement('span');
   dateSpan.textContent = formatRelativeTime(article.created);
-  dateSpan.dataset.created = article.created.toISOString();
+  try {
+    dateSpan.dataset.created = article.created.toISOString();
+  } catch { /* Invalid Date 容错：不设 dataset（P1-23） */ }
   dateSpan.style.marginLeft = 'auto';
   metaRow.appendChild(dateSpan);
 
@@ -626,7 +634,13 @@ async function copyOriginalLink(article: ArticleEntry): Promise<void> {
 
 /** 按路径找回列表卡片节点（删除确认后移除卡片用；找不到返回 null，deleteArticle 已兜底） */
 function findCardByPath(path: string): HTMLElement | null {
-  return (articlesContainer?.querySelector(`.article-entry-card[data-path="${path}"]`) as HTMLElement) || null;
+  if (!articlesContainer) return null;
+  // 遍历比对 dataset.path：路径含引号时拼属性选择器会抛 DOMException（P2）
+  const cards = articlesContainer.querySelectorAll<HTMLElement>('.article-entry-card');
+  for (const card of Array.from(cards)) {
+    if (card.dataset.path === path) return card;
+  }
+  return null;
 }
 
 function createArticleCard(article: ArticleEntry): HTMLElement {
@@ -783,9 +797,14 @@ export function rebuildSiteBar() {
     const icon = createSiteIcon(info.domain, 14);
     if (icon) btn.appendChild(icon);
 
-    // 文本：站点名 + 计数
+    // 文本：站点名（textContent 子节点防注入，P0-8）+ 计数
     const textSpan = document.createElement('span');
-    textSpan.innerHTML = `${site} <span class="count">(${info.count})</span>`;
+    textSpan.appendChild(document.createTextNode(site));
+    textSpan.appendChild(document.createTextNode(' '));
+    const countSpan = document.createElement('span');
+    countSpan.className = 'count';
+    countSpan.textContent = `(${info.count})`;
+    textSpan.appendChild(countSpan);
     btn.appendChild(textSpan);
 
     if (selectedSite === site) btn.classList.add('active');
@@ -847,7 +866,8 @@ function attachFileListener() {
   const app = getApp();
   if (fileListenerAttached) return;
   const fileModifyHandler = async (file: any) => {
-    if (file.path.startsWith(ARTICLE_DIRECTORY) && file.extension === 'md') {
+    // 补 '/' 边界：防「我的/文章备选」误命中「我的/文章」前缀（与 auto-summary getWatchDir()+'/' 对齐）
+    if (file.path.startsWith(ARTICLE_DIRECTORY + '/') && file.extension === 'md') {
       if (refreshTimer) clearTimeout(refreshTimer);
       refreshTimer = setTimeout(async () => {
         await refreshData();
