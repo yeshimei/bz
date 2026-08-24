@@ -14,7 +14,7 @@ import { createSiteIcon } from '../core/dom';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
-import { openSettingsModal } from '../core/settings-modal';
+import { openSettingsModal, createSettingsGroup } from '../core/settings-modal';
 import {
   formatRelativeTime,
   extractUrlAndDisplay,
@@ -106,7 +106,7 @@ function attachSuggestion<T>(
   });
 }
 
-// ---------- 设置弹窗（ADR-0009 域设置弹窗，14 项） ----------
+// ---------- 设置弹窗（ADR-0009 域设置弹窗，分组卡片，10 项 5 组） ----------
 
 /** 设置项辅助：toggle / text / textArea / dropdown 四类，写回设置并保存，支持副作用 */
 function settingToggle(el: HTMLElement, name: string, desc: string, get: boolean, key: keyof any, after?: () => void) {
@@ -214,33 +214,35 @@ export const UIManager = {
 
       openSettingsModal({
         title: '备忘录设置',
+        maxWidth: 560,
         build: (el) => {
-          // ===== 提醒 =====
-          new Setting(el).setHeading().setName('提醒');
-          settingToggle(el, '启动时自动弹出', '启动时若存在未完成的重要或到期备忘录，自动弹出面板提醒', s.autoPopupOnStart, 'autoPopupOnStart');
-          settingToggle(el, '打开笔记自动提醒', '打开笔记时若该笔记有重要或到期的未完成备忘录，自动弹出面板', s.openNoteReminder !== false, 'openNoteReminder');
+          // ===== 提醒组 =====
+          const remindGroup = createSettingsGroup(el, { icon: 'bell', name: '提醒' });
+          settingToggle(remindGroup, '启动时自动弹出', '启动时若有重要或到期未完成的备忘录，自动打开面板提醒', s.autoPopupOnStart, 'autoPopupOnStart');
+          settingToggle(remindGroup, '打开笔记自动提醒', '打开笔记时若笔记有重要或到期的未完成备忘录，自动弹出面板', s.openNoteReminder !== false, 'openNoteReminder');
 
-          // ===== 显示 =====
-          new Setting(el).setHeading().setName('显示');
-          settingDropdown(el, '默认排序方式', '面板条目的默认排序：紧急优先 / 仅按到期时间 / 按创建时间', [['priority', '紧急优先'], ['due', '仅按到期时间'], ['created', '按创建时间']], s.memoSortMode || 'priority', 'memoSortMode');
-          settingToggle(el, '默认显示归档', '打开面板时显示已归档（已完成）条目', !!s.memoShowArchivedByDefault, 'memoShowArchivedByDefault');
-          settingDropdown(el, '到期时间格式', '相对（今天 14:00 到期）/ 绝对（08/12 14:00 到期）', [['relative', '相对'], ['absolute', '绝对']], s.memoDueFormat || 'relative', 'memoDueFormat');
+          // ===== 显示组 =====
+          const viewGroup = createSettingsGroup(el, { icon: 'eye', name: '显示' });
+          settingDropdown(viewGroup, '默认排序方式', '面板条目按所选规则排序', [['priority', '紧急优先'], ['due', '仅按到期时间'], ['created', '按创建时间']], s.memoSortMode || 'priority', 'memoSortMode');
+          settingToggle(viewGroup, '默认显示归档', '打开面板时同时显示已归档条目', !!s.memoShowArchivedByDefault, 'memoShowArchivedByDefault');
+          settingDropdown(viewGroup, '到期时间格式', '到期时间按相对或绝对格式显示', [['relative', '相对'], ['absolute', '绝对']], s.memoDueFormat || 'relative', 'memoDueFormat');
 
-          // ===== 新建 =====
-          new Setting(el).setHeading().setName('新建');
-          settingDropdown(el, '新条目默认优先级', '新建备忘录时默认选中的优先级', [['minor', '次要'], ['important', '重要']], s.memoDefaultPriority || 'minor', 'memoDefaultPriority');
-          settingDropdown(el, '新条目默认场景', '新建时默认选中的场景（「第一个场景」为自动）', [['', '第一个场景'], ...DataManager.getScenarios().map((sc) => [sc, sc] as [string, string])], s.memoDefaultScene || '', 'memoDefaultScene');
-          settingToggle(el, '完成后自动归档', '勾选完成时移入归档；关闭则完成条目保留在主列表（划线显示）', s.memoAutoArchive !== false, 'memoAutoArchive');
+          // ===== 新建组 =====
+          const createGroup = createSettingsGroup(el, { icon: 'pencil-line', name: '新建' });
+          settingDropdown(createGroup, '新条目默认优先级', '新建备忘录时默认选中的优先级', [['minor', '次要'], ['important', '重要']], s.memoDefaultPriority || 'minor', 'memoDefaultPriority');
+          settingDropdown(createGroup, '新条目默认场景', '新建备忘录时默认选用的场景', [['', '第一个场景'], ...DataManager.getScenarios().map((sc) => [sc, sc] as [string, string])], s.memoDefaultScene || '', 'memoDefaultScene');
+          settingToggle(createGroup, '完成后自动归档', '勾选完成后条目移入归档，关闭则留在主列表并划线显示', s.memoAutoArchive !== false, 'memoAutoArchive');
 
-          // ===== 场景列表 =====
-          new Setting(el).setHeading().setName('场景列表');
-          settingTextArea(el, '场景', '逗号分隔的场景列表（留空用内置默认：剪藏,工作,学习,生活,代码,公开课）', '剪藏,工作,学习,生活,代码,公开课', s.memoScenarios || '', 'memoScenarios', reloadScenes);
+          // ===== 场景列表组 =====
+          const sceneGroup = createSettingsGroup(el, { icon: 'tags', name: '场景列表' });
+          settingTextArea(sceneGroup, '自定义场景列表', '场景名用逗号分隔，留空使用默认场景', '剪藏,工作,学习,生活,代码,公开课', s.memoScenarios || '', 'memoScenarios', reloadScenes);
 
-          // ===== 移动端 =====
+          // ===== 移动端组（仅移动端显示） =====
           if (isMobileEnv()) {
-            new Setting(el)
+            const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
+            new Setting(mobileGroup)
               .setName('移动端默认全屏')
-              .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
+              .setDesc('移动端打开主窗口时默认全屏，关闭则显示常规卡片')
               .addToggle((toggle) =>
                 toggle.setValue(!!s.memoMobileDefaultFullscreen).onChange(async (v) => { s.memoMobileDefaultFullscreen = v; await saveSettings(); })
               );
