@@ -2,14 +2,7 @@
  * 做题家题目生成器（ticket 17 修正版：对齐源码 QuestionGenerator 逐字）
  */
 import type { AIService } from '../core/ai';
-
-export interface QuizQuestion {
-  question: string;
-  options: string[];
-  correctIndices: number[];
-  notePath?: string;
-  _index?: number;
-}
+import type { QuizQuestion } from './manager';
 
 export class QuestionGenerator {
   /** 构建提示词（源码 L92-128 逐字） */

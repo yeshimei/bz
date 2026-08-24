@@ -64,9 +64,6 @@ export class QuizMasterUI {
   /** ticket 098:多选提交按钮暂存（renderModal 选项后补挂，保证位于选项下方） */
   _pendingSubmitBtn: HTMLElement | null = null;
 
-  constructor() {
-  }
-
   shuffleArray<T>(arr: T[]): T[] {
     for (let i = arr.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -81,7 +78,7 @@ export class QuizMasterUI {
     try {
       const activeItems = await loadActiveItems(app);
       if (!activeItems.length) {
-        await this.managerSaveQuiz({ notes: {} });
+        await this.manager.saveQuiz(getApp(), { notes: {} });
         return;
       }
 
@@ -103,10 +100,6 @@ export class QuizMasterUI {
       notice('更新题库失败：' + e.message, 'error');
       console.error(e);
     }
-  }
-
-  private async managerSaveQuiz(quiz: any): Promise<void> {
-    await this.manager.saveQuiz(getApp(), quiz);
   }
 
   /** 确保指定笔记都有题目（源码 L346-398 逐字） */
@@ -375,22 +368,14 @@ export class QuizMasterUI {
           if (isCorrect) {
             // 答对：删除该题
             this.correctCount++;
-            this.manager
-              .removeQuestion(app, q.notePath!, q._index!)
-              .then(() => {
-                this.currentQuestions.splice(this.currentIndex, 1);
-                optionElements.forEach((b, i) => {
-                  if (i === q.correctIndices[0]) b.classList.add('correct');
-                });
-                setTimeout(() => {
-                  this.showQuestion();
-                }, 800);
-              })
-              .catch((e) => {
-                notice('删除题目失败：' + e.message, 'error');
-                answeredRef.value = false;
-                optionElements.forEach((b) => b.classList.remove('disabled'));
+            this._answerCorrect(q, app, () => {
+              answeredRef.value = false;
+              optionElements.forEach((b) => b.classList.remove('disabled'));
+            }, () => {
+              optionElements.forEach((b, i) => {
+                if (i === q.correctIndices[0]) b.classList.add('correct');
               });
+            });
           } else {
             // 答错：显示正确答案，不删除，添加"下一题"按钮
             this.wrongCount++;
@@ -438,20 +423,11 @@ export class QuizMasterUI {
         if (isCorrect) {
           // ticket 098（ADR-0044）：多选计数 bug 解冻——答对也递增 correctCount（唯一破铁律 1 项）
           this.correctCount++;
-          this.manager
-            .removeQuestion(app, q.notePath!, q._index!)
-            .then(() => {
-              this.currentQuestions.splice(this.currentIndex, 1);
-              setTimeout(() => {
-                this.showQuestion();
-              }, 800);
-            })
-            .catch((e) => {
-              notice('删除题目失败：' + e.message, 'error');
-              answeredRef.value = false;
-              submitBtn.disabled = false;
-              optionElements.forEach((b) => b.classList.remove('disabled'));
-            });
+          this._answerCorrect(q, app, () => {
+            answeredRef.value = false;
+            submitBtn.disabled = false;
+            optionElements.forEach((b) => b.classList.remove('disabled'));
+          });
         } else {
           this.addNextButton(optionsContainer);
         }
@@ -460,7 +436,26 @@ export class QuizMasterUI {
     }
 
     return optionElements;
-  }  /**
+  }
+
+  /** 答对公共链路：删题 → splice 出当前题 → （单选补高亮）→ 800ms 后下一题；失败通知并恢复作答状态 */
+  private _answerCorrect(q: QuizQuestion, app: App, onFailRestore: () => void, onSplice?: () => void): void {
+    this.manager
+      .removeQuestion(app, q.notePath!, q._index!)
+      .then(() => {
+        this.currentQuestions.splice(this.currentIndex, 1);
+        onSplice?.();
+        setTimeout(() => {
+          this.showQuestion();
+        }, 800);
+      })
+      .catch((e) => {
+        notice('删除题目失败：' + e.message, 'error');
+        onFailRestore();
+      });
+  }
+
+  /**
    * 复习联动契约：开始一轮做题会话（复习计划经此进入做题模式）。
    * 会话状态（_reviewMode/currentQuestions/计数/onComplete）只允许在本方法内设置，
    * 复习域禁止直接改写——契约化后复习域只需调用本方法与 endReviewSession。
@@ -482,21 +477,25 @@ export class QuizMasterUI {
     this.finishQuiz();
   }
 
+  /** 汇总本轮做题统计（showQuestion 完题 / finishQuiz 共用） */
+  private _buildResults(): QuizReviewResults {
+    const total = this.correctCount + this.wrongCount;
+    return {
+      correct: this.correctCount,
+      wrong: this.wrongCount,
+      total,
+      accuracy: total > 0 ? Math.round((this.correctCount / total) * 100) : 0,
+    };
+  }
+
   /** 渲染单题（源码 L679-697 逐字） */
   showQuestion(): void {
     if (this.currentIndex >= this.currentQuestions.length) {
       // 做完了：只回调，不关闭弹窗（由调用方决定何时关闭）
       if (this.onComplete) {
-        const total = this.correctCount + this.wrongCount;
-        const results = {
-          correct: this.correctCount,
-          wrong: this.wrongCount,
-          total,
-          accuracy: total > 0 ? Math.round((this.correctCount / total) * 100) : 0,
-        };
         const cb = this.onComplete;
         this.onComplete = null;
-        cb(results);
+        cb(this._buildResults());
       }
       return;
     }
@@ -525,16 +524,9 @@ export class QuizMasterUI {
 
   /** 做题结束（源码 L723-735：回调优先，否则关闭） */
   finishQuiz(): void {
-    const total = this.correctCount + this.wrongCount;
-    const results = {
-      correct: this.correctCount,
-      wrong: this.wrongCount,
-      total,
-      accuracy: total > 0 ? Math.round((this.correctCount / total) * 100) : 0,
-    };
     const cb = this.onComplete;
     this.onComplete = null;
-    if (cb) cb(results);
+    if (cb) cb(this._buildResults());
     else this.close(); // 没有回调时才直接关闭
   }
 

@@ -9,18 +9,20 @@ import { tryGetSettings } from '../core/settings-provider';
 export const QUIZ_FILE_PATH = 'CONFIG/STORAGE/quiz.json';
 export const REVIEW_DATA_PATH = 'CONFIG/STORAGE/review.json';
 
-/** 做题家数据文件路径（ADR-0009：storagePath 优先，旧 reviewStoragePath 兼容兜底） */
-export function getQuizFilePath(): string {
+/** 共享数据目录（ADR-0009：storagePath 优先，旧 reviewStoragePath 兼容兜底） */
+function storageDir(): string {
   const s = tryGetSettings() as any;
-  const dir = (s && (s.storagePath || s.reviewStoragePath)) || 'CONFIG/STORAGE';
-  return `${dir}/quiz.json`;
+  return (s && (s.storagePath || s.reviewStoragePath)) || 'CONFIG/STORAGE';
+}
+
+/** 做题家数据文件路径 */
+export function getQuizFilePath(): string {
+  return `${storageDir()}/quiz.json`;
 }
 
 /** 复习数据文件路径（设置可配，默认 CONFIG/STORAGE/review.json） */
 export function getReviewDataPath(): string {
-  const s = tryGetSettings() as any;
-  const dir = (s && (s.storagePath || s.reviewStoragePath)) || 'CONFIG/STORAGE';
-  return `${dir}/review.json`;
+  return `${storageDir()}/review.json`;
 }
 
 export interface QuizQuestion {
