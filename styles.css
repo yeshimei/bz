@@ -3970,6 +3970,37 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   background: rgba(var(--color-orange-rgb), 0.15);
   color: var(--color-orange);
 }
+/* 洞察版本化（092，ADR-0039）：DDID 短索引 / 固定·废弃徽章 / 人工修正按钮 */
+.bz-sc-dash-insight-id {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.bz-sc-dash-badge-pinned {
+  background: var(--background-primary-alt);
+  color: var(--color-green);
+}
+.bz-sc-dash-badge-superseded {
+  background: var(--background-primary-alt);
+  color: var(--color-red);
+}
+.bz-sc-dash-insight-actions {
+  display: inline-flex;
+  gap: 4px;
+}
+.bz-sc-dash-mini-btn {
+  font-size: 11px;
+  line-height: 1.5;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--background-modifier-border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.bz-sc-dash-mini-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
 .bz-sc-dash-list {
   display: flex;
   flex-direction: column;
@@ -4068,3 +4099,58 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   .bz-sc-dash-body { padding: 6px 14px 14px; }
   .bz-sc-dash-tabs { padding: 0 14px; }
 }
+
+/* 「一起的日子」（ticket 094：关系史时间线区块；样式收敛本域 styles.css） */
+.bz-sc-dash-dossier-summary {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.bz-sc-dash-dossier-tl {
+  display: flex;
+  flex-direction: column;
+}
+.bz-sc-dash-dossier-week {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.bz-sc-dash-dossier-week:last-child { border-bottom: none; }
+.bz-sc-dash-dossier-narrative { margin-top: 10px; }
+.bz-sc-dash-dossier-narrative .bz-sc-dash-report-text { white-space: pre-wrap; }
+.bz-sc-dash-dossier-moments {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* 数据面板 097（归因展示/安静期可见化/口径统一）：全部静态收敛本文件，bz-sc-dash- 前缀 */
+/* A1 成长轨迹归因徽标（llm 第二色调 / lexical 低调度）+ LLM 引用原文 */
+.bz-sc-dash-badge-attrib-llm {
+  background: rgba(var(--color-purple-rgb), 0.12);
+  color: var(--color-purple);
+}
+.bz-sc-dash-badge-attrib-lexical {
+  background: var(--background-primary-alt);
+  color: var(--text-muted);
+}
+.bz-sc-dash-tl-quote {
+  color: var(--text-faint);
+  font-style: italic;
+}
+/* A2 安静陪伴 chip（既有 chip 类 + 低调色变体） */
+.bz-sc-dash-chip-quiet {
+  background: rgba(var(--color-blue-rgb), 0.10);
+  color: var(--text-muted);
+  margin-left: 6px;
+}
+/* B2 洞察行主题 chip + 已被推翻行态（整行降透明度 + 描述删除线；pinned 行不加此态） */
+.bz-sc-dash-badge-theme {
+  background: rgba(var(--color-cyan-rgb), 0.15);
+  color: var(--color-cyan);
+}
+.bz-sc-dash-memory--superseded { opacity: 0.55; }
+.bz-sc-dash-memory--superseded .bz-sc-dash-memory-text { text-decoration: line-through; }
