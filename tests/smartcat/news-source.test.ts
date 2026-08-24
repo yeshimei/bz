@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 聚合讯观察文案层（ticket 076）：buildNewsReadText 三态文案 + buildNewsSavedFullText 摘要/标签拼接——
  * 阅读带分钟/跳过无时长/保存立即形态；补全形态：摘要+标签 / 只摘要 / 只标签 / 都缺省略。

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 懂你上下文块测试（ADR-0025：作息/趋势/关系/记忆组装 + generatePrompt 注入）
  */

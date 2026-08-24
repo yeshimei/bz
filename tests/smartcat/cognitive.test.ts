@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 认知能力模块测试（2026-08-23：参考 cognitive-engine 自研——趋势/波动 + Bandit + 矛盾检测）
  */

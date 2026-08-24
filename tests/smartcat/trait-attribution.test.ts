@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * smartcat 特质归因学习测试（ticket 091，方向六）：
  * mode 标记落 growthHistory（llm 带 quote/lexical 无 quote）、≤2 截断、digest 排除 existential、

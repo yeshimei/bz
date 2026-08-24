@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 域 JSON 感知（2026-08-23 用户拍板扩展；ticket 082 用户拍板清空 → 081 library 唯一条目）
  * ticket 075：memo 移除；076：news 移除；078：favorites 移除；079：belongings 移除；080：pomodoro 移除

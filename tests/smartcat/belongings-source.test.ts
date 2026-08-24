@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 归物本动作观察文案构造（ticket 079 方法监听）：belongings-source 纯函数全覆盖——
  * 添加（键值式有才加：全字段/无描述/无描述无分类/状态闲置非省略/状态使用中省略）、

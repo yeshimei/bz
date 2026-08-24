@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * smartcat 记忆流测试（ADR-0021）：单层记忆流写入/importance 打分（规则+LLM mock）/
  * 三因子检索（词法/语义）/自增强 lastAccessed/500 上限/反思调度/降级链。

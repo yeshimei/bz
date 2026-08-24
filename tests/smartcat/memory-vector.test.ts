@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 记忆向量行对齐测试（P1-27 向量行错位修复）：
  * 两条 addObservation 受控交错（第一条 push 后在 embedding 处挂起、第二条整体完成），

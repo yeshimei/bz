@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 卡片盒/现代诗/信 观察纯函数层（ticket 083，ADR-0035；v1 + v2 段落 diff + v3 真实日期 + v4 readonly）：
  * 文案（首落三句式带日期/删除）、文件名去 .md、正文去 frontmatter、日期解析（信 frontmatter / 诗三层回退）、

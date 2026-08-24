@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * smartcat 配置测试（ADR-0023 更新）：默认值/归一化（shortTermMemory 越界、外观非法回退、历史截断）。
  * 预设人格（personality/customPersonality/getPersonalityPrompt）已删除——人格由性格系统（character.ts）承担。

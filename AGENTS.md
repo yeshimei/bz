@@ -67,6 +67,8 @@
 ## 测试与质量门禁
 
 - 测试：Vitest + jsdom；新功能必须包含数据层+UI层测试，smoke.test.ts同步验证。
+- 纯数据层测试文件首行标注 `// @vitest-environment node` 跳过 jsdom 环境创建（碰 DOM/UI 的测试不加，现有 50+ 个文件照此办理）。
+- 多个 worktree 并发跑全量测试时设 `BZ_TEST_MAX_WORKERS=8`（如 `BZ_TEST_MAX_WORKERS=8 pnpm test`）限流防 CPU 超卖互拖；单会话不用设。
 - 异步按项目约定处理，依赖注入使用已有 test helper。
 - 全量测试已配置 `retry`（vitest.config.ts）：多个 worktree 并发跑测试时的 CPU 争抢抖动会被自动吸收；若仍出现失败，先排查是否为真 bug，**勿以「已知 flaky」豁免**。
 - 完成门禁（必须全绿）：
