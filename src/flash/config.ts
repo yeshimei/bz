@@ -3,7 +3,7 @@
  */
 import { tryGetSettings } from '../core/settings-provider';
 
-export interface FlashConfig {
+interface FlashConfig {
   OLLAMA_URL: string;
   EMBEDDING_MODEL: string;
   META_PATH: string;

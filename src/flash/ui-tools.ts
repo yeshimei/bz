@@ -128,9 +128,3 @@ export function makeResizable(el: HTMLElement, minW = 200, minH = 120): () => vo
     document.removeEventListener('mouseup', onResizeUp);
   };
 }
-
-/** 区域光标工具（zoneCursor，简化保留） */
-export function zoneCursor(el: HTMLElement, onEnter: () => void, onLeave: () => void): void {
-  el.addEventListener('mouseenter', onEnter);
-  el.addEventListener('mouseleave', onLeave);
-}
