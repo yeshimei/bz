@@ -5,7 +5,6 @@
 import {
   formatReadingTime,
   formatSessionDuration,
-  generateProgressBar,
   analyzeReadingHabits,
   analyzeSessionDurationDistribution,
   analyzeReadingTrends,
@@ -14,7 +13,6 @@ import {
   analyzeReadingSpeed,
   analyzeReadingCategories,
   analyzeNotesInteractions,
-  generateCellTooltip,
   calculateIntensityLevel,
   getHeatmapColor,
 } from './stats';
@@ -597,11 +595,8 @@ export function generateHeatmapCell(cell: any): string {
   }
 
   const durationHours = cell.data.duration / 3600;
-  const intensityLevel = cell.data.duration >= 0 ? Math.floor(durationHours / 0.5) : 0;
-  // 源码 calculateIntensityLevel 语义：>=4h→4, >=2h→3, >=1h→2, >=0.5h→1, 0
-  const level = durationHours >= 4 ? 4 : durationHours >= 2 ? 3 : durationHours >= 1 ? 2 : durationHours >= 0.5 ? 1 : 0;
-  const colors = ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'];
-  const color = colors[level] || colors[0];
+  // 强度分级/配色复用 stats 纯函数（>=4h→4, >=2h→3, >=1h→2, >=0.5h→1, 其余 0）
+  const color = getHeatmapColor(calculateIntensityLevel(durationHours));
   const tooltip = `${cell.date}\n阅读时长: ${(cell.data.duration / 3600).toFixed(1)}小时\n会话次数: ${cell.data.sessions}次`;
 
   return `
