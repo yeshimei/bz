@@ -171,6 +171,22 @@ export class ReviewWatcher {
     });
   }
 
+  /** 移除监听文件夹（ticket 099 追加）：同时清空该目录下全部排除记录——否则二次添加时存量被旧黑名单挡住。
+   *  返回清理的排除条数（仅用于提示文案）。 */
+  async removeWatchedFolder(folder: string): Promise<number> {
+    const s = tryGetSettings() as any;
+    if (!s) return 0;
+    const folders = Array.isArray(s.reviewWatchedFolders) ? [...(s.reviewWatchedFolders as string[])] : [];
+    const idx = folders.indexOf(folder);
+    if (idx !== -1) folders.splice(idx, 1);
+    s.reviewWatchedFolders = folders;
+    const before = Array.isArray(s.reviewExcludedNotes) ? [...(s.reviewExcludedNotes as string[])] : [];
+    const kept = before.filter((p) => !isUnderFolder(folder, p));
+    s.reviewExcludedNotes = kept;
+    await saveSettings();
+    return before.length - kept.length;
+  }
+
   private async refresh(): Promise<void> {
     const { uiManager } = await import('./index');
     await uiManager?.refreshPanel();

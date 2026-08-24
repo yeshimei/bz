@@ -9,7 +9,7 @@ import { getApp } from '../core/app';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
-import { escManager } from '../core/esc-manager';
+import { FolderSelectModal } from '../attach/ui';
 import {
   attachItemActions,
   registerSheetCompanion,
@@ -241,10 +241,14 @@ export class UIManager {
         close.className = 'bz-review-watch-close';
         close.setAttribute('aria-label', `移除监听文件夹 ${folder}`);
         close.textContent = '✕';
-        close.onclick = async () => {
-          s.reviewWatchedFolders.splice(idx, 1);
-          await saveSettings();
-          renderWatchRows();
+        close.onclick = () => {
+          void (async () => {
+            // ticket 099 追加：移除目录同时清空其下排除记录（否则二次添加时存量被旧黑名单挡住）
+            const { ReviewWatcher } = await import('./watch');
+            const cleared = await new ReviewWatcher(this.app, this.dataManager).removeWatchedFolder(folder);
+            renderWatchRows();
+            notice(cleared > 0 ? `已移除监听文件夹，并清理其下 ${cleared} 条排除记录` : '已移除监听文件夹', 'success');
+          })();
         };
         chip.appendChild(name);
         chip.appendChild(close);
@@ -262,7 +266,8 @@ export class UIManager {
         void (async () => {
           const { ReviewWatcher } = await import('./watch');
           const watcher = new ReviewWatcher(this.app, this.dataManager);
-          new ReviewFolderPicker(this.app, async (picked) => {
+          // ticket 099 追加：复用附件搬移的 FolderSelectModal（z-index 200000 压设置弹窗；不读 attachLastFolder）
+          new FolderSelectModal(this.app, async (picked) => {
             const folder = picked.trim().replace(/^\/+|\/+$/g, '');
             if (!folder) {
               notice('未选择文件夹', 'warning');
@@ -278,6 +283,11 @@ export class UIManager {
             s.reviewWatchedFolders = [...(s.reviewWatchedFolders || []), folder];
             await saveSettings();
             renderWatchRows();
+          }, {
+            title: '选择监听文件夹',
+            okText: '确定',
+            placeholder: 'vault 内目录路径，如 卡片盒/复习',
+            initial: '',
           }).open();
         })();
       };
@@ -660,124 +670,3 @@ export class UIManager {
   }
 }
 
-/**
- * 监听文件夹选择弹窗（ticket 099）：仿附件搬移 FolderSelectModal 形态——
- * 输入过滤 + 目录列表点选 + 取消/确定；自绘 DOM（铁律 9：bz-review-* 类名，样式收敛 src/review/styles.css）。
- * onPick 回调选中的库内文件夹路径（可为空串=库根目录）。
- */
-export class ReviewFolderPicker {
-  private app: any;
-  private onPick: (folder: string) => void;
-  private mask: HTMLElement | null = null;
-  private input: HTMLInputElement | null = null;
-  private listEl: HTMLElement | null = null;
-  private folders: string[] = [];
-
-  constructor(app: any, onPick: (folder: string) => void) {
-    this.app = app;
-    this.onPick = onPick;
-  }
-
-  open(): void {
-    const old = document.getElementById('bz-review-folder-mask');
-    if (old) old.remove();
-
-    const mask = document.createElement('div');
-    mask.id = 'bz-review-folder-mask';
-    mask.className = 'bz-review-folder-mask';
-    mask.onclick = (e) => {
-      if (e.target === mask) this.close();
-    };
-
-    const popup = document.createElement('div');
-    popup.className = 'bz-review-folder-popup';
-
-    const title = document.createElement('div');
-    title.className = 'bz-review-folder-title';
-    title.textContent = '选择监听文件夹';
-    popup.appendChild(title);
-
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'bz-review-folder-input';
-    input.placeholder = 'vault 内目录路径，如 卡片盒/复习';
-    input.addEventListener('input', () => this.filter());
-    this.input = input;
-    popup.appendChild(input);
-
-    const list = document.createElement('div');
-    list.className = 'bz-review-folder-list';
-    this.listEl = list;
-    popup.appendChild(list);
-
-    const actions = document.createElement('div');
-    actions.className = 'bz-review-folder-actions';
-    const cancel = document.createElement('button');
-    cancel.className = 'bz-review-folder-btn';
-    cancel.textContent = '取消';
-    cancel.onclick = () => this.close();
-    const ok = document.createElement('button');
-    ok.className = 'bz-review-folder-btn bz-review-folder-btn--primary';
-    ok.textContent = '确定';
-    ok.onclick = () => this.submit();
-    actions.appendChild(cancel);
-    actions.appendChild(ok);
-    popup.appendChild(actions);
-
-    mask.appendChild(popup);
-    document.body.appendChild(mask);
-    this.mask = mask;
-    escManager.register('bz-review-folder', {
-      isVisible: () => !!this.mask && this.mask.isConnected,
-      close: () => this.close(),
-    });
-    input.focus();
-
-    this.refreshFolders();
-    this.filter();
-  }
-
-  refreshFolders(): void {
-    const set = new Set<string>();
-    const files =
-      this.app?.vault?.getFiles?.() ?? this.app?.vault?.getMarkdownFiles?.() ?? [];
-    for (const f of files) {
-      const idx = f.path.lastIndexOf('/');
-      if (idx !== -1) set.add(f.path.slice(0, idx));
-    }
-    set.add('');
-    this.folders = [...set].sort();
-  }
-
-  filter(): void {
-    if (!this.listEl) return;
-    const q = (this.input?.value || '').trim().toLowerCase();
-    // 输入恰好等于某个目录 → 视为「已选中」，显示完整列表
-    const exact = !!q && this.folders.some((f) => f === q);
-    this.listEl.textContent = '';
-    for (const folder of this.folders) {
-      if (q && !exact && !folder.toLowerCase().includes(q)) continue;
-      const item = document.createElement('div');
-      item.className = 'bz-review-folder-item';
-      item.textContent = folder === '' ? '（库根目录）' : folder;
-      item.addEventListener('click', () => {
-        if (this.input) this.input.value = folder;
-        this.filter();
-      });
-      this.listEl.appendChild(item);
-    }
-  }
-
-  submit(): void {
-    const folder = (this.input?.value || '').trim().replace(/^\/+|\/+$/g, '');
-    this.close();
-    this.onPick(folder);
-  }
-
-  close(): void {
-    if (this.mask) {
-      this.mask.remove();
-      this.mask = null;
-    }
-  }
-}
