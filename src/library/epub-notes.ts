@@ -115,13 +115,15 @@ async function findWeaveBookWithMutation(app: any, vaultPath: string): Promise<a
   return null;
 }
 
-/** 更新某书某划线的想法（commentText）；高亮不存在 → false。 */
+/** 更新某书某划线的想法（commentText）；高亮不存在或 highlightId 为空（脏数据）→ false。 */
 export async function updateEpubNoteComment(
   app: any,
   vaultPath: string,
   highlightId: string,
   comment: string
 ): Promise<boolean> {
+  // P2：空 id 会与「无 id 高亮」的兜底空串匹配上，误改第一条脏记录
+  if (!String(highlightId || '').trim()) return false;
   const target = await findWeaveBookWithMutation(app, vaultPath);
   if (!target) return false;
   const { document, aggregate } = target;
@@ -142,8 +144,10 @@ export async function updateEpubNoteComment(
   return true;
 }
 
-/** 删除某书某高亮（整条移除）；不存在 → false。 */
+/** 删除某书某高亮（整条移除）；不存在或 highlightId 为空（脏数据）→ false。 */
 export async function deleteEpubNote(app: any, vaultPath: string, highlightId: string): Promise<boolean> {
+  // P2：空 id 在过滤条件里会命中所有「无 id 高亮」（String(h?.id||'') === ''），一次删光脏记录
+  if (!String(highlightId || '').trim()) return false;
   const target = await findWeaveBookWithMutation(app, vaultPath);
   if (!target) return false;
   const { document, aggregate } = target;

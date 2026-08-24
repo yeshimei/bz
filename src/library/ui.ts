@@ -42,6 +42,14 @@ export function showLibrary(app: any) {
   applyMobileWindowFullscreen(document.querySelector<HTMLElement>('.bz-lib-modal--full'), tryGetSettings().libraryMobileDefaultFullscreen === true);
   if (libraryOverlay) {
     libraryOverlay.style.visibility = 'visible';
+    // P1-19：复用打开前重扫数据（md 书目 + EPUB 条目），外部增删书目后重开即可见
+    currentItems = getBookItems(app);
+    void loadEpubBookItems(app).then((epubItems) => {
+      if (epubItems && epubItems.length > 0) {
+        currentItems = [...currentItems, ...epubItems];
+      }
+      if (libraryOverlay && libraryListContainer) renderLibraryList(app);
+    });
     return;
   }
 
@@ -141,20 +149,19 @@ export function showLibrary(app: any) {
   modal.appendChild(listContainer);
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
-  escManager.register('lib', { isVisible: () => overlay.isConnected, close: () => (overlay.style.visibility = 'hidden') });
+  // P0-9：面板关闭走 visibility:hidden 常驻复用（性能设计），isConnected 恒真会让本层「永真」，
+  // 吞掉注册序更早的他域层的 ESC。可见性必须按真实显示状态判定。
+  escManager.register('lib', {
+    isVisible: () => overlay.isConnected && overlay.style.visibility !== 'hidden',
+    close: () => (overlay.style.visibility = 'hidden'),
+  });
 
   libraryOverlay = overlay;
 
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) overlay.style.visibility = 'hidden';
   });
-  const escHandler = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      overlay.style.visibility = 'hidden';
-      document.removeEventListener('keydown', escHandler);
-    }
-  };
-  document.addEventListener('keydown', escHandler);
+  // 注：不再私挂 document 级 keydown 监听（见 core/esc-manager 立约），ESC 关闭统一走上方注册的 lib 层。
 
   // 先同步渲染 markdown 书目；EPUB 条目（ADR-0013）异步并入后重渲染。
   // 空态判定放到 EPUB 合并之后：纯 EPUB 书库（无 markdown 书目）不被提前 return 吞掉。
@@ -634,6 +641,8 @@ function renderHighlightBlock(hl: any, app: any, filePath: string): HTMLElement 
 // ============ 读书笔记模态 ============
 
 let bookNotesOverlay: HTMLElement | null = null;
+/** 在途打开序号：vault.read 异步窗口内连开两本时，旧请求过期作废，只留最后一次（P2 双弹窗竞态） */
+let bookNotesLoadSeq = 0;
 
 export function showBookNotes(app: any, filePath: string) {
   if (bookNotesOverlay) {
@@ -647,7 +656,9 @@ export function showBookNotes(app: any, filePath: string) {
     return;
   }
 
+  const seq = ++bookNotesLoadSeq;
   app.vault.read(file).then((content: string) => {
+    if (seq !== bookNotesLoadSeq) return; // 过期在途请求：已被更新一次的打开取代
     const parsed = parseBookNotes(content, file.basename);
 
     const { overlay, contentContainer } = createBookNotesModal(`📚 《${parsed.bookTitle}》的读书笔记`, () => closeBookNotesModal());
@@ -709,7 +720,8 @@ export function showEpubBookNotes(app: any, item: BookItem) {
 /** 读书笔记/EPUB 读书笔记共享的外壳：遮罩+弹窗+头部+关闭，返回 overlay 与内容容器。 */
 function createBookNotesModal(title: string, onClose: () => void): { overlay: HTMLElement; contentContainer: HTMLElement } {
   const overlay = document.createElement('div');
-  overlay.className = 'bz-lib-overlay bz-lib-overlay--1200';
+  // P0-7：读书笔记壳作为抽屉附属浮层，必须压过统一抽屉遮罩 10999/本体 11000（对照 movie 12000）
+  overlay.className = 'bz-lib-overlay bz-lib-overlay--11100';
   // 抽屉来源打开时：笔记弹窗作为附属浮层叠在抽屉上（内部点击不误关抽屉）
   registerSheetCompanion(overlay);
 
@@ -871,7 +883,8 @@ function openNoteEditModal(opts: {
   onSave: (value: string) => Promise<boolean>;
 }): void {
   const overlay = document.createElement('div');
-  overlay.className = 'bz-lib-overlay bz-lib-overlay--1300';
+  // 编辑弹窗叠在读书笔记壳（11100）之上：11101 档保持压过
+  overlay.className = 'bz-lib-overlay bz-lib-overlay--11101';
 
   const modal = document.createElement('div');
   modal.className = 'bz-lib-modal bz-lib-modal--sm';
@@ -988,5 +1001,6 @@ export function _testResetLibrary() {
   statusFilter = '全部';
   settingsOverlay = null;
   bookNotesOverlay = null;
+  bookNotesLoadSeq = 0;
   epubBookNotesOverlay = null;
 }

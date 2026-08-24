@@ -2,8 +2,11 @@
  * 书库 UI 测试（ticket 12）：showLibrary 面板/设置弹窗/读书笔记弹窗。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
+import { escManager } from '../../src/core/esc-manager';
 import { showLibrary, showBookNotes, openFilterModal, _testResetLibrary } from '../../src/library/ui';
 import { openBookNotes } from '../../src/library/index';
 import { MockVault, parseFrontmatter } from '../mock-vault';
@@ -392,5 +395,112 @@ describe('移动端默认全屏（ticket 68）', () => {
     MockPlatform.isMobile = true;
     settingsBtn.click(); // toggle：关旧开新
     expect(settingNames()).toContain('移动端默认全屏');
+  });
+});
+
+describe('书库修复回归（fx-library）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    resetObsidianMocks();
+    _testResetLibrary();
+    document.body.innerHTML = '';
+    vault = new MockVault();
+    setApp(makeApp(vault));
+    setSettingsProvider(() => ({ libraryFolderPath: '书库', bookTag: 'book' }) as any);
+  });
+
+  afterEach(() => {
+    _testResetLibrary();
+    document.body.innerHTML = '';
+    closeItemMenu();
+    MockPlatform.isMobile = false;
+  });
+
+  it('P0-9：关书库（visibility 常驻）后，注册序更早的他域层能收到 ESC（两层模拟）；三条关闭路径语义一致', async () => {
+    vault.files.set('书库/活着.md', BOOK_MD);
+    const app = makeApp(vault);
+    const closedOrder: string[] = [];
+    // 他域层先注册（注册序早于 lib → ESC 优先级更低）
+    const other = escManager.register('other-domain', { isVisible: () => true, close: () => closedOrder.push('other') });
+    try {
+      showLibrary(app);
+      await new Promise((r) => setTimeout(r, 20));
+      const overlay = document.getElementById('__book_library__')!;
+      expect(overlay).not.toBeNull();
+
+      // ① 面板开着：ESC 只关书库层（更高优先），他域层不动
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      expect(closedOrder).toEqual([]);
+      expect(overlay.style.visibility).toBe('hidden');
+      expect(overlay.isConnected).toBe(true); // visibility:hidden 复用机制保留
+
+      // ② 已关：lib 层 isVisible 判假 → 他域层收到 ESC
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      expect(closedOrder).toEqual(['other']);
+
+      // ③ 另两条关闭路径同样置 hidden 且不卸载：关闭按钮 / 遮罩点击
+      showLibrary(app); // 复用打开
+      const closeBtn = [...overlay.querySelectorAll<HTMLElement>('button')].find((b) => b.title === '关闭')!;
+      closeBtn.click();
+      expect(overlay.style.visibility).toBe('hidden');
+      showLibrary(app);
+      overlay.dispatchEvent(new MouseEvent('click', { bubbles: true })); // target === overlay
+      expect(overlay.style.visibility).toBe('hidden');
+    } finally {
+      other.unregister();
+    }
+  });
+
+  it('P0-7：读书笔记壳 z-index 落在 11100/11101 档（压过抽屉遮罩 10999/本体 11000）', async () => {
+    vault.files.set('书库/活着.md', NOTE_MD);
+    showBookNotes(makeApp(vault), '书库/活着.md');
+    await new Promise((r) => setTimeout(r, 20));
+    // 壳元素挂新档类名；jsdom 不做 CSS 级联，z-index 档位以源样式表规则为准断言 ≥11100
+    const shell = document.querySelector('.bz-lib-overlay--11100') as HTMLElement | null;
+    expect(shell).not.toBeNull();
+    const css = readFileSync(resolve(process.cwd(), 'src/library/styles.css'), 'utf8');
+    const zi = (cls: string): number => {
+      const m = css.match(new RegExp(`\\.bz-lib-overlay--${cls}\\s*\\{\\s*z-index:\\s*(\\d+)`));
+      return m ? parseInt(m[1], 10) : -1;
+    };
+    expect(zi('11100')).toBeGreaterThanOrEqual(11100); // 壳：压过遮罩 10999 与抽屉本体 11000
+    expect(zi('11101')).toBeGreaterThan(zi('11100')); // 编辑弹窗档仍压过壳
+    // 旧低档类名不再被读书笔记壳使用
+    expect(shell!.className).not.toContain('--1200');
+  });
+
+  it('P1-19：复用打开重扫数据——打开→外部加书目→重开可见新书', async () => {
+    vault.files.set('书库/活着.md', BOOK_MD);
+    const app = makeApp(vault);
+    showLibrary(app);
+    await new Promise((r) => setTimeout(r, 20));
+    let overlay = document.getElementById('__book_library__')!;
+    expect(overlay.textContent).not.toContain('三体');
+
+    // 关闭（visibility 常驻复用），外部新增书目后重开
+    ([...overlay.querySelectorAll<HTMLElement>('button')].find((b) => b.title === '关闭')!).click();
+    vault.files.set('书库/三体.md', BOOK_MD.replace('余华', '刘慈欣'));
+    showLibrary(app);
+    await new Promise((r) => setTimeout(r, 20));
+
+    overlay = document.getElementById('__book_library__')!;
+    expect(overlay.style.visibility).toBe('visible');
+    expect(overlay.textContent).toContain('三体');
+    expect(overlay.textContent).toContain('刘慈欣');
+  });
+
+  it('P2 双弹窗竞态：vault.read 在途窗口内连开两本书，仅弹最后一本的一个弹窗', async () => {
+    vault.files.set('书库/甲.md', NOTE_MD);
+    vault.files.set('书库/乙.md', NOTE_MD.replace('第一章', '第二章'));
+    const app = makeApp(vault);
+    showBookNotes(app, '书库/甲.md'); // read 异步在途
+    showBookNotes(app, '书库/乙.md'); // 紧接第二次打开
+    await new Promise((r) => setTimeout(r, 30));
+
+    const notesShells = [...document.querySelectorAll('.bz-lib-overlay--11100')];
+    expect(notesShells.length).toBe(1);
+    expect(notesShells[0].textContent).toContain('📚 《乙》的读书笔记');
+    expect(notesShells[0].textContent).toContain('第二章');
   });
 });

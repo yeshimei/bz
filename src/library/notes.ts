@@ -149,23 +149,29 @@ export function updateComment(
   if (!file) return;
 
   app.vault.read(file).then((content: string) => {
+    // P1-18：newComment 以 HTML 属性值嵌入（data-comment 属性机制不变），双引号转义 &quot;；
+    // 替换串一律函数式——字符串形式的 $&、$`、$' 等会被当作替换模式注入。
+    const attrValue = newComment.replace(/"/g, '&quot;');
     const spanRegex = /<span[^>]*data-id="([^"]*)"[^>]*>(.*?)<\/span>/gs;
-    let newContent = content.replace(spanRegex, (match: string, id: string, inner: string) => {
+    let replaced = false;
+    const newContent = content.replace(spanRegex, (match: string, id: string, inner: string) => {
       if (id === highlightId && inner.trim() === text) {
+        replaced = true;
         if (newComment === '') {
           return match.replace(/\s+data-comment="[^"]*"/, '');
         } else {
           if (match.includes('data-comment=')) {
-            return match.replace(/(data-comment=")[^"]*(")/, `$1${newComment}$2`);
+            return match.replace(/(data-comment=")[^"]*(")/, (_m: string, p1: string, p2: string) => `${p1}${attrValue}${p2}`);
           } else {
-            return match.replace(/<span/, `<span data-comment="${newComment}"`);
+            return match.replace(/<span/, () => `<span data-comment="${attrValue}"`);
           }
         }
       }
       return match;
     });
 
-    if (newContent === content) {
+    // 命中与否按「是否处理过目标 span」判定：同值保存全文不变，旧的全文本比对会误报失败
+    if (!replaced) {
       notice('未找到对应高亮（原文不匹配），编辑失败');
       return;
     }

@@ -123,4 +123,35 @@ describe('epub-notes', () => {
     expect(await updateEpubNoteComment(app, '书库/a.epub', 'h', 'c')).toBe(false);
     expect(await deleteEpubNote(app, '书库/a.epub', 'h')).toBe(false);
   });
+
+  it('P2 空 id 守卫：脏数据（无 id 高亮）不会被空 highlightId 一次删光/误改', async () => {
+    seedWeaveData(vault, {
+      bk_dirty: {
+        ...JSON.parse(JSON.stringify(HIGH_BOOK)),
+        id: 'bk_dirty',
+        file: { vaultPath: '书库/脏数据.epub' },
+        notes: {
+          bookmarks: [],
+          highlights: [
+            { text: '无id一', chapterIndex: 0 },
+            { text: '无id二', chapterIndex: 1 },
+            { id: 'ok1', text: '正常高亮', chapterIndex: 2 },
+          ],
+          excerpts: [],
+        },
+      },
+    });
+    const app = makeApp(vault);
+    // 空 id / 纯空白 id：直接 false，不读不写
+    expect(await deleteEpubNote(app, '书库/脏数据.epub', '')).toBe(false);
+    expect(await deleteEpubNote(app, '书库/脏数据.epub', '   ')).toBe(false);
+    expect(await updateEpubNoteComment(app, '书库/脏数据.epub', '', '恶意想法')).toBe(false);
+    // 三条高亮一条未少，无任何写回
+    const notes = await loadEpubBookNotes(app, '书库/脏数据.epub');
+    expect(notes.length).toBe(3);
+    expect(vault.modifiedPaths).toHaveLength(0);
+    // 正常 id 删除仍工作
+    expect(await deleteEpubNote(app, '书库/脏数据.epub', 'ok1')).toBe(true);
+    expect((await loadEpubBookNotes(app, '书库/脏数据.epub')).length).toBe(2);
+  });
 });

@@ -2405,7 +2405,8 @@ button.news-close-btn {
     .pomodoro-stat-label { font-size: 9px; color: var(--text-faint); }
 /* ==================== 书库域样式（src/library/styles.css） ==================== */
 /* ============ 书库 library（ticket 62 样式收敛：原 ui.ts 内联 → bz-lib-*） ============ */
-/* 遮罩分层：1000 主面板 / 1100 筛选 / 1200 读书笔记 / 1300 编辑弹窗 */
+/* 遮罩分层：1000 主面板 / 1100 筛选；读书笔记壳 11100 与编辑弹窗 11101 为抽屉附属档
+   （P0-7：必须压过统一抽屉遮罩 10999/本体 11000，对照 movie 12000） */
 .bz-lib-overlay {
   position: fixed;
   top: 0;
@@ -2419,8 +2420,8 @@ button.news-close-btn {
 }
 .bz-lib-overlay--1000 { z-index: 1000; }
 .bz-lib-overlay--1100 { z-index: 1100; background: rgba(0, 0, 0, 0.3); }
-.bz-lib-overlay--1200 { z-index: 1200; }
-.bz-lib-overlay--1300 { z-index: 1300; }
+.bz-lib-overlay--11100 { z-index: 11100; }
+.bz-lib-overlay--11101 { z-index: 11101; }
 
 .bz-lib-modal {
   background: var(--background-primary);
