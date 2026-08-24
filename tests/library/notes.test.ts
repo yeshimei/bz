@@ -131,4 +131,41 @@ describe('updateComment / deleteHighlight', () => {
     expect(hasNotice('未找到对应高亮（原文不匹配），删除失败')).toBe(true);
     spy.mockRestore();
   });
+
+  it('updateComment（P1-18）：含 $&、$`、双引号的批注往返无损——转义 &quot; 且 $ 序列不被当替换模式', async () => {
+    const tricky = '说"$&"与"$`"完';
+    const escaped = '说&quot;$&&quot;与&quot;$`&quot;完'; // 四个双引号全转义；$ 序列原样
+    let done = false;
+    updateComment(makeApp(vault), '书库/活着.md', 'h1', '原文一', tricky, () => { done = true; });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(done).toBe(true);
+    const out = vault.files.get('书库/活着.md')!;
+    // 双引号已转义；$&/$` 原样落盘（字符串替换模式注入已杜绝）；同 span 的 data-date 完好
+    expect(out).toContain(`data-comment="${escaped}" data-date="2025-06-01"`);
+    // reparse 一致：读回值 = 写入的转义形态
+    const reparsed = parseBookNotes(out, '活着');
+    expect(reparsed.root.children[0].highlights[0].comment).toBe(escaped);
+    // 以读回值再存一次（幂等）：不二次转义、内容稳定
+    clearNotices();
+    updateComment(makeApp(vault), '书库/活着.md', 'h1', '原文一', escaped);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(vault.files.get('书库/活着.md')).toBe(out);
+    expect(hasNotice('批注已更新')).toBe(true);
+  });
+
+  it('updateComment（P1-18）：插入路径同样转义且不受 $ 模式影响', async () => {
+    updateComment(makeApp(vault), '书库/活着.md', 'h2', '原文二', '"$&新增');
+    await new Promise((r) => setTimeout(r, 20));
+    const out = vault.files.get('书库/活着.md')!;
+    expect(out).toContain('<span data-comment="&quot;$&新增" data-id="h2"');
+  });
+
+  it('updateComment（P1-18）：同值保存不再误报失败', async () => {
+    let done = false;
+    updateComment(makeApp(vault), '书库/活着.md', 'h1', '原文一', '批注一', () => { done = true; });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(done).toBe(true);
+    expect(hasNotice('批注已更新')).toBe(true);
+    expect(hasNotice('未找到对应高亮（原文不匹配），编辑失败')).toBe(false);
+  });
 });
