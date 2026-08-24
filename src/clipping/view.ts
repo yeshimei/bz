@@ -32,7 +32,6 @@ let isTouchDevice = false;
 let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let currentSearchKeyword = '';
 let refreshTimer: ReturnType<typeof setTimeout> | null = null;
-let isInternalUpdate = false;
 let fileListenerAttached = false;
 let fileListenerRef: any = null;
 let isLoadingData = false;
@@ -71,8 +70,7 @@ export async function initArticleView(showImmediately = true): Promise<void> {
   if (existingPopup && existingMask) {
     // 窗口已存在，根据参数切换可见性
     if (showImmediately) {
-      (existingPopup as HTMLElement).style.visibility = 'visible';
-      (existingMask as HTMLElement).style.visibility = 'visible';
+      setArticleViewVisible(true);
       // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
       applyMobileWindowFullscreen(articlePopup, tryGetSettings().clippingMobileDefaultFullscreen === true);
       // 若数据为空（可能加载失败），重新加载
@@ -80,8 +78,7 @@ export async function initArticleView(showImmediately = true): Promise<void> {
         void loadAllArticles();
       }
     } else {
-      (existingPopup as HTMLElement).style.visibility = 'hidden';
-      (existingMask as HTMLElement).style.visibility = 'hidden';
+      setArticleViewVisible(false);
     }
     return;
   }
@@ -92,8 +89,7 @@ export async function initArticleView(showImmediately = true): Promise<void> {
   registerEscapeListener();
 
   // 设置可见性
-  articleMask!.style.visibility = showImmediately ? 'visible' : 'hidden';
-  articlePopup!.style.visibility = showImmediately ? 'visible' : 'hidden';
+  setArticleViewVisible(showImmediately);
   // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
   applyMobileWindowFullscreen(articlePopup, tryGetSettings().clippingMobileDefaultFullscreen === true);
 
@@ -112,16 +108,20 @@ export async function initArticleView(showImmediately = true): Promise<void> {
 }
 
 // ========== 创建 UI ==========
+/** 面板显隐单点：mask + popup 同步切换（模块级引用即当前实例节点） */
+function setArticleViewVisible(visible: boolean): void {
+  const v = visible ? 'visible' : 'hidden';
+  if (articleMask) articleMask.style.visibility = v;
+  if (articlePopup) articlePopup.style.visibility = v;
+}
+
 function createMaskAndPopup() {
   // 遮罩
   articleMask = document.createElement('div');
   articleMask.id = 'article-view-mask';
   articleMask.style.cssText =
     'position:fixed;top:0;left:0;right:0;bottom:0;background:var(--background-modifier-cover);z-index:9998;visibility:hidden;';
-  articleMask.onclick = () => {
-    articleMask!.style.visibility = 'hidden';
-    articlePopup!.style.visibility = 'hidden';
-  };
+  articleMask.onclick = () => setArticleViewVisible(false);
 
   // 弹窗
   articlePopup = document.createElement('div');
@@ -252,17 +252,13 @@ function createHeader(): HTMLElement {
       },
     });
   });
-  const closeBtn = createIconButton('❌', '关闭', () => {
-    articleMask!.style.visibility = 'hidden';
-    articlePopup!.style.visibility = 'hidden';
-  });
+  const closeBtn = createIconButton('❌', '关闭', () => setArticleViewVisible(false));
 
   buttonContainer.appendChild(searchToggleBtn);
 
   // 资讯阅读器按钮（剪藏本互调 bz-news-reader-open）
   const newsBtn = createIconButton('📰', '打开资讯阅读器', () => {
-    articleMask!.style.visibility = 'hidden';
-    articlePopup!.style.visibility = 'hidden';
+    setArticleViewVisible(false);
     (app as any).commands.executeCommandById('bz-news-open');
   });
   buttonContainer.appendChild(newsBtn);
@@ -300,7 +296,6 @@ function createSiteBar(): HTMLElement {
   sc.className = 'article-sites-scroll';
   sc.style.cssText =
     'display:flex;flex-wrap:wrap;gap:8px;overflow-x:auto;padding:4px 0;scrollbar-width:none;-ms-overflow-style:none;';
-  sc.addEventListener('scroll', () => {});
 
   container.appendChild(sc);
   return container;
@@ -329,8 +324,6 @@ function createSearchContainer(): HTMLElement {
   container.appendChild(input);
   return container;
 }
-
-// ========== 注入样式（与源码逐字一致；已同步 styles/clipping.css） ==========
 
 // ========== 数据加载 ==========
 async function loadAllArticles(): Promise<void> {
@@ -561,8 +554,7 @@ function buildMetaRow(article: ArticleEntry, interactive: boolean): HTMLElement 
         linkTag.onclick = (e) => {
           e.stopPropagation();
           app.workspace.openLinkText(sourcePath, '', false, { active: true });
-          articleMask!.style.visibility = 'hidden';
-          articlePopup!.style.visibility = 'hidden';
+          setArticleViewVisible(false);
         };
       }
       metaRow.appendChild(linkTag);
@@ -735,8 +727,7 @@ async function deleteArticle(article: ArticleEntry, card: HTMLElement | null) {
 // ========== 跳转文章 ==========
 function jumpToArticle(article: ArticleEntry) {
   getApp().workspace.openLinkText(article.path, '', false, { active: true });
-  articleMask!.style.visibility = 'hidden';
-  articlePopup!.style.visibility = 'hidden';
+  setArticleViewVisible(false);
 }
 
 // ========== 站点标签栏（单选） ==========
@@ -857,7 +848,6 @@ function attachFileListener() {
   if (fileListenerAttached) return;
   const fileModifyHandler = async (file: any) => {
     if (file.path.startsWith(ARTICLE_DIRECTORY) && file.extension === 'md') {
-      if (isInternalUpdate) return;
       if (refreshTimer) clearTimeout(refreshTimer);
       refreshTimer = setTimeout(async () => {
         await refreshData();
