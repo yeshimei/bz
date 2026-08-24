@@ -1,5 +1,5 @@
 {
-  "name": "obsidian-diary-notebook",
+  "name": "bz",
   "version": "1.0.0",
   "description": "日记本 — 原 QuickAdd 脚本「日记本」的独立 Obsidian 插件版（UI 与逻辑保持一致）",
   "main": "src/main.ts",
