@@ -161,6 +161,28 @@ describe('DataManager（合并至保险箱：password-vault 条目）', () => {
     expect(dm.unlocked).toBe(false);
   });
 
+  it('load 脏数据防御（P2）：null/非对象元素被过滤，健康条目保留并归一化，整表不炸', async () => {
+    const dm = await unlockedDM('pw');
+    await dm.addItem({ platform: 'seed', account: 'a', password: 'p' } as any);
+    const note = sm.manifest.notes[0];
+    // 整表 JSON 被污染：混入 null / 字符串 / 数字 / 数组等非法元素
+    const dirty = JSON.stringify([
+      null,
+      'junk-string',
+      42,
+      [],
+      { platform: '无 id 条目' },
+      { id: 'keep-1', platform: 'GitHub', account: 'me', password: 'x', note: '', url: '', createdAt: '2026-01-01T00:00:00.000Z' },
+    ]);
+    vault.files.set('CONFIG/.ENCRYPT/' + note.contentRef, await CryptoService.encrypt(dirty, 'pw'));
+    await dm.load();
+    // 只剩两个对象条目；缺失字段归一化补齐
+    expect(dm.pwData.length).toBe(2);
+    expect(dm.pwData[0]).toMatchObject({ platform: '无 id 条目' });
+    expect(dm.pwData[0].id).toMatch(/^pw-/); // 归一化补 id
+    expect(dm.pwData[1].id).toBe('keep-1');
+  });
+
   it('search：平台/账号/备注关键词过滤', async () => {
     const dm = await unlockedDM('pw');
     await dm.addItem({ platform: 'GitHub', account: 'alice', password: 'a', note: '代码' });

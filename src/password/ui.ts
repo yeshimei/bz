@@ -31,6 +31,52 @@ interface UIConfig {
   securityMode: boolean;
 }
 
+/**
+ * 加密安全随机密码串（P2）：crypto.getRandomValues + 拒绝采样——
+ * 旧实现 `Math.floor(Math.random() * len)` 有取模偏差且非加密安全源；
+ * 拒绝采样只接受 `[0, LIMIT)` 均匀区间（LIMIT 为 2^32 内最大的 n 的整倍数），
+ * 每个字符严格等概率，任意字符集长度都无偏差、不越界。
+ */
+export function secureRandomPassword(length: number, charset: string): string {
+  const n = charset.length;
+  if (!(length > 0) || n === 0) return '';
+  const LIMIT = Math.floor(0x100000000 / n) * n;
+  let pwd = '';
+  while (pwd.length < length) {
+    const buf = new Uint32Array(length - pwd.length);
+    crypto.getRandomValues(buf);
+    for (let i = 0; i < buf.length && pwd.length < length; i++) {
+      if (buf[i] >= LIMIT) continue; // 超出均匀区间 → 该采样值丢弃重采
+      pwd += charset.charAt(buf[i] % n);
+    }
+  }
+  return pwd;
+}
+
+/** 敏感内容复制后自动清空剪贴板的延时（P2） */
+const CLIPBOARD_CLEAR_DELAY_MS = 60_000;
+let clipboardClearTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** 布防（或重置）60s 自动清空剪贴板计时；触发时写入空串覆盖敏感内容，失败静默（尽力而为） */
+export function armClipboardClear(): void {
+  if (clipboardClearTimer !== null) clearTimeout(clipboardClearTimer);
+  clipboardClearTimer = setTimeout(() => {
+    clipboardClearTimer = null;
+    try {
+      void navigator.clipboard.writeText('').catch(() => {
+        /* 尽力而为 */
+      });
+    } catch (e) {
+      /* 尽力而为：剪贴板 API 不可用时不打扰用户 */
+    }
+  }, CLIPBOARD_CLEAR_DELAY_MS);
+}
+
+/** 复制敏感内容：写入剪贴板成功后布防定时清空（P2） */
+export function copySensitiveText(text: string): Promise<void> {
+  return navigator.clipboard.writeText(text).then(() => armClipboardClear());
+}
+
 export class UIManager {
   dataManager: DataManager;
   config: UIConfig;
@@ -371,7 +417,7 @@ export class UIManager {
       label: '复制账号',
       onClick: () => {
         if (item.account) {
-          navigator.clipboard.writeText(item.account);
+          void copySensitiveText(item.account); // 复制后 60s 尽力清空剪贴板（P2）
           notice('账号已复制', 'success');
         }
       },
@@ -382,7 +428,7 @@ export class UIManager {
       label: '复制密码',
       onClick: () => {
         if (item.password) {
-          navigator.clipboard.writeText(item.password);
+          void copySensitiveText(item.password); // 复制后 60s 尽力清空剪贴板（P2）
           notice('密码已复制', 'success');
         }
       },
@@ -710,11 +756,7 @@ export class UIManager {
     const charset =
       this.config.charset ||
       '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+';
-    let pwd = '';
-    for (let i = 0; i < length; i++) {
-      pwd += charset.charAt(Math.floor(Math.random() * charset.length));
-    }
-    return pwd;
+    return secureRandomPassword(length, charset); // 加密安全随机 + 拒绝采样（P2）
   }
 
   // ---------- ESC 处理 ----------
@@ -791,6 +833,7 @@ export class PasswordAppController {
     navigator.clipboard
       .writeText(pwd)
       .then(() => {
+        armClipboardClear(); // 复制后 60s 尽力清空剪贴板（P2）
         notice('密码已复制到剪贴板', 'success');
       })
       .catch(() => {

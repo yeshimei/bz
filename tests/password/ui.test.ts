@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { PasswordAppController, UIManager } from '../../src/password/ui';
+import { PasswordAppController, UIManager, secureRandomPassword } from '../../src/password/ui';
 import { DataManager } from '../../src/password/data';
 import { EncryptAppController } from '../../src/encrypt/ui';
 import { getSafeManager } from '../../src/encrypt';
@@ -389,6 +389,41 @@ describe('UIManager 面板与条目', () => {
     Platform.isMobile = false;
     writeSpy.mockRestore();
   });
+
+  it('复制敏感内容后 60s 定时清空剪贴板（P2）：抽屉「复制密码」布防、到期写空串', async () => {
+    const writeSpy = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined as any);
+    ui.show();
+    await waitFor(() => document.querySelectorAll('.pw-entry-card').length === 2);
+    const container = document.getElementById('pw-entries-container')!;
+    Platform.isMobile = true;
+    vi.useFakeTimers();
+    try {
+      const card = container.querySelector('.pw-entry-card') as HTMLElement;
+      card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 60, clientY: 60 }));
+      vi.advanceTimersByTime(550);
+      card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+      card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(10); // 假时钟下推进长按后续流（等价真实等待）
+      const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+      expect(sheet).not.toBeNull();
+      const copyPwd = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
+        (b) => b.textContent!.includes('复制密码')
+      ) as HTMLElement;
+      copyPwd.click();
+      await vi.advanceTimersByTimeAsync(0); // 冲刷 writeText promise 链（布防计时）
+      expect(writeSpy.mock.calls.some((c: any[]) => c[0] === 'secret2')).toBe(true);
+      // 未到期不清空
+      vi.advanceTimersByTime(59_999);
+      expect(writeSpy.mock.calls.some((c: any[]) => c[0] === '')).toBe(false);
+      // 到期 → 尽力清空（写入空串）
+      vi.advanceTimersByTime(1);
+      expect(writeSpy.mock.calls.some((c: any[]) => c[0] === '')).toBe(true);
+    } finally {
+      vi.useRealTimers();
+      Platform.isMobile = false;
+      writeSpy.mockRestore();
+    }
+  });
 });
 
 describe('PasswordAppController 命令', () => {
@@ -425,5 +460,62 @@ describe('PasswordAppController 命令', () => {
     await c.init();
     c.addEntry();
     expect(hasNotice('请先解锁密码本（打开管理器）')).toBe(true);
+  });
+
+  it('generatePassword 复制后 60s 定时清空剪贴板（P2）：到期写空串、重复复制重新计时', async () => {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: vi.fn().mockResolvedValue(undefined) },
+      configurable: true,
+    });
+    const writeText = navigator.clipboard.writeText as ReturnType<typeof vi.fn>;
+    const c = PasswordAppController.getInstance({ charset: 'abc123', length: '8', securityMode: false });
+    await c.init();
+    vi.useFakeTimers();
+    try {
+      c.generatePassword();
+      await vi.advanceTimersByTimeAsync(0); // 冲刷复制 promise 链
+      expect(writeText.mock.calls.length).toBe(1);
+      expect(writeText.mock.calls[0][0]).toBeTruthy();
+      // 59_999ms 内不清空
+      vi.advanceTimersByTime(59_999);
+      expect(writeText.mock.calls.length).toBe(1);
+      // 满 60s → 清空
+      vi.advanceTimersByTime(1);
+      expect(writeText.mock.calls.length).toBe(2);
+      expect(writeText.mock.calls[1][0]).toBe('');
+      // 再次复制：重新计时（re-arm），同样 60s 后清空
+      c.generatePassword();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(writeText.mock.calls.length).toBe(3);
+      vi.advanceTimersByTime(60_000);
+      expect(writeText.mock.calls.length).toBe(4);
+      expect(writeText.mock.calls[3][0]).toBe('');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('secureRandomPassword 加密安全随机生成器（P2）', () => {
+  it('长度与字符集正确；多次生成全部落在字符集内、无越界崩溃', () => {
+    for (let i = 0; i < 200; i++) {
+      const pwd = secureRandomPassword(13, 'abc123');
+      expect(pwd.length).toBe(13);
+      expect([...pwd].every((ch) => 'abc123'.includes(ch))).toBe(true);
+    }
+  });
+
+  it('边界：length<=0 / 空字符集返回空串；单字符集不崩溃', () => {
+    expect(secureRandomPassword(0, 'abc')).toBe('');
+    expect(secureRandomPassword(-3, 'abc')).toBe('');
+    expect(secureRandomPassword(8, '')).toBe('');
+    expect(secureRandomPassword(10, 'Z')).toBe('ZZZZZZZZZZ');
+  });
+
+  it('拒绝采样消除模偏差：大样本双字符占比接近均匀（±5%）', () => {
+    const N = 4000;
+    const pwd = secureRandomPassword(N, 'ab');
+    const a = [...pwd].filter((ch) => ch === 'a').length;
+    expect(Math.abs(a / N - 0.5)).toBeLessThan(0.05);
   });
 });
