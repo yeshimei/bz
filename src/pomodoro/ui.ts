@@ -12,7 +12,7 @@ import { escManager } from '../core/esc-manager';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { notice } from '../core/notice';
-import { openSettingsModal } from '../core/settings-modal';
+import { openSettingsModal, createSettingsGroup, refreshSettingsGroupCounts } from '../core/settings-modal';
 import { PomodoroDataManager } from './data';
 import { playSound } from './sound';
 import type { SoundKind } from './sound';
@@ -326,10 +326,11 @@ async function initData(): Promise<void> {
   loaded = true;
 }
 
-/** ⚙️ 番茄钟设置弹窗（ADR-0009，复用 core/settings-modal） */
+/** ⚙️ 番茄钟设置弹窗（ADR-0009，复用 core/settings-modal；分组卡片重设计 + ticket 100 文案规范） */
 function openPomodoroSettings(): void {
   openSettingsModal({
     title: '番茄钟设置',
+    maxWidth: 560,
     build: (el) => {
       const s = getSettings();
       const isCustom = () => s.pomodoroPreset === CUSTOM_PRESET_ID;
@@ -342,9 +343,11 @@ function openPomodoroSettings(): void {
         if (shortRow) shortRow.settingEl.toggleClass('bz-setting-hidden', !show);
         if (longRow) longRow.settingEl.toggleClass('bz-setting-hidden', !show);
       };
-      new Setting(el)
+      // ===== 时间方案组 =====
+      const timerGroup = createSettingsGroup(el, { icon: 'timer', name: '时间方案' });
+      new Setting(timerGroup)
         .setName('预设方案')
-        .setDesc('工作时间 / 短休息 / 长休息 时长组合')
+        .setDesc('选择现成的工作与休息时长组合')
         .addDropdown((dd) => {
           for (const [id, p] of Object.entries(PRESETS)) {
             dd.addOption(id, `${p.label}（${p.workMin}/${p.shortBreakMin}/${p.longBreakMin}）`);
@@ -354,12 +357,13 @@ function openPomodoroSettings(): void {
           dd.onChange(async (v) => {
             s.pomodoroPreset = v;
             refreshCustom(); // 立即反馈（先于落盘）
+            refreshSettingsGroupCounts(el); // 徽标随自定义行显隐刷新
             await saveSettings();
             render();
           });
         });
-      const numSetting = (name: string, desc: string, get: () => string, set: (v: string) => void): Setting =>
-        new Setting(el)
+      const numSetting = (parent: HTMLElement, name: string, desc: string, get: () => string, set: (v: string) => void): Setting =>
+        new Setting(parent)
           .setName(name)
           .setDesc(desc)
           .addText((text) =>
@@ -371,12 +375,12 @@ function openPomodoroSettings(): void {
                 render();
               })
           );
-      workRow = numSetting('工作时长（分钟）', '自定义方案的工作阶段时长', () => s.pomodoroWorkMin ?? '25', (v) => (s.pomodoroWorkMin = v));
-      shortRow = numSetting('短休息时长（分钟）', '自定义方案的短休息时长', () => s.pomodoroShortBreakMin ?? '5', (v) => (s.pomodoroShortBreakMin = v));
-      longRow = numSetting('长休息时长（分钟）', '自定义方案的长休息时长', () => s.pomodoroLongBreakMin ?? '15', (v) => (s.pomodoroLongBreakMin = v));
-      new Setting(el)
+      workRow = numSetting(timerGroup, '工作时长', '自定义方案的工作阶段分钟数', () => s.pomodoroWorkMin ?? '25', (v) => (s.pomodoroWorkMin = v));
+      shortRow = numSetting(timerGroup, '短休息时长', '自定义方案的短休息分钟数', () => s.pomodoroShortBreakMin ?? '5', (v) => (s.pomodoroShortBreakMin = v));
+      longRow = numSetting(timerGroup, '长休息时长', '自定义方案的长休息分钟数', () => s.pomodoroLongBreakMin ?? '15', (v) => (s.pomodoroLongBreakMin = v));
+      new Setting(timerGroup)
         .setName('长休息间隔')
-        .setDesc('几个专注后进入长休息（默认 4）')
+        .setDesc('每隔几个专注进入一次长休息')
         .addText((text) =>
           text
             .setValue(s.pomodoroLongBreakInterval ?? '4')
@@ -386,8 +390,10 @@ function openPomodoroSettings(): void {
               render();
             })
         );
+      // ===== 行为组 =====
+      const behaviorGroup = createSettingsGroup(el, { icon: 'sliders-horizontal', name: '行为' });
       const toggleSetting = (name: string, desc: string, get: () => boolean, set: (v: boolean) => void): Setting =>
-        new Setting(el)
+        new Setting(behaviorGroup)
           .setName(name)
           .setDesc(desc)
           .addToggle((toggle) =>
@@ -399,14 +405,14 @@ function openPomodoroSettings(): void {
                 render();
               })
           );
-      toggleSetting('强制专注模式', '专注阶段无法暂停/跳过/重置', () => !!s.pomodoroForceFocus, (v) => (s.pomodoroForceFocus = v));
+      toggleSetting('强制专注模式', '专注进行中无法暂停跳过或重置', () => !!s.pomodoroForceFocus, (v) => (s.pomodoroForceFocus = v));
       toggleSetting('自动循环', '阶段结束后自动开始下一阶段', () => !!s.pomodoroAutoCycle, (v) => (s.pomodoroAutoCycle = v));
-      toggleSetting('自动跳过休息', '专注结束后立即开始下一专注（连续工作）', () => !!s.pomodoroAutoSkipBreak, (v) => (s.pomodoroAutoSkipBreak = v));
-      toggleSetting('声音提醒', '阶段完成时的提示音', () => s.pomodoroSound !== false, (v) => (s.pomodoroSound = v));
-      toggleSetting('后台自动暂停', '窗口最小化/失去可见性时自动暂停番茄钟，恢复后自动继续（默认开）', () => s.pomodoroAutoPauseOnHide !== false, (v) => (s.pomodoroAutoPauseOnHide = v));
-      new Setting(el)
-        .setName('音量')
-        .setDesc('提示音大小（默认最大）')
+      toggleSetting('自动跳过休息', '专注结束后直接进入下一个专注', () => !!s.pomodoroAutoSkipBreak, (v) => (s.pomodoroAutoSkipBreak = v));
+      toggleSetting('声音提醒', '阶段切换时播放提示音', () => s.pomodoroSound !== false, (v) => (s.pomodoroSound = v));
+      toggleSetting('后台自动暂停', '窗口隐藏时暂停，恢复可见后自动继续', () => s.pomodoroAutoPauseOnHide !== false, (v) => (s.pomodoroAutoPauseOnHide = v));
+      new Setting(behaviorGroup)
+        .setName('提示音音量')
+        .setDesc('提示音大小，默认最大')
         .addSlider((sl) => {
           sl.setLimits(0, 100, 5)
             .setValue(s.pomodoroVolume ?? 100)
@@ -421,9 +427,9 @@ function openPomodoroSettings(): void {
             playSound('focus-start', s.pomodoroVolume ?? 100);
           })
         );
-      new Setting(el)
+      new Setting(behaviorGroup)
         .setName('打开时恢复方式')
-        .setDesc('Obsidian 启动时若正在倒计时：后台继续（状态栏可见）或自动弹窗提醒')
+        .setDesc('启动时正在倒计时，选择弹窗提醒或后台继续')
         .addDropdown((dd) => {
           dd.addOption('background', '后台继续');
           dd.addOption('popup', '自动弹窗');
@@ -433,10 +439,12 @@ function openPomodoroSettings(): void {
             await saveSettings();
           });
         });
+      // ===== 移动端组（仅移动端显示） =====
       if (isMobileEnv()) {
-        new Setting(el)
+        const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
+        new Setting(mobileGroup)
           .setName('移动端默认全屏')
-          .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
+          .setDesc('移动端打开主窗口时默认全屏，关闭则显示常规卡片')
           .addToggle((toggle) =>
             toggle.setValue(!!s.pomodoroMobileDefaultFullscreen).onChange(async (v) => { s.pomodoroMobileDefaultFullscreen = v; await saveSettings(); })
           );
