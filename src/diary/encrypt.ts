@@ -11,11 +11,11 @@ import { getApp } from './app';
 import { getSafeManager } from '../encrypt';
 import { collectNoteAttachmentPaths, kindOf } from '../encrypt/ui';
 import { bytesToBase64, type LockAttachmentInput } from '../encrypt/data';
-import { DIARY_DIRECTORY, getTagEmoji, emojiToTagMap } from './config';
+import { DIARY_DIRECTORY, ENCRYPT_TAG, getTagEmoji, emojiToTagMap } from './config';
 import type { DiaryEntry } from './types';
 
-/** 加密分类标签名（ADR-0017；写入块标题、参与筛选/计数） */
-export const ENCRYPT_TAG = '加密';
+// 加密分类标签名（ADR-0017；写入块标题、参与筛选/计数）——单一来源在 config，此处转出给 UI 层
+export { ENCRYPT_TAG };
 
 // ===== 解锁态（与保险箱同一 SafeManager 单例，共享解锁态） =====
 let unlockedListeners: (() => void)[] = [];
@@ -33,7 +33,7 @@ export function onUnlockChange(cb: () => void): void {
   unlockedListeners.push(cb);
 }
 
-export function notifyUnlockChange(): void {
+function notifyUnlockChange(): void {
   unlockedListeners.forEach((cb) => cb());
 }
 
@@ -129,7 +129,7 @@ export async function loadEncryptedEntries(): Promise<DiaryEntry[]> {
 }
 
 /** 把一个 `# emoji HH:mm\n正文` 块解析成 DiaryEntry（带 encrypted/noteId） */
-export function parseDiaryBlock(block: string, date: string, noteId: string): DiaryEntry | null {
+function parseDiaryBlock(block: string, date: string, noteId: string): DiaryEntry | null {
   const lines = block.replace(/\r\n/g, '\n').split('\n');
   const m = lines[0]?.match(/^#\s+(\S+)\s+(\d{2}:\d{2})$/);
   if (!m) return null;

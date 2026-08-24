@@ -1,17 +1,16 @@
 /**
- * 日记本领域配置：目录常量、批量数、标签配置（emoji 编码）与解析。
- * 原脚本 35-158 行 + settings.primaryTagsConfig 解析逻辑。
+ * 日记本领域配置：目录常量、批量数、标签配置（emoji 编码）。
+ * 原脚本 35-158 行；设置项「标签配置」已移除，标签表为内置默认 + 测试重置入口。
  */
-import type { DiaryEntry, SubTagConfig, TagConfig } from './types';
+import type { SubTagConfig, TagConfig } from './types';
 
 // ===== 可变常量（设置应用时更新） =====
 export let DIARY_DIRECTORY = '我的/日记';
 export let MOVIE_DIRECTORY = '我的/影视';
 export let LETTER_DIRECTORY = '我的/信';
 export let BATCH_SIZE = 20;
-export let LONG_PRESS_DURATION = 800;
 
-/** 应用目录常量（设置变更时调用；批量读设置，长按时长固定默认） */
+/** 应用目录常量（设置变更时调用） */
 export function applyDirectories(settings: {
   diaryDirectory?: string;
   movieDirectory?: string;
@@ -22,7 +21,6 @@ export function applyDirectories(settings: {
   MOVIE_DIRECTORY = settings.movieDirectory || '我的/影视';
   LETTER_DIRECTORY = settings.letterDirectory || '我的/信';
   BATCH_SIZE = parseInt(settings.diaryBatchSize || '20', 10) || 20;
-  LONG_PRESS_DURATION = 800;
 }
 
 /** 获取当前标签配置 */
@@ -138,20 +136,6 @@ export function getTagEmoji(tag: string): string {
   return tagToEmojiMap[tag] || '📖';
 }
 
-/** 获取所有可用标签（主标签+二级标签） */
-export function getAllAvailableTags(): string[] {
-  const tags: string[] = [];
-  for (const [tag, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
-    tags.push(tag);
-    if (config.subTags) {
-      for (const sub of config.subTags) {
-        tags.push(sub.tag);
-      }
-    }
-  }
-  return tags;
-}
-
 /** 获取主标签的二级标签配置 */
 export function getSubTagsOfPrimary(primaryTag: string): SubTagConfig[] | null {
   const config = PRIMARY_TAGS_CONFIG[primaryTag];
@@ -176,71 +160,6 @@ export function getParentPrimaryTag(subTag: string): string | null {
     }
   }
   return null;
-}
-
-// ===== 标签配置解析（原 settings 文本格式） =====
-/**
- * 解析文本格式标签配置：
- * - `标签名 emoji`
- * - `主标签 emoji > 子标签 emoji, 子标签 emoji, ...`
- */
-export function parseTagConfig(text: string): Record<string, TagConfig> {
-  const lines = text
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
-
-  const config: Record<string, TagConfig> = {};
-  for (const line of lines) {
-    if (line.includes('>')) {
-      const parts = line.split('>').map((s) => s.trim());
-      const mainPart = parts[0];
-      const subPart = parts.slice(1).join('>').trim();
-
-      const mainMatch = mainPart.match(/^(.+?)\s+(\S+)$/);
-      if (!mainMatch) continue;
-      const mainTag = mainMatch[1].trim();
-      const mainEmoji = mainMatch[2].trim();
-
-      const subItems = subPart.split(',').map((s) => s.trim()).filter((s) => s.length > 0);
-      const subTags: SubTagConfig[] = [];
-      for (const item of subItems) {
-        const subMatch = item.match(/^(.+?)\s+(\S+)$/);
-        if (subMatch) {
-          subTags.push({ tag: subMatch[1].trim(), emoji: subMatch[2].trim() });
-        }
-      }
-      config[mainTag] = { emoji: mainEmoji, subTags };
-    } else {
-      const match = line.match(/^(.+?)\s+(\S+)$/);
-      if (match) {
-        const tag = match[1].trim();
-        const emoji = match[2].trim();
-        config[tag] = { emoji };
-      }
-    }
-  }
-  return config;
-}
-
-/**
- * 应用标签配置（支持 JSON 或文本格式；解析失败保留默认配置）
- */
-export function applyTagsConfig(rawConfig: string | undefined) {
-  if (rawConfig && rawConfig.trim()) {
-    const trimmed = rawConfig.trim();
-    if (trimmed.startsWith('{')) {
-      try {
-        PRIMARY_TAGS_CONFIG = JSON.parse(trimmed);
-      } catch (e) {
-        console.warn('JSON 解析失败，尝试文本格式');
-        PRIMARY_TAGS_CONFIG = parseTagConfig(trimmed);
-      }
-    } else {
-      PRIMARY_TAGS_CONFIG = parseTagConfig(trimmed);
-    }
-  }
-  buildTagMaps();
 }
 
 // ===== 排序辅助 =====

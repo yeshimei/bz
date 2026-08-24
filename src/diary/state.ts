@@ -27,7 +27,6 @@ export const state = {
     isLoadingData: false,
   },
   events: {
-    fileModifyHandler: null as ((file: any) => void) | null,
     isInternalUpdate: false,
     fileListenerAttached: false,
   },

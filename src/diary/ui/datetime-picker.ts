@@ -4,7 +4,7 @@
 import { moment } from 'obsidian';
 import { notice } from '../../core/notice';
 import { escManager } from '../../core/esc-manager';
-import { parseNaturalTime } from '../parser';
+import { parseFlexibleDateTime } from '../parser';
 
 // ===== 滚轮列（原 2629-2782） =====
 
@@ -600,10 +600,7 @@ export function createDateTimeControl() {
 
   function commitManualEdit() {
     const raw = manualInput.value.trim();
-    let newMoment = parseNaturalTime(raw);
-    if (!newMoment || !newMoment.isValid()) {
-      newMoment = moment(raw, 'YYYY-MM-DD HH:mm', true);
-    }
+    const newMoment = parseFlexibleDateTime(raw);
     if (newMoment && newMoment.isValid()) {
       currentMoment = newMoment;
       updateDisplay(currentMoment);

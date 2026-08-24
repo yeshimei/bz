@@ -6,7 +6,7 @@
  */
 import { notice } from '../core/notice';
 import { getApp } from './app';
-import { BATCH_SIZE, DIARY_DIRECTORY, LETTER_DIRECTORY, MOVIE_DIRECTORY, buildTagMaps, getTagEmoji } from './config';
+import { BATCH_SIZE, DIARY_DIRECTORY, LETTER_DIRECTORY, MOVIE_DIRECTORY, getTagEmoji } from './config';
 import { isEncryptedEntry, parseFile, parseLetterFile, parseMovieFile } from './parser';
 import { loadEncryptedEntries, isUnlocked } from './encrypt';
 import { diaryDataMap, setDiaryDataMap, state } from './state';
@@ -37,10 +37,10 @@ export function onLoadingChange(cb: (loading: boolean) => void) {
   loadingCallbacks.push(cb);
 }
 
-export function emitFullRefresh() {
+function emitFullRefresh() {
   fullRefreshCallbacks.forEach((cb) => cb());
 }
-export function emitLightRefresh() {
+function emitLightRefresh() {
   lightRefreshCallbacks.forEach((cb) => cb());
 }
 
@@ -53,12 +53,6 @@ function emitLoading(loading: boolean) {
 
 /** 文件变更延迟：固定 100ms（设置项已移除） */
 const FILE_CHANGE_DELAY = 100;
-
-/** 原 window.isProcessingRemainingFiles（死代码保留，行为一致） */
-let isProcessingRemainingFiles = false;
-export function getIsProcessingRemainingFiles(): boolean {
-  return isProcessingRemainingFiles;
-}
 
 // ===== 目录递归查找（vault 未就绪时兜底） =====
 function findDirRecursive(folder: any, path: string): any {
@@ -232,8 +226,6 @@ export async function loadAll() {
     emitLoading(false);
   }
 }
-
-/** 加密条目：内容含 🔐（保留在 diaryDataMap 防止写入时丢失） */
 
 // ===== 写回 =====
 
@@ -461,11 +453,6 @@ export async function onFileChange(file: any) {
     }
     refreshTimer = null;
   }, FILE_CHANGE_DELAY);
-}
-
-/** 供 ui 层调用：重新构建标签映射（设置变更后） */
-export function rebuildTagMaps() {
-  buildTagMaps();
 }
 
 // ===== 加密日记可见性（ADR-0017，Q21-a 未解锁完全不可见） =====

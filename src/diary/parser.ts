@@ -101,13 +101,13 @@ export function parseFile(content: string, dateStr: string): DiaryEntry[] {
 }
 
 /** 获取文件 frontmatter（无则返回 null） */
-export function getFileFrontmatter(file: any): Record<string, any> | null {
+function getFileFrontmatter(file: any): Record<string, any> | null {
   const cache = getApp().metadataCache.getFileCache(file);
   return cache && cache.frontmatter ? cache.frontmatter : null;
 }
 
 /** 文件创建时间 → { timeStr, timeValue } */
-export async function getFileTimeParts(file: any): Promise<{ timeStr: string; timeValue: number }> {
+async function getFileTimeParts(file: any): Promise<{ timeStr: string; timeValue: number }> {
   const stat = await file.stat;
   const createTime = stat.ctime || stat.birthtime;
   const m = moment(createTime);
@@ -115,7 +115,7 @@ export async function getFileTimeParts(file: any): Promise<{ timeStr: string; ti
 }
 
 /** 生成特殊文件条目的稳定 id */
-export function makeEntryId(prefix: string, file: any, dateStr: string): string {
+function makeEntryId(prefix: string, file: any, dateStr: string): string {
   return `${prefix}-${file.path.replace(/\//g, '-')}-${dateStr}`;
 }
 
@@ -269,4 +269,11 @@ export function parseNaturalTime(input: string): any {
   const std = moment(input, 'YYYY-MM-DD HH:mm', true);
   if (std.isValid()) return std;
   return null;
+}
+
+/** 自然语言时间优先，失败回退严格 `YYYY-MM-DD HH:mm`（写日记保存与手动输入共用） */
+export function parseFlexibleDateTime(input: string): any {
+  const natural = parseNaturalTime(input);
+  if (natural && natural.isValid()) return natural;
+  return moment(input, 'YYYY-MM-DD HH:mm', true);
 }

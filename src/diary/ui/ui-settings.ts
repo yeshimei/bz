@@ -36,10 +36,6 @@ export function applyUiSettings(s: {
 export function getShowTagCountSetting(): boolean {
   return showTagCountSetting;
 }
-/** 长按手势：固定启用（设置项已移除，用户确认保持默认启用） */
-export function getEnableLongPressSetting(): boolean {
-  return true;
-}
 export function getUseFileDateTimeSetting(): boolean {
   return useFileDateTimeSetting;
 }

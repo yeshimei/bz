@@ -8,6 +8,7 @@ import { getShowTagCountSetting, getTagShowEmojiSetting, getTagSortModeSetting }
 import { ENCRYPT_TAG, isUnlocked } from '../encrypt';
 import { ensureSafeUnlocked } from '../../encrypt';
 import { reloadWithEncrypted } from '../store';
+import { applyFilter as applyFilterFromShared } from './entries';
 
 /** 更新标题上的日期后缀（原 1934-1952） */
 export function updateTitleSuffix() {
@@ -212,15 +213,8 @@ function applyTagSelection(button: HTMLElement, tag: string) {
 export function createTag(tag: string, emoji: string, count: number | null) {
   const showCount = getShowTagCountSetting(); // 默认 true
   // 加密分类在上锁态显示为锁定态（🔒、无计数），解锁态为普通标签（ADR-0017）
-  // 设置未注入时视为上锁态（防御：既有测试/部分环境无设置提供者）
-  let encryptLocked = false;
-  if (tag === ENCRYPT_TAG) {
-    try {
-      encryptLocked = !isUnlocked();
-    } catch {
-      encryptLocked = true;
-    }
-  }
+  // isUnlocked 自带降级链（未注入设置视为未解锁），不会抛错
+  const encryptLocked = tag === ENCRYPT_TAG && !isUnlocked();
 
   const button = document.createElement('button');
   button.className = 'diary-tag-btn';
@@ -249,24 +243,16 @@ export function createTag(tag: string, emoji: string, count: number | null) {
 
   button.onclick = (e) => {
     e.stopPropagation();
-    if (tag === ENCRYPT_TAG) {
+    if (tag === ENCRYPT_TAG && !isUnlocked()) {
       // 上锁态点击「加密」：先弹主密码，解锁成功后再选中该标签；
       // 保险箱弹窗解锁不触发 onUnlockChange，需在此重并加密条目并重建标签栏
-      let locked = false;
-      try {
-        locked = !isUnlocked();
-      } catch {
-        locked = false;
-      }
-      if (locked) {
-        void ensureSafeUnlocked().then((ok) => {
-          if (ok) {
-            applyTagSelection(button, tag);
-            void reloadWithEncrypted();
-          }
-        });
-        return;
-      }
+      void ensureSafeUnlocked().then((ok) => {
+        if (ok) {
+          applyTagSelection(button, tag);
+          void reloadWithEncrypted();
+        }
+      });
+      return;
     }
     applyTagSelection(button, tag);
   };
@@ -314,6 +300,3 @@ export function updateTagCounts() {
 
   updateSubTagsCounts();
 }
-
-import type { DateFilter } from '../types';
-import { applyFilter as applyFilterFromShared } from './entries';
