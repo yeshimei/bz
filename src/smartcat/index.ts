@@ -22,8 +22,8 @@ import { generateBookDescription, hasBookTag } from './content';
 import { classifyPath, observationText } from './context-source';
 import { buildMovieActionText, type MovieActionEvent } from './movie-source';
 import { buildMemoActionText, memoDueObservation, type MemoActionEvent, type MemoDueLike } from './memo-source';
-import { parseDiaryFile, decideDiarySettle, diaryDeleteText, diaryDeleteFileText, type DiaryEntryLike } from './diary-source';
-import { noteFirstText, noteDeleteText, noteFileName, noteBodyText, parseNoteDate, letterReadonly, decideNoteSettle, type NoteKind } from './note-source';
+import { parseDiaryFile, decideDiarySettle, diaryDeleteText, diaryDeleteFileText, DIARY_SETTLE_MS, type DiaryEntryLike } from './diary-source';
+import { noteFirstText, noteDeleteText, noteFileName, noteBodyText, parseNoteDate, letterReadonly, decideNoteSettle, NOTE_SETTLE_MS, type NoteKind } from './note-source';
 import { DIARY_DIRECTORY } from '../diary/config';
 
 import { buildBelongingsActionText, type BelongingsActionEvent } from './belongings-source';
@@ -109,8 +109,8 @@ interface DiaryTimerState {
 const diaryTimers = new Map<string, DiaryTimerState>();
 /** 日记文件最近一次快照（diff 变更/删除用）：filePath → Map(entryKey → {body, tags})；内存态 */
 const diaryTracked = new Map<string, Map<string, { body: string; tags: string[] }>>();
-/** 结算静置时长（默认 10 分钟；测试可注入缩短） */
-let diarySettleMs = 10 * 60 * 1000;
+/** 结算静置时长（默认 DIARY_SETTLE_MS；测试可注入缩短） */
+let diarySettleMs = DIARY_SETTLE_MS;
 /** 卡片盒/现代诗/信 观察计时表（ticket 083，ADR-0035；v2 差异观察 + v3 真实日期 + v4 readonly 准入）：
  *  key = filePath → 该篇结算状态。「每篇文件独立 10 分钟结算」（对齐日记模型，per-file 简化版）：
  *  该篇任何修改重置计时；静置到期 → 结算产出观察（首落有字 / 正文有变化 → 段落 diff 摘要）。
@@ -129,8 +129,8 @@ interface NoteTimerState {
 const noteTimers = new Map<string, NoteTimerState>();
 /** 三域文件最近一次快照（modify diff / delete 感知、日期缓存）：filePath → {kind, body 全文, date}；内存态 */
 const noteTracked = new Map<string, { kind: NoteKind; body: string; date: string | null }>();
-/** 结算静置时长（默认 10 分钟；测试可注入缩短） */
-let noteSettleMs = 10 * 60 * 1000;
+/** 结算静置时长（默认 NOTE_SETTLE_MS；测试可注入缩短） */
+let noteSettleMs = NOTE_SETTLE_MS;
 /** 条目 key 分隔符（filePath / date / time 三段，控制字符防与路径字符冲突） */
 const DIARY_KEY_SEP = '\u0001';
 
@@ -786,8 +786,6 @@ export function hideSmartCat(): void {
   closeChat();
   closeSettings();
   unmountCatContainer();
-  const c = document.getElementById('smart-companion-cat');
-  if (c && c.parentNode) c.parentNode.removeChild(c);
 }
 
 /** 打开聊天面板（挂猫容器 + 建面板 + 显示） */
@@ -1009,7 +1007,7 @@ export function unloadSmartCat(): void {
   }
   diaryTimers.clear();
   diaryTracked.clear();
-  diarySettleMs = 10 * 60 * 1000;
+  diarySettleMs = DIARY_SETTLE_MS;
 
   // 书库划线/想法防抖 pending（ticket 081 v2）：定时器全清 + 表清空 + 窗口复位
   for (const p of libraryPendingNotes.values()) clearTimeout(p.timer);
@@ -1022,7 +1020,7 @@ export function unloadSmartCat(): void {
   }
   noteTimers.clear();
   noteTracked.clear();
-  noteSettleMs = 10 * 60 * 1000;
+  noteSettleMs = NOTE_SETTLE_MS;
   if (visibilityCleanup) {
     visibilityCleanup();
     visibilityCleanup = null;

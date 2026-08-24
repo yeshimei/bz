@@ -83,16 +83,6 @@ export function getCharacterDescription(traits?: CharacterTraits | null): string
   return parts.length ? parts.join('，') + '的猫咪' : '安静友善，偶尔撒娇的陪伴猫咪';
 }
 
-/** personalities 旧文案全面废弃——保留函数名兼容导出（返回动态描述） */
-export function getPersonalityDescription(): string {
-  return getCharacterDescription();
-}
-
-/** 性格 prompt（旧接口，返回动态描述 + MATE 数值角色行） */
-export function fallbackPersonalityPrompt(): string {
-  return getCharacterDescription();
-}
-
 /** 生成 prompt 主方法（MATE：注入状态向量 + traits 推导字数/描述；
    *  ADR-0025：companionContext 携带「懂你上下文块」——作息/情绪趋势/关系/相关记忆） */
 export function generatePrompt(
@@ -174,23 +164,6 @@ export function getMoodEmoji(value: number, high: string, mid: string, low: stri
   if (value >= 70) return high;
   if (value >= 40) return mid;
   return low;
-}
-
-/** 当前心情文本 */
-export function getCurrentMoodText(currentMood?: string): string {
-  if (!currentMood) return '平静';
-  return MOOD_STATE_TEXT[currentMood] || '平静';
-}
-
-/** 互动类型显示名 */
-export function getInteractionDisplayName(type: string): string {
-  const names: Record<string, string> = {
-    pet: '抚摸互动', click: '点触互动', learn: '学习陪伴', note_create: '笔记创建',
-    note_edit: '笔记编辑', note_read: '笔记阅读', note_open: '笔记打开',
-    casual_chat: '日常聊天', book_review: '书评交流', welcome_back: '欢迎回来',
-    settings_updated: '设置更新', talk: '对话', auto_companion: '自动陪伴',
-  };
-  return names[type] || '常规互动';
 }
 
 /** 回复要求 */

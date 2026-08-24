@@ -73,25 +73,9 @@ export function stopAllThinking(): void {
   if (thinkingIndicator) thinkingIndicator.classList.remove('active');
 }
 
-/** 获取思考计数（测试断言用） */
-export function getThinkingCount(): number {
-  return thinkingCount;
-}
-
-/** 重置思考指示器引用（卸载时） */
-export function resetThinkingIndicator(el?: HTMLElement | null): void {
-  if (el && thinkingIndicator === el) thinkingIndicator = null;
-  else if (!el) thinkingIndicator = null;
-  thinkingCount = 0;
-}
-
 let appRef: App | null = null;
 export function setSmartcatApp(app: App): void {
   appRef = app;
-}
-export function getSmartcatApp(): App {
-  if (!appRef) throw new Error('smartcat: app 未初始化（ensureSmartCat 未调用）');
-  return appRef;
 }
 
 /** 可见性监听注册（原 setupSimpleVisibilityCheck 语义：离开 60s 才允许回程语） */
@@ -132,10 +116,6 @@ export function setupVisibilityCheck(handlers: VisibilityHandlers): () => void {
     visibilityCleanup = null;
   };
   return visibilityCleanup;
-}
-
-export function getAllowBackMessage(): boolean {
-  return allowBackMessage;
 }
 
 /** 测试辅助：重置可见性状态 */

@@ -1,7 +1,6 @@
 /**
  * smartcat 域类型（移植自 SmartCat 8 个 JS 文件，字段名/枚举逐字保留）
  */
-import type BzSettings from '../settings';
 
 /** 外观皮肤枚举（13 种：基础 5 + 高级 8） */
 export type Appearance =
@@ -11,22 +10,11 @@ export type Appearance =
 
 /** 性格枚举已废弃（预设人格退役，ADR-0023 对齐 MATE：OCEAN+30 特质成长） */
 
-/** 离散心情状态（MOOD_MAP 5 级；currentMood 初始 'content' 不在枚举内，按原样保留） */
-export type MoodLevel = 'excellent' | 'good' | 'neutral' | 'low' | 'poor';
-
 /** 心情 PAD 三维（Mehrabian PAD 模型：愉悦/唤醒/支配，0-100；社区对齐，ADR-0021 后心情重构） */
 export interface PadDimensions {
   pleasure: number;
   arousal: number;
   dominance: number;
-}
-
-/** 负面状态 4 项（只展示，原版从不写入） */
-export interface NegativeStates {
-  boredom: number;
-  fatigue: number;
-  distraction: number;
-  loneliness: number;
 }
 
 /** 对话消息（role 原样透传 OpenAI 兼容） */
@@ -222,14 +210,3 @@ export const EVENTS = {
   HISTORY_CLEARED: 'historyCleared',
   APP_INITIALIZED: 'appInitialized',
 } as const;
-
-/** 消息类型 key 类型（SmartCatMessages.js 顶层 key 全集） */
-export type MessageKey =
-  | 'PET_MESSAGES' | 'CONNECTED_MESSAGES' | 'SETUP_MESSAGES' | 'WELCOME_BACK_MESSAGES'
-  | 'LITTLE_ORANGE_COMPLAINTS' | 'THINKING_MESSAGES' | 'THINKING_IN_PROGRESS_MESSAGES';
-
-/** 与 bz 设置结构对齐所需的 smartcat 设置窗口形状（域设置弹窗用） */
-export interface SmartcatSettingsLike {
-  smartcatEnabled?: boolean;
-  smartcatMobileDefaultFullscreen?: boolean;
-}

@@ -103,15 +103,6 @@ export const INJECTED_ACTIONS: Record<string, InjectedAction[]> = {
   ],
 };
 
-/** 皮肤动画表（原 setupAdvancedSkinAnimations 的皮肤动画组合；现由 styles.css .bz-sc-skin-* 承担，此处仅作为测试数据源导出） */
-export const SKIN_ANIMATIONS: Record<string, { body: string; tail: string; eyes?: string; ears?: string }> = {
-  neon: { body: 'neonDance 4s ease-in-out infinite, glowEffect 3s ease-in-out infinite', tail: 'neonDance 2s ease-in-out infinite', eyes: 'blinkQuick 2s ease-in-out infinite, glowEffect 4s ease-in-out infinite' },
-  galaxy: { body: 'floatGracefully 6s ease-in-out infinite', tail: 'tailSwish 4s ease-in-out infinite', ears: 'earsTwitch 5s ease-in-out infinite' },
-  fire: { body: 'fireFlicker 2s ease-in-out infinite, excitedVibrate 3s ease-in-out infinite', tail: 'tailFlick 1.5s ease-in-out infinite', eyes: 'eyesSparkle 3s ease-in-out infinite' },
-  liquidMetal: { body: 'shimmer 4s linear infinite, gentleSway 5s ease-in-out infinite', tail: 'tailSwish 3s ease-in-out infinite' },
-  crystal: { body: 'glowEffect 5s ease-in-out infinite, breathing 4s ease-in-out infinite', tail: 'tailSwish 3s ease-in-out infinite', eyes: 'blinkSlow 4s ease-in-out infinite, eyesSparkle 6s ease-in-out infinite' },
-};
-
 export type AnimMood = 'content' | 'happy' | 'curious' | 'sleepy' | 'excited' | 'playful';
 
 export class SmartCatAnimation {
@@ -290,7 +281,7 @@ export class SmartCatAnimation {
         this.setMood('excited');
         if (Math.random() < 0.5) {
           const t = setTimeout(() => {
-            this.playPartAnimation(Math.random() < 0.5 ? 'ears' : 'ears', Math.random() < 0.5 ? 'earFlickLeft' : 'earFlickRight', 600);
+            this.playPartAnimation('ears', Math.random() < 0.5 ? 'earFlickLeft' : 'earFlickRight', 600);
           }, 300);
           this.pendingTimeouts.push(t);
         }
@@ -298,13 +289,8 @@ export class SmartCatAnimation {
     });
   }
 
-  /** 特殊场合（原 celebrate/greet/surprise/startListening/stopListening/thinking） */
-  celebrate(): void { this.playAnimation('celebrationDance', 2500); this.setMood('excited'); }
+  /** 特殊场合（原 celebrate/greet/surprise/startListening/stopListening/thinking；无调用点的五个已随清理移除） */
   greet(): void { this.playAnimation('greetingBow', 1200); this.setMood('happy'); }
-  surprise(): void { this.playAnimation('surpriseJump', 1500); this.setMood('excited'); }
-  startListening(): void { this.playAnimation('attentionPulse', 2000); this.setMood('curious'); }
-  stopListening(): void { this.setMood('content'); }
-  thinking(): void { this.playAnimation('curiousTilt', 1500); this.setMood('curious'); }
 
   // ---------- 72 小动作（增强版随机动作） ----------
 

@@ -21,12 +21,6 @@ export const CAT_CONTAINER_ID = 'smart-companion-cat';
 /** 13 皮肤 key 全集（basic 5 + advanced 8） */
 export const SKINS: Appearance[] = ['orange', 'gray', 'black', 'white', 'calico', 'neon', 'galaxy', 'liquidMetal', 'fire', 'crystal', 'cyberpunk', 'rainbow', 'hologram'];
 
-export interface CatUIElements {
-  catContainer: HTMLElement;
-  panelMask: HTMLElement;
-  chatPanel: HTMLElement;
-}
-
 /** 猫本体 HTML（原 CAT_UI 模板，结构逐字：voice 指示器/思考圆点/气泡容器/cat-body） */
 const CAT_HTML = `
         <!-- 语音指示器 -->
@@ -192,11 +186,6 @@ export function showChatPanel(panels: SmartcatPanels, fullscreenEnabled: boolean
 export function hideChatPanel(panels: SmartcatPanels): void {
   panels.mask.style.display = 'none';
   panels.chatPopup.style.display = 'none';
-}
-
-export interface SettingsModalBuildResult {
-  /** 是否设置了移动端全屏行（仅移动端） */
-  mobileSettable: boolean;
 }
 
 /**
