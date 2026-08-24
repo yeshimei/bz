@@ -11,8 +11,10 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { attachObsidianAdapter, detachObsidianAdapter } from '../../src/core/obsidian-adapter';
+import { emitDomainEvent, clearDomainEvents } from '../../src/core/domain-bus';
 import {
-  ensureSmartCat, unloadSmartCat, notifyNewsRead, notifyNewsSaved,
+  ensureSmartCat, unloadSmartCat,
   __getSmartcatInternals, __getNewsPendingSavesForTests, __setNewsSaveTimeoutForTests,
 } from '../../src/smartcat/index';
 
@@ -31,6 +33,11 @@ function makeApp() {
     const idx = arr.indexOf(ref?.cb);
     if (idx >= 0) arr.splice(idx, 1);
   };
+  // 总线接线（对齐生产 main.ts 挂载）：vault 裸事件 → adapter 两路派发（剪藏 modify 补全链路依赖此转译）；
+  // 单例先摘再挂 + 清空订阅，防跨用例串线
+  detachObsidianAdapter();
+  clearDomainEvents();
+  attachObsidianAdapter(app);
   return { app, vault };
 }
 
@@ -50,7 +57,7 @@ describe('notifyNewsRead（逐篇三态，方法监听）', () => {
   it('阅读 → 观察入流（含 source news）', async () => {
     const { app } = makeApp();
     await ensureSmartCat(app);
-    notifyNewsRead({ title: '黑洞照片刷新认知', platform: '果壳', state: 'read', durationMin: 5 });
+    emitDomainEvent('news', { kind: 'read', evt: { title: '黑洞照片刷新认知', platform: '果壳', state: 'read', durationMin: 5 } });
     await settle();
     const stream = readStream();
     expect(stream[stream.length - 1].description).toBe('你阅读了《黑洞照片刷新认知》（果壳·读了 5 分钟）');
@@ -63,8 +70,8 @@ describe('notifyNewsRead（逐篇三态，方法监听）', () => {
     const data: any = __getSmartcatInternals().data;
     data.config.noteSource = false;
     const before = data.memory.stream.length;
-    notifyNewsRead({ title: '黑洞照片刷新认知', platform: '果壳', state: 'saved', durationMin: 5 });
-    notifyNewsSaved({ title: '黑洞照片刷新认知', platform: '果壳', state: 'saved', durationMin: 5 }, '归档/网页剪藏/黑洞照片刷新认知.md');
+    emitDomainEvent('news', { kind: 'read', evt: { title: '黑洞照片刷新认知', platform: '果壳', state: 'saved', durationMin: 5 } });
+    emitDomainEvent('news', { kind: 'saved', evt: { title: '黑洞照片刷新认知', platform: '果壳', state: 'saved', durationMin: 5 }, clipPath: '归档/网页剪藏/黑洞照片刷新认知.md' });
     await settle();
     expect(data.memory.stream.length).toBe(before);
     expect(__getNewsPendingSavesForTests().size).toBe(0);
@@ -75,8 +82,8 @@ describe('notifyNewsRead（逐篇三态，方法监听）', () => {
     await ensureSmartCat(app);
     unloadSmartCat();
     expect(() => {
-      notifyNewsRead({ title: 'X', platform: '果壳', state: 'read', durationMin: 1 });
-      notifyNewsSaved({ title: 'X', platform: '果壳', state: 'saved', durationMin: 1 }, '归档/网页剪藏/X.md');
+      emitDomainEvent('news', { kind: 'read', evt: { title: 'X', platform: '果壳', state: 'read', durationMin: 1 } });
+      emitDomainEvent('news', { kind: 'saved', evt: { title: 'X', platform: '果壳', state: 'saved', durationMin: 1 }, clipPath: '归档/网页剪藏/X.md' });
     }).not.toThrow();
     await settle();
     expect(__getNewsPendingSavesForTests().size).toBe(0);
@@ -90,7 +97,7 @@ describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
     const clipPath = '归档/网页剪藏/黑洞照片刷新认知.md';
     // 模拟 saveToClip 已创建剪藏 + auto-summary 写回 frontmatter（summary/tags）
     vault.files.set(clipPath, '---\nsummary: "首张黑洞照片公布，视觉中国被质疑滥用版权。"\ntags:\n  - "科学"\n  - "AI"\n---\n\n正文');
-    notifyNewsSaved({ title: '黑洞照片刷新认知', platform: '果壳', state: 'saved', durationMin: 5 }, clipPath);
+    emitDomainEvent('news', { kind: 'saved', evt: { title: '黑洞照片刷新认知', platform: '果壳', state: 'saved', durationMin: 5 }, clipPath: clipPath });
     expect(__getNewsPendingSavesForTests().size).toBe(1);
     // auto-summary 写回触发的 modify 事件
     vault.emit('modify', vault.file(clipPath));
@@ -125,7 +132,7 @@ describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
     await ensureSmartCat(app);
     __setNewsSaveTimeoutForTests(60);
     const clipPath = '归档/网页剪藏/未等来摘要.md';
-    notifyNewsSaved({ title: '未等来摘要', platform: '知乎日报', state: 'saved', durationMin: 3 }, clipPath);
+    emitDomainEvent('news', { kind: 'saved', evt: { title: '未等来摘要', platform: '知乎日报', state: 'saved', durationMin: 3 }, clipPath: clipPath });
     expect(__getNewsPendingSavesForTests().size).toBe(1);
     await new Promise((r) => setTimeout(r, 250)); // 超过降级等待（60ms）并等落流
     const stream = readStream();
@@ -145,7 +152,7 @@ describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
     const newPath = '归档/网页剪藏/黑洞照片刷新认知 AI标题.md';
     // saveToClip 落盘（剪藏模板形态：link 有、title 无）
     vault.files.set(oldPath, '---\nlink: "https://www.guokr.com/article/black-hole"\n---\n\n正文');
-    notifyNewsSaved({ title: '黑洞照片刷新认知', platform: '果壳', state: 'saved', durationMin: 5 }, oldPath);
+    emitDomainEvent('news', { kind: 'saved', evt: { title: '黑洞照片刷新认知', platform: '果壳', state: 'saved', durationMin: 5 }, clipPath: oldPath });
     await new Promise((r) => setTimeout(r, 5)); // 只等异步 link 登记（微任务），60ms 定时器未到
     expect(__getNewsPendingSavesForTests().size).toBe(1);
     // auto-summary renameToTitle：原路径删除，新路径同名 link + summary/tags 写回（modify 事件未捕获场景）
@@ -164,7 +171,7 @@ describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
     const oldPath = '归档/网页剪藏/黑洞照片刷新认知.md';
     const newPath = '归档/网页剪藏/黑洞照片刷新认知 AI标题.md';
     vault.files.set(oldPath, '---\nlink: "https://www.guokr.com/article/black-hole"\n---\n\n正文');
-    notifyNewsSaved({ title: '黑洞照片刷新认知', platform: '果壳', state: 'saved', durationMin: 5 }, oldPath);
+    emitDomainEvent('news', { kind: 'saved', evt: { title: '黑洞照片刷新认知', platform: '果壳', state: 'saved', durationMin: 5 }, clipPath: oldPath });
     await settle();
     // auto-summary 改名 + 写回：原路径删除，新路径带 summary/tags，modify 事件携带新路径文件
     vault.files.delete(oldPath);
@@ -184,7 +191,7 @@ describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
     const oldPath = '归档/网页剪藏/黑洞照片刷新认知.md';
     const newPath = '归档/网页剪藏/科技/黑洞照片刷新认知.md'; // 同 basename 新路径（目录移动）
     vault.files.set(oldPath, '---\nsummary: ""\n---\n\n正文'); // 无 link 剪藏 → 登记 baseName 兜底
-    notifyNewsSaved({ title: '黑洞照片刷新认知', platform: '果壳', state: 'saved', durationMin: 5 }, oldPath);
+    emitDomainEvent('news', { kind: 'saved', evt: { title: '黑洞照片刷新认知', platform: '果壳', state: 'saved', durationMin: 5 }, clipPath: oldPath });
     await new Promise((r) => setTimeout(r, 5)); // 登记完成即可（60ms 定时器未到）
     vault.files.delete(oldPath);
     vault.files.set(newPath, '---\nlink: "https://www.guokr.com/article/black-hole"\nsummary: "首张黑洞照片公布。"\ntags:\n  - "科学"\n---\n\n正文');
@@ -200,11 +207,11 @@ describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
     __setNewsSaveTimeoutForTests(60);
     const clipPath = '归档/网页剪藏/防重文章.md';
     // reader 保存真实顺序：markAsRead('saved') 先产立即形态，再登记待补全
-    notifyNewsRead({ title: '防重文章', platform: '少数派', state: 'saved', durationMin: 2 });
+    emitDomainEvent('news', { kind: 'read', evt: { title: '防重文章', platform: '少数派', state: 'saved', durationMin: 2 } });
     await settle();
     const before = readStream().length;
     vault.files.set(clipPath, '---\nsummary: ""\n---\n\n正文'); // auto-summary 未及写回
-    notifyNewsSaved({ title: '防重文章', platform: '少数派', state: 'saved', durationMin: 2 }, clipPath);
+    emitDomainEvent('news', { kind: 'saved', evt: { title: '防重文章', platform: '少数派', state: 'saved', durationMin: 2 }, clipPath: clipPath });
     await new Promise((r) => setTimeout(r, 250));
     const stream = readStream();
     expect(stream.length).toBe(before); // 降级无摘要 → 文案同立即形态 → 防重跳过

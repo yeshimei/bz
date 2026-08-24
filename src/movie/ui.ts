@@ -17,7 +17,7 @@ import { confirm } from '../core/confirm';
 import { runAIRecommend, runSimilarRecommend } from './recommend';
 import { watchPosterFetch } from './poster-watch';
 import { openAnalysisModal } from './analysis';
-import { notifyMovieAction } from '../smartcat';
+import { emitDomainEvent } from '../core/domain-bus';
 
 /** 渲染卡片列表（分页，源码 L279-426 逐字） */
 export function renderAll(displayItems: any[], container: HTMLElement, app: App): void {
@@ -517,8 +517,8 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
 
     try {
       const newFile = await app.vault.create(filePath, fileContent);
-      // ticket 074（方法监听）：创建动作观察（smartcat；未初始化/关闭时静默）
-      notifyMovieAction({
+      // ticket 074（域事件派发）：创建动作观察（emitDomainEvent → smartcat 订阅；未初始化/关闭时静默）
+      emitDomainEvent('movie', {
         kind: 'created',
         name,
         status: selectedStatus === STATUS_WANT ? 'want' : selectedStatus === STATUS_WATCHING ? 'watching' : 'watched',
@@ -578,10 +578,10 @@ export function closeEditModal(): void {
 }
 
 /** 【待接线】ticket 084a B5：影视编辑弹窗，当前无生产调用点（死代码，仅测试直调）。
- *  本弹窗确认回调可改 状态/评分/观影日期/影评 但零 notifyMovieAction。
+ *  本弹窗确认回调可改 状态/评分/观影日期/影评 但零 emitDomainEvent('movie', …) 派发。
  *  若未来启用：确认回调 processFrontMatter 落盘后，按电影名对齐 5 挂点模式补
- *  notifyMovieAction({ kind: 'status' | 'rated' | 'review', name: item.name, ... })，
- *  接线完成后再移除本注释（复用 300ms 防重，B6）。 */
+ *  emitDomainEvent('movie', { kind: 'status' | 'rated' | 'review', name: item.name, ... })，
+ *  接线完成后再移除本注释（复用 smartcat 订阅侧 300ms 防重，B6）。 */
 export function openEditModal(item: any, app: App): void {
   if (M.editOverlay) {
     closeEditModal();
@@ -1352,8 +1352,8 @@ async function setMovieStatus(item: MovieItem, status: number, app: App): Promis
     fm['评分'] = ratingValue;
     fm['观影日期'] = watchDate;
   });
-  // ticket 074（方法监听）：状态流转观察（from = 改前状态，setMovieStatus 不就地更新 item.status）
-  notifyMovieAction({
+  // ticket 074（域事件派发）：状态流转观察（from = 改前状态，setMovieStatus 不就地更新 item.status）
+  emitDomainEvent('movie', {
     kind: 'status',
     name: item.name,
     from: item.status === STATUS_WANT ? 'want' : item.status === STATUS_WATCHING ? 'watching' : 'watched',
@@ -1421,8 +1421,8 @@ export function openRateModal(item: MovieItem, app: App, title: string, onDone?:
       fm['评分'] = ratingVal;
       fm['观影日期'] = watchDate;
     });
-    // ticket 074（方法监听）：评分/改分观察（from = 改前评分，改前无分 → 首次评分）
-    notifyMovieAction({ kind: 'rated', name: item.name, fromRating: item.rating, toRating: ratingVal });
+    // ticket 074（域事件派发）：评分/改分观察（from = 改前评分，改前无分 → 首次评分）
+    emitDomainEvent('movie', { kind: 'rated', name: item.name, fromRating: item.rating, toRating: ratingVal });
     notice('已更新影视信息', 'success');
     item.rating = ratingVal;
     item.watchDate = watchDate;
@@ -1476,8 +1476,8 @@ export function openReviewModal(item: MovieItem, app: App, title: string, onDone
       if (reviewText) fm['影评'] = reviewText;
       else delete fm['影评'];
     });
-    // ticket 074（方法监听）：影评 写/改/删 观察（from = 改前影评，text 空 = 删除）
-    notifyMovieAction({ kind: 'review', name: item.name, fromReview: item.review, toReview: reviewText || null });
+    // ticket 074（域事件派发）：影评 写/改/删 观察（from = 改前影评，text 空 = 删除）
+    emitDomainEvent('movie', { kind: 'review', name: item.name, fromReview: item.review, toReview: reviewText || null });
     notice(reviewText ? '已保存影评' : '已删除影评', 'success');
     closeMovieTinyModal(mask, modalEsc);
     refreshDataAndView(app);
@@ -1506,8 +1506,8 @@ function confirmDeleteMovie(item: MovieItem, app: App): void {
     confirmText: '删除',
     onConfirm: async () => {
       await app.vault.delete(item.file);
-      // ticket 074（方法监听）：删除影视观察
-      notifyMovieAction({ kind: 'deleted', name: item.name });
+      // ticket 074（域事件派发）：删除影视观察
+      emitDomainEvent('movie', { kind: 'deleted', name: item.name });
       notice('影视已删除', 'success');
       refreshDataAndView(app);
     },

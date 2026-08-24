@@ -11,9 +11,11 @@ import {
 } from '../../src/news/reader';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, Platform as MockPlatform, hasNotice } from '../mock-obsidian-entry';
-// ticket 076 修订：隔离 smartcat——断言 reader 只对「保存」产观察（跳过不再调 notifyNewsRead）
-import { notifyNewsRead, notifyNewsSaved } from '../../src/smartcat';
-vi.mock('../../src/smartcat', () => ({ notifyNewsRead: vi.fn(), notifyNewsSaved: vi.fn() }));
+import { onDomainEvent } from '../../src/core/domain-bus';
+// ticket 076 观测点换线（域事件派发）：真实总线 + onDomainEvent('news', spy) 挂间谍，
+// 断言 reader 只对「保存」发事件（跳过不发）；载荷 {kind:'read'|'saved', evt, clipPath?}
+let newsSpy: import('vitest').Mock<(evt?: unknown) => void>;
+let offNewsSpy: () => void = () => {};
 
 function makeApp(vault: MockVault) {
   return {
@@ -21,6 +23,16 @@ function makeApp(vault: MockVault) {
     metadataCache: {},
     workspace: { openLinkText: vi.fn() },
   } as any;
+}
+
+/** 最近一次 read 入口载荷（保存立即形态断言用） */
+function lastReadEvt(): any {
+  const calls = newsSpy.mock.calls.map((c: any[]) => c[0]).filter((m: any) => m?.kind === 'read');
+  return calls[calls.length - 1]?.evt;
+}
+/** 是否出现过 saved 入口事件 */
+function hasSavedEvt(): boolean {
+  return newsSpy.mock.calls.some((c: any[]) => c[0]?.kind === 'saved');
 }
 
 const NEWS_JSON = [
@@ -62,8 +74,14 @@ async function setup() {
 describe('聚合讯阅读流', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
+    newsSpy = vi.fn((_evt?: unknown) => {});
+    offNewsSpy = onDomainEvent('news', (evt) => newsSpy(evt));
     await setup();
     init(false);
+  });
+
+  afterEach(() => {
+    offNewsSpy();
   });
 
   it('加载未读文章并渲染单篇（标题/平台徽章/👤作者/📅日期/正文 markdown）', async () => {
@@ -100,24 +118,26 @@ describe('聚合讯阅读流', () => {
     expect(saved[0].body).toBeUndefined(); // delete a.body
   });
 
-  it('跳过：不再产生观察（notifyNewsRead/notifyNewsSaved 均不调用），域统计照记', async () => {
+  it('跳过：不发任何 news 事件（域统计照记）', async () => {
     await loadStats(); // 重置模块级 stats（防跨用例串扰）后再动作
     await loadArticles();
     render();
     skipArticle();
-    expect(notifyNewsRead).not.toHaveBeenCalled();
-    expect(notifyNewsSaved).not.toHaveBeenCalled();
+    expect(newsSpy).not.toHaveBeenCalled();
     const stats = JSON.parse((getVault().files as Map<string, string>).get('CONFIG/STORAGE/news-stats.json')!);
     expect(stats.totalSkipped).toBe(1);
   });
 
-  it('保存：仅产保存观察（ticket 076 修订：三态 → 仅保存），时长取整分钟 ≥1', async () => {
+  it('保存：仅发 read 入口事件（ticket 076 修订：三态 → 仅保存），时长取整分钟 ≥1', async () => {
     await loadArticles();
     render();
     markAsRead('saved');
-    expect(notifyNewsRead).toHaveBeenCalledTimes(1);
-    expect(notifyNewsRead).toHaveBeenCalledWith(expect.objectContaining({ title: '第一篇新闻', platform: '知乎日报', state: 'saved', durationMin: 1 }));
-    expect(notifyNewsSaved).not.toHaveBeenCalled(); // 仅 saveToClip 流程登记补全，直接 markAsRead 不发
+    expect(newsSpy).toHaveBeenCalledTimes(1);
+    expect(newsSpy).toHaveBeenCalledWith(expect.objectContaining({
+      kind: 'read',
+      evt: expect.objectContaining({ title: '第一篇新闻', platform: '知乎日报', state: 'saved', durationMin: 1 }),
+    }));
+    expect(hasSavedEvt()).toBe(false); // 仅 saveToClip 流程登记补全，直接 markAsRead 不发 saved
   });
 
   it('阅读时长：打开起算 → 关闭暂停 → 重开同篇续算 → 下一篇后重置（仅保存带时长）', async () => {
@@ -131,12 +151,11 @@ describe('聚合讯阅读流', () => {
       render();                                              // 重开同篇 → 续算
       vi.setSystemTime(Date.now() + 1 * 60 * 1000);          // 再读 1 分钟
       markAsRead('saved');                                   // 累计 4 分钟
-      expect(notifyNewsRead).toHaveBeenLastCalledWith(expect.objectContaining({ state: 'saved', durationMin: 4 }));
+      expect(lastReadEvt()).toMatchObject({ state: 'saved', durationMin: 4 });
       // 内部 render 已切到下一篇 → 累计清零
       vi.setSystemTime(Date.now() + 5 * 60 * 1000);          // 下一篇读 5 分钟
       markAsRead('saved');
-      const calls = vi.mocked(notifyNewsRead).mock.calls;
-      expect(calls[calls.length - 1][0]).toMatchObject({ title: '第二篇新闻', state: 'saved', durationMin: 5 });
+      expect(lastReadEvt()).toMatchObject({ title: '第二篇新闻', state: 'saved', durationMin: 5 });
     } finally {
       vi.useRealTimers();
     }
