@@ -12,6 +12,7 @@ import {
   onLightRefresh,
   onLoadingChange,
   onProgress,
+  refreshFile,
 } from '../../src/diary/store';
 import { diaryDataMap, setDiaryDataMap, state } from '../../src/diary/state';
 
@@ -212,6 +213,17 @@ describe('addEntry', () => {
     expect(state.data.originalDiaryEntries).toContainEqual(entry);
     expect(light).toHaveBeenCalled();
   });
+
+  it('P1-12 回归：同分钟追加后行号与磁盘标题行对位', async () => {
+    makeVault({});
+    setDiaryDataMap(new Map());
+    await addEntry('2024-01-01', '10:00', ['日记'], '一');
+    const second = await addEntry('2024-01-01', '10:00', ['随笔'], '二');
+    const lines = vault.files.get('我的/日记/2024-01-01.md')!.split('\n');
+    // 同分钟两条：第二条的行号必须指向自己的 ✍️ 标题行（旧逻辑按 time+tags 猜测会错位）
+    expect(lines[second.lineNumber - 1]).toBe('# ✍️ 10:00');
+    expect(lines.filter((l) => l.startsWith('# ')).length).toBe(2);
+  });
 });
 
 describe('deleteEntry', () => {
@@ -237,6 +249,60 @@ describe('deleteEntry', () => {
     makeVault({});
     setDiaryDataMap(new Map());
     await expect(deleteEntry('nope')).rejects.toThrow('未找到日记条目');
+  });
+
+  it('P1-12 回归：同分钟多条删第二条，磁盘消失的必须是目标那条', async () => {
+    makeVault({ '我的/日记/2024-01-01.md': '# 📖 10:00\n第一条\n\n# 📖 10:00\n第二条\n' });
+    await loadAll();
+    const flat = state.data.originalDiaryEntries;
+    expect(flat.map((e) => e.content)).toEqual(['第一条', '第二条']);
+    expect(flat[0].lineNumber).toBe(1);
+    expect(flat[1].lineNumber).toBe(4);
+    // 删第二条：磁盘上必须保留第一条、消失第二条（旧逻辑按 time 匹配会误删第一条）
+    await deleteEntry(flat[1].id!);
+    const disk = vault.files.get('我的/日记/2024-01-01.md')!;
+    expect(disk).toContain('第一条');
+    expect(disk).not.toContain('第二条');
+  });
+});
+
+describe('refreshFile（P0-4 回归）', () => {
+  it('同日影视/信特殊条目不因刷新日记文件被剔除', async () => {
+    makeVault({
+      '我的/日记/2024-01-03.md': '# 📖 08:00\nx\n',
+      '我的/影视/film.md': '---\n影评: 好看\n观影日期: 2024-01-03\ntags: [电影]\n---\n',
+      '我的/信/note.md': '---\ndate: 2024-01-03\n---\n信正文',
+    });
+    // frontmatter 解析 mock（影视/信文件）
+    const vm = vault;
+    setApp({
+      vault,
+      metadataCache: {
+        getFileCache: (f: any) => {
+          const content = vm.files.get(f.path) ?? '';
+          const m = content.match(/^---\n([\s\S]*?)\n---\n/);
+          if (!m) return null;
+          const fm: any = {};
+          for (const line of m[1].split('\n')) {
+            const idx = line.indexOf(':');
+            if (idx > 0) fm[line.slice(0, idx).trim()] = line.slice(idx + 1).trim();
+          }
+          return { frontmatter: fm };
+        },
+      },
+      workspace: {},
+    } as any);
+    await loadAll();
+    expect(state.data.originalDiaryEntries.some((e) => e.id!.startsWith('movie-'))).toBe(true);
+    expect(state.data.originalDiaryEntries.some((e) => e.id!.startsWith('letter-'))).toBe(true);
+    // 外部修改日记文件后主动刷新
+    vault.files.set('我的/日记/2024-01-03.md', '# 📖 09:00\ny\n');
+    await refreshFile('我的/日记/2024-01-03.md');
+    // 同日的影视/信条目仍在列表；旧普通条目被新解析结果替换
+    expect(state.data.originalDiaryEntries.some((e) => e.id!.startsWith('movie-'))).toBe(true);
+    expect(state.data.originalDiaryEntries.some((e) => e.id!.startsWith('letter-'))).toBe(true);
+    expect(state.data.originalDiaryEntries.some((e) => e.content === 'y')).toBe(true);
+    expect(state.data.originalDiaryEntries.some((e) => e.content === 'x')).toBe(false);
   });
 });
 
@@ -271,5 +337,23 @@ describe('onFileChange', () => {
     onFileChange({ path: '其他/note.md', extension: 'md' });
     await new Promise((r) => setTimeout(r, 30));
     expect(state.data.originalDiaryEntries).toEqual([]);
+  });
+
+  it('P2 回归：多文件并行变更按 filePath 分桶去抖，互不吞并', async () => {
+    makeVault({
+      '我的/日记/2024-01-01.md': '# 📖 08:00\na\n',
+      '我的/日记/2024-01-02.md': '# ✍️ 09:00\nb\n',
+    });
+    await loadAll();
+    vault.files.set('我的/日记/2024-01-01.md', '# 📖 08:00\na改\n');
+    vault.files.set('我的/日记/2024-01-02.md', '# ✍️ 09:00\nb改\n');
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
+    onFileChange({ path: '我的/日记/2024-01-01.md', extension: 'md' });
+    onFileChange({ path: '我的/日记/2024-01-02.md', extension: 'md' });
+    // 文件变更延迟固定 100ms
+    await vi.advanceTimersByTimeAsync(250);
+    vi.useRealTimers();
+    const contents = state.data.originalDiaryEntries.map((e) => e.content).sort();
+    expect(contents).toEqual(['a改', 'b改']);
   });
 });

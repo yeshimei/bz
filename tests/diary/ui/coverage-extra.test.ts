@@ -6,7 +6,7 @@ import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { setApp } from '../../../src/diary/app';
 import { applyDirectories, resetTagsConfig } from '../../../src/diary/config';
 import { init } from '../../../src/diary/ui/panel';
-import { createEntryCard, buildSheetHead, copyLink, jumpToEntry, cancelEdit, removeCard, insertCard, updateSticky } from '../../../src/diary/ui/entries';
+import { applyFilter, createEntryCard, buildSheetHead, copyLink, jumpToEntry, cancelEdit, removeCard, insertCard, initScroll, updateSticky } from '../../../src/diary/ui/entries';
 import { createTagPicker, showTagPicker, updateTags, createAddDialog, openAddDialog, createDatePicker } from '../../../src/diary/ui/dialogs';
 import { createDateTimeControl, syncDateTime, showDateTimePicker } from '../../../src/diary/ui/datetime-picker';
 import { state } from '../../../src/diary/state';
@@ -339,8 +339,7 @@ describe('dialogs 补测', () => {
   });
 });
 
-describe('datetime-picker 补测', () => {
-  function mountControl() {
+describe('datetime-picker 补测', () => {  function mountControl() {
     // init 可能已创建同名弹窗，先移除保证 id 唯一
     document.querySelectorAll('#add-diary-popup').forEach((el) => el.remove());
     const ctrl = createDateTimeControl();
@@ -375,6 +374,163 @@ describe('datetime-picker 补测', () => {
   it('showDateTimePicker：打开滚轮选择器弹窗', () => {
     showDateTimePicker(moment('2024-06-15 14:30'), vi.fn());
     expect(document.getElementById('unified-datetime-picker-mask')).toBeTruthy();
+  });
+});
+
+// ===== 修复回归（fx-diary-review） =====
+
+describe('insertCard 真实时间源（P1-15 回归）', () => {
+  it('同日内按条目数据的真实时间降序插入（不再解析 data-entry-id）', () => {
+    const container = document.createElement('div');
+    state.ui.scrollContainer = container;
+    const mk = (id: string, time: string, tv: number) => ({ ...soloEntry(), id, time, timeValue: tv }) as any;
+    const late = mk('late', '15:00', 1500);
+    const early = mk('early', '09:00', 900);
+    state.data.originalDiaryEntries = [late, early];
+    state.data.currentFilteredEntries = [late, early];
+    // 已有 15:00 卡片的日期段，插入 09:00 → 必须排在其后（旧逻辑 cardTime 恒为 '' 会插到最前）
+    const section = document.createElement('div');
+    section.className = 'date-section';
+    const sep = document.createElement('div');
+    sep.className = 'diary-date-separator';
+    sep.dataset.date = early.date;
+    section.appendChild(sep);
+    section.appendChild(createEntryCard(late));
+    container.appendChild(section);
+    insertCard(early);
+    let cards = section.querySelectorAll('.diary-entry-card');
+    expect([cards[0].id, cards[1].id]).toEqual(['diary-entry-late', 'diary-entry-early']);
+    // 再插入 12:00 → 排在 15:00 之后、09:00 之前
+    const noon = mk('noon', '12:00', 1200);
+    state.data.originalDiaryEntries.push(noon);
+    state.data.currentFilteredEntries.push(noon);
+    insertCard(noon);
+    cards = section.querySelectorAll('.diary-entry-card');
+    expect([cards[0].id, cards[1].id, cards[2].id]).toEqual([
+      'diary-entry-late',
+      'diary-entry-noon',
+      'diary-entry-early',
+    ]);
+  });
+});
+
+describe('特殊条目动作裁剪（P1-16 回归）', () => {
+  async function openSheet(entry: any) {
+    MockPlatform.isMobile = true;
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
+    const card = createEntryCard(entry);
+    document.body.appendChild(card);
+    card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 100, clientY: 100 }));
+    await vi.advanceTimersByTimeAsync(550);
+    card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    return document.querySelector('.bz-item-sheet') as HTMLElement;
+  }
+
+  function closeSheet() {
+    document.querySelectorAll('.bz-item-sheet').forEach((el) => el.remove());
+    MockPlatform.isMobile = false;
+    vi.useRealTimers();
+  }
+
+  it('影视卡片动作条无 删除/加密/改标签，保留 打开/复制双链/复制正文', async () => {
+    const entry = { ...soloEntry(), id: 'movie-x', filename: '我的/影视/film.md' } as any;
+    const sheet = await openSheet(entry);
+    expect(sheet).not.toBeNull();
+    const bodyText = (sheet.querySelector('.bz-item-sheet-body') as HTMLElement).textContent!;
+    expect(bodyText).toContain('打开');
+    expect(bodyText).toContain('复制双链');
+    expect(bodyText).toContain('复制正文');
+    expect(bodyText).not.toContain('改标签');
+    expect(bodyText).not.toContain('加密');
+    expect(bodyText).not.toContain('删除');
+    closeSheet();
+  });
+
+  it('信卡片动作条同样裁剪日记专属动作', async () => {
+    const entry = { ...soloEntry(), id: 'letter-x', filename: '我的/信/dear.md' } as any;
+    const sheet = await openSheet(entry);
+    expect(sheet).not.toBeNull();
+    const bodyText = (sheet.querySelector('.bz-item-sheet-body') as HTMLElement).textContent!;
+    expect(bodyText).toContain('打开');
+    expect(bodyText).not.toContain('改标签');
+    expect(bodyText).not.toContain('加密');
+    expect(bodyText).not.toContain('删除');
+    closeSheet();
+  });
+});
+
+describe('letter 分流与双链路径（P2-9 回归）', () => {
+  it('jumpToEntry：信条目直接 openLinkText(file.path)（无锚点）', async () => {
+    vault.files.set('我的/信/hello.md', '---\ndate: 2024-01-01\n---\n正文');
+    const entry = { ...soloEntry(), id: 'letter-x', filename: '我的/信/hello.md' } as any;
+    const openSpy = vi.spyOn(app.workspace, 'openLinkText').mockResolvedValue(undefined);
+    await jumpToEntry(entry);
+    expect(openSpy).toHaveBeenCalledWith('我的/信/hello.md', '', false, { active: true });
+  });
+
+  it('jumpToEntry：信文件不存在 → 「找不到信文件」', async () => {
+    const entry = { ...soloEntry(), id: 'letter-x', filename: '我的/信/gone.md' } as any;
+    await jumpToEntry(entry);
+    expect(hasNotice('找不到信文件')).toBe(true);
+  });
+
+  it('copyLink：特殊条目用真实路径生成双链；普通日记保持日期锚点', async () => {
+    const writeSpy = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined);
+    const base = state.data.originalDiaryEntries[0];
+    const letter = { ...base, id: 'letter-x', filename: '我的/信/hello.md' };
+    const movie = { ...base, id: 'movie-x', filename: '我的/影视/film.md' };
+    state.data.originalDiaryEntries.push(letter as any, movie as any);
+    await copyLink('letter-x');
+    expect(writeSpy).toHaveBeenLastCalledWith('[[我的/信/hello]]');
+    await copyLink('movie-x');
+    expect(writeSpy).toHaveBeenLastCalledWith('[[我的/影视/film]]');
+    await copyLink(base.id!);
+    expect(writeSpy).toHaveBeenLastCalledWith(`[[我的/日记/${base.date}#${base.emoji} ${base.time}]]`);
+  });
+});
+
+describe('renderMarkdown 兜底安全化（P2-10 回归）', () => {
+  it('文件缺失分支用 textContent 渲染，不 innerHTML 注入原文', async () => {
+    const entry = {
+      ...soloEntry(),
+      id: 'xss-1',
+      filename: '2099-12-31',
+      content: '<b>粗体</b><img src=x onerror="alert(1)">',
+    } as any;
+    const card = createEntryCard(entry);
+    document.body.appendChild(card);
+    await new Promise((r) => setTimeout(r, 0));
+    const content = card.querySelector('.diary-entry-content') as HTMLElement;
+    expect(content.querySelector('b')).toBeNull();
+    expect(content.querySelector('img')).toBeNull();
+    expect(content.textContent).toContain('<b>粗体</b>');
+    expect(content.textContent).toContain('<img src=x onerror="alert(1)">');
+  });
+});
+
+describe('isLoadingMore 早退复位（P2-11 回归）', () => {
+  it('空筛选结果早退前复位', () => {
+    state.data.originalDiaryEntries = [];
+    state.data.isLoadingMore = true;
+    applyFilter();
+    expect(state.data.isLoadingMore).toBe(false);
+  });
+
+  it('滚动加载：批次耗尽后再次滚动 isLoadingMore 复位（不卡死）', () => {
+    const container = document.getElementById('__diary-entries-container__')!;
+    const entry = soloEntry();
+    state.data.originalDiaryEntries = [entry];
+    state.data.currentFilteredEntries = [entry];
+    state.data.currentDisplayCount = 0;
+    container.innerHTML = '';
+    state.ui.entriesContainer = container;
+    state.ui.scrollContainer = null;
+    initScroll();
+    container.dispatchEvent(new Event('scroll'));
+    expect(state.data.isLoadingMore).toBe(false); // 首批渲染完成即复位
+    container.dispatchEvent(new Event('scroll')); // 批次耗尽 → 空批次早退
+    expect(state.data.isLoadingMore).toBe(false); // 早退前已复位（旧逻辑卡在 true）
   });
 });
 

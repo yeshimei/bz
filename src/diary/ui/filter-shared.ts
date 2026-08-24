@@ -293,9 +293,17 @@ export function updateTagCounts() {
 
   for (const btn of tagButtons) {
     const tag = (btn as HTMLElement).dataset.tag;
-    const count = countMap.get(tag!) || 0;
-    const emoji = getTagEmoji(tag!);
-    (btn as HTMLElement).innerHTML = `${emoji} ${tag} <span style="margin-left:4px; font-size:10px; opacity:0.8;">(${count})</span>`;
+    if (!tag) continue;
+    const count = countMap.get(tag) || 0;
+    // P1-13：重写按钮时与 createTag 同源——emoji 开关决定是否带 emoji；
+    // 加密锁定态（🔒 无计数 + bz-encrypt-locked class）不因计数刷新而丢失
+    const encryptLocked = tag === ENCRYPT_TAG && !isUnlocked();
+    const showEmoji = getTagShowEmojiSetting();
+    const displayEmoji = encryptLocked ? '🔒' : getTagEmoji(tag);
+    const countHtml = encryptLocked ? '' : `<span style="margin-left:4px; font-size:10px; opacity:0.8;">(${count})</span>`;
+    (btn as HTMLElement).innerHTML = `${showEmoji ? displayEmoji + ' ' : ''}${tag} ${countHtml}`;
+    if (encryptLocked) (btn as HTMLElement).classList.add('bz-encrypt-locked');
+    else (btn as HTMLElement).classList.remove('bz-encrypt-locked');
   }
 
   updateSubTagsCounts();

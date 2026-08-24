@@ -244,6 +244,8 @@ export async function writeFile(dateStr: string) {
   }
 
   entries.sort((a, b) => a.timeValue - b.timeValue);
+  // 稳定标识：写盘时把每个 map 条目的行号与磁盘标题行一一对应（P1-12：同 time 多条不再靠 time 唯一定位）
+  let headingCursor = 0;
   const fileLines = entries
     .map((entry) => {
       // 使用 getTagEmoji 生成 emoji 序列
@@ -251,6 +253,8 @@ export async function writeFile(dateStr: string) {
       const lines = [`# ${emojiSeq} ${entry.time}`, ''];
       if (entry.content.trim()) lines.push(entry.content.trim());
       lines.push('');
+      entry.lineNumber = headingCursor + 1;
+      headingCursor += lines.length;
       return lines;
     })
     .flat()
@@ -305,14 +309,13 @@ export async function addEntry(
 
   await writeFile(dateStr);
 
+  // 回读校验行号（writeFile 已按磁盘标题行给 map 条目盖 lineNumber 戳；此处按行号精确对位，不再按 time+tags 猜测）
   const filePath = `${DIARY_DIRECTORY}/${dateStr}.md`;
   const file = getApp().vault.getAbstractFileByPath(filePath) as any;
   if (file) {
     const fileContent = await getApp().vault.read(file);
     const parsedEntries = parseFile(fileContent, dateStr);
-    const matched = parsedEntries.find(
-      (e) => e.time === timeStr && e.tags.join(',') === tagsArray.join(',')
-    );
+    const matched = parsedEntries.find((e) => e.time === timeStr && e.lineNumber === newEntry.lineNumber);
     if (matched) {
       newEntry.lineNumber = matched.lineNumber;
     }
@@ -337,8 +340,13 @@ export async function deleteEntry(entryId: string) {
   const entries = diaryDataMap!.get(dateStr);
   if (!entries) throw new Error('未找到日期对应的日记数据');
 
-  // 按时间匹配（同一文件内同一时间只有一个条目）
-  const entryIndex = entries.findIndex((e) => e.time === entry.time);
+  // 稳定定位（P1-12）：行号优先（writeFile 后与磁盘标题行一一对应），同 time 多条不再误删；
+  // 行号失配的旧数据回退到「该时间仅一条」的唯一匹配
+  let entryIndex = entries.findIndex((e) => e.time === entry.time && e.lineNumber === entry.lineNumber);
+  if (entryIndex === -1) {
+    const sameTime = entries.filter((e) => e.time === entry.time);
+    if (sameTime.length === 1) entryIndex = entries.indexOf(sameTime[0]);
+  }
   if (entryIndex === -1) throw new Error('未找到日记条目在数据中的索引');
 
   entries.splice(entryIndex, 1);
@@ -385,7 +393,15 @@ export async function refreshFile(filePath: string) {
     diaryDataMap!.set(dateStr, newEntries);
   }
 
-  const otherEntries = state.data.originalDiaryEntries.filter((e) => e.date !== dateStr && !e.encrypted);
+  // P0-4：仅移除属于该日记文件的普通条目；影视/信等特殊条目（id 前缀 movie-/letter-
+  // 或 filename 含目录分隔符）即使 date 与该日记同日也不得被剔除。加密条目由
+  // mergeEncryptedEntries 统一重并，不在此保留。
+  const isPlainEntryOfThisFile = (e: DiaryEntry) =>
+    !e.encrypted &&
+    !(e.id && (e.id.startsWith('movie-') || e.id.startsWith('letter-'))) &&
+    !e.filename.includes('/') &&
+    (e.date === dateStr || e.filename === dateStr);
+  const otherEntries = state.data.originalDiaryEntries.filter((e) => !isPlainEntryOfThisFile(e));
   newEntries.forEach((entry) => {
     entry.filename = dateStr;
   });
@@ -428,8 +444,8 @@ async function refreshSpecialFile(filePath: string, parseFn: (file: any) => Prom
   emitFullRefresh();
 }
 
-/** 监听日记文件变更（原 onFileChange，含节流与内部更新防回环） */
-let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+/** 监听日记文件变更（原 onFileChange，含节流与内部更新防回环）；P2：debounce 按 filePath 分桶，多文件并行变更互不吞并 */
+const refreshTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 export async function onFileChange(file: any) {
   if (state.events.isInternalUpdate) return;
@@ -442,17 +458,21 @@ export async function onFileChange(file: any) {
 
   if (!isDiaryFile && !isMovieFile && !isLetterFile) return;
 
-  if (refreshTimer) clearTimeout(refreshTimer);
-  refreshTimer = setTimeout(async () => {
-    if (isDiaryFile) {
-      await refreshFile(filePath);
-    } else if (isMovieFile) {
-      await refreshSpecialFile(filePath, parseMovieFile, 'movie');
-    } else if (isLetterFile) {
-      await refreshSpecialFile(filePath, parseLetterFile, 'letter');
-    }
-    refreshTimer = null;
-  }, FILE_CHANGE_DELAY);
+  const pending = refreshTimers.get(filePath);
+  if (pending) clearTimeout(pending);
+  refreshTimers.set(
+    filePath,
+    setTimeout(async () => {
+      refreshTimers.delete(filePath);
+      if (isDiaryFile) {
+        await refreshFile(filePath);
+      } else if (isMovieFile) {
+        await refreshSpecialFile(filePath, parseMovieFile, 'movie');
+      } else if (isLetterFile) {
+        await refreshSpecialFile(filePath, parseLetterFile, 'letter');
+      }
+    }, FILE_CHANGE_DELAY)
+  );
 }
 
 // ===== 加密日记可见性（ADR-0017，Q21-a 未解锁完全不可见） =====
