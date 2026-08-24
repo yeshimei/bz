@@ -33,8 +33,12 @@ let popup: HTMLElement | null = null;
 let mask: HTMLElement | null = null;
 let container: HTMLElement | null = null;
 let stats: any = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-/** ticket 076：当前文章打开时刻（render 渲染当前文章时记录；下一篇/保存时算停留时长） */
+/** ticket 076 修订（2026-08-25 用户拍板）：本篇文章累计可视时长——
+ *  openedAt=本次显示会话起算时刻（0=暂停中）；accumMs=关闭前已累计可视毫秒（跨会话续算）；
+ *  render 文章切换（url|title 键）才清零累计；hide 暂停并入 accumMs，重开同篇续算。 */
 let openedAt = 0;
+let accumMs = 0;
+let renderedKey = '';
 
 // ---------- CSS（≈196 行，与源码逐字一致；已同步 styles/news.css） ----------
 // ---------- 创建弹窗 ----------
@@ -128,8 +132,13 @@ export function render() {
 
   const a = articles[currentIndex];
 
-  // ticket 076：文章刷新（打开/下一篇）→ 重置打开时刻（停留时长从此刻起算）
-  openedAt = Date.now();
+  // ticket 076 修订：文章切换（打开/下一篇）→ 清零累计；同篇重渲染（面板重开）续算
+  const key = a ? `${a.url}|${a.title}` : '';
+  if (key !== renderedKey) {
+    renderedKey = key;
+    accumMs = 0;
+  }
+  openedAt = Date.now(); // 本次显示会话起算（重开同篇 = resume）
 
   // 固定头部（标题 + 元信息，不随滚动）
   const header = document.createElement('div');
@@ -354,14 +363,17 @@ export function markAsRead(action: string): NewsReadEvent | null {
   const a = articles[currentIndex];
   let evt: NewsReadEvent | null = null;
   if (a) {
-    // ticket 076：打开到动作的停留时长 → 三态判定（保存优先，不看时长；跳过 ≥2 分钟升「阅读」）
-    const now = Date.now();
-    const durationSec = openedAt ? now - openedAt : 0;
-    const durationMin = Math.max(1, Math.round(durationSec / 60));
-    const state: NewsReadEvent['state'] = action === 'saved' ? 'saved' : (durationSec >= 120 ? 'read' : 'skipped');
-    evt = { title: a.title, platform: a.platform, state, durationMin };
-    // 逐篇观察统一在此发（含保存的立即形态）；smartcat 未初始化 / noteSource 关时静默
-    notifyNewsRead(evt);
+    // ticket 076 修订（2026-08-25 用户拍板）：只保留「保存」观察——跳过/阅读不再产观察（域统计照记）；
+    // 时长 = 累计可视时间（hide 已暂停并入 accumMs，此处补挂起会话），毫秒/60000 取整分钟 ≥1
+    // （原实现 ms/60 致时长虚增 60 倍——「读了 N 分钟」离谱根因之一）
+    if (action === 'saved') {
+      const now = Date.now();
+      const durationSec = (openedAt ? now - openedAt : 0) + accumMs;
+      const durationMin = Math.max(1, Math.round(durationSec / 60000));
+      evt = { title: a.title, platform: a.platform, state: 'saved', durationMin };
+      // 保存立即形态在此发（saveToClip 再经 notifyNewsSaved 登记 auto-summary 补全）；smartcat 未初始化 / noteSource 关时静默
+      notifyNewsRead(evt);
+    }
     a.read = true;
     delete a.body;
     recordStat(action, a);
@@ -410,6 +422,11 @@ export function show() {
 }
 
 export function hide() {
+  // ticket 076 修订：关闭暂停——本次会话已视时长并入累计，openedAt 归零防重复累计
+  if (openedAt) {
+    accumMs += Date.now() - openedAt;
+    openedAt = 0;
+  }
   if (mask) mask.style.visibility = 'hidden';
   if (popup) popup.style.visibility = 'hidden';
 }
