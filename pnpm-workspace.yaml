@@ -1,0 +1,7 @@
+# 构建脚本白名单（pnpm 11）。
+# esbuild@0.21.5 的 postinstall 在本机（Windows + Node 24 + pnpm 11）下
+# 执行 install.js 的二进制版本校验时 stdout 为空而报错，但 esbuild 通过
+# optional 依赖 @esbuild/win32-x64 提供的二进制可直接运行（build 已验证），
+# 故显式禁止其 build script，避免每次 install 出现错误噪音。
+allowBuilds:
+  esbuild: false
