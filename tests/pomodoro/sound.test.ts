@@ -38,6 +38,23 @@ function mockAudio(): FakeAudioContext {
   return ctx;
 }
 
+/** 挂起态上下文 mock：state='suspended' + resume 间谍（自动播放策略场景） */
+function mockSuspendedAudio(): FakeAudioContext {
+  const ctx: any = new FakeAudioContext();
+  ctx.state = 'suspended';
+  ctx.resume = vi.fn(() => Promise.resolve());
+  (globalThis as any).AudioContext = class {
+    currentTime = 0;
+    destination = {};
+    createOscillator = ctx.createOscillator;
+    createGain = ctx.createGain;
+    close = ctx.close;
+    state = 'suspended';
+    resume = ctx.resume;
+  };
+  return ctx;
+}
+
 afterEach(() => {
   delete (globalThis as any).AudioContext;
   delete (globalThis as any).webkitAudioContext;
@@ -93,11 +110,31 @@ describe('playSound（阶段开始提示声，各一声）', () => {
     expect(gain.gain.exponentialRampToValueAtTime).toHaveBeenCalledWith(0.8, 0.02);
   });
 
-  it('音量越界钳制：150 → 0.8；0 → 0.008（近静音）', () => {
+  it('音量越界钳制：150 → 0.8', () => {
     const ctx = mockAudio();
     playSound('focus-start', 150);
     expect((ctx.createGain.mock.results[0].value as FakeGain).gain.exponentialRampToValueAtTime).toHaveBeenCalledWith(0.8, 0.02);
+  });
+
+  it('音量 <=0 真静音：不建振荡器直接短路（P2，原近静音峰值行为废弃）', () => {
+    const ctx = mockAudio();
     playSound('focus-start', 0);
-    expect((ctx.createGain.mock.results[1].value as FakeGain).gain.exponentialRampToValueAtTime).toHaveBeenCalledWith(0.008, 0.02);
+    playSound('pause', -5);
+    expect(ctx.createOscillator).not.toHaveBeenCalled();
+    expect(ctx.createGain).not.toHaveBeenCalled();
+  });
+
+  it('ctx.state=suspended → 播放前先 resume（P2 自动播放策略兜底）', () => {
+    const ctx = mockSuspendedAudio();
+    playSound('focus-start');
+    expect((ctx as any).resume).toHaveBeenCalledTimes(1);
+    expect(ctx.createOscillator).toHaveBeenCalledTimes(1); // resume 后正常出声
+  });
+
+  it('ctx 未挂起（无 state 字段）→ 不调用 resume，正常播放', () => {
+    const ctx = mockAudio();
+    playSound('short-break-start');
+    expect((ctx as any).resume).toBeUndefined();
+    expect(ctx.createOscillator).toHaveBeenCalledTimes(1);
   });
 });

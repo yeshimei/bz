@@ -18,6 +18,11 @@ export interface PomodoroState {
   /** 剩余秒（暂停/停止时有效） */
   remaining: number;
   paused: boolean;
+  /**
+   * 暂停来源标记（仅冻结暂停写入）：'autopause' = 后台自动暂停产生的冻结；
+   * 缺省/undefined = 手动暂停或旧数据（兼容读取）。恢复/重置/跳过/手动暂停时清除。
+   */
+  pausedBy?: 'autopause';
   /** 当前循环内已完成专注数（进长休后清零） */
   cycleFocusCount: number;
 }
@@ -73,10 +78,10 @@ export function createInitialState(): PomodoroState {
 /** 合法阶段白名单（数据层校验用） */
 export const PHASES: Phase[] = ['idle', 'focus', 'short-break', 'long-break'];
 
-/** 恢复暂停：endTime = now + remaining（start 暂停分支与 resume 共用） */
+/** 恢复暂停：endTime = now + remaining（start 暂停分支与 resume 共用）；清除暂停来源标记 */
 function resumePhase(state: PomodoroState, now: number): TransitionResult {
   return {
-    state: { ...state, paused: false, remaining: 0, endTime: now + state.remaining * 1000 },
+    state: { ...state, paused: false, pausedBy: undefined, remaining: 0, endTime: now + state.remaining * 1000 },
     event: { type: 'started', phase: state.phase },
   };
 }
@@ -101,7 +106,7 @@ function breakPhase(count: number, d: Durations): Phase {
 /** 从「未开始」态启动计时 */
 function startPhase(state: PomodoroState, phase: Phase, now: number, d: Durations): TransitionResult {
   return {
-    state: { ...state, phase, endTime: now + phaseDurationSec(phase, d) * 1000, paused: false, remaining: 0 },
+    state: { ...state, phase, endTime: now + phaseDurationSec(phase, d) * 1000, paused: false, pausedBy: undefined, remaining: 0 },
     event: { type: 'started', phase },
   };
 }
@@ -170,7 +175,8 @@ export function transition(state: PomodoroState, action: PomodoroAction, now: nu
     if (state.endTime === null) return { state, event: { type: 'none' } };
     if (o.forceFocus && state.phase === 'focus') return { state, event: { type: 'none' } };
     return {
-      state: { ...state, paused: true, remaining: Math.ceil((state.endTime - now) / 1000), endTime: null },
+      // 手动暂停：清除可能残留的冻结来源标记（pausedBy 只在冻结暂停期间有效）
+      state: { ...state, paused: true, pausedBy: undefined, remaining: Math.ceil((state.endTime - now) / 1000), endTime: null },
       event: { type: 'none' },
     };
   }
@@ -182,7 +188,7 @@ export function transition(state: PomodoroState, action: PomodoroAction, now: nu
     if (o.forceFocus && state.phase === 'focus') return { state, event: { type: 'none' } };
     const phase = activePhase(state.phase);
     return {
-      state: { ...state, phase, endTime: null, paused: false, remaining: phaseDurationSec(phase, d) },
+      state: { ...state, phase, endTime: null, paused: false, pausedBy: undefined, remaining: phaseDurationSec(phase, d) },
       event: { type: 'none' },
     };
   }
@@ -193,7 +199,7 @@ export function transition(state: PomodoroState, action: PomodoroAction, now: nu
     if (phase === 'focus') next = o.autoSkipBreak ? 'focus' : breakPhase(state.cycleFocusCount, d);
     else next = 'focus';
     return {
-      state: { ...state, phase: next, endTime: null, paused: false, remaining: phaseDurationSec(next, d) },
+      state: { ...state, phase: next, endTime: null, paused: false, pausedBy: undefined, remaining: phaseDurationSec(next, d) },
       event: { type: 'phase-completed', completedPhase: phase, nextPhase: next, autoStarted: false, longBreak: false },
     };
   }
@@ -212,7 +218,7 @@ function idleState(): PomodoroState {
 /**
  * 超时恢复（ticket 62 修订：不补算）：Obsidian 关闭/重启期间的时间一律不折算成历史。
  * - 运行中（endTime 非空）且已超时 → 会话结束回空闲（剩余作废、不记历史）。
- * - 暂停态 / 空闲态不流转（时间已冻结，无超时概念）。
+ * - 暂停态 / 空闲态不流转（时间已冻结，无超时概念；冻结暂停的 pausedBy 来源标记原样保留）。
  * 取代旧「逐段补算」语义：不再把离开时长拆成完整番茄钟编造进历史。
  */
 export function recover(

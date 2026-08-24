@@ -282,4 +282,62 @@ describe('recover：超时恢复（ticket 62 不补算）', () => {
     expect(history.length).toBe(0);
     expect(events.length).toBe(0);
   });
+
+  it('冻结暂停态（pausedBy=autopause）→ 原样保留不流转（P1-4：标记供重启后 locked 判定放行）', () => {
+    const frozen: PomodoroState = {
+      phase: 'focus',
+      endTime: null,
+      remaining: 1200,
+      paused: true,
+      pausedBy: 'autopause',
+      cycleFocusCount: 0,
+    };
+    const { state, history, events } = recover(frozen, [], NOW + 3_600_000, D, O);
+    expect(state).toBe(frozen);
+    expect(state.pausedBy).toBe('autopause');
+    expect(history.length).toBe(0);
+    expect(events.length).toBe(0);
+  });
+});
+
+describe('pausedBy 暂停来源标记（P1-4：冻结 vs 手动）', () => {
+  /** 后台自动暂停冻结态样例 */
+  const frozen: PomodoroState = {
+    phase: 'focus',
+    endTime: null,
+    remaining: 1200,
+    paused: true,
+    pausedBy: 'autopause',
+    cycleFocusCount: 0,
+  };
+
+  it('resume：清除标记并恢复运行', () => {
+    const r = transition(frozen, 'resume', NOW, D, O);
+    expect(r.state.paused).toBe(false);
+    expect(r.state.endTime).toBe(NOW + 1200 * 1000);
+    expect(r.state.pausedBy).toBeUndefined();
+    expect(r.event.type).toBe('started');
+  });
+
+  it('start：暂停态恢复（resume 语义）同样清除标记', () => {
+    const r = transition(frozen, 'start', NOW, D, O);
+    expect(r.state.paused).toBe(false);
+    expect(r.state.pausedBy).toBeUndefined();
+  });
+
+  it('reset / skip：离开暂停态时清除标记', () => {
+    const r = transition(frozen, 'reset', NOW, D, O);
+    expect(r.state.paused).toBe(false);
+    expect(r.state.pausedBy).toBeUndefined();
+    const s = transition({ ...frozen, phase: 'short-break' }, 'skip', NOW, D, O);
+    expect(s.state.phase).toBe('focus');
+    expect(s.state.pausedBy).toBeUndefined();
+  });
+
+  it('手动 pause：不携带来源标记（保持 undefined，重启后维持锁定）', () => {
+    const running = transition(createInitialState(), 'start', NOW, D, O).state;
+    const r = transition(running, 'pause', NOW + 60_000, D, O);
+    expect(r.state.paused).toBe(true);
+    expect(r.state.pausedBy).toBeUndefined();
+  });
 });

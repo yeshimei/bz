@@ -195,7 +195,10 @@ function updateButtons(): void {
   const running = state.endTime !== null;
   startBtn.textContent = running ? '暂停' : state.paused ? '继续' : '开始';
   const locked = options().forceFocus && state.phase === 'focus' && (running || state.paused);
-  startBtn.disabled = locked;
+  // P1-4：后台自动暂停的冻结态在重启后仍放行「开始/继续」（否则 forceFocus 下永久死锁）；
+  // 手动暂停（无 pausedBy 标记，含旧数据）维持锁定。
+  const startLocked = locked && !(state.paused && state.pausedBy === 'autopause');
+  startBtn.disabled = startLocked;
   const resetBtn = document.getElementById('pomodoro-btn-reset') as HTMLButtonElement | null;
   const skipBtn = document.getElementById('pomodoro-btn-skip') as HTMLButtonElement | null;
   if (resetBtn) resetBtn.disabled = locked;
@@ -220,7 +223,8 @@ function applyAction(action: PomodoroAction): void {
   }
   // 暂停生效（含手动；forceFocus 下 transition 返回 none 不触发）才通知+响
   if (action === 'pause' && state.paused) notifyPaused();
-  // 落盘：事件非 none（阶段完成/开始），或手动暂停生效（ticket 62：暂停态与后台冻结应持久化）
+  // 落盘：事件非 none（阶段完成/开始），或手动暂停生效（ticket 62：暂停态与后台冻结应持久化；
+  // 手动暂停不带来源标记，重启后 locked 判定维持锁定）
   if (r.event.type !== 'none' || (action === 'pause' && state.paused)) void save();
   ensureTick();
   render();
@@ -237,12 +241,14 @@ function autoPauseEnabled(): boolean {
   return tryGetSettings().pomodoroAutoPauseOnHide !== false;
 }
 
-/** 冻结运行中状态（绕过 forceFocus——后台暂停是环境事件，非手动；返回是否由本机制冻结） */
+/** 冻结运行中状态（绕过 forceFocus——后台暂停是环境事件，非手动；返回是否由本机制冻结）；
+ *  写入 pausedBy:'autopause' 来源标记并随落盘持久化（重启后 locked 判定据此放行继续按钮，P1-4） */
 function freezeRunning(s: PomodoroState, now: number): PomodoroState {
   if (s.endTime === null || s.paused) return s;
   return {
     ...s,
     paused: true,
+    pausedBy: 'autopause',
     remaining: Math.max(0, Math.ceil((s.endTime - now) / 1000)),
     endTime: null,
   };
@@ -251,7 +257,7 @@ function freezeRunning(s: PomodoroState, now: number): PomodoroState {
 /** 解冻本机制冻结的状态（仅解除 autoPause 标记的；手动暂停的保持暂停） */
 function unfreezeRunning(s: PomodoroState, now: number): PomodoroState {
   if (!s.paused) return s;
-  return { ...s, paused: false, remaining: 0, endTime: now + s.remaining * 1000 };
+  return { ...s, paused: false, pausedBy: undefined, remaining: 0, endTime: now + s.remaining * 1000 };
 }
 
 /** 窗口 hidden：主番茄钟冻结（仅运行中的；手动暂停的尊重不覆盖） */
@@ -263,7 +269,7 @@ function pauseOnHidden(): void {
     autoPauseMain = true;
   }
   if (autoPauseMain) {
-    void save();
+    void save(); // 冻结态（含 pausedBy:'autopause' 来源标记）落盘，重启恢复后据此放行继续按钮
     render();
   }
 }
@@ -512,14 +518,23 @@ function buildDOM(): void {
   render();
 }
 
-/** 打开弹窗（幂等：已存在则仅确保显示；未加载先 load+recover） */
+/** 打开弹窗（幂等：已存在则仅确保显示；未加载先 load+recover）。
+ *  初始化窗口内并发调用复用同一 in-flight Promise，杜绝双遮罩（P2）。 */
+let openInflight: Promise<void> | null = null;
 export async function openPomodoro(app: App): Promise<void> {
   appRef = app;
   if (!dataManager) dataManager = new PomodoroDataManager(app);
   if (!maskEl) {
-    if (!loaded) await initData();
-    buildDOM();
-    ensureTick(); // 恢复/首次打开时若在倒计时，启动轮询继续走（修复：恢复后不 tick 的 bug）
+    openInflight ??= (async () => {
+      if (!loaded) await initData();
+      buildDOM();
+      ensureTick(); // 恢复/首次打开时若在倒计时，启动轮询继续走（修复：恢复后不 tick 的 bug）
+    })();
+    try {
+      await openInflight;
+    } finally {
+      openInflight = null;
+    }
   }
   // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
   applyMobileWindowFullscreen(
@@ -567,6 +582,7 @@ export function unloadPomodoro(): void {
   }
   unregisterVisibilityListener(); // ticket 62
   autoPauseMain = false;
+  openInflight = null; // 丢弃未完成的初始化（下次 openPomodoro 重新走 init）
   closePomodoro();
   state = createInitialState();
   history = [];

@@ -50,6 +50,8 @@ function normalizeState(raw: any): PomodoroState {
     endTime: typeof raw.endTime === 'number' ? raw.endTime : def.endTime,
     remaining: typeof raw.remaining === 'number' && raw.remaining >= 0 ? raw.remaining : def.remaining,
     paused: typeof raw.paused === 'boolean' ? raw.paused : def.paused,
+    // 冻结来源标记：仅认 'autopause'，旧数据无此字段/非法值 → undefined（手动暂停语义）
+    pausedBy: raw.pausedBy === 'autopause' ? 'autopause' : undefined,
     cycleFocusCount:
       typeof raw.cycleFocusCount === 'number' && raw.cycleFocusCount >= 0 ? raw.cycleFocusCount : def.cycleFocusCount,
   };
