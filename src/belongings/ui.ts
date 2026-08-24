@@ -58,12 +58,11 @@ let sheetEditPending = false;
 let autoRefreshOff: (() => void) | null = null;
 let sortField = 'purchase_date'; // 默认按购买日期
 let sortOrder = 'desc'; // 降序
-let isDarkMode = false;
 
 // ----- 渲染主界面 -----
 function render() {
   if (!listContainer) return;
-  isDarkMode = document.body.classList.contains('theme-dark');
+  const isDarkMode = document.body.classList.contains('theme-dark');
 
   // ----- 排序：根据当前 sortField 和 sortOrder -----
   const items = sortItems();
@@ -561,16 +560,10 @@ function buildForm(
 
 
 /** 弹窗公共结构（遮罩/弹窗/色板） */
-function createModalShell(
-  zIndex: number,
-  maxWidth: number,
-  titleText: string
-): {
+function createModalShell(zIndex: number, maxWidth: number, titleText: string): {
   overlay: HTMLDivElement;
   modal: HTMLDivElement;
   palette: ModalPalette;
-  resolve: (v?: unknown) => void;
-  promise: Promise<unknown>;
 } {
   const isDark = document.body.classList.contains('theme-dark');
   const bg = isDark ? '#1e1e1e' : '#ffffff';
@@ -600,14 +593,9 @@ function createModalShell(
   title.style.cssText = 'margin: 0 0 20px 0; font-size: 20px;';
   modal.appendChild(title);
 
-  let resolveFn: (v?: unknown) => void = () => {};
-  const promise = new Promise((resolve) => {
-    resolveFn = resolve;
-  });
-
   document.body.appendChild(overlay);
   overlay.appendChild(modal);
-  return { overlay, modal, palette, resolve: resolveFn, promise };
+  return { overlay, modal, palette };
 }
 
 /** 编辑弹窗关闭路径统一清理：清抽屉编辑标志 + 注销附属浮层（取消/遮罩/ESC，抽屉保持） */
@@ -628,7 +616,7 @@ function editItemById(id: string): Promise<void> {
 
   // ----- 创建独立编辑弹窗 -----
   return new Promise((resolve) => {
-    const { overlay, modal, palette, resolve: done } = createModalShell(10001, 480, '编辑物品');
+    const { overlay, modal, palette } = createModalShell(10001, 480, '编辑物品');
     // 抽屉来源的编辑：注册附属浮层（弹窗内点击不误关抽屉）
     if (sheetEditPending) registerSheetCompanion(overlay);
 
@@ -660,7 +648,7 @@ function editItemById(id: string): Promise<void> {
     const cancelBtn = createSecondaryButton('取消', palette, () => {
       document.body.removeChild(overlay);
       closeSheetEditState(overlay);
-      done();
+      resolve();
     });
 
     const saveBtn = createActionButton('💾 保存', 'var(--interactive-accent)', async () => {
@@ -694,7 +682,6 @@ function editItemById(id: string): Promise<void> {
         closeSheetEditState(overlay);
         closeItemMenu();
       }
-      done();
       resolve();
     });
 
@@ -708,7 +695,7 @@ function editItemById(id: string): Promise<void> {
       close: () => {
         if (document.body.contains(overlay)) document.body.removeChild(overlay);
         closeSheetEditState(overlay);
-        done();
+        resolve();
       },
     });
 
@@ -717,7 +704,7 @@ function editItemById(id: string): Promise<void> {
       if (e.target === overlay) {
         document.body.removeChild(overlay);
         closeSheetEditState(overlay);
-        done();
+        resolve();
         resolve();
       }
     });
@@ -746,7 +733,7 @@ function deleteItemById(id: string): Promise<void> {
 
   // ----- 创建独立确认弹窗 -----
   return new Promise((resolve) => {
-    const { overlay, modal, palette, resolve: done } = createModalShell(10002, 400, '确认删除');
+    const { overlay, modal, palette } = createModalShell(10002, 400, '确认删除');
     const { isDark } = palette;
 
     modal.style.maxHeight = 'none';
@@ -761,7 +748,6 @@ function deleteItemById(id: string): Promise<void> {
 
     const cancelBtn = createSecondaryButton('取消', palette, () => {
       document.body.removeChild(overlay);
-      done();
       resolve();
     });
 
@@ -773,7 +759,6 @@ function deleteItemById(id: string): Promise<void> {
       // ticket 079：删除成功通知 smartcat（仅标题）
       notifyBelongingsAction({ kind: 'delete', title: item.name });
       document.body.removeChild(overlay);
-      done();
       resolve();
     });
 
@@ -786,7 +771,7 @@ function deleteItemById(id: string): Promise<void> {
       isVisible: () => overlay.isConnected,
       close: () => {
         if (document.body.contains(overlay)) document.body.removeChild(overlay);
-        done();
+        resolve();
         resolve();
       },
     });
@@ -795,7 +780,7 @@ function deleteItemById(id: string): Promise<void> {
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
         document.body.removeChild(overlay);
-        done();
+        resolve();
         resolve();
       }
     });
@@ -817,7 +802,7 @@ function deleteItemById(id: string): Promise<void> {
 // ----- 排序弹窗 -----
 export function showSortModal(): Promise<void> {
   return new Promise((resolve) => {
-    const { overlay, modal, palette, resolve: done } = createModalShell(10003, 480, '排序设置');
+    const { overlay, modal, palette } = createModalShell(10003, 480, '排序设置');
     const { text, border } = palette;
     modal.style.maxHeight = 'none';
     modal.style.overflow = 'visible';
@@ -860,7 +845,7 @@ export function showSortModal(): Promise<void> {
         sortOrder = opt.order;
         render();
         document.body.removeChild(overlay);
-        done();
+        resolve();
         resolve();
       });
       sortGroup.appendChild(btn);
@@ -872,7 +857,6 @@ export function showSortModal(): Promise<void> {
 
     const closeBtn = createSecondaryButton('关闭', palette, () => {
       document.body.removeChild(overlay);
-      done();
       resolve();
     });
 
@@ -889,7 +873,7 @@ export function showSortModal(): Promise<void> {
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
         document.body.removeChild(overlay);
-        done();
+        resolve();
         resolve();
       }
     });
@@ -906,7 +890,7 @@ export function showSortModal(): Promise<void> {
 /** 添加物品（弹窗） */
 export function addItem(): Promise<void> {
   return new Promise((resolve) => {
-    const { overlay, modal, palette, resolve: done } = createModalShell(10000, 480, '添加物品');
+    const { overlay, modal, palette } = createModalShell(10000, 480, '添加物品');
 
     const fields: FormField[] = [
       { id: 'name', label: '📝 物品名称', type: 'text', placeholder: '请输入物品名称', required: true },
@@ -925,7 +909,6 @@ export function addItem(): Promise<void> {
 
     const cancelBtn = createSecondaryButton('取消', palette, () => {
       document.body.removeChild(overlay);
-      done();
       resolve();
     });
 
@@ -959,7 +942,6 @@ export function addItem(): Promise<void> {
       if (document.body.contains(overlay)) {
         document.body.removeChild(overlay);
       }
-      done();
       resolve();
     });
 
@@ -972,7 +954,7 @@ export function addItem(): Promise<void> {
       isVisible: () => overlay.isConnected,
       close: () => {
         if (document.body.contains(overlay)) document.body.removeChild(overlay);
-        done();
+        resolve();
         resolve();
       },
     });
@@ -980,7 +962,7 @@ export function addItem(): Promise<void> {
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
         document.body.removeChild(overlay);
-        done();
+        resolve();
         resolve();
       }
     });

@@ -4,7 +4,6 @@
  * 默认分类 1226 条来自 default-categories.gen.ts（源码逐字提取）
  */
 import { notice } from '../core/notice';
-import { pad2 } from '../core/utils';
 import { getApp } from '../core/app';
 import { getSettings } from '../core/settings-provider';
 import { DEFAULT_CATEGORIES } from './default-categories.gen';
@@ -18,7 +17,7 @@ export function getDataFilePath(): string {
 }
 
 /** 空数据库结构 */
-export function emptyDatabase(): BelongingsDatabase {
+function emptyDatabase(): BelongingsDatabase {
   return {
     version: '1.0',
     last_updated: new Date().toISOString(),
@@ -98,9 +97,4 @@ export function calculateDaysUsed(purchaseDate: string): number {
   const now = new Date();
   const diffTime = Math.abs(now.getTime() - purchase.getTime());
   return Math.ceil(diffTime / 86400000);
-}
-
-export function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return `${date.getFullYear()}.${pad2(date.getMonth() + 1)}.${pad2(date.getDate())}`;
 }
