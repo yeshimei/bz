@@ -103,7 +103,14 @@ export function openSettingsModal(opts: SettingsModalOptions): void {
   const { mask, popup } = createOverlay({
     maskId: 'bz-settings-modal-mask',
     popupId: 'bz-settings-modal-popup',
-    // 高于所有面板与面板内弹窗（主面板 9999/弹窗 10001-10005/闪念窄窗 10020），低于入口页 10100
+    // z-index 家族表（全站统一层规，改层级前先对表）：
+    //   999x        主面板族（各域主面板 9999 / 遮罩 9998）
+    //   10001-10060 域模态旧档（各域历史弹窗/预览/加密确认等）
+    //   10050       设置弹窗（本组件，压域模态、被抽屉与 companion 盖）
+    //   10999-11000 统一抽屉（core/item-actions：遮罩 10999 + 本体 11000）
+    //   11100+      companion 档（必须 >11000：抽屉之上叠的域内小弹窗）
+    //   12000       movie 小窗
+    //   200000      attach 选择器
     zIndex: 10050,
     maxWidth: opts.maxWidth,
     onMaskClick: () => closeSettingsModal(),
