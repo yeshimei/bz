@@ -77,7 +77,7 @@ function cleanTile(t: any): LauncherTile | null {
   };
 }
 
-/** 列数清洗：3-8，缺省桌面 6 / 移动 4 */
+/** 列数清洗：3-8，缺省 6（桌面/移动端口径一致——现状实现即双端 6，勿再写「移动 4」） */
 function cleanColumns(v: any, fallback: number): number {
   const n = parseInt(v, 10);
   return n >= 3 && n <= 8 ? n : fallback;

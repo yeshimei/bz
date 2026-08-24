@@ -88,12 +88,12 @@ describe('launcher 数据层', () => {
       const d = normalizeData({
         version: 3,
         desktop: { tiles: [{ id: 'a', commandId: 'c1', x: 0, y: 0, w: 1, h: 1 }], columns: 5 },
-        mobile: { tiles: [{ id: 'b', commandId: 'c2', x: 1, y: 2, w: 2, h: 1 }], columns: 99 }, // 99 → 4（移动端兜底）
+        mobile: { tiles: [{ id: 'b', commandId: 'c2', x: 1, y: 2, w: 2, h: 1 }], columns: 99 }, // 99 → 6（缺省兜底，桌面/移动一致）
       });
       expect(d.desktop.columns).toBe(5);
       expect(d.desktop.tiles.length).toBe(1);
-      expect(d.mobile.columns).toBe(6); // 越界值回退移动端默认
-      // 缺省列数：desktop 6 / mobile 4
+      expect(d.mobile.columns).toBe(6); // 越界值回退缺省列数
+      // 缺省列数：桌面/移动均为 6（现状实现口径）
       const d2 = normalizeData({ version: 3, desktop: { tiles: [] }, mobile: { tiles: [] } });
       expect(d2.desktop.columns).toBe(6);
       expect(d2.mobile.columns).toBe(6);

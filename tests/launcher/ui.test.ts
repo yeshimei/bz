@@ -443,6 +443,89 @@ describe('入口页 UI', () => {
     expect(saved.desktop.tiles.find((t: any) => t.id === 't2')).toMatchObject({ x: 2, y: 0 }); // 被挤到右侧
   });
 
+  it('拖拽中 pointercancel → 等同放弃拖拽：回弹原布局、清占位框、不写盘（P2）', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({
+        version: 1,
+        tiles: [
+          { id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 },
+          { id: 't2', commandId: 'bz-pw-open', x: 1, y: 0, w: 1, h: 1 },
+        ],
+      })
+    );
+    await openOnce(vault);
+    longPressEnterEdit(gridTiles().find((t) => t.dataset.commandId === 'bz-memo-open'), 50, 50);
+    const t1 = gridTiles().find((t) => t.dataset.commandId === 'bz-memo-open')!;
+    firePointer(t1, 'pointerdown', 0 * STEP + STEP / 2, STEP / 2);
+    // 实时让位：t2 被挤到 (2,0)
+    firePointer(document, 'pointermove', 1 * STEP + STEP / 2, STEP / 2);
+    const live = gridTiles().find((t) => t.dataset.commandId === 'bz-pw-open')!;
+    expect(live.style.gridColumn).toBe('3 / span 1');
+    // 系统打断（来电/手势抢占）
+    firePointer(document, 'pointercancel', 1 * STEP + STEP / 2, STEP / 2);
+    const restored = gridTiles().find((t) => t.dataset.commandId === 'bz-pw-open')!;
+    expect(restored.style.gridColumn).toBe('2 / span 1'); // 回弹原位
+    expect(document.querySelector('.launcher-placeholder')).toBeNull(); // 占位框清除
+    await new Promise((r) => setTimeout(r, 0));
+    const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!); // 放弃拖拽不落盘：文件仍是初始 v1 内容
+    expect(saved.version).toBe(1); // 未被升级改写
+    expect(saved.tiles.find((t: any) => t.id === 't1')).toMatchObject({ x: 0, y: 0 });
+    expect(saved.tiles.find((t: any) => t.id === 't2')).toMatchObject({ x: 1, y: 0 });
+  });
+
+  it('编辑模式按下后 pointercancel → 放弃预判，后续移动不进入拖拽（P2）', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 }] })
+    );
+    await openOnce(vault);
+    longPressEnterEdit(gridTiles()[0], 50, 50);
+    firePointer(gridTiles()[0], 'pointerdown', STEP / 2, STEP / 2);
+    firePointer(document, 'pointercancel', STEP / 2, STEP / 2);
+    // 预判监听已解除：大幅移动不再触发拖拽
+    firePointer(document, 'pointermove', 5 * STEP, 5 * STEP);
+    expect(document.querySelector('.launcher-placeholder')).toBeNull();
+    expect(gridTiles()[0].classList.contains('dragging')).toBe(false);
+  });
+
+  it('拖拽进行中关闭面板（ESC/unload）→ document 级监听解除，残留指针事件不影响数据（P2）', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({
+        version: 1,
+        tiles: [
+          { id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 },
+          { id: 't2', commandId: 'bz-pw-open', x: 1, y: 0, w: 1, h: 1 },
+        ],
+      })
+    );
+    await openOnce(vault);
+    longPressEnterEdit(gridTiles().find((t) => t.dataset.commandId === 'bz-memo-open'), 50, 50);
+    const t1 = gridTiles().find((t) => t.dataset.commandId === 'bz-memo-open')!;
+    firePointer(t1, 'pointerdown', 0 * STEP + STEP / 2, STEP / 2);
+    firePointer(document, 'pointermove', 1 * STEP + STEP / 2, STEP / 2); // 拖拽进行中
+    // ESC 关闭面板时同步解绑 document 级监听
+    const rmSpy = vi.spyOn(document, 'removeEventListener');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(document.getElementById('launcher-overlay')).toBeNull();
+    expect(rmSpy).toHaveBeenCalledWith('pointermove', expect.any(Function));
+    expect(rmSpy).toHaveBeenCalledWith('pointerup', expect.any(Function));
+    expect(rmSpy).toHaveBeenCalledWith('pointercancel', expect.any(Function));
+    rmSpy.mockRestore();
+    // 解绑后残留 move/up 不再落位写盘
+    firePointer(document, 'pointermove', 3 * STEP + STEP / 2, STEP / 2);
+    firePointer(document, 'pointerup', 3 * STEP + STEP / 2, STEP / 2);
+    await new Promise((r) => setTimeout(r, 0));
+    const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!); // 解绑后残留事件未触发写盘：文件仍是初始 v1 内容
+    expect(saved.version).toBe(1);
+    expect(saved.tiles.find((t: any) => t.id === 't1')).toMatchObject({ x: 0, y: 0 });
+    expect(saved.tiles.find((t: any) => t.id === 't2')).toMatchObject({ x: 1, y: 0 });
+  });
+
   it('尺寸菜单：编辑模式点磁贴 → 选择 2×2 → 写盘', async () => {
     const vault = new MockVault();
     await vault.create(
