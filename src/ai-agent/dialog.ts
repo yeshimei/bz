@@ -3,17 +3,7 @@
  * 仅 AI 剪藏匹配使用（权限模型：非 AI 操作静默直改；仅 AI 匹配弹窗批准）。
  */
 import { escManager } from '../core/esc-manager';
-
-/** HTML 转义（AIAgent.js esc 逐字移植） */
-export function esc(s: unknown): string {
-  return String(s ?? '').replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-  }[c] as string));
-}
+import { escapeHtml } from '../core/utils';
 
 export function showClipConfirmDialog({
   itemTitle,
@@ -42,8 +32,8 @@ export function showClipConfirmDialog({
   dialog.innerHTML = `
     <h3 style="margin:0 0 8px; font-size:16px;">🤖 AI 剪藏匹配</h3>
     <div style="font-size:14px; line-height:1.6; margin-bottom:12px;">
-      <div>🎯 新笔记：<b>${esc(noteName)}</b></div>
-      <div>📋 命中备忘录条目：<b>${esc(itemTitle)}</b>（ID:${esc(itemId)}）</div>
+      <div>🎯 新笔记：<b>${escapeHtml(noteName)}</b></div>
+      <div>📋 命中备忘录条目：<b>${escapeHtml(itemTitle)}</b>（ID:${escapeHtml(itemId)}）</div>
       <hr style="margin:10px 0; border:0; border-top:1px solid var(--background-modifier-border);">
       <div><b>批准</b> → 更新条目标题/链接并归档</div>
       <div><b>忽略</b> → 不做任何更改</div>

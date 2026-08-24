@@ -48,12 +48,18 @@ export function syncAutoLink(items: SyncItem[], noteTitle: string, notePath: str
   return changed;
 }
 
-/** 监听目录范围检查（WATCH_FOLDERS：卡片盒 / 归档/网页剪藏） */
+/** 默认监听目录（设置 aiAgentWatchedFolders 未配置时的兜底） */
 export const WATCH_FOLDERS = ['卡片盒', '归档/网页剪藏'];
 export const CLIP_FOLDER = '归档/网页剪藏';
 
+/** 监听目录范围检查：路径等于目录本身或位于其下 */
+export function inFolders(path: string, folders: string[]): boolean {
+  return folders.some((f) => path.startsWith(f + '/') || path === f);
+}
+
+/** 默认监听目录范围检查（index.ts 实际经 inFolders + getWatchedFolders() 动态判断） */
 export function inWatchedFolders(path: string): boolean {
-  return WATCH_FOLDERS.some((f) => path.startsWith(f + '/') || path === f);
+  return inFolders(path, WATCH_FOLDERS);
 }
 
 // ---------- JSON 读写 ----------
