@@ -492,6 +492,18 @@ export class SafeManager {
     }
   }
 
+  /**
+   * 删除一条条目的全部密文镜像（正文 + 附件原始层/预览层）。
+   * 自愈回滚 / 彻底取出 / 失效条目清理共用；deleteSafeFile 幂等，正文缺失时为无害空操作。
+   */
+  private async deleteNoteMirrors(note: SafeNote): Promise<void> {
+    if (note.contentRef) await this.deleteSafeFile(note.contentRef);
+    for (const a of note.attachments) {
+      await this.deleteSafeFile(a.blobRef);
+      if (a.hasPreview) await this.deleteSafeFile(a.previewRef);
+    }
+  }
+
   /** 删除 vault 原文件（非点前缀，走 vault 使 Obsidian 认可删除；幂等） */
   private async deleteVaultFile(path: string) {
     const app = getApp();
@@ -581,11 +593,7 @@ export class SafeManager {
         const idx = this.manifest.notes.findIndex((n) => n.id === id);
         if (idx === -1) continue;
         const note = this.manifest.notes[idx];
-        if (note.contentRef) await this.deleteSafeFile(note.contentRef);
-        for (const a of note.attachments) {
-          await this.deleteSafeFile(a.blobRef);
-          if (a.hasPreview) await this.deleteSafeFile(a.previewRef);
-        }
+        await this.deleteNoteMirrors(note);
         this.manifest.notes.splice(idx, 1);
         changed = true;
       }
@@ -753,10 +761,8 @@ export class SafeManager {
         }
       }
       if (want.has('entry:' + n.id) && !bodyExists) {
-        for (const a of n.attachments) {
-          await this.deleteSafeFile(a.blobRef);
-          if (a.hasPreview) await this.deleteSafeFile(a.previewRef);
-        }
+        // 正文镜像已缺失（dead-entry 判定），deleteNoteMirrors 对缺失正文为无害空操作
+        await this.deleteNoteMirrors(n);
         notes += 1;
       } else {
         kept.push(n);
@@ -998,11 +1004,7 @@ export class SafeManager {
     }
 
     // 全部成功 → 彻底取出（删镜像 + 移除清单条目）
-    await this.deleteSafeFile(note.contentRef);
-    for (const a of note.attachments) {
-      await this.deleteSafeFile(a.blobRef);
-      if (a.hasPreview) await this.deleteSafeFile(a.previewRef);
-    }
+    await this.deleteNoteMirrors(note);
     const idx = this.manifest.notes.indexOf(note);
     if (idx !== -1) this.manifest.notes.splice(idx, 1);
     try {
@@ -1077,11 +1079,7 @@ export class SafeManager {
       return false;
     }
     // 无冲突则彻底取出（删镜像 + 移除清单条目）；清单落盘失败如实返回 false（merge 幂等兜底）
-    await this.deleteSafeFile(note.contentRef);
-    for (const a of note.attachments) {
-      await this.deleteSafeFile(a.blobRef);
-      if (a.hasPreview) await this.deleteSafeFile(a.previewRef);
-    }
+    await this.deleteNoteMirrors(note);
     const idx = this.manifest.notes.indexOf(note);
     if (idx !== -1) this.manifest.notes.splice(idx, 1);
     try {
