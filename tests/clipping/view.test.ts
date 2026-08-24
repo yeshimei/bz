@@ -348,7 +348,7 @@ describe('剪藏本面板', () => {
     expect(document.querySelector('.article-empty')!.textContent).toBe('暂无文章');
   });
 
-  it('⚙️ 设置弹窗：仅剪藏目录/每批加载数量/自动摘要开关三项', async () => {
+  it('⚙️ 设置弹窗：分组卡片（目录/加载/智能；移动端组桌面不渲染）+ 文案规范', async () => {
     const { vault } = await setup();
     vault.files.set('我的/文章/A.md', makeArticleMd('https://x.com/a', '站', 'A', '2025-06-02T08:00:00.000Z'));
     await initArticleView(true);
@@ -357,7 +357,17 @@ describe('剪藏本面板', () => {
     settingsBtn.click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect(popup.textContent).toContain('剪藏本设置');
-    const names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
-    expect(names).toEqual(['剪藏目录', '每批加载数量', '自动摘要']);
+    // 分组卡片结构：桌面 3 组（目录/加载/智能；移动端组仅移动端渲染），原生图标 + 徽标回填项数
+    const heads = [...popup.querySelectorAll('.bz-settings-group-head')];
+    expect(heads.map((el) => (el as HTMLElement).textContent!.trim())).toEqual(['目录1 项', '加载1 项', '智能1 项']);
+    expect(heads.map((el) => el.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon'))).toEqual(['folder-open', 'gauge', 'sparkles']);
+    const settingItems = [...popup.querySelectorAll('.bz-settings-group-body .setting-item')];
+    expect(settingItems.map((el) => (el as HTMLElement).dataset.name)).toEqual(['剪藏目录', '每批加载数量', '自动摘要']);
+    // 文案规范：标题零符号；描述大白话，无括号/符号写法与实现细节
+    expect(settingItems.map((el) => (el as any).__setting.desc as string)).toEqual([
+      '存放网页剪藏文章的文件夹',
+      '滚动加载时每批显示的条目数',
+      '新剪藏的文章自动生成 AI 摘要',
+    ]);
   });
 });
