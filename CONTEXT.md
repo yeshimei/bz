@@ -279,6 +279,9 @@ _Avoid_: 长按菜单、底部菜单（泛指时）、右键菜单（桌面端�
 
 **AIService / createAI**: Q3 的 AI 服务抽象——provider 可选 deepseek / opencode-go，key 存于 QuickAdd 宏设置（`aiProvider`、`opencodeGoApiKey`），支持 override 对象（endpoint/apiKey/model）；插件化后迁移至插件设置。
 
+**域事件总线 (Domain Event Bus)**: bz 的进程内发布订阅设施（ticket 101，ADR-0047，`src/core/domain-bus.ts`）——通道命名 `<域名>:<事件>`（如 `vault:md-modified`、`diary:file-renamed`），fire-and-forget 同步扇出、单 handler 抛错隔离、总线不做去重/防抖。vault 原生四事件由 `core/obsidian-adapter.ts` 全插件唯一订阅点收编并**双通道派发**：恒发通用兜底 `vault:md-*`（任意文件夹监听需求在此接），命中域目录另发语义 `<域>:file-*`；目录归类由 `core/path-classify.ts` 按 settings 实时动态构建（smartcat/context-source 硬编码副本的单源替代）。订阅端两条纪律：回环抑制只能在订阅端做（总线禁全局去环）；同源双订必须自带防双记录。跨域事件类型 type-only 导入，零运行时边。
+_Avoid_: 总线层全局去环、在 obsidian-adapter 之外直接 app.vault.on 订阅 md 四事件、预铺无消费者的通道
+
 ### 设置模型（ADR-0009）
 
 **全局设置页 (Global Settings Page)**: Obsidian 设置中的 bz 设置页——单页平铺（无 tab），只含「AI」「数据存储路径」两个区块。

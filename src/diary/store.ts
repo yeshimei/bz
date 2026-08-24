@@ -5,6 +5,7 @@
  * UI 刷新通过回调解耦（避免循环依赖）。
  */
 import { notice } from '../core/notice';
+import { emitDomainEvent } from '../core/domain-bus';
 import { getApp } from './app';
 import { BATCH_SIZE, DIARY_DIRECTORY, LETTER_DIRECTORY, MOVIE_DIRECTORY, getTagEmoji } from './config';
 import { isEncryptedEntry, parseFile, parseLetterFile, parseMovieFile } from './parser';
@@ -367,6 +368,8 @@ export async function deleteEntry(entryId: string) {
       } finally {
         state.events.isInternalUpdate = false;
       }
+      // 结构性事实：该日期整文件已清空删除（意图类事件 entry-deleted 由 UI 确认回调负责，此处不发）
+      emitDomainEvent('diary:file-vacated', { date: dateStr });
     }
     if (diaryDataMap) diaryDataMap.delete(dateStr);
   } else {
@@ -447,14 +450,20 @@ async function refreshSpecialFile(filePath: string, parseFn: (file: any) => Prom
 /** 监听日记文件变更（原 onFileChange，含节流与内部更新防回环）；P2：debounce 按 filePath 分桶，多文件并行变更互不吞并 */
 const refreshTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
-export async function onFileChange(file: any) {
+/**
+ * 文件变更刷新入口：订阅端 handler，接收域事件载荷 { path }（diary/movie/letter:file-modified
+ * 三通道共用，由 panel.ts 经 onDomainEvent 接线；adapter 仅对 .md 派发域事件，此处保留
+ * .md 后缀兜底判定）。isInternalUpdate 回环抑制留在订阅端本函数内，不前移到派发侧。
+ */
+export async function onFileChange(evt: { path: string }) {
   if (state.events.isInternalUpdate) return;
-  const filePath = file.path;
+  const filePath = evt.path;
   // 目录前缀带边界匹配（避免 我的/日记.md、我的/日记本/... 误判）
   const inDir = (p: string, dir: string) => p === dir || p.startsWith(dir + '/');
-  const isDiaryFile = inDir(filePath, DIARY_DIRECTORY) && file.extension === 'md';
-  const isMovieFile = inDir(filePath, MOVIE_DIRECTORY) && file.extension === 'md';
-  const isLetterFile = inDir(filePath, LETTER_DIRECTORY) && file.extension === 'md';
+  const isMd = filePath.endsWith('.md');
+  const isDiaryFile = inDir(filePath, DIARY_DIRECTORY) && isMd;
+  const isMovieFile = inDir(filePath, MOVIE_DIRECTORY) && isMd;
+  const isLetterFile = inDir(filePath, LETTER_DIRECTORY) && isMd;
 
   if (!isDiaryFile && !isMovieFile && !isLetterFile) return;
 

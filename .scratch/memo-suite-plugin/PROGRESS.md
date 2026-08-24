@@ -1,3 +1,13 @@
+## 2026-08-26 域事件总线一期（ticket 101；worktree/event-bus）
+
+**状态：全量 2064 绿（137 文件）+ tsc 0；worktree/event-bus 已提交，待合并 master + 构建部署**
+
+- core 三件套落地：domain-bus 进程内 pub-sub + obsidian-adapter 全插件唯一 vault 四事件订阅点（双通道派发）+ path-classify 按 settings 动态归类
+- main.ts 装卸接线完成；76 事件总表中已有消费者的通道先行（兜底 4 / 文件域语义 / 六域动作 27 / diary 动作 8 / diary 核心交互若干）
+- 依赖方向改道 ui → core，六域不再 import smartcat；观察文案/防抖/结算/守卫行为冻结零变化
+- 测试改写：六域挂点契约测试改走总线 spy（pomodoro-action/movie-action/memo-action/news-action 等）；diary/note/news 三份 vault 模拟测试补挂 adapter（vault.emit → 总线转译，对齐生产链路）
+- 文档全套：ADR-0047、CONTEXT.md 词条、spec.md 架构节、issue 101
+
 ## 2026-08-26 复习计划设置重构（ticket 100；worktree/review-settings-ux 合并 master 5fb603f，构建部署未推送）
 
 **状态：全量 1890 绿（library-source 3 例历史并发 flaky 除外，单跑恒绿）+ tsc 0；fast-forward 合并 master + 产物入库 c55d935；本地领先 origin 4 笔（用户拍板暂不推送）**

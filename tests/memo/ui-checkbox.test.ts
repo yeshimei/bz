@@ -11,11 +11,11 @@ import { App } from '../../src/memo/app';
 import { UIManager } from '../../src/memo/ui';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
-import { notifyMemoAction } from '../../src/smartcat';
+import { onDomainEvent } from '../../src/core/domain-bus';
 
-vi.mock('../../src/smartcat', () => ({ notifyMemoAction: vi.fn() }));
-
-const mockedNotify = vi.mocked(notifyMemoAction);
+// 观测点换线（域事件派发）：真实总线 + onDomainEvent('memo', spy) 挂间谍，断言 UI 发出的载荷
+const mockedNotify = vi.fn();
+let offNotifySpy: () => void = () => {};
 
 const SETTINGS = {
   todoFilePath: 'CONFIG/STORAGE',
@@ -59,9 +59,11 @@ describe('checkbox 完成防抖（ticket 084a A1）', () => {
     localStorage.clear();
     vi.useFakeTimers();
     mockedNotify.mockClear();
+    offNotifySpy = onDomainEvent('memo', mockedNotify);
   });
 
   afterEach(() => {
+    offNotifySpy();
     vi.useRealTimers();
   });
 

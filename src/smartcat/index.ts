@@ -2,6 +2,9 @@
  * smartcat 域入口（小橘陪伴猫）
  * ensureSmartCat 幂等懒加载：挂载猫容器 + 装配全部子系统 + 常驻监听
  * （file-open 书评 / visibilitychange 欢迎回来 / 记忆固化）。
+ * vault md 事件与六域动作观察均走域事件总线：vault 原生事件由 core/obsidian-adapter
+ * 转译后订阅语义通道消费；movie/memo/news/favorites/belongings/pomodoro 六域 UI 动作
+ * 经 emitDomainEvent(域名, 事件) 派发、此处订阅（原 notifyXxxAction 导出入口已收编为订阅端）。
  * unloadSmartCat 全量清理。命令回调：open（召唤显示）/ chat（聊天）/ hide（隐藏）。
  */
 import type { App } from 'obsidian';
@@ -19,7 +22,8 @@ import { getSmartCatMessage } from './messages';
 import { generatePrompt } from './prompts';
 import { callChat, isAIConfigured } from './api';
 import { generateBookDescription, hasBookTag } from './content';
-import { classifyPath, observationText } from './context-source';
+import { classifyPath } from './context-source';
+import { onDomainEvent } from '../core/domain-bus';
 import { buildMovieActionText, type MovieActionEvent } from './movie-source';
 import { buildMemoActionText, memoDueObservation, type MemoActionEvent, type MemoDueLike } from './memo-source';
 import { parseDiaryFile, decideDiarySettle, diaryDeleteText, diaryDeleteFileText, DIARY_SETTLE_MS, type DiaryEntryLike } from './diary-source';
@@ -66,11 +70,16 @@ let interaction: InteractionManager | null = null;
 let mobileAdapter: MobileInputAdapter | null = null;
 let panels: SmartcatPanels | null = null;
 let fileOpenRef: any = null;
-let vaultRefs: any[] = [];
-/** vault 活动去弹跳：同一路径 10 分钟内只计一次（防自动保存连发；非严格只读不影响数据） */
-const lastActivity = new Map<string, number>();
-/** 机械去簇（红队 B P1-4）：1 分钟内 ≥5 个不同路径 = 批量导入/同步，折叠为机械事件（不计信任成长） */
-const batchWindow: { path: string; t: number }[] = [];
+/** 域事件总线订阅退订函数收集（vault md 事件换线 + 六域方法监听换线；unload 逐一退订） */
+const busUnsubs: (() => void)[] = [];
+/** news 总线通道载荷（news/reader emitDomainEvent('news', ...) 派发；kind 区分两个入口——
+ *  read = markAsRead('saved') 的保存立即形态；saved = saveToClip 登记待补全（带剪藏路径）） */
+interface NewsChannelEvent {
+  kind: 'read' | 'saved';
+  evt: NewsReadEvent;
+  /** saved 入口专用：剪藏落盘路径（待补全登记键） */
+  clipPath?: string;
+}
 /** 聚合讯保存待补全登记（ticket 076，方案 a）：剪藏路径 → 登记（内存态不落盘）；
  *  auto-summary 写回 frontmatter 的剪藏 modify 命中 → 补全完整保存观察并移除；2 分钟降级定时器兜底。
  *  ticket 084b：登记追加 baseName/link（rename 反查锚点）——剪藏 frontmatter 无 title →
@@ -300,78 +309,44 @@ export async function ensureSmartCat(app: App): Promise<void> {
     void generateBookReview();
   });
 
-  // 笔记库接入（ADR-0024 决策，ticket 025）：vault create/modify（实时事件，不扫存量）
-  //   → ① 写日记/闪念计入信任成长（轻质量 0.15）② 笔记库内容 → 小橘信息观察（隐私分级）
-  const onVaultActivity = async (file: any) => {
-    if (!file || !file.path || !data || !personalityGrowth || !memorySystem || !appRef) return;
-    const kind = classifyPath(file.path);
-    if (!kind || !data.config.noteSource) return;
-    // 聚合讯保存联动补全（ticket 076）：剪藏观察整体停用（不再产「你剪藏了」）；
-    // 唯一例外——命中待补全登记的该剪藏 modify → 只做补全产出（先判补全，未命中则 return）。
-    if (kind === 'clipping') {
-      await completePendingNewsSave(file);
-      return;
-    }
-    // 影视动作改由方法监听（ticket 074 修订）：事件通道短路，防 UI 动作双记录
-    if (kind === 'movie') return;
-    // 日记观察改走新链路（ticket 077，ADR-0030）：每条日记独立 10 分钟结算——
-    // 替换原 observationText 快照分支；原日记 10 分钟去弹跳、信任成长 developBasedOnInteraction 不再执行；
-    // PAD 正向轻推（红队 C 接线，diary→note_create）照旧保留（新链路自带 per-entry 计时，无需机械去簇防批量）。
-    if (kind === 'diary') {
-      if (moodSystem) moodSystem.handleInteraction('note_create' as any, 0.5);
-      await handleDiaryVaultActivity(file);
-      return;
-    }
-    // 卡片盒/现代诗/信 观察改走新链路（ticket 083，ADR-0035）：每篇文件独立 10 分钟结算——
-    // 替换原 observationText 快照分支（flash/poem/letter 的 observationText 分支不再被触发）；
-    // 原三域 10 分钟去弹跳、机械去簇、信任成长不再执行；PAD 正向轻推（note_create）照旧保留
-    // （对齐日记分支写法：新链路自带 per-file 计时，无需机械去簇防批量）。
-    if (kind === 'flash' || kind === 'poem' || kind === 'letter') {
-      if (moodSystem) moodSystem.handleInteraction('note_create' as any, 0.5);
-      await handleNoteVaultActivity(file);
-      return;
-    }
-
-    // 收藏本动作改由方法监听（ticket 078）：favorites 是 JSON 数据域本不产 vault 事件，防御性短接
-    if (kind === 'favorites') return;
-
-    // 归物本动作改由方法监听（ticket 079）：事件通道短路，防 UI 动作双记录
-    if (kind === 'belongings') return;
-
-    // 番茄钟观察改由方法监听（ticket 080）：事件通道短路，防 UI 动作双记录（对齐 movie 先例）
-    if (kind === 'pomodoro') return;
-
-    // 书库 md 通道短路（ticket 081）：划线/想法改由 weave-data.json 计数观察（防双记录；
-    // context-source 的 reading 分支保留不删，但从此不再被触发）
-    if (kind === 'reading') return;
-    const now = Date.now();
-    const last = lastActivity.get(file.path) || 0;
-    if (now - last < 10 * 60 * 1000) return;          // 同一路径 10 分钟去弹跳
-    lastActivity.set(file.path, now);
-    if (lastActivity.size > 300) {
-      const first = lastActivity.keys().next().value;
-      if (first !== undefined) lastActivity.delete(first);
-    }
-    // 机械去簇：1 分钟内不同路径 ≥5 条 → 批量导入/同步，折叠为一次机械事件（不计信任、观察合并）
-    const since = now - 60 * 1000;
-    while (batchWindow.length && batchWindow[0].t < since) batchWindow.shift();
-    batchWindow.push({ path: file.path, t: now });
-    const distinct = new Set(batchWindow.map((b) => b.path)).size;
-    const mechanical = distinct >= 5;
-    // 信任成长：此点之后不再有 flash（ticket 083 已早退于上——flash/poem/letter 三域信任成长不再执行，
-    // 对齐日记 077 的处理；此处信任成长仅剩 reading 可达，flash 死分支随 tsc 收敛删除）
-    // PAD 生产补接线（2026-08-23 用户拍板，红队 C G1/G2 消除 sim 专属通道假阳性）：
-    // vault 正向活动轻量影响心情——用生产 EFFECTS 表（不改公式，仅接线），强度 VAULT_PAD_GAIN=0.5
-    // （diary/三域的 note_create 轻推已在早退分支内照旧执行；此处到达的 kind 仅剩 reading）
-    if (!mechanical && moodSystem) {
-      moodSystem.handleInteraction('note_read' as any, 0.5);
-    }
-    try {
-      const text = await observationText(appRef, file as any, kind);
-      // 2026-08-23 用户拍板：所有内容走 LLM 云端打分 + 词法情绪（AI 未配置降级本地规则分）
-      if (text) await memorySystem.addObservation(text, { source: kind });
-    } catch { /* 读取失败静默（不打断主流程） */ }
+  // ---- 域事件总线订阅（vault md 事件换线）：vault create/modify/delete/rename 已由 core/obsidian-adapter
+  //      统一转译为两路域事件（通用兜底 'vault:md-*' + 语义 '<域>:file-*'），此处只订阅语义通道消费；
+  //      载荷 {path} 即原 TFile 的最小面——下游处理只用 file.path。movie/favorites/belongings/pomodoro/
+  //      reading 的原事件通道短路分支随裸订阅一并移除：favorites/belongings/pomodoro 是 JSON 数据域本不产
+  //      md 语义事件，reading（书库 md）不在 path-classify 域表内，movie 不订阅即维持「UI 动作单记录」短路。
+  // 日记 create|modified → PAD 正向轻推照旧（红队 C 接线，diary→note_create）+ 新链路结算（ticket 077）
+  const onDiaryFileUpsert = async (payload: { path: string }): Promise<void> => {
+    if (!data || !personalityGrowth || !memorySystem || !appRef || !data.config.noteSource) return;
+    if (moodSystem) moodSystem.handleInteraction('note_create' as any, 0.5);
+    await handleDiaryVaultActivity(payload);
   };
+  // 卡片盒/现代诗/信 create|modified → PAD 正向轻推照旧（note_create）+ 新链路结算（ticket 083）
+  const onNoteFileUpsert = async (payload: { path: string }): Promise<void> => {
+    if (!data || !personalityGrowth || !memorySystem || !appRef || !data.config.noteSource) return;
+    if (moodSystem) moodSystem.handleInteraction('note_create' as any, 0.5);
+    await handleNoteVaultActivity(payload);
+  };
+  // 聚合讯保存联动补全（ticket 076）：clipping modify 的唯一保留用途——命中待补全登记才产出完整保存观察
+  const onClippingModified = async (payload: { path: string }): Promise<void> => {
+    if (!data || !personalityGrowth || !memorySystem || !appRef || !data.config.noteSource) return;
+    await completePendingNewsSave(payload);
+  };
+  busUnsubs.push(onDomainEvent('diary:file-created', (e: any) => void onDiaryFileUpsert(e)));
+  busUnsubs.push(onDomainEvent('diary:file-modified', (e: any) => void onDiaryFileUpsert(e)));
+  for (const ch of ['flash', 'poem', 'letter'] as const) {
+    busUnsubs.push(onDomainEvent(`${ch}:file-created`, (e: any) => void onNoteFileUpsert(e)));
+    busUnsubs.push(onDomainEvent(`${ch}:file-modified`, (e: any) => void onNoteFileUpsert(e)));
+  }
+  busUnsubs.push(onDomainEvent('clipping:file-modified', (e: any) => void onClippingModified(e)));
+  // 文件删除感知（ticket 077/083）：四域 deleted → 原 onVaultDelete 分派（内部 classifyPath 分 diary/note）
+  for (const ch of ['diary', 'flash', 'poem', 'letter'] as const) {
+    busUnsubs.push(onDomainEvent(`${ch}:file-deleted`, (e: any) => void onVaultDelete(e)));
+  }
+  // 文件重命名/移动感知（ticket 084d B2）：三分支语义保持——订阅通用兜底 renamed 通道而非各域语义通道：
+  // 语义 renamed 按新路径分类派发，「移出观察目录」时新路径不命中任何域、语义路不派发；
+  // 通用通道恒发 {oldPath, newPath}，onVaultRename 内部按新旧路径分类自行三分支判定（迁移 / 删除+清理）
+  busUnsubs.push(onDomainEvent('vault:md-renamed', (e: any) => void onVaultRename({ path: e?.newPath }, e?.oldPath)));
+
   // 日记重启基线（ticket 077）：监听挂载前先对日记目录当日文件建快照（不产出观察，
   // 防重启后旧条目被当首次——已有正文条目记「已见」，后续改动走更新分支）
   await buildDiaryBaseline();
@@ -379,15 +354,16 @@ export async function ensureSmartCat(app: App): Promise<void> {
   // 防重启后旧文件被当首次——有字记「已见」，后续改动走更新分支；不装计时器，事件才起动）
   await buildNoteBaseline();
   if (!initialized) return; // 竞态守卫 3：基线扫描期间被 unload 则停止装配
-  if (app.vault && typeof (app.vault as any).on === 'function') {
-    vaultRefs.push((app.vault as any).on('create', onVaultActivity));
-    vaultRefs.push((app.vault as any).on('modify', onVaultActivity));
-    // 文件删除感知（ticket 077）：diary 目录文件删除 → 追加删除观察（原观察全部保留）
-    vaultRefs.push((app.vault as any).on('delete', onVaultDelete));
-    // 文件重命名/移动感知（ticket 084d B2）：diary/三域文件 rename → 计时与跟踪快照路径 key 迁移
-    // （同观察目录内）或按旧跟踪产删除观察 + 清理（移出观察目录）——防「假删除 + 新路径重刷首落」
-    vaultRefs.push((app.vault as any).on('rename', onVaultRename));
-  }
+
+  // ---- 方法监听换线（六域动作事件总线订阅）：生产域 UI 改经 emitDomainEvent(域名, 事件) 派发，
+  //      此处订阅即原 notifyXxxAction 导出入口（守卫/防重/文案构造原样保留在各自函数体内）；
+  //      news 两入口共用 'news' 通道，按载荷 kind 分派（read=保存立即形态 / saved=登记补全）
+  busUnsubs.push(onDomainEvent<MovieActionEvent>('movie', (evt) => notifyMovieAction(evt)));
+  busUnsubs.push(onDomainEvent<MemoActionEvent>('memo', (evt) => notifyMemoAction(evt)));
+  busUnsubs.push(onDomainEvent<NewsChannelEvent>('news', onNewsChannelEvent));
+  busUnsubs.push(onDomainEvent<FavoritesActionEvent>('favorites', (evt) => notifyFavoritesAction(evt)));
+  busUnsubs.push(onDomainEvent<BelongingsActionEvent>('belongings', (evt) => notifyBelongingsAction(evt)));
+  busUnsubs.push(onDomainEvent<PomodoroActionEvent>('pomodoro', (evt) => notifyPomodoroAction(evt)));
 
   // 域 JSON 感知（2026-08-23 用户拍板：CONFIG/STORAGE 域数据 modify → 观察；懒启动探测）
   void onDomainActivity();
@@ -995,13 +971,11 @@ export function unloadSmartCat(): void {
     } catch (e) { /* 忽略 */ }
     fileOpenRef = null;
   }
-  if (vaultRefs.length && appRef) {
-    for (const ref of vaultRefs) {
-      try { (appRef.vault as any).offref(ref); } catch (e) { /* 忽略 */ }
-    }
-    vaultRefs = [];
+  // 域事件总线订阅全量退订（vault md 事件换线 + 六域方法监听换线）
+  for (const off of busUnsubs) {
+    try { off(); } catch (e) { /* 忽略 */ }
   }
-  lastActivity.clear();
+  busUnsubs.length = 0;
   // ticket 084a B6/B8：通知防重时间表 + 到期扫描失败计数（重开即重置）
   notifyLastAt.clear();
   memoDueScanFail = { date: '', count: 0 };
@@ -1132,9 +1106,9 @@ function memoActionKey(evt: MemoActionEvent): string {
   }
 }
 
-/** 影视动作观察入口：movie 域 UI 确认回调调用（fire-and-forget）。
+/** 影视动作观察处理（movie 域 UI 经 emitDomainEvent('movie', evt) 派发 → 总线订阅进入）。
  *  未初始化 / 未启用（noteSource 关）→ 静默；文案构造见 movie-source.buildMovieActionText。 */
-export function notifyMovieAction(evt: MovieActionEvent): void {
+function notifyMovieAction(evt: MovieActionEvent): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
   const text = buildMovieActionText(evt);
   if (!text) return;
@@ -1145,9 +1119,9 @@ export function notifyMovieAction(evt: MovieActionEvent): void {
 
 // ------------- 备忘录动作观察（ticket 075：方法监听 + 每日到期扫描） -------------
 
-/** 备忘录动作观察入口：memo 域 UI 确认回调调用（fire-and-forget）。
+/** 备忘录动作观察处理（memo 域 UI 经 emitDomainEvent('memo', evt) 派发 → 总线订阅进入）。
  *  未初始化 / 未启用（noteSource 关）→ 静默；文案构造见 memo-source.buildMemoActionText。 */
-export function notifyMemoAction(evt: MemoActionEvent): void {
+function notifyMemoAction(evt: MemoActionEvent): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
   const text = buildMemoActionText(evt);
   if (!text) return;
@@ -1214,22 +1188,23 @@ export async function maybeMemoDueScan(now: Date = new Date()): Promise<void> {
 
 // ------------- 聚合讯观察（ticket 076：2026-08-25 修订——仅保存 + 累计可视时长，ADR-0029） -------------
 
-/** 聚合讯观察入口：news 域 reader 保存路径调用（markAsRead('saved') 发，fire-and-forget）。
+/** 聚合讯观察处理（read 入口）：news 域 reader 经 emitDomainEvent('news', {kind:'read', evt}) 派发。
  *  2026-08-25 用户拍板：跳过/阅读不再产生观察，仅保存发（立即形态，auto-summary 补全走
- *  notifyNewsSaved）；文案构造见 news-source.buildNewsReadText；未初始化/未启用（noteSource 关）→ 静默。 */
-export function notifyNewsRead(evt: NewsReadEvent): void {
+ *  saved 入口登记）；文案构造见 news-source.buildNewsReadText；未初始化/未启用（noteSource 关）→ 静默。 */
+function notifyNewsRead(evt: NewsReadEvent): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
   const text = buildNewsReadText(evt.state, evt.title, evt.platform, evt.durationMin);
   if (text) void memorySystem.addObservation(text, { source: 'news' });
 }
 
-/** 保存登记待补全（方案 a）：news 保存成功路径调用（saveToClip → notifyNewsSaved(evt, 剪藏路径)）。
+/** 保存登记待补全（方案 a，saved 入口）：news 域 reader saveToClip 经
+ *  emitDomainEvent('news', {kind:'saved', evt, clipPath}) 派发 → 总线订阅进入。
  *  登记 {标题, 平台, 时长分, 剪藏 baseName, link} 进内存表并启动 2 分钟降级定时器：
  *  命中 auto-summary 写回的剪藏 modify → 补全完整保存观察并移除登记（clearTimeout）；
  *  定时器兜底（到时无提交）→ 降级产出保存观察并移除登记。未初始化 / noteSource 关 → 静默。
  *  ticket 084b：剪藏 frontmatter 无 title → auto-summary renameToTitle 必改名，登记键（原路径）
  *  会失效；补全/降级靠登记 baseName/link 反查新路径（见 complete/degradePendingNewsSave）。 */
-export function notifyNewsSaved(evt: NewsReadEvent, clipPath: string): void {
+function notifyNewsSaved(evt: NewsReadEvent, clipPath: string): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
   const prev = newsPendingSaves.get(clipPath);
   if (prev) clearTimeout(prev.timer); // 同路径重复保存（覆盖）→ 重置等待
@@ -1246,6 +1221,17 @@ export function notifyNewsSaved(evt: NewsReadEvent, clipPath: string): void {
   });
 }
 
+/** news 总线通道分派：'news' 通道两入口共用，按载荷 kind 分派
+ *  （read → notifyNewsRead 立即形态 / saved → notifyNewsSaved 登记补全，clipPath 必带）。 */
+function onNewsChannelEvent(msg: NewsChannelEvent): void {
+  if (!msg || !msg.evt) return;
+  if (msg.kind === 'saved') {
+    if (msg.clipPath) notifyNewsSaved(msg.evt, msg.clipPath);
+    return;
+  }
+  notifyNewsRead(msg.evt);
+}
+
 /** 移除待补全登记（clearTimeout + 删除） */
 function removePendingNewsSave(clipPath: string): void {
   const reg = newsPendingSaves.get(clipPath);
@@ -1253,7 +1239,7 @@ function removePendingNewsSave(clipPath: string): void {
   newsPendingSaves.delete(clipPath);
 }
 
-/** 剪藏 modify 补全（onVaultActivity clipping 短路分支）：命中登记 → 读 frontmatter summary/tags → 完整保存观察 → 移除登记。
+/** 剪藏 modify 补全（'clipping:file-modified' 总线订阅）：命中登记 → 读 frontmatter summary/tags → 完整保存观察 → 移除登记。
  *  ticket 084b 二次匹配：事件路径 ≠ 登记键（auto-summary renameToTitle 改名后 modify 带新路径）时，
  *  按事件文件 frontmatter link / 文件名反查登记表，改名场景同样补全命中。 */
 async function completePendingNewsSave(file: any): Promise<void> {
@@ -1817,9 +1803,9 @@ export function __getNoteTrackedForTests(): ReadonlyMap<string, { kind: NoteKind
 
 // ------------- 收藏本动作观察（ticket 078：方法监听，ADR-0031） -------------
 
-/** 收藏本动作观察入口：favorites 域 UI 确认回调调用（fire-and-forget）。
+/** 收藏本动作观察处理（favorites 域 UI 经 emitDomainEvent('favorites', evt) 派发 → 总线订阅进入）。
  *  未初始化 / 未启用（noteSource 关）→ 静默；文案构造见 favorites-source.buildFavoritesActionText。 */
-export function notifyFavoritesAction(evt: FavoritesActionEvent): void {
+function notifyFavoritesAction(evt: FavoritesActionEvent): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
   const text = buildFavoritesActionText(evt);
   if (text) void memorySystem.addObservation(text, { source: 'favorites' });
@@ -1827,10 +1813,10 @@ export function notifyFavoritesAction(evt: FavoritesActionEvent): void {
 
 // ------------- 归物本动作观察（ticket 079：方法监听，ADR-0032） -------------
 
-/** 归物本动作观察入口：belongings 域 UI 确认回调调用（fire-and-forget）。
+/** 归物本动作观察处理（belongings 域 UI 经 emitDomainEvent('belongings', evt) 派发 → 总线订阅进入）。
  *  未初始化 / 未启用（noteSource 关）→ 静默；文案构造见 belongings-source.buildBelongingsActionText。
  *  即时同步观察：无 timer/map 需清理。 */
-export function notifyBelongingsAction(evt: BelongingsActionEvent): void {
+function notifyBelongingsAction(evt: BelongingsActionEvent): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
   const text = buildBelongingsActionText(evt);
   if (text) void memorySystem.addObservation(text, { source: 'belongings' });
@@ -1838,9 +1824,9 @@ export function notifyBelongingsAction(evt: BelongingsActionEvent): void {
 
 // ------------- 番茄钟动作观察（ticket 080：方法监听） -------------
 
-/** 番茄钟动作观察入口：pomodoro 域 applyAction 专注自然完成时调用（fire-and-forget）。
+/** 番茄钟动作观察处理（pomodoro 域 applyAction 经 emitDomainEvent('pomodoro', evt) 派发 → 总线订阅进入）。
  *  未初始化 / 未启用（noteSource 关）→ 静默；文案构造见 pomodoro-source.buildPomodoroActionText。 */
-export function notifyPomodoroAction(evt: PomodoroActionEvent): void {
+function notifyPomodoroAction(evt: PomodoroActionEvent): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
   const text = buildPomodoroActionText(evt);
   if (text) void memorySystem.addObservation(text, { source: 'pomodoro' });
@@ -1851,7 +1837,7 @@ const domainPrev = new Map<string, string>();
 const domainObserved = new Set<string>();
 let domainReader: (() => void) | null = null;
 
-/** noteSource 开关守卫（ticket 084c A3，对齐 onVaultActivity / notifyXxxAction 先例）：关 → 书库观察整链静默（不产即时/防抖） */
+/** noteSource 开关守卫（ticket 084c A3，对齐 vault md 事件订阅 / 域动作订阅先例）：关 → 书库观察整链静默（不产即时/防抖） */
 const watchEnabled = (): boolean => !!(data?.config?.noteSource);
 
 /** 书库划线/想法事件入 pending（ticket 081 v2）：per-book 独立 5 分钟窗口，追加内容 + 重置计时；超时结算一条 */
@@ -1895,7 +1881,7 @@ async function consumeLibraryDiff(diff: LibraryWeaveDiff, mem: any): Promise<voi
 }
 
 /** 域 JSON 观察接入（2026-08-23 用户拍板：CONFIG/STORAGE 域数据 modify → 观察；懒启动探测已有数据文件）。
- *  noteSource 关（A3）→ modify 监听照挂、事件逐个短接静默（对齐 onVaultActivity：开关可随时切换）。 */
+ *  noteSource 关（A3）→ modify 监听照挂、事件逐个短接静默（对齐 vault md 事件订阅：开关可随时切换）。 */
 async function onDomainActivity(): Promise<void> {
   if (!appRef || !memorySystem) return;
   const app = appRef;
@@ -1906,7 +1892,7 @@ async function onDomainActivity(): Promise<void> {
   if (!domainReader) {
     const ref = (app.vault as any).on?.('modify', async (file: any) => {
       if (!file?.path) return;
-      if (!watchEnabled()) return; // noteSource 关（ticket 084c A3）→ 域数据 modify 不产（对齐 onVaultActivity 短接）
+      if (!watchEnabled()) return; // noteSource 关（ticket 084c A3）→ 域数据 modify 不产（对齐 vault md 事件订阅短接）
       const key = Object.keys(DOMAIN_FILES).find((k) => DOMAIN_FILES[k].file === file.path);
       if (!key || !domainObserved.has(key)) return;
       let raw: any = null;

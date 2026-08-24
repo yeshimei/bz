@@ -314,7 +314,7 @@ describe('onFileChange', () => {
     // 模拟外部修改：内容变化
     vault.files.set('我的/日记/2024-01-01.md', '# 📖 08:00\nx\n# ✍️ 09:00\ny\n');
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
-    onFileChange({ path: '我的/日记/2024-01-01.md', extension: 'md' });
+    onFileChange({ path: '我的/日记/2024-01-01.md' });
     // 文件变更延迟固定 100ms
     await vi.advanceTimersByTimeAsync(250);
     vi.useRealTimers();
@@ -326,7 +326,7 @@ describe('onFileChange', () => {
     setDiaryDataMap(new Map());
     state.events.isInternalUpdate = true;
     const before = state.data.originalDiaryEntries.length;
-    onFileChange({ path: '我的/日记/2024-01-01.md', extension: 'md' });
+    onFileChange({ path: '我的/日记/2024-01-01.md' });
     await new Promise((r) => setTimeout(r, 30));
     expect(state.data.originalDiaryEntries.length).toBe(before);
   });
@@ -334,7 +334,7 @@ describe('onFileChange', () => {
   it('非日记目录的文件不处理', async () => {
     makeVault({ '其他/note.md': 'x' });
     setDiaryDataMap(new Map());
-    onFileChange({ path: '其他/note.md', extension: 'md' });
+    onFileChange({ path: '其他/note.md' });
     await new Promise((r) => setTimeout(r, 30));
     expect(state.data.originalDiaryEntries).toEqual([]);
   });
@@ -348,8 +348,8 @@ describe('onFileChange', () => {
     vault.files.set('我的/日记/2024-01-01.md', '# 📖 08:00\na改\n');
     vault.files.set('我的/日记/2024-01-02.md', '# ✍️ 09:00\nb改\n');
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
-    onFileChange({ path: '我的/日记/2024-01-01.md', extension: 'md' });
-    onFileChange({ path: '我的/日记/2024-01-02.md', extension: 'md' });
+    onFileChange({ path: '我的/日记/2024-01-01.md' });
+    onFileChange({ path: '我的/日记/2024-01-02.md' });
     // 文件变更延迟固定 100ms
     await vi.advanceTimersByTimeAsync(250);
     vi.useRealTimers();

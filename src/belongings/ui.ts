@@ -23,7 +23,7 @@ import {
 } from '../core/item-actions';
 import { loadDatabase, saveDatabase, calculateDailyCost, calculateDaysUsed, getDataFilePath } from './data';
 import type { BelongingsDatabase, BelongingsItem } from './types';
-import { notifyBelongingsAction } from '../smartcat';
+import { emitDomainEvent } from '../core/domain-bus';
 import { belongingsEditChanges } from '../smartcat/belongings-source';
 
 // ----- 类型 -----
@@ -254,7 +254,7 @@ function buildActions(item: BelongingsItem, rebuild: () => void): ItemAction[] {
           item.last_updated = new Date().toISOString();
           await saveDatabase(database!);
           // ticket 079：状态流转通知 smartcat（4 态动词化，不防抖）
-          notifyBelongingsAction({ kind: 'status', title: item.name, status: s });
+          emitDomainEvent('belongings', { kind: 'status', title: item.name, status: s });
           render();
           rebuild();
         })();
@@ -688,7 +688,7 @@ function editItemById(id: string): Promise<void> {
       render();
       notice(`物品「${name}」已更新`, 'success');
       // ticket 079：编辑成功通知 smartcat（α 变化列表：snapshot vs 保存后的 item）
-      notifyBelongingsAction({ kind: 'edit', title: name, changes: belongingsEditChanges(snapshot, item) });
+      emitDomainEvent('belongings', { kind: 'edit', title: name, changes: belongingsEditChanges(snapshot, item) });
 
       if (document.body.contains(overlay)) {
         document.body.removeChild(overlay);
@@ -773,7 +773,7 @@ function deleteItemById(id: string): Promise<void> {
       render();
       notice(`已删除「${item.name}」`, 'success');
       // ticket 079：删除成功通知 smartcat（仅标题）
-      notifyBelongingsAction({ kind: 'delete', title: item.name });
+      emitDomainEvent('belongings', { kind: 'delete', title: item.name });
       document.body.removeChild(overlay);
       resolve();
     });
@@ -954,7 +954,7 @@ export function addItem(): Promise<void> {
       render();
       notice(`物品「${name}」已添加`, 'success');
       // ticket 079：添加成功通知 smartcat（键值式完整信息，字段有才加）
-      notifyBelongingsAction({ kind: 'add', item: newItem });
+      emitDomainEvent('belongings', { kind: 'add', item: newItem });
 
       if (document.body.contains(overlay)) {
         document.body.removeChild(overlay);
