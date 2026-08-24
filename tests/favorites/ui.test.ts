@@ -668,3 +668,123 @@ describe('收藏本 smartcat 观察挂点（ticket 078 方法监听）', () => {
     expect(hasNotice('保存失败：磁盘错误')).toBe(true);
   });
 });
+
+describe('收藏本修复回归（P0-7 层级 / P1-36 余额状态 / P1-37 并发写回）', () => {
+  afterEach(() => {
+    closeItemMenu();
+    vi.unstubAllGlobals();
+  });
+
+  it('P0-7：添加弹窗遮罩/弹窗 zIndex 抬到 11100/11101（压过抽屉遮罩 10999 与抽屉本体 11000）', async () => {
+    const { ui } = await setup();
+    ui.build();
+    expect(Number(ui.addMask!.style.zIndex)).toBeGreaterThanOrEqual(11100);
+    expect(Number(ui.addPopup!.style.zIndex)).toBeGreaterThanOrEqual(11100);
+  });
+
+  it('P1-36：查询失败后自动刷新成功 → balanceError 清空（内存+落盘），卡片不再显示错误态', async () => {
+    const { ui, dm } = await setup();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ balance: 42.5 }) }));
+    await dm.add(makeItem({
+      id: '9', tags: ['大模型'], type: '大模型', title: 'LLM', url: '',
+      llmConfig: { apiKeys: 'sk-1', balanceUrl: 'https://api.example.com/balance' },
+      balance: null, balanceCacheTime: null, balanceError: 'HTTP 500',
+    }));
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 30));
+
+    const saved = (await dm.getAll())[0];
+    expect(saved.balance).toBe('42.5');
+    expect(saved.balanceError).toBeNull(); // 落盘清空（不再粘滞）
+    expect(ui.currentItems.find((i) => i.id === '9')!.balanceError).toBeNull(); // 内存清空
+    const container = document.getElementById('fav-entries-container')!;
+    expect(container.textContent).toContain('(余额: 42.5)');
+    expect(container.textContent).not.toContain('❌');
+  });
+
+  it('P1-36：编辑时取消「大模型」标签保存 → llmConfig/balance/balanceCacheTime 显式置 null，无幽灵查询', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { ui, dm } = await setup();
+    await dm.add(makeItem({
+      id: '7', title: 'LLM 条目', tags: ['大模型', '网站'], type: '大模型', url: '',
+      llmConfig: { apiKeys: 'sk-old', balanceUrl: '' },
+      balance: '9.9', balanceCacheTime: Date.now(), balanceError: null,
+    }));
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    // 打开编辑弹窗，取消「大模型」标签（保留「网站」）后保存
+    const card = document.querySelector('#fav-entries-container .fav-card') as HTMLElement;
+    rightClickOpen(card);
+    await new Promise((r) => setTimeout(r, 10));
+    clickAction('编辑');
+    await new Promise((r) => setTimeout(r, 10));
+    const typeBtns = [...document.querySelectorAll('.fav-type-btn')] as HTMLElement[];
+    typeBtns.find((b) => b.dataset.tag === '大模型')!.click(); // 取消选中
+    ui.addSaveBtn!.click();
+    await new Promise((r) => setTimeout(r, 30));
+
+    const saved = (await dm.getAll())[0];
+    expect(saved.tags).toEqual(['网站']);
+    expect(saved.llmConfig).toBeNull();
+    expect(saved.balance).toBeNull();
+    expect(saved.balanceCacheTime).toBeNull();
+    // 无幽灵查询：保存后的自动刷新不再对该条目发起余额请求
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('P1-36：更换 apiKeys 保存（无余额URL）→ 旧余额缓存一并失效置空', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { ui, dm } = await setup();
+    await dm.add(makeItem({
+      id: '7', title: 'LLM 条目', tags: ['大模型'], type: '大模型', url: '',
+      llmConfig: { apiKeys: 'sk-old', balanceUrl: '' },
+      balance: '9.9', balanceCacheTime: Date.now(), balanceError: null,
+    }));
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const card = document.querySelector('#fav-entries-container .fav-card') as HTMLElement;
+    rightClickOpen(card);
+    await new Promise((r) => setTimeout(r, 10));
+    clickAction('编辑');
+    await new Promise((r) => setTimeout(r, 10));
+    ui.llmApiKeysInput!.value = 'sk-new';
+    ui.addSaveBtn!.click();
+    await new Promise((r) => setTimeout(r, 30));
+
+    const saved = (await dm.getAll())[0];
+    expect(saved.llmConfig).toMatchObject({ apiKeys: 'sk-new' });
+    expect(saved.balance).toBeNull(); // 旧 key 的 9.9 不残留
+    expect(saved.balanceCacheTime).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled(); // 未取到新值前不携带旧余额
+  });
+
+  it('P1-37：_batchUpdate 写前重读比对——读后并发变更基于最新值重套本批结果再写', async () => {
+    const { ui } = await setup();
+    let store: any[] = [makeItem({ id: '1', title: 'A' }), makeItem({ id: '2', title: 'B' })];
+    let reads = 0;
+    const writeMock = vi.fn(async (data: any[]) => {
+      store = data.map((x) => ({ ...x }));
+    });
+    ui.dataManager = {
+      read: vi.fn(async () => {
+        reads++;
+        if (reads === 2) store = store.map((x) => (x.id === '2' ? { ...x, title: 'B-并发改' } : x)); // 第一次读后被并发写入者改
+        return store.map((x) => ({ ...x }));
+      }),
+      write: writeMock,
+    } as any;
+
+    await ui._batchUpdate({ '1': { balance: '42.5', balanceCacheTime: 1234567890 } });
+
+    expect(writeMock).toHaveBeenCalledTimes(1);
+    expect(store.find((x) => x.id === '1')!.balance).toBe('42.5');   // 本批结果落盘
+    expect(store.find((x) => x.id === '2')!.title).toBe('B-并发改'); // 并发写入者的变更未丢
+  });
+});
