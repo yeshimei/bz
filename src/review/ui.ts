@@ -287,7 +287,8 @@ export class UIManager {
         watchBox.appendChild(chip);
       });
       const addRow = document.createElement('div');
-      addRow.className = 'setting-item';
+      // 纯操作行：复用 setting-item 布局 + bz-setting-action-row 豁免徽标计数（非设置项）
+      addRow.className = 'setting-item bz-setting-action-row';
       addRow.style.cssText = 'border:none;padding:8px 0;';
       const ctl = document.createElement('div');
       ctl.className = 'setting-item-control';
