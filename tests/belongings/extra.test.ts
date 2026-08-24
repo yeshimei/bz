@@ -37,7 +37,7 @@ function seed(vault: MockVault) {
 /** 添加弹窗内按名称定位控件 */
 function modalByTitle(title: string): HTMLElement {
   return [...document.querySelectorAll('div')].find(
-    (d) => d.style.zIndex === '10000' && d.textContent?.includes(title)
+    (d) => d.style.zIndex === '11100' && d.textContent?.includes(title)
   ) as HTMLElement;
 }
 
@@ -136,7 +136,7 @@ describe('search-select 键盘导航', () => {
     categoryInput.focus();
     categoryInput.dispatchEvent(new Event('input'));
     const dropdownItems = modal.querySelectorAll('#add-todo-scenes, [style*="display: block"]');
-    // 选项 div 在 dropdown 内（z-index 10001）
+    // 选项 div 在 dropdown 内（z-index 11101）
     const opt = [...modal.querySelectorAll('div')].find((d) => d.textContent === '📱 备用手机');
     if (opt) (opt as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 10));
@@ -159,7 +159,7 @@ describe('编辑保存流程', () => {
     editItem.click();
     await new Promise((r) => setTimeout(r, 20));
 
-    const editModal = [...document.querySelectorAll('div')].find((d) => d.style.zIndex === '10001') as HTMLElement;
+    const editModal = [...document.querySelectorAll('div')].find((d) => d.style.zIndex === '11100') as HTMLElement;
     expect(editModal.textContent).toContain('编辑物品');
     // 修改名称并保存
     const nameInput = editModal.querySelector('input') as HTMLInputElement;
@@ -187,7 +187,7 @@ describe('删除取消 / 排序关闭', () => {
     ) as HTMLElement;
     delItem.click();
     await new Promise((r) => setTimeout(r, 20));
-    const confirmModal = [...document.querySelectorAll('div')].find((d) => d.style.zIndex === '10002') as HTMLElement;
+    const confirmModal = [...document.querySelectorAll('div')].find((d) => d.style.zIndex === '11101') as HTMLElement;
     expect(confirmModal.textContent).toContain('确认删除');
     const cancelBtn = [...confirmModal.querySelectorAll('button')].find((b) => b.textContent === '取消')!;
     cancelBtn.click();
@@ -204,10 +204,10 @@ describe('删除取消 / 排序关闭', () => {
     await openBelongingsPanel();
     const p = showSortModal();
     await vi.advanceTimersByTimeAsync(0);
-    const sortModal = [...document.querySelectorAll('div')].find((d) => d.style.zIndex === '10003') as HTMLElement;
+    const sortModal = [...document.querySelectorAll('div')].find((d) => d.style.zIndex === '11100') as HTMLElement;
     const closeBtn = [...sortModal.querySelectorAll('button')].find((b) => b.textContent === '关闭')!;
     closeBtn.click();
     await p;
-    expect(document.querySelector('[style*="z-index: 10003"]')).toBeNull();
+    expect(document.querySelector('[style*="z-index: 11100"]')).toBeNull();
   });
 });

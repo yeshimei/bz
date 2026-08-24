@@ -150,7 +150,7 @@ describe('添加/编辑/删除', () => {
     seed(vault);
     await addBelongingsItemCommand();
     const modal = [...document.querySelectorAll('div')].find(
-      (d) => d.style.zIndex === '10000' && d.style.display === 'flex'
+      (d) => d.style.zIndex === '11100' && d.style.display === 'flex'
     ) as HTMLElement;
     expect(modal.textContent).toContain('添加物品');
 
@@ -199,7 +199,7 @@ describe('添加/编辑/删除', () => {
     await new Promise((r) => setTimeout(r, 20));
 
     const editModal = [...document.querySelectorAll('div')].find(
-      (d) => d.style.zIndex === '10001'
+      (d) => d.style.zIndex === '11100'
     ) as HTMLElement;
     expect(editModal.textContent).toContain('编辑物品');
     expect(editModal.textContent).toContain('机械键盘');
@@ -219,7 +219,7 @@ describe('添加/编辑/删除', () => {
     await new Promise((r) => setTimeout(r, 20));
 
     const confirmModal = [...document.querySelectorAll('div')].find(
-      (d) => d.style.zIndex === '10002'
+      (d) => d.style.zIndex === '11101'
     ) as HTMLElement;
     expect(confirmModal).toBeTruthy();
     expect(confirmModal.textContent).toContain('确认删除');
@@ -315,7 +315,7 @@ describe('归物本抽屉（移动端：状态流转 keepOpen）', () => {
     delItem.click();
     await new Promise((r) => setTimeout(r, 20));
     expect(document.querySelector('.bz-item-sheet')).toBeNull(); // 先收抽屉
-    expect([...document.querySelectorAll('div')].some((d) => (d as HTMLElement).style.zIndex === '10002')).toBe(true);
+    expect([...document.querySelectorAll('div')].some((d) => (d as HTMLElement).style.zIndex === '11101')).toBe(true);
   });
 });
 
@@ -347,7 +347,7 @@ describe('排序弹窗', () => {
     const p = showSortModal();
     await vi.advanceTimersByTimeAsync(0);
     const sortModal = [...document.querySelectorAll('div')].find(
-      (d) => d.style.zIndex === '10003'
+      (d) => d.style.zIndex === '11100'
     ) as HTMLElement;
     expect(sortModal.textContent).toContain('排序设置');
     const buttons = [...sortModal.querySelectorAll('button')];
@@ -385,7 +385,7 @@ describe('smartcat 方法监听挂点（ticket 079）', () => {
     seed(vault);
     await addBelongingsItemCommand();
     const modal = [...document.querySelectorAll('div')].find(
-      (d) => d.style.zIndex === '10000' && d.style.display === 'flex'
+      (d) => d.style.zIndex === '11100' && d.style.display === 'flex'
     ) as HTMLElement;
     const nameInput = modal.querySelector('input') as HTMLInputElement;
     nameInput.value = '新耳机';
@@ -418,7 +418,7 @@ describe('smartcat 方法监听挂点（ticket 079）', () => {
     await new Promise((r) => setTimeout(r, 20));
 
     const editModal = [...document.querySelectorAll('div')].find(
-      (d) => d.style.zIndex === '10001'
+      (d) => d.style.zIndex === '11100'
     ) as HTMLElement;
     expect(editModal.textContent).toContain('机械键盘');
     const nameInput = editModal.querySelector('input') as HTMLInputElement;
@@ -451,7 +451,7 @@ describe('smartcat 方法监听挂点（ticket 079）', () => {
     await new Promise((r) => setTimeout(r, 20));
 
     const editModal = [...document.querySelectorAll('div')].find(
-      (d) => d.style.zIndex === '10001'
+      (d) => d.style.zIndex === '11100'
     ) as HTMLElement;
     const save = [...editModal.querySelectorAll('button')].find((b) => b.textContent === '💾 保存')!;
     save.click();
@@ -502,11 +502,156 @@ describe('smartcat 方法监听挂点（ticket 079）', () => {
     await new Promise((r) => setTimeout(r, 20));
 
     const confirmModal = [...document.querySelectorAll('div')].find(
-      (d) => d.style.zIndex === '10002'
+      (d) => d.style.zIndex === '11101'
     ) as HTMLElement;
     const delBtn = [...confirmModal.querySelectorAll('button')].find((b) => b.textContent === '🗑 删除')!;
     delBtn.click();
     await new Promise((r) => setTimeout(r, 50));
     expect(smartcatMocks.notifyBelongingsAction).toHaveBeenCalledWith({ kind: 'delete', title: '旧手机' });
+  });
+});
+
+describe('修复回归（P0-7 层级 / P0-8 注入 / P1-38 回车双删 / P2 泄漏与容错）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    vault = new MockVault();
+    document.body.innerHTML = '';
+    localStorage.clear();
+    cleanupBelongings();
+    setup(vault);
+    smartcatMocks.notifyBelongingsAction.mockClear();
+  });
+
+  afterEach(() => {
+    Platform.isMobile = false;
+    vi.useRealTimers();
+    closeItemMenu();
+    cleanupBelongings();
+  });
+
+  /** 按标题找域内模态（遮罩层：唯一带非空 zIndex 的容器） */
+  function modalByTitle(title: string): HTMLElement {
+    return [...document.querySelectorAll('div')].find(
+      (d) => d.style.zIndex && d.textContent?.includes(title)
+    ) as HTMLElement;
+  }
+
+  it('P0-7：添加/编辑/删除/排序弹窗 zIndex 均 ≥11100（压过抽屉遮罩 10999），下拉为 11101 档', async () => {
+    seed(vault);
+    // 添加弹窗
+    await addBelongingsItemCommand();
+    const addModal = modalByTitle('添加物品');
+    expect(Number(addModal.style.zIndex)).toBeGreaterThanOrEqual(11100);
+    const dropdown = [...addModal.querySelectorAll('div')].find((d) => Number(d.style.zIndex) > 0) as HTMLElement;
+    expect(Number(dropdown.style.zIndex)).toBe(11101);
+    addModal.remove();
+
+    // 主面板 → 编辑 / 删除 / 排序
+    await openBelongingsPanel();
+    const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
+    const card = overlay.querySelector('[data-id="item_1"]') as HTMLElement;
+    rightClickOpen(card);
+    ([...document.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.includes('编辑')) as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(Number(modalByTitle('编辑物品').style.zIndex)).toBeGreaterThanOrEqual(11100);
+
+    rightClickOpen(card);
+    ([...document.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.includes('删除')) as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(Number(modalByTitle('确认删除').style.zIndex)).toBeGreaterThanOrEqual(11100);
+
+    vi.useFakeTimers();
+    const p = showSortModal();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(Number(modalByTitle('排序设置').style.zIndex)).toBeGreaterThanOrEqual(11100);
+    [...modalByTitle('排序设置').querySelectorAll('button')].find((b) => b.textContent === '关闭')!.click();
+    await p;
+    vi.useRealTimers();
+  });
+
+  it('P0-8：物品名含 HTML → 按文本渲染，不产生 <img> 标签', async () => {
+    vault.files.set(
+      'CONFIG/STORAGE/belongings.json',
+      JSON.stringify({
+        version: '1.0',
+        last_updated: '2025-01-01T00:00:00.000Z',
+        items: {
+          item_x: {
+            id: 'item_x', name: '<img src=x onerror=alert(1)>键盘', category: '⌨ 机械键盘', purchase_price: 99,
+            purchase_date: '2024-06-01', current_status: '使用中', description: '',
+            created_date: '', last_updated: '',
+          },
+        },
+      })
+    );
+    await openBelongingsPanel();
+    const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
+    expect(overlay.querySelector('img')).toBeNull(); // 不产生标签
+    expect(overlay.querySelector('[data-id="item_x"]')).not.toBeNull(); // 卡片正常渲染
+    expect(overlay.textContent).toContain('<img src=x onerror=alert(1)>键盘'); // 纯文本呈现
+  });
+
+  it('P1-38：确认弹窗 Enter 仅触发一次删除回调（preventDefault 拦原生激活）', async () => {
+    seed(vault);
+    await openBelongingsPanel();
+    const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
+    const card = overlay.querySelector('[data-id="item_1"]') as HTMLElement;
+    rightClickOpen(card);
+    ([...document.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.includes('删除')) as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const confirmModal = modalByTitle('确认删除');
+    const delBtn = [...confirmModal.querySelectorAll('button')].find((b) => b.textContent === '🗑 删除')!;
+    delBtn.focus();
+    // 真实路径：Enter 在删除按钮上触发，冒泡到 modal 的 keydown 处理器
+    const ev = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+    delBtn.dispatchEvent(ev);
+    expect(ev.defaultPrevented).toBe(true); // 与 edit/add 弹窗对齐：拦原生按钮二次激活
+    await new Promise((r) => setTimeout(r, 50));
+
+    // 删除回调只执行一次（修复前原生激活 + 处理器 click 会双发）
+    expect(smartcatMocks.notifyBelongingsAction).toHaveBeenCalledTimes(1);
+    expect(smartcatMocks.notifyBelongingsAction).toHaveBeenCalledWith({ kind: 'delete', title: '机械键盘' });
+    const data = JSON.parse(vault.files.get('CONFIG/STORAGE/belongings.json')!);
+    expect(data.items['item_1']).toBeUndefined();
+  });
+
+  it('P2 监听泄漏：search-select 弹窗销毁后，旧 document click 监听自注销', async () => {
+    seed(vault);
+    await addBelongingsItemCommand();
+    const addModal = modalByTitle('添加物品');
+    addModal.remove(); // 弹窗销毁（取消/保存路径同款 removeChild）
+
+    const rmSpy = vi.spyOn(document, 'removeEventListener');
+    document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(rmSpy.mock.calls.some(([type]) => type === 'click')).toBe(true); // closeDropdown 引用化后可移除
+    rmSpy.mockRestore();
+  });
+
+  it('P2 形状容错：缺 purchase_price/category/purchase_date 的脏数据渲染不抛错、按 0 计入统计', async () => {
+    vault.files.set(
+      'CONFIG/STORAGE/belongings.json',
+      JSON.stringify({
+        version: '1.0',
+        last_updated: '2025-01-01T00:00:00.000Z',
+        items: {
+          item_ok: {
+            id: 'item_ok', name: '正常物品', category: '⌨ 机械键盘', purchase_price: 100,
+            purchase_date: '2024-06-01', current_status: '使用中', description: '',
+            created_date: '', last_updated: '',
+          },
+          item_dirty: {
+            id: 'item_dirty', name: '脏数据物品', current_status: '使用中', description: '',
+          },
+        },
+      })
+    );
+    await expect(openBelongingsPanel()).resolves.toBeUndefined(); // 渲染全程不抛 TypeError
+    const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
+    expect(overlay.textContent).toContain('脏数据物品'); // 脏数据卡片照常渲染
+    expect(overlay.textContent).toContain('￥100.00'); // 总资产只计正常项（缺失按 0）
+    expect(overlay.textContent).toContain('📦'); // 分类缺失回退默认图标
+    expect(overlay.textContent).not.toContain('NaN'); // 无 NaN 外漏
   });
 });

@@ -1,6 +1,6 @@
 /**
  * 归物本 UI（归物本.js 逐字移植）
- * 主面板：__gui_wu_ben__（visibility 控制，不销毁）；弹窗 z-index：add=10000/edit=10001/delete=10002/sort=10003；
+ * 主面板：__gui_wu_ben__（visibility 控制，不销毁）；弹窗 z-index（P0-7 统一抬档，压过抽屉遮罩 10999/抽屉 11000）：add=11100/edit=11100/delete=11101/sort=11100；
  * 统一抽屉（桌面右键/移动长按）：状态流转 + 编辑 + 删除（用户拍板，替换原手写 pointerdown 长按删除/单击编辑）；
  * 刷新：右上角 ⏳ 按钮已移除 → 打开期间监听 belongings.json 变更自动刷新（用户拍板）；
  * MutationObserver 主题变化重渲染。
@@ -9,7 +9,7 @@ import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
-import { formatRelativeTime } from '../core/utils';
+import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
@@ -50,6 +50,11 @@ interface FormField {
 
 
 // ----- 模块状态（原脚本全局变量） -----
+/** 域内模态层级档（P0-7）：必须压过抽屉遮罩 10999 / 抽屉本体 11000 */
+const MODAL_Z = 11100;
+/** 模态内 search-select 下拉层级（模态 +1 档） */
+const DROPDOWN_Z = 11101;
+
 let database: BelongingsDatabase | null = null;
 let listContainer: HTMLDivElement | null = null;
 /** 抽屉来源的编辑（保存成功后关抽屉，与收藏本 Q8 同决策） */
@@ -115,9 +120,10 @@ function computeStats(items: any[]): {
   totalDailyCost: number;
   statusMap: Record<string, any[]>;
 } {
-  const totalValue = items.reduce((sum: number, item: any) => sum + item.purchase_price, 0);
+  // P2 形状容错：purchase_price 缺失按 0 计，不再 NaN/TypeError
+  const totalValue = items.reduce((sum: number, item: any) => sum + (item.purchase_price || 0), 0);
   const totalDailyCost = items.reduce((sum: number, item: any) => {
-    return sum + parseFloat(calculateDailyCost(item.purchase_price, item.purchase_date));
+    return sum + parseFloat(calculateDailyCost(item.purchase_price || 0, item.purchase_date));
   }, 0);
 
   // 按状态分组，但保持全局排序顺序
@@ -182,21 +188,23 @@ function buildItemGroupsHtml(
         <h2 style="color: ${textColor}; font-size: 16px; margin-bottom: 12px;">${status === '使用中' ? '✅ 使用中' : status === '闲置' ? '📦 闲置' : status === '已转卖' ? '💰 已转卖' : '🗑 已丢弃'}</h2>
         <div style="display: flex; flex-direction: column; gap: 12px;">
           ${list.map((item, idx) => {
-            const dailyCost = calculateDailyCost(item.purchase_price, item.purchase_date);
+            const dailyCost = calculateDailyCost(item.purchase_price || 0, item.purchase_date);
             const daysUsed = calculateDaysUsed(item.purchase_date);
-            const catIcon = database!.categoryIcons[item.category] || '📦';
+            // P0-8：名称/分类/分类图标过 escapeHtml（物品名含 HTML 时按文本渲染）；P2：字段兜底
+            const catIcon = escapeHtml(database!.categoryIcons[item.category] || '📦');
+            const catName = escapeHtml((item.category || '').replace(/^[^ ]+ /, ''));
             const colorIdx = idx % colors.length;
-            return `<div style="background: ${colors[colorIdx]}; border-radius: 15px; padding: 15px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" data-id="${item.id}">
+            return `<div style="background: ${colors[colorIdx]}; border-radius: 15px; padding: 15px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" data-id="${escapeHtml(item.id)}">
               <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div style="display: flex; align-items: center; gap: 12px;">
                   <div style="font-size: 24px;">${catIcon}</div>
                   <div>
-                    <div style="font-size: 16px; font-weight: bold; margin-bottom: 3px;">${item.name}</div>
-                    <div style="font-size: 14px; opacity: 0.9;">${item.category.replace(/^[^ ]+ /, '')}</div>
+                    <div style="font-size: 16px; font-weight: bold; margin-bottom: 3px;">${escapeHtml(item.name)}</div>
+                    <div style="font-size: 14px; opacity: 0.9;">${catName}</div>
                   </div>
                 </div>
                 <div style="text-align: right;">
-                  <div style="font-size: 16px; font-weight: bold;">￥${item.purchase_price.toFixed(2)}</div>
+                  <div style="font-size: 16px; font-weight: bold;">￥${(item.purchase_price ?? 0).toFixed(2)}</div>
                   <div style="font-size: 14px; opacity: 0.9;">￥${dailyCost}/天</div>
                 </div>
               </div>
@@ -299,9 +307,10 @@ function buildSheetHead(item: BelongingsItem): HTMLElement {
   info.appendChild(title);
   const sub = document.createElement('div');
   sub.className = 'bz-item-sheet-sub';
-  const catName = item.category.replace(/^[^ ]+ /, '');
+  // P2 形状容错：脏数据缺字段不再 TypeError
+  const catName = (item.category || '').replace(/^[^ ]+ /, '');
   const days = calculateDaysUsed(item.purchase_date);
-  sub.textContent = `${catName} · ￥${item.purchase_price.toFixed(2)} · 已用 ${days} 天`;
+  sub.textContent = `${catName} · ￥${(item.purchase_price ?? 0).toFixed(2)} · 已用 ${days} 天`;
   info.appendChild(sub);
 
   body.appendChild(info);
@@ -316,7 +325,7 @@ function buildSheetHead(item: BelongingsItem): HTMLElement {
 function createSearchSelect(
   field: FormField,
   palette: ModalPalette,
-  zIndex = 10002
+  zIndex: number = DROPDOWN_Z
 ): HTMLDivElement {
   const { bg, text, border, inputBg, isDark } = palette;
   const searchWrapper = document.createElement('div');
@@ -391,12 +400,18 @@ function createSearchSelect(
     input.dispatchEvent(new Event('input'));
   });
 
-  // 点击外部关闭
-  document.addEventListener('click', function closeDropdown(e) {
+  // 点击外部关闭（P2 监听泄漏修复：closeDropdown 引用化——弹窗销毁（searchWrapper 脱离文档）
+  // 后首次点击自注销，不再永久挂在 document 上）
+  const closeDropdown = (e: MouseEvent): void => {
+    if (!searchWrapper.isConnected) {
+      document.removeEventListener('click', closeDropdown);
+      return;
+    }
     if (!searchWrapper.contains(e.target as Node)) {
       dropdown.style.display = 'none';
     }
-  });
+  };
+  document.addEventListener('click', closeDropdown);
 
   // 键盘事件
   input.addEventListener('keydown', (e) => {
@@ -482,7 +497,7 @@ function buildForm(
   fields: FormField[],
   palette: ModalPalette,
   searchSelectInit?: (input: HTMLInputElement, field: FormField) => void,
-  searchSelectZIndex = 10002
+  searchSelectZIndex = DROPDOWN_Z
 ): { form: HTMLDivElement; inputs: Record<string, any> } {
   const { text, border, inputBg } = palette;
   const form = document.createElement('div');
@@ -616,7 +631,8 @@ function editItemById(id: string): Promise<void> {
 
   // ----- 创建独立编辑弹窗 -----
   return new Promise((resolve) => {
-    const { overlay, modal, palette } = createModalShell(10001, 480, '编辑物品');
+    // P0-7：抬到 11100 档——companion 编辑弹窗必须压过抽屉遮罩 10999 / 抽屉本体 11000
+    const { overlay, modal, palette } = createModalShell(MODAL_Z, 480, '编辑物品');
     // 抽屉来源的编辑：注册附属浮层（弹窗内点击不误关抽屉）
     if (sheetEditPending) registerSheetCompanion(overlay);
 
@@ -733,7 +749,7 @@ function deleteItemById(id: string): Promise<void> {
 
   // ----- 创建独立确认弹窗 -----
   return new Promise((resolve) => {
-    const { overlay, modal, palette } = createModalShell(10002, 400, '确认删除');
+    const { overlay, modal, palette } = createModalShell(MODAL_Z + 1, 400, '确认删除');
     const { isDark } = palette;
 
     modal.style.maxHeight = 'none';
@@ -785,9 +801,10 @@ function deleteItemById(id: string): Promise<void> {
       }
     });
 
-    // 回车确认
+    // 回车确认（P1-38：preventDefault 与 edit/add 弹窗对齐——拦原生按钮激活，Enter 仅触发一次删除回调）
     modal.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
+        e.preventDefault();
         confirmBtn.click();
       } else if (e.key === 'Escape') {
         cancelBtn.click();
@@ -802,7 +819,7 @@ function deleteItemById(id: string): Promise<void> {
 // ----- 排序弹窗 -----
 export function showSortModal(): Promise<void> {
   return new Promise((resolve) => {
-    const { overlay, modal, palette } = createModalShell(10003, 480, '排序设置');
+    const { overlay, modal, palette } = createModalShell(MODAL_Z, 480, '排序设置');
     const { text, border } = palette;
     modal.style.maxHeight = 'none';
     modal.style.overflow = 'visible';
@@ -890,7 +907,7 @@ export function showSortModal(): Promise<void> {
 /** 添加物品（弹窗） */
 export function addItem(): Promise<void> {
   return new Promise((resolve) => {
-    const { overlay, modal, palette } = createModalShell(10000, 480, '添加物品');
+    const { overlay, modal, palette } = createModalShell(MODAL_Z, 480, '添加物品');
 
     const fields: FormField[] = [
       { id: 'name', label: '📝 物品名称', type: 'text', placeholder: '请输入物品名称', required: true },
@@ -901,7 +918,7 @@ export function addItem(): Promise<void> {
       { id: 'description', label: '📋 描述（可选）', type: 'textarea', placeholder: '规格、颜色、购买原因等...' },
     ];
 
-    const { form, inputs } = buildForm(fields, palette, undefined, 10001);
+    const { form, inputs } = buildForm(fields, palette, undefined, DROPDOWN_Z);
 
     // 按钮容器
     const btnRow = document.createElement('div');
