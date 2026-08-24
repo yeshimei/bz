@@ -18,7 +18,7 @@ import {
 } from '../core/item-actions';
 import { escManager } from '../core/esc-manager';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
-import { openSettingsModal } from '../core/settings-modal';
+import { openSettingsModal, createSettingsGroup } from '../core/settings-modal';
 import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
 import type BzSettings from '../settings';
 import { formatFileSize } from '../core/utils';
@@ -70,14 +70,15 @@ export function showLibrary(app: any) {
   const filterBtn = createIconBtn('🔀', '视图与筛选', () => {
     openFilterModal(app);
   });
-  // 书库设置弹窗（ADR-0009 域设置弹窗：文件夹/识别标签/显示开关）
+  // 书库设置弹窗（ADR-0009 域设置弹窗；分组卡片重设计：目录/列表显示/移动端）
   const settingsBtn = createIconBtn('⚙️', '书库设置', () => {
     openSettingsModal({
       title: '书库设置',
+      maxWidth: 560,
       build: (el) => {
         const s = getSettings();
-        const textSetting = (name: string, desc: string, field: keyof BzSettings) =>
-          new Setting(el)
+        const textSetting = (parent: HTMLElement, name: string, desc: string, field: keyof BzSettings) =>
+          new Setting(parent)
             .setName(name)
             .setDesc(desc)
             .addText((text) =>
@@ -86,8 +87,8 @@ export function showLibrary(app: any) {
                 await saveSettings();
               })
             );
-        const toggleSetting = (name: string, desc: string, field: keyof BzSettings) =>
-          new Setting(el)
+        const toggleSetting = (parent: HTMLElement, name: string, desc: string, field: keyof BzSettings) =>
+          new Setting(parent)
             .setName(name)
             .setDesc(desc)
             .addToggle((toggle) =>
@@ -96,17 +97,23 @@ export function showLibrary(app: any) {
                 await saveSettings();
               })
             );
-        textSetting('书库文件夹', '存放书籍笔记的根目录', 'libraryFolderPath');
-        textSetting('书籍识别标签', 'Frontmatter 中用于识别书籍笔记的标签名', 'bookTag');
-        toggleSetting('显示文件大小', '', 'showFileSize');
-        toggleSetting('显示阅读时长', '', 'showReadingTime');
-        toggleSetting('显示划线数', '', 'showHighlights');
-        toggleSetting('显示想法数', '', 'showThinks');
-        toggleSetting('显示书评摘要', '', 'showReview');
+        // ===== 目录组 =====
+        const dirGroup = createSettingsGroup(el, { icon: 'folder-open', name: '目录' });
+        textSetting(dirGroup, '书库文件夹', '存放书籍笔记的文件夹路径', 'libraryFolderPath');
+        textSetting(dirGroup, '书籍识别标签', '识别书籍笔记所用的标签名', 'bookTag');
+        // ===== 列表显示组 =====
+        const listGroup = createSettingsGroup(el, { icon: 'eye', name: '列表显示' });
+        toggleSetting(listGroup, '显示文件大小', '在书籍卡片上显示文件大小', 'showFileSize');
+        toggleSetting(listGroup, '显示阅读时长', '在书籍卡片上显示阅读时长', 'showReadingTime');
+        toggleSetting(listGroup, '显示划线数', '在书籍卡片上显示划线数量', 'showHighlights');
+        toggleSetting(listGroup, '显示想法数', '在书籍卡片上显示想法数量', 'showThinks');
+        toggleSetting(listGroup, '显示书评摘要', '在书籍卡片上显示书评摘要', 'showReview');
+        // ===== 移动端组（仅移动端显示） =====
         if (isMobileEnv()) {
-          new Setting(el)
+          const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
+          new Setting(mobileGroup)
             .setName('移动端默认全屏')
-            .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
+            .setDesc('移动端打开主窗口时默认全屏，关闭则显示常规卡片')
             .addToggle((toggle) =>
               toggle.setValue(!!s.libraryMobileDefaultFullscreen).onChange(async (v) => {
                 s.libraryMobileDefaultFullscreen = v;
