@@ -253,7 +253,7 @@ describe('设置读取（ticket 09 前置）', () => {
     expect(getShowTagCountSetting()).toBe(false);
   });
 
-  it('⚙️ 设置弹窗：目录/批量/标签计数/文件日期', async () => {
+  it('⚙️ 设置弹窗：分组卡片 + 目录/批量/标签计数/文件日期', async () => {
     const { setSettingsProvider } = await import('../../../src/core/settings-provider');
     const { showDiaryPanel } = await import('../../../src/diary/ui/panel');
     setSettingsProvider(() => ({
@@ -266,11 +266,14 @@ describe('设置读取（ticket 09 前置）', () => {
     (settingsBtn as HTMLElement).click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect(popup.textContent).toContain('日记本设置');
-    const names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    // 分组卡片结构：3 组（目录/显示/默认视图；移动端组桌面不渲染），徽标回填项数
+    const groups = [...popup.querySelectorAll('.bz-settings-group-head')].map((el) => (el as HTMLElement).textContent!.trim());
+    expect(groups).toEqual(['📂目录4 项', '👁️显示5 项', '🖥️默认视图3 项']);
+    const names = [...popup.querySelectorAll('.bz-settings-group-body .setting-item')].map((el) => (el as HTMLElement).dataset.name);
     expect(names).toEqual([
-      '日记目录', '影视目录', '信目录', '每批加载数量', '显示标签计数', '使用文件日期作为默认日期',
-      '显示', '标签按钮显示 emoji', '卡片内容渲染方式', '标签排序',
-      '默认视图', '打开面板默认日期筛选', '默认选中标签', '保存后立即进入编辑',
+      '日记目录', '影视目录', '信目录', '每批加载数量',
+      '显示标签计数', '默认日期取自文件', '标签按钮显示表情', '卡片内容渲染方式', '标签排序',
+      '面板默认日期筛选', '默认选中标签', '保存后进入编辑',
     ]);
   });
 

@@ -3,6 +3,8 @@
  * 单例管理：同一时刻至多一个设置弹窗；重复调用先关闭旧弹窗（toggle 语义）。
  * 结构：mask + popup（标题栏 + 可滚动设置区），点击遮罩 / Esc 关闭（不放右上角关闭按钮）。
  * build 回调内用 obsidian Setting 挂设置项；未挂任何 .setting-item 时显示空态。
+ * 重设计（2026-08 用户拍板方案 A 分组卡片）：build 内可用 createSettingsGroup 建
+ * 「分组卡片」（图标+组名+项数徽标头 + 设置项体）；弹窗打开后徽标自动回填。
  */
 import { Setting } from 'obsidian';
 import { createOverlay } from './dom';
@@ -17,12 +19,52 @@ export interface SettingsModalOptions {
   emptyText?: string;
   /** 空态二级说明 */
   emptyDesc?: string;
+  /** 弹窗最大宽度 px（默认 400；分组卡片方案建议 520 更透气） */
+  maxWidth?: number;
   /**
    * 关闭回调：遮罩点击 / Esc / 被新弹窗顶替时触发（dispose 后调用一次）。
    * 域内用它复位打开时置位的状态（如 smartcat 的交互锁——否则移动端长按开设置
    * 再关闭后，isSettingsOpen 卡在 true，拖拽永久失效）。
    */
   onClose?: () => void;
+}
+
+/** 建「分组卡片」：head（图标+组名+项数徽标）+ body（挂 Setting），返回 body。
+ *  项数徽标由 openSettingsModal 在 build 后统一回填（隐藏项不计）。 */
+export function createSettingsGroup(container: HTMLElement, opts: { icon: string; name: string }): HTMLElement {
+  const group = document.createElement('div');
+  group.className = 'bz-settings-group';
+  const head = document.createElement('div');
+  head.className = 'bz-settings-group-head';
+  const icon = document.createElement('span');
+  icon.className = 'bz-settings-group-icon';
+  icon.textContent = opts.icon;
+  const name = document.createElement('span');
+  name.className = 'bz-settings-group-name';
+  name.textContent = opts.name;
+  const count = document.createElement('span');
+  count.className = 'bz-settings-group-count';
+  count.textContent = '0 项';
+  head.append(icon, name, count);
+  const body = document.createElement('div');
+  body.className = 'bz-settings-group-body';
+  group.append(head, body);
+  container.appendChild(group);
+  return body;
+}
+
+/** 回填分组卡片项数徽标（build 完成后的实际可见设置项数；隐藏项不计）。幂等。 */
+function fillSettingsGroupCounts(content: HTMLElement): void {
+  content.querySelectorAll('.bz-settings-group').forEach((g) => {
+    const body = g.querySelector('.bz-settings-group-body');
+    const countEl = g.querySelector('.bz-settings-group-count');
+    if (!body || !countEl) return;
+    const n = [...body.querySelectorAll('.setting-item')].filter((el) => {
+      const h = el as HTMLElement;
+      return !h.classList.contains('bz-setting-hidden') && h.style.display !== 'none';
+    }).length;
+    countEl.textContent = `${n} 项`;
+  });
 }
 
 let currentModal: { mask: HTMLElement; popup: HTMLElement; dispose: () => void; onClose?: () => void } | null = null;
@@ -46,6 +88,7 @@ export function openSettingsModal(opts: SettingsModalOptions): void {
     popupId: 'bz-settings-modal-popup',
     // 高于所有面板与面板内弹窗（主面板 9999/弹窗 10001-10005/闪念窄窗 10020），低于入口页 10100
     zIndex: 10050,
+    maxWidth: opts.maxWidth,
     onMaskClick: () => closeSettingsModal(),
   });
 
@@ -61,6 +104,8 @@ export function openSettingsModal(opts: SettingsModalOptions): void {
   content.className = 'bz-settings-content';
 
   opts.build(content);
+  // 分组卡片项数徽标回填（build 后、空态判断前）
+  fillSettingsGroupCounts(content);
 
   // 空态：build 未挂任何设置项（归物本/收藏本）
   if (!content.querySelector('.setting-item')) {
