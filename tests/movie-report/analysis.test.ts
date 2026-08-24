@@ -1,13 +1,13 @@
 /**
- * 影视数据分析测试（ticket 23 迁移自 QuickAdd《影视数据分析.js》）
+ * 影视数据分析测试（ticket 23 迁移自 QuickAdd《影视数据分析.js》；ADR-0048 随独立域迁至 tests/movie-report/）
  * 数据层：buildAnalysisData 纯函数统计；UI 层：弹窗打开/顶部 34px/关闭
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, Platform as MockPlatform } from '../mock-obsidian-entry';
-import { M, resetMovieState } from '../../src/movie/state';
-import { buildAnalysisData, openAnalysisModal, closeAnalysis } from '../../src/movie/analysis';
-import { openMovieReport } from '../../src/movie/index';
+import { resetMovieReportState, setReportFolderPath } from '../../src/movie-report/state';
+import { buildAnalysisData, openAnalysisModal, closeAnalysis } from '../../src/movie-report/analysis';
+import { openMovieReport } from '../../src/movie-report/index';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 
 function makeApp(vault: MockVault) {
@@ -31,8 +31,8 @@ function movieMd(fields: Record<string, any>): string {
 
 beforeEach(() => {
   resetObsidianMocks();
-  resetMovieState();
-  M.folderPath = '我的/影视';
+  resetMovieReportState();
+  setReportFolderPath('我的/影视');
 });
 
 describe('buildAnalysisData 数据采集', () => {

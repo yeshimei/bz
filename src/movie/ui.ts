@@ -16,7 +16,7 @@ import { attachItemActions, refreshItemSheet, registerSheetCompanion, unregister
 import { confirm } from '../core/confirm';
 import { runAIRecommend, runSimilarRecommend } from './recommend';
 import { watchPosterFetch } from './poster-watch';
-import { openAnalysisModal } from './analysis';
+import { openAnalysisModal } from '../movie-report/analysis'; // ADR-0048：报告独立域，📊 按钮跨域显式引用（纯数据回引 constants 无环）
 import { emitDomainEvent } from '../core/domain-bus';
 
 /** 渲染卡片列表（分页，源码 L279-426 逐字） */

@@ -1,14 +1,15 @@
 /**
- * 影视数据分析补充覆盖测试（src/movie/analysis.ts 未触达函数分支 + src/movie/constants.ts）：
+ * 影视数据分析补充覆盖测试（src/movie-report/analysis.ts 未触达函数分支 + src/movie/constants.ts）：
  * 评分全桶、宝藏/失望双榜、想看质量、片龄边界（当年/≥10年/负差值）、系列基名剥离
  * （含纯数字书名）、季集缺失回退、影评关键词多命中、年度趋势、无日期条目、
  * 字符串标签容错；空库/富库两套弹窗渲染路径；常量工具浅暗主题。
+ * （ADR-0048：原 tests/movie/analysis-cov.test.ts 随报告独立域迁入）
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
-import { M, resetMovieState } from '../../src/movie/state';
-import { buildAnalysisData, openAnalysisModal, closeAnalysis } from '../../src/movie/analysis';
+import { resetMovieReportState, setReportFolderPath } from '../../src/movie-report/state';
+import { buildAnalysisData, openAnalysisModal, closeAnalysis } from '../../src/movie-report/analysis';
 import {
   STATUS_WANT,
   STATUS_WATCHING,
@@ -41,8 +42,8 @@ function movieMd(fields: Record<string, any>): string {
 
 beforeEach(() => {
   resetObsidianMocks();
-  resetMovieState();
-  M.folderPath = '我的/影视';
+  resetMovieReportState();
+  setReportFolderPath('我的/影视');
 });
 
 describe('constants 常量与工具', () => {

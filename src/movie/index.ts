@@ -7,7 +7,6 @@ import { tryGetSettings } from '../core/settings-provider';
 import { M, resetMovieState } from './state';
 import { rebuildItems } from './data';
 import { registerEscapeHandler, createOverlay, closeOverlay, renderList, openAddModal } from './ui';
-import { openAnalysisModal } from './analysis';
 
 let initialized = false;
 let autoRefreshRegistered = false;
@@ -87,12 +86,6 @@ export function openMovieManager(app: App): void {
 export function addMovieItem(app: App): void {
   ensureMovie(app);
   openAddModal(app);
-}
-
-/** 影视报告（movie-report）：观影数据分析窗口（迁移自 QuickAdd《影视数据分析.js》） */
-export function openMovieReport(app: App): void {
-  ensureMovie(app);
-  openAnalysisModal(app);
 }
 
 /** 卸载清理（main.ts onunload 调用） */

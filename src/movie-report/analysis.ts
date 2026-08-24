@@ -1,14 +1,15 @@
 /**
- * 影视观影数据分析（迁移自 QuickAdd 脚本《影视数据分析.js》→ ticket 23）
- * 入口：openMovieReport（bz-movie-report）与影视主界面右上角 📊 按钮。
- * 数据采集与渲染逻辑与原脚本一致（公式/配色/文案保持既有实现）。
+ * 影视观影数据分析（迁移自 QuickAdd 脚本《影视数据分析.js》→ ticket 23；ADR-0048 迁出为独立域 src/movie-report/）
+ * 入口：openMovieReport（bz-movie-report，本域 index.ts）与影视主界面右上角 📊 按钮。
+ * 数据采集与渲染逻辑与原脚本一致（公式/配色/文案保持既有实现）；
+ * 类型常量显式引用 movie 域 constants（纯数据模块，无环）。
  */
 import type { App, TFile } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
-import { ALL_TAGS, getGroupForTag, STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED } from './constants';
-import { M } from './state';
+import { ALL_TAGS, getGroupForTag, STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED } from '../movie/constants';
+import { getReportFolderPath } from './state';
 
 let analysisOverlay: HTMLElement | null = null;
 
@@ -266,7 +267,7 @@ function finalizeAnalysis(data: any): void {
 /** 构建分析数据（纯函数，供测试直接调用） */
 export function buildAnalysisData(app: App): any {
   const data = createEmptyAnalysis();
-  const folderPath = M.folderPath || '我的/影视';
+  const folderPath = getReportFolderPath();
   const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folderPath + '/'));
   for (const file of files) {
     const cache = (app.metadataCache as any).getFileCache(file);
@@ -504,7 +505,7 @@ export function openAnalysisModal(app: App): void {
         display: flex; flex-direction: column; overflow: hidden;
         box-shadow: 0 8px 30px rgba(0,0,0,0.3);
     `;
-  // 移动端默认全屏（与影视主面板同一 movie 键控制；顶部避让由 .bz-win-mfs 统一提供，基样式不再自带 34px 防双重垫顶）
+  // 移动端默认全屏（沿用影视 movie 键控制——2026-08 用户拍板：跟随窗口不设独立开关；顶部避让由 .bz-win-mfs 统一提供，基样式不再自带 34px 防双重垫顶）
   applyMobileWindowFullscreen(modal, tryGetSettings().movieMobileDefaultFullscreen === true);
 
   const header = document.createElement('div');
