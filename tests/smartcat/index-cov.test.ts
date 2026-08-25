@@ -610,15 +610,32 @@ describe('域 JSON 感知（library 盲通道）', () => {
     };
     vault.files.set(weavePath, JSON.stringify(weave1));
     vault.emit('modify', vault.file(weavePath));
-    await sleep(120); // 即时事件（逐条 await 入流）
-    await sleep(300); // 防抖窗口（40ms）到期结算划线
+    // 即时事件（逐条 await 入流）+ 防抖窗口（40ms）结算划线：并发跑全量时 CPU 争抢会拉伸
+    // 异步链，固定 sleep 会假超时——改为轮询等待目标条目落流（deadline 内到齐即通过）
+    const descs = () => (__getSmartcatInternals().data.memory.stream as any[]).map((m) => m.description);
+    const waitForDesc = async (text: string, deadlineMs = 8000): Promise<boolean> => {
+      const t0 = Date.now();
+      while (!descs().includes(text)) {
+        if (Date.now() - t0 > deadlineMs) return false;
+        await sleep(25);
+      }
+      return true;
+    };
+    expect(await waitForDesc('你开始读《三体》')).toBe(true);
+    expect(await waitForDesc('你读完了《三体》')).toBe(true);
+    expect(await waitForDesc('你读了《三体》约 15 分钟（读到 40%）')).toBe(true);
+    expect(await waitForDesc('你在《三体》划了条重点：「很震撼的一段」')).toBe(true);
     const stream: any[] = __getSmartcatInternals().data.memory.stream;
-    expect(stream.some((m) => m.description === '你开始读《三体》')).toBe(true);
-    expect(stream.some((m) => m.description === '你读完了《三体》')).toBe(true);
-    expect(stream.some((m) => m.description === '你读了《三体》约 15 分钟（读到 40%）')).toBe(true);
-    expect(stream.some((m) => m.description === '你在《三体》划了条重点：「很震撼的一段」')).toBe(true);
     expect(stream.filter((m) => m.source === 'domain:library').length).toBeGreaterThanOrEqual(4);
-    // 「读完」命中 dossier 正性白名单 → 事件表即写（经 onObservation 钩子）
-    expect((__getSmartcatInternals().data.editingData?.dossierEvents || []).some((e: any) => e.type === 'book' && e.title === '三体')).toBe(true);
+    // 「读完」命中 dossier 正性白名单 → 事件表即写（经 onObservation 钩子）；划线防抖结算后落表
+    const hasDossier = async (): Promise<boolean> => {
+      const t0 = Date.now();
+      while (!(__getSmartcatInternals().data.editingData?.dossierEvents || []).some((e: any) => e.type === 'book' && e.title === '三体')) {
+        if (Date.now() - t0 > 3000) return false;
+        await sleep(25);
+      }
+      return true;
+    };
+    expect(await hasDossier()).toBe(true);
   }, 20000);
 });
