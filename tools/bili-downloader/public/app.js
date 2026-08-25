@@ -11,10 +11,10 @@ const fmtDuration = t => {                                  // HH:MM:SS（显示
   const s = Math.max(0, Math.floor(t))
   return `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s % 3600 / 60))}:${pad(s % 60)}`
 }
-const fmtPrec = t => {                                      // HH:MM:SS.S（起/止精度 0.1s）
+const fmtPrec = t => {                                      // HH:MM:SS.S（起/止精度 0.1s；秒位取模，防总秒数溢出）
   const s = Math.max(0, t)
   const ss = Math.floor(s), ds = Math.round((s - ss) * 10)
-  return `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s % 3600 / 60))}:${pad(ss)}.${ds}`
+  return `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s % 3600 / 60))}:${pad(ss % 60)}.${ds}`
 }
 const fmtMB = b => (b / 1048576).toFixed(1) + 'MB'
 
@@ -56,6 +56,7 @@ function toast(msg, isErr = false) {
 // ---- 任务状态（单任务 + 多段落 + 分P）----
 const S = {
   info: null, quality: 0, crf: 23, dur: 0, transcript: '', busy: false,
+  delivered: false,         // 本任务是否已交付（文献笔记快捷命令用于避免重复交付）
   mode: 'split',            // split（分开交付）| merge（合并成一个视频）
   segments: [],             // [{id, start, end, checked?}]
   activeId: null,
@@ -137,6 +138,8 @@ async function doParse() {
     $('ts-wrap').classList.add('hidden')
     $('result-wrap').classList.add('hidden')
     $('done-btn').disabled = true
+    S.delivered = false
+    updateGenNote()
     $('dl-diag').textContent = ''
     $('dl-fill').style.width = '0'
     $('dl-text').textContent = ''
@@ -220,6 +223,8 @@ $('dl-btn').onclick = async () => {
     syncFromActive()
     loadVideo()
     $('done-btn').disabled = false
+    S.delivered = false
+    updateGenNote()
     toast(r.cached ? '⚡ 缓存命中，跳过下载，直接进入剪辑' : '✅ 下载完成，拖动滑块/色块可实时预览剪辑范围')
   } catch (e) {
     if (!/已中止/.test(e.message)) toast(e.message, true)
@@ -532,7 +537,7 @@ $('transcribe-btn').onclick = async () => {
   wrap.classList.remove('hidden')
   const st = $('ts-status')
   st.className = 'hint'
-  if (S.transcript) { $('ts-text').value = S.transcript; st.textContent = '已有转录文本'; st.className = 'hint ok'; return }
+  if (S.transcript) { $('ts-text').value = S.transcript; st.textContent = '已有转录文本'; st.className = 'hint ok'; updateGenNote(); return }
   st.textContent = '转录中（首次加载模型约1-2分钟，请稍候）…'
   $('ts-text').value = ''
   try {
@@ -541,6 +546,7 @@ $('transcribe-btn').onclick = async () => {
     $('ts-text').value = r.transcript
     st.textContent = '转录完成'
     st.className = 'hint ok'
+    updateGenNote()
     try {
       await navigator.clipboard.writeText(r.transcript)
       toast('✅ 转录完成，文本已自动复制到剪贴板')
@@ -561,6 +567,21 @@ $('ts-copy').onclick = async () => {
 }
 
 // ---- 完成 = 交付（按交付模式批量产出全部交付物）----
+// 交付结果展示（「完成」按钮与「生成文献笔记」快捷命令共用）
+async function showDelivered(r) {
+  S.delivered = true
+  $('result-path').textContent = '📂 ' + r.files.map(f => f.finalPath).join('\n')
+  $('result-clip').textContent = r.clipboard
+  $('result-wrap').classList.remove('hidden')
+  updateGenNote()
+  if (r.failures && r.failures.length) toast('部分失败：' + r.failures.join('；'), true)
+  try {
+    await navigator.clipboard.writeText(r.clipboard)
+    toast(`✅ 已交付并复制${r.files.length > 1 ? `：${r.files.length} 个文件` : ''}`)
+  } catch {
+    toast('✅ 已交付（剪贴板复制失败，请点「复制」按钮）')
+  }
+}
 $('done-btn').onclick = async () => {
   if (!S.segments.length) return toast('请先添加至少一个段落', true)
   const btn = $('done-btn')
@@ -571,17 +592,7 @@ $('done-btn').onclick = async () => {
       mode: S.mode,
       crf: S.crf,
     })
-    $('result-path').textContent = '📂 ' + r.files.map(f => f.finalPath).join('\n')
-    $('result-clip').textContent = r.clipboard
-    $('result-wrap').classList.remove('hidden')
-    $('gen-note').disabled = false   // 交付后可一键生成文献笔记
-    if (r.failures && r.failures.length) toast('部分失败：' + r.failures.join('；'), true)
-    try {
-      await navigator.clipboard.writeText(r.clipboard)
-      toast(`✅ 已交付并复制${r.files.length > 1 ? `：${r.files.length} 个文件` : ''}`)
-    } catch {
-      toast('✅ 已交付（剪贴板复制失败，请点「复制」按钮）')
-    }
+    await showDelivered(r)
   } catch (e) {
     toast(e.message, true)
     btn.disabled = false
@@ -592,7 +603,11 @@ $('copy-btn').onclick = async () => {
   catch { toast('复制失败', true) }
 }
 
-// ---- 生成文献笔记（交付后一键：AI 元数据 + 润色 + 落盘文献盒）----
+// ---- 快速命令：生成文献笔记（后续步骤自动执行：交付 → AI → 写入文献盒）----
+// 前置：已下载（够段落）+ 已转文字；未交付时自动先跑「完成」交付，已交付则跳过重复交付
+function updateGenNote() {
+  $('gen-note').disabled = !(S.dur > 0 && !!S.transcript)
+}
 $('gen-note').onclick = async () => {
   const btn = $('gen-note')
   btn.disabled = true
@@ -600,11 +615,20 @@ $('gen-note').onclick = async () => {
   nr.classList.add('hidden')
   nr.textContent = ''
   try {
-    const r = await api('/api/note', 'POST', {})
+    if (!S.delivered) {
+      if (!S.segments.length) throw new Error('请先添加至少一个段落')
+      const r = await api('/api/done', 'POST', {
+        segments: S.segments.map(s => ({ id: s.id, start: s.start, end: s.end })),
+        mode: S.mode,
+        crf: S.crf,
+      })
+      await showDelivered(r)
+    }
+    const r2 = await api('/api/note', 'POST', {})
     const a = document.createElement('a')
-    a.href = r.note.url
+    a.href = r2.note.url
     a.target = '_blank'
-    a.textContent = `📄 ${r.note.wiki}（点击在 Obsidian 中打开）`
+    a.textContent = `📄 ${r2.note.wiki}（点击在 Obsidian 中打开）`
     nr.appendChild(a)
     nr.classList.remove('hidden')
     toast('✅ 文献笔记已生成')
@@ -638,6 +662,7 @@ function resetUI() {
   S.info = null
   S.transcript = ''
   S.dur = 0
+  S.delivered = false
   S.mode = 'split'
   setMode('split')
   S.segments = []
@@ -648,7 +673,7 @@ function resetUI() {
   ;['card-wrap', 'dl-wrap', 'preview-wrap', 'ts-wrap', 'result-wrap'].forEach(id => $(id).classList.add('hidden'))
   $('url').value = ''
   $('done-btn').disabled = true
-  $('gen-note').disabled = true
+  updateGenNote()
   $('note-result').classList.add('hidden')
   $('note-result').textContent = ''
   $('video').removeAttribute('src')
