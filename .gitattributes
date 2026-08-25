@@ -1,0 +1,3 @@
+# 发布版 main.js 由构建生成（esbuild 输出 LF）：固定 LF 避免 autocrlf 检出成 CRLF，
+# 否则每次 pnpm run build 同步后 git status 都会出现行尾假差异
+main.js text eol=lf
