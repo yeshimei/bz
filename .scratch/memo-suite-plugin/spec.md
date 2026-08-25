@@ -186,6 +186,8 @@ Feature: memo-suite-plugin
 50. 作为用户，我希望移动端检测（IS_MOBILE 语义）与降级行为与原脚本一致，以便移动端可用时行为正确。
 51. 作为用户，我希望 TF-IDF 检索保留（「✅ TF-IDF 就绪（N 段）」状态提示，与向量检索协同），以便无 Ollama 时也能基础检索。
 52. 作为用户，我希望连接状态提示（✅ 远程 Ollama 已连接）与聊天界面（发送/··· 菜单、📚 🤖 按钮）与原脚本一致。
+53. 作为用户，我希望本地还没有向量数据时，主面板/参考侧边栏/AI 对话三条命令都打开主面板并看到初始化引导（简短说明 + 开始按钮），以便明确首次向量化需要我手动触发（ticket 107）。
+54. 作为用户，我希望点击开始后能看到向量化进度条，完成后面板自动切换为正常统计；失败时给出原因并可重试（ticket 107）。
 
 ### 番茄钟（Pomodoro，ticket 26 新域）
 
@@ -528,3 +530,7 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 ### 第二大脑正名接管（ticket 103，ADR-0051）
 
 以 QuickAdd《闪念.js》（2311 行）为完整基准完成实现并正名「第二大脑」：src/flash 整体更名 src/secondbrain 完全接管（issue 18 关闭 superseded）；命令换代 bz-secondbrain-panel/open/chat（主面板为统一入口，✕ 仅移动端全屏显示）；17 设置键更名 secondBrain* 并 onload 迁移（META_PATH/VEC_PATH 废弃清除）；meta v7→v8 首载整库重嵌 + 数据文件更名 secondbrain_meta.json / secondbrain_vectors.vec；行为对齐 QA 八处（分块保段落边界、cos=1−d²/2、句界集补中文分号/省略号、TF-IDF chunk 粒度且索引复用、文本检索返回命中段+QA 加权评分、VP 树 mu/minD/maxD 包络剪枝+构建缓存、parallelMap 自适应并发、移动端提示词「【参考】」）；保留 bz 四改进（Ollama 30s 超时、MobileBuffer 写入、真 ⚙️ 域设置弹窗、jumpToChunk offsetToPos）；修 QA/bz 同源缺陷三处（refresh 仅删除不落盘、删除后向量段偏移错位、分块大段路径 buffer 不清致内容重复）；新增主面板统一弹窗（统计卡片+来源分布+近12周趋势自绘迷你图+最近向量化 Top10+AI 一键概括缓存 secondbrain_panel.json，打开即自动增量刷新）；全部 UI 表面 bz-sb-* 类名收敛根 styles.css，废除 sh-* 运行时 style 注入；笔记类型词汇 'flash'（path-classify/smartcat source/credibility）冻结不动。
+
+### 第二大脑首用引导与隐形 bug 清剿（ticket 107，ADR-0051 补记）
+
+本地无向量数据（isIndexReady=false：空库或 meta 残留但 .vec 缺失的损坏态）时三条命令统一打开主面板引导态——说明文案+「开始向量化」按钮；**首次向量化须用户触发**：启动空库不再自动全量嵌入、vault modify 防抖在索引就绪前不生效；点击后进度条实时更新，完成自动切换正常统计面板，失败给出原因可重试（QA 全败仍报「完成」文案，故以 isIndexReady 判定成败）。**样式补齐**：ticket 103 的「bz-sb-* 收敛根 styles.css」实际未落盘——src/secondbrain/styles.css 从未创建，全部 UI 以裸 DOM 发布；本次补齐全套样式（主面板/窄窗/参考卡/悬停预览/AI 对话/移动端抽屉/引导态）并接入 build-css.mjs 聚合清单。**行为修订三处（bz 改进）**：refresh 并发去重（启动/防抖/面板三入口并发会令 srcOffsets 与合并布局错位且不自愈）；损坏态自愈（meta 有条目但向量为空 → refresh 视为全量重建，否则永远「已最新」）；移动端嵌入走远程 Ollama URL（原只会打 localhost 必败）。**移植回归修复**：getEmbeddingsBatch 空结果恢复抛「向量为空」（QA L125）；renderMarkdown 异步失败回退 textContent（原 try/catch 死路径）；makeDraggable 视口钳制（QA L906-908）；jumpToChunk 与后台防抖 refresh 补 .catch；DeepSeek 模型设置生效（chat() 硬编码模型名致 secondBrainDeepseekModel 永不传出，改调 prompt()）；main.ts onunload 补接线 unloadSecondBrain()（原先从未调用：残留窗体 ESC 失效、防抖定时器卸载后仍触发整轮嵌入）。内容态打开改为「refresh 完成后重渲统计」（原先渲染不等 refresh，展示的总是上一轮旧数据）。

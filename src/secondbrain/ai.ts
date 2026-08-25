@@ -25,7 +25,9 @@ export const AI = {
     const CONFIG = buildConfig();
     if (useDeepSeek) {
       try {
-        return await getDeepseekAI().chat(prompt);
+        // prompt() 不显式传模型 → 用 createAI 注入的 defaultModel（secondBrainDeepseekModel 设置）。
+        // 不能用 chat()：其内部硬编码 'deepseek-v4-flash'，自定义模型名永远传不出（ticket 107 修）
+        return await getDeepseekAI().prompt(prompt);
       } catch (e) {
         console.warn('[secondbrain] DeepSeek 调用失败，回退到本地', e);
       }

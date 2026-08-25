@@ -290,6 +290,8 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
       JSON.stringify({ version: 8, notes: { '我的/A.md': { mtime: 5, chunks: [{ text: 't' }] } }, _dim: 2 })
     );
     const { adapter, binary } = makeAdapter(vault);
+    // 健康库：meta 与 .vec 一致（ticket 107 起「meta 有条目但向量缺失」会触发全量重建自愈，不再「已最新」）
+    binary.set(VEC_PATH, vecBuffer([[1, 0]], 2));
     const app = makeApp(vault, adapter, { '我的/A.md': 5 });
     setApp(app as any);
     const vs = new VectorStore(app as any);
@@ -304,7 +306,7 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
     expect(progress).toHaveBeenCalledWith('✅ 向量库已最新');
     expect(writeSpy).not.toHaveBeenCalled(); // 无删除不写盘
     expect(writeBinSpy).not.toHaveBeenCalled();
-    expect(binary.size).toBe(0);
+    expect(binary.size).toBe(1); // 仅预种的 .vec，无新增写盘
     expect(vault.files.get(META_PATH)).toBe(metaBefore);
   });
 

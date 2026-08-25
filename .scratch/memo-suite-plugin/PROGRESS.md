@@ -1,3 +1,13 @@
+## 2026-08-25 第二大脑首用引导 + 隐形 bug 清剿（ticket 107，ADR-0051 补记）
+
+**状态：secondbrain 106 例全绿（新增 10）+ tsc 0 错误；worktree/sb-init-onboarding**
+
+- ✅ **首用引导**：无向量数据时三命令统一开主面板引导态（说明 + 开始按钮）；首次向量化须用户点击触发——启动空库不再自动全量嵌入、vault modify 防抖未就绪不生效；进度条实时更新，完成自动切统计面板，失败给原因可重试（QA 全败仍报「完成」，以 isIndexReady 判定）
+- 🐞 **隐形 bug 头号发现**：`src/secondbrain/styles.css` 从未创建——ticket 103「样式收敛根 styles.css」实际未落盘，全部第二大脑 UI 以裸 DOM 发布（部署的 styles.css 零 bz-sb 规则）；本次补齐全套样式并接入 build-css.mjs 聚合清单
+- ✅ **行为修订三处（bz 改进）**：refresh 并发去重（启动/防抖/面板三入口并发致向量段错位且不自愈）；损坏态自愈（meta 有条目但向量为空 → 全量重建）；移动端嵌入走远程 Ollama URL
+- ✅ **移植回归修复**：getEmbeddingsBatch 空结果恢复抛「向量为空」（畸形 2xx 登记空向量会致行映射错位）；renderMarkdown 异步回退死路径；makeDraggable 视口钳制（QA L906-908）；jumpToChunk/后台 refresh 补 .catch；DeepSeek 模型设置生效（chat() 硬编码模型名）；main.ts onunload 补接线 unloadSecondBrain()（残留窗体 + 卸载后防抖仍嵌入）
+- ✅ 附带修复：内容态打开改为 refresh 完成后重渲统计（原先总展示上一轮旧数据）；reference-panel 在途检索 post-await 守卫；主面板死类 bz-win-mfs-host 移除
+
 ## 2026-08-25 第二大脑完成（ticket 103 取代 18：闪念正名接管 + QuickAdd 完整复刻，ADR-0051）
 
 **状态：全量 2595 测试通过（172 文件）+ tsc 0 错误 + 构建部署完成；提交 worktree/second-brain**

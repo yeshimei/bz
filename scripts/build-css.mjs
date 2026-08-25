@@ -39,6 +39,7 @@ const SOURCES = [
   "src/attach/styles.css",
   "src/encrypt/styles.css",
   "src/movie/styles.css",
+  "src/secondbrain/styles.css",
   "src/smartcat/styles.css",
 ];
 

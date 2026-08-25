@@ -22,3 +22,10 @@
 - 正面：功能首次真正可用；命名与心智模型一致；历史包袱（死配置保留但如实标注除外）一次清空；向量库统一到 QA 分块口径，检索质量与原型一致。
 - 代价：回滚到旧版插件会因数据文件更名而整库从头重建（可接受）；设置键迁移后旧工具若直读 data.json 旧键将失效（已知无私有消费者）；冻结清单中「flash refresh 不清理已删文件向量条目」条目随之修订为「已于 ticket 103 修复」。
 - 中性：`'flash'` 作为笔记类型词汇长期与「第二大脑」并存，新代码不得再将其用作功能模块名。
+
+## 补记（ticket 107，2026-08-25：首用引导 + 隐形 bug 清剿）
+
+1. **首用引导（用户需求）**：本地无向量数据（`isIndexReady()=false`：空库或 meta 残留但 .vec 缺失的损坏态）时，三条命令统一打开主面板引导态——说明文案 + 「开始向量化」按钮；**首次向量化必须由用户触发**：启动路径空库不再自动全量嵌入、vault modify 防抖在索引就绪前不生效；点击按钮显示进度条（解析 QA 进度文案），完成后自动切换正常统计面板；失败（QA 语义下全部嵌入失败仍报「完成」文案，故以 isIndexReady 判定）给出原因并可重试。
+2. **样式文件补齐**：ticket 103 的「bz-sb-* 收敛根 styles.css」实际未落盘——`src/secondbrain/styles.css` 从未创建，全部第二大脑 UI 以裸 DOM 发布。本次补齐全套样式并接入 `scripts/build-css.mjs` 聚合清单（置于 smartcat 前）。属 103 验收项的补完成，非新决策。
+3. **行为修订两处（超出 QA 基线的 bz 改进）**：① refresh 并发去重——进行中的 refresh 复用同一 promise（启动全量刷新 / vault 防抖 / 面板打开三入口并发会让 srcOffsets 与合并布局错位且不自愈）；② 损坏态自愈——meta 有条目但向量为空时 refresh 视为全量重建（否则 mtime 全匹配永远「已最新」，索引损坏不可恢复）；③ 移动端嵌入端点走「远程 Ollama URL」（原实现移动端 refresh 只会打 localhost 必败，引导初始化在移动端因此可用）。
+4. **移植回归修复**（对齐 QA，非冻结缺陷）：getEmbeddingsBatch 空结果恢复抛「向量为空」（畸形 2xx 走逐条回退而非登记空向量致行映射错位）；renderMarkdown 异步失败回退 textContent（原 try/catch 是死路径）；makeDraggable 视口钳制（QA L906-908）；jumpToChunk/后台防抖 refresh 补 .catch 防 unhandled rejection；DeepSeek 模型设置生效（`chat()` 硬编码 'deepseek-v4-flash' 致 secondBrainDeepseekModel 永不传出，改调 `prompt()` 用注入的 defaultModel）；main.ts onunload 补调 `unloadSecondBrain()`（原先导出但从未接线：残留窗体 ESC 失效、防抖定时器卸载后仍触发）。

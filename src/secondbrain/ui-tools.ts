@@ -12,32 +12,39 @@ export function jumpToChunk(file: any, chunkText: string, highlight = false): vo
     const f = app.vault.getAbstractFileByPath(file.path);
     if (!f) return;
     const leaf = app.workspace.getLeaf();
-    leaf.openFile(f as any).then(() => {
-      if (highlight) {
-        const view = leaf.view as any;
-        const ed = view?.editor;
-        if (ed) {
-          const text = ed.getValue();
-          const idx = text.indexOf(chunkText);
-          if (idx !== -1) {
-            // P2：from 直接取 offsetToPos(idx)（原 posToOffset 恒真三元只会得到文档开头）
-            const from = ed.offsetToPos(idx);
-            const to = ed.offsetToPos(idx + chunkText.length);
-            ed.setSelection(from, to);
+    leaf
+      .openFile(f as any)
+      .then(() => {
+        if (highlight) {
+          const view = leaf.view as any;
+          const ed = view?.editor;
+          if (ed) {
+            const text = ed.getValue();
+            const idx = text.indexOf(chunkText);
+            if (idx !== -1) {
+              // P2：from 直接取 offsetToPos(idx)（原 posToOffset 恒真三元只会得到文档开头）
+              const from = ed.offsetToPos(idx);
+              const to = ed.offsetToPos(idx + chunkText.length);
+              ed.setSelection(from, to);
+            }
           }
         }
-      }
-    });
+      })
+      .catch(() => {
+        /* 打开失败（文件被删/改名等）：忽略，避免 unhandled rejection（ticket 107） */
+      });
   } catch {
     /* ignore */
   }
 }
 
-/** 渲染 markdown（失败回退 textContent） */
+/** 渲染 markdown（异步失败也回退 textContent——QA L815-822 同语义；ticket 107 修移植回归） */
 export function renderMarkdown(el: HTMLElement, md: string, app: App): void {
   try {
     const ctx = new Component();
-    (MarkdownRenderer as any).render(app, md, el, '', ctx);
+    Promise.resolve((MarkdownRenderer as any).render(app, md, el, '', ctx)).catch(() => {
+      el.textContent = md;
+    });
   } catch {
     el.textContent = md;
   }
@@ -58,8 +65,11 @@ export function makeDraggable(el: HTMLElement, handle: HTMLElement, onMove?: (x:
   };
   const onMoveHandler = (e: MouseEvent) => {
     if (!dragging) return;
-    const x = origX + (e.clientX - startX);
-    const y = origY + (e.clientY - startY);
+    let x = origX + (e.clientX - startX);
+    let y = origY + (e.clientY - startY);
+    // 视口钳制（QA L906-908 同语义，ticket 107 补回移植时丢失的边界约束）
+    x = Math.max(0, Math.min(window.innerWidth - el.offsetWidth, x));
+    y = Math.max(0, Math.min(window.innerHeight - el.offsetHeight, y));
     el.style.left = x + 'px';
     el.style.top = y + 'px';
     onMove?.(x, y);
