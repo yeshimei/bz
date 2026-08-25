@@ -1,5 +1,5 @@
 /**
- * 闪念二进制工具（ticket 18，源码 MobileBuffer L36-75 语义移植）
+ * 第二大脑二进制工具（ticket 103；对齐 QA 闪念.js MobileBuffer L36-75）
  * 写 .vec 头部固定用本类（alloc 从 0 起，避免 Node Buffer 池偏移）。
  */
 export class MobileBuffer {

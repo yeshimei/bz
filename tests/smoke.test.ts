@@ -66,7 +66,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-movie-open', 'bz-movie-add', 'bz-movie-report',
   'bz-review-open', 'bz-review-start', 'bz-review-add', 'bz-review-remove', 'bz-review-overdue', 'bz-review-rate',
   'bz-review-again', 'bz-review-hard', 'bz-review-good', 'bz-review-easy',
-  'bz-flash-open', 'bz-flash-chat',
+  'bz-secondbrain-panel', 'bz-secondbrain-open', 'bz-secondbrain-chat',
   'bz-pomodoro-open',
   'bz-bili-open',
   'bz-attach-move',
@@ -135,8 +135,8 @@ describe('bz 骨架冒烟', () => {
     expect(s.movieFolderPath).toBe('我的/影视');
     expect(s.libraryFolderPath).toBe('书库');
     expect(s.favoritesStoragePath).toBe('CONFIG/STORAGE');
-    expect(s.OLLAMA_URL).toBe('http://localhost:11434');
-    expect(s.EMBEDDING_MODEL).toBe('bge-m3');
+    expect(s.secondBrainOllamaUrl).toBe('http://localhost:11434');
+    expect(s.secondBrainEmbeddingModel).toBe('bge-m3');
     expect(s.passwordLength).toBe('16');
   });
 
@@ -169,8 +169,9 @@ describe('bz 骨架冒烟', () => {
 ${failures.join('\n')}`).toEqual([]);
     expect(registeredCommands.length).toBeGreaterThanOrEqual(31);
   }, 15000);
-  it('事件常驻域开关开启时 onload 注册（autoSummary/aiAgent→memo+favorites 文件同步/flash 懒加载分支）', async () => {
+  it('事件常驻域开关开启时 onload 注册（autoSummary/aiAgent→memo+favorites 文件同步/secondBrain 懒加载分支；旧 flashEnabled 键随 ticket 103 迁移）', async () => {
     delete diskData['bz'];
+    // 故意种旧键：验证 onload 迁移把 flashEnabled 平移为 secondBrainEnabled
     diskData['bz'] = { autoSummaryEnabled: true, aiAgentEnabled: true, flashEnabled: true };
     syncSpies.ensureMemoFileSync.mockClear();
     syncSpies.ensureFavoritesFileSync.mockClear();
@@ -180,7 +181,8 @@ ${failures.join('\n')}`).toEqual([]);
     // memo/favorites 两路文件同步 ensure 各恰好一次，均不抛错
     expect(plugin.settings.autoSummaryEnabled).toBe(true);
     expect(plugin.settings.aiAgentEnabled).toBe(true);
-    expect(plugin.settings.flashEnabled).toBe(true);
+    expect(plugin.settings.secondBrainEnabled).toBe(true);
+    expect(plugin.settings.flashEnabled).toBeUndefined();
     expect(syncSpies.ensureMemoFileSync).toHaveBeenCalledTimes(1);
     expect(syncSpies.ensureMemoFileSync).toHaveBeenCalledWith(app);
     expect(syncSpies.ensureFavoritesFileSync).toHaveBeenCalledTimes(1);

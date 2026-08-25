@@ -6,12 +6,12 @@
  * 向量模块 mock（getEmbedding/checkRemoteOllama），不碰网络。
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getEmbedding } from '../../src/flash/ollama';
+import { getEmbedding } from '../../src/secondbrain/ollama';
 import { MemorySystem } from '../../src/smartcat/memory';
 import { defaultSmartCatData } from '../../src/smartcat/data';
 import type { SmartCatData } from '../../src/smartcat/types';
 
-vi.mock('../../src/flash/ollama', () => ({
+vi.mock('../../src/secondbrain/ollama', () => ({
   getEmbedding: vi.fn(),
   checkRemoteOllama: vi.fn(async () => true),
 }));

@@ -4,7 +4,7 @@
  * 不再因恒真三元退化为文档开头。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { jumpToChunk } from '../../src/flash/ui-tools';
+import { jumpToChunk } from '../../src/secondbrain/ui-tools';
 import { setApp } from '../../src/core/app';
 
 describe('jumpToChunk（P2）', () => {

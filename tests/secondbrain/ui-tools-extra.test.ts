@@ -3,7 +3,7 @@
  * （jumpToChunk 主路径见 ui-tools.test.ts；本文件补齐其余导出与防御分支）。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { jumpToChunk, renderMarkdown, makeDraggable, makeResizable } from '../../src/flash/ui-tools';
+import { jumpToChunk, renderMarkdown, makeDraggable, makeResizable } from '../../src/secondbrain/ui-tools';
 import { setApp } from '../../src/core/app';
 import { MarkdownRenderer } from 'obsidian';
 
