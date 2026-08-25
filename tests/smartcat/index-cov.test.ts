@@ -11,10 +11,10 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
+import { emitDomainEvent, clearDomainEvents } from '../../src/core/domain-bus';
+import { attachObsidianAdapter, detachObsidianAdapter } from '../../src/core/obsidian-adapter';
 import {
   ensureSmartCat, unloadSmartCat, openSmartCatChat, hideSmartCat,
-  notifyFavoritesAction, notifyBelongingsAction, notifyPomodoroAction,
-  notifyMemoAction, notifyMovieAction, notifyNewsRead, notifyNewsSaved,
   parseClipFrontmatter, maybeProactiveCare,
   __getSmartcatInternals, __setDiarySettleMsForTests, __setNoteSettleMsForTests,
   __setNewsSaveTimeoutForTests, __getNewsPendingSavesForTests,
@@ -43,6 +43,11 @@ function makeApp() {
     return arr;
   };
   (app as any).__wsListeners = wsListeners;
+  // 总线接线（对齐生产 main.ts 挂载 + diary-action.test 惯例）：vault 裸事件 → adapter 两路派发；
+  // 单例先摘再挂 + 清空订阅，防跨用例串线（ensureSmartCat 的总线订阅在其后注册，不受影响）
+  detachObsidianAdapter();
+  clearDomainEvents();
+  attachObsidianAdapter(app);
   return { app, vault };
 }
 
@@ -85,6 +90,8 @@ beforeEach(() => {
 
 afterEach(() => {
   unloadSmartCat();
+  detachObsidianAdapter();
+  clearDomainEvents();
   eventSystem.off(EVENTS.BUBBLE_QUEUED, bubbleListener);
   globalThis.fetch = origFetch;
   vi.useRealTimers();
@@ -108,12 +115,12 @@ function mockAIRouted(): void {
 describe('动作观察入口（方法监听）', () => {
   it('未初始化时全部入口静默不抛错', () => {
     expect(() => {
-      notifyMovieAction({ kind: 'created', name: 'x', status: 'want', rating: -1, review: null });
-      notifyMemoAction({ kind: 'completed', title: 'x' });
-      notifyNewsRead({ title: 'x', platform: 'p', state: 'read', durationMin: 1 });
-      notifyFavoritesAction({ kind: 'delete', title: 'x' });
-      notifyBelongingsAction({ kind: 'delete', title: 'x' });
-      notifyPomodoroAction({ kind: 'focus-done', minutes: 25 });
+      emitDomainEvent('movie', { kind: 'created', name: 'x', status: 'want', rating: -1, review: null });
+      emitDomainEvent('memo', { kind: 'completed', title: 'x' });
+      emitDomainEvent('news', { kind: 'read', evt: { title: 'x', platform: 'p', state: 'read', durationMin: 1 } });
+      emitDomainEvent('favorites', { kind: 'delete', title: 'x' });
+      emitDomainEvent('belongings', { kind: 'delete', title: 'x' });
+      emitDomainEvent('pomodoro', { kind: 'focus-done', minutes: 25 });
     }).not.toThrow();
     expect(__getSmartcatInternals().initialized).toBe(false);
   });
@@ -121,11 +128,11 @@ describe('动作观察入口（方法监听）', () => {
   it('收藏本/归物本/番茄钟/备忘录/影视 动作各产出对应观察', async () => {
     const { app } = makeApp();
     await ensureSmartCat(app);
-    notifyFavoritesAction({ kind: 'add', item: { title: 'GitHub', tags: ['工具'], description: '代码托管', url: 'https://github.com', pinned: false } as any });
-    notifyBelongingsAction({ kind: 'add', item: { name: 'Kindle', category: '数码', purchase_price: 998, purchase_date: '2026-01-01', current_status: '使用中', description: '' } });
-    notifyPomodoroAction({ kind: 'focus-done', minutes: 25 });
-    notifyMemoAction({ kind: 'completed', title: '买菜' });
-    notifyMovieAction({ kind: 'rated', name: '美丽人生', fromRating: 3.5, toRating: 4.5 });
+    emitDomainEvent('favorites', { kind: 'add', item: { title: 'GitHub', tags: ['工具'], description: '代码托管', url: 'https://github.com', pinned: false } as any });
+    emitDomainEvent('belongings', { kind: 'add', item: { name: 'Kindle', category: '数码', purchase_price: 998, purchase_date: '2026-01-01', current_status: '使用中', description: '' } });
+    emitDomainEvent('pomodoro', { kind: 'focus-done', minutes: 25 });
+    emitDomainEvent('memo', { kind: 'completed', title: '买菜' });
+    emitDomainEvent('movie', { kind: 'rated', name: '美丽人生', fromRating: 3.5, toRating: 4.5 });
     await sleep(150);
     const stream: any[] = __getSmartcatInternals().data.memory.stream;
     const desc = (frag: string) => stream.some((m) => m.description.includes(frag));
@@ -138,15 +145,15 @@ describe('动作观察入口（方法监听）', () => {
     // noteSource 关闭 → 后续动作静默
     const before = stream.length;
     __getSmartcatInternals().data.config.noteSource = false;
-    notifyPomodoroAction({ kind: 'focus-done', minutes: 30 });
+    emitDomainEvent('pomodoro', { kind: 'focus-done', minutes: 30 });
     await sleep(80);
     expect(__getSmartcatInternals().data.memory.stream.length).toBe(before);
   });
 
-  it('notifyNewsRead 立即形态观察', async () => {
+  it('news read 立即形态观察（bus 载荷 kind=read → notifyNewsRead 收编入口）', async () => {
     const { app } = makeApp();
     await ensureSmartCat(app);
-    notifyNewsRead({ title: '好文', platform: '聚合讯', state: 'read', durationMin: 6 });
+    emitDomainEvent('news', { kind: 'read', evt: { title: '好文', platform: '聚合讯', state: 'read', durationMin: 6 } });
     await sleep(120);
     const stream: any[] = __getSmartcatInternals().data.memory.stream;
     expect(stream[stream.length - 1].description).toContain('你阅读了《好文》（聚合讯·读了 6 分钟）');
@@ -408,7 +415,7 @@ describe('聚合讯待补全登记（ticket 076/084b）', () => {
     vault.files.set(clip1, '---\nlink: "https://ex.com/a"\nsummary: "精彩摘要"\ntags:\n  - 科技\n  - AI\n---\n正文');
     await ensureSmartCat(app);
     __setNewsSaveTimeoutForTests(10 * 60 * 1000); // 先不让降级定时器捣乱
-    notifyNewsSaved({ title: '好文', platform: '聚合讯', state: 'saved', durationMin: 5 }, clip1);
+    emitDomainEvent('news', { kind: 'saved', evt: { title: '好文', platform: '聚合讯', state: 'saved', durationMin: 5 }, clipPath: clip1 });
     await sleep(30); // 等 link 异步登记
     const pending = __getNewsPendingSavesForTests().get(clip1) as any;
     expect(pending.link).toBe('https://ex.com/a');
@@ -426,7 +433,7 @@ describe('聚合讯待补全登记（ticket 076/084b）', () => {
     __setNewsSaveTimeoutForTests(40);
     const clip2 = '归档/网页剪藏/文章二.md';
     vault.files.set(clip2, '纯正文没有 frontmatter');
-    notifyNewsSaved({ title: '第二篇', platform: 'RSS', state: 'saved', durationMin: 2 }, clip2);
+    emitDomainEvent('news', { kind: 'saved', evt: { title: '第二篇', platform: 'RSS', state: 'saved', durationMin: 2 }, clipPath: clip2 });
     await sleep(120);
     const stream: any[] = __getSmartcatInternals().data.memory.stream;
     expect(stream.some((m) => m.description === '你保存了《第二篇》（RSS·读了 2 分钟）')).toBe(true);
