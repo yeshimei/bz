@@ -428,7 +428,7 @@ test('buildLiteratureNote：frontmatter 四键 + 引号转义 + 正文在前 emb
   assert.ok(md.includes('  - "科普"\n  - "AI 前沿"'))
   assert.ok(md.includes('summary: "一句话"'))
   assert.ok(md.includes('source: "BV1GJ411x7h7"'))
-  assert.ok(md.includes('![[CONFIG/APPENDIX/a.mp4]]\n![[CONFIG/APPENDIX/b.mp4]]'))
+  assert.ok(md.includes('![[CONFIG/APPENDIX/a.mp4]]\n\n![[CONFIG/APPENDIX/b.mp4]]'))
   assert.ok(md.indexOf('润色后的正文。') < md.indexOf('![[CONFIG/APPENDIX/a.mp4]]'))
 })
 
@@ -524,4 +524,21 @@ test('aiJson：JSON 模式解析 + 残留文本容错提取', async () => {
   assert.deepEqual(ok, { title: '标题', tags: ['a'] })
   const fuzzy = await core.aiJson({ endpoint: 'https://x', apiKey: 'k', model: 'm', messages: [], requestImpl: mockHttpsRequest({ status: 200, body: { choices: [{ message: { content: '好的，结果如下：{"title":"T"}' } }] } }) })
   assert.equal(fuzzy.title, 'T')
+})
+
+test('buildLiteratureNote：视频块对象（wiki + 对应转文字）逐段依次排布，字符串兼容', () => {
+  const md = core.buildLiteratureNote({
+    title: 'T', tags: ['a'], summary: 's', source: 'BV',
+    body: '润色正文。',
+    embeds: [
+      { wiki: '![[CONFIG/APPENDIX/a.mp4]]', transcript: '第一段转录' },
+      { wiki: '![[CONFIG/APPENDIX/b.mp4]]', transcript: '第二段转录' },
+    ],
+  })
+  assert.ok(md.includes('![[CONFIG/APPENDIX/a.mp4]]\n\n第一段转录'))
+  assert.ok(md.includes('![[CONFIG/APPENDIX/b.mp4]]\n\n第二段转录'))
+  assert.ok(md.indexOf('润色正文。') < md.indexOf('![[CONFIG/APPENDIX/a.mp4]]'))
+  assert.ok(md.indexOf('第一段转录') < md.indexOf('![[CONFIG/APPENDIX/b.mp4]]'))
+  const md2 = core.buildLiteratureNote({ title: 'T', body: 'b', embeds: ['![[x.mp4]]'] })
+  assert.ok(md2.includes('![[x.mp4]]'))
 })

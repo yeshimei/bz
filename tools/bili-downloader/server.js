@@ -28,7 +28,8 @@ const T = {
   mode: 'split',           // split（分开交付，每段一个） | merge（合并成一个视频）
   prepared: [],            // [{id, start, end, mode, tempPath}] 已校验段落临时产物缓存（交付复用）
   transcript: '',
-  lastFiles: [],           // 本次交付的文件 [{finalName, wiki}]（文献笔记 embed 与历史 note 字段用）
+  segmentTranscripts: {},  // 分段转录 {segId: text}（多段落交付时笔记按片段挂正文）
+  lastFiles: [],           // 本次交付的文件 [{finalName, wiki, segId}]（文献笔记 embed 与历史 note 字段用）
 }
 function resetTask() {
   core.resetAbort()
@@ -38,6 +39,7 @@ function resetTask() {
   T.originalPath = null; T.curPath = null; T.curDur = 0
   T.crf = 23; T.segments = []; T.mode = 'split'; T.prepared = []
   T.transcript = ''
+  T.segmentTranscripts = {}
   T.lastFiles = []
   T.phase = 'idle'
 }
@@ -113,8 +115,8 @@ async function prepareSegment(seg, duration) {
 // 交付：按交付模式批量产出全部交付物（分开=每段一个文件+一条 wikilink；合并=段序拼接一个文件）
 async function doDone(body) {
   if (!T.originalPath) throw new Error('请先下载视频')
-  const segs = (body.segments || []).filter(Boolean).map(s => clampSeg(s, T.info.duration))
-  if (!segs.length) throw new Error('请先添加至少一个段落')
+  let segs = (body.segments || []).filter(Boolean).map(s => clampSeg(s, T.info.duration))
+  if (!segs.length) segs = [{ id: 'full', start: 0, end: T.info.duration }]   // 空段落 = 整片交付
   T.segments = segs
   T.mode = body.mode === 'merge' ? 'merge' : 'split'
   const crf = body.crf === null || body.crf === undefined ? null : Number(body.crf)
@@ -149,7 +151,7 @@ async function doDone(body) {
       try { fs.unlinkSync(finalTemp) } catch {}
       const finalName = path.basename(finalPath)
       history(finalName, makeWiki(finalName, conf))
-      files.push({ finalName, finalPath, wiki: makeWiki(finalName, conf) })
+      files.push({ finalName, finalPath, wiki: makeWiki(finalName, conf), segId: null })   // 合并 = 单文件对应整段转录
     } catch (e) {
       failures.push(`合并：${e.message}`)
     }
@@ -172,7 +174,7 @@ async function doDone(body) {
         fs.copyFileSync(finalTemp, finalPath)
         try { if (finalTemp !== tmp) fs.unlinkSync(finalTemp) } catch {}
         history(finalName, makeWiki(finalName, conf))
-        files.push({ finalName, finalPath, wiki: makeWiki(finalName, conf) })
+        files.push({ finalName, finalPath, wiki: makeWiki(finalName, conf), segId: seg.id })   // 分开交付 = 每文件对应自身段落转录
       } catch (e) {
         failures.push(`段落 ${seg.id}：${e.message}`)
       }
@@ -180,7 +182,7 @@ async function doDone(body) {
   }
   if (!files.length) throw new Error(failures.join('\n') || '交付失败')
   T.phase = 'done'
-  T.lastFiles = files.map(f => ({ finalName: f.finalName, wiki: f.wiki }))   // 记录本次交付文件（文献笔记 embed 引用）
+  T.lastFiles = files.map(f => ({ finalName: f.finalName, wiki: f.wiki, segId: f.segId }))   // 记录本次交付文件（文献笔记 embed + 分段转录引用）
   const clip = buildClipboard(files.map(f => f.finalName))   // 传裸文件名，由 buildClipboard 统一包一层 ![[ ]]，避免双重嵌套
   return { ok: true, mode: T.mode, files, failures, clipboard: clip.text, wiki: clip.wiki }
 }
@@ -220,10 +222,16 @@ async function doNote() {
       })
       polished.push(t)
     }
+    // 视频块：分开交付 = 每文件「视频链接 + 对应段落转文字」依次排；合并 = 单文件「视频链接 + 整段转文字」
+    const segT = T.segmentTranscripts || {}
+    const embeds = (T.lastFiles || []).map(f => ({
+      wiki: f.wiki,
+      transcript: f.segId ? (segT[f.segId] || '') : T.transcript,
+    }))
     const md = core.buildLiteratureNote({
       title: meta.title, tags, summary: meta.summary, source,
       body: polished.join(''),
-      embeds: (T.lastFiles || []).map(f => f.wiki),
+      embeds,
     })
     const folder = path.join(conf.vaultPath, conf.literatureFolder || '文献盒')
     fs.mkdirSync(folder, { recursive: true })
@@ -420,7 +428,7 @@ const handlers = {
       return { ok: true, before, after, pct: (1 - after / before) * 100 }
     } finally { setBusy(false) }
   },
-  async 'POST /api/transcribe'() {
+  async 'POST /api/transcribe'(body = {}) {
     if (!T.curPath) throw new Error('请先下载视频')
     if (busy) throw new Error('任务进行中')
     if (T.transcript) return { ok: true, transcript: T.transcript }
@@ -428,12 +436,32 @@ const handlers = {
     setBusy(true)
     T.phase = 'transcribing'
     try {
-      let text = ''
-      await core.runPython({
-        py: conf.pythonPath, args: [conf.whisperModel, T.curPath],
-        onChunk: s => { text += s; broadcast({ type: 'transcript-chunk', text: s }) },
-      })
-      T.transcript = text.replace(/\s+/g, ' ').trim()
+      // 转录跟随剪辑语义：传 segments 则按「所选段落」逐段转录（分开交付时笔记按视频链接、正文依次对应），
+      // 不传（或整片单段）则转录当前预览原件。prepareSegment 产物交付复用。
+      const segs = (body.segments || []).filter(Boolean).map(s => clampSeg(s, T.info.duration))
+      const sources = []
+      if (!segs.length) sources.push({ seg: null, file: T.curPath })
+      else {
+        const fullSingle = segs.length === 1 && segs[0].start === 0 && segs[0].end === T.info.duration
+        if (fullSingle) sources.push({ seg: segs[0], file: T.curPath })
+        else {
+          for (const seg of segs) sources.push({ seg, file: await prepareSegment(seg, T.info.duration) })
+        }
+      }
+      const segTexts = {}
+      const full = []
+      for (const { seg, file } of sources) {
+        let text = ''
+        await core.runPython({
+          py: conf.pythonPath, args: [conf.whisperModel, file],
+          onChunk: s => { text += s; broadcast({ type: 'transcript-chunk', text: s }) },
+        })
+        const t = text.replace(/\s+/g, ' ').trim()
+        if (seg) segTexts[seg.id] = t
+        full.push(t)
+      }
+      T.segmentTranscripts = segTexts
+      T.transcript = full.join(' ')
       T.phase = 'ready'
       return { ok: true, transcript: T.transcript }
     } finally { setBusy(false) }
