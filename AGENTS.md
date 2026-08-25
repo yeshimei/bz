@@ -9,7 +9,7 @@
 ## 命令与构建
 
 - `pnpm install` / `pnpm run dev` / `pnpm run build` / `pnpm test` / `pnpm run test:watch` / `pnpm exec tsc --noEmit`（依赖管理已迁移 pnpm，勿用 npm 装依赖）
-- 产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`（esbuild.config.mjs 硬编码）
+- 产物直出 `E:/Obsidian/叫我包仔/.obsidian/plugins/bz/`（esbuild.config.mjs 硬编码）；`pnpm run build` 另把发布版 `main.js`（minify）同步到仓库根目录，`styles.css` 聚合时即写根目录——根目录三件套是发 GitHub Release 的版本
 - 测试经 vitest alias 将 `obsidian` 替换为 `tests/mock-obsidian-entry.ts`
 
 ## 架构
