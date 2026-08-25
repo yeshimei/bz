@@ -2,10 +2,25 @@
  * 骨架加载冒烟（ticket 01）：mock obsidian 环境下插件可加载、
  * 25 命令裸注册、ribbon 主入口、设置页挂载、卸载清理命令。
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import BzPlugin, { BzSettingTab } from '../src/main';
 import { MockVault } from './mock-vault';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from './mock-obsidian-entry';
+
+// ai-agent 域解散后的新注册点隔离：ensureMemoFileSync/ensureFavoritesFileSync 换 spy
+// （vi.mock 局部替换，其余导出保持真实实现，命令回调冒烟等用例不受影响）
+const syncSpies = vi.hoisted(() => ({
+  ensureMemoFileSync: vi.fn(),
+  ensureFavoritesFileSync: vi.fn(),
+}));
+vi.mock('../src/memo', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  ensureMemoFileSync: syncSpies.ensureMemoFileSync,
+}));
+vi.mock('../src/favorites', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  ensureFavoritesFileSync: syncSpies.ensureFavoritesFileSync,
+}));
 
 /** 构造 mock app（workspace/vault/commands/metadataCache 最小面） */
 function makeMockApp() {
@@ -154,14 +169,22 @@ describe('bz 骨架冒烟', () => {
 ${failures.join('\n')}`).toEqual([]);
     expect(registeredCommands.length).toBeGreaterThanOrEqual(31);
   }, 15000);
-  it('事件常驻域开关开启时 onload 注册（autoSummary/aiAgent/flash 懒加载分支）', async () => {
+  it('事件常驻域开关开启时 onload 注册（autoSummary/aiAgent→memo+favorites 文件同步/flash 懒加载分支）', async () => {
     delete diskData['bz'];
     diskData['bz'] = { autoSummaryEnabled: true, aiAgentEnabled: true, flashEnabled: true };
-    const plugin = await createPlugin(makeMockApp());
-    // 开启后 onLayoutReady 触发三个 ensure，均不抛错（占位/幂等）
+    syncSpies.ensureMemoFileSync.mockClear();
+    syncSpies.ensureFavoritesFileSync.mockClear();
+    const app = makeMockApp();
+    const plugin = await createPlugin(app);
+    // aiAgent 键名不变（旧 data.json 兼容）：开启后 onLayoutReady 触发新注册点——
+    // memo/favorites 两路文件同步 ensure 各恰好一次，均不抛错
     expect(plugin.settings.autoSummaryEnabled).toBe(true);
     expect(plugin.settings.aiAgentEnabled).toBe(true);
     expect(plugin.settings.flashEnabled).toBe(true);
+    expect(syncSpies.ensureMemoFileSync).toHaveBeenCalledTimes(1);
+    expect(syncSpies.ensureMemoFileSync).toHaveBeenCalledWith(app);
+    expect(syncSpies.ensureFavoritesFileSync).toHaveBeenCalledTimes(1);
+    expect(syncSpies.ensureFavoritesFileSync).toHaveBeenCalledWith(app);
   }, 15000);
   it('onunload 清理全部裸注册命令', async () => {
     const plugin = await createPlugin(makeMockApp());

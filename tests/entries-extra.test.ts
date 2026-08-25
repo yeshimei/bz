@@ -7,6 +7,7 @@ import { MockVault, mockAppWithVault } from './mock-vault';
 import { resetObsidianMocks } from './mock-obsidian-entry';
 import { setApp } from '../src/core/app';
 import { setSettingsProvider } from '../src/core/settings-provider';
+import { emitDomainEvent } from '../src/core/domain-bus';
 import { ensureFavorites, openFavoritesPanel, addFavoriteItem, unloadFavorites } from '../src/favorites/index';
 import { ensureClipping, openArticleView, unloadArticleView } from '../src/clipping/index';
 import { ensureNews, openNewsReader, unloadNewsReader } from '../src/news/index';
@@ -100,25 +101,25 @@ describe('movie 入口', () => {
     expect(MovieM.addOverlay).toBeTruthy();
   });
 
-  it('vault 事件触发防抖刷新（overlay 打开时 rebuild）', async () => {
+  it('域事件触发防抖刷新（overlay 打开时 rebuild）', async () => {
     ensureMovie(app);
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     openMovieManager(app);
     await vi.advanceTimersByTimeAsync(50); // rebuildItems 完成
     const before = ((MovieM as any).entries || []).length;
-    vault.emit('modify', { path: '我的/影视/《新片》.md', extension: 'md' });
+    emitDomainEvent('movie:file-modified', { path: '我的/影视/《新片》.md' });
     await vi.advanceTimersByTimeAsync(400);
     vi.useRealTimers();
     expect(((MovieM as any).entries || []).length).toBeGreaterThanOrEqual(before);
   });
 
-  it('vault 事件：非影视目录文件不触发', async () => {
+  it('域事件：非影视目录文件不触发（M.folderPath 前缀守卫双保险）', async () => {
     ensureMovie(app);
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     openMovieManager(app);
     await vi.advanceTimersByTimeAsync(50);
     const before = ((MovieM as any).entries || []).length;
-    vault.emit('create', { path: '其他/x.md', extension: 'md' });
+    emitDomainEvent('movie:file-created', { path: '其他/x.md' });
     await vi.advanceTimersByTimeAsync(400);
     vi.useRealTimers();
     expect(((MovieM as any).entries || []).length).toBe(before);
@@ -145,7 +146,7 @@ describe('core/dom createSiteIcon', () => {
 });
 
 describe('main.ts onunload 清理分支', () => {
-  it('onunload：unloadBz/unloadAIAgent/清理 diary 全部执行', async () => {
+  it('onunload：unloadBz/unloadMemoFileSync/unloadFavoritesFileSync/清理 diary 全部执行', async () => {
     setup();
     const plugin: any = new BzPlugin(app, {} as any);
     plugin.app = app;

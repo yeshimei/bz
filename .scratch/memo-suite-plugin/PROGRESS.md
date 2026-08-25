@@ -1,3 +1,14 @@
+## 2026-08-26 解散 AI Agent 域（ticket 102；worktree/dissolve-ai-agent）
+
+**状态：全量 2202 绿（148 文件）+ tsc 0；worktree/dissolve-ai-agent 已提交，待合并 master + 构建部署**
+
+- 引用同步拆回数据属主：src/memo/file-sync.ts + src/favorites/file-sync.ts（sync 纯函数私有副本 + 串行队列 + DEBOUNCE_DELAY 合并去抖，订 'vault:md-*'）；剪藏 AI 匹配归档归 memo：src/memo/clip-archive.ts（+批准弹窗，订 'clipping:file-created'）
+- main 装配点改 ensureMemoFileSync/ensureFavoritesFileSync 一对入口，仍 aiAgentEnabled 门控（ADR-0003 事件常驻例外延续，宿主换 memo/favorites）；src/ai-agent 退役删除，域数 21→20
+- 行为冻结零变化：监听文件夹门/合并去抖/串行队列/URL 精确优先+AI 弹窗批准权限模型/enableAIClipMatch；唯一文案例外=favorites 失败通知改「收藏本同步失败」（dedupeKey 'favorites-file-sync'；memo 侧键同步改 'memo-file-sync'/'memo-clip-match'）；设置四键保留不暴露
+- 顺带收编最后两处 md 裸监听：movie 索引订 'movie:file-*'、剪藏视图订 'clipping:file-modified'；遗留=belongings/weave-data 等 json 数据文件通道与 workspace file-open 一期不覆盖
+- 文档全套：ADR-0048、CONTEXT.md（AI Agent 词条改已解散 + 新增「文件引用同步」「剪藏归档」）、AGENTS.md/README.md（含两处 AI Agent 残留清理）/manifest.json 去名、spec.md 追加小节、issue 102
+- 门禁实录：tsc 0 错；全量 148 文件 2202 例全绿（smartcat 一时序用例在 8 workers 下抖动、隔离与 4 workers 均绿——CPU 争抢非回归）
+
 ## 2026-08-26 域事件总线一期（ticket 101；worktree/event-bus）
 
 **状态：全量 2064 绿（137 文件）+ tsc 0；worktree/event-bus 已提交，待合并 master + 构建部署**

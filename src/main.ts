@@ -42,7 +42,9 @@ import { openEncrypt, encryptCurrentNote, unloadEncrypt, mountEncryptStatusBar, 
 import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setLauncherGestureSetter, LauncherModal } from './launcher';
 import { registerGestureListeners } from './launcher/gestures';
 import { ensureAutoSummary, unloadAutoSummary } from './auto-summary';
-import { ensureAIAgent, unloadAIAgent } from './ai-agent';
+// ai-agent 域解散：文件同步拆入 memo/favorites 域（原 ensureAIAgent/unloadAIAgent 换线）
+import { ensureMemoFileSync, unloadMemoFileSync } from './memo';
+import { ensureFavoritesFileSync, unloadFavoritesFileSync } from './favorites';
 // 日记本（diary-notebook 合并）
 import { setApp as setDiaryApp } from './diary/app';
 import { applyDirectories } from './diary/config';
@@ -218,7 +220,10 @@ export default class BzPlugin extends Plugin {
       // 日记本：启动即初始化（diary-notebook 原行为：onLayoutReady → init）
       void diaryInit(this);
       if (this.settings.autoSummaryEnabled) ensureAutoSummary(this.app);
-      if (this.settings.aiAgentEnabled) ensureAIAgent(this.app);
+      if (this.settings.aiAgentEnabled) {
+        ensureMemoFileSync(this.app);
+        ensureFavoritesFileSync(this.app);
+      }
       if (this.settings.flashEnabled) ensureFlashOnReady(this.app);
       // 复习计划：到期提醒开启时常驻（ticket 100——监听/染色/轮询统一启动；否则懒加载）；enableAutoNotify 缺省视为开
       if (this.settings.enableAutoNotify !== false) void ensureReview(this.app);
@@ -247,7 +252,8 @@ export default class BzPlugin extends Plugin {
     unmountEncryptStatusBar();
     unloadPomodoro();
     unloadBz();
-    unloadAIAgent();
+    unloadMemoFileSync();
+    unloadFavoritesFileSync();
     unloadLauncherPanel();
     unloadEncrypt();
     unloadSmartCat();

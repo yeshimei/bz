@@ -30,7 +30,7 @@ _Avoid_: 类型、分类
 
 ### 待迁移域
 
-**备忘录 (Memo/Todo)**: 待办事项管理，数据 `CONFIG/STORAGE/memo.json`，场景分类（剪藏/工作/学习/生活/代码/公开课），Todo 弹窗（#todo-popup）。被 AIAgent 与闪念引用。
+**备忘录 (Memo/Todo)**: 待办事项管理，数据 `CONFIG/STORAGE/memo.json`，场景分类（剪藏/工作/学习/生活/代码/公开课），Todo 弹窗（#todo-popup）。被闪念引用；引用同步与剪藏归档已并入本域（ADR-0048）。
 _Avoid_: 待办列表、任务
 
 **归物本 (Belongings)**: 物品登记管理，数据目录 `CONFIG/STORAGE`（可配置）。
@@ -80,7 +80,13 @@ _Avoid_: 抓海报、豆瓣补全、poster fetch
 
 **B站下载 (Bilibili Downloader)**: 输入链接 → B站 API 解析（封面/标题/清晰度）→ 下载合并（ffmpeg spawn）→ 多段剪辑（对一个下载原件定义 0..N 段落，时间 0.1s/HH:MM:SS(.S)）/合并（段序拼接）/压缩（ffmpeg，产物 ffprobe 校验兜底，交付模式：分开、每段一个；合并、单文件）→ 转文字（faster-whisper，python -c 内嵌代码）。**用户决策：独立 NodeJS Web 工具（`tools/bili-downloader/`，bin `bili-dl`），不并入 bz 插件**——运行即起本地网页，网页内完成全部操作，设置图标可改交付目录。术语见 `tools/bili-downloader/CONTEXT.md`（ADR-0011）。
 
-**AI Agent**: 笔记 ⇄ 备忘录/收藏本 自动同步 + AI 剪藏匹配。常驻监听 vault 事件（rename/delete/create）。权限模型：非 AI 操作静默直改；仅 AI 剪藏匹配弹窗批准。
+**AI Agent（已解散，ADR-0048）**: 原 ticket 19 后台常驻域——笔记 ⇄ 备忘录/收藏本引用自动同步 + AI 剪藏匹配（裸监听 vault rename/delete/create；权限模型：非 AI 操作静默直改，仅 AI 匹配弹窗批准）。2026-08-26 解散、职责归位：引用同步拆回数据属主（见「文件引用同步」），剪藏匹配归档归 memo 域（见「剪藏归档」）；main 装配点改 ensureMemoFileSync/ensureFavoritesFileSync 一对入口，仍由 aiAgentEnabled 门控。设置四键（aiAgentEnabled/enableAIClipMatch/aiAgentWatchedFolders/aiAgentModel）冻结保留、不暴露。
+_Avoid_: 把「文件引用同步」「剪藏归档」再称作 AI Agent（域已不存在）
+
+**文件引用同步 (File Reference Sync)**: 笔记 rename/delete 后自动维护「引用了该笔记的数据条目」的家族机制，共三员——memo.json、favorites.json、review.json：各数据属主订阅域事件总线通用通道 `'vault:md-*'` 就地更新自身字段（memo/favorites 的 linkedNote/notePath/标题，review 的计划内笔记路径）。memo/favorites 持本地纯函数私有副本（ADR-0048 自 ai-agent 拆回，语义逐行等价、勿跨域 import）；review 一期已订同一通道。
+_Avoid_: 引用同步单独成域（AI Agent 已解散）；跨域 import 他域 sync 副本
+
+**剪藏归档 (Clip Archive)**: memo 域功能——剪藏落盘（订 `'clipping:file-created'` 语义通道）→ 读 frontmatter link 在 memo.json 剪藏场景待办中 **URL 精确匹配**；命中即归档（写入 linkedNote 并置完成）；未命中且 enableAIClipMatch 开启时 AI 匹配候选条目并**弹窗征求批准**，确认后才写入。「URL 精确优先 / AI 弹窗批准」权限模型冻结（ADR-0048）。
 
 **复习计划 (Review Plan)**: FSRS v4 算法驱动的复习管理，数据 `CONFIG/STORAGE/review.json`。可配置多个「监听文件夹」自动收编笔记；做题会话自动评级未通过（忘了/困难）时结果卡变唯一按钮「复习此笔记」并置「待重做」，重做到通过才进下篇（首次评级=唯一排期来源，ADR-0044）；「做题家」命令入口已退役（ADR-0045），仅作复习引擎。ticket 100 起：**到期提醒**（enableAutoNotify，开启时插件启动即常驻轮询，有逾期笔记即弹聚合通知）；**每日复习上限**（reviewDailyLimit，一轮复习最多处理 N 篇逾期）；**复习间隔缩放**（reviewIntervalScale，FSRS 相位间隔乘系数，ADR-0046）；**文件树标记**（reviewTreeBadge，关闭则文件树不染色不挂徽章）；**自动加入提醒**（reviewAutoAddNotice，新笔记自动收编时 3 秒窗口合并一条通知）。
 

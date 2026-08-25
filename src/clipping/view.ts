@@ -12,6 +12,7 @@ import { escManager } from '../core/esc-manager';
 import { createSiteIcon } from '../core/dom';
 import { formatRelativeTime } from '../core/utils';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
+import { onDomainEvent } from '../core/domain-bus';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal, createSettingsGroup } from '../core/settings-modal';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
@@ -33,7 +34,8 @@ let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let currentSearchKeyword = '';
 let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 let fileListenerAttached = false;
-let fileListenerRef: any = null;
+/** 总线退订函数（原存 vault ref 用于 offref，换线后改存 onDomainEvent 返回的退订闭包） */
+let fileListenerRef: (() => void) | null = null;
 let isLoadingData = false;
 
 // ---------- 配置（从设置读取） ----------
@@ -863,7 +865,6 @@ function initScroll() {
 
 // ========== 文件监听 ==========
 function attachFileListener() {
-  const app = getApp();
   if (fileListenerAttached) return;
   const fileModifyHandler = async (file: any) => {
     // 补 '/' 边界：防「我的/文章备选」误命中「我的/文章」前缀（与 auto-summary getWatchDir()+'/' 对齐）
@@ -875,7 +876,11 @@ function attachFileListener() {
       }, 300);
     }
   };
-  fileListenerRef = app.vault.on('modify', fileModifyHandler);
+  // 换线：原生 vault modify 订阅 → 域事件总线 clipping:file-modified（obsidian-adapter 统一派发，仅 md）。
+  // fileListenerRef 改存总线退订函数，卸载点 unloadClipping 同步适配；防抖与目录边界判断原样保留。
+  fileListenerRef = onDomainEvent<{ path: string }>('clipping:file-modified', (evt) =>
+    fileModifyHandler({ path: evt.path, extension: 'md' })
+  );
   fileListenerAttached = true;
 }
 
@@ -909,7 +914,7 @@ export function renderEmpty() {
 export function unloadClipping(): void {
   if (fileListenerRef) {
     try {
-      getApp().vault.offref(fileListenerRef);
+      fileListenerRef(); // 总线退订函数（幂等，重复调用安全）
     } catch (e) { /* 忽略 */ }
     fileListenerRef = null;
     fileListenerAttached = false;

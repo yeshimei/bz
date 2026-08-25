@@ -999,7 +999,8 @@ export function addItem(): Promise<void> {
   });
 }
 
-/** 打开期间监听数据文件变更自动刷新（用户拍板：去 ⏳ 按钮改实时）；面板隐藏时注销 */
+/** 打开期间监听数据文件变更自动刷新（用户拍板：去 ⏳ 按钮改实时）；面板隐藏时注销。
+ *  监听对象是 belongings.json（json 数据文件）：域事件总线一期仅收编 md 事件不覆盖，维持原生订阅（ADR-0048 边界）。 */
 function startAutoRefresh(): void {
   stopAutoRefresh();
   const app = getApp();

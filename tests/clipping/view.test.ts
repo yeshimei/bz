@@ -1,11 +1,12 @@
 /**
  * 剪藏本 UI 测试（ticket 08/69）：面板渲染、站点栏单选过滤、搜索、单击跳转、
  * 移动端长按抽屉（打开/复制双链/复制原文链接/删除）、桌面端无浮层、
- * 反链直点、滚动加载、空态、modify 自动刷新。
+ * 反链直点、滚动加载、空态、clipping:file-modified 域事件自动刷新。
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
+import { emitDomainEvent } from '../../src/core/domain-bus';
 import { initArticleView, applyArticleSettings, applyFilter, renderEmpty, unloadClipping } from '../../src/clipping/view';
 import { MockVault } from '../mock-vault';
 import {
@@ -473,7 +474,7 @@ describe('剪藏本修复回归（P0-8/P1-22/P1-23/P2）', () => {
     expect(hasNotice(/已删除/)).toBe(true);
   });
 
-  it('vault modify 目录边界（P2）：前缀同名目录不误触发刷新；目录内正常防抖刷新', async () => {
+  it('clipping:file-modified 目录边界（P2）：前缀同名目录不误触发刷新；目录内正常防抖刷新', async () => {
     const { vault } = await setup();
     vault.files.set('我的/文章/A.md', makeArticleMd('https://x.com/a', '站', 'A', '2025-06-02T08:00:00.000Z'));
     await initArticleView(true);
@@ -486,14 +487,14 @@ describe('剪藏本修复回归（P0-8/P1-22/P1-23/P2）', () => {
     const scBefore = document.querySelector('.article-scroll-container');
 
     // 「我的/文章备选」（前缀同名但非同目录）modify → 不刷新（补 '/' 边界后 startsWith 不命中）
-    vault.emit('modify', vault.file('我的/文章备选/x.md'));
+    emitDomainEvent('clipping:file-modified', { path: '我的/文章备选/x.md' });
     await new Promise((r) => setTimeout(r, 350));
     expect(document.querySelector('.article-scroll-container')).toBe(scBefore);
     expect(document.querySelectorAll('.article-entry-card').length).toBe(1);
 
     // 目录内 modify → 防抖 300ms 后 refreshData 重渲染（scrollContainer 重建）
     vault.files.set('我的/文章/B.md', makeArticleMd('https://x.com/b', '站', 'B', '2025-06-03T08:00:00.000Z'));
-    vault.emit('modify', vault.file('我的/文章/B.md'));
+    emitDomainEvent('clipping:file-modified', { path: '我的/文章/B.md' });
     await new Promise((r) => setTimeout(r, 400));
     expect(document.querySelector('.article-scroll-container')).not.toBe(scBefore);
     expect(document.querySelectorAll('.article-entry-card').length).toBe(2);
