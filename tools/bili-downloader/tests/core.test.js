@@ -542,3 +542,19 @@ test('buildLiteratureNote：视频块对象（wiki + 对应转文字）逐段依
   const md2 = core.buildLiteratureNote({ title: 'T', body: 'b', embeds: ['![[x.mp4]]'] })
   assert.ok(md2.includes('![[x.mp4]]'))
 })
+
+test('parseTranscriptUnits：逐文件转录输出解析（多行、乱行容错）', () => {
+  const units = core.parseTranscriptUnits([
+    '\x1eC:\\a.mp4\x1f第一段文本\x1f',
+    '前导噪声行',
+    '\x1eC:\\b.mp4\x1f第二段文本\x1f',
+    '',
+  ].join('\n'))
+  assert.equal(units.length, 2)
+  assert.equal(units[0].file, 'C:\\a.mp4')
+  assert.equal(units[0].text, '第一段文本')
+  assert.equal(units[1].file, 'C:\\b.mp4')
+  assert.equal(units[1].text, '第二段文本')
+  assert.deepEqual(core.parseTranscriptUnits(''), [])
+  assert.deepEqual(core.parseTranscriptUnits('abc\n'), [])
+})

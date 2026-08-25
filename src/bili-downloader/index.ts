@@ -17,14 +17,31 @@ function getChildProcess(): any {
 const ADDR_RE = /地址:\s*(https?:\/\/\S+)/;
 const INSTALL_HINT = '请先运行 npm install -g @jwbz/bili-downloader';
 
+/**
+ * 修复期临时指针（2026-08-25 用户拍板：发布未稳定前停止 npm publish，
+ * B站下载直连本仓库未发布 CLI 验证；稳定后再恢复全局 bili-dl 并删除此段）。
+ */
+const LOCAL_CLI_CANDIDATE = 'D:/Obsidian/bz/tools/bili-downloader/cli.js';
+function resolveCmd(): string {
+  try {
+    const w = window as any;
+    const fsMod = w.require && w.require('fs');
+    if (fsMod && typeof fsMod.existsSync === 'function' && fsMod.existsSync(LOCAL_CLI_CANDIDATE)) {
+      return `node "${LOCAL_CLI_CANDIDATE}"`;
+    }
+  } catch { /* 非桌面端/无 fs：走全局命令 */ }
+  return 'bili-dl';
+}
+
 /** 打开 B站下载器（bz-bili-downloader-open 命令回调） */
 export function openBiliDownloader(): void {
   const cp = getChildProcess();
   if (!cp) { notice('仅桌面端可用：B站下载器需要 Node.js 外部进程', 'error'); return; }
   let child: any;
   try {
-    // Windows 全局 bin 是 bili-dl.cmd shim，需 shell:true 解析（参数为空，无注入风险）
-    child = cp.spawn('bili-dl', [], { shell: true, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+    // Windows 全局 bin 是 bili-dl.cmd shim，需 shell:true 解析（参数为空，无注入风险）；
+    // 本地 CLI 指针（resolveCmd）同样经 shell 执行 node "<path>"
+    child = cp.spawn(resolveCmd(), [], { shell: true, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
   } catch (e: any) {
     notice(`启动失败：${e.message}。${INSTALL_HINT}`, 'error');
     return;

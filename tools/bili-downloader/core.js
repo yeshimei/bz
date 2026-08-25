@@ -471,7 +471,9 @@ function uniquePath(file) {
 }
 
 // 内嵌转录 Python 代码（faster-whisper，python -c 执行，无需独立脚本文件）
-// 用法: python -c "此代码" <模型> <视频路径>，stdout 输出无换行一段文字
+// 用法: python -c "此代码" <模型> <文件1> [<文件2>...]
+// 单进程单次加载模型，依次转录多个文件；每文件一行输出：
+//   \x1e<文件路径>\x1f<该文件全文>\x1f\n（\x1e/\x1f 为单元分隔符，服务端解析归位）
 const PY_TRANSCRIBE = `
 import sys
 from faster_whisper import WhisperModel
@@ -481,13 +483,28 @@ for _s in (sys.stdout, sys.stderr):
     except Exception:
         pass
 model = WhisperModel(sys.argv[1], device='cpu', compute_type='int8')
-segments, _ = model.transcribe(sys.argv[2], language='zh', vad_filter=True)
-for seg in segments:
-    t = seg.text.strip()
-    if t:
-        sys.stdout.write(t + ' ')
-        sys.stdout.flush()
+for f in sys.argv[2:]:
+    segments, _ = model.transcribe(f, language='zh', vad_filter=True)
+    parts = [seg.text.strip() for seg in segments if seg.text.strip()]
+    sys.stdout.write('\\x1e' + f + '\\x1f' + ' '.join(parts) + '\\x1f\\n')
+    sys.stdout.flush()
 `
+
+// 解析逐文件转录输出（行格式 \x1e<file>\x1f<text>\x1f）；按输出序返回 [{file, text}]
+function parseTranscriptUnits(raw) {
+  const out = []
+  for (const line of String(raw || '').split(/\r?\n/)) {
+    if (!line.startsWith('\x1e')) continue
+    const rest = line.slice(1)
+    const sep = rest.indexOf('\x1f')
+    if (sep < 0) continue
+    const file = rest.slice(0, sep)
+    let text = rest.slice(sep + 1)
+    if (text.endsWith('\x1f')) text = text.slice(0, -1)
+    if (file) out.push({ file, text: text.trim() })
+  }
+  return out
+}
 
 // 转文字：python -c 执行内嵌代码；stdout 逐块回调（修复原版双监听导致的文本双写）
 function runPython({ py, args, onChunk }) {
@@ -677,7 +694,7 @@ module.exports = {
   buildTrimArgs, runFfmpeg, probeDuration, validateClip, trimVideo,
   buildMergeArgs, writeConcatList, mergeSegments,
   loadCookies, saveCookies, readJson, writeJson, uniquePath,
-  abortAll, resetAbort, trackProc, runPython, PY_TRANSCRIBE,
+  abortAll, resetAbort, trackProc, runPython, PY_TRANSCRIBE, parseTranscriptUnits,
   cacheKey, getCacheDir, cachePath, cleanupCache,
   sanitizeMdTitle, chunkTranscript, buildLiteratureNote,
   AI_TIMEOUT_MS, AI_PROVIDERS, loadBzAiConfig, aiChat, aiJson,

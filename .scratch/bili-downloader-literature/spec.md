@@ -108,7 +108,8 @@
 - 入口：底部快捷命令「📄 生成文献笔记」（转文字旁），恒可见；`S.dur > 0`（已下载）才可点（前端 `updateGenNote`）。点击后前端链条：**①** 未转录 → 自动调 `POST /api/transcribe`（带 segments；按段落逐段转录，SSE 进度流式进文本区）并写入 `S.transcript`；**②** 未交付 → 调 `POST /api/done`（复用交付参数 segments/mode/crf，内部完成剪切/压缩/交付，trim-progress SSE 推进度）→ `showDelivered`；本任务已交付（`S.delivered`）则跳过①②直走 ③；**③** 调 `POST /api/note`。`/api/note` 服务端仍要求 `T.phase === done` + 转录存在（前置防线不变，链条保证先满足）。
 - **1.2.3 修订——转文字跟随剪辑语义**：`/api/transcribe` 带 segments 时**逐段转录**（每段 prepare 后分别跑 faster-whisper，存 `T.segmentTranscripts{segId:text}`，`T.transcript`=各段拼接）；不传或整片单段 → 转录当前预览原件。下载后**段落为空**（不再自动生成整片段落，手动圈选「+ 添加段落」）；空段落 = 整片交付/转录。
 - **1.2.3 修订——笔记视频块布局（用户拍板）**：分开交付多段 = 每文件「视频链接、对应转文字」依次排 N 块；合并交付 = 单块「视频链接、整段转文字」；正文（润色全文）在其前。
-- 步骤：① 元数据调用（`response_format: json_object`）→ {title, tags[], summary}；② 正文润色——转录按段落切块（块大小控 token 预算），逐块轻润色、按序拼接；任一步失败即中止、可重试，不落半成品。
+- **1.2.4 修订（2026-08-25，未发布·本地验证期）**：快捷命令改**严格顺序五步**——①应用剪辑（逐段 `/api/trim`）→②应用压缩（选档逐段 `/api/compress`）→③转文字→④AI 润色（**新端点 `/api/note-prepare`**：元数据+分块润色存 `T.polishedNote`）→⑤生成笔记（`/api/done` 交付 + `/api/note` 写笔记复用润色结果，AI 只跑一次）；各步串行 await 绝不并行，`#flow-status` 显式展示步骤；**转录单进程单次模型加载多文件转**（PY_TRANSCRIBE 多文件 + `\x1e/\x1f` 单元分隔 + `parseTranscriptUnits` 归位，修多段「一直转录中无效果」）；修草稿态滑块被 `syncFromActive` 重置导致的把手不跟随/回零；压缩完成清「100% 编码中」残影。
+- 步骤（AI 部分，note-prepare 内）：① 元数据调用（`response_format: json_object`）→ {title, tags[], summary}；② 正文润色——转录按段落切块（块大小控 token 预算），逐块轻润色、按序拼接；任一步失败即中止、可重试，不落半成品。
 - 成功：写笔记（F4）→ toast → `obsidian://open?vault=<vaultPath 末段>&file=<文献盒相对路径>` 跳转（URL 编码）。
 
 ### F4 笔记落盘
