@@ -18,7 +18,7 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; cha
 
 // ---- 任务状态（单任务语义；一个任务可有多个「段落」）----
 const T = {
-  phase: 'idle',           // idle | parsing | downloading | trimming | compressing | transcribing | done
+  phase: 'idle',           // idle | parsing | downloading | trimming | compressing | transcribing | generating | ready | done
   url: '', info: null, quality: null,
   cid: null, part: 1, pageCount: 1, partTitle: '',   // 分P：当前选中 P 的 cid/序号/总数/标题
   originalPath: null,      // 下载原件（剪辑的源；始终保留，「返回原视频」可重建段落）
@@ -28,6 +28,7 @@ const T = {
   mode: 'split',           // split（分开交付，每段一个） | merge（合并成一个视频）
   prepared: [],            // [{id, start, end, mode, tempPath}] 已校验段落临时产物缓存（交付复用）
   transcript: '',
+  lastFiles: [],           // 本次交付的文件 [{finalName, wiki}]（文献笔记 embed 与历史 note 字段用）
 }
 function resetTask() {
   core.resetAbort()
@@ -37,6 +38,7 @@ function resetTask() {
   T.originalPath = null; T.curPath = null; T.curDur = 0
   T.crf = 23; T.segments = []; T.mode = 'split'; T.prepared = []
   T.transcript = ''
+  T.lastFiles = []
   T.phase = 'idle'
 }
 
@@ -178,8 +180,73 @@ async function doDone(body) {
   }
   if (!files.length) throw new Error(failures.join('\n') || '交付失败')
   T.phase = 'done'
+  T.lastFiles = files.map(f => ({ finalName: f.finalName, wiki: f.wiki }))   // 记录本次交付文件（文献笔记 embed 引用）
   const clip = buildClipboard(files.map(f => f.finalName))   // 传裸文件名，由 buildClipboard 统一包一层 ![[ ]]，避免双重嵌套
   return { ok: true, mode: T.mode, files, failures, clipboard: clip.text, wiki: clip.wiki }
+}
+
+// ---- 文献笔记（F3-F5）：AI 元数据 + 分块润色 + 落盘文献盒 + 历史 note 字段 ----
+// 前置：已「完成」交付（embed 引用真实交付文件名）+ 已转文字（转录全文在内存 T.transcript）
+async function doNote() {
+  if (T.phase !== 'done') throw new Error('请先点「完成」交付视频，再生成文献笔记')
+  if (!T.transcript) throw new Error('请先转文字（生成文献笔记需要转录文本）')
+  const conf = cfg.loadConfig()
+  const ai = core.loadBzAiConfig(conf)   // 缺 key / 缺 bz 数据文件 → 报错，无 quickadd 回退
+  const source = core.extractBv(T.url) || T.url
+  const videoTitle = (T.info && T.info.title) || ''
+  setBusy(true)
+  T.phase = 'generating'
+  try {
+    broadcast({ type: 'diag', text: 'AI 生成标题/标签/一句话简介…' })
+    const chunks = core.chunkTranscript(T.transcript)
+    const metaRaw = await core.aiJson({
+      ...ai,
+      messages: [{ role: 'user', content: core.literatureMetaPrompt(videoTitle, chunks[0] || '') }],
+      maxTokens: 600,
+    })
+    const tags = Array.isArray(metaRaw.tags) ? metaRaw.tags.map(String).filter(Boolean).slice(0, 5) : []
+    const meta = {
+      title: String(metaRaw.title || '').trim() || videoTitle || '未命名',
+      tags,
+      summary: String(metaRaw.summary || '').trim(),
+    }
+    broadcast({ type: 'diag', text: 'AI 润色正文…' })
+    const polished = []
+    for (let i = 0; i < chunks.length; i++) {
+      const t = await core.aiChat({
+        ...ai,
+        messages: [{ role: 'user', content: core.literaturePolishPrompt(chunks[i]) }],
+        maxTokens: 4096,
+      })
+      polished.push(t)
+    }
+    const md = core.buildLiteratureNote({
+      title: meta.title, tags, summary: meta.summary, source,
+      body: polished.join(''),
+      embeds: (T.lastFiles || []).map(f => f.wiki),
+    })
+    const folder = path.join(conf.vaultPath, conf.literatureFolder || '文献盒')
+    fs.mkdirSync(folder, { recursive: true })
+    const notePath = core.uniquePath(path.join(folder, core.sanitizeMdTitle(meta.title) + '.md'))
+    fs.writeFileSync(notePath, md, 'utf8')
+    const rel = path.relative(path.resolve(conf.vaultPath), notePath).replace(/\\/g, '/')
+    attachNote(rel, (T.lastFiles || []).map(f => f.finalName))
+    const url = `obsidian://open?vault=${encodeURIComponent(path.basename(path.resolve(conf.vaultPath)))}&file=${encodeURIComponent(rel)}`
+    T.phase = 'done'
+    return { ok: true, note: { path: notePath, wiki: `![[${rel}]]`, url } }
+  } finally {
+    if (T.phase === 'generating') T.phase = 'done'   // 失败也回到 done，可重试
+    setBusy(false)
+  }
+}
+
+// 给本任务本次交付的历史条目追加可选 note 字段（最新一条；旧历史零迁移，重复生成为新文件则更新）
+function attachNote(rel, targetFiles) {
+  const h = cfg.loadHistory()
+  const i = h.findIndex(it => targetFiles.includes(it.file))
+  if (i < 0) return
+  h[i] = { ...h[i], note: rel }
+  core.writeJson(cfg.HISTORY_PATH, h)
 }
 
 // ---- 取消：中止 + 删除全部产物 + 重置任务 ----
@@ -279,21 +346,33 @@ const handlers = {
     if (body.part) T.part = Number(body.part)
     if (body.partTitle != null) T.partTitle = String(body.partTitle)
     if (body.duration != null && isFinite(Number(body.duration))) T.info = { ...T.info, duration: Number(body.duration) }
+    const conf = cfg.loadConfig()
     setBusy(true)
     T.phase = 'downloading'
     try {
       const outPath = path.join(TMP_DIR, `bili_${Date.now()}.mp4`)
-      await core.downloadVideo({
-        url: T.url, cookie: cfg.loadCookie(), height, cid: T.cid, outPath, ffmpeg: cfg.loadConfig().ffmpegPath,
-        onDiag: text => broadcast({ type: 'diag', text }),
-        onProgress: p => broadcast({ type: 'download-progress', ...p }),
-      })
+      // 视频缓存：键 = BV + cid(分P) + 清晰度，全同命中则跳过下载+合并，复用缓存原件
+      const key = core.cacheKey(core.extractBv(T.url), T.cid, height)
+      const cached = core.cachePath(conf, key)
+      const wasCached = fs.existsSync(cached)
+      if (wasCached) {
+        broadcast({ type: 'diag', text: '⏩ 缓存命中，跳过下载（直接复用下载原件）' })
+        fs.copyFileSync(cached, outPath)
+      } else {
+        await core.downloadVideo({
+          url: T.url, cookie: cfg.loadCookie(), height, cid: T.cid, outPath, ffmpeg: conf.ffmpegPath,
+          onDiag: text => broadcast({ type: 'diag', text }),
+          onProgress: p => broadcast({ type: 'download-progress', ...p }),
+        })
+        // 未命中下载完成后回写缓存（下载原件；剪辑/压缩件不进缓存）
+        try { fs.mkdirSync(path.dirname(cached), { recursive: true }); fs.copyFileSync(outPath, cached) } catch {}
+      }
       T.curPath = outPath      // 预览即下载原件（时间轴坐标 = 原件时长）
       T.originalPath = outPath // 下载原件：剪辑的源，始终保留
       T.curDur = T.info.duration
       T.segments = []; T.prepared = []; T.mode = 'split'
       T.phase = 'ready'
-      return { ok: true, path: outPath }
+      return { ok: true, path: outPath, cached: wasCached }
     } finally { setBusy(false) }
   },
   async 'POST /api/trim'(body) {
@@ -362,6 +441,9 @@ const handlers = {
   async 'POST /api/done'(body) {
     if (busy) throw new Error('任务进行中')
     return doDone(body || {})
+  },
+  async 'POST /api/note'() {
+    return doNote()
   },
   async 'POST /api/revert'() {
     // 返回原视频：清空全部段落 + 关闭压缩 + 恢复下载原件（可重新剪辑）
@@ -449,7 +531,10 @@ function createServer() {
   return http.createServer(route)
 }
 
-// 启动后：异步验证 Cookie 状态广播给页面
-function startValidate() { validateCookie() }
+// 启动后：异步验证 Cookie 状态广播给页面 + 视频缓存启动清扫（清理过期下载原件）
+function startValidate() {
+  validateCookie()
+  try { core.cleanupCache(cfg.loadConfig()) } catch {}
+}
 
 module.exports = { createServer, T, TMP_DIR, resetTask, startValidate, broadcast }

@@ -80,6 +80,14 @@ _Avoid_: 抓海报、豆瓣补全、poster fetch
 
 **B站下载 (Bilibili Downloader)**: 输入链接 → B站 API 解析（封面/标题/清晰度）→ 下载合并（ffmpeg spawn）→ 多段剪辑（对一个下载原件定义 0..N 段落，时间 0.1s/HH:MM:SS(.S)）/合并（段序拼接）/压缩（ffmpeg，产物 ffprobe 校验兜底，交付模式：分开、每段一个；合并、单文件）→ 转文字（faster-whisper，python -c 内嵌代码）。**用户决策：独立 NodeJS Web 工具（`tools/bili-downloader/`，bin `bili-dl`），不并入 bz 插件**——运行即起本地网页，网页内完成全部操作，设置图标可改交付目录。术语见 `tools/bili-downloader/CONTEXT.md`（ADR-0011）。
 
+**快速流程 (Quick Flow)**: B站下载「转文字」之后的一键后续——AI 生成标题/标签/一句话简介并轻度润色转录正文，落一篇「文献笔记」；视频本体仍走既有交付流程，笔记嵌入交付文件。_Avoid_: 一键流程、AI 后处理
+
+**文献笔记 (Literature Note)**: 由快速流程生成的视频文献笔记——frontmatter 含标题/标签/一句话简介/来源，正文为转录稿轻度润色 + 交付视频的嵌入双链，存于「文献盒」。区别于书库「读书笔记」与聚合讯「剪藏文章」。_Avoid_: 读书笔记、视频笔记（指本词时）
+
+**文献盒 (Literature Box)**: 存放文献笔记的 vault 内目录，默认 vault 根下「文献盒」。_Avoid_: 笔记夹、输出目录
+
+**视频缓存 (Video Cache)**: 「下载原件」的跨任务持久缓存——同 BV 同分 P 同清晰度的重复下载优先复用缓存、跳过下载阶段，超期（默认 7 天）清理。_Avoid_: 产物缓存、中间缓存（剪辑/压缩件不进缓存）
+
 **AI Agent（已解散，ADR-0048）**: 原 ticket 19 后台常驻域——笔记 ⇄ 备忘录/收藏本引用自动同步 + AI 剪藏匹配（裸监听 vault rename/delete/create；权限模型：非 AI 操作静默直改，仅 AI 匹配弹窗批准）。2026-08-26 解散、职责归位：引用同步拆回数据属主（见「文件引用同步」），剪藏匹配归档归 memo 域（见「剪藏归档」）；main 装配点改 ensureMemoFileSync/ensureFavoritesFileSync 一对入口，仍由 aiAgentEnabled 门控。设置四键（aiAgentEnabled/enableAIClipMatch/aiAgentWatchedFolders/aiAgentModel）冻结保留、不暴露。
 _Avoid_: 把「文件引用同步」「剪藏归档」再称作 AI Agent（域已不存在）
 

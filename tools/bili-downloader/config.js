@@ -22,6 +22,10 @@ const DEFAULTS = {
   ffprobePath: 'ffprobe',                              // 产物校验（时长/可播放性）用
   pythonPath: 'C:/Users/PC/AppData/Local/Programs/Python/Python312/python.exe',
   whisperModel: 'small',
+  // 视频缓存 + 文献笔记（新增三键，可选；既有六键与结构原样保留）
+  cacheDir: '',                                        // 视频缓存目录（留空 = 系统临时目录/bili-dl-cache）
+  cacheRetentionDays: 7,                               // 下载原件缓存保留天数
+  literatureFolder: '文献盒',                           // 文献笔记存放目录（相对 vault 根）
 }
 
 function loadConfig() {

@@ -66,7 +66,7 @@ const nextSegId = () => 'seg' + (++segSeq)
 const activeSeg = () => S.segments.find(s => s.id === S.activeId) || null
 const pageCount = () => (S.pages || []).length || 1
 
-const OP_BTNS = ['parse-btn', 'dl-btn', 'trim-btn', 'compress-btn', 'transcribe-btn', 'done-btn', 'add-seg-btn', 'ts-copy', 'cookie-save-btn', 'settings-save']
+const OP_BTNS = ['parse-btn', 'dl-btn', 'trim-btn', 'compress-btn', 'transcribe-btn', 'done-btn', 'add-seg-btn', 'ts-copy', 'cookie-save-btn', 'settings-save', 'gen-note']
 function setBusy(b) {
   S.busy = b
   OP_BTNS.forEach(id => { const el = $(id); if (el) el.disabled = b })
@@ -198,7 +198,7 @@ $('dl-btn').onclick = async () => {
   txt.textContent = '连接中…'
   try {
     const page = S.pages[S.pageIndex]
-    await api('/api/download', 'POST', {
+    const r = await api('/api/download', 'POST', {
       height: S.quality,
       cid: page ? page.cid : undefined,
       part: page ? page.page : 1,
@@ -220,7 +220,7 @@ $('dl-btn').onclick = async () => {
     syncFromActive()
     loadVideo()
     $('done-btn').disabled = false
-    toast('✅ 下载完成，拖动滑块/色块可实时预览剪辑范围')
+    toast(r.cached ? '⚡ 缓存命中，跳过下载，直接进入剪辑' : '✅ 下载完成，拖动滑块/色块可实时预览剪辑范围')
   } catch (e) {
     if (!/已中止/.test(e.message)) toast(e.message, true)
   } finally {
@@ -574,6 +574,7 @@ $('done-btn').onclick = async () => {
     $('result-path').textContent = '📂 ' + r.files.map(f => f.finalPath).join('\n')
     $('result-clip').textContent = r.clipboard
     $('result-wrap').classList.remove('hidden')
+    $('gen-note').disabled = false   // 交付后可一键生成文献笔记
     if (r.failures && r.failures.length) toast('部分失败：' + r.failures.join('；'), true)
     try {
       await navigator.clipboard.writeText(r.clipboard)
@@ -589,6 +590,29 @@ $('done-btn').onclick = async () => {
 $('copy-btn').onclick = async () => {
   try { await navigator.clipboard.writeText($('result-clip').textContent); toast('📋 已复制') }
   catch { toast('复制失败', true) }
+}
+
+// ---- 生成文献笔记（交付后一键：AI 元数据 + 润色 + 落盘文献盒）----
+$('gen-note').onclick = async () => {
+  const btn = $('gen-note')
+  btn.disabled = true
+  const nr = $('note-result')
+  nr.classList.add('hidden')
+  nr.textContent = ''
+  try {
+    const r = await api('/api/note', 'POST', {})
+    const a = document.createElement('a')
+    a.href = r.note.url
+    a.target = '_blank'
+    a.textContent = `📄 ${r.note.wiki}（点击在 Obsidian 中打开）`
+    nr.appendChild(a)
+    nr.classList.remove('hidden')
+    toast('✅ 文献笔记已生成')
+  } catch (e) {
+    toast(e.message, true)
+  } finally {
+    btn.disabled = false
+  }
 }
 
 // ---- 返回原视频（清空段落回到整片，可重新剪辑）----
@@ -624,6 +648,9 @@ function resetUI() {
   ;['card-wrap', 'dl-wrap', 'preview-wrap', 'ts-wrap', 'result-wrap'].forEach(id => $(id).classList.add('hidden'))
   $('url').value = ''
   $('done-btn').disabled = true
+  $('gen-note').disabled = true
+  $('note-result').classList.add('hidden')
+  $('note-result').textContent = ''
   $('video').removeAttribute('src')
   $('video').load && $('video').load()
   $('dl-diag').textContent = ''
@@ -660,6 +687,9 @@ $('settings-btn').onclick = async () => {
     $('set-ffprobePath').value = r.config.ffprobePath || ''
     $('set-pythonPath').value = r.config.pythonPath || ''
     $('set-whisperModel').value = r.config.whisperModel || ''
+    $('set-cacheDir').value = r.config.cacheDir || ''
+    $('set-cacheRetentionDays').value = r.config.cacheRetentionDays != null ? r.config.cacheRetentionDays : '7'
+    $('set-literatureFolder').value = r.config.literatureFolder || '文献盒'
     $('set-cookie').value = ''
     const c2 = $('cookie-status2')
     if (!r.cookieConfigured) { c2.textContent = '⚠️ 未配置 Cookie：只能下载低清晰度（≤720P）'; c2.className = 'hint err' }
@@ -681,6 +711,9 @@ $('settings-save').onclick = async () => {
       ffprobePath: $('set-ffprobePath').value.trim() || 'ffprobe',
       pythonPath: $('set-pythonPath').value.trim(),
       whisperModel: $('set-whisperModel').value.trim() || 'small',
+      cacheDir: $('set-cacheDir').value.trim(),
+      cacheRetentionDays: parseInt($('set-cacheRetentionDays').value.trim(), 10) || 7,
+      literatureFolder: $('set-literatureFolder').value.trim() || '文献盒',
     })
     toast('✅ 设置已保存')
   } catch (e) { toast(e.message, true) }

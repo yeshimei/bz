@@ -9,6 +9,7 @@ const { spawn } = require('child_process')
 const crypto = require('crypto')
 const https = require('https')
 const fs = require('fs')
+const os = require('os')
 const path = require('path')
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
@@ -501,6 +502,167 @@ function runPython({ py, args, onChunk }) {
   })
 }
 
+// ---- 视频缓存（F1）：只缓存「下载原件」，键 = BV + cid(分P) + 清晰度 ----
+function cacheKey(bv, cid, quality) {
+  return `${bv}_${cid}_${quality}`
+}
+
+// 缓存目录：rc cacheDir 可选，缺省系统临时目录下 bili-dl-cache
+function getCacheDir(conf) {
+  return (conf && conf.cacheDir) ? conf.cacheDir : path.join(os.tmpdir(), 'bili-dl-cache')
+}
+
+function cachePath(conf, key) {
+  return path.join(getCacheDir(conf), `${key}.mp4`)
+}
+
+// 启动清扫：删除超过 cacheRetentionDays（默认 7）天的缓存原件；返回删除数
+function cleanupCache(conf, now = Date.now()) {
+  const dir = getCacheDir(conf)
+  let files = []
+  try { files = fs.readdirSync(dir).filter(f => f.endsWith('.mp4')) } catch { return 0 }
+  if (!files.length) return 0
+  const maxAge = Math.max(0, Number((conf && conf.cacheRetentionDays) || 7)) * 86400000
+  let removed = 0
+  for (const f of files) {
+    const p = path.join(dir, f)
+    try { if (now - fs.statSync(p).mtimeMs > maxAge) { fs.unlinkSync(p); removed++ } } catch {}
+  }
+  return removed
+}
+
+// ---- 文献笔记（F3/F4）：文件名 / frontmatter / 分块 / AI ----
+// 笔记文件名 = AI 标题：清洗 Windows 非法字符 + 空白折叠 + 截断 50 字 + 空兜底
+function sanitizeMdTitle(s) {
+  const t = String(s).replace(/[\\/:*?"<>|#^[\]]/g, '_').replace(/\s+/g, ' ').trim().slice(0, 50)
+  return t || '文献笔记'
+}
+
+// 转写文稿分块：优先按句边界（。！？；）切，单块不超 maxLen；超长单句硬切。
+// faster-whisper 输出为无换行的连接文本，句边界即自然段落。
+function chunkTranscript(text, maxLen = 4000) {
+  const src = String(text || '').trim()
+  if (!src) return []
+  const segs = src.split(/(?<=[。！？!?；;])/).map(s => s.trim()).filter(Boolean)
+  const chunks = []
+  let cur = ''
+  for (const seg of segs) {
+    if (cur && (cur + seg).length > maxLen) { chunks.push(cur); cur = '' }
+    if (seg.length <= maxLen) { cur += seg; continue }
+    if (cur) { chunks.push(cur); cur = '' }   // 前一块已入列，再硬切超长句
+    let rest = seg
+    while (rest.length > maxLen) { chunks.push(rest.slice(0, maxLen)); rest = rest.slice(maxLen) }
+    cur = rest
+  }
+  if (cur) chunks.push(cur)
+  return chunks
+}
+
+// frontmatter 引号包裹（对齐 auto-summary 的 YAML 风格，防冒号/引号破坏结构）
+function quoteYaml(s) {
+  return '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'
+}
+
+// 组装文献笔记全文：frontmatter 四键 + 正文 + embed 连排
+function buildLiteratureNote({ title, tags = [], summary, source, body, embeds = [] }) {
+  const tagLines = (Array.isArray(tags) ? tags : []).map(t => `  - ${quoteYaml(t)}`).join('\n')
+  const head = ['---',
+    `title: ${quoteYaml(title)}`,
+    'tags:',
+    tagLines,
+    `summary: ${quoteYaml(summary || '')}`,
+    `source: ${quoteYaml(source || '')}`,
+    '---',
+  ].join('\n')
+  const main = String(body || '').trim()
+  const emb = (Array.isArray(embeds) ? embeds : []).filter(Boolean).join('\n')
+  return [head, main, emb].filter(Boolean).join('\n\n')
+}
+
+// ---- AI 直读 bz 配置（F2）：provider 映射与 bz core/ai.ts 同套，工具侧持有副本 ----
+const AI_TIMEOUT_MS = 180000
+const AI_PROVIDERS = {
+  'opencode-go': { endpoint: 'https://opencode.ai/zen/go/v1', model: 'deepseek-v4-flash', keyField: 'opencodeGoApiKey' },
+  deepseek: { endpoint: 'https://api.deepseek.com', model: 'deepseek-v4-flash', keyField: 'deepseekApiKey' },
+}
+
+// 直读 <vaultPath>/.obsidian/plugins/bz/data.json（只读；无 quickadd 回退，缺 key 报错）
+function loadBzAiConfig(conf) {
+  const vaultPath = conf && conf.vaultPath
+  if (!vaultPath) throw new Error('AI 配置读取失败：rc 未配置 vaultPath')
+  const data = readJson(path.join(vaultPath, '.obsidian', 'plugins', 'bz', 'data.json'), null)
+  if (!data) throw new Error('AI 配置读取失败：找不到 bz 插件数据文件（请确认 bz 插件已安装在该 vault）')
+  const name = data.aiProvider || 'opencode-go'
+  const p = AI_PROVIDERS[name]
+  if (!p) throw new Error(`AI 配置错误：不支持的 provider ${name}`)
+  const apiKey = data[p.keyField]
+  if (!apiKey) throw new Error(`AI 密钥缺失：请先在 bz（备忘录插件）设置中填写（${name === 'deepseek' ? 'DeepSeek' : 'OpenCode Go'} API Key）`)
+  return { provider: name, endpoint: p.endpoint, apiKey, model: p.model }
+}
+
+// AI 错误信息提取：兼容 OpenAI（{error:{message}}) 与 opencode（{error:{error:{message}}}）格式
+function aiErrMsg(j) {
+  if (!j) return ''
+  const e = j.error
+  if (e && typeof e === 'object') return e.message || e.msg || ((e.error && (e.error.message || e.error.msg)) || '')
+  if (typeof e === 'string') return e
+  return j.message || ''
+}
+
+// OpenAI 兼容 chat/completions（原生 https，零依赖；显式超时默认 180s）
+function aiChat({ endpoint, apiKey, model, messages, temperature = 0.3, maxTokens, responseFormat, timeoutMs = AI_TIMEOUT_MS, requestImpl = https.request }) {
+  return new Promise((resolve, reject) => {
+    const url = `${String(endpoint).replace(/\/+$/, '')}/chat/completions`
+    const body = JSON.stringify({
+      model, messages,
+      temperature,
+      ...(maxTokens ? { max_tokens: maxTokens } : {}),
+      ...(responseFormat ? { response_format: { type: responseFormat } } : {}),
+    })
+    const req = requestImpl(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      timeout: timeoutMs,
+    }, res => {
+      let d = ''
+      res.on('data', c => (d += c))
+      res.on('end', () => {
+        let j
+        try { j = JSON.parse(d) } catch { return reject(new Error('AI 响应解析失败')) }
+        if (!res.statusCode || res.statusCode >= 400) {
+          return reject(new Error(`AI 请求失败：${aiErrMsg(j) || 'HTTP ' + res.statusCode}`))
+        }
+        const content = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content
+        if (content == null) return reject(new Error('AI 响应缺少内容'))
+        resolve(String(content).trim())
+      })
+    })
+    req.on('error', e => reject(new Error(`AI 请求失败：${e.message}`)))
+    req.on('timeout', () => { req.destroy(new Error('AI 请求超时')) })
+    req.write(body)
+    req.end()
+  })
+}
+
+// JSON 模式调用：response_format=json_object + 残留文本容错提取
+async function aiJson(args) {
+  const content = await aiChat({ ...args, responseFormat: 'json_object' })
+  try { return JSON.parse(content) } catch {}
+  const m = content.match(/\{[\s\S]*\}/)
+  if (m) { try { return JSON.parse(m[0]) } catch {} }
+  throw new Error('AI 返回的不是 JSON：' + content.slice(0, 120))
+}
+
+// 元数据提示词（标题/标签/一句话简介，基于转写文稿开头片段控制 token 预算）
+function literatureMetaPrompt(videoTitle, transcriptSample) {
+  return `你是文献整理助手。基于下方 B站视频《${videoTitle || '未命名'}》的转写文稿片段，生成文献笔记元数据。只输出 JSON，不要任何解释：{"title": "不超过30字的精炼标题", "tags": ["3-5个中文标签，不含B站"], "summary": "一句话简介，不超过60字"}\n\n【转写文稿片段】\n${transcriptSample}`
+}
+
+// 润色提示词（轻度：口语转书面、去口水词，保原顺序原内容）
+function literaturePolishPrompt(chunk) {
+  return `你是文字编辑。把下面的视频转写文稿轻度润色为书面语：口语转书面、删除口水词与重复内容，保持原顺序、原事实（数字与专名不变）。直接输出润色后的正文，不要解释、不要加标题、不要列表。\n\n【转写文稿】\n${chunk}`
+}
+
 module.exports = {
   UA, MIXIN_KEY_ENC_TAB, getMixinKey, fetchJsonImpl, getWbiKeys, wbiSign, getViewInfo, getPlayUrls,
   lastLine, qualityLabel, sanitizeName, extractBv, fmtTime, fmtDuration, fmtSec, parseTimeInput, buildFileName,
@@ -509,4 +671,8 @@ module.exports = {
   buildMergeArgs, writeConcatList, mergeSegments,
   loadCookies, saveCookies, readJson, writeJson, uniquePath,
   abortAll, resetAbort, trackProc, runPython, PY_TRANSCRIBE,
+  cacheKey, getCacheDir, cachePath, cleanupCache,
+  sanitizeMdTitle, chunkTranscript, buildLiteratureNote,
+  AI_TIMEOUT_MS, AI_PROVIDERS, loadBzAiConfig, aiChat, aiJson,
+  literatureMetaPrompt, literaturePolishPrompt,
 }

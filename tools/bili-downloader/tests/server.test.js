@@ -18,6 +18,8 @@ process.env.BILI_DL_HISTORY = path.join(tmp, 'history.json')
 const hasFfmpeg = (() => { try { return spawnSync('ffmpeg', ['-version']).status === 0 } catch { return false } })()
 
 const { createServer, T, resetTask } = require('../server')
+const core = require('../core')
+const cfg = require('../config')
 
 let server, base
 before(async () => {
@@ -221,4 +223,89 @@ test('POST /api/done：vault 内交付 → wikilink 单层不嵌套（分P 命�
   assert.ok(!merge.clipboard.includes('![[CONFIG/APPENDIX/![[CONFIG'))
   assert.ok(merge.files[0].finalName.includes('_P2_merge_2段'), merge.files[0].finalName)
   resetTask()
+})
+
+// ---------- 视频缓存 + 文献笔记（F1-F6）----------
+
+test('POST /api/config：新增三键可保存并回读，既有键不受影响', async () => {
+  await (await req('POST', '/api/config', { cacheDir: 'D:/cache-x', cacheRetentionDays: 3, literatureFolder: '文献' })).json()
+  const j = await (await req('GET', '/api/config')).json()
+  assert.equal(j.config.cacheDir, 'D:/cache-x')
+  assert.equal(j.config.cacheRetentionDays, 3)
+  assert.equal(j.config.literatureFolder, '文献')
+  assert.ok(j.config.outputDir)
+  assert.ok(j.config.ffmpegPath)
+})
+
+test('POST /api/download：缓存命中跳过下载（零网络/ffmpeg），原件为缓存副本', async () => {
+  const cacheDir = path.join(tmp, 'dl-cache')
+  fs.mkdirSync(cacheDir, { recursive: true })
+  await (await req('POST', '/api/config', { cacheDir, cacheRetentionDays: 7 })).json()
+  fs.writeFileSync(path.join(cacheDir, 'BV1GJ411x7h7_1001_1080.mp4'), 'FAKE-VIDEO')
+  T.url = 'https://www.bilibili.com/video/BV1GJ411x7h7'
+  T.info = { title: '缓存测试', duration: 120 }
+  T.cid = 1001
+  const j = await (await req('POST', '/api/download', { height: 1080 })).json()
+  assert.equal(j.ok, true, j.error)
+  assert.equal(j.cached, true)
+  assert.ok(T.originalPath && fs.existsSync(T.originalPath))
+  assert.equal(fs.readFileSync(T.originalPath, 'utf8'), 'FAKE-VIDEO')
+  resetTask()
+})
+
+test('POST /api/note：未交付 / 未转文字 前置报错', async () => {
+  const j1 = await (await req('POST', '/api/note', {})).json()
+  assert.equal(j1.ok, false)
+  assert.match(j1.error, /完成/)
+  T.phase = 'done'
+  const j2 = await (await req('POST', '/api/note', {})).json()
+  assert.equal(j2.ok, false)
+  assert.match(j2.error, /转文字/)
+  resetTask()
+})
+
+test('POST /api/note：交付后生成文献笔记（AI 打桩）→ 落盘文献盒 + embed + 历史 note 字段', async () => {
+  const vault = path.join(tmp, 'vault-note')
+  const bzDir = path.join(vault, '.obsidian', 'plugins', 'bz')
+  fs.mkdirSync(bzDir, { recursive: true })
+  fs.writeFileSync(path.join(bzDir, 'data.json'), JSON.stringify({ aiProvider: 'opencode-go', opencodeGoApiKey: 'k' }))
+  const outDir = path.join(vault, 'CONFIG', 'APPENDIX')
+  fs.mkdirSync(outDir, { recursive: true })
+  await (await req('POST', '/api/config', { vaultPath: vault, outputDir: outDir, literatureFolder: '文献盒' })).json()
+  // 预置一次交付历史（attachNote 对照目标：file 命中最近条目）
+  cfg.pushHistory({ time: '2026/8/25 10:00:00', title: '测试', bv: 'BV1GJ411x7h7', quality: '1080P', file: '测试_BV1GJ411x7h7.mp4', wiki: '![[CONFIG/APPENDIX/测试_BV1GJ411x7h7.mp4]]' })
+  const origJson = core.aiJson, origChat = core.aiChat
+  core.aiJson = async () => ({ title: '测试文献', tags: ['科普', 'AI'], summary: '一句话简介' })
+  core.aiChat = async () => '润色后的正文。'
+  try {
+    T.phase = 'done'
+    T.transcript = '第一句。第二句。'
+    T.lastFiles = [{ finalName: '测试_BV1GJ411x7h7.mp4', wiki: '![[CONFIG/APPENDIX/测试_BV1GJ411x7h7.mp4]]' }]
+    T.url = 'https://www.bilibili.com/video/BV1GJ411x7h7'
+    T.info = { title: '测试', duration: 120 }
+    const j = await (await req('POST', '/api/note', {})).json()
+    assert.equal(j.ok, true, j.error)
+    assert.ok(j.note.path.endsWith(path.join('文献盒', '测试文献.md')), j.note.path)
+    assert.ok(fs.existsSync(j.note.path))
+    const md = fs.readFileSync(j.note.path, 'utf8')
+    assert.ok(md.includes('title: "测试文献"'))
+    assert.ok(md.includes('  - "科普"\n  - "AI"'))
+    assert.ok(md.includes('summary: "一句话简介"'))
+    assert.ok(md.includes('source: "BV1GJ411x7h7"'))
+    assert.ok(md.includes('润色后的正文。'))
+    assert.ok(md.includes('![[CONFIG/APPENDIX/测试_BV1GJ411x7h7.mp4]]'))
+    assert.ok(j.note.url.startsWith('obsidian://open?vault='))
+    assert.ok(j.note.url.includes(encodeURIComponent('文献盒/测试文献.md')))
+    // 历史最新条目追加 note 字段
+    const hist = (await (await req('GET', '/api/history')).json()).history
+    assert.equal(hist[0].note, '文献盒/测试文献.md')
+    // 重复生成 → 新文件名（uniquePath 不覆盖）
+    const j2 = await (await req('POST', '/api/note', {})).json()
+    assert.equal(j2.ok, true, j2.error)
+    assert.ok(j2.note.path.endsWith(path.join('文献盒', '测试文献_2.md')), j2.note.path)
+    assert.equal((await (await req('GET', '/api/history')).json()).history[0].note, '文献盒/测试文献_2.md')
+  } finally {
+    core.aiJson = origJson; core.aiChat = origChat
+    resetTask()
+  }
 })

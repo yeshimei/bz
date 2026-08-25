@@ -9,6 +9,17 @@
 - 文档全套：ADR-0048、CONTEXT.md（AI Agent 词条改已解散 + 新增「文件引用同步」「剪藏归档」）、AGENTS.md/README.md（含两处 AI Agent 残留清理）/manifest.json 去名、spec.md 追加小节、issue 102
 - 门禁实录：tsc 0 错；全量 148 文件 2202 例全绿（smartcat 一时序用例在 8 workers 下抖动、隔离与 4 workers 均绿——CPU 争抢非回归）
 
+## 2026-08-25 bili-dl 视频缓存 + 文献笔记快速流程（grilling Q1–Q25 设计收口；tools/bili-downloader，bz 插件侧零改动）
+
+**状态：设计共识达成（五轮 Q1–Q25）→ 实现已完成（工具 1.2.0，`npm test` 60 全绿）；worktree/bili-dl-cache-literature 待合并 master**
+
+- ✅ **视频缓存**：仅缓存下载原件；键 = BV+cid+清晰度；rc 新键 `cacheDir`/`cacheRetentionDays`（默认 `%TEMP%/bili-dl-cache`、7 天）；启动清扫；命中跳过下载+合并、原件复制入 TMP_DIR
+- ✅ **文献笔记快速流程**：「完成」交付后触发；AI 直读 `.obsidian/plugins/bz/data.json`（aiProvider+key，无 quickadd 回退、缺 key 报错）；元数据 JSON + 分块轻润色拼接（单次 180s 超时）；落 `<vaultPath>/文献盒/<标题>.md`（uniquePath 加序号不覆盖）；frontmatter title/tags/summary/source；正文 = 润色全文 + 交付文件 embed 连排；toast + obsidian:// 跳转；历史条目可选 `note` 字段
+- ✅ **边界**：rc 六键原样（仅新增 cacheDir/cacheRetentionDays/literatureFolder 三可选键）；bz data.json 只读不加键；零 npm 依赖保持（原生 https）；ADR-0011 独立化边界不动
+- ✅ **文档**：ADR-0049、tools/bili-downloader/CONTEXT.md 四词条+规则、bz CONTEXT.md 四词条（快速流程/文献笔记/文献盒/视频缓存）、spec.md、issue 01
+- ✅ **实现（1.2.0）**：core 新增 cacheKey/getCacheDir/cleanupCache/sanitizeMdTitle/chunkTranscript/buildLiteratureNote/loadBzAiConfig/aiChat/aiJson（原生 https、180s 超时、无 quickadd 回退）；server 新增 /api/note + 下载缓存命中/回写 + 启动清扫 + T.lastFiles + attachNote；前端设置三字段 + 「📄 生成文献笔记」按钮 + obsidian:// 跳转；`npm test` 60 全绿（服务端缓存命中/文献笔记端到端/AI 打桩）
+- ⏳ 待办：真机冒烟（缓存命中、文献笔记生成与 obsidian 跳转）；`npm publish`（@jwbz/bili-downloader 1.2.0）
+
 ## 2026-08-26 域事件总线一期（ticket 101；worktree/event-bus）
 
 **状态：全量 2064 绿（137 文件）+ tsc 0；worktree/event-bus 已提交，待合并 master + 构建部署**
