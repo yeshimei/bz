@@ -20,6 +20,7 @@
 - ✅ **实现（1.2.0）**：core 新增 cacheKey/getCacheDir/cleanupCache/sanitizeMdTitle/chunkTranscript/buildLiteratureNote/loadBzAiConfig/aiChat/aiJson（原生 https、180s 超时、无 quickadd 回退）；server 新增 /api/note + 下载缓存命中/回写 + 启动清扫 + T.lastFiles + attachNote；前端设置三字段 + 「📄 生成文献笔记」按钮 + obsidian:// 跳转；`npm test` 60 全绿（服务端缓存命中/文献笔记端到端/AI 打桩）
 - ✅ **发布（2026-08-25）**：真实冒烟通过（页面新元素 / `/api/config` 三新键合并默认值 / `/api/note` 前置拦截 / 真实 opencode-go 最小 AI 请求返回 `{"ok":true}`）；`npm publish @jwbz/bili-downloader@1.2.0` 成功；本地全局安装已替换（`bili-dl` 现指向 1.2.0，含 `POST /api/note` 与缓存逻辑）
 - ✅ **1.2.1 跟进（2026-08-25，用户反馈两项）**：①「生成文献笔记」改为**快捷命令**——按钮移底部常驻（转文字旁），点击自动执行 交付→AI→写笔记（未交付先自动「完成」，已交付跳过重复）；前置仅「已下载+已转文字」（`S.delivered`/`updateGenNote`）；② **修复 `fmtPrec` 秒位溢出**（`pad(ss)` → `pad(ss % 60)`，原显示 `00:04:251.x` 类错误）
+- ✅ **1.2.2（2026-08-25，用户追加：一键全流水）**：快捷命令扩为完整流水——点击自动执行 **剪切/压缩（随交付）→ 转文字（未转录自动补跑，SSE 进度流式）→ 交付 → AI → 写笔记**；前置改为仅「已下载」（`updateGenNote` 去掉转录条件，按钮下载后即点亮）；`/api/note` 服务端防线不变
 - ⏳ 待办：真机全流程冒烟（真实视频下载→剪辑→转文字→生成文献笔记→obsidian 跳转；由用户实机验证）
 
 ## 2026-08-26 域事件总线一期（ticket 101；worktree/event-bus）
