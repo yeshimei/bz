@@ -89,7 +89,7 @@
 
 ```bash
 pnpm install
-pnpm run build   # 产物直出 vault 的 .obsidian/plugins/bz/
+pnpm run build   # 产物直出 vault 的 .obsidian/plugins/bz/，并同步发布版 main.js 到仓库根目录
 ```
 
 ## AI 功能配置
