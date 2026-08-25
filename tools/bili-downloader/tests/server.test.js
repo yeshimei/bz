@@ -309,3 +309,49 @@ test('POST /api/note：交付后生成文献笔记（AI 打桩）→ 落盘文�
     resetTask()
   }
 })
+
+test('POST /api/note：分开交付多段 → 视频块「链接+对应转文字」依次排布', async () => {
+  const vault = path.join(tmp, 'vault-note-multi')
+  const bzDir = path.join(vault, '.obsidian', 'plugins', 'bz')
+  fs.mkdirSync(bzDir, { recursive: true })
+  fs.writeFileSync(path.join(bzDir, 'data.json'), JSON.stringify({ aiProvider: 'opencode-go', opencodeGoApiKey: 'k' }))
+  await (await req('POST', '/api/config', { vaultPath: vault, literatureFolder: '文献盒' })).json()
+  const origJson = core.aiJson, origChat = core.aiChat
+  core.aiJson = async () => ({ title: '多段笔记', tags: ['t'], summary: 's' })
+  core.aiChat = async () => '润色正文。'
+  try {
+    T.phase = 'done'
+    T.transcript = '段一文本。 段二文本。'
+    T.segmentTranscripts = { a: '段一文本。', b: '段二文本。' }
+    T.lastFiles = [
+      { finalName: 'x_a.mp4', wiki: '![[CONFIG/APPENDIX/x_a.mp4]]', segId: 'a' },
+      { finalName: 'x_b.mp4', wiki: '![[CONFIG/APPENDIX/x_b.mp4]]', segId: 'b' },
+    ]
+    T.url = 'https://www.bilibili.com/video/BV1GJ411x7h7'
+    T.info = { title: 'X', duration: 100 }
+    const j = await (await req('POST', '/api/note', {})).json()
+    assert.equal(j.ok, true, j.error)
+    const md = fs.readFileSync(j.note.path, 'utf8')
+    assert.ok(md.includes('![[CONFIG/APPENDIX/x_a.mp4]]\n\n段一文本。'))
+    assert.ok(md.includes('![[CONFIG/APPENDIX/x_b.mp4]]\n\n段二文本。'))
+    assert.ok(md.indexOf('段一文本。') < md.indexOf('![[CONFIG/APPENDIX/x_b.mp4]]'))
+  } finally {
+    core.aiJson = origJson; core.aiChat = origChat
+    resetTask()
+  }
+})
+
+test('POST /api/done：空段落 = 整片交付（单文件、无 clip 标记）', { skip: !hasFfmpeg }, async () => {
+  const src = makeSrc()
+  const outDir = path.join(tmp, 'deliver-empty')
+  fs.mkdirSync(outDir, { recursive: true })
+  await (await req('POST', '/api/config', { outputDir: outDir, vaultPath: '' })).json()
+  T.originalPath = src; T.curPath = src; T.curDur = 3
+  T.info = { title: '空段测试', duration: 3 }; T.url = 'https://www.bilibili.com/video/BV1GJ411x7h7'; T.quality = 720
+  const j = await (await req('POST', '/api/done', { segments: [], mode: 'split', crf: null })).json()
+  assert.equal(j.ok, true, j.error)
+  assert.equal(j.files.length, 1)
+  assert.ok(j.files[0].finalName.includes('空段测试_BV1GJ411x7h7'), j.files[0].finalName)
+  assert.ok(!j.files[0].finalName.includes('_clip_'), j.files[0].finalName)
+  resetTask()
+})

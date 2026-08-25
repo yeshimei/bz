@@ -1,7 +1,7 @@
 # bili-downloader 视频缓存 + 文献笔记快速流程
 
 - **范围**：`tools/bili-downloader`（npm 包 `@jwbz/bili-downloader`）——与 bz 插件保持 ADR-0011 独立化边界，新增**单向只读**耦合：AI 配置直读 bz data.json。
-- **状态**：五轮 grilling 共识（Q1–Q25，2026-08-25）已达成；**实现已完成并发布**（1.2.0：`npm test` 60 全绿；1.2.1：Q24 快捷命令 + `fmtPrec` 秒位修复；1.2.2：一键全流水——转文字并入链条）。本 spec 是唯一事实源——后续改动先改 spec 再改码。
+- **状态**：五轮 grilling 共识（Q1–Q25，2026-08-25）已达成；**实现已完成并发布**（1.2.0 基础版；1.2.1 快捷命令+时间显示修复；1.2.2 一键全流水；1.2.3 转文字逐段化 + 下载后空段落 + 笔记视频块布局 + 末尾把手跟随）。本 spec 是唯一事实源——后续改动先改 spec 再改码。
 - **术语**：`tools/bili-downloader/CONTEXT.md` 新增 快速流程/文献笔记/文献盒/视频缓存 词条；bz 侧 `CONTEXT.md` 四处词条已同步。
 
 ---
@@ -105,7 +105,9 @@
 
 ### F3 文献笔记生成
 
-- 入口：底部快捷命令「📄 生成文献笔记」（转文字旁），恒可见；`S.dur > 0`（已下载）才可点（前端 `updateGenNote`）。点击后前端链条：**①** 未转录 → 自动调 `POST /api/transcribe`（SSE 进度流式进文本区）并写入 `S.transcript`；**②** 未交付 → 调 `POST /api/done`（复用交付参数 segments/mode/crf，内部完成剪切/压缩/交付，trim-progress SSE 推进度）→ `showDelivered`；本任务已交付（`S.delivered`）则跳过①②直走 ③；**③** 调 `POST /api/note`。`/api/note` 服务端仍要求 `T.phase === done` + 转录存在（前置防线不变，链条保证先满足）。
+- 入口：底部快捷命令「📄 生成文献笔记」（转文字旁），恒可见；`S.dur > 0`（已下载）才可点（前端 `updateGenNote`）。点击后前端链条：**①** 未转录 → 自动调 `POST /api/transcribe`（带 segments；按段落逐段转录，SSE 进度流式进文本区）并写入 `S.transcript`；**②** 未交付 → 调 `POST /api/done`（复用交付参数 segments/mode/crf，内部完成剪切/压缩/交付，trim-progress SSE 推进度）→ `showDelivered`；本任务已交付（`S.delivered`）则跳过①②直走 ③；**③** 调 `POST /api/note`。`/api/note` 服务端仍要求 `T.phase === done` + 转录存在（前置防线不变，链条保证先满足）。
+- **1.2.3 修订——转文字跟随剪辑语义**：`/api/transcribe` 带 segments 时**逐段转录**（每段 prepare 后分别跑 faster-whisper，存 `T.segmentTranscripts{segId:text}`，`T.transcript`=各段拼接）；不传或整片单段 → 转录当前预览原件。下载后**段落为空**（不再自动生成整片段落，手动圈选「+ 添加段落」）；空段落 = 整片交付/转录。
+- **1.2.3 修订——笔记视频块布局（用户拍板）**：分开交付多段 = 每文件「视频链接、对应转文字」依次排 N 块；合并交付 = 单块「视频链接、整段转文字」；正文（润色全文）在其前。
 - 步骤：① 元数据调用（`response_format: json_object`）→ {title, tags[], summary}；② 正文润色——转录按段落切块（块大小控 token 预算），逐块轻润色、按序拼接；任一步失败即中止、可重试，不落半成品。
 - 成功：写笔记（F4）→ toast → `obsidian://open?vault=<vaultPath 末段>&file=<文献盒相对路径>` 跳转（URL 编码）。
 
@@ -122,7 +124,7 @@
   source: "BV… 或原链接"
   ---
   ```
-- 正文：润色拼接全文 + 空行 + 交付文件 embed 每文件一行（复用 `makeWiki` 的 vault 相对路径逻辑；分开模式 N 行、合并模式 1 行）。
+- 正文（1.2.3）：润色拼接全文 + 空行 + **视频块**（复用 `makeWiki` 的 vault 相对路径逻辑）——分开交付每交付文件一块 `![[文件]]\n\n该段转录` 依次排；合并交付/整片单块 `![[文件]]\n\n整段转录`。
 
 ### F5 历史
 

@@ -57,6 +57,7 @@ function toast(msg, isErr = false) {
 const S = {
   info: null, quality: 0, crf: 23, dur: 0, transcript: '', busy: false,
   delivered: false,         // 本任务是否已交付（文献笔记快捷命令用于避免重复交付）
+  draft: { start: 0, end: 0 },  // 无激活段时的时间轴圈选草稿（下载后段落为空，先圈选再加段）
   mode: 'split',            // split（分开交付）| merge（合并成一个视频）
   segments: [],             // [{id, start, end, checked?}]
   activeId: null,
@@ -212,11 +213,12 @@ $('dl-btn').onclick = async () => {
     $('preview-wrap').classList.remove('hidden')
     // 预览时长以所选 P 为准
     S.dur = page ? page.duration : S.info.duration
+    // 下载后段落为空：用时间轴圈选后「+ 添加段落」手动添加；不加段落 = 整片交付/转录
+    S.draft = { start: 0, end: S.dur }
+    S.segments = []
+    S.activeId = null
     S.mode = 'split'
     setMode('split')
-    const id = nextSegId()
-    S.segments = [{ id, start: 0, end: S.dur }]
-    S.activeId = id
     $('revert-btn').classList.add('hidden')
     initTrimUI(S.dur)
     renderSegList()
@@ -225,7 +227,7 @@ $('dl-btn').onclick = async () => {
     $('done-btn').disabled = false
     S.delivered = false
     updateGenNote()
-    toast(r.cached ? '⚡ 缓存命中，跳过下载，直接进入剪辑' : '✅ 下载完成，拖动滑块/色块可实时预览剪辑范围')
+    toast(r.cached ? '⚡ 缓存命中，跳过下载，直接进入剪辑' : '✅ 下载完成，时间轴圈选后点「+ 添加段落」；不加即为整片')
   } catch (e) {
     if (!/已中止/.test(e.message)) toast(e.message, true)
   } finally {
@@ -281,24 +283,28 @@ function initTrimUI(duration) {
   st.max = en.max = String(duration)
   st.step = en.step = '0.1'
   st.oninput = () => {
-    const a = activeSeg(); if (!a) return
+    const a = activeSeg()
     let v = parseFloat(st.value)
-    if (v > a.end - 0.1) v = a.end - 0.1
-    a.start = Math.max(0, Math.round(v * 10) / 10)
-    st.value = String(a.start)
-    markDirty(a)
+    const e = a ? a.end : S.draft.end
+    if (v > e - 0.1) v = e - 0.1
+    const start = Math.max(0, Math.round(v * 10) / 10)
+    if (a) { a.start = start; markDirty(a) }
+    else S.draft.start = start
+    st.value = String(start)
     syncFromActive()
-    seekPreview(a.start)
+    seekPreview(start)
   }
   en.oninput = () => {
-    const a = activeSeg(); if (!a) return
+    const a = activeSeg()
     let v = parseFloat(en.value)
-    if (v < a.start + 0.1) v = Math.min(S.dur, a.start + 0.5)
-    a.end = Math.max(a.start + 0.1, Math.min(S.dur, Math.round(v * 10) / 10))
-    en.value = String(a.end)
-    markDirty(a)
+    const s = a ? a.start : S.draft.start
+    if (v < s + 0.1) v = Math.min(S.dur, s + 0.5)
+    const end = Math.max(s + 0.1, Math.min(S.dur, Math.round(v * 10) / 10))
+    if (a) { a.end = end; markDirty(a) }
+    else S.draft.end = end
+    en.value = String(end)
     syncFromActive()
-    seekPreview(a.start)
+    seekPreview(end)   // 拖末尾把手：视频跟随到结束位置
   }
   syncFromActive()
 }
@@ -313,7 +319,7 @@ function syncFromActive() {
 }
 function syncRange() {
   const a = activeSeg()
-  const s = a ? a.start : 0, e = a ? a.end : S.dur
+  const s = a ? a.start : S.draft.start, e = a ? a.end : S.draft.end
   $('start-label').textContent = `起 ${fmtPrec(s)}`
   $('end-label').textContent = `止 ${fmtPrec(e)} / 共 ${fmtPrec(S.dur)}`
   if (document.activeElement !== $('seg-start')) $('seg-start').value = fmtPrec(s)
@@ -354,7 +360,8 @@ function addHandleDrag(el, which, seg) {
     const v = Math.round(frac * S.dur * 10) / 10
     if (which === 'start') { if (v < seg.end - 0.1) { seg.start = Math.max(0, v); markDirty(seg) } }
     else { if (v > seg.start + 0.1) { seg.end = Math.min(S.dur, v); markDirty(seg) } }
-    syncFromActive(); seekPreview(seg.start)
+    syncFromActive()
+    seekPreview(which === 'start' ? seg.start : seg.end)   // 结束把手拖动：视频跟随到结束位置
   })
   el.addEventListener('pointerup', () => { dragging = false })
 }
@@ -373,15 +380,22 @@ function validateSegInputs() {
   }
 }
 function applySegTime(which) {
-  const a = activeSeg(); if (!a) return
+  const a = activeSeg()
   const el = which === 'start' ? $('seg-start') : $('seg-end')
   const v = parseTimeInput(el.value)
   if (v === null) { el.classList.add('err'); $('seg-input-err').textContent = '时间格式：HH:MM:SS.S / MM:SS / 秒'; $('seg-input-err').classList.remove('hidden'); return }
   const clamped = Math.max(0, Math.min(S.dur, v))
-  if (which === 'start') { if (clamped < a.end - 0.1) { a.start = Math.round(clamped * 10) / 10; markDirty(a) } }
-  else { if (clamped > a.start + 0.1) { a.end = Math.round(clamped * 10) / 10; markDirty(a) } }
+  if (a) {
+    if (which === 'start') { if (clamped < a.end - 0.1) { a.start = Math.round(clamped * 10) / 10; markDirty(a) } }
+    else { if (clamped > a.start + 0.1) { a.end = Math.round(clamped * 10) / 10; markDirty(a) } }
+  } else {
+    // 无激活段：编辑草稿圈选范围（圈好再「+ 添加段落」）
+    if (which === 'start') S.draft.start = Math.min(Math.round(clamped * 10) / 10, Math.max(0, S.draft.end - 0.1))
+    else S.draft.end = Math.max(Math.round(clamped * 10) / 10, Math.min(S.dur, S.draft.start + 0.1))
+  }
   syncFromActive()
-  seekPreview(a.start)
+  const t = a ? (which === 'start' ? a.start : a.end) : (which === 'start' ? S.draft.start : S.draft.end)
+  seekPreview(t)
 }
 $('seg-start').addEventListener('change', () => applySegTime('start'))
 $('seg-end').addEventListener('change', () => applySegTime('end'))
@@ -428,8 +442,9 @@ function delSeg(i) {
 $('add-seg-btn').onclick = () => {
   if (!S.dur) return
   const last = S.segments[S.segments.length - 1]
-  let s = last ? Math.min(last.end, S.dur) : 0
-  let e = Math.min(S.dur, s + Math.max(60, (last ? (last.end - last.start) : 0) || S.dur))
+  let s, e
+  if (last) { s = Math.min(last.end, S.dur); e = Math.min(S.dur, s + Math.max(60, (last.end - last.start) || S.dur)) }
+  else { s = S.draft.start; e = S.draft.end }   // 无段落：按草稿圈选范围添加
   if (e - s < 0.1) { s = 0; e = Math.min(S.dur, 60) }
   if (e - s < 0.1) { s = 0; e = S.dur }
   const id = nextSegId()
@@ -541,7 +556,7 @@ $('transcribe-btn').onclick = async () => {
   st.textContent = '转录中（首次加载模型约1-2分钟，请稍候）…'
   $('ts-text').value = ''
   try {
-    const r = await api('/api/transcribe', 'POST', {})
+    const r = await api('/api/transcribe', 'POST', { segments: S.segments.map(s => ({ id: s.id, start: s.start, end: s.end })) })
     S.transcript = r.transcript
     $('ts-text').value = r.transcript
     st.textContent = '转录完成'
@@ -583,7 +598,6 @@ async function showDelivered(r) {
   }
 }
 $('done-btn').onclick = async () => {
-  if (!S.segments.length) return toast('请先添加至少一个段落', true)
   const btn = $('done-btn')
   btn.disabled = true
   try {
@@ -616,8 +630,7 @@ $('gen-note').onclick = async () => {
   nr.textContent = ''
   try {
     if (!S.delivered) {
-      if (!S.segments.length) throw new Error('请先添加至少一个段落')
-      // ① 转文字（未转录时自动补跑；进度经 SSE transcript-chunk 流式进文本区）
+      // ① 转文字（未转录时自动补跑，按所选段落逐段转录；进度经 SSE transcript-chunk 流式进文本区）
       if (!S.transcript) {
         const tsWrap = $('ts-wrap')
         tsWrap.classList.remove('hidden')
@@ -625,7 +638,7 @@ $('gen-note').onclick = async () => {
         st.className = 'hint'
         st.textContent = '转录中（首次加载模型约1-2分钟，请稍候）…'
         $('ts-text').value = ''
-        const rt = await api('/api/transcribe', 'POST', {})
+        const rt = await api('/api/transcribe', 'POST', { segments: S.segments.map(s => ({ id: s.id, start: s.start, end: s.end })) })
         S.transcript = rt.transcript
         $('ts-text').value = rt.transcript
         st.textContent = '转录完成'
@@ -660,9 +673,9 @@ $('revert-btn').onclick = async () => {
   try {
     const r = await api('/api/revert', 'POST', {})
     S.dur = r.duration
-    const id = nextSegId()
-    S.segments = [{ id, start: 0, end: r.duration }]
-    S.activeId = id
+    S.draft = { start: 0, end: r.duration }
+    S.segments = []
+    S.activeId = null
     $('revert-btn').classList.add('hidden')
     initTrimUI(r.duration)
     renderSegList()
@@ -679,6 +692,7 @@ function resetUI() {
   S.transcript = ''
   S.dur = 0
   S.delivered = false
+  S.draft = { start: 0, end: 0 }
   S.mode = 'split'
   setMode('split')
   S.segments = []

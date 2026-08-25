@@ -563,7 +563,8 @@ function quoteYaml(s) {
   return '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'
 }
 
-// 组装文献笔记全文：frontmatter 四键 + 正文 + embed 连排
+// 组装文献笔记全文：frontmatter 四键 + 正文 + 视频块（embed 可带对应转文字，逐段「视频链接、正文」排布；
+// 合并交付 = 单块「视频链接 + 整段转文字」）
 function buildLiteratureNote({ title, tags = [], summary, source, body, embeds = [] }) {
   const tagLines = (Array.isArray(tags) ? tags : []).map(t => `  - ${quoteYaml(t)}`).join('\n')
   const head = ['---',
@@ -575,7 +576,13 @@ function buildLiteratureNote({ title, tags = [], summary, source, body, embeds =
     '---',
   ].join('\n')
   const main = String(body || '').trim()
-  const emb = (Array.isArray(embeds) ? embeds : []).filter(Boolean).join('\n')
+  const blocks = (Array.isArray(embeds) ? embeds : []).filter(Boolean).map(item => {
+    if (typeof item === 'string') return item
+    const w = item && item.wiki ? String(item.wiki) : ''
+    const t = item && item.transcript ? String(item.transcript) : ''
+    return t ? `${w}\n\n${t}` : w
+  })
+  const emb = blocks.join('\n\n')
   return [head, main, emb].filter(Boolean).join('\n\n')
 }
 
