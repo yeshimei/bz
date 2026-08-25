@@ -603,10 +603,10 @@ $('copy-btn').onclick = async () => {
   catch { toast('复制失败', true) }
 }
 
-// ---- 快速命令：生成文献笔记（后续步骤自动执行：交付 → AI → 写入文献盒）----
-// 前置：已下载（够段落）+ 已转文字；未交付时自动先跑「完成」交付，已交付则跳过重复交付
+// ---- 快速命令：生成文献笔记（一键全流水：剪切/压缩 → 转文字 → 交付 → AI → 写入文献盒）----
+// 前置：已下载（段落与 CRF 即用户已圈选参数）；未转录自动补跑转文字，未交付自动先「完成」
 function updateGenNote() {
-  $('gen-note').disabled = !(S.dur > 0 && !!S.transcript)
+  $('gen-note').disabled = !(S.dur > 0)
 }
 $('gen-note').onclick = async () => {
   const btn = $('gen-note')
@@ -617,6 +617,21 @@ $('gen-note').onclick = async () => {
   try {
     if (!S.delivered) {
       if (!S.segments.length) throw new Error('请先添加至少一个段落')
+      // ① 转文字（未转录时自动补跑；进度经 SSE transcript-chunk 流式进文本区）
+      if (!S.transcript) {
+        const tsWrap = $('ts-wrap')
+        tsWrap.classList.remove('hidden')
+        const st = $('ts-status')
+        st.className = 'hint'
+        st.textContent = '转录中（首次加载模型约1-2分钟，请稍候）…'
+        $('ts-text').value = ''
+        const rt = await api('/api/transcribe', 'POST', {})
+        S.transcript = rt.transcript
+        $('ts-text').value = rt.transcript
+        st.textContent = '转录完成'
+        st.className = 'hint ok'
+      }
+      // ② 剪切/压缩/交付（done 内部按段落 prepare + CRF 编码，trim-progress SSE 推进度）
       const r = await api('/api/done', 'POST', {
         segments: S.segments.map(s => ({ id: s.id, start: s.start, end: s.end })),
         mode: S.mode,
@@ -624,6 +639,7 @@ $('gen-note').onclick = async () => {
       })
       await showDelivered(r)
     }
+    // ③ AI 生成元数据 + 润色 + 写笔记
     const r2 = await api('/api/note', 'POST', {})
     const a = document.createElement('a')
     a.href = r2.note.url
