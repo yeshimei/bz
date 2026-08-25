@@ -106,9 +106,6 @@
       <div class="result-head">✓ 已交付</div>
       <div class="hint" id="result-path"></div>
       <div class="result-clip" id="result-clip"></div>
-      <div class="row" style="margin-top:10px">
-        <button class="btn" id="gen-note" disabled title="AI 生成标题/标签/一句话简介并润色正文，写入文献盒">📄 生成文献笔记</button>
-      </div>
       <div class="hint hidden" id="note-result"></div>
       <div class="row" style="margin-top:10px">
         <button class="btn primary" id="copy-btn">复制</button>
@@ -134,6 +131,7 @@
 
 <footer class="foot">
   <button class="btn" id="transcribe-btn">转文字</button>
+  <button class="btn" id="gen-note" disabled title="快捷命令：自动执行交付 + AI 生成标题/标签/简介 + 润色正文 + 写入文献盒">📄 生成文献笔记</button>
   <button class="btn primary" id="done-btn" disabled>完成</button>
   <button class="btn danger hidden" id="cancel-btn">✕ 取消任务</button>
 </footer>
