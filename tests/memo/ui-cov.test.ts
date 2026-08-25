@@ -20,11 +20,12 @@ import {
   clearNotices,
   requestUrl as mockRequestUrl,
 } from '../mock-obsidian-entry';
-import { notifyMemoAction } from '../../src/smartcat';
+// ticket 075 域事件派发改用真实总线观测点（对齐 memo/ui.test.ts）：订阅 'memo' 通道挂间谍，
+// 断言 UI 发出的动作载荷；不再 mock smartcat 入口（event-bus 换线后该入口已收编为私有）
+import { onDomainEvent } from '../../src/core/domain-bus';
 
-vi.mock('../../src/smartcat', () => ({ notifyMemoAction: vi.fn() }));
-
-const mockedNotify = vi.mocked(notifyMemoAction);
+const mockedNotify = vi.fn();
+let offMemoSpy: (() => void) | null = null;
 
 const SETTINGS = {
   todoFilePath: 'CONFIG/STORAGE',
@@ -86,9 +87,12 @@ beforeEach(() => {
     configurable: true,
   });
   vi.useFakeTimers();
+  offMemoSpy = onDomainEvent('memo', mockedNotify);
 });
 
 afterEach(() => {
+  offMemoSpy?.();
+  offMemoSpy = null;
   vi.useRealTimers();
 });
 
