@@ -774,6 +774,9 @@ describe('睡前巩固（Digest，2026-08-23 增强）', () => {
     (globalThis as any).fetch = fetchMock;
     await m.reflect();
     expect(data.memory.reflection.lastReflectAt).toBeGreaterThan(0);
+    // 反思与后续观察可能落在同一毫秒（created > lastReflectAt 严格比较会漏计）→
+    // 隔开数毫秒保证时间戳严格递增，消除毫秒边界竞态
+    await new Promise((r) => setTimeout(r, 5));
     // 自上次反思新增 ≥digestMinNew 条 → 首次日小结解锁（无需等 18h——尚无上次小结可计）
     await m.addObservation('用户说：d', { importance: 0.5 });
     await m.addObservation('用户说：e', { importance: 0.5 });
