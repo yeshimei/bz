@@ -82,11 +82,26 @@ describe('Ollama HTTP 覆盖补测', () => {
     expect(seen[0].body).toEqual({ model: 'bge-m3', input: ['a', 'b'] });
   });
 
-  it('getEmbeddingsBatch：非 2xx 抛错；embeddings 缺省回退空数组', async () => {
+  it('getEmbeddingsBatch：非 2xx 抛错；embeddings 缺省/空数组抛「向量为空」（QA L125 同语义，ticket 107 补回）', async () => {
     vi.stubGlobal('fetch', stubJson({}, 503));
     await expect(getEmbeddingsBatch(['a'])).rejects.toThrow('Ollama 错误: 503');
     vi.stubGlobal('fetch', stubJson({}));
-    await expect(getEmbeddingsBatch(['a'])).resolves.toEqual([]);
+    await expect(getEmbeddingsBatch(['a'])).rejects.toThrow('向量为空');
+    vi.stubGlobal('fetch', stubJson({ embeddings: [] }));
+    await expect(getEmbeddingsBatch(['a'])).rejects.toThrow('向量为空');
+  });
+
+  it('getEmbeddingsBatch：baseUrl 参数生效（移动端远程嵌入端点，ticket 107）', async () => {
+    const seen: string[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        seen.push(url);
+        return { ok: true, status: 200, json: async () => ({ embeddings: [[1]] }) };
+      })
+    );
+    await expect(getEmbeddingsBatch(['a'], 'http://10.0.0.8:11434')).resolves.toEqual([[1]]);
+    expect(seen[0]).toBe('http://10.0.0.8:11434/api/embed');
   });
 
   it('ollamaChat：自定义 baseUrl/model 生效，请求体带流关闭与温度', async () => {

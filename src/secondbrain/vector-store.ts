@@ -8,6 +8,9 @@
  * - 移动端三级降级 remote→tfidf→text；TF-IDF 以 chunk 为文档单位且构建后复用（不再随查询重建）。
  *
  * 保留 bz 改进：MobileBuffer 写入避 Node Buffer 池偏移、Ollama 统一 30s 超时、检索异常降级文本。
+ * ticket 107：isIndexReady() 就绪判定（空库/损坏态 → 主面板引导态，首次向量化须用户触发）；
+ * refresh 并发去重（进行中复用同一 promise）；meta 有条目但向量缺失 → 视为全量重建自愈；
+ * 移动端嵌入端点走远程 URL（引导初始化在移动端亦可完成）。
  * ticket 103 修复 QA/bz 同源缺陷两处（Q3=B 用户拍板，冻结描述随 ADR 修订）：
  * ① 仅删除文件时提前 return 跳过落盘 → 删除也持久化（紧凑重排后重写 meta+vec；白名单清空同样生效）；
  * ② 旧向量段偏移按「删除前」完整键序计算（原实现用删除后键序拷贝删除前布局，非末尾删除会错位）。
@@ -56,12 +59,16 @@ export class VectorStore {
   tfidf = new TFIDF();
   searchMode: 'remote' | 'tfidf' | 'text' = 'text';
   updateProgress: (msg: string) => void = () => {};
+  /** 初始 load 完成信号（域入口注入；主面板打开时等待，防启动竞态误入引导态——ticket 107） */
+  initialLoad: Promise<void> | null = null;
 
   /** VP 索引缓存：树 + 归一化向量 + 缓存键 + 来源数组身份（内容变更即失效） */
   private vpTree: VPNode | null = null;
   private vpVecs: Float32Array[] | null = null;
   private vpMetaKey: string | null = null;
   private vpSrc: Float32Array | null = null;
+  /** 进行中的 refresh（并发去重：重复调用复用同一 promise，ticket 107） */
+  private refreshPromise: Promise<void> | null = null;
 
   constructor(app: App) {
     this.app = app;
@@ -109,6 +116,15 @@ export class VectorStore {
     }
   }
 
+  /**
+   * 索引是否就绪（ticket 107）：meta 有条目且向量已装载。
+   * 空库 / meta 残留但 .vec 丢失（损坏态）返回 false——主面板据此进入引导态，
+   * 参考侧边栏与 AI 对话命令据此统一转开主面板。
+   */
+  isIndexReady(): boolean {
+    return Object.keys(this.meta.notes).length > 0 && this.vectors.length > 0 && this.dim > 0;
+  }
+
   async saveVectors(): Promise<void> {
     const CONFIG = buildConfig();
     const dim = this.dim;
@@ -149,9 +165,17 @@ export class VectorStore {
     await this.saveStore();
   }
 
-  /** 增量重建向量库 */
-  async refresh(updateProgress?: (msg: string) => void): Promise<void> {
+  /** 增量重建向量库（并发去重：进行中重复调用复用同一 promise——ticket 107） */
+  refresh(updateProgress?: (msg: string) => void): Promise<void> {
     if (updateProgress) this.updateProgress = updateProgress;
+    if (this.refreshPromise) return this.refreshPromise;
+    this.refreshPromise = this.doRefresh().finally(() => {
+      this.refreshPromise = null;
+    });
+    return this.refreshPromise;
+  }
+
+  private async doRefresh(): Promise<void> {
     const CONFIG = buildConfig();
 
     // 白名单过滤
@@ -200,18 +224,23 @@ export class VectorStore {
       }
     }
 
+    // ticket 107 自愈：meta 有条目但向量缺失/为空（.vec 丢失或写入中断）→ 视为全量重建，
+    // 否则 mtime 全匹配会永远「已最新」，损坏态无法自愈、主面板引导也无法修复
+    const indexIncomplete = Object.keys(this.meta.notes).length > 0 && (this.vectors.length === 0 || !this.dim);
+
     let vectors = this.vectors;
     let dim = this.meta._dim || this.dim || 0;
-    if (srcOff === 0) {
+    if (srcOff === 0 || indexIncomplete) {
       vectors = new Float32Array(0);
       dim = 0;
     }
 
-    // 待处理：新文件或 mtime 变化
-    const toProcess = files.filter((f) => {
+    // 待处理：新文件或 mtime 变化；自愈态全量重处理
+    let toProcess = files.filter((f) => {
       const entry = this.meta.notes[f.path];
       return !entry || entry.mtime !== (f.stat as any).mtime;
     });
+    if (indexIncomplete) toProcess = files.slice();
 
     // 修复①：无变更但有删除 → 也必须落盘
     if (toProcess.length === 0) {
@@ -246,6 +275,8 @@ export class VectorStore {
     }
 
     // 批量嵌入：EMBED_BATCH_SIZE 分批 → parallelMap 自适应并发（起始 3，QA 同参）
+    // 嵌入端点（ticket 107）：桌面本地 Ollama；移动端优先远程 URL——引导初始化在移动端亦可完成
+    const embedBase = IS_MOBILE ? CONFIG.OLLAMA_REMOTE_URL || CONFIG.OLLAMA_URL : CONFIG.OLLAMA_URL;
     const batches: ChunkTask[][] = [];
     for (let i = 0; i < globalTasks.length; i += EMBED_BATCH_SIZE) {
       batches.push(globalTasks.slice(i, i + EMBED_BATCH_SIZE));
@@ -254,7 +285,7 @@ export class VectorStore {
     const total = toProcess.length;
     await parallelMap(batches, 3, async (batch) => {
       try {
-        const embeddings = await getEmbeddingsBatch(batch.map((t) => t.text));
+        const embeddings = await getEmbeddingsBatch(batch.map((t) => t.text), embedBase);
         for (let j = 0; j < batch.length; j++) {
           fileChunksMap.get(batch[j].filePath)![batch[j].chunkIdx] = batch[j];
           batch[j].embedding = new Float32Array(embeddings[j]);
@@ -267,7 +298,7 @@ export class VectorStore {
         console.warn('[secondbrain] 批量向量化失败，回退逐条处理', err);
         for (const task of batch) {
           try {
-            const embedding = await getEmbedding(task.text, false);
+            const embedding = await getEmbedding(task.text, false, embedBase);
             // 回填槽位与登记口径一致（QA L598 同构）：否则 chunks 与向量数错位、合并越界
             fileChunksMap.get(task.filePath)![task.chunkIdx] = task;
             task.embedding = new Float32Array(embedding);

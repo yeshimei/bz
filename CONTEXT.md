@@ -117,7 +117,7 @@ _Avoid_: 预期难度、期望评级
 **挂起记录 (Parked Record)**: 复习条目文件在 vault 中找不到（删除后保留、改名/移动后未更新路径）的保留态——列表以删除线展示，不计逾期、不进复习队列，文件恢复（同路径重建/路径更新）即复活；抽屉可手动移出清理。
 _Avoid_: 幽灵条目、孤儿记录
 
-**第二大脑 (Second Brain)**: 笔记向量库的管理与检索功能（ticket 103 正名，前名「闪念」——QuickAdd《闪念.js》完整原型）：主面板统一入口（统计总览/来源分布/趋势/最近向量化/AI 一键概括）· 右侧窄窗（吸附缩起/悬停展开/参考卡拖出浮卡）· 向量检索增强（Ollama bge-m3，meta v8+secondbrain_vectors.vec）· AI 对话（Ollama qwen2.5 / DeepSeek 经 core/ai）。常驻监听光标移动与笔记变更。
+**第二大脑 (Second Brain)**: 笔记向量库的管理与检索功能（ticket 103 正名，前名「闪念」——QuickAdd《闪念.js》完整原型）：主面板统一入口（统计总览/来源分布/趋势/最近向量化/AI 一键概括）· 右侧窄窗（吸附缩起/悬停展开/参考卡拖出浮卡）· 向量检索增强（Ollama bge-m3，meta v8+secondbrain_vectors.vec）· AI 对话（Ollama qwen2.5 / DeepSeek 经 core/ai）。常驻监听光标移动与笔记变更。本地无向量数据时三命令统一进主面板「引导态」：首次向量化须用户点击按钮触发（进度可见，ticket 107）。
 _Avoid_: 闪念（旧功能名，仅存于「闪念笔记」文档类型语义）、AI 补全（ai_completion 时代旧称）
 
 **闪念笔记 (Flash Note)**: 卡片盒目录下的快速笔记**文档类型**（path-classify 分类 `'flash'`；smartcat 观察来源标签与 credibility 0.9 档位沿用此词汇）。注意与「第二大脑」功能相区分：前者是笔记类型，后者是管理/检索它们的功能模块。

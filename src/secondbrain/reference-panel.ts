@@ -114,6 +114,7 @@ export class ReferencePanel {
     try {
       const CONFIG = buildConfig();
       const results = await this.store.search(query, CONFIG.TOP_K);
+      if (this.isClosed) return; // 关闭瞬间检索才返回：不再向已 detach 的 DOM 渲染（ticket 107）
       this.renderResults(results);
     } catch (err) {
       console.warn('[secondbrain] 参考面板检索失败', err);

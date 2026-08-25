@@ -40,17 +40,20 @@ export async function getEmbedding(text: string, isQuery: boolean, baseUrl?: str
   return vec;
 }
 
-/** 批量嵌入 */
-export async function getEmbeddingsBatch(texts: string[]): Promise<number[][]> {
+/** 批量嵌入（baseUrl 缺省本地；ticket 107 移动端引导初始化传远程 URL） */
+export async function getEmbeddingsBatch(texts: string[], baseUrl?: string): Promise<number[][]> {
   const CONFIG = buildConfig();
-  const resp = await httpFetch(`${CONFIG.OLLAMA_URL}/api/embed`, {
+  const resp = await httpFetch(`${baseUrl || CONFIG.OLLAMA_URL}/api/embed`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ model: CONFIG.EMBEDDING_MODEL, input: texts }),
   });
   if (!resp.ok) throw new Error(`Ollama 错误: ${resp.status}`);
   const data = await resp.json();
-  return data.embeddings || [];
+  // 空结果校验（QA L125 同语义，ticket 107 补回）：畸形 2xx 响应走逐条回退而非登记空向量
+  const vec = data.embeddings;
+  if (!vec || !vec.length) throw new Error('向量为空');
+  return vec;
 }
 
 /** Ollama 对话 */

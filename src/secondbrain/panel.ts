@@ -1,9 +1,12 @@
 /**
- * 第二大脑主面板（ticket 103 新功能）
+ * 第二大脑主面板（ticket 103 新功能；ticket 107 增加首用引导态）
  * 统一入口弹窗：统计卡片 / 来源分布 / 近 12 周趋势 / 最近向量化 Top10 / AI 一键概括。
- * - 每次打开自动触发一次增量 refresh（后台 modify 5s 防抖静默刷新由域入口另行挂载）；
- * - 头部按钮秩序：功能（📚 侧边栏 · 💬 对话）→ ⚙️ → 关闭；✕ 仅移动端全屏形态渲染，桌面靠 mask+ESC；
- * - 样式全部收敛根 styles.css（bz-sb-panel-*），此处零视觉内联（仅显隐/动态计算）；
+ * - 本地无向量数据（isIndexReady=false）→ 引导态：说明文案 + 「开始向量化」按钮，
+ *   点击后进度条实时更新，完成后自动切换正常面板；失败给出原因并可重试；
+ * - 内容态每次打开自动增量 refresh 且完成后重渲统计（否则展示上一轮旧数据）；
+ * - 头部按钮秩序：功能（📚 侧边栏 · 💬 对话）→ ⚙️ → 关闭；✕ 仅移动端全屏形态渲染，
+ *   桌面靠 mask+ESC；引导期 📚💬 收起（空库进侧边栏/对话无意义）；
+ * - 样式全部收敛 src/secondbrain/styles.css（bz-sb-panel-* / bz-sb-onboard-*），此处零视觉内联；
  * - 概括缓存 STORAGE/secondbrain_panel.json（含生成时间，可重新生成/清除）。
  */
 import type { App } from 'obsidian';
@@ -12,7 +15,7 @@ import { notice } from '../core/notice';
 import { tryGetSettings, saveSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal, createSettingsGroup } from '../core/settings-modal';
-import { buildConfig } from './config';
+import { buildConfig, IS_MOBILE } from './config';
 import { AI } from './ai';
 import type { VectorStore, SecondBrainMeta } from './vector-store';
 
@@ -144,6 +147,10 @@ export class SecondBrainPanel {
   private popup: HTMLElement | null = null;
   private escapeHandler: ((e: KeyboardEvent) => void) | null = null;
   private refreshing = false;
+  /** 引导按钮的首次向量化进行中标记（防双击重复触发） */
+  private initializing = false;
+  /** 头部功能钮（📚💬）——引导期收起 */
+  private funcBtns: HTMLButtonElement[] = [];
 
   constructor(app: App, store: VectorStore, opts: PanelOptions) {
     this.app = app;
@@ -156,9 +163,8 @@ export class SecondBrainPanel {
     this.mask!.style.display = 'block';
     this.popup!.style.display = 'flex';
     applyMobileWindowFullscreen(this.popup, tryGetSettings().secondBrainMobileDefaultFullscreen === true);
-    // 打开即自动增量刷新（每次打开触发一次）
-    void this.autoRefresh();
-    await this.renderStats();
+    // 先等初始 load 完成再定形态（防启动竞态把已有索引误判为空库）
+    await this.render();
   }
 
   close(): void {
@@ -177,6 +183,36 @@ export class SecondBrainPanel {
     this.popup = null;
   }
 
+  /** 按索引就绪与否切换引导态 / 内容态 */
+  private async render(): Promise<void> {
+    if (this.store.initialLoad) {
+      try {
+        await this.store.initialLoad;
+      } catch {
+        /* load 失败按空库处理，走引导态 */
+      }
+    }
+    if (this.store.isIndexReady()) this.showContent();
+    else this.showOnboarding();
+  }
+
+  private showContent(skipRefresh = false): void {
+    const onboard = document.getElementById('bz-sb-onboard');
+    const content = document.getElementById('bz-sb-content');
+    if (onboard) onboard.style.display = 'none';
+    if (content) content.style.display = 'flex';
+    for (const b of this.funcBtns) b.classList.remove('bz-sb-btn-hidden');
+    if (!skipRefresh && !this.refreshing) void this.autoRefreshThenRender();
+  }
+
+  private showOnboarding(): void {
+    const onboard = document.getElementById('bz-sb-onboard');
+    const content = document.getElementById('bz-sb-content');
+    if (onboard) onboard.style.display = 'flex';
+    if (content) content.style.display = 'none';
+    for (const b of this.funcBtns) b.classList.add('bz-sb-btn-hidden');
+  }
+
   private createUI(): void {
     if (this.mask && document.body.contains(this.mask)) return;
     const mask = document.createElement('div');
@@ -185,7 +221,6 @@ export class SecondBrainPanel {
 
     const popup = document.createElement('div');
     popup.className = 'bz-sb-panel';
-    popup.classList.add('bz-win-mfs-host');
 
     // 头部：标题 + 功能(📚💬) + ⚙️ + ✕(仅移动全屏)
     const head = document.createElement('div');
@@ -203,14 +238,15 @@ export class SecondBrainPanel {
       btns.appendChild(b);
       return b;
     };
-    mkBtn('bz-sb-panel-func', '📚', '打开侧边栏', () => {
+    const refBtn = mkBtn('bz-sb-panel-func', '📚', '打开侧边栏', () => {
       this.close();
       this.opts.onOpenReference();
     });
-    mkBtn('bz-sb-panel-func', '💬', '打开对话', () => {
+    const chatBtn = mkBtn('bz-sb-panel-func', '💬', '打开对话', () => {
       this.close();
       this.opts.onOpenChat();
     });
+    this.funcBtns = [refBtn, chatBtn]; // 引导期整体收起（ticket 107）
     mkBtn('bz-sb-panel-gear', '⚙️', '第二大脑设置', () => this.openSettings());
     if (isMobileEnv() && tryGetSettings().secondBrainMobileDefaultFullscreen === true) {
       mkBtn('bz-win-close', '❌', '关闭', () => this.close());
@@ -224,25 +260,31 @@ export class SecondBrainPanel {
     const body = document.createElement('div');
     body.className = 'bz-sb-panel-body';
 
+    // 内容态包裹层（引导态整层隐藏；初始双隐，open().render() 后二选一显示）
+    const content = document.createElement('div');
+    content.className = 'bz-sb-panel-content';
+    content.id = 'bz-sb-content';
+    content.style.display = 'none';
+
     const cards = document.createElement('div');
     cards.className = 'bz-sb-cards';
     cards.id = 'bz-sb-cards';
-    body.appendChild(cards);
+    content.appendChild(cards);
 
     const trendBox = document.createElement('div');
     trendBox.className = 'bz-sb-section';
     trendBox.innerHTML = `<div class="bz-sb-section-title">近 12 周向量化趋势</div><div id="bz-sb-trend" class="bz-sb-trend"></div>`;
-    body.appendChild(trendBox);
+    content.appendChild(trendBox);
 
     const distBox = document.createElement('div');
     distBox.className = 'bz-sb-section';
     distBox.innerHTML = `<div class="bz-sb-section-title">来源分布</div><div id="bz-sb-dist" class="bz-sb-dist"></div>`;
-    body.appendChild(distBox);
+    content.appendChild(distBox);
 
     const recentBox = document.createElement('div');
     recentBox.className = 'bz-sb-section';
     recentBox.innerHTML = `<div class="bz-sb-section-title">最近向量化</div><div id="bz-sb-recent" class="bz-sb-recent"></div>`;
-    body.appendChild(recentBox);
+    content.appendChild(recentBox);
 
     const summaryBox = document.createElement('div');
     summaryBox.className = 'bz-sb-section';
@@ -259,7 +301,54 @@ export class SecondBrainPanel {
     summaryBox.appendChild(sumBtn);
     summaryBox.appendChild(sumMeta);
     summaryBox.appendChild(sumText);
-    body.appendChild(summaryBox);
+    content.appendChild(summaryBox);
+
+    body.appendChild(content);
+
+    // 引导态（ticket 107）：本地无向量数据时的首次初始化入口
+    const onboard = document.createElement('div');
+    onboard.className = 'bz-sb-onboard';
+    onboard.id = 'bz-sb-onboard';
+    onboard.style.display = 'none';
+
+    const obIcon = document.createElement('div');
+    obIcon.className = 'bz-sb-onboard-icon';
+    obIcon.textContent = '🧠';
+    const obTitle = document.createElement('div');
+    obTitle.className = 'bz-sb-onboard-title';
+    obTitle.textContent = '初始化向量数据库';
+    const obDesc = document.createElement('div');
+    obDesc.className = 'bz-sb-onboard-desc';
+    obDesc.textContent =
+      '第二大脑还没有你的笔记索引。点击下方按钮后，会把白名单目录内的笔记分块并向量化' +
+      '（通过 Ollama 本地生成，数据不出本机），建成可检索的知识库——之后参考侧边栏、AI 对话与这里的统计才会可用。' +
+      '首次向量化需要手动触发一次，完成后笔记变更会自动增量同步。';
+    const initBtn = document.createElement('button');
+    initBtn.className = 'bz-sb-init-btn';
+    initBtn.id = 'bz-sb-init-btn';
+    initBtn.textContent = '🚀 开始向量化';
+    initBtn.onclick = () => void this.startInitialIndex();
+    const progress = document.createElement('div');
+    progress.className = 'bz-sb-init-progress';
+    progress.id = 'bz-sb-init-progress';
+    const bar = document.createElement('div');
+    bar.className = 'bz-sb-init-bar';
+    const fill = document.createElement('span');
+    fill.className = 'bz-sb-init-fill';
+    fill.id = 'bz-sb-init-fill';
+    bar.appendChild(fill);
+    const status = document.createElement('div');
+    status.className = 'bz-sb-init-status';
+    status.id = 'bz-sb-init-status';
+    progress.appendChild(bar);
+    progress.appendChild(status);
+
+    onboard.appendChild(obIcon);
+    onboard.appendChild(obTitle);
+    onboard.appendChild(obDesc);
+    onboard.appendChild(initBtn);
+    onboard.appendChild(progress);
+    body.appendChild(onboard);
 
     popup.appendChild(body);
     document.body.appendChild(mask);
@@ -275,8 +364,8 @@ export class SecondBrainPanel {
     this.popup = popup;
   }
 
-  /** 打开时自动增量刷新（并发去重；进度走 toast） */
-  private async autoRefresh(): Promise<void> {
+  /** 内容态打开时自动增量刷新，完成后重渲统计（修复：原先渲染不等 refresh，展示的总是上一轮旧数据） */
+  private async autoRefreshThenRender(): Promise<void> {
     if (this.refreshing) return;
     this.refreshing = true;
     try {
@@ -288,6 +377,70 @@ export class SecondBrainPanel {
     } finally {
       this.refreshing = false;
     }
+    await this.renderStats();
+  }
+
+  /**
+   * 引导按钮（ticket 107）：首次全量向量化。
+   * 进度条实时更新；完成 → 切内容态渲染统计；失败 → 给出原因并可重试。
+   * 注意：refresh 全部嵌入失败时不抛错也不登记任何条目（QA 同语义），故以 isIndexReady 判定成败。
+   */
+  private async startInitialIndex(): Promise<void> {
+    if (this.initializing || this.refreshing) return;
+    const btn = document.getElementById('bz-sb-init-btn') as HTMLButtonElement | null;
+    const fill = document.getElementById('bz-sb-init-fill');
+    const status = document.getElementById('bz-sb-init-status');
+    const box = document.getElementById('bz-sb-init-progress');
+    if (!btn || !fill || !status || !box) return;
+    this.initializing = true;
+    btn.disabled = true;
+    btn.textContent = '向量化中…';
+    box.style.display = 'flex';
+    fill.style.width = '0%';
+    let sawCountedDone = false; // ✅ 向量化完成：N 篇…（QA 文案带计数；全部嵌入失败也会报，须据此判败）
+    let sawWarning = false;
+    try {
+      await this.store.refresh((msg) => {
+        if (!status.isConnected) return; // 面板已销毁：不再写 DOM
+        if (msg.startsWith('⚠️')) sawWarning = true;
+        if (msg.startsWith('✅ 向量化完成：')) sawCountedDone = true;
+        const m = msg.match(/向量化:\s*(\d+)\/(\d+)/);
+        if (m && Number(m[2]) > 0) {
+          fill.style.width = Math.min(100, Math.round((Number(m[1]) / Number(m[2])) * 100)) + '%';
+        }
+        status.textContent = msg;
+      });
+      if (!status.isConnected) return;
+      if (this.store.isIndexReady()) {
+        this.showContent(true); // 刚完成全量索引，跳过重复自动刷新
+        await this.renderStats(); // 但统计必须立即渲染（skipRefresh 不带渲染）
+      } else if (sawWarning) {
+        status.textContent = '白名单目录内没有可索引的 Markdown 笔记：请检查 ⚙️ 设置中的「白名单目录」';
+        this.resetInitBtn(btn);
+      } else if (sawCountedDone) {
+        status.textContent =
+          '没有成功向量化任何内容：请确认 Ollama 服务与 Embedding 模型可用' +
+          (IS_MOBILE ? '（移动端需配置「远程 Ollama URL」）' : '') +
+          '后重试';
+        this.resetInitBtn(btn);
+      } else {
+        status.textContent = '未发现可索引的笔记内容';
+        this.resetInitBtn(btn);
+      }
+    } catch (e: any) {
+      console.warn('[secondbrain] 初始向量化失败', e);
+      if (status.isConnected) {
+        status.textContent = '初始化失败：' + (e?.message || e);
+        this.resetInitBtn(btn);
+      }
+    } finally {
+      this.initializing = false;
+    }
+  }
+
+  private resetInitBtn(btn: HTMLButtonElement): void {
+    btn.disabled = false;
+    btn.textContent = '🚀 重试初始化';
   }
 
   private async renderStats(): Promise<void> {
