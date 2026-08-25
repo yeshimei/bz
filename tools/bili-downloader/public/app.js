@@ -313,8 +313,8 @@ function setActive(id) { S.activeId = id; renderSegList(); syncFromActive() }
 function syncFromActive() {
   renderBlocks()
   const a = activeSeg()
-  $('range-start').value = a ? String(a.start) : '0'
-  $('range-end').value = a ? String(a.end) : String(S.dur)
+  $('range-start').value = a ? String(a.start) : String(S.draft.start)
+  $('range-end').value = a ? String(a.end) : String(S.draft.end)
   syncRange()
 }
 function syncRange() {
@@ -543,6 +543,7 @@ $('compress-btn').onclick = async () => {
     if (!/已中止/.test(e.message)) toast(e.message, true)
   } finally {
     btn.disabled = false
+    $('cp-text').textContent = ''   // 压缩完成/失败都清掉「编码中」残影
   }
 }
 
@@ -617,10 +618,15 @@ $('copy-btn').onclick = async () => {
   catch { toast('复制失败', true) }
 }
 
-// ---- 快速命令：生成文献笔记（一键全流水：剪切/压缩 → 转文字 → 交付 → AI → 写入文献盒）----
-// 前置：已下载（段落与 CRF 即用户已圈选参数）；未转录自动补跑转文字，未交付自动先「完成」
+// ---- 快速命令：生成文献笔记（严格顺序五步：① 应用剪辑 ② 应用压缩 ③ 转文字 ④ AI 润色 ⑤ 生成笔记）----
+// 前置：已下载（段落与 CRF 即用户已圈选参数）；各步串行 await，绝不并行；步骤状态显式展示
 function updateGenNote() {
   $('gen-note').disabled = !(S.dur > 0)
+}
+function flowStatus(text) {
+  const el = $('flow-status')
+  if (text) { el.textContent = text; el.classList.remove('hidden') }
+  else el.classList.add('hidden')
 }
 $('gen-note').onclick = async () => {
   const btn = $('gen-note')
@@ -628,31 +634,63 @@ $('gen-note').onclick = async () => {
   const nr = $('note-result')
   nr.classList.add('hidden')
   nr.textContent = ''
+  const segs = S.segments
   try {
+    // ① 应用剪辑（逐段串行）
+    flowStatus(segs.length ? `步骤 1/5：应用剪辑（共 ${segs.length} 段）…` : '步骤 1/5：应用剪辑（无段落，跳过）')
+    S.op = 'trim'
+    for (let i = 0; i < segs.length; i++) {
+      flowStatus(`步骤 1/5：应用剪辑（第 ${i + 1}/${segs.length} 段）…`)
+      await api('/api/trim', { segmentId: segs[i].id, start: segs[i].start, end: segs[i].end })
+    }
+    $('trim-text').textContent = ''
+    // ② 应用压缩（选档才压，逐段串行）
+    if (S.crf !== null) {
+      flowStatus(segs.length ? `步骤 2/5：应用压缩（CRF ${S.crf}，共 ${segs.length} 段）…` : '步骤 2/5：应用压缩（无段落，跳过）')
+      S.op = 'compress'
+      for (let i = 0; i < segs.length; i++) {
+        flowStatus(`步骤 2/5：应用压缩（第 ${i + 1}/${segs.length} 段）…`)
+        await api('/api/compress', { segmentId: segs[i].id, start: segs[i].start, end: segs[i].end, crf: S.crf })
+      }
+    } else {
+      flowStatus('步骤 2/5：应用压缩（未选档位，跳过）')
+    }
+    $('cp-text').textContent = ''
     if (!S.delivered) {
-      // ① 转文字（未转录时自动补跑，按所选段落逐段转录；进度经 SSE transcript-chunk 流式进文本区）
+      // ③ 转文字（未转录自动补跑；单次模型加载多文件转录）
       if (!S.transcript) {
+        flowStatus('步骤 3/5：转文字（模型单次加载，稍候）…')
         const tsWrap = $('ts-wrap')
         tsWrap.classList.remove('hidden')
         const st = $('ts-status')
         st.className = 'hint'
         st.textContent = '转录中（首次加载模型约1-2分钟，请稍候）…'
         $('ts-text').value = ''
-        const rt = await api('/api/transcribe', 'POST', { segments: S.segments.map(s => ({ id: s.id, start: s.start, end: s.end })) })
+        const rt = await api('/api/transcribe', 'POST', { segments: segs.map(s => ({ id: s.id, start: s.start, end: s.end })) })
         S.transcript = rt.transcript
         $('ts-text').value = rt.transcript
         st.textContent = '转录完成'
         st.className = 'hint ok'
+      } else {
+        flowStatus('步骤 3/5：转文字（已有转录，跳过）')
       }
-      // ② 剪切/压缩/交付（done 内部按段落 prepare + CRF 编码，trim-progress SSE 推进度）
+      // ④ AI 润色（元数据 + 分块润色，独立步骤）
+      flowStatus('步骤 4/5：AI 润色…')
+      await api('/api/note-prepare', 'POST', {})
+      // ⑤ 生成笔记（自动交付 + 写入文献盒）
+      flowStatus('步骤 5/5：生成笔记（自动交付 + 写入文献盒）…')
       const r = await api('/api/done', 'POST', {
-        segments: S.segments.map(s => ({ id: s.id, start: s.start, end: s.end })),
+        segments: segs.map(s => ({ id: s.id, start: s.start, end: s.end })),
         mode: S.mode,
         crf: S.crf,
       })
       await showDelivered(r)
+    } else {
+      if (!S.transcript) throw new Error('缺少转录文本：请先转文字')
+      flowStatus('步骤 4/5：AI 润色…')
+      await api('/api/note-prepare', 'POST', {})
+      flowStatus('步骤 5/5：生成笔记…')
     }
-    // ③ AI 生成元数据 + 润色 + 写笔记
     const r2 = await api('/api/note', 'POST', {})
     const a = document.createElement('a')
     a.href = r2.note.url
@@ -660,10 +698,13 @@ $('gen-note').onclick = async () => {
     a.textContent = `📄 ${r2.note.wiki}（点击在 Obsidian 中打开）`
     nr.appendChild(a)
     nr.classList.remove('hidden')
+    flowStatus('')
     toast('✅ 文献笔记已生成')
   } catch (e) {
+    flowStatus('')
     toast(e.message, true)
   } finally {
+    S.op = null
     btn.disabled = false
   }
 }

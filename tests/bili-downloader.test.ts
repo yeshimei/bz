@@ -28,6 +28,16 @@ describe('bili-downloader 启动命令', () => {
     expect(noticeText()).toContain('仅桌面端可用');
   });
 
+  it('本地未发布 CLI 存在（临时指针）：spawn node cli.js 而非全局 bili-dl', () => {
+    const child = new FakeChild();
+    const spawn = vi.fn(() => child);
+    (window as any).require = (m: string) => (m === 'fs' ? { existsSync: (p: string) => p.includes('tools/bili-downloader/cli.js') } : { spawn });
+    openBiliDownloader();
+    expect(spawn).toHaveBeenCalledWith(expect.stringContaining('cli.js'), [], expect.objectContaining({ shell: true, windowsHide: true }));
+    child.stdout.emit('data', Buffer.from('  地址: http://127.0.0.1:8801\n'));
+    expect(noticeText()).toContain('http://127.0.0.1:8801');
+  });
+
   it('桌面端：以 shell 方式 spawn bili-dl，解析 stdout 地址并提示', () => {
     const child = new FakeChild();
     const spawn = vi.fn(() => child);

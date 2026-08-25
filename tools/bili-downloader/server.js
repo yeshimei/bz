@@ -29,6 +29,7 @@ const T = {
   prepared: [],            // [{id, start, end, mode, tempPath}] 已校验段落临时产物缓存（交付复用）
   transcript: '',
   segmentTranscripts: {},  // 分段转录 {segId: text}（多段落交付时笔记按片段挂正文）
+  polishedNote: null,      // AI 润色产物 {meta, body}（/api/note-prepare 缓存，生成笔记直接复用）
   lastFiles: [],           // 本次交付的文件 [{finalName, wiki, segId}]（文献笔记 embed 与历史 note 字段用）
 }
 function resetTask() {
@@ -40,6 +41,7 @@ function resetTask() {
   T.crf = 23; T.segments = []; T.mode = 'split'; T.prepared = []
   T.transcript = ''
   T.segmentTranscripts = {}
+  T.polishedNote = null
   T.lastFiles = []
   T.phase = 'idle'
 }
@@ -189,39 +191,48 @@ async function doDone(body) {
 
 // ---- 文献笔记（F3-F5）：AI 元数据 + 分块润色 + 落盘文献盒 + 历史 note 字段 ----
 // 前置：已「完成」交付（embed 引用真实交付文件名）+ 已转文字（转录全文在内存 T.transcript）
+// AI 润色独立成步（POST /api/note-prepare，1.2.4 起）：润色结果存 T.polishedNote，note 落盘直接复用；
+// 未走 prepare（旧前端/直连）时 note 内部内联执行 AI（向后兼容）。
+async function runNoteAi(ai, videoTitle) {
+  if (T.polishedNote) return T.polishedNote
+  broadcast({ type: 'diag', text: 'AI 生成标题/标签/一句话简介…' })
+  const chunks = core.chunkTranscript(T.transcript)
+  const metaRaw = await core.aiJson({
+    ...ai,
+    messages: [{ role: 'user', content: core.literatureMetaPrompt(videoTitle, chunks[0] || '') }],
+    maxTokens: 600,
+  })
+  const tags = Array.isArray(metaRaw.tags) ? metaRaw.tags.map(String).filter(Boolean).slice(0, 5) : []
+  const meta = {
+    title: String(metaRaw.title || '').trim() || videoTitle || '未命名',
+    tags,
+    summary: String(metaRaw.summary || '').trim(),
+  }
+  broadcast({ type: 'diag', text: 'AI 润色正文…' })
+  const polished = []
+  for (let i = 0; i < chunks.length; i++) {
+    const t = await core.aiChat({
+      ...ai,
+      messages: [{ role: 'user', content: core.literaturePolishPrompt(chunks[i]) }],
+      maxTokens: 4096,
+    })
+    polished.push(t)
+  }
+  const out = { meta, body: polished.join('') }
+  T.polishedNote = out
+  return out
+}
+
 async function doNote() {
   if (T.phase !== 'done') throw new Error('请先点「完成」交付视频，再生成文献笔记')
   if (!T.transcript) throw new Error('请先转文字（生成文献笔记需要转录文本）')
   const conf = cfg.loadConfig()
   const ai = core.loadBzAiConfig(conf)   // 缺 key / 缺 bz 数据文件 → 报错，无 quickadd 回退
   const source = core.extractBv(T.url) || T.url
-  const videoTitle = (T.info && T.info.title) || ''
   setBusy(true)
   T.phase = 'generating'
   try {
-    broadcast({ type: 'diag', text: 'AI 生成标题/标签/一句话简介…' })
-    const chunks = core.chunkTranscript(T.transcript)
-    const metaRaw = await core.aiJson({
-      ...ai,
-      messages: [{ role: 'user', content: core.literatureMetaPrompt(videoTitle, chunks[0] || '') }],
-      maxTokens: 600,
-    })
-    const tags = Array.isArray(metaRaw.tags) ? metaRaw.tags.map(String).filter(Boolean).slice(0, 5) : []
-    const meta = {
-      title: String(metaRaw.title || '').trim() || videoTitle || '未命名',
-      tags,
-      summary: String(metaRaw.summary || '').trim(),
-    }
-    broadcast({ type: 'diag', text: 'AI 润色正文…' })
-    const polished = []
-    for (let i = 0; i < chunks.length; i++) {
-      const t = await core.aiChat({
-        ...ai,
-        messages: [{ role: 'user', content: core.literaturePolishPrompt(chunks[i]) }],
-        maxTokens: 4096,
-      })
-      polished.push(t)
-    }
+    const { meta, body } = await runNoteAi(ai, (T.info && T.info.title) || '')
     // 视频块：分开交付 = 每文件「视频链接 + 对应段落转文字」依次排；合并 = 单文件「视频链接 + 整段转文字」
     const segT = T.segmentTranscripts || {}
     const embeds = (T.lastFiles || []).map(f => ({
@@ -229,8 +240,8 @@ async function doNote() {
       transcript: f.segId ? (segT[f.segId] || '') : T.transcript,
     }))
     const md = core.buildLiteratureNote({
-      title: meta.title, tags, summary: meta.summary, source,
-      body: polished.join(''),
+      title: meta.title, tags: meta.tags, summary: meta.summary, source,
+      body,
       embeds,
     })
     const folder = path.join(conf.vaultPath, conf.literatureFolder || '文献盒')
@@ -244,6 +255,23 @@ async function doNote() {
     return { ok: true, note: { path: notePath, wiki: `![[${rel}]]`, url } }
   } finally {
     if (T.phase === 'generating') T.phase = 'done'   // 失败也回到 done，可重试
+    setBusy(false)
+  }
+}
+
+// AI 润色独立步骤（快捷命令第 4 步）：元数据 + 分块润色 → 存 T.polishedNote，供生成笔记复用
+async function doNotePrepare() {
+  if (!T.transcript) throw new Error('请先转文字（AI 润色需要转录文本）')
+  const conf = cfg.loadConfig()
+  const ai = core.loadBzAiConfig(conf)
+  setBusy(true)
+  T.phase = 'generating'
+  try {
+    const { meta } = await runNoteAi(ai, (T.info && T.info.title) || '')
+    T.phase = 'ready'
+    return { ok: true, meta }
+  } finally {
+    if (T.phase === 'generating') T.phase = 'ready'
     setBusy(false)
   }
 }
@@ -448,20 +476,28 @@ const handlers = {
           for (const seg of segs) sources.push({ seg, file: await prepareSegment(seg, T.info.duration) })
         }
       }
+      // 单次进程 = 单次模型加载，多文件一次转录（逐段各自重载模型会静默几十秒，多段观感像卡死）
+      let raw = ''
+      await core.runPython({
+        py: conf.pythonPath,
+        args: [conf.whisperModel, ...sources.map(s => s.file)],
+        onChunk: s => {
+          raw += s
+          broadcast({ type: 'transcript-chunk', text: String(s).replace(/[\x1e\x1f]/g, '') })   // 剥单元分隔符，避免污染文本区
+        },
+      })
+      const units = core.parseTranscriptUnits(raw)
+      const byFile = new Map(units.map(u => [path.resolve(u.file), u.text]))
       const segTexts = {}
       const full = []
-      for (const { seg, file } of sources) {
-        let text = ''
-        await core.runPython({
-          py: conf.pythonPath, args: [conf.whisperModel, file],
-          onChunk: s => { text += s; broadcast({ type: 'transcript-chunk', text: s }) },
-        })
-        const t = text.replace(/\s+/g, ' ').trim()
-        if (seg) segTexts[seg.id] = t
+      sources.forEach((src, i) => {
+        const t = byFile.get(path.resolve(src.file)) || ''
+        if (src.seg) segTexts[src.seg.id] = t
         full.push(t)
-      }
+        broadcast({ type: 'diag', text: `转录 ${i + 1}/${sources.length} 完成` })
+      })
       T.segmentTranscripts = segTexts
-      T.transcript = full.join(' ')
+      T.transcript = full.join(' ').trim()
       T.phase = 'ready'
       return { ok: true, transcript: T.transcript }
     } finally { setBusy(false) }
@@ -472,6 +508,9 @@ const handlers = {
   },
   async 'POST /api/note'() {
     return doNote()
+  },
+  async 'POST /api/note-prepare'() {
+    return doNotePrepare()
   },
   async 'POST /api/revert'() {
     // 返回原视频：清空全部段落 + 关闭压缩 + 恢复下载原件（可重新剪辑）

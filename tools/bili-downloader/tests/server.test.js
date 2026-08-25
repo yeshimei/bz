@@ -355,3 +355,37 @@ test('POST /api/done：空段落 = 整片交付（单文件、无 clip 标记）
   assert.ok(!j.files[0].finalName.includes('_clip_'), j.files[0].finalName)
   resetTask()
 })
+
+test('POST /api/note-prepare + /api/note：AI 只跑一次（润色独立成步，生成笔记直接复用）', async () => {
+  const vault = path.join(tmp, 'vault-note-prep')
+  const bzDir = path.join(vault, '.obsidian', 'plugins', 'bz')
+  fs.mkdirSync(bzDir, { recursive: true })
+  fs.writeFileSync(path.join(bzDir, 'data.json'), JSON.stringify({ aiProvider: 'opencode-go', opencodeGoApiKey: 'k' }))
+  await (await req('POST', '/api/config', { vaultPath: vault, literatureFolder: '文献盒' })).json()
+  const origJson = core.aiJson, origChat = core.aiChat
+  let aiCalls = 0
+  core.aiJson = async () => { aiCalls++; return { title: '预润色笔记', tags: ['a'], summary: 's' } }
+  core.aiChat = async () => { aiCalls++; return '润色好的正文。' }
+  try {
+    T.phase = 'done'
+    T.transcript = '第一段。第二段。'
+    T.lastFiles = [{ finalName: 'x.mp4', wiki: '![[CONFIG/APPENDIX/x.mp4]]', segId: null }]
+    T.url = 'https://www.bilibili.com/video/BV1GJ411x7h7'
+    T.info = { title: 'X', duration: 10 }
+    const p = await (await req('POST', '/api/note-prepare', {})).json()
+    assert.equal(p.ok, true, p.error)
+    assert.equal(p.meta.title, '预润色笔记')
+    const callsAfterPrepare = aiCalls
+    assert.ok(callsAfterPrepare > 0)
+    T.phase = 'done'   // 真实链路：prepare 与 note 之间由「完成」交付驱动 phase=done
+    const n = await (await req('POST', '/api/note', {})).json()
+    assert.equal(n.ok, true, n.error)
+    assert.equal(aiCalls, callsAfterPrepare, '生成笔记不得再次调用 AI（复用 T.polishedNote）')
+    const md = fs.readFileSync(n.note.path, 'utf8')
+    assert.ok(md.includes('润色好的正文。'))
+    assert.ok(md.includes('title: "预润色笔记"'))
+  } finally {
+    core.aiJson = origJson; core.aiChat = origChat
+    resetTask()
+  }
+})
