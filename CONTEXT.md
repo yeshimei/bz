@@ -82,7 +82,7 @@ _Avoid_: 抓海报、豆瓣补全、poster fetch
 
 **快速流程 (Quick Flow)**: B站下载「转文字」之后的一键后续——AI 生成标题/标签/一句话简介并轻度润色转录正文，落一篇「文献笔记」；视频本体仍走既有交付流程，笔记嵌入交付文件。_Avoid_: 一键流程、AI 后处理
 
-**文献笔记 (Literature Note)**: 由快速流程生成的视频文献笔记——frontmatter 含标题/标签/一句话简介/来源，正文为转录稿轻度润色 + 交付视频的嵌入双链，存于「文献盒」。区别于书库「读书笔记」与聚合讯「剪藏文章」。_Avoid_: 读书笔记、视频笔记（指本词时）
+**文献笔记 (Literature Note)**: 由快速流程生成的视频文献笔记——frontmatter 含 AI 标题/标签/一句话简介/来源链接等七键，正文为逐段「润色正文 + 视频双链」排布（不含原始转录），存于「文献盒」。区别于书库「读书笔记」与聚合讯「剪藏文章」。_Avoid_: 读书笔记、视频笔记（指本词时）
 
 **文献盒 (Literature Box)**: 存放文献笔记的 vault 内目录，默认 vault 根下「文献盒」。_Avoid_: 笔记夹、输出目录
 
@@ -94,7 +94,7 @@ _Avoid_: 把「文件引用同步」「剪藏归档」再称作 AI Agent（域�
 **文件引用同步 (File Reference Sync)**: 笔记 rename/delete 后自动维护「引用了该笔记的数据条目」的家族机制，共三员——memo.json、favorites.json、review.json：各数据属主订阅域事件总线通用通道 `'vault:md-*'` 就地更新自身字段（memo/favorites 的 linkedNote/notePath/标题，review 的计划内笔记路径）。memo/favorites 持本地纯函数私有副本（ADR-0048 自 ai-agent 拆回，语义逐行等价、勿跨域 import）；review 一期已订同一通道。
 _Avoid_: 引用同步单独成域（AI Agent 已解散）；跨域 import 他域 sync 副本
 
-**剪藏归档 (Clip Archive)**: memo 域功能——剪藏落盘（订 `'clipping:file-created'` 语义通道）→ 读 frontmatter link 在 memo.json 剪藏场景待办中 **URL 精确匹配**；命中即归档（写入 linkedNote 并置完成）；未命中且 enableAIClipMatch 开启时 AI 匹配候选条目并**弹窗征求批准**，确认后才写入。「URL 精确优先 / AI 弹窗批准」权限模型冻结（ADR-0048）。
+**剪藏归档 (Clip Archive)**: memo 域功能——剪藏落盘（订 `'clipping:file-created'` 语义通道）→ 读 frontmatter url 在 memo.json 剪藏场景待办中 **URL 精确匹配**；命中即归档（写入 linkedNote 并置完成）；未命中且 enableAIClipMatch 开启时 AI 匹配候选条目并**弹窗征求批准**，确认后才写入。「URL 精确优先 / AI 弹窗批准」权限模型冻结（ADR-0048）。
 
 **复习计划 (Review Plan)**: FSRS v4 算法驱动的复习管理，数据 `CONFIG/STORAGE/review.json`。可配置多个「监听文件夹」自动收编笔记；做题会话自动评级未通过（忘了/困难）时结果卡变唯一按钮「复习此笔记」并置「待重做」，重做到通过才进下篇（首次评级=唯一排期来源，ADR-0044）；「做题家」命令入口已退役（ADR-0045），仅作复习引擎。ticket 100 起：**到期提醒**（enableAutoNotify，开启时插件启动即常驻轮询，有逾期笔记即弹聚合通知）；**每日复习上限**（reviewDailyLimit，一轮复习最多处理 N 篇逾期）；**复习间隔缩放**（reviewIntervalScale，FSRS 相位间隔乘系数，ADR-0046）；**文件树标记**（reviewTreeBadge，关闭则文件树不染色不挂徽章）；**自动加入提醒**（reviewAutoAddNotice，新笔记自动收编时 3 秒窗口合并一条通知）。
 

@@ -214,14 +214,14 @@ describe('聚合讯阅读流', () => {
     expect(stats.byDate[today]).toBe(2);
   });
 
-  it('saveToClip：写入 归档/网页剪藏/标题.md（含 link/author/site/tags/dataviewjs 代码块）并 markAsRead', async () => {
+  it('saveToClip：写入 归档/网页剪藏/标题.md（含 url/author/site/tags/dataviewjs 代码块）并 markAsRead', async () => {
     await loadArticles();
     render();
     await saveToClip();
 
     const vault = getVault();
     const md = vault.files.get('归档/网页剪藏/第一篇新闻.md');
-    expect(md).toContain('link: "https://zhihu.com/a"');
+    expect(md).toContain('url: "https://zhihu.com/a"');
     expect(md).toContain('author: "甲"');
     expect(md).toContain('site: "知乎日报"');
     expect(md).toContain('tags:\n  - "AI"');
@@ -253,7 +253,7 @@ describe('聚合讯阅读流', () => {
 
     const md = vault.files.get('归档/网页剪藏/特殊字符新闻.md')!;
     // 每个双引号标量行都保持合法 YAML 形状（内部引号均被转义，无裸换行断行）
-    for (const key of ['link', 'author', 'site', 'summary', 'date']) {
+    for (const key of ['url', 'author', 'site', 'summary', 'date']) {
       expect(md).toMatch(new RegExp(`^${key}: "(?:[^"\\\\]|\\\\.)*"$`, 'm'));
     }
     expect(md).toMatch(/^tags:\n {2}- "(?:[^"\\]|\\.)*"\n {2}- "(?:[^"\\]|\\.)*"$/m);

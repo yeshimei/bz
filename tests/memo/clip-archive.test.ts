@@ -83,7 +83,7 @@ function sseBody(content: string) {
   });
 }
 
-const CLIP_MD = '---\nlink: "https://example.com/article-1"\ncreated: "2025-06-01"\n---\n正文';
+const CLIP_MD = '---\nurl: "https://example.com/article-1"\ncreated: "2025-06-01"\n---\n正文';
 
 function seedMemo(vault: MockVault, url: string) {
   vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([

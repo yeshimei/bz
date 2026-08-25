@@ -4,7 +4,7 @@
  * 保存联动 auto-summary（方案 a）：notifyNewsSaved 登记 → 剪藏 modify 命中补全完整保存观察且登记移除
  * （再触发不再产）；2 分钟降级（注入短间隔）产出无摘要保存观察；剪藏事件观察短路；noteSource 关静默。
  * ticket 084b（R2 审查 A2）：剪藏无 title → auto-summary rename 改名 → 登记键失效——
- * 改名后降级按 link/baseName 定位新路径命中带摘要、modify 新路径反查登记补全、防重保留。
+ * 改名后降级按 url/baseName 定位新路径命中带摘要、modify 新路径反查登记补全、防重保留。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -142,22 +142,22 @@ describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
   });
 
   // ticket 084b（R2 审查 A2）：剪藏 frontmatter 无 title → auto-summary renameToTitle 必改名
-  // （登记键=原路径失效）。以下 4 测覆盖：改名降级 link 反查、改名 modify 补全反查、
-  // 无 link 剪藏 baseName 兜底降级、防重保留（降级无摘要同立即形态不产第二条）。
-  it('改名后降级：登记原路径 → 同 link 新路径出现（renameToTitle）→ 降级定位命中带摘要', async () => {
+  // （登记键=原路径失效）。以下 4 测覆盖：改名降级 url 反查、改名 modify 补全反查、
+  // 无 url 剪藏 baseName 兜底降级、防重保留（降级无摘要同立即形态不产第二条）。
+  it('改名后降级：登记原路径 → 同 url 新路径出现（renameToTitle）→ 降级定位命中带摘要', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     __setNewsSaveTimeoutForTests(60);
     const oldPath = '归档/网页剪藏/黑洞照片刷新认知.md';
     const newPath = '归档/网页剪藏/黑洞照片刷新认知 AI标题.md';
-    // saveToClip 落盘（剪藏模板形态：link 有、title 无）
-    vault.files.set(oldPath, '---\nlink: "https://www.guokr.com/article/black-hole"\n---\n\n正文');
+    // saveToClip 落盘（剪藏模板形态：url 有、title 无）
+    vault.files.set(oldPath, '---\nurl: "https://www.guokr.com/article/black-hole"\n---\n\n正文');
     emitDomainEvent('news', { kind: 'saved', evt: { title: '黑洞照片刷新认知', platform: '果壳', state: 'saved', durationMin: 5 }, clipPath: oldPath });
-    await new Promise((r) => setTimeout(r, 5)); // 只等异步 link 登记（微任务），60ms 定时器未到
+    await new Promise((r) => setTimeout(r, 5)); // 只等异步 url 登记（微任务），60ms 定时器未到
     expect(__getNewsPendingSavesForTests().size).toBe(1);
-    // auto-summary renameToTitle：原路径删除，新路径同名 link + summary/tags 写回（modify 事件未捕获场景）
+    // auto-summary renameToTitle：原路径删除，新路径同名 url + summary/tags 写回（modify 事件未捕获场景）
     vault.files.delete(oldPath);
-    vault.files.set(newPath, '---\nlink: "https://www.guokr.com/article/black-hole"\nsummary: "首张黑洞照片公布，视觉中国被质疑滥用版权。"\ntags:\n  - "科学"\n---\n\n正文');
+    vault.files.set(newPath, '---\nurl: "https://www.guokr.com/article/black-hole"\nsummary: "首张黑洞照片公布，视觉中国被质疑滥用版权。"\ntags:\n  - "科学"\n---\n\n正文');
     await new Promise((r) => setTimeout(r, 250)); // 超过降级等待（60ms）并等落流
     const stream = readStream();
     expect(stream[stream.length - 1].description).toBe('你保存了《黑洞照片刷新认知》（果壳·读了 5 分钟）：首张黑洞照片公布，视觉中国被质疑滥用版权。 #科学');
@@ -165,17 +165,17 @@ describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
     expect(__getNewsPendingSavesForTests().size).toBe(0);
   });
 
-  it('改名后 modify 补全：事件新路径 ≠ 登记键 → frontmatter link 反查登记 → 带摘要完整观察', async () => {
+  it('改名后 modify 补全：事件新路径 ≠ 登记键 → frontmatter url 反查登记 → 带摘要完整观察', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const oldPath = '归档/网页剪藏/黑洞照片刷新认知.md';
     const newPath = '归档/网页剪藏/黑洞照片刷新认知 AI标题.md';
-    vault.files.set(oldPath, '---\nlink: "https://www.guokr.com/article/black-hole"\n---\n\n正文');
+    vault.files.set(oldPath, '---\nurl: "https://www.guokr.com/article/black-hole"\n---\n\n正文');
     emitDomainEvent('news', { kind: 'saved', evt: { title: '黑洞照片刷新认知', platform: '果壳', state: 'saved', durationMin: 5 }, clipPath: oldPath });
     await settle();
     // auto-summary 改名 + 写回：原路径删除，新路径带 summary/tags，modify 事件携带新路径文件
     vault.files.delete(oldPath);
-    vault.files.set(newPath, '---\nlink: "https://www.guokr.com/article/black-hole"\nsummary: "首张黑洞照片公布。"\ntags:\n  - "科学"\n---\n\n正文');
+    vault.files.set(newPath, '---\nurl: "https://www.guokr.com/article/black-hole"\nsummary: "首张黑洞照片公布。"\ntags:\n  - "科学"\n---\n\n正文');
     vault.emit('modify', vault.file(newPath));
     await settle();
     const stream = readStream();
@@ -184,17 +184,17 @@ describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
     expect(__getNewsPendingSavesForTests().size).toBe(0);
   });
 
-  it('改名后降级（无 link 剪藏）：basename 反查子目录移动后新路径 → 命中带摘要', async () => {
+  it('改名后降级（无 url 剪藏）：basename 反查子目录移动后新路径 → 命中带摘要', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     __setNewsSaveTimeoutForTests(60);
     const oldPath = '归档/网页剪藏/黑洞照片刷新认知.md';
     const newPath = '归档/网页剪藏/科技/黑洞照片刷新认知.md'; // 同 basename 新路径（目录移动）
-    vault.files.set(oldPath, '---\nsummary: ""\n---\n\n正文'); // 无 link 剪藏 → 登记 baseName 兜底
+    vault.files.set(oldPath, '---\nsummary: ""\n---\n\n正文'); // 无 url 剪藏 → 登记 baseName 兜底
     emitDomainEvent('news', { kind: 'saved', evt: { title: '黑洞照片刷新认知', platform: '果壳', state: 'saved', durationMin: 5 }, clipPath: oldPath });
     await new Promise((r) => setTimeout(r, 5)); // 登记完成即可（60ms 定时器未到）
     vault.files.delete(oldPath);
-    vault.files.set(newPath, '---\nlink: "https://www.guokr.com/article/black-hole"\nsummary: "首张黑洞照片公布。"\ntags:\n  - "科学"\n---\n\n正文');
+    vault.files.set(newPath, '---\nurl: "https://www.guokr.com/article/black-hole"\nsummary: "首张黑洞照片公布。"\ntags:\n  - "科学"\n---\n\n正文');
     await new Promise((r) => setTimeout(r, 250));
     const stream = readStream();
     expect(stream[stream.length - 1].description).toBe('你保存了《黑洞照片刷新认知》（果壳·读了 5 分钟）：首张黑洞照片公布。 #科学');

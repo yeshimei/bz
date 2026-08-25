@@ -1,4 +1,14 @@
-## 2026-08-26 解散 AI Agent 域（ticket 102；worktree/dissolve-ai-agent）
+## 2026-08-25 剪藏 frontmatter 主字段 link→url（ADR-0050；用户拍板豁免兼容性冻结）
+
+**状态：全量 2569 绿（171 文件）+ tsc 0 + 构建部署完成；vault 存量 138 篇已批量迁移**
+
+- 换名范围四域：剪藏本解析（clipping/view.ts ArticleEntry.url）、聚合讯存剪写入模板（news/reader.ts saveToClip `url:`）、剪藏归档 URL 精确匹配（memo/clip-archive.ts 读 frontmatter url）、smartcat 待补全登记/rename 反查锚点（NewsPendingSave.url + parseClipFrontmatter 只认 `url:`）
+- **不做双读兼容**（用户拍板「不用做兼容」）：读取只认 url；auto-summary 零改动自然跟随（frontmatter 原样合并保留）
+- 存量迁移：`.scratch/clipping-link-to-url/migrate.mjs`（frontmatter 块内键名替换，BOM/CRLF/值/正文逐字节保留；夹具干跑验证后执行）——140 篇扫描、138 改写、2 跳过（无 link）、0 失败；行数基线比对零差异、`^link:` 清零；备份在 `.scratch/clipping-link-to-url/vault-backup/`
+- 文档：ADR-0050、CONTEXT.md「剪藏归档」词条措辞
+- ⚠️ 遗留人工项：**Obsidian Web Clipper 浏览器扩展模板属性 link→url 需手动改**——扩展配置在浏览器侧插件无法代改，未改前新剪落文件只有 link 字段，剪藏本不收录
+
+
 
 **状态：全量 2202 绿（148 文件）+ tsc 0；worktree/dissolve-ai-agent 已提交，待合并 master + 构建部署**
 

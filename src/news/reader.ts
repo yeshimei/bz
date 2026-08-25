@@ -360,7 +360,7 @@ export async function saveToClip() {
   const body = (a.body || '').replace(/^\s*---[\s\S]*?---\s*/m, '').replace(/^\s*```dataviewjs[\s\S]*?```\s*/m, '').trim();
 
   const md = `---
-link: "${yamlEscape(a.url || '')}"
+url: "${yamlEscape(a.url || '')}"
 author: "${yamlEscape(a.author || '')}"
 site: "${yamlEscape(a.platform || '')}"
 summary: "${yamlEscape(a.summary || '')}"
