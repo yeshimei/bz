@@ -15,7 +15,7 @@
 ## 架构
 
 - `src/main.ts`：命令裸注册表、设置页、懒加载、onunload（38 命令）
-- `src/core/`：共享层（不挂 window）——app/settings-provider/ai/json-store/esc-manager/confirm/utils/dom/changelog/notice（自绘 toast）/settings-modal
+- `src/core/`：共享层（不挂 window）——app/settings-provider/ai/json-store/domain-bus/obsidian-adapter/path-classify/esc-manager/confirm/utils/dom/changelog/notice（自绘 toast）/settings-modal
 - `src/<域>/`：index.ts + data + ui；`src/settings.ts`；`styles.css`（唯一样式收敛处）；`docs/adr/`；`CONTEXT.md`；`.scratch/<feature>/`
 - **依赖方向（ADR-0002）**：`core ← config/state ← parser ← store ← ui ← main`。store 无 DOM；UI 刷新靠回调订阅；禁止模块顶层互访，函数级引用环须函数体内延迟解析。
 
@@ -24,7 +24,7 @@
 1. **兼容性冻结**：数据格式（`CONFIG/STORAGE/*.json`、`我的/*`、frontmatter）、文案/CSS/公式、已知缺陷（多选计数 bug、主演计数取单次、flash refresh 不清理已删文件向量条目）一律不改。
 2. **命令注册单点**：id `bz-<域>-<动作>` 三段式；只在 main.ts COMMANDS 表注册一次，域内不重复 addCommand；卸载全量 removeCommand。id 是外部裸调用约定，改名需同步。
 3. **DOM 契约稳定**：外部依赖既有 id/类名，新增 UI 保持风格。
-4. **懒加载（ADR-0003）**：UI 域 `ensureXxx` 幂等初始化；事件常驻域（auto-summary/ai-agent/flash）按设置开关注册。
+4. **懒加载（ADR-0003）**：UI 域 `ensureXxx` 幂等初始化；事件常驻域（自动摘要 / memo·收藏本文件同步 / flash）按设置开关注册。
 5. **域间共享**：显式 import 或 core 层，不挂 window（`__MOVIE_FOLDER_PATH` 为遗留兼容，勿新增）。
 6. **架构决策**：设置页单页（域设置走 ⚙️ 弹窗）；通知用自绘 toast；AI 配置在 data.json，聚合讯 dataviewjs，闪念走 Ollama HTTP，B 站下载/海报抓取走外部 npm。
 7. **通知规范**：正文不带 emoji 前缀；新语义先查 `src/core/notice.ts` ICONS 表，确无匹配才新增；详见 CONTEXT.md「通知类型规范」。
@@ -57,7 +57,6 @@
 | quiz | quiz.json |
 | flash | ai_completion_meta.json + *.vec |
 | auto-summary | 剪藏 frontmatter |
-| ai-agent | ai-agent.json |
 | launcher | launcher.json |
 | pomodoro | pomodoro.json |
 | attach | —（搬当前笔记引用的 vault 附件） |

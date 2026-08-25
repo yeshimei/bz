@@ -38,3 +38,6 @@ export function unloadFavorites(): void {
   FavoritesApp.instance = null;
   initialized = false;
 }
+
+/** 文件同步入口（引用同步 + 同名自动关联，见 ./file-sync） */
+export { ensureFavoritesFileSync, unloadFavoritesFileSync } from './file-sync';
