@@ -4,6 +4,7 @@
  */
 import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
+import { onDomainEvent } from '../core/domain-bus';
 import { M, resetMovieState } from './state';
 import { rebuildItems } from './data';
 import { registerEscapeHandler, createOverlay, closeOverlay, renderList, openAddModal } from './ui';
@@ -50,13 +51,14 @@ function applyDefaultView(s: {
   M.statusFilter = ['全部', '想看', '在看', '已看'].includes(st as string) ? (st as string) : '全部';
 }
 
-/** vault 三事件自动刷新（防抖 300ms，仅 overlay 打开时刷新） */
+/** 域事件自动刷新（movie:file-created/deleted/modified，防抖 300ms，仅 overlay 打开时刷新） */
 function registerAutoRefresh(app: App): void {
   if (autoRefreshRegistered) return;
   autoRefreshRegistered = true;
 
   let timer: ReturnType<typeof setTimeout> | null = null;
   const schedule = (file: any) => {
+    // M.folderPath 前缀守卫保留：防御性双保险（总线语义路已按域目录分类，正常不会越界）
     if (file && !file.path.startsWith(M.folderPath + '/')) return;
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
@@ -66,9 +68,11 @@ function registerAutoRefresh(app: App): void {
     }, 300);
   };
 
-  app.vault.on('create', schedule);
-  app.vault.on('delete', schedule);
-  app.vault.on('modify', schedule);
+  // 三条换线：原生 vault create/delete/modify 订阅 → 域事件总线（obsidian-adapter 统一派发，仅 md）。
+  // 无需显式退订：插件卸载时 main.ts onunload 的 clearDomainEvents() 统一清空全部总线订阅。
+  onDomainEvent<{ path: string }>('movie:file-created', (evt) => schedule({ path: evt.path }));
+  onDomainEvent<{ path: string }>('movie:file-deleted', (evt) => schedule({ path: evt.path }));
+  onDomainEvent<{ path: string }>('movie:file-modified', (evt) => schedule({ path: evt.path }));
 }
 
 /** 打开影视管理（命令 movie-manager-open，toggle 语义） */

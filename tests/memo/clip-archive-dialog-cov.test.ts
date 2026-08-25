@@ -2,7 +2,7 @@
  * AI 剪藏批准弹窗覆盖补测：HTML 转义、遮罩/内部点击区分、批准/忽略回调、ESC 关闭。
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { showClipConfirmDialog } from '../../src/ai-agent/dialog';
+import { showClipConfirmDialog } from '../../src/memo/clip-archive-dialog';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 
 describe('showClipConfirmDialog 剪藏批准弹窗', () => {
