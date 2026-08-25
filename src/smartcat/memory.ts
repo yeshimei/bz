@@ -14,7 +14,7 @@
 import type { App } from 'obsidian';
 import { getSmartcatVecPath, touchPresence } from './data';
 import { callChatJson, isAIConfigured } from './api';
-import { getEmbedding, checkRemoteOllama } from '../flash/ollama';
+import { getEmbedding, checkRemoteOllama } from '../secondbrain/ollama';
 import { EMOTION_VAD, emotionToVAD, vadAffinity } from './cognitive';
 import { isSupersededInsight, resolveTheme, buildReflectCandidates, applySupersede } from './insight-version';
 import type { SmartCatData, MemoryStreamEntry, CloudScoringMode } from './types';
@@ -550,7 +550,7 @@ export class MemorySystem {
   private async probeSemantic(): Promise<boolean> {
     if (this.ollamaAvailable !== null) return this.ollamaAvailable;
     try {
-      const { buildConfig } = await import('../flash/config');
+      const { buildConfig } = await import('../secondbrain/config');
       this.ollamaAvailable = await checkRemoteOllama(buildConfig().OLLAMA_URL);
     } catch {
       this.ollamaAvailable = false;

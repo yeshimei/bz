@@ -1,23 +1,22 @@
 // @vitest-environment node
 /**
- * 闪念 Ollama HTTP 覆盖率补测：
+ * 第二大脑 Ollama HTTP 覆盖率补测（ticket 103：设置键随 secondBrain* 换代）：
  * 非 2xx 响应抛错、空向量/缺字段兜底、批量 embeddings 缺省、对话消息缺省回退、
  * 远程探活 ok/false/异常三分支、自定义 baseUrl/model 传参。
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getEmbedding, getEmbeddingsBatch, ollamaChat, checkRemoteOllama } from '../../src/flash/ollama';
+import { getEmbedding, getEmbeddingsBatch, ollamaChat, checkRemoteOllama } from '../../src/secondbrain/ollama';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 
 const BASE = 'http://127.0.0.1:11434';
 
 function flashSettings() {
   return {
-    OLLAMA_URL: BASE,
-    EMBEDDING_MODEL: 'bge-m3',
-    OLLAMA_CHAT_MODEL: 'qwen-test',
-    OLLAMA_REMOTE_URL: 'http://192.168.1.8:11434',
-    META_PATH: 'CONFIG/STORAGE/ai_completion_meta.json',
-    VEC_PATH: 'CONFIG/STORAGE/ai_completion_vectors.vec',
+    secondBrainOllamaUrl: BASE,
+    secondBrainEmbeddingModel: 'bge-m3',
+    secondBrainChatModel: 'qwen-test',
+    secondBrainRemoteOllamaUrl: 'http://192.168.1.8:11434',
+    storagePath: 'CONFIG/STORAGE',
   };
 }
 

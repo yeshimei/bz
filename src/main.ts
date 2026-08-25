@@ -15,7 +15,7 @@ import { clearDomainEvents } from './core/domain-bus';
 import { attachObsidianAdapter, detachObsidianAdapter } from './core/obsidian-adapter';
 import { setBzSettingsProvider, unloadBz, ensureBz } from './memo';
 
-import BzSettings, { DEFAULT_SETTINGS } from './settings';
+import BzSettings, { DEFAULT_SETTINGS, migrateSecondBrainSettings } from './settings';
 
 // 15 域（懒加载：首次命令/事件触发时 ensureXxx 幂等初始化）
 import { openBzPanel, createMemoItem } from './memo';
@@ -30,7 +30,7 @@ import { openMovieManager, addMovieItem, unloadMovie } from './movie';
 // 影视分析报告（独立域，ADR-0048）
 import { openMovieReport, unloadMovieReport } from './movie-report';
 import { openReviewPanel, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart, ensureReview, unloadReview } from './review';
-import { openFlashReference, openFlashChat } from './flash';
+import { openSecondBrainPanel, openSecondBrainReference, openSecondBrainChat } from './secondbrain';
 import { openPomodoro, unloadPomodoro, ensurePomodoro } from './pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // B站下载器启动命令（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
@@ -96,9 +96,10 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-review-hard', name: '复习：困难（Hard）', icon: 'trending-up', callback: () => reviewMarkRating(getApp(), 'hard') },
   { id: 'bz-review-good', name: '复习：一般（Good）', icon: 'check', callback: () => reviewMarkRating(getApp(), 'good') },
   { id: 'bz-review-easy', name: '复习：简单（Easy）', icon: 'sparkles', callback: () => reviewMarkRating(getApp(), 'easy') },
-  // 闪念
-  { id: 'bz-flash-open', name: '闪念', icon: 'zap', callback: () => openFlashReference(getApp()) },
-  { id: 'bz-flash-chat', name: '闪念对话', icon: 'message-circle', callback: () => openFlashChat(getApp()) },
+  // 第二大脑（ticket 103：原闪念正名接管，主面板为统一入口）
+  { id: 'bz-secondbrain-panel', name: '第二大脑面板', icon: 'brain', callback: () => openSecondBrainPanel(getApp()) },
+  { id: 'bz-secondbrain-open', name: '第二大脑', icon: 'zap', callback: () => openSecondBrainReference(getApp()) },
+  { id: 'bz-secondbrain-chat', name: '第二大脑对话', icon: 'message-circle', callback: () => openSecondBrainChat(getApp()) },
   // 番茄钟（ticket 26-32 新域）
   { id: 'bz-pomodoro-open', name: '番茄钟', icon: 'timer', callback: () => openPomodoro(getApp()) },
   // B站下载器（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
@@ -157,6 +158,8 @@ export default class BzPlugin extends Plugin {
       delete old.gestureSwipeDown;
       migrated = true;
     }
+    // ticket 103 迁移：闪念 16 键 → secondBrain* 更名平移（META_PATH/VEC_PATH 废弃清除）
+    if (migrateSecondBrainSettings(this.settings)) migrated = true;
     // P2：迁移完成立即落盘——storagePath/手势结果写回 data.json，迁移 warning 不随每次启动重播
     if (migrated) void this.saveSettings();
     setApp(this.app);
@@ -224,7 +227,7 @@ export default class BzPlugin extends Plugin {
         ensureMemoFileSync(this.app);
         ensureFavoritesFileSync(this.app);
       }
-      if (this.settings.flashEnabled) ensureFlashOnReady(this.app);
+      if (this.settings.secondBrainEnabled) ensureSecondBrainOnReady(this.app);
       // 复习计划：到期提醒开启时常驻（ticket 100——监听/染色/轮询统一启动；否则懒加载）；enableAutoNotify 缺省视为开
       if (this.settings.enableAutoNotify !== false) void ensureReview(this.app);
       // 番茄钟：启动即恢复（load+recover，正在倒计时则后台继续/按设置自动弹窗）
@@ -321,8 +324,9 @@ export default class BzPlugin extends Plugin {
       ['pwStoragePath', dirOf(this.settings.pwStoragePath)],
       ['favoritesStoragePath', dirOf(this.settings.favoritesStoragePath)],
       ['reviewStoragePath', dirOf(this.settings.reviewStoragePath)],
-      ['META_PATH', fileDir(this.settings.META_PATH, 'ai_completion_meta.json')],
-      ['VEC_PATH', fileDir(this.settings.VEC_PATH, 'ai_completion_vectors.vec')],
+      // ticket 103：META_PATH/VEC_PATH 已从接口删除；此处仅 ADR-0009 首次迁移窗口读旧 data.json 残值
+      ['META_PATH', fileDir(String((this.settings as any).META_PATH ?? ''), 'ai_completion_meta.json')],
+      ['VEC_PATH', fileDir(String((this.settings as any).VEC_PATH ?? ''), 'ai_completion_vectors.vec')],
     ];
     const vals = oldPaths.map(([, v]) => v || 'CONFIG/STORAGE');
     if (vals.every((v) => v === vals[0])) {
@@ -358,12 +362,12 @@ export default class BzPlugin extends Plugin {
   }
 }
 
-/** 闪念在布局就绪后初始化（按设置开关） */
-function ensureFlashOnReady(app: any) {
+/** 第二大脑在布局就绪后初始化（按设置开关；ticket 103 原闪念懒加载换线） */
+function ensureSecondBrainOnReady(app: any) {
   // 延迟到 onLayoutReady 之后的事件循环，避免 onload 时序问题
   setTimeout(() => {
-    // 动态引入避免循环依赖；闪念自身懒加载
-    import('./flash').then((m) => m.ensureFlash(app));
+    // 动态引入避免循环依赖；第二大脑自身懒加载
+    import('./secondbrain').then((m) => m.ensureSecondBrain(app));
   }, 0);
 }
 
@@ -436,7 +440,7 @@ export class BzSettingTab extends PluginSettingTab {
     this.textSetting(
       containerEl,
       '数据存储路径',
-      '所有 JSON 数据文件（备忘录/归物本/密码本/收藏本/复习计划/做题家/闪念）的统一存放目录',
+      '所有 JSON 数据文件（备忘录/归物本/密码本/收藏本/复习计划/做题家/第二大脑）的统一存放目录',
       s.storagePath,
       save,
       (v) => (s.storagePath = v)

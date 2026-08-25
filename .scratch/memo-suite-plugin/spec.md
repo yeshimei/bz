@@ -170,7 +170,9 @@ Feature: memo-suite-plugin
 46. 作为用户，我希望答题流程与原脚本一致：题目展示 → 提交答案 → 下一题 →（多选支持），以便沿用做题习惯。
 46b. 作为用户，我希望题型语义一致：单选题（四选一）/多选题（正确选项数量不限）；AI 出题难度三档（基础概念低难度/中等/高难度推理+多知识点交叉）；出题失败降级逐篇批量，以便与原脚本一致。
 
-### 闪念（Flash Thought）
+### 第二大脑（Second Brain）
+
+> ticket 103（ADR-0051）：原「闪念」正名接管——以下用户故事 41-51 由第二大脑承接；命名/命令 id/设置键/数据文件按 ADR-0051 换代（bz-secondbrain-*、secondBrain*、secondbrain_meta.json/vec），QuickAdd《闪念.js》为完整行为基准，差距 9/9 复刻并修复同源缺陷三处。
 
 41. 作为用户，我希望右侧窄窗（自动吸附缩起、悬停展开）与原脚本一致，以便快速记录闪念。
 42. 作为用户，我希望相关笔记随光标浮现（向量检索，Ollama bge-m3 嵌入），以便写作时发现关联。
@@ -301,7 +303,7 @@ otifyMemoAction（方法监听，一次动作一条）+ **每日到期扫描**�
 - **影视数据分析**：已并入 `bz-movie-report`（原 `bz-movie-report` 不再单独注册）
 - **复习计划**（9 个）：`bz-review-open`、`bz-review-start`、`bz-review-add`（添加当前笔记到复习）、`bz-review-remove`（移除当前笔记）、`bz-review-overdue`（跳转逾期）、`bz-review-rate`（评级对话框）、`bz-review-again`（忘了 Again）、`bz-review-hard`、`bz-review-good`、`bz-review-easy`
 - **做题家**：`bz-quiz-update`、`bz-quiz-open`
-- **闪念**：`bz-flash-open`（打开参考窗口）、`bz-flash-chat`（打开聊天窗口）
+- **第二大脑**：`bz-secondbrain-panel`（主面板·统一入口）、`bz-secondbrain-open`（参考侧边栏）、`bz-secondbrain-chat`（AI 对话）——ticket 103 换代，旧 bz-flash-open/chat 无真实外部调用者不留别名
 - **番茄钟**（ticket 26 新域）：`bz-pomodoro-open`（中文名「番茄钟」，icon timer）
 - **日记本**（已迁）：`bz-diary-write`、`bz-diary-open`
 - **B站下载器**：`bz-bili-open`
@@ -357,7 +359,7 @@ otifyMemoAction（方法监听，一次动作一条）+ **每日到期扫描**�
 - **影视**（6 项）：movieFolderPath、moviePageSize（海报抓取仅文字提示）、movieDefaultSort（默认排序 date-desc/…/name-desc）、movieDefaultTypeFilter（默认类型筛选，空=全部）、movieDefaultStatusFilter（默认状态筛选 全部/想看/在看/已看）、movieRatingDisplay（已看卡片评分 stars/number）
 - **复习计划（含做题家，ticket 100 重构后）**：enableAutoNotify（到期提醒，默认开——开启时插件启动即常驻轮询，有逾期笔记弹聚合通知）、reviewAutoAddNotice（新笔记自动加入提醒，默认开，3 秒窗口合并一条）、forceQuizForReview（用做题测难度，**做题家 4 项仅在其开启时显示**：enableMultipleChoice 允许多选题、questionsPerNote 每篇笔记出题数量、shuffleQuestions 打乱出题顺序、difficulty 出题难度）、reviewDailyLimit（每日复习上限，0=不限，逾期队列截断）、reviewIntervalScale（复习间隔缩放，默认 1、范围 0.1-5，FSRS 相位间隔乘系数，ADR-0046）、reviewWatchedFolders（监听文件夹 chip）、reviewTreeBadge（文件树标记，默认开）、reviewExcludedNotes（排除名单）；**autoCheckInterval（检查间隔）已于 ticket 100 删除**（死设置，data.json 残留忽略）。forceQuizForReview（用做题测难度）控制复习流程：开启 → 开始复习（bz-review-start/跳转逾期）自动批量出题做题，正确率自动定级；关闭 → 普通复习（跳转笔记逐篇评级）；开启时做题家未初始化（ai 为 null）先 ensureQuiz 注入，出题失败/无题目 → 降级普通复习并警告
 - **番茄钟（12 项）**：pomodoroPreset（12 档：11 预设+自定义）、pomodoroWorkMin/pomodoroShortBreakMin/pomodoroLongBreakMin（自定义时长，预设=自定义时动态显示）、pomodoroLongBreakInterval（N，默认 4）、pomodoroForceFocus（默认关）、pomodoroAutoCycle（默认关）、pomodoroAutoSkipBreak（默认关）、pomodoroSound（默认开）、pomodoroVolume（音量 0-100，默认 100 最大，设置弹窗 slider+试听）、pomodoroRestoreMode（启动恢复方式：background 后台继续 / popup 正在倒计时则自动弹窗；恢复继续弹「番茄钟继续：…还剩 mm:ss」通知）、pomodoroAutoPauseOnHide（后台自动暂停，默认开，ticket 62：窗口 hidden 时主番茄钟暂停、恢复自动继续；blur 不触发）。读书联动与目标选择已移除（ticket 63：pomodoroEpubAuto/pomodoroEpubMode 删除）
-- **闪念（17 项全量，含 AI 项）**：OLLAMA_URL、EMBEDDING_MODEL、META_PATH、VEC_PATH、TOP_K、CHAT_TOP_K、CHUNK_MIN_LENGTH、ALLOW_PATHS、CONCURRENCY、CONTEXT_LIMIT、DEBOUNCE_DELAY、CURSOR_POLL_INTERVAL、OLLAMA_CHAT_MODEL、DEEPSEEK_MODEL、DEFAULT_USE_DEEPSEEK、MAX_HISTORY、OLLAMA_REMOTE_URL
+- **第二大脑（ticket 103 更名迁移）**：secondBrainOllamaUrl、secondBrainEmbeddingModel、secondBrainTopK、secondBrainChatTopK、secondBrainChunkMinLength、secondBrainAllowPaths、secondBrainConcurrency（死配置保留）、secondBrainContextLimit、secondBrainDebounceDelay、secondBrainCursorPollInterval、secondBrainChatModel、secondBrainDeepseekModel、secondBrainDefaultUseDeepseek、secondBrainMaxHistory、secondBrainRemoteOllamaUrl + secondBrainEnabled（原 flashEnabled）+ secondBrainMobileDefaultFullscreen（新增）；旧 16 键 onload 平移，META_PATH/VEC_PATH 废弃清除
 
 **跨域：移动端主窗口默认全屏（ticket 68，ADR-0019）**：11 个有主窗口的域各 1 项布尔开关「移动端默认全屏」（键 `<域前缀>MobileDefaultFullscreen`，落 data.json），**仅移动端（Platform.isMobile）生效、设置项仅移动端显示**，桌面端行为与显示完全不动。语义：≤768px 时 **开=真全屏**（覆盖整个视口 100vw×100vh、去圆角、头部避让安全区、底部 env(safe-area-inset-bottom)，统一类 `.bz-win-mfs`）；**关=常规卡**（95%/90vh 圆角卡，统一 ≤768 规则），并解除既有写死的强制全屏（8 处 JS 内联 + 4 处 CSS 媒体规则，原 480/640/768 乱断点废止）。只决定每次打开的**初始形态**，窗口内无手动切换按钮（用户拍板，Q4-A）；多窗口域（影视主面板+影视分析+影视报告、书库主面板+读书笔记+阅读报告）一并对控制，筛选/批注等小弹窗不纳入。默认值=行为保持（老用户零感知）：**默认开 9 域**——日记本（diaryMobileDefaultFullscreen）、归物本（belongingsMobileDefaultFullscreen）、剪藏本（clippingMobileDefaultFullscreen）、密码本（passwordMobileDefaultFullscreen）、收藏本（favoritesMobileDefaultFullscreen）、书库（libraryMobileDefaultFullscreen）、影视（movieMobileDefaultFullscreen）、复习计划（reviewMobileDefaultFullscreen）、保险箱（encryptMobileDefaultFullscreen）；**默认关 2 域**——备忘录（memoMobileDefaultFullscreen）、番茄钟（pomodoroMobileDefaultFullscreen）。**做题家、入口页明确排除**（用户拍板）。归物本/收藏本 ⚙️ 弹窗由空弹窗变为含此 1 项。**2026-08 用户拍板修订：聚合讯跟随剪藏本键、阅读报告跟随书库键**——两域取消独立开关并移除窗口 ⚙️ 入口与 `newsMobileDefaultFullscreen`/`readingReportMobileDefaultFullscreen` 键（旧 data.json 残留值忽略）；影视报告随影视键。
 
@@ -436,7 +438,7 @@ otifyMemoAction（方法监听，一次动作一条）+ **每日到期扫描**�
 - **影视排序**：键 date（有 watchDate 的在前、无日期的排后）/ rating / name；条目含 watchDate 字段
 - **影视数据分析评分桶**（ratingBucketOf 6 档）：≥5.5 / 5~5.5 / 4~5 / 3~4 / 2~3 / <2；buildAnalysisData 聚合 {total, watched, watching, want, …}
 - **归物本排序弹窗**：自绘弹窗（Promise），手动检测 theme-dark 取色板（bg/text/border/accent），不依赖主题变量
-- **闪念**：命令 `bz-flash-open`（闪念：打开参考窗口）；ALLOW_PATHS 默认 ["卡片盒","主题盒","我的","归档","CODE"]；CHUNK_MIN_LENGTH 默认 50；TFIDF 中文停用词表（'的了是在我有和人这中大为上个国不以到说时要就出会也年对自其他里去子后也得着与把等'）+ 文档频率/平均长度（BM25 式）
+- **第二大脑**（ticket 103）：命令 `bz-secondbrain-panel/open/chat`；ALLOW_PATHS 默认 ["卡片盒","主题盒","我的","归档","CODE"]；CHUNK_MIN_LENGTH 默认 50；TFIDF 中文停用词表（'的了是在我有和人这中大为上个国不以到说时要就出会也年对自其他里去子后也得着与把等'）+ 文档频率/平均长度（BM25 式）；数据文件 secondbrain_meta.json(v8)+secondbrain_vectors.vec
 - **AI 提示词结构（移植基准）**：自动摘要（JSON 模板按缺失字段裁剪，只含 title/summary/tags 定义；标题 15-30 字禁标点/摘要 150-250 字禁"本文"等前缀/3-6 个中文标签≤5 字/正文截断 6000；不含 author）；AIAgent 匹配（→{match, itemId}，ai.json + max_tokens 200 + response_format）；收藏本（→{title, description}，简介≤50 字，ai.json；**GitHub 链接分支**：附 GitHub API 仓库名/简介（8s 超时 + 重试 1 次，失败时 fetched=false），标题=仓库名（用户已填则保留）、简介=仓库简介**忠实翻译成中文**（不扩写/不总结/不凑字数，已中文则原样保留；**获取失败或无简介时简介必须返回空字符串，严禁 AI 编造**，且弹 warning 提示「简介获取失败，简介留空不编造」、成功弹 info「已获取 GitHub 仓库信息」）、标签必须含 GitHub）；做题家（单选四选一/多选不限/难度三档提示词）；备忘录 AI 推荐场景（→{scene, priority}，priority 仅"重要"/"次要"两档，ai.chat）
 
 ### 样式规模与边界行为（第 5 轮，源码提取）
@@ -522,3 +524,7 @@ otifyMemoAction（方法监听，一次动作一条）+ **每日到期扫描**�
 ### AI Agent 解散归位（ticket 102，ADR-0048）
 
 ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按数据属主归位并总线化：① **引用同步拆回属主**——`src/memo/file-sync.ts` / `src/favorites/file-sync.ts` 各持 sync 纯函数（syncRename/syncDelete/syncAutoLink）+ JSON 读写 + 串行队列 + DEBOUNCE_DELAY 合并去抖的本地私有副本（语义逐行等价、勿跨域 import），订 `'vault:md-*'` 通用兜底通道，生效范围仍按 `aiAgentWatchedFolders` 过滤；② **剪藏 AI 匹配归档归 memo**——`src/memo/clip-archive.ts`（+clip-archive-dialog 批准弹窗逐字移植）订 `'clipping:file-created'` 语义通道：URL 精确匹配优先，未命中且 enableAIClipMatch 开启才 AI 匹配并弹窗征求批准，确认后写入备忘录剪藏待办（linkedNote + 完成态）；③ **装配点收敛**——main.ts 改调 ensureMemoFileSync/ensureFavoritesFileSync 一对入口，仍由 aiAgentEnabled 单一门控（ADR-0003 事件常驻例外延续，宿主换 memo/favorites）。**行为冻结**：监听文件夹门/合并去抖/串行队列/URL 精确优先+AI 弹窗批准权限模型/enableAIClipMatch 开关语义零变化；**唯一文案例外**=favorites 失败通知改「收藏本同步失败，数据可能不一致」（dedupeKey 'favorites-file-sync'）；设置四键（aiAgentEnabled/enableAIClipMatch/aiAgentWatchedFolders/aiAgentModel）冻结保留不暴露。顺带收编最后两处 md 裸监听：movie 索引订 `'movie:file-*'`、剪藏视图订 `'clipping:file-modified'`。文件引用同步家族三员=memo.json/favorites.json/review.json（review/watch.ts onVaultRename 一期已订同一通用通道，无需改动）。遗留边界：belongings.json/weave-data.json 等 json 数据文件通道与 workspace file-open（favorites 同名自动关联仍原生订阅）一期不覆盖。
+
+### 第二大脑正名接管（ticket 103，ADR-0051）
+
+以 QuickAdd《闪念.js》（2311 行）为完整基准完成实现并正名「第二大脑」：src/flash 整体更名 src/secondbrain 完全接管（issue 18 关闭 superseded）；命令换代 bz-secondbrain-panel/open/chat（主面板为统一入口，✕ 仅移动端全屏显示）；17 设置键更名 secondBrain* 并 onload 迁移（META_PATH/VEC_PATH 废弃清除）；meta v7→v8 首载整库重嵌 + 数据文件更名 secondbrain_meta.json / secondbrain_vectors.vec；行为对齐 QA 八处（分块保段落边界、cos=1−d²/2、句界集补中文分号/省略号、TF-IDF chunk 粒度且索引复用、文本检索返回命中段+QA 加权评分、VP 树 mu/minD/maxD 包络剪枝+构建缓存、parallelMap 自适应并发、移动端提示词「【参考】」）；保留 bz 四改进（Ollama 30s 超时、MobileBuffer 写入、真 ⚙️ 域设置弹窗、jumpToChunk offsetToPos）；修 QA/bz 同源缺陷三处（refresh 仅删除不落盘、删除后向量段偏移错位、分块大段路径 buffer 不清致内容重复）；新增主面板统一弹窗（统计卡片+来源分布+近12周趋势自绘迷你图+最近向量化 Top10+AI 一键概括缓存 secondbrain_panel.json，打开即自动增量刷新）；全部 UI 表面 bz-sb-* 类名收敛根 styles.css，废除 sh-* 运行时 style 注入；笔记类型词汇 'flash'（path-classify/smartcat source/credibility）冻结不动。

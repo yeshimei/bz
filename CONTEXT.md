@@ -30,7 +30,7 @@ _Avoid_: 类型、分类
 
 ### 待迁移域
 
-**备忘录 (Memo/Todo)**: 待办事项管理，数据 `CONFIG/STORAGE/memo.json`，场景分类（剪藏/工作/学习/生活/代码/公开课），Todo 弹窗（#todo-popup）。被闪念引用；引用同步与剪藏归档已并入本域（ADR-0048）。
+**备忘录 (Memo/Todo)**: 待办事项管理，数据 `CONFIG/STORAGE/memo.json`，场景分类（剪藏/工作/学习/生活/代码/公开课），Todo 弹窗（#todo-popup）。被第二大脑引用；引用同步与剪藏归档已并入本域（ADR-0048）。
 _Avoid_: 待办列表、任务
 
 **归物本 (Belongings)**: 物品登记管理，数据目录 `CONFIG/STORAGE`（可配置）。
@@ -117,7 +117,10 @@ _Avoid_: 预期难度、期望评级
 **挂起记录 (Parked Record)**: 复习条目文件在 vault 中找不到（删除后保留、改名/移动后未更新路径）的保留态——列表以删除线展示，不计逾期、不进复习队列，文件恢复（同路径重建/路径更新）即复活；抽屉可手动移出清理。
 _Avoid_: 幽灵条目、孤儿记录
 
-**闪念 (Flash Thought)**: 右侧窄窗 · 自动吸附缩起 · 悬停展开 · 向量检索增强（Ollama bge-m3）· AI 对话（Ollama qwen2.5 / DeepSeek）。常驻监听光标移动。
+**第二大脑 (Second Brain)**: 笔记向量库的管理与检索功能（ticket 103 正名，前名「闪念」——QuickAdd《闪念.js》完整原型）：主面板统一入口（统计总览/来源分布/趋势/最近向量化/AI 一键概括）· 右侧窄窗（吸附缩起/悬停展开/参考卡拖出浮卡）· 向量检索增强（Ollama bge-m3，meta v8+secondbrain_vectors.vec）· AI 对话（Ollama qwen2.5 / DeepSeek 经 core/ai）。常驻监听光标移动与笔记变更。
+_Avoid_: 闪念（旧功能名，仅存于「闪念笔记」文档类型语义）、AI 补全（ai_completion 时代旧称）
+
+**闪念笔记 (Flash Note)**: 卡片盒目录下的快速笔记**文档类型**（path-classify 分类 `'flash'`；smartcat 观察来源标签与 credibility 0.9 档位沿用此词汇）。注意与「第二大脑」功能相区分：前者是笔记类型，后者是管理/检索它们的功能模块。
 
 **入口页 (Launcher)**: 全局唯一的命令入口弹窗，网格化展示命令磁贴；单击磁贴执行对应命令并关闭入口页。范围不限 bz- 命令，其他插件命令亦可上墙。
 _Avoid_: 主页、启动台、dashboard、控制台
@@ -314,7 +317,7 @@ _Avoid_: 首页、仪表盘
 **域设置弹窗 (Domain Settings Modal)**: 各功能主面板右上角 ⚙️ 打开的该功能专属设置弹窗，承载该域的行为设置（归物本/收藏本为空弹窗）。与全局设置页互补，设置就近。
 _Avoid_: 域设置 tab、功能设置页
 
-**共享数据路径 (Shared Storage Path)**: `storagePath` 设置项——所有 JSON 数据文件（memo/belongings/passwords/favorites/review/quiz/闪念 meta/vec）的统一目录，默认 `CONFIG/STORAGE`。旧各域路径字段（todoFilePath、belongingsDataFolder、pwStoragePath、favoritesStoragePath、reviewStoragePath、META_PATH、VEC_PATH）废弃，仅兼容保留不暴露。
+**共享数据路径 (Shared Storage Path)**: `storagePath` 设置项——所有数据文件（memo/belongings/passwords/favorites/review/quiz/第二大脑 secondbrain_meta.json+vec）的统一目录，默认 `CONFIG/STORAGE`。旧各域路径字段（todoFilePath、belongingsDataFolder、pwStoragePath、favoritesStoragePath、reviewStoragePath）废弃仅兼容保留；META_PATH/VEC_PATH 已随 ticket 103 彻底删除（不再兼容保留），闪念 16 设置键更名 secondBrain* 由 onload 迁移。
 _Avoid_: 各脚本路径、存储路径们
 
 **筛选弹窗 (Filter Modal)**: 🔀 图标打开的筛选/排序弹窗（影视「筛选与排序」、书库「视图与筛选」），与 ⚙️ 域设置弹窗严格区分——🔀 只做筛选，⚙️ 只做设置。

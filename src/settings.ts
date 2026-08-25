@@ -173,41 +173,37 @@ export default interface BzSettings {
   /** 移动端独立：打开入口页手势（未设置 → 继承桌面端） */
   launcherGestureMobile?: string;
 
-  // ===== 💭 闪念（17 项，全量迁移）=====
+  // ===== 🧠 第二大脑（secondbrain 域；原闪念 17 键 ticket 103 全量更名，onload 迁移旧值）=====
   /** Ollama URL（本地） */
-  OLLAMA_URL: string;
+  secondBrainOllamaUrl: string;
   /** Embedding 模型 */
-  EMBEDDING_MODEL: string;
-  /** 元数据路径（meta.json）——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
-  META_PATH: string;
-  /** 向量文件路径（vectors.vec）——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
-  VEC_PATH: string;
+  secondBrainEmbeddingModel: string;
   /** 参考结果数 */
-  TOP_K: string;
+  secondBrainTopK: string;
   /** AI 检索结果数 */
-  CHAT_TOP_K: string;
+  secondBrainChatTopK: string;
   /** 段落最小长度 */
-  CHUNK_MIN_LENGTH: string;
+  secondBrainChunkMinLength: string;
   /** 允许的文件夹（逗号分隔） */
-  ALLOW_PATHS: string;
-  /** Embedding 请求并发数 */
-  CONCURRENCY: string;
+  secondBrainAllowPaths: string;
+  /** Embedding 请求并发数（QA 遗留死配置：定义后从未接线，忠实保留不删） */
+  secondBrainConcurrency: string;
   /** 上下文限制 */
-  CONTEXT_LIMIT: string;
+  secondBrainContextLimit: string;
   /** 防抖延迟（ms） */
-  DEBOUNCE_DELAY: string;
+  secondBrainDebounceDelay: string;
   /** 光标轮询间隔（ms） */
-  CURSOR_POLL_INTERVAL: string;
+  secondBrainCursorPollInterval: string;
   /** Ollama 对话模型 */
-  OLLAMA_CHAT_MODEL: string;
+  secondBrainChatModel: string;
   /** DeepSeek 模型 */
-  DEEPSEEK_MODEL: string;
+  secondBrainDeepseekModel: string;
   /** 默认使用 DeepSeek（true/false） */
-  DEFAULT_USE_DEEPSEEK: string;
+  secondBrainDefaultUseDeepseek: string;
   /** 最大历史记录 */
-  MAX_HISTORY: string;
-  /** 远程 Ollama URL */
-  OLLAMA_REMOTE_URL: string;
+  secondBrainMaxHistory: string;
+  /** 远程 Ollama URL（移动端探活/降级链） */
+  secondBrainRemoteOllamaUrl: string;
 
   // ===== 常驻监听开关（懒加载架构，ADR-0003）=====
   // AI Agent 4 项（ADR-0009）：设置不暴露 UI，运行时读字段（默认值兜底，尊重旧 data.json 值）
@@ -219,8 +215,8 @@ export default interface BzSettings {
   aiAgentWatchedFolders: string;
   /** 🧠 AI Agent 剪藏匹配模型 */
   aiAgentModel: string;
-  /** 闪念：常驻监听光标/文件 */
-  flashEnabled: boolean;
+  /** 第二大脑：常驻监听光标/文件（原 flashEnabled，ticket 103 更名迁移） */
+  secondBrainEnabled: boolean;
 
   // ===== 🍅 番茄钟（9 项，ticket 31）=====
   /** 预设方案 id（PRESETS 12 档：11 科学预设 + custom 自定义） */
@@ -298,6 +294,10 @@ export default interface BzSettings {
    * 原独立键 smartcatDashboardMobileDefaultFullscreen（ticket 071）删除，旧值残留忽略。
    */
   smartcatMobileDefaultFullscreen: boolean;
+
+  // ===== 🧠 第二大脑 =====
+  /** 第二大脑主面板：移动端默认全屏（默认开——总览信息密度高；ticket 103） */
+  secondBrainMobileDefaultFullscreen: boolean;
 }
 
 export const DEFAULT_SETTINGS: BzSettings = {
@@ -398,31 +398,29 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 手势触发（默认关闭；单选一个手势打开命令入口页）
   launcherGesture: 'off',
 
-  // 闪念
-  OLLAMA_URL: 'http://localhost:11434',
-  EMBEDDING_MODEL: 'bge-m3',
-  META_PATH: 'CONFIG/STORAGE/ai_completion_meta.json',
-  VEC_PATH: 'CONFIG/STORAGE/ai_completion_vectors.vec',
-  TOP_K: '20',
-  CHAT_TOP_K: '20',
-  CHUNK_MIN_LENGTH: '50',
-  ALLOW_PATHS: '卡片盒,主题盒,我的,归档,CODE',
-  CONCURRENCY: '15',
-  CONTEXT_LIMIT: '600',
-  DEBOUNCE_DELAY: '300',
-  CURSOR_POLL_INTERVAL: '500',
-  OLLAMA_CHAT_MODEL: 'qwen2.5:14b-instruct',
-  DEEPSEEK_MODEL: 'deepseek-v4-flash',
-  DEFAULT_USE_DEEPSEEK: 'false',
-  MAX_HISTORY: '10',
-  OLLAMA_REMOTE_URL: 'http://192.168.1.8:11434',
+  // 第二大脑（ticket 103：原闪念键更名，值语义与存储类型不变；META_PATH/VEC_PATH 废弃清除）
+  secondBrainOllamaUrl: 'http://localhost:11434',
+  secondBrainEmbeddingModel: 'bge-m3',
+  secondBrainTopK: '20',
+  secondBrainChatTopK: '20',
+  secondBrainChunkMinLength: '50',
+  secondBrainAllowPaths: '卡片盒,主题盒,我的,归档,CODE',
+  secondBrainConcurrency: '15',
+  secondBrainContextLimit: '600',
+  secondBrainDebounceDelay: '300',
+  secondBrainCursorPollInterval: '500',
+  secondBrainChatModel: 'qwen2.5:14b-instruct',
+  secondBrainDeepseekModel: 'deepseek-v4-flash',
+  secondBrainDefaultUseDeepseek: 'false',
+  secondBrainMaxHistory: '10',
+  secondBrainRemoteOllamaUrl: 'http://192.168.1.8:11434',
 
   // 常驻监听
   aiAgentEnabled: true,
   enableAIClipMatch: true,
   aiAgentWatchedFolders: '卡片盒,归档/网页剪藏',
   aiAgentModel: 'deepseek-v4-flash',
-  flashEnabled: true,
+  secondBrainEnabled: true,
 
   // 番茄钟（9 项，ticket 31）
   pomodoroPreset: 'classic',
@@ -459,8 +457,53 @@ export const DEFAULT_SETTINGS: BzSettings = {
   reviewMobileDefaultFullscreen: true,
   pomodoroMobileDefaultFullscreen: false,
   encryptMobileDefaultFullscreen: true,
+  secondBrainMobileDefaultFullscreen: true,
 
   // 小橘陪伴猫（smartcat 域；移动端默认全屏键聊天/设置/数据面板共用，2026-08-23 合并一套）
   smartcatEnabled: true,
   smartcatMobileDefaultFullscreen: false,
 };
+
+/** 闪念旧键 → 第二大脑新键映射（ticket 103；META_PATH/VEC_PATH 废弃清除无继任者） */
+export const SECOND_BRAIN_RENAMED_KEYS: ReadonlyArray<readonly [string, string]> = [
+  ['OLLAMA_URL', 'secondBrainOllamaUrl'],
+  ['EMBEDDING_MODEL', 'secondBrainEmbeddingModel'],
+  ['TOP_K', 'secondBrainTopK'],
+  ['CHAT_TOP_K', 'secondBrainChatTopK'],
+  ['CHUNK_MIN_LENGTH', 'secondBrainChunkMinLength'],
+  ['ALLOW_PATHS', 'secondBrainAllowPaths'],
+  ['CONCURRENCY', 'secondBrainConcurrency'],
+  ['CONTEXT_LIMIT', 'secondBrainContextLimit'],
+  ['DEBOUNCE_DELAY', 'secondBrainDebounceDelay'],
+  ['CURSOR_POLL_INTERVAL', 'secondBrainCursorPollInterval'],
+  ['OLLAMA_CHAT_MODEL', 'secondBrainChatModel'],
+  ['DEEPSEEK_MODEL', 'secondBrainDeepseekModel'],
+  ['DEFAULT_USE_DEEPSEEK', 'secondBrainDefaultUseDeepseek'],
+  ['MAX_HISTORY', 'secondBrainMaxHistory'],
+  ['OLLAMA_REMOTE_URL', 'secondBrainRemoteOllamaUrl'],
+  ['flashEnabled', 'secondBrainEnabled'],
+];
+
+/**
+ * ticket 103 设置迁移：闪念 16 键更名平移（旧有值且新缺 → 复制；一律删旧键），
+ * 废弃 META_PATH/VEC_PATH 直接清除（ADR-0009 起 storagePath 接管，不再兼容保留）。
+ * 纯函数可测；main.onload 调用，返回是否发生迁移以决定落盘。
+ */
+export function migrateSecondBrainSettings(s: BzSettings): boolean {
+  const anyS = s as unknown as Record<string, unknown>;
+  let migrated = false;
+  for (const [from, to] of SECOND_BRAIN_RENAMED_KEYS) {
+    if (anyS[from] !== undefined) {
+      if (anyS[to] === undefined) anyS[to] = anyS[from];
+      delete anyS[from];
+      migrated = true;
+    }
+  }
+  for (const dead of ['META_PATH', 'VEC_PATH']) {
+    if (anyS[dead] !== undefined) {
+      delete anyS[dead];
+      migrated = true;
+    }
+  }
+  return migrated;
+}

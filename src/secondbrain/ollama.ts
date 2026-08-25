@@ -1,11 +1,11 @@
 /**
- * 闪念 Ollama HTTP（ticket 18，源码 L100-151 逐字）
+ * 第二大脑 Ollama HTTP（ticket 103；对齐 QA 闪念.js L100-151）
  */
 import { buildConfig } from './config';
 
 export const EMBED_BATCH_SIZE = 64;
 
-/** Ollama HTTP 统一超时（P1-10）：Ollama 未启动/挂起时请求将永久 pending，卡死闪念链路 */
+/** Ollama HTTP 统一超时（P1-10）：Ollama 未启动/挂起时请求将永久 pending，卡死检索链路 */
 export const OLLAMA_TIMEOUT_MS = 30000;
 
 async function httpFetch(url: string, opts: any): Promise<Response> {

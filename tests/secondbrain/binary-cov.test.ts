@@ -5,7 +5,7 @@
  * （MobileBuffer 实例 / 裸 Uint8Array）与跨段拼接正确性。
  */
 import { describe, it, expect } from 'vitest';
-import { MobileBuffer } from '../../src/flash/binary';
+import { MobileBuffer } from '../../src/secondbrain/binary';
 
 describe('MobileBuffer', () => {
   it('alloc：指定长度全零缓冲，writeUInt32LE 按小端写入', () => {

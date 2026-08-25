@@ -1,3 +1,28 @@
+## 2026-08-25 第二大脑完成（ticket 103 取代 18：闪念正名接管 + QuickAdd 完整复刻，ADR-0051）
+
+**状态：全量 2595 测试通过（172 文件）+ tsc 0 错误 + 构建部署完成；提交 worktree/second-brain**
+
+- ✅ **正名接管**：`src/flash` → `src/secondbrain` 整体更名完全接管；命令换代 `bz-secondbrain-panel/open/chat`（主面板统一入口）；`'flash'` 笔记类型词汇（path-classify/smartcat source/credibility/域事件）冻结不动
+- ✅ **行为对齐 QA 八处**：分块保段落边界、cos=`max(0,1−d²/2)`、句界集补中文分号/省略号+整行空白回退上一行尾、TF-IDF chunk 粒度且索引复用、文本检索返回命中段+QA 加权评分、VP 树 mu/minD/maxD 包络剪枝+构建缓存（另加向量数组身份失效校验）、parallelMap 自适应并发（起始 3）、移动端提示词「【参考】」；保留 bz 四改进（Ollama 30s 超时/MobileBuffer 写入/真⚙️弹窗/jumpToChunk offsetToPos）
+- ✅ **修缺陷四处**：refresh 仅删除不落盘（提前 return 跳过 save；白名单清空同径）；旧向量段偏移按「删除前」键序计算（原实现非末尾删除会错位）；分块大段路径 buffer 不清致内容重复（QA 同源）；批量嵌入失败→逐条回退成功路径未回填 fileChunksMap 致合并越界 RangeError
+- ✅ **设置与数据换代**：16 键更名 `secondBrain*` onload 迁移删旧（META_PATH/VEC_PATH 清除）；新增 `secondBrainMobileDefaultFullscreen`（默认 true，主面板移动端全屏）；meta v7→v8 首载一次性整库重嵌（约 19688 块静默后台跑）+ 数据文件更名 `secondbrain_meta.json`/`secondbrain_vectors.vec`
+- ✅ **QuickAdd 差距 9/9 复刻**：入口接线+启动自动化（ensureSecondBrain 幂等 + vault modify 经 domain-bus 5s 防抖静默刷新）、DeepSeek 走 core/ai createAI（弃 window.__utils）、参考卡长按拖出浮卡状态机（250ms 浮起/15px 拖出/双击归位回原位）、悬停预览智能左右定位、过滤当前文件、卡片 markdown 渲染、移动端全套交互（双 tab/拖拽吸附 45·75vh/<18vh mini 胶囊/selectionchange/光标轮询/长按震动跳转）、VP 缓存、自适应并发
+- ✅ **新增主面板统一弹窗**：统计卡片（块数/笔记数/维度/存储占用/上次索引）+来源分布横条+近 12 周趋势自绘迷你图+最近向量化 Top10 点击跳转+AI 一键概括（缓存 secondbrain_panel.json 可重新生成/清除）；打开即自动增量刷新；头部 📚💬→⚙️→✕ 仅移动端全屏显示
+- ✅ **样式统一**：全部表面 bz-sb-* 类名收敛根 styles.css（+547 行），废除 sh-* 运行时 style 注入与 globalThis 挂载；ESC 一律走 escManager 层级
+- ✅ **测试**：tests/secondbrain 重写+新建 10 文件 96 例全绿（含 A/B/C 删中间文件合并不错位回归、cos 公式反转断言、v8 迁移、设置迁移 5 例、浮卡/窄窗 jsdom 冒烟）；smoke 断言三条新命令并种旧 flashEnabled 验证迁移链路
+- 📄 文档：ADR-0051、CONTEXT.md「第二大脑/闪念笔记」双词条、AGENTS.md 四处、README 六处、spec.md 五处修订+Further Notes；issue 18 关闭 superseded、issue 103 done
+
+## 2026-08-25 第二大脑开工（ticket 103 取代 18：闪念正名接管 + QuickAdd 完整复刻）
+
+**状态：设计共识闭环（grilling 设计树走完，用户逐项拍板），worktree/second-brain 开工**
+
+- 📋 **基准裁定**：QuickAdd `CONFIG/SCRIPTS/Quickadd/闪念.js`（2311 行单文件）为完整原型；`src/flash` 为当年移植的未接线半成品（index 占位、四 UI 模块 WIP、两命令只弹「迁移中」，数据/纯函数层可用并被 smartcat 复用）。本票完成实现并正名「第二大脑」，issue 18 关闭 superseded
+- 📋 **命名三层拆分**：功能=第二大脑；模块 `src/secondbrain/`、命令 `bz-secondbrain-open/chat/panel`、设置键 `secondBrain*`；笔记类型词汇 `'flash'`（path-classify 卡片盒分类/smartcat source/credibility 0.9/`flash:*` 域事件）冻结不动——「闪念笔记」是文档类型，「第二大脑」是功能模块
+- 📋 **行为对齐 QA 八处**：分块保段落边界、cos=`1−d²/2`（bz 版失真正交≈0.29）、句界集补中文分号/省略号+空行回退上一行尾、TF-IDF 以 chunk 为文档单位且索引复用、文本检索返回命中段+QA 加权评分、VP 树 minD/maxD 包络剪枝+构建缓存、parallelMap 自适应并发、移动端提示词「【参考】」；**保留 bz 四改进**（Ollama 30s 超时/MobileBuffer 写入/真⚙️弹窗/jumpToChunk 修复）；**修 refresh 仅删除不落盘真病灶**（无 mtime 变化提前 return 跳过 save）
+- 📋 **兼容破例三项（用户拍板，将记 ADR）**：命令 id 换代不留别名（旧 id 从无真实外部调用者）；17 设置键全量更名 `secondBrain*` + onload 迁移删旧键（废弃 META_PATH/VEC_PATH 清除）；meta v7→v8 首载一次性整库重嵌（约 19688 块，静默后台+进度通知）+ 数据文件更名 `secondbrain_meta.json`/`secondbrain_vectors.vec`
+- 📋 **新增面**：主面板统一弹窗（统计卡片+来源分布+近 12 周趋势自绘迷你图+最近 Top10+AI 一键概括缓存 `secondbrain_panel.json`；打开即自动增量刷新；头部 📚💬→⚙️→✕ 仅移动全屏）；⚙️ 三分组+移动端全屏行+清概括缓存行；全部 UI 表面统一 BZ 样式（`bz-secondbrain-*` 收敛根 styles.css，废除 sh-* 运行时 style 注入）
+- ⏳ 实施中
+
 ## 2026-08-25 剪藏 frontmatter 主字段 link→url（ADR-0050；用户拍板豁免兼容性冻结）
 
 **状态：全量 2569 绿（171 文件）+ tsc 0 + 构建部署完成；vault 存量 138 篇已批量迁移**

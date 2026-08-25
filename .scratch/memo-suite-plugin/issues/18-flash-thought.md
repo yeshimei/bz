@@ -4,7 +4,7 @@
 
 **Blocked by:** 01, 02, 03
 
-**Status:** ready-for-agent
+**Status:** superseded → #103（第二大脑：按 QuickAdd 完整基准正名接管实现，2026-08-25。原清单由 103 验收清单吸收取代）
 
 - [ ] 右侧窄窗：FloatWindow（吸附缩起/悬停展开 hoverExpandTimer/关闭）+ ReferencePanel（参考面板）+ ChatPanel（聊天：发送/··· 菜单）+ MobilePanel（移动端）
 - [ ] 检索：向量（Ollama bge-m3，meta.json + vectors.vec 持久化）+ TF-IDF（停用词表、文档频率/平均长度）+ 移动端文本匹配降级；TOP_K/CHAT_TOP_K

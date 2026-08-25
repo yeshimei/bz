@@ -4,7 +4,7 @@
  * 正常响应不受影响。
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { getEmbedding, ollamaChat, checkRemoteOllama, OLLAMA_TIMEOUT_MS } from '../../src/flash/ollama';
+import { getEmbedding, ollamaChat, checkRemoteOllama, OLLAMA_TIMEOUT_MS } from '../../src/secondbrain/ollama';
 
 const BASE = 'http://127.0.0.1:65535';
 

@@ -1,5 +1,5 @@
 /**
- * 闪念 UI 工具（ticket 18，源码 L798-925 语义移植）
+ * 第二大脑 UI 工具（ticket 103；对齐 QA 闪念.js L798-925）
  */
 import type { App } from 'obsidian';
 import { MarkdownRenderer, Component } from 'obsidian';
