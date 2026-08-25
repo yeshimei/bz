@@ -161,9 +161,9 @@ describe('动作观察入口（方法监听）', () => {
 });
 
 describe('parseClipFrontmatter 解析', () => {
-  it('list 标签/半角冒号 summary/带引号 link', () => {
-    const out = parseClipFrontmatter('---\nlink: "https://a.com"\nsummary: "一段摘要"\ntags:\n  - 科技\n  - AI\n---\n正文');
-    expect(out.link).toBe('https://a.com');
+  it('list 标签/半角冒号 summary/带引号 url', () => {
+    const out = parseClipFrontmatter('---\nurl: "https://a.com"\nsummary: "一段摘要"\ntags:\n  - 科技\n  - AI\n---\n正文');
+    expect(out.url).toBe('https://a.com');
     expect(out.summary).toBe('一段摘要');
     expect(out.tags).toEqual(['科技', 'AI']);
   });
@@ -176,7 +176,7 @@ describe('parseClipFrontmatter 解析', () => {
   it('inline 数组标签；非法 inline 回退 list；无 frontmatter 全空', () => {
     expect(parseClipFrontmatter('---\ntags: ["a","b"]\n---\nx').tags).toEqual(['a', 'b']);
     expect(parseClipFrontmatter('---\ntags: [bad\n---\nx').tags).toEqual([]);
-    expect(parseClipFrontmatter('没有 frontmatter')).toEqual({ summary: '', tags: [], link: '' });
+    expect(parseClipFrontmatter('没有 frontmatter')).toEqual({ summary: '', tags: [], url: '' });
   });
 
   it('tags 列表块被后续键终止', () => {
@@ -412,13 +412,13 @@ describe('聚合讯待补全登记（ticket 076/084b）', () => {
   it('剪藏 modify 命中登记 → 补全完整保存观察并移除登记', async () => {
     const { app, vault } = makeApp();
     const clip1 = '归档/网页剪藏/文章一.md';
-    vault.files.set(clip1, '---\nlink: "https://ex.com/a"\nsummary: "精彩摘要"\ntags:\n  - 科技\n  - AI\n---\n正文');
+    vault.files.set(clip1, '---\nurl: "https://ex.com/a"\nsummary: "精彩摘要"\ntags:\n  - 科技\n  - AI\n---\n正文');
     await ensureSmartCat(app);
     __setNewsSaveTimeoutForTests(10 * 60 * 1000); // 先不让降级定时器捣乱
     emitDomainEvent('news', { kind: 'saved', evt: { title: '好文', platform: '聚合讯', state: 'saved', durationMin: 5 }, clipPath: clip1 });
-    await sleep(30); // 等 link 异步登记
+    await sleep(30); // 等 url 异步登记
     const pending = __getNewsPendingSavesForTests().get(clip1) as any;
-    expect(pending.link).toBe('https://ex.com/a');
+    expect(pending.url).toBe('https://ex.com/a');
 
     vault.emit('modify', vault.file(clip1));
     await sleep(60);

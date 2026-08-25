@@ -17,9 +17,9 @@ import {
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, Platform as MockPlatform } from '../mock-obsidian-entry';
 
-function makeArticleMd(link: string, site: string, title: string, created: string, extra = '') {
+function makeArticleMd(url: string, site: string, title: string, created: string, extra = '') {
   return `---
-link: "${link}"
+url: "${url}"
 author: "作者"
 site: "${site}"
 summary: "摘要"
@@ -202,14 +202,14 @@ describe('剪藏本数据解析与容错', () => {
     document.body.innerHTML = '';
   });
 
-  it('parseArticleFile：无 frontmatter / 缺 link / 缺 created / 读文件抛错 → 均返回 null', async () => {
+  it('parseArticleFile：无 frontmatter / 缺 url / 缺 created / 读文件抛错 → 均返回 null', async () => {
     const { vault, app } = await setup();
     vault.files.set('我的/文章/nofm.md', '正文（无 frontmatter）');
-    vault.files.set('我的/文章/nolink.md', '---\ncreated: 2025-06-02T08:00:00.000Z\n---\n正文');
-    vault.files.set('我的/文章/nocreated.md', '---\nlink: "https://x.com/a"\n---\n正文');
+    vault.files.set('我的/文章/nourl.md', '---\ncreated: 2025-06-02T08:00:00.000Z\n---\n正文');
+    vault.files.set('我的/文章/nocreated.md', '---\nurl: "https://x.com/a"\n---\n正文');
 
     expect(await parseArticleFile(vault.file('我的/文章/nofm.md'))).toBeNull();
-    expect(await parseArticleFile(vault.file('我的/文章/nolink.md'))).toBeNull();
+    expect(await parseArticleFile(vault.file('我的/文章/nourl.md'))).toBeNull();
     expect(await parseArticleFile(vault.file('我的/文章/nocreated.md'))).toBeNull();
 
     // 读文件抛错：console.warn 兜底不中断
@@ -235,7 +235,7 @@ describe('剪藏本数据解析与容错', () => {
 
   it('最小字段文章：站点回退「未知」、无作者标记、非法链接不抛错', async () => {
     const { vault } = await setup({ articleDirectory: '我的/文章' });
-    vault.files.set('我的/文章/min.md', '---\nlink: "不是合法URL"\ncreated: 2025-06-02T08:00:00.000Z\n---\n正文');
+    vault.files.set('我的/文章/min.md', '---\nurl: "不是合法URL"\ncreated: 2025-06-02T08:00:00.000Z\n---\n正文');
     await initArticleView(true);
     await flush();
     const metaRow = document.querySelector('.article-entry-meta') as HTMLElement;
@@ -307,7 +307,7 @@ describe('剪藏本渲染辅助与滚动', () => {
     const entry = {
       file: {},
       path: '我的/文章/A.md',
-      link: 'https://x.com/a',
+      url: 'https://x.com/a',
       author: '',
       site: '知乎',
       summary: '',

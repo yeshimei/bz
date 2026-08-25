@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * 剪藏本解析测试（ticket 08）：parseArticleFile 必需 link+created 字段、
+ * 剪藏本解析测试（ticket 08）：parseArticleFile 必需 url+created 字段、
  * title=文件名、作者/站点/摘要/标签、反链笔记名。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -25,7 +25,7 @@ function makeApp(vault: MockVault, backlinkSources: string[] = []) {
 }
 
 const ARTICLE_MD = `---
-link: "https://zhuanlan.zhihu.com/p/123"
+url: "https://zhuanlan.zhihu.com/p/123"
 author: "作者甲"
 site: "知乎专栏"
 summary: "这是一段摘要"
@@ -48,7 +48,7 @@ describe('parseArticleFile', () => {
     const entry = await parseArticleFile(vault.file('我的/文章/《测试文章》.md'));
     expect(entry).not.toBeNull();
     expect(entry!.title).toBe('《测试文章》'); // 文件名（含书名号）
-    expect(entry!.link).toBe('https://zhuanlan.zhihu.com/p/123');
+    expect(entry!.url).toBe('https://zhuanlan.zhihu.com/p/123');
     expect(entry!.author).toBe('作者甲');
     expect(entry!.site).toBe('知乎专栏');
     expect(entry!.summary).toBe('这是一段摘要');
@@ -57,8 +57,8 @@ describe('parseArticleFile', () => {
     expect(entry!.rawContent).toBe(ARTICLE_MD);
   });
 
-  it('缺 link → 跳过（null）', async () => {
-    vault.files.set('我的/文章/A.md', ARTICLE_MD.replace('link: "https://zhuanlan.zhihu.com/p/123"\n', ''));
+  it('缺 url → 跳过（null）', async () => {
+    vault.files.set('我的/文章/A.md', ARTICLE_MD.replace('url: "https://zhuanlan.zhihu.com/p/123"\n', ''));
     setApp(makeApp(vault) as any);
     expect(await parseArticleFile(vault.file('我的/文章/A.md'))).toBeNull();
   });

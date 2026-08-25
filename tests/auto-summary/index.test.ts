@@ -94,7 +94,7 @@ describe('auto-summary 入口', () => {
     ensureAutoSummary(makeApp(vault, workspace));
     await vi.advanceTimersByTimeAsync(2000);
     // 目录外 md
-    vault.files.set('Inbox/x.md', `---\nlink: "https://x.com/x"\n---\n\n${LONG_BODY}`);
+    vault.files.set('Inbox/x.md', `---\nurl: "https://x.com/x"\n---\n\n${LONG_BODY}`);
     // 非 md
     vault.files.set('归档/网页剪藏/y.txt', 'hello');
     vault.emit('create', vault.file('Inbox/x.md'));

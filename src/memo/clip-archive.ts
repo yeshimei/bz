@@ -155,15 +155,15 @@ ${candidatesDesc}
 /** 剪藏入口：URL 精确匹配直接归档；不中 → AI 判断 + 弹窗批准 */
 async function handleClip(app: App, file: any) {
   const cache = app.metadataCache.getFileCache(file);
-  const link = (cache as any)?.frontmatter?.link;
-  if (!link) return;
+  const url = (cache as any)?.frontmatter?.url;
+  if (!url) return;
 
   const items = await loadJSON(app, getMemoPath());
   const candidates = items.filter((i) => i.scene === '剪藏' && i.url && !i.linkedNote);
   if (candidates.length === 0) return;
 
   // ① URL 精确匹配 → 直接归档（非 AI，静默执行）
-  const exact = candidates.find((i) => i.url === link);
+  const exact = candidates.find((i) => i.url === url);
   if (exact) {
     await archiveItem(exact!, file);
     return;
@@ -176,7 +176,7 @@ async function handleClip(app: App, file: any) {
     getAI(),
     {
       title: file.basename,
-      url: link,
+      url,
       frontmatter: (cache as any).frontmatter,
     },
     candidates
@@ -201,7 +201,7 @@ function createClipArchiveAgent(app: App): void {
     // 语义通道只保证落在剪藏目录（articleDirectory 分类命中），但用户可能已把该目录移出
     // aiAgentWatchedFolders 监听范围——保留旧 watchedFolders 门，范围外不触发匹配归档。
     if (!inFolders(evt.path, getWatchedFolders())) return;
-    // 伪载荷只有 path：取真 TFile 后读 metadataCache frontmatter link（文件已被删则静默跳过）
+    // 伪载荷只有 path：取真 TFile 后读 metadataCache frontmatter url（文件已被删则静默跳过）
     const file = app.vault.getAbstractFileByPath(evt.path);
     if (!file) return;
     enqueue(() => handleClip(app, file));

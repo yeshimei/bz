@@ -21,9 +21,9 @@ vi.mock('../../src/auto-summary', () => ({
 }));
 import { ensureAutoSummary, stopAutoSummary } from '../../src/auto-summary';
 
-function makeArticleMd(link: string, site: string, title: string, created: string, extra = '') {
+function makeArticleMd(url: string, site: string, title: string, created: string, extra = '') {
   return `---
-link: "${link}"
+url: "${url}"
 author: "作者"
 site: "${site}"
 summary: "摘要"

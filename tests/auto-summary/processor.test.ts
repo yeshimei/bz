@@ -112,7 +112,7 @@ describe('processFile', () => {
   });
 
   it('缺全部字段 → AI 补全写回 + 缺 title 重命名笔记 + 通知', async () => {
-    vault.files.set('归档/网页剪藏/a.md', `---\nlink: "https://x.com/a"\n---\n\n${LONG_BODY}`);
+    vault.files.set('归档/网页剪藏/a.md', `---\nurl: "https://x.com/a"\n---\n\n${LONG_BODY}`);
     const ai = makeAI('{"title":"新标题","summary":"摘要内容","tags":["AI","阅读"]}');
     await processFile(makeApp(vault), ai, vault.file('归档/网页剪藏/a.md'));
     // 重命名：a.md → 新标题.md
@@ -122,7 +122,7 @@ describe('processFile', () => {
     expect(out).toContain('summary: "摘要内容"');
     expect(out).toContain('  - "AI"');
     expect(out).toContain('  - "阅读"');
-    expect(out).toContain('link: "https://x.com/a"'); // 原字段保留
+    expect(out).toContain('url: "https://x.com/a"'); // 原字段保留
     // 通知：动态链路（ticket 25）——单条通知原地更新为结果
     expect(getNoticeMessages()).toHaveLength(1);
     expect(getNoticeMessages()[0]).toBe('《新标题》\n\n摘要内容\n\n#AI #阅读');
@@ -170,7 +170,7 @@ describe('processFile', () => {
   });
 
   it('重命名防重名 → 追加 (1)', async () => {
-    vault.files.set('归档/网页剪藏/e.md', `---\nlink: "https://x.com/e"\n---\n\n${LONG_BODY}`);
+    vault.files.set('归档/网页剪藏/e.md', `---\nurl: "https://x.com/e"\n---\n\n${LONG_BODY}`);
     vault.files.set('归档/网页剪藏/新标题.md', '占位');
     const ai = makeAI('{"title":"新标题"}');
     await processFile(makeApp(vault), ai, vault.file('归档/网页剪藏/e.md'));
@@ -178,9 +178,9 @@ describe('processFile', () => {
   });
 
   it('rename 失败 → 回退仅写 frontmatter title', async () => {
-    vault.files.set('归档/网页剪藏/f.md', `---\nlink: "https://x.com/f"\n---\n\n${LONG_BODY}`);
+    vault.files.set('归档/网页剪藏/f.md', `---\nurl: "https://x.com/f"\n---\n\n${LONG_BODY}`);
     const vault2 = new MockVault();
-    vault2.files.set('归档/网页剪藏/f.md', `---\nlink: "https://x.com/f"\n---\n\n${LONG_BODY}`);
+    vault2.files.set('归档/网页剪藏/f.md', `---\nurl: "https://x.com/f"\n---\n\n${LONG_BODY}`);
     vault2.rename = vi.fn().mockRejectedValue(new Error('rename 失败')) as any;
     const ai = makeAI('{"title":"新标题"}');
     await processFile(makeApp(vault2), ai, vault2.file('归档/网页剪藏/f.md'));
@@ -189,14 +189,14 @@ describe('processFile', () => {
   });
 
   it('正文 <100 字 → 跳过', async () => {
-    vault.files.set('归档/网页剪藏/g.md', `---\nlink: "https://x.com/g"\n---\n\n太短`);
+    vault.files.set('归档/网页剪藏/g.md', `---\nurl: "https://x.com/g"\n---\n\n太短`);
     const ai = makeAI('{"title":"T"}');
     await processFile(makeApp(vault), ai, vault.file('归档/网页剪藏/g.md'));
     expect(vault.modifiedPaths).toHaveLength(0);
   });
 
   it('AI 返回 null → 不改文件，动态通知变为失败提示', async () => {
-    vault.files.set('归档/网页剪藏/h.md', `---\nlink: "https://x.com/h"\n---\n\n${LONG_BODY}`);
+    vault.files.set('归档/网页剪藏/h.md', `---\nurl: "https://x.com/h"\n---\n\n${LONG_BODY}`);
     await processFile(makeApp(vault), makeAI(null), vault.file('归档/网页剪藏/h.md'));
     expect(vault.modifiedPaths).toHaveLength(0);
     // 动态链路：progress → error（ticket 25）
@@ -210,7 +210,7 @@ describe('processFile', () => {
       prompt: vi.fn().mockImplementation(() => new Promise<string>((r) => { release = r; })),
     } as any;
     const path = '归档/网页剪藏/a.md';
-    vault.files.set(path, `---\nlink: "https://x.com/a"\ncustom: "保留我"\n---\n\n${LONG_BODY}`);
+    vault.files.set(path, `---\nurl: "https://x.com/a"\ncustom: "保留我"\n---\n\n${LONG_BODY}`);
 
     const running = processFile(makeApp(vault), ai, vault.file(path));
     await new Promise((r) => setTimeout(r, 0)); // 推进到 AI 调用挂起点
@@ -219,7 +219,7 @@ describe('processFile', () => {
     // AI 处理期间：外部追加正文段落与自定义 frontmatter 字段
     vault.files.set(
       path,
-      `---\nlink: "https://x.com/a"\ncustom: "保留我"\nadded: "外部字段"\n---\n\n${LONG_BODY}\n\n外部追加的段落`
+      `---\nurl: "https://x.com/a"\ncustom: "保留我"\nadded: "外部字段"\n---\n\n${LONG_BODY}\n\n外部追加的段落`
     );
 
     release('{"title":"新标题","summary":"摘要内容","tags":["AI"]}'); // rename → 新路径 a.md → 新标题.md
@@ -234,7 +234,7 @@ describe('processFile', () => {
     expect(out).toContain('custom: "保留我"');
     expect(out).toContain('added: "外部字段"');
     expect(out).toContain('外部追加的段落');
-    expect(out).toContain('link: "https://x.com/a"');
+    expect(out).toContain('url: "https://x.com/a"');
   });
 
   it('无重命名场景同样基于最新读合并（P1-21）：已有 title 只缺 summary，外部追加不被覆盖', async () => {

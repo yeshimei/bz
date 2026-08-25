@@ -46,7 +46,8 @@ let BATCH_SIZE = 20;
 export interface ArticleEntry {
   file: any;
   path: string;
-  link: string;
+  /** 剪藏原文 URL（frontmatter url 字段，2026-08-25 由 link 改名，ADR-0050） */
+  url: string;
   author: string;
   site: string;
   summary: string;
@@ -362,14 +363,14 @@ async function loadAllArticles(): Promise<void> {
   }
 }
 
-/** 解析文章：frontmatter 必需 link+created（缺任一跳过）；title=文件名 */
+/** 解析文章：frontmatter 必需 url+created（缺任一跳过）；title=文件名 */
 export async function parseArticleFile(file: any): Promise<ArticleEntry | null> {
   const app = getApp();
   try {
     const cache = app.metadataCache.getFileCache(file);
     const fm = cache && (cache as any).frontmatter;
     if (!fm) return null;
-    if (!fm.link || !fm.created) return null;
+    if (!fm.url || !fm.created) return null;
 
     const content = await app.vault.read(file);
     const title = file.basename;
@@ -387,7 +388,7 @@ export async function parseArticleFile(file: any): Promise<ArticleEntry | null> 
     return {
       file,
       path: file.path,
-      link: fm.link,
+      url: fm.url,
       author: fm.author || '',
       site: fm.site || '未知',
       summary: fm.summary || '',
@@ -527,9 +528,9 @@ function buildMetaRow(article: ArticleEntry, interactive: boolean): HTMLElement 
   siteContainer.style.cssText = 'display:inline-flex; align-items:center; gap:4px;';
 
   // 尝试添加图标（Yandex 服务）
-  if (article.link) {
+  if (article.url) {
     try {
-      const url = new URL(article.link);
+      const url = new URL(article.url);
       const icon = createSiteIcon(url.hostname, 16);
       if (icon) siteContainer.appendChild(icon);
     } catch (e) { /* 忽略 */ }
@@ -598,9 +599,9 @@ export function buildSheetHead(article: ArticleEntry): HTMLElement {
 function buildArticleActions(article: ArticleEntry): ItemAction[] {
   // 复制原文链接右侧小字：域名（取不到则不显示小字）
   let domain = '';
-  if (article.link) {
+  if (article.url) {
     try {
-      domain = new URL(article.link).hostname;
+      domain = new URL(article.url).hostname;
     } catch (e) { /* 忽略 */ }
   }
   return [
@@ -630,8 +631,8 @@ async function copyWikilink(article: ArticleEntry): Promise<void> {
 }
 
 async function copyOriginalLink(article: ArticleEntry): Promise<void> {
-  await navigator.clipboard.writeText(article.link);
-  notice(`已复制原文链接：${article.link}`, 'success');
+  await navigator.clipboard.writeText(article.url);
+  notice(`已复制原文链接：${article.url}`, 'success');
 }
 
 /** 按路径找回列表卡片节点（删除确认后移除卡片用；找不到返回 null，deleteArticle 已兜底） */
@@ -757,9 +758,9 @@ export function rebuildSiteBar() {
     const site = a.site;
     if (!siteInfo.has(site)) {
       let domain = '';
-      if (a.link) {
+      if (a.url) {
         try {
-          const url = new URL(a.link);
+          const url = new URL(a.url);
           domain = url.hostname;
         } catch (e) { /* 忽略 */ }
       }
