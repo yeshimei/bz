@@ -1,3 +1,16 @@
+﻿## 2026-08-26 第二大脑面板打磨（ticket 108，ADR-0052）
+
+**状态：secondbrain 117 例全绿（新增 11）+ tsc 0 错误；worktree/sb-panel-polish**
+
+- ✅ **主面板**：存储占用合计单值（hover 明细）；上次索引/最近向量化改共享 formatRelativeTime；趋势柱铺满整行；来源分布树形逐级展开（左对齐取消固定列宽、▸/▾ 递归下钻、每级聚合全量计数）；新维度 ×4（白名单覆盖率/内容规模总字数·平均块长·每篇块数/最厚笔记 Top5/索引一致性健康灯）
+- ✅ **打开即增量索引**：hasPendingChanges 预扫描（新文件/变更/删除）；有待处理 → 全屏进度视图接管（「正在同步索引」），完成自动切统计；无变更直进统计
+- ✅ **重新索引**：设置弹窗 → confirm 确认 → 关设置 → 开主面板自动全量重建（rebuildAll：清空 meta/vec/VP 缓存后整库重嵌，失败可重试）
+- ✅ **AI 通道统一（ADR-0052）**：对话+概括走主设置页 core AI，不回退 Ollama；删对话三键 UI（键保留不消费）；两端 DeepSeek 复选框删除；ollamaChat 函数保留标注预留
+- ✅ **参考窄窗**：删 🤖/⚙️，emoji 按钮 🔄/◀️▶️/❌，标题去 📚，收起边条 📖，密度切换（📃/📑 会话内）
+- ✅ **对话改居中弹窗**：core createOverlay 9998/9999，无头部按钮，遮罩+ESC 关闭
+- ✅ **测试**：statistics（树/维度）+ hasPendingChanges/rebuildAll + UI（增量接管/重建/弹窗/失败气泡）共 +11 例
+- 📄 文档：spec 55-58 + Further Notes、issues/108、CONTEXT 三术语（引导态/增量索引/重新索引）、ADR-0052、AGENTS 决策 6
+
 ## 2026-08-25 第二大脑首用引导 + 隐形 bug 清剿（ticket 107，ADR-0051 补记）
 
 **状态：secondbrain 106 例全绿（新增 10）+ tsc 0 错误；worktree/sb-init-onboarding**
@@ -213,7 +226,8 @@
 
 - **ticket 36 小橘「懂你」闭环（用户反馈「配合不密切、数据给得不恰当」；ADR-0025 + issue 36；git worktree worktree/smartcat-companion 开发）**：三包落地。**A 情绪闭环**——推翻旧拍板「情绪不直接改写 PAD」：`mood.emotionResonanceDelta`（纯函数，VAD→PAD 差量：负面增益 6>正面 4、calm/neutral 趋 0）+ `applyEmotionResonance` + `applyTrendDrift`（近 48h 趋势 30 分钟节流回写 PAD）；`memory.onObservation` 钩子（index 接线：每条观察 → registerEmotion + 共振；聊天手动 registerEmotion 移除）。**B 全通道记忆**——新 `src/smartcat/companion-context.ts` `buildCompanionContext`（作息+情绪趋势+信任/依恋+检索记忆）经 `generatePrompt` 新参 `companionContext`（`## 你了解的用户` 节）注入聊天（记忆段从 user 尾部移入 system）/自言自语/欢迎回来（作息感知气泡）/书评/主动关心。**C 数据诚实化**——① 聊天记忆去重限流（`addObservation(…,{dedupe:true})`：近 20 条同内容短路省 LLM 打分 + 非 calm 情绪 or importance≥0.55 才落库）；② `trustUpdate` 增 neutral 语义（click/note_* 不动 trust 且跳过软收拢，修「warm 恒真」侵蚀死代码）；③ `preferredHour` 假众数→真众数（复用作息画像 peakHour，无记忆数据兜底当前小时）；④ 矛盾检测动词表补 看了/读了/剪藏了/记下 +「在…记下」前缀（闪念源）；⑤ 周报 `padAvg` 取周内观察情绪 VAD 均值（无情绪样本回退当前 PAD，不再抄现值）；⑥ 检索 `retrieve(query,topN,{lexicalQuery})` 词法降级用纯用户消息（免「情绪/时段」索引词稀释命中率）。文档：ADR-0025、CONTEXT.md 情绪/心情/记忆流/RL 词条同步 + 新术语「温和共振」「懂你上下文块」（并修正 α 漂移：0.66/0.95/1.5、decay 0.982、TRUST_CAP=0.85 软收拢、ticket 029 全内容 LLM 打分），issue 36。**测试**：smartcat 域 195 全绿（新增 mood 共振/趋势/众数/中性信任、memory 去重限流/钩子/lexicalQuery、cognitive 新事实模板、report padAvg 推导、新 companion-context 6 用例），全量 1357 绿 + tsc 0。
 
-- **ticket 036 小橘「懂你」闭环 + 云端打分范围（用户反馈「配合不密切、数据不当」；ADR-0025 + issue 36；git worktree worktree/smartcat-companion 开发，并入 master）**：三包落地后追加「记忆打分范围」智能默认。① **A 情绪闭环**——推翻旧拍板「情绪不直接改写 PAD」：emotionResonanceDelta（纯函数，VAD→PAD 差量：负面增益 6>正面 4、calm/neutral 趋 0）+ pplyEmotionResonance + pplyTrendDrift（近 48h 趋势 30 分钟节流回写 PAD）；memory.onObservation 钩子（index 接线：每条观察 → registerEmotion + 共振）。② **B 全通道记忆**——新 companion-context.ts uildCompanionContext（作息+情绪趋势+信任/依恋+检索记忆）经 generatePrompt 新参 companionContext（## 你了解的用户 节）注入聊天/自言自语/欢迎回来（作息感知气泡）/书评/主动关心。③ **C 数据诚实化**——聊天记忆去重限流（opts.dedupe：近 20 条同内容短路 + 非 calm 或 importance≥0.55 才落库）；	rustUpdate 增 neutral（click/note_* 不动 trust，修 warm 恒真死代码）；preferredHour 真众数（复用作息画像 peakHour）；矛盾检测动词表补看了/读了/剪藏了/记下+「在…记下」；周报 padAvg 取周内情绪 VAD 均值；检索 etrieve 增 lexicalQuery（词法降级免「情绪/时段」噪音）。④ **云端打分范围 config.cloudScoring 智能默认（用户追加拍板）**——shouldCloudScore：日记/反省/闪念恒 LLM、剪藏/影评/书库/诗/信 ≥30 字 LLM、聊天/域 JSON 本地规则分（省隐形大头，活跃用户日调用减半）；弹窗「记忆打分范围」可切 全部/智能/仅日记/本地。与并行 ticket 071 数据面板（bz-smartcat-dashboard）合并共存（merge 冲突仅 mood.ts 相邻插入，手解保留两侧）。文档：ADR-0025（含追加决策节）、CONTEXT.md 情绪/心情/记忆流/RL 词条同步 + 新术语「温和共振」「懂你上下文块」、issue 36。**测试**：smartcat 199（+4 打分档位/零调用/local/config），全量 1375 绿 + tsc 0。
+- **ticket 036 小橘「懂你」闭环 + 云端打分范围（用户反馈「配合不密切、数据不当」；ADR-0025 + issue 36；git worktree worktree/smartcat-companion 开发，并入 master）**：三包落地后追加「记忆打分范围」智能默认。① **A 情绪闭环**——推翻旧拍板「情绪不直接改写 PAD」：emotionResonanceDelta（纯函数，VAD→PAD 差量：负面增益 6>正面 4、calm/neutral 趋 0）+ pplyEmotionResonance + pplyTrendDrift（近 48h 趋势 30 分钟节流回写 PAD）；memory.onObservation 钩子（index 接线：每条观察 → registerEmotion + 共振）。② **B 全通道记忆**——新 companion-context.ts uildCompanionContext（作息+情绪趋势+信任/依恋+检索记忆）经 generatePrompt 新参 companionContext（## 你了解的用户 节）注入聊天/自言自语/欢迎回来（作息感知气泡）/书评/主动关心。③ **C 数据诚实化**——聊天记忆去重限流（opts.dedupe：近 20 条同内容短路 + 非 calm 或 importance≥0.55 才落库）；	rustUpdate 增 neutral（click/note_* 不动 trust，修 warm 恒真死代码）；preferredHour 真众数（复用作息画像 peakHour）；矛盾检测动词表补看了/读了/剪藏了/记下+「在…记下」；周报 padAvg 取周内情绪 VAD 均值；检索 
+etrieve 增 lexicalQuery（词法降级免「情绪/时段」噪音）。④ **云端打分范围 config.cloudScoring 智能默认（用户追加拍板）**——shouldCloudScore：日记/反省/闪念恒 LLM、剪藏/影评/书库/诗/信 ≥30 字 LLM、聊天/域 JSON 本地规则分（省隐形大头，活跃用户日调用减半）；弹窗「记忆打分范围」可切 全部/智能/仅日记/本地。与并行 ticket 071 数据面板（bz-smartcat-dashboard）合并共存（merge 冲突仅 mood.ts 相邻插入，手解保留两侧）。文档：ADR-0025（含追加决策节）、CONTEXT.md 情绪/心情/记忆流/RL 词条同步 + 新术语「温和共振」「懂你上下文块」、issue 36。**测试**：smartcat 199（+4 打分档位/零调用/local/config），全量 1375 绿 + tsc 0。
 
 - **ticket 70 样式按域拆分（铁律 9 修订，用户指令「铁律9 改成css按域拆分」；git worktree worktree/rule9-css-split 开发）**：① **源文件布局**——视觉样式源按域拆分：`src/<域>/styles.css` ×14（diary/launcher/memo/news/clipping/password/favorites/review/quiz/pomodoro/library/attach/encrypt/movie）+ `src/core/styles.css`（共享：设置页分页、主窗口头部行统一规范、core 层 notice/settings-modal/confirm/dom、移动端主窗口默认全屏、统一右键菜单/长按抽屉）；原 2979 行单文件 styles.css 的 22 个分节逐字切块搬运（无损校验：按原序重组 byte-identical；去注释规则行排序 2664=2664）。② **构建聚合**——新 `scripts/build-css.mjs`：SOURCES 清单顺序聚合生成根 `styles.css`（产物勿手改）+ 同步插件目录；esbuild.config.mjs 接线（build 一次聚合 / dev 经 fs.watch(src/**) 监听 src/**/*.css 自动重新聚合）。③ **顺序安全审计**——跨节选择器全量比对：仅 win-head/core/移动端全屏的 `!important` 支配对与互不冲突复合选择器（.active/.overdue/.bz-item-sheet-head 均无裸规则重复；slideUp 五处定义同义），拼接顺序=原文档顺序（共享节前置），级联行为不变。④ 文档同步：AGENTS.md 铁律 9 重写 + 架构行 + 主窗口样式规范引用、CONTEXT.md 新术语「样式按域拆分」+ Rules + 密码本词条去「含样式注入」、spec.md 构建/样式/CSS 规模三处、encrypt-suite spec 铁律 9 行、ADR-0020、issue 70。测试无样式表断言无需改动。
 
@@ -619,3 +633,4 @@
 - ✅ **C1 自动刷新**：手动 🔄 按钮删除（smartcat-dash-refresh id 移除留档）；vault modify 命中 smartcat.json/memo.json 防抖 3s 静默重读渲染（保持当前页签、零 toast、窗口内重置合并、失败保旧画面）；closeSmartcatDashboard 全量 offref+clearTimeout，幂等重开无泄漏；escManager 与 mask 关闭路径未动
 - ⚠ 必要偏差：洞察废弃徽标文案按票 B2 统一为「已被推翻」（原「已废弃（人工）/已废弃」双文案取消，insight-version.test.ts 断言同步更新）；面板模块无 Component 宿主，监听以 vault.on EventRef + close offref 落地（与 registerEvent 清理语义等价）
 - 📄 文档：spec.md Further Notes 追加一行；issue 097 status done
+

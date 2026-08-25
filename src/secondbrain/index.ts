@@ -78,7 +78,7 @@ export function unloadSecondBrain(): void {
   panel = null;
   reference?.close();
   reference = null;
-  chat?.close();
+  chat?.destroy(); // 弹窗形态：卸载需摘 escManager 层并移除 DOM（ticket 108）
   chat = null;
   mobile?.close();
   mobile = null;
@@ -94,8 +94,8 @@ function ensureReference(): void {
     mobile ??= new MobilePanel(appRef, store);
     return;
   }
-  // ReferencePanel 自持窄窗（内部 new FloatWindow('灵感参考')），🤖 回调开对话
-  reference = new ReferencePanel(appRef, store, () => openChatInternal());
+  // ReferencePanel 自持窄窗（内部 new FloatWindow('灵感参考')）；🤖 入口已移除（ticket 108）
+  reference = new ReferencePanel(appRef, store);
 }
 
 function openReferenceInternal(): void {
@@ -109,13 +109,13 @@ function openReferenceInternal(): void {
 
 function ensureChat(): void {
   if (!appRef || !store || chat) return;
-  // ChatPanel 自持窄窗（内部 new FloatWindow('AI 助手')）
+  // ChatPanel 为居中弹窗（core createOverlay，ticket 108 改；原右侧窄窗形态废弃）
   chat = new ChatPanel(store, appRef);
 }
 
 function openChatInternal(): void {
   ensureChat();
-  chat?.fw.show();
+  chat?.show();
 }
 
 /** 主面板：第二大脑统一入口 */
@@ -126,6 +126,18 @@ export function openSecondBrainPanel(app: App): void {
     onOpenReference: () => openReferenceInternal(),
     onOpenChat: () => openChatInternal(),
   });
+  void panel.open();
+}
+
+/** 设置页「重新索引」（ticket 108）：打开主面板并标记全量重建意图，面板自动进入重建进度视图 */
+export function rebuildSecondBrainIndex(app: App): void {
+  ensureSecondBrain(app);
+  if (!store) return;
+  panel ??= new SecondBrainPanel(app, store, {
+    onOpenReference: () => openReferenceInternal(),
+    onOpenChat: () => openChatInternal(),
+  });
+  panel.requestRebuild();
   void panel.open();
 }
 

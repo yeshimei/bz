@@ -1,26 +1,23 @@
 /**
- * 第二大脑窄窗 FloatWindow（ticket 103；对齐 QA 闪念.js L1119-1315）
- * 补齐交互点：
- * - 右贴边 300px 全高窄窗 + 📚 图标 + 入场动画（L1121-1148）
- * - ⟲ 复位到右贴边基线（L1161-1166/L1239-1247）；◀ 隐藏成 30px 右边条，
- *   隐藏态悬停 200ms 自动展开（L1168-1175/L1218-1227/L1272-1302）
- * - ✕ 关闭（Esc）：ESC 走 core/escManager 注册层级，不私挂 document 监听（L1178-1183/L1229-1231）
- * - 标题栏拖拽（right→left 定位归一后交 ui-tools.makeDraggable，L888-902 同语义）
- * - 8 向缩放（ui-tools.makeResizable，minW/minH 对齐 QA L1210）
- * - 双击标题栏最大化/还原（L1213-1216/L1249-1265）
- * - ⚙️ 改开共享域设置弹窗 openSecondBrainSettings（替代 QA L1190-1194 的 Notice 占位）
- * 样式全部收敛根 styles.css「第二大脑」段；内联仅显隐与动态几何。
+ * 第二大脑窄窗 FloatWindow（ticket 103 建；ticket 108 头部精简）
+ * 交互点（QA 对齐 + 用户拍板调整）：
+ * - 右贴边 300px 全高窄窗 + 入场动画；标题纯文字（📚 图标已删，ticket 108）
+ * - 🔄 复位到右贴边基线；◀️/▶️ 隐藏成 30px 右边条（边条显示固定 📖），
+ *   隐藏态悬停 200ms 自动展开
+ * - ❌ 关闭（Esc）：ESC 走 core/escManager 注册层级，不私挂 document 监听
+ * - ⚙️ 按钮已移除（域设置只留主面板入口，ticket 108）
+ * - 标题栏拖拽 / 8 向缩放 / 双击标题栏最大化还原（QA 同语义）
+ * 样式全部收敛 src/secondbrain/styles.css；内联仅显隐与动态几何。
  */
-import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
-import { openSecondBrainSettings } from './panel';
 import { makeDraggable, makeResizable } from './ui-tools';
 
 export class FloatWindow {
   el: HTMLElement;
   header: HTMLElement;
   body: HTMLElement;
-  iconSpan: HTMLElement;
+  /** 收起态边条标识（📖）——展开时隐藏，收起时唯一可见元素 */
+  stripEl: HTMLElement;
   titleEl: HTMLElement;
   headerRight: HTMLElement;
   hideBtn: HTMLButtonElement;
@@ -43,13 +40,15 @@ export class FloatWindow {
     this.el.className = 'bz-sb-float-win bz-sb-float-enter';
     this.el.style.width = this.origWidth + 'px';
 
-    // ----- 标题栏：📚 图标 + 标题 + 按钮秩序（复位/隐藏 → 功能注入 → ⚙️ → ✕） -----
+    // ----- 标题栏：收起边条标识 + 标题 + 按钮秩序（功能注入 → 🔄 复位 → ◀️/▶️ 隐藏 → ❌ 关闭）
+    // ticket 108：⚙️ 与 📚 图标移除（设置只留主面板入口）；按钮全部换 emoji
     this.header = document.createElement('div');
     this.header.className = 'bz-sb-float-head';
 
-    this.iconSpan = document.createElement('span');
-    this.iconSpan.className = 'bz-sb-float-icon';
-    this.iconSpan.textContent = '📚';
+    // 收起态 30px 边条的固定视觉标识（展开态隐藏——CSS 控制）
+    this.stripEl = document.createElement('span');
+    this.stripEl.className = 'bz-sb-float-strip';
+    this.stripEl.textContent = '📖';
 
     this.titleEl = document.createElement('span');
     this.titleEl.className = 'bz-sb-float-title';
@@ -60,7 +59,7 @@ export class FloatWindow {
 
     const resetBtn = document.createElement('button');
     resetBtn.className = 'bz-sb-float-btn';
-    resetBtn.textContent = '⟲';
+    resetBtn.textContent = '🔄';
     resetBtn.title = '复位位置';
     resetBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -69,7 +68,7 @@ export class FloatWindow {
 
     this.hideBtn = document.createElement('button');
     this.hideBtn.className = 'bz-sb-float-btn';
-    this.hideBtn.textContent = '◀';
+    this.hideBtn.textContent = '◀️';
     this.hideBtn.title = '隐藏到右侧';
     this.hideBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -78,18 +77,9 @@ export class FloatWindow {
 
     if (opts.headerRight) this.headerRight.appendChild(opts.headerRight);
 
-    const settingsBtn = document.createElement('button');
-    settingsBtn.className = 'bz-sb-float-btn';
-    settingsBtn.textContent = '⚙';
-    settingsBtn.title = '设置';
-    settingsBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      openSecondBrainSettings(getApp());
-    });
-
     const closeBtn = document.createElement('button');
     closeBtn.className = 'bz-sb-float-btn bz-sb-float-btn-close';
-    closeBtn.textContent = '✕';
+    closeBtn.textContent = '❌';
     closeBtn.title = '关闭 (Esc)';
     closeBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -98,12 +88,11 @@ export class FloatWindow {
 
     this.headerRight.appendChild(resetBtn);
     this.headerRight.appendChild(this.hideBtn);
-    this.headerRight.appendChild(settingsBtn);
     this.headerRight.appendChild(closeBtn);
     // 按钮区按下不启动标题栏拖拽（QA L890 closest('button') 同语义）
     this.headerRight.addEventListener('mousedown', (e) => e.stopPropagation());
 
-    this.header.appendChild(this.iconSpan);
+    this.header.appendChild(this.stripEl);
     this.header.appendChild(this.titleEl);
     this.header.appendChild(this.headerRight);
 
@@ -240,10 +229,10 @@ export class FloatWindow {
     this.syncHiddenUI(false);
   }
 
-  /** 隐藏态 UI：标题/按钮/内容淡出只留 📚 图标条（视觉切换收敛 CSS hidden 类） */
+  /** 隐藏态 UI：标题/按钮/内容淡出只留 📖 边条标识（视觉切换收敛 CSS hidden 类） */
   syncHiddenUI(hidden: boolean): void {
     this.el.classList.toggle('bz-sb-float-hidden', hidden);
-    this.hideBtn.textContent = hidden ? '▶' : '◀';
+    this.hideBtn.textContent = hidden ? '▶️' : '◀️';
     this.hideBtn.title = hidden ? '展开' : '隐藏到右侧';
   }
 

@@ -185,4 +185,63 @@ describe('VectorStore 索引就绪与自愈（ticket 107）', () => {
     expect(vs.isIndexReady()).toBe(false);
     expect(progress.some((m) => m.startsWith('✅'))).toBe(true); // QA 文案仍报「完成」→ 面板须自行判定
   });
+
+  it('hasPendingChanges：无变更 false；新文件/已修改/已删除任一 true（ticket 108）', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/A.md', '内容 A。');
+    vault.files.set(
+      META_PATH,
+      JSON.stringify({ version: 8, notes: { '我的/A.md': { mtime: 5, chunks: [{ text: 't' }] } }, _dim: 2 })
+    );
+    const { adapter, binary } = makeAdapter(vault);
+    const header = new Uint8Array(4);
+    new DataView(header.buffer).setUint32(0, 2, true);
+    const row = new Float32Array([1, 0]);
+    const out = new Uint8Array(4 + row.byteLength);
+    out.set(header, 0);
+    out.set(new Uint8Array(row.buffer, row.byteOffset, row.byteLength), 4);
+    binary.set(VEC_PATH, out.buffer);
+    const app = makeApp(vault, adapter, { '我的/A.md': 5 });
+    setApp(app as any);
+    const vs = new VectorStore(app as any);
+    await vs.load();
+
+    expect(vs.hasPendingChanges()).toBe(false); // mtime 一致，无删除
+
+    // 已修改
+    app.vault.getMarkdownFiles = () => [{ path: '我的/A.md', stat: { mtime: 6 } }] as any;
+    expect(vs.hasPendingChanges()).toBe(true);
+
+    // 新文件
+    app.vault.getMarkdownFiles = () => [{ path: '我的/B.md', stat: { mtime: 1 } }] as any;
+    expect(vs.hasPendingChanges()).toBe(true);
+
+    // 已删除（meta 有条目但文件列表没有）
+    app.vault.getMarkdownFiles = () => [] as any;
+    expect(vs.hasPendingChanges()).toBe(true);
+  });
+
+  it('rebuildAll：清空 meta/vec 与 VP 缓存后整库重嵌（ticket 108 重新索引）', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/A.md', '足够长的单一文本块内容用于重建。');
+    const { adapter, binary } = makeAdapter(vault);
+    const app = makeApp(vault, adapter, { '我的/A.md': 3 });
+    setApp(app as any);
+    const vs = new VectorStore(app as any);
+    await vs.load();
+
+    vi.mocked(getEmbeddingsBatch).mockImplementation(async (texts) => texts.map(() => [0.5, 0.5]));
+
+    // 先正常建一次索引，制造存量
+    await vs.refresh();
+    expect(vs.isIndexReady()).toBe(true);
+    const oldNotes = vs.meta.notes;
+
+    // 再全量重建：meta 清空 → 重新整库嵌入
+    await vs.rebuildAll();
+    expect(vs.isIndexReady()).toBe(true);
+    expect(Object.keys(vs.meta.notes)).toEqual(Object.keys(oldNotes));
+    expect(vi.mocked(getEmbeddingsBatch)).toHaveBeenCalled(); // 确实重嵌了
+    expect(parseVec(binary).rows.length / parseVec(binary).dim).toBe(1);
+  });
 });

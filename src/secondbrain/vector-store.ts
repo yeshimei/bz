@@ -15,7 +15,7 @@
  * ① 仅删除文件时提前 return 跳过落盘 → 删除也持久化（紧凑重排后重写 meta+vec；白名单清空同样生效）；
  * ② 旧向量段偏移按「删除前」完整键序计算（原实现用删除后键序拷贝删除前布局，非末尾删除会错位）。
  */
-import type { App } from 'obsidian';
+import type { App, TFile } from 'obsidian';
 import { buildConfig, IS_MOBILE } from './config';
 import { MobileBuffer } from './binary';
 import { CHUNK_SIZE, smartChunk } from './chunk';
@@ -125,6 +125,60 @@ export class VectorStore {
     return Object.keys(this.meta.notes).length > 0 && this.vectors.length > 0 && this.dim > 0;
   }
 
+  /** 白名单过滤后的 md 文件列表（doRefresh / hasPendingChanges / 主面板覆盖率共用） */
+  whitelistedFiles(): TFile[] {
+    const CONFIG = buildConfig();
+    const allowPaths = CONFIG.ALLOW_PATHS || [];
+    return (this.app.vault.getMarkdownFiles() as TFile[]).filter((f) => {
+      if (allowPaths.length === 0) return true;
+      for (const allow of allowPaths) {
+        if (f.path.startsWith(allow + '/') || f.path === allow) return true;
+      }
+      return false;
+    });
+  }
+
+  /**
+   * 是否有增量索引待处理项（ticket 108）：新文件 / mtime 变化 / 已删除文件，任一即 true。
+   * 主面板打开时据此决定是否显示增量索引进度视图（纯扫描不读文件内容，开销可忽略）。
+   */
+  hasPendingChanges(): boolean {
+    const files = this.whitelistedFiles();
+    const filePaths = new Set(files.map((f) => f.path));
+    for (const path of Object.keys(this.meta.notes)) {
+      if (!filePaths.has(path)) return true; // 有已删除条目待清理
+    }
+    for (const f of files) {
+      const entry = this.meta.notes[f.path];
+      if (!entry || entry.mtime !== f.stat.mtime) return true; // 新文件或已修改
+    }
+    return false;
+  }
+
+  /**
+   * 全量重建（ticket 108「重新索引」）：清空元数据与向量后整库重嵌。
+   * 先等待进行中的 refresh 结束再清空，避免与增量刷新交错写坏布局。
+   */
+  async rebuildAll(updateProgress?: (msg: string) => void): Promise<void> {
+    if (this.refreshPromise) {
+      try {
+        await this.refreshPromise;
+      } catch {
+        /* 前一轮失败不影响重建 */
+      }
+    }
+    this.meta.notes = {};
+    this.vectors = new Float32Array(0);
+    this.dim = 0;
+    this.meta._dim = 0;
+    // VP 索引缓存随内容失效（来源数组身份已变，此处显式置空双保险）
+    this.vpTree = null;
+    this.vpVecs = null;
+    this.vpMetaKey = null;
+    this.vpSrc = null;
+    await this.refresh(updateProgress);
+  }
+
   async saveVectors(): Promise<void> {
     const CONFIG = buildConfig();
     const dim = this.dim;
@@ -178,16 +232,10 @@ export class VectorStore {
   private async doRefresh(): Promise<void> {
     const CONFIG = buildConfig();
 
-    // 白名单过滤
+    // 白名单过滤（与 hasPendingChanges / 主面板覆盖率同一实现）
     const allowPaths = CONFIG.ALLOW_PATHS || [];
     const allFiles = this.app.vault.getMarkdownFiles();
-    const files = allFiles.filter((f) => {
-      if (allowPaths.length === 0) return true;
-      for (const allow of allowPaths) {
-        if (f.path.startsWith(allow + '/') || f.path === allow) return true;
-      }
-      return false;
-    });
+    const files = this.whitelistedFiles();
     console.log(`[secondbrain] 全库 ${allFiles.length} 篇，白名单 [${allowPaths}] → 过滤后 ${files.length} 篇`);
 
     // 记录「删除前」完整键序的源偏移（修复②：拷贝旧段必须按源布局寻址）

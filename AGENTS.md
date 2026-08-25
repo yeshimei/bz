@@ -26,7 +26,7 @@
 3. **DOM 契约稳定**：外部依赖既有 id/类名，新增 UI 保持风格。
 4. **懒加载（ADR-0003）**：UI 域 `ensureXxx` 幂等初始化；事件常驻域（自动摘要 / memo·收藏本文件同步 / 第二大脑）按设置开关注册。
 5. **域间共享**：显式 import 或 core 层，不挂 window（`__MOVIE_FOLDER_PATH` 为遗留兼容，勿新增）。
-6. **架构决策**：设置页单页（域设置走 ⚙️ 弹窗）；通知用自绘 toast；AI 配置在 data.json，聚合讯 dataviewjs，第二大脑走 Ollama HTTP（ticket 103 起原「闪念」正名接管，ADR-0051），B 站下载/海报抓取走外部 npm。
+6. **架构决策**：设置页单页（域设置走 ⚙️ 弹窗）；通知用自绘 toast；AI 配置在 data.json，聚合讯 dataviewjs，第二大脑嵌入走 Ollama HTTP（ticket 103 起原「闪念」正名接管，ADR-0051；ticket 108 起对话与概括统一走主设置页 core AI，ADR-0052），B 站下载/海报抓取走外部 npm。
 7. **通知规范**：正文不带 emoji 前缀；新语义先查 `src/core/notice.ts` ICONS 表，确无匹配才新增；详见 CONTEXT.md「通知类型规范」。
 8. **样式收敛**：视觉样式一律写根 `styles.css`（构建自动复制），类名 `bz-` 前缀；禁止运行时注入 `<style>` 与内联视觉样式；功能性内联仅限显隐与动态计算。
 
