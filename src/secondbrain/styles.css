@@ -1,5 +1,5 @@
 /* ============================================================
- * 第二大脑（secondbrain 域，ticket 103 建 UI / ticket 107 补样式文件）
+ * 第二大脑（secondbrain 域，ticket 103 建 UI / 107 补样式文件 / 108 面板打磨）
  * 全部表面：主面板弹窗 / 桌面窄窗 / 参考卡与悬停预览 / AI 对话 / 移动端抽屉
  * 类名 bz-sb- 前缀；层级对表 settings-modal.ts z-index 家族：
  *   窄窗/抽屉 9000 < 浮卡·预览 9200 < 主面板遮罩 9998 < 主面板 9999 < 设置弹窗 10050
@@ -9,7 +9,7 @@
 .bz-sb-scroll-y {
   overflow-y: auto;
 }
-/* 头部功能钮隐藏态（主面板引导期收起 📚💬，切回内容态恢复） */
+/* 头部功能钮隐藏态（主面板引导/进度期收起 📚💬，切回内容态恢复） */
 .bz-sb-btn-hidden {
   display: none !important;
 }
@@ -52,10 +52,6 @@
   background: var(--background-secondary);
   cursor: grab;
   user-select: none;
-  flex-shrink: 0;
-}
-.bz-sb-float-icon {
-  font-size: 15px;
   flex-shrink: 0;
 }
 .bz-sb-float-title {
@@ -106,7 +102,18 @@
   display: flex;
   flex-direction: column;
 }
-/* 隐藏成右边条：只留最左 📚 图标条，其余淡出 */
+/* 收起边条标识 📖：展开态隐藏，收起态唯一可见（ticket 108 取代原 📚 标题图标） */
+.bz-sb-float-strip {
+  font-size: 15px;
+  line-height: 1;
+  flex-shrink: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.bz-sb-float-win.bz-sb-float-hidden .bz-sb-float-strip {
+  opacity: 1;
+}
+/* 隐藏成右边条：标题/按钮/内容淡出，只留 📖 边条标识 */
 .bz-sb-float-win.bz-sb-float-hidden .bz-sb-float-title,
 .bz-sb-float-win.bz-sb-float-hidden .bz-sb-float-headright,
 .bz-sb-float-win.bz-sb-float-hidden .bz-sb-float-body {
@@ -220,6 +227,10 @@
   max-height: calc(100% - 30px);
   overflow-y: auto;
   color: var(--text-normal);
+}
+/* 密度切换（ticket 108）：仅标题态整体隐藏正文（浮出的独立浮卡不受影响） */
+.bz-sb-ref-dense .bz-sb-ref-card:not(.bz-sb-ref-card--float) .bz-sb-ref-card-body {
+  display: none;
 }
 /* 悬停预览（300ms 浮出；定位 JS 内联，pointer-events 关闭防闪烁） */
 .bz-sb-ref-preview {
@@ -409,7 +420,7 @@
   }
 }
 
-/* ---- 统计卡片 ---- */
+/* ---- 统计卡片（ticket 108：7 卡自动换行；健康告警色） ---- */
 .bz-sb-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
@@ -429,6 +440,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.bz-sb-card-value--warn {
+  color: var(--text-warning);
+}
 .bz-sb-card-label {
   margin-top: 3px;
   font-size: 11.5px;
@@ -443,43 +457,87 @@
   margin-bottom: 8px;
 }
 
-/* ---- 近 12 周趋势（自绘迷你柱图，高度 JS 内联） ---- */
+/* ---- 内容规模（ticket 108） ---- */
+.bz-sb-scale {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+}
+.bz-sb-scale-item {
+  background: var(--background-secondary);
+  border-radius: 10px;
+  padding: 10px 8px;
+  text-align: center;
+}
+.bz-sb-scale-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bz-sb-scale-label {
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+/* ---- 近 12 周趋势（自绘迷你柱图，高度 JS 内联；108 修「铺满整行」） ---- */
 .bz-sb-trend {
   display: flex;
   align-items: flex-end;
-  gap: 4px;
+  gap: 6px;
   height: 68px;
   padding-top: 4px;
 }
 .bz-sb-trend-col {
-  flex: 1;
-  max-width: 20px;
+  flex: 1 1 0;
   background: var(--interactive-accent);
   opacity: 0.82;
   border-radius: 3px 3px 0 0;
   transition: height 0.2s ease;
 }
 
-/* ---- 来源分布横条 ---- */
+/* ---- 来源分布（树形逐级展开，ticket 108：取消固定列宽与右对齐，行可点击展开） ---- */
 .bz-sb-dist {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 5px;
 }
 .bz-sb-dist-row {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
   font-size: 12.5px;
+  border-radius: 6px;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+.bz-sb-dist-row:hover {
+  background: var(--background-modifier-hover);
+}
+.bz-sb-dist-caret {
+  width: 14px;
+  flex-shrink: 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 11px;
+  user-select: none;
+}
+.bz-sb-dist-caret--leaf {
+  visibility: hidden;
 }
 .bz-sb-dist-name {
-  width: 92px;
+  min-width: 0;
   flex-shrink: 0;
+  /* 不再固定 92px 预留列：名称按内容自适应，杜绝大左margin（ticket 108） */
+  max-width: 34%;
   color: var(--text-normal);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: right;
+  text-align: left;
 }
 .bz-sb-dist-bar {
   flex: 1;
@@ -498,6 +556,7 @@
   flex-shrink: 0;
   color: var(--text-muted);
   white-space: nowrap;
+  font-size: 12px;
 }
 
 /* ---- 最近向量化 Top10 ---- */
@@ -885,4 +944,36 @@
 }
 .bz-sb-mb-chat-send:disabled {
   opacity: 0.55;
+}
+
+/* ==================== AI 对话弹窗（ticket 108 改居中弹窗，遮罩+ESC 关闭） ==================== */
+.bz-sb-chat-modal {
+  width: 92%;
+  max-width: 600px;
+  height: 72vh;
+  max-height: 72vh;
+  overflow: hidden;
+}
+@media (max-width: 768px) {
+  .bz-sb-chat-modal {
+    width: 94%;
+    height: 78vh;
+    max-height: 78vh;
+  }
+}
+.bz-sb-chat-head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-normal);
+}
+/* 弹窗内的消息/输入沿用桌面窄窗时代类名（bz-sb-chat-*），容器改弹窗布局 */
+.bz-sb-chat-modal .bz-sb-chat-messages {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.bz-sb-chat-modal .bz-sb-chat-input-area {
+  flex-shrink: 0;
+  border-top: 1px solid var(--background-modifier-border);
+  padding: 10px 12px;
 }

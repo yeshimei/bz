@@ -232,4 +232,162 @@ describe('第二大脑首用引导（ticket 107）', () => {
     await until(() => document.getElementById('bz-sb-onboard')?.style.display === 'flex');
     unloadSecondBrain();
   });
+
+  it('待处理增量：打开面板先入进度视图，完成后自动进统计（ticket 108）', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/A.md', '旧内容不会重读因为 mtime 不一致会触发重嵌。');
+    vault.files.set(
+      META_PATH,
+      JSON.stringify({ version: 8, notes: { '我的/A.md': { mtime: 5, chunks: [{ text: 't' }] } }, _dim: 2 })
+    );
+    const { adapter, binary } = makeAdapter(vault);
+    const header = new Uint8Array(4);
+    new DataView(header.buffer).setUint32(0, 2, true);
+    const row = new Float32Array([1, 0]);
+    const out = new Uint8Array(4 + row.byteLength);
+    out.set(header, 0);
+    out.set(new Uint8Array(row.buffer, row.byteOffset, row.byteLength), 4);
+    binary.set(VEC_PATH, out.buffer);
+    const app = makeApp(vault, adapter, { '我的/A.md': 99 }); // mtime 不一致 → 有待处理
+    setApp(app as any);
+    vi.mocked(getEmbeddingsBatch).mockImplementation(async (texts) => texts.map(() => [0.6, 0.8]));
+
+    const store = new VectorStore(app as any);
+    await store.load();
+    expect(store.isIndexReady()).toBe(true);
+    expect(store.hasPendingChanges()).toBe(true); // 关键前提：有增量待处理
+
+    const panel = new SecondBrainPanel(app as any, store, { onOpenReference: () => {}, onOpenChat: () => {} });
+    await panel.open();
+
+    // 先进入进度视图（标题=正在同步索引，说明/按钮隐藏）
+    await until(() => (document.getElementById('bz-sb-progress-title')?.textContent ?? '').includes('正在同步索引'));
+    expect(document.getElementById('bz-sb-onboard-desc')!.style.display).toBe('none');
+    expect((document.getElementById('bz-sb-init-btn') as HTMLElement).style.display).toBe('none');
+
+    // 完成后自动切统计
+    await until(() => document.getElementById('bz-sb-content')!.style.display === 'flex');
+    expect(document.getElementById('bz-sb-cards')!.innerHTML).toContain('向量块');
+    panel.destroy();
+  });
+
+  it('就绪无变更：打开直接进统计，不闪现进度视图（ticket 108）', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/A.md', '内容 A。');
+    vault.files.set(
+      META_PATH,
+      JSON.stringify({ version: 8, notes: { '我的/A.md': { mtime: 5, chunks: [{ text: 't' }] } }, _dim: 2 })
+    );
+    const { adapter, binary } = makeAdapter(vault);
+    const header = new Uint8Array(4);
+    new DataView(header.buffer).setUint32(0, 2, true);
+    const row = new Float32Array([1, 0]);
+    const out = new Uint8Array(4 + row.byteLength);
+    out.set(header, 0);
+    out.set(new Uint8Array(row.buffer, row.byteOffset, row.byteLength), 4);
+    binary.set(VEC_PATH, out.buffer);
+    const app = makeApp(vault, adapter, { '我的/A.md': 5 });
+    setApp(app as any);
+
+    const store = new VectorStore(app as any);
+    await store.load();
+    expect(store.hasPendingChanges()).toBe(false);
+
+    const panel = new SecondBrainPanel(app as any, store, { onOpenReference: () => {}, onOpenChat: () => {} });
+    await panel.open();
+
+    await until(() => document.getElementById('bz-sb-cards')!.innerHTML.includes('向量块'));
+    expect(document.getElementById('bz-sb-onboard')!.style.display).toBe('none');
+    panel.destroy();
+  });
+
+  it('requestRebuild：打开后进入「正在重建向量数据库」进度并完成到统计（ticket 108）', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/A.md', '足够长的单一文本块内容用于重建流程。');
+    vault.files.set(
+      META_PATH,
+      JSON.stringify({ version: 8, notes: { '我的/A.md': { mtime: 3, chunks: [{ text: '旧' }] } }, _dim: 2 })
+    );
+    const { adapter, binary } = makeAdapter(vault);
+    const header = new Uint8Array(4);
+    new DataView(header.buffer).setUint32(0, 2, true);
+    const row = new Float32Array([1, 0]);
+    const out = new Uint8Array(4 + row.byteLength);
+    out.set(header, 0);
+    out.set(new Uint8Array(row.buffer, row.byteOffset, row.byteLength), 4);
+    binary.set(VEC_PATH, out.buffer);
+    const app = makeApp(vault, adapter, { '我的/A.md': 3 });
+    setApp(app as any);
+    vi.mocked(getEmbeddingsBatch).mockImplementation(async (texts) => texts.map(() => [0.5, 0.5]));
+
+    const store = new VectorStore(app as any);
+    await store.load();
+    expect(store.isIndexReady()).toBe(true);
+    const panel = new SecondBrainPanel(app as any, store, { onOpenReference: () => {}, onOpenChat: () => {} });
+    panel.requestRebuild(); // 设置页确认后的意图标记
+    await panel.open();
+
+    await until(() => (document.getElementById('bz-sb-progress-title')?.textContent ?? '').includes('正在重建向量数据库'));
+    await until(() => document.getElementById('bz-sb-content')!.style.display === 'flex');
+    expect(store.isIndexReady()).toBe(true);
+    panel.destroy();
+  });
+});
+
+describe('第二大脑对话弹窗（ticket 108 改居中弹窗）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+    setApp(null as any);
+    setSettingsProvider(() => sbSettings() as any);
+    unloadSecondBrain();
+    vi.mocked(getEmbeddingsBatch).mockReset();
+    vi.mocked(getEmbedding).mockReset();
+  });
+
+  it('show 显示遮罩+弹窗，close 隐藏；destroy 移除 DOM 并摘 esc 层', async () => {
+    const vault = new MockVault();
+    const { adapter } = makeAdapter(vault);
+    const app = makeApp(vault, adapter);
+    setApp(app as any);
+    const store = new VectorStore(app as any);
+
+    const { ChatPanel } = await import('../../src/secondbrain/chat-panel');
+    const chat = new ChatPanel(store, app as any);
+    expect(chat.alive).toBe(true);
+    chat.show();
+    const popup = document.getElementById('bz-sb-chat-panel');
+    expect(popup).not.toBeNull();
+    expect(popup!.style.display).toBe('flex');
+    expect(document.getElementById('bz-sb-chat-mask')!.style.display).toBe('block');
+    expect(popup!.querySelectorAll('button').length).toBe(1); // 只有发送钮，无头部按钮（ticket 108）
+
+    chat.close();
+    expect(popup!.style.display).toBe('none');
+    chat.destroy();
+    expect(document.getElementById('bz-sb-chat-panel')).toBeNull();
+  });
+
+  it('发送走统一 AI.ask（单参）；AI 失败 → 气泡显示错误且按钮恢复', async () => {
+    const vault = new MockVault();
+    const { adapter } = makeAdapter(vault);
+    const app = makeApp(vault, adapter);
+    setApp(app as any);
+    const store = new VectorStore(app as any);
+    // 检索走文本直通，无需向量数据
+    vi.spyOn(store, 'search').mockResolvedValue([]);
+
+    const { ChatPanel } = await import('../../src/secondbrain/chat-panel');
+    const { AI } = await import('../../src/secondbrain/ai');
+    vi.spyOn(AI, 'ask').mockRejectedValue(new Error('服务商不可用'));
+
+    const chat = new ChatPanel(store, app as any);
+    chat.show();
+    chat.input.value = '测试问题';
+    await chat.sendChatMessage();
+    // 欢迎语 + user + assistant(报错) = 3 条
+    await until(() => chat.messagesDiv.textContent!.includes('出错了：服务商不可用'));
+    expect(chat.sendBtn.disabled).toBe(false);
+    chat.destroy();
+  });
 });

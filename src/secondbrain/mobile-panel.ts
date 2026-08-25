@@ -350,14 +350,7 @@ export class MobilePanel {
     this.chatMessagesDiv.className = 'bz-sb-mb-chat-messages bz-sb-scroll-y';
     chat.appendChild(this.chatMessagesDiv);
 
-    const toggleRow = document.createElement('label');
-    toggleRow.className = 'bz-sb-mb-chat-toggle';
-    const toggleCheck = document.createElement('input');
-    toggleCheck.type = 'checkbox';
-    toggleCheck.checked = CONFIG.DEFAULT_USE_DEEPSEEK;
-    toggleRow.appendChild(toggleCheck);
-    toggleRow.appendChild(document.createTextNode('DeepSeek'));
-    chat.appendChild(toggleRow);
+    // DeepSeek 复选框已随统一 AI 通道移除（ticket 108：对话统一走主设置页「🤖 AI」）
 
     const inputArea = document.createElement('div');
     inputArea.className = 'bz-sb-mb-chat-input-area';
@@ -394,7 +387,7 @@ export class MobilePanel {
             : '（未找到相关笔记）';
         // 移动端提示词：与桌面同构，「【参考内容】」简写「【参考】」（QA L2149）
         const prompt = `你是知识助手。参考 ${results.length} 条检索结果回答。不相关可忽略。\n\n【参考】\n${ctx}\n\n【问题】\n${text}`;
-        const answer = await AI.ask(prompt, toggleCheck.checked);
+        const answer = await AI.ask(prompt);
         this.appendChatMsg('assistant', answer);
         this.chatHistory.push({ role: 'assistant', content: answer });
         if (this.chatHistory.length > CONFIG.MAX_HISTORY * 2) {

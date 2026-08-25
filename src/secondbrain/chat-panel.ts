@@ -1,55 +1,61 @@
 /**
- * 第二大脑桌面 AI 对话面板（ticket 103；对齐 QA 闪念.js L1644-1735）
- * 补齐交互点：
- * - DeepSeek 复选框（默认值 DEFAULT_USE_DEEPSEEK，L1663-1667）+ Enter 发送（L1728）
- * - RAG 提示词逐字对齐 L1718：每问独立检索 CHAT_TOP_K 条，context 格式 `[path] (xx%)\nchunk`；
- *   历史仅 UI 展示 + 裁剪 MAX_HISTORY×2 条，不进 prompt（L1703-1718）
- * - assistant 消息 markdown 渲染（renderMarkdown 失败回退纯文本），user 消息纯文本（L1693-1701）
- * - app 经构造函数注入（替代 QA 全局 app 与 WIP 半成品挂 window 的做法——铁律 5）
+ * 第二大脑 AI 对话（ticket 103 建；ticket 108 改居中弹窗）
+ * - 形态：普通弹窗（core createOverlay，遮罩+ESC 关闭，无任何头部按钮——用户拍板）；
+ *   此前为右侧窄窗形态，🤖 入口随参考窄窗按钮精简一并移除；
+ * - DeepSeek 复选框删除：统一走主设置页「🤖 AI」服务商（ticket 108）；
+ * - RAG 提示词逐字对齐 QA L1718：每问独立检索 CHAT_TOP_K 条，context 格式 `[path] (xx%)\nchunk`；
+ *   历史仅 UI 展示 + 裁剪 MAX_HISTORY×2 条，不进 prompt；
+ * - assistant 消息 markdown 渲染（失败回退纯文本），user 消息纯文本。
  */
 import type { App } from 'obsidian';
-import { FloatWindow } from './float-window';
+import { createOverlay } from '../core/dom';
+import { escManager } from '../core/esc-manager';
 import { buildConfig } from './config';
 import { renderMarkdown } from './ui-tools';
 import { AI } from './ai';
 import type { SearchHit, VectorStore } from './vector-store';
 
 export class ChatPanel {
-  fw: FloatWindow;
+  store: VectorStore;
   messagesDiv: HTMLElement;
   input: HTMLInputElement;
   sendBtn: HTMLButtonElement;
-  toggle: HTMLInputElement;
-  store: VectorStore;
   history: { role: 'user' | 'assistant'; content: string }[] = [];
+  mask: HTMLDivElement;
+  popup: HTMLDivElement;
   private app: App;
+  private escHandle: ReturnType<typeof escManager.register> | null = null;
 
-  constructor(store: VectorStore, app: App, existingWin?: FloatWindow) {
+  constructor(store: VectorStore, app: App) {
     this.app = app;
     this.store = store;
 
-    const chatContainer = document.createElement('div');
-    chatContainer.className = 'bz-sb-chat-wrap';
+    const CONFIG = buildConfig();
+    // 弹窗外壳：主面板族层级（9998 遮罩 / 9999 本体），与 smartcat 对话弹窗同款先例
+    const { mask, popup } = createOverlay({
+      maskId: 'bz-sb-chat-mask',
+      popupId: 'bz-sb-chat-panel',
+      zIndex: 9998,
+      onMaskClick: () => this.close(),
+    });
+    this.mask = mask;
+    this.popup = popup;
+    this.popup.classList.add('bz-sb-chat-modal');
 
+    // 头部：仅标题文字（不放任何按钮——靠遮罩+ESC 关闭）
+    const head = document.createElement('div');
+    head.className = 'bz-win-head bz-sb-chat-head';
+    const title = document.createElement('h3');
+    title.textContent = '🤖 AI 助手';
+    head.appendChild(title);
+
+    // 消息区
     this.messagesDiv = document.createElement('div');
     this.messagesDiv.className = 'bz-sb-chat-messages bz-sb-scroll-y';
-    chatContainer.appendChild(this.messagesDiv);
 
-    const CONFIG = buildConfig();
-
-    // 输入区：DeepSeek 开关 + 输入框 + 发送
+    // 输入区（DeepSeek 开关已随统一 AI 通道移除）
     const inputArea = document.createElement('div');
     inputArea.className = 'bz-sb-chat-input-area';
-
-    const toggleRow = document.createElement('label');
-    toggleRow.className = 'bz-sb-chat-toggle';
-    this.toggle = document.createElement('input');
-    this.toggle.type = 'checkbox';
-    this.toggle.checked = CONFIG.DEFAULT_USE_DEEPSEEK;
-    toggleRow.appendChild(this.toggle);
-    toggleRow.appendChild(document.createTextNode('DeepSeek'));
-    inputArea.appendChild(toggleRow);
-
     const inputRow = document.createElement('div');
     inputRow.className = 'bz-sb-chat-input-row';
     this.input = document.createElement('input');
@@ -66,26 +72,45 @@ export class ChatPanel {
     inputRow.appendChild(this.input);
     inputRow.appendChild(this.sendBtn);
     inputArea.appendChild(inputRow);
-    chatContainer.appendChild(inputArea);
 
-    if (existingWin) {
-      // 入口已建窄窗时复用（index 接线传 chatWin，避免双窗）
-      this.fw = existingWin;
-    } else {
-      this.fw = new FloatWindow('AI 助手', {});
-    }
-    this.fw.body.appendChild(chatContainer);
+    this.popup.appendChild(head);
+    this.popup.appendChild(this.messagesDiv);
+    this.popup.appendChild(inputArea);
+    document.body.appendChild(mask);
+    document.body.appendChild(popup);
+
+    // ESC 关闭走 escManager 层级
+    this.escHandle = escManager.register('bz-sb-chat-modal', {
+      isVisible: () => this.popup.style.display === 'flex' && !!this.popup.isConnected,
+      close: () => this.close(),
+    });
 
     this.addChatMessage('assistant', `你好！每次提问会独立检索 ${CONFIG.CHAT_TOP_K} 条笔记辅助回答。`);
-    this.input.focus();
   }
 
   get alive(): boolean {
-    return this.fw.alive;
+    return !!this.popup.isConnected;
   }
 
-  expand(): void {
-    this.fw.expand();
+  /** 显示弹窗并聚焦输入框 */
+  show(): void {
+    if (!this.alive) return;
+    this.mask.style.display = 'block';
+    this.popup.style.display = 'flex';
+    this.input.focus();
+  }
+
+  close(): void {
+    this.mask.style.display = 'none';
+    this.popup.style.display = 'none';
+  }
+
+  /** 完全销毁（unload 调用）：摘 ESC 层并移除 DOM */
+  destroy(): void {
+    this.escHandle?.unregister();
+    this.escHandle = null;
+    this.mask.remove();
+    this.popup.remove();
   }
 
   /** 历史仅 UI 展示用；裁剪 MAX_HISTORY×2 条，不进 prompt（每问独立检索） */
@@ -122,7 +147,7 @@ export class ChatPanel {
           : '（未找到相关笔记）';
       // QA L1718 提示词原样
       const fullPrompt = `你是知识助手。参考笔记库中 ${results.length} 条检索结果回答问题。不相关可忽略。\n\n【参考内容】\n${context}\n\n【问题】\n${userMsg}`;
-      const answer = await AI.ask(fullPrompt, this.toggle.checked);
+      const answer = await AI.ask(fullPrompt);
       this.addChatMessage('assistant', answer);
     } catch (e: any) {
       this.addChatMessage('assistant', '出错了：' + (e?.message || e));
@@ -130,9 +155,5 @@ export class ChatPanel {
       this.sendBtn.disabled = false;
       this.sendBtn.textContent = '发送';
     }
-  }
-
-  close(): void {
-    this.fw.close();
   }
 }

@@ -1,18 +1,18 @@
 /**
- * 第二大脑 AI 双通道（ticket 103；对齐 QA 闪念.js L747-765 语义）
- * DeepSeek 优先（勾选时），失败自动回退本地 Ollama。
- * DeepSeek 通道走 bz core/ai 的 createAI()（替代 QA 的 window.__utils.createAI——铁律 5 不挂 window）。
+ * 第二大脑 AI 通道（ticket 108 起统一走 bz core/ai，主设置页「🤖 AI」服务商单选）
+ * - ticket 103~107：QA 双通道（勾选 DeepSeek / 回退本地 Ollama qwen2.5），设置键 secondBrainDeepseekModel 等；
+ * - ticket 108：用户拍板「统一使用 ai」——对话与概括都走 core/ai（aiProvider：DeepSeek / OpenCode Go），
+ *   不再回退 Ollama（Ollama 从此专注嵌入 bge-m3）；旧三个对话设置键保留 data.json 不再消费
+ *   （CONCURRENCY 死配置同款处理），内部模型名改用 QA 冻结常量。
  */
 import { createAI } from '../core/ai';
-import { buildConfig } from './config';
-import { ollamaChat } from './ollama';
 
 type AIService = ReturnType<typeof createAI>;
 let deepseek: AIService | null = null;
 
-/** DeepSeek 服务懒创建（unload 由域入口置空，对齐 clip-archive 先例） */
+/** 主设置页 AI 服务懒创建（unload 由域入口置空）；defaultModel 用 QA 冻结默认值，provider 配置的模型优先 */
 export function getDeepseekAI(): AIService {
-  if (!deepseek) deepseek = createAI({}, buildConfig().DEEPSEEK_MODEL, {}, 16384);
+  if (!deepseek) deepseek = createAI({}, 'deepseek-v4-flash', {}, 16384);
   return deepseek;
 }
 
@@ -21,17 +21,9 @@ export function resetDeepseekAI(): void {
 }
 
 export const AI = {
-  async ask(prompt: string, useDeepSeek: boolean): Promise<string> {
-    const CONFIG = buildConfig();
-    if (useDeepSeek) {
-      try {
-        // prompt() 不显式传模型 → 用 createAI 注入的 defaultModel（secondBrainDeepseekModel 设置）。
-        // 不能用 chat()：其内部硬编码 'deepseek-v4-flash'，自定义模型名永远传不出（ticket 107 修）
-        return await getDeepseekAI().prompt(prompt);
-      } catch (e) {
-        console.warn('[secondbrain] DeepSeek 调用失败，回退到本地', e);
-      }
-    }
-    return ollamaChat(prompt, CONFIG.OLLAMA_CHAT_MODEL);
+  /** 统一入口：失败直接抛出，由调用方 toast 报错（不静默回退 Ollama——ticket 108） */
+  async ask(prompt: string): Promise<string> {
+    // prompt() 不显式传模型 → 用 createAI 注入的 defaultModel；provider.model 配置存在时优先生效
+    return getDeepseekAI().prompt(prompt);
   },
 };

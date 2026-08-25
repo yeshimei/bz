@@ -1,13 +1,15 @@
 /**
- * 第二大脑桌面参考面板（ticket 103；对齐 QA 闪念.js L1318-1642）
- * 补齐交互点：
- * - 结果过滤当前文件（L1410-1411）；空态「暂无相关笔记」
- * - 卡片 = 文件名 + 匹配度百分比 + 正文 markdown 渲染（L1425-1447，正文列表态收起）
- * - 300ms 悬停浮出预览：路径 + 匹配度 + markdown 正文，按窄窗在屏左/右智能定位（L1449-1460/L1599-1641）
- * - 双击卡片跳转 chunk 前 30 字并选中；浮卡态双击归位（L1462-1468）
- * - 长按 250ms 浮起 → 位移超 15px 拖出独立浮卡状态机：可拖拽/可缩放/双击归位回原位（L1470-1596）
- * - 🤖 按钮开 AI 聊天（L1345-1351）；vault modify(.md)/active-leaf-change/editor-change 自动刷新 +
- *   光标轮询 CURSOR_POLL_INTERVAL、防抖 DEBOUNCE_DELAY（L1356-1366/L1371-1375）
+ * 第二大脑桌面参考面板（ticket 103 建；ticket 108 头部与密度切换）
+ * 交互点：
+ * - 结果过滤当前文件；空态「暂无相关笔记」
+ * - 卡片 = 文件名 + 匹配度百分比 + 正文 markdown 渲染（列表态收起）
+ * - 密度切换（ticket 108）：📃 仅标题 / 📑 标题+省略内容，会话内有效不持久化
+ * - 300ms 悬停浮出预览：路径 + 匹配度 + markdown 正文，按窄窗在屏左/右智能定位
+ * - 双击卡片跳转 chunk 前 30 字并选中；浮卡态双击归位
+ * - 长按 250ms 浮起 → 位移超 15px 拖出独立浮卡状态机：可拖拽/可缩放/双击归位回原位
+ * - 🤖 按钮已移除（对话改独立弹窗，从主面板 💬 或命令进入——ticket 108）；
+ *   vault modify(.md)/active-leaf-change/editor-change 自动刷新 +
+ *   光标轮询 CURSOR_POLL_INTERVAL、防抖 DEBOUNCE_DELAY
  */
 import type { App, TFile } from 'obsidian';
 import { notice } from '../core/notice';
@@ -23,8 +25,10 @@ export class ReferencePanel {
   store: VectorStore;
   app: App;
   lastQuery = '';
-  onOpenChat: (() => void) | null = null;
   floatingCards = new Set<HTMLElement>();
+  /** 密度态：false=标题+省略内容（默认），true=仅标题（会话内有效，不持久化） */
+  denseMode = false;
+  private denseBtn: HTMLButtonElement;
 
   private isClosed = false;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
@@ -37,25 +41,24 @@ export class ReferencePanel {
   /** 浮卡拖出跟随的 document 级监听卸载器（close 时兜底清理） */
   private activeFollows = new Set<() => void>();
 
-  constructor(app: App, store: VectorStore, onOpenChat?: () => void, existingWin?: FloatWindow) {
+  constructor(app: App, store: VectorStore, existingWin?: FloatWindow) {
     this.app = app;
     this.store = store;
-    this.onOpenChat = onOpenChat || null;
 
-    // 🤖 AI 对话按钮（注入窄窗标题栏功能位）
-    const chatBtn = document.createElement('button');
-    chatBtn.className = 'bz-sb-float-btn';
-    chatBtn.textContent = '🤖';
-    chatBtn.title = 'AI 对话';
-    chatBtn.addEventListener('click', () => this.onOpenChat?.());
+    // 密度切换钮（窄窗标题栏功能位，ticket 108）
+    this.denseBtn = document.createElement('button');
+    this.denseBtn.className = 'bz-sb-float-btn';
+    this.denseBtn.textContent = '📑';
+    this.denseBtn.title = '切换：仅标题 / 标题+内容';
 
     if (existingWin) {
       // 入口已建窄窗时复用（index 接线传 referenceWin，避免双窗）
       this.fw = existingWin;
-      this.fw.headerRight.appendChild(chatBtn);
+      this.fw.headerRight.appendChild(this.denseBtn);
     } else {
-      this.fw = new FloatWindow('灵感参考', { headerRight: chatBtn, onClose: () => this.destroyResources() });
+      this.fw = new FloatWindow('灵感参考', { headerRight: this.denseBtn, onClose: () => this.destroyResources() });
     }
+    this.denseBtn.addEventListener('click', () => this.toggleDensity());
 
     this.resultsDiv = document.createElement('div');
     this.resultsDiv.className = 'bz-sb-ref-list bz-sb-scroll-y';
@@ -92,6 +95,14 @@ export class ReferencePanel {
 
   expand(): void {
     this.fw.expand();
+  }
+
+  /** 密度切换（ticket 108）：📃 仅标题 / 📑 标题+省略内容；CSS 类整体切换，会话内有效 */
+  toggleDensity(): void {
+    this.denseMode = !this.denseMode;
+    this.resultsDiv.classList.toggle('bz-sb-ref-dense', this.denseMode);
+    this.denseBtn.textContent = this.denseMode ? '📃' : '📑';
+    this.denseBtn.title = this.denseMode ? '切换：标题+内容' : '切换：仅标题';
   }
 
   refreshWithDebounce(): void {
