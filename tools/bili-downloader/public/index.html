@@ -107,6 +107,10 @@
       <div class="hint" id="result-path"></div>
       <div class="result-clip" id="result-clip"></div>
       <div class="row" style="margin-top:10px">
+        <button class="btn" id="gen-note" disabled title="AI 生成标题/标签/一句话简介并润色正文，写入文献盒">📄 生成文献笔记</button>
+      </div>
+      <div class="hint hidden" id="note-result"></div>
+      <div class="row" style="margin-top:10px">
         <button class="btn primary" id="copy-btn">复制</button>
         <button class="btn" id="newtask-btn">新建任务</button>
       </div>
@@ -159,6 +163,15 @@
       </label>
       <label>🤖 Whisper 模型
         <input type="text" id="set-whisperModel" placeholder="small">
+      </label>
+      <label>⏳ 视频缓存保留天数（下载原件，同视频重复下载直接复用）
+        <input type="text" id="set-cacheRetentionDays" placeholder="7">
+      </label>
+      <label>⚡ 视频缓存目录（可选，留空 = 系统临时目录/bili-dl-cache）
+        <input type="text" id="set-cacheDir" placeholder="C:/.../bili-dl-cache">
+      </label>
+      <label>📚 文献盒文件夹（文献笔记存放目录，相对 vault 根）
+        <input type="text" id="set-literatureFolder" placeholder="文献盒">
       </label>
       <div class="divider"></div>
       <div class="hint" id="cookie-status2"></div>
