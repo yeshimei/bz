@@ -10,6 +10,7 @@
 /* 主面板根（legacy id）双保险：JS 仅清内联 z 而暂未挂类时同样兜底抬档 */
 #__gui_wu_ben__ { z-index: 9997; }
 
-/* 注：子弹窗（createModalShell 生成：添加/编辑/删除/排序，z 11100/11101 档已在 JS 固定）
-   为纯内联样式、无 id/类钩子——p3 焦点环需 ux-misc 清内联时补挂 bz- 类（如 bz-bel-modal），
-   挂上即被 core p3 伞规则（src/core/styles.css）自动覆盖 */
+/* 子弹窗档位（createModalShell 生成：添加/编辑/删除/排序）：JS 已挂 .bz-belongings-overlay--11100/11101 类，
+   值压过统一抽屉 10999/11000（companion 档 11100+，与家族表注释一致） */
+.bz-belongings-overlay--11100 { z-index: 11100; }
+.bz-belongings-overlay--11101 { z-index: 11101; }
