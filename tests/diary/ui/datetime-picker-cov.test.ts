@@ -150,7 +150,9 @@ describe('边界与按钮', () => {
   it('初始时刻超出列范围（2035 年）→ 安全渲染无高亮', () => {
     const mask = openPicker('2035-05-05 10:30');
     const cols = wheelCols(mask);
-    expect(colItemCount(cols[0])).toBe(31); // 年列固定 2000-2030
+    // 年列动态范围（UX-34）：无数据时下限放宽至 1900，max = 当前年份+1
+    const yearCount = new Date().getFullYear() + 1 - 1900 + 1;
+    expect(colItemCount(cols[0])).toBe(yearCount);
     expect(selectedItem(cols[0])).toBeNull(); // 2035 无对应项，scrollToSelected 越界安全
     mask.remove();
   });

@@ -24,6 +24,8 @@ export const state = {
     currentDateFilter: null as DateFilter | null,
     currentSearchKeyword: '',
     searchDebounceTimer: null as ReturnType<typeof setTimeout> | null,
+    /** 标签计数防抖计时器（UX-41：全量 O(条目×标签) 遍历合并为一次，状态可见便于测试清理） */
+    tagCountTimer: null as ReturnType<typeof setTimeout> | null,
     isLoadingData: false,
   },
   events: {

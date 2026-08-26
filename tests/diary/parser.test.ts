@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, expect, it, beforeEach } from 'vitest';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { setApp } from '../../src/diary/app';
 import { buildTagMaps } from '../../src/diary/config';
 import { parseFile, parseMovieFile, parseLetterFile, parseNaturalTime, isEncryptedEntry } from '../../src/diary/parser';
@@ -88,6 +88,42 @@ describe('parseFile', () => {
   it('isEncryptedEntry 检测 🔐', () => {
     const e = parseFile('# 📖 08:00\n🔐secret🔐\n', '2024-01-01')[0];
     expect(isEncryptedEntry(e)).toBe(true);
+  });
+});
+
+describe('parseFile 未解析行统计（UX-9）', () => {
+  it('全可解析文件不回调（计为零，免打扰）', () => {
+    const cb = vi.fn();
+    parseFile('# 📖 08:00\n内容\n', '2024-01-01', cb);
+    expect(cb).not.toHaveBeenCalled();
+  });
+
+  it('首个条目之前游离的非空行计入未解析行，解析结果不变', () => {
+    const cb = vi.fn();
+    const entries = parseFile('游离说明文字\n# 📖 08:00\n内容\n', '2024-01-01', cb);
+    expect(entries).toHaveLength(1);
+    expect(entries[0].content).toBe('内容');
+    expect(entries[0].time).toBe('08:00');
+    expect(cb).toHaveBeenCalledWith(1);
+  });
+
+  it('时间越界的条目标题行计入未解析行（其后孤儿正文行同样无法归属）', () => {
+    const cb = vi.fn();
+    const entries = parseFile('# 📖 25:99\nx\n# 📖 08:00\n正常\n', '2024-01-01', cb);
+    expect(entries).toHaveLength(1);
+    expect(entries[0].time).toBe('08:00');
+    expect(cb).toHaveBeenCalledWith(2); // 越界标题行 + 孤儿正文行 x
+  });
+
+  it('首行空行不计未解析；多处游离行累计', () => {
+    const cb = vi.fn();
+    parseFile('\n\n游离一\n游离二\n# 📖 08:00\n内容\n', '2024-01-01', cb);
+    expect(cb).toHaveBeenCalledWith(2);
+  });
+
+  it('未传回调不统计（兼容旧调用）', () => {
+    const entries = parseFile('游离文字\n# 📖 08:00\n内容\n', '2024-01-01');
+    expect(entries).toHaveLength(1);
   });
 });
 
