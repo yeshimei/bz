@@ -109,6 +109,18 @@
 - **1.2.3 修订——转文字跟随剪辑语义**：`/api/transcribe` 带 segments 时**逐段转录**（每段 prepare 后分别跑 faster-whisper，存 `T.segmentTranscripts{segId:text}`，`T.transcript`=各段拼接）；不传或整片单段 → 转录当前预览原件。下载后**段落为空**（不再自动生成整片段落，手动圈选「+ 添加段落」）；空段落 = 整片交付/转录。
 - **1.2.3 修订——笔记视频块布局（用户拍板）**：分开交付多段 = 每文件「视频链接、对应转文字」依次排 N 块；合并交付 = 单块「视频链接、整段转文字」；正文（润色全文）在其前。
 - **1.2.4 修订（2026-08-25，未发布·本地验证期）**：快捷命令改**严格顺序五步**——①应用剪辑（逐段 `/api/trim`）→②应用压缩（选档逐段 `/api/compress`）→③转文字→④AI 润色（**新端点 `/api/note-prepare`**：元数据+分块润色存 `T.polishedNote`）→⑤生成笔记（`/api/done` 交付 + `/api/note` 写笔记复用润色结果，AI 只跑一次）；各步串行 await 绝不并行，`#flow-status` 显式展示步骤；**转录单进程单次模型加载多文件转**（PY_TRANSCRIBE 多文件 + `\x1e/\x1f` 单元分隔 + `parseTranscriptUnits` 归位，修多段「一直转录中无效果」）；修草稿态滑块被 `syncFromActive` 重置导致的把手不跟随/回零；压缩完成清「100% 编码中」残影。
+- **1.2.5 修订（2026-08-25，未发布·本地验证期）**：修两处 `gen-note` 链条 bug——① `/api/trim` 与 `/api/compress` 调用漏传 `'POST'`（body 对象被当 method 参数，报 `'[object Object]' is not a valid HTTP method`，链条第一步即失败）；② **段落语义统一（用户拍板）**：三入口（转文字 **/ 完成 / 生成文献笔记）共用前端 `resolveSegments()`——若**已有段落**按段落走（不区分是否拖拽）；若**无段落但拖拽了把手**（draft 非整片）则自动把草稿范围添加为段落再走；若**既无段落也未拖拽**（整视频、未圈选）则生成文献笔记**跳过 ①剪切/②压缩**、③转文字走整片、再 ④⑤（已完成交付则仅 ④⑤）。
+- **1.2.6 修订（2026-08-25，未发布·本地验证期）**：**转录死锁根因修复**——faster-whisper 在本机 `transcribe(..., vad_filter=True)`（Silero VAD）会**永久挂起**（实测模型 2.1s 加载后 60s+ 零输出），表现为「一直转录/无字」；改为 `vad_filter=False` 后 3s 音频 3.6s 完成、逐文件 `\x1e/\x1f` 归位正常。定位方式：ffmpeg 生成 3s 测试音频 → node 子进程观测 python stdout/stderr（未在 harness 内 import faster_whisper）。**教训：凡转录卡死先做「小音频 + 子进程观测」冒烟，勿反复让用户整片重试。**
+- **1.2.7 修订（2026-08-25，未发布·本地验证期，grilling 二轮 Q1–Q5 拍板）**：
+  - **繁→简（Q1）**：不做本地转换库；AI 润色提示词强制**输出简体中文**兜底（繁体转写一并转简）。
+  - **润色稿回填**：`/api/note-prepare` 返回润色全文，前端把「转文字」文本框原文**替换为润色稿**（`S.transcript` 同步）。
+  - **笔记结构（Q2）**：去掉独立「原文」段与块内转录文字——改为逐段「**该段润色正文 + 该段视频双链**」依次排布；合并/单段 = 一组。润色改**按段落分别进行**（段内超长仍切块），`T.polishedNote` 扩为 `{meta, bodies:[{segId,text}], whole}`。
+  - **元数据规则（Q3=B）**：标题/tags 规则对齐 bz 自动摘要（标题 15-30 字完整陈述句或疑问句，禁冒号/破折号/句中句号问号；tags 3-6 个每个 ≤5 字，涵盖主题领域/关键概念/应用场景）；**简介维持一句话 ≤60 字**。
+  - **frontmatter 七键（Q4）**：`title/tags/summary/url/date/author/videoTitle`——`source` 改名 `url` = `https://www.bilibili.com/video/<BV>`（分P 追加 `?p=N`）；`date`=生成时刻本地时间 `"YYYY-MM-DD HH:mm:ss"`；`author`=UP主（解析 uploader）；`videoTitle`=视频原标题。
+  - **AI 润色进度（Q5=B）**：服务端逐块广播 `note-progress` SSE，前端 flow-status 实时显示「生成标题/标签/简介…」「AI 润色（第 x/y 块）…」。
+  - **双重压缩 bug 修复**：交付端 doDone 不再看缓存标记重复编码——prepared 条目 `mode==='reencode'` 时跳过再次压缩（分开/合并两分支）。
+  - **杂项**：按钮「✂ 应用裁切」→「✂ 裁切」；右下角「转文字」按钮移除（转文字只属快捷命令流程）；笔记生成成功后自动 `obsidian://` 打开（浏览器首次弹外部协议确认属正常）。
+  - **审查修复（同日二轮）**：① **转录签名** `transcriptSig`/`flowSig`（段落 id+起止 0.1s 粒度，整片=`full`）双侧校验——签名不符自动重转，杜绝「整片稿被分段复用 → 笔记丢正文」「换视频残留旧稿报请先转文字」「改段落时间不重转」三类隐形 bug；下载成功/resetUI 清客户端转录与签名。② prepare 成功后服务端 `T.transcript` 同步为润色全文（交付剪贴板不再夹带繁体原文）。回归测试：`POST /api/transcribe` 签名早退/重转用例（66 tests 全绿）。
 - 步骤（AI 部分，note-prepare 内）：① 元数据调用（`response_format: json_object`）→ {title, tags[], summary}；② 正文润色——转录按段落切块（块大小控 token 预算），逐块轻润色、按序拼接；任一步失败即中止、可重试，不落半成品。
 - 成功：写笔记（F4）→ toast → `obsidian://open?vault=<vaultPath 末段>&file=<文献盒相对路径>` 跳转（URL 编码）。
 

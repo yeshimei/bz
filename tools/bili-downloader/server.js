@@ -28,6 +28,7 @@ const T = {
   mode: 'split',           // split（分开交付，每段一个） | merge（合并成一个视频）
   prepared: [],            // [{id, start, end, mode, tempPath}] 已校验段落临时产物缓存（交付复用）
   transcript: '',
+  transcriptSig: '',       // 转录覆盖范围签名（段落 id+起止 / 'full'）：不符则重转，防陈旧稿跨段落复用（1.2.7 审查修复）
   segmentTranscripts: {},  // 分段转录 {segId: text}（多段落交付时笔记按片段挂正文）
   polishedNote: null,      // AI 润色产物 {meta, body}（/api/note-prepare 缓存，生成笔记直接复用）
   lastFiles: [],           // 本次交付的文件 [{finalName, wiki, segId}]（文献笔记 embed 与历史 note 字段用）
@@ -40,6 +41,7 @@ function resetTask() {
   T.originalPath = null; T.curPath = null; T.curDur = 0
   T.crf = 23; T.segments = []; T.mode = 'split'; T.prepared = []
   T.transcript = ''
+  T.transcriptSig = ''
   T.segmentTranscripts = {}
   T.polishedNote = null
   T.lastFiles = []
@@ -52,6 +54,15 @@ function clampSeg(seg, duration) {
   let end = Math.min(duration, Number(seg.end) || duration)
   if (end - start < 0.1) { start = 0; end = duration }
   return { id: String(seg.id != null ? seg.id : Math.random()), start, end }
+}
+
+// 转录覆盖范围签名：整片（含整片单段）= 'full'，分段 = id+起止(0.1s 粒度)串。
+// 前端 flowSig 与此同构；两侧任一不一致即触发重转，杜绝陈旧转录跨段落复用（1.2.7 审查修复）
+function transSig(segs, duration) {
+  if (!segs.length) return 'full'
+  if (segs.length === 1 && segs[0].start === 0 && segs[0].end === duration) return 'full'
+  const r = v => Math.round(Number(v) * 10) / 10
+  return segs.map(s => `${s.id}:${r(s.start)}-${r(s.end)}`).join('|')
 }
 
 // ---- SSE 客户端 ----
@@ -139,7 +150,9 @@ async function doDone(body) {
       const expected = segs.reduce((a, s) => a + (s.end - s.start), 0)
       await core.mergeSegments({ files: parts, outPath: merged, ffmpeg: conf.ffmpegPath, ffprobe: conf.ffprobePath, expectedSec: expected, onProgress: ({ percent }) => broadcast({ type: 'trim-progress', percent }) })
       let finalTemp = merged, compressed = false, usedCrf = null
-      if (crf !== null) {
+      // 1.2.7 双重压缩修复：全部段落已在快捷命令第②步按该 CRF 编码过（prepared mode=reencode）→ 不再二次压缩
+      const allPreEncoded = crf !== null && segs.every(s => { const p = T.prepared.find(x => x.id === s.id); return p && p.mode === 'reencode' })
+      if (crf !== null && !allPreEncoded) {
         const before = fs.statSync(merged).size
         const enc = path.join(TMP_DIR, `bili_${Date.now()}_crf${crf}.mp4`)
         await core.trimVideo({ inPath: merged, outPath: enc, ffmpeg: conf.ffmpegPath, ffprobe: conf.ffprobePath, start: 0, end: expected, crf, totalMs: expected * 1000, onProgress: ({ percent }) => broadcast({ type: 'trim-progress', percent }) })
@@ -162,7 +175,9 @@ async function doDone(body) {
       try {
         const tmp = await prepareSegment(seg, duration)
         let finalTemp = tmp, compressed = false, usedCrf = null
-        if (crf !== null) {
+        // 1.2.7 双重压缩修复：该段已预编码（快捷命令第②步 / 手动压缩，mode=reencode）→ 交付直接复用
+        const pre = T.prepared.find(p => p.id === seg.id)
+        if (crf !== null && !(pre && pre.mode === 'reencode')) {
           const before = fs.statSync(tmp).size
           const enc = path.join(TMP_DIR, `bili_${Date.now()}_${seg.id}_crf${crf}.mp4`)
           await core.trimVideo({ inPath: tmp, outPath: enc, ffmpeg: conf.ffmpegPath, ffprobe: conf.ffprobePath, start: 0, end: seg.end - seg.start, crf, totalMs: (seg.end - seg.start) * 1000, onProgress: ({ percent }) => broadcast({ type: 'trim-progress', percent }) })
@@ -193,34 +208,59 @@ async function doDone(body) {
 // 前置：已「完成」交付（embed 引用真实交付文件名）+ 已转文字（转录全文在内存 T.transcript）
 // AI 润色独立成步（POST /api/note-prepare，1.2.4 起）：润色结果存 T.polishedNote，note 落盘直接复用；
 // 未走 prepare（旧前端/直连）时 note 内部内联执行 AI（向后兼容）。
-async function runNoteAi(ai, videoTitle) {
+// 1.2.7：按段落分别润色（sources=[{segId,text}]；段内超长仍切块），逐块广播 note-progress 进度；
+// 产物 = { meta, bodies:[{segId,text}], whole }（whole=各段润色稿拼接，供合并交付与前端回填）。
+async function runNoteAi(ai, videoTitle, sources) {
   if (T.polishedNote) return T.polishedNote
-  broadcast({ type: 'diag', text: 'AI 生成标题/标签/一句话简介…' })
-  const chunks = core.chunkTranscript(T.transcript)
+  const srcs = (Array.isArray(sources) && sources.length)
+    ? sources.filter(s => s && s.text && String(s.text).trim())
+    : [{ segId: null, text: T.transcript }]
+  if (!srcs.length) srcs.push({ segId: null, text: T.transcript })
+  // 元数据：基于第一段开头片段
+  broadcast({ type: 'note-progress', text: '生成标题/标签/简介…' })
+  const firstChunks = core.chunkTranscript(srcs[0].text)
   const metaRaw = await core.aiJson({
     ...ai,
-    messages: [{ role: 'user', content: core.literatureMetaPrompt(videoTitle, chunks[0] || '') }],
+    messages: [{ role: 'user', content: core.literatureMetaPrompt(videoTitle, firstChunks[0] || '') }],
     maxTokens: 600,
   })
-  const tags = Array.isArray(metaRaw.tags) ? metaRaw.tags.map(String).filter(Boolean).slice(0, 5) : []
+  const tags = Array.isArray(metaRaw.tags) ? metaRaw.tags.map(String).filter(Boolean).slice(0, 6) : []
   const meta = {
     title: String(metaRaw.title || '').trim() || videoTitle || '未命名',
     tags,
     summary: String(metaRaw.summary || '').trim(),
   }
-  broadcast({ type: 'diag', text: 'AI 润色正文…' })
-  const polished = []
-  for (let i = 0; i < chunks.length; i++) {
-    const t = await core.aiChat({
-      ...ai,
-      messages: [{ role: 'user', content: core.literaturePolishPrompt(chunks[i]) }],
-      maxTokens: 4096,
-    })
-    polished.push(t)
+  // 正文：逐段润色；进度按全部切块总数推进
+  const plan = srcs.map(s => ({ segId: s.segId, chunks: core.chunkTranscript(s.text) }))
+  const total = plan.reduce((a, p) => a + p.chunks.length, 0)
+  let done = 0
+  const bodies = []
+  for (const p of plan) {
+    const polished = []
+    for (const c of p.chunks) {
+      done++
+      broadcast({ type: 'note-progress', text: `AI 润色（第 ${done}/${total} 块）…` })
+      polished.push(await core.aiChat({
+        ...ai,
+        messages: [{ role: 'user', content: core.literaturePolishPrompt(c) }],
+        maxTokens: 4096,
+      }))
+    }
+    bodies.push({ segId: p.segId, text: polished.join('') })
   }
-  const out = { meta, body: polished.join('') }
+  const out = { meta, bodies, whole: bodies.map(b => b.text).join('\n\n') }
   T.polishedNote = out
   return out
+}
+
+// 笔记 frontmatter 附加字段：url（BV 规范链接，分P 追加 ?p=N）/ date / author / videoTitle
+function noteExtras() {
+  const bv = core.extractBv(T.url)
+  const url = bv ? `https://www.bilibili.com/video/${bv}${T.part > 1 ? `?p=${T.part}` : ''}` : (T.url || '')
+  const d = new Date()
+  const pad = n => String(n).padStart(2, '0')
+  const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+  return { url, date, author: (T.info && T.info.uploader) || '', videoTitle: (T.info && T.info.title) || '' }
 }
 
 async function doNote() {
@@ -228,21 +268,23 @@ async function doNote() {
   if (!T.transcript) throw new Error('请先转文字（生成文献笔记需要转录文本）')
   const conf = cfg.loadConfig()
   const ai = core.loadBzAiConfig(conf)   // 缺 key / 缺 bz 数据文件 → 报错，无 quickadd 回退
-  const source = core.extractBv(T.url) || T.url
   setBusy(true)
   T.phase = 'generating'
   try {
-    const { meta, body } = await runNoteAi(ai, (T.info && T.info.title) || '')
-    // 视频块：分开交付 = 每文件「视频链接 + 对应段落转文字」依次排；合并 = 单文件「视频链接 + 整段转文字」
-    const segT = T.segmentTranscripts || {}
-    const embeds = (T.lastFiles || []).map(f => ({
+    // 未走 prepare（直连 /api/note）→ 同样按段落润色（源=lastFiles 的分段转录）；已 prepare → 复用缓存
+    const segT0 = T.segmentTranscripts || {}
+    const segSources = (T.lastFiles || []).filter(f => f.segId && segT0[f.segId]).map(f => ({ segId: f.segId, text: segT0[f.segId] }))
+    const { meta, bodies, whole } = await runNoteAi(ai, (T.info && T.info.title) || '', segSources.length ? segSources : undefined)
+    // 逐段块：分开交付 = 每文件「该段润色正文 + 该段双链」依次排；合并/整片 = 单组（整篇润色稿 + 单链）
+    // 缺润色稿的段落只落双链（绝不回填原始转录——笔记中不出现「原文」）
+    const blocks = (T.lastFiles || []).map(f => ({
+      text: f.segId ? ((bodies.find(b => b.segId === f.segId) || {}).text || '') : whole,
       wiki: f.wiki,
-      transcript: f.segId ? (segT[f.segId] || '') : T.transcript,
     }))
     const md = core.buildLiteratureNote({
-      title: meta.title, tags: meta.tags, summary: meta.summary, source,
-      body,
-      embeds,
+      title: meta.title, tags: meta.tags, summary: meta.summary,
+      ...noteExtras(),
+      blocks,
     })
     const folder = path.join(conf.vaultPath, conf.literatureFolder || '文献盒')
     fs.mkdirSync(folder, { recursive: true })
@@ -259,17 +301,24 @@ async function doNote() {
   }
 }
 
-// AI 润色独立步骤（快捷命令第 4 步）：元数据 + 分块润色 → 存 T.polishedNote，供生成笔记复用
-async function doNotePrepare() {
+// AI 润色独立步骤（快捷命令第 4 步）：按段落润色 → 存 T.polishedNote，供生成笔记复用；
+// 返回 body（各段润色稿拼接），前端把「转文字」原文替换为润色稿（1.2.7）
+async function doNotePrepare(body = {}) {
   if (!T.transcript) throw new Error('请先转文字（AI 润色需要转录文本）')
   const conf = cfg.loadConfig()
   const ai = core.loadBzAiConfig(conf)
   setBusy(true)
   T.phase = 'generating'
   try {
-    const { meta } = await runNoteAi(ai, (T.info && T.info.title) || '')
+    // 按段落构建润色源：前端传 segments 则逐段取 segmentTranscripts；缺失/未传 → 整篇单源
+    const segT = T.segmentTranscripts || {}
+    const reqSegs = (body.segments || []).filter(Boolean).map(s => String(s.id)).filter(id => segT[id])
+    const sources = reqSegs.length ? reqSegs.map(id => ({ segId: id, text: segT[id] })) : undefined
+    const { meta, whole } = await runNoteAi(ai, (T.info && T.info.title) || '', sources)
+    // 服务端转录视图对齐为润色稿：交付剪贴板/后续早退判断与前端文本框一致（简体）
+    if (whole) T.transcript = whole
     T.phase = 'ready'
-    return { ok: true, meta }
+    return { ok: true, meta, body: whole }
   } finally {
     if (T.phase === 'generating') T.phase = 'ready'
     setBusy(false)
@@ -459,7 +508,6 @@ const handlers = {
   async 'POST /api/transcribe'(body = {}) {
     if (!T.curPath) throw new Error('请先下载视频')
     if (busy) throw new Error('任务进行中')
-    if (T.transcript) return { ok: true, transcript: T.transcript }
     const conf = cfg.loadConfig()
     setBusy(true)
     T.phase = 'transcribing'
@@ -467,6 +515,9 @@ const handlers = {
       // 转录跟随剪辑语义：传 segments 则按「所选段落」逐段转录（分开交付时笔记按视频链接、正文依次对应），
       // 不传（或整片单段）则转录当前预览原件。prepareSegment 产物交付复用。
       const segs = (body.segments || []).filter(Boolean).map(s => clampSeg(s, T.info.duration))
+      // 覆盖范围签名：与已存转录一致才早退，否则（整片↔分段互切、段落时间改动）重转，绝不复用陈旧稿
+      const wantSig = transSig(segs, T.info.duration)
+      if (T.transcript && T.transcriptSig === wantSig) return { ok: true, transcript: T.transcript }
       const sources = []
       if (!segs.length) sources.push({ seg: null, file: T.curPath })
       else {
@@ -498,6 +549,7 @@ const handlers = {
       })
       T.segmentTranscripts = segTexts
       T.transcript = full.join(' ').trim()
+      T.transcriptSig = wantSig
       T.phase = 'ready'
       return { ok: true, transcript: T.transcript }
     } finally { setBusy(false) }
@@ -509,8 +561,8 @@ const handlers = {
   async 'POST /api/note'() {
     return doNote()
   },
-  async 'POST /api/note-prepare'() {
-    return doNotePrepare()
+  async 'POST /api/note-prepare'(body = {}) {
+    return doNotePrepare(body)
   },
   async 'POST /api/revert'() {
     // 返回原视频：清空全部段落 + 关闭压缩 + 恢复下载原件（可重新剪辑）
