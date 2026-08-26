@@ -366,9 +366,12 @@ export class ReferencePanel {
     const isRightSide = refRect.left > window.innerWidth / 2;
     const preview = document.createElement('div');
     preview.className = 'bz-sb-ref-preview';
-    // 定位属动态几何内联；其余皮肤走 CSS
-    preview.style.left = (isRightSide ? refRect.left - 310 : refRect.right + 8) + 'px';
-    preview.style.top = Math.max(10, cardRect.top - 20) + 'px';
+    // 定位属动态几何内联；其余皮肤走 CSS。宽度与 styles.css .bz-sb-ref-preview 同步（ticket 109：460px）
+    const PW = 460;
+    let left = isRightSide ? refRect.left - (PW + 8) : refRect.right + 8;
+    left = Math.max(8, Math.min(left, window.innerWidth - PW - 8));
+    preview.style.left = left + 'px';
+    this.clampPreviewTop(preview, cardRect.top - 20);
 
     const pathLabel = document.createElement('div');
     pathLabel.className = 'bz-sb-ref-preview-path';
@@ -384,6 +387,16 @@ export class ReferencePanel {
     preview.appendChild(scoreLabel);
     preview.appendChild(bodyDiv);
     document.body.appendChild(preview);
+    // 正文 markdown 异步渲染会长高，渲染后按实际高度再钳制一次（ticket 109）
+    setTimeout(() => {
+      if (preview.isConnected) this.clampPreviewTop(preview, cardRect.top - 20);
+    }, 120);
+  }
+
+  /** 不限高随内容生长（ticket 109）：top 钳制进视口，尽量多显示全文 */
+  private clampPreviewTop(preview: HTMLElement, desiredTop: number): void {
+    const maxTop = window.innerHeight - preview.offsetHeight - 10;
+    preview.style.top = Math.max(10, Math.min(desiredTop, maxTop)) + 'px';
   }
 
   hideHoverPreview(): void {
