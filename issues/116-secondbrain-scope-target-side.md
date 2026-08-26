@@ -1,6 +1,6 @@
 # Ticket 116：关联范围语义修订（目标侧） + 候选来源 = 白名单索引库 + 两目录字段默认空
 
-- 状态：开发中（worktree/sb-scope-empty，待合并）
+- 状态：已完成（master 09d37b9；合并后全量 2710 用例复核绿 + tsc 0 + 构建部署验证）
 - 域：secondbrain
 - 设计文档：`.scratch/secondbrain-link-agent/spec.md`（v1.2 语义修订节）
 - 前置：ticket 115（存量补链，本票在其上修订范围/候选语义）
