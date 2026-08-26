@@ -487,11 +487,17 @@ describe('ticket 100：到期提醒 / 每日上限 / 间隔缩放', () => {
     expect(String(noticeSpy.mock.calls[0][0])).toContain('A');
   });
 
-  it('ticket 58：到期提醒挂「去复习」action → 点击打开逾期笔记（action 文案无 emoji）', async () => {
+  it('ticket 58：到期提醒挂「去复习」action → 打开 newly 中最早逾期（不同到期日精确断言）', async () => {
     const noticeSpy = vi.spyOn(await import('../../src/core/notice'), 'notify');
     const vault = new MockVault();
-    for (const p of ['A.md', 'B.md']) vault.files.set(p, '正文');
-    seedOverdueWith(vault, ['A.md', 'B.md']);
+    vault.files.set('A.md', '正文');
+    vault.files.set('B.md', '正文');
+    const now = new Date();
+    // A 最早到期（最紧迫），B 次之；本轮都属 newly
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      { id: '1', filePath: 'A.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() - 2 * 86400000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+      { id: '2', filePath: 'B.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() - 1 * 86400000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+    ]));
     const app = makeApp(vault);
     const openFile = vi.fn().mockResolvedValue(undefined);
     (app.workspace as any).getLeaf = () => ({ openFile });
@@ -505,8 +511,40 @@ describe('ticket 100：到期提醒 / 每日上限 / 间隔缩放', () => {
     opts.action.onClick();
     await new Promise((r) => setTimeout(r, 10));
     expect(openFile).toHaveBeenCalledTimes(1);
-    const opened = openFile.mock.calls[0][0].path as string;
-    expect(['A.md', 'B.md']).toContain(opened); // 跳转对象为逾期笔记
+    expect(openFile.mock.calls[0][0].path).toBe('A.md'); // 精确：newly 中最早逾期
+  });
+
+  it('ticket 58 修 #1：已通知的旧逾期不夺位——跳转目标取 newly 而非全逾集合', async () => {
+    const noticeSpy = vi.spyOn(await import('../../src/core/notice'), 'notify');
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    vault.files.set('B.md', '正文');
+    const now = new Date();
+    const seed = (rows: any[]) => vault.files.set(REVIEW_FILE_PATH, JSON.stringify(rows));
+    const aRow = { id: '1', filePath: 'A.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, lastReviewed: null, lastDifficulty: null, completed: false };
+    // 首轮：仅 A 逾期（最紧迫）；B 未逾期 → 通知 A
+    seed([{ ...aRow, nextReviewDate: new Date(now.getTime() - 2 * 86400000).toISOString() }]);
+    const app = makeApp(vault);
+    const openFile = vi.fn().mockResolvedValue(undefined);
+    (app.workspace as any).getLeaf = () => ({ openFile });
+    setApp(app);
+    setSettingsProvider(() => ({ enableAutoNotify: true } as any));
+    await reviewApp.checkOverdueAndNotify();
+    expect(String(noticeSpy.mock.calls[0][0])).toContain('A 到期待复习');
+    // 第二轮：A 仍逾期（已在已通知集合），B 变逾期且晚于 A → 通知 B；
+    // 全逾集合最早是 A（旧实现打开 A），修 #1 后必须打开 newly 中最早 = B
+    noticeSpy.mockClear();
+    seed([
+      { ...aRow, nextReviewDate: new Date(now.getTime() - 2 * 86400000).toISOString() },
+      { id: '2', filePath: 'B.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() - 1 * 86400000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+    ]);
+    await reviewApp.checkOverdueAndNotify();
+    expect(String(noticeSpy.mock.calls[0][0])).toContain('B 到期待复习');
+    const opts = noticeSpy.mock.calls[0][1] as any;
+    opts.action.onClick();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(openFile).toHaveBeenCalledTimes(1);
+    expect(openFile.mock.calls[0][0].path).toBe('B.md');
   });
 
   it('超 3 篇截断「，等 M 篇」；单篇「X 到期待复习」', async () => {

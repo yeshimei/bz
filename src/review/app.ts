@@ -668,12 +668,16 @@ export const reviewApp = {
         const names = newly.map(([, i]) => i.name.replace(/^《|》$/g, ''));
         const shown = names.slice(0, 3).join('、');
         const tail = names.length > 3 ? `，等 ${names.length - 3} 篇` : '';
-        // ticket 58：最早逾期（最紧迫）作「去复习」跳转目标
-        const earliest = [...overdueMap.values()].sort(
-          (a, b) =>
-            new Date((a.nextReviewDate as string) || '0').getTime() -
-            new Date((b.nextReviewDate as string) || '0').getTime()
-        )[0];
+        // ticket 58：最早逾期（最紧迫）作「去复习」跳转目标。
+        // 修 #1：目标只从本次 newly（通知名单）取——全逾集合含已在通知而逾期未清的旧条目，
+        // 同键合并通知的 action 闭包保持首目标，会出现「通知 B 却打开 A」。
+        const earliest = newly
+          .map(([, i]) => i)
+          .sort(
+            (a, b) =>
+              new Date((a.nextReviewDate as string) || '0').getTime() -
+              new Date((b.nextReviewDate as string) || '0').getTime()
+          )[0];
         notify(
           names.length > 1
             ? `${names.length} 篇笔记到期待复习：${shown}${tail}`
