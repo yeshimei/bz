@@ -13,25 +13,33 @@
 import { jsonStore } from '../../core/json-store';
 import { tryGetSettings } from '../../core/settings-provider';
 
-/** 自动双链默认范围目录（需求变更后 linkAgentScopes 缺省回退值；原写死文献盒改为可配置） */
-export const LINK_AGENT_DEFAULT_SCOPE = '文献盒';
-
 /**
  * 关联范围解析（linkAgentScopes）：英文逗号分隔的 vault 内目录清单（风格同 aiAgentWatchedFolders），
- * 同时决定 ① 落盘监听触发的目录集合 ② 向量近邻候选的过滤范围。
- * 空值/缺省回退默认 '文献盒'。
+ * 只决定**哪些笔记会被自动关联**（目标/触发侧：落盘监听目录 + 存量补链目标清单）；
+ * **候选来源不受本范围限制**——一律取白名单索引库（secondBrainAllowPaths）中的全部笔记近邻。
+ * 空值/缺省 = 什么也不录（不自动关联任何笔记），**不是**全库意思（用户拍板，ticket 116）。
  */
 export function parseScopeList(raw: unknown): string[] {
   const list = String(raw ?? '')
     .split(',')
     .map((x) => x.trim())
     .filter(Boolean);
-  return list.length > 0 ? list : [LINK_AGENT_DEFAULT_SCOPE];
+  // 无 fallback：空 = 空（此前缺省回退「文献盒」，ticket 116 移除）
+  return [...new Set(list)];
 }
 
 /** 读当前设置的关联范围目录清单（实时读取，弹窗改动即时生效于后续事件） */
 export function getLinkAgentScopes(): string[] {
   return parseScopeList((tryGetSettings() as any).linkAgentScopes);
+}
+
+/**
+ * 范围命中判定（目标/触发侧）：空范围 = 什么也不录入（任何路径都不命中），非空按目录递归匹配。
+ * 用于监听触发、补链目标、死链扫描；候选检索不使用本判定。
+ */
+export function matchesScope(scopes: string[], path: string): boolean {
+  if (!scopes.length) return false;
+  return scopes.some((dir) => isUnderFolder(dir, path));
 }
 
 // ---------------- 存量补链目标清单（ticket 115） ----------------

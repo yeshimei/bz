@@ -418,7 +418,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   secondBrainTopK: '20',
   secondBrainChatTopK: '20',
   secondBrainChunkMinLength: '50',
-  secondBrainAllowPaths: '卡片盒,主题盒,我的,归档,CODE',
+  secondBrainAllowPaths: '', // ticket 116：默认空 = 什么也不录（不索引任何目录），由用户自行填写
   secondBrainConcurrency: '15',
   secondBrainContextLimit: '600',
   secondBrainDebounceDelay: '300',
@@ -429,9 +429,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
   secondBrainMaxHistory: '10',
   secondBrainRemoteOllamaUrl: 'http://192.168.1.8:11434',
 
-  // 自动双链管线（ticket 111）
+  // 自动双链管线（ticket 111；ticket 116 起默认空 = 什么也不录，由用户自行填写范围）
   linkAgentEnabled: true,
-  linkAgentScopes: '文献盒',
+  linkAgentScopes: '',
   linkAgentTopK: 8,
   linkAgentMaxLinks: 0,
   linkAgentNotify: true,

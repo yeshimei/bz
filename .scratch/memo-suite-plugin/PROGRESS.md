@@ -1,3 +1,14 @@
+## 2026-08-27 第二大脑范围语义修订（ticket 116：候选=全索引库 / 范围=目标侧 / 两目录字段默认空）
+
+**状态：worktree/sb-scope-empty 全量 2710 测试通过（179 文件）+ tsc 0；待合并**
+
+- ✅ **根因（真机复现）**：范围缺省回退「文献盒」且同时过滤候选 → 文献盒仅 1 篇时候选恒为空 → 「处理中 1/1 篇」但 0 产出、「未发现实质关联」——弗洛伊德明明在索引里却不进候选
+- ✅ **候选取向（用户拍板）**：`findCandidates` 去掉 `linkAgentScopes` 过滤 —— 候选来源 = 白名单索引库全部笔记，剔除自身/缺失文件/encrypt 锁定；范围（`matchesScope`）只管目标/触发侧（监听 + 补链目标 + 死链扫描），空 = 任何路径不命中
+- ✅ **双字段默认空（用户拍板）**：`DEFAULT_SETTINGS.linkAgentScopes=''`、`secondBrainAllowPaths=''`；`parseScopeList` 空值返回 `[]`（删 `LINK_AGENT_DEFAULT_SCOPE` 回退）；`buildConfig.ALLOW_PATHS` 空=[]；`whitelistedFiles` 空白名单 = 不录任何文件（原"空=全库"一并修订）—— 空 = 什么也不录，不是全库
+- ✅ 文案：⚙️ 弹窗「白名单目录 / 单篇候选数量 TopK / 关联范围 / 自动双链」四处描述按新语义更新
+- ✅ 测试：数据层（空值=[]/matchesScope/默认值）+ UI 层（候选不受范围限制、空范围 backfill no-targets、监听空范围不触发、显式范围回归）；spec v1.2、issue 116、CONTEXT 同步
+- ⚠ 用户实配保持「文献盒」（data.json 不代改）：启动补链目标 = 文献盒 1 篇，候选来自全索引库 → 弗洛伊德将正常链接到相关卡片
+
 ## 2026-08-27 第二大脑存量笔记启动自动补链（ticket 115：启动补链 + 批量补链命令）
 
 **状态：master 1975912 合并完成；合并复核全量 2708 测试通过（179 文件）+ tsc 0 + 构建部署（产物已落 E:/Obsidian/叫我包仔/.obsidian/plugins/bz/）**

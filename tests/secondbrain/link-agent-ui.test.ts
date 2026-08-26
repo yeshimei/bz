@@ -225,28 +225,25 @@ describe('管线：related 幂等写入与可达性门', () => {
     expect(r).toEqual({ status: 'skipped' });
   });
 
-  it('候选过滤随 linkAgentScopes 生效：多目录同步命中、范围外剔除、缺省回退文献盒', async () => {
+  it('候选来源 = 白名单索引库全部笔记：不按关联范围过滤，仅剔除自身/缺失文件/encrypt 锁定', async () => {
     const { vault, agent } = makeWorld({
       hits: [
         { path: '文献盒/B.md', chunk: 'B', score: 0.9 },
         { path: '卡片盒/K.md', chunk: 'K', score: 0.85 },
-        { path: '其他/X.md', chunk: 'X', score: 0.8 }, // 范围外
+        { path: '其他/X.md', chunk: 'X', score: 0.8 }, // 范围外照常入选（候选不受范围限制）
         { path: '文献盒/A.md', chunk: '自身', score: 0.99 }, // 自身剔除
+        { path: 'CONFIG/.ENCRYPT/E.md', chunk: 'E', score: 0.7 }, // encrypt 锁定剔除
+        { path: '文献盒/GONE.md', chunk: 'G', score: 0.6 }, // 文件不存在剔除
       ],
     });
-    vault.files.set('卡片盒/K.md', 'k'); // 存在性检查要求命中候选真实存在于 vault
-    // 多范围：文献盒 + 卡片盒 同时生效
-    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '文献盒,卡片盒' }));
-    const multi = await agent.findCandidates('文献盒/A.md', '正文');
-    expect(multi.map((c) => c.path)).toEqual(['文献盒/B.md', '卡片盒/K.md']);
-    // 缺省（仅默认文献盒）：卡片盒候选被剔除；设置对象缺键时同样回退
-    setSettingsProvider(() => {
-      const s = { ...baseSettings() };
-      delete (s as any).linkAgentScopes;
-      return s;
-    });
-    const fallback = await agent.findCandidates('文献盒/A.md', '正文');
-    expect(fallback.map((c) => c.path)).toEqual(['文献盒/B.md']);
+    vault.files.set('卡片盒/K.md', 'k');
+    vault.files.set('其他/X.md', 'x');
+    // 空范围（ticket 116 默认）与显式范围都不影响候选来源
+    const r1 = await agent.findCandidates('文献盒/A.md', '正文');
+    expect(r1.map((c) => c.path)).toEqual(['文献盒/B.md', '卡片盒/K.md', '其他/X.md']);
+    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '文献盒' }));
+    const r2 = await agent.findCandidates('文献盒/A.md', '正文');
+    expect(r2.map((c) => c.path)).toEqual(['文献盒/B.md', '卡片盒/K.md', '其他/X.md']);
   });
 });
 
@@ -352,6 +349,7 @@ describe('通知触发条件（自绘 toast）', () => {
     const { vault, agent } = makeWorld({});
     vault.files.set('CONFIG/.ENCRYPT/.safe.enc', 'cipher');
     vault.files.set('文献盒/C.md', '---\nrelated:\n  - "[[文献盒/GONE.md]]"\n---\n\n正文');
+    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '文献盒' }));
     const n = await agent.cleanDeadLinks();
     expect(n).toBe(0);
     expect(vault.files.get('文献盒/C.md')).toContain('GONE');
@@ -385,6 +383,7 @@ describe('监听器：防抖聚合与开关门', () => {
     const { vault, agent, watcher } = makeWatcher(new MockVault());
     vault.files.set('文献盒/X.md', 'x');
     vault.files.set('其他/Y.md', 'y');
+    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '文献盒' }));
     watcher.start();
     watcher.onCreated('文献盒/X.md');
     watcher.onCreated('文献盒/DEAD.md'); // 防抖窗口内将被删除
@@ -396,7 +395,7 @@ describe('监听器：防抖聚合与开关门', () => {
     watcher.destroy();
   });
 
-  it('多范围目录：监听随 linkAgentScopes 同步生效；缺键时回退默认文献盒', async () => {
+  it('多范围目录：监听随 linkAgentScopes 同步生效；缺键（空）时什么也不录、不触发', async () => {
     const { vault, agent, watcher } = makeWatcher(new MockVault());
     vault.files.set('文献盒/X.md', 'x');
     vault.files.set('卡片盒/K.md', 'k');
@@ -411,7 +410,7 @@ describe('监听器：防抖聚合与开关门', () => {
     expect(agent.processBatch.mock.calls[0][0]).toEqual(['文献盒/X.md', '卡片盒/K.md']);
     watcher.destroy();
 
-    // 设置对象缺 linkAgentScopes 键：回退默认「文献盒」仍触发
+    // 设置对象缺 linkAgentScopes 键（空）：范围 = 什么也不录，任何路径都不触发监听
     clearDomainEvents();
     const w2env = makeWatcher(new MockVault());
     w2env.vault.files.set('文献盒/Z.md', 'z');
@@ -423,8 +422,7 @@ describe('监听器：防抖聚合与开关门', () => {
     w2env.watcher.start();
     w2env.watcher.onCreated('文献盒/Z.md');
     await new Promise((r) => setTimeout(r, 70));
-    expect(w2env.agent.processBatch).toHaveBeenCalledTimes(1);
-    expect(w2env.agent.processBatch.mock.calls[0][0]).toEqual(['文献盒/Z.md']);
+    expect(w2env.agent.processBatch).not.toHaveBeenCalled();
     w2env.watcher.destroy();
   });
 
@@ -525,12 +523,12 @@ describe('命令 bz-secondbrain-rebuild-links 守卫分支', () => {
 
 // ---------------- 存量补链与串行锁（ticket 115） ----------------
 
-describe('存量补链（backfillMissingLinks，ticket 115）', () => {
+describe('存量补链（backfillMissingLinks，ticket 115 + 116）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     clearDomainEvents();
     document.body.innerHTML = '';
-    setSettingsProvider(baseSettings);
+    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '文献盒' }));
     setSettingsSaver(() => Promise.resolve());
   });
 
@@ -595,6 +593,15 @@ describe('存量补链（backfillMissingLinks，ticket 115）', () => {
     expect(summary.processed).toBe(2);
     const q = await loadQueue();
     expect(q.map((i) => i.path)).toEqual(['文献盒/A.md']); // 队列条目未被消费（归队列消费管）
+  });
+
+  it('空关联范围：目标为空，返回 no-targets（ticket 116：什么也不录）', async () => {
+    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '' }));
+    const { agent, askSpy } = makeWorld({});
+    const result = await agent.backfillMissingLinks();
+    expect(result).toEqual({ status: 'no-targets' });
+    expect(askSpy).not.toHaveBeenCalled();
+    expect(getNoticeMessages()).toEqual([]);
   });
 
   it('串行锁：并发批次排队执行，refresh 绝不同时运行', async () => {

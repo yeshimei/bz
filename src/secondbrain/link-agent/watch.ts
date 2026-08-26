@@ -10,7 +10,7 @@ import type { App } from 'obsidian';
 import { onDomainEvent } from '../../core/domain-bus';
 import { notice } from '../../core/notice';
 import { tryGetSettings } from '../../core/settings-provider';
-import { getLinkAgentScopes, isUnderFolder } from './data';
+import { getLinkAgentScopes, matchesScope } from './data';
 import { LINK_BATCH_DELAY_MS, LinkAgent } from './pipeline';
 
 /** 死链清理防抖窗口（删除事件合并；测试可注入短值） */
@@ -66,10 +66,10 @@ export class LinkAgentWatcher {
     this.maybeGuideAllowPaths();
   }
 
-  /** 关联范围内新笔记落盘 → 入缓冲并重置防抖计时（约 60 秒聚合一批）；范围随 linkAgentScopes 实时生效 */
+  /** 关联范围内（空 = 不触发任何监听）新笔记落盘 → 入缓冲并重置防抖计时（约 60 秒聚合一批）；范围随 linkAgentScopes 实时生效 */
   onCreated(path: string): void {
     if (!this.enabled) return;
-    if (!getLinkAgentScopes().some((dir) => isUnderFolder(dir, path))) return;
+    if (!matchesScope(getLinkAgentScopes(), path)) return;
     this.pendingCreates.add(path);
     if (this.batchTimer) clearTimeout(this.batchTimer);
     this.batchTimer = setTimeout(() => {

@@ -46,7 +46,7 @@ export function buildConfig(): SecondBrainConfig {
           .split(',')
           .map((p: string) => p.trim())
           .filter(Boolean)
-      : ['卡片盒', '主题盒', '我的', '归档', 'CODE'],
+      : [], // ticket 116：空 = 什么也不录（不索引任何目录），不再是缺省目录清单
     CONCURRENCY: Number(s.secondBrainConcurrency) || 15,
     CONTEXT_LIMIT: Number(s.secondBrainContextLimit) || 600,
     DEBOUNCE_DELAY: Number(s.secondBrainDebounceDelay) || 300,

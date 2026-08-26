@@ -148,7 +148,8 @@ export class VectorStore {
     const CONFIG = buildConfig();
     const allowPaths = CONFIG.ALLOW_PATHS || [];
     return (this.app.vault.getMarkdownFiles() as TFile[]).filter((f) => {
-      if (allowPaths.length === 0) return true;
+      // ticket 116：白名单空 = 什么也不录（不索引任何目录），不再是"全库"
+      if (allowPaths.length === 0) return false;
       for (const allow of allowPaths) {
         if (f.path.startsWith(allow + '/') || f.path === allow) return true;
       }

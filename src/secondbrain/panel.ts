@@ -867,7 +867,7 @@ export function openSecondBrainSettings(_app?: App): void {
       allowChipsWrap.className = 'bz-sb-pick-chips--setting';
       const allowSetting = new Setting(b1)
         .setName('白名单目录')
-        .setDesc('纳入第二大脑检索的笔记目录；点「📁 选择」从库内文件夹勾选，也可直接改路径文本（英文逗号分隔）')
+        .setDesc('纳入第二大脑检索/候选来源的笔记目录；点「📁 选择」从库内文件夹勾选，也可直接改路径文本（英文逗号分隔）；留空 = 不索引')
         .addText((t) =>
           t.setValue(String(s.secondBrainAllowPaths ?? '')).onChange((v) => {
             set('secondBrainAllowPaths', v);
@@ -913,7 +913,7 @@ export function openSecondBrainSettings(_app?: App): void {
         if ((tryGetSettings() as any).linkAgentEnabled === false) return;
         new Setting(linkDetailBox)
           .setName('单篇候选数量 TopK')
-          .setDesc('文献盒内向量近邻候选数')
+          .setDesc('每篇笔记的近邻候选数（候选来源 = 白名单索引库中的全部笔记）')
           .addText((t) =>
             t.setValue(String((tryGetSettings() as any).linkAgentTopK ?? 8)).onChange((v) => {
               const n = Math.floor(Number(v));
@@ -939,7 +939,7 @@ export function openSecondBrainSettings(_app?: App): void {
           .addToggle((t) => t.setValue((tryGetSettings() as any).linkAgentAutoClean !== false).onChange((v) => set('linkAgentAutoClean', v)));
         new Setting(linkDetailBox)
           .setName('关联范围')
-          .setDesc('自动双链作用的目录清单（英文逗号分隔），同时决定落盘监听与候选过滤；留空回退「文献盒」')
+          .setDesc('决定哪些笔记会被自动关联（落盘监听与补链目标）；候选来源为白名单索引库全部笔记；留空 = 不自动关联')
           .addText((t) =>
             t.setValue(String((tryGetSettings() as any).linkAgentScopes ?? '')).onChange((v) => set('linkAgentScopes', v))
           )
@@ -955,7 +955,7 @@ export function openSecondBrainSettings(_app?: App): void {
       };
       new Setting(bLink)
         .setName('自动双链')
-        .setDesc('文献盒新笔记落盘时自动建立 related 双链：向量近邻出候选、AI 裁判、只写新笔记侧')
+        .setDesc('关联范围内新笔记落盘时自动建立 related 双链：向量近邻出候选（白名单索引库）、AI 裁判、只写新笔记侧')
         .addToggle((t) =>
           t.setValue(s.linkAgentEnabled !== false).onChange((v) => {
             set('linkAgentEnabled', v);
