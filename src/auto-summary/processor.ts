@@ -150,13 +150,14 @@ export async function processFile(app: any, ai: AIService, file: any): Promise<v
 
     // AI 标题 → 重命名笔记文件（rename 只改路径不改内容；失败/无需改回退原 file）
     let targetFile = file;
+    let renameFailed = false; // warning 推迟到 modify 成功后发（B5：文案承诺「标题已写入」需以真实落盘为前提）
     if (missing.includes('title') && aiResult.title) {
       const outcome = await renameToTitle(app, file, aiResult.title);
       targetFile = outcome.target;
       if (outcome.renamed) {
         notify(`已重命名为《${aiResult.title}》`, { type: 'success' });
       } else if (outcome.failed) {
-        notify('自动改名失败，标题已写入笔记，请手动重命名', { type: 'warning' });
+        renameFailed = true;
       }
     }
 
@@ -173,6 +174,10 @@ export async function processFile(app: any, ai: AIService, file: any): Promise<v
 
     const newContent = buildFrontmatter(mergedFm) + '\n\n' + latestParsed.body;
     await app.vault.modify(targetFile, newContent);
+    if (renameFailed) {
+      // B5：标题已在上面真实写入 frontmatter，此刻的「已写入」文案才站得住
+      notify('自动改名失败，标题已写入笔记，请手动重命名', { type: 'warning' });
+    }
 
     const msg = formatSummaryNotice(mergedFm);
     if (msg) {
