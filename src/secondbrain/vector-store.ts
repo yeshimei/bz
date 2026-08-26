@@ -1,6 +1,7 @@
 /**
  * 第二大脑 VectorStore（ticket 103；对齐 QA 闪念.js L442-745）
- * meta v9 + secondbrain_vectors.vec（uint32LE dim 头 + float32 平铺；行序 = meta.notes 键序 × chunks）。
+ * meta v9 段 + secondbrain.vec（ticket 120：原 secondbrain_vectors.vec 改名；uint32LE dim 头 + float32 平铺；
+ * 行序 = meta.notes 键序 × chunks）。meta 段随 JSON 并入 secondbrain.json（store-file 单文件三段）。
  *
  * 对齐要点：
  * - VP-Tree 构建缓存（{dim,count,noteCount} 键）+ 归一化一次性预存；检索 cos = max(0, 1 − d²/2)，score^0.35 锐化；
@@ -23,6 +24,7 @@
  */
 import type { App, TFile } from 'obsidian';
 import { buildConfig, IS_MOBILE } from './config';
+import { loadStore, mutateStore } from './store-file';
 import { MobileBuffer } from './binary';
 import { embedChunks, noteTitleFromPath } from './chunk';
 import { euclideanSq, normalizeVec, vptree_build, vptree_search, VPNode, Vec } from './vptree';
@@ -92,26 +94,22 @@ export class VectorStore {
   }
 
   async load(): Promise<void> {
-    const CONFIG = buildConfig();
-    try {
-      const parsed = JSON.parse(await this.app.vault.adapter.read(CONFIG.META_PATH));
-      if (parsed.version !== VECTOR_STORE_VERSION) {
-        // 版本不符整库重建（QA 同语义；v7→v8 首载触发一次性全量重嵌）
-        console.log(`[secondbrain] 向量库版本升级: ${parsed.version || 0} → ${VECTOR_STORE_VERSION}，触发重建`);
-        this.meta = { version: VECTOR_STORE_VERSION, notes: {}, _dim: 0 };
-        this.vectors = new Float32Array(0);
-        this.dim = 0;
-        return;
-      }
+    // ticket 120：meta 段并入 secondbrain.json；旧 secondbrain_meta.json 经 store-file 一次性迁移
+    const data = await loadStore(this.app);
+    const parsed = data.meta as SecondBrainMeta | null;
+    if (parsed && typeof parsed === 'object' && parsed.version === VECTOR_STORE_VERSION) {
       this.meta = parsed;
       this.dim = parsed._dim || 0;
-    } catch {
-      this.meta = { version: VECTOR_STORE_VERSION, notes: {}, _dim: 0 };
-      this.vectors = new Float32Array(0);
-      this.dim = 0;
+      await this.loadVectors();
       return;
     }
-    await this.loadVectors();
+    if (parsed && typeof parsed === 'object') {
+      // 版本不符整库重建（QA 同语义；v7→v8 首载触发一次性全量重嵌）
+      console.log(`[secondbrain] 向量库版本升级: ${(parsed as any).version || 0} → ${VECTOR_STORE_VERSION}，触发重建`);
+    }
+    this.meta = { version: VECTOR_STORE_VERSION, notes: {}, _dim: 0 };
+    this.vectors = new Float32Array(0);
+    this.dim = 0;
   }
 
   async loadVectors(): Promise<void> {
@@ -210,8 +208,13 @@ export class VectorStore {
   }
 
   async saveStore(): Promise<void> {
-    const CONFIG = buildConfig();
-    await this.app.vault.adapter.write(CONFIG.META_PATH, JSON.stringify(this.meta));
+    // ticket 120：meta 段写入 secondbrain.json（经串行写链，与 panel/link 段互斥）
+    await mutateStore(
+      (s) => {
+        s.meta = this.meta as unknown as Record<string, unknown>;
+      },
+      this.app
+    );
   }
 
   /**

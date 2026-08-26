@@ -746,3 +746,15 @@ etrieve 增 lexicalQuery（词法降级免「情绪/时段」噪音）。④ **�
 - ✅ **队列消费与死链清理**：域初始化非空且可达自动消费「待处理关联已处理完毕：N 篇 / 新建 M 条」；清理走域事件总线 + 30 分钟低频巡检兜底，encrypt 三态边界（无清单正常清理/解锁态清单内视为存活/锁定态整体跳过）+ 同名 basename 歧义不判死；通知全部查表 ICONS、dedupeKey 合并动态更新，N=0 与零变化静默
 - ⚠ 必要偏离：⚙️ 弹窗实际位于 panel.ts openSecondBrainSettings（票面白名单误写 config.ts）；向量库无「按笔记向量取近邻」公开入口，以正文摘要再嵌一次绕行（每篇多一次 embedding，ticket 112 可一并优化）
 - 📄 文档：spec `.scratch/secondbrain-link-agent/spec.md` 定稿；issue 111 status done；质量反馈闭环已立项 issue 112（排在合并后）
+
+## 2026-08-27 第二大脑数据文件整合完成（ticket 120，用户拍板）
+**状态：分支全量 secondbrain 17 文件 220 用例 + encrypt 等受影响域全绿（23 文件 391 用例）+ tsc 0 错误；新增 store-file.test.ts 9 用例（迁移/损坏/串行写链/link 段打通）；worktree/sb-single-file**
+
+- ✅ **store-file.ts 共享数据层**：单文件 `secondbrain.json` 三段（meta/panel/link）+ 串行写链 mutateStore（读改写原子化，杜绝 meta/queue/state/panel 并发交错覆盖）；损坏留档 .corrupt- 重建（jsonStore 同款）；新文件缺失且无旧数据 → 空结构不落盘（保持空库不产生文件语义）
+- ✅ **一次性迁移**：四旧 JSON（secondbrain_meta/panel/link_queue/link_state）读旧合并组装 → 写新 → 删旧；旧 vec `secondbrain_vectors.vec` → 改名 `secondbrain.vec`（rename 缺失时读改写删兜底）；幂等（新文件在即跳过）；迁移经串行链保护
+- ✅ **消费方改造**：vector-store（load/saveStore 改 meta 段，vec 路径换代）、panel（概括缓存改 panel 段，统计 stat 改新文件）、link-agent/data（queue/state 改 link 段，对外 API 签名不变）
+- ✅ **config.ts**：META_PATH → STORE_PATH（secondbrain.json）、VEC_PATH → secondbrain.vec
+- ✅ **测试适配**：4 个 vector-store/panel 测试 + 2 个 link-agent 测试路径/预置换代（storeJSON 包装 + readMeta 断言）；mock-vault adapter exists/rename 补 binaryFiles 支持
+- ✅ **测试**：store-file.test.ts 9 例（四旧合并组装/vec 改名/幂等/空库不落盘/段容错/损坏留档/并发 50+50 mutate 不丢段/link 段打通）
+- 📄 文档：issues/120 立项；spec v1.5 数据设计改单文件；CONTEXT 词条；AGENTS 领域清单表（secondbrain.json + secondbrain.vec）；PROGRESS 本条目
+- ⏳ 待办：合并 master 后构建部署（main.js/styles.css 同步）；vault 遗留 ai_completion_meta.json + ai_completion_vectors.vec 本地删除（用户拍板）

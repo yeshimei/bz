@@ -14,12 +14,10 @@ import {
   computeBackfillTargets,
   computeHash,
   dequeuePath,
-  getLinkStateFilePath,
   loadLinkState,
   removeLinkState,
   upsertLinkState,
   enqueuePaths,
-  getLinkQueueFilePath,
   isUnderFolder,
   loadQueue,
   matchesScope,
@@ -32,6 +30,7 @@ import {
   pruneQueueByExists,
   toRelatedEntry,
 } from '../../src/secondbrain/link-agent/data';
+import { getSecondBrainStorePath } from '../../src/secondbrain/store-file';
 
 describe('自动双链·设置键默认值', () => {
   it('DEFAULT_SETTINGS 六键齐备且取 spec 默认值（ticket 116：关联范围默认空 = 什么也不录）', () => {
@@ -142,12 +141,12 @@ describe('待处理队列 CRUD', () => {
     return { vault, app };
   }
 
-  it('队列文件路径落在 STORAGE 目录（storagePath 口径）', () => {
+  it('队列数据并入 secondbrain.json 的 link.queue 段（ticket 120：storagePath 单文件口径）', () => {
     makeEnv();
-    expect(getLinkQueueFilePath()).toBe('CONFIG/STORAGE/secondbrain_link_queue.json');
+    expect(getSecondBrainStorePath()).toBe('CONFIG/STORAGE/secondbrain.json');
   });
 
-  it('入队新建文件并落盘；同 path 重入队合并为一条并刷新 hash 与 queuedAt', async () => {
+  it('入队写入 link.queue 段并落盘；同 path 重入队合并为一条并刷新 hash 与 queuedAt', async () => {
     const { vault } = makeEnv();
     await enqueuePaths(['文献盒/a.md'], { '文献盒/a.md': 'h1' });
     let q = await loadQueue();
@@ -162,7 +161,7 @@ describe('待处理队列 CRUD', () => {
     expect(q).toHaveLength(1);
     expect(q[0].hash).toBe('h2');
     expect(q[0].queuedAt).not.toBe(firstAt); // 刷新时间戳
-    expect(vault.files.has(getLinkQueueFilePath())).toBe(true);
+    expect(vault.files.has(getSecondBrainStorePath())).toBe(true);
   });
 
   it('消费成功移除单条；失败保留语义 = 不调用移除则条目仍在', async () => {
@@ -188,7 +187,13 @@ describe('待处理队列 CRUD', () => {
 
   it('loadQueue 容忍畸形条目（缺 path / 非 md）', async () => {
     const { vault } = makeEnv();
-    vault.files.set(getLinkQueueFilePath(), JSON.stringify([{ path: '文献盒/ok.md' }, { hash: 'x' }, { path: 'a.txt' }, 'junk']));
+    vault.files.set(
+      getSecondBrainStorePath(),
+      JSON.stringify({
+        version: 1,
+        link: { queue: [{ path: '文献盒/ok.md' }, { hash: 'x' }, { path: 'a.txt' }, 'junk'] },
+      })
+    );
     const q = await loadQueue();
     expect(q.map((i) => i.path)).toEqual(['文献盒/ok.md']);
   });
@@ -206,9 +211,9 @@ describe('正文基准哈希状态（v1.4/ticket 119）', () => {
     return { vault, app };
   }
 
-  it('状态文件路径落在 STORAGE 目录（storagePath 口径）', () => {
+  it('基准哈希并入 secondbrain.json 的 link.state 段（ticket 120：storagePath 单文件口径）', () => {
     makeEnv();
-    expect(getLinkStateFilePath()).toBe('CONFIG/STORAGE/secondbrain_link_state.json');
+    expect(getSecondBrainStorePath()).toBe('CONFIG/STORAGE/secondbrain.json');
   });
 
   it('upsert 写入并读回（hash + linkedAt 时间戳）；重复 upsert 覆盖旧条目', async () => {
@@ -217,7 +222,7 @@ describe('正文基准哈希状态（v1.4/ticket 119）', () => {
     let state = await loadLinkState();
     expect(state['文献盒/A.md'].hash).toBe('h1');
     expect(typeof state['文献盒/A.md'].linkedAt).toBe('string');
-    expect(vault.files.has(getLinkStateFilePath())).toBe(true);
+    expect(vault.files.has(getSecondBrainStorePath())).toBe(true);
 
     await new Promise((r) => setTimeout(r, 5));
     await upsertLinkState('文献盒/A.md', 'h2');
@@ -230,15 +235,27 @@ describe('正文基准哈希状态（v1.4/ticket 119）', () => {
     const { vault } = makeEnv();
     expect(await loadLinkState()).toEqual({}); // 文件不存在
 
-    vault.files.set(getLinkStateFilePath(), 'not-json{{{');
-    expect(await loadLinkState()).toEqual({}); // 损坏 → jsonStore 留档重建 → 空对象
-
-    vault.files.set(getLinkStateFilePath(), JSON.stringify([{ path: 'x' }]));
-    expect(await loadLinkState()).toEqual({}); // 数组形态（队列同文件误写）→ 空对象
+    vault.files.set(getSecondBrainStorePath(), 'not-json{{{');
+    expect(await loadLinkState()).toEqual({}); // 损坏 → store-file 留档重建 → 空对象
 
     vault.files.set(
-      getLinkStateFilePath(),
-      JSON.stringify({ '文献盒/ok.md': { hash: 'h', linkedAt: 't' }, '文献盒/bad1.md': { hash: '' }, '文献盒/bad2.md': 'junk' })
+      getSecondBrainStorePath(),
+      JSON.stringify({ version: 1, link: { state: [{ path: 'x' }] } })
+    );
+    expect(await loadLinkState()).toEqual({}); // state 数组形态（异常）→ 空对象
+
+    vault.files.set(
+      getSecondBrainStorePath(),
+      JSON.stringify({
+        version: 1,
+        link: {
+          state: {
+            '文献盒/ok.md': { hash: 'h', linkedAt: 't' },
+            '文献盒/bad1.md': { hash: '' },
+            '文献盒/bad2.md': 'junk',
+          },
+        },
+      })
     );
     const state = await loadLinkState();
     expect(Object.keys(state)).toEqual(['文献盒/ok.md']);

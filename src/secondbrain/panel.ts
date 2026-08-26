@@ -6,7 +6,7 @@
  *   ② 来源分布改树形逐级展开（名称左对齐，▸/▾ 递归下钻子目录）；
  *   ③ ticket 108 曾新增白名单覆盖率/内容规模/最厚笔记 Top5/一致性健康四项，其中覆盖率卡与 Top5 区块已按 ticket 109 移除（语义重复/需求砍掉）；
  *   ④ 每次打开自动增量索引：有待处理变更 → 全屏进度视图接管，完成后再进统计；无变更直接统计；
- *   ⑤ 概括走统一 AI 通道（主设置页服务商）；缓存 secondbrain_panel.json 保留，设置页清除入口移除。
+ *   ⑤ 概括走统一 AI 通道（主设置页服务商）；缓存并入 secondbrain.json panel 段（ticket 120），设置页清除入口移除。
  * - 引导/进度视图三用：首次初始化（空库，带按钮）/ 自动增量（待处理块，纯进度）/ 重新索引（设置页确认后）。
  * - ticket 114：初始向量化进行中关页重开 → 恢复实时进度视图（原缺陷：重开回引导态且按钮
  *   因 initializing 守卫静默失效，看起来「点击没有任何反应」）；重复点击不再吞掉，接回进度。
@@ -22,6 +22,7 @@ import { formatRelativeTime } from '../core/utils';
 import { confirm } from '../core/confirm';
 import { getApp } from '../core/app';
 import { buildConfig, IS_MOBILE } from './config';
+import { loadStore, mutateStore } from './store-file';
 import { AI } from './ai';
 import type { VectorStore, SecondBrainMeta } from './vector-store';
 import { parsePathList, formatPathList } from './whitelist';
@@ -186,25 +187,26 @@ export function computeStats(meta: SecondBrainMeta, now = Date.now()): Omit<Seco
   };
 }
 
-// ==================== 概括缓存（secondbrain_panel.json） ====================
+// ==================== 概括缓存（secondbrain.json panel 段，ticket 120） ====================
 
 interface SummaryCache {
   summary: string;
   generatedAt: number;
 }
 
-const PANEL_CACHE_FILE = () => `${buildConfig().META_PATH.replace(/secondbrain_meta\.json$/, '')}secondbrain_panel.json`;
-
-async function readCache(app: App): Promise<SummaryCache | null> {
+async function readCache(): Promise<SummaryCache | null> {
   try {
-    return JSON.parse(await app.vault.adapter.read(PANEL_CACHE_FILE()));
+    const store = await loadStore();
+    return store.panel;
   } catch {
     return null;
   }
 }
 
-async function writeCache(app: App, cache: SummaryCache): Promise<void> {
-  await app.vault.adapter.write(PANEL_CACHE_FILE(), JSON.stringify(cache));
+async function writeCache(cache: SummaryCache): Promise<void> {
+  await mutateStore((s) => {
+    s.panel = cache;
+  });
 }
 
 /** 构建概括提示词（纯函数） */
@@ -687,7 +689,7 @@ export class SecondBrainPanel {
     let metaBytes = 0;
     let vecBytes = 0;
     try {
-      metaBytes = (await this.app.vault.adapter.stat(CONFIG.META_PATH))?.size ?? 0;
+      metaBytes = (await this.app.vault.adapter.stat(CONFIG.STORE_PATH))?.size ?? 0;
     } catch {}
     try {
       vecBytes = (await this.app.vault.adapter.stat(CONFIG.VEC_PATH))?.size ?? 0;
@@ -798,7 +800,7 @@ export class SecondBrainPanel {
     }
 
     // 概括缓存回显
-    const cache = await readCache(this.app);
+    const cache = await readCache();
     if (cache) {
       const text = document.getElementById('bz-sb-summary-text');
       const meta = document.getElementById('bz-sb-summary-meta');
@@ -818,7 +820,7 @@ export class SecondBrainPanel {
     try {
       const summary = await AI.ask(buildSummaryPrompt(stats));
       const cache: SummaryCache = { summary, generatedAt: Date.now() };
-      await writeCache(this.app, cache);
+      await writeCache(cache);
       const text = document.getElementById('bz-sb-summary-text');
       const meta = document.getElementById('bz-sb-summary-meta');
       if (text) text.textContent = summary;

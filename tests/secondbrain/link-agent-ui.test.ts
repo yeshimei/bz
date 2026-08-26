@@ -27,8 +27,6 @@ import { enqueuePaths, loadQueue, loadLinkState, computeHash } from '../../src/s
 import { AI } from '../../src/secondbrain/ai';
 import { rebuildSecondBrainLinks, runSecondBrainLinkAll, unloadSecondBrain } from '../../src/secondbrain/index';
 
-const QUEUE_PATH = 'CONFIG/STORAGE/secondbrain_link_queue.json';
-
 function baseSettings() {
   return { ...DEFAULT_SETTINGS, secondBrainAllowPaths: '卡片盒,文献盒' } as any;
 }

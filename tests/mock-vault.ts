@@ -20,7 +20,7 @@ export class MockVault {
       this.files.set(path, content);
       this.modifiedPaths.push(path);
     },
-    exists: async (path: string): Promise<boolean> => this.files.has(path) || this.dirs.has(path),
+    exists: async (path: string): Promise<boolean> => this.files.has(path) || this.binaryFiles.has(path) || this.dirs.has(path),
     remove: async (path: string): Promise<void> => {
       this.files.delete(path);
       this.binaryFiles.delete(path);
@@ -31,10 +31,18 @@ export class MockVault {
     },
     rename: async (oldPath: string, newPath: string): Promise<void> => {
       const v = this.files.get(oldPath);
-      if (v === undefined) return;
-      this.files.delete(oldPath);
-      this.files.set(newPath, v);
-      this.modifiedPaths.push(newPath);
+      if (v !== undefined) {
+        this.files.delete(oldPath);
+        this.files.set(newPath, v);
+        this.modifiedPaths.push(newPath);
+        return;
+      }
+      const b = this.binaryFiles.get(oldPath);
+      if (b !== undefined) {
+        this.binaryFiles.delete(oldPath);
+        this.binaryFiles.set(newPath, b);
+        this.modifiedPaths.push(newPath);
+      }
     },
     list: async (path: string): Promise<{ files: string[]; folders: string[] }> => {
       const prefix = path.endsWith('/') ? path : path + '/';

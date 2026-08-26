@@ -2,17 +2,19 @@
  * 自动双链管线数据层（ticket 111；spec `.scratch/secondbrain-link-agent/spec.md`）
  *
  * 职责：
- * - 待处理队列 CONFIG/STORAGE/secondbrain_link_queue.json 的读写（jsonStore 同款 STORAGE json CRUD）：
+ * - 待处理队列 link 段（ticket 120：并入 secondbrain.json 的 link.queue，原独立
+ *   secondbrain_link_queue.json 由 store-file 一次性迁移）：
  *   同 path 合并刷新 hash、消费成功移除、失败保留、对应文件删除时顺带清理；
- * - 正文基准哈希 CONFIG/STORAGE/secondbrain_link_state.json（v1.4/ticket 119）：
+ * - 正文基准哈希 link 段（ticket 120：link.state，原独立 secondbrain_link_state.json 迁移）：
  *   记录每篇笔记最近一次成功建链时的全文内容哈希——修改监听据此判断"内容是否有实质变化才重跑"；
  * - related 属性解析与幂等写入的纯函数部分：只写新笔记侧，已存在的链不重复添加，
  *   `linkAgentMaxLinks > 0` 时截断，默认 0 = 不限量；
  * - 裁判输出（严格 JSON `[{"id":1,"reason":"..."}]`）解析。
  *
- * 本文件保持纯数据层（无 DOM / 无 notice 依赖），供 node 环境测试直接加载。
+ * 本文件保持纯数据层（无 DOM / 无 notice 依赖），供 node 环境测试直接加载；
+ * queue/state 经 store-file 串行写链读写（与 meta/panel 段互斥）。
  */
-import { jsonStore } from '../../core/json-store';
+import { loadStore, mutateStore } from '../store-file';
 import { tryGetSettings } from '../../core/settings-provider';
 
 /**
@@ -79,16 +81,6 @@ export interface LinkQueueItem {
   hash?: string;
   /** ISO 时间戳 */
   queuedAt?: string;
-}
-
-/** 队列文件路径（ADR-0009：storagePath 为唯一目录口径，同 review/data.ts 模式） */
-export function getLinkQueueFilePath(): string {
-  const s = tryGetSettings() as any;
-  const dir =
-    String(s.storagePath ?? '')
-      .trim()
-      .replace(/\/+$/, '') || 'CONFIG/STORAGE';
-  return `${dir}/secondbrain_link_queue.json`;
 }
 
 /** 目录边界判定：path 恰为 folder 或位于其下（递归语义；与 review/watch.isUnderFolder 同构，域内私有副本不跨域 import） */
@@ -175,11 +167,12 @@ export function planRemovals(
   return { keep, removed };
 }
 
-// ---------------- 待处理队列 CRUD（jsonStore；消费方拿到后跑完整管线） ----------------
+// ---------------- 待处理队列 CRUD（ticket 120：store link.queue 段；消费方拿到后跑完整管线） ----------------
 
-/** 读队列（不存在/畸形按空队处理；jsonStore 自带损坏留档重建兜底） */
+/** 读队列（不存在/畸形按空队处理；store-file 自带损坏留档重建兜底） */
 export async function loadQueue(): Promise<LinkQueueItem[]> {
-  const data = await jsonStore(getLinkQueueFilePath()).read();
+  const store = await loadStore();
+  const data = store.link.queue;
   if (!Array.isArray(data)) return [];
   return data
     .filter((it) => it && typeof it.path === 'string' && it.path.endsWith('.md'))
@@ -190,9 +183,11 @@ export async function loadQueue(): Promise<LinkQueueItem[]> {
     }));
 }
 
-/** 写队列 */
+/** 写队列（串行链：与 meta/panel/state 段互斥） */
 export async function saveQueue(items: LinkQueueItem[]): Promise<void> {
-  await jsonStore(getLinkQueueFilePath()).write(items);
+  await mutateStore((s) => {
+    s.link.queue = items;
+  });
 }
 
 /**
@@ -200,39 +195,46 @@ export async function saveQueue(items: LinkQueueItem[]): Promise<void> {
  * @param hashes 可选 path→hash 映射（管线在入队前已算好内容哈希）
  */
 export async function enqueuePaths(paths: string[], hashes?: Record<string, string>): Promise<void> {
-  const items = await loadQueue();
   const now = new Date().toISOString();
-  for (const path of paths) {
-    if (!path || !path.endsWith('.md')) continue;
-    const cur = items.find((i) => i.path === path);
-    const hash = hashes?.[path];
-    if (cur) {
-      if (hash !== undefined) cur.hash = hash;
-      cur.queuedAt = now;
-    } else {
-      items.push({ path, ...(hash !== undefined ? { hash } : {}), queuedAt: now });
+  await mutateStore((s) => {
+    const items = Array.isArray(s.link.queue) ? s.link.queue : [];
+    for (const path of paths) {
+      if (!path || !path.endsWith('.md')) continue;
+      const cur = items.find((i) => i.path === path);
+      const hash = hashes?.[path];
+      if (cur) {
+        if (hash !== undefined) cur.hash = hash;
+        cur.queuedAt = now;
+      } else {
+        items.push({ path, ...(hash !== undefined ? { hash } : {}), queuedAt: now });
+      }
     }
-  }
-  await saveQueue(items);
+    s.link.queue = items;
+  });
 }
 
 /** 消费成功移除单条（不存在则空操作） */
 export async function dequeuePath(path: string): Promise<void> {
-  const items = await loadQueue();
-  const next = items.filter((i) => i.path !== path);
-  if (next.length !== items.length) await saveQueue(next);
+  await mutateStore((s) => {
+    const items = Array.isArray(s.link.queue) ? s.link.queue : [];
+    const next = items.filter((i) => i.path !== path);
+    if (next.length !== items.length) s.link.queue = next;
+  });
 }
 
 /** 对应文件已删除的条目顺带清理；返回移除数 */
 export async function pruneQueueByExists(exists: (path: string) => boolean): Promise<number> {
-  const items = await loadQueue();
-  const next = items.filter((i) => exists(i.path));
-  const removed = items.length - next.length;
-  if (removed > 0) await saveQueue(next);
+  let removed = 0;
+  await mutateStore((s) => {
+    const items = Array.isArray(s.link.queue) ? s.link.queue : [];
+    const next = items.filter((i) => exists(i.path));
+    removed = items.length - next.length;
+    if (removed > 0) s.link.queue = next;
+  });
   return removed;
 }
 
-// ---------------- 正文基准哈希（v1.4/ticket 119：正文大改自动重跑） ----------------
+// ---------------- 正文基准哈希（v1.4/ticket 119：正文大改自动重跑；ticket 120：store link.state 段） ----------------
 
 /** 基准状态条目：最近一次成功建链时的全文内容哈希 + 时间戳 */
 export interface LinkStateEntry {
@@ -243,27 +245,13 @@ export interface LinkStateEntry {
 /** 全部基准状态：path → 条目 */
 export type LinkStateMap = Record<string, LinkStateEntry>;
 
-/** 基准状态文件路径（ADR-0009：storagePath 为唯一目录口径，同队列文件） */
-export function getLinkStateFilePath(): string {
-  const s = tryGetSettings() as any;
-  const dir =
-    String(s.storagePath ?? '')
-      .trim()
-      .replace(/\/+$/, '') || 'CONFIG/STORAGE';
-  return `${dir}/secondbrain_link_state.json`;
-}
-
 /**
  * 读全部基准状态：文件不存在 / 非对象（损坏或旧 [] 形态）一律按空对象处理。
- * jsonStore 底层对损坏文件走改名留档重建，此处再兜一层对象形态校验。
+ * store-file 底层对损坏文件走改名留档重建（jsonStore 同款），此处再兜一层对象形态校验。
  */
 export async function loadLinkState(): Promise<LinkStateMap> {
-  let data: unknown;
-  try {
-    data = await jsonStore(getLinkStateFilePath()).read();
-  } catch {
-    return {};
-  }
+  const store = await loadStore();
+  const data = store.link.state;
   if (!data || typeof data !== 'object' || Array.isArray(data)) return {};
   const out: LinkStateMap = {};
   for (const [path, entry] of Object.entries(data as Record<string, unknown>)) {
@@ -278,17 +266,16 @@ export async function loadLinkState(): Promise<LinkStateMap> {
 /** upsert 单篇基准（成功建链后调用）：刷新全文内容哈希与时间戳 */
 export async function upsertLinkState(path: string, hash: string): Promise<void> {
   if (!path || !hash) return;
-  const state = await loadLinkState();
-  state[path] = { hash, linkedAt: new Date().toISOString() };
-  await jsonStore(getLinkStateFilePath()).write(state);
+  await mutateStore((s) => {
+    s.link.state[path] = { hash, linkedAt: new Date().toISOString() };
+  });
 }
 
 /** 移除单篇基准（文件删除清理时用；不存在则空操作） */
 export async function removeLinkState(path: string): Promise<void> {
-  const state = await loadLinkState();
-  if (!(path in state)) return;
-  delete state[path];
-  await jsonStore(getLinkStateFilePath()).write(state);
+  await mutateStore((s) => {
+    if (path in s.link.state) delete s.link.state[path];
+  });
 }
 
 // ---------------- 裁判输出解析（严格 JSON `[{"id":1,"reason":"..."}]`） ----------------

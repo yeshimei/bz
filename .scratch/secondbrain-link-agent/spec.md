@@ -1,6 +1,6 @@
 # 第二大脑自动双链管线（link agent）设计 spec
 
-状态：已评审定稿（2026-08，六轮设计交流 + 用户逐项拍板）；v1.1 增量（ticket 115：启动存量补链 + 批量补链命令）+ v1.2 语义修订（ticket 116：范围只管目标侧 / 候选来源 = 白名单索引库 / 两目录字段默认空、空=什么也不录）+ v1.4 增量（ticket 119：正文大改自动重跑——基准哈希 + 修改监听）含内
+状态：已评审定稿（2026-08，六轮设计交流 + 用户逐项拍板）；v1.1 增量（ticket 115：启动存量补链 + 批量补链命令）+ v1.2 语义修订（ticket 116：范围只管目标侧 / 候选来源 = 白名单索引库 / 两目录字段默认空、空=什么也不录）+ v1.4 增量（ticket 119：正文大改自动重跑——基准哈希 + 修改监听）+ v1.5 数据整合（ticket 120：queue/state 并入 secondbrain.json link 段、vec 改名 secondbrain.vec、store-file 串行写链 + 一次性迁移）含内
 归属域：secondbrain
 前置依赖：ticket 110（切块剥离 frontmatter——向量候选质量的前提）
 
@@ -55,26 +55,26 @@ related:
 - 幂等基准 = 已存在于 `related` 的链不重复添加；
 - 不做笔记底部静态显示区（图谱 + 反链面板承担可见性）。
 
-### 待处理队列 CONFIG/STORAGE/secondbrain_link_queue.json
+### 待处理队列与正文基准哈希（ticket 120 起并入 secondbrain.json 的 link 段）
+
+统一进入第二大脑单文件 `CONFIG/STORAGE/secondbrain.json`（store-file 共享数据层，串行写链）：
 
 ```json
-[ { "path": "文献盒/xxx.md", "hash": "<内容哈希>", "queuedAt": "2026-08-26T10:00:00Z" } ]
+{
+  "version": 1,
+  "meta":  { ...第二大脑索引元数据（原 secondbrain_meta.json）... },
+  "panel": { ...AI 概括缓存（原 secondbrain_panel.json）... },
+  "link": {
+    "queue": [ { "path": "文献盒/xxx.md", "hash": "<内容哈希>", "queuedAt": "2026-08-26T10:00:00Z" } ],
+    "state": { "文献盒/xxx.md": { "hash": "<内容哈希>", "linkedAt": "2026-08-26T10:00:00Z" } }
+  }
+}
 ```
 
-- 存**事件**不存半成品：消费方拿到后用完整管线跑；
-- 同 path 重入队合并并刷新 hash；消费成功即移除；失败保留待下次；对应文件已删除的条目清理时顺带移除；
-- 该文件位于 STORAGE 目录（不在 `.stignore` 排除范围），随 Syncthing 自然跨设备流动，无需服务器。
-
-### 正文基准哈希 CONFIG/STORAGE/secondbrain_link_state.json（v1.4/ticket 119）
-
-```json
-{ "文献盒/xxx.md": { "hash": "<内容哈希>", "linkedAt": "2026-08-26T10:00:00Z" } }
-```
-
-- 键 = vault 内笔记路径，值 = 该篇**最近一次成功建链时**的内容哈希（全文 `computeHash`）+ 时间戳；
-- **只记成功**：每次 `processNote` 落盘 related 后刷新该篇基准（写入前内容算哈希，related 写入本身不算变更——重跑幂等不新增时不刷新也无害，以下次成功为准）；
-- 用途 = 修改事件判定：内容哈希与基准**相同 = 自写 related / 保存未实质变化 → 跳过**；不同（或无基准）→ 重跑建链；
-- 状态文件同样随 Syncthing 流动；不存在/损坏 → 按空对象读，首次修改视为有变化（重跑），建链成功即重建基准。
+- 原 `secondbrain_link_queue.json` → `link.queue`、`secondbrain_link_state.json` → `link.state`，首次加载由 store-file **一次性迁移**（读旧合并写新删旧），无误导旧文件；
+- queue：存**事件**不存半成品；同 path 重入队合并并刷新 hash；消费成功即移除；失败保留待下次；对应文件已删除的条目清理时顺带移除；
+- state：键 = vault 内笔记路径，值 = 该篇**最近一次成功建链时**的内容哈希（全文 `computeHash`）+ 时间戳；**只记成功**；用途 = 修改事件判定（哈希相同 → 跳过，不同/无基准 → 重跑并重建基准）；
+- 单文件位于 STORAGE 目录（不在 `.stignore` 排除范围），随 Syncthing 自然跨设备流动；向量二进制独立 `secondbrain.vec`（原 secondbrain_vectors.vec 改名）；meta/panel/link 四段写方共用一条串行写链（store-file `mutateStore`），杜绝并发交错覆盖。
 
 ## 核心流程
 
