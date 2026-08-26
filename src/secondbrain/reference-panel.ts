@@ -7,6 +7,8 @@
  * - 300ms 悬停浮出预览：路径 + 匹配度 + markdown 正文，按窄窗在屏左/右智能定位
  * - 双击卡片跳转 chunk 前 30 字并选中；浮卡态双击归位
  * - 长按 250ms 浮起 → 位移超 15px 拖出独立浮卡状态机：可拖拽/可缩放/双击归位回原位
+ * - 刷新竞态防护：列表整页重建前清场未决长按/悬停计时；已摘除卡片禁止浮出
+ *   （否则零矩形 fixed 浮卡 = 左上角幽灵卡）；关闭时对漂浮卡片兜底解绑拖拽/缩放监听
  * - 🤖 按钮已移除（对话改独立弹窗，从主面板 💬 或命令进入——ticket 108）；
  *   vault modify(.md)/active-leaf-change/editor-change 自动刷新 +
  *   光标轮询 CURSOR_POLL_INTERVAL、防抖 DEBOUNCE_DELAY
@@ -40,6 +42,10 @@ export class ReferencePanel {
   private editorRef: any = null;
   /** 浮卡拖出跟随的 document 级监听卸载器（close 时兜底清理） */
   private activeFollows = new Set<() => void>();
+  /** 每张卡片的未决态清理器：列表整页重建/面板关闭前统一执行——长按计时器不得跨重建存活（左上角幽灵卡根因） */
+  private cardTeardowns = new Map<HTMLElement, () => void>();
+  /** 浮卡的拖拽/缩放 document 级监听卸载器：close 时对仍在漂浮的卡片兜底解绑 */
+  private floatDetachers = new Map<HTMLElement, () => void>();
 
   constructor(app: App, store: VectorStore, existingWin?: FloatWindow) {
     this.app = app;
@@ -90,7 +96,8 @@ export class ReferencePanel {
   }
 
   get alive(): boolean {
-    return this.fw.alive;
+    // fw.el.remove 延迟 150ms 执行，仅看 isConnected 会把刚关闭的实例误判为存活
+    return !this.isClosed && this.fw.alive;
   }
 
   expand(): void {
@@ -133,6 +140,7 @@ export class ReferencePanel {
   }
 
   renderResults(results: SearchHit[]): void {
+    this.cancelPendingCardStates();
     this.resultsDiv.innerHTML = '';
     // 过滤当前文件（QA L1410-1411）
     const currentPath = this.app.workspace.getActiveFile()?.path || '';
@@ -147,6 +155,14 @@ export class ReferencePanel {
     for (const item of filtered) {
       this.createResultCard(item);
     }
+  }
+
+  /** 列表重建/关闭前清场：取消所有卡片的未决长按与悬停计时（卡片即将被摘除，计时器不得存活） */
+  private cancelPendingCardStates(): void {
+    for (const teardown of this.cardTeardowns.values()) teardown();
+    this.cardTeardowns.clear();
+    if (this.hoverTimer) clearTimeout(this.hoverTimer);
+    this.hoverTimer = null;
   }
 
   /** 单张卡片：悬停预览 / 双击跳转 / 长按浮出拖出独立浮卡 */
@@ -182,7 +198,9 @@ export class ReferencePanel {
       if (isFloating()) return;
       clearTimeout(panel.hoverTimer ?? undefined);
       panel.hoverTimer = setTimeout(() => {
-        if (!isFloating()) panel.showHoverPreview(item, card);
+        // 卡片已被刷新摘除：放弃预览，杜绝零坐标孤儿预览（屏幕顶部残影）
+        if (isFloating() || !card.isConnected) return;
+        panel.showHoverPreview(item, card);
       }, 300);
     });
     card.addEventListener('mouseleave', () => {
@@ -243,6 +261,9 @@ export class ReferencePanel {
 
     /** 拖出为独立浮卡：fixed 定位 + 标题栏拖拽 + 缩放（QA L1497-1530） */
     const floatCard = () => {
+      // 双保险：对已脱离 DOM 的卡片取 rect 得全 0，会以 left/top=0、width=0 浮出——
+      // 即左上角幽灵卡（不可抓握、无法拖动），任何路径都不得在此状态浮出
+      if (!card.isConnected || isFloating()) return;
       card.classList.add('bz-sb-ref-card--float');
       panel.floatingCards.add(card);
       panel.hideHoverPreview();
@@ -257,6 +278,11 @@ export class ReferencePanel {
       topRow.classList.add('bz-sb-ref-card-top--grip');
       detachDrag = makeDraggable(card, topRow);
       detachResize = makeResizable(card, 180, 120);
+      // 关闭面板时对仍在漂浮的卡片兜底解绑 document 级监听
+      panel.floatDetachers.set(card, () => {
+        if (detachDrag) detachDrag();
+        if (detachResize) detachResize();
+      });
     };
 
     /** 归位：还原列表卡形态并插回原位置（QA L1532-1551） */
@@ -267,6 +293,7 @@ export class ReferencePanel {
       if (detachResize) detachResize();
       detachDrag = null;
       detachResize = null;
+      panel.floatDetachers.delete(card);
       topRow.classList.remove('bz-sb-ref-card-top--grip');
       card.style.cssText = '';
       if (originalNext && originalNext.parentNode === panel.resultsDiv) {
@@ -286,13 +313,15 @@ export class ReferencePanel {
       holdStartY = e.clientY;
       holdTimer = setTimeout(() => {
         holdTimer = null;
+        // 已被刷新摘除：不得进入浮起态（长按计时器跨列表重建存活 = 幽灵卡根因之一）
+        if (!card.isConnected) return;
         isHeld = true;
         card.classList.add('bz-sb-ref-card--held');
         panel.hideHoverPreview();
       }, 250);
     });
     card.addEventListener('mousemove', (e) => {
-      if (isFloating()) return;
+      if (isFloating() || !card.isConnected) return;
       if (!isHeld) {
         if (holdTimer && (Math.abs(e.clientX - holdStartX) > 8 || Math.abs(e.clientY - holdStartY) > 8)) {
           clearTimeout(holdTimer);
@@ -311,11 +340,20 @@ export class ReferencePanel {
     });
     card.addEventListener('mouseleave', () => {
       if (isFloating()) return;
+      if (!card.isConnected) {
+        // 刷新竞态：卡片摘除后浏览器补发的边界事件只清态，绝不浮出
+        cancelHold();
+        return;
+      }
       if (isHeld) {
         cancelHold();
         floatCard();
       }
     });
+
+    // 未决态清理器：renderResults 整页重建 / destroyResources 时执行，
+    // 保证长按计时器与浮起态不存活于已被摘除的卡片上
+    panel.cardTeardowns.set(card, () => cancelHold());
 
     return card;
   }
@@ -376,9 +414,13 @@ export class ReferencePanel {
         /* 环境无 offref 能力时忽略 */
       }
     }
+    this.cancelPendingCardStates();
     this.hideHoverPreview();
     for (const detach of this.activeFollows) detach();
     this.activeFollows.clear();
+    // 仍在漂浮的卡片：先解绑其 document 级拖拽/缩放监听再移除 DOM
+    for (const detach of this.floatDetachers.values()) detach();
+    this.floatDetachers.clear();
     for (const fc of this.floatingCards) fc.remove();
     this.floatingCards.clear();
   }
