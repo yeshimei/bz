@@ -119,6 +119,67 @@ describe('core settings-modal 机制', () => {
     openSettingsModal({ title: '新弹窗', build: () => {} });
     expect(oldClosed).toBe(1);
   });
+
+  it('焦点管理（UX 整改 37）：popup 挂 role=dialog + aria-modal；打开聚焦首个可交互项；关闭还原焦点', () => {
+    const trigger = document.createElement('button');
+    trigger.textContent = '触发';
+    document.body.appendChild(trigger);
+    trigger.focus();
+    openSettingsModal({
+      title: '焦点测试',
+      build: (el) => {
+        const item = document.createElement('div');
+        item.className = 'setting-item';
+        el.appendChild(item);
+        const first = document.createElement('button');
+        first.className = 'first-control';
+        first.textContent = '第一个控件';
+        item.appendChild(first);
+        const second = document.createElement('button');
+        second.className = 'second-control';
+        second.textContent = '第二个控件';
+        item.appendChild(second);
+      },
+    });
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    expect(popup.getAttribute('role')).toBe('dialog');
+    expect(popup.getAttribute('aria-modal')).toBe('true');
+    expect(document.activeElement).toBe(popup.querySelector('.first-control'));
+    expect((document.activeElement as HTMLElement).className).toBe('first-control');
+    closeSettingsModal();
+    expect(document.getElementById('bz-settings-modal-mask')).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it('焦点管理：隐藏项（bz-setting-hidden）不承接首焦点', () => {
+    const trigger = document.createElement('button');
+    document.body.appendChild(trigger);
+    trigger.focus();
+    openSettingsModal({
+      title: '隐藏焦点测试',
+      build: (el) => {
+        const item = document.createElement('div');
+        item.className = 'setting-item bz-setting-hidden';
+        el.appendChild(item);
+        const hiddenBtn = document.createElement('button');
+        hiddenBtn.className = 'hidden-control';
+        hiddenBtn.textContent = '隐藏项';
+        item.appendChild(hiddenBtn);
+        const item2 = document.createElement('div');
+        item2.className = 'setting-item';
+        el.appendChild(item2);
+        const visibleBtn = document.createElement('button');
+        visibleBtn.className = 'visible-control';
+        visibleBtn.textContent = '可见项';
+        item2.appendChild(visibleBtn);
+      },
+    });
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    // 跳过隐藏项，聚焦可见首项 → 仍为原触发元素（可见项虽在但首个可见按钮是 visible-control）
+    expect(popup.querySelector('.visible-control')).not.toBeNull();
+    expect((document.activeElement as HTMLElement).className).toBe('visible-control');
+    closeSettingsModal();
+  });
 });
 
 describe('分组卡片（2026-08 用户拍板方案 A：先落日记本）', () => {

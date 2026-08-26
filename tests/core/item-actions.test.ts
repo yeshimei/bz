@@ -201,6 +201,53 @@ describe('右键跟手菜单（桌面主路径）', () => {
     expect(document.querySelector('.bz-item-sheet')).toBeNull();
     vi.useRealTimers();
   });
+
+  it('键盘导航（UX 整改 38）：打开聚焦首项；↑↓ 循环选择；回车执行选中项', () => {
+    const card = makeCard();
+    document.body.appendChild(card);
+    attachItemActions(card, ACTIONS);
+    rightClickOn(card);
+    const items = [...document.querySelectorAll('.bz-item-menu-item')] as HTMLElement[];
+    expect(items).toHaveLength(3);
+    // 打开即聚焦首个可交互项
+    expect(document.activeElement).toBe(items[0]);
+    // ↓ 依次移动
+    document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    expect(document.activeElement).toBe(items[1]);
+    document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    expect(document.activeElement).toBe(items[2]);
+    // ↓ 到末尾循环回首项
+    document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    expect(document.activeElement).toBe(items[0]);
+    // ↑ 回退到末项
+    document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+    expect(document.activeElement).toBe(items[2]);
+    // 回车/空格等价于点击（按钮原生激活）→ 执行选中项并关闭菜单
+    (document.activeElement as HTMLElement).click();
+    expect((window as any).__deleted).toBe(true);
+    expect(document.querySelector('.bz-item-menu')).toBeNull();
+  });
+
+  it('键盘导航：↑↓ 不冒泡成页面滚动（preventDefault）；关闭后焦点还原到打开前元素', () => {
+    const card = makeCard();
+    document.body.appendChild(card);
+    const focusTarget = document.createElement('button');
+    focusTarget.textContent = '焦点锚点';
+    document.body.appendChild(focusTarget);
+    focusTarget.focus();
+    attachItemActions(card, ACTIONS);
+    rightClickOn(card);
+    expect(document.activeElement).not.toBe(focusTarget);
+    // 方向键已消费（无默认滚动行为；jsdom 无可观测滚动，这里验证不抛错 + 焦点仍在浮层内）
+    const ev = new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true });
+    document.activeElement!.dispatchEvent(ev);
+    expect(ev.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(document.querySelectorAll('.bz-item-menu-item')[1]);
+    // 关闭 → 焦点还原到打开前的锚点元素
+    closeItemMenu();
+    expect(document.querySelector('.bz-item-menu')).toBeNull();
+    expect(document.activeElement).toBe(focusTarget);
+  });
 });
 
 describe('移动端底部抽屉（Platform.isMobile = true）', () => {
@@ -370,6 +417,38 @@ describe('移动端底部抽屉（Platform.isMobile = true）', () => {
     expect(sheet.classList.contains('bz-item-sheet--dragging')).toBe(false);
     expect(mask.style.opacity).toBe('1');
     expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
+    vi.useRealTimers();
+  });
+
+  it('键盘导航（UX 整改 38）：抽屉打开聚焦首项；↑↓ 在功能项区循环（头部自定义内容不参与）', () => {
+    vi.useFakeTimers();
+    const card = makeCard();
+    // 头部带自定义按钮（sheetHead 路径）：不参与功能项 roving 范围
+    const head = document.createElement('div');
+    const headBtn = document.createElement('button');
+    headBtn.className = 'sheet-head-btn';
+    headBtn.textContent = '头部按钮';
+    head.appendChild(headBtn);
+    attachItemActions(card, ACTIONS, { sheetHead: head });
+    openSheet(card);
+    const items = [...document.querySelectorAll('.bz-item-sheet-body .bz-item-sheet-item')] as HTMLElement[];
+    expect(items).toHaveLength(3);
+    // 打开即聚焦功能首项（而非头部按钮）
+    expect(document.activeElement).toBe(items[0]);
+    // ↓ 循环；到末项再 ↓ 回首项
+    document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    expect(document.activeElement).toBe(items[1]);
+    document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    expect(document.activeElement).toBe(items[2]);
+    document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    expect(document.activeElement).toBe(items[0]);
+    // ↑ 回末项
+    document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+    expect(document.activeElement).toBe(items[2]);
+    // 点击选中项执行并关闭抽屉
+    (document.activeElement as HTMLElement).click();
+    expect((window as any).__deleted).toBe(true);
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
     vi.useRealTimers();
   });
 
