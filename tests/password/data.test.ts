@@ -193,4 +193,42 @@ describe('DataManager（合并至保险箱：password-vault 条目）', () => {
     expect(dm.search('nope').length).toBe(0);
     expect(dm.search('').length).toBe(2);
   });
+
+  it('load 结果缓存（ticket 43）：密文未变不重解密；写操作后密文变化自动失效重解；lock 清缓存', async () => {
+    const dm = await unlockedDM('pw');
+    await dm.addItem({ platform: 'GitHub', account: 'me', password: 'p' } as any);
+    // 首次 load：真实解密整表
+    await dm.load();
+    expect(dm.pwData.length).toBe(1);
+    // 未变化：缓存命中，不再触发解密（复读原始密文零解密开销）
+    const spy = vi.spyOn(sm, 'decryptNoteBody');
+    await dm.load();
+    expect(spy).not.toHaveBeenCalled();
+    // 写操作（addItem）：重加密使密文变化 → 缓存自动失效 → 真实重解
+    await dm.addItem({ platform: 'Gmail', account: 'b', password: 'x' } as any);
+    await dm.load();
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(dm.pwData.length).toBe(2);
+    // lock 后缓存清空：重新解锁再 load 走全量解密
+    spy.mockClear();
+    dm.lock();
+    await sm.unlock('pw');
+    await dm.load();
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  it('load 缓存不吞错误：镜像损坏（解密失败）不写缓存，重复 load 仍真实重试并抛错', async () => {
+    const dm = await unlockedDM('pw');
+    await dm.addItem({ platform: 'x', account: 'a', password: 'p' } as any);
+    const note = sm.manifest.notes[0];
+    const raw = Uint8Array.from(
+      atob(vault.files.get('CONFIG/.ENCRYPT/' + note.contentRef)!),
+      (c) => c.charCodeAt(0)
+    );
+    raw[raw.length - 1] = raw[raw.length - 1] ^ 0xff; // 破坏密文尾部（GCM tag）
+    vault.files.set('CONFIG/.ENCRYPT/' + note.contentRef, btoa(String.fromCharCode(...raw)));
+    await expect(dm.load()).rejects.toThrow();
+    // 失败未写缓存：再次 load 仍走真实解密并抛错（而非静默返回旧数据）
+    await expect(dm.load()).rejects.toThrow();
+  });
 });

@@ -12,7 +12,7 @@ import { DataManager } from '../../src/password/data';
 import { EncryptAppController } from '../../src/encrypt/ui';
 import { getSafeManager } from '../../src/encrypt';
 import { MockVault } from '../mock-vault';
-import { resetObsidianMocks, hasNotice, clearNotices, Platform } from '../mock-obsidian-entry';
+import { resetObsidianMocks, hasNotice, clearNotices, getNoticeMessages, Platform } from '../mock-obsidian-entry';
 import { closeItemMenu } from '../../src/core/item-actions';
 import { closeSettingsModal } from '../../src/core/settings-modal';
 
@@ -316,7 +316,7 @@ describe('密码本 ⚙️ 设置弹窗覆盖补测', () => {
     return document.getElementById('bz-settings-modal-popup')!;
   }
 
-  it('设置项 onChange 写回设置对象并触发保存；重复改动只提示一次重载生效', async () => {
+  it('设置项 onChange 写回设置对象并触发保存；重复改动只提示一次重载生效（ticket 55）', async () => {
     const s: any = { passwordCharset: 'abc', passwordLength: '8', securityMode: false };
     setSettingsProvider(() => s);
     const saveSpy = vi.fn(async () => {});
@@ -324,6 +324,7 @@ describe('密码本 ⚙️ 设置弹窗覆盖补测', () => {
     const popup = openModal();
     const settings = [...popup.querySelectorAll('.setting-item')].map((el) => (el as any).__setting);
     expect(settings.length).toBe(3);
+    const RELOAD_TIP = '密码本设置已保存，重载插件后生效';
     // 字符集 / 长度文本项
     (settings[0].controls[0] as any).trigger('xyz789');
     expect(s.passwordCharset).toBe('xyz789');
@@ -333,7 +334,9 @@ describe('密码本 ⚙️ 设置弹窗覆盖补测', () => {
     (settings[2].controls[0] as any).trigger(true);
     expect(s.securityMode).toBe(true);
     await waitFor(() => saveSpy.mock.calls.length >= 3);
-    expect(hasNotice('保险箱设置已保存，重载插件后生效')).toBe(false); // 密码本设置不提示重载（无启动快照语义）
+    // 改动提示重载生效，且多次改动只提示一次
+    expect(hasNotice(RELOAD_TIP)).toBe(true);
+    expect(getNoticeMessages().filter((m) => m === RELOAD_TIP).length).toBe(1);
     closeSettingsModal(); // 关闭弹窗清理
   });
 
