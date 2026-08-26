@@ -9,7 +9,7 @@ import { setApp } from '../../../src/diary/app';
 import { applyDirectories, resetTagsConfig } from '../../../src/diary/config';
 import { init, showDiaryPanel } from '../../../src/diary/ui/panel';
 import { openAddDialog, saveNewEntry, createTagPicker, showTagPicker } from '../../../src/diary/ui/dialogs';
-import { jumpToEntry, updateSticky } from '../../../src/diary/ui/entries';
+import { jumpToEntry, insertCard, removeCard, updateSticky } from '../../../src/diary/ui/entries';
 import { rebuildTags, updateTagCounts, refreshSubTagsBar } from '../../../src/diary/ui/filter-shared';
 import { showDateTimePicker } from '../../../src/diary/ui/datetime-picker';
 import { loadAll } from '../../../src/diary/store';
@@ -391,6 +391,88 @@ describe('UX-p5 滚动性能', () => {
       expect(a.sep.style.zIndex).toBe('10');
       container.scrollTop = 350;
       updateSticky(); // 置顶未变 → 幂等无抖动
+      expect(b.sep.style.zIndex).toBe('20');
+      expect(a.sep.style.zIndex).toBe('10');
+    } finally {
+      state.ui.entriesContainer = null;
+      state.ui.scrollContainer = null;
+      container.remove();
+    }
+  });
+
+  it('既有分区插卡后分区缓存重建：后续分区移位被重新读取（UX-p5 回归）', () => {
+    const container = document.createElement('div');
+    const mk = (top: number, date: string) => {
+      const section = document.createElement('div');
+      section.className = 'date-section';
+      const sep = document.createElement('div');
+      sep.className = 'diary-date-separator';
+      sep.dataset.date = date;
+      Object.assign(sep.style, { position: 'sticky', top: '0', zIndex: '10' });
+      section.appendChild(sep);
+      container.appendChild(section);
+      Object.defineProperty(section, 'offsetTop', { value: top, configurable: true });
+      return { section, sep };
+    };
+    const a = mk(100, '2024-01-01');
+    const b = mk(300, '2024-01-02');
+    document.body.appendChild(container);
+    state.ui.entriesContainer = container;
+    state.ui.scrollContainer = container;
+    try {
+      container.scrollTop = 250;
+      updateSticky(); // 建缓存 [100, 300] → A 置顶
+      expect(a.sep.style.zIndex).toBe('20');
+      // 模拟插卡后 B 下移：先改 stub，再走「既有分区插卡」路径（保存新条目/改分类重入列同源）
+      Object.defineProperty(b.section, 'offsetTop', { value: 1000, configurable: true });
+      const entry = { ...state.data.originalDiaryEntries[0], id: 'ux-insert', date: '2024-01-01', time: '23:59', timeValue: 2359 } as any;
+      insertCard(entry); // 命中 2024-01-01 既有分区 → 必须重建缓存（新 B 顶 1000）
+      container.scrollTop = 800;
+      updateSticky();
+      // 若缓存未重建：B 旧值 300 ≤ 805 会被误选为置顶 → B z20 错误
+      expect(a.sep.style.zIndex).toBe('20');
+      expect(b.sep.style.zIndex).toBe('10');
+    } finally {
+      state.ui.entriesContainer = null;
+      state.ui.scrollContainer = null;
+      container.remove();
+    }
+  });
+
+  it('removeCard 后分区缓存重建：后续分区上移被重新读取（UX-p5 回归）', () => {
+    const container = document.createElement('div');
+    const mk = (top: number, date: string) => {
+      const section = document.createElement('div');
+      section.className = 'date-section';
+      const sep = document.createElement('div');
+      sep.className = 'diary-date-separator';
+      sep.dataset.date = date;
+      Object.assign(sep.style, { position: 'sticky', top: '0', zIndex: '10' });
+      section.appendChild(sep);
+      container.appendChild(section);
+      Object.defineProperty(section, 'offsetTop', { value: top, configurable: true });
+      return { section, sep };
+    };
+    const a = mk(100, '2024-01-01');
+    const b = mk(300, '2024-01-02');
+    // 分区 A 内放一张真实卡片（减卡路径）
+    const card = document.createElement('div');
+    card.id = 'diary-entry-ux-rm';
+    a.section.appendChild(card);
+    document.body.appendChild(container);
+    state.ui.entriesContainer = container;
+    state.ui.scrollContainer = container;
+    try {
+      container.scrollTop = 250;
+      updateSticky(); // 建缓存 [100, 300] → A 置顶
+      expect(a.sep.style.zIndex).toBe('20');
+      // 模拟减卡后 B 上移：先改 stub，再走 removeCard（改分类移除卡片同源）
+      Object.defineProperty(b.section, 'offsetTop', { value: 200, configurable: true });
+      removeCard('ux-rm');
+      expect(document.getElementById('diary-entry-ux-rm')).toBeNull();
+      container.scrollTop = 250;
+      updateSticky();
+      // 若缓存未重建：B 旧值 300 > 255 不会被选中 → A 仍置顶，B 应为新值 200 → B z20
       expect(b.sep.style.zIndex).toBe('20');
       expect(a.sep.style.zIndex).toBe('10');
     } finally {
