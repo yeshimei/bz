@@ -10,7 +10,6 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { DEFAULT_SETTINGS } from '../../src/settings';
 import {
-  LINK_AGENT_DEFAULT_SCOPE,
   computeBackfillTargets,
   computeHash,
   dequeuePath,
@@ -18,6 +17,7 @@ import {
   getLinkQueueFilePath,
   isUnderFolder,
   loadQueue,
+  matchesScope,
   mergeRelated,
   normalizeRelatedEntry,
   parseJudgeOutput,
@@ -29,30 +29,39 @@ import {
 } from '../../src/secondbrain/link-agent/data';
 
 describe('自动双链·设置键默认值', () => {
-  it('DEFAULT_SETTINGS 六键齐备且取 spec 默认值', () => {
+  it('DEFAULT_SETTINGS 六键齐备且取 spec 默认值（ticket 116：关联范围默认空 = 什么也不录）', () => {
     const s = DEFAULT_SETTINGS as any;
     expect(s.linkAgentEnabled).toBe(true);
-    expect(s.linkAgentScopes).toBe('文献盒');
+    expect(s.linkAgentScopes).toBe('');
     expect(s.linkAgentTopK).toBe(8);
     expect(s.linkAgentMaxLinks).toBe(0);
     expect(s.linkAgentNotify).toBe(true);
     expect(s.linkAgentAutoClean).toBe(true);
-    expect(LINK_AGENT_DEFAULT_SCOPE).toBe('文献盒');
   });
 });
 
-describe('关联范围解析（linkAgentScopes，需求变更）', () => {
-  it('parseScopeList：逗号分隔/trim/去空；多目录保序', () => {
+describe('关联范围解析（linkAgentScopes，ticket 116 语义：只决定目标/触发侧）', () => {
+  it('parseScopeList：逗号分隔/trim/去空/去重；多目录保序', () => {
     expect(parseScopeList('文献盒,卡片盒')).toEqual(['文献盒', '卡片盒']);
     expect(parseScopeList(' 文献盒 , 卡片盒 , ,')).toEqual(['文献盒', '卡片盒']);
     expect(parseScopeList('书库')).toEqual(['书库']);
+    expect(parseScopeList('文献盒,文献盒,卡片盒')).toEqual(['文献盒', '卡片盒']);
   });
 
-  it('空值/缺省回退「文献盒」', () => {
-    expect(parseScopeList(undefined)).toEqual(['文献盒']);
-    expect(parseScopeList(null)).toEqual(['文献盒']);
-    expect(parseScopeList('')).toEqual(['文献盒']);
-    expect(parseScopeList(' , ')).toEqual(['文献盒']);
+  it('空值/缺省 = 空（什么也不录），不再是回退「文献盒」', () => {
+    expect(parseScopeList(undefined)).toEqual([]);
+    expect(parseScopeList(null)).toEqual([]);
+    expect(parseScopeList('')).toEqual([]);
+    expect(parseScopeList(' , ')).toEqual([]);
+  });
+
+  it('matchesScope：空范围任何路径都不命中；非空按目录递归匹配', () => {
+    expect(matchesScope([], '文献盒/A.md')).toBe(false);
+    expect(matchesScope(['文献盒'], '文献盒/A.md')).toBe(true);
+    expect(matchesScope(['文献盒'], '文献盒/子/B.md')).toBe(true);
+    expect(matchesScope(['文献盒'], '文献盒')).toBe(true);
+    expect(matchesScope(['文献盒'], '其他/A.md')).toBe(false);
+    expect(matchesScope(['文献盒', '卡片盒'], '卡片盒/K.md')).toBe(true);
   });
 });
 

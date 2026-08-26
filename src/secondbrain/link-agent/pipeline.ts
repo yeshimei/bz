@@ -20,7 +20,6 @@ import { buildConfig, IS_MOBILE } from '../config';
 import { AI } from '../ai';
 import type { SearchHit } from '../vector-store';
 import {
-  LINK_AGENT_DEFAULT_SCOPE,
   computeBackfillTargets,
   getLinkAgentScopes,
   LinkQueueItem,
@@ -28,6 +27,7 @@ import {
   enqueuePaths,
   dequeuePath,
   loadQueue,
+  matchesScope,
   mergeRelated,
   normalizeRelatedEntry,
   parseRelatedEntries,
@@ -218,7 +218,11 @@ export class LinkAgent {
     return { status: 'done', created };
   }
 
-  /** 关联范围内向量近邻候选：全局大池 → 过滤 linkAgentScopes/去自身 → 按 path 去重取最优 → Top-K */
+  /**
+   * 候选生成（ticket 116：来源 = 白名单索引库全部笔记，不再按 linkAgentScopes 过滤）：
+   * 全局大池近邻 → 去自身 → 剔除已不存在文件与 encrypt 锁定 → 按 path 去重取最优 → Top-K。
+   * 关联范围（linkAgentScopes）只决定"哪些笔记会被关联"（目标/触发侧），不限制候选来源。
+   */
   async findCandidates(selfPath: string, content: string): Promise<SearchHit[]> {
     const topK = this.maxTopK;
     const cfg = buildConfig();
@@ -232,11 +236,10 @@ export class LinkAgent {
       return [];
     }
     const bestByPath = new Map<string, SearchHit>();
-    const scopes = getLinkAgentScopes();
     for (const hit of hits) {
-      if (!scopes.some((dir) => isUnderFolder(dir, hit.path))) continue;
       if (hit.path === selfPath) continue;
       if (!this.app.vault.getAbstractFileByPath(hit.path)) continue;
+      if (isEncryptLockedPath(this.app, hit.path)) continue;
       const cur = bestByPath.get(hit.path);
       if (!cur || hit.score > cur.score) bestByPath.set(hit.path, hit);
     }
@@ -477,7 +480,7 @@ export class LinkAgent {
     return computeBackfillTargets(
       files.map((f) => f.path),
       {
-        inScope: (p) => scopes.some((dir) => isUnderFolder(dir, p)),
+        inScope: (p) => matchesScope(scopes, p),
         hasRelated: (p) => {
           try {
             const fm = cache?.getFileCache?.(vault.getAbstractFileByPath(p))?.frontmatter as Record<string, unknown> | undefined;
@@ -492,7 +495,7 @@ export class LinkAgent {
   }
 
   /**
-   * 死链清理：解析关联范围（linkAgentScopes，缺省回退「文献盒」）各笔记 related，移除指向不存在文件的失效条目（非 wikilink 条目不动）。
+   * 死链清理：解析关联范围（linkAgentScopes，空 = 不扫描）内各笔记 related，移除指向不存在文件的失效条目（非 wikilink 条目不动）。
    * encrypt 域锁定文件一律跳过：保险箱锁定态无法区分「已删除」与「已加密」，整体跳过本次清理；
    * 解锁态下清单内路径视为存活。返回实际移除条数；有移除才通知（零变化静默）。
    */
@@ -543,8 +546,7 @@ export class LinkAgent {
     };
 
     let removedTotal = 0;
-    const scopes = getLinkAgentScopes();
-    const scopedFiles = mdFiles.filter((f) => scopes.some((dir) => isUnderFolder(dir, f.path)));
+    const scopedFiles = mdFiles.filter((f) => matchesScope(getLinkAgentScopes(), f.path));
     for (const file of scopedFiles) {
       let entries: string[];
       try {
