@@ -1,10 +1,10 @@
 /**
- * 第二大脑主面板（ticket 103 建；ticket 107 首用引导；ticket 108 打磨）
- * 统一入口弹窗：统计卡片 / 内容规模 / 最厚笔记 / 来源分布树形 / 近 12 周趋势 / 最近向量化 / AI 概括。
+ * 第二大脑主面板（ticket 103 建；ticket 107 首用引导；ticket 108 打磨；ticket 109 统计卡精简）
+ * 统一入口弹窗：统计卡片 / 内容规模明细 / 来源分布树形 / 近 12 周趋势 / 最近向量化 / AI 概括。
  * - ticket 108 打磨项：
  *   ① 存储占用=meta+向量合计单值（hover 明细）；上次索引与最近向量化行用共享 formatRelativeTime；
  *   ② 来源分布改树形逐级展开（名称左对齐，▸/▾ 递归下钻子目录）；
- *   ③ 新增维度：白名单覆盖率、内容规模（总字数/平均块长/平均每篇块数）、最厚笔记 Top5、索引一致性健康；
+ *   ③ ticket 108 曾新增白名单覆盖率/内容规模/最厚笔记 Top5/一致性健康四项，其中覆盖率卡与 Top5 区块已按 ticket 109 移除（语义重复/需求砍掉）；
  *   ④ 每次打开自动增量索引：有待处理变更 → 全屏进度视图接管，完成后再进统计；无变更直接统计；
  *   ⑤ 概括走统一 AI 通道（主设置页服务商）；缓存 secondbrain_panel.json 保留，设置页清除入口移除。
  * - 引导/进度视图三用：首次初始化（空库，带按钮）/ 自动增量（待处理块，纯进度）/ 重新索引（设置页确认后）。
@@ -52,8 +52,6 @@ export interface SecondBrainStats {
   totalChars: number;
   avgChunkLen: number;
   avgChunksPerNote: number;
-  /** 最厚笔记 Top5（按块数降序），点击跳转 */
-  topThickets: RecentNote[];
 }
 
 /** 来源分布树节点（ticket 108）：dir 末段为 name，聚合整棵子树计数，children 按 chunks 降序 */
@@ -131,6 +129,15 @@ export function buildSourceTree(meta: SecondBrainMeta): SourceTreeNode[] {
   return rootsArr;
 }
 
+/** 数值缩写（ticket 109）：≥10,000 显示 K/M（19.7K / 1.2M），万以下原样千分位；精确值走卡片 title hover */
+export function fmtCompact(n: number): string {
+  const trim = (s: string) => s.replace(/\.0$/, '');
+  if (n >= 1_000_000_000) return `${trim((n / 1_000_000_000).toFixed(1))}B`;
+  if (n >= 1_000_000) return `${trim((n / 1_000_000).toFixed(1))}M`;
+  if (n >= 10_000) return `${trim((n / 1000).toFixed(1))}K`;
+  return n.toLocaleString();
+}
+
 /** 由 meta.notes 聚合全部统计（本地计算，秒开） */
 export function computeStats(meta: SecondBrainMeta, now = Date.now()): Omit<SecondBrainStats, 'metaBytes' | 'vecBytes'> {
   const bySource = new Map<string, SourceDistItem>();
@@ -161,7 +168,6 @@ export function computeStats(meta: SecondBrainMeta, now = Date.now()): Omit<Seco
   recent.sort((a, b) => b.mtime - a.mtime);
   const bySourceArr = [...bySource.values()].sort((a, b) => b.chunks - a.chunks);
   const noteCount = Object.keys(meta.notes).length;
-  const topThickets = [...recent].sort((a, b) => b.chunks - a.chunks).slice(0, 5);
   return {
     chunkCount,
     noteCount,
@@ -173,7 +179,6 @@ export function computeStats(meta: SecondBrainMeta, now = Date.now()): Omit<Seco
     totalChars,
     avgChunkLen: chunkCount ? Math.round(totalChars / chunkCount) : 0,
     avgChunksPerNote: noteCount ? Math.round((chunkCount / noteCount) * 10) / 10 : 0,
-    topThickets,
   };
 }
 
@@ -196,18 +201,6 @@ async function readCache(app: App): Promise<SummaryCache | null> {
 
 async function writeCache(app: App, cache: SummaryCache): Promise<void> {
   await app.vault.adapter.write(PANEL_CACHE_FILE(), JSON.stringify(cache));
-}
-
-/** 清除 AI 概括缓存（⚙️ 域设置弹窗动作行调用） */
-export async function clearSummaryCache(app?: App): Promise<boolean> {
-  try {
-    await (app as any).vault.adapter.remove(PANEL_CACHE_FILE());
-    notice('第二大脑：AI 概括缓存已清除');
-    return true;
-  } catch {
-    notice('第二大脑：无概括缓存可清除');
-    return false;
-  }
 }
 
 /** 构建概括提示词（纯函数） */
@@ -498,12 +491,6 @@ export class SecondBrainPanel {
     scaleBox.innerHTML = `<div class="bz-sb-section-title">内容规模</div><div id="bz-sb-scale" class="bz-sb-scale"></div>`;
     content.appendChild(scaleBox);
 
-    // ticket 108 新维度：最厚笔记 Top5
-    const topBox = document.createElement('div');
-    topBox.className = 'bz-sb-section';
-    topBox.innerHTML = `<div class="bz-sb-section-title">最厚笔记 Top5</div><div id="bz-sb-top" class="bz-sb-recent"></div>`;
-    content.appendChild(topBox);
-
     const distBox = document.createElement('div');
     distBox.className = 'bz-sb-section';
     distBox.innerHTML = `<div class="bz-sb-section-title">来源分布</div><div id="bz-sb-dist" class="bz-sb-dist"></div>`;
@@ -683,21 +670,17 @@ export class SecondBrainPanel {
     } catch {}
     const stats = { ...computeStats(this.store.meta), metaBytes, vecBytes };
 
-    // ---- 卡片行（ticket 108：存储占用合计 + 相对日期 + 覆盖率 + 一致性健康） ----
+    // ---- 卡片行（ticket 109：六张精简版一行放下；≥1 万数值 K/M 缩写，hover 精确值） ----
     const cards = document.getElementById('bz-sb-cards');
     if (cards) {
       const fmtBytes = (n: number) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`);
       // 索引健康：向量行数 vs 块总数（dim>0 才有行数概念）
       const vecRows = stats.dim && vecBytes > 0 ? (this.store.vectors.length / stats.dim) : 0;
       const healthy = vecRows === 0 || vecRows === stats.chunkCount;
-      // 白名单覆盖率：已索引 vs 白名单内 md 总数
-      const whitelisted = this.store.whitelistedFiles().length;
-      const coverText = whitelisted > 0 ? `${stats.noteCount}/${whitelisted} 篇` : String(stats.noteCount);
       const items: Array<[string, string, string]> = [
-        ['向量块', String(stats.chunkCount), ''],
-        ['覆盖笔记', String(stats.noteCount), ''],
-        ['白名单覆盖', coverText, whitelisted > 0 ? `白名单内共 ${whitelisted} 篇 md` : '白名单内无 md 文件'],
-        ['内容规模', this.fmtScale(stats.totalChars), `总字数 ${stats.totalChars.toLocaleString()} · 平均块长 ${stats.avgChunkLen} 字`],
+        ['向量块', fmtCompact(stats.chunkCount), `共 ${stats.chunkCount.toLocaleString()} 个向量块`],
+        ['覆盖笔记', fmtCompact(stats.noteCount), `共 ${stats.noteCount.toLocaleString()} 篇笔记`],
+        ['嵌入维度', stats.dim > 0 ? `${stats.dim} 维` : '—', `嵌入模型 ${CONFIG.EMBEDDING_MODEL} · 维度变更需重建索引`],
         ['索引健康', healthy ? '✓ 一致' : `⚠ 偏差 ${Math.abs(vecRows - stats.chunkCount)} 行`, `向量 ${vecRows} 行 / 块 ${stats.chunkCount} 个`],
         ['存储占用', stats.vecBytes ? fmtBytes(metaBytes + vecBytes) : '—', `meta ${fmtBytes(metaBytes)} + 向量 ${fmtBytes(vecBytes)}`],
         ['上次索引', stats.lastIndexedAt ? formatRelativeTime(stats.lastIndexedAt) : '—', stats.lastIndexedAt ? new Date(stats.lastIndexedAt).toLocaleString() : ''],
@@ -728,32 +711,6 @@ export class SecondBrainPanel {
       ]
         .map(([k, v]) => `<div class="bz-sb-scale-item"><div class="bz-sb-scale-value">${v}</div><div class="bz-sb-scale-label">${k}</div></div>`)
         .join('');
-    }
-
-    // ---- 最厚笔记 Top5（ticket 108，点击跳转） ----
-    const topEl = document.getElementById('bz-sb-top');
-    if (topEl) {
-      topEl.innerHTML = '';
-      if (stats.topThickets.length === 0) {
-        topEl.innerHTML = '<div class="bz-sb-empty">暂无数据</div>';
-      }
-      for (const r of stats.topThickets) {
-        const row = document.createElement('div');
-        row.className = 'bz-sb-recent-row';
-        const name = document.createElement('span');
-        name.className = 'bz-sb-recent-name';
-        name.textContent = r.path.split('/').pop() || r.path;
-        const time = document.createElement('span');
-        time.className = 'bz-sb-recent-time';
-        time.textContent = `${r.chunks} 段`;
-        row.appendChild(name);
-        row.appendChild(time);
-        row.onclick = () => {
-          const f = this.app.vault.getAbstractFileByPath(r.path);
-          if (f) this.app.workspace.getLeaf(false).openFile(f as any);
-        };
-        topEl.appendChild(row);
-      }
     }
 
     // ---- 来源分布（树形逐级展开，ticket 108） ----
@@ -824,13 +781,6 @@ export class SecondBrainPanel {
       if (text) text.textContent = cache.summary;
       if (meta) meta.textContent = `生成于 ${new Date(cache.generatedAt).toLocaleString()}`;
     }
-  }
-
-  /** 字节数 → 人类可读（卡片值用） */
-  private fmtScale(chars: number): string {
-    if (chars >= 1_0000_0000) return `${(chars / 1_0000_0000).toFixed(1)} 亿字`;
-    if (chars >= 1_0000) return `${(chars / 1_0000).toFixed(1)} 万字`;
-    return `${chars.toLocaleString()} 字`;
   }
 
   private async generateSummary(btn: HTMLButtonElement): Promise<void> {

@@ -1,11 +1,12 @@
 // @vitest-environment node
 /**
- * 第二大脑统计纯函数（ticket 108）：
+ * 第二大脑统计纯函数（ticket 108/109）：
  * - buildSourceTree：目录树构建（逐级聚合计数/子节点按块数降序/递归）；
- * - computeStats 新维度：总字数/平均块长/平均每篇块数/最厚笔记 Top5。
+ * - computeStats 新维度：总字数/平均块长/平均每篇块数（ticket 109 起 topThickets 已删）；
+ * - fmtCompact：卡片数值 K/M 缩写（≥10,000）。
  */
 import { describe, it, expect } from 'vitest';
-import { buildSourceTree, computeStats } from '../../src/secondbrain/panel';
+import { buildSourceTree, computeStats, fmtCompact } from '../../src/secondbrain/panel';
 import type { SecondBrainMeta } from '../../src/secondbrain/vector-store';
 
 function meta(notes: Record<string, { mtime: number; chunks: { text: string }[] }>): SecondBrainMeta {
@@ -54,14 +55,22 @@ describe('computeStats 新维度（ticket 108）', () => {
     expect(s.avgChunksPerNote).toBe(1.5); // 3 块 / 2 篇
   });
 
-  it('最厚笔记 Top5 按块数降序，最多 5 条', () => {
-    const m2 = meta({
-      'p1.md': { mtime: 1, chunks: [{ text: 'x' }] },
-      'p2.md': { mtime: 2, chunks: [{ text: 'x' }, { text: 'y' }] },
-      'p3.md': { mtime: 3, chunks: [{ text: 'x' }, { text: 'y' }, { text: 'z' }] },
-    });
-    const s = computeStats(m2, 1000);
-    expect(s.topThickets.map((t) => t.path)).toEqual(['p3.md', 'p2.md', 'p1.md']);
-    expect(s.topThickets[0].chunks).toBe(3);
+  it('ticket 109 起 topThickets 字段已删除', () => {
+    const s = computeStats(m, 1000);
+    expect((s as unknown as Record<string, unknown>).topThickets).toBeUndefined();
+  });
+});
+
+describe('fmtCompact（ticket 109 卡片数值缩写）', () => {
+  it('≥10,000 缩写 K/M/B，末尾 .0 去除', () => {
+    expect(fmtCompact(19688)).toBe('19.7K');
+    expect(fmtCompact(10000)).toBe('10K');
+    expect(fmtCompact(1240000)).toBe('1.2M');
+    expect(fmtCompact(2_500_000_000)).toBe('2.5B');
+  });
+
+  it('万以下原样千分位（locale 自洽断言）', () => {
+    expect(fmtCompact(9999)).toBe((9999).toLocaleString());
+    expect(fmtCompact(0)).toBe((0).toLocaleString());
   });
 });
