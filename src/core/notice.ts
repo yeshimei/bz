@@ -295,6 +295,24 @@ export function __resetNoticeForTests(): void {
   for (const k of Object.keys(recent)) delete recent[k];
 }
 
+/**
+ * 插件卸载清理（UX 整改 l2-toast，main.ts onunload 调用）：
+ * 清空容器 DOM + 存活/去重状态（语义同 __resetNoticeForTests，正式版出口），
+ * 随后移除通知容器节点；幂等，可重复调用。
+ */
+export function cleanupNotices(): void {
+  for (const n of live.splice(0)) {
+    if (n.timer !== null) {
+      window.clearTimeout(n.timer);
+      n.timer = null;
+    }
+    if (n.el.parentNode) n.el.parentNode.removeChild(n.el);
+  }
+  for (const k of Object.keys(recent)) delete recent[k];
+  const container = document.getElementById('bz-notice-container');
+  if (container && container.parentNode) container.parentNode.removeChild(container);
+}
+
 /** 空操作 handle：去重合并时返回（调用方安全调用 setMessage/setType/hide） */
 function noopHandle(): NoticeHandle {
   return {
@@ -413,7 +431,9 @@ export function notify(msg: string, opts?: NoticeOptions): NoticeHandle {
     },
     setType(t: NoticeKind): void {
       applyTypeToEl(n, t);
-      armTimer(n, t);
+      // 重排计时（UX 整改 16）：传入当前正文，progress→success 等长文案按 60ms/字
+      // 动态显示，不再固定 3s；显式 duration 优先规则不变
+      armTimer(n, t, undefined, n.msgEl.textContent || undefined);
     },
     setProgress(pct: number): void {
       if (!n.progressEl) return;
