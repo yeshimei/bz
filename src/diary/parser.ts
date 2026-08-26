@@ -13,13 +13,16 @@ export function isEncryptedEntry(entry: DiaryEntry): boolean {
 }
 
 /**
- * 解析日记文件内容（按 `# emoji序列 HH:mm` 标题切分条目）
+ * 解析日记文件内容（按 `# emoji序列 HH:mm` 标题切分条目）。
+ * UX-9：顺带统计「未能解析的行」数（游离于首个条目之前的非空行、时间越界的条目标题行），
+ * 不改解析结果、不动数据格式；onUnparsed 收到非零值时由调用方汇总提示。
  */
-export function parseFile(content: string, dateStr: string): DiaryEntry[] {
+export function parseFile(content: string, dateStr: string, onUnparsed?: (unparsedLineCount: number) => void): DiaryEntry[] {
   const entries: DiaryEntry[] = [];
   const lines = content.split('\n');
   let currentEntry: DiaryEntry | null = null;
   let contentLines: string[] = [];
+  let unparsedLines = 0;
 
   const headingRegex = /^#\s*((?:\S+)+)\s+(\d{2}:\d{2})/u;
 
@@ -38,7 +41,11 @@ export function parseFile(content: string, dateStr: string): DiaryEntry[] {
       const time = headingMatch[2];
 
       const [hours, minutes] = time.split(':').map(Number);
-      if (isNaN(hours) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) continue;
+      if (isNaN(hours) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+        // 时间越界的条目标题行：跳过（原行为），计入未解析行
+        unparsedLines++;
+        continue;
+      }
 
       const timeValue = hours * 100 + minutes;
 
@@ -76,6 +83,9 @@ export function parseFile(content: string, dateStr: string): DiaryEntry[] {
       } else {
         contentLines.push(line);
       }
+    } else if (line.trim() !== '') {
+      // 首个条目之前游离的非空行：无法归属任何条目（原行为静默丢弃），计入未解析行
+      unparsedLines++;
     }
   }
 
@@ -83,6 +93,9 @@ export function parseFile(content: string, dateStr: string): DiaryEntry[] {
     currentEntry.content = contentLines.join('\n').trim();
     entries.push(currentEntry);
   }
+
+  // UX-9：有未解析行才回调（零值时免打扰）
+  if (onUnparsed && unparsedLines > 0) onUnparsed(unparsedLines);
 
   // 向后兼容旧数据
   for (const entry of entries) {

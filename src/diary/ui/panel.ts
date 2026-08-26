@@ -15,11 +15,12 @@ import { applyDirectories, getPrimaryTagsConfig, getPrimaryTagsInDisplayOrder, g
 import { applyUiSettings, getDefaultDateFilterSetting, getDefaultSelectedTagSetting } from './ui-settings';
 import { state } from '../state';
 import { loadAll, onFullRefresh, onLightRefresh, onProgress, onLoadingChange, onFileChange, clearEncryptedEntries, reloadWithEncrypted } from '../store';
-import { lockSafe, isUnlocked, onUnlockChange } from '../encrypt';
+import { isUnlocked, onUnlockChange } from '../encrypt';
 import { applyFilter, cancelEdit, updateSticky, initScroll } from './entries';
 import { createTag, rebuildTags, refreshSubTagsBar } from './filter-shared';
 import { createTagPicker, createAddDialog, createDatePicker, showDatePicker, openAddDialog } from './dialogs';
 import { registerOpenDialogCommand } from './quote';
+import { closePanel } from './panel-close';
 
 // ===== 进度条（原 202-237） =====
 
@@ -70,8 +71,8 @@ function createMaskAndPopup() {
   state.ui.maskLayer.style.cssText =
     'position:fixed;top:0;left:0;right:0;bottom:0;background:var(--background-modifier-cover);z-index:9998;visibility:hidden;';
   state.ui.maskLayer.onclick = () => {
-    state.ui.maskLayer!.style.visibility = 'hidden';
-    state.ui.tagFilterPopup!.style.visibility = 'hidden';
+    // UX-25：遮罩点击与 ESC/关闭按钮同路径（关面板即锁保险箱）
+    closePanel();
   };
 
   state.ui.tagFilterPopup = document.createElement('div');
@@ -109,7 +110,8 @@ function createMaskAndPopup() {
     if (state.data.searchDebounceTimer) clearTimeout(state.data.searchDebounceTimer);
     state.data.searchDebounceTimer = setTimeout(() => {
       state.data.currentSearchKeyword = keyword;
-      applyFilter();
+      // UX-41：搜索键击不触发标签全量计数与二级标签栏重建（选中标签未变，计数不变）
+      applyFilter({ skipTagCountUpdate: true, skipSubBar: true });
     }, 300);
   });
   searchContainer.appendChild(searchInput);
@@ -138,18 +140,7 @@ function createMaskAndPopup() {
   createTagPicker();
 }
 
-// ===== 关闭面板（关面板即上锁，ADR-0017 固定行为） =====
-
-/** 隐藏主面板并锁定保险箱：上锁后加密条目完全不可见（Q21-a） */
-function closePanel() {
-  if (state.ui.maskLayer) state.ui.maskLayer.style.visibility = 'hidden';
-  if (state.ui.tagFilterPopup) state.ui.tagFilterPopup.style.visibility = 'hidden';
-  // isUnlocked 自带降级链（未注入设置视为未解锁），不会抛错
-  if (isUnlocked()) {
-    lockSafe();
-    clearEncryptedEntries();
-  }
-}
+// ===== 关闭面板（实现见 panel-close.ts；UX-25 起为唯一关闭路径，无环共享） =====
 
 // ===== 头部（原 822-864） =====
 
@@ -400,7 +391,8 @@ export function toggleSearch() {
     }
     state.data.currentSearchKeyword = '';
     if (state.data.searchDebounceTimer) clearTimeout(state.data.searchDebounceTimer);
-    applyFilter();
+    // UX-41：收起搜索只重筛列表，不重算标签计数/二级标签栏
+    applyFilter({ skipTagCountUpdate: true, skipSubBar: true });
   }
 }
 
@@ -559,6 +551,7 @@ function registerEscapeListener() {
     },
     close: () => {
       const byId = (id: string) => document.getElementById(id);
+      // 弹窗遮罩优先（既有层级语义）：任何弹窗开着时 ESC 先关弹窗
       const conf = byId('delete-confirm-mask');
       if (conf && conf.style.display === 'block') {
         conf.style.display = 'none';
@@ -579,6 +572,16 @@ function registerEscapeListener() {
       const date = byId('diary-date-filter-mask');
       if (date && date.style.display === 'block') {
         date.style.display = 'none';
+        return;
+      }
+      // UX-24：无弹窗且焦点在搜索框时，ESC 只清空/失焦搜索框（不关闭面板），再按 ESC 才关面板
+      const searchInput = byId('diary-search-input') as HTMLInputElement | null;
+      if (searchInput && document.activeElement === searchInput) {
+        searchInput.value = '';
+        state.data.currentSearchKeyword = '';
+        if (state.data.searchDebounceTimer) clearTimeout(state.data.searchDebounceTimer);
+        searchInput.blur();
+        applyFilter({ skipTagCountUpdate: true, skipSubBar: true });
         return;
       }
       const main = byId('diary-filter-mask');
