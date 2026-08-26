@@ -3,18 +3,20 @@
  * URL 精确匹配直接归档（含 P1-25 url 回传断言）、AI 匹配弹窗批准流、
  * AI 失败跳过、enableAIClipMatch 关跳过 AI（URL 精确仍生效）、
  * watchedFolders 门与剪藏目录外不触发。
- * n2：归档成功通知合并窗口（批量剪藏归档合并一条、单篇原文案、30s 同键去重防刷屏）。
+ * n2：归档成功通知合并窗口（批量剪藏归档合并一条、单篇原文案、间隔归档独立反馈不被吞、
+ * unload 竞态守卫不复活通知）。
  * stub 手法照抄 tests/ai-agent/ai-agent.test.ts（MockVault / metadataCache 伪对象 /
  * mock fetch SSE / 语义通道 clipping:file-created 经总线 emitDomainEvent 派发；
  * 弹窗涉及 DOM，不加 node 环境标注）。
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { __resetNoticeForTests } from '../../src/core/notice';
 import { getNoticeMessages, clearNotices } from '../mock-obsidian-entry';
 import { ensureMemoFileSync, unloadMemoFileSync } from '../../src/memo';
+import { DataManager } from '../../src/memo/data';
 import { __setClipArchiveNotifyMergeMsForTests } from '../../src/memo/clip-archive';
 import { emitDomainEvent, clearDomainEvents } from '../../src/core/domain-bus';
 import { MockVault } from '../mock-vault';
@@ -101,6 +103,11 @@ describe('剪藏 AI 匹配归档', () => {
     // n2：通知去重记录为模块单例——跨用例清理防 30s 同键窗口误吞；合并窗口注入短值加速断言
     __resetNoticeForTests();
     __setClipArchiveNotifyMergeMsForTests(80);
+  });
+
+  afterEach(() => {
+    // 测试卫生：恢复合并窗口默认值，避免注入值泄漏到其它用例/文件
+    __setClipArchiveNotifyMergeMsForTests(3000);
   });
 
   it('URL 精确匹配 → 直接归档（无弹窗、静默；P1-25 url 不被抹掉）', async () => {
@@ -288,7 +295,7 @@ describe('剪藏 AI 匹配归档', () => {
     vi.useRealTimers();
   });
 
-  it('n2：单篇归档 → 单条原文案；同键去重窗口（30s）内再归档不重复弹', async () => {
+  it('n2：单篇归档 → 单条原文案；间隔归档（越过合并窗口）→ 独立反馈不被吞', async () => {
     vi.useFakeTimers();
     const { vault } = await setup();
     vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
@@ -300,7 +307,7 @@ describe('剪藏 AI 匹配归档', () => {
     await vi.advanceTimersByTimeAsync(100); // 越过合并窗口
     expect(getNoticeMessages()).toEqual(['已归档到备忘录：单篇']);
 
-    // 去重窗口内再归档另一篇：清掉已显示通知 DOM，同 dedupeKey 不再新弹（防连续剪藏刷屏）
+    // 间隔归档（>合并窗口、远小于 30s）：无 dedupeKey → 第二个合并窗口的反馈独立弹出，不被吞
     clearNotices();
     vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
       { id: 'm3', title: '单篇', scene: '剪藏', priority: 'minor', created: '2025-01-01 00:00:00', completed: null, url: 'https://example.com/s', linkedNote: null },
@@ -308,9 +315,32 @@ describe('剪藏 AI 匹配归档', () => {
     ], null, 2));
     vault.files.set('归档/网页剪藏/再一篇.md', '---\nurl: "https://example.com/t"\n---\n正文');
     emitDomainEvent('clipping:file-created', { path: '归档/网页剪藏/再一篇.md' });
-    await vi.advanceTimersByTimeAsync(60);
-    await vi.advanceTimersByTimeAsync(100);
-    expect(getNoticeMessages()).toEqual([]); // 30s 同键窗口内不重复弹
+    await vi.advanceTimersByTimeAsync(60); // 新合并窗口未到 → 暂不弹
+    expect(getNoticeMessages()).toEqual([]);
+    await vi.advanceTimersByTimeAsync(100); // 越过新合并窗口 → 独立反馈
+    expect(getNoticeMessages()).toEqual(['已归档到备忘录：再一篇']);
+    vi.useRealTimers();
+  });
+
+  it('n2：卸载发生在归档 in-flight 时 → 续体不排队不弹通知（unload 竞态守卫）', async () => {
+    vi.useFakeTimers();
+    const { vault } = await setup();
+    seedMemo(vault, 'https://example.com/article-1');
+    vault.files.set('归档/网页剪藏/文章1.md', CLIP_MD);
+
+    // 挂起 completeItem 模拟 unload 竞态窗口（updateItem 已真实落盘，completeItem 停在 await 上）
+    let release!: () => void;
+    const gate = new Promise<void>((r) => { release = r; });
+    const spy = vi.spyOn(DataManager, 'completeItem').mockImplementation((async () => { await gate; }) as any);
+
+    emitDomainEvent('clipping:file-created', { path: '归档/网页剪藏/文章1.md' });
+    await vi.advanceTimersByTimeAsync(10); // 任务开始处理并挂在 completeItem 上
+    unloadMemoFileSync(); // 此刻卸载：_cancelled 置位、合并定时器/名单清空
+
+    release(); // 放行续体：_cancelled 守卫拦截，不 push 不 arm
+    spy.mockRestore();
+    await vi.advanceTimersByTimeAsync(200); // 越过一切合并窗口
+    expect(getNoticeMessages()).toEqual([]); // 无归档成功通知
     vi.useRealTimers();
   });
 });
