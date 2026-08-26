@@ -6,7 +6,7 @@
  */
 import moment from 'moment';
 import { Setting } from 'obsidian';
-import { notice } from '../core/notice';
+import { notice, notify } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { confirm } from '../core/confirm';
@@ -413,9 +413,13 @@ export const UIManager = {
 
     saveBtn.onclick = () => this._handleAddSave(ctx);
 
-    // 键盘事件（ESC关闭）
+    // 键盘事件（ESC 关闭；e1-memo：stopImmediatePropagation 阻停冒泡 —— 否则事件会继续
+    // 冒泡到 document 上的 escManager，把主面板一并关掉（一次 ESC 关两层、丢未保存草稿））
     this.addPopup.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') this.hideAddDialog();
+      if (e.key === 'Escape') {
+        e.stopImmediatePropagation();
+        this.hideAddDialog();
+      }
     });
   },
 
@@ -427,14 +431,12 @@ export const UIManager = {
     sceneContainer.innerHTML = '';
     for (const scene of DataManager.getScenarios()) {
       makeChoiceBtn(sceneContainer, 'scene-btn', scene, scene, (btn) => {
-        // 切换场景时清空输入框内容（如果离开剪藏）
+        // 拍板 10：切换场景默认保留已输入内容（不再清空 content/title、不弹窗询问）；
+        // 离开剪藏仅还原剪藏预填态（占位符/剪贴板草稿）与标题框显隐
         const isClip = btn.dataset.scene === '剪藏';
         if (!isClip) {
-          contentInput.value = '';
           contentInput.placeholder = '输入备忘录内容...';
           contentInput.dataset.rawClipboard = '';
-          autoGrowContent(contentInput); // 清空后回到一行高
-          titleInput.value = '';
           titleInput.placeholder = '标题（可选）';
           titleInput.style.display = 'none';
         } else {
@@ -446,6 +448,8 @@ export const UIManager = {
               if (text) {
                 const trimmed = text.trim();
                 contentInput.dataset.rawClipboard = trimmed;
+                // 拍板 11：剪贴板预填成功给轻提示（正文不带 emoji；同键去重防连续切换刷屏）
+                notify('已从剪贴板预填链接', { type: 'info', dedupeKey: 'memo-clip-prefill' });
                 const { url, display } = extractUrlAndDisplay(trimmed);
                 if (url) {
                   contentInput.placeholder = url;
@@ -705,7 +709,7 @@ export const UIManager = {
           }
         });
         if (!found) (sceneBtns[0] as HTMLElement).click();
-        // 编辑时回填内容到输入框（场景按钮会清空，所以放在最后）
+        // 编辑时回填内容到输入框（拍板 10 起场景按钮不再清空，回填仍放最后保证点击先就位）
         contentInput.value = editItem.title || '';
       } else {
         const defaultScene = App.settings.memoDefaultScene;

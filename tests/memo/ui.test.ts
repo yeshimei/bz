@@ -164,7 +164,7 @@ describe('备忘录面板', () => {
     const vault = new MockVault();
     await initApp(vault);
     UIManager.showAddDialog(null);
-    // 先切到工作场景（原脚本：切换非剪藏场景会清空输入框）
+    // 先切到工作场景（拍板 10：切换场景保留已输入内容，此处先选场景再输入）
     const sceneBtns = document.querySelectorAll('#add-todo-scenes .scene-btn');
     (sceneBtns[1] as HTMLElement).click(); // 工作
     const content = document.getElementById('add-todo-content') as HTMLTextAreaElement;

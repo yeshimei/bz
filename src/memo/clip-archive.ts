@@ -85,6 +85,32 @@ function enqueue(task: () => Promise<any> | void) {
     });
 }
 
+// ---------- 归档成功通知合并（n2：批量剪藏归档不逐条弹屏，参照 review/watch.ts ticket 100 先例） ----------
+
+/** 归档成功通知合并窗口（3 秒；测试可注入短值） */
+export let CLIP_ARCHIVE_NOTIFY_MERGE_MS = 3000;
+export function __setClipArchiveNotifyMergeMsForTests(ms: number): void {
+  CLIP_ARCHIVE_NOTIFY_MERGE_MS = ms;
+}
+
+/** 归档成功通知合并缓冲：窗口内多条剪藏收进一份名单，到点合并成一条通知 */
+let archiveNotifyQueue: string[] = [];
+let archiveNotifyTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** 到点刷出合并通知（单条/多条文案与 review 先例一致；dedupeKey 防重复弹屏） */
+function flushArchiveNotify(): void {
+  archiveNotifyTimer = null;
+  const batch = archiveNotifyQueue;
+  archiveNotifyQueue = [];
+  if (!batch.length) return;
+  const shown = batch.slice(0, 3).join('、');
+  const tail = batch.length > 3 ? ` 等 ${batch.length - 3} 条` : '';
+  notify(
+    batch.length > 1 ? `已归档到备忘录：${shown}${tail}` : `已归档到备忘录：${shown}`,
+    { type: 'success', dedupeKey: 'memo-clip-archive-success' }
+  );
+}
+
 // ---------- 剪藏归档（仅备忘录数据源） ----------
 
 let _ai: AIService | null = null;
@@ -101,7 +127,9 @@ async function archiveItem(item: any, file: any) {
   try {
     await DataManager.updateItem(item.id, { title: file.basename, linkedNote: file.path, url: item.url ?? null } as any);
     await DataManager.completeItem(item.id);
-    notify('已归档到备忘录', { type: 'success' });
+    // n2：归档成功通知合并窗口——窗口内多条剪藏收进一份名单，到点统一弹一条（不再逐条弹屏）
+    archiveNotifyQueue.push(file.basename);
+    if (!archiveNotifyTimer) archiveNotifyTimer = setTimeout(flushArchiveNotify, CLIP_ARCHIVE_NOTIFY_MERGE_MS);
   } catch (e) {
     console.error('[memo-clip-archive] 归档失败', e);
     notify('归档失败：' + ((e && (e as any).message) || e), { type: 'error' });
@@ -229,4 +257,10 @@ export function unloadClipArchive(): void {
   initialized = false;
   _ai = null;
   queue = Promise.resolve();
+  // 卸载时取消待刷出的归档成功通知（残余定时器与名单一并清空）
+  if (archiveNotifyTimer !== null) {
+    clearTimeout(archiveNotifyTimer);
+    archiveNotifyTimer = null;
+  }
+  archiveNotifyQueue = [];
 }
