@@ -10,6 +10,7 @@
  */
 import { Setting } from 'obsidian';
 import { notice, createIconBtn, longPress } from '../core/dom';
+import { confirm } from '../core/confirm';
 import {
   attachItemActions,
   registerSheetCompanion,
@@ -48,7 +49,7 @@ export function showLibrary(app: any) {
       if (epubItems && epubItems.length > 0) {
         currentItems = [...currentItems, ...epubItems];
       }
-      if (libraryOverlay && libraryListContainer) renderLibraryList(app);
+      renderAfterEpubMerge(app);
     });
     return;
   }
@@ -79,65 +80,16 @@ export function showLibrary(app: any) {
     openFilterModal(app);
   });
   // 书库设置弹窗（ADR-0009 域设置弹窗；分组卡片重设计：目录/列表显示/移动端）
-  const settingsBtn = createIconBtn('⚙️', '书库设置', () => {
-    openSettingsModal({
-      title: '书库设置',
-      maxWidth: 560,
-      build: (el) => {
-        const s = getSettings();
-        const textSetting = (parent: HTMLElement, name: string, desc: string, field: keyof BzSettings) =>
-          new Setting(parent)
-            .setName(name)
-            .setDesc(desc)
-            .addText((text) =>
-              text.setValue(String((s as any)[field] || '')).onChange(async (v) => {
-                (s as any)[field] = v;
-                await saveSettings();
-              })
-            );
-        const toggleSetting = (parent: HTMLElement, name: string, desc: string, field: keyof BzSettings) =>
-          new Setting(parent)
-            .setName(name)
-            .setDesc(desc)
-            .addToggle((toggle) =>
-              toggle.setValue(!!(s as any)[field]).onChange(async (v) => {
-                (s as any)[field] = v;
-                await saveSettings();
-              })
-            );
-        // ===== 目录组 =====
-        const dirGroup = createSettingsGroup(el, { icon: 'folder-open', name: '目录' });
-        textSetting(dirGroup, '书库文件夹', '存放书籍笔记的文件夹路径', 'libraryFolderPath');
-        textSetting(dirGroup, '书籍识别标签', '识别书籍笔记所用的标签名', 'bookTag');
-        // ===== 列表显示组 =====
-        const listGroup = createSettingsGroup(el, { icon: 'eye', name: '列表显示' });
-        toggleSetting(listGroup, '显示文件大小', '在书籍卡片上显示文件大小', 'showFileSize');
-        toggleSetting(listGroup, '显示阅读时长', '在书籍卡片上显示阅读时长', 'showReadingTime');
-        toggleSetting(listGroup, '显示划线数', '在书籍卡片上显示划线数量', 'showHighlights');
-        toggleSetting(listGroup, '显示想法数', '在书籍卡片上显示想法数量', 'showThinks');
-        toggleSetting(listGroup, '显示书评摘要', '在书籍卡片上显示书评摘要', 'showReview');
-        // ===== 移动端组（仅移动端显示） =====
-        if (isMobileEnv()) {
-          const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
-          new Setting(mobileGroup)
-            .setName('移动端默认全屏')
-            .setDesc('移动端打开主窗口时默认全屏，关闭则显示常规卡片')
-            .addToggle((toggle) =>
-              toggle.setValue(!!s.libraryMobileDefaultFullscreen).onChange(async (v) => {
-                s.libraryMobileDefaultFullscreen = v;
-                await saveSettings();
-              })
-            );
-        }
-      },
-    });
-  });
+  const settingsBtn = createIconBtn('⚙️', '书库设置', () => openLibrarySettings(app));
 
-  const closeBtn = createIconBtn('❌', '关闭', () => (overlay.style.visibility = 'hidden'));
+  // 关闭图符统一（ticket 51）：bz-win-close + ✕
+  const closeBtn = createIconBtn('✕', '关闭', () => (overlay.style.visibility = 'hidden'));
+  closeBtn.classList.add('bz-win-close');
 
+  // 按钮秩序：报告 → 筛选 → 设置 → 关闭（功能 → ⚙️ → 关闭）
   headerButtons.appendChild(reportBtn);
-  headerButtons.appendChild(settingsBtn);
   headerButtons.appendChild(filterBtn);
+  headerButtons.appendChild(settingsBtn);
   headerButtons.appendChild(closeBtn);
   header.appendChild(headerButtons);
 
@@ -166,26 +118,11 @@ export function showLibrary(app: any) {
   // 先同步渲染 markdown 书目；EPUB 条目（ADR-0013）异步并入后重渲染。
   // 空态判定放到 EPUB 合并之后：纯 EPUB 书库（无 markdown 书目）不被提前 return 吞掉。
   currentItems = getBookItems(app);
-  const finishEmptyIfNeeded = () => {
-    if (currentItems.length === 0) {
-      const settings = deriveBookSettings();
-      notice(`未找到任何书籍笔记（路径：${settings.folderPath}，需包含 tags: book）`);
-      if (libraryOverlay) {
-        libraryOverlay.remove();
-        libraryOverlay = null;
-      }
-      libraryListContainer = null;
-      currentItems = [];
-    }
-  };
   void loadEpubBookItems(app).then((epubItems) => {
     if (epubItems && epubItems.length > 0) {
       currentItems = [...currentItems, ...epubItems];
     }
-    if (libraryOverlay && libraryListContainer) {
-      renderLibraryList(app);
-      finishEmptyIfNeeded();
-    }
+    renderAfterEpubMerge(app);
   });
 
   if (currentItems.length === 0 && libraryListContainer) {
@@ -193,6 +130,90 @@ export function showLibrary(app: any) {
   } else {
     renderLibraryList(app);
   }
+}
+
+/** EPUB 合并后统一渲染：空库内嵌空态（l4），否则渲染列表 */
+function renderAfterEpubMerge(app: any): void {
+  if (!libraryOverlay || !libraryListContainer) return;
+  if (currentItems.length === 0) renderLibraryEmpty(app);
+  else renderLibraryList(app);
+}
+
+/** 空库内嵌空态（l4：不再自动关窗 + 短 toast）：路径 + tags 说明 + ⚙️ 设置入口 */
+function renderLibraryEmpty(app: any): void {
+  if (!libraryListContainer) return;
+  const settings = deriveBookSettings();
+  libraryListContainer.innerHTML = '';
+  const empty = document.createElement('div');
+  empty.className = 'bz-lib-empty';
+
+  const main = document.createElement('div');
+  main.textContent = `书库「${settings.folderPath}」中还没有书籍笔记`;
+  const guide = document.createElement('div');
+  guide.textContent = `将书籍笔记放入该文件夹，并在 frontmatter 中添加 tags: ${settings.bookTag} 标签`;
+  const settingsBtn = document.createElement('button');
+  settingsBtn.textContent = '⚙️ 去设置';
+  settingsBtn.addEventListener('click', () => openLibrarySettings(app));
+
+  empty.appendChild(main);
+  empty.appendChild(guide);
+  empty.appendChild(settingsBtn);
+  libraryListContainer.appendChild(empty);
+}
+
+/** 书库设置弹窗（头部 ⚙️ 与空库空态「去设置」入口共用） */
+function openLibrarySettings(app: any): void {
+  openSettingsModal({
+    title: '书库设置',
+    maxWidth: 560,
+    build: (el) => {
+      const s = getSettings();
+      const textSetting = (parent: HTMLElement, name: string, desc: string, field: keyof BzSettings) =>
+        new Setting(parent)
+          .setName(name)
+          .setDesc(desc)
+          .addText((text) =>
+            text.setValue(String((s as any)[field] || '')).onChange(async (v) => {
+              (s as any)[field] = v;
+              await saveSettings();
+            })
+          );
+      const toggleSetting = (parent: HTMLElement, name: string, desc: string, field: keyof BzSettings) =>
+        new Setting(parent)
+          .setName(name)
+          .setDesc(desc)
+          .addToggle((toggle) =>
+            toggle.setValue(!!(s as any)[field]).onChange(async (v) => {
+              (s as any)[field] = v;
+              await saveSettings();
+            })
+          );
+      // ===== 目录组 =====
+      const dirGroup = createSettingsGroup(el, { icon: 'folder-open', name: '目录' });
+      textSetting(dirGroup, '书库文件夹', '存放书籍笔记的文件夹路径', 'libraryFolderPath');
+      textSetting(dirGroup, '书籍识别标签', '识别书籍笔记所用的标签名', 'bookTag');
+      // ===== 列表显示组 =====
+      const listGroup = createSettingsGroup(el, { icon: 'eye', name: '列表显示' });
+      toggleSetting(listGroup, '显示文件大小', '在书籍卡片上显示文件大小', 'showFileSize');
+      toggleSetting(listGroup, '显示阅读时长', '在书籍卡片上显示阅读时长', 'showReadingTime');
+      toggleSetting(listGroup, '显示划线数', '在书籍卡片上显示划线数量', 'showHighlights');
+      toggleSetting(listGroup, '显示想法数', '在书籍卡片上显示想法数量', 'showThinks');
+      toggleSetting(listGroup, '显示书评摘要', '在书籍卡片上显示书评摘要', 'showReview');
+      // ===== 移动端组（仅移动端显示） =====
+      if (isMobileEnv()) {
+        const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
+        new Setting(mobileGroup)
+          .setName('移动端默认全屏')
+          .setDesc('移动端打开主窗口时默认全屏，关闭则显示常规卡片')
+          .addToggle((toggle) =>
+            toggle.setValue(!!s.libraryMobileDefaultFullscreen).onChange(async (v) => {
+              s.libraryMobileDefaultFullscreen = v;
+              await saveSettings();
+            })
+          );
+      }
+    },
+  });
 }
 
 export function renderLibraryList(app: any) {
@@ -626,11 +647,23 @@ function renderHighlightBlock(hl: any, app: any, filePath: string): HTMLElement 
     });
   });
 
-  // 3. 长按日期区域 => 删除高亮
+  // 3. 长按日期区域 => 删除高亮（统一 core/confirm；壳层级 11100 > confirm 10060，先关壳再确认，取消/确认后均重开）
   if (hl.date) {
     longPress(dateEl, () => {
-      deleteHighlight(app, filePath, hl.id, hl.text, () => {
-        showBookNotes(app, filePath);
+      closeBookNotesModal();
+      confirm({
+        title: '删除划线',
+        message: '确定要删除该高亮及其批注吗？此操作不可撤销。',
+        confirmText: '删除',
+        cancelText: '取消',
+        onConfirm: () => {
+          deleteHighlight(app, filePath, hl.id, hl.text, () => {
+            showBookNotes(app, filePath);
+          });
+        },
+        onCancel: () => {
+          showBookNotes(app, filePath);
+        },
       });
     });
   }
@@ -657,26 +690,34 @@ export function showBookNotes(app: any, filePath: string) {
   }
 
   const seq = ++bookNotesLoadSeq;
-  app.vault.read(file).then((content: string) => {
-    if (seq !== bookNotesLoadSeq) return; // 过期在途请求：已被更新一次的打开取代
-    const parsed = parseBookNotes(content, file.basename);
-
-    const { overlay, contentContainer } = createBookNotesModal(`📚 《${parsed.bookTitle}》的读书笔记`, () => closeBookNotesModal());
-
-    if (!parsed.root || parsed.root.children.length === 0) {
-      const p = document.createElement('p');
-      p.className = 'bz-lib-empty';
-      p.textContent = '📭 没有找到高亮或批注';
-      contentContainer.appendChild(p);
-    } else {
-      renderBookNoteNode(parsed.root, contentContainer, app, filePath);
-    }
-
-    bookNotesOverlay = overlay;
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) closeBookNotesModal();
-    });
+  // 先建窗放占位，vault.read 完成后填充（大文件不白屏；l4）
+  const { overlay, contentContainer } = createBookNotesModal(`📚 《${file.basename}》的读书笔记`, () => closeBookNotesModal());
+  contentContainer.innerHTML = '<p class="bz-lib-empty">正在加载…</p>';
+  bookNotesOverlay = overlay;
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeBookNotesModal();
   });
+
+  void app.vault
+    .read(file)
+    .then((content: string) => {
+      if (seq !== bookNotesLoadSeq) return; // 过期在途请求：已被更新一次的打开取代
+      const parsed = parseBookNotes(content, file.basename);
+      contentContainer.innerHTML = '';
+      if (!parsed.root || parsed.root.children.length === 0) {
+        const p = document.createElement('p');
+        p.className = 'bz-lib-empty';
+        p.textContent = '📭 没有找到高亮或批注';
+        contentContainer.appendChild(p);
+      } else {
+        renderBookNoteNode(parsed.root, contentContainer, app, filePath);
+      }
+    })
+    .catch((e) => {
+      if (seq !== bookNotesLoadSeq) return;
+      console.error(`读书笔记读取失败: ${filePath}`, e);
+      contentContainer.innerHTML = '<p class="bz-lib-empty">笔记读取失败，请稍后重试</p>';
+    });
 }
 
 // ---------- EPUB 读书笔记模态（ADR-0013 扩展） ----------
@@ -736,7 +777,7 @@ function createBookNotesModal(title: string, onClose: () => void): { overlay: HT
   titleSpan.textContent = title;
   const closeBtn = document.createElement('button');
   closeBtn.className = 'bz-lib-modal-close--sm bz-win-close';
-  closeBtn.textContent = '❌';
+  closeBtn.textContent = '✕';
   closeBtn.addEventListener('click', onClose);
   header.appendChild(titleSpan);
   header.appendChild(closeBtn);
@@ -858,11 +899,22 @@ function renderEpubHighlightBlock(
     openEpubEditCommentModal(app, vaultPath, highlightId, note, onChanged);
   });
 
-  // 长按日期 → 删除高亮
+  // 长按日期 → 删除高亮（统一 core/confirm：壳 11100 > confirm 10060，先关壳，取消/确认后均重开）
   longPress(dateEl, () => {
-    if (!window.confirm('确定要删除该划线和想法吗？')) return;
-    void deleteEpubNote(app, vaultPath, highlightId).then((ok) => {
-      if (ok) onChanged();
+    closeEpubBookNotesModal();
+    confirm({
+      title: '删除划线',
+      message: '确定要删除该划线和想法吗？此操作不可撤销。',
+      confirmText: '删除',
+      cancelText: '取消',
+      onConfirm: () => {
+        void deleteEpubNote(app, vaultPath, highlightId).then((ok) => {
+          // 失败也重开壳（列表保留该条）并给明确 toast（B2：失败路径不能只剩关掉的壳、无任何反馈）
+          if (!ok) notice('删除划线和想法失败，请重试', 'error');
+          onChanged();
+        });
+      },
+      onCancel: () => onChanged(),
     });
   });
 
@@ -991,8 +1043,18 @@ export function openEpubEditCommentModal(
   });
 }
 
-// ---------- 测试辅助/导出 ----------
+// ---------- 测试辅助/卸载导出 ----------
+/** 卸载清理（l1）与测试复位共用：显式 remove 主窗等 bz-lib 浮层 DOM，再重置引用 */
 export function _testResetLibrary() {
+  const removeEl = (el: HTMLElement | null) => {
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+  };
+  removeEl(libraryOverlay);
+  removeEl(settingsOverlay);
+  removeEl(bookNotesOverlay);
+  removeEl(epubBookNotesOverlay);
+  // 兜底：未持引用的 bz-lib 浮层（如编辑弹窗 11101）一并移除，保证卸载后 DOM 无残留
+  document.querySelectorAll('.bz-lib-overlay').forEach((el) => el.remove());
   libraryOverlay = null;
   libraryListContainer = null;
   currentItems = [];

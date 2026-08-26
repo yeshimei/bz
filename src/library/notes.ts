@@ -182,7 +182,11 @@ export function updateComment(
   });
 }
 
-/** 删除高亮：原生 window.confirm（源码语义） */
+/**
+ * 删除高亮：确认弹窗统一在 UI 层处理（ticket 52）——长按日期先关笔记壳再弹 core/confirm，
+ * 由调用方重开壳；此处只负责读改写文件。
+ * onDone 在流程结束（成功或失败）时统一回调：UI 层据此重开壳，失败路径不留「壳已关」的死局（B2）。
+ */
 export function deleteHighlight(
   app: any,
   filePath: string,
@@ -190,10 +194,14 @@ export function deleteHighlight(
   text: string,
   onDone?: () => void
 ) {
-  if (!window.confirm('确定要删除该高亮及其批注吗？')) return;
-
+  const done = () => {
+    if (onDone) onDone();
+  };
   const file = app.vault.getAbstractFileByPath(filePath);
-  if (!file) return;
+  if (!file) {
+    done();
+    return;
+  }
 
   app.vault.read(file).then((content: string) => {
     const spanRegex = /<span[^>]*data-id="([^"]*)"[^>]*>(.*?)<\/span>/gs;
@@ -206,11 +214,12 @@ export function deleteHighlight(
 
     if (newContent === content) {
       notice('未找到对应高亮（原文不匹配），删除失败');
+      done(); // 失败也重开壳（B2）
       return;
     }
     app.vault.modify(file, newContent).then(() => {
       notice('已删除', 'success');
-      if (onDone) onDone();
+      done();
     });
   });
 }

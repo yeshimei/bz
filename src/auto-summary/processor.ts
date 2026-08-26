@@ -5,7 +5,23 @@
 import { parseFrontmatter, buildFrontmatter, extractBodyForAI } from './parser';
 import { notify } from '../core/notice';
 import type { NoticeHandle } from '../core/notice';
-import type { AIService } from '../core/ai';
+import { getAIProvider, type AIService } from '../core/ai';
+
+/** 通知去重键自增序号：同一次尝试内 progress→结果 原地合并；不同文件/重试 各弹各（ticket 1） */
+let attemptSeq = 0;
+function dedupeKeyFor(file: any): string {
+  return `auto-summary:${file.path}#${++attemptSeq}`;
+}
+
+/** 失败原因人话化：AI 未配置 → 引导设置（原技术错误详情在 console）；其余通用重试文案 */
+async function humanizeFailReason(): Promise<string> {
+  try {
+    await getAIProvider(); // 配置解析成功即缓存；仅在失败时复查一次
+    return '摘要生成失败，请重试';
+  } catch {
+    return 'AI 服务未配置或不可用，请到设置页配置';
+  }
+}
 
 /** 缺失字段 → JSON 模板定义（规则文案逐字保留；不含 author） */
 const FIELD_DEFS: Record<string, string> = {
@@ -50,14 +66,21 @@ ${bodyText.substring(0, 6000)}`;
   return null;
 }
 
-/** AI 标题 → 重命名笔记文件（清理非法字符/截断/防重名；失败返回原 file） */
-async function renameToTitle(app: any, file: any, title: string): Promise<any> {
+/** 重命名结果：目标文件 + 是否实际改名 + 是否执行失败（失败回退为仅写 frontmatter title） */
+interface RenameOutcome {
+  target: any;
+  renamed: boolean;
+  failed: boolean;
+}
+
+/** AI 标题 → 重命名笔记文件（清理非法字符/截断/防重名；无需改/失败返回原 file 并给出标记） */
+async function renameToTitle(app: any, file: any, title: string): Promise<RenameOutcome> {
   const clean = String(title)
     .replace(/[\\/:*?"<>|\r\n]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 80);
-  if (!clean || clean === file.basename) return file;
+  if (!clean || clean === file.basename) return { target: file, renamed: false, failed: false };
   const dir = file.path.includes('/') ? file.path.slice(0, file.path.lastIndexOf('/')) : '/';
   let newPath = `${dir}/${clean}.md`;
   let n = 1;
@@ -66,10 +89,10 @@ async function renameToTitle(app: any, file: any, title: string): Promise<any> {
   }
   try {
     await app.vault.rename(file, newPath);
-    return app.vault.getAbstractFileByPath(newPath) || file;
+    return { target: app.vault.getAbstractFileByPath(newPath) || file, renamed: true, failed: false };
   } catch (e) {
     console.warn('[自动摘要] 重命名失败，仅写 frontmatter title:', e);
-    return file;
+    return { target: file, renamed: false, failed: true };
   }
 }
 
@@ -100,23 +123,42 @@ export async function processFile(app: any, ai: AIService, file: any): Promise<v
     if (missing.length === 0) return; // 字段齐全，无需处理
 
     console.log(`[自动摘要] 补全缺失字段(${missing.join('/')}): ${file.basename}`);
-    // 开始调用 AI：动态通知（进行中 → 原地更新为结果）
+    // 开始调用 AI：动态通知（进行中 → 原地更新为结果；去重键按文件区分，连续剪藏各弹各）
     const startName = fm && fm.title ? fm.title : file.basename;
-    h = notify(`正在为《${startName}》生成摘要…`, { type: 'progress', dedupeKey: 'auto-summary' });
+    const key = dedupeKeyFor(file);
+    h = notify(`正在为《${startName}》生成摘要…`, { type: 'progress', dedupeKey: key });
     const aiResult = await aiProcess(ai, bodyText, missing);
     if (!aiResult) {
+      // 失败：人话原因 + action「重试」（点按重跑当前文件；原技术错误详情在 console）
+      const reason = await humanizeFailReason();
       if (h) {
+        h.setMessage(reason);
         h.setType('error');
-        h.setMessage('摘要生成失败，请重试');
-        window.setTimeout(() => h && h.hide(), 2500);
+        const retryBtn = document.createElement('button');
+        retryBtn.className = 'bz-notice-action';
+        retryBtn.textContent = '重试';
+        retryBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          retryBtn.remove();
+          if (h) h.hide();
+          void processFile(app, ai, file);
+        });
+        h.el.appendChild(retryBtn);
       }
       return;
     }
 
     // AI 标题 → 重命名笔记文件（rename 只改路径不改内容；失败/无需改回退原 file）
     let targetFile = file;
+    let renameFailed = false; // warning 推迟到 modify 成功后发（B5：文案承诺「标题已写入」需以真实落盘为前提）
     if (missing.includes('title') && aiResult.title) {
-      targetFile = await renameToTitle(app, file, aiResult.title);
+      const outcome = await renameToTitle(app, file, aiResult.title);
+      targetFile = outcome.target;
+      if (outcome.renamed) {
+        notify(`已重命名为《${aiResult.title}》`, { type: 'success' });
+      } else if (outcome.failed) {
+        renameFailed = true;
+      }
     }
 
     // 写回前重读目标文件最新内容（AI 处理期间可能被外部修改）：正文一律取磁盘最新，
@@ -132,11 +174,15 @@ export async function processFile(app: any, ai: AIService, file: any): Promise<v
 
     const newContent = buildFrontmatter(mergedFm) + '\n\n' + latestParsed.body;
     await app.vault.modify(targetFile, newContent);
+    if (renameFailed) {
+      // B5：标题已在上面真实写入 frontmatter，此刻的「已写入」文案才站得住
+      notify('自动改名失败，标题已写入笔记，请手动重命名', { type: 'warning' });
+    }
 
     const msg = formatSummaryNotice(mergedFm);
-    if (msg && h) {
-      h.setMessage(msg);
-      h.setType('success');
+    if (msg) {
+      // 成功：同去重键原地合并 → 切换 success 图标并按显式时长驻留（≥8s，正文无 emoji）
+      notify(msg, { type: 'success', dedupeKey: key, duration: 8000 });
     } else if (h) {
       h.hide();
     }

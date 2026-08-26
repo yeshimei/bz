@@ -3,7 +3,7 @@
  * 剪藏本解析测试（ticket 08）：parseArticleFile 必需 url+created 字段、
  * title=文件名、作者/站点/摘要/标签、反链笔记名。
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { parseArticleFile } from '../../src/clipping/view';
 import { MockVault } from '../mock-vault';
@@ -42,9 +42,10 @@ describe('parseArticleFile', () => {
     vault = new MockVault();
   });
 
-  it('合法文章 → 解析全部字段（title=文件名）', async () => {
+  it('合法文章 → 解析全部字段（title=文件名）；不读文件本体（rawContent 已废弃，ticket 45）', async () => {
     vault.files.set('我的/文章/《测试文章》.md', ARTICLE_MD);
     setApp(makeApp(vault) as any);
+    const readSpy = vi.spyOn(vault, 'read');
     const entry = await parseArticleFile(vault.file('我的/文章/《测试文章》.md'));
     expect(entry).not.toBeNull();
     expect(entry!.title).toBe('《测试文章》'); // 文件名（含书名号）
@@ -54,7 +55,7 @@ describe('parseArticleFile', () => {
     expect(entry!.summary).toBe('这是一段摘要');
     expect(entry!.tags).toEqual(['AI', '阅读']);
     expect(entry!.created.toISOString()).toBe('2025-06-01T08:00:00.000Z');
-    expect(entry!.rawContent).toBe(ARTICLE_MD);
+    expect(readSpy).not.toHaveBeenCalled(); // 纯 metadataCache，列表加载零 I/O
   });
 
   it('缺 url → 跳过（null）', async () => {
