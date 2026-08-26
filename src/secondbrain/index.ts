@@ -7,6 +7,7 @@
  * - 三个命令入口：主面板（统一入口）/ 参考侧边栏 / AI 对话；ticket 107 起本地无向量数据时
  *   后两者统一转开主面板引导态；
  * - ticket 111：自动双链管线（link agent）——linkAgentEnabled 开关注册监听与队列消费；
+ * - ticket 115：启动存量补链（队列消费后串行）+ 手动命令 bz-secondbrain-link-all 兜底；
  * - unload 全量清理：定时器、订阅、面板 DOM、DeepSeek 服务、link agent。
  */
 import type { App } from 'obsidian';
@@ -21,7 +22,7 @@ import { ReferencePanel } from './reference-panel';
 import { ChatPanel } from './chat-panel';
 import { MobilePanel } from './mobile-panel';
 import { LinkAgent } from './link-agent/pipeline';
-import { LinkAgentWatcher, startQueueConsumption } from './link-agent/watch';
+import { LinkAgentWatcher, startQueueConsumption, startStartupBackfill } from './link-agent/watch';
 
 let appRef: App | null = null;
 let store: VectorStore | null = null;
@@ -79,8 +80,21 @@ export function ensureSecondBrain(app: App): void {
       linkAgent = new LinkAgent({ app, store: s });
       linkWatcher = new LinkAgentWatcher(app, linkAgent);
       linkWatcher.start();
-      // 域初始化发现队列非空且 embedding 可达 → 自动消费，无需询问
-      void startQueueConsumption(linkAgent, s.initialLoad);
+      // 域初始化发现队列非空且 embedding 可达 → 自动消费，无需询问；
+      // 队列消费之后串行执行存量补链（ticket 115：关联范围内缺 related 的存量笔记批量建链，
+      // 补链目标排除队列内待重试条目避免重复算力；启动路径静默，进度由批次 toast 呈现）
+      void (async () => {
+        try {
+          await startQueueConsumption(linkAgent, s.initialLoad);
+        } catch (e) {
+          console.warn('[secondbrain] 队列消费失败', e);
+        }
+        try {
+          await startStartupBackfill(linkAgent, s.initialLoad);
+        } catch (e) {
+          console.warn('[secondbrain] 启动补链失败', e);
+        }
+      })();
     }
   } catch (e) {
     console.warn('[secondbrain] 自动双链初始化失败', e);
@@ -186,6 +200,40 @@ export function openSecondBrainChat(app: App): void {
     return;
   }
   openChatInternal();
+}
+
+/**
+ * 命令 bz-secondbrain-link-all（ticket 115）：对关联范围内**所有未连接（缺 related）的存量笔记**
+ * 手动批量补链——启动自动补链的显式兜底入口，同路径同串行锁；embedding 不可达 / 无目标均明确通知。
+ */
+export async function runSecondBrainLinkAll(app: App): Promise<void> {
+  if ((tryGetSettings() as any).linkAgentEnabled === false) {
+    notice('自动双链已在第二大脑设置中关闭');
+    return;
+  }
+  ensureSecondBrain(app);
+  if (!linkAgent) return;
+  try {
+    const result = await linkAgent.backfillMissingLinks();
+    if (result.status === 'done') {
+      const { summary } = result;
+      notice(
+        summary.created > 0
+          ? `批量补链完成：处理 ${summary.processed} 篇 / 新建关联 ${summary.created} 条`
+          : '批量补链完成：未发现实质关联，未新建',
+        'success'
+      );
+    } else if (result.status === 'unreachable') {
+      notice('embedding 服务不可达，无法补链；服务恢复后可在下次启动自动补链', 'info');
+    } else if (result.status === 'no-targets') {
+      notice('当前无待补链笔记：关联范围内未连接的笔记已处理完', 'info');
+    } else {
+      notice('批量补链跳过（自动双链已关闭）', 'info');
+    }
+  } catch (e) {
+    console.warn('[secondbrain] 批量补链失败', e);
+    notice(`批量补链失败：${e instanceof Error ? e.message : String(e)}`, 'error');
+  }
 }
 
 /**

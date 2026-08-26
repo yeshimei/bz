@@ -11,6 +11,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { DEFAULT_SETTINGS } from '../../src/settings';
 import {
   LINK_AGENT_DEFAULT_SCOPE,
+  computeBackfillTargets,
   computeHash,
   dequeuePath,
   enqueuePaths,
@@ -201,5 +202,47 @@ describe('裁判输出解析', () => {
     ]);
     // 完全重复的合法项只保留首个
     expect(parseJudgeOutput('[{"id":1,"reason":"a"},{"id":1,"reason":"b"}]', 1)).toEqual([{ id: 1, reason: 'a' }]);
+  });
+});
+
+describe('存量补链目标清单（computeBackfillTargets，ticket 115）', () => {
+  const alw = {
+    inScope: (p: string) => p === '文献盒' || p.startsWith('文献盒/') || p.startsWith('卡片盒/'),
+    hasRelated: (p: string) => p.includes('DONE'),
+    excluded: (p: string) => p.includes('ENC') || p.includes('排队'),
+  };
+
+  it('只收 .md：范围外 / 已含 related / 被排除的一律剔除，输出按字典序稳定', () => {
+    const paths = [
+      '其他/X.md',          // 范围外
+      '文献盒/C.md',
+      '文献盒/A.md',
+      '文献盒/A.md',        // 重复输入
+      '文献盒/B.md',
+      '文献盒/DONE.md',     // 已连接
+      '文献盒/ENC.md',      // 加密锁定
+      '文献盒/排队.md',     // 队列内待重试
+      '文献盒/notes.txt',   // 非 md
+      '卡片盒/K.md',
+    ];
+    expect(computeBackfillTargets(paths, alw)).toEqual([
+      '卡片盒/K.md', // JS 默认字典序按码点：卡(U+5361) < 文(U+6587)
+      '文献盒/A.md',
+      '文献盒/B.md',
+      '文献盒/C.md',
+    ]);
+  });
+
+  it('无入选项时返回空数组（全部已连接 / 全空输入）', () => {
+    expect(computeBackfillTargets([], alw)).toEqual([]);
+    expect(computeBackfillTargets(['文献盒/DONE.md', '卡片盒/K.md'], { ...alw, hasRelated: () => true })).toEqual([]);
+  });
+
+  it('谓词实时生效：范围收窄后不再入选', () => {
+    const paths = ['文献盒/A.md', '卡片盒/K.md'];
+    expect(computeBackfillTargets(paths, alw)).toEqual(['卡片盒/K.md', '文献盒/A.md']);
+    expect(
+      computeBackfillTargets(paths, { ...alw, inScope: (p) => p.startsWith('文献盒/') })
+    ).toEqual(['文献盒/A.md']);
   });
 });

@@ -175,3 +175,23 @@ export async function startQueueConsumption(agent: LinkAgent, initialLoad?: Prom
     console.warn('[link-agent] 队列消费失败', e);
   }
 }
+
+/**
+ * 启动存量补链（ticket 115：域初始化在队列消费之后调用）：
+ * 等待索引装载完成后对关联范围内缺 related 的存量笔记批量建链；
+ * embedding 不可达 / 无目标时静默（批次进度与汇总由批次 toast 呈现，串行锁保证与监听批次互斥）。
+ */
+export async function startStartupBackfill(agent: LinkAgent, initialLoad?: Promise<void> | null): Promise<void> {
+  try {
+    await initialLoad;
+  } catch {
+    /* 装载失败不阻断补链尝试（内部有探测兜底） */
+  }
+  try {
+    const result = await agent.backfillMissingLinks();
+    if (result.status === 'done' || result.status === 'unreachable' || result.status === 'no-targets') return;
+    console.warn('[link-agent] 启动补链跳过（自动双链已关闭）');
+  } catch (e) {
+    console.warn('[link-agent] 启动补链失败', e);
+  }
+}

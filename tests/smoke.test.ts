@@ -66,7 +66,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-movie-open', 'bz-movie-add', 'bz-movie-report',
   'bz-review-open', 'bz-review-start', 'bz-review-add', 'bz-review-remove', 'bz-review-overdue', 'bz-review-rate',
   'bz-review-again', 'bz-review-hard', 'bz-review-good', 'bz-review-easy',
-  'bz-secondbrain-panel', 'bz-secondbrain-open', 'bz-secondbrain-chat', 'bz-secondbrain-rebuild-links',
+  'bz-secondbrain-panel', 'bz-secondbrain-open', 'bz-secondbrain-chat', 'bz-secondbrain-rebuild-links', 'bz-secondbrain-link-all',
   'bz-pomodoro-open',
   'bz-bili-open',
   'bz-attach-move',
