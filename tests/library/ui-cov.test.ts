@@ -543,7 +543,7 @@ describe('EPUB 读书笔记（分组/跳转/删除/编辑）', () => {
     expect(document.querySelector('.bz-lib-overlay--11100')).toBeNull();
   });
 
-  it('长按日期删除：confirm 取消不动数据；确认后整条移除并重开（onChanged）', async () => {
+  it('长按日期删除：统一 core/confirm——取消重开壳不动数据；确认后删除并重开（ticket 52）', async () => {
     vault.files.set(
       'CONFIG/STORAGE/weave-data.json',
       weaveJson([
@@ -552,18 +552,24 @@ describe('EPUB 读书笔记（分组/跳转/删除/编辑）', () => {
       ])
     );
     await openEpub();
-    const dateEl = document.querySelector('.bz-lib-overlay--11100 .bz-lib-hl-date') as HTMLElement;
+    let dateEl = document.querySelector('.bz-lib-overlay--11100 .bz-lib-hl-date') as HTMLElement;
 
-    // ① 取消：weave 数据不变
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    // ① 取消：壳先关（core confirm 层级低于壳 11100），取消后重开壳，数据不动
     await longPressEl(dateEl);
-    expect(confirmSpy).toHaveBeenCalledWith('确定要删除该划线和想法吗？');
-    await flush(40);
+    expect(document.querySelector('.bz-lib-overlay--11100')).toBeNull(); // 先关壳再弹确认
+    const confirmPop = document.getElementById('__shared_confirm_popup__') as HTMLElement;
+    expect(confirmPop).not.toBeNull();
+    expect(confirmPop.textContent).toContain('此操作不可撤销');
+    expect(confirmPop.textContent).toContain('确定要删除该划线和想法吗');
+    document.getElementById('__shared_confirm_cancel__')!.click();
+    await flush(60);
     expect(JSON.parse(vault.files.get('CONFIG/STORAGE/weave-data.json')!).books.bk_001.notes.highlights).toHaveLength(2);
+    expect(document.querySelector('.bz-lib-overlay--11100')).not.toBeNull(); // 取消后重开壳
 
-    // ② 确认：删除 e1 → onChanged 重开只剩一条
-    confirmSpy.mockReturnValue(true);
+    // ② 确认：删除 e1 → 重开只剩一条
+    dateEl = document.querySelector('.bz-lib-overlay--11100 .bz-lib-hl-date') as HTMLElement;
     await longPressEl(dateEl);
+    document.getElementById('__shared_confirm_ok__')!.click();
     await flush(80);
     const saved = JSON.parse(vault.files.get('CONFIG/STORAGE/weave-data.json')!);
     expect(saved.books.bk_001.notes.highlights.map((h: any) => h.id)).toEqual(['e2']);
@@ -571,6 +577,29 @@ describe('EPUB 读书笔记（分组/跳转/删除/编辑）', () => {
     const reopened = document.querySelector('.bz-lib-overlay--11100') as HTMLElement;
     expect(reopened.querySelectorAll('.bz-lib-hl').length).toBe(1);
     expect(reopened.textContent).toContain('要留的');
+  });
+
+  it('EPUB 删除失败（deleteEpubNote=false）→ error toast + 重开壳保留条目（B2）', async () => {
+    vault.files.set(
+      'CONFIG/STORAGE/weave-data.json',
+      weaveJson([{ id: 'e1', text: '要删的', commentText: '', chapterIndex: 0, chapterTitle: '第一章', cfiRange: 'c1', createdTime: 0 }])
+    );
+    const epubNotes = await import('../../src/library/epub-notes');
+    const spy = vi.spyOn(epubNotes as any, 'deleteEpubNote').mockResolvedValue(false);
+    try {
+      await openEpub();
+      const dateEl = document.querySelector('.bz-lib-overlay--11100 .bz-lib-hl-date') as HTMLElement;
+      await longPressEl(dateEl); // 壳关 + confirm
+      document.getElementById('__shared_confirm_ok__')!.click();
+      await flush(80);
+      // 失败：明确 toast + 重开壳且条目未被删（B2：不留只剩关掉的壳）
+      expect(getNoticeMessages()).toContain('删除划线和想法失败，请重试');
+      const shell = document.querySelector('.bz-lib-overlay--11100') as HTMLElement;
+      expect(shell).not.toBeNull();
+      expect(shell.textContent).toContain('要删的');
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it('openEpubEditCommentModal 直调：保存成功关弹窗；空 id 失败保持打开', async () => {

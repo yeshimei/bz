@@ -7,6 +7,7 @@
  */
 import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
+import { confirm } from '../core/confirm';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { createSiteIcon } from '../core/dom';
@@ -34,8 +35,8 @@ let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let currentSearchKeyword = '';
 let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 let fileListenerAttached = false;
-/** 总线退订函数（原存 vault ref 用于 offref，换线后改存 onDomainEvent 返回的退订闭包） */
-let fileListenerRef: (() => void) | null = null;
+/** 总线退订闭包集合（modify/delete/rename 三通道，onDomainEvent 各返回一个退订函数） */
+let fileListenerRefs: (() => void)[] = [];
 let isLoadingData = false;
 
 // ---------- 配置（从设置读取） ----------
@@ -54,7 +55,6 @@ export interface ArticleEntry {
   tags: string[];
   created: Date;
   title: string;
-  rawContent: string;
   hasBacklink: boolean;
   backlinkSources: string[];
 }
@@ -76,8 +76,8 @@ export async function initArticleView(showImmediately = true): Promise<void> {
       setArticleViewVisible(true);
       // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
       applyMobileWindowFullscreen(articlePopup, tryGetSettings().clippingMobileDefaultFullscreen === true);
-      // 若数据为空（可能加载失败），重新加载
-      if (allArticles.length === 0 && !isLoadingData) {
+      // 重开即重载：解析零 I/O（纯 metadataCache），外部删除/改名/换目录不留幽灵卡片跨重开（B1）
+      if (!isLoadingData) {
         void loadAllArticles();
       }
     } else {
@@ -325,17 +325,14 @@ async function loadAllArticles(): Promise<void> {
     if (!dir || !(dir as any).children) {
       allArticles = [];
       filteredArticles = [];
-      renderEmpty();
+      renderEmpty(); // 目录未配置/不存在 → 引导设置空态（ticket 63）
       return;
     }
 
     const mdFiles = (dir as any).children.filter((f: any) => f.extension === 'md');
-    const articles: ArticleEntry[] = [];
-    for (const file of mdFiles) {
-      const entry = await parseArticleFile(file);
-      if (entry) articles.push(entry);
-    }
-
+    // 并行解析（parseArticleFile 不读文件本体，纯 metadataCache）
+    const entries = await Promise.all(mdFiles.map((f: any) => parseArticleFile(f)));
+    const articles = entries.filter((e): e is ArticleEntry => e !== null);
     articles.sort((a, b) => b.created.valueOf() - a.created.valueOf());
 
     allArticles = articles;
@@ -349,7 +346,7 @@ async function loadAllArticles(): Promise<void> {
   }
 }
 
-/** 解析文章：frontmatter 必需 url+created（缺任一跳过）；title=文件名 */
+/** 解析文章：frontmatter 必需 url+created（缺任一跳过）；title=文件名；纯 metadataCache，不读文件本体 */
 export async function parseArticleFile(file: any): Promise<ArticleEntry | null> {
   const app = getApp();
   try {
@@ -358,7 +355,6 @@ export async function parseArticleFile(file: any): Promise<ArticleEntry | null> 
     if (!fm) return null;
     if (!fm.url || !fm.created) return null;
 
-    const content = await app.vault.read(file);
     const title = file.basename;
 
     // created 解析失败（如 "1750000000000" 这类值）→ Invalid Date 会在 toISOString 抛
@@ -381,7 +377,6 @@ export async function parseArticleFile(file: any): Promise<ArticleEntry | null> 
       tags: Array.isArray(fm.tags) ? (fm.tags as string[]) : fm.tags ? [fm.tags as string] : [],
       created,
       title,
-      rawContent: content,
       hasBacklink,
       backlinkSources,
     };
@@ -391,11 +386,41 @@ export async function parseArticleFile(file: any): Promise<ArticleEntry | null> 
   }
 }
 
-// ========== 刷新数据 ==========
-async function refreshData(): Promise<void> {
-  if (isLoadingData) return;
-  await loadAllArticles();
+// ========== 刷新数据（单文件增量，ticket 45 + B1） ==========
+/** 按路径移除存量条目并重渲染（删除/改名旧路径/解析失败共用；无此条目则不动） */
+function removeArticleByPath(path: string): void {
+  const idx = allArticles.findIndex((a) => a.path === path);
+  if (idx === -1) return;
+  allArticles.splice(idx, 1);
+  allArticles.sort((a, b) => b.created.valueOf() - a.created.valueOf());
+  filteredArticles = [...allArticles];
   applyFilter();
+  rebuildSiteBar();
+}
+
+/** modify/rename 新路径：只重解析这一个文件并就地更新列表（parseArticleFile 无 I/O，代价低廉） */
+async function refreshSingleFile(path: string): Promise<void> {
+  const app = getApp();
+  const file = app.vault.getAbstractFileByPath(path) as any;
+  if (!file) {
+    // 文件已删除/移出（如整目录清理）：按路径移除存量条目，防幽灵卡片（B1）
+    removeArticleByPath(path);
+    return;
+  }
+  if (file.extension !== 'md') return;
+  const entry = await parseArticleFile(file);
+  if (entry) {
+    const idx = allArticles.findIndex((a) => a.path === path);
+    if (idx >= 0) allArticles[idx] = entry;
+    else allArticles.push(entry);
+  } else {
+    removeArticleByPath(path); // 修改后不再是合法文章（缺 url/created）→ 从列表移除
+    return;
+  }
+  allArticles.sort((a, b) => b.created.valueOf() - a.created.valueOf());
+  filteredArticles = [...allArticles];
+  applyFilter();
+  rebuildSiteBar();
 }
 
 // ========== 筛选与排序（单选站点） ==========
@@ -440,7 +465,14 @@ export function renderEntries(reset = false) {
     if (currentDisplayCount === 0) {
       const empty = document.createElement('div');
       empty.className = 'article-empty';
-      empty.textContent = selectedSite ? '没有匹配站点的文章' : '没有文章，请添加';
+      // 空态三态区分（ticket 63）：筛选/搜索无结果 vs 目录为空 vs 目录未配置（renderEmpty）
+      if (selectedSite || currentSearchKeyword) {
+        empty.textContent = '没有符合条件的文章';
+      } else if (allArticles.length === 0) {
+        empty.textContent = '目录为空，还没有剪藏文章';
+      } else {
+        empty.textContent = '没有符合条件的文章';
+      }
       articlesContainer.appendChild(empty);
     }
     return;
@@ -657,52 +689,16 @@ function createArticleCard(article: ArticleEntry): HTMLElement {
 }
 
 // ========== 删除确认 ==========
+/** 删除确认统一走 core/confirm（ticket 52）：与书库 EPUB 删除同一套自绘确认，保留「此操作不可撤销」说明 */
 function showDeleteConfirm(article: ArticleEntry, card: HTMLElement | null) {
-  const confirmMask = document.createElement('div');
-  confirmMask.style.cssText =
-    'position:fixed;top:0;left:0;right:0;bottom:0;background:var(--background-modifier-cover);z-index:10001;display:flex;align-items:center;justify-content:center;';
-  confirmMask.onclick = (e) => {
-    if (e.target === confirmMask) confirmMask.remove();
-  };
-
-  const popup = document.createElement('div');
-  popup.style.cssText =
-    'background:var(--background-primary);border-radius:12px;padding:24px;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);';
-  const title = document.createElement('h4');
-  title.textContent = '确认删除';
-  title.style.cssText = 'margin:0 0 16px 0;font-size:18px;color:var(--text-normal);';
-  const msg = document.createElement('p');
-  msg.textContent = `确定要删除文章「${article.title}」吗？\n此操作不可撤销。`;
-  msg.style.cssText = 'margin:0 0 24px 0;color:var(--text-muted);font-size:14px;white-space:pre-line;';
-
-  const btnContainer = document.createElement('div');
-  btnContainer.style.cssText = 'display:flex;gap:12px;justify-content:flex-end;';
-
-  const cancelBtn = document.createElement('button');
-  cancelBtn.textContent = '取消';
-  cancelBtn.style.cssText = 'padding:8px 16px;border-radius:6px;border:none;background:var(--background-secondary);cursor:pointer;font-size:14px;';
-  cancelBtn.onclick = () => confirmMask.remove();
-
-  const deleteBtn = document.createElement('button');
-  deleteBtn.textContent = '删除';
-  deleteBtn.style.cssText =
-    'padding:8px 16px;border-radius:6px;border:none;background:var(--background-modifier-error);color:var(--text-on-accent);cursor:pointer;font-size:14px;font-weight:500;';
-  deleteBtn.onclick = async () => {
-    await deleteArticle(article, card);
-    confirmMask.remove();
-  };
-
-  btnContainer.appendChild(cancelBtn);
-  btnContainer.appendChild(deleteBtn);
-
-  popup.appendChild(title);
-  popup.appendChild(msg);
-  popup.appendChild(btnContainer);
-  confirmMask.appendChild(popup);
-  document.body.appendChild(confirmMask);
-  escManager.register('article-confirm', {
-    isVisible: () => confirmMask.isConnected,
-    close: () => confirmMask.remove(),
+  confirm({
+    title: '确认删除',
+    message: `确定要删除文章「${article.title}」吗？\n此操作不可撤销。`,
+    confirmText: '删除',
+    cancelText: '取消',
+    onConfirm: () => {
+      void deleteArticle(article, card);
+    },
   });
 }
 
@@ -851,23 +847,58 @@ function initScroll() {
 }
 
 // ========== 文件监听 ==========
+/** 防抖窗口内被修改（含改名新路径）的文件路径集合 */
+const pendingRefreshPaths = new Set<string>();
+/** 防抖窗口内被删除（含改名旧路径）的文件路径集合 */
+const pendingDeletePaths = new Set<string>();
+
+/** 防抖窗口结束统一结算：先按删除路径移除（含改名旧路径），再逐个增量解析存活路径 */
+function scheduleRefreshFlush(): void {
+  if (refreshTimer) clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(async () => {
+    const deletes = Array.from(pendingDeletePaths);
+    const modifies = Array.from(pendingRefreshPaths);
+    pendingDeletePaths.clear();
+    pendingRefreshPaths.clear();
+    for (const p of deletes) removeArticleByPath(p);
+    for (const p of modifies) await refreshSingleFile(p);
+    refreshTimer = null;
+  }, 300);
+}
+
 function attachFileListener() {
   if (fileListenerAttached) return;
-  const fileModifyHandler = async (file: any) => {
+  const inDir = (path: string) => path.startsWith(ARTICLE_DIRECTORY + '/');
+  const fileModifyHandler = (file: any) => {
     // 补 '/' 边界：防「我的/文章备选」误命中「我的/文章」前缀（与 auto-summary getWatchDir()+'/' 对齐）
-    if (file.path.startsWith(ARTICLE_DIRECTORY + '/') && file.extension === 'md') {
-      if (refreshTimer) clearTimeout(refreshTimer);
-      refreshTimer = setTimeout(async () => {
-        await refreshData();
-        refreshTimer = null;
-      }, 300);
+    if (inDir(file.path) && file.extension === 'md') {
+      pendingRefreshPaths.add(file.path);
+      scheduleRefreshFlush();
     }
   };
-  // 换线：原生 vault modify 订阅 → 域事件总线 clipping:file-modified（obsidian-adapter 统一派发，仅 md）。
-  // fileListenerRef 改存总线退订函数，卸载点 unloadClipping 同步适配；防抖与目录边界判断原样保留。
-  fileListenerRef = onDomainEvent<{ path: string }>('clipping:file-modified', (evt) =>
-    fileModifyHandler({ path: evt.path, extension: 'md' })
-  );
+  // 销毁侧（vault delete / rename 旧路径）：文件已不在，按路径移除旧条目，防幽灵卡片（B1）
+  const fileDeleteHandler = (evt: { path: string }) => {
+    if (inDir(evt.path)) {
+      pendingDeletePaths.add(evt.path);
+      scheduleRefreshFlush();
+    }
+  };
+  // 改名：移除 oldPath 旧卡；新路径仍在剪藏目录则增量解析（auto-summary 改名正走此事件 → 防同文双卡）
+  const fileRenameHandler = (evt: { oldPath: string; newPath: string; movedOut: boolean }) => {
+    if (inDir(evt.oldPath)) pendingDeletePaths.add(evt.oldPath);
+    // movedOut=true 为移入（旧路径不在域内，无旧卡）；movedOut=false 则新旧路径均在剪藏目录
+    if (!evt.movedOut && inDir(evt.newPath)) pendingRefreshPaths.add(evt.newPath);
+    scheduleRefreshFlush();
+  };
+  // 换线：原生 vault 事件 → 域事件总线 clipping:file-*（obsidian-adapter 统一派发，仅 md；rename 只发一条）。
+  // fileListenerRefs 存各通道退订闭包，卸载点 unloadClipping 统一退订；防抖与目录边界判断原样保留。
+  fileListenerRefs = [
+    onDomainEvent<{ path: string }>('clipping:file-modified', (evt) =>
+      fileModifyHandler({ path: evt.path, extension: 'md' })
+    ),
+    onDomainEvent<{ path: string }>('clipping:file-deleted', fileDeleteHandler),
+    onDomainEvent<{ oldPath: string; newPath: string; movedOut: boolean }>('clipping:file-renamed', fileRenameHandler),
+  ];
   fileListenerAttached = true;
 }
 
@@ -888,22 +919,25 @@ function registerEscapeListener() {
 }
 
 // ========== 渲染空状态 ==========
+/** 目录未配置/不存在空态（ticket 63）：引导到设置；区别于「目录为空」与「筛选无结果」 */
 export function renderEmpty() {
   if (!articlesContainer) return;
   articlesContainer.innerHTML = '';
   const empty = document.createElement('div');
   empty.className = 'article-empty';
-  empty.textContent = '暂无文章';
+  empty.textContent = `未找到剪藏目录「${ARTICLE_DIRECTORY}」，请点击右上角 ⚙️ 前往设置`;
   articlesContainer.appendChild(empty);
 }
 
 /** 卸载清理（main.ts onunload 可调用） */
 export function unloadClipping(): void {
-  if (fileListenerRef) {
-    try {
-      fileListenerRef(); // 总线退订函数（幂等，重复调用安全）
-    } catch (e) { /* 忽略 */ }
-    fileListenerRef = null;
+  if (fileListenerRefs.length > 0) {
+    for (const unsub of fileListenerRefs) {
+      try {
+        unsub(); // 总线退订函数（幂等，重复调用安全）
+      } catch (e) { /* 忽略 */ }
+    }
+    fileListenerRefs = [];
     fileListenerAttached = false;
   }
   ['article-view-mask', 'article-view-popup'].forEach((id) => {
