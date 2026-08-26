@@ -47,6 +47,9 @@ let renderedKey = '';
 /** l5 三态：news.json 缺失（首用引导）与解析失败（错误态，不渲染「读完」态） */
 let dataFileMissing = false;
 let loadFailed = false;
+/** show() 重入串行化：加载链在跑时重入（hide 后立即重开 / 双 show 并发）复用同一链，
+ *  防双链竞态——晚完成链用旧快照覆盖面板、晚到 render() 重设 openedAt 截断已读时长。 */
+let pendingLoad: Promise<void> | null = null;
 
 // ---------- 创建弹窗 ----------
 function createMaskAndPopup() {
@@ -557,10 +560,15 @@ export function show() {
   renderLoading();
   mask!.style.visibility = 'visible';
   popup!.style.visibility = 'visible';
-  loadStats()
+  // 重入串行化：已有加载链在跑 → 占位/显窗已重建，复用同一链（其完成时 render 替换占位），不另起第二条链
+  if (pendingLoad) return;
+  pendingLoad = loadStats()
     .then(() => loadArticles())
     .then(() => {
       render();
+    })
+    .finally(() => {
+      pendingLoad = null;
     });
 }
 
