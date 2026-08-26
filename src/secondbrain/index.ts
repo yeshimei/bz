@@ -89,7 +89,10 @@ export function unloadSecondBrain(): void {
 }
 
 function ensureReference(): void {
-  if (!appRef || !store || reference) return;
+  if (!appRef || !store) return;
+  // 上个实例已被 ❌ 关闭（isClosed）：置空以便重建，否则窄窗关闭后命令将永久失灵
+  if (reference && !reference.alive) reference = null;
+  if (reference) return;
   if (IS_MOBILE) {
     mobile ??= new MobilePanel(appRef, store);
     return;
