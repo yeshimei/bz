@@ -9,7 +9,7 @@
 ## Decision
 
 1. 新建 `src/movie-report/` 三件套：`index.ts`（`ensureMovieReport` / `openMovieReport` / `unloadMovieReport`）+ `analysis.ts`（自 movie 域全量迁入，统计公式/配色/文案逐字不动）+ `state.ts`（本域目录态）。
-2. 命令 id `bz-movie-report`、名称「影视分析报告」、icon **不变**（外部裸调用契约冻结）；main.ts COMMANDS 表拆出独立「影视分析报告」分节；onunload 增 `unloadMovieReport()`。
+2. 命令 id `bz-movie-report`、名称「影视分析报告」不变（外部裸调用契约冻结）；icon 由 clapperboard 改为 pie-chart（2026-08 UX 整改 f7 解冻授权，id/名称/契约不动）；main.ts COMMANDS 表拆出独立「影视分析报告」分节；onunload 增 `unloadMovieReport()`。
 3. 解耦点：`buildAnalysisData` 不再读 `movie/state` 的 `M.folderPath`，改读本域 state——`ensureMovieReport` 时自设置 `movieFolderPath` 解析一次，「重启生效」语义与 movie 域一致。
 4. 跨域引用保持显式且无环：`movie-report/analysis → ../movie/constants`（纯数据常量）；`movie/ui.ts` 📊 按钮 → `../movie-report/analysis`（`openAnalysisModal`）。ESC 键名 `movie-analysis` 不变。
 5. 报告独立打开不再连带 `ensureMovie`（不注册面板自动刷新监听、不写 `__MOVIE_FOLDER_PATH` 遗留全局）——报告窗口自身可见行为不变。

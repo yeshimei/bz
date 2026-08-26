@@ -25,7 +25,7 @@ import { openNewsReader, unloadNewsReader } from './news';
 import { openPasswordManager, addPasswordEntry, generatePassword, unloadPassword } from './password';
 import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorites';
 import { openLibrary, openBookNotes, unloadLibrary } from './library';
-import { showReadingReport } from './reading-report';
+import { showReadingReport, unloadReadingReport } from './reading-report';
 import { openMovieManager, addMovieItem, unloadMovie } from './movie';
 // 影视分析报告（独立域，ADR-0048）
 import { openMovieReport, unloadMovieReport } from './movie-report';
@@ -287,6 +287,7 @@ export default class BzPlugin extends Plugin {
     unloadReview();
     unloadMovie();
     unloadMovieReport();
+    unloadReadingReport();
     unloadLibrary();
     unloadNewsReader();
     unloadArticleView();
