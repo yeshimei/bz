@@ -1,6 +1,6 @@
 ## 2026-08-27 第二大脑正文大改自动重跑（ticket 119：v1.4 基准哈希 + 修改监听）
 
-**状态：worktree/t119-edit-relink 完成；分支全量测试 + tsc 0（合并复核待主会话）**
+**状态：master 3256b1c 合并完成；合并复核全量 2724 测试通过（179 文件）+ tsc 0 + 构建部署（产物已落 E:/Obsidian/叫我包仔/.obsidian/plugins/bz/）**
 
 - ✅ **用户拍板机制**：「记录第一次向量后的文件，如果改动笔记后，再次向量的文件有变化才走查新索引」→ 用全文内容哈希做基准，**内容实质变化才重跑建链**（Obsidian 高频保存但内容未变 / 自写 related 触发 → 哈希相同 → 不空转裁判；杜绝自触发死循环）
 - ✅ **基准状态**：新数据文件 `CONFIG/STORAGE/secondbrain_link_state.json`（`{ path: { hash, linkedAt } }`，STORAGE 目录随 Syncthing 流动；损坏/非对象/旧形态容错为空）；每次 `processNote` 成功（含监听/队列消费/补链/手动重跑）写入后刷新；不可达入队/失败不记；文件删除 `dropLinkBaseline` 清条目
