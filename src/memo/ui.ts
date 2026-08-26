@@ -448,8 +448,12 @@ export const UIManager = {
               if (text) {
                 const trimmed = text.trim();
                 contentInput.dataset.rawClipboard = trimmed;
-                // 拍板 11：剪贴板预填成功给轻提示（正文不带 emoji；同键去重防连续切换刷屏）
-                notify('已从剪贴板预填链接', { type: 'info', dedupeKey: 'memo-clip-prefill' });
+                // 拍板 11：剪贴板预填成功给轻提示（正文不带 emoji；同键去重防连续切换刷屏）。
+                // 建议 B：编辑模式（addEditingId 非空）不弹——编辑入口自动点击剪藏按钮会触发
+                // 此读取，且异步回调晚于编辑回填，提示会误导
+                if (!this.addEditingId) {
+                  notify('已从剪贴板预填链接', { type: 'info', dedupeKey: 'memo-clip-prefill' });
+                }
                 const { url, display } = extractUrlAndDisplay(trimmed);
                 if (url) {
                   contentInput.placeholder = url;

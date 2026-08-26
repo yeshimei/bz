@@ -97,17 +97,19 @@ export function __setClipArchiveNotifyMergeMsForTests(ms: number): void {
 let archiveNotifyQueue: string[] = [];
 let archiveNotifyTimer: ReturnType<typeof setTimeout> | null = null;
 
-/** 到点刷出合并通知（单条/多条文案与 review 先例一致；dedupeKey 防重复弹屏） */
+/** 到点刷出合并通知（单条/多条文案与 review 先例一致；不带 dedupeKey——
+ *  notice 的 30s 同键抑制窗口会把间隔 3.2s~30s 的归档成功反馈静默吞掉） */
 function flushArchiveNotify(): void {
   archiveNotifyTimer = null;
   const batch = archiveNotifyQueue;
   archiveNotifyQueue = [];
-  if (!batch.length) return;
+  // 建议 C：卸载后到点的在途定时器不再弹（与 enqueue 首行 _cancelled 短路同语义）
+  if (_cancelled || !batch.length) return;
   const shown = batch.slice(0, 3).join('、');
   const tail = batch.length > 3 ? ` 等 ${batch.length - 3} 条` : '';
   notify(
     batch.length > 1 ? `已归档到备忘录：${shown}${tail}` : `已归档到备忘录：${shown}`,
-    { type: 'success', dedupeKey: 'memo-clip-archive-success' }
+    { type: 'success' }
   );
 }
 
@@ -127,6 +129,8 @@ async function archiveItem(item: any, file: any) {
   try {
     await DataManager.updateItem(item.id, { title: file.basename, linkedNote: file.path, url: item.url ?? null } as any);
     await DataManager.completeItem(item.id);
+    // 建议 C：await 期间插件卸载 → 不再排队/弹通知（unload 竞态守卫，防续体复活定时器）
+    if (_cancelled) return;
     // n2：归档成功通知合并窗口——窗口内多条剪藏收进一份名单，到点统一弹一条（不再逐条弹屏）
     archiveNotifyQueue.push(file.basename);
     if (!archiveNotifyTimer) archiveNotifyTimer = setTimeout(flushArchiveNotify, CLIP_ARCHIVE_NOTIFY_MERGE_MS);

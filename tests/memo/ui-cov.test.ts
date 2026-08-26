@@ -371,6 +371,28 @@ describe('拍板 10：切换场景默认保留已输入内容（不询问）', (
   });
 });
 
+describe('拍板 11：剪藏剪贴板预填提示', () => {
+  it('编辑模式不弹预填提示（编辑入口自动点击剪藏按钮不误报）；新建模式照常提示', async () => {
+    const vault = new MockVault();
+    await initApp(vault);
+    await seedItems(vault, [
+      { id: 'e1', title: '剪藏条目', scene: '剪藏', priority: 'minor', created: '2025-06-14 10:00:00', completed: null, url: 'https://example.com/edit-clip' },
+    ]);
+    clipboardRead.mockResolvedValue('https://example.com/edit-clip 编辑标题');
+    const target = App.state.todoItems.find((i) => i.id === 'e1')!;
+    clearNotices();
+    // 编辑：自动点击剪藏按钮 → 剪贴板读取成功 → 预填执行但提示被编辑模式门控
+    UIManager.showAddDialog(target);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(hasNotice('已从剪贴板预填链接')).toBe(false);
+
+    // 对照：新建模式（addEditingId 为空）默认场景自动激活剪藏 → 提示照常弹出
+    UIManager.showAddDialog(null);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(hasNotice('已从剪贴板预填链接')).toBe(true);
+  });
+});
+
 describe('ESC 层级：共享确认遮罩最优先', () => {
   it('共享确认遮罩存在 → ESC 只移除它，添加弹窗保持打开', async () => {
     const vault = new MockVault();
