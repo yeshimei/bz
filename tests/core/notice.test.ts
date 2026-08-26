@@ -122,6 +122,27 @@ describe('通知系统', () => {
     expect(visibleNotices()).toHaveLength(0);
   });
 
+  it('长文本通知按字数动态延长停留时间', async () => {
+    // 短文本（≤20 字）用默认 3000ms
+    notify('短');
+    // 长文本（50 字）：base 3000 + (50-20)×60 = 4800ms
+    notify('这是一条比较长的通知消息，用于测试动态延长停留时间的功能是否正常');
+    expect(visibleNotices()).toHaveLength(2);
+    // 3200ms：短文本消失，长文本仍在
+    await vi.advanceTimersByTimeAsync(3200);
+    expect(visibleNotices()).toHaveLength(1);
+    // 5000ms：长文本也消失（4800 + 200 退出动画）
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(visibleNotices()).toHaveLength(0);
+  });
+
+  it('显式 duration 优先于动态计算', async () => {
+    // 50 字文本但显式指定 500ms，不走动态计算
+    notify('这是一条比较长的通知消息，用于测试显式 duration 是否优先于动态计算', { duration: 500 });
+    await vi.advanceTimersByTimeAsync(700);
+    expect(visibleNotices()).toHaveLength(0);
+  });
+
   it('点击通知本体关闭', async () => {
     const h = notify('可点击关闭');
     h.el.click();
