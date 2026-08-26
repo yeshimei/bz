@@ -35,6 +35,7 @@ import {
   openSecondBrainReference,
   openSecondBrainChat,
   rebuildSecondBrainLinks,
+  runSecondBrainLinkAll,
   unloadSecondBrain,
 } from './secondbrain';
 import { openPomodoro, unloadPomodoro, ensurePomodoro } from './pomodoro';
@@ -108,6 +109,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-secondbrain-chat', name: '第二大脑对话', icon: 'message-circle', callback: () => openSecondBrainChat(getApp()) },
   // 自动双链（ticket 111）：当前笔记重跑一次关联（正文大改后的手动兜底入口）
   { id: 'bz-secondbrain-rebuild-links', name: '重跑当前笔记关联', icon: 'link', callback: () => rebuildSecondBrainLinks(getApp()) },
+  // 自动双链（ticket 115）：存量未连接笔记手动批量补链（启动自动补链的显式兜底）
+  { id: 'bz-secondbrain-link-all', name: '为未关联笔记批量补链', icon: 'link-2', callback: () => runSecondBrainLinkAll(getApp()) },
   // 番茄钟（ticket 26-32 新域）
   { id: 'bz-pomodoro-open', name: '番茄钟', icon: 'timer', callback: () => openPomodoro(getApp()) },
   // B站下载器（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）

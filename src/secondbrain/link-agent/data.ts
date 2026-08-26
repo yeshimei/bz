@@ -34,6 +34,34 @@ export function getLinkAgentScopes(): string[] {
   return parseScopeList((tryGetSettings() as any).linkAgentScopes);
 }
 
+// ---------------- 存量补链目标清单（ticket 115） ----------------
+
+export interface BackfillTargetPredicates {
+  /** 是否位于关联范围内（linkAgentScopes） */
+  inScope: (path: string) => boolean;
+  /** frontmatter 是否已含 related（已连接的笔记跳过，related 即进度检查点） */
+  hasRelated: (path: string) => boolean;
+  /** 排除（加密锁定目录 / 队列内待重试条目等） */
+  excluded: (path: string) => boolean;
+}
+
+/**
+ * 计算存量补链目标清单（纯函数，node 环境可测）：
+ * 只收 .md、去重、按路径字典序稳定输出；范围外 / 已含 related / 被排除的一律剔除。
+ * 由调用方把 app（vault/metadataCache/encrypt 边界/队列）翻译成三个谓词。
+ */
+export function computeBackfillTargets(allPaths: string[], opts: BackfillTargetPredicates): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const p of [...allPaths].sort()) {
+    if (!p.endsWith('.md') || seen.has(p)) continue;
+    seen.add(p);
+    if (!opts.inScope(p) || opts.hasRelated(p) || opts.excluded(p)) continue;
+    out.push(p);
+  }
+  return out;
+}
+
 /** 待处理队列条目（spec「数据设计」：存事件不存半成品） */
 export interface LinkQueueItem {
   path: string;

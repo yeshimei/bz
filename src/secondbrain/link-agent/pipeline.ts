@@ -9,6 +9,8 @@
  * - 裁判 prompt 指令前缀固定（命中供应商前缀缓存），强调「只链实质关联，存疑不链」；
  * - 写入幂等：related 已存在的链不重复添加；linkAgentMaxLinks > 0 时裁判提示附上限且写入侧截断；
  * - 队列消费：域初始化发现队列非空且服务可达即自动消费，完成后合并通知；
+ * - 存量补链（ticket 115）：启动时（队列消费之后）扫描关联范围内缺 related 的存量笔记批量建链，
+ *   手动命令 bz-secondbrain-link-all 同路径兜底；批次与监听批次共用串行锁；
  * - 死链清理：关联范围（linkAgentScopes）各笔记 related 中指向不存在文件的条目移除；encrypt 锁定文件一律跳过。
  */
 import type { App, TFile } from 'obsidian';
@@ -19,6 +21,7 @@ import { AI } from '../ai';
 import type { SearchHit } from '../vector-store';
 import {
   LINK_AGENT_DEFAULT_SCOPE,
+  computeBackfillTargets,
   getLinkAgentScopes,
   LinkQueueItem,
   computeHash,
@@ -75,6 +78,13 @@ export interface BatchSummary {
   queued: number;
   failed: number;
 }
+
+/** 存量补链结果（ticket 115）：调用方（启动静默 / 手动命令通知）按 status 区分处理 */
+export type BackfillResult =
+  | { status: 'disabled' }
+  | { status: 'unreachable' }
+  | { status: 'no-targets' }
+  | { status: 'done'; summary: BatchSummary };
 
 /** 裁判指令前缀（固定不变，命中供应商前缀缓存——spec「核心流程③」） */
 const JUDGE_PROMPT_PREFIX = [
@@ -302,10 +312,36 @@ export class LinkAgent {
   }
 
   /**
+   * 批次串行锁（ticket 115）：启停补链、监听批次共用同一 agent 实例时，
+   * 批次级管线（refresh + 向量检索 + AI 裁判）只允许一端执行，其余排队串行——
+   * 避免并发 refresh 争抢 embedding 与裁判请求交错（store.refresh 自带并发去重仍不保证整体串行）。
+   */
+  private serialChain: Promise<unknown> = Promise.resolve();
+
+  private runSerial<T>(fn: () => Promise<T>): Promise<T> {
+    const run = this.serialChain.then(
+      () => fn(),
+      () => fn()
+    );
+    // 链上吞掉失败：后继批次不因前一端抛错而断链
+    this.serialChain = run.then(
+      () => undefined,
+      () => undefined
+    );
+    return run;
+  }
+
+  /**
    * 批次处理：逐篇跑管线；批次进行中以 dedupeKey 合并动态更新单条 progress toast，
    * 结束时同键切换为完成通知（新建 0 条静默——隐藏进行中帧），失败合并提示一次。
+   * 经串行锁执行：与存量补链批次排队互斥。
+   * @param assumeReachable 已在上游探测过可达（存量补链），批内不再逐篇探测（同队列消费语义）
    */
-  async processBatch(paths: string[]): Promise<BatchSummary> {
+  async processBatch(paths: string[], opts?: { assumeReachable?: boolean }): Promise<BatchSummary> {
+    return this.runSerial(() => this.runBatch(paths, opts));
+  }
+
+  private async runBatch(paths: string[], opts?: { assumeReachable?: boolean }): Promise<BatchSummary> {
     const summary: BatchSummary = { total: paths.length, processed: 0, created: 0, queued: 0, failed: 0 };
     if (!paths.length) return summary;
     const notifyOn = this.notifyEnabled;
@@ -314,7 +350,7 @@ export class LinkAgent {
       handle = notify(`自动双链：处理中 0/${paths.length} 篇`, { type: 'progress', dedupeKey: LINK_BATCH_NOTICE_KEY });
     }
     for (let i = 0; i < paths.length; i++) {
-      const outcome = await this.processNote(paths[i]);
+      const outcome = await this.processNote(paths[i], opts);
       if (outcome.status === 'done') {
         summary.processed++;
         summary.created += outcome.created;
@@ -406,6 +442,53 @@ export class LinkAgent {
       }
     }
     return summary;
+  }
+
+  /**
+   * 存量补链（ticket 115）：扫描关联范围内**缺 related** 的存量笔记批量建链。
+   * - 探测 embedding 可达：不可达 → 返回 unreachable（启动调用方静默跳过，下次启动重试）；
+   * - 目标清单 = scope 内 md、frontmatter 无 related、排除 encrypt 锁定与队列内待重试条目；
+   *   related 即进度检查点——中断/重启后续跑只处理仍未连接的，天然增量；
+   * - 批次走 processBatch（入口已探测，批内 assumeReachable 不再逐篇探测），与监听批次串行互斥；
+   * - 启动调用忽略结果（静默）；手动命令 bz-secondbrain-link-all 按 status 通知。
+   */
+  async backfillMissingLinks(): Promise<BackfillResult> {
+    if ((tryGetSettings() as any).linkAgentEnabled === false) return { status: 'disabled' };
+    const reachable = await this.probeFn();
+    if (!reachable) return { status: 'unreachable' };
+    const targets = await this.computeBackfillTargets();
+    if (!targets.length) return { status: 'no-targets' };
+    const summary = await this.processBatch(targets, { assumeReachable: true });
+    return { status: 'done', summary };
+  }
+
+  /** 存量补链目标清单（app 层把 vault / metadataCache / encrypt 边界 / 队列翻译成纯谓词） */
+  private async computeBackfillTargets(): Promise<string[]> {
+    const vault = this.app.vault as any;
+    const cache = (this.app as any).metadataCache as any;
+    const scopes = getLinkAgentScopes();
+    let queued: Set<string>;
+    try {
+      queued = new Set((await loadQueue()).map((i) => i.path));
+    } catch {
+      queued = new Set();
+    }
+    const files = (typeof vault.getMarkdownFiles === 'function' ? vault.getMarkdownFiles() : []) as { path: string }[];
+    return computeBackfillTargets(
+      files.map((f) => f.path),
+      {
+        inScope: (p) => scopes.some((dir) => isUnderFolder(dir, p)),
+        hasRelated: (p) => {
+          try {
+            const fm = cache?.getFileCache?.(vault.getAbstractFileByPath(p))?.frontmatter as Record<string, unknown> | undefined;
+            return parseRelatedEntries(fm?.related).length > 0;
+          } catch {
+            return true; // 缓存不可读视作已连接，防止同一批反复重试
+          }
+        },
+        excluded: (p) => isEncryptLockedPath(this.app, p) || queued.has(p),
+      }
+    );
   }
 
   /**

@@ -1,9 +1,10 @@
 /**
- * 自动双链 UI/通知层测试（ticket 111，jsdom）：
+ * 自动双链 UI/通知层测试（ticket 111 + 115，jsdom）：
  * - ⚙️ 弹窗「自动双链」总开关联动明细显隐（onChange 即时重渲染、各键独立持久化、重开还原）；
  * - 管线写入（单侧幂等 / 上限截断 / 入队 / 裁判失败入队）；
  * - 通知触发条件（本批新建 N 条 / N=0 静默 / 队列消费完成 / 死链清理有移除才报）；
- * - 监听器聚合与守卫；命令 bz-secondbrain-rebuild-links 注册守卫分支。
+ * - 监听器聚合与守卫；命令 bz-secondbrain-rebuild-links 注册守卫分支；
+ * - 存量补链（ticket 115）：目标清单扫描 / 可达门 / 队列排除 / 串行锁；命令 bz-secondbrain-link-all 守卫分支。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -22,7 +23,7 @@ import {
 } from '../../src/secondbrain/link-agent/watch';
 import { enqueuePaths, loadQueue } from '../../src/secondbrain/link-agent/data';
 import { AI } from '../../src/secondbrain/ai';
-import { rebuildSecondBrainLinks, unloadSecondBrain } from '../../src/secondbrain/index';
+import { rebuildSecondBrainLinks, runSecondBrainLinkAll, unloadSecondBrain } from '../../src/secondbrain/index';
 
 const QUEUE_PATH = 'CONFIG/STORAGE/secondbrain_link_queue.json';
 
@@ -519,5 +520,170 @@ describe('命令 bz-secondbrain-rebuild-links 守卫分支', () => {
     const app = makeCommandApp('文献盒/a.md');
     await rebuildSecondBrainLinks(app as any);
     expect(getNoticeMessages().some((m) => m.includes('自动双链已在第二大脑设置中关闭'))).toBe(true);
+  });
+});
+
+// ---------------- 存量补链与串行锁（ticket 115） ----------------
+
+describe('存量补链（backfillMissingLinks，ticket 115）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    clearDomainEvents();
+    document.body.innerHTML = '';
+    setSettingsProvider(baseSettings);
+    setSettingsSaver(() => Promise.resolve());
+  });
+
+  it('可达且有目标：批量跑管线并写 related，done 汇总计数正确', async () => {
+    const { vault, agent, askSpy } = makeWorld({
+      hits: [
+        { path: '文献盒/B.md', chunk: 'B', score: 0.9 },
+        { path: '文献盒/D.md', chunk: 'D', score: 0.8 },
+      ],
+    });
+    askSpy.mockResolvedValue('[{"id":1,"reason":"同主题"}]');
+    const result = await agent.backfillMissingLinks();
+    expect(result.status).toBe('done');
+    const summary = (result as { summary: { total: number; processed: number; created: number } }).summary;
+    // 目标 = 文献盒内缺 related 的三篇（A/B/D），各建 1 条
+    expect(summary).toMatchObject({ total: 3, processed: 3, created: 3 });
+    // 每个目标都写入了 related
+    for (const f of ['文献盒/A.md', '文献盒/B.md', '文献盒/D.md']) {
+      expect(vault.files.get(f)).toContain('related');
+    }
+  });
+
+  it('embedding 不可达：返回 unreachable，无写入无通知', async () => {
+    const { agent, vault, askSpy } = makeWorld({ reachable: false });
+    const result = await agent.backfillMissingLinks();
+    expect(result).toEqual({ status: 'unreachable' });
+    expect(askSpy).not.toHaveBeenCalled();
+    expect(vault.files.get('文献盒/A.md')).not.toContain('related');
+    expect(getNoticeMessages()).toEqual([]);
+  });
+
+  it('范围内全部已连接：返回 no-targets，不调裁判', async () => {
+    const { vault, agent, askSpy } = makeWorld({});
+    // 全部目标自带 related（已连接）
+    vault.files.set(
+      '文献盒/A.md',
+      '---\nrelated: ["[[文献盒/B]]"]\n---\n\n正文'
+    );
+    vault.files.set(
+      '文献盒/B.md',
+      '---\nrelated: ["[[文献盒/A]]"]\n---\n\n正文'
+    );
+    vault.files.set(
+      '文献盒/D.md',
+      '---\nrelated: ["[[文献盒/A]]"]\n---\n\n正文'
+    );
+    const result = await agent.backfillMissingLinks();
+    expect(result).toEqual({ status: 'no-targets' });
+    expect(askSpy).not.toHaveBeenCalled();
+  });
+
+  it('队列内待重试条目排除在目标外（不重复算力）', async () => {
+    const { agent, askSpy } = makeWorld({
+      hits: [{ path: '文献盒/B.md', chunk: 'B', score: 0.9 }],
+    });
+    askSpy.mockResolvedValue('[{"id":1,"reason":"r"}]');
+    await enqueuePaths(['文献盒/A.md']); // A 在队列中 → 本次补链跳过它
+    const result = await agent.backfillMissingLinks();
+    expect(result.status).toBe('done');
+    const summary = (result as { summary: { total: number; processed: number } }).summary;
+    expect(summary.total).toBe(2); // 只处理 B、D
+    expect(summary.processed).toBe(2);
+    const q = await loadQueue();
+    expect(q.map((i) => i.path)).toEqual(['文献盒/A.md']); // 队列条目未被消费（归队列消费管）
+  });
+
+  it('串行锁：并发批次排队执行，refresh 绝不同时运行', async () => {
+    const vault = new MockVault();
+    vault.files.set('文献盒/A.md', 'a');
+    vault.files.set('文献盒/B.md', 'b');
+    const app = mockAppWithVault(vault);
+    setApp(app as any);
+    let active = 0;
+    let maxActive = 0;
+    const store = {
+      refresh: vi.fn(async () => {
+        active++;
+        maxActive = Math.max(maxActive, active);
+        await new Promise((r) => setTimeout(r, 15));
+        active--;
+      }),
+      vectorSearch: vi.fn(async () => []),
+    };
+    const agent = new LinkAgent({ app: app as any, store: store as any, probe: vi.fn(async () => true) });
+    await Promise.all([
+      agent.processBatch(['文献盒/A.md']),
+      agent.processBatch(['文献盒/B.md']),
+    ]);
+    expect(maxActive).toBe(1); // 两个批次被串行锁排队，从未重叠
+  });
+});
+
+// ---------------- 命令 bz-secondbrain-link-all 守卫分支（ticket 115） ----------------
+
+describe('命令 bz-secondbrain-link-all 守卫分支', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    clearDomainEvents();
+    document.body.innerHTML = '';
+    setSettingsProvider(baseSettings);
+    setSettingsSaver(() => Promise.resolve());
+    unloadSecondBrain();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    unloadSecondBrain();
+  });
+
+  function makeAllApp() {
+    const vault = new MockVault();
+    vault.files.set('文献盒/A.md', '正文');
+    const app = mockAppWithVault(vault);
+    setApp(app as any);
+    return app;
+  }
+
+  it('自动双链已关闭：提示且不进入补链', async () => {
+    setSettingsProvider(() => ({ ...baseSettings(), linkAgentEnabled: false }));
+    const spy = vi.spyOn(LinkAgent.prototype, 'backfillMissingLinks').mockResolvedValue({ status: 'done', summary: { total: 0, processed: 0, created: 0, queued: 0, failed: 0 } });
+    await runSecondBrainLinkAll(makeAllApp() as any);
+    expect(getNoticeMessages().some((m) => m.includes('自动双链已在第二大脑设置中关闭'))).toBe(true);
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('补链产出关联：按汇总通知（启动静默路径不重复通知）', async () => {
+    const spy = vi.spyOn(LinkAgent.prototype, 'backfillMissingLinks').mockResolvedValue({
+      status: 'done',
+      summary: { total: 2, processed: 2, created: 3, queued: 0, failed: 0 },
+    });
+    await runSecondBrainLinkAll(makeAllApp() as any);
+    expect(spy).toHaveBeenCalled(); // 手动命令路径进入补链（启动补链同路径静默）
+    expect(getNoticeMessages().some((m) => m.includes('批量补链完成：处理 2 篇 / 新建关联 3 条'))).toBe(true);
+  });
+
+  it('零新建：通知未发现实质关联', async () => {
+    vi.spyOn(LinkAgent.prototype, 'backfillMissingLinks').mockResolvedValue({
+      status: 'done',
+      summary: { total: 1, processed: 1, created: 0, queued: 0, failed: 0 },
+    });
+    await runSecondBrainLinkAll(makeAllApp() as any);
+    expect(getNoticeMessages().some((m) => m.includes('批量补链完成：未发现实质关联，未新建'))).toBe(true);
+  });
+
+  it('embedding 不可达：提示稍后自动补链', async () => {
+    vi.spyOn(LinkAgent.prototype, 'backfillMissingLinks').mockResolvedValue({ status: 'unreachable' });
+    await runSecondBrainLinkAll(makeAllApp() as any);
+    expect(getNoticeMessages().some((m) => m.includes('embedding 服务不可达'))).toBe(true);
+  });
+
+  it('无待补链笔记：提示已处理完', async () => {
+    vi.spyOn(LinkAgent.prototype, 'backfillMissingLinks').mockResolvedValue({ status: 'no-targets' });
+    await runSecondBrainLinkAll(makeAllApp() as any);
+    expect(getNoticeMessages().some((m) => m.includes('当前无待补链笔记'))).toBe(true);
   });
 });

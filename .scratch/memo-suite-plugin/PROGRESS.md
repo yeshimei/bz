@@ -1,3 +1,15 @@
+## 2026-08-27 第二大脑存量笔记启动自动补链（ticket 115：启动补链 + 批量补链命令）
+
+**状态：worktree/sb-startup-backfill 全量 2708 测试通过（179 文件）+ tsc 0 错误；等待合并（构建产物随合并后重生成）**
+
+- ✅ **根因定位（真机）**：`linkAgentScopes` 默认仅「文献盒」而文献盒只有 1 篇笔记（候选池自排除后为 0）+ 自动建链只监听新建落盘（存量永远不触发）→ 全库 0 条 related、队列空、一切静默——非 bug，是 v1 设计边界 + 配置 + 库内容叠加
+- ✅ **数据层 `computeBackfillTargets` 纯函数**：目标 = scope 内 md，剔除已含 related（`related` 即进度检查点，中断续跑天然增量）/ encrypt 锁定 / 队列内待重试条目；去重、字典序稳定输出
+- ✅ **管线 `backfillMissingLinks`**：开关门 → 可达性探测（不可达返回 unreachable 静默，下次启动重试）→ 目标清单 → `processBatch(targets, { assumeReachable: true })`（入口已探测不再逐篇探测）；`processBatch` 增全局串行锁（线程安全：与监听批次排队互斥，refresh/AI 裁判绝不并发）
+- ✅ **启动接线**：`startStartupBackfill`（等待索引装载后执行、启动路径静默）；`ensureSecondBrain` 中「队列消费 → 存量补链」依序串行
+- ✅ **命令 `bz-secondbrain-link-all`**：存量批量补链的显式兜底，按结果通知（完成 N 篇/M 条 / 未发现实质关联 / 无待补链 / embedding 不可达 / 开关已关闭）
+- ✅ 测试：数据层 +4（目标清单筛选/去重/字典序/谓词实时），UI/通知层 +10（补链 done 汇总 / 不可达 / no-targets / 队列排除 / 串行锁 maxActive=1 / 命令五分支），smoke 命令 id 同步
+- 📄 文档：spec v1.1（①b 存量补链 / 手动命令 / 验收标准）；CONTEXT.md 第二大脑词条并入 link agent 与存量补链说明；issue 115 status 待合并
+
 ## 2026-08-26 第二大脑初始化断点可续 + 白名单目录选择器（ticket 114；编号与并行 core 113 错开）
 
 **状态：master ef5c56a 合并完成；全量 2695 例绿 + tsc 0 + 构建部署**
