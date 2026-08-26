@@ -3,7 +3,7 @@
  * 控件交互保存持久化 + storagePath 迁移（旧 7 字段 → 共享路径）。
  * 依赖 mock-obsidian-entry 的 Setting 链式 mock（MockDropdown/MockText/MockToggle）。
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import BzPlugin, { BzSettingTab } from '../src/main';
 import { MockVault } from './mock-vault';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from './mock-obsidian-entry';
@@ -93,13 +93,46 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
     expect(diskData['bz'].aiProvider).toBe('opencode-go');
   });
 
-  it('数据存储路径输入更新设置并持久化', async () => {
+  it('数据存储路径输入：内存即时更新，落盘走防抖有意触发（UX 整改 f1）', async () => {
+    vi.useFakeTimers();
     const el = findSetting(tab, '数据存储路径');
     const text = (el as any).__setting.controls.find((c: any) => typeof c.trigger === 'function' && c.placeholder !== undefined);
+    // saveData mock 为按引用存储（diskData['bz'] 即 settings 同一对象），用 spy 数落盘调用
+    const saveSpy = vi.spyOn(plugin, 'saveData');
     text.trigger('CONFIG/数据');
-    await new Promise((r) => setTimeout(r, 10));
+    // 不再逐键落盘：防抖窗口内未触发持久化，仅内存设置生效
+    expect(saveSpy).not.toHaveBeenCalled();
     expect(plugin.settings.storagePath).toBe('CONFIG/数据');
-    expect(diskData['bz'].storagePath).toBe('CONFIG/数据');
+    // 防抖窗口过后有意落盘一次
+    await vi.advanceTimersByTimeAsync(900);
+    expect(saveSpy.mock.calls.length).toBeGreaterThanOrEqual(1);
+    expect(plugin.settings.storagePath).toBe('CONFIG/数据');
+    // 有变更 → 弹风险提示（仅改路径、文件不迁移、重载后生效；正文不带 emoji）
+    const msgs = getNoticeMessages();
+    expect(msgs.some((m) => m.includes('文件') && m.includes('迁移') && m.includes('重载'))).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it('数据存储路径：改回原值不提示；同一次编辑会话不重复提示', async () => {
+    vi.useFakeTimers();
+    const el = findSetting(tab, '数据存储路径');
+    const text = (el as any).__setting.controls.find((c: any) => typeof c.trigger === 'function' && c.placeholder !== undefined);
+    // 输入新值 → 防抖提示一次
+    text.trigger('CONFIG/数据');
+    await vi.advanceTimersByTimeAsync(900);
+    expect(hasNotice(/重载/)).toBe(true);
+    clearNotices();
+    // 同会话继续改动：不重复提示（warnedInitial 去重）
+    text.trigger('CONFIG/数据2');
+    await vi.advanceTimersByTimeAsync(900);
+    expect(getNoticeMessages().filter((m) => m.includes('重载')).length).toBe(0);
+    // 改回原值后再次改动 → 可再次提示
+    text.trigger('CONFIG/STORAGE');
+    await vi.advanceTimersByTimeAsync(900);
+    text.trigger('CONFIG/数据3');
+    await vi.advanceTimersByTimeAsync(900);
+    expect(hasNotice(/重载/)).toBe(true);
+    vi.useRealTimers();
   });
 });
 

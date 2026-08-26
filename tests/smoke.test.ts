@@ -6,6 +6,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import BzPlugin, { BzSettingTab } from '../src/main';
 import { MockVault } from './mock-vault';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from './mock-obsidian-entry';
+import { notify } from '../src/core/notice';
 
 // ai-agent 域解散后的新注册点隔离：ensureMemoFileSync/ensureFavoritesFileSync 换 spy
 // （vi.mock 局部替换，其余导出保持真实实现，命令回调冒烟等用例不受影响）
@@ -117,6 +118,47 @@ describe('bz 骨架冒烟', () => {
 
     expect(plugin.ribbonIcons.length).toBeGreaterThanOrEqual(1);
     expect(plugin.ribbonIcons[0].title).toBe('备忘录');
+  });
+
+  it('命令名统一（f3/f7/t1/t2，id 不动）与重复图标去重（f7）', async () => {
+    await createPlugin(makeMockApp());
+    const byId = (id: string) => registeredCommands.find((c: any) => c.id === id)!;
+    // t1：主页 → 入口页（术语随 CONTEXT.md；id bz-home 不变）
+    expect(byId('bz-home').name).toBe('入口页');
+    // f3：新建类动词统一（写备忘/写影视 → 加备忘/加影视，与加物品/加密码/加收藏一致）
+    expect(byId('bz-memo-add').name).toBe('加备忘');
+    expect(byId('bz-movie-add').name).toBe('加影视');
+    // t2：阅读分析报告 → 阅读数据分析报告
+    expect(byId('bz-reading-report-open').name).toBe('阅读数据分析报告');
+    // f3：评级四命令去英文后缀、统一「复习（X）」标点
+    expect(byId('bz-review-again').name).toBe('复习（忘了）');
+    expect(byId('bz-review-hard').name).toBe('复习（困难）');
+    expect(byId('bz-review-good').name).toBe('复习（一般）');
+    expect(byId('bz-review-easy').name).toBe('复习（简单）');
+    // f7：第二大脑面板与第二大脑参考区分（不再与功能名歧义）
+    expect(byId('bz-secondbrain-panel').name).toBe('第二大脑面板');
+    expect(byId('bz-secondbrain-open').name).toBe('第二大脑参考');
+    // f7：重复图标去重——clapperboard / message-circle 各只出现一次
+    const icons = registeredCommands.map((c: any) => c.icon);
+    expect(icons.filter((i: string) => i === 'clapperboard')).toHaveLength(1);
+    expect(icons.filter((i: string) => i === 'message-circle')).toHaveLength(1);
+    expect(byId('bz-movie-report').icon).toBe('pie-chart');
+    expect(byId('bz-smartcat-chat').icon).toBe('messages-square');
+  });
+
+  it('onunload 清理 toast 容器（UX 整改 l2-toast）', async () => {
+    const plugin = await createPlugin(makeMockApp());
+    // createPlugin 期间日记本 mock 加载失败会弹一条 error 通知（既有噪音），先清空再精确计数
+    clearNotices();
+    notify('一条提示', { type: 'info' });
+    expect(document.querySelectorAll('.bz-notice')).toHaveLength(1);
+    await plugin.onunload();
+    expect(document.getElementById('bz-notice-container')).toBeNull();
+    expect(document.querySelectorAll('.bz-notice')).toHaveLength(0);
+    // 卸载后如再触发通知也能重建容器（模块单例未被销毁）
+    notify('重建');
+    expect(document.getElementById('bz-notice-container')).not.toBeNull();
+    clearNotices();
   });
 
   it('设置页挂载且含 AI 配置骨架', async () => {

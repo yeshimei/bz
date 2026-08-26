@@ -132,7 +132,7 @@ export default interface BzSettings {
   // ===== 🧠 做题家（4 项，含 shuffleQuestions；设置并入复习计划 tab）=====
   /** 允许多选题 */
   enableMultipleChoice: boolean;
-  /** 每笔记题目数量（0 为自动） */
+  /** 每篇笔记出题数量（f8：留空/0=自动） */
   questionsPerNote: string;
   /** 打乱题目顺序 */
   shuffleQuestions: boolean;
@@ -184,7 +184,7 @@ export default interface BzSettings {
   secondBrainChatTopK: string;
   /** 段落最小长度 */
   secondBrainChunkMinLength: string;
-  /** 允许的文件夹（逗号分隔） */
+  /** 允许的文件夹（逗号分隔；f8：留空/空=不索引任何目录，不是「全库」） */
   secondBrainAllowPaths: string;
   /** Embedding 请求并发数（QA 遗留死配置：定义后从未接线，忠实保留不删） */
   secondBrainConcurrency: string;
@@ -208,7 +208,7 @@ export default interface BzSettings {
   // ===== 🔗 第二大脑·自动双链管线（ticket 111，⚙️ 弹窗「自动双链」组）=====
   /** 自动双链总开关：关联范围新笔记落盘时自动建立 related 双链（false 时无任何监听与写入） */
   linkAgentEnabled: boolean;
-  /** 关联范围：英文逗号分隔的 vault 内目录清单（风格同 aiAgentWatchedFolders），同时决定落盘监听与候选过滤；空值/缺省回退「文献盒」 */
+  /** 关联范围：英文逗号分隔的 vault 内目录清单（风格同 aiAgentWatchedFolders），同时决定落盘监听与候选过滤；f8：留空/空=不自动关联（ticket 116 起不再回退「文献盒」） */
   linkAgentScopes: string;
   /** 单篇候选数量（关联范围内向量近邻 Top-K） */
   linkAgentTopK: number;
@@ -229,7 +229,7 @@ export default interface BzSettings {
   aiAgentWatchedFolders: string;
   /** 🧠 AI Agent 剪藏匹配模型 */
   aiAgentModel: string;
-  /** 第二大脑：常驻监听光标/文件（原 flashEnabled，ticket 103 更名迁移） */
+  /** 第二大脑启用开关（l7A）：仅控制启动时自动加载（常驻监听/面板初始化），关闭后仍可从命令面板手动打开；原 flashEnabled，ticket 103 更名迁移 */
   secondBrainEnabled: boolean;
 
   // ===== 🍅 番茄钟（9 项，ticket 31）=====
@@ -300,7 +300,7 @@ export default interface BzSettings {
   encryptMobileDefaultFullscreen: boolean;
 
   // ===== 🐱 小橘陪伴猫（smartcat 域：桌面宠物 + AI 陪伴）=====
-  /** 常驻域开关：开启后 onLayoutReady 启动小橘（猫容器 + 自言自语/心情/动画等常驻行为） */
+  /** 小橘启用开关（l7A）：仅控制启动时自动加载（猫容器挂载/常驻行为），关闭后仍可从命令面板手动打开 */
   smartcatEnabled: boolean;
   /**
    * 小橘主窗口：移动端默认全屏（默认关——原居中卡）。
