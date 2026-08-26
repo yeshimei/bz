@@ -643,3 +643,21 @@ etrieve 增 lexicalQuery（词法降级免「情绪/时段」噪音）。④ **�
 - ⚠ 必要偏差：洞察废弃徽标文案按票 B2 统一为「已被推翻」（原「已废弃（人工）/已废弃」双文案取消，insight-version.test.ts 断言同步更新）；面板模块无 Component 宿主，监听以 vault.on EventRef + close offref 落地（与 registerEvent 清理语义等价）
 - 📄 文档：spec.md Further Notes 追加一行；issue 097 status done
 
+
+## 2026-08-26 第二大脑切块剥离 frontmatter 完成（ticket 110）
+**状态：分支全量 2630 测试通过（176 文件，BZ_TEST_MAX_WORKERS=8 双 worktree 并发限流）+ tsc 0 错误；合并 master 复核同绿；worktree/ticket-110-chunk-strip rebase 后 ff 合并（abf288e）**
+
+- ✅ **chunk.ts 切块管线 embedChunks**：stripFrontmatter（Obsidian 同口径：^--- 界定、容忍 CRLF/文末闭合、未闭合不剥）→ smartChunk → 空正文兜底截断 → 标题并入首块；纯 frontmatter 文件返回 [] 不入索引
+- ✅ **vector-store meta v8→v9**：doRefresh 换用 embedChunks；旧库经 load() 版本不符路径自动清空、下次 refresh 全量重建（一次性 re-embed 桌面执行）
+- ⚠ 关键决策：标题在 smartChunk 之后显式前缀（拼进输入会被大段 flush 丢弃）；首块可超 CHUNK_SIZE 一个标题长度（bge-m3 无碍）
+- ✅ 测试：pure.test.ts +5（YAML 不进块/标题在首块/边界形态）；vector-store.test.ts 版本重建端到端重写；6 个既有 secondbrain 测试适配 v9
+- 📄 文档：CONTEXT.md 词条 v9 口径；issue 110 status done
+
+## 2026-08-26 第二大脑自动双链管线完成（ticket 111）
+**状态：分支全量 2667 测试通过（178 文件，含 link-agent-data 16 例 + link-agent-ui 26 例）+ tsc 0 错误；合并 master 复核 2672 全绿；worktree/ticket-111-link-agent rebase 后 ff 合并（886dd9a + d473857）**
+
+- ✅ **link-agent/{data,pipeline,watch}.ts**：队列 secondbrain_link_queue.json CRUD（存事件不存半成品，Syncthing 随 vault 跨设备）｜可达性门 1.5s 探测→不可达入队/可达就地管线｜范围内向量近邻 Top-K→core AI 档案卡裁判严格 JSON（指令前缀固定吃前缀缓存，「只链实质关联存疑不链」）→ processFrontMatter 单侧幂等写 related（默认不限量由 AI 决定，MaxLinks>0 才截断）
+- ✅ **linkAgentScopes 可配置范围**（用户拍板中途变更）：一份清单同源决定监听目录与候选过滤，缺省回退「文献盒」；⚙️ 弹窗明细五行显隐联动（TopK8/上限0=不限/完成通知/自动清理/关联范围）；命令 bz-secondbrain-rebuild-links 解除范围限制
+- ✅ **队列消费与死链清理**：域初始化非空且可达自动消费「待处理关联已处理完毕：N 篇 / 新建 M 条」；清理走域事件总线 + 30 分钟低频巡检兜底，encrypt 三态边界（无清单正常清理/解锁态清单内视为存活/锁定态整体跳过）+ 同名 basename 歧义不判死；通知全部查表 ICONS、dedupeKey 合并动态更新，N=0 与零变化静默
+- ⚠ 必要偏离：⚙️ 弹窗实际位于 panel.ts openSecondBrainSettings（票面白名单误写 config.ts）；向量库无「按笔记向量取近邻」公开入口，以正文摘要再嵌一次绕行（每篇多一次 embedding，ticket 112 可一并优化）
+- 📄 文档：spec `.scratch/secondbrain-link-agent/spec.md` 定稿；issue 111 status done；质量反馈闭环已立项 issue 112（排在合并后）

@@ -1,6 +1,6 @@
 # Ticket 111：第二大脑自动双链管线（link agent）
 
-- 状态：待开发
+- 状态：已完成（master 886dd9a + d473857，linkAgentScopes 范围化变更含内；合并后全量 2672 用例复核绿）
 - 域：secondbrain
 - 设计文档：`.scratch/secondbrain-link-agent/spec.md`（已评审定稿，含用户逐项拍板记录）
 - 前置：ticket 110（切块剥离 frontmatter）先行合并——向量候选质量前提
