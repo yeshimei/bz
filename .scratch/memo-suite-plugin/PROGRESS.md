@@ -141,6 +141,21 @@
 - ✅ **1.2.4（2026-08-25，未发布·本地验证期；用户拍板冻结 npm publish）**：**bz 插件临时指针**——`bz-bili-open` spawn 改本仓库未发布 CLI（`node "D:/Obsidian/bz/tools/bili-downloader/cli.js"`，存在即优先，源码注释标记修复期，稳定后删除恢复全局 bili-dl，插件构建已部署 vault）；**快捷命令严格顺序五步**（①应用剪辑 ②应用压缩 ③转文字 ④AI 润色=新 `/api/note-prepare`、存 `T.polishedNote` ⑤生成笔记=交付+写笔记复用润色，AI 只跑一次；`#flow-status` 步骤展示、串行不并行）；**转录单进程单次模型加载多文件**（PY_TRANSCRIBE 多文件 + `\x1e/\x1f` 单元分隔 + `parseTranscriptUnits`，修多段「一直转录中无效果」）；**修草稿态滑块重置**（`syncFromActive` 用 `S.draft`，把手跟随不回零）；**压缩完成清「编码中」残影**。工具 `npm test` 65 全绿、插件 bili 测试 9 全绿、tsc 0、构建部署（指针入产物）
 - ⏳ 待办：本地全流程实机验证（下载→圈选段落→五步生成笔记→obsidian 跳转）；验证通过后再评估 `npm publish`（冻结中）
 
+## 2026-08-27 bili-dl 体验优化十项（ticket 117；worktree/bili-ux，用户采纳 P1 六项 + P3 三项 + AI 润色进度反馈）
+
+**状态：实现完成（工具 + 插件启动器），待测试/构建/合并门禁**
+
+- ✅ **转文字进度反馈**：PY_TRANSCRIBE 逐段 flush（`\x1e<file>\x1f<seg>\x1f\n`）+ 文件结束空行哨兵（标记完成、不计文本）；`parseTranscriptUnits` 同文件多行聚合；服务端 `transcribe-phase`（model/work + done/total，哨兵行驱动文件级计数，resolve 后兜底补齐）；前端 ts-status 三态 + 已用计时（本地 setInterval，完成/失败清除）
+- ✅ **AI 润色进度**：`runNoteAi` 先算全量切块总数，`note-progress` 带 `phase/meta|polish/done/total`；`#flow-status` 升级为「进度条 + 阶段文案 + 已用计时」一行（`#flow-bar/#flow-text/#flow-elapsed`，.flow 样式），meta 不定进度（indet）、正文逐块实进度；快捷命令步骤 4 起启动本地计时
+- ✅ **刷新恢复任务**：`GET /api/state` 快照（phase/url/info/quality/分P/curDur/segments/mode/crf/transcript/transcriptSig/lastFiles(补 finalPath)）；DOMContentLoaded 拉取重建解析卡/预览/段落/转录/结果卡（静默交付渲染不重复复制）；busy 阶段恢复时置 busy + 提示；不回传 cookie/临时路径
+- ✅ **取消确认**：`confirm()` 文案点明删除未交付临时产物；交付结果渲染改行内结构 + 「打开所在文件夹」按钮（`POST /api/reveal`，win32 `explorer /select` spawn 免 shell，`revealApi.impl` 可打桩）；文献笔记成功后同款按钮（note.path）
+- ✅ **实例复用**：cli.js 端口文件 `~/.bilibili-dl-port` + 存活探测（读页面含「B站下载器」才算）；复用打印同格式地址行 + 开浏览器后退出；`cleanup` 不删端口文件（复用路径退出会误删旧实例文件）；`--port` 显式指定跳过复用
+- ✅ **插件启动反馈**：spawn 即 `notice('正在启动 B站下载器…')`（消除启动空窗）；6s 兜底改**软超时**（不 settle），close 非 0/error 可覆盖升级失败提示；`tests/bili-downloader/index-cov.test.ts` 三个旧语义用例同步修订（stderr 后仍只 1 条启动提示 / close(0) 叠加启动提示 / 软超时后 error→close 可升级，error settle 后 close 不再改口）
+- ✅ **P3 三项**：`fmtPrec` 先归一 0.1s 再拆位（修 x.95~x.99 进位显示错乱）；`.handle::after` 透明热区 20×28px + z-index 3（长视频好拖）；`#seg-hint` 空段落引导（下载/回退原片显示、添加首段隐藏、恢复/重置联动）
+- ✅ **设置页新键说明剔除**：复查 index.html 已具备 cacheDir/cacheRetentionDays/literatureFolder 中文说明，P3-13 误报不做
+- ✅ **文档**：spec（.scratch/bili-downloader-ux/spec.md）、issue 117、tools/bili-downloader/CONTEXT.md 三词条（任务快照/转写进度/AI 润色进度）+ 规则「重复启动复用实例」、README 特性五条
+- ⏳ 待办：工具 `npm test` + 插件 `pnpm test`/tsc 全绿 → 构建部署 → 合并 master → 清理 worktree
+
 ## 2026-08-26 域事件总线一期（ticket 101；worktree/event-bus）
 
 **状态：全量 2064 绿（137 文件）+ tsc 0；worktree/event-bus 已提交，待合并 master + 构建部署**

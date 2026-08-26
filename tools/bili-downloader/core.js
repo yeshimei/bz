@@ -472,8 +472,11 @@ function uniquePath(file) {
 
 // 内嵌转录 Python 代码（faster-whisper，python -c 执行，无需独立脚本文件）
 // 用法: python -c "此代码" <模型> <文件1> [<文件2>...]
-// 单进程单次加载模型，依次转录多个文件；每文件一行输出：
-//   \x1e<文件路径>\x1f<该文件全文>\x1f\n（\x1e/\x1f 为单元分隔符，服务端解析归位）
+// 单进程单次加载模型，依次转录多个文件；**逐段输出**（每段识别完立即 flush）：
+//   \x1e<文件路径>\x1f<该段文本>\x1f\n（\x1e/\x1f 为单元分隔符，服务端解析聚合）
+//   同一文件多行 = 该文件的多个片段；文件末尾输出空文本行作为**完成哨兵**：
+//   \x1e<文件路径>\x1f\x1f\n（不产生文本，服务端据此报「第 i/N 个文件完成」）
+// 逐段 flush 的意义：长视频不再等整片识别完才蹦出全部文本，前端可实时看到文字在动（ticket 117）。
 const PY_TRANSCRIBE = `
 import sys
 from faster_whisper import WhisperModel
@@ -486,14 +489,20 @@ model = WhisperModel(sys.argv[1], device='cpu', compute_type='int8')
 for f in sys.argv[2:]:
     # 本机 faster-whisper 的 vad_filter=True(Silero VAD) 会死锁卡死，禁用之（实测 3s 音频 3.6s 完成、无 VAD 亦正常）
     segments, _ = model.transcribe(f, language='zh', vad_filter=False)
-    parts = [seg.text.strip() for seg in segments if seg.text.strip()]
-    sys.stdout.write('\\x1e' + f + '\\x1f' + ' '.join(parts) + '\\x1f\\n')
+    for seg in segments:
+        t = (seg.text or '').strip()
+        if t:
+            sys.stdout.write('\\x1e' + f + '\\x1f' + t + '\\x1f\\n')
+            sys.stdout.flush()
+    sys.stdout.write('\\x1e' + f + '\\x1f' + '\\x1f\\n')
     sys.stdout.flush()
 `
 
-// 解析逐文件转录输出（行格式 \x1e<file>\x1f<text>\x1f）；按输出序返回 [{file, text}]
+// 解析逐文件转录输出（行格式 \x1e<file>\x1f<text>\x1f）；同文件多行聚合为一条；
+// 文件结束空行哨兵（\x1e<file>\x1f\x1f）只标记完成、不贡献文本。按输出序返回 [{file, text}]
 function parseTranscriptUnits(raw) {
   const out = []
+  const byFile = new Map()
   for (const line of String(raw || '').split(/\r?\n/)) {
     if (!line.startsWith('\x1e')) continue
     const rest = line.slice(1)
@@ -502,7 +511,12 @@ function parseTranscriptUnits(raw) {
     const file = rest.slice(0, sep)
     let text = rest.slice(sep + 1)
     if (text.endsWith('\x1f')) text = text.slice(0, -1)
-    if (file) out.push({ file, text: text.trim() })
+    if (!file) continue
+    text = text.trim()
+    if (!text) continue   // 完成哨兵：不计文本
+    const prev = byFile.get(file)
+    if (prev) prev.text = prev.text ? prev.text + ' ' + text : text
+    else { const u = { file, text }; byFile.set(file, u); out.push(u) }
   }
   return out
 }
