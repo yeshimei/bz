@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, hasNotice } from '../mock-obsidian-entry';
 
 const NEWS_JSON = 'CONFIG/STORAGE/news.json';
 const STATS_JSON = 'CONFIG/STORAGE/news-stats.json';
@@ -93,7 +93,7 @@ describe('聚合讯 saveArticles 双写者合并（P0-5）', () => {
     expect(merged[4]).toMatchObject({ url: 'mem-only' }); // 内存新增防御性追加
   });
 
-  it('崩溃半截 JSON：load 容错不清盘（console.warn + 按空列表），save 不覆写原样保留', async () => {
+  it('崩溃半截 JSON：load 容错不清盘（error toast + 错误态，不渲染「读完」态），save 不覆写原样保留', async () => {
     const halfJson = '{"articles": [';
     const vault = setup([]);
     vault.files.set(NEWS_JSON, halfJson);
@@ -101,9 +101,15 @@ describe('聚合讯 saveArticles 双写者合并（P0-5）', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try {
       await reader.loadArticles();
-      expect(warnSpy).toHaveBeenCalled();
-      reader.render(); // 空列表 → 完成态渲染不炸
-      expect(document.querySelector('.news-card-area')).not.toBeNull();
+      expect(warnSpy).toHaveBeenCalled(); // 技术详情进 console
+      expect(hasNotice(/新闻数据读取失败/)).toBe(true); // 人话 error toast
+      reader.render();
+      // 错误态而非「读完」态：不出现完成卡片
+      expect(document.querySelector('.news-card-area')).toBeNull();
+      const doneEl = document.querySelector('.news-done');
+      expect(doneEl).not.toBeNull();
+      expect(doneEl!.textContent).toContain('新闻数据读取失败');
+      expect(doneEl!.textContent).not.toContain('今日文章已读完');
 
       await reader.saveArticles();
       expect(vault.files.get(NEWS_JSON)).toBe(halfJson); // 解析失败不覆写
