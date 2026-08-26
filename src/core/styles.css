@@ -163,6 +163,60 @@ button.news-close-btn {
   display: flex !important;
 }
 
+/* ==================== 键盘焦点可见（p3 冻结面授权）：全站 focus-visible 焦点环 ==================== */
+/* 仅 :focus-visible 触发（键盘 Tab 导航）；文本录入元素（text/number/date/textarea/select）点击聚焦
+   同样出环（浏览器对文本录入元素恒匹配 :focus-visible 的基线行为）——与既有 :focus border 高亮叠加
+   属预期行为，接受；非输入类元素鼠标点击不触发，与既有 hover/active 高亮互不冲突。
+   伞规则按铁律 8 bz- 命名空间收敛（含 bz- 容器内无 bz- 类名的交互元素）；
+   遗留非 bz 类名根（日记/备忘录/复习/做题家/密码本/番茄钟/聚合讯/剪藏/影视/归物本/小橘对话等）下方显式补齐。 */
+[class*="bz-"]:is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+[class*="bz-"] :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+/* 入口页磁贴（launcher-tile 非 bz- 类名，p3 覆盖项） */
+#launcher-grid .launcher-tile:focus-visible,
+/* 入口页（骨架内弹窗/编辑控件 + 四个 picker：菜单/命令/图标/改名） */
+#launcher-modal :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+#launcher-edit-controls :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+#launcher-cmd-popup :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+#launcher-icon-popup :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+#launcher-rename-popup :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+#launcher-menu-popup :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+/* 收藏本（主面板 + 添加/编辑弹窗：标题/链接/描述输入与类型按钮） */
+#fav-popup :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+#fav-add-popup :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+/* 日记本 */
+#add-diary-popup :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+#diary-filter-mask :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+#diary-tag-selector-mask :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+#diary-date-filter-mask :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+#unified-datetime-picker-mask :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+/* 备忘录 */
+#todo-popup :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+#add-todo-popup :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+/* 复习（评级弹窗 body 级挂载，独立根）与做题家 */
+#review-popup :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+.difficulty-dialog :is(button, [tabindex]):focus-visible,
+#quiz-popup :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+/* 密码本 / 番茄钟（含状态栏 chip） */
+#pw-popup :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+#pw-add-popup :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+#pomodoro-popup :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+.pomodoro-statusbar:focus-visible,
+/* 聚合讯 / 剪藏 */
+.news-popup :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+#article-view-popup :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+/* AI 剪藏批准确认框（memo clip-archive：遮罩无 id，按钮带 id 直接覆盖） */
+#clip-cancel:focus-visible,
+#clip-ok:focus-visible,
+/* 影视主面板 / 归物本主面板 / 小橘对话（主面板根为 legacy id；影视添加/编辑等子弹窗遮罩经 bz-movie-overlay--* 类覆盖，见影视域） */
+#__yin_ying__ :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+#__gui_wu_ben__ :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+#chat-panel :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
+/* 共享确认框（core/confirm） */
+#__shared_confirm_mask__ :is(button, input, select, textarea, a[href], [tabindex]):focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 2px;
+}
+
 /* ==================== core 层样式收敛（ticket 60 延伸：notice/settings-modal/confirm/dom） ==================== */
 /* 通知 toast（原 core/notice.ts NOTICE_CSS，ADR-0010） */
 #bz-notice-container {
