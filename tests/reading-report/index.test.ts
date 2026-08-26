@@ -170,4 +170,38 @@ describe('完整链路', () => {
     expect(findModal()).not.toBeNull();
     expect(findModal()!.textContent).toContain('已读');
   });
+
+  it('快速重开（30s 内）：第二轮 progress toast 不静默（dedupeKey 唯一化）', async () => {
+    const vault = seedVault();
+    setApp(makeApp(vault));
+    // 第一轮：打开后立刻 ESC 关闭（首轮中止并在离场动画后移除 toast）
+    const p1 = showReadingReport(makeApp(vault) as any);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    await p1;
+    expect(findModal()).toBeNull();
+    // 等首轮 toast 离场动画结束（hide 200ms，留足余量）→ 容器清空
+    await new Promise((r) => setTimeout(r, 400));
+    expect(document.querySelectorAll('#bz-notice-container .bz-notice').length).toBe(0);
+
+    // 第二轮：仍在 notice 30s 去重抑制窗口内，但必须有全新 progress toast（不被 noopHandle 吞掉）
+    const p2 = showReadingReport(makeApp(vault) as any);
+    const toast = document.querySelector('#bz-notice-container .bz-notice') as HTMLElement;
+    expect(toast).not.toBeNull();
+    expect(toast.textContent).toContain('正在读取书库');
+    await p2;
+  });
+
+  it('连点两次：第二轮完成反馈不静默（独立 toast 转 success）', async () => {
+    const vault = seedVault();
+    setApp(makeApp(vault));
+    // 第一轮完整跑完（success toast 存活中，3s 自动消失）
+    await showReadingReport(makeApp(vault) as any);
+    // 立刻第二轮（第一轮 toast 仍在存活窗口内）
+    await showReadingReport(makeApp(vault) as any);
+
+    const toasts = Array.from(document.querySelectorAll('#bz-notice-container .bz-notice'));
+    // 两轮各自独立 toast（未被 30s 抑制合并吞掉），且有完成反馈
+    expect(toasts.length).toBeGreaterThanOrEqual(2);
+    expect(toasts.some((t) => (t.textContent || '').includes('阅读统计完成'))).toBe(true);
+  });
 });
