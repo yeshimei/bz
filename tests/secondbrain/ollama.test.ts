@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * 闪念 Ollama HTTP 测试（P1-10）：统一超时——挂起请求在 30s 后中止并拒绝「Ollama 无响应」；
+ * 闪念 Ollama HTTP 测试（P1-10 / ticket 46）：统一超时——挂起请求在 10s 后中止并拒绝「Ollama 无响应」；
  * 正常响应不受影响。
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';

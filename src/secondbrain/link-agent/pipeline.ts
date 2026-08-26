@@ -413,15 +413,16 @@ export class LinkAgent {
    * 结束时同键切换为完成通知（新建 0 条静默——隐藏进行中帧），失败合并提示一次。
    * 经串行锁执行：与存量补链批次排队互斥。
    * @param assumeReachable 已在上游探测过可达（存量补链），批内不再逐篇探测（同队列消费语义）
+   * @param silent 启动路径静默（ticket 6）：批次进度/完成 toast 一律不弹，仅汇总照常返回
    */
-  async processBatch(paths: string[], opts?: { assumeReachable?: boolean }): Promise<BatchSummary> {
+  async processBatch(paths: string[], opts?: { assumeReachable?: boolean; silent?: boolean }): Promise<BatchSummary> {
     return this.runSerial(() => this.runBatch(paths, opts));
   }
 
-  private async runBatch(paths: string[], opts?: { assumeReachable?: boolean }): Promise<BatchSummary> {
+  private async runBatch(paths: string[], opts?: { assumeReachable?: boolean; silent?: boolean }): Promise<BatchSummary> {
     const summary: BatchSummary = { total: paths.length, processed: 0, created: 0, queued: 0, failed: 0 };
     if (!paths.length) return summary;
-    const notifyOn = this.notifyEnabled;
+    const notifyOn = this.notifyEnabled && !opts?.silent;
     let handle: NoticeHandle | null = null;
     if (notifyOn) {
       handle = notify(`自动双链：处理中 0/${paths.length} 篇`, { type: 'progress', dedupeKey: LINK_BATCH_NOTICE_KEY });
@@ -461,8 +462,9 @@ export class LinkAgent {
   /**
    * 队列消费（域初始化调用）：队列非空且 embedding 可达 → 自动消费无需询问；
    * 成功移除条目、失败保留；全部完成后通知「待处理关联已处理完毕：N 篇 / 新建 M 条」。
+   * @param silent 启动静默（ticket 6）：批次进度/完成 toast 不弹（启动路径由 index 传 silent:true）
    */
-  async consumeQueue(): Promise<BatchSummary | null> {
+  async consumeQueue(opts?: { silent?: boolean }): Promise<BatchSummary | null> {
     // 对应文件已删除的条目顺带清理
     try {
       await pruneQueueByExists((p) => !!this.app.vault.getAbstractFileByPath(p));
@@ -482,7 +484,7 @@ export class LinkAgent {
     if (!reachable) return null; // 不可达：静默保留队列（移动端自然回退）
 
     const summary: BatchSummary = { total: items.length, processed: 0, created: 0, queued: 0, failed: 0 };
-    const notifyOn = this.notifyEnabled;
+    const notifyOn = this.notifyEnabled && !opts?.silent;
     let handle: NoticeHandle | null = null;
     if (notifyOn) {
       handle = notify(`待处理关联：处理中 0/${items.length} 篇`, { type: 'progress', dedupeKey: LINK_BATCH_NOTICE_KEY });
@@ -527,15 +529,15 @@ export class LinkAgent {
    * - 目标清单 = scope 内 md、frontmatter 无 related、排除 encrypt 锁定与队列内待重试条目；
    *   related 即进度检查点——中断/重启后续跑只处理仍未连接的，天然增量；
    * - 批次走 processBatch（入口已探测，批内 assumeReachable 不再逐篇探测），与监听批次串行互斥；
-   * - 启动调用忽略结果（静默）；手动命令 bz-secondbrain-link-all 按 status 通知。
+   * - 启动调用忽略结果且批次全程静默（ticket 6，index 传 silent:true）；手动命令 bz-secondbrain-link-all 按 status 通知。
    */
-  async backfillMissingLinks(): Promise<BackfillResult> {
+  async backfillMissingLinks(opts?: { silent?: boolean }): Promise<BackfillResult> {
     if ((tryGetSettings() as any).linkAgentEnabled === false) return { status: 'disabled' };
     const reachable = await this.probeFn();
     if (!reachable) return { status: 'unreachable' };
     const targets = await this.computeBackfillTargets();
     if (!targets.length) return { status: 'no-targets' };
-    const summary = await this.processBatch(targets, { assumeReachable: true });
+    const summary = await this.processBatch(targets, { assumeReachable: true, ...opts });
     return { status: 'done', summary };
   }
 

@@ -81,9 +81,10 @@ export class ReferencePanel {
       /* 订阅失败不阻断面板 */
     }
 
-    // ----- 光标轮询 -----
+    // ----- 光标轮询（p2-sb 收敛：窄窗已关闭/收起边条时不再空转，仅面板可见时轮询）-----
     const CONFIG = buildConfig();
     this.pollTimer = setInterval(() => {
+      if (!this.fw.alive || this.fw.isHidden) return; // 不可见（已关闭 / ◀️ 收起为边条）不轮询
       const ed = app.workspace.activeEditor?.editor;
       if (!ed) return;
       const c = ed.getCursor();
@@ -129,14 +130,40 @@ export class ReferencePanel {
     const query = getCurrentContext(ed);
     if (query.length < 2 || query === this.lastQuery) return;
     this.lastQuery = query;
+    // [46] 查询期 loading 占位：清掉旧结果给出进行中状态（避免停留上一份结果造成误导）
+    this.showListState('检索中…');
+    let degraded = false;
     try {
       const CONFIG = buildConfig();
-      const results = await this.store.search(query, CONFIG.TOP_K);
+      const results = await this.store.search(query, CONFIG.TOP_K, () => {
+        degraded = true; // store 内部向量检索失败已降级文本：向用户明示
+      });
       if (this.isClosed) return; // 关闭瞬间检索才返回：不再向已 detach 的 DOM 渲染（ticket 107）
       this.renderResults(results);
+      if (degraded) this.appendListHint('⚠ 向量检索暂不可用，已降级为文本匹配');
     } catch (err) {
       console.warn('[secondbrain] 参考面板检索失败', err);
+      if (this.isClosed) return;
+      this.showListState('检索失败：请检查 Ollama 服务后重试');
     }
+  }
+
+  /** [46] 列表整体占位/错误提示（loading / 失败态，复用空态样式） */
+  private showListState(text: string): void {
+    this.cancelPendingCardStates(); // 旧卡未决态不跨重建存活
+    this.resultsDiv.innerHTML = '';
+    const div = document.createElement('div');
+    div.className = 'bz-sb-ref-empty';
+    div.textContent = text;
+    this.resultsDiv.appendChild(div);
+  }
+
+  /** [46] 降级脚注：不打断结果列表，在列表末追加一行说明 */
+  private appendListHint(text: string): void {
+    const div = document.createElement('div');
+    div.className = 'bz-sb-ref-empty';
+    div.textContent = text;
+    this.resultsDiv.appendChild(div);
   }
 
   renderResults(results: SearchHit[]): void {
