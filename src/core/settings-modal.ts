@@ -5,12 +5,14 @@
  * build 回调内用 obsidian Setting 挂设置项；未挂任何 .setting-item 时显示空态。
  * 重设计（2026-08 用户拍板方案 A 分组卡片）：build 内可用 createSettingsGroup 建
  * 「分组卡片」（原生图标+组名+项数徽标头 + 设置项体）；弹窗打开后徽标自动回填。
- * 焦点管理（UX 整改 37）：打开聚焦弹窗内首个可交互设置项（跳过隐藏项），
+ * 焦点管理（UX 整改 37）：打开聚焦弹窗内首个可交互设置项（跳过隐藏项；
+ * 移动端再跳过 input/textarea，避免弹软键盘遮挡并聚焦到按钮/开关/下拉），
  * 关闭（遮罩/Esc/被顶替）还原焦点到触发元素；popup 挂 role="dialog" aria-modal="true"。
  */
 import { Setting, setIcon } from 'obsidian';
 import { createOverlay } from './dom';
 import { escManager } from './esc-manager';
+import { isMobileEnv } from './mobile';
 
 /** 弹窗内可交互元素选择器（读屏/焦点管理的通用口径） */
 const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
@@ -162,10 +164,16 @@ export function openSettingsModal(opts: SettingsModalOptions): void {
   // UX 整改 37：读屏语义——弹窗容器为 dialog 模态（挂载后设置）
   popup.setAttribute('role', 'dialog');
   popup.setAttribute('aria-modal', 'true');
-  // 聚焦首个可交互设置项（跳过隐藏项：bz-setting-hidden / 内联 display none）
-  const firstFocusable = Array.from(popup.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).find(
-    (el) => !isItemHidden(el)
-  );
+  // 聚焦首个可交互设置项：跳过隐藏项（bz-setting-hidden / 内联 display none）；
+  // 移动端再跳过 input/textarea（避免弹软键盘遮挡，仅聚焦按钮/开关/下拉）
+  const firstFocusable = Array.from(popup.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).find((el) => {
+    if (isItemHidden(el)) return false;
+    if (isMobileEnv()) {
+      const tag = el.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return false;
+    }
+    return true;
+  });
   if (firstFocusable) firstFocusable.focus();
 
   const handle = escManager.register('bz-settings-modal', {

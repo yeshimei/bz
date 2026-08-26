@@ -325,6 +325,8 @@ export default class BzPlugin extends Plugin {
       /* 命令可能已被移除 */
     }
     diaryState.events.fileListenerAttached = false;
+    // 卸载兜底（UX 整改 l2）：异步尾任务禁用前若 notify 重建过通知容器，此处再次清理
+    cleanupNotices();
   }
 
   async saveSettings() {
