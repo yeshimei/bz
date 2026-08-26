@@ -417,19 +417,28 @@ test('chunkTranscript：超长单句硬切 / 空输入', () => {
   assert.deepEqual(core.chunkTranscript(''), [])
 })
 
-test('buildLiteratureNote：frontmatter 四键 + 引号转义 + 正文在前 embed 连排', () => {
+test('buildLiteratureNote：frontmatter 七键 + 引号转义 + 逐段「正文+双链」块连排', () => {
   const md = core.buildLiteratureNote({
-    title: '讲"述"', tags: ['科普', 'AI 前沿'], summary: '一句话', source: 'BV1GJ411x7h7',
-    body: '润色后的正文。', embeds: ['![[CONFIG/APPENDIX/a.mp4]]', '![[CONFIG/APPENDIX/b.mp4]]'],
+    title: '讲"述"', tags: ['科普', 'AI 前沿'], summary: '一句话',
+    url: 'https://www.bilibili.com/video/BV1GJ411x7h7', date: '2026-08-25 10:00:00',
+    author: 'UP主', videoTitle: '视频原标题',
+    blocks: [
+      '![[CONFIG/APPENDIX/a.mp4]]',
+      { text: '段一润色。', wiki: '![[CONFIG/APPENDIX/b.mp4]]' },
+    ],
   })
   assert.ok(md.startsWith('---\n'))
   assert.ok(md.includes('\n---\n'))
   assert.ok(md.includes('title: "讲\\"述\\""'))
   assert.ok(md.includes('  - "科普"\n  - "AI 前沿"'))
   assert.ok(md.includes('summary: "一句话"'))
-  assert.ok(md.includes('source: "BV1GJ411x7h7"'))
-  assert.ok(md.includes('![[CONFIG/APPENDIX/a.mp4]]\n\n![[CONFIG/APPENDIX/b.mp4]]'))
-  assert.ok(md.indexOf('润色后的正文。') < md.indexOf('![[CONFIG/APPENDIX/a.mp4]]'))
+  assert.ok(md.includes('url: "https://www.bilibili.com/video/BV1GJ411x7h7"'))
+  assert.ok(md.includes('date: "2026-08-25 10:00:00"'))
+  assert.ok(md.includes('author: "UP主"'))
+  assert.ok(md.includes('videoTitle: "视频原标题"'))
+  // 字符串块兼容 = 纯双链行；对象块 = 该段正文在上、双链在下
+  assert.ok(md.includes('![[CONFIG/APPENDIX/a.mp4]]'))
+  assert.ok(md.includes('段一润色。\n\n![[CONFIG/APPENDIX/b.mp4]]'))
 })
 
 test('loadBzAiConfig：opencode-go 默认 + 未写 aiProvider 走默认', () => {
@@ -526,20 +535,23 @@ test('aiJson：JSON 模式解析 + 残留文本容错提取', async () => {
   assert.equal(fuzzy.title, 'T')
 })
 
-test('buildLiteratureNote：视频块对象（wiki + 对应转文字）逐段依次排布，字符串兼容', () => {
+test('buildLiteratureNote：多块「该段正文+该段双链」依次排布（无独立原文段）', () => {
   const md = core.buildLiteratureNote({
-    title: 'T', tags: ['a'], summary: 's', source: 'BV',
-    body: '润色正文。',
-    embeds: [
-      { wiki: '![[CONFIG/APPENDIX/a.mp4]]', transcript: '第一段转录' },
-      { wiki: '![[CONFIG/APPENDIX/b.mp4]]', transcript: '第二段转录' },
+    title: 'T', tags: ['a'], summary: 's',
+    url: 'u', date: 'd', author: 'a', videoTitle: 'v',
+    blocks: [
+      { text: '第一段润色', wiki: '![[CONFIG/APPENDIX/a.mp4]]' },
+      { text: '第二段润色', wiki: '![[CONFIG/APPENDIX/b.mp4]]' },
     ],
   })
-  assert.ok(md.includes('![[CONFIG/APPENDIX/a.mp4]]\n\n第一段转录'))
-  assert.ok(md.includes('![[CONFIG/APPENDIX/b.mp4]]\n\n第二段转录'))
-  assert.ok(md.indexOf('润色正文。') < md.indexOf('![[CONFIG/APPENDIX/a.mp4]]'))
-  assert.ok(md.indexOf('第一段转录') < md.indexOf('![[CONFIG/APPENDIX/b.mp4]]'))
-  const md2 = core.buildLiteratureNote({ title: 'T', body: 'b', embeds: ['![[x.mp4]]'] })
+  const iA = md.indexOf('![[CONFIG/APPENDIX/a.mp4]]')
+  const iB = md.indexOf('![[CONFIG/APPENDIX/b.mp4]]')
+  assert.ok(md.includes('第一段润色\n\n![[CONFIG/APPENDIX/a.mp4]]'))
+  assert.ok(md.includes('第二段润色\n\n![[CONFIG/APPENDIX/b.mp4]]'))
+  assert.ok(iA > -1 && iB > iA)                       // 段一双链在段二之前
+  assert.ok(md.indexOf('第二段润色') > iA && md.indexOf('第二段润色') < iB)   // 段二正文夹在段一双链与段二双链之间
+  // 空正文块 → 只落双链
+  const md2 = core.buildLiteratureNote({ title: 'T', url: '', blocks: [{ text: '', wiki: '![[x.mp4]]' }] })
   assert.ok(md2.includes('![[x.mp4]]'))
 })
 

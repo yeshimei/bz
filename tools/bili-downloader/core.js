@@ -484,7 +484,8 @@ for _s in (sys.stdout, sys.stderr):
         pass
 model = WhisperModel(sys.argv[1], device='cpu', compute_type='int8')
 for f in sys.argv[2:]:
-    segments, _ = model.transcribe(f, language='zh', vad_filter=True)
+    # 本机 faster-whisper 的 vad_filter=True(Silero VAD) 会死锁卡死，禁用之（实测 3s 音频 3.6s 完成、无 VAD 亦正常）
+    segments, _ = model.transcribe(f, language='zh', vad_filter=False)
     parts = [seg.text.strip() for seg in segments if seg.text.strip()]
     sys.stdout.write('\\x1e' + f + '\\x1f' + ' '.join(parts) + '\\x1f\\n')
     sys.stdout.flush()
@@ -580,27 +581,28 @@ function quoteYaml(s) {
   return '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'
 }
 
-// 组装文献笔记全文：frontmatter 四键 + 正文 + 视频块（embed 可带对应转文字，逐段「视频链接、正文」排布；
-// 合并交付 = 单块「视频链接 + 整段转文字」）
-function buildLiteratureNote({ title, tags = [], summary, source, body, embeds = [] }) {
+// 组装文献笔记全文（1.2.7）：frontmatter 七键 + 逐段「润色正文 + 视频双链」块依次排布
+// （blocks: [{text, wiki}] 每组 = 该段润色正文在上、双链在下；字符串项兼容为纯双链行）
+function buildLiteratureNote({ title, tags = [], summary, url, date, author, videoTitle, blocks = [] }) {
   const tagLines = (Array.isArray(tags) ? tags : []).map(t => `  - ${quoteYaml(t)}`).join('\n')
   const head = ['---',
     `title: ${quoteYaml(title)}`,
     'tags:',
     tagLines,
     `summary: ${quoteYaml(summary || '')}`,
-    `source: ${quoteYaml(source || '')}`,
+    `url: ${quoteYaml(url || '')}`,
+    `date: ${quoteYaml(date || '')}`,
+    `author: ${quoteYaml(author || '')}`,
+    `videoTitle: ${quoteYaml(videoTitle || '')}`,
     '---',
   ].join('\n')
-  const main = String(body || '').trim()
-  const blocks = (Array.isArray(embeds) ? embeds : []).filter(Boolean).map(item => {
+  const groups = (Array.isArray(blocks) ? blocks : []).filter(Boolean).map(item => {
     if (typeof item === 'string') return item
     const w = item && item.wiki ? String(item.wiki) : ''
-    const t = item && item.transcript ? String(item.transcript) : ''
-    return t ? `${w}\n\n${t}` : w
+    const t = item && item.text ? String(item.text) : ''
+    return [t, w].filter(Boolean).join('\n\n')
   })
-  const emb = blocks.join('\n\n')
-  return [head, main, emb].filter(Boolean).join('\n\n')
+  return [head, ...groups].filter(Boolean).join('\n\n')
 }
 
 // ---- AI 直读 bz 配置（F2）：provider 映射与 bz core/ai.ts 同套，工具侧持有副本 ----
@@ -677,14 +679,16 @@ async function aiJson(args) {
   throw new Error('AI 返回的不是 JSON：' + content.slice(0, 120))
 }
 
-// 元数据提示词（标题/标签/一句话简介，基于转写文稿开头片段控制 token 预算）
+// 元数据提示词（1.2.7：标题/tags 规则对齐 bz 自动摘要；简介维持一句话 ≤60 字；全部简体中文）
 function literatureMetaPrompt(videoTitle, transcriptSample) {
-  return `你是文献整理助手。基于下方 B站视频《${videoTitle || '未命名'}》的转写文稿片段，生成文献笔记元数据。只输出 JSON，不要任何解释：{"title": "不超过30字的精炼标题", "tags": ["3-5个中文标签，不含B站"], "summary": "一句话简介，不超过60字"}\n\n【转写文稿片段】\n${transcriptSample}`
+  return `你是文献整理助手。基于下方 B站视频《${videoTitle || '未命名'}》的转写文稿片段，生成文献笔记元数据。只输出 JSON，不要任何解释：
+{"title": "15-30字的中文完整陈述句或疑问句，禁止冒号、破折号、句中句号问号，需要连接时用逗号", "tags": ["3-6个中文标签，每个不超过5个字，涵盖主题领域、关键概念、应用场景"], "summary": "一句话简介，不超过60字"}
+所有字段一律使用简体中文。\n\n【转写文稿片段】\n${transcriptSample}`
 }
 
-// 润色提示词（轻度：口语转书面、去口水词，保原顺序原内容）
+// 润色提示词（轻度：口语转书面、去口水词，保原顺序原内容；简体中文兜底——繁体转写一并转为简体）
 function literaturePolishPrompt(chunk) {
-  return `你是文字编辑。把下面的视频转写文稿轻度润色为书面语：口语转书面、删除口水词与重复内容，保持原顺序、原事实（数字与专名不变）。直接输出润色后的正文，不要解释、不要加标题、不要列表。\n\n【转写文稿】\n${chunk}`
+  return `你是文字编辑。把下面的视频转写文稿轻度润色为书面语：口语转书面、删除口水词与重复内容，保持原顺序、原事实（数字与专名不变）。输出必须是简体中文（繁体转写一律转为简体）。直接输出润色后的正文，不要解释、不要加标题、不要列表。\n\n【转写文稿】\n${chunk}`
 }
 
 module.exports = {

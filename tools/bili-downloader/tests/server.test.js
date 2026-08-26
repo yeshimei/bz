@@ -291,9 +291,12 @@ test('POST /api/note：交付后生成文献笔记（AI 打桩）→ 落盘文�
     assert.ok(md.includes('title: "测试文献"'))
     assert.ok(md.includes('  - "科普"\n  - "AI"'))
     assert.ok(md.includes('summary: "一句话简介"'))
-    assert.ok(md.includes('source: "BV1GJ411x7h7"'))
-    assert.ok(md.includes('润色后的正文。'))
-    assert.ok(md.includes('![[CONFIG/APPENDIX/测试_BV1GJ411x7h7.mp4]]'))
+    assert.ok(md.includes('url: "https://www.bilibili.com/video/BV1GJ411x7h7"'))
+    assert.ok(/date: "\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"/.test(md), 'date 字段')
+    assert.ok(md.includes('videoTitle: "测试"'))
+    // 布局：该段润色正文在上、双链在下；笔记不含原始转录
+    assert.ok(md.includes('润色后的正文。\n\n![[CONFIG/APPENDIX/测试_BV1GJ411x7h7.mp4]]'))
+    assert.ok(!md.includes('第一句。'))
     assert.ok(j.note.url.startsWith('obsidian://open?vault='))
     assert.ok(j.note.url.includes(encodeURIComponent('文献盒/测试文献.md')))
     // 历史最新条目追加 note 字段
@@ -310,7 +313,7 @@ test('POST /api/note：交付后生成文献笔记（AI 打桩）→ 落盘文�
   }
 })
 
-test('POST /api/note：分开交付多段 → 视频块「链接+对应转文字」依次排布', async () => {
+test('POST /api/note：分开交付多段 → 逐段「润色正文+视频双链」依次排布（无原文）', async () => {
   const vault = path.join(tmp, 'vault-note-multi')
   const bzDir = path.join(vault, '.obsidian', 'plugins', 'bz')
   fs.mkdirSync(bzDir, { recursive: true })
@@ -318,7 +321,8 @@ test('POST /api/note：分开交付多段 → 视频块「链接+对应转文字
   await (await req('POST', '/api/config', { vaultPath: vault, literatureFolder: '文献盒' })).json()
   const origJson = core.aiJson, origChat = core.aiChat
   core.aiJson = async () => ({ title: '多段笔记', tags: ['t'], summary: 's' })
-  core.aiChat = async () => '润色正文。'
+  let chatCalls = 0
+  core.aiChat = async () => { chatCalls++; return `润色正文${chatCalls}。` }
   try {
     T.phase = 'done'
     T.transcript = '段一文本。 段二文本。'
@@ -331,10 +335,15 @@ test('POST /api/note：分开交付多段 → 视频块「链接+对应转文字
     T.info = { title: 'X', duration: 100 }
     const j = await (await req('POST', '/api/note', {})).json()
     assert.equal(j.ok, true, j.error)
+    // 直连 note 也按段落分别润色（两段各一次）
+    assert.equal(chatCalls, 2)
     const md = fs.readFileSync(j.note.path, 'utf8')
-    assert.ok(md.includes('![[CONFIG/APPENDIX/x_a.mp4]]\n\n段一文本。'))
-    assert.ok(md.includes('![[CONFIG/APPENDIX/x_b.mp4]]\n\n段二文本。'))
-    assert.ok(md.indexOf('段一文本。') < md.indexOf('![[CONFIG/APPENDIX/x_b.mp4]]'))
+    // 每组 = 该段润色正文在上 + 该段双链在下，组间依次排布
+    assert.ok(md.includes('润色正文1。\n\n![[CONFIG/APPENDIX/x_a.mp4]]'))
+    assert.ok(md.includes('润色正文2。\n\n![[CONFIG/APPENDIX/x_b.mp4]]'))
+    assert.ok(md.indexOf('![[CONFIG/APPENDIX/x_a.mp4]]') < md.indexOf('润色正文2。'))
+    // 笔记中绝不出现原始转录
+    assert.ok(!md.includes('段一文本。') && !md.includes('段二文本。'))
   } finally {
     core.aiJson = origJson; core.aiChat = origChat
     resetTask()
@@ -375,6 +384,7 @@ test('POST /api/note-prepare + /api/note：AI 只跑一次（润色独立成步�
     const p = await (await req('POST', '/api/note-prepare', {})).json()
     assert.equal(p.ok, true, p.error)
     assert.equal(p.meta.title, '预润色笔记')
+    assert.equal(p.body, '润色好的正文。')   // 1.2.7：返回润色全文，前端回填转写框
     const callsAfterPrepare = aiCalls
     assert.ok(callsAfterPrepare > 0)
     T.phase = 'done'   // 真实链路：prepare 与 note 之间由「完成」交付驱动 phase=done
@@ -386,6 +396,41 @@ test('POST /api/note-prepare + /api/note：AI 只跑一次（润色独立成步�
     assert.ok(md.includes('title: "预润色笔记"'))
   } finally {
     core.aiJson = origJson; core.aiChat = origChat
+    resetTask()
+  }
+})
+
+test('POST /api/transcribe：签名一致早退复用，不符（整片↔分段）自动重转', { skip: !hasFfmpeg }, async () => {
+  const src = makeSrc()
+  await (await req('POST', '/api/config', { vaultPath: '', literatureFolder: '文献盒' })).json()
+  const origPy = core.runPython
+  let pyCalls = 0
+  core.runPython = async ({ args, onChunk }) => {
+    pyCalls++
+    const line = f => `\x1e${f}\x1f稿-${pyCalls}-${f.length}\x1f\n`
+    onChunk(args.slice(1).map(line).join(''))
+  }
+  try {
+    T.originalPath = src; T.curPath = src; T.curDur = 3
+    T.info = { title: '签名测试', duration: 3 }; T.url = 'https://www.bilibili.com/video/BV1GJ411x7h7'
+    // 第一次：整片转录
+    const r1 = await (await req('POST', '/api/transcribe', {})).json()
+    assert.equal(r1.ok, true, r1.error)
+    assert.equal(pyCalls, 1)
+    // 同签名第二次 → 早退复用，不再跑 python
+    const r2 = await (await req('POST', '/api/transcribe', {})).json()
+    assert.equal(r2.transcript, r1.transcript)
+    assert.equal(pyCalls, 1)
+    // 切到分段（签名不同）→ 重转并写入分段映射
+    const r3 = await (await req('POST', '/api/transcribe', { segments: [{ id: 'a', start: 0, end: 2 }] })).json()
+    assert.equal(r3.ok, true, r3.error)
+    assert.equal(pyCalls, 2)
+    assert.ok(T.segmentTranscripts.a && T.segmentTranscripts.a.startsWith('稿-2-'), JSON.stringify(T.segmentTranscripts))
+    // 分段同签名第三次 → 再次早退
+    await (await req('POST', '/api/transcribe', { segments: [{ id: 'a', start: 0, end: 2 }] })).json()
+    assert.equal(pyCalls, 2)
+  } finally {
+    core.runPython = origPy
     resetTask()
   }
 })

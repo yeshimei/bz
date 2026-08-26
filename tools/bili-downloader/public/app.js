@@ -56,6 +56,7 @@ function toast(msg, isErr = false) {
 // ---- 任务状态（单任务 + 多段落 + 分P）----
 const S = {
   info: null, quality: 0, crf: 23, dur: 0, transcript: '', busy: false,
+  transcriptSig: '',        // 已有转录对应的段落签名（flowSig）：不符则快捷命令重转，防陈旧稿复用
   delivered: false,         // 本任务是否已交付（文献笔记快捷命令用于避免重复交付）
   draft: { start: 0, end: 0 },  // 无激活段时的时间轴圈选草稿（下载后段落为空，先圈选再加段）
   mode: 'split',            // split（分开交付）| merge（合并成一个视频）
@@ -100,6 +101,8 @@ es.onmessage = e => {
     if (txt) txt.textContent = `${d.percent.toFixed(0)}% · ${S.op === 'compress' ? '编码中…' : '裁切中…'}`
   } else if (d.type === 'transcript-chunk') {
     $('ts-text').value += d.text
+  } else if (d.type === 'note-progress') {
+    flowStatus(`步骤 4/5：${d.text}`)   // AI 润色逐块进度（1.2.7）
   } else if (d.type === 'cookie-status') {
     onCookieStatus(d.valid)
   }
@@ -218,6 +221,7 @@ $('dl-btn').onclick = async () => {
     S.segments = []
     S.activeId = null
     S.mode = 'split'
+    S.transcript = ''; S.transcriptSig = ''   // 新下载：清上一任务残留转录（服务端已随 parse 重置）
     setMode('split')
     $('revert-btn').classList.add('hidden')
     initTrimUI(S.dur)
@@ -547,18 +551,21 @@ $('compress-btn').onclick = async () => {
   }
 }
 
-// ---- 转文字（完成自动复制）----
+// ---- 转文字（完成自动复制；若拖拽了把手自动添为段落）----
 $('transcribe-btn').onclick = async () => {
   const wrap = $('ts-wrap')
   wrap.classList.remove('hidden')
   const st = $('ts-status')
   st.className = 'hint'
-  if (S.transcript) { $('ts-text').value = S.transcript; st.textContent = '已有转录文本'; st.className = 'hint ok'; updateGenNote(); return }
+  const segs = resolveSegments()
+  const sig = flowSig(segs)
+  if (S.transcript && S.transcriptSig === sig) { $('ts-text').value = S.transcript; st.textContent = '已有转录文本'; st.className = 'hint ok'; updateGenNote(); return }
   st.textContent = '转录中（首次加载模型约1-2分钟，请稍候）…'
   $('ts-text').value = ''
   try {
-    const r = await api('/api/transcribe', 'POST', { segments: S.segments.map(s => ({ id: s.id, start: s.start, end: s.end })) })
+    const r = await api('/api/transcribe', 'POST', { segments: segs.map(s => ({ id: s.id, start: s.start, end: s.end })) })
     S.transcript = r.transcript
+    S.transcriptSig = sig
     $('ts-text').value = r.transcript
     st.textContent = '转录完成'
     st.className = 'hint ok'
@@ -602,8 +609,9 @@ $('done-btn').onclick = async () => {
   const btn = $('done-btn')
   btn.disabled = true
   try {
+    const segs = resolveSegments()
     const r = await api('/api/done', 'POST', {
-      segments: S.segments.map(s => ({ id: s.id, start: s.start, end: s.end })),
+      segments: segs.map(s => ({ id: s.id, start: s.start, end: s.end })),
       mode: S.mode,
       crf: S.crf,
     })
@@ -618,8 +626,11 @@ $('copy-btn').onclick = async () => {
   catch { toast('复制失败', true) }
 }
 
-// ---- 快速命令：生成文献笔记（严格顺序五步：① 应用剪辑 ② 应用压缩 ③ 转文字 ④ AI 润色 ⑤ 生成笔记）----
-// 前置：已下载（段落与 CRF 即用户已圈选参数）；各步串行 await，绝不并行；步骤状态显式展示
+// ---- 快速命令：生成文献笔记（严格顺序：① 应用剪切 ② 应用压缩 ③ 转文字 ④ AI 润色 ⑤ 生成笔记）----
+// 前置：已下载（段落与 CRF 即用户已圈选参数）；各步串行 await，绝不并行；步骤状态显式展示。
+// 段落语义（用户拍板）：
+//   - 三个入口（转文字 / 完成 / 生成文献笔记）共用本文 resolveSegments()：若未添加段落但拖拽了把手（draft 非整片），自动把草稿范围添加为段落。
+//   - 若既无段落也未拖拽（整视频、未圈选）：生成文献笔记 **跳过 ①剪切 / ②压缩**，③ 转文字走整片，再 ④⑤。
 function updateGenNote() {
   $('gen-note').disabled = !(S.dur > 0)
 }
@@ -628,37 +639,80 @@ function flowStatus(text) {
   if (text) { el.textContent = text; el.classList.remove('hidden') }
   else el.classList.add('hidden')
 }
+// AI 润色完成后：把「转文字」框里的原文替换为润色稿（1.2.7；S.transcript 同步，后续步骤用简体稿）
+function applyPolished(rt) {
+  if (!rt || !rt.body) return
+  S.transcript = rt.body
+  const wrap = $('ts-wrap')
+  wrap.classList.remove('hidden')
+  $('ts-text').value = rt.body
+  const st = $('ts-status')
+  st.textContent = '已替换为 AI 润色稿（简体）'
+  st.className = 'hint ok'
+}
+// 草稿是否被拖拽（draft 非整片）：拖过把手/改过时间则 true
+function draftTrimmed() {
+  return S.draft.start > 0.05 || S.draft.end < S.dur - 0.05
+}
+// 转录覆盖范围签名（与 server transSig 同构）：整片='full'；分段=id+起止(0.1s)。防陈旧转录跨段落复用
+function flowSig(segs) {
+  if (!segs.length) return 'full'
+  if (segs.length === 1 && segs[0].start === 0 && segs[0].end === S.dur) return 'full'
+  const r = v => Math.round(v * 10) / 10
+  return segs.map(s => `${s.id}:${r(s.start)}-${r(s.end)}`).join('|')
+}
+// 统一生效段落：S.segments 非空则用其；否则若草稿被拖拽 → 自动把草稿范围添加为段落；否则返回空（=整片）
+function resolveSegments() {
+  if (S.segments.length) return S.segments.map(s => ({ id: s.id, start: s.start, end: s.end }))
+  if (draftTrimmed() && S.dur > 0) {
+    const id = nextSegId()
+    const seg = { id, start: S.draft.start, end: S.draft.end }
+    S.segments.push({ id, start: S.draft.start, end: S.draft.end, checked: true })
+    S.activeId = id
+    renderSegList()
+    syncFromActive()
+    return [{ id, start: seg.start, end: seg.end }]
+  }
+  return []
+}
 $('gen-note').onclick = async () => {
   const btn = $('gen-note')
   btn.disabled = true
   const nr = $('note-result')
   nr.classList.add('hidden')
   nr.textContent = ''
-  const segs = S.segments
+  const segs = resolveSegments()
+  const trimmed = segs.length > 0                       // 是否为「已圈选段落」（需剪切/压缩）
+  const scopeLabel = trimmed ? `共 ${segs.length} 段` : '整片（未圈选）'
   try {
-    // ① 应用剪辑（逐段串行）
-    flowStatus(segs.length ? `步骤 1/5：应用剪辑（共 ${segs.length} 段）…` : '步骤 1/5：应用剪辑（无段落，跳过）')
-    S.op = 'trim'
-    for (let i = 0; i < segs.length; i++) {
-      flowStatus(`步骤 1/5：应用剪辑（第 ${i + 1}/${segs.length} 段）…`)
-      await api('/api/trim', { segmentId: segs[i].id, start: segs[i].start, end: segs[i].end })
-    }
-    $('trim-text').textContent = ''
-    // ② 应用压缩（选档才压，逐段串行）
-    if (S.crf !== null) {
-      flowStatus(segs.length ? `步骤 2/5：应用压缩（CRF ${S.crf}，共 ${segs.length} 段）…` : '步骤 2/5：应用压缩（无段落，跳过）')
-      S.op = 'compress'
+    if (trimmed) {
+      // ① 应用剪切（逐段串行）
+      flowStatus(`步骤 1/5：应用剪切（${scopeLabel}）…`)
+      S.op = 'trim'
       for (let i = 0; i < segs.length; i++) {
-        flowStatus(`步骤 2/5：应用压缩（第 ${i + 1}/${segs.length} 段）…`)
-        await api('/api/compress', { segmentId: segs[i].id, start: segs[i].start, end: segs[i].end, crf: S.crf })
+        flowStatus(`步骤 1/5：应用剪切（${scopeLabel} · ${i + 1}/${segs.length}）…`)
+        await api('/api/trim', 'POST', { segmentId: segs[i].id, start: segs[i].start, end: segs[i].end })
       }
+      $('trim-text').textContent = ''
+      // ② 应用压缩（选档才压，逐段串行）
+      if (S.crf !== null) {
+        flowStatus(`步骤 2/5：应用压缩（CRF ${S.crf} · ${scopeLabel}）…`)
+        S.op = 'compress'
+        for (let i = 0; i < segs.length; i++) {
+          flowStatus(`步骤 2/5：应用压缩（CRF ${S.crf} · ${scopeLabel} · ${i + 1}/${segs.length}）…`)
+          await api('/api/compress', 'POST', { segmentId: segs[i].id, start: segs[i].start, end: segs[i].end, crf: S.crf })
+        }
+      } else {
+        flowStatus('步骤 2/5：应用压缩（未选档位，跳过）')
+      }
+      $('cp-text').textContent = ''
     } else {
-      flowStatus('步骤 2/5：应用压缩（未选档位，跳过）')
+      flowStatus('步骤 1/5：应用剪切（整片未圈选，跳过） → 步骤 2/5：应用压缩（跳过）')
     }
-    $('cp-text').textContent = ''
     if (!S.delivered) {
-      // ③ 转文字（未转录自动补跑；单次模型加载多文件转录）
-      if (!S.transcript) {
+      // ③ 转文字（签名不符自动重转；单次模型加载多文件转录）
+      const wantSig = flowSig(segs)
+      if (!S.transcript || S.transcriptSig !== wantSig) {
         flowStatus('步骤 3/5：转文字（模型单次加载，稍候）…')
         const tsWrap = $('ts-wrap')
         tsWrap.classList.remove('hidden')
@@ -668,15 +722,16 @@ $('gen-note').onclick = async () => {
         $('ts-text').value = ''
         const rt = await api('/api/transcribe', 'POST', { segments: segs.map(s => ({ id: s.id, start: s.start, end: s.end })) })
         S.transcript = rt.transcript
+        S.transcriptSig = wantSig
         $('ts-text').value = rt.transcript
         st.textContent = '转录完成'
         st.className = 'hint ok'
       } else {
-        flowStatus('步骤 3/5：转文字（已有转录，跳过）')
+        flowStatus('步骤 3/5：转文字（当前段落已有转录，跳过）')
       }
-      // ④ AI 润色（元数据 + 分块润色，独立步骤）
+      // ④ AI 润色（元数据 + 按段润色，独立步骤；完成后回填润色稿到转写框）
       flowStatus('步骤 4/5：AI 润色…')
-      await api('/api/note-prepare', 'POST', {})
+      applyPolished(await api('/api/note-prepare', 'POST', { segments: segs.map(s => ({ id: s.id, start: s.start, end: s.end })) }))
       // ⑤ 生成笔记（自动交付 + 写入文献盒）
       flowStatus('步骤 5/5：生成笔记（自动交付 + 写入文献盒）…')
       const r = await api('/api/done', 'POST', {
@@ -688,16 +743,16 @@ $('gen-note').onclick = async () => {
     } else {
       if (!S.transcript) throw new Error('缺少转录文本：请先转文字')
       flowStatus('步骤 4/5：AI 润色…')
-      await api('/api/note-prepare', 'POST', {})
+      applyPolished(await api('/api/note-prepare', 'POST', { segments: segs.map(s => ({ id: s.id, start: s.start, end: s.end })) }))
       flowStatus('步骤 5/5：生成笔记…')
     }
     const r2 = await api('/api/note', 'POST', {})
     const a = document.createElement('a')
     a.href = r2.note.url
-    a.target = '_blank'
-    a.textContent = `📄 ${r2.note.wiki}（点击在 Obsidian 中打开）`
+    a.textContent = `📄 ${r2.note.wiki}（未自动打开时点击跳转）`
     nr.appendChild(a)
     nr.classList.remove('hidden')
+    try { window.location.href = r2.note.url } catch {}   // 自动在 Obsidian 打开（浏览器首次可能弹外部协议确认）
     flowStatus('')
     toast('✅ 文献笔记已生成')
   } catch (e) {
@@ -731,6 +786,7 @@ $('revert-btn').onclick = async () => {
 function resetUI() {
   S.info = null
   S.transcript = ''
+  S.transcriptSig = ''
   S.dur = 0
   S.delivered = false
   S.draft = { start: 0, end: 0 }
