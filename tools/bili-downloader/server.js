@@ -10,6 +10,7 @@ const http = require('http')
 const fs = require('fs')
 const path = require('path')
 const os = require('os')
+const { spawn } = require('child_process')
 const core = require('./core')
 const cfg = require('./config')
 
@@ -99,6 +100,19 @@ function makeWiki(finalName, conf) {
     }
   }
   return path.join(outAbs, finalName)
+}
+
+// ---- 打开所在文件夹（ticket 117）：win32 explorer /select，spawn 免 shell 免引号坑 ----
+// revealApi.impl 挂对象上而非 let 变量，测试可整体替换打桩（server.test.js 用）
+const revealApi = {
+  impl(p) {
+    return new Promise(resolve => {
+      if (process.platform !== 'win32') return resolve({ ok: false, error: '仅支持 Windows 打开资源管理器' })
+      const ex = spawn('explorer', ['/select,' + p], { windowsHide: true, stdio: 'ignore' })
+      ex.on('error', () => resolve({ ok: false, error: '无法启动资源管理器' }))
+      ex.on('close', code => resolve(code === 0 ? { ok: true } : { ok: false, error: `资源管理器退出码 ${code}` }))
+    })
+  },
 }
 // 剪贴板内容：wikilink 可多条（分开交付=每段一行，合并=单条）；已转文字 = 末尾空行 + 转录全文一次
 function buildClipboard(wikis) {
@@ -199,7 +213,7 @@ async function doDone(body) {
   }
   if (!files.length) throw new Error(failures.join('\n') || '交付失败')
   T.phase = 'done'
-  T.lastFiles = files.map(f => ({ finalName: f.finalName, wiki: f.wiki, segId: f.segId }))   // 记录本次交付文件（文献笔记 embed + 分段转录引用）
+  T.lastFiles = files.map(f => ({ finalName: f.finalName, wiki: f.wiki, segId: f.segId, finalPath: f.finalPath }))   // 记录本次交付文件（文献笔记 embed + 分段转录引用 + 刷新恢复后「打开所在文件夹」）
   const clip = buildClipboard(files.map(f => f.finalName))   // 传裸文件名，由 buildClipboard 统一包一层 ![[ ]]，避免双重嵌套
   return { ok: true, mode: T.mode, files, failures, clipboard: clip.text, wiki: clip.wiki }
 }
@@ -216,8 +230,11 @@ async function runNoteAi(ai, videoTitle, sources) {
     ? sources.filter(s => s && s.text && String(s.text).trim())
     : [{ segId: null, text: T.transcript }]
   if (!srcs.length) srcs.push({ segId: null, text: T.transcript })
+  // 进度分母先行：全部切块总数（元数据一步 + 逐块润色）；phase: meta | polish（ticket 117 前端进度条）
+  const plan = srcs.map(s => ({ segId: s.segId, chunks: core.chunkTranscript(s.text) }))
+  const total = plan.reduce((a, p) => a + p.chunks.length, 0)
+  broadcast({ type: 'note-progress', phase: 'meta', done: 0, total, text: '生成标题/标签/简介…' })
   // 元数据：基于第一段开头片段
-  broadcast({ type: 'note-progress', text: '生成标题/标签/简介…' })
   const firstChunks = core.chunkTranscript(srcs[0].text)
   const metaRaw = await core.aiJson({
     ...ai,
@@ -231,15 +248,13 @@ async function runNoteAi(ai, videoTitle, sources) {
     summary: String(metaRaw.summary || '').trim(),
   }
   // 正文：逐段润色；进度按全部切块总数推进
-  const plan = srcs.map(s => ({ segId: s.segId, chunks: core.chunkTranscript(s.text) }))
-  const total = plan.reduce((a, p) => a + p.chunks.length, 0)
   let done = 0
   const bodies = []
   for (const p of plan) {
     const polished = []
     for (const c of p.chunks) {
       done++
-      broadcast({ type: 'note-progress', text: `AI 润色（第 ${done}/${total} 块）…` })
+      broadcast({ type: 'note-progress', phase: 'polish', done, total, text: `AI 润色（第 ${done}/${total} 块）…` })
       polished.push(await core.aiChat({
         ...ai,
         messages: [{ role: 'user', content: core.literaturePolishPrompt(c) }],
@@ -528,15 +543,41 @@ const handlers = {
         }
       }
       // 单次进程 = 单次模型加载，多文件一次转录（逐段各自重载模型会静默几十秒，多段观感像卡死）
-      let raw = ''
+      // ticket 117：逐段文本实时推送 + 文件级完成计数（前端有三态进度与计时）
+      broadcast({ type: 'transcribe-phase', phase: 'model', done: 0, total: sources.length })
+      let raw = '', lineBuf = '', doneCount = 0
+      const completedFiles = new Set()
       await core.runPython({
         py: conf.pythonPath,
         args: [conf.whisperModel, ...sources.map(s => s.file)],
         onChunk: s => {
           raw += s
-          broadcast({ type: 'transcript-chunk', text: String(s).replace(/[\x1e\x1f]/g, '') })   // 剥单元分隔符，避免污染文本区
+          lineBuf += String(s)
+          const lines = lineBuf.split('\n')
+          lineBuf = lines.pop() || ''   // 尾行可能不完整，留到下一块
+          let texts = []
+          for (const line of lines) {
+            if (!line.startsWith('\x1e')) continue
+            const rest = line.slice(1)
+            const sep = rest.indexOf('\x1f')
+            if (sep < 0) continue
+            const file = rest.slice(0, sep)
+            const t = rest.slice(sep + 1).replace(/\x1f$/, '')
+            if (t.trim()) texts.push(t)              // 文本单元：只推文本，文件名不掺进转录框
+            else if (file && !completedFiles.has(file)) {   // 完成哨兵：\x1e<file>\x1f\x1f
+              completedFiles.add(file)
+              doneCount++
+              broadcast({ type: 'transcribe-phase', phase: 'work', done: doneCount, total: sources.length })
+              broadcast({ type: 'diag', text: `转录 ${doneCount}/${sources.length} 完成` })
+            }
+          }
+          if (texts.length) broadcast({ type: 'transcript-chunk', text: texts.join(' ') })
         },
       })
+      if (doneCount < sources.length) {   // 兜底：哨兵缺失（旧协议/异常）时补齐完成广播
+        doneCount = sources.length
+        broadcast({ type: 'transcribe-phase', phase: 'work', done: doneCount, total: sources.length })
+      }
       const units = core.parseTranscriptUnits(raw)
       const byFile = new Map(units.map(u => [path.resolve(u.file), u.text]))
       const segTexts = {}
@@ -545,7 +586,6 @@ const handlers = {
         const t = byFile.get(path.resolve(src.file)) || ''
         if (src.seg) segTexts[src.seg.id] = t
         full.push(t)
-        broadcast({ type: 'diag', text: `转录 ${i + 1}/${sources.length} 完成` })
       })
       T.segmentTranscripts = segTexts
       T.transcript = full.join(' ').trim()
@@ -590,6 +630,35 @@ const handlers = {
   },
   async 'DELETE /api/history'() {
     cfg.clearHistory()
+    return { ok: true }
+  },
+  // ---- 任务快照（ticket 117）：页面刷新后恢复 UI（不回传 cookie/originalPath/prepared）----
+  async 'GET /api/state'() {
+    return {
+      ok: true,
+      state: {
+        phase: T.phase,
+        url: T.url,
+        info: T.info,
+        quality: T.quality,
+        cid: T.cid, part: T.part, pageCount: T.pageCount, partTitle: T.partTitle,
+        curDur: T.curDur,
+        segments: T.segments,
+        mode: T.mode,
+        crf: T.crf,
+        transcript: T.transcript,
+        transcriptSig: T.transcriptSig,
+        segmentTranscripts: T.segmentTranscripts,
+        lastFiles: T.lastFiles,   // [{finalName, wiki, segId, finalPath}]
+      },
+    }
+  },
+  // 交付后「打开所在文件夹」（ticket 117）：win32 explorer /select；revealApi.impl 可替换（测试打桩）
+  async 'POST /api/reveal'(body) {
+    const p = body && body.path
+    if (!p || typeof p !== 'string') throw new Error('缺少文件路径')
+    const r = await revealApi.impl(p)
+    if (!r.ok) throw new Error(r.error || '打开失败')
     return { ok: true }
   },
 }
@@ -656,4 +725,4 @@ function startValidate() {
   try { core.cleanupCache(cfg.loadConfig()) } catch {}
 }
 
-module.exports = { createServer, T, TMP_DIR, resetTask, startValidate, broadcast }
+module.exports = { createServer, T, TMP_DIR, resetTask, startValidate, broadcast, revealApi }

@@ -53,6 +53,7 @@
   <!-- 预览 + 剪辑（多段落）/ 压缩 -->
   <section class="hidden" id="preview-wrap">
     <video id="video" controls playsinline></video>
+    <div class="hint ok hidden" id="seg-hint">先在时间轴上拖动两端滑块/时间框圈选范围 → 点「+ 添加段落」；不圈选 = 整片交付/转录。</div>
     <div class="vctrl">
       <button class="btn small" id="play-btn">播放</button>
       <span class="vtime" id="vtime">00:00:00 / 00:00:00</span>
@@ -129,7 +130,12 @@
   </section>
 </main>
 
-<div class="hint hidden" id="flow-status"></div>
+<!-- 流程进度条（AI 润色等长步骤：阶段文案 + 进度条 + 已用计时，ticket 117） -->
+<div class="flow hidden" id="flow-status">
+  <div class="progress"><div class="fill" id="flow-bar"></div></div>
+  <span class="flow-text" id="flow-text"></span>
+  <span class="flow-elapsed" id="flow-elapsed"></span>
+</div>
 
 <footer class="foot">
   <button class="btn hidden" id="transcribe-btn">转文字</button>

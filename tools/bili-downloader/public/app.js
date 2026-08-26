@@ -11,10 +11,10 @@ const fmtDuration = t => {                                  // HH:MM:SS（显示
   const s = Math.max(0, Math.floor(t))
   return `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s % 3600 / 60))}:${pad(s % 60)}`
 }
-const fmtPrec = t => {                                      // HH:MM:SS.S（起/止精度 0.1s；秒位取模，防总秒数溢出）
-  const s = Math.max(0, t)
-  const ss = Math.floor(s), ds = Math.round((s - ss) * 10)
-  return `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s % 3600 / 60))}:${pad(ss % 60)}.${ds}`
+const fmtPrec = t => {                                      // HH:MM:SS.S（起/止精度 0.1s；先归一到 0.1 秒再拆位，秒位取模防溢出；修复 x.95~x.99 进位显示错乱）
+  const r = Math.round(Math.max(0, t) * 10) / 10
+  const ss = Math.floor(r), ds = Math.round((r - ss) * 10)
+  return `${pad(Math.floor(r / 3600))}:${pad(Math.floor(r % 3600 / 60))}:${pad(ss % 60)}.${ds}`
 }
 const fmtMB = b => (b / 1048576).toFixed(1) + 'MB'
 
@@ -77,10 +77,39 @@ function setBusy(b) {
   $('cancel-btn').classList.toggle('hidden', !b)
 }
 
+// ---- 转文字进度（ticket 117）：三态 + 已用计时，长视频不再「无感干等」----
+let tsTimer = null, tsStart = 0, tsPhase = 'model', tsDone = 0, tsTotal = 0
+const fmtClock = sec => `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(Math.floor(sec % 60)).padStart(2, '0')}`
+const tsElapsed = () => fmtClock(Math.max(0, (Date.now() - tsStart) / 1000))
+function tsStatusText() {
+  if (tsPhase === 'work') return `转录中 · 已用 ${tsElapsed()}${tsDone ? ` · ${tsDone}/${tsTotal} 段完成` : ''}（文本实时追加）`
+  return `正在加载 Whisper 模型（首次约 1-2 分钟）· 已用 ${tsElapsed()}`
+}
+function startTsTimer() {
+  tsStart = Date.now(); tsPhase = 'model'; tsDone = 0
+  stopTsTimer()
+  tsTimer = setInterval(() => {
+    const st = $('ts-status')
+    if (st && !st.className.includes('ok') && !st.className.includes('err')) st.textContent = tsStatusText()
+  }, 1000)
+}
+function stopTsTimer() { if (tsTimer) { clearInterval(tsTimer); tsTimer = null } }
+
+// ---- AI 润色进度（ticket 117）：进度条 + 阶段文案 + 已用计时 ----
+let flowTimer = null, flowStart = 0
+function startFlowTimer() { flowStart = Date.now(); stopFlowTimer(); flowTimer = setInterval(() => { const el = $('flow-elapsed'); if (el) el.textContent = '已用 ' + fmtClock((Date.now() - flowStart) / 1000) }, 1000) }
+function stopFlowTimer() { if (flowTimer) { clearInterval(flowTimer); flowTimer = null } }
+function flowBar(pct) {
+  const b = $('flow-bar'); if (!b) return
+  if (pct === null || pct === undefined) { b.classList.add('indet'); b.style.width = '0' }
+  else { b.classList.remove('indet'); b.style.width = Math.max(2, Math.min(100, pct)) + '%' }
+}
+
 // ---- SSE ----
 const es = new EventSource('/events')
 es.onmessage = e => {
-  const d = JSON.parse(e.data)
+  let d
+  try { d = JSON.parse(e.data) } catch { return }
   if (d.type === 'busy') setBusy(d.busy)
   else if (d.type === 'diag') $('dl-diag').textContent = d.text
   else if (d.type === 'download-progress') {
@@ -99,10 +128,17 @@ es.onmessage = e => {
     const txt = S.op === 'compress' ? $('cp-text') : $('trim-text')
     if (fill) fill.style.width = `${d.percent}%`
     if (txt) txt.textContent = `${d.percent.toFixed(0)}% · ${S.op === 'compress' ? '编码中…' : '裁切中…'}`
+  } else if (d.type === 'transcribe-phase') {
+    tsPhase = d.phase === 'work' ? 'work' : 'model'
+    tsDone = d.done || 0; tsTotal = d.total || 0
+    const st = $('ts-status')
+    if (st && !st.className.includes('ok')) st.textContent = tsStatusText()
   } else if (d.type === 'transcript-chunk') {
+    if (tsPhase === 'model') { tsPhase = 'work'; $('ts-status').textContent = tsStatusText() }
     $('ts-text').value += d.text
   } else if (d.type === 'note-progress') {
-    flowStatus(`步骤 4/5：${d.text}`)   // AI 润色逐块进度（1.2.7）
+    flowStatus(`步骤 4/5：${d.text}`)   // AI 润色阶段文案（1.2.7）
+    flowBar(d.phase === 'meta' ? null : (d.total ? (d.done / d.total) * 100 : 0))   // meta 不定进度，polish 实进度
   } else if (d.type === 'cookie-status') {
     onCookieStatus(d.valid)
   }
@@ -226,6 +262,7 @@ $('dl-btn').onclick = async () => {
     $('revert-btn').classList.add('hidden')
     initTrimUI(S.dur)
     renderSegList()
+    updateSegHint()
     syncFromActive()
     loadVideo()
     $('done-btn').disabled = false
@@ -454,6 +491,7 @@ $('add-seg-btn').onclick = () => {
   const id = nextSegId()
   S.segments.push({ id, start: Math.round(s * 10) / 10, end: Math.round(e * 10) / 10 })
   setActive(id)
+  updateSegHint()   // 首个段落添加后隐藏「空段落引导」
   if (S.dur > 0 && s < S.dur) seekPreview(s)
 }
 
@@ -560,10 +598,12 @@ $('transcribe-btn').onclick = async () => {
   const segs = resolveSegments()
   const sig = flowSig(segs)
   if (S.transcript && S.transcriptSig === sig) { $('ts-text').value = S.transcript; st.textContent = '已有转录文本'; st.className = 'hint ok'; updateGenNote(); return }
-  st.textContent = '转录中（首次加载模型约1-2分钟，请稍候）…'
+  st.textContent = '正在加载 Whisper 模型（首次约 1-2 分钟）· 已用 00:00'
   $('ts-text').value = ''
+  startTsTimer()
   try {
     const r = await api('/api/transcribe', 'POST', { segments: segs.map(s => ({ id: s.id, start: s.start, end: s.end })) })
+    stopTsTimer()
     S.transcript = r.transcript
     S.transcriptSig = sig
     $('ts-text').value = r.transcript
@@ -577,6 +617,7 @@ $('transcribe-btn').onclick = async () => {
       toast('✅ 转录完成（自动复制失败，请手动复制）')
     }
   } catch (e) {
+    stopTsTimer()
     if (/已中止/.test(e.message)) return
     st.textContent = `转录失败：${e.message}`
     st.className = 'hint err'
@@ -590,14 +631,29 @@ $('ts-copy').onclick = async () => {
 }
 
 // ---- 完成 = 交付（按交付模式批量产出全部交付物）----
-// 交付结果展示（「完成」按钮与「生成文献笔记」快捷命令共用）
-async function showDelivered(r) {
+// 交付结果展示（「完成」与「生成文献笔记」共用；opts.silent = 刷新恢复时不重复复制/提醒）
+function renderResultFiles(files) {
+  $('result-path').innerHTML = (files || []).map(f => {
+    const esc = String(f.finalPath || f.finalName || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    return `<div class="res-file"><span class="res-file-path">📂 ${esc}</span><button class="btn small" data-reveal title="在资源管理器中定位该文件">打开所在文件夹</button></div>`
+  }).join('')
+  $('result-path').querySelectorAll('[data-reveal]').forEach((b, i) => {
+    b.onclick = async () => {
+      const f = (files || [])[i]
+      if (!f || !f.finalPath) return toast('缺少文件路径', true)
+      try { await api('/api/reveal', 'POST', { path: f.finalPath }); toast('已定位文件') }
+      catch (e) { toast(e.message, true) }
+    }
+  })
+}
+async function showDelivered(r, opts = {}) {
   S.delivered = true
-  $('result-path').textContent = '📂 ' + r.files.map(f => f.finalPath).join('\n')
+  renderResultFiles(r.files)
   $('result-clip').textContent = r.clipboard
   $('result-wrap').classList.remove('hidden')
   updateGenNote()
   if (r.failures && r.failures.length) toast('部分失败：' + r.failures.join('；'), true)
+  if (opts.silent) return   // 刷新恢复：不重复复制/弹提示
   try {
     await navigator.clipboard.writeText(r.clipboard)
     toast(`✅ 已交付并复制${r.files.length > 1 ? `：${r.files.length} 个文件` : ''}`)
@@ -635,10 +691,73 @@ function updateGenNote() {
   $('gen-note').disabled = !(S.dur > 0)
 }
 function flowStatus(text) {
-  const el = $('flow-status')
-  if (text) { el.textContent = text; el.classList.remove('hidden') }
-  else el.classList.add('hidden')
+  const el = $('flow-status'), tx = $('flow-text')
+  if (text) { if (tx) tx.textContent = text; if (el) el.classList.remove('hidden') }
+  else {
+    if (el) el.classList.add('hidden')
+    flowBar(null)
+    stopFlowTimer()
+    if (tx) tx.textContent = ''
+    const ev = $('flow-elapsed'); if (ev) ev.textContent = ''
+  }
 }
+// 空段落引导（ticket 117）：下载后/回退原片时提示圈选流程，添加首个段落即隐藏
+function updateSegHint() {
+  const el = $('seg-hint')
+  if (el) el.classList.toggle('hidden', S.segments.length > 0)
+}
+
+// ---- 刷新恢复（ticket 117）：DOMContentLoaded 拉 /api/state 重建界面 ----
+async function restoreState(s) {
+  if (!s || !s.info) return
+  S.info = s.info
+  S.pages = s.info.pages || []
+  S.pageIndex = Math.max(0, S.pages.findIndex(p => p.cid === s.cid && p.page === s.part))
+  S.quality = s.quality || s.info.maxHeight
+  if (s.url) $('url').value = s.url
+  renderCard()
+  renderPages()
+  $('card-wrap').classList.remove('hidden')
+  $('dl-wrap').classList.remove('hidden')
+  const busyPhases = ['parsing', 'downloading', 'trimming', 'compressing', 'transcribing', 'generating']
+  if (busyPhases.includes(s.phase)) {
+    setBusy(true)
+    toast('上一任务仍在进行中，请等待完成或点「✕ 取消任务」')
+  }
+  if (s.curDur > 0) {
+    $('dl-wrap').classList.add('hidden')
+    $('preview-wrap').classList.remove('hidden')
+    S.dur = s.curDur
+    S.segments = (s.segments || []).map(x => ({ ...x }))
+    S.activeId = S.segments.length ? S.segments[0].id : null
+    S.mode = s.mode || 'split'
+    S.crf = s.crf != null ? s.crf : 23
+    S.draft = { start: 0, end: S.dur }
+    renderCrfs()
+    setMode(S.mode)
+    initTrimUI(S.dur)
+    renderSegList()
+    updateSegHint()
+    syncFromActive()
+    loadVideo()
+    $('done-btn').disabled = false
+    $('revert-btn').classList.toggle('hidden', !S.segments.length)
+    if (s.transcript) {
+      S.transcript = s.transcript
+      S.transcriptSig = s.transcriptSig || ''
+      $('ts-wrap').classList.remove('hidden')
+      $('ts-text').value = s.transcript
+      $('ts-status').textContent = '已有转录文本'
+      $('ts-status').className = 'hint ok'
+    }
+  }
+  if (s.lastFiles && s.lastFiles.length) {
+    const files = s.lastFiles.map(f => ({ finalName: f.finalName, finalPath: f.finalPath, wiki: f.wiki, segId: f.segId }))
+    await showDelivered({ files, clipboard: files.map(f => f.wiki).join('\n'), failures: [] }, { silent: true })
+  }
+  updateGenNote()
+}
+
 // AI 润色完成后：把「转文字」框里的原文替换为润色稿（1.2.7；S.transcript 同步，后续步骤用简体稿）
 function applyPolished(rt) {
   if (!rt || !rt.body) return
@@ -729,9 +848,12 @@ $('gen-note').onclick = async () => {
       } else {
         flowStatus('步骤 3/5：转文字（当前段落已有转录，跳过）')
       }
-      // ④ AI 润色（元数据 + 按段润色，独立步骤；完成后回填润色稿到转写框）
+      // ④ AI 润色（元数据 + 按段润色，独立步骤；完成后回填润色稿到转写框；ticket 117 加进度条 + 计时）
       flowStatus('步骤 4/5：AI 润色…')
+      flowBar(null)
+      startFlowTimer()
       applyPolished(await api('/api/note-prepare', 'POST', { segments: segs.map(s => ({ id: s.id, start: s.start, end: s.end })) }))
+      stopFlowTimer()
       // ⑤ 生成笔记（自动交付 + 写入文献盒）
       flowStatus('步骤 5/5：生成笔记（自动交付 + 写入文献盒）…')
       const r = await api('/api/done', 'POST', {
@@ -743,7 +865,10 @@ $('gen-note').onclick = async () => {
     } else {
       if (!S.transcript) throw new Error('缺少转录文本：请先转文字')
       flowStatus('步骤 4/5：AI 润色…')
+      flowBar(null)
+      startFlowTimer()
       applyPolished(await api('/api/note-prepare', 'POST', { segments: segs.map(s => ({ id: s.id, start: s.start, end: s.end })) }))
+      stopFlowTimer()
       flowStatus('步骤 5/5：生成笔记…')
     }
     const r2 = await api('/api/note', 'POST', {})
@@ -751,6 +876,16 @@ $('gen-note').onclick = async () => {
     a.href = r2.note.url
     a.textContent = `📄 ${r2.note.wiki}（未自动打开时点击跳转）`
     nr.appendChild(a)
+    // 打开所在文件夹（文献盒）
+    const rv = document.createElement('a')
+    rv.className = 'note-link'
+    rv.href = 'javascript:void(0)'
+    rv.textContent = ' · 打开所在文件夹'
+    rv.onclick = async () => {
+      try { await api('/api/reveal', 'POST', { path: r2.note.path }); toast('已定位文献笔记') }
+      catch (e) { toast(e.message, true) }
+    }
+    nr.appendChild(rv)
     nr.classList.remove('hidden')
     try { window.location.href = r2.note.url } catch {}   // 自动在 Obsidian 打开（浏览器首次可能弹外部协议确认）
     flowStatus('')
@@ -775,6 +910,7 @@ $('revert-btn').onclick = async () => {
     $('revert-btn').classList.add('hidden')
     initTrimUI(r.duration)
     renderSegList()
+    updateSegHint()   // 返回原片：段落清空，恢复引导
     syncFromActive()
     loadVideo()
     resetProgress()
@@ -798,6 +934,7 @@ function resetUI() {
   const pagesEl = $('pages'); if (pagesEl) { pagesEl.innerHTML = ''; pagesEl.classList.add('hidden') }
   $('revert-btn').classList.add('hidden')
   ;['card-wrap', 'dl-wrap', 'preview-wrap', 'ts-wrap', 'result-wrap'].forEach(id => $(id).classList.add('hidden'))
+  const segHint = $('seg-hint'); if (segHint) segHint.classList.add('hidden')
   $('url').value = ''
   $('done-btn').disabled = true
   updateGenNote()
@@ -815,6 +952,7 @@ function resetUI() {
   syncFromActive()
 }
 $('cancel-btn').onclick = async () => {
+  if (!confirm('确认取消任务？将中止下载/剪辑并删除全部未交付的临时产物（已交付文件不受影响）。')) return
   try {
     await api('/api/cancel', 'POST', {})
     resetUI()
@@ -942,5 +1080,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   try {
     const r = await api('/api/config')
     onCookieStatus(r.cookieConfigured ? r.cookieValid : false)
+  } catch {}
+  // 刷新恢复（ticket 117）：拉任务快照重建界面（解析卡/段落/转录/已交付结果）
+  try {
+    const r = await api('/api/state')
+    await restoreState(r.state)
   } catch {}
 })

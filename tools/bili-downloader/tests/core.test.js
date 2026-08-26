@@ -555,18 +555,22 @@ test('buildLiteratureNote：多块「该段正文+该段双链」依次排布（
   assert.ok(md2.includes('![[x.mp4]]'))
 })
 
-test('parseTranscriptUnits：逐文件转录输出解析（多行、乱行容错）', () => {
+test('parseTranscriptUnits：同文件多行聚合 + 文件结束空哨兵（逐段转录协议，ticket 117）', () => {
   const units = core.parseTranscriptUnits([
     '\x1eC:\\a.mp4\x1f第一段文本\x1f',
+    '\x1eC:\\a.mp4\x1f第二段文本\x1f',
+    '\x1eC:\\a.mp4\x1f\x1f',                  // 完成哨兵：不计文本、不新增条目
     '前导噪声行',
-    '\x1eC:\\b.mp4\x1f第二段文本\x1f',
     '',
+    '\x1eC:\\b.mp4\x1f第三段文本\x1f',
+    '\x1eD:\\c.mp4\x1f\x1f',                  // 仅哨兵（整文件无文本）→ 不产生条目
+    '\x1eC:\\b.mp4\x1f\x1f',
   ].join('\n'))
   assert.equal(units.length, 2)
   assert.equal(units[0].file, 'C:\\a.mp4')
-  assert.equal(units[0].text, '第一段文本')
+  assert.equal(units[0].text, '第一段文本 第二段文本')
   assert.equal(units[1].file, 'C:\\b.mp4')
-  assert.equal(units[1].text, '第二段文本')
+  assert.equal(units[1].text, '第三段文本')
   assert.deepEqual(core.parseTranscriptUnits(''), [])
   assert.deepEqual(core.parseTranscriptUnits('abc\n'), [])
 })

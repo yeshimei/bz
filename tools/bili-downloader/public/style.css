@@ -191,6 +191,13 @@ video { width: 100%; max-height: 260px; border-radius: 10px; background: #000; d
 .range .blk .handle {
   position: absolute; top: 50%; width: 7px; height: 12px; transform: translateY(-50%);
   background: var(--accent); border-radius: 2px; cursor: ew-resize;
+  z-index: 3;   /* 压在原生 range 滑块之上，保证拖动命中 */
+  -webkit-tap-highlight-color: transparent;
+}
+/* ticket 117：透明热区扩大命中面积（视觉不变 7px，可点区域 ≥20×28px，长视频不再点不中） */
+.range .blk .handle::after {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  width: 20px; height: 28px; transform: translate(-50%, -50%);
 }
 .range .blk .handle.hl { left: -3px; }
 .range .blk .handle.hr { right: -3px; }
@@ -216,6 +223,19 @@ video { width: 100%; max-height: 260px; border-radius: 10px; background: #000; d
 .segl-actions { display: flex; gap: 4px; flex-shrink: 0; }
 
 #result-path { white-space: pre-wrap; word-break: break-all; line-height: 1.7; }
+/* ticket 117：交付文件行 + 「打开所在文件夹」按钮 */
+.res-file { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+.res-file-path { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---- 流程进度条（AI 润色等长步骤，ticket 117）---- */
+.flow {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; margin: 6px 20px 0;
+  background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+}
+.flow .progress { flex: 1; }
+.flow-text { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.flow-elapsed { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* ---- 转录 ---- */
 #ts-text { width: 100%; min-height: 180px; margin-top: 8px; box-sizing: border-box; }

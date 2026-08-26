@@ -17,7 +17,7 @@ process.env.BILI_DL_HISTORY = path.join(tmp, 'history.json')
 // 端到端交付测试需要真实 ffmpeg；无二进制环境自动跳过
 const hasFfmpeg = (() => { try { return spawnSync('ffmpeg', ['-version']).status === 0 } catch { return false } })()
 
-const { createServer, T, resetTask } = require('../server')
+const { createServer, T, resetTask, revealApi } = require('../server')
 const core = require('../core')
 const cfg = require('../config')
 
@@ -142,6 +142,51 @@ test('GET /events：SSE 端点返回 event-stream 并推送 cookie 状态', asyn
   const text = new TextDecoder().decode(value)
   assert.match(text, /data: \{"type":"cookie-status"/)
   ac.abort()
+})
+
+test('GET /api/state：空闲快照 + 解析后快照（刷新恢复 UI，ticket 117）', async () => {
+  const j0 = await (await req('GET', '/api/state')).json()
+  assert.equal(j0.ok, true)
+  assert.equal(j0.state.info, null)
+  assert.deepEqual(j0.state.segments, [])
+  assert.deepEqual(j0.state.lastFiles, [])
+  // 手工铺任务态（等同解析+下载后）
+  T.info = { title: '测试视频', duration: 100, formats: [{ height: 1080, fps: 30, label: '1080P 30帧' }], pages: [{ cid: 11, page: 1, title: '', duration: 100 }] }
+  T.url = 'https://www.bilibili.com/video/BV1xx411c7mD'
+  T.quality = 1080
+  T.cid = 11; T.part = 1; T.pageCount = 1
+  T.curDur = 100
+  T.segments = [{ id: 'seg1', start: 1, end: 20 }]
+  T.mode = 'merge'; T.crf = 23
+  T.transcript = '转录文本'; T.transcriptSig = 'full'
+  T.lastFiles = [{ finalName: 'a.mp4', wiki: '![[CONFIG/APPENDIX/a.mp4]]', segId: null, finalPath: 'C:/tmp/a.mp4' }]
+  const j1 = await (await req('GET', '/api/state')).json()
+  assert.equal(j1.state.info.title, '测试视频')
+  assert.equal(j1.state.url, 'https://www.bilibili.com/video/BV1xx411c7mD')
+  assert.deepEqual(j1.state.segments, [{ id: 'seg1', start: 1, end: 20 }])
+  assert.equal(j1.state.transcript, '转录文本')
+  assert.equal(j1.state.lastFiles[0].finalPath, 'C:/tmp/a.mp4')
+  assert.ok(!('cookie' in j1.state))           // 快照不回传敏感/内部字段
+  assert.ok(!('originalPath' in j1.state))
+  resetTask()
+})
+
+test('POST /api/reveal：缺路径报错；revealApi.impl 打桩成功/失败分支', async () => {
+  const j0 = await (await req('POST', '/api/reveal', {})).json()
+  assert.equal(j0.ok, false)
+  assert.match(j0.error, /缺少文件路径/)
+  const orig = revealApi.impl
+  try {
+    revealApi.impl = () => Promise.resolve({ ok: true })
+    const j1 = await (await req('POST', '/api/reveal', { path: 'C:/x.mp4' })).json()
+    assert.equal(j1.ok, true)
+    revealApi.impl = () => Promise.resolve({ ok: false, error: '资源管理器退出码 1' })
+    const j2 = await (await req('POST', '/api/reveal', { path: 'C:/x.mp4' })).json()
+    assert.equal(j2.ok, false)
+    assert.match(j2.error, /退出码 1/)
+  } finally {
+    revealApi.impl = orig   // 恢复真实实现（平台为 win32 时不打扰后续测试）
+  }
 })
 
 test('POST /api/cookie：空 Cookie 报错', async () => {
