@@ -5,14 +5,14 @@
  * 流程对齐 spec `.scratch/secondbrain-link-agent/spec.md`「核心流程」②③④⑥（范围词按需求变更
  * 泛化为 linkAgentScopes 可配置清单，缺省回退「文献盒」）：
  * - 探测短超时 ~1.5s（复用 secondBrainRemoteOllamaUrl/Ollama 客户端配置，移动端远程优先同 doRefresh 规则）；
- * - 不可达 → 入队（secondbrain_link_queue.json）；可达 → 就地完整管线；
+ * - 不可达 → 入队（secondbrain.json link.queue 段）；可达 → 就地完整管线；
  * - 裁判 prompt 指令前缀固定（命中供应商前缀缓存），强调「只链实质关联，存疑不链」；
  * - 写入幂等：related 已存在的链不重复添加；linkAgentMaxLinks > 0 时裁判提示附上限且写入侧截断；
  * - 队列消费：域初始化发现队列非空且服务可达即自动消费，完成后合并通知；
  * - 存量补链（ticket 115）：启动时（队列消费之后）扫描关联范围内缺 related 的存量笔记批量建链，
  *   手动命令 bz-secondbrain-link-all 同路径兜底；批次与监听批次共用串行锁；
  * - 正文大改自动重跑（v1.4/ticket 119）：每次成功建链后把**全文内容哈希**记为基准
- *   （secondbrain_link_state.json）；修改监听按基准过滤——内容未实质变化（含自写 related 触发的
+ *   （secondbrain.json link.state 段，ticket 120 起）；修改监听按基准过滤——内容未实质变化（含自写 related 触发的
  *   modify）不重跑，哈希不同 / 无基准才重跑该篇；
  * - 死链清理：关联范围（linkAgentScopes）各笔记 related 中指向不存在文件的条目移除；encrypt 锁定文件一律跳过。
  */

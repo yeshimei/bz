@@ -21,8 +21,18 @@ vi.mock('../../src/secondbrain/ollama', () => ({
   checkRemoteOllama: vi.fn(),
 }));
 
-const META_PATH = 'CONFIG/STORAGE/secondbrain_meta.json';
-const VEC_PATH = 'CONFIG/STORAGE/secondbrain_vectors.vec';
+const STORE_PATH = 'CONFIG/STORAGE/secondbrain.json';
+const VEC_PATH = 'CONFIG/STORAGE/secondbrain.vec';
+
+/** 把 meta 对象包入 secondbrain.json 单文件结构（ticket 120；panel/link 段空置） */
+function storeJSON(meta: unknown): string {
+  return JSON.stringify({ version: 1, meta, panel: null, link: { queue: [], state: {} } });
+}
+
+/** 从单文件结构取出 meta 段（断言用） */
+function readMeta(vault: MockVault): any {
+  return JSON.parse(vault.files.get(STORE_PATH)!).meta;
+}
 
 function makeAdapter(vault: MockVault) {
   const binary = new Map<string, ArrayBuffer>();
@@ -102,9 +112,9 @@ describe('VectorStore 补测（load 异常分支）', () => {
     vi.unstubAllGlobals();
   });
 
-  it('meta.json 损坏（非法 JSON）→ 重置空库', async () => {
+  it('secondbrain.json 损坏（非法 JSON）→ store-file 留档重建空结构，向量库重置空库', async () => {
     const vault = new MockVault();
-    vault.files.set(META_PATH, '{这不是JSON');
+    vault.files.set(STORE_PATH, '{这不是JSON');
     const { adapter } = makeAdapter(vault);
     const app = makeApp(vault, adapter);
     setApp(app as any);
@@ -135,8 +145,8 @@ describe('VectorStore 补测（load 异常分支）', () => {
   it('version=9 正常载入：meta 条目与 .vec 行恢复', async () => {
     const vault = new MockVault();
     vault.files.set(
-      META_PATH,
-      JSON.stringify({ version: 9, notes: { 'a.md': { mtime: 1, chunks: [{ text: 't1' }, { text: 't2' }] } }, _dim: 2 })
+      STORE_PATH,
+      storeJSON({ version: 9, notes: { 'a.md': { mtime: 1, chunks: [{ text: 't1' }, { text: 't2' }] } }, _dim: 2 })
     );
     const { adapter, binary } = makeAdapter(vault);
     binary.set(VEC_PATH, vecBuffer([[1, 0], [0, 1]], 2));
@@ -177,7 +187,7 @@ describe('VectorStore 补测（refresh 边界）', () => {
     vi.mocked(getEmbeddingsBatch).mockImplementation(async (texts) => texts.map(() => [0.5, 0.5]));
     await vs.refresh();
 
-    const meta = JSON.parse(vault.files.get(META_PATH)!);
+    const meta = readMeta(vault);
     expect(meta.notes['我的/坏.md']).toBeUndefined(); // 读取失败条目被删除
     expect(meta.notes['我的/A.md']).toBeDefined();
     expect(binary.size).toBe(1); // 正常文件已落盘
@@ -216,7 +226,7 @@ describe('VectorStore 补测（refresh 边界）', () => {
     );
     await vs.refresh(); // 不传回调 → 默认 noop 不抛错
 
-    const meta = JSON.parse(vault.files.get(META_PATH)!);
+    const meta = readMeta(vault);
     expect(meta.notes['我的/S.md'].chunks).toEqual([{ text: 'S\n' + short }]); // 首块带标题（ticket 110）
     const rows = parseRows(binary);
     expect(rows.length).toBe(2);

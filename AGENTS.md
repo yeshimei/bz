@@ -55,7 +55,7 @@
 | movie | `我的/影视/*.md` |
 | review | review.json |
 | quiz | quiz.json |
-| secondbrain（第二大脑） | secondbrain_meta.json + secondbrain_vectors.vec + secondbrain_panel.json |
+| secondbrain（第二大脑） | secondbrain.json（meta/panel/link 三段）+ secondbrain.vec |
 | auto-summary | 剪藏 frontmatter |
 | launcher | launcher.json |
 | pomodoro | pomodoro.json |
