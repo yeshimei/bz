@@ -18,6 +18,7 @@
  * - 动态能力：setMessage（原地更新文本）/ setProgress（0-100 或 -1 不确定态）
  * - 富文本：title 标题行 + action 操作按钮（点击后自动收起）
  * - 时长：默认 info/success/warning 3s、error 5s；显式 duration 优先；
+ *   未指定时按文字长度动态计算（≤20 字用默认值，>20 字每多 1 字加 60ms，上限 15s）；
  *   progress 类型默认不自动消失（调用方控制）
  * - 点击通知本体即关闭
  */
@@ -141,6 +142,23 @@ function defaultDuration(type: NoticeType): number {
   return type === 'error' ? 5000 : 3000;
 }
 
+/** 基础阅读速度：每字符约 60ms（中英文混合均值）；短文本用 base 兜底 */
+const PER_CHAR_MS = 60;
+/** 低于此字符数不加时长，直接用 base */
+const SHORT_THRESHOLD = 20;
+
+/**
+ * 根据文字长度动态计算停留时间。
+ * 公式：base + max(0, len - 20) × 60ms，上限 15s 防止过长。
+ * 调用方显式指定 duration 时直接用显式值，不走此函数。
+ */
+function calcDuration(text: string, base: number): number {
+  const len = text.length;
+  if (len <= SHORT_THRESHOLD) return base;
+  const extra = (len - SHORT_THRESHOLD) * PER_CHAR_MS;
+  return Math.min(base + extra, 15000);
+}
+
 function ensureContainer(): HTMLElement {
   let container = document.getElementById('bz-notice-container');
   if (!container) {
@@ -238,8 +256,13 @@ function hideNow(n: InternalNotice): void {
   }
 }
 
-/** 按类型/显式 duration 设定自动消失计时；duration <= 0 或 progress 默认 = 常驻（persistent，不参与堆叠驱逐） */
-function armTimer(n: InternalNotice, kind: NoticeKind, explicitDuration?: number): void {
+/**
+ * 按类型/显式 duration 设定自动消失计时。
+ * - 显式 duration 优先
+ * - 未指定时根据文字长度动态计算（短文本用类型默认值，长文本按字数加时）
+ * - duration <= 0 或 progress 默认 = 常驻（persistent，不参与堆叠驱逐）
+ */
+function armTimer(n: InternalNotice, kind: NoticeKind, explicitDuration?: number, text?: string): void {
   if (n.timer !== null) {
     window.clearTimeout(n.timer);
     n.timer = null;
@@ -254,7 +277,8 @@ function armTimer(n: InternalNotice, kind: NoticeKind, explicitDuration?: number
     }
     return;
   }
-  const dur = explicitDuration !== undefined ? explicitDuration : defaultDuration(kind);
+  const base = defaultDuration(kind);
+  const dur = explicitDuration !== undefined ? explicitDuration : (text ? calcDuration(text, base) : base);
   if (dur <= 0) {
     n.persistent = true; // <= 0 = 常驻
     return;
@@ -302,7 +326,7 @@ export function notify(msg: string, opts?: NoticeOptions): NoticeHandle {
       if (r.n.isProgress !== isProgress || r.n.el.classList.contains('bz-notice--' + type) === false) {
         applyTypeToEl(r.n, kind);
       }
-      armTimer(r.n, kind, opts.duration);
+      armTimer(r.n, kind, opts.duration, msg);
       return noopHandle();
     }
     if (r && now - r.at < DEDUPE_WINDOW_MS) {
@@ -378,8 +402,9 @@ export function notify(msg: string, opts?: NoticeOptions): NoticeHandle {
     if (r) r.n = n;
   }
 
-  // 自动消失计时
-  armTimer(n, kind, opts && opts.duration);
+  // 自动消失计时（无显式 duration 时按文字长度动态计算）
+  const fullText = (opts && opts.title ? opts.title + ' ' : '') + msg;
+  armTimer(n, kind, opts && opts.duration, fullText);
 
   return {
     el,
