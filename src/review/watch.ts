@@ -25,6 +25,12 @@ export function __setAutoAddMergeMsForTests(ms: number): void {
   REVIEW_AUTO_ADD_MERGE_MS = ms;
 }
 
+/** ticket n2：改名通知合并窗口（3 秒；批量重命名只弹一条；测试可注入短值） */
+export let RENAME_MERGE_MS = 3000;
+export function __setRenameMergeMsForTests(ms: number): void {
+  RENAME_MERGE_MS = ms;
+}
+
 export class ReviewWatcher {
   app: App;
   dataManager: ReviewDataManager;
@@ -35,6 +41,9 @@ export class ReviewWatcher {
   /** ticket 100：新笔记自动加入提醒合并缓冲（3 秒窗口收集，多条合并一条通知） */
   private autoAddQueue: string[] = [];
   private autoAddTimer: ReturnType<typeof setTimeout> | null = null;
+  /** ticket n2：改名通知合并缓冲（3 秒窗口收集；列表/文件树更新仍即时） */
+  private renameQueue: string[] = [];
+  private renameTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(app: App, dataManager: ReviewDataManager) {
     this.app = app;
@@ -74,6 +83,17 @@ export class ReviewWatcher {
     }
     if (!changed) return;
     if (s) s.reviewExcludedNotes = cur;
+    await saveSettings();
+  }
+
+  /** ticket 57：单条解除排除记录（数据 reviewExcludedNotes 既有；仅补 UI 管理入口） */
+  async removeExcludedNote(path: string): Promise<void> {
+    const s = tryGetSettings() as any;
+    if (!s) return;
+    const cur = Array.isArray(s.reviewExcludedNotes) ? [...(s.reviewExcludedNotes as string[])] : [];
+    const kept = cur.filter((p) => p !== path);
+    if (kept.length === cur.length) return;
+    s.reviewExcludedNotes = kept;
     await saveSettings();
   }
 
@@ -138,7 +158,8 @@ export class ReviewWatcher {
     })();
   }
 
-  /** vault rename：计划内文件改名/移动 → 自动更新路径（ticket 099：不再弹确认） */
+  /** vault rename：计划内文件改名/移动 → 自动更新路径（ticket 099：不再弹确认）；
+   *   ticket n2：通知改合并窗口（窗口内多条合并一条；列表/文件树刷新仍即时） */
   onVaultRename(file: TFile, oldPath: string): void {
     void (async () => {
       if (file.extension !== 'md') return;
@@ -146,10 +167,22 @@ export class ReviewWatcher {
       const items = await this.dataManager.loadItems();
       if (!items.some((i) => i.filePath === oldPath)) return;
       const updated = await this.dataManager.updateFilePath(oldPath, file.path, file.basename);
-      if (updated) {
-        notice('已更新复习计划路径', 'success');
-        await this.refresh();
-      }
+      if (!updated) return;
+      await this.refresh(); // 列表自动更新（即时）
+      this.renameQueue.push(file.basename);
+      if (this.renameTimer) return;
+      this.renameTimer = setTimeout(() => {
+        this.renameTimer = null;
+        const batch = this.renameQueue;
+        this.renameQueue = [];
+        if (!batch.length) return;
+        const shown = batch.slice(0, 3).join('、');
+        const tail = batch.length > 3 ? `，等 ${batch.length - 3} 篇` : '';
+        notice(
+          batch.length > 1 ? `已更新 ${batch.length} 篇笔记的复习路径：${shown}${tail}` : '已更新复习计划路径',
+          'success'
+        );
+      }, RENAME_MERGE_MS);
     })();
   }
 
@@ -228,5 +261,10 @@ export class ReviewWatcher {
       this.autoAddTimer = null;
     }
     this.autoAddQueue = [];
+    if (this.renameTimer) {
+      clearTimeout(this.renameTimer);
+      this.renameTimer = null;
+    }
+    this.renameQueue = [];
   }
 }
