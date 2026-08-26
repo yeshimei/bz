@@ -26,7 +26,7 @@ vi.mock('../../src/secondbrain/ollama', () => ({
   getEmbedding: vi.fn(),
   getEmbeddingsBatch: vi.fn(),
   checkRemoteOllama: vi.fn(),
-  OLLAMA_TIMEOUT_MS: 10000, // ticket 46 统一 10s 超时
+  SEARCH_TIMEOUT_MS: 10000, // ticket 46：检索级超时（与嵌入 30s 分离）
 }));
 
 const STORE_PATH = 'CONFIG/STORAGE/secondbrain.json';

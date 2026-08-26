@@ -448,13 +448,14 @@ export class LinkAgent {
       } else {
         handle?.hide(); // N=0 静默：收起进行中帧
       }
-    }
-    if (summary.failed > 0) {
-      // 连续多次失败经合并通知提示一次（dedupeKey 同键合并 + 抑制窗口）
-      notify(`${summary.failed} 篇笔记关联处理失败，已入队稍后自动重试`, {
-        type: 'warning',
-        dedupeKey: LINK_ERROR_NOTICE_KEY,
-      });
+      if (summary.failed > 0) {
+        // 连续多次失败经合并通知提示一次（dedupeKey 同键合并 + 抑制窗口）；
+        // 置于 notifyOn 门控内：silent 启动路径与 consumeQueue 同样全程静默
+        notify(`${summary.failed} 篇笔记关联处理失败，已入队稍后自动重试`, {
+          type: 'warning',
+          dedupeKey: LINK_ERROR_NOTICE_KEY,
+        });
+      }
     }
     return summary;
   }

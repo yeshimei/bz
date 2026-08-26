@@ -9,8 +9,8 @@
  *   逐条失败按段计数，完成态有失败 → 通知失败段数（ticket 3 假成功修复），全部成功才发完成通知；
  * - 移动端三级降级 remote→tfidf→text；TF-IDF 以 chunk 为文档单位且构建后复用（不再随查询重建）。
  *
- * 保留 bz 改进：MobileBuffer 写入避 Node Buffer 池偏移、Ollama 统一 10s 超时（ticket 46）、
- * 检索异常降级文本（含超时上限，保证参考面板/对话不被挂起请求长期阻塞）。
+ * 保留 bz 改进：MobileBuffer 写入避 Node Buffer 池偏移、Embedding 统一 30s 超时（慢推理不误伤）、
+ * 检索异常降级文本（10s 检索级超时上限，保证参考面板/对话不被挂起请求长期阻塞——ticket 46）。
  * ticket 107：isIndexReady() 就绪判定（空库/损坏态 → 主面板引导态，首次向量化须用户触发）；
  * refresh 并发去重（进行中复用同一 promise）；meta 有条目但向量缺失 → 视为全量重建自愈；
  * 移动端嵌入端点走远程 URL（引导初始化在移动端亦可完成）。
@@ -33,7 +33,7 @@ import { euclideanSq, normalizeVec, vptree_build, vptree_search, VPNode, Vec } f
 import { parallelMap } from './parallel';
 import { TFIDF } from './tfidf';
 import { searchTextIndex } from './text-search';
-import { checkRemoteOllama, EMBED_BATCH_SIZE, getEmbedding, getEmbeddingsBatch, OLLAMA_TIMEOUT_MS } from './ollama';
+import { checkRemoteOllama, EMBED_BATCH_SIZE, getEmbedding, getEmbeddingsBatch, SEARCH_TIMEOUT_MS } from './ollama';
 
 // v8→v9（ticket 110）：切块剥离 frontmatter + 标题入首块——旧库版本不符走 load() 自动重建
 const VECTOR_STORE_VERSION = 9;
@@ -476,17 +476,21 @@ export class VectorStore {
     await ckptChain; // 排空暂存链再最终合并（最终写回与链互斥）
 
     // 登记新 meta 条目（meta 只存 text，向量只进 .vec——QA L610-619 同构；
-    // 已被断点暂存登记过的文件在此按同一口径重登记，幂等覆盖）
+    // 已被断点暂存登记过的文件在此按同一口径重登记，幂等覆盖）。
+    // [3] 与断点暂存 ckptDoneFiles 同口径：文件只要还有失败（空）槽位，整篇不写 mtime——
+    // 部分登记会让失败段永久丢失（下轮 refresh 的 mtime 比对把它跳过）。保留旧条目/无条目
+    // → 下轮按 mtime 差异整篇重试；仅整篇全失败才删除旧条目（QA 同语义）。
     const newChunksPerFile = new Map<string, Float32Array[]>();
     for (const file of toProcess) {
-      const tasks = globalTasks.filter((t) => t.filePath === file.path);
-      const vecs = tasks.map((t) => t.embedding).filter(Boolean) as Float32Array[];
-      if (vecs.length === 0) {
-        delete this.meta.notes[file.path];
-        continue;
+      const slots = fileChunksMap.get(file.path);
+      if (!slots) continue; // 读取失败的文件：读取循环已删条目，无槽位（与 maybeCheckpoint 同守卫）
+      if (slots.some((s) => !s || !s.embedding)) {
+        if (!slots.some((s) => s?.embedding)) delete this.meta.notes[file.path]; // 整篇全失败
+        continue; // 部分失败：保持旧条目/无条目 → 下轮自动整篇重试
       }
+      const vecs = slots.map((s) => s!.embedding!);
       if (dim === 0) dim = vecs[0].length;
-      const keptTexts = (fileChunksMap.get(file.path)!.filter(Boolean) as ChunkTask[]).map((c) => ({ text: c.text }));
+      const keptTexts = slots.map((c) => ({ text: c!.text }));
       this.meta.notes[file.path] = { mtime: (file.stat as any).mtime, chunks: keptTexts };
       newChunksPerFile.set(file.path, vecs);
     }
@@ -577,11 +581,12 @@ export class VectorStore {
     }
   }
 
-  /** [46] 检索级超时封装：超时按失败降级处理（不吞掉原错误，仅兜住挂起请求） */
+  /** [46] 检索级超时封装：超时按失败降级处理（不吞掉原错误，仅兜住挂起请求）；
+   *  10s（SEARCH_TIMEOUT_MS）与嵌入端点 30s 分离——检索降级快，嵌入不因慢推理误报失败 */
   private async withSearchTimeout<T>(p: Promise<T>): Promise<T> {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const timeout = new Promise<never>((_, reject) => {
-      timer = setTimeout(() => reject(new Error(`向量检索超时（${OLLAMA_TIMEOUT_MS / 1000}s）`)), OLLAMA_TIMEOUT_MS);
+      timer = setTimeout(() => reject(new Error(`向量检索超时（${SEARCH_TIMEOUT_MS / 1000}s）`)), SEARCH_TIMEOUT_MS);
     });
     try {
       return await Promise.race([p, timeout]);
