@@ -131,7 +131,7 @@ function makeWorld(opts: WorldOpts = {}) {
   setApp(app as any);
   const store = {
     refresh: vi.fn(async () => {}),
-    vectorSearch: vi.fn(async () => opts.hits ?? []),
+    vectorSearch: vi.fn(async (_query: string) => opts.hits ?? []),
   };
   const agent = new LinkAgent({
     app: app as any,
@@ -244,6 +244,21 @@ describe('管线：related 幂等写入与可达性门', () => {
     setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '文献盒' }));
     const r2 = await agent.findCandidates('文献盒/A.md', '正文');
     expect(r2.map((c) => c.path)).toEqual(['文献盒/B.md', '卡片盒/K.md', '其他/X.md']);
+  });
+
+  it('查询端全文嵌入（ticket 118）：不再 800 字截断；超长按 LINK_QUERY_MAX_CHARS 安全截尾', async () => {
+    const { store, agent } = makeWorld({ hits: [] });
+    // 常规笔记：全文（2000+ 字）直接进向量化，而非 800 字截断
+    const longBody = '关于精神分析与文明批判的论述段落。'.repeat(150); // ~2100 字
+    await agent.findCandidates('文献盒/A.md', longBody);
+    const q1 = store.vectorSearch.mock.calls[0][0] as string;
+    expect(q1.length).toBeGreaterThan(1500);
+    expect(q1).toContain('论述段落。');
+    // 超长笔记：截尾到上限
+    const huge = 'x'.repeat(20000);
+    await agent.findCandidates('文献盒/A.md', huge);
+    const q2 = store.vectorSearch.mock.calls[1][0] as string;
+    expect(q2.length).toBeLessThanOrEqual(8000);
   });
 });
 

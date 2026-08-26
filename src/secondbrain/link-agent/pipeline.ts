@@ -106,11 +106,18 @@ function boolSetting(v: unknown, fallback: boolean): boolean {
   return v === undefined || v === null ? fallback : v === true;
 }
 
-/** 剥 frontmatter 后的正文摘要（近邻查询词与新笔记档案卡首块共用） */
+/** 剥 frontmatter 后的正文摘要（新笔记档案卡首块共用；检索查询不再用它截断） */
 export function bodyExcerpt(content: string, maxLen: number): string {
   const body = content.replace(/^---\r?\n[\s\S]*?\r?\n---\s*(?:\r?\n|$)/, '');
   return body.replace(/\s+/g, ' ').trim().slice(0, maxLen);
 }
+
+/**
+ * 建链检索查询长度上限（ticket 118）：**查询用笔记全文嵌入**（不再 800 字截断），
+ * 仅对超长笔记做安全截尾——bge-m3 上下文约 8192 token，中文约 1 字/token，取 8000 规避越界报错；
+ * 常规笔记（卡片/文献段）全文远小于上限，等效"全文向量化检索"。
+ */
+export const LINK_QUERY_MAX_CHARS = 8000;
 
 /**
  * embedding 服务可达性探测：GET <base>/api/tags，短超时 1.5s。
@@ -222,6 +229,8 @@ export class LinkAgent {
    * 候选生成（ticket 116：来源 = 白名单索引库全部笔记，不再按 linkAgentScopes 过滤）：
    * 全局大池近邻 → 去自身 → 剔除已不存在文件与 encrypt 锁定 → 按 path 去重取最优 → Top-K。
    * 关联范围（linkAgentScopes）只决定"哪些笔记会被关联"（目标/触发侧），不限制候选来源。
+   * 查询端（ticket 118）：**全文嵌入**——正文全文（剥 frontmatter、去空白，超长按 LINK_QUERY_MAX_CHARS 安全截尾）
+   * 送向量模型生成查询向量，而非 800 字摘要，提高召回。
    */
   async findCandidates(selfPath: string, content: string): Promise<SearchHit[]> {
     const topK = this.maxTopK;
@@ -230,7 +239,7 @@ export class LinkAgent {
     const pool = Math.max(topK * 3, CANDIDATE_POOL_MIN);
     let hits: SearchHit[] = [];
     try {
-      hits = await this.store.vectorSearch(bodyExcerpt(content, 800), pool, baseUrl);
+      hits = await this.store.vectorSearch(bodyExcerpt(content, LINK_QUERY_MAX_CHARS), pool, baseUrl);
     } catch (e) {
       console.warn('[link-agent] 近邻检索失败', e);
       return [];
