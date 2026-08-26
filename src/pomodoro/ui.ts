@@ -483,8 +483,8 @@ function bindEvents(): void {
 function buildDOM(): void {
   const mask = document.createElement('div');
   mask.id = 'pomodoro-mask';
-  // 域主弹窗层级（password 先例 9998）：低于域设置弹窗 10030 与 Obsidian 设置页，⚙️ 弹窗可正常覆盖
-  mask.style.zIndex = '9998';
+  // 域主弹窗层级在 src/pomodoro/styles.css（#pomodoro-mask z-index: 9998，低于域设置弹窗 10030 与
+  // Obsidian 设置页，⚙️ 弹窗可正常覆盖）——e3：不再 JS 内联 z-index
   mask.innerHTML = `
     <div id="pomodoro-popup">
       <button id="pomodoro-btn-settings" class="pomodoro-btn" title="设置"></button>

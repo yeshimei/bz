@@ -50,7 +50,8 @@ interface FormField {
 
 
 // ----- 模块状态（原脚本全局变量） -----
-/** 域内模态层级档（P0-7）：必须压过抽屉遮罩 10999 / 抽屉本体 11000 */
+/** 域内模态层级档（P0-7）：必须压过抽屉遮罩 10999 / 抽屉本体 11000；
+ *  e3 起不再内联 z-index——遮罩/下拉改挂 .bz-belongings-overlay--<档> 类，值由根样式提供（移交 ux-css） */
 const MODAL_Z = 11100;
 /** 模态内 search-select 下拉层级（模态 +1 档） */
 const DROPDOWN_Z = 11101;
@@ -61,6 +62,10 @@ let listContainer: HTMLDivElement | null = null;
 let sheetEditPending = false;
 /** 数据文件变更监听（打开期间注册，关闭注销——用户拍板"自动刷新"） */
 let autoRefreshOff: (() => void) | null = null;
+/** 主题变化监听（模块级持有，cleanupBelongings 时断开——防卸载残留） */
+let bodyThemeObserver: MutationObserver | null = null;
+/** 主题淡化渲染只关心 body 上的主题类（P44 去全量重渲染） */
+const THEME_CLASSES = new Set(['theme-dark', 'theme-light']);
 let sortField = 'purchase_date'; // 默认按购买日期
 let sortOrder = 'desc'; // 降序
 
@@ -85,7 +90,7 @@ function render() {
   const html = `
   <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 15px; background: ${palette.bg}; min-height: 100vh; color: ${palette.textColor};">
     ${buildStatsHtml(palette, totalValue, totalDailyCost, statusMap)}
-    ${buildItemGroupsHtml(palette, statusMap)}
+    ${items.length === 0 ? buildEmptyGuideHtml(palette) : buildItemGroupsHtml(palette, statusMap)}
     <div style="text-align: center; color: ${palette.muted}; font-size: 11px; margin-top: 15px; padding-top: 15px; border-top: 1px solid ${palette.border};">
       最后更新: ${new Date().toLocaleString('zh-CN')}
     </div>
@@ -219,6 +224,16 @@ function buildItemGroupsHtml(
     }).join('')}`;
 }
 
+/** 空态首步引导（l6-belongings）：零物品时提示点 ✏️ 添加第一个物品 */
+function buildEmptyGuideHtml(palette: { textColor: string; muted: string; border: string }): string {
+  const { textColor, muted, border } = palette;
+  return `
+    <div style="text-align:center;padding:32px 16px;border:1px dashed ${border};border-radius:12px;color:${muted};font-size:13px;">
+      <div style="font-size:15px;color:${textColor};font-weight:600;margin-bottom:8px;">归物本还没有物品</div>
+      点右上角 ✏️ 添加第一个物品
+    </div>`;
+}
+
 /** 为物品卡片挂统一抽屉（桌面右键菜单 / 移动长按抽屉）：状态流转 + 编辑 + 删除 */
 function bindCardDrawers(): void {
   if (!listContainer) return;
@@ -252,10 +267,10 @@ function buildActions(item: BelongingsItem, rebuild: () => void): ItemAction[] {
         void (async () => {
           item.current_status = s;
           item.last_updated = new Date().toISOString();
-          await saveDatabase(database!);
+          await saveAndRender();
           // ticket 079：状态流转通知 smartcat（4 态动词化，不防抖）
           emitDomainEvent('belongings', { kind: 'status', title: item.name, status: s });
-          render();
+          notice(`「${item.name}」已标记为${s}`, 'success');
           rebuild();
         })();
       },
@@ -343,11 +358,12 @@ function createSearchSelect(
   input.autocomplete = 'off';
 
   const dropdown = document.createElement('div');
+  dropdown.className = `bz-belongings-overlay--${zIndex}`; // e3：z-index 由根样式档位类提供（移交 ux-css）
   dropdown.style.cssText = `
         position: absolute; top: 100%; left: 0; right: 0;
         background: ${bg}; border: 1px solid ${border};
         border-radius: 6px; max-height: 200px; overflow-y: auto;
-        display: none; z-index: ${zIndex};
+        display: none;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       `;
 
@@ -443,7 +459,12 @@ function createSearchSelect(
         input.dispatchEvent(new Event('input'));
       }
     } else if (e.key === 'Escape') {
-      dropdown.style.display = 'none';
+      // e1：下拉可见 → 只收下拉，不再冒泡到 escManager 连关整层弹窗（ESC 一次只关一层）；
+      // 修 c3：下拉不可见/无匹配时放行冒泡，ESC 照常经 escManager 关弹窗/主面板（不留 ESC 死区）
+      if (dropdown.style.display !== 'none') {
+        e.stopImmediatePropagation();
+        dropdown.style.display = 'none';
+      }
     }
   });
 
@@ -588,9 +609,10 @@ function createModalShell(zIndex: number, maxWidth: number, titleText: string): 
   const palette = { bg, text, border, inputBg, isDark };
 
   const overlay = document.createElement('div');
+  overlay.className = `bz-belongings-overlay--${zIndex}`; // e3：z-index 由根样式档位类提供（移交 ux-css）
   overlay.style.cssText = `
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5); z-index: ${zIndex};
+      background: rgba(0,0,0,0.5);
       display: flex; align-items: center; justify-content: center;
     `;
 
@@ -684,8 +706,7 @@ function editItemById(id: string): Promise<void> {
       item.description = inputs.description.value.trim();
       item.last_updated = new Date().toISOString();
 
-      await saveDatabase(database!);
-      render();
+      await saveAndRender();
       notice(`物品「${name}」已更新`, 'success');
       // ticket 079：编辑成功通知 smartcat（α 变化列表：snapshot vs 保存后的 item）
       emitDomainEvent('belongings', { kind: 'edit', title: name, changes: belongingsEditChanges(snapshot, item) });
@@ -769,8 +790,7 @@ function deleteItemById(id: string): Promise<void> {
 
     const confirmBtn = createActionButton('🗑 删除', '#e74c3c', async () => {
       delete database!.items[id];
-      await saveDatabase(database!);
-      render();
+      await saveAndRender();
       notice(`已删除「${item.name}」`, 'success');
       // ticket 079：删除成功通知 smartcat（仅标题）
       emitDomainEvent('belongings', { kind: 'delete', title: item.name });
@@ -801,18 +821,25 @@ function deleteItemById(id: string): Promise<void> {
       }
     });
 
-    // 回车确认（P1-38：preventDefault 与 edit/add 弹窗对齐——拦原生按钮激活，Enter 仅触发一次删除回调）
+    // 回车处理（P1-38 + 修 c4：Enter 跟随当前焦点——焦点在「取消」→ 取消，不再焦点在取消却按 Enter 删除；
+    // 焦点在「删除」或未聚焦 → 确认删除；preventDefault 与 edit/add 弹窗对齐，拦原生按钮激活防双发）
     modal.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
-        confirmBtn.click();
+        if (document.activeElement === cancelBtn) {
+          cancelBtn.click();
+        } else {
+          confirmBtn.click();
+        }
       } else if (e.key === 'Escape') {
+        // e1：本地关确认弹窗即止，不再冒泡到 escManager 连关主面板（ESC 一次只关一层）
+        e.stopImmediatePropagation();
         cancelBtn.click();
       }
     });
 
-    // 聚焦删除按钮（防止误触）
-    setTimeout(() => confirmBtn.focus(), 100);
+    // P19：默认焦点不落在「删除」按钮（防误触），落在「取消」
+    setTimeout(() => cancelBtn.focus(), 100);
   });
 }
 
@@ -898,6 +925,8 @@ export function showSortModal(): Promise<void> {
     // ESC 关闭
     modal.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        // e1：本地关排序弹窗即止，不再冒泡到 escManager 连关主面板（ESC 一次只关一层）
+        e.stopImmediatePropagation();
         closeBtn.click();
       }
     });
@@ -950,8 +979,7 @@ export function addItem(): Promise<void> {
       };
 
       database!.items[newItem.id] = newItem;
-      await saveDatabase(database!);
-      render();
+      await saveAndRender();
       notice(`物品「${name}」已添加`, 'success');
       // ticket 079：添加成功通知 smartcat（键值式完整信息，字段有才加）
       emitDomainEvent('belongings', { kind: 'add', item: newItem });
@@ -999,6 +1027,21 @@ export function addItem(): Promise<void> {
   });
 }
 
+/** 本会话写盘标记（P44 去双渲染）：saveAndRender 保存期间置位，modify 事件自写短路吸收 */
+let selfWritePending = false;
+
+/** 保存 + 渲染单点入口：先置写盘标记再保存，事件型自动刷新对自写出让（不再重载重渲染）；
+ *  外部修改（非本会话写盘）仍走 startAutoRefresh 的 modify 路径重载。 */
+async function saveAndRender(): Promise<void> {
+  selfWritePending = true;
+  try {
+    await saveDatabase(database!);
+  } finally {
+    selfWritePending = false;
+  }
+  render();
+}
+
 /** 打开期间监听数据文件变更自动刷新（用户拍板：去 ⏳ 按钮改实时）；面板隐藏时注销。
  *  监听对象是 belongings.json（json 数据文件）：域事件总线一期仅收编 md 事件不覆盖，维持原生订阅（ADR-0048 边界）。 */
 function startAutoRefresh(): void {
@@ -1006,6 +1049,11 @@ function startAutoRefresh(): void {
   const app = getApp();
   const off = app.vault.on('modify', (file: any) => {
     if (file && file.path === getDataFilePath()) {
+      // 自写短路（P44 去双渲染）：本会话 saveAndRender 已渲染，事件型刷新不再重载重渲染
+      if (selfWritePending) {
+        selfWritePending = false;
+        return;
+      }
       void (async () => {
         database = await loadDatabase();
         render();
@@ -1043,9 +1091,10 @@ export async function openBelongingsPanel(): Promise<void> {
 
   const overlay = document.createElement('div');
   overlay.id = '__gui_wu_ben__';
+  overlay.className = 'bz-belongings-overlay--1000'; // e3：z-index 由根样式档位类提供（移交 ux-css）
   overlay.style.cssText = `
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5); z-index: 1000;
+      background: rgba(0,0,0,0.5);
       display: flex; align-items: center; justify-content: center;
     `;
 
@@ -1178,12 +1227,23 @@ export async function openBelongingsPanel(): Promise<void> {
   render();
   startAutoRefresh();
 
-  // 主题变化监听
-  const themeObserver = new MutationObserver(() => {
-    render();
+  // 主题变化监听（P44 去全量重渲染）：body class 任意变更不再全量重渲染，
+  // 仅当实际变化的类与渲染相关（主题类 theme-dark/theme-light）才重渲染
+  bodyThemeObserver?.disconnect();
+  let lastBodyClasses = document.body.className;
+  bodyThemeObserver = new MutationObserver(() => {
+    const cur = document.body.className;
+    if (cur === lastBodyClasses) return;
+    const prevTokens = new Set(lastBodyClasses.split(/\s+/).filter(Boolean));
+    const nextTokens = new Set(cur.split(/\s+/).filter(Boolean));
+    lastBodyClasses = cur;
+    let relevant = false;
+    for (const c of nextTokens) if (!prevTokens.has(c) && THEME_CLASSES.has(c)) { relevant = true; break; }
+    if (!relevant) for (const c of prevTokens) if (!nextTokens.has(c) && THEME_CLASSES.has(c)) { relevant = true; break; }
+    if (relevant) render();
   });
-  themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-  window.addEventListener('beforeunload', () => themeObserver.disconnect());
+  bodyThemeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  window.addEventListener('beforeunload', () => bodyThemeObserver?.disconnect());
 }
 
 /** 命令回调体：belongings-add-item（面板不打开，直接弹添加） */
@@ -1195,6 +1255,11 @@ export async function addBelongingsItemCommand(): Promise<void> {
 /** 卸载清理：移除主面板 DOM */
 export function cleanupBelongings(): void {
   stopAutoRefresh();
+  // 主题监听断开（l2：防卸载残留）
+  if (bodyThemeObserver) {
+    bodyThemeObserver.disconnect();
+    bodyThemeObserver = null;
+  }
   const el = document.getElementById('__gui_wu_ben__');
   if (el) el.remove();
   listContainer = null;

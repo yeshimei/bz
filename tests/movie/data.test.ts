@@ -81,17 +81,21 @@ tags:
     expect(items.find((i) => i.name === 'F')!.rating).toBeNull();
   });
 
-  it('无类型标签/无 frontmatter 跳过；非本目录跳过；状态字段被忽略（按评分推断）', () => {
+  it('无类型标签/无 frontmatter：无 tag 的笔记仍跳过；自定义 tag 归「其他」可见（x4）；非本目录跳过；状态字段被忽略（按评分推断）', () => {
     const vault = new MockVault();
-    vault.files.set('我的/影视/X.md', '---\ntags: [随笔]\n---');
+    vault.files.set('我的/影视/X.md', '---\ntags: [随笔]\n---'); // 自定义 tag → 归「其他」不再静默消失
+    vault.files.set('我的/影视/无标签.md', '---\n评分: 2\n---'); // 完全无 tag → 仍跳过
     vault.files.set('其他/Y.md', '---\ntags: [电影]\n---');
     // 状态字段不再被读取（旧数据兼容）：评分 0 = 在看，即使状态字段写矛盾值
     vault.files.set('我的/影视/Z.md', '---\ntags: [电影]\n状态: 2\n评分: 0\n---');
     vault.files.set('我的/影视/W.md', '正文无 frontmatter');
     const items = rebuildItems(makeApp(vault));
-    expect(items.length).toBe(1);
-    expect(items[0].name).toBe('Z');
-    expect(items[0].status).toBe(STATUS_WATCHING);
+    expect(items.length).toBe(2);
+    const x = items.find((i) => i.name === 'X')!;
+    expect(x.typeTag).toBe('随笔');
+    expect(x.group).toBe('其他');
+    expect(items.find((i) => i.name === '无标签')).toBeUndefined();
+    expect(items.find((i) => i.name === 'Z')!.status).toBe(STATUS_WATCHING);
   });
 
   it('tags 字符串单值', () => {

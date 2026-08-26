@@ -155,6 +155,69 @@ describe('moveAttachments 命令入口', () => {
     expect(hasNotice('没有打开的笔记')).toBe(true);
     expect(document.getElementById('bz-attach-folder-mask')).toBeNull();
   });
+
+  it('P20：选目标文件夹 → 先弹预览确认「将移动 N 个、改名 M 个」→ 确认后才执行', async () => {
+    const vault = new MockVault();
+    vault.create('笔记/章.md', '图：![[a.png]]');
+    vault.create('笔记/a.png', '');
+    vault.create('附件/a.png', ''); // 同名冲突 → 将改名 a (1).png
+    const app = mockAppWithVault(vault) as any;
+    app.workspace.getActiveFile = () => vault.getAbstractFileByPath('笔记/章.md');
+    const calls: Array<[string, string]> = [];
+    app.fileManager = {
+      renameFile: vi.fn(async (file: any, newPath: string) => {
+        calls.push([file.path, newPath]);
+        await vault.rename(file, newPath);
+      }),
+    };
+    setApp(app as any);
+
+    void moveAttachments(app);
+    await new Promise((r) => setTimeout(r, 0));
+    const mask = document.getElementById('bz-attach-folder-mask')!;
+    expect(mask).not.toBeNull();
+    const input = document.querySelector('.bz-attach-input') as HTMLInputElement;
+    input.value = '附件';
+    input.dispatchEvent(new Event('input'));
+    (document.querySelector('.bz-attach-btn--primary') as HTMLButtonElement).click();
+
+    // 预览确认弹出（执行前文件未动）
+    await new Promise((r) => setTimeout(r, 30));
+    const confirmMask = document.getElementById('__shared_confirm_mask__') as HTMLElement;
+    expect(confirmMask).not.toBeNull();
+    expect(confirmMask.textContent).toContain('将移动 1 个资源到「附件」');
+    expect(confirmMask.textContent).toContain('1 个将改名');
+    expect(calls).toHaveLength(0); // 确认前不执行
+
+    // 确认 → 执行
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(calls).toEqual([['笔记/a.png', '附件/a (1).png']]);
+    expect(vault.files.has('附件/a (1).png')).toBe(true);
+    expect(hasNotice(/已移动 1 个资源到 附件，改名 1 个/)).toBe(true);
+  });
+
+  it('P20 修复自相矛盾：选「（库根目录）」不再被「未选择目标文件夹」拒绝——空串目标 = 移动到 vault 根', async () => {
+    const vault = new MockVault();
+    vault.create('笔记/章.md', '图：![[a.png]]');
+    vault.create('笔记/a.png', '');
+    const app = mockAppWithVault(vault) as any;
+    app.workspace.getActiveFile = () => vault.getAbstractFileByPath('笔记/章.md');
+    const calls: Array<[string, string]> = [];
+    app.fileManager = {
+      renameFile: vi.fn(async (file: any, newPath: string) => {
+        calls.push([file.path, newPath]);
+        await vault.rename(file, newPath);
+      }),
+    };
+    setApp(app as any);
+
+    const summary = await runMove(app, vault.getAbstractFileByPath('笔记/章.md'), '');
+    expect(summary).toEqual({ moved: 1, renamed: 0, linksAuto: true });
+    expect(calls).toEqual([['笔记/a.png', 'a.png']]);
+    expect(vault.files.has('a.png')).toBe(true);
+    expect(hasNotice(/已移动 1 个资源到 库根目录/)).toBe(true);
+  });
 });
 
 describe('FolderSelectModal 文件夹选择弹窗', () => {

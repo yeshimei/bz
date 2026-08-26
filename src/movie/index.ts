@@ -96,5 +96,10 @@ export function addMovieItem(app: App): void {
 export function unloadMovie(): void {
   initialized = false;
   autoRefreshRegistered = false;
+  // l1-movie：重置前显式移除全部 overlay DOM（禁用插件不再留死遮罩）；
+  // 每个遮罩先移除再置空引用（closeOverlay 语义，幂等——已脱离 DOM 的元素 remove 无害）
+  for (const overlay of [M.currentOverlay, M.addOverlay, M.editOverlay, M.settingsOverlay, M.recommendOverlay]) {
+    if (overlay) overlay.remove();
+  }
   resetMovieState();
 }
