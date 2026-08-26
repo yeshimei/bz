@@ -100,7 +100,7 @@ describe('_handleAddSave 字段收集分支', () => {
   it('内容为空但自定义占位符有 URL → 以占位符入库并提取 url/title', async () => {
     const vault = new MockVault();
     await initApp(vault);
-    openWithScene('工作'); // 非剪藏场景会清空内容并还原默认占位符
+    openWithScene('工作'); // 切到非剪藏场景（拍板 10：已输入内容保留，本用例随后显式注入占位符）
     const content = q<HTMLTextAreaElement>('#add-todo-content');
     content.value = '';
     content.placeholder = 'https://example.com/a 示例页'; // 模拟剪藏预填残留
@@ -244,6 +244,8 @@ describe('添加弹窗交互细节', () => {
     await vi.advanceTimersByTimeAsync(20);
     expect(q<HTMLTextAreaElement>('#add-todo-content').placeholder).toBe('https://example.com/page');
     expect(q<HTMLInputElement>('#add-todo-title').placeholder).toBe('示例页');
+    // 拍板 11：预填成功给轻提示（info，正文不带 emoji）
+    expect(hasNotice('已从剪贴板预填链接')).toBe(true);
 
     // ② 纯 URL（display===url）→ fetchPageTitle（requestUrl mock 返回空页 → 无标题，占位符保持 URL）
     mockRequestUrl.mockClear();
@@ -317,6 +319,8 @@ describe('添加弹窗交互细节', () => {
     UIManager.showAddDialog({ ...codeItem, scene: '不存在的场景' });
     const activeScene = q<HTMLElement>('#add-todo-scenes .scene-btn.active');
     expect(activeScene.dataset.scene).toBe('剪藏');
+    // 拍板 10：回退点击不再清空——编辑内容完好回填（场景按钮点击后内容补回）
+    expect(q<HTMLTextAreaElement>('#add-todo-content').value).toBe('跑脚本');
     void app;
   });
 
@@ -329,6 +333,63 @@ describe('添加弹窗交互细节', () => {
     } as any);
     await vi.advanceTimersByTimeAsync(10);
     expect(q<HTMLButtonElement>('#add-todo-pos-btn').textContent).toBe('📌');
+  });
+});
+
+describe('拍板 10：切换场景默认保留已输入内容（不询问）', () => {
+  it('切离剪藏再切回：content/title 均保留；离开剪藏仅还原预填态并隐藏标题框', async () => {
+    const vault = new MockVault();
+    await initApp(vault);
+    UIManager.showAddDialog(null); // 默认场景 剪藏 → 自动激活并显示标题框
+    const content = q<HTMLTextAreaElement>('#add-todo-content');
+    const title = q<HTMLInputElement>('#add-todo-title');
+    expect(title.style.display).toBe('block'); // 剪藏场景标题框可见
+    content.value = '已输入内容';
+    title.value = '标题文字';
+    content.placeholder = 'https://example.com/x'; // 剪藏预填占位符（模拟）
+    content.dataset.rawClipboard = 'https://example.com/x'; // 剪藏预填草稿（模拟）
+
+    // 切到工作：content/title 保留；剪藏预填态还原、标题框隐藏
+    const workBtn = [...document.querySelectorAll('.scene-btn')].find(
+      (b) => (b as HTMLElement).dataset.scene === '工作'
+    ) as HTMLElement;
+    workBtn.click();
+    expect(content.value).toBe('已输入内容');
+    expect(title.value).toBe('标题文字');
+    expect(title.style.display).toBe('none');
+    expect(content.placeholder).toBe('输入备忘录内容...');
+    expect(content.dataset.rawClipboard).toBe('');
+
+    // 再切回剪藏：content/title 仍保留；标题框恢复
+    const clipBtn = [...document.querySelectorAll('.scene-btn')].find(
+      (b) => (b as HTMLElement).dataset.scene === '剪藏'
+    ) as HTMLElement;
+    clipBtn.click();
+    expect(content.value).toBe('已输入内容');
+    expect(title.value).toBe('标题文字');
+    expect(title.style.display).toBe('block');
+  });
+});
+
+describe('拍板 11：剪藏剪贴板预填提示', () => {
+  it('编辑模式不弹预填提示（编辑入口自动点击剪藏按钮不误报）；新建模式照常提示', async () => {
+    const vault = new MockVault();
+    await initApp(vault);
+    await seedItems(vault, [
+      { id: 'e1', title: '剪藏条目', scene: '剪藏', priority: 'minor', created: '2025-06-14 10:00:00', completed: null, url: 'https://example.com/edit-clip' },
+    ]);
+    clipboardRead.mockResolvedValue('https://example.com/edit-clip 编辑标题');
+    const target = App.state.todoItems.find((i) => i.id === 'e1')!;
+    clearNotices();
+    // 编辑：自动点击剪藏按钮 → 剪贴板读取成功 → 预填执行但提示被编辑模式门控
+    UIManager.showAddDialog(target);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(hasNotice('已从剪贴板预填链接')).toBe(false);
+
+    // 对照：新建模式（addEditingId 为空）默认场景自动激活剪藏 → 提示照常弹出
+    UIManager.showAddDialog(null);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(hasNotice('已从剪贴板预填链接')).toBe(true);
   });
 });
 
