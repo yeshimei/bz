@@ -150,6 +150,13 @@
     color: var(--text-faint);
     margin-top: 4px;
 }
+/* l5 三态正文（首用引导 / 错误态说明行） */
+.news-done-body {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.9;
+    margin-top: 10px;
+}
 .news-loading {
     flex: 1;
     display: flex;
