@@ -6,10 +6,13 @@
  *   ticket 107 起索引未就绪时不自动嵌入）；
  * - 三个命令入口：主面板（统一入口）/ 参考侧边栏 / AI 对话；ticket 107 起本地无向量数据时
  *   后两者统一转开主面板引导态；
- * - unload 全量清理：定时器、订阅、面板 DOM、DeepSeek 服务。
+ * - ticket 111：自动双链管线（link agent）——linkAgentEnabled 开关注册监听与队列消费；
+ * - unload 全量清理：定时器、订阅、面板 DOM、DeepSeek 服务、link agent。
  */
 import type { App } from 'obsidian';
 import { onDomainEvent } from '../core/domain-bus';
+import { notice } from '../core/notice';
+import { tryGetSettings } from '../core/settings-provider';
 import { IS_MOBILE } from './config';
 import { VectorStore } from './vector-store';
 import { resetDeepseekAI } from './ai';
@@ -17,6 +20,9 @@ import { SecondBrainPanel } from './panel';
 import { ReferencePanel } from './reference-panel';
 import { ChatPanel } from './chat-panel';
 import { MobilePanel } from './mobile-panel';
+import { LinkAgent } from './link-agent/pipeline';
+import { LITERATURE_BOX, isUnderFolder } from './link-agent/data';
+import { LinkAgentWatcher, startQueueConsumption } from './link-agent/watch';
 
 let appRef: App | null = null;
 let store: VectorStore | null = null;
@@ -26,6 +32,10 @@ let panel: SecondBrainPanel | null = null;
 let reference: ReferencePanel | null = null;
 let chat: ChatPanel | null = null;
 let mobile: MobilePanel | null = null;
+
+// 自动双链管线（ticket 111）：随 linkAgentEnabled 开关注册（ADR-0003）
+let linkAgent: LinkAgent | null = null;
+let linkWatcher: LinkAgentWatcher | null = null;
 
 let unsubVault: (() => void) | null = null;
 let refreshTimer: ReturnType<typeof setTimeout> | null = null;
@@ -64,6 +74,18 @@ export function ensureSecondBrain(app: App): void {
       store?.refresh().catch((e) => console.warn('[secondbrain] 后台刷新失败', e));
     }, 5000);
   });
+  // ticket 111：自动双链——linkAgentEnabled=false 时无任何监听与写入
+  try {
+    if ((tryGetSettings() as any).linkAgentEnabled !== false) {
+      linkAgent = new LinkAgent({ app, store: s });
+      linkWatcher = new LinkAgentWatcher(app, linkAgent);
+      linkWatcher.start();
+      // 域初始化发现队列非空且 embedding 可达 → 自动消费，无需询问
+      void startQueueConsumption(linkAgent, s.initialLoad);
+    }
+  } catch (e) {
+    console.warn('[secondbrain] 自动双链初始化失败', e);
+  }
 }
 
 /** 卸载清理（main.onunload 调用） */
@@ -82,6 +104,9 @@ export function unloadSecondBrain(): void {
   chat = null;
   mobile?.close();
   mobile = null;
+  linkWatcher?.destroy();
+  linkWatcher = null;
+  linkAgent = null;
   store = null;
   appRef = null;
   initialized = false;
@@ -162,4 +187,42 @@ export function openSecondBrainChat(app: App): void {
     return;
   }
   openChatInternal();
+}
+
+/**
+ * 命令 bz-secondbrain-rebuild-links（ticket 111）：对当前打开笔记重跑一次关联
+ * （正文大改后的手动兜底入口）。非文献盒笔记给出提示性通知；
+ * embedding 不可达时入队待自动消费。
+ */
+export async function rebuildSecondBrainLinks(app: App): Promise<void> {
+  const file = app.workspace.getActiveFile?.() as { path: string } | null;
+  if (!file) {
+    notice('请先打开一个笔记');
+    return;
+  }
+  if (!isUnderFolder(LITERATURE_BOX, file.path)) {
+    notice('当前笔记不在文献盒，自动双链仅处理文献盒内笔记');
+    return;
+  }
+  if ((tryGetSettings() as any).linkAgentEnabled === false) {
+    notice('自动双链已在第二大脑设置中关闭');
+    return;
+  }
+  ensureSecondBrain(app);
+  if (!linkAgent) return;
+  try {
+    const outcome = await linkAgent.processNote(file.path);
+    if (outcome.status === 'done') {
+      notice(outcome.created > 0 ? `已新建关联 ${outcome.created} 条` : '未发现实质关联，未新建', 'success');
+    } else if (outcome.status === 'queued') {
+      notice('embedding 服务不可达，已加入待处理队列，服务可达后自动处理', 'info');
+    } else if (outcome.status === 'failed') {
+      notice(`关联处理失败：${outcome.error}`, 'error');
+    } else {
+      notice('该笔记暂无法处理（文件缺失或位于加密目录）', 'info');
+    }
+  } catch (e) {
+    console.warn('[secondbrain] 重跑关联失败', e);
+    notice(`关联处理失败：${e instanceof Error ? e.message : String(e)}`, 'error');
+  }
 }
