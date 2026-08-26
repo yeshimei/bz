@@ -579,6 +579,29 @@ describe('EPUB 读书笔记（分组/跳转/删除/编辑）', () => {
     expect(reopened.textContent).toContain('要留的');
   });
 
+  it('EPUB 删除失败（deleteEpubNote=false）→ error toast + 重开壳保留条目（B2）', async () => {
+    vault.files.set(
+      'CONFIG/STORAGE/weave-data.json',
+      weaveJson([{ id: 'e1', text: '要删的', commentText: '', chapterIndex: 0, chapterTitle: '第一章', cfiRange: 'c1', createdTime: 0 }])
+    );
+    const epubNotes = await import('../../src/library/epub-notes');
+    const spy = vi.spyOn(epubNotes as any, 'deleteEpubNote').mockResolvedValue(false);
+    try {
+      await openEpub();
+      const dateEl = document.querySelector('.bz-lib-overlay--11100 .bz-lib-hl-date') as HTMLElement;
+      await longPressEl(dateEl); // 壳关 + confirm
+      document.getElementById('__shared_confirm_ok__')!.click();
+      await flush(80);
+      // 失败：明确 toast + 重开壳且条目未被删（B2：不留只剩关掉的壳）
+      expect(getNoticeMessages()).toContain('删除划线和想法失败，请重试');
+      const shell = document.querySelector('.bz-lib-overlay--11100') as HTMLElement;
+      expect(shell).not.toBeNull();
+      expect(shell.textContent).toContain('要删的');
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it('openEpubEditCommentModal 直调：保存成功关弹窗；空 id 失败保持打开', async () => {
     vault.files.set(
       'CONFIG/STORAGE/weave-data.json',

@@ -909,7 +909,9 @@ function renderEpubHighlightBlock(
       cancelText: '取消',
       onConfirm: () => {
         void deleteEpubNote(app, vaultPath, highlightId).then((ok) => {
-          if (ok) onChanged();
+          // 失败也重开壳（列表保留该条）并给明确 toast（B2：失败路径不能只剩关掉的壳、无任何反馈）
+          if (!ok) notice('删除划线和想法失败，请重试', 'error');
+          onChanged();
         });
       },
       onCancel: () => onChanged(),

@@ -35,8 +35,8 @@ let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 let currentSearchKeyword = '';
 let refreshTimer: ReturnType<typeof setTimeout> | null = null;
 let fileListenerAttached = false;
-/** 总线退订函数（原存 vault ref 用于 offref，换线后改存 onDomainEvent 返回的退订闭包） */
-let fileListenerRef: (() => void) | null = null;
+/** 总线退订闭包集合（modify/delete/rename 三通道，onDomainEvent 各返回一个退订函数） */
+let fileListenerRefs: (() => void)[] = [];
 let isLoadingData = false;
 
 // ---------- 配置（从设置读取） ----------
@@ -76,8 +76,8 @@ export async function initArticleView(showImmediately = true): Promise<void> {
       setArticleViewVisible(true);
       // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
       applyMobileWindowFullscreen(articlePopup, tryGetSettings().clippingMobileDefaultFullscreen === true);
-      // 若数据为空（可能加载失败），重新加载
-      if (allArticles.length === 0 && !isLoadingData) {
+      // 重开即重载：解析零 I/O（纯 metadataCache），外部删除/改名/换目录不留幽灵卡片跨重开（B1）
+      if (!isLoadingData) {
         void loadAllArticles();
       }
     } else {
@@ -386,21 +386,36 @@ export async function parseArticleFile(file: any): Promise<ArticleEntry | null> 
   }
 }
 
-// ========== 刷新数据（单文件增量，ticket 45） ==========
-/** modify 只重解析被改的那一个文件并就地更新列表，避免整目录重读（parseArticleFile 无 I/O，代价低廉） */
+// ========== 刷新数据（单文件增量，ticket 45 + B1） ==========
+/** 按路径移除存量条目并重渲染（删除/改名旧路径/解析失败共用；无此条目则不动） */
+function removeArticleByPath(path: string): void {
+  const idx = allArticles.findIndex((a) => a.path === path);
+  if (idx === -1) return;
+  allArticles.splice(idx, 1);
+  allArticles.sort((a, b) => b.created.valueOf() - a.created.valueOf());
+  filteredArticles = [...allArticles];
+  applyFilter();
+  rebuildSiteBar();
+}
+
+/** modify/rename 新路径：只重解析这一个文件并就地更新列表（parseArticleFile 无 I/O，代价低廉） */
 async function refreshSingleFile(path: string): Promise<void> {
   const app = getApp();
   const file = app.vault.getAbstractFileByPath(path) as any;
-  if (!file || file.extension !== 'md') return;
+  if (!file) {
+    // 文件已删除/移出（如整目录清理）：按路径移除存量条目，防幽灵卡片（B1）
+    removeArticleByPath(path);
+    return;
+  }
+  if (file.extension !== 'md') return;
   const entry = await parseArticleFile(file);
-  const idx = allArticles.findIndex((a) => a.path === path);
   if (entry) {
+    const idx = allArticles.findIndex((a) => a.path === path);
     if (idx >= 0) allArticles[idx] = entry;
     else allArticles.push(entry);
-  } else if (idx >= 0) {
-    allArticles.splice(idx, 1); // 修改后不再是合法文章（缺 url/created）→ 从列表移除
   } else {
-    return; // 既非存量也非新文章（如目录内普通 md 的 modify）→ 无需重渲染
+    removeArticleByPath(path); // 修改后不再是合法文章（缺 url/created）→ 从列表移除
+    return;
   }
   allArticles.sort((a, b) => b.created.valueOf() - a.created.valueOf());
   filteredArticles = [...allArticles];
@@ -832,29 +847,58 @@ function initScroll() {
 }
 
 // ========== 文件监听 ==========
-/** 防抖窗口内被修改的文件路径集合（窗口结束逐个增量刷新，防多文件改只刷最后一个） */
+/** 防抖窗口内被修改（含改名新路径）的文件路径集合 */
 const pendingRefreshPaths = new Set<string>();
+/** 防抖窗口内被删除（含改名旧路径）的文件路径集合 */
+const pendingDeletePaths = new Set<string>();
+
+/** 防抖窗口结束统一结算：先按删除路径移除（含改名旧路径），再逐个增量解析存活路径 */
+function scheduleRefreshFlush(): void {
+  if (refreshTimer) clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(async () => {
+    const deletes = Array.from(pendingDeletePaths);
+    const modifies = Array.from(pendingRefreshPaths);
+    pendingDeletePaths.clear();
+    pendingRefreshPaths.clear();
+    for (const p of deletes) removeArticleByPath(p);
+    for (const p of modifies) await refreshSingleFile(p);
+    refreshTimer = null;
+  }, 300);
+}
+
 function attachFileListener() {
   if (fileListenerAttached) return;
+  const inDir = (path: string) => path.startsWith(ARTICLE_DIRECTORY + '/');
   const fileModifyHandler = (file: any) => {
     // 补 '/' 边界：防「我的/文章备选」误命中「我的/文章」前缀（与 auto-summary getWatchDir()+'/' 对齐）
-    if (file.path.startsWith(ARTICLE_DIRECTORY + '/') && file.extension === 'md') {
+    if (inDir(file.path) && file.extension === 'md') {
       pendingRefreshPaths.add(file.path);
-      if (refreshTimer) clearTimeout(refreshTimer);
-      refreshTimer = setTimeout(async () => {
-        // 防抖保持，但只重解析窗口内被改的文件（ticket 45：不再整目录重读）
-        const paths = Array.from(pendingRefreshPaths);
-        pendingRefreshPaths.clear();
-        for (const p of paths) await refreshSingleFile(p);
-        refreshTimer = null;
-      }, 300);
+      scheduleRefreshFlush();
     }
   };
-  // 换线：原生 vault modify 订阅 → 域事件总线 clipping:file-modified（obsidian-adapter 统一派发，仅 md）。
-  // fileListenerRef 改存总线退订函数，卸载点 unloadClipping 同步适配；防抖与目录边界判断原样保留。
-  fileListenerRef = onDomainEvent<{ path: string }>('clipping:file-modified', (evt) =>
-    fileModifyHandler({ path: evt.path, extension: 'md' })
-  );
+  // 销毁侧（vault delete / rename 旧路径）：文件已不在，按路径移除旧条目，防幽灵卡片（B1）
+  const fileDeleteHandler = (evt: { path: string }) => {
+    if (inDir(evt.path)) {
+      pendingDeletePaths.add(evt.path);
+      scheduleRefreshFlush();
+    }
+  };
+  // 改名：移除 oldPath 旧卡；新路径仍在剪藏目录则增量解析（auto-summary 改名正走此事件 → 防同文双卡）
+  const fileRenameHandler = (evt: { oldPath: string; newPath: string; movedOut: boolean }) => {
+    if (inDir(evt.oldPath)) pendingDeletePaths.add(evt.oldPath);
+    // movedOut=true 为移入（旧路径不在域内，无旧卡）；movedOut=false 则新旧路径均在剪藏目录
+    if (!evt.movedOut && inDir(evt.newPath)) pendingRefreshPaths.add(evt.newPath);
+    scheduleRefreshFlush();
+  };
+  // 换线：原生 vault 事件 → 域事件总线 clipping:file-*（obsidian-adapter 统一派发，仅 md；rename 只发一条）。
+  // fileListenerRefs 存各通道退订闭包，卸载点 unloadClipping 统一退订；防抖与目录边界判断原样保留。
+  fileListenerRefs = [
+    onDomainEvent<{ path: string }>('clipping:file-modified', (evt) =>
+      fileModifyHandler({ path: evt.path, extension: 'md' })
+    ),
+    onDomainEvent<{ path: string }>('clipping:file-deleted', fileDeleteHandler),
+    onDomainEvent<{ oldPath: string; newPath: string; movedOut: boolean }>('clipping:file-renamed', fileRenameHandler),
+  ];
   fileListenerAttached = true;
 }
 
@@ -887,11 +931,13 @@ export function renderEmpty() {
 
 /** 卸载清理（main.ts onunload 可调用） */
 export function unloadClipping(): void {
-  if (fileListenerRef) {
-    try {
-      fileListenerRef(); // 总线退订函数（幂等，重复调用安全）
-    } catch (e) { /* 忽略 */ }
-    fileListenerRef = null;
+  if (fileListenerRefs.length > 0) {
+    for (const unsub of fileListenerRefs) {
+      try {
+        unsub(); // 总线退订函数（幂等，重复调用安全）
+      } catch (e) { /* 忽略 */ }
+    }
+    fileListenerRefs = [];
     fileListenerAttached = false;
   }
   ['article-view-mask', 'article-view-popup'].forEach((id) => {

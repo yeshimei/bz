@@ -468,6 +468,60 @@ describe('空态三态与增量刷新（ticket 45/63）', () => {
     expect(texts.some((t) => t!.includes('知乎新站'))).toBe(true);
     expect(texts.some((t) => t!.includes('果壳新站'))).toBe(true);
   });
+
+  it('file-deleted 事件 → 按路径移除卡片，不残留幽灵条目（B1）', async () => {
+    const { vault } = await setup();
+    vault.files.set('我的/文章/A.md', makeArticleMd('https://x.com/a', '知乎', 'A', '2025-06-02T08:00:00.000Z'));
+    vault.files.set('我的/文章/B.md', makeArticleMd('https://x.com/b', '果壳', 'B', '2025-06-01T08:00:00.000Z'));
+    await initArticleView(true);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(2);
+    // 外部删除 B：vault 文件消失 + adapter 派发 clipping:file-deleted
+    vault.files.delete('我的/文章/B.md');
+    emitDomainEvent('clipping:file-deleted', { path: '我的/文章/B.md' });
+    await new Promise((r) => setTimeout(r, 400));
+    const cards = document.querySelectorAll('.article-entry-card');
+    expect(cards.length).toBe(1);
+    expect(cards[0].textContent).toContain('A');
+  });
+
+  it('file-renamed 事件（auto-summary 改名路径）→ 旧卡移除、新卡解析，同一文章不双卡（B1）', async () => {
+    const { vault } = await setup();
+    vault.files.set('我的/文章/《旧名》.md', makeArticleMd('https://x.com/a', '知乎', '旧名', '2025-06-02T08:00:00.000Z'));
+    await initArticleView(true);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(1);
+    // 模拟 auto-summary 改名：旧文件消失、新文件就位 + adapter 派发 renamed（双路径均在本目录）
+    const content = vault.files.get('我的/文章/《旧名》.md')!;
+    vault.files.delete('我的/文章/《旧名》.md');
+    vault.files.set('我的/文章/《新名》.md', content);
+    emitDomainEvent('clipping:file-renamed', {
+      oldPath: '我的/文章/《旧名》.md',
+      newPath: '我的/文章/《新名》.md',
+      movedOut: false,
+    });
+    await new Promise((r) => setTimeout(r, 400));
+    // 仅一张卡：旧卡已移除、新路径已解析（若只增不删就是双卡）
+    const cards = document.querySelectorAll('.article-entry-card');
+    expect(cards.length).toBe(1);
+    expect(cards[0].textContent).toContain('《新名》');
+  });
+
+  it('重开窗口即重载：外部删除未被事件捕获时，幽灵卡片不跨重开持久（B1）', async () => {
+    const { vault } = await setup();
+    vault.files.set('我的/文章/A.md', makeArticleMd('https://x.com/a', '知乎', 'A', '2025-06-02T08:00:00.000Z'));
+    vault.files.set('我的/文章/B.md', makeArticleMd('https://x.com/b', '果壳', 'B', '2025-06-01T08:00:00.000Z'));
+    await initArticleView(true);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(2);
+    const closeBtn = [...document.querySelectorAll('button')].find((b) => b.title === '关闭')!;
+    closeBtn.click(); // 面板关闭（visibility 常驻，列表数据保留）
+    // 关闭期间外部删除 B（不派发任何域事件 → 模拟监听未覆盖的删除/改名路径）
+    vault.files.delete('我的/文章/B.md');
+    await initArticleView(true); // 重开 → 无条件重载（B1：length>0 也重载）
+    await new Promise((r) => setTimeout(r, 20));
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(1);
+  });
 });
 
 describe('剪藏本修复回归（P0-8/P1-22/P1-23/P2）', () => {

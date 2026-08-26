@@ -478,6 +478,7 @@ button.news-close-btn {
   line-height: 1.5;
   word-wrap: break-word;
   max-width: 100%;
+  white-space: pre-line; /* 消息内 \n 换行按行渲染（B6：删除确认「此操作不可撤销」独立成行） */
 }
 #__shared_confirm_popup__ .confirm-actions {
   display: flex;

@@ -114,10 +114,12 @@ describe('updateComment / deleteHighlight', () => {
     expect(hasNotice('已删除')).toBe(true);
   });
 
-  it('deleteHighlight：原文不匹配 → 「未找到对应高亮（原文不匹配），删除失败」', async () => {
-    deleteHighlight(makeApp(vault), '书库/活着.md', 'h1', '错原文');
+  it('deleteHighlight：原文不匹配 → 「未找到对应高亮（原文不匹配），删除失败」+ onDone 仍回调（B2）', async () => {
+    const done = vi.fn();
+    deleteHighlight(makeApp(vault), '书库/活着.md', 'h1', '错原文', done);
     await new Promise((r) => setTimeout(r, 20));
     expect(hasNotice('未找到对应高亮（原文不匹配），删除失败')).toBe(true);
+    expect(done).toHaveBeenCalled(); // 失败路径也回调：UI 层据此重开壳（B2）
   });
 
   it('updateComment（P1-18）：含 $&、$`、双引号的批注往返无损——转义 &quot; 且 $ 序列不被当替换模式', async () => {
