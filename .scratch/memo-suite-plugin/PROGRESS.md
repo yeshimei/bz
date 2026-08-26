@@ -1,3 +1,20 @@
+## 2026-08-26 第二大脑初始化断点可续 + 白名单目录选择器（ticket 114；编号与并行 core 113 错开）
+
+**状态：master ef5c56a 合并完成；全量 2695 例绿 + tsc 0 + 构建部署**
+
+- ✅ **断点暂存续嵌**：长库初始化/重建期间按「时间 ≥5s + 新增完成块 ≥200」双阈值（CHECKPOINT_POLICY
+  可测收紧）把已完整嵌完文件 `mergeWrite` 落盘；中断（关页/重启/Ollama 失联）后重开自动增量续嵌，
+  不再整库从零重来；行序布局不变式与数据格式零改动（最终写回与暂存共用同一 mergeWrite）
+- ✅ **关页重开恢复进度视图**：原缺陷「初始化中途关页重开 → 回引导态 + 按钮点击无反应」（initializing
+  守卫静默吞点击 + 进度 UI 未恢复）；现 render() 检测 store.isRefreshing() → 恢复实时进度视图（fire-and-forget
+  不阻塞 open）；重复点击接回进度而非静默失效；startInitialIndex 抽为 runInitialIndexView 点击/重开两路共用
+- ✅ **白名单目录选择器**：whitelist.ts 纯函数（parse/format/normalize——祖先去冗余后代/collectFolderInfos——
+  每级祖先+根级单文件聚合计数）+ whitelist-modal 弹窗（搜索过滤 + checkbox 层级列表 + 已选 chips ✕ +
+  清空/全选/确定，z-index 11200 companion 档）；设置页白名单行 = 文本框+📁 选择+chips 预览，
+  「关联范围」行同步 📁 按钮；存储格式不变（逗号分隔字符串），兼容冻结零破坏
+- ✅ **测试**：白名单纯函数 / 断点暂存恢复续嵌 / 重开进度视图 / fake store 补 isRefreshing，共 +10 例
+- 📄 文档：issues/114、本票编号与并行 core 域 ticket 113（通知时长）错开
+
 ## 2026-08-26 通知动态停留时长（ticket 113）
 
 **状态：测试 + tsc 全绿；待合并**
