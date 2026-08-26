@@ -28,6 +28,9 @@ vi.mock('../../src/secondbrain/vector-store', () => {
     isIndexReady(): boolean {
       return fakeState.ready;
     }
+    isRefreshing(): boolean {
+      return false;
+    }
     async load(): Promise<void> {}
     async initMobile(): Promise<string> {
       return '';
