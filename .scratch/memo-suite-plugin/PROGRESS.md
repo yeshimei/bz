@@ -1,4 +1,12 @@
-﻿## 2026-08-26 第二大脑面板打磨（ticket 108，ADR-0052）
+## 2026-08-26 第二大脑统计卡改版 + 灵感参考悬停全文（ticket 109）
+
+**状态：进行中（worktree/sb-cards-hover）**
+
+- 🚧 顶卡 7→6：删「内容规模」「白名单覆盖」，新增「嵌入维度」卡；桌面一行 6 列、移动端 3×2；≥10K 用 K/M 缩写、hover 千分位精确值
+- 🚧 「最厚笔记 Top5」连根删（区块+computeStats.topThickets+测试）；清死代码 clearSummaryCache / fmtScale
+- 🚧 灵感参考悬停浮层：460px 加宽 + overflow-wrap 断词 + 取消 150px 限高 + top 贴屏钳制；拖出缩放与浮卡全文经核实为既有能力，不动
+
+## 2026-08-26 第二大脑面板打磨（ticket 108，ADR-0052）
 
 **状态：secondbrain 117 例全绿（新增 11）+ tsc 0 错误；worktree/sb-panel-polish**
 
