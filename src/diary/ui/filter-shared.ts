@@ -168,8 +168,11 @@ export function rebuildTags() {
   }
 
   const oldContainer = tagsContainer.querySelector('.diary-tags-scroll-container');
+  const savedScrollLeft = oldContainer ? oldContainer.scrollLeft : 0;
   if (oldContainer) oldContainer.remove();
   tagsContainer.appendChild(tagsScrollContainer);
+  // UX-41：重建标签滚动容器后恢复横向滚动位置（原实现每次重建即复位）
+  if (savedScrollLeft > 0) tagsScrollContainer.scrollLeft = savedScrollLeft;
 
   refreshSubTagsBar();
 }
@@ -190,21 +193,29 @@ function getTagCountForPrimary(primaryTag: string) {
   return count;
 }
 
+/** 单标签选中态切换样式（与 createTag/rebuildTags 高亮同源） */
+function setTagButtonSelectedStyle(button: HTMLElement, selected: boolean) {
+  button.style.background = selected ? 'var(--interactive-accent)' : 'var(--background-secondary)';
+  button.style.color = selected ? 'var(--background-primary)' : 'var(--text-normal)';
+}
+
 // 标签选中统一逻辑（普通点击与「加密」解锁后复用，原 214-231）
 function applyTagSelection(button: HTMLElement, tag: string) {
   if (!state.data.selectedTags.has(tag)) {
+    // UX-41：增量切换——仅按 data-tag 边界收回旧选中按钮并高亮新按钮，不再全量重绘
+    const prevTag = [...state.data.selectedTags][0];
     state.data.selectedTags.clear();
     state.data.selectedTags.add(tag);
-    document.querySelectorAll('.diary-tag-btn').forEach((btn) => {
-      (btn as HTMLElement).style.background = 'var(--background-secondary)';
-      (btn as HTMLElement).style.color = 'var(--text-normal)';
-    });
-    button.style.background = 'var(--interactive-accent)';
-    button.style.color = 'var(--background-primary)';
+    if (prevTag !== undefined && prevTag !== tag) {
+      const prevBtn = document.querySelector(
+        `.diary-tag-btn:not(.diary-sub-tag-btn)[data-tag="${CSS.escape(prevTag)}"]`
+      ) as HTMLElement | null;
+      if (prevBtn && prevBtn !== button) setTagButtonSelectedStyle(prevBtn, false);
+    }
+    setTagButtonSelectedStyle(button, true);
   } else {
     state.data.selectedTags.delete(tag);
-    button.style.background = 'var(--background-secondary)';
-    button.style.color = 'var(--text-normal)';
+    setTagButtonSelectedStyle(button, false);
   }
   applyFilterFromShared({ skipTagCountUpdate: true });
 }
@@ -222,7 +233,8 @@ export function createTag(tag: string, emoji: string, count: number | null) {
 
   let countHtml = '';
   if (showCount && count !== null && count !== undefined && !encryptLocked) {
-    countHtml = `<span style="margin-left:4px; font-size:10px; opacity:0.8;">(${count})</span>`;
+    // UX-41：计数独立 span（.diary-tag-count），updateTagCounts 增量更新只碰它
+    countHtml = `<span style="margin-left:4px; font-size:10px; opacity:0.8;" class="diary-tag-count">(${count})</span>`;
   }
   // 标签按钮显示 emoji 开关（设置项 diaryTagShowEmoji，关=纯文字）
   const showEmoji = getTagShowEmojiSetting();
@@ -291,19 +303,13 @@ export function updateTagCounts() {
     }
   }
 
+  // UX-41：增量更新计数 span——不重写整枚按钮（emoji/锁定态/选中态/横向滚动均不受影响）
   for (const btn of tagButtons) {
     const tag = (btn as HTMLElement).dataset.tag;
     if (!tag) continue;
-    const count = countMap.get(tag) || 0;
-    // P1-13：重写按钮时与 createTag 同源——emoji 开关决定是否带 emoji；
-    // 加密锁定态（🔒 无计数 + bz-encrypt-locked class）不因计数刷新而丢失
-    const encryptLocked = tag === ENCRYPT_TAG && !isUnlocked();
-    const showEmoji = getTagShowEmojiSetting();
-    const displayEmoji = encryptLocked ? '🔒' : getTagEmoji(tag);
-    const countHtml = encryptLocked ? '' : `<span style="margin-left:4px; font-size:10px; opacity:0.8;">(${count})</span>`;
-    (btn as HTMLElement).innerHTML = `${showEmoji ? displayEmoji + ' ' : ''}${tag} ${countHtml}`;
-    if (encryptLocked) (btn as HTMLElement).classList.add('bz-encrypt-locked');
-    else (btn as HTMLElement).classList.remove('bz-encrypt-locked');
+    const countSpan = btn.querySelector('.diary-tag-count') as HTMLElement | null;
+    if (!countSpan) continue;
+    countSpan.textContent = `(${countMap.get(tag) || 0})`;
   }
 
   updateSubTagsCounts();

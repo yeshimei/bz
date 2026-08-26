@@ -336,7 +336,12 @@ async function handleTagPickerSave(
     if (!proceed) return;
     if (!entry.noteId) return;
     const success = await reclassifyEntry(entry.noteId, selTagNames);
-    if (!success) notice('解密改分类失败', 'error');
+    if (!success) {
+      notice('解密改分类失败', 'error');
+    } else {
+      // UX-8：加密条目改分类成功提示，语义同「已解密还原」
+      notice('已解密还原', 'success');
+    }
     await reloadWithEncrypted();
     return;
   }
@@ -641,8 +646,10 @@ export async function saveNewEntry() {
 
   try {
     const newEntry = await addEntry(dateStr, timeStr, selTagNames, '');
-    // 动作埋点：新增保存成功（本期无消费者，emit 即可，不发通知不打日志）
+    // 动作埋点：新增保存成功（本期无消费者，emit 即可）
     emitDomainEvent('diary:entry-added', { date: dateStr, time: timeStr, tags: selTagNames, content: '' });
+    // UX-7：保存成功确认（正文不带 emoji，类型图标即视觉前缀）
+    notice('已保存日记', 'success');
     mask.style.display = 'none';
     popup.style.display = 'none';
 

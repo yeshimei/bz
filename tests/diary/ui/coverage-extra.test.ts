@@ -266,16 +266,20 @@ describe('entries 补测', () => {
     expect(document.getElementById('diary-entry-test-1')).toBeNull();
   });
 
-  it('updateSticky：无容器直接返回；有分隔符设置 sticky', () => {
+  it('updateSticky：无容器直接返回；缓存二分提升当前置顶分隔符 zIndex（UX-p5）', () => {
     updateSticky();
     const container = document.createElement('div');
+    const section = document.createElement('div');
+    section.className = 'date-section';
     const sep = document.createElement('div');
     sep.className = 'diary-date-separator';
-    container.appendChild(sep);
+    section.appendChild(sep);
+    container.appendChild(section);
     state.ui.entriesContainer = container;
     state.ui.scrollContainer = container;
     updateSticky();
-    expect(sep.style.position).toBe('sticky');
+    // jsdom offsetTop=0 → 该分区视为置顶分区：zIndex 20（sticky 基础样式由渲染期设定）
+    expect(sep.style.zIndex).toBe('20');
   });
 });
 

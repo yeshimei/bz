@@ -222,8 +222,9 @@ describe('滚轮日期时间选择器（ticket 07）', () => {
     expect(columns.length).toBe(5);
     // 2月29天（2024 闰年）
     const dayColumn = document.querySelectorAll('#unified-datetime-picker-mask .datetime-number-item');
-    // 年(2000-2030=31) + 月(12) + 日(29) + 时(24) + 分(60)
-    expect(dayColumn.length).toBe(31 + 12 + 29 + 24 + 60);
+    // 年列动态（UX-34：数据最早年份 2024 ~ 当前年份+1）+ 月(12) + 日(29) + 时(24) + 分(60)
+    const yearCount = new Date().getFullYear() + 1 - 2024 + 1;
+    expect(dayColumn.length).toBe(yearCount + 12 + 29 + 24 + 60);
     // ESC 或点击遮罩关闭
     (document.getElementById('unified-datetime-picker-mask') as HTMLElement).remove();
   });

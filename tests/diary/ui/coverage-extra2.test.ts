@@ -326,17 +326,18 @@ describe('saveNewEntry 插入条件求值（P1-14 回归）', () => {
 });
 
 describe('updateTagCounts 与 createTag 同源（P1-13 回归）', () => {
-  it('关表情开关后重写按钮不复活 emoji', () => {
+  it('关表情开关后重建按钮不复活 emoji（emoji 切换走 rebuildTags；计数刷新不动按钮结构）', () => {
     applyUiSettings({ diaryTagShowEmoji: true });
     rebuildTags();
     const container = document.getElementById('diary-tag-container')!;
     const btn = container.querySelector('[data-tag="日记"]') as HTMLElement;
     expect(btn.textContent!.trim().startsWith('📖')).toBe(true);
     applyUiSettings({ diaryTagShowEmoji: false });
-    updateTagCounts(); // 模拟 applyFilter 后的计数刷新
-    expect(btn.innerHTML.startsWith('📖')).toBe(false);
-    expect(btn.textContent).toContain('日记');
-    expect(btn.textContent).toMatch(/\(\d+\)/); // 计数仍在
+    rebuildTags(); // emoji 开关变更经 uiSettingsChanged → rebuildTags 同源
+    const btn2 = container.querySelector('[data-tag="日记"]') as HTMLElement;
+    expect(btn2.innerHTML.startsWith('📖')).toBe(false);
+    expect(btn2.textContent).toContain('日记');
+    expect(btn2.textContent).toMatch(/\(\d+\)/); // 计数仍在
     applyUiSettings({ diaryTagShowEmoji: true });
   });
 

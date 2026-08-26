@@ -5,6 +5,7 @@ import { moment } from 'obsidian';
 import { notice } from '../../core/notice';
 import { escManager } from '../../core/esc-manager';
 import { parseFlexibleDateTime } from '../parser';
+import { state } from '../state';
 
 // ===== 滚轮列（原 2629-2782） =====
 
@@ -279,6 +280,23 @@ function updateAllColumns(picker: WheelPicker, shouldScroll = false) {
 
 // ===== 显示统一日期时间选择器（原 2865-3033） =====
 
+/**
+ * 滚轮年份动态范围（UX-34）：
+ * min = 数据最早年份（无数据时回落下限 1900，下限放宽至 1900）；
+ * max = 当前年份 + 1。
+ */
+function getYearRange(): { min: number; max: number } {
+  let earliest: number | null = null;
+  for (const entry of state.data.originalDiaryEntries) {
+    const y = parseInt(String(entry.date).split('-')[0], 10);
+    if (!Number.isNaN(y) && (earliest === null || y < earliest)) earliest = y;
+  }
+  return {
+    min: Math.max(1900, earliest ?? 1900),
+    max: new Date().getFullYear() + 1,
+  };
+}
+
 export function showDateTimePicker(initialMoment: any, onConfirm: (m: any) => void) {
   const existing = document.getElementById('unified-datetime-picker-mask');
   if (existing) existing.remove();
@@ -289,8 +307,9 @@ export function showDateTimePicker(initialMoment: any, onConfirm: (m: any) => vo
       {
         name: '年',
         unit: 'year',
-        min: 2000,
-        max: 2030,
+        // UX-34：动态范围——min 数据最早年份（下限放宽至 1900）、max 当前年份+1
+        min: () => getYearRange().min,
+        max: () => getYearRange().max,
         get: (m) => m.year(),
         set: (m, v) => m.year(v),
       },
