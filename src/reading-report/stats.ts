@@ -698,7 +698,7 @@ export function calculateIntensityLevel(durationHours: number): number {
 /** 获取热力图颜色 */
 export function getHeatmapColor(level: number): string {
   const colors = [
-    '#ebedf0', // 0级：无阅读
+    'var(--background-secondary)', // 0级：无阅读（p1 主题中性色，暗色主题可读）
     '#9be9a8', // 1级：0.5-1小时
     '#40c463', // 2级：1-2小时
     '#30a14e', // 3级：2-4小时

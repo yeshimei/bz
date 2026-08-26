@@ -5,7 +5,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
-  generateFullStatsReport, generateStatsReport, generateYearlyStats, generateAuthorStats,
+  generateFullStatsReport, buildReportSections, generateStatsReport, generateYearlyStats, generateAuthorStats,
   generateReadingSpeedAnalysis, generateTimeDistributionChart, generateReadingHabitsDeepAnalysis2,
   generateReadingTrendsAnalysis, generateMobileFriendlyTrendChart, generateReadingHeatmap,
   generateHeatmapGrid, generateMonthHeatmap, generateHeatmapCell, generateReadingFocusAnalysis,
@@ -164,7 +164,7 @@ describe('report 生成函数', () => {
     const cell = generateHeatmapCell({ type: 'nodata', date: '2000-01-15' });
     expect(cell).not.toContain('未来日期');
     expect(cell).toContain('无阅读记录');
-    expect(cell).toContain('#f8f9fa'); // 与 future 同为浅灰底
+    expect(cell).toContain('var(--background-secondary)'); // 与 future 同为主题中性底（p1）
   });
 
   it('generateReadingFocusAnalysis：专注度指标卡', () => {
@@ -223,5 +223,47 @@ describe('report 生成函数', () => {
     expect(html).toContain('2025年');
     // 至少包含主要段落标记
     expect(html.length).toBeGreaterThan(generateStatsReport(stats).length);
+  });
+
+  it('buildReportSections：分段懒生成、顺序与 generateFullStatsReport 口径一致（ticket 40）', () => {
+    const sections = buildReportSections(stats, books);
+    expect(sections.length).toBeGreaterThan(5);
+    expect(sections[0].key).toBe('stats');
+    expect(sections.map((s) => s.key)).toContain('categories');
+    // 懒生成：未调用 generate 前不产出 HTML（分片渲染前置条件）
+    expect(sections[0].generate()).toContain('书库');
+    // 逐段 join 与整串生成输出一致（分片渲染不改变报告内容）
+    const joined = sections.map((s) => s.generate()).join('\n');
+    expect(generateFullStatsReport(stats, books)).toBe(joined);
+  });
+
+  it('s1 XSS：authorStats 作者字段过 escapeHtml', () => {
+    const evil = book({ author: '<img src=x onerror=alert(1)>', completionDate: '2025-07-01', readingProgress: 100 });
+    const s = calculateReadingStats([evil]);
+    const html = generateAuthorStats(s);
+    expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
+    expect(html).not.toContain('<img src=x onerror=alert(1)>');
+  });
+
+  it('s1 XSS：分类名（topCategory + 分布行）过 escapeHtml', () => {
+    const evil = book({ category: '<svg onload=alert(1)>', completionDate: '2025-07-01', readingProgress: 100 });
+    const html = generateReadingCategoryAnalysis([evil]);
+    expect(html).toContain('&lt;svg onload=alert(1)&gt;');
+    expect(html).not.toContain('<svg onload=alert(1)>');
+  });
+
+  it('p1 主题适配：整页用主题变量，无硬编码浅色板', () => {
+    const html = generateFullStatsReport(stats, books) + generateReadingCategoryAnalysis(books) + generateReadingHeatmap(sessions) + generateHeatmapCell({ type: 'data', date: '2025-06-01', data: { duration: 600, sessions: 1 } });
+    expect(html).toContain('var(--background-primary)');
+    expect(html).toContain('var(--background-secondary)');
+    expect(html).toContain('var(--text-normal)');
+    expect(html).toContain('var(--text-muted)');
+    expect(html).not.toContain('background: white');
+    expect(html).not.toContain('#2c3e50');
+    expect(html).not.toContain('color: #666');
+    expect(html).not.toContain('#f8f9fa');
+    // 热力图等级 0（无阅读）用主题中性色（p1）
+    expect(generateHeatmapCell({ type: 'data', date: '2025-06-01', data: { duration: 600, sessions: 1 } })).toContain('var(--background-secondary)');
+    expect(generateHeatmapCell({ type: 'nodata', date: '2000-01-15' })).toContain('var(--background-secondary)');
   });
 });
