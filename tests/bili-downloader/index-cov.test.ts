@@ -40,14 +40,16 @@ describe('bili-downloader 启动命令补充分支', () => {
     expect(noticeText()).toContain('仅桌面端可用：B站下载器需要 Node.js 外部进程');
   });
 
-  it('stderr 输出只进缓冲不触发提示；地址随后在 stdout 命中', () => {
+  it('stderr 输出只进缓冲不触发额外提示；地址随后在 stdout 命中', () => {
     vi.useFakeTimers();
     const child = new FakeChild();
     (window as any).require = () => ({ spawn: () => child });
     openBiliDownloader();
-    // stderr 大段输出（>8KB 触发滑窗裁剪）→ 不产生任何提示
+    // spawn 即有一条「正在启动」即时反馈（ticket 117）
+    expect(getNoticeMessages()).toEqual(['正在启动 B站下载器…']);
+    // stderr 大段输出（>8KB 触发滑窗裁剪）→ 除启动提示外不产生任何提示
     child.stderr.emit('data', Buffer.alloc(20 * 1024, 'x'));
-    expect(getNoticeMessages()).toHaveLength(0);
+    expect(getNoticeMessages()).toEqual(['正在启动 B站下载器…']);
     // 地址从 stdout 到达 → 成功
     child.stdout.emit('data', Buffer.from('地址: http://127.0.0.1:7777\n'));
     expect(noticeText()).toContain('B站下载器已启动：http://127.0.0.1:7777');
@@ -58,20 +60,23 @@ describe('bili-downloader 启动命令补充分支', () => {
     (window as any).require = () => ({ spawn: () => child });
     openBiliDownloader();
     child.emit('close', 0);
-    expect(noticeText()).toBe('B站下载器已退出');
+    expect(noticeText()).toContain('正在启动 B站下载器…');
+    expect(noticeText()).toContain('B站下载器已退出');
   });
 
-  it('6 秒未解析地址 → 兜底「启动中」提示；此后 close/error 不再改口', async () => {
+  it('6 秒未解析地址 → 软超时「启动中」提示；随后 close/error 可升级（ticket 117）', async () => {
     vi.useFakeTimers();
     const child = new FakeChild();
     (window as any).require = () => ({ spawn: () => child });
     openBiliDownloader();
     await vi.advanceTimersByTimeAsync(6000);
     expect(noticeText()).toContain('B站下载器启动中…浏览器将自动打开');
-    // settled 后的残余事件不再覆盖提示
+    // 软超时不 settle：进程随后失败可覆盖升级为准确提示（旧语义「不再改口」废止）
     child.emit('error', new Error('spawn bili-dl ENOENT'));
+    expect(noticeText()).toContain('未找到 bili-dl');
+    // error 已 settle → close 不再重复改口（仍保留失败信息，不退回「启动中」）
     child.emit('close', 1);
-    expect(noticeText()).toContain('B站下载器启动中…浏览器将自动打开');
-    expect(getNoticeMessages()).toHaveLength(1);
+    expect(noticeText()).toContain('未找到 bili-dl');
+    expect(noticeText()).not.toContain('启动失败');
   });
 });

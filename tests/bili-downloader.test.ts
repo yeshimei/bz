@@ -20,6 +20,7 @@ describe('bili-downloader 启动命令', () => {
   const origRequire = (window as any).require;
   afterEach(() => {
     (window as any).require = origRequire;
+    vi.useRealTimers();
   });
 
   it('非桌面端（无 window.require）：提示仅桌面端可用', () => {
@@ -101,5 +102,37 @@ describe('bili-downloader 启动命令', () => {
     expect(noticeText()).toContain('http://127.0.0.1:9902');
     child.emit('close', 0);
     expect(noticeText()).toContain('B站下载器已启动');
+  });
+
+  it('ticket 117：spawn 落地即提示「正在启动」（消除启动空窗无响应感）', () => {
+    const child = new FakeChild();
+    (window as any).require = () => ({ spawn: () => child });
+    openBiliDownloader();
+    expect(noticeText()).toContain('正在启动 B站下载器');
+    child.stdout.emit('data', Buffer.from('地址: http://127.0.0.1:8803\n'));
+    expect(noticeText()).toContain('http://127.0.0.1:8803');
+  });
+
+  it('ticket 117：6s 软超时提示启动中，随后 close 非 0 升级为失败提示（不再被吞）', () => {
+    vi.useFakeTimers();
+    const child = new FakeChild();
+    (window as any).require = () => ({ spawn: () => child });
+    openBiliDownloader();
+    vi.advanceTimersByTime(6000);
+    expect(noticeText()).toContain('启动中');
+    child.emit('close', 1);
+    expect(noticeText()).toContain('启动失败');
+    expect(noticeText()).toContain('npm install -g @jwbz/bili-downloader');
+  });
+
+  it('ticket 117：6s 软超时后 close 0（正常退出）提示已退出', () => {
+    vi.useFakeTimers();
+    const child = new FakeChild();
+    (window as any).require = () => ({ spawn: () => child });
+    openBiliDownloader();
+    vi.advanceTimersByTime(6000);
+    expect(noticeText()).toContain('启动中');
+    child.emit('close', 0);
+    expect(noticeText()).toContain('已退出');
   });
 });
