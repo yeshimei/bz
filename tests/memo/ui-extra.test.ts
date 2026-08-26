@@ -165,4 +165,25 @@ describe('ESC 双窗口径（P2）', () => {
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect(document.getElementById('todo-popup')!.style.display).toBe('none');
   });
+
+  it('e1-memo：弹窗内 ESC 只关添加弹窗——一次 ESC 不连关主面板（草稿不丢）', async () => {
+    const vault = new MockVault();
+    await initApp(vault);
+    UIManager.showMain(null, false);
+    await new Promise((r) => setTimeout(r, 20));
+    UIManager.showAddDialog(null);
+    expect(document.getElementById('todo-popup')!.style.display).toBe('flex'); // 主面板开
+    expect(document.getElementById('add-todo-popup')!.style.display).toBe('block'); // 添加弹窗开
+
+    // 弹窗内部按 ESC：addPopup 层 stopImmediatePropagation 拦停冒泡 → 只关添加弹窗，主面板保持
+    document.getElementById('add-todo-content')!.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
+    );
+    expect(document.getElementById('add-todo-popup')!.style.display).toBe('none');
+    expect(document.getElementById('todo-popup')!.style.display).toBe('flex');
+
+    // 主面板外（document 层）再按 ESC → 才关主面板（层级语义不回归）
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(document.getElementById('todo-popup')!.style.display).toBe('none');
+  });
 });

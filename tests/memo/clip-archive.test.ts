@@ -3,6 +3,7 @@
  * URL 精确匹配直接归档（含 P1-25 url 回传断言）、AI 匹配弹窗批准流、
  * AI 失败跳过、enableAIClipMatch 关跳过 AI（URL 精确仍生效）、
  * watchedFolders 门与剪藏目录外不触发。
+ * n2：归档成功通知合并窗口（批量剪藏归档合并一条、单篇原文案、30s 同键去重防刷屏）。
  * stub 手法照抄 tests/ai-agent/ai-agent.test.ts（MockVault / metadataCache 伪对象 /
  * mock fetch SSE / 语义通道 clipping:file-created 经总线 emitDomainEvent 派发；
  * 弹窗涉及 DOM，不加 node 环境标注）。
@@ -11,7 +12,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
+import { __resetNoticeForTests } from '../../src/core/notice';
+import { getNoticeMessages, clearNotices } from '../mock-obsidian-entry';
 import { ensureMemoFileSync, unloadMemoFileSync } from '../../src/memo';
+import { __setClipArchiveNotifyMergeMsForTests } from '../../src/memo/clip-archive';
 import { emitDomainEvent, clearDomainEvents } from '../../src/core/domain-bus';
 import { MockVault } from '../mock-vault';
 
@@ -94,6 +98,9 @@ function seedMemo(vault: MockVault, url: string) {
 describe('剪藏 AI 匹配归档', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
+    // n2：通知去重记录为模块单例——跨用例清理防 30s 同键窗口误吞；合并窗口注入短值加速断言
+    __resetNoticeForTests();
+    __setClipArchiveNotifyMergeMsForTests(80);
   });
 
   it('URL 精确匹配 → 直接归档（无弹窗、静默；P1-25 url 不被抹掉）', async () => {
@@ -222,6 +229,88 @@ describe('剪藏 AI 匹配归档', () => {
     const bz = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
     expect(bz[0].completed).toBeNull(); // 未处理
     expect(document.getElementById('clip-ok')).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it('n2：归档成功通知合并——窗口内两篇合并一条通知（不再逐条弹屏）', async () => {
+    vi.useFakeTimers();
+    const { vault } = await setup();
+    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
+      { id: 'm1', title: '文章A', scene: '剪藏', priority: 'minor', created: '2025-01-01 00:00:00', completed: null, url: 'https://example.com/a', linkedNote: null },
+      { id: 'm2', title: '文章B', scene: '剪藏', priority: 'minor', created: '2025-01-01 00:00:00', completed: null, url: 'https://example.com/b', linkedNote: null },
+    ], null, 2));
+    vault.files.set('归档/网页剪藏/文章A.md', '---\nurl: "https://example.com/a"\n---\n正文');
+    vault.files.set('归档/网页剪藏/文章B.md', '---\nurl: "https://example.com/b"\n---\n正文');
+
+    emitDomainEvent('clipping:file-created', { path: '归档/网页剪藏/文章A.md' });
+    emitDomainEvent('clipping:file-created', { path: '归档/网页剪藏/文章B.md' });
+    await vi.advanceTimersByTimeAsync(60); // 队列处理：两条均已归档
+    const bz = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(bz.every((b: any) => b.completed !== null)).toBe(true);
+    // 合并窗口未到 → 一条都不弹（逐条弹屏已消除）
+    expect(getNoticeMessages()).toEqual([]);
+
+    // 越过合并窗口 → 只弹一条合并通知（名单 = 窗口内全部剪藏）
+    await vi.advanceTimersByTimeAsync(100);
+    const msgs = getNoticeMessages();
+    expect(msgs).toHaveLength(1);
+    expect(msgs[0]).toBe('已归档到备忘录：文章A、文章B');
+    vi.useRealTimers();
+  });
+
+  it('n2：超过 3 条合并 → 名单前三 + 等 N 条', async () => {
+    vi.useFakeTimers();
+    const { vault } = await setup();
+    const clips: [string, string, string][] = [
+      ['a', '文章甲', 'https://example.com/1'],
+      ['b', '文章乙', 'https://example.com/2'],
+      ['c', '文章丙', 'https://example.com/3'],
+      ['d', '文章丁', 'https://example.com/4'],
+    ];
+    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify(
+      clips.map(([id, title, url]) => ({
+        id, title, scene: '剪藏', priority: 'minor', created: '2025-01-01 00:00:00', completed: null, url, linkedNote: null,
+      })),
+      null,
+      2
+    ));
+    for (const [, title, url] of clips) {
+      vault.files.set(`归档/网页剪藏/${title}.md`, `---\nurl: "${url}"\n---\n正文`);
+    }
+    for (const [, title] of clips) {
+      emitDomainEvent('clipping:file-created', { path: `归档/网页剪藏/${title}.md` });
+    }
+    await vi.advanceTimersByTimeAsync(60);
+    await vi.advanceTimersByTimeAsync(100);
+    const msgs = getNoticeMessages();
+    expect(msgs).toHaveLength(1);
+    expect(msgs[0]).toBe('已归档到备忘录：文章甲、文章乙、文章丙 等 1 条');
+    vi.useRealTimers();
+  });
+
+  it('n2：单篇归档 → 单条原文案；同键去重窗口（30s）内再归档不重复弹', async () => {
+    vi.useFakeTimers();
+    const { vault } = await setup();
+    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
+      { id: 'm3', title: '单篇', scene: '剪藏', priority: 'minor', created: '2025-01-01 00:00:00', completed: null, url: 'https://example.com/s', linkedNote: null },
+    ], null, 2));
+    vault.files.set('归档/网页剪藏/单篇.md', '---\nurl: "https://example.com/s"\n---\n正文');
+    emitDomainEvent('clipping:file-created', { path: '归档/网页剪藏/单篇.md' });
+    await vi.advanceTimersByTimeAsync(60);
+    await vi.advanceTimersByTimeAsync(100); // 越过合并窗口
+    expect(getNoticeMessages()).toEqual(['已归档到备忘录：单篇']);
+
+    // 去重窗口内再归档另一篇：清掉已显示通知 DOM，同 dedupeKey 不再新弹（防连续剪藏刷屏）
+    clearNotices();
+    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([
+      { id: 'm3', title: '单篇', scene: '剪藏', priority: 'minor', created: '2025-01-01 00:00:00', completed: null, url: 'https://example.com/s', linkedNote: null },
+      { id: 'm4', title: '再一篇', scene: '剪藏', priority: 'minor', created: '2025-01-01 00:00:00', completed: null, url: 'https://example.com/t', linkedNote: null },
+    ], null, 2));
+    vault.files.set('归档/网页剪藏/再一篇.md', '---\nurl: "https://example.com/t"\n---\n正文');
+    emitDomainEvent('clipping:file-created', { path: '归档/网页剪藏/再一篇.md' });
+    await vi.advanceTimersByTimeAsync(60);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(getNoticeMessages()).toEqual([]); // 30s 同键窗口内不重复弹
     vi.useRealTimers();
   });
 });
