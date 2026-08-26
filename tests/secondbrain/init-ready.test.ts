@@ -4,7 +4,8 @@
  * - isIndexReady：空库 / meta 残留但向量缺失 → false；健康库 → true；
  * - refresh 自愈：meta 有条目但 .vec 缺失（mtime 全匹配的损坏态）→ 全量重建而非「已最新」；
  * - refresh 并发去重：进行中重复调用复用同一 promise，只跑一轮；
- * - 全部嵌入失败：refresh 正常 resolve 且不登记条目（QA 同语义——主面板据此判定失败并给出原因）。
+ * - 全部嵌入失败：refresh 正常 resolve 且不登记条目（QA 同语义）；完成态按失败段数提示（ticket 3，
+ *   不再误报「✅ 向量化完成」——面板失败判定无需再猜）。
  * ollama 经 vi.mock 替身；vault.adapter 用内存假体。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -20,6 +21,7 @@ vi.mock('../../src/secondbrain/ollama', () => ({
   getEmbedding: vi.fn(),
   getEmbeddingsBatch: vi.fn(),
   checkRemoteOllama: vi.fn(),
+  OLLAMA_TIMEOUT_MS: 10000, // ticket 46 统一 10s 超时
 }));
 
 const STORE_PATH = 'CONFIG/STORAGE/secondbrain.json';
@@ -172,7 +174,7 @@ describe('VectorStore 索引就绪与自愈（ticket 107）', () => {
     expect(batchCalls).toBe(1); // 单块单批：两轮会两次
   });
 
-  it('全部嵌入失败：refresh 正常 resolve、不登记条目、isIndexReady 保持 false（面板失败判定的前提）', async () => {
+  it('全部嵌入失败：refresh 正常 resolve、不登记条目、isIndexReady 保持 false；完成态提示失败段数而非假完成（ticket 3）', async () => {
     const vault = new MockVault();
     vault.files.set('我的/A.md', '足够长的单一文本块内容用于失败路径。');
     const { adapter } = makeAdapter(vault);
@@ -188,7 +190,9 @@ describe('VectorStore 索引就绪与自愈（ticket 107）', () => {
     await expect(vs.refresh((m) => progress.push(m))).resolves.toBeUndefined(); // 不抛错（QA 同语义）
     expect(vs.meta.notes).toEqual({});
     expect(vs.isIndexReady()).toBe(false);
-    expect(progress.some((m) => m.startsWith('✅'))).toBe(true); // QA 文案仍报「完成」→ 面板须自行判定
+    // ticket 3：失败段数提示替换假「✅ 向量化完成」（面板无须再靠 isIndexReady 猜判）
+    expect(progress.some((m) => m.includes('段向量化失败，请检查 Ollama 服务'))).toBe(true);
+    expect(progress.some((m) => m.startsWith('✅ 向量化完成'))).toBe(false);
   });
 
   it('hasPendingChanges：无变更 false；新文件/已修改/已删除任一 true（ticket 108）', async () => {

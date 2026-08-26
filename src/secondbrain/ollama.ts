@@ -5,8 +5,8 @@ import { buildConfig } from './config';
 
 export const EMBED_BATCH_SIZE = 64;
 
-/** Ollama HTTP 统一超时（P1-10）：Ollama 未启动/挂起时请求将永久 pending，卡死检索链路 */
-export const OLLAMA_TIMEOUT_MS = 30000;
+/** Ollama HTTP 统一超时（ticket 46）：Ollama 未启动/挂起时请求将永久 pending，卡死检索链路；10s 上限避免 30s 阻塞 */
+export const OLLAMA_TIMEOUT_MS = 10000;
 
 async function httpFetch(url: string, opts: any): Promise<Response> {
   const controller = new AbortController();

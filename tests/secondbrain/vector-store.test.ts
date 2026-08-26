@@ -20,6 +20,7 @@ vi.mock('../../src/secondbrain/ollama', () => ({
   getEmbedding: vi.fn(),
   getEmbeddingsBatch: vi.fn(),
   checkRemoteOllama: vi.fn(),
+  OLLAMA_TIMEOUT_MS: 10000, // ticket 46 统一 10s 超时（检索级超时封装依赖此值）
 }));
 
 const STORE_PATH = 'CONFIG/STORAGE/secondbrain.json';
@@ -415,6 +416,41 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
     const meta = readMeta(vault);
     expect(meta.notes['我的/A.md'].chunks).toEqual([{ text: 'A\n' + S1 }, { text: S2 }]); // 首块带标题（ticket 110）
     expectClose(parseVec(binary).rows, [1, 0, 1, 0]);
+  });
+
+  it('ticket 3 失败计数：部分段落失败 → 不发「✅ 向量化完成」、末条提示失败段数；全部成功才发完成通知', async () => {
+    const vault = new MockVault();
+    const A1 = '甲'.repeat(130);
+    const B1 = '乙'.repeat(130);
+    vault.files.set('我的/A.md', `${A1}。`);
+    vault.files.set('我的/B.md', `${B1}。`);
+    const { adapter, binary } = makeAdapter(vault);
+    const app = makeApp(vault, adapter);
+    setApp(app as any);
+    const vs = new VectorStore(app as any);
+    await vs.load();
+
+    // B 的批失败且逐条回退亦失败（1 段）；A 正常（1 段）——逐条 catch 内 failed++ 计数
+    vi.mocked(getEmbeddingsBatch).mockImplementation(async (texts: string[]) => {
+      if (texts.some((t) => t.includes(B1))) throw new Error('B 批失败');
+      return texts.map(() => [1, 0]);
+    });
+    vi.mocked(getEmbedding).mockRejectedValue(new Error('单条也失败'));
+
+    const progress: string[] = [];
+    await vs.refresh((m) => progress.push(m));
+    // 登记契约不变：A 入库；B 未登记 → mtime 差异下轮增量重试（断点续传语义未变）
+    expect(Object.keys(readMeta(vault).notes)).toEqual(['我的/A.md']);
+    expect(progress.some((m) => m.includes('1 段向量化失败，请检查 Ollama 服务'))).toBe(true);
+    expect(progress.some((m) => m.startsWith('✅ 向量化完成'))).toBe(false); // 假成功消除
+
+    // 全部成功才发完成通知：B 补齐（A mtime 已登记不变）→ failed=0
+    vi.mocked(getEmbeddingsBatch).mockImplementation(async (texts: string[]) => texts.map(() => [0.5, 0.5]));
+    vi.mocked(getEmbedding).mockResolvedValue([0.5, 0.5]);
+    const progress2: string[] = [];
+    await vs.refresh((m) => progress2.push(m));
+    expect(progress2.some((m) => m.startsWith('✅ 向量化完成'))).toBe(true);
+    expect(parseVec(binary).rows.length).toBe(4); // A 1 段 + B 1 段，dim=2
   });
 
   it('断点暂存：A 嵌完落盘，新 store 从磁盘恢复并补嵌 B（ticket 114）', async () => {

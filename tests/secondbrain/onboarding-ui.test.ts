@@ -7,7 +7,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MockVault } from '../mock-vault';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, clearNotices, getNoticeMessages, hasNotice } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import {
@@ -26,6 +26,7 @@ vi.mock('../../src/secondbrain/ollama', () => ({
   getEmbedding: vi.fn(),
   getEmbeddingsBatch: vi.fn(),
   checkRemoteOllama: vi.fn(),
+  OLLAMA_TIMEOUT_MS: 10000, // ticket 46 统一 10s 超时
 }));
 
 const STORE_PATH = 'CONFIG/STORAGE/secondbrain.json';
@@ -371,6 +372,131 @@ describe('第二大脑首用引导（ticket 107）', () => {
     expect(document.getElementById('bz-sb-init-progress')!.style.display).toBe('flex');
     expect(document.getElementById('bz-sb-progress-title')!.textContent).toContain('初始化向量数据库');
     // 不能是「开始向量化」引导态（按钮隐藏即证）
+    panel.destroy();
+  });
+
+  it('ticket 3 增量索引部分失败：不发假完成，「N 段向量化失败」toast 通知，内容照常进统计', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/A.md', 'A 内容足够长成块。');
+    vault.files.set('我的/B.md', 'B 内容足够长成块。');
+    vault.files.set(
+      STORE_PATH,
+      storeJSON({ version: 9, notes: { '我的/A.md': { mtime: 5, chunks: [{ text: '旧' }] } }, _dim: 2 })
+    );
+    const { adapter, binary } = makeAdapter(vault);
+    const header = new Uint8Array(4);
+    new DataView(header.buffer).setUint32(0, 2, true);
+    const row = new Float32Array([1, 0]);
+    const out = new Uint8Array(4 + row.byteLength);
+    out.set(header, 0);
+    out.set(new Uint8Array(row.buffer, row.byteOffset, row.byteLength), 4);
+    binary.set(VEC_PATH, out.buffer);
+    const app = makeApp(vault, adapter, { '我的/A.md': 99, '我的/B.md': 1 });
+    setApp(app as any);
+    // A 批失败且逐条回退亦失败（假成功根源路径）；B 正常 → 部分失败 1 段
+    vi.mocked(getEmbeddingsBatch).mockImplementation(async (texts: string[]) => {
+      if (texts.some((t) => t.includes('A 内容'))) throw new Error('A 批失败');
+      return texts.map(() => [0.5, 0.5]);
+    });
+    vi.mocked(getEmbedding).mockRejectedValue(new Error('单条也失败'));
+
+    const store = new VectorStore(app as any);
+    await store.load();
+    expect(store.hasPendingChanges()).toBe(true);
+
+    const panel = new SecondBrainPanel(app as any, store, { onOpenReference: () => {}, onOpenChat: () => {} });
+    await panel.open();
+
+    await until(() => document.getElementById('bz-sb-content')!.style.display === 'flex');
+    await until(() => hasNotice(/段向量化失败/)); // toast 明示失败段数（不再假装完成）
+    expect(getNoticeMessages().some((m) => m.includes('1 段向量化失败，请检查 Ollama 服务'))).toBe(true);
+    panel.destroy();
+  });
+
+  it('[s1-sb] 来源分布目录名 HTML 转义：恶意目录名不得注入可执行元素', async () => {
+    const vault = new MockVault();
+    const evilDir = '<img src=x onerror=alert(1)>';
+    vault.files.set(`我的/${evilDir}/A.md`, '内容 A。');
+    vault.files.set('我的/X.md', '内容 X。');
+    vault.files.set(
+      STORE_PATH,
+      storeJSON({
+        version: 9,
+        notes: {
+          [`我的/${evilDir}/A.md`]: { mtime: 5, chunks: [{ text: 't' }] },
+          '我的/X.md': { mtime: 5, chunks: [{ text: 't2' }] },
+        },
+        _dim: 2,
+      })
+    );
+    const { adapter, binary } = makeAdapter(vault);
+    const header = new Uint8Array(4);
+    new DataView(header.buffer).setUint32(0, 2, true);
+    const row = new Float32Array([1, 0]);
+    const out = new Uint8Array(4 + row.byteLength);
+    out.set(header, 0);
+    out.set(new Uint8Array(row.buffer, row.byteOffset, row.byteLength), 4);
+    binary.set(VEC_PATH, out.buffer);
+    const app = makeApp(vault, adapter, { [`我的/${evilDir}/A.md`]: 5, '我的/X.md': 5 });
+    setApp(app as any);
+
+    const store = new VectorStore(app as any);
+    await store.load();
+    const panel = new SecondBrainPanel(app as any, store, { onOpenReference: () => {}, onOpenChat: () => {} });
+    await panel.open();
+    await until(() => document.getElementById('bz-sb-cards')!.innerHTML.includes('向量块'));
+
+    // 恶意目录是「我的」的子目录：先展开根节点再断言子树中的名称（renderStats 异步，需等重渲）
+    const mineRow = [...document.querySelectorAll('.bz-sb-dist-row')].find(
+      (r) => r.querySelector('.bz-sb-dist-name')?.textContent === '我的'
+    ) as HTMLElement;
+    expect(mineRow).toBeTruthy();
+    mineRow.click();
+    await until(() =>
+      [...document.querySelectorAll('.bz-sb-dist-name')].some((n) => n.textContent === evilDir)
+    );
+    const names = [...document.querySelectorAll('.bz-sb-dist-name')].map((n) => n.textContent);
+    expect(names).toContain(evilDir); // 以纯文本呈现（未渲染成元素）
+    expect(document.querySelector('.bz-sb-dist img[onerror]')).toBeNull(); // 无可执行注入
+    expect(document.querySelector('.bz-sb-dist script')).toBeNull();
+    panel.destroy();
+  });
+
+  it('[l2-sb] ESC 监听与 open/close 成对：反复开关不累积 document keydown', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/A.md', '内容 A。');
+    vault.files.set(
+      STORE_PATH,
+      storeJSON({ version: 9, notes: { '我的/A.md': { mtime: 5, chunks: [{ text: 't' }] } }, _dim: 2 })
+    );
+    const { adapter, binary } = makeAdapter(vault);
+    const header = new Uint8Array(4);
+    new DataView(header.buffer).setUint32(0, 2, true);
+    const row = new Float32Array([1, 0]);
+    const out = new Uint8Array(4 + row.byteLength);
+    out.set(header, 0);
+    out.set(new Uint8Array(row.buffer, row.byteOffset, row.byteLength), 4);
+    binary.set(VEC_PATH, out.buffer);
+    const app = makeApp(vault, adapter, { '我的/A.md': 5 });
+    setApp(app as any);
+
+    const store = new VectorStore(app as any);
+    await store.load();
+    const panel = new SecondBrainPanel(app as any, store, { onOpenReference: () => {}, onOpenChat: () => {} });
+    const addSpy = vi.spyOn(document, 'addEventListener');
+    const removeSpy = vi.spyOn(document, 'removeEventListener');
+    const keydownAdds = () => addSpy.mock.calls.filter((c) => c[0] === 'keydown').length;
+    const keydownRemoves = () => removeSpy.mock.calls.filter((c) => c[0] === 'keydown').length;
+
+    await panel.open();
+    expect(keydownAdds()).toBe(1); // 首次 open 挂载一次
+    panel.close();
+    expect(keydownRemoves()).toBe(1); // close 同步移除
+    await panel.open();
+    expect(keydownAdds()).toBe(2); // 再次 open 重挂，不累积（每次关闭都摘除）
+    expect((panel as any).escapeHandler).not.toBeNull();
+    panel.close();
+    expect((panel as any).escapeHandler).toBeNull();
     panel.destroy();
   });
 });

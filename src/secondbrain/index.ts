@@ -83,15 +83,16 @@ export function ensureSecondBrain(app: App): void {
       linkWatcher.start();
       // 域初始化发现队列非空且 embedding 可达 → 自动消费，无需询问；
       // 队列消费之后串行执行存量补链（ticket 115：关联范围内缺 related 的存量笔记批量建链，
-      // 补链目标排除队列内待重试条目避免重复算力；启动路径静默，进度由批次 toast 呈现）
+      // 补链目标排除队列内待重试条目避免重复算力；启动路径全程静默——批次进度/完成 toast 均不弹，
+      // 手动命令 bz-secondbrain-link-all 才按批次通知，ticket 6/n2-sb）
       void (async () => {
         try {
-          await startQueueConsumption(linkAgent, s.initialLoad);
+          await startQueueConsumption(linkAgent, s.initialLoad, { silent: true });
         } catch (e) {
           console.warn('[secondbrain] 队列消费失败', e);
         }
         try {
-          await startStartupBackfill(linkAgent, s.initialLoad);
+          await startStartupBackfill(linkAgent, s.initialLoad, { silent: true });
         } catch (e) {
           console.warn('[secondbrain] 启动补链失败', e);
         }
@@ -155,7 +156,15 @@ function ensureChat(): void {
   chat = new ChatPanel(store, appRef);
 }
 
+/** 对话入口：桌面居中弹窗；移动端统一走底部抽屉 AI tab（ticket 31：与参考入口同一抽屉、两入口行为一致） */
 function openChatInternal(): void {
+  if (IS_MOBILE) {
+    // 移动端复用 MobilePanel（📚参考/🤖AI 双 tab 抽屉）：切到 AI tab 并展开
+    ensureReference();
+    mobile?.switchTab('chat');
+    mobile?.show();
+    return;
+  }
   ensureChat();
   chat?.show();
 }
