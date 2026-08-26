@@ -3,7 +3,7 @@
  * 覆盖：四种类型 / 时长规则 / 点击关闭 / 动态消息 / 进度条 / 操作按钮 / 堆叠上限。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { notify, __resetNoticeForTests } from '../../src/core/notice';
+import { notify, __resetNoticeForTests, cleanupNotices } from '../../src/core/notice';
 
 function visibleNotices(): HTMLElement[] {
   return Array.from(document.querySelectorAll('.bz-notice')) as HTMLElement[];
@@ -157,6 +157,45 @@ describe('通知系统', () => {
     expect(visibleNotices()[0].querySelector('.bz-notice-msg')!.textContent).toBe(
       '摘要已生成'
     );
+  });
+
+  it('setType 接管计时按当前正文长度动态计算（UX 整改 16：progress→success 长文案 60ms/字）', async () => {
+    const h = notify('处理中', { type: 'progress' });
+    h.setMessage('已为 12 篇笔记生成摘要并补全标签，本次共整理五十字左右的长文本内容。');
+    h.setType('success');
+    const len = h.el.querySelector('.bz-notice-msg')!.textContent!.length;
+    expect(len).toBeGreaterThan(20);
+    // base 3000 + (len - 20) × 60，而非固定 3s
+    const expected = 3000 + (len - 20) * 60;
+    expect(h.el.classList.contains('bz-notice--success')).toBe(true);
+    // 到点前仍在（比固定 3s 明显更长）
+    await vi.advanceTimersByTimeAsync(expected - 100);
+    expect(h.el.isConnected).toBe(true);
+    // 到点 + 退出动画后移除
+    await vi.advanceTimersByTimeAsync(400);
+    expect(h.el.isConnected).toBe(false);
+  });
+
+  it('setType 接管计时：短文本仍按类型默认时长（行为保持）', async () => {
+    const h = notify('长任务', { type: 'progress' });
+    h.setMessage('同步到 50%');
+    h.setType('success');
+    await vi.advanceTimersByTimeAsync(3300);
+    expect(h.el.isConnected).toBe(false);
+  });
+
+  it('cleanupNotices（UX 整改 l2-toast）：卸载清理容器 DOM + 存活/去重状态，之后可重建', () => {
+    notify('甲', { dedupeKey: 'cleanup-k1' });
+    notify('乙', { type: 'progress' }); // 常驻帧（无自动计时）
+    expect(visibleNotices()).toHaveLength(2);
+    cleanupNotices();
+    expect(document.getElementById('bz-notice-container')).toBeNull();
+    expect(visibleNotices()).toHaveLength(0);
+    // 去重记录一并清空：同键可再次弹出（不再受 30s 窗口抑制）
+    notify('甲', { dedupeKey: 'cleanup-k1' });
+    expect(visibleNotices()).toHaveLength(1);
+    // 幂等：重复调用不抛错
+    cleanupNotices();
   });
 
   it('setProgress：更新进度条宽度；-1 进入不确定态；100 完成变绿', () => {
