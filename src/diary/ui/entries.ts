@@ -17,7 +17,7 @@ import { state } from '../state';
 import type { DiaryEntry } from '../types';
 import { getContentRenderModeSetting } from './ui-settings';
 import { showTagPicker } from './dialogs';
-import { closePanel } from './panel';
+import { closePanel } from './panel-close';
 import { refreshSubTagsBar, updateTagCounts, updateTitleSuffix } from './filter-shared';
 
 // ===== 渲染 markdown（原 3531-3548） =====
@@ -619,6 +619,8 @@ export function showConfirm(entryId: string) {
 export function removeCard(entryId: string) {
   const card = document.getElementById(`diary-entry-${entryId}`);
   if (card) card.remove();
+  // UX-p5：分区内减卡（改分类移除/删除卡片）会令后续分区的流式位置变化 → 全量重建缓存
+  if (state.ui.scrollContainer) rebuildSectionTopCache();
 }
 
 // ===== 插入卡片（原 2577-2624） =====
@@ -673,9 +675,9 @@ export function insertCard(entry: DiaryEntry) {
       }
     }
     if (!inserted) state.ui.scrollContainer.appendChild(newSection);
-    // UX-p5：中部插段会推移后续分区流式位置 → 全量重建缓存
-    rebuildSectionTopCache();
   }
+  // UX-p5：既有分区插卡与新增分区都会推移后续分区的流式位置 → 全量重建缓存
+  rebuildSectionTopCache();
 }
 
 // ===== 滚动与粘性（原 2434-2505；UX-p5：置顶分隔符判定改缓存二分，滚动路径零布局读取） =====
