@@ -1,10 +1,12 @@
 // @vitest-environment node
 /**
  * 收藏本 FavoritesAIService 测试（ticket 11）：GitHub 信息获取（增强：真实 GitHub API）。
+ * ticket 23：isAvailable 真实读取插件 AI 配置（core/ai 判定口径）。
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { FavoritesAIService } from '../../src/favorites/ai';
 import { requestUrl } from '../mock-obsidian-entry';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 
 describe('fetchGitHubInfo', () => {
   beforeEach(() => {
@@ -64,5 +66,39 @@ describe('fetchGitHubInfo', () => {
     svc.ai = null;
     await expect(svc.fetchGitHubInfo('https://example.com/x')).rejects.toThrow('无效的 GitHub 地址');
     expect(requestUrl).not.toHaveBeenCalled();
+  });
+});
+
+describe('isAvailable（ticket 23：真实读取插件 AI 配置，替代恒真 !!this.ai）', () => {
+  afterEach(() => {
+    // 避免残留设置影响同文件后续用例（保持 provider 已注入，getSettings 不抛）
+    setSettingsProvider(() => ({ aiProvider: 'opencode-go', opencodeGoApiKey: 'sk-x' }) as any);
+  });
+
+  it('未配置任何 key → false', () => {
+    setSettingsProvider(() => ({ aiProvider: 'opencode-go', opencodeGoApiKey: '' }) as any);
+    expect(new FavoritesAIService().isAvailable()).toBe(false);
+  });
+
+  it('opencode-go（默认 provider）配 key → true', () => {
+    setSettingsProvider(() => ({ aiProvider: 'opencode-go', opencodeGoApiKey: 'sk-o' }) as any);
+    expect(new FavoritesAIService().isAvailable()).toBe(true);
+  });
+
+  it('provider 未显式设置 → 按默认 opencode-go 口径判定', () => {
+    setSettingsProvider(() => ({ opencodeGoApiKey: 'sk-o' }) as any);
+    expect(new FavoritesAIService().isAvailable()).toBe(true);
+  });
+
+  it('deepseek 配 key → true；缺 key → false', () => {
+    setSettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'sk-d' }) as any);
+    expect(new FavoritesAIService().isAvailable()).toBe(true);
+    setSettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: '' }) as any);
+    expect(new FavoritesAIService().isAvailable()).toBe(false);
+  });
+
+  it('opencode-go 缺 key 时 deepseek key 不顶替（provider 独立判定）', () => {
+    setSettingsProvider(() => ({ aiProvider: 'opencode-go', opencodeGoApiKey: '', deepseekApiKey: 'sk-d' }) as any);
+    expect(new FavoritesAIService().isAvailable()).toBe(false);
   });
 });
