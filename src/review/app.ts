@@ -6,6 +6,7 @@ import { notice, notify } from '../core/notice';
 import type { NoticeHandle } from '../core/notice';
 import { getApp } from '../core/app';
 import { getSettings } from '../core/settings-provider';
+import { escapeHtml } from '../core/utils';
 import { FSRS, FSRS_FIRST_INTERVALS, FSRS_FIRST_TEXTS, LADDER_MAX } from './fsrs';
 import type { Rating } from './fsrs';
 import type { ReviewItem } from './data';
@@ -20,6 +21,8 @@ export const reviewApp = {
   _reviewNotice: null as NoticeHandle | null,
   /** 已通知逾期的笔记路径（ticket 100：diff 记忆集合，避免重复刷屏） */
   _notifiedOverdue: new Set<string>(),
+  /** ticket 48：已染色/挂徽章的文件路径（移出计划后据此回退；仅提交计划路径 + 曾染色路径，不再全库扫描） */
+  _styledPaths: new Set<string>(),
 
   async getQuiz(): Promise<any> {
     if (this._quizOverride) return this._quizOverride;
@@ -314,13 +317,15 @@ export const reviewApp = {
     });
   },
 
-  /** 未通过结果卡（ADR-0044）：唯一按钮「复习此笔记」→ 点击关弹窗 + 开笔记 + 会话中断 */
+  /** 未通过结果卡（ADR-0044）：唯一按钮「复习此笔记」→ 点击关弹窗 + 开笔记 + 会话中断
+   *  ticket s1：文件名经 escapeHtml 转义后拼 HTML（review 结果卡 XSS 修复） */
   buildFailCard(item: ReviewItem, results: any, rating: Rating): string {
     const ratingNames: Record<string, string> = { again: '忘了', hard: '困难', good: '一般', easy: '简单' };
     const tagColors: Record<string, string> = { again: '#ff4757', hard: '#ff9f43', good: '#2ed573', easy: '#7bed9f' };
+    const name = escapeHtml(item.name.replace(/^《|》$/g, ''));
     return `
       <div style="text-align:center;padding:24px;">
-        <div style="font-size:18px;font-weight:600;margin-bottom:16px;color:var(--text-normal);">🎯 ${item.name.replace(/^《|》$/g, '')}</div>
+        <div style="font-size:18px;font-weight:600;margin-bottom:16px;color:var(--text-normal);">🎯 ${name}</div>
         <div style="font-size:40px;margin-bottom:16px;">${results.correct}/${results.total}</div>
         <div style="font-size:14px;color:var(--text-muted);margin-bottom:12px;">✅ 答对 ${results.correct} 题　❌ 答错 ${results.wrong} 题</div>
         <div style="display:inline-block;padding:6px 16px;border-radius:16px;font-size:14px;font-weight:500;background:${tagColors[rating]}22;color:${tagColors[rating]};margin-bottom:20px;">自动标记：${ratingNames[rating]}</div>
@@ -330,13 +335,15 @@ export const reviewApp = {
     `;
   },
 
-  /** 通过结果卡（重做复用视觉）：下一篇/完成复习/结束这次复习 */
+  /** 通过结果卡（重做复用视觉）：下一篇/完成复习/结束这次复习
+   *  ticket s1：文件名经 escapeHtml 转义后拼 HTML（review 结果卡 XSS 修复） */
   buildPassCard(item: ReviewItem, results: any, rating: Rating, opts: { nextLabel?: string }): string {
     const ratingNames: Record<string, string> = { again: '忘了', hard: '困难', good: '一般', easy: '简单' };
     const tagColors: Record<string, string> = { again: '#ff4757', hard: '#ff9f43', good: '#2ed573', easy: '#7bed9f' };
+    const name = escapeHtml(item.name.replace(/^《|》$/g, ''));
     return `
       <div style="text-align:center;padding:24px;">
-        <div style="font-size:18px;font-weight:600;margin-bottom:16px;color:var(--text-normal);">🎯 ${item.name.replace(/^《|》$/g, '')}</div>
+        <div style="font-size:18px;font-weight:600;margin-bottom:16px;color:var(--text-normal);">🎯 ${name}</div>
         <div style="font-size:40px;margin-bottom:16px;">${results.correct}/${results.total}</div>
         <div style="font-size:14px;color:var(--text-muted);margin-bottom:12px;">✅ 答对 ${results.correct} 题　❌ 答错 ${results.wrong} 题</div>
         <div style="display:inline-block;padding:6px 16px;border-radius:16px;font-size:14px;font-weight:500;background:${tagColors[rating]}22;color:${tagColors[rating]};margin-bottom:20px;">自动标记：${ratingNames[rating]}</div>
@@ -531,26 +538,56 @@ export const reviewApp = {
     notice('已加入复习计划，首次复习：1分钟后', 'success');
   },
 
-  /** 文件树染色 + 阶段徽标（源码 L719-772 逐字；ticket 100 加「文件树标记」开关） */
-  async applyReviewStyles(app: App, changedFile?: TFile): Promise<void> {
+  /** 文件树染色 + 阶段徽标（源码 L719-772 逐字；ticket 100 加「文件树标记」开关；
+   *   ticket 48 收敛：不再全库 getMarkdownFiles + 逐路径 querySelector——
+   *   处理范围 = 复习条目路径 + 曾染色路径（移出计划后回退），树节点一次 querySelectorAll 建 Map 查找；
+   *   可选 items 参数：checkOverdueAndNotify 传本轮已加载结果，避免每轮二次读盘。 */
+  async applyReviewStyles(app: App, changedFile?: TFile, items?: ReviewItem[]): Promise<void> {
     if ((getSettings() as any).reviewTreeBadge === false) return; // ticket 100：关=清爽文件树（不染色不挂徽章）
     this.ensure(app);
-    const dm = this.dataManager!;
-    const allItems = await dm.loadItems();
-    const files = changedFile ? [changedFile] : app.vault.getMarkdownFiles();
+    const allItems = items || (await this.dataManager!.loadItems());
+    const itemByPath = new Map<string, ReviewItem>();
+    for (const item of allItems) {
+      if (item.filePath) itemByPath.set(item.filePath, item);
+    }
+
+    // 处理路径集：单文件事件只处理该文件；全量轮 = 复习条目 + 曾染色路径（回退清洗用）
+    const paths = new Set<string>();
+    if (changedFile) {
+      paths.add(changedFile.path);
+    } else {
+      for (const p of itemByPath.keys()) paths.add(p);
+      for (const p of this._styledPaths) paths.add(p);
+    }
+
+    // 树节点一次收集（data-path → 元素，首个匹配语义与原 querySelector 一致）
+    const els = new Map<string, HTMLElement>();
+    for (const el of Array.from(document.querySelectorAll<HTMLElement>('div[data-path]'))) {
+      const p = el.getAttribute('data-path');
+      if (p && !els.has(p)) els.set(p, el);
+    }
+
     const fsrs = new FSRS();
 
-    for (const file of files) {
-      const el = document.querySelector(`div[data-path="${file.path}"]`);
-      if (!el) continue;
+    for (const path of paths) {
+      const el = els.get(path);
+      if (!el) {
+        // 树节点不存在（文件删除/目录收起）：从曾染色集合剔除，防集合无限增长
+        this._styledPaths.delete(path);
+        continue;
+      }
       const target = el.querySelector('div.tree-item-inner') as HTMLElement | null;
       if (!target) continue;
       const badge = target.querySelector('.review-stage-badge');
       if (badge) badge.remove();
 
-      const item = allItems.find((i) => i.filePath === file.path);
+      const item = itemByPath.get(path);
       if (!item) {
-        target.style.color = '';
+        // 仅回退「本插件曾染色」的路径（从未染色的非条目节点不触碰，缩范围语义）
+        if (this._styledPaths.has(path)) {
+          target.style.color = '';
+          this._styledPaths.delete(path);
+        }
         continue;
       }
       const currentStage = item.stage || 0;
@@ -599,6 +636,7 @@ export const reviewApp = {
         badgeEl.style.cssText = `font-size:0.7em;opacity:0.8;margin-left:6px;color:${color};background:color-mix(in srgb, ${color} 10%, transparent);padding:1px 4px;border-radius:3px;border:1px solid color-mix(in srgb, ${color} 30%, transparent);font-weight:500;`;
         target.appendChild(badgeEl);
       }
+      this._styledPaths.add(path);
     }
   },
 
@@ -606,15 +644,17 @@ export const reviewApp = {
    * 到期提醒 + 染色刷新（ticket 100：原只刷染色，重写为 diff + 通知；染色职责保留）
    * 每轮与已通知集合对比：新增逾期 → 弹聚合通知；移出逾期（评级/完成/挂起）从集合剔除 → 之后再次逾期重新提醒。
    * 启动首查把存量逾期当新产生 → 晨报式汇总（Q1 拍板接受）。
+   * ticket 48 收敛：与本轮 loadItems 共用结果，不再二次读盘；
+   * ticket 58：通知挂「去复习」action → 打开最早逾期笔记。
    */
   async checkOverdueAndNotify(): Promise<void> {
     try {
-      // 染色刷新保留（原 60s 轮询职责：逾期文件实时变红；是否染色由 reviewTreeBadge 决定）
-      await this.applyReviewStyles(getApp());
-      if ((getSettings() as any).enableAutoNotify === false) return; // 通知开关关 → 不弹通知
       this.ensure(getApp());
       const dm = this.dataManager!;
       const items = await dm.loadItems();
+      // 染色刷新保留（原 60s 轮询职责：逾期文件实时变红；是否染色由 reviewTreeBadge 决定）
+      await this.applyReviewStyles(getApp(), undefined, items);
+      if ((getSettings() as any).enableAutoNotify === false) return; // 通知开关关 → 不弹通知
       const overdueMap = new Map<string, ReviewItem>(
         items.filter((i) => i.isOverdue && !i.completed && !i.isMissing).map((i) => [i.filePath, i])
       );
@@ -628,11 +668,31 @@ export const reviewApp = {
         const names = newly.map(([, i]) => i.name.replace(/^《|》$/g, ''));
         const shown = names.slice(0, 3).join('、');
         const tail = names.length > 3 ? `，等 ${names.length - 3} 篇` : '';
+        // ticket 58：最早逾期（最紧迫）作「去复习」跳转目标
+        const earliest = [...overdueMap.values()].sort(
+          (a, b) =>
+            new Date((a.nextReviewDate as string) || '0').getTime() -
+            new Date((b.nextReviewDate as string) || '0').getTime()
+        )[0];
         notify(
           names.length > 1
             ? `${names.length} 篇笔记到期待复习：${shown}${tail}`
             : `${shown} 到期待复习`,
-          { type: 'info', dedupeKey: 'review-overdue-notice' }
+          {
+            type: 'info',
+            dedupeKey: 'review-overdue-notice',
+            action: {
+              label: '去复习', // action 文案不带 emoji（通知规范）
+              onClick: () => {
+                if (!earliest) return;
+                const app = getApp();
+                const file = app.vault.getAbstractFileByPath(earliest.filePath);
+                if (!file) return;
+                const leaf = app.workspace.getLeaf(false);
+                void leaf.openFile(file as TFile);
+              },
+            },
+          }
         );
       }
     } catch (e) {

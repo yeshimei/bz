@@ -407,6 +407,7 @@ describe('applyReviewStyles 着色矩阵', () => {
     document.body.innerHTML = '';
     setSettingsProvider(() => ({}) as any);
     (reviewApp as any).dataManager = null;
+    (reviewApp as any)._styledPaths = new Set(); // ticket 48：曾染色集合逐用例隔离
     vault = new MockVault();
   });
 
@@ -443,21 +444,20 @@ describe('applyReviewStyles 着色矩阵', () => {
     };
   }
 
-  it('防御分支：树节点缺失 / 内层缺失 / 无条目重置颜色 / 旧徽标先移除', async () => {
-    vault.files.set('A.md', 'x'); // 有文件但无树节点 → continue
-    const noInner = 'B.md';
-    vault.files.set(noInner, 'x');
-    treeNode(noInner, false); // 内层缺失 → continue
+  it('ticket 48 缩范围：非复习条目节点全库扫描不动；树节点缺失跳过；旧徽标先移除', async () => {
+    // A：有文件但无树节点 → 不在处理范围（continue 语义）
+    vault.files.set('A.md', 'x');
+    // C：有树节点但无复习条目 → 缩范围后不再被全库重置（颜色保持用户/他方设置）
     const innerC = treeNode('C.md')!;
-    vault.files.set('C.md', 'x'); // 无复习条目 → 颜色重置
+    vault.files.set('C.md', 'x');
     innerC.style.color = '#1890ff';
     // D：有条目且已有旧徽标 → 先移除再按状态重建
     const innerD = treeNode('D.md')!;
+    vault.files.set('D.md', 'x');
     const staleBadge = document.createElement('span');
     staleBadge.className = 'review-stage-badge';
     staleBadge.textContent = '99d';
     innerD.appendChild(staleBadge);
-    vault.files.set('D.md', 'x');
 
     vault.files.set(
       REVIEW_FILE_PATH,
@@ -465,10 +465,31 @@ describe('applyReviewStyles 着色矩阵', () => {
     );
     const app = makeApp(vault);
     setApp(app);
-    await reviewApp.applyReviewStyles(app); // 无 changedFile → 全量扫描
-    expect(innerC.style.color).toBe(''); // 无条目重置
+    await reviewApp.applyReviewStyles(app); // 无 changedFile → 复习条目扫描（非全库）
+    // 非条目节点颜色不被触碰（此前全库路径会重置为空）
+    expect(innerC.style.color).toBe('rgb(24, 144, 255)');
     // 旧「99d」徽标先被移除；该条目 completed=false 且无到期日 → 不再挂新徽标
     expect(innerD.querySelector('.review-stage-badge')).toBeNull();
+  });
+
+  it('ticket 48：曾染色条目移出计划 → 下次扫描回退颜色与徽章', async () => {
+    const inner = treeNode('E.md')!;
+    vault.files.set('E.md', 'x');
+    vault.files.set(
+      REVIEW_FILE_PATH,
+      JSON.stringify([row({ filePath: 'E.md', stage: 1, nextReviewDate: new Date(Date.now() + 3600000).toISOString() })])
+    );
+    const app = makeApp(vault);
+    setApp(app);
+    await reviewApp.applyReviewStyles(app); // 首次：条目染色 + 挂徽标
+    expect(inner.style.color).toBe('rgb(24, 144, 255)');
+    expect(inner.querySelector('.review-stage-badge')).not.toBeNull();
+    // 移出计划（条目不存在于 review.json）→ 曾染色路径被回退
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([]));
+    await reviewApp.applyReviewStyles(app);
+    expect(inner.style.color).toBe('');
+    expect(inner.querySelector('.review-stage-badge')).toBeNull();
+    expect((reviewApp as any)._styledPaths.has('E.md')).toBe(false);
   });
 
   it('逾期红 + 📅 徽标；阶梯 stage3-6 黄、stage7+ 绿；时间徽标 d/h/m 三档', async () => {

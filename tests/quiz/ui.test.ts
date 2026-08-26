@@ -262,6 +262,25 @@ describe('QuizMasterUI', () => {
     expect(document.querySelector('.quiz-next-btn')).not.toBeNull();
   });
 
+  it('ticket 15：多选零选择点提交 → notice「请至少选择一项」，不提交不判题', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '内容');
+    seedQuiz(vault, { 'A.md': [{ question: 'Q1?', options: ['甲', '乙', '丙', '丁'], correctIndices: [0, 2] }] });
+    const app = makeApp(vault);
+    setApp(app);
+    const ui = new QuizMasterUI();
+    await ui.startQuiz();
+    (document.querySelector('.quiz-submit-btn') as HTMLElement).click();
+    expect(getNoticeMessages().some((m) => m === '请至少选择一项')).toBe(true);
+    // 未判题：无正确/错误高亮，无「下一题」，题目仍保留
+    const btns = document.querySelectorAll('.quiz-option-btn');
+    expect(btns[0].classList.contains('correct')).toBe(false);
+    expect(document.querySelector('.quiz-next-btn')).toBeNull();
+    expect(JSON.parse(vault.files.get(QUIZ_FILE_PATH)!).notes['A.md']).toHaveLength(1);
+    expect(ui.correctCount).toBe(0);
+    expect(ui.wrongCount).toBe(0);
+  });
+
   it('mask 点击 = finishQuiz（onComplete 回调）', async () => {
     const vault = new MockVault();
     vault.files.set('A.md', '内容');
@@ -392,7 +411,7 @@ describe('复习联动契约', () => {
     expect(document.getElementById('quiz-popup')).toBeNull();
   });
 
-  it('P1-1：复习做题中途 ESC（close）→ 回调按 total=0 结算，外层 Promise 不悬挂', async () => {
+  it('P1-1：复习做题中途 ESC（close）→ 先确认（ticket 17），确认后按 total=0 结算，外层 Promise 不悬挂', async () => {
     const vault = new MockVault();
     const app = makeApp(vault);
     setApp(app);
@@ -406,11 +425,78 @@ describe('复习联动契约', () => {
       ui.startReviewSession({ questions, onComplete: (r) => resolve(r) });
     });
     expect(document.getElementById('quiz-popup')).not.toBeNull();
-    // 答题中途按 ESC
+    // 答题中途按 ESC → 先弹退出确认（未结算）
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    const confirmPopup = document.getElementById('__shared_confirm_popup__')!;
+    expect(confirmPopup).not.toBeNull();
+    expect(confirmPopup.textContent).toContain('放弃本次做题');
+    expect(confirmPopup.textContent).toContain('继续做题');
+    expect(document.getElementById('quiz-popup')).not.toBeNull(); // 确认前弹窗保留
+    // 确认放弃 → 结算 + 关闭
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
     const results = await outer;
     expect(results).toEqual({ correct: 0, wrong: 0, total: 0, accuracy: 0 }); // ADR-0044：total=0 → again 既定语义
     expect(document.getElementById('quiz-popup')).toBeNull(); // 结算后关闭
+  });
+
+  it('P1-1：复习做题中途 ESC → 取消（继续做题）不结算；答完恰好一次回调', async () => {
+    const vault = new MockVault();
+    const app = makeApp(vault);
+    setApp(app);
+    const ui = new QuizMasterUI();
+    const onComplete = vi.fn();
+    ui.startReviewSession({
+      questions: [
+        { question: 'RQ1?', options: ['a', 'b', 'c', 'd'], correctIndices: [0], notePath: 'A.md' },
+        { question: 'RQ2?', options: ['a', 'b', 'c', 'd'], correctIndices: [1], notePath: 'A.md' },
+      ],
+      onComplete,
+    });
+    // ESC → 确认弹窗 → 取消 → 继续做题（会话不结算、弹窗保留）
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
+    (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
+    expect(onComplete).not.toHaveBeenCalled();
+    expect(document.getElementById('quiz-popup')).not.toBeNull();
+    expect(document.getElementById('quiz-popup')!.textContent).toContain('RQ1?');
+    // 继续作答到完成 → 恰好一次回调
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
+    (document.querySelectorAll('.quiz-option-btn')[0] as HTMLElement).click(); // 答对 RQ1
+    await vi.advanceTimersByTimeAsync(900);
+    expect(document.getElementById('quiz-popup')!.textContent).toContain('RQ2?');
+    (document.querySelectorAll('.quiz-option-btn')[1] as HTMLElement).click(); // 答对 RQ2
+    await vi.advanceTimersByTimeAsync(900);
+    vi.useRealTimers();
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(onComplete).toHaveBeenCalledWith({ correct: 2, wrong: 0, total: 2, accuracy: 100 });
+  });
+
+  it('P1-1：复习做题中途点遮罩 → 确认闸门（ticket 17）；取消继续、确认按已答结算', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '内容');
+    const app = makeApp(vault);
+    setApp(app);
+    const ui = new QuizMasterUI();
+    const onComplete = vi.fn();
+    ui.startReviewSession({
+      questions: [
+        { question: 'RQ1?', options: ['a', 'b', 'c', 'd'], correctIndices: [0], notePath: 'A.md' },
+        { question: 'RQ2?', options: ['a', 'b', 'c', 'd'], correctIndices: [1], notePath: 'A.md' },
+      ],
+      onComplete,
+    });
+    // 点遮罩 → 先确认（不直接结算）
+    (document.getElementById('quiz-mask') as HTMLElement).click();
+    expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
+    expect(onComplete).not.toHaveBeenCalled();
+    // 取消 → 继续做题
+    (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
+    expect(document.getElementById('quiz-popup')).not.toBeNull();
+    // 再点遮罩 → 确认放弃 → 按已答结算（0 题）
+    (document.getElementById('quiz-mask') as HTMLElement).click();
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(onComplete).toHaveBeenCalledWith({ correct: 0, wrong: 0, total: 0, accuracy: 0 });
   });
 
   it('P1-1：复习换题过渡不结算——多题会话中途回调不触发，完成后恰好一次', async () => {
@@ -449,12 +535,14 @@ describe('复习联动契约', () => {
     setApp(app);
     const ui = new QuizMasterUI();
     const staleCb = vi.fn();
-    // 上次复习会话（题不带 notePath：删除安全空转），答题中途 ESC 中断
+    // 上次复习会话（题不带 notePath：删除安全空转），答题中途 ESC 中断（ticket 17：确认后结算）
     ui.startReviewSession({
       questions: [{ question: 'RQ?', options: ['a', 'b', 'c', 'd'], correctIndices: [0] } as any],
       onComplete: staleCb,
     });
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
     expect(staleCb).toHaveBeenCalledTimes(1); // 中断时结算一次
     // 之后普通做题（入口清理残留 onComplete）→ 做完触发新回调，旧回调不再误触发
     await ui.startQuiz();
