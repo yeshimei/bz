@@ -52,6 +52,8 @@ export function openBiliDownloader(): void {
     settled = true;
     notice(msg, type);
   };
+  // 即时反馈（ticket 117）：spawn 落地就提示，消除 1~3s 的空窗无响应感
+  notice('正在启动 B站下载器…');
   // P2 缓冲防护：buf 只保留尾部 8KB 滑窗（防长时运行/刷屏输出把缓冲无界撑大）；
   // 地址命中 settled 后移除 data 监听并短路匹配（不再做无谓的正则扫描）。
   const BUF_CAP = 8 * 1024;
@@ -73,8 +75,12 @@ export function openBiliDownloader(): void {
     done(/ENOENT/.test(e.message) ? `未找到 bili-dl。${INSTALL_HINT}` : `启动失败：${e.message}`, 'error');
   });
   child.on('close', (code: number) => {
+    // 软超时未 settle 时仍可升级：启动失败（非 0 退出）覆盖「启动中…」提示，不再被吞
     if (!settled) done(code === 0 ? 'B站下载器已退出' : `B站下载器启动失败。${INSTALL_HINT}`, code === 0 ? 'info' : 'error');
   });
-  // 兜底：6 秒未解析到地址也提示（服务可能在后台拉起）
-  setTimeout(() => { if (!settled) done('B站下载器启动中…浏览器将自动打开'); }, 6000);
+  // 软超时（ticket 117）：6 秒未解析到地址先提示启动中（不 settle 死），
+  // 进程随后失败/退出仍可被 close/error 覆盖升级为准确提示。
+  setTimeout(() => {
+    if (!settled) notice('B站下载器启动中…浏览器将自动打开；若未打开请重新执行命令', 'info');
+  }, 6000);
 }
