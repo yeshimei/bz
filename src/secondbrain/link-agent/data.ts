@@ -4,6 +4,8 @@
  * 职责：
  * - 待处理队列 CONFIG/STORAGE/secondbrain_link_queue.json 的读写（jsonStore 同款 STORAGE json CRUD）：
  *   同 path 合并刷新 hash、消费成功移除、失败保留、对应文件删除时顺带清理；
+ * - 正文基准哈希 CONFIG/STORAGE/secondbrain_link_state.json（v1.4/ticket 119）：
+ *   记录每篇笔记最近一次成功建链时的全文内容哈希——修改监听据此判断"内容是否有实质变化才重跑"；
  * - related 属性解析与幂等写入的纯函数部分：只写新笔记侧，已存在的链不重复添加，
  *   `linkAgentMaxLinks > 0` 时截断，默认 0 = 不限量；
  * - 裁判输出（严格 JSON `[{"id":1,"reason":"..."}]`）解析。
@@ -228,6 +230,65 @@ export async function pruneQueueByExists(exists: (path: string) => boolean): Pro
   const removed = items.length - next.length;
   if (removed > 0) await saveQueue(next);
   return removed;
+}
+
+// ---------------- 正文基准哈希（v1.4/ticket 119：正文大改自动重跑） ----------------
+
+/** 基准状态条目：最近一次成功建链时的全文内容哈希 + 时间戳 */
+export interface LinkStateEntry {
+  hash: string;
+  linkedAt: string;
+}
+
+/** 全部基准状态：path → 条目 */
+export type LinkStateMap = Record<string, LinkStateEntry>;
+
+/** 基准状态文件路径（ADR-0009：storagePath 为唯一目录口径，同队列文件） */
+export function getLinkStateFilePath(): string {
+  const s = tryGetSettings() as any;
+  const dir =
+    String(s.storagePath ?? '')
+      .trim()
+      .replace(/\/+$/, '') || 'CONFIG/STORAGE';
+  return `${dir}/secondbrain_link_state.json`;
+}
+
+/**
+ * 读全部基准状态：文件不存在 / 非对象（损坏或旧 [] 形态）一律按空对象处理。
+ * jsonStore 底层对损坏文件走改名留档重建，此处再兜一层对象形态校验。
+ */
+export async function loadLinkState(): Promise<LinkStateMap> {
+  let data: unknown;
+  try {
+    data = await jsonStore(getLinkStateFilePath()).read();
+  } catch {
+    return {};
+  }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return {};
+  const out: LinkStateMap = {};
+  for (const [path, entry] of Object.entries(data as Record<string, unknown>)) {
+    const e = entry as LinkStateEntry | null | undefined;
+    if (e && typeof e === 'object' && typeof e.hash === 'string' && e.hash) {
+      out[path] = { hash: e.hash, linkedAt: typeof e.linkedAt === 'string' ? e.linkedAt : '' };
+    }
+  }
+  return out;
+}
+
+/** upsert 单篇基准（成功建链后调用）：刷新全文内容哈希与时间戳 */
+export async function upsertLinkState(path: string, hash: string): Promise<void> {
+  if (!path || !hash) return;
+  const state = await loadLinkState();
+  state[path] = { hash, linkedAt: new Date().toISOString() };
+  await jsonStore(getLinkStateFilePath()).write(state);
+}
+
+/** 移除单篇基准（文件删除清理时用；不存在则空操作） */
+export async function removeLinkState(path: string): Promise<void> {
+  const state = await loadLinkState();
+  if (!(path in state)) return;
+  delete state[path];
+  await jsonStore(getLinkStateFilePath()).write(state);
 }
 
 // ---------------- 裁判输出解析（严格 JSON `[{"id":1,"reason":"..."}]`） ----------------

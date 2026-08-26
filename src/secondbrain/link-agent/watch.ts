@@ -2,7 +2,10 @@
  * 自动双链监听器（ticket 111；ADR-0003 事件随开关注册，模式对齐 src/review/watch.ts）：
  * - vault md 创建事件（域事件总线通用兜底通道）过滤关联范围（linkAgentScopes，缺省回退「文献盒」）
  *   → 防抖聚合约 60 秒一批跑管线；
- * - 删除事件订阅 → 防抖合并触发死链清理（低频巡检 30 分钟兜底）；
+ * - v1.4（ticket 119）：vault md **修改**事件同样过滤关联范围 → 防抖聚合 → 冲刷时先经
+ *   基准哈希过滤（filterChangedForRelink：内容未实质变化 / 自写 related 不重跑），
+ *   只对真正改动的存量笔记重跑建链（正文大改自动重跑）；
+ * - 删除事件订阅 → 防抖合并触发死链清理（低频巡检 30 分钟兜底）；删除同时移除该篇基准哈希；
  * - linkAgentScopes 中出现白名单未包含目录时一次性引导提示（只提示，不代改配置）。
  * 依赖方向：本层经 index.ts 接线；refresh 类副作用全部收敛在 LinkAgent。
  */
@@ -34,6 +37,8 @@ export class LinkAgentWatcher {
 
   /** 防抖批次缓冲（创建事件聚合） */
   private pendingCreates = new Set<string>();
+  /** 防抖批次缓冲（修改事件聚合，v1.4/ticket 119） */
+  private pendingModifies = new Set<string>();
   private batchTimer: ReturnType<typeof setTimeout> | null = null;
   /** 死链清理防抖定时器 */
   private cleanTimer: ReturnType<typeof setTimeout> | null = null;
@@ -58,6 +63,7 @@ export class LinkAgentWatcher {
     if (!this.enabled) return;
     this.unsubs.push(
       onDomainEvent<{ path: string }>('vault:md-created', (evt) => this.onCreated(evt.path)),
+      onDomainEvent<{ path: string }>('vault:md-modified', (evt) => this.onModified(evt.path)),
       onDomainEvent<{ path: string }>('vault:md-deleted', (evt) => this.onDeleted(evt.path))
     );
     this.sweepTimer = setInterval(() => {
@@ -78,21 +84,51 @@ export class LinkAgentWatcher {
     }, LINK_BATCH_DELAY_MS);
   }
 
-  /** 删除事件：缓冲内顺带剔除；死链清理防抖合并触发 */
+  /**
+   * 修改事件（v1.4/ticket 119 正文大改自动重跑）：范围内已有笔记被修改 → 入缓冲防抖聚合；
+   * 冲刷时经 agent.filterChangedForRelink 基准哈希过滤，只重跑真正变化的笔记
+   * （Obsidian 高频保存 / 自写 related 触发的 modify 被哈希挡掉，不空转裁判）。
+   */
+  onModified(path: string): void {
+    if (!this.enabled) return;
+    if (!matchesScope(getLinkAgentScopes(), path)) return;
+    this.pendingModifies.add(path);
+    if (this.batchTimer) clearTimeout(this.batchTimer);
+    this.batchTimer = setTimeout(() => {
+      this.batchTimer = null;
+      void this.flushBatch();
+    }, LINK_BATCH_DELAY_MS);
+  }
+
+  /** 删除事件：缓冲内顺带剔除；死链清理防抖合并触发；该篇基准哈希一并移除 */
   onDeleted(path: string): void {
     this.pendingCreates.delete(path);
+    this.pendingModifies.delete(path);
     if (!this.enabled) return;
     if (this.cleanTimer) clearTimeout(this.cleanTimer);
     this.cleanTimer = setTimeout(() => {
       this.cleanTimer = null;
       void this.runDeadLinkSweep();
     }, LINK_CLEAN_DEBOUNCE_MS);
+    void this.agent.dropLinkBaseline(path);
   }
 
   /** 冲刷防抖批次：只处理仍存在的文件；上一批未完成时本次跳过（下一事件重新聚合） */
   async flushBatch(): Promise<void> {
     const batch = [...this.pendingCreates].filter((p) => !!this.app.vault.getAbstractFileByPath(p));
     this.pendingCreates.clear();
+    // v1.4：修改事件经基准哈希过滤（只留真正变化者）后并入批次；过滤失败按全部保留兜底
+    if (this.pendingModifies.size > 0) {
+      const mods = [...this.pendingModifies].filter((p) => !!this.app.vault.getAbstractFileByPath(p));
+      this.pendingModifies.clear();
+      try {
+        const changed = await this.agent.filterChangedForRelink(mods);
+        for (const p of changed) if (!batch.includes(p)) batch.push(p);
+      } catch (e) {
+        console.warn('[link-agent] 修改过滤失败，按全部修改保留', e);
+        for (const p of mods) if (!batch.includes(p)) batch.push(p);
+      }
+    }
     if (!batch.length || this.running) return;
     this.running = true;
     try {
@@ -159,6 +195,7 @@ export class LinkAgentWatcher {
     }
     this.unsubs = [];
     this.pendingCreates.clear();
+    this.pendingModifies.clear();
   }
 }
 

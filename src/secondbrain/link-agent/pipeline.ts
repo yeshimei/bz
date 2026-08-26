@@ -11,6 +11,9 @@
  * - 队列消费：域初始化发现队列非空且服务可达即自动消费，完成后合并通知；
  * - 存量补链（ticket 115）：启动时（队列消费之后）扫描关联范围内缺 related 的存量笔记批量建链，
  *   手动命令 bz-secondbrain-link-all 同路径兜底；批次与监听批次共用串行锁；
+ * - 正文大改自动重跑（v1.4/ticket 119）：每次成功建链后把**全文内容哈希**记为基准
+ *   （secondbrain_link_state.json）；修改监听按基准过滤——内容未实质变化（含自写 related 触发的
+ *   modify）不重跑，哈希不同 / 无基准才重跑该篇；
  * - 死链清理：关联范围（linkAgentScopes）各笔记 related 中指向不存在文件的条目移除；encrypt 锁定文件一律跳过。
  */
 import type { App, TFile } from 'obsidian';
@@ -27,6 +30,7 @@ import {
   enqueuePaths,
   dequeuePath,
   loadQueue,
+  loadLinkState,
   matchesScope,
   mergeRelated,
   normalizeRelatedEntry,
@@ -34,7 +38,9 @@ import {
   parseJudgeOutput,
   planRemovals,
   pruneQueueByExists,
+  removeLinkState,
   toRelatedEntry,
+  upsertLinkState,
   isUnderFolder,
 } from './data';
 
@@ -222,7 +228,66 @@ export class LinkAgent {
       .map((p) => candidates[p.id - 1])
       .filter((c) => !!c && c.path !== path && !!this.app.vault.getAbstractFileByPath(c.path));
     const created = await this.writeRelated(file, links.map((c) => c.path));
+    // v1.4/ticket 119：写入后把当前文件全文哈希记为基准（含本次 related 写入——
+    // 自写触发的 modify 事件后续经基准过滤掉，防止自触发死循环）
+    await this.recordLinkBaseline(path);
     return { status: 'done', created };
+  }
+
+  /**
+   * v1.4/ticket 119：记录某篇的正文基准哈希（写盘成功后调用）。
+   * - 只记录"当前文件内容"（含本次写入的 related）——这样自写触发的 vault:md-modified
+   *   到冲刷时哈希与基准相同 → 被过滤跳过，不会循环重跑；
+   * - 失败静默（下一次成功建链会重记）。
+   */
+  async recordLinkBaseline(path: string): Promise<void> {
+    try {
+      const file = this.app.vault.getAbstractFileByPath(path) as TFile | null;
+      if (!file) return;
+      const content = await this.app.vault.read(file);
+      await upsertLinkState(path, computeHash(content));
+    } catch (e) {
+      console.warn('[link-agent] 基准哈希记录失败', e);
+    }
+  }
+
+  /**
+   * v1.4/ticket 119：修改事件冲刷过滤——输入候选路径，返回**需要重跑建链**的子集：
+   * - 与基准哈希相同（内容未实质变化 / 自写 related / Obsidian 高频保存）→ 剔除；
+   * - 无基准（升级前存量已连接笔记 / 首次见到）→ 保留（重跑一次并从成功结果重建基准）；
+   * - 文件已删 / 非 md / encrypt 锁定 → 剔除（管线本来会跳过，省一次读取）。
+   */
+  async filterChangedForRelink(paths: string[]): Promise<string[]> {
+    let state: Record<string, { hash: string; linkedAt: string }> = {};
+    try {
+      state = await loadLinkState();
+    } catch {
+      /* 状态文件损坏等：按无基准处理（全部保留） */
+    }
+    const out: string[] = [];
+    for (const p of [...paths].sort()) {
+      const file = this.app.vault.getAbstractFileByPath(p) as TFile | null;
+      if (!file || file.extension !== 'md') continue;
+      if (isEncryptLockedPath(this.app, p)) continue;
+      let content = '';
+      try {
+        content = await this.app.vault.read(file);
+      } catch {
+        continue;
+      }
+      if (state[p]?.hash === computeHash(content)) continue;
+      out.push(p);
+    }
+    return out;
+  }
+
+  /** v1.4/ticket 119：文件删除时移除基准条目（死链/删除清理顺带） */
+  async dropLinkBaseline(path: string): Promise<void> {
+    try {
+      await removeLinkState(path);
+    } catch {
+      /* 清理失败静默 */
+    }
   }
 
   /**

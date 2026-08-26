@@ -1,3 +1,14 @@
+## 2026-08-27 第二大脑正文大改自动重跑（ticket 119：v1.4 基准哈希 + 修改监听）
+
+**状态：worktree/t119-edit-relink 完成；分支全量测试 + tsc 0（合并复核待主会话）**
+
+- ✅ **用户拍板机制**：「记录第一次向量后的文件，如果改动笔记后，再次向量的文件有变化才走查新索引」→ 用全文内容哈希做基准，**内容实质变化才重跑建链**（Obsidian 高频保存但内容未变 / 自写 related 触发 → 哈希相同 → 不空转裁判；杜绝自触发死循环）
+- ✅ **基准状态**：新数据文件 `CONFIG/STORAGE/secondbrain_link_state.json`（`{ path: { hash, linkedAt } }`，STORAGE 目录随 Syncthing 流动；损坏/非对象/旧形态容错为空）；每次 `processNote` 成功（含监听/队列消费/补链/手动重跑）写入后刷新；不可达入队/失败不记；文件删除 `dropLinkBaseline` 清条目
+- ✅ **修改监听**：`LinkAgentWatcher` 订阅 `vault:md-modified`（`linkAgentScopes` 范围门 + 防抖聚合，复用既有批次管道）；冲刷时 `filterChangedForRelink` 过滤——基准相同剔除 / 正文大改保留 / **无基准（升级前存量已连接笔记）保留**（重跑一次并从结果重建基准）
+- ✅ 纯自动：无新命令、无新按钮、无新设置项；批次沿用串行锁与通知规则（N=0 静默）；过滤异常按全部修改保留兜底
+- ✅ 测试：数据层 +4（状态 CRUD/覆盖/移除/损坏与非对象容错/STORAGE 路径），UI 层 +5（成功建链记基准含 related·幂等重跑刷新·入队不记 / filterChangedForRelink 五分支 / dropLinkBaseline / 修改聚合与混合批次 / 过滤异常兜底 / scope 与开关门），watcher stub 补 `filterChangedForRelink`+`dropLinkBaseline`；smoke 无新命令不变
+- 📄 文档：spec v1.4（状态文件/修改监听/基准过滤/验收标准）；issue 119；CONTEXT 第二大脑词条并入正文大改自动重跑；PROGRESS 本条
+
 ## 2026-08-27 第二大脑建链检索查询改全文嵌入（ticket 118：召回优化）
 
 **状态：master 4bc3d7b 合并完成；合并复核全量 2714 测试通过（179 文件）+ tsc 0 + 构建部署（产物已落 E:/Obsidian/叫我包仔/.obsidian/plugins/bz/）**

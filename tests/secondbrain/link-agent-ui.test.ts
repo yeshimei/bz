@@ -1,10 +1,12 @@
 /**
- * 自动双链 UI/通知层测试（ticket 111 + 115，jsdom）：
+ * 自动双链 UI/通知层测试（ticket 111 + 115 + 119，jsdom）：
  * - ⚙️ 弹窗「自动双链」总开关联动明细显隐（onChange 即时重渲染、各键独立持久化、重开还原）；
  * - 管线写入（单侧幂等 / 上限截断 / 入队 / 裁判失败入队）；
  * - 通知触发条件（本批新建 N 条 / N=0 静默 / 队列消费完成 / 死链清理有移除才报）；
  * - 监听器聚合与守卫；命令 bz-secondbrain-rebuild-links 注册守卫分支；
- * - 存量补链（ticket 115）：目标清单扫描 / 可达门 / 队列排除 / 串行锁；命令 bz-secondbrain-link-all 守卫分支。
+ * - 存量补链（ticket 115）：目标清单扫描 / 可达门 / 队列排除 / 串行锁；命令 bz-secondbrain-link-all 守卫分支；
+ * - 正文大改自动重跑（v1.4/ticket 119）：成功建链后记基准哈希；修改过滤（实质变化才重跑）；
+ *   修改监听聚合与删除清基准；自写 related 不触发循环重跑。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -21,7 +23,7 @@ import {
   __resetLinkAgentGuideForTests,
   __setLinkCleanDebounceMsForTests,
 } from '../../src/secondbrain/link-agent/watch';
-import { enqueuePaths, loadQueue } from '../../src/secondbrain/link-agent/data';
+import { enqueuePaths, loadQueue, loadLinkState, computeHash } from '../../src/secondbrain/link-agent/data';
 import { AI } from '../../src/secondbrain/ai';
 import { rebuildSecondBrainLinks, runSecondBrainLinkAll, unloadSecondBrain } from '../../src/secondbrain/index';
 
@@ -262,6 +264,69 @@ describe('管线：related 幂等写入与可达性门', () => {
   });
 });
 
+describe('正文大改自动重跑（v1.4/ticket 119）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    clearDomainEvents();
+    document.body.innerHTML = '';
+    setSettingsProvider(baseSettings);
+    setSettingsSaver(() => Promise.resolve());
+  });
+
+  it('成功建链后记录基准哈希；幂等重跑（无新增）同样刷新基准；入队/失败不记', async () => {
+    const { vault, app, store, agent, askSpy } = makeWorld({
+      hits: [{ path: '文献盒/B.md', chunk: 'B', score: 0.9 }],
+    });
+    askSpy.mockResolvedValue('[{"id":1,"reason":"同主题"}]');
+    // ① 成功建链 → 记录基准（写入后内容哈希，含本次 related）
+    const r1 = await agent.processNote('文献盒/A.md');
+    expect(r1).toEqual({ status: 'done', created: 1 });
+    let state = await loadLinkState();
+    expect(state['文献盒/A.md'].hash).toBe(computeHash(vault.files.get('文献盒/A.md')!));
+    // ② 幂等重跑（created=0）→ 基准刷新为当前内容（幂等返回 done 仍记）
+    const r2 = await agent.processNote('文献盒/A.md');
+    expect(r2).toEqual({ status: 'done', created: 0 });
+    state = await loadLinkState();
+    expect(state['文献盒/A.md'].hash).toBe(computeHash(vault.files.get('文献盒/A.md')!));
+
+    clearNotices();
+    // ③ 不可达（入队）→ 不记基准：先大改正文（文件变了），入队后基准仍是旧内容哈希
+    vault.files.set('文献盒/A.md', '---\ntitle: 向量笔记\ntags: vec\n---\n\n入队后不更新基准的正文。');
+    const agent2 = new LinkAgent({
+      app: app as any,
+      store: store as any,
+      probe: vi.fn(async () => false), // 同 vault 不同探测：不可达
+    });
+    expect((await agent2.processNote('文献盒/A.md')).status).toBe('queued');
+    state = await loadLinkState();
+    expect(state['文献盒/A.md'].hash).not.toBe(computeHash(vault.files.get('文献盒/A.md')!)); // 基准未随入队刷新
+  });
+
+  it('filterChangedForRelink：基准相同（自写/保存未实质变化）剔除；无基准保留；文件缺失/encrypt 剔除', async () => {
+    const { vault, agent } = makeWorld({ hits: [] });
+    await agent.recordLinkBaseline('文献盒/A.md'); // 记基准（当前内容）
+    // ① 内容未变 → 剔除
+    expect(await agent.filterChangedForRelink(['文献盒/A.md'])).toEqual([]);
+    // ② 正文大改 → 保留
+    vault.files.set('文献盒/A.md', '---\ntitle: 向量笔记\ntags: vec\n---\n\n大改后的正文内容，主题完全不同了。');
+    expect(await agent.filterChangedForRelink(['文献盒/A.md'])).toEqual(['文献盒/A.md']);
+    // ③ 无基准（从未建链过的存量）→ 保留（重跑一次并从结果重建基准）
+    vault.files.set('文献盒/C.md', '---\nrelated: ["[[文献盒/B]]"]\n---\n\n老笔记，升级前已连接但无基准。');
+    expect(await agent.filterChangedForRelink(['文献盒/C.md'])).toEqual(['文献盒/C.md']);
+    // ④ 文件缺失 / 非 md / encrypt 锁定 → 剔除
+    expect(await agent.filterChangedForRelink(['文献盒/GONE.md', '文献盒/notes.txt', 'CONFIG/.ENCRYPT/e.md'])).toEqual([]);
+  });
+
+  it('删除事件清基准：dropLinkBaseline 移除条目', async () => {
+    const { agent } = makeWorld({ hits: [] });
+    await agent.recordLinkBaseline('文献盒/A.md');
+    expect(await loadLinkState()).toHaveProperty('文献盒/A.md');
+    await agent.dropLinkBaseline('文献盒/A.md');
+    expect(await loadLinkState()).not.toHaveProperty('文献盒/A.md');
+    await agent.dropLinkBaseline('文献盒/不存在.md'); // 空操作不抛
+  });
+});
+
 describe('通知触发条件（自绘 toast）', () => {
   beforeEach(() => {
     resetObsidianMocks();
@@ -389,6 +454,9 @@ describe('监听器：防抖聚合与开关门', () => {
     const agent = {
       processBatch: vi.fn(async () => ({ total: 0, processed: 0, created: 0, queued: 0, failed: 0 })),
       cleanDeadLinks: vi.fn(async () => 0),
+      // v1.4：修改过滤与基准移除（stub：默认全部保留，测试按需覆写）
+      filterChangedForRelink: vi.fn(async (paths: string[]) => paths),
+      dropLinkBaseline: vi.fn(async () => {}),
     } as any;
     const watcher = new LinkAgentWatcher(app as any, agent);
     return { vault, agent, watcher };
@@ -439,6 +507,73 @@ describe('监听器：防抖聚合与开关门', () => {
     await new Promise((r) => setTimeout(r, 70));
     expect(w2env.agent.processBatch).not.toHaveBeenCalled();
     w2env.watcher.destroy();
+  });
+
+  it('v1.4 修改事件：范围内聚合 → 经 filterChangedForRelink 过滤后并入批次（创建+修改混合）', async () => {
+    const { vault, agent, watcher } = makeWatcher(new MockVault());
+    vault.files.set('文献盒/X.md', 'x');
+    vault.files.set('文献盒/M.md', 'm');
+    vault.files.set('文献盒/UNCHANGED.md', 'u');
+    vault.files.set('文献盒/DEAD.md', 'd');
+    vault.files.set('其他/Y.md', 'y');
+    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '文献盒' }));
+    // 修改过滤 stub：只保留 M 与 X（UNCHANGED 被滤掉；X 虽来自 created 也并入批次去重）
+    agent.filterChangedForRelink.mockImplementation(async (paths: string[]) =>
+      paths.filter((p) => p.includes('M.md') || p.includes('X.md'))
+    );
+    watcher.start();
+    watcher.onCreated('文献盒/X.md');
+    watcher.onModified('文献盒/M.md');
+    watcher.onModified('文献盒/UNCHANGED.md'); // 过滤剔除
+    watcher.onModified('文献盒/DEAD.md'); // 防抖窗口内被删除 → 缓冲剔除
+    watcher.onModified('其他/Y.md'); // 范围外忽略
+    watcher.onDeleted('文献盒/DEAD.md');
+    expect(agent.dropLinkBaseline).toHaveBeenCalledWith('文献盒/DEAD.md');
+    await new Promise((r) => setTimeout(r, 70));
+    expect(agent.processBatch).toHaveBeenCalledTimes(1);
+    expect(agent.processBatch.mock.calls[0][0]).toEqual(['文献盒/X.md', '文献盒/M.md']);
+    watcher.destroy();
+  });
+
+  it('v1.4 修改过滤异常时按全部修改保留兜底（不丢事件）', async () => {
+    const { vault, agent, watcher } = makeWatcher(new MockVault());
+    vault.files.set('文献盒/M.md', 'm');
+    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '文献盒' }));
+    agent.filterChangedForRelink.mockRejectedValue(new Error('状态文件损坏'));
+    watcher.start();
+    watcher.onModified('文献盒/M.md');
+    await new Promise((r) => setTimeout(r, 70));
+    expect(agent.processBatch).toHaveBeenCalledTimes(1);
+    expect(agent.processBatch.mock.calls[0][0]).toEqual(['文献盒/M.md']);
+    watcher.destroy();
+  });
+
+  it('v1.4 修改事件校验：范围外/开关关闭不缓冲，删除清两缓冲', async () => {
+    const { vault, agent, watcher } = makeWatcher(new MockVault());
+    vault.files.set('文献盒/M.md', 'm');
+    setSettingsProvider(() => ({ ...baseSettings(), linkAgentScopes: '文献盒' }));
+    watcher.start();
+    watcher.onModified('其他/Y.md'); // 范围外
+    await new Promise((r) => setTimeout(r, 70));
+    expect(agent.processBatch).not.toHaveBeenCalled();
+    // 缓冲累积后删除 → 冲刷空批次（不调 processBatch）
+    watcher.onCreated('文献盒/X.md');
+    watcher.onModified('文献盒/X.md');
+    watcher.onDeleted('文献盒/X.md');
+    await new Promise((r) => setTimeout(r, 70));
+    expect(agent.processBatch).not.toHaveBeenCalled();
+    watcher.destroy();
+
+    // 开关关闭：start 不订阅，onModified 不缓冲
+    clearDomainEvents();
+    setSettingsProvider(() => ({ ...baseSettings(), linkAgentEnabled: false }));
+    const w2 = makeWatcher(new MockVault());
+    w2.vault.files.set('文献盒/M.md', 'm');
+    w2.watcher.start();
+    w2.watcher.onModified('文献盒/M.md');
+    await new Promise((r) => setTimeout(r, 70));
+    expect(w2.agent.processBatch).not.toHaveBeenCalled();
+    w2.watcher.destroy();
   });
 
   it('destroy 清空定时器：销毁后不再冲刷批次', async () => {
