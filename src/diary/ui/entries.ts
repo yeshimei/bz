@@ -17,6 +17,7 @@ import { state } from '../state';
 import type { DiaryEntry } from '../types';
 import { getContentRenderModeSetting } from './ui-settings';
 import { showTagPicker } from './dialogs';
+import { closePanel } from './panel';
 import { refreshSubTagsBar, updateTagCounts, updateTitleSuffix } from './filter-shared';
 
 // ===== 渲染 markdown（原 3531-3548） =====
@@ -42,8 +43,20 @@ async function renderMarkdown(content: string, container: HTMLElement, filePath:
 
 // ===== 筛选（原 1867-1952） =====
 
-export function applyFilter(options: { skipTagCountUpdate?: boolean } = {}) {
-  const { skipTagCountUpdate = false } = options;
+/**
+ * 标签计数防抖（UX-41）：全量 O(条目×标签) 遍历在键击/联动波动下合并为一次；
+ * 计时器引用挂 state，测试可清理（与 searchDebounceTimer 同款）。
+ */
+function scheduleTagCountUpdate(): void {
+  if (state.data.tagCountTimer) return;
+  state.data.tagCountTimer = setTimeout(() => {
+    state.data.tagCountTimer = null;
+    updateTagCounts();
+  }, 200);
+}
+
+export function applyFilter(options: { skipTagCountUpdate?: boolean; skipSubBar?: boolean } = {}) {
+  const { skipTagCountUpdate = false, skipSubBar = false } = options;
   let filtered = [...state.data.originalDiaryEntries];
 
   // 多标签筛选：对于每个选中的标签，如果是主标签且有二级标签，则匹配该主标签或其任意二级标签
@@ -104,11 +117,9 @@ export function applyFilter(options: { skipTagCountUpdate?: boolean } = {}) {
   }
   renderEntries();
   updateTitleSuffix();
-  refreshSubTagsBar();
-
-  if (!skipTagCountUpdate) {
-    updateTagCounts();
-  }
+  // UX-41：选中标签未变的筛选（搜索等）跳过二级标签栏重建与标签全量计数
+  if (!skipSubBar) refreshSubTagsBar();
+  if (!skipTagCountUpdate) scheduleTagCountUpdate();
 }
 
 // ===== 标题日期后缀（原 1934-1952，经 filter-shared 桥接） =====
@@ -147,12 +158,17 @@ function renderEntries() {
   if (!state.ui.scrollContainer) {
     state.ui.scrollContainer = document.createElement('div');
     state.ui.scrollContainer.className = 'diary-scroll-container';
-    state.ui.scrollContainer.style.cssText = 'padding:0 20px;';
+    // position:relative 使分区 offsetTop 相对本容器（UX-p5：置顶判定用流式位置缓存）
+    state.ui.scrollContainer.style.cssText = 'padding:0 20px;position:relative;';
     state.ui.entriesContainer.appendChild(state.ui.scrollContainer);
+    sectionTopCache = [];
+    sectionTopCacheOwner = null;
   }
 
   let lastDate: string | null = null;
   let dateSection: HTMLElement | null = null;
+  // UX-p5：本次批次新渲染的分区，流式位置增量入缓存（不重读既有分区）
+  const appendedSections: HTMLElement[] = [];
 
   batchToShow.forEach((entry) => {
     if (entry.date !== lastDate) {
@@ -168,6 +184,7 @@ function renderEntries() {
 
       dateSection.appendChild(dateSeparator);
       state.ui.scrollContainer!.appendChild(dateSection);
+      appendedSections.push(dateSection);
       lastDate = entry.date;
     }
 
@@ -177,6 +194,12 @@ function renderEntries() {
   });
 
   state.data.currentDisplayCount = endIndex;
+
+  // UX-p5：新分区流式位置增量入缓存（offsetTop 相对滚动容器，无逐项布局读取于滚动路径）
+  for (const section of appendedSections) {
+    sectionTopCache.push({ section, top: section.offsetTop });
+  }
+  sectionTopCacheOwner = state.ui.scrollContainer;
 
   if (state.data.currentDisplayCount >= state.data.currentFilteredEntries.length) {
     const allLoaded = document.createElement('div');
@@ -395,9 +418,8 @@ export async function jumpToEntry(entry: DiaryEntry, mode: 'select' | 'edit' = '
       return;
     }
     await getApp().workspace.openLinkText(file.path, '', false, { active: true });
-    // 关闭日记本弹窗
-    if (state.ui.maskLayer) state.ui.maskLayer.style.visibility = 'hidden';
-    if (state.ui.tagFilterPopup) state.ui.tagFilterPopup.style.visibility = 'hidden';
+    // UX-25：与遮罩/ESC 同路径关闭（关面板即锁保险箱）；保持「先跳原文后隐藏」顺序
+    closePanel();
     return;
   }
 
@@ -411,8 +433,7 @@ export async function jumpToEntry(entry: DiaryEntry, mode: 'select' | 'edit' = '
       return;
     }
     await getApp().workspace.openLinkText(file.path, '', false, { active: true });
-    if (state.ui.maskLayer) state.ui.maskLayer.style.visibility = 'hidden';
-    if (state.ui.tagFilterPopup) state.ui.tagFilterPopup.style.visibility = 'hidden';
+    closePanel();
     return;
   }
 
@@ -432,9 +453,8 @@ export async function jumpToEntry(entry: DiaryEntry, mode: 'select' | 'edit' = '
   // 打开文件并滚动到对应的标题位置
   await getApp().workspace.openLinkText(link, '', false, { active: true });
 
-  // 关闭日记本弹窗
-  if (state.ui.maskLayer) state.ui.maskLayer.style.visibility = 'hidden';
-  if (state.ui.tagFilterPopup) state.ui.tagFilterPopup.style.visibility = 'hidden';
+  // 关闭日记本弹窗（UX-25：统一 closePanel 路径）
+  closePanel();
 }
 
 // ===== 复制双链（原 2209-2215） =====
@@ -653,10 +673,38 @@ export function insertCard(entry: DiaryEntry) {
       }
     }
     if (!inserted) state.ui.scrollContainer.appendChild(newSection);
+    // UX-p5：中部插段会推移后续分区流式位置 → 全量重建缓存
+    rebuildSectionTopCache();
   }
 }
 
-// ===== 滚动与粘性（原 2434-2505） =====
+// ===== 滚动与粘性（原 2434-2505；UX-p5：置顶分隔符判定改缓存二分，滚动路径零布局读取） =====
+
+/** 分区流式位置缓存条目：offsetTop 相对滚动容器（position:relative），滚动时恒定 */
+interface SectionTopEntry {
+  section: HTMLElement;
+  top: number;
+}
+
+let sectionTopCache: SectionTopEntry[] = [];
+/** 缓存归属的滚动容器：换容器（重渲染/测试换手）即失效，防误用旧布局数据 */
+let sectionTopCacheOwner: HTMLElement | null = null;
+let currentStickyEl: HTMLElement | null = null;
+
+/** 全量重建分区位置缓存（中部插段等偏移变化场景；渲染批次走增量 append） */
+function rebuildSectionTopCache(): void {
+  sectionTopCache = [];
+  const container = state.ui.scrollContainer;
+  if (!container) {
+    sectionTopCacheOwner = null;
+    return;
+  }
+  const sections = container.querySelectorAll('.date-section');
+  for (const s of Array.from(sections)) {
+    sectionTopCache.push({ section: s as HTMLElement, top: (s as HTMLElement).offsetTop });
+  }
+  sectionTopCacheOwner = container;
+}
 
 export function initScroll() {
   if (!state.ui.entriesContainer)
@@ -677,26 +725,36 @@ export function initScroll() {
 
 export function updateSticky() {
   if (!state.ui.entriesContainer || !state.ui.scrollContainer) return;
-  const dateSeparators = state.ui.scrollContainer.querySelectorAll('.diary-date-separator');
-  if (dateSeparators.length === 0) return;
-  const containerRect = state.ui.entriesContainer.getBoundingClientRect();
+  // 缓存为空/归属容器已换/指向已卸载分区（全量重渲染后）→ 重建；否则直接用流式位置，不读布局
+  const cached = sectionTopCache;
+  if (cached.length === 0 || sectionTopCacheOwner !== state.ui.scrollContainer || !cached[0]?.section.isConnected) {
+    rebuildSectionTopCache();
+  }
+  const sectionTops = sectionTopCache;
+  if (sectionTops.length === 0) return;
+
   const scrollTop = state.ui.entriesContainer.scrollTop;
-  let currentStickyDate: HTMLElement | null = null;
-  for (let i = dateSeparators.length - 1; i >= 0; i--) {
-    const separator = dateSeparators[i] as HTMLElement;
-    const separatorRect = separator.getBoundingClientRect();
-    const separatorTop = separatorRect.top - containerRect.top + scrollTop;
-    if (separatorTop <= scrollTop + 5) {
-      currentStickyDate = separator;
-      break;
+  // 二分定位最后一个 flow top ≤ scrollTop+5 的分区 = 当前置顶分区（纯 JS 计算）
+  let lo = 0;
+  let hi = sectionTops.length - 1;
+  let best = -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (sectionTops[mid].top <= scrollTop + 5) {
+      best = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
     }
   }
-  dateSeparators.forEach((separator) => {
-    const el = separator as HTMLElement;
-    el.style.position = 'sticky';
-    el.style.top = '0';
-    el.style.zIndex = '10';
-    el.style.background = 'var(--background-primary)';
-  });
-  if (currentStickyDate) currentStickyDate.style.zIndex = '20';
+
+  let next: HTMLElement | null = null;
+  if (best !== -1) {
+    next = sectionTops[best].section.querySelector('.diary-date-separator') as HTMLElement | null;
+  }
+  if (currentStickyEl === next) return;
+  // 增量升降：仅切换置顶分隔符的 zIndex（sticky 基础样式由渲染期一次设定）
+  if (currentStickyEl) currentStickyEl.style.zIndex = '10';
+  if (next) next.style.zIndex = '20';
+  currentStickyEl = next;
 }

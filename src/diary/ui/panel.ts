@@ -70,8 +70,8 @@ function createMaskAndPopup() {
   state.ui.maskLayer.style.cssText =
     'position:fixed;top:0;left:0;right:0;bottom:0;background:var(--background-modifier-cover);z-index:9998;visibility:hidden;';
   state.ui.maskLayer.onclick = () => {
-    state.ui.maskLayer!.style.visibility = 'hidden';
-    state.ui.tagFilterPopup!.style.visibility = 'hidden';
+    // UX-25：遮罩点击与 ESC/关闭按钮同路径（关面板即锁保险箱）
+    closePanel();
   };
 
   state.ui.tagFilterPopup = document.createElement('div');
@@ -109,7 +109,8 @@ function createMaskAndPopup() {
     if (state.data.searchDebounceTimer) clearTimeout(state.data.searchDebounceTimer);
     state.data.searchDebounceTimer = setTimeout(() => {
       state.data.currentSearchKeyword = keyword;
-      applyFilter();
+      // UX-41：搜索键击不触发标签全量计数与二级标签栏重建（选中标签未变，计数不变）
+      applyFilter({ skipTagCountUpdate: true, skipSubBar: true });
     }, 300);
   });
   searchContainer.appendChild(searchInput);
@@ -140,8 +141,8 @@ function createMaskAndPopup() {
 
 // ===== 关闭面板（关面板即上锁，ADR-0017 固定行为） =====
 
-/** 隐藏主面板并锁定保险箱：上锁后加密条目完全不可见（Q21-a） */
-function closePanel() {
+/** 隐藏主面板并锁定保险箱：上锁后加密条目完全不可见（Q21-a）；UX-25 起为唯一关闭路径 */
+export function closePanel() {
   if (state.ui.maskLayer) state.ui.maskLayer.style.visibility = 'hidden';
   if (state.ui.tagFilterPopup) state.ui.tagFilterPopup.style.visibility = 'hidden';
   // isUnlocked 自带降级链（未注入设置视为未解锁），不会抛错
@@ -400,7 +401,8 @@ export function toggleSearch() {
     }
     state.data.currentSearchKeyword = '';
     if (state.data.searchDebounceTimer) clearTimeout(state.data.searchDebounceTimer);
-    applyFilter();
+    // UX-41：收起搜索只重筛列表，不重算标签计数/二级标签栏
+    applyFilter({ skipTagCountUpdate: true, skipSubBar: true });
   }
 }
 
@@ -559,6 +561,16 @@ function registerEscapeListener() {
     },
     close: () => {
       const byId = (id: string) => document.getElementById(id);
+      // UX-24：焦点在搜索框时，ESC 先清空/失焦搜索框（不关闭面板），再按 ESC 才关面板
+      const searchInput = byId('diary-search-input') as HTMLInputElement | null;
+      if (searchInput && document.activeElement === searchInput) {
+        searchInput.value = '';
+        state.data.currentSearchKeyword = '';
+        if (state.data.searchDebounceTimer) clearTimeout(state.data.searchDebounceTimer);
+        searchInput.blur();
+        applyFilter({ skipTagCountUpdate: true, skipSubBar: true });
+        return;
+      }
       const conf = byId('delete-confirm-mask');
       if (conf && conf.style.display === 'block') {
         conf.style.display = 'none';

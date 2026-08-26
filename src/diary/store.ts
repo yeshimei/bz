@@ -139,18 +139,26 @@ export async function loadAll() {
 
     const BATCH_CONCURRENCY = 10;
     const results: { date: string; entries: DiaryEntry[] }[] = [];
+    // UX-9：跨文件汇总「未能解析的行」数（不改解析结果、不动数据格式）
+    let unparsedTotal = 0;
     if (totalDiaryFiles > 0) {
       for (let i = 0; i < mdFiles.length; i += BATCH_CONCURRENCY) {
         const batch = mdFiles.slice(i, i + BATCH_CONCURRENCY);
         const batchResults = await Promise.all(
           batch.map(async (file: any, idx: number) => {
             const content = await app.vault.read(file);
-            const entries = parseFile(content, file.basename);
+            const entries = parseFile(content, file.basename, (n) => {
+              unparsedTotal += n;
+            });
             emitProgress(i + idx + 1, totalDiaryFiles);
             return { date: file.basename, entries };
           })
         );
         results.push(...batchResults);
+      }
+      if (unparsedTotal > 0) {
+        // UX-9：解析失败汇总提示，一次 warning（正文不带 emoji）
+        notice(`${unparsedTotal} 条未能解析，请检查日记文件格式`, 'warning');
       }
     }
 
