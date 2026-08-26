@@ -201,7 +201,7 @@ describe('剪藏本数据解析与容错', () => {
     document.body.innerHTML = '';
   });
 
-  it('parseArticleFile：无 frontmatter / 缺 url / 缺 created / 读文件抛错 → 均返回 null', async () => {
+  it('parseArticleFile：无 frontmatter / 缺 url / 缺 created / metadataCache 抛错 → 均返回 null', async () => {
     const { vault, app } = await setup();
     vault.files.set('我的/文章/nofm.md', '正文（无 frontmatter）');
     vault.files.set('我的/文章/nourl.md', '---\ncreated: 2025-06-02T08:00:00.000Z\n---\n正文');
@@ -211,10 +211,10 @@ describe('剪藏本数据解析与容错', () => {
     expect(await parseArticleFile(vault.file('我的/文章/nourl.md'))).toBeNull();
     expect(await parseArticleFile(vault.file('我的/文章/nocreated.md'))).toBeNull();
 
-    // 读文件抛错：console.warn 兜底不中断
+    // metadataCache 抛错：console.warn 兜底不中断（rawContent 已废弃，解析不再读文件本体）
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    (app as any).vault.read = async () => {
-      throw new Error('disk error');
+    (app as any).metadataCache.getFileCache = () => {
+      throw new Error('cache error');
     };
     vault.files.set('我的/文章/bad.md', makeArticleMd('https://x.com/a', '知乎', 'bad', '2025-06-02T08:00:00.000Z'));
     expect(await parseArticleFile(vault.file('我的/文章/bad.md'))).toBeNull();
@@ -313,7 +313,6 @@ describe('剪藏本渲染辅助与滚动', () => {
       tags: [],
       created: new Date('2025-06-02T08:00:00.000Z'),
       title: '标题A',
-      rawContent: '',
       hasBacklink: true,
       backlinkSources: ['我的/阅读/B.md'],
     };

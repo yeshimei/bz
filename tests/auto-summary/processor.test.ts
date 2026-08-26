@@ -3,6 +3,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
+import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { aiProcess, processFile, formatSummaryNotice } from '../../src/auto-summary/processor';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages } from '../mock-obsidian-entry';
@@ -106,6 +107,8 @@ describe('processFile', () => {
 
   beforeEach(() => {
     resetObsidianMocks();
+    resetAIProviderCache();
+    setAISettingsProvider(() => ({})); // 默认未配 AI：失败原因走「未配置」文案
     document.body.innerHTML = '';
     vault = new MockVault();
     setApp(makeApp(vault));
@@ -123,9 +126,10 @@ describe('processFile', () => {
     expect(out).toContain('  - "AI"');
     expect(out).toContain('  - "阅读"');
     expect(out).toContain('url: "https://x.com/a"'); // 原字段保留
-    // 通知：动态链路（ticket 25）——单条通知原地更新为结果
-    expect(getNoticeMessages()).toHaveLength(1);
-    expect(getNoticeMessages()[0]).toBe('《新标题》\n\n摘要内容\n\n#AI #阅读');
+    // 通知：摘要单条原地更新为结果 + 改名成功独立弹出「已重命名为《X》」（ticket a1）
+    const msgs = getNoticeMessages();
+    expect(msgs).toContain('《新标题》\n\n摘要内容\n\n#AI #阅读');
+    expect(msgs).toContain('已重命名为《新标题》');
   });
 
   it('已有 title/summary 只缺 tags → 只补 tags，不重命名，原字段保留', async () => {
@@ -169,15 +173,16 @@ describe('processFile', () => {
     expect(prompt).toContain('tags 规则');
   });
 
-  it('重命名防重名 → 追加 (1)', async () => {
+  it('重命名防重名 → 追加 (1) + 改名成功通知', async () => {
     vault.files.set('归档/网页剪藏/e.md', `---\nurl: "https://x.com/e"\n---\n\n${LONG_BODY}`);
     vault.files.set('归档/网页剪藏/新标题.md', '占位');
     const ai = makeAI('{"title":"新标题"}');
     await processFile(makeApp(vault), ai, vault.file('归档/网页剪藏/e.md'));
     expect(vault.files.has('归档/网页剪藏/新标题 (1).md')).toBe(true);
+    expect(getNoticeMessages()).toContain('已重命名为《新标题》');
   });
 
-  it('rename 失败 → 回退仅写 frontmatter title', async () => {
+  it('rename 失败 → 回退仅写 frontmatter title + warning 通知（a1）', async () => {
     vault.files.set('归档/网页剪藏/f.md', `---\nurl: "https://x.com/f"\n---\n\n${LONG_BODY}`);
     const vault2 = new MockVault();
     vault2.files.set('归档/网页剪藏/f.md', `---\nurl: "https://x.com/f"\n---\n\n${LONG_BODY}`);
@@ -186,6 +191,7 @@ describe('processFile', () => {
     await processFile(makeApp(vault2), ai, vault2.file('归档/网页剪藏/f.md'));
     expect(vault2.files.has('归档/网页剪藏/f.md')).toBe(true);
     expect(vault2.files.get('归档/网页剪藏/f.md')!).toContain('title: "新标题"');
+    expect(getNoticeMessages()).toContain('自动改名失败，标题已写入笔记，请手动重命名');
   });
 
   it('正文 <100 字 → 跳过', async () => {
@@ -195,13 +201,54 @@ describe('processFile', () => {
     expect(vault.modifiedPaths).toHaveLength(0);
   });
 
-  it('AI 返回 null → 不改文件，动态通知变为失败提示', async () => {
+  it('AI 返回 null → 不改文件，失败通知人话化（未配 AI 引导设置）+ 挂「重试」action', async () => {
     vault.files.set('归档/网页剪藏/h.md', `---\nurl: "https://x.com/h"\n---\n\n${LONG_BODY}`);
     await processFile(makeApp(vault), makeAI(null), vault.file('归档/网页剪藏/h.md'));
     expect(vault.modifiedPaths).toHaveLength(0);
-    // 动态链路：progress → error（ticket 25）
+    // 动态链路：progress → error（ticket 25）+ 人话原因（测试环境未配置 AI）
     expect(getNoticeMessages()).toHaveLength(1);
+    expect(getNoticeMessages()[0]).toBe('AI 服务未配置或不可用，请到设置页配置');
+    const retryBtn = document.querySelector('.bz-notice .bz-notice-action') as HTMLButtonElement;
+    expect(retryBtn).not.toBeNull();
+    expect(retryBtn.textContent).toBe('重试');
+  });
+
+  it('AI 已配置但请求失败 → 通用人话文案（不误报「未配置」）', async () => {
+    setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'sk-test' }) as any);
+    resetAIProviderCache();
+    vault.files.set('归档/网页剪藏/k.md', `---\nurl: "https://x.com/k"\n---\n\n${LONG_BODY}`);
+    await processFile(makeApp(vault), makeAI(null, true), vault.file('归档/网页剪藏/k.md'));
+    expect(vault.modifiedPaths).toHaveLength(0);
     expect(getNoticeMessages()[0]).toBe('摘要生成失败，请重试');
+  });
+
+  it('失败通知点「重试」→ 重跑当前文件，第二次成功并改名', async () => {
+    vault.files.set('归档/网页剪藏/r.md', `---\nurl: "https://x.com/r"\n---\n\n${LONG_BODY}`);
+    const prompt = vi
+      .fn()
+      .mockResolvedValueOnce(null) // 第一次失败
+      .mockResolvedValueOnce('{"title":"重试标题","summary":"摘要内容","tags":["AI"]}'); // 重试成功
+    const ai = { prompt } as any;
+    const file = vault.file('归档/网页剪藏/r.md');
+    await processFile(makeApp(vault), ai, file);
+    expect(vault.files.has('归档/网页剪藏/r.md')).toBe(true); // 失败不改文件
+    const retryBtn = document.querySelector('.bz-notice .bz-notice-action') as HTMLButtonElement;
+    expect(retryBtn).not.toBeNull();
+    retryBtn.click(); // 点按重跑当前文件
+    await new Promise((r) => setTimeout(r, 30));
+    expect(vault.files.has('归档/网页剪藏/重试标题.md')).toBe(true);
+    expect(getNoticeMessages().some((m) => m.includes('重试标题'))).toBe(true);
+  });
+
+  it('连续处理两个文件 → 各自一条完成通知（ticket 1：按文件区分去重键，互不吞结果）', async () => {
+    vault.files.set('归档/网页剪藏/m1.md', `---\nurl: "https://x.com/m1"\n---\n\n${LONG_BODY}`);
+    vault.files.set('归档/网页剪藏/m2.md', `---\nurl: "https://x.com/m2"\n---\n\n${LONG_BODY}`);
+    const ai = makeAI('{"title":"甲","summary":"摘要一","tags":["AI"]}');
+    await Promise.all([
+      processFile(makeApp(vault), ai, vault.file('归档/网页剪藏/m1.md')),
+      processFile(makeApp(vault), ai, vault.file('归档/网页剪藏/m2.md')),
+    ]);
+    expect(getNoticeMessages().filter((m) => m.includes('摘要一'))).toHaveLength(2);
   });
 
   it('AI 处理期间外部追加（P1-21）：写回基于最新读——自定义 frontmatter 与正文段落保留，摘要字段已更新', async () => {
