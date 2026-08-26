@@ -15,7 +15,7 @@ import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
 import { tryGetSettings, saveSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
-import { openSettingsModal, closeSettingsModal, createSettingsGroup } from '../core/settings-modal';
+import { openSettingsModal, closeSettingsModal, createSettingsGroup, refreshSettingsGroupCounts } from '../core/settings-modal';
 import { formatRelativeTime } from '../core/utils';
 import { confirm } from '../core/confirm';
 import { getApp } from '../core/app';
@@ -846,6 +846,53 @@ export function openSecondBrainSettings(_app?: App): void {
         .setName('启用')
         .setDesc('常驻监听光标移动与笔记变更，触发向量检索和 AI 对话')
         .addToggle((t) => t.setValue(s.secondBrainEnabled === true).onChange((v) => set('secondBrainEnabled', v)));
+
+      // 自动双链（ticket 111）：总开关为明细设置的显隐开关——onChange 即时重渲染该区块，
+      // 各键独立持久化，重开弹窗按当前状态还原；显隐属功能性显隐，无新 CSS
+      const bLink = group('link', '自动双链');
+      const linkDetailBox = document.createElement('div');
+      const renderLinkDetail = () => {
+        linkDetailBox.innerHTML = '';
+        if ((tryGetSettings() as any).linkAgentEnabled === false) return;
+        new Setting(linkDetailBox)
+          .setName('单篇候选数量 TopK')
+          .setDesc('文献盒内向量近邻候选数')
+          .addText((t) =>
+            t.setValue(String((tryGetSettings() as any).linkAgentTopK ?? 8)).onChange((v) => {
+              const n = Math.floor(Number(v));
+              set('linkAgentTopK', Number.isFinite(n) && n > 0 ? n : 8);
+            })
+          );
+        new Setting(linkDetailBox)
+          .setName('每篇关联上限')
+          .setDesc('0 = 不限量，由 AI 裁判自行决定（沿用复习域「0=不限制」惯例）')
+          .addText((t) =>
+            t.setValue(String((tryGetSettings() as any).linkAgentMaxLinks ?? 0)).onChange((v) => {
+              const n = Math.floor(Number(v));
+              set('linkAgentMaxLinks', Number.isFinite(n) && n > 0 ? n : 0);
+            })
+          );
+        new Setting(linkDetailBox)
+          .setName('完成通知')
+          .setDesc('处理完成后通知提醒；关闭则全程静默')
+          .addToggle((t) => t.setValue((tryGetSettings() as any).linkAgentNotify !== false).onChange((v) => set('linkAgentNotify', v)));
+        new Setting(linkDetailBox)
+          .setName('失效关联自动清理')
+          .setDesc('笔记删除后自动移除指向它的失效 related 条目')
+          .addToggle((t) => t.setValue((tryGetSettings() as any).linkAgentAutoClean !== false).onChange((v) => set('linkAgentAutoClean', v)));
+      };
+      new Setting(bLink)
+        .setName('自动双链')
+        .setDesc('文献盒新笔记落盘时自动建立 related 双链：向量近邻出候选、AI 裁判、只写新笔记侧')
+        .addToggle((t) =>
+          t.setValue(s.linkAgentEnabled !== false).onChange((v) => {
+            set('linkAgentEnabled', v);
+            renderLinkDetail();
+            refreshSettingsGroupCounts(content);
+          })
+        );
+      bLink.appendChild(linkDetailBox);
+      renderLinkDetail();
 
       const b2 = group('search', '检索');
       new Setting(b2).setName('参考结果数 TOP_K').addText((t) => t.setValue(String(s.secondBrainTopK ?? '')).onChange((v) => set('secondBrainTopK', v)));

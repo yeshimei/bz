@@ -205,6 +205,18 @@ export default interface BzSettings {
   /** 远程 Ollama URL（移动端探活/降级链） */
   secondBrainRemoteOllamaUrl: string;
 
+  // ===== 🔗 第二大脑·自动双链管线（ticket 111，⚙️ 弹窗「自动双链」组）=====
+  /** 自动双链总开关：文献盒新笔记落盘时自动建立 related 双链（false 时无任何监听与写入） */
+  linkAgentEnabled: boolean;
+  /** 单篇候选数量（文献盒内向量近邻 Top-K） */
+  linkAgentTopK: number;
+  /** 每篇 related 写入上限；0 = 不限，由 AI 裁判自行决定（沿用复习域「0=不限制」惯例） */
+  linkAgentMaxLinks: number;
+  /** 处理完成后通知提醒（关闭则全程静默） */
+  linkAgentNotify: boolean;
+  /** 失效关联自动清理（metadataCache 删除事件 + 低频巡检） */
+  linkAgentAutoClean: boolean;
+
   // ===== 常驻监听开关（懒加载架构，ADR-0003）=====
   // AI Agent 4 项（ADR-0009）：设置不暴露 UI，运行时读字段（默认值兜底，尊重旧 data.json 值）
   /** AI Agent：笔记 rename/delete/create 同步 */
@@ -414,6 +426,13 @@ export const DEFAULT_SETTINGS: BzSettings = {
   secondBrainDefaultUseDeepseek: 'false',
   secondBrainMaxHistory: '10',
   secondBrainRemoteOllamaUrl: 'http://192.168.1.8:11434',
+
+  // 自动双链管线（ticket 111）
+  linkAgentEnabled: true,
+  linkAgentTopK: 8,
+  linkAgentMaxLinks: 0,
+  linkAgentNotify: true,
+  linkAgentAutoClean: true,
 
   // 常驻监听
   aiAgentEnabled: true,
