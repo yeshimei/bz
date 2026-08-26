@@ -4,6 +4,8 @@
  * - 无数据文件（首次使用）→ 首用引导态（数据从哪来：外部数据源守护写入）
  * - 真读空（文件存在且全部已读）→ 完成态照常
  * - show() 加载期 → .news-loading 占位，加载完成清理并被正文替换；加载中 hide 不强制弹出
+ * - show() 重入串行化（审查后追加）：双 show 并发 / 加载中 hide→立即重开，均复用同一加载链（数据只读一次），
+ *   防「晚完成链旧快照覆盖面板 / 晚到 render() 重设 openedAt 截断已读时长」双链竞态
  * - 本地日期口径（对齐 src/pomodoro/stats.ts dayKey）：凌晨 0-8 点不落昨日
  * 独立测试文件：vi.resetModules 保证每例全新模块状态（flags/articles/stats 干净）。
  */
@@ -116,6 +118,59 @@ describe('聚合讯 l5 三态', () => {
     await flush();
     expect((document.querySelector('.news-mask') as HTMLElement).style.visibility).toBe('hidden');
     expect(document.querySelector('.news-loading')).toBeNull(); // 内容已渲染但不弹窗
+  });
+});
+
+describe('聚合讯 show 重入串行化（双链竞态）', () => {
+  /** 挂起 news.json 读取（门闸模拟慢加载），并计数实际读取次数 */
+  async function gateNewsRead(vault: MockVault): Promise<{ release: () => void; newsReads: () => number }> {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => { release = r; });
+    let reads = 0;
+    const origRead = vault.read.bind(vault);
+    vault.read = async (f: any) => {
+      if (f && String(f.path) === NEWS_JSON) {
+        reads++;
+        await gate;
+      }
+      return origRead(f);
+    };
+    return { release, newsReads: () => reads };
+  }
+
+  it('双 show 并发：串行化只起一条加载链（news.json 只读一次），完成后渲染单篇', async () => {
+    const { reader, vault } = await freshReader();
+    vault.files.set(NEWS_JSON, JSON.stringify([makeArticle('A'), makeArticle('B')]));
+    const { release, newsReads } = await gateNewsRead(vault);
+
+    reader.show();
+    reader.show(); // 重入：复用同一链，不另起第二条
+    expect(document.querySelector('.news-loading')).not.toBeNull();
+    release();
+    await flush();
+    expect(newsReads()).toBe(1); // 无双链 → 无「晚完成链旧快照覆盖」
+    expect(document.querySelector('.news-loading')).toBeNull();
+    expect(document.querySelector('.news-card-title')!.textContent).toBe('A');
+    expect((document.querySelector('.news-mask') as HTMLElement).style.visibility).toBe('visible');
+  });
+
+  it('加载中 hide → 立即重开：复用同一链重新显窗，完成后内容就绪且窗口可见（仅一次数据读取）', async () => {
+    const { reader, vault } = await freshReader();
+    vault.files.set(NEWS_JSON, JSON.stringify([makeArticle('A')]));
+    const { release, newsReads } = await gateNewsRead(vault);
+
+    reader.show();
+    reader.hide(); // 加载中关闭
+    expect((document.querySelector('.news-mask') as HTMLElement).style.visibility).toBe('hidden');
+    reader.show(); // 立即重开 → 占位重建 + 复用原链，不起新链（防晚到 render 重设 openedAt 截断时长）
+    expect((document.querySelector('.news-mask') as HTMLElement).style.visibility).toBe('visible');
+    expect(document.querySelector('.news-loading')).not.toBeNull();
+    release();
+    await flush();
+    expect(newsReads()).toBe(1); // 未起第二条加载链
+    expect(document.querySelector('.news-loading')).toBeNull();
+    expect(document.querySelector('.news-card-title')!.textContent).toBe('A');
+    expect((document.querySelector('.news-mask') as HTMLElement).style.visibility).toBe('visible');
   });
 });
 
