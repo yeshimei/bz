@@ -260,6 +260,71 @@ describe('UIManager 面板与条目', () => {
     expect(container.textContent).toContain('Gmail');
   });
 
+  it('搜索输入防抖（ticket 43）：快速连续输入只渲染最后一次（180ms 窗口，不逐键整表 load/解密）', async () => {
+    ui.show();
+    await waitFor(() => document.querySelectorAll('.pw-entry-card').length === 2);
+    const loadSpy = vi.spyOn(ui.dataManager, 'load');
+    vi.useFakeTimers();
+    try {
+      // 关键词即时生效，渲染延迟到防抖窗结束
+      ui.searchInput!.value = 'g';
+      ui.searchInput!.dispatchEvent(new Event('input'));
+      ui.searchInput!.value = 'gm';
+      ui.searchInput!.dispatchEvent(new Event('input'));
+      ui.searchInput!.value = 'gmail';
+      ui.searchInput!.dispatchEvent(new Event('input'));
+      // 未到防抖窗：不触发渲染/load
+      vi.advanceTimersByTime(179);
+      expect(loadSpy).not.toHaveBeenCalled();
+      // 满 180ms → 只渲染最后一次（load 只触发一次，且缓存命中不重解密）
+      vi.advanceTimersByTime(1);
+      for (let i = 0; i < 40 && loadSpy.mock.calls.length === 0; i++) {
+        await vi.advanceTimersByTimeAsync(25); // 冲刷渲染链（load 含真实异步解密）
+      }
+      expect(loadSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+      loadSpy.mockRestore();
+    }
+    // 防抖后列表按最新关键词过滤
+    await waitFor(() => document.querySelectorAll('.pw-entry-card').length === 1);
+    expect(document.getElementById('pw-entries-container')!.textContent).toContain('Gmail');
+  });
+
+  it('抽屉复制失败 → 「复制失败，请手动复制」，不弹成功提示（ticket 4）', async () => {
+    const writeSpy = vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('denied'));
+    ui.show();
+    await waitFor(() => document.querySelectorAll('.pw-entry-card').length === 2);
+    const container = document.getElementById('pw-entries-container')!;
+    Platform.isMobile = true;
+    vi.useFakeTimers();
+    try {
+      const card = container.querySelector('.pw-entry-card') as HTMLElement;
+      card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 60, clientY: 60 }));
+      vi.advanceTimersByTime(550);
+      card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+      card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      await vi.advanceTimersByTimeAsync(10);
+      const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+      expect(sheet).not.toBeNull();
+      const copyAcc = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
+        (b) => b.textContent!.includes('复制账号')
+      ) as HTMLElement;
+      copyAcc.click();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(hasNotice('复制失败，请手动复制')).toBe(true);
+      expect(hasNotice('账号已复制')).toBe(false);
+      // 失败不布防 60s 清空计时（copySensitiveText 只在成功链路布防）
+      vi.advanceTimersByTime(60_000);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(writeSpy.mock.calls.some((c: any[]) => c[0] === '')).toBe(false);
+    } finally {
+      vi.useRealTimers();
+      Platform.isMobile = false;
+      writeSpy.mockRestore();
+    }
+  });
+
   it('添加弹窗：保存新条目（含生成按钮）', async () => {
     ui.openAddDialog();
     const popup = document.getElementById('pw-add-popup')!;
@@ -362,13 +427,13 @@ describe('UIManager 面板与条目', () => {
     const labels = [...sheet.querySelectorAll('.bz-item-sheet-label')].map((e) => e.textContent);
     expect(labels).toEqual(['复制账号', '复制密码', '编辑', '删除']);
 
-    // 点「复制账号」→ 剪贴板 + 关抽屉（非 keepOpen）
+    // 点「复制账号」→ 剪贴板 + 成功 toast（异步链路，等 toast）+ 关抽屉（非 keepOpen）
     const copyAcc = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
       (b) => b.textContent!.includes('复制账号')
     ) as HTMLElement;
     copyAcc.click();
-    await waitFor(() => writeSpy.mock.calls.some((c: any[]) => c[0] === 'bob'));
-    expect(hasNotice('账号已复制')).toBe(true);
+    await waitFor(() => hasNotice('账号已复制'));
+    expect(writeSpy.mock.calls.some((c: any[]) => c[0] === 'bob')).toBe(true);
     expect(document.querySelector('.bz-item-sheet')).toBeNull();
 
     // 再开抽屉点「复制密码」
@@ -383,8 +448,8 @@ describe('UIManager 面板与条目', () => {
       (b) => b.textContent!.includes('复制密码')
     ) as HTMLElement;
     copyPwd.click();
-    await waitFor(() => writeSpy.mock.calls.some((c: any[]) => c[0] === 'secret2'));
-    expect(hasNotice('密码已复制')).toBe(true);
+    await waitFor(() => hasNotice('密码已复制'));
+    expect(writeSpy.mock.calls.some((c: any[]) => c[0] === 'secret2')).toBe(true);
 
     Platform.isMobile = false;
     writeSpy.mockRestore();
@@ -490,6 +555,28 @@ describe('PasswordAppController 命令', () => {
       vi.advanceTimersByTime(60_000);
       expect(writeText.mock.calls.length).toBe(4);
       expect(writeText.mock.calls[3][0]).toBe('');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('cleanup：取消剪贴板自动清空计时（l2-pw）——卸载后到期不再写空串', async () => {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: vi.fn().mockResolvedValue(undefined) },
+      configurable: true,
+    });
+    const writeText = navigator.clipboard.writeText as ReturnType<typeof vi.fn>;
+    const c = PasswordAppController.getInstance({ charset: 'abc123', length: '8', securityMode: false });
+    await c.init();
+    vi.useFakeTimers();
+    try {
+      c.generatePassword(); // 复制 → 布防 60s 清空计时
+      await vi.advanceTimersByTimeAsync(0);
+      expect(writeText.mock.calls.length).toBe(1);
+      c.cleanup(); // 卸载：取消计时（cleanup 幂等，afterEach 再调无副作用）
+      vi.advanceTimersByTime(60_000);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(writeText.mock.calls.length).toBe(1); // 不再写空串
     } finally {
       vi.useRealTimers();
     }

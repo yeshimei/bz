@@ -26,6 +26,12 @@ const VAULT_TITLE = '密码本';
 export class DataManager {
   private safe: SafeManager;
   pwData: PasswordEntry[] = [];
+  /**
+   * load 结果缓存（ticket 43）：记录「清单条目 + 原始密文字节」。
+   * 判等用密文字节而非解密：PBKDF2 解密昂贵，搜索逐键渲染等纯读场景命中缓存即跳过整表重解密；
+   * 任何写操作都会重加密（密文天然变化）→ 缓存自动失效，不产生陈旧数据。
+   */
+  private loadCache: { noteId: string; cipher: string | null } | null = null;
 
   /** 注入 SafeManager（测试用）；缺省取保险箱单例（与保险箱面板共享主密码与解锁态） */
   constructor(safe?: SafeManager) {
@@ -49,6 +55,13 @@ export class DataManager {
     const note = this.vaultNote;
     if (!note) {
       this.pwData = [];
+      this.loadCache = null;
+      return;
+    }
+    // 缓存命中：同一清单条目且镜像密文字节未变 → 复用上次解密结果（读原始密文零解密开销）。
+    // 缓存只在成功解析后写入；解密失败不写缓存，下次 load 仍会真实重试并向上抛错（语义不变）。
+    const cipher = await this.safe.readNotePayloadRaw(note);
+    if (this.loadCache && this.loadCache.noteId === note.id && this.loadCache.cipher === cipher) {
       return;
     }
     const plain = await this.safe.decryptNoteBody(note);
@@ -75,6 +88,7 @@ export class DataManager {
       if (!item.createdAt) item.createdAt = new Date().toISOString();
       return item;
     });
+    this.loadCache = { noteId: note.id, cipher };
   }
 
   async save() {
@@ -98,10 +112,11 @@ export class DataManager {
     }
   }
 
-  /** 上锁：整体锁定（与保险箱共享解锁态；安全模式/卸载时调用） */
+  /** 上锁：整体锁定（与保险箱共享解锁态；安全模式/卸载时调用），清空内存数据与 load 缓存 */
   lock() {
     this.safe.lock();
     this.pwData = [];
+    this.loadCache = null;
   }
 
   async addItem(item: Partial<PasswordEntry>) {

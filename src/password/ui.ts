@@ -94,6 +94,8 @@ export class UIManager {
   pendingPassword: string | null = null;
   /** 抽屉来源的编辑（保存成功后关抽屉，与收藏本/归物本同决策） */
   sheetEditPending = false;
+  /** 搜索输入防抖计时器（ticket 43：快速连续输入只渲染最后一次，避免逐键整表 load/解密） */
+  searchRenderTimer: ReturnType<typeof setTimeout> | null = null;
   // 内部标志
   _initialized = false;
   // 添加弹窗引用
@@ -126,7 +128,7 @@ export class UIManager {
     this.searchInput.placeholder = '搜索平台、账号、备注...';
     this.searchInput.addEventListener('input', (e) => {
       this.searchKeyword = (e.target as HTMLInputElement).value.trim();
-      this.renderList();
+      this.scheduleSearchRender();
     });
     this.searchContainer.appendChild(this.searchInput);
 
@@ -192,6 +194,14 @@ export class UIManager {
     });
     // 密码本设置弹窗（ADR-0009 域设置弹窗；分组卡片重设计）
     const settingsBtn = createIconBtn('⚙️', '密码本设置', () => {
+      // 以下配置项均为启动快照（控制器构造时读取），改动需重载插件后生效——首次改动即提示一次（ticket 55）
+      let reloadWarned = false;
+      const warnReload = () => {
+        if (!reloadWarned) {
+          reloadWarned = true;
+          notice('密码本设置已保存，重载插件后生效', 'info');
+        }
+      };
       openSettingsModal({
         title: '密码本设置',
         maxWidth: 560,
@@ -206,6 +216,7 @@ export class UIManager {
               text.setValue(s.passwordCharset || '').onChange(async (v) => {
                 s.passwordCharset = v;
                 await saveSettings();
+                warnReload();
               })
             );
           new Setting(genGroup)
@@ -215,6 +226,7 @@ export class UIManager {
               text.setValue(s.passwordLength || '').onChange(async (v) => {
                 s.passwordLength = v;
                 await saveSettings();
+                warnReload();
               })
             );
           // ===== 安全组 =====
@@ -226,6 +238,7 @@ export class UIManager {
               toggle.setValue(!!s.securityMode).onChange(async (v) => {
                 s.securityMode = v;
                 await saveSettings();
+                warnReload();
               })
             );
           // ===== 移动端组（仅移动端显示） =====
@@ -238,6 +251,7 @@ export class UIManager {
                 toggle.setValue(!!s.passwordMobileDefaultFullscreen).onChange(async (v) => {
                   s.passwordMobileDefaultFullscreen = v;
                   await saveSettings();
+                  warnReload();
                 })
               );
           }
@@ -276,6 +290,15 @@ export class UIManager {
   }
 
   // ---------- 渲染列表 ----------
+  /** 搜索输入防抖（ticket 43）：180ms 内连续键入只渲染最后一次，逐键不作整表 load/解密 */
+  private scheduleSearchRender() {
+    if (this.searchRenderTimer !== null) clearTimeout(this.searchRenderTimer);
+    this.searchRenderTimer = setTimeout(() => {
+      this.searchRenderTimer = null;
+      void this.renderList();
+    }, 180);
+  }
+
   async renderList() {
     if (!this.entriesContainer) return;
     this.entriesContainer.innerHTML = '';
@@ -417,8 +440,9 @@ export class UIManager {
       label: '复制账号',
       onClick: () => {
         if (item.account) {
-          void copySensitiveText(item.account); // 复制后 60s 尽力清空剪贴板（P2）
-          notice('账号已复制', 'success');
+          copySensitiveText(item.account) // 复制后 60s 尽力清空剪贴板（P2）
+            .then(() => notice('账号已复制', 'success'))
+            .catch(() => notice('复制失败，请手动复制', 'error')); // 与 generatePassword 复制失败同口径（ticket 4）
         }
       },
     });
@@ -428,8 +452,9 @@ export class UIManager {
       label: '复制密码',
       onClick: () => {
         if (item.password) {
-          void copySensitiveText(item.password); // 复制后 60s 尽力清空剪贴板（P2）
-          notice('密码已复制', 'success');
+          copySensitiveText(item.password) // 复制后 60s 尽力清空剪贴板（P2）
+            .then(() => notice('密码已复制', 'success'))
+            .catch(() => notice('复制失败，请手动复制', 'error')); // 与 generatePassword 复制失败同口径（ticket 4）
         }
       },
     });
@@ -843,8 +868,16 @@ export class PasswordAppController {
     notice('密码已暂存，打开“添加条目”时将自动填入');
   }
 
-  /** 卸载清理：移除注入 DOM */
+  /** 卸载清理：移除注入 DOM；取消剪贴板自动清空与搜索防抖计时（l2-pw/ticket 43 残留定时器） */
   cleanup() {
+    if (clipboardClearTimer !== null) {
+      clearTimeout(clipboardClearTimer);
+      clipboardClearTimer = null;
+    }
+    if (this.uiManager.searchRenderTimer !== null) {
+      clearTimeout(this.uiManager.searchRenderTimer);
+      this.uiManager.searchRenderTimer = null;
+    }
     const ids = ['pw-mask', 'pw-popup', 'pw-add-mask', 'pw-add-popup'];
     for (const id of ids) {
       const el = document.getElementById(id);
