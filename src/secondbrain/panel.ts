@@ -8,6 +8,8 @@
  *   ④ 每次打开自动增量索引：有待处理变更 → 全屏进度视图接管，完成后再进统计；无变更直接统计；
  *   ⑤ 概括走统一 AI 通道（主设置页服务商）；缓存 secondbrain_panel.json 保留，设置页清除入口移除。
  * - 引导/进度视图三用：首次初始化（空库，带按钮）/ 自动增量（待处理块，纯进度）/ 重新索引（设置页确认后）。
+ * - ticket 114：初始向量化进行中关页重开 → 恢复实时进度视图（原缺陷：重开回引导态且按钮
+ *   因 initializing 守卫静默失效，看起来「点击没有任何反应」）；重复点击不再吞掉，接回进度。
  * - 样式全部收敛 src/secondbrain/styles.css（bz-sb-panel-* / bz-sb-onboard-* / bz-sb-dist-*）。
  */
 import type { App } from 'obsidian';
@@ -22,6 +24,8 @@ import { getApp } from '../core/app';
 import { buildConfig, IS_MOBILE } from './config';
 import { AI } from './ai';
 import type { VectorStore, SecondBrainMeta } from './vector-store';
+import { parsePathList, formatPathList } from './whitelist';
+import { openWhitelistPicker, renderSelectedChips } from './whitelist-modal';
 
 // ==================== 统计聚合（纯函数，可测） ====================
 
@@ -230,7 +234,7 @@ export class SecondBrainPanel {
   private popup: HTMLElement | null = null;
   private escapeHandler: ((e: KeyboardEvent) => void) | null = null;
   private refreshing = false;
-  /** 引导按钮的首次向量化进行中标记（防双击重复触发） */
+  /** 初始向量化视图进行中标记（ticket 114：runInitialIndexView 持有；进行中重复点击接回进度视图而非静默失效） */
   private initializing = false;
   /** 头部功能钮（📚💬）——引导期收起 */
   private funcBtns: HTMLButtonElement[] = [];
@@ -275,7 +279,8 @@ export class SecondBrainPanel {
     this.popup = null;
   }
 
-  /** 打开形态分派：重建意图 → 全量重建进度；空库 → 引导态；就绪 + 待处理 → 增量进度；就绪无变更 → 统计 */
+  /** 打开形态分派：重建意图 → 全量重建进度；空库+初始索引进行中 → 恢复进度（fire-and-forget，不阻塞 panel.open）；空库 → 引导态；
+   *  就绪 + 待处理 → 增量进度；就绪无变更 → 统计（ticket 114 补「空库但 refresh 在途」分支） */
   private async render(): Promise<void> {
     if (this.store.initialLoad) {
       try {
@@ -291,6 +296,13 @@ export class SecondBrainPanel {
       return;
     }
     if (!this.store.isIndexReady()) {
+      if (this.store.isRefreshing()) {
+        // 初始向量化仍在后台跑（关页重开场景）：先展示进度视图，不 await——
+        // 背景 runInitialIndexView 完成后自行切内容态或重试按钮，panel.open() 不阻塞。
+        this.enterProgressView('正在初始化向量数据库');
+        void this.runInitialIndexView();
+        return;
+      }
       this.showInitGuidance();
       return;
     }
@@ -598,19 +610,17 @@ export class SecondBrainPanel {
   }
 
   /**
-   * 引导按钮（ticket 107/108）：首次全量向量化。
-   * 点击 → 立即切换为纯进度形态（按钮/说明隐藏），进度条实时更新；
-   * 完成 → 切内容态渲染统计；失败 → 给出原因并可重试。
+   * 初始向量化运行器（ticket 114 自按钮处理器抽出共用）：进入进度视图并接住 refresh 实时进度，
+   * 完成切内容态渲染统计；失败给出原因并可重试。
+   * 按钮点击与「关页重开恢复」（render 分派）两条路都走这里——store.refresh 并发去重保证
+   * 重复调用只是把进度回调重新接到同一个进行中的 promise 上，不会二次跑库。
    * 注意：refresh 全部嵌入失败时不抛错也不登记任何条目（QA 同语义），故以 isIndexReady 判定成败。
    */
-  private async startInitialIndex(): Promise<void> {
-    if (this.initializing || this.refreshing) return;
+  private async runInitialIndexView(): Promise<void> {
     const status = document.getElementById('bz-sb-init-status');
-    const box = document.getElementById('bz-sb-init-progress');
-    if (!status || !box) return;
-    this.initializing = true;
-    const btn = document.getElementById('bz-sb-init-btn') as HTMLButtonElement | null;
+    if (!status || !status.isConnected) return;
     this.enterProgressView('正在初始化向量数据库');
+    this.initializing = true;
     let sawCountedDone = false; // ✅ 向量化完成：N 篇…（QA 文案带计数；全部嵌入失败也会报，须据此判败）
     let sawWarning = false;
     try {
@@ -646,6 +656,20 @@ export class SecondBrainPanel {
     } finally {
       this.initializing = false;
     }
+  }
+
+  /**
+   * 引导按钮（ticket 107/108；ticket 114 修「点了没反应」）：首次全量向量化。
+   * 已在进行中（关页重开后的引导态残留 / 双击）时不再静默吞掉——只要后台确有 refresh 在跑，
+   * 就切回进度视图接回实时进度；否则维持原守卫语义不动。
+   */
+  private startInitialIndex(): void {
+    if (!document.getElementById('bz-sb-init-progress')) return;
+    if (this.initializing || this.refreshing) {
+      if (this.store.isRefreshing()) void this.runInitialIndexView();
+      return;
+    }
+    void this.runInitialIndexView();
   }
 
   /** 失败路径恢复「开始按钮」可见并复位文案（进度形态时按钮被隐藏） */
@@ -839,9 +863,42 @@ export function openSecondBrainSettings(_app?: App): void {
       new Setting(b1)
         .setName('Embedding 模型')
         .addText((t) => t.setValue(String(s.secondBrainEmbeddingModel ?? '')).onChange((v) => set('secondBrainEmbeddingModel', v.trim())));
-      new Setting(b1)
-        .setName('白名单目录（逗号分隔）')
-        .addText((t) => t.setValue(String(s.secondBrainAllowPaths ?? '')).onChange((v) => set('secondBrainAllowPaths', v)));
+      const allowChipsWrap = document.createElement('div');
+      allowChipsWrap.className = 'bz-sb-pick-chips--setting';
+      const allowSetting = new Setting(b1)
+        .setName('白名单目录')
+        .setDesc('纳入第二大脑检索的笔记目录；点「📁 选择」从库内文件夹勾选，也可直接改路径文本（英文逗号分隔）')
+        .addText((t) =>
+          t.setValue(String(s.secondBrainAllowPaths ?? '')).onChange((v) => {
+            set('secondBrainAllowPaths', v);
+            renderAllowChips();
+          })
+        )
+        .addButton((b) =>
+          b.setButtonText('📁 选择').onClick(() =>
+            openWhitelistPicker({
+              selected: parsePathList((tryGetSettings() as any).secondBrainAllowPaths),
+              onConfirm: (list) => {
+                set('secondBrainAllowPaths', formatPathList(list));
+                renderAllowChips();
+              },
+            })
+          )
+        );
+      // chips 预览紧随设置行下方（显示当前已选目录，可 ✕ 移除）
+      allowChipsWrap.style.marginTop = '4px';
+      allowSetting.settingEl.insertAdjacentElement('afterend', allowChipsWrap);
+      const renderAllowChips = () => {
+        renderSelectedChips(
+          allowChipsWrap,
+          parsePathList((tryGetSettings() as any).secondBrainAllowPaths),
+          (list) => {
+            set('secondBrainAllowPaths', formatPathList(list));
+            renderAllowChips();
+          }
+        );
+      };
+      renderAllowChips();
       new Setting(b1)
         .setName('启用')
         .setDesc('常驻监听光标移动与笔记变更，触发向量检索和 AI 对话')
@@ -885,6 +942,15 @@ export function openSecondBrainSettings(_app?: App): void {
           .setDesc('自动双链作用的目录清单（英文逗号分隔），同时决定落盘监听与候选过滤；留空回退「文献盒」')
           .addText((t) =>
             t.setValue(String((tryGetSettings() as any).linkAgentScopes ?? '')).onChange((v) => set('linkAgentScopes', v))
+          )
+          .addButton((b) =>
+            b.setButtonText('📁 选择').onClick(() =>
+              openWhitelistPicker({
+                title: '选择关联范围目录',
+                selected: parsePathList((tryGetSettings() as any).linkAgentScopes),
+                onConfirm: (list) => set('linkAgentScopes', formatPathList(list)),
+              })
+            )
           );
       };
       new Setting(bLink)

@@ -10,7 +10,7 @@ import { MockVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { VectorStore } from '../../src/secondbrain/vector-store';
+import { VectorStore, CHECKPOINT_POLICY } from '../../src/secondbrain/vector-store';
 import { searchTextIndex } from '../../src/secondbrain/text-search';
 import { getEmbedding, getEmbeddingsBatch } from '../../src/secondbrain/ollama';
 
@@ -404,6 +404,59 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
     const meta = JSON.parse(vault.files.get(META_PATH)!);
     expect(meta.notes['我的/A.md'].chunks).toEqual([{ text: 'A\n' + S1 }, { text: S2 }]); // 首块带标题（ticket 110）
     expectClose(parseVec(binary).rows, [1, 0, 1, 0]);
+  });
+
+  it('断点暂存：A 嵌完落盘，新 store 从磁盘恢复并补嵌 B（ticket 114）', async () => {
+    const vault = new MockVault();
+    const A1 = '甲'.repeat(130);
+    vault.files.set('我的/A.md', `A.md内容${A1}结束。`);
+    vault.files.set('我的/B.md', 'B.md内容丙'.repeat(15) + '结束。');
+    const { adapter, binary } = makeAdapter(vault);
+    const mtimes: Record<string, number> = { '我的/A.md': 1, '我的/B.md': 1 };
+    const app = makeApp(vault, adapter, mtimes);
+    setApp(app as any);
+
+    const origPolicy = { ...CHECKPOINT_POLICY };
+    CHECKPOINT_POLICY.minIntervalMs = 0;
+    CHECKPOINT_POLICY.minNewChunks = 1;
+
+    // 第 1 轮：只让 A 嵌入成功（B 的批量失败 → 逐条回退也失败 → B 被丢弃）
+    vi.mocked(getEmbeddingsBatch).mockImplementation(async (texts: string[]) => {
+      if (texts.some((t) => t.includes('B.md内容'))) throw new Error('B 模拟全败');
+      return texts.map(() => [0.5, 0.5]);
+    });
+    vi.mocked(getEmbedding).mockRejectedValue(new Error('单条也失败'));
+
+    const store1 = new VectorStore(app as any);
+    await store1.load();
+    vi.spyOn(Date, 'now').mockReturnValue(0);
+    await store1.refresh();
+
+    // A 已写盘，B 被丢弃
+    const meta1 = JSON.parse(vault.files.get(META_PATH)!);
+    expect(Object.keys(meta1.notes)).toEqual(['我的/A.md']);
+    expect(parseVec(binary).dim).toBe(2);
+
+    // store2 加载 → isIndexReady=true（A），hasPendingChanges=true（B 不在 meta）
+    const store2 = new VectorStore(app as any);
+    await store2.load();
+    expect(store2.isIndexReady()).toBe(true);
+    expect(store2.hasPendingChanges()).toBe(true);
+
+    // 第 2 轮：全部成功
+    vi.mocked(getEmbeddingsBatch).mockImplementation(async (texts: string[]) => texts.map(() => [0.5, 0.5]));
+    vi.mocked(getEmbedding).mockResolvedValue([0.5, 0.5]);
+    vi.spyOn(Date, 'now').mockReturnValue(10000);
+    await store2.refresh();
+
+    const finalMeta = JSON.parse(vault.files.get(META_PATH)!);
+    expect(Object.keys(finalMeta.notes).sort()).toEqual(['我的/A.md', '我的/B.md']);
+    let expectedTotal = 0;
+    for (const n of Object.values(finalMeta.notes)) expectedTotal += (n as any).chunks.length;
+    expect(parseVec(binary).rows.length).toBe(expectedTotal * 2);
+
+    vi.mocked(Date.now).mockRestore();
+    Object.assign(CHECKPOINT_POLICY, origPolicy);
   });
 });
 
