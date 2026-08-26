@@ -459,9 +459,12 @@ function createSearchSelect(
         input.dispatchEvent(new Event('input'));
       }
     } else if (e.key === 'Escape') {
-      // e1：本地收起下拉即止，不再冒泡到 escManager 连关整层弹窗（ESC 一次只关一层）
-      e.stopImmediatePropagation();
-      dropdown.style.display = 'none';
+      // e1：下拉可见 → 只收下拉，不再冒泡到 escManager 连关整层弹窗（ESC 一次只关一层）；
+      // 修 c3：下拉不可见/无匹配时放行冒泡，ESC 照常经 escManager 关弹窗/主面板（不留 ESC 死区）
+      if (dropdown.style.display !== 'none') {
+        e.stopImmediatePropagation();
+        dropdown.style.display = 'none';
+      }
     }
   });
 
@@ -818,11 +821,16 @@ function deleteItemById(id: string): Promise<void> {
       }
     });
 
-    // 回车确认（P1-38：preventDefault 与 edit/add 弹窗对齐——拦原生按钮激活，Enter 仅触发一次删除回调）
+    // 回车处理（P1-38 + 修 c4：Enter 跟随当前焦点——焦点在「取消」→ 取消，不再焦点在取消却按 Enter 删除；
+    // 焦点在「删除」或未聚焦 → 确认删除；preventDefault 与 edit/add 弹窗对齐，拦原生按钮激活防双发）
     modal.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
-        confirmBtn.click();
+        if (document.activeElement === cancelBtn) {
+          cancelBtn.click();
+        } else {
+          confirmBtn.click();
+        }
       } else if (e.key === 'Escape') {
         // e1：本地关确认弹窗即止，不再冒泡到 escManager 连关主面板（ESC 一次只关一层）
         e.stopImmediatePropagation();
