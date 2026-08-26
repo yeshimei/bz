@@ -90,11 +90,14 @@ describe('isAvailable（ticket 23：真实读取插件 AI 配置，替代恒真 
     expect(new FavoritesAIService().isAvailable()).toBe(true);
   });
 
-  it('deepseek 配 key → true；缺 key → false', () => {
+  it('deepseek 配 key → true', () => {
     setSettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: 'sk-d' }) as any);
     expect(new FavoritesAIService().isAvailable()).toBe(true);
+  });
+
+  it('deepseek 缺 key → 不判死（true）：legacy quickadd data.json 兜底交由 getAIProvider 运行时判定（审查建议 C）', () => {
     setSettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: '' }) as any);
-    expect(new FavoritesAIService().isAvailable()).toBe(false);
+    expect(new FavoritesAIService().isAvailable()).toBe(true);
   });
 
   it('opencode-go 缺 key 时 deepseek key 不顶替（provider 独立判定）', () => {
