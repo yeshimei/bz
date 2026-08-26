@@ -131,6 +131,25 @@ describe('search-select 键盘导航', () => {
     ([...modal.querySelectorAll('button')].find((b) => b.textContent === '取消') as HTMLElement).click();
   });
 
+  it('c3：下拉不可见/无匹配时 ESC 放行冒泡，escManager 照常关弹窗（不留 ESC 死区）', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    setup(vault);
+    await addBelongingsItemCommand();
+    const modal = modalByTitle('添加物品');
+    const inputs = modal.querySelectorAll('input');
+    const categoryInput = inputs[1] as HTMLInputElement;
+    categoryInput.focus();
+    // 键入无匹配 → 下拉隐藏
+    categoryInput.value = '不存在的分类xyz';
+    categoryInput.dispatchEvent(new Event('input'));
+    // 下拉不可见时 ESC → 放行冒泡：escManager 关掉整层弹窗（不再被吞掉）
+    categoryInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await new Promise((r) => setTimeout(r, 10));
+    expect(modal.isConnected).toBe(false); // 弹窗已关（之前 stopImmediatePropagation 把它吞成死区）
+    expect(modalByTitle('添加物品')).toBeFalsy();
+  });
+
   it('下拉选项点击填充输入框', async () => {
     const vault = new MockVault();
     seed(vault);

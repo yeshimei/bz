@@ -638,6 +638,27 @@ describe('修复回归（P0-7 层级 / P0-8 注入 / P1-38 回车双删 / P2 泄
     expect(data.items['item_1']).toBeUndefined();
   });
 
+  it('c4：删除确认默认焦点在「取消」，此时按 Enter → 取消（不删除，不再焦点在取消却按 Enter 删除）', async () => {
+    seed(vault);
+    await openBelongingsPanel();
+    const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
+    const card = overlay.querySelector('[data-id="item_2"]') as HTMLElement;
+    rightClickOpen(card);
+    ([...document.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.includes('删除')) as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 150)); // 默认聚焦回调 100ms → 取消
+
+    expect((document.activeElement as HTMLElement).textContent).toBe('取消');
+    // Enter 跟随当前焦点 → 取消
+    (document.activeElement as HTMLElement).dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })
+    );
+    await new Promise((r) => setTimeout(r, 20));
+    const data = JSON.parse(vault.files.get('CONFIG/STORAGE/belongings.json')!);
+    expect(data.items['item_2']).toBeDefined(); // 未删除
+    expect(belongingsSpy).not.toHaveBeenCalled(); // 无 delete 事件
+    expect(document.querySelector('.bz-belongings-overlay--11101')).toBeNull(); // 弹窗经取消关闭
+  });
+
   it('P2 监听泄漏：search-select 弹窗销毁后，旧 document click 监听自注销', async () => {
     seed(vault);
     await addBelongingsItemCommand();
