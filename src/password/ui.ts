@@ -72,9 +72,16 @@ export function armClipboardClear(): void {
   }, CLIPBOARD_CLEAR_DELAY_MS);
 }
 
-/** 复制敏感内容：写入剪贴板成功后布防定时清空（P2） */
+/** 复制敏感内容：写入剪贴板成功后布防定时清空（P2）。
+ *  clipboard API 缺失（非安全上下文/部分 WebView）时 writeText 会**同步抛 TypeError**，
+ *  此处 try/catch 转成 rejected promise，保证调用方 .catch 始终能收到（对照 armClipboardClear 兜底先例）。
+ */
 export function copySensitiveText(text: string): Promise<void> {
-  return navigator.clipboard.writeText(text).then(() => armClipboardClear());
+  try {
+    return navigator.clipboard.writeText(text).then(() => armClipboardClear());
+  } catch (e) {
+    return Promise.reject(e);
+  }
 }
 
 export class UIManager {

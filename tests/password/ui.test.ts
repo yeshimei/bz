@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { PasswordAppController, UIManager, secureRandomPassword } from '../../src/password/ui';
+import { PasswordAppController, UIManager, secureRandomPassword, copySensitiveText } from '../../src/password/ui';
 import { DataManager } from '../../src/password/data';
 import { EncryptAppController } from '../../src/encrypt/ui';
 import { getSafeManager } from '../../src/encrypt';
@@ -325,6 +325,45 @@ describe('UIManager 面板与条目', () => {
     }
   });
 
+  it('抽屉复制：clipboard API 缺失（writeText 同步抛 TypeError）→ 同样提示「复制失败，请手动复制」（ticket 4 兜底路径）', async () => {
+    // 模拟非安全上下文/部分 WebView：navigator.clipboard 不存在，访问 writeText 即同步抛错——
+    // copySensitiveText 的 try/catch 须把同步异常转成 rejected promise，调用方 .catch 才能收到
+    Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
+    try {
+      ui.show();
+      await waitFor(() => document.querySelectorAll('.pw-entry-card').length === 2);
+      const container = document.getElementById('pw-entries-container')!;
+      Platform.isMobile = true;
+      vi.useFakeTimers();
+      try {
+        const card = container.querySelector('.pw-entry-card') as HTMLElement;
+        card.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true, clientX: 60, clientY: 60 }));
+        vi.advanceTimersByTime(550);
+        card.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+        card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        await vi.advanceTimersByTimeAsync(10);
+        const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
+        expect(sheet).not.toBeNull();
+        const copyAcc = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
+          (b) => b.textContent!.includes('复制账号')
+        ) as HTMLElement;
+        copyAcc.click();
+        await vi.advanceTimersByTimeAsync(0);
+        expect(hasNotice('复制失败，请手动复制')).toBe(true);
+        expect(hasNotice('账号已复制')).toBe(false);
+      } finally {
+        vi.useRealTimers();
+        Platform.isMobile = false;
+      }
+    } finally {
+      // 恢复 setup 形态的 clipboard（本文件后续用例直接 vi.spyOn(navigator.clipboard...) 依赖它）
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { readText: () => Promise.resolve(''), writeText: () => Promise.resolve() },
+        configurable: true,
+      });
+    }
+  });
+
   it('添加弹窗：保存新条目（含生成按钮）', async () => {
     ui.openAddDialog();
     const popup = document.getElementById('pw-add-popup')!;
@@ -604,5 +643,36 @@ describe('secureRandomPassword 加密安全随机生成器（P2）', () => {
     const pwd = secureRandomPassword(N, 'ab');
     const a = [...pwd].filter((ch) => ch === 'a').length;
     expect(Math.abs(a / N - 0.5)).toBeLessThan(0.05);
+  });
+});
+
+describe('copySensitiveText clipboard API 缺失兜底（ticket 4 补充）', () => {
+  afterEach(() => {
+    // 恢复 setup 形态的 clipboard（文件内其它用例依赖）
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { readText: () => Promise.resolve(''), writeText: () => Promise.resolve() },
+      configurable: true,
+    });
+  });
+
+  it('writeText 同步抛 TypeError（clipboard API 缺失）→ 转成 rejected promise，调用方 .catch 可收到', async () => {
+    Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
+    await expect(copySensitiveText('secret')).rejects.toThrow();
+  });
+
+  it('正常路径：写入成功并布防 60s 清空计时', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    vi.useFakeTimers();
+    try {
+      await copySensitiveText('secret');
+      expect(writeText).toHaveBeenCalledWith('secret');
+      // 布防计时须挂在 fake clock 上（先开假时钟再复制）
+      vi.advanceTimersByTime(60_000);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(writeText.mock.calls.some((c: any[]) => c[0] === '')).toBe(true); // 到期写空串布防生效
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
