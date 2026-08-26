@@ -13,8 +13,26 @@
 import { jsonStore } from '../../core/json-store';
 import { tryGetSettings } from '../../core/settings-provider';
 
-/** 文献盒（CONTEXT.md「Literature Box」）：v1 候选范围与触发监听都限定此目录 */
-export const LITERATURE_BOX = '文献盒';
+/** 自动双链默认范围目录（需求变更后 linkAgentScopes 缺省回退值；原写死文献盒改为可配置） */
+export const LINK_AGENT_DEFAULT_SCOPE = '文献盒';
+
+/**
+ * 关联范围解析（linkAgentScopes）：英文逗号分隔的 vault 内目录清单（风格同 aiAgentWatchedFolders），
+ * 同时决定 ① 落盘监听触发的目录集合 ② 向量近邻候选的过滤范围。
+ * 空值/缺省回退默认 '文献盒'。
+ */
+export function parseScopeList(raw: unknown): string[] {
+  const list = String(raw ?? '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean);
+  return list.length > 0 ? list : [LINK_AGENT_DEFAULT_SCOPE];
+}
+
+/** 读当前设置的关联范围目录清单（实时读取，弹窗改动即时生效于后续事件） */
+export function getLinkAgentScopes(): string[] {
+  return parseScopeList((tryGetSettings() as any).linkAgentScopes);
+}
 
 /** 待处理队列条目（spec「数据设计」：存事件不存半成品） */
 export interface LinkQueueItem {

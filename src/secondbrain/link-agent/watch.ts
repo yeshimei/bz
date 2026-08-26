@@ -1,15 +1,16 @@
 /**
  * 自动双链监听器（ticket 111；ADR-0003 事件随开关注册，模式对齐 src/review/watch.ts）：
- * - vault md 创建事件（域事件总线通用兜底通道）过滤文献盒路径 → 防抖聚合约 60 秒一批跑管线；
+ * - vault md 创建事件（域事件总线通用兜底通道）过滤关联范围（linkAgentScopes，缺省回退「文献盒」）
+ *   → 防抖聚合约 60 秒一批跑管线；
  * - 删除事件订阅 → 防抖合并触发死链清理（低频巡检 30 分钟兜底）；
- * - 开启但 secondBrainAllowPaths 缺「文献盒」时一次性引导提示（只提示，不代改配置）。
+ * - linkAgentScopes 中出现白名单未包含目录时一次性引导提示（只提示，不代改配置）。
  * 依赖方向：本层经 index.ts 接线；refresh 类副作用全部收敛在 LinkAgent。
  */
 import type { App } from 'obsidian';
 import { onDomainEvent } from '../../core/domain-bus';
 import { notice } from '../../core/notice';
 import { tryGetSettings } from '../../core/settings-provider';
-import { LITERATURE_BOX, isUnderFolder } from './data';
+import { getLinkAgentScopes, isUnderFolder } from './data';
 import { LINK_BATCH_DELAY_MS, LinkAgent } from './pipeline';
 
 /** 死链清理防抖窗口（删除事件合并；测试可注入短值） */
@@ -65,10 +66,10 @@ export class LinkAgentWatcher {
     this.maybeGuideAllowPaths();
   }
 
-  /** 文献盒内新笔记落盘 → 入缓冲并重置防抖计时（约 60 秒聚合一批） */
+  /** 关联范围内新笔记落盘 → 入缓冲并重置防抖计时（约 60 秒聚合一批）；范围随 linkAgentScopes 实时生效 */
   onCreated(path: string): void {
     if (!this.enabled) return;
-    if (!isUnderFolder(LITERATURE_BOX, path)) return;
+    if (!getLinkAgentScopes().some((dir) => isUnderFolder(dir, path))) return;
     this.pendingCreates.add(path);
     if (this.batchTimer) clearTimeout(this.batchTimer);
     this.batchTimer = setTimeout(() => {
@@ -114,7 +115,10 @@ export class LinkAgentWatcher {
     }
   }
 
-  /** 开启但白名单缺「文献盒」时一次性引导提示（只提示，绝不代改用户 data.json 配置） */
+  /**
+   * 一次性引导提示（泛化版）：linkAgentScopes 中出现 secondBrainAllowPaths 未包含的目录时，
+   * 提示用户把目录加入第二大脑索引范围；只提示，绝不代改用户 data.json 配置。
+   */
   maybeGuideAllowPaths(): void {
     if (allowPathsGuideShown) return;
     const s = tryGetSettings() as any;
@@ -122,9 +126,13 @@ export class LinkAgentWatcher {
       .split(',')
       .map((x: string) => x.trim())
       .filter(Boolean);
-    if (!allow.includes(LITERATURE_BOX)) {
+    const missing = getLinkAgentScopes().filter((dir) => !allow.includes(dir));
+    if (missing.length > 0) {
       allowPathsGuideShown = true;
-      notice('自动双链已开启：第二大脑白名单目录尚未包含「文献盒」，候选检索不会命中文献盒笔记，可在第二大脑设置的白名单目录中补充。', 'warning');
+      notice(
+        `自动双链已开启：关联范围中的「${missing.join('」「')}」不在第二大脑白名单目录内，候选检索不会命中这些目录，可在第二大脑设置的白名单目录中补充。`,
+        'warning'
+      );
     }
   }
 

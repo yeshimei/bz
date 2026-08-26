@@ -880,6 +880,12 @@ export function openSecondBrainSettings(_app?: App): void {
           .setName('失效关联自动清理')
           .setDesc('笔记删除后自动移除指向它的失效 related 条目')
           .addToggle((t) => t.setValue((tryGetSettings() as any).linkAgentAutoClean !== false).onChange((v) => set('linkAgentAutoClean', v)));
+        new Setting(linkDetailBox)
+          .setName('关联范围')
+          .setDesc('自动双链作用的目录清单（英文逗号分隔），同时决定落盘监听与候选过滤；留空回退「文献盒」')
+          .addText((t) =>
+            t.setValue(String((tryGetSettings() as any).linkAgentScopes ?? '')).onChange((v) => set('linkAgentScopes', v))
+          );
       };
       new Setting(bLink)
         .setName('自动双链')
