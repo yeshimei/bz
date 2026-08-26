@@ -226,6 +226,11 @@ export class SafeManager {
    * 绝不静默当作首次设置（旧密文会因此永久不可解）。
    */
   manifestIssue?: 'empty' | 'corrupt';
+  /**
+   * 最近一次解锁时自愈回滚的条目数（ADR-0018；UI 解锁成功提示用，无自愈为 0）。
+   * unlock 入口复位，selfHeal 结束时写回本次实际回滚数。
+   */
+  selfHealRolledBack = 0;
 
   constructor(root?: string) {
     if (root) this.root = root.replace(/\/+$/, '');
@@ -265,6 +270,7 @@ export class SafeManager {
    */
   async unlock(password: string, forceReset = false): Promise<boolean> {
     this.manifestIssue = undefined;
+    this.selfHealRolledBack = 0;
     // 先恢复可能中断的清单原子写（三段式 rename 的任一崩溃点，见 saveManifest）
     await this.recoverManifestWrite();
     const existsManifest = await this.exists();
@@ -672,23 +678,26 @@ export class SafeManager {
    * （已搬入的清掉、未搬入的自然无文件）、从清单丢弃该条目，随后清空暂存区与标记。
    * 关键不变量：标记于删原文件前清除，故标记存在 ⇒ 原文件未删 ⇒ 回滚永远安全、
    * 不产生密文孤儿。无挂起条目时仅清空遗留暂存。解锁成功后调用；失败不阻塞解锁。
+   * @returns 本次实际回滚的条目数（挂起标记无对应条目的不计入；无挂起为 0）
    */
-  async selfHeal(): Promise<void> {
-    if (!this.unlocked || !this.password) return;
+  async selfHeal(): Promise<number> {
+    if (!this.unlocked || !this.password) return 0;
     const pending = await this.readPending();
+    let rolledBack = 0;
     if (pending.length) {
-      let changed = false;
       for (const id of pending) {
         const idx = this.manifest.notes.findIndex((n) => n.id === id);
         if (idx === -1) continue;
         const note = this.manifest.notes[idx];
         await this.deleteNoteMirrors(note);
         this.manifest.notes.splice(idx, 1);
-        changed = true;
+        rolledBack += 1;
       }
-      if (changed) await this.saveManifest();
+      if (rolledBack > 0) await this.saveManifest();
     }
     await this.clearStaging();
+    this.selfHealRolledBack = rolledBack;
+    return rolledBack;
   }
 
   /**
@@ -1165,6 +1174,16 @@ export class SafeManager {
     const cipher = await this.readMirror(note.contentRef);
     if (!cipher) return null;
     return CryptoService.decrypt(cipher, this.password);
+  }
+
+  /**
+   * 读条目标题镜像的原始密文字符串（不解密，零 PBKDF2 开销）。
+   * 供密码本等高频读侧做「内容未变」判等（密文字节相同 ⇒ 载荷未变，可复用上次解密结果）。
+   * 无镜像返回 null。
+   */
+  async readNotePayloadRaw(note: SafeNote): Promise<string | null> {
+    if (!note.contentRef) return null;
+    return this.readMirror(note.contentRef);
   }
 
   /**
