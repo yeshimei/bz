@@ -53,10 +53,10 @@ function seed(vault: MockVault) {
   );
 }
 
-/** 域内模态（遮罩层：带非空 zIndex 且含指定标题） */
+/** 域内模态（遮罩层：带 bz-belongings-overlay--* 层级类且含指定标题） */
 function modalByTitle(title: string): HTMLElement {
   return [...document.querySelectorAll('div')].find(
-    (d) => d.style.zIndex && d.textContent?.includes(title)
+    (d) => (d as HTMLElement).className.includes('bz-belongings-overlay--') && d.textContent?.includes(title)
   ) as HTMLElement;
 }
 
@@ -89,7 +89,7 @@ describe('表单校验与添加流程全分支', () => {
     date: HTMLInputElement;
   } {
     const modal = [...document.querySelectorAll('div')].find(
-      (d) => d.style.zIndex === '11100' && d.style.display === 'flex'
+      (d) => (d as HTMLElement).classList.contains('bz-belongings-overlay--11100') && d.style.display === 'flex'
     ) as HTMLElement;
     const inputs = modal.querySelectorAll('input');
     return {

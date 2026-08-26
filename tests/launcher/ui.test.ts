@@ -168,6 +168,42 @@ describe('入口页 UI', () => {
     }
   });
 
+  it('长按计时中：磁贴挂激活反馈类 launcher-press-active（26）；提前松开/取消后移除', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 }] })
+    );
+    await openOnce(vault);
+    const tile = gridTiles()[0];
+    // 按下 → 计时中（未到 500ms）：激活类挂上（视觉提示，避免长度不足误执行命令）
+    firePointer(tile, 'pointerdown', 50, 50);
+    expect(tile.classList.contains('launcher-press-active')).toBe(true);
+    // 提前松开 → 取消计时：激活类移除、未进编辑模式
+    firePointer(tile, 'pointerup', 50, 50);
+    expect(tile.classList.contains('launcher-press-active')).toBe(false);
+    expect(tile.classList.contains('editing')).toBe(false);
+    // 移动超阈值 → 取消计时并移除反馈
+    firePointer(tile, 'pointerdown', 50, 50);
+    expect(tile.classList.contains('launcher-press-active')).toBe(true);
+    firePointer(tile, 'pointermove', 90, 50);
+    expect(tile.classList.contains('launcher-press-active')).toBe(false);
+  });
+
+  it('长按空白区域计时中：网格挂激活反馈类（26）', async () => {
+    await openOnce(new MockVault());
+    const grid = document.getElementById('launcher-grid')!;
+    vi.useFakeTimers();
+    try {
+      firePointer(grid, 'pointerdown', 100, 100);
+      expect(grid.classList.contains('launcher-press-active')).toBe(true);
+      vi.advanceTimersByTime(500);
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(grid.classList.contains('launcher-press-active')).toBe(false); // 触发编辑后移除
+  });
+
   it('长按前快速移动/松开取消进编辑', async () => {
     const vault = new MockVault();
     await vault.create(

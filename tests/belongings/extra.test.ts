@@ -37,7 +37,7 @@ function seed(vault: MockVault) {
 /** 添加弹窗内按名称定位控件 */
 function modalByTitle(title: string): HTMLElement {
   return [...document.querySelectorAll('div')].find(
-    (d) => d.style.zIndex === '11100' && d.textContent?.includes(title)
+    (d) => (d as HTMLElement).classList.contains('bz-belongings-overlay--11100') && d.textContent?.includes(title)
   ) as HTMLElement;
 }
 
@@ -110,7 +110,7 @@ describe('校验失败分支', () => {
 });
 
 describe('search-select 键盘导航', () => {
-  it('ArrowDown/Enter 选择分类；Escape 关闭下拉', async () => {
+  it('ArrowDown/Enter 选择分类；Escape 只收下拉、不再连关整层弹窗（e1）', async () => {
     const vault = new MockVault();
     seed(vault);
     setup(vault);
@@ -122,7 +122,13 @@ describe('search-select 键盘导航', () => {
     categoryInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
     categoryInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     expect(categoryInput.value).toBeTruthy();
+    // e1：ESC 在输入框内只收起下拉，弹窗保持打开（不再冒泡到 escManager 连关一层）
     categoryInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await new Promise((r) => setTimeout(r, 10));
+    expect(modal.isConnected).toBe(true);
+    expect(modalByTitle('添加物品')).toBeTruthy();
+    // 收尾：取消关闭，不污染后续用例
+    ([...modal.querySelectorAll('button')].find((b) => b.textContent === '取消') as HTMLElement).click();
   });
 
   it('下拉选项点击填充输入框', async () => {
@@ -159,7 +165,7 @@ describe('编辑保存流程', () => {
     editItem.click();
     await new Promise((r) => setTimeout(r, 20));
 
-    const editModal = [...document.querySelectorAll('div')].find((d) => d.style.zIndex === '11100') as HTMLElement;
+    const editModal = [...document.querySelectorAll('div')].find((d) => (d as HTMLElement).classList.contains('bz-belongings-overlay--11100')) as HTMLElement;
     expect(editModal.textContent).toContain('编辑物品');
     // 修改名称并保存
     const nameInput = editModal.querySelector('input') as HTMLInputElement;
@@ -187,7 +193,7 @@ describe('删除取消 / 排序关闭', () => {
     ) as HTMLElement;
     delItem.click();
     await new Promise((r) => setTimeout(r, 20));
-    const confirmModal = [...document.querySelectorAll('div')].find((d) => d.style.zIndex === '11101') as HTMLElement;
+    const confirmModal = [...document.querySelectorAll('div')].find((d) => (d as HTMLElement).classList.contains('bz-belongings-overlay--11101')) as HTMLElement;
     expect(confirmModal.textContent).toContain('确认删除');
     const cancelBtn = [...confirmModal.querySelectorAll('button')].find((b) => b.textContent === '取消')!;
     cancelBtn.click();
@@ -204,10 +210,10 @@ describe('删除取消 / 排序关闭', () => {
     await openBelongingsPanel();
     const p = showSortModal();
     await vi.advanceTimersByTimeAsync(0);
-    const sortModal = [...document.querySelectorAll('div')].find((d) => d.style.zIndex === '11100') as HTMLElement;
+    const sortModal = [...document.querySelectorAll('div')].find((d) => (d as HTMLElement).classList.contains('bz-belongings-overlay--11100')) as HTMLElement;
     const closeBtn = [...sortModal.querySelectorAll('button')].find((b) => b.textContent === '关闭')!;
     closeBtn.click();
     await p;
-    expect(document.querySelector('[style*="z-index: 11100"]')).toBeNull();
+    expect(document.querySelector('.bz-belongings-overlay--11100')).toBeNull();
   });
 });

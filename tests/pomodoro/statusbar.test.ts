@@ -68,7 +68,7 @@ describe('番茄钟状态栏', () => {
     expect(textSpan.textContent).toBe('24:57');
   });
 
-  it('暂停：回灰态（文本清空、图标保留）', async () => {
+  it('暂停：显示「已暂停」标签 + 暂停标识类（x6，与空闲灰态区分）；图标保留', async () => {
     const vault = new MockVault();
     const app = makeApp(vault);
     setApp(app);
@@ -77,9 +77,27 @@ describe('番茄钟状态栏', () => {
     document.getElementById('pomodoro-btn-start')!.click(); // 开始
     document.getElementById('pomodoro-btn-start')!.click(); // 暂停
     const statusEl = container.querySelector('.pomodoro-statusbar') as HTMLElement;
-    expect((statusEl.querySelector('.pomodoro-statusbar-text') as HTMLElement).textContent).toBe('');
-    expect(statusEl.classList.contains('pomodoro-statusbar-idle')).toBe(true);
+    expect((statusEl.querySelector('.pomodoro-statusbar-text') as HTMLElement).textContent).toBe('已暂停');
+    expect(statusEl.classList.contains('pomodoro-statusbar-paused')).toBe(true);
+    expect(statusEl.classList.contains('pomodoro-statusbar-idle')).toBe(false); // 非空闲灰态
     expect(statusEl.querySelector('.pomodoro-statusbar-icon')).not.toBeNull();
+  });
+
+  it('恢复继续 → 暂停标识消失（自动恢复只在状态栏体现，不加 toast）', async () => {
+    const vault = new MockVault();
+    const app = makeApp(vault);
+    setApp(app);
+    mountPomodoroStatusBar(container, app);
+    await openPomodoro(app);
+    document.getElementById('pomodoro-btn-start')!.click(); // 开始
+    document.getElementById('pomodoro-btn-start')!.click(); // 暂停
+    const statusEl = container.querySelector('.pomodoro-statusbar') as HTMLElement;
+    expect(statusEl.classList.contains('pomodoro-statusbar-paused')).toBe(true);
+    document.getElementById('pomodoro-btn-start')!.click(); // 继续
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(statusEl.classList.contains('pomodoro-statusbar-paused')).toBe(false);
+    expect(statusEl.classList.contains('pomodoro-statusbar-idle')).toBe(false);
+    expect((statusEl.querySelector('.pomodoro-statusbar-text') as HTMLElement).textContent).toMatch(/^\d{2}:\d{2}$/);
   });
 
   it('点击状态栏打开弹窗（幂等单例）', async () => {

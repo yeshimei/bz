@@ -7,6 +7,7 @@
 import { notice } from '../core/notice';
 import { getSettings, saveSettings } from '../core/settings-provider';
 import { escManager } from '../core/esc-manager';
+import { confirm } from '../core/confirm';
 import { collectResources, planMoves } from './data';
 
 /** 当前打开笔记；无则 null */
@@ -161,13 +162,11 @@ export interface MoveSummary {
  * 执行附件搬移：移动当前笔记附件到目标文件夹（仅同名冲突才改名）。
  * 经 `app.fileManager.renameFile` 移动并自动更新全库内部链接（Obsidian 内建）；
  * 无 fileManager（异常环境）回退 `vault.rename`（不更新链接，warning 通知）。
+ * dest 允许空串 = 库根目录（与文件夹选择器「（库根目录）」选项一致，P20 修复自相矛盾——
+ * 可选却提交被拒；根目录场景 dest 为空时直接移动到 vault 根）。
  */
 export async function runMove(app: any, note: any, destFolder: string): Promise<MoveSummary | null> {
   const dest = (destFolder || '').trim().replace(/^\/+|\/+$/g, '');
-  if (!dest) {
-    notice('未选择目标文件夹', 'warning');
-    return null;
-  }
   try {
     const allFiles = (app.vault.getFiles?.() || app.vault.getAllLoadedFiles?.() || []).map((f: any) => f.path);
     const noteContent = await app.vault.read(note);
@@ -182,7 +181,8 @@ export async function runMove(app: any, note: any, destFolder: string): Promise<
       return null;
     }
 
-    if (!app.vault.getAbstractFileByPath(dest)) await app.vault.createFolder(dest);
+    // 仅非根目录需要建目录；根目录（''）必然存在
+    if (dest && !app.vault.getAbstractFileByPath(dest)) await app.vault.createFolder(dest);
     const fmRename = app?.fileManager?.renameFile;
     let failed = 0;
     for (const m of moves) {
@@ -217,7 +217,8 @@ export async function runMove(app: any, note: any, destFolder: string): Promise<
     const movedCount = moves.length - failed;
     const failTail = failed ? `，失败 ${failed} 个` : '';
     const linkTail = linksAuto ? '，内部链接已自动更新' : '，链接未自动更新';
-    notice(`已移动 ${movedCount} 个资源到 ${dest}，改名 ${renamedCount} 个${linkTail}${failTail}`, linksAuto && failed === 0 ? 'success' : 'warning');
+    const destLabel = dest || '库根目录';
+    notice(`已移动 ${movedCount} 个资源到 ${destLabel}，改名 ${renamedCount} 个${linkTail}${failTail}`, linksAuto && failed === 0 ? 'success' : 'warning');
     return { moved: movedCount, renamed: renamedCount, linksAuto };
   } catch (e) {
     console.error('[附件搬移] 失败:', e);
@@ -226,7 +227,7 @@ export async function runMove(app: any, note: any, destFolder: string): Promise<
   }
 }
 
-/** 命令入口：当前笔记 → 文件夹选择 → 执行 */
+/** 命令入口：当前笔记 → 文件夹选择 → 预览确认（将移动 N 个、改名 M 个）→ 执行 */
 export async function moveAttachments(app: any): Promise<void> {
   const note = getActiveNote(app);
   if (!note) {
@@ -234,6 +235,37 @@ export async function moveAttachments(app: any): Promise<void> {
     return;
   }
   new FolderSelectModal(app, (folder) => {
-    void runMove(app, note, folder);
+    void (async () => {
+      const dest = (folder || '').trim().replace(/^\/+|\/+$/g, '');
+      try {
+        const allFiles = (app.vault.getFiles?.() || app.vault.getAllLoadedFiles?.() || []).map((f: any) => f.path);
+        const noteContent = await app.vault.read(note);
+        const resources = collectResources(noteContent, allFiles, note.path);
+        if (resources.length === 0) {
+          notice('当前笔记没有可移动的资源文件', 'info');
+          return;
+        }
+        const moves = planMoves(resources, dest, allFiles);
+        if (moves.length === 0) {
+          notice('资源已全部在目标文件夹', 'info');
+          return;
+        }
+        // P20：执行前展示预览确认（移动/改名数）；根目录文案用「库根目录」展示
+        const destLabel = dest || '库根目录';
+        const renamedCount = moves.filter((m) => m.renamed).length;
+        const renameTail = renamedCount ? `，${renamedCount} 个将改名（目标已有同名文件）` : '';
+        confirm({
+          title: '移动附件',
+          message: `将移动 ${moves.length} 个资源到「${destLabel}」${renameTail}。\n\n移动后全库引用这些附件的链接会自动更新。`,
+          confirmText: '移动',
+          onConfirm: () => {
+            void runMove(app, note, dest);
+          },
+        });
+      } catch (e) {
+        console.error('[附件搬移] 预览失败:', e);
+        notice('附件搬移失败，已中止（原文件未改动）', 'error');
+      }
+    })();
   }).open();
 }
