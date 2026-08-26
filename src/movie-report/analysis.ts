@@ -80,9 +80,13 @@ function parseAnalysisItem(fm: any, file: TFile): { item: any; d: Date | null; d
   for (const t of ALL_TAGS) {
     if (tagList.includes(t)) { typeTag = t; break; }
   }
-  if (!typeTag) return null;
-  const group = getGroupForTag(typeTag);
-  if (!group) return null;
+  // x4：不在固定清单的自定义 tag 不再静默消失——取首个 tag 归入「其他」组展示；
+  // 完全无 tag 的文件（无自定义 tag 可言）维持跳过
+  if (!typeTag) {
+    if (tagList.length === 0) return null;
+    typeTag = tagList[0];
+  }
+  const group = getGroupForTag(typeTag!) ?? '其他';
 
   const watchDate = fm['观影日期'] ? fm['观影日期'].toString() : null;
   // null/空串 = 未打分（显式归已看），避免 Number('')=0 误判在看；undefined 缺省行为不变
@@ -231,6 +235,9 @@ function accumulateMovieExtras(data: any, item: any, fm: any, db: number): void 
 function finalizeAnalysis(data: any): void {
   data.topRated.sort((a: any, b: any) => b.rating - a.rating);
   data.topRated = data.topRated.slice(0, 10);
+  // 想看清单（ticket 50）：总数保留在 wantTotal，列表只取前 10
+  data.wantTotal = data.wantList.length;
+  data.wantList = data.wantList.slice(0, 10);
   data.treasure.sort((a: any, b: any) => b.rating - a.rating);
   data.treasure = data.treasure.slice(0, 10);
   data.disappoint.sort((a: any, b: any) => a.rating - b.rating);
@@ -430,6 +437,15 @@ function statInlineHTML(items: string[]): string {
 }
 
 function buildAnalysisHTML(data: any): string {
+  // 空库引导（ticket 50）：无 frontmatter / 空目录 → 引导文案替代全 0 仪表盘
+  if (data.total === 0) {
+    const folder = getReportFolderPath();
+    return `
+    <div style="padding:64px 20px;text-align:center;color:var(--text-muted);">
+      <div style="font-size:.95rem;font-weight:600;margin-bottom:10px;color:var(--text-normal);">还没有可统计的影视记录</div>
+      <div style="font-size:.8rem;line-height:1.8;">影视文件夹「${folder}」里还没有可分析的条目。<br>先去影视面板添加影视条目，或检查设置中的影视文件夹路径。</div>
+    </div>`;
+  }
   const yearEntries = Object.keys(data.years).sort((a, b) => Number(a) - Number(b)).map((y) => ({ label: y, value: data.years[y] }));
   const monthEntries = Array.from({ length: 12 }, (_, i) => ({ label: (i + 1) + '月', value: data.months[i + 1] || 0 }));
   const bucketEntries = ['≥5.5', '5~5.5', '4~5', '3~4', '2~3', '<2'].map((b) => ({ label: b, value: data.buckets[b] }));
@@ -449,7 +465,7 @@ function buildAnalysisHTML(data: any): string {
         ${statCardHTML('已看', data.watched, 1)}
         ${statCardHTML('在看', data.watching, 2)}
         ${statCardHTML('想看', data.want, 3)}
-        ${statCardHTML('平均评分', avgRating, 4)}
+        ${statCardHTML('平均评分（10分制）', avgRating, 4)}
         ${statCardHTML('平均豆瓣', avgDouban, 5)}
     </div>
     ${sectionHTML('🎬 类型分布', donutChartHTML(typeEntries, typeColors, data.total), '#FFE5CC')}
@@ -470,7 +486,7 @@ function buildAnalysisHTML(data: any): string {
     ${sectionHTML('🏆 我的高分 TOP10', topListHTML(data.topRated, true), '#FFE5CC')}
     ${sectionHTML('🔗 系列追踪', statInlineHTML([`追了 ${data.seriesList.length} 个系列（≥2部）`]) + (data.seriesList.length ? data.seriesList.map(([k, v]: any, i: number) => `<div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--background-modifier-border);"><span style="width:18px;flex-shrink:0;font-size:.72rem;color:var(--text-muted);text-align:center;">${i + 1}</span><span style="flex:1;font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">《${k}》</span><span style="font-size:.78rem;font-weight:600;color:var(--text-accent);flex-shrink:0;">${v} 部</span></div>`).join('') : emptyHTML()), '#D6E4FF')}
     ${sectionHTML('📺 追剧深度', statInlineHTML([`平均 ${data.avgSeason} 季`]) + (data.seasons.length ? data.seasons.map((s: any, i: number) => `<div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--background-modifier-border);"><span style="width:18px;flex-shrink:0;font-size:.72rem;color:var(--text-muted);text-align:center;">${i + 1}</span><span style="flex:1;font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">《${s.name}》</span><span style="font-size:.78rem;font-weight:600;color:var(--text-accent);flex-shrink:0;">${s.seasons} 季</span></div>`).join('') : emptyHTML()), '#CDF0EA')}
-    ${sectionHTML('📌 想看清单（' + data.wantList.length + '）' + (data.wantAvgDouban !== '—' ? ' · 均豆瓣 ' + data.wantAvgDouban : ''), topListHTML(data.wantList, false) + (Object.keys(data.wantTags).length ? '<div style="margin-top:8px;">' + Object.entries(data.wantTags).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([t, c]) => `<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:.72rem;background:var(--background-primary);color:var(--text-normal);border:1px solid var(--background-modifier-border);margin:2px;">${t} ${c}</span>`).join('') + '</div>' : ''), '#FFF3C4')}
+    ${sectionHTML('📌 想看清单（' + (data.wantTotal ?? data.wantList.length) + '）' + (data.wantAvgDouban !== '—' ? ' · 均豆瓣 ' + data.wantAvgDouban : ''), topListHTML(data.wantList, false) + (Object.keys(data.wantTags).length ? '<div style="margin-top:8px;">' + Object.entries(data.wantTags).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([t, c]) => `<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:.72rem;background:var(--background-primary);color:var(--text-normal);border:1px solid var(--background-modifier-border);margin:2px;">${t} ${c}</span>`).join('') + '</div>' : ''), '#FFF3C4')}
     <p style="text-align:center;font-size:.68rem;color:var(--text-muted);margin-top:16px;">个人评分 6 分制 ⇄ 豆瓣 10 分制，换算 ×${R6to10.toFixed(2)}</p>
     `;
 }
@@ -493,9 +509,10 @@ export function openAnalysisModal(app: App): void {
   const data = buildAnalysisData(app);
 
   const overlay = document.createElement('div');
+  overlay.className = 'bz-movie-report-overlay--1200'; // e3：z-index 由根样式 .bz-movie-report-overlay--* 档位类提供（移交 ux-css）
   overlay.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.5); z-index: 1200;
+        background: rgba(0,0,0,0.5);
         display: flex; align-items: center; justify-content: center;
     `;
   const modal = document.createElement('div');

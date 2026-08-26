@@ -114,7 +114,7 @@ function seedRichVault(vault: MockVault) {
   vault.files.set('我的/影视/《2046》.md', movieMd({ tags: ['电影'], '观影日期': '2025-04-04T20:00:00', 评分: 3.5 }));
   // 标签为字符串（非数组）也能识别
   vault.files.set('我的/影视/《字符串标签》.md', movieMd({ tags: '英剧', '观影日期': '2025-06-06T20:00:00', 评分: 4 }));
-  // 无有效类型标签 → 忽略
+  // 自定义标签（不在固定清单）→ 归「其他」组入统计（x4，不再忽略）
   vault.files.set('我的/影视/《杂项》.md', movieMd({ tags: ['杂项'], 评分: 5 }));
 }
 
@@ -123,9 +123,9 @@ describe('buildAnalysisData 全维度统计', () => {
     const vault = new MockVault();
     seedRichVault(vault);
     const data = buildAnalysisData(makeApp(vault));
-    // 13 部入统计：5.5→≥5.5、5→5~5.5、4×2→4~5、3~3.9×4（谍×3+2046）→3~4、2→2~3、1.5→<2
-    expect(data.total).toBe(13);
-    expect(data.buckets).toEqual({ '≥5.5': 1, '5~5.5': 1, '4~5': 2, '3~4': 4, '2~3': 1, '<2': 1 });
+    // 14 部入统计（含自定义 tag 归「其他」的杂项）：5.5→≥5.5、5×2→5~5.5、4×2→4~5、3~3.9×4（谍×3+2046）→3~4、2→2~3、1.5→<2
+    expect(data.total).toBe(14);
+    expect(data.buckets).toEqual({ '≥5.5': 1, '5~5.5': 2, '4~5': 2, '3~4': 4, '2~3': 1, '<2': 1 });
     expect(data.watched).toBeGreaterThan(0);
     expect(data.watching).toBe(1); // 评分 0 → 在看
     expect(data.want).toBe(2); // 评分 -1 → 想看
@@ -243,9 +243,9 @@ describe('buildAnalysisData 全维度统计', () => {
     const trend = data.yearTrend.find((t: any) => t.label === '2024→2025');
     expect(trend).toBeTruthy();
     expect(Number.isInteger(trend.value)).toBe(true);
-    // 星期分布总和：缺日期键/空串均回退 epoch（合法日期）→ 全部 13 部都计入
+    // 星期分布总和：缺日期键/空串均回退 epoch（合法日期）→ 全部 14 部都计入
     const weekdaySum = data.weekdayEntries.reduce((s: number, w: any) => s + w.value, 0);
-    expect(weekdaySum).toBe(13);
+    expect(weekdaySum).toBe(14);
     expect(data.monthFreq).not.toBe('—');
   });
 
@@ -274,36 +274,55 @@ describe('buildAnalysisData 全维度统计', () => {
 });
 
 describe('分析弹窗渲染两态', () => {
-  it('空库渲染：全部图表走「暂无数据」占位 + 统计卡零值 + 换算尾注', () => {
+  it('空库渲染：引导文案替代全 0 仪表盘（ticket 50）；关闭幂等', () => {
     const app = makeApp(new MockVault());
     openAnalysisModal(app);
-    const overlay = document.body.querySelector('div[style*="z-index: 1200"]') as HTMLElement;
+    const overlay = document.body.querySelector('.bz-movie-report-overlay--1200') as HTMLElement;
     expect(overlay).not.toBeNull();
-    expect(overlay.textContent).toContain('收录总数');
-    expect(overlay.textContent).toContain('暂无数据');
-    expect(overlay.textContent).toContain('—');
-    expect(overlay.textContent).toContain('个人评分 6 分制');
+    expect(overlay.textContent).toContain('还没有可统计的影视记录');
+    expect(overlay.textContent).toContain('影视文件夹');
+    expect(overlay.textContent).not.toContain('收录总数'); // 不再渲染全 0 仪表盘
     // 关闭幂等：再关一次不抛错
     closeAnalysis();
     expect(overlay.isConnected).toBe(false);
     expect(() => closeAnalysis()).not.toThrow();
   });
 
-  it('富库渲染：双榜/系列/追剧深度/想看清单均豆瓣/关键词 chips 全量出现；ESC 可关', () => {
+  it('富库渲染：双榜/系列/追剧深度/想看清单均豆瓣/关键词 chips 全量出现；平均评分标注 10 分制；ESC 可关', () => {
     const vault = new MockVault();
     seedRichVault(vault);
     openAnalysisModal(makeApp(vault));
-    const overlay = document.body.querySelector('div[style*="z-index: 1200"]') as HTMLElement;
+    const overlay = document.body.querySelector('.bz-movie-report-overlay--1200') as HTMLElement;
     const text = overlay.textContent!;
     expect(text).toContain('宝藏片'); // 宝藏榜小节
     expect(text).toContain('失望榜');
     expect(text).toContain('谍影重重'); // 系列追踪行
     expect(text).toContain('3 季'); // 追剧深度
+    expect(text).toContain('平均评分（10分制）'); // ticket 50：平均评分注明 10 分制
     expect(text).toContain('8.20'); // 想看清单 · 均豆瓣
     expect(text).toContain('好看 1'); // 影评关键词 chip
     expect(text).toContain('诺兰'); // 最爱导演 TOP10
     // ESC 经 escManager 层关闭
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect(overlay.isConnected).toBe(false);
+  });
+
+  it('想看清单超 10 部 → 列表只取前 10，总数保留（ticket 50）', () => {
+    const vault = new MockVault();
+    for (let i = 1; i <= 12; i++) {
+      vault.files.set(`我的/影视/《想看${i}》.md`, movieMd({ tags: ['电影'], 评分: -1 }));
+    }
+    const data = buildAnalysisData(makeApp(vault));
+    expect(data.wantTotal).toBe(12); // 总数保留
+    expect(data.wantList).toHaveLength(10); // 列表 slice 10
+    openAnalysisModal(makeApp(vault));
+    const overlay = document.body.querySelector('.bz-movie-report-overlay--1200') as HTMLElement;
+    expect(overlay.textContent).toContain('想看清单（12）'); // 区块头部用总数
+    // 列表行 = 10（前 10 个书名出现）
+    for (let i = 1; i <= 10; i++) {
+      expect(overlay.textContent).toContain(`想看${i}`);
+    }
+    expect(overlay.textContent).not.toContain('想看11');
+    closeAnalysis();
   });
 });

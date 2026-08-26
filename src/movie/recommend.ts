@@ -215,10 +215,10 @@ export function showResultWindow(app: App, title: string, list: any[]): void {
   }
 
   const overlay = document.createElement('div');
+  overlay.className = 'bz-movie-overlay--1300'; // e3：z-index 由根样式 .bz-movie-overlay--* 档位类提供
   overlay.style.cssText = `
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;
-    z-index: 1300;
   `;
 
   const modal = document.createElement('div');
