@@ -4,6 +4,7 @@
  */
 import type { App } from 'obsidian';
 import { notice, notify } from '../core/notice';
+import { confirm } from '../core/confirm';
 import { escManager } from '../core/esc-manager';
 import { getApp } from '../core/app';
 import { QuizManager, loadActiveItems } from './manager';
@@ -408,6 +409,7 @@ export class QuizMasterUI {
       submitBtn.onclick = () => {
         if (answeredRef.value) return;
         if (selectedIndices.size === 0) {
+          notice('请至少选择一项', 'warning'); // ticket 15：多选零选择提示
           return;
         }
         answeredRef.value = true;
@@ -521,6 +523,26 @@ export class QuizMasterUI {
     popup.appendChild(nextBtn);
   }
 
+  /**
+   * ticket 17：复习模式中途退出确认闸门（点遮罩 / ESC）。
+   * 复习会话答题中途（_reviewMode 且回调未消费，即尚未结算）退出，先确认「放弃本次做题？」：
+   * 确认 → 执行 proceed（既有结算/写排期语义，信任 review/app.ts 契约）；取消 → 继续做题。
+   * 非复习模式或回调已消费 → 直接放行（不打断普通做题与结果卡阶段）。
+   */
+  private gateAbortReview(proceed: () => void): void {
+    if (!this._reviewMode || !this.onComplete) {
+      proceed();
+      return;
+    }
+    confirm({
+      title: '放弃本次做题？',
+      message: '未完成的题目将丢弃，本次复习将按已答题目结算评级',
+      confirmText: '放弃',
+      cancelText: '继续做题',
+      onConfirm: proceed,
+    });
+  }
+
   /** 仅拆除弹窗 DOM（换题/加载等内部过渡用，不走结算语义） */
   private _teardownModal(): void {
     if (this.mask && this.mask.parentNode) this.mask.remove();
@@ -530,22 +552,28 @@ export class QuizMasterUI {
 
   /** 关闭弹窗。P1-1：复习模式下回调未被消费时（如答题中途 ESC），按 finishQuiz 语义
    *  先结算再关闭——否则复习域外层 Promise 将永久悬挂；total=0 按 ADR-0044 评 again 属既定语义。
-   *  回调已消费（正常完成/已结算）或非复习模式 → 纯关闭。 */
+   *  回调已消费（正常完成/已结算）或非复习模式 → 纯关闭。
+   *  ticket 17：答题中途退出前先确认（确认才结算；取消继续做题）。 */
   close(): void {
-    if (this._reviewMode && this.onComplete) {
-      const cb = this.onComplete;
-      this.onComplete = null;
-      cb(this._buildResults());
-    }
-    this._teardownModal();
+    this.gateAbortReview(() => {
+      if (this._reviewMode && this.onComplete) {
+        const cb = this.onComplete;
+        this.onComplete = null;
+        cb(this._buildResults());
+      }
+      this._teardownModal();
+    });
   }
 
-  /** 做题结束（源码 L723-735：回调优先，否则关闭） */
+  /** 做题结束（源码 L723-735：回调优先，否则关闭）
+   *  ticket 17：复习模式答题中途点遮罩 → 先确认（确认才结算；取消继续做题）。 */
   finishQuiz(): void {
-    const cb = this.onComplete;
-    this.onComplete = null;
-    if (cb) cb(this._buildResults());
-    else this.close(); // 没有回调时才直接关闭
+    this.gateAbortReview(() => {
+      const cb = this.onComplete;
+      this.onComplete = null;
+      if (cb) cb(this._buildResults());
+      else this.close(); // 没有回调时才直接关闭
+    });
   }
 
   get manager(): QuizManager {

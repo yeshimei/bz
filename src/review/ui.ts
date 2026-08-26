@@ -6,6 +6,7 @@ import type { App } from 'obsidian';
 import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
+import { escapeHtml } from '../core/utils';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal, createSettingsGroup, refreshSettingsGroupCounts } from '../core/settings-modal';
 import { FolderSelectModal } from '../attach/ui';
@@ -86,6 +87,8 @@ export class UIManager {
     container.style.cssText = 'flex:1;overflow-y:auto;padding:0 20px;min-height:200px;';
     this.popup.appendChild(container);
     this.entriesContainer = container;
+    // ticket x5：列表键盘路径（方向键移动焦点 + 回车执行主操作；低频，Tab 原生可达无焦点陷阱）
+    container.addEventListener('keydown', (e: KeyboardEvent) => this.onEntriesKeydown(e));
 
     document.body.appendChild(this.mask);
     document.body.appendChild(this.popup);
@@ -209,7 +212,8 @@ export class UIManager {
       );
     new Setting(quizBox)
       .setName('每篇笔记出题数量')
-      .setDesc('固定每篇笔记出题的数量')
+      /* ticket f8-quiz（解冻文案）：留空/0=自动 */
+      .setDesc('固定每篇笔记出题的数量，留空/0=自动')
       .addText((text) =>
         text.setValue(s.questionsPerNote || '').onChange(async (v) => {
           s.questionsPerNote = v;
@@ -343,6 +347,49 @@ export class UIManager {
       watchBox.appendChild(addRow);
     };
     renderWatchRows();
+
+    // ticket 57：排除名单管理——查看 + 单条解除（数据 reviewExcludedNotes 既有；本组只补 UI）
+    new Setting(autoGroup)
+      .setName('排除名单')
+      .setDesc('不参与监听自动加入的笔记，可在此单条解除');
+    const excludeBox = document.createElement('div');
+    excludeBox.id = 'review-excluded-list';
+    autoGroup.appendChild(excludeBox);
+    const renderExcludeRows = () => {
+      excludeBox.innerHTML = '';
+      const notes = s.reviewExcludedNotes || [];
+      if (!notes.length) {
+        const empty = document.createElement('div');
+        empty.className = 'bz-review-exclude-empty';
+        empty.textContent = '暂无排除笔记';
+        excludeBox.appendChild(empty);
+        return;
+      }
+      notes.forEach((path: string) => {
+        const chip = document.createElement('span');
+        chip.className = 'bz-review-exclude-chip';
+        const name = document.createElement('span');
+        name.className = 'bz-review-exclude-name';
+        name.textContent = path;
+        name.title = path;
+        const remove = document.createElement('button');
+        remove.className = 'bz-review-exclude-remove';
+        remove.setAttribute('aria-label', `解除排除 ${path}`);
+        remove.textContent = '✕';
+        remove.onclick = () => {
+          void (async () => {
+            const { ReviewWatcher } = await import('./watch');
+            await new ReviewWatcher(this.app, this.dataManager).removeExcludedNote(path);
+            renderExcludeRows();
+            notice('已解除排除', 'success');
+          })();
+        };
+        chip.appendChild(name);
+        chip.appendChild(remove);
+        excludeBox.appendChild(chip);
+      });
+    };
+    renderExcludeRows();
   }
 
   /** 界面组：文件树标记开关 */
@@ -446,8 +493,9 @@ export class UIManager {
     if (old) old.remove();
     const div = document.createElement('div');
     div.className = 'difficulty-dialog';
+    // ticket s1：文件名经 escapeHtml 转义后拼 HTML
     div.innerHTML = `
-      <h4 style="margin:0 0 12px 0;font-size:16px;">标记复习：${item.name}</h4>
+      <h4 style="margin:0 0 12px 0;font-size:16px;">标记复习：${escapeHtml(item.name)}</h4>
       <button class="diff-btn" data-diff="again" style="border-left:3px solid #ff4757;">🟥 忘了（Again）</button>
       <button class="diff-btn" data-diff="hard" style="border-left:3px solid #ff9f43;">🟧 困难（Hard）</button>
       <button class="diff-btn" data-diff="good" style="border-left:3px solid #2ed573;">🟩 一般（Good）</button>
@@ -514,7 +562,16 @@ export class UIManager {
       filtered = filtered.filter((i) => i.name.toLowerCase().includes(lower));
     }
     if (!filtered.length) {
-      container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-faint);font-size:16px;">${this.showArchived ? '没有已完成（归档）的复习' : '没有复习计划 🎉'}</div>`;
+      // ticket l6（解冻：新增空态文案）：空态补首步引导
+      if (this.showArchived) {
+        container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-faint);font-size:16px;">没有已完成（归档）的复习</div>`;
+      } else {
+        container.innerHTML = `
+          <div style="padding:40px 24px;text-align:center;color:var(--text-faint);font-size:16px;">
+            <div>没有复习计划 🎉</div>
+            <div style="margin-top:10px;font-size:13px;color:var(--text-muted);">打开任意笔记使用「加入复习计划」命令，或在 ⚙️ 设置中添加监听文件夹</div>
+          </div>`;
+      }
       return;
     }
     filtered.sort((a, b) => {
@@ -529,6 +586,9 @@ export class UIManager {
     const app = this.app;
     const card = document.createElement('div');
     card.className = 'review-card';
+    // ticket x5：列表键盘路径——卡片可聚焦（Tab 原生可达），方向键在卡片间移动焦点，回车执行主操作
+    card.tabIndex = 0;
+    (card as any).__reviewItem = item;
 
     const content = document.createElement('span');
     content.className = 'review-content';
@@ -637,6 +697,51 @@ export class UIManager {
       const leaf = this.app.workspace.getLeaf();
       await leaf.openFile(file as any);
     } else notice('文件已删除', 'success');
+  }
+
+  /**
+   * ticket x5：列表键盘路径（列表级 keydown，事件委托；低频，不引入焦点陷阱——Tab 原生可达）。
+   * 方向键在卡片间移动焦点；回车执行主操作（与抽屉首动作一致：可复习 → 难度弹窗；否则打开原文）。
+   */
+  private onEntriesKeydown(e: KeyboardEvent): void {
+    const container = this.entriesContainer;
+    if (!container) return;
+    const cards = Array.from(container.querySelectorAll<HTMLElement>('.review-card'));
+    if (!cards.length) return;
+    const active = document.activeElement as HTMLElement | null;
+    const idx = active && cards.includes(active) ? cards.indexOf(active) : -1;
+
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const dir = e.key === 'ArrowDown' ? 1 : -1;
+      const next =
+        idx === -1 ? (dir === 1 ? 0 : cards.length - 1) : Math.min(cards.length - 1, Math.max(0, idx + dir));
+      cards[next].focus();
+      return;
+    }
+    if (e.key === 'Enter' && idx !== -1) {
+      e.preventDefault();
+      this.keyboardExecute(cards[idx]);
+    }
+  }
+
+  /** 回车执行主操作（与抽屉「开始复习/打开原文」语义一致） */
+  private keyboardExecute(card: HTMLElement): void {
+    const item = (card as any).__reviewItem as ReviewItem | undefined;
+    if (!item) return;
+    if (!item.isCompleted && !item.completed && !item.isMissing) {
+      this.showDifficultyDialog(item, async (diff) => {
+        const { reviewApp } = await import('./app');
+        await reviewApp.markReview(item.filePath, diff as Rating);
+        await this.refreshPanel();
+        await reviewApp.applyReviewStyles(this.app);
+      });
+      // 难度弹窗作为附属浮层（内部点击不误关任何已开浮层；生命周期由弹窗自身注销）
+      const dlg = document.querySelector('.difficulty-dialog');
+      if (dlg) registerSheetCompanion(dlg as HTMLElement);
+    } else {
+      void this.openItemFile(item);
+    }
   }
 
   /** 卡片挂统一抽屉 + 头部（🔁 名称 + 阶段 · 到期） */
