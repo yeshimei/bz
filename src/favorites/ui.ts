@@ -31,6 +31,27 @@ const SEARCH_DEBOUNCE_MS = 180;
 /** 单击直开双击窗口（ticket 61）：同卡 300ms 内重复点击不重开（防双击连开两个标签页） */
 const OPEN_CLICK_WINDOW_MS = 300;
 
+/**
+ * 右键菜单「点外关闭」手势标记（审查阻断 A）：
+ * 菜单开着时点卡片 = 关闭菜单的手势，该次点击不得顺带直开链接。
+ * 时序：item-actions 的 document 捕获层会在同一 mousedown 里先关菜单（onMouseDownCapture → closeItemMenu），
+ * 卡片 click handler（冒泡阶段）再查 `.bz-item-menu` 已是 disconnected——因此必须在 **window 捕获层**
+ * （早于 document 捕获）观测「按下时菜单还开着」，记下标记供随后的 click 消费。
+ */
+let menuDismissPending = false;
+let menuWatcherInstalled = false;
+function installMenuDismissWatcher(): void {
+  if (menuWatcherInstalled) return;
+  menuWatcherInstalled = true;
+  window.addEventListener(
+    'mousedown',
+    () => {
+      menuDismissPending = !!document.querySelector('.bz-item-menu')?.isConnected;
+    },
+    true
+  );
+}
+
 export class UIManager {
   dataManager: DataManager;
   aiService: FavoritesAIService;
@@ -81,6 +102,8 @@ export class UIManager {
 
   // ---------- 构建主 UI ----------
   build() {
+    // 右键菜单点外关闭手势观察（审查阻断 A）：幂等安装
+    installMenuDismissWatcher();
     // 移动端列表样式：平铺 + 隐藏滚动条
     this.mask = document.createElement('div');
     this.mask.id = 'fav-mask';
@@ -381,11 +404,17 @@ export class UIManager {
     // ---- 打开可见入口（ticket 61·拍板）----
     // 单击卡片主体（含标题/简介/元信息区）直接打开链接；长按/右键抽屉保持不变。
     // 与旧「标题纯文本、列表干净」拍板相悖——用户已重新拍板要可见入口（冲突记录见提交说明）。
-    // 防手势冲突：长按松手的残余/合成 click 由 item-actions 文档捕获层吞掉，不会走到这里；
-    // 单击直开与双击不冲突——双击窗口（300ms）内同卡重复点击不重开，防双击连开两个标签页。
+    // 防手势冲突（审查修复）：① 长按松手的残余/合成 click 由 item-actions 捕获层吞掉，不走到这里；
+    // ② 文本选中中不直开（允许复制标题，审查建议 B）；③ 右键菜单开着时点卡片 = 关菜单，不直开（阻断 A）；
+    // ④ 双击窗口（300ms）内同卡重复点击不重开，防双击连开两个标签页。
     if (rawUrl) {
       let lastOpenAt = 0;
       card.addEventListener('click', () => {
+        if (window.getSelection()?.toString()) return; // 选字/复制场景不直开（审查建议 B）
+        if (menuDismissPending) {
+          menuDismissPending = false; // 菜单点外关闭手势：消费标记，不直开（审查阻断 A）
+          return;
+        }
         const now = Date.now();
         if (now - lastOpenAt < OPEN_CLICK_WINDOW_MS) return;
         lastOpenAt = now;
@@ -1297,11 +1326,12 @@ GitHub 仓库信息（来自 GitHub API）：
         else throw new Error('AI 返回格式异常，无法解析');
       }
 
-      // AI 整理不覆盖手写（ticket 22）：以进入本函数时的输入快照为「用户手填基线」，
-      // 已手动填写的字段保持原样，仅补全未填字段；未知标签的忽略 notice 保留在后文
-      if (parsed.title && !currentTitle) this.addTitleInput!.value = parsed.title;
-      if (parsed.url && !currentUrl) this.addUrlInput!.value = parsed.url;
-      if (parsed.description && !currentDesc) this.addDescInput!.value = parsed.description;
+      // AI 整理不覆盖手写（ticket 22 + 审查竞态 D）：回填前**重读输入框当前值**——
+      // AI 处理期间用户新填/改动的内容同样不被覆盖（快照竞态），仅补全仍为空的字段；
+      // GitHub 仓库名预填视为已存在的输入内容，同样不被 AI 覆盖；未知标签的忽略 notice 保留在后文
+      if (parsed.title && !this.addTitleInput!.value.trim()) this.addTitleInput!.value = parsed.title;
+      if (parsed.url && !this.addUrlInput!.value.trim()) this.addUrlInput!.value = parsed.url;
+      if (parsed.description && !this.addDescInput!.value.trim()) this.addDescInput!.value = parsed.description;
 
       // 处理 AI 推荐的标签（支持 tags 数组和单个 tag 两种格式）
       let recommendedTags = parsed.tags || (parsed.tag ? [parsed.tag] : null);

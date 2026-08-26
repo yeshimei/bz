@@ -313,7 +313,8 @@ describe('收藏本面板', () => {
     const { ui } = await setup();
     ui.build();
     ui.openAddDialog();
-    ui.addUrlInput!.value = 'https://github.com/foo/bar';
+    // 非 GitHub 地址：无仓库名预填干扰，验证 AI 对空字段的补全（ticket 22 改当前值语义后）
+    ui.addUrlInput!.value = 'https://example.com/x';
     ui.aiService.ai = {
       json: vi.fn().mockResolvedValue('{"title":"AI标题","url":"https://github.com/foo/bar","description":"AI简介","tags":["GitHub"]}'),
     } as any;
@@ -393,8 +394,8 @@ describe('收藏本面板', () => {
     ui.addAiBtn!.click();
     await new Promise((r) => setTimeout(r, 30));
 
-    // AI 结果优先覆盖预填的仓库名
-    expect(ui.addTitleInput!.value).toBe('自定义标题');
+    // 仓库名预填（def）视为已存在的输入内容，AI 结果不覆盖（ticket 22 当前值语义）；简介空字段照常回填
+    expect(ui.addTitleInput!.value).toBe('def');
     expect(ui.addDescInput!.value).toBe('自定义简介');
     // GitHub 标签兜底强制选中
     const active = [...document.querySelectorAll('.fav-type-btn.active')].map((b) => (b as HTMLElement).dataset.tag);
@@ -465,6 +466,31 @@ describe('收藏本面板', () => {
     expect(ui.addTitleInput!.value).toBe('我的手写标题'); // 手写保留
     expect(ui.addUrlInput!.value).toBe('https://github.com/foo/bar'); // 空字段补全
     expect(ui.addDescInput!.value).toBe('AI简介');
+  });
+
+  it('AI 整理不覆盖手写（审查竞态 D）：处理期间用户补填的字段不被 AI 覆盖', async () => {
+    const { ui } = await setup();
+    ui.build();
+    ui.openAddDialog();
+    ui.addUrlInput!.value = 'https://example.com/x'; // 非 GitHub：无预填干扰
+    let resolveAi: (v: string) => void = () => {};
+    ui.aiService.ai = {
+      json: vi.fn().mockImplementation(
+        () => new Promise<string>((res) => { resolveAi = res; })
+      ),
+    } as any;
+
+    ui.addAiBtn!.click();
+    // AI 处理中（快照时为空）用户补填标题
+    ui.addTitleInput!.value = '处理中补填';
+    await new Promise((r) => setTimeout(r, 10)); // 让 AI 调用挂起（resolveAi 就位）
+    resolveAi('{"title":"AI标题","url":"https://evil.example/y","description":"AI简介","tags":["网站"]}');
+    await new Promise((r) => setTimeout(r, 30));
+
+    expect(ui.addTitleInput!.value).toBe('处理中补填'); // 处理中手填不被 AI 覆盖
+    expect(ui.addUrlInput!.value).toBe('https://example.com/x'); // 用户既有内容不被覆盖
+    expect(ui.addDescInput!.value).toBe('AI简介'); // 仍为空的字段照常补全
+    expect(hasNotice('AI 整理完成')).toBe(true);
   });
 
   it('AI 未配置（ticket 23）：直接 warning 拦截，不弹 progress、不转整理中态、不调用 AI', async () => {
@@ -542,6 +568,60 @@ describe('收藏本面板', () => {
     expect(app.openUrl).not.toHaveBeenCalled(); // 长按松手的残余 click 未穿透到直开
     Platform.isMobile = false;
     closeItemMenu();
+  });
+
+  it('打开可见入口（审查阻断 A）：右键菜单开着时点卡片 = 关菜单手势，不顺带直开链接', async () => {
+    const { ui, dm } = await setup();
+    const app = getApp() as any;
+    await dm.add(makeItem()); // 有 url
+    await dm.add(makeItem({ id: '2', title: '无链接', url: '' }));
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const cards = [...document.querySelectorAll('#fav-entries-container .fav-card')] as HTMLElement[];
+    const urlCard = cards.find((c) => c.textContent.includes('我的项目'))!;
+    const menuAnchor = cards.find((c) => c.textContent.includes('无链接'))!;
+
+    // 在无链接卡上右键开菜单（锚在它上面；点它不会直开，便于隔离「关菜单」这一步的副作用）
+    rightClickOpen(menuAnchor);
+    await new Promise((r) => setTimeout(r, 10));
+    expect(document.querySelector('.bz-item-menu')).not.toBeNull();
+
+    // 菜单开着时点另一张卡：完整鼠标序（mousedown 在 window 捕获层记「关菜单手势」→ document 捕获层关菜单 → click）
+    urlCard.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
+    urlCard.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+    urlCard.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(app.openUrl).not.toHaveBeenCalled(); // 关菜单的点击不直开
+    expect(document.querySelector('.bz-item-menu')).toBeNull(); // 菜单已关
+
+    // 菜单已关后再点 → 正常直开
+    urlCard.click();
+    expect(app.openUrl).toHaveBeenCalledTimes(1);
+  });
+
+  it('打开可见入口（审查建议 B）：有文本选择时不直开（允许复制标题）', async () => {
+    const { ui, dm } = await setup();
+    const app = getApp() as any;
+    await dm.add(makeItem());
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const card = document.querySelector('#fav-entries-container .fav-card') as HTMLElement;
+    // 模拟拖选/双击选标题后松手：正文处于选中态
+    const sel = window.getSelection()!;
+    sel.removeAllRanges();
+    const range = document.createRange();
+    range.selectNodeContents(card);
+    sel.addRange(range);
+
+    card.click();
+    expect(app.openUrl).not.toHaveBeenCalled(); // 选中态不直开
+
+    sel.removeAllRanges();
+    card.click();
+    expect(app.openUrl).toHaveBeenCalledTimes(1); // 清除选择后正常直开
   });
 
   it('余额：列表纯展示不可点击，刷新走抽屉「刷新余额」（小字+头部同步更新）', async () => {
