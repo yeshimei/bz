@@ -126,6 +126,41 @@ describe('UIManager 解锁弹窗', () => {
     expect((inputs[1] as HTMLInputElement).style.display).toBe('none');
     ui.hide();
   });
+
+  it('ticket 6：解锁时自愈回滚了半提交条目 → 成功通知追加「自动回滚」提示（原文未动）', async () => {
+    await dm.unlock('pw');
+    const note = await dm.lockNote({ path: '我的/日记/x.md', title: 'x', content: '# x', attachments: [] });
+    // 制造半提交现场：清单已提交 + 挂起标记残留（模拟删除原文件前崩溃）
+    vault.files.set('CONFIG/.ENCRYPT/.staging/pending.json', JSON.stringify([note.id]));
+    dm.lock();
+    const p = ui.showPasswordDialog();
+    await waitFor(() => !!findDialog());
+    const dialog = findDialog()!;
+    const inputs = dialog.querySelectorAll('input[type="password"]');
+    const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+    (inputs[0] as HTMLInputElement).value = 'pw';
+    confirmBtn.click();
+    expect(await p).toBe(true);
+    expect(dm.unlocked).toBe(true);
+    expect(dm.selfHealRolledBack).toBe(1);
+    expect(hasNotice('解锁成功；上次未完成的加密已自动回滚，原文未动')).toBe(true);
+  });
+
+  it('ticket 6：无自愈回滚时解锁成功通知保持原文案（不带回滚提示）', async () => {
+    await dm.unlock('pw');
+    dm.lock();
+    const p = ui.showPasswordDialog();
+    await waitFor(() => !!findDialog());
+    const dialog = findDialog()!;
+    const inputs = dialog.querySelectorAll('input[type="password"]');
+    const confirmBtn = [...dialog.querySelectorAll('button')].find((b) => b.textContent === '确认')!;
+    (inputs[0] as HTMLInputElement).value = 'pw';
+    confirmBtn.click();
+    expect(await p).toBe(true);
+    expect(dm.selfHealRolledBack).toBe(0);
+    expect(hasNotice('解锁成功')).toBe(true);
+    expect(hasNotice('解锁成功；上次未完成的加密已自动回滚，原文未动')).toBe(false);
+  });
 });
 
 describe('UIManager 主面板', () => {
@@ -494,7 +529,7 @@ describe('EncryptAppController', () => {
     (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
   });
 
-  it('面板顶部「体检」按钮（替换原扫把）：体检弹窗报告失效条目与孤儿密文，默认勾选，清理后列表刷新', async () => {
+  it('面板顶部「体检」按钮（替换原扫把）：体检弹窗报告失效条目与孤儿密文，默认不全选，勾选后二次确认清理，清理后列表刷新', async () => {
     setup(vault, CONFIG);
     const c = EncryptAppController.getInstance(CONFIG);
     await c.init();
@@ -521,11 +556,23 @@ describe('EncryptAppController', () => {
     expect(body.textContent).toContain('全部镜像完整');
     expect(body.textContent).toContain('失效笔记');
     expect(body.textContent).toContain('.junk.enc');
-    // 可清理项默认全选（2 项：1 失效条目 + 1 孤儿密文）
+    // 可清理项默认不全选（ticket 18 用户拍板）：勾选即明确同意删除
     const checks = [...document.querySelectorAll('input.bz-encrypt-health-check')] as HTMLInputElement[];
     expect(checks.length).toBe(2);
-    expect(checks.every((x) => x.checked)).toBe(true);
+    expect(checks.every((x) => x.checked)).toBe(false);
+    // 未勾选点清理 → 只提示，不弹确认
     (document.getElementById('bz-encrypt-health-clean') as HTMLButtonElement).click();
+    expect(hasNotice('未勾选任何可清理项')).toBe(true);
+    // 勾选后点清理 → 二次确认写明将永久删除的数量 → 确认后执行
+    for (const x of checks) x.click();
+    (document.getElementById('bz-encrypt-health-clean') as HTMLButtonElement).click();
+    await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
+    const confirmTxt = document.getElementById('__shared_confirm_mask__')!.textContent!;
+    expect(confirmTxt).toContain('清理确认');
+    expect(confirmTxt).toContain('1 条失效条目（含残余附件镜像）');
+    expect(confirmTxt).toContain('1 个孤儿密文');
+    expect(confirmTxt).toContain('将永久删除，不可恢复');
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
     await waitFor(() => hasNotice(/已清理/));
     expect(vault.files.get('CONFIG/.ENCRYPT/.junk.enc')).toBeUndefined();
     expect(c.dataManager.manifest.notes.some((n) => n.id === dead.id)).toBe(false);
@@ -1182,6 +1229,66 @@ describe('EncryptAppController 重入保护（雷 3）', () => {
     (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
     await p;
     expect(c.dataManager.manifest.notes.length).toBe(0);
+  });
+});
+
+describe('幽灵进度条收尾（ticket 5）', () => {
+  let vault: MockVault;
+  let dm: SafeManager;
+  let ui: UIManager;
+
+  beforeEach(async () => {
+    vault = new MockVault();
+    setup(vault);
+    document.body.innerHTML = '';
+    dm = new SafeManager('CONFIG/.ENCRYPT');
+    ui = new UIManager(dm, CONFIG);
+    ui.ensureElements();
+    await dm.unlock('pw');
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = '';
+    vi.restoreAllMocks();
+  });
+
+  it('还原失败：进度通知被收尾（常驻转圈不残留），仅保留错误 toast', async () => {
+    await dm.lockNote({
+      path: '我的/日记/x.md', title: 'x', content: '# x', attachments: [],
+    });
+    ui.show();
+    const card = document.querySelector('.bz-encrypt-card') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
+    const restoreItem = [...document.querySelectorAll('.bz-item-menu-item')].find(
+      (b) => b.textContent!.includes('还原')
+    ) as HTMLElement;
+    restoreItem.click();
+    await new Promise((r) => setTimeout(r, 20));
+    vi.spyOn(dm, 'restoreNote').mockRejectedValue(new Error('镜像丢失'));
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    await waitFor(() => hasNotice('还原失败：镜像丢失'));
+    // 常驻 progress 转圈已被收尾（等退出动画移除后 DOM 无残留）
+    await waitFor(() => document.querySelectorAll('.bz-notice--progress').length === 0, 1000);
+    // 错误 toast 保留
+    expect(hasNotice('还原失败：镜像丢失')).toBe(true);
+  });
+
+  it('加密失败（lockCurrentNote）：进度通知被收尾（常驻转圈不残留），仅保留错误 toast', async () => {
+    const app = setup(vault, CONFIG);
+    vault.create('笔记/主题.md', '正文');
+    const activeFile = { path: '笔记/主题.md', basename: '主题', vault: vault as any };
+    (app.workspace as any).getActiveFile = () => activeFile;
+    const c = EncryptAppController.getInstance(CONFIG);
+    await c.init();
+    await c.dataManager.unlock('pw');
+    vi.spyOn(c.dataManager, 'lockNote').mockRejectedValue(new Error('磁盘满'));
+    const p = c.lockCurrentNote();
+    await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    await p;
+    expect(hasNotice('加密失败：磁盘满')).toBe(true);
+    await waitFor(() => document.querySelectorAll('.bz-notice--progress').length === 0, 1000);
+    c.cleanup();
   });
 });
 

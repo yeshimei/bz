@@ -359,7 +359,7 @@ export class UIManager {
   /**
    * 体检（用户拍板：右上角 🩺 按钮替换原清理扫把，先报告后勾选清理）。
    * 体检需解锁（对账依赖清单明文，完整性检测需解密）——未解锁先弹主密码，取消则不进入。
-   * 可清理类（失效条目/孤儿密文）默认勾选、可取消；损坏/缺失类只展示不清理（删了就是真丢数据）。
+   * 可清理类（失效条目/孤儿密文）默认不全选、勾选后二次确认才删（ticket 18）；损坏/缺失类只展示不清理（删了就是真丢数据）。
    * 清理后自动重新体检，报告收敛。
    */
   async openHealthDialog() {
@@ -484,7 +484,7 @@ export class UIManager {
     }
   }
 
-  /** 渲染体检报告（UI 保证解锁后调用，integrityChecked 恒 true）：可清理类默认勾选；损坏/缺失只展示 */
+  /** 渲染体检报告（UI 保证解锁后调用，integrityChecked 恒 true）：可清理类默认不全选；损坏/缺失只展示 */
   private renderHealthReport(report: HealthReport, body: HTMLElement) {
     body.innerHTML = '';
     const cleanable = report.items.filter((i) => i.cat === 'dead-entry' || i.cat === 'orphan-file');
@@ -535,7 +535,7 @@ export class UIManager {
     this.updateHealthCleanCount();
   }
 
-  /** 可清理区块：失效条目 + 孤儿密文（checkbox 默认勾选，可取消） */
+  /** 可清理区块：失效条目 + 孤儿密文（checkbox 默认不全选，勾选才计入清理） */
   private appendCleanableSection(body: HTMLElement, items: HealthItem[]) {
     const sec = document.createElement('div');
     sec.className = 'bz-encrypt-health-section bz-encrypt-health-section--clean';
@@ -554,7 +554,7 @@ export class UIManager {
       box.type = 'checkbox';
       box.className = 'bz-encrypt-health-check';
       box.value = item.key;
-      box.checked = true; // 可清理项默认全选（对齐原扫把全清语义，可取消）
+      box.checked = false; // 用户拍板（ticket 18）：可清理项默认不全选，勾选即明确同意删除
       box.addEventListener('change', () => this.updateHealthCleanCount());
       row.appendChild(box);
       row.appendChild(document.createTextNode(item.label));
@@ -575,13 +575,36 @@ export class UIManager {
     return [...popup.querySelectorAll<HTMLInputElement>('input.bz-encrypt-health-check:checked')].map((i) => i.value);
   }
 
-  /** 清理勾选项：只执行可清理类（resolveHealth 对损坏/缺失类防御性忽略），完成后自动重新体检 */
+  /**
+   * 清理勾选项（ticket 18）：执行前二次确认——写明将永久删除的数量（失效条目含残余附件镜像、
+   * 孤儿密文），确认后才执行；只处理可清理类（resolveHealth 对损坏/缺失类防御性忽略），
+   * 完成后自动重新体检。
+   */
   private async confirmHealthCleanup() {
     const keys = this.collectCheckedKeys();
     if (!keys.length) {
       notice('未勾选任何可清理项');
       return;
     }
+    // 勾选 key 按类别计数（契约见 data.ts HealthItem：dead-entry=`entry:<id>`、orphan-file=`file:<文件名>`）
+    const dead = keys.filter((k) => k.startsWith('entry:')).length;
+    const orphan = keys.filter((k) => k.startsWith('file:')).length;
+    const parts: string[] = [];
+    if (dead > 0) parts.push(dead + ' 条失效条目（含残余附件镜像）');
+    if (orphan > 0) parts.push(orphan + ' 个孤儿密文');
+    confirm({
+      title: '清理确认',
+      message: parts.join('、') + '将永久删除，不可恢复',
+      confirmText: '永久删除',
+      cancelText: '取消',
+      onConfirm: () => {
+        void this.executeHealthCleanup(keys);
+      },
+    });
+  }
+
+  /** 执行清理（二次确认通过后）：resolveHealth 只处理可清理类，完成后自动重新体检 */
+  private async executeHealthCleanup(keys: string[]) {
     try {
       const { notes, files } = await this.dataManager.resolveHealth(keys);
       const parts: string[] = [];
@@ -699,7 +722,10 @@ export class UIManager {
             this.resetUnlockThrottle();
             document.body.removeChild(mask);
             resolve(true);
-            notice('解锁成功', 'success');
+            // 自愈回滚提示（ticket 6）：上次未完成的加密已被自动回滚，原文全程未被删过（原文未动）
+            const healMsg =
+              this.dataManager.selfHealRolledBack > 0 ? '；上次未完成的加密已自动回滚，原文未动' : '';
+            notice('解锁成功' + healMsg, 'success');
           } else {
             // 区分「清单损坏」与「密码错误」：损坏必须显式确认后才能重设，绝不静默
             const issue = this.dataManager.manifestIssue;
@@ -909,7 +935,11 @@ export class UIManager {
             }
             void this.renderList();
           })
-          .catch((e: any) => notice('还原失败：' + e.message, 'error'));
+          .catch((e: any) => {
+            // 失败分支收尾进度通知（ticket 5）：收起常驻转圈，不残留幽灵进度条
+            if (h) h.hide();
+            notice('还原失败：' + e.message, 'error');
+          });
       },
     });
   }
@@ -1413,6 +1443,8 @@ export class EncryptAppController {
         finishProgress(h, attachments.length + 1, '加密完成');
         this.uiManager.show();
       } catch (e: any) {
+        // 失败分支收尾进度通知（ticket 5）：收起常驻转圈，不残留幽灵进度条；错误另由 error toast 明示
+        if (h) h.hide();
         notice('加密失败：' + e.message, 'error');
       }
     } finally {
