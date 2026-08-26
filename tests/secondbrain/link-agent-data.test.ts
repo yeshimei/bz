@@ -2,6 +2,7 @@
 /**
  * 自动双链数据层测试（ticket 111；纯数据层 node 环境）：
  * 队列 CRUD（入队合并刷新 hash / 消费移除 / 失败保留语义 / 失效条目清理）、
+ * 正文基准哈希状态（v1.4/ticket 119：upsert/读回/移除/畸形容错）、
  * related 解析与幂等合并、上限截断、失效清理规划、裁判输出解析。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -13,6 +14,10 @@ import {
   computeBackfillTargets,
   computeHash,
   dequeuePath,
+  getLinkStateFilePath,
+  loadLinkState,
+  removeLinkState,
+  upsertLinkState,
   enqueuePaths,
   getLinkQueueFilePath,
   isUnderFolder,
@@ -186,6 +191,70 @@ describe('待处理队列 CRUD', () => {
     vault.files.set(getLinkQueueFilePath(), JSON.stringify([{ path: '文献盒/ok.md' }, { hash: 'x' }, { path: 'a.txt' }, 'junk']));
     const q = await loadQueue();
     expect(q.map((i) => i.path)).toEqual(['文献盒/ok.md']);
+  });
+});
+
+describe('正文基准哈希状态（v1.4/ticket 119）', () => {
+  beforeEach(() => {
+    setSettingsProvider(() => ({ ...DEFAULT_SETTINGS }) as any);
+  });
+
+  function makeEnv() {
+    const vault = new MockVault();
+    const app = mockAppWithVault(vault);
+    setApp(app);
+    return { vault, app };
+  }
+
+  it('状态文件路径落在 STORAGE 目录（storagePath 口径）', () => {
+    makeEnv();
+    expect(getLinkStateFilePath()).toBe('CONFIG/STORAGE/secondbrain_link_state.json');
+  });
+
+  it('upsert 写入并读回（hash + linkedAt 时间戳）；重复 upsert 覆盖旧条目', async () => {
+    const { vault } = makeEnv();
+    await upsertLinkState('文献盒/A.md', 'h1');
+    let state = await loadLinkState();
+    expect(state['文献盒/A.md'].hash).toBe('h1');
+    expect(typeof state['文献盒/A.md'].linkedAt).toBe('string');
+    expect(vault.files.has(getLinkStateFilePath())).toBe(true);
+
+    await new Promise((r) => setTimeout(r, 5));
+    await upsertLinkState('文献盒/A.md', 'h2');
+    state = await loadLinkState();
+    expect(state['文献盒/A.md'].hash).toBe('h2'); // 覆盖旧哈希
+    expect(Object.keys(state)).toEqual(['文献盒/A.md']);
+  });
+
+  it('空/损坏/非对象形态 → 空对象（不抛错）；畸形条目逐项丢弃', async () => {
+    const { vault } = makeEnv();
+    expect(await loadLinkState()).toEqual({}); // 文件不存在
+
+    vault.files.set(getLinkStateFilePath(), 'not-json{{{');
+    expect(await loadLinkState()).toEqual({}); // 损坏 → jsonStore 留档重建 → 空对象
+
+    vault.files.set(getLinkStateFilePath(), JSON.stringify([{ path: 'x' }]));
+    expect(await loadLinkState()).toEqual({}); // 数组形态（队列同文件误写）→ 空对象
+
+    vault.files.set(
+      getLinkStateFilePath(),
+      JSON.stringify({ '文献盒/ok.md': { hash: 'h', linkedAt: 't' }, '文献盒/bad1.md': { hash: '' }, '文献盒/bad2.md': 'junk' })
+    );
+    const state = await loadLinkState();
+    expect(Object.keys(state)).toEqual(['文献盒/ok.md']);
+    expect(state['文献盒/ok.md']).toEqual({ hash: 'h', linkedAt: 't' });
+  });
+
+  it('removeLinkState 移除单篇；不存在则空操作', async () => {
+    makeEnv();
+    await upsertLinkState('文献盒/A.md', 'h1');
+    await upsertLinkState('文献盒/B.md', 'h2');
+    await removeLinkState('文献盒/不存在.md'); // 空操作
+    let state = await loadLinkState();
+    expect(Object.keys(state).sort()).toEqual(['文献盒/A.md', '文献盒/B.md']);
+    await removeLinkState('文献盒/A.md');
+    state = await loadLinkState();
+    expect(Object.keys(state)).toEqual(['文献盒/B.md']);
   });
 });
 

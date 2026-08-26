@@ -8,6 +8,7 @@
  *   后两者统一转开主面板引导态；
  * - ticket 111：自动双链管线（link agent）——linkAgentEnabled 开关注册监听与队列消费；
  * - ticket 115：启动存量补链（队列消费后串行）+ 手动命令 bz-secondbrain-link-all 兜底；
+ * - ticket 119（v1.4）：正文大改自动重跑——修改监听按基准哈希过滤，内容实质变化才重跑建链；
  * - unload 全量清理：定时器、订阅、面板 DOM、DeepSeek 服务、link agent。
  */
 import type { App } from 'obsidian';
