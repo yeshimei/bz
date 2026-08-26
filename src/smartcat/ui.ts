@@ -140,6 +140,9 @@ export function createChatPanel(opts: {
     if (v) opts.onSend(v);
   });
   chatInput.addEventListener('keydown', (e) => {
+    // UX 30：中文输入法组合态（composition）回车是选字确认，不发送——isComposing 标准属性
+    // + keyCode 229（Safari/部分浏览器组合期 keyCode 兜底）双保险；组合态直接放行交还 IME
+    if (e.isComposing || e.keyCode === 229) return;
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       const v = chatInput.value.trim();

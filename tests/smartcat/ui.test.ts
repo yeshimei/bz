@@ -8,6 +8,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { ensureSmartCat, unloadSmartCat, openSmartCat, openSmartCatChat, hideSmartCat, __getSmartcatInternals } from '../../src/smartcat/index';
+import { createChatPanel } from '../../src/smartcat/ui';
 import { getSmartcatFilePath, defaultSmartCatData } from '../../src/smartcat/data';
 
 const diskData: Record<string, any> = {};
@@ -129,4 +130,38 @@ describe('unloadSmartCat', () => {
     expect(internals.bubbleManager).toBeNull();
     expect(internals.initialized).toBe(false);
   }, 15000);
+});
+
+describe('聊天输入回车发送（UX 30 中文输入法）', () => {
+  function buildPanel() {
+    const sent: string[] = [];
+    const panels = createChatPanel({
+      onSend: (m: string) => sent.push(m),
+      onClose: () => {},
+    });
+    return { panels, sent };
+  }
+
+  function keydown(el: HTMLElement, init: KeyboardEventInit): void {
+    el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, ...init }));
+  }
+
+  it('composition 组合态回车（isComposing/keyCode 229）不发送', () => {
+    const { panels, sent } = buildPanel();
+    panels.chatInput.value = '你好';
+    keydown(panels.chatInput, { isComposing: true, keyCode: 229 });
+    expect(sent).toEqual([]);
+    expect(panels.chatInput.value).toBe('你好'); // 未清空，交还 IME 选字
+    panels.dispose();
+  });
+
+  it('普通 Enter 发送；Shift+Enter 不发送（输入清空由 sendChatMessage 层负责，面板本身不清）', () => {
+    const { panels, sent } = buildPanel();
+    panels.chatInput.value = '喵~';
+    keydown(panels.chatInput, { shiftKey: true });
+    expect(sent).toEqual([]);
+    keydown(panels.chatInput, { shiftKey: false });
+    expect(sent).toEqual(['喵~']);
+    panels.dispose();
+  });
 });

@@ -1,6 +1,7 @@
 // @vitest-environment node
 /**
- * smartcat 消息库测试：18 key 全集（1232 条）、随机选取、getPetMessage 映射。
+ * smartcat 消息库测试：18 key 全集（1146 条）、随机选取、getPetMessage 映射。
+ * [54] 解冻文案：SETUP_MESSAGES 98 条已连接语料 → 12 条未配 AI 引导语料（总数 1232 → 1146）。
  */
 import { describe, it, expect } from 'vitest';
 import {
@@ -16,11 +17,19 @@ describe('消息库全集', () => {
     );
     expect(SMART_CAT_MESSAGES.PET_MESSAGES.length).toBe(200);
     expect(SMART_CAT_MESSAGES.CONNECTED_MESSAGES.length).toBe(98);
-    expect(SMART_CAT_MESSAGES.SETUP_MESSAGES.length).toBe(98);
+    expect(SMART_CAT_MESSAGES.SETUP_MESSAGES.length).toBe(12);
     expect(SMART_CAT_MESSAGES.WELCOME_BACK_MESSAGES.length).toBe(85);
     expect(SMART_CAT_MESSAGES.LITTLE_ORANGE_COMPLAINTS.length).toBe(100);
     expect(SMART_CAT_MESSAGES.THINKING_MESSAGES.length).toBe(50);
     expect(SMART_CAT_MESSAGES.THINKING_IN_PROGRESS_MESSAGES.length).toBe(51);
+  });
+
+  it('[54] SETUP_MESSAGES 与 CONNECTED 语料区分：未配 AI 引导语料带「配置/接入 AI」方向且不与已连接语料重复', () => {
+    for (const m of SMART_CAT_MESSAGES.SETUP_MESSAGES) {
+      expect(m).toContain('AI');
+      expect(m).toMatch(/配置|接上|配上/); // 引导方向（配置/接入 AI）
+      expect(SMART_CAT_MESSAGES.CONNECTED_MESSAGES).not.toContain(m);
+    }
   });
 
   it('MOOD_MESSAGES 6 key 各 50 条', () => {
@@ -30,14 +39,14 @@ describe('消息库全集', () => {
     }
   });
 
-  it('PET_MESSAGES 5 key 各 50 条（总计 1232）', () => {
+  it('PET_MESSAGES 5 key 各 50 条（总计 1146）', () => {
     expect(Object.keys(SMART_CAT_PET_MESSAGES).length).toBe(5);
     const petTotal = Object.values(SMART_CAT_PET_MESSAGES).reduce((s, arr) => s + arr.length, 0);
     expect(petTotal).toBe(250);
     const total = Object.values(SMART_CAT_MESSAGES).reduce((s, arr) => s + arr.length, 0)
       + Object.values(SMART_CAT_MOOD_MESSAGES).reduce((s, arr) => s + arr.length, 0)
       + petTotal;
-    expect(total).toBe(1232);
+    expect(total).toBe(1146);
   });
 
   it('message 中文原文保留不空白（抽查）', () => {

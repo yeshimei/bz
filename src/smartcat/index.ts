@@ -151,10 +151,6 @@ const libraryPendingNotes = new Map<string, LibraryPendingNote>();
 let libraryDebounceMs = 5 * 60 * 1000;
 let visibilityCleanup: (() => void) | null = null;
 let greetTimer: ReturnType<typeof setTimeout> | null = null;
-/** 主动关心调度（2026-08-23：作息模型判定时机，每周 ≤ proactiveWeeklyCap 次温和搭话） */
-let proactiveTimer: ReturnType<typeof setInterval> | null = null;
-/** 每周报告调度（每小时检查，10:00 触发生成） */
-let weeklyReportTimer: ReturnType<typeof setInterval> | null = null;
 /** 每周报告状态（editingData.weeklyReport） */
 interface WeeklyReportState { weekKey: string; at: number; }
 function getWeeklyReportState(): WeeklyReportState {
@@ -228,9 +224,16 @@ export async function ensureSmartCat(app: App): Promise<void> {
   // ticket 093：缺席状态机挂同一调度心跳（复用既有 30s tick，不自建定时器）——
   // 检查 lastPresenceAt 距今 → normal→missing 迁移；重逢由在场信号钩子触发
   absenceSystem = new AbsenceSystem(dataProvider, dataSaver, moodSystem);
-  memorySystem.onSchedulerTick = () => { void maybeMemoDueScan(); void absenceSystem?.onSchedulerTick(); };
+  memorySystem.onSchedulerTick = () => {
+    void maybeMemoDueScan();
+    void absenceSystem?.onSchedulerTick();
+    // p2 收敛：常驻长周期轮询随同一 30s tick 按节拍分派
+    dispatchResidentTick();
+  };
   // ticket 093：重逢判定 = 在场信号（观察路径统一经 addObservation→touchPresence 后到此）+ phase ≠ normal
   memorySystem.onPresence = () => { void absenceSystem?.onPresenceSignal(); };
+  // p2 收敛：常驻调度心跳挂同一 30s tick（主动/趋势/周报/叙事 四路长周期轮询并入分派，
+  // 见 startResidentHeartbeat / dispatchResidentTick —— 不自建 setInterval）
   // 反思驱动人格（ADR-0023：洞察 → 特质归因成长 + 行为周统计深更新；ticket 091 origin 透传给归因来源约束）
   memorySystem.onReflect = async (insights, meta) => {
     if (personalityGrowth) {
@@ -397,20 +400,50 @@ export async function ensureSmartCat(app: App): Promise<void> {
     },
   });
 
-  // 主动关心（2026-08-23：作息模型 + 每周 ≤2 次温和搭话；每 10 分钟检查一次）
-  startProactiveCare();
-  // 每周懂你报告（2026-08-23：每周一检查，有观察则生成写回流 + 气泡展示）
-  startWeeklyReport();
+  // 常驻调度（2026-08-23：作息模型主动关心 + 每周报告 + 关系史叙事 + 情绪趋势回写；
+  // p2 收敛：四路长周期 setInterval 合并为分层心跳——复用 memory 30s 反射调度 tick 按节拍分派，
+  // 10min/30min/1h 检查口径与节流逻辑全部保持；ensure 末尾照旧保留周报/叙事的一次性入口）
+  startResidentHeartbeat();
   void maybeWeeklyReport();
-  // 关系史叙事扫描（ticket 094：独立周键退避，成功才推进 dossierScanKey）
-  startDossierScan();
   void maybeDossierNarrative();
-  // 情绪趋势回写心情（ADR-0025 A 面：30 分钟节流，declining/improving/高波动温和漂移 PAD）
-  startTrendDrift();
 
   eventSystem.emit('appInitialized');
 }
 
+
+// ---------------- 常驻调度心跳（p2 收敛：长周期轮询合并，节流语义不变） ----------------
+
+/** 常驻调度节拍计数（每 30s memory 反射调度 tick 递增一次；unload 归零，重装后从 0 重算相位） */
+let residentTickCount = 0;
+
+/**
+ * 启动常驻调度心跳（p2 收敛）：把主动关心（10min）/ 情绪趋势回写（30min）/ 每周报告（1h）/
+ * 关系史叙事扫描（1h）四个独立 setInterval 合并进 memory 30s 反射调度 tick 按节拍分派
+ * （对齐 ticket 075/093「复用既有 30s tick，不自建定时器」先例）；节流逻辑本身不动
+ * （主动关心隔天/每周上限、趋势 48h 样本门槛、周报 10 点 + 周键、叙事周键与失败退避全部保持）。
+ * memory 30s / mood 60s / 陪伴 speakInterval / 动画 5-8s 循环频率不落在 30s 网格上或属
+ * 模块内既有测试契约（mood/animation/interaction 直接构造驱动），保持各自定时器不动——
+ * 本心跳只减少长周期轮询的 setInterval 数量。
+ */
+function startResidentHeartbeat(): void {
+  residentTickCount = 0;
+}
+
+/** 心跳分派（由 ensure 挂到 memorySystem.onSchedulerTick；每次 30s tick 递增并按节拍分派） */
+function dispatchResidentTick(): void {
+  residentTickCount++;
+  const n = residentTickCount;
+  // 10 分钟（20 节拍）→ 主动关心（温和问候豁免/作息闸门等在 maybeProactiveCare 内部，语义不动）
+  if (n % 20 === 0) void maybeProactiveCare();
+  // 30 分钟（60 节拍）→ 情绪趋势回写 + 心情门控心跳（maybeTrendDrift 内部喂 onHeartbeat）
+  if (n % 60 === 0) void maybeTrendDrift();
+  // 1 小时（120 节拍）→ 每周报告（沿用原 startWeeklyReport 的 10 点检查）+ 关系史叙事扫描
+  if (n % 120 === 0) {
+    const hour = new Date().getHours();
+    if (hour === 10) void maybeWeeklyReport();
+    void maybeDossierNarrative();
+  }
+}
 
 // ---------------- 主动关心（作息模型判定时机，2026-08-23 用户拍板） ----------------
 
@@ -480,16 +513,8 @@ async function rewardProactiveArm(): Promise<void> {
   await dataSaver(d);
 }
 
-/** 主动关心调度：每 10 分钟检查；时机 = 距上次 ≥2 天 + 本周未超上限 + 当前在用户活跃时段 */
-function startProactiveCare(): void {
-  if (proactiveTimer) clearInterval(proactiveTimer);
-  proactiveTimer = setInterval(() => {
-    void maybeProactiveCare();
-  }, 10 * 60 * 1000);
-}
-
 /** 温和主动搭话（LLM 生成一句关心；AI 未配置/失败 → 模板兜底；Bandit 选臂决定话术风格）。
- *  导出供测试驱动（对齐 maybeMemoDueScan 先例；生产仅 startProactiveCare 定时调用）。 */
+ *  导出供测试驱动（对齐 maybeMemoDueScan 先例；生产由常驻心跳 10 分钟节拍分派，见 dispatchResidentTick）。 */
 export async function maybeProactiveCare(): Promise<void> {
   if (!data || !bubbleManager || !moodSystem || !memorySystem || !personalityGrowth) return;
   const cfg = data.config;
@@ -597,16 +622,7 @@ export async function maybeProactiveCare(): Promise<void> {
 }
 
 // ---------------- 情绪趋势回写心情（ADR-0025 A 面：近 48h 趋势 → PAD 温和漂移） ----------------
-
-let trendDriftTimer: ReturnType<typeof setInterval> | null = null;
-
-/** 趋势回写调度（每 30 分钟检查；观察情绪样本 ≥3 才动） */
-function startTrendDrift(): void {
-  if (trendDriftTimer) clearInterval(trendDriftTimer);
-  trendDriftTimer = setInterval(() => {
-    void maybeTrendDrift();
-  }, 30 * 60 * 1000);
-}
+// 趋势回写按 30 分钟节拍调度，由常驻心跳分派（startResidentHeartbeat / dispatchResidentTick，p2 收敛）
 
 /** 近 48h 观察情绪序列 → 趋势/波动 → applyTrendDrift（温和回写；样本太少不动） */
 async function maybeTrendDrift(): Promise<void> {
@@ -624,15 +640,7 @@ async function maybeTrendDrift(): Promise<void> {
 }
 
 // ---------------- 每周懂你报告（2026-08-23「懂你」增强：⑦） ----------------
-
-/** 周报调度：每天 10:00 检查一次（新一周且本周有观察 → 生成） */
-function startWeeklyReport(): void {
-  if (weeklyReportTimer) clearInterval(weeklyReportTimer);
-  weeklyReportTimer = setInterval(() => {
-    const h = new Date().getHours();
-    if (h === 10) void maybeWeeklyReport();
-  }, 60 * 60 * 1000);
-}
+// 周报按 1 小时节拍调度 + 10 点检查，由常驻心跳分派（startResidentHeartbeat / dispatchResidentTick，p2 收敛）
 
 /** 生成本周报告（仅当新周 + 本周有观察；LLM/兜底 → 写回流 source weekly-report + 气泡展示 + 状态推进） */
 async function maybeWeeklyReport(): Promise<void> {
@@ -666,18 +674,12 @@ async function maybeWeeklyReport(): Promise<void> {
 }
 
 // ---------------- 关系史叙事扫描（ticket 094 方向八：独立周键退避，不共享 reflectBackoffUntil） ----------------
+// 叙事扫描按 1 小时节拍调度，由常驻心跳分派（startResidentHeartbeat / dispatchResidentTick，p2 收敛）
 
-/** 叙事扫描调度（每小时检查；本周未生成且本周有正性事件才尝试，AI 未配置静默跳过） */
-let dossierTimer: ReturnType<typeof setInterval> | null = null;
 /** 叙事失败内存退避（30 分钟；不落盘——重启即重置，周键才是持久化去重位） */
 let dossierRetryAt = 0;
 /** 叙事生成进行中锁（防 ensure 即扫与小时 tick 并发双发） */
 let dossierScanning = false;
-
-function startDossierScan(): void {
-  if (dossierTimer) clearInterval(dossierTimer);
-  dossierTimer = setInterval(() => { void maybeDossierNarrative(); }, 60 * 60 * 1000);
-}
 
 /** 生成本周关系史叙事（成功 → 洞察写回流 source=dossier + 推进 editingData.dossierScanKey；
  *  LLM 未配置/失败/空回包静默不推进周键（下轮小时检查再试，对齐周报先例）；
@@ -943,22 +945,37 @@ async function sendChatMessage(message: string): Promise<void> {
   }
 }
 
-/** 打字机效果（原 typewriterEffect 逐字） */
+/** 打字机效果（原 typewriterEffect 逐字；UX 47：长回复期间点击目标气泡可直接完成渲染——
+ * 点击任意时刻补全全文并清 interval，不必等打字节拍走完） */
 function typewriterEffect(element: HTMLElement, text: string, speed = 30): Promise<void> {
   return new Promise((resolve) => {
     let index = 0;
+    let timer: ReturnType<typeof setInterval> | null = null;
     element.textContent = '';
-    const timer = setInterval(() => {
+    const finish = () => {
+      if (timer) clearInterval(timer);
+      timer = null;
+      element.removeEventListener('click', onClick);
+      element.textContent = text;
+      resolve();
+    };
+    const onClick = (): void => finish();
+    element.addEventListener('click', onClick);
+    timer = setInterval(() => {
       if (index < text.length) {
         element.textContent += text[index];
         index++;
         if (panels) panels.chatMessages.scrollTop = panels.chatMessages.scrollHeight;
       } else {
-        clearInterval(timer);
-        resolve();
+        finish();
       }
     }, speed);
   });
+}
+
+/** 测试辅助：UX 47 打字机点击跳过单测直取（生产仅 sendChatMessage 内部使用） */
+export function __typewriterEffectForTests(element: HTMLElement, text: string, speed = 30): Promise<void> {
+  return typewriterEffect(element, text, speed);
 }
 
 /** 卸载清理 */
@@ -1007,24 +1024,9 @@ export function unloadSmartCat(): void {
     visibilityCleanup();
     visibilityCleanup = null;
   }
-  if (proactiveTimer) {
-    clearInterval(proactiveTimer);
-    proactiveTimer = null;
-  }
-  if (weeklyReportTimer) {
-    clearInterval(weeklyReportTimer);
-    weeklyReportTimer = null;
-  }
-  // 关系史叙事扫描调度（ticket 094）
-  if (dossierTimer) {
-    clearInterval(dossierTimer);
-    dossierTimer = null;
-  }
+  // 常驻调度心跳（p2 收敛）：随下方 memory stopScheduler 停跳；节拍计数归零，重装后从 0 重算相位
+  residentTickCount = 0;
   dossierRetryAt = 0;
-  if (trendDriftTimer) {
-    clearInterval(trendDriftTimer);
-    trendDriftTimer = null;
-  }
   if (greetTimer) {
     clearTimeout(greetTimer);
     greetTimer = null;

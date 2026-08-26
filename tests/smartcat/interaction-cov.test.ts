@@ -395,29 +395,40 @@ describe('MobileInputAdapter 移动端输入法适配', () => {
     };
   }
 
+  /** 聊天面板包装（UX 36 范围收敛：只有自家面板内的输入才抬猫） */
+  function panelInput(): HTMLInputElement {
+    let panel = document.getElementById('chat-panel') as HTMLElement | null;
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'chat-panel';
+      document.body.appendChild(panel);
+    }
+    const input = document.createElement('input');
+    input.type = 'text';
+    panel.appendChild(input);
+    return input;
+  }
+
   it('桌面 UA：构造不挂监听，聚焦输入框不动猫，destroy 安全', () => {
     const restore = stubUA('Mozilla/5.0 (Windows NT 10.0) Chrome/120');
     const container = document.createElement('div');
     document.body.appendChild(container);
     const adapter = new MobileInputAdapter(container);
-    const input = document.createElement('input');
-    input.type = 'text';
-    document.body.appendChild(input);
+    const input = panelInput();
     input.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
     expect(container.style.position).toBe('');
     expect(() => adapter.destroy()).not.toThrow();
     restore();
   });
 
-  it('移动 UA：聚焦输入框 → fixed 居中悬浮；失焦 300ms 后还原内联样式', () => {
+  it('移动 UA：聚焦自家面板输入框 → fixed 居中悬浮；失焦 300ms 后还原且保留拖拽位置', () => {
     const restore = stubUA('Mozilla/5.0 (iPhone; CPU iPhone OS 17 like Mac OS X)');
     const container = document.createElement('div');
+    container.style.left = '99px';
     container.style.top = '123px';
     document.body.appendChild(container);
     const adapter = new MobileInputAdapter(container);
-    const input = document.createElement('input');
-    input.type = 'text';
-    document.body.appendChild(input);
+    const input = panelInput();
     input.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
     expect(container.style.position).toBe('fixed');
     expect(container.style.transform).toBe('translateX(-50%)');
@@ -425,18 +436,35 @@ describe('MobileInputAdapter 移动端输入法适配', () => {
     input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
     vi.advanceTimersByTime(300);
     expect(container.style.position).toBe('');
+    // UX 36：失焦不重置拖拽位置（抬升前捕获的 left/top 原样复原；top 空串走样式表默认位）
+    expect(container.style.left).toBe('99px');
+    expect(container.style.top).toBe('123px');
+    adapter.destroy();
+    restore();
+  });
+
+  it('UX 36 范围收敛：自家面板外的输入聚焦不抬猫（全局焦点劫持收敛）', () => {
+    const restore = stubUA('Android Mobile');
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const adapter = new MobileInputAdapter(container);
+    const stray = document.createElement('input');
+    stray.type = 'text';
+    document.body.appendChild(stray); // 不在 #chat-panel / 设置 / 面板内
+    stray.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    expect(container.style.position).toBe('');
     expect(container.style.top).toBe('');
     adapter.destroy();
     restore();
   });
 
-  it('shouldHandleElement 分支：checkbox/普通 div 不处理、TEXTAREA 处理', () => {
+  it('shouldHandleElement 分支：checkbox/普通 div 不处理（面板内也不抬）、TEXTAREA 处理', () => {
     const restore = stubUA('Android Mobile');
     const container = document.createElement('div');
     document.body.appendChild(container);
     const adapter = new MobileInputAdapter(container);
     const fire = (el: HTMLElement) => el.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
-    // 负例先行（此时 isInputActive 尚未置位，样式不应被改）
+    // 负例先行（此时 isInputActive 尚未置位，样式不应被改；且即使面板内 checkbox 也不处理）
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     document.body.appendChild(checkbox);
@@ -446,10 +474,42 @@ describe('MobileInputAdapter 移动端输入法适配', () => {
     document.body.appendChild(plainDiv);
     fire(plainDiv);
     expect(container.style.position).toBe('');
-    // 正例：TEXTAREA
+    // 正例：面板内 TEXTAREA
+    const panel = document.createElement('div');
+    panel.id = 'chat-panel';
+    document.body.appendChild(panel);
     const textarea = document.createElement('textarea');
-    document.body.appendChild(textarea);
+    panel.appendChild(textarea);
     fire(textarea);
+    expect(container.style.position).toBe('fixed');
+    adapter.destroy();
+    restore();
+  });
+
+  it('UX 36 焦点跳转/抖动竞态：面板内输入间跳转不复原；300ms 内重新聚焦取消复原', () => {
+    const restore = stubUA('iPhone');
+    const container = document.createElement('div');
+    document.body.appendChild(container);
+    const adapter = new MobileInputAdapter(container);
+    const panel = document.createElement('div');
+    panel.id = 'chat-panel';
+    document.body.appendChild(panel);
+    const a = document.createElement('input');
+    a.type = 'text';
+    const b = document.createElement('input');
+    b.type = 'text';
+    panel.appendChild(a);
+    panel.appendChild(b);
+    // 面板内 a → b 跳转：focusout 的 relatedTarget 仍在面板内 → 不复原
+    a.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    expect(container.style.position).toBe('fixed');
+    b.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: a }));
+    vi.advanceTimersByTime(400);
+    expect(container.style.position).toBe('fixed');
+    // 失焦后 300ms 内重新聚焦（输入法抖动）→ 取消复原保持抬升态
+    b.dispatchEvent(new FocusEvent('focusout', { bubbles: true, relatedTarget: null }));
+    a.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    vi.advanceTimersByTime(400);
     expect(container.style.position).toBe('fixed');
     adapter.destroy();
     restore();
@@ -470,9 +530,7 @@ describe('MobileInputAdapter 移动端输入法适配', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
     const adapter = new MobileInputAdapter(container);
-    const input = document.createElement('input');
-    input.type = 'text';
-    document.body.appendChild(input);
+    const input = panelInput();
     input.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
     const topBefore = parseFloat(container.style.top);
     (window as any).visualViewport.height = 260;
