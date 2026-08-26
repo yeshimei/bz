@@ -182,7 +182,10 @@ export function updateComment(
   });
 }
 
-/** 删除高亮：原生 window.confirm（源码语义） */
+/**
+ * 删除高亮：确认弹窗统一在 UI 层处理（ticket 52）——长按日期先关笔记壳再弹 core/confirm，
+ * 取消/确认后由调用方重开壳；此处只负责读改写文件。
+ */
 export function deleteHighlight(
   app: any,
   filePath: string,
@@ -190,8 +193,6 @@ export function deleteHighlight(
   text: string,
   onDone?: () => void
 ) {
-  if (!window.confirm('确定要删除该高亮及其批注吗？')) return;
-
   const file = app.vault.getAbstractFileByPath(filePath);
   if (!file) return;
 

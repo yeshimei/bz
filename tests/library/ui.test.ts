@@ -125,11 +125,18 @@ describe('书库面板', () => {
     expect(overlay.textContent).toContain('📚 《活着》的读书笔记');
   });
 
-  it('无书 → Notice 提示且遮罩移除（EPUB 合并后判空）', async () => {
+  it('空库 → 窗口保留并内嵌空态（l4：路径 + tags 说明 + ⚙️ 设置入口，不自动关窗）', async () => {
     showLibrary(makeApp(vault));
     await new Promise((r) => setTimeout(r, 20));
-    expect(hasNotice(/未找到任何书籍笔记/)).toBe(true);
-    expect(document.getElementById('__book_library__')).toBeNull();
+    const overlay = document.getElementById('__book_library__')!;
+    expect(overlay).not.toBeNull(); // 不再自动关窗
+    expect(overlay.textContent).toContain('书库「书库」中还没有书籍笔记');
+    expect(overlay.textContent).toContain('tags: book');
+    expect(hasNotice(/未找到任何书籍笔记/)).toBe(false); // 短 toast 已废弃
+    // ⚙️ 设置入口 → 打开书库设置弹窗
+    const settingsEntry = [...overlay.querySelectorAll('button')].find((b) => b.textContent!.includes('去设置'))!;
+    settingsEntry.click();
+    expect(document.getElementById('bz-settings-modal-popup')).not.toBeNull();
   });
 
   it('渲染卡片（标题/作者/进度/时长/划线/想法/书评）', async () => {
@@ -213,6 +220,36 @@ describe('书库面板', () => {
     await new Promise((r) => setTimeout(r, 20));
     const overlay = [...document.querySelectorAll('div')].find((d) => d.textContent!.includes('的读书笔记'))!;
     expect(overlay.textContent).toContain('📭 没有找到高亮或批注');
+  });
+
+  it('showBookNotes 先建壳放「正在加载…」占位，read 完成后填入内容（l4）', async () => {
+    vault.files.set('书库/活着.md', NOTE_MD);
+    let release!: (v: string) => void;
+    const app = makeApp(vault);
+    app.vault.read = vi.fn(() => new Promise<string>((r) => { release = r; })) as any;
+    showBookNotes(app, '书库/活着.md');
+    await new Promise((r) => setTimeout(r, 10));
+    // 读未返回时壳已建好并显示占位
+    const shell = document.querySelector('.bz-lib-overlay--11100') as HTMLElement;
+    expect(shell).not.toBeNull();
+    expect(shell.querySelector('.bz-lib-notes-body')!.textContent).toContain('正在加载…');
+    release(NOTE_MD);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(shell.textContent).toContain('❝ 原文一');
+  });
+
+  it('showBookNotes read 失败 → 壳内人话错误文案（不崩溃、壳保留）', async () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vault.files.set('书库/活着.md', NOTE_MD);
+    const app = makeApp(vault);
+    app.vault.read = vi.fn().mockRejectedValue(new Error('disk io')) as any;
+    showBookNotes(app, '书库/活着.md');
+    await new Promise((r) => setTimeout(r, 20));
+    const shell = document.querySelector('.bz-lib-overlay--11100') as HTMLElement;
+    expect(shell).not.toBeNull();
+    expect(shell.querySelector('.bz-lib-notes-body')!.textContent).toContain('笔记读取失败，请稍后重试');
+    expect(errSpy).toHaveBeenCalled();
+    errSpy.mockRestore();
   });
 
   it('openBookNotes：无活动文件 → 「没有打开的文件」', () => {

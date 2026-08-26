@@ -346,11 +346,13 @@ describe('剪藏本面板', () => {
   });
 
 
-  it('目录不存在 → 空态「暂无文章」', async () => {
+  it('目录不存在 → 空态引导设置（ticket 63 三态之一：目录未配置）', async () => {
     await setup();
     await initArticleView(true);
     await new Promise((r) => setTimeout(r, 20));
-    expect(document.querySelector('.article-empty')!.textContent).toBe('暂无文章');
+    expect(document.querySelector('.article-empty')!.textContent).toBe(
+      '未找到剪藏目录「我的/文章」，请点击右上角 ⚙️ 前往设置'
+    );
   });
 
   it('⚙️ 设置弹窗：分组卡片（基础/智能；移动端组桌面不渲染）+ 文案规范', async () => {
@@ -374,6 +376,97 @@ describe('剪藏本面板', () => {
       '滚动加载时每批显示的条目数',
       '新剪藏的文章自动生成 AI 摘要',
     ]);
+  });
+});
+
+describe('空态三态与增量刷新（ticket 45/63）', () => {
+  afterEach(() => {
+    unloadClipping();
+    vi.clearAllMocks();
+    vi.useRealTimers();
+    document.body.innerHTML = '';
+  });
+
+  it('目录存在但为空 → 空态「目录为空」（区别于目录未配置/筛选无结果）', async () => {
+    const { vault } = await setup();
+    vault.dirs.add('我的/文章'); // 注册空目录（存在但无文件）
+    await initArticleView(true);
+    await new Promise((r) => setTimeout(r, 20));
+    // 清空先前用例残留的搜索关键字（模块状态），保证空态文案由目录内容决定（同「目录边界」用例惯例）
+    const searchInput = document.getElementById('article-search-input') as HTMLInputElement;
+    if (searchInput) {
+      searchInput.value = '';
+      searchInput.dispatchEvent(new Event('input'));
+      await new Promise((r) => setTimeout(r, 350));
+    }
+    expect(document.querySelector('.article-empty')!.textContent).toBe('目录为空，还没有剪藏文章');
+  });
+
+  it('搜索无结果 → 空态「没有符合条件的文章」（筛选无结果三态文案）', async () => {
+    const { vault } = await setup();
+    vault.files.set('我的/文章/A.md', makeArticleMd('https://x.com/a', '知乎', 'A', '2025-06-02T08:00:00.000Z'));
+    await initArticleView(true);
+    await new Promise((r) => setTimeout(r, 20));
+    const toggleBtn = [...document.querySelectorAll('button')].find((b) => b.title === '切换搜索框')!;
+    toggleBtn.click();
+    const input = document.getElementById('article-search-input') as HTMLInputElement;
+    input.value = '不存在的关键字';
+    input.dispatchEvent(new Event('input'));
+    await new Promise((r) => setTimeout(r, 350)); // 防抖 300ms
+    expect(document.querySelector('.article-empty')!.textContent).toBe('没有符合条件的文章');
+    // 清空关键字 → 恢复卡片（不再停留空态）
+    input.value = '';
+    input.dispatchEvent(new Event('input'));
+    await new Promise((r) => setTimeout(r, 350));
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(1);
+  });
+
+  it('modify 增量刷新：只重解析被改文件，不整目录重读（vault.read 零调用）', async () => {
+    const { vault } = await setup();
+    vault.files.set('我的/文章/A.md', makeArticleMd('https://x.com/a', '知乎', 'A', '2025-06-02T08:00:00.000Z'));
+    vault.files.set('我的/文章/B.md', makeArticleMd('https://x.com/b', '果壳', 'B', '2025-06-01T08:00:00.000Z'));
+    await initArticleView(true);
+    await new Promise((r) => setTimeout(r, 20));
+    const readSpy = vi.spyOn(vault, 'read');
+
+    // 修改 B（站点变更，卡片 meta 就地更新）→ 增量更新生效
+    vault.files.set('我的/文章/B.md', makeArticleMd('https://x2.com/b', '果壳新站', 'B', '2025-06-01T08:00:00.000Z'));
+    emitDomainEvent('clipping:file-modified', { path: '我的/文章/B.md' });
+    await new Promise((r) => setTimeout(r, 400));
+
+    expect(readSpy).not.toHaveBeenCalled(); // 不再整目录重读
+    const cards = document.querySelectorAll('.article-entry-card');
+    expect(cards.length).toBe(2);
+    expect([...cards].some((c) => c.textContent!.includes('果壳新站'))).toBe(true);
+  });
+
+  it('modify 后失去 url/created → 从列表移除（增量删除分支）', async () => {
+    const { vault } = await setup();
+    vault.files.set('我的/文章/A.md', makeArticleMd('https://x.com/a', '知乎', 'A', '2025-06-02T08:00:00.000Z'));
+    vault.files.set('我的/文章/B.md', makeArticleMd('https://x.com/b', '果壳', 'B', '2025-06-01T08:00:00.000Z'));
+    await initArticleView(true);
+    await new Promise((r) => setTimeout(r, 20));
+    vault.files.set('我的/文章/B.md', '# 不再是文章\n\n无 frontmatter');
+    emitDomainEvent('clipping:file-modified', { path: '我的/文章/B.md' });
+    await new Promise((r) => setTimeout(r, 400));
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(1);
+  });
+
+  it('防抖窗口内多文件被改 → 逐个增量刷新，全部生效', async () => {
+    const { vault } = await setup();
+    vault.files.set('我的/文章/A.md', makeArticleMd('https://x.com/a', '知乎', 'A', '2025-06-02T08:00:00.000Z'));
+    vault.files.set('我的/文章/B.md', makeArticleMd('https://x.com/b', '果壳', 'B', '2025-06-01T08:00:00.000Z'));
+    await initArticleView(true);
+    await new Promise((r) => setTimeout(r, 20));
+    // 同一防抖窗口内改两个文件的站点 → 窗口结束逐个刷新，两处都生效
+    vault.files.set('我的/文章/A.md', makeArticleMd('https://x.com/a', '知乎新站', 'A', '2025-06-02T08:00:00.000Z'));
+    vault.files.set('我的/文章/B.md', makeArticleMd('https://x.com/b', '果壳新站', 'B', '2025-06-01T08:00:00.000Z'));
+    emitDomainEvent('clipping:file-modified', { path: '我的/文章/A.md' });
+    emitDomainEvent('clipping:file-modified', { path: '我的/文章/B.md' }); // 重置防抖计时
+    await new Promise((r) => setTimeout(r, 400));
+    const texts = [...document.querySelectorAll('.article-entry-card')].map((c) => c.textContent);
+    expect(texts.some((t) => t!.includes('知乎新站'))).toBe(true);
+    expect(texts.some((t) => t!.includes('果壳新站'))).toBe(true);
   });
 });
 
