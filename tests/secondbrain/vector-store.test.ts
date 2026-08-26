@@ -13,14 +13,14 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { VectorStore, CHECKPOINT_POLICY } from '../../src/secondbrain/vector-store';
 import { searchTextIndex } from '../../src/secondbrain/text-search';
-import { getEmbedding, getEmbeddingsBatch } from '../../src/secondbrain/ollama';
+import { getEmbedding, getEmbeddingsBatch, SEARCH_TIMEOUT_MS } from '../../src/secondbrain/ollama';
 
 vi.mock('../../src/secondbrain/ollama', () => ({
   EMBED_BATCH_SIZE: 1, // 每块一批：便于按文件隔离批量接口的成功/失败
   getEmbedding: vi.fn(),
   getEmbeddingsBatch: vi.fn(),
   checkRemoteOllama: vi.fn(),
-  OLLAMA_TIMEOUT_MS: 10000, // ticket 46 统一 10s 超时（检索级超时封装依赖此值）
+  SEARCH_TIMEOUT_MS: 10000, // ticket 46：检索级超时（与嵌入 30s 分离）
 }));
 
 const STORE_PATH = 'CONFIG/STORAGE/secondbrain.json';
@@ -453,6 +453,79 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
     expect(parseVec(binary).rows.length).toBe(4); // A 1 段 + B 1 段，dim=2
   });
 
+  it('[3] 部分失败文件不「部分登记」：失败段不丢，下轮 refresh 整篇重试（新库场景）', async () => {
+    const vault = new MockVault();
+    const S1 = '甲'.repeat(130);
+    const S2 = '乙'.repeat(130);
+    vault.files.set('我的/A.md', `${S1}。${S2}。`);
+    const { adapter, binary } = makeAdapter(vault);
+    const app = makeApp(vault, adapter);
+    setApp(app as any);
+    const vs = new VectorStore(app as any);
+    await vs.load();
+
+    // 第 1 段成功、第 2 段批失败且逐条回退亦失败 → 部分成功但不登记
+    vi.mocked(getEmbeddingsBatch).mockImplementation(async (texts: string[]) => {
+      if (texts.some((t) => t.includes(S2))) throw new Error('第二段批失败');
+      return texts.map(() => [1, 0]);
+    });
+    vi.mocked(getEmbedding).mockRejectedValue(new Error('单条也失败'));
+    await vs.refresh();
+    // 与断点暂存 ckptDoneFiles 同口径：整篇不写 mtime（部分登记会让失败段下轮被 mtime 跳过而永久丢失）
+    expect(readMeta(vault).notes).toEqual({});
+
+    // 下轮全部成功 → 整篇重试登记两段（失败段不丢失）
+    vi.mocked(getEmbeddingsBatch).mockImplementation(async (texts: string[]) => texts.map(() => [0.5, 0.5]));
+    vi.mocked(getEmbedding).mockResolvedValue([0.5, 0.5]);
+    await vs.refresh();
+    const meta = readMeta(vault);
+    expect(meta.notes['我的/A.md'].chunks).toEqual([{ text: 'A\n' + S1 }, { text: S2 }]);
+    expect(parseVec(binary).rows.length).toBe(4); // 2 段 × dim 2
+  });
+
+  it('[3] 存量文件重嵌部分失败：保留旧条目与旧向量，下轮按 mtime 差异整篇重试', async () => {
+    const vault = new MockVault();
+    const S1 = '甲'.repeat(130);
+    const S2 = '乙'.repeat(130);
+    vault.files.set('我的/A.md', `${S1}。${S2}。`);
+    vault.files.set(
+      STORE_PATH,
+      storeJSON({ version: 9, notes: { '我的/A.md': { mtime: 5, chunks: [{ text: '旧' }] } }, _dim: 2 })
+    );
+    const { adapter, binary } = makeAdapter(vault);
+    const header = new Uint8Array(4);
+    new DataView(header.buffer).setUint32(0, 2, true);
+    const row = new Float32Array([1, 0]);
+    const out = new Uint8Array(4 + row.byteLength);
+    out.set(header, 0);
+    out.set(new Uint8Array(row.buffer, row.byteOffset, row.byteLength), 4);
+    binary.set(VEC_PATH, out.buffer);
+    const app = makeApp(vault, adapter, { '我的/A.md': 99 }); // mtime 变化 → 重嵌
+    setApp(app as any);
+    const vs = new VectorStore(app as any);
+    await vs.load();
+
+    // 第 1 段成功、第 2 段失败：不覆盖旧条目（mtime 仍是旧值 → 下轮继续重试），旧向量保留
+    vi.mocked(getEmbeddingsBatch).mockImplementation(async (texts: string[]) => {
+      if (texts.some((t) => t.includes(S2))) throw new Error('第二段批失败');
+      return texts.map(() => [1, 0]);
+    });
+    vi.mocked(getEmbedding).mockRejectedValue(new Error('单条也失败'));
+    await vs.refresh();
+    let meta = readMeta(vault);
+    expect(meta.notes['我的/A.md']).toEqual({ mtime: 5, chunks: [{ text: '旧' }] }); // 旧条目原样保留
+    expect(parseVec(binary).rows).toEqual([1, 0]); // 旧向量未动
+
+    // 下轮全部成功 → 整篇重嵌登记两段
+    vi.mocked(getEmbeddingsBatch).mockImplementation(async (texts: string[]) => texts.map(() => [0.5, 0.5]));
+    vi.mocked(getEmbedding).mockResolvedValue([0.5, 0.5]);
+    await vs.refresh();
+    meta = readMeta(vault);
+    expect(meta.notes['我的/A.md'].mtime).toBe(99);
+    expect(meta.notes['我的/A.md'].chunks).toEqual([{ text: 'A\n' + S1 }, { text: S2 }]);
+    expectClose(parseVec(binary).rows, [0.5, 0.5, 0.5, 0.5]);
+  });
+
   it('断点暂存：A 嵌完落盘，新 store 从磁盘恢复并补嵌 B（ticket 114）', async () => {
     const vault = new MockVault();
     const A1 = '甲'.repeat(130);
@@ -589,5 +662,23 @@ describe('VectorStore（检索链路）', () => {
     expect(r).toEqual(searchTextIndex('机器学习', vs.meta.notes, 5));
     expect(r[0].chunk).toBe('机器学习入门指南');
     expect(vs.searchText('', 5)).toEqual([]);
+  });
+
+  it('[46] 检索超时：vectorSearch 挂起超过 SEARCH_TIMEOUT_MS → 降级文本并触发 onDegraded（嵌入 30s 不受检索 10s 影响）', async () => {
+    vi.useFakeTimers();
+    try {
+      const { vs } = seedOrthoStore();
+      const onDegraded = vi.fn();
+      vi.mocked(getEmbedding).mockImplementation(() => new Promise<number[]>(() => {})); // 查询嵌入挂起
+
+      const p = vs.search('苹果', 20, onDegraded);
+      await vi.advanceTimersByTimeAsync(SEARCH_TIMEOUT_MS + 1); // 跨过 10s 检索级超时
+      const results = await p;
+      expect(onDegraded).toHaveBeenCalledTimes(1); // 降级信号已触发（参考面板据此给提示）
+      expect(results.length).toBeGreaterThan(0); // 文本降级照常出结果
+      expect(results[0].chunk).toBe('苹果');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
