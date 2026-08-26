@@ -253,11 +253,14 @@ describe('聚合讯补测（每例全新模块状态）', () => {
     expect(() => reader.hide()).not.toThrow();
   });
 
-  it('loadArticles：news.json 缺失 → 清空列表进入完成态', async () => {
+  it('loadArticles：news.json 缺失 → 首用引导态（数据从哪来），不渲染完成态', async () => {
     vault.files.delete(NEWS_JSON);
     reader.init(false);
     await reader.loadArticles();
     reader.render();
-    expect(document.querySelector('.news-card-area')!.textContent).toContain('今日文章已读完');
+    const text = document.querySelector('.news-done')!.textContent!;
+    expect(text).toContain('数据从哪里来');
+    expect(text).toContain('obsidian-news');
+    expect(text).not.toContain('今日文章已读完');
   });
 });

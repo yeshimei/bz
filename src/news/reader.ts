@@ -10,6 +10,7 @@ import { escManager } from '../core/esc-manager';
 import { createSiteIcon } from '../core/dom';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
+import { pad2 } from '../core/utils';
 // 聚合讯观察（ticket 076，ADR-0029）：域事件派发挂点（域内 import 之后，对齐影视 movie/ui）
 import { emitDomainEvent } from '../core/domain-bus';
 import type { NewsReadEvent } from '../smartcat/news-source';
@@ -43,6 +44,9 @@ let stats: any = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {},
 let openedAt = 0;
 let accumMs = 0;
 let renderedKey = '';
+/** l5 三态：news.json 缺失（首用引导）与解析失败（错误态，不渲染「读完」态） */
+let dataFileMissing = false;
+let loadFailed = false;
 
 // ---------- 创建弹窗 ----------
 function createMaskAndPopup() {
@@ -101,7 +105,8 @@ export function recordStat(action: string, article: any) {
   const platform = article.platform || '未知';
   stats.byPlatform[platform] = (stats.byPlatform[platform] || 0) + 1;
 
-  const today = new Date().toISOString().substring(0, 10);
+  // x2b：byDate 键用本地日（对齐 src/pomodoro/stats.ts dayKey 口径，UTC+8 凌晨 0-8 点不落昨日）
+  const today = localDayKey();
   stats.byDate[today] = (stats.byDate[today] || 0) + 1;
 
   void saveStats();
@@ -130,17 +135,27 @@ export function mergeWithDisk(memory: any[], disk: any[]): any[] {
 
 export async function loadArticles() {
   const app = getApp();
+  loadFailed = false; // 每次加载重置状态（修复文件后重开即可恢复）
   const af = app.vault.getAbstractFileByPath(NEWS_JSON_PATH);
-  if (!af) { allArticles = []; articles = []; batchTotal = 0; return; }
+  if (!af) {
+    // l5：无数据文件（首次使用）→ 首用引导态；allArticles 清空（后续 saveArticles 不覆写）
+    dataFileMissing = true;
+    allArticles = []; articles = []; batchTotal = 0;
+    return;
+  }
+  dataFileMissing = false;
   const prevCurrent = articles[currentIndex]; // 重载前当前篇，用于游标锚定
   try {
     allArticles = JSON.parse(await app.vault.read(af as TFile));
     articles = allArticles.filter((a: any) => !a.read);
     batchTotal = articles.length;
   } catch (e) {
-    // 崩溃半截 JSON：保留磁盘旧文件不动、按空列表返回并告警（后续 saveArticles 不覆写）
-    console.warn('[聚合讯] news.json 解析失败，按空列表处理', e);
+    // l5：崩溃半截/非数组 JSON → 错误态（不渲染「读完」态），error toast 人话提示；
+    // 保留磁盘旧文件不动（后续 saveArticles 不覆写），技术详情进 console
+    loadFailed = true;
     allArticles = []; articles = []; batchTotal = 0;
+    console.warn('[聚合讯] news.json 解析失败，进入错误态（不渲染完成态）', e);
+    notice('新闻数据读取失败，请检查数据文件后重试', 'error');
   }
   // 游标锚定：优先按上一当前篇的稳定标识定位新索引，找不到再夹取边界
   const anchored = anchorCursor(prevCurrent, articles);
@@ -160,9 +175,14 @@ export function render() {
   if (!container) return;
   container.innerHTML = '';
 
-  // 所有文章读完 → 完成状态
+  // l5 三态：解析失败 → 错误态（不渲染「读完」）；无数据文件 → 首用引导；真读空 → 完成态
+  if (loadFailed) {
+    renderErrorState();
+    return;
+  }
   if (articles.length === 0) {
-    renderDoneState();
+    if (dataFileMissing) renderFirstUseState();
+    else renderDoneState();
     return;
   }
 
@@ -241,7 +261,8 @@ export function render() {
 }
 
 export function renderDoneState() {
-  const today = new Date().toISOString().substring(0, 10);
+  // x2b：今日统计键用本地日（与 recordStat 的 byDate 同口径）
+  const today = localDayKey();
   const todayRead = stats.byDate[today] || 0;
 
   const cardArea = document.createElement('div');
@@ -272,6 +293,69 @@ export function renderDoneState() {
 }
 
 // ---------- 工具 ----------
+/** 本地日期键 YYYY-MM-DD（对齐 src/pomodoro/stats.ts dayKey 本地日口径：UTC+8 凌晨 0-8 点不落昨日） */
+export function localDayKey(ts: number = Date.now()): string {
+  const d = new Date(ts);
+  const m = pad2(d.getMonth() + 1);
+  const day = pad2(d.getDate());
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+/** 本地时间戳 YYYY-MM-DD HH:mm:ss（剪藏 created 字段，避免 UTC+8 凌晨写入昨日） */
+export function localDatetime(ts: number = Date.now()): string {
+  const d = new Date(ts);
+  const hms = `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  return `${localDayKey(ts)} ${hms}`;
+}
+
+/**
+ * l5 错误态：news.json 解析失败——错误 toast 已提示（loadArticles），面板不渲染「读完」态，
+ * 只说明文件可能正在被写入或已损坏，重开即重试。
+ */
+function renderErrorState() {
+  const card = document.createElement('div');
+  card.className = 'news-done';
+  card.innerHTML = `
+        <div class="news-done-stats">
+            <div class="news-done-stats-title">新闻数据读取失败</div>
+            <div class="news-done-body">数据文件（CONFIG/STORAGE/news.json）可能正在被写入或已损坏。请检查文件内容后重新打开阅读器。</div>
+        </div>
+    `;
+  container!.appendChild(card);
+}
+
+/**
+ * l5 首用引导态：无数据文件（首次使用）——说明数据从哪来：
+ * 由外部「数据源守护」进程（obsidian-news）抓取写入，插件本身只读渲染。
+ */
+function renderFirstUseState() {
+  const card = document.createElement('div');
+  card.className = 'news-done';
+  card.innerHTML = `
+        <div class="news-done-stats">
+            <div class="news-done-stats-title">数据从哪里来？</div>
+            <div class="news-done-body">聚合讯的数据由外部「数据源守护」进程（obsidian-news）自动抓取写入 CONFIG/STORAGE/news.json，插件本身不抓取新闻，只负责渲染阅读流。</div>
+            <div class="news-done-body">首次使用请先配置并运行数据源守护（obsidian-news watch），守护进程每 30 分钟抓取最新文章入库，之后回到这里即可阅读。</div>
+        </div>
+    `;
+  container!.appendChild(card);
+}
+
+/** l5 加载态占位：show() 异步加载期间的反馈（.news-loading 样式已收敛在 src/news/styles.css） */
+function renderLoading() {
+  if (!container) return;
+  container.innerHTML = '';
+  const loading = document.createElement('div');
+  loading.className = 'news-loading';
+  const spinner = document.createElement('div');
+  spinner.className = 'news-loading-spinner';
+  const text = document.createElement('div');
+  text.textContent = '正在加载…';
+  loading.appendChild(spinner);
+  loading.appendChild(text);
+  container.appendChild(loading);
+}
+
 export function toDatetime(dateStr: string): string {
   try {
     const d = new Date(dateStr);
@@ -355,7 +439,8 @@ export async function saveToClip() {
   }
 
   const tagsYaml = (a.tags || []).map((t: string) => `  - "${yamlEscape(t)}"`).join('\n');
-  const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+  // x2b：created 用本地时间戳（与 byDate 本地日同口径，避免 UTC+8 凌晨写入昨日）
+  const now = localDatetime();
   const pubDate = a.date ? toDatetime(a.date) : '';
   const body = (a.body || '').replace(/^\s*---[\s\S]*?---\s*/m, '').replace(/^\s*```dataviewjs[\s\S]*?```\s*/m, '').trim();
 
@@ -388,7 +473,9 @@ ${body}`;
     // ticket 076：保存联动 auto-summary——登记待补全（smartcat 订阅该剪藏 modify 补全 / 2 分钟降级）
     if (evt) emitDomainEvent('news', { kind: 'saved', evt, clipPath: filePath });
   } catch (e: any) {
-    notice(`保存失败：${e.message}`, 'error');
+    // m1b-news：技术详情进 console，toast 只给可操作的人话（正文不带 emoji）
+    console.error('[聚合讯] 保存剪藏失败', e);
+    notice('保存失败，请稍后重试', 'error');
   }
 }
 
@@ -465,12 +552,15 @@ export function show() {
   if (!popup) createMaskAndPopup();
   // 移动端默认全屏跟随剪藏本（用户拍板：聚合讯不设独立开关，与剪藏本同键 clippingMobileDefaultFullscreen）
   applyMobileWindowFullscreen(popup, tryGetSettings().clippingMobileDefaultFullscreen === true);
+  // l5：加载期先展示占位（此前整个加载过程全程 hidden 无反馈），加载完成后 render() 替换为正文；
+  // 不可见即展示：加载中途 hide() 关闭 → 加载完成只渲染内容不再强制弹出
+  renderLoading();
+  mask!.style.visibility = 'visible';
+  popup!.style.visibility = 'visible';
   loadStats()
     .then(() => loadArticles())
     .then(() => {
       render();
-      mask!.style.visibility = 'visible';
-      popup!.style.visibility = 'visible';
     });
 }
 

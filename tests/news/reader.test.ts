@@ -7,7 +7,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import {
   loadArticles, render, markAsRead, skipArticle, saveToClip, hide,
-  loadStats, recordStat, renderMarkdown, toDatetime, init, show,
+  loadStats, recordStat, renderMarkdown, toDatetime, localDayKey, init, show,
 } from '../../src/news/reader';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, Platform as MockPlatform, hasNotice } from '../mock-obsidian-entry';
@@ -210,7 +210,8 @@ describe('聚合讯阅读流', () => {
     expect(stats.totalSkipped).toBe(1);
     expect(stats.byPlatform['知乎日报']).toBe(1);
     expect(stats.byPlatform['果壳']).toBe(1);
-    const today = new Date().toISOString().substring(0, 10);
+    // x2b：byDate 键为本地日（与实现同口径，避免 UTC+8 凌晨跨日断言）
+    const today = localDayKey();
     expect(stats.byDate[today]).toBe(2);
   });
 
@@ -266,16 +267,23 @@ describe('聚合讯阅读流', () => {
     expect(summary).toContain('第一行 第二行 \\"引用\\"');
   });
 
-  it('剪藏保存失败 → 「❌ 保存失败」', async () => {
+  it('剪藏保存失败 → 人话 toast（技术详情只进 console，m1b-news）', async () => {
     const vault = getVault();
     // 让 create 抛错
     vault.create = async () => {
-      throw new Error('磁盘错误');
+      throw new Error('ENOSPC: no space left on device');
     };
-    await loadArticles();
-    render();
-    await saveToClip();
-    expect(hasNotice(/保存失败/)).toBe(true);
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      await loadArticles();
+      render();
+      await saveToClip();
+      expect(hasNotice(/保存失败/)).toBe(true);
+      expect(hasNotice(/ENOSPC/)).toBe(false); // 技术异常不裸露给用户
+      expect(errSpy).toHaveBeenCalled(); // 详情进 console
+    } finally {
+      errSpy.mockRestore();
+    }
   });
 
   it('renderMarkdown：转义 XSS 后再渲染', () => {
