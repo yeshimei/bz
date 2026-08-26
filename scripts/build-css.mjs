@@ -38,6 +38,7 @@ const SOURCES = [
   "src/library/styles.css",
   "src/attach/styles.css",
   "src/encrypt/styles.css",
+  "src/belongings/styles.css",
   "src/movie/styles.css",
   "src/secondbrain/styles.css",
   "src/smartcat/styles.css",

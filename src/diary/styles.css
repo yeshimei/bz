@@ -10,12 +10,12 @@
     animation: slideUp 0.3s ease-out;
 }
 
+/* 焦点环统一走 core p3 focus-visible 规则（src/core/styles.css）：此处移除旧 outline:none/box-shadow 环，
+   仅保留 border 高亮，避免输入聚焦双环 */
 #add-diary-datetime:focus,
 #add-diary-type:focus,
 #add-diary-content:focus {
-    outline: none;
     border-color: var(--interactive-accent);
-    box-shadow: 0 0 0 3px var(--background-modifier-border-focus);
 }
 
 /* 移动端优化 */

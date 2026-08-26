@@ -91,6 +91,18 @@
   margin: 4px 0 0; font-size: 13px; line-height: 1.7;
   color: var(--text-normal); white-space: pre-wrap;
 }
+/* ---- e3 低 z 族抬档（冻结面授权）：影视遮罩档 ----
+   原 JS 内联 z-index（主面板 1000 / 筛选 1100 / 添加·编辑 1200 / 推荐 1300）→ 主面板族 9997/9998；
+   纯层级规则、统一不带背景（压暗由各遮罩内联 CSS 负责）；对表 settings-modal.ts z-index 家族；
+   配套 JS 由 ux-misc 清内联并挂同款类 */
+.bz-movie-overlay--1000 { z-index: 9997; }
+.bz-movie-overlay--1100 { z-index: 9998; }
+.bz-movie-overlay--1200 { z-index: 9998; }
+.bz-movie-overlay--1300 { z-index: 9998; }
+/* 主面板根（legacy id）双保险：JS 仅清内联 z 而暂未挂类时同样兜底抬档 */
+#__yin_ying__ { z-index: 9997; }
+/* 影视报告（movie-report 域无独立样式源，归属影视域文件）：分析弹窗遮罩原内联 1200 → 9998 */
+.bz-movie-report-overlay--1200 { z-index: 9998; }
 .bz-item-sheet-title {
   font-size: 14px; font-weight: 600; color: var(--text-normal);
   line-height: 1.4; word-break: break-word;
