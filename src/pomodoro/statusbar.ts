@@ -40,17 +40,24 @@ export function unmountPomodoroStatusBar(): void {
 
 /**
  * ui.ts render 每 1s 调用：
- * 主番茄钟运行中：mm:ss；停止/暂停灰态（图标保留）。
+ * 主番茄钟运行中：mm:ss；暂停（含后台自动暂停）：显示「已暂停」标签（.pomodoro-statusbar-paused 醒目标识）；
+ * 空闲：空文本灰态（.pomodoro-statusbar-idle）。自动暂停/恢复只在此处体现，不加 toast（x6）。
  */
 export function syncPomodoroStatusBar(state: PomodoroState, remainSec: number): void {
   if (!statusEl) return;
-  if (state.endTime !== null) {
-    const m = Math.floor(remainSec / 60);
-    const s = remainSec % 60;
-    if (textSpan) textSpan.textContent = `${pad2(m)}:${pad2(s)}`;
-    statusEl.classList.remove('pomodoro-statusbar-idle');
-  } else {
-    if (textSpan) textSpan.textContent = '';
-    statusEl.classList.add('pomodoro-statusbar-idle');
+  const running = state.endTime !== null;
+  const paused = !running && state.paused;
+  statusEl.classList.toggle('pomodoro-statusbar-idle', !running && !paused);
+  statusEl.classList.toggle('pomodoro-statusbar-paused', paused);
+  if (textSpan) {
+    if (running) {
+      const m = Math.floor(remainSec / 60);
+      const s = remainSec % 60;
+      textSpan.textContent = `${pad2(m)}:${pad2(s)}`;
+    } else if (paused) {
+      textSpan.textContent = '已暂停';
+    } else {
+      textSpan.textContent = '';
+    }
   }
 }

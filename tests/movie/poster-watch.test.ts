@@ -60,7 +60,7 @@ describe('watchPosterFetch', () => {
     expect(visibleNotices()[0].classList.contains('bz-notice--success')).toBe(true);
   });
 
-  it('超时（POSTER_POLL_MAX 次）后停止轮询：通知保持常驻「正在获取」，后续写入不再更新', async () => {
+  it('超时（POSTER_POLL_MAX 次）后停止轮询：通知原地更新为明确失败（error），自动收尾不再永久挂「获取中」', async () => {
     const vault = new MockVault();
     vault.files.set('我的/影视/《片》.md', '---\ntags: [电影]\n海报: \n---\n');
     const app = mockAppWithVault(vault);
@@ -70,13 +70,15 @@ describe('watchPosterFetch', () => {
     await vi.advanceTimersByTimeAsync(POSTER_POLL_MS * (POSTER_POLL_MAX + 1));
 
     const el = visibleNotices()[0];
-    expect(el.textContent).toContain('正在获取海报和豆瓣信息');
-    expect(el.classList.contains('bz-notice--progress')).toBe(true);
+    expect(el.textContent).toContain('海报获取超时：请确认海报守护进程已运行');
+    expect(el.classList.contains('bz-notice--error')).toBe(true);
+    expect(el.classList.contains('bz-notice--progress')).toBe(false);
 
-    // 轮询已停止：之后再写入海报也不更新
+    // 轮询已停止：失败通知按 error 类型默认时长自动收尾（不永久挂「获取中」）；
+    // 之后再写入海报也不产生新通知
     vault.files.set('我的/影视/《片》.md', '---\ntags: [电影]\n海报: y.png\n---\n');
     await vi.advanceTimersByTimeAsync(POSTER_POLL_MS * 2);
-    expect(visibleNotices()[0].textContent).toContain('正在获取海报和豆瓣信息');
-    expect(visibleNotices()).toHaveLength(1);
+    expect(el.isConnected).toBe(false); // 失败通知已自动消失
+    expect(visibleNotices()).toHaveLength(0);
   });
 });

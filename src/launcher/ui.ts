@@ -175,9 +175,11 @@ export class LauncherModal {
 
     // 遮罩 + 弹窗骨架（移动端：底部滑入贴底；桌面端：正常居中）
     const isMobile = LauncherModal.isMobileEnv();
+    // e3：z-index 由根样式 .bz-launcher-overlay--* 档位类提供（不再内联）
+    this.overlay.classList.add('bz-launcher-overlay--10100');
     this.overlay.style.cssText =
       'position:fixed;top:0;left:0;right:0;bottom:0;background:var(--background-modifier-cover);' +
-      'z-index:10100;display:flex;align-items:' + (isMobile ? 'flex-end' : 'center') +
+      'display:flex;align-items:' + (isMobile ? 'flex-end' : 'center') +
       ';justify-content:center;' + (isMobile ? 'animation:launcher-mask-in 0.2s ease-out;' : '');
     this.overlay.addEventListener('mousedown', (e) => {
       if (e.target === this.overlay) this.close();
@@ -257,8 +259,10 @@ export class LauncherModal {
   private buildDoneButton(): void {
     const wrap = document.createElement('div');
     wrap.id = 'launcher-edit-controls';
+    // e3：z-index 由根样式 .bz-launcher-overlay--* 档位类提供（不再内联）
+    wrap.classList.add('bz-launcher-overlay--10101');
     wrap.style.cssText =
-      'position:fixed;top:34px;right:18px;z-index:10101;display:none;align-items:center;gap:8px;';
+      'position:fixed;top:34px;right:18px;display:none;align-items:center;gap:8px;';
 
     // 文字显隐开关（写回插件设置，与设置页同字段）
     const textBtn = document.createElement('button');
@@ -346,8 +350,10 @@ export class LauncherModal {
   /**
    * 长按进入编辑模式计时器工厂：pointerdown 计时，移动超阈值/提前松开取消。
    * 网格空白处与磁贴共用同一套判定，仅注册面不同。
+   * 反馈（26）：计时期间给目标挂 `launcher-press-active` 激活类（视觉提示，样式在 launcher/styles.css）——
+   * 用户看到「按着就进编辑」就不会因长度不足提前松手误执行命令。
    */
-  private createLongPress(onFire: () => void): {
+  private createLongPress(onFire: () => void, feedbackEl?: HTMLElement): {
     down: (e: PointerEvent) => void;
     move: (e: PointerEvent) => void;
     cancel: () => void;
@@ -355,18 +361,25 @@ export class LauncherModal {
     let timer: number | null = null;
     let sx = 0;
     let sy = 0;
+    const PRESS_CLASS = 'launcher-press-active';
+    const clearFeedback = () => {
+      if (feedbackEl) feedbackEl.classList.remove(PRESS_CLASS);
+    };
     const cancel = () => {
       if (timer !== null) {
         clearTimeout(timer);
         timer = null;
       }
+      clearFeedback();
     };
     return {
       down: (e) => {
         sx = e.clientX;
         sy = e.clientY;
+        if (feedbackEl) feedbackEl.classList.add(PRESS_CLASS); // 长按计时中：激活反馈
         timer = window.setTimeout(() => {
           timer = null;
+          clearFeedback();
           onFire();
         }, EDIT_LONG_PRESS_MS);
       },
@@ -378,9 +391,9 @@ export class LauncherModal {
     };
   }
 
-  /** 长按网格空白区域（非磁贴）进入编辑模式——空态无磁贴时的入口 */
+  /** 长按网格空白区域（非磁贴）进入编辑模式——空态无磁贴时的入口（空白区整体挂激活反馈） */
   private bindGridLongPress(): void {
-    const lp = this.createLongPress(() => this.enterEdit());
+    const lp = this.createLongPress(() => this.enterEdit(), this.grid);
     this.grid.addEventListener('pointerdown', (e) => {
       if (this.editing) return;
       if ((e.target as HTMLElement).closest('.launcher-tile')) return; // 磁贴上由 bindDrag 处理
@@ -629,7 +642,7 @@ export class LauncherModal {
 
   /** 长按检测：pointerdown 计时，移动超阈值/提前松开取消；触发后抑制随后的 click */
   private bindDrag(el: HTMLElement, tile: LauncherTile): void {
-    const lp = this.createLongPress(() => this.enterEdit());
+    const lp = this.createLongPress(() => this.enterEdit(), el); // 26：磁贴长按计时中挂激活反馈
 
     el.addEventListener('pointerdown', (e) => {
       if (this.editing) return; // 编辑模式：拖拽由 startDrag 处理
@@ -704,13 +717,13 @@ export class LauncherModal {
     this.placePlaceholder(ph, tile, cellX, cellY);
     this.grid.appendChild(ph);
 
-    /** 拖拽磁贴跟随手指（fixed 定位 + 放大；render 重建后重新应用） */
+    /** 拖拽磁贴跟随手指（fixed 定位 + 放大；render 重建后重新应用；
+     *  z-index 由根样式 .launcher-tile.dragging 提供，不再内联） */
     const positionFloating = () => {
       const el = this.grid.querySelector<HTMLElement>(`.launcher-tile[data-tile-id="${tile.id}"]`);
       if (!el) return;
       el.classList.add('dragging');
       el.style.position = 'fixed';
-      el.style.zIndex = '9999';
       el.style.width = tile.w * step - GAP + 'px';
       el.style.height = tile.h * step - GAP + 'px';
       el.style.left = lastX - offX + 'px';
@@ -969,7 +982,11 @@ export class LauncherModal {
     renderList('');
     input.addEventListener('input', () => renderList(input.value));
     input.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') this.closePicker(mask);
+      if (e.key === 'Escape') {
+        // e1：本地收命令选择器即止，不再冒泡到 escManager 连关入口页（ESC 一次只关一层）
+        e.stopImmediatePropagation();
+        this.closePicker(mask);
+      }
       if (e.key === 'Enter') {
         const q = (input.value || '').trim().toLowerCase();
         const hit = this.commands.find(
@@ -1056,7 +1073,11 @@ export class LauncherModal {
     renderList('');
     input.addEventListener('input', () => renderList(input.value));
     input.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') this.closePicker(mask);
+      if (e.key === 'Escape') {
+        // e1：本地收图标选择器即止，不再冒泡到 escManager 连关入口页（ESC 一次只关一层）
+        e.stopImmediatePropagation();
+        this.closePicker(mask);
+      }
     });
     setTimeout(() => input.focus(), 0);
   }
@@ -1098,7 +1119,11 @@ export class LauncherModal {
     popup.appendChild(row);
 
     input.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') this.closePicker(mask);
+      if (e.key === 'Escape') {
+        // e1：本地收改名弹窗即止，不再冒泡到 escManager 连关入口页（ESC 一次只关一层）
+        e.stopImmediatePropagation();
+        this.closePicker(mask);
+      }
       if (e.key === 'Enter') submit();
     });
     input.select();
@@ -1110,8 +1135,10 @@ export class LauncherModal {
   private buildPicker(maskId: string, popupId: string, titleText: string): { mask: HTMLDivElement; popup: HTMLDivElement } {
     const mask = document.createElement('div');
     mask.id = maskId;
+    // e3：z-index 由根样式 .bz-launcher-overlay--* 档位类提供（不再内联）
+    mask.classList.add('bz-launcher-overlay--10200');
     mask.style.cssText =
-      'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:10200;' +
+      'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);' +
       'display:flex;align-items:center;justify-content:center;';
     mask.addEventListener('mousedown', (e) => {
       if (e.target === mask) this.closePicker(mask);

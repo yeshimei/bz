@@ -81,6 +81,15 @@ describe('归物本主面板', () => {
     expect(overlay.querySelectorAll('[data-id]').length).toBe(2);
   });
 
+  it('空库：零物品显示首步引导（l6-belongings）', async () => {
+    // 不 seed（belongings.json 不存在 → 空库）
+    await openBelongingsPanel();
+    const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
+    expect(overlay.textContent).toContain('归物本还没有物品');
+    expect(overlay.textContent).toContain('点右上角 ✏️ 添加第一个物品');
+    expect(overlay.querySelectorAll('[data-id]').length).toBe(0); // 无物品卡片
+  });
+
   it('再次打开复用 DOM（visibility visible）', async () => {
     seed(vault);
     await openBelongingsPanel();
@@ -151,7 +160,7 @@ describe('添加/编辑/删除', () => {
     seed(vault);
     await addBelongingsItemCommand();
     const modal = [...document.querySelectorAll('div')].find(
-      (d) => d.style.zIndex === '11100' && d.style.display === 'flex'
+      (d) => (d as HTMLElement).classList.contains('bz-belongings-overlay--11100') && d.style.display === 'flex'
     ) as HTMLElement;
     expect(modal.textContent).toContain('添加物品');
 
@@ -200,7 +209,7 @@ describe('添加/编辑/删除', () => {
     await new Promise((r) => setTimeout(r, 20));
 
     const editModal = [...document.querySelectorAll('div')].find(
-      (d) => d.style.zIndex === '11100'
+      (d) => (d as HTMLElement).classList.contains('bz-belongings-overlay--11100')
     ) as HTMLElement;
     expect(editModal.textContent).toContain('编辑物品');
     expect(editModal.textContent).toContain('机械键盘');
@@ -220,11 +229,15 @@ describe('添加/编辑/删除', () => {
     await new Promise((r) => setTimeout(r, 20));
 
     const confirmModal = [...document.querySelectorAll('div')].find(
-      (d) => d.style.zIndex === '11101'
+      (d) => (d as HTMLElement).classList.contains('bz-belongings-overlay--11101')
     ) as HTMLElement;
     expect(confirmModal).toBeTruthy();
     expect(confirmModal.textContent).toContain('确认删除');
     expect(confirmModal.textContent).toContain('确定要删除物品「旧手机」吗？此操作不可撤销。');
+
+    // 19：默认焦点不落在「删除」按钮（防误触），落在「取消」
+    await new Promise((r) => setTimeout(r, 150)); // 等待 100ms 聚焦回调
+    expect((document.activeElement as HTMLElement).textContent).toBe('取消');
 
     // 确认删除
     const delBtn = [...confirmModal.querySelectorAll('button')].find((b) => b.textContent === '🗑 删除')!;
@@ -282,7 +295,7 @@ describe('归物本抽屉（移动端：状态流转 keepOpen）', () => {
     expect(sheet.querySelector('.bz-item-sheet-title')!.textContent).toBe('机械键盘');
     expect(sheet.querySelector('.bz-item-sheet-sub')!.textContent).toContain('机械键盘');
 
-    // 点「标记为闲置」→ keepOpen：抽屉保持 + 数据写回 + 动作区刷新（使用中 出现、闲置 消失）
+    // 点「标记为闲置」→ keepOpen：抽屉保持 + 数据写回 + toast 反馈（12）+ 动作区刷新（使用中 出现、闲置 消失）
     const idleItem = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
       (b) => b.textContent!.includes('标记为闲置')
     ) as HTMLElement;
@@ -290,6 +303,7 @@ describe('归物本抽屉（移动端：状态流转 keepOpen）', () => {
     await new Promise((r) => setTimeout(r, 30));
     const data = JSON.parse(vault.files.get('CONFIG/STORAGE/belongings.json')!);
     expect(data.items['item_1'].current_status).toBe('闲置');
+    expect(hasNotice(/「机械键盘」已标记为闲置/)).toBe(true); // 状态流转成功 toast（正文无 emoji）
     expect(document.querySelector('.bz-item-sheet')).not.toBeNull(); // keepOpen
     const labels2 = [...document.querySelectorAll('.bz-item-sheet-label')].map((e) => e.textContent);
     expect(labels2).toContain('标记为使用中');
@@ -316,7 +330,7 @@ describe('归物本抽屉（移动端：状态流转 keepOpen）', () => {
     delItem.click();
     await new Promise((r) => setTimeout(r, 20));
     expect(document.querySelector('.bz-item-sheet')).toBeNull(); // 先收抽屉
-    expect([...document.querySelectorAll('div')].some((d) => (d as HTMLElement).style.zIndex === '11101')).toBe(true);
+    expect([...document.querySelectorAll('div')].some((d) => (d as HTMLElement).classList.contains('bz-belongings-overlay--11101'))).toBe(true);
   });
 });
 
@@ -348,7 +362,7 @@ describe('排序弹窗', () => {
     const p = showSortModal();
     await vi.advanceTimersByTimeAsync(0);
     const sortModal = [...document.querySelectorAll('div')].find(
-      (d) => d.style.zIndex === '11100'
+      (d) => (d as HTMLElement).classList.contains('bz-belongings-overlay--11100')
     ) as HTMLElement;
     expect(sortModal.textContent).toContain('排序设置');
     const buttons = [...sortModal.querySelectorAll('button')];
@@ -388,7 +402,7 @@ describe('smartcat 域事件派发挂点（ticket 079）', () => {
     seed(vault);
     await addBelongingsItemCommand();
     const modal = [...document.querySelectorAll('div')].find(
-      (d) => d.style.zIndex === '11100' && d.style.display === 'flex'
+      (d) => (d as HTMLElement).classList.contains('bz-belongings-overlay--11100') && d.style.display === 'flex'
     ) as HTMLElement;
     const nameInput = modal.querySelector('input') as HTMLInputElement;
     nameInput.value = '新耳机';
@@ -421,7 +435,7 @@ describe('smartcat 域事件派发挂点（ticket 079）', () => {
     await new Promise((r) => setTimeout(r, 20));
 
     const editModal = [...document.querySelectorAll('div')].find(
-      (d) => d.style.zIndex === '11100'
+      (d) => (d as HTMLElement).classList.contains('bz-belongings-overlay--11100')
     ) as HTMLElement;
     expect(editModal.textContent).toContain('机械键盘');
     const nameInput = editModal.querySelector('input') as HTMLInputElement;
@@ -454,7 +468,7 @@ describe('smartcat 域事件派发挂点（ticket 079）', () => {
     await new Promise((r) => setTimeout(r, 20));
 
     const editModal = [...document.querySelectorAll('div')].find(
-      (d) => d.style.zIndex === '11100'
+      (d) => (d as HTMLElement).classList.contains('bz-belongings-overlay--11100')
     ) as HTMLElement;
     const save = [...editModal.querySelectorAll('button')].find((b) => b.textContent === '💾 保存')!;
     save.click();
@@ -505,7 +519,7 @@ describe('smartcat 域事件派发挂点（ticket 079）', () => {
     await new Promise((r) => setTimeout(r, 20));
 
     const confirmModal = [...document.querySelectorAll('div')].find(
-      (d) => d.style.zIndex === '11101'
+      (d) => (d as HTMLElement).classList.contains('bz-belongings-overlay--11101')
     ) as HTMLElement;
     const delBtn = [...confirmModal.querySelectorAll('button')].find((b) => b.textContent === '🗑 删除')!;
     delBtn.click();
@@ -535,41 +549,43 @@ describe('修复回归（P0-7 层级 / P0-8 注入 / P1-38 回车双删 / P2 泄
     cleanupBelongings();
   });
 
-  /** 按标题找域内模态（遮罩层：唯一带非空 zIndex 的容器） */
+  /** 按标题找域内模态（遮罩层：带 bz-belongings-overlay--* 层级类且含指定标题） */
   function modalByTitle(title: string): HTMLElement {
     return [...document.querySelectorAll('div')].find(
-      (d) => d.style.zIndex && d.textContent?.includes(title)
+      (d) => (d as HTMLElement).className.includes('bz-belongings-overlay--') && d.textContent?.includes(title)
     ) as HTMLElement;
   }
 
-  it('P0-7：添加/编辑/删除/排序弹窗 zIndex 均 ≥11100（压过抽屉遮罩 10999），下拉为 11101 档', async () => {
+  it('P0-7/e3：添加/编辑/删除/排序弹窗挂 11100 层级类（压过抽屉遮罩 10999），下拉为 11101 档；JS 不再内联 z-index', async () => {
     seed(vault);
     // 添加弹窗
     await addBelongingsItemCommand();
     const addModal = modalByTitle('添加物品');
-    expect(Number(addModal.style.zIndex)).toBeGreaterThanOrEqual(11100);
-    const dropdown = [...addModal.querySelectorAll('div')].find((d) => Number(d.style.zIndex) > 0) as HTMLElement;
-    expect(Number(dropdown.style.zIndex)).toBe(11101);
+    expect(addModal.classList.contains('bz-belongings-overlay--11100')).toBe(true);
+    expect(addModal.style.zIndex).toBe(''); // e3：JS 不再内联 z-index（值由根样式档位类提供，移交 ux-css）
+    const dropdown = [...addModal.querySelectorAll('div')].find((d) => (d as HTMLElement).classList.contains('bz-belongings-overlay--11101')) as HTMLElement;
+    expect(dropdown).toBeTruthy();
     addModal.remove();
 
     // 主面板 → 编辑 / 删除 / 排序
     await openBelongingsPanel();
     const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
+    expect(overlay.classList.contains('bz-belongings-overlay--1000')).toBe(true);
     const card = overlay.querySelector('[data-id="item_1"]') as HTMLElement;
     rightClickOpen(card);
     ([...document.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.includes('编辑')) as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 20));
-    expect(Number(modalByTitle('编辑物品').style.zIndex)).toBeGreaterThanOrEqual(11100);
+    expect(modalByTitle('编辑物品').classList.contains('bz-belongings-overlay--11100')).toBe(true);
 
     rightClickOpen(card);
     ([...document.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.includes('删除')) as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 20));
-    expect(Number(modalByTitle('确认删除').style.zIndex)).toBeGreaterThanOrEqual(11100);
+    expect(modalByTitle('确认删除').classList.contains('bz-belongings-overlay--11101')).toBe(true); // 删除确认档 +1
 
     vi.useFakeTimers();
     const p = showSortModal();
     await vi.advanceTimersByTimeAsync(0);
-    expect(Number(modalByTitle('排序设置').style.zIndex)).toBeGreaterThanOrEqual(11100);
+    expect(modalByTitle('排序设置').classList.contains('bz-belongings-overlay--11100')).toBe(true);
     [...modalByTitle('排序设置').querySelectorAll('button')].find((b) => b.textContent === '关闭')!.click();
     await p;
     vi.useRealTimers();
@@ -620,6 +636,27 @@ describe('修复回归（P0-7 层级 / P0-8 注入 / P1-38 回车双删 / P2 泄
     expect(belongingsSpy).toHaveBeenCalledWith({ kind: 'delete', title: '机械键盘' });
     const data = JSON.parse(vault.files.get('CONFIG/STORAGE/belongings.json')!);
     expect(data.items['item_1']).toBeUndefined();
+  });
+
+  it('c4：删除确认默认焦点在「取消」，此时按 Enter → 取消（不删除，不再焦点在取消却按 Enter 删除）', async () => {
+    seed(vault);
+    await openBelongingsPanel();
+    const overlay = document.getElementById('__gui_wu_ben__') as HTMLElement;
+    const card = overlay.querySelector('[data-id="item_2"]') as HTMLElement;
+    rightClickOpen(card);
+    ([...document.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.includes('删除')) as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 150)); // 默认聚焦回调 100ms → 取消
+
+    expect((document.activeElement as HTMLElement).textContent).toBe('取消');
+    // Enter 跟随当前焦点 → 取消
+    (document.activeElement as HTMLElement).dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })
+    );
+    await new Promise((r) => setTimeout(r, 20));
+    const data = JSON.parse(vault.files.get('CONFIG/STORAGE/belongings.json')!);
+    expect(data.items['item_2']).toBeDefined(); // 未删除
+    expect(belongingsSpy).not.toHaveBeenCalled(); // 无 delete 事件
+    expect(document.querySelector('.bz-belongings-overlay--11101')).toBeNull(); // 弹窗经取消关闭
   });
 
   it('P2 监听泄漏：search-select 弹窗销毁后，旧 document click 监听自注销', async () => {
