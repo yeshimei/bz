@@ -31,9 +31,14 @@ export function rebuildItems(app: App): MovieItem[] {
           break;
         }
       }
-      if (!typeTag) continue;
-      const group = getGroupForTag(typeTag);
-      if (!group) continue;
+      // x4：不在固定清单的自定义 tag 不再静默消失——取首个 tag 归入「其他」组展示；
+      // 完全无 tag 的笔记（无自定义 tag 可言）维持跳过
+      if (!typeTag) {
+        if (tags.length === 0) continue;
+        typeTag = tags[0];
+      }
+      let group = getGroupForTag(typeTag);
+      if (!group) group = '其他';
 
       const watchDate = fm['观影日期']?.toString() ?? null;
       // null/空串 = 未打分（显式归已看），避免 Number('')=0 误判在看；undefined 缺省行为不变

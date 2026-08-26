@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks, hasNotice, Platform as MockPlatform } from '../mock-obsidian-entry';
+import { resetObsidianMocks, hasNotice, getNoticeMessages, Platform as MockPlatform } from '../mock-obsidian-entry';
 import { M, resetMovieState, setHomeFilmStatus } from '../../src/movie/state';
 import { rebuildItems, getDisplayItems } from '../../src/movie/data';
 import {
@@ -38,10 +38,23 @@ describe('renderAll 分页', () => {
     M.pageSize = 50;
   });
 
-  it('空列表 → 提示', () => {
+  it('空列表（无筛选）→ 空库引导（l6-movie）', () => {
+    const c = document.createElement('div');
+    renderAll([], c, makeApp(new MockVault()));
+    expect(c.innerHTML).toContain('添加第一部影视');
+  });
+
+  it('空列表（有筛选/搜索）→ 筛选无结果（l6-movie）', () => {
+    M.typeFilter = '剧集';
     const c = document.createElement('div');
     renderAll([], c, makeApp(new MockVault()));
     expect(c.innerHTML).toContain('暂无符合条件的影视记录');
+    M.typeFilter = '全部';
+    M.searchKeyword = '不存在';
+    const c2 = document.createElement('div');
+    renderAll([], c2, makeApp(new MockVault()));
+    expect(c2.innerHTML).toContain('暂无符合条件的影视记录');
+    M.searchKeyword = '';
   });
 
   it('首屏 50 + 加载更多指示', () => {
@@ -188,6 +201,27 @@ describe('设置弹窗筛选', () => {
       '影视文件夹', '每页加载数量',
       '默认排序', '默认类型筛选', '默认状态筛选', '已看卡片评分显示', '海报抓取',
     ]);
+    closeFilterModal();
+  });
+
+  it('f2-movie：改动启动快照设置（目录/默认视图前 3 项）→ 提示「重载插件后生效」，仅首次改动提示一次', async () => {
+    createOverlay(M.appRef as any);
+    const settingsBtn = [...document.querySelectorAll('#__yin_ying__ button')].find((b) => (b as HTMLElement).title === '影视设置') as HTMLElement;
+    settingsBtn.click();
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    const settingOf = (name: string): any => {
+      const el = [...popup.querySelectorAll('.setting-item')].find((s) => (s as HTMLElement).dataset.name === name)!;
+      return (el as any).__setting;
+    };
+    // 默认排序（启动快照之一）改动 → 提示一次
+    (settingOf('默认排序').controls[0] as any).trigger('name-asc');
+    await new Promise((r) => setTimeout(r, 10));
+    expect(hasNotice('影视设置已保存，重载插件后生效')).toBe(true);
+    // 同弹窗内再改其它快照 → 不重复提示
+    (settingOf('默认类型筛选').controls[0] as any).trigger('美剧');
+    await new Promise((r) => setTimeout(r, 10));
+    const notices = getNoticeMessages();
+    expect(notices.filter((m) => m.includes('重载插件后生效')).length).toBe(1);
     closeFilterModal();
   });
 
@@ -483,7 +517,7 @@ describe('抽屉（统一手势组件接入）', () => {
     expect(hasNotice('已标记在看')).toBe(true);
   });
 
-  it('想看条目点「标记已看」→ 直改标记不弹窗：评分写默认 3.5 + 观影日期=当前日期，抽屉保持并动态刷新为已看动作', async () => {
+  it('想看条目点「标记已看」→ 直接弹评分窗（不写默认分）；确认后写评分 + 观影日期=今天，抽屉保持并刷新为已看动作', async () => {
     const vault = setupVault();
     const app = makeApp(vault);
     const items = rebuildItems(app);
@@ -495,12 +529,23 @@ describe('抽屉（统一手势组件接入）', () => {
     const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
     expect(sheet.textContent).toContain('标记已看');
     const markBtn = [...sheet.querySelectorAll('.bz-item-sheet-item')].find((b) => b.textContent!.includes('标记已看')) as HTMLElement;
-    markBtn.click(); // keepOpen：抽屉不关闭
+    // keepOpen：评分窗叠于抽屉之上，触发前不写盘（不写默认 3.5）
+    const before = vault.files.get('我的/影视/《想看片》.md');
+    markBtn.click();
+    const modal = document.querySelector('.bz-movie-tiny-modal') as HTMLElement;
+    expect(modal).not.toBeNull();
+    expect(modal.textContent).toContain('标记已看');
+    expect(vault.files.get('我的/影视/《想看片》.md')).toBe(before); // 确认前文件未动
+    // 拖动滑块 → 确认
+    const slider = modal.querySelector('input[type="range"]') as HTMLInputElement;
+    slider.value = '4.2';
+    slider.dispatchEvent(new Event('input', { bubbles: true }));
+    (modal.querySelector('.bz-movie-tiny-confirm') as HTMLElement).click();
     await vi.advanceTimersByTimeAsync(50);
-    expect(vault.files.get('我的/影视/《想看片》.md')).toContain('评分: 3.5');
-    expect(vault.files.get('我的/影视/《想看片》.md')).toMatch(/观影日期: \d{4}-\d{2}-\d{2}/); // 标记已看 → 观影日期=当前日期
+    expect(vault.files.get('我的/影视/《想看片》.md')).toContain('评分: 4.2'); // 滑块值，非默认 3.5
+    expect(vault.files.get('我的/影视/《想看片》.md')).toMatch(/观影日期: \d{4}-\d{2}-\d{2}/); // 标记已看 → 观影日期=今天
     expect(vault.files.get('我的/影视/《想看片》.md')).not.toContain('状态');
-    expect(hasNotice('已标记已看')).toBe(true);
+    expect(hasNotice('已更新影视信息')).toBe(true);
     // 抽屉保持打开，动作动态刷新为已看态（改分/写影评），不再有标记在看/标记已看
     expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
     expect(sheet.textContent).toContain('改分');
@@ -514,7 +559,7 @@ describe('抽屉（统一手势组件接入）', () => {
     expect(sheetHead.textContent).toContain('⭐');
   });
 
-  it('在看条目点「标记已看」→ 直改标记不弹窗：评分写默认 3.5 + 观影日期=当前日期，抽屉保持并动态刷新为已看动作', async () => {
+  it('在看条目点「标记已看」→ 直接弹评分窗；确认后写评分 + 观影日期=今天，抽屉保持并刷新为已看动作', async () => {
     const vault = setupVault();
     const app = makeApp(vault);
     const items = rebuildItems(app);
@@ -526,12 +571,18 @@ describe('抽屉（统一手势组件接入）', () => {
     const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
     expect(sheet.textContent).toContain('标记已看');
     const markBtn = [...sheet.querySelectorAll('.bz-item-sheet-item')].find((b) => b.textContent!.includes('标记已看')) as HTMLElement;
-    markBtn.click(); // keepOpen：抽屉不关闭
+    markBtn.click(); // keepOpen：评分窗叠于抽屉之上
+    const modal = document.querySelector('.bz-movie-tiny-modal') as HTMLElement;
+    expect(modal).not.toBeNull();
+    expect(modal.textContent).toContain('标记已看');
+    const slider = modal.querySelector('input[type="range"]') as HTMLInputElement;
+    slider.dispatchEvent(new Event('input', { bubbles: true })); // 保持默认 3.5
+    (modal.querySelector('.bz-movie-tiny-confirm') as HTMLElement).click();
     await vi.advanceTimersByTimeAsync(50);
-    expect(vault.files.get('我的/影视/《在看片》.md')).toContain('评分: 3.5');
-    expect(vault.files.get('我的/影视/《在看片》.md')).toMatch(/观影日期: \d{4}-\d{2}-\d{2}/); // 在看→已看：观影日期=当前日期
+    expect(vault.files.get('我的/影视/《在看片》.md')).toContain('评分: 3.5'); // 滑块默认 3.5（用户确认后）
+    expect(vault.files.get('我的/影视/《在看片》.md')).toMatch(/观影日期: \d{4}-\d{2}-\d{2}/); // 在看→已看：观影日期=今天
     expect(vault.files.get('我的/影视/《在看片》.md')).not.toContain('状态');
-    expect(hasNotice('已标记已看')).toBe(true);
+    expect(hasNotice('已更新影视信息')).toBe(true);
     // 抽屉保持打开，动作动态刷新为已看态（改分/写影评），不再有标记已看
     expect(document.querySelector('.bz-item-sheet')).not.toBeNull();
     expect(sheet.textContent).toContain('改分');
@@ -988,5 +1039,54 @@ describe('主页影视状态过滤（window.__homeFilmStatus 兼容）', () => {
     openMovieManager(makeApp(new MockVault()));
     expect(M.statusFilter).toBe('全部');
     closeOverlay();
+  });
+});
+
+describe('l1-movie：卸载清理 overlay DOM', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetMovieState();
+    document.body.innerHTML = '';
+    M.folderPath = '我的/影视';
+    const vault = new MockVault();
+    seed(vault);
+    M.appRef = makeApp(vault);
+  });
+
+  it('unloadMovie 显式移除全部 overlay（主面板/添加/编辑/筛选/推荐），禁用插件不留死遮罩', () => {
+    createOverlay(M.appRef as any);
+    openAddModal(M.appRef as any);
+    openFilterModal();
+    openEditModal({ file: { path: '我的/影视/《片1》.md' }, name: '片1', status: 2, rating: 5, review: null, typeTag: '电影', group: '电影', watchDate: null, poster: null, genre: null, director: null, actors: null, region: null }, M.appRef as any);
+    const rec = document.createElement('div');
+    rec.id = 'fake-recommend';
+    document.body.appendChild(rec);
+    M.recommendOverlay = rec;
+
+    expect(M.currentOverlay).not.toBeNull();
+    expect(M.addOverlay).not.toBeNull();
+    expect(M.editOverlay).not.toBeNull();
+    expect(M.settingsOverlay).not.toBeNull();
+    expect(M.recommendOverlay).not.toBeNull();
+    expect(document.body.querySelectorAll('#__yin_ying__, .bz-movie-overlay--1100, .bz-movie-overlay--1200, #fake-recommend').length).toBe(5); // 主面板 + 筛选 + 添加 + 编辑 + 推荐
+
+    unloadMovie();
+
+    // 全部遮罩已从 DOM 移除
+    expect(document.querySelector('#__yin_ying__')).toBeNull();
+    expect(document.querySelector('#fake-recommend')).toBeNull();
+    expect(document.querySelectorAll('.bz-movie-overlay--1100').length).toBe(0);
+    expect(document.querySelectorAll('.bz-movie-overlay--1200').length).toBe(0);
+    // 状态引用清空
+    expect(M.currentOverlay).toBeNull();
+    expect(M.addOverlay).toBeNull();
+    expect(M.editOverlay).toBeNull();
+    expect(M.settingsOverlay).toBeNull();
+    expect(M.recommendOverlay).toBeNull();
+  });
+
+  it('unloadMovie 幂等：无 overlay 时重复调用安全', () => {
+    expect(() => unloadMovie()).not.toThrow();
+    unloadMovie();
   });
 });

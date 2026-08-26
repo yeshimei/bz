@@ -47,24 +47,24 @@ describe('buildAnalysisData 数据采集', () => {
     expect(data.seriesList).toEqual([]);
   });
 
-  it('状态归类：已看/在看/想看 + 类型分组 + 评分桶', () => {
+  it('状态归类：已看/在看/想看 + 类型分组 + 评分桶；自定义 tag 归「其他」入统计（x4）', () => {
     const vault = new MockVault();
     vault.files.set('我的/影视/《A》.md', movieMd({ tags: ['电影'], '观影日期': '2025-06-01T20:00:00', 评分: 5, '豆瓣评分': 8 }));
     vault.files.set('我的/影视/《B》.md', movieMd({ tags: ['国产剧'], '观影日期': '2025-06-02T20:00:00', 评分: 0 }));
     vault.files.set('我的/影视/《C》.md', movieMd({ tags: ['日漫'], 评分: -1 }));
-    // 非影视标签文件被忽略
+    // 自定义标签归「其他」组入统计（不再被忽略）
     vault.files.set('我的/影视/《D》.md', movieMd({ tags: ['杂项'], 评分: 5 }));
 
     const data = buildAnalysisData(makeApp(vault));
-    expect(data.total).toBe(3);
-    expect(data.watched).toBe(1);
+    expect(data.total).toBe(4);
+    expect(data.watched).toBe(2);
     expect(data.watching).toBe(1);
     expect(data.want).toBe(1);
-    expect(data.groups).toEqual({ 电影: 1, 剧集: 1, 动漫: 1 });
-    expect(data.tags).toEqual({ 电影: 1, 国产剧: 1, 日漫: 1 });
-    // 评分桶：5 分 → 5~5.5
-    expect(data.buckets['5~5.5']).toBe(1);
-    expect(data.topRated.length).toBe(1);
+    expect(data.groups).toEqual({ 电影: 1, 剧集: 1, 动漫: 1, 其他: 1 });
+    expect(data.tags).toEqual({ 电影: 1, 国产剧: 1, 日漫: 1, 杂项: 1 });
+    // 评分桶：5 分 ×2 → 5~5.5
+    expect(data.buckets['5~5.5']).toBe(2);
+    expect(data.topRated.length).toBe(2);
     expect(data.topRated[0].name).toBe('A');
   });
 
@@ -127,7 +127,7 @@ describe('openAnalysisModal 弹窗', () => {
     vault.files.set('我的/影视/《A》.md', movieMd({ tags: ['电影'], '观影日期': '2025-06-01T20:00:00', 评分: 5 }));
     openAnalysisModal(makeApp(vault));
 
-    const overlay = document.body.querySelector('div[style*="z-index: 1200"]') as HTMLElement;
+    const overlay = document.body.querySelector('.bz-movie-report-overlay--1200') as HTMLElement;
     expect(overlay).not.toBeNull();
     const modal = overlay.querySelector(':scope > div') as HTMLElement;
     // 顶部 34px 避让由 .bz-win-mfs 统一提供（仅移动端真全屏），基样式不再自带（ticket 68 后续）
@@ -145,7 +145,7 @@ describe('openAnalysisModal 弹窗', () => {
     MockPlatform.isMobile = true;
     setSettingsProvider(() => ({ movieMobileDefaultFullscreen: true } as any));
     openAnalysisModal(makeApp(vault));
-    const overlay2 = document.body.querySelector('div[style*="z-index: 1200"]') as HTMLElement;
+    const overlay2 = document.body.querySelector('.bz-movie-report-overlay--1200') as HTMLElement;
     expect(overlay2).not.toBeNull();
     expect((overlay2.querySelector(':scope > div') as HTMLElement).classList.contains('bz-win-mfs')).toBe(true);
     closeAnalysis();
@@ -155,7 +155,7 @@ describe('openAnalysisModal 弹窗', () => {
   it('已打开再调用 → 关闭（切换语义）；点遮罩关闭', () => {
     const vault = new MockVault();
     openAnalysisModal(makeApp(vault));
-    const overlay = document.body.querySelector('div[style*="z-index: 1200"]') as HTMLElement;
+    const overlay = document.body.querySelector('.bz-movie-report-overlay--1200') as HTMLElement;
     expect(overlay).not.toBeNull();
     // 再开 → 关闭
     openAnalysisModal(makeApp(vault));
@@ -163,7 +163,7 @@ describe('openAnalysisModal 弹窗', () => {
 
     // 重开 → 点遮罩关闭
     openAnalysisModal(makeApp(vault));
-    const overlay2 = document.body.querySelector('div[style*="z-index: 1200"]') as HTMLElement;
+    const overlay2 = document.body.querySelector('.bz-movie-report-overlay--1200') as HTMLElement;
     expect(overlay2).not.toBeNull();
     overlay2.click();
     expect(overlay2.isConnected).toBe(false);
@@ -172,7 +172,7 @@ describe('openAnalysisModal 弹窗', () => {
   it('openMovieReport（bz-movie-report 命令回调）打开分析窗口', () => {
     const vault = new MockVault();
     openMovieReport(makeApp(vault));
-    const overlay = document.body.querySelector('div[style*="z-index: 1200"]') as HTMLElement;
+    const overlay = document.body.querySelector('.bz-movie-report-overlay--1200') as HTMLElement;
     expect(overlay).not.toBeNull();
     expect(overlay.textContent).toContain('观影数据分析');
     closeAnalysis();
