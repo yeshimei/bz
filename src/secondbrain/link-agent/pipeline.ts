@@ -2,13 +2,14 @@
  * 自动双链管线（ticket 111）：embedding 可达性门 → 增量索引 → 文献盒内向量近邻 Top-K →
  * core AI 裁判（ADR-0052 统一通道）→ 单侧写入 related。
  *
- * 流程对齐 spec `.scratch/secondbrain-link-agent/spec.md`「核心流程」②③④⑥：
+ * 流程对齐 spec `.scratch/secondbrain-link-agent/spec.md`「核心流程」②③④⑥（范围词按需求变更
+ * 泛化为 linkAgentScopes 可配置清单，缺省回退「文献盒」）：
  * - 探测短超时 ~1.5s（复用 secondBrainRemoteOllamaUrl/Ollama 客户端配置，移动端远程优先同 doRefresh 规则）；
  * - 不可达 → 入队（secondbrain_link_queue.json）；可达 → 就地完整管线；
  * - 裁判 prompt 指令前缀固定（命中供应商前缀缓存），强调「只链实质关联，存疑不链」；
  * - 写入幂等：related 已存在的链不重复添加；linkAgentMaxLinks > 0 时裁判提示附上限且写入侧截断；
  * - 队列消费：域初始化发现队列非空且服务可达即自动消费，完成后合并通知；
- * - 死链清理：文献盒各笔记 related 中指向不存在文件的条目移除；encrypt 锁定文件一律跳过。
+ * - 死链清理：关联范围（linkAgentScopes）各笔记 related 中指向不存在文件的条目移除；encrypt 锁定文件一律跳过。
  */
 import type { App, TFile } from 'obsidian';
 import { notice, notify, NoticeHandle } from '../../core/notice';
@@ -17,7 +18,8 @@ import { buildConfig, IS_MOBILE } from '../config';
 import { AI } from '../ai';
 import type { SearchHit } from '../vector-store';
 import {
-  LITERATURE_BOX,
+  LINK_AGENT_DEFAULT_SCOPE,
+  getLinkAgentScopes,
   LinkQueueItem,
   computeHash,
   enqueuePaths,
@@ -206,7 +208,7 @@ export class LinkAgent {
     return { status: 'done', created };
   }
 
-  /** 文献盒范围内向量近邻候选：全局大池 → 过滤文献盒/去自身 → 按 path 去重取最优 → Top-K */
+  /** 关联范围内向量近邻候选：全局大池 → 过滤 linkAgentScopes/去自身 → 按 path 去重取最优 → Top-K */
   async findCandidates(selfPath: string, content: string): Promise<SearchHit[]> {
     const topK = this.maxTopK;
     const cfg = buildConfig();
@@ -220,8 +222,9 @@ export class LinkAgent {
       return [];
     }
     const bestByPath = new Map<string, SearchHit>();
+    const scopes = getLinkAgentScopes();
     for (const hit of hits) {
-      if (!isUnderFolder(LITERATURE_BOX, hit.path)) continue;
+      if (!scopes.some((dir) => isUnderFolder(dir, hit.path))) continue;
       if (hit.path === selfPath) continue;
       if (!this.app.vault.getAbstractFileByPath(hit.path)) continue;
       const cur = bestByPath.get(hit.path);
@@ -406,7 +409,7 @@ export class LinkAgent {
   }
 
   /**
-   * 死链清理：解析文献盒各笔记 related，移除指向不存在文件的失效条目（非 wikilink 条目不动）。
+   * 死链清理：解析关联范围（linkAgentScopes，缺省回退「文献盒」）各笔记 related，移除指向不存在文件的失效条目（非 wikilink 条目不动）。
    * encrypt 域锁定文件一律跳过：保险箱锁定态无法区分「已删除」与「已加密」，整体跳过本次清理；
    * 解锁态下清单内路径视为存活。返回实际移除条数；有移除才通知（零变化静默）。
    */
@@ -457,8 +460,9 @@ export class LinkAgent {
     };
 
     let removedTotal = 0;
-    const boxFiles = mdFiles.filter((f) => isUnderFolder(LITERATURE_BOX, f.path));
-    for (const file of boxFiles) {
+    const scopes = getLinkAgentScopes();
+    const scopedFiles = mdFiles.filter((f) => scopes.some((dir) => isUnderFolder(dir, f.path)));
+    for (const file of scopedFiles) {
       let entries: string[];
       try {
         const fm = cache.getFileCache(file)?.frontmatter as Record<string, unknown> | undefined;

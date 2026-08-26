@@ -21,7 +21,6 @@ import { ReferencePanel } from './reference-panel';
 import { ChatPanel } from './chat-panel';
 import { MobilePanel } from './mobile-panel';
 import { LinkAgent } from './link-agent/pipeline';
-import { LITERATURE_BOX, isUnderFolder } from './link-agent/data';
 import { LinkAgentWatcher, startQueueConsumption } from './link-agent/watch';
 
 let appRef: App | null = null;
@@ -191,17 +190,13 @@ export function openSecondBrainChat(app: App): void {
 
 /**
  * 命令 bz-secondbrain-rebuild-links（ticket 111）：对当前打开笔记重跑一次关联
- * （正文大改后的手动兜底入口）。非文献盒笔记给出提示性通知；
- * embedding 不可达时入队待自动消费。
+ * （正文大改后的手动兜底入口）。手动触发即显式意图：不受 linkAgentScopes 范围限制，
+ * 任何笔记可跑（候选仍按 linkAgentScopes 过滤）；embedding 不可达时入队待自动消费。
  */
 export async function rebuildSecondBrainLinks(app: App): Promise<void> {
   const file = app.workspace.getActiveFile?.() as { path: string } | null;
   if (!file) {
     notice('请先打开一个笔记');
-    return;
-  }
-  if (!isUnderFolder(LITERATURE_BOX, file.path)) {
-    notice('当前笔记不在文献盒，自动双链仅处理文献盒内笔记');
     return;
   }
   if ((tryGetSettings() as any).linkAgentEnabled === false) {

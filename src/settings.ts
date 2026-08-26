@@ -206,9 +206,11 @@ export default interface BzSettings {
   secondBrainRemoteOllamaUrl: string;
 
   // ===== 🔗 第二大脑·自动双链管线（ticket 111，⚙️ 弹窗「自动双链」组）=====
-  /** 自动双链总开关：文献盒新笔记落盘时自动建立 related 双链（false 时无任何监听与写入） */
+  /** 自动双链总开关：关联范围新笔记落盘时自动建立 related 双链（false 时无任何监听与写入） */
   linkAgentEnabled: boolean;
-  /** 单篇候选数量（文献盒内向量近邻 Top-K） */
+  /** 关联范围：英文逗号分隔的 vault 内目录清单（风格同 aiAgentWatchedFolders），同时决定落盘监听与候选过滤；空值/缺省回退「文献盒」 */
+  linkAgentScopes: string;
+  /** 单篇候选数量（关联范围内向量近邻 Top-K） */
   linkAgentTopK: number;
   /** 每篇 related 写入上限；0 = 不限，由 AI 裁判自行决定（沿用复习域「0=不限制」惯例） */
   linkAgentMaxLinks: number;
@@ -429,6 +431,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
 
   // 自动双链管线（ticket 111）
   linkAgentEnabled: true,
+  linkAgentScopes: '文献盒',
   linkAgentTopK: 8,
   linkAgentMaxLinks: 0,
   linkAgentNotify: true,

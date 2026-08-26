@@ -10,7 +10,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { DEFAULT_SETTINGS } from '../../src/settings';
 import {
-  LITERATURE_BOX,
+  LINK_AGENT_DEFAULT_SCOPE,
   computeHash,
   dequeuePath,
   enqueuePaths,
@@ -21,20 +21,37 @@ import {
   normalizeRelatedEntry,
   parseJudgeOutput,
   parseRelatedEntries,
+  parseScopeList,
   planRemovals,
   pruneQueueByExists,
   toRelatedEntry,
 } from '../../src/secondbrain/link-agent/data';
 
 describe('自动双链·设置键默认值', () => {
-  it('DEFAULT_SETTINGS 五键齐备且取 spec 默认值', () => {
+  it('DEFAULT_SETTINGS 六键齐备且取 spec 默认值', () => {
     const s = DEFAULT_SETTINGS as any;
     expect(s.linkAgentEnabled).toBe(true);
+    expect(s.linkAgentScopes).toBe('文献盒');
     expect(s.linkAgentTopK).toBe(8);
     expect(s.linkAgentMaxLinks).toBe(0);
     expect(s.linkAgentNotify).toBe(true);
     expect(s.linkAgentAutoClean).toBe(true);
-    expect(LITERATURE_BOX).toBe('文献盒');
+    expect(LINK_AGENT_DEFAULT_SCOPE).toBe('文献盒');
+  });
+});
+
+describe('关联范围解析（linkAgentScopes，需求变更）', () => {
+  it('parseScopeList：逗号分隔/trim/去空；多目录保序', () => {
+    expect(parseScopeList('文献盒,卡片盒')).toEqual(['文献盒', '卡片盒']);
+    expect(parseScopeList(' 文献盒 , 卡片盒 , ,')).toEqual(['文献盒', '卡片盒']);
+    expect(parseScopeList('书库')).toEqual(['书库']);
+  });
+
+  it('空值/缺省回退「文献盒」', () => {
+    expect(parseScopeList(undefined)).toEqual(['文献盒']);
+    expect(parseScopeList(null)).toEqual(['文献盒']);
+    expect(parseScopeList('')).toEqual(['文献盒']);
+    expect(parseScopeList(' , ')).toEqual(['文献盒']);
   });
 });
 
