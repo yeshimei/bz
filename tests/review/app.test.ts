@@ -332,6 +332,7 @@ describe('applyReviewStyles', () => {
     document.body.innerHTML = '';
     setSettingsProvider(() => ({}) as any);
     (reviewApp as any).dataManager = null;
+    (reviewApp as any)._styledPaths = new Set(); // ticket 48：曾染色集合逐用例隔离
   });
 
   it('data-path 选择器 + 时间徽标（d/h/m）', async () => {
@@ -399,6 +400,42 @@ describe('applyReviewStyles', () => {
     expect(inner.style.color).toBe('');
     expect(inner.querySelector('.review-stage-badge')).toBeNull();
   });
+
+  it('ticket 48：changedFile 单文件路径——非条目节点不被触碰（他方颜色保持）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文'); // 非复习条目
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([]));
+    const treeItem = document.createElement('div');
+    treeItem.setAttribute('data-path', 'A.md');
+    const inner = document.createElement('div');
+    inner.className = 'tree-item-inner';
+    treeItem.appendChild(inner);
+    document.body.appendChild(treeItem);
+    inner.style.color = '#1890ff'; // 模拟他方设置的颜色
+    const app = makeApp(vault);
+    setApp(app);
+    await reviewApp.applyReviewStyles(app, vault.file('A.md') as any);
+    expect(inner.style.color).toBe('rgb(24, 144, 255)'); // 未被重置
+    expect(inner.querySelector('.review-stage-badge')).toBeNull();
+  });
+
+  it('ticket s1：结果卡文件名 XSS 转义（buildFailCard / buildPassCard）', () => {
+    const evil = { filePath: 'X.md', name: '<img src=x onerror=alert(1)>' } as any;
+    const results = { correct: 1, wrong: 0, total: 1 };
+    const failHtml = reviewApp.buildFailCard(evil, results, 'good');
+    expect(failHtml).toContain('&lt;img src=x onerror=alert(1)&gt;');
+    expect(failHtml).not.toContain('<img src=x onerror=alert(1)>');
+    // innerHTML 解析后不产生 img 元素
+    const div = document.createElement('div');
+    div.innerHTML = failHtml;
+    expect(div.querySelector('img')).toBeNull();
+    const passHtml = reviewApp.buildPassCard(evil, results, 'good', {});
+    expect(passHtml).toContain('&lt;img src=x onerror=alert(1)&gt;');
+    expect(passHtml).not.toContain('<img src=x onerror=alert(1)>');
+    const div2 = document.createElement('div');
+    div2.innerHTML = passHtml;
+    expect(div2.querySelector('img')).toBeNull();
+  });
 });
 
 describe('ticket 100：到期提醒 / 每日上限 / 间隔缩放', () => {
@@ -448,6 +485,66 @@ describe('ticket 100：到期提醒 / 每日上限 / 间隔缩放', () => {
     await reviewApp.checkOverdueAndNotify();
     expect(noticeSpy).toHaveBeenCalledTimes(1);
     expect(String(noticeSpy.mock.calls[0][0])).toContain('A');
+  });
+
+  it('ticket 58：到期提醒挂「去复习」action → 打开 newly 中最早逾期（不同到期日精确断言）', async () => {
+    const noticeSpy = vi.spyOn(await import('../../src/core/notice'), 'notify');
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    vault.files.set('B.md', '正文');
+    const now = new Date();
+    // A 最早到期（最紧迫），B 次之；本轮都属 newly
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      { id: '1', filePath: 'A.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() - 2 * 86400000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+      { id: '2', filePath: 'B.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() - 1 * 86400000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+    ]));
+    const app = makeApp(vault);
+    const openFile = vi.fn().mockResolvedValue(undefined);
+    (app.workspace as any).getLeaf = () => ({ openFile });
+    setApp(app);
+    setSettingsProvider(() => ({ enableAutoNotify: true } as any));
+    await reviewApp.checkOverdueAndNotify();
+    const opts = noticeSpy.mock.calls[0][1] as any;
+    expect(opts.action).toBeTruthy();
+    expect(opts.action.label).toBe('去复习'); // 无 emoji
+    expect(String(noticeSpy.mock.calls[0][0])).toContain('2 篇笔记到期待复习');
+    opts.action.onClick();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(openFile).toHaveBeenCalledTimes(1);
+    expect(openFile.mock.calls[0][0].path).toBe('A.md'); // 精确：newly 中最早逾期
+  });
+
+  it('ticket 58 修 #1：已通知的旧逾期不夺位——跳转目标取 newly 而非全逾集合', async () => {
+    const noticeSpy = vi.spyOn(await import('../../src/core/notice'), 'notify');
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    vault.files.set('B.md', '正文');
+    const now = new Date();
+    const seed = (rows: any[]) => vault.files.set(REVIEW_FILE_PATH, JSON.stringify(rows));
+    const aRow = { id: '1', filePath: 'A.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, lastReviewed: null, lastDifficulty: null, completed: false };
+    // 首轮：仅 A 逾期（最紧迫）；B 未逾期 → 通知 A
+    seed([{ ...aRow, nextReviewDate: new Date(now.getTime() - 2 * 86400000).toISOString() }]);
+    const app = makeApp(vault);
+    const openFile = vi.fn().mockResolvedValue(undefined);
+    (app.workspace as any).getLeaf = () => ({ openFile });
+    setApp(app);
+    setSettingsProvider(() => ({ enableAutoNotify: true } as any));
+    await reviewApp.checkOverdueAndNotify();
+    expect(String(noticeSpy.mock.calls[0][0])).toContain('A 到期待复习');
+    // 第二轮：A 仍逾期（已在已通知集合），B 变逾期且晚于 A → 通知 B；
+    // 全逾集合最早是 A（旧实现打开 A），修 #1 后必须打开 newly 中最早 = B
+    noticeSpy.mockClear();
+    seed([
+      { ...aRow, nextReviewDate: new Date(now.getTime() - 2 * 86400000).toISOString() },
+      { id: '2', filePath: 'B.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() - 1 * 86400000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+    ]);
+    await reviewApp.checkOverdueAndNotify();
+    expect(String(noticeSpy.mock.calls[0][0])).toContain('B 到期待复习');
+    const opts = noticeSpy.mock.calls[0][1] as any;
+    opts.action.onClick();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(openFile).toHaveBeenCalledTimes(1);
+    expect(openFile.mock.calls[0][0].path).toBe('B.md');
   });
 
   it('超 3 篇截断「，等 M 篇」；单篇「X 到期待复习」', async () => {

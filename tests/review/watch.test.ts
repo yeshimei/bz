@@ -7,7 +7,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { isUnderFolder, ReviewWatcher, __setAutoAddMergeMsForTests } from '../../src/review/watch';
+import { isUnderFolder, ReviewWatcher, __setAutoAddMergeMsForTests, __setRenameMergeMsForTests } from '../../src/review/watch';
 import { ReviewDataManager, REVIEW_FILE_PATH } from '../../src/review/data';
 
 function makeApp(vault: MockVault) {
@@ -231,6 +231,61 @@ describe('ReviewWatcher 自动加入', () => {
     w.onVaultRename({ path: 'X-new.md', extension: 'md', basename: 'X-new' } as any, 'X.md');
     await new Promise((r) => setTimeout(r, 30));
     expect((await dm.loadItems()).some((i) => i.filePath === 'X-new.md')).toBe(false);
+  });
+
+  it('ticket n2：批量改名通知合并——窗口内多条一条；窗口外单条原文案；路径即时更新', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/复习/A.md', '正文');
+    vault.files.set('我的/复习/B.md', '正文');
+    const now = new Date();
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      { id: '1', filePath: '我的/复习/A.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() + 60000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+      { id: '2', filePath: '我的/复习/B.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() + 60000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+    ]));
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    setSettingsProvider(() => ({ reviewWatchedFolders: ['我的/复习'], reviewExcludedNotes: [] } as any));
+    const w = new ReviewWatcher(app, dm);
+    __setRenameMergeMsForTests(50); // 测试注入短窗口
+    // 窗口内连续两篇改名 → 一条合并通知；路径即时更新（不等窗口；串行触发避免并发读盘覆盖）
+    w.onVaultRename({ path: '我的/复习/A2.md', extension: 'md', basename: 'A2' } as any, '我的/复习/A.md');
+    await new Promise((r) => setTimeout(r, 30));
+    w.onVaultRename({ path: '我的/复习/B2.md', extension: 'md', basename: 'B2' } as any, '我的/复习/B.md');
+    await new Promise((r) => setTimeout(r, 30));
+    const items = await dm.loadItems();
+    expect(items.some((i) => i.filePath === '我的/复习/A2.md')).toBe(true);
+    expect(items.some((i) => i.filePath === '我的/复习/B2.md')).toBe(true);
+    await new Promise((r) => setTimeout(r, 80));
+    expect(lastNoticeText()).toContain('已更新 2 篇笔记的复习路径');
+    // 窗口外单篇 → 原文案
+    __setRenameMergeMsForTests(50);
+    w.onVaultRename({ path: '我的/复习/A3.md', extension: 'md', basename: 'A3' } as any, '我的/复习/A2.md');
+    await new Promise((r) => setTimeout(r, 80));
+    expect(lastNoticeText()).toContain('已更新复习计划路径');
+    // 计划外文件改名 → 不产生通知
+    const before = document.querySelectorAll('.bz-notice').length;
+    w.onVaultRename({ path: 'X2.md', extension: 'md', basename: 'X2' } as any, 'X.md');
+    await new Promise((r) => setTimeout(r, 80));
+    expect(document.querySelectorAll('.bz-notice').length).toBe(before);
+  });
+
+  it('ticket 57：removeExcludedNote 单条解除（其余保留；不存在路径幂等）', async () => {
+    const vault = new MockVault();
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    const settings = makeSettings();
+    settings.reviewWatchedFolders = ['我的/复习'];
+    settings.reviewExcludedNotes = ['我的/复习/A.md', '我的/复习/B.md'];
+    setSettingsProvider(() => settings as any);
+    const w = new ReviewWatcher(app, dm);
+
+    await w.removeExcludedNote('我的/复习/A.md');
+    expect(settings.reviewExcludedNotes).toEqual(['我的/复习/B.md']);
+    // 不存在路径 → 幂等不动
+    await w.removeExcludedNote('我的/复习/C.md');
+    expect(settings.reviewExcludedNotes).toEqual(['我的/复习/B.md']);
   });
 
   it('removeWatchedFolder（ticket 099 追加）：移除目录 + 清空其下排除记录（目录外保留）；返回清理条数', async () => {
