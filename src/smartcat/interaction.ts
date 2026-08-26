@@ -492,13 +492,24 @@ export class InteractionManager {
   }
 }
 
-/** 移动端输入法适配（原 MobileInputAdapter 简版：输入框聚焦时把猫挪到可视区上方） */
+/** 移动端输入法适配（UX 36 修订：焦点劫持范围收敛 + 失焦保留拖拽位置）——
+ * 原版 document 级 focusin/focusout 对所有输入框生效（任意外部输入聚焦都把猫挪到可视区上方），
+ * 且失焦时清空全部内联样式（把用户拖拽过的 left/top 一并抹掉，猫跳回默认位）。
+ * 现改为：
+ * ① 范围收敛：只有焦点落在小橘自家面板（聊天/设置/数据面板）内的输入才抬猫，
+ *   其余全局输入（搜索框/他域设置等）不再干预；
+ * ② 位置记忆：抬升前捕获当前内联 left/top（即拖拽位置），输入法收起/失焦后原样复原——
+ *   不重置猫的拖拽位置（未拖拽过为空串 → 走样式表默认位）。 */
 export class MobileInputAdapter {
   private isInputActive = false;
   private isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
   private boundFocusIn: (e: Event) => void;
   private boundFocusOut: (e: Event) => void;
   private boundVisualResize: () => void;
+  /** 抬升前捕获的内联位置记忆（left/top 原值；visualViewport resize 重算不覆盖） */
+  private savedPosition: { left: string; top: string } | null = null;
+  /** 失焦复原延时句柄（300ms 内重新聚焦 → 取消复原，防输入法抖动/焦点跳转竞态） */
+  private focusOutTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private catContainer: HTMLElement) {
     this.boundFocusIn = this.handleFocusIn.bind(this);
@@ -526,15 +537,33 @@ export class MobileInputAdapter {
     return element && element.isContentEditable;
   }
 
+  /** 焦点劫持范围收敛（UX 36）：只处理小橘自家面板内的输入——
+   * 聊天面板 #chat-panel / 设置弹窗 #bz-settings-modal-popup / 数据面板 #smartcat-dashboard-panel */
+  private isWithinOwnPanel(element: any): boolean {
+    if (!element || typeof element.closest !== 'function') return false;
+    return !!element.closest('#chat-panel, #bz-settings-modal-popup, #smartcat-dashboard-panel');
+  }
+
   private handleFocusIn(event: Event): void {
     if (!this.shouldHandleElement(event.target)) return;
+    if (!this.isWithinOwnPanel(event.target)) return; // 范围收敛：非小橘面板输入不抬猫
+    // 竞态：上次失焦的复原延时未到已重新聚焦（输入法抖动/焦点跳转）→ 取消复原保持抬升态
+    if (this.focusOutTimer) {
+      clearTimeout(this.focusOutTimer);
+      this.focusOutTimer = null;
+    }
     this.isInputActive = true;
     this.adjustCatPosition();
   }
 
-  private handleFocusOut(): void {
+  private handleFocusOut(event: Event): void {
     if (!this.isInputActive) return;
-    setTimeout(() => {
+    // 焦点仍在自家面板内（输入框之间跳转）→ 不复原
+    const related = (event as any).relatedTarget;
+    if (related && this.shouldHandleElement(related) && this.isWithinOwnPanel(related)) return;
+    if (this.focusOutTimer) clearTimeout(this.focusOutTimer);
+    this.focusOutTimer = setTimeout(() => {
+      this.focusOutTimer = null;
       this.isInputActive = false;
       this.restoreOriginalPosition();
     }, 300);
@@ -542,6 +571,10 @@ export class MobileInputAdapter {
 
   private adjustCatPosition(): void {
     if (!this.isInputActive) return;
+    // 位置记忆：抬升前捕获当前内联 left/top（用户拖拽位置）；visualViewport resize 重算时只捕一次
+    if (this.savedPosition === null) {
+      this.savedPosition = { left: this.catContainer.style.left, top: this.catContainer.style.top };
+    }
     const safeMargin = 20;
     const viewportHeight = (window as any).visualViewport ? (window as any).visualViewport.height : window.innerHeight;
     const catRect = this.catContainer.getBoundingClientRect();
@@ -556,13 +589,20 @@ export class MobileInputAdapter {
   }
 
   private restoreOriginalPosition(): void {
-    // 还原为右下角默认位（styles.css .bz-sc-cat 承担静态定位；此处清内联）
+    // 只复位抬升调整（position/transform/zIndex/transition）；left/top 恢复为抬升前捕获值——
+    // 输入法收起不重置猫的拖拽位置（未拖拽过为空串 → 样式表默认位不变）
     this.catContainer.style.position = '';
-    this.catContainer.style.top = '';
-    this.catContainer.style.left = '';
     this.catContainer.style.transform = '';
     this.catContainer.style.zIndex = '';
     this.catContainer.style.transition = '';
+    if (this.savedPosition) {
+      this.catContainer.style.left = this.savedPosition.left;
+      this.catContainer.style.top = this.savedPosition.top;
+      this.savedPosition = null;
+    } else {
+      this.catContainer.style.left = '';
+      this.catContainer.style.top = '';
+    }
   }
 
   destroy(): void {
@@ -570,6 +610,10 @@ export class MobileInputAdapter {
     document.removeEventListener('focusout', this.boundFocusOut);
     if ((window as any).visualViewport) {
       (window as any).visualViewport.removeEventListener('resize', this.boundVisualResize);
+    }
+    if (this.focusOutTimer) {
+      clearTimeout(this.focusOutTimer);
+      this.focusOutTimer = null;
     }
   }
 }
