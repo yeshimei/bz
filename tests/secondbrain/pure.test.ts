@@ -3,10 +3,11 @@
  * 第二大脑纯函数测试（ticket 103 重写对齐）：chunk/vptree/text-search/tfidf/context/parallel
  * 口径要点：smartChunk 空行分段聚合（非全文句界顺序拼接）；vptree_search 无累加器新签名；
  * searchTextIndex(query, notes, topK) 直接评分扫描；getCurrentContext 句界含分号/省略号。
+ * ticket 110：stripFrontmatter/embedChunks——YAML 头不进任何 chunk、标题并入首块。
  */
 import { describe, it, expect } from 'vitest';
 import { euclideanSq, normalizeVec, vptree_build, vptree_search } from '../../src/secondbrain/vptree';
-import { smartChunk, CHUNK_SIZE } from '../../src/secondbrain/chunk';
+import { smartChunk, CHUNK_SIZE, stripFrontmatter, embedChunks, noteTitleFromPath } from '../../src/secondbrain/chunk';
 import { STOP_WORDS, extractTerms, searchTextIndex } from '../../src/secondbrain/text-search';
 import { TFIDF, TFIDF_STOP_WORDS } from '../../src/secondbrain/tfidf';
 import { getCurrentContext } from '../../src/secondbrain/context';
@@ -45,6 +46,54 @@ describe('smartChunk', () => {
     expect(smartChunk('', 50)).toEqual([]);
     expect(smartChunk('  \n\n   ', 50)).toEqual([]);
     expect(smartChunk('短文本', 50)).toEqual([]);
+  });
+});
+
+describe('stripFrontmatter / embedChunks（ticket 110 切块剥离 frontmatter）', () => {
+  const FM = '---\nreviewStart: 2026-08-01\nreviewStage: 3\nurl: https://example.com/post\n---\n';
+  const b1 = '记忆依据图式构建。'.repeat(15); // 135 字：单独成块
+  const b2 = '实验证据支持这一结论。'.repeat(12); // 132 字：与 b1 聚合超 CHUNK_SIZE → 独立成块
+
+  it('stripFrontmatter：剥去开头 --- 界定块；未闭合/非 --- 开头原样返回；容忍 CRLF 与文末无换行闭合', () => {
+    expect(stripFrontmatter(`${FM}正文第一段。`)).toBe('正文第一段。');
+    expect(stripFrontmatter(`---\na: 1\n---\n\n正文`)).toBe('\n正文'); // 保留正文前空行结构
+    // 未闭合（如首行分隔线 + 后文无独占行 ---）：不视为 frontmatter
+    expect(stripFrontmatter('---\n甲乙丙丁\n\n正文内容')).toBe('---\n甲乙丙丁\n\n正文内容');
+    expect(stripFrontmatter('普通正文没有头部')).toBe('普通正文没有头部');
+    expect(stripFrontmatter('---\na: 1\n---')).toBe(''); // 闭合 --- 在文末（无换行）
+    expect(stripFrontmatter('---\r\na: 1\r\n---\r\n正文')).toBe('正文');
+  });
+
+  it('embedChunks：YAML 头与样板字段不进任何 chunk（验收 a）', () => {
+    const chunks = embedChunks(`${FM}${b1}\n\n${b2}`, '幽灵之战', 10);
+    expect(chunks).toHaveLength(2);
+    for (const c of chunks) {
+      expect(c).not.toContain('reviewStart');
+      expect(c).not.toContain('reviewStage');
+      expect(c).not.toContain('https://example.com');
+      expect(c).not.toContain('---');
+    }
+    expect(chunks[0]).toContain(b1);
+    expect(chunks[1]).toBe(b2);
+  });
+
+  it('embedChunks：笔记标题并入首块保留主题信号（验收 b）', () => {
+    const chunks = embedChunks(`${FM}${b1}\n\n${b2}`, '幽灵之战', 10);
+    expect(chunks[0].startsWith('幽灵之战\n')).toBe(true);
+    expect(chunks[0]).toContain(b1); // 标题只加前缀，不挤掉正文
+    // 无 frontmatter 的普通笔记同样带标题
+    expect(embedChunks('单一短块的正文内容足够长了吧。', '短卡', 10)[0].startsWith('短卡\n')).toBe(true);
+  });
+
+  it('embedChunks：纯 frontmatter 无正文 → 返回 [] 不入索引；短正文兜底截断块同样带标题', () => {
+    expect(embedChunks(FM, '任意标题', 10)).toEqual([]);
+    expect(embedChunks('微短正文', '短卡', 50)).toEqual(['短卡\n微短正文']);
+  });
+
+  it('noteTitleFromPath：子目录取 basename 去 .md', () => {
+    expect(noteTitleFromPath('卡片盒/次卡片盒/幽灵之战：记忆依据图式构建.md')).toBe('幽灵之战：记忆依据图式构建');
+    expect(noteTitleFromPath('README.md')).toBe('README');
+    expect(noteTitleFromPath('我的/日记/2026-08-01.md')).toBe('2026-08-01');
   });
 });
 

@@ -1,8 +1,8 @@
 // @vitest-environment node
 /**
- * 第二大脑 VectorStore 测试（ticket 103 重写对齐）：
- * meta v8 与数据文件路径换代（storagePath/secondbrain_*）、白名单过滤、增量刷新与
- * 删除后合并写回（非末尾删除不错位回归）、批量嵌入降级、检索公式 cos=max(0,1−d²/2)。
+ * 第二大脑 VectorStore 测试（ticket 103 重写对齐；ticket 110 起 meta v9）：
+ * 数据文件路径换代（storagePath/secondbrain_*）、版本不符自动重建（v8→v9）、白名单过滤、
+ * 增量刷新与删除后合并写回（非末尾删除不错位回归）、批量嵌入降级、检索公式 cos=max(0,1−d²/2)。
  * ollama 模块经 vi.mock 替身（不碰网络），vault.adapter 用内存 Map 假体。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -131,7 +131,7 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
     });
   }
 
-  it('数据文件路径换代：storagePath 下 secondbrain_meta.json / secondbrain_vectors.vec，版本 8 往返', async () => {
+  it('数据文件路径换代：storagePath 下 secondbrain_meta.json / secondbrain_vectors.vec，当前版本往返', async () => {
     const vault = new MockVault();
     vault.files.set('我的/A.md', '第一段内容足够长可以成块。第二段内容也同样足够长可以成块。');
     const { adapter, binary } = makeAdapter(vault);
@@ -140,7 +140,7 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
     const vs = new VectorStore(app as any);
 
     await vs.load(); // 文件不存在 → 空库
-    expect(vs.meta.version).toBe(8);
+    expect(vs.meta.version).toBe(9);
     mockBatchEmbed({});
     await vs.refresh();
 
@@ -148,7 +148,7 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
     expect(vault.files.has(META_PATH)).toBe(true);
     expect(binary.has(VEC_PATH)).toBe(true);
     const meta = JSON.parse(vault.files.get(META_PATH)!);
-    expect(meta.version).toBe(8);
+    expect(meta.version).toBe(9);
     expect(meta._dim).toBe(2);
     expect(Object.keys(meta.notes)).toEqual(['我的/A.md']);
 
@@ -160,22 +160,41 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
     expect(vs2.vectors.length).toBe(2);
   });
 
-  it('load：version≠8 → 重置为空库且不读 .vec（v7→v8 首载触发重建）', async () => {
+  it('load：version≠9 → 重置为空库且不读 .vec；下次 refresh 全量重建且新块无 YAML 头、首块带标题（v8→v9，ticket 110）', async () => {
     const vault = new MockVault();
+    const fm = '---\nreviewStart: 2026-08-01\nreviewStage: 2\n---\n';
+    const body = '记忆依据图式构建的正文内容足够长可以成块入库使用。';
+    vault.files.set('我的/幽灵之战.md', fm + body);
     vault.files.set(
       META_PATH,
-      JSON.stringify({ version: 7, notes: { 'x.md': { mtime: 1, chunks: [{ text: '旧' }] } }, _dim: 3 })
+      JSON.stringify({ version: 8, notes: { 'x.md': { mtime: 1, chunks: [{ text: '旧' }] } }, _dim: 3 })
     );
     const { adapter, binary } = makeAdapter(vault);
     binary.set(VEC_PATH, vecBuffer([[9, 9]], 2)); // 若被读取会破坏断言
-    const app = makeApp(vault, adapter);
+    const app = makeApp(vault, adapter, { '我的/幽灵之战.md': 1 });
     setApp(app as any);
     const vs = new VectorStore(app as any);
     await vs.load();
-    expect(vs.meta.version).toBe(8);
-    expect(vs.meta.notes).toEqual({});
+    expect(vs.meta.version).toBe(9);
+    expect(vs.meta.notes).toEqual({}); // v8 旧条目不复活
     expect(vs.dim).toBe(0);
     expect(vs.vectors.length).toBe(0); // 提前 return，loadVectors 未执行
+
+    // 版本重置后的下一轮刷新即全量重建路径：全部文件重嵌，YAML 头与样板字段不入向量文本
+    const embedded: string[] = [];
+    vi.mocked(getEmbeddingsBatch).mockImplementation(async (texts) => {
+      embedded.push(...texts);
+      return texts.map(() => [0.5, 0.5]);
+    });
+    await vs.refresh();
+    expect(Object.keys(vs.meta.notes)).toEqual(['我的/幽灵之战.md']);
+    expect(embedded).toHaveLength(1);
+    expect(embedded[0]).not.toContain('reviewStart');
+    expect(embedded[0]).not.toContain('---');
+    expect(embedded[0]).toContain(body);
+    expect(embedded[0].startsWith('幽灵之战\n')).toBe(true); // 标题信号在首块
+    const meta = JSON.parse(vault.files.get(META_PATH)!);
+    expect(meta.notes['我的/幽灵之战.md'].chunks[0].text).toBe(embedded[0]); // meta 存的即嵌入文本
   });
 
   it('refresh：ALLOW_PATHS 目录前缀/全等过滤；meta 只存 text、向量只进 .vec', async () => {
@@ -216,12 +235,13 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
     const app = makeApp(vault, adapter, mtimes);
     setApp(app as any);
     const vs = new VectorStore(app as any);
+    // ticket 110 起首块带标题前缀（<basename>\n<原文>），第二块及以后不带；嵌入替身按最终块文本查表
     const EMBED: Record<string, number[]> = {
-      [A1]: [1, 0],
+      ['A\n' + A1]: [1, 0],
       [A2]: [0.9, 0.1],
-      [B1]: [0.5, 0.5],
+      ['B\n' + B1]: [0.5, 0.5],
       [B2]: [0.6, 0.4],
-      [C1]: [0.2, 0.8],
+      ['C\n' + C1]: [0.2, 0.8],
       [C2]: [0.7, 0.7],
     };
     const embeddedTexts: string[] = [];
@@ -230,13 +250,13 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
     await vs.load();
     await vs.refresh();
     expectClose(parseVec(binary).rows, [
-      ...EMBED[A1], ...EMBED[A2], ...EMBED[B1], ...EMBED[B2], ...EMBED[C1], ...EMBED[C2],
+      ...EMBED['A\n' + A1], ...EMBED[A2], ...EMBED['B\n' + B1], ...EMBED[B2], ...EMBED['C\n' + C1], ...EMBED[C2],
     ]);
 
     // 第二轮：删除中间文件 B，改 C 触发刷新；A 不变
     const NC1 = '癸'.repeat(130);
     const NC2 = '壬'.repeat(130);
-    EMBED[NC1] = [-1, 0];
+    EMBED['C\n' + NC1] = [-1, 0];
     EMBED[NC2] = [0, -1];
     vault.files.delete('我的/B.md');
     vault.files.set('我的/C.md', `${NC1}。${NC2}。`);
@@ -246,9 +266,9 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
 
     const meta = JSON.parse(vault.files.get(META_PATH)!);
     expect(Object.keys(meta.notes)).toEqual(['我的/A.md', '我的/C.md']); // B 条目已清理
-    expect(embeddedTexts.every((t) => t === NC1 || t === NC2)).toBe(true); // A 未被重嵌
+    expect(embeddedTexts.every((t) => t === 'C\n' + NC1 || t === NC2)).toBe(true); // A 未被重嵌
     // 关键回归：未变的 A 按「删除前」源偏移拷贝，两段数值仍在正确位置（不错位到 B 的旧槽位）
-    expectClose(parseVec(binary).rows, [...EMBED[A1], ...EMBED[A2], -1, 0, 0, -1]);
+    expectClose(parseVec(binary).rows, [[1, 0], [0.9, 0.1], -1, 0, 0, -1].flat());
   });
 
   it('refresh：仅清理失效条目也必须落盘并提示数量（旧版提前 return 缺陷已修）', async () => {
@@ -257,7 +277,7 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
     vault.files.set(
       META_PATH,
       JSON.stringify({
-        version: 8,
+        version: 9,
         notes: {
           '我的/A.md': { mtime: 1, chunks: [{ text: 't1' }] },
           '我的/Ghost.md': { mtime: 1, chunks: [{ text: 'g1' }, { text: 'g2' }] },
@@ -287,7 +307,7 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
     vault.files.set('我的/A.md', '内容不重要不会读。');
     vault.files.set(
       META_PATH,
-      JSON.stringify({ version: 8, notes: { '我的/A.md': { mtime: 5, chunks: [{ text: 't' }] } }, _dim: 2 })
+      JSON.stringify({ version: 9, notes: { '我的/A.md': { mtime: 5, chunks: [{ text: 't' }] } }, _dim: 2 })
     );
     const { adapter, binary } = makeAdapter(vault);
     // 健康库：meta 与 .vec 一致（ticket 107 起「meta 有条目但向量缺失」会触发全量重建自愈，不再「已最新」）
@@ -316,7 +336,7 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
     vault.files.set('其他/X.md', '白名单外文件');
     vault.files.set(
       META_PATH,
-      JSON.stringify({ version: 8, notes: { '我的/A.md': { mtime: 1, chunks: [{ text: 't' }] } }, _dim: 2 })
+      JSON.stringify({ version: 9, notes: { '我的/A.md': { mtime: 1, chunks: [{ text: 't' }] } }, _dim: 2 })
     );
     const { adapter, binary } = makeAdapter(vault);
     binary.set(VEC_PATH, vecBuffer([[1, 0]], 2));
@@ -352,17 +372,17 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
     const vs = new VectorStore(app as any);
     await vs.load();
 
-    // 批量接口按文本隔离：G 的批失败（触发逐条回退），A 的批正常
+    // 批量接口按文本隔离：G 的批失败（触发逐条回退），A 的批正常（首块带标题前缀）
     vi.mocked(getEmbeddingsBatch).mockImplementation(async (texts: string[]) => {
-      if (texts.includes(G1)) throw new Error('G 批量失败');
-      return texts.map((t) => (t === A1 ? [1, 0] : [0, 0.9]));
+      if (texts.some((t) => t.endsWith(G1))) throw new Error('G 批量失败');
+      return texts.map((t) => (t === 'A\n' + A1 || t === A1 ? [1, 0] : [0, 0.9]));
     });
     vi.mocked(getEmbedding).mockRejectedValue(new Error('单条也失败')); // G 回退全败
 
     await vs.refresh();
     const meta = JSON.parse(vault.files.get(META_PATH)!);
     expect(Object.keys(meta.notes)).toEqual(['我的/A.md']); // 全败文件条目删除
-    expect(meta.notes['我的/A.md'].chunks).toEqual([{ text: A1 }, { text: A2 }]);
+    expect(meta.notes['我的/A.md'].chunks).toEqual([{ text: 'A\n' + A1 }, { text: A2 }]); // 首块带标题（ticket 110）
     expectClose(parseVec(binary).rows, [1, 0, 0, 0.9]);
   });
 
@@ -382,7 +402,7 @@ describe('VectorStore（v8 元数据与增量刷新）', () => {
     vi.mocked(getEmbedding).mockResolvedValue([1, 0]);
     await expect(vs.refresh()).resolves.toBeUndefined();
     const meta = JSON.parse(vault.files.get(META_PATH)!);
-    expect(meta.notes['我的/A.md'].chunks).toEqual([{ text: S1 }, { text: S2 }]);
+    expect(meta.notes['我的/A.md'].chunks).toEqual([{ text: 'A\n' + S1 }, { text: S2 }]); // 首块带标题（ticket 110）
     expectClose(parseVec(binary).rows, [1, 0, 1, 0]);
   });
 });

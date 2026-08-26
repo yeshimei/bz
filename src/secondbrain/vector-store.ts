@@ -1,6 +1,6 @@
 /**
  * 第二大脑 VectorStore（ticket 103；对齐 QA 闪念.js L442-745）
- * meta v8 + secondbrain_vectors.vec（uint32LE dim 头 + float32 平铺；行序 = meta.notes 键序 × chunks）。
+ * meta v9 + secondbrain_vectors.vec（uint32LE dim 头 + float32 平铺；行序 = meta.notes 键序 × chunks）。
  *
  * 对齐要点：
  * - VP-Tree 构建缓存（{dim,count,noteCount} 键）+ 归一化一次性预存；检索 cos = max(0, 1 − d²/2)，score^0.35 锐化；
@@ -14,18 +14,21 @@
  * ticket 103 修复 QA/bz 同源缺陷两处（Q3=B 用户拍板，冻结描述随 ADR 修订）：
  * ① 仅删除文件时提前 return 跳过落盘 → 删除也持久化（紧凑重排后重写 meta+vec；白名单清空同样生效）；
  * ② 旧向量段偏移按「删除前」完整键序计算（原实现用删除后键序拷贝删除前布局，非末尾删除会错位）。
+ * ticket 110：切块剥离 frontmatter（YAML 样板不进 embedding 文本）+ 笔记标题并入首块；
+ * meta v8→v9，旧库经 load() 版本不符路径自动清空、下次 refresh 全量重建（一次性 re-embed，桌面执行）。
  */
 import type { App, TFile } from 'obsidian';
 import { buildConfig, IS_MOBILE } from './config';
 import { MobileBuffer } from './binary';
-import { CHUNK_SIZE, smartChunk } from './chunk';
+import { embedChunks, noteTitleFromPath } from './chunk';
 import { euclideanSq, normalizeVec, vptree_build, vptree_search, VPNode, Vec } from './vptree';
 import { parallelMap } from './parallel';
 import { TFIDF } from './tfidf';
 import { searchTextIndex } from './text-search';
 import { checkRemoteOllama, EMBED_BATCH_SIZE, getEmbedding, getEmbeddingsBatch } from './ollama';
 
-const VECTOR_STORE_VERSION = 8;
+// v8→v9（ticket 110）：切块剥离 frontmatter + 标题入首块——旧库版本不符走 load() 自动重建
+const VECTOR_STORE_VERSION = 9;
 
 export interface NoteEntry {
   mtime: number;
@@ -308,8 +311,8 @@ export class VectorStore {
     for (const file of toProcess) {
       try {
         const content = await this.app.vault.read(file);
-        const chunks = smartChunk(content, minChunk);
-        if (chunks.length === 0 && content.trim().length > 0) chunks.push(content.trim().slice(0, CHUNK_SIZE));
+        // ticket 110：frontmatter 剥离后切块、标题并入首块（空正文兜底截断收口在 embedChunks 内）
+        const chunks = embedChunks(content, noteTitleFromPath(file.path), minChunk);
         fileChunksMap.set(file.path, chunks.map(() => null));
         chunks.forEach((text, idx) => globalTasks.push({ filePath: file.path, chunkIdx: idx, text }));
       } catch (err) {

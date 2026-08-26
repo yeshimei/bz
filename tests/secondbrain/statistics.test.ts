@@ -10,7 +10,7 @@ import { buildSourceTree, computeStats, fmtCompact } from '../../src/secondbrain
 import type { SecondBrainMeta } from '../../src/secondbrain/vector-store';
 
 function meta(notes: Record<string, { mtime: number; chunks: { text: string }[] }>): SecondBrainMeta {
-  return { version: 8, notes, _dim: 2 };
+  return { version: 9, notes, _dim: 2 };
 }
 
 describe('buildSourceTree（ticket 108 来源分布树）', () => {

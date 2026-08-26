@@ -110,7 +110,7 @@ describe('VectorStore 补测（load 异常分支）', () => {
     setApp(app as any);
     const vs = new VectorStore(app as any);
     await vs.load();
-    expect(vs.meta.version).toBe(8);
+    expect(vs.meta.version).toBe(9);
     expect(vs.meta.notes).toEqual({});
     expect(vs.dim).toBe(0);
   });
@@ -132,11 +132,11 @@ describe('VectorStore 补测（load 异常分支）', () => {
     expect(vs.dim).toBe(0);
   });
 
-  it('version=8 正常载入：meta 条目与 .vec 行恢复', async () => {
+  it('version=9 正常载入：meta 条目与 .vec 行恢复', async () => {
     const vault = new MockVault();
     vault.files.set(
       META_PATH,
-      JSON.stringify({ version: 8, notes: { 'a.md': { mtime: 1, chunks: [{ text: 't1' }, { text: 't2' }] } }, _dim: 2 })
+      JSON.stringify({ version: 9, notes: { 'a.md': { mtime: 1, chunks: [{ text: 't1' }, { text: 't2' }] } }, _dim: 2 })
     );
     const { adapter, binary } = makeAdapter(vault);
     binary.set(VEC_PATH, vecBuffer([[1, 0], [0, 1]], 2));
@@ -211,11 +211,13 @@ describe('VectorStore 补测（refresh 边界）', () => {
     const vs = new VectorStore(app as any);
     await vs.load();
 
-    vi.mocked(getEmbeddingsBatch).mockImplementation(async (texts) => texts.map((t) => (t === short ? [0.25, 0.75] : [0.5, 0.5])));
+    vi.mocked(getEmbeddingsBatch).mockImplementation(async (texts) =>
+      texts.map((t) => (t === 'S\n' + short ? [0.25, 0.75] : [0.5, 0.5]))
+    );
     await vs.refresh(); // 不传回调 → 默认 noop 不抛错
 
     const meta = JSON.parse(vault.files.get(META_PATH)!);
-    expect(meta.notes['我的/S.md'].chunks).toEqual([{ text: short }]);
+    expect(meta.notes['我的/S.md'].chunks).toEqual([{ text: 'S\n' + short }]); // 首块带标题（ticket 110）
     const rows = parseRows(binary);
     expect(rows.length).toBe(2);
     expect(rows[0]).toBeCloseTo(0.25, 5);

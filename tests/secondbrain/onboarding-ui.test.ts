@@ -190,7 +190,7 @@ describe('第二大脑首用引导（ticket 107）', () => {
     vault.files.set('我的/A.md', '旧内容不会被重读因为 mtime 一致。');
     vault.files.set(
       META_PATH,
-      JSON.stringify({ version: 8, notes: { '我的/A.md': { mtime: 5, chunks: [{ text: 't' }] } }, _dim: 2 })
+      JSON.stringify({ version: 9, notes: { '我的/A.md': { mtime: 5, chunks: [{ text: 't' }] } }, _dim: 2 })
     );
     const { adapter, binary } = makeAdapter(vault);
     const header = new Uint8Array(4);
@@ -238,7 +238,7 @@ describe('第二大脑首用引导（ticket 107）', () => {
     vault.files.set('我的/A.md', '旧内容不会重读因为 mtime 不一致会触发重嵌。');
     vault.files.set(
       META_PATH,
-      JSON.stringify({ version: 8, notes: { '我的/A.md': { mtime: 5, chunks: [{ text: 't' }] } }, _dim: 2 })
+      JSON.stringify({ version: 9, notes: { '我的/A.md': { mtime: 5, chunks: [{ text: 't' }] } }, _dim: 2 })
     );
     const { adapter, binary } = makeAdapter(vault);
     const header = new Uint8Array(4);
@@ -276,7 +276,7 @@ describe('第二大脑首用引导（ticket 107）', () => {
     vault.files.set('我的/A.md', '内容 A。');
     vault.files.set(
       META_PATH,
-      JSON.stringify({ version: 8, notes: { '我的/A.md': { mtime: 5, chunks: [{ text: 't' }] } }, _dim: 2 })
+      JSON.stringify({ version: 9, notes: { '我的/A.md': { mtime: 5, chunks: [{ text: 't' }] } }, _dim: 2 })
     );
     const { adapter, binary } = makeAdapter(vault);
     const header = new Uint8Array(4);
@@ -306,7 +306,7 @@ describe('第二大脑首用引导（ticket 107）', () => {
     vault.files.set('我的/A.md', '足够长的单一文本块内容用于重建流程。');
     vault.files.set(
       META_PATH,
-      JSON.stringify({ version: 8, notes: { '我的/A.md': { mtime: 3, chunks: [{ text: '旧' }] } }, _dim: 2 })
+      JSON.stringify({ version: 9, notes: { '我的/A.md': { mtime: 3, chunks: [{ text: '旧' }] } }, _dim: 2 })
     );
     const { adapter, binary } = makeAdapter(vault);
     const header = new Uint8Array(4);
