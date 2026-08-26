@@ -541,6 +541,7 @@ button.news-close-btn {
   line-height: 1.5;
   word-wrap: break-word;
   max-width: 100%;
+  white-space: pre-line; /* 消息内 \n 换行按行渲染（B6：删除确认「此操作不可撤销」独立成行） */
 }
 #__shared_confirm_popup__ .confirm-actions {
   display: flex;
@@ -1417,6 +1418,17 @@ button.news-close-btn {
 }
 
 /* ==================== 入口页域样式（src/launcher/styles.css） ==================== */
+/* ---- e3 z 家族〔冻结面:CSS〕：入口页遮罩档位类（JS 不再内联 z-index；抬档值由 ux-css 在根样式统一裁定） ---- */
+.bz-launcher-overlay--10100 { z-index: 10100; }
+.bz-launcher-overlay--10101 { z-index: 10101; }
+.bz-launcher-overlay--10200 { z-index: 10200; }
+/* ---- 长按编辑反馈（ticket 26）：长按计时中轻压 + 微高亮，避免长度不足提前松手误执行命令 ---- */
+#launcher-grid .launcher-tile.launcher-press-active,
+#launcher-grid.launcher-press-active {
+  background: var(--background-modifier-hover);
+  transform: scale(0.96);
+  transition: transform 0.1s ease, background 0.1s ease;
+}
 /* ===== 入口页（ticket 23）===== */
 /* 底部滑入（Windows 开始菜单式） */
 @keyframes launcher-slide-up {
@@ -1874,6 +1886,13 @@ button.news-close-btn {
     font-size: 13px;
     color: var(--text-faint);
     margin-top: 4px;
+}
+/* l5 三态正文（首用引导 / 错误态说明行） */
+.news-done-body {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.9;
+    margin-top: 10px;
 }
 .news-loading {
     flex: 1;
@@ -2340,6 +2359,13 @@ button.news-close-btn {
       .bz-review-watch-name { font-size:12px; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
       .bz-review-watch-close { background:none; border:none; cursor:pointer; color:var(--text-faint); font-size:11px; line-height:1; padding:2px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:none !important; }
       .bz-review-watch-close:hover { color:var(--text-error, #ff4757); background:var(--background-modifier-hover); }
+      /* ticket 57：排除名单 chip（名字 + 解除标签） */
+      #review-excluded-list { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:4px 0; }
+      .bz-review-exclude-empty { font-size:12px; color:var(--text-faint); padding:4px 0; }
+      .bz-review-exclude-chip { display:inline-flex; align-items:center; gap:6px; padding:2px 10px; border-radius:12px; background:var(--background-secondary); border:1px solid var(--background-modifier-border); max-width:100%; }
+      .bz-review-exclude-name { font-size:12px; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      .bz-review-exclude-remove { background:none; border:none; cursor:pointer; color:var(--text-faint); font-size:11px; line-height:1; padding:2px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:none !important; }
+      .bz-review-exclude-remove:hover { color:var(--text-error, #ff4757); background:var(--background-modifier-hover); }
 
 
 /* ==================== 做题家域样式（src/quiz/styles.css） ==================== */
@@ -2437,10 +2463,14 @@ button.news-close-btn {
     .pomodoro-statusbar { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
     .pomodoro-statusbar .pomodoro-statusbar-icon { display: inline-flex; align-items: center; }
     .pomodoro-statusbar-idle { opacity: 0.45; }
+    /* x6：暂停态与空闲态视觉区分（暂停显示「已暂停」标签；醒目标识，非空闲灰态） */
+    .pomodoro-statusbar-paused { opacity: 1; color: var(--text-warning, var(--text-normal)); }
+    .pomodoro-statusbar-paused .pomodoro-statusbar-text { font-size: 12px; }
   
 
 /* ==================== 番茄钟弹窗（pomodoro，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
-    #pomodoro-mask { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.45); }
+    /* e3：域主弹窗层级收敛——z-index 从 JS 内联移入样式（password 先例 9998） */
+    #pomodoro-mask { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.45); z-index: 9998; }
     #pomodoro-popup { width: 320px; padding: 24px; border-radius: 16px; background: var(--background-primary); box-shadow: 0 8px 40px rgba(0,0,0,0.3); text-align: center; position: relative; }
     #pomodoro-ring-svg { width: 160px; height: 160px; margin: 8px auto; display: block; }
     .pomodoro-ring-track { fill: none; stroke: var(--background-modifier-border); stroke-width: 8; }
@@ -2976,6 +3006,8 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
    为纯内联样式、无 id/类钩子——p3 焦点环需 ux-misc 清内联时补挂 bz- 类（如 bz-bel-modal），
    挂上即被 core p3 伞规则（src/core/styles.css）自动覆盖 */
 /* ==================== 影视域样式（src/movie/styles.css） ==================== */
+/* 影视域遮罩档位已由主仓库 ux-css 裁定（z-index 9997/9998 家族，本域不再定义档位类规则，
+   避免与本文件另处已合并的裁定值双规则并存/回退层级体系；JS 侧仅挂 class，由根/域样式接管） */
 /* ---- 影视抽屉头部（与影视卡片一字不差：海报 + 名称 + 徽章 + 影评） ---- */
 .bz-item-sheet-movie-name {
   font-size: 16px; font-weight: 600; color: var(--text-normal);
