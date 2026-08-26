@@ -2,7 +2,7 @@
  * 收藏本 UI 测试（ticket 11）：面板渲染/添加弹窗/编辑/长按/AI 整理/余额。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { setApp } from '../../src/core/app';
+import { setApp, getApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { DataManager } from '../../src/favorites/data';
 import { FavoritesAIService } from '../../src/favorites/ai';
@@ -21,6 +21,8 @@ function makeApp(vault: MockVault) {
     vault,
     metadataCache: {},
     workspace: { openLinkText: vi.fn() },
+    // 打开可见入口（ticket 61）：app.openUrl spy（_openExternal 直调）
+    openUrl: vi.fn(),
   } as any;
 }
 
@@ -74,7 +76,10 @@ async function setup() {
   document.body.innerHTML = '';
   const vault = new MockVault();
   setApp(makeApp(vault));
-  setSettingsProvider(() => ({ favoritesStoragePath: 'CONFIG/STORAGE' }) as any);
+  // ticket 23：AI 整理守卫真实读取插件 AI 配置——默认带 opencode-go key（缺配置拦截的用例自行覆盖）
+  setSettingsProvider(
+    () => ({ favoritesStoragePath: 'CONFIG/STORAGE', aiProvider: 'opencode-go', opencodeGoApiKey: 'sk-test' }) as any
+  );
   const dm = new DataManager('CONFIG/STORAGE/favorites.json');
   const aiSvc = new FavoritesAIService();
   const ui = new UIManager(dm, aiSvc, null);
@@ -99,7 +104,9 @@ describe('收藏本面板', () => {
     ui.show();
     await new Promise((r) => setTimeout(r, 20));
     expect(ui.mask!.style.display).toBe('flex');
+    // 空态首步引导（ticket l6-fav 解冻）：暂无收藏 + 第一步引导
     expect(document.querySelector('.fav-empty, #fav-entries-container')!.textContent).toContain('暂无收藏 🎉');
+    expect(document.querySelector('.fav-empty, #fav-entries-container')!.textContent).toContain('添加第一个收藏');
     ui.hide();
     expect(ui.mask!.style.display).toBe('none');
   });
@@ -165,8 +172,30 @@ describe('收藏本面板', () => {
 
     ui.searchInput!.value = '项目';
     ui.searchInput!.dispatchEvent(new Event('input'));
+    // ticket 42：搜索防抖 180ms——输入后需等静置窗口渲染
+    await new Promise((r) => setTimeout(r, 250));
     const container = document.getElementById('fav-entries-container')!;
     expect(container.querySelectorAll('.fav-card').length).toBe(1);
+  });
+
+  it('搜索防抖（ticket 42）：连续输入合并为一次渲染，只按最终关键词筛选', async () => {
+    const { ui, dm } = await setup();
+    await dm.add(makeItem());
+    await dm.add(makeItem({ id: '2', tags: ['网站'], title: '其他网页', url: '', description: '网页简介' }));
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    ui.searchInput!.value = '项目';
+    ui.searchInput!.dispatchEvent(new Event('input'));
+    expect(document.querySelectorAll('.fav-card').length).toBe(2); // 防抖窗口内不立即渲染
+    ui.searchInput!.value = '网页';
+    ui.searchInput!.dispatchEvent(new Event('input'));
+    await new Promise((r) => setTimeout(r, 250));
+
+    const container = document.getElementById('fav-entries-container')!;
+    expect(container.querySelectorAll('.fav-card').length).toBe(1);
+    expect(container.textContent).toContain('其他网页');
   });
 
   it('添加弹窗：未选分类/无标题 Notice + 成功保存', async () => {
@@ -395,6 +424,124 @@ describe('收藏本面板', () => {
     expect(ui.addTitleInput!.value).toBe('def');
     expect(ui.addDescInput!.value).toBe('Original English description');
     expect(hasNotice('AI 整理失败：网络错误')).toBe(true);
+  });
+
+  it('AI 整理不覆盖手写（ticket 22）：手填字段保持原样，仅补全空字段', async () => {
+    const { ui } = await setup();
+    ui.build();
+    ui.openAddDialog();
+    ui.addTitleInput!.value = '我的手写标题';
+    ui.addUrlInput!.value = 'https://github.com/foo/bar';
+    ui.addDescInput!.value = '我的手写简介';
+    ui.aiService.ai = {
+      json: vi.fn().mockResolvedValue('{"title":"AI标题","url":"https://evil.example/x","description":"AI简介","tags":["GitHub"]}'),
+    } as any;
+
+    ui.addAiBtn!.click();
+    await new Promise((r) => setTimeout(r, 30));
+
+    // 用户手填字段不被 AI 覆盖（url 连协议头补全也不改）
+    expect(ui.addTitleInput!.value).toBe('我的手写标题');
+    expect(ui.addUrlInput!.value).toBe('https://github.com/foo/bar');
+    expect(ui.addDescInput!.value).toBe('我的手写简介');
+    // 标签照常由 AI 处理（未知标签 notice 逻辑不受影响）
+    const active = [...document.querySelectorAll('.fav-type-btn.active')].map((b) => (b as HTMLElement).dataset.tag);
+    expect(active).toContain('GitHub');
+    expect(hasNotice('AI 整理完成')).toBe(true);
+  });
+
+  it('AI 整理不覆盖手写（ticket 22）：仅手填标题 → 空字段照常补全', async () => {
+    const { ui } = await setup();
+    ui.build();
+    ui.openAddDialog();
+    ui.addTitleInput!.value = '我的手写标题';
+    ui.aiService.ai = {
+      json: vi.fn().mockResolvedValue('{"title":"AI标题","url":"https://github.com/foo/bar","description":"AI简介","tags":["网站"]}'),
+    } as any;
+
+    ui.addAiBtn!.click();
+    await new Promise((r) => setTimeout(r, 30));
+
+    expect(ui.addTitleInput!.value).toBe('我的手写标题'); // 手写保留
+    expect(ui.addUrlInput!.value).toBe('https://github.com/foo/bar'); // 空字段补全
+    expect(ui.addDescInput!.value).toBe('AI简介');
+  });
+
+  it('AI 未配置（ticket 23）：直接 warning 拦截，不弹 progress、不转整理中态、不调用 AI', async () => {
+    const { ui } = await setup();
+    // 覆盖设置：清空 AI 配置（setup 默认带 key）
+    setSettingsProvider(
+      () => ({ favoritesStoragePath: 'CONFIG/STORAGE', aiProvider: 'opencode-go', opencodeGoApiKey: '' }) as any
+    );
+    ui.build();
+    ui.openAddDialog();
+    ui.addTitleInput!.value = 'x';
+    const aiJson = vi.fn();
+    ui.aiService.ai = { json: aiJson } as any;
+
+    ui.addAiBtn!.click();
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(hasNotice('AI 服务未配置或不可用')).toBe(true);
+    expect(aiJson).not.toHaveBeenCalled();
+    expect(document.querySelector('.bz-notice--progress')).toBeNull(); // 不弹 progress
+    expect(ui.addAiBtn!.textContent).toBe('✨ AI 整理'); // 按钮未进入整理中态
+    expect(ui.addAiBtn!.disabled).toBe(false);
+  });
+
+  it('打开可见入口（ticket 61）：单击卡片直接打开链接；无链接卡片点击无动作', async () => {
+    const { ui, dm } = await setup();
+    const app = getApp() as any;
+    await dm.add(makeItem()); // 有 url（GitHub）
+    await dm.add(makeItem({ id: '2', title: '无链接', url: '' }));
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const cards = [...document.querySelectorAll('#fav-entries-container .fav-card')] as HTMLElement[];
+    // add() 用 unshift：后加的在前；按文案定位（避免依赖排序）
+    const urlCard = cards.find((c) => c.textContent.includes('我的项目'))!;
+    const noUrlCard = cards.find((c) => c.textContent.includes('无链接'))!;
+    urlCard.click();
+    expect(app.openUrl).toHaveBeenCalledTimes(1);
+    expect(app.openUrl).toHaveBeenCalledWith('https://github.com/a/b');
+    urlCard.click(); // 300ms 窗口内同卡重复点击不重开（防双击双开）
+    noUrlCard.click(); // 无链接不动作
+    expect(app.openUrl).toHaveBeenCalledTimes(1);
+    // 可见入口提示：有链接 cursor=pointer，无链接保持 default（无 hover 图标排）
+    expect(urlCard.style.cursor).toBe('pointer');
+    expect(noUrlCard.style.cursor).toBe('default');
+  });
+
+  it('打开可见入口（ticket 61）：双击窗口内同卡重复点击不重开（防双击连开两个标签页）', async () => {
+    const { ui, dm } = await setup();
+    const app = getApp() as any;
+    await dm.add(makeItem());
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const card = document.querySelector('#fav-entries-container .fav-card') as HTMLElement;
+    card.click();
+    card.click(); // 快速双击（同毫秒，300ms 窗口内）
+    expect(app.openUrl).toHaveBeenCalledTimes(1);
+  });
+
+  it('打开可见入口（ticket 61）：长按抽屉的合成 click 被吞，不触发直开（手势不冲突）', async () => {
+    Platform.isMobile = true; // 移动端：长按开抽屉
+    const { ui, dm } = await setup();
+    const app = getApp() as any;
+    await dm.add(makeItem());
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const card = document.querySelector('#fav-entries-container .fav-card') as HTMLElement;
+    await openByLongPress(card);
+    expect(document.querySelector('.bz-item-sheet')).not.toBeNull(); // 抽屉正常弹出
+    expect(app.openUrl).not.toHaveBeenCalled(); // 长按松手的残余 click 未穿透到直开
+    Platform.isMobile = false;
+    closeItemMenu();
   });
 
   it('余额：列表纯展示不可点击，刷新走抽屉「刷新余额」（小字+头部同步更新）', async () => {

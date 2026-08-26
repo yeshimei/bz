@@ -26,6 +26,11 @@ import type { FavoritesItem } from './types';
 import { emitDomainEvent } from '../core/domain-bus';
 import { favoritesEditChanges } from '../smartcat/favorites-source';
 
+/** 搜索防抖时长（ticket 42）：输入停止 180ms 后才重新筛选渲染 */
+const SEARCH_DEBOUNCE_MS = 180;
+/** 单击直开双击窗口（ticket 61）：同卡 300ms 内重复点击不重开（防双击连开两个标签页） */
+const OPEN_CLICK_WINDOW_MS = 300;
+
 export class UIManager {
   dataManager: DataManager;
   aiService: FavoritesAIService;
@@ -48,6 +53,7 @@ export class UIManager {
   searchWrapper: HTMLElement | null = null;
   searchInput: HTMLInputElement | null = null;
   searchToggleBtn: HTMLButtonElement | null = null;
+  searchDebounceTimer: ReturnType<typeof setTimeout> | null = null; // 搜索防抖（ticket 42）
 
   // 添加对话框 DOM
   addMask: HTMLElement | null = null;
@@ -289,7 +295,12 @@ export class UIManager {
     });
     this.searchInput.oninput = () => {
       this.searchKeyword = this.searchInput!.value;
-      this.render();
+      // 搜索防抖（ticket 42）：关键词即时记录，渲染延迟到输入静置 180ms 后，防高频输入卡顿
+      if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
+      this.searchDebounceTimer = setTimeout(() => {
+        this.searchDebounceTimer = null;
+        this.render();
+      }, SEARCH_DEBOUNCE_MS);
     };
 
     wrapper.appendChild(this.searchInput);
@@ -318,9 +329,16 @@ export class UIManager {
 
     this.container.innerHTML = '';
     if (filtered.length === 0) {
+      // 空态首步引导（ticket l6-fav 解冻）：正文无 emoji，图标可提及（✏️ = 头部添加按钮）
       const empty = document.createElement('div');
-      empty.textContent = '暂无收藏 🎉';
       empty.style.cssText = 'padding:40px; text-align:center; color:var(--text-faint); font-size:16px;';
+      const emptyMain = document.createElement('div');
+      emptyMain.textContent = '暂无收藏 🎉';
+      empty.appendChild(emptyMain);
+      const emptyHint = document.createElement('div');
+      emptyHint.textContent = '点右上角 ✏️ 添加第一个收藏';
+      emptyHint.style.cssText = 'font-size:13px; margin-top:6px; opacity:0.8;';
+      empty.appendChild(emptyHint);
       this.container.appendChild(empty);
       return;
     }
@@ -333,6 +351,7 @@ export class UIManager {
   _renderCard(item: FavoritesItem): HTMLElement {
     const card = document.createElement('div');
     card.className = 'fav-card';
+    const rawUrl = (item.url || '').trim();
     Object.assign(card.style, {
       display: 'flex',
       flexDirection: 'column',
@@ -341,7 +360,7 @@ export class UIManager {
       border: '1px solid var(--background-modifier-border)',
       borderRadius: '10px',
       background: 'var(--background-primary)',
-      cursor: 'default',
+      cursor: rawUrl ? 'pointer' : 'default', // 有链接 = 可见的点击入口（ticket 61）
       transition: 'background 0.15s',
       position: 'relative',
     });
@@ -358,6 +377,21 @@ export class UIManager {
     card.onmouseleave = () => {
       if (!item.pinned) card.style.background = 'var(--background-primary)';
     };
+
+    // ---- 打开可见入口（ticket 61·拍板）----
+    // 单击卡片主体（含标题/简介/元信息区）直接打开链接；长按/右键抽屉保持不变。
+    // 与旧「标题纯文本、列表干净」拍板相悖——用户已重新拍板要可见入口（冲突记录见提交说明）。
+    // 防手势冲突：长按松手的残余/合成 click 由 item-actions 文档捕获层吞掉，不会走到这里；
+    // 单击直开与双击不冲突——双击窗口（300ms）内同卡重复点击不重开，防双击连开两个标签页。
+    if (rawUrl) {
+      let lastOpenAt = 0;
+      card.addEventListener('click', () => {
+        const now = Date.now();
+        if (now - lastOpenAt < OPEN_CLICK_WINDOW_MS) return;
+        lastOpenAt = now;
+        this._openExternal(this._normalizeUrl(rawUrl));
+      });
+    }
 
     // ---- 标题行（标题/链接 + 余额 + 跳转 + 标签） ----
     card.appendChild(this._renderTitleRow(item));
@@ -384,7 +418,6 @@ export class UIManager {
       const acts: ItemAction[] = [];
 
       // 1. 打开（有链接才显示；小字=域名）
-      const rawUrl = (item.url || '').trim();
       if (rawUrl) {
         const openUrl = this._normalizeUrl(rawUrl);
         acts.push({
@@ -507,12 +540,12 @@ export class UIManager {
     return card;
   }
 
-  /** 标题行：标题（纯文本，打开动作在抽屉）+ 余额展示 + 类型标签组 */
+  /** 标题行：标题（纯文本）+ 余额展示 + 类型标签组；打开入口在卡片主体单击（ticket 61，标题不做 <a>） */
   _renderTitleRow(item: FavoritesItem): HTMLElement {
     const titleRow = document.createElement('div');
     titleRow.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:6px;';
 
-    // 标题：纯文本（手势收敛后列表不再直开链接，「打开」在抽屉）
+    // 标题：纯文本（打开入口 = 单击卡片主体直开链接，ticket 61；「打开」仍在抽屉，标题不做 <a> 保持列表干净）
     const titleElement = document.createElement('span');
     titleElement.textContent = item.title || '无标题';
     Object.assign(titleElement.style, {
@@ -1168,6 +1201,8 @@ export class UIManager {
   }
 
   async _handleAIRecommend() {
+    // ticket 23：守卫真实读取插件 AI 配置（isAvailable 已改为按 core/ai 口径判定，不再恒真）；
+    // 未配置直接 warning 拦截，不弹 progress、不进入整理中态
     if (!this.aiService.isAvailable()) {
       notice('AI 服务未配置或不可用', 'warning');
       return;
@@ -1262,9 +1297,11 @@ GitHub 仓库信息（来自 GitHub API）：
         else throw new Error('AI 返回格式异常，无法解析');
       }
 
-      if (parsed.title) this.addTitleInput!.value = parsed.title;
-      if (parsed.url) this.addUrlInput!.value = parsed.url;
-      if (parsed.description) this.addDescInput!.value = parsed.description;
+      // AI 整理不覆盖手写（ticket 22）：以进入本函数时的输入快照为「用户手填基线」，
+      // 已手动填写的字段保持原样，仅补全未填字段；未知标签的忽略 notice 保留在后文
+      if (parsed.title && !currentTitle) this.addTitleInput!.value = parsed.title;
+      if (parsed.url && !currentUrl) this.addUrlInput!.value = parsed.url;
+      if (parsed.description && !currentDesc) this.addDescInput!.value = parsed.description;
 
       // 处理 AI 推荐的标签（支持 tags 数组和单个 tag 两种格式）
       let recommendedTags = parsed.tags || (parsed.tag ? [parsed.tag] : null);
