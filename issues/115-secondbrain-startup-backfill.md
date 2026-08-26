@@ -1,6 +1,6 @@
 # Ticket 115：第二大脑存量笔记启动自动补链 + 批量补链命令
 
-- 状态：开发中（worktree/sb-startup-backfill，待合并）
+- 状态：已完成（master 1975912；合并后全量 2708 用例复核绿 + tsc 0 + 构建部署验证）
 - 域：secondbrain
 - 设计文档：`.scratch/secondbrain-link-agent/spec.md`（v1.1 增量节「①b 存量补链」/ 手动命令 / 验收标准）
 - 前置：ticket 111（自动双链管线，本票在其 link-agent 模块上叠加）

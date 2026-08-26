@@ -1,6 +1,6 @@
 ## 2026-08-27 第二大脑存量笔记启动自动补链（ticket 115：启动补链 + 批量补链命令）
 
-**状态：worktree/sb-startup-backfill 全量 2708 测试通过（179 文件）+ tsc 0 错误；等待合并（构建产物随合并后重生成）**
+**状态：master 1975912 合并完成；合并复核全量 2708 测试通过（179 文件）+ tsc 0 + 构建部署（产物已落 E:/Obsidian/叫我包仔/.obsidian/plugins/bz/）**
 
 - ✅ **根因定位（真机）**：`linkAgentScopes` 默认仅「文献盒」而文献盒只有 1 篇笔记（候选池自排除后为 0）+ 自动建链只监听新建落盘（存量永远不触发）→ 全库 0 条 related、队列空、一切静默——非 bug，是 v1 设计边界 + 配置 + 库内容叠加
 - ✅ **数据层 `computeBackfillTargets` 纯函数**：目标 = scope 内 md，剔除已含 related（`related` 即进度检查点，中断续跑天然增量）/ encrypt 锁定 / 队列内待重试条目；去重、字典序稳定输出
