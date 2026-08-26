@@ -157,7 +157,11 @@ export class MobilePanel {
     document.addEventListener('touchend', this.onTouchEnd);
 
     // ── 自动刷新：光标轮询 + 选区变化 + 活动叶子切换（QA L1995-1999）──
-    this.cursorPoll = setInterval(() => this.checkCursor(), CONFIG.CURSOR_POLL_INTERVAL);
+    // [p2-sb] 轮询收敛：收起为 mini 胶囊时无可视结果，不空转轮询（selectionchange/leaf 事件仍即时响应）
+    this.cursorPoll = setInterval(() => {
+      if (this.collapsed) return;
+      this.checkCursor();
+    }, CONFIG.CURSOR_POLL_INTERVAL);
     try {
       this.evLeaf = app.workspace.on('active-leaf-change', () => this.checkCursor());
     } catch {
@@ -169,7 +173,9 @@ export class MobilePanel {
     document.addEventListener('selectionchange', this.onSelectionChange);
 
     this.renderBody();
-    requestAnimationFrame(() => this.expand());
+    // 入场展开（无 rAF 环境——如测试 jsdom——降级直接展开，生产恒有 rAF）
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => this.expand());
+    else this.expand();
 
     // 初始上下文检索
     const initEd = app.workspace.activeEditor?.editor;

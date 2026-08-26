@@ -10,6 +10,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ReferencePanel } from '../../src/secondbrain/reference-panel';
+import { buildConfig } from '../../src/secondbrain/config';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
@@ -144,4 +145,75 @@ describe('secondbrain/reference-panel 刷新竞态防护', () => {
     expect((panel as any).cardTeardowns.size).toBe(0);
     expect(card.isConnected).toBe(false);
   });
+
+  /** 带活动编辑器的 mock（驱动 refreshContent 查询与光标轮询） */
+  function appWithEditor(): any {
+    const app = makeApp();
+    app.workspace.activeEditor = {
+      editor: {
+        getCursor: () => ({ line: 0, ch: 4 }),
+        getLine: () => '足够长的上下文句子用于检索。',
+      },
+    };
+    return app;
+  }
+
+  it('[46] 查询期显示 loading 占位；检索完成后渲染结果', async () => {
+    let resolveSearch!: (v: SearchHitLike[]) => void;
+    const app = appWithEditor();
+    const store: any = { search: (_q: string, _k?: number) => new Promise((r) => (resolveSearch = r)) };
+    const panel = new ReferencePanel(app, store as any);
+    const pending = panel.refreshContent();
+    expect(panel.resultsDiv.textContent).toContain('检索中…'); // 查询期 loading 占位
+    resolveSearch([HIT_A as any]);
+    await pending;
+    expect(panel.resultsDiv.querySelectorAll('.bz-sb-ref-card')).toHaveLength(1);
+    expect(panel.resultsDiv.textContent).not.toContain('检索中…');
+    panel.close();
+  });
+
+  it('[46] 检索抛错 → 列表显示失败提示（不再仅 console）', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const app = appWithEditor();
+      const store: any = { search: async () => { throw new Error('Ollama 无响应'); } };
+      const panel = new ReferencePanel(app, store as any);
+      await panel.refreshContent();
+      expect(panel.resultsDiv.textContent).toContain('检索失败：请检查 Ollama 服务后重试');
+      panel.close();
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
+  it('[46] 向量检索降级文本 → 结果照常渲染并追加降级说明', async () => {
+    const app = appWithEditor();
+    const store: any = {
+      search: async (_q: string, _k?: number, onDegraded?: () => void) => {
+        onDegraded?.();
+        return [HIT_A as any];
+      },
+    };
+    const panel = new ReferencePanel(app, store as any);
+    await panel.refreshContent();
+    expect(panel.resultsDiv.querySelectorAll('.bz-sb-ref-card')).toHaveLength(1);
+    expect(panel.resultsDiv.textContent).toContain('已降级为文本匹配');
+    panel.close();
+  });
+
+  it('[8] 窄窗收起（isHidden）时光标轮询空转不刷新；展开后恢复轮询', () => {
+    const app = appWithEditor();
+    const panel = new ReferencePanel(app, { search: async () => [] } as any);
+    const spy = vi.spyOn(panel, 'refreshWithDebounce');
+    const interval = buildConfig().CURSOR_POLL_INTERVAL;
+    panel.fw.isHidden = true;
+    vi.advanceTimersByTime(interval + 100); // 隐藏态：不触发
+    expect(spy).not.toHaveBeenCalled();
+    panel.fw.isHidden = false;
+    vi.advanceTimersByTime(interval + 100); // 可见态：光标变化触发防抖刷新
+    expect(spy).toHaveBeenCalled();
+    panel.close();
+  });
 });
+
+type SearchHitLike = { path: string; score: number; chunk: string };

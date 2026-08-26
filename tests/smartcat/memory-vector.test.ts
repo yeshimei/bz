@@ -14,6 +14,7 @@ import type { SmartCatData } from '../../src/smartcat/types';
 vi.mock('../../src/secondbrain/ollama', () => ({
   getEmbedding: vi.fn(),
   checkRemoteOllama: vi.fn(async () => true),
+  SEARCH_TIMEOUT_MS: 10000, // ticket 46：VectorStore 检索级超时依赖（与嵌入 30s 分离）
 }));
 
 function make(): { m: MemorySystem; data: SmartCatData } {

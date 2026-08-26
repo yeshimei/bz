@@ -199,15 +199,19 @@ export class LinkAgentWatcher {
   }
 }
 
-/** 队列消费启动（域初始化调用）：等待索引装载完成后自动消费，无需询问 */
-export async function startQueueConsumption(agent: LinkAgent, initialLoad?: Promise<void> | null): Promise<void> {
+/** 队列消费启动（域初始化调用）：等待索引装载完成后自动消费，无需询问；启动路径批次 toast 静默（ticket 6） */
+export async function startQueueConsumption(
+  agent: LinkAgent,
+  initialLoad?: Promise<void> | null,
+  opts?: { silent?: boolean }
+): Promise<void> {
   try {
     await initialLoad;
   } catch {
     /* 装载失败不阻断队列尝试（消费内部有各自兜底） */
   }
   try {
-    await agent.consumeQueue();
+    await agent.consumeQueue(opts);
   } catch (e) {
     console.warn('[link-agent] 队列消费失败', e);
   }
@@ -216,16 +220,21 @@ export async function startQueueConsumption(agent: LinkAgent, initialLoad?: Prom
 /**
  * 启动存量补链（ticket 115：域初始化在队列消费之后调用）：
  * 等待索引装载完成后对关联范围内缺 related 的存量笔记批量建链；
- * embedding 不可达 / 无目标时静默（批次进度与汇总由批次 toast 呈现，串行锁保证与监听批次互斥）。
+ * embedding 不可达 / 无目标时静默；批次进度与完成 toast 亦全程静默（ticket 6：
+ * 手动命令 bz-secondbrain-link-all 才按批次通知），串行锁保证与监听批次互斥。
  */
-export async function startStartupBackfill(agent: LinkAgent, initialLoad?: Promise<void> | null): Promise<void> {
+export async function startStartupBackfill(
+  agent: LinkAgent,
+  initialLoad?: Promise<void> | null,
+  opts?: { silent?: boolean }
+): Promise<void> {
   try {
     await initialLoad;
   } catch {
     /* 装载失败不阻断补链尝试（内部有探测兜底） */
   }
   try {
-    const result = await agent.backfillMissingLinks();
+    const result = await agent.backfillMissingLinks(opts);
     if (result.status === 'done' || result.status === 'unreachable' || result.status === 'no-targets') return;
     console.warn('[link-agent] 启动补链跳过（自动双链已关闭）');
   } catch (e) {
