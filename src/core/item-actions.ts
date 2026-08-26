@@ -84,6 +84,8 @@ let sheetHeadEl: HTMLElement | null = null;
 /** 附属浮层（抽屉之上的域内小弹窗，如评分窗/影评窗）：点击其中不触发「外部点击关闭抽屉」 */
 const sheetCompanions = new Set<HTMLElement>();
 let menuEsc: ReturnType<typeof escManager.register> | null = null;
+/** 打开浮层前的焦点归属（关闭时还原；UX 整改 38 键盘导航配套） */
+let prevFocus: HTMLElement | null = null;
 
 /** 注册附属浮层：抽屉保持打开时再叠的小弹窗（遮罩即可）；生命周期由域管理，关闭时注销 */
 export function registerSheetCompanion(el: HTMLElement): void {
@@ -173,6 +175,11 @@ export function closeItemMenu(): void {
   suppressNextClick = false;
   residualClickArmed = false;
   touchSettlePending = false;
+  // 焦点还原到打开前元素（仅当焦点已随浮层移除落回 body，避免抢走用户刚点的目标焦点）
+  if (prevFocus && prevFocus.isConnected && document.activeElement === document.body) {
+    prevFocus.focus();
+  }
+  prevFocus = null;
 }
 
 /** 打开触屏合成 click 静置窗口（长按松手后的合成 click 吞一次） */
@@ -216,6 +223,36 @@ function positionMenu(m: HTMLElement, x: number, y: number): void {
   m.style.top = `${top}px`;
 }
 
+/**
+ * 键盘导航（UX 整改 38）：浮层内 ↑/↓ 循环移动焦点（roving focus）。
+ * @param host 挂 keydown 监听的浮层元素
+ * @param scope 功能项集合范围（菜单＝浮层全体按钮；抽屉＝仅功能项区，不含头部自定义内容）
+ */
+function attachItemKeyboardNav(host: HTMLElement, scope: HTMLElement): void {
+  host.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    const items = Array.from(scope.querySelectorAll<HTMLElement>('button'));
+    if (items.length === 0) return;
+    e.preventDefault();
+    const idx = items.indexOf(document.activeElement as HTMLElement);
+    const next =
+      idx === -1
+        ? 0
+        : e.key === 'ArrowDown'
+          ? (idx + 1) % items.length
+          : (idx - 1 + items.length) % items.length;
+    items[next].focus();
+  });
+}
+
+/** 打开时记录焦点归属 + 聚焦功能首项（↑↓ 另由 attachItemKeyboardNav 承接） */
+function focusMenuFirst(host: HTMLElement, scope: HTMLElement): void {
+  prevFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  const first = scope.querySelector<HTMLElement>('button');
+  if (first) first.focus();
+  attachItemKeyboardNav(host, scope);
+}
+
 /** 桌面跟手菜单（鼠标长按；anchored at 光标，防溢出） */
 export function openItemMenu(x: number, y: number, actions: ItemAction[], suppressResidualClick = false): void {
   closeItemMenu();
@@ -254,6 +291,7 @@ export function openItemMenu(x: number, y: number, actions: ItemAction[], suppre
   residualClickArmed = false;
   if (!suppressResidualClick) armTouchSettle();
   attachPopupListeners('bz-item-menu');
+  focusMenuFirst(m, m);
 }
 
 /** 构建抽屉功能项按钮（openItemSheet / refreshItemSheet 共用） */
@@ -356,6 +394,7 @@ export function openItemSheet(actions: ItemAction[], opts?: ItemActionsOptions, 
   if (!suppressResidualClick) armTouchSettle();
   attachPopupListeners('bz-item-sheet');
   attachSheetDismiss(sheet, body);
+  focusMenuFirst(sheet, body);
 }
 
 /** 下滑关闭手势：按住抽屉下拉跟随位移、遮罩变淡；松手超阈值滑出关闭，未超回弹 */

@@ -5,10 +5,15 @@
  * build 回调内用 obsidian Setting 挂设置项；未挂任何 .setting-item 时显示空态。
  * 重设计（2026-08 用户拍板方案 A 分组卡片）：build 内可用 createSettingsGroup 建
  * 「分组卡片」（原生图标+组名+项数徽标头 + 设置项体）；弹窗打开后徽标自动回填。
+ * 焦点管理（UX 整改 37）：打开聚焦弹窗内首个可交互设置项（跳过隐藏项），
+ * 关闭（遮罩/Esc/被顶替）还原焦点到触发元素；popup 挂 role="dialog" aria-modal="true"。
  */
 import { Setting, setIcon } from 'obsidian';
 import { createOverlay } from './dom';
 import { escManager } from './esc-manager';
+
+/** 弹窗内可交互元素选择器（读屏/焦点管理的通用口径） */
+const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 export interface SettingsModalOptions {
   /** 弹窗标题，如「书库设置」 */
@@ -99,6 +104,8 @@ export function closeSettingsModal(): void {
 /** 打开域设置弹窗（幂等：已开先关） */
 export function openSettingsModal(opts: SettingsModalOptions): void {
   closeSettingsModal();
+  // 打开前记录焦点归属，关闭时还原（被顶替/遮罩/Esc 均走 dispose）
+  const prevActive = document.activeElement;
 
   const { mask, popup } = createOverlay({
     maskId: 'bz-settings-modal-mask',
@@ -152,6 +159,14 @@ export function openSettingsModal(opts: SettingsModalOptions): void {
   document.body.appendChild(popup);
   mask.style.display = 'block';
   popup.style.display = 'flex';
+  // UX 整改 37：读屏语义——弹窗容器为 dialog 模态（挂载后设置）
+  popup.setAttribute('role', 'dialog');
+  popup.setAttribute('aria-modal', 'true');
+  // 聚焦首个可交互设置项（跳过隐藏项：bz-setting-hidden / 内联 display none）
+  const firstFocusable = Array.from(popup.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).find(
+    (el) => !isItemHidden(el)
+  );
+  if (firstFocusable) firstFocusable.focus();
 
   const handle = escManager.register('bz-settings-modal', {
     isVisible: () => !!currentModal,
@@ -165,6 +180,10 @@ export function openSettingsModal(opts: SettingsModalOptions): void {
       mask.remove();
       popup.remove();
       handle.unregister();
+      // 关闭后还原焦点到触发元素（元素仍连接时；被外部清理时跳过）
+      if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
+        prevActive.focus();
+      }
     },
   };
 }
