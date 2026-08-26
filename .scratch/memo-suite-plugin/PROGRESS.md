@@ -1,6 +1,6 @@
 ## 2026-08-27 第二大脑建链检索查询改全文嵌入（ticket 118：召回优化）
 
-**状态：worktree/sb-link-query-fulltext 待合并（编号说明：master 117 已由 bili 域占用，顺延 118）**
+**状态：master 4bc3d7b 合并完成；合并复核全量 2714 测试通过（179 文件）+ tsc 0 + 构建部署（产物已落 E:/Obsidian/叫我包仔/.obsidian/plugins/bz/）**
 
 - ✅ **用户澄清机制**：全文进向量模型 = 建链检索的**查询端**；检索只是"召回候选"，**建链条数由 AI 裁判择优决定**（"只链实质关联，存疑不链"）
 - ✅ **查询端全文嵌入**：`findCandidates` 以正文全文（剥 frontmatter、去空白）生成查询向量，超长按 `LINK_QUERY_MAX_CHARS=8000` 安全截尾（bge-m3 上下文约 8192 token）；替代原 800 字摘要截断——长笔记中后段语义参与召回

@@ -1,6 +1,6 @@
 # Ticket 118：建链检索查询改全文嵌入（召回优化）
 
-- 状态：开发中（worktree/sb-link-query-fulltext，待合并；master 的 117 已被 bili 域使用，编号顺延）
+- 状态：已完成（master 4bc3d7b；合并后全量 2714 用例复核绿 + tsc 0 + 构建部署验证）
 - 域：secondbrain
 - 设计文档：`.scratch/secondbrain-link-agent/spec.md`（② 候选生成 v1.3 注）
 - 前置：ticket 116（候选来源 = 白名单索引库）
