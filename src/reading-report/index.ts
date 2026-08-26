@@ -22,6 +22,9 @@ let reportOverlay: HTMLElement | null = null;
 /** 弹窗 ESC 关闭监听（closeReportPopup 移除用） */
 let reportKeydownHandler: ((e: KeyboardEvent) => void) | null = null;
 
+/** progress toast 序号：dedupeKey 每次调用唯一化——避免 notice.ts 30s 抑制窗口吞掉快速重开/连点两轮的新 toast */
+let progressToastSeq = 0;
+
 /** 骨架占位（l3：计算完成前先见「统计中…」；新增文案无 emoji） */
 const SKELETON_HTML =
   '<div style="text-align: center; padding: 48px 0; color: var(--text-muted);">统计中…</div>';
@@ -173,10 +176,11 @@ async function generateEnhancedReadingReport(app: any): Promise<void> {
   popup.body.innerHTML = SKELETON_HTML;
 
   // ticket 40：progress toast 先弹（常驻帧随阶段更新；完成转 success，失败转 error）
+  // dedupeKey 唯一化：30s 内快速重开/连点两次时第二轮各有独立 toast，不被去重抑制窗口静默
   const progress = notify('正在统计阅读数据…', {
     type: 'progress',
     duration: 0,
-    dedupeKey: 'bz-reading-report-progress',
+    dedupeKey: `bz-reading-report-progress-${++progressToastSeq}`,
   });
 
   try {
@@ -203,6 +207,11 @@ async function generateEnhancedReadingReport(app: any): Promise<void> {
         return;
       }
       await yieldToMainThread();
+      // 二次校验：await 让出期间用户已关闭/重建 → 不把本段写进已摘除的 DOM
+      if (reportOverlay !== popup.overlay || !reportOverlay.isConnected) {
+        progress.hide();
+        return;
+      }
       popup.body.insertAdjacentHTML('beforeend', section.generate());
       progress.setMessage(`正在生成${section.label}…`);
     }
