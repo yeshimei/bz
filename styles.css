@@ -3274,7 +3274,8 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 /* 悬停预览（300ms 浮出；定位 JS 内联，pointer-events 关闭防闪烁） */
 .bz-sb-ref-preview {
   position: fixed;
-  width: 300px;
+  width: 460px;
+  max-width: calc(100vw - 24px);
   z-index: 9200;
   background: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
@@ -3295,14 +3296,19 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 }
 .bz-sb-ref-preview-body {
   margin-top: 6px;
-  max-height: 150px;
-  overflow: hidden;
+  /* ticket 109：不限高随内容生长；断词防长 URL/英文串/代码横向溢出被裁 */
+  overflow-wrap: anywhere;
   font-size: 12.5px;
   line-height: 1.55;
   color: var(--text-normal);
 }
 .bz-sb-ref-preview-body p {
   margin: 0 0 4px;
+}
+.bz-sb-ref-preview-body pre,
+.bz-sb-ref-preview-body code {
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* ==================== AI 对话（桌面窄窗内） ==================== */
@@ -3459,10 +3465,10 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   }
 }
 
-/* ---- 统计卡片（ticket 108：7 卡自动换行；健康告警色） ---- */
+/* ---- 统计卡片（ticket 109：六张固定网格，桌面一行放下；健康告警色） ---- */
 .bz-sb-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  grid-template-columns: repeat(6, 1fr);
   gap: 8px;
 }
 .bz-sb-card {
@@ -3486,6 +3492,12 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   margin-top: 3px;
   font-size: 11.5px;
   color: var(--text-muted);
+}
+/* 移动端（≤768）：六卡降为 3×2 两行（须位于上方基础规则之后才能覆写成功） */
+@media (max-width: 768px) {
+  .bz-sb-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 /* ---- 分区标题 ---- */
