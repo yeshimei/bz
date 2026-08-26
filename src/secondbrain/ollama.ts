@@ -5,17 +5,19 @@ import { buildConfig } from './config';
 
 export const EMBED_BATCH_SIZE = 64;
 
-/** Ollama HTTP 统一超时（P1-10）：Ollama 未启动/挂起时请求将永久 pending，卡死检索链路 */
-export const OLLAMA_TIMEOUT_MS = 30000;
+/** Embedding HTTP 超时：嵌入端点可能因慢网络/CPU 推理超 10s（bge-m3 单批常见），保持 30s 不误伤批量嵌入 */
+export const EMBED_TIMEOUT_MS = 30000;
+/** 检索超时（ticket 46）：查询嵌入/检索全链路 10s 上限，超出即降级文本，避免参考面板/对话被挂起请求长期阻塞 */
+export const SEARCH_TIMEOUT_MS = 10000;
 
-async function httpFetch(url: string, opts: any): Promise<Response> {
+async function httpFetch(url: string, opts: any, timeoutMs: number = EMBED_TIMEOUT_MS): Promise<Response> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), OLLAMA_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     return await fetch(url, { ...opts, signal: controller.signal });
   } catch (e) {
     if (controller.signal.aborted) {
-      throw new Error(`Ollama 无响应（超过 ${OLLAMA_TIMEOUT_MS / 1000}s 未应答）：${url}`);
+      throw new Error(`Ollama 无响应（超过 ${timeoutMs / 1000}s 未应答）：${url}`);
     }
     throw e;
   } finally {

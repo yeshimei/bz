@@ -6,9 +6,11 @@
  * 对齐要点：
  * - VP-Tree 构建缓存（{dim,count,noteCount} 键）+ 归一化一次性预存；检索 cos = max(0, 1 − d²/2)，score^0.35 锐化；
  * - refresh 批量嵌入走 parallelMap 自适应并发（起始并发 3，EMA 爬坡上限 60），批量失败回退逐条；
+ *   逐条失败按段计数，完成态有失败 → 通知失败段数（ticket 3 假成功修复），全部成功才发完成通知；
  * - 移动端三级降级 remote→tfidf→text；TF-IDF 以 chunk 为文档单位且构建后复用（不再随查询重建）。
  *
- * 保留 bz 改进：MobileBuffer 写入避 Node Buffer 池偏移、Ollama 统一 30s 超时、检索异常降级文本。
+ * 保留 bz 改进：MobileBuffer 写入避 Node Buffer 池偏移、Embedding 统一 30s 超时（慢推理不误伤）、
+ * 检索异常降级文本（10s 检索级超时上限，保证参考面板/对话不被挂起请求长期阻塞——ticket 46）。
  * ticket 107：isIndexReady() 就绪判定（空库/损坏态 → 主面板引导态，首次向量化须用户触发）；
  * refresh 并发去重（进行中复用同一 promise）；meta 有条目但向量缺失 → 视为全量重建自愈；
  * 移动端嵌入端点走远程 URL（引导初始化在移动端亦可完成）。
@@ -31,7 +33,7 @@ import { euclideanSq, normalizeVec, vptree_build, vptree_search, VPNode, Vec } f
 import { parallelMap } from './parallel';
 import { TFIDF } from './tfidf';
 import { searchTextIndex } from './text-search';
-import { checkRemoteOllama, EMBED_BATCH_SIZE, getEmbedding, getEmbeddingsBatch } from './ollama';
+import { checkRemoteOllama, EMBED_BATCH_SIZE, getEmbedding, getEmbeddingsBatch, SEARCH_TIMEOUT_MS } from './ollama';
 
 // v8→v9（ticket 110）：切块剥离 frontmatter + 标题入首块——旧库版本不符走 load() 自动重建
 const VECTOR_STORE_VERSION = 9;
@@ -393,6 +395,8 @@ export class VectorStore {
     }
     let processed = 0;
     const total = toProcess.length;
+    // ticket 3 假成功修复：统计逐条回退失败段数——有失败不发「✅ 向量化完成」，完成态按失败数提示
+    let failed = 0;
 
     // —— 断点暂存（ticket 114）：长库初始化/重建期间周期性把「已完整嵌完」的文件合并落盘，
     //    中断后重开可从已存进度增量续嵌。ckptEmbedded 累积全部已暂存文件的向量（与任务槽位
@@ -462,6 +466,7 @@ export class VectorStore {
             if (dim === 0 && task.embedding.length) dim = task.embedding.length;
             processed++;
           } catch (e) {
+            failed++; // 该段落本次未嵌成（断点续传语义不变：文件 mtime 未登记，下次增量会重试）
             console.warn(`[secondbrain] 段落向量化失败 [${task.filePath}]`, e);
           }
         }
@@ -471,17 +476,21 @@ export class VectorStore {
     await ckptChain; // 排空暂存链再最终合并（最终写回与链互斥）
 
     // 登记新 meta 条目（meta 只存 text，向量只进 .vec——QA L610-619 同构；
-    // 已被断点暂存登记过的文件在此按同一口径重登记，幂等覆盖）
+    // 已被断点暂存登记过的文件在此按同一口径重登记，幂等覆盖）。
+    // [3] 与断点暂存 ckptDoneFiles 同口径：文件只要还有失败（空）槽位，整篇不写 mtime——
+    // 部分登记会让失败段永久丢失（下轮 refresh 的 mtime 比对把它跳过）。保留旧条目/无条目
+    // → 下轮按 mtime 差异整篇重试；仅整篇全失败才删除旧条目（QA 同语义）。
     const newChunksPerFile = new Map<string, Float32Array[]>();
     for (const file of toProcess) {
-      const tasks = globalTasks.filter((t) => t.filePath === file.path);
-      const vecs = tasks.map((t) => t.embedding).filter(Boolean) as Float32Array[];
-      if (vecs.length === 0) {
-        delete this.meta.notes[file.path];
-        continue;
+      const slots = fileChunksMap.get(file.path);
+      if (!slots) continue; // 读取失败的文件：读取循环已删条目，无槽位（与 maybeCheckpoint 同守卫）
+      if (slots.some((s) => !s || !s.embedding)) {
+        if (!slots.some((s) => s?.embedding)) delete this.meta.notes[file.path]; // 整篇全失败
+        continue; // 部分失败：保持旧条目/无条目 → 下轮自动整篇重试
       }
+      const vecs = slots.map((s) => s!.embedding!);
       if (dim === 0) dim = vecs[0].length;
-      const keptTexts = (fileChunksMap.get(file.path)!.filter(Boolean) as ChunkTask[]).map((c) => ({ text: c.text }));
+      const keptTexts = slots.map((c) => ({ text: c!.text }));
       this.meta.notes[file.path] = { mtime: (file.stat as any).mtime, chunks: keptTexts };
       newChunksPerFile.set(file.path, vecs);
     }
@@ -489,7 +498,13 @@ export class VectorStore {
     // 合并写回：未变文件按源偏移拷贝旧段，新文件写新向量（QA L621-639 偏移口径不变；与断点暂存共用 mergeWrite）
     await this.mergeWrite(vectors, srcOffsets, newChunksPerFile, dim);
     console.log(`[secondbrain] 向量库已保存: ${Object.keys(this.meta.notes).length} 个文件, dim=${dim}`);
-    this.updateProgress(`✅ 向量化完成：${total} 篇文件，${globalTasks.length} 个段落`);
+    // ticket 3 假成功修复：全部成功才发「✅ 向量化完成」；有失败段 → 提示失败数（失败段不登记，
+    // 下轮按 mtime 差异自动重试，断点续传契约不变）
+    if (failed === 0) {
+      this.updateProgress(`✅ 向量化完成：${total} 篇文件，${globalTasks.length} 个段落`);
+    } else {
+      this.updateProgress(`⚠️ ${failed} 段向量化失败，请检查 Ollama 服务`);
+    }
   }
 
   /** VP 索引缓存（QA L645-654）：键含 dim/count/noteCount，另加来源数组身份校验（内容变即重建） */
@@ -554,13 +569,29 @@ export class VectorStore {
   }
 
   /** 桌面检索：向量优先，异常降级文本；移动端直走文本索引（QA L694-699 + bz 降级改进） */
-  async search(query: string, topK = 20): Promise<SearchHit[]> {
+  async search(query: string, topK = 20, onDegraded?: (reason: unknown) => void): Promise<SearchHit[]> {
     if (IS_MOBILE) return searchTextIndex(query, this.meta.notes, topK);
     try {
-      return await this.vectorSearch(query, topK);
+      // ticket 46：检索整体限时（与 Ollama 统一超时同值）——挂起/超时即降级文本，避免 30s 阻塞参考面板/对话
+      return await this.withSearchTimeout(this.vectorSearch(query, topK));
     } catch (e) {
       console.warn('[secondbrain] 向量检索失败，降级为文本检索', e);
+      onDegraded?.(e); // 降级信号：调用方（参考面板）可给用户降级提示
       return searchTextIndex(query, this.meta.notes, topK);
+    }
+  }
+
+  /** [46] 检索级超时封装：超时按失败降级处理（不吞掉原错误，仅兜住挂起请求）；
+   *  10s（SEARCH_TIMEOUT_MS）与嵌入端点 30s 分离——检索降级快，嵌入不因慢推理误报失败 */
+  private async withSearchTimeout<T>(p: Promise<T>): Promise<T> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`向量检索超时（${SEARCH_TIMEOUT_MS / 1000}s）`)), SEARCH_TIMEOUT_MS);
+    });
+    try {
+      return await Promise.race([p, timeout]);
+    } finally {
+      clearTimeout(timer);
     }
   }
 

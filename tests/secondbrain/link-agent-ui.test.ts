@@ -22,6 +22,8 @@ import {
   LinkAgentWatcher,
   __resetLinkAgentGuideForTests,
   __setLinkCleanDebounceMsForTests,
+  startQueueConsumption,
+  startStartupBackfill,
 } from '../../src/secondbrain/link-agent/watch';
 import { enqueuePaths, loadQueue, loadLinkState, computeHash } from '../../src/secondbrain/link-agent/data';
 import { AI } from '../../src/secondbrain/ai';
@@ -111,6 +113,25 @@ describe('⚙️ 弹窗「自动双链」开关联动显隐', () => {
     expect(settings.linkAgentNotify).toBe(true);
     expect(settings.linkAgentAutoClean).toBe(true);
     expect(settings.linkAgentScopes).toBe('文献盒,卡片盒');
+    closeSettingsModal();
+  });
+
+  it('[l7A/f2-sb] 「启用」开关：desc 为启动语义说明；改动弹「重载后生效」且一次弹窗只提示一次', async () => {
+    openSecondBrainSettings();
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    const row = [...popup.querySelectorAll('.setting-item')].find(
+      (n) => (n as HTMLElement).dataset.name === '启用'
+    ) as any;
+    expect(row).toBeTruthy();
+    // MockSetting 的 desc 存于实例（不入 DOM 文本）
+    expect(row.__setting.desc).toContain('仅控制启动时自动加载，关闭后仍可从命令面板手动打开');
+    clearNotices();
+    rowTrigger(popup, '启用')(false);
+    rowTrigger(popup, '启用')(true);
+    await new Promise((r) => setTimeout(r, 5));
+    expect(settings.secondBrainEnabled).toBe(true);
+    // 一次弹窗会话内只提示一次（f2 重载提示收敛）
+    expect(getNoticeMessages().filter((m) => m.includes('重载插件后生效')).length).toBe(1);
     closeSettingsModal();
   });
 });
@@ -421,6 +442,44 @@ describe('通知触发条件（自绘 toast）', () => {
     const n3 = await agent.cleanDeadLinks();
     expect(n3).toBe(0);
     expect(vault.files.get('卡片盒/F.md')).toContain('DEAD2');
+  });
+
+  it('[n2-sb] 启动静默：silent 批次/队列不发进度与完成 toast，汇总照常；手动（非 silent）保留通知', async () => {
+    const { agent, askSpy } = makeWorld({
+      hits: [{ path: '文献盒/B.md', chunk: 'B', score: 0.9 }],
+    });
+    askSpy.mockResolvedValue('[{"id":1,"reason":"a"}]');
+    const s = await agent.processBatch(['文献盒/A.md'], { silent: true });
+    expect(s.processed).toBe(1);
+    expect(getNoticeMessages()).toEqual([]); // 启动路径批次全程静默（手动命令非 silent 才有 toast，已有用例覆盖）
+
+    // 队列消费同样支持启动静默
+    const { agent: agent2, askSpy: ask2 } = makeWorld({
+      hits: [{ path: '文献盒/B.md', chunk: 'B', score: 0.9 }],
+    });
+    ask2.mockResolvedValue('[{"id":1,"reason":"b"}]');
+    await enqueuePaths(['文献盒/A.md']);
+    const s2 = await agent2.consumeQueue({ silent: true });
+    expect(s2).toMatchObject({ processed: 1 });
+    expect(getNoticeMessages()).toEqual([]);
+  });
+
+  it('[n2-sb] 启动包装器按静默接线：startQueueConsumption / startStartupBackfill 传 { silent: true }', async () => {
+    const agent = new LinkAgent({ app: {} as any, store: {} as any, probe: vi.fn(async () => true) });
+    const spyC = vi.spyOn(LinkAgent.prototype, 'consumeQueue').mockResolvedValue(null);
+    const spyB = vi.spyOn(LinkAgent.prototype, 'backfillMissingLinks').mockResolvedValue({
+      status: 'done',
+      summary: { total: 0, processed: 0, created: 0, queued: 0, failed: 0 },
+    });
+    try {
+      await startQueueConsumption(agent as any, Promise.resolve(), { silent: true });
+      await startStartupBackfill(agent as any, Promise.resolve(), { silent: true });
+      expect(spyC).toHaveBeenCalledWith({ silent: true });
+      expect(spyB).toHaveBeenCalledWith({ silent: true });
+    } finally {
+      spyC.mockRestore();
+      spyB.mockRestore();
+    }
   });
 
   it('死链清理：encrypt 锁定态（保险箱清单存在且未解锁）一律跳过', async () => {

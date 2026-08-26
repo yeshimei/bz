@@ -18,7 +18,7 @@ import { notice } from '../core/notice';
 import { tryGetSettings, saveSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal, closeSettingsModal, createSettingsGroup, refreshSettingsGroupCounts } from '../core/settings-modal';
-import { formatRelativeTime } from '../core/utils';
+import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { confirm } from '../core/confirm';
 import { getApp } from '../core/app';
 import { buildConfig, IS_MOBILE } from './config';
@@ -258,6 +258,8 @@ export class SecondBrainPanel {
 
   async open(): Promise<void> {
     this.createUI();
+    // [l2-sb] ESC 监听与 open/close 成对：open 挂载、close 移除（幂等），反复开关不累积
+    this.attachEscapeListener();
     this.mask!.style.display = 'block';
     this.popup!.style.display = 'flex';
     applyMobileWindowFullscreen(this.popup, tryGetSettings().secondBrainMobileDefaultFullscreen === true);
@@ -266,15 +268,29 @@ export class SecondBrainPanel {
   }
 
   close(): void {
+    this.removeEscapeListener(); // [l2-sb] 面板关闭即移除 ESC 监听（与 open 成对）
     if (this.mask) this.mask.style.display = 'none';
     if (this.popup) this.popup.style.display = 'none';
   }
 
-  destroy(): void {
+  /** [l2-sb] ESC 关闭监听：注册/移除成对（幂等）——open 挂载、close 移除 */
+  private attachEscapeListener(): void {
+    if (this.escapeHandler) return;
+    this.escapeHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') this.close();
+    };
+    document.addEventListener('keydown', this.escapeHandler);
+  }
+
+  private removeEscapeListener(): void {
     if (this.escapeHandler) {
       document.removeEventListener('keydown', this.escapeHandler);
       this.escapeHandler = null;
     }
+  }
+
+  destroy(): void {
+    this.removeEscapeListener();
     this.mask?.remove();
     this.popup?.remove();
     this.mask = null;
@@ -381,11 +397,16 @@ export class SecondBrainPanel {
     };
   }
 
-  /** 自动增量索引（ticket 108）：有待处理块 → 进度视图 → 完成后统计 */
+  /** 自动增量索引（ticket 108）：有待处理块 → 进度视图 → 完成后统计；
+   *  ticket 3 假成功修复：有失败段 → toast 明示失败数（进度视图随即被内容态替代，仅靠状态行不可见） */
   private async runIncremental(): Promise<void> {
     this.enterProgressView('正在同步索引');
+    let lastMsg = '';
     try {
-      await this.store.refresh(this.progressObserver());
+      await this.store.refresh((msg) => {
+        lastMsg = msg;
+        this.progressObserver()(msg);
+      });
     } catch (e) {
       console.warn('[secondbrain] 面板增量索引失败', e);
     }
@@ -396,6 +417,11 @@ export class SecondBrainPanel {
     }
     this.showContent(true);
     await this.renderStats();
+    // 增量索引失败段数提示（与 vector-store 完成态文案同口径；成功不发——完成态已展示）
+    const fail = lastMsg.match(/^⚠️\s*(\d+)\s*段向量化失败/);
+    if (fail) {
+      notice(`第二大脑：${fail[1]} 段向量化失败，请检查 Ollama 服务`, 'warning');
+    }
   }
 
   /** 全量重建（ticket 108「重新索引」）：清空 → 整库重嵌 → 统计；失败给原因可重试 */
@@ -584,12 +610,7 @@ export class SecondBrainPanel {
     popup.appendChild(body);
     document.body.appendChild(mask);
     document.body.appendChild(popup);
-
-    // ESC 关闭（桌面）；记录 handler 以便销毁
-    this.escapeHandler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') this.close();
-    };
-    document.addEventListener('keydown', this.escapeHandler);
+    // ESC 关闭监听移到 open()/close() 成对注册移除（[l2-sb]：不再每次 createUI 私挂 document keydown）
 
     this.mask = mask;
     this.popup = popup;
@@ -623,12 +644,14 @@ export class SecondBrainPanel {
     if (!status || !status.isConnected) return;
     this.enterProgressView('正在初始化向量数据库');
     this.initializing = true;
-    let sawCountedDone = false; // ✅ 向量化完成：N 篇…（QA 文案带计数；全部嵌入失败也会报，须据此判败）
-    let sawWarning = false;
+    let sawCountedDone = false; // ✅ 向量化完成：N 篇…（ticket 3 起仅全部成功才发）
+    let sawWarning = false; // ⚠️ 白名单空 / 无符合条件的文件
+    let sawFail = false; // [3] 「N 段向量化失败」提示（Ollama 服务异常或部分失败）
     try {
       await this.store.refresh((msg) => {
         if (!status.isConnected) return; // 面板已销毁：不再写 DOM
         if (msg.startsWith('⚠️')) sawWarning = true;
+        if (msg.includes('段向量化失败')) sawFail = true;
         if (msg.startsWith('✅ 向量化完成：')) sawCountedDone = true;
         this.progressObserver()(msg);
       });
@@ -636,14 +659,15 @@ export class SecondBrainPanel {
       if (this.store.isIndexReady()) {
         this.showContent(true); // 刚完成全量索引，跳过重复自动刷新
         await this.renderStats(); // 但统计必须立即渲染（skipRefresh 不带渲染）
-      } else if (sawWarning) {
-        status.textContent = '白名单目录内没有可索引的 Markdown 笔记：请检查 ⚙️ 设置中的「白名单目录」';
-        this.revealInitBtn('🚀 重试初始化');
-      } else if (sawCountedDone) {
+      } else if (sawFail || sawCountedDone) {
+        // [3]：失败段提示（缺 ✅ 完整完成）或全跑完仍未登记 → 判为 Ollama/数据不可用，先于白名单提示
         status.textContent =
           '没有成功向量化任何内容：请确认 Ollama 服务与 Embedding 模型可用' +
           (IS_MOBILE ? '（移动端需配置「远程 Ollama URL」）' : '') +
           '后重试';
+        this.revealInitBtn('🚀 重试初始化');
+      } else if (sawWarning) {
+        status.textContent = '白名单目录内没有可索引的 Markdown 笔记：请检查 ⚙️ 设置中的「白名单目录」';
         this.revealInitBtn('🚀 重试初始化');
       } else {
         status.textContent = '未发现可索引的笔记内容';
@@ -754,7 +778,7 @@ export class SecondBrainPanel {
         if (depth > 0) row.style.paddingLeft = `${10 + depth * 16}px`; // 树形缩进（功能性几何内联）
         row.innerHTML = `
           <span class="bz-sb-dist-caret ${hasChildren ? '' : 'bz-sb-dist-caret--leaf'}">${hasChildren ? (open ? '▾' : '▸') : ''}</span>
-          <span class="bz-sb-dist-name">${node.name}</span>
+          <span class="bz-sb-dist-name">${escapeHtml(node.name)}</span>
           <span class="bz-sb-dist-bar"><span class="bz-sb-dist-fill" style="width:${Math.round((node.chunks / rootMax) * 100)}%"></span></span>
           <span class="bz-sb-dist-num">${node.notes} 篇 / ${node.chunks} 段</span>`;
         if (hasChildren) {
@@ -854,6 +878,14 @@ export function openSecondBrainSettings(_app?: App): void {
         void saveSettings();
       };
       const group = (icon: string, name: string) => createSettingsGroup(content, { icon, name });
+      // [f2-sb] 重载提示：以下开关均为启动快照配置（监听注册发生在域初始化），改动重载插件后生效；
+      // 参照 encrypt warnReload 先例——一次弹窗会话内只提示一次
+      let reloadWarned = false;
+      const warnReload = () => {
+        if (reloadWarned) return;
+        reloadWarned = true;
+        notice('第二大脑设置已保存，重载插件后生效', 'info');
+      };
 
       const b1 = group('folder-open', '基础');
       new Setting(b1)
@@ -903,8 +935,13 @@ export function openSecondBrainSettings(_app?: App): void {
       renderAllowChips();
       new Setting(b1)
         .setName('启用')
-        .setDesc('常驻监听光标移动与笔记变更，触发向量检索和 AI 对话')
-        .addToggle((t) => t.setValue(s.secondBrainEnabled === true).onChange((v) => set('secondBrainEnabled', v)));
+        .setDesc('仅控制启动时自动加载，关闭后仍可从命令面板手动打开') // [l7A] 语义修正
+        .addToggle((t) =>
+          t.setValue(s.secondBrainEnabled === true).onChange((v) => {
+            set('secondBrainEnabled', v);
+            warnReload(); // [f2-sb] 启动快照配置：重载后生效
+          })
+        );
 
       // 自动双链（ticket 111）：总开关为明细设置的显隐开关——onChange 即时重渲染该区块，
       // 各键独立持久化，重开弹窗按当前状态还原；显隐属功能性显隐，无新 CSS
@@ -961,6 +998,7 @@ export function openSecondBrainSettings(_app?: App): void {
         .addToggle((t) =>
           t.setValue(s.linkAgentEnabled !== false).onChange((v) => {
             set('linkAgentEnabled', v);
+            warnReload(); // [f2-sb] 监听注册在域启动时：重载后生效
             renderLinkDetail();
             refreshSettingsGroupCounts(content);
           })
