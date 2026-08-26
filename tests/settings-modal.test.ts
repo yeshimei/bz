@@ -15,7 +15,7 @@ import { DataManager } from '../src/memo/data';
 import { openBelongingsPanel, cleanupBelongings } from '../src/belongings/ui';
 import { FavoritesApp } from '../src/favorites/app';
 import { MockVault } from './mock-vault';
-import { resetObsidianMocks } from './mock-obsidian-entry';
+import { resetObsidianMocks, Platform as MockPlatform } from './mock-obsidian-entry';
 import moment from 'moment';
 
 describe('core settings-modal 机制', () => {
@@ -179,6 +179,39 @@ describe('core settings-modal 机制', () => {
     expect(popup.querySelector('.visible-control')).not.toBeNull();
     expect((document.activeElement as HTMLElement).className).toBe('visible-control');
     closeSettingsModal();
+  });
+
+  it('焦点管理：移动端跳过 input/textarea（避免弹软键盘），聚焦按钮/开关/下拉', () => {
+    MockPlatform.isMobile = true;
+    try {
+      const trigger = document.createElement('button');
+      document.body.appendChild(trigger);
+      trigger.focus();
+      openSettingsModal({
+        title: '移动端焦点测试',
+        build: (el) => {
+          const item = document.createElement('div');
+          item.className = 'setting-item';
+          el.appendChild(item);
+          const firstInput = document.createElement('input');
+          firstInput.className = 'first-input';
+          item.appendChild(firstInput);
+          const toggleBtn = document.createElement('button');
+          toggleBtn.className = 'toggle-control';
+          toggleBtn.textContent = '开关';
+          item.appendChild(toggleBtn);
+        },
+      });
+      const popup = document.getElementById('bz-settings-modal-popup')!;
+      // 桌面会聚焦 first-input；移动端跳过它 → 聚焦首个按钮（开关/下拉同理）
+      expect(popup.querySelector('.first-input')).not.toBeNull();
+      expect(popup.querySelector('.toggle-control')).not.toBeNull();
+      expect(document.activeElement).not.toBe(popup.querySelector('.first-input'));
+      expect((document.activeElement as HTMLElement).className).toBe('toggle-control');
+      closeSettingsModal();
+    } finally {
+      MockPlatform.isMobile = false;
+    }
   });
 });
 

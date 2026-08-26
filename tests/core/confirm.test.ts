@@ -61,7 +61,7 @@ describe('confirm 防注入（P0-8）', () => {
     expect(no).toBe(true);
   });
 
-  it('焦点管理（UX 整改 37）：popup 挂 role=dialog + aria-modal；打开聚焦首个可交互元素；关闭还原焦点', () => {
+  it('焦点管理（UX 整改 37，2026-08 拍板修订）：popup 挂 role=dialog + aria-modal；打开默认聚焦「确定」钮（回车=确定）；关闭还原焦点', () => {
     const trigger = document.createElement('button');
     trigger.textContent = '触发';
     document.body.appendChild(trigger);
@@ -70,8 +70,9 @@ describe('confirm 防注入（P0-8）', () => {
     const popup = document.getElementById('__shared_confirm_popup__')!;
     expect(popup.getAttribute('role')).toBe('dialog');
     expect(popup.getAttribute('aria-modal')).toBe('true');
-    // 首个可交互元素 = 取消钮（DOM 序在前，确认钮在后；默认焦点不落确认钮防误删）
-    expect(document.activeElement).toBe(document.getElementById('__shared_confirm_cancel__'));
+    // 默认焦点落在「确定/确认」按钮（回车即确认），而非取消钮
+    expect(document.activeElement).toBe(document.getElementById('__shared_confirm_ok__'));
+    expect(document.activeElement).not.toBe(document.getElementById('__shared_confirm_cancel__'));
     // 点确认关闭 → 焦点还原到触发元素
     (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
     expect(popup.isConnected).toBe(false);

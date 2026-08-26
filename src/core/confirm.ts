@@ -3,8 +3,8 @@
  * 原实现来自 QuickAdd 环境的 Q3.js（window.__utils.confirm）。
  * 独立插件版：DOM 结构与原版一致（含 __shared_confirm_* id），并接入本地 escManager。
  * 文案（title/message/confirmText/cancelText）一律 escapeHtml 后拼 HTML（P0-8 防注入）。
- * 焦点管理（UX 整改 37）：打开聚焦弹窗内首个可交互元素（DOM 序在前者为取消钮，
- * 默认焦点不落在确认钮防误删，与「删除不预聚焦」精神一致）；关闭还原焦点到触发元素；
+ * 焦点管理（UX 整改 37，2026-08 拍板修订）：打开默认聚焦「确定/确认」按钮
+ * （回车=确定）；关闭还原焦点到触发元素；
  * popup 挂 role="dialog" aria-modal="true"（读屏语义）。id/类名不变（铁律 3）。
  */
 import { escManager } from './esc-manager';
@@ -18,9 +18,6 @@ export interface ConfirmOptions {
   onConfirm?: () => void;
   onCancel?: () => void;
 }
-
-/** 弹窗内可交互元素选择器（读屏/焦点管理的通用口径） */
-const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 export function confirm(opts: ConfirmOptions) {
   const t = opts.title || '确认';
@@ -73,9 +70,9 @@ export function confirm(opts: ConfirmOptions) {
     if (!ok && typeof onNo === 'function') onNo();
   }
 
-  // 打开聚焦首个可交互元素（取消钮在前，确认钮在后，见上）
-  const first = popup.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
-  if (first) first.focus();
+  // 打开默认聚焦「确定/确认」按钮（用户拍板：回车=确定）
+  const okBtn = document.getElementById('__shared_confirm_ok__');
+  if (okBtn) okBtn.focus();
 
   document.getElementById('__shared_confirm_ok__')!.onclick = () => close(true);
   document.getElementById('__shared_confirm_cancel__')!.onclick = () => close(false);
