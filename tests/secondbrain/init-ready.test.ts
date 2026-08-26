@@ -96,7 +96,7 @@ describe('VectorStore 索引就绪与自愈（ticket 107）', () => {
     const vault = new MockVault();
     vault.files.set(
       META_PATH,
-      JSON.stringify({ version: 8, notes: { '我的/A.md': { mtime: 1, chunks: [{ text: 't' }] } }, _dim: 2 })
+      JSON.stringify({ version: 9, notes: { '我的/A.md': { mtime: 1, chunks: [{ text: 't' }] } }, _dim: 2 })
     );
     const { adapter } = makeAdapter(vault);
     const app = makeApp(vault, adapter);
@@ -120,7 +120,7 @@ describe('VectorStore 索引就绪与自愈（ticket 107）', () => {
     vault.files.set('我的/A.md', '足够长的单一文本块内容用于自愈测试。');
     vault.files.set(
       META_PATH,
-      JSON.stringify({ version: 8, notes: { '我的/A.md': { mtime: 11, chunks: [{ text: '旧块' }] } }, _dim: 2 })
+      JSON.stringify({ version: 9, notes: { '我的/A.md': { mtime: 11, chunks: [{ text: '旧块' }] } }, _dim: 2 })
     );
     const { adapter, binary } = makeAdapter(vault); // 故意不种 .vec
     const app = makeApp(vault, adapter, { '我的/A.md': 11 });
@@ -138,7 +138,7 @@ describe('VectorStore 索引就绪与自愈（ticket 107）', () => {
     expect(dim).toBe(2);
     expect(rows.length / dim).toBe(1);
     const meta = JSON.parse(vault.files.get(META_PATH)!);
-    expect(meta.notes['我的/A.md'].chunks).toEqual([{ text: '足够长的单一文本块内容用于自愈测试。' }]);
+    expect(meta.notes['我的/A.md'].chunks).toEqual([{ text: 'A\n足够长的单一文本块内容用于自愈测试。' }]); // 首块带标题（ticket 110）
   });
 
   it('refresh 并发去重：进行中重复调用复用同一 promise，只跑一轮', async () => {
@@ -191,7 +191,7 @@ describe('VectorStore 索引就绪与自愈（ticket 107）', () => {
     vault.files.set('我的/A.md', '内容 A。');
     vault.files.set(
       META_PATH,
-      JSON.stringify({ version: 8, notes: { '我的/A.md': { mtime: 5, chunks: [{ text: 't' }] } }, _dim: 2 })
+      JSON.stringify({ version: 9, notes: { '我的/A.md': { mtime: 5, chunks: [{ text: 't' }] } }, _dim: 2 })
     );
     const { adapter, binary } = makeAdapter(vault);
     const header = new Uint8Array(4);
