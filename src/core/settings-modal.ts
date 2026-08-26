@@ -113,11 +113,13 @@ export function openSettingsModal(opts: SettingsModalOptions): void {
     maskId: 'bz-settings-modal-mask',
     popupId: 'bz-settings-modal-popup',
     // z-index 家族表（全站统一层规，改层级前先对表）：
-    //   999x        主面板族（各域主面板 9999 / 遮罩 9998）
+    //   9997-9998  主面板族（各域主面板 9999 / 遮罩 9998；原 1000 档影视/归物/书库遮罩 2026-08 抬入此族）
     //   10001-10060 域模态旧档（各域历史弹窗/预览/加密确认等）
     //   10050       设置弹窗（本组件，压域模态、被抽屉与 companion 盖）
+    //   10250       共享确认框（core/confirm：必须 > 全部域弹窗 10060/10070/10080/10200，< 抽屉）
     //   10999-11000 统一抽屉（core/item-actions：遮罩 10999 + 本体 11000）
-    //   11100+      companion 档（必须 >11000：抽屉之上叠的域内小弹窗）
+    //   11100+      companion 档（必须 >11000：抽屉之上叠的域内小弹窗；belongings 子弹窗 11100/11101 落此档；
+    //                            复习评级弹窗 11102 亦此档）
     //   12000       movie 小窗
     //   200000      attach 选择器
     zIndex: 10050,
