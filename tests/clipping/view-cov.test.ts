@@ -160,8 +160,7 @@ describe('剪藏本面板显隐与头部按钮', () => {
     expect(document.querySelectorAll('.article-entry-card').length).toBe(2);
   });
 
-  // 注：源码中 ⏳「重新加载文章」按钮创建后从未挂载到 DOM（refreshBtn 无 appendChild），
-  // 属不可达 UI 分支（兼容性冻结不改产线码），其回调无法经真实路径触达，故无用例。
+  // 注：⏳「重新加载文章」按钮为不可达死代码（创建后从未挂载），已随 UX 整改删除。
 
   it('📰 资讯按钮：隐藏面板并经 commands 裸调用 bz-news-open（域间互调约定 id）', async () => {
     const { app } = await setup();

@@ -189,20 +189,6 @@ function createHeader(): HTMLElement {
     }
   });
 
-  const refreshBtn = createIconButton('⏳', '重新加载文章', async () => {
-    if (refreshBtn.disabled) return;
-    refreshBtn.disabled = true;
-    refreshBtn.style.opacity = '0.5';
-    try {
-      await refreshData();
-    } finally {
-      refreshBtn.disabled = false;
-      refreshBtn.style.opacity = '1';
-    }
-  });
-  refreshBtn.disabled = true;
-  refreshBtn.style.opacity = '0.5';
-
   // 剪藏本设置弹窗（ADR-0009 域设置弹窗；分组卡片重设计，2026-08 用户拍板方案 A）
   const settingsBtn = createIconButton('⚙️', '剪藏本设置', () => {
     openSettingsModal({
