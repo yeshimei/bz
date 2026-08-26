@@ -15,7 +15,7 @@ import { emitDomainEvent, clearDomainEvents } from '../../src/core/domain-bus';
 import { attachObsidianAdapter, detachObsidianAdapter } from '../../src/core/obsidian-adapter';
 import {
   ensureSmartCat, unloadSmartCat, openSmartCatChat, hideSmartCat,
-  parseClipFrontmatter, maybeProactiveCare,
+  parseClipFrontmatter, maybeProactiveCare, __typewriterEffectForTests,
   __getSmartcatInternals, __setDiarySettleMsForTests, __setNoteSettleMsForTests,
   __setNewsSaveTimeoutForTests, __getNewsPendingSavesForTests,
   __getDiaryTimersForTests, __getNoteTimersForTests, __setLibraryDebounceMsForTests,
@@ -586,6 +586,49 @@ describe('定时任务链路（趋势漂移 / 每周报告 / 关系史叙事）'
     const countAfter = d.memory.stream.filter((m: any) => m.description.includes('【一起的日子】')).length;
     expect(countAfter).toBe(countBefore);
   }, 30000);
+
+  it('常驻心跳节拍（p2 合并后时机不变）：10 分钟分派主动关心，9 分 59 秒不触发', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 7, 26, 9, 30, 0));
+    vi.spyOn(Math, 'random').mockReturnValue(0.9); // 压制陪伴概率分支（speakProbability 0.3 恒不触发）
+    const { app } = makeApp();
+    await ensureSmartCat(app);
+    const d: any = __getSmartcatInternals().data;
+    d.memory.stream = mkStream(5);
+    d.editingData = {
+      ...(d.editingData || {}),
+      proactiveCare: { week: isoWeekKey(), count: 0, lastAt: Date.now() - 4 * DAY_MS },
+    };
+    // 先过 2s（覆盖 startCompanionMode 的 1000ms 欢迎语）建立基线
+    await vi.advanceTimersByTimeAsync(2000);
+    const base = bubbles.length;
+    // 9 分 59 秒：未到 10 分钟节拍（20 节拍 × 30s）→ 主动关心不触发
+    await vi.advanceTimersByTimeAsync(9 * 60 * 1000 + 59 * 1000 - 2000);
+    expect(bubbles.length).toBe(base);
+    // 10 分钟整：心跳分派主动关心 → 气泡 +1、计数 +1
+    await vi.advanceTimersByTimeAsync(1000);
+    await vi.advanceTimersByTimeAsync(0); // 冲刷 maybeProactiveCare 的 await 微任务
+    expect(bubbles.length).toBeGreaterThan(base);
+    expect(d.editingData.proactiveCare.count).toBe(1);
+  }, 20000);
+});
+
+describe('打字机点击跳过（UX 47）', () => {
+  it('点击目标气泡立即完成全文渲染并清理 interval', async () => {
+    vi.useFakeTimers();
+    const el = document.createElement('div');
+    document.body.appendChild(el);
+    const p = __typewriterEffectForTests(el, '你好，世界！', 1000);
+    vi.advanceTimersByTime(1000); // 1 打字节拍 → 1 字
+    expect(el.textContent).toBe('你');
+    el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await p;
+    expect(el.textContent).toBe('你好，世界！');
+    // interval 已清：再推进不再增长（防残留定时器）
+    vi.advanceTimersByTime(10_000);
+    expect(el.textContent).toBe('你好，世界！');
+    el.remove();
+  });
 });
 
 describe('域 JSON 感知（library 盲通道）', () => {
