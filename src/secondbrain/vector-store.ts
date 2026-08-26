@@ -16,6 +16,10 @@
  * ② 旧向量段偏移按「删除前」完整键序计算（原实现用删除后键序拷贝删除前布局，非末尾删除会错位）。
  * ticket 110：切块剥离 frontmatter（YAML 样板不进 embedding 文本）+ 笔记标题并入首块；
  * meta v8→v9，旧库经 load() 版本不符路径自动清空、下次 refresh 全量重建（一次性 re-embed，桌面执行）。
+ * ticket 113：断点暂存——长库初始化/重建期间按「时间 + 新增完成块数」双阈值周期性把已完成
+ * 文件合并落盘（mergeWrite 与最终写回同一实现，行序布局不变式不破坏），中断（关面板/重启
+ * Obsidian/Ollama 中途失联）后重开自动从已暂存进度增量续嵌，不再整库从零重来；
+ * isRefreshing() 暴露进行中状态供主面板恢复进度视图。
  */
 import type { App, TFile } from 'obsidian';
 import { buildConfig, IS_MOBILE } from './config';
@@ -29,6 +33,12 @@ import { checkRemoteOllama, EMBED_BATCH_SIZE, getEmbedding, getEmbeddingsBatch }
 
 // v8→v9（ticket 110）：切块剥离 frontmatter + 标题入首块——旧库版本不符走 load() 自动重建
 const VECTOR_STORE_VERSION = 9;
+
+/**
+ * 断点暂存阈值（ticket 113）：距上次暂存 ≥minIntervalMs 且新完成块数 ≥minNewChunks 才落盘一次。
+ * 导出为可变属性对象仅供测试收紧阈值；生产代码勿改。
+ */
+export const CHECKPOINT_POLICY = { minIntervalMs: 5000, minNewChunks: 200 };
 
 export interface NoteEntry {
   mtime: number;
@@ -128,6 +138,11 @@ export class VectorStore {
     return Object.keys(this.meta.notes).length > 0 && this.vectors.length > 0 && this.dim > 0;
   }
 
+  /** 是否有 refresh 正在进行（ticket 113）：主面板重开时据此恢复进度视图而非引导死按钮 */
+  isRefreshing(): boolean {
+    return this.refreshPromise !== null;
+  }
+
   /** 白名单过滤后的 md 文件列表（doRefresh / hasPendingChanges / 主面板覆盖率共用） */
   whitelistedFiles(): TFile[] {
     const CONFIG = buildConfig();
@@ -217,6 +232,46 @@ export class VectorStore {
         offset += count * dim;
       }
       this.vectors = merged;
+      await this.saveVectors();
+    }
+    await this.saveStore();
+  }
+
+  /**
+   * 合并写回（ticket 113：最终写回与中途断点暂存共用同一实现）。
+   * 按 meta.notes 当前键序重建整段向量：本轮新完成文件（embedded）写入新嵌入向量，
+   * 未变文件按「删除前」源偏移从 srcVectors（本轮开始时的原始缓冲，永不原地改写）拷贝旧段，
+   * 随后 saveVectors + saveStore。中间无论暂存多少次，最终布局与一次到位完全一致。
+   */
+  private async mergeWrite(
+    srcVectors: Float32Array,
+    srcOffsets: Map<string, number>,
+    embedded: Map<string, Float32Array[]>,
+    dim: number
+  ): Promise<void> {
+    if (dim > 0) {
+      let totalVecs = 0;
+      for (const note of Object.values(this.meta.notes)) totalVecs += note.chunks.length;
+      const merged = new Float32Array(totalVecs * dim);
+      let offset = 0;
+      for (const [path, note] of Object.entries(this.meta.notes)) {
+        const vecs = embedded.get(path);
+        if (vecs) {
+          for (const v of vecs) {
+            merged.set(v, offset);
+            offset += v.length;
+          }
+        } else {
+          const srcRow = srcOffsets.get(path);
+          if (srcRow === undefined) continue; // 理论不达：meta 条目要么旧（有源偏移）要么新（在 embedded）
+          const srcStart = srcRow * dim;
+          merged.set(srcVectors.subarray(srcStart, srcStart + note.chunks.length * dim), offset);
+          offset += note.chunks.length * dim;
+        }
+      }
+      this.vectors = merged;
+      this.dim = dim;
+      this.meta._dim = dim;
       await this.saveVectors();
     }
     await this.saveStore();
@@ -334,6 +389,50 @@ export class VectorStore {
     }
     let processed = 0;
     const total = toProcess.length;
+
+    // —— 断点暂存（ticket 113）：长库初始化/重建期间周期性把「已完整嵌完」的文件合并落盘，
+    //    中断后重开可从已存进度增量续嵌。ckptEmbedded 累积全部已暂存文件的向量（与任务槽位
+    //    同引用，零拷贝）；ckptChain 串行化防并发写盘；最终合并前先排空链，保证互斥。 ——
+    const ckptEmbedded = new Map<string, Float32Array[]>();
+    const ckptDoneFiles = new Set<string>();
+    let lastCkptAt = Date.now();
+    let ckptChunks = 0;
+    let ckptChain: Promise<void> = Promise.resolve();
+
+    const maybeCheckpoint = (): void => {
+      if (dim <= 0) return;
+      let doneChunks = 0;
+      for (const slots of fileChunksMap.values()) {
+        for (const s of slots) if (s) doneChunks++;
+      }
+      if (doneChunks - ckptChunks < CHECKPOINT_POLICY.minNewChunks) return;
+      const now = Date.now();
+      if (now - lastCkptAt < CHECKPOINT_POLICY.minIntervalMs) return;
+      lastCkptAt = now;
+      ckptChunks = doneChunks;
+      ckptChain = ckptChain
+        .then(async () => {
+          let newly = 0;
+          for (const file of toProcess) {
+            const slots = fileChunksMap.get(file.path);
+            if (!slots || slots.some((s) => !s || !s.embedding)) continue; // 槽位有任务且 embedding 已赋值
+            if (ckptDoneFiles.has(file.path)) continue;
+            ckptDoneFiles.add(file.path);
+            newly++;
+            const tasks = slots as ChunkTask[];
+            this.meta.notes[file.path] = { mtime: (file.stat as any).mtime, chunks: tasks.map((c) => ({ text: c.text })) };
+            const vecs = tasks.map((t) => t.embedding!);
+            ckptEmbedded.set(file.path, vecs);
+          }
+          if (newly === 0) return;
+          await this.mergeWrite(vectors, srcOffsets, ckptEmbedded, dim);
+          let regTotal = 0;
+          for (const v of ckptEmbedded.values()) regTotal += v.length;
+          this.updateProgress(`已暂存 ${regTotal}/${globalTasks.length} 段（此时关闭也会保留进度，重开自动继续）`);
+        })
+        .catch((e) => console.warn('[secondbrain] 断点暂存失败（索引继续，不影响最终结果）', e));
+    };
+
     await parallelMap(batches, 3, async (batch) => {
       try {
         const embeddings = await getEmbeddingsBatch(batch.map((t) => t.text), embedBase);
@@ -341,10 +440,13 @@ export class VectorStore {
           fileChunksMap.get(batch[j].filePath)![batch[j].chunkIdx] = batch[j];
           batch[j].embedding = new Float32Array(embeddings[j]);
         }
+        // 嵌入维度在第一批嵌入完成时即可确定（与最终注册口径一致）
+        if (dim === 0 && batch[0]?.embedding) dim = batch[0].embedding.length;
         processed += batch.length;
         this.updateProgress(
           `向量化: ${processed}/${globalTasks.length} chunks (${total} 篇文件, ${Math.round((processed / globalTasks.length) * 100)}%)`
         );
+        maybeCheckpoint();
       } catch (err) {
         console.warn('[secondbrain] 批量向量化失败，回退逐条处理', err);
         for (const task of batch) {
@@ -353,15 +455,19 @@ export class VectorStore {
             // 回填槽位与登记口径一致（QA L598 同构）：否则 chunks 与向量数错位、合并越界
             fileChunksMap.get(task.filePath)![task.chunkIdx] = task;
             task.embedding = new Float32Array(embedding);
+            if (dim === 0 && task.embedding.length) dim = task.embedding.length;
             processed++;
           } catch (e) {
             console.warn(`[secondbrain] 段落向量化失败 [${task.filePath}]`, e);
           }
         }
+        maybeCheckpoint(); // 逐条回退也可能凑满触发条件（慢速大库同样受益断点续嵌）
       }
     });
+    await ckptChain; // 排空暂存链再最终合并（最终写回与链互斥）
 
-    // 登记新 meta 条目（meta 只存 text，向量只进 .vec——QA L610-619 同构）
+    // 登记新 meta 条目（meta 只存 text，向量只进 .vec——QA L610-619 同构；
+    // 已被断点暂存登记过的文件在此按同一口径重登记，幂等覆盖）
     const newChunksPerFile = new Map<string, Float32Array[]>();
     for (const file of toProcess) {
       const tasks = globalTasks.filter((t) => t.filePath === file.path);
@@ -376,31 +482,8 @@ export class VectorStore {
       newChunksPerFile.set(file.path, vecs);
     }
 
-    // 合并写回：未变文件按源偏移拷贝旧段，新文件写新向量（QA L621-639，偏移已修）
-    if (dim > 0) {
-      let totalVecs = 0;
-      for (const note of Object.values(this.meta.notes)) totalVecs += note.chunks.length;
-      const merged = new Float32Array(totalVecs * dim);
-      let offset = 0;
-      for (const [path, note] of Object.entries(this.meta.notes)) {
-        const srcRow = srcOffsets.get(path);
-        if (!newChunksPerFile.has(path) && srcRow !== undefined) {
-          const srcStart = srcRow * dim;
-          merged.set(vectors.subarray(srcStart, srcStart + note.chunks.length * dim), offset);
-          offset += note.chunks.length * dim;
-        } else if (newChunksPerFile.has(path)) {
-          for (const v of newChunksPerFile.get(path)!) {
-            merged.set(v, offset);
-            offset += v.length;
-          }
-        }
-      }
-      this.vectors = merged;
-      this.dim = dim;
-      this.meta._dim = dim;
-      await this.saveVectors();
-    }
-    await this.saveStore();
+    // 合并写回：未变文件按源偏移拷贝旧段，新文件写新向量（QA L621-639 偏移口径不变；与断点暂存共用 mergeWrite）
+    await this.mergeWrite(vectors, srcOffsets, newChunksPerFile, dim);
     console.log(`[secondbrain] 向量库已保存: ${Object.keys(this.meta.notes).length} 个文件, dim=${dim}`);
     this.updateProgress(`✅ 向量化完成：${total} 篇文件，${globalTasks.length} 个段落`);
   }

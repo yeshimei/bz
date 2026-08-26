@@ -332,6 +332,42 @@ describe('第二大脑首用引导（ticket 107）', () => {
     expect(store.isIndexReady()).toBe(true);
     panel.destroy();
   });
+
+  it('初始向量化进行中关页重开 → 恢复进度视图而非死按钮引导态（ticket 113）', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/A.md', '足够长的文本块内容用于测试重开恢复进度。');
+    const { adapter } = makeAdapter(vault);
+    const app = makeApp(vault, adapter, { '我的/A.md': 1 });
+    setApp(app as any);
+    // 嵌入永远 pending：refresh 挂起，面板可检查 store.isRefreshing()
+    const neverResolve = new Promise<number[][]>(() => {});
+    vi.mocked(getEmbeddingsBatch).mockImplementation(async () => neverResolve);
+
+    const store = new VectorStore(app as any);
+    await store.load();
+    expect(store.isIndexReady()).toBe(false);
+    const panel = new SecondBrainPanel(app as any, store, { onOpenReference: () => {}, onOpenChat: () => {} });
+    await panel.open();
+    await until(() => (document.getElementById('bz-sb-init-btn')?.textContent?.includes('开始向量化') ?? false));
+
+    // 点击开始 → 进度视图（此时 refresh 已挂起，refreshPromise 非空）
+    (document.getElementById('bz-sb-init-btn') as HTMLButtonElement).click();
+    await until(() => (document.getElementById('bz-sb-init-status')?.textContent ?? '').length > 0);
+    expect(store.isRefreshing()).toBe(true);
+
+    // 关页重开：mask/popup 仅隐藏（display:none），DOM 仍在 document.body
+    panel.close();
+    panel.close(); // 幂等：再调一次无妨
+    await panel.open();
+    await until(() => document.getElementById('bz-sb-onboard')?.style.display === 'flex');
+
+    // 恢复进度视图：按钮隐藏，进度条可见，标题含「初始化」
+    expect((document.getElementById('bz-sb-init-btn') as HTMLElement).style.display).toBe('none');
+    expect(document.getElementById('bz-sb-init-progress')!.style.display).toBe('flex');
+    expect(document.getElementById('bz-sb-progress-title')!.textContent).toContain('初始化向量数据库');
+    // 不能是「开始向量化」引导态（按钮隐藏即证）
+    panel.destroy();
+  });
 });
 
 describe('第二大脑对话弹窗（ticket 108 改居中弹窗）', () => {
