@@ -223,13 +223,13 @@ describe('体检弹窗覆盖补测', () => {
     expect(body.textContent).toContain('可清理（2）：1 个失效条目、1 个孤儿密文');
     expect(body.textContent).toContain('损坏镜像（2）——不可清理，请从备份恢复后重试还原');
     expect(body.textContent).toContain('附件镜像缺失（1）——还原时该附件将不可用');
-    // 可清理项默认全选，计数联动
+    // 可清理项默认不全选（ticket 18 用户拍板），勾选才计入清理
     const boxes = [...body.querySelectorAll<HTMLInputElement>('input.bz-encrypt-health-check')];
     expect(boxes.length).toBe(2);
-    expect(boxes.every((b) => b.checked)).toBe(true);
+    expect(boxes.every((b) => b.checked)).toBe(false);
     const cleanBtn = document.getElementById('bz-encrypt-health-clean') as HTMLButtonElement;
-    expect(cleanBtn.textContent).toBe('清理勾选项 (2)');
-    boxes[0].checked = false;
+    expect(cleanBtn.textContent).toBe('清理勾选项 (0)');
+    boxes[0].checked = true;
     boxes[0].dispatchEvent(new Event('change'));
     expect(cleanBtn.textContent).toBe('清理勾选项 (1)');
     // 重新体检按钮触发再次扫描（foot 仅有 class 无 id）
@@ -263,7 +263,7 @@ describe('体检弹窗覆盖补测', () => {
     expect(document.getElementById('bz-encrypt-health-popup')!.style.display).toBe('none');
   });
 
-  it('清理：未勾选提示；成功按类目汇总并自动复扫；失败如实报错', async () => {
+  it('清理：未勾选提示；勾选后二次确认写明永久删除数量，确认后按类目汇总并自动复扫；失败如实报错', async () => {
     const dm = fakeDM({
       overrides: {
         resolveHealth: vi.fn(async () => ({ notes: 2, files: 1 })),
@@ -277,23 +277,44 @@ describe('体检弹窗覆盖补测', () => {
     await ui.openHealthDialog();
     await waitFor(() => !!document.querySelector('.bz-encrypt-health-check'));
 
-    // 全部取消勾选 → 提示未勾选
+    // 默认未勾选（ticket 18）→ 点清理只提示未勾选，不弹确认
     const box = document.querySelector<HTMLInputElement>('input.bz-encrypt-health-check')!;
-    box.checked = false;
-    box.dispatchEvent(new Event('change'));
+    expect(box.checked).toBe(false);
     (document.getElementById('bz-encrypt-health-clean') as HTMLElement).click();
     await waitFor(() => hasNotice('未勾选任何可清理项'));
+    expect(document.getElementById('__shared_confirm_mask__')).toBeNull();
 
-    // 勾选后清理 → 汇总通知 + 自动重新体检
+    // 勾选后清理 → 二次确认写明永久删除数量 → 确认后汇总通知 + 自动重新体检
     box.checked = true;
     box.dispatchEvent(new Event('change'));
     (document.getElementById('bz-encrypt-health-clean') as HTMLElement).click();
+    await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
+    expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('清理确认');
+    expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('1 条失效条目（含残余附件镜像）');
+    expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('将永久删除，不可恢复');
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
     await waitFor(() => hasNotice('已清理：2 个失效条目、1 个孤儿密文'));
     expect((dm as any).scanHealth.mock.calls.length).toBeGreaterThanOrEqual(2);
 
-    // 失败路径
+    // 取消二次确认 → 不执行清理（清理后自动复扫渲染新报告，重新查询勾选框，默认仍不全选）
+    await waitFor(() => !!document.querySelector('input.bz-encrypt-health-check'));
+    const box2 = document.querySelector<HTMLInputElement>('input.bz-encrypt-health-check')!;
+    expect(box2.checked).toBe(false);
+    const resolvedBefore = (dm as any).resolveHealth.mock.calls.length;
+    box2.checked = true;
+    box2.dispatchEvent(new Event('change'));
+    (document.getElementById('bz-encrypt-health-clean') as HTMLElement).click();
+    await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
+    expect(document.getElementById('__shared_confirm_mask__')!.textContent).toContain('将永久删除，不可恢复');
+    (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 30));
+    expect((dm as any).resolveHealth).toHaveBeenCalledTimes(resolvedBefore); // 取消未多执行清理
+
+    // 失败路径（同样先过二次确认 → 确认后如实报错）
     (dm as any).resolveHealth.mockRejectedValueOnce(new Error('磁盘只读'));
     (document.getElementById('bz-encrypt-health-clean') as HTMLElement).click();
+    await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
     await waitFor(() => hasNotice('清理失败：磁盘只读'));
   });
 });

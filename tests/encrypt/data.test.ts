@@ -614,6 +614,8 @@ describe('SafeManager 提交式加密（ADR-0018）', () => {
     expect(vault.files.get('CONFIG/.ENCRYPT/.staging/pending.json')).toBeUndefined();
     expect(vault.files.get('CONFIG/.ENCRYPT/.staging/.stale.enc')).toBeUndefined();
     expect(vault.files.get('CONFIG/.ENCRYPT/.safe.enc')).toBeTruthy();
+    // 解锁入口暴露回滚计数（ticket 6：UI 解锁成功追加「自动回滚」提示）
+    expect(sm2.selfHealRolledBack).toBe(1);
   });
 
   it('自愈回滚：挂起标记无对应条目（S2 前崩溃）→ 仅清空暂存，清单不动', async () => {
@@ -628,6 +630,23 @@ describe('SafeManager 提交式加密（ADR-0018）', () => {
     expect(sm2.manifest.notes.length).toBe(0);
     expect(vault.files.get('CONFIG/.ENCRYPT/.staging/pending.json')).toBeUndefined();
     expect(vault.files.get('CONFIG/.ENCRYPT/.staging/.ghost.enc')).toBeUndefined();
+    // 无条目录回滚 → 计数为 0（不误报）
+    expect(sm2.selfHealRolledBack).toBe(0);
+  });
+
+  it('自愈回滚计数（ticket 6）：selfHeal 返回值 = 实际移除条目数；无对应条目的挂起标记不计入；无挂起为 0', async () => {
+    makeApp(vault);
+    const sm = new SafeManager('CONFIG/.ENCRYPT');
+    await sm.unlock('pw');
+    const a = await lockSample(sm, { content: '# A' });
+    const b = await lockSample(sm, { notePath: '我的/日记/2025-06-02.md', content: '# B' });
+    // 现场：A 是真实半提交（清单有条目 + 挂起标记）；B 是 S2 前崩溃残留（标记无对应条目）
+    vault.files.set('CONFIG/.ENCRYPT/.staging/pending.json', JSON.stringify([a.id, 'enc-nothing']));
+    expect(await sm.selfHeal()).toBe(1); // 只有 A 被回滚
+    expect(sm.manifest.notes.length).toBe(1); // B 保留
+    expect(sm.selfHealRolledBack).toBe(1); // selfHeal 直接调用同样写回计数
+    // 无挂起条目 → 0
+    expect(await sm.selfHeal()).toBe(0);
   });
 
   it('体检扫描孤儿密文（不删）：报告顶层无引用点前缀密文，保留清单/引用镜像/非点前缀文件；勾选后清理并清空暂存', async () => {
