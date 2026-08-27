@@ -55,17 +55,19 @@ beforeEach(() => {
 });
 
 describe('卡片盒/现代诗/信 观察（per-file 10 分钟结算，ticket 083 v1+v2+v3+v4）', () => {
-  it('首落：新建有字 flash（无日期）静置结算 → 新增观察（source=flash，全文），计时结束', async () => {
+  it('首落：新建有字 flash（无日期）静置结算 → 新增观察（behavior 流），计时结束', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const path = '卡片盒/TDD.md';
     vault.files.set(path, '今天实践 TDD\n第二行');
     vault.emit('modify', vault.file(path));
     await waitSettle();
-    const stream = readStream();
-    const last = stream[stream.length - 1];
+    // P2a：flash:created 路由到 behavior 流（用户拍板：知识内容不进记忆流）
+    const beh = readBehavior();
+    const last = beh[beh.length - 1];
     expect(last.source).toBe('flash');
-    expect(last.description).toBe('你在卡片盒记下了「TDD」：「今天实践 TDD\n第二行」');
+    expect(last.type).toBe('created');
+    expect(last.description).toMatch(/^flash:created/);
     expect(__getNoteTimersForTests().get(path)?.timer).toBeNull();
   });
 
@@ -127,13 +129,15 @@ describe('卡片盒/现代诗/信 观察（per-file 10 分钟结算，ticket 083
     vault.files.set(path, '今天天气很好');
     vault.emit('modify', vault.file(path));
     await waitSettle();
-    expect(readStream().length).toBe(1);
+    // P2a：flash:created → behavior 流
+    expect(readBehavior().length).toBe(1);
     vault.files.set(path, '今天天气不好');
     vault.emit('modify', vault.file(path));
     await waitSettle();
-    const stream = readStream();
-    expect(stream.length).toBe(2);
-    expect(stream[stream.length - 1].description).toBe('你修改了卡片盒「TDD」：修改了第 1 段「今天天气很好」→「今天天气不好」');
+    const beh = readBehavior();
+    expect(beh.length).toBe(2);
+    // behavior 流描述格式：source:action name
+    expect(beh[beh.length - 1].description).toMatch(/^flash:updated TDD/);
   });
 
   it('修改：删段 + 增段 diff；窗口内连续编辑合并为一次结算', async () => {
@@ -150,9 +154,9 @@ describe('卡片盒/现代诗/信 观察（per-file 10 分钟结算，ticket 083
     vault.files.set(path, 'B\n\nC');
     vault.emit('modify', vault.file(path));
     await waitSettle();
-    const stream = readStream();
-    expect(stream.length).toBe(2); // 首落 + 一次合并 diff（不是两次）
-    expect(stream[stream.length - 1].description).toBe('你修改了卡片盒「TDD」：删除了第 1 段「A」；新增了第 1 段「B」、新增了第 2 段「C」');
+    const beh = readBehavior();
+    expect(beh.length).toBe(2); // 首落 + 一次合并 diff（不是两次）
+    expect(beh[beh.length - 1].description).toMatch(/^flash:updated TDD/);
   });
 
   it('删除：跟踪过的文件删整文件 → 追加删除观察（behavior 流）+ 清计时；未跟踪过 → 跳过', async () => {
@@ -190,9 +194,9 @@ describe('卡片盒/现代诗/信 观察（per-file 10 分钟结算，ticket 083
     vault.files.set(path, '旧内容第一段\n\n新加的第二段');
     vault.emit('modify', vault.file(path));
     await waitSettle();
-    const stream = readStream();
-    expect(stream.length).toBe(1); // 只 diff，无「你在卡片盒记下了」
-    expect(stream[0].description).toBe('你修改了卡片盒「旧卡」：新增了第 2 段「新加的第二段」');
+    const beh = readBehavior();
+    expect(beh.length).toBe(1); // 只 diff，无首落
+    expect(beh[0].description).toMatch(/^flash:updated 旧卡/);
   });
 
   it('存量信（frontmatter date）：首次修改 → 先补带日期全文首落，再产 diff（v3，两条观察）', async () => {
@@ -234,13 +238,13 @@ describe('卡片盒/现代诗/信 观察（per-file 10 分钟结算，ticket 083
     vault.files.set(path, '   \n');
     vault.emit('modify', vault.file(path));
     await waitSettle();
-    expect(readStream().length).toBe(0);
+    expect(readStream().length).toBe(0); // 内存流无变化
     vault.files.set(path, '写了第一句话');
     vault.emit('modify', vault.file(path));
     await waitSettle();
-    const stream = readStream();
-    expect(stream.length).toBe(1);
-    expect(stream[0].description).toBe('你在卡片盒记下了「空卡」：「写了第一句话」');
+    const beh = readBehavior();
+    expect(beh.length).toBe(1);
+    expect(beh[0].description).toMatch(/^flash:created 空卡/);
   });
 
   it('noteSource 关闭 → modify/delete 均静默（不装计时、不观察）', async () => {

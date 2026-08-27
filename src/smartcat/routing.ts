@@ -30,8 +30,8 @@ export const ROUTING_RULES: Record<string, RoutingRule> = {
   'diary:deleted':   { stream: 'behavior' },
 
   // === 闪念 ===
-  'flash:created':   { stream: 'memory', importance: 0.70, defaultEmotion: 'calm', credibility: 0.9 },
-  'flash:updated':   { stream: 'memory', importance: 0.65, defaultEmotion: 'calm', credibility: 0.9 },
+  'flash:created':   { stream: 'behavior' },
+  'flash:updated':   { stream: 'behavior' },
   'flash:deleted':   { stream: 'behavior' },
 
   // === 诗 ===

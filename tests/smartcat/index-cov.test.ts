@@ -363,7 +363,9 @@ describe('vault 活动路由（diary/note/clipping/短路）', () => {
     vault.emit('modify', vault.file('我的/信/第一封.md'));
     await sleep(40);
     const stream: any[] = __getSmartcatInternals().data.memory.memoryStream;
-    expect(stream.some((m) => m.description.includes('你在卡片盒记下了「想法一」'))).toBe(true);
+    const noteBeh: any[] = __getSmartcatInternals().data.memory.behaviorStream;
+    // P2a：flash:created → behavior 流（知识内容不进记忆流）
+    expect(noteBeh.some((m) => m.source === 'flash' && m.type === 'created')).toBe(true);
     expect(stream.some((m) => m.description.includes('你在 2016-12-30 08:00 写了一首现代诗「161230 忧郁啊」'))).toBe(true);
     expect(stream.some((m) => m.source === 'letter')).toBe(false);
     expect(__getNoteTimersForTests().has('我的/信/第一封.md')).toBe(false);
@@ -371,7 +373,6 @@ describe('vault 活动路由（diary/note/clipping/短路）', () => {
     // 删除已跟踪的诗 → 删除观察（behavior 流）
     vault.emit('delete', { path: '我的/现代诗/161230 忧郁啊.md' });
     await sleep(40);
-    const noteBeh = __getSmartcatInternals().data.memory.behaviorStream;
     expect(noteBeh.some((m) => m.source === 'poem' && m.type === 'deleted')).toBe(true);
 
     // 卡片盒改名移出观察目录 → 按旧跟踪产删除观察（behavior 流）
