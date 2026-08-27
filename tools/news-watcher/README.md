@@ -1,10 +1,13 @@
 # @jwbz/obsidian-news
 
-聚合讯数据源守护脚本——每 30 分钟抓取最近 24 小时文章（果壳科学人 + 知乎日报），URL + 标题双去重后入库 `CONFIG/STORAGE/news.json`，供 bz 插件「聚合讯」阅读。
+聚合讯数据源守护脚本——每 30 分钟抓取最近 24 小时文章（果壳科学人 + 知乎日报 + B站 UP 主视频投稿），URL + 标题双去重后入库 `CONFIG/STORAGE/news.json`（**四段结构**），供 bz 插件「聚合讯」阅读。
 
-- 📡 双源并行抓取：果壳科学人（新站 API + 文章页正文）+ 知乎日报（官方 API + 详情正文）
-- 🔁 滚动 24 小时窗口，不是自然日——深夜发布的文章不丢
+> **v1.1.0（ticket 124，ADR-0060）**：news.json 升级为 `{articles, stats, bilibiliUps, sources}` 四段（旧纯数组读取时自动包裹迁移）；新增 B 站 UP 主视频投稿源；三源独立开关（读 news.json `sources` 段，插件剪藏本设置「数据源」组写）；UP 主名单读 news.json `bilibiliUps` 段。rc 配置仍只需 vaultPath（不新增配置键）。
+
+- 📡 三源并行抓取：果壳科学人（新站 API + 文章页正文）+ 知乎日报（官方 API + 详情正文）+ B站 UP 主（动态 API，仅视频投稿）
+- 🔁 滚动 24 小时窗口，不是自然日——深夜发布的文章不丢；B 站源按 pub_ts 翻页直到越过窗口边界
 - 🧹 双去重：URL + 标题，批内与库内都过滤，入库即未读
+- 🎛️ 源开关：news.json `sources` 段（zhihu/guokr/bilibili 三布尔）决定抓哪些源，默认全开
 - 🛡️ 源级容错：单个源失败不影响其他源，下个轮次自然重试
 - ⚙️ PM2 后台守护 + 崩溃自动重启（`start` / `stop` / `status` / `logs`）
 - 🧩 与 bz 插件分离：脚本只负责抓取入库，不维护已读状态（ADR-0008）
@@ -34,6 +37,8 @@ news.json 路径按以下优先级解析：
 
 3. 缺省：相对脚本位置 `../../../STORAGE/news.json`（兼容旧版 vault 内嵌部署，从 npm 全局安装后需用前两种方式配置）
 
+**B 站 UP 主配置**（不走 rc）：在 bz 插件「剪藏本设置 → 数据源」组粘贴主页/视频链接添加 UP 主，名单写入 vault 内 `CONFIG/STORAGE/news.json` 的 `bilibiliUps` 段；守护进程每轮读取。
+
 ## 使用
 
 ```bash
@@ -55,10 +60,13 @@ obsidian-news fetch
 ```
 启动即抓取一轮
   ↓ 每 30 分钟轮询（PM2 守护，崩溃自动重启）
-  ↓ 滚动 24 小时窗口：过滤窗口外的文章（按时间倒序，越过边界即停）
+  ↓ 读 news.json 四段：sources 开关决定抓哪些源，bilibiliUps 决定 B 站 UP 主集合
+  ↓ 滚动 24 小时窗口：过滤窗口外的文章（按时间倒序，越过边界即停；B 站按 pub_ts 翻页）
   ↓ 双去重：URL（批内 + 库内）→ 标题（库内）
-  ↓ 追加写入 CONFIG/STORAGE/news.json（fetch 超时 15s，单源失败不影响其他源）
+  ↓ 四段整写回（仅替换 articles 段，保留 stats/bilibiliUps/sources——插件侧维护段）
 ```
+
+B 站抓取细节：每轮先 GET `https://www.bilibili.com/` 收集 Cookie（buvid3）规避未登录 API 风控（412）；请求 `https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid=<uid>`；仅收 `DYNAMIC_TYPE_AV`（视频投稿）；条目映射 platform='B站'、title=视频标题、url=`https://www.bilibili.com/video/<bvid>`、body=简介+封面+播放链接。
 
 ## 从 vault 内嵌脚本迁移（旧部署）
 
@@ -87,7 +95,8 @@ rm -rf CONFIG/SCRIPTS/NodeJs/news-watcher
 ```
 tools/news-watcher/    （bz 插件仓库内的源码目录，npm 包 @jwbz/obsidian-news）
 ├── cli.js             # CLI 入口（watch/fetch/start/stop/status/logs）
-├── watcher.js         # 抓取核心：路径解析/双源抓取/HTML→Markdown/双去重/入库
+├── watcher.js         # 抓取核心：路径解析/三源抓取/四段读写/HTML→Markdown/双去重/入库
+├── test/              # node:test 单测（bilibili 条目映射纯函数）
 ├── CONTEXT.md         # 领域术语表
 └── README.md
 ```
@@ -95,14 +104,14 @@ tools/news-watcher/    （bz 插件仓库内的源码目录，npm 包 @jwbz/obsi
 ## 测试
 
 ```bash
-npm test      # node --check 语法门禁（cli.js + watcher.js，零依赖无需 install）
+npm test      # node --check 语法门禁（cli.js + watcher.js）+ node --test（B 站映射纯函数，零依赖）
 ```
 
 发布门禁（incidents 沉淀的 checklist）：`npm test` → `obsidian-news fetch` 真实抓取冒烟 → `npm pack --dry-run` 核对打包清单 → 发布后全局安装实测。
 
 ## 与 bz 插件的关系
 
-bz 插件**不包含**任何抓取逻辑（ADR-0008）：插件「聚合讯」只读 `CONFIG/STORAGE/news.json` 渲染阅读流。抓取由本脚本以 PM2 守护进程独立承担，与 Obsidian 是否运行无关。
+bz 插件**不包含**任何抓取逻辑（ADR-0008）：插件「聚合讯」只读 `CONFIG/STORAGE/news.json` 渲染阅读流；「数据源」组设置（源开关/UP 名单/保留天数）写 news.json 各段，守护进程下轮读取生效。抓取由本脚本以 PM2 守护进程独立承担，与 Obsidian 是否运行无关。
 
 ## License
 

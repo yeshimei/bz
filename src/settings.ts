@@ -76,13 +76,25 @@ export default interface BzSettings {
   /** 📁 存储文件夹路径（belongings.json）——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
   belongingsDataFolder: string;
 
-  // ===== 📰 剪藏本（2 项 + 自动摘要开关）=====
+  // ===== 📰 剪藏本（2 项 + 自动摘要开关 + ticket 124 详设/数据源）=====
   /** 📂 剪藏目录 */
   articleDirectory: string;
   /** 📄 每批加载数量（滚动加载每批显示的条目数） */
   articleBatchSize: string;
   /** 📄 自动摘要：监听剪藏目录新文件（路径与剪藏目录一致） */
   autoSummaryEnabled: boolean;
+  /** 📏 自动摘要长度档位：simple（简短）/ standard（标准）/ detailed（详细）——ticket 124 详设 */
+  autoSummaryLength: string;
+  /** 🏷️ 自动摘要标签生成开关（关 = 不生成/不补全 tags）——ticket 124 详设 */
+  autoSummaryTagsEnabled: boolean;
+  /** 🔢 自动摘要标签数量（"3-6" 区间文本）——ticket 124 详设 */
+  autoSummaryTagCount: string;
+  /** ⏱️ 自动摘要时机：immediate（保存后立刻，create+file-open 双监听）/ lazy（仅打开文件时补全）——ticket 124 详设 */
+  autoSummaryTiming: string;
+  /** 🗑️ 聚合讯保留策略：已保存骨架（state=saved，正文已清空）保留天数——ticket 124 数据源组 */
+  newsRetentionSavedDays: string;
+  /** 🗑️ 聚合讯保留策略：已跳过骨架（state=skipped）保留天数——ticket 124 数据源组 */
+  newsRetentionSkippedDays: string;
 
   // ===== 🔐 密码本（4 项）=====
   /** 📂 数据存储路径——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
@@ -372,6 +384,12 @@ export const DEFAULT_SETTINGS: BzSettings = {
   articleDirectory: '归档/网页剪藏',
   articleBatchSize: '20',
   autoSummaryEnabled: true,
+  autoSummaryLength: 'standard',
+  autoSummaryTagsEnabled: true,
+  autoSummaryTagCount: '3-6',
+  autoSummaryTiming: 'immediate',
+  newsRetentionSavedDays: '3',
+  newsRetentionSkippedDays: '7',
 
   // 密码本
   pwStoragePath: 'CONFIG/STORAGE',

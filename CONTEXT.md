@@ -38,12 +38,20 @@ _Avoid_: 待办列表、任务
 
 **归物本 (Belongings)**: 物品登记管理，数据目录 `CONFIG/STORAGE`（可配置）。
 
-**剪藏本 (Clipping)**: `我的/文章` 的剪藏文章展示面板——搜索、站点过滤、排序、反链笔记名显示（metadataCache.getBacklinksForFile）。交互（ticket 69 重构）：**单击整卡直接打开**文章（五域首例单击直开）、**移动端长按整卡弹统一抽屉**（打开/复制双链/复制原文链接/删除）；反链📌保留列表直点跳转；桌面右键弹跟手菜单（全局组件）。
+**剪藏本 (Clipping)**: `我的/文章` 的剪藏文章展示面板——搜索、站点过滤、排序、反链笔记名显示（metadataCache.getBacklinksForFile）。交互（ticket 69 重构）：**单击整卡直接打开**文章（五域首例单击直开）、**移动端长按整卡弹统一抽屉**（打开/复制双链/复制原文链接/删除）；反链📌保留列表直点跳转；桌面右键弹跟手菜单（全局组件）。设置弹窗（ticket 124）新增「数据源」组（聚合讯数据源开关/UP 名单/保留天数/状态行，news.json 缺失时显示安装引导）与自动摘要详设（开关打开后展开长度档位/标签/时机）。
 
-**聚合讯 (News Aggregator)**: 抓取新闻写入 `归档/网页剪藏`（CLIP_DIR），管理 `CONFIG/STORAGE/news.json`、`news-stats.json`；把 `dataviewjs` 代码块（`dv.view('CONFIG/SCRIPTS/DataView/摘要')`）写进笔记由 **Dataview 插件**渲染。
+**聚合讯 (News Aggregator)**: 抓取新闻写入 `归档/网页剪藏`（CLIP_DIR），管理 `CONFIG/STORAGE/news.json`（**ticket 124 起四段结构**：articles/stats/bilibiliUps/sources，兼容旧纯数组自动迁移；stats 由旧 news-stats.json 并入）；把 `dataviewjs` 代码块（`dv.view('CONFIG/SCRIPTS/DataView/摘要')`）写进笔记由 **Dataview 插件**渲染。
 
-**数据源守护 (News Source Watcher)**: 聚合讯数据源的抓取守护进程（PM2 托管 `obsidian-news watch`，ADR-0008）——每 30 分钟抓取最近 24 小时文章（果壳科学人 + 知乎日报），URL + 标题双去重后入库 `CONFIG/STORAGE/news.json`，入库即未读。命名区分：**包** `@jwbz/obsidian-news`（npm 分发单元）≠ **CLI 命令** `obsidian-news`（bin 入口，六子命令 watch/fetch/start/stop/status/logs）≠ **PM2 进程名** `news-watcher`（历史名，引用不破）≠ 仓库目录 `tools/news-watcher/`。配置走 **rc 配置** `~/.news-watcherrc`（vaultPath 指向 vault 根）或 `NEWS_PATH` 环境变量；旧 vault 内嵌部署（`CONFIG/SCRIPTS/NodeJs/news-watcher`）已废弃（legacy）。与 bz 插件完全分离：插件不含抓取逻辑，只读 news.json 渲染阅读流。
+**数据源守护 (News Source Watcher)**: 聚合讯数据源的抓取守护进程（PM2 托管 `obsidian-news watch`，ADR-0008）——每 30 分钟抓取最近 24 小时文章（果壳科学人 + 知乎日报 + **B站 UP 主视频投稿**，ticket 124），URL + 标题双去重后入库 `CONFIG/STORAGE/news.json`（四段整读写，保留插件侧维护段），入库即未读。**ticket 124 源开关**：按 news.json `sources` 段决定抓哪些源（插件剪藏本设置「数据源」组写）；**B 站抓取**：未登录 Cookie 引导（GET www.bilibili.com 收集 buvid3 规避 412）→ 用户动态 API（`x/polymer/web-dynamic/v1/feed/space?host_mid=<uid>`）→ 仅 `DYNAMIC_TYPE_AV`（视频投稿）→ 24h 窗口翻页 → 条目 platform='B站'、body=简介+封面+播放链接。命名区分：**包** `@jwbz/obsidian-news`（npm 分发单元）≠ **CLI 命令** `obsidian-news`（bin 入口，六子命令 watch/fetch/start/stop/status/logs）≠ **PM2 进程名** `news-watcher`（历史名，引用不破）≠ 仓库目录 `tools/news-watcher/`。配置走 **rc 配置** `~/.news-watcherrc`（vaultPath 指向 vault 根）或 `NEWS_PATH` 环境变量；旧 vault 内嵌部署（`CONFIG/SCRIPTS/NodeJs/news-watcher`）已废弃（legacy）。与 bz 插件完全分离：插件不含抓取逻辑，只读 news.json 渲染阅读流。
 _Avoid_: 新闻抓取、新闻爬虫、news watcher 进程
+
+**数据源开关 (Source Switch)**: news.json `sources` 段的三个布尔开关（zhihu/guokr/bilibili，默认全开），决定数据源守护抓哪些源；插件侧唯一写点 = 剪藏本设置弹窗「数据源」组。
+
+**UP 主名单 (UP List)**: news.json `bilibiliUps` 段的 uid 数组（仅存 uid），决定 B 站源抓取哪些 UP 主的视频投稿；插件侧「数据源」组添加/删除，粘贴 space.bilibili.com/<uid> 主页链接或视频链接自动解析 uid。_Avoid_: UP 主（指用户概念，名单持 uid）
+
+**保留策略 (Retention Policy)**: 插件侧清理规则（ticket 124，Q12/Q15 用户拍板）——打开阅读器时对 news.json articles 清理一次：未读永不处理；已保存骨架（read=true 且 state='saved'，正文已清空）超过 newsRetentionSavedDays（默认 3）天删除；已跳过骨架（state='skipped' 或旧数据无 state 兜底按此档）超过 newsRetentionSkippedDays（默认 7）天删除；起算 = fetchedAt ?? date。设置项在剪藏本设置「数据源」组。_Avoid_: 数据清理、过期清理（非术语）
+
+**摘要时机 (Summary Timing)**: 自动摘要详设（ticket 124，Q14）——autoSummaryTiming 设置：immediate（默认，保存后立刻：create+file-open 双监听）/ lazy（懒触发：仅打开文件时补全，不监听 create）。_Avoid_: 摘要触发模式
 
 **密码本 (Password Vault)**: 密码管理，存储路径可配置（storagePath）。样式在 `src/password/styles.css`（铁律 9 按域拆分，原「含样式注入」口径废止）。
 
@@ -79,7 +87,7 @@ _Avoid_: 抓海报、豆瓣补全、poster fetch
 **桌面端专属能力 (Desktop-only Capability)**: 依赖 Node.js 外部进程（child_process）、移动端（Capacitor）不可用的功能。门禁：`window.require('child_process')` 为 null 即非桌面端；移动端不注册事件监听，设置项置灰标注「仅桌面端可用」，不静默降级。（当前实例：B站下载等外部工具；海报抓取已移出插件，由独立守护进程承担）
 
 
-**自动摘要 (Auto Summary)**: 常驻监听 `归档/网页剪藏` 新文件 → AI（deepseek-v4-flash）生成摘要/标签写回 frontmatter。
+**自动摘要 (Auto Summary)**: 常驻监听 `归档/网页剪藏` 新文件 → AI（deepseek-v4-flash）生成摘要/标签写回 frontmatter。详设（ticket 124）三键：autoSummaryLength（simple/standard/detailed 摘要长度档位）、autoSummaryTagsEnabled + autoSummaryTagCount（标签生成开关与数量区间）、autoSummaryTiming（见「摘要时机」）。AI 配置走主设置页 core AI（ADR-0052）。
 
 **B站下载 (Bilibili Downloader)**: 输入链接 → B站 API 解析（封面/标题/清晰度）→ 下载合并（ffmpeg spawn）→ 多段剪辑（对一个下载原件定义 0..N 段落，时间 0.1s/HH:MM:SS(.S)）/合并（段序拼接）/压缩（ffmpeg，产物 ffprobe 校验兜底，交付模式：分开、每段一个；合并、单文件）→ 转文字（faster-whisper，python -c 内嵌代码）。**用户决策：独立 NodeJS Web 工具（`tools/bili-downloader/`，bin `bili-dl`），不并入 bz 插件**——运行即起本地网页，网页内完成全部操作，设置图标可改交付目录。术语见 `tools/bili-downloader/CONTEXT.md`（ADR-0011）。
 

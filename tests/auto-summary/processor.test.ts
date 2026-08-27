@@ -87,6 +87,45 @@ describe('aiProcess', () => {
     const r = await aiProcess(ai, '正文', ['title']);
     expect(r!.title).toBe('T2');
   });
+
+  it('ticket 124：摘要长度简单档 → 50-100 字规则 + max_tokens 1024', async () => {
+    const ai = makeAI('{"summary":"S"}');
+    await aiProcess(ai, '正文', ['summary'], { summaryLength: 'simple' });
+    const prompt = ai.prompt.mock.calls[0][0] as string;
+    expect(prompt).toContain('50-100字');
+    expect(prompt).not.toContain('150-250字');
+    expect(ai.prompt.mock.calls[0][2]).toEqual({ modelOptions: { max_tokens: 1024, temperature: 0.3 } });
+  });
+
+  it('ticket 124：详细档 → 300-400 字规则 + max_tokens 2048', async () => {
+    const ai = makeAI('{"summary":"S"}');
+    await aiProcess(ai, '正文', ['summary'], { summaryLength: 'detailed' });
+    const prompt = ai.prompt.mock.calls[0][0] as string;
+    expect(prompt).toContain('300-400字');
+    expect(ai.prompt.mock.calls[0][2]).toEqual({ modelOptions: { max_tokens: 2048, temperature: 0.3 } });
+  });
+
+  it('ticket 124：未知长度档 → 回退标准档', async () => {
+    const ai = makeAI('{"summary":"S"}');
+    await aiProcess(ai, '正文', ['summary'], { summaryLength: 'weird' });
+    expect(ai.prompt.mock.calls[0][0]).toContain('150-250字');
+  });
+
+  it('ticket 124：标签开关关 → 即使 missing 含 tags 也不生成，提示词无 tags 规则', async () => {
+    const ai = makeAI('{"title":"T"}');
+    await aiProcess(ai, '正文', ['title', 'tags'], { tagsEnabled: false });
+    const prompt = ai.prompt.mock.calls[0][0] as string;
+    expect(prompt).toContain('生成中文标题');
+    expect(prompt).not.toContain('tags 规则');
+  });
+
+  it('ticket 124：标签数量自定义区间 → 规则含自定义区间', async () => {
+    const ai = makeAI('{"tags":["a"]}');
+    await aiProcess(ai, '正文', ['tags'], { tagCount: '5-8' });
+    const prompt = ai.prompt.mock.calls[0][0] as string;
+    expect(prompt).toContain('5-8 个中文标签');
+    expect(prompt).not.toContain('3-6 个中文标签');
+  });
 });
 
 describe('formatSummaryNotice', () => {

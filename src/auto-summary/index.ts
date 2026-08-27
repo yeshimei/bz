@@ -46,18 +46,23 @@ function queueProcess(app: any, ai: any, file: any): void {
   }, 1500);
 }
 
-/** 延迟 2000ms 注册 create + file-open 监听（原脚本防冲突语义） */
+/** 延迟 2000ms 注册 create + file-open 监听（原脚本防冲突语义）。
+ *  ticket 124（Q14 详设三）：timing=lazy 时只注册 file-open（仅打开文件时补全），
+ *  immediate（默认）保持 create+file-open 双监听（保存后立刻）。 */
 function scheduleRegister(app: any): void {
   const ai = createAI();
   registerTimer = setTimeout(() => {
     registerTimer = null; // 注册完成即清引用（stop 后再开的判断依据）
     if (!vaultRef) return;
-    fileListenerRef = vaultRef.on('create', (file: any) => queueProcess(app, ai, file));
+    const timing = (tryGetSettings() as any)?.autoSummaryTiming || 'immediate';
+    if (timing !== 'lazy') {
+      fileListenerRef = vaultRef.on('create', (file: any) => queueProcess(app, ai, file));
+    }
     // 打开文件同样触发（file-open 关闭时传 null，queueProcess 内跳过）
     if (workspaceRef && typeof workspaceRef.on === 'function') {
       openListenerRef = workspaceRef.on('file-open', (file: any) => queueProcess(app, ai, file));
     }
-    console.log(`[自动摘要] 👁️ 监听 ${getWatchDir()}`);
+    console.log(`[自动摘要] 👁️ 监听 ${getWatchDir()}` + (timing === 'lazy' ? '（懒触发：仅打开时）' : ''));
   }, 2000);
 }
 

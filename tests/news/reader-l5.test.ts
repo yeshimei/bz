@@ -49,12 +49,20 @@ function freshReader(): Promise<{ reader: ReaderModule; vault: MockVault }> {
   })();
 }
 
+/** 四段结构 fixture（ticket 124：stats 内嵌 + bilibiliUps/sources 段） */
+function writeFourSegments(vault: MockVault, articles: any[], stats: any = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }) {
+  vault.files.set(
+    NEWS_JSON,
+    JSON.stringify({ articles, stats, bilibiliUps: [], sources: { zhihu: true, guokr: true, bilibili: true } })
+  );
+}
+
 function flush(ms = 30) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
 describe('聚合讯 l5 三态', () => {
-  it('无数据文件（首次使用）→ 首用引导态：说明数据由外部数据源守护写入，不渲染「读完」态', async () => {
+  it('无数据文件（首次使用）→ 首用引导态：说明数据由外部数据源守护写入与 B 站配置入口，不渲染「读完」态', async () => {
     const { reader } = await freshReader();
     await reader.loadArticles();
     reader.render();
@@ -62,6 +70,7 @@ describe('聚合讯 l5 三态', () => {
     expect(text).toContain('数据从哪里来');
     expect(text).toContain('obsidian-news');
     expect(text).toContain('CONFIG/STORAGE/news.json');
+    expect(text).toContain('剪藏本设置'); // ticket 124：B 站 UP 主聚合入口说明
     expect(text).not.toContain('今日文章已读完');
     expect(document.querySelector('.news-bottombar')).toBeNull();
   });
@@ -78,7 +87,7 @@ describe('聚合讯 l5 三态', () => {
     expect(document.querySelector('.news-bottombar')).toBeNull();
 
     // 修复（守护进程写入完整数据）后重载 → 恢复正常单篇渲染
-    vault.files.set(NEWS_JSON, JSON.stringify([makeArticle('A'), makeArticle('B')]));
+    writeFourSegments(vault, [makeArticle('A'), makeArticle('B')]);
     clearNotices();
     await reader.loadArticles();
     reader.render();
@@ -88,7 +97,7 @@ describe('聚合讯 l5 三态', () => {
 
   it('真读空（文件存在且全部已读）→ 完成态照常渲染', async () => {
     const { reader, vault } = await freshReader();
-    vault.files.set(NEWS_JSON, JSON.stringify([makeArticle('A', { read: true })]));
+    writeFourSegments(vault, [makeArticle('A', { read: true })]);
     await reader.loadArticles();
     reader.render();
     // 完成态走 .news-card-area，非引导/错误卡
@@ -98,7 +107,7 @@ describe('聚合讯 l5 三态', () => {
 
   it('加载期：show() 同步渲染 .news-loading 占位并立即显示弹窗，加载完成后占位被清理并替换为正文', async () => {
     const { reader, vault } = await freshReader();
-    vault.files.set(NEWS_JSON, JSON.stringify([makeArticle('A')]));
+    writeFourSegments(vault, [makeArticle('A')]);
     reader.show();
     // show() 同步先出占位（异步加载尚未完成）
     expect(document.querySelector('.news-loading')).not.toBeNull();
@@ -111,7 +120,7 @@ describe('聚合讯 l5 三态', () => {
 
   it('加载期间 hide() → 完成后占位被清理但窗口保持隐藏（不强制弹出）', async () => {
     const { reader, vault } = await freshReader();
-    vault.files.set(NEWS_JSON, JSON.stringify([makeArticle('A')]));
+    writeFourSegments(vault, [makeArticle('A')]);
     reader.show();
     expect(document.querySelector('.news-loading')).not.toBeNull();
     reader.hide();
@@ -140,7 +149,7 @@ describe('聚合讯 show 重入串行化（双链竞态）', () => {
 
   it('双 show 并发：串行化只起一条加载链（news.json 只读一次），完成后渲染单篇', async () => {
     const { reader, vault } = await freshReader();
-    vault.files.set(NEWS_JSON, JSON.stringify([makeArticle('A'), makeArticle('B')]));
+    writeFourSegments(vault, [makeArticle('A'), makeArticle('B')]);
     const { release, newsReads } = await gateNewsRead(vault);
 
     reader.show();
@@ -156,7 +165,7 @@ describe('聚合讯 show 重入串行化（双链竞态）', () => {
 
   it('加载中 hide → 立即重开：复用同一链重新显窗，完成后内容就绪且窗口可见（仅一次数据读取）', async () => {
     const { reader, vault } = await freshReader();
-    vault.files.set(NEWS_JSON, JSON.stringify([makeArticle('A')]));
+    writeFourSegments(vault, [makeArticle('A')]);
     const { release, newsReads } = await gateNewsRead(vault);
 
     reader.show();
@@ -204,13 +213,13 @@ describe('聚合讯 x2b 本地日期（对齐 pomodoro dayKey）', () => {
   it('recordStat：byDate 键 = 本地日；fake timers 锚定本地凌晨不落昨日', async () => {
     vi.useFakeTimers();
     try {
-      vault.files.set(STATS_JSON, JSON.stringify({ totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }));
+      writeFourSegments(vault, [makeArticle('X')]);
       vi.setSystemTime(new Date(2026, 1, 3, 2, 30, 0)); // 本地凌晨 02:30
       reader.recordStat('skipped', makeArticle('X'));
       await vi.runAllTimersAsync(); // 冲刷 saveStats 微任务链
-      const stats = JSON.parse(vault.files.get(STATS_JSON)!);
-      expect(stats.byDate['2026-02-03']).toBe(1); // 本地日桶（旧口径 UTC+8 会落 2026-02-02）
-      expect(stats.byDate).not.toHaveProperty('2026-02-02');
+      const saved = JSON.parse(vault.files.get(NEWS_JSON)!);
+      expect(saved.stats.byDate['2026-02-03']).toBe(1); // 本地日桶（旧口径 UTC+8 会落 2026-02-02）
+      expect(saved.stats.byDate).not.toHaveProperty('2026-02-02');
     } finally {
       vi.useRealTimers();
     }

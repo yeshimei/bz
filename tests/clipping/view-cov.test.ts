@@ -189,8 +189,9 @@ describe('剪藏本面板显隐与头部按钮', () => {
     const settingsBtn = [...document.querySelectorAll('button')].find((b) => b.title === '剪藏本设置')!;
     settingsBtn.click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
+    await new Promise((r) => setTimeout(r, 50)); // 数据源组异步替换（news.json 缺失 → 引导块）
     const heads = [...popup.querySelectorAll('.bz-settings-group-head')];
-    expect(heads.map((el) => (el as HTMLElement).textContent!.trim())).toEqual(['基础2 项', '智能1 项', '移动端1 项']);
+    expect(heads.map((el) => (el as HTMLElement).textContent!.trim())).toEqual(['基础2 项', '智能1 项', '数据源1 项', '移动端1 项']);
   });
 });
 

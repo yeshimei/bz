@@ -269,4 +269,39 @@ describe('auto-summary 入口', () => {
     await vi.advanceTimersByTimeAsync(1600);
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
+
+  it('ticket 124：摘要时机 lazy → 只注册 file-open（不注册 create），保存新文件不补全、打开才补全', async () => {
+    setSettingsProvider(() => ({ autoSummaryTiming: 'lazy', articleDirectory: '归档/网页剪藏' }) as any);
+    const fetchSpy = mockAIResponse('{"summary":"S","tags":["a"]}');
+    ensureAutoSummary(makeApp(vault, workspace));
+    await vi.advanceTimersByTimeAsync(2000);
+    // lazy：无 create 监听，仅 file-open
+    expect(vault.listeners['create']).toBeUndefined();
+    expect(workspace.listeners['file-open']).toHaveLength(1);
+
+    // 保存（create）新剪藏 → 不触发 AI
+    vault.files.set('归档/网页剪藏/lazy.md', `---\ntitle: "T"\n---\n\n${LONG_BODY}`);
+    vault.emit('create', vault.file('归档/网页剪藏/lazy.md'));
+    await vi.advanceTimersByTimeAsync(4000);
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    // 打开文件 → 补全触发
+    workspace.emit('file-open', vault.file('归档/网页剪藏/lazy.md'));
+    await vi.advanceTimersByTimeAsync(1600);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(vault.files.get('归档/网页剪藏/lazy.md')).toContain('summary: "S"');
+  });
+
+  it('ticket 124：摘要时机 immediate（默认）→ create+file-open 双监听（行为不变）', async () => {
+    setSettingsProvider(() => ({ autoSummaryTiming: 'immediate', articleDirectory: '归档/网页剪藏' }) as any);
+    const fetchSpy = mockAIResponse('{"summary":"S","tags":["a"]}');
+    ensureAutoSummary(makeApp(vault, workspace));
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(vault.listeners['create']).toHaveLength(1);
+    expect(workspace.listeners['file-open']).toHaveLength(1);
+    vault.files.set('归档/网页剪藏/imm.md', `---\ntitle: "T"\n---\n\n${LONG_BODY}`);
+    vault.emit('create', vault.file('归档/网页剪藏/imm.md'));
+    await vi.advanceTimersByTimeAsync(1600);
+    expect(fetchSpy).toHaveBeenCalled();
+  });
 });

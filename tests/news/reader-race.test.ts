@@ -41,8 +41,8 @@ describe('聚合讯 saveArticles 双写者合并（P0-5）', () => {
     document.body.innerHTML = '';
     document.head.innerHTML = '';
     const vault = new MockVault();
-    vault.files.set(NEWS_JSON, JSON.stringify(disk));
-    vault.files.set(STATS_JSON, JSON.stringify({ totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }));
+    // ticket 124：四段结构 fixture（stats 内嵌）
+    vault.files.set(NEWS_JSON, JSON.stringify({ articles: disk, stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }, bilibiliUps: [], sources: { zhihu: true, guokr: true, bilibili: true } }));
     setAppFresh({ vault, metadataCache: {}, workspace: { openLinkText: vi.fn() } } as any);
     reader.init(false);
     return vault;
@@ -59,17 +59,22 @@ describe('聚合讯 saveArticles 双写者合并（P0-5）', () => {
     expect(document.querySelector('.news-card-title')!.textContent).toBe('A');
 
     // 内存快照完成后、保存开始前：另一写入者向磁盘追加 C（真实竞态窗口）
-    vault.files.set(NEWS_JSON, JSON.stringify([A, B, C]));
+    const disk4 = JSON.parse(vault.files.get(NEWS_JSON)!);
+    disk4.articles = [A, B, C];
+    vault.files.set(NEWS_JSON, JSON.stringify(disk4));
 
     reader.skipArticle(); // A 标读（delete body）→ 内部触发 saveArticles
     await new Promise((r) => setTimeout(r, 20)); // 冲刷异步写回链
 
     const saved = JSON.parse(vault.files.get(NEWS_JSON)!);
-    expect(saved.map((s: any) => s.title)).toEqual(['A', 'B', 'C']);
-    expect(saved[0].read).toBe(true); // 内存处理状态照常落盘
-    expect(saved[0].body).toBeUndefined();
-    expect(saved[2].read).toBeUndefined(); // 外部追加项原样保留
-    expect(saved[2].body).toBe('C 外部追加正文');
+    expect(saved.articles.map((s: any) => s.title)).toEqual(['A', 'B', 'C']);
+    expect(saved.articles[0].read).toBe(true); // 内存处理状态照常落盘
+    expect(saved.articles[0].state).toBe('skipped');
+    expect(saved.articles[0].body).toBeUndefined();
+    expect(saved.articles[2].read).toBeUndefined(); // 外部追加项原样保留
+    expect(saved.articles[2].body).toBe('C 外部追加正文');
+    expect(saved.bilibiliUps).toEqual([]); // 非本域段保留
+    expect(saved.sources).toEqual({ zhihu: true, guokr: true, bilibili: true });
   });
 
   it('mergeWithDisk：url 键优先合并处理状态；无 url 回退 title+date 键；磁盘多出的项保留；内存新增防御性追加', () => {
@@ -118,17 +123,16 @@ describe('聚合讯 saveArticles 双写者合并（P0-5）', () => {
     }
   });
 
-  it('磁盘为合法 JSON 但非数组 → save 跳过不覆写（防御）', async () => {
-    const notArray = '{"a":1}';
+  it('磁盘为 JSON 但非数组也非对象（如数字）→ save 跳过不覆写（防御）', async () => {
+    const notArray = '42';
     const vault = setup([]);
     vault.files.set(NEWS_JSON, notArray);
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     try {
       await reader.loadArticles();
       await reader.saveArticles();
       expect(vault.files.get(NEWS_JSON)).toBe(notArray);
     } finally {
-      warnSpy.mockRestore();
+      // 无 warn 断言（readNewsData 静默回退空骨架；saveArticles 遇 !ok 直接返回）
     }
   });
 });
