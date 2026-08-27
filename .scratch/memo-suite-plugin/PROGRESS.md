@@ -1,12 +1,14 @@
 ## 2026-09-01 小橘记忆流/行为流重构（ticket 123；grill-with-docs 定案，ADR-0055~0059）
 
-**状态：设计共识完成（多轮 grill），多 worktree 并行实施中（P1 数据基座 → 域适配/分层策略/UX 并行）**
+**状态：多 worktree 并行实施完成并全部合入 master（4 merge + 1 build 修复）；全量 195 文件 / 3106 测试全绿 + tsc 0 + 构建部署（产物落 vault 与仓库根）**
 
-- 📋 **设计定案（ADR-0055~0059）**：记忆流+行为流拆分（同文件 smartcat.json）；小橘=情感陪伴，知识内容（memo/news/favorites/belongings/卡片盒）→ 行为流不向量化；行为流=辅助上下文（时间模式+频率统计）；反思/小结/周报/叙事/prompt 全部只看记忆流；旧数据重置清空 + vec 删除重建
-- 📋 **数据契约**：各域自行填充 StructuredMeta（12+ 域全部一次适配）；addObservation 简化为只传 source + structured；importance/emotion/stream 由 ROUTING_RULES 按 `source:action` 静态推导；source（路由）+ entityType（描述生成）两字段并存
-- 📋 **描述双轨**：创作型（日记/诗歌/信）走 ContentCompletionDetector（30s 稳定窗口 + 5min 会话超时 + ≥20 字符）+ SnapshotGenerator（summary/tags/emotion，snapshot.emotion 写顶层）；非创作型走 entityType 模板函数；refHash 变化 ≥30% 才重生成快照 + 重向量化；旧 *-source.ts 废弃
-- 📋 **范围**：遗忘机制不做；设置项 5 个（行为流保留天数 30/最大条数 1000/显示行为日志/启用关联自动发现/关联发现窗口 7）；P3 含 promote/pin、自动关联（同 entityType+name）、conversationId 聚合
-- ⏳ 实施中：worktree/smartcat-foundation（P1）→ 并行：域适配（创作/情感域 + 行为域）、分层策略、UX 面板
+- ✅ **P1 数据基座（e06fc4f）**：types.ts 新增 StructuredMeta/BehaviorItem、MemoryStream v2（memoryStream+behaviorStream 双流同文件）；routing.ts（45+ source:action 路由表 + resolveRouting 三级解析）；addObservation 新签名（source + structured，路由自动推导 importance/emotion/stream，旧签名保留过时包装）；behavior-trim.ts 滚动窗口（默认 30 天/1000 条）；data.ts 旧 schema 检测重置（stream/version<2 → 空双流）+ vec 重建；settings.ts 5 新键（behaviorMaxDays/behaviorMaxCount/showBehaviorLog/enableAutoLinking/linkWindowDays）；全库 `.stream → .memoryStream` 迁移（32 文件）；review 修复 interaction-cov mock 字段
+- ✅ **P2c 分层策略（588fa69）**：content-completion-detector.ts（minLength 20/稳定 30s/会话 5min/forceComplete/时钟注入）+ snapshot-generator.ts（shouldRegenerateSnapshot 30% 阈值 LCS diff/simpleHash/generateSnapshot AI 注入+非AI兜底/emotion 白名单）——纯新增文件零修改；review P1 修复（timeout 后状态清除防重复）
+- ✅ **P2b 行为域（64f41ca）**：memo/news/favorites/belongings/pomodoro 五域 build*Structured 纯函数 + index.ts notify* 改走新签名（B6 300ms 防重/B8 到期扫描顺序/news 补全降级逻辑全部保留）；review 补 memo:due 显式路由
+- ✅ **P3 用户体验层（5e9cce2）**：dashboard 行为日志页签（showBehaviorLog 控制）+ promote 按钮；memory.ts 新增 promoteToMemory/queryBehavior/summarizeBehavior/linkRelatedMemories/buildStoryline；设置弹窗 3 组 5 控件；review 2×P1 修复（promote/settings 落盘 saveSettings）
+- ✅ **P2a 创作/情感域（75fb7a6）**：description-generators.ts 策略注册表（movie/book/diary_entry/letter/poem/chat_message/insight + fallback，snapshot.summary 优先）；diary/movie/library/chat 接线改新签名；**review P0 捕获：flash(卡片盒) 被误改 memory → 恢复 behavior（用户拍板知识内容不进记忆流）**；P1 修复（library credibility/description 截断/movie default 分支）
+- 🔧 **样式位置修复（9d079e6）**：P3 行为日志样式误写根 styles.css（构建产物被覆盖丢失）→ 移入 src/smartcat/styles.css 收敛处重建
+- 📄 文档：ADR-0055~0059、issues/123、spec.md、CONTEXT 词条、PROGRESS 本条；worktree 已清理
 
 ## 2026-08-27 日记「未解析行」主动检测+手动修复 与 第二大脑移动端 IP 防呆（ticket 121 / 122，grill-with-docs 定案）
 
