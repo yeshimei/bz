@@ -7,7 +7,10 @@
  * （skip 与休息完成无 historyEntry，天然排除）。
  * 文案：X = 当前配置的工作分钟数（durations().workMin，设置预设/自定义；默认 25）。
  * 数据语义零改动：不碰 pomodoro.json 格式/状态机/UI 结构/命令/文案（兼容冻结）。
+ *
+ * P2b（ticket 123）：新增 buildPomodoroStructured——构造 StructuredMeta 供行为流写入。
  */
+import type { StructuredMeta } from './types';
 export type PomodoroActionEvent =
   | { kind: 'focus-done'; minutes: number };
 
@@ -22,4 +25,15 @@ export function buildPomodoroActionText(evt: PomodoroActionEvent): string | null
     case 'focus-done':
       return pomodoroFocusDoneText(evt.minutes);
   }
+}
+
+// ==================== P2b 结构化元数据（行为流 + memory 流） ====================
+
+/** 番茄钟事件 → StructuredMeta（focus-done 进 memory 流，其余进行为流） */
+export function buildPomodoroStructured(evt: PomodoroActionEvent): StructuredMeta {
+  return {
+    entityType: 'pomodoro', action: evt.kind,
+    name: `番茄钟 ${evt.minutes} 分钟专注`,
+    duration: evt.minutes,
+  };
 }

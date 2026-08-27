@@ -3,11 +3,13 @@
  * 备忘录动作观察文案层（ticket 075）：文案构造纯函数全覆盖——
  * 添加键值式（有才加，键序 场景→脚本→课程→优先级→截止→笔记）/ 编辑 α 合并（标题变主句/改题为/更新了+变更列表）
  * 完成/恢复/延后/优先级/删除/每日到期扫描合并一条（≤5 截断、日期语义、N=0 不产出）。
+ * P2b：buildMemoStructured / buildMemoDueScanStructured 结构化元数据映射。
  */
 import { describe, it, expect } from 'vitest';
 import {
   memoAddedText, memoEditedText, memoCompletedText, memoRestoredText, memoPostponedText,
   memoPriorityText, memoDeletedText, memoDueObservation, buildMemoActionText,
+  buildMemoStructured, buildMemoDueScanStructured,
   type MemoEditSnapshot,
 } from '../../src/smartcat/memo-source';
 
@@ -121,5 +123,58 @@ describe('buildMemoActionText（事件 → 观察文本）', () => {
   it('编辑无变化 → null', () => {
     const s: MemoEditSnapshot = { title: '写周报', scene: '工作', priority: 'minor', due: null, notePath: null, scriptName: null, courseName: null };
     expect(buildMemoActionText({ kind: 'edited', old: s, next: { ...s } })).toBeNull();
+  });
+});
+
+// ==================== P2b StructuredMeta 映射测试 ====================
+
+describe('buildMemoStructured（事件 → StructuredMeta，行为流）', () => {
+  it('added：entityType=task, action=added, name=标题, extras 含场景/优先级/截止/笔记等', () => {
+    const s = buildMemoStructured({ kind: 'added', title: '写周报', scene: '工作', priority: 'important', due: '2026-08-25 18:00', notePath: '书库/1984.md', scriptName: null, courseName: '算法' });
+    expect(s).not.toBeNull();
+    expect(s!.entityType).toBe('task');
+    expect(s!.action).toBe('added');
+    expect(s!.name).toBe('写周报');
+    expect(s!.extras).toEqual({ scene: '工作', priority: 'important', due: '2026-08-25 18:00', notePath: '书库/1984.md', scriptName: null, courseName: '算法' });
+  });
+  it('completed/restored/deleted：entityType=task, action 对应', () => {
+    expect(buildMemoStructured({ kind: 'completed', title: '买菜' })).toEqual({ entityType: 'task', action: 'completed', name: '买菜' });
+    expect(buildMemoStructured({ kind: 'restored', title: '买菜' })).toEqual({ entityType: 'task', action: 'restored', name: '买菜' });
+    expect(buildMemoStructured({ kind: 'deleted', title: '买菜' })).toEqual({ entityType: 'task', action: 'deleted', name: '买菜' });
+  });
+  it('postponed/priority：extras 含额外字段', () => {
+    expect(buildMemoStructured({ kind: 'postponed', title: '写周报', due: '2026-08-28 18:00' })).toEqual({ entityType: 'task', action: 'postponed', name: '写周报', extras: { due: '2026-08-28 18:00' } });
+    expect(buildMemoStructured({ kind: 'priority', title: '写周报', to: 'minor' })).toEqual({ entityType: 'task', action: 'priority', name: '写周报', extras: { to: 'minor' } });
+  });
+  it('edited：无变化 → null', () => {
+    const s: MemoEditSnapshot = { title: '写周报', scene: '工作', priority: 'minor', due: null, notePath: null, scriptName: null, courseName: null };
+    expect(buildMemoStructured({ kind: 'edited', old: s, next: { ...s } })).toBeNull();
+  });
+  it('edited：有变化 → entityType=task, action=edited, extras 含 old/next', () => {
+    const old: MemoEditSnapshot = { title: '草稿', scene: '生活', priority: 'minor', due: null, notePath: null, scriptName: null, courseName: null };
+    const next: MemoEditSnapshot = { title: '写周报', scene: '工作', priority: 'important', due: '2026-08-25 18:00', notePath: null, scriptName: null, courseName: null };
+    const s = buildMemoStructured({ kind: 'edited', old, next });
+    expect(s).not.toBeNull();
+    expect(s!.entityType).toBe('task');
+    expect(s!.action).toBe('edited');
+    expect(s!.name).toBe('写周报');
+    expect(s!.extras).toEqual({ old, next });
+  });
+});
+
+describe('buildMemoDueScanStructured（每日到期扫描 → StructuredMeta）', () => {
+  const now = new Date(2026, 7, 25, 9, 0);
+  it('无到期/空 → null', () => {
+    expect(buildMemoDueScanStructured([], now)).toBeNull();
+    expect(buildMemoDueScanStructured(null, now)).toBeNull();
+  });
+  it('有到期 → entityType=task, action=due, extras.text 含合并文案', () => {
+    const items = [{ title: '写周报', due: '2026-08-25 18:00', completed: null }];
+    const s = buildMemoDueScanStructured(items, now);
+    expect(s).not.toBeNull();
+    expect(s!.entityType).toBe('task');
+    expect(s!.action).toBe('due');
+    expect(s!.name).toBe('到期扫描');
+    expect(s!.extras!.text).toBe('你有 1 个待办今天到期：写周报（18:00）');
   });
 });

@@ -25,17 +25,17 @@ import { generateBookDescription, hasBookTag } from './content';
 import { classifyPath } from './context-source';
 import { onDomainEvent } from '../core/domain-bus';
 import { buildMovieActionText, type MovieActionEvent } from './movie-source';
-import { buildMemoActionText, memoDueObservation, type MemoActionEvent, type MemoDueLike } from './memo-source';
+import { buildMemoStructured, buildMemoDueScanStructured, type MemoActionEvent, type MemoDueLike } from './memo-source';
 import { parseDiaryFile, decideDiarySettle, diaryDeleteText, diaryDeleteFileText, DIARY_SETTLE_MS, type DiaryEntryLike } from './diary-source';
 import { noteFirstText, noteDeleteText, noteFileName, noteBodyText, parseNoteDate, letterReadonly, decideNoteSettle, NOTE_SETTLE_MS, type NoteKind } from './note-source';
 import { DIARY_DIRECTORY } from '../diary/config';
 
-import { buildBelongingsActionText, type BelongingsActionEvent } from './belongings-source';
+import { buildBelongingsStructured, type BelongingsActionEvent } from './belongings-source';
 
-import { buildNewsReadText, buildNewsSavedFullText, type NewsReadEvent } from './news-source';
-import { buildFavoritesActionText, type FavoritesActionEvent } from './favorites-source';
+import { buildNewsReadStructured, buildNewsSavedStructured, type NewsReadEvent } from './news-source';
+import { buildFavoritesStructured, type FavoritesActionEvent } from './favorites-source';
 
-import { buildPomodoroActionText, type PomodoroActionEvent } from './pomodoro-source';
+import { buildPomodoroStructured, type PomodoroActionEvent } from './pomodoro-source';
 import { DOMAIN_FILES, snapshotDomains } from './domain-source';
 import { buildLibraryNoteText, type LibraryWeaveDiff } from './library-source';
 import { buildRhythmProfile, isActiveNow, describeRhythm, periodText, isoWeekKey } from './rhythm';
@@ -49,7 +49,7 @@ import {
   QuietGateSystem, gentleGreeting, gentleGreetingAvailable, gentlePhraseFor, gentleStyleFor,
   localDayKey, proactiveMinGapMs,
 } from './quiet-gate';
-import type { SmartCatData, SmartCatConfig, ProactiveCareState } from './types';
+import type { SmartCatData, SmartCatConfig, ProactiveCareState, StructuredMeta } from './types';
 import type { BanditArmParams } from './cognitive';
 import type { SmartcatPanels } from './ui';
 
@@ -1122,14 +1122,14 @@ function notifyMovieAction(evt: MovieActionEvent): void {
 // ------------- 备忘录动作观察（ticket 075：方法监听 + 每日到期扫描） -------------
 
 /** 备忘录动作观察处理（memo 域 UI 经 emitDomainEvent('memo', evt) 派发 → 总线订阅进入）。
- *  未初始化 / 未启用（noteSource 关）→ 静默；文案构造见 memo-source.buildMemoActionText。 */
+ *  未初始化 / 未启用（noteSource 关）→ 静默；P2b：构造 StructuredMeta 走行为流。 */
 function notifyMemoAction(evt: MemoActionEvent): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
-  const text = buildMemoActionText(evt);
-  if (!text) return;
+  const structured = buildMemoStructured(evt);
+  if (!structured) return;
   // B6（ticket 084a）：同事件同 key 近 300ms 防重（勾选完成与抽屉「标记完成」双入口/双击等）
   if (notifyDeduped(evt.kind, memoActionKey(evt))) return;
-  void memorySystem.addObservation(text, { source: 'memo' });
+  void memorySystem.addObservation('memo', { structured });
 }
 
 /** memo.json 路径（跟随共享 storagePath，同 smartcatStorageDir 目录规则） */
@@ -1175,12 +1175,12 @@ export async function maybeMemoDueScan(now: Date = new Date()): Promise<void> {
     if (!file) return; // memo 域未启用（无 memo.json）：静默，不推进扫描日期（等 memo 数据出现再扫）
     const raw = JSON.parse(await appRef.vault.read(file as any));
     const items: MemoDueLike[] = Array.isArray(raw) ? (raw as any[]) : [];
-    const text = memoDueObservation(items, now);
     // B8 防重复：先推进扫描日期（落盘）再观察——如上注释，任何后续失败也跳过当天重扫
     const d = dataProvider();
     d.editingData = { ...(d.editingData || {}), dueScan: { date: today } };
     await dataSaver(d);
-    if (text) await memorySystem.addObservation(text, { source: 'memo' });
+    const structured = buildMemoDueScanStructured(items, now);
+    if (structured) await memorySystem.addObservation('memo', { structured });
     memoDueScanFail = { date: today, count: 0 };
   } catch (e) {
     /* 读取/解析/日期落盘失败：不推进日期，记连续失败计数——达到上限当日放弃（下次 tick 不再重试） */
@@ -1192,11 +1192,11 @@ export async function maybeMemoDueScan(now: Date = new Date()): Promise<void> {
 
 /** 聚合讯观察处理（read 入口）：news 域 reader 经 emitDomainEvent('news', {kind:'read', evt}) 派发。
  *  2026-08-25 用户拍板：跳过/阅读不再产生观察，仅保存发（立即形态，auto-summary 补全走
- *  saved 入口登记）；文案构造见 news-source.buildNewsReadText；未初始化/未启用（noteSource 关）→ 静默。 */
+ *  saved 入口登记）；P2b：构造 StructuredMeta 走行为流；未初始化/未启用（noteSource 关）→ 静默。 */
 function notifyNewsRead(evt: NewsReadEvent): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
-  const text = buildNewsReadText(evt.state, evt.title, evt.platform, evt.durationMin);
-  if (text) void memorySystem.addObservation(text, { source: 'news' });
+  const structured = buildNewsReadStructured(evt);
+  void memorySystem.addObservation('news', { structured });
 }
 
 /** 保存登记待补全（方案 a，saved 入口）：news 域 reader saveToClip 经
@@ -1257,8 +1257,8 @@ async function completePendingNewsSave(file: any): Promise<void> {
     regPath = hit.clipPath;
   }
   removePendingNewsSave(regPath);
-  const text = buildNewsSavedFullText(reg.title, reg.platform, reg.durationMin, fm.summary || null, fm.tags.length ? fm.tags : null);
-  await addNewsSaveObservation(text);
+  const structured = buildNewsSavedStructured(reg.title, reg.platform, reg.durationMin, fm.summary || null, fm.tags.length ? fm.tags : null);
+  await addNewsSaveObservation(structured);
 }
 
 /** 二次匹配（ticket 084b）：事件文件与登记键不一致时反查登记表——frontmatter url 一致（URL 唯一，
@@ -1289,8 +1289,8 @@ async function degradePendingNewsSave(clipPath: string): Promise<void> {
     const moved = await locateRenamedClip(reg, clipPath);
     if (moved) fm = await readClipFrontmatterOrEmpty(moved);
   }
-  const text = buildNewsSavedFullText(reg.title, reg.platform, reg.durationMin, fm.summary || null, fm.tags.length ? fm.tags : null);
-  await addNewsSaveObservation(text);
+  const structured = buildNewsSavedStructured(reg.title, reg.platform, reg.durationMin, fm.summary || null, fm.tags.length ? fm.tags : null);
+  await addNewsSaveObservation(structured);
 }
 
 /** 剪藏目录内反查改名后新文件（ticket 084b）：枚举 `归档/网页剪藏/` 下 .md，
@@ -1326,13 +1326,15 @@ async function locateRenamedClip(reg: NewsPendingSave, clipPath: string): Promis
   return null;
 }
 
-/** 保存联动产出防重复：与近 20 条同文案（保存瞬间 notifyNewsRead 已产的立即形态）→ 跳过，防双条入流 */
-async function addNewsSaveObservation(text: string): Promise<void> {
+/** 保存联动产出防重复：与近 20 条同文案（保存瞬间 notifyNewsRead 已产的立即形态）→ 跳过，防双条入流。
+ *  P2b：改用 StructuredMeta 走行为流；防重检查同步切换到行为流。 */
+async function addNewsSaveObservation(structured: StructuredMeta): Promise<void> {
   const mem = memorySystem;
   if (!mem) return;
-  const norm = text.trim();
-  if (mem.stream.slice(-20).some((m) => (m.description || '').trim() === norm)) return;
-  await mem.addObservation(text, { source: 'news' });
+  const name = structured.name ?? '';
+  // 防重：行为流近 20 条内有同 source+name → 跳过（防止 notifyNewsRead 立即形态已入流后的重复）
+  if (mem.behaviorStream.slice(-20).some((b) => b.source === 'news' && (b.metadata as StructuredMeta | undefined)?.name === name)) return;
+  await mem.addObservation('news', { structured });
 }
 
 /** 读剪藏 frontmatter 的 url/summary/tags（auto-summary 产物原样处理；正则轻量解析，兼容 list 与 inline 数组两式） */
@@ -1806,32 +1808,34 @@ export function __getNoteTrackedForTests(): ReadonlyMap<string, { kind: NoteKind
 // ------------- 收藏本动作观察（ticket 078：方法监听，ADR-0031） -------------
 
 /** 收藏本动作观察处理（favorites 域 UI 经 emitDomainEvent('favorites', evt) 派发 → 总线订阅进入）。
- *  未初始化 / 未启用（noteSource 关）→ 静默；文案构造见 favorites-source.buildFavoritesActionText。 */
+ *  未初始化 / 未启用（noteSource 关）→ 静默；P2b：构造 StructuredMeta 走行为流。 */
 function notifyFavoritesAction(evt: FavoritesActionEvent): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
-  const text = buildFavoritesActionText(evt);
-  if (text) void memorySystem.addObservation(text, { source: 'favorites' });
+  const structured = buildFavoritesStructured(evt);
+  if (!structured) return;
+  void memorySystem.addObservation('favorites', { structured });
 }
 
 // ------------- 归物本动作观察（ticket 079：方法监听，ADR-0032） -------------
 
 /** 归物本动作观察处理（belongings 域 UI 经 emitDomainEvent('belongings', evt) 派发 → 总线订阅进入）。
- *  未初始化 / 未启用（noteSource 关）→ 静默；文案构造见 belongings-source.buildBelongingsActionText。
+ *  未初始化 / 未启用（noteSource 关）→ 静默；P2b：构造 StructuredMeta 走行为流。
  *  即时同步观察：无 timer/map 需清理。 */
 function notifyBelongingsAction(evt: BelongingsActionEvent): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
-  const text = buildBelongingsActionText(evt);
-  if (text) void memorySystem.addObservation(text, { source: 'belongings' });
+  const structured = buildBelongingsStructured(evt);
+  if (!structured) return;
+  void memorySystem.addObservation('belongings', { structured });
 }
 
 // ------------- 番茄钟动作观察（ticket 080：方法监听） -------------
 
 /** 番茄钟动作观察处理（pomodoro 域 applyAction 经 emitDomainEvent('pomodoro', evt) 派发 → 总线订阅进入）。
- *  未初始化 / 未启用（noteSource 关）→ 静默；文案构造见 pomodoro-source.buildPomodoroActionText。 */
+ *  未初始化 / 未启用（noteSource 关）→ 静默；P2b：构造 StructuredMeta 走路由（focus-done 进 memory 流）。 */
 function notifyPomodoroAction(evt: PomodoroActionEvent): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
-  const text = buildPomodoroActionText(evt);
-  if (text) void memorySystem.addObservation(text, { source: 'pomodoro' });
+  const structured = buildPomodoroStructured(evt);
+  void memorySystem.addObservation('pomodoro', { structured });
 }
 
 /** 域 JSON 感知状态（domain-source.ts 提供 extract 纯函数；此处管理监听生命周期） */
