@@ -101,6 +101,32 @@ describe('剪藏本面板', () => {
     expect(cards[0].textContent).toContain('✍️作者');
   });
 
+  it('打开先弹窗并显示加载提示，数据让出事件循环后渲染替换（首开与重开一致，先窗口后加载）', async () => {
+    const { vault } = await setup();
+    vault.files.set('我的/文章/A.md', makeArticleMd('https://zhihu.com/a', '知乎', 'A', '2025-06-02T08:00:00.000Z'));
+    await initArticleView(true);
+    // 解析让出事件循环（未渲染）→ 窗口已可见且内容区为加载提示
+    const popup = document.getElementById('article-view-popup') as HTMLElement;
+    expect(popup.style.visibility).toBe('visible');
+    const hint = document.querySelector('.article-loading-hint');
+    expect(hint).not.toBeNull();
+    expect(hint!.textContent).toBe('📚 正在加载文章...');
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(0);
+    // 宏任务让出后：解析渲染替换加载提示
+    await new Promise((r) => setTimeout(r, 20));
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(1);
+    expect(document.querySelector('.article-loading-hint')!.textContent).toBe('已显示所有文章');
+    // 关闭再重开（重开即重载，B1）：同样先加载提示后渲染，不残留旧列表
+    (document.getElementById('article-view-mask') as HTMLElement).click();
+    expect(popup.style.visibility).toBe('hidden');
+    await initArticleView(true);
+    expect(popup.style.visibility).toBe('visible');
+    expect(document.querySelector('.article-loading-hint')!.textContent).toBe('📚 正在加载文章...');
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(0);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(1);
+  });
+
   it('站点栏：全部 (N) + 各站点计数；点击站点单选过滤', async () => {
     const { vault } = await setup();
     vault.files.set('我的/文章/A.md', makeArticleMd('https://zhihu.com/a', '知乎', 'A', '2025-06-02T08:00:00.000Z'));
