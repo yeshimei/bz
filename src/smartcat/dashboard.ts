@@ -24,7 +24,7 @@ import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
-import { loadSmartCatData, getSmartcatFilePath } from './data';
+import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath } from './data';
 import { MOOD_MAP, moodLevelFromPad } from './mood';
 import { TRAIT_GROUPS } from './character';
 import { sourceLabel, formatRelativeTime, emotionDensityStats } from './memory';
@@ -910,8 +910,8 @@ async function handlePromote(behaviorId: string): Promise<void> {
     const data = await loadSmartCatData(dashState.app);
     const result = promoteToMemory(data, behaviorId);
     if (result) {
+      await saveSmartCatData(dashState.app, data);
       notice('已提升为记忆', 'success');
-      // 重渲染（需要落盘——通过常驻实例通道或直接 loadSmartCatData 刷新）
       renderPanes(data);
     } else {
       notice('未找到该行为条目', 'error');

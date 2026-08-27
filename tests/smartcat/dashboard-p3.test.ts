@@ -21,6 +21,9 @@ vi.mock('../../src/core/settings-provider', () => ({
 }));
 
 // mock data module (preserve actual exports, only mock loadSmartCatData)
+const mocks = vi.hoisted(() => ({
+  saveSmartCatData: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock('../../src/smartcat/data', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/smartcat/data')>();
   return {
@@ -41,6 +44,7 @@ vi.mock('../../src/smartcat/data', async (importOriginal) => {
         reflection: { lastReflectAt: 0, count: 0 },
       },
     }),
+    saveSmartCatData: mocks.saveSmartCatData,
   };
 });
 
@@ -126,5 +130,22 @@ describe('Dashboard 行为日志页签（P3 ticket 123）', () => {
 
     const promoteButtons = document.querySelectorAll('.bz-sc-dash-promote-btn');
     expect(promoteButtons.length).toBeGreaterThan(0);
+  });
+
+  it('promote 按钮点击后调用 saveSmartCatData 落盘', async () => {
+    await openSmartcatDashboard(mockApp as any);
+
+    // 切换到行为日志页签
+    const tabs = document.querySelectorAll('.bz-sc-dash-tab');
+    const behaviorTab = Array.from(tabs).find((t) => t.textContent === '行为日志');
+    (behaviorTab as HTMLElement).click();
+
+    // 点击第一个 promote 按钮
+    const promoteBtn = document.querySelector('.bz-sc-dash-promote-btn') as HTMLElement;
+    expect(promoteBtn).not.toBeNull();
+    await promoteBtn.click();
+
+    // 验证 saveSmartCatData 被调用（P1-1 fix）
+    expect(mocks.saveSmartCatData).toHaveBeenCalled();
   });
 });
