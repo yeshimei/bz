@@ -2,7 +2,7 @@
  * smartcat 设置弹窗测试（UI 层）：
  * 1) 移动端长按开设置 → 关闭（遮罩）→ 拖拽恢复（回归：onClose 复位 isSettingsOpen 交互锁）；
  * 2) 外观平铺色块选择器（13 皮肤、active 跟随、点击落盘并即时换肤）；
- * 3) 人格成长数据列表桌面/移动同套显示（2026-08-23 合并一套拍板，推翻原「移动端删除」差异）；
+ * 3) 人格成长可视化与重置成长已移除（ticket 123 UI 拍板），设置弹窗无相关元素；
  * 4) 设置弹窗移动端全屏跟随 smartcatMobileDefaultFullscreen（与聊天/数据面板同一开关）；
  * 5) 「打开数据面板」行替换原「每周懂你报告」（周报移入数据面板「报告」页签）；
  * 6) 分组卡片结构（2026-08 方案 A：外观/可视化/互动/记忆 + 移动端）与文案规范（标题无括号、
@@ -100,11 +100,6 @@ describe('外观平铺色块选择器', () => {
       },
       settingsKeys: { enabled: true, mobileFullscreen: keys?.mobileFullscreen ?? false },
       setMobileFullscreen: async () => {},
-      getPersonalityGrowth: () => ({
-        ocean: { openness: 0.6, conscientiousness: 0.5, extraversion: 0.4, agreeableness: 0.7, neuroticism: 0.3 },
-        traits: { warmth: 0.6 },
-      }),
-      resetPersonalityGrowth: async () => {},
       onAppearanceChanged: (skin) => hooks.appearances.push(skin),
     });
   }
@@ -139,21 +134,31 @@ describe('外观平铺色块选择器', () => {
     expect(hooks.saves.length).toBe(1);
   });
 
-  it('人格成长数据列表桌面/移动同套显示（2026-08-23 合并一套）', () => {
+  it('人格成长可视化与重置成长已移除（ticket 123 UI 拍板）', () => {
     const hooks = { saves: [] as any[], appearances: [] as string[] };
-    // 桌面端：有人格面板
+    // 桌面端：无人格面板、无重置成长按钮
     Platform.isMobile = false;
     openWith(baseConfig(), hooks);
-    expect(document.querySelector('.bz-sc-personality-panel')).not.toBeNull();
-    expect(document.querySelector('.setting-item[data-name="重置成长"]')).not.toBeNull();
-    // 移动端：同样有人格面板与重置行（分端差异已删除），皮肤网格仍在
+    expect(document.querySelector('.bz-sc-personality-panel')).toBeNull();
+    expect(document.querySelector('.setting-item[data-name="重置成长"]')).toBeNull();
+    expect(document.querySelector('.bz-sc-skin-grid')).not.toBeNull();
+    // 移动端：同样无人格面板与重置行，皮肤网格仍在
     closeSettingsModal();
     document.body.innerHTML = '';
     Platform.isMobile = true;
     openWith(baseConfig(), hooks);
-    expect(document.querySelector('.bz-sc-personality-panel')).not.toBeNull();
-    expect(document.querySelector('.setting-item[data-name="重置成长"]')).not.toBeNull();
+    expect(document.querySelector('.bz-sc-personality-panel')).toBeNull();
+    expect(document.querySelector('.setting-item[data-name="重置成长"]')).toBeNull();
     expect(document.querySelector('.bz-sc-skin-grid')).not.toBeNull();
+  });
+
+  it('设置弹窗无彩色条形类元素（.bz-sc-personality-panel / .bz-sc-trait-row 不出现）', () => {
+    const hooks = { saves: [] as any[], appearances: [] as string[] };
+    openWith(baseConfig(), hooks);
+    expect(document.querySelector('.bz-sc-personality-panel')).toBeNull();
+    expect(document.querySelector('.bz-sc-trait-row')).toBeNull();
+    expect(document.querySelector('.bz-sc-trait-bar')).toBeNull();
+    expect(document.querySelector('.bz-sc-trait-fill')).toBeNull();
   });
 
   it('设置弹窗移动端全屏跟随 smartcatMobileDefaultFullscreen（与聊天/数据面板同一开关）', () => {
@@ -187,7 +192,6 @@ describe('外观平铺色块选择器', () => {
       },
       settingsKeys: { enabled: true, mobileFullscreen: false },
       setMobileFullscreen: async () => {},
-      getPersonalityGrowth: () => null,
       onOpenDashboard: () => {
         dashboardOpened++;
         closeSettingsModal();
@@ -218,11 +222,7 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
       },
       settingsKeys: { enabled: true, mobileFullscreen: false },
       setMobileFullscreen: async () => {},
-      getPersonalityGrowth: () => ({
-        ocean: { openness: 0.6, conscientiousness: 0.5, extraversion: 0.4, agreeableness: 0.7, neuroticism: 0.3 },
-        traits: { warmth: 0.6 },
-      }),
-      resetPersonalityGrowth: async () => {},
+      onOpenDashboard: () => {},
       onAppearanceChanged: (skin) => hooks.appearances.push(skin),
     });
   }
@@ -247,9 +247,9 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
       { icon: 'link', name: '关联', count: '2 项' },
       { icon: 'eye', name: '显示', count: '1 项' },
     ]);
-    // 外观组内为色块网格（无 Setting 行，不计徽标），可视化组内人格面板 + 重置成长
+    // 外观组内为色块网格（无 Setting 行，不计徽标），可视化组内仅「打开数据面板」
     expect(popup.querySelector('.bz-settings-group-body .bz-sc-skin-grid')).not.toBeNull();
-    expect(popup.querySelector('.bz-settings-group-body .bz-sc-personality-panel')).not.toBeNull();
+    expect(popup.querySelector('.bz-settings-group-body .bz-sc-personality-panel')).toBeNull();
     // 弹窗宽度 560（分组卡片方案）
     expect(popup.style.maxWidth).toBe('560px');
   });
@@ -284,7 +284,7 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
     expect(mobileGroup.querySelector('.bz-settings-group-count')!.textContent).toBe('1 项');
   });
 
-  it('无成长数据且有数据面板入口：可视化组仅「打开数据面板」1 项、无人格面板', () => {
+  it('可视化组仅有「打开数据面板」1 项、无人格面板', () => {
     const hooks = { saves: [] as any[], appearances: [] as string[] };
     Platform.isMobile = false;
     openSmartcatSettings({
@@ -294,7 +294,6 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
       },
       settingsKeys: { enabled: true, mobileFullscreen: false },
       setMobileFullscreen: async () => {},
-      getPersonalityGrowth: () => null,
       onOpenDashboard: () => {},
       onAppearanceChanged: (skin) => hooks.appearances.push(skin),
     });
