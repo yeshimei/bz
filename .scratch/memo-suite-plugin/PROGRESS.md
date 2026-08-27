@@ -1,6 +1,6 @@
 ## 2026-08-27 聚合讯 B 站 UP 主聚合 + 数据源设置（ticket 124；grill-with-docs 定案，ADR-0060）
 
-**状态：worktree/news-bilibili 实现完成，测试全绿待合并**（news 43 + clipping 53 + auto-summary 48 + 新契约文件；全量 2992 绿 + tsc 0 + watcher node:test 6）
+**状态：master 713efff 合并完成；合并复核全量 3136 测试通过（198 文件）+ tsc 0 + 构建部署（产物已落 E:/Obsidian/叫我包仔/.obsidian/plugins/bz/）；worktree 已清理**
 
 - 📋 **grill 定案（Q1-Q18）**：检测信号=news.json 存在（引导块 vs 设置项两条路径）；news.json 四段化 {articles/stats/bilibiliUps/sources}（旧数组自动迁移、news-stats.json 并入）；B 站聚合=仅视频投稿（DYNAMIC_TYPE_AV）24h 窗口 + cookie 引导；平台名「B站」；保留策略=未读不处理/已保存 3 天/已跳过 7 天（插件侧清理，设置可调）；UP 名单仅存 uid（粘贴链接解析）；三源独立开关；自动摘要详设三键（长度档位/标签开关数量/时机默认保存后立刻）
 - ✅ **实现**：`src/news/data.ts`（四段读写/迁移/uid 解析/保留策略纯函数）+ `src/news/source-settings.ts`（数据源组数据层）+ reader.ts 四段化（loadAll 一次读盘、markAsRead 写 state、写回串行队列防两写回互相覆盖）+ 剪藏设置「数据源」组 + 自动摘要详设 + settings 7 新键
