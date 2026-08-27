@@ -26,12 +26,15 @@ export interface BilibiliUpInfo {
 }
 
 /** 四段对象结构（ADR-0060）；articles 为原纯数组内容，stats 由 news-stats.json 并入。
- *  bilibiliUpInfo 为第五段（可选，ticket 126 新增）：uid → {name?, avatar?}，后台回填、插件只读展示 */
+ *  bilibiliUpInfo 为第五段（可选，ticket 126 新增）：uid → {name?, avatar?}，后台回填、插件只读展示；
+ *  bilibiliMaxItems/bilibiliCookie 为第六段（可选，ticket 127 新增）：每 UP 最近 N 条 + 用户配置的 B 站 Cookie */
 export interface NewsData {
   articles: any[];
   stats: { totalRead: number; totalSaved: number; totalSkipped: number; byPlatform: Record<string, number>; byDate: Record<string, number> };
   bilibiliUps: string[];
   bilibiliUpInfo: Record<string, BilibiliUpInfo>;
+  bilibiliMaxItems: number;
+  bilibiliCookie: string;
   sources: NewsSources;
 }
 
@@ -43,7 +46,7 @@ export interface ReadNewsResult {
 }
 
 function emptyData(): NewsData {
-  return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, sources: { ...DEFAULT_SOURCES } };
+  return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES } };
 }
 
 /** 纯函数：bilibiliUpInfo 段容错解析（uid → {name?, avatar?}；非对象/数组/空 → {}；头像统一转 https） */
@@ -58,6 +61,17 @@ export function parseBilibiliUpInfo(raw: unknown): Record<string, BilibiliUpInfo
     out[uid] = info;
   }
   return out;
+}
+
+/** 纯函数：B 站每 UP 抓取条数容错解析（默认 10，夹取 1..50；非法回退 10） */
+export function parseBilibiliMaxItems(raw: unknown): number {
+  const n = Math.floor(Number(raw));
+  return Number.isFinite(n) && n >= 1 ? Math.min(n, 50) : 10;
+}
+
+/** 纯函数：B 站 Cookie 容错解析（字符串去空白；非字符串 → 空串） */
+export function parseBilibiliCookie(raw: unknown): string {
+  return typeof raw === 'string' ? raw.trim() : '';
 }
 
 /** 纯函数：旧纯数组 → 四段包裹（articles 原样，stats 默认，名单空，源全开） */
@@ -111,6 +125,8 @@ export function parseNewsFileContent(raw: string): NewsData | null {
       stats: obj.stats && typeof obj.stats === 'object' ? obj.stats : DEFAULT_STATS(),
       bilibiliUps: Array.isArray(obj.bilibiliUps) ? obj.bilibiliUps.map((u: any) => String(u ?? '').trim()).filter(Boolean) : [],
       bilibiliUpInfo: parseBilibiliUpInfo(obj.bilibiliUpInfo),
+      bilibiliMaxItems: parseBilibiliMaxItems(obj.bilibiliMaxItems),
+      bilibiliCookie: parseBilibiliCookie(obj.bilibiliCookie),
       sources: obj.sources && typeof obj.sources === 'object'
         ? { ...DEFAULT_SOURCES, ...(obj.sources as Record<string, boolean>) }
         : { ...DEFAULT_SOURCES },

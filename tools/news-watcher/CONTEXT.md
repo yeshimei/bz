@@ -28,8 +28,16 @@ _Avoid_: UP 主列表（非 canonical）
 news.json `bilibiliUpInfo` 段的 uid → `{name?, avatar?}` 映射（ticket 126）——B 站抓到条目时由本进程回填（取首个条目的 `module_author` name/face，头像统一转 https），插件侧只读展示；缺资料时显示回退 uid。
 _Avoid_: UP 主信息（非 canonical）
 
-**五段结构 (five-segment structure)**:
-news.json 的对象形态 `{ articles, stats, bilibiliUps, bilibiliUpInfo, sources }`（v1.1.0 四段 + ticket 126 新增 `bilibiliUpInfo` 段）；旧纯数组读取时自动包裹迁移。
+**每 UP 最近 N 条 (latest N per UP)**:
+news.json `bilibiliMaxItems` 段（ticket 127，默认 10，夹取 1..50）——B 站源不走 24 小时窗口，按最近优先收满 N 条未抓过的动态即停（长期未更新的 UP 也能抓到最新动态）；插件「数据源」组设置。
+_Avoid_: 抓取条数（非 canonical）
+
+**B 站 Cookie (bilibili cookie)**:
+news.json `bilibiliCookie` 段（ticket 127，可选字符串）——API 返回 412（风控）时优先使用；用户经插件「UP 主名单管理」弹窗配置（浏览器 F12 复制 buvid3/SESSDATA）；未配置回退自动引导（GET 主页收集 buvid3）。明文本地存储，随 vault 同步。
+_Avoid_: cookie 配置（非 canonical）
+
+**六段结构 (six-segment structure)**:
+news.json 的对象形态 `{ articles, stats, bilibiliUps, bilibiliUpInfo, bilibiliMaxItems, bilibiliCookie, sources }`（v1.1.0 四段 + ticket 126 `bilibiliUpInfo` + ticket 127 两段）；旧纯数组读取时自动包裹迁移。
 _Avoid_: 对象结构（非 canonical）
 
 **新闻条目 (news article)**:
@@ -48,9 +56,9 @@ _Avoid_: 过滤, 查重
 
 ## Rules
 
-- **抓取窗口是滚动 24 小时**，不是自然日 — 深夜发布的文章不丢；B 站源按 pub_ts 翻页直到越过窗口边界。
-- **一个轮次抓取窗口内的全部文章**，不限制数量。
+- **滚动 24 小时窗口仅用于果壳/知乎**，不是自然日 — 深夜发布的文章不丢；B 站源不走窗口（ticket 127：每 UP 最近 N 条，默认 `bilibiliMaxItems`=10）。
+- **一个轮次抓取窗口内的全部文章**，不限制数量；B 站按最近优先收满 N 条即停。
 - **批内和库内都要去重**：API 可能返回重复数据，库内按 URL + 标题双去重。
 - **源级容错**：单个源失败不影响其他源，下个轮次自然重试，无重试状态机。
-- **五段整读写**：写回只动本进程负责的 articles 段 + 合并本轮 `bilibiliUpInfo`（保留 stats/bilibiliUps/sources——插件侧维护段）。
-- **B 站 Cookie 引导**：每轮先 GET 主页收集 buvid3 等 Cookie，规避未登录 API 风控（412）；失败则该源本轮跳过。
+- **多段整读写**：写回只动本进程负责的 articles 段 + 合并本轮 `bilibiliUpInfo`（保留 stats/bilibiliUps/bilibiliMaxItems/bilibiliCookie/sources——插件侧维护段）。
+- **B 站 Cookie 优先级**：配置的 `bilibiliCookie` 优先；未配置再 GET 主页自动引导（buvid3，规避 412）；都失败则跳过本轮并提示到插件「UP 主名单管理」配置。

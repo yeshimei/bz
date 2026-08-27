@@ -53,6 +53,9 @@ async function setup(withNewsJson: boolean) {
       bilibiliUps: ['546195', '999999'],
       // ticket 126：后台抓到消息回填的 UP 主资料（缺资料 → 显示回退 uid）
       bilibiliUpInfo: { '546195': { name: '老番茄', avatar: 'https://i0.hdslb.com/bfs/face/a.jpg' } },
+      // ticket 127：每 UP 最近 N 条（默认 10）+ Cookie 配置（空=自动引导）
+      bilibiliMaxItems: 10,
+      bilibiliCookie: '',
       sources: { zhihu: true, guokr: true, bilibili: true },
     }));
   }
@@ -235,6 +238,50 @@ describe('剪藏本设置「数据源」组', () => {
     expect(disk.bilibiliUps).toEqual(['546195', '999999', '888888']);
     const upCtl = (findSetting(popup, 'UP 主名单') as any).__setting;
     expect(upCtl.desc).toContain('3 位');
+  });
+
+  it('B 站抓取条数（ticket 127）：默认 10 展示，修改落盘并夹取，随 B 站开关整段隐藏', async () => {
+    const { vault } = await setup(true);
+    const popup = await openSettings();
+    const maxRow = findSetting(popup, 'B站抓取条数');
+    const ctrls = (maxRow as any).__setting.controls;
+    const text = ctrls.find((c: any) => typeof c.trigger === 'function' && 'value' in c);
+    expect(text.value).toBe('10'); // 默认 10（fixture）
+    text.trigger('5');
+    await new Promise((r) => setTimeout(r, 30)); // 冲刷写回
+    let disk = JSON.parse(vault.files.get(NEWS)!);
+    expect(disk.bilibiliMaxItems).toBe(5);
+    // 随 B 站源关闭整段隐藏（同 [data-up-section]，抓取条数行在其内一并隐藏）
+    const bili = findSetting(popup, 'B站 UP 主');
+    toggleOf(bili).trigger(false);
+    await flushDom();
+    const section = popup.querySelector<HTMLElement>('[data-up-section]')!;
+    expect(section.style.display).toBe('none');
+    expect(section.contains(findSetting(popup, 'B站抓取条数'))).toBe(true); // 行仍在该段内（段整体隐藏）
+  });
+
+  it('UP 弹窗 B 站 Cookie（ticket 127）：保存/清除落盘，状态文案联动，412 引导文案就位', async () => {
+    const { vault } = await setup(true);
+    const popup = await openSettings();
+    const modal = await openUpManager(popup);
+    const cookieRow = findSetting(modal, 'B 站 Cookie（可选）');
+    const ctrls = (cookieRow as any).__setting.controls;
+    expect((cookieRow as any).__setting.desc).toContain('412'); // 风控引导文案
+    expect((cookieRow as any).__setting.desc).toContain('未配置');
+    const text = ctrls.find((c: any) => typeof c.trigger === 'function' && 'value' in c);
+    const saveBtn = ctrls.find((c: any) => c.text === '保存');
+    const clearBtn = ctrls.find((c: any) => c.text === '清除');
+    text.trigger('  SESSDATA=abc  ');
+    saveBtn.trigger();
+    await new Promise((r) => setTimeout(r, 30));
+    let disk = JSON.parse(vault.files.get(NEWS)!);
+    expect(disk.bilibiliCookie).toBe('SESSDATA=abc'); // 去空白落盘
+    expect((cookieRow as any).__setting.desc).toContain('已配置');
+    clearBtn.trigger();
+    await new Promise((r) => setTimeout(r, 30));
+    disk = JSON.parse(vault.files.get(NEWS)!);
+    expect(disk.bilibiliCookie).toBe('');
+    expect((cookieRow as any).__setting.desc).toContain('未配置');
   });
 
   it('自动摘要详设：开关开 → 长度/标签/时机三项可见；关 → 隐藏', async () => {

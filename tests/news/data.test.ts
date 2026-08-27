@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 import {
   wrapArrayToNewsData, parseNewsFileContent, mergeStatsInto, statsHasData,
   applyRetention, parseUidFromText, parseBvidFromText, normalizeRetentionDays,
-  parseBilibiliUpInfo,
+  parseBilibiliUpInfo, parseBilibiliMaxItems, parseBilibiliCookie,
 } from '../../src/news/data';
 
 describe('news.json 四段结构', () => {
@@ -67,6 +67,34 @@ describe('news.json 四段结构', () => {
     expect(parseBilibiliUpInfo(undefined)).toEqual({});
     expect(parseBilibiliUpInfo([])).toEqual({});
     expect(parseBilibiliUpInfo('bad')).toEqual({});
+  });
+
+  it('bilibiliMaxItems/bilibiliCookie 段（ticket 127）：解析与回退默认（10 / 空串），缺失段不崩', () => {
+    const parsed = parseNewsFileContent(
+      JSON.stringify({
+        articles: [],
+        stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} },
+        bilibiliUps: ['1'],
+        sources: { zhihu: true, guokr: true, bilibili: true },
+        bilibiliMaxItems: 20,
+        bilibiliCookie: '  SESSDATA=abc  ',
+      })
+    )!;
+    expect(parsed.bilibiliMaxItems).toBe(20);
+    expect(parsed.bilibiliCookie).toBe('SESSDATA=abc'); // 去空白
+    // 缺失/非法 → 默认
+    expect(parseNewsFileContent('{"articles":[]}')!.bilibiliMaxItems).toBe(10);
+    expect(parseNewsFileContent('{"articles":[]}')!.bilibiliCookie).toBe('');
+    expect(wrapArrayToNewsData([]).bilibiliMaxItems).toBe(10);
+    // 纯函数容错：默认 10 夹取 1..50；Cookie 非字符串 → 空
+    expect(parseBilibiliMaxItems(undefined)).toBe(10);
+    expect(parseBilibiliMaxItems('abc')).toBe(10);
+    expect(parseBilibiliMaxItems(0)).toBe(10);
+    expect(parseBilibiliMaxItems(99)).toBe(50);
+    expect(parseBilibiliMaxItems('7')).toBe(7);
+    expect(parseBilibiliCookie(undefined)).toBe('');
+    expect(parseBilibiliCookie(123)).toBe('');
+    expect(parseBilibiliCookie('  x=1  ')).toBe('x=1');
   });
 
   it('mergeStatsInto / statsHasData：仅 stats 段无真实数据时并入旧文件', () => {
