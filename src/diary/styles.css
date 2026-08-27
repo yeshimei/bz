@@ -529,3 +529,78 @@
   opacity: 1;
 }
 
+/* ==================== 日记解析检测面板（ticket 121，ADR-0054） ==================== */
+.bz-diary-repair-progress {
+  margin: 12px 0 16px;
+}
+.bz-diary-repair-progress-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--background-modifier-border);
+  overflow: hidden;
+}
+.bz-diary-repair-progress-fill {
+  height: 100%;
+  background: var(--interactive-accent);
+  border-radius: 3px;
+  transition: width 0.2s;
+}
+.bz-diary-repair-progress-text {
+  margin-top: 6px;
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+}
+.bz-diary-repair-summary {
+  margin: 4px 0 12px;
+}
+.bz-diary-repair-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  margin: 14px 0 6px;
+}
+.bz-diary-repair-file {
+  margin: 6px 0;
+  padding: 6px 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+}
+.bz-diary-repair-file-head {
+  font-weight: 600;
+}
+.bz-diary-repair-snippet {
+  opacity: 0.75;
+}
+.bz-diary-repair-footer {
+  margin-top: 14px;
+}
+.bz-diary-repair-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 2px 0;
+  font-size: var(--font-ui-small);
+}
+.bz-diary-repair-row code {
+  font-size: var(--font-ui-small);
+}
+.bz-diary-repair-link {
+  cursor: pointer;
+  color: var(--text-accent);
+  text-decoration: underline;
+}
+/* 检测面板操作按钮（一键修复/重新检测） */
+.bz-button {
+  cursor: pointer;
+  padding: 4px 12px;
+  border: none;
+  border-radius: var(--radius-s, 4px);
+  background: var(--interactive-accent);
+  color: var(--text-on-accent, #fff);
+  font-size: var(--font-ui-small);
+}
+.bz-button:hover {
+  background: var(--interactive-accent-hover);
+}
+

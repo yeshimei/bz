@@ -21,6 +21,7 @@ import { createTag, rebuildTags, refreshSubTagsBar } from './filter-shared';
 import { createTagPicker, createAddDialog, createDatePicker, showDatePicker, openAddDialog } from './dialogs';
 import { registerOpenDialogCommand } from './quote';
 import { closePanel } from './panel-close';
+import { openDiaryRepairModal } from './repair-modal';
 
 // ===== 进度条（原 202-237） =====
 
@@ -305,6 +306,12 @@ function openDiarySettingsModal() {
       addViewGroup(el, s);
       addDefaultViewGroup(el, s);
       addMobileGroup(el, s);
+      // ticket 121：解析检测入口（手动驱动，不自动触发）
+      const maintGroup = createSettingsGroup(el, { icon: 'wrench', name: '维护' });
+      new Setting(maintGroup)
+        .setName('日记解析检测')
+        .setDesc('扫描所有日记文件，定位未能解析的行；可一键修复标题格式问题')
+        .addButton((b) => b.setButtonText('检测日记解析').setCta().onClick(() => openDiaryRepairModal()));
     },
   });
 }

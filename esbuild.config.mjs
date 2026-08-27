@@ -14,7 +14,7 @@ const RELEASE_MAIN = path.join(process.cwd(), "main.js");
 const context = await esbuild.context({
   entryPoints: ["src/main.ts"],
   bundle: true,
-  external: ["obsidian", "electron", "@codemirror/*"],
+  external: ["obsidian", "electron", "@codemirror/*", "os"],
   format: "cjs",
   target: "es2018",
   logLevel: "info",
