@@ -13,7 +13,6 @@ import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { closeSettingsModal, createSettingsGroup, openSettingsModal } from '../core/settings-modal';
-import { notice } from '../core/notice';
 import { tryGetSettings, saveSettings } from '../core/settings-provider';
 import type { Appearance } from './types';
 
@@ -194,11 +193,11 @@ export function hideChatPanel(panels: SmartcatPanels): void {
 
 /**
  * 打开 smartcat 域设置弹窗（bz openSettingsModal；分组卡片方案 A：外观/可视化/互动/记忆 +
- * 移动端全屏，2026-08 用户拍板）。ADR-0023：预设「性格」下拉删除 → OCEAN+traits 可视化。
+ * 移动端全屏，2026-08 用户拍板）。
  * 2026-08-23 合并一套：① 弹窗与聊天面板共用同一「移动端默认全屏」开关（打开即应用）；
- * ② 人格成长可视化不再分端（桌面/移动同内容）；③ 「每周懂你报告」入口换成
- * 「打开数据面板」（周报全文移入数据面板「报告」页签）。
- * 分组：外观 palette（13 皮肤色块平铺）、可视化 bar-chart-3（人格成长+重置+数据面板）、
+ * ② 「每周懂你报告」入口换成「打开数据面板」（周报全文移入数据面板「报告」页签）；
+ * ③ 人格成长可视化与重置成长已移除（ticket 123 UI 拍板），数据层面保留。
+ * 分组：外观 palette（13 皮肤色块平铺）、可视化 bar-chart-3（数据面板）、
  * 互动 message-circle（自言自语间隔/说话概率/主动关心）、记忆 archive（记忆量/上下文/打分）；
  * 移动端 smartphone 组仅 isMobileEnv 显示。
  */
@@ -209,8 +208,6 @@ export function openSmartcatSettings(opts: {
   setMobileFullscreen: (v: boolean) => Promise<void>;
   /** 弹窗关闭回调（遮罩/✕/ESC）：index 用它复位 interaction.isSettingsOpen 交互锁 */
   onClose?: () => void;
-  getPersonalityGrowth?: () => any;
-  resetPersonalityGrowth?: () => Promise<void>;
   /** 「打开数据面板」按钮回调（index 注入：关设置弹窗 → openSmartcatDashboard） */
   onOpenDashboard?: () => void;
   /** 选皮肤即时生效（换色块后立刻切猫容器皮肤类，不必重载插件） */
@@ -248,54 +245,19 @@ export function openSmartcatSettings(opts: {
       }
       lookGroup.appendChild(grid);
 
-      // ===== 可视化组（ADR-0023 人格成长 OCEAN 5 轴 + 关键特质条形；2026-08-23 合并一套：
-      // 桌面/移动同内容，原「移动端不显示」分端差异删除；无成长数据且无数据面板入口时整组省略） =====
-      const g = opts.getPersonalityGrowth?.();
-      if (g || opts.onOpenDashboard) {
+      // ===== 可视化组（2026-08-23 合并一套：人格成长可视化与重置已移除，仅保留数据面板入口） =====
+      if (opts.onOpenDashboard) {
         const vizGroup = createSettingsGroup(el, { icon: 'bar-chart-3', name: '可视化' });
-        if (g) {
-          const panelEl = vizGroup.createDiv({ cls: 'bz-sc-personality-panel' });
-          const bar = (label: string, v: number) =>
-            `<div class="bz-sc-trait-row"><span class="bz-sc-trait-name">${label}</span>` +
-            `<div class="bz-sc-trait-bar"><div class="bz-sc-trait-fill" style="width:${Math.round(Math.min(1, Math.max(0, v)) * 100)}%"></div></div>` +
-            `<span class="bz-sc-trait-val">${(v * 100).toFixed(0)}</span></div>`;
-          const oceanNames: Record<string, string> = {
-            openness: '开放', conscientiousness: '尽责', extraversion: '外向', agreeableness: '宜人', neuroticism: '敏感',
-          };
-          const keyTraits: Record<string, string> = {
-            warmth: '温暖', self_worth: '自我价值', others_trust: '信任他人',
-            anxiety: '焦虑', humor: '幽默', beh_depth: '深度', optimism: '乐观',
-          };
-          let html = '<div class="bz-sc-personality-title">人格成长：随相处自动演化</div>';
-          html += '<div class="bz-sc-personality-section">OCEAN</div>';
-          for (const [k, name] of Object.entries(oceanNames)) html += bar(name, g.ocean?.[k] ?? 0.5);
-          html += '<div class="bz-sc-personality-section">关键特质</div>';
-          for (const [k, name] of Object.entries(keyTraits)) html += bar(name, g.traits?.[k] ?? 0.5);
-          panelEl.innerHTML = html;
-          if (opts.resetPersonalityGrowth) {
-            new Setting(vizGroup)
-              .setName('重置成长')
-              .setDesc('清空已演化的人格，回到出生时的初始状态')
-              .addButton((btn: any) => {
-                btn.setButtonText('重置').onClick(async () => {
-                  await opts.resetPersonalityGrowth!();
-                  notice('人格已重置，请重新打开设置查看新种子', 'info');
-                });
-              });
-          }
-        }
-        // 数据面板入口（归可视化组；2026-08-23 用户拍板：周报全文移入数据面板「报告」页签）
-        if (opts.onOpenDashboard) {
-          new Setting(vizGroup)
-            .setName('打开数据面板')
-            .setDesc('查看小橘的状态全貌与每周懂你报告')
-            .addButton((btn: any) => {
-              btn.setButtonText('打开数据面板').onClick(() => {
-                closeSettingsModal();
-                opts.onOpenDashboard!();
-              });
+        // 数据面板入口（归可视化组；周报全文在面板「报告」页签）
+        new Setting(vizGroup)
+          .setName('打开数据面板')
+          .setDesc('查看小橘的状态全貌与每周懂你报告')
+          .addButton((btn: any) => {
+            btn.setButtonText('打开数据面板').onClick(() => {
+              closeSettingsModal();
+              opts.onOpenDashboard!();
             });
-        }
+          });
       }
 
       // ===== 互动组（陪伴说话节奏 + 主动关心） =====
