@@ -6,8 +6,11 @@
  * 置顶/取消置顶不观察（不单独发观察，编辑里的置顶变化也不列入变化列表）；
  * 打开链接、跳转笔记、刷新余额不观察（不落盘或系统数据）。
  * 数据语义零改动：字段对齐 favorites.json（id/tags/title/description/pinned/url/…/type/llmConfig）。
+ *
+ * P2b（ticket 123）：新增 buildFavoritesStructured——构造 StructuredMeta 供行为流写入。
  */
 import type { FavoritesItem } from '../favorites/types';
+import type { StructuredMeta } from './types';
 
 /** 收藏本动作事件（favorites 域确认回调 → smartcat.notifyFavoritesAction） */
 export type FavoritesActionEvent =
@@ -62,5 +65,22 @@ export function buildFavoritesActionText(evt: FavoritesActionEvent): string | nu
       return favoritesEditedText(evt.title, evt.changes);
     case 'delete':
       return favoritesDeletedText(evt.title);
+  }
+}
+
+// ==================== P2b 结构化元数据（行为流） ====================
+
+/** 收藏本事件 → StructuredMeta（行为流） */
+export function buildFavoritesStructured(evt: FavoritesActionEvent): StructuredMeta | null {
+  switch (evt.kind) {
+    case 'add':
+      return {
+        entityType: 'favorite', action: 'added', name: evt.item.title,
+        extras: { tags: evt.item.tags, description: evt.item.description, url: evt.item.url, pinned: evt.item.pinned },
+      };
+    case 'edit':
+      return { entityType: 'favorite', action: 'edited', name: evt.title, extras: { changes: evt.changes } };
+    case 'delete':
+      return { entityType: 'favorite', action: 'deleted', name: evt.title };
   }
 }

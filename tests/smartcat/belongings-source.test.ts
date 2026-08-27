@@ -8,6 +8,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   buildBelongingsActionText,
+  buildBelongingsStructured,
   belongingsAddedText,
   belongingsEditChanges,
   belongingsEditedText,
@@ -137,5 +138,31 @@ describe('buildBelongingsActionText（事件 → 文本分发）', () => {
     expect(buildBelongingsActionText({ kind: 'edit', title: '松下s5', changes: ['改了价格'] })).toBe('你编辑了物品《松下s5》：改了价格');
     expect(buildBelongingsActionText({ kind: 'status', title: '松下s5', status: '已丢弃' })).toBe('你丢弃了《松下s5》');
     expect(buildBelongingsActionText({ kind: 'delete', title: '松下s5' })).toBe('你删除了物品《松下s5》');
+  });
+});
+
+// ==================== P2b StructuredMeta 映射测试 ====================
+
+describe('buildBelongingsStructured（归物本事件 → StructuredMeta，行为流）', () => {
+  it('add：entityType=item, action=added, extras 含分类/价格/购买日期/状态/描述', () => {
+    const s = buildBelongingsStructured({ kind: 'add', item: item() });
+    expect(s).not.toBeNull();
+    expect(s!.entityType).toBe('item');
+    expect(s!.action).toBe('added');
+    expect(s!.name).toBe('松下s5');
+    expect(s!.extras!.category).toBe('📷 微单相机');
+    expect(s!.extras!.purchase_price).toBe(7988);
+  });
+  it('edit：entityType=item, action=edited, extras 含 changes', () => {
+    const s = buildBelongingsStructured({ kind: 'edit', title: '松下s5', changes: ['改了价格'] });
+    expect(s).toEqual({ entityType: 'item', action: 'edited', name: '松下s5', extras: { changes: ['改了价格'] } });
+  });
+  it('status：entityType=item, action=status, extras 含 status', () => {
+    const s = buildBelongingsStructured({ kind: 'status', title: '松下s5', status: '已丢弃' });
+    expect(s).toEqual({ entityType: 'item', action: 'status', name: '松下s5', extras: { status: '已丢弃' } });
+  });
+  it('delete：entityType=item, action=deleted', () => {
+    const s = buildBelongingsStructured({ kind: 'delete', title: '松下s5' });
+    expect(s).toEqual({ entityType: 'item', action: 'deleted', name: '松下s5' });
   });
 });

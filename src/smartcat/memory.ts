@@ -385,8 +385,9 @@ export class MemorySystem {
   /**
    * 写入行为流（P1 数据基座，ticket 123）
    * 轻量行为事件：不参与向量化/检索，按天数+条数滚动清理。
+   * 去重由上游 B6 守卫（300ms 同事件同 key）处理，此处不做额外去重。
    */
-  private writeBehaviorStream(source: string, structured?: StructuredMeta): BehaviorItem {
+  private writeBehaviorStream(source: string, structured?: StructuredMeta): BehaviorItem | null {
     const action = structured?.action ?? 'unknown';
     const name = structured?.name ?? '';
     const item: BehaviorItem = {

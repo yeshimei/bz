@@ -6,7 +6,11 @@
  * 延后 / 切换优先级 / 删除（仅标题）+ 每日到期扫描合并一条（memoDueObservation）。
  * AIAgent 同步等非 UI 写入天然不收（方法监听，用户拍板不收批量同步）。
  * 数据语义零改动：字段对齐 memo.json（title/scene/priority/due/notePath/scriptName/courseName）。
+ *
+ * P2b（ticket 123）：新增 buildMemoStructured / buildMemoDueScanStructured——
+ * 构造 StructuredMeta 供 addObservation(source, { structured }) 路由到行为流。
  */
+import type { StructuredMeta } from './types';
 export type MemoPriority = 'important' | 'minor';
 
 /** 编辑对比快照（α 合并：对比保存前后条目的相关字段） */
@@ -204,4 +208,39 @@ export function buildMemoActionText(evt: MemoActionEvent): string | null {
     case 'deleted':
       return memoDeletedText(evt.title);
   }
+}
+
+// ==================== P2b 结构化元数据（行为流） ====================
+
+/** 备忘录事件 → StructuredMeta（行为流；编辑无变化返回 null） */
+export function buildMemoStructured(evt: MemoActionEvent): StructuredMeta | null {
+  switch (evt.kind) {
+    case 'added':
+      return {
+        entityType: 'task', action: 'added', name: evt.title,
+        extras: { scene: evt.scene, priority: evt.priority, due: evt.due, notePath: evt.notePath, scriptName: evt.scriptName, courseName: evt.courseName },
+      };
+    case 'edited': {
+      const text = memoEditedText(evt.old, evt.next);
+      if (!text) return null;
+      return { entityType: 'task', action: 'edited', name: evt.next.title, extras: { old: evt.old, next: evt.next } };
+    }
+    case 'completed':
+      return { entityType: 'task', action: 'completed', name: evt.title };
+    case 'restored':
+      return { entityType: 'task', action: 'restored', name: evt.title };
+    case 'postponed':
+      return { entityType: 'task', action: 'postponed', name: evt.title, extras: { due: evt.due } };
+    case 'priority':
+      return { entityType: 'task', action: 'priority', name: evt.title, extras: { to: evt.to } };
+    case 'deleted':
+      return { entityType: 'task', action: 'deleted', name: evt.title };
+  }
+}
+
+/** 每日到期扫描 → StructuredMeta（action='due'，extras 放合并文本；N=0 返回 null） */
+export function buildMemoDueScanStructured(items: MemoDueLike[] | null | undefined, now: Date = new Date()): StructuredMeta | null {
+  const text = memoDueObservation(items, now);
+  if (!text) return null;
+  return { entityType: 'task', action: 'due', name: '到期扫描', extras: { text } };
 }
