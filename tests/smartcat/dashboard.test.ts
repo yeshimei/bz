@@ -173,7 +173,7 @@ describe('openSmartcatDashboard UI', () => {
     expect(popup!.querySelector('.bz-win-head')).not.toBeNull();
     expect(popup!.querySelector('#smartcat-dash-close')).not.toBeNull();
     expect(popup!.querySelector('#smartcat-dash-refresh')).toBeNull(); // 097 C1：手动刷新按钮已删
-    expect(popup!.querySelectorAll('.bz-sc-dash-tab').length).toBe(6); // P3: 新增行为日志页签
+    expect(popup!.querySelectorAll('.bz-sc-dash-tab').length).toBe(6); // P3: 新增行为页签
     const overview = popup!.querySelector('[data-pane="overview"]') as HTMLElement;
     expect(overview.style.display).not.toBe('none');
     expect(overview.textContent).toContain('心情好');
