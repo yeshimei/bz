@@ -20,7 +20,7 @@ describe('路由规则表（ROUTING_RULES）', () => {
       // 影视
       'movie:want', 'movie:watching', 'movie:watched', 'movie:rated', 'movie:reviewed', 'movie:deleted',
       // 备忘录
-      'memo:added', 'memo:edited', 'memo:completed', 'memo:restored', 'memo:postponed', 'memo:priority', 'memo:deleted',
+      'memo:added', 'memo:edited', 'memo:completed', 'memo:restored', 'memo:postponed', 'memo:priority', 'memo:deleted', 'memo:due',
       // 聚合讯
       'news:read', 'news:saved', 'news:skipped',
       // 收藏本
@@ -95,6 +95,10 @@ describe('路由规则表（ROUTING_RULES）', () => {
 
   it('memo:added → behavior', () => {
     expect(ROUTING_RULES['memo:added'].stream).toBe('behavior');
+  });
+
+  it('memo:due → behavior（每日到期扫描）', () => {
+    expect(ROUTING_RULES['memo:due'].stream).toBe('behavior');
   });
 
   it('news:read → behavior', () => {

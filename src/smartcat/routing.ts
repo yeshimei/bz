@@ -57,6 +57,7 @@ export const ROUTING_RULES: Record<string, RoutingRule> = {
   'memo:postponed':  { stream: 'behavior' },
   'memo:priority':   { stream: 'behavior' },
   'memo:deleted':    { stream: 'behavior' },
+  'memo:due':        { stream: 'behavior' },
 
   // === 聚合讯 ===
   'news:read':       { stream: 'behavior' },
