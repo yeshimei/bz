@@ -30,15 +30,18 @@ export const ROUTING_RULES: Record<string, RoutingRule> = {
   'diary:deleted':   { stream: 'behavior' },
 
   // === 闪念 ===
-  'flash:created':   { stream: 'behavior' },
+  'flash:created':   { stream: 'memory', importance: 0.70, defaultEmotion: 'calm', credibility: 0.9 },
+  'flash:updated':   { stream: 'memory', importance: 0.65, defaultEmotion: 'calm', credibility: 0.9 },
   'flash:deleted':   { stream: 'behavior' },
 
   // === 诗 ===
   'poem:created':    { stream: 'memory', importance: 0.75, defaultEmotion: 'calm', credibility: 0.9 },
+  'poem:updated':    { stream: 'memory', importance: 0.70, defaultEmotion: 'calm', credibility: 0.9 },
   'poem:deleted':    { stream: 'behavior' },
 
   // === 信 ===
   'letter:created':  { stream: 'memory', importance: 0.80, defaultEmotion: 'calm', credibility: 0.9 },
+  'letter:updated':  { stream: 'memory', importance: 0.75, defaultEmotion: 'calm', credibility: 0.9 },
   'letter:deleted':  { stream: 'behavior' },
 
   // === 影视 ===

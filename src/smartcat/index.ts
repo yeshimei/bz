@@ -25,6 +25,8 @@ import { generateBookDescription, hasBookTag } from './content';
 import { classifyPath } from './context-source';
 import { onDomainEvent } from '../core/domain-bus';
 import { buildMovieActionText, type MovieActionEvent } from './movie-source';
+import { generateDescription } from './description-generators';
+import type { StructuredMeta } from './types';
 import { buildMemoActionText, memoDueObservation, type MemoActionEvent, type MemoDueLike } from './memo-source';
 import { parseDiaryFile, decideDiarySettle, diaryDeleteText, diaryDeleteFileText, DIARY_SETTLE_MS, type DiaryEntryLike } from './diary-source';
 import { noteFirstText, noteDeleteText, noteFileName, noteBodyText, parseNoteDate, letterReadonly, decideNoteSettle, NOTE_SETTLE_MS, type NoteKind } from './note-source';
@@ -929,7 +931,14 @@ async function sendChatMessage(message: string): Promise<void> {
     // ADR-0021/0025：对话写入 observation（dedupe=聊天去重限流：近 20 条内重复跳过；
     //  非 calm 情绪或 importance≥0.55 才落库，低价值「用户说：X」不稀释记忆流）；
     //  情绪共振/瞬时情绪由 memorySystem.onObservation 钩子统一处理（不再此处手动 registerEmotion）
-    await memorySystem!.addObservation(`用户说：${message}`, { source: 'chat', dedupe: true });
+    //  P2a：结构化聊天消息——走新签名，dedupe 保留
+    await memorySystem!.addObservation('chat', {
+      structured: {
+        entityType: 'chat_message', action: 'said',
+        extras: { content: message },
+      },
+      dedupe: true,
+    });
     // ADR-0023：聊天 → 性格微移 + 行为统计（tickBehaviorStats；情绪强度近似取消息长度）
     // ticket 072：强度上限 0.8→0.5（长度≠情绪浓度，粘贴长文不应拿满格人格微移）
     personalityGrowth!.developBasedOnInteraction('talk', 1, Math.min(0.5, message.length / 200)).catch(() => {});
@@ -1109,14 +1118,54 @@ function memoActionKey(evt: MemoActionEvent): string {
 }
 
 /** 影视动作观察处理（movie 域 UI 经 emitDomainEvent('movie', evt) 派发 → 总线订阅进入）。
- *  未初始化 / 未启用（noteSource 关）→ 静默；文案构造见 movie-source.buildMovieActionText。 */
+ *  未初始化 / 未启用（noteSource 关）→ 静默；文案构造见 movie-source.buildMovieActionText。
+ *  P2a：结构化观察——产出 StructuredMeta 走新签名 addObservation，由路由规则分派流。 */
 function notifyMovieAction(evt: MovieActionEvent): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
-  const text = buildMovieActionText(evt);
-  if (!text) return;
   // B6（ticket 084a）：同事件同 key 近 300ms 防重（双击确认等重复触发）
   if (notifyDeduped(evt.kind, movieActionKey(evt))) return;
-  void memorySystem.addObservation(text, { source: 'movie' });
+  // P2a：将 MovieActionEvent 映射为 StructuredMeta
+  const structured = movieEventToStructured(evt);
+  const desc = generateDescription(structured);
+  structured.snapshot = { summary: desc, tags: [], length: 0 };
+  void memorySystem.addObservation('movie', { structured });
+}
+
+/** MovieActionEvent → StructuredMeta 映射（P2a） */
+function movieEventToStructured(evt: MovieActionEvent): StructuredMeta {
+  switch (evt.kind) {
+    case 'created':
+      return {
+        entityType: 'movie', action: evt.status,
+        name: evt.name,
+        rating: evt.rating ?? undefined,
+        extras: { review: evt.review },
+      };
+    case 'status':
+      return {
+        entityType: 'movie', action: evt.to,
+        name: evt.name,
+        extras: { from: evt.from },
+      };
+    case 'rated':
+      return {
+        entityType: 'movie', action: 'rated',
+        name: evt.name,
+        rating: evt.toRating,
+        extras: { fromRating: evt.fromRating },
+      };
+    case 'review':
+      return {
+        entityType: 'movie', action: 'reviewed',
+        name: evt.name,
+        extras: { fromReview: evt.fromReview, review: evt.toReview },
+      };
+    case 'deleted':
+      return {
+        entityType: 'movie', action: 'deleted',
+        name: evt.name,
+      };
+  }
 }
 
 // ------------- 备忘录动作观察（ticket 075：方法监听 + 每日到期扫描） -------------
@@ -1511,7 +1560,19 @@ async function settleDiaryEntry(filePath: string, date: string, time: string): P
   if (settled.text) {
     // fire-and-forget：addObservation 的 appendVector（探测 Ollama）尾段在无向量环境可能不 resolve，
     // 结算状态须立即推进（对齐 notifyMovieAction 等既有 fire-and-forget 模式）
-    void mem.addObservation(settled.text, { source: 'diary' });
+    // P2a：结构化观察——settled.text 作为 snapshot.summary；generateDescription 生成更丰富的描述
+    const diaryAction = settled.kind === 'first' ? 'created' : 'updated';
+    const tags = entry.tags || [];
+    const structured: StructuredMeta = {
+      entityType: 'diary_entry', action: diaryAction,
+      name: `${date} ${time}`,
+      tags, refPath: filePath,
+      snapshot: { summary: settled.text, tags, length: entry.body.length },
+    };
+    const desc = generateDescription(structured);
+    // 过渡设计：生成的描述写入 snapshot.summary，memory.ts buildDescription 拾取
+    structured.snapshot!.summary = desc;
+    void mem.addObservation('diary', { structured });
     st.lastGeneratedAt = Date.now();
   }
   // 结算状态推进会话内生效（首落已见 / 基线更新 / 累计推进——本次补写 ≤50 也计入下次结算）
@@ -1521,11 +1582,17 @@ async function settleDiaryEntry(filePath: string, date: string, time: string): P
   st.accum = settled.next.accum;
 }
 
-/** 追加一条删除观察（原观察全部保留，删除观察只是追加；fire-and-forget 防阻塞事件链） */
+/** 追加一条删除观察（原观察全部保留，删除观察只是追加；fire-and-forget 防阻塞事件链）
+ *  P2a：走 behavior 流（diary:deleted 路由已定义）+ structured 语义 */
 function appendDiaryDeleteObservation(date: string, time: string): void {
   const mem = memorySystem;
   if (!mem || !data?.config?.noteSource) return;
-  void mem.addObservation(diaryDeleteText(date, time), { source: 'diary' });
+  void mem.addObservation('diary', {
+    structured: {
+      entityType: 'diary_entry', action: 'deleted',
+      name: `${date} ${time}`,
+    },
+  });
 }
 
 /** 日记 create/modify 新链路（ticket 077）：diff 出变化的条目重置其独立计时；
@@ -1576,19 +1643,29 @@ function handleDiaryTrackedDelete(filePath: string): void {
     const date = diaryFileDate(filePath);
     if (!date) return;
     // 文件级兜底（fire-and-forget，防阻塞 vault 事件链）
-    void mem.addObservation(diaryDeleteFileText(date), { source: 'diary' });
+    // P2a：走 behavior 流 + structured 语义
+    void mem.addObservation('diary', {
+      structured: {
+        entityType: 'diary_entry', action: 'deleted',
+        name: date,
+      },
+    });
   }
   diaryTracked.delete(filePath);
 }
 
 /** 卡片盒/现代诗/信 文件删除处理（delete 事件与 rename 移出目录共用）：有跟踪快照 → 追加删除观察
- * （原观察全部保留；fire-and-forget 防阻塞事件链）+ 清计时；未跟踪（无法知道内容）→ 跳过。 */
+ * （原观察全部保留；fire-and-forget 防阻塞事件链）+ 清计时；未跟踪（无法知道内容）→ 跳过。
+ *  P2a：走 behavior 流 + structured 语义 */
 function handleNoteTrackedDelete(filePath: string): void {
   const mem = memorySystem;
   if (!mem) return;
   const tracked = noteTracked.get(filePath);
   if (tracked) {
-    void mem.addObservation(noteDeleteText(tracked.kind, noteFileName(filePath)), { source: tracked.kind });
+    const entityType = tracked.kind === 'letter' ? 'letter' : tracked.kind === 'poem' ? 'poem' : 'flash';
+    void mem.addObservation(tracked.kind, {
+      structured: { entityType, action: 'deleted', name: noteFileName(filePath) },
+    });
     dropNoteTimer(filePath);
   }
   noteTracked.delete(filePath);
@@ -1737,7 +1814,11 @@ async function settleNoteFile(filePath: string): Promise<void> {
   let file: any = null;
   try { file = appRef.vault.getAbstractFileByPath(filePath); } catch { return; }
   if (!file) {
-    void mem.addObservation(noteDeleteText(st.kind, noteFileName(filePath)), { source: st.kind });
+    // P2a：走 behavior 流（note:deleted 路由）+ structured 语义
+    const entityType = st.kind === 'letter' ? 'letter' : st.kind === 'poem' ? 'poem' : 'flash';
+    void mem.addObservation(st.kind, {
+      structured: { entityType, action: 'deleted', name: noteFileName(filePath) },
+    });
     dropNoteTimer(filePath);
     noteTracked.delete(filePath);
     return;
@@ -1759,7 +1840,16 @@ async function settleNoteFile(filePath: string): Promise<void> {
   if (st.generated && !st.observed && (st.kind === 'letter' || st.kind === 'poem') && date && body) {
     const first = noteFirstText(st.kind, name, body, date);
     if (first) {
-      void mem.addObservation(first, { source: st.kind }); // fire-and-forget，对齐 diary 链路
+      // P2a：结构化首落观察
+      const entityType = st.kind === 'letter' ? 'letter' : 'poem';
+      const structured: StructuredMeta = {
+        entityType, action: 'created', name,
+        extras: { date, body },
+        snapshot: { summary: first, tags: [], length: body.length },
+      };
+      const desc = generateDescription(structured);
+      structured.snapshot!.summary = desc;
+      void mem.addObservation(st.kind, { structured }); // fire-and-forget，对齐 diary 链路
       st.observed = true;
     }
   }
@@ -1769,7 +1859,17 @@ async function settleNoteFile(filePath: string): Promise<void> {
   if (settled.text) {
     // fire-and-forget：addObservation 的 appendVector（探测 Ollama）尾段在无向量环境可能不 resolve，
     // 结算状态须立即推进（对齐日记链路）
-    void mem.addObservation(settled.text, { source: st.kind });
+    // P2a：结构化 diff 观察
+    const entityType = st.kind === 'letter' ? 'letter' : st.kind === 'poem' ? 'poem' : 'flash';
+    const action = settled.kind === 'first' ? 'created' : 'updated';
+    const structured: StructuredMeta = {
+      entityType, action, name,
+      extras: { date, body },
+      snapshot: { summary: settled.text, tags: [], length: body.length },
+    };
+    const desc = generateDescription(structured);
+    structured.snapshot!.summary = desc;
+    void mem.addObservation(st.kind, { structured });
   }
   // 结算状态推进会话内生效：基线恒推进到当前正文全文（v2：无累计）；observed——首落已产出或确定不产（无日期）置 true
   st.generated = settled.next.generated;
@@ -1864,19 +1964,53 @@ async function settleLibraryPending(id: string): Promise<void> {
   libraryPendingNotes.delete(id);
   if (!watchEnabled() || !memorySystem) return;
   const text = buildLibraryNoteText(p.title, p.highlights, p.excerpts);
-  if (text) await memorySystem.addObservation(text, { source: 'domain:library' });
+  if (!text) return;
+  // P2a：划线/想法结算 → StructuredMeta，路由走 library:highlight/library:thought（按首个有内容的类型判定）
+  const hasHighlights = p.highlights.some((h) => h.trim());
+  const hasExcerpts = p.excerpts.some((e) => e.trim());
+  const action = hasHighlights ? 'highlight' : 'thought';
+  const structured: StructuredMeta = {
+    entityType: 'book', action,
+    name: p.title,
+    extras: { highlights: p.highlights, excerpts: p.excerpts, texts: hasHighlights ? p.highlights : p.excerpts },
+  };
+  const desc = generateDescription(structured);
+  structured.snapshot = { summary: desc, tags: [], length: 0 };
+  await memorySystem.addObservation('library', { structured });
 }
 
 /** library 结构化 diff 消费（ticket 081 v2）：书架增删/读完/时长即时入流；划线/想法走 5 分钟防抖。
- *  noteSource 关（A3）→ 即时事件与防抖档案均不产。 */
+ *  noteSource 关（A3）→ 即时事件与防抖档案均不产。
+ *  P2a：每个事件产出 StructuredMeta 走新签名 addObservation。 */
 async function consumeLibraryDiff(diff: LibraryWeaveDiff, mem: any): Promise<void> {
   if (!watchEnabled()) return;
-  for (const e of diff.added) await mem.addObservation('你把《' + e.title + '》加入了书架', { source: 'domain:library' });
-  for (const e of diff.started) await mem.addObservation('你开始读《' + e.title + '》', { source: 'domain:library' });
-  for (const e of diff.done) await mem.addObservation('你读完了《' + e.title + '》', { source: 'domain:library' });
-  for (const e of diff.removed) await mem.addObservation('你把《' + e.title + '》移出了书架', { source: 'domain:library' });
+  for (const e of diff.added) {
+    const structured: StructuredMeta = { entityType: 'book', action: 'added', name: e.title };
+    structured.snapshot = { summary: generateDescription(structured), tags: [], length: 0 };
+    await mem.addObservation('library', { structured });
+  }
+  for (const e of diff.started) {
+    const structured: StructuredMeta = { entityType: 'book', action: 'started', name: e.title };
+    structured.snapshot = { summary: generateDescription(structured), tags: [], length: 0 };
+    await mem.addObservation('library', { structured });
+  }
+  for (const e of diff.done) {
+    const structured: StructuredMeta = { entityType: 'book', action: 'completed', name: e.title };
+    structured.snapshot = { summary: generateDescription(structured), tags: [], length: 0 };
+    await mem.addObservation('library', { structured });
+  }
+  for (const e of diff.removed) {
+    const structured: StructuredMeta = { entityType: 'book', action: 'removed', name: e.title };
+    structured.snapshot = { summary: generateDescription(structured), tags: [], length: 0 };
+    await mem.addObservation('library', { structured });
+  }
   for (const e of diff.sessions) {
-    await mem.addObservation('你读了《' + e.title + '》约 ' + e.minutes + ' 分钟（读到 ' + e.percent + '%）', { source: 'domain:library' });
+    const structured: StructuredMeta = {
+      entityType: 'book', action: 'progressed',
+      name: e.title, duration: e.minutes, progress: e.percent,
+    };
+    structured.snapshot = { summary: generateDescription(structured), tags: [], length: 0 };
+    await mem.addObservation('library', { structured });
   }
   for (const e of diff.highlightEvents) pushLibraryPending(e.id, e.title, { highlights: e.texts });
   for (const e of diff.excerptEvents) pushLibraryPending(e.id, e.title, { excerpts: e.texts });
