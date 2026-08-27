@@ -1,3 +1,12 @@
+## 2026-08-27 日记「未解析行」主动检测+手动修复 与 第二大脑移动端 IP 防呆（ticket 121 / 122，grill-with-docs 定案）
+
+**状态：master 直接实现完成，待提交（ADR-0054 + issues/121 + issues/122；全量 2915 测试绿 + tsc 0 + 构建部署产物已落）**
+
+- ✅ **实现（ticket 121）**：`src/diary/repair.ts` 扫描/修复引擎（R1 补空格 / R2 时间补零 / 时间越界与无可修头行的游离正文 → 不可修清单；applyRepairs 按行号 before 匹配替换）；`src/diary/ui/repair-modal.ts` 检测面板（zIndex 11200 companion 档、分批并发扫描进度条、两区汇报、一键修复 confirm 后 vault.modify、点击行 openAtLine 编辑器 setCursor 定位、重新检测）；`loadAll` 移除启动自动 toast（UX-9 数字通知退役）；日记⚙️设置弹窗「维护」组加「检测日记解析」按钮；样式收 `src/diary/styles.css`
+- ✅ **实现（ticket 122）**：`src/secondbrain/local-ip.ts`（enumerateLanIPs 过滤 internal/loopback/link-local/IPv6；getLanIPs 走 window.require('os')，esbuild external 'os'）；第二大脑⚙️弹窗基础组加「本机局域网 IP（电脑）」行（桌面端探测展示 + 确认后一键填入 remote URL；移动端显示引导文案）
+- ✅ **测试**：+4 文件 22 例（repair 引擎 11 / 检测面板 4 / IP 枚举 4 / 第二大脑设置弹窗 3）；UX-9 两用例按新契约改写（loadAll 不再弹 toast、检测入口迁面板）；日记设置弹窗分组断言加「维护」组；MockButton 补 setCta；全量 2915 绿 + tsc 0
+- 📄 文档：ADR-0054（修复≠改格式，冻结边界立据）；issues/121、122；CONTEXT 词条「未解析行」「远程 Ollama URL」；spec 用户故事 26/52；PROGRESS 本条
+
 ## 2026-08-27 第二大脑正文大改自动重跑（ticket 119：v1.4 基准哈希 + 修改监听）
 
 **状态：master 3256b1c 合并完成；合并复核全量 2724 测试通过（179 文件）+ tsc 0 + 构建部署（产物已落 E:/Obsidian/叫我包仔/.obsidian/plugins/bz/）**

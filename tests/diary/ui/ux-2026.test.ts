@@ -143,23 +143,23 @@ describe('UX-8 加密改分类提示', () => {
   });
 });
 
-// ===== 9 解析失败汇总提示 =====
+// ===== 9 未解析行检测（ticket 121 契约变更：loadAll 不再弹启动 toast，
+//      检测入口迁移至日记⚙️设置弹窗「检测日记解析」面板——行为见 repair-modal.test.ts） =====
 
-describe('UX-9 解析失败汇总提示', () => {
-  it('存在未解析行 → 一次 warning 汇总「N 条未能解析，请检查日记文件格式」', async () => {
+describe('UX-9 未解析行（ticket 121）', () => {
+  it('存在未解析行 → loadAll 不弹启动 warning，解析结果不受影响', async () => {
     vault.files.set('我的/日记/2020-01-01.md', '游离前言\n# 📖 08:00\n正常\n');
     await loadAll();
-    expect(hasNotice('1 条未能解析，请检查日记文件格式')).toBe(true);
+    expect(hasNotice(/未能解析/)).toBe(false);
     // 解析结果不受影响：游离行不产生条目，正常条目照常解析
     expect(state.data.originalDiaryEntries.some((e) => e.date === '2020-01-01' && e.content === '正常')).toBe(true);
   });
 
-  it('多文件未解析行跨文件累计为一次提示', async () => {
+  it('多文件未解析行 → loadAll 跨文件静默（不累计弹窗）', async () => {
     vault.files.set('我的/日记/2020-01-01.md', '游离一\n游离二\n# 📖 08:00\n正常\n');
     vault.files.set('我的/日记/2019-12-31.md', '# 📖 27:00\nx\n# ✍️ 09:00\ny\n');
     await loadAll();
-    // 2020 文件 2 行游离 + 2019 文件 1 行越界标题 + 其 1 行孤儿正文 = 4
-    expect(hasNotice('4 条未能解析，请检查日记文件格式')).toBe(true);
+    expect(hasNotice(/未能解析/)).toBe(false);
     // 可解析部分不受影响
     expect(state.data.originalDiaryEntries.some((e) => e.date === '2019-12-31' && e.time === '09:00')).toBe(true);
   });

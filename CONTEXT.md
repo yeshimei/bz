@@ -11,6 +11,9 @@ _Avoid_: 日记、记录、post
 
 **日期文件 (Date File)**: `我的/日记/YYYY-MM-DD.md`，一个文件包含同一天的多个条目，标题行 `# emoji序列 HH:mm` 作为条目边界与锚点。
 
+**未解析行 (Unparsed Line)**: 解析日期文件时无法归属任何条目的行——两类：① 游离于首个条目之前的非空行（若头行格式不合规无法被标题正则识别，其下正文会随之全部失主）；② 时间越界的条目标题行。标题正则 `# emoji序列 HH:mm` 要求 emoji 与时间之间有空白、时间恰两位数字，常见不合规形态：缺空格（`# 🤝02:43`）、单数字时间（`# 📖 9:33`）。解析行为：行内容静默丢弃（不改解析结果、不动数据格式）；UX-9（25c79a7）起统计并在 `loadAll` 结束时汇总为一次性 warning toast「N 条未能解析」。
+_Avoid_: 解析失败条目（它是「行」，不是条目）。修复边界见 ADR-0054（只修不合规头行：标题补空格/时间补零，正文归位不改写；时间越界等不可自动修，列清单跳转手工改）。
+
 **主标签 (Primary Tag)**: 标签配置中的一级标签（如 日记 📖、旅游 ✈️），可带二级标签。
 _Avoid_: 类型、分类
 
@@ -119,6 +122,8 @@ _Avoid_: 幽灵条目、孤儿记录
 
 **第二大脑 (Second Brain)**: 笔记向量库的管理与检索功能（ticket 103 正名，前名「闪念」——QuickAdd《闪念.js》完整原型）：主面板统一入口（统计总览/来源分布/趋势/最近向量化/AI 一键概括）· 右侧窄窗（吸附缩起/悬停展开/参考卡拖出浮卡）· 向量检索增强（Ollama bge-m3，meta v9 段 + secondbrain.vec；ticket 110 起切块剥离 frontmatter、标题并入首块；ticket 120 起数据整合为**两文件**：`secondbrain.json`（meta/panel/link 三段 JSON）+ `secondbrain.vec`（向量二进制，原 secondbrain_vectors.vec 改名））· AI 对话（经主设置页 core AI 服务商，ticket 108 起统一；不再回退 Ollama 对话模型）。常驻监听光标移动与笔记变更。**引导态**（ticket 107）：本地无向量数据时三命令统一进主面板，首次向量化须用户点击按钮触发；**增量索引**（ticket 108）：打开面板时如有待处理变更，先以进度视图展示索引推进再进统计；**重新索引**（ticket 108）：设置弹窗确认后清空全库重嵌（区别于增量索引的 mtime 差异刷新）。**自动双链 link agent**（ticket 111 + 115 + 116 + 118 + 120）：**关联范围（`linkAgentScopes`）只决定"哪些笔记会被关联"（目标/触发侧：落盘监听 + 存量补链目标 + 死链扫描），候选来源 = 白名单索引库（`secondBrainAllowPaths`）中的全部笔记**（ticket 116，任一已索引笔记都可就近作候选）；建链检索**查询端用笔记全文嵌入**（ticket 118：剥 frontmatter 去空白，超长 8000 字安全截尾）→ 本地语义近邻召回候选 → 在线 AI 裁判择优（"只链实质关联，存疑不链"）→ 单侧幂等写 `related`（Obsidian 图谱双向呈现）；待处理队列与基准哈希并入 `secondbrain.json` 的 link 段（queue/state，原 secondbrain_link_queue.json / secondbrain_link_state.json 已由 store-file 一次性迁移合并，ticket 120）跨设备自动消费、死链自动清理；**存量补链**（ticket 115）：每次启动自动对范围内缺 `related` 的存量笔记批量建链（`related` 即进度检查点），命令 `bz-secondbrain-link-all` 手动兜底，批次与监听共用串行锁；**正文大改自动重跑**（ticket 119/v1.4）：每次成功建链后把全文内容哈希记入 link.state 基准，范围内笔记被修改时按基准哈希过滤——**内容实质变化才重跑该篇建链**（Obsidian 高频保存/自写 related 触发 → 哈希相同 → 不空转；无基准的升级前存量首次修改视为变化重跑并重建基准）。**白名单目录 / 关联范围两字段默认均空，空 = 什么也不录（不索引 / 不自动关联），不是"全库"**（ticket 116；`LINK_AGENT_DEFAULT_SCOPE`「文献盒」回退已移除）。
 _Avoid_: 闪念（旧功能名，仅存于「闪念笔记」文档类型语义）、AI 补全（ai_completion 时代旧称）
+
+**远程 Ollama URL (Remote Ollama URL)**: 移动端连回桌面 Ollama 的局域网地址（设置键 `secondBrainRemoteOllamaUrl`，默认 `http://192.168.1.8:11434`）。移动端在无向量引导初始化与检索时优先用它（`initMobile` 探活成功后 searchMode='remote'；embedBase 移动端优先取它），不可达则降级 TF-IDF/文本。它是**桌面机当前的局域网 IP**，DHCP 漂移后需同步更新；非代码缺陷。
 
 **闪念笔记 (Flash Note)**: 卡片盒目录下的快速笔记**文档类型**（path-classify 分类 `'flash'`；smartcat 观察来源标签与 credibility 0.9 档位沿用此词汇）。注意与「第二大脑」功能相区分：前者是笔记类型，后者是管理/检索它们的功能模块。
 

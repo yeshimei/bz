@@ -181,9 +181,15 @@ export class MockToggle {
 }
 export class MockButton {
   text = '';
+  cta = false;
   private cb: (() => void) | null = null;
   setButtonText(t: string): this {
     this.text = t;
+    return this;
+  }
+  /** 真实 Obsidian SettingButton 有该 API（强调色按钮）；mock 记录 flag 供断言 */
+  setCta(): this {
+    this.cta = true;
     return this;
   }
   onClick(cb: () => void): this {

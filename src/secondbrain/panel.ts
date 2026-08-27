@@ -27,6 +27,7 @@ import { AI } from './ai';
 import type { VectorStore, SecondBrainMeta } from './vector-store';
 import { parsePathList, formatPathList } from './whitelist';
 import { openWhitelistPicker, renderSelectedChips } from './whitelist-modal';
+import { getLanIPs, formatRemoteOllamaUrl, pickPrimaryLanIp } from './local-ip';
 
 // ==================== 统计聚合（纯函数，可测） ====================
 
@@ -891,9 +892,47 @@ export function openSecondBrainSettings(_app?: App): void {
       new Setting(b1)
         .setName('Ollama URL（本地）')
         .addText((t) => t.setValue(String(s.secondBrainOllamaUrl ?? '')).onChange((v) => set('secondBrainOllamaUrl', v.trim())));
+      let urlText: any = null;
       new Setting(b1)
         .setName('远程 Ollama URL（移动端）')
-        .addText((t) => t.setValue(String(s.secondBrainRemoteOllamaUrl ?? '')).onChange((v) => set('secondBrainRemoteOllamaUrl', v.trim())));
+        .addText((t) => {
+          urlText = t;
+          t.setValue(String(s.secondBrainRemoteOllamaUrl ?? '')).onChange((v) => set('secondBrainRemoteOllamaUrl', v.trim()));
+        });
+      // ticket 122：本机局域网 IP 提示 + 一键填入（移动端连不上的自查路径；仅桌面端探测显示）
+      if (!isMobileEnv()) {
+        const lanIPs = getLanIPs();
+        const primary = pickPrimaryLanIp(lanIPs);
+        const ipDesc =
+          lanIPs.length > 0
+            ? `本机当前局域网 IP：${lanIPs.map((l) => `${l.ip}（${l.iface}）`).join('、')}。移动端连不上时，把上方远程 URL 填为此处 IP`
+            : '未能探测本机局域网 IP（请确认电脑已联网），移动端远程 URL 需手动填写电脑的局域网 IP';
+        new Setting(b1)
+          .setName('本机局域网 IP（电脑）')
+          .setDesc(ipDesc)
+          .addButton((btn) =>
+            btn.setButtonText('填入远程 URL').setCta().onClick(() => {
+              if (!primary) {
+                notice('未探测到本机局域网 IP，请手动填写');
+                return;
+              }
+              const target = formatRemoteOllamaUrl(primary.ip);
+              confirm({
+                title: '填入远程 Ollama URL',
+                message: `将「远程 Ollama URL（移动端）」覆盖为 ${target}？`,
+                confirmText: '覆盖',
+                onConfirm: () => {
+                  set('secondBrainRemoteOllamaUrl', target);
+                  urlText?.setValue(target); // 输入框即时回显新值
+                },
+              });
+            })
+          );
+      } else {
+        new Setting(b1)
+          .setName('本机局域网 IP 提示')
+          .setDesc('移动端连不上远程向量库时，请在电脑上打开第二大脑设置，查看「本机局域网 IP（电脑）」并核对上方远程 URL');
+      }
       new Setting(b1)
         .setName('Embedding 模型')
         .addText((t) => t.setValue(String(s.secondBrainEmbeddingModel ?? '')).onChange((v) => set('secondBrainEmbeddingModel', v.trim())));

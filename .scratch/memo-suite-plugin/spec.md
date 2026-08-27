@@ -30,6 +30,8 @@ Feature: memo-suite-plugin
 
 25. 作为用户，我希望小橘能感知日记本每条日记的写入与删除（每条独立 10 分钟静置结算：首次有字才生成、累计字数 >50 才追加更新观察、删除时原观察保留并追加删除观察），以便陪伴记忆细致准确。（2026-08-23 用户拍板，ticket 077，ADR-0030：**per-entry 独立 10 分钟结算**——vault create/modify/delete 监听 `我的/日记/*.md`（classifyPath==='diary' 走新链路，替换原 observationText 快照分支；原 diary 10 分钟去弹跳/信任成长不再执行，其它 kind 不动），per-entry 计时表 + 重启基线内存态不落盘（smartcat.json 零改动）；首落正文**有字（非空）**才生成「你在 <date> <time> 写了一篇日记（分类：…）：<正文全量不截断>」，空标题记已见防「标题即存」（补正文后走首落）；已有观察按「累计字数 = 每次结算累加（当前长度 − 上次生成基线），中文按字符数」**>50 才生成更新观察**（「你更新了日记（<date> <time>）：<新正文>」，分类有变化也更新进括号）并重置基线/累计，≤50 不生成但计入累计；删除（文件 delete / 条目块消失的 modify diff）→ 原观察保留 + 追加「你删除了 <date> <time> 的日记」（从未跟踪过的文件删除 → 文件级单条兜底「你删除了 <date> 的日记」）；重启 ensure 对当日文件建基线快照（不产出，防旧条目被当首次）；emoji→分类 import diary/config 的 emojiToTagMap（单向域间 import）；source 'diary' 恒 LLM（AI 未配置降级本地规则分 + 词法情绪））
 
+26. 作为用户，我希望日记「未解析行」不再在启动时弹数字 toast，而是在日记⚙️设置弹窗点「检测日记解析」主动检测：打开面板 → 进度条逐文件解析 → 可修项（头行补空格/时间补零，预览修改前后）确认后一键批量修复、正文归位不改写；不可修项（如时间越界 24:99）列清单点击跳转并定位到行手工改，以便我知道到底哪些日记哪里出错并能修好。（2026-08-27 用户拍板，ticket 121，ADR-0054：手动驱动修复、只修不合规头行、不额外备份、规则白名单 R1 补空格/R2 补零/R3 正文归位）
+
 ### 备忘录（Todo）
 
 9. 作为用户，我希望打开「备忘录」面板（ribbon 主入口）后界面与原脚本一致（#todo-popup 弹窗、场景分类筛选），以便沿用使用习惯。
@@ -180,6 +182,8 @@ Feature: memo-suite-plugin
 44. 作为用户，我希望 Ollama 服务不可用时有明确提示而非崩溃，以便知道是环境问题。
 45. 作为用户，我希望闪念的常驻监听可按设置开关，以便不需要时节省资源。
 46. 作为用户，我希望闪念的 17 项设置全量迁移：OLLAMA_URL/EMBEDDING_MODEL/META_PATH/VEC_PATH/TOP_K/CHAT_TOP_K/CHUNK_MIN_LENGTH/ALLOW_PATHS/CONCURRENCY/CONTEXT_LIMIT/DEBOUNCE_DELAY/CURSOR_POLL_INTERVAL/OLLAMA_CHAT_MODEL/DEEPSEEK_MODEL/DEFAULT_USE_DEEPSEEK/MAX_HISTORY/OLLAMA_REMOTE_URL，以便精细调优。
+
+52. 作为用户，我希望桌面端第二大脑 ⚙️ 设置弹窗显示「本机当前局域网 IP」并提供一键填入远程 Ollama URL（确认后覆盖），以便移动端连不上时（DHCP 漂移导致旧 IP 失效）能自查自修。（2026-08-27 用户拍板，ticket 122：`require('os').networkInterfaces()` 枚举桌面端 IP、过滤 internal/link-local、仅桌面端显示、confirm 后覆盖 `secondBrainRemoteOllamaUrl`）
 47. 作为用户，我希望向量索引持久化（meta.json + vectors.vec 二进制文件，存 CONFIG/STORAGE），以便重启后检索不失效。
 48. 作为用户，我希望笔记修改时向量增量重建（vault modify 监听 + 防抖 DEBOUNCE_DELAY），以便索引不过期。
 49. 作为用户，我希望闪念的性能参数（chunk 切分长度、并发、光标轮询间隔、上下文限制、聊天历史上限）按设置生效，以便控制开销。
