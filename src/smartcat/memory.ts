@@ -339,7 +339,7 @@ export class MemorySystem {
 
     if (rule.stream === 'behavior') {
       // 行为流：写入 behaviorStream，不参与向量化
-      return this.writeBehaviorStream(source, newOpts.structured);
+      return await this.writeBehaviorStream(source, newOpts.structured);
     }
 
     // memory 流：走原有逻辑（importance/emotion/credibility 从规则取）
@@ -387,7 +387,7 @@ export class MemorySystem {
    * 轻量行为事件：不参与向量化/检索，按天数+条数滚动清理。
    * 去重由上游 B6 守卫（300ms 同事件同 key）处理，此处不做额外去重。
    */
-  private writeBehaviorStream(source: string, structured?: StructuredMeta): BehaviorItem | null {
+  private async writeBehaviorStream(source: string, structured?: StructuredMeta): Promise<BehaviorItem | null> {
     const action = structured?.action ?? 'unknown';
     const name = structured?.name ?? '';
     const item: BehaviorItem = {
@@ -406,6 +406,9 @@ export class MemorySystem {
     const trimmed = trimBehaviorStream(this.behaviorStream, { maxDays, maxCount });
     this.dataProvider().memory.behaviorStream.length = 0;
     this.behaviorStream.push(...trimmed);
+    try {
+      await this.dataSaver(this.dataProvider());
+    } catch { /* 落盘失败静默——行为流条目已在内存，下次 dataSaver 会随整体落盘 */ }
     return item;
   }
 
