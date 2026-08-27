@@ -38,16 +38,18 @@ _Avoid_: 待办列表、任务
 
 **归物本 (Belongings)**: 物品登记管理，数据目录 `CONFIG/STORAGE`（可配置）。
 
-**剪藏本 (Clipping)**: `我的/文章` 的剪藏文章展示面板——搜索、站点过滤、排序、反链笔记名显示（metadataCache.getBacklinksForFile）。交互（ticket 69 重构）：**单击整卡直接打开**文章（五域首例单击直开）、**移动端长按整卡弹统一抽屉**（打开/复制双链/复制原文链接/删除）；反链📌保留列表直点跳转；桌面右键弹跟手菜单（全局组件）。设置弹窗（ticket 124）新增「数据源」组（聚合讯数据源开关/UP 名单/保留天数/状态行，news.json 缺失时显示安装引导）与自动摘要详设（开关打开后展开长度档位/标签/时机）。
+**剪藏本 (Clipping)**: `我的/文章` 的剪藏文章展示面板——搜索、站点过滤、排序、反链笔记名显示（metadataCache.getBacklinksForFile）。交互（ticket 69 重构）：**单击整卡直接打开**文章（五域首例单击直开）、**移动端长按整卡弹统一抽屉**（打开/复制双链/复制原文链接/删除）；反链📌保留列表直点跳转；桌面右键弹跟手菜单（全局组件）。设置弹窗（ticket 124）新增「数据源」组（聚合讯数据源开关/UP 名单/保留天数/状态行，news.json 缺失时显示安装引导）与自动摘要详设（开关打开后展开长度档位/标签/时机）。**ticket 125**：打开面板先弹窗显示加载提示再异步加载（重开同）；自动摘要详设去左边距与父级平级。**ticket 126**：B 站开关关闭时整个 UP 名单段隐藏；UP 名单收敛为「管理」按钮，添加/删除移入独立管理弹窗（层 10100）；后台回填的 UP 主名字/头像（news.json `bilibiliUpInfo` 段）替换 uid 展示。
 
-**聚合讯 (News Aggregator)**: 抓取新闻写入 `归档/网页剪藏`（CLIP_DIR），管理 `CONFIG/STORAGE/news.json`（**ticket 124 起四段结构**：articles/stats/bilibiliUps/sources，兼容旧纯数组自动迁移；stats 由旧 news-stats.json 并入）；把 `dataviewjs` 代码块（`dv.view('CONFIG/SCRIPTS/DataView/摘要')`）写进笔记由 **Dataview 插件**渲染。
+**聚合讯 (News Aggregator)**: 抓取新闻写入 `归档/网页剪藏`（CLIP_DIR），管理 `CONFIG/STORAGE/news.json`（**ticket 124 起四段结构**：articles/stats/bilibiliUps/sources，兼容旧纯数组自动迁移；stats 由旧 news-stats.json 并入；**ticket 126 起可含第五段 `bilibiliUpInfo`**：uid → {name, avatar} 的 UP 主资料回填）；把 `dataviewjs` 代码块（`dv.view('CONFIG/SCRIPTS/DataView/摘要')`）写进笔记由 **Dataview 插件**渲染。
 
 **数据源守护 (News Source Watcher)**: 聚合讯数据源的抓取守护进程（PM2 托管 `obsidian-news watch`，ADR-0008）——每 30 分钟抓取最近 24 小时文章（果壳科学人 + 知乎日报 + **B站 UP 主视频投稿**，ticket 124），URL + 标题双去重后入库 `CONFIG/STORAGE/news.json`（四段整读写，保留插件侧维护段），入库即未读。**ticket 124 源开关**：按 news.json `sources` 段决定抓哪些源（插件剪藏本设置「数据源」组写）；**B 站抓取**：未登录 Cookie 引导（GET www.bilibili.com 收集 buvid3 规避 412）→ 用户动态 API（`x/polymer/web-dynamic/v1/feed/space?host_mid=<uid>`）→ 仅 `DYNAMIC_TYPE_AV`（视频投稿）→ 24h 窗口翻页 → 条目 platform='B站'、body=简介+封面+播放链接。命名区分：**包** `@jwbz/obsidian-news`（npm 分发单元）≠ **CLI 命令** `obsidian-news`（bin 入口，六子命令 watch/fetch/start/stop/status/logs）≠ **PM2 进程名** `news-watcher`（历史名，引用不破）≠ 仓库目录 `tools/news-watcher/`。配置走 **rc 配置** `~/.news-watcherrc`（vaultPath 指向 vault 根）或 `NEWS_PATH` 环境变量；旧 vault 内嵌部署（`CONFIG/SCRIPTS/NodeJs/news-watcher`）已废弃（legacy）。与 bz 插件完全分离：插件不含抓取逻辑，只读 news.json 渲染阅读流。
 _Avoid_: 新闻抓取、新闻爬虫、news watcher 进程
 
 **数据源开关 (Source Switch)**: news.json `sources` 段的三个布尔开关（zhihu/guokr/bilibili，默认全开），决定数据源守护抓哪些源；插件侧唯一写点 = 剪藏本设置弹窗「数据源」组。
 
-**UP 主名单 (UP List)**: news.json `bilibiliUps` 段的 uid 数组（仅存 uid），决定 B 站源抓取哪些 UP 主的视频投稿；插件侧「数据源」组添加/删除，粘贴 space.bilibili.com/<uid> 主页链接或视频链接自动解析 uid。_Avoid_: UP 主（指用户概念，名单持 uid）
+**UP 主名单 (UP List)**: news.json `bilibiliUps` 段的 uid 数组（仅存 uid），决定 B 站源抓取哪些 UP 主的视频投稿；插件侧「数据源」组收成一个「管理」按钮（ticket 126），点击打开**独立管理弹窗**做添加/删除（粘贴 space.bilibili.com/<uid> 主页链接或视频链接自动解析 uid）；后台抓到消息后经 `bilibiliUpInfo` 段回填 UP 主名字/头像，名单展示用名字/头像替换 uid（缺资料回退 uid）。**B 站源开关关闭时整个名单段隐藏**（ticket 126，原先只隐藏名单行）。_Avoid_: UP 主（指用户概念，名单持 uid）
+
+**UP 主资料 (UP Info)**: news.json `bilibiliUpInfo` 段的 uid → `{name?, avatar?}` 映射（ticket 126）——数据源守护 B 站抓取到条目时回填（取首个条目的 `module_author` name/face，头像统一转 https），插件侧只读展示，缺资料回退 uid。_Avoid_: UP 主信息（非术语）
 
 **保留策略 (Retention Policy)**: 插件侧清理规则（ticket 124，Q12/Q15 用户拍板）——打开阅读器时对 news.json articles 清理一次：未读永不处理；已保存骨架（read=true 且 state='saved'，正文已清空）超过 newsRetentionSavedDays（默认 3）天删除；已跳过骨架（state='skipped' 或旧数据无 state 兜底按此档）超过 newsRetentionSkippedDays（默认 7）天删除；起算 = fetchedAt ?? date。设置项在剪藏本设置「数据源」组。_Avoid_: 数据清理、过期清理（非术语）
 

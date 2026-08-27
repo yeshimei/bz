@@ -43,24 +43,39 @@ const BILIBILI_API = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/spa
 const BILIBILI_HOME = 'https://www.bilibili.com/';
 const DEFAULT_SOURCES = { zhihu: true, guokr: true, bilibili: true };
 
-/** 读 news.json → 四段对象 { articles, stats, bilibiliUps, sources }；旧纯数组自动包裹；损坏 → 空骨架 */
+/** ticket 126：UP 主资料段容错解析（uid → {name?, avatar?}；非对象/数组 → {}；头像统一转 https） */
+function parseBilibiliUpInfo(raw) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+    const out = {};
+    for (const [uid, v] of Object.entries(raw)) {
+        if (!v || typeof v !== 'object') continue;
+        const info = {};
+        if (v.name) info.name = String(v.name);
+        if (v.avatar) info.avatar = String(v.avatar).replace(/^http:/, 'https:');
+        out[uid] = info;
+    }
+    return out;
+}
+
+/** 读 news.json → 四段对象 { articles, stats, bilibiliUps, bilibiliUpInfo, sources }；旧纯数组自动包裹；损坏 → 空骨架 */
 function readNewsData() {
-    if (!fs.existsSync(NEWS_PATH)) return { articles: [], stats: null, bilibiliUps: [], sources: { ...DEFAULT_SOURCES }, missing: true };
+    if (!fs.existsSync(NEWS_PATH)) return { articles: [], stats: null, bilibiliUps: [], bilibiliUpInfo: {}, sources: { ...DEFAULT_SOURCES }, missing: true };
     try {
         const raw = JSON.parse(fs.readFileSync(NEWS_PATH, 'utf-8'));
-        if (Array.isArray(raw)) return { articles: raw, stats: null, bilibiliUps: [], sources: { ...DEFAULT_SOURCES }, missing: false };
+        if (Array.isArray(raw)) return { articles: raw, stats: null, bilibiliUps: [], bilibiliUpInfo: {}, sources: { ...DEFAULT_SOURCES }, missing: false };
         if (raw && typeof raw === 'object') {
             return {
                 articles: Array.isArray(raw.articles) ? raw.articles : [],
                 stats: raw.stats && typeof raw.stats === 'object' ? raw.stats : null,
                 bilibiliUps: Array.isArray(raw.bilibiliUps) ? raw.bilibiliUps.map((u) => String(u || '').trim()).filter(Boolean) : [],
+                bilibiliUpInfo: parseBilibiliUpInfo(raw.bilibiliUpInfo),
                 sources: raw.sources && typeof raw.sources === 'object' ? { ...DEFAULT_SOURCES, ...raw.sources } : { ...DEFAULT_SOURCES },
                 missing: false,
             };
         }
-        return { articles: [], stats: null, bilibiliUps: [], sources: { ...DEFAULT_SOURCES }, missing: false };
+        return { articles: [], stats: null, bilibiliUps: [], bilibiliUpInfo: {}, sources: { ...DEFAULT_SOURCES }, missing: false };
     } catch {
-        return { articles: [], stats: null, bilibiliUps: [], sources: { ...DEFAULT_SOURCES }, missing: false };
+        return { articles: [], stats: null, bilibiliUps: [], bilibiliUpInfo: {}, sources: { ...DEFAULT_SOURCES }, missing: false };
     }
 }
 
@@ -120,11 +135,28 @@ function buildBilibiliArticle(it, cutoffMs) {
     return { platform: 'B站', title: String(archive.title), url, author: String(author.name || ''), date, body };
 }
 
-/** 单个 UP 主动态翻页抓取（仅 DYNAMIC_TYPE_AV 视频投稿；24h 窗口） */
+/** ticket 126：从 B 站动态条目提取 UP 主资料（name/face；首个含资料的条目即返回；无 → null；头像统一转 https） */
+function extractUpInfo(items) {
+    for (const it of items || []) {
+        const author = it && it.modules && it.modules.module_author;
+        if (!author) continue;
+        if (author.name || author.face) {
+            const info = {};
+            if (author.name) info.name = String(author.name);
+            if (author.face) info.avatar = String(author.face).replace(/^http:/, 'https:');
+            return info;
+        }
+    }
+    return null;
+}
+
+/** 单个 UP 主动态翻页抓取（仅 DYNAMIC_TYPE_AV 视频投稿；24h 窗口）；
+ *  返回 { articles, upInfo }——upInfo=本轮抓到的该 UP 主名字/头像（ticket 126，无则 null） */
 async function fetchBilibiliUp(uid, existingUrls, cookie) {
     const articles = [];
     const cutoff = Date.now() - WINDOW_MS;
     let offset = '';
+    let upInfo = null;
     const headers = { ...HEADERS };
     if (cookie) headers['Cookie'] = cookie;
 
@@ -139,6 +171,7 @@ async function fetchBilibiliUp(uid, existingUrls, cookie) {
 
         const items = data.data.items || [];
         if (items.length === 0) break;
+        if (!upInfo) upInfo = extractUpInfo(items);
         let crossedWindow = false;
 
         for (const it of items) {
@@ -155,10 +188,11 @@ async function fetchBilibiliUp(uid, existingUrls, cookie) {
         offset = data.data.offset || '';
         if (!offset) break;
     }
-    return articles;
+    return { articles, upInfo };
 }
 
-/** B 站源：cookie 引导 + 逐 UP 主抓取（24h 窗口；批内/库内双去重由 checkAndFetch 统一完成） */
+/** B 站源：cookie 引导 + 逐 UP 主抓取（24h 窗口；批内/库内双去重由 checkAndFetch 统一完成）；
+ *  返回 { articles, upInfo }——upInfo=本轮各 UP 主资料合并（ticket 126） */
 async function fetchBilibili(existingUrls, upUids) {
     const list = upUids || [];
     if (list.length === 0) {
@@ -173,16 +207,18 @@ async function fetchBilibili(existingUrls, upUids) {
     }
     const seen = new Set();
     const articles = [];
+    const upInfo = {};
     for (const uid of list) {
-        const ups = await fetchBilibiliUp(uid, existingUrls, cookie);
-        for (const a of ups) {
+        const res = await fetchBilibiliUp(uid, existingUrls, cookie);
+        for (const a of res.articles) {
             if (seen.has(a.url)) continue;
             seen.add(a.url);
             articles.push(a);
         }
+        if (res.upInfo) upInfo[uid] = res.upInfo;
     }
     console.log(`  ✓ B站 ${articles.length} 条 (24h 内)`);
-    return articles;
+    return { articles, upInfo };
 }
 
 let running = false;
@@ -370,10 +406,13 @@ async function checkAndFetch() {
         else console.log('  🚫 果壳 已关闭（sources.guokr=false），跳过');
         if (sources.zhihu !== false) jobs.push(fetchZhihu().then((r) => r));
         else console.log('  🚫 知乎日报 已关闭（sources.zhihu=false），跳过');
-        if (sources.bilibili !== false) jobs.push(fetchBilibili(existingUrls, disk.bilibiliUps));
-        else console.log('  🚫 B站 已关闭（sources.bilibili=false），跳过');
+        // B 站：并入 jobs 并行抓取，同时收集本轮 UP 主资料（ticket 126：抓到消息即回填名字/头像）
+        const biliPromise = sources.bilibili !== false ? fetchBilibili(existingUrls, disk.bilibiliUps) : null;
+        if (!biliPromise) console.log('  🚫 B站 已关闭（sources.bilibili=false），跳过');
+        if (biliPromise) jobs.push(biliPromise.then((r) => r.articles));
 
         const results = await Promise.all(jobs);
+        const biliUpInfo = biliPromise ? (await biliPromise).upInfo : {};
         let newArticles = results.flat().filter(a => a && !existingUrls.has(a.url));
 
         // 标题去重
@@ -391,8 +430,8 @@ async function checkAndFetch() {
             a.fetchedAt = new Date().toISOString().replace('T', ' ').substring(0, 19);
         }
 
-        // 四段写回：仅替换 articles 段（保留 stats/bilibiliUps/sources——插件侧维护段）
-        writeNewsData({ ...disk, articles: [...existing, ...newArticles] });
+        // 五段写回：仅替换 articles 段 + 合并本轮 UP 主资料（保留 stats/bilibiliUps/sources——插件侧维护段）
+        writeNewsData({ ...disk, articles: [...existing, ...newArticles], bilibiliUpInfo: { ...(disk.bilibiliUpInfo || {}), ...biliUpInfo } });
 
         console.log(`  ✅ 新增 ${newArticles.length} 篇，总计 ${existing.length + newArticles.length} 篇`);
         for (const a of newArticles) {
@@ -414,4 +453,4 @@ if (require.main === module) {
     setInterval(checkAndFetch, FETCH_INTERVAL_MS);
 }
 
-module.exports = { NEWS_PATH, FETCH_INTERVAL_MS, resolveNewsPath, checkAndFetch, readNewsData, fetchBilibiliUp, getBilibiliCookie, buildBilibiliArticle };
+module.exports = { NEWS_PATH, FETCH_INTERVAL_MS, resolveNewsPath, checkAndFetch, readNewsData, fetchBilibiliUp, getBilibiliCookie, buildBilibiliArticle, extractUpInfo, parseBilibiliUpInfo };

@@ -1,7 +1,9 @@
 # @jwbz/obsidian-news
 
-聚合讯数据源守护脚本——每 30 分钟抓取最近 24 小时文章（果壳科学人 + 知乎日报 + B站 UP 主视频投稿），URL + 标题双去重后入库 `CONFIG/STORAGE/news.json`（**四段结构**），供 bz 插件「聚合讯」阅读。
+聚合讯数据源守护脚本——每 30 分钟抓取最近 24 小时文章（果壳科学人 + 知乎日报 + B站 UP 主视频投稿），URL + 标题双去重后入库 `CONFIG/STORAGE/news.json`（**五段结构**），供 bz 插件「聚合讯」阅读。
 
+> **v1.1.1（ticket 126）**：B 站抓取到条目时回填 `bilibiliUpInfo` 段（uid → `{name, avatar}`，头像统一转 https）——插件侧名单/弹窗据此把 uid 显示为 UP 主名字和头像（无资料回退 uid）。其余结构与 v1.1.0 一致。
+>
 > **v1.1.0（ticket 124，ADR-0060）**：news.json 升级为 `{articles, stats, bilibiliUps, sources}` 四段（旧纯数组读取时自动包裹迁移）；新增 B 站 UP 主视频投稿源；三源独立开关（读 news.json `sources` 段，插件剪藏本设置「数据源」组写）；UP 主名单读 news.json `bilibiliUps` 段。rc 配置仍只需 vaultPath（不新增配置键）。
 
 - 📡 三源并行抓取：果壳科学人（新站 API + 文章页正文）+ 知乎日报（官方 API + 详情正文）+ B站 UP 主（动态 API，仅视频投稿）
@@ -60,13 +62,13 @@ obsidian-news fetch
 ```
 启动即抓取一轮
   ↓ 每 30 分钟轮询（PM2 守护，崩溃自动重启）
-  ↓ 读 news.json 四段：sources 开关决定抓哪些源，bilibiliUps 决定 B 站 UP 主集合
+  ↓ 读 news.json 五段：sources 开关决定抓哪些源，bilibiliUps 决定 B 站 UP 主集合
   ↓ 滚动 24 小时窗口：过滤窗口外的文章（按时间倒序，越过边界即停；B 站按 pub_ts 翻页）
   ↓ 双去重：URL（批内 + 库内）→ 标题（库内）
-  ↓ 四段整写回（仅替换 articles 段，保留 stats/bilibiliUps/sources——插件侧维护段）
+  ↓ 五段整写回：替换 articles 段 + 合并本轮 UP 主资料 bilibiliUpInfo（保留 stats/bilibiliUps/sources——插件侧维护段）
 ```
 
-B 站抓取细节：每轮先 GET `https://www.bilibili.com/` 收集 Cookie（buvid3）规避未登录 API 风控（412）；请求 `https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid=<uid>`；仅收 `DYNAMIC_TYPE_AV`（视频投稿）；条目映射 platform='B站'、title=视频标题、url=`https://www.bilibili.com/video/<bvid>`、body=简介+封面+播放链接。
+B 站抓取细节：每轮先 GET `https://www.bilibili.com/` 收集 Cookie（buvid3）规避未登录 API 风控（412）；请求 `https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid=<uid>`；仅收 `DYNAMIC_TYPE_AV`（视频投稿）；条目映射 platform='B站'、title=视频标题、url=`https://www.bilibili.com/video/<bvid>`、body=简介+封面+播放链接；每个 UP 首个条目取 `module_author` 的 name/face 回填其资料（ticket 126）。
 
 ## 从 vault 内嵌脚本迁移（旧部署）
 

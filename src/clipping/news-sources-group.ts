@@ -7,10 +7,12 @@ import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
 import { getSettings, saveSettings } from '../core/settings-provider';
 import { refreshSettingsGroupCounts } from '../core/settings-modal';
+import { createOverlay } from '../core/dom';
+import { escManager } from '../core/esc-manager';
 import {
   readDataSourceState, writeSources, addBilibiliUp, removeBilibiliUp, type DataSourceState,
 } from '../news/source-settings';
-import { resolveUidFromInput } from '../news/data';
+import { resolveUidFromInput, type BilibiliUpInfo } from '../news/data';
 
 /** 数据源组构建：检测 news.json → 两条路径；groupBody 为 buildNewsSourcesGroup 挂载容器 */
 export function buildNewsSourcesGroup(el: HTMLElement, groupBody: HTMLElement): void {
@@ -31,7 +33,7 @@ function renderDataSourceGroup(groupBody: HTMLElement, state: DataSourceState, r
     return;
   }
   renderSourceSwitches(groupBody, state.sources, refreshCounts);
-  renderUpList(groupBody, state.bilibiliUps, refreshCounts);
+  renderUpSection(groupBody, state.bilibiliUps, state.bilibiliUpInfo, state.sources.bilibili, refreshCounts);
   renderRetention(groupBody, refreshCounts);
   renderStatusRow(groupBody, state);
   refreshCounts();
@@ -58,7 +60,7 @@ function renderSourceSwitches(groupBody: HTMLElement, sources: { zhihu: boolean;
   const items: Array<{ key: 'zhihu' | 'guokr' | 'bilibili'; name: string; desc: string }> = [
     { key: 'zhihu', name: '知乎日报', desc: '抓取知乎日报每日文章' },
     { key: 'guokr', name: '果壳科学人', desc: '抓取果壳科学人最新文章' },
-    { key: 'bilibili', name: 'B站 UP 主', desc: '抓取下方名单内 UP 主的视频投稿' },
+    { key: 'bilibili', name: 'B站 UP 主', desc: '抓取名单内 UP 主的视频投稿' },
   ];
   for (const it of items) {
     new Setting(groupBody)
@@ -69,9 +71,9 @@ function renderSourceSwitches(groupBody: HTMLElement, sources: { zhihu: boolean;
           const next = { ...sources, [it.key]: v };
           await writeSources(next);
           if (it.key === 'bilibili') {
-            // B 站开关联动 UP 名单可见性（关闭时隐藏名单行）
-            const rows = groupBody.querySelectorAll<HTMLElement>('[data-up-row]');
-            rows.forEach((r) => { r.style.display = v ? '' : 'none'; });
+            // B 站开关联动 UP 名单段可见性：关闭时整个「UP 主名单」段隐藏（ticket 126）
+            const section = groupBody.querySelector<HTMLElement>('[data-up-section]');
+            if (section) section.style.display = v ? '' : 'none';
             refreshCounts();
           }
           notice(`已${v ? '开启' : '关闭'}${it.name}`, 'success');
@@ -80,66 +82,185 @@ function renderSourceSwitches(groupBody: HTMLElement, sources: { zhihu: boolean;
   }
 }
 
-/** UP 主名单：现有列表 + 粘贴链接/UID 添加（闭包捕获输入值，不依赖 DOM 查询） */
-function renderUpList(groupBody: HTMLElement, ups: string[], refreshCounts: () => void): void {
-  let inputValue = '';
-  const head = new Setting(groupBody)
-    .setName('UP 主名单')
-    .setDesc('粘贴主页链接（space.bilibili.com/123456）或视频链接自动解析 UID');
-  head.addText((text) => {
-    text.setPlaceholder('粘贴链接或 UID');
-    text.onChange((v) => { inputValue = v; });
-  });
-  head.addButton((btn) =>
-    btn.setButtonText('添加').setCta().onClick(async () => {
-      const raw = (inputValue || '').trim();
-      if (!raw) return;
-      const uid = await resolveUidFromInput(raw);
-      if (!uid) {
-        notice('无法识别 UID，请粘贴 space.bilibili.com/<uid> 主页链接', 'error');
-        return;
-      }
-      const added = await addBilibiliUp(uid);
-      if (!added) {
-        notice('该 UP 主已在名单中', 'info');
-        return;
-      }
-      inputValue = '';
-      notice(`已添加 UP 主 ${uid}`, 'success');
-      // 重新渲染名单区（移除旧列表行后重建）
-      groupBody.querySelectorAll('[data-up-row]').forEach((r) => r.remove());
-      groupBody.querySelector('[data-up-list-head]')?.remove();
-      renderUpRows(groupBody, [...ups, uid], refreshCounts);
-      refreshCounts();
-    })
-  );
-  // 列表头占位（供追加行时替换）
-  renderUpRows(groupBody, ups, refreshCounts);
+/** UP 主显示名：后台回填名字则用之，否则回退 uid（ticket 126） */
+function upDisplayName(uid: string, info?: BilibiliUpInfo): string {
+  return info && info.name ? info.name : `UP ${uid}`;
 }
 
-function renderUpRows(groupBody: HTMLElement, ups: string[], refreshCounts: () => void): void {
-  if (ups.length === 0) return;
-  const listHead = document.createElement('div');
-  listHead.dataset.upListHead = '1';
-  groupBody.appendChild(listHead);
-  for (const uid of ups) {
-    const row = new Setting(listHead);
-    row.setName(`UP ${uid}`);
-    row.setDesc(`https://space.bilibili.com/${uid}`);
-    row.addExtraButton((b) => {
-      b.setIcon('trash').setTooltip('移除');
-      b.onClick(async () => {
-        await removeBilibiliUp(uid);
-        row.settingEl.remove();
-        if (groupBody.querySelectorAll('[data-up-row]').length === 0) {
-          groupBody.querySelector('[data-up-list-head]')?.remove();
-        }
-        refreshCounts();
-        notice(`已移除 UP 主 ${uid}`, 'success');
-      });
-    });
-    row.settingEl.dataset.upRow = '1';
+/** 名单概要（「管理」按钮行 desc）：已跟踪 N 位 + 名字预览（有资料用名字，否则 uid） */
+function buildUpSummary(ups: string[], upInfo: Record<string, BilibiliUpInfo>): string {
+  if (ups.length === 0) return '暂无跟踪 UP 主，点击「管理」粘贴主页链接或视频链接添加';
+  const names = ups.map((uid) => upDisplayName(uid, upInfo[uid]));
+  const preview = names.length > 3 ? `${names.slice(0, 3).join('、')} 等 ${names.length} 位` : names.join('、');
+  return `已跟踪 ${ups.length} 位：${preview}。点击「管理」添加/删除`;
+}
+
+/**
+ * UP 主名单段（ticket 126）：组内只留「管理」按钮行，添加/删除移入独立弹窗；
+ * B 站源关闭时整段隐藏（与开关联动，不残留名单行）。
+ */
+function renderUpSection(groupBody: HTMLElement, ups: string[], upInfo: Record<string, BilibiliUpInfo>, bilibiliEnabled: boolean, refreshCounts: () => void): void {
+  const section = document.createElement('div');
+  section.dataset.upSection = '1';
+  section.style.display = bilibiliEnabled ? '' : 'none';
+  groupBody.appendChild(section);
+  const build = () => {
+    section.innerHTML = '';
+    const row = new Setting(section)
+      .setName('UP 主名单')
+      .setDesc(buildUpSummary(ups, upInfo));
+    row.addButton((btn) =>
+      btn.setButtonText('管理').setCta().onClick(() => {
+        openUpManagerModal({
+          ups,
+          upInfo,
+          onChanged: async () => {
+            // 增删后重读盘（以磁盘为基底）重绘组内按钮行与徽标
+            const fresh = await readDataSourceState();
+            ups = fresh.bilibiliUps;
+            upInfo = fresh.bilibiliUpInfo;
+            build();
+            refreshCounts();
+          },
+        });
+      })
+    );
+  };
+  build();
+}
+
+/** UP 主名单管理弹窗（ticket 126）：独立 overlay——层 10100（设置弹窗 10050 之上、共享确认 10250 之下）；
+ *  顶部添加行 + 列表（头像/名字回填展示 + uid + 移除） */
+function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, BilibiliUpInfo>; onChanged: () => void }): void {
+  let handle: { unregister(): void } | null = null;
+  function close(): void {
+    mask.remove();
+    popup.remove();
+    if (handle) handle.unregister();
   }
+  const { mask, popup } = createOverlay({
+    maskId: 'bz-up-manager-mask',
+    popupId: 'bz-up-manager-popup',
+    zIndex: 10100,
+    maxWidth: 460,
+    onMaskClick: close,
+  });
+
+  const header = document.createElement('div');
+  header.className = 'bz-settings-header';
+  const title = document.createElement('h3');
+  title.className = 'bz-settings-title';
+  title.textContent = 'UP 主名单管理';
+  header.appendChild(title);
+
+  const content = document.createElement('div');
+  content.className = 'bz-settings-content';
+
+  let inputValue = '';
+  let currentUps = [...opts.ups];
+  let currentInfo = { ...opts.upInfo };
+
+  /** 列表重绘：空态 / 行（头像 + 名字 + uid + 移除） */
+  const refresh = () => {
+    listEl.innerHTML = '';
+    if (currentUps.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'bz-up-manager-empty';
+      empty.textContent = '暂无跟踪 UP 主，在上方粘贴主页链接或视频链接添加';
+      listEl.appendChild(empty);
+      return;
+    }
+    for (const uid of currentUps) {
+      const info = currentInfo[uid];
+      const row = document.createElement('div');
+      row.className = 'bz-up-manager-row';
+      row.dataset.upRow = '1';
+      if (info && info.avatar) {
+        const img = document.createElement('img');
+        img.className = 'bz-up-manager-avatar';
+        img.src = info.avatar;
+        img.alt = '';
+        img.onerror = () => img.remove(); // 头像加载失败不占位
+        row.appendChild(img);
+      }
+      const text = document.createElement('div');
+      text.className = 'bz-up-manager-text';
+      const name = document.createElement('div');
+      name.className = 'bz-up-manager-name';
+      name.textContent = upDisplayName(uid, info);
+      const uidEl = document.createElement('div');
+      uidEl.className = 'bz-up-manager-uid';
+      uidEl.textContent = `UID ${uid}`;
+      text.appendChild(name);
+      text.appendChild(uidEl);
+      row.appendChild(text);
+      const del = document.createElement('button');
+      del.className = 'bz-up-manager-remove';
+      del.textContent = '移除';
+      del.onclick = () => {
+        void (async () => {
+          await removeBilibiliUp(uid);
+          currentUps = currentUps.filter((u) => u !== uid);
+          delete currentInfo[uid];
+          refresh();
+          opts.onChanged();
+          notice(`已移除 UP 主 ${uid}`, 'success');
+        })();
+      };
+      row.appendChild(del);
+      listEl.appendChild(row);
+    }
+  };
+
+  const listEl = document.createElement('div');
+  listEl.dataset.upManagerList = '1';
+
+  new Setting(content)
+    .setName('添加 UP 主')
+    .setDesc('粘贴主页链接（space.bilibili.com/123456）或视频链接自动解析 UID')
+    .addText((text) => {
+      text.setPlaceholder('粘贴链接或 UID');
+      text.onChange((v) => { inputValue = v; });
+    })
+    .addButton((btn) =>
+      btn.setButtonText('添加').setCta().onClick(() => {
+        void (async () => {
+          const raw = (inputValue || '').trim();
+          if (!raw) return;
+          const uid = await resolveUidFromInput(raw);
+          if (!uid) {
+            notice('无法识别 UID，请粘贴 space.bilibili.com/<uid> 主页链接', 'error');
+            return;
+          }
+          const added = await addBilibiliUp(uid);
+          if (!added) {
+            notice('该 UP 主已在名单中', 'info');
+            return;
+          }
+          inputValue = '';
+          currentUps.push(uid);
+          refresh();
+          opts.onChanged();
+          notice(`已添加 UP 主 ${uid}`, 'success');
+        })();
+      })
+    );
+
+  content.appendChild(listEl);
+  popup.appendChild(header);
+  popup.appendChild(content);
+  document.body.appendChild(mask);
+  document.body.appendChild(popup);
+  mask.style.display = 'block';
+  popup.style.display = 'flex';
+
+  const handleReg = escManager.register('bz-up-manager', {
+    isVisible: () => true,
+    close,
+  });
+  handle = handleReg;
+
+  refresh();
 }
 
 /** 保留天数（已保存 3 天 / 已跳过 7 天，设置可调） */

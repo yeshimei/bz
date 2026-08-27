@@ -1,9 +1,10 @@
 // @ts-nocheck
 // ticket 124：B 站动态条目映射纯函数单测（node:test，零依赖；npm test 合并执行）
+// ticket 126：+ extractUpInfo / parseBilibiliUpInfo（UP 主名字/头像回填）
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { buildBilibiliArticle } = require('../watcher.js');
+const { buildBilibiliArticle, extractUpInfo, parseBilibiliUpInfo } = require('../watcher.js');
 
 const NOW_MS = new Date('2026-08-27T12:00:00Z').getTime();
 const CUTOFF = NOW_MS - 24 * 60 * 60 * 1000; // 最近 24h
@@ -72,4 +73,29 @@ test('无动态文案 + 无 archive.desc → 正文仅封面+观看链接', () =
   assert.ok(!a.body.includes('动态文案'));
   assert.ok(a.body.includes('![封面]'));
   assert.ok(a.body.includes('🔗 观看'));
+});
+
+test('extractUpInfo：条目含 name/face → 资料（头像 http→https），首个含资料条目即返回', () => {
+  const items = [
+    { type: 'DYNAMIC_TYPE_AV', modules: { module_author: { name: '老番茄', face: 'http://i0.hdslb.com/bfs/face/a.jpg', mid: 546195 } } },
+    { modules: { module_author: { name: '另一UP主' } } },
+  ];
+  assert.deepEqual(extractUpInfo(items), { name: '老番茄', avatar: 'https://i0.hdslb.com/bfs/face/a.jpg' });
+});
+
+test('extractUpInfo：无 module_author / 无 name+face → null；仅名字也算资料', () => {
+  assert.equal(extractUpInfo([]), null);
+  assert.equal(extractUpInfo([{}]), null);
+  assert.equal(extractUpInfo([{ modules: { module_author: { mid: 1 } } }]), null);
+  assert.deepEqual(extractUpInfo([{ modules: { module_author: { name: 'x' } } }]), { name: 'x' });
+});
+
+test('parseBilibiliUpInfo：段容错解析——非对象/数组 → {}；头像统一转 https；非对象值跳过', () => {
+  assert.deepEqual(parseBilibiliUpInfo(undefined), {});
+  assert.deepEqual(parseBilibiliUpInfo([]), {});
+  assert.deepEqual(parseBilibiliUpInfo('bad'), {});
+  assert.deepEqual(
+    parseBilibiliUpInfo({ '1': { name: 'a', avatar: 'http://x/a.jpg' }, '2': 'bad', '3': { name: 'b' } }),
+    { '1': { name: 'a', avatar: 'https://x/a.jpg' }, '3': { name: 'b' } }
+  );
 });

@@ -19,11 +19,19 @@ export interface NewsSources {
   bilibili: boolean;
 }
 
-/** 四段对象结构（ADR-0060）；articles 为原纯数组内容，stats 由 news-stats.json 并入 */
+/** UP 主资料（ticket 126：后台抓到消息后回填名字/头像；缺失时 UI 回退显示 uid） */
+export interface BilibiliUpInfo {
+  name?: string;
+  avatar?: string;
+}
+
+/** 四段对象结构（ADR-0060）；articles 为原纯数组内容，stats 由 news-stats.json 并入。
+ *  bilibiliUpInfo 为第五段（可选，ticket 126 新增）：uid → {name?, avatar?}，后台回填、插件只读展示 */
 export interface NewsData {
   articles: any[];
   stats: { totalRead: number; totalSaved: number; totalSkipped: number; byPlatform: Record<string, number>; byDate: Record<string, number> };
   bilibiliUps: string[];
+  bilibiliUpInfo: Record<string, BilibiliUpInfo>;
   sources: NewsSources;
 }
 
@@ -35,7 +43,21 @@ export interface ReadNewsResult {
 }
 
 function emptyData(): NewsData {
-  return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], sources: { ...DEFAULT_SOURCES } };
+  return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, sources: { ...DEFAULT_SOURCES } };
+}
+
+/** 纯函数：bilibiliUpInfo 段容错解析（uid → {name?, avatar?}；非对象/数组/空 → {}；头像统一转 https） */
+export function parseBilibiliUpInfo(raw: unknown): Record<string, BilibiliUpInfo> {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const out: Record<string, BilibiliUpInfo> = {};
+  for (const [uid, v] of Object.entries(raw as Record<string, any>)) {
+    if (!v || typeof v !== 'object') continue;
+    const info: BilibiliUpInfo = {};
+    if (v.name) info.name = String(v.name);
+    if (v.avatar) info.avatar = String(v.avatar).replace(/^http:/, 'https:');
+    out[uid] = info;
+  }
+  return out;
 }
 
 /** 纯函数：旧纯数组 → 四段包裹（articles 原样，stats 默认，名单空，源全开） */
@@ -88,6 +110,7 @@ export function parseNewsFileContent(raw: string): NewsData | null {
       articles: Array.isArray(obj.articles) ? obj.articles : [],
       stats: obj.stats && typeof obj.stats === 'object' ? obj.stats : DEFAULT_STATS(),
       bilibiliUps: Array.isArray(obj.bilibiliUps) ? obj.bilibiliUps.map((u: any) => String(u ?? '').trim()).filter(Boolean) : [],
+      bilibiliUpInfo: parseBilibiliUpInfo(obj.bilibiliUpInfo),
       sources: obj.sources && typeof obj.sources === 'object'
         ? { ...DEFAULT_SOURCES, ...(obj.sources as Record<string, boolean>) }
         : { ...DEFAULT_SOURCES },

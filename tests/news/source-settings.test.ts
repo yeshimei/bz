@@ -61,6 +61,21 @@ describe('数据源状态读取', () => {
     expect(state.bilibiliUps).toEqual([]);
     expect(state.lastFetchAt).toBeNull();
   });
+
+  it('readDataSourceState：透出 bilibiliUpInfo（后台回填名字/头像；缺失 → 空对象）', async () => {
+    const vault = new MockVault();
+    vault.files.set(NEWS, JSON.stringify({
+      ...fourSegments(),
+      bilibiliUpInfo: { '1': { name: '老番茄', avatar: 'http://i0.hdslb.com/bfs/face/a.jpg' } },
+    }));
+    setApp(makeApp(vault));
+    const state = await readDataSourceState();
+    expect(state.bilibiliUpInfo).toEqual({ '1': { name: '老番茄', avatar: 'https://i0.hdslb.com/bfs/face/a.jpg' } });
+    // 段损坏 → 空对象不崩
+    vault.files.set(NEWS, JSON.stringify({ ...fourSegments(), bilibiliUpInfo: 'bad' }));
+    const state2 = await readDataSourceState();
+    expect(state2.bilibiliUpInfo).toEqual({});
+  });
 });
 
 describe('sources 开关读写', () => {
@@ -114,5 +129,29 @@ describe('UP 主名单增删', () => {
     const disk = JSON.parse(vault.files.get(NEWS)!);
     expect(disk.bilibiliUps).toEqual([]);
     expect(disk.articles).toHaveLength(1);
+  });
+
+  it('增删 UP 主保留/清理 bilibiliUpInfo 段（ticket 126）', async () => {
+    const vault = new MockVault();
+    vault.files.set(NEWS, JSON.stringify({ ...fourSegments(), bilibiliUpInfo: { '1': { name: '老番茄' }, '9': { name: 'x' } } }));
+    setApp(makeApp(vault));
+    await addBilibiliUp('999');
+    let disk = JSON.parse(vault.files.get(NEWS)!);
+    expect(disk.bilibiliUps).toEqual(['1', '999']);
+    expect(disk.bilibiliUpInfo).toEqual({ '1': { name: '老番茄' }, '9': { name: 'x' } }); // 添加保留资料段
+    await removeBilibiliUp('1');
+    disk = JSON.parse(vault.files.get(NEWS)!);
+    expect(disk.bilibiliUps).toEqual(['999']);
+    expect(disk.bilibiliUpInfo).toEqual({ '9': { name: 'x' } }); // 移除时清掉该 uid 资料
+    expect(disk.articles).toHaveLength(0);
+  });
+
+  it('文件缺失路径写骨架：含空 bilibiliUpInfo 段（第五段自洽）', async () => {
+    const vault = new MockVault();
+    setApp(makeApp(vault));
+    await addBilibiliUp('999');
+    const disk = JSON.parse(vault.files.get(NEWS)!);
+    expect(disk.bilibiliUpInfo).toEqual({});
+    expect(disk.sources.bilibili).toBe(true);
   });
 });
