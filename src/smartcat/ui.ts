@@ -14,7 +14,7 @@ import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { closeSettingsModal, createSettingsGroup, openSettingsModal } from '../core/settings-modal';
 import { notice } from '../core/notice';
-import { tryGetSettings } from '../core/settings-provider';
+import { tryGetSettings, saveSettings } from '../core/settings-provider';
 import type { Appearance } from './types';
 
 export const CAT_CONTAINER_ID = 'smart-companion-cat';
@@ -414,6 +414,7 @@ export function openSmartcatSettings(opts: {
           sl.onChange(async (v: number) => {
             bzSettings.behaviorMaxDays = v;
             await opts.saveConfig(config);
+            await saveSettings();
           });
         });
 
@@ -426,6 +427,7 @@ export function openSmartcatSettings(opts: {
           sl.onChange(async (v: number) => {
             bzSettings.behaviorMaxCount = v;
             await opts.saveConfig(config);
+            await saveSettings();
           });
         });
 
@@ -438,6 +440,7 @@ export function openSmartcatSettings(opts: {
           toggle.setValue(bzSettings?.enableAutoLinking !== false).onChange(async (v: boolean) => {
             bzSettings.enableAutoLinking = v;
             await opts.saveConfig(config);
+            await saveSettings();
           })
         );
 
@@ -450,6 +453,7 @@ export function openSmartcatSettings(opts: {
           sl.onChange(async (v: number) => {
             bzSettings.linkWindowDays = v;
             await opts.saveConfig(config);
+            await saveSettings();
           });
         });
 
@@ -462,6 +466,7 @@ export function openSmartcatSettings(opts: {
           toggle.setValue(bzSettings?.showBehaviorLog !== false).onChange(async (v: boolean) => {
             bzSettings.showBehaviorLog = v;
             await opts.saveConfig(config);
+            await saveSettings();
           })
         );
     },

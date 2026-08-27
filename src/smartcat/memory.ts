@@ -1360,12 +1360,12 @@ export function queryBehavior(
  * 按天/按来源计数 + 最近活跃时段分布（纯数据层，供未来小橘参考行为流用）。
  *
  * @param data 智能猫数据
- * @param opts 聚合选项（sinceDays 限制时间窗口，groupBy 暂未使用预留）
+ * @param opts 聚合选项（sinceDays 限制时间窗口）
  * @returns 行为流聚合摘要
  */
 export function summarizeBehavior(
   data: SmartCatData,
-  opts: { sinceDays?: number; groupBy?: 'day' | 'source' | 'hour' } = {},
+  opts: { sinceDays?: number } = {},
 ): BehaviorSummary {
   const items = data.memory.behaviorStream || [];
   const now = Date.now();
@@ -1420,6 +1420,8 @@ export function linkRelatedMemories(
   linkWindowDays?: number,
 ): number {
   const settings = tryGetSettings() as any;
+  // P2-1: 自动关联发现开关关闭时直接返回
+  if (settings?.enableAutoLinking === false) return 0;
   const windowDays = linkWindowDays ?? settings?.linkWindowDays ?? 7;
   const maxRelated = 20;
   const stream = data.memory.memoryStream || [];

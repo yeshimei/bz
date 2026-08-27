@@ -17,15 +17,16 @@ import {
 } from '../../src/smartcat/memory';
 import type { SmartCatData, BehaviorItem, MemoryStreamEntry } from '../../src/smartcat/types';
 
-// mock settings-provider
+// mock settings-provider (configurable for enableAutoLinking tests)
+const mockSettingsData: Record<string, any> = {
+  linkWindowDays: 7,
+  behaviorMaxDays: 30,
+  behaviorMaxCount: 1000,
+  showBehaviorLog: true,
+  enableAutoLinking: true,
+};
 vi.mock('../../src/core/settings-provider', () => ({
-  tryGetSettings: () => ({
-    linkWindowDays: 7,
-    behaviorMaxDays: 30,
-    behaviorMaxCount: 1000,
-    showBehaviorLog: true,
-    enableAutoLinking: true,
-  }),
+  tryGetSettings: () => mockSettingsData,
 }));
 
 function makeData(overrides: Partial<SmartCatData> = {}): SmartCatData {
@@ -326,6 +327,19 @@ describe('linkRelatedMemories', () => {
     );
     const newLinks = linkRelatedMemories(data);
     expect(newLinks).toBe(0);
+  });
+
+  it('enableAutoLinking=false 时直接返回 0', () => {
+    mockSettingsData.enableAutoLinking = false;
+    const data = makeData();
+    const now = Date.now();
+    data.memory.memoryStream.push(
+      makeMemory({ id: 'm1', created: new Date(now).toISOString(), structured: { entityType: 'book', action: 'read', name: '三体' } }),
+      makeMemory({ id: 'm2', created: new Date(now + 3600000).toISOString(), structured: { entityType: 'book', action: 'finished', name: '三体' } }),
+    );
+    const newLinks = linkRelatedMemories(data);
+    expect(newLinks).toBe(0);
+    mockSettingsData.enableAutoLinking = true; // 恢复默认
   });
 });
 
