@@ -289,7 +289,7 @@ describe('generateAutoCompanionMessage 四分支', () => {
     manager = new InteractionManager(makeDeps({
       bubble: { showBubble } as any,
       retrieveMemories: async (q: string) => { retrieved = q; return '用户最近在写小说'; },
-      characterData: () => ({ personalityGrowth: growth, mood: { currentEmotion: '开心' }, memory: { stream: [] } }),
+      characterData: () => ({ personalityGrowth: growth, mood: { currentEmotion: '开心' }, memory: { memoryStream: [], behaviorStream: [] } }),
     }));
     mountEditorApp();
     await manager.generateAutoCompanionMessage();
