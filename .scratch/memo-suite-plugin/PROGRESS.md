@@ -1,3 +1,13 @@
+## 2026-xx-xx 剪藏本两个小问题（ticket 125）：先弹窗后加载提示 + 自动摘要详设去左边距平级
+
+**状态：master 直接实现完成，待提交（issues/125；全量测试 + tsc 0 + 构建部署）**
+
+- ✅ **根因（ticket 125）**：`parseArticleFile` 无内部 await，`Promise.all` 的 map 回调同步执行——整批解析抢在浏览器首帧绘制前跑完，加载提示与内容同帧出现，点击剪藏本后无反馈直到「窗口+内容」同时弹出（观感=等加载完才弹窗）
+- ✅ **先窗口后加载**：提取 `showLoadingHint()`；`loadAllArticles` 在 `isLoadingData=true` 后让出一个宏任务再解析（首帧绘制「窗口+加载提示」，数据就绪整体替换）；**重开路径同样先提示再重载**（不残留旧列表，保留 B1 重开即重载）
+- ✅ **自动摘要详设平级**：`.auto-summary-detail` 左边距 44px→0，摘要长度/生成标签/标签数量/摘要时机四行与「自动摘要」行左缘对齐
+- ✅ **测试**：+1 UI 例（首开与重开均先弹窗+加载提示、卡数 0，宏任务后渲染替换）；clipping/entries 61 例全绿
+- 📄 文档：issues/125；PROGRESS 本条
+
 ## 2026-08-27 聚合讯 B 站 UP 主聚合 + 数据源设置（ticket 124；grill-with-docs 定案，ADR-0060）
 
 **状态：master 713efff 合并完成；合并复核全量 3136 测试通过（198 文件）+ tsc 0 + 构建部署（产物已落 E:/Obsidian/叫我包仔/.obsidian/plugins/bz/）；worktree 已清理**

@@ -68,6 +68,15 @@ export function applyArticleSettings(): void {
 }
 
 // ========== 初始化 ==========
+/** 内容区加载提示（打开面板即写入；数据渲染/空态渲染时整体替换） */
+function showLoadingHint(): void {
+  articlesContainer!.innerHTML = '';
+  const loadingDiv = document.createElement('div');
+  loadingDiv.className = 'article-loading-hint';
+  loadingDiv.textContent = '📚 正在加载文章...';
+  articlesContainer!.appendChild(loadingDiv);
+}
+
 export async function initArticleView(showImmediately = true): Promise<void> {
   const existingPopup = document.getElementById('article-view-popup');
   const existingMask = document.getElementById('article-view-mask');
@@ -78,7 +87,9 @@ export async function initArticleView(showImmediately = true): Promise<void> {
       // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
       applyMobileWindowFullscreen(articlePopup, tryGetSettings().clippingMobileDefaultFullscreen === true);
       // 重开即重载：解析零 I/O（纯 metadataCache），外部删除/改名/换目录不留幽灵卡片跨重开（B1）
+      // 重载前先显示加载提示：重载期间内容区不残留旧列表，与首次打开「先弹窗后加载」一致
       if (!isLoadingData) {
+        showLoadingHint();
         void loadAllArticles();
       }
     } else {
@@ -97,14 +108,8 @@ export async function initArticleView(showImmediately = true): Promise<void> {
   // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
   applyMobileWindowFullscreen(articlePopup, tryGetSettings().clippingMobileDefaultFullscreen === true);
 
-  // 显示加载提示
-  articlesContainer!.innerHTML = '';
-  const loadingDiv = document.createElement('div');
-  loadingDiv.className = 'article-loading-hint';
-  loadingDiv.textContent = '📚 正在加载文章...';
-  articlesContainer!.appendChild(loadingDiv);
-
-  // 异步加载数据（不阻塞显示）
+  // 先弹窗并显示加载提示，再异步加载数据（窗口不等待数据就绪）
+  showLoadingHint();
   void loadAllArticles();
 
   initScroll();
@@ -380,6 +385,10 @@ async function loadAllArticles(): Promise<void> {
   const app = getApp();
   if (isLoadingData) return;
   isLoadingData = true;
+  // 先让浏览器绘制「窗口+加载提示」首帧，再整批解析：parseArticleFile 无内部 await，
+  // Promise.all 的 map 回调同步执行——不让出一个宏任务，整批解析会抢在首帧绘制前跑完，
+  // 加载提示与内容同帧出现（点击后卡顿无反馈，窗口"等加载完才弹出"的观感）。
+  await new Promise((resolve) => setTimeout(resolve, 0));
   try {
     const dir = app.vault.getAbstractFileByPath(ARTICLE_DIRECTORY);
     if (!dir || !(dir as any).children) {
