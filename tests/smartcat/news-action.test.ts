@@ -254,4 +254,47 @@ describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
   });
 });
 
+// ---------------- 行为流落盘测试（ticket 123 缺陷修复：writeBehaviorStream 补 dataSaver） ----------------
+
+describe('行为流落盘（writeBehaviorStream → dataSaver）', () => {
+  it('news:skipped 后读磁盘 smartcat.json 确认 behaviorStream 已持久化', async () => {
+    const { app, vault } = makeApp();
+    await ensureSmartCat(app);
+    emitDomainEvent('news', { kind: 'read', evt: { title: '落盘验证文章', platform: '知乎日报', state: 'skipped', durationMin: 2 } });
+    await settle();
+    // 内存行为流已写入
+    const beh = readBeh();
+    const last = beh[beh.length - 1];
+    expect(last.source).toBe('news');
+    expect(last.type).toBe('skipped');
+    expect(last.metadata.name).toBe('落盘验证文章');
+    // 读磁盘 smartcat.json 确认 behaviorStream 已持久化（现读现渲染面板的数据源）
+    const filePath = 'CONFIG/STORAGE/smartcat.json';
+    const raw = JSON.parse(await vault.adapter.read(filePath));
+    const persisted = raw.memory.behaviorStream;
+    expect(Array.isArray(persisted)).toBe(true);
+    expect(persisted.some((b: any) => b.source === 'news' && b.type === 'skipped' && b.metadata?.name === '落盘验证文章')).toBe(true);
+  });
+
+  it('dataSaver 抛错 → 行为流条目仍在内存（容错不崩链）', async () => {
+    const { app, vault } = makeApp();
+    await ensureSmartCat(app);
+    // 覆盖 vault.modify 使落盘失败（ensureSmartCat 已完成初始化，不会受影响）
+    const realModify = vault.modify.bind(vault);
+    vault.modify = async () => { throw new Error('disk full'); };
+    const before = readBeh().length;
+    emitDomainEvent('news', { kind: 'read', evt: { title: '容错文章', platform: '果壳', state: 'skipped', durationMin: 1 } });
+    await settle();
+    // 内存行为流条目已写入（dataSaver 失败不导致调用链崩溃）
+    const beh = readBeh();
+    expect(beh.length).toBe(before + 1);
+    const last = beh[beh.length - 1];
+    expect(last.source).toBe('news');
+    expect(last.type).toBe('skipped');
+    expect(last.metadata.name).toBe('容错文章');
+    // 恢复 vault.modify
+    vault.modify = realModify;
+  });
+});
+
 void vi; // 保持 vi 引用（测试风格一致性，同 movie-action.test.ts）
