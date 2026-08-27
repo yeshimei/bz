@@ -1192,9 +1192,9 @@
 .bz-sc-dash-memory--superseded { opacity: 0.55; }
 .bz-sc-dash-memory--superseded .bz-sc-dash-memory-text { text-decoration: line-through; }
 
-/* ===== P3 用户体验层：行为日志页签 + structured 摘要（ticket 123） ===== */
+/* ===== P3 用户体验层：行为页签 + structured 摘要（ticket 123） ===== */
 
-/* 行为日志条目 */
+/* 行为条目 */
 .bz-sc-dash-behavior-item {
   padding: 8px 0;
   border-bottom: 1px solid var(--background-modifier-border);

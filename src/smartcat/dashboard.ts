@@ -347,7 +347,7 @@ function distributionCard(
   return c;
 }
 
-// ---------------- 页签渲染（P3 新增行为日志） ----------------
+// ---------------- 页签渲染（P3 新增行为） ----------------
 
 const PANE_KEYS_ALL = ['overview', 'emotion', 'personality', 'memory', 'report', 'behavior'] as const;
 type PaneKey = (typeof PANE_KEYS_ALL)[number];
@@ -357,10 +357,10 @@ const TAB_LABELS: Record<PaneKey, string> = {
   personality: '人格',
   memory: '记忆',
   report: '报告',
-  behavior: '行为日志',
+  behavior: '行为',
 };
 
-/** 根据设置决定可见页签（showBehaviorLog=false 时隐藏行为日志页签） */
+/** 根据设置决定可见页签（showBehaviorLog=false 时隐藏行为页签） */
 function getVisiblePaneKeys(): PaneKey[] {
   const s = tryGetSettings() as any;
   const keys: PaneKey[] = ['overview', 'emotion', 'personality', 'memory', 'report'];
@@ -841,9 +841,9 @@ function renderReport(pane: HTMLElement, data: SmartCatData): void {
   pane.appendChild(histCard.root);
 }
 
-// ---------------- 行为日志页签（P3 ticket 123） ----------------
+// ---------------- 行为页签（P3 ticket 123） ----------------
 
-/** 行为日志来源中文标签 */
+/** 行为来源中文标签 */
 const BEHAVIOR_SOURCE_LABELS: Record<string, string> = {
   chat: '聊天', diary: '日记', flash: '闪念', clipping: '剪藏', movie: '影视', memo: '备忘录',
   reading: '书库', pomodoro: '番茄钟', news: '聚合讯', favorites: '收藏', belongings: '归物',
