@@ -75,8 +75,8 @@ describe('路由规则表（ROUTING_RULES）', () => {
     expect(ROUTING_RULES['diary:deleted'].stream).toBe('behavior');
   });
 
-  it('flash:created → memory（P2a：卡片盒内容进记忆流）', () => {
-    expect(ROUTING_RULES['flash:created'].stream).toBe('memory');
+  it('flash:created → behavior（卡片盒知识内容不进记忆流，用户拍板）', () => {
+    expect(ROUTING_RULES['flash:created'].stream).toBe('behavior');
   });
 
   it('movie:watched → memory, importance=0.85, emotion=happy', () => {
