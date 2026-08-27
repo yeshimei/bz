@@ -242,6 +242,10 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
       { icon: 'bar-chart-3', name: '可视化', count: '1 项' },
       { icon: 'message-circle', name: '互动', count: '3 项' },
       { icon: 'archive', name: '记忆', count: '4 项' },
+      // P3 新增三组（ticket 123）
+      { icon: 'database', name: '存储与记忆', count: '2 项' },
+      { icon: 'link', name: '关联', count: '2 项' },
+      { icon: 'eye', name: '显示', count: '1 项' },
     ]);
     // 外观组内为色块网格（无 Setting 行，不计徽标），可视化组内人格面板 + 重置成长
     expect(popup.querySelector('.bz-settings-group-body .bz-sc-skin-grid')).not.toBeNull();
