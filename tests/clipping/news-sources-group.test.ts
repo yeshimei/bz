@@ -1,6 +1,7 @@
 /**
- * 剪藏本设置弹窗「数据源」组测试（ticket 124，ADR-0060）：
- * news.json 缺失 → 引导块；存在 → 三源开关 + UP 名单 + 保留天数 + 状态行；
+ * 剪藏本设置弹窗「数据源」组测试（ticket 124，ADR-0060；ticket 126：UP 名单整段联动 +
+ * 管理按钮独立弹窗 + 名字/头像回填展示）：
+ * news.json 缺失 → 引导块；存在 → 三源开关 + UP 名单（按钮行）+ 保留天数 + 状态行；
  * 自动摘要详设展开（长度档位/标签开关/时机）。
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
@@ -49,7 +50,9 @@ async function setup(withNewsJson: boolean) {
     vault.files.set(NEWS, JSON.stringify({
       articles: [{ title: 'B站视频', url: 'https://www.bilibili.com/video/BV1xx', platform: 'B站', author: 'UP主', date: '2026-08-26 10:00:00', fetchedAt: '2026-08-26 12:00:00' }],
       stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} },
-      bilibiliUps: ['546195'],
+      bilibiliUps: ['546195', '999999'],
+      // ticket 126：后台抓到消息回填的 UP 主资料（缺资料 → 显示回退 uid）
+      bilibiliUpInfo: { '546195': { name: '老番茄', avatar: 'https://i0.hdslb.com/bfs/face/a.jpg' } },
       sources: { zhihu: true, guokr: true, bilibili: true },
     }));
   }
@@ -84,6 +87,18 @@ async function openSettings(): Promise<HTMLElement> {
   const popup = document.getElementById('bz-settings-modal-popup')!;
   await new Promise((r) => setTimeout(r, 50)); // 数据源组异步加载
   return popup;
+}
+
+/** 点组内「管理」按钮打开 UP 主名单弹窗（返回弹窗节点） */
+async function openUpManager(popup: HTMLElement): Promise<HTMLElement> {
+  const upRow = findSetting(popup, 'UP 主名单');
+  const manageBtn = (upRow as any).__setting.controls.find((c: any) => c.text === '管理');
+  expect(manageBtn).toBeDefined();
+  manageBtn.trigger();
+  await new Promise((r) => setTimeout(r, 20));
+  const modal = document.getElementById('bz-up-manager-popup')!;
+  expect(modal).not.toBeNull();
+  return modal;
 }
 
 /** 按 dataset.name 找 setting 行 */
@@ -134,52 +149,92 @@ describe('剪藏本设置「数据源」组', () => {
     expect(popup.textContent).not.toContain('抓取状态');
   });
 
-  it('news.json 存在 → 三源开关/UP 名单/保留天数/状态行全部出现', async () => {
+  it('news.json 存在 → 三源开关/UP 名单按钮行/保留天数/状态行；名单行移入管理弹窗并显示名字头像', async () => {
     await setup(true);
     const popup = await openSettings();
     expectSetting(popup, '知乎日报');
     expectSetting(popup, '果壳科学人');
     expectSetting(popup, 'B站 UP 主');
-    expectSetting(popup, 'UP 主名单');
-    const upRow = popup.querySelector<HTMLElement>('[data-up-row]');
-    expect(upRow).not.toBeNull();
-    expect(upRow!.dataset.upRow).toBe('1');
-    expect((upRow as any).__setting.name).toBe('UP 546195');
+    const upRow = findSetting(popup, 'UP 主名单');
+    const upCtl = (upRow as any).__setting;
+    // 按钮行 desc：名字预览（后台回填优先，无资料回退 uid）
+    expect(upCtl.desc).toContain('老番茄');
+    expect(upCtl.desc).toContain('UP 999999');
+    expect(upCtl.controls.some((c: any) => c.text === '管理')).toBe(true);
+    // 组内不再直接渲染名单行（已移入弹窗）
+    expect(popup.querySelector('[data-up-row]')).toBeNull();
     expectSetting(popup, '已保存文章保留天数');
     expectSetting(popup, '已跳过文章保留天数');
     const status = expectSetting(popup, '抓取状态');
-    expect((status as any).__setting.desc).toContain('1 位 UP 主');
+    expect((status as any).__setting.desc).toContain('2 位 UP 主');
     expect((status as any).__setting.desc).toContain('1 篇');
+    // 弹窗列表：有资料 → 名字+头像；无资料 → uid 回退
+    const modal = await openUpManager(popup);
+    const rows = [...modal.querySelectorAll<HTMLElement>('[data-up-row]')];
+    expect(rows.length).toBe(2);
+    const withInfo = rows.find((r) => r.textContent!.includes('UID 546195'))!;
+    expect(withInfo.textContent).toContain('老番茄');
+    expect(withInfo.querySelector('.bz-up-manager-avatar')).not.toBeNull();
+    const withoutInfo = rows.find((r) => r.textContent!.includes('UID 999999'))!;
+    expect(withoutInfo.textContent).toContain('UP 999999');
+    expect(withoutInfo.querySelector('.bz-up-manager-avatar')).toBeNull();
+    // 点遮罩关闭弹窗：独立 overlay，设置弹窗保留
+    (document.getElementById('bz-up-manager-mask') as HTMLElement).click();
+    await flushDom();
+    expect(document.getElementById('bz-up-manager-popup')).toBeNull();
+    expect(document.getElementById('bz-settings-modal-popup')).not.toBeNull();
   });
 
-  it('B 站源开关关闭 → UP 名单行隐藏（联动）；再开恢复', async () => {
+  it('B 站源开关关闭 → 整个 UP 主名单段隐藏（含按钮行）；再开恢复', async () => {
     await setup(true);
     const popup = await openSettings();
+    const section = popup.querySelector<HTMLElement>('[data-up-section]');
+    expect(section).not.toBeNull();
+    expect(section!.style.display).not.toBe('none');
     const bili = findSetting(popup, 'B站 UP 主');
     const toggle = toggleOf(bili);
     toggle.trigger(false);
     await flushDom();
-    const upRows = popup.querySelectorAll('[data-up-row]');
-    expect(upRows.length).toBeGreaterThanOrEqual(1);
-    // 关闭后名单行内联隐藏（style.display none）
-    upRows.forEach((r) => expect((r as HTMLElement).style.display).toBe('none'));
+    expect(section!.style.display).toBe('none');
+    expect(popup.textContent).not.toContain('管理'); // 按钮行随整段隐藏
     toggle.trigger(true);
     await flushDom();
-    popup.querySelectorAll('[data-up-row]').forEach((r) => expect((r as HTMLElement).style.display).not.toBe('none'));
+    expect(section!.style.display).not.toBe('none');
   });
 
-  it('UP 名单删除：点移除 → 名单行消失，news.json bilibiliUps 更新', async () => {
+  it('管理弹窗移除 UP 主：名单行消失、news.json 名单与资料同步更新、组内概要刷新', async () => {
     const { vault } = await setup(true);
     const popup = await openSettings();
-    const row = popup.querySelector<HTMLElement>('[data-up-row]')!;
-    const deleteBtn = (row as any).__setting.controls.find((c: any) => c.isExtraButton);
-    expect(deleteBtn).toBeDefined();
-    deleteBtn.trigger();
-    await flushDom();
-    await new Promise((r) => setTimeout(r, 20)); // 冲刷写回
-    expect(popup.querySelector('[data-up-row]')).toBeNull();
+    const modal = await openUpManager(popup);
+    const row = [...modal.querySelectorAll<HTMLElement>('[data-up-row]')].find((r) => r.textContent!.includes('UID 546195'))!;
+    row.querySelector<HTMLElement>('.bz-up-manager-remove')!.click();
+    await new Promise((r) => setTimeout(r, 30)); // 冲刷删除写回 + onChanged 重读重绘
+    expect(modal.querySelectorAll('[data-up-row]').length).toBe(1);
     const disk = JSON.parse(vault.files.get(NEWS)!);
-    expect(disk.bilibiliUps).toEqual([]);
+    expect(disk.bilibiliUps).toEqual(['999999']);
+    expect(disk.bilibiliUpInfo).toEqual({}); // 该 uid 资料一并清除
+    const upCtl = (findSetting(popup, 'UP 主名单') as any).__setting;
+    expect(upCtl.desc).not.toContain('老番茄');
+    expect(upCtl.desc).toContain('UP 999999');
+    expect(upCtl.desc).toContain('1 位');
+  });
+
+  it('管理弹窗添加 UP 主：解析 uid 入库、弹窗列表与组内概要同步刷新', async () => {
+    const { vault } = await setup(true);
+    const popup = await openSettings();
+    const modal = await openUpManager(popup);
+    const addRow = findSetting(modal, '添加 UP 主');
+    const ctrls = (addRow as any).__setting.controls;
+    const text = ctrls.find((c: any) => typeof c.trigger === 'function' && 'value' in c);
+    const addBtn = ctrls.find((c: any) => c.text === '添加');
+    text.trigger('888888'); // 纯数字 uid，本地解析无需网络
+    addBtn.trigger();
+    await new Promise((r) => setTimeout(r, 30));
+    expect([...modal.querySelectorAll<HTMLElement>('[data-up-row]')].some((r) => r.textContent!.includes('UID 888888'))).toBe(true);
+    const disk = JSON.parse(vault.files.get(NEWS)!);
+    expect(disk.bilibiliUps).toEqual(['546195', '999999', '888888']);
+    const upCtl = (findSetting(popup, 'UP 主名单') as any).__setting;
+    expect(upCtl.desc).toContain('3 位');
   });
 
   it('自动摘要详设：开关开 → 长度/标签/时机三项可见；关 → 隐藏', async () => {

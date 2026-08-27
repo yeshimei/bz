@@ -8,6 +8,7 @@ import { describe, it, expect } from 'vitest';
 import {
   wrapArrayToNewsData, parseNewsFileContent, mergeStatsInto, statsHasData,
   applyRetention, parseUidFromText, parseBvidFromText, normalizeRetentionDays,
+  parseBilibiliUpInfo,
 } from '../../src/news/data';
 
 describe('news.json 四段结构', () => {
@@ -39,6 +40,33 @@ describe('news.json 四段结构', () => {
     expect(empty.sources.bilibili).toBe(true);
     // 损坏：null
     expect(parseNewsFileContent('{broken')).toBeNull();
+  });
+
+  it('bilibiliUpInfo 段（ticket 126）：解析 uid→{name?,avatar?}（头像转 https），缺失/损坏 → 空对象', () => {
+    const parsed = parseNewsFileContent(
+      JSON.stringify({
+        articles: [],
+        stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} },
+        bilibiliUps: ['1'],
+        sources: { zhihu: true, guokr: true, bilibili: true },
+        bilibiliUpInfo: {
+          '1': { name: '老番茄', avatar: 'http://i0.hdslb.com/bfs/face/a.jpg' },
+          '2': 'bad',
+          '3': { name: 'x' },
+        },
+      })
+    )!;
+    expect(parsed.bilibiliUpInfo).toEqual({
+      '1': { name: '老番茄', avatar: 'https://i0.hdslb.com/bfs/face/a.jpg' }, // http → https
+      '3': { name: 'x' },
+    });
+    // 段缺失 → 空对象；wrapArrayToNewsData（旧纯数组）→ 空对象
+    expect(parseNewsFileContent('{"articles":[]}')!.bilibiliUpInfo).toEqual({});
+    expect(wrapArrayToNewsData([]).bilibiliUpInfo).toEqual({});
+    // 纯函数容错
+    expect(parseBilibiliUpInfo(undefined)).toEqual({});
+    expect(parseBilibiliUpInfo([])).toEqual({});
+    expect(parseBilibiliUpInfo('bad')).toEqual({});
   });
 
   it('mergeStatsInto / statsHasData：仅 stats 段无真实数据时并入旧文件', () => {

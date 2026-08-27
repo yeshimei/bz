@@ -1,6 +1,6 @@
 # News Watcher
 
-抓取新闻源文章并去重入库 `news.json`（四段结构）的守护进程，供 Obsidian 阅读使用。
+抓取新闻源文章并去重入库 `news.json`（五段结构）的守护进程，供 Obsidian 阅读使用。
 
 ## Language
 
@@ -24,8 +24,12 @@ _Avoid_: 源开关（非 canonical）
 news.json `bilibiliUps` 段的 uid 数组，决定 B 站源抓取哪些 UP 主的视频投稿；插件侧写。
 _Avoid_: UP 主列表（非 canonical）
 
-**四段结构 (four-segment structure)**:
-news.json 的对象形态 `{ articles, stats, bilibiliUps, sources }`；旧纯数组读取时自动包裹迁移。
+**UP 主资料 (UP info)**:
+news.json `bilibiliUpInfo` 段的 uid → `{name?, avatar?}` 映射（ticket 126）——B 站抓到条目时由本进程回填（取首个条目的 `module_author` name/face，头像统一转 https），插件侧只读展示；缺资料时显示回退 uid。
+_Avoid_: UP 主信息（非 canonical）
+
+**五段结构 (five-segment structure)**:
+news.json 的对象形态 `{ articles, stats, bilibiliUps, bilibiliUpInfo, sources }`（v1.1.0 四段 + ticket 126 新增 `bilibiliUpInfo` 段）；旧纯数组读取时自动包裹迁移。
 _Avoid_: 对象结构（非 canonical）
 
 **新闻条目 (news article)**:
@@ -48,5 +52,5 @@ _Avoid_: 过滤, 查重
 - **一个轮次抓取窗口内的全部文章**，不限制数量。
 - **批内和库内都要去重**：API 可能返回重复数据，库内按 URL + 标题双去重。
 - **源级容错**：单个源失败不影响其他源，下个轮次自然重试，无重试状态机。
-- **四段整读写**：只写本进程负责的 articles 段（保留 stats/bilibiliUps/sources——插件侧维护段）。
+- **五段整读写**：写回只动本进程负责的 articles 段 + 合并本轮 `bilibiliUpInfo`（保留 stats/bilibiliUps/sources——插件侧维护段）。
 - **B 站 Cookie 引导**：每轮先 GET 主页收集 buvid3 等 Cookie，规避未登录 API 风控（412）；失败则该源本轮跳过。

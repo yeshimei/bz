@@ -1,3 +1,13 @@
+## 2026-xx-xx B 站 UP 名单整合（ticket 126）：整段联动隐藏 + 管理按钮独立弹窗 + UP 主名字/头像回填
+
+**状态：master 直接实现完成，待提交（issues/126；watcher v1.1.1；全量测试 + tsc 0 + 构建部署）**
+
+- ✅ **整段联动**：B 站源开关关闭 → 整个「UP 主名单」段（`[data-up-section]`，含按钮行）隐藏，不再残留名单行
+- ✅ **管理按钮 + 独立弹窗**：组内 UP 名单收敛为「管理」按钮行（desc=已跟踪 N 位+名字预览），点击开独立 overlay（层 10100）做添加/删除，增删后弹窗与组内概要同刷
+- ✅ **名字/头像回填**：watcher v1.1.1 B 站抓取时取 `module_author` name/face 回填 news.json 第五段 `bilibiliUpInfo`（uid→{name,avatar}，头像转 https）；插件解析容错（缺段/损坏→空），展示 name??uid，移除 UP 同步清资料；旧四段/纯数组无感兼容
+- ✅ **测试**：数据层 +5、UI 层重写 3+新增 1、watcher 单测 +3；watcher node:test 全绿
+- 📄 文档：issues/126；CONTEXT「剪藏本」「UP 主名单」「UP 主资料」；watcher README/CONTEXT v1.1.1；PROGRESS 本条
+
 ## 2026-xx-xx 剪藏本两个小问题（ticket 125）：先弹窗后加载提示 + 自动摘要详设去左边距平级
 
 **状态：master 直接实现完成，待提交（issues/125；全量测试 + tsc 0 + 构建部署）**
@@ -29,6 +39,7 @@
 - ✅ **P2a 创作/情感域（75fb7a6）**：description-generators.ts 策略注册表（movie/book/diary_entry/letter/poem/chat_message/insight + fallback，snapshot.summary 优先）；diary/movie/library/chat 接线改新签名；**review P0 捕获：flash(卡片盒) 被误改 memory → 恢复 behavior（用户拍板知识内容不进记忆流）**；P1 修复（library credibility/description 截断/movie default 分支）
 - 🔧 **样式位置修复（9d079e6）**：P3 行为日志样式误写根 styles.css（构建产物被覆盖丢失）→ 移入 src/smartcat/styles.css 收敛处重建
 - 📄 文档：ADR-0055~0059、issues/123、spec.md、CONTEXT 词条、PROGRESS 本条；worktree 已清理
+- ⚡ **追加拍板（2026-08-27）**：聚合讯「跳过」（markAsRead('skipped') → 点「下一篇」）也发观察入行为流——reader.ts 跳过分支补 `emitDomainEvent('news', {kind:'read', evt(state:'skipped')})`，smartcat 侧 `news:skipped` 路由（原为死代码）生效；「阅读」无独立 UI 动作不发；reader.test.ts「跳过不发」反例反转、news-action.test.ts 补 skipped 行为流用例、news-source/index 注释与 spec/issues 同步
 
 ## 2026-08-27 日记「未解析行」主动检测+手动修复 与 第二大脑移动端 IP 防呆（ticket 121 / 122，grill-with-docs 定案）
 

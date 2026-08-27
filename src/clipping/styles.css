@@ -149,10 +149,55 @@
 .auto-summary-detail .setting-item:first-child {
     border-top: none;
 }
-[data-up-row] .setting-item-info {
-    flex: 1;
+
+/* ===== UP 主名单管理弹窗（ticket 126）：设置弹窗之上的独立 overlay，列表行=头像+名字+uid+移除 ===== */
+.bz-up-manager-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
 }
-[data-up-row] .setting-item-control {
-    gap: 4px;
+.bz-up-manager-row:hover {
+    background: var(--background-modifier-hover);
+}
+.bz-up-manager-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    object-fit: cover;
+    background: var(--background-modifier-hover);
+}
+.bz-up-manager-text {
+    flex: 1;
+    min-width: 0;
+}
+.bz-up-manager-name {
+    font-size: 14px;
+    color: var(--text-normal);
+}
+.bz-up-manager-uid {
+    font-size: 12px;
+    color: var(--text-faint);
+}
+.bz-up-manager-remove {
+    border: none;
+    background: var(--background-modifier-hover);
+    color: var(--text-muted);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+}
+.bz-up-manager-remove:hover {
+    background: var(--background-modifier-error);
+    color: var(--text-on-accent);
+}
+.bz-up-manager-empty {
+    padding: 24px 12px;
+    text-align: center;
+    color: var(--text-faint);
+    font-size: 14px;
 }
 
