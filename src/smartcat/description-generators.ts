@@ -144,7 +144,7 @@ register('diary_entry', (s) => {
 register('letter', (s) => {
   const name = s.name || '未命名信';
   const date = s.extras?.date || '';
-  const body = s.extras?.body ? `：${String(s.extras.body)}` : '';
+  const body = s.extras?.body ? `：${String(s.extras.body).slice(0, 200)}` : '';
   switch (s.action) {
     case 'created':
       return date
@@ -164,7 +164,7 @@ register('letter', (s) => {
 register('poem', (s) => {
   const name = s.name || '未命名诗';
   const date = s.extras?.date || '';
-  const body = s.extras?.body ? `：${String(s.extras.body)}` : '';
+  const body = s.extras?.body ? `：${String(s.extras.body).slice(0, 200)}` : '';
   switch (s.action) {
     case 'created':
       return date
@@ -202,7 +202,7 @@ register('insight', (s) => {
 
 register('flash', (s) => {
   const name = s.name || '未命名';
-  const body = s.extras?.body ? `：「${String(s.extras.body)}」` : '';
+  const body = s.extras?.body ? `：「${String(s.extras.body).slice(0, 200)}」` : '';
   switch (s.action) {
     case 'created':
       return `你在卡片盒记下了「${name}」${body}`;

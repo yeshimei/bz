@@ -1149,11 +1149,12 @@ export class MemorySystem {
 /**
  * 观察可信度基准分（ADR-0036，ticket 085）：来源档位表 + 负向词降档，纯函数。
  * 档位：高 0.9 亲笔心迹（diary/reflection/flash/letter/poem）；中高 0.75 明确 UI 意图
- * （memo/favorites/belongings）；中 0.6 行为动作（movie/pomodoro/domain:library 书架/时长/done）；
- * 中低 0.45 停留/标记可误触（news、domain:library 移出）；低 0.3 负向/移除信号
+ * （memo/favorites/belongings）；中 0.6 行为动作（movie/pomodoro/library 书架/时长/done）；
+ * 中低 0.45 停留/标记可误触（news、library 移出）；低 0.3 负向/移除信号
  * （news 跳过、移出书架——由 0.45 中低档 −0.15 降档得出）；未知来源缺省 0.5 中性（对齐旧数据无字段兜底）。
- * 085 追加拍板：domain:library 内部细分——想法（excerpts 亲笔批注）0.75、划线（highlights 主动标记投入）0.70、
- * 书架加入/时长/读完 0.60、移出 0.45→0.30。
+ * P2a：library 事件 source 已从 domain:library 改为 library；routing 规则自带 credibility
+ * （library:highlight=0.70, library:thought=0.75, 其余=0.60），新签名走 routing 值不经本函数；
+ * 旧 domain:library 分支保留作 legacy 兼容（旧数据/旧签名路径仍可能触发）。
  * 描述含「跳过/移出/移除/删除/删掉/取消」等负向词 → 来源档基础 −0.15（下限 0.25）。
  */
 export const CREDIBILITY_TIERS: Record<string, number> = {
@@ -1166,13 +1167,14 @@ export const CREDIBILITY_TIERS: Record<string, number> = {
 /** 负向词集（「跳过」等；命中 → 来源档基础 −0.15，下限 0.25） */
 const CREDIBILITY_NEGATIVE_WORDS = ['跳过', '移出', '移除', '删除', '删掉', '取消'];
 
-/** 观察可信度（0-1）：来源档位基准 + 负向词降档；domain:library 按描述关键词细分
+/** 观察可信度（0-1）：来源档位基准 + 负向词降档；domain:library/library 按描述关键词细分
  *  （「想法」→0.75 亲笔批注、「划了/划线/重点」→0.70 主动标记、「移出/移除」→0.45 经负向词降档→0.30、
- *   其余书架/开始读/读完/时长 →0.60） */
+ *   其余书架/开始读/读完/时长 →0.60）；
+ *  P2a：新签名走 routing credibility，本函数仅 legacy 路径/LLM 打分调用 */
 export function ruleCredibility(source: string | undefined, description: string): number {
   const text = typeof description === 'string' ? description : String(description ?? '');
   let base: number;
-  if (source === 'domain:library') {
+  if (source === 'domain:library' || source === 'library') {
     // 想法（excerpts 亲笔批注文字）≈ 明确 UI 意图 0.75；划线（highlights 主动标记重要内容）0.70；
     // 移出书架 0.45（负向信号，再经通用负向词降档 → 低 0.30）；书架加入/开始读/读完/时长 0.60。
     // 划线关键词取「划了|划线|重点」并集：实际文案「划了条/划了 N 条重点」，「划重点」「划线」字样亦命中
@@ -1195,8 +1197,10 @@ export function ruleCredibility(source: string | undefined, description: string)
 export const SOURCE_LABELS: Record<string, string> = {
   chat: '聊天', diary: '日记', flash: '闪念', clipping: '剪藏', movie: '影视', memo: '备忘录',
   reading: '书库', poem: '现代诗', letter: '信', reflection: '反省',
+  library: '书库', // P2a：library 事件 source 统一为 'library'（兼容旧 'domain:library'）
   'domain:memo': '备忘录', 'domain:pomodoro': '番茄钟', 'domain:news': '聚合讯',
   'domain:quiz': '做题', 'domain:review': '复习', 'domain:favorites': '收藏', 'domain:belongings': '归物',
+  'domain:library': '书库', // 遗留兼容（旧数据/旧签名路径）
 };
 
 /** 来源 → 中文（未知来源回显原值；domain:<key> 查域表） */

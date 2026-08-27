@@ -1165,6 +1165,12 @@ function movieEventToStructured(evt: MovieActionEvent): StructuredMeta {
         entityType: 'movie', action: 'deleted',
         name: evt.name,
       };
+    default:
+      // P1-2：意外 evt.kind 兜底——不抛错，走 system:fallback 路由
+      return {
+        entityType: 'movie', action: 'unknown',
+        name: (evt as any).name ?? '未知',
+      };
   }
 }
 
