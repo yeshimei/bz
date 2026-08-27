@@ -8,6 +8,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   favoritesAddedText, favoritesEditChanges, favoritesEditedText, favoritesDeletedText, buildFavoritesActionText,
+  buildFavoritesStructured,
   type FavoritesActionEvent,
 } from '../../src/smartcat/favorites-source';
 import type { FavoritesItem } from '../../src/favorites/types';
@@ -87,5 +88,27 @@ describe('buildFavoritesActionText（事件 → 观察文本）', () => {
     expect(buildFavoritesActionText({ kind: 'edit', title: 'TokenLedger', changes: ['改了简介'] })).toBe('你编辑了收藏《TokenLedger》：改了简介');
     expect(buildFavoritesActionText({ kind: 'edit', title: 'TokenLedger', changes: [] })).toBe('你编辑了收藏《TokenLedger》');
     expect(buildFavoritesActionText({ kind: 'delete', title: 'TokenLedger' })).toBe('你删除了收藏《TokenLedger》');
+  });
+});
+
+// ==================== P2b StructuredMeta 映射测试 ====================
+
+describe('buildFavoritesStructured（收藏本事件 → StructuredMeta，行为流）', () => {
+  it('add：entityType=favorite, action=added, extras 含 tags/description/url/pinned', () => {
+    const s = buildFavoritesStructured({ kind: 'add', item: item({}) });
+    expect(s).not.toBeNull();
+    expect(s!.entityType).toBe('favorite');
+    expect(s!.action).toBe('added');
+    expect(s!.name).toBe('TokenLedger');
+    expect(s!.extras!.tags).toEqual(['GitHub', 'DeepSeek Harness']);
+    expect(s!.extras!.pinned).toBe(false);
+  });
+  it('edit：entityType=favorite, action=edited, extras 含 changes', () => {
+    const s = buildFavoritesStructured({ kind: 'edit', title: 'TokenLedger', changes: ['改了简介'] });
+    expect(s).toEqual({ entityType: 'favorite', action: 'edited', name: 'TokenLedger', extras: { changes: ['改了简介'] } });
+  });
+  it('delete：entityType=favorite, action=deleted', () => {
+    const s = buildFavoritesStructured({ kind: 'delete', title: 'TokenLedger' });
+    expect(s).toEqual({ entityType: 'favorite', action: 'deleted', name: 'TokenLedger' });
   });
 });

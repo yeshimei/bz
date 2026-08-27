@@ -53,15 +53,21 @@ beforeEach(() => {
   unloadSmartCat();
 });
 
+const readBeh = (): any[] => __getSmartcatInternals().data.memory.behaviorStream;
+
 describe('notifyNewsRead（逐篇三态，方法监听）', () => {
-  it('阅读 → 观察入流（含 source news）', async () => {
+  it('阅读 → 行为流条目（source=news, action=read）', async () => {
     const { app } = makeApp();
     await ensureSmartCat(app);
     emitDomainEvent('news', { kind: 'read', evt: { title: '黑洞照片刷新认知', platform: '果壳', state: 'read', durationMin: 5 } });
     await settle();
-    const stream = readStream();
-    expect(stream[stream.length - 1].description).toBe('你阅读了《黑洞照片刷新认知》（果壳·读了 5 分钟）');
-    expect(stream[stream.length - 1].source).toBe('news');
+    const beh = readBeh();
+    const last = beh[beh.length - 1];
+    expect(last.source).toBe('news');
+    expect(last.type).toBe('read');
+    expect(last.metadata.entityType).toBe('news');
+    expect(last.metadata.name).toBe('黑洞照片刷新认知');
+    expect(last.metadata.extras).toEqual({ platform: '果壳', durationMin: 5 });
   });
 
   it('noteSource 关闭 → 静默不观察；notifyNewsSaved 也不登记', async () => {
@@ -69,11 +75,11 @@ describe('notifyNewsRead（逐篇三态，方法监听）', () => {
     await ensureSmartCat(app);
     const data: any = __getSmartcatInternals().data;
     data.config.noteSource = false;
-    const before = data.memory.memoryStream.length;
+    const before = data.memory.behaviorStream.length;
     emitDomainEvent('news', { kind: 'read', evt: { title: '黑洞照片刷新认知', platform: '果壳', state: 'saved', durationMin: 5 } });
     emitDomainEvent('news', { kind: 'saved', evt: { title: '黑洞照片刷新认知', platform: '果壳', state: 'saved', durationMin: 5 }, clipPath: '归档/网页剪藏/黑洞照片刷新认知.md' });
     await settle();
-    expect(data.memory.memoryStream.length).toBe(before);
+    expect(data.memory.behaviorStream.length).toBe(before);
     expect(__getNewsPendingSavesForTests().size).toBe(0);
   });
 
@@ -91,7 +97,7 @@ describe('notifyNewsRead（逐篇三态，方法监听）', () => {
 });
 
 describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
-  it('剪藏 modify 命中登记 → 完整保存观察 + 登记移除（再触发不再产）', async () => {
+  it('剪藏 modify 命中登记 → 完整保存观察（行为流）+ 登记移除（再触发不再产）', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const clipPath = '归档/网页剪藏/黑洞照片刷新认知.md';
@@ -102,32 +108,35 @@ describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
     // auto-summary 写回触发的 modify 事件
     vault.emit('modify', vault.file(clipPath));
     await settle();
-    const stream = readStream();
-    expect(stream[stream.length - 1].description).toBe('你保存了《黑洞照片刷新认知》（果壳·读了 5 分钟）：首张黑洞照片公布，视觉中国被质疑滥用版权。 #科学 #AI');
-    expect(stream[stream.length - 1].source).toBe('news');
+    const beh = readBeh();
+    const last = beh[beh.length - 1];
+    expect(last.source).toBe('news');
+    expect(last.type).toBe('saved');
+    expect(last.metadata.entityType).toBe('news');
+    expect(last.metadata.name).toBe('黑洞照片刷新认知');
+    expect(last.metadata.extras.summary).toBe('首张黑洞照片公布，视觉中国被质疑滥用版权。');
+    expect(last.metadata.extras.tags).toEqual(['科学', 'AI']);
     // 登记已移除；再触发 modify 不再产
     expect(__getNewsPendingSavesForTests().size).toBe(0);
-    const before = stream.length;
+    const before = beh.length;
     vault.emit('modify', vault.file(clipPath));
     await settle();
-    expect(readStream().length).toBe(before);
+    expect(readBeh().length).toBe(before);
   });
 
-  it('普通剪藏 modify（未命中登记）→ 短路：不产「你剪藏了」观察', async () => {
+  it('普通剪藏 modify（未命中登记）→ 短路：不产观察', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const clipPath = '归档/网页剪藏/普通剪藏文章.md';
     vault.files.set(clipPath, '---\nsummary: "普通摘要"\n---\n\n正文');
-    const before = readStream().length;
+    const before = readBeh().length;
     vault.emit('modify', vault.file(clipPath));
     await settle();
-    const stream = readStream();
-    expect(stream.length).toBe(before);
-    expect(stream.some((m) => m.description.includes('你剪藏了'))).toBe(false);
+    expect(readBeh().length).toBe(before);
     expect(__getNewsPendingSavesForTests().size).toBe(0);
   });
 
-  it('降级：登记后未等到 summary → 产出无摘要保存观察 + 登记移除', async () => {
+  it('降级：登记后未等到 summary → 行为流产出无摘要保存观察 + 登记移除', async () => {
     const { app } = makeApp();
     await ensureSmartCat(app);
     __setNewsSaveTimeoutForTests(60);
@@ -135,16 +144,20 @@ describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
     emitDomainEvent('news', { kind: 'saved', evt: { title: '未等来摘要', platform: '知乎日报', state: 'saved', durationMin: 3 }, clipPath: clipPath });
     expect(__getNewsPendingSavesForTests().size).toBe(1);
     await new Promise((r) => setTimeout(r, 250)); // 超过降级等待（60ms）并等落流
-    const stream = readStream();
-    expect(stream[stream.length - 1].description).toBe('你保存了《未等来摘要》（知乎日报·读了 3 分钟）');
-    expect(stream[stream.length - 1].source).toBe('news');
+    const beh = readBeh();
+    const last = beh[beh.length - 1];
+    expect(last.source).toBe('news');
+    expect(last.type).toBe('saved');
+    expect(last.metadata.name).toBe('未等来摘要');
+    expect(last.metadata.extras.platform).toBe('知乎日报');
+    expect(last.metadata.extras.durationMin).toBe(3);
     expect(__getNewsPendingSavesForTests().size).toBe(0);
   });
 
   // ticket 084b（R2 审查 A2）：剪藏 frontmatter 无 title → auto-summary renameToTitle 必改名
   // （登记键=原路径失效）。以下 4 测覆盖：改名降级 url 反查、改名 modify 补全反查、
   // 无 url 剪藏 baseName 兜底降级、防重保留（降级无摘要同立即形态不产第二条）。
-  it('改名后降级：登记原路径 → 同 url 新路径出现（renameToTitle）→ 降级定位命中带摘要', async () => {
+  it('改名后降级：登记原路径 → 同 url 新路径出现（renameToTitle）→ 降级定位命中带摘要（行为流）', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     __setNewsSaveTimeoutForTests(60);
@@ -159,13 +172,15 @@ describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
     vault.files.delete(oldPath);
     vault.files.set(newPath, '---\nurl: "https://www.guokr.com/article/black-hole"\nsummary: "首张黑洞照片公布，视觉中国被质疑滥用版权。"\ntags:\n  - "科学"\n---\n\n正文');
     await new Promise((r) => setTimeout(r, 250)); // 超过降级等待（60ms）并等落流
-    const stream = readStream();
-    expect(stream[stream.length - 1].description).toBe('你保存了《黑洞照片刷新认知》（果壳·读了 5 分钟）：首张黑洞照片公布，视觉中国被质疑滥用版权。 #科学');
-    expect(stream[stream.length - 1].source).toBe('news');
+    const beh = readBeh();
+    const last = beh[beh.length - 1];
+    expect(last.source).toBe('news');
+    expect(last.metadata.extras.summary).toBe('首张黑洞照片公布，视觉中国被质疑滥用版权。');
+    expect(last.metadata.extras.tags).toEqual(['科学']);
     expect(__getNewsPendingSavesForTests().size).toBe(0);
   });
 
-  it('改名后 modify 补全：事件新路径 ≠ 登记键 → frontmatter url 反查登记 → 带摘要完整观察', async () => {
+  it('改名后 modify 补全：事件新路径 ≠ 登记键 → frontmatter url 反查登记 → 带摘要完整观察（行为流）', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const oldPath = '归档/网页剪藏/黑洞照片刷新认知.md';
@@ -178,13 +193,15 @@ describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
     vault.files.set(newPath, '---\nurl: "https://www.guokr.com/article/black-hole"\nsummary: "首张黑洞照片公布。"\ntags:\n  - "科学"\n---\n\n正文');
     vault.emit('modify', vault.file(newPath));
     await settle();
-    const stream = readStream();
-    expect(stream[stream.length - 1].description).toBe('你保存了《黑洞照片刷新认知》（果壳·读了 5 分钟）：首张黑洞照片公布。 #科学');
-    expect(stream[stream.length - 1].source).toBe('news');
+    const beh = readBeh();
+    const last = beh[beh.length - 1];
+    expect(last.source).toBe('news');
+    expect(last.metadata.extras.summary).toBe('首张黑洞照片公布。');
+    expect(last.metadata.extras.tags).toEqual(['科学']);
     expect(__getNewsPendingSavesForTests().size).toBe(0);
   });
 
-  it('改名后降级（无 url 剪藏）：basename 反查子目录移动后新路径 → 命中带摘要', async () => {
+  it('改名后降级（无 url 剪藏）：basename 反查子目录移动后新路径 → 命中带摘要（行为流）', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     __setNewsSaveTimeoutForTests(60);
@@ -196,12 +213,15 @@ describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
     vault.files.delete(oldPath);
     vault.files.set(newPath, '---\nurl: "https://www.guokr.com/article/black-hole"\nsummary: "首张黑洞照片公布。"\ntags:\n  - "科学"\n---\n\n正文');
     await new Promise((r) => setTimeout(r, 250));
-    const stream = readStream();
-    expect(stream[stream.length - 1].description).toBe('你保存了《黑洞照片刷新认知》（果壳·读了 5 分钟）：首张黑洞照片公布。 #科学');
+    const beh = readBeh();
+    const last = beh[beh.length - 1];
+    expect(last.source).toBe('news');
+    expect(last.metadata.extras.summary).toBe('首张黑洞照片公布。');
+    expect(last.metadata.extras.tags).toEqual(['科学']);
     expect(__getNewsPendingSavesForTests().size).toBe(0);
   });
 
-  it('防重保留：保存立即形态已入流 → 降级无摘要同文案不产第二条', async () => {
+  it('防重保留：保存立即形态已入流 → 降级无摘要同标题不产第二条（行为流）', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     __setNewsSaveTimeoutForTests(60);
@@ -209,12 +229,12 @@ describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
     // reader 保存真实顺序：markAsRead('saved') 先产立即形态，再登记待补全
     emitDomainEvent('news', { kind: 'read', evt: { title: '防重文章', platform: '少数派', state: 'saved', durationMin: 2 } });
     await settle();
-    const before = readStream().length;
+    const before = readBeh().length;
     vault.files.set(clipPath, '---\nsummary: ""\n---\n\n正文'); // auto-summary 未及写回
     emitDomainEvent('news', { kind: 'saved', evt: { title: '防重文章', platform: '少数派', state: 'saved', durationMin: 2 }, clipPath: clipPath });
     await new Promise((r) => setTimeout(r, 250));
-    const stream = readStream();
-    expect(stream.length).toBe(before); // 降级无摘要 → 文案同立即形态 → 防重跳过
+    const beh = readBeh();
+    expect(beh.length).toBe(before); // 降级无摘要 → 同标题防重跳过
     expect(__getNewsPendingSavesForTests().size).toBe(0);
   });
 });

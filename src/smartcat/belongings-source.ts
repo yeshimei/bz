@@ -7,7 +7,10 @@
  * 添加状态省略规则：仅当 current_status 非「使用中」才写（表单默认使用中，避免噪音）。
  * 数据语义零改动：字段对齐 belongings.json（name/category/purchase_price/purchase_date/current_status/description）。
  * 编辑比较不参与：id、created_date、last_updated。
+ *
+ * P2b（ticket 123）：新增 buildBelongingsStructured——构造 StructuredMeta 供行为流写入。
  */
+import type { StructuredMeta } from './types';
 
 /** 归物本物品观察形状（只含参与观察的字段；完整字段见 src/belongings/types.ts BelongingsItem） */
 export interface BelongingsItemLike {
@@ -86,5 +89,24 @@ export function buildBelongingsActionText(evt: BelongingsActionEvent): string | 
     case 'edit': return belongingsEditedText(evt.title, evt.changes);
     case 'status': return belongingsStatusText(evt.title, evt.status);
     case 'delete': return belongingsDeletedText(evt.title);
+  }
+}
+
+// ==================== P2b 结构化元数据（行为流） ====================
+
+/** 归物本事件 → StructuredMeta（行为流） */
+export function buildBelongingsStructured(evt: BelongingsActionEvent): StructuredMeta | null {
+  switch (evt.kind) {
+    case 'add':
+      return {
+        entityType: 'item', action: 'added', name: evt.item.name,
+        extras: { category: evt.item.category, purchase_price: evt.item.purchase_price, purchase_date: evt.item.purchase_date, current_status: evt.item.current_status, description: evt.item.description },
+      };
+    case 'edit':
+      return { entityType: 'item', action: 'edited', name: evt.title, extras: { changes: evt.changes } };
+    case 'status':
+      return { entityType: 'item', action: 'status', name: evt.title, extras: { status: evt.status } };
+    case 'delete':
+      return { entityType: 'item', action: 'deleted', name: evt.title };
   }
 }
