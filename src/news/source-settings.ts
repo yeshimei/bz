@@ -3,7 +3,7 @@
  * 检测 news.json 存在性、读/写 sources 开关与 bilibiliUps 名单、最近抓取时间。
  * 纯数据层（无 DOM），供 src/clipping/view.ts 设置弹窗调用。
  */
-import { readNewsData, writeNewsData, NEWS_JSON_PATH, type BilibiliUpInfo } from './data';
+import { readNewsData, writeNewsData, NEWS_JSON_PATH, DEFAULT_SOURCES, type BilibiliUpInfo } from './data';
 
 export interface DataSourceState {
   /** news.json 是否存在（news-watcher 库存在的检测信号） */
@@ -12,19 +12,23 @@ export interface DataSourceState {
   bilibiliUps: string[];
   /** UP 主资料（后台抓到消息后回填；缺失时 UI 回退显示 uid） */
   bilibiliUpInfo: Record<string, BilibiliUpInfo>;
+  /** B 站每 UP 抓取条数（ticket 127：最近 N 条，默认 10） */
+  bilibiliMaxItems: number;
+  /** 用户配置的 B 站 Cookie（ticket 127：API 风控 412 时使用；缺省空串走自动引导） */
+  bilibiliCookie: string;
   /** 最近抓取时间（articles 最新 fetchedAt；无文章返回 null） */
   lastFetchAt: string | null;
   totalArticles: number;
 }
 
-/** 读数据源状态（检测 + sources + 名单 + UP 资料 + 最近抓取时间） */
+/** 读数据源状态（检测 + sources + 名单 + UP 资料 + B站配置 + 最近抓取时间） */
 export async function readDataSourceState(): Promise<DataSourceState> {
   const res = await readNewsData();
   if (res.missing) {
-    return { exists: false, sources: { zhihu: true, guokr: true, bilibili: true }, bilibiliUps: [], bilibiliUpInfo: {}, lastFetchAt: null, totalArticles: 0 };
+    return { exists: false, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', lastFetchAt: null, totalArticles: 0 };
   }
   if (!res.ok) {
-    return { exists: true, sources: { zhihu: true, guokr: true, bilibili: true }, bilibiliUps: [], bilibiliUpInfo: {}, lastFetchAt: null, totalArticles: 0 };
+    return { exists: true, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', lastFetchAt: null, totalArticles: 0 };
   }
   let lastFetchAt: string | null = null;
   for (const a of res.data.articles) {
@@ -35,6 +39,8 @@ export async function readDataSourceState(): Promise<DataSourceState> {
     sources: { ...res.data.sources },
     bilibiliUps: [...res.data.bilibiliUps],
     bilibiliUpInfo: { ...res.data.bilibiliUpInfo },
+    bilibiliMaxItems: res.data.bilibiliMaxItems,
+    bilibiliCookie: res.data.bilibiliCookie,
     lastFetchAt,
     totalArticles: res.data.articles.length,
   };
@@ -44,7 +50,7 @@ export async function readDataSourceState(): Promise<DataSourceState> {
 export async function writeSources(sources: { zhihu: boolean; guokr: boolean; bilibili: boolean }): Promise<void> {
   const res = await readNewsData();
   if (res.missing) {
-    await writeNewsData({ articles: [], stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }, bilibiliUps: [], bilibiliUpInfo: {}, sources: { ...sources } });
+    await writeNewsData({ articles: [], stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...sources } });
     return;
   }
   if (!res.ok) return;
@@ -57,13 +63,38 @@ export async function addBilibiliUp(uid: string): Promise<boolean> {
   if (!id) return false;
   const res = await readNewsData();
   if (res.missing) {
-    await writeNewsData({ articles: [], stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }, bilibiliUps: [id], bilibiliUpInfo: {}, sources: { zhihu: true, guokr: true, bilibili: true } });
+    await writeNewsData({ articles: [], stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }, bilibiliUps: [id], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES } });
     return true;
   }
   if (!res.ok) return false;
   if (res.data.bilibiliUps.includes(id)) return false; // 已存在
   await writeNewsData({ ...res.data, bilibiliUps: [...res.data.bilibiliUps, id] });
   return true;
+}
+
+/** 写 B 站每 UP 抓取条数（ticket 127；默认 10，夹取 1..50，非法回退 10；保留其它段） */
+export async function writeBilibiliMaxItems(v: string | number): Promise<void> {
+  const n = Math.floor(Number(v));
+  const maxItems = Number.isFinite(n) && n >= 1 ? Math.min(n, 50) : 10;
+  const res = await readNewsData();
+  if (res.missing) {
+    await writeNewsData({ articles: [], stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: maxItems, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES } });
+    return;
+  }
+  if (!res.ok) return;
+  await writeNewsData({ ...res.data, bilibiliMaxItems: maxItems });
+}
+
+/** 写 B 站 Cookie（ticket 127；空串=清除，回到自动引导；保留其它段） */
+export async function writeBilibiliCookie(cookie: string): Promise<void> {
+  const c = String(cookie || '').trim();
+  const res = await readNewsData();
+  if (res.missing) {
+    await writeNewsData({ articles: [], stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: c, sources: { ...DEFAULT_SOURCES } });
+    return;
+  }
+  if (!res.ok) return;
+  await writeNewsData({ ...res.data, bilibiliCookie: c });
 }
 
 /** 删除 UP 主 uid（连同其资料条目，保留其它段） */

@@ -1,3 +1,13 @@
+## 2026-xx-xx B 站不走 24h 窗口（ticket 127）：每 UP 最近 N 条页面可设 + UP 弹窗 Cookie 配置引导
+
+**状态：worktree/ticket127 实施完成，待合并（issues/127；watcher v1.1.2；全量测试 + tsc 0）**
+
+- ✅ **根因**：B 站源按滚动 24h 窗口抓取——长期未更新的 UP 永远 0 条（uid 已入名单、watcher 每轮都抓但 24h 内无新视频）；API 未登录返回 412 风控需要 Cookie
+- ✅ **每 UP 最近 N 条**：新增 news.json 可选段 `bilibiliMaxItems`（默认 10，夹取 1..50）；watcher 新增纯函数 `collectBilibiliBatch`（无窗口、按最近优先收满 N 条未抓过的即停）；插件「数据源」组 UP 名单段内新增「B站抓取条数」行，随 B 站开关整段隐藏
+- ✅ **Cookie 配置引导**：新增可选段 `bilibiliCookie`；watcher 优先用配置值，未配置回退自动引导（buvid3），都失败打印引导文案；插件「UP 主名单管理」弹窗底部新增 Cookie 配置区（引导文案 + 输入 + 保存/清除 + 已配置/未配置状态联动）
+- ✅ **测试**：watcher node:test +4；数据层 +4；UI 层 +2；全量绿 + tsc 0
+- 📄 文档：issues/127；watcher README/CONTEXT v1.1.2；CONTEXT 词条更新；PROGRESS 本条
+
 ## 2026-xx-xx B 站 UP 名单整合（ticket 126）：整段联动隐藏 + 管理按钮独立弹窗 + UP 主名字/头像回填
 
 **状态：master 直接实现完成，待提交（issues/126；watcher v1.1.1；全量测试 + tsc 0 + 构建部署）**

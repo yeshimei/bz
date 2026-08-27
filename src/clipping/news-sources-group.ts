@@ -10,7 +10,8 @@ import { refreshSettingsGroupCounts } from '../core/settings-modal';
 import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import {
-  readDataSourceState, writeSources, addBilibiliUp, removeBilibiliUp, type DataSourceState,
+  readDataSourceState, writeSources, addBilibiliUp, removeBilibiliUp,
+  writeBilibiliMaxItems, writeBilibiliCookie, type DataSourceState,
 } from '../news/source-settings';
 import { resolveUidFromInput, type BilibiliUpInfo } from '../news/data';
 
@@ -33,7 +34,7 @@ function renderDataSourceGroup(groupBody: HTMLElement, state: DataSourceState, r
     return;
   }
   renderSourceSwitches(groupBody, state.sources, refreshCounts);
-  renderUpSection(groupBody, state.bilibiliUps, state.bilibiliUpInfo, state.sources.bilibili, refreshCounts);
+  renderUpSection(groupBody, state.bilibiliUps, state.bilibiliUpInfo, state.sources.bilibili, state.bilibiliMaxItems, state.bilibiliCookie, refreshCounts);
   renderRetention(groupBody, refreshCounts);
   renderStatusRow(groupBody, state);
   refreshCounts();
@@ -96,10 +97,10 @@ function buildUpSummary(ups: string[], upInfo: Record<string, BilibiliUpInfo>): 
 }
 
 /**
- * UP 主名单段（ticket 126）：组内只留「管理」按钮行，添加/删除移入独立弹窗；
+ * UP 主名单段（ticket 126）：组内只留「管理」按钮行 + 抓取条数行（ticket 127），添加/删除移入独立弹窗；
  * B 站源关闭时整段隐藏（与开关联动，不残留名单行）。
  */
-function renderUpSection(groupBody: HTMLElement, ups: string[], upInfo: Record<string, BilibiliUpInfo>, bilibiliEnabled: boolean, refreshCounts: () => void): void {
+function renderUpSection(groupBody: HTMLElement, ups: string[], upInfo: Record<string, BilibiliUpInfo>, bilibiliEnabled: boolean, maxItems: number, cookie: string, refreshCounts: () => void): void {
   const section = document.createElement('div');
   section.dataset.upSection = '1';
   section.style.display = bilibiliEnabled ? '' : 'none';
@@ -114,24 +115,36 @@ function renderUpSection(groupBody: HTMLElement, ups: string[], upInfo: Record<s
         openUpManagerModal({
           ups,
           upInfo,
+          cookie,
           onChanged: async () => {
-            // 增删后重读盘（以磁盘为基底）重绘组内按钮行与徽标
+            // 增删/配置后重读盘（以磁盘为基底）重绘组内按钮行与徽标
             const fresh = await readDataSourceState();
             ups = fresh.bilibiliUps;
             upInfo = fresh.bilibiliUpInfo;
+            cookie = fresh.bilibiliCookie;
             build();
             refreshCounts();
           },
         });
       })
     );
+    // ticket 127：每 UP 最近 N 条（不走 24h 窗口）
+    new Setting(section)
+      .setName('B站抓取条数')
+      .setDesc('每位 UP 主抓取最近多少条动态（不走 24 小时窗口），默认 10，范围 1-50')
+      .addText((text) =>
+        text.setValue(String(maxItems)).onChange(async (v) => {
+          await writeBilibiliMaxItems(v);
+          notice('B 站抓取条数已保存', 'success');
+        })
+      );
   };
   build();
 }
 
-/** UP 主名单管理弹窗（ticket 126）：独立 overlay——层 10100（设置弹窗 10050 之上、共享确认 10250 之下）；
- *  顶部添加行 + 列表（头像/名字回填展示 + uid + 移除） */
-function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, BilibiliUpInfo>; onChanged: () => void }): void {
+/** UP 主名单管理弹窗（ticket 126 + 127）：独立 overlay——层 10100（设置弹窗 10050 之上、共享确认 10250 之下）；
+ *  顶部添加行 + 列表（头像/名字回填展示 + uid + 移除）+ B 站 Cookie 配置区（风控 412 引导） */
+function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, BilibiliUpInfo>; cookie: string; onChanged: () => void }): void {
   let handle: { unregister(): void } | null = null;
   function close(): void {
     mask.remove();
@@ -245,6 +258,40 @@ function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, Bilibi
         })();
       })
     );
+
+  // ticket 127：B 站 Cookie 配置（接口 412 风控时使用；空=清除走自动引导）
+  let cookieInput = String(opts.cookie || '');
+  const cookieDesc = () =>
+    `接口返回 412（风控）时使用：浏览器打开 bilibili.com → F12 → Cookie → 复制 buvid3 或 SESSDATA 粘贴（当前${cookieInput ? '已配置' : '未配置，走自动引导'}）`;
+  const cookieRow = new Setting(content)
+    .setName('B 站 Cookie（可选）')
+    .setDesc(cookieDesc())
+    .addText((text) => {
+      text.setPlaceholder('粘贴 buvid3/SESSDATA 等 Cookie');
+      text.setValue(cookieInput);
+      text.onChange((v) => { cookieInput = v; });
+    });
+  cookieRow.addButton((btn) =>
+    btn.setButtonText('保存').onClick(() => {
+      void (async () => {
+        await writeBilibiliCookie(cookieInput);
+        cookieRow.setDesc(cookieDesc());
+        opts.onChanged();
+        notice('B 站 Cookie 已保存', 'success');
+      })();
+    })
+  );
+  cookieRow.addButton((btn) =>
+    btn.setButtonText('清除').onClick(() => {
+      void (async () => {
+        await writeBilibiliCookie('');
+        cookieInput = '';
+        cookieRow.setDesc(cookieDesc());
+        opts.onChanged();
+        notice('已清除 B 站 Cookie（回自动引导）', 'success');
+      })();
+    })
+  );
 
   content.appendChild(listEl);
   popup.appendChild(header);

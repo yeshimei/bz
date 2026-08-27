@@ -1,7 +1,7 @@
 {
   "name": "@jwbz/obsidian-news",
-  "version": "1.1.1",
-  "description": "聚合讯数据源守护——每 30 分钟抓取最近 24 小时文章（果壳科学人 + 知乎日报 + B站 UP 主视频投稿；源开关可控），URL + 标题双去重入库 news.json（五段结构，含 UP 主名字/头像回填），供 Obsidian 阅读",
+  "version": "1.1.2",
+  "description": "聚合讯数据源守护——每 30 分钟抓取最近 24 小时文章（果壳科学人 + 知乎日报 + B站 UP 主视频投稿；源开关可控），URL + 标题双去重入库 news.json（六段结构，含 UP 主名字/头像回填、每 UP 最近 N 条与 Cookie 配置），供 Obsidian 阅读",
   "main": "watcher.js",
   "bin": {
     "obsidian-news": "./cli.js"

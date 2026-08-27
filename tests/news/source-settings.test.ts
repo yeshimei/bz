@@ -8,6 +8,7 @@ import { MockVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import {
   readDataSourceState, writeSources, addBilibiliUp, removeBilibiliUp,
+  writeBilibiliMaxItems, writeBilibiliCookie,
 } from '../../src/news/source-settings';
 
 const NEWS = 'CONFIG/STORAGE/news.json';
@@ -153,5 +154,59 @@ describe('UP 主名单增删', () => {
     const disk = JSON.parse(vault.files.get(NEWS)!);
     expect(disk.bilibiliUpInfo).toEqual({});
     expect(disk.sources.bilibili).toBe(true);
+  });
+});
+
+describe('B 站抓取条数与 Cookie（ticket 127）', () => {
+  it('readDataSourceState：透出 bilibiliMaxItems（默认 10）与 bilibiliCookie（默认空串）', async () => {
+    const vault = new MockVault();
+    vault.files.set(NEWS, JSON.stringify({ ...fourSegments(), bilibiliMaxItems: 7, bilibiliCookie: 'SESSDATA=abc' }));
+    setApp(makeApp(vault));
+    const state = await readDataSourceState();
+    expect(state.bilibiliMaxItems).toBe(7);
+    expect(state.bilibiliCookie).toBe('SESSDATA=abc');
+    // 缺失 → 默认
+    const vault2 = new MockVault();
+    vault2.files.set(NEWS, JSON.stringify(fourSegments()));
+    setApp(makeApp(vault2));
+    const state2 = await readDataSourceState();
+    expect(state2.bilibiliMaxItems).toBe(10);
+    expect(state2.bilibiliCookie).toBe('');
+  });
+
+  it('writeBilibiliMaxItems：写回并夹取 1..50，保留其它段；非法回退 10', async () => {
+    const vault = new MockVault();
+    vault.files.set(NEWS, JSON.stringify({ ...fourSegments([{ title: 'a' }]), bilibiliUpInfo: { '1': { name: '老番茄' } } }));
+    setApp(makeApp(vault));
+    await writeBilibiliMaxItems('5');
+    let disk = JSON.parse(vault.files.get(NEWS)!);
+    expect(disk.bilibiliMaxItems).toBe(5);
+    expect(disk.articles).toHaveLength(1);
+    expect(disk.bilibiliUpInfo).toEqual({ '1': { name: '老番茄' } }); // 其它段保留
+    await writeBilibiliMaxItems('999');
+    disk = JSON.parse(vault.files.get(NEWS)!);
+    expect(disk.bilibiliMaxItems).toBe(50); // 上夹取
+    await writeBilibiliMaxItems('abc');
+    disk = JSON.parse(vault.files.get(NEWS)!);
+    expect(disk.bilibiliMaxItems).toBe(10); // 非法回退 10
+  });
+
+  it('writeBilibiliCookie：保存去空白；空串清除；骨架路径自洽', async () => {
+    const vault = new MockVault();
+    vault.files.set(NEWS, JSON.stringify(fourSegments()));
+    setApp(makeApp(vault));
+    await writeBilibiliCookie('  buvid3=x; SESSDATA=y  ');
+    let disk = JSON.parse(vault.files.get(NEWS)!);
+    expect(disk.bilibiliCookie).toBe('buvid3=x; SESSDATA=y');
+    await writeBilibiliCookie('');
+    disk = JSON.parse(vault.files.get(NEWS)!);
+    expect(disk.bilibiliCookie).toBe('');
+    // 文件缺失 → 建骨架
+    const vault2 = new MockVault();
+    setApp(makeApp(vault2));
+    await writeBilibiliCookie('SESSDATA=z');
+    const disk2 = JSON.parse(vault2.files.get(NEWS)!);
+    expect(disk2.bilibiliCookie).toBe('SESSDATA=z');
+    expect(disk2.bilibiliMaxItems).toBe(10);
   });
 });

@@ -1,10 +1,11 @@
 // @ts-nocheck
 // ticket 124：B 站动态条目映射纯函数单测（node:test，零依赖；npm test 合并执行）
 // ticket 126：+ extractUpInfo / parseBilibiliUpInfo（UP 主名字/头像回填）
+// ticket 127：+ collectBilibiliBatch（每 UP 最近 N 条，不走 24h 窗口）/ parseBilibiliMaxItems / parseBilibiliCookie
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { buildBilibiliArticle, extractUpInfo, parseBilibiliUpInfo } = require('../watcher.js');
+const { buildBilibiliArticle, extractUpInfo, parseBilibiliUpInfo, parseBilibiliMaxItems, parseBilibiliCookie, collectBilibiliBatch } = require('../watcher.js');
 
 const NOW_MS = new Date('2026-08-27T12:00:00Z').getTime();
 const CUTOFF = NOW_MS - 24 * 60 * 60 * 1000; // 最近 24h
@@ -99,3 +100,56 @@ test('parseBilibiliUpInfo：段容错解析——非对象/数组 → {}；头�
     { '1': { name: 'a', avatar: 'https://x/a.jpg' }, '3': { name: 'b' } }
   );
 });
+
+test('parseBilibiliMaxItems：默认 10，夹取 1..50，非法回退 10', () => {
+  assert.equal(parseBilibiliMaxItems(undefined), 10);
+  assert.equal(parseBilibiliMaxItems(''), 10);
+  assert.equal(parseBilibiliMaxItems('abc'), 10);
+  assert.equal(parseBilibiliMaxItems(20), 20);
+  assert.equal(parseBilibiliMaxItems(0), 10);
+  assert.equal(parseBilibiliMaxItems(-5), 10);
+  assert.equal(parseBilibiliMaxItems(99), 50);
+  assert.equal(parseBilibiliMaxItems('7'), 7);
+});
+
+test('parseBilibiliCookie：字符串去空白；非字符串 → 空串', () => {
+  assert.equal(parseBilibiliCookie(undefined), '');
+  assert.equal(parseBilibiliCookie('  SESSDATA=abc  '), 'SESSDATA=abc');
+  assert.equal(parseBilibiliCookie(123), '');
+});
+
+test('collectBilibiliBatch：每 UP 最近 N 条收满即停（无 24h 窗口），已抓过的 url 跳过', () => {
+  const items = [
+    makeAvItem({ modules: { module_author: { name: '老番茄', mid: 1, pub_ts: NOW_MS / 1000 }, module_dynamic: { major: { archive: { title: '新视频', bvid: 'BVnew' } } } } }),
+    { type: 'DYNAMIC_TYPE_DRAW', modules: {} }, // 非 AV 跳过
+    makeAvItem({ modules: { module_author: { name: '老番茄', mid: 1, pub_ts: CUTOFF / 1000 - 60 }, module_dynamic: { major: { archive: { title: '老视频（窗口外也收）', bvid: 'BVold' } } } } }), // 旧视频照收
+    makeAvItem({ modules: { module_author: { name: '老番茄', mid: 1, pub_ts: NOW_MS / 1000 }, module_dynamic: { major: { archive: { title: '已抓过', bvid: 'BVdup' } } } } }),
+  ];
+  const existing = new Set(['https://www.bilibili.com/video/BVdup']);
+  const out = [];
+  const full = collectBilibiliBatch(items, existing, 10, out);
+  assert.equal(full, false);
+  assert.equal(out.length, 2); // 新视频 + 窗口外的老视频（无 24h 窗口）
+  assert.equal(out[0].title, '新视频');
+  assert.equal(out[1].title, '老视频（窗口外也收）');
+  fromBv(out[0].url, 'BVnew');
+  fromBv(out[1].url, 'BVold');
+});
+
+test('collectBilibiliBatch：达到条数上限返回 true 且不再多收', () => {
+  const items = [
+    makeAvItem({ modules: { module_author: { name: 'a', mid: 1, pub_ts: NOW_MS / 1000 }, module_dynamic: { major: { archive: { title: 'A', bvid: 'BV1' } } } } }),
+    makeAvItem({ modules: { module_author: { name: 'a', mid: 1, pub_ts: NOW_MS / 1000 }, module_dynamic: { major: { archive: { title: 'B', bvid: 'BV2' } } } } }),
+    makeAvItem({ modules: { module_author: { name: 'a', mid: 1, pub_ts: NOW_MS / 1000 }, module_dynamic: { major: { archive: { title: 'C', bvid: 'BV3' } } } } }),
+  ];
+  const out = [];
+  const full = collectBilibiliBatch(items, new Set(), 2, out);
+  assert.equal(full, true);
+  assert.equal(out.length, 2);
+  assert.equal(out[0].title, 'A');
+  assert.equal(out[1].title, 'B');
+});
+
+function fromBv(url, bvid) {
+  assert.ok(url && url.includes(`/video/${bvid}`), `expect url contains ${bvid}, got ${url}`);
+}

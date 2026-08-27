@@ -57,25 +57,38 @@ function parseBilibiliUpInfo(raw) {
     return out;
 }
 
-/** 读 news.json → 四段对象 { articles, stats, bilibiliUps, bilibiliUpInfo, sources }；旧纯数组自动包裹；损坏 → 空骨架 */
+/** ticket 127：B 站每 UP 抓取条数容错解析（默认 10，夹取 1..50） */
+function parseBilibiliMaxItems(raw) {
+    const n = Math.floor(Number(raw));
+    return Number.isFinite(n) && n >= 1 ? Math.min(n, 50) : 10;
+}
+
+/** ticket 127：B 站 Cookie 容错解析（字符串去空白；缺省空串） */
+function parseBilibiliCookie(raw) {
+    return typeof raw === 'string' ? raw.trim() : '';
+}
+
+/** 读 news.json → 对象 { articles, stats, bilibiliUps, bilibiliUpInfo, bilibiliMaxItems, bilibiliCookie, sources }；旧纯数组自动包裹；损坏 → 空骨架 */
 function readNewsData() {
-    if (!fs.existsSync(NEWS_PATH)) return { articles: [], stats: null, bilibiliUps: [], bilibiliUpInfo: {}, sources: { ...DEFAULT_SOURCES }, missing: true };
+    if (!fs.existsSync(NEWS_PATH)) return { articles: [], stats: null, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES }, missing: true };
     try {
         const raw = JSON.parse(fs.readFileSync(NEWS_PATH, 'utf-8'));
-        if (Array.isArray(raw)) return { articles: raw, stats: null, bilibiliUps: [], bilibiliUpInfo: {}, sources: { ...DEFAULT_SOURCES }, missing: false };
+        if (Array.isArray(raw)) return { articles: raw, stats: null, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES }, missing: false };
         if (raw && typeof raw === 'object') {
             return {
                 articles: Array.isArray(raw.articles) ? raw.articles : [],
                 stats: raw.stats && typeof raw.stats === 'object' ? raw.stats : null,
                 bilibiliUps: Array.isArray(raw.bilibiliUps) ? raw.bilibiliUps.map((u) => String(u || '').trim()).filter(Boolean) : [],
                 bilibiliUpInfo: parseBilibiliUpInfo(raw.bilibiliUpInfo),
+                bilibiliMaxItems: parseBilibiliMaxItems(raw.bilibiliMaxItems),
+                bilibiliCookie: parseBilibiliCookie(raw.bilibiliCookie),
                 sources: raw.sources && typeof raw.sources === 'object' ? { ...DEFAULT_SOURCES, ...raw.sources } : { ...DEFAULT_SOURCES },
                 missing: false,
             };
         }
-        return { articles: [], stats: null, bilibiliUps: [], bilibiliUpInfo: {}, sources: { ...DEFAULT_SOURCES }, missing: false };
+        return { articles: [], stats: null, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES }, missing: false };
     } catch {
-        return { articles: [], stats: null, bilibiliUps: [], bilibiliUpInfo: {}, sources: { ...DEFAULT_SOURCES }, missing: false };
+        return { articles: [], stats: null, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES }, missing: false };
     }
 }
 
@@ -150,11 +163,24 @@ function extractUpInfo(items) {
     return null;
 }
 
-/** 单个 UP 主动态翻页抓取（仅 DYNAMIC_TYPE_AV 视频投稿；24h 窗口）；
+/** ticket 127：按最近优先收满 limit 条未抓过的 B 站条目（无 24h 窗口）；已收满返回 true
+ *  （纯函数，供 fetchBilibiliUp 与 node:test 单测使用） */
+function collectBilibiliBatch(items, existingUrls, limit, out) {
+    for (const it of items || []) {
+        if (out.length >= limit) return true;
+        const a = buildBilibiliArticle(it, null); // cutoff=null：不走 24h 窗口
+        if (!a) continue;
+        if (a.url && existingUrls.has(a.url)) continue;
+        out.push(a);
+    }
+    return out.length >= limit;
+}
+
+/** 单个 UP 主动态翻页抓取（仅 DYNAMIC_TYPE_AV 视频投稿；ticket 127：按「最近 N 条」收满即停，不走 24h 窗口）；
  *  返回 { articles, upInfo }——upInfo=本轮抓到的该 UP 主名字/头像（ticket 126，无则 null） */
-async function fetchBilibiliUp(uid, existingUrls, cookie) {
+async function fetchBilibiliUp(uid, existingUrls, cookie, maxItems) {
     const articles = [];
-    const cutoff = Date.now() - WINDOW_MS;
+    const limit = Math.max(1, Math.floor(Number(maxItems) || 10));
     let offset = '';
     let upInfo = null;
     const headers = { ...HEADERS };
@@ -172,44 +198,35 @@ async function fetchBilibiliUp(uid, existingUrls, cookie) {
         const items = data.data.items || [];
         if (items.length === 0) break;
         if (!upInfo) upInfo = extractUpInfo(items);
-        let crossedWindow = false;
-
-        for (const it of items) {
-            const article = buildBilibiliArticle(it, cutoff);
-            if (!article) continue;
-            if (article.url && existingUrls.has(article.url)) continue;
-            articles.push(article);
-            if (cutoff && it.modules && it.modules.module_author && Number(it.modules.module_author.pub_ts || 0) * 1000 < cutoff) {
-                crossedWindow = true; // 越过 24h 边界（按时间倒序）
-            }
-        }
-
-        if (crossedWindow || !data.data.has_more) break;
+        if (collectBilibiliBatch(items, existingUrls, limit, articles)) break; // 已收满
+        if (!data.data.has_more) break;
         offset = data.data.offset || '';
         if (!offset) break;
     }
     return { articles, upInfo };
 }
 
-/** B 站源：cookie 引导 + 逐 UP 主抓取（24h 窗口；批内/库内双去重由 checkAndFetch 统一完成）；
+/** B 站源：cookie 引导 + 逐 UP 主抓取（ticket 127：每 UP 最近 N 条，不走 24h 窗口；批内/库内双去重由 checkAndFetch 统一完成）；
  *  返回 { articles, upInfo }——upInfo=本轮各 UP 主资料合并（ticket 126） */
-async function fetchBilibili(existingUrls, upUids) {
+async function fetchBilibili(existingUrls, upUids, maxItems, cookie) {
     const list = upUids || [];
     if (list.length === 0) {
         console.log('  📡 B站 (无 UP 主名单，跳过)');
-        return [];
+        return { articles: [], upInfo: {} };
     }
-    console.log(`  📡 B站 (${list.length} 位 UP 主)...`);
-    const cookie = await getBilibiliCookie();
-    if (!cookie) {
-        console.log('  ✗ B站 cookie 引导失败，跳过本轮（下轮重试）');
-        return [];
+    const per = Math.max(1, Math.floor(Number(maxItems) || 10));
+    console.log(`  📡 B站 (${list.length} 位 UP 主，每 UP 最近 ${per} 条)...`);
+    // ticket 127：优先用用户在「UP 主名单管理」弹窗配置的 Cookie；未配置则自动引导（buvid3 等）
+    const ck = (cookie && String(cookie).trim()) || (await getBilibiliCookie());
+    if (!ck) {
+        console.log('  ✗ B站 无可用 Cookie（自动引导失败或 API 风控 412）——请在剪藏本设置 ⚙️ → UP 主名单管理 → 粘贴 B 站 Cookie 后重试');
+        return { articles: [], upInfo: {} };
     }
     const seen = new Set();
     const articles = [];
     const upInfo = {};
     for (const uid of list) {
-        const res = await fetchBilibiliUp(uid, existingUrls, cookie);
+        const res = await fetchBilibiliUp(uid, existingUrls, ck, per);
         for (const a of res.articles) {
             if (seen.has(a.url)) continue;
             seen.add(a.url);
@@ -217,7 +234,7 @@ async function fetchBilibili(existingUrls, upUids) {
         }
         if (res.upInfo) upInfo[uid] = res.upInfo;
     }
-    console.log(`  ✓ B站 ${articles.length} 条 (24h 内)`);
+    console.log(`  ✓ B站 ${articles.length} 条 (最近 ${per} 条/UP)`);
     return { articles, upInfo };
 }
 
@@ -406,8 +423,10 @@ async function checkAndFetch() {
         else console.log('  🚫 果壳 已关闭（sources.guokr=false），跳过');
         if (sources.zhihu !== false) jobs.push(fetchZhihu().then((r) => r));
         else console.log('  🚫 知乎日报 已关闭（sources.zhihu=false），跳过');
-        // B 站：并入 jobs 并行抓取，同时收集本轮 UP 主资料（ticket 126：抓到消息即回填名字/头像）
-        const biliPromise = sources.bilibili !== false ? fetchBilibili(existingUrls, disk.bilibiliUps) : null;
+        // B 站：并入 jobs 并行抓取，同时收集本轮 UP 主资料（ticket 126）与「最近 N 条」配置（ticket 127）
+        const biliPromise = sources.bilibili !== false
+            ? fetchBilibili(existingUrls, disk.bilibiliUps, disk.bilibiliMaxItems, disk.bilibiliCookie)
+            : null;
         if (!biliPromise) console.log('  🚫 B站 已关闭（sources.bilibili=false），跳过');
         if (biliPromise) jobs.push(biliPromise.then((r) => r.articles));
 
@@ -453,4 +472,4 @@ if (require.main === module) {
     setInterval(checkAndFetch, FETCH_INTERVAL_MS);
 }
 
-module.exports = { NEWS_PATH, FETCH_INTERVAL_MS, resolveNewsPath, checkAndFetch, readNewsData, fetchBilibiliUp, getBilibiliCookie, buildBilibiliArticle, extractUpInfo, parseBilibiliUpInfo };
+module.exports = { NEWS_PATH, FETCH_INTERVAL_MS, resolveNewsPath, checkAndFetch, readNewsData, fetchBilibiliUp, getBilibiliCookie, buildBilibiliArticle, extractUpInfo, parseBilibiliUpInfo, parseBilibiliMaxItems, parseBilibiliCookie, collectBilibiliBatch };
