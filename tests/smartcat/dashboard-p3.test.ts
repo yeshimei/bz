@@ -1,6 +1,6 @@
 /**
- * P3 用户体验层：Dashboard 行为日志页签测试（ticket 123）
- * - 行为日志页签渲染（开关控制显隐）
+ * P3 用户体验层：Dashboard 行为页签测试（ticket 123）
+ * - 行为页签渲染（开关控制显隐）
  * - promote 按钮存在
  *
  * 设置弹窗新分组测试见 settings.test.ts（已更新断言）
@@ -66,7 +66,7 @@ vi.mock('../../src/core/notice', () => ({
 
 import { openSmartcatDashboard, closeSmartcatDashboard } from '../../src/smartcat/dashboard';
 
-describe('Dashboard 行为日志页签（P3 ticket 123）', () => {
+describe('Dashboard 行为页签（P3 ticket 123）', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
     vi.clearAllMocks();
@@ -89,29 +89,29 @@ describe('Dashboard 行为日志页签（P3 ticket 123）', () => {
     metadataCache: { on: vi.fn() },
   };
 
-  it('showBehaviorLog=true 时渲染行为日志页签', async () => {
+  it('showBehaviorLog=true 时渲染行为页签', async () => {
     await openSmartcatDashboard(mockApp as any);
 
     const tabs = document.querySelectorAll('.bz-sc-dash-tab');
     const tabTexts = Array.from(tabs).map((t) => t.textContent);
-    expect(tabTexts).toContain('行为日志');
+    expect(tabTexts).toContain('行为');
   });
 
-  it('showBehaviorLog=false 时隐藏行为日志页签', async () => {
+  it('showBehaviorLog=false 时隐藏行为页签', async () => {
     mockSettings.showBehaviorLog = false;
     await openSmartcatDashboard(mockApp as any);
 
     const tabs = document.querySelectorAll('.bz-sc-dash-tab');
     const tabTexts = Array.from(tabs).map((t) => t.textContent);
-    expect(tabTexts).not.toContain('行为日志');
+    expect(tabTexts).not.toContain('行为');
   });
 
-  it('行为日志页签显示行为条目', async () => {
+  it('行为页签显示行为条目', async () => {
     await openSmartcatDashboard(mockApp as any);
 
-    // 切换到行为日志页签
+    // 切换到行为页签
     const tabs = document.querySelectorAll('.bz-sc-dash-tab');
-    const behaviorTab = Array.from(tabs).find((t) => t.textContent === '行为日志');
+    const behaviorTab = Array.from(tabs).find((t) => t.textContent === '行为');
     expect(behaviorTab).toBeDefined();
     (behaviorTab as HTMLElement).click();
 
@@ -120,12 +120,12 @@ describe('Dashboard 行为日志页签（P3 ticket 123）', () => {
     expect(behaviorItems.length).toBeGreaterThan(0);
   });
 
-  it('行为日志页签有提升为记忆按钮', async () => {
+  it('行为页签有提升为记忆按钮', async () => {
     await openSmartcatDashboard(mockApp as any);
 
-    // 切换到行为日志页签
+    // 切换到行为页签
     const tabs = document.querySelectorAll('.bz-sc-dash-tab');
-    const behaviorTab = Array.from(tabs).find((t) => t.textContent === '行为日志');
+    const behaviorTab = Array.from(tabs).find((t) => t.textContent === '行为');
     (behaviorTab as HTMLElement).click();
 
     const promoteButtons = document.querySelectorAll('.bz-sc-dash-promote-btn');
@@ -135,9 +135,9 @@ describe('Dashboard 行为日志页签（P3 ticket 123）', () => {
   it('promote 按钮点击后调用 saveSmartCatData 落盘', async () => {
     await openSmartcatDashboard(mockApp as any);
 
-    // 切换到行为日志页签
+    // 切换到行为页签
     const tabs = document.querySelectorAll('.bz-sc-dash-tab');
-    const behaviorTab = Array.from(tabs).find((t) => t.textContent === '行为日志');
+    const behaviorTab = Array.from(tabs).find((t) => t.textContent === '行为');
     (behaviorTab as HTMLElement).click();
 
     // 点击第一个 promote 按钮

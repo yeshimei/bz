@@ -347,7 +347,7 @@ function distributionCard(
   return c;
 }
 
-// ---------------- 页签渲染（P3 新增行为日志） ----------------
+// ---------------- 页签渲染（P3 新增行为） ----------------
 
 const PANE_KEYS_ALL = ['overview', 'emotion', 'personality', 'memory', 'report', 'behavior'] as const;
 type PaneKey = (typeof PANE_KEYS_ALL)[number];
@@ -357,10 +357,10 @@ const TAB_LABELS: Record<PaneKey, string> = {
   personality: '人格',
   memory: '记忆',
   report: '报告',
-  behavior: '行为日志',
+  behavior: '行为',
 };
 
-/** 根据设置决定可见页签（showBehaviorLog=false 时隐藏行为日志页签） */
+/** 根据设置决定可见页签（showBehaviorLog=false 时隐藏行为页签） */
 function getVisiblePaneKeys(): PaneKey[] {
   const s = tryGetSettings() as any;
   const keys: PaneKey[] = ['overview', 'emotion', 'personality', 'memory', 'report'];
