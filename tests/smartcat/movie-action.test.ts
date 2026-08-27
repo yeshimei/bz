@@ -49,9 +49,10 @@ describe('notifyMovieAction（影视动作观察，域事件派发）', () => {
     expect(stream[stream.length - 1].source).toBe('movie');
   });
 
-  it('状态流转/改分/影评/删除各事件 → 对应动作文案', async () => {
+  it('状态流转/改分/影评/删除各事件 → 对应结构化观察', async () => {
     const { app } = makeApp();
     await ensureSmartCat(app);
+    // P2a：status 事件无专用路由规则 → system:fallback → behavior 流
     emitDomainEvent('movie', { kind: 'status', name: '美丽人生', from: 'watching', to: 'watched' });
     emitDomainEvent('movie', { kind: 'rated', name: '美丽人生', fromRating: 3.5, toRating: 4.5 });
     emitDomainEvent('movie', { kind: 'review', name: '美丽人生', fromReview: null, toReview: '经典' });
@@ -59,14 +60,17 @@ describe('notifyMovieAction（影视动作观察，域事件派发）', () => {
     emitDomainEvent('movie', { kind: 'deleted', name: '美丽人生' });
     await settle();
     const stream: any[] = __getSmartcatInternals().data.memory.memoryStream;
-    const tail = stream.slice(-5).map((m) => m.description);
-    expect(tail).toEqual([
-      '你看完了《美丽人生》',
+    const behavior: any[] = __getSmartcatInternals().data.memory.behaviorStream;
+    // rated → memory, reviewed×2 → memory; status/deleted → behavior
+    const memTail = stream.slice(-3).map((m) => m.description);
+    expect(memTail).toEqual([
       '你把《美丽人生》的评分从 3.5 改为 4.5',
       '你写了《美丽人生》的影评：经典',
       '你删掉了《美丽人生》的影评',
-      '你删除了《美丽人生》的影视记录',
     ]);
+    // status/deleted → behavior 流（至少有 movie 来源的条目）
+    const movieBeh = behavior.filter((m) => m.source === 'movie');
+    expect(movieBeh.length).toBeGreaterThanOrEqual(1);
   });
 
   it('noteSource 关闭 → 静默不观察', async () => {

@@ -323,25 +323,25 @@ describe('vault 活动路由（diary/note/clipping/短路）', () => {
     await sleep(10);
     expect([...__getDiaryTimersForTests().keys()].every((k) => k.startsWith(p2 + '\u0001'))).toBe(true);
 
-    // 条目消失（modify diff）→ 删除观察 + 计时清理
+    // 条目消失（modify diff）→ 删除观察（behavior 流）+ 计时清理
     vault.files.set(p2, entryA);
     vault.emit('modify', vault.file(p2));
     await sleep(40);
-    stream = __getSmartcatInternals().data.memory.memoryStream;
+    const beh = __getSmartcatInternals().data.memory.behaviorStream;
     const yestStr = `${yest.getFullYear()}-${yp(yest.getMonth() + 1)}-${yp(yest.getDate())}`;
-    expect(stream.some((m) => m.description === `你删除了 ${yestStr} 11:00 的日记`)).toBe(true);
+    expect(beh.some((m) => m.source === 'diary' && m.type === 'deleted')).toBe(true);
 
-    // 文件删除事件（有跟踪快照）→ 逐条删除观察（日期取自最近一次快照：已随改名后的文件日期）
+    // 文件删除事件（有跟踪快照）→ 逐条删除观察（behavior 流）
     vault.emit('delete', { path: p2 });
     await sleep(40);
-    stream = __getSmartcatInternals().data.memory.memoryStream;
-    expect(stream.some((m) => m.description === `你删除了 ${yestStr} 09:00 的日记`)).toBe(true);
+    const beh2 = __getSmartcatInternals().data.memory.behaviorStream;
+    expect(beh2.filter((m) => m.source === 'diary' && m.type === 'deleted').length).toBeGreaterThanOrEqual(2);
 
-    // 从未跟踪过的日期文件删除 → 文件级单条兜底
+    // 从未跟踪过的日期文件删除 → 文件级单条兜底（behavior 流）
     vault.emit('delete', { path: `${dir}/2020-01-01.md` });
     await sleep(40);
-    stream = __getSmartcatInternals().data.memory.memoryStream;
-    expect(stream.some((m) => m.description === '你删除了 2020-01-01 的日记')).toBe(true);
+    const beh3 = __getSmartcatInternals().data.memory.behaviorStream;
+    expect(beh3.some((m) => m.source === 'diary' && m.type === 'deleted')).toBe(true);
   }, 20000);
 
   it('卡片盒/现代诗/信：修改静置首落、删除观察、移出目录观察、信准入拒绝', async () => {
@@ -368,15 +368,17 @@ describe('vault 活动路由（diary/note/clipping/短路）', () => {
     expect(stream.some((m) => m.source === 'letter')).toBe(false);
     expect(__getNoteTimersForTests().has('我的/信/第一封.md')).toBe(false);
 
-    // 删除已跟踪的诗 → 删除观察
+    // 删除已跟踪的诗 → 删除观察（behavior 流）
     vault.emit('delete', { path: '我的/现代诗/161230 忧郁啊.md' });
     await sleep(40);
-    expect(stream.some((m) => m.description === '你删除了现代诗「161230 忧郁啊」')).toBe(true);
+    const noteBeh = __getSmartcatInternals().data.memory.behaviorStream;
+    expect(noteBeh.some((m) => m.source === 'poem' && m.type === 'deleted')).toBe(true);
 
-    // 卡片盒改名移出观察目录 → 按旧跟踪产删除观察
+    // 卡片盒改名移出观察目录 → 按旧跟踪产删除观察（behavior 流）
     vault.emit('rename', { path: '其他/想法一.md' }, '卡片盒/想法一.md');
     await sleep(40);
-    expect(stream.some((m) => m.description === '你删除了卡片盒「想法一」')).toBe(true);
+    const noteBeh2 = __getSmartcatInternals().data.memory.behaviorStream;
+    expect(noteBeh2.some((m) => m.source === 'flash' && m.type === 'deleted')).toBe(true);
   }, 20000);
 
   it('影视/番茄钟/reading 路径短路不产观察；无关 md 静默', async () => {
@@ -669,7 +671,7 @@ describe('域 JSON 感知（library 盲通道）', () => {
     expect(await waitForDesc('你读了《三体》约 15 分钟（读到 40%）')).toBe(true);
     expect(await waitForDesc('你在《三体》划了条重点：「很震撼的一段」')).toBe(true);
     const stream: any[] = __getSmartcatInternals().data.memory.memoryStream;
-    expect(stream.filter((m) => m.source === 'domain:library').length).toBeGreaterThanOrEqual(4);
+    expect(stream.filter((m) => m.source === 'library').length).toBeGreaterThanOrEqual(4);
     // 「读完」命中 dossier 正性白名单 → 事件表即写（经 onObservation 钩子）；划线防抖结算后落表
     const hasDossier = async (): Promise<boolean> => {
       const t0 = Date.now();

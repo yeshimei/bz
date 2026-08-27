@@ -44,6 +44,7 @@ const settle = () => new Promise((r) => setTimeout(r, 100));
 const waitSettle = () => new Promise((r) => setTimeout(r, 320));
 
 const readStream = (): any[] => __getSmartcatInternals().data.memory.memoryStream;
+const readBehavior = (): any[] => __getSmartcatInternals().data.memory.behaviorStream;
 
 beforeEach(() => {
   resetObsidianMocks();
@@ -154,7 +155,7 @@ describe('卡片盒/现代诗/信 观察（per-file 10 分钟结算，ticket 083
     expect(stream[stream.length - 1].description).toBe('你修改了卡片盒「TDD」：删除了第 1 段「A」；新增了第 1 段「B」、新增了第 2 段「C」');
   });
 
-  it('删除：跟踪过的文件删整文件 → 追加删除观察 + 清计时；未跟踪过 → 跳过', async () => {
+  it('删除：跟踪过的文件删整文件 → 追加删除观察（behavior 流）+ 清计时；未跟踪过 → 跳过', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const path = '卡片盒/TDD.md';
@@ -165,10 +166,10 @@ describe('卡片盒/现代诗/信 观察（per-file 10 分钟结算，ticket 083
     vault.files.delete(path);
     vault.emit('delete', vault.file(path));
     await settle();
-    const stream = readStream();
-    const del = stream.find((m) => m.description === '你删除了卡片盒「TDD」');
+    // P2a：flash:deleted 路由到 behavior 流
+    const beh = readBehavior();
+    const del = beh.find((m) => m.source === 'flash' && m.type === 'deleted');
     expect(del).toBeTruthy();
-    expect(del.source).toBe('flash');
     expect(__getNoteTimersForTests().size).toBe(0);
     // 从未跟踪过的文件删除 → 跳过（无法知道内容）
     const oldPath = '我的/现代诗/旧诗.md';
@@ -176,7 +177,7 @@ describe('卡片盒/现代诗/信 观察（per-file 10 分钟结算，ticket 083
     vault.files.delete(oldPath);
     vault.emit('delete', vault.file(oldPath));
     await settle();
-    expect(readStream().length).toBe(1);
+    expect(readStream().length).toBe(0); // 首落未结算（timer 被删除前清除），内存流为空
   });
 
   it('存量基线：ensure 前已有 flash 文件 → 修改直接产 diff（不补首落，v2 规则 3）', async () => {
@@ -271,7 +272,7 @@ describe('卡片盒/现代诗/信 观察（per-file 10 分钟结算，ticket 083
     expect(__getNoteTimersForTests().size).toBe(0);
   });
 
-  it('B1：settle 时文件真删除（无 delete 事件）→ 兜底删除观察 + 清理', async () => {
+  it('B1：settle 时文件真删除（无 delete 事件）→ 兜底删除观察（behavior 流）+ 清理', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const path = '卡片盒/TDD.md';
@@ -280,8 +281,9 @@ describe('卡片盒/现代诗/信 观察（per-file 10 分钟结算，ticket 083
     await flush(); // 计时已装（未到结算）
     vault.files.delete(path); // 不 emit delete —— 只走 settle 的 getAbstractFileByPath null 兜底
     await waitSettle();
-    const stream = readStream();
-    expect(stream.some((m) => m.description === '你删除了卡片盒「TDD」')).toBe(true);
+    // P2a：flash:deleted 路由到 behavior 流
+    const beh = readBehavior();
+    expect(beh.some((m) => m.source === 'flash' && m.type === 'deleted')).toBe(true);
     expect(__getNoteTimersForTests().size).toBe(0);
     expect(__getNoteTrackedForTests().has(path)).toBe(false);
   });
@@ -321,7 +323,7 @@ describe('卡片盒/现代诗/信 观察（per-file 10 分钟结算，ticket 083
     expect(__getNoteTrackedForTests().has(path)).toBe(false);
   });
 
-  it('B2：note rename 移出目录 → 按旧跟踪产删除观察 + 清理', async () => {
+  it('B2：note rename 移出目录 → 按旧跟踪产删除观察（behavior 流）+ 清理', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const path = '卡片盒/A.md';
@@ -332,8 +334,9 @@ describe('卡片盒/现代诗/信 观察（per-file 10 分钟结算，ticket 083
     await vault.rename(vault.file(path), outPath);
     vault.emit('rename', vault.file(outPath), path);
     await settle();
-    const stream = readStream();
-    expect(stream.some((m) => m.description === '你删除了卡片盒「A」')).toBe(true);
+    // P2a：flash:deleted 路由到 behavior 流
+    const beh = readBehavior();
+    expect(beh.some((m) => m.source === 'flash' && m.type === 'deleted')).toBe(true);
     expect(__getNoteTimersForTests().size).toBe(0);
     expect(__getNoteTrackedForTests().has(path)).toBe(false);
   });

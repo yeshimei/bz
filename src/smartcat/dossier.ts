@@ -51,7 +51,8 @@ export function dossierEventFromMemory(m: MemoryStreamEntry): DossierEvent | nul
   const mk = (type: DossierEventType, title?: string): DossierEvent =>
     title ? { eventId: m.id, type, at, title } : { eventId: m.id, type, at };
   switch (m.source) {
-    case 'domain:library': {
+    case 'domain:library':
+    case 'library': {
       // 书库读完书（加入/开始/移出/进度句式不命中）
       const t = desc.match(/^你读完了《(.+?)》$/);
       return t ? mk('book', t[1]) : null;

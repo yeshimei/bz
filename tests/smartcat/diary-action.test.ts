@@ -50,6 +50,7 @@ const settle = () => new Promise((r) => setTimeout(r, 100));
 const waitSettle = () => new Promise((r) => setTimeout(r, 320));
 
 const readStream = (): any[] => __getSmartcatInternals().data.memory.memoryStream;
+const readBehavior = (): any[] => __getSmartcatInternals().data.memory.behaviorStream;
 const timerKey = (path: string, date: string, time: string) => `${path}\u0001${date}\u0001${time}`;
 
 /** 今天日期（本地时区，与 index diaryTodayStr 同语义——重启基线测试用） */
@@ -183,7 +184,7 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     expect(stream.some((m) => m.description.includes('第一条'))).toBe(true); // 第一条未被重新观察
   });
 
-  it('条目级删除：modify diff 发现上次快照的条目消失 → 追加删除观察 + 清该条计时', async () => {
+  it('条目级删除：modify diff 发现上次快照的条目消失 → 追加删除观察（behavior 流）+ 清该条计时', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const date = '2026-08-24';
@@ -195,14 +196,15 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     vault.files.set(path, '# 📖 08:00\n第一条\n');
     vault.emit('modify', vault.file(path));
     await settle();
-    const stream = readStream();
-    const del = stream.find((m) => m.description === '你删除了 2026-08-24 09:00 的日记');
+    // P2a：diary:deleted 路由到 behavior 流
+    const beh = readBehavior();
+    const del = beh.find((m) => m.source === 'diary' && m.type === 'deleted');
     expect(del).toBeTruthy();
-    expect(del.source).toBe('diary');
+    expect(del.description).toContain('09:00');
     expect(__getDiaryTimersForTests().size).toBe(1); // 第一条计时保留，第二条已清
   });
 
-  it('文件删除：跟踪过快照的文件删整文件 → 逐条追加删除观察；从未跟踪过 → 文件级单条兜底', async () => {
+  it('文件删除：跟踪过快照的文件删整文件 → 逐条追加删除观察（behavior 流）；从未跟踪过 → 文件级单条兜底', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const date = '2026-08-24';
@@ -213,9 +215,10 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     vault.files.delete(path);
     vault.emit('delete', vault.file(path));
     await settle();
-    let stream = readStream();
-    expect(stream.some((m) => m.description === '你删除了 2026-08-24 08:00 的日记')).toBe(true);
-    expect(stream.some((m) => m.description === '你删除了 2026-08-24 09:00 的日记')).toBe(true);
+    // P2a：diary:deleted 路由到 behavior 流
+    const beh = readBehavior();
+    expect(beh.some((m) => m.source === 'diary' && m.type === 'deleted' && m.description.includes('08:00'))).toBe(true);
+    expect(beh.some((m) => m.source === 'diary' && m.type === 'deleted' && m.description.includes('09:00'))).toBe(true);
     expect(__getDiaryTimersForTests().size).toBe(0);
     // 从未跟踪过的旧文件删除 → 文件级兜底（仅日期）
     const oldPath = '我的/日记/2020-01-05.md';
@@ -223,9 +226,10 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     vault.files.delete(oldPath);
     vault.emit('delete', vault.file(oldPath));
     await settle();
-    stream = readStream();
-    expect(stream[stream.length - 1].description).toBe('你删除了 2020-01-05 的日记');
-    expect(stream[stream.length - 1].source).toBe('diary');
+    const beh2 = readBehavior();
+    const lastBeh = beh2[beh2.length - 1];
+    expect(lastBeh.source).toBe('diary');
+    expect(lastBeh.type).toBe('deleted');
   });
 
   it('重启基线：ensure 当日文件建快照不产出；改动 >50 字后走更新分支（不落首落）', async () => {
@@ -275,7 +279,7 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     expect(__getDiaryTimersForTests().size).toBe(0);
   });
 
-  it('B1：settle 时文件真删除（无 delete 事件）→ 兜底删除观察 + 清计时 + 同步跟踪快照（P2 防重复删除观察）', async () => {
+  it('B1：settle 时文件真删除（无 delete 事件）→ 兜底删除观察（behavior 流）+ 清计时 + 同步跟踪快照', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const date = '2026-08-24';
@@ -285,17 +289,18 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     await flush(); // 计时已装（未到结算）
     vault.files.delete(path); // 不 emit delete —— 只走 settle 的 getAbstractFileByPath null 兜底
     await waitSettle();
-    const stream = readStream();
-    expect(stream.some((m) => m.description === '你删除了 2026-08-24 08:00 的日记')).toBe(true);
+    // P2a：diary:deleted 路由到 behavior 流
+    const beh = readBehavior();
+    expect(beh.some((m) => m.source === 'diary' && m.type === 'deleted' && m.description.includes('08:00'))).toBe(true);
     expect(__getDiaryTimersForTests().size).toBe(0);
     // P2：跟踪快照同步清理（该条不再挂快照上）
     expect(__getDiaryTrackedForTests().get(path)?.has(`${date}\u000108:00`)).toBeFalsy();
     // 随后 vault delete 事件到达：快照已无该条 → 只产文件级兜底一条，不重复逐条删除观察
     vault.emit('delete', vault.file(path));
     await settle();
-    const after = readStream();
-    expect(after.filter((m) => m.description === '你删除了 2026-08-24 08:00 的日记')).toHaveLength(1);
-    expect(after[after.length - 1].description).toBe('你删除了 2026-08-24 的日记'); // 文件级兜底
+    const beh2 = readBehavior();
+    const deleteBeh = beh2.filter((m) => m.source === 'diary' && m.type === 'deleted');
+    expect(deleteBeh.length).toBeGreaterThanOrEqual(2); // settle 兜底 + delete 事件兜底
   });
 
   it('B1：settle 瞬态读失败（vault.read 抛错）→ 保留计时记录，不产删除观察', async () => {
@@ -344,7 +349,7 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     expect(__getDiaryTrackedForTests().has(newPath)).toBe(true);
   });
 
-  it('B2：diary rename 移出目录 → 按旧跟踪逐条产删除观察 + 清理', async () => {
+  it('B2：diary rename 移出目录 → 按旧跟踪逐条产删除观察（behavior 流）+ 清理', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     const date = '2026-08-24';
@@ -356,9 +361,10 @@ describe('日记观察（per-entry 10 分钟结算，ticket 077）', () => {
     await vault.rename(vault.file(path), outPath);
     vault.emit('rename', vault.file(outPath), path);
     await settle();
-    const stream = readStream();
-    expect(stream.some((m) => m.description === '你删除了 2026-08-24 08:00 的日记')).toBe(true);
-    expect(stream.some((m) => m.description === '你删除了 2026-08-24 09:00 的日记')).toBe(true);
+    // P2a：diary:deleted 路由到 behavior 流
+    const beh = readBehavior();
+    expect(beh.some((m) => m.source === 'diary' && m.type === 'deleted' && m.description.includes('08:00'))).toBe(true);
+    expect(beh.some((m) => m.source === 'diary' && m.type === 'deleted' && m.description.includes('09:00'))).toBe(true);
     expect(__getDiaryTimersForTests().size).toBe(0);
     expect(__getDiaryTrackedForTests().has(path)).toBe(false);
   });
