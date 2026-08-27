@@ -1191,3 +1191,68 @@
 }
 .bz-sc-dash-memory--superseded { opacity: 0.55; }
 .bz-sc-dash-memory--superseded .bz-sc-dash-memory-text { text-decoration: line-through; }
+
+/* ===== P3 用户体验层：行为日志页签 + structured 摘要（ticket 123） ===== */
+
+/* 行为日志条目 */
+.bz-sc-dash-behavior-item {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.bz-sc-dash-behavior-item:last-child { border-bottom: none; }
+.bz-sc-dash-behavior-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.bz-sc-dash-behavior-type {
+  background: rgba(var(--color-orange-rgb), 0.12);
+  color: var(--color-orange);
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+.bz-sc-dash-promote-btn {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  background: rgba(var(--color-green-rgb), 0.12);
+  color: var(--color-green);
+  border: none;
+}
+.bz-sc-dash-promote-btn:hover {
+  background: rgba(var(--color-green-rgb), 0.25);
+}
+
+/* 记忆流 structured 摘要 */
+.bz-sc-dash-structured-summary {
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-top: 2px;
+  font-style: italic;
+}
+.bz-sc-dash-structured-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 3px;
+}
+.bz-sc-dash-structured-tags .bz-sc-dash-badge {
+  font-size: 10px;
+  padding: 0 4px;
+  background: rgba(var(--color-purple-rgb), 0.1);
+  color: var(--color-purple);
+}
+.bz-sc-dash-snapshot-summary {
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-top: 2px;
+  padding-left: 8px;
+  border-left: 2px solid var(--background-modifier-border);
+}
