@@ -1,6 +1,6 @@
 # 123 — 小橘记忆流/行为流重构
 
-> 状态：进行中 ～ 关联：ADR-0055~0059 ～ 分支：worktree/smartcat-*
+> 状态：✅ 完成（master 8f310f0）～ 关联：ADR-0055~0059 ～ 追加拍板：2026-08-27 跳过聚合讯文章也进行为流
 
 ## 目标
 
@@ -23,6 +23,7 @@
 13. P3: 数据面板记忆流+行为日志视图、promote 按钮、pin/unpin、自动关联（同 entityType+name）、conversationId 聚合
 14. ContentCompletionDetector 替换旧 10 分钟结算计时器（30s 稳定窗口 + 5min 会话超时 + ≥20 字符）
 15. source 保留（路由）+ structured.entityType（描述生成）两字段并存
+16. **追加拍板（2026-08-27）**：聚合讯「跳过」（点「下一篇」）也发观察——`news:skipped` 入行为流（轻量记录，不向量化）；保存链路不变（saved 立即形态 + auto-summary 补全）；「阅读」无独立 UI 动作不发
 
 ## 阶段划分
 

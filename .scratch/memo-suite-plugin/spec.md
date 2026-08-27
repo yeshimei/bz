@@ -96,7 +96,7 @@ Feature: memo-suite-plugin
 26. 作为用户，我希望阅读器内的摘要以 markdown 渲染（renderMarkdown），以便排版与原脚本一致。
 27. 作为用户，我希望聚合讯的约 196 行注入样式（弹窗/列表/统计）原样保留，以便视觉一致。
 28. 作为用户，我希望阅读器显示作者（👤）与日期（📅）、全部读完显示完成态（renderDoneState），以便与原脚本一致。
-29. 作为用户，我希望小橘能感知聚合讯逐篇阅读（打开记时长；下一篇/保存时按三态判定——保存优先、跳过 ≥2 分钟升阅读，时长取整分钟），保存联动 auto-summary（登记待补全 → 剪藏 modify 补全完整保存观察 / 2 分钟降级），以便陪伴记忆细致准确。（2026-08-23 用户拍板，ticket 076，ADR-0029：**逐篇三态方法监听**——news 域 reader 动作调 `notifyNewsRead`/`notifyNewsSaved`，文案构造集中 `news-source.ts` 纯函数；剪藏事件观察整体停用、domain:news 计数观察移除；news.json/news-stats.json/smartcat.json 零改动，时长仅观察携带）
+29. 作为用户，我希望小橘能感知聚合讯逐篇阅读（打开记时长；下一篇/保存时发观察——保存立即形态 + auto-summary 补全、跳过 `news:skipped` 入行为流，时长取整分钟），以便陪伴记忆细致准确。（2026-08-23 用户拍板，ticket 076，ADR-0029：**逐篇三态方法监听**——news 域 reader 动作调 `notifyNewsRead`/`notifyNewsSaved`，文案构造集中 `news-source.ts` 纯函数；剪藏事件观察整体停用、domain:news 计数观察移除；news.json/news-stats.json/smartcat.json 零改动，时长仅观察携带。2026-08-25 修订：仅保存发观察；**2026-08-27 追加拍板（ticket 123）**：跳过也发——`news:skipped` 入行为流，阅读无独立动作不发）
 ### 收藏本（Favorites）
 
 23. 作为用户，我希望 GitHub 收藏管理（列表、AI 生成标题/简介、打开链接、长按操作）与原脚本一致，以便管理我的 GitHub stars。
@@ -554,6 +554,7 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - 描述双轨：创作型（日记/诗歌/信）ContentCompletionDetector（30s 稳定/5min 会话超时/≥20 字符）→ SnapshotGenerator（summary/tags/emotion，snapshot.emotion 写顶层）→ description；非创作型 entityType 模板函数；refHash 变化 ≥30% 才重生成快照+重向量化；旧 *-source.ts 废弃
 - 行为流辅助上下文（时间模式+频率统计查询），不入 prompt 槽位；反思/小结/周报/叙事全部只看记忆流；向量只对 memoryStream，旧 vec 删除重建
 - 遗忘机制不做；设置项 5 个（行为流保留天数/最大条数/显示行为日志/启用关联自动发现/关联发现窗口）；P3 数据面板行为日志 tab + promote 按钮（行为→记忆）+ pin/unpin + 自动关联（同 entityType+name）+ conversationId 聚合
+- **追加拍板（2026-08-27）**：聚合讯「跳过」（点「下一篇」，markAsRead('skipped')）也发观察——`news:skipped` 入行为流（轻量记录，不向量化）；保存链路不变（saved 立即形态 + auto-summary 补全）；「阅读」无独立 UI 动作不发
 
 ### 第二大脑统计卡改版与悬停全文（ticket 109）
 

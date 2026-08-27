@@ -12,6 +12,7 @@ import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
 import { pad2 } from '../core/utils';
 // 聚合讯观察（ticket 076，ADR-0029）：域事件派发挂点（域内 import 之后，对齐影视 movie/ui）
+// ticket 123 追加（2026-08-27 用户拍板）：跳过也发观察（news:skipped → 行为流）——见 markAsRead
 import { emitDomainEvent } from '../core/domain-bus';
 import type { NewsReadEvent } from '../smartcat/news-source';
 
@@ -522,15 +523,18 @@ export function markAsRead(action: string): NewsReadEvent | null {
   const a = articles[currentIndex];
   let evt: NewsReadEvent | null = null;
   if (a) {
-    // ticket 076 修订（2026-08-25 用户拍板）：只保留「保存」观察——跳过/阅读不再产观察（域统计照记）；
+    // ticket 076 修订（2026-08-25 用户拍板：只发保存）→ ticket 123 追加（2026-08-27 用户拍板）：跳过也产观察
+    // ——保存走 saved 立即形态 + auto-summary 补全；跳过走 news:skipped 入行为流（轻量记录，不向量化）；
+    // 阅读无独立动作不发（域统计照记）；
     // 时长 = 累计可视时间（hide 已暂停并入 accumMs，此处补挂起会话），毫秒/60000 取整分钟 ≥1
     // （原实现 ms/60 致时长虚增 60 倍——「读了 N 分钟」离谱根因之一）
-    if (action === 'saved') {
+    if (action === 'saved' || action === 'skipped') {
       const now = Date.now();
       const durationSec = (openedAt ? now - openedAt : 0) + accumMs;
       const durationMin = Math.max(1, Math.round(durationSec / 60000));
-      evt = { title: a.title, platform: a.platform, state: 'saved', durationMin };
-      // 保存立即形态在此发（saveToClip 再经 'news' saved 入口登记 auto-summary 补全）；smartcat 未初始化 / noteSource 关时静默
+      evt = { title: a.title, platform: a.platform, state: action as 'saved' | 'skipped', durationMin };
+      // 保存立即形态在此发（saveToClip 再经 'news' saved 入口登记 auto-summary 补全）；
+      // 跳过：news:skipped → 行为流；smartcat 未初始化 / noteSource 关时静默
       emitDomainEvent('news', { kind: 'read', evt });
     }
     a.read = true;

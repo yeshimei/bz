@@ -1245,8 +1245,9 @@ export async function maybeMemoDueScan(now: Date = new Date()): Promise<void> {
 // ------------- 聚合讯观察（ticket 076：2026-08-25 修订——仅保存 + 累计可视时长，ADR-0029） -------------
 
 /** 聚合讯观察处理（read 入口）：news 域 reader 经 emitDomainEvent('news', {kind:'read', evt}) 派发。
- *  2026-08-25 用户拍板：跳过/阅读不再产生观察，仅保存发（立即形态，auto-summary 补全走
- *  saved 入口登记）；P2b：构造 StructuredMeta 走行为流；未初始化/未启用（noteSource 关）→ 静默。 */
+ *  2026-08-25 拍板：仅保存发观察（立即形态，auto-summary 补全走 saved 入口登记）；
+ *  2026-08-27 追加拍板（ticket 123）：跳过也发——news:skipped 入行为流（轻量记录，不向量化）；
+ *  阅读无独立动作不发。P2b：构造 StructuredMeta 走行为流；未初始化/未启用（noteSource 关）→ 静默。 */
 function notifyNewsRead(evt: NewsReadEvent): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
   const structured = buildNewsReadStructured(evt);
