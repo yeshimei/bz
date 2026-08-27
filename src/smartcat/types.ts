@@ -248,6 +248,21 @@ export interface SmartCatData {
   memory: MemoryStream;
 }
 
+/**
+ * 行为流聚合摘要（P3 用户体验层，ticket 123）
+ * summarizeBehavior 的返回结构：按天/按来源计数 + 最近活跃时段分布。
+ */
+export interface BehaviorSummary {
+  /** 总条数 */
+  totalCount: number;
+  /** 按天计数（日期键 YYYY-MM-DD → 条数） */
+  byDay: Record<string, number>;
+  /** 按来源计数（source → 条数） */
+  bySource: Record<string, number>;
+  /** 最近活跃时段分布（0-23 小时 → 条数） */
+  hourlyDistribution: number[];
+}
+
 /** 域事件名（原 EVENT constants，保留全部） */
 export const EVENTS = {
   BUBBLE_SHOWN: 'bubbleShown',

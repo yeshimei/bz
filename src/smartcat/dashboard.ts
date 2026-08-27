@@ -24,7 +24,7 @@ import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
-import { loadSmartCatData, getSmartcatFilePath } from './data';
+import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath } from './data';
 import { MOOD_MAP, moodLevelFromPad } from './mood';
 import { TRAIT_GROUPS } from './character';
 import { sourceLabel, formatRelativeTime, emotionDensityStats } from './memory';
@@ -45,7 +45,8 @@ import {
   detectEmotionShiftDays,
   buildDossierNarratives,
 } from './dossier';
-import type { SmartCatData, MemoryStreamEntry, CharacterTraits, OceanProfile } from './types';
+import type { SmartCatData, MemoryStreamEntry, CharacterTraits, OceanProfile, BehaviorItem } from './types';
+import { promoteToMemory } from './memory';
 
 // ---------------- 中文标签表 ----------------
 
@@ -346,17 +347,26 @@ function distributionCard(
   return c;
 }
 
-// ---------------- 四页签渲染 ----------------
+// ---------------- 页签渲染（P3 新增行为日志） ----------------
 
-const PANE_KEYS = ['overview', 'emotion', 'personality', 'memory', 'report'] as const;
-type PaneKey = (typeof PANE_KEYS)[number];
+const PANE_KEYS_ALL = ['overview', 'emotion', 'personality', 'memory', 'report', 'behavior'] as const;
+type PaneKey = (typeof PANE_KEYS_ALL)[number];
 const TAB_LABELS: Record<PaneKey, string> = {
   overview: '总览',
   emotion: '情绪',
   personality: '人格',
   memory: '记忆',
   report: '报告',
+  behavior: '行为日志',
 };
+
+/** 根据设置决定可见页签（showBehaviorLog=false 时隐藏行为日志页签） */
+function getVisiblePaneKeys(): PaneKey[] {
+  const s = tryGetSettings() as any;
+  const keys: PaneKey[] = ['overview', 'emotion', 'personality', 'memory', 'report'];
+  if (s?.showBehaviorLog !== false) keys.push('behavior');
+  return keys;
+}
 
 /** memo.json 路径（跟随共享 storagePath；loadMemoTitlesByDay 与 C1 自动刷新监听共用） */
 function memoDataPath(): string {
@@ -713,6 +723,27 @@ function renderMemory(pane: HTMLElement, data: SmartCatData): void {
       if (m.type === 'insight' && m.id && dashState?.app) meta.appendChild(buildInsightActions(m));
       item.appendChild(meta);
       item.appendChild(el('div', 'bz-sc-dash-memory-text', truncateText(m.description, 80)));
+      // P3 structured 摘要：entityType/action/name/tags 展示
+      if (m.structured) {
+        const structParts: string[] = [];
+        if (m.structured.entityType) structParts.push(m.structured.entityType);
+        if (m.structured.action) structParts.push(m.structured.action);
+        if (m.structured.name) structParts.push(m.structured.name);
+        if (structParts.length) {
+          item.appendChild(el('div', 'bz-sc-dash-structured-summary', structParts.join(' · ')));
+        }
+        if (m.structured.tags && m.structured.tags.length) {
+          const tagsEl = el('div', 'bz-sc-dash-structured-tags');
+          for (const tag of m.structured.tags.slice(0, 5)) {
+            tagsEl.appendChild(el('span', 'bz-sc-dash-badge', tag));
+          }
+          item.appendChild(tagsEl);
+        }
+        // snapshot 摘要
+        if (m.structured.snapshot?.summary) {
+          item.appendChild(el('div', 'bz-sc-dash-snapshot-summary', truncateText(m.structured.snapshot.summary, 60)));
+        }
+      }
       list.appendChild(item);
     }
     listCard.body.appendChild(list);
@@ -809,6 +840,87 @@ function renderReport(pane: HTMLElement, data: SmartCatData): void {
   }
   pane.appendChild(histCard.root);
 }
+
+// ---------------- 行为日志页签（P3 ticket 123） ----------------
+
+/** 行为日志来源中文标签 */
+const BEHAVIOR_SOURCE_LABELS: Record<string, string> = {
+  chat: '聊天', diary: '日记', flash: '闪念', clipping: '剪藏', movie: '影视', memo: '备忘录',
+  reading: '书库', pomodoro: '番茄钟', news: '聚合讯', favorites: '收藏', belongings: '归物',
+};
+
+function behaviorSourceLabel(source: string): string {
+  return BEHAVIOR_SOURCE_LABELS[source] || source;
+}
+
+function renderBehavior(pane: HTMLElement, data: SmartCatData): void {
+  pane.innerHTML = '';
+  const items = data.memory?.behaviorStream || [];
+
+  // 统计
+  const stCard = card('行为流');
+  const stats = el('div', 'bz-sc-dash-stats');
+  stats.appendChild(statBlock(items.length, '行为总数'));
+  // 按来源分组统计
+  const bySource: Record<string, number> = {};
+  for (const b of items) {
+    bySource[b.source] = (bySource[b.source] || 0) + 1;
+  }
+  const topSources = Object.entries(bySource).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  for (const [src, count] of topSources) {
+    stats.appendChild(statBlock(count, behaviorSourceLabel(src)));
+  }
+  stCard.body.appendChild(stats);
+  pane.appendChild(stCard.root);
+
+  // 行为列表（时间倒序，截前 50 条）
+  const listCard = card('最近行为');
+  if (items.length) {
+    const list = el('div', 'bz-sc-dash-list');
+    const sorted = [...items]
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, 50);
+    for (const b of sorted) {
+      const item = el('div', 'bz-sc-dash-behavior-item');
+      const meta = el('div', 'bz-sc-dash-behavior-meta');
+      meta.appendChild(el('span', 'bz-sc-dash-badge bz-sc-dash-behavior-type', b.type));
+      meta.appendChild(el('span', '', behaviorSourceLabel(b.source)));
+      meta.appendChild(el('span', '', formatRelativeTime(b.timestamp)));
+      // 提升为记忆按钮
+      const promoteBtn = el('button', 'bz-sc-dash-mini-btn bz-sc-dash-promote-btn', '提升为记忆');
+      promoteBtn.addEventListener('click', () => {
+        void handlePromote(b.id);
+      });
+      meta.appendChild(promoteBtn);
+      item.appendChild(meta);
+      item.appendChild(el('div', 'bz-sc-dash-memory-text', truncateText(b.description, 80)));
+      list.appendChild(item);
+    }
+    listCard.body.appendChild(list);
+  } else {
+    listCard.body.appendChild(emptyHint('还没有行为记录——使用小橘的各种功能会自动记录行为轨迹。'));
+  }
+  pane.appendChild(listCard.root);
+}
+
+/** 处理 promote 按钮点击（P3 ticket 123） */
+async function handlePromote(behaviorId: string): Promise<void> {
+  if (!dashState) return;
+  try {
+    const data = await loadSmartCatData(dashState.app);
+    const result = promoteToMemory(data, behaviorId);
+    if (result) {
+      await saveSmartCatData(dashState.app, data);
+      notice('已提升为记忆', 'success');
+      renderPanes(data);
+    } else {
+      notice('未找到该行为条目', 'error');
+    }
+  } catch (e) {
+    notice('操作失败', 'error');
+  }
+}
+
 // ---------------- 面板开关（bz 主窗口规范） ----------------
 
 /** C1 自动刷新防抖窗口（ms）：vault modify 命中目标路径后，静默重读渲染前的合并等待 */
@@ -818,9 +930,10 @@ interface DashboardState {
   app: App;
   mask: HTMLElement;
   popup: HTMLElement;
-  panes: Record<PaneKey, HTMLElement>;
-  tabs: Record<PaneKey, HTMLElement>;
+  panes: Partial<Record<PaneKey, HTMLElement>>;
+  tabs: Partial<Record<PaneKey, HTMLElement>>;
   activeTab: PaneKey;
+  visibleKeys: PaneKey[];
   escHandle: { unregister: () => void };
   /** 当日备忘标题表（「一起的日子」关键时刻用；打开/刷新时现读） */
   memoTitles: Map<string, string[]>;
@@ -836,20 +949,21 @@ let dashState: DashboardState | null = null;
 function activateTab(key: PaneKey): void {
   if (!dashState) return;
   dashState.activeTab = key;
-  for (const k of PANE_KEYS) {
-    dashState.tabs[k].classList.toggle('active', k === key);
-    dashState.panes[k].style.display = k === key ? 'block' : 'none';
+  for (const k of dashState.visibleKeys) {
+    dashState.tabs[k]?.classList.toggle('active', k === key);
+    if (dashState.panes[k]) dashState.panes[k]!.style.display = k === key ? 'block' : 'none';
   }
 }
 
 /** 重渲染全部页签（打开/刷新共用；数据现读现渲染；不触碰页签显隐 → 刷新保持当前页签） */
 function renderPanes(data: SmartCatData): void {
   if (!dashState) return;
-  renderOverview(dashState.panes.overview, data, dashState.memoTitles);
-  renderEmotion(dashState.panes.emotion, data);
-  renderPersonality(dashState.panes.personality, data);
-  renderMemory(dashState.panes.memory, data);
-  renderReport(dashState.panes.report, data);
+  if (dashState.panes.overview) renderOverview(dashState.panes.overview, data, dashState.memoTitles);
+  if (dashState.panes.emotion) renderEmotion(dashState.panes.emotion, data);
+  if (dashState.panes.personality) renderPersonality(dashState.panes.personality, data);
+  if (dashState.panes.memory) renderMemory(dashState.panes.memory, data);
+  if (dashState.panes.report) renderReport(dashState.panes.report, data);
+  if (dashState.panes.behavior) renderBehavior(dashState.panes.behavior, data);
 }
 
 // ---------------- C1 事件驱动静默刷新（2026-08-24 用户拍板：去手动刷新按钮） ----------------
@@ -929,12 +1043,13 @@ export async function openSmartcatDashboard(app: App): Promise<void> {
   header.appendChild(btns);
   popup.appendChild(header);
 
-  // 页签栏
+  // 页签栏（P3：根据 showBehaviorLog 设置决定可见页签）
+  const visibleKeys = getVisiblePaneKeys();
   const tabBar = el('div', 'bz-sc-dash-tabs');
-  const tabs = {} as Record<PaneKey, HTMLElement>;
-  const panes = {} as Record<PaneKey, HTMLElement>;
+  const tabs: Partial<Record<PaneKey, HTMLElement>> = {};
+  const panes: Partial<Record<PaneKey, HTMLElement>> = {};
   const body = el('div', 'bz-sc-dash-body');
-  for (const key of PANE_KEYS) {
+  for (const key of visibleKeys) {
     const tab = el('button', 'bz-sc-dash-tab', TAB_LABELS[key]);
     tab.dataset.tab = key;
     tab.addEventListener('click', () => activateTab(key));
@@ -953,7 +1068,7 @@ export async function openSmartcatDashboard(app: App): Promise<void> {
 
   // 当日备忘标题表现读（094「一起的日子」关键时刻；失败静默空表）
   const memoTitles = await loadMemoTitlesByDay(app);
-  dashState = { app, mask, popup, panes, tabs, activeTab: 'overview', escHandle: null as any, memoTitles, eventRefs: [], debounceTimer: null };
+  dashState = { app, mask, popup, panes, tabs, activeTab: 'overview', visibleKeys, escHandle: null as any, memoTitles, eventRefs: [], debounceTimer: null };
   renderPanes(data);
   activateTab('overview');
 

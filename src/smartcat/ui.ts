@@ -14,6 +14,7 @@ import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { closeSettingsModal, createSettingsGroup, openSettingsModal } from '../core/settings-modal';
 import { notice } from '../core/notice';
+import { tryGetSettings, saveSettings } from '../core/settings-provider';
 import type { Appearance } from './types';
 
 export const CAT_CONTAINER_ID = 'smart-companion-cat';
@@ -400,6 +401,74 @@ export function openSmartcatSettings(opts: {
             })
           );
       }
+
+      // ===== 存储与记忆组（P3 ticket 123：行为流保留策略） =====
+      const storageGroup = createSettingsGroup(el, { icon: 'database', name: '存储与记忆' });
+      const bzSettings = tryGetSettings() as any;
+      new Setting(storageGroup)
+        .setName('行为流保留天数')
+        .setDesc('行为流条目最多保留多少天（1-365），超出部分自动删除')
+        .addSlider((sl: any) => {
+          sl.setLimits(1, 365, 1);
+          sl.setValue(bzSettings?.behaviorMaxDays ?? 30);
+          sl.onChange(async (v: number) => {
+            bzSettings.behaviorMaxDays = v;
+            await opts.saveConfig(config);
+            await saveSettings();
+          });
+        });
+
+      new Setting(storageGroup)
+        .setName('行为流最大条数')
+        .setDesc('行为流最多保留多少条（100-10000），超出部分删除最旧条目')
+        .addSlider((sl: any) => {
+          sl.setLimits(100, 10000, 100);
+          sl.setValue(bzSettings?.behaviorMaxCount ?? 1000);
+          sl.onChange(async (v: number) => {
+            bzSettings.behaviorMaxCount = v;
+            await opts.saveConfig(config);
+            await saveSettings();
+          });
+        });
+
+      // ===== 关联组（P3 ticket 123：自动关联发现） =====
+      const linkGroup = createSettingsGroup(el, { icon: 'link', name: '关联' });
+      new Setting(linkGroup)
+        .setName('启用关联自动发现')
+        .setDesc('自动为同名实体的记忆建立关联（relatedIds）')
+        .addToggle((toggle: any) =>
+          toggle.setValue(bzSettings?.enableAutoLinking !== false).onChange(async (v: boolean) => {
+            bzSettings.enableAutoLinking = v;
+            await opts.saveConfig(config);
+            await saveSettings();
+          })
+        );
+
+      new Setting(linkGroup)
+        .setName('关联发现窗口天数')
+        .setDesc('同一实体在多少天内的记忆自动关联（1-30）')
+        .addSlider((sl: any) => {
+          sl.setLimits(1, 30, 1);
+          sl.setValue(bzSettings?.linkWindowDays ?? 7);
+          sl.onChange(async (v: number) => {
+            bzSettings.linkWindowDays = v;
+            await opts.saveConfig(config);
+            await saveSettings();
+          });
+        });
+
+      // ===== 显示组（P3 ticket 123：行为日志开关） =====
+      const displayGroup = createSettingsGroup(el, { icon: 'eye', name: '显示' });
+      new Setting(displayGroup)
+        .setName('显示行为日志')
+        .setDesc('在数据面板中显示行为日志页签')
+        .addToggle((toggle: any) =>
+          toggle.setValue(bzSettings?.showBehaviorLog !== false).onChange(async (v: boolean) => {
+            bzSettings.showBehaviorLog = v;
+            await opts.saveConfig(config);
+            await saveSettings();
+          })
+        );
     },
   });
 
