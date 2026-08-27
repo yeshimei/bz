@@ -420,7 +420,7 @@ describe('每日温和问候豁免端到端（不计计数、不领 reward、总
     const { app } = makeApp();
     await ensureSmartCat(app);
     const d: any = __getSmartcatInternals().data;
-    d.memory.stream = mkStream();
+    d.memory.memoryStream = mkStream();
     d.editingData = {
       ...(d.editingData || {}),
       quietMode: { on: overrides.quiet !== false, since: Date.now() - 3600 * 1000 },

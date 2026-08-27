@@ -257,7 +257,7 @@ describe('空 query 分支（显式退化：recency+importance 现行为）', ()
     const { m, data } = makeWithStream((d) => {
       d.mood.pad = { pleasure: 15, arousal: 30, dominance: 35 }; // 用户当前低落
       for (let i = 0; i < 8; i++) {
-        d.memory.stream.push({
+        d.memory.memoryStream.push({
           id: `f${i}`,
           created: new Date(Date.now() - (i + 1) * DAY).toISOString(),
           lastAccessed: new Date(Date.now() - (i + 1) * DAY).toISOString(),
@@ -267,7 +267,7 @@ describe('空 query 分支（显式退化：recency+importance 现行为）', ()
           source: 'chat',
         });
       }
-      d.memory.stream[7].emotion = 'sad'; // H3 追标产物（唯一带情绪候选，深居 GA 尾部）
+      d.memory.memoryStream[7].emotion = 'sad'; // H3 追标产物（唯一带情绪候选，深居 GA 尾部）
     });
     const mems = await m.retrieve('');
     const text = m.formatMemoriesForPrompt(mems, PROMPT_SLOTS.maxEntries);

@@ -299,7 +299,7 @@ const waitFor = (pred: () => boolean, timeout = 10000, step = 30) =>
     };
     tick();
   });
-const readStream = (): any[] => __getSmartcatInternals().data.memory.stream;
+const readStream = (): any[] => __getSmartcatInternals().data.memory.memoryStream;
 const WEAVE_PATH = 'CONFIG/STORAGE/weave-data.json';
 
 /** weave 文件先写入 vault → ensureSmartCat（首快照基线）→ 返回 */

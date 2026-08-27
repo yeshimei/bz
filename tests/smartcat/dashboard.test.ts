@@ -48,7 +48,7 @@ function fixtureData(): SmartCatData {
   d.memory.reflection.digestCount = 2;
   d.memory.reflection.lastReflectAt = Date.now() - 60 * 1000;
   const iso = (agoMin: number) => new Date(Date.now() - agoMin * 60 * 1000).toISOString();
-  d.memory.stream = [
+  d.memory.memoryStream = [
     { id: 'm1', created: iso(10), lastAccessed: iso(10), description: '用户说：今天完成了复习计划，很开心', importance: 0.8, type: 'observation', source: 'chat', emotion: 'happy' },
     { id: 'm2', created: iso(30), lastAccessed: iso(30), description: '你写了日记：最近有点低落', importance: 0.6, type: 'observation', source: 'diary', emotion: 'sad' },
     { id: 'i1', created: iso(5), lastAccessed: iso(5), description: '【洞察】用户坚持复习', importance: 0.75, type: 'insight', source: 'reflection', evidenceIds: ['m1'] },
@@ -96,18 +96,18 @@ describe('dashboard 纯函数', () => {
 
   it('buildEmotionTimeline 仅带情绪条目、新→旧排序、截断 limit', () => {
     const d = fixtureData();
-    const tl = buildEmotionTimeline(d.memory.stream, 20);
+    const tl = buildEmotionTimeline(d.memory.memoryStream, 20);
     expect(tl.length).toBe(2); // m1 happy / m2 sad（m3 无情绪、i1 无情绪）
     expect(tl[0].emotion).toBe('happy');
     expect(tl[1].emotion).toBe('sad');
     expect(tl[0].time).toBeGreaterThanOrEqual(tl[1].time);
-    expect(buildEmotionTimeline(d.memory.stream, 1).length).toBe(1);
+    expect(buildEmotionTimeline(d.memory.memoryStream, 1).length).toBe(1);
   });
 
   it('buildEmotionDistribution 只计观察；buildSourceDistribution 中文归并', () => {
     const d = fixtureData();
-    expect(buildEmotionDistribution(d.memory.stream)).toEqual({ happy: 1, sad: 1 });
-    const rows = distributionRows(buildSourceDistribution(d.memory.stream));
+    expect(buildEmotionDistribution(d.memory.memoryStream)).toEqual({ happy: 1, sad: 1 });
+    const rows = distributionRows(buildSourceDistribution(d.memory.memoryStream));
     const labels = rows.map((r) => r.label);
     expect(labels).toContain('聊天');
     expect(labels).toContain('日记');
@@ -220,12 +220,12 @@ describe('openSmartcatDashboard UI', () => {
       await new Promise((r) => setTimeout(r, 20)); // 异步写盘 + 重渲染
       // 磁盘已写入 pinned=true
       let onDisk = JSON.parse(vault.files.get(getSmartcatFilePath())!);
-      expect(onDisk.memory.stream.find((m: any) => m.id === 'i1').pinned).toBe(true);
+      expect(onDisk.memory.memoryStream.find((m: any) => m.id === 'i1').pinned).toBe(true);
       // 常驻侧触发任意保存（如心情衰减/观察落盘）
       resident.mood.pad.pleasure = 61;
       await saveSmartCatData(app as any, resident);
       onDisk = JSON.parse(vault.files.get(getSmartcatFilePath())!);
-      expect(onDisk.memory.stream.find((m: any) => m.id === 'i1').pinned).toBe(true); // 修正未被回滚
+      expect(onDisk.memory.memoryStream.find((m: any) => m.id === 'i1').pinned).toBe(true); // 修正未被回滚
       // 面板重渲染后按钮态翻转
       const btn2 = document.querySelector('[data-pane="memory"] .bz-sc-dash-insight-actions .bz-sc-dash-mini-btn') as HTMLButtonElement;
       expect(btn2.textContent).toBe('取消固定');
@@ -262,7 +262,7 @@ describe('openSmartcatDashboard UI', () => {
   /** 带两期周报的夹具（报告页签专用；不动共享 fixtureData 以免影响既有计数断言） */
   function fixtureWithReports(): SmartCatData {
     const d = fixtureData();
-    d.memory.stream.push(
+    d.memory.memoryStream.push(
       { id: 'wr1', created: new Date(Date.now() - 3600 * 1000).toISOString(), lastAccessed: new Date(Date.now() - 3600 * 1000).toISOString(), description: '【本周懂你报告】这周你写了三篇日记，心情整体向上。', importance: 0.8, type: 'insight', source: 'weekly-report' },
       { id: 'wr2', created: new Date(Date.now() - 8 * 24 * 3600 * 1000).toISOString(), lastAccessed: new Date(Date.now() - 8 * 24 * 3600 * 1000).toISOString(), description: '【本周懂你报告】上周你的主题是复习计划。', importance: 0.8, type: 'insight', source: 'weekly-report' },
     );

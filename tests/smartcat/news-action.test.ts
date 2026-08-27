@@ -44,7 +44,7 @@ function makeApp() {
 /** 等待 fire-and-forget 的 addObservation 落流 */
 const settle = () => new Promise((r) => setTimeout(r, 100));
 
-const readStream = (): any[] => __getSmartcatInternals().data.memory.stream;
+const readStream = (): any[] => __getSmartcatInternals().data.memory.memoryStream;
 
 beforeEach(() => {
   resetObsidianMocks();
@@ -69,11 +69,11 @@ describe('notifyNewsRead（逐篇三态，方法监听）', () => {
     await ensureSmartCat(app);
     const data: any = __getSmartcatInternals().data;
     data.config.noteSource = false;
-    const before = data.memory.stream.length;
+    const before = data.memory.memoryStream.length;
     emitDomainEvent('news', { kind: 'read', evt: { title: '黑洞照片刷新认知', platform: '果壳', state: 'saved', durationMin: 5 } });
     emitDomainEvent('news', { kind: 'saved', evt: { title: '黑洞照片刷新认知', platform: '果壳', state: 'saved', durationMin: 5 }, clipPath: '归档/网页剪藏/黑洞照片刷新认知.md' });
     await settle();
-    expect(data.memory.stream.length).toBe(before);
+    expect(data.memory.memoryStream.length).toBe(before);
     expect(__getNewsPendingSavesForTests().size).toBe(0);
   });
 

@@ -80,7 +80,7 @@ export class InteractionManager {
   private getCompanionContext(memoriesText = ''): string {
     const d = this.deps.characterData?.() ?? null;
     return buildCompanionContext({
-      stream: d?.memory?.stream ?? [],
+      memoryStream: d?.memory?.memoryStream ?? [],
       relationship: d?.personalityGrowth?.relationship ?? null,
       emotion: d?.mood?.currentEmotion ?? null,
       memoriesText,

@@ -49,7 +49,7 @@ describe('notifyMemoAction（备忘录动作观察，域事件派发）', () => 
     await ensureSmartCat(app);
     emitDomainEvent('memo', { kind: 'added', title: '写周报', scene: '工作', priority: 'important', due: '2026-08-25 18:00', notePath: '书库/1984.md', scriptName: null, courseName: '算法' });
     await settle();
-    const stream: any[] = __getSmartcatInternals().data.memory.stream;
+    const stream: any[] = __getSmartcatInternals().data.memory.memoryStream;
     expect(stream[stream.length - 1].description).toBe('你添加了待办「写周报」（场景：工作，课程：算法，优先级：重要，截止：08-25 18:00，笔记：1984.md）');
     expect(stream[stream.length - 1].source).toBe('memo');
   });
@@ -66,7 +66,7 @@ describe('notifyMemoAction（备忘录动作观察，域事件派发）', () => 
     emitDomainEvent('memo', { kind: 'priority', title: '写周报', to: 'important' });
     emitDomainEvent('memo', { kind: 'deleted', title: '写周报' });
     await settle();
-    const stream: any[] = __getSmartcatInternals().data.memory.stream;
+    const stream: any[] = __getSmartcatInternals().data.memory.memoryStream;
     const tail = stream.slice(-6).map((m) => m.description);
     expect(tail).toEqual([
       '你编辑了待办「写周报」（课程改为「算法」，场景改为「工作」，关联笔记 书库/1984.md）',
@@ -83,10 +83,10 @@ describe('notifyMemoAction（备忘录动作观察，域事件派发）', () => 
     await ensureSmartCat(app);
     const data: any = __getSmartcatInternals().data;
     data.config.noteSource = false;
-    const before = data.memory.stream.length;
+    const before = data.memory.memoryStream.length;
     emitDomainEvent('memo', { kind: 'completed', title: '写周报' });
     await settle();
-    expect(data.memory.stream.length).toBe(before);
+    expect(data.memory.memoryStream.length).toBe(before);
   });
 
   it('未初始化（unload 后）→ 静默不观察', async () => {
@@ -100,18 +100,18 @@ describe('notifyMemoAction（备忘录动作观察，域事件派发）', () => 
     const { app } = makeApp();
     await ensureSmartCat(app);
     const data: any = __getSmartcatInternals().data;
-    const before = data.memory.stream.length;
+    const before = data.memory.memoryStream.length;
     // checkbox 300ms 防抖到点 + 抽屉「标记完成」重复触发 → 同 key 只入流一次
     emitDomainEvent('memo', { kind: 'completed', title: '写周报' });
     emitDomainEvent('memo', { kind: 'completed', title: '写周报' });
     await settle();
-    expect(data.memory.stream.length).toBe(before + 1);
+    expect(data.memory.memoryStream.length).toBe(before + 1);
     // 窗口外（>300ms）同事件可再发；不同标题不误伤
     await new Promise((r) => setTimeout(r, 350));
     emitDomainEvent('memo', { kind: 'completed', title: '买菜' });
     emitDomainEvent('memo', { kind: 'completed', title: '写周报' });
     await settle();
-    expect(data.memory.stream.length).toBe(before + 3);
+    expect(data.memory.memoryStream.length).toBe(before + 3);
   });
 });
 
@@ -128,7 +128,7 @@ describe('maybeMemoDueScan（每日到期扫描）', () => {
     await maybeMemoDueScan(DAY1);
     await settle();
     const data: any = __getSmartcatInternals().data;
-    const stream: any[] = data.memory.stream;
+    const stream: any[] = data.memory.memoryStream;
     expect(stream[stream.length - 1].description).toBe('你有 2 个待办今天到期：写周报（18:00）、买菜（20:30）');
     expect(stream[stream.length - 1].source).toBe('memo');
     expect(data.editingData.dueScan).toEqual({ date: '2026-08-25' });
@@ -143,14 +143,14 @@ describe('maybeMemoDueScan（每日到期扫描）', () => {
     await maybeMemoDueScan(DAY1);
     await settle();
     const data: any = __getSmartcatInternals().data;
-    const afterFirst = data.memory.stream.length;
+    const afterFirst = data.memory.memoryStream.length;
     await maybeMemoDueScan(DAY1); // 当天已扫过 → 跳过
-    expect(data.memory.stream.length).toBe(afterFirst);
+    expect(data.memory.memoryStream.length).toBe(afterFirst);
     // 模拟第二天（把 dueScan 日期改为昨天/过去）
     data.editingData = { ...data.editingData, dueScan: { date: '2026-08-24' } };
     await maybeMemoDueScan(DAY1);
     await settle();
-    expect(data.memory.stream.length).toBe(afterFirst + 1);
+    expect(data.memory.memoryStream.length).toBe(afterFirst + 1);
   });
 
   it('noteSource 关闭 → 扫描静默（不产出、不推进日期）', async () => {
@@ -161,10 +161,10 @@ describe('maybeMemoDueScan（每日到期扫描）', () => {
     await ensureSmartCat(app);
     const data: any = __getSmartcatInternals().data;
     data.config.noteSource = false;
-    const before = data.memory.stream.length;
+    const before = data.memory.memoryStream.length;
     await maybeMemoDueScan(DAY1);
     await settle();
-    expect(data.memory.stream.length).toBe(before);
+    expect(data.memory.memoryStream.length).toBe(before);
     expect(data.editingData?.dueScan).toBeUndefined();
   });
 
@@ -172,10 +172,10 @@ describe('maybeMemoDueScan（每日到期扫描）', () => {
     const { app } = makeApp();
     await ensureSmartCat(app);
     const data: any = __getSmartcatInternals().data;
-    const before = data.memory.stream.length;
+    const before = data.memory.memoryStream.length;
     await maybeMemoDueScan(DAY1);
     await settle();
-    expect(data.memory.stream.length).toBe(before);
+    expect(data.memory.memoryStream.length).toBe(before);
     expect(data.editingData?.dueScan).toBeUndefined();
   });
 
@@ -184,7 +184,7 @@ describe('maybeMemoDueScan（每日到期扫描）', () => {
     vault.files.set('CONFIG/STORAGE/memo.json', 'not-json'); // 读取解析失败路径
     await ensureSmartCat(app);
     const data: any = __getSmartcatInternals().data;
-    const before = data.memory.stream.length;
+    const before = data.memory.memoryStream.length;
     for (let i = 0; i < 3; i++) await maybeMemoDueScan(DAY1); // 连续失败 3 次
     await settle();
     expect(data.editingData?.dueScan).toBeUndefined(); // 失败不推进日期
@@ -194,13 +194,13 @@ describe('maybeMemoDueScan（每日到期扫描）', () => {
     ]));
     await maybeMemoDueScan(DAY1);
     await settle();
-    expect(data.memory.stream.length).toBe(before);
+    expect(data.memory.memoryStream.length).toBe(before);
     expect(data.editingData?.dueScan).toBeUndefined();
     // 跨天（DAY2）→ 失败计数重置 → 正常扫描产出
     const DAY2 = new Date(2026, 7, 26, 9, 0);
     await maybeMemoDueScan(DAY2);
     await settle();
-    expect(data.memory.stream[data.memory.stream.length - 1].description).toBe('你有 1 个待办今天到期：写周报（18:00）');
+    expect(data.memory.memoryStream[data.memory.memoryStream.length - 1].description).toBe('你有 1 个待办今天到期：写周报（18:00）');
     expect(data.editingData.dueScan).toEqual({ date: '2026-08-26' });
   });
 
@@ -216,7 +216,7 @@ describe('maybeMemoDueScan（每日到期扫描）', () => {
     await maybeMemoDueScan(DAY1); // 重试成功
     await settle();
     expect(data.editingData.dueScan).toEqual({ date: '2026-08-25' });
-    const memoOnes = data.memory.stream.filter((m: any) => m.source === 'memo');
+    const memoOnes = data.memory.memoryStream.filter((m: any) => m.source === 'memo');
     expect(memoOnes.length).toBe(1);
     expect(memoOnes[0].description).toBe('你有 1 个待办今天到期：写周报（18:00）');
   });

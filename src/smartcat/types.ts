@@ -1,6 +1,70 @@
 /**
  * smartcat 域类型（移植自 SmartCat 8 个 JS 文件，字段名/枚举逐字保留）
+ *
+ * P1 数据基座（ticket 123）：新增 StructuredMeta、BehaviorItem；
+ * MemoryStreamEntry 扩展 structured 字段；MemoryStream 结构升级为 v2
+ * （stream 废弃→memoryStream + behaviorStream 双流）
  */
+
+// ==================== P1 数据基座：结构化元数据 + 行为流 ====================
+
+/**
+ * 结构化元数据（P1 数据基座，ticket 123）
+ * 描述事件的结构化字段——由各域 notify 传入，路由规则据此决定写入哪个流。
+ * entityType/action 为必填路由键；其余按事件粒度可选。
+ */
+export interface StructuredMeta {
+  /** 实体类型（diary/flash/poem/letter/movie/memo/news/favorites/belongings/pomodoro/chat/library/reflection/weekly-report/dossier） */
+  entityType: string;
+  /** 动作（created/updated/deleted/read/saved/want/watching/watched/rated/reviewed/...） */
+  action: string;
+  name?: string;
+  id?: string;
+  rating?: number;
+  progress?: number;
+  duration?: number;
+  count?: number;
+  tags?: string[];
+  category?: string;
+  refPath?: string;
+  refId?: string;
+  relatedIds?: string[];
+  conversationId?: string;
+  extras?: Record<string, any>;
+  /** 创作型内容：引用哈希（用于去重/版本追踪） */
+  refHash?: string;
+  /** 创作型内容：快照摘要 */
+  snapshot?: {
+    summary: string;
+    tags: string[];
+    time?: string;
+    length: number;
+    emotion?: string;
+  };
+  /** 创作型内容：版本号 */
+  version?: number;
+  /** 创作型内容：上次快照时间 */
+  lastSnapshotAt?: string;
+}
+
+/**
+ * 行为流条目（P1 数据基座，ticket 123）
+ * 轻量行为事件：不参与向量化/检索，仅记录用户操作轨迹，按天数+条数滚动清理。
+ */
+export interface BehaviorItem {
+  /** 格式：beh_<ts>_<rand> */
+  id: string;
+  /** ISO 时间戳 */
+  timestamp: string;
+  /** 事件类型（与 StructuredMeta.action 对应） */
+  type: string;
+  /** 来源域 */
+  source: string;
+  /** 轻量描述文本（source:action + name） */
+  description: string;
+  /** 可选扩展数据 */
+  metadata?: Record<string, any>;
+}
 
 /** 外观皮肤枚举（13 种：基础 5 + 高级 8） */
 export type Appearance =
@@ -122,6 +186,9 @@ export interface PersonalityGrowthData {
 /**
  * 记忆流条目（GA Memory Object 的 TS 结构，ADR-0021）
  * 单层记忆：所有观察/洞察同构追加入 stream，检索时按三因子分级。
+ *
+ * P1 数据基座（ticket 123）：新增 structured 字段（结构化元数据），
+ * 由路由规则根据 source:action 决定写入 memory 流还是 behavior 流。
  */
 export interface MemoryStreamEntry {
   id: string;
@@ -140,13 +207,22 @@ export interface MemoryStreamEntry {
   supersededBy?: string;  // 被哪条洞察取代（真实 insight id；'manual'=人工废弃标记）；有值即视为已废弃，检索排序前剔除
   pinned?: boolean;       // 人工固定（dashboard「固定」修正信号）：固定后不被自动 supersede
   emotionBackfilledAt?: string; // H3/096：LLM 情绪追标时间戳（ISO）——只补无 emotion 的观察、绝不覆盖已有值；可选字段旧数据容忍
+  // ---- P1 数据基座（ticket 123）：结构化元数据 ----
+  structured?: StructuredMeta; // 各域 notify 传入的结构化事件数据（P2 模板生成依赖此字段）
 }
 
-/** 记忆流（单层，检索时分级；ADR-0021 取代原四层） */
+/**
+ * 记忆流（v2 结构，P1 数据基座 ticket 123）
+ * 单层记忆（memoryStream）+ 行为流（behaviorStream）双流；
+ * 旧 stream 字段废弃，加载时检测旧 schema（有 stream 或 version < 2）→ 重置为空新结构。
+ */
 export interface MemoryStream {
   version: number;
   lastUpdated: string;
-  stream: MemoryStreamEntry[];
+  /** 记忆流（参与向量化/检索/反思；无上限） */
+  memoryStream: MemoryStreamEntry[];
+  /** 行为流（不参与向量化/检索；按天数+条数滚动清理） */
+  behaviorStream: BehaviorItem[];
   reflection: {
     lastReflectAt: number;
     count: number;

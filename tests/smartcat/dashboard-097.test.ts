@@ -27,7 +27,7 @@ function fixtureData(): SmartCatData {
   d.mood.currentEmotion = 'happy';
   d.mood.lastUpdate = Date.now() - 5 * 60 * 1000;
   const iso = (agoMin: number) => new Date(Date.now() - agoMin * 60 * 1000).toISOString();
-  d.memory.stream = [
+  d.memory.memoryStream = [
     { id: 'm1', created: iso(10), lastAccessed: iso(10), description: '用户说：今天完成了复习计划，很开心', importance: 0.8, type: 'observation', source: 'chat', emotion: 'happy' },
     { id: 'm2', created: iso(30), lastAccessed: iso(30), description: '你写了日记：最近有点低落', importance: 0.6, type: 'observation', source: 'diary', emotion: 'sad' },
     { id: 'm3', created: iso(20), lastAccessed: iso(20), description: '无情绪标注的观察', importance: 0.4, type: 'observation', source: 'flash' },
@@ -165,7 +165,7 @@ describe('097 A3 情绪标注覆盖率小字', () => {
     const big = fixtureData();
     const iso = new Date().toISOString();
     for (let i = 0; i < 3; i++) {
-      big.memory.stream.push({ id: `x${i}`, created: iso, lastAccessed: iso, description: `补充观察${i}`, importance: 0.5, type: 'observation', source: 'chat', emotion: 'happy' });
+      big.memory.memoryStream.push({ id: `x${i}`, created: iso, lastAccessed: iso, description: `补充观察${i}`, importance: 0.5, type: 'observation', source: 'chat', emotion: 'happy' });
     }
     const app2 = makeApp(big).app; // 6 观察全标注且非 calm → 覆盖 83% 分支
     await openSmartcatDashboard(app2 as any);
@@ -208,7 +208,7 @@ describe('097 B2 洞察行 theme·推翻·固定视觉态', () => {
     const iso = new Date().toISOString();
     const ins = (id: string, desc: string, extra: Partial<MemoryStreamEntry>): MemoryStreamEntry =>
       ({ id, created: iso, lastAccessed: iso, description: desc, importance: 0.7, type: 'insight', source: 'reflection', ...extra });
-    d.memory.stream.push(
+    d.memory.memoryStream.push(
       ins('b-i1', '主题洞察：工作节奏稳定', { theme: '工作' }),
       ins('b-i2', '被推翻的旧结论', { supersededBy: 'b-i1' }),
       ins('b-i3', '人工固定的结论', { pinned: true }),

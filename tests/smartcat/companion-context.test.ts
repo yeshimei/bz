@@ -13,7 +13,7 @@ function entry(created: string, emotion?: string, importance = 0.5): MemoryStrea
 
 describe('buildCompanionContext（懂你上下文块）', () => {
   it('无任何信号 → 空串（调用方自行省略）', () => {
-    expect(buildCompanionContext({ stream: [] })).toBe('');
+    expect(buildCompanionContext({ memoryStream: [] })).toBe('');
   });
 
   it('作息（≥3 条活跃）→ 作息行 + 当前时段', () => {
@@ -24,7 +24,7 @@ describe('buildCompanionContext（懂你上下文块）', () => {
       d.setHours(h, 30, 0, 0);
       stream.push(entry(d.toISOString()));
     }
-    const c = buildCompanionContext({ stream, hour: 22, now });
+    const c = buildCompanionContext({ memoryStream: stream, hour: 22, now });
     expect(c).toContain('最活跃');
     expect(c).toContain('现在是晚上');
   });
@@ -35,20 +35,20 @@ describe('buildCompanionContext（懂你上下文块）', () => {
       entry(new Date(now - 3600e3).toISOString(), 'sad'),
       entry(new Date(now - 7200e3).toISOString(), 'sad'),
     ];
-    const c = buildCompanionContext({ stream, now });
+    const c = buildCompanionContext({ memoryStream: stream, now });
     expect(c).toContain('难过');
   });
 
   it('关系 → 信任/依恋行；记忆文本原样透传', () => {
     const c = buildCompanionContext({
-      stream: [],
+      memoryStream: [],
       relationship: { trust: 0.72, attachment: 0.64 },
       now: Date.now(),
     });
     expect(c).toContain('信任 0.72');
     expect(c).toContain('依恋 0.64');
     const withMem = buildCompanionContext({
-      stream: [],
+      memoryStream: [],
       relationship: { trust: 0.5 },
       memoriesText: '1. [observation（聊天·2 小时前）] 记得买牛奶',
       now: Date.now(),
@@ -59,7 +59,7 @@ describe('buildCompanionContext（懂你上下文块）', () => {
 
   it('作息数据不足（<3 条）→ 不产生作息行', () => {
     const now = Date.now();
-    const c = buildCompanionContext({ stream: [entry(new Date(now - 1000).toISOString())], now });
+    const c = buildCompanionContext({ memoryStream: [entry(new Date(now - 1000).toISOString())], now });
     expect(c).not.toContain('最活跃');
   });
 });

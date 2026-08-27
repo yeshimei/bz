@@ -388,9 +388,9 @@ export async function ensureSmartCat(app: App): Promise<void> {
         msg = getSmartCatMessage('WELCOME_BACK_MESSAGES');
       }
       // ADR-0025 B 面：欢迎回来也「懂你」——作息有数据时掺入作息感知话
-      if (data && data.memory.stream.length >= 3 && Math.random() > 0.6) {
+      if (data && data.memory.memoryStream.length >= 3 && Math.random() > 0.6) {
         try {
-          const profile = buildRhythmProfile(data.memory.stream, 30, Date.now());
+          const profile = buildRhythmProfile(data.memory.memoryStream, 30, Date.now());
           if (profile.total >= 3) {
             msg = `我注意到你通常在${describeRhythm(profile)}最活跃。欢迎回来，我一直在哦~`;
           }
@@ -519,14 +519,14 @@ export async function maybeProactiveCare(): Promise<void> {
   if (!data || !bubbleManager || !moodSystem || !memorySystem || !personalityGrowth) return;
   const cfg = data.config;
   if (!cfg.proactiveCare) return;
-  if (!memorySystem || data.memory.stream.length < 3) return; // 记忆太少还不知道你
+  if (!memorySystem || data.memory.memoryStream.length < 3) return; // 记忆太少还不知道你
   const st = getProactiveState();
   const since = Date.now() - st.lastAt;
   // ticket 095 设计 1：平静期主动间隔 2 天 → 3~4 天（默认 3.5，晨起可调）；非平静维持既有 2 天
   const quiet = quietGateSystem?.isQuiet() ?? false;
   if (since < proactiveMinGapMs(quiet)) return;
   // 作息模型：当前是否用户活跃时段（无数据 → 保守不打扰）——温和问候豁免与 Bandit 主动共享本闸门
-  const profile = buildRhythmProfile(data.memory.stream, 30, Date.now());
+  const profile = buildRhythmProfile(data.memory.memoryStream, 30, Date.now());
   if (!profile.total || !isActiveNow(profile)) return;
   // ticket 095 设计 2+7：每日 1 次温和问候豁免——安静陪伴期优先占用本次调度槽位：
   // 与 Bandit 主动共享间隔/作息闸门，发出即刷新 lastAt 顺延下一次 Bandit 主动（打扰总量守恒，
@@ -557,7 +557,7 @@ export async function maybeProactiveCare(): Promise<void> {
       } else {
         const templates: Record<string, string[]> = {
           empathy: [
-            `我看记录你最近情绪有些波动，${describeEmotionTrend(analyzeEmotionTrend(buildEmotionSnapshots(data.memory.stream)))}。想说的时候我都在。`,
+            `我看记录你最近情绪有些波动，${describeEmotionTrend(analyzeEmotionTrend(buildEmotionSnapshots(data.memory.memoryStream)))}。想说的时候我都在。`,
             `喵~ 感觉你这阵子心情起伏不小，要不要和我说说？`,
           ],
           life: [
@@ -574,7 +574,7 @@ export async function maybeProactiveCare(): Promise<void> {
       }
     } else {
       // 近 3 条记忆做引子 + 懂你上下文块（作息/趋势/关系/检索记忆）→ LLM 温和关心（按臂给风格指令）
-      const recent = data.memory.stream.slice(-3).map((m) => m.description).join('；');
+      const recent = data.memory.memoryStream.slice(-3).map((m) => m.description).join('；');
       // ticket 095 设计 1：平静期臂 → 温和风格指令子集（只换表达维度，不改选臂与 reward 口径）
       const styleHint = quiet
         ? gentleStyleFor(armId)
@@ -587,7 +587,7 @@ export async function maybeProactiveCare(): Promise<void> {
         memoriesText = mems.length ? memorySystem.formatMemoriesForPrompt(mems, PROMPT_SLOTS.maxEntries) : '';
       } catch { /* 检索失败用空 */ }
       const companionContext = buildCompanionContext({
-        stream: data.memory.stream,
+        memoryStream: data.memory.memoryStream,
         relationship: data.personalityGrowth?.relationship ?? null,
         emotion: moodSystem.getCurrentEmotion(),
         memoriesText,
@@ -628,7 +628,7 @@ export async function maybeProactiveCare(): Promise<void> {
 async function maybeTrendDrift(): Promise<void> {
   if (!data || !moodSystem) return;
   const since = Date.now() - 48 * 60 * 60 * 1000;
-  const recent = data.memory.stream.filter((m) => m.type === 'observation' && m.emotion && new Date(m.created).getTime() >= since);
+  const recent = data.memory.memoryStream.filter((m) => m.type === 'observation' && m.emotion && new Date(m.created).getTime() >= since);
   if (recent.length < 3) return;
   try {
     const trend = analyzeEmotionTrend(buildEmotionSnapshots(recent));
@@ -652,13 +652,13 @@ async function maybeWeeklyReport(): Promise<void> {
   const [start] = win;
   // 周一起算：只在本周窗口已至少过去 1 天且本周有观察时生成（周二起才可能）
   if (Date.now() - start < 24 * 60 * 60 * 1000) return;
-  const weekEntries = data.memory.stream.filter((m) => {
+  const weekEntries = data.memory.memoryStream.filter((m) => {
     const t = m.created ? new Date(m.created).getTime() : NaN;
     return Number.isFinite(t) && t >= win[0] && t <= win[1] && m.type === 'observation';
   });
   if (weekEntries.length < 3) return; // 观察太少，本周报告无意义（下周再试）
   try {
-    const report = buildWeeklyReportData(data.memory.stream, moodSystem.pad, Date.now());
+    const report = buildWeeklyReportData(data.memory.memoryStream, moodSystem.pad, Date.now());
     const text = await generateWeeklyReport(report);
     if (!text) return;
     // 写回流（insight，source weekly-report，importance 高——记忆流可见但 insight 不作反思 evidence）
@@ -720,7 +720,7 @@ async function generateBookReview(): Promise<void> {
     if (!bookDescription) return;
     // ADR-0025 B 面：书评也带「懂你上下文」（作息/趋势/关系；不额外检索记忆省一次调用）
     const companionContext = buildCompanionContext({
-      stream: data.memory.stream,
+      memoryStream: data.memory.memoryStream,
       relationship: data.personalityGrowth?.relationship ?? null,
       emotion: moodSystem.getCurrentEmotion(),
     });
@@ -901,14 +901,14 @@ async function sendChatMessage(message: string): Promise<void> {
     // 元认知矛盾检测（ticket 035）：当前消息 vs 记忆流用户事实 → 命中则给回复加提醒
     let contradictionHint = '';
     try {
-      const facts = extractStoredFacts(data.memory.stream);
+      const facts = extractStoredFacts(data.memory.memoryStream);
       const cr = checkContradiction(message, facts);
       if (cr.detected && cr.detail.length) contradictionHint = '\n\n（小橘注意到：' + cr.detail[0] + '——你是不是改变主意了？）';
     } catch { /* 矛盾检测失败不阻断 */ }
     // 情绪趋势注入（ticket 035）：格式化后拼进 user 上下文尾
     let emotionContext = '';
     try {
-      const trend = analyzeEmotionTrend(buildEmotionSnapshots(data.memory.stream));
+      const trend = analyzeEmotionTrend(buildEmotionSnapshots(data.memory.memoryStream));
       if (trend.count > 0) emotionContext = '\n用户近期情绪趋势：' + describeEmotionTrend(trend);
     } catch { /* 无情绪数据跳过 */ }
     const messages = await interaction.prepareChatMessages(message + emotionContext + contradictionHint);
