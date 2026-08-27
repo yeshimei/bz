@@ -44,7 +44,7 @@ describe('notifyMovieAction（影视动作观察，域事件派发）', () => {
     await ensureSmartCat(app);
     emitDomainEvent('movie', { kind: 'created', name: '美丽人生', status: 'want', rating: -1, review: null });
     await settle();
-    const stream: any[] = __getSmartcatInternals().data.memory.stream;
+    const stream: any[] = __getSmartcatInternals().data.memory.memoryStream;
     expect(stream[stream.length - 1].description).toBe('你把《美丽人生》加入想看');
     expect(stream[stream.length - 1].source).toBe('movie');
   });
@@ -58,7 +58,7 @@ describe('notifyMovieAction（影视动作观察，域事件派发）', () => {
     emitDomainEvent('movie', { kind: 'review', name: '美丽人生', fromReview: '经典', toReview: '' });
     emitDomainEvent('movie', { kind: 'deleted', name: '美丽人生' });
     await settle();
-    const stream: any[] = __getSmartcatInternals().data.memory.stream;
+    const stream: any[] = __getSmartcatInternals().data.memory.memoryStream;
     const tail = stream.slice(-5).map((m) => m.description);
     expect(tail).toEqual([
       '你看完了《美丽人生》',
@@ -74,10 +74,10 @@ describe('notifyMovieAction（影视动作观察，域事件派发）', () => {
     await ensureSmartCat(app);
     const data: any = __getSmartcatInternals().data;
     data.config.noteSource = false;
-    const before = data.memory.stream.length;
+    const before = data.memory.memoryStream.length;
     emitDomainEvent('movie', { kind: 'created', name: '美丽人生', status: 'want', rating: -1, review: null });
     await settle();
-    expect(data.memory.stream.length).toBe(before);
+    expect(data.memory.memoryStream.length).toBe(before);
   });
 
   it('未初始化（unload 后）→ 静默不观察', async () => {
@@ -85,10 +85,10 @@ describe('notifyMovieAction（影视动作观察，域事件派发）', () => {
     await ensureSmartCat(app);
     unloadSmartCat();
     let before = 0;
-    try { before = __getSmartcatInternals().data?.memory.stream?.length ?? 0; } catch { before = -1; }
+    try { before = __getSmartcatInternals().data?.memory.memoryStream?.length ?? 0; } catch { before = -1; }
     expect(() => emitDomainEvent('movie', { kind: 'deleted', name: '美丽人生' })).not.toThrow();
     await settle();
-    const after = (() => { try { return __getSmartcatInternals().data?.memory.stream?.length ?? 0; } catch { return before; } })();
+    const after = (() => { try { return __getSmartcatInternals().data?.memory.memoryStream?.length ?? 0; } catch { return before; } })();
     void vi; // 保持 vi 引用（测试风格一致性）
     expect(after).toBe(before);
   });
@@ -97,20 +97,20 @@ describe('notifyMovieAction（影视动作观察，域事件派发）', () => {
     const { app } = makeApp();
     await ensureSmartCat(app);
     const data: any = __getSmartcatInternals().data;
-    const before = data.memory.stream.length;
+    const before = data.memory.memoryStream.length;
     // 双击「已看」确认 → 重复 status 事件只入流一次
     emitDomainEvent('movie', { kind: 'status', name: '美丽人生', from: 'watching', to: 'watched' });
     emitDomainEvent('movie', { kind: 'status', name: '美丽人生', from: 'watching', to: 'watched' });
     await settle();
-    expect(data.memory.stream.length).toBe(before + 1);
+    expect(data.memory.memoryStream.length).toBe(before + 1);
     // payload 不同不误伤：紧随其后的改分事件正常入流（同 key 判定含 payload）
     emitDomainEvent('movie', { kind: 'rated', name: '美丽人生', fromRating: 4, toRating: 4.5 });
     await settle();
-    expect(data.memory.stream.length).toBe(before + 2);
+    expect(data.memory.memoryStream.length).toBe(before + 2);
     // 窗口外（>300ms）同事件可再次入流（防重不锁死）
     await new Promise((r) => setTimeout(r, 320));
     emitDomainEvent('movie', { kind: 'status', name: '美丽人生', from: 'watching', to: 'watched' });
     await settle();
-    expect(data.memory.stream.length).toBe(before + 3);
+    expect(data.memory.memoryStream.length).toBe(before + 3);
   });
 });

@@ -354,7 +354,7 @@ describe('PersonalityGrowth（MATE ADR-0023）', () => {
     for (let i = 0; i < 20; i++) {
       const d = new Date(now - (i + 1) * 24 * 3600e3);
       d.setHours(23, Math.floor(Math.random() * 60), 0, 0);
-      data.memory.stream.push({
+      data.memory.memoryStream.push({
         id: `mem${i}`, created: d.toISOString(), lastAccessed: d.toISOString(),
         description: `记忆${i}`, importance: 0.5, type: 'observation',
       });

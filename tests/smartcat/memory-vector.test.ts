@@ -9,7 +9,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getEmbedding } from '../../src/secondbrain/ollama';
 import { MemorySystem } from '../../src/smartcat/memory';
 import { defaultSmartCatData } from '../../src/smartcat/data';
-import type { SmartCatData } from '../../src/smartcat/types';
+import type { SmartCatData, MemoryStreamEntry } from '../../src/smartcat/types';
 
 vi.mock('../../src/secondbrain/ollama', () => ({
   getEmbedding: vi.fn(),
@@ -44,13 +44,13 @@ describe('appendVector 行号定位（P1-27）', () => {
     });
 
     const pA = m.addObservation(descA, { importance: 0.5 }); // push A → 挂起在 A 的 embedding
-    const memB = (await m.addObservation(descB, { importance: 0.5 }))!; // B 整体完成
+    const memB = (await m.addObservation(descB, { importance: 0.5 })) as MemoryStreamEntry; // B 整体完成
     releaseA(); // B 完成后再放行 A 的 embedding
-    const memA = (await pA)!;
+    const memA = (await pA) as MemoryStreamEntry;
 
     expect(memA).not.toBeNull();
-    const idxA = data.memory.stream.indexOf(memA!);
-    const idxB = data.memory.stream.indexOf(memB);
+    const idxA = data.memory.memoryStream.indexOf(memA!);
+    const idxB = data.memory.memoryStream.indexOf(memB);
     expect(idxA).toBe(0);
     expect(idxB).toBe(1);
 
@@ -79,6 +79,6 @@ describe('appendVector 行号定位（P1-27）', () => {
     const map = (m as any).vectorIndexMap as Map<string, number>;
     expect(map.get(m1!.id)).toBe(0);
     expect(map.get(m2!.id)).toBe(1);
-    expect(data.memory.stream.length).toBe(2);
+    expect(data.memory.memoryStream.length).toBe(2);
   });
 });

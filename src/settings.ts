@@ -309,6 +309,18 @@ export default interface BzSettings {
    */
   smartcatMobileDefaultFullscreen: boolean;
 
+  // ===== 🐱 小橘行为流设置（P1 数据基座，ticket 123）=====
+  /** 行为流最大保留天数（超出部分删除最旧条目） */
+  behaviorMaxDays: number;
+  /** 行为流最大保留条数（超出部分删除最旧） */
+  behaviorMaxCount: number;
+  /** 显示行为日志面板（控制 UI 入口是否可见） */
+  showBehaviorLog: boolean;
+  /** 启用自动双链（关联范围新笔记落盘时自动建立 related 双链） */
+  enableAutoLinking: boolean;
+  /** 自动双链窗口天数（关联范围内的笔记时间窗口） */
+  linkWindowDays: number;
+
   // ===== 🧠 第二大脑 =====
   /** 第二大脑主面板：移动端默认全屏（默认开——总览信息密度高；ticket 103） */
   secondBrainMobileDefaultFullscreen: boolean;
@@ -484,6 +496,13 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 小橘陪伴猫（smartcat 域；移动端默认全屏键聊天/设置/数据面板共用，2026-08-23 合并一套）
   smartcatEnabled: true,
   smartcatMobileDefaultFullscreen: false,
+
+  // 小橘行为流设置（P1 数据基座，ticket 123）
+  behaviorMaxDays: 30,
+  behaviorMaxCount: 1000,
+  showBehaviorLog: true,
+  enableAutoLinking: true,
+  linkWindowDays: 7,
 };
 
 /** 闪念旧键 → 第二大脑新键映射（ticket 103；META_PATH/VEC_PATH 废弃清除无继任者） */

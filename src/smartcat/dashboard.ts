@@ -119,7 +119,7 @@ export interface DashboardStats {
 }
 
 export function computeDashboardStats(data: SmartCatData): DashboardStats {
-  const stream = (data.memory && Array.isArray(data.memory.stream)) ? data.memory.stream : [];
+  const stream = (data.memory && Array.isArray(data.memory.memoryStream)) ? data.memory.memoryStream : [];
   let observationCount = 0;
   let insightCount = 0;
   for (const m of stream) {
@@ -423,7 +423,7 @@ function renderOverview(pane: HTMLElement, data: SmartCatData, memoTitles: Map<s
   pane.appendChild(padCard.root);
 
   // 情绪趋势一句话
-  const trend = analyzeEmotionTrend(buildEmotionSnapshots(data.memory?.stream || []));
+  const trend = analyzeEmotionTrend(buildEmotionSnapshots(data.memory?.memoryStream || []));
   const trendCard = card('近期情绪观察');
   trendCard.body.appendChild(el('div', 'bz-sc-dash-trend-text', describeEmotionTrend(trend)));
   pane.appendChild(trendCard.root);
@@ -453,7 +453,7 @@ function renderOverview(pane: HTMLElement, data: SmartCatData, memoTitles: Map<s
  */
 function buildDossierCard(data: SmartCatData, memoTitles: Map<string, string[]>): HTMLElement {
   const dossierCard = card('一起的日子');
-  const stream = data.memory?.stream || [];
+  const stream = data.memory?.memoryStream || [];
   const events = getDossierEvents(data);
   const rows = deriveTimeline(events, { companionDays: countCompanionDays(stream) });
   // 兜底统计行（恒在）
@@ -503,7 +503,7 @@ function buildDossierCard(data: SmartCatData, memoTitles: Map<string, string[]>)
 
 function renderEmotion(pane: HTMLElement, data: SmartCatData): void {
   pane.innerHTML = '';
-  const stream = data.memory?.stream || [];
+  const stream = data.memory?.memoryStream || [];
 
   // 趋势/波动度
   const trend = analyzeEmotionTrend(buildEmotionSnapshots(stream));
@@ -617,7 +617,7 @@ function renderPersonality(pane: HTMLElement, data: SmartCatData): void {
 
 function renderMemory(pane: HTMLElement, data: SmartCatData): void {
   pane.innerHTML = '';
-  const stream = data.memory?.stream || [];
+  const stream = data.memory?.memoryStream || [];
   const refl = data.memory?.reflection || ({} as SmartCatData['memory']['reflection']);
 
   // 统计
@@ -776,7 +776,7 @@ async function persistInsightPatch(id: string, patch: (m: MemoryStreamEntry) => 
 /** 报告页签（2026-08-23：每周懂你报告从设置弹窗移入——最新一期全文 + 历史报告） */
 function renderReport(pane: HTMLElement, data: SmartCatData): void {
   pane.innerHTML = '';
-  const reports = buildWeeklyReports(data.memory?.stream || []);
+  const reports = buildWeeklyReports(data.memory?.memoryStream || []);
 
   // 最新一期全文
   const latestCard = card('本周懂你报告');

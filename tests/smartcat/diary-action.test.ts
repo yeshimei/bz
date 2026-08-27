@@ -49,7 +49,7 @@ const settle = () => new Promise((r) => setTimeout(r, 100));
 /** 等待计时结算：60ms 计时 + 读文件 + 判定 + 观察落流 */
 const waitSettle = () => new Promise((r) => setTimeout(r, 320));
 
-const readStream = (): any[] => __getSmartcatInternals().data.memory.stream;
+const readStream = (): any[] => __getSmartcatInternals().data.memory.memoryStream;
 const timerKey = (path: string, date: string, time: string) => `${path}\u0001${date}\u0001${time}`;
 
 /** 今天日期（本地时区，与 index diaryTodayStr 同语义——重启基线测试用） */

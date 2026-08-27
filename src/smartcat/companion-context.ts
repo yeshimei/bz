@@ -10,7 +10,7 @@ import { analyzeEmotionTrend, buildEmotionSnapshots, describeEmotionTrend } from
 
 export interface CompanionContextInput {
   /** 记忆流条目（作息/趋势分析的数据源） */
-  stream?: { created?: string; emotion?: string; importance?: number }[];
+  memoryStream?: { created?: string; emotion?: string; importance?: number }[];
   /** 关系张量（PersonalityGrowth.relationship） */
   relationship?: { trust?: number; attachment?: number } | null;
   /** 当前瞬时情绪（可选，作为趋势补充上下文） */
@@ -25,7 +25,7 @@ export interface CompanionContextInput {
 /** 组装「懂你上下文块」：无任何可用信号时返回空串（调用方自行省略） */
 export function buildCompanionContext(i: CompanionContextInput): string {
   const now = i.now ?? Date.now();
-  const stream = i.stream || [];
+  const stream = i.memoryStream || [];
   const hour = i.hour ?? new Date(now).getHours();
   const parts: string[] = [];
 

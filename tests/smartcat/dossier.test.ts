@@ -356,7 +356,7 @@ function uiFixture(): SmartCatData {
     source: 'chat',
     emotion,
   });
-  d.memory.stream = [
+  d.memory.memoryStream = [
     mk(0, 'happy'),
     mk(1, 'happy'), // 变化日 = 昨天：前有标注日（前天 sad）多数标签不同
     mk(2, 'sad'),

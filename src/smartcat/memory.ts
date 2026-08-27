@@ -17,7 +17,10 @@ import { callChatJson, isAIConfigured } from './api';
 import { getEmbedding, checkRemoteOllama } from '../secondbrain/ollama';
 import { EMOTION_VAD, emotionToVAD, vadAffinity } from './cognitive';
 import { isSupersededInsight, resolveTheme, buildReflectCandidates, applySupersede } from './insight-version';
-import type { SmartCatData, MemoryStreamEntry, CloudScoringMode } from './types';
+import type { SmartCatData, MemoryStreamEntry, CloudScoringMode, StructuredMeta, BehaviorItem } from './types';
+import { resolveRouting, type RoutingRule } from './routing';
+import { trimBehaviorStream } from './behavior-trim';
+import { tryGetSettings } from '../core/settings-provider';
 
 export const MEMORY_CONFIG = {
   /** 检索返回条数 */
@@ -291,7 +294,12 @@ export class MemorySystem {
   }
 
   get stream(): MemoryStreamEntry[] {
-    return this.dataProvider().memory.stream;
+    return this.dataProvider().memory.memoryStream;
+  }
+
+  /** 获取行为流 */
+  get behaviorStream(): BehaviorItem[] {
+    return this.dataProvider().memory.behaviorStream;
   }
 
   /** 初始化：探测 Ollama + 加载向量 + 启动反思调度 */
@@ -303,11 +311,117 @@ export class MemorySystem {
 
   // ---------------- 记忆写入 ----------------
 
-  /** 添加观察记忆（聊天对话等）；importance+emotion+credibility 走 LLM 打分（未配置降级规则分/词法情绪/来源档位）
-   *  ADR-0025：opts.dedupe=true 时先做近 N 条同内容去重（短路，省一次 LLM 打分），
-   *  再按「非 calm 情绪 or importance≥聊天保留阈值」限流——返回 null 表示未落库。
-   *  ADR-0036：opts.credibility 可显式透传（各域 notify 不必改——source 已够，除非特殊覆盖需求）。 */
-  async addObservation(description: string, opts: { source?: string; manuallyMarked?: boolean; importance?: number; emotion?: string; dedupe?: boolean; credibility?: number } = {}): Promise<MemoryStreamEntry | null> {
+  /**
+   * 新版添加观察记忆（P1 数据基座，ticket 123）
+   * 根据 source:action 路由规则决定写入 memory 流或 behavior 流。
+   *
+   * 兼容旧签名：addObservation(description, { source, ... }) 仍然可用（进 memory 流、无 structured）。
+   *
+   * @param sourceOrDescription 来源域（新签名）或描述文本（旧签名兼容）
+   * @param options 结构化选项（新签名）或旧参数对象（旧签名兼容）
+   * @returns memory 流返回 MemoryStreamEntry，behavior 流返回 BehaviorItem，未落库返回 null
+   */
+  async addObservation(
+    sourceOrDescription: string,
+    options: { structured?: StructuredMeta; dedupe?: boolean; dedupeKey?: string } | { source?: string; manuallyMarked?: boolean; importance?: number; emotion?: string; dedupe?: boolean; credibility?: number } = {},
+  ): Promise<MemoryStreamEntry | BehaviorItem | null> {
+    // 检测旧签名：options 有 source/manuallyMarked/importance/emotion 之一 → 旧签名
+    const isLegacy = 'source' in options || 'manuallyMarked' in options || 'importance' in options || 'emotion' in options || 'credibility' in options;
+    if (isLegacy) {
+      return this.addObservationLegacy(sourceOrDescription, options as any);
+    }
+
+    // 新签名：sourceOrDescription = source, options = { structured, dedupe, dedupeKey }
+    const source = sourceOrDescription;
+    const newOpts = options as { structured?: StructuredMeta; dedupe?: boolean; dedupeKey?: string };
+    const action = newOpts.structured?.action ?? 'unknown';
+    const rule = resolveRouting(source, action);
+
+    if (rule.stream === 'behavior') {
+      // 行为流：写入 behaviorStream，不参与向量化
+      return this.writeBehaviorStream(source, newOpts.structured);
+    }
+
+    // memory 流：走原有逻辑（importance/emotion/credibility 从规则取）
+    const description = this.buildDescription(newOpts.structured);
+    const importance = rule.importance ?? 0.5;
+    const emotion = rule.defaultEmotion;
+    const credibility = rule.credibility ?? 0.8;
+
+    // 去重检查
+    if (newOpts.dedupe) {
+      const norm = description.trim();
+      const recent = this.stream.slice(-MemorySystem.dedupeWindow);
+      if (recent.some((m) => (m.description || '').trim() === norm)) return null;
+    }
+
+    const memory: MemoryStreamEntry = {
+      id: `memory_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      created: new Date().toISOString(),
+      lastAccessed: new Date().toISOString(),
+      description,
+      importance,
+      type: 'observation',
+      source,
+      emotion,
+      credibility,
+      suspicious: detectInjection(description) || undefined,
+      structured: newOpts.structured,
+    };
+    this.stream.push(memory);
+    this.pendingSinceReflect++;
+    touchPresence(this.dataProvider());
+    if (this.onPresence) {
+      try { void this.onPresence(); } catch { /* 钩子失败静默 */ }
+    }
+    await this.dataSaver(this.dataProvider());
+    await this.appendVector(memory);
+    if (this.onObservation) {
+      try { await this.onObservation(memory); } catch { /* 钩子失败不影响记忆主流程 */ }
+    }
+    return memory;
+  }
+
+  /**
+   * 写入行为流（P1 数据基座，ticket 123）
+   * 轻量行为事件：不参与向量化/检索，按天数+条数滚动清理。
+   */
+  private writeBehaviorStream(source: string, structured?: StructuredMeta): BehaviorItem {
+    const action = structured?.action ?? 'unknown';
+    const name = structured?.name ?? '';
+    const item: BehaviorItem = {
+      id: `beh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: new Date().toISOString(),
+      type: action,
+      source,
+      description: `${source}:${action}${name ? ` ${name}` : ''}`,
+      metadata: structured,
+    };
+    this.behaviorStream.push(item);
+    // 滚动窗口清理（使用 settings 的配置值，缺省走默认值）
+    const s = tryGetSettings() as any;
+    const maxDays = s?.behaviorMaxDays ?? 30;
+    const maxCount = s?.behaviorMaxCount ?? 1000;
+    const trimmed = trimBehaviorStream(this.behaviorStream, { maxDays, maxCount });
+    this.dataProvider().memory.behaviorStream.length = 0;
+    this.behaviorStream.push(...trimmed);
+    return item;
+  }
+
+  /**
+   * 构建描述文本（P1 数据基座，ticket 123）
+   * snapshot.summary 优先；否则用 [entityType] action name 形式兜底（P2 会替换为正式模板）。
+   */
+  private buildDescription(structured?: StructuredMeta): string {
+    if (!structured) return '';
+    if (structured.snapshot?.summary) return structured.snapshot.summary;
+    const parts = [structured.entityType, structured.action, structured.name].filter(Boolean);
+    return parts.join(' ') || `[${structured.entityType}] ${structured.action}`;
+  }
+
+  /** 添加观察记忆（旧签名兼容，过时包装）；行为与现状一致（进 memory 流、无 structured）
+   *  @deprecated 使用新签名 addObservation(source, { structured }) 替代 */
+  private async addObservationLegacy(description: string, opts: { source?: string; manuallyMarked?: boolean; importance?: number; emotion?: string; dedupe?: boolean; credibility?: number } = {}): Promise<MemoryStreamEntry | null> {
     if (opts.dedupe) {
       const norm = (description || '').trim();
       const recent = this.stream.slice(-MemorySystem.dedupeWindow);

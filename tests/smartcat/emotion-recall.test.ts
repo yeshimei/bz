@@ -31,7 +31,7 @@ function make(opts: { ai?: boolean } = {}): MemorySystem {
 
 /** 构造无情绪观察条目直插 stream */
 function pushObs(desc: string, importance = 0.5): void {
-  data.memory.stream.push({
+  data.memory.memoryStream.push({
     id: `mem_${Math.random().toString(36).slice(2)}`,
     created: new Date().toISOString(),
     lastAccessed: new Date().toISOString(),
@@ -126,18 +126,18 @@ describe('H3-③ LLM 情绪追标（reflect evidenceTop 窗口）', () => {
     const m = make({ ai: true });
     await m.addObservation('用户说：这周要考六级', { importance: 0.9 });            // AI 未配置走本地 → 有词法 emotion？——chat 本地也有 detectEmotion 兜底
     // 直接构造确定性数据：一条无 emotion、一条已有 happy
-    data.memory.stream.length = 0;
+    data.memory.memoryStream.length = 0;
     pushObs('用户说：项目里程碑达成');
-    data.memory.stream.push({
+    data.memory.memoryStream.push({
       id: 'has_emo', created: new Date().toISOString(), lastAccessed: new Date().toISOString(),
       description: '用户说：今天好开心', importance: 0.8, type: 'observation', source: 'chat', emotion: 'happy',
     });
     (globalThis as any).fetch = backfillFetch({ emotions: [{ index: 1, emotion: 'focused' }, { index: 2, emotion: 'sad' }] });
-    await m.backfillEmotions(data.memory.stream.filter((x) => x.type === 'observation'));
-    const noEmo = data.memory.stream.find((x) => x.id !== 'has_emo')!;
+    await m.backfillEmotions(data.memory.memoryStream.filter((x) => x.type === 'observation'));
+    const noEmo = data.memory.memoryStream.find((x) => x.id !== 'has_emo')!;
     expect(noEmo.emotion).toBe('focused');
     expect(noEmo.emotionBackfilledAt).toBeTruthy();
-    const hasEmo = data.memory.stream.find((x) => x.id === 'has_emo')!;
+    const hasEmo = data.memory.memoryStream.find((x) => x.id === 'has_emo')!;
     expect(hasEmo.emotion).toBe('happy');           // 只补不覆盖
     expect(hasEmo.emotionBackfilledAt).toBeUndefined(); // 未被追标的条目不留时间戳
   });
@@ -155,9 +155,9 @@ describe('H3-③ LLM 情绪追标（reflect evidenceTop 窗口）', () => {
       return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify({ insights: [{ text: '用户处于备考期', evidence: [1] }] }) } }] }) };
     });
     await m.reflect();
-    const obs = data.memory.stream.filter((x) => x.type === 'observation');
+    const obs = data.memory.memoryStream.filter((x) => x.type === 'observation');
     expect(obs.every((x) => x.emotion)).toBe(true);          // 证据池内全部补上
-    expect(data.memory.stream.some((x) => x.type === 'insight')).toBe(true); // 反思照常产出
+    expect(data.memory.memoryStream.some((x) => x.type === 'insight')).toBe(true); // 反思照常产出
     expect(data.memory.reflection.count).toBe(1);
   });
 
@@ -174,7 +174,7 @@ describe('H3-③ LLM 情绪追标（reflect evidenceTop 窗口）', () => {
     });
     await m.reflect();
     expect(callCount).toBeGreaterThanOrEqual(2);              // 追标失败后反思仍发起
-    expect(data.memory.stream.some((x) => x.type === 'insight')).toBe(true);
+    expect(data.memory.memoryStream.some((x) => x.type === 'insight')).toBe(true);
     expect((m as any).reflectBackoffUntil).toBe(0);           // 追标失败不污染反思退避
   });
 
@@ -182,7 +182,7 @@ describe('H3-③ LLM 情绪追标（reflect evidenceTop 窗口）', () => {
     const m = make({ ai: true });
     pushObs('用户说：缺标记忆甲');
     (globalThis as any).fetch = vi.fn(async () => { throw new Error('down'); });
-    const ok = await m.backfillEmotions(data.memory.stream.filter((x) => x.type === 'observation'));
+    const ok = await m.backfillEmotions(data.memory.memoryStream.filter((x) => x.type === 'observation'));
     expect(ok).toBe(false);
     expect((m as any).emotionBackfillBackoffUntil).toBeGreaterThan(Date.now()); // 独立退避生效
     expect((m as any).emotionBackfillBackoffMs).toBe(10 * 60 * 1000);            // 5min→10min 指数递增
@@ -191,7 +191,7 @@ describe('H3-③ LLM 情绪追标（reflect evidenceTop 窗口）', () => {
     // 退避期内再次调用：不发请求直接跳过
     const fetchSpy = vi.fn(async () => { throw new Error('down'); });
     (globalThis as any).fetch = fetchSpy;
-    const ok2 = await m.backfillEmotions(data.memory.stream.filter((x) => x.type === 'observation'));
+    const ok2 = await m.backfillEmotions(data.memory.memoryStream.filter((x) => x.type === 'observation'));
     expect(ok2).toBe(false);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
@@ -205,10 +205,10 @@ describe('H3-③ LLM 情绪追标（reflect evidenceTop 窗口）', () => {
       sysContent = body.messages[0].content as string;
       return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify({ emotions: [{ index: 1, emotion: 'superhappy' }] }) } }] }) };
     });
-    await m.backfillEmotions(data.memory.stream.filter((x) => x.type === 'observation'));
+    await m.backfillEmotions(data.memory.memoryStream.filter((x) => x.type === 'observation'));
     expect(sysContent).toContain(USER_CONTENT_BOUNDARY);
-    expect(data.memory.stream[0].emotion).toBeUndefined();     // 白名单外丢弃：宁缺勿滥
-    expect(data.memory.stream[0].emotionBackfilledAt).toBeUndefined();
+    expect(data.memory.memoryStream[0].emotion).toBeUndefined();     // 白名单外丢弃：宁缺勿滥
+    expect(data.memory.memoryStream[0].emotionBackfilledAt).toBeUndefined();
   });
 
   it('批次上限：候选超过 maxBatch 只取前 N 条（token 预算封顶）', async () => {
@@ -220,17 +220,17 @@ describe('H3-③ LLM 情绪追标（reflect evidenceTop 窗口）', () => {
       prompted = body.messages[1].content as string;
       return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify({ emotions: [] } ) } }] }) };
     });
-    await m.backfillEmotions(data.memory.stream.filter((x) => x.type === 'observation'));
+    await m.backfillEmotions(data.memory.memoryStream.filter((x) => x.type === 'observation'));
     expect(prompted).toContain(`编号 1-${EMOTION_BACKFILL_CONFIG.maxBatch}`); // 只批 20 条
   });
 
   it('AI 未配置：进独立退避、不落盘、不抛错', async () => {
     const m = make(); // 未配 AI
     pushObs('用户说：缺标记忆乙');
-    const ok = await m.backfillEmotions(data.memory.stream.filter((x) => x.type === 'observation'));
+    const ok = await m.backfillEmotions(data.memory.memoryStream.filter((x) => x.type === 'observation'));
     expect(ok).toBe(false);
     expect((m as any).emotionBackfillBackoffUntil).toBeGreaterThan(Date.now());
-    expect(data.memory.stream[0].emotion).toBeUndefined();
+    expect(data.memory.memoryStream[0].emotion).toBeUndefined();
   });
 });
 

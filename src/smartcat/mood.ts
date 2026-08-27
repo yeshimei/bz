@@ -597,7 +597,7 @@ export class PersonalityGrowth {
     const hour = new Date().getHours();
     // ADR-0025 修「假众数」：preferredHour 由近 30 天记忆创建小时直方图峰值（复用作息画像）给出；
     // 无记忆数据（还没观察过）时兜底当前小时（旧行为，mood 测试保持）
-    const profile = buildRhythmProfile(this.dataProvider().memory.stream || [], 30, Date.now());
+    const profile = buildRhythmProfile(this.dataProvider().memory.memoryStream || [], 30, Date.now());
     s.preferredHour = profile.total > 0 ? profile.peakHour : hour;
     const tone = interactionType === 'learn' ? 0.02
       : interactionType === 'diary' || interactionType === 'flash' ? 0.01
