@@ -177,23 +177,28 @@ function collectBilibiliBatch(items, existingUrls, limit, out) {
 }
 
 /** 单个 UP 主动态翻页抓取（仅 DYNAMIC_TYPE_AV 视频投稿；ticket 127：按「最近 N 条」收满即停，不走 24h 窗口）；
- *  返回 { articles, upInfo }——upInfo=本轮抓到的该 UP 主名字/头像（ticket 126，无则 null） */
+ *  返回 { articles, upInfo, rejected }——upInfo=本轮抓到的该 UP 主名字/头像（ticket 126，无则 null）；
+ *  rejected=接口被风控拦截（code -352/-412 等，ticket 127：匿名 Cookie 常见，交由 fetchBilibili 引导用户配登录 Cookie） */
 async function fetchBilibiliUp(uid, existingUrls, cookie, maxItems) {
     const articles = [];
     const limit = Math.max(1, Math.floor(Number(maxItems) || 10));
     let offset = '';
     let upInfo = null;
+    let rejected = false;
     const headers = { ...HEADERS };
     if (cookie) headers['Cookie'] = cookie;
 
-    // 安全翻页上限（防异常接口死循环）
+    // 安全翻页上限（防异常接口死循环）；web_location=333.999 为网页端常规参数，部分风控场景可放行
     for (let page = 0; page < 50; page++) {
-        const url = `${BILIBILI_API}?host_mid=${encodeURIComponent(uid)}&offset=${encodeURIComponent(offset)}&timezone_offset=-480`;
+        const url = `${BILIBILI_API}?host_mid=${encodeURIComponent(uid)}&offset=${encodeURIComponent(offset)}&timezone_offset=-480&web_location=333.999`;
         const text = await safeFetch(url, { headers });
         if (!text) break;
         let data;
         try { data = JSON.parse(text); } catch { break; }
-        if (!data || data.code !== 0 || !data.data || !Array.isArray(data.data.items)) break;
+        if (!data || data.code !== 0 || !data.data || !Array.isArray(data.data.items)) {
+            if (data && data.code !== 0 && data.code !== undefined) rejected = true; // 风控拦截
+            break;
+        }
 
         const items = data.data.items || [];
         if (items.length === 0) break;
@@ -203,7 +208,7 @@ async function fetchBilibiliUp(uid, existingUrls, cookie, maxItems) {
         offset = data.data.offset || '';
         if (!offset) break;
     }
-    return { articles, upInfo };
+    return { articles, upInfo, rejected };
 }
 
 /** B 站源：cookie 引导 + 逐 UP 主抓取（ticket 127：每 UP 最近 N 条，不走 24h 窗口；批内/库内双去重由 checkAndFetch 统一完成）；
@@ -217,14 +222,16 @@ async function fetchBilibili(existingUrls, upUids, maxItems, cookie) {
     const per = Math.max(1, Math.floor(Number(maxItems) || 10));
     console.log(`  📡 B站 (${list.length} 位 UP 主，每 UP 最近 ${per} 条)...`);
     // ticket 127：优先用用户在「UP 主名单管理」弹窗配置的 Cookie；未配置则自动引导（buvid3 等）
-    const ck = (cookie && String(cookie).trim()) || (await getBilibiliCookie());
+    const configured = cookie && String(cookie).trim();
+    const ck = configured || (await getBilibiliCookie());
     if (!ck) {
-        console.log('  ✗ B站 无可用 Cookie（自动引导失败或 API 风控 412）——请在剪藏本设置 ⚙️ → UP 主名单管理 → 粘贴 B 站 Cookie 后重试');
+        console.log('  ✗ B站 无可用 Cookie（自动引导失败或 API 风控 412）——请在剪藏本设置 ⚙️ → UP 主名单管理 → 粘贴登录后的 B 站 Cookie 后重试');
         return { articles: [], upInfo: {} };
     }
     const seen = new Set();
     const articles = [];
     const upInfo = {};
+    let rejected = false;
     for (const uid of list) {
         const res = await fetchBilibiliUp(uid, existingUrls, ck, per);
         for (const a of res.articles) {
@@ -232,9 +239,16 @@ async function fetchBilibili(existingUrls, upUids, maxItems, cookie) {
             seen.add(a.url);
             articles.push(a);
         }
+        if (res.rejected) rejected = true;
         if (res.upInfo) upInfo[uid] = res.upInfo;
     }
     console.log(`  ✓ B站 ${articles.length} 条 (最近 ${per} 条/UP)`);
+    if (rejected) {
+        // ticket 127：匿名/弱 Cookie 常被 -352/-412 拦截（返回空），引导配置登录后 Cookie（含 SESSDATA）
+        console.log('  ✗ B站 接口风控拦截（-352/412）——匿名 Cookie 拿不到动态数据，请在剪藏本设置 ⚙️ → UP 主名单管理 → 粘贴浏览器「登录后」的 B 站 Cookie（含 SESSDATA）保存，下轮生效');
+    } else if (articles.length === 0 && !configured) {
+        console.log('  ℹ️ B站 本轮 0 条——若名单无误却应抓到内容，多因未登录 Cookie；请在该弹窗粘贴登录后的 Cookie 后重试');
+    }
     return { articles, upInfo };
 }
 

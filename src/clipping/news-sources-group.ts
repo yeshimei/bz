@@ -259,10 +259,10 @@ function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, Bilibi
       })
     );
 
-  // ticket 127：B 站 Cookie 配置（接口 412 风控时使用；空=清除走自动引导）
+  // ticket 127：B 站 Cookie 配置（接口 412/-352 风控时使用；空=清除走自动引导）
   let cookieInput = String(opts.cookie || '');
   const cookieDesc = () =>
-    `接口返回 412（风控）时使用：浏览器打开 bilibili.com → F12 → Cookie → 复制 buvid3 或 SESSDATA 粘贴（当前${cookieInput ? '已配置' : '未配置，走自动引导'}）`;
+    `接口返回 412/-352（风控）时需要「登录后」的 Cookie：浏览器登录并打开 bilibili.com → F12 → Cookie → 复制含 SESSDATA 的整段粘贴（当前${cookieInput ? '已配置' : '未配置，走自动引导'}）`;
   const cookieRow = new Setting(content)
     .setName('B 站 Cookie（可选）')
     .setDesc(cookieDesc())

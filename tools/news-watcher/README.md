@@ -2,7 +2,7 @@
 
 聚合讯数据源守护脚本——每 30 分钟抓取最近 24 小时文章（果壳科学人 + 知乎日报 + B站 UP 主视频投稿），URL + 标题双去重后入库 `CONFIG/STORAGE/news.json`（**六段结构**），供 bz 插件「聚合讯」阅读。
 
-> **v1.1.2（ticket 127）**：B 站改为**每 UP 抓最近 N 条**（默认 10，news.json `bilibiliMaxItems`，插件「数据源」组可设），不走 24 小时窗口——长期未更新的 UP 也能抓到其最新动态；新增 `bilibiliCookie` 段——API 返回 412（风控）时优先用用户配置的 Cookie（插件 UP 主名单管理弹窗引导配置），未配置则回退自动引导（GET 主页收集 buvid3）。其余结构一致。
+> **v1.1.2（ticket 127）**：B 站改为**每 UP 抓最近 N 条**（默认 10，news.json `bilibiliMaxItems`，插件「数据源」组可设），不走 24 小时窗口——长期未更新的 UP 也能抓到其最新动态；新增 `bilibiliCookie` 段——API 返回 412/-352（风控）时优先用用户配置的 Cookie（插件 UP 主名单管理弹窗引导配置**登录后**含 SESSDATA 的 Cookie），未配置则回退自动引导（GET 主页收集 buvid3）。**注意：B 站空间动态接口对匿名请求常返回 -352 或空结果，必须配置登录 Cookie 才能拿到真实动态**；接口请求带网页常规参数 `web_location=333.999`，被风控拦截时日志会打印引导提示。其余结构一致。
 >
 > **v1.1.1（ticket 126）**：B 站抓取到条目时回填 `bilibiliUpInfo` 段（uid → `{name, avatar}`，头像统一转 https）——插件侧名单/弹窗据此把 uid 显示为 UP 主名字和头像（无资料回退 uid）。
 >
