@@ -1,3 +1,13 @@
+## 2026-09-01 小橘记忆流/行为流重构（ticket 123；grill-with-docs 定案，ADR-0055~0059）
+
+**状态：设计共识完成（多轮 grill），多 worktree 并行实施中（P1 数据基座 → 域适配/分层策略/UX 并行）**
+
+- 📋 **设计定案（ADR-0055~0059）**：记忆流+行为流拆分（同文件 smartcat.json）；小橘=情感陪伴，知识内容（memo/news/favorites/belongings/卡片盒）→ 行为流不向量化；行为流=辅助上下文（时间模式+频率统计）；反思/小结/周报/叙事/prompt 全部只看记忆流；旧数据重置清空 + vec 删除重建
+- 📋 **数据契约**：各域自行填充 StructuredMeta（12+ 域全部一次适配）；addObservation 简化为只传 source + structured；importance/emotion/stream 由 ROUTING_RULES 按 `source:action` 静态推导；source（路由）+ entityType（描述生成）两字段并存
+- 📋 **描述双轨**：创作型（日记/诗歌/信）走 ContentCompletionDetector（30s 稳定窗口 + 5min 会话超时 + ≥20 字符）+ SnapshotGenerator（summary/tags/emotion，snapshot.emotion 写顶层）；非创作型走 entityType 模板函数；refHash 变化 ≥30% 才重生成快照 + 重向量化；旧 *-source.ts 废弃
+- 📋 **范围**：遗忘机制不做；设置项 5 个（行为流保留天数 30/最大条数 1000/显示行为日志/启用关联自动发现/关联发现窗口 7）；P3 含 promote/pin、自动关联（同 entityType+name）、conversationId 聚合
+- ⏳ 实施中：worktree/smartcat-foundation（P1）→ 并行：域适配（创作/情感域 + 行为域）、分层策略、UX 面板
+
 ## 2026-08-27 日记「未解析行」主动检测+手动修复 与 第二大脑移动端 IP 防呆（ticket 121 / 122，grill-with-docs 定案）
 
 **状态：master 直接实现完成，待提交（ADR-0054 + issues/121 + issues/122；全量 2915 测试绿 + tsc 0 + 构建部署产物已落）**

@@ -547,6 +547,14 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 ### 第二大脑面板打磨（ticket 108，ADR-0052）
 
 主面板：存储占用卡改合计单值（hover 明细）；「上次索引」卡与「最近向量化」行改用 core 共享 formatRelativeTime（hover 精确时间戳）；近 12 周趋势柱铺满整行；来源分布改树形逐级展开（名称左对齐取消固定列宽，▸/▾ 递归下钻子目录，每级节点聚合其下全部计数）；新增维度四枚——白名单覆盖率（已索引/白名单 md 总数）、内容规模（总字数/平均块长/平均每篇块数）、最厚笔记 Top5（点击跳转）、索引一致性健康灯（向量行数 vs 块总数，偏差告警色）。**打开即增量索引**：hasPendingChanges()（新文件/mtime 变化/已删除）预扫描，有待处理 → 全屏进度视图接管（与首用引导同一视图族、标题不同），完成后自动切统计；无变更直接统计。**重新索引**：设置弹窗动作行 → core confirm 确认（影响+耗时警告）→ closeSettingsModal + 打开主面板自动全量重建（store.rebuildAll：等待在途 refresh 后清空 meta/vec/VP 缓存再整库重嵌）。**AI 通道统一**（ADR-0052）：对话与概括改走主设置页 core AI（aiProvider），不再回退 Ollama 对话模型；设置弹窗删「Ollama 对话模型/DeepSeek 模型/默认使用 DeepSeek」三行（键保留 data.json 不消费，CONCURRENCY 先例），桌面+移动端 DeepSeek 复选框删除，ollamaChat 函数与其测试保留标注预留；新增「前往配置」行直达主设置页。**参考窄窗**：删 🤖 与 ⚙️ 按钮（设置只留主面板入口），按钮换 emoji（🔄 复位 / ◀️▶️ 隐藏 / ❌ 关闭），标题去 📚 图标，收起边条固定 📖；新增密度切换（📃 仅标题 / 📑 标题+内容，会话内有效不持久化）。**对话改居中弹窗**（core createOverlay，9998/9999 层级）：无头部按钮，遮罩+ESC 关闭，宽 min(600px,92vw)×72vh。
+### 小橘记忆流/行为流重构（ticket 123，ADR-0055~0059）
+
+- 单一 `memory.stream` 拆分为 `memoryStream`（情感/认知记忆）+ `behaviorStream`（系统/操作日志），同文件 smartcat.json；行为流滚动窗口清理（保留天数 30/最大条数 1000），记忆流无上限
+- 各域（12+）发事件时自带 StructuredMeta（entityType/action/name/refPath/refHash/snapshot 等）；addObservation 只传 source + structured，importance/emotion/stream 由 ROUTING_RULES 按 `source:action` 静态推导；source（路由）+ entityType（描述生成）并存
+- 描述双轨：创作型（日记/诗歌/信）ContentCompletionDetector（30s 稳定/5min 会话超时/≥20 字符）→ SnapshotGenerator（summary/tags/emotion，snapshot.emotion 写顶层）→ description；非创作型 entityType 模板函数；refHash 变化 ≥30% 才重生成快照+重向量化；旧 *-source.ts 废弃
+- 行为流辅助上下文（时间模式+频率统计查询），不入 prompt 槽位；反思/小结/周报/叙事全部只看记忆流；向量只对 memoryStream，旧 vec 删除重建
+- 遗忘机制不做；设置项 5 个（行为流保留天数/最大条数/显示行为日志/启用关联自动发现/关联发现窗口）；P3 数据面板行为日志 tab + promote 按钮（行为→记忆）+ pin/unpin + 自动关联（同 entityType+name）+ conversationId 聚合
+
 ### 第二大脑统计卡改版与悬停全文（ticket 109）
 
 主面板顶卡 7→6 张：删「内容规模」（与下方内容规模明细区重复）与「白名单覆盖」（与「覆盖笔记」语义重叠）；新增「嵌入维度」卡（取 stats.dim，tip 注明当前嵌入模型与「维度变更需重建索引」）。布局由 auto-fit minmax(96px,1fr)（680px 内容区只摆得下 6 列，第 7 卡孤行换行）改为桌面固定 repeat(6,1fr)、≤768px repeat(3,1fr)。数值缩写：≥10,000 显示 K/M（19.7K / 1.24M，新增 fmtCompact 纯函数），卡片 title hover 恒为千分位精确值。删「最厚笔记 Top5」连根：createUI 容器、渲染函数、SecondBrainStats.topThickets 字段与 computeStats 构造、statistics 测试断言一并移除；孤儿 fmtScale 与无调用方的 clearSummaryCache（ticket 108 删设置入口后遗留）死代码清除。「灵感参考」悬停全文浮层：宽 300→460px（左贴边定位偏移常量同步），正文取消 max-height:150px 硬截断、随内容生长，补 overflow-wrap:anywhere 断词规则（长 URL/英文串/代码块不再横向溢出被裁），top 钳制尽量贴屏内。拖出浮卡自由缩放（makeResizable 八向手柄）与浮卡正文全文（--float 态放开 clamp + 内部滚动）为既有能力，本次核实后维持不动。
