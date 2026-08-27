@@ -10,7 +10,7 @@
 import type { App } from 'obsidian';
 import { notice } from '../core/notice';
 import { getSettings, saveSettings } from '../core/settings-provider';
-import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath, smartcatStorageDir, defaultPersonalityGrowth, touchPresence, applyInsightPatch } from './data';
+import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath, smartcatStorageDir, touchPresence, applyInsightPatch } from './data';
 import { eventSystem, setSmartcatApp, setupVisibilityCheck, __resetVisibilityForTests } from './state';
 import { mountCatContainer, unmountCatContainer, applyAppearance, createChatPanel, showChatPanel, hideChatPanel, openSmartcatSettings } from './ui';
 import { BubbleManager } from './bubble';
@@ -826,17 +826,7 @@ function openSettings(): void {
       (getSettings() as any).smartcatMobileDefaultFullscreen = v;
       await saveSettings();
     },
-    // ADR-0023：人格成长可视化 + 重置
-    getPersonalityGrowth: () => {
-      return data ? data.personalityGrowth : null;
-    },
-    resetPersonalityGrowth: async () => {
-      if (!data || !appRef) return;
-      const fresh = defaultPersonalityGrowth();
-      // 保留已有 30 特质成长历史？重置 = 回新种子（MATE：重置出生）
-      data.personalityGrowth = fresh;
-      await saveSmartCatData(appRef, data);
-    },
+    // ADR-0023：人格成长数据在内部演化（personalityGrowth 字段），设置弹窗不再展示
     // 「打开数据面板」（2026-08-23：原「每周懂你报告」行替换；周报全文在面板「报告」页签）
     onOpenDashboard: () => {
       if (appRef) void openSmartcatDashboard(appRef);
