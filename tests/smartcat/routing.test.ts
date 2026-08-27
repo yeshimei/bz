@@ -75,7 +75,7 @@ describe('路由规则表（ROUTING_RULES）', () => {
     expect(ROUTING_RULES['diary:deleted'].stream).toBe('behavior');
   });
 
-  it('flash:created → behavior（闪念不进记忆流）', () => {
+  it('flash:created → behavior（卡片盒知识内容不进记忆流，用户拍板）', () => {
     expect(ROUTING_RULES['flash:created'].stream).toBe('behavior');
   });
 
