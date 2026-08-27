@@ -558,3 +558,18 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 ### 第二大脑统计卡改版与悬停全文（ticket 109）
 
 主面板顶卡 7→6 张：删「内容规模」（与下方内容规模明细区重复）与「白名单覆盖」（与「覆盖笔记」语义重叠）；新增「嵌入维度」卡（取 stats.dim，tip 注明当前嵌入模型与「维度变更需重建索引」）。布局由 auto-fit minmax(96px,1fr)（680px 内容区只摆得下 6 列，第 7 卡孤行换行）改为桌面固定 repeat(6,1fr)、≤768px repeat(3,1fr)。数值缩写：≥10,000 显示 K/M（19.7K / 1.24M，新增 fmtCompact 纯函数），卡片 title hover 恒为千分位精确值。删「最厚笔记 Top5」连根：createUI 容器、渲染函数、SecondBrainStats.topThickets 字段与 computeStats 构造、statistics 测试断言一并移除；孤儿 fmtScale 与无调用方的 clearSummaryCache（ticket 108 删设置入口后遗留）死代码清除。「灵感参考」悬停全文浮层：宽 300→460px（左贴边定位偏移常量同步），正文取消 max-height:150px 硬截断、随内容生长，补 overflow-wrap:anywhere 断词规则（长 URL/英文串/代码块不再横向溢出被裁），top 钳制尽量贴屏内。拖出浮卡自由缩放（makeResizable 八向手柄）与浮卡正文全文（--float 态放开 clamp + 内部滚动）为既有能力，本次核实后维持不动。
+
+### 聚合讯 B 站 UP 主聚合 + 数据源设置（ticket 124，ADR-0060，grill-with-docs 定案）
+
+> 用户需求「聚合讯，聚合我感兴趣的 b 站 up 主」+「剪藏本设置中自动摘要打开后显示更详细的设置项」。剪藏本设置面板新建「数据源」组，聚合讯数据源扩展到 B 站 UP 主视频投稿；news.json 升级为四段对象结构（articles/stats/bilibiliUps/sources），news-stats.json 并入；新增插件侧保留策略清理（未读不处理、已保存 3 天、已跳过 7 天，均设置可调）。
+
+- **检测与引导**：bz 插件以「vault 内 `CONFIG/STORAGE/news.json` 存在」为 news-watcher 库存在的信号（Q1，不依赖跨进程探测，移动端可用）；存在 → 「数据源」组显示全部设置项；不存在 → 显示安装引导块（如何安装/启动 obsidian-news，一行说明 + 复制命令），设置项隐藏（Q2）
+- **数据源组（Q9，剪藏本设置弹窗新增组）**：「知乎」「果壳」「B站」三源独立开关（Q17 用户拍板三源都有开关，落 news.json sources，默认全开；watcher 按开关决定抓不抓）；B 站 UP 主名单（bilibiliUps：仅存 uid，Q13，添加方式=粘贴主页/视频链接自动解析，Q4）；保留天数两项（已保存骨架 3 天 / 已跳过骨架 7 天，Q15，放数据源组，Q16）；只读状态行（最近抓取时间、UP 主数量，Q18）
+- **news.json 四段结构（Q3/Q10）**：`{articles: [...], stats: {...}, bilibiliUps: [uid,...], sources: {zhihu, guokr, bilibili}}`；旧纯数组首次读取自动迁移包裹为 articles 段，news-stats.json 首次读取并入 stats 段（之后不再读写 news-stats.json，旧文件保留不动）；watcher/插件双写者均按四段整读写（保留非本域段），兼容旧数组
+- **保留策略清理（Q11 插件侧 / Q12 未读不处理 / Q15 双档）**：清理时机=打开阅读器时（loadArticles 后触发一次，不新建常驻监听）；未读（read 非 true）永不处理；已保存骨架（read=true 且 state='saved'，正文已清空）按 fetchedAt/date 超过 N 天删除（默认 3，设置可调）；已跳过骨架（state='skipped'）超 M 天删除（默认 7，设置可调）；已读但无 state 的旧数据按「已跳过」档处理（保守，7 天）；超龄直接删（不做降级保留标题）
+- **状态标记**：markAsRead 时在 article 上写 `state: 'saved' | 'skipped'` 字段（区分两档保留策略的依据；旧数据无字段 → 按 skipped 档）
+- **B 站抓取（watcher 侧，ADR-0008 边界不动）**：`tools/news-watcher` 新增 B 站源——每轮先 GET `https://www.bilibili.com/` 拿 Cookie（buvid3），再带 Cookie 请求 `https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid=<uid>&timezone_offset=-480`（未登录可读，风控 412 由 Cookie 引导规避）；仅收 `DYNAMIC_TYPE_AV`（视频投稿，Q5 窗口沿用 24h 滚动窗口：pub_ts 过滤 + has_more 分页翻页直到越过 24h 边界）；条目映射：title=archive.title、url=`https://www.bilibili.com/video/<bvid>`、author=module_author.name、date=pub_ts 格式化、body=简介（module_desc.desc 若有）+ 封面 `![](cover)` + 播放链接；platform='B站'（Q7）；双去重（url=bvid 链接 + 标题）沿用；watcher 读 news.json 的 sources/bilibiliUps 决定抓取集合与开关（rc 仍只指定 vaultPath，用户拍板「news-watcher 只指定 obsidian 库的路径」）
+- **阅读流展示（Q6）**：标题 + 简介 + 封面 + 链接；platform-pill 显示「B站」，PLATFORM_DOMAIN 加 'B站': 'bilibili.com' 映射 site 图标；已读/跳过/保存/统计/复制链等既有语义零改动
+- **自动摘要详设（智能组，开关打开后展开，Q8/Q14）**：A) 摘要长度档位（autoSummaryLength：简短/标准/详细，默认标准，映射 summary 字数要求与 max_tokens）；B) 标签生成开关与数量（autoSummaryTagsEnabled + autoSummaryTagCount，默认开 3-6 个；关则不再生成/补全 tags）；C) 摘要时机（autoSummaryTiming：保存后立刻（默认，保持 create+file-open 双监听）/ 懒触发（仅打开文件时补全，去掉 create 即时监听））；AI 配置仍走主设置页 core AI（ADR-0052 不重复）
+- **设置/数据格式开销**：settings.ts 新增 6 键（autoSummaryLength/autoSummaryTagsEnabled/autoSummaryTagCount/autoSummaryTiming/newsRetentionSavedDays/newsRetentionSkippedDays）；news.json 四段结构与 `state` 字段为数据格式变更——铁律 1 兼容性冻结按用户拍板豁免，立 ADR-0060 记录边界（旧 news.json 纯数组/news-stats.json 读取兼容，迁移不破坏已读标记）
+- **验收标准**：a) 剪藏本设置弹窗出现「数据源」组，news.json 存在与否两条路径正确；b) 三源开关切换后 watcher 下轮按 sources 抓取；c) 粘贴 space.bilibili.com/<uid> 或 bilibili.com/video/BVxxx 自动解析出 uid 入名单并可删除；d) 阅读流出现 platform=B站 的条目（标题/简介/封面/链接），保存/跳过标记 state 并按 3/7 天档清理；e) 自动摘要开关打开后展开三组详设并生效；f) 旧 news.json 纯数组与 news-stats.json 迁移无感；g) 全量测试绿 + tsc + 构建

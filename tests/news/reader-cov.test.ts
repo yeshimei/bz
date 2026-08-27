@@ -42,8 +42,7 @@ describe('聚合讯补测（每例全新模块状态）', () => {
     document.head.innerHTML = '';
     clearNotices();
     vault = new MockVault();
-    vault.files.set(NEWS_JSON, JSON.stringify([makeArticle('A'), makeArticle('B')]));
-    vault.files.set(STATS_JSON, JSON.stringify({ totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }));
+    vault.files.set(NEWS_JSON, JSON.stringify({ articles: [makeArticle('A'), makeArticle('B')], stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }, bilibiliUps: [], sources: { zhihu: true, guokr: true, bilibili: true } }));
     setAppFresh({ vault, metadataCache: {}, workspace: { openLinkText: vi.fn() } } as any);
   });
 
@@ -76,54 +75,66 @@ describe('聚合讯补测（每例全新模块状态）', () => {
     expect(() => reader.markAsRead('saved')).not.toThrow(); // 时长下限 1 分钟（未开过会话也不炸）
   });
 
-  it('loadStats：统计文件缺失/损坏均保留默认值（不从旧值累加）', async () => {
-    // ① 缺失：先在磁盘放一份「陈年高值」再删掉 → loadStats 读不到 → 从默认 0 起算
+  it('loadStats：news.json 无 stats 段（旧纯数组）→ 默认 0 起算；旧 news-stats.json 自动迁移并入', async () => {
+    // ① 旧纯数组（无 stats 段）+ 旧 news-stats.json 有真实统计 → loadStats 迁移并入 stats 段
+    vault.files.set(NEWS_JSON, JSON.stringify([makeArticle('A'), makeArticle('B')]));
     vault.files.set(STATS_JSON, JSON.stringify({ totalRead: 100, totalSaved: 50, totalSkipped: 50, byPlatform: { x: 5 }, byDate: { '2020-01-01': 9 } }));
-    vault.files.delete(STATS_JSON);
     reader.init(false);
     await reader.loadStats();
     await reader.loadArticles();
     reader.skipArticle(); // A 读 → B
     reader.skipArticle(); // 全读完 → 完成态
+    await flush(); // 冲刷 saveArticles/saveStats 写回链
     const doneText = document.querySelector('.news-card-area')!.textContent!;
-    expect(doneText).toContain('总计阅读2 篇'); // 默认 0 + 本会话 2（若误读旧文件会是 102）
-    expect(doneText).not.toContain('102');
+    expect(doneText).toContain('总计阅读102 篇'); // 迁移 100 + 本会话 2
+    // 迁移后落盘：news.json 升级为四段，stats 段含旧统计
+    const migrated = JSON.parse(vault.files.get(NEWS_JSON)!);
+    expect(migrated.articles.length).toBe(2);
+    expect(migrated.stats.totalRead).toBe(102);
+    expect(migrated.stats.byPlatform['x']).toBe(5);
 
-    // ② 损坏 JSON → 解析失败保留默认（不抛错）
+    // ② 损坏 JSON → 解析失败保留默认（不抛错；错误态而非完成态）
     vi.resetModules();
     reader = await import('../../src/news/reader');
     ({ setApp: setAppFresh } = await import('../../src/core/app'));
     resetObsidianMocks();
     document.body.innerHTML = '';
     const vault2 = new MockVault();
-    vault2.files.set(NEWS_JSON, '[]');
-    vault2.files.set(STATS_JSON, '{broken json');
+    vault2.files.set(NEWS_JSON, '{broken json');
     setAppFresh({ vault: vault2, metadataCache: {}, workspace: {} } as any);
     reader.init(false);
     await reader.loadStats();
     await reader.loadArticles();
-    reader.render(); // 空列表 → 完成态，总计 0
-    expect(document.querySelector('.news-card-area')!.textContent).toContain('0 篇');
+    reader.render(); // 损坏 → 错误态（不渲染完成态/引导态）
+    const errEl = document.querySelector('.news-done');
+    expect(errEl).not.toBeNull();
+    expect(errEl!.textContent).toContain('新闻数据读取失败');
   });
 
-  it('saveStats：目录缺失先建目录；文件已存在走 modify 改写', async () => {
-    // ① 空 vault：目录与文件都不存在 → createFolder + create
-    const emptyVault = new MockVault();
-    setAppFresh({ vault: emptyVault, metadataCache: {}, workspace: {} } as any);
+  it('saveStats：news.json 存在 → stats 段改写；news.json 缺失 → 静默不落盘（首用引导一致）', async () => {
+    // ① 已有 news.json（四段）→ recordStat 写回 stats 段（保留 articles/bilibiliUps/sources）
     reader.recordStat('saved', makeArticle('X', { platform: '' }));
     await flush();
-    expect(emptyVault.dirs.has('CONFIG/STORAGE')).toBe(true);
-    const saved1 = JSON.parse(emptyVault.files.get(STATS_JSON)!);
-    expect(saved1.totalSaved).toBe(1);
-    expect(saved1.byPlatform['未知']).toBe(1); // platform 为空串 → 归「未知」桶
+    const disk1 = JSON.parse(vault.files.get(NEWS_JSON)!);
+    expect(disk1.stats.totalSaved).toBe(1);
+    expect(disk1.stats.byPlatform['未知']).toBe(1); // platform 为空串 → 归「未知」桶
+    expect(disk1.articles.length).toBe(2); // 非 stats 段保留
+    const beforeModifies = vault.modifiedPaths.filter((p) => p === NEWS_JSON).length;
 
-    // ② 已有统计文件 → modify 更新
+    // ② 既有 stats 段 → modify 更新累计
     reader.recordStat('skipped', makeArticle('Y', { platform: '果壳' }));
     await flush();
-    const saved2 = JSON.parse(emptyVault.files.get(STATS_JSON)!);
-    expect(saved2.totalSkipped).toBe(1);
-    expect(saved2.byPlatform['果壳']).toBe(1);
-    expect(emptyVault.modifiedPaths.filter((p) => p === STATS_JSON).length).toBeGreaterThanOrEqual(1);
+    const disk2 = JSON.parse(vault.files.get(NEWS_JSON)!);
+    expect(disk2.stats.totalSkipped).toBe(1);
+    expect(disk2.stats.byPlatform['果壳']).toBe(1);
+    expect(vault.modifiedPaths.filter((p) => p === NEWS_JSON).length).toBeGreaterThan(beforeModifies);
+
+    // ③ news.json 缺失（首用引导态）→ 静默不建文件不落盘
+    const emptyVault = new MockVault();
+    setAppFresh({ vault: emptyVault, metadataCache: {}, workspace: {} } as any);
+    reader.recordStat('saved', makeArticle('Z'));
+    await flush();
+    expect(emptyVault.files.has(NEWS_JSON)).toBe(false);
   });
 
   /** 轮询等待条件成立（防 CPU 争抢下的 DOM 就绪抖动） */

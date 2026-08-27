@@ -38,6 +38,153 @@ const HEADERS = {
     'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8'
 };
 
+// ---------- ticket 124（ADR-0060）：news.json 四段结构 + B 站源 ----------
+const BILIBILI_API = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space';
+const BILIBILI_HOME = 'https://www.bilibili.com/';
+const DEFAULT_SOURCES = { zhihu: true, guokr: true, bilibili: true };
+
+/** 读 news.json → 四段对象 { articles, stats, bilibiliUps, sources }；旧纯数组自动包裹；损坏 → 空骨架 */
+function readNewsData() {
+    if (!fs.existsSync(NEWS_PATH)) return { articles: [], stats: null, bilibiliUps: [], sources: { ...DEFAULT_SOURCES }, missing: true };
+    try {
+        const raw = JSON.parse(fs.readFileSync(NEWS_PATH, 'utf-8'));
+        if (Array.isArray(raw)) return { articles: raw, stats: null, bilibiliUps: [], sources: { ...DEFAULT_SOURCES }, missing: false };
+        if (raw && typeof raw === 'object') {
+            return {
+                articles: Array.isArray(raw.articles) ? raw.articles : [],
+                stats: raw.stats && typeof raw.stats === 'object' ? raw.stats : null,
+                bilibiliUps: Array.isArray(raw.bilibiliUps) ? raw.bilibiliUps.map((u) => String(u || '').trim()).filter(Boolean) : [],
+                sources: raw.sources && typeof raw.sources === 'object' ? { ...DEFAULT_SOURCES, ...raw.sources } : { ...DEFAULT_SOURCES },
+                missing: false,
+            };
+        }
+        return { articles: [], stats: null, bilibiliUps: [], sources: { ...DEFAULT_SOURCES }, missing: false };
+    } catch {
+        return { articles: [], stats: null, bilibiliUps: [], sources: { ...DEFAULT_SOURCES }, missing: false };
+    }
+}
+
+/** 写回 news.json 四段（调用方保证读盘后改段再整写，保留非本域段） */
+function writeNewsData(data) {
+    const dir = path.dirname(NEWS_PATH);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(NEWS_PATH, JSON.stringify(data, null, 2), 'utf-8');
+}
+
+/** B 站未登录 Cookie 引导：GET 主页收集 Set-Cookie（buvid3 等），规避 API 风控 412 */
+async function getBilibiliCookie() {
+    try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), TIMEOUT);
+        const resp = await fetch(BILIBILI_HOME, { headers: HEADERS, redirect: 'follow', signal: ctrl.signal });
+        clearTimeout(timer);
+        const setCookies = typeof resp.headers.getSetCookie === 'function' ? resp.headers.getSetCookie() : [];
+        const cookies = (setCookies || [])
+            .map((c) => String(c).split(';')[0])
+            .filter((c) => /^[^=]+=/.test(c));
+        return cookies.length > 0 ? cookies.join('; ') : null;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * B 站动态条目 → 新闻条目纯函数（ticket 124）：仅 DYNAMIC_TYPE_AV 返回非 null；
+ * 供 fetchBilibiliUp 与 node:test 单测使用。
+ */
+function buildBilibiliArticle(it, cutoffMs) {
+    if (!it || it.type !== 'DYNAMIC_TYPE_AV') return null; // 仅视频投稿
+    const author = (it.modules && it.modules.module_author) || {};
+    const dyn = (it.modules && it.modules.module_dynamic) || {};
+    const desc = (it.modules && it.modules.module_desc) || {};
+    const archive = (dyn.major && dyn.major.archive) || null;
+    if (!archive || !archive.bvid || !archive.title) return null;
+
+    const pubTs = Number(author.pub_ts || 0);
+    if (!pubTs || isNaN(pubTs)) return null;
+    if (cutoffMs && pubTs * 1000 < cutoffMs) return null; // 越过 24h 边界
+
+    const url = `https://www.bilibili.com/video/${archive.bvid}`;
+    const cover = String(archive.cover || '').replace(/^http:/, 'https:');
+    const descText = String(desc.desc || '').trim();
+    const intro = descText || String(archive.desc || '').trim();
+    const body = [
+        intro ? `${intro}\n\n` : '',
+        cover ? `![封面](${cover})\n\n` : '',
+        `🔗 观看：[${String(archive.title)}](${url})${archive.duration_text ? `（时长 ${archive.duration_text}）` : ''}`,
+    ].join('').trim();
+    const d = new Date(pubTs * 1000);
+    const p2 = (n) => String(n).padStart(2, '0');
+    const date = `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`;
+
+    return { platform: 'B站', title: String(archive.title), url, author: String(author.name || ''), date, body };
+}
+
+/** 单个 UP 主动态翻页抓取（仅 DYNAMIC_TYPE_AV 视频投稿；24h 窗口） */
+async function fetchBilibiliUp(uid, existingUrls, cookie) {
+    const articles = [];
+    const cutoff = Date.now() - WINDOW_MS;
+    let offset = '';
+    const headers = { ...HEADERS };
+    if (cookie) headers['Cookie'] = cookie;
+
+    // 安全翻页上限（防异常接口死循环）
+    for (let page = 0; page < 50; page++) {
+        const url = `${BILIBILI_API}?host_mid=${encodeURIComponent(uid)}&offset=${encodeURIComponent(offset)}&timezone_offset=-480`;
+        const text = await safeFetch(url, { headers });
+        if (!text) break;
+        let data;
+        try { data = JSON.parse(text); } catch { break; }
+        if (!data || data.code !== 0 || !data.data || !Array.isArray(data.data.items)) break;
+
+        const items = data.data.items || [];
+        if (items.length === 0) break;
+        let crossedWindow = false;
+
+        for (const it of items) {
+            const article = buildBilibiliArticle(it, cutoff);
+            if (!article) continue;
+            if (article.url && existingUrls.has(article.url)) continue;
+            articles.push(article);
+            if (cutoff && it.modules && it.modules.module_author && Number(it.modules.module_author.pub_ts || 0) * 1000 < cutoff) {
+                crossedWindow = true; // 越过 24h 边界（按时间倒序）
+            }
+        }
+
+        if (crossedWindow || !data.data.has_more) break;
+        offset = data.data.offset || '';
+        if (!offset) break;
+    }
+    return articles;
+}
+
+/** B 站源：cookie 引导 + 逐 UP 主抓取（24h 窗口；批内/库内双去重由 checkAndFetch 统一完成） */
+async function fetchBilibili(existingUrls, upUids) {
+    const list = upUids || [];
+    if (list.length === 0) {
+        console.log('  📡 B站 (无 UP 主名单，跳过)');
+        return [];
+    }
+    console.log(`  📡 B站 (${list.length} 位 UP 主)...`);
+    const cookie = await getBilibiliCookie();
+    if (!cookie) {
+        console.log('  ✗ B站 cookie 引导失败，跳过本轮（下轮重试）');
+        return [];
+    }
+    const seen = new Set();
+    const articles = [];
+    for (const uid of list) {
+        const ups = await fetchBilibiliUp(uid, existingUrls, cookie);
+        for (const a of ups) {
+            if (seen.has(a.url)) continue;
+            seen.add(a.url);
+            articles.push(a);
+        }
+    }
+    console.log(`  ✓ B站 ${articles.length} 条 (24h 内)`);
+    return articles;
+}
+
 let running = false;
 
 // ---------- 工具 ----------
@@ -52,12 +199,6 @@ async function safeFetch(url, options = {}) {
         console.warn(`  ✗ ${url.split('?')[0]}: ${e.message}`);
         return null;
     } finally { clearTimeout(timer); }
-}
-
-function readNews() {
-    if (!fs.existsSync(NEWS_PATH)) return [];
-    try { return JSON.parse(fs.readFileSync(NEWS_PATH, 'utf-8')); }
-    catch { return []; }
 }
 
 // ---------- HTML → Markdown ----------
@@ -210,19 +351,30 @@ async function fetchZhihu() {
     return articles;
 }
 
-// ---------- 抓取与入库 ----------
+// ---------- 抓取与入库（ticket 124：四段读写 + sources 开关 + B 站源）----------
 async function checkAndFetch() {
     if (running) return;
     running = true;
     try {
         console.log(`\n🔔 轮询抓取 (窗口: 最近 24h)...`);
 
-        const existing = readNews();
+        const disk = readNewsData();
+        const existing = disk.articles;
         const existingUrls = new Set(existing.map(a => a.url));
         const existingTitles = new Set(existing.map(a => a.title.trim()));
 
-        const [guokr, zhihu] = await Promise.all([fetchGuokr(existingUrls), fetchZhihu()]);
-        let newArticles = [...guokr, ...zhihu].filter(a => !existingUrls.has(a.url));
+        // 按 sources 开关决定抓哪些源（默认全开；插件剪藏本设置「数据源」组写四段）
+        const sources = disk.sources || { ...DEFAULT_SOURCES };
+        const jobs = [];
+        if (sources.guokr !== false) jobs.push(fetchGuokr(existingUrls).then((r) => r));
+        else console.log('  🚫 果壳 已关闭（sources.guokr=false），跳过');
+        if (sources.zhihu !== false) jobs.push(fetchZhihu().then((r) => r));
+        else console.log('  🚫 知乎日报 已关闭（sources.zhihu=false），跳过');
+        if (sources.bilibili !== false) jobs.push(fetchBilibili(existingUrls, disk.bilibiliUps));
+        else console.log('  🚫 B站 已关闭（sources.bilibili=false），跳过');
+
+        const results = await Promise.all(jobs);
+        let newArticles = results.flat().filter(a => a && !existingUrls.has(a.url));
 
         // 标题去重
         const beforeTitleDedup = newArticles.length;
@@ -239,12 +391,10 @@ async function checkAndFetch() {
             a.fetchedAt = new Date().toISOString().replace('T', ' ').substring(0, 19);
         }
 
-        const merged = [...existing, ...newArticles];
-        const dir = path.dirname(NEWS_PATH);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(NEWS_PATH, JSON.stringify(merged, null, 2), 'utf-8');
+        // 四段写回：仅替换 articles 段（保留 stats/bilibiliUps/sources——插件侧维护段）
+        writeNewsData({ ...disk, articles: [...existing, ...newArticles] });
 
-        console.log(`  ✅ 新增 ${newArticles.length} 篇，总计 ${merged.length} 篇`);
+        console.log(`  ✅ 新增 ${newArticles.length} 篇，总计 ${existing.length + newArticles.length} 篇`);
         for (const a of newArticles) {
             console.log(`  📰 [${a.platform}] ${a.title} — ${a.author || '未知'}`);
         }
@@ -257,11 +407,11 @@ async function checkAndFetch() {
 if (require.main === module) {
     console.log('👁️  News Watcher 启动');
     console.log(`   监控: ${NEWS_PATH}`);
-    console.log(`   源: 果壳科学人 + 知乎日报`);
+    console.log(`   源: 果壳科学人 + 知乎日报 + B站 UP 主`);
     console.log(`   节奏: 启动即抓 + 每 ${FETCH_INTERVAL_MS / 60000} 分钟轮询, 窗口 24h, 去重入库`);
 
     checkAndFetch();
     setInterval(checkAndFetch, FETCH_INTERVAL_MS);
 }
 
-module.exports = { NEWS_PATH, FETCH_INTERVAL_MS, resolveNewsPath, checkAndFetch };
+module.exports = { NEWS_PATH, FETCH_INTERVAL_MS, resolveNewsPath, checkAndFetch, readNewsData, fetchBilibiliUp, getBilibiliCookie, buildBilibiliArticle };

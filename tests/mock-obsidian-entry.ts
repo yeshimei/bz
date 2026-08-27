@@ -182,6 +182,8 @@ export class MockToggle {
 export class MockButton {
   text = '';
   cta = false;
+  isExtraButton = false;
+  icon: string | null = null;
   private cb: (() => void) | null = null;
   setButtonText(t: string): this {
     this.text = t;
@@ -190,6 +192,14 @@ export class MockButton {
   /** 真实 Obsidian SettingButton 有该 API（强调色按钮）；mock 记录 flag 供断言 */
   setCta(): this {
     this.cta = true;
+    return this;
+  }
+  /** ticket 124：删除按钮 setIcon（mock 记录图标名） */
+  setIcon(name: string): this {
+    this.icon = name;
+    return this;
+  }
+  setTooltip(_t: string): this {
     return this;
   }
   onClick(cb: () => void): this {
@@ -282,6 +292,14 @@ export class Setting {
     const b = new MockButton();
     cb(b);
     this.controls.push(b);
+    return this;
+  }
+  /** ticket 124：数据源组 UP 名单删除按钮（Obsidian 真实 API；mock 复用 MockButton） */
+  addExtraButton(cb: (b: MockButton) => void): this {
+    const b = new MockButton();
+    cb(b);
+    this.controls.push(b);
+    b.isExtraButton = true;
     return this;
   }
   addSlider(cb: (sl: MockSlider) => void): this {

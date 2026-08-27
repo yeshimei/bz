@@ -16,10 +16,13 @@ import { emitDomainEvent } from '../core/domain-bus';
 import type { NewsReadEvent } from '../smartcat/news-source';
 
 // ---------- 常量 ----------
-const NEWS_JSON_PATH = 'CONFIG/STORAGE/news.json';
-const STATS_JSON_PATH = 'CONFIG/STORAGE/news-stats.json';
+// ticket 124（ADR-0060）：news.json 四段结构 + 保留策略；路径/读写/迁移收 src/news/data.ts
+import {
+  readNewsData, writeNewsData, migrateLegacyStats, applyRetention, normalizeRetentionDays, statsHasData,
+} from './data';
+
 const CLIP_DIR = '归档/网页剪藏';
-const PLATFORM_DOMAIN: Record<string, string> = { '果壳': 'guokr.com', '知乎日报': 'zhihu.com' };
+const PLATFORM_DOMAIN: Record<string, string> = { '果壳': 'guokr.com', '知乎日报': 'zhihu.com', 'B站': 'bilibili.com' };
 
 /** HTML 转义（源码内联 esc） */
 const esc = (s: any) =>
@@ -50,6 +53,12 @@ let loadFailed = false;
 /** show() 重入串行化：加载链在跑时重入（hide 后立即重开 / 双 show 并发）复用同一链，
  *  防双链竞态——晚完成链用旧快照覆盖面板、晚到 render() 重设 openedAt 截断已读时长。 */
 let pendingLoad: Promise<void> | null = null;
+/** ticket 124（ADR-0060）：news.json 写回串行队列——saveArticles（articles 段）与 saveStats
+ *  （stats 段）同文件异步写回必须串行执行（先读盘→改段→整写），否则两写回并发互相覆盖对方段。 */
+let writeChain: Promise<void> = Promise.resolve();
+function enqueueWrite(fn: () => Promise<void>): void {
+  writeChain = writeChain.then(fn).catch(() => { /* 写回失败静默（原语义） */ });
+}
 
 // ---------- 创建弹窗 ----------
 function createMaskAndPopup() {
@@ -78,26 +87,32 @@ function createMaskAndPopup() {
   document.body.appendChild(popup);
 }
 
-// ---------- 统计 ----------
+// ---------- 统计（ticket 124：并入 news.json stats 段，兼容旧 news-stats.json 迁移）----------
 export async function loadStats() {
-  const app = getApp();
-  const af = app.vault.getAbstractFileByPath(STATS_JSON_PATH);
-  if (!af) return;
-  try {
-    stats = JSON.parse(await app.vault.read(af as TFile));
-  } catch (e) { /* 保留默认 */ }
+  const res = await readNewsData();
+  if (!res.ok || res.missing) return;
+  let data = res.data;
+  // 首次迁移：stats 段无真实数据且旧 news-stats.json 存在 → 并入并落盘一次
+  if (!statsHasData(data.stats)) {
+    const migrated = await migrateLegacyStats(data);
+    if (statsHasData(migrated.stats) && migrated !== data) {
+      data = migrated;
+      await writeNewsData(data);
+    }
+  }
+  stats = data.stats || stats;
 }
 
 export async function saveStats() {
-  const app = getApp();
-  try {
-    const dir = STATS_JSON_PATH.substring(0, STATS_JSON_PATH.lastIndexOf('/'));
-    const dirAf = app.vault.getAbstractFileByPath(dir);
-    if (!dirAf) await app.vault.createFolder(dir);
-    const af = app.vault.getAbstractFileByPath(STATS_JSON_PATH);
-    if (af) await app.vault.modify(af as TFile, JSON.stringify(stats, null, 2));
-    else await app.vault.create(STATS_JSON_PATH, JSON.stringify(stats, null, 2));
-  } catch (e) { /* 静默 */ }
+  // 四段整读写：读盘保留 articles/bilibiliUps/sources，仅替换 stats 段；
+  // 写回串行队列（与 saveArticles 同文件，防并发覆盖）
+  enqueueWrite(async () => {
+    try {
+      const res = await readNewsData();
+      if (!res.ok || res.missing) return;
+      await writeNewsData({ ...res.data, stats });
+    } catch (e) { /* 静默 */ }
+  });
 }
 
 export function recordStat(action: string, article: any) {
@@ -139,25 +154,42 @@ export function mergeWithDisk(memory: any[], disk: any[]): any[] {
 export async function loadArticles() {
   const app = getApp();
   loadFailed = false; // 每次加载重置状态（修复文件后重开即可恢复）
-  const af = app.vault.getAbstractFileByPath(NEWS_JSON_PATH);
-  if (!af) {
+  const res = await readNewsData();
+  if (res.missing) {
     // l5：无数据文件（首次使用）→ 首用引导态；allArticles 清空（后续 saveArticles 不覆写）
     dataFileMissing = true;
     allArticles = []; articles = []; batchTotal = 0;
     return;
   }
-  dataFileMissing = false;
-  const prevCurrent = articles[currentIndex]; // 重载前当前篇，用于游标锚定
-  try {
-    allArticles = JSON.parse(await app.vault.read(af as TFile));
-    articles = allArticles.filter((a: any) => !a.read);
-    batchTotal = articles.length;
-  } catch (e) {
-    // l5：崩溃半截/非数组 JSON → 错误态（不渲染「读完」态），error toast 人话提示；
+  if (!res.ok) {
+    // l5：崩溃半截/损坏 JSON → 错误态（不渲染「读完」态），error toast 人话提示；
     // 保留磁盘旧文件不动（后续 saveArticles 不覆写），技术详情进 console
     loadFailed = true;
     allArticles = []; articles = []; batchTotal = 0;
-    console.warn('[聚合讯] news.json 解析失败，进入错误态（不渲染完成态）', e);
+    console.warn('[聚合讯] news.json 解析失败，进入错误态（不渲染完成态）');
+    notice('新闻数据读取失败，请检查数据文件后重试', 'error');
+    return;
+  }
+  dataFileMissing = false;
+  const prevCurrent = articles[currentIndex]; // 重载前当前篇，用于游标锚定
+  try {
+    let data = res.data;
+    // ticket 124（ADR-0060）保留策略：打开阅读器清理一次（插件侧；未读不处理）
+    const s = tryGetSettings() as any;
+    const savedDays = normalizeRetentionDays(s?.newsRetentionSavedDays) ?? 3;
+    const skippedDays = normalizeRetentionDays(s?.newsRetentionSkippedDays) ?? 7;
+    const cleaned = applyRetention(data.articles, savedDays, skippedDays);
+    if (cleaned.length !== data.articles.length) {
+      data = { ...data, articles: cleaned };
+      await writeNewsData(data);
+    }
+    allArticles = data.articles;
+    articles = allArticles.filter((a: any) => !a.read);
+    batchTotal = articles.length;
+  } catch (e) {
+    loadFailed = true;
+    allArticles = []; articles = []; batchTotal = 0;
+    console.warn('[聚合讯] news.json 处理失败，进入错误态', e);
     notice('新闻数据读取失败，请检查数据文件后重试', 'error');
   }
   // 游标锚定：优先按上一当前篇的稳定标识定位新索引，找不到再夹取边界
@@ -339,6 +371,7 @@ function renderFirstUseState() {
             <div class="news-done-stats-title">数据从哪里来？</div>
             <div class="news-done-body">聚合讯的数据由外部「数据源守护」进程（obsidian-news）自动抓取写入 CONFIG/STORAGE/news.json，插件本身不抓取新闻，只负责渲染阅读流。</div>
             <div class="news-done-body">首次使用请先配置并运行数据源守护（obsidian-news watch），守护进程每 30 分钟抓取最新文章入库，之后回到这里即可阅读。</div>
+            <div class="news-done-body">B 站 UP 主聚合在剪藏本设置 →「数据源」组配置（添加关注的 UP 主即可自动抓取其新视频）。</div>
         </div>
     `;
   container!.appendChild(card);
@@ -501,6 +534,8 @@ export function markAsRead(action: string): NewsReadEvent | null {
       emitDomainEvent('news', { kind: 'read', evt });
     }
     a.read = true;
+    // ticket 124（ADR-0060）保留策略档位依据：保存/跳过写 state（旧数据无 state → 按跳过档）
+    a.state = action === 'saved' ? 'saved' : 'skipped';
     delete a.body;
     recordStat(action, a);
   }
@@ -518,39 +553,70 @@ export function markAsRead(action: string): NewsReadEvent | null {
 }
 
 export async function checkNewArticles(prevTotal: number) {
-  const app = getApp();
   try {
-    const af = app.vault.getAbstractFileByPath(NEWS_JSON_PATH);
-    if (!af) return;
-    const fresh = JSON.parse(await app.vault.read(af as TFile));
-    if (fresh.length > prevTotal) {
-      notice(`新增 ${fresh.length - prevTotal} 篇文章`, 'info');
+    const res = await readNewsData();
+    if (!res.ok || res.missing) return;
+    if (res.data.articles.length > prevTotal) {
+      notice(`新增 ${res.data.articles.length - prevTotal} 篇文章`, 'info');
     }
   } catch (e) { /* 忽略 */ }
 }
 
 export async function saveArticles() {
-  const app = getApp();
-  try {
-    const af = app.vault.getAbstractFileByPath(NEWS_JSON_PATH);
-    if (!af) return;
-    // 双写者防丢：写前重读磁盘，合并外部追加项（P0-5）；磁盘解析失败不覆写防清盘
-    let disk: any;
+  // 双写者防丢：写前重读磁盘（四段），仅替换 articles 段（保留 stats/bilibiliUps/sources）；
+  // 写回串行队列（与 saveStats 同文件，防并发覆盖）；磁盘解析失败/缺失不覆写防清盘
+  enqueueWrite(async () => {
     try {
-      disk = JSON.parse(await app.vault.read(af as TFile));
-    } catch (e) {
-      console.warn('[聚合讯] news.json 解析失败，跳过本次写回以防覆盖', e);
-      return;
-    }
-    if (!Array.isArray(disk)) {
-      console.warn('[聚合讯] news.json 内容异常（非数组），跳过本次写回以防覆盖');
-      return;
-    }
-    await app.vault.modify(af as TFile, JSON.stringify(mergeWithDisk(allArticles, disk), null, 2));
-  } catch (e) { /* 忽略 */ }
+      const res = await readNewsData();
+      if (!res.ok || res.missing) return;
+      const merged = mergeWithDisk(allArticles, res.data.articles);
+      await writeNewsData({ ...res.data, articles: merged });
+    } catch (e) { /* 忽略 */ }
+  });
 }
 
 // ---------- 显示 / 隐藏 ----------
+/** 一次读盘加载（stats 迁移 + articles + 保留清理；show 链专用，避免 loadStats+loadArticles 双读盘） */
+export async function loadAll(): Promise<void> {
+  const res = await readNewsData();
+  loadFailed = false;
+  if (res.missing) {
+    dataFileMissing = true;
+    allArticles = []; articles = []; batchTotal = 0;
+    stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+    return;
+  }
+  if (!res.ok) {
+    dataFileMissing = false;
+    loadFailed = true;
+    allArticles = []; articles = []; batchTotal = 0;
+    console.warn('[聚合讯] news.json 解析失败，进入错误态（不渲染完成态）');
+    notice('新闻数据读取失败，请检查数据文件后重试', 'error');
+    return;
+  }
+  dataFileMissing = false;
+  let data = res.data;
+  // 保留策略清理（插件侧；未读不处理）
+  const s = tryGetSettings() as any;
+  const savedDays = normalizeRetentionDays(s?.newsRetentionSavedDays) ?? 3;
+  const skippedDays = normalizeRetentionDays(s?.newsRetentionSkippedDays) ?? 7;
+  const cleaned = applyRetention(data.articles, savedDays, skippedDays);
+  // 旧 news-stats.json 迁移（stats 段无真实数据时）
+  let changed = cleaned.length !== data.articles.length;
+  if (!statsHasData(data.stats)) {
+    const migrated = await migrateLegacyStats(data);
+    if (statsHasData(migrated.stats)) { data = migrated; changed = true; }
+  }
+  if (changed) {
+    data = { ...data, articles: cleaned };
+    await writeNewsData(data);
+  }
+  stats = data.stats || stats;
+  allArticles = data.articles;
+  articles = allArticles.filter((a: any) => !a.read);
+  batchTotal = articles.length;
+}
+
 export function show() {
   if (!popup) createMaskAndPopup();
   // 移动端默认全屏跟随剪藏本（用户拍板：聚合讯不设独立开关，与剪藏本同键 clippingMobileDefaultFullscreen）
@@ -562,8 +628,7 @@ export function show() {
   popup!.style.visibility = 'visible';
   // 重入串行化：已有加载链在跑 → 占位/显窗已重建，复用同一链（其完成时 render 替换占位），不另起第二条链
   if (pendingLoad) return;
-  pendingLoad = loadStats()
-    .then(() => loadArticles())
+  pendingLoad = loadAll()
     .then(() => {
       render();
     })

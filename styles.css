@@ -2153,6 +2153,23 @@ button.news-close-btn {
         }
 .article-sites-scroll::-webkit-scrollbar { display:none; }
 
+/* ===== 剪藏本设置「数据源」组 + 自动摘要详设（ticket 124，ADR-0060） ===== */
+.auto-summary-detail {
+    padding: 4px 12px 12px 44px;
+}
+.auto-summary-detail .setting-item {
+    border-top: 1px solid var(--background-modifier-border);
+}
+.auto-summary-detail .setting-item:first-child {
+    border-top: none;
+}
+[data-up-row] .setting-item-info {
+    flex: 1;
+}
+[data-up-row] .setting-item-control {
+    gap: 4px;
+}
+
 /* ==================== 密码本域样式（src/password/styles.css） ==================== */
 /* ==================== 密码本（password，ticket 60 收敛：原 PW_STYLES 运行时注入，逐字搬运） ==================== */
     #pw-mask { backdrop-filter: blur(2px); }

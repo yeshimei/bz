@@ -63,8 +63,8 @@ async function setup() {
   document.body.innerHTML = '';
   document.head.innerHTML = '';
   const vault = new MockVault();
-  vault.files.set('CONFIG/STORAGE/news.json', JSON.stringify(NEWS_JSON));
-  vault.files.set('CONFIG/STORAGE/news-stats.json', JSON.stringify({ totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }));
+  // ticket 124（ADR-0060）：四段结构 fixture（stats 内嵌；旧 news-stats.json 由迁移测试覆盖）
+  vault.files.set('CONFIG/STORAGE/news.json', JSON.stringify({ articles: NEWS_JSON, stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }, bilibiliUps: [], sources: { zhihu: true, guokr: true, bilibili: true } }));
   const app = makeApp(vault);
   setApp(app);
   _vault = vault; // 测试内共享 vault 引用（供 getVault）
@@ -112,10 +112,11 @@ describe('聚合讯阅读流', () => {
 
     expect(document.querySelector('.news-card-title')!.textContent).toBe('第二篇新闻');
     expect(document.querySelector('.news-counter')!.textContent).toContain('2 / 2');
-    // news.json 写回 read 标记
+    // news.json 写回 read 标记 + state（ticket 124：保留策略档位依据）
     const saved = JSON.parse((getVault().files as Map<string, string>).get('CONFIG/STORAGE/news.json')!);
-    expect(saved[0].read).toBe(true);
-    expect(saved[0].body).toBeUndefined(); // delete a.body
+    expect(saved.articles[0].read).toBe(true);
+    expect(saved.articles[0].state).toBe('skipped');
+    expect(saved.articles[0].body).toBeUndefined(); // delete a.body
   });
 
   it('跳过：不发任何 news 事件（域统计照记）', async () => {
@@ -123,9 +124,10 @@ describe('聚合讯阅读流', () => {
     await loadArticles();
     render();
     skipArticle();
+    await new Promise((r) => setTimeout(r, 0)); // 冲刷 saveStats 写回链（ticket 124：stats 内嵌 news.json）
     expect(newsSpy).not.toHaveBeenCalled();
-    const stats = JSON.parse((getVault().files as Map<string, string>).get('CONFIG/STORAGE/news-stats.json')!);
-    expect(stats.totalSkipped).toBe(1);
+    const saved = JSON.parse((getVault().files as Map<string, string>).get('CONFIG/STORAGE/news.json')!);
+    expect(saved.stats.totalSkipped).toBe(1);
   });
 
   it('保存：仅发 read 入口事件（ticket 076 修订：三态 → 仅保存），时长取整分钟 ≥1', async () => {
@@ -186,7 +188,7 @@ describe('聚合讯阅读流', () => {
   it('打开时只剩最后一篇：按钮即完成说明，读完显示最终计数 1 / 1', async () => {
     const vault = getVault();
     const saved = JSON.parse(vault.files.get('CONFIG/STORAGE/news.json')!);
-    saved[0].read = true; // 只留第二篇未读
+    saved.articles[0].read = true; // 只留第二篇未读
     vault.files.set('CONFIG/STORAGE/news.json', JSON.stringify(saved));
     await loadStats();
     await loadArticles();
@@ -199,12 +201,14 @@ describe('聚合讯阅读流', () => {
     expect(document.querySelector('.news-bottombar .news-counter')!.textContent).toContain('1 / 1');
   });
 
-  it('news-stats.json：recordStat 累计并落盘（byPlatform/byDate）', async () => {
+  it('news.json stats 段：recordStat 累计并落盘（byPlatform/byDate）', async () => {
     await loadStats();
     recordStat('skipped', NEWS_JSON[0]);
     recordStat('saved', NEWS_JSON[1]);
+    await new Promise((r) => setTimeout(r, 0)); // 冲刷 saveStats 写回链
     const vault = getVault();
-    const stats = JSON.parse(vault.files.get('CONFIG/STORAGE/news-stats.json')!);
+    const saved = JSON.parse(vault.files.get('CONFIG/STORAGE/news.json')!);
+    const stats = saved.stats;
     expect(stats.totalRead).toBe(2);
     expect(stats.totalSaved).toBe(1);
     expect(stats.totalSkipped).toBe(1);

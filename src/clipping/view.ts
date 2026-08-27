@@ -15,9 +15,10 @@ import { formatRelativeTime } from '../core/utils';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { onDomainEvent } from '../core/domain-bus';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
-import { openSettingsModal, createSettingsGroup } from '../core/settings-modal';
+import { openSettingsModal, createSettingsGroup, refreshSettingsGroupCounts } from '../core/settings-modal';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { ensureAutoSummary, stopAutoSummary } from '../auto-summary';
+import { buildNewsSourcesGroup } from './news-sources-group';
 
 // ---------- 模块状态 ----------
 let articlePopup: HTMLElement | null = null;
@@ -227,8 +228,67 @@ function createHeader(): HTMLElement {
               await saveSettings();
               if (v) ensureAutoSummary(app);
               else stopAutoSummary(); // 关闭：摘除监听（initialized 保留，再开启复用注册）
+              // ticket 124：开关打开 → 显示详情设置项；关闭 → 隐藏
+              detailEl.style.display = v ? '' : 'none';
+              refreshSettingsGroupCounts(el);
             })
           );
+        // ticket 124（Q8/Q14）：自动摘要详设——开关注册后插入（sub-settings 形态，Obsidian Setting 模板）
+        const detailEl = document.createElement('div');
+        detailEl.className = 'auto-summary-detail';
+        detailEl.style.display = s.autoSummaryEnabled ? '' : 'none';
+        smartGroup.appendChild(detailEl);
+        // 1) 摘要长度档位
+        new Setting(detailEl)
+          .setName('摘要长度')
+          .setDesc('控制生成的摘要详略程度')
+          .addDropdown((dd) => {
+            dd.addOption('simple', '简短（50-100 字）');
+            dd.addOption('standard', '标准（150-250 字）');
+            dd.addOption('detailed', '详细（300-400 字）');
+            dd.setValue(s.autoSummaryLength || 'standard').onChange(async (v) => {
+              s.autoSummaryLength = v;
+              await saveSettings();
+            });
+          });
+        // 2) 标签生成开关与数量
+        const tagCountRow = new Setting(detailEl)
+          .setName('生成标签')
+          .setDesc('为剪藏生成中文标签')
+          .addToggle((toggle) =>
+            toggle.setValue(!!s.autoSummaryTagsEnabled).onChange(async (v) => {
+              s.autoSummaryTagsEnabled = v;
+              await saveSettings();
+              tagCountEl.style.display = v ? '' : 'none';
+            })
+          );
+        const tagCountEl = document.createElement('div');
+        tagCountEl.style.display = s.autoSummaryTagsEnabled ? '' : 'none';
+        detailEl.appendChild(tagCountEl);
+        new Setting(tagCountEl)
+          .setName('标签数量')
+          .setDesc('如 "3-6" 表示 3 到 6 个')
+          .addText((text) =>
+            text.setValue(s.autoSummaryTagCount || '3-6').onChange(async (v) => {
+              s.autoSummaryTagCount = v;
+              await saveSettings();
+            })
+          );
+        // 3) 摘要时机
+        new Setting(detailEl)
+          .setName('摘要时机')
+          .setDesc('保存后立刻生成，或仅打开文件时才补全')
+          .addDropdown((dd) => {
+            dd.addOption('immediate', '保存后立刻');
+            dd.addOption('lazy', '懒触发（打开时）');
+            dd.setValue(s.autoSummaryTiming || 'immediate').onChange(async (v) => {
+              s.autoSummaryTiming = v;
+              await saveSettings();
+            });
+          });
+        // ===== 数据源组（ticket 124，ADR-0060）=====
+        const dataSourceGroup = createSettingsGroup(el, { icon: 'radio', name: '数据源' });
+        buildNewsSourcesGroup(el, dataSourceGroup);
         // ===== 移动端组（仅移动端显示） =====
         if (isMobileEnv()) {
           const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
