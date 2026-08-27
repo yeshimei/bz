@@ -2,8 +2,9 @@
  * 聚合讯观察文案层（ticket 076，ADR-0029）：方法监听——
  * news 域 reader 动作（下一篇/保存）直接调 smartcat.notifyNewsRead(事件)/notifyNewsSaved，
  * 文案构造集中本模块（纯函数可测）。
- * 覆盖范围：保存观察（带阅读时长）+ 平台 + 标题；阅读/跳过文案保留兼容
- * （2026-08-25 用户拍板：reader 只发保存——跳过/阅读不再产生观察，三态文案仅 saved 实际使用）；
+ * 覆盖范围：保存观察（带阅读时长）+ 平台 + 标题；跳过观察（ticket 123 追加：news:skipped → 行为流）；
+ * 阅读/跳过文案保留兼容（2026-08-25 用户拍板：reader 只发保存→2026-08-27 追加拍板：跳过也发，
+ * 三态文案 read/skipped 保留兼容、saved 实际使用）；
  * 保存联动 auto-summary（方案 a）：待补全登记 → 剪藏 modify 补全完整观察 / 2 分钟降级。
  * 数据语义零改动：news.json / news-stats.json 不落时长（观察携带）；待补全表为内存态（smartcat.json 零改动）。
  *

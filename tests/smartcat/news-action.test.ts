@@ -1,6 +1,7 @@
 /**
- * 聚合讯观察集成（ticket 076，ADR-0029）：notifyNewsRead 观察入口 → 记忆流观察（source news）；
- * 2026-08-25 修订注记：生产（reader）只发 saved——本文件仍按函数契约覆盖三态兼容（text 构造层保留）；
+ * 聚合讯观察集成（ticket 076，ADR-0029）：notifyNewsRead 观察入口 → 行为流条目（source news）；
+ * 2026-08-25 修订注记：生产（reader）只发 saved → 2026-08-27 追加拍板（ticket 123）：跳过也发
+ * （news:skipped → 行为流）——本文件按函数契约覆盖三态兼容（text 构造层保留）；
  * 保存联动 auto-summary（方案 a）：notifyNewsSaved 登记 → 剪藏 modify 命中补全完整保存观察且登记移除
  * （再触发不再产）；2 分钟降级（注入短间隔）产出无摘要保存观察；剪藏事件观察短路；noteSource 关静默。
  * ticket 084b（R2 审查 A2）：剪藏无 title → auto-summary rename 改名 → 登记键失效——
@@ -68,6 +69,20 @@ describe('notifyNewsRead（逐篇三态，方法监听）', () => {
     expect(last.metadata.entityType).toBe('news');
     expect(last.metadata.name).toBe('黑洞照片刷新认知');
     expect(last.metadata.extras).toEqual({ platform: '果壳', durationMin: 5 });
+  });
+
+  it('跳过 → 行为流条目（source=news, action=skipped，2026-08-27 追加拍板）', async () => {
+    const { app } = makeApp();
+    await ensureSmartCat(app);
+    emitDomainEvent('news', { kind: 'read', evt: { title: '被跳过的一篇', platform: '知乎日报', state: 'skipped', durationMin: 1 } });
+    await settle();
+    const beh = readBeh();
+    const last = beh[beh.length - 1];
+    expect(last.source).toBe('news');
+    expect(last.type).toBe('skipped');
+    expect(last.metadata.entityType).toBe('news');
+    expect(last.metadata.name).toBe('被跳过的一篇');
+    expect(last.metadata.extras).toEqual({ platform: '知乎日报', durationMin: 1 });
   });
 
   it('noteSource 关闭 → 静默不观察；notifyNewsSaved 也不登记', async () => {

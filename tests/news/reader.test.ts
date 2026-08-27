@@ -13,7 +13,7 @@ import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, Platform as MockPlatform, hasNotice } from '../mock-obsidian-entry';
 import { onDomainEvent } from '../../src/core/domain-bus';
 // ticket 076 观测点换线（域事件派发）：真实总线 + onDomainEvent('news', spy) 挂间谍，
-// 断言 reader 只对「保存」发事件（跳过不发）；载荷 {kind:'read'|'saved', evt, clipPath?}
+// 断言 reader 对「保存/跳过」发事件（阅读无独立动作不发）；载荷 {kind:'read'|'saved', evt, clipPath?}
 let newsSpy: import('vitest').Mock<(evt?: unknown) => void>;
 let offNewsSpy: () => void = () => {};
 
@@ -119,18 +119,23 @@ describe('聚合讯阅读流', () => {
     expect(saved.articles[0].body).toBeUndefined(); // delete a.body
   });
 
-  it('跳过：不发任何 news 事件（域统计照记）', async () => {
+  it('跳过：发 read 入口事件（state=skipped，2026-08-27 追加拍板→行为流）+ 域统计照记', async () => {
     await loadStats(); // 重置模块级 stats（防跨用例串扰）后再动作
     await loadArticles();
     render();
     skipArticle();
     await new Promise((r) => setTimeout(r, 0)); // 冲刷 saveStats 写回链（ticket 124：stats 内嵌 news.json）
-    expect(newsSpy).not.toHaveBeenCalled();
+    expect(newsSpy).toHaveBeenCalledTimes(1);
+    expect(newsSpy).toHaveBeenCalledWith(expect.objectContaining({
+      kind: 'read',
+      evt: expect.objectContaining({ title: '第一篇新闻', platform: '知乎日报', state: 'skipped' }),
+    }));
+    expect(hasSavedEvt()).toBe(false); // 跳过只发 read 入口，不发 saved（无 auto-summary 补全）
     const saved = JSON.parse((getVault().files as Map<string, string>).get('CONFIG/STORAGE/news.json')!);
     expect(saved.stats.totalSkipped).toBe(1);
   });
 
-  it('保存：仅发 read 入口事件（ticket 076 修订：三态 → 仅保存），时长取整分钟 ≥1', async () => {
+  it('保存：仅发 read 入口事件（ticket 076 修订后：保存/跳过均经 read 入口，时长取整分钟 ≥1）', async () => {
     await loadArticles();
     render();
     markAsRead('saved');
@@ -142,7 +147,7 @@ describe('聚合讯阅读流', () => {
     expect(hasSavedEvt()).toBe(false); // 仅 saveToClip 流程登记补全，直接 markAsRead 不发 saved
   });
 
-  it('阅读时长：打开起算 → 关闭暂停 → 重开同篇续算 → 下一篇后重置（仅保存带时长）', async () => {
+  it('阅读时长：打开起算 → 关闭暂停 → 重开同篇续算 → 下一篇后重置（保存带时长，跳过同口径）', async () => {
     vi.useFakeTimers();
     try {
       await loadArticles();
