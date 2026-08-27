@@ -17,7 +17,7 @@ import { callChatJson, isAIConfigured } from './api';
 import { getEmbedding, checkRemoteOllama } from '../secondbrain/ollama';
 import { EMOTION_VAD, emotionToVAD, vadAffinity } from './cognitive';
 import { isSupersededInsight, resolveTheme, buildReflectCandidates, applySupersede } from './insight-version';
-import type { SmartCatData, MemoryStreamEntry, CloudScoringMode, StructuredMeta, BehaviorItem } from './types';
+import type { SmartCatData, MemoryStreamEntry, CloudScoringMode, StructuredMeta, BehaviorItem, BehaviorSummary } from './types';
 import { resolveRouting, type RoutingRule } from './routing';
 import { trimBehaviorStream } from './behavior-trim';
 import { tryGetSettings } from '../core/settings-provider';
@@ -1252,4 +1252,270 @@ export function emotionDensityStats(stream: MemoryStreamEntry[]): {
     coverage: observations ? r(annotated / observations) : 0,
     nonCalmShare: observations ? r(nonCalm / observations) : 0,
   };
+}
+
+// ==================== P3 用户体验层：行为流查询/管理/关联 ====================
+
+/**
+ * 将行为流条目提升为记忆流条目（P3 ticket 123）
+ * 从 behaviorStream 找条目 → 构造 MemoryStreamEntry → 入 memoryStream + 从 behaviorStream 移除 + 落盘。
+ *
+ * @param data 智能猫数据
+ * @param behaviorId 行为条目 id
+ * @param importance 重要度（默认 0.5）
+ * @returns 新记忆条目，未找到返回 null
+ */
+export function promoteToMemory(
+  data: SmartCatData,
+  behaviorId: string,
+  importance = 0.5,
+): MemoryStreamEntry | null {
+  const behavior = data.memory.behaviorStream.find((b) => b.id === behaviorId);
+  if (!behavior) return null;
+
+  // 构造记忆条目
+  const meta = behavior.metadata as StructuredMeta | undefined;
+  const structured: StructuredMeta = {
+    entityType: meta?.entityType ?? behavior.source,
+    action: meta?.action ?? behavior.type,
+    name: meta?.name,
+    tags: meta?.tags,
+    extras: {
+      ...(meta?.extras || {}),
+      originalType: behavior.type,
+      originalSource: behavior.source,
+    },
+  };
+
+  // description 生成：snapshot.summary 优先，否则 source:action name 兜底
+  let description = behavior.description;
+  if (meta?.snapshot?.summary) {
+    description = meta.snapshot.summary;
+  }
+
+  const memory: MemoryStreamEntry = {
+    id: `memory_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    created: behavior.timestamp,
+    lastAccessed: new Date().toISOString(),
+    description,
+    importance,
+    type: 'observation',
+    source: behavior.source,
+    structured,
+    credibility: 0.5,
+  };
+
+  // 入记忆流
+  data.memory.memoryStream.push(memory);
+  // 从行为流移除
+  const idx = data.memory.behaviorStream.findIndex((b) => b.id === behaviorId);
+  if (idx >= 0) data.memory.behaviorStream.splice(idx, 1);
+  data.memory.lastUpdated = new Date().toISOString();
+
+  return memory;
+}
+
+/**
+ * 行为流查询（P3 ticket 123）
+ * 基础过滤：source / type / since / limit。
+ *
+ * @param data 智能猫数据
+ * @param opts 过滤选项
+ * @returns 过滤后的行为流条目（时间倒序）
+ */
+export function queryBehavior(
+  data: SmartCatData,
+  opts: { source?: string; type?: string; since?: string; limit?: number } = {},
+): BehaviorItem[] {
+  let items = data.memory.behaviorStream || [];
+
+  if (opts.source) {
+    items = items.filter((b) => b.source === opts.source);
+  }
+  if (opts.type) {
+    items = items.filter((b) => b.type === opts.type);
+  }
+  if (opts.since) {
+    const sinceMs = new Date(opts.since).getTime();
+    if (Number.isFinite(sinceMs)) {
+      items = items.filter((b) => {
+        const t = new Date(b.timestamp).getTime();
+        return Number.isFinite(t) && t >= sinceMs;
+      });
+    }
+  }
+
+  // 时间倒序
+  items = [...items].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+  if (opts.limit && opts.limit > 0) {
+    items = items.slice(0, opts.limit);
+  }
+
+  return items;
+}
+
+/**
+ * 行为流聚合摘要（P3 ticket 123）
+ * 按天/按来源计数 + 最近活跃时段分布（纯数据层，供未来小橘参考行为流用）。
+ *
+ * @param data 智能猫数据
+ * @param opts 聚合选项（sinceDays 限制时间窗口，groupBy 暂未使用预留）
+ * @returns 行为流聚合摘要
+ */
+export function summarizeBehavior(
+  data: SmartCatData,
+  opts: { sinceDays?: number; groupBy?: 'day' | 'source' | 'hour' } = {},
+): BehaviorSummary {
+  const items = data.memory.behaviorStream || [];
+  const now = Date.now();
+  const sinceMs = opts.sinceDays
+    ? now - opts.sinceDays * 24 * 60 * 60 * 1000
+    : -Infinity;
+
+  const filtered = items.filter((b) => {
+    const t = new Date(b.timestamp).getTime();
+    return Number.isFinite(t) && t >= sinceMs;
+  });
+
+  const byDay: Record<string, number> = {};
+  const bySource: Record<string, number> = {};
+  const hourlyDistribution = new Array(24).fill(0) as number[];
+
+  for (const item of filtered) {
+    const t = new Date(item.timestamp);
+    if (!Number.isFinite(t.getTime())) continue;
+
+    // 按天
+    const dayKey = t.toISOString().slice(0, 10);
+    byDay[dayKey] = (byDay[dayKey] || 0) + 1;
+
+    // 按来源
+    bySource[item.source] = (bySource[item.source] || 0) + 1;
+
+    // 按小时
+    const hour = t.getHours();
+    hourlyDistribution[hour] = (hourlyDistribution[hour] || 0) + 1;
+  }
+
+  return {
+    totalCount: filtered.length,
+    byDay,
+    bySource,
+    hourlyDistribution,
+  };
+}
+
+/**
+ * 关联记忆自动发现（P3 ticket 123）
+ * 扫描 memoryStream，同一 entityType + 同一 name 的多条记忆在时间窗口内自动互相写 relatedIds。
+ * 幂等（已关联的不重复加）；上限防爆（单条 relatedIds ≤ 20）。
+ *
+ * @param data 智能猫数据
+ * @param linkWindowDays 关联发现窗口天数（默认从 settings 取 linkWindowDays，fallback 7）
+ * @returns 新建的关联数（幂等：已存在的不计入）
+ */
+export function linkRelatedMemories(
+  data: SmartCatData,
+  linkWindowDays?: number,
+): number {
+  const settings = tryGetSettings() as any;
+  const windowDays = linkWindowDays ?? settings?.linkWindowDays ?? 7;
+  const maxRelated = 20;
+  const stream = data.memory.memoryStream || [];
+  let newLinks = 0;
+
+  // 按 entityType+name 分组
+  const groups = new Map<string, MemoryStreamEntry[]>();
+  for (const m of stream) {
+    const et = m.structured?.entityType;
+    const name = m.structured?.name;
+    if (!et || !name) continue;
+    const key = `${et}:${name}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(m);
+  }
+
+  for (const group of groups.values()) {
+    if (group.length < 2) continue;
+
+    for (const m of group) {
+      if (!m.structured) continue;
+      if (!m.structured.relatedIds) m.structured.relatedIds = [];
+
+      for (const other of group) {
+        if (other.id === m.id) continue;
+        // 时间窗口检查
+        const tM = new Date(m.created).getTime();
+        const tO = new Date(other.created).getTime();
+        if (Number.isFinite(tM) && Number.isFinite(tO)) {
+          const diffDays = Math.abs(tM - tO) / (24 * 60 * 60 * 1000);
+          if (diffDays > windowDays) continue;
+        }
+        // 幂等检查
+        if (m.structured.relatedIds.includes(other.id!)) continue;
+        // 上限防爆
+        if (m.structured.relatedIds.length >= maxRelated) break;
+        m.structured.relatedIds.push(other.id!);
+        newLinks++;
+      }
+    }
+  }
+
+  return newLinks;
+}
+
+/**
+ * 构建故事线（P3 ticket 123）
+ * 按 relatedIds / 同实体回溯出「故事线」——返回直接关联的记忆数组。
+ *
+ * @param data 智能猫数据
+ * @param memoryId 起始记忆 id
+ * @returns 关联记忆列表（含自身，按时间排序）
+ */
+export function buildStoryline(
+  data: SmartCatData,
+  memoryId: string,
+): MemoryStreamEntry[] {
+  const stream = data.memory.memoryStream || [];
+  const start = stream.find((m) => m.id === memoryId);
+  if (!start) return [];
+
+  const visited = new Set<string>();
+  const result: MemoryStreamEntry[] = [];
+
+  // BFS 遍历 relatedIds
+  const queue: string[] = [memoryId];
+  while (queue.length > 0) {
+    const id = queue.shift()!;
+    if (visited.has(id)) continue;
+    visited.add(id);
+
+    const m = stream.find((s) => s.id === id);
+    if (!m) continue;
+    result.push(m);
+
+    // 加入 relatedIds
+    if (m.structured?.relatedIds) {
+      for (const rid of m.structured.relatedIds) {
+        if (!visited.has(rid)) queue.push(rid);
+      }
+    }
+
+    // 加入同实体记忆（同一 entityType+name）
+    const et = m.structured?.entityType;
+    const name = m.structured?.name;
+    if (et && name) {
+      for (const s of stream) {
+        if (s.id === id || visited.has(s.id!)) continue;
+        if (s.structured?.entityType === et && s.structured?.name === name) {
+          queue.push(s.id!);
+        }
+      }
+    }
+  }
+
+  // 按时间排序
+  result.sort((a, b) => new Date(a.created).getTime() - new Date(b.created).getTime());
+  return result;
 }
