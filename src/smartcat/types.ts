@@ -209,6 +209,10 @@ export interface MemoryStreamEntry {
   emotionBackfilledAt?: string; // H3/096：LLM 情绪追标时间戳（ISO）——只补无 emotion 的观察、绝不覆盖已有值；可选字段旧数据容忍
   // ---- P1 数据基座（ticket 123）：结构化元数据 ----
   structured?: StructuredMeta; // 各域 notify 传入的结构化事件数据（P2 模板生成依赖此字段）
+  // ---- ADR-0069：引用型记忆条目（笔记记忆库） ----
+  /** 引用定位（有值 = 引用型条目）：description 存 vault 路径(+#定位符)，prompt 拼装命中时经 refResolver 当场读正文，
+   *  向量对笔记全文 embedding（超长分块、一条目挂多向量）。可选字段，事件类/洞察条目不写。 */
+  ref?: { path: string; locator?: string };
 }
 
 /**
