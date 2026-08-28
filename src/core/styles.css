@@ -22,42 +22,8 @@
     margin-bottom: 12px;
     overflow-x: auto;
 }
-.bz-tab-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px;
-    border-bottom: 2px solid var(--background-modifier-border);
-    padding: 4px 2px 0;
-}
-.bz-tab {
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.9em;
-    padding: 6px 14px;
-    border: 2px solid transparent;
-    border-bottom: none;
-    border-radius: 6px 6px 0 0;
-    color: var(--text-muted);
-    white-space: nowrap;
-    user-select: none;
-    transition: color 0.2s ease, background-color 0.2s ease;
-}
-.bz-tab:hover {
-    color: var(--text-normal);
-    background: var(--background-modifier-hover);
-}
-.bz-tab-active,
-.bz-tab-active:hover {
-    color: var(--text-on-accent);
-    background: var(--interactive-accent);
-    border-color: var(--interactive-accent);
-}
-.bz-tab-content {
-    display: none;
-}
-.bz-tab-content-active {
-    display: block;
-}
+/* 旧分页 .bz-tab-* 死类已删（ticket 131 Q14：grep 全仓零引用；.bz-tab 断言残留于
+   tests/settings-tab.test.ts 的「无 tab」负向回归，非使用方） */
 .bz-setting-hidden {
     display: none !important;
 }

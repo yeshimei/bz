@@ -3,6 +3,8 @@
  * 控件交互保存持久化 + storagePath 迁移（旧 7 字段 → 共享路径）。
  * ticket 128：数据存储路径行改为统一路径选择器（chips + 选择…按钮，无手输文本框），
  * 交互经选择器录入；onCommit 提示语义（有变更才提示、同一次会话至多一次、改回原值复位）保留。
+ * ticket 131：两区块 schema 化（ADR-0064 渲染器）；AI 服务商切换 → 密钥行显隐走 visibleWhen；
+ * ticket 100 文案修正（标题收短为「DeepSeek 密钥」「OpenCode 密钥」，键名/行为不动）。
  * 依赖 mock-obsidian-entry 的 Setting 链式 mock（MockDropdown/MockText/MockToggle）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -77,10 +79,10 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
     expect(titles).toEqual(['🤖 AI', '📂 数据存储路径']);
   });
 
-  it('AI 区块：服务商下拉 + 两个 API Key；数据存储路径区块：路径选择行（选择…按钮 + chips，无手输输入框）', () => {
+  it('AI 区块：服务商下拉 + 两个密钥行；数据存储路径区块：路径选择行（选择…按钮 + chips，无手输输入框）', () => {
     findSetting(tab, 'AI 服务商');
-    findSetting(tab, 'DeepSeek API Key');
-    findSetting(tab, 'OpenCode Go API Key');
+    findSetting(tab, 'DeepSeek 密钥');
+    findSetting(tab, 'OpenCode 密钥');
     const storageRow = findSetting(tab, '数据存储路径');
     // ticket 128：行内无 text 输入框（ddd），选择…按钮 + 控件区内 chips（当前值 chip）
     expect(storageRow.querySelector('.setting-item-control input')).toBeNull();
@@ -90,6 +92,25 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
     // 域设置不再出现在设置页（已迁往各域 ⚙️ 弹窗）
     expect([...tab.containerEl.querySelectorAll('.setting-item')].some((s) => (s as HTMLElement).dataset.name === '启动时自动弹窗')).toBe(false);
     expect([...tab.containerEl.querySelectorAll('.setting-item')].some((s) => (s as HTMLElement).dataset.name === '剪藏目录')).toBe(false);
+  });
+
+  it('AI 服务商切换 → 密钥行 visibleWhen 显隐（ticket 131：默认 opencode-go 显示 OpenCode 行）', async () => {
+    const hiddenOf = (name: string) => findSetting(tab, name).classList.contains('bz-setting-hidden');
+    // 默认 opencode-go：OpenCode 行显示、DeepSeek 行隐藏
+    expect(hiddenOf('DeepSeek 密钥')).toBe(true);
+    expect(hiddenOf('OpenCode 密钥')).toBe(false);
+    // 切 deepseek：反转
+    const aiSetting = findSetting(tab, 'AI 服务商');
+    const dd = (aiSetting as any).__setting.controls.find((c: any) => c.options && 'deepseek' in c.options);
+    dd.trigger('deepseek');
+    await new Promise((r) => setTimeout(r, 10));
+    expect(hiddenOf('DeepSeek 密钥')).toBe(false);
+    expect(hiddenOf('OpenCode 密钥')).toBe(true);
+    // 切回 opencode-go：再次反转
+    dd.trigger('opencode-go');
+    await new Promise((r) => setTimeout(r, 10));
+    expect(hiddenOf('DeepSeek 密钥')).toBe(true);
+    expect(hiddenOf('OpenCode 密钥')).toBe(false);
   });
 
   it('AI 服务商切换更新设置并持久化', async () => {
