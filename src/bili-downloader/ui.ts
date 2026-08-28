@@ -446,22 +446,23 @@ export class UIManager {
     for (const g of sortedGroups) this.historyList.appendChild(this.renderHistoryGroup(g));
   }
 
-  /** 历史分组卡片：标题链接 + 每条任务一行「📄 笔记路径 ⏱ 完成时间」，行级右键/长按操作 */
+  /** 历史分组卡片：标题链接（UP主名紧随其后，ADR-0070）+ 每条任务一行「📄 笔记路径 ⏱ 完成时间」，行级右键/长按操作 */
   private renderHistoryGroup(group: BiliTask[]): HTMLElement {
     const head = group[0];
     const card = document.createElement('div');
     card.className = 'bz-bili-task-card bz-bili-hgroup';
     card.dataset.url = head.url || '';
     const href = head.url ? `href="${esc(head.url)}"` : '';
-    const upText = head.uploader ? `UP主 ${esc(head.uploader)}` : '';
-    const countText = group.length > 1 ? `${group.length} 条笔记` : '';
+    const upText = head.uploader ? `<span class="bz-bili-hup">${esc(head.uploader)}</span>` : '';
+    const countText = group.length > 1 ? `<span class="bz-bili-hcount">${group.length} 条笔记</span>` : '';
     card.innerHTML = `
       <div class="bz-bili-row">
         ${head.title
           ? `<a class="bz-bili-title" ${href} title="${esc(head.url || '')}">${esc(head.title)}</a>`
           : `<span class="bz-bili-url" title="${esc(head.url || '')}">${esc(shortUrlText(head.url || ''))}</span>`}
-      </div>
-      <div class="bz-bili-meta">${[upText, countText].filter(Boolean).join(' · ')}</div>`;
+        ${upText}
+        ${countText}
+      </div>`;
     for (const task of group) {
       const line = document.createElement('div');
       line.className = 'bz-bili-hnote';
