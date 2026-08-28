@@ -11,70 +11,15 @@ import { describe, it, expect } from 'vitest';
 import { mainSettingsSchema } from '../../src/core/settings-main-schema';
 import { mobileFullscreenGroup } from '../../src/core/settings-common';
 import type { SettingsSchema, SettingsRow } from '../../src/core/settings-schema';
+import { lintName, lintDesc, lintTargets } from './settings-copy-lint-engine';
 
-/* ==================== lint 规则实现（测试期工具，不进 src） ==================== */
-
-/** 标题零符号：仅允许文字/数字/空白 */
-const TITLE_SYMBOL = /[^\p{Script=Han}\p{L}\p{N}\s]/u;
-/** 描述自然句：额外允许中文逗号/句号/百分号/加减连字符；其余符号（、·/—（）等）一律违规 */
-const DESC_ALLOWED = /^[\p{Script=Han}\p{L}\p{N}\s，。%+\-]*$/u;
-
-/** 字数折算：连续西文字母/数字串按 2 字宽计（如 DeepSeek≈2 字），CJK 逐字计，空白不计 */
-function unitCount(s: string): number {
-  return [...s.replace(/[A-Za-z0-9]+/g, 'XX')].filter((ch) => !/\s/.test(ch)).length;
-}
-
-function lintName(name: string): string[] {
-  const v: string[] = [];
-  if (TITLE_SYMBOL.test(name)) v.push('title-symbol');
-  const n = unitCount(name);
-  if (n < 4 || n > 8) v.push('title-length');
-  return v;
-}
-
-function lintDesc(desc: string): string[] {
-  const v: string[] = [];
-  if (!DESC_ALLOWED.test(desc)) v.push('desc-symbol');
-  const n = unitCount(desc);
-  if (n < 8 || n > 32) v.push('desc-length');
-  return v;
-}
-
-/** 展开 schema 全部行（含分组；行名缺省的 custom 行跳过 name/desc 检查） */
-function collectRows(schema: SettingsSchema): Array<{ label: string; name?: string; desc?: string }> {
-  const out: Array<{ label: string; name?: string; desc?: string }> = [];
-  for (const g of schema.groups) {
-    for (const row of g.rows as SettingsRow[]) {
-      const r = row as { name?: string; desc?: string };
-      out.push({ label: r.name || '<unnamed>', name: r.name, desc: r.desc });
-    }
-  }
-  return out;
-}
+/* ==================== 本组白名单 ==================== */
 
 /** 白名单：violation id 精确项 + 行级通配 `来源#行名:*`（遗留文案豁免须注明年/票与理由） */
 const WHITELIST = new Set<string>([
   // Wave-1 无豁免项：主设置页存量违规已按 ticket 100 修正（标题可改、键名/行为不动）。
   // 示例：'域来源#行名:desc-length'（精确）/ '域来源#行名:*'（整行豁免）。
 ]);
-
-function whitelisted(id: string): boolean {
-  if (WHITELIST.has(id)) return true;
-  const rowPrefix = id.slice(0, id.lastIndexOf(':'));
-  return WHITELIST.has(`${rowPrefix}:*`);
-}
-
-/** lint 全部目标 schema，返回未豁免的 violation id 列表 */
-function lintTargets(targets: Array<{ source: string; schema: SettingsSchema }>): string[] {
-  const violations: string[] = [];
-  for (const { source, schema } of targets) {
-    for (const row of collectRows(schema)) {
-      for (const code of row.name ? lintName(row.name) : []) violations.push(`${source}#${row.label}:${code}`);
-      for (const code of row.desc ? lintDesc(row.desc) : []) violations.push(`${source}#${row.label}:${code}`);
-    }
-  }
-  return violations.filter((id) => !whitelisted(id));
-}
 
 /* ==================== 注册表：全量 schema 纳管 ==================== */
 
@@ -122,7 +67,7 @@ describe('文案 lint 规则自检（ticket 100：标题 4-8 字零符号 / 描�
 
 describe('全量 schema 文案 lint（注册表：LINT_TARGETS）', () => {
   it('已注册 schema 无未豁免违规（主设置页存量违规已在 Wave-1 修正）', () => {
-    const violations = lintTargets(LINT_TARGETS);
+    const violations = lintTargets(LINT_TARGETS, WHITELIST);
     expect(
       violations,
       `文案违规（如需豁免遗留项，往 WHITELIST 加 id 并注明年/票与理由）:\n${violations.join('\n')}`
