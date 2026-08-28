@@ -1,7 +1,8 @@
 /**
- * 统一路径选择器 UI 层测试（ticket 128，ADR-0061）：弹窗结构/单选高亮提交/多选勾选清空/
+ * 统一路径选择器 UI 层测试（ticket 128，ADR-0061；ticket 133 增补）：弹窗结构/单选高亮提交/多选勾选清空/
  * 搜索过滤（含恰好相等显示全量）/库根目录/遮罩与 ESC 取消/已选 chips ✕ 移除/设置行助手
- * （按钮 + 控件区内 chips）/移动端两行式挂类（markSettingSplitRows）。jsdom 环境。
+ * （空态紧凑按钮 + 已选态 chip 点击重开选择器）/移动端两行式挂类（markSettingSplitRows）/
+ * 列表排序（已选置顶 → 库根 → 其余整体反转）。jsdom 环境。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -181,10 +182,10 @@ describe('搜索即时过滤（包含匹配；恰好相等显示全量）', () =
     search.value = '卡';
     search.dispatchEvent(new Event('input'));
     expect(visible()).toEqual(['卡片盒']);
-    // 恰好等于某目录（'我的'）→ 显示完整列表
+    // 恰好等于某目录（'我的'）→ 显示完整列表（ticket 133 排序：无已选 → 库根 → 其余整体反转）
     search.value = '我的';
     search.dispatchEvent(new Event('input'));
-    expect(visible()).toEqual(['', '卡片盒', '归档', '我的', '我的/日记']);
+    expect(visible()).toEqual(['', '我的/日记', '我的', '归档', '卡片盒']);
     // 清空恢复全量
     search.value = '';
     search.dispatchEvent(new Event('input'));
@@ -197,9 +198,9 @@ describe('搜索即时过滤（包含匹配；恰好相等显示全量）', () =
     const search = popup.querySelector('.bz-path-picker-search') as HTMLInputElement;
     search.value = '我的';
     search.dispatchEvent(new Event('input'));
-    // 完整列表（UTF-16 码元排序：卡片盒 0x5361 < 归档 0x5F52 < 我的 0x6211）
+    // 完整列表（ticket 133 排序：已选「我的」置顶 → 库根 → 其余反转）
     const visible = [...popup.querySelectorAll<HTMLElement>(ROW_SEL)].map((r) => r.dataset.path);
-    expect(visible).toEqual(['', '卡片盒', '归档', '我的', '我的/日记']);
+    expect(visible).toEqual(['我的', '', '我的/日记', '归档', '卡片盒']);
   });
 
   it('无匹配 → 空态「没有匹配的目录」', async () => {
@@ -246,10 +247,26 @@ describe('renderPathChips：已选 chips 渲染与 ✕ 移除', () => {
     renderPathChips(wrap, [], onChange);
     expect(wrap.querySelector('.bz-path-picker-chips-empty')).toBeTruthy();
   });
+
+  it('onChipClick 提供时 chip 文本可点回调；✕ 不触发 onChipClick；emptyText 传空串不渲染空态占位', () => {
+    const wrap = document.createElement('div');
+    const onChange = vi.fn();
+    const onChipClick = vi.fn();
+    renderPathChips(wrap, ['卡片盒'], onChange, '未选择', onChipClick);
+    const chip = wrap.querySelector('.bz-path-picker-chip') as HTMLElement;
+    expect(chip.classList.contains('bz-path-picker-chip--click')).toBe(true);
+    (chip.querySelector('.bz-path-picker-chip-name') as HTMLElement).click();
+    expect(onChipClick).toHaveBeenCalledWith('卡片盒');
+    (chip.querySelector('.bz-path-picker-chip-x') as HTMLButtonElement).click();
+    expect(onChange).toHaveBeenCalledWith([]);
+    expect(onChipClick).toHaveBeenCalledTimes(1); // ✕ 不冒泡触发重开
+    renderPathChips(wrap, [], onChange, '');
+    expect(wrap.querySelector('.bz-path-picker-chips-empty')).toBeNull();
+  });
 });
 
 describe('renderPathSettingRow：设置行助手（chips + 选择按钮，无手输输入框）', () => {
-  it('单值行：chips 展示当前值；点按钮开选择器，确定后 onChange 回传并刷新 chips', async () => {
+  it('单值行：已选态 chips 展示当前值（按钮移出 DOM）；✕ 清除回空态（按钮恢复、无灰字）；点按钮开选择器确定后回传', async () => {
     makeAppAndSeed(['卡片盒/A.md', '我的/日记/a.md']);
     const parent = document.createElement('div');
     document.body.appendChild(parent);
@@ -263,15 +280,16 @@ describe('renderPathSettingRow：设置行助手（chips + 选择按钮，无手
       onChange,
     });
     expect(settingEl.dataset.name).toBe('剪藏目录');
-    // chips 在控件区内（与按钮同区 → 移动端两行式判定 ≥2 子元素）
+    // chips 在控件区内；已选态「选择…」按钮移出 DOM（控件区仅 chips，chip 内 ✕ 按钮不算）
     const control = settingEl.querySelector('.setting-item-control')!;
     expect(control.querySelectorAll('.bz-path-picker-chip-name').length).toBe(1);
-    expect(control.querySelector('button')).toBeTruthy();
+    expect(control.querySelector('.bz-path-picker-btn--slim')).toBeNull();
     expect(control.querySelector('.bz-path-picker-chips--setting')).toBeTruthy();
-    // chips ✕ 清除 → onChange [] 并刷新为空态
+    // chips ✕ 清除 → onChange [] 并恢复空态：按钮回来、无「未选择」灰字（ticket 133）
     (control.querySelector('.bz-path-picker-chip-x') as HTMLButtonElement).click();
     expect(onChange).toHaveBeenCalledWith([]);
-    expect(control.querySelector('.bz-path-picker-chips-empty')).toBeTruthy();
+    expect(control.querySelector('.bz-path-picker-chips-empty')).toBeNull();
+    expect(control.querySelector('.bz-path-picker-btn--slim')).toBeTruthy();
 
     // 点按钮 → 打开选择器（单选框初始已清空）；选目录后确定 → onChange(['我的/日记'])
     ((settingEl as any).__setting.controls.find((c: any) => typeof c.trigger === 'function') as any).trigger();
@@ -282,6 +300,36 @@ describe('renderPathSettingRow：设置行助手（chips + 选择按钮，无手
     (popup.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).click();
     expect(onChange).toHaveBeenLastCalledWith(['我的/日记']);
     expect(control.querySelector('.bz-path-picker-chip-name')!.textContent).toBe('我的/日记');
+    // 再次已选态：「选择…」按钮移出 DOM
+    expect(control.querySelector('.bz-path-picker-btn--slim')).toBeNull();
+  });
+
+  it('单值行：chip 文本点击重开选择器（初始已选高亮 + 置顶；✕ 不触发重开）', async () => {
+    makeAppAndSeed(['卡片盒/A.md', '我的/日记/a.md']);
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+    const { settingEl } = renderPathSettingRow({
+      parent,
+      name: '剪藏目录',
+      mode: 'single',
+      value: '卡片盒',
+      onChange: () => {},
+    });
+    const control = settingEl.querySelector('.setting-item-control')!;
+    const nameEl = control.querySelector('.bz-path-picker-chip-name') as HTMLElement;
+    expect(control.querySelector('.bz-path-picker-chip')!.classList.contains('bz-path-picker-chip--click')).toBe(true);
+    nameEl.click();
+    const popup = document.getElementById('bz-path-picker-popup')!;
+    await vi.waitFor(() => expect(popup.querySelectorAll(ROW_SEL).length).toBeGreaterThan(0));
+    // 初始已选「卡片盒」置顶第一行 + 高亮
+    const paths = [...popup.querySelectorAll<HTMLElement>(ROW_SEL)].map((r) => r.dataset.path);
+    expect(paths[0]).toBe('卡片盒');
+    const selRow = [...popup.querySelectorAll<HTMLElement>(ROW_SEL)].find((r) => r.dataset.path === '卡片盒')!;
+    expect(selRow.classList.contains('bz-path-picker-row--sel')).toBe(true);
+    closePathPicker();
+    // ✕ 点击不重开选择器（事件不冒泡到文本点击）
+    (control.querySelector('.bz-path-picker-chip-x') as HTMLButtonElement).click();
+    expect(document.getElementById('bz-path-picker-popup')).toBeNull();
   });
 
   it('多值行：chips 逐条；✕ 移除回传剩余列表', async () => {
@@ -300,6 +348,7 @@ describe('renderPathSettingRow：设置行助手（chips + 选择按钮，无手
     const control = parent.querySelector('.setting-item-control')!;
     const xs = [...control.querySelectorAll('.bz-path-picker-chip-x')];
     expect(xs.length).toBe(2);
+    expect(control.querySelector('.bz-path-picker-btn--slim')).toBeNull(); // 已选态：「添加…」按钮移出 DOM（ticket 133 多选同套）
     (xs[0] as HTMLButtonElement).click();
     expect(onChange).toHaveBeenCalledWith(['我的']);
   });
@@ -311,6 +360,46 @@ describe('renderPathSettingRow：设置行助手（chips + 选择按钮，无手
     renderPathSettingRow({ parent, name: '监听目录', mode: 'multi', value: [], onChange: () => {} });
     const btn = parent.querySelector('.setting-item-control button') as HTMLButtonElement;
     expect(btn.textContent).toBe('添加…');
+  });
+});
+
+describe('ticket 133 列表排序：已选置顶（打开时定格）→ 库根 → 其余整体反转', () => {
+  it('已选置顶、库根第二梯队、其余反转（中文在前、英文在后）', async () => {
+    makeAppAndSeed(['卡片盒/A.md', '我的/日记/a.md', '归档/b.md', 'books/c.md']);
+    const popup = await openAndWait({ mode: 'single', selected: ['归档'], onConfirm: () => {} });
+    const paths = [...popup.querySelectorAll<HTMLElement>(ROW_SEL)].map((r) => r.dataset.path);
+    // 已选「归档」置顶 → 库根 '' → 其余反转（原码点升序 books/卡片盒/我的/我的/日记 逆排）
+    expect(paths).toEqual(['归档', '', '我的/日记', '我的', '卡片盒', 'books']);
+  });
+
+  it('点击勾选不重排（仅打开时置顶一次）：勾选后已选行仍在原列表位置', async () => {
+    makeAppAndSeed(['卡片盒/A.md', '我的/日记/a.md', '归档/b.md']);
+    const popup = await openAndWait({ mode: 'multi', selected: [], onConfirm: () => {} });
+    const paths = () => [...popup.querySelectorAll<HTMLElement>(ROW_SEL)].map((r) => r.dataset.path);
+    // 初始：库根 → 反转（我的/日记 我的 归档 卡片盒）
+    expect(paths()).toEqual(['', '我的/日记', '我的', '归档', '卡片盒']);
+    const rowOf = (p: string) =>
+      [...popup.querySelectorAll<HTMLElement>(ROW_SEL)].find((r) => r.dataset.path === p)!;
+    rowOf('卡片盒').click(); // 勾选但不应置顶
+    expect(paths()).toEqual(['', '我的/日记', '我的', '归档', '卡片盒']);
+    expect(paths().indexOf('卡片盒')).toBe(4);
+  });
+
+  it('搜索时置顶仅对命中项生效：未命中的已选不出现；命中的已选在过滤结果最前', async () => {
+    makeAppAndSeed(['卡片盒/A.md', '我的/日记/a.md', '归档/b.md']);
+    const popup = await openAndWait({ mode: 'single', selected: ['我的'], onConfirm: () => {} });
+    const search = popup.querySelector('.bz-path-picker-search') as HTMLInputElement;
+    const visible = () =>
+      [...popup.querySelectorAll<HTMLElement>(ROW_SEL)].map((r) => r.dataset.path);
+    // 搜「日记」：命中 我的/日记（已选「我的」未命中 → 被滤掉，不出现在顶部）
+    search.value = '日记';
+    search.dispatchEvent(new Event('input'));
+    expect(visible()).toEqual(['我的/日记']);
+    // 搜「我的」恰好相等 → 全量列表，已选「我的」仍置顶第一行
+    search.value = '我的';
+    search.dispatchEvent(new Event('input'));
+    expect(visible()[0]).toBe('我的');
+    expect(visible()).toContain('');
   });
 });
 
@@ -375,7 +464,8 @@ describe('大 vault 性能（ticket 128 性能修复：剪枝 + 快速首渲染 
     search.value = '目录39';
     search.dispatchEvent(new Event('input'));
     const names = [...popup.querySelectorAll(`${ROW_SEL} .bz-path-picker-name`)].map((el) => el.textContent);
-    expect(names).toEqual(['目录390', '目录391', '目录392', '目录393', '目录394', '目录395', '目录396', '目录397', '目录398', '目录399']);
+    // ticket 133 反转排：000→399 码点升序逆排 → 399 在前
+    expect(names).toEqual(['目录399', '目录398', '目录397', '目录396', '目录395', '目录394', '目录393', '目录392', '目录391', '目录390']);
     expect(popup.querySelector('.bz-path-picker-list .bz-path-picker-empty')).toBeNull();
   });
 });

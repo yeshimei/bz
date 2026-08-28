@@ -79,15 +79,15 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
     expect(titles).toEqual(['🤖 AI', '📂 数据存储路径']);
   });
 
-  it('AI 区块：服务商下拉 + 两个密钥行；数据存储路径区块：路径选择行（选择…按钮 + chips，无手输输入框）', () => {
+  it('AI 区块：服务商下拉 + 两个密钥行；数据存储路径区块：路径选择行（已选态 chip + ✕，无按钮/手输框）', () => {
     findSetting(tab, 'AI 服务商');
     findSetting(tab, 'DeepSeek 密钥');
     findSetting(tab, 'OpenCode 密钥');
     const storageRow = findSetting(tab, '数据存储路径');
-    // ticket 128：行内无 text 输入框（ddd），选择…按钮 + 控件区内 chips（当前值 chip）
+    // ticket 128：行内无 text 输入框；ticket 133：已选态「选择…」按钮移出 DOM（chip 内 ✕ 仍是 button）
     expect(storageRow.querySelector('.setting-item-control input')).toBeNull();
-    const btn = storageRow.querySelector('.setting-item-control button') as HTMLButtonElement;
-    expect(btn.textContent).toBe('选择…');
+    expect(storageRow.querySelector('.setting-item-control .bz-path-picker-btn--slim')).toBeNull();
+    expect(storageRow.querySelector('.setting-item-control .bz-path-picker-chip-x')).toBeTruthy();
     expect(storageRow.querySelector('.setting-item-control .bz-path-picker-chip-name')!.textContent).toBe('CONFIG/STORAGE');
     // 域设置不再出现在设置页（已迁往各域 ⚙️ 弹窗）
     expect([...tab.containerEl.querySelectorAll('.setting-item')].some((s) => (s as HTMLElement).dataset.name === '启动时自动弹窗')).toBe(false);
