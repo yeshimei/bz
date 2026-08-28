@@ -140,8 +140,9 @@ export interface PathRow extends RowBase {
   okText?: string;
   /** chips 空态文案（缺省「未选择」） */
   emptyText?: string;
-  /** 选择确定 / chip 移除后（写内存 + 落盘后触发） */
-  onChange?: (list: string[], ctx: SettingsRowContext) => void;
+  /** 选择确定 / chip 移除后（写内存 + 落盘后触发）。返回 string[]（或其 Promise）= 否决/改写后的
+   *  最终清单（如异步收编确认被取消时回退旧值），以返回值为落盘与 chips 渲染口径；void = 以 list 为准。 */
+  onChange?: (list: string[], ctx: SettingsRowContext) => void | string[] | Promise<void | string[]>;
   /** 有意落盘点回调：一次性提示语义内置（同 text 行） */
   onCommit?: () => void;
 }
@@ -409,9 +410,17 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
             const v = multi ? list : (list[0] || '').trim().replace(/^\/+|\/+$/g, '');
             acc.write(v as string | string[]);
             void acc.persist();
-            row.onChange?.(list, ctx);
+            // 回调在落盘后触发（原口径）；返回清单（含异步解析结果）回传 path 行作 chips 渲染口径——
+            // 异步否决场景的落盘改写由回调自行负责（如外部 binding 自管写盘）
+            const res = row.onChange?.(list, ctx);
             warn.fire(multi ? JSON.stringify(v) : String(v));
             reevaluate();
+            if (res && typeof (res as { then?: unknown }).then === 'function') {
+              return Promise.resolve(res as Promise<void | string[]>).then(
+                (final) => (Array.isArray(final) ? final : list)
+              );
+            }
+            return Array.isArray(res) ? res : undefined;
           },
         });
         return;

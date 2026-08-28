@@ -208,8 +208,10 @@ export interface PathSettingRowOptions {
   okText?: string;
   /** 空态文案（ticket 133 起废弃：设置行空态只显示按钮、不渲染占位文字；字段保留兼容 schema 传参，实现不再读取） */
   emptyText?: string;
-  /** 选择器确定 / chip ✕ 移除后的统一回调（list = 最新目录清单；单值 [] = 未选择） */
-  onChange: (list: string[]) => void;
+  /** 选择器确定 / chip ✕ 移除后的统一回调（list = 最新目录清单；单值 [] = 未选择）。
+   *  返回 string[]（或其 Promise）= 改写/否决后的最终清单（如异步确认被取消时回退旧值），
+   *  行内 chips 与按钮以该返回值重渲染；返回 void = 以 list 为准。 */
+  onChange: (list: string[]) => void | string[] | Promise<void | string[]>;
 }
 
 /** 构建路径设置行：Setting（名称/描述）+ 控件区——空态：紧凑「选择…/添加…」按钮（无「未选择」灰字）；
@@ -230,6 +232,19 @@ export function renderPathSettingRow(opts: PathSettingRowOptions): { refresh: ()
   const chipsWrap = document.createElement('div');
   chipsWrap.className = 'bz-path-picker-chips--setting';
 
+  /** 统一变更入口：onChange 返回 Promise 时异步解析改写清单后重渲染；同步返回（含 void）立即重渲染 */
+  const apply = (list: string[]): void | Promise<void> => {
+    const res = opts.onChange(list);
+    if (res && typeof (res as { then?: unknown }).then === 'function') {
+      return Promise.resolve(res as Promise<void | string[]>).then((final) => {
+        current = Array.isArray(final) ? final : list;
+        renderAll();
+      });
+    }
+    current = Array.isArray(res) ? res : list;
+    renderAll();
+  };
+
   const openPicker = () =>
     openPathPicker({
       title: opts.pickerTitle || opts.name,
@@ -238,17 +253,13 @@ export function renderPathSettingRow(opts: PathSettingRowOptions): { refresh: ()
       selected: current,
       okText: opts.okText,
       onConfirm: (list) => {
-        current = list;
-        opts.onChange(list);
-        renderAll();
+        void apply(list);
       },
     });
 
   const render = () =>
     renderPathChips(chipsWrap, current, (next) => {
-      current = next;
-      opts.onChange(next);
-      renderAll();
+      void apply(next);
     }, '', openPicker);
 
   let btn: HTMLButtonElement | null = null;

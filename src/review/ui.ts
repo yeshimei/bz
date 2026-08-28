@@ -2,14 +2,13 @@
  * 复习计划 UI（ticket 16 修正版：对齐源码 UIManager + Renderer，常驻 DOM + display 切换）
  * 统一抽屉（桌面右键/移动长按）：开始复习/打开原文/移出；双击名称打开对应笔记（用户拍板保留）。
  */
-import type { App } from 'obsidian';
+import { Setting, type App } from 'obsidian';
 import { topifyZ, allocZ } from '../core/z-order';
 import { notice } from '../core/notice';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { escapeHtml } from '../core/utils';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
-import { openPathPicker } from '../core/path-picker';
 import { mobileFullscreenGroup } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 import {
@@ -27,13 +26,13 @@ import { ReviewDataManager } from './data';
 /**
  * 复习计划设置 schema（ticket 131 声明式；ADR-0064）：检查提醒/做题家/复习节奏/自动化/界面 +
  * 移动端六组卡片。做题家子项显隐（原 quizBox style.display + refreshSettingsGroupCounts）收敛为
- * visibleWhen 声明式联动；监听文件夹 chips 区与排除名单 chips 区走 custom 插槽（DOM id/类名零变化），
- * 「添加监听文件夹」为 button 行（actionRow 豁免徽标计数）。置于模块顶层供文案 lint 直接引用；
- * deps 仅在交互回调（custom/button）经闭包引用，工厂构建无副作用。
+ * visibleWhen 声明式联动；监听文件夹走通用 path 行（multi chips + 添加… 按钮，落盘外部 binding
+ * 自管：新增先确认存量收编、移除连带清理排除记录）；排除名单 chips 区走 custom 插槽（DOM id/类名
+ * 零变化）。置于模块顶层供文案 lint 直接引用；
+ * deps 仅在交互回调（custom/path onChange）经闭包引用，工厂构建无副作用。
  */
 export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataManager }): SettingsSchema {
-  // 两个 custom 插槽的 chips 重渲染句柄（原 renderWatchRows / renderExcludeRows；交互后调用）
-  let renderWatchRows: (() => void) | null = null;
+  // 排除名单 custom 行的 chips 重渲染句柄（原 renderExcludeRows；交互后调用）
   let renderExcludeRows: (() => void) | null = null;
   // enableAutoNotify 常驻轮询在 main.ts onload 注册、运行时按设置实时读值（app.ts checkOverdueAndNotify
   // 门控），设置弹窗 toggle 只需落盘，渲染器键直绑自动完成，无需额外副作用回调。
@@ -93,89 +92,61 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
         icon: 'sliders-horizontal',
         name: '自动化',
         rows: [
-          { type: 'info', name: '监听文件夹', desc: '文件夹里的新笔记自动加入复习计划，包括子文件夹' },
-          // 监听文件夹 chips 区（DOM id/类名零变化；交互后经 renderWatchRows 重渲染）
+          // 监听文件夹：通用 path 行（multi chips + 添加… 按钮，ticket 133 形态）。
+          // 落盘走外部 binding 自管（权威写盘在 onChange）：新增目录需先确认存量收编（取消=不加入，
+          // 回传回退清单否决本次变更），移除目录需连带清理其下排除记录（ticket 099）。
           {
-            type: 'custom',
-            render: (body) => {
-              const watchBox = document.createElement('div');
-              watchBox.id = 'review-watch-folders';
-              body.appendChild(watchBox);
-              renderWatchRows = () => {
-                watchBox.innerHTML = '';
-                const folders = (getSettings() as any).reviewWatchedFolders || [];
-                folders.forEach((folder) => {
-                  const chip = document.createElement('span');
-                  chip.className = 'bz-review-watch-chip';
-                  const name = document.createElement('span');
-                  name.className = 'bz-review-watch-name';
-                  name.textContent = folder;
-                  const close = document.createElement('button');
-                  close.className = 'bz-review-watch-close';
-                  close.setAttribute('aria-label', `移除监听文件夹 ${folder}`);
-                  close.textContent = '✕';
-                  close.onclick = () => {
-                    void (async () => {
-                      // ticket 099 追加：移除目录同时清空其下排除记录（否则二次添加时存量被旧黑名单挡住）
-                      const { ReviewWatcher } = await import('./watch');
-                      const cleared = await new ReviewWatcher(deps.app, deps.dataManager).removeWatchedFolder(folder);
-                      renderWatchRows?.();
-                      notice(cleared > 0 ? `已移除监听文件夹，并清理其下 ${cleared} 条排除记录` : '已移除监听文件夹', 'success');
-                    })();
-                  };
-                  chip.appendChild(name);
-                  chip.appendChild(close);
-                  watchBox.appendChild(chip);
-                });
-              };
-              renderWatchRows();
+            type: 'path',
+            mode: 'multi',
+            name: '监听文件夹',
+            desc: '文件夹里的新笔记自动加入复习计划，包括子文件夹',
+            binding: {
+              get: () => ((getSettings() as any).reviewWatchedFolders || []) as string[],
+              set: () => {},
+              save: () => {},
             },
-          },
-          {
-            type: 'button',
-            name: '添加监听文件夹',
-            buttonText: '＋ 添加监听文件夹',
-            cta: true,
-            onClick: () => {
-              void (async () => {
+            pickerTitle: '选择监听文件夹',
+            pickerDesc: '文件夹里的新笔记自动加入复习计划，包括子文件夹',
+            okText: '确定',
+            onChange: (list) => {
+              const prev = [...(((getSettings() as any).reviewWatchedFolders as string[]) || [])];
+              return (async (): Promise<string[]> => {
                 const { ReviewWatcher } = await import('./watch');
-                // ticket 128：统一路径选择器（companion 档 11200 压设置弹窗 10050）；单选一次添加一个目录
-                openPathPicker({
-                  title: '选择监听文件夹',
-                  mode: 'single',
-                  okText: '确定',
-                  desc: '文件夹里的新笔记自动加入复习计划，包括子文件夹',
-                  selected: [],
-                  onConfirm: async (list) => {
-                    const folder = (list[0] || '').trim().replace(/^\/+|\/+$/g, '');
-                    if (!folder) {
-                      notice('未选择文件夹', 'warning');
-                      return;
-                    }
-                    if (((getSettings() as any).reviewWatchedFolders || []).includes(folder)) {
-                      notice('该文件夹已在监听列表', 'info');
-                      return;
-                    }
-                    // 选择后立即确认存量收编：取消=什么都不做（不添加目录、不写排除名单）
-                    const watcher = new ReviewWatcher(deps.app, deps.dataManager);
-                    const confirmed = await watcher.confirmBatchAddForFolder(folder);
-                    if (!confirmed) return;
-                    (getSettings() as any).reviewWatchedFolders = [...((getSettings() as any).reviewWatchedFolders || []), folder];
-                    await saveSettings();
-                    renderWatchRows?.();
-                  },
-                });
+                const watcher = new ReviewWatcher(deps.app, deps.dataManager);
+                const kept: string[] = [];
+                for (const folder of list) {
+                  if (!folder) {
+                    notice('暂不支持监听库根目录', 'warning');
+                    continue;
+                  }
+                  if (prev.includes(folder)) {
+                    kept.push(folder);
+                    continue;
+                  }
+                  // 新增：先确认存量收编；取消 = 该目录不加入（不写排除名单）
+                  if (await watcher.confirmBatchAddForFolder(folder)) kept.push(folder);
+                }
+                for (const folder of prev) {
+                  if (list.includes(folder)) continue;
+                  // 移除：同时清空其下排除记录（否则二次添加时存量被旧黑名单挡住）
+                  const cleared = await watcher.removeWatchedFolder(folder);
+                  notice(cleared > 0 ? `已移除监听文件夹，并清理其下 ${cleared} 条排除记录` : '已移除监听文件夹', 'success');
+                }
+                (getSettings() as any).reviewWatchedFolders = kept;
+                await saveSettings();
+                return kept;
               })();
             },
           },
-          { type: 'info', name: '排除名单', desc: '不参与监听自动加入的笔记，可在此单条解除' },
-          // 排除名单 chips 区（ticket 57 管理 UI；DOM id/类名零变化）
+          // 排除名单 chips 区（ticket 57 管理 UI；DOM id/类名零变化；交互后经 renderExcludeRows 重渲染）
           {
             type: 'custom',
             render: (body) => {
+              const setting = new Setting(body).setName('排除名单').setDesc('不参与监听自动加入的笔记，可在此单条解除');
+              setting.settingEl.classList.add('bz-review-exclude-row');
               const excludeBox = document.createElement('div');
               excludeBox.id = 'review-excluded-list';
-              body.appendChild(excludeBox);
+              setting.controlEl.appendChild(excludeBox);
               renderExcludeRows = () => {
                 excludeBox.innerHTML = '';
                 const notes = (getSettings() as any).reviewExcludedNotes || [];

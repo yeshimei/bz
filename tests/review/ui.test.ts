@@ -234,7 +234,7 @@ describe('UIManager', () => {
     expect(names()).toContain('排除名单');
     // 界面组
     expect(names()).toContain('文件树标记');
-    // 分组项数徽标（隐藏项不计；自动化组的「＋ 添加监听文件夹」为纯操作行，挂 bz-setting-action-row 豁免）
+    // 分组项数徽标（隐藏项不计；自动化组 = 监听文件夹 path 行 + 排除名单行）
     const badge = (groupName: string) =>
       [...popup.querySelectorAll('.bz-settings-group')].find(
         (g) => g.querySelector('.bz-settings-group-name')!.textContent === groupName
@@ -579,7 +579,7 @@ describe('ticket 098 UI：做题家图标移除 / 挂起记录删除线 / 监听
     ui.destroy();
   });
 
-  it('⚙️ 设置弹窗：监听文件夹 chip（名字+关闭标签）+ 添加按钮打开文件夹选择弹窗', async () => {
+  it('⚙️ 设置弹窗：监听文件夹为通用 path 行（chips + 添加…），✕ 移除连带清理排除记录', async () => {
     const vault = new MockVault();
     seed(vault);
     const app = makeApp(vault);
@@ -594,21 +594,24 @@ describe('ticket 098 UI：做题家图标移除 / 挂起记录删除线 / 监听
     const popup = document.getElementById('bz-settings-modal-popup')!;
     const names = () => [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
     expect(names()).toContain('监听文件夹');
-    // 已有监听目录 → chip 形态（名字 + ✕ 关闭标签）
-    const watchBox = popup.querySelector('#review-watch-folders')!;
-    expect(watchBox.querySelector('.bz-review-watch-name')!.textContent).toBe('卡片盒');
-    const chipClose = watchBox.querySelector('.bz-review-watch-close') as HTMLElement;
+    // 已有监听目录 → 通用 path chips 形态（名字 + ✕，ticket 133 设置行样式）
+    const row = [...popup.querySelectorAll('.setting-item')].find(
+      (el) => (el as HTMLElement).dataset.name === '监听文件夹'
+    ) as HTMLElement;
+    expect(row.classList.contains('bz-path-picker-setting-row')).toBe(true);
+    const chipName = row.querySelector('.bz-path-picker-chip-name')!;
+    expect(chipName.textContent).toBe('卡片盒');
+    const chipClose = row.querySelector('.bz-path-picker-chip-x') as HTMLElement;
     expect(chipClose).not.toBeNull();
-    // ✕ 关闭标签移除该目录（同时清空其下排除记录，见 watch.test removeWatchedFolder）；异步链路 → 轮询等待
+    // ✕ 移除该目录（onChange 连带清空其下排除记录并落盘，见 watch.test removeWatchedFolder）；异步链路 → 轮询等待
     chipClose.click();
-    for (let i = 0; i < 100 && popup.querySelector('#review-watch-folders .bz-review-watch-chip'); i++) {
+    for (let i = 0; i < 100 && row.querySelector('.bz-path-picker-chip'); i++) {
       await new Promise((r) => setTimeout(r, 10));
     }
-    expect(popup.querySelector('#review-watch-folders .bz-review-watch-chip')).toBeNull();
-    // ＋ 添加监听文件夹（ticket 131：声明式为 button 行，独立于 chips 插槽 #review-watch-folders）
-    const addBtn = [...popup.querySelectorAll('.setting-item.bz-setting-action-row button')].find(
-      (b) => b.textContent === '＋ 添加监听文件夹'
-    ) as HTMLElement;
+    expect(row.querySelector('.bz-path-picker-chip')).toBeNull();
+    expect(settings.reviewWatchedFolders).toEqual([]);
+    // 空态恢复紧凑「添加…」按钮 → 点击打开文件夹选择弹窗
+    const addBtn = row.querySelector('.bz-path-picker-btn--slim') as HTMLElement;
     expect(addBtn).toBeTruthy();
     addBtn.click();
     for (let i = 0; i < 100 && !document.getElementById('bz-path-picker-mask'); i++) {
@@ -621,6 +624,47 @@ describe('ticket 098 UI：做题家图标移除 / 挂起记录删除线 / 监听
     expect(pickerPopup.querySelector('.bz-path-picker-btn--primary')!.textContent).toBe('确定');
     const pmz = parseInt(pickerMask.style.zIndex, 10);
     expect(Number.isFinite(pmz)).toBe(true); // 动态发号（ADR-0067），后开压过设置弹窗
+    closeSettingsModal();
+    ui.destroy();
+  });
+
+  it('⚙️ 设置弹窗：监听文件夹新增目录收编确认取消 → 否决本次变更（chips 与落盘均回退）', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    vault.files.set('新目录/A.md', '正文');
+    const app = makeApp(vault);
+    setApp(app);
+    const settings: any = { reviewWatchedFolders: ['卡片盒'], reviewExcludedNotes: [] };
+    setSettingsProvider(() => settings);
+    const dm = new ReviewDataManager(app);
+    const ui = new UIManager(app, dm);
+    ui.showMain();
+    (document.getElementById('review-btn-settings') as HTMLElement).click();
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    const row = [...popup.querySelectorAll('.setting-item')].find(
+      (el) => (el as HTMLElement).dataset.name === '监听文件夹'
+    ) as HTMLElement;
+    // 空态按钮不在（已有卡片盒 chip）→ chip 文本点击重开选择器
+    (row.querySelector('.bz-path-picker-chip-name') as HTMLElement).click();
+    for (let i = 0; i < 100 && !document.getElementById('bz-path-picker-popup'); i++) {
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    // 勾选「新目录」→ 确定 → 弹存量收编确认 → 点「取消」→ 该目录不加入
+    const pickerPopup = document.getElementById('bz-path-picker-popup')!;
+    const opt = pickerPopup.querySelector('.bz-path-picker-row[data-path="新目录"]') as HTMLElement;
+    opt.click();
+    (pickerPopup.querySelector('.bz-path-picker-btn--primary') as HTMLElement).click();
+    for (let i = 0; i < 100 && !document.getElementById('__shared_confirm_popup__'); i++) {
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
+    for (let i = 0; i < 100 && row.querySelectorAll('.bz-path-picker-chip').length !== 1; i++) {
+      await new Promise((r) => setTimeout(r, 10));
+    }
+    // chips 回退为仅卡片盒，落盘同样不含新目录
+    const chipNames = () => [...row.querySelectorAll('.bz-path-picker-chip-name')].map((el) => el.textContent);
+    expect(chipNames()).toEqual(['卡片盒']);
+    expect(settings.reviewWatchedFolders).toEqual(['卡片盒']);
     closeSettingsModal();
     ui.destroy();
   });
