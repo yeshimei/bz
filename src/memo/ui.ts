@@ -9,7 +9,7 @@ import { Setting } from 'obsidian';
 import { notice, notify } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
-import { confirm } from '../core/confirm';
+import { openFlowDialog } from '../core/flow-dialog';
 import { createSiteIcon } from '../core/dom';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
@@ -796,9 +796,18 @@ export const UIManager = {
     this.addEditingId = null;
   },
 
-  // ---------- 确认对话框（代理到 core confirm） ----------
+  // ---------- 确认对话框（代理到 core flow-dialog） ----------
   showConfirm(title: string, msg: string, onConfirm: () => void) {
-    confirm({ title: title || '确认删除', message: msg || '', onConfirm });
+    void openFlowDialog({
+      title: title || '确认删除',
+      message: msg || '',
+      actions: [
+        { label: '取消', value: 'cancel' },
+        { label: '确定', value: 'ok', cta: true },
+      ],
+    }).then((v) => {
+      if (v === 'ok') onConfirm();
+    });
   },
 
   // ---------- ESC ----------

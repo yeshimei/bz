@@ -183,7 +183,7 @@ export function updateComment(
 }
 
 /**
- * 删除高亮：确认弹窗统一在 UI 层处理（ticket 52）——长按日期先关笔记壳再弹 core/confirm，
+ * 删除高亮：确认弹窗统一在 UI 层处理（ticket 52）——长按日期先关笔记壳再弹 core/flow-dialog，
  * 由调用方重开壳；此处只负责读改写文件。
  * onDone 在流程结束（成功或失败）时统一回调：UI 层据此重开壳，失败路径不留「壳已关」的死局（B2）。
  */

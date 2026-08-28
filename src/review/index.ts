@@ -4,7 +4,7 @@
  */
 import type { App } from 'obsidian';
 import { notice } from '../core/notice';
-import { confirm } from '../core/confirm';
+import { openFlowDialog } from '../core/flow-dialog';
 import { onDomainEvent } from '../core/domain-bus';
 import { ReviewDataManager } from './data';
 import { ReviewWatcher } from './watch';
@@ -118,17 +118,19 @@ export async function reviewRemoveCurrent(app: App): Promise<void> {
     notice('该笔记不在复习计划中');
     return;
   }
-  confirm({
+  void openFlowDialog({
     title: '确认移出复习计划？',
     message: '所有复习数据将被删除。',
-    confirmText: '确定',
-    cancelText: '取消',
-    onConfirm: async () => {
-      await dataManager!.removeItem(file.path);
-      notice('已移出复习计划', 'success');
-      await uiManager!.refreshPanel();
-      await reviewApp.applyReviewStyles(app);
-    },
+    actions: [
+      { label: '取消', value: 'cancel' },
+      { label: '确定', value: 'ok', cta: true },
+    ],
+  }).then(async (v) => {
+    if (v !== 'ok') return;
+    await dataManager!.removeItem(file.path);
+    notice('已移出复习计划', 'success');
+    await uiManager!.refreshPanel();
+    await reviewApp.applyReviewStyles(app);
   });
 }
 

@@ -495,6 +495,7 @@ describe('复习联动契约', () => {
     // 再点遮罩 → 确认放弃 → 按已答结算（0 题）
     (document.getElementById('quiz-mask') as HTMLElement).click();
     (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
+    await Promise.resolve(); // 流程框确认走 Promise 微任务（ticket 131），等一拍再断言
     expect(onComplete).toHaveBeenCalledTimes(1);
     expect(onComplete).toHaveBeenCalledWith({ correct: 0, wrong: 0, total: 0, accuracy: 0 });
   });
@@ -543,6 +544,7 @@ describe('复习联动契约', () => {
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
     (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
+    await Promise.resolve(); // 流程框确认走 Promise 微任务（ticket 131），等一拍再断言
     expect(staleCb).toHaveBeenCalledTimes(1); // 中断时结算一次
     // 之后普通做题（入口清理残留 onComplete）→ 做完触发新回调，旧回调不再误触发
     await ui.startQuiz();

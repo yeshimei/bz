@@ -9,7 +9,7 @@
  */
 import { notice } from '../core/notice';
 import { getSettings, saveSettings } from '../core/settings-provider';
-import { confirm } from '../core/confirm';
+import { openFlowDialog } from '../core/flow-dialog';
 import { openPathPicker } from '../core/path-picker';
 import { collectResources, planMoves } from './data';
 
@@ -130,13 +130,15 @@ export function moveAttachments(app: any): void {
           const destLabel = dest || '库根目录';
           const renamedCount = moves.filter((m) => m.renamed).length;
           const renameTail = renamedCount ? `，${renamedCount} 个将改名（目标已有同名文件）` : '';
-          confirm({
+          void openFlowDialog({
             title: '移动附件',
             message: `将移动 ${moves.length} 个资源到「${destLabel}」${renameTail}。\n\n移动后全库引用这些附件的链接会自动更新。`,
-            confirmText: '移动',
-            onConfirm: () => {
-              void runMove(app, note, dest);
-            },
+            actions: [
+              { label: '取消', value: 'cancel' },
+              { label: '移动', value: 'ok', cta: true },
+            ],
+          }).then((v) => {
+            if (v === 'ok') void runMove(app, note, dest);
           });
         } catch (e) {
           console.error('[附件搬移] 预览失败:', e);

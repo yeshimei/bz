@@ -4,7 +4,7 @@
 import { MarkdownView as MarkdownViewFromObsidian, moment } from 'obsidian';
 import { pad2 } from '../../core/utils';
 import { notice } from '../../core/notice';
-import { confirm } from '../../core/confirm';
+import { openFlowDialog } from '../../core/flow-dialog';
 import { emitDomainEvent } from '../../core/domain-bus';
 import { getApp } from '../app';
 import {
@@ -324,15 +324,15 @@ async function handleTagPickerSave(
 
   if (isEncryptedEntry) {
     // 加密条目：改分类 = 解密降级 + 应用新标签（Q20-a）
-    const proceed = await new Promise<boolean>((resolve) => {
-      confirm({
+    const proceed =
+      (await openFlowDialog({
         title: '改分类',
         message: '将解密此日记并恢复为普通类型（确定）？',
-        confirmText: '确定',
-        onConfirm: () => resolve(true),
-        onCancel: () => resolve(false),
-      });
-    });
+        actions: [
+          { label: '取消', value: 'cancel' },
+          { label: '确定', value: 'ok', cta: true },
+        ],
+      })) === 'ok';
     if (!proceed) return;
     if (!entry.noteId) return;
     const success = await reclassifyEntry(entry.noteId, selTagNames);

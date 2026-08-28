@@ -9,7 +9,7 @@ import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
-import { confirm } from '../core/confirm';
+import { openFlowDialog } from '../core/flow-dialog';
 import { createIconBtn } from '../core/dom';
 import {
   attachItemActions,
@@ -772,9 +772,18 @@ export class UIManager {
     }
   }
 
-  // ---------- 确认（代理到 core confirm） ----------
+  // ---------- 确认（代理到 core flow-dialog） ----------
   showConfirm(title: string, message: string, onConfirm: () => void) {
-    confirm({ title: title || '确认', message: message || '', onConfirm });
+    void openFlowDialog({
+      title: title || '确认',
+      message: message || '',
+      actions: [
+        { label: '取消', value: 'cancel' },
+        { label: '确定', value: 'ok', cta: true },
+      ],
+    }).then((v) => {
+      if (v === 'ok') onConfirm();
+    });
   }
 
   // ---------- 解锁（统一走保险箱主密码弹窗：共享同一解锁态，不再自绘） ----------
