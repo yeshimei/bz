@@ -174,6 +174,7 @@ registerEntity('diary_entry', {
   created: (s) => `你写了一篇日记${s.name ? `（${s.name}）` : ''}`,
   updated: (s) => `你更新了日记${s.name ? `（${s.name}）` : ''}`,
   deleted: (s) => `你删除了日记${s.name ? `（${s.name}）` : ''}`,
+  tagged: (s) => `你调整了日记${s.name ? `（${s.name}）` : ''}的标签`,
 }, ['diary'], (s) => `日记${s.name ? `（${s.name}）` : ''}有更新`);
 
 // ==================== letter（信） ====================
@@ -228,6 +229,56 @@ registerEntity('bili', {
   converted: (s) => `你把《${s.name || '一部视频'}》转成了文献`,
 }, ['bili-downloader'], (s) => `转文献动态：${s.name || '一部视频'}`);
 
+// ==================== ADR-0069 行为流全量盘点补齐（新增实体模板） ====================
+
+// ==================== clipping（剪藏；删除感知接线，created/modify 由 news 保存流覆盖） ====================
+
+registerEntity('clipping', {
+  deleted: (s) => `你删除了剪藏《${s.name || '未命名'}》`,
+}, [], (s) => `剪藏《${s.name || '未命名'}》有更新`);
+
+// ==================== review（复习计划；规则就绪待域事件接线） ====================
+
+registerEntity('review', {
+  started: () => '你开始了复习',
+  added: (s) => `你把《${s.name || '未命名'}》加入了复习计划`,
+  removed: (s) => `你把《${s.name || '未命名'}》移出了复习计划`,
+  rated: (s) => {
+    const rating = s.extras?.rating ? String(s.extras.rating) : '';
+    const suffix = rating === 'again' ? '（忘了）'
+      : rating === 'hard' ? '（困难）'
+      : rating === 'good' ? '（一般）'
+      : rating === 'easy' ? '（简单）' : '';
+    return `你给《${s.name || '未命名'}》完成了复习评分${suffix}`;
+  },
+}, [], (s) => `复习计划《${s.name || '未命名'}》有更新`);
+
+// ==================== quiz（题库；规则就绪待域事件接线） ====================
+
+registerEntity('quiz', {
+  added: (s) => `你把「${s.name || '未命名'}」加入了题库`,
+  answered: (s) => {
+    const ok = s.extras?.correct;
+    const suffix = ok === true ? '，答对了' : ok === false ? '，答错了' : '';
+    return `你回答了题目「${s.name || '未命名'}」${suffix}`;
+  },
+}, [], (s) => `题库「${s.name || '未命名'}」有更新`);
+
+// ==================== launcher（入口页；规则就绪待域事件接线） ====================
+
+registerEntity('launcher', {
+  opened: () => '你打开了入口页',
+}, [], () => '入口页有动态');
+
+// ==================== attach（附件搬移；规则就绪待域事件接线） ====================
+
+registerEntity('attach', {
+  moved: (s) => {
+    const n = Number(s.count ?? s.extras?.count);
+    return Number.isFinite(n) && n > 0 ? `你搬移了当前笔记引用的 ${n} 个附件` : '你搬移了当前笔记引用的附件';
+  },
+}, [], () => '附件搬移记录');
+
 /**
  * 行为流条目 → 人类文案（渲染时生成，纯函数）。
  * 1) 有 structured（metadata.entityType）→ 按 `entityType:action` 精确模板 → 实体级默认（`entityType:*`）；
@@ -258,6 +309,7 @@ export const ACTION_WORD_LABELS: Record<string, string> = {
   status: '状态', 'focus-done': '专注', said: '说过',
   started: '开始读', progressed: '在读', highlight: '划线', thought: '想法', removed: '移出',
   insight: '洞察', digest: '小结', generated: '生成', unknown: '活动',
+  tagged: '标签', opened: '打开', moved: '搬移', answered: '答题',
 };
 
 /** action → 中文徽标词（未知回显原值） */

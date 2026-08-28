@@ -211,3 +211,115 @@ describe('resolveRouting', () => {
     }
   });
 });
+
+// ==================== ADR-0069 行为流全量盘点补齐 ====================
+
+describe('ADR-0069：盘点补齐路由规则', () => {
+  it('新增 behavior 规则键存在', () => {
+    const keys = [
+      'diary:tagged', 'clipping:deleted',
+      'review:started', 'review:added', 'review:removed', 'review:rated',
+      'quiz:added', 'quiz:answered',
+      'launcher:opened', 'attach:moved',
+    ];
+    for (const key of keys) {
+      expect(ROUTING_RULES, `${key} 应存在`).toHaveProperty(key);
+      expect(ROUTING_RULES[key].stream).toBe('behavior');
+      expect(ROUTING_RULES[key].importance).toBeUndefined();
+      expect(ROUTING_RULES[key].defaultEmotion).toBeUndefined();
+    }
+  });
+
+  it('隐私豁免键存在且为 exempt（密码域/加密域通配 + 日记加密动作精确）', () => {
+    const keys = [
+      'password:*', 'encrypt:*',
+      'diary:entry-encrypted', 'diary:entry-decrypted', 'diary:encrypted-purged',
+    ];
+    for (const key of keys) {
+      expect(ROUTING_RULES, `${key} 应存在`).toHaveProperty(key);
+      expect(ROUTING_RULES[key].stream).toBe('exempt');
+      expect(ROUTING_RULES[key].importance).toBeUndefined();
+      expect(ROUTING_RULES[key].defaultEmotion).toBeUndefined();
+    }
+  });
+
+  it('resolveRouting：密码/加密域通配 exempt（任意动作）', () => {
+    expect(resolveRouting('password', 'open').stream).toBe('exempt');
+    expect(resolveRouting('password', 'added').stream).toBe('exempt');
+    expect(resolveRouting('password', 'generate').stream).toBe('exempt');
+    expect(resolveRouting('encrypt', 'lock').stream).toBe('exempt');
+    expect(resolveRouting('encrypt', 'unlock').stream).toBe('exempt');
+  });
+
+  it('resolveRouting：日记加密动作精确匹配 exempt', () => {
+    expect(resolveRouting('diary', 'entry-encrypted').stream).toBe('exempt');
+    expect(resolveRouting('diary', 'entry-decrypted').stream).toBe('exempt');
+    expect(resolveRouting('diary', 'encrypted-purged').stream).toBe('exempt');
+  });
+
+  it('豁免规则不影响既有精确匹配：diary:created 仍 memory、diary:deleted 仍 behavior', () => {
+    expect(resolveRouting('diary', 'created').stream).toBe('memory');
+    expect(resolveRouting('diary', 'deleted').stream).toBe('behavior');
+  });
+
+  it('每域每动作判定表（盘点矩阵：既有键 + 新增键 → 期望路由）', () => {
+    const matrix: Array<[string, string, RoutingRule['stream']]> = [
+      // 日记
+      ['diary', 'created', 'memory'],
+      ['diary', 'updated', 'memory'],
+      ['diary', 'deleted', 'behavior'],
+      ['diary', 'tagged', 'behavior'],
+      ['diary', 'entry-encrypted', 'exempt'],
+      ['diary', 'entry-decrypted', 'exempt'],
+      ['diary', 'encrypted-purged', 'exempt'],
+      // 闪念 / 诗 / 信
+      ['flash', 'created', 'behavior'],
+      ['poem', 'created', 'memory'],
+      ['letter', 'created', 'memory'],
+      // 影视
+      ['movie', 'want', 'memory'],
+      ['movie', 'watched', 'memory'],
+      ['movie', 'deleted', 'behavior'],
+      // 备忘录
+      ['memo', 'added', 'behavior'],
+      ['memo', 'due', 'behavior'],
+      // 聚合讯
+      ['news', 'read', 'behavior'],
+      ['news', 'saved', 'behavior'],
+      ['news', 'skipped', 'behavior'],
+      // 收藏本 / 归物本
+      ['favorites', 'added', 'behavior'],
+      ['belongings', 'status', 'behavior'],
+      // 番茄钟 / 聊天
+      ['pomodoro', 'focus-done', 'memory'],
+      ['chat', 'said', 'memory'],
+      // 书库
+      ['library', 'started', 'memory'],
+      ['library', 'highlight', 'memory'],
+      ['library', 'added', 'behavior'],
+      // 文献盒
+      ['bili-downloader', 'added', 'behavior'],
+      ['bili-downloader', 'converted', 'behavior'],
+      // 剪藏（新增）
+      ['clipping', 'deleted', 'behavior'],
+      // 复习计划 / 题库 / 入口页 / 附件（新增，规则就绪）
+      ['review', 'started', 'behavior'],
+      ['review', 'rated', 'behavior'],
+      ['quiz', 'answered', 'behavior'],
+      ['launcher', 'opened', 'behavior'],
+      ['attach', 'moved', 'behavior'],
+      // 反思 / 周报 / dossier
+      ['reflection', 'insight', 'memory'],
+      ['weekly-report', 'generated', 'memory'],
+      ['dossier', 'generated', 'memory'],
+      // 密码 / 加密（豁免）
+      ['password', 'open', 'exempt'],
+      ['encrypt', 'lock', 'exempt'],
+      // 兜底
+      ['unknown', 'whatever', 'behavior'],
+    ];
+    for (const [source, action, expected] of matrix) {
+      expect(resolveRouting(source, action).stream, `${source}:${action}`).toBe(expected);
+    }
+  });
+});
