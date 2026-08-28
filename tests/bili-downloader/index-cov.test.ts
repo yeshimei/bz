@@ -6,7 +6,9 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { EventEmitter } from 'events';
-import { openBiliDownloader } from '../../src/bili-downloader';
+import { openBiliDownloader, openBiliAddTask, unloadBiliDownloader } from '../../src/bili-downloader';
+import { setApp } from '../../src/core/app';
+import { MockVault } from '../mock-vault';
 import { clearNotices, getNoticeMessages } from '../mock-obsidian-entry';
 
 /** 假子进程：stdout/stderr 可 emit */
@@ -78,5 +80,23 @@ describe('bili-downloader 启动命令补充分支', () => {
     child.emit('close', 1);
     expect(noticeText()).toContain('未找到 bili-dl');
     expect(noticeText()).not.toContain('启动失败');
+  });
+});
+
+describe('openBiliAddTask（聚合讯「保存至文献」入口，ticket 134/ADR-0067）', () => {
+  afterEach(() => {
+    unloadBiliDownloader();
+    document.body.innerHTML = '';
+  });
+
+  it('ensure 幂等初始化 → 主面板叠开添加弹窗，预填链接去空白/标题/UP主（新增模式标题）', () => {
+    setApp({ vault: new MockVault() } as any);
+    openBiliAddTask({} as any, { url: ' https://www.bilibili.com/video/BV1xx411c7mD ', title: '某视频', uploader: 'UP主甲' });
+    expect(document.getElementById('bili-tasks-popup')!.style.display).toBe('flex');
+    expect(document.getElementById('bili-add-popup')!.style.display).toBe('flex');
+    expect((document.getElementById('bili-add-url') as HTMLInputElement).value).toBe('https://www.bilibili.com/video/BV1xx411c7mD');
+    expect((document.getElementById('bili-add-vtitle') as HTMLInputElement).value).toBe('某视频');
+    expect((document.getElementById('bili-add-uploader') as HTMLInputElement).value).toBe('UP主甲');
+    expect(document.getElementById('bili-add-title')!.textContent).toBe('添加转文献任务');
   });
 });

@@ -13,7 +13,10 @@ import { tryGetSettings } from '../core/settings-provider';
 import { pad2 } from '../core/utils';
 // 聚合讯观察（ticket 076，ADR-0029）：域事件派发挂点（域内 import 之后，对齐影视 movie/ui）
 // ticket 123 追加（2026-08-27 用户拍板）：跳过也发观察（news:skipped → 行为流）——见 markAsRead
+// ticket 134 修订（ADR-0067）：B站视频条目保存改道文献盒（saveToLiterature）、跳过不发——普通文章保留
 import { emitDomainEvent } from '../core/domain-bus';
+// 域内函数级 import（无环，对齐 movie/ui → movie-report 先例）：B站条目保存入口
+import { openBiliAddTask } from '../bili-downloader';
 import type { NewsReadEvent } from '../smartcat/news-source';
 
 // ---------- 常量 ----------
@@ -24,6 +27,9 @@ import {
 
 const CLIP_DIR = '归档/网页剪藏';
 const PLATFORM_DOMAIN: Record<string, string> = { '果壳': 'guokr.com', '知乎日报': 'zhihu.com', 'B站': 'bilibili.com' };
+
+/** ticket 134（ADR-0067）：B站视频条目——保存改道文献盒、跳过不进行为流；url 异常缺失回退剪藏按钮 */
+const isBiliVideo = (a: any): boolean => a?.platform === 'B站' && !!String(a?.url || '').trim();
 
 /** HTML 转义（源码内联 esc） */
 const esc = (s: any) =>
@@ -286,13 +292,15 @@ export function render() {
   const bottombar = document.createElement('div');
   bottombar.className = 'news-bottombar';
   const nextLabel = articles.length === 1 ? '✅ 完成阅读' : '⏭️ 下一篇';
+  // ticket 134（ADR-0067）：B站视频条目保存改道文献盒，普通文章仍是剪藏（data-action 契约不变）
+  const saveLabel = isBiliVideo(articles[currentIndex]) ? '📥 保存至文献' : '📥 保存至剪藏';
   bottombar.innerHTML = `
-        <button class="news-btn news-btn-primary" data-action="save">📥 保存至剪藏</button>
+        <button class="news-btn news-btn-primary" data-action="save">${saveLabel}</button>
         <button class="news-btn" data-action="next">${nextLabel}</button>
         <span class="news-counter">${batchTotal - articles.length + 1} / ${batchTotal}</span>
     `;
   container.appendChild(bottombar);
-  bottombar.querySelector<HTMLElement>('[data-action="save"]')!.onclick = () => saveToClip();
+  bottombar.querySelector<HTMLElement>('[data-action="save"]')!.onclick = () => saveCurrent();
   bottombar.querySelector<HTMLElement>('[data-action="next"]')!.onclick = () => skipArticle();
 }
 
@@ -516,6 +524,23 @@ ${body}`;
   }
 }
 
+// ---------- 保存分流 + 保存至文献（ticket 134，ADR-0067）----------
+/** 底栏保存按钮分流：B站视频条目 → 文献盒，其余 → 剪藏 */
+function saveCurrent(): void {
+  if (isBiliVideo(articles[currentIndex])) saveToLiterature();
+  else void saveToClip();
+}
+
+/**
+ * B站条目「保存至文献」：打开文献盒主面板 + 添加转文献任务弹窗（预填链接/标题/UP主）。
+ * 不写剪藏、不标已读（阅读器留在本篇未读）、不发 'news' 域事件；标题/UP主仅任务元数据。
+ */
+export function saveToLiterature() {
+  const a = articles[currentIndex];
+  if (!a) return;
+  openBiliAddTask(getApp(), { url: a.url, title: a.title || null, uploader: a.author || null });
+}
+
 // ---------- 下一篇 / 标记已读 ----------
 export function skipArticle() { markAsRead('skipped'); }
 
@@ -526,9 +551,10 @@ export function markAsRead(action: string): NewsReadEvent | null {
     // ticket 076 修订（2026-08-25 用户拍板：只发保存）→ ticket 123 追加（2026-08-27 用户拍板）：跳过也产观察
     // ——保存走 saved 立即形态 + auto-summary 补全；跳过走 news:skipped 入行为流（轻量记录，不向量化）；
     // 阅读无独立动作不发（域统计照记）；
+    // ticket 134 修订（ADR-0067）：B站视频条目不发（保存改道文献盒、跳过静音——普通文章保留跳过上报）；
     // 时长 = 累计可视时间（hide 已暂停并入 accumMs，此处补挂起会话），毫秒/60000 取整分钟 ≥1
     // （原实现 ms/60 致时长虚增 60 倍——「读了 N 分钟」离谱根因之一）
-    if (action === 'saved' || action === 'skipped') {
+    if ((action === 'saved' || action === 'skipped') && !isBiliVideo(a)) {
       const now = Date.now();
       const durationSec = (openedAt ? now - openedAt : 0) + accumMs;
       const durationMin = Math.max(1, Math.round(durationSec / 60000));

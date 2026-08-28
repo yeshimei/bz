@@ -11,7 +11,7 @@ import { notice } from '../core/notice';
 import type { NoticeType } from '../core/notice';
 import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
-import { TasksData } from './data';
+import { TasksData, normalizeUrl } from './data';
 import { UIManager } from './ui';
 
 /** 桌面端专属能力（CONTEXT.md）：window.require('child_process') 为 null 即非桌面端 */
@@ -109,6 +109,16 @@ export function ensureBiliTasks(app: App): void {
 export function openBiliTasksPanel(app: App): void {
   ensureBiliTasks(app);
   uiManager?.showMain();
+}
+
+/**
+ * 打开文献盒并弹出预填的「添加转文献任务」弹窗（聚合讯「保存至文献」入口，ticket 134/ADR-0067）。
+ * prefill 无 id = 新增模式；标题/UP主仅任务元数据。层级/ESC 由面板自理（动态 z-index 机制），调用方不碰。
+ */
+export function openBiliAddTask(app: App, prefill: { url: string; title?: string | null; uploader?: string | null }): void {
+  ensureBiliTasks(app);
+  uiManager?.showMain();
+  uiManager?.showAddDialog({ url: normalizeUrl(prefill.url), title: prefill.title ?? null, uploader: prefill.uploader ?? null });
 }
 
 /** 卸载（main.ts onunload 调用；幂等空清理） */

@@ -19,6 +19,10 @@ export interface BiliTask {
   reason: string | null;
   /** 可选备注 */
   remark: string | null;
+  /** 可选视频标题（聚合讯「保存至文献」入口预填；仅任务元数据，不进转换流程，ticket 134） */
+  title?: string | null;
+  /** 可选 UP 主名（同上） */
+  uploader?: string | null;
   /** 成功后的文献笔记路径（vault 相对） */
   notePath: string | null;
   /** 成功后的交付视频文件路径（vault 相对，可能有多个产物时取主文件） */
