@@ -367,6 +367,30 @@ describe('renderPathSettingRow：设置行助手（chips + 选择按钮，无手
     const btn = parent.querySelector('.setting-item-control button') as HTMLButtonElement;
     expect(btn.textContent).toBe('添加…');
   });
+
+  it('onChange 异步改写（否决回退）：返回数组以返回值为渲染口径（复习监听目录收编取消场景）', async () => {
+    makeAppAndSeed(['卡片盒/A.md', '新目录/A.md']);
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+    renderPathSettingRow({
+      parent,
+      name: '监听文件夹',
+      mode: 'multi',
+      value: ['卡片盒'],
+      onChange: (list) => Promise.resolve(list.filter((p) => p !== '新目录')),
+    });
+    const chips = () => [...parent.querySelectorAll('.bz-path-picker-chip-name')].map((el) => el.textContent);
+    expect(chips()).toEqual(['卡片盒']);
+    // 模拟选择器确定（勾了卡片盒 + 新目录）：异步否决新目录 → chips 只剩卡片盒
+    await openAndWait({ mode: 'multi', selected: [], onConfirm: () => {} });
+    const popup = document.getElementById('bz-path-picker-popup')!;
+    (popup.querySelector('.bz-path-picker-row[data-path="卡片盒"]') as HTMLElement).click();
+    (popup.querySelector('.bz-path-picker-row[data-path="新目录"]') as HTMLElement).click();
+    (popup.querySelector('.bz-path-picker-btn--primary') as HTMLElement).click();
+    for (let i = 0; i < 100 && chips().length !== 1; i++) await new Promise((r) => setTimeout(r, 10));
+    expect(chips()).toEqual(['卡片盒']);
+    closePathPicker();
+  });
 });
 
 describe('ticket 133 列表排序：已选置顶（打开时定格）→ 库根 → 其余整体反转', () => {
