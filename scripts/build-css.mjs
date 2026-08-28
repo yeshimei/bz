@@ -40,6 +40,7 @@ const SOURCES = [
   "src/encrypt/styles.css",
   "src/belongings/styles.css",
   "src/movie/styles.css",
+  "src/bili-downloader/styles.css",
   "src/secondbrain/styles.css",
   "src/smartcat/styles.css",
 ];

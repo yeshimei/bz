@@ -60,7 +60,7 @@
 | launcher | launcher.json |
 | pomodoro | pomodoro.json |
 | attach | —（搬当前笔记引用的 vault 附件） |
-| bili-downloader | —（外部） |
+| bili-downloader | bili-tasks.json |
 | encrypt | `CONFIG/.ENCRYPT/`（.safe.enc + .随机名.enc） |
 
 ## 测试与质量门禁

@@ -1,11 +1,17 @@
 /**
- * B站下载器启动命令（bz-bili-downloader-open，main.ts 裸注册）
- * 外部工具 @jwbz/bili-downloader（tools/bili-downloader，ADR-0011）：
- * 桌面端 spawn 全局命令 bili-dl → 起本地服务并自动开浏览器；
- * 解析 stdout 中的服务地址，经自绘 toast 提示用户。
+ * B站下载器域（视频转文献，bili-downloader 域升级）：
+ * 1) 启动命令 bz-bili-open：外部工具 @jwbz/bili-downloader（tools/bili-downloader，ADR-0011）
+ *    桌面端 spawn 全局命令 bili-dl → 起本地服务并自动开浏览器；
+ *    解析 stdout 中的服务地址，经自绘 toast 提示用户。
+ * 2) 待转文献面板 bz-bili-tasks-open：移动端暂存录入 / 桌面端批量处理（ADR-0065），
+ *    数据 CONFIG/STORAGE/bili-tasks.json，面板见 ui.ts，跑批器见 processor.ts。
  */
 import { notice } from '../core/notice';
 import type { NoticeType } from '../core/notice';
+import type { App } from 'obsidian';
+import { tryGetSettings } from '../core/settings-provider';
+import { TasksData } from './data';
+import { UIManager } from './ui';
 
 /** 桌面端专属能力（CONTEXT.md）：window.require('child_process') 为 null 即非桌面端 */
 function getChildProcess(): any {
@@ -33,7 +39,7 @@ function resolveCmd(): string {
   return 'bili-dl';
 }
 
-/** 打开 B站下载器（bz-bili-downloader-open 命令回调） */
+/** 打开 B站下载器（bz-bili-open 命令回调） */
 export function openBiliDownloader(): void {
   const cp = getChildProcess();
   if (!cp) { notice('仅桌面端可用：B站下载器需要 Node.js 外部进程', 'error'); return; }
@@ -83,4 +89,30 @@ export function openBiliDownloader(): void {
   setTimeout(() => {
     if (!settled) notice('B站下载器启动中…浏览器将自动打开；若未打开请重新执行命令', 'info');
   }, 6000);
+}
+
+// ---- 待转文献面板（ADR-0065）----
+
+let initialized = false;
+let uiManager: UIManager | null = null;
+
+/** 懒加载初始化（ADR-0003 幂等）：数据层 + 面板 */
+export function ensureBiliTasks(app: App): void {
+  if (initialized) return;
+  initialized = true;
+  TasksData.init({ storagePath: (tryGetSettings() as any)?.storagePath });
+  uiManager = new UIManager(app);
+}
+
+/** 打开待转文献面板（bz-bili-tasks-open 命令回调） */
+export function openBiliTasksPanel(app: App): void {
+  ensureBiliTasks(app);
+  uiManager?.showMain();
+}
+
+/** 卸载（main.ts onunload 调用；幂等空清理） */
+export function unloadBiliDownloader(): void {
+  uiManager?.destroy();
+  uiManager = null;
+  initialized = false;
 }

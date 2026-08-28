@@ -3412,6 +3412,85 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   to { opacity: 1; }
 }
 
+/* 待转文献面板（bili-downloader 域升级，ADR-0065） */
+
+/* ---- 任务行卡片 ---- */
+.bz-bili-task-card {
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  background: var(--background-secondary);
+  cursor: pointer;
+  position: relative;
+}
+.bz-bili-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.bz-bili-url {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-normal);
+}
+.bz-bili-meta {
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.bz-bili-progress {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-accent);
+}
+.bz-bili-progress-error {
+  color: var(--text-error, #e5484d);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.bz-bili-note {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--color-green, #46a758);
+}
+
+/* ---- 状态徽标 ---- */
+.bz-bili-status {
+  flex-shrink: 0;
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  color: #fff;
+  line-height: 18px;
+}
+.bz-bili-pending { background: var(--text-muted); }
+.bz-bili-processing { background: var(--interactive-accent); animation: bz-bili-pulse 1.2s ease-in-out infinite; }
+.bz-bili-success { background: var(--color-green, #46a758); }
+.bz-bili-failed { background: var(--text-error, #e5484d); }
+
+@keyframes bz-bili-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .55; }
+}
+
+/* ---- 批处理横幅 / 空态 ---- */
+.bz-bili-banner {
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--background-modifier-hover);
+  color: var(--text-accent);
+}
+.bz-bili-empty {
+  padding: 28px 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
 ﻿/* ============================================================
  * 绗簩澶ц剳锛坰econdbrain 鍩燂紝ticket 103 寤?UI / 107 琛ユ牱寮忔枃浠?/ 108 闈㈡澘鎵撶（锛?
  * 鍏ㄩ儴琛ㄩ潰锛氫富闈㈡澘寮圭獥 / 妗岄潰绐勭獥 / 鍙傝€冨崱涓庢偓鍋滈瑙?/ AI 瀵硅瘽 / 绉诲姩绔娊灞?

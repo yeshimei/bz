@@ -310,6 +310,8 @@ export default interface BzSettings {
   pomodoroMobileDefaultFullscreen: boolean;
   /** 保险箱：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   encryptMobileDefaultFullscreen: boolean;
+  /** 待转文献：移动端默认全屏（默认关——95% 居中卡，ADR-0065） */
+  biliTasksMobileDefaultFullscreen: boolean;
 
   // ===== 🐱 小橘陪伴猫（smartcat 域：桌面宠物 + AI 陪伴）=====
   /** 小橘启用开关（l7A）：仅控制启动时自动加载（猫容器挂载/常驻行为），关闭后仍可从命令面板手动打开 */
@@ -509,6 +511,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   reviewMobileDefaultFullscreen: true,
   pomodoroMobileDefaultFullscreen: false,
   encryptMobileDefaultFullscreen: true,
+  biliTasksMobileDefaultFullscreen: false,
   secondBrainMobileDefaultFullscreen: true,
 
   // 小橘陪伴猫（smartcat 域；移动端默认全屏键聊天/设置/数据面板共用，2026-08-23 合并一套）

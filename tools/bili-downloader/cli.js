@@ -5,6 +5,13 @@
 //   bili-dl             启动本地服务 + 自动打开浏览器
 //   bili-dl --port 8080 指定端口（默认随机空闲端口）
 //   bili-dl --no-open   只打印地址，不自动开浏览器
+//   bili-dl --batch '<json>'   无头批处理（Obsidian 插件「待转文献」面板后台引擎）
+//       json = {"url":"…","start":"mm:ss|hh:mm:ss(.S)|null","end":"…"}；start/end 都 null = 整片不剪辑
+//       stdout 逐步打 [bz-step] 行（解析中 → 下载中 → 剪辑中(有起止才跑) → 转文字中 → AI 生成文献笔记中）；
+//       成功末尾一行 [bz-result] {"note":"文献盒/标题.md","video":"CONFIG/APPENDIX/xxx.mp4"}
+//       （note/video 为 vault 相对路径；不在 vault 下为绝对路径）并 exit 0；
+//       任一步失败 stderr 给中文原因（含缺失前置引导，如 whisper 环境 / AI key）并 exit 1，不写 [bz-result]。
+//       --batch 模式不打印横幅、不起服务，避免污染协议。
 // 实例复用（ticket 117）: 未指定 --port 时，若端口文件 ~/.bilibili-dl-port
 //   记的旧实例仍存活，则直接复用其地址（打印同格式「地址:」行 + 开浏览器后退出），
 //   不再起第二个服务/第二个临时目录——插件连点命令不再叠标签页。
@@ -14,15 +21,52 @@ const http = require('http')
 const os = require('os')
 const path = require('path')
 const fs = require('fs')
-const { createServer, TMP_DIR, startValidate } = require('./server')
+const core = require('./core')
+const cfg = require('./config')
 
 const PORT_FILE = path.join(os.homedir(), '.bilibili-dl-port')
 
 const args = process.argv.slice(2)
-const portIdx = args.indexOf('--port')
-const port = portIdx >= 0 ? Number(args[portIdx + 1]) || 0 : 0
-const noOpen = args.includes('--no-open')
 
+// ---- 无头批处理（--batch）：core.runBatch 的薄壳 + 协议输出 ----
+function runBatchMode(rawJson) {
+  if (rawJson === undefined) {
+    console.error('缺少 --batch 参数（需要 JSON 字符串，如 --batch \'{"url":"BV…","start":null,"end":null}\'）')
+    process.exit(1)
+  }
+  let task
+  try {
+    task = JSON.parse(rawJson)
+  } catch (e) {
+    console.error(`--batch 参数不是合法 JSON：${e.message}`)
+    process.exit(1)
+  }
+  if (!task || typeof task !== 'object' || Array.isArray(task)) {
+    console.error('--batch 参数必须是 JSON 对象（{"url":"…","start":"…|null","end":"…|null"}）')
+    process.exit(1)
+  }
+  if (!task.url || typeof task.url !== 'string' || !String(task.url).trim()) {
+    console.error('缺少 url（B站视频链接或 BV 号）')
+    process.exit(1)
+  }
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'bili-dl-batch-'))
+  core.runBatch(task, {
+    conf: cfg.loadConfig(),
+    cookie: cfg.loadCookie(),
+    onStep: name => console.log(`[bz-step] ${name}`),
+    tmpDir: tmp,
+  }).then(r => {
+    try { fs.rmSync(tmp, { recursive: true, force: true }) } catch {}
+    console.log(`[bz-result] ${JSON.stringify({ note: r.note, video: r.video })}`)
+    process.exit(0)
+  }).catch(e => {
+    try { fs.rmSync(tmp, { recursive: true, force: true }) } catch {}
+    console.error((e && e.message) || String(e))
+    process.exit(1)
+  })
+}
+
+// ---- 服务模式 ----
 function openBrowser(url) {
   try {
     const plat = process.platform
@@ -55,17 +99,21 @@ function probeAlive(p) {
   })
 }
 
-function cleanup() {
-  try { fs.rmSync(TMP_DIR, { recursive: true, force: true }) } catch {}
-  // 注意：不删 PORT_FILE——复用路径退出时旧实例仍存活，文件必须保留；
-  // 实例真的死了，下次启动探测失败自会覆盖（stale 文件由探测兜底）。
-}
-
-process.on('SIGINT', () => { console.log('\n[B站下载器] 正在退出…'); cleanup(); process.exit(0) })
-process.on('SIGTERM', () => { cleanup(); process.exit(0) })
-process.on('exit', cleanup)
-
 async function main() {
+  const { createServer, TMP_DIR, startValidate } = require('./server')   // 服务模式才加载（batch 模式不建服务临时目录）
+  const cleanup = () => {
+    try { fs.rmSync(TMP_DIR, { recursive: true, force: true }) } catch {}
+    // 注意：不删 PORT_FILE——复用路径退出时旧实例仍存活，文件必须保留；
+    // 实例真的死了，下次启动探测失败自会覆盖（stale 文件由探测兜底）。
+  }
+  process.on('SIGINT', () => { console.log('\n[B站下载器] 正在退出…'); cleanup(); process.exit(0) })
+  process.on('SIGTERM', () => { cleanup(); process.exit(0) })
+  process.on('exit', cleanup)
+
+  const portIdx = args.indexOf('--port')
+  const port = portIdx >= 0 ? Number(args[portIdx + 1]) || 0 : 0
+  const noOpen = args.includes('--no-open')
+
   // 实例复用：显式 --port 跳过（用户要的就是指定端口的新实例）
   if (portIdx < 0) {
     let prev = null
@@ -94,4 +142,6 @@ async function main() {
   })
 }
 
-main()
+const batchIdx = args.indexOf('--batch')
+if (batchIdx >= 0) runBatchMode(args[batchIdx + 1])
+else main()

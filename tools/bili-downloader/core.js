@@ -705,6 +705,175 @@ function literaturePolishPrompt(chunk) {
   return `你是文字编辑。把下面的视频转写文稿轻度润色为书面语：口语转书面、删除口水词与重复内容，保持原顺序、原事实（数字与专名不变）。输出必须是简体中文（繁体转写一律转为简体）。直接输出润色后的正文，不要解释、不要加标题、不要列表。\n\n【转写文稿】\n${chunk}`
 }
 
+// ---- 无头批处理（--batch）：runBatch ----
+// 契约（与 Obsidian 插件「待转文献」面板对齐，cli.js --batch 调用）：
+//   task = { url, start, end }；start/end 为 'HH:MM:SS(.S)'/'MM:SS'/秒 或 null；都 null = 整片不剪辑。
+//   deps（全部可注入，防循环依赖——core 不 require config.js，conf 由调用方读入传入）：
+//     conf（必需：vaultPath/outputDir/cacheDir/ffmpegPath/ffprobePath/pythonPath/whisperModel/literatureFolder）、
+//     cookie、fetchJson/get（网络注入，测试打桩）、ffmpeg、ffprobe、py、
+//     runPythonImpl、aiJsonImpl、aiChatImpl（AI/转录打桩）、onStep(名称)、tmpDir。
+// 9 步时序：resetAbort → 解析 → 下载（复刻 /api/download 缓存命中检测与回写）→ 剪辑（起止有值才跑，
+//   parseTimeInput 转秒，trimVideo 沿用 ffprobe 校验 + 自动重编码兜底，crf=null 不压缩）→ 转文字
+//   （runPython + PY_TRANSCRIBE，parseTranscriptUnits 收文本）→ AI（loadBzAiConfig 校验配置，
+//   缺 key 按既有报错引导；aiJson 元数据 + chunkTranscript 分块 + 逐块 literaturePolishPrompt + aiChat 润色）
+//   → 交付（copyFileSync + unlink 移入 outputDir，buildFileName/uniquePath，makeWiki 等价自建）
+//   → 文献笔记（buildLiteratureNote 组装 + uniquePath 落 vaultPath/literatureFolder，永不覆盖）。
+// 返回 { note, video, notePath, videoPath, wiki, transcript, title }；note/video 为 vault 相对路径
+//   （不在 vault 下退化为绝对路径）。任一步失败抛错（中文文案带缺失前置引导）。
+function vaultRel(absPath, vaultPath) {
+  if (!vaultPath) return absPath
+  const vaultAbs = path.resolve(vaultPath)
+  const rel = path.relative(vaultAbs, absPath)
+  if (rel && !rel.startsWith('..') && !path.isAbsolute(rel)) return rel.replace(/\\/g, '/')
+  return absPath
+}
+
+// makeWiki 等价（server.js:93 未导出的纯函数副本）：vault 内 → ![[rel/finalName]]，否则绝对路径
+function batchWiki(finalPath, conf) {
+  const outAbs = path.resolve(conf && conf.outputDir ? conf.outputDir : path.dirname(finalPath))
+  if (conf && conf.vaultPath) {
+    const vaultAbs = path.resolve(conf.vaultPath)
+    const rel = path.relative(vaultAbs, outAbs)
+    if (rel && !rel.startsWith('..') && !path.isAbsolute(rel)) {
+      return `![[${rel.replace(/\\/g, '/')}/${path.basename(finalPath)}]]`
+    }
+  }
+  return finalPath
+}
+
+async function runBatch(task, deps = {}) {
+  resetAbort()   // 全局中止标志复位（server resetTask 同规）
+  const conf = deps.conf || {}
+  const cookie = deps.cookie || null
+  const fetchJson = deps.fetchJson || fetchJsonImpl
+  const get = deps.get
+  const ffmpeg = deps.ffmpeg || conf.ffmpegPath || 'ffmpeg'
+  const ffprobe = deps.ffprobe || conf.ffprobePath || 'ffprobe'
+  const py = deps.py || conf.pythonPath
+  const model = conf.whisperModel || 'small'
+  const runPythonImpl = deps.runPythonImpl || runPython
+  const aiJsonImpl = deps.aiJsonImpl || aiJson
+  const aiChatImpl = deps.aiChatImpl || aiChat
+  const onStep = deps.onStep || (() => {})
+  const tmpDir = deps.tmpDir || fs.mkdtempSync(path.join(os.tmpdir(), 'bili-dl-batch-'))
+
+  const url = String((task && task.url) || '').trim()
+  if (!url) throw new Error('缺少 url（B站视频链接或 BV 号）')
+
+  // ① 解析
+  onStep('解析中')
+  const info = await parseVideo({ url, cookie, fetchJson })
+
+  // ② 下载（缓存命中检测与回写，同 /api/download）
+  onStep('下载中')
+  const bvid = extractBv(url)
+  const height = deps.quality || info.maxHeight
+  const cachedPath = cachePath(conf, cacheKey(bvid, info.cid, height))
+  const originalPath = path.join(tmpDir, `bili_${Date.now()}.mp4`)
+  if (fs.existsSync(cachedPath)) {
+    fs.copyFileSync(cachedPath, originalPath)
+  } else {
+    await downloadVideo({ url, cookie, height, cid: info.cid, outPath: originalPath, ffmpeg, fetchJson, get })
+    // 未命中下载完成后回写缓存（剪辑/压缩件不进缓存）
+    try { fs.mkdirSync(path.dirname(cachedPath), { recursive: true }); fs.copyFileSync(originalPath, cachedPath) } catch {}
+  }
+
+  // ③ 剪辑（起止都有值才跑；parseTimeInput 转秒；越界/非法区间 clampSeg 同规 → 按整片）
+  let seg = null
+  let srcForDeliver = originalPath
+  const hasRange = task.start != null && task.end != null &&
+    String(task.start).trim() !== '' && String(task.end).trim() !== ''
+  if (hasRange) {
+    const start = parseTimeInput(task.start)
+    const end = parseTimeInput(task.end)
+    if (start === null || end === null) throw new Error('起止时间格式错误（HH:MM:SS.S / MM:SS / 秒）')
+    let s = Math.max(0, start)
+    let e = Math.min(info.duration, end)
+    if (e - s < 0.1) { s = 0; e = info.duration }
+    seg = { start: s, end: e, full: !(s > 0 || e < info.duration) }
+    if (!seg.full) {
+      onStep('剪辑中')
+      const clipPath = path.join(tmpDir, `bili_${Date.now()}_clip.mp4`)
+      // crf=null：流复制优先，ffprobe 校验不过自动重编码兜底（不压缩）
+      await trimVideo({ inPath: originalPath, outPath: clipPath, ffmpeg, ffprobe, start: s, end: e, crf: null, totalMs: (e - s) * 1000 })
+      srcForDeliver = clipPath
+    }
+  }
+
+  // ④ 转文字（单进程单次模型加载；注入 runPythonImpl；parseTranscriptUnits 收文本）
+  onStep('转文字中')
+  if (!py) throw new Error('转文字失败：rc 未配置 pythonPath（faster-whisper 所在 Python 路径），请到设置页填写')
+  let raw = ''
+  try {
+    await runPythonImpl({ py, args: [model, srcForDeliver], onChunk: s => { raw += s } })
+  } catch (err) {
+    throw new Error(`转文字失败：${(err && err.message) || err}（请确认 faster-whisper 环境已安装：目标 Python 已 pip install faster-whisper）`)
+  }
+  const units = parseTranscriptUnits(raw)
+  const byFile = new Map(units.map(u => [path.resolve(u.file), u.text]))
+  const transcript = (byFile.get(path.resolve(srcForDeliver)) || '').trim()
+  if (!transcript) throw new Error('转文字未产出文本（视频可能无语音，或请确认 faster-whisper 环境可用、模型正常加载）')
+
+  // ⑤ AI 生成文献笔记：配置校验 → 元数据 → 分块润色；⑥ 交付；⑦ 笔记落盘
+  onStep('AI 生成文献笔记中')
+  const ai = loadBzAiConfig(conf)   // 缺 key / 缺 bz 数据文件 → 既有报错文案（引导去 bz 设置）
+  const firstChunks = chunkTranscript(transcript)
+  const metaRaw = await aiJsonImpl({
+    ...ai,
+    messages: [{ role: 'user', content: literatureMetaPrompt(info.title, firstChunks[0] || '') }],
+    maxTokens: 600,
+  })
+  const tags = Array.isArray(metaRaw && metaRaw.tags) ? metaRaw.tags.map(String).filter(Boolean).slice(0, 6) : []
+  const meta = {
+    title: String((metaRaw && metaRaw.title) || '').trim() || info.title || '未命名',
+    tags,
+    summary: String((metaRaw && metaRaw.summary) || '').trim(),
+  }
+  const chunks = chunkTranscript(transcript)
+  const polished = []
+  for (const c of chunks) {
+    polished.push(await aiChatImpl({ ...ai, messages: [{ role: 'user', content: literaturePolishPrompt(c) }], maxTokens: 4096 }))
+  }
+  const whole = polished.join('')
+
+  // ⑥ 交付：文件移入 outputDir（copyFileSync + unlink，exFAT 兼容；重名 uniquePath 加序号）
+  if (!conf.outputDir) throw new Error('交付目录未配置（rc outputDir），请先运行网页端在设置中填写')
+  const outDirAbs = path.resolve(conf.outputDir)
+  fs.mkdirSync(outDirAbs, { recursive: true })
+  const name = buildFileName({
+    title: info.title, bv: bvid, page: '',
+    trimmed: seg ? !seg.full : false,
+    start: seg ? seg.start : 0, end: seg ? seg.end : info.duration,
+    duration: info.duration, compressed: false, crf: null,
+  })
+  const finalPath = uniquePath(path.join(outDirAbs, name))
+  fs.copyFileSync(srcForDeliver, finalPath)
+  if (srcForDeliver !== originalPath) { try { fs.unlinkSync(srcForDeliver) } catch {} }   // 剪辑临时件已交付，删
+  const wiki = batchWiki(finalPath, conf)
+
+  // ⑦ 文献笔记：frontmatter 七键 + 润色正文 + 视频双链；落 vaultPath/literatureFolder（缺省「文献盒」）
+  if (!conf.vaultPath) throw new Error('文献笔记落盘失败：rc 未配置 vaultPath（Obsidian vault 根目录）')
+  const noteFolder = path.join(conf.vaultPath, conf.literatureFolder || '文献盒')
+  fs.mkdirSync(noteFolder, { recursive: true })
+  const now = new Date()
+  const p2 = n => String(n).padStart(2, '0')
+  const md = buildLiteratureNote({
+    title: meta.title, tags: meta.tags, summary: meta.summary,
+    url: bvid ? `https://www.bilibili.com/video/${bvid}` : url,
+    date: `${now.getFullYear()}-${p2(now.getMonth() + 1)}-${p2(now.getDate())} ${p2(now.getHours())}:${p2(now.getMinutes())}:${p2(now.getSeconds())}`,
+    author: info.uploader, videoTitle: info.title,
+    blocks: [{ text: whole, wiki }],
+  })
+  const notePath = uniquePath(path.join(noteFolder, sanitizeMdTitle(meta.title) + '.md'))
+  fs.writeFileSync(notePath, md, 'utf8')
+
+  return {
+    note: vaultRel(notePath, conf.vaultPath),
+    video: vaultRel(finalPath, conf.vaultPath),
+    notePath, videoPath: finalPath, wiki, transcript, title: meta.title,
+  }
+}
+
 module.exports = {
   UA, MIXIN_KEY_ENC_TAB, getMixinKey, fetchJsonImpl, getWbiKeys, wbiSign, getViewInfo, getPlayUrls,
   lastLine, qualityLabel, sanitizeName, extractBv, fmtTime, fmtDuration, fmtSec, parseTimeInput, buildFileName,
@@ -717,4 +886,5 @@ module.exports = {
   sanitizeMdTitle, chunkTranscript, buildLiteratureNote,
   AI_TIMEOUT_MS, AI_PROVIDERS, loadBzAiConfig, aiChat, aiJson,
   literatureMetaPrompt, literaturePolishPrompt,
+  vaultRel, batchWiki, runBatch,
 }
