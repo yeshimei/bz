@@ -312,14 +312,15 @@ export class MemorySystem {
   // ---------------- 记忆写入 ----------------
 
   /**
-   * 新版添加观察记忆（P1 数据基座，ticket 123）
-   * 根据 source:action 路由规则决定写入 memory 流或 behavior 流。
+   * 新版添加观察记忆（P1 数据基座，ticket 123；ticket 129/ADR-0062 升级全量双写）
+   * 一律**先写行为流**（全量行为日志）；随后 routing 判定命中 memory 的再写记忆流条目——
+   * 两条独立（各自生成 id/时间戳，不互相标记来源，「看起来是独立添加的，只是方便管理」）。
    *
    * 兼容旧签名：addObservation(description, { source, ... }) 仍然可用（进 memory 流、无 structured）。
    *
    * @param sourceOrDescription 来源域（新签名）或描述文本（旧签名兼容）
    * @param options 结构化选项（新签名）或旧参数对象（旧签名兼容）
-   * @returns memory 流返回 MemoryStreamEntry，behavior 流返回 BehaviorItem，未落库返回 null
+   * @returns memory 路由返回 MemoryStreamEntry（行为条目已另行写入），behavior 路由返回 BehaviorItem，未落库返回 null
    */
   async addObservation(
     sourceOrDescription: string,
@@ -337,12 +338,16 @@ export class MemorySystem {
     const action = newOpts.structured?.action ?? 'unknown';
     const rule = resolveRouting(source, action);
 
+    // ticket 129：一律先写行为流（全量日志；含 memory 路由事件——双写）
+    const behavior = await this.writeBehaviorStream(source, newOpts.structured);
+
     if (rule.stream === 'behavior') {
-      // 行为流：写入 behaviorStream，不参与向量化
-      return await this.writeBehaviorStream(source, newOpts.structured);
+      // 行为路由：仅行为流（记忆流条目不写），返回行为条目
+      return behavior;
     }
 
-    // memory 流：走原有逻辑（importance/emotion/credibility 从规则取）
+    // memory 路由：行为条目已另行写入，此处再写记忆流条目（走原有逻辑：
+    // description 构建 / importance-emotion-credibility / 向量化 appendVector / onObservation 钩子 / touchPresence）
     const description = this.buildDescription(newOpts.structured);
     const importance = rule.importance ?? 0.5;
     const emotion = rule.defaultEmotion;
@@ -383,26 +388,39 @@ export class MemorySystem {
   }
 
   /**
-   * 写入行为流（P1 数据基座，ticket 123）
+   * 写入行为流（P1 数据基座，ticket 123；ticket 129 起成为 addObservation 全量第一落点）
    * 轻量行为事件：不参与向量化/检索，按天数+条数滚动清理。
    * 去重由上游 B6 守卫（300ms 同事件同 key）处理，此处不做额外去重。
+   *
+   * @param source 来源域
+   * @param structured 结构化元数据（缺省时以 action=unknown 构造）
+   * @param fallbackDescription legacy 兜底描述（无 structured 时作为条目描述文本回显，
+   *   metadata 保持缺省——legacy 事件在面板按存储描述直显）
    */
-  private async writeBehaviorStream(source: string, structured?: StructuredMeta): Promise<BehaviorItem | null> {
+  private async writeBehaviorStream(source: string, structured?: StructuredMeta, fallbackDescription?: string): Promise<BehaviorItem | null> {
     const action = structured?.action ?? 'unknown';
     const name = structured?.name ?? '';
+    let description: string;
+    if (structured) {
+      description = `${source}:${action}${name ? ` ${name}` : ''}`;
+    } else if (typeof fallbackDescription === 'string' && fallbackDescription.length > 0) {
+      description = fallbackDescription;
+    } else {
+      description = `${source}:${action}`;
+    }
     const item: BehaviorItem = {
       id: `beh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date().toISOString(),
       type: action,
       source,
-      description: `${source}:${action}${name ? ` ${name}` : ''}`,
+      description,
       metadata: structured,
     };
     this.behaviorStream.push(item);
     // 滚动窗口清理（使用 settings 的配置值，缺省走默认值）
     const s = tryGetSettings() as any;
     const maxDays = s?.behaviorMaxDays ?? 30;
-    const maxCount = s?.behaviorMaxCount ?? 1000;
+    const maxCount = s?.behaviorMaxCount ?? 2000;
     const trimmed = trimBehaviorStream(this.behaviorStream, { maxDays, maxCount });
     this.dataProvider().memory.behaviorStream.length = 0;
     this.behaviorStream.push(...trimmed);
@@ -423,9 +441,13 @@ export class MemorySystem {
     return parts.join(' ') || `[${structured.entityType}] ${structured.action}`;
   }
 
-  /** 添加观察记忆（旧签名兼容，过时包装）；行为与现状一致（进 memory 流、无 structured）
+  /** 添加观察记忆（旧签名兼容，过时包装）；ticket 129 起同口径全量双写——legacy 现固定进 memory
+   *  流，改为也进行为流（dedupe 短路前先落行为条目；无 structured → description 兜底条目）。
    *  @deprecated 使用新签名 addObservation(source, { structured }) 替代 */
   private async addObservationLegacy(description: string, opts: { source?: string; manuallyMarked?: boolean; importance?: number; emotion?: string; dedupe?: boolean; credibility?: number } = {}): Promise<MemoryStreamEntry | null> {
+    // ticket 129：全量口径——legacy 同样先写行为流（无 structured → description 兜底、metadata 缺省）
+    const legacySource = opts.source ?? 'unknown';
+    await this.writeBehaviorStream(legacySource, undefined, typeof description === 'string' ? description : String(description ?? ''));
     if (opts.dedupe) {
       const norm = (description || '').trim();
       const recent = this.stream.slice(-MemorySystem.dedupeWindow);

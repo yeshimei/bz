@@ -1194,18 +1194,13 @@
 
 /* ===== P3 用户体验层：行为页签 + structured 摘要（ticket 123） ===== */
 
-/* 行为条目 */
-.bz-sc-dash-behavior-item {
-  padding: 8px 0;
-  border-bottom: 1px solid var(--background-modifier-border);
-}
-.bz-sc-dash-behavior-item:last-child { border-bottom: none; }
+/* 行为条目元信息行 */
 .bz-sc-dash-behavior-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   font-size: 12px;
   color: var(--text-muted);
 }
@@ -1216,18 +1211,71 @@
   padding: 1px 6px;
   border-radius: 3px;
 }
-.bz-sc-dash-promote-btn {
-  margin-left: auto;
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 3px;
-  cursor: pointer;
-  background: rgba(var(--color-green-rgb), 0.12);
-  color: var(--color-green);
-  border: none;
+.bz-sc-dash-behavior-source { color: var(--text-muted); }
+.bz-sc-dash-behavior-time { color: var(--text-faint); }
+
+/* 行为页签升级（ticket 129：时间线式列表 + 来源筛选 + 滚动加载） */
+/* 时间线容器：左侧竖线 + 每条圆点节点（条目左 padding 让位节点，竖线居中对齐圆点） */
+.bz-sc-dash-behavior-tl {
+  position: relative;
+  padding-left: 14px;
 }
-.bz-sc-dash-promote-btn:hover {
-  background: rgba(var(--color-green-rgb), 0.25);
+.bz-sc-dash-behavior-tl::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--background-modifier-border);
+}
+.bz-sc-dash-behavior-item {
+  position: relative;
+  padding: 7px 0;
+}
+.bz-sc-dash-behavior-item::before {
+  content: '';
+  position: absolute;
+  left: -14px;
+  top: 11px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-sizing: border-box;
+  background: var(--background-primary);
+  border: 2px solid var(--interactive-accent);
+}
+.bz-sc-dash-behavior-tl > .bz-sc-dash-behavior-item:last-child::before {
+  background: var(--interactive-accent);
+}
+/* 来源统计块可点击（筛选/还原）：hover 反馈 + active 高亮 */
+.bz-sc-dash-stat-click {
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, background 0.15s ease;
+}
+.bz-sc-dash-stat-click:hover {
+  background: var(--background-modifier-hover);
+}
+.bz-sc-dash-stat-click.active {
+  box-shadow: inset 0 0 0 1.5px var(--interactive-accent);
+  background: rgba(var(--interactive-accent-rgb), 0.06);
+}
+/* 加载更多按钮（批次追加；剩余条数显示） */
+.bz-sc-dash-load-more {
+  display: block;
+  margin: 8px auto 2px;
+  font-size: 12px;
+  padding: 4px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--background-modifier-border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.bz-sc-dash-load-more:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
 }
 
 /* 记忆流 structured 摘要 */
