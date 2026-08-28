@@ -1406,6 +1406,7 @@ export class MemorySystem {
     const existing = this.stream.find(findBySeed);
     if (existing && existing.contentHash && existing.contentHash === hash) {
       if (existing.ref && existing.ref.path !== basePath) existing.ref = { path: basePath, locator: seed.locator }; // 旧数据自愈
+      if (existing.description !== description) { existing.description = description; this.markMemoryDirty(); } // 双 # 描述自愈（零 AI 成本）
       return; // 内容未变：跳过
     }
     const score = await this.scoreImportanceAndEmotion(fullText || description, { source });
