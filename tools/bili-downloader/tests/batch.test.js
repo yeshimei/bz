@@ -36,7 +36,11 @@ function viewOk() {
     code: 0,
     data: {
       title: '批处理测试视频', owner: { name: 'UP主' }, duration: 120, pic: 'https://i0.hdslb.com/bfs/archive/cover.jpg', cid: 1001,
-      pages: [{ cid: 1001, page: 1, part: '', duration: 120 }],
+      pages: [
+        { cid: 1001, page: 1, part: '开篇', duration: 120 },
+        { cid: 1002, page: 2, part: '中段', duration: 120 },
+        { cid: 1003, page: 3, part: '收尾', duration: 120 },
+      ],
     },
   }
 }
@@ -269,6 +273,107 @@ test('runBatch：options.outputDir 覆盖交付目录（vault 外绝对路径，
   assert.equal(r.video, path.resolve(outside, '批处理测试视频_BV1GJ411x7h7.mp4'))
   assert.ok(fs.existsSync(path.join(outside, '批处理测试视频_BV1GJ411x7h7.mp4')))
   assert.equal(fs.readdirSync(env.outDir).length, 0)
+})
+
+test('runBatch：[bz-info] 解析信息回传（标题/UP主/规范化 url，ADR-0067）', async () => {
+  const env = makeEnv()
+  env.seedCache('FAKE')
+  const infos = []
+  await core.runBatch({ url: 'https://www.bilibili.com/video/BV1GJ411x7h7', start: null, end: null }, {
+    ...env.deps, conf: env.conf, onInfo: i => infos.push(i),
+  })
+  assert.equal(infos.length, 1)
+  assert.equal(infos[0].title, '批处理测试视频')
+  assert.equal(infos[0].uploader, 'UP主')
+  assert.equal(infos[0].bvid, 'BV1GJ411x7h7')
+  assert.equal(infos[0].url, 'https://www.bilibili.com/video/BV1GJ411x7h7')
+  assert.ok(infos[0].duration > 0)
+})
+
+test('runBatch：task.page=2 → 命中第 2 P（cid=1002）独立缓存键，文件名带 _2（ADR-0067）', async () => {
+  const env = makeEnv()
+  // 只预置第 2 P 缓存：若 page 未生效 → 走 cid=1001 缓存键未命中 → 真实下载必败
+  const cached = core.cachePath(env.conf, core.cacheKey('BV1GJ411x7h7', 1002, 1080))
+  fs.mkdirSync(path.dirname(cached), { recursive: true })
+  fs.writeFileSync(cached, 'FAKE-P2')
+  const r = await core.runBatch({ url: 'BV1GJ411x7h7', start: null, end: null, page: 2 }, { ...env.deps, conf: env.conf })
+  assert.ok(r.video.includes('批处理测试视频_BV1GJ411x7h7_2.mp4'), r.video)
+})
+
+test('runBatch：task.page 越界/非法 → 回落第 1 P（cid=1001 缓存命中）', async () => {
+  const env = makeEnv()
+  env.seedCache('FAKE')
+  const r = await core.runBatch({ url: 'BV1GJ411x7h7', start: null, end: null, page: 99 }, { ...env.deps, conf: env.conf })
+  assert.ok(r.video.includes('批处理测试视频_BV1GJ411x7h7.mp4'), r.video)
+})
+
+test('runBatch：断点续跑——转写稿/AI 元数据/润色分块复用，失败重跑从出错步骤继续（ADR-0067）', async () => {
+  const env = makeEnv()
+  env.seedCache('FAKE')
+  // 长文稿（>4000 字，句边界 → 2 个润色分块），供分块级断点
+  const longText = '模拟转录文本。'.repeat(600)
+  let pythonCalls = 0
+  let metaCalls = 0
+  let chatCalls = 0
+  const deps = {
+    ...env.deps,
+    runPythonImpl: async (o) => {
+      pythonCalls++
+      o.onChunk(`\x1e${o.args[1]}\x1f${longText}\x1f\n\x1e${o.args[1]}\x1f\x1f\n`)
+    },
+    aiJsonImpl: async () => { metaCalls++; throw new Error('AI 返回的不是 JSON：xxx') },
+    aiChatImpl: async () => { chatCalls++; return '润色块' + chatCalls },
+  }
+  const runTask = depsObj => core.runBatch({ url: 'BV1GJ411x7h7', start: null, end: null }, { ...depsObj, conf: env.conf })
+
+  // ① 转写成功（落盘），AI 元数据失败
+  await assert.rejects(runTask(deps), /AI 返回的不是 JSON/)
+  assert.equal(pythonCalls, 1)
+  assert.equal(metaCalls, 1)
+  assert.equal(chatCalls, 0)
+
+  // ② 元数据成功（落盘），第 1 块润色后第 2 块失败
+  deps.aiJsonImpl = async () => { metaCalls++; return { title: '断点文献', tags: ['t'], summary: 's' } }
+  deps.aiChatImpl = async () => {
+    chatCalls++
+    if (chatCalls === 2) throw new Error('润色失败')
+    return '润色块' + chatCalls
+  }
+  await assert.rejects(runTask(deps), /润色失败/)
+  assert.equal(pythonCalls, 1)   // 转写稿复用
+  assert.equal(metaCalls, 2)     // 元数据第二次才成功
+  assert.equal(chatCalls, 2)     // 分块 1 成功 + 分块 2 失败
+
+  // ③ 从第 2 块继续 → 全流程成功
+  deps.aiChatImpl = async () => { chatCalls++; return '润色块' + chatCalls }
+  const r = await runTask(deps)
+  assert.equal(pythonCalls, 1)   // 不再跑转写
+  assert.equal(metaCalls, 2)     // 不再调元数据
+  assert.equal(chatCalls, 3)     // 只补第 2 块
+  const md = fs.readFileSync(path.join(env.vault, r.note), 'utf8')
+  assert.ok(md.includes('title: "断点文献"'))
+  assert.ok(md.includes('润色块1润色块3'))
+  // 三档产物齐备
+  const dir = env.conf.cacheDir
+  assert.ok(fs.readdirSync(dir).some(f => f.startsWith('resume-transcript-')))
+  assert.ok(fs.readdirSync(dir).some(f => f.startsWith('resume-meta-')))
+  assert.ok(fs.readdirSync(dir).some(f => f.startsWith('resume-polish-')))
+})
+
+test('runBatch：断点续跑——剪辑件复用（命中缓存跳过 ffmpeg，ADR-0067）', { skip: !hasFfmpeg }, async () => {
+  // 真实 ffmpeg 造 3s 源，塞进缓存充当「下载原件」
+  const src = path.join(tmp, 'batch-resume-src-' + Date.now() + '.mp4')
+  const r0 = spawnSync('ffmpeg', ['-y', '-f', 'lavfi', '-i', 'testsrc2=size=64x64:rate=10', '-t', '3', '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p', src], { encoding: 'utf8' })
+  assert.equal(r0.status, 0, r0.stderr || 'ffmpeg 生成源失败')
+  const env = makeEnv()
+  env.seedCache(fs.readFileSync(src))
+  // 首跑：真实 ffmpeg 完成剪辑
+  await core.runBatch({ url: 'BV1GJ411x7h7', start: '0:01', end: '0:02' }, { ...env.deps, conf: env.conf })
+  const clips = fs.readdirSync(env.conf.cacheDir).filter(f => f.startsWith('resume-clip-'))
+  assert.equal(clips.length, 1)
+  // 重跑：换必然失败的 ffmpeg → 剪辑命中缓存跳过，流程照常成功
+  const r = await core.runBatch({ url: 'BV1GJ411x7h7', start: '0:01', end: '0:02' }, { ...env.deps, conf: env.conf, ffmpeg: 'definitely-not-ffmpeg' })
+  assert.ok(r.video.includes('_clip_'), r.video)
 })
 
 test('runBatch：缓存未命中且下载失败 → 报错（get 注入连接失败）', async () => {

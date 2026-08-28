@@ -548,11 +548,11 @@ function cachePath(conf, key) {
   return path.join(getCacheDir(conf), `${key}.mp4`)
 }
 
-// 启动清扫：删除超过 cacheRetentionDays（默认 7）天的缓存原件；返回删除数
+// 启动清扫：删除超过 cacheRetentionDays（默认 7）天的缓存原件与断点续跑产物；返回删除数
 function cleanupCache(conf, now = Date.now()) {
   const dir = getCacheDir(conf)
   let files = []
-  try { files = fs.readdirSync(dir).filter(f => f.endsWith('.mp4')) } catch { return 0 }
+  try { files = fs.readdirSync(dir).filter(f => f.endsWith('.mp4') || f.startsWith('resume-')) } catch { return 0 }
   if (!files.length) return 0
   const maxAge = Math.max(0, Number((conf && conf.cacheRetentionDays) || 7)) * 86400000
   let removed = 0
@@ -561,6 +561,26 @@ function cleanupCache(conf, now = Date.now()) {
     try { if (now - fs.statSync(p).mtimeMs > maxAge) { fs.unlinkSync(p); removed++ } } catch {}
   }
   return removed
+}
+
+// ---- 断点续跑产物缓存（ADR-0067 用户拍板：重试从出错步骤继续，成功步骤产物留存复用）----
+// 键 = BV + cid(分P) + 起止范围（0.1s 精度，整片 = 0-duration）；文件放 cacheDir（cleanupCache 同保留期回收）。
+// 四档产物：剪辑件（.mp4，随原件缓存回收）/ 转写稿 / AI 元数据 / 润色分块（JSON 数组，逐块追加——分块级断点）。
+function resumeKey(bv, cid, s, e) {
+  const bit = n => String(Math.round((Number(n) || 0) * 10))
+  return `${bv}_${cid}_${bit(s)}-${bit(e)}`
+}
+function resumeClipPath(conf, bv, cid, height, s, e) {
+  return path.join(getCacheDir(conf), `resume-clip-${resumeKey(bv, cid, s, e)}-${height}.mp4`)
+}
+function resumeTranscriptPath(conf, bv, cid, s, e) {
+  return path.join(getCacheDir(conf), `resume-transcript-${resumeKey(bv, cid, s, e)}.txt`)
+}
+function resumeMetaPath(conf, bv, cid, s, e) {
+  return path.join(getCacheDir(conf), `resume-meta-${resumeKey(bv, cid, s, e)}.json`)
+}
+function resumePolishPath(conf, bv, cid, s, e) {
+  return path.join(getCacheDir(conf), `resume-polish-${resumeKey(bv, cid, s, e)}.json`)
 }
 
 // ---- 文献笔记（F3/F4）：文件名 / frontmatter / 分块 / AI ----
@@ -684,13 +704,19 @@ function aiChat({ endpoint, apiKey, model, messages, temperature = 0.3, maxToken
   })
 }
 
-// JSON 模式调用：response_format=json_object + 残留文本容错提取
+// JSON 模式调用：response_format=json_object + 残留文本容错提取。
+// 自愈（ADR-0067，用户实测「AI 返回的不是 JSON」）：先剥 markdown 代码围栏（```json … ```）
+// 再解析；仍失败自动重试一次（模型偶发输出围栏/杂讯）；二次失败才报错（带 120 字片段）。
 async function aiJson(args) {
-  const content = await aiChat({ ...args, responseFormat: 'json_object' })
-  try { return JSON.parse(content) } catch {}
-  const m = content.match(/\{[\s\S]*\}/)
-  if (m) { try { return JSON.parse(m[0]) } catch {} }
-  throw new Error('AI 返回的不是 JSON：' + content.slice(0, 120))
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const content = await aiChat({ ...args, responseFormat: 'json_object' })
+    const cleaned = String(content).replace(/```(?:json)?\s*/gi, '').replace(/```/g, '').trim()
+    try { return JSON.parse(cleaned) } catch {}
+    const m = cleaned.match(/\{[\s\S]*\}/)
+    if (m) { try { return JSON.parse(m[0]) } catch {} }
+    if (attempt === 1) continue
+    throw new Error('AI 返回的不是 JSON：' + content.slice(0, 120))
+  }
 }
 
 // 元数据提示词（1.2.7：标题/tags 规则对齐 bz 自动摘要；简介维持一句话 ≤60 字；全部简体中文）
@@ -707,13 +733,15 @@ function literaturePolishPrompt(chunk) {
 
 // ---- 无头批处理（--batch）：runBatch ----
 // 契约（与 Obsidian 插件「文献盒」面板对齐，cli.js --batch 调用）：
-//   task = { url, start, end, options }；start/end 为 'HH:MM:SS(.S)'/'MM:SS'/秒 或 null；都 null = 整片不剪辑。
+//   task = { url, start, end, page, options }；start/end 为 'HH:MM:SS(.S)'/'MM:SS'/秒 或 null；都 null = 整片不剪辑。
+//   task.page（可选，ADR-0067 添加界面分P选择）：1 起的分P 序号，越界/缺省 = 第 1 P（按 P 独立缓存键）。
 //   task.options（「文献盒」设置提取项，全部可选）：quality='720'|'1080'|'highest'（缺省最高）、
 //     keepVideo=false 跳过交付（只出文献笔记，video 结果 null）、outputDir 覆盖交付目录（空跟随 conf）。
 //   deps（全部可注入，防循环依赖——core 不 require config.js，conf 由调用方读入传入）：
 //     conf（必需：vaultPath/outputDir/cacheDir/ffmpegPath/ffprobePath/pythonPath/whisperModel/literatureFolder）、
 //     cookie、fetchJson/get（网络注入，测试打桩）、ffmpeg、ffprobe、py、
-//     runPythonImpl、aiJsonImpl、aiChatImpl（AI/转录打桩）、onStep(名称)、onProgress(进度)、tmpDir。
+//     runPythonImpl、aiJsonImpl、aiChatImpl（AI/转录打桩）、onStep(名称)、onProgress(进度)、
+//     onInfo(解析信息 {title,uploader,bvid,url,duration})、tmpDir。
 // 7 步时序：resetAbort → 解析 → 下载（复刻 /api/download 缓存命中检测与回写）→ 剪辑（起止有值才跑，
 //   parseTimeInput 转秒，trimVideo 沿用 ffprobe 校验 + 自动重编码兜底，crf=null 不压缩）→ 转文字
 //   （runPython + PY_TRANSCRIBE，parseTranscriptUnits 收文本）→ AI（loadBzAiConfig 校验配置，
@@ -724,6 +752,8 @@ function literaturePolishPrompt(chunk) {
 // 进度：onProgress({phase:'download'|'trim'|'transcribe'|'ai', pct})，pct 为 0-100 或 null（不确定，
 //   绝不假报）；300ms 节流聚合高频事件。步骤行 onStep 覆盖：解析中/下载中/剪辑中/转文字中/
 //   AI 生成文献笔记中/交付中/笔记落盘中（交付被跳过时不出「交付中」）。
+// 断点续跑（ADR-0067）：成功步骤产物留存 cacheDir（resume-*：剪辑件/转写稿/AI 元数据/润色分块），
+//   同一任务重跑自动跳过已完成步骤、从出错步骤继续；cleanupCache 同保留期回收。
 // 返回 { note, video, notePath, videoPath, wiki, transcript, title }；note/video 为 vault 相对路径
 //   （不在 vault 下退化为绝对路径；video 为 null = 未交付）。任一步失败抛错（中文文案带缺失前置引导）。
 function vaultRel(absPath, vaultPath) {
@@ -783,16 +813,28 @@ async function runBatch(task, deps = {}) {
   // ② 下载（缓存命中检测与回写，同 /api/download）
   onStep('下载中')
   const bvid = extractBv(url)
+  // 解析信息回传（[bz-info] 行，ADR-0067）：标题/UP主 供插件落库、面板行内以「文字+链接」展示
+  const onInfo = deps.onInfo || (() => {})
+  try {
+    onInfo({
+      title: info.title || '', uploader: info.uploader || '',
+      bvid, url: bvid ? `https://www.bilibili.com/video/${bvid}` : url, duration: info.duration || 0,
+    })
+  } catch { /* 信息回传失败不阻断流程 */ }
+  // 分P 选择（task.page 1 起，ADR-0067）：越界/缺省/非数字 → 第 1 P；cid 随 P 变 → 按 P 独立缓存键
+  const pageNum = Number(task && task.page)
+  const selPage = Number.isFinite(pageNum) && pageNum >= 1 ? (info.pages || [])[pageNum - 1] : null
+  const playCid = selPage && selPage.cid ? selPage.cid : info.cid
   // 清晰度设置项（task.options.quality）：720/1080 精确档，highest/缺省跟随 parse 最高可用
   const qOpt = task && task.options ? task.options.quality : undefined
   const height = qOpt === '720' ? 720 : qOpt === '1080' ? 1080 : (deps.quality || info.maxHeight)
-  const cachedPath = cachePath(conf, cacheKey(bvid, info.cid, height))
+  const cachedPath = cachePath(conf, cacheKey(bvid, playCid, height))
   const originalPath = path.join(tmpDir, `bili_${Date.now()}.mp4`)
   if (fs.existsSync(cachedPath)) {
     fs.copyFileSync(cachedPath, originalPath)
   } else {
     await downloadVideo({
-      url, cookie, height, cid: info.cid, outPath: originalPath, ffmpeg, fetchJson, get,
+      url, cookie, height, cid: playCid, outPath: originalPath, ffmpeg, fetchJson, get,
       onProgress: p => pg({ phase: 'download', pct: Number.isFinite(p.percent) ? p.percent : null }),
     })
     // 未命中下载完成后回写缓存（剪辑/压缩件不进缓存）
@@ -802,6 +844,10 @@ async function runBatch(task, deps = {}) {
   // ③ 剪辑（起止都有值才跑；parseTimeInput 转秒；越界/非法区间 clampSeg 同规 → 按整片）
   let seg = null
   let srcForDeliver = originalPath
+  let resumeClipUsed = false   // 断点续跑命中剪辑缓存：交付后不得删缓存件
+  // 断点续跑区间键（ADR-0067）：无剪辑/整片 → [0, duration]；剪辑 → [start, end]
+  let rStart = 0
+  let rEnd = info.duration
   const hasRange = task.start != null && task.end != null &&
     String(task.start).trim() !== '' && String(task.end).trim() !== ''
   if (hasRange) {
@@ -813,59 +859,87 @@ async function runBatch(task, deps = {}) {
     if (e - s < 0.1) { s = 0; e = info.duration }
     seg = { start: s, end: e, full: !(s > 0 || e < info.duration) }
     if (!seg.full) {
+      rStart = s
+      rEnd = e
       onStep('剪辑中')
-      const clipPath = path.join(tmpDir, `bili_${Date.now()}_clip.mp4`)
-      // crf=null：流复制优先，ffprobe 校验不过自动重编码兜底（不压缩）
-      await trimVideo({
-        inPath: originalPath, outPath: clipPath, ffmpeg, ffprobe, start: s, end: e, crf: null, totalMs: (e - s) * 1000,
-        onProgress: p => pg({ phase: 'trim', pct: Number.isFinite(p.percent) ? p.percent : null }),
-      })
-      srcForDeliver = clipPath
+      // 断点续跑：剪辑件留存（resume-clip-*.mp4），命中即跳过 ffmpeg，从下一环继续
+      const clipCache = resumeClipPath(conf, bvid, playCid, height, s, e)
+      if (fs.existsSync(clipCache)) {
+        srcForDeliver = clipCache
+        resumeClipUsed = true
+      } else {
+        const clipPath = path.join(tmpDir, `bili_${Date.now()}_clip.mp4`)
+        // crf=null：流复制优先，ffprobe 校验不过自动重编码兜底（不压缩）
+        await trimVideo({
+          inPath: originalPath, outPath: clipPath, ffmpeg, ffprobe, start: s, end: e, crf: null, totalMs: (e - s) * 1000,
+          onProgress: p => pg({ phase: 'trim', pct: Number.isFinite(p.percent) ? p.percent : null }),
+        })
+        srcForDeliver = clipPath
+        try { fs.mkdirSync(path.dirname(clipCache), { recursive: true }); fs.copyFileSync(clipPath, clipCache) } catch {}
+      }
     }
   }
 
-  // ④ 转文字（单进程单次模型加载；注入 runPythonImpl；parseTranscriptUnits 收文本）
+  // ④ 转文字（断点续跑：转写稿留存 resume-transcript-*.txt，命中即跳过 python，从下一环继续）
   onStep('转文字中')
   if (!py) throw new Error('转文字失败：rc 未配置 pythonPath（faster-whisper 所在 Python 路径），请到设置页填写')
-  let raw = ''
-  let doneFiles = 0
-  try {
-    await runPythonImpl({
-      py, args: [model, srcForDeliver],
-      onChunk: s => {
-        raw += s
-        // 完成哨兵（\x1e<file>\x1f\x1f）计数 → 文件级进度（当前单文件：0→100 跳变，诚实不假报）
-        doneFiles += (String(s).match(/\x1e[^\x1f]*\x1f\x1f/g) || []).length
-        pg({ phase: 'transcribe', pct: doneFiles >= 1 ? 100 : null })
-      },
-    })
-  } catch (err) {
-    throw new Error(`转文字失败：${(err && err.message) || err}（请确认 faster-whisper 环境已安装：目标 Python 已 pip install faster-whisper）`)
+  const transPath = resumeTranscriptPath(conf, bvid, playCid, rStart, rEnd)
+  let transcript = ''
+  if (fs.existsSync(transPath)) {
+    transcript = String(fs.readFileSync(transPath, 'utf8') || '').trim()
+  } else {
+    let raw = ''
+    let doneFiles = 0
+    try {
+      await runPythonImpl({
+        py, args: [model, srcForDeliver],
+        onChunk: s => {
+          raw += s
+          // 完成哨兵（\x1e<file>\x1f\x1f）计数 → 文件级进度（当前单文件：0→100 跳变，诚实不假报）
+          doneFiles += (String(s).match(/\x1e[^\x1f]*\x1f\x1f/g) || []).length
+          pg({ phase: 'transcribe', pct: doneFiles >= 1 ? 100 : null })
+        },
+      })
+    } catch (err) {
+      throw new Error(`转文字失败：${(err && err.message) || err}（请确认 faster-whisper 环境已安装：目标 Python 已 pip install faster-whisper）`)
+    }
+    const units = parseTranscriptUnits(raw)
+    const byFile = new Map(units.map(u => [path.resolve(u.file), u.text]))
+    transcript = (byFile.get(path.resolve(srcForDeliver)) || '').trim()
+    if (!transcript) throw new Error('转文字未产出文本（视频可能无语音，或请确认 faster-whisper 环境可用、模型正常加载）')
+    try { fs.writeFileSync(transPath, transcript, 'utf8') } catch {}
   }
-  const units = parseTranscriptUnits(raw)
-  const byFile = new Map(units.map(u => [path.resolve(u.file), u.text]))
-  const transcript = (byFile.get(path.resolve(srcForDeliver)) || '').trim()
-  if (!transcript) throw new Error('转文字未产出文本（视频可能无语音，或请确认 faster-whisper 环境可用、模型正常加载）')
 
   // ⑤ AI 生成文献笔记：配置校验 → 元数据 → 分块润色（块级进度）；⑥ 交付（可关）；⑦ 笔记落盘
   onStep('AI 生成文献笔记中')
   const ai = loadBzAiConfig(conf)   // 缺 key / 缺 bz 数据文件 → 既有报错文案（引导去 bz 设置）
-  const firstChunks = chunkTranscript(transcript)
-  const metaRaw = await aiJsonImpl({
-    ...ai,
-    messages: [{ role: 'user', content: literatureMetaPrompt(info.title, firstChunks[0] || '') }],
-    maxTokens: 600,
-  })
-  const tags = Array.isArray(metaRaw && metaRaw.tags) ? metaRaw.tags.map(String).filter(Boolean).slice(0, 6) : []
-  const meta = {
-    title: String((metaRaw && metaRaw.title) || '').trim() || info.title || '未命名',
-    tags,
-    summary: String((metaRaw && metaRaw.summary) || '').trim(),
+  // 断点续跑：AI 元数据留存 resume-meta-*.json（润色正文基于同稿转写，改动转写时才需重生成）
+  const metaPath = resumeMetaPath(conf, bvid, playCid, rStart, rEnd)
+  let meta = null
+  try { meta = JSON.parse(fs.readFileSync(metaPath, 'utf8')) } catch { meta = null }
+  if (!meta || typeof meta !== 'object' || !meta.title) {
+    const firstChunks = chunkTranscript(transcript)
+    const metaRaw = await aiJsonImpl({
+      ...ai,
+      messages: [{ role: 'user', content: literatureMetaPrompt(info.title, firstChunks[0] || '') }],
+      maxTokens: 600,
+    })
+    const tags = Array.isArray(metaRaw && metaRaw.tags) ? metaRaw.tags.map(String).filter(Boolean).slice(0, 6) : []
+    meta = {
+      title: String((metaRaw && metaRaw.title) || '').trim() || info.title || '未命名',
+      tags,
+      summary: String((metaRaw && metaRaw.summary) || '').trim(),
+    }
+    try { fs.writeFileSync(metaPath, JSON.stringify(meta)) } catch {}
   }
   const chunks = chunkTranscript(transcript)
-  const polished = []
-  for (let i = 0; i < chunks.length; i++) {
+  // 断点续跑：润色分块逐块落盘（resume-polish-*.json）——失败重跑从已润色块数继续，不重跑已成功块
+  const polishPath = resumePolishPath(conf, bvid, playCid, rStart, rEnd)
+  let polished = []
+  try { const arr = JSON.parse(fs.readFileSync(polishPath, 'utf8')); if (Array.isArray(arr)) polished = arr } catch { /* 无缓存从零开始 */ }
+  for (let i = polished.length; i < chunks.length; i++) {
     polished.push(await aiChatImpl({ ...ai, messages: [{ role: 'user', content: literaturePolishPrompt(chunks[i]) }], maxTokens: 4096 }))
+    try { fs.writeFileSync(polishPath, JSON.stringify(polished)) } catch {}
     pg({ phase: 'ai', pct: Math.round(((i + 1) / chunks.length) * 100) })
   }
   const whole = polished.join('')
@@ -883,14 +957,15 @@ async function runBatch(task, deps = {}) {
     const outDirAbs = outOverride ? path.resolve(outOverride) : path.resolve(conf.outputDir)
     fs.mkdirSync(outDirAbs, { recursive: true })
     const name = buildFileName({
-      title: info.title, bv: bvid, page: '',
+      title: info.title, bv: bvid,
+      page: selPage && pageNum > 1 ? pageNum : '',   // 第 2 P 起文件名带 _N
       trimmed: seg ? !seg.full : false,
       start: seg ? seg.start : 0, end: seg ? seg.end : info.duration,
       duration: info.duration, compressed: false, crf: null,
     })
     finalPath = uniquePath(path.join(outDirAbs, name))
     fs.copyFileSync(srcForDeliver, finalPath)
-    if (srcForDeliver !== originalPath) { try { fs.unlinkSync(srcForDeliver) } catch {} }   // 剪辑临时件已交付，删
+    if (srcForDeliver !== originalPath && !resumeClipUsed) { try { fs.unlinkSync(srcForDeliver) } catch {} }   // 剪辑临时件已交付，删（缓存件不删）
     wiki = batchWiki(finalPath, conf)
   }
 
@@ -927,6 +1002,7 @@ module.exports = {
   loadCookies, saveCookies, readJson, writeJson, uniquePath,
   abortAll, resetAbort, trackProc, runPython, PY_TRANSCRIBE, parseTranscriptUnits,
   cacheKey, getCacheDir, cachePath, cleanupCache,
+  resumeKey, resumeClipPath, resumeTranscriptPath, resumeMetaPath, resumePolishPath,
   sanitizeMdTitle, chunkTranscript, buildLiteratureNote,
   AI_TIMEOUT_MS, AI_PROVIDERS, loadBzAiConfig, aiChat, aiJson,
   literatureMetaPrompt, literaturePolishPrompt,

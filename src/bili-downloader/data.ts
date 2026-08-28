@@ -18,6 +18,10 @@ export interface BiliTaskInput {
   start?: string | null;
   end?: string | null;
   remark?: string | null;
+  /** 下载清晰度任务级覆盖（null=跟随全局设置，ADR-0067） */
+  quality?: string | null;
+  /** 分P 序号（1 起；null/空=第 1 P，ADR-0067） */
+  page?: number | null;
 }
 
 /** 时间格式：mm:ss 或 hh:mm:ss(.S)，与工具 @jwbz/bili-downloader 一致（0.1s 精度） */
@@ -77,6 +81,12 @@ export const TasksData = {
         videoPath: item.videoPath || null,
         created: item.created || moment().format('YYYY-MM-DD HH:mm:ss'),
         processedAt: item.processedAt || null,
+        title: item.title || null,
+        uploader: item.uploader || null,
+        archived: item.archived === true,
+        archivedAt: item.archivedAt || null,
+        quality: item.quality || null,
+        page: Number.isInteger(item.page) && Number(item.page) > 0 ? Number(item.page) : null,
       } as BiliTask;
     });
     if (needWrite) await this.write(raw);
@@ -97,6 +107,12 @@ export const TasksData = {
       videoPath: null,
       created: moment().format('YYYY-MM-DD HH:mm:ss'),
       processedAt: null,
+      title: null,
+      uploader: null,
+      archived: false,
+      archivedAt: null,
+      quality: input.quality || null,
+      page: Number.isInteger(input.page) && Number(input.page) > 0 ? Number(input.page) : null,
     };
     const data = await this.read();
     data.push(task);
@@ -130,10 +146,10 @@ export const TasksData = {
     });
   },
 
-  /** 清空已完成（成功项；失败项保留便于复查，可单独删） */
-  async clearFinished(): Promise<void> {
+  /** 清空历史（archived 条目；主列表待处理/失败项不受影响，ADR-0067） */
+  async clearHistory(): Promise<void> {
     const data = await this.read();
-    const kept = data.filter((d: any) => (d.status || 'pending') !== 'success');
+    const kept = data.filter((d: any) => d.archived !== true);
     await this.write(kept);
   },
 };

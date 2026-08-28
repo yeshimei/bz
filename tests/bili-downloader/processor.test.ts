@@ -11,6 +11,7 @@ import { TasksData } from '../../src/bili-downloader/data';
 import type { BiliTask } from '../../src/bili-downloader/types';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
+import { onDomainEvent } from '../../src/core/domain-bus';
 import { MockVault } from '../mock-vault';
 import { clearNotices, getNoticeMessages } from '../mock-obsidian-entry';
 
@@ -30,7 +31,7 @@ async function seedTasks(): Promise<BiliTask[]> {
 }
 
 function makeEvents() {
-  return { onTaskProgress: vi.fn(), onTaskDone: vi.fn(), onBatchDone: vi.fn() };
+  return { onTaskProgress: vi.fn(), onTaskInfo: vi.fn(), onTaskDone: vi.fn(), onBatchDone: vi.fn() };
 }
 
 describe('BatchRunner', () => {
@@ -94,6 +95,7 @@ describe('BatchRunner', () => {
     const done: BiliTask[] = [];
     const ev = {
       onTaskProgress: (t: BiliTask, s: string) => steps.push(`${t.id}:${s}`),
+      onTaskInfo: vi.fn(),
       onTaskDone: (t: BiliTask) => done.push(t),
       onBatchDone: vi.fn(),
     };
@@ -104,9 +106,9 @@ describe('BatchRunner', () => {
     const [cmd, args, opts] = cpMock.spawn.mock.calls[0];
     expect(cmd).toBe('bili-dl'); // 无 fs.existsSync → 全局 shim
     expect(args[0]).toBe('--batch');
-    // ADR-0066：设置项随任务 JSON 透传（测试无 provider → 默认值）
+    // ADR-0066/0067：设置项与分P 随任务 JSON 透传（测试无 provider → 设置默认值、无分P）
     expect(JSON.parse(args[1])).toEqual({
-      url: 'BV1xx411c7mD', start: '1:02:03', end: '1:05:00',
+      url: 'BV1xx411c7mD', start: '1:02:03', end: '1:05:00', page: null,
       options: { quality: 'highest', keepVideo: true, outputDir: '' },
     });
     expect(opts.shell).toBe(true);
@@ -199,6 +201,7 @@ describe('BatchRunner', () => {
     const seen: Array<{ step: string; prog: any }> = [];
     const ev = {
       onTaskProgress: (t: BiliTask, s: string, p?: any) => seen.push({ step: s, prog: p ?? null }),
+      onTaskInfo: vi.fn(),
       onTaskDone: vi.fn(),
       onBatchDone: vi.fn(),
     };
@@ -247,6 +250,100 @@ describe('BatchRunner', () => {
     const [, args] = cpMock.spawn.mock.calls[0];
     expect(JSON.parse(args[1]).options).toEqual({ quality: '720', keepVideo: false, outputDir: 'D:/videos' });
     child.emit('close', 0);
+    await p;
+  });
+
+  it('任务级覆盖透传：task.page=2 / task.quality=1080 覆盖全局设置（ADR-0067）', async () => {
+    setSettingsProvider(() => ({ biliQuality: 'highest' }) as any);
+    const t = await TasksData.addTask({ url: 'BV1xx411c7mD', quality: '1080', page: 2 });
+    const ev = makeEvents();
+    const p = BatchRunner.runAll(await TasksData.loadTasks(), ev);
+    await tick();
+    const [, args] = cpMock.spawn.mock.calls[0];
+    const json = JSON.parse(args[1]);
+    expect(json.page).toBe(2);
+    expect(json.options.quality).toBe('1080'); // 任务级优先于全局
+    child.emit('close', 0);
+    await p;
+    void t;
+  });
+
+  it('[bz-info] 解析信息：落库 title/uploader + onTaskInfo + 域事件 parsed（ADR-0067）', async () => {
+    const bus: any[] = [];
+    const sub = onDomainEvent('bili-tasks', (e) => bus.push(e));
+    try {
+      const tasks = await seedTasks();
+      const ev = makeEvents();
+      const p = BatchRunner.runAll(tasks, ev);
+      await tick();
+      child.stdout.emit('data', Buffer.from('[bz-step] 解析中\n'));
+      child.stdout.emit('data', Buffer.from('[bz-info] {"title":"从零开始学B站","uploader":"某UP","bvid":"BV1xx411c7mD","url":"https://www.bilibili.com/video/BV1xx411c7mD","duration":600}\n'));
+      await tick();
+      expect(ev.onTaskInfo).toHaveBeenCalledTimes(1);
+      let all = await TasksData.loadTasks();
+      expect(all[0].title).toBe('从零开始学B站');
+      expect(all[0].uploader).toBe('某UP');
+      expect(bus).toHaveLength(1);
+      expect(bus[0]).toMatchObject({ kind: 'parsed', url: 'BV1xx411c7mD', title: '从零开始学B站', uploader: '某UP' });
+      BatchRunner.abort();
+      child.emit('close', 0);
+      await p;
+    } finally {
+      sub();
+    }
+  });
+
+  it('再次批量处理：失败项续跑（重跑含 failed，成功项跳过，ADR-0067 断点续跑入口）', async () => {
+    const tasks = await seedTasks();
+    const ev = makeEvents();
+    const p = BatchRunner.runAll(tasks, ev);
+    await tick();
+    child.stdout.emit('data', Buffer.from('[bz-step] 解析中\n[bz-info] {"title":"测试视频","uploader":"UP主","bvid":"BV1xx411c7mD","url":"BV1xx411c7mD","duration":600}\n'));
+    child.emit('close', 1); // 首部失败（解析信息已留存 → 断点续跑场景）
+    await tick();
+    expect(cpMock.spawn).toHaveBeenCalledTimes(2); // 第二部照常
+    const child2 = cpMock.spawn.mock.results[1].value;
+    child2.emit('close', 0);
+    await p;
+    let all = await TasksData.loadTasks();
+    expect(all[0].status).toBe('failed');
+    await vi.waitFor(async () => {
+      const cur = await TasksData.loadTasks();
+      expect(cur[0].title).toBe('测试视频'); // 解析信息落库（先落库后事件，确定性）
+    });
+    all = await TasksData.loadTasks();
+    expect(all[1].archived).toBe(true);
+    // 再点批量处理：只处理失败项，成功（归档）项跳过
+    const ev2 = makeEvents();
+    const p2 = BatchRunner.runAll(all, ev2);
+    await tick();
+    expect(cpMock.spawn).toHaveBeenCalledTimes(3); // 失败项续跑
+    const child3 = cpMock.spawn.mock.results[2].value;
+    child3.emit('close', 0);
+    await p2;
+    expect(ev2.onBatchDone).toHaveBeenCalledWith({ success: 1, failed: 0, aborted: false, stopped: false });
+    all = await TasksData.loadTasks();
+    expect(all.filter((x) => x.status === 'failed')).toHaveLength(0);
+    expect(all.filter((x) => x.archived)).toHaveLength(2); // 两部都归档
+  });
+
+  it('成功自动归档：archived=true + archivedAt 落库（ADR-0067）', async () => {
+    const tasks = await seedTasks();
+    const ev = makeEvents();
+    const p = BatchRunner.runAll(tasks, ev);
+    await tick();
+    child.stdout.emit('data', Buffer.from('[bz-result] {"note":"文献盒/测试.md","video":"CONFIG/APPENDIX/v.mp4"}\n'));
+    child.emit('close', 0);
+    await tick();
+    const all = await TasksData.loadTasks();
+    expect(all[0].status).toBe('success');
+    expect(all[0].archived).toBe(true);
+    expect(all[0].archivedAt).toBeTruthy();
+    expect(all[1].archived).toBe(false); // 未处理项不归档
+    // 收尾：第二部仍会 spawn——中止并关闭，防止悬挂
+    BatchRunner.abort();
+    const child2 = cpMock.spawn.mock.results[1]?.value;
+    if (child2) child2.emit('close', 0);
     await p;
   });
 });

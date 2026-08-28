@@ -1,7 +1,9 @@
 /**
  * 文献盒面板 UI 测试（src/bili-downloader/ui.ts）：
- * 主窗口结构（正名「文献盒」+ ⬇️ 下载按钮钩子）、空态/行渲染与状态徽标、添加/编辑弹窗与校验、
- * 点击分流、行内详细进度（[bz-step]/[bz-p] 时间线+百分比+耗时）、移动端仅暂存、destroy 清理。
+ * 主窗口结构（正名「文献盒」+ ⬇️ 下载按钮钩子 + 🕘 历史切换）、空态/行渲染与状态徽标、
+ * 行内标题链接+UP主+失败重试按钮（ADR-0067）、添加/编辑弹窗（含清晰度/分P）与校验、
+ * 点击分流、行内详细进度（[bz-step]/[bz-p] 时间线+百分比+耗时）、历史视图（自动归档/清空）、
+ * 移动端仅暂存、destroy 清理。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { EventEmitter } from 'events';
@@ -18,24 +20,27 @@ function strNotices(): string {
 
 function makeApp(vault: MockVault) {
   const openFile = vi.fn();
+  const openUrl = vi.fn();
   const app = {
     vault,
     workspace: { getLeaf: () => ({ openFile }) },
     commands: {},
+    openUrl,
   };
   setApp(app as any);
-  return { app, openFile };
+  return { app, openFile, openUrl };
 }
 
 describe('文献盒面板 UI', () => {
   let vault: MockVault;
   let openFile: ReturnType<typeof vi.fn>;
+  let openUrl: ReturnType<typeof vi.fn>;
   let ui: UIManager;
 
   beforeEach(() => {
     resetObsidianMocks();
     vault = new MockVault();
-    ({ openFile } = makeApp(vault));
+    ({ openFile, openUrl } = makeApp(vault));
     TasksData.init({ storagePath: 'CONFIG/STORAGE' });
     clearNotices();
     ui = new UIManager({} as any);
@@ -152,14 +157,15 @@ describe('文献盒面板 UI', () => {
     expect(openFile).toHaveBeenCalledTimes(1);
   });
 
-  it('移动端仅暂存：处理/下载/中止/清空按钮隐藏', () => {
+  it('移动端仅暂存：处理/下载/中止隐藏；历史可见；无清空按钮（ADR-0067）', () => {
     ui.destroy();
     (Platform as any).isMobile = true;
     ui = new UIManager({} as any);
     expect((document.getElementById('bili-btn-run') as HTMLButtonElement).style.display).toBe('none');
     expect((document.getElementById('bili-btn-download') as HTMLButtonElement).style.display).toBe('none');
     expect((document.getElementById('bili-btn-abort') as HTMLButtonElement).style.display).toBe('none');
-    expect((document.getElementById('bili-btn-clear') as HTMLButtonElement).style.display).toBe('none');
+    expect(document.getElementById('bili-btn-clear')).toBeNull(); // 清空入口移至历史视图
+    expect(document.getElementById('bili-btn-history')).toBeTruthy();
   });
 
   it('⬇️ 下载按钮 → 触发 hooks.onDownload（弹出原 B站下载弹窗入口，ADR-0066）', () => {
@@ -203,11 +209,89 @@ describe('文献盒面板 UI', () => {
       // 已完成步骤带 ✓（时间线形态）
       const done = document.querySelector('.bz-bili-step-done')!;
       expect(done.textContent).toContain('✓ 解析中');
+      // 非下载阶段不显示百分比（ADR-0067 拍板：仅下载显示）
+      child.stdout.emit('data', Buffer.from('[bz-p] {"phase":"ai","pct":77}\n'));
+      await new Promise((r) => setTimeout(r, 0));
+      const box2 = document.querySelector('.bz-bili-progress-box')!;
+      expect(box2.textContent).not.toContain('77%');
+      expect(box2.querySelector('.bz-bili-progress-fill')).toBeNull();
     } finally {
       // 无论断言成败都收尾整批（防 BatchRunner.running 卡死重试）
       child.emit('close', 1);
       (window as any).require = origRequire;
     }
+  });
+
+  it('行内信息（ADR-0067）：标题链接（浏览器打开）+ UP主 + 失败行重试按钮', async () => {
+    const t = await TasksData.addTask({ url: 'https://www.bilibili.com/video/BV1xx411c7mD' });
+    await TasksData.updateTask(t.id, { title: '从零开始学B站', uploader: '某UP', status: 'failed', reason: 'AI 返回的不是 JSON：xxx' } as any);
+    await ui.refreshPanel();
+    const list = document.getElementById('bili-tasks-list')!;
+    const txt = list.textContent!;
+    expect(txt).toContain('从零开始学B站'); // 文字链接（不再裸显 URL）
+    expect(txt).toContain('UP主 某UP');
+    expect(txt).not.toContain('BV1xx411c7mD'); // 原始链接被标题替换
+    const link = document.querySelector('.bz-bili-title') as HTMLAnchorElement;
+    expect(link).toBeTruthy();
+    link.click(); // 浏览器打开 + 不冒泡触发失败原因弹窗
+    expect(openUrl).toHaveBeenCalledTimes(1);
+    expect(String(openUrl.mock.calls[0][0])).toContain('BV1xx411c7mD');
+    // 失败行行内「重试」→ 回到待处理
+    const retry = document.querySelector('.bz-bili-retry-btn') as HTMLButtonElement;
+    expect(retry).toBeTruthy();
+    retry.click();
+    await vi.waitFor(async () => {
+      const all = await TasksData.loadTasks();
+      expect(all[0].status).toBe('pending');
+    });
+  });
+
+  it('历史视图（ADR-0067）：成功自动归档不出现在任务列表；🕘 切换后可见并可清空', async () => {
+    const ok = await TasksData.addTask({ url: 'https://www.bilibili.com/video/BV1xx411c7mD' });
+    await TasksData.updateTask(ok.id, { status: 'success', archived: true, archivedAt: '2026-08-28 21:00:00', title: '从零开始学B站', notePath: '文献盒/从零开始学B站.md' } as any);
+    const pend = await TasksData.addTask({ url: 'BV1xx411c7mE' });
+    await ui.refreshPanel();
+    // 任务视图：归档项不可见
+    let list = document.getElementById('bili-tasks-list')!;
+    expect(list.textContent).toContain('BV1xx411c7mE');
+    expect(list.textContent).not.toContain('从零开始学B站');
+    // 切历史
+    (document.getElementById('bili-btn-history') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(document.querySelector('.bz-bili-hstrip')).toBeTruthy());
+    list = document.getElementById('bili-tasks-list')!;
+    expect(list.textContent).toContain('历史 · 1 条');
+    expect(list.textContent).toContain('从零开始学B站');
+    expect(list.textContent).toContain('文献盒/从零开始学B站.md');
+    // 清空历史（确认弹窗 → 标准双动作确认钮 __shared_confirm_ok__）
+    (document.getElementById('bili-btn-clear-history') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(document.getElementById('__shared_confirm_ok__')).toBeTruthy());
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(document.querySelector('.bz-bili-hstrip')!.textContent).toContain('历史 · 0 条'));
+    const all = await TasksData.loadTasks();
+    expect(all.some((x) => x.archived)).toBe(false);
+    expect(all[0].id).toBe(pend.id);
+  });
+
+  it('添加弹窗（ADR-0067）：清晰度 + 分P 可选并入库；非法分P 报错', async () => {
+    ui.showMain();
+    await new Promise((r) => setTimeout(r, 0));
+    (document.getElementById('bili-btn-add') as HTMLButtonElement)!.click();
+    (document.getElementById('bili-add-url') as HTMLInputElement).value = 'BV1xx411c7mD';
+    (document.getElementById('bili-add-quality') as HTMLSelectElement).value = '720';
+    (document.getElementById('bili-add-page') as HTMLInputElement).value = '2';
+    (document.getElementById('bili-add-save') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(strNotices()).toContain('已保存'));
+    let all = await TasksData.loadTasks();
+    expect(all[0].quality).toBe('720');
+    expect(all[0].page).toBe(2);
+    // 非法分P：0 或小数 → 报错不入库
+    (document.getElementById('bili-btn-add') as HTMLButtonElement)!.click();
+    (document.getElementById('bili-add-url') as HTMLInputElement).value = 'BV1xx411c7mF';
+    (document.getElementById('bili-add-page') as HTMLInputElement).value = '0';
+    (document.getElementById('bili-add-save') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(strNotices()).toContain('分P 应为正整数'));
+    all = await TasksData.loadTasks();
+    expect(all).toHaveLength(1);
   });
 
   it('destroy 清空全部 DOM 与键盘监听', async () => {
