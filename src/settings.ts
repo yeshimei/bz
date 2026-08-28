@@ -344,6 +344,8 @@ export default interface BzSettings {
   enableAutoLinking: boolean;
   /** 自动双链窗口天数（关联范围内的笔记时间窗口） */
   linkWindowDays: number;
+  /** 记忆目录（ADR-0069 记忆目录流）：进入小橘笔记记忆库的多个 vault 文件夹（⚙️ 小橘设置弹窗配置） */
+  memoryDirectories: string[];
 
   // ===== 🧠 第二大脑 =====
   /** 第二大脑主面板：移动端默认全屏（默认开——总览信息密度高；ticket 103） */
@@ -541,6 +543,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
   showBehaviorLog: true,
   enableAutoLinking: true,
   linkWindowDays: 7,
+
+  // 记忆目录（ADR-0069 记忆目录流）：默认空=不启用笔记记忆库
+  memoryDirectories: [],
 };
 
 /** 闪念旧键 → 第二大脑新键映射（ticket 103；META_PATH/VEC_PATH 废弃清除无继任者） */

@@ -23,6 +23,8 @@ import { generatePrompt } from './prompts';
 import { callChat, isAIConfigured } from './api';
 import { generateBookDescription, hasBookTag } from './content';
 import { classifyPath } from './context-source';
+import { NoteMemorySync, type NoteMemoryBackend } from './note-memory';
+import { normalizeMemoryDirectories } from './config';
 import { onDomainEvent } from '../core/domain-bus';
 import type { MovieActionEvent } from './movie-source';
 import { buildMemoStructured, buildMemoDueScanStructured, type MemoActionEvent, type MemoDueLike } from './memo-source';
@@ -71,6 +73,8 @@ let animation: SmartCatAnimation | null = null;
 let interaction: InteractionManager | null = null;
 let mobileAdapter: MobileInputAdapter | null = null;
 let panels: SmartcatPanels | null = null;
+/** 记忆目录增量同步器（ADR-0069：配置了 memoryDirectories 才装配；unload 置空） */
+let noteMemorySync: NoteMemorySync | null = null;
 let fileOpenRef: any = null;
 /** 域事件总线订阅退订函数收集（vault md 事件换线 + 六域方法监听换线；unload 逐一退订） */
 const busUnsubs: (() => void)[] = [];
@@ -243,6 +247,8 @@ export async function ensureSmartCat(app: App): Promise<void> {
     void absenceSystem?.onSchedulerTick();
     // p2 收敛：常驻长周期轮询随同一 30s tick 按节拍分派
     dispatchResidentTick();
+    // ADR-0069 R4：节流期合并的笔记变更到期重入库（随既有 30s tick 分派，不自建定时器）
+    void noteMemorySync?.flushDue();
   };
   // ticket 093：重逢判定 = 在场信号（观察路径统一经 addObservation→touchPresence 后到此）+ phase ≠ normal
   memorySystem.onPresence = () => { void absenceSystem?.onPresenceSignal(); };
@@ -371,6 +377,14 @@ export async function ensureSmartCat(app: App): Promise<void> {
   // 通用通道恒发 {oldPath, newPath}，onVaultRename 内部按新旧路径分类自行三分支判定（迁移 / 删除+清理）
   busUnsubs.push(onDomainEvent('vault:md-renamed', (e: any) => void onVaultRename({ path: e?.newPath }, e?.oldPath)));
 
+  // ADR-0069 记忆目录（笔记记忆库）：vault 原生 md 增删改通用兜底通道订阅 + 懒初始化
+  //（未配置 memoryDirectories 时同步器不装配，订阅静默空转）
+  busUnsubs.push(onDomainEvent('vault:md-created', (e: any) => void noteMemorySync?.onModified(e?.path)));
+  busUnsubs.push(onDomainEvent('vault:md-modified', (e: any) => void noteMemorySync?.onModified(e?.path)));
+  busUnsubs.push(onDomainEvent('vault:md-deleted', (e: any) => void noteMemorySync?.onDeleted(e?.path)));
+  busUnsubs.push(onDomainEvent('vault:md-renamed', (e: any) => void noteMemorySync?.onRenamed(e?.oldPath, e?.newPath)));
+  ensureNoteMemorySync();
+
   // 日记重启基线（ticket 077）：监听挂载前先对日记目录当日文件建快照（不产出观察，
   // 防重启后旧条目被当首次——已有正文条目记「已见」，后续改动走更新分支）
   await buildDiaryBaseline();
@@ -431,6 +445,50 @@ export async function ensureSmartCat(app: App): Promise<void> {
   void maybeDossierNarrative();
 
   eventSystem.emit('appInitialized');
+}
+
+// ---------------- 记忆目录同步（ADR-0069：笔记记忆库增量接线） ----------------
+
+/** 记忆目录同步器懒初始化（幂等）：noteSource 开 + 配置了 memoryDirectories 才装配；
+ *  已装配时仅同步目录集合（设置变更后的移除清理/新增补扫由 syncDirectories 承担）。
+ *  backend 即 memorySystem（ADR-0069 契约 API upsertNoteMemory/removeMemoryByRef/setRefResolver
+ *  由记忆流侧实现；本流先按签名对接，method 缺位属另一条流合并点）。 */
+function ensureNoteMemorySync(): void {
+  if (!appRef || !memorySystem) return;
+  const dirs = normalizeMemoryDirectories((getSettings() as any).memoryDirectories);
+  if (!data?.config?.noteSource || !dirs.length) {
+    noteMemorySync = null;
+    return;
+  }
+  if (noteMemorySync) {
+    void noteMemorySync.syncDirectories(dirs);
+    return;
+  }
+  const app = appRef;
+  noteMemorySync = new NoteMemorySync({
+    adapter: {
+      listFiles: () => {
+        try { return ((app.vault.getFiles?.() || []) as any[]).map((f) => String(f.path)); } catch { return []; }
+      },
+      readFile: async (p) => {
+        try {
+          const f = app.vault.getAbstractFileByPath(p);
+          return f ? await app.vault.read(f as any) : null;
+        } catch { return null; }
+      },
+      fileMtime: (p) => {
+        try {
+          const f: any = app.vault.getAbstractFileByPath(p);
+          return f?.stat?.mtime ?? null;
+        } catch { return null; }
+      },
+      now: () => Date.now(),
+      diaryDirectory: () => DIARY_DIRECTORY || '我的/日记',
+    },
+    backend: memorySystem as unknown as NoteMemoryBackend,
+    getDirectories: () => normalizeMemoryDirectories((getSettings() as any).memoryDirectories),
+  });
+  void noteMemorySync.init();
 }
 
 
@@ -855,6 +913,11 @@ function openSettings(): void {
       (getSettings() as any).smartcatMobileDefaultFullscreen = v;
       await saveSettings();
     },
+    // ADR-0069：记忆目录变更 → 同步增量同步器（移除目录清理条目/新增目录补扫；全清则卸载）
+    onMemoryDirectoriesChanged: (dirs: string[]) => {
+      if (!dirs.length) noteMemorySync = null;
+      else ensureNoteMemorySync();
+    },
     // ADR-0023：人格成长数据在内部演化（personalityGrowth 字段），设置弹窗不再展示
     // 「打开数据面板」（2026-08-23：原「每周懂你报告」行替换；周报全文在面板「报告」页签）
     onOpenDashboard: () => {
@@ -1069,6 +1132,9 @@ export function unloadSmartCat(): void {
   domainPrev.clear();
   domainObserved.clear();
   mobileAdapter?.destroy();
+  // 记忆目录增量同步器（ADR-0069）：内存表清空（无定时器）
+  noteMemorySync?.dispose();
+  noteMemorySync = null;
   if (panels) {
     panels.dispose();
     panels = null;

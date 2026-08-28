@@ -87,12 +87,13 @@ export async function observationText(app: App, file: TAbstractFile, kind: Activ
       return full ? '你在卡片盒记下闪念：' + full.slice(0, 300) : null;
     }
     case 'diary': {
-      // 用户拍板：日记读正文，标记关键词和情绪，影响小橘情绪
+      // ADR-0069 R3 双通道去重收缩：日记正文不再实时进 prompt（记忆目录按时间段拆条入库，
+      // 正文进 prompt 改由记忆检索承担）——关键词标记保留（词法情绪/信任成长钩子不受影响）
       const full = (await readAll()).trim();
       if (!full) return null;
       const kws = extractKeywords(full);
       const kw = kws.length ? '（关键词：' + kws.join('、') + '）' : '';
-      return '你写了日记：' + full.slice(0, 300) + kw;
+      return '你写了日记' + kw;
     }
     case 'clipping': {
       // 用户拍板：记住完整的 AI 摘要

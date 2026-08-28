@@ -52,3 +52,21 @@ export function normalizeConfig(raw: any): SmartCatConfig {
   }
   return c;
 }
+
+// ===== 记忆目录（ADR-0069 记忆目录流）=====
+
+/** 记忆目录清单（vault 内文件夹路径列表；'' = 库根目录） */
+export type MemoryDirectories = string[];
+
+/** 记忆目录清洗：反斜杠归一 / trim / 去首尾斜杠 / 去重 / 丢空段（合法值全部保留，'' 视为库根） */
+export function normalizeMemoryDirectories(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const out: string[] = [];
+  for (const item of raw) {
+    if (typeof item !== 'string') continue;
+    const p = item.replace(/\\/g, '/').trim().replace(/^\/+|\/+$/g, '');
+    if (!p && item.trim() !== '') continue; // 纯斜杠残留（非真库根输入）丢弃；'' 原样保留为库根
+    if (!out.includes(p)) out.push(p);
+  }
+  return out;
+}
