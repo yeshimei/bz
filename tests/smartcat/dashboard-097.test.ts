@@ -366,3 +366,55 @@ describe('097 C1 事件驱动静默刷新', () => {
     expect(document.getElementById('bz-notice-container')).toBeNull();
   }, 15000);
 });
+// ---------------- 最近记忆展开详情（点击正文行读全文；引用型当场读 vault） ----------------
+
+describe('最近记忆点击展开详情', () => {
+  it('普通条目展开显完整 description，再点收起', async () => {
+    const d = fixtureData();
+    const long = '一段很长的描述'.repeat(30); // > 80 字，行内截断
+    d.memory.memoryStream = [
+      { id: 'm1', created: new Date().toISOString(), lastAccessed: new Date().toISOString(), description: long, importance: 0.8, type: 'observation', source: 'chat' },
+    ];
+    const { app } = makeApp(d);
+    await openSmartcatDashboard(app as any);
+    const popup = document.getElementById('smartcat-dashboard-panel')!;
+    (popup.querySelector('[data-tab="memory"]') as HTMLElement).click();
+    const pane = popup.querySelector('[data-pane="memory"]') as HTMLElement;
+    const text = pane.querySelector('.bz-sc-dash-memory-text--expandable') as HTMLElement;
+    expect(text).toBeTruthy();
+    expect(text.textContent!.length).toBeLessThan(long.length); // 行内截断
+    text.click(); // 展开
+    await new Promise((r) => setTimeout(r, 0));
+    const detail = pane.querySelector('.bz-sc-dash-memory-detail-text') as HTMLElement;
+    expect(detail).toBeTruthy();
+    expect(detail.textContent).toBe(long); // 详情 = 完整内容
+    text.click(); // 收起
+    await new Promise((r) => setTimeout(r, 0));
+    expect(pane.querySelector('.bz-sc-dash-memory-detail')).toBeNull();
+    closeSmartcatDashboard();
+  });
+
+  it('引用型条目（日记段）展开当场读 vault 正文（按定位符拆段）；文件失效显降级文案', async () => {
+    const d = fixtureData();
+    d.memory.memoryStream = [
+      { id: 'm1', created: new Date().toISOString(), lastAccessed: new Date().toISOString(), description: '我的/日记/2026-08-29.md#09:30', importance: 0.8, type: 'observation', source: 'diary', ref: { path: '我的/日记/2026-08-29.md', locator: '09:30' } },
+      { id: 'm2', created: new Date().toISOString(), lastAccessed: new Date().toISOString(), description: '归档/旧笔记.md', importance: 0.5, type: 'observation', source: 'note', ref: { path: '归档/已删除.md' } },
+    ];
+    const { app, vault } = makeApp(d);
+    vault.create('我的/日记/2026-08-29.md', '# 🐱 09:30\n早上去跑了五公里，神清气爽。\n\n# 🌙 23:00\n睡前读了半小时书。');
+    await openSmartcatDashboard(app as any);
+    const popup = document.getElementById('smartcat-dashboard-panel')!;
+    (popup.querySelector('[data-tab="memory"]') as HTMLElement).click();
+    const pane = popup.querySelector('[data-pane="memory"]') as HTMLElement;
+    const rows = [...pane.querySelectorAll('.bz-sc-dash-memory')];
+    const diaryRow = rows.find((r) => (r.textContent || '').includes('#09:30'))!;
+    (diaryRow.querySelector('.bz-sc-dash-memory-text--expandable') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(diaryRow.querySelector('.bz-sc-dash-memory-detail-text')!.textContent).toBe('早上去跑了五公里，神清气爽。');
+    const staleRow = rows.find((r) => (r.textContent || '').includes('旧笔记'))!;
+    (staleRow.querySelector('.bz-sc-dash-memory-text--expandable') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(staleRow.querySelector('.bz-sc-dash-memory-detail-text')!.textContent).toContain('读取失败');
+    closeSmartcatDashboard();
+  });
+});

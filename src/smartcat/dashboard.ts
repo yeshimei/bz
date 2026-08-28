@@ -41,6 +41,8 @@ async function loadDashboardData(app: App): Promise<SmartCatData> {
 import { MOOD_MAP, moodLevelFromPad } from './mood';
 import { TRAIT_GROUPS } from './character';
 import { sourceLabel, formatRelativeTime, emotionDensityStats } from './memory';
+import { noteMemoryDiaryDate } from './note-memory';
+import { parseFile } from '../diary/parser';
 import { buildInsightShortIndex, isSupersededInsight, MANUAL_SUPERSEDED_BY, sanitizeInsightTheme } from './insight-version';
 import { lazyAttachment, buildAbsenceCard } from './absence'; // ticket 093：读侧依恋视图 + 缺席状态卡
 import { readQuietMode } from './quiet-gate'; // ticket 095：安静陪伴期状态（097 A2 chip 只读消费）
@@ -638,6 +640,46 @@ function renderPersonality(pane: HTMLElement, data: SmartCatData): void {
   pane.appendChild(trailCard.root);
 }
 
+/** 引用型条目 → 笔记正文（日记带定位符按 diary parser 拆回该时间段；null = 文件失效） */
+async function resolveMemoryDetail(app: App, ref: { path: string; locator?: string }): Promise<string | null> {
+  try {
+    const f = app.vault.getAbstractFileByPath(ref.path);
+    if (!f) return null;
+    const content = await (app.vault.read as (f: any) => Promise<string>)(f);
+    if (!ref.locator) return content;
+    const date = noteMemoryDiaryDate(ref.path);
+    if (!date) return content;
+    const seg = parseFile(content, date).find((e) => e.time === ref.locator);
+    return seg && seg.content.trim() ? seg.content : null;
+  } catch { return null; }
+}
+
+/** 最近记忆行点击展开/收起详情（面板仍只读——仅 DOM 显隐，不写任何数据） */
+function attachMemoryDetailToggle(item: HTMLElement, textEl: HTMLElement, m: MemoryStreamEntry): void {
+  let detailEl: HTMLElement | null = null;
+  textEl.addEventListener('click', async () => {
+    if (detailEl) {
+      detailEl.remove();
+      detailEl = null;
+      textEl.classList.remove('is-open');
+      return;
+    }
+    textEl.classList.add('is-open');
+    detailEl = el('div', 'bz-sc-dash-memory-detail');
+    detailEl.appendChild(el('div', 'bz-sc-dash-memory-detail-hint', '加载中…'));
+    item.appendChild(detailEl);
+    const app = dashState?.app;
+    const body = m.ref && app ? await resolveMemoryDetail(app, m.ref) : (m.description || '');
+    if (!detailEl) return; // 展开期间被收起
+    detailEl.textContent = '';
+    detailEl.appendChild(el(
+      'div',
+      'bz-sc-dash-memory-detail-text',
+      body ?? '正文读取失败——文件可能已被移动或删除。',
+    ));
+  });
+}
+
 function renderMemory(pane: HTMLElement, data: SmartCatData): void {
   pane.innerHTML = '';
   const stream = data.memory?.memoryStream || [];
@@ -735,7 +777,10 @@ function renderMemory(pane: HTMLElement, data: SmartCatData): void {
       // 092 设计第 7 条 + P1-29：Dashboard「固定/废弃」人工修正（经常驻实例通道写点）
       if (m.type === 'insight' && m.id && dashState?.app) meta.appendChild(buildInsightActions(m));
       item.appendChild(meta);
-      item.appendChild(el('div', 'bz-sc-dash-memory-text', truncateText(m.description, 80)));
+      // 点击正文行展开详情：普通条目显完整 description；引用型条目（ADR-0069）当场读 vault 正文
+      const textEl = el('div', 'bz-sc-dash-memory-text bz-sc-dash-memory-text--expandable', truncateText(m.description, 80));
+      attachMemoryDetailToggle(item, textEl, m);
+      item.appendChild(textEl);
       // P3 structured 摘要：entityType/action/name/tags 展示
       if (m.structured) {
         const structParts: string[] = [];

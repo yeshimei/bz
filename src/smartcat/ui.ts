@@ -354,6 +354,9 @@ export function smartcatSettingsSchema(opts: {
               { value: 'local', label: '本地' },
             ],
           },
+          // 首载/向量化参数（用户可调；改模型需重建记忆向量索引——删除 smartcat-memory-vectors.vec 后重扫）
+          { type: 'text', name: '向量化模型', desc: '留空跟随第二大脑嵌入模型，改动后需重建记忆向量索引', binding: bindBehavior('smartcatEmbeddingModel') },
+          { type: 'slider', name: '分块字符上限', desc: '长笔记每块向量的最大字符数，200 到 6000，越小检索越精准', binding: bindBehavior('smartcatChunkLimitChars'), min: 200, max: 6000, step: 100 },
         ],
       },
       // ADR-0069 记忆目录（记忆目录流）：多文件夹选择（core/path-picker 多选），其内笔记进入笔记记忆库
@@ -416,6 +419,8 @@ const DEFAULT_BEHAVIOR = {
   behaviorMaxDays: 30,
   behaviorMaxCount: 2000,
   linkWindowDays: 7,
+  smartcatEmbeddingModel: '',
+  smartcatChunkLimitChars: 800,
 } as const;
 
 /**

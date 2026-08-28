@@ -235,6 +235,18 @@ describe('存储 sidecar 化：升级迁移（旧 smartcat.json → 新布局）
     expect(memSide.entries).toHaveLength(1);
   });
 
+  it('sidecar 坏 JSON → 抛错中止 + 备份 .bak；二次迁移旧 .bak 被替换不抛 create 冲突', async () => {
+    const { app, files } = makeFakeApp();
+    files.set(getSmartcatMemorySidecarPath(), '{broken json');
+    const data = defaultSmartCatData();
+    await expect(migrateSmartcatSidecars(app, data)).rejects.toThrow(/损坏/);
+    expect(files.get(getSmartcatMemorySidecarPath() + '.bak')).toBe('{broken json');
+    // smartcat.json 未被瘦身（保留现场）
+    // 再次迁移：.bak 先删后建，不因已存在抛 create 冲突
+    await expect(migrateSmartcatSidecars(app, defaultSmartCatData())).rejects.toThrow(/损坏/);
+    expect(files.get(getSmartcatMemorySidecarPath() + '.bak')).toBe('{broken json');
+  });
+
   it('全新安装（无旧数据无 sidecar）→ 迁移产出空 sidecar，不抛错', async () => {
     const { app, files } = makeFakeApp();
     const data = defaultSmartCatData();
@@ -334,6 +346,7 @@ describe('引用型记忆 API（记忆目录流调用契约）', () => {
     const m = make({ app });
     (m as any).ollamaAvailable = true;
     vi.mocked(getEmbedding).mockResolvedValue([0, 1]);
+    mockSettings.smartcatChunkLimitChars = NOTE_CHUNK_LIMIT_CHARS; // 固定 6000 上限（运行时默认 800，见分块设置）
     const longText = '# 段一\n' + '甲'.repeat(NOTE_CHUNK_LIMIT_CHARS) + '\n# 段二\n' + '乙'.repeat(NOTE_CHUNK_LIMIT_CHARS);
     await m.upsertNoteMemory({ refPath: '笔记/长文.md', fullText: longText });
     const e = data.memory.memoryStream[0];
@@ -402,5 +415,28 @@ describe('chunkNoteText 分块（R3：不静默截断）', () => {
     // 全文覆盖（不静默截断）：去标题行拼接后长度不小于原正文
     const joined = chunks.join('');
     expect(joined.length).toBeGreaterThanOrEqual(long.replace(/^# /gm, '').length - 10);
+  });
+});
+
+describe('upsertNoteMemory 内容哈希跳过（重启全量扫描零 AI 调用）', () => {
+  it('同内容重复入库：不重调打分链、不重嵌入、不重复建条；内容变化才重打分并更新哈希', async () => {
+    const { app } = makeFakeApp();
+    const m = make({ app });
+    (m as any).ollamaAvailable = true;
+    vi.mocked(getEmbedding).mockResolvedValue([1, 0]);
+    const seed = { refPath: '日记/2026-08-29.md', locator: '09:30', fullText: '早上一杯咖啡，状态不错', created: '2026-08-29T09:30:00' };
+    await m.upsertNoteMemory(seed);
+    expect(data.memory.memoryStream.length).toBe(1);
+    expect(data.memory.memoryStream[0].contentHash).toBeTruthy();
+    const embeddingCallsAfterFirst = vi.mocked(getEmbedding).mock.calls.length;
+    // 重启场景：同内容再次全量扫描 → 直接跳过（向量调用数不变）
+    await m.upsertNoteMemory(seed);
+    expect(data.memory.memoryStream.length).toBe(1);
+    expect(vi.mocked(getEmbedding).mock.calls.length).toBe(embeddingCallsAfterFirst);
+    // 内容变化 → 走更新：重嵌入、哈希刷新
+    await m.upsertNoteMemory({ ...seed, fullText: '晚上改了主意，喝了茶' });
+    expect(data.memory.memoryStream.length).toBe(1);
+    expect(vi.mocked(getEmbedding).mock.calls.length).toBeGreaterThan(embeddingCallsAfterFirst);
+    expect(data.memory.memoryStream[0].contentHash).toBeTruthy();
   });
 });

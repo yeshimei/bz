@@ -332,6 +332,10 @@ export default interface BzSettings {
    * 原独立键 smartcatDashboardMobileDefaultFullscreen（ticket 071）删除，旧值残留忽略。
    */
   smartcatMobileDefaultFullscreen: boolean;
+  /** 小橘记忆库向量化模型（'' = 跟随第二大脑嵌入模型；改动需重建记忆向量索引） */
+  smartcatEmbeddingModel: string;
+  /** 小橘记忆库分块字符上限（200–6000；默认 800——中文语义检索粒度优先，改动后新入库条目生效） */
+  smartcatChunkLimitChars: number;
 
   // ===== 🐱 小橘行为流设置（P1 数据基座，ticket 123）=====
   /** 行为流最大保留天数（超出部分删除最旧条目） */
@@ -535,6 +539,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 小橘陪伴猫（smartcat 域；移动端默认全屏键聊天/设置/数据面板共用，2026-08-23 合并一套）
   smartcatEnabled: true,
   smartcatMobileDefaultFullscreen: false,
+  smartcatEmbeddingModel: '',
+  smartcatChunkLimitChars: 800,
 
   // 小橘行为流设置（P1 数据基座，ticket 123；ADR-0069：全量补齐后扩容 30→60 天 / 2000→10000 条）
   behaviorMaxDays: 60,
