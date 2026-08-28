@@ -106,7 +106,26 @@ describe('⚙️ 弹窗「自动双链」开关联动显隐', () => {
     rowTrigger(popup, '每篇关联上限')('5');
     rowTrigger(popup, '完成通知')(true);
     rowTrigger(popup, '失效关联自动清理')(true);
-    rowTrigger(popup, '关联范围')('文献盒,卡片盒');
+    // 关联范围（ticket 128 统一选择器）：种库内目录 → 点「📁 选择」→ 勾选 → 确定；存储格式仍逗号分隔串
+    const scopeVault = new MockVault();
+    scopeVault.create('文献盒/A.md', 'x');
+    scopeVault.create('卡片盒/B.md', 'x');
+    setApp({ vault: scopeVault } as any);
+    const scopeBtn = rowTrigger(popup, '关联范围'); // (v) => controls[0].trigger(v)，按钮触发即打开选择器
+    scopeBtn(undefined);
+    const picker = document.getElementById('bz-path-picker-popup')!;
+    await vi.waitFor(() => expect(picker.querySelectorAll('.bz-path-picker-row').length).toBeGreaterThan(0));
+    const clickRow = (p: string) => {
+      const row = [...picker.querySelectorAll('.bz-path-picker-row')].find(
+        (r) => (r as HTMLElement).dataset.path === p
+      ) as HTMLElement;
+      row.click();
+    };
+    clickRow('文献盒');
+    clickRow('卡片盒');
+    (picker.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).click();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(settings.linkAgentScopes).toBe('文献盒,卡片盒');
     await new Promise((r) => setTimeout(r, 10));
     expect(settings.linkAgentTopK).toBe(6);
     expect(settings.linkAgentMaxLinks).toBe(5);

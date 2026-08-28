@@ -16,6 +16,7 @@ import { getSettings, saveSettings, tryGetSettings } from '../core/settings-prov
 import { onDomainEvent } from '../core/domain-bus';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal, createSettingsGroup, refreshSettingsGroupCounts } from '../core/settings-modal';
+import { renderPathSettingRow } from '../core/path-picker';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { ensureAutoSummary, stopAutoSummary } from '../auto-summary';
 import { buildNewsSourcesGroup } from './news-sources-group';
@@ -204,15 +205,18 @@ function createHeader(): HTMLElement {
         const s = getSettings();
         // ===== 基础组 =====
         const basicGroup = createSettingsGroup(el, { icon: 'folder-open', name: '基础' });
-        new Setting(basicGroup)
-          .setName('剪藏目录')
-          .setDesc('存放网页剪藏文章的文件夹')
-          .addText((text) =>
-            text.setValue(s.articleDirectory || '').onChange(async (v) => {
-              s.articleDirectory = v;
-              await saveSettings();
-            })
-          );
+        // ticket 128：剪藏目录（路径统一选择器录入，无手输文本框）
+        renderPathSettingRow({
+          parent: basicGroup,
+          name: '剪藏目录',
+          desc: '存放网页剪藏文章的文件夹',
+          mode: 'single',
+          value: s.articleDirectory || '',
+          onChange: (list) => {
+            s.articleDirectory = list[0] || '';
+            void saveSettings();
+          },
+        });
         new Setting(basicGroup)
           .setName('每批加载数量')
           .setDesc('滚动加载时每批显示的条目数')

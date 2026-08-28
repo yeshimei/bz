@@ -880,3 +880,208 @@ button.news-close-btn {
     to { opacity: 1; transform: translate(-50%, -50%); }
 }
 
+/* ==================== 统一路径选择器（ticket 128，ADR-0061；core/path-picker.ts） ==================== */
+/* 卡片弹窗：标题头 + 搜索框 + 目录列表（滚动）+ 底部 selinfo/清空(多选)/确定；原型 picker-prototype A 变体为视觉基准。
+   z-index 11200/11201（companion 档）与宽 min(92vw, 440px) 为功能性几何，由 createOverlay/组件内联（铁律 8）；
+   高度 min(560px, 82vh) 功能内联，其余视觉样式收敛于此。 */
+.bz-path-picker {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* 覆盖 .bz-overlay-popup 的 max-height: 80vh，与原型 min(560px, 82vh) 定稿一致
+     （height 由组件功能内联，此处兜底 max-height 防 80vh 截断） */
+  max-height: min(560px, 82vh);
+}
+.bz-path-picker-head {
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+.bz-path-picker-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-normal);
+}
+.bz-path-picker-desc {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+.bz-path-picker-search {
+  flex-shrink: 0;
+  margin: 12px 16px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+}
+.bz-path-picker-search:focus { outline: none; border-color: var(--interactive-accent); }
+.bz-path-picker-list {
+  flex: 1;
+  min-height: 120px;
+  overflow-y: auto;
+  margin: 10px 8px;
+  padding: 4px;
+}
+.bz-path-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-normal);
+  cursor: pointer;
+  user-select: none;
+}
+.bz-path-picker-row:hover { background: var(--background-modifier-hover); }
+.bz-path-picker-row--sel { background: var(--background-modifier-hover); color: var(--interactive-accent); font-weight: 600; }
+.bz-path-picker-check {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--background-modifier-border);
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--text-on-accent);
+}
+.bz-path-picker-row--sel .bz-path-picker-check { background: var(--interactive-accent); border-color: var(--interactive-accent); }
+.bz-path-picker-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-path-picker-empty {
+  padding: 24px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.bz-path-picker-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+.bz-path-picker-selinfo {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.bz-path-picker-foot-btns {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.bz-path-picker-btn {
+  font-size: 13px;
+  padding: 6px 14px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  cursor: pointer;
+}
+.bz-path-picker-btn:hover { background: var(--background-modifier-hover); }
+.bz-path-picker-btn--primary {
+  border: none;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.bz-path-picker-btn--primary:hover { opacity: 0.88; }
+
+/* 已选 chips（设置行控件区内与选择器共用；随控件区 flex-wrap 自动折行） */
+.bz-path-picker-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
+.bz-path-picker-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px 3px 11px;
+  border-radius: 999px;
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+  font-size: 12px;
+  max-width: 100%;
+}
+.bz-path-picker-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-path-picker-chip-x {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1;
+}
+.bz-path-picker-chip-x:hover { background: var(--background-secondary); color: var(--text-normal); }
+.bz-path-picker-chips-empty {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+/* 设置行控件区内 chips 容器（renderPathSettingRow；并入 .setting-item-control 参与两行式计数） */
+.bz-path-picker-chips--setting {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+  min-width: 0;
+}
+
+/* 移动端近全屏 + 键盘适配（原型 A 变体口径）：顶对齐避让软键盘（聚焦搜索框不遮列表）、底部安全区 */
+@media (max-width: 768px) {
+  .bz-path-picker {
+    top: 6vh;
+    transform: translateX(-50%);
+  }
+  .bz-path-picker-foot {
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* ==================== 移动端两行式（ticket 128，ADR-0061） ==================== */
+/* 口径：settings-modal.ts markSettingSplitRows 在 build 后遍历 .setting-item 挂 .bz-setting-split
+   （控件区 .setting-item-control ≥2 个子元素：如 选择…按钮 + chips）；主设置页 display 末尾同调用；
+   动态重渲染处（如第二大脑自动双链明细）按需调用。类是 bz JS 专挂，原生非 bz 设置行不落类，
+   天然不误伤 Obsidian 原生设置弹窗；窄视口才拆两行，桌面宽视口保持原生布局（单控件行豁免）。 */
+@media (max-width: 768px) {
+  .setting-item.bz-setting-split {
+    flex-wrap: wrap;
+  }
+  .setting-item.bz-setting-split > .setting-item-info {
+    flex-basis: 100%;
+  }
+  .setting-item.bz-setting-split > .setting-item-control {
+    flex-basis: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
