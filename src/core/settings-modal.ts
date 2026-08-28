@@ -91,6 +91,22 @@ export function refreshSettingsGroupCounts(content: HTMLElement): void {
   });
 }
 
+/**
+ * 移动端两行式标注（ticket 128，ADR-0061）：控件区（.setting-item-control）含 ≥2 个子元素的
+ * 设置行挂 .bz-setting-split 类（如「选择…按钮 + chips」），纯 CSS 在窄视口拆成两行
+ * （名称+描述一行、控件区一行并允许内部折行）；单控件行（开关/下拉/单按钮）不挂类保持原生。
+ * 实现口径：不依赖 `:has()`（顾虑 Obsidian 移动端 WebView 兼容性），由 JS 在 build 后遍历挂类
+ * （ADRs 对票二选一中选了挂类方案）。调用点：域设置弹窗 build 后（本模块）、主设置页 display
+ * 末尾（main.ts BzSettingTab）、动态重渲染处按需调用（如第二大脑自动双链明细）。
+ * 幂等：可对同一容器重复调用。类名仅 bz JS 挂载，原生非 bz 设置行不落类，天然不误伤。
+ */
+export function markSettingSplitRows(container: HTMLElement): void {
+  container.querySelectorAll('.setting-item').forEach((el) => {
+    const ctl = (el as HTMLElement).querySelector('.setting-item-control');
+    (el as HTMLElement).classList.toggle('bz-setting-split', !!ctl && ctl.children.length >= 2);
+  });
+}
+
 let currentModal: { mask: HTMLElement; popup: HTMLElement; dispose: () => void; onClose?: () => void } | null = null;
 
 /** 关闭当前设置弹窗（无则静默）；触发该弹窗的 onClose（至多一次） */
@@ -120,8 +136,9 @@ export function openSettingsModal(opts: SettingsModalOptions): void {
     //   10999-11000 统一抽屉（core/item-actions：遮罩 10999 + 本体 11000）
     //   11100+      companion 档（必须 >11000：抽屉之上叠的域内小弹窗；belongings 子弹窗 11100/11101 落此档；
     //                            复习评级弹窗 11102 亦此档）
+    //   11200/11201 统一路径选择器（core/path-picker：遮罩 11200 + 本体 11201——叠于设置弹窗 10050 之上，
+    //                            原第二大脑白名单弹窗同档退役合并；附件搬移旧 FolderSelectModal 200000 档同退役）
     //   12000       movie 小窗
-    //   200000      attach 选择器
     zIndex: 10050,
     maxWidth: opts.maxWidth,
     onMaskClick: () => closeSettingsModal(),
@@ -141,6 +158,8 @@ export function openSettingsModal(opts: SettingsModalOptions): void {
   opts.build(content);
   // 分组卡片项数徽标回填（build 后、空态判断前）
   refreshSettingsGroupCounts(content);
+  // 移动端两行式标注（ticket 128）：控件区 ≥2 子元素的设置行挂 .bz-setting-split（build 后统一挂）
+  markSettingSplitRows(content);
 
   // 空态：build 未挂任何设置项（归物本/收藏本）
   if (!content.querySelector('.setting-item')) {

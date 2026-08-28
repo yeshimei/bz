@@ -199,7 +199,12 @@ describe('剪藏本设置「数据源」组', () => {
     toggle.trigger(false);
     await flushDom();
     expect(section!.style.display).toBe('none');
-    expect(popup.textContent).not.toContain('管理'); // 按钮行随整段隐藏
+    // 按钮行随整段隐藏：按钮仍在 DOM 但落在 display:none 的 [data-up-section] 内
+    // （mock Setting 渲染真实 button DOM 后，textContent 会含隐藏文本，故按归属断言可见性）
+    const manageBtn = [...popup.querySelectorAll('button')].find((b) => b.textContent === '管理');
+    expect(manageBtn).toBeTruthy();
+    expect(manageBtn!.closest('[data-up-section]')!).toBe(section);
+    expect((manageBtn!.closest('[data-up-section]') as HTMLElement).style.display).toBe('none');
     toggle.trigger(true);
     await flushDom();
     expect(section!.style.display).not.toBe('none');

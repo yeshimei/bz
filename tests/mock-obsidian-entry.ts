@@ -112,11 +112,19 @@ export class PluginSettingTab {
   display() {}
 }
 
-/** Setting 控件链式 mock（setName/setDesc/addDropdown/addText/addToggle/addButton） */
+/** Setting 控件链式 mock（setName/setDesc/addDropdown/addText/addToggle/addButton）
+ *  2026-08（ticket 128）：补真实 DOM 结构——settingEl 下建 .setting-item-info +
+ *  .setting-item-control（对齐 Obsidian 真实布局；移动端两行式 markSettingSplitRows 按控件区
+ *  子元素计数），addText/addButton 同步渲染真实 input/button 元素（buttonEl/inputEl 同真实 API），
+ *  trigger() 为既有测试主路径保持不变。 */
 export class MockDropdown {
   options: Record<string, string> = {};
   value = '';
+  dropdownEl: HTMLSelectElement;
   private cb: ((v: string) => void) | null = null;
+  constructor() {
+    this.dropdownEl = document.createElement('select');
+  }
   addOption(key: string, label: string): this {
     this.options[key] = label;
     return this;
@@ -138,13 +146,24 @@ export class MockDropdown {
 export class MockText {
   value = '';
   placeholder = '';
+  inputEl: HTMLInputElement;
   private cb: ((v: string) => void) | null = null;
+  constructor() {
+    this.inputEl = document.createElement('input');
+    this.inputEl.type = 'text';
+    this.inputEl.addEventListener('input', () => {
+      this.value = this.inputEl.value;
+      if (this.cb) void this.cb(this.value);
+    });
+  }
   setValue(v: string): this {
     this.value = v;
+    this.inputEl.value = v;
     return this;
   }
   setPlaceholder(p: string): this {
     this.placeholder = p;
+    this.inputEl.placeholder = p;
     return this;
   }
   onChange(cb: (v: string) => void): this {
@@ -154,13 +173,19 @@ export class MockText {
   /** 测试辅助：模拟输入 */
   trigger(v: string) {
     this.value = v;
+    this.inputEl.value = v;
     if (this.cb) void this.cb(v);
   }
 }
 export class MockToggle {
   value = false;
   disabled = false;
+  toggleEl: HTMLInputElement;
   private cb: ((v: boolean) => void) | null = null;
+  constructor() {
+    this.toggleEl = document.createElement('input');
+    this.toggleEl.type = 'checkbox';
+  }
   setValue(v: boolean): this {
     this.value = v;
     return this;
@@ -184,9 +209,15 @@ export class MockButton {
   cta = false;
   isExtraButton = false;
   icon: string | null = null;
+  buttonEl: HTMLButtonElement;
   private cb: (() => void) | null = null;
+  constructor() {
+    this.buttonEl = document.createElement('button');
+    this.buttonEl.addEventListener('click', () => this.cb?.());
+  }
   setButtonText(t: string): this {
     this.text = t;
+    this.buttonEl.textContent = t;
     return this;
   }
   /** 真实 Obsidian SettingButton 有该 API（强调色按钮）；mock 记录 flag 供断言 */
@@ -240,6 +271,8 @@ export class MockSlider {
 export class Setting {
   containerEl: HTMLElement;
   settingEl: HTMLElement;
+  infoEl: HTMLElement;
+  controlEl: HTMLElement;
   name = '';
   desc = '';
   controls: any[] = [];
@@ -247,6 +280,13 @@ export class Setting {
     this.containerEl = containerEl;
     this.settingEl = document.createElement('div');
     this.settingEl.className = 'setting-item';
+    // 对齐 Obsidian 真实布局：info（名称/描述区）+ control（控件区）——移动端两行式
+    // markSettingSplitRows 按 .setting-item-control 的子元素数挂 .bz-setting-split
+    this.infoEl = document.createElement('div');
+    this.infoEl.className = 'setting-item-info';
+    this.controlEl = document.createElement('div');
+    this.controlEl.className = 'setting-item-control';
+    this.settingEl.append(this.infoEl, this.controlEl);
     // 测试辅助：settingEl 反向引用实例（取控件用）
     (this.settingEl as any).__setting = this;
     containerEl.appendChild(this.settingEl);
@@ -267,30 +307,35 @@ export class Setting {
   addDropdown(cb: (dd: MockDropdown) => void): this {
     const dd = new MockDropdown();
     cb(dd);
+    this.controlEl.appendChild(dd.dropdownEl);
     this.controls.push(dd);
     return this;
   }
   addText(cb: (t: MockText) => void): this {
     const t = new MockText();
     cb(t);
+    this.controlEl.appendChild(t.inputEl);
     this.controls.push(t);
     return this;
   }
   addTextArea(cb: (t: MockText) => void): this {
     const t = new MockText();
     cb(t);
+    this.controlEl.appendChild(t.inputEl);
     this.controls.push(t);
     return this;
   }
   addToggle(cb: (t: MockToggle) => void): this {
     const t = new MockToggle();
     cb(t);
+    this.controlEl.appendChild(t.toggleEl);
     this.controls.push(t);
     return this;
   }
   addButton(cb: (b: MockButton) => void): this {
     const b = new MockButton();
     cb(b);
+    this.controlEl.appendChild(b.buttonEl);
     this.controls.push(b);
     return this;
   }
@@ -298,6 +343,7 @@ export class Setting {
   addExtraButton(cb: (b: MockButton) => void): this {
     const b = new MockButton();
     cb(b);
+    this.controlEl.appendChild(b.buttonEl);
     this.controls.push(b);
     b.isExtraButton = true;
     return this;

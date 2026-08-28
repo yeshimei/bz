@@ -1,20 +1,20 @@
-/* ============================================================
- * 第二大脑（secondbrain 域，ticket 103 建 UI / 107 补样式文件 / 108 面板打磨）
- * 全部表面：主面板弹窗 / 桌面窄窗 / 参考卡与悬停预览 / AI 对话 / 移动端抽屉
- * 类名 bz-sb- 前缀；层级对表 settings-modal.ts z-index 家族：
- *   窄窗/抽屉 9000 < 浮卡·预览 9200 < 主面板遮罩 9998 < 主面板 9999 < 设置弹窗 10050
+﻿/* ============================================================
+ * 绗簩澶ц剳锛坰econdbrain 鍩燂紝ticket 103 寤?UI / 107 琛ユ牱寮忔枃浠?/ 108 闈㈡澘鎵撶（锛?
+ * 鍏ㄩ儴琛ㄩ潰锛氫富闈㈡澘寮圭獥 / 妗岄潰绐勭獥 / 鍙傝€冨崱涓庢偓鍋滈瑙?/ AI 瀵硅瘽 / 绉诲姩绔娊灞?
+ * 绫诲悕 bz-sb- 鍓嶇紑锛涘眰绾у琛?settings-modal.ts z-index 瀹舵棌锛?
+ *   绐勭獥/鎶藉眽 9000 < 娴崱路棰勮 9200 < 涓婚潰鏉块伄缃?9998 < 涓婚潰鏉?9999 < 璁剧疆寮圭獥 10050
  * ============================================================ */
 
-/* ---------- 共享 ---------- */
+/* ---------- 鍏变韩 ---------- */
 .bz-sb-scroll-y {
   overflow-y: auto;
 }
-/* 头部功能钮隐藏态（主面板引导/进度期收起 📚💬，切回内容态恢复） */
+/* 澶撮儴鍔熻兘閽殣钘忔€侊紙涓婚潰鏉垮紩瀵?杩涘害鏈熸敹璧?馃摎馃挰锛屽垏鍥炲唴瀹规€佹仮澶嶏級 */
 .bz-sb-btn-hidden {
   display: none !important;
 }
 
-/* ==================== 桌面窄窗 FloatWindow ==================== */
+/* ==================== 妗岄潰绐勭獥 FloatWindow ==================== */
 .bz-sb-float-win {
   position: fixed;
   top: 0;
@@ -29,7 +29,7 @@
   box-shadow: -4px 0 18px rgba(0, 0, 0, 0.12);
   transition: transform 0.25s ease, opacity 0.15s ease;
 }
-/* 入场：右侧滑入 */
+/* 鍏ュ満锛氬彸渚ф粦鍏?*/
 .bz-sb-float-enter {
   animation: bz-sb-float-in 0.22s ease-out;
 }
@@ -70,7 +70,7 @@
   gap: 2px;
   flex-shrink: 0;
 }
-/* 头行按钮：与 .bz-win-head button 同规格（窄窗不在 bz-win-head 内，此处同款复刻） */
+/* 澶磋鎸夐挳锛氫笌 .bz-win-head button 鍚岃鏍硷紙绐勭獥涓嶅湪 bz-win-head 鍐咃紝姝ゅ鍚屾澶嶅埢锛?*/
 .bz-sb-float-btn {
   width: 22px;
   height: 26px;
@@ -102,7 +102,7 @@
   display: flex;
   flex-direction: column;
 }
-/* 收起边条标识 📖：展开态隐藏，收起态唯一可见（ticket 108 取代原 📚 标题图标） */
+/* 鏀惰捣杈规潯鏍囪瘑 馃摉锛氬睍寮€鎬侀殣钘忥紝鏀惰捣鎬佸敮涓€鍙锛坱icket 108 鍙栦唬鍘?馃摎 鏍囬鍥炬爣锛?*/
 .bz-sb-float-strip {
   font-size: 15px;
   line-height: 1;
@@ -113,7 +113,7 @@
 .bz-sb-float-win.bz-sb-float-hidden .bz-sb-float-strip {
   opacity: 1;
 }
-/* 隐藏成右边条：标题/按钮/内容淡出，只留 📖 边条标识 */
+/* 闅愯棌鎴愬彸杈规潯锛氭爣棰?鎸夐挳/鍐呭娣″嚭锛屽彧鐣?馃摉 杈规潯鏍囪瘑 */
 .bz-sb-float-win.bz-sb-float-hidden .bz-sb-float-title,
 .bz-sb-float-win.bz-sb-float-hidden .bz-sb-float-headright,
 .bz-sb-float-win.bz-sb-float-hidden .bz-sb-float-body {
@@ -124,7 +124,7 @@
   box-shadow: none;
 }
 
-/* ==================== 参考列表 / 卡片 / 悬停预览 ==================== */
+/* ==================== 鍙傝€冨垪琛?/ 鍗＄墖 / 鎮仠棰勮 ==================== */
 .bz-sb-ref-list {
   flex: 1;
   min-height: 0;
@@ -150,18 +150,18 @@
 .bz-sb-ref-card:hover {
   border-color: var(--interactive-accent);
 }
-/* 长按浮起态 */
+/* 闀挎寜娴捣鎬?*/
 .bz-sb-ref-card--held {
   transform: scale(1.02);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
 }
-/* 拖出独立浮卡：fixed 定位由 JS 内联写入 */
+/* 鎷栧嚭鐙珛娴崱锛歠ixed 瀹氫綅鐢?JS 鍐呰仈鍐欏叆 */
 .bz-sb-ref-card--float {
   z-index: 9200;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.24);
   cursor: default;
 }
-/* 双击归位的回落动画 */
+/* 鍙屽嚮褰掍綅鐨勫洖钀藉姩鐢?*/
 .bz-sb-ref-card--return {
   animation: bz-sb-card-return 0.4s ease;
 }
@@ -181,7 +181,7 @@
   justify-content: space-between;
   gap: 8px;
 }
-/* 浮卡态顶行变拖拽把手 */
+/* 娴崱鎬侀《琛屽彉鎷栨嫿鎶婃墜 */
 .bz-sb-ref-card-top--grip {
   cursor: grab;
   padding-bottom: 4px;
@@ -219,7 +219,7 @@
 .bz-sb-ref-card-body p:last-child {
   margin-bottom: 0;
 }
-/* 浮卡态正文放开限高，可滚动阅读 */
+/* 娴崱鎬佹鏂囨斁寮€闄愰珮锛屽彲婊氬姩闃呰 */
 .bz-sb-ref-card--float .bz-sb-ref-card-body {
   -webkit-line-clamp: unset;
   -webkit-box-orient: horizontal;
@@ -228,11 +228,11 @@
   overflow-y: auto;
   color: var(--text-normal);
 }
-/* 密度切换（ticket 108）：仅标题态整体隐藏正文（浮出的独立浮卡不受影响） */
+/* 瀵嗗害鍒囨崲锛坱icket 108锛夛細浠呮爣棰樻€佹暣浣撻殣钘忔鏂囷紙娴嚭鐨勭嫭绔嬫诞鍗′笉鍙楀奖鍝嶏級 */
 .bz-sb-ref-dense .bz-sb-ref-card:not(.bz-sb-ref-card--float) .bz-sb-ref-card-body {
   display: none;
 }
-/* 悬停预览（300ms 浮出；定位 JS 内联，pointer-events 关闭防闪烁） */
+/* 鎮仠棰勮锛?00ms 娴嚭锛涘畾浣?JS 鍐呰仈锛宲ointer-events 鍏抽棴闃查棯鐑侊級 */
 .bz-sb-ref-preview {
   position: fixed;
   width: 460px;
@@ -257,7 +257,7 @@
 }
 .bz-sb-ref-preview-body {
   margin-top: 6px;
-  /* ticket 109：不限高随内容生长；断词防长 URL/英文串/代码横向溢出被裁 */
+  /* ticket 109锛氫笉闄愰珮闅忓唴瀹圭敓闀匡紱鏂瘝闃查暱 URL/鑻辨枃涓?浠ｇ爜妯悜婧㈠嚭琚 */
   overflow-wrap: anywhere;
   font-size: 12.5px;
   line-height: 1.55;
@@ -272,7 +272,7 @@
   word-break: break-word;
 }
 
-/* ==================== AI 对话（桌面窄窗内） ==================== */
+/* ==================== AI 瀵硅瘽锛堟闈㈢獎绐楀唴锛?==================== */
 .bz-sb-chat-wrap {
   flex: 1;
   min-height: 0;
@@ -367,7 +367,7 @@
   cursor: default;
 }
 
-/* ==================== 主面板弹窗（统一入口） ==================== */
+/* ==================== 涓婚潰鏉垮脊绐楋紙缁熶竴鍏ュ彛锛?==================== */
 .bz-sb-panel-mask {
   position: fixed;
   inset: 0;
@@ -409,13 +409,13 @@
   flex-direction: column;
   gap: 16px;
 }
-/* 内容态包裹层（引导态整层隐藏） */
+/* 鍐呭鎬佸寘瑁瑰眰锛堝紩瀵兼€佹暣灞傞殣钘忥級 */
 .bz-sb-panel-content {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
-/* ≤768 常规卡基规则（真全屏态走 core .bz-win-mfs !important 覆写） */
+/* 鈮?68 甯歌鍗″熀瑙勫垯锛堢湡鍏ㄥ睆鎬佽蛋 core .bz-win-mfs !important 瑕嗗啓锛?*/
 @media (max-width: 768px) {
   .bz-sb-panel {
     width: 95vw;
@@ -426,7 +426,7 @@
   }
 }
 
-/* ---- 统计卡片（ticket 109：六张固定网格，桌面一行放下；健康告警色） ---- */
+/* ---- 缁熻鍗＄墖锛坱icket 109锛氬叚寮犲浐瀹氱綉鏍硷紝妗岄潰涓€琛屾斁涓嬶紱鍋ュ悍鍛婅鑹诧級 ---- */
 .bz-sb-cards {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -454,14 +454,14 @@
   font-size: 11.5px;
   color: var(--text-muted);
 }
-/* 移动端（≤768）：六卡降为 3×2 两行（须位于上方基础规则之后才能覆写成功） */
+/* 绉诲姩绔紙鈮?68锛夛細鍏崱闄嶄负 3脳2 涓よ锛堥』浣嶄簬涓婃柟鍩虹瑙勫垯涔嬪悗鎵嶈兘瑕嗗啓鎴愬姛锛?*/
 @media (max-width: 768px) {
   .bz-sb-cards {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
-/* ---- 分区标题 ---- */
+/* ---- 鍒嗗尯鏍囬 ---- */
 .bz-sb-section-title {
   font-size: 13px;
   font-weight: 600;
@@ -469,7 +469,7 @@
   margin-bottom: 8px;
 }
 
-/* ---- 内容规模（ticket 108） ---- */
+/* ---- 鍐呭瑙勬ā锛坱icket 108锛?---- */
 .bz-sb-scale {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
@@ -495,7 +495,7 @@
   color: var(--text-muted);
 }
 
-/* ---- 近 12 周趋势（自绘迷你柱图，高度 JS 内联；108 修「铺满整行」） ---- */
+/* ---- 杩?12 鍛ㄨ秼鍔匡紙鑷粯杩蜂綘鏌卞浘锛岄珮搴?JS 鍐呰仈锛?08 淇€岄摵婊℃暣琛屻€嶏級 ---- */
 .bz-sb-trend {
   display: flex;
   align-items: flex-end;
@@ -511,7 +511,7 @@
   transition: height 0.2s ease;
 }
 
-/* ---- 来源分布（树形逐级展开，ticket 108：取消固定列宽与右对齐，行可点击展开） ---- */
+/* ---- 鏉ユ簮鍒嗗竷锛堟爲褰㈤€愮骇灞曞紑锛宼icket 108锛氬彇娑堝浐瀹氬垪瀹戒笌鍙冲榻愶紝琛屽彲鐐瑰嚮灞曞紑锛?---- */
 .bz-sb-dist {
   display: flex;
   flex-direction: column;
@@ -543,7 +543,7 @@
 .bz-sb-dist-name {
   min-width: 0;
   flex-shrink: 0;
-  /* 不再固定 92px 预留列：名称按内容自适应，杜绝大左margin（ticket 108） */
+  /* 涓嶅啀鍥哄畾 92px 棰勭暀鍒楋細鍚嶇О鎸夊唴瀹硅嚜閫傚簲锛屾潨缁濆ぇ宸argin锛坱icket 108锛?*/
   max-width: 34%;
   color: var(--text-normal);
   white-space: nowrap;
@@ -571,7 +571,7 @@
   font-size: 12px;
 }
 
-/* ---- 最近向量化 Top10 ---- */
+/* ---- 鏈€杩戝悜閲忓寲 Top10 ---- */
 .bz-sb-recent {
   display: flex;
   flex-direction: column;
@@ -612,7 +612,7 @@
   color: var(--text-muted);
 }
 
-/* ---- AI 一键概括 ---- */
+/* ---- AI 涓€閿鎷?---- */
 .bz-sb-summary-btn {
   font-size: 13px;
   padding: 6px 14px;
@@ -649,7 +649,7 @@
   display: block;
 }
 
-/* ==================== 首次初始化引导（ticket 107） ==================== */
+/* ==================== 棣栨鍒濆鍖栧紩瀵硷紙ticket 107锛?==================== */
 .bz-sb-onboard {
   flex: 1;
   display: none;
@@ -724,7 +724,7 @@
   word-break: break-all;
 }
 
-/* ==================== 移动端底部抽屉 MobilePanel ==================== */
+/* ==================== 绉诲姩绔簳閮ㄦ娊灞?MobilePanel ==================== */
 .bz-sb-mb-sheet {
   position: fixed;
   left: 0;
@@ -745,7 +745,7 @@
 .bz-sb-mb-sheet.bz-sb-mb-open {
   transform: translateY(0);
 }
-/* 拖拽跟手期间关过渡（QA 同语义） */
+/* 鎷栨嫿璺熸墜鏈熼棿鍏宠繃娓★紙QA 鍚岃涔夛級 */
 .bz-sb-mb-sheet.bz-sb-mb-dragging {
   transition: none;
 }
@@ -800,7 +800,7 @@
   font-size: 12.5px;
   color: var(--text-muted);
 }
-/* 收起态 mini 胶囊 */
+/* 鏀惰捣鎬?mini 鑳跺泭 */
 .bz-sb-mb-mini {
   position: fixed;
   left: 50%;
@@ -831,7 +831,7 @@
   font-size: 12px;
   color: var(--text-muted);
 }
-/* 参考 tab 卡片（移动端紧凑版） */
+/* 鍙傝€?tab 鍗＄墖锛堢Щ鍔ㄧ绱у噾鐗堬級 */
 .bz-sb-mb-card {
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
@@ -876,7 +876,7 @@
 .bz-sb-mb-card-chunk p {
   margin: 0 0 4px;
 }
-/* AI tab（移动端） */
+/* AI tab锛堢Щ鍔ㄧ锛?*/
 .bz-sb-mb-chat {
   flex: 1;
   min-height: 0;
@@ -958,7 +958,7 @@
   opacity: 0.55;
 }
 
-/* ==================== AI 对话弹窗（ticket 108 改居中弹窗，遮罩+ESC 关闭） ==================== */
+/* ==================== AI 瀵硅瘽寮圭獥锛坱icket 108 鏀瑰眳涓脊绐楋紝閬僵+ESC 鍏抽棴锛?==================== */
 .bz-sb-chat-modal {
   width: 92%;
   max-width: 600px;
@@ -979,7 +979,7 @@
   font-weight: 700;
   color: var(--text-normal);
 }
-/* 弹窗内的消息/输入沿用桌面窄窗时代类名（bz-sb-chat-*），容器改弹窗布局 */
+/* 寮圭獥鍐呯殑娑堟伅/杈撳叆娌跨敤妗岄潰绐勭獥鏃朵唬绫诲悕锛坆z-sb-chat-*锛夛紝瀹瑰櫒鏀瑰脊绐楀竷灞€ */
 .bz-sb-chat-modal .bz-sb-chat-messages {
   flex: 1 1 auto;
   min-height: 0;
@@ -990,165 +990,3 @@
   padding: 10px 12px;
 }
 
-/* ==================== 白名单/范围目录选择器（ticket 114） ==================== */
-.bz-sb-pick {
-  width: 92%;
-  max-width: 460px;
-  height: 72vh;
-  max-height: 72vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  gap: 0;
-}
-.bz-sb-pick-head {
-  padding: 10px 14px 8px;
-  border-bottom: 1px solid var(--background-modifier-border);
-  flex-shrink: 0;
-}
-.bz-sb-pick-head h3 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-normal);
-}
-.bz-sb-pick-desc {
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--text-muted);
-  line-height: 1.55;
-}
-.bz-sb-pick-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 8px 14px;
-  flex-shrink: 0;
-  min-height: 0;
-}
-.bz-sb-pick-chips:empty { display: none; }
-.bz-sb-pick-chips-empty {
-  font-size: 12px;
-  color: var(--text-faint);
-}
-.bz-sb-pick-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border-radius: 7px;
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-  font-size: 12px;
-  line-height: 1.35;
-}
-.bz-sb-pick-chip-name {
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.bz-sb-pick-chip-x {
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  color: inherit;
-  cursor: pointer;
-  font-size: 12px;
-  opacity: 0.7;
-}
-.bz-sb-pick-chip-x:hover { opacity: 1; }
-/* 设置页内 chips 行 */
-.bz-sb-pick-chips--setting {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  padding: 0 14px;
-  min-height: 0;
-}
-.bz-sb-pick-chips--setting:empty { display: none; }
-.bz-sb-pick-search {
-  margin: 0 14px 8px;
-  padding: 6px 9px;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 7px;
-  font-size: 13px;
-  background: var(--background-primary);
-  color: var(--text-normal);
-  flex-shrink: 0;
-}
-.bz-sb-pick-search:focus { outline: none; border-color: var(--interactive-accent); }
-.bz-sb-pick-list {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 0 14px;
-}
-.bz-sb-pick-row {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 5px 6px;
-  border-radius: 6px;
-  font-size: 13px;
-  color: var(--text-normal);
-  cursor: pointer;
-  user-select: none;
-}
-.bz-sb-pick-row:hover { background: var(--background-modifier-hover); }
-.bz-sb-pick-row input[type=checkbox] { margin: 0; }
-.bz-sb-pick-row--file { font-style: italic; opacity: 0.85; }
-.bz-sb-pick-name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-}
-.bz-sb-pick-count {
-  flex-shrink: 0;
-  font-size: 11.5px;
-  color: var(--text-muted);
-}
-.bz-sb-pick-empty {
-  padding: 18px 0;
-  text-align: center;
-  font-size: 12.5px;
-  color: var(--text-muted);
-}
-.bz-sb-pick-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 14px;
-  border-top: 1px solid var(--background-modifier-border);
-  flex-shrink: 0;
-}
-.bz-sb-pick-count-all {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-.bz-sb-pick-foot-btns {
-  display: flex;
-  gap: 6px;
-}
-.bz-sb-pick-btn {
-  font-size: 13px;
-  padding: 5px 12px;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 7px;
-  background: var(--background-secondary);
-  color: var(--text-normal);
-  cursor: pointer;
-}
-.bz-sb-pick-btn:hover { background: var(--background-modifier-hover); }
-.bz-sb-pick-btn--primary {
-  border: none;
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-}
-.bz-sb-pick-btn--primary:hover { opacity: 0.88; }
-@media (max-width: 768px) {
-  .bz-sb-pick { width: 96%; height: 78vh; max-height: 78vh; }
-}
