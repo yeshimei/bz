@@ -146,6 +146,8 @@ export const BatchRunner = {
           if (m) {
             const stepText = m[1].trim();
             task.reason = stepText;
+            // 步骤文案必须落库：refreshPanel 重读 storage 渲染，仅改内存会一直显示「启动中…」
+            void TasksData.updateTask(task.id, { reason: stepText });
             events.onTaskProgress({ ...task }, stepText);
             continue;
           }
