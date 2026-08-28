@@ -2,42 +2,52 @@
  * 剪藏本设置「数据源」组（ticket 124，ADR-0060）：
  * news.json 存在 → 三源开关 + UP 主名单 + 保留天数 + 状态行；缺失 → 安装引导块。
  * UI 层（jsdom 可测）；数据操作走 ../news/source-settings。
+ *
+ * ticket 131（ADR-0064）声明式迁移：组壳（createSettingsGroup 卡片形态）由 schema 渲染器承担，
+ * 本模块只负责组内内容（经 custom 插槽渲染进组体）。news.json 是外部数据（非 data.json），且
+ * 状态读取为异步 + 段内联动（B 站开关关→UP 名单段隐藏、缺失引导、异步状态行）依赖 news.json
+ * 键——渲染器 visibleWhen 的 snapshot 只覆盖 data.json 键，故整段保留 custom 插槽内部逻辑，
+ * 仅刷新通道换用渲染器句柄（refreshVisibility 统一重求值 + 徽标回填）。
  */
 import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
 import { getSettings, saveSettings } from '../core/settings-provider';
-import { refreshSettingsGroupCounts } from '../core/settings-modal';
 import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
+import { renderSettingsInto } from '../core/settings-schema';
+import type { SettingsRowContext, SettingsSchema } from '../core/settings-schema';
 import {
   readDataSourceState, writeSources, addBilibiliUp, removeBilibiliUp,
   writeBilibiliMaxItems, writeBilibiliCookie, type DataSourceState,
 } from '../news/source-settings';
 import { resolveUidFromInput, type BilibiliUpInfo } from '../news/data';
 
-/** 数据源组构建：检测 news.json → 两条路径；groupBody 为 buildNewsSourcesGroup 挂载容器 */
-export function buildNewsSourcesGroup(el: HTMLElement, groupBody: HTMLElement): void {
+/**
+ * 数据源组构建（custom 插槽内容）：检测 news.json → 两条路径；groupBody 为 schema 渲染器
+ * 传入的包装容器（位于「数据源」分组卡体内）；refreshVisibility 为渲染器句柄（徽标回填等）。
+ */
+export function buildNewsSourcesGroup(groupBody: HTMLElement, refreshVisibility: () => void): void {
   // 异步读取状态后在组体内渲染（首帧仅显示加载行，回填后徽标刷新）
   const loading = new Setting(groupBody)
     .setName('数据源状态')
     .setDesc('读取中…');
   void readDataSourceState().then((state) => {
     loading.settingEl.remove();
-    renderDataSourceGroup(groupBody, state, () => refreshSettingsGroupCounts(el));
+    renderDataSourceGroup(groupBody, state, refreshVisibility);
   });
 }
 
-function renderDataSourceGroup(groupBody: HTMLElement, state: DataSourceState, refreshCounts: () => void): void {
+function renderDataSourceGroup(groupBody: HTMLElement, state: DataSourceState, refreshVisibility: () => void): void {
   if (!state.exists) {
     renderInstallGuide(groupBody);
-    refreshCounts();
+    refreshVisibility();
     return;
   }
-  renderSourceSwitches(groupBody, state.sources, refreshCounts);
-  renderUpSection(groupBody, state.bilibiliUps, state.bilibiliUpInfo, state.sources.bilibili, state.bilibiliMaxItems, state.bilibiliCookie, refreshCounts);
-  renderRetention(groupBody, refreshCounts);
+  renderSourceSwitches(groupBody, state.sources, refreshVisibility);
+  renderUpSection(groupBody, state.bilibiliUps, state.bilibiliUpInfo, state.sources.bilibili, state.bilibiliMaxItems, state.bilibiliCookie, refreshVisibility);
+  renderRetention(groupBody, refreshVisibility);
   renderStatusRow(groupBody, state);
-  refreshCounts();
+  refreshVisibility();
 }
 
 /** news.json 缺失 → 引导块（安装/启动 obsidian-news） */
@@ -56,8 +66,8 @@ function renderInstallGuide(groupBody: HTMLElement): void {
   );
 }
 
-/** 三源独立开关（写 news.json.sources） */
-function renderSourceSwitches(groupBody: HTMLElement, sources: { zhihu: boolean; guokr: boolean; bilibili: boolean }, refreshCounts: () => void): void {
+/** 三源独立开关（写 news.json.sources；B 站开关联动 UP 名单段可见性——ticket 126） */
+function renderSourceSwitches(groupBody: HTMLElement, sources: { zhihu: boolean; guokr: boolean; bilibili: boolean }, refreshVisibility: () => void): void {
   const items: Array<{ key: 'zhihu' | 'guokr' | 'bilibili'; name: string; desc: string }> = [
     { key: 'zhihu', name: '知乎日报', desc: '抓取知乎日报每日文章' },
     { key: 'guokr', name: '果壳科学人', desc: '抓取果壳科学人最新文章' },
@@ -75,7 +85,7 @@ function renderSourceSwitches(groupBody: HTMLElement, sources: { zhihu: boolean;
             // B 站开关联动 UP 名单段可见性：关闭时整个「UP 主名单」段隐藏（ticket 126）
             const section = groupBody.querySelector<HTMLElement>('[data-up-section]');
             if (section) section.style.display = v ? '' : 'none';
-            refreshCounts();
+            refreshVisibility();
           }
           notice(`已${v ? '开启' : '关闭'}${it.name}`, 'success');
         });
@@ -100,7 +110,7 @@ function buildUpSummary(ups: string[], upInfo: Record<string, BilibiliUpInfo>): 
  * UP 主名单段（ticket 126）：组内只留「管理」按钮行 + 抓取条数行（ticket 127），添加/删除移入独立弹窗；
  * B 站源关闭时整段隐藏（与开关联动，不残留名单行）。
  */
-function renderUpSection(groupBody: HTMLElement, ups: string[], upInfo: Record<string, BilibiliUpInfo>, bilibiliEnabled: boolean, maxItems: number, cookie: string, refreshCounts: () => void): void {
+function renderUpSection(groupBody: HTMLElement, ups: string[], upInfo: Record<string, BilibiliUpInfo>, bilibiliEnabled: boolean, maxItems: number, cookie: string, refreshVisibility: () => void): void {
   const section = document.createElement('div');
   section.dataset.upSection = '1';
   section.style.display = bilibiliEnabled ? '' : 'none';
@@ -123,7 +133,7 @@ function renderUpSection(groupBody: HTMLElement, ups: string[], upInfo: Record<s
             upInfo = fresh.bilibiliUpInfo;
             cookie = fresh.bilibiliCookie;
             build();
-            refreshCounts();
+            refreshVisibility();
           },
         });
       })
@@ -142,49 +152,143 @@ function renderUpSection(groupBody: HTMLElement, ups: string[], upInfo: Record<s
   build();
 }
 
-/** UP 主名单管理弹窗（ticket 126 + 127）：独立 overlay——层 10100（设置弹窗 10050 之上、共享确认 10250 之下）；
- *  顶部添加行 + 列表（头像/名字回填展示 + uid + 移除）+ B 站 Cookie 配置区（风控 412 引导） */
-function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, BilibiliUpInfo>; cookie: string; onChanged: () => void }): void {
-  let handle: { unregister(): void } | null = null;
-  function close(): void {
-    mask.remove();
-    popup.remove();
-    if (handle) handle.unregister();
-  }
-  const { mask, popup } = createOverlay({
-    maskId: 'bz-up-manager-mask',
-    popupId: 'bz-up-manager-popup',
-    zIndex: 10100,
-    maxWidth: 460,
-    onMaskClick: close,
+// ===== UP 主名单管理弹窗（ticket 126 + 127）=====
+// 独立 overlay——层 10100（设置弹窗 10050 之上、共享确认 10250 之下）；
+// ticket 131 声明式：内容经 renderSettingsInto 渲染进自建 overlay（bz-up-manager-mask/-popup id 与
+// z 序 10100/10101 不变；不换 openSettingsModal——其单例 toggle 语义会顶掉底层剪藏设置弹窗）。
+
+/** UP 弹窗 schema 构建入参（lint 注册时以最小参数调用即可——custom 行无 name/desc） */
+export interface UpManagerSchemaOptions {
+  ups: string[];
+  upInfo: Record<string, BilibiliUpInfo>;
+  cookie: string;
+  onChanged: () => void;
+}
+
+/** UP 弹窗级可变状态盒：添加/Cookie/名单操作共享（schema 每次打开重建，状态随弹窗生命周期） */
+interface UpManagerBox {
+  inputValue: string;
+  cookieInput: string;
+  ups: string[];
+  upInfo: Record<string, BilibiliUpInfo>;
+  /** 列表区重绘（renderUpList 登记；添加/移除后调用） */
+  listRefresh: () => void;
+}
+
+/**
+ * UP 主名单管理弹窗 schema（ticket 131 声明式；渲染进自建 overlay）：
+ * 「添加 UP 主」「B 站 Cookie（可选）」为多控件复合行（文本+按钮、动态 desc），列表区为
+ * 自定义列表 DOM——declarative 十类行均无法等价表达（渲染器缺口，custom 插槽兜底），
+ * 故三行全部走 custom 插槽；组壳（分组卡片）由 schema 声明。
+ */
+export function upManagerSettingsSchema(opts: UpManagerSchemaOptions): SettingsSchema {
+  const box: UpManagerBox = {
+    inputValue: '',
+    cookieInput: String(opts.cookie || ''),
+    ups: [...opts.ups],
+    upInfo: { ...opts.upInfo },
+    listRefresh: () => {},
+  };
+  return {
+    groups: [
+      {
+        icon: 'users',
+        name: 'UP 主名单',
+        rows: [
+          { type: 'custom', render: (body) => renderAddUpRow(body, box, opts.onChanged) },
+          { type: 'custom', render: (body) => renderCookieRow(body, box, opts.onChanged) },
+          { type: 'custom', render: (body, ctx) => renderUpList(body, box, opts.onChanged, ctx) },
+        ],
+      },
+    ],
+  };
+}
+
+/** 顶部添加行：文本输入（粘贴链接/UID）+ 添加按钮（解析入库） */
+function renderAddUpRow(body: HTMLElement, box: UpManagerBox, onChanged: () => void): void {
+  new Setting(body)
+    .setName('添加 UP 主')
+    .setDesc('粘贴主页链接（space.bilibili.com/123456）或视频链接自动解析 UID')
+    .addText((text) => {
+      text.setPlaceholder('粘贴链接或 UID');
+      text.onChange((v) => { box.inputValue = v; });
+    })
+    .addButton((btn) =>
+      btn.setButtonText('添加').setCta().onClick(() => {
+        void (async () => {
+          const raw = (box.inputValue || '').trim();
+          if (!raw) return;
+          const uid = await resolveUidFromInput(raw);
+          if (!uid) {
+            notice('无法识别 UID，请粘贴 space.bilibili.com/<uid> 主页链接', 'error');
+            return;
+          }
+          const added = await addBilibiliUp(uid);
+          if (!added) {
+            notice('该 UP 主已在名单中', 'info');
+            return;
+          }
+          box.inputValue = '';
+          box.ups.push(uid);
+          box.listRefresh();
+          onChanged();
+          notice(`已添加 UP 主 ${uid}`, 'success');
+        })();
+      })
+    );
+}
+
+/** B 站 Cookie 配置区（ticket 127）：接口 412/-352 风控引导，保存/清除落盘，desc 随状态联动 */
+function renderCookieRow(body: HTMLElement, box: UpManagerBox, onChanged: () => void): void {
+  const cookieDesc = () =>
+    `接口返回 412/-352（风控）时需要「登录后」的 Cookie：浏览器登录并打开 bilibili.com → F12 → Cookie → 复制含 SESSDATA 的整段粘贴（当前${box.cookieInput ? '已配置' : '未配置，走自动引导'}）`;
+  const row = new Setting(body)
+    .setName('B 站 Cookie（可选）')
+    .setDesc(cookieDesc());
+  row.addText((text) => {
+    text.setPlaceholder('粘贴 buvid3/SESSDATA 等 Cookie');
+    text.setValue(box.cookieInput);
+    text.onChange((v) => { box.cookieInput = v; });
   });
+  row.addButton((btn) =>
+    btn.setButtonText('保存').onClick(() => {
+      void (async () => {
+        await writeBilibiliCookie(box.cookieInput);
+        row.setDesc(cookieDesc());
+        onChanged();
+        notice('B 站 Cookie 已保存', 'success');
+      })();
+    })
+  );
+  row.addButton((btn) =>
+    btn.setButtonText('清除').onClick(() => {
+      void (async () => {
+        await writeBilibiliCookie('');
+        box.cookieInput = '';
+        row.setDesc(cookieDesc());
+        onChanged();
+        notice('已清除 B 站 Cookie（回自动引导）', 'success');
+      })();
+    })
+  );
+}
 
-  const header = document.createElement('div');
-  header.className = 'bz-settings-header';
-  const title = document.createElement('h3');
-  title.className = 'bz-settings-title';
-  title.textContent = 'UP 主名单管理';
-  header.appendChild(title);
-
-  const content = document.createElement('div');
-  content.className = 'bz-settings-content';
-
-  let inputValue = '';
-  let currentUps = [...opts.ups];
-  let currentInfo = { ...opts.upInfo };
-
-  /** 列表重绘：空态 / 行（头像 + 名字 + uid + 移除） */
+/** 名单列表区：空态 / 行（头像 + 名字 + uid + 移除）；移除走 news.json 写回 + 组内概要刷新 */
+function renderUpList(body: HTMLElement, box: UpManagerBox, onChanged: () => void, ctx: SettingsRowContext): void {
+  const listEl = document.createElement('div');
+  listEl.dataset.upManagerList = '1';
+  body.appendChild(listEl);
   const refresh = () => {
     listEl.innerHTML = '';
-    if (currentUps.length === 0) {
+    if (box.ups.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'bz-up-manager-empty';
       empty.textContent = '暂无跟踪 UP 主，在上方粘贴主页链接或视频链接添加';
       listEl.appendChild(empty);
       return;
     }
-    for (const uid of currentUps) {
-      const info = currentInfo[uid];
+    for (const uid of box.ups) {
+      const info = box.upInfo[uid];
       const row = document.createElement('div');
       row.className = 'bz-up-manager-row';
       row.dataset.upRow = '1';
@@ -213,10 +317,11 @@ function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, Bilibi
       del.onclick = () => {
         void (async () => {
           await removeBilibiliUp(uid);
-          currentUps = currentUps.filter((u) => u !== uid);
-          delete currentInfo[uid];
+          box.ups = box.ups.filter((u) => u !== uid);
+          delete box.upInfo[uid];
           refresh();
-          opts.onChanged();
+          onChanged();
+          ctx.refreshVisibility();
           notice(`已移除 UP 主 ${uid}`, 'success');
         })();
       };
@@ -224,76 +329,40 @@ function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, Bilibi
       listEl.appendChild(row);
     }
   };
+  box.listRefresh = refresh;
+  refresh();
+}
 
-  const listEl = document.createElement('div');
-  listEl.dataset.upManagerList = '1';
+/** 打开 UP 主名单管理弹窗：自建 overlay + 声明式内容（ticket 131；z 序与叠加行为零变化） */
+function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, BilibiliUpInfo>; cookie: string; onChanged: () => void }): void {
+  let handle: { unregister(): void } | null = null;
+  function close(): void {
+    mask.remove();
+    popup.remove();
+    if (handle) handle.unregister();
+  }
+  const { mask, popup } = createOverlay({
+    maskId: 'bz-up-manager-mask',
+    popupId: 'bz-up-manager-popup',
+    // z-index 家族（同 settings-modal 层规表）：10050 设置弹窗之下、10250 共享确认框之上
+    zIndex: 10100,
+    maxWidth: 460,
+    onMaskClick: close,
+  });
 
-  new Setting(content)
-    .setName('添加 UP 主')
-    .setDesc('粘贴主页链接（space.bilibili.com/123456）或视频链接自动解析 UID')
-    .addText((text) => {
-      text.setPlaceholder('粘贴链接或 UID');
-      text.onChange((v) => { inputValue = v; });
-    })
-    .addButton((btn) =>
-      btn.setButtonText('添加').setCta().onClick(() => {
-        void (async () => {
-          const raw = (inputValue || '').trim();
-          if (!raw) return;
-          const uid = await resolveUidFromInput(raw);
-          if (!uid) {
-            notice('无法识别 UID，请粘贴 space.bilibili.com/<uid> 主页链接', 'error');
-            return;
-          }
-          const added = await addBilibiliUp(uid);
-          if (!added) {
-            notice('该 UP 主已在名单中', 'info');
-            return;
-          }
-          inputValue = '';
-          currentUps.push(uid);
-          refresh();
-          opts.onChanged();
-          notice(`已添加 UP 主 ${uid}`, 'success');
-        })();
-      })
-    );
+  const header = document.createElement('div');
+  header.className = 'bz-settings-header';
+  const title = document.createElement('h3');
+  title.className = 'bz-settings-title';
+  title.textContent = 'UP 主名单管理';
+  header.appendChild(title);
 
-  // ticket 127：B 站 Cookie 配置（接口 412/-352 风控时使用；空=清除走自动引导）
-  let cookieInput = String(opts.cookie || '');
-  const cookieDesc = () =>
-    `接口返回 412/-352（风控）时需要「登录后」的 Cookie：浏览器登录并打开 bilibili.com → F12 → Cookie → 复制含 SESSDATA 的整段粘贴（当前${cookieInput ? '已配置' : '未配置，走自动引导'}）`;
-  const cookieRow = new Setting(content)
-    .setName('B 站 Cookie（可选）')
-    .setDesc(cookieDesc())
-    .addText((text) => {
-      text.setPlaceholder('粘贴 buvid3/SESSDATA 等 Cookie');
-      text.setValue(cookieInput);
-      text.onChange((v) => { cookieInput = v; });
-    });
-  cookieRow.addButton((btn) =>
-    btn.setButtonText('保存').onClick(() => {
-      void (async () => {
-        await writeBilibiliCookie(cookieInput);
-        cookieRow.setDesc(cookieDesc());
-        opts.onChanged();
-        notice('B 站 Cookie 已保存', 'success');
-      })();
-    })
-  );
-  cookieRow.addButton((btn) =>
-    btn.setButtonText('清除').onClick(() => {
-      void (async () => {
-        await writeBilibiliCookie('');
-        cookieInput = '';
-        cookieRow.setDesc(cookieDesc());
-        opts.onChanged();
-        notice('已清除 B 站 Cookie（回自动引导）', 'success');
-      })();
-    })
-  );
+  const content = document.createElement('div');
+  content.className = 'bz-settings-content';
 
-  content.appendChild(listEl);
+  // 声明式内容：渲染进自建 overlay（不换 openSettingsModal——单例会顶掉底层剪藏设置弹窗）
+  renderSettingsInto(content, upManagerSettingsSchema(opts));
+
   popup.appendChild(header);
   popup.appendChild(content);
   document.body.appendChild(mask);
@@ -306,12 +375,10 @@ function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, Bilibi
     close,
   });
   handle = handleReg;
-
-  refresh();
 }
 
 /** 保留天数（已保存 3 天 / 已跳过 7 天，设置可调） */
-function renderRetention(groupBody: HTMLElement, refreshCounts: () => void): void {
+function renderRetention(groupBody: HTMLElement, refreshVisibility: () => void): void {
   const s = getSettings();
   new Setting(groupBody)
     .setName('已保存文章保留天数')

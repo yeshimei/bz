@@ -23,6 +23,12 @@
   - 迁移期 core 三处补正（随 88682a4；B/C 组基于此继续）：① `mobileFullscreenGroup` 增加**组级 visibleWhen（isMobileEnv）**——仅行级隐藏会残留空卡片壳并抑制空态域空态文案；② `openSettingsModal` **空态判定改「可见项计数」**（隐藏项/action 行不抑制空态，对齐 refreshSettingsGroupCounts 口径）；③ `settings-schema.ts` select 行**空值回退首个选项**（对齐原 diary `|| options[0]`）
   - **状态差异警告（B/C 组注意）**：声明式联动下「移动端组行在桌面端留在 DOM 但隐藏」——既有测试若按扁平 querySelectorAll 断言桌面端无该行/该组会破，需加可见性过滤（行 `.bz-setting-hidden`、组 `.closest('.bz-settings-group')`），请照域组 A 各测试改造先例
 - 主仓库 `D:\Obsidian\bz` 工作区干净，master = 1f76ef7（A 分支未合并）。
+- **域组 B（clipping+UP/favorites/library）已迁移并提交**（分支 `worktree/t131-domains-b` 最新提交，Conventional Commits 附 ticket 131；全量 208 文件/3290 用例绿 + tsc 0，未合并）：
+  - 三域 schema 工厂导出（`clippingSettingsSchema/upManagerSettingsSchema/favoritesSettingsSchema/librarySettingsSchema`，供文案 lint 直接引用）；文案 lint 注册 `tests/core/settings-copy-lint-b.test.ts`
+  - clipping：基础/智能键直绑 + 自动摘要详设 visibleWhen 联动（标签数量二次联动）；数据源组 news.json 外部数据 + 异步状态整段 custom 插槽（组壳卡片由渲染器承担；刷新通道换 refreshVisibility）；UP 名单管理弹窗内容经 `renderSettingsInto` 渲染进自建 overlay（bz-up-manager-mask/-popup 与 z 序 10100/10101 不变），添加/Cookie/列表三行全 custom（复合控件行 + 动态 desc，declarative 十类行无法等价表达——渲染器缺口，custom 兜底）
+  - favorites：空态域（emptyText/emptyDesc 保留）+ 分组卡片 + maxWidth 520；移动端全屏文案按 ticket 100 收敛为多数派（与域组 A belongings 同口径）
+  - library：闭包工厂退役 → 键直绑行
+  - **注意（主会话合并时参考）**：数据源组保留天数/三源开关/B站抓取条数因 async 外部状态无法声明化（渲染器无重渲染 API），留在 custom 插槽内（手写 Setting，行为逐字保持）——与任务「允许整段 custom 插槽」口径一致
 
 ## 接手步骤（新会话照做）
 

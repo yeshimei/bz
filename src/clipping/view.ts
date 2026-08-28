@@ -5,18 +5,18 @@
  * 打开/复制双链/复制原文链接/删除，全局组件承载）＋**双击整卡打开文章**（用户反馈回退单击直开）；
  * 移除旧「长按日期删除」。头部两行=标题+简介（摘要两行省略号截断）。
  */
-import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { createSiteIcon } from '../core/dom';
 import { formatRelativeTime } from '../core/utils';
-import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
+import { tryGetSettings } from '../core/settings-provider';
 import { onDomainEvent } from '../core/domain-bus';
-import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
-import { openSettingsModal, createSettingsGroup, refreshSettingsGroupCounts } from '../core/settings-modal';
-import { renderPathSettingRow } from '../core/path-picker';
+import { applyMobileWindowFullscreen } from '../core/mobile';
+import { openSettingsModal } from '../core/settings-modal';
+import { mobileFullscreenGroup } from '../core/settings-common';
+import type { SettingsSchema } from '../core/settings-schema';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { ensureAutoSummary, stopAutoSummary } from '../auto-summary';
 import { buildNewsSourcesGroup } from './news-sources-group';
@@ -148,6 +148,61 @@ export async function initArticleView(showImmediately = true): Promise<void> {
 }
 
 // ========== 创建 UI ==========
+// ===== 剪藏本设置 schema（ticket 131 声明式，ADR-0064）=====
+// 基础/智能组键直绑 + visibleWhen 联动（自动摘要详设随开关展开）；数据源组为 news.json
+// 外部数据 + 异步状态，整段走 custom 插槽保留内部联动（组壳卡片形态由渲染器承担）；
+// 移动端组 = 通用预设 mobileFullscreenGroup（行为/文案与现网逐字一致）。
+export function clippingSettingsSchema(): SettingsSchema {
+  return {
+    groups: [
+      {
+        icon: 'folder-open', name: '基础',
+        rows: [
+          { type: 'path', mode: 'single', name: '剪藏目录', desc: '存放网页剪藏文章的文件夹', binding: { key: 'articleDirectory' } },
+          { type: 'text', name: '每批加载数量', desc: '滚动加载时每批显示的条目数', binding: { key: 'articleBatchSize' } },
+        ],
+      },
+      {
+        icon: 'sparkles', name: '智能',
+        rows: [
+          {
+            type: 'toggle', name: '自动摘要', desc: '新剪藏的文章自动生成 AI 摘要', binding: { key: 'autoSummaryEnabled' },
+            onChange: (v) => {
+              if (v) ensureAutoSummary(getApp());
+              else stopAutoSummary(); // 关闭：摘除监听（initialized 保留，再开启复用注册）
+            },
+          },
+          // ticket 124（Q8/Q14）：自动摘要详设——开关开 → 显示详情设置项；关 → 隐藏（visibleWhen 联动）
+          { type: 'select', name: '摘要长度', desc: '控制生成的摘要详略程度', binding: { key: 'autoSummaryLength' },
+            options: [
+              { value: 'simple', label: '简短（50-100 字）' },
+              { value: 'standard', label: '标准（150-250 字）' },
+              { value: 'detailed', label: '详细（300-400 字）' },
+            ],
+            visibleWhen: (s) => s.autoSummaryEnabled === true },
+          { type: 'toggle', name: '生成标签', desc: '为剪藏生成中文标签', binding: { key: 'autoSummaryTagsEnabled' },
+            visibleWhen: (s) => s.autoSummaryEnabled === true },
+          { type: 'text', name: '标签数量', desc: '生成的标签个数写成区间，如 3-6', binding: { key: 'autoSummaryTagCount' },
+            visibleWhen: (s) => s.autoSummaryEnabled === true && s.autoSummaryTagsEnabled === true },
+          { type: 'select', name: '摘要时机', desc: '保存后立刻生成，或仅打开文件时才补全', binding: { key: 'autoSummaryTiming' },
+            options: [
+              { value: 'immediate', label: '保存后立刻' },
+              { value: 'lazy', label: '懒触发（打开时）' },
+            ],
+            visibleWhen: (s) => s.autoSummaryEnabled === true },
+        ],
+      },
+      {
+        icon: 'radio', name: '数据源',
+        rows: [
+          // custom 插槽：news.json 外部数据 + 异步状态行 + 缺失引导 + B 站开关段内联动（整段保留现有逻辑）
+          { type: 'custom', render: (body, ctx) => buildNewsSourcesGroup(body, ctx.refreshVisibility) },
+        ],
+      },
+      mobileFullscreenGroup('clippingMobileDefaultFullscreen'),
+    ],
+  };
+}
 /** 面板显隐单点：mask + popup 同步切换（模块级引用即当前实例节点） */
 function setArticleViewVisible(visible: boolean): void {
   const v = visible ? 'visible' : 'hidden';
@@ -226,7 +281,7 @@ function createHeader(): HTMLElement {
     }
   });
 
-  // 剪藏本设置弹窗（ADR-0009 域设置弹窗；分组卡片重设计，2026-08 用户拍板方案 A）
+  // 剪藏本设置弹窗（ADR-0009 域设置弹窗；ticket 131 声明式 schema，分组卡片重设计形态保持）
   const settingsBtn = createIconButton('⚙️', '剪藏本设置', () => {
     openSettingsModal({
       title: '剪藏本设置',
@@ -234,114 +289,7 @@ function createHeader(): HTMLElement {
       // ticket 130 review S1：面板开着时改目录，关设置弹窗即触发目录变更检测（清缓存+全量重载），
       // 不必等下次重开——applyArticleSettings 内部有 isConnected 门控与非变更短路
       onClose: () => applyArticleSettings(),
-      build: (el) => {
-        const s = getSettings();
-        // ===== 基础组 =====
-        const basicGroup = createSettingsGroup(el, { icon: 'folder-open', name: '基础' });
-        // ticket 128：剪藏目录（路径统一选择器录入，无手输文本框）
-        renderPathSettingRow({
-          parent: basicGroup,
-          name: '剪藏目录',
-          desc: '存放网页剪藏文章的文件夹',
-          mode: 'single',
-          value: s.articleDirectory || '',
-          onChange: (list) => {
-            s.articleDirectory = list[0] || '';
-            void saveSettings();
-          },
-        });
-        new Setting(basicGroup)
-          .setName('每批加载数量')
-          .setDesc('滚动加载时每批显示的条目数')
-          .addText((text) =>
-            text.setValue(s.articleBatchSize || '').onChange(async (v) => {
-              s.articleBatchSize = v;
-              await saveSettings();
-            })
-          );
-        // ===== 智能组 =====
-        const smartGroup = createSettingsGroup(el, { icon: 'sparkles', name: '智能' });
-        new Setting(smartGroup)
-          .setName('自动摘要')
-          .setDesc('新剪藏的文章自动生成 AI 摘要')
-          .addToggle((toggle) =>
-            toggle.setValue(!!s.autoSummaryEnabled).onChange(async (v) => {
-              s.autoSummaryEnabled = v;
-              await saveSettings();
-              if (v) ensureAutoSummary(app);
-              else stopAutoSummary(); // 关闭：摘除监听（initialized 保留，再开启复用注册）
-              // ticket 124：开关打开 → 显示详情设置项；关闭 → 隐藏
-              detailEl.style.display = v ? '' : 'none';
-              refreshSettingsGroupCounts(el);
-            })
-          );
-        // ticket 124（Q8/Q14）：自动摘要详设——开关注册后插入（sub-settings 形态，Obsidian Setting 模板）
-        const detailEl = document.createElement('div');
-        detailEl.className = 'auto-summary-detail';
-        detailEl.style.display = s.autoSummaryEnabled ? '' : 'none';
-        smartGroup.appendChild(detailEl);
-        // 1) 摘要长度档位
-        new Setting(detailEl)
-          .setName('摘要长度')
-          .setDesc('控制生成的摘要详略程度')
-          .addDropdown((dd) => {
-            dd.addOption('simple', '简短（50-100 字）');
-            dd.addOption('standard', '标准（150-250 字）');
-            dd.addOption('detailed', '详细（300-400 字）');
-            dd.setValue(s.autoSummaryLength || 'standard').onChange(async (v) => {
-              s.autoSummaryLength = v;
-              await saveSettings();
-            });
-          });
-        // 2) 标签生成开关与数量
-        const tagCountRow = new Setting(detailEl)
-          .setName('生成标签')
-          .setDesc('为剪藏生成中文标签')
-          .addToggle((toggle) =>
-            toggle.setValue(!!s.autoSummaryTagsEnabled).onChange(async (v) => {
-              s.autoSummaryTagsEnabled = v;
-              await saveSettings();
-              tagCountEl.style.display = v ? '' : 'none';
-            })
-          );
-        const tagCountEl = document.createElement('div');
-        tagCountEl.style.display = s.autoSummaryTagsEnabled ? '' : 'none';
-        detailEl.appendChild(tagCountEl);
-        new Setting(tagCountEl)
-          .setName('标签数量')
-          .setDesc('如 "3-6" 表示 3 到 6 个')
-          .addText((text) =>
-            text.setValue(s.autoSummaryTagCount || '3-6').onChange(async (v) => {
-              s.autoSummaryTagCount = v;
-              await saveSettings();
-            })
-          );
-        // 3) 摘要时机
-        new Setting(detailEl)
-          .setName('摘要时机')
-          .setDesc('保存后立刻生成，或仅打开文件时才补全')
-          .addDropdown((dd) => {
-            dd.addOption('immediate', '保存后立刻');
-            dd.addOption('lazy', '懒触发（打开时）');
-            dd.setValue(s.autoSummaryTiming || 'immediate').onChange(async (v) => {
-              s.autoSummaryTiming = v;
-              await saveSettings();
-            });
-          });
-        // ===== 数据源组（ticket 124，ADR-0060）=====
-        const dataSourceGroup = createSettingsGroup(el, { icon: 'radio', name: '数据源' });
-        buildNewsSourcesGroup(el, dataSourceGroup);
-        // ===== 移动端组（仅移动端显示） =====
-        if (isMobileEnv()) {
-          const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
-          new Setting(mobileGroup)
-            .setName('移动端默认全屏')
-            .setDesc('移动端打开主窗口时默认全屏，关闭则显示常规卡片')
-            .addToggle((toggle) =>
-              toggle.setValue(!!s.clippingMobileDefaultFullscreen).onChange(async (v) => { s.clippingMobileDefaultFullscreen = v; await saveSettings(); })
-            );
-        }
-      },
+      schema: clippingSettingsSchema(),
     });
   });
   const closeBtn = createIconButton('❌', '关闭', () => setArticleViewVisible(false));

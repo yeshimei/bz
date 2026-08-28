@@ -389,7 +389,7 @@ describe('剪藏本面板', () => {
     );
   });
 
-  it('⚙️ 设置弹窗：分组卡片（基础/智能/数据源；移动端组桌面不渲染）+ 文案规范', async () => {
+  it('⚙️ 设置弹窗：分组卡片（基础/智能/数据源；移动端组桌面整组隐藏）+ 文案规范', async () => {
     const { vault } = await setup();
     vault.files.set('我的/文章/A.md', makeArticleMd('https://x.com/a', '站', 'A', '2025-06-02T08:00:00.000Z'));
     await initArticleView(true);
@@ -400,20 +400,25 @@ describe('剪藏本面板', () => {
     expect(popup.textContent).toContain('剪藏本设置');
     // 数据源组异步加载（news.json 缺失 → 引导块）；等替换完成后断言
     await new Promise((r) => setTimeout(r, 50));
-    // 分组卡片结构：桌面 3 组（基础/智能/数据源；移动端组仅移动端渲染），原生图标 + 徽标回填项数
-    const heads = [...popup.querySelectorAll('.bz-settings-group-head')];
+    // 分组卡片结构：桌面 3 组可见（基础/智能/数据源；移动端组挂 bz-setting-hidden 整组隐藏——
+    // ticket 131 声明式联动保留 DOM 结构），原生图标 + 徽标回填项数
+    const isHiddenGroup = (el: Element) =>
+      Boolean((el.closest('.bz-settings-group') as HTMLElement | null)?.classList.contains('bz-setting-hidden'));
+    const heads = [...popup.querySelectorAll('.bz-settings-group-head')].filter((el) => !isHiddenGroup(el));
     expect(heads.map((el) => (el as HTMLElement).textContent!.trim())).toEqual(['基础2 项', '智能1 项', '数据源1 项']);
     expect(heads.map((el) => el.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon'))).toEqual(['folder-open', 'sparkles', 'radio']);
-    // 可见设置行（隐藏的自动摘要详设不计入——开关默认关，detailEl display none）：基础 2 + 智能 1 + 数据源引导 1
+    // 可见设置行（隐藏的自动摘要详设行不计入——开关默认关，bz-setting-hidden）：基础 2 + 智能 1 + 数据源引导 1
     const settingItems = [...popup.querySelectorAll('.bz-settings-group-body .setting-item')].filter(
-      (el) => !(el as HTMLElement).closest('.auto-summary-detail')
+      (el) => !el.classList.contains('bz-setting-hidden') && !isHiddenGroup(el)
     );
     expect(settingItems.map((el) => (el as HTMLElement).dataset.name)).toEqual(['剪藏目录', '每批加载数量', '自动摘要', '尚未启用新闻数据源']);
-    // 详设容器存在但隐藏（自动摘要默认关 → detailEl display none）
-    const detailContainer = popup.querySelector<HTMLElement>('.auto-summary-detail');
-    expect(detailContainer).not.toBeNull();
-    expect(detailContainer!.style.display).toBe('none');
-    expect(detailContainer!.querySelectorAll('.setting-item').length).toBeGreaterThanOrEqual(3);
+    // 详设行存在但隐藏（自动摘要默认关 → bz-setting-hidden；标签数量随标签开关二次联动）
+    const detailHidden = (name: string) =>
+      [...popup.querySelectorAll<HTMLElement>('.setting-item')].find((el) => el.dataset.name === name)!
+        .classList.contains('bz-setting-hidden');
+    for (const n of ['摘要长度', '生成标签', '标签数量', '摘要时机']) {
+      expect(detailHidden(n), `详设行「${n}」在自动摘要关闭时隐藏`).toBe(true);
+    }
     // 文案规范：标题零符号；描述大白话，无括号/符号写法与实现细节
     const descs = settingItems.map((el: any) => el.__setting && el.__setting.desc);
     expect(descs.slice(0, 3)).toEqual([
