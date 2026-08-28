@@ -84,9 +84,11 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
     findSetting(tab, 'DeepSeek 密钥');
     findSetting(tab, 'OpenCode 密钥');
     const storageRow = findSetting(tab, '数据存储路径');
-    // ticket 128：行内无 text 输入框；ticket 133：已选态「选择…」按钮移出 DOM（chip 内 ✕ 仍是 button）
+    // ticket 128：行内无 text 输入框；ticket 133：已选态「选择…」按钮移出 DOM（chip 内 ✕ 仍是 button）；
+    // 默认值场景 data-filled=1（CSS 双保险隐藏按钮——用户反馈「有默认值时按钮不消失」的回归锁）
     expect(storageRow.querySelector('.setting-item-control input')).toBeNull();
     expect(storageRow.querySelector('.setting-item-control .bz-path-picker-btn--slim')).toBeNull();
+    expect(storageRow.dataset.filled).toBe('1');
     expect(storageRow.querySelector('.setting-item-control .bz-path-picker-chip-x')).toBeTruthy();
     expect(storageRow.querySelector('.setting-item-control .bz-path-picker-chip-name')!.textContent).toBe('CONFIG/STORAGE');
     // 域设置不再出现在设置页（已迁往各域 ⚙️ 弹窗）
