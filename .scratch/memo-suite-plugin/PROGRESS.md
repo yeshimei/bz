@@ -1,3 +1,12 @@
+## 2026-08-28 路径设置行空态/已选态翻转 + 选择器列表排序（ticket 133；master 84bca3c）
+
+**状态：路径行空态只显紧凑次级按钮、已选态隐藏按钮且 chip 可点重开选择器、选择器列表「已选置顶→库根→整体反转（中文在前英文在后）」；全量 209 文件/3297 用例绿 + tsc 0**
+
+- ✅ **路径设置行**（`renderPathSettingRow`）：空态只显示紧凑次级「选择…/添加…」按钮（去 setCta accent，样式 `.bz-path-picker-btn--slim`），去掉「未选择」灰字；已选态按钮移出 DOM（`syncBtn`——控件区恒 1 子元素 → `markSettingSplitRows` 不挂 `.bz-setting-split` → 移动端名称/描述与控件区同行）；chip 文本点击重开选择器（`renderPathChips` 新增 `onChipClick`，✕ 事件不冒泡）、✕ 保留清除并回空态；单选/多选同套
+- ✅ **选择器列表排序**：已选置顶（`pinnedAtOpen` 打开时定格快照，点击勾选不重排）→ 库根第二梯队 → 其余整体反转（原 sort() 码点升序逆排：中文在前、英文在后；英文组内小写在前大写在后）；搜索时置顶仅对命中项生效；数据层 `foldersFromFiles`/`collectVaultFolders` 排序不动（反转只在 UI 渲染层 `orderedList`）
+- ✅ **测试**：`path-picker-ui.test.ts` 排序断言更新 + 新增用例（空态/已选态按钮翻转、chip 重开、onChipClick、置顶/反转/点击不重排/搜索命中置顶）；`settings-tab.test.ts` 已选态无「选择…」按钮断言；全量 209 文件/3297 用例绿 + tsc 0
+- 📌 文档：issues/133 定稿；grill-with-docs 三轮 Q&A 拍板（范围/空态组成/已选态交互/按钮样式/列表排序）
+
 ## 2026-08-28 设置页声明化 Wave-2 完成（ticket 131；ADR-0064；master 4985f64）
 
 **状态：13 域设置弹窗 + UP 名单弹窗全部 schema 化并合入 master；全量 209 文件/3292 用例绿 + tsc 0；build 参数已收尾退役**

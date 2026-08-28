@@ -1,6 +1,6 @@
 # Ticket 133：路径设置行空态/已选态翻转 + 选择器列表排序（grill-with-docs 拍板）
 
-- 状态：进行中（worktree t133-path-picker-row-sort）
+- 状态：已完成（master 84bca3c + 样式源迁址后续提交；全量 209 文件/3297 用例绿 + tsc 0 + 构建部署）
 - 域：core/path-picker（跨域设置面板路径行统一组件）
 - 来源：grill-with-docs 拍板（三轮 Q&A 收敛）
 - 关联：`src/core/path-picker.ts`、`styles.css`、`tests/core/path-picker-ui.test.ts`、`tests/settings-tab.test.ts`
