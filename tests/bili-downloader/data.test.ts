@@ -113,14 +113,27 @@ describe('TasksData（bili-tasks.json）', () => {
     expect(all[0]).toMatchObject({ status: 'pending', reason: null, processedAt: null });
   });
 
-  it('clearFinished 只清成功项（保留失败/待处理/处理中）', async () => {
+  it('clearHistory 只清归档项（archived；失败/待处理/处理中保留，ADR-0067）', async () => {
     const ok = await TasksData.addTask({ url: 'BV1xx411c7mD' });
     const bad = await TasksData.addTask({ url: 'BV1xx411c7mE' });
     const pend = await TasksData.addTask({ url: 'BV1xx411c7mF' });
-    await TasksData.updateTask(ok.id, { status: 'success' } as any);
+    await TasksData.updateTask(ok.id, { status: 'success', archived: true, archivedAt: '2026-08-28 21:00:00' } as any);
     await TasksData.updateTask(bad.id, { status: 'failed', reason: 'x' } as any);
-    await TasksData.clearFinished();
+    await TasksData.clearHistory();
     const all = await TasksData.loadTasks();
     expect(all.map((x) => x.id).sort()).toEqual([bad.id, pend.id].sort());
+  });
+
+  it('loadTasks 字段形状：title/uploader/archived/quality/page 缺省补默认（ADR-0067 零迁移）', async () => {
+    await TasksData.addTask({ url: 'BV1xx411c7mD', quality: '720', page: 2 });
+    const all = await TasksData.loadTasks();
+    expect(all[0]).toMatchObject({
+      title: null, uploader: null, archived: false, archivedAt: null,
+      quality: '720', page: 2,
+    });
+    await TasksData.addTask({ url: 'BV1xx411c7mE' });
+    const all2 = await TasksData.loadTasks();
+    expect(all2[1].quality).toBeNull();
+    expect(all2[1].page).toBeNull();
   });
 });

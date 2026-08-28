@@ -535,6 +535,40 @@ test('aiJson：JSON 模式解析 + 残留文本容错提取', async () => {
   assert.equal(fuzzy.title, 'T')
 })
 
+test('aiJson：剥 markdown 代码围栏后解析（``````json … ```````，ADR-0067 自愈）', async () => {
+  const out = await core.aiJson({
+    endpoint: 'https://x', apiKey: 'k', model: 'm', messages: [],
+    requestImpl: mockHttpsRequest({ status: 200, body: { choices: [{ message: { content: '```json\n{"title":"围栏标题","tags":["b"]}\n```' } }] } }),
+  })
+  assert.deepEqual(out, { title: '围栏标题', tags: ['b'] })
+})
+
+test('aiJson：非 JSON 自动重试一次；两次失败才抛「AI 返回的不是 JSON」（ADR-0067）', async () => {
+  let n = 0
+  const requestImpl = (url, opts, cb) => {
+    const req = new EventEmitter()
+    req.write = () => {}
+    req.end = () => setTimeout(() => {
+      const res = new EventEmitter()
+      res.statusCode = 200
+      cb(res)
+      n++
+      // 第 1 次返回噪音、第 2 次合法 JSON → 自愈
+      res.emit('data', Buffer.from(JSON.stringify({ choices: [{ message: { content: n === 1 ? '抱歉我无法理解' : '{"title":"重试成功"}' } }] })))
+      res.emit('end')
+    }, 0)
+    return req
+  }
+  const ok = await core.aiJson({ endpoint: 'https://x', apiKey: 'k', model: 'm', messages: [], requestImpl })
+  assert.equal(ok.title, '重试成功')
+  assert.equal(n, 2)
+  // 两次都失败 → 报错并带内容片段
+  await assert.rejects(
+    core.aiJson({ endpoint: 'https://x', apiKey: 'k', model: 'm', messages: [], requestImpl: mockHttpsRequest({ status: 200, body: { choices: [{ message: { content: '纯文本噪音' } }] } }) }),
+    /AI 返回的不是 JSON：纯文本噪音/
+  )
+})
+
 test('buildLiteratureNote：多块「该段正文+该段双链」依次排布（无独立原文段）', () => {
   const md = core.buildLiteratureNote({
     title: 'T', tags: ['a'], summary: 's',

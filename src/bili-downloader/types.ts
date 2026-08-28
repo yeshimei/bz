@@ -27,4 +27,16 @@ export interface BiliTask {
   created: string;
   /** 处理完成时间（成功或失败），未处理为 null */
   processedAt: string | null;
+  /** 解析到的视频标题（[bz-info] 落库；行内以「文字+链接」展示，ADR-0067） */
+  title: string | null;
+  /** 解析到的 UP主（ADR-0067） */
+  uploader: string | null;
+  /** 成功自动归档到历史（ADR-0067：主列表只含 待处理/处理中/失败） */
+  archived: boolean;
+  /** 归档时间（=成功时刻），未归档为 null */
+  archivedAt: string | null;
+  /** 下载清晰度任务级覆盖（null/'highest'/'1080'/'720'；null=跟随全局设置，ADR-0067） */
+  quality: string | null;
+  /** 分P 序号（1 起；null=第 1 P，ADR-0067） */
+  page: number | null;
 }

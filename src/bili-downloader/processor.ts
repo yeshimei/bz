@@ -8,6 +8,7 @@
  * 单部失败继续剩余（或按设置「遇错即停」中断）、失败项可重试；abort() 杀死当前子进程并中止整批。
  */
 import { notice } from '../core/notice';
+import { emitDomainEvent } from '../core/domain-bus';
 import { tryGetSettings } from '../core/settings-provider';
 import { TasksData } from './data';
 import type { BiliTask } from './types';
@@ -20,6 +21,8 @@ const STEP_RE = /^\[bz-step\]\s*(.+)$/;
 const RESULT_RE = /^\[bz-result\]\s*(\{.*\})$/;
 /** [bz-p] {"phase":"download","pct":35}——阶段百分比进度行（pct 0-100，null=该阶段不确定，绝不假报） */
 const PROGRESS_RE = /^\[bz-p\]\s*(\{.*\})$/;
+/** [bz-info] {"title","uploader","bvid","url","duration"}——解析信息行（ADR-0067，行内「文字+链接」+ UP主） */
+const INFO_RE = /^\[bz-info\]\s*(\{.*\})$/;
 
 export interface BatchSummary {
   success: number;
@@ -38,6 +41,8 @@ export interface BiliProgress {
 export interface BatchEvents {
   /** 任务行进度更新（步骤文案已写入 task.reason；progress 为 [bz-p] 行解析出的阶段百分比，无则 null） */
   onTaskProgress(task: BiliTask, stepText: string, progress?: BiliProgress | null): void;
+  /** 解析信息落库回调（[bz-info] 行：title/uploader 已写入 task 与 storage，UI 整表刷新显示「文字+链接」） */
+  onTaskInfo(task: BiliTask): void;
   /** 任务终态（成功/失败），task 已持久化 */
   onTaskDone(task: BiliTask): void;
   /** 整批结束 */
@@ -90,8 +95,9 @@ export const BatchRunner = {
   },
 
   /**
-   * 串行处理全部「待处理」任务（按数组顺序，一次一部）。
-   * 已成功/失败项不动；失败项默认不阻塞后续待处理项（遇错即停设置开启时失败后中断）。
+   * 串行处理全部「待处理 + 失败」任务（按数组顺序，一次一部；ADR-0067 断点续跑：
+   * 失败项重跑时工具自动跳过已成功步骤、从出错步骤继续）。
+   * 已成功（归档）项不动；默认失败后继续（遇错即停设置开启时失败后中断）。
    */
   async runAll(tasks: BiliTask[], events: BatchEvents): Promise<void> {
     if (this.running) return;
@@ -111,8 +117,8 @@ export const BatchRunner = {
       let failed = 0;
       for (const task of tasks) {
         if (this.aborted) break;
-        // 只处理待处理项；失败项等手动重试
-        if (task.status !== 'pending') continue;
+        // 只处理待处理/失败项（成功项已归档不动）
+        if (task.status !== 'pending' && task.status !== 'failed') continue;
         let itemFailed = false;
         await this._runOne(cp, task, events, (ok: boolean) => { if (ok) success++; else { failed++; itemFailed = true; } });
         // 遇错即停：单条失败后停止整批（不 kill 子进程——已结束；未开始项保持待处理）
@@ -133,14 +139,16 @@ export const BatchRunner = {
   /** 单部执行：spawn → 解析步骤/进度行 → 终态落库；Promise 在子进程终结（close/error）时 resolve */
   _runOne(cp: any, task: BiliTask, events: BatchEvents, onEnd: (ok: boolean) => void): Promise<void> {
     return new Promise((resolve) => {
-      // 文献盒设置项透传（ADR-0066）：清晰度 / 保留视频原件 / 输出目录覆盖；工具缺省 = 跟随工具配置
+      // 文献盒设置项透传（ADR-0066/0067）：清晰度 = 任务级覆盖优先、否则全局设置；保留视频/输出目录走全局；
+      // 分P 序号（task.page，1 起）随任务 JSON 下发（工具按 P 选 cid，独立缓存键）
       const s = tryGetSettings();
       const taskJson = JSON.stringify({
         url: task.url,
         start: task.start ?? null,
         end: task.end ?? null,
+        page: task.page && task.page > 0 ? task.page : null,
         options: {
-          quality: (s && s.biliQuality) || 'highest',
+          quality: (task.quality || (s && s.biliQuality) || 'highest') as string,
           keepVideo: !s || s.biliKeepVideo !== false,
           outputDir: (s && s.biliOutputDir ? String(s.biliOutputDir).trim() : ''),
         },
@@ -194,6 +202,26 @@ export const BatchRunner = {
             } catch { /* 忽略坏进度行 */ }
             continue;
           }
+          // 解析信息行（ADR-0067）：标题/UP主 落库 + 域事件分发（小橘充实既有 added 条目，不新增）。
+          // 先落库再发事件：UI onTaskInfo 整表刷新时能确定性读到新字段（避免读旧快照的竞态）
+          m = line.match(INFO_RE);
+          if (m) {
+            try {
+              const info = JSON.parse(m[1]);
+              const title = info && typeof info.title === 'string' ? String(info.title).trim() : '';
+              const uploader = info && typeof info.uploader === 'string' ? String(info.uploader).trim() : '';
+              if (title) {
+                task.title = title;
+                task.uploader = uploader || task.uploader;
+                const patch: Partial<BiliTask> = { title, uploader: task.uploader };
+                void TasksData.updateTask(task.id, patch).then(() => {
+                  emitDomainEvent('bili-tasks', { kind: 'parsed', id: task.id, url: task.url, title, uploader: task.uploader || undefined });
+                  events.onTaskInfo({ ...task });
+                });
+              }
+            } catch { /* 忽略坏信息行 */ }
+            continue;
+          }
           m = line.match(RESULT_RE);
           if (m) {
             try {
@@ -224,19 +252,26 @@ export const BatchRunner = {
     });
   },
 
-  /** 终态落库 + 事件（resolve 于落库完成后） */
+  /** 终态落库 + 事件（resolve 于落库完成后）；成功 → 自动归档历史（archived+归档时间，ADR-0067） */
   async _finish(task: BiliTask, events: BatchEvents, onEnd: (ok: boolean) => void, ok: boolean, reason: string | null, notePath: string | null, videoPath: string | null): Promise<void> {
     task.status = ok ? 'success' : 'failed';
     task.reason = reason;
     task.notePath = ok ? notePath : task.notePath;
     task.videoPath = ok ? videoPath : task.videoPath;
     task.processedAt = nowTs();
+    if (ok) { task.archived = true; task.archivedAt = task.processedAt; }
     await TasksData.updateTask(task.id, {
       status: task.status,
       reason,
       notePath: task.notePath,
       videoPath: task.videoPath,
       processedAt: task.processedAt,
+      archived: task.archived,
+      archivedAt: task.archivedAt,
+      // 内存态解析信息一并落库（ADR-0067）：终态写与信息写并发时，终态写携带新字段，
+      // 避免读-改-写竞态把已落库的 title/uploader 覆盖丢失
+      title: task.title,
+      uploader: task.uploader,
     });
     events.onTaskDone({ ...task });
     onEnd(ok);

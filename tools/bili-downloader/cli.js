@@ -15,6 +15,8 @@
 //       成功末尾一行 [bz-result] {"note":"文献盒/标题.md","video":"CONFIG/APPENDIX/xxx.mp4"|null}
 //       （note/video 为 vault 相对路径；不在 vault 下为绝对路径；video null = 未交付保留）并 exit 0；
 //       任一步失败 stderr 给中文原因（含缺失前置引导，如 whisper 环境 / AI key）并 exit 1，不写 [bz-result]。
+//       断点续跑（ADR-0067）：成功步骤产物（剪辑件/转写稿/AI 元数据/润色分块）留存缓存目录，
+//       同一任务重跑自动从出错步骤继续，不重跑已成功步骤。
 //       --batch 模式不打印横幅、不起服务，避免污染协议。
 // 实例复用（ticket 117）: 未指定 --port 时，若端口文件 ~/.bilibili-dl-port
 //   记的旧实例仍存活，则直接复用其地址（打印同格式「地址:」行 + 开浏览器后退出），
@@ -60,6 +62,8 @@ function runBatchMode(rawJson) {
     onStep: name => console.log(`[bz-step] ${name}`),
     // 进度行：phase + 0-100 整数百分比（null = 不确定，绝不假报）
     onProgress: p => console.log(`[bz-p] ${JSON.stringify({ phase: p.phase || 'step', pct: Number.isFinite(p.pct) ? Math.round(p.pct) : null })}`),
+    // 解析信息行（ADR-0067）：标题/UP主 落库 → 面板行内「文字+链接」
+    onInfo: info => console.log(`[bz-info] ${JSON.stringify(info)}`),
     tmpDir: tmp,
   }).then(r => {
     try { fs.rmSync(tmp, { recursive: true, force: true }) } catch {}
