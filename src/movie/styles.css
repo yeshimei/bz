@@ -1,5 +1,5 @@
 /* ==================== 影视域样式（src/movie/styles.css） ==================== */
-/* 影视域遮罩档位已由主仓库 ux-css 裁定（z-index 9997/9998 家族，本域不再定义档位类规则，
+/* 影视域遮罩层级已动态发号（ADR-0067，本域不再定义档位类规则，
    避免与本文件另处已合并的裁定值双规则并存/回退层级体系；JS 侧仅挂 class，由根/域样式接管） */
 /* ---- 影视抽屉头部（与影视卡片一字不差：海报 + 名称 + 徽章 + 影评） ---- */
 .bz-item-sheet-movie-name {
@@ -25,7 +25,7 @@
 /* ---- 影视小弹窗（评分窗 / 影评窗：遮罩点击 + ESC 关闭，无取消按钮） ---- */
 .bz-movie-tiny-mask {
   position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5);
-  z-index: 12000; display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: center; justify-content: center; /* z 动态发号（ADR-0067） */
 }
 .bz-movie-tiny-modal {
   width: 280px; max-width: 86vw;
@@ -94,17 +94,7 @@
   color: var(--text-normal); white-space: pre-wrap;
 }
 /* ---- e3 低 z 族抬档（冻结面授权）：影视遮罩档 ----
-   原 JS 内联 z-index（主面板 1000 / 筛选 1100 / 添加·编辑 1200 / 推荐 1300）→ 主面板族 9997/9998；
-   纯层级规则、统一不带背景（压暗由各遮罩内联 CSS 负责）；对表 settings-modal.ts z-index 家族；
-   配套 JS 由 ux-misc 清内联并挂同款类 */
-.bz-movie-overlay--1000 { z-index: 9997; }
-.bz-movie-overlay--1100 { z-index: 9998; }
-.bz-movie-overlay--1200 { z-index: 9998; }
-.bz-movie-overlay--1300 { z-index: 9998; }
-/* 主面板根（legacy id）双保险：JS 仅清内联 z 而暂未挂类时同样兜底抬档 */
-#__yin_ying__ { z-index: 9997; }
-/* 影视报告（movie-report 域无独立样式源，归属影视域文件）：分析弹窗遮罩原内联 1200 → 9998 */
-.bz-movie-report-overlay--1200 { z-index: 9998; }
+   层级已动态发号（ADR-0067）：主面板显示时 topifyZ、弹窗创建时 allocZ；--1000/--1100/--1200/--1300 修饰名仅作标识钩子；压暗由各遮罩内联 CSS 负责 */
 .bz-item-sheet-title {
   font-size: 14px; font-weight: 600; color: var(--text-normal);
   line-height: 1.4; word-break: break-word;

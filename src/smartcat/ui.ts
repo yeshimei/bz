@@ -9,6 +9,7 @@
  * 设置统一由小橘本体长按打开）。
  */
 import { createOverlay } from '../core/dom';
+import { registerAlwaysOnTop } from '../core/z-order';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { closeSettingsModal, openSettingsModal } from '../core/settings-modal';
@@ -55,13 +56,14 @@ export function createCatContainer(): HTMLElement {
   return container;
 }
 
-/** 挂载猫容器（幂等：已存在则复用） */
+/** 挂载猫容器（幂等：已存在则复用）；注册恒顶层——小橘保持最高（ADR-0067，用户拍板） */
 export function mountCatContainer(): HTMLElement | null {
   let container = document.getElementById(CAT_CONTAINER_ID);
   if (!container) {
     container = createCatContainer();
     document.body.appendChild(container);
   }
+  registerAlwaysOnTop(container);
   return container;
 }
 
@@ -104,7 +106,6 @@ export function createChatPanel(opts: {
   const { mask, popup } = createOverlay({
     maskId: 'smartcat-chat-mask',
     popupId: 'chat-panel',
-    zIndex: 9998,
     onMaskClick: () => opts.onClose(),
     width: '92%',
     maxWidth: 350,

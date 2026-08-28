@@ -508,20 +508,16 @@ describe('书库修复回归（fx-library）', () => {
     }
   });
 
-  it('P0-7：读书笔记壳 z-index 落在 11100/11101 档（压过抽屉遮罩 10999/本体 11000）', async () => {
+  it('读书笔记壳 z 动态发号（ADR-0067）：创建即分配，样式源不再持有静态档', async () => {
     vault.files.set('书库/活着.md', NOTE_MD);
     showBookNotes(makeApp(vault), '书库/活着.md');
     await new Promise((r) => setTimeout(r, 20));
-    // 壳元素挂新档类名；jsdom 不做 CSS 级联，z-index 档位以源样式表规则为准断言 ≥11100
     const shell = document.querySelector('.bz-lib-overlay--11100') as HTMLElement | null;
     expect(shell).not.toBeNull();
+    const mz = parseInt(shell!.style.zIndex, 10);
+    expect(Number.isFinite(mz)).toBe(true);
     const css = readFileSync(resolve(process.cwd(), 'src/library/styles.css'), 'utf8');
-    const zi = (cls: string): number => {
-      const m = css.match(new RegExp(`\\.bz-lib-overlay--${cls}\\s*\\{\\s*z-index:\\s*(\\d+)`));
-      return m ? parseInt(m[1], 10) : -1;
-    };
-    expect(zi('11100')).toBeGreaterThanOrEqual(11100); // 壳：压过遮罩 10999 与抽屉本体 11000
-    expect(zi('11101')).toBeGreaterThan(zi('11100')); // 编辑弹窗档仍压过壳
+    expect(/\.bz-lib-overlay--\d+\s*\{[^}]*z-index:/.test(css)).toBe(false);
     // 旧低档类名不再被读书笔记壳使用
     expect(shell!.className).not.toContain('--1200');
   });

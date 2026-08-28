@@ -13,7 +13,6 @@ import {
   closePathPicker,
   renderPathChips,
   renderPathSettingRow,
-  PATH_PICKER_Z_MASK,
 } from '../../src/core/path-picker';
 import { markSettingSplitRows } from '../../src/core/settings-modal';
 
@@ -55,7 +54,7 @@ afterEach(() => {
 });
 
 describe('openPathPicker 弹窗结构与层级', () => {
-  it('卡片结构：标题头 + 搜索框 + 目录列表 + 底部；无关闭按钮；z-index 11200/11201（companion 档）', async () => {
+  it('卡片结构：标题头 + 搜索框 + 目录列表 + 底部；无关闭按钮；z 动态发号（遮罩在下、本体在上）', async () => {
     makeAppAndSeed(['卡片盒/A.md', '我的/日记/a.md']);
     const popup = await openAndWait({ title: '选择测试目录', mode: 'multi', selected: [], onConfirm: () => {} });
     expect(popup.querySelector('.bz-path-picker-title')!.textContent).toBe('选择测试目录');
@@ -64,8 +63,9 @@ describe('openPathPicker 弹窗结构与层级', () => {
     expect(popup.querySelector('.bz-path-picker-foot')).toBeTruthy();
     // 主窗口规范：无右上角关闭按钮
     expect(popup.querySelector('.bz-win-close')).toBeNull();
-    expect(pickerMask()!.style.zIndex).toBe(String(PATH_PICKER_Z_MASK));
-    expect(popup.style.zIndex).toBe(String(PATH_PICKER_Z_MASK + 1));
+    const mz = parseInt(pickerMask()!.style.zIndex, 10);
+    expect(Number.isFinite(mz)).toBe(true);
+    expect(parseInt(popup.style.zIndex, 10)).toBe(mz + 1);
   });
 
   it('数据源 = vault 全部文件夹：含库根（（库根目录））与排序', async () => {

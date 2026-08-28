@@ -24,7 +24,7 @@ describe('showClipConfirmDialog 剪藏批准弹窗', () => {
         confirmed++;
       },
     });
-    const mask = document.querySelector('div[style*="z-index: 10000"]') as HTMLElement;
+    const mask = document.querySelector('.bz-clip-archive-mask') as HTMLElement;
     return { mask, isConfirmed: () => confirmed };
   }
 

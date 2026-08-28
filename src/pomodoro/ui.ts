@@ -9,6 +9,7 @@ import { Setting } from 'obsidian';
 import type { App } from 'obsidian';
 import { setIcon } from 'obsidian';
 import { escManager } from '../core/esc-manager';
+import { allocZ } from '../core/z-order';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { notice } from '../core/notice';
@@ -501,6 +502,7 @@ function buildDOM(): void {
         <div id="pomodoro-week" class="pomodoro-week"></div>
       </div>
     </div>`;
+  mask.style.zIndex = String(allocZ()); // ADR-0067：创建即显示即发号
   document.body.appendChild(mask);
   maskEl = mask;
   // 点击遮罩本身关闭（弹窗内部点击不关闭）——计时后台继续

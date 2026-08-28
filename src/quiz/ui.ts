@@ -6,6 +6,7 @@ import type { App } from 'obsidian';
 import { notice, notify } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
 import { escManager } from '../core/esc-manager';
+import { allocZ } from '../core/z-order';
 import { getApp } from '../core/app';
 import { QuizManager, loadActiveItems } from './manager';
 import { QuestionGenerator } from './generator';
@@ -178,7 +179,7 @@ export class QuizMasterUI {
     this._teardownModal(); // 只关可能存在的弹窗 DOM（不走 close 的复习结算语义）
     const mask = document.createElement('div');
     mask.id = 'quiz-mask';
-    mask.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:10010;display:flex;align-items:center;justify-content:center;';
+    mask.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;';
     const popup = document.createElement('div');
     popup.id = 'quiz-loading';
     popup.style.cssText = 'background:var(--background-primary);border-radius:12px;padding:30px;max-width:400px;text-align:center;';
@@ -186,6 +187,7 @@ export class QuizMasterUI {
       <div style="font-size:18px;margin-bottom:12px;">⏳ ${message}</div>
       <div class="spinner"></div>
     `;
+    mask.style.zIndex = String(allocZ()); // ADR-0067：一次性弹窗，创建即显示即发号（popup 为 mask 子节点随动）
     mask.appendChild(popup);
     document.body.appendChild(mask);
     escManager.register('quiz-loading', {
@@ -293,9 +295,9 @@ export class QuizMasterUI {
 
     const mask = document.createElement('div');
     mask.id = 'quiz-mask';
-    mask.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:10010;display:flex;align-items:center;justify-content:center;';
+    mask.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;';
     this.mask = mask;
-
+    mask.style.zIndex = String(allocZ()); // ADR-0067：换题重建 DOM，创建即显示即发号（popup 为 mask 子节点随动）
     const popup = document.createElement('div');
     popup.id = 'quiz-popup';
     popup.style.cssText = 'background:var(--background-primary);border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.3);padding:24px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;display:flex;flex-direction:column;position:relative;';

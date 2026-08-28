@@ -4,9 +4,13 @@
  * injectStyles 已随 ticket 60 样式收敛废弃删除（铁律 9：禁运行时注入）。
  */
 import { notice } from './notice';
+import { allocZ, topifyZ } from './z-order';
 
 /** notice(msg, dur)：统一走自绘通知系统（自动语义归类，ticket 25 替代原生 Notice） */
 export { notice };
+
+/** 层级发号（ADR-0067 动态 z-index）：overlay 显示时发号，谁后显示谁在上 */
+export { allocZ, topifyZ };
 
 /** longPress(el, cb, dur, filter)：长按手势（mousedown/touchstart 计时，移动超 10px 取消）
  *  触屏滚动兼容：touchstart 被动监听、不 preventDefault（否则整段列表滚动被禁，memo 归档视图
@@ -139,19 +143,19 @@ export function createIconBtn(
   return b;
 }
 
-/** createOverlay(opts)：{maskId, popupId, zIndex=9999, onMaskClick, width, maxWidth} → {mask, popup} */
+/** createOverlay(opts)：{maskId, popupId, onMaskClick, width, maxWidth} → {mask, popup, topify}
+ *  z-index 动态分配（ADR-0067）：创建时发号一次（创建即显示的场景够用）；
+ *  show/hide 复用的面板每次显示调 topify() 重新发号，保证「谁后显示谁在上」 */
 export function createOverlay(opts: {
   maskId: string;
   popupId: string;
-  zIndex?: number;
   onMaskClick?: () => void;
   width?: string;
   maxWidth?: number;
-}): { mask: HTMLDivElement; popup: HTMLDivElement } {
+}): { mask: HTMLDivElement; popup: HTMLDivElement; topify: () => void } {
   const mask = document.createElement('div');
   mask.id = opts.maskId;
   mask.className = 'bz-overlay-mask';
-  mask.style.zIndex = String(opts.zIndex || 9999);
   mask.style.display = 'none';
   mask.onclick = function (e) {
     if (e.target === mask && typeof opts.onMaskClick === 'function') opts.onMaskClick();
@@ -159,9 +163,9 @@ export function createOverlay(opts: {
   const popup = document.createElement('div');
   popup.id = opts.popupId;
   popup.className = 'bz-overlay-popup';
-  popup.style.zIndex = String((opts.zIndex || 9999) + 1);
   popup.style.display = 'none';
   popup.style.width = opts.width || '90%';
   popup.style.maxWidth = (opts.maxWidth || 400) + 'px';
-  return { mask, popup };
+  topifyZ(mask, popup);
+  return { mask, popup, topify: () => topifyZ(mask, popup) };
 }

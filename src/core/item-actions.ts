@@ -21,6 +21,7 @@
  */
 import { longPress } from './dom';
 import { escManager } from './esc-manager';
+import { allocZ } from './z-order';
 import { isMobileEnv } from './mobile';
 import { setIcon, type IconName } from 'obsidian';
 
@@ -283,6 +284,8 @@ export function openItemMenu(x: number, y: number, actions: ItemAction[], suppre
     });
     m.appendChild(item);
   }
+  // 动态发号（ADR-0067）：每次右键新建，创建即显示
+  m.style.zIndex = String(allocZ());
   document.body.appendChild(m);
   positionMenu(m, x, y);
   m.style.visibility = 'visible';
@@ -384,6 +387,9 @@ export function openItemSheet(actions: ItemAction[], opts?: ItemActionsOptions, 
     body.appendChild(buildSheetItem(a));
   }
   sheet.appendChild(body);
+  // 动态发号（ADR-0067）：遮罩在下、本体在上（每次打开新建，创建即显示）
+  mask.style.zIndex = String(allocZ());
+  sheet.style.zIndex = String(allocZ());
   document.body.appendChild(mask);
   document.body.appendChild(sheet);
   popupEl = sheet;

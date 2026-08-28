@@ -9,7 +9,7 @@ import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { openFlowDialog } from '../core/flow-dialog';
-import { createIconBtn } from '../core/dom';
+import { createIconBtn, topifyZ } from '../core/dom';
 import {
   attachItemActions,
   registerSheetCompanion,
@@ -188,7 +188,7 @@ export class UIManager {
     const mask = document.createElement('div');
     mask.id = id;
     mask.style.cssText =
-      'position:fixed;top:0;left:0;right:0;bottom:0;background:var(--background-modifier-cover);z-index:9998;display:none;';
+      'position:fixed;top:0;left:0;right:0;bottom:0;background:var(--background-modifier-cover);display:none;';
     mask.onclick = () => this.hide();
     return mask;
   }
@@ -197,7 +197,7 @@ export class UIManager {
     const popup = document.createElement('div');
     popup.id = 'pw-popup';
     popup.style.cssText =
-      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--background-primary);border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.2);z-index:9999;width:90%;max-width:700px;max-height:80vh;display:none;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,system-ui,sans-serif;';
+      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--background-primary);border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.2);width:90%;max-width:700px;max-height:80vh;display:none;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,system-ui,sans-serif;';
     return popup;
   }
 
@@ -245,6 +245,7 @@ export class UIManager {
     if (!this._initialized) this.ensureElements();
     // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
     applyMobileWindowFullscreen(this.popup, tryGetSettings().passwordMobileDefaultFullscreen === true);
+    topifyZ(this.mask!, this.popup!); // ADR-0067：显示即发号，谁后显示谁在上
     this.mask!.style.display = 'block';
     this.popup!.style.display = 'flex';
     this.renderList();
@@ -501,7 +502,7 @@ export class UIManager {
     this.addMask = document.createElement('div');
     this.addMask.id = 'pw-add-mask';
     this.addMask.style.cssText =
-      'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);z-index:10001;display:none;';
+      'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);display:none;';
     this.addMask.onclick = (e) => {
       if (e.target === this.addMask) this.closeAddDialog();
     };
@@ -510,7 +511,7 @@ export class UIManager {
     this.addPopup.id = 'pw-add-popup';
     this.addPopup.className = 'pw-add-dialog';
     this.addPopup.style.cssText =
-      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--background-primary);border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.3);z-index:10002;padding:24px;max-width:420px;width:90%;display:none;';
+      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--background-primary);border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.3);padding:24px;max-width:420px;width:90%;display:none;';
 
     const title = document.createElement('h4');
     title.id = 'pw-add-title';
@@ -716,6 +717,7 @@ export class UIManager {
       this._passwordInput.value = pwd;
       this.pendingPassword = null;
     }
+    topifyZ(this.addMask!, this.addPopup!); // ADR-0067：显示即发号
     this.addMask!.style.display = 'block';
     this.addPopup!.style.display = 'block';
     this._platformInput.focus();

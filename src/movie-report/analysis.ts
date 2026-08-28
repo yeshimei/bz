@@ -6,6 +6,7 @@
  */
 import type { App, TFile } from 'obsidian';
 import { escManager } from '../core/esc-manager';
+import { allocZ } from '../core/z-order';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
 import { ALL_TAGS, getGroupForTag, STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED } from '../movie/constants';
@@ -509,7 +510,8 @@ export function openAnalysisModal(app: App): void {
   const data = buildAnalysisData(app);
 
   const overlay = document.createElement('div');
-  overlay.className = 'bz-movie-report-overlay--1200'; // e3：z-index 由根样式 .bz-movie-report-overlay--* 档位类提供（移交 ux-css）
+  overlay.className = 'bz-movie-report-overlay--1200'; // 标识钩子（层级已动态发号 ADR-0067）
+  overlay.style.zIndex = String(allocZ()); // 新建即显示即发号
   overlay.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0,0,0,0.5);

@@ -31,11 +31,10 @@ export class ChatPanel {
     this.store = store;
 
     const CONFIG = buildConfig();
-    // 弹窗外壳：主面板族层级（9998 遮罩 / 9999 本体），与 smartcat 对话弹窗同款先例
+    // 弹窗外壳（z-index 动态发号，ADR-0067），与 smartcat 对话弹窗同款先例
     const { mask, popup } = createOverlay({
       maskId: 'bz-sb-chat-mask',
       popupId: 'bz-sb-chat-panel',
-      zIndex: 9998,
       onMaskClick: () => this.close(),
     });
     this.mask = mask;

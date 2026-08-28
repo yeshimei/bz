@@ -16,10 +16,9 @@
 }
 /* e3 抬档：修饰符名保留旧 z 值作稳定挂类契约（JS 引用不变），实际层级见值；
    筛选档保留 0.3 半透明底（与主面板 0.5 区分用，统一去背景的例外，勿删） */
-.bz-lib-overlay--1000 { z-index: 9997; }
-.bz-lib-overlay--1100 { z-index: 9998; background: rgba(0, 0, 0, 0.3); }
-.bz-lib-overlay--11100 { z-index: 11100; }
-.bz-lib-overlay--11101 { z-index: 11101; }
+/* 层级已动态发号（ADR-0067）：--1000/--1100/--11100/--11101 修饰名仅作标识钩子；
+   筛选档保留 0.3 半透明底（与主面板 0.5 区分用，勿删） */
+.bz-lib-overlay--1100 { background: rgba(0, 0, 0, 0.3); }
 
 .bz-lib-modal {
   background: var(--background-primary);

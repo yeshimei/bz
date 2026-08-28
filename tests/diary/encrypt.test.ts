@@ -28,10 +28,10 @@ async function waitFor(cond: () => boolean, timeout = 8000) {
   }
 }
 
-/** 保险箱解锁弹窗（zIndex 10070、flex 布局，复用 encrypt 测试的查找方式） */
+/** 保险箱解锁弹窗（bz-encrypt-dialog-mask、flex 布局，复用 encrypt 测试的查找方式） */
 function findDialog(): HTMLElement | null {
   return [...document.querySelectorAll('div')].find(
-    (d) => (d as HTMLElement).style.zIndex === '10070' && (d as HTMLElement).style.display === 'flex'
+    (d) => (d as HTMLElement).classList.contains('bz-encrypt-dialog-mask') && (d as HTMLElement).style.display === 'flex'
   ) as HTMLElement | null;
 }
 

@@ -9,7 +9,7 @@ import { notice } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
-import { createSiteIcon } from '../core/dom';
+import { createSiteIcon, topifyZ } from '../core/dom';
 import { formatRelativeTime } from '../core/utils';
 import { tryGetSettings } from '../core/settings-provider';
 import { onDomainEvent } from '../core/domain-bus';
@@ -205,6 +205,7 @@ export function clippingSettingsSchema(): SettingsSchema {
 }
 /** 面板显隐单点：mask + popup 同步切换（模块级引用即当前实例节点） */
 function setArticleViewVisible(visible: boolean): void {
+  if (visible && articleMask && articlePopup) topifyZ(articleMask, articlePopup); // ADR-0067：显示即发号，谁后显示谁在上
   const v = visible ? 'visible' : 'hidden';
   if (articleMask) articleMask.style.visibility = v;
   if (articlePopup) articlePopup.style.visibility = v;
@@ -215,14 +216,14 @@ function createMaskAndPopup() {
   articleMask = document.createElement('div');
   articleMask.id = 'article-view-mask';
   articleMask.style.cssText =
-    'position:fixed;top:0;left:0;right:0;bottom:0;background:var(--background-modifier-cover);z-index:9998;visibility:hidden;';
+    'position:fixed;top:0;left:0;right:0;bottom:0;background:var(--background-modifier-cover);visibility:hidden;';
   articleMask.onclick = () => setArticleViewVisible(false);
 
   // 弹窗
   articlePopup = document.createElement('div');
   articlePopup.id = 'article-view-popup';
   articlePopup.style.cssText =
-    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--background-primary);border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.2);z-index:9999;width:90%;max-width:800px;max-height:80vh;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,system-ui,sans-serif;visibility:hidden;';
+    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--background-primary);border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.2);width:90%;max-width:800px;max-height:80vh;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,system-ui,sans-serif;visibility:hidden;';
 
   // 头部
   const header = createHeader();

@@ -2,6 +2,7 @@
  * 影视 AI 推荐（ticket 14，源码 L1419-1650 逐字移植）
  */
 import type { App } from 'obsidian';
+import { allocZ } from '../core/z-order';
 import { pad2 } from '../core/utils';
 import { notice, notify } from '../core/notice';
 import { createAI } from '../core/ai';
@@ -215,7 +216,8 @@ export function showResultWindow(app: App, title: string, list: any[]): void {
   }
 
   const overlay = document.createElement('div');
-  overlay.className = 'bz-movie-overlay--1300'; // e3：z-index 由根样式 .bz-movie-overlay--* 档位类提供
+  overlay.className = 'bz-movie-overlay--1300'; // 标识钩子（层级已动态发号 ADR-0067）
+  overlay.style.zIndex = String(allocZ()); // 新建即显示即发号
   overlay.style.cssText = `
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center;

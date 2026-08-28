@@ -18,8 +18,8 @@
       .review-tag.overdue { background:#ff4757; color:white; }
       .review-tag.completed { background:#52c41a; color:white; }
       .review-time { font-size:12px; color:var(--text-faint); cursor:pointer; }
-      /* e3 抬档（冻结面授权）：评级弹窗须压过统一抽屉遮罩 10999/本体 11000 → 11102（避开 companion 11100/11101 档，对表 settings-modal.ts z-index 家族） */
-      .difficulty-dialog { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--background-primary); border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.3); padding:24px; z-index:11102; min-width:220px; display:none; }
+      /* 评级弹窗 z 动态发号（ADR-0067）：review showDifficultyDialog 创建时 allocZ */
+      .difficulty-dialog { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--background-primary); border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.3); padding:24px; min-width:220px; display:none; }
       .difficulty-dialog .diff-btn { display:block; width:100%; padding:10px; margin:6px 0; border:none; border-radius:6px; background:var(--background-secondary); cursor:pointer; font-size:14px; text-align:left; }
       .difficulty-dialog .diff-btn:hover { background:var(--interactive-accent); color:var(--text-on-accent); }
       .review-search-input { padding:4px 10px; border-radius:12px; border:1px solid var(--background-modifier-border); background:var(--background-secondary); color:var(--text-normal); font-size:13px; width:150px; outline:none; }

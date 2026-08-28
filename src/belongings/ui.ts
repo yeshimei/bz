@@ -1,6 +1,6 @@
 /**
  * 归物本 UI（归物本.js 逐字移植）
- * 主面板：__gui_wu_ben__（visibility 控制，不销毁）；弹窗 z-index（P0-7 统一抬档，压过抽屉遮罩 10999/抽屉 11000）：add=11100/edit=11100/delete=11101/sort=11100；
+ * 主面板：__gui_wu_ben__（visibility 控制，不销毁，显示即 topifyZ 发号）；弹窗 z-index 动态发号（ADR-0067）：谁后打开谁在上；
  * 统一抽屉（桌面右键/移动长按）：状态流转 + 编辑 + 删除（用户拍板，替换原手写 pointerdown 长按删除/单击编辑）；
  * 刷新：右上角 ⏳ 按钮已移除 → 打开期间监听 belongings.json 变更自动刷新（用户拍板）；
  * MutationObserver 主题变化重渲染。
@@ -8,6 +8,7 @@
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
+import { allocZ, topifyZ } from '../core/z-order';
 import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { tryGetSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen } from '../core/mobile';
@@ -56,11 +57,6 @@ interface FormField {
 
 
 // ----- 模块状态（原脚本全局变量） -----
-/** 域内模态层级档（P0-7）：必须压过抽屉遮罩 10999 / 抽屉本体 11000；
- *  e3 起不再内联 z-index——遮罩/下拉改挂 .bz-belongings-overlay--<档> 类，值由根样式提供（移交 ux-css） */
-const MODAL_Z = 11100;
-/** 模态内 search-select 下拉层级（模态 +1 档） */
-const DROPDOWN_Z = 11101;
 
 let database: BelongingsDatabase | null = null;
 let listContainer: HTMLDivElement | null = null;
@@ -345,8 +341,7 @@ function buildSheetHead(item: BelongingsItem): HTMLElement {
 /** 创建搜索下拉分类（与添加/编辑一致，可复用 helper） */
 function createSearchSelect(
   field: FormField,
-  palette: ModalPalette,
-  zIndex: number = DROPDOWN_Z
+  palette: ModalPalette
 ): HTMLDivElement {
   const { bg, text, border, inputBg, isDark } = palette;
   const searchWrapper = document.createElement('div');
@@ -364,7 +359,8 @@ function createSearchSelect(
   input.autocomplete = 'off';
 
   const dropdown = document.createElement('div');
-  dropdown.className = `bz-belongings-overlay--${zIndex}`; // e3：z-index 由根样式档位类提供（移交 ux-css）
+  dropdown.className = 'bz-belongings-overlay--dropdown'; // 标识钩子（层级已动态发号 ADR-0067）
+  dropdown.style.zIndex = String(allocZ()); // ADR-0067：动态发号（overlay 层叠上下文内最高，压过 modal 兄弟）
   dropdown.style.cssText = `
         position: absolute; top: 100%; left: 0; right: 0;
         background: ${bg}; border: 1px solid ${border};
@@ -523,8 +519,7 @@ function createActionButton(
 function buildForm(
   fields: FormField[],
   palette: ModalPalette,
-  searchSelectInit?: (input: HTMLInputElement, field: FormField) => void,
-  searchSelectZIndex = DROPDOWN_Z
+  searchSelectInit?: (input: HTMLInputElement, field: FormField) => void
 ): { form: HTMLDivElement; inputs: Record<string, any> } {
   const { text, border, inputBg } = palette;
   const form = document.createElement('div');
@@ -542,7 +537,7 @@ function buildForm(
     let input: any;
 
     if (field.type === 'search-select') {
-      const searchWrapper = createSearchSelect(field, palette, searchSelectZIndex);
+      const searchWrapper = createSearchSelect(field, palette);
       const searchInput = searchWrapper.querySelector('input') as HTMLInputElement;
       if (searchSelectInit) searchSelectInit(searchInput, field);
       input = searchInput;
@@ -602,7 +597,7 @@ function buildForm(
 
 
 /** 弹窗公共结构（遮罩/弹窗/色板） */
-function createModalShell(zIndex: number, maxWidth: number, titleText: string): {
+function createModalShell(maxWidth: number, titleText: string): {
   overlay: HTMLDivElement;
   modal: HTMLDivElement;
   palette: ModalPalette;
@@ -615,12 +610,13 @@ function createModalShell(zIndex: number, maxWidth: number, titleText: string): 
   const palette = { bg, text, border, inputBg, isDark };
 
   const overlay = document.createElement('div');
-  overlay.className = `bz-belongings-overlay--${zIndex}`; // e3：z-index 由根样式档位类提供（移交 ux-css）
+  overlay.className = 'bz-belongings-overlay--modal'; // 标识钩子（层级已动态发号 ADR-0067）
   overlay.style.cssText = `
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.5);
       display: flex; align-items: center; justify-content: center;
     `;
+  overlay.style.zIndex = String(allocZ()); // ADR-0067：弹窗每次新建，创建即显示即发号（modal 为子节点随动）
 
   const modal = document.createElement('div');
   modal.style.cssText = `
@@ -660,7 +656,7 @@ function editItemById(id: string): Promise<void> {
   // ----- 创建独立编辑弹窗 -----
   return new Promise((resolve) => {
     // P0-7：抬到 11100 档——companion 编辑弹窗必须压过抽屉遮罩 10999 / 抽屉本体 11000
-    const { overlay, modal, palette } = createModalShell(MODAL_Z, 480, '编辑物品');
+    const { overlay, modal, palette } = createModalShell(480, '编辑物品');
     // 抽屉来源的编辑：注册附属浮层（弹窗内点击不误关抽屉）
     if (sheetEditPending) registerSheetCompanion(overlay);
 
@@ -776,7 +772,7 @@ function deleteItemById(id: string): Promise<void> {
 
   // ----- 创建独立确认弹窗 -----
   return new Promise((resolve) => {
-    const { overlay, modal, palette } = createModalShell(MODAL_Z + 1, 400, '确认删除');
+    const { overlay, modal, palette } = createModalShell(400, '确认删除');
     const { isDark } = palette;
 
     modal.style.maxHeight = 'none';
@@ -852,7 +848,7 @@ function deleteItemById(id: string): Promise<void> {
 // ----- 排序弹窗 -----
 export function showSortModal(): Promise<void> {
   return new Promise((resolve) => {
-    const { overlay, modal, palette } = createModalShell(MODAL_Z, 480, '排序设置');
+    const { overlay, modal, palette } = createModalShell(480, '排序设置');
     const { text, border } = palette;
     modal.style.maxHeight = 'none';
     modal.style.overflow = 'visible';
@@ -942,7 +938,7 @@ export function showSortModal(): Promise<void> {
 /** 添加物品（弹窗） */
 export function addItem(): Promise<void> {
   return new Promise((resolve) => {
-    const { overlay, modal, palette } = createModalShell(MODAL_Z, 480, '添加物品');
+    const { overlay, modal, palette } = createModalShell(480, '添加物品');
 
     const fields: FormField[] = [
       { id: 'name', label: '📝 物品名称', type: 'text', placeholder: '请输入物品名称', required: true },
@@ -953,7 +949,7 @@ export function addItem(): Promise<void> {
       { id: 'description', label: '📋 描述（可选）', type: 'textarea', placeholder: '规格、颜色、购买原因等...' },
     ];
 
-    const { form, inputs } = buildForm(fields, palette, undefined, DROPDOWN_Z);
+    const { form, inputs } = buildForm(fields, palette);
 
     // 按钮容器
     const btnRow = document.createElement('div');
@@ -1085,6 +1081,7 @@ export async function openBelongingsPanel(): Promise<void> {
     const overlayEl = document.getElementById('__gui_wu_ben__') as HTMLElement;
     // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等，对已存在面板同样生效），关=常规卡
     applyMobileWindowFullscreen(overlayEl.firstElementChild as HTMLElement | null, tryGetSettings().belongingsMobileDefaultFullscreen === true);
+    topifyZ(overlayEl); // ADR-0067：显示即发号，谁后显示谁在上（modal 为子节点随动）
     overlayEl.style.visibility = 'visible';
     // 重新加载数据并渲染
     database = await loadDatabase();
@@ -1097,12 +1094,13 @@ export async function openBelongingsPanel(): Promise<void> {
 
   const overlay = document.createElement('div');
   overlay.id = '__gui_wu_ben__';
-  overlay.className = 'bz-belongings-overlay--1000'; // e3：z-index 由根样式档位类提供（移交 ux-css）
+  overlay.className = 'bz-belongings-overlay--main'; // 标识钩子（层级已动态发号 ADR-0067）
   overlay.style.cssText = `
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.5);
       display: flex; align-items: center; justify-content: center;
     `;
+  overlay.style.zIndex = String(allocZ()); // ADR-0067：首建即显示即发号（modal 为子节点随动）
 
   const modal = document.createElement('div');
   modal.style.cssText = `

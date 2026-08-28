@@ -15,6 +15,7 @@
  */
 import type { App, TFile } from 'obsidian';
 import { notice } from '../core/notice';
+import { allocZ } from '../core/z-order';
 import { FloatWindow } from './float-window';
 import { buildConfig } from './config';
 import { getCurrentContext } from './context';
@@ -292,6 +293,7 @@ export class ReferencePanel {
       // 即左上角幽灵卡（不可抓握、无法拖动），任何路径都不得在此状态浮出
       if (!card.isConnected || isFloating()) return;
       card.classList.add('bz-sb-ref-card--float');
+      card.style.zIndex = String(allocZ()); // ADR-0067：浮卡化 = 抬到最上（谁拖谁在上）
       panel.floatingCards.add(card);
       panel.hideHoverPreview();
       cancelHold();
@@ -393,6 +395,7 @@ export class ReferencePanel {
     const isRightSide = refRect.left > window.innerWidth / 2;
     const preview = document.createElement('div');
     preview.className = 'bz-sb-ref-preview';
+    preview.style.zIndex = String(allocZ()); // ADR-0067：hover 预览创建即显示即发号
     // 定位属动态几何内联；其余皮肤走 CSS。宽度与 styles.css .bz-sb-ref-preview 同步（ticket 109：460px）
     const PW = 460;
     let left = isRightSide ? refRect.left - (PW + 8) : refRect.right + 8;
