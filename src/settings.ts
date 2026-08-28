@@ -536,10 +536,10 @@ export const DEFAULT_SETTINGS: BzSettings = {
   smartcatEnabled: true,
   smartcatMobileDefaultFullscreen: false,
 
-  // 小橘行为流设置（P1 数据基座，ticket 123）
-  behaviorMaxDays: 30,
-  /** 行为流最大保留条数（ticket 129：默认 1000→2000——行为流升级全量日志后条目增速上升，2000 条滚动窗口吸收；已有 data.json 值尊重、零迁移） */
-  behaviorMaxCount: 2000,
+  // 小橘行为流设置（P1 数据基座，ticket 123；ADR-0069：全量补齐后扩容 30→60 天 / 2000→10000 条）
+  behaviorMaxDays: 60,
+  /** 行为流最大保留条数（ticket 129：1000→2000；ADR-0069：2000→10000——全域事件补齐后条目增速再升，已有 data.json 值尊重、零迁移） */
+  behaviorMaxCount: 10000,
   showBehaviorLog: true,
   enableAutoLinking: true,
   linkWindowDays: 7,
