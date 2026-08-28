@@ -4,7 +4,7 @@
  * 命令 id 统一 `bz-` 前缀（ADR-0004 修订：2025 用户决策统一品牌前缀），不设置默认快捷键，
  * 卸载时 removeCommand 清理——取代原脚本的 window.__*CommandRegistered 防重标志。
  */
-import { Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { Plugin, PluginSettingTab } from 'obsidian';
 import { notice, cleanupNotices } from './core/notice';
 import { escManager } from './core/esc-manager';
 import { closeItemMenu } from './core/item-actions';
@@ -13,8 +13,8 @@ import { setAISettingsProvider, resetAIProviderCache } from './core/ai';
 import { setSettingsProvider, setSettingsSaver } from './core/settings-provider';
 import { clearDomainEvents } from './core/domain-bus';
 import { attachObsidianAdapter, detachObsidianAdapter } from './core/obsidian-adapter';
-import { markSettingSplitRows } from './core/settings-modal';
-import { renderPathSettingRow } from './core/path-picker';
+import { renderSettingsInto } from './core/settings-schema';
+import { mainSettingsSchema } from './core/settings-main-schema';
 import { setBzSettingsProvider, unloadBz, ensureBz } from './memo';
 
 import BzSettings, { DEFAULT_SETTINGS, migrateSecondBrainSettings } from './settings';
@@ -396,6 +396,8 @@ function ensureSecondBrainOnReady(app: any) {
 }
 
 // ===== 设置页（ADR-0009：单页平铺，只含「🤖 AI」「📂 数据存储路径」两区块）=====
+// ticket 131：两区块 schema 化（ADR-0064 声明式渲染器），原私有 textSetting/toggleSetting/
+// pathSetting helper 退役（text 防抖落盘/onCommit 一次性提示语义收口 core 渲染器）。
 
 export class BzSettingTab extends PluginSettingTab {
   plugin: BzPlugin;
@@ -408,120 +410,8 @@ export class BzSettingTab extends PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    const s = this.plugin.settings;
-    const save = async () => {
-      await this.plugin.saveSettings();
-    };
-
-    // 🤖 AI 区块：服务商下拉 + 动态显示对应 API Key
-    containerEl.createDiv({ cls: 'bz-setting-section-title', text: '🤖 AI' });
-    let deepseekRow: Setting | null = null;
-    let opencodeRow: Setting | null = null;
-    const refreshKeys = () => {
-      const isDeepseek = s.aiProvider === 'deepseek';
-      if (deepseekRow) deepseekRow.settingEl.toggleClass('bz-setting-hidden', !isDeepseek);
-      if (opencodeRow) opencodeRow.settingEl.toggleClass('bz-setting-hidden', isDeepseek);
-    };
-    new Setting(containerEl)
-      .setName('AI 服务商')
-      .setDesc('选择 AI 服务商，切换后显示对应的 API Key 配置')
-      .addDropdown((dd) => {
-        dd.addOption('deepseek', 'DeepSeek');
-        dd.addOption('opencode-go', 'OpenCode Go');
-        dd.setValue(s.aiProvider === 'deepseek' ? 'deepseek' : 'opencode-go');
-        dd.onChange(async (v) => {
-          s.aiProvider = v;
-          refreshKeys();
-          await save();
-        });
-      });
-    deepseekRow = new Setting(containerEl)
-      .setName('DeepSeek API Key')
-      .setDesc('留空则回退读取 QuickAdd data.json 里的 key')
-      .addText((text) =>
-        text
-          .setValue(s.deepseekApiKey)
-          .onChange(async (v) => {
-            s.deepseekApiKey = v;
-            await save();
-          })
-      );
-    opencodeRow = new Setting(containerEl)
-      .setName('OpenCode Go API Key')
-      .setDesc('从 opencode.ai/zen 订阅后获取')
-      .addText((text) =>
-        text
-          .setValue(s.opencodeGoApiKey)
-          .onChange(async (v) => {
-            s.opencodeGoApiKey = v;
-            await save();
-          })
-      );
-    refreshKeys();
-
-    // 📂 数据存储路径区块：共享 storagePath（ADR-0009，JSON 数据文件统一目录）
-    containerEl.createDiv({ cls: 'bz-setting-section-title', text: '📂 数据存储路径' });
-    this.pathSetting(
-      containerEl,
-      '数据存储路径',
-      '所有 JSON 数据文件（备忘录/归物本/密码本/收藏本/复习计划/做题家/第二大脑）的统一存放目录',
-      s.storagePath,
-      save,
-      (v) => (s.storagePath = v),
-      // f1：路径改动防错——仅改路径、文件不迁移，提示自行迁移 + 重载后生效（正文不带 emoji，铁律 7）；
-      // 语义与 textSetting 一致（值有变更才提示、同一设置会话至多一次、改回原值后可再次提示）
-      () => {
-        notice('存储路径已修改：仅改路径，文件不会自动迁移，旧数据需自行迁移；重载插件后生效。', 'warning');
-      }
-    );
-    // 移动端两行式标注（ticket 128）：控件区 ≥2 子元素（选择…按钮 + chips）的设置行挂类
-    markSettingSplitRows(containerEl);
-  }
-
-  // ---- 设置项 helper ----
-  /**
-   * 路径设置行（ticket 128，ADR-0061）：chips + 「选择…」按钮（经 core 统一选择器录入，无手输输入框）。
-   * 落盘/提示语义沿用原 textSetting（f1）：确认即落盘；值相对初始值有变更才触发 onCommit 提示，
-   * 同一次设置会话至多一次，改回原值后复位可再次提示（无防抖必要——选择器为离散确认，非逐步输入）。
-   */
-  private pathSetting(
-    containerEl: HTMLElement,
-    name: string,
-    desc: string,
-    value: string,
-    onSave: () => Promise<void>,
-    apply: (v: string) => void,
-    onCommit?: () => void
-  ): void {
-    let warned = false;
-    renderPathSettingRow({
-      parent: containerEl,
-      name,
-      desc,
-      mode: 'single',
-      value,
-      onChange: (list) => {
-        const v = (list[0] || '').trim().replace(/^\/+|\/+$/g, '');
-        apply(v);
-        void onSave();
-        if (v !== value) {
-          if (!warned) {
-            warned = true;
-            onCommit?.();
-          }
-        } else {
-          warned = false;
-        }
-      },
-    });
-  }
-
-  private toggleSetting(containerEl: HTMLElement, name: string, desc: string, value: boolean, onSave: () => Promise<void>, apply: (v: boolean) => void): Setting {
-    return new Setting(containerEl).setName(name).setDesc(desc).addToggle((toggle) =>
-      toggle.setValue(value).onChange(async (v) => {
-        apply(v);
-        await onSave();
-      })
-    );
+    // AI 服务商切换 → 密钥行显隐走 visibleWhen；存储路径 onCommit warning 文案逐字保留
+    // （schema 定义见 core/settings-main-schema.ts）；渲染器统一完成徽标/两行式标注/初始显隐
+    renderSettingsInto(containerEl, mainSettingsSchema());
   }
 }
