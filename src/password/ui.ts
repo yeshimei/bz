@@ -5,7 +5,6 @@
  * 主密码流程：首次设置（再次输入确认）→ 解锁 → 加密驱动（showPasswordDialog）。
  * 统一抽屉（桌面右键/移动长按）：复制账号/复制密码/编辑/删除；卡片保留平台链接点击与 👁 显隐（用户拍板）。
  */
-import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
@@ -19,9 +18,11 @@ import {
   type ItemAction,
 } from '../core/item-actions';
 import { formatRelativeTime } from '../core/utils';
-import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
-import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
-import { createSettingsGroup, openSettingsModal } from '../core/settings-modal';
+import { tryGetSettings } from '../core/settings-provider';
+import { applyMobileWindowFullscreen } from '../core/mobile';
+import { openSettingsModal } from '../core/settings-modal';
+import { mobileFullscreenGroup } from '../core/settings-common';
+import type { SettingsSchema } from '../core/settings-schema';
 import { ensureSafeUnlocked } from '../encrypt';
 import { DataManager, type PasswordEntry } from './data';
 
@@ -82,6 +83,30 @@ export function copySensitiveText(text: string): Promise<void> {
   } catch (e) {
     return Promise.reject(e);
   }
+}
+
+/** 密码本设置 schema（ticket 131 声明式；启动快照语义——改动需重载生效，首次改动提示一次 ticket 55）
+ *  置于模块顶层供文案 lint 直接引用。 */
+export function passwordSettingsSchema(): SettingsSchema {
+  let reloadWarned = false;
+  const warnReload = () => {
+    if (!reloadWarned) {
+      reloadWarned = true;
+      notice('密码本设置已保存，重载插件后生效', 'info');
+    }
+  };
+  return {
+    groups: [
+      { icon: 'key-round', name: '生成', rows: [
+        { type: 'text', name: '密码生成字符集', desc: '随机生成密码时使用的字符集', binding: { key: 'passwordCharset' }, onCommit: warnReload },
+        { type: 'text', name: '密码生成长度', desc: '随机生成密码的字符个数', binding: { key: 'passwordLength' }, onCommit: warnReload },
+      ]},
+      { icon: 'shield', name: '安全', rows: [
+        { type: 'toggle', name: '安全模式', desc: '关闭密码本窗口时立即上锁，保险箱同步锁定', binding: { key: 'securityMode' }, onChange: warnReload },
+      ]},
+      mobileFullscreenGroup('passwordMobileDefaultFullscreen'),
+    ],
+  };
 }
 
 export class UIManager {
@@ -201,69 +226,7 @@ export class UIManager {
     });
     // 密码本设置弹窗（ADR-0009 域设置弹窗；分组卡片重设计）
     const settingsBtn = createIconBtn('⚙️', '密码本设置', () => {
-      // 以下配置项均为启动快照（控制器构造时读取），改动需重载插件后生效——首次改动即提示一次（ticket 55）
-      let reloadWarned = false;
-      const warnReload = () => {
-        if (!reloadWarned) {
-          reloadWarned = true;
-          notice('密码本设置已保存，重载插件后生效', 'info');
-        }
-      };
-      openSettingsModal({
-        title: '密码本设置',
-        maxWidth: 560,
-        build: (el) => {
-          const s = getSettings();
-          // ===== 生成组：字符集 + 长度 =====
-          const genGroup = createSettingsGroup(el, { icon: 'key-round', name: '生成' });
-          new Setting(genGroup)
-            .setName('密码生成字符集')
-            .setDesc('随机生成密码时使用的字符集')
-            .addText((text) =>
-              text.setValue(s.passwordCharset || '').onChange(async (v) => {
-                s.passwordCharset = v;
-                await saveSettings();
-                warnReload();
-              })
-            );
-          new Setting(genGroup)
-            .setName('密码生成长度')
-            .setDesc('随机生成密码的字符个数')
-            .addText((text) =>
-              text.setValue(s.passwordLength || '').onChange(async (v) => {
-                s.passwordLength = v;
-                await saveSettings();
-                warnReload();
-              })
-            );
-          // ===== 安全组 =====
-          const secureGroup = createSettingsGroup(el, { icon: 'shield', name: '安全' });
-          new Setting(secureGroup)
-            .setName('安全模式')
-            .setDesc('关闭密码本窗口时立即上锁，保险箱同步锁定')
-            .addToggle((toggle) =>
-              toggle.setValue(!!s.securityMode).onChange(async (v) => {
-                s.securityMode = v;
-                await saveSettings();
-                warnReload();
-              })
-            );
-          // ===== 移动端组（仅移动端显示） =====
-          if (isMobileEnv()) {
-            const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
-            new Setting(mobileGroup)
-              .setName('移动端默认全屏')
-              .setDesc('移动端打开主窗口时默认全屏，关闭则显示常规卡片')
-              .addToggle((toggle) =>
-                toggle.setValue(!!s.passwordMobileDefaultFullscreen).onChange(async (v) => {
-                  s.passwordMobileDefaultFullscreen = v;
-                  await saveSettings();
-                  warnReload();
-                })
-              );
-          }
-        },
-      });
+      openSettingsModal({ title: '密码本设置', maxWidth: 560, schema: passwordSettingsSchema() });
     });
     const closeBtn = createIconBtn('❌', '关闭', () => this.hide());
 

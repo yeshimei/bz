@@ -5,7 +5,6 @@
  * 视觉样式已收敛至 styles.css（ticket 57），此处仅保留功能性内联样式（显隐/高度计算）。
  */
 import moment from 'moment';
-import { Setting } from 'obsidian';
 import { notice, notify } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
@@ -13,8 +12,10 @@ import { openFlowDialog } from '../core/flow-dialog';
 import { createSiteIcon } from '../core/dom';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
-import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
-import { openSettingsModal, createSettingsGroup } from '../core/settings-modal';
+import { applyMobileWindowFullscreen } from '../core/mobile';
+import { openSettingsModal } from '../core/settings-modal';
+import { mobileFullscreenGroup } from '../core/settings-common';
+import type { SettingsSchema } from '../core/settings-schema';
 import {
   formatRelativeTime,
   extractUrlAndDisplay,
@@ -113,35 +114,44 @@ function attachSuggestion<T>(
   document.addEventListener('click', onDocClick);
 }
 
-// ---------- 设置弹窗（ADR-0009 域设置弹窗，分组卡片，10 项 5 组） ----------
+// ---------- 设置弹窗（ADR-0009 域设置弹窗；ticket 131 声明式 schema，5 组 10 项形态保持） ----------
 
-/** 设置项辅助：toggle / textArea / dropdown 三类，写回设置并保存，支持副作用 */
-function settingToggle(el: HTMLElement, name: string, desc: string, get: boolean, key: keyof any, after?: () => void) {
-  new Setting(el).setName(name).setDesc(desc).addToggle((toggle) =>
-    toggle.setValue(get).onChange(async (v) => {
-      (getSettings() as any)[key] = v;
-      await saveSettings();
-      after?.();
-    })
-  );
+/** 场景/平台映射变更后即时生效：重建 DataManager 与添加弹窗场景按钮 */
+function memoReloadScenes() {
+  DataManager.init(getSettings());
+  if (UIManager.addMask && document.body.contains(UIManager.addMask)) {
+    UIManager.addMask.remove();
+    if (UIManager.addPopup) UIManager.addPopup.remove();
+    UIManager.addMask = null;
+    UIManager.addPopup = null;
+    UIManager.createAddDialog();
+  }
 }
-function settingTextArea(el: HTMLElement, name: string, desc: string, placeholder: string, get: string, key: keyof any, after?: () => void) {
-  new Setting(el).setName(name).setDesc(desc).addTextArea((text) =>
-    text.setPlaceholder(placeholder).setValue(get).onChange(async (v) => {
-      (getSettings() as any)[key] = v;
-      await saveSettings();
-      after?.();
-    })
-  );
-}
-function settingDropdown(el: HTMLElement, name: string, desc: string, options: [string, string][], get: string, key: keyof any) {
-  new Setting(el).setName(name).setDesc(desc).addDropdown((dd) => {
-    for (const [v, label] of options) dd.addOption(v, label);
-    dd.setValue(get).onChange(async (v) => {
-      (getSettings() as any)[key] = v;
-      await saveSettings();
-    });
-  });
+
+/** 备忘录设置 schema（ticket 131 声明式；openNoteReminder/memoAutoArchive「非 false 即开」走外部绑定） */
+export function memoSettingsSchema(): SettingsSchema {
+  return {
+    groups: [
+      { icon: 'bell', name: '提醒', rows: [
+        { type: 'toggle', name: '启动时自动弹出', desc: '启动时若有重要或到期未完成的备忘录，自动打开面板提醒', binding: { key: 'autoPopupOnStart' } },
+        { type: 'toggle', name: '打开笔记自动提醒', desc: '打开笔记时若笔记有重要或到期的未完成备忘录，自动弹出面板', binding: { get: () => getSettings().openNoteReminder !== false, set: (v) => { (getSettings() as any).openNoteReminder = v; }, save: () => saveSettings() } },
+      ]},
+      { icon: 'eye', name: '显示', rows: [
+        { type: 'select', name: '默认排序方式', desc: '面板条目按所选规则排序', binding: { key: 'memoSortMode' }, options: [{ value: 'priority', label: '紧急优先' }, { value: 'due', label: '仅按到期时间' }, { value: 'created', label: '按创建时间' }] },
+        { type: 'toggle', name: '默认显示归档', desc: '打开面板时同时显示已归档条目', binding: { key: 'memoShowArchivedByDefault' } },
+        { type: 'select', name: '到期时间格式', desc: '到期时间按相对或绝对格式显示', binding: { key: 'memoDueFormat' }, options: [{ value: 'relative', label: '相对' }, { value: 'absolute', label: '绝对' }] },
+      ]},
+      { icon: 'pencil-line', name: '新建', rows: [
+        { type: 'select', name: '新条目默认优先级', desc: '新建备忘录时默认选中的优先级', binding: { key: 'memoDefaultPriority' }, options: [{ value: 'minor', label: '次要' }, { value: 'important', label: '重要' }] },
+        { type: 'select', name: '新条目默认场景', desc: '新建备忘录时默认选用的场景', binding: { key: 'memoDefaultScene' }, options: [{ value: '', label: '第一个场景' }, ...DataManager.getScenarios().map((sc) => ({ value: sc, label: sc }))] },
+        { type: 'toggle', name: '完成后自动归档', desc: '勾选完成后条目移入归档，关闭则留在主列表并划线显示', binding: { get: () => getSettings().memoAutoArchive !== false, set: (v) => { (getSettings() as any).memoAutoArchive = v; }, save: () => saveSettings() } },
+      ]},
+      { icon: 'tags', name: '场景列表', rows: [
+        { type: 'textarea', name: '自定义场景列表', desc: '场景名用逗号分隔，留空使用默认场景', placeholder: '剪藏,工作,学习,生活,代码,公开课', binding: { key: 'memoScenarios' }, onCommit: memoReloadScenes },
+      ]},
+      mobileFullscreenGroup('memoMobileDefaultFullscreen'),
+    ],
+  };
 }
 
 /** 添加弹窗共享元素上下文（createAddDialog 拆分传递） */
@@ -196,56 +206,7 @@ export const UIManager = {
     this.entriesContainer = this.popup.querySelector('#todo-entries-container');
     const settingsBtn = this.popup.querySelector('.todo-btn-settings');
     settingsBtn!.onclick = () => {
-      const s = getSettings();
-      // 场景/平台映射变更后即时生效：重建 DataManager 与添加弹窗场景按钮
-      const reloadScenes = () => {
-        DataManager.init(s);
-        if (UIManager.addMask && document.body.contains(UIManager.addMask)) {
-          UIManager.addMask.remove();
-          if (UIManager.addPopup) UIManager.addPopup.remove();
-          UIManager.addMask = null;
-          UIManager.addPopup = null;
-          UIManager.createAddDialog();
-        }
-      };
-
-      openSettingsModal({
-        title: '备忘录设置',
-        maxWidth: 560,
-        build: (el) => {
-          // ===== 提醒组 =====
-          const remindGroup = createSettingsGroup(el, { icon: 'bell', name: '提醒' });
-          settingToggle(remindGroup, '启动时自动弹出', '启动时若有重要或到期未完成的备忘录，自动打开面板提醒', s.autoPopupOnStart, 'autoPopupOnStart');
-          settingToggle(remindGroup, '打开笔记自动提醒', '打开笔记时若笔记有重要或到期的未完成备忘录，自动弹出面板', s.openNoteReminder !== false, 'openNoteReminder');
-
-          // ===== 显示组 =====
-          const viewGroup = createSettingsGroup(el, { icon: 'eye', name: '显示' });
-          settingDropdown(viewGroup, '默认排序方式', '面板条目按所选规则排序', [['priority', '紧急优先'], ['due', '仅按到期时间'], ['created', '按创建时间']], s.memoSortMode || 'priority', 'memoSortMode');
-          settingToggle(viewGroup, '默认显示归档', '打开面板时同时显示已归档条目', !!s.memoShowArchivedByDefault, 'memoShowArchivedByDefault');
-          settingDropdown(viewGroup, '到期时间格式', '到期时间按相对或绝对格式显示', [['relative', '相对'], ['absolute', '绝对']], s.memoDueFormat || 'relative', 'memoDueFormat');
-
-          // ===== 新建组 =====
-          const createGroup = createSettingsGroup(el, { icon: 'pencil-line', name: '新建' });
-          settingDropdown(createGroup, '新条目默认优先级', '新建备忘录时默认选中的优先级', [['minor', '次要'], ['important', '重要']], s.memoDefaultPriority || 'minor', 'memoDefaultPriority');
-          settingDropdown(createGroup, '新条目默认场景', '新建备忘录时默认选用的场景', [['', '第一个场景'], ...DataManager.getScenarios().map((sc) => [sc, sc] as [string, string])], s.memoDefaultScene || '', 'memoDefaultScene');
-          settingToggle(createGroup, '完成后自动归档', '勾选完成后条目移入归档，关闭则留在主列表并划线显示', s.memoAutoArchive !== false, 'memoAutoArchive');
-
-          // ===== 场景列表组 =====
-          const sceneGroup = createSettingsGroup(el, { icon: 'tags', name: '场景列表' });
-          settingTextArea(sceneGroup, '自定义场景列表', '场景名用逗号分隔，留空使用默认场景', '剪藏,工作,学习,生活,代码,公开课', s.memoScenarios || '', 'memoScenarios', reloadScenes);
-
-          // ===== 移动端组（仅移动端显示） =====
-          if (isMobileEnv()) {
-            const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
-            new Setting(mobileGroup)
-              .setName('移动端默认全屏')
-              .setDesc('移动端打开主窗口时默认全屏，关闭则显示常规卡片')
-              .addToggle((toggle) =>
-                toggle.setValue(!!s.memoMobileDefaultFullscreen).onChange(async (v) => { s.memoMobileDefaultFullscreen = v; await saveSettings(); })
-              );
-          }
-        },
-      });
+      openSettingsModal({ title: '备忘录设置', maxWidth: 560, schema: memoSettingsSchema() });
     };
     const addBtn = this.popup.querySelector('.todo-btn-add');
     addBtn!.onclick = () => this.showAddDialog(null);
