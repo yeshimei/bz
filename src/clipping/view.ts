@@ -7,7 +7,7 @@
  */
 import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
-import { confirm } from '../core/confirm';
+import { openFlowDialog } from '../core/flow-dialog';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { createSiteIcon } from '../core/dom';
@@ -795,16 +795,17 @@ function createArticleCard(article: ArticleEntry): HTMLElement {
 }
 
 // ========== 删除确认 ==========
-/** 删除确认统一走 core/confirm（ticket 52）：与书库 EPUB 删除同一套自绘确认，保留「此操作不可撤销」说明 */
+/** 删除确认统一走 core/flow-dialog（ticket 52 + 131）：与书库 EPUB 删除同一套自绘确认，保留「此操作不可撤销」说明 */
 function showDeleteConfirm(article: ArticleEntry, card: HTMLElement | null) {
-  confirm({
+  void openFlowDialog({
     title: '确认删除',
     message: `确定要删除文章「${article.title}」吗？\n此操作不可撤销。`,
-    confirmText: '删除',
-    cancelText: '取消',
-    onConfirm: () => {
-      void deleteArticle(article, card);
-    },
+    actions: [
+      { label: '取消', value: 'cancel' },
+      { label: '删除', value: 'ok', cta: true },
+    ],
+  }).then((v) => {
+    if (v === 'ok') void deleteArticle(article, card);
   });
 }
 

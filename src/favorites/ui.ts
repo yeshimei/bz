@@ -5,7 +5,7 @@ import moment from 'moment';
 import { Setting } from 'obsidian';
 import { notice, notify } from '../core/notice';
 import { createIconBtn } from '../core/dom';
-import { confirm } from '../core/confirm';
+import { openFlowDialog } from '../core/flow-dialog';
 import { escManager } from '../core/esc-manager';
 import {
   attachItemActions,
@@ -548,15 +548,20 @@ export class UIManager {
         sub: item.created || undefined,
         title: '删除收藏',
         onClick: () => {
-          confirm({
+          void openFlowDialog({
             title: '删除确认',
             message: '确定删除收藏 "' + item.title + '" 吗？',
-            onConfirm: () => {
+            actions: [
+              { label: '取消', value: 'cancel' },
+              { label: '确定', value: 'ok', cta: true },
+            ],
+          }).then((v) => {
+            if (v === 'ok') {
               void (async () => {
                 await this._deleteItem(item.id);
                 closeItemMenu();
               })();
-            },
+            }
           });
         },
       });

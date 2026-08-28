@@ -4,7 +4,7 @@
  */
 import type { App } from 'obsidian';
 import { notice, notify } from '../core/notice';
-import { confirm } from '../core/confirm';
+import { openFlowDialog } from '../core/flow-dialog';
 import { escManager } from '../core/esc-manager';
 import { getApp } from '../core/app';
 import { QuizManager, loadActiveItems } from './manager';
@@ -534,12 +534,15 @@ export class QuizMasterUI {
       proceed();
       return;
     }
-    confirm({
+    void openFlowDialog({
       title: '放弃本次做题？',
       message: '未完成的题目将丢弃，本次复习将按已答题目结算评级',
-      confirmText: '放弃',
-      cancelText: '继续做题',
-      onConfirm: proceed,
+      actions: [
+        { label: '继续做题', value: 'cancel' },
+        { label: '放弃', value: 'ok', cta: true },
+      ],
+    }).then((v) => {
+      if (v === 'ok') proceed();
     });
   }
 
