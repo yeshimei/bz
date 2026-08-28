@@ -1,0 +1,331 @@
+/**
+ * 统一路径选择器 UI 层测试（ticket 128，ADR-0061）：弹窗结构/单选高亮提交/多选勾选清空/
+ * 搜索过滤（含恰好相等显示全量）/库根目录/遮罩与 ESC 取消/已选 chips ✕ 移除/设置行助手
+ * （按钮 + 控件区内 chips）/移动端两行式挂类（markSettingSplitRows）。jsdom 环境。
+ */
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { MockVault, mockAppWithVault } from '../mock-vault';
+import { resetObsidianMocks, Setting } from '../mock-obsidian-entry';
+import { setApp } from '../../src/core/app';
+import {
+  openPathPicker,
+  closePathPicker,
+  renderPathChips,
+  renderPathSettingRow,
+  PATH_PICKER_Z_MASK,
+} from '../../src/core/path-picker';
+import { markSettingSplitRows } from '../../src/core/settings-modal';
+
+function makeAppAndSeed(files: string[]): any {
+  const vault = new MockVault();
+  for (const f of files) void vault.create(f, 'x');
+  const app = mockAppWithVault(vault) as any;
+  setApp(app as any);
+  return app;
+}
+
+async function openAndWait(opts: Parameters<typeof openPathPicker>[0]) {
+  openPathPicker(opts);
+  const popup = document.getElementById('bz-path-picker-popup')!;
+  expect(popup).toBeTruthy();
+  // 目录聚合为异步（adapter 递归），等列表行就绪
+  await vi.waitFor(() =>
+    expect(popup.querySelectorAll('.bz-path-picker-row').length).toBeGreaterThan(0)
+  );
+  return popup;
+}
+
+function pickerMask(): HTMLElement | null {
+  return document.getElementById('bz-path-picker-mask');
+}
+
+const ROW_SEL = '.bz-path-picker-row';
+
+beforeEach(() => {
+  resetObsidianMocks();
+  closePathPicker();
+  document.body.innerHTML = '';
+});
+
+afterEach(() => {
+  closePathPicker();
+});
+
+describe('openPathPicker 弹窗结构与层级', () => {
+  it('卡片结构：标题头 + 搜索框 + 目录列表 + 底部；无关闭按钮；z-index 11200/11201（companion 档）', async () => {
+    makeAppAndSeed(['卡片盒/A.md', '我的/日记/a.md']);
+    const popup = await openAndWait({ title: '选择测试目录', mode: 'multi', selected: [], onConfirm: () => {} });
+    expect(popup.querySelector('.bz-path-picker-title')!.textContent).toBe('选择测试目录');
+    expect(popup.querySelector('.bz-path-picker-search')).toBeTruthy();
+    expect(popup.querySelectorAll(ROW_SEL).length).toBeGreaterThan(0);
+    expect(popup.querySelector('.bz-path-picker-foot')).toBeTruthy();
+    // 主窗口规范：无右上角关闭按钮
+    expect(popup.querySelector('.bz-win-close')).toBeNull();
+    expect(pickerMask()!.style.zIndex).toBe(String(PATH_PICKER_Z_MASK));
+    expect(popup.style.zIndex).toBe(String(PATH_PICKER_Z_MASK + 1));
+  });
+
+  it('数据源 = vault 全部文件夹：含库根（（库根目录））与排序', async () => {
+    makeAppAndSeed(['卡片盒/A.md', '我的/日记/a.md', '归档/b.md']);
+    const popup = await openAndWait({ mode: 'multi', selected: [], onConfirm: () => {} });
+    const names = [...popup.querySelectorAll(`${ROW_SEL} .bz-path-picker-name`)].map((el) => el.textContent);
+    expect(names[0]).toBe('（库根目录）');
+    expect(names).toContain('卡片盒');
+    expect(names).toContain('我的');
+    expect(names).toContain('我的/日记');
+    expect(names).toContain('归档');
+  });
+});
+
+describe('单选：点选高亮 + 确定提交；初始已选高亮', () => {
+  it('点选行高亮，确定回调 [path]；再点另一行替换选择', async () => {
+    makeAppAndSeed(['卡片盒/A.md', '我的/日记/a.md']);
+    let picked: string[] | null = null;
+    const popup = await openAndWait({ mode: 'single', selected: [], onConfirm: (l) => (picked = l) });
+    const rowOf = (path: string) =>
+      [...popup.querySelectorAll<HTMLElement>(ROW_SEL)].find((r) => r.dataset.path === path)!;
+    rowOf('卡片盒').click();
+    // 点击后列表重绘，重新取值断言高亮
+    expect(rowOf('卡片盒').classList.contains('bz-path-picker-row--sel')).toBe(true);
+    // 点另一行 → 高亮替换（单选）
+    rowOf('我的').click();
+    expect(rowOf('卡片盒').classList.contains('bz-path-picker-row--sel')).toBe(false);
+    expect(rowOf('我的').classList.contains('bz-path-picker-row--sel')).toBe(true);
+    (popup.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).click();
+    expect(picked).toEqual(['我的']);
+    expect(pickerMask()).toBeNull();
+  });
+
+  it('初始 selected 高亮 + selinfo 显示已选项', async () => {
+    makeAppAndSeed(['卡片盒/A.md']);
+    const popup = await openAndWait({ mode: 'single', selected: ['卡片盒'], onConfirm: () => {} });
+    expect(popup.querySelector('.bz-path-picker-selinfo')!.textContent).toContain('卡片盒');
+    const row = [...popup.querySelectorAll<HTMLElement>(ROW_SEL)].find((r) => r.dataset.path === '卡片盒')!;
+    expect(row.classList.contains('bz-path-picker-row--sel')).toBe(true);
+  });
+
+  it('库根目录可选：点（库根目录）确定 → [""]（附件搬移根目录语义）', async () => {
+    makeAppAndSeed(['a.md']);
+    let picked: string[] | null = null;
+    const popup = await openAndWait({ mode: 'single', selected: [], onConfirm: (l) => (picked = l) });
+    const rootRow = [...popup.querySelectorAll<HTMLElement>(ROW_SEL)].find((r) => r.dataset.path === '')!;
+    expect(rootRow.querySelector('.bz-path-picker-name')!.textContent).toBe('（库根目录）');
+    rootRow.click();
+    (popup.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).click();
+    expect(picked).toEqual(['']);
+  });
+
+  it('不点选直接确定 → []（未选择）', async () => {
+    makeAppAndSeed(['卡片盒/A.md']);
+    let picked: string[] | null = null;
+    const popup = await openAndWait({ mode: 'single', selected: [], onConfirm: (l) => (picked = l) });
+    expect(popup.querySelector('.bz-path-picker-selinfo')!.textContent).toBe('未选择');
+    (popup.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).click();
+    expect(picked).toEqual([]);
+  });
+});
+
+describe('多选：勾选累加 + 清空 + 全量回调', () => {
+  it('点击切换勾选；selinfo 计数；确定回调全量，顺序 = 点击顺序', async () => {
+    makeAppAndSeed(['卡片盒/A.md', '我的/日记/a.md']);
+    let picked: string[] | null = null;
+    const popup = await openAndWait({ mode: 'multi', selected: [], onConfirm: (l) => (picked = l) });
+    const clickRow = (path: string) => {
+      const r = [...popup.querySelectorAll<HTMLElement>(ROW_SEL)].find((x) => x.dataset.path === path)!;
+      r.click();
+    };
+    clickRow('我的');
+    clickRow('卡片盒');
+    expect(popup.querySelector('.bz-path-picker-selinfo')!.textContent).toBe('已选 2 项');
+    // 再点取消
+    clickRow('我的');
+    expect(popup.querySelector('.bz-path-picker-selinfo')!.textContent).toBe('已选 1 项');
+    clickRow('我的');
+    (popup.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).click();
+    // 多选 Set 按点击次序迭代：卡片盒先入集，我的 移除后重加落尾
+    expect(picked).toEqual(['卡片盒', '我的']);
+  });
+
+  it('清空按钮（仅多选）清空选择 → 确定回调 []', async () => {
+    makeAppAndSeed(['卡片盒/A.md', '我的/日记/a.md']);
+    let picked: string[] | null = null;
+    const popup = await openAndWait({ mode: 'multi', selected: ['卡片盒'], onConfirm: (l) => (picked = l) });
+    const clearBtn = [...popup.querySelectorAll('.bz-path-picker-btn')].find((b) => b.textContent === '清空') as HTMLElement;
+    expect(clearBtn).toBeTruthy();
+    clearBtn.click();
+    expect(popup.querySelector('.bz-path-picker-selinfo')!.textContent).toBe('已选 0 项');
+    (popup.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).click();
+    expect(picked).toEqual([]);
+  });
+
+  it('单选模式无清空按钮', async () => {
+    makeAppAndSeed(['卡片盒/A.md']);
+    const popup = await openAndWait({ mode: 'single', selected: [], onConfirm: () => {} });
+    expect([...popup.querySelectorAll('.bz-path-picker-btn')].some((b) => b.textContent === '清空')).toBe(false);
+  });
+});
+
+describe('搜索即时过滤（包含匹配；恰好相等显示全量）', () => {
+  it('输入过滤只留包含匹配行；输入恰好等于某目录时例外显示全量', async () => {
+    makeAppAndSeed(['卡片盒/A.md', '我的/日记/a.md', '归档/b.md']);
+    const popup = await openAndWait({ mode: 'multi', selected: [], onConfirm: () => {} });
+    const search = popup.querySelector('.bz-path-picker-search') as HTMLInputElement;
+    const visible = () =>
+      [...popup.querySelectorAll<HTMLElement>(ROW_SEL)].map((r) => r.dataset.path);
+    // 部分命中（非恰好相等）：只留包含匹配行
+    search.value = '档';
+    search.dispatchEvent(new Event('input'));
+    expect(visible()).toEqual(['归档']);
+    search.value = '卡';
+    search.dispatchEvent(new Event('input'));
+    expect(visible()).toEqual(['卡片盒']);
+    // 恰好等于某目录（'我的'）→ 显示完整列表
+    search.value = '我的';
+    search.dispatchEvent(new Event('input'));
+    expect(visible()).toEqual(['', '卡片盒', '归档', '我的', '我的/日记']);
+    // 清空恢复全量
+    search.value = '';
+    search.dispatchEvent(new Event('input'));
+    expect(visible()).toContain('归档');
+  });
+
+  it('输入恰好等于某目录 → 显示完整列表（预填/精确命中不把列表滤掉）', async () => {
+    makeAppAndSeed(['卡片盒/A.md', '我的/日记/a.md', '归档/b.md']);
+    const popup = await openAndWait({ mode: 'multi', selected: ['我的'], onConfirm: () => {} });
+    const search = popup.querySelector('.bz-path-picker-search') as HTMLInputElement;
+    search.value = '我的';
+    search.dispatchEvent(new Event('input'));
+    // 完整列表（UTF-16 码元排序：卡片盒 0x5361 < 归档 0x5F52 < 我的 0x6211）
+    const visible = [...popup.querySelectorAll<HTMLElement>(ROW_SEL)].map((r) => r.dataset.path);
+    expect(visible).toEqual(['', '卡片盒', '归档', '我的', '我的/日记']);
+  });
+
+  it('无匹配 → 空态「没有匹配的目录」', async () => {
+    makeAppAndSeed(['卡片盒/A.md']);
+    const popup = await openAndWait({ mode: 'multi', selected: [], onConfirm: () => {} });
+    const search = popup.querySelector('.bz-path-picker-search') as HTMLInputElement;
+    search.value = '不存在的目录xyz';
+    search.dispatchEvent(new Event('input'));
+    expect(popup.querySelector('.bz-path-picker-row')).toBeNull();
+    expect(popup.querySelector('.bz-path-picker-empty')!.textContent).toBe('没有匹配的目录');
+  });
+});
+
+describe('取消语义：遮罩点击 / ESC 关闭且不回调', () => {
+  it('遮罩点击关闭，onConfirm 不被调用；二次打开幂等（旧弹窗先关）', async () => {
+    makeAppAndSeed(['卡片盒/A.md']);
+    const onConfirm = vi.fn();
+    await openAndWait({ mode: 'single', selected: [], onConfirm });
+    pickerMask()!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(pickerMask()).toBeNull();
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it('ESC 关闭且不回调（esc-manager 层级）', async () => {
+    makeAppAndSeed(['卡片盒/A.md']);
+    const onConfirm = vi.fn();
+    await openAndWait({ mode: 'single', selected: [], onConfirm });
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(pickerMask()).toBeNull();
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+});
+
+describe('renderPathChips：已选 chips 渲染与 ✕ 移除', () => {
+  it('渲染逐条 chips（✕ 带 aria-label）；空列表显示空态', () => {
+    const wrap = document.createElement('div');
+    const onChange = vi.fn();
+    renderPathChips(wrap, ['卡片盒', '我的'], onChange);
+    const chips = [...wrap.querySelectorAll('.bz-path-picker-chip')];
+    expect(chips.map((c) => c.querySelector('.bz-path-picker-chip-name')!.textContent)).toEqual(['卡片盒', '我的']);
+    (chips[0].querySelector('.bz-path-picker-chip-x') as HTMLButtonElement).click();
+    expect(onChange).toHaveBeenCalledWith(['我的']);
+
+    renderPathChips(wrap, [], onChange);
+    expect(wrap.querySelector('.bz-path-picker-chips-empty')).toBeTruthy();
+  });
+});
+
+describe('renderPathSettingRow：设置行助手（chips + 选择按钮，无手输输入框）', () => {
+  it('单值行：chips 展示当前值；点按钮开选择器，确定后 onChange 回传并刷新 chips', async () => {
+    makeAppAndSeed(['卡片盒/A.md', '我的/日记/a.md']);
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+    const onChange = vi.fn();
+    const { settingEl } = renderPathSettingRow({
+      parent,
+      name: '剪藏目录',
+      desc: '存放剪藏文章的文件夹',
+      mode: 'single',
+      value: '卡片盒',
+      onChange,
+    });
+    expect(settingEl.dataset.name).toBe('剪藏目录');
+    // chips 在控件区内（与按钮同区 → 移动端两行式判定 ≥2 子元素）
+    const control = settingEl.querySelector('.setting-item-control')!;
+    expect(control.querySelectorAll('.bz-path-picker-chip-name').length).toBe(1);
+    expect(control.querySelector('button')).toBeTruthy();
+    expect(control.querySelector('.bz-path-picker-chips--setting')).toBeTruthy();
+    // chips ✕ 清除 → onChange [] 并刷新为空态
+    (control.querySelector('.bz-path-picker-chip-x') as HTMLButtonElement).click();
+    expect(onChange).toHaveBeenCalledWith([]);
+    expect(control.querySelector('.bz-path-picker-chips-empty')).toBeTruthy();
+
+    // 点按钮 → 打开选择器（单选框初始已清空）；选目录后确定 → onChange(['我的/日记'])
+    ((settingEl as any).__setting.controls.find((c: any) => typeof c.trigger === 'function') as any).trigger();
+    const popup = document.getElementById('bz-path-picker-popup')!;
+    await vi.waitFor(() => expect(popup.querySelectorAll(ROW_SEL).length).toBeGreaterThan(0));
+    const row = [...popup.querySelectorAll<HTMLElement>(ROW_SEL)].find((r) => r.dataset.path === '我的/日记')!;
+    row.click();
+    (popup.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).click();
+    expect(onChange).toHaveBeenLastCalledWith(['我的/日记']);
+    expect(control.querySelector('.bz-path-picker-chip-name')!.textContent).toBe('我的/日记');
+  });
+
+  it('多值行：chips 逐条；✕ 移除回传剩余列表', async () => {
+    makeAppAndSeed([]);
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+    const onChange = vi.fn();
+    renderPathSettingRow({
+      parent,
+      name: '白名单目录',
+      mode: 'multi',
+      value: ['卡片盒', '我的'],
+      buttonText: '📁 选择',
+      onChange,
+    });
+    const control = parent.querySelector('.setting-item-control')!;
+    const xs = [...control.querySelectorAll('.bz-path-picker-chip-x')];
+    expect(xs.length).toBe(2);
+    (xs[0] as HTMLButtonElement).click();
+    expect(onChange).toHaveBeenCalledWith(['我的']);
+  });
+
+  it('多值行按钮文案：添加…（可自定义 buttonText）', () => {
+    makeAppAndSeed([]);
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+    renderPathSettingRow({ parent, name: '监听目录', mode: 'multi', value: [], onChange: () => {} });
+    const btn = parent.querySelector('.setting-item-control button') as HTMLButtonElement;
+    expect(btn.textContent).toBe('添加…');
+  });
+});
+
+describe('markSettingSplitRows：移动端两行式挂类', () => {
+  it('控件区 ≥2 子元素 → 挂 .bz-setting-split；单控件行不挂；幂等可重调', () => {
+    const container = document.createElement('div');
+    // 单控件行（一个按钮）
+    const single = new Setting(container).addButton((b) => b.setButtonText('A'));
+    // 多控件行（按钮 + chips 容器——模拟统一路径选择器行）
+    const multi = new Setting(container).addButton((b) => b.setButtonText('选择…'));
+    multi.controlEl.appendChild(document.createElement('div'));
+    markSettingSplitRows(container);
+    expect(single.settingEl.classList.contains('bz-setting-split')).toBe(false);
+    expect(multi.settingEl.classList.contains('bz-setting-split')).toBe(true);
+    // 幂等：移除一个子元素后重调 → 摘类
+    multi.controlEl.lastChild!.remove();
+    markSettingSplitRows(container);
+    expect(multi.settingEl.classList.contains('bz-setting-split')).toBe(false);
+  });
+});
