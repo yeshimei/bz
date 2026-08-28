@@ -1,55 +1,41 @@
-# Ticket 131（提案·待排期）：设置行构建助手 + 通用设置组分发
+# Ticket 131（定稿·待实施）：声明式设置页 + 通用设置组 + 流程框声明（ADR-0064）
 
-- 状态：提案（2026-08-27 用户提出，本批 128-130 合并后另排期；不阻塞当前批次）
+- 状态：定稿（2026-08-27 grill-with-docs 拍板 Q1–Q18；原「提案」的想法 A/B 口径经本轮升格与扩展）
 - 域：core/settings（跨域）
-- 来源：用户在 ticket 128 实现期间提出「设置面板是通用模板吗？开关只需要指定是开关、文本、绑定的值，同时提供回调」；随后追加方向——「面板尽量多一些通用设置，分发到不同域，减少重复，让所有域的设置面板调用逻辑和显示逻辑一致」
-- 关联：`src/core/settings-modal.ts`（骨架）、`src/core/path-picker.ts` + 路径行助手（ticket 128 产出，本 ticket 的 API 风格基准）、`src/main.ts`（既有 textSetting/toggleSetting 私有 helper）、各域设置弹窗 build
+- 来源：想法 A（行构建助手）/ 想法 B（通用设置组分发）经 grilling 升格为「全页声明式 schema + 流程框声明」
+- 关联：`src/core/settings-modal.ts`（外壳/分组卡片/焦点/ESC，收编为渲染器基座）、`src/core/path-picker.ts`（path 行复用，ADR-0061）、`src/main.ts`（textSetting/toggleSetting 退役）、`src/core/confirm.ts`（退役并入）、13 个域设置弹窗 build
 
-## 想法 A：设置行构建助手（kind + 绑定值 + 回调）
+## 拍板清单（Q1–Q18）
 
-core 层提供统一的设置行构建助手（API 风格对齐 ticket 128 路径行助手）：
+| # | 决策 |
+|---|---|
+| Q1/Q12 | **全页声明式 schema**，对象字面量书写（builder 链式否决）；域只声明「有什么设置」，core 渲染器统一构建 |
+| Q13 | `openSettingsModal` **只收 schema，build 回调入口退役**；custom 插槽行是唯一非常规内容出口 |
+| Q2/Q9/Q15 | 覆盖 **13 域设置弹窗 + 主设置页 + UP 名单管理弹窗**；UP 弹窗 = schema 内容经 `renderSettingsInto` 渲染进**自建 overlay**（z 序与叠加行为零变化；不换 openSettingsModal 承载——单例 toggle 语义会顶掉底层剪藏设置弹窗） |
+| Q16/Q18 | **流程框声明**：新增 `{ title, message, actions }` 声明式流程弹窗；**core/confirm 退役**，全部 23 处调用点（15 文件：encrypt×4、diary×5、review×3、secondbrain×2、library×2、attach/clipping/favorites/movie/quiz/password/memo 各 1）全量改写；`__shared_confirm_*` id/类名与双按钮 DOM 契约保持（铁律 3） |
+| Q17 | encrypt 仅迁 ⚙️ 设置弹窗（本就在 13 域内）；主密码/体检清理/预览窗为流程展示型（零持久化设置项）不动 |
+| Q4 | **键直绑 + 回调逃生口**：`{ key }`（keyof BzSettings 收窄）自动读值落盘（text 防抖 800ms/失焦/回车、toggle 即时——现 textSetting 语义收口 core）；外部数据（news.json 等）用 `{ get, set, save }` 三函数；特殊逻辑 `onChange/onCommit` 回调 |
+| Q5 | 行类型十类：toggle / text / path / select / slider（基准五类）+ **custom 插槽 / button（actionRow 豁免组徽标）/ info / number / textarea** |
+| Q6 | **visibleWhen 声明式联动**：行/组声明条件，任意行变更后 core 统一重求值，`.bz-setting-hidden` 显隐 + `refreshSettingsGroupCounts` 徽标刷新一并收口 |
+| Q7/Q10 | 通用设置组首批：**「移动端默认全屏」11 键收敛**、**批次数数字行**（diary/article/movie）、**排序/默认筛选下拉**；**warnReload 一次性提示收敛为 text 行 onCommit 内置语义**（movie/password/encrypt/secondbrain 四处手写退役） |
+| Q11 | favorites/belongings **统一为分组卡片**（现平铺 + 默认宽 400 → 组头 + 向 520 看齐；视觉变化已拍板接受） |
+| Q3 | 迁移 = **一次性全量单提交**（实施时域逐个替换自验，最终单 commit 落地） |
+| Q8 | ticket 100 文案规范（标题 4-8 字零符号、描述 20 字上下）= **测试期 lint**（对全量 schema 断言，违反即测试红；不改运行时行为） |
+| Q14 | 清理：main.ts 私有 helper 退役、diary/pomodoro/library 等域内闭包工厂退役、styles.css 旧分页 `.bz-tab-*` 死类 grep 确认零引用后删 |
 
-```ts
-addRow(group, { kind: 'toggle', name: '自动摘要', desc: '…', value: true, onChange })
-addRow(group, { kind: 'text', name, desc, value, onChange, placeholder?, onCommit? })
-addRow(group, { kind: 'path', name, desc, value, onChange, mode: 'single'|'multi' })  // ticket 128 已交付
-addRow(group, { kind: 'select', name, desc, value, options, onChange })
-addRow(group, { kind: 'slider', name, desc, value, min, max, step, onChange })
-```
+## 落地面
 
-- 产出仍是标准 `.setting-item` DOM（铁律「DOM 契约稳定」不破）；数据键格式零变化。
-- main.ts 的 textSetting/toggleSetting（防抖落盘/onCommit 提示）语义并入助手，成为全库统一行为。
-- 各域设置弹窗逐行替换为助手调用（机械改造，量：约 10+ 个域弹窗 × 各 3-10 行）。
-- 动态逻辑（联动显隐、启动快照提示、自定义行）保留在各域 build 内，助手只封装「标准行」；非常规行（chips 区、皮肤网格、动作行）不走助手。
+- 新增 `src/core/settings-schema.ts`（渲染器 + 类型）、`src/core/settings-common.ts`（通用组预设）；`settings-modal.ts` 外壳/分组卡片/焦点管理/ESC 逻辑原样收编为基座。
+- 渲染器统一职责：分组卡片 + 项数徽标回填、防抖落盘、visibleWhen 重求值、路径行复用 path-picker（ADR-0061）、移动端两行式标注、空态。
+- 主设置页「AI」「数据存储路径」两区块同套 schema；数据键格式零变化（铁律 1）、DOM 契约不破（铁律 3）、行为与文案零变化。
 
-## 想法 B：通用设置组分发（定义一次、挂载到域）
+## 验收标准
 
-跨域重复的设置项在 core 定义一次，域 build 一行挂载，消灭逐域复制：
-
-```ts
-// core/settings-common.ts
-mountCommonRows(el, {
-  mobileFullscreen: 'clippingMobileDefaultFullscreen',  // 键名按域前缀传入
-});
-// 域 build 里：
-mountCommonRows(el, { mobileFullscreen: 'libraryMobileDefaultFullscreen' });
-```
-
-- **首批纳入的通用项候选**（按重复度盘点）：
-  - 「移动端默认全屏」——11 个域逐字复制（AGENTS.md 主窗口规范第 3 条），最典型的模板代码；
-  - 批次/每页加载数量（diary/article/movie 三域同构的 addText 数字行）；
-  - 排序方式/默认筛选类下拉（movie 等）。
-- 显示逻辑一致性随分发收敛：`isMobileEnv()` 门控、文案规范（ticket 100：标题 4-8 字零符号、描述 20 字上下）、防抖口径，全部只在 core 一处。
-- **边界**：真正域专属的设置（剪载数据源、小橘记忆打分、保险箱预览参数）不进通用层；通用层只收「≥3 个域同构」的项。
-
-## 两步的关系
-
-想法 A 是地基（行级一致），想法 B 是其上的复用层（组级一致）。实现顺序：A 先行（含路径行已交付部分），B 在 A 稳定后把「移动端默认全屏」等候选逐个迁入。均可分批落地，不要求一次全换。
-
-## 验收标准（排期后细化）
-
-- a) 助手覆盖 toggle/text/path/select/slider 五类，主设置页与域设置弹窗通用；
-- b) 至少 3 个域弹窗完成替换作为样板（其余域可分批跟进）；
-- c) 防抖落盘/onCommit 语义与现 textSetting 一致；
-- d) 「移动端默认全屏」迁入通用分发，11 域调用点各收敛为一行，行为与文案零变化；
-- e) 全量测试绿 + tsc + 构建。
+- a) 渲染器数据层 + UI 层测试 + smoke 同步；文案 lint 测试落地；
+- b) 13 域弹窗全量 schema 化，`openSettingsModal` 无 build 调用方残留；
+- c) 主设置页两区块 schema 化，main.ts 旧 helper 删除；
+- d) 通用组首批迁入完成，「移动端默认全屏」11 键行为文案零变化；
+- e) UP 名单弹窗 schema 内容 + 自建外壳，z 序不变；
+- f) confirm 退役，23 处调用点全走流程框声明，`__shared_confirm_*` 契约保持；
+- g) favorites/belongings 分组卡片统一；`.bz-tab-*` 死类清理；
+- h) 全量测试绿 + tsc + 构建通过；单提交落地。

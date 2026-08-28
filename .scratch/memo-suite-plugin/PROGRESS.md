@@ -1,3 +1,14 @@
+## 2026-08-27 设置页声明化定案（ticket 131 定稿；grill-with-docs 拍板 Q1–Q18，ADR-0064）
+
+**状态：设计共识闭环（原想法 A/B「行助手 + 组分发」升格为全页声明式 schema + 流程框声明），待排期实施**
+
+- 📋 **形态**：全页声明式 schema（对象字面量，builder 否决）；`openSettingsModal` 只收 schema、build 回调退役；行类型十类（基准五类 + custom 插槽/button/info/number/textarea）；键直绑 + get/set/save 逃生口 + onChange/onCommit；visibleWhen 声明式联动（core 重求值 + 分组徽标收口）
+- 📋 **范围**：13 域设置弹窗 + 主设置页（AI/存储路径两区块）+ UP 名单管理弹窗（schema 内容经 renderSettingsInto 进自建 overlay，z 序零变化——单例设置弹窗会顶掉底层弹窗故不换承载）；encrypt 仅 ⚙️（主密码/体检清理/预览窗流程展示型不动）；favorites/belongings 统一分组卡片
+- 📋 **流程框声明**：{title, message, actions} 新 API；core/confirm 退役、23 处调用点（15 文件）全量改写；`__shared_confirm_*` DOM 契约保持（铁律 3）
+- 📋 **通用组首批**：移动端默认全屏 11 键收敛、批次数数字行、排序/默认筛选下拉、warnReload 收敛为 onCommit 内置语义
+- 📋 **迁移与清理**：一次性全量单提交（域逐个替换自验）；main.ts 私有 helper + diary/pomodoro/library 域内工厂退役；`.bz-tab-*` 死类清理；ticket 100 文案测试期 lint
+- 📄 文档：issues/131 重写定稿、ADR-0064、CONTEXT 四词条（声明式设置页/通用设置组/插槽行/流程框声明）、spec.md ticket 131 节；PROGRESS 本条
+
 ## 2026-xx-xx B 站不走 24h 窗口（ticket 127）：每 UP 最近 N 条页面可设 + UP 弹窗 Cookie 配置引导
 
 **状态：worktree/ticket127 实施完成，待合并（issues/127；watcher v1.1.2；全量测试 + tsc 0）**

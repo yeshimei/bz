@@ -607,3 +607,12 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - **目录变更**：applyArticleSettings 检测 articleDirectory 变化 → 清空模块列表 + 全量重载一次，此后重开零扫描
 - **B1 修订**：幽灵卡片防护由「重开即重载」改为「常驻监听增量维护」（ticket 125 的「重开先显示加载提示」语义随之作废，首开保留）
 - **关闭按钮**：全局统一 ✕→❌（library 主面板与书库弹窗、movie recommend 等仍用 ✕ 的关闭按钮；chips 的 ✕ 移除符是功能性删除符不动）
+
+#### ticket 131（定稿·待实施）：声明式设置页 + 通用设置组 + 流程框声明（ADR-0064）
+
+- **形态**：全页声明式 schema（对象字面量）；core 渲染器唯一路径，`openSettingsModal` 只收 schema（build 回调退役）；custom 插槽行承载非常规内容
+- **行类型十类**：toggle/text/path/select/slider + custom/button(actionRow)/info/number/textarea；键直绑（keyof BzSettings）+ get/set/save 逃生口 + onChange/onCommit；visibleWhen 声明式联动（core 重求值 + 分组徽标收口）
+- **范围**：13 域设置弹窗 + 主设置页（AI/存储路径）+ UP 名单管理弹窗（renderSettingsInto + 自建 overlay 外壳，z 序零变化）；encrypt 仅 ⚙️（流程展示型不动）；favorites/belongings 统一分组卡片
+- **流程框声明**：{title, message, actions}；core/confirm 退役、23 处调用点（15 文件）全量改写、`__shared_confirm_*` DOM 契约保持（铁律 3）
+- **通用组首批**：移动端默认全屏（11 键收敛）、批次数数字行、排序/默认筛选下拉；warnReload 收敛为 onCommit 内置语义
+- **迁移与门禁**：一次性全量单提交（域逐个替换自验）；ticket 100 文案测试期 lint；设置键格式/DOM 契约/行为文案零变化（铁律 1/3）
