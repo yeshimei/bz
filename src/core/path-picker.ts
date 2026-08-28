@@ -36,15 +36,32 @@ export interface PathPickerOptions {
 
 /* ==================== 数据层 ==================== */
 
-/** 由文件路径集合聚合全部祖先目录（含库根 ''）；排序去重 */
+/** 环境目录剪枝（ticket 128 性能修复）：这些目录名（任意层级）不可能是业务目标，
+ *  聚合与递归一律跳过整棵子树——大 vault 的 node_modules/.store 依赖树动辄数千目录，
+ *  是选择器打开缓慢的根因。点前缀业务目录（如 CONFIG/.ENCRYPT）不在此列，照常收录。 */
+const EXCLUDED_DIR_NAMES = new Set(['.obsidian', '.trash', 'node_modules', '.git']);
+
+/** 路径任一段命中环境目录 → true（该目录及其子树整体排除） */
+export function isExcludedPath(p: string): boolean {
+  if (!p) return false;
+  for (const seg of p.split('/')) {
+    if (EXCLUDED_DIR_NAMES.has(seg)) return true;
+  }
+  return false;
+}
+
+/** 由文件路径集合聚合全部祖先目录（含库根 ''；环境目录子树整体排除）；排序去重 */
 export function foldersFromFiles(paths: string[]): string[] {
   const out = new Set<string>(['']);
   for (const p of paths) {
+    // 文件位于环境目录子树内（如 node_modules 下的 README）→ 整个文件跳过：
+    // 若只剪「命中环境名的目录段」，其上层祖先（CODE、CODE/x）会因不含环境段而漏网
+    if (isExcludedPath(p)) continue;
     const sep = p.lastIndexOf('/');
     if (sep === -1) continue;
     let dir = p.slice(0, sep);
     while (dir) {
-      out.add(dir);
+      if (!isExcludedPath(dir)) out.add(dir);
       const i = dir.lastIndexOf('/');
       dir = i === -1 ? '' : dir.slice(0, i);
     }
@@ -57,6 +74,8 @@ export function foldersFromFiles(paths: string[]): string[] {
  * 1. vault.getFiles() 聚合所有父目录（不含空目录、不含点前缀目录——Obsidian 不对点前缀索引）；
  * 2. vault.adapter.list() 从根递归列目录补齐（磁盘直读，空目录与 .ENCRYPT 等一览无余）；
  * 3. 库根 '' 恒在（显示「（库根目录）」）。
+ * 环境目录子树（EXCLUDED_DIR_NAMES）整体剪枝：列表显示不依赖本函数完成（openPathPicker
+ * 先用文件聚合快速首渲染），本函数在后台补齐后合并。
  * adapter 异常（老环境/只读测试替身缺方法）静默回落纯文件聚合。幂等、可重复调用。
  */
 export async function collectVaultFolders(app: any): Promise<string[]> {
@@ -89,6 +108,8 @@ export async function collectVaultFolders(app: any): Promise<string[]> {
       for (const f of listed?.folders ?? []) {
         const p = String(f).replace(/^\/+|\/+$/g, '');
         if (!p) continue;
+        // 环境目录整棵子树剪枝（node_modules 依赖树动辄数千目录，逐层 list 是打开缓慢根因）
+        if (isExcludedPath(p)) continue;
         // 去重仅跳过「已收集」，仍须递归（文件聚合已知的目录下可能藏着空目录/点前缀目录）
         if (!out.has(p)) out.add(p);
         await walk(p, depth + 1);
@@ -341,9 +362,15 @@ export function openPathPicker(opts: PathPickerOptions): void {
     const q = state.q.trim().toLowerCase();
     // 输入恰好等于某目录 → 视为「已选中」，显示完整列表（预填已选时不把列表滤掉）
     const exact = !!q && state.folders.includes(q);
+    // 渲染上限（ticket 128 性能修复）：大 vault 全量数千目录时逐条建 DOM 会卡死交互——
+    // 只渲染前 LIMIT 条，超出显示「输入关键词缩小范围」提示（计数不受限，提示给全量）
+    const LIMIT = 300;
     let n = 0;
+    let total = 0;
     for (const folder of state.folders) {
       if (q && !exact && !folder.toLowerCase().includes(q)) continue;
+      total++;
+      if (n >= LIMIT) continue;
       n++;
       const on = selected.has(folder);
       const row = document.createElement('div');
@@ -374,11 +401,16 @@ export function openPathPicker(opts: PathPickerOptions): void {
       };
       listEl.appendChild(row);
     }
-    if (!n) {
+    if (!total) {
       const empty = document.createElement('div');
       empty.className = 'bz-path-picker-empty';
       empty.textContent = '没有匹配的目录';
       listEl.appendChild(empty);
+    } else if (total > LIMIT) {
+      const more = document.createElement('div');
+      more.className = 'bz-path-picker-empty';
+      more.textContent = `已显示前 ${LIMIT} 个（共 ${total} 个匹配目录），请输入关键词缩小范围`;
+      listEl.appendChild(more);
     }
   }
   function updateSel(): void {
@@ -395,10 +427,21 @@ export function openPathPicker(opts: PathPickerOptions): void {
     renderList();
   };
 
-  // 异步聚合目录（open 后即时渲染；关闭后迟到的聚合直接丢弃）
+  // 快速首渲染（ticket 128 性能修复）：文件聚合毫秒级完成，立即显示绝大多数业务目录，
+  // 弹窗打开即可选；adapter 递归补齐（空目录/点前缀目录）在后台完成后合并替换
+  try {
+    const files = ((app?.vault?.getFiles?.() ?? []) as Array<{ path: string }>).map((f) => f.path);
+    state.folders = foldersFromFiles(files);
+  } catch {
+    /* 环境异常静默——等待 adapter 补齐 */
+  }
+
+  // 后台补齐：adapter 递归（含空目录/点前缀目录，环境目录已剪枝）；关闭后迟到的聚合直接丢弃。
+  // 补齐合并完成后在 popup 挂 data-ready="1"——测试/调用方可据此区分「快速首渲染」与「全量聚合完成」
   void collectVaultFolders(app).then((folders) => {
     if (!mask.isConnected) return;
     state.folders = folders;
+    popup.dataset.ready = '1';
     renderList();
   });
 

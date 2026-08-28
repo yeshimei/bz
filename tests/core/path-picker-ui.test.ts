@@ -28,7 +28,9 @@ async function openAndWait(opts: Parameters<typeof openPathPicker>[0]) {
   openPathPicker(opts);
   const popup = document.getElementById('bz-path-picker-popup')!;
   expect(popup).toBeTruthy();
-  // 目录聚合为异步（adapter 递归），等列表行就绪
+  // 等目录聚合完成（data-ready：adapter 补齐合并后挂载）——比「等首行」更稳：
+  // 快速首渲染下 rows 立即出现，但空目录/点前缀目录要等补齐
+  await vi.waitFor(() => expect(popup.dataset.ready).toBe('1'));
   await vi.waitFor(() =>
     expect(popup.querySelectorAll('.bz-path-picker-row').length).toBeGreaterThan(0)
   );
@@ -327,5 +329,53 @@ describe('markSettingSplitRows：移动端两行式挂类', () => {
     multi.controlEl.lastChild!.remove();
     markSettingSplitRows(container);
     expect(multi.settingEl.classList.contains('bz-setting-split')).toBe(false);
+  });
+});
+
+describe('大 vault 性能（ticket 128 性能修复：剪枝 + 快速首渲染 + 渲染上限）', () => {
+  it('快速首渲染：adapter 迟迟不响应时，打开即显示文件聚合目录（不等补齐）', () => {
+    const app = makeAppAndSeed(['卡片盒/A.md', '我的/日记/a.md']);
+    // adapter.list 永不 resolve：模拟大 vault 的慢速递归补齐
+    (app.vault as any).adapter = { list: () => new Promise(() => {}) };
+    openPathPicker({ mode: 'single', selected: [], onConfirm: () => {} });
+    // 同步断言：文件聚合已在打开瞬间渲染，无需等待 adapter
+    const popup = document.getElementById('bz-path-picker-popup')!;
+    const names = [...popup.querySelectorAll(`${ROW_SEL} .bz-path-picker-name`)].map((el) => el.textContent);
+    expect(names.length).toBeGreaterThan(0);
+    expect(names).toContain('卡片盒');
+    expect(names).toContain('我的/日记');
+  });
+
+  it('环境目录剪枝：node_modules/.obsidian 下的文件不产生可选目录', () => {
+    makeAppAndSeed([
+      '卡片盒/A.md',
+      'CODE/x/node_modules/.store/@img+sharp/README.md',
+      '.obsidian/plugins/bz/README.md',
+    ]);
+    openPathPicker({ mode: 'multi', selected: [], onConfirm: () => {} });
+    const popup = document.getElementById('bz-path-picker-popup')!;
+    const names = [...popup.querySelectorAll(`${ROW_SEL} .bz-path-picker-name`)].map((el) => el.textContent);
+    expect(names).toContain('卡片盒');
+    expect(names.some((n) => (n || '').includes('node_modules'))).toBe(false);
+    expect(names.some((n) => (n || '').startsWith('.obsidian'))).toBe(false);
+  });
+
+  it('渲染上限：目录超过 300 只渲染前 300 行 + 「请输入关键词缩小范围」提示', () => {
+    const files: string[] = [];
+    for (let i = 0; i < 400; i++) files.push(`目录${String(i).padStart(3, '0')}/a.md`);
+    makeAppAndSeed(files);
+    openPathPicker({ mode: 'multi', selected: [], onConfirm: () => {} });
+    const popup = document.getElementById('bz-path-picker-popup')!;
+    // 400 目录（+库根）> 300 上限 → 恰 300 行 + 提示行
+    expect(popup.querySelectorAll(ROW_SEL).length).toBe(300);
+    const hint = popup.querySelector('.bz-path-picker-list .bz-path-picker-empty');
+    expect(hint?.textContent).toContain('请输入关键词缩小范围');
+    // 搜索过滤后低于上限 → 提示消失，全部显示（用非完整目录名的词——「恰好相等」语义会显示全量）
+    const search = popup.querySelector('.bz-path-picker-search') as HTMLInputElement;
+    search.value = '目录39';
+    search.dispatchEvent(new Event('input'));
+    const names = [...popup.querySelectorAll(`${ROW_SEL} .bz-path-picker-name`)].map((el) => el.textContent);
+    expect(names).toEqual(['目录390', '目录391', '目录392', '目录393', '目录394', '目录395', '目录396', '目录397', '目录398', '目录399']);
+    expect(popup.querySelector('.bz-path-picker-list .bz-path-picker-empty')).toBeNull();
   });
 });

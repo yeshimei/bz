@@ -615,6 +615,26 @@ describe('空态三态与增量刷新（ticket 45/63）', () => {
     expect(document.querySelector('.article-entry-card')!.textContent).toContain('A');
     expect(document.body.textContent).not.toContain('📚 正在加载文章...');
   });
+
+  it('面板隐藏期间新建文章 → created 监听通道增量补挂，重开即出现（ticket 130 review 补口，ADR-0063 四通道）', async () => {
+    const { vault } = await setup();
+    vault.files.set('我的/文章/A.md', makeArticleMd('https://x.com/a', '知乎', 'A', '2025-06-02T08:00:00.000Z'));
+    await initArticleView(true);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(1);
+    const closeBtn = [...document.querySelectorAll('button')].find((b) => b.title === '关闭')!;
+    closeBtn.click(); // 面板关闭（监听常驻）
+    // 关闭期间资讯阅读器保存/网页剪藏新建：vault 建文件 + 派发 clipping:file-created
+    // （该类路径是单次 create 无后续 modify——无 created 通道则重开零扫描后新文章永久缺失）
+    vault.files.set('我的/文章/新建D.md', makeArticleMd('https://x.com/d', '知乎', '新建D', '2025-06-03T08:00:00.000Z'));
+    emitDomainEvent('clipping:file-created', { path: '我的/文章/新建D.md' });
+    await new Promise((r) => setTimeout(r, 400)); // 防抖 300ms 结算
+    // 重开零扫描：新文章已在列表（created 通道增量补挂），无加载提示
+    await initArticleView(true);
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(2);
+    expect([...document.querySelectorAll('.article-entry-card')].some((c) => c.textContent!.includes('新建D'))).toBe(true);
+    expect(document.body.textContent).not.toContain('📚 正在加载文章...');
+  });
 });
 
 describe('剪藏本修复回归（P0-8/P1-22/P1-23/P2）', () => {

@@ -342,6 +342,15 @@ _Avoid_: 域设置 tab、功能设置页
 
 **移动端两行式 (Mobile Split Rows)**: 设置行移动端布局规则（ticket 128，ADR-0061）——控件区含 ≥2 个子元素（如输入框+按钮、按钮+chips）时，移动端名称+描述独占一行、控件区一行（内部可折行）；单控件行（开关/下拉）保持原生布局。适用于主设置页与全部域设置弹窗。_Avoid_: 所有行强制两行（单控件行豁免）、桌面端分行
 
+**声明式设置页 (Declarative Settings)**: 域设置界面 = 一份对象字面量声明（分组 + 行数组 + 联动条件），core 渲染器统一构建（ticket 131 定稿，ADR-0064）——域只描述「有什么设置」，不写 DOM 组装；行默认直绑设置键（读值与落盘防抖语义收口 core），外部数据用 get/set/save 逃生口，特殊逻辑用 onChange/onCommit 回调；联动显隐用 visibleWhen 声明，任意行变更后统一重求值并刷新分组徽标。手写 build 回调入口与各域本地行工厂退役，全站唯一渲染路径。
+_Avoid_: 行助手拼装（想法 A 旧口径）、手写 Setting 链、builder 链式（已否候选）
+
+**通用设置组 (Common Settings Group)**: 跨域同构设置项在 core 定义一次、域一行挂载的复用层（ticket 131 想法 B 定稿）——首批「移动端默认全屏」（11 键收敛）、「批次数数字行」、「排序与默认筛选下拉」；门控、文案、防抖口径只在 core 一处。
+_Avoid_: 逐域复制设置块
+
+**插槽行 (Custom Row)**: 声明式设置页中非常规内容（皮肤网格、chips 区、异步状态区）的唯一出口——render 回调行；是声明体系的逃生口，不是第二体系。
+_Avoid_: 自定义 build 分支（build 入口已退役）
+
 **共享数据路径 (Shared Storage Path)**: `storagePath` 设置项——所有数据文件（memo/belongings/passwords/favorites/review/quiz/第二大脑 secondbrain.json+secondbrain.vec）的统一目录，默认 `CONFIG/STORAGE`。旧各域路径字段（todoFilePath、belongingsDataFolder、pwStoragePath、favoritesStoragePath、reviewStoragePath）废弃仅兼容保留；META_PATH/VEC_PATH 已随 ticket 103 彻底删除（不再兼容保留），闪念 16 设置键更名 secondBrain* 由 onload 迁移。
 _Avoid_: 各脚本路径、存储路径们
 

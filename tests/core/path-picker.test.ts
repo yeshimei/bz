@@ -149,3 +149,45 @@ describe('collectVaultFolders：全量 vault 目录聚合（含空目录与点�
     expect(await collectVaultFolders(app)).toEqual(await collectVaultFolders(app));
   });
 });
+
+describe('环境目录剪枝（ticket 128 性能修复：node_modules 依赖树不再拖慢选择器）', () => {
+  it('foldersFromFiles 排除环境目录祖先（node_modules/.obsidian/.trash/.git）', () => {
+    const out = foldersFromFiles([
+      'CODE/x/node_modules/.store/@img+sharp/README.md',
+      '.obsidian/plugins/bz/main.js'.replace('.js', '.md'),
+      '.trash/旧笔记.md',
+      '我的/日记/a.md',
+    ]);
+    expect(out).toEqual(['', '我的', '我的/日记']);
+  });
+
+  it('collectVaultFolders 剪枝 adapter 递归：node_modules 深树整棵跳过、点前缀业务目录照常收录', async () => {
+    const app = fakeApp(['我的/日记/a.md'], {
+      '': ['CONFIG', 'CODE', '.obsidian'],
+      CONFIG: ['CONFIG/.ENCRYPT'],
+      'CONFIG/.ENCRYPT': [],
+      CODE: ['CODE/x'],
+      'CODE/x': ['CODE/x/node_modules'],
+      'CODE/x/node_modules': ['CODE/x/node_modules/.store'],
+      'CODE/x/node_modules/.store': ['CODE/x/node_modules/.store/@img+sharp'],
+      'CODE/x/node_modules/.store/@img+sharp': [],
+      '.obsidian': ['.obsidian/plugins'],
+      '.obsidian/plugins': [],
+    });
+    const folders = await collectVaultFolders(app);
+    expect(folders).toContain('CONFIG/.ENCRYPT');
+    expect(folders).toContain('我的/日记');
+    expect(folders.some((f) => f.includes('node_modules'))).toBe(false);
+    expect(folders.some((f) => f.startsWith('.obsidian'))).toBe(false);
+    expect(folders).not.toContain('CODE/x/node_modules');
+  });
+
+  it('isExcludedPath：任一段命中即排除，普通路径不受影响', async () => {
+    const { isExcludedPath } = await import('../../src/core/path-picker');
+    expect(isExcludedPath('CODE/x/node_modules/.store')).toBe(true);
+    expect(isExcludedPath('.obsidian/plugins/bz')).toBe(true);
+    expect(isExcludedPath('CONFIG/.ENCRYPT')).toBe(false);
+    expect(isExcludedPath('我的/日记')).toBe(false);
+    expect(isExcludedPath('')).toBe(false);
+  });
+});
