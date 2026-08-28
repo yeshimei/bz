@@ -43,7 +43,7 @@ import {
 import { openPomodoro, unloadPomodoro, ensurePomodoro } from './pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // B站下载器启动命令（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
-import { openBiliDownloader } from './bili-downloader';
+import { openBiliDownloader, openBiliTasksPanel, unloadBiliDownloader } from './bili-downloader';
 // 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 入口页磁贴播种）
 import { openAttachMove, ensureAttachSeed, ATTACH_COMMAND_ID } from './attach';
 // 保险箱（encrypt 域：移出式清单容器加密，正文+图片/视频附件；原名「加密保险箱」，ticket 68 更名仅文案）
@@ -119,6 +119,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-pomodoro-open', name: '番茄钟', icon: 'timer', callback: () => openPomodoro(getApp()) },
   // B站下载器（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
   { id: 'bz-bili-open', name: 'B站下载器', icon: 'tv-minimal-play', callback: () => openBiliDownloader() },
+  // 待转文献（视频转文献，ADR-0065：移动端暂存 / 桌面端批量处理）
+  { id: 'bz-bili-tasks-open', name: '待转文献', icon: 'list-video', callback: () => openBiliTasksPanel(getApp()) },
   // 附件搬移（ticket 65 新域：移动当前笔记附件到指定文件夹，fileManager 自动更新内部链接）
   { id: ATTACH_COMMAND_ID, name: '移动附件', icon: 'folder-down', callback: () => openAttachMove(getApp()) },
   // 保险箱（encrypt 域：移出式清单容器加密；原名「加密保险箱」，ticket 68 更名仅文案）
@@ -294,6 +296,8 @@ export default class BzPlugin extends Plugin {
     unloadNewsReader();
     unloadArticleView();
     unloadAutoSummary();
+    // 待转文献（ADR-0065：面板 DOM + 模块单例复位）
+    unloadBiliDownloader();
     // 域事件总线收口：摘除 vault 订阅点 + 清空全部域事件订阅（总线为进程内单例，随插件卸载全量清空）
     detachObsidianAdapter();
     clearDomainEvents();

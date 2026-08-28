@@ -90,12 +90,15 @@ _Avoid_: 影视数据分析弹窗（旧词条口径——指本域窗口时用�
 **海报抓取 (Poster Fetch)**: 由独立守护进程（PM2 托管 `douban-poster watch`，ADR-0007）完成：监听影视文件夹新建/改动（10s 防抖）→ 全目录遍历缺「海报」字段的笔记 → 按创建时间倒序入队 → 每 15s 串行抓取「豆瓣搜索 → 高清海报下载 → 13 个 frontmatter 字段补全 → 正文海报 embed」。与 bz 插件完全分离：插件不含抓取逻辑，设置页仅提供安装与运行指引；脚本源码在 `tools/obsidian-douban-poster/`（npm 包 `@jwbz/obsidian-douban-poster`）。
 _Avoid_: 抓海报、豆瓣补全、poster fetch
 
-**桌面端专属能力 (Desktop-only Capability)**: 依赖 Node.js 外部进程（child_process）、移动端（Capacitor）不可用的功能。门禁：`window.require('child_process')` 为 null 即非桌面端；移动端不注册事件监听，设置项置灰标注「仅桌面端可用」，不静默降级。（当前实例：B站下载等外部工具；海报抓取已移出插件，由独立守护进程承担）
+**桌面端专属能力 (Desktop-only Capability)**: 依赖 Node.js 外部进程（child_process）、移动端（Capacitor）不可用的功能。门禁：`window.require('child_process')` 为 null 即非桌面端；移动端不注册事件监听，设置项置灰标注「仅桌面端可用」，不静默降级。（当前实例：B站下载器启动、待转文献批量处理等外部工具；海报抓取已移出插件，由独立守护进程承担）
 
 
 **自动摘要 (Auto Summary)**: 常驻监听 `归档/网页剪藏` 新文件 → AI（deepseek-v4-flash）生成摘要/标签写回 frontmatter。详设（ticket 124）三键：autoSummaryLength（simple/standard/detailed 摘要长度档位）、autoSummaryTagsEnabled + autoSummaryTagCount（标签生成开关与数量区间）、autoSummaryTiming（见「摘要时机」）。AI 配置走主设置页 core AI（ADR-0052）。
 
-**B站下载 (Bilibili Downloader)**: 输入链接 → B站 API 解析（封面/标题/清晰度）→ 下载合并（ffmpeg spawn）→ 多段剪辑（对一个下载原件定义 0..N 段落，时间 0.1s/HH:MM:SS(.S)）/合并（段序拼接）/压缩（ffmpeg，产物 ffprobe 校验兜底，交付模式：分开、每段一个；合并、单文件）→ 转文字（faster-whisper，python -c 内嵌代码）。**用户决策：独立 NodeJS Web 工具（`tools/bili-downloader/`，bin `bili-dl`），不并入 bz 插件**——运行即起本地网页，网页内完成全部操作，设置图标可改交付目录。术语见 `tools/bili-downloader/CONTEXT.md`（ADR-0011）。
+**B站下载 (Bilibili Downloader)**: 输入链接 → B站 API 解析（封面/标题/清晰度）→ 下载合并（ffmpeg spawn）→ 多段剪辑（对一个下载原件定义 0..N 段落，时间 0.1s/HH:MM:SS(.S)）/合并（段序拼接）/压缩（ffmpeg，产物 ffprobe 校验兜底，交付模式：分开、每段一个；合并、单文件）→ 转文字（faster-whisper，python -c 内嵌代码）。**用户决策：独立 NodeJS Web 工具（`tools/bili-downloader/`，bin `bili-dl`），不并入 bz 插件**——运行即起本地网页，网页内完成全部操作，设置图标可改交付目录。**ADR-0065 起插件侧新增「待转文献」队列（见该词条）：批量处理 = spawn 工具无头批处理命令（`cli.js --batch`）跑既有快速流程**。术语见 `tools/bili-downloader/CONTEXT.md`（ADR-0011）。
+
+**待转文献 (Bilibili Task Queue)**: bili-downloader 域的面板+队列能力（ADR-0065）——条目 = 视频链接 + 起止时间（HH:MM:SS(.S)，留空=整片）+ 状态（待处理/处理中/成功/失败）+ 可选备注，数据 `CONFIG/STORAGE/bili-tasks.json`；**移动端仅暂存录入**（bili 服务桌面端专属，无处理按钮），**桌面端批量处理**：按列表顺序**串行逐部** spawn 工具无头批处理命令（`cli.js --batch <json>`，stdout 打 `[bz-step]` 步骤行）跑既有「快速流程」，产出「文献笔记」落「文献盒」；进度直接显示在列表行上（当前项步骤文案 + 前置项状态徽标），支持「中止整批」（杀死当前子进程、未开始项保持待处理）与失败项单独重试；全部成功才视为批次完成。命令 `bz-bili-tasks-open`（名称「待转文献」）。
+_Avoid_: 备忘录场景（用户拍板不走备忘录域）、视频剪切列表
 
 **快速流程 (Quick Flow)**: B站下载「转文字」之后的一键后续——AI 生成标题/标签/一句话简介并轻度润色转录正文，落一篇「文献笔记」；视频本体仍走既有交付流程，笔记嵌入交付文件。_Avoid_: 一键流程、AI 后处理
 
@@ -284,7 +287,7 @@ _Avoid_: 记忆文件、memories 目录、四层（已废弃）；迁移（已�
 
 ### 移动端窗口（ticket 68，跨域）
 
-**移动端默认全屏 (Mobile Default Fullscreen)**: bz 的跨域设置（ticket 68，ADR-0019）——11 个有主窗口的域各一项布尔开关（键 `<域前缀>MobileDefaultFullscreen`，落 data.json），**仅移动端（`Platform.isMobile`）显示与生效**，桌面端不显示不受影响。语义：≤768px 时 **开=真全屏**（主窗口覆盖整个视口 100vw×100vh、去圆角、头部避让安全区、底部 env(safe-area-inset-bottom)，统一类 `.bz-win-mfs`），**关=常规卡**（95%/90vh 圆角卡）；只决定每次打开的**初始形态**，窗口内无手动切换按钮。多窗口域（影视主面板+影视分析+影视报告、书库主面板+读书笔记+阅读报告）一并对控制，筛选/批注等小弹窗不纳入。**聚合讯跟随剪藏本键、阅读报告跟随书库键（2026-08 用户拍板：两域不设独立开关、窗口无 ⚙️ 设置入口）**。默认值=行为保持（原移动端即全屏的域默认开——日记/归物本/剪藏本/密码本/收藏本/书库/影视/复习/保险箱；原居中卡的 2 域默认关——备忘录/番茄钟）。做题家、入口页不设此开关（用户拍板）。
+**移动端默认全屏 (Mobile Default Fullscreen)**: bz 的跨域设置（ticket 68，ADR-0019）——12 个有主窗口的域各一项布尔开关（键 `<域前缀>MobileDefaultFullscreen`，落 data.json），**仅移动端（`Platform.isMobile`）显示与生效**，桌面端不显示不受影响。语义：≤768px 时 **开=真全屏**（主窗口覆盖整个视口 100vw×100vh、去圆角、头部避让安全区、底部 env(safe-area-inset-bottom)，统一类 `.bz-win-mfs`），**关=常规卡**（95%/90vh 圆角卡）；只决定每次打开的**初始形态**，窗口内无手动切换按钮。多窗口域（影视主面板+影视分析+影视报告、书库主面板+读书笔记+阅读报告）一并对控制，筛选/批注等小弹窗不纳入。**聚合讯跟随剪藏本键、阅读报告跟随书库键（2026-08 用户拍板：两域不设独立开关、窗口无 ⚙️ 设置入口）**。默认值=行为保持（原移动端即全屏的域默认开——日记/归物本/剪藏本/密码本/收藏本/书库/影视/复习/保险箱；原居中卡的 3 域默认关——备忘录/番茄钟/待转文献）。做题家、入口页不设此开关（用户拍板）。
 _Avoid_: 窗口最大化、自动全屏（注意区别于闪念 FloatWindow 双击标题栏最大化——那是未接线的桌面窄窗机制，与本设置无关）
 
 ### 加密日记条目（日记加密，ticket 67）
