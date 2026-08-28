@@ -11,6 +11,7 @@
  * 分类语义对齐 diary/parser.parseFile：标题行 emoji 逐个反查分类名（主/二级都列），无命中回退「日记」。
  */
 import { emojiToTagMap } from '../diary/config';
+import type { StructuredMeta } from './types';
 
 /** 日记条目（smartcat 侧精简形状：只取观察所需字段） */
 export interface DiaryEntryLike {
@@ -144,4 +145,35 @@ export function diaryDeleteText(date: string, time: string): string {
 /** 文件级删除兜底文案（整文件被删且从未跟踪过条目，无时间信息）：`你删除了 <YYYY-MM-DD> 的日记`——ticket 077 兜底允许 */
 export function diaryDeleteFileText(date: string): string {
   return `你删除了 ${date} 的日记`;
+}
+
+// ---------------- 分类调整观察（ADR-0069 行为流全量盘点补齐） ----------------
+
+/** 日记分类调整事件（diary 域 dialogs emitDomainEvent('diary:tags-changed') 载荷的观察所需面） */
+export interface DiaryTagsEvent {
+  /** 条目日期 YYYY-MM-DD */
+  date: string;
+  /** 条目时间 HH:mm */
+  time: string;
+  /** 旧分类名数组 */
+  from: string[];
+  /** 新分类名数组 */
+  to: string[];
+}
+
+/**
+ * 日记分类调整 → StructuredMeta（行为流，diary:tagged 路由）。
+ * 载荷异常（缺 date/time）返回 null 不产观察；extras 保留 from/to 供追溯，tags 记新分类。
+ */
+export function buildDiaryTagsStructured(evt: DiaryTagsEvent): StructuredMeta | null {
+  if (!evt || typeof evt.date !== 'string' || !evt.date || typeof evt.time !== 'string' || !evt.time) return null;
+  const from = Array.isArray(evt.from) ? evt.from.map(String) : [];
+  const to = Array.isArray(evt.to) ? evt.to.map(String) : [];
+  return {
+    entityType: 'diary_entry',
+    action: 'tagged',
+    name: `${evt.date} ${evt.time}`,
+    tags: to,
+    extras: { from, to },
+  };
 }

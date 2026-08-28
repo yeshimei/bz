@@ -1,14 +1,15 @@
 /**
  * 路由规则（P1 数据基座，ticket 123）
  *
- * 根据 source:action 决定事件写入 memory 流（参与向量化/检索/反思）还是 behavior 流（轻量行为记录）。
+ * 根据 source:action 决定事件写入 memory 流（参与向量化/检索/反思）、behavior 流（轻量行为记录）
+ * 或 exempt（豁免：不写任何流，ADR-0069 隐私豁免——密码/加密域及日记加密动作不留痕）。
  * memory 流条目从规则获取 importance/emotion/credibility 默认值；behavior 流不参与向量化。
  */
 
 /** 路由规则 */
 export interface RoutingRule {
-  /** 目标流：memory（记忆流）或 behavior（行为流） */
-  stream: 'memory' | 'behavior';
+  /** 目标流：memory（记忆流）/ behavior（行为流）/ exempt（豁免：不写任何流，ADR-0069 隐私豁免） */
+  stream: 'memory' | 'behavior' | 'exempt';
   /** 重要度 0-1（仅 memory 流；behavior 流忽略） */
   importance?: number;
   /** 默认情绪（仅 memory 流；behavior 流忽略） */
@@ -109,6 +110,40 @@ export const ROUTING_RULES: Record<string, RoutingRule> = {
 
   // === 兜底 ===
   'system:fallback': { stream: 'behavior' },
+
+  // ==================== ADR-0069 行为流全量盘点补齐 ====================
+
+  // === 日记分类调整（diary 域 dialogs 的 tags-changed 域事件接线，本流补齐此前无观察的动作） ===
+  'diary:tagged': { stream: 'behavior' },
+
+  // === 日记条目加密/解密/清除（diary 域加密语义动作；ADR-0069 隐私豁免——敏感操作不留痕，
+  //     与密码/加密域同口径。规则先行落表：即使未来接线，addObservation 也判 exempt 不写任何流） ===
+  'diary:entry-encrypted':  { stream: 'exempt' },
+  'diary:entry-decrypted':  { stream: 'exempt' },
+  'diary:encrypted-purged': { stream: 'exempt' },
+
+  // === 剪藏（vault delete 语义通道接线；created/modified 不产——保存观察已由 news 通道覆盖，防双记录） ===
+  'clipping:deleted': { stream: 'behavior' },
+
+  // === 密码域（ADR-0069 隐私豁免：查看/新增/生成等敏感操作不留痕；通配覆盖该域全部动作） ===
+  'password:*': { stream: 'exempt' },
+
+  // === 加密域（ADR-0069 隐私豁免：加密/解密/保险箱操作不留痕） ===
+  'encrypt:*': { stream: 'exempt' },
+
+  // === 复习计划（规则就绪：review 域当前不发域事件，规则先行落表待接线） ===
+  'review:started': { stream: 'behavior' },
+  'review:added':   { stream: 'behavior' },
+  'review:removed': { stream: 'behavior' },
+  'review:rated':   { stream: 'behavior' },
+
+  // === 题库（规则就绪：quiz 域当前不发域事件） ===
+  'quiz:added':    { stream: 'behavior' },
+  'quiz:answered': { stream: 'behavior' },
+
+  // === 入口页 / 附件搬移（规则就绪：launcher/attach 域当前不发域事件） ===
+  'launcher:opened': { stream: 'behavior' },
+  'attach:moved':    { stream: 'behavior' },
 };
 
 /**
