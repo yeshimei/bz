@@ -1,6 +1,6 @@
-# Ticket 131（定稿·待实施）：声明式设置页 + 通用设置组 + 流程框声明（ADR-0064）
+# Ticket 131（已完成）：声明式设置页 + 通用设置组 + 流程框声明（ADR-0064）
 
-- 状态：定稿（2026-08-27 grill-with-docs 拍板 Q1–Q18；原「提案」的想法 A/B 口径经本轮升格与扩展）
+- 状态：已完成（2026-08-28 三组 worktree 并行迁移并入 master；验收 a–h 全过）
 - 域：core/settings（跨域）
 - 来源：想法 A（行构建助手）/ 想法 B（通用设置组分发）经 grilling 升格为「全页声明式 schema + 流程框声明」
 - 关联：`src/core/settings-modal.ts`（外壳/分组卡片/焦点/ESC，收编为渲染器基座）、`src/core/path-picker.ts`（path 行复用，ADR-0061）、`src/main.ts`（textSetting/toggleSetting 退役）、`src/core/confirm.ts`（退役并入）、13 个域设置弹窗 build

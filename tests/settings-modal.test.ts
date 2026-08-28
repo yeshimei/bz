@@ -1,6 +1,6 @@
 /**
  * 域设置弹窗测试（ADR-0009）：
- * 1) core/settings-modal 机制——打开/标题/build/空态/无右上角关闭按钮/遮罩/Esc/幂等替换；
+ * 1) core/settings-modal 机制——打开/标题/schema/空态/无右上角关闭按钮/遮罩/Esc/幂等替换；
  * 2) 备忘录面板 ⚙️ 交互（toggle 写回设置）；
  * 3) 归物本（空弹窗 + 排序按钮改 🔀）、收藏本（空弹窗）。
  */
@@ -26,14 +26,26 @@ describe('core settings-modal 机制', () => {
     closeSettingsModal();
   });
 
-  it('打开：mask/popup 挂载 body，标题正确，build 内容渲染', () => {
+  it('打开：mask/popup 挂载 body，标题正确，schema 内容渲染', () => {
     openSettingsModal({
       title: '测试设置',
-      build: (el) => {
-        const s = document.createElement('div');
-        s.className = 'setting-item';
-        s.dataset.name = '测试项';
-        el.appendChild(s);
+      schema: {
+        groups: [
+          {
+            name: '测试组',
+            rows: [
+              {
+                type: 'custom',
+                render: (body) => {
+                  const s = document.createElement('div');
+                  s.className = 'setting-item';
+                  s.dataset.name = '测试项';
+                  body.appendChild(s);
+                },
+              },
+            ],
+          },
+        ],
       },
     });
     const mask = document.getElementById('bz-settings-modal-mask');
@@ -46,7 +58,7 @@ describe('core settings-modal 机制', () => {
   });
 
   it('层级：设置弹窗 z-index 高于普通面板弹窗（10001-10005），低于入口页 10100', () => {
-    openSettingsModal({ title: '层级测试', build: () => {} });
+    openSettingsModal({ title: '层级测试', schema: { groups: [] } });
     const mask = document.getElementById('bz-settings-modal-mask');
     expect(mask).not.toBeNull();
     const z = parseInt(mask!.style.zIndex, 10);
@@ -54,8 +66,8 @@ describe('core settings-modal 机制', () => {
     expect(z).toBeLessThan(10100);
   });
 
-  it('空态：build 未挂 setting-item 时显示 emptyText/emptyDesc', () => {
-    openSettingsModal({ title: '空设置', build: () => {}, emptyText: '没有可配置的设置项', emptyDesc: '路径由全局管理' });
+  it('空态：schema 未挂 setting-item 时显示 emptyText/emptyDesc', () => {
+    openSettingsModal({ title: '空设置', schema: { groups: [] }, emptyText: '没有可配置的设置项', emptyDesc: '路径由全局管理' });
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect(popup.textContent).toContain('没有可配置的设置项');
     expect(popup.textContent).toContain('路径由全局管理');
@@ -96,27 +108,27 @@ describe('core settings-modal 机制', () => {
   });
 
   it('不渲染右上角关闭按钮（关闭只走遮罩/Esc，用户拍板）', () => {
-    openSettingsModal({ title: '测试设置', build: () => {} });
+    openSettingsModal({ title: '测试设置', schema: { groups: [] } });
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect([...popup.querySelectorAll('button')].some((b) => b.textContent === '✕')).toBe(false);
     expect(popup.querySelector('.bz-settings-close')).toBeNull();
   });
 
   it('点击遮罩关闭', () => {
-    openSettingsModal({ title: '测试设置', build: () => {} });
+    openSettingsModal({ title: '测试设置', schema: { groups: [] } });
     document.getElementById('bz-settings-modal-mask')!.click();
     expect(document.getElementById('bz-settings-modal-mask')).toBeNull();
   });
 
   it('Esc 关闭（escManager 层级）', () => {
-    openSettingsModal({ title: '测试设置', build: () => {} });
+    openSettingsModal({ title: '测试设置', schema: { groups: [] } });
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(document.getElementById('bz-settings-modal-mask')).toBeNull();
   });
 
   it('重复打开替换旧弹窗（同一时刻至多一个）', () => {
-    openSettingsModal({ title: '旧弹窗', build: () => {} });
-    openSettingsModal({ title: '新弹窗', build: () => {} });
+    openSettingsModal({ title: '旧弹窗', schema: { groups: [] } });
+    openSettingsModal({ title: '新弹窗', schema: { groups: [] } });
     const popups = [...document.querySelectorAll('#bz-settings-modal-popup')];
     expect(popups.length).toBe(1);
     expect(popups[0].textContent).toContain('新弹窗');
@@ -124,7 +136,7 @@ describe('core settings-modal 机制', () => {
 
   it('onClose：点遮罩关闭时触发一次', () => {
     let closed = 0;
-    openSettingsModal({ title: '回调测试', build: () => {}, onClose: () => { closed++; } });
+    openSettingsModal({ title: '回调测试', schema: { groups: [] }, onClose: () => { closed++; } });
     const mask = document.getElementById('bz-settings-modal-mask')!;
     mask.click();
     expect(closed).toBe(1);
@@ -135,22 +147,22 @@ describe('core settings-modal 机制', () => {
 
   it('onClose：遮罩与 Esc 关闭均触发；无 onClose 不报错', () => {
     let closed = 0;
-    openSettingsModal({ title: '回调测试', build: () => {}, onClose: () => { closed++; } });
+    openSettingsModal({ title: '回调测试', schema: { groups: [] }, onClose: () => { closed++; } });
     document.getElementById('bz-settings-modal-mask')!.click();
     expect(closed).toBe(1);
-    openSettingsModal({ title: '回调测试2', build: () => {}, onClose: () => { closed++; } });
+    openSettingsModal({ title: '回调测试2', schema: { groups: [] }, onClose: () => { closed++; } });
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(closed).toBe(2);
     // 无 onClose 的弹窗正常关闭
-    openSettingsModal({ title: '无回调', build: () => {} });
+    openSettingsModal({ title: '无回调', schema: { groups: [] } });
     closeSettingsModal();
     expect(document.getElementById('bz-settings-modal-mask')).toBeNull();
   });
 
   it('onClose：被新弹窗顶替时对旧弹窗触发', () => {
     let oldClosed = 0;
-    openSettingsModal({ title: '旧弹窗', build: () => {}, onClose: () => { oldClosed++; } });
-    openSettingsModal({ title: '新弹窗', build: () => {} });
+    openSettingsModal({ title: '旧弹窗', schema: { groups: [] }, onClose: () => { oldClosed++; } });
+    openSettingsModal({ title: '新弹窗', schema: { groups: [] } });
     expect(oldClosed).toBe(1);
   });
 
@@ -161,18 +173,30 @@ describe('core settings-modal 机制', () => {
     trigger.focus();
     openSettingsModal({
       title: '焦点测试',
-      build: (el) => {
-        const item = document.createElement('div');
-        item.className = 'setting-item';
-        el.appendChild(item);
-        const first = document.createElement('button');
-        first.className = 'first-control';
-        first.textContent = '第一个控件';
-        item.appendChild(first);
-        const second = document.createElement('button');
-        second.className = 'second-control';
-        second.textContent = '第二个控件';
-        item.appendChild(second);
+      schema: {
+        groups: [
+          {
+            name: '焦点组',
+            rows: [
+              {
+                type: 'custom',
+                render: (body) => {
+                  const item = document.createElement('div');
+                  item.className = 'setting-item';
+                  body.appendChild(item);
+                  const first = document.createElement('button');
+                  first.className = 'first-control';
+                  first.textContent = '第一个控件';
+                  item.appendChild(first);
+                  const second = document.createElement('button');
+                  second.className = 'second-control';
+                  second.textContent = '第二个控件';
+                  item.appendChild(second);
+                },
+              },
+            ],
+          },
+        ],
       },
     });
     const popup = document.getElementById('bz-settings-modal-popup')!;
@@ -191,21 +215,33 @@ describe('core settings-modal 机制', () => {
     trigger.focus();
     openSettingsModal({
       title: '隐藏焦点测试',
-      build: (el) => {
-        const item = document.createElement('div');
-        item.className = 'setting-item bz-setting-hidden';
-        el.appendChild(item);
-        const hiddenBtn = document.createElement('button');
-        hiddenBtn.className = 'hidden-control';
-        hiddenBtn.textContent = '隐藏项';
-        item.appendChild(hiddenBtn);
-        const item2 = document.createElement('div');
-        item2.className = 'setting-item';
-        el.appendChild(item2);
-        const visibleBtn = document.createElement('button');
-        visibleBtn.className = 'visible-control';
-        visibleBtn.textContent = '可见项';
-        item2.appendChild(visibleBtn);
+      schema: {
+        groups: [
+          {
+            name: '隐藏组',
+            rows: [
+              {
+                type: 'custom',
+                render: (body) => {
+                  const item = document.createElement('div');
+                  item.className = 'setting-item bz-setting-hidden';
+                  body.appendChild(item);
+                  const hiddenBtn = document.createElement('button');
+                  hiddenBtn.className = 'hidden-control';
+                  hiddenBtn.textContent = '隐藏项';
+                  item.appendChild(hiddenBtn);
+                  const item2 = document.createElement('div');
+                  item2.className = 'setting-item';
+                  body.appendChild(item2);
+                  const visibleBtn = document.createElement('button');
+                  visibleBtn.className = 'visible-control';
+                  visibleBtn.textContent = '可见项';
+                  item2.appendChild(visibleBtn);
+                },
+              },
+            ],
+          },
+        ],
       },
     });
     const popup = document.getElementById('bz-settings-modal-popup')!;
@@ -223,17 +259,29 @@ describe('core settings-modal 机制', () => {
       trigger.focus();
       openSettingsModal({
         title: '移动端焦点测试',
-        build: (el) => {
-          const item = document.createElement('div');
-          item.className = 'setting-item';
-          el.appendChild(item);
-          const firstInput = document.createElement('input');
-          firstInput.className = 'first-input';
-          item.appendChild(firstInput);
-          const toggleBtn = document.createElement('button');
-          toggleBtn.className = 'toggle-control';
-          toggleBtn.textContent = '开关';
-          item.appendChild(toggleBtn);
+        schema: {
+          groups: [
+            {
+              name: '移动焦点组',
+              rows: [
+                {
+                  type: 'custom',
+                  render: (body) => {
+                    const item = document.createElement('div');
+                    item.className = 'setting-item';
+                    body.appendChild(item);
+                    const firstInput = document.createElement('input');
+                    firstInput.className = 'first-input';
+                    item.appendChild(firstInput);
+                    const toggleBtn = document.createElement('button');
+                    toggleBtn.className = 'toggle-control';
+                    toggleBtn.textContent = '开关';
+                    item.appendChild(toggleBtn);
+                  },
+                },
+              ],
+            },
+          ],
         },
       });
       const popup = document.getElementById('bz-settings-modal-popup')!;
@@ -267,28 +315,39 @@ describe('分组卡片（2026-08 用户拍板方案 A：先落日记本）', () 
     expect(group.querySelector('.bz-settings-group-count')!.textContent).toBe('0 项');
   });
 
-  it('打开弹窗：build 内分组挂设置项后，徽标回填实际项数；平铺结构不受影响', () => {
+  it('打开弹窗：schema 分组挂设置项后，徽标回填实际项数；平铺结构不受影响', () => {
     openSettingsModal({
       title: '分组测试',
-      build: (el) => {
-        const body = createSettingsGroup(el, { icon: 'eye', name: '显示' });
-        const s1 = document.createElement('div');
-        s1.className = 'setting-item';
-        body.appendChild(s1);
-        const s2 = document.createElement('div');
-        s2.className = 'setting-item bz-setting-hidden';
-        body.appendChild(s2);
-        // 父链隐藏容器（review 做题家式）同样不计入
-        const box = document.createElement('div');
-        box.style.display = 'none';
-        const s3 = document.createElement('div');
-        s3.className = 'setting-item';
-        box.appendChild(s3);
-        body.appendChild(box);
-        // 纯操作行（review「添加监听文件夹」式）：挂豁免类不计入徽标
-        const actionRow = document.createElement('div');
-        actionRow.className = 'setting-item bz-setting-action-row';
-        body.appendChild(actionRow);
+      schema: {
+        groups: [
+          {
+            icon: 'eye', name: '显示',
+            rows: [
+              {
+                type: 'custom',
+                render: (body) => {
+                  const s1 = document.createElement('div');
+                  s1.className = 'setting-item';
+                  body.appendChild(s1);
+                  const s2 = document.createElement('div');
+                  s2.className = 'setting-item bz-setting-hidden';
+                  body.appendChild(s2);
+                  // 父链隐藏容器（review 做题家式）同样不计入
+                  const box = document.createElement('div');
+                  box.style.display = 'none';
+                  const s3 = document.createElement('div');
+                  s3.className = 'setting-item';
+                  box.appendChild(s3);
+                  body.appendChild(box);
+                  // 纯操作行（review「添加监听文件夹」式）：挂豁免类不计入徽标
+                  const actionRow = document.createElement('div');
+                  actionRow.className = 'setting-item bz-setting-action-row';
+                  body.appendChild(actionRow);
+                },
+              },
+            ],
+          },
+        ],
       },
     });
     const popup = document.getElementById('bz-settings-modal-popup')!;
@@ -302,18 +361,47 @@ describe('分组卡片（2026-08 用户拍板方案 A：先落日记本）', () 
   it('多组连续创建：每组独立卡片，间距样式由 CSS 负责（结构断言）', () => {
     openSettingsModal({
       title: '多组测试',
-      build: (el) => {
-        const b1 = createSettingsGroup(el, { icon: 'folder-open', name: '目录' });
-        const s1 = document.createElement('div');
-        s1.className = 'setting-item';
-        b1.appendChild(s1);
-        const b2 = createSettingsGroup(el, { icon: 'monitor', name: '默认视图' });
-        const s2 = document.createElement('div');
-        s2.className = 'setting-item';
-        b2.appendChild(s2);
-        // 纯自定义内容组（smartcat 皮肤网格式）：0 个 setting-item，徽标应隐藏
-        const b3 = createSettingsGroup(el, { icon: 'palette', name: '外观' });
-        b3.appendChild(document.createElement('div'));
+      schema: {
+        groups: [
+          {
+            icon: 'folder-open', name: '目录',
+            rows: [
+              {
+                type: 'custom',
+                render: (body) => {
+                  const s1 = document.createElement('div');
+                  s1.className = 'setting-item';
+                  body.appendChild(s1);
+                },
+              },
+            ],
+          },
+          {
+            icon: 'monitor', name: '默认视图',
+            rows: [
+              {
+                type: 'custom',
+                render: (body) => {
+                  const s2 = document.createElement('div');
+                  s2.className = 'setting-item';
+                  body.appendChild(s2);
+                },
+              },
+            ],
+          },
+          // 纯自定义内容组（smartcat 皮肤网格式）：0 个 setting-item，徽标应隐藏
+          {
+            icon: 'palette', name: '外观',
+            rows: [
+              {
+                type: 'custom',
+                render: (body) => {
+                  body.appendChild(document.createElement('div'));
+                },
+              },
+            ],
+          },
+        ],
       },
     });
     const popup = document.getElementById('bz-settings-modal-popup')!;
@@ -334,17 +422,17 @@ describe('分组卡片（2026-08 用户拍板方案 A：先落日记本）', () 
   });
 
   it('maxWidth 透传：传 560 时 popup 最大宽度为 560px，默认仍 400', () => {
-    openSettingsModal({ title: '宽弹窗', build: () => {}, maxWidth: 560 });
+    openSettingsModal({ title: '宽弹窗', schema: { groups: [] }, maxWidth: 560 });
     const wide = document.getElementById('bz-settings-modal-popup')!;
     expect(wide.style.maxWidth).toBe('560px');
     closeSettingsModal();
-    openSettingsModal({ title: '默认弹窗', build: () => {} });
+    openSettingsModal({ title: '默认弹窗', schema: { groups: [] } });
     const normal = document.getElementById('bz-settings-modal-popup')!;
     expect(normal.style.maxWidth).toBe('400px');
   });
 
   it('空态兼容：分组为空时仍显示空态文案（分组结构不破坏空态判断）', () => {
-    openSettingsModal({ title: '空分组', build: (el) => { createSettingsGroup(el, { icon: 'folder-open', name: '目录' }); }, emptyText: '暂无可配置项' });
+    openSettingsModal({ title: '空分组', schema: { groups: [{ icon: 'folder-open', name: '目录', rows: [] }] }, emptyText: '暂无可配置项' });
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect(popup.textContent).toContain('暂无可配置项');
   });
