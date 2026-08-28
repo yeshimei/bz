@@ -880,7 +880,8 @@ describe('EncryptAppController 覆盖补测', () => {
     expect(controls[0][0].text).toBe('选择…');
     controls[0][0].trigger();
     const picker = document.getElementById('bz-path-picker-popup')!;
-    await waitFor(() => picker.querySelectorAll('.bz-path-picker-row').length > 0);
+    // 等「adapter 补齐完成」标记（快速首渲染下 rows 立即出现，但空目录 新/路径 与点前缀目录要等补齐合并）
+    await waitFor(() => picker.dataset.ready === '1');
     const paths = [...picker.querySelectorAll('.bz-path-picker-row')].map((r) => (r as HTMLElement).dataset.path);
     expect(paths).toContain('CONFIG/.ENCRYPT'); // 点前缀目录经 adapter 补齐
     expect(paths).toContain('新/路径');

@@ -114,7 +114,8 @@ describe('⚙️ 弹窗「自动双链」开关联动显隐', () => {
     const scopeBtn = rowTrigger(popup, '关联范围'); // (v) => controls[0].trigger(v)，按钮触发即打开选择器
     scopeBtn(undefined);
     const picker = document.getElementById('bz-path-picker-popup')!;
-    await vi.waitFor(() => expect(picker.querySelectorAll('.bz-path-picker-row').length).toBeGreaterThan(0));
+    // 等「adapter 补齐完成」标记（快速首渲染下 rows 立即出现；等 ready 保证目录集合完整）
+    await vi.waitFor(() => expect(picker.dataset.ready).toBe('1'));
     const clickRow = (p: string) => {
       const row = [...picker.querySelectorAll('.bz-path-picker-row')].find(
         (r) => (r as HTMLElement).dataset.path === p

@@ -231,6 +231,9 @@ function createHeader(): HTMLElement {
     openSettingsModal({
       title: '剪藏本设置',
       maxWidth: 560,
+      // ticket 130 review S1：面板开着时改目录，关设置弹窗即触发目录变更检测（清缓存+全量重载），
+      // 不必等下次重开——applyArticleSettings 内部有 isConnected 门控与非变更短路
+      onClose: () => applyArticleSettings(),
       build: (el) => {
         const s = getSettings();
         // ===== 基础组 =====
@@ -996,6 +999,12 @@ function attachFileListener() {
   // 换线：原生 vault 事件 → 域事件总线 clipping:file-*（obsidian-adapter 统一派发，仅 md；rename 只发一条）。
   // fileListenerRefs 存各通道退订闭包，卸载点 unloadClipping 统一退订；防抖与目录边界判断原样保留。
   fileListenerRefs = [
+    // created 通道（ticket 130 review 补口，ADR-0063 四通道）：面板隐藏期/无回写路径的新建剪藏
+    // （资讯阅读器保存、网页剪藏、手动拖入均为单次 create 无后续 modify）→ 与 modify 同语义增量补挂，
+    // 防「重开零扫描后新文章永久缺失」；空目录新建等非 md 由 obsidian-adapter 语义路过滤
+    onDomainEvent<{ path: string }>('clipping:file-created', (evt) =>
+      fileModifyHandler({ path: evt.path, extension: 'md' })
+    ),
     onDomainEvent<{ path: string }>('clipping:file-modified', (evt) =>
       fileModifyHandler({ path: evt.path, extension: 'md' })
     ),

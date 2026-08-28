@@ -142,7 +142,8 @@ describe('⚙️ 日记本设置弹窗控件写回', () => {
     expect(ctrls[0].text).toBe('选择…');
     ctrls[0].trigger();
     const popup = document.getElementById('bz-path-picker-popup')!;
-    await vi.waitFor(() => expect(popup.querySelectorAll('.bz-path-picker-row').length).toBeGreaterThan(0));
+    // 等「adapter 补齐完成」标记（快速首渲染下 rows 立即出现，但空目录 我的/日记X 要等补齐合并）
+    await vi.waitFor(() => expect(popup.dataset.ready).toBe('1'));
     const row = [...popup.querySelectorAll('.bz-path-picker-row')].find(
       (r) => (r as HTMLElement).dataset.path === '我的/日记X'
     ) as HTMLElement;
