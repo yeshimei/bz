@@ -14,8 +14,6 @@ import { DIARY_DIRECTORY } from '../config';
 import { scanUnparsed, applyRepairs, type UnparsedScan } from '../repair';
 
 const BATCH_CONCURRENCY = 10;
-/** companion 档（z-index 家族表注释：11100+ 为 companion 档，须 > 设置弹窗 10050） */
-const Z_INDEX = 11200;
 
 interface ScannedFile {
   file: any;
@@ -105,7 +103,6 @@ export function openDiaryRepairModal(): void {
   const { mask, popup } = createOverlay({
     maskId: 'bz-diary-repair-mask',
     popupId: 'bz-diary-repair-popup',
-    zIndex: Z_INDEX,
     maxWidth: 640,
     onMaskClick: close,
   });

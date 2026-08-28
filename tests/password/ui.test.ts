@@ -64,9 +64,9 @@ describe('UIManager 主密码流程（统一走保险箱弹窗）', () => {
   });
 
   function findPasswordDialog(): HTMLElement | null {
-    // 保险箱主密码弹窗（zIndex 10070、flex 布局）
+    // 保险箱主密码弹窗（bz-encrypt-dialog-mask、flex 布局）
     return [...document.querySelectorAll('div')].find(
-      (d) => d.style.zIndex === '10070' && d.style.display === 'flex'
+      (d) => d.classList.contains('bz-encrypt-dialog-mask') && d.style.display === 'flex'
     ) as HTMLElement | null;
   }
 

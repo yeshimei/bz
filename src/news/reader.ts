@@ -7,7 +7,7 @@ import { TFile } from 'obsidian';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
-import { createSiteIcon } from '../core/dom';
+import { createSiteIcon, topifyZ } from '../core/dom';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
 import { pad2 } from '../core/utils';
@@ -457,7 +457,7 @@ export async function saveToClip() {
         background: 'var(--background-primary)',
         borderRadius: '10px', padding: '20px',
         boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
-        zIndex: 10001, minWidth: '260px', textAlign: 'center',
+        minWidth: '260px', textAlign: 'center',
         fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, system-ui, sans-serif',
       });
       el.innerHTML = `
@@ -468,7 +468,8 @@ export async function saveToClip() {
                 </div>
             `;
       const ov = document.createElement('div');
-      Object.assign(ov.style, { position: 'fixed', inset: '0', background: 'var(--background-modifier-cover)', zIndex: 10000 });
+      Object.assign(ov.style, { position: 'fixed', inset: '0', background: 'var(--background-modifier-cover)' });
+      topifyZ(ov, el); // ADR-0067：一次性弹窗，创建即显示即发号
       document.body.appendChild(ov);
       document.body.appendChild(el);
       // 点遮罩 = 取消（与「取消」按钮同语义，用户拍板：小弹窗靠遮罩关闭）
@@ -654,6 +655,7 @@ export function show() {
   // l5：加载期先展示占位（此前整个加载过程全程 hidden 无反馈），加载完成后 render() 替换为正文；
   // 不可见即展示：加载中途 hide() 关闭 → 加载完成只渲染内容不再强制弹出
   renderLoading();
+  topifyZ(mask!, popup!); // ADR-0067：显示即发号，谁后显示谁在上
   mask!.style.visibility = 'visible';
   popup!.style.visibility = 'visible';
   // 重入串行化：已有加载链在跑 → 占位/显窗已重建，复用同一链（其完成时 render 替换占位），不另起第二条链

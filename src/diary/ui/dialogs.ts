@@ -3,6 +3,7 @@
  */
 import { MarkdownView as MarkdownViewFromObsidian, moment } from 'obsidian';
 import { pad2 } from '../../core/utils';
+import { topifyZ } from '../../core/z-order';
 import { notice } from '../../core/notice';
 import { openFlowDialog } from '../../core/flow-dialog';
 import { emitDomainEvent } from '../../core/domain-bus';
@@ -58,7 +59,7 @@ export function createDatePicker() {
 
   const mask = document.createElement('div');
   mask.id = 'diary-date-filter-mask';
-  mask.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:var(--background-modifier-cover);z-index:10003;display:none;';
+  mask.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:var(--background-modifier-cover);display:none;';
   mask.onclick = (e) => {
     if (e.target === mask) mask.style.display = 'none';
   };
@@ -66,7 +67,7 @@ export function createDatePicker() {
   const popup = document.createElement('div');
   popup.id = 'diary-date-filter-popup';
   popup.style.cssText =
-    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--background-primary);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.3);z-index:10004;width:90%;max-width:480px;display:flex;flex-direction:column;overflow:hidden;';
+    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--background-primary);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.3);width:90%;max-width:480px;display:flex;flex-direction:column;overflow:hidden;';
 
   const header = document.createElement('div');
   header.style.cssText = 'padding:16px 20px;border-bottom:1px solid var(--background-modifier-border);display:flex;justify-content:space-between;align-items:center;';
@@ -121,6 +122,7 @@ export function showDatePicker() {
   }
 
   renderDatePicker(content, years, selectedYear);
+  topifyZ(mask); // ADR-0067：显示即发号，谁后显示谁在上（content 为 mask 子节点随动）
   mask.style.display = 'block';
 }
 
@@ -239,14 +241,14 @@ export function createTagPicker() {
 
   const mask = document.createElement('div');
   mask.id = 'diary-tag-selector-mask';
-  mask.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);z-index:9999;display:none;';
+  mask.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);display:none;';
   mask.onclick = (e) => e.target === mask && (mask.style.display = 'none');
 
   const popup = document.createElement('div');
   popup.id = 'diary-tag-selector-popup';
   popup.className = 'diary-tag-selector-popup';
   popup.style.cssText =
-    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--background-primary);border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.3);z-index:10000;padding:20px;max-width:300px;width:90%;max-height:80vh;overflow-y:auto;display:none;';
+    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--background-primary);border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.3);padding:20px;max-width:300px;width:90%;max-height:80vh;overflow-y:auto;display:none;';
 
   const title = document.createElement('h4');
   title.className = 'diary-tag-selector-title';
@@ -399,6 +401,7 @@ export function showTagPicker(entryId: string) {
     buttonsContainer.appendChild(button);
   }
 
+  topifyZ(mask, popup); // ADR-0067：显示即发号
   mask.style.display = 'block';
   popup.style.display = 'block';
 }
@@ -481,14 +484,14 @@ export function createAddDialog() {
 
   const mask = document.createElement('div');
   mask.id = 'add-diary-mask';
-  mask.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);z-index:10001;display:none;';
+  mask.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);display:none;';
   mask.onclick = (e) => e.target === mask && (mask.style.display = 'none');
 
   const popup = document.createElement('div');
   popup.id = 'add-diary-popup';
   popup.className = 'add-diary-popup';
   popup.style.cssText =
-    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--background-primary);border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.3);z-index:10002;padding:24px;max-width:400px;width:90%;max-height:80vh;overflow-y:auto;display:none;';
+    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--background-primary);border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.3);padding:24px;max-width:400px;width:90%;max-height:80vh;overflow-y:auto;display:none;';
 
   const title = document.createElement('h4');
   title.className = 'add-diary-title';
@@ -585,6 +588,7 @@ export function openAddDialog() {
     syncDateTime();
   }
 
+  topifyZ(mask, popup); // ADR-0067：显示即发号
   mask.style.display = 'block';
   popup.style.display = 'block';
   setTimeout(() => datetimeInput && datetimeInput.focus(), 100);

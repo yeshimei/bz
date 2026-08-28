@@ -54,7 +54,7 @@ describe('UIManager', () => {
     expect(popup).not.toBeNull();
     expect(mask.style.display).toBe('none');
     expect(popup.style.display).toBe('none');
-    expect(mask.style.zIndex).toBe('9998');
+    expect(Number.isFinite(parseInt(mask.style.zIndex, 10))).toBe(true); // 动态发号（ADR-0067）
     expect(popup.style.maxWidth).toBe('800px');
     expect(document.querySelector('style[data-review-styles]')).toBeNull(); // 样式已收敛 styles.css，不再运行时注入
     expect(document.getElementById('review-btn-add')).not.toBeNull();
@@ -619,7 +619,8 @@ describe('ticket 098 UI：做题家图标移除 / 挂起记录删除线 / 监听
     const pickerPopup = document.getElementById('bz-path-picker-popup')!;
     expect(pickerPopup.querySelector('.bz-path-picker-title')!.textContent).toBe('选择监听文件夹');
     expect(pickerPopup.querySelector('.bz-path-picker-btn--primary')!.textContent).toBe('确定');
-    expect(pickerMask.style.zIndex).toBe('11200'); // companion 档，叠于域设置弹窗 10050 之上
+    const pmz = parseInt(pickerMask.style.zIndex, 10);
+    expect(Number.isFinite(pmz)).toBe(true); // 动态发号（ADR-0067），后开压过设置弹窗
     closeSettingsModal();
     ui.destroy();
   });

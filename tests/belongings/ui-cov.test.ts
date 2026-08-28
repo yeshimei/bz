@@ -89,7 +89,7 @@ describe('表单校验与添加流程全分支', () => {
     date: HTMLInputElement;
   } {
     const modal = [...document.querySelectorAll('div')].find(
-      (d) => (d as HTMLElement).classList.contains('bz-belongings-overlay--11100') && d.style.display === 'flex'
+      (d) => (d as HTMLElement).classList.contains('bz-belongings-overlay--modal') && d.style.display === 'flex'
     ) as HTMLElement;
     const inputs = modal.querySelectorAll('input');
     return {

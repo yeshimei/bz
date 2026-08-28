@@ -20,6 +20,7 @@
  */
 import { escManager } from './esc-manager';
 import { escapeHtml } from './utils';
+import { allocZ } from './z-order';
 
 export interface FlowDialogAction {
   /** 按钮文案（纯文本语义，渲染前 escapeHtml） */
@@ -119,6 +120,8 @@ export function openFlowDialog(opts: FlowDialogOptions): Promise<string | undefi
 
     const mask = document.createElement('div');
     mask.id = '__shared_confirm_mask__';
+    // 动态发号（ADR-0067）：每次打开新建 DOM，创建即显示，谁后开谁在上
+    mask.style.zIndex = String(allocZ());
     mask.onclick = (e) => {
       if (e.target === mask) settle(undefined);
     };

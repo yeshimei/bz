@@ -4,6 +4,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { notice, longPress, createIconBtn, createSiteIcon, createOverlay } from '../../src/core/dom';
+import { __resetZForTests, allocZ } from '../../src/core/z-order';
 import { getNoticeMessages } from '../mock-obsidian-entry';
 
 describe('notice', () => {
@@ -196,14 +197,23 @@ describe('createOverlay', () => {
     document.body.innerHTML = '';
   });
 
-  it('mask/popup 结构与 z-index', () => {
-    const { mask, popup } = createOverlay({ maskId: 'm', popupId: 'p', zIndex: 9999 });
+  it('mask/popup 结构与动态 z-index（ADR-0067：创建即发号，遮罩在下、本体在上）', () => {
+    __resetZForTests();
+    const { mask, popup } = createOverlay({ maskId: 'm', popupId: 'p' });
     expect(mask.id).toBe('m');
     expect(popup.id).toBe('p');
-    expect(mask.style.zIndex).toBe('9999');
-    expect(popup.style.zIndex).toBe('10000');
+    const mz = parseInt(mask.style.zIndex, 10);
+    expect(Number.isFinite(mz)).toBe(true);
+    expect(parseInt(popup.style.zIndex, 10)).toBe(mz + 1);
     expect(mask.style.display).toBe('none');
     expect(popup.style.display).toBe('none');
+  });
+
+  it('连续创建的 overlay z 单调递增（谁后创建谁在上）', () => {
+    __resetZForTests();
+    const z1 = allocZ();
+    const z2 = allocZ();
+    expect(z2).toBeGreaterThan(z1);
   });
 
   it('点击遮罩触发 onMaskClick，点击 popup 不触发', () => {

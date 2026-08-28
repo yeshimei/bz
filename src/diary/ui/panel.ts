@@ -3,6 +3,7 @@
  * 负责面板/遮罩/头部/标签栏/进度条的创建，init 幂等入口，ESC 注册。
  */
 import { pad2 } from '../../core/utils';
+import { topifyZ } from '../../core/z-order';
 import { notice } from '../../core/notice';
 import { escManager } from '../../core/esc-manager';
 import type { EscHandle } from '../../core/esc-manager';
@@ -71,7 +72,7 @@ function createMaskAndPopup() {
   state.ui.maskLayer = document.createElement('div');
   state.ui.maskLayer.id = 'diary-filter-mask';
   state.ui.maskLayer.style.cssText =
-    'position:fixed;top:0;left:0;right:0;bottom:0;background:var(--background-modifier-cover);z-index:9998;visibility:hidden;';
+    'position:fixed;top:0;left:0;right:0;bottom:0;background:var(--background-modifier-cover);visibility:hidden;';
   state.ui.maskLayer.onclick = () => {
     // UX-25：遮罩点击与 ESC/关闭按钮同路径（关面板即锁保险箱）
     closePanel();
@@ -80,7 +81,7 @@ function createMaskAndPopup() {
   state.ui.tagFilterPopup = document.createElement('div');
   state.ui.tagFilterPopup.id = 'diary-tag-filter';
   state.ui.tagFilterPopup.style.cssText =
-    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--background-primary);border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.2);z-index:9999;width:90%;max-width:800px;max-height:80vh;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,system-ui,sans-serif;visibility:hidden;';
+    'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--background-primary);border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.2);width:90%;max-width:800px;max-height:80vh;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,system-ui,sans-serif;visibility:hidden;';
 
   const header = createHeader();
   const tagsContainer = createTagBar();
@@ -363,6 +364,7 @@ function detachFileChangeListeners(): void {
 export async function init(plugin?: { registerEvent: (ref: unknown) => unknown }) {
   try {
   if (document.getElementById('diary-tag-filter')) {
+    topifyZ(document.getElementById('diary-filter-mask') ?? undefined, document.getElementById('diary-tag-filter')!); // ADR-0067：显示即发号
     document.getElementById('diary-tag-filter')!.style.visibility = 'visible';
     const mask = document.getElementById('diary-filter-mask');
     if (mask) mask.style.visibility = 'visible';
@@ -452,8 +454,9 @@ export async function showDiaryPanel(plugin?: { registerEvent: (ref: unknown) =>
   await init(plugin);
   // 强制显示（init 创建时保持隐藏）
   const popup = document.getElementById('diary-tag-filter');
-  if (popup) popup.style.visibility = 'visible';
   const mask = document.getElementById('diary-filter-mask');
+  topifyZ(mask ?? undefined, popup ?? undefined); // ADR-0067：显示即发号
+  if (popup) popup.style.visibility = 'visible';
   if (mask) mask.style.visibility = 'visible';
   // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡（每次显示均执行）
   applyMobileWindowFullscreen(popup, tryGetSettings().diaryMobileDefaultFullscreen === true);

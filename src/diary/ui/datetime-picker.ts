@@ -4,6 +4,7 @@
 import { moment } from 'obsidian';
 import { notice } from '../../core/notice';
 import { escManager } from '../../core/esc-manager';
+import { allocZ } from '../../core/z-order';
 import { parseFlexibleDateTime } from '../parser';
 import { state } from '../state';
 
@@ -355,7 +356,6 @@ export function showDateTimePicker(initialMoment: any, onConfirm: (m: any) => vo
   mask.style.cssText = `
     position: fixed; top:0; left:0; right:0; bottom:0;
     background: var(--background-modifier-cover);
-    z-index: 10010;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -455,6 +455,7 @@ export function showDateTimePicker(initialMoment: any, onConfirm: (m: any) => vo
   popup.appendChild(btnContainer);
 
   mask.appendChild(popup);
+  mask.style.zIndex = String(allocZ()); // ADR-0067:一次性选择器,创建即显示即发号(popup 为 mask 子节点随动)
   document.body.appendChild(mask);
 
   updateAllColumns(picker, true);

@@ -3,6 +3,7 @@
  * 统一抽屉（桌面右键/移动长按）：开始复习/打开原文/移出；双击名称打开对应笔记（用户拍板保留）。
  */
 import type { App } from 'obsidian';
+import { topifyZ, allocZ } from '../core/z-order';
 import { notice } from '../core/notice';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { escapeHtml } from '../core/utils';
@@ -254,12 +255,14 @@ export class UIManager {
     if (this.mask && document.body.contains(this.mask)) return;
     this.mask = document.createElement('div');
     this.mask.id = 'review-mask';
-    Object.assign(this.mask.style, { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'var(--background-modifier-cover)', zIndex: '9998', display: 'none' });
+    Object.assign(this.mask.style, { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'var(--background-modifier-cover)', display: 'none' });
+    this.mask.style.zIndex = String(allocZ()); // ADR-0067：创建即发号（显示时 topifyZ 再抬）
     this.mask.onclick = () => this.hideMain();
 
     this.popup = document.createElement('div');
     this.popup.id = 'review-popup';
-    Object.assign(this.popup.style, { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'var(--background-primary)', borderRadius: '12px', boxShadow: '0 10px 40px rgba(0,0,0,0.2)', zIndex: '9999', width: '90%', maxWidth: '800px', maxHeight: '80vh', display: 'none', flexDirection: 'column' });
+    Object.assign(this.popup.style, { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'var(--background-primary)', borderRadius: '12px', boxShadow: '0 10px 40px rgba(0,0,0,0.2)', width: '90%', maxWidth: '800px', maxHeight: '80vh', display: 'none', flexDirection: 'column' });
+    this.popup.style.zIndex = String(allocZ()); // ADR-0067：创建即发号
     const header = document.createElement('div');
     header.className = 'bz-win-head';
     header.style.cssText = 'padding:16px 24px 8px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;';
@@ -359,6 +362,7 @@ export class UIManager {
     if (!this.mask || !this.popup) return;
     // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
     applyMobileWindowFullscreen(this.popup, tryGetSettings().reviewMobileDefaultFullscreen === true);
+    topifyZ(this.mask, this.popup); // ADR-0067：显示即发号，谁后显示谁在上
     this.mask.style.display = 'block';
     this.popup.style.display = 'flex';
     this.refreshPanel();
@@ -381,12 +385,12 @@ export class UIManager {
   createConfirmDialog(): void {
     if (this.confirmMask && document.body.contains(this.confirmMask)) return;
     this.confirmMask = document.createElement('div');
-    Object.assign(this.confirmMask.style, { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.3)', zIndex: '10003', display: 'none' });
+    Object.assign(this.confirmMask.style, { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.3)', display: 'none' });
     this.confirmMask.onclick = (e) => {
       if (e.target === this.confirmMask) this.hideConfirm();
     };
     this.confirmPopup = document.createElement('div');
-    Object.assign(this.confirmPopup.style, { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'var(--background-primary)', borderRadius: '12px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', zIndex: '10004', padding: '24px', maxWidth: '400px', width: '90%', display: 'none', flexDirection: 'column', alignItems: 'center', textAlign: 'center' });
+    Object.assign(this.confirmPopup.style, { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'var(--background-primary)', borderRadius: '12px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', padding: '24px', maxWidth: '400px', width: '90%', display: 'none', flexDirection: 'column', alignItems: 'center', textAlign: 'center' });
     this.confirmPopup.innerHTML = `
       <h4 id="confirm-title" style="margin:0 0 12px 0;font-size:18px;font-weight:600;">确认删除</h4>
       <p id="confirm-message" style="margin:0 0 20px 0;font-size:15px;color:var(--text-muted);"></p>
@@ -410,6 +414,7 @@ export class UIManager {
     this.confirmPopup.querySelector('#confirm-title')!.textContent = title || '确认';
     this.confirmPopup.querySelector('#confirm-message')!.textContent = msg || '';
     this.confirmCallback = onConfirm || null;
+    topifyZ(this.confirmMask, this.confirmPopup); // ADR-0067：显示即发号
     this.confirmMask.style.display = 'block';
     this.confirmPopup.style.display = 'flex';
   }
@@ -426,6 +431,7 @@ export class UIManager {
     if (old) old.remove();
     const div = document.createElement('div');
     div.className = 'difficulty-dialog';
+    div.style.zIndex = String(allocZ()); // ADR-0067：一次性弹窗，创建即显示即发号
     // ticket s1：文件名经 escapeHtml 转义后拼 HTML
     div.innerHTML = `
       <h4 style="margin:0 0 12px 0;font-size:16px;">标记复习：${escapeHtml(item.name)}</h4>

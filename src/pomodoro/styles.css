@@ -9,8 +9,7 @@
   
 
 /* ==================== 番茄钟弹窗（pomodoro，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
-    /* e3：域主弹窗层级收敛——z-index 从 JS 内联移入样式（password 先例 9998） */
-    #pomodoro-mask { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.45); z-index: 9998; }
+    #pomodoro-mask { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.45); } /* z 动态发号（ADR-0067） */
     #pomodoro-popup { width: 320px; padding: 24px; border-radius: 16px; background: var(--background-primary); box-shadow: 0 8px 40px rgba(0,0,0,0.3); text-align: center; position: relative; }
     #pomodoro-ring-svg { width: 160px; height: 160px; margin: 8px auto; display: block; }
     .pomodoro-ring-track { fill: none; stroke: var(--background-modifier-border); stroke-width: 8; }
