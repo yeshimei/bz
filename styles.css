@@ -1078,6 +1078,14 @@ button.news-close-btn {
   }
 }
 
+/* ticket 133 兜底：路径设置行移动端恒单行——名称/描述在左、按钮（或已选 chips）在右同行；
+   不依赖控件区子元素计数（即便按钮意外在场也不拆两行）；chips 在控件区内自行折行 */
+@media (max-width: 768px) {
+  .setting-item.bz-path-picker-setting-row { flex-wrap: nowrap; }
+  .setting-item.bz-path-picker-setting-row > .setting-item-info { flex: 1 1 auto; min-width: 0; }
+  .setting-item.bz-path-picker-setting-row > .setting-item-control { flex: 0 1 auto; justify-content: flex-end; }
+}
+
 /* ==================== 日记本域样式（src/diary/styles.css） ==================== */
 /* ==================== 日记本（diary-notebook 合并） ==================== */
 /* 添加日记弹窗样式 */

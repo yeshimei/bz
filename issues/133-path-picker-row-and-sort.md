@@ -1,6 +1,7 @@
 # Ticket 133：路径设置行空态/已选态翻转 + 选择器列表排序（grill-with-docs 拍板）
 
-- 状态：已完成（master 84bca3c + 样式源迁址后续提交；全量 209 文件/3297 用例绿 + tsc 0 + 构建部署）
+- 状态：已完成（master 95a3792 + 修订 bb7f7cd；全量 209 文件/3298 用例绿 + tsc 0 + 构建部署）
+- 修订（bb7f7cd，用户验收反馈）：① 路径行移动端单行兜底——空态行控件区为「按钮+chips」两子元素会被两行式误标，`markSettingSplitRows` 对 `.bz-path-picker-setting-row` 直接跳过 + 守卫类 CSS 恒单行；② 移动端选择器外边距（`min(calc(100vw - 32px), 440px)` 左右各 16px）；③ 空态/已选态按钮显隐回归测试锁定
 - 域：core/path-picker（跨域设置面板路径行统一组件）
 - 来源：grill-with-docs 拍板（三轮 Q&A 收敛）
 - 关联：`src/core/path-picker.ts`、`styles.css`、`tests/core/path-picker-ui.test.ts`、`tests/settings-tab.test.ts`
