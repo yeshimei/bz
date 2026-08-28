@@ -28,42 +28,8 @@
     margin-bottom: 12px;
     overflow-x: auto;
 }
-.bz-tab-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px;
-    border-bottom: 2px solid var(--background-modifier-border);
-    padding: 4px 2px 0;
-}
-.bz-tab {
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.9em;
-    padding: 6px 14px;
-    border: 2px solid transparent;
-    border-bottom: none;
-    border-radius: 6px 6px 0 0;
-    color: var(--text-muted);
-    white-space: nowrap;
-    user-select: none;
-    transition: color 0.2s ease, background-color 0.2s ease;
-}
-.bz-tab:hover {
-    color: var(--text-normal);
-    background: var(--background-modifier-hover);
-}
-.bz-tab-active,
-.bz-tab-active:hover {
-    color: var(--text-on-accent);
-    background: var(--interactive-accent);
-    border-color: var(--interactive-accent);
-}
-.bz-tab-content {
-    display: none;
-}
-.bz-tab-content-active {
-    display: block;
-}
+/* 旧分页 .bz-tab-* 死类已删（ticket 131 Q14：grep 全仓零引用；.bz-tab 断言残留于
+   tests/settings-tab.test.ts 的「无 tab」负向回归，非使用方） */
 .bz-setting-hidden {
     display: none !important;
 }
@@ -217,7 +183,7 @@ button.news-close-btn {
 #__yin_ying__ :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
 #__gui_wu_ben__ :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
 #chat-panel :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
-/* 共享确认框（core/confirm） */
+/* 共享确认框（core/flow-dialog，承继旧 core/confirm 契约） */
 #__shared_confirm_mask__ :is(button, input, select, textarea, a[href], [tabindex]):focus-visible {
   outline: 2px solid var(--interactive-accent);
   outline-offset: 2px;
@@ -499,7 +465,7 @@ button.news-close-btn {
     }
 }
 
-/* 通用确认弹窗（原 core/confirm.ts 内联，Q3.js 移植；id 保持外部约定；popup 为 mask 子节点，层级由 mask 承载）
+/* 通用确认弹窗（core/flow-dialog 流程框，承继旧 core/confirm.ts 的 Q3.js 移植结构；id 保持外部约定；popup 为 mask 子节点，层级由 mask 承载）
    z 档位 10250：确认类弹窗应永远最顶层——压过全部域弹窗（域模态旧档 10001-10060 / encrypt unlock 10070·
    体检 10080 / launcher 10100·10101·10200），原 10060 被 encrypt 10070/10080 盖住属倒挂（encrypt-pw 审查发现，
    点确认需两次）已修；同时低于统一抽屉 10999/11000、companion 11100+、movie 小窗 12000、toast 100000 */
@@ -2358,17 +2324,7 @@ button.news-close-btn {
         }
 .article-sites-scroll::-webkit-scrollbar { display:none; }
 
-/* ===== 剪藏本设置「数据源」组 + 自动摘要详设（ticket 124，ADR-0060） ===== */
-/* 自动摘要下级选择：去掉左边距与父级平级显示（用户反馈：不要缩进） */
-.auto-summary-detail {
-    padding: 4px 12px 12px 0;
-}
-.auto-summary-detail .setting-item {
-    border-top: 1px solid var(--background-modifier-border);
-}
-.auto-summary-detail .setting-item:first-child {
-    border-top: none;
-}
+/* ===== 剪藏本设置「数据源」组（ticket 124，ADR-0060） ===== */
 
 /* ===== UP 主名单管理弹窗（ticket 126）：设置弹窗之上的独立 overlay，列表行=头像+名字+uid+移除 ===== */
 .bz-up-manager-row {
