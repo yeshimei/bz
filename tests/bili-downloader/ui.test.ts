@@ -374,7 +374,7 @@ describe('文献盒面板 UI', () => {
     const a = await TasksData.addTask({ url: 'https://www.bilibili.com/video/BV1xx411c7mD', start: '1:00', end: '2:00' });
     const b = await TasksData.addTask({ url: 'https://www.bilibili.com/video/BV1xx411c7mD', start: '3:00', end: '4:00' });
     const c = await TasksData.addTask({ url: 'BV1xx411c7mZ' });
-    await TasksData.updateTask(a.id, { status: 'success', archived: true, processedAt: '2026-08-28 21:00:00', title: '同一视频', notePath: '文献盒/同一视频.md' } as any);
+    await TasksData.updateTask(a.id, { status: 'success', archived: true, processedAt: '2026-08-28 21:00:00', title: '同一视频', uploader: '某UP', notePath: '文献盒/同一视频.md' } as any);
     await TasksData.updateTask(b.id, { status: 'success', archived: true, processedAt: '2026-08-28 22:00:00', title: '同一视频', notePath: '文献盒/同一视频-2.md' } as any);
     await TasksData.updateTask(c.id, { status: 'success', archived: true, processedAt: '2026-08-28 20:00:00', title: '另一视频', notePath: '文献盒/另一视频.md' } as any);
     vault.files.set('文献盒/同一视频.md', '# A');
@@ -386,6 +386,9 @@ describe('文献盒面板 UI', () => {
     const grouped = Array.from(cards).find((c) => c.textContent!.includes('同一视频'))!;
     expect(grouped.querySelectorAll('.bz-bili-hnote')).toHaveLength(2); // 两条笔记行
     expect(grouped.textContent).toContain('2 条笔记');
+    expect(grouped.textContent).toContain('某UP'); // UP主名紧随标题（无「UP主」前缀，ADR-0070）
+    expect(grouped.textContent).not.toContain('UP主');
+    expect(grouped.querySelector('.bz-bili-meta')).toBeNull(); // 无次行，UP主/笔记数并入标题行
     expect(grouped.textContent).toContain('文献盒/同一视频.md');
     expect(grouped.textContent).toContain('文献盒/同一视频-2.md');
     // 点击笔记行 → 打开对应文献笔记
