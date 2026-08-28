@@ -227,7 +227,7 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
     });
   }
 
-  it('桌面端七组：外观/可视化/互动/记忆/存储与记忆/关联/显示，图标与项数徽标正确', () => {
+  it('桌面端八组：外观/可视化/互动/记忆/记忆目录/存储与记忆/关联/显示，图标与项数徽标正确', () => {
     const hooks = { saves: [] as any[], appearances: [] as string[] };
     Platform.isMobile = false;
     openWith(baseConfig(), hooks);
@@ -246,6 +246,8 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
       { icon: 'bar-chart-3', name: '可视化', count: '0 项' },
       { icon: 'message-circle', name: '互动', count: '3 项' },
       { icon: 'archive', name: '记忆', count: '4 项' },
+      // ADR-0069 记忆目录（记忆目录流）：多文件夹选择（path-picker 多选）
+      { icon: 'folder-open', name: '记忆目录', count: '1 项' },
       // P3 新增三组（ticket 123）
       { icon: 'database', name: '存储与记忆', count: '2 项' },
       { icon: 'link', name: '关联', count: '2 项' },
