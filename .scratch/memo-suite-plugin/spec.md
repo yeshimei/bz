@@ -574,3 +574,36 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - **自动摘要详设（智能组，开关打开后展开，Q8/Q14）**：A) 摘要长度档位（autoSummaryLength：简短/标准/详细，默认标准，映射 summary 字数要求与 max_tokens）；B) 标签生成开关与数量（autoSummaryTagsEnabled + autoSummaryTagCount，默认开 3-6 个；关则不再生成/补全 tags）；C) 摘要时机（autoSummaryTiming：保存后立刻（默认，保持 create+file-open 双监听）/ 懒触发（仅打开文件时补全，去掉 create 即时监听））；AI 配置仍走主设置页 core AI（ADR-0052 不重复）
 - **设置/数据格式开销**：settings.ts 新增 6 键（autoSummaryLength/autoSummaryTagsEnabled/autoSummaryTagCount/autoSummaryTiming/newsRetentionSavedDays/newsRetentionSkippedDays）；news.json 四段结构与 `state` 字段为数据格式变更——铁律 1 兼容性冻结按用户拍板豁免，立 ADR-0060 记录边界（旧 news.json 纯数组/news-stats.json 读取兼容，迁移不破坏已读标记）
 - **验收标准**：a) 剪藏本设置弹窗出现「数据源」组，news.json 存在与否两条路径正确；b) 三源开关切换后 watcher 下轮按 sources 抓取；c) 粘贴 space.bilibili.com/<uid> 或 bilibili.com/video/BVxxx 自动解析出 uid 入名单并可删除；d) 阅读流出现 platform=B站 的条目（标题/简介/封面/链接），保存/跳过标记 state 并按 3/7 天档清理；e) 自动摘要开关打开后展开三组详设并生效；f) 旧 news.json 纯数组与 news-stats.json 迁移无感；g) 全量测试绿 + tsc + 构建
+
+### 设置面板路径选择器统一 + 行为流全量化 + 剪藏本缓存（ticket 128-130，ADR-0061~0063，grill-with-docs 定案）
+
+> 用户需求：「设置面板输入文件或文件夹统一改成文件搜索输入框，支持单个或多个，移动端优化」「移动端输入框行超过两个元素时描述一行、输入框和其他元素一行」「剪藏本每次打开都重新加载数据（要缓存复用）」「最近行为用时间线、行为流全量记录（含记忆流行为，两边都有）」。原型（`.scratch/picker-prototype/`）验收定稿：文件夹选择 = **卡片弹窗**；选择器**不保留手输输入框**（推翻 grill 中 Q8 的保留手输拍板）；行为面板 = 时间线 + 统计块筛选 + 滚动加载。
+
+#### ticket 128（W1）：设置面板统一文件选择器 + 移动端两行式（ADR-0061）
+
+- **范围**：主设置页 + 所有域设置弹窗的路径类输入全部统一。单值目录：storagePath / articleDirectory / diaryDirectory / movieDirectory / letterDirectory / libraryFolderPath / movieFolderPath / encryptRoot；多值目录：secondBrainAllowPaths / linkAgentScopes / reviewWatchedFolders / reviewExcludedNotes；aiAgentWatchedFolders 不暴露 UI 不动
+- **形态**：抽 core 统一选择器（`src/core/path-picker.ts`），单选/多选参数化；**卡片弹窗**（居中卡：标题头 + 搜索框 + 目录列表 + 底部 selinfo/清空(多选)/确定）；已选 = chips（单选 chip 替换式、可 ✕ 清除；多选逐个 ✕ 移除）
+- **数据源**：全部 vault 文件夹（含空目录与点前缀隐藏目录如 `CONFIG/.ENCRYPT`），不能只聚合含笔记目录
+- **不保留手输输入框**：设置行只显示 chips + 「选择…/添加…」按钮，路径一律经选择器录入（限 vault 内）
+- **旧两套迁移**：secondbrain whitelist-modal（多选弹窗）与 attach FolderSelectModal（运行时单选弹窗）合并进 core 组件；z-index 对表 settings-modal.ts 家族注释
+- **移动端**：弹窗近全屏 + 键盘适配；样式简练（原型定稿卡片弹窗）
+- **移动端两行式**：所有设置行（主设置页 + 域设置弹窗）通用规则——控件区（.setting-item-control）含 ≥2 个子元素时，移动端名称+描述独占一行、控件区一行（flex-wrap 折行）；单控件行（开关/下拉）保持原生
+- **兼容**：设置键格式零变化（单值字符串/逗号分隔字符串/数组照旧），仅换 UI（铁律 1 不破）
+
+#### ticket 129（W2）：行为流全量双写 + 时间线面板（ADR-0062，修订 ADR-0055 分流拍板）
+
+- **双写机制**：addObservation 一律**先写行为流**（全量日志）；routing 命中 memory 的再写记忆流条目——两条独立（id/时间戳各自独立，不互相标记来源，用户拍板「看起来是独立添加的，只是方便管理」）；ROUTING_RULES 表本身不动
+- **文案**：行为流条目存结构化数据（metadata = StructuredMeta，description 保持 `source:action 名称` 兜底），面板渲染时按 entityType:action 分派模板生成人类文案（「你保存了《x》（平台·读了 N 分钟）」式）；模板全覆盖（news/movie/memo/favorites/belongings/pomodoro/library/chat/diary 等全部结构化域），无模板兜底旧式；最近行为列表**不显示事件名**
+- **面板**：时间线式（左竖线 + 圆点节点）；来源统计块可点击筛选（点 = 筛选该来源，点「全部」还原）+ 滚动加载
+- **提升按钮**：去掉「提升为记忆」按钮（UI），promoteToMemory 接口保留
+- **容量**：DEFAULT behaviorMaxCount 1000→2000（保留 30 天不变；已有 data.json 值尊重不迁移）
+- **防重维持**：B6 300ms 同事件守卫、news 保存近 20 条防重不变
+- **聚合讯时长**：数据已有（news-source extras.durationMin），本次经渲染文案可见
+
+#### ticket 130（W3）：剪藏本重开缓存复用 + 关闭按钮 ❌ 统一（ADR-0063，修订 B1）
+
+- **缓存复用**：剪藏本面板重开（窗口已存在）→ 仅 setVisible + applyMobileWindowFullscreen，**不再 showLoadingHint + loadAllArticles**（首开仍全量 + 加载提示）
+- **完全信任监听**：modify/delete/rename 三通道常驻（面板隐藏不卸）维护增量，重开零扫描
+- **目录变更**：applyArticleSettings 检测 articleDirectory 变化 → 清空模块列表 + 全量重载一次，此后重开零扫描
+- **B1 修订**：幽灵卡片防护由「重开即重载」改为「常驻监听增量维护」（ticket 125 的「重开先显示加载提示」语义随之作废，首开保留）
+- **关闭按钮**：全局统一 ✕→❌（library 主面板与书库弹窗、movie recommend 等仍用 ✕ 的关闭按钮；chips 的 ✕ 移除符是功能性删除符不动）
