@@ -5,7 +5,6 @@
  * - 位置：桌面端右上角、从右侧滑入；移动端（max-width 768px）顶部居中、从上往下
  * - 堆叠 + 上限 5 条（超出挤掉最旧；常驻帧 duration<=0 / progress 默认不参与驱逐——P1-33：
  *   连续任务的常驻句柄不会被后续 toast 挤掉，setMessage/setType 始终有效）
- * - z-index 100000（最顶，盖过 Obsidian 全部 UI 层）
  * - 类型图标用 emoji（info ℹ️ / success ✅ / warning ⚠️ / error ❌ / pause ⏸️ / accept ✨ /
  *   delete 🗑️ / confirm ✓ / restore ↩️ / skip 🚫 / archive 📁 / progress 转圈）；
  *   类型由调用方显式指定（notice(msg, type)），不做消息内容自动归类
