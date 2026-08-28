@@ -3412,7 +3412,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   to { opacity: 1; }
 }
 
-/* 待转文献面板（bili-downloader 域升级，ADR-0065） */
+/* 待转文献面板（bili-downloader 域升级，ADR-0065；面板正名「文献盒」，ADR-0066） */
 
 /* ---- 任务行卡片 ---- */
 .bz-bili-task-card {
@@ -3490,6 +3490,53 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   text-align: center;
   font-size: 12px;
   color: var(--text-muted);
+}
+
+/* ---- 行内详细进度（ADR-0066：步骤时间线 + 百分比条 + 耗时）---- */
+.bz-bili-progress-box {
+  margin-top: 5px;
+}
+.bz-bili-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.bz-bili-step-done {
+  color: var(--text-muted);
+}
+.bz-bili-step-cur {
+  color: var(--text-accent);
+  font-weight: 600;
+}
+.bz-bili-step-arrow {
+  color: var(--text-faint);
+}
+.bz-bili-step-pct {
+  color: var(--text-accent);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.bz-bili-progress-track {
+  margin-top: 4px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--background-modifier-hover);
+  overflow: hidden;
+}
+.bz-bili-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--interactive-accent);
+  transition: width .3s ease;
+}
+.bz-bili-elapsed {
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
 }
 ﻿/* ============================================================
  * 绗簩澶ц剳锛坰econdbrain 鍩燂紝ticket 103 寤?UI / 107 琛ユ牱寮忔枃浠?/ 108 闈㈡澘鎵撶（锛?
