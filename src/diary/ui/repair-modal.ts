@@ -7,7 +7,7 @@
  */
 import { createOverlay } from '../../core/dom';
 import { escManager } from '../../core/esc-manager';
-import { confirm } from '../../core/confirm';
+import { openFlowDialog } from '../../core/flow-dialog';
 import { notice } from '../../core/notice';
 import { getApp } from '../app';
 import { DIARY_DIRECTORY } from '../config';
@@ -259,14 +259,18 @@ export function openDiaryRepairModal(): void {
 
   const confirmFix = (scanned: ScannedFile[], repairs: ScannedFile[]): void => {
     const count = repairs.reduce((n, s) => n + s.scan.repairs.length, 0);
-    confirm({
+    void openFlowDialog({
       title: '修复日记标题格式',
       message:
         `将修改 ${repairs.length} 个日记文件中的 ${count} 处标题行：` +
         `补空格/时间补零使其符合「# emoji HH:mm」格式，正文内容不变。` +
         `修改不可撤销，可通过 Obsidian 文件历史恢复。`,
-      confirmText: '修复',
-      onConfirm: () => void runFix(scanned, repairs),
+      actions: [
+        { label: '取消', value: 'cancel' },
+        { label: '修复', value: 'ok', cta: true },
+      ],
+    }).then((v) => {
+      if (v === 'ok') void runFix(scanned, repairs);
     });
   };
 

@@ -14,7 +14,7 @@ import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, getTypeColor, getStarRati
 import { M, takeHomeFilmStatus, type MovieItem } from './state';
 import { getDisplayItems, refreshDataAndView, rebuildItems } from './data';
 import { attachItemActions, refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, type ItemAction } from '../core/item-actions';
-import { confirm } from '../core/confirm';
+import { openFlowDialog } from '../core/flow-dialog';
 import { runAIRecommend, runSimilarRecommend } from './recommend';
 import { watchPosterFetch } from './poster-watch';
 import { openAnalysisModal } from '../movie-report/analysis'; // ADR-0048：报告独立域，📊 按钮跨域显式引用（纯数据回引 constants 无环）
@@ -1525,17 +1525,20 @@ export function openReviewModal(item: MovieItem, app: App, title: string, onDone
 
 /** 删除影视笔记（二次确认，不可撤销） */
 function confirmDeleteMovie(item: MovieItem, app: App): void {
-  confirm({
+  void openFlowDialog({
     title: '删除影视',
     message: `确定删除《${item.name}》吗？\n\n此操作不可撤销，影视笔记将从笔记库永久删除。`,
-    confirmText: '删除',
-    onConfirm: async () => {
-      await app.vault.delete(item.file);
-      // ticket 074（域事件派发）：删除影视观察
-      emitDomainEvent('movie', { kind: 'deleted', name: item.name });
-      notice('影视已删除', 'success');
-      refreshDataAndView(app);
-    },
+    actions: [
+      { label: '取消', value: 'cancel' },
+      { label: '删除', value: 'ok', cta: true },
+    ],
+  }).then(async (v) => {
+    if (v !== 'ok') return;
+    await app.vault.delete(item.file);
+    // ticket 074（域事件派发）：删除影视观察
+    emitDomainEvent('movie', { kind: 'deleted', name: item.name });
+    notice('影视已删除', 'success');
+    refreshDataAndView(app);
   });
 }
 

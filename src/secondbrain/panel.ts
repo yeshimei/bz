@@ -20,7 +20,7 @@ import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal, closeSettingsModal, createSettingsGroup, refreshSettingsGroupCounts, markSettingSplitRows } from '../core/settings-modal';
 import { renderPathSettingRow } from '../core/path-picker';
 import { escapeHtml, formatRelativeTime } from '../core/utils';
-import { confirm } from '../core/confirm';
+import { openFlowDialog } from '../core/flow-dialog';
 import { getApp } from '../core/app';
 import { buildConfig, IS_MOBILE } from './config';
 import { loadStore, mutateStore } from './store-file';
@@ -917,14 +917,18 @@ export function openSecondBrainSettings(_app?: App): void {
                 return;
               }
               const target = formatRemoteOllamaUrl(primary.ip);
-              confirm({
+              void openFlowDialog({
                 title: '填入远程 Ollama URL',
                 message: `将「远程 Ollama URL（移动端）」覆盖为 ${target}？`,
-                confirmText: '覆盖',
-                onConfirm: () => {
+                actions: [
+                  { label: '取消', value: 'cancel' },
+                  { label: '覆盖', value: 'ok', cta: true },
+                ],
+              }).then((v) => {
+                if (v === 'ok') {
                   set('secondBrainRemoteOllamaUrl', target);
                   urlText?.setValue(target); // 输入框即时回显新值
-                },
+                }
               });
             })
           );
@@ -1058,16 +1062,19 @@ export function openSecondBrainSettings(_app?: App): void {
         .setDesc('清空现有向量索引并按当前白名单全部重嵌入；视库大小耗时数分钟，期间检索降级为文本匹配')
         .addButton((b) =>
           b.setButtonText('开始').onClick(() => {
-            confirm({
+            void openFlowDialog({
               title: '重新索引',
               message: '将清空现有向量索引，按当前白名单全部重嵌入（约等于首次初始化全量跑一遍）。期间参考侧边栏与对话的向量检索会降级为文本匹配。确定继续吗？',
-              confirmText: '开始重建',
-              cancelText: '取消',
-              onConfirm: () => {
+              actions: [
+                { label: '取消', value: 'cancel' },
+                { label: '开始重建', value: 'ok', cta: true },
+              ],
+            }).then((v) => {
+              if (v === 'ok') {
                 // 关设置弹窗 → 打开主面板 → 进入重建进度视图（ticket 108）
                 closeSettingsModal();
                 void import('./index').then((m) => m.rebuildSecondBrainIndex(getApp()));
-              },
+              }
             });
           })
         );

@@ -8,7 +8,7 @@
  */
 import type { App, TFile } from 'obsidian';
 import { notice } from '../core/notice';
-import { confirm } from '../core/confirm';
+import { openFlowDialog } from '../core/flow-dialog';
 import { tryGetSettings, saveSettings } from '../core/settings-provider';
 import { ReviewDataManager } from './data';
 
@@ -135,24 +135,26 @@ export class ReviewWatcher {
         if (!batch.length) return;
         const n = batch.length;
         const firstName = (batch[0] || '').split('/').pop();
-        confirm({
+        void openFlowDialog({
           title: n > 1 ? `删除 ${n} 篇笔记` : '笔记已删除',
           message:
             n > 1
               ? `有 ${n} 篇笔记已从 vault 删除，是否同步移除复习计划里的记录？不移除则保留（文件恢复后继续复习，列表现删除线）。`
               : `「${firstName}」已从 vault 删除，是否同步移除复习计划里的记录？不移除则保留（文件恢复后继续复习，列表现删除线）。`,
-          confirmText: '移除',
-          cancelText: '保留',
-          onConfirm: async () => {
+          actions: [
+            { label: '保留', value: 'cancel' },
+            { label: '移除', value: 'ok', cta: true },
+          ],
+        }).then(async (v) => {
+          if (v === 'ok') {
             for (const path of batch) await this.dataManager.removeItem(path);
             // 仅监听目录内的删除写排除名单（防自动加回；目录外的删除无监听风险）
             await this.excludePaths(batch.filter((p) => this.isWatched(p)));
             notice(`已移除 ${n} 条复习记录`, 'success');
             await this.refresh();
-          },
-          onCancel: () => {
+          } else {
             void this.refresh();
-          },
+          }
         });
       }, 300);
     })();
@@ -201,29 +203,27 @@ export class ReviewWatcher {
     const items = await this.dataManager.loadItems();
     const candidates = this.collectAutoaddCandidates(folder, items);
     if (!candidates.length) return true; // 无存量候选：直接接受
-    return new Promise<boolean>((resolve) => {
-      confirm({
-        title: '批量加入复习计划',
-        message: `监听文件夹「${folder}」下有 ${candidates.length} 篇笔记未加入复习计划，是否一并加入？`,
-        confirmText: '加入',
-        cancelText: '取消',
-        onConfirm: async () => {
-          let ok = 0;
-          for (const p of candidates) {
-            try {
-              await this.dataManager.addItem(p, p.split('/').pop()!.replace(/\.md$/, ''));
-              ok++;
-            } catch {
-              /* 并发已加入 → 跳过 */
-            }
-          }
-          notice(`已加入 ${ok} 篇笔记到复习计划`, 'success');
-          await this.refresh();
-          resolve(true);
-        },
-        onCancel: () => resolve(false),
-      });
+    const v = await openFlowDialog({
+      title: '批量加入复习计划',
+      message: `监听文件夹「${folder}」下有 ${candidates.length} 篇笔记未加入复习计划，是否一并加入？`,
+      actions: [
+        { label: '取消', value: 'cancel' },
+        { label: '加入', value: 'ok', cta: true },
+      ],
     });
+    if (v !== 'ok') return false;
+    let ok = 0;
+    for (const p of candidates) {
+      try {
+        await this.dataManager.addItem(p, p.split('/').pop()!.replace(/\.md$/, ''));
+        ok++;
+      } catch {
+        /* 并发已加入 → 跳过 */
+      }
+    }
+    notice(`已加入 ${ok} 篇笔记到复习计划`, 'success');
+    await this.refresh();
+    return true;
   }
 
   /** 移除监听文件夹（ticket 099 追加）：同时清空该目录下全部排除记录——否则二次添加时存量被旧黑名单挡住。
