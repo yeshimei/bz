@@ -14,6 +14,8 @@ import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { closeSettingsModal, openSettingsModal } from '../core/settings-modal';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
+import { renderPathSettingRow } from '../core/path-picker';
+import { normalizeMemoryDirectories } from './config';
 import type { GroupDecl, SettingsSchema } from '../core/settings-schema';
 import type { Appearance } from './types';
 
@@ -207,6 +209,8 @@ export function smartcatSettingsSchema(opts: {
   saveConfig: (config: any) => Promise<void>;
   settingsKeys: { enabled: boolean; mobileFullscreen: boolean };
   setMobileFullscreen: (v: boolean) => Promise<void>;
+  /** 记忆目录变更回调（ADR-0069：index 注入——增量同步目录移除清理/新增补扫） */
+  onMemoryDirectoriesChanged?: (dirs: string[]) => void;
   onOpenDashboard?: () => void;
   onAppearanceChanged?: (appearance: string) => void;
 }): SettingsSchema {
@@ -352,6 +356,33 @@ export function smartcatSettingsSchema(opts: {
           },
         ],
       },
+      // ADR-0069 记忆目录（记忆目录流）：多文件夹选择（core/path-picker 多选），其内笔记进入笔记记忆库
+      {
+        icon: 'folder-open',
+        name: '记忆目录',
+        rows: [
+          {
+            type: 'custom',
+            render: (body) => {
+              renderPathSettingRow({
+                parent: body,
+                name: '记忆目录',
+                desc: '这些文件夹内的笔记会进入小橘的记忆库（日记按时间段拆条）；移除目录会清掉对应记忆',
+                mode: 'multi',
+                value: normalizeMemoryDirectories((tryGetSettings() as any).memoryDirectories),
+                pickerTitle: '选择记忆目录',
+                pickerDesc: '选择小橘读取笔记的文件夹（可多选）',
+                onChange: (list) => {
+                  const next = normalizeMemoryDirectories(list);
+                  (getSettings() as any).memoryDirectories = next;
+                  void saveSettings();
+                  opts.onMemoryDirectoriesChanged?.(next);
+                },
+              });
+            },
+          },
+        ],
+      },
       mobileGroup,
       {
         icon: 'database',
@@ -407,6 +438,8 @@ export function openSmartcatSettings(opts: {
   onClose?: () => void;
   /** 「打开数据面板」按钮回调（index 注入：关设置弹窗 → openSmartcatDashboard） */
   onOpenDashboard?: () => void;
+  /** 记忆目录变更回调（ADR-0069：index 注入，同步增量同步器目录集合） */
+  onMemoryDirectoriesChanged?: (dirs: string[]) => void;
   /** 选皮肤即时生效（换色块后立刻切猫容器皮肤类，不必重载插件） */
   onAppearanceChanged?: (appearance: Appearance) => void;
 }): void {
