@@ -411,6 +411,9 @@ export class MemorySystem {
     const action = newOpts.structured?.action ?? 'unknown';
     const rule = resolveRouting(source, action);
 
+    // exempt（ADR-0069 隐私豁免：password/encrypt/日记加密）：不落任何流，直接返回
+    if (rule.stream === 'exempt') return null;
+
     // ticket 129：一律先写行为流（全量日志；含 memory 路由事件——双写）
     const behavior = await this.writeBehaviorStream(source, newOpts.structured);
 
@@ -422,7 +425,7 @@ export class MemorySystem {
       try { void this.onPresence(); } catch { /* 钩子失败静默 */ }
     }
 
-    if (rule.stream === 'behavior') {
+    if (rule.stream !== 'memory') {
       // 行为路由：仅行为流（记忆流条目不写），返回行为条目；
       // onObservation（情绪共振/瞬时情绪/dossier）同样触发——构造伪记忆条目承载钩子契约，
       // credibility 取 ruleCredibility 档位默认值（routing 无 behavior 档位，按来源+描述落档）
