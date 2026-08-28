@@ -1,7 +1,9 @@
 /**
- * 聚合讯「保存至文献」测试（ticket 134，ADR-0067）：
+ * 聚合讯「保存至文献」测试（ticket 134；ADR-0069 反转在案豁免）：
  * B站视频条目底栏按钮换「保存至文献」、点击改道文献盒入口（预填链接/标题/UP主）且
- * 不落剪藏/不标已读/不发 'news' 域事件；B站条目「下一篇」不发事件但统计照记；
+ * 不落剪藏/不标已读/不发 'news' 域事件（行为留痕由文献盒添加确认回调的 bili:added 承担）；
+ * B站条目「下一篇/完成阅读」ADR-0068 的跳过静音被 ADR-0069「行为流全量盘点补齐」反转——
+ * 照发 'news' 域事件（news:skipped 入行为流），统计照记；
  * 普通文章（果壳/知乎）原行为保留（ticket 123 跳过仍发）；url 缺失回退剪藏按钮。
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
@@ -99,13 +101,18 @@ describe('聚合讯保存至文献（ticket 134）', () => {
     expect(document.querySelector('.news-card-title')!.textContent).toBe('B站视频一');
   });
 
-  it('B站条目「下一篇」：不发 news 事件、统计照记、落盘 skipped 并切篇', async () => {
+  it('B站条目「下一篇」：ADR-0069 反转豁免——发 news skipped 事件、统计照记、落盘 skipped 并切篇', async () => {
     await loadStats();
     await loadArticles();
     render();
     skipArticle();
     await new Promise((r) => setTimeout(r, 0));
-    expect(newsSpy).not.toHaveBeenCalled(); // ADR-0067：B站条目跳过静音（部分推翻 ticket 123）
+    // ADR-0069：B站条目跳过不再静音（反转 ADR-0068），news:skipped 入行为流
+    expect(newsSpy).toHaveBeenCalledTimes(1);
+    expect(newsSpy).toHaveBeenCalledWith(expect.objectContaining({
+      kind: 'read',
+      evt: expect.objectContaining({ title: 'B站视频一', platform: 'B站', state: 'skipped' }),
+    }));
     const saved = JSON.parse(getVault().files.get('CONFIG/STORAGE/news.json')!);
     expect(saved.articles[0].read).toBe(true);
     expect(saved.articles[0].state).toBe('skipped');
@@ -119,21 +126,25 @@ describe('聚合讯保存至文献（ticket 134）', () => {
     await loadStats();
     await loadArticles();
     render();
-    skipArticle(); // B站条目：静音
+    skipArticle(); // B站条目：ADR-0069 起也发
     await new Promise((r) => setTimeout(r, 0));
     skipArticle(); // 果壳：发
-    expect(newsSpy).toHaveBeenCalledTimes(1);
-    expect(newsSpy).toHaveBeenCalledWith(expect.objectContaining({
+    expect(newsSpy).toHaveBeenCalledTimes(2);
+    expect(newsSpy).toHaveBeenLastCalledWith(expect.objectContaining({
       kind: 'read',
       evt: expect.objectContaining({ title: '果壳文章', platform: '果壳', state: 'skipped' }),
     }));
   });
 
-  it('B站条目 markAsRead("saved") 直接调用也不发事件（防御，正常路径不可达）', async () => {
+  it('B站条目 markAsRead("saved") 直接调用也发事件（ADR-0069；正常路径不可达——保存改道文献盒不标已读）', async () => {
     await loadArticles();
     render();
     markAsRead('saved');
-    expect(newsSpy).not.toHaveBeenCalled();
+    expect(newsSpy).toHaveBeenCalledTimes(1);
+    expect(newsSpy).toHaveBeenCalledWith(expect.objectContaining({
+      kind: 'read',
+      evt: expect.objectContaining({ title: 'B站视频一', platform: 'B站', state: 'saved' }),
+    }));
   });
 
   it('B站条目 url 缺失回退「保存至剪藏」按钮，点击走剪藏保存（不进文献盒）', async () => {
