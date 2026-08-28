@@ -25,6 +25,19 @@ import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
 import { loadSmartCatData, getSmartcatFilePath } from './data';
+import { readMemorySidecarFile, readBehaviorSidecarFile } from './memory';
+
+/** 面板现读（ADR-0069）：smartcat.json 已不含双流——合并 memory/behavior sidecar 后再渲染，
+ *  与常驻实例解耦的「现读」语义保持，只是数据源扩为三文件 */
+async function loadDashboardData(app: App): Promise<SmartCatData> {
+  const data = await loadSmartCatData(app);
+  try {
+    const [memSide, behSide] = await Promise.all([readMemorySidecarFile(app), readBehaviorSidecarFile(app)]);
+    if (memSide && Array.isArray(memSide.entries)) data.memory.memoryStream = memSide.entries;
+    if (behSide && Array.isArray(behSide.items)) data.memory.behaviorStream = behSide.items;
+  } catch { /* sidecar 读取失败回退主文件（恒空双流），面板不崩 */ }
+  return data;
+}
 import { MOOD_MAP, moodLevelFromPad } from './mood';
 import { TRAIT_GROUPS } from './character';
 import { sourceLabel, formatRelativeTime, emotionDensityStats } from './memory';
@@ -798,7 +811,7 @@ async function persistInsightPatch(id: string, patch: (m: MemoryStreamEntry) => 
       return;
     }
     notice(okMsg, 'success');
-    if (dashState) renderPanes(await loadSmartCatData(dashState.app)); // 只读现读渲染保持一致
+    if (dashState) renderPanes(await loadDashboardData(dashState.app)); // 只读现读渲染保持一致
   } catch (e) {
     notice('操作失败，请重试', 'error');
   }
@@ -1071,7 +1084,7 @@ async function runSilentRefresh(): Promise<void> {
   if (!st) return;
   st.debounceTimer = null;
   try {
-    const fresh = await loadSmartCatData(st.app);
+    const fresh = await loadDashboardData(st.app);
     const memoTitles = await loadMemoTitlesByDay(st.app); // 当日备忘同步现读（094）
     if (dashState !== st || !st.popup.isConnected) return; // 刷新期间被关闭/重开 → 丢弃陈旧结果
     st.memoTitles = memoTitles;
@@ -1087,7 +1100,7 @@ export async function openSmartcatDashboard(app: App): Promise<void> {
   closeSmartcatDashboard();
   let data: SmartCatData;
   try {
-    data = await loadSmartCatData(app);
+    data = await loadDashboardData(app);
   } catch (e) {
     notice('小橘数据读取失败', 'error');
     return;
