@@ -19,6 +19,7 @@ import { Setting } from 'obsidian';
 import { getApp } from './app';
 import { createOverlay } from './dom';
 import { escManager, type EscHandle } from './esc-manager';
+import { isMobileEnv } from './mobile';
 
 /** 选择器遮罩 z-index（companion 档；本体 +1 = 11201） */
 export const PATH_PICKER_Z_MASK = 11200;
@@ -229,6 +230,8 @@ export function renderPathSettingRow(opts: PathSettingRowOptions): { refresh: ()
   let current = readValue();
   const setting = new Setting(opts.parent).setName(opts.name);
   if (opts.desc) setting.setDesc(opts.desc);
+  // ticket 133 兜底：移动端路径行恒单行（CSS 层保证，不依赖控件区子元素计数——即使按钮未及时移出也不拆两行）
+  setting.settingEl.classList.add('bz-path-picker-setting-row');
   const chipsWrap = document.createElement('div');
   chipsWrap.className = 'bz-path-picker-chips--setting';
 
@@ -332,7 +335,8 @@ export function openPathPicker(opts: PathPickerOptions): void {
     maskId: 'bz-path-picker-mask',
     popupId: 'bz-path-picker-popup',
     zIndex: PATH_PICKER_Z_MASK,
-    width: 'min(92vw, 440px)',
+    // ticket 133 修订：移动端左右各留 16px 外边距（宽视口/桌面维持 92vw 居中卡）
+    width: isMobileEnv() ? 'min(calc(100vw - 32px), 440px)' : 'min(92vw, 440px)',
     maxWidth: 440,
     onMaskClick: () => closePathPicker(),
   });

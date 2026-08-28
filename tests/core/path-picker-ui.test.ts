@@ -280,6 +280,8 @@ describe('renderPathSettingRow：设置行助手（chips + 选择按钮，无手
       onChange,
     });
     expect(settingEl.dataset.name).toBe('剪藏目录');
+    // 行挂移动端单行兜底类（ticket 133 修订：CSS 层保证同行，不依赖子元素计数）
+    expect(settingEl.classList.contains('bz-path-picker-setting-row')).toBe(true);
     // chips 在控件区内；已选态「选择…」按钮移出 DOM（控件区仅 chips，chip 内 ✕ 按钮不算）
     const control = settingEl.querySelector('.setting-item-control')!;
     expect(control.querySelectorAll('.bz-path-picker-chip-name').length).toBe(1);
@@ -404,6 +406,21 @@ describe('ticket 133 列表排序：已选置顶（打开时定格）→ 库根 
 });
 
 describe('markSettingSplitRows：移动端两行式挂类', () => {
+  it('路径设置行（空态/已选态）控件区恒 1 子元素 → 不挂 .bz-setting-split（移动端单行由兜底类保证）', () => {
+    const container = document.createElement('div');
+    // 已选态：控件区仅 chips 容器
+    renderPathSettingRow({ parent: container, name: '目录A', mode: 'single', value: '卡片盒', onChange: () => {} });
+    // 空态：控件区仅按钮
+    renderPathSettingRow({ parent: container, name: '目录B', mode: 'multi', value: [], onChange: () => {} });
+    markSettingSplitRows(container);
+    const rows = [...container.querySelectorAll<HTMLElement>('.setting-item')];
+    expect(rows.length).toBe(2);
+    for (const row of rows) {
+      expect(row.classList.contains('bz-setting-split')).toBe(false);
+      expect(row.classList.contains('bz-path-picker-setting-row')).toBe(true);
+    }
+  });
+
   it('控件区 ≥2 子元素 → 挂 .bz-setting-split；单控件行不挂；幂等可重调', () => {
     const container = document.createElement('div');
     // 单控件行（一个按钮）
