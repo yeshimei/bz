@@ -860,6 +860,8 @@ button.news-close-btn {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /* 外边框：桌面/移动端统一可见的卡片边界（ticket 133 修订） */
+  border: 1px solid var(--background-modifier-border);
   /* 覆盖 .bz-overlay-popup 的 max-height: 80vh，与原型 min(560px, 82vh) 定稿一致
      （height 由组件功能内联，此处兜底 max-height 防 80vh 截断） */
   max-height: min(560px, 82vh);
@@ -1045,12 +1047,9 @@ button.news-close-btn {
   min-width: 0;
 }
 
-/* 移动端近全屏 + 键盘适配（原型 A 变体口径）：顶对齐避让软键盘（聚焦搜索框不遮列表）、底部安全区 */
+/* ticket 133 修订：桌面/移动端统一样式（不再分两套）——弹窗同 .bz-overlay-popup 垂直居中卡，
+   宽度统一 min(calc(100vw - 32px), 440px) 由 openPathPicker 内联设定；仅保留底部安全区适配 */
 @media (max-width: 768px) {
-  .bz-path-picker {
-    top: 6vh;
-    transform: translateX(-50%);
-  }
   .bz-path-picker-foot {
     padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
   }
@@ -1085,6 +1084,10 @@ button.news-close-btn {
   .setting-item.bz-path-picker-setting-row > .setting-item-info { flex: 1 1 auto; min-width: 0; }
   .setting-item.bz-path-picker-setting-row > .setting-item-control { flex: 0 1 auto; justify-content: flex-end; }
 }
+
+/* ticket 133：已选态隐藏选择按钮——行级 data-filled 由 renderPathSettingRow 同步，CSS 强制隐藏
+   （双保险：即使按钮元素未及时移出 DOM，只要行有值即不可见；桌面/移动端一致） */
+.setting-item.bz-path-picker-setting-row[data-filled='1'] .bz-path-picker-btn--slim { display: none; }
 
 /* ==================== 日记本域样式（src/diary/styles.css） ==================== */
 /* ==================== 日记本（diary-notebook 合并） ==================== */
