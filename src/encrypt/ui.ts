@@ -4,7 +4,7 @@
  * 解锁弹窗（复用密码本 showPasswordDialog 范式）；预览窗（独立只读弹窗，Markdown 渲染 + 图片/视频压缩预览）。
  * 协调层：加锁当前笔记（含预览生成 + 动态进度；完成自动打开面板）、还原取出（完成跳转笔记并关闭面板）。
  */
-import { Setting, MarkdownRenderer, Component } from 'obsidian';
+import { MarkdownRenderer, Component } from 'obsidian';
 import { notice, notify } from '../core/notice';
 import type { NoticeHandle } from '../core/notice';
 import { getApp } from '../core/app';
@@ -18,10 +18,10 @@ import {
   type ItemAction,
 } from '../core/item-actions';
 import { escapeHtml, formatRelativeTime } from '../core/utils';
-import { getSettings, tryGetSettings, saveSettings } from '../core/settings-provider';
-import { openSettingsModal, createSettingsGroup } from '../core/settings-modal';
-import { renderPathSettingRow } from '../core/path-picker';
+import { tryGetSettings } from '../core/settings-provider';
+import { openSettingsModal } from '../core/settings-modal';
 import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
+import type { SettingsSchema } from '../core/settings-schema';
 import { SafeManager, base64ToBytes, bytesToBase64, type SafeNote, type SafeAttachment, type HealthReport, type HealthItem, type LockAttachmentInput } from './data';
 import { compressImage, videoFrame } from './preview';
 
@@ -232,6 +232,73 @@ function finishProgress(h: NoticeHandle | null, done: number, msg: string) {
 }
 
 
+
+/** 保险箱设置 schema（ticket 131；ADR-0064）：存储/预览/安全/移动端四组 7 键。全部配置项为启动快照
+ *  （控制器构造时读取），改动需重载插件后生效——warnReload 一次性提示收敛为渲染器 onCommit（text/path
+ *  行值变更才提示）/ onChange 一次性闭包（toggle），文案逐字保留。置于模块顶层供文案 lint 直接引用。
+ *  移动端组手写（非 mobileFullscreenGroup 预设）：原 toggle 同带 warnReload 启动快照提示，预设无回调
+ *  通道，手写行保行为（desc 为多数派文案，逐字对齐现状）。 */
+export function encryptSettingsSchema(): SettingsSchema {
+  let reloadWarned = false;
+  const warnReload = () => {
+    if (!reloadWarned) {
+      reloadWarned = true;
+      notice('保险箱设置已保存，重载插件后生效', 'info');
+    }
+  };
+  return {
+    groups: [
+      {
+        icon: 'folder-open',
+        name: '存储',
+        rows: [
+          // ticket 128：保险箱根目录（统一路径选择器录入，无手输文本框；点前缀目录可选自 CONFIG/.ENCRYPT）
+          {
+            type: 'path',
+            mode: 'single',
+            name: '保险箱根目录',
+            desc: '加密清单与密文镜像的存放位置，点前缀目录在侧栏隐藏，防止误删',
+            binding: { key: 'encryptRoot' },
+            onCommit: warnReload,
+          },
+        ],
+      },
+      {
+        icon: 'image',
+        name: '预览',
+        rows: [
+          { type: 'toggle', name: '生成压缩预览', desc: '加密时生成图片和视频的压缩预览，体积小但足够清晰', binding: { key: 'encryptPreviewEnabled' }, onChange: warnReload },
+          { type: 'text', name: '预览长边', desc: '压缩预览的目标长边像素，默认 384，数值越小打开越快', binding: { key: 'encryptPreviewSize' }, onCommit: warnReload },
+          { type: 'text', name: '预览质量', desc: '压缩图的 JPEG 质量，默认百分之五十，调低更省空间，画质会变模糊', binding: { key: 'encryptPreviewQuality' }, onCommit: warnReload },
+          { type: 'toggle', name: '预览自动加载原图', desc: '打开预览自动解密原图替换省略图，默认关闭，省流量和内存', binding: { key: 'encryptAutoLoadOriginal' }, onChange: warnReload },
+        ],
+      },
+      {
+        icon: 'shield',
+        name: '安全',
+        rows: [
+          { type: 'toggle', name: '安全模式', desc: '关闭保险箱面板立即自动上锁', binding: { key: 'encryptSecurityMode' }, onChange: warnReload },
+        ],
+      },
+      {
+        icon: 'smartphone',
+        name: '移动端',
+        // 组级门控（ticket 131 域迁移补正）：桌面端整组隐藏但结构保留，可重求值
+        visibleWhen: () => isMobileEnv(),
+        rows: [
+          {
+            type: 'toggle',
+            name: '移动端默认全屏',
+            desc: '移动端打开主窗口时默认全屏，关闭则显示常规卡片',
+            binding: { key: 'encryptMobileDefaultFullscreen' },
+            onChange: warnReload,
+            visibleWhen: () => isMobileEnv(),
+          },
+        ],
+      },
+    ],
+  };
+}
 
 export class UIManager {
   dataManager: SafeManager;
@@ -1190,103 +1257,9 @@ export class UIManager {
 
   // ---------- 设置弹窗 ----------
   openSettings() {
-    // 以下配置项均为启动快照（控制器构造时读取），改动需重载插件后生效——首次改动即提示一次
-    let reloadWarned = false;
-    const warnReload = () => {
-      if (!reloadWarned) {
-        reloadWarned = true;
-        notice('保险箱设置已保存，重载插件后生效', 'info');
-      }
-    };
-    openSettingsModal({
-      title: '保险箱设置',
-      maxWidth: 560,
-      build: (el) => {
-        const s = getSettings() as any;
-        // ===== 存储组 =====
-        const storeGroup = createSettingsGroup(el, { icon: 'folder-open', name: '存储' });
-        // ticket 128：保险箱根目录（统一路径选择器录入，无手输文本框；点前缀目录可选自 CONFIG/.ENCRYPT）
-        renderPathSettingRow({
-          parent: storeGroup,
-          name: '保险箱根目录',
-          desc: '加密清单与密文镜像的存放位置，点前缀目录在侧栏隐藏，防止误删',
-          mode: 'single',
-          value: s.encryptRoot || 'CONFIG/.ENCRYPT',
-          onChange: (list) => {
-            s.encryptRoot = list[0] || '';
-            void saveSettings().then(warnReload);
-          },
-        });
-        // ===== 预览组 =====
-        const previewGroup = createSettingsGroup(el, { icon: 'image', name: '预览' });
-        new Setting(previewGroup)
-          .setName('生成压缩预览')
-          .setDesc('加密时生成图片和视频的压缩预览，体积小但足够清晰')
-          .addToggle((toggle) =>
-            toggle.setValue(!!s.encryptPreviewEnabled).onChange(async (v) => {
-              s.encryptPreviewEnabled = v;
-              await saveSettings();
-              warnReload();
-            })
-          );
-        new Setting(previewGroup)
-          .setName('预览长边')
-          .setDesc('压缩预览的目标长边像素，默认 384，数值越小打开越快')
-          .addText((text) =>
-            text.setValue(String(s.encryptPreviewSize || '384')).onChange(async (v) => {
-              s.encryptPreviewSize = v;
-              await saveSettings();
-              warnReload();
-            })
-          );
-        new Setting(previewGroup)
-          .setName('预览质量')
-          .setDesc('压缩图的 JPEG 质量，默认 0.5，调低更省空间，画质会变模糊')
-          .addText((text) =>
-            text.setValue(String(s.encryptPreviewQuality || '0.5')).onChange(async (v) => {
-              s.encryptPreviewQuality = v;
-              await saveSettings();
-              warnReload();
-            })
-          );
-        new Setting(previewGroup)
-          .setName('预览自动加载原图')
-          .setDesc('打开预览自动解密原图替换省略图，默认关闭，省流量和内存')
-          .addToggle((toggle) =>
-            toggle.setValue(!!s.encryptAutoLoadOriginal).onChange(async (v) => {
-              s.encryptAutoLoadOriginal = v;
-              await saveSettings();
-              warnReload();
-            })
-          );
-        // ===== 安全组 =====
-        const securityGroup = createSettingsGroup(el, { icon: 'shield', name: '安全' });
-        new Setting(securityGroup)
-          .setName('安全模式')
-          .setDesc('关闭保险箱面板立即自动上锁')
-          .addToggle((toggle) =>
-            toggle.setValue(!!s.encryptSecurityMode).onChange(async (v) => {
-              s.encryptSecurityMode = v;
-              await saveSettings();
-              warnReload();
-            })
-          );
-        // ===== 移动端组（仅移动端显示） =====
-        if (isMobileEnv()) {
-          const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
-          new Setting(mobileGroup)
-            .setName('移动端默认全屏')
-            .setDesc('移动端打开主窗口时默认全屏，关闭则显示常规卡片')
-            .addToggle((toggle) =>
-              toggle.setValue(!!s.encryptMobileDefaultFullscreen).onChange(async (v) => {
-                s.encryptMobileDefaultFullscreen = v;
-                await saveSettings();
-                warnReload();
-              })
-            );
-        }
-      },
-    });
+    // 以下配置项均为启动快照（控制器构造时读取），改动需重载插件后生效——warnReload 一次性提示
+    // 收敛为渲染器 onCommit（text/path 行）/ onChange 一次性闭包（toggle），文案逐字保留（ticket 131）
+    openSettingsModal({ title: '保险箱设置', maxWidth: 560, schema: encryptSettingsSchema() });
   }
 
   registerEscape() {

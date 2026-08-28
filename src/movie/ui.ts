@@ -2,14 +2,14 @@
  * 影视 UI（ticket 14 修正版：对齐源码逐字——卡片/overlay/添加/编辑/设置弹窗）
  */
 import type { App, TFile } from 'obsidian';
-import { Setting } from 'obsidian';
 import { notice, notify } from '../core/notice';
 import { escManager } from '../core/esc-manager';
 import { formatRelativeTime, pad2 } from '../core/utils';
-import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
-import { openSettingsModal, createSettingsGroup } from '../core/settings-modal';
-import { renderPathSettingRow } from '../core/path-picker';
-import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
+import { tryGetSettings } from '../core/settings-provider';
+import { openSettingsModal } from '../core/settings-modal';
+import { applyMobileWindowFullscreen } from '../core/mobile';
+import { mobileFullscreenGroup } from '../core/settings-common';
+import type { SettingsSchema } from '../core/settings-schema';
 import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, getTypeColor, getStarRating, ALL_TAGS, getGroupForTag } from './constants';
 import { M, takeHomeFilmStatus, type MovieItem } from './state';
 import { getDisplayItems, refreshDataAndView, rebuildItems } from './data';
@@ -983,6 +983,88 @@ export function openFilterModal(): void {
 
 // ---------- 主 overlay（源码 L1219-1402 逐字） ----------
 
+/** 影视设置 schema（ticket 131 声明式；ADR-0064）：目录/默认视图为启动快照设置（ensureMovie
+ *  一次性读取），改动需重载插件后生效——warnReload 一次性提示收敛为渲染器 onCommit 内置语义
+ *  （text/path 行值变更才提示、同会话至多一次；dropdown 行用 onChange + 域内一次性闭包）。
+ *  置于模块顶层供文案 lint 直接引用。 */
+export function movieSettingsSchema(): SettingsSchema {
+  let reloadWarned = false;
+  const warnReload = () => {
+    if (!reloadWarned) {
+      reloadWarned = true;
+      notice('影视设置已保存，重载插件后生效', 'info');
+    }
+  };
+  // 海报抓取指引（ADR-0007：外部工具承担；描述去包名细节，详见 README/ADR）
+  return {
+    groups: [
+      {
+        icon: 'folder-open',
+        name: '目录',
+        rows: [
+          // ticket 128：影视文件夹（统一路径选择器录入，无手输文本框）
+          { type: 'path', mode: 'single', name: '影视文件夹', desc: '存放影视笔记的文件夹路径', binding: { key: 'movieFolderPath' }, onCommit: warnReload },
+          { type: 'text', name: '每页加载数量', desc: '列表首次加载和滚动加载时显示的条数', binding: { key: 'moviePageSize' }, onCommit: warnReload },
+        ],
+      },
+      {
+        icon: 'monitor',
+        name: '默认视图',
+        rows: [
+          {
+            type: 'select',
+            name: '默认排序',
+            desc: '打开影视列表时默认的排序方式',
+            binding: { key: 'movieDefaultSort' },
+            options: [
+              { value: 'date-desc', label: '日期↓' },
+              { value: 'date-asc', label: '日期↑' },
+              { value: 'rating-desc', label: '评分↓' },
+              { value: 'rating-asc', label: '评分↑' },
+              { value: 'name-asc', label: '名称A-Z' },
+              { value: 'name-desc', label: '名称Z-A' },
+            ],
+            onChange: warnReload,
+          },
+          {
+            type: 'select',
+            name: '默认类型筛选',
+            desc: '打开影视列表时默认选中的类型',
+            binding: { key: 'movieDefaultTypeFilter' },
+            options: [{ value: '', label: '全部' }, ...ALL_TAGS.map((tag) => ({ value: tag, label: tag }))],
+            onChange: warnReload,
+          },
+          {
+            type: 'select',
+            name: '默认状态筛选',
+            desc: '打开影视列表时默认选中的状态',
+            binding: { key: 'movieDefaultStatusFilter' },
+            options: [
+              { value: '全部', label: '全部' },
+              { value: '想看', label: '想看' },
+              { value: '在看', label: '在看' },
+              { value: '已看', label: '已看' },
+            ],
+            onChange: warnReload,
+          },
+          {
+            type: 'select',
+            name: '已看卡片评分显示',
+            desc: '已看条目评分以星星串或数字显示',
+            binding: { key: 'movieRatingDisplay' },
+            options: [
+              { value: 'stars', label: '星星串' },
+              { value: 'number', label: '⭐数字' },
+            ],
+          },
+          { type: 'info', name: '海报抓取', desc: '海报与豆瓣信息由独立的外部工具提供，需另行安装运行' },
+        ],
+      },
+      mobileFullscreenGroup('movieMobileDefaultFullscreen'),
+    ],
+  };
+}
+
 export function createOverlay(app: App, statusType?: string): void {
   registerEscapeHandler(); // 确保监听已注册
   // 主页点击"在看/想看"传入初始筛选；无参数时恢复默认"全部"
@@ -1069,126 +1151,10 @@ export function createOverlay(app: App, statusType?: string): void {
     openFilterModal();
   });
 
-  // 影视设置弹窗（ADR-0009 域设置弹窗；分组卡片重设计 + ticket 100 文案规范）
+  // 影视设置弹窗（ADR-0009 域设置弹窗；分组卡片重设计 + ticket 100 文案规范；ticket 131 声明式 schema）
   const settingsBtn = mkBtn('⚙️', '影视设置', 'var(--text-normal)', (e) => {
     e.stopPropagation();
-    openSettingsModal({
-      title: '影视设置',
-      maxWidth: 560,
-      build: (el) => {
-        const s = getSettings();
-        // 目录/main 启动快照设置（ensureMovie 一次性读取）：改动需重载插件后生效——首次改动即提示一次（f2-movie）
-        let reloadWarned = false;
-        const warnReload = () => {
-          if (!reloadWarned) {
-            reloadWarned = true;
-            notice('影视设置已保存，重载插件后生效', 'info');
-          }
-        };
-        // ===== 目录组 =====
-        const dirGroup = createSettingsGroup(el, { icon: 'folder-open', name: '目录' });
-        // ticket 128：影视文件夹（统一路径选择器录入，无手输文本框）
-        renderPathSettingRow({
-          parent: dirGroup,
-          name: '影视文件夹',
-          desc: '存放影视笔记的文件夹路径',
-          mode: 'single',
-          value: s.movieFolderPath || '',
-          onChange: (list) => {
-            s.movieFolderPath = list[0] || '';
-            void saveSettings().then(warnReload);
-          },
-        });
-        new Setting(dirGroup)
-          .setName('每页加载数量')
-          .setDesc('列表首次加载和滚动加载时显示的条数')
-          .addText((text) =>
-            text.setValue(s.moviePageSize || '').onChange(async (v) => {
-              s.moviePageSize = v;
-              await saveSettings();
-              warnReload();
-            })
-          );
-        // ===== 默认视图组 =====
-        const viewGroup = createSettingsGroup(el, { icon: 'monitor', name: '默认视图' });
-        new Setting(viewGroup)
-          .setName('默认排序')
-          .setDesc('打开影视列表时默认的排序方式')
-          .addDropdown((dd) =>
-            dd
-              .addOption('date-desc', '日期↓')
-              .addOption('date-asc', '日期↑')
-              .addOption('rating-desc', '评分↓')
-              .addOption('rating-asc', '评分↑')
-              .addOption('name-asc', '名称A-Z')
-              .addOption('name-desc', '名称Z-A')
-              .setValue(s.movieDefaultSort || 'date-desc')
-              .onChange(async (v) => {
-                s.movieDefaultSort = v;
-                await saveSettings();
-                warnReload();
-              })
-          );
-        new Setting(viewGroup)
-          .setName('默认类型筛选')
-          .setDesc('打开影视列表时默认选中的类型')
-          .addDropdown((dd) => {
-            dd.addOption('', '全部');
-            for (const tag of ALL_TAGS) dd.addOption(tag, tag);
-            dd.setValue(s.movieDefaultTypeFilter || '').onChange(async (v) => {
-              s.movieDefaultTypeFilter = v;
-              await saveSettings();
-              warnReload();
-            });
-          });
-        new Setting(viewGroup)
-          .setName('默认状态筛选')
-          .setDesc('打开影视列表时默认选中的状态')
-          .addDropdown((dd) =>
-            dd
-              .addOption('全部', '全部')
-              .addOption('想看', '想看')
-              .addOption('在看', '在看')
-              .addOption('已看', '已看')
-              .setValue(s.movieDefaultStatusFilter || '全部')
-              .onChange(async (v) => {
-                s.movieDefaultStatusFilter = v;
-                await saveSettings();
-                warnReload();
-              })
-          );
-        new Setting(viewGroup)
-          .setName('已看卡片评分显示')
-          .setDesc('已看条目评分以星星串或数字显示')
-          .addDropdown((dd) =>
-            dd
-              .addOption('stars', '星星串')
-              .addOption('number', '⭐数字')
-              .setValue(s.movieRatingDisplay || 'stars')
-              .onChange(async (v) => {
-                s.movieRatingDisplay = v;
-                await saveSettings();
-              })
-          );
-        // 海报抓取指引（ADR-0007：外部工具承担；描述去包名细节，详见 README/ADR）
-        new Setting(viewGroup)
-          .setName('海报抓取')
-          .setDesc('海报与豆瓣信息由独立的外部工具提供，需另行安装运行');
-        // ===== 移动端组（仅移动端显示） =====
-        if (isMobileEnv()) {
-          const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
-          new Setting(mobileGroup)
-            .setName('移动端默认全屏')
-            .setDesc('移动端打开主窗口时默认全屏，关闭则显示常规卡片')
-            .addToggle((toggle) =>
-              toggle.setValue(!!s.movieMobileDefaultFullscreen).onChange(async (v) => {
-                s.movieMobileDefaultFullscreen = v;
-                await saveSettings();
-              })
-            );
-        }
-      },
-    });
+    openSettingsModal({ title: '影视设置', maxWidth: 560, schema: movieSettingsSchema() });
   });
 
   const closeBtn = mkBtn('❌', '关闭', 'var(--text-muted)', () => closeOverlay());

@@ -10,9 +10,11 @@ import type { App } from 'obsidian';
 import { setIcon } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
-import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
+import { applyMobileWindowFullscreen } from '../core/mobile';
 import { notice } from '../core/notice';
-import { openSettingsModal, createSettingsGroup, refreshSettingsGroupCounts } from '../core/settings-modal';
+import { openSettingsModal } from '../core/settings-modal';
+import { mobileFullscreenGroup } from '../core/settings-common';
+import type { SettingsSchema } from '../core/settings-schema';
 import { PomodoroDataManager } from './data';
 import { playSound } from './sound';
 import type { SoundKind } from './sound';
@@ -332,132 +334,127 @@ async function initData(): Promise<void> {
   loaded = true;
 }
 
-/** ⚙️ 番茄钟设置弹窗（ADR-0009，复用 core/settings-modal；分组卡片重设计 + ticket 100 文案规范） */
+/** ⚙️ 番茄钟设置弹窗（ADR-0009，复用 core/settings-modal；分组卡片重设计 + ticket 100 文案规范；
+ *  ticket 131 声明式 schema——预设方案 dropdown 联动自定义时长行走 visibleWhen；numSetting/
+ *  toggleSetting 闭包工厂退役；音量 slider + 「试听」同行附加按钮渲染器不支持 → custom 插槽保行为） */
 function openPomodoroSettings(): void {
-  openSettingsModal({
-    title: '番茄钟设置',
-    maxWidth: 560,
-    build: (el) => {
-      const s = getSettings();
-      const isCustom = () => s.pomodoroPreset === CUSTOM_PRESET_ID;
-      let workRow: Setting | null = null;
-      let shortRow: Setting | null = null;
-      let longRow: Setting | null = null;
-      const refreshCustom = () => {
-        const show = isCustom();
-        if (workRow) workRow.settingEl.toggleClass('bz-setting-hidden', !show);
-        if (shortRow) shortRow.settingEl.toggleClass('bz-setting-hidden', !show);
-        if (longRow) longRow.settingEl.toggleClass('bz-setting-hidden', !show);
-      };
-      // ===== 时间方案组 =====
-      const timerGroup = createSettingsGroup(el, { icon: 'timer', name: '时间方案' });
-      new Setting(timerGroup)
-        .setName('预设方案')
-        .setDesc('选择现成的工作与休息时长组合')
-        .addDropdown((dd) => {
-          for (const [id, p] of Object.entries(PRESETS)) {
-            dd.addOption(id, `${p.label}（${p.workMin}/${p.shortBreakMin}/${p.longBreakMin}）`);
-          }
-          dd.addOption(CUSTOM_PRESET_ID, '自定义');
-          dd.setValue(s.pomodoroPreset || 'classic');
-          dd.onChange(async (v) => {
-            s.pomodoroPreset = v;
-            refreshCustom(); // 立即反馈（先于落盘）
-            refreshSettingsGroupCounts(el); // 徽标随自定义行显隐刷新
-            await saveSettings();
-            render();
-          });
-        });
-      const numSetting = (parent: HTMLElement, name: string, desc: string, get: () => string, set: (v: string) => void): Setting =>
-        new Setting(parent)
-          .setName(name)
-          .setDesc(desc)
-          .addText((text) =>
-            text
-              .setValue(get())
-              .onChange(async (v) => {
-                set(v);
-                await saveSettings();
-                render();
-              })
-          );
-      workRow = numSetting(timerGroup, '工作时长', '自定义方案的工作阶段分钟数', () => s.pomodoroWorkMin ?? '25', (v) => (s.pomodoroWorkMin = v));
-      shortRow = numSetting(timerGroup, '短休息时长', '自定义方案的短休息分钟数', () => s.pomodoroShortBreakMin ?? '5', (v) => (s.pomodoroShortBreakMin = v));
-      longRow = numSetting(timerGroup, '长休息时长', '自定义方案的长休息分钟数', () => s.pomodoroLongBreakMin ?? '15', (v) => (s.pomodoroLongBreakMin = v));
-      new Setting(timerGroup)
-        .setName('长休息间隔')
-        .setDesc('每隔几个专注进入一次长休息')
-        .addText((text) =>
-          text
-            .setValue(s.pomodoroLongBreakInterval ?? '4')
-            .onChange(async (v) => {
-              s.pomodoroLongBreakInterval = v;
-              await saveSettings();
-              render();
-            })
-        );
-      // ===== 行为组 =====
-      const behaviorGroup = createSettingsGroup(el, { icon: 'sliders-horizontal', name: '行为' });
-      const toggleSetting = (name: string, desc: string, get: () => boolean, set: (v: boolean) => void): Setting =>
-        new Setting(behaviorGroup)
-          .setName(name)
-          .setDesc(desc)
-          .addToggle((toggle) =>
-            toggle
-              .setValue(get())
-              .onChange(async (v) => {
-                set(v);
-                await saveSettings();
-                render();
-              })
-          );
-      toggleSetting('强制专注模式', '专注进行中无法暂停跳过或重置', () => !!s.pomodoroForceFocus, (v) => (s.pomodoroForceFocus = v));
-      toggleSetting('自动循环', '阶段结束后自动开始下一阶段', () => !!s.pomodoroAutoCycle, (v) => (s.pomodoroAutoCycle = v));
-      toggleSetting('自动跳过休息', '专注结束后直接进入下一个专注', () => !!s.pomodoroAutoSkipBreak, (v) => (s.pomodoroAutoSkipBreak = v));
-      toggleSetting('声音提醒', '阶段切换时播放提示音', () => s.pomodoroSound !== false, (v) => (s.pomodoroSound = v));
-      toggleSetting('后台自动暂停', '窗口隐藏时暂停，恢复可见后自动继续', () => s.pomodoroAutoPauseOnHide !== false, (v) => (s.pomodoroAutoPauseOnHide = v));
-      new Setting(behaviorGroup)
-        .setName('提示音音量')
-        .setDesc('提示音大小，默认最大')
-        .addSlider((sl) => {
-          sl.setLimits(0, 100, 5)
-            .setValue(s.pomodoroVolume ?? 100)
-            .setDynamicTooltip();
-          sl.onChange(async (v) => {
-            s.pomodoroVolume = v;
-            await saveSettings();
-          });
-        })
-        .addButton((b) =>
-          b.setButtonText('试听').onClick(() => {
-            playSound('focus-start', s.pomodoroVolume ?? 100);
-          })
-        );
-      new Setting(behaviorGroup)
-        .setName('打开时恢复方式')
-        .setDesc('启动时正在倒计时，选择弹窗提醒或后台继续')
-        .addDropdown((dd) => {
-          dd.addOption('background', '后台继续');
-          dd.addOption('popup', '自动弹窗');
-          dd.setValue(s.pomodoroRestoreMode || 'background');
-          dd.onChange(async (v) => {
-            s.pomodoroRestoreMode = v;
-            await saveSettings();
-          });
-        });
-      // ===== 移动端组（仅移动端显示） =====
-      if (isMobileEnv()) {
-        const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
-        new Setting(mobileGroup)
-          .setName('移动端默认全屏')
-          .setDesc('移动端打开主窗口时默认全屏，关闭则显示常规卡片')
-          .addToggle((toggle) =>
-            toggle.setValue(!!s.pomodoroMobileDefaultFullscreen).onChange(async (v) => { s.pomodoroMobileDefaultFullscreen = v; await saveSettings(); })
-          );
-      }
-      refreshCustom();
+  openSettingsModal({ title: '番茄钟设置', maxWidth: 560, schema: pomodoroSettingsSchema() });
+}
+
+/** 番茄钟设置 schema（ticket 131；ADR-0064）：时间方案/行为/移动端三组，置于模块顶层供文案 lint 直接引用。
+ *  设置变更后 render() 重绘主面板（沿用原 onChange 副作用）；声音提醒/后台自动暂停沿用缺省开语义
+ *  （键缺失视为开，非键直绑的 === true 口径）——三函数绑定逐字保持原读值语义。 */
+export function pomodoroSettingsSchema(): SettingsSchema {
+  // 缺省开语义（旧数据无键视为开）：原 toggleSetting get 口径，键直绑 === true 会翻转初始显示
+  const soundToggle = {
+    get: () => (tryGetSettings() as any).pomodoroSound !== false,
+    set: (v: boolean) => {
+      (getSettings() as any).pomodoroSound = v;
     },
-  });
+    save: () => saveSettings(),
+  } as const;
+  const autoPauseToggle = {
+    get: () => (tryGetSettings() as any).pomodoroAutoPauseOnHide !== false,
+    set: (v: boolean) => {
+      (getSettings() as any).pomodoroAutoPauseOnHide = v;
+    },
+    save: () => saveSettings(),
+  } as const;
+  return {
+    groups: [
+      {
+        icon: 'timer',
+        name: '时间方案',
+        rows: [
+          {
+            type: 'select',
+            name: '预设方案',
+            desc: '选择现成的工作与休息时长组合',
+            binding: { key: 'pomodoroPreset' },
+            options: [
+              ...Object.entries(PRESETS).map(([id, p]) => ({
+                value: id,
+                label: `${p.label}（${p.workMin}/${p.shortBreakMin}/${p.longBreakMin}）`,
+              })),
+              { value: CUSTOM_PRESET_ID, label: '自定义' },
+            ],
+            onChange: () => render(),
+          },
+          {
+            type: 'text',
+            name: '工作时长',
+            desc: '自定义方案的工作阶段分钟数',
+            binding: { key: 'pomodoroWorkMin' },
+            visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
+            onChange: () => render(),
+          },
+          {
+            type: 'text',
+            name: '短休息时长',
+            desc: '自定义方案的短休息分钟数',
+            binding: { key: 'pomodoroShortBreakMin' },
+            visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
+            onChange: () => render(),
+          },
+          {
+            type: 'text',
+            name: '长休息时长',
+            desc: '自定义方案的长休息分钟数',
+            binding: { key: 'pomodoroLongBreakMin' },
+            visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
+            onChange: () => render(),
+          },
+          { type: 'text', name: '长休息间隔', desc: '每隔几个专注进入一次长休息', binding: { key: 'pomodoroLongBreakInterval' }, onChange: () => render() },
+        ],
+      },
+      {
+        icon: 'sliders-horizontal',
+        name: '行为',
+        rows: [
+          { type: 'toggle', name: '强制专注模式', desc: '专注进行中无法暂停跳过或重置', binding: { key: 'pomodoroForceFocus' }, onChange: () => render() },
+          { type: 'toggle', name: '自动循环', desc: '阶段结束后自动开始下一阶段', binding: { key: 'pomodoroAutoCycle' }, onChange: () => render() },
+          { type: 'toggle', name: '自动跳过休息', desc: '专注结束后直接进入下一个专注', binding: { key: 'pomodoroAutoSkipBreak' }, onChange: () => render() },
+          { type: 'toggle', name: '声音提醒', desc: '阶段切换时播放提示音', binding: soundToggle, onChange: () => render() },
+          { type: 'toggle', name: '后台自动暂停', desc: '窗口隐藏时暂停，恢复可见后自动继续', binding: autoPauseToggle, onChange: () => render() },
+          // 提示音音量 + 「试听」：slider 行不支持同行附加按钮 → custom 插槽保行为（原 Setting 链逐字；
+          // 名称/描述在插槽内部声明，schema 行不声明 name/desc——lint 引擎跳过 custom 行）
+          {
+            type: 'custom',
+            render: (body) => {
+              new Setting(body)
+                .setName('提示音音量')
+                .setDesc('提示音大小，默认最大')
+                .addSlider((sl) => {
+                  sl.setLimits(0, 100, 5)
+                    .setValue((tryGetSettings() as any).pomodoroVolume ?? 100)
+                    .setDynamicTooltip();
+                  sl.onChange(async (v) => {
+                    (getSettings() as any).pomodoroVolume = v;
+                    await saveSettings();
+                  });
+                })
+                .addButton((b) =>
+                  b.setButtonText('试听').onClick(() => {
+                    playSound('focus-start', (tryGetSettings() as any).pomodoroVolume ?? 100);
+                  })
+                );
+            },
+          },
+          {
+            type: 'select',
+            name: '打开时恢复方式',
+            desc: '启动时正在倒计时，选择弹窗提醒或后台继续',
+            binding: { key: 'pomodoroRestoreMode' },
+            options: [
+              { value: 'background', label: '后台继续' },
+              { value: 'popup', label: '自动弹窗' },
+            ],
+          },
+        ],
+      },
+      mobileFullscreenGroup('pomodoroMobileDefaultFullscreen'),
+    ],
+  };
 }
 
 function bindEvents(): void {

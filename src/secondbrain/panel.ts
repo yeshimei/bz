@@ -15,10 +15,11 @@
 import type { App } from 'obsidian';
 import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
-import { tryGetSettings, saveSettings } from '../core/settings-provider';
+import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
-import { openSettingsModal, closeSettingsModal, createSettingsGroup, refreshSettingsGroupCounts, markSettingSplitRows } from '../core/settings-modal';
-import { renderPathSettingRow } from '../core/path-picker';
+import { openSettingsModal, closeSettingsModal } from '../core/settings-modal';
+import { mobileFullscreenRow } from '../core/settings-common';
+import type { SettingsSchema } from '../core/settings-schema';
 import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { openFlowDialog } from '../core/flow-dialog';
 import { getApp } from '../core/app';
@@ -867,218 +868,248 @@ export class SecondBrainPanel {
 
 // ==================== ⚙️ 域设置弹窗（主面板 / 窄窗共用） ====================
 
-/** 第二大脑域设置：基础/检索/对话/面板 三分组卡片（主面板 ⚙️ 入口；ticket 108 对话组收敛） */
-export function openSecondBrainSettings(_app?: App): void {
-  openSettingsModal({
-    title: '第二大脑设置',
-    maxWidth: 520,
-    build: (content) => {
-      const s = tryGetSettings() as any;
-      const set = (k: string, v: unknown) => {
-        s[k] = v;
-        void saveSettings();
-      };
-      const group = (icon: string, name: string) => createSettingsGroup(content, { icon, name });
-      // [f2-sb] 重载提示：以下开关均为启动快照配置（监听注册发生在域初始化），改动重载插件后生效；
-      // 参照 encrypt warnReload 先例——一次弹窗会话内只提示一次
-      let reloadWarned = false;
-      const warnReload = () => {
-        if (reloadWarned) return;
-        reloadWarned = true;
-        notice('第二大脑设置已保存，重载插件后生效', 'info');
-      };
-
-      const b1 = group('folder-open', '基础');
-      new Setting(b1)
-        .setName('Ollama URL（本地）')
-        .addText((t) => t.setValue(String(s.secondBrainOllamaUrl ?? '')).onChange((v) => set('secondBrainOllamaUrl', v.trim())));
-      let urlText: any = null;
-      new Setting(b1)
-        .setName('远程 Ollama URL（移动端）')
-        .addText((t) => {
-          urlText = t;
-          t.setValue(String(s.secondBrainRemoteOllamaUrl ?? '')).onChange((v) => set('secondBrainRemoteOllamaUrl', v.trim()));
-        });
-      // ticket 122：本机局域网 IP 提示 + 一键填入（移动端连不上的自查路径；仅桌面端探测显示）
-      if (!isMobileEnv()) {
-        const lanIPs = getLanIPs();
-        const primary = pickPrimaryLanIp(lanIPs);
-        const ipDesc =
-          lanIPs.length > 0
-            ? `本机当前局域网 IP：${lanIPs.map((l) => `${l.ip}（${l.iface}）`).join('、')}。移动端连不上时，把上方远程 URL 填为此处 IP`
-            : '未能探测本机局域网 IP（请确认电脑已联网），移动端远程 URL 需手动填写电脑的局域网 IP';
-        new Setting(b1)
-          .setName('本机局域网 IP（电脑）')
-          .setDesc(ipDesc)
-          .addButton((btn) =>
-            btn.setButtonText('填入远程 URL').setCta().onClick(() => {
-              if (!primary) {
-                notice('未探测到本机局域网 IP，请手动填写');
-                return;
+/**
+ * 第二大脑设置 schema（ticket 131；ADR-0064）：基础/自动双链/检索/对话/面板 五组卡片。
+ * - ticket 100 文案修正：含符号标题（（本地）/（ms）/（电脑）/…）改写自然句，键名/行为/通知文案零变化；
+ * - 省略 desc 的行保持省略（lint 只查有 name/desc 的行，不为过 lint 加文案）；
+ * - 「本机局域网 IP」行为态（探测 IP 动态 desc + 「填入远程 URL」确认覆盖 + 输入框即时回显）
+ *   走 custom 插槽保行为；「重新索引」确认已 flow 化（openFlowDialog）不动。
+ * 置于模块顶层供文案 lint 直接引用。 */
+export function secondBrainSettingsSchema(): SettingsSchema {
+  // [f2-sb] 重载提示：以下开关均为启动快照配置（监听注册发生在域初始化），一次弹窗会话只提示一次（文案冻结）
+  let reloadWarned = false;
+  const warnReload = () => {
+    if (reloadWarned) return;
+    reloadWarned = true;
+    notice('第二大脑设置已保存，重载插件后生效', 'info');
+  };
+  // 远程 Ollama URL 输入框引用（「填入远程 URL」按钮确认覆盖后即时回显）
+  let remoteUrlText: { setValue(v: string): void } | null = null;
+  /** text 行 trim 落盘（沿用原 onChange 口径：v.trim() 写内存，防抖落盘读内存值） */
+  const trimStore = (key: string) => (v: string) => {
+    (getSettings() as any)[key] = v.trim();
+  };
+  /** 缺省开语义（键缺失视为开，沿用原 !== false 口径） */
+  const boolDefaultOn = (key: string) => ({
+    get: () => (tryGetSettings() as any)[key] !== false,
+    set: (v: boolean) => {
+      (getSettings() as any)[key] = v;
+    },
+    save: () => saveSettings(),
+  });
+  /** 逗号分隔串 ↔ 多选路径数组（存储格式冻结——英文逗号分隔字符串） */
+  const pathsOf = (key: string) => ({
+    get: () => parsePathList(String((tryGetSettings() as any)[key] ?? '')),
+    set: (v: string[]) => {
+      (getSettings() as any)[key] = formatPathList(v);
+    },
+    save: () => saveSettings(),
+  });
+  return {
+    groups: [
+      {
+        icon: 'folder-open',
+        name: '基础',
+        rows: [
+          { type: 'text', name: 'Ollama 本地 URL', binding: { key: 'secondBrainOllamaUrl' }, onChange: trimStore('secondBrainOllamaUrl') },
+          // 远程 Ollama URL（移动端）：custom 持输入框引用（「填入远程 URL」按钮覆盖后即时回显）
+          {
+            type: 'custom',
+            render: (body) => {
+              new Setting(body)
+                .setName('远程 Ollama URL（移动端）')
+                .addText((t) => {
+                  remoteUrlText = t;
+                  t.setValue(String((tryGetSettings() as any).secondBrainRemoteOllamaUrl ?? '')).onChange((v) =>
+                    trimStore('secondBrainRemoteOllamaUrl')(v)
+                  );
+                });
+            },
+          },
+          // ticket 122：本机局域网 IP（移动端连不上的自查路径；仅桌面端探测显示）
+          {
+            type: 'custom',
+            render: (body) => {
+              if (!isMobileEnv()) {
+                const lanIPs = getLanIPs();
+                const primary = pickPrimaryLanIp(lanIPs);
+                const ipDesc =
+                  lanIPs.length > 0
+                    ? `本机当前局域网 IP：${lanIPs.map((l) => `${l.ip}（${l.iface}）`).join('、')}。移动端连不上时，把上方远程 URL 填为此处 IP`
+                    : '未能探测本机局域网 IP（请确认电脑已联网），移动端远程 URL 需手动填写电脑的局域网 IP';
+                new Setting(body)
+                  .setName('本机局域网 IP（电脑）')
+                  .setDesc(ipDesc)
+                  .addButton((btn) =>
+                    btn.setButtonText('填入远程 URL').setCta().onClick(() => {
+                      if (!primary) {
+                        notice('未探测到本机局域网 IP，请手动填写');
+                        return;
+                      }
+                      const target = formatRemoteOllamaUrl(primary.ip);
+                      void openFlowDialog({
+                        title: '填入远程 Ollama URL',
+                        message: `将「远程 Ollama URL（移动端）」覆盖为 ${target}？`,
+                        actions: [
+                          { label: '取消', value: 'cancel' },
+                          { label: '覆盖', value: 'ok', cta: true },
+                        ],
+                      }).then((v) => {
+                        if (v === 'ok') {
+                          (getSettings() as any).secondBrainRemoteOllamaUrl = target;
+                          void saveSettings();
+                          remoteUrlText?.setValue(target); // 输入框即时回显新值
+                        }
+                      });
+                    })
+                  );
+              } else {
+                new Setting(body)
+                  .setName('本机局域网 IP 提示')
+                  .setDesc('移动端连不上远程向量库时，请在电脑上打开第二大脑设置，查看「本机局域网 IP（电脑）」并核对上方远程 URL');
               }
-              const target = formatRemoteOllamaUrl(primary.ip);
+            },
+          },
+          { type: 'text', name: 'Embedding 模型', binding: { key: 'secondBrainEmbeddingModel' }, onChange: trimStore('secondBrainEmbeddingModel') },
+          // 白名单目录（ticket 128 统一选择器：chips + 选择按钮；存储格式冻结——英文逗号分隔字符串）
+          {
+            type: 'path',
+            mode: 'multi',
+            name: '白名单目录',
+            desc: '纳入第二大脑检索与候选来源的笔记目录，留空则不索引',
+            binding: pathsOf('secondBrainAllowPaths'),
+            pickerTitle: '选择白名单目录',
+            pickerDesc: '白名单为目录前缀语义：勾选祖先目录即覆盖其下全部子目录',
+            buttonText: '📁 选择',
+            emptyText: '暂未选择（留空 = 不索引任何目录）',
+          },
+          { type: 'toggle', name: '启用', desc: '仅控制启动时自动加载，关闭后仍可从命令面板手动打开', binding: { key: 'secondBrainEnabled' }, onChange: warnReload },
+        ],
+      },
+      {
+        icon: 'link',
+        name: '自动双链',
+        rows: [
+          // 自动双链（ticket 111）：总开关为明细设置的显隐开关（visibleWhen 声明式联动 + 徽标自动刷新）
+          { type: 'toggle', name: '自动双链', desc: '关联范围内新笔记落盘时自动建双链，候选近邻经 AI 裁判筛选', binding: boolDefaultOn('linkAgentEnabled'), onChange: warnReload },
+          {
+            type: 'text',
+            name: '单篇候选数量 TopK',
+            desc: '每篇笔记的近邻候选数，来源为白名单索引库的全部笔记',
+            // number 键（linkAgentTopK）不走键直绑（收窄到 string），三函数绑定 + onChange 钳制复写
+            binding: {
+              get: () => String((getSettings() as any).linkAgentTopK ?? 8),
+              set: (v: string) => {
+                (getSettings() as any).linkAgentTopK = v;
+              },
+              save: () => saveSettings(),
+            },
+            visibleWhen: (s) => s.linkAgentEnabled !== false,
+            onChange: (v) => {
+              const n = Math.floor(Number(v));
+              (getSettings() as any).linkAgentTopK = Number.isFinite(n) && n > 0 ? n : 8;
+            },
+          },
+          {
+            type: 'text',
+            name: '每篇关联上限',
+            desc: '0 表示不限量，由 AI 裁判自行决定，沿用复习域惯例',
+            // number 键（linkAgentMaxLinks）同上
+            binding: {
+              get: () => String((getSettings() as any).linkAgentMaxLinks ?? 0),
+              set: (v: string) => {
+                (getSettings() as any).linkAgentMaxLinks = v;
+              },
+              save: () => saveSettings(),
+            },
+            visibleWhen: (s) => s.linkAgentEnabled !== false,
+            onChange: (v) => {
+              const n = Math.floor(Number(v));
+              (getSettings() as any).linkAgentMaxLinks = Number.isFinite(n) && n > 0 ? n : 0;
+            },
+          },
+          { type: 'toggle', name: '完成通知', desc: '处理完成后通知提醒，关闭则全程静默', binding: boolDefaultOn('linkAgentNotify'), visibleWhen: (s) => s.linkAgentEnabled !== false },
+          { type: 'toggle', name: '失效关联自动清理', desc: '笔记删除后自动移除指向它的失效 related 条目', binding: boolDefaultOn('linkAgentAutoClean'), visibleWhen: (s) => s.linkAgentEnabled !== false },
+          // 关联范围（ticket 128 统一选择器：chips + 选择按钮；格式冻结——英文逗号分隔字符串）
+          {
+            type: 'path',
+            mode: 'multi',
+            name: '关联范围',
+            desc: '决定哪些笔记会被自动关联，并作为落盘监听与补链目标',
+            binding: pathsOf('linkAgentScopes'),
+            visibleWhen: (s) => s.linkAgentEnabled !== false,
+            pickerTitle: '选择关联范围目录',
+            buttonText: '📁 选择',
+            emptyText: '暂未选择（留空 = 不自动关联）',
+          },
+        ],
+      },
+      {
+        icon: 'search',
+        name: '检索',
+        rows: [
+          { type: 'text', name: '参考结果数 TopK', binding: { key: 'secondBrainTopK' }, onChange: trimStore('secondBrainTopK') },
+          { type: 'text', name: '对话参考结果数', binding: { key: 'secondBrainChatTopK' }, onChange: trimStore('secondBrainChatTopK') },
+          { type: 'text', name: '段落最小长度', binding: { key: 'secondBrainChunkMinLength' }, onChange: trimStore('secondBrainChunkMinLength') },
+          { type: 'text', name: '上下文限制', binding: { key: 'secondBrainContextLimit' }, onChange: trimStore('secondBrainContextLimit') },
+          { type: 'text', name: '防抖延迟毫秒', binding: { key: 'secondBrainDebounceDelay' }, onChange: trimStore('secondBrainDebounceDelay') },
+          { type: 'text', name: '光标轮询毫秒', binding: { key: 'secondBrainCursorPollInterval' }, onChange: trimStore('secondBrainCursorPollInterval') },
+          { type: 'text', name: '嵌入并发', desc: 'QA 遗留死配置，定义后从未接线，忠实保留不删', binding: { key: 'secondBrainConcurrency' }, onChange: trimStore('secondBrainConcurrency') },
+        ],
+      },
+      {
+        icon: 'message-square',
+        name: '对话',
+        rows: [
+          { type: 'text', name: '最大历史记录', binding: { key: 'secondBrainMaxHistory' }, onChange: trimStore('secondBrainMaxHistory') },
+          {
+            type: 'button',
+            name: 'AI 通道',
+            desc: '对话与概括统一走主设置页 AI 服务商，Embedding 仍走 Ollama',
+            buttonText: '前往配置',
+            onClick: () => {
+              closeSettingsModal();
+              (getApp() as any).setting?.open?.(); // 打开主设置页「🤖 AI」区块
+            },
+          },
+        ],
+      },
+      {
+        icon: 'layout-dashboard',
+        name: '面板',
+        rows: [
+          // 移动端默认全屏（无描述——保持省略；仅移动端可见）
+          mobileFullscreenRow('secondBrainMobileDefaultFullscreen', { desc: '' }),
+          // 重新索引（ticket 108）：确认已 flow 化（openFlowDialog），此处仅保留按钮与文案
+          {
+            type: 'button',
+            name: '重新索引',
+            desc: '清空现有向量索引并按当前白名单重嵌入，期间检索降级为文本匹配',
+            buttonText: '开始',
+            onClick: () => {
               void openFlowDialog({
-                title: '填入远程 Ollama URL',
-                message: `将「远程 Ollama URL（移动端）」覆盖为 ${target}？`,
+                title: '重新索引',
+                message: '将清空现有向量索引，按当前白名单全部重嵌入（约等于首次初始化全量跑一遍）。期间参考侧边栏与对话的向量检索会降级为文本匹配。确定继续吗？',
                 actions: [
                   { label: '取消', value: 'cancel' },
-                  { label: '覆盖', value: 'ok', cta: true },
+                  { label: '开始重建', value: 'ok', cta: true },
                 ],
               }).then((v) => {
                 if (v === 'ok') {
-                  set('secondBrainRemoteOllamaUrl', target);
-                  urlText?.setValue(target); // 输入框即时回显新值
+                  // 关设置弹窗 → 打开主面板 → 进入重建进度视图（ticket 108）
+                  closeSettingsModal();
+                  void import('./index').then((m) => m.rebuildSecondBrainIndex(getApp()));
                 }
               });
-            })
-          );
-      } else {
-        new Setting(b1)
-          .setName('本机局域网 IP 提示')
-          .setDesc('移动端连不上远程向量库时，请在电脑上打开第二大脑设置，查看「本机局域网 IP（电脑）」并核对上方远程 URL');
-      }
-      new Setting(b1)
-        .setName('Embedding 模型')
-        .addText((t) => t.setValue(String(s.secondBrainEmbeddingModel ?? '')).onChange((v) => set('secondBrainEmbeddingModel', v.trim())));
-      // 白名单目录（ticket 128 统一选择器：chips + 选择按钮，无手输文本框；存储格式冻结——英文逗号分隔字符串）
-      renderPathSettingRow({
-        parent: b1,
-        name: '白名单目录',
-        desc: '纳入第二大脑检索/候选来源的笔记目录；点「📁 选择」从库内文件夹勾选（含空目录与点前缀目录）；留空 = 不索引',
-        mode: 'multi',
-        value: parsePathList(String((tryGetSettings() as any).secondBrainAllowPaths ?? '')),
-        pickerTitle: '选择白名单目录',
-        pickerDesc: '白名单为目录前缀语义：勾选祖先目录即覆盖其下全部子目录',
-        buttonText: '📁 选择',
-        emptyText: '暂未选择（留空 = 不索引任何目录）',
-        onChange: (list) => {
-          set('secondBrainAllowPaths', formatPathList(list));
-        },
-      });
-      new Setting(b1)
-        .setName('启用')
-        .setDesc('仅控制启动时自动加载，关闭后仍可从命令面板手动打开') // [l7A] 语义修正
-        .addToggle((t) =>
-          t.setValue(s.secondBrainEnabled === true).onChange((v) => {
-            set('secondBrainEnabled', v);
-            warnReload(); // [f2-sb] 启动快照配置：重载后生效
-          })
-        );
-
-      // 自动双链（ticket 111）：总开关为明细设置的显隐开关——onChange 即时重渲染该区块，
-      // 各键独立持久化，重开弹窗按当前状态还原；显隐属功能性显隐，无新 CSS
-      const bLink = group('link', '自动双链');
-      const linkDetailBox = document.createElement('div');
-      const renderLinkDetail = () => {
-        linkDetailBox.innerHTML = '';
-        if ((tryGetSettings() as any).linkAgentEnabled === false) return;
-        new Setting(linkDetailBox)
-          .setName('单篇候选数量 TopK')
-          .setDesc('每篇笔记的近邻候选数（候选来源 = 白名单索引库中的全部笔记）')
-          .addText((t) =>
-            t.setValue(String((tryGetSettings() as any).linkAgentTopK ?? 8)).onChange((v) => {
-              const n = Math.floor(Number(v));
-              set('linkAgentTopK', Number.isFinite(n) && n > 0 ? n : 8);
-            })
-          );
-        new Setting(linkDetailBox)
-          .setName('每篇关联上限')
-          .setDesc('0 = 不限量，由 AI 裁判自行决定（沿用复习域「0=不限制」惯例）')
-          .addText((t) =>
-            t.setValue(String((tryGetSettings() as any).linkAgentMaxLinks ?? 0)).onChange((v) => {
-              const n = Math.floor(Number(v));
-              set('linkAgentMaxLinks', Number.isFinite(n) && n > 0 ? n : 0);
-            })
-          );
-        new Setting(linkDetailBox)
-          .setName('完成通知')
-          .setDesc('处理完成后通知提醒；关闭则全程静默')
-          .addToggle((t) => t.setValue((tryGetSettings() as any).linkAgentNotify !== false).onChange((v) => set('linkAgentNotify', v)));
-        new Setting(linkDetailBox)
-          .setName('失效关联自动清理')
-          .setDesc('笔记删除后自动移除指向它的失效 related 条目')
-          .addToggle((t) => t.setValue((tryGetSettings() as any).linkAgentAutoClean !== false).onChange((v) => set('linkAgentAutoClean', v)));
-        // 关联范围（ticket 128 统一选择器：chips + 选择按钮；格式冻结——英文逗号分隔字符串）
-        renderPathSettingRow({
-          parent: linkDetailBox,
-          name: '关联范围',
-          desc: '决定哪些笔记会被自动关联（落盘监听与补链目标）；候选来源为白名单索引库全部笔记；留空 = 不自动关联',
-          mode: 'multi',
-          value: parsePathList(String((tryGetSettings() as any).linkAgentScopes ?? '')),
-          pickerTitle: '选择关联范围目录',
-          buttonText: '📁 选择',
-          emptyText: '暂未选择（留空 = 不自动关联）',
-          onChange: (list) => {
-            set('linkAgentScopes', formatPathList(list));
+            },
           },
-        });
-        // 明细为动态重渲染区块：两行式标注按需重挂（控件区 ≥2 子元素的新建行）
-        markSettingSplitRows(linkDetailBox);
-      };
-      new Setting(bLink)
-        .setName('自动双链')
-        .setDesc('关联范围内新笔记落盘时自动建立 related 双链：向量近邻出候选（白名单索引库）、AI 裁判、只写新笔记侧')
-        .addToggle((t) =>
-          t.setValue(s.linkAgentEnabled !== false).onChange((v) => {
-            set('linkAgentEnabled', v);
-            warnReload(); // [f2-sb] 监听注册在域启动时：重载后生效
-            renderLinkDetail();
-            refreshSettingsGroupCounts(content);
-          })
-        );
-      bLink.appendChild(linkDetailBox);
-      renderLinkDetail();
+        ],
+      },
+    ],
+  };
+}
 
-      const b2 = group('search', '检索');
-      new Setting(b2).setName('参考结果数 TOP_K').addText((t) => t.setValue(String(s.secondBrainTopK ?? '')).onChange((v) => set('secondBrainTopK', v)));
-      new Setting(b2).setName('AI 检索结果数 CHAT_TOP_K').addText((t) => t.setValue(String(s.secondBrainChatTopK ?? '')).onChange((v) => set('secondBrainChatTopK', v)));
-      new Setting(b2).setName('段落最小长度').addText((t) => t.setValue(String(s.secondBrainChunkMinLength ?? '')).onChange((v) => set('secondBrainChunkMinLength', v)));
-      new Setting(b2).setName('上下文限制').addText((t) => t.setValue(String(s.secondBrainContextLimit ?? '')).onChange((v) => set('secondBrainContextLimit', v)));
-      new Setting(b2).setName('防抖延迟（ms）').addText((t) => t.setValue(String(s.secondBrainDebounceDelay ?? '')).onChange((v) => set('secondBrainDebounceDelay', v)));
-      new Setting(b2).setName('光标轮询间隔（ms）').addText((t) => t.setValue(String(s.secondBrainCursorPollInterval ?? '')).onChange((v) => set('secondBrainCursorPollInterval', v)));
-      new Setting(b2)
-        .setName('嵌入并发')
-        .setDesc('QA 遗留死配置：定义后从未接线，忠实保留不删')
-        .addText((t) => t.setValue(String(s.secondBrainConcurrency ?? '')).onChange((v) => set('secondBrainConcurrency', v)));
-
-      const b3 = group('message-square', '对话');
-      new Setting(b3).setName('最大历史记录').addText((t) => t.setValue(String(s.secondBrainMaxHistory ?? '')).onChange((v) => set('secondBrainMaxHistory', v)));
-      new Setting(b3)
-        .setName('AI 通道')
-        .setDesc('对话与概括统一走主设置页「🤖 AI」服务商；Embedding 仍走 Ollama。ticket 108 起此处不再单独配置模型')
-        .addButton((b) => b.setButtonText('前往配置').onClick(() => {
-          closeSettingsModal();
-          (getApp() as any).setting?.open?.(); // 打开主设置页「🤖 AI」区块
-        }));
-
-      const b4 = group('layout-dashboard', '面板');
-      const mobileRow = new Setting(b4)
-        .setName('移动端默认全屏')
-        .addToggle((t) => t.setValue(s.secondBrainMobileDefaultFullscreen === true).onChange((v) => set('secondBrainMobileDefaultFullscreen', v)));
-      if (!isMobileEnv()) mobileRow.settingEl.classList.add('bz-setting-hidden');
-      // ticket 108：概括缓存清除入口移除（缓存保留，面板可重新生成覆盖）；新增「重新索引」
-      const rebuildRow = new Setting(b4)
-        .setName('重新索引')
-        .setDesc('清空现有向量索引并按当前白名单全部重嵌入；视库大小耗时数分钟，期间检索降级为文本匹配')
-        .addButton((b) =>
-          b.setButtonText('开始').onClick(() => {
-            void openFlowDialog({
-              title: '重新索引',
-              message: '将清空现有向量索引，按当前白名单全部重嵌入（约等于首次初始化全量跑一遍）。期间参考侧边栏与对话的向量检索会降级为文本匹配。确定继续吗？',
-              actions: [
-                { label: '取消', value: 'cancel' },
-                { label: '开始重建', value: 'ok', cta: true },
-              ],
-            }).then((v) => {
-              if (v === 'ok') {
-                // 关设置弹窗 → 打开主面板 → 进入重建进度视图（ticket 108）
-                closeSettingsModal();
-                void import('./index').then((m) => m.rebuildSecondBrainIndex(getApp()));
-              }
-            });
-          })
-        );
-      rebuildRow.settingEl.classList.add('bz-setting-action-row');
-    },
-  });
+/** 第二大脑域设置：基础/自动双链/检索/对话/面板 五组卡片（主面板 ⚙️ 入口；ticket 108 对话组收敛） */
+export function openSecondBrainSettings(_app?: App): void {
+  openSettingsModal({ title: '第二大脑设置', maxWidth: 520, schema: secondBrainSettingsSchema() });
 }

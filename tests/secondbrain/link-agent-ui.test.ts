@@ -68,24 +68,30 @@ describe('⚙️ 弹窗「自动双链」开关联动显隐', () => {
     closeSettingsModal();
   });
 
-  it('onChange 关闭总开关：明细即时隐藏且键持久化；重开弹窗还原关闭态', async () => {
+  it('onChange 关闭总开关：明细即时隐藏（bz-setting-hidden）且键持久化；重开弹窗还原关闭态', async () => {
     openSecondBrainSettings();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     rowTrigger(popup, '自动双链')(false);
     await new Promise((r) => setTimeout(r, 5));
     expect(settings.linkAgentEnabled).toBe(false);
-    // 明细整体隐藏（区块重渲染后无明细行，含新增的关联范围行）
-    expect(
-      [...popup.querySelectorAll('.setting-item')].some(
-        (el) => (el as HTMLElement).dataset.name === '单篇候选数量 TopK' || (el as HTMLElement).dataset.name === '关联范围'
-      )
-    ).toBe(false);
+    // 明细整体隐藏（ticket 131 visibleWhen 声明式：隐藏行留在 DOM 带 .bz-setting-hidden；path 行
+    // visibleWhen 作用于自定义包装容器，用 closest 统查，含新增的关联范围行）
+    const detailHidden = (name: string) => {
+      const el = [...popup.querySelectorAll('.setting-item')].find((s) => (s as HTMLElement).dataset.name === name);
+      return el ? (el as HTMLElement).closest('.bz-setting-hidden') !== null : false;
+    };
+    expect(detailHidden('单篇候选数量 TopK')).toBe(true);
+    expect(detailHidden('关联范围')).toBe(true);
     closeSettingsModal();
 
-    // 重开弹窗按当前状态还原：仍关闭、无明细
+    // 重开弹窗按当前状态还原：仍关闭、明细隐藏
     openSecondBrainSettings();
     const popup2 = document.getElementById('bz-settings-modal-popup')!;
-    expect([...popup2.querySelectorAll('.setting-item')].some((el) => (el as HTMLElement).dataset.name === '关联范围')).toBe(false);
+    const scopeEl2 = [...popup2.querySelectorAll('.setting-item')].find(
+      (s) => (s as HTMLElement).dataset.name === '关联范围'
+    ) as HTMLElement;
+    expect(scopeEl2).toBeTruthy();
+    expect(scopeEl2.closest('.bz-setting-hidden')).not.toBeNull();
     closeSettingsModal();
   });
 
