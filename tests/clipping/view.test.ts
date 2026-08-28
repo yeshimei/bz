@@ -101,11 +101,11 @@ describe('剪藏本面板', () => {
     expect(cards[0].textContent).toContain('✍️作者');
   });
 
-  it('打开先弹窗并显示加载提示，数据让出事件循环后渲染替换（首开与重开一致，先窗口后加载）', async () => {
-    const { vault } = await setup();
+  it('首开：先弹窗显示加载提示，数据让出事件循环后渲染替换；重开：缓存复用零扫描（ticket 130）', async () => {
+    const { vault, app } = await setup();
     vault.files.set('我的/文章/A.md', makeArticleMd('https://zhihu.com/a', '知乎', 'A', '2025-06-02T08:00:00.000Z'));
     await initArticleView(true);
-    // 解析让出事件循环（未渲染）→ 窗口已可见且内容区为加载提示
+    // 解析让出事件循环（未渲染）→ 窗口已可见且内容区为加载提示（首开保留，ticket 125）
     const popup = document.getElementById('article-view-popup') as HTMLElement;
     expect(popup.style.visibility).toBe('visible');
     const hint = document.querySelector('.article-loading-hint');
@@ -116,13 +116,21 @@ describe('剪藏本面板', () => {
     await new Promise((r) => setTimeout(r, 20));
     expect(document.querySelectorAll('.article-entry-card').length).toBe(1);
     expect(document.querySelector('.article-loading-hint')!.textContent).toBe('已显示所有文章');
-    // 关闭再重开（重开即重载，B1）：同样先加载提示后渲染，不残留旧列表
+    // 重开缓存复用（ticket 130）：不重载——直接显示旧列表、无加载提示、loadAllArticles 不再调用。
+    // getFileCache 是解析入口（loadAllArticles 逐文件调用）：重开后零新增调用即证明零重扫。
+    const parseSpy = vi.spyOn(app.metadataCache, 'getFileCache');
+    // 关闭期间 vault 补入新文章（不派发任何域事件）→ 重开不应扫描到它
+    vault.files.set('我的/文章/新增C.md', makeArticleMd('https://x.com/c', '知乎', '新增C', '2025-06-03T08:00:00.000Z'));
     (document.getElementById('article-view-mask') as HTMLElement).click();
     expect(popup.style.visibility).toBe('hidden');
     await initArticleView(true);
     expect(popup.style.visibility).toBe('visible');
-    expect(document.querySelector('.article-loading-hint')!.textContent).toBe('📚 正在加载文章...');
-    expect(document.querySelectorAll('.article-entry-card').length).toBe(0);
+    // 立即断言（重开路径无异步）：无「正在加载」提示、旧列表仍在、新文件未被扫描
+    expect(document.body.textContent).not.toContain('📚 正在加载文章...');
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(1);
+    expect([...document.querySelectorAll('.article-entry-card')].some((c) => c.textContent!.includes('新增C'))).toBe(false);
+    expect(parseSpy).not.toHaveBeenCalled(); // 零重扫：解析入口零新增调用
+    // 等待任一潜在异步加载窗口后仍无扫描结果
     await new Promise((r) => setTimeout(r, 20));
     expect(document.querySelectorAll('.article-entry-card').length).toBe(1);
   });
@@ -415,6 +423,48 @@ describe('剪藏本面板', () => {
     ]);
     expect(descs[3]).toContain('obsidian-news');
   });
+
+  it('目录变更 → 清缓存全量重载一次：旧目录条目清空、站点/搜索筛选态重置、新目录内容呈现（ticket 130）', async () => {
+    const { vault } = await setup();
+    vault.files.set('我的/文章/A.md', makeArticleMd('https://zhihu.com/a', '知乎', 'A', '2025-06-02T08:00:00.000Z'));
+    vault.files.set('我的/文章/B.md', makeArticleMd('https://guokr.com/b', '果壳', 'B', '2025-06-01T08:00:00.000Z'));
+    await initArticleView(true);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(2);
+    // 清空先前用例残留的搜索关键字（模块状态跨用例常驻；同「目录边界」用例惯例）
+    const input = document.getElementById('article-search-input') as HTMLInputElement;
+    input.value = '';
+    input.dispatchEvent(new Event('input'));
+    await new Promise((r) => setTimeout(r, 350)); // 防抖 300ms 清空 currentSearchKeyword
+    // 置位站点筛选 + 搜索关键字（目录变更后应被清空重置）
+    const guokrBtn = [...document.querySelectorAll('.article-site-btn')].find(
+      (b) => (b as HTMLElement).dataset.site === '果壳'
+    ) as HTMLElement;
+    guokrBtn.click();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(1);
+    input.value = '残留关键字';
+    input.dispatchEvent(new Event('input'));
+    await new Promise((r) => setTimeout(r, 350)); // 防抖 300ms 后站点+搜索双筛选生效
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(0); // 双筛选无结果
+    // 变更剪藏目录（模拟设置保存后 applyArticleSettings 生效）→ 清缓存全量重载一次
+    vault.files.set('我的/新文章/C.md', makeArticleMd('https://r.jina.ai/c', '知乎', 'C', '2025-06-05T08:00:00.000Z'));
+    setSettingsProvider(() => ({ articleDirectory: '我的/新文章' }) as any);
+    applyArticleSettings();
+    await new Promise((r) => setTimeout(r, 20));
+    // 新目录内容呈现、旧目录条目清空
+    const cards = document.querySelectorAll('.article-entry-card');
+    expect(cards.length).toBe(1);
+    expect(cards[0].textContent).toContain('C');
+    // 筛选态已重置：站点栏回「全部 (1)」（无果壳/知乎站点残留），搜索框清空，非空态
+    expect((document.querySelector('.article-site-btn') as HTMLElement).textContent).toContain('全部 (1)');
+    expect(input.value).toBe('');
+    expect(document.body.textContent).not.toContain('没有符合条件的文章');
+    // 恢复原目录（防后续用例模块状态残留：本 describe 面板跨用例常驻连接）
+    setSettingsProvider(() => SETTINGS as any);
+    applyArticleSettings();
+    await new Promise((r) => setTimeout(r, 20));
+  });
 });
 
 describe('空态三态与增量刷新（ticket 45/63）', () => {
@@ -545,7 +595,7 @@ describe('空态三态与增量刷新（ticket 45/63）', () => {
     expect(cards[0].textContent).toContain('《新名》');
   });
 
-  it('重开窗口即重载：外部删除未被事件捕获时，幽灵卡片不跨重开持久（B1）', async () => {
+  it('面板隐藏期间文件删除 → 监听通道移除旧卡，重开无幽灵卡片（B1 常驻监听，ticket 130）', async () => {
     const { vault } = await setup();
     vault.files.set('我的/文章/A.md', makeArticleMd('https://x.com/a', '知乎', 'A', '2025-06-02T08:00:00.000Z'));
     vault.files.set('我的/文章/B.md', makeArticleMd('https://x.com/b', '果壳', 'B', '2025-06-01T08:00:00.000Z'));
@@ -553,12 +603,17 @@ describe('空态三态与增量刷新（ticket 45/63）', () => {
     await new Promise((r) => setTimeout(r, 20));
     expect(document.querySelectorAll('.article-entry-card').length).toBe(2);
     const closeBtn = [...document.querySelectorAll('button')].find((b) => b.title === '关闭')!;
-    closeBtn.click(); // 面板关闭（visibility 常驻，列表数据保留）
-    // 关闭期间外部删除 B（不派发任何域事件 → 模拟监听未覆盖的删除/改名路径）
+    closeBtn.click(); // 面板关闭（visibility 常驻，模块列表与 DOM 均保留）
+    // 关闭期间外部删除 B：vault 文件消失 + adapter 派发 clipping:file-deleted
+    // （三通道监听常驻，面板隐藏期间照常结算——B1 由常驻监听增量维护，重开不再重载兜底）
     vault.files.delete('我的/文章/B.md');
-    await initArticleView(true); // 重开 → 无条件重载（B1：length>0 也重载）
-    await new Promise((r) => setTimeout(r, 20));
+    emitDomainEvent('clipping:file-deleted', { path: '我的/文章/B.md' });
+    await new Promise((r) => setTimeout(r, 400)); // 防抖 300ms 结算
+    // 重开缓存复用（ticket 130）：零扫描，直接展示监听维护后的列表，无幽灵卡片
+    await initArticleView(true);
     expect(document.querySelectorAll('.article-entry-card').length).toBe(1);
+    expect(document.querySelector('.article-entry-card')!.textContent).toContain('A');
+    expect(document.body.textContent).not.toContain('📚 正在加载文章...');
   });
 });
 

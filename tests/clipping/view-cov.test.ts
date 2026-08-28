@@ -1,6 +1,6 @@
 /**
  * 剪藏本面板补充覆盖测试（src/clipping/view.ts 未触达分支）：
- * 面板显隐切换（showImmediately=false / 已存在重开并重载）、头部按钮（🔍/⏳/📰/❌）、
+ * 面板显隐切换（showImmediately=false / 已存在重开零扫描）、头部按钮（🔍/⏳/📰/❌）、
  * ESC 关闭、parseArticleFile 容错、删除失败兜底、失效反链来源、最小字段文章、
  * 空容器直调安全、滚动未到底不加载、抽屉头部结构、移动端设置组、批次非法值回退。
  */
@@ -15,6 +15,7 @@ import {
   unloadClipping,
 } from '../../src/clipping/view';
 import { MockVault } from '../mock-vault';
+import { emitDomainEvent } from '../../src/core/domain-bus';
 import { resetObsidianMocks, Platform as MockPlatform } from '../mock-obsidian-entry';
 
 function makeArticleMd(url: string, site: string, title: string, created: string, extra = '') {
@@ -99,15 +100,19 @@ describe('剪藏本面板显隐与头部按钮', () => {
     expect(mask.style.visibility).toBe('hidden');
   });
 
-  it('已存在面板且数据为空时以 true 重开 → 触发重新加载', async () => {
+  it('已存在面板重开零扫描：无事件不补数据；modify 事件经监听通道增量补卡（B1 常驻监听，ticket 130）', async () => {
     const { vault } = await setup();
     await initArticleView(true); // 目录尚不存在 → 空态
     await flush();
     expect(document.querySelector('.article-empty')).not.toBeNull();
-    // 补入文章后面板仍挂着（模块内 allArticles 为空）→ 重开触发补加载
+    // 补入文章但不派发域事件 → 重开不重载（旧状态下直接展示），依旧空态——数据由常驻监听增量维护
     vault.files.set('我的/文章/A.md', makeArticleMd('https://x.com/a', '知乎', 'A', '2025-06-02T08:00:00.000Z'));
     await initArticleView(true);
     await flush();
+    expect(document.querySelectorAll('.article-entry-card').length).toBe(0);
+    // 派发 clipping:file-modified → 监听通道防抖结算后增量补卡（重开零扫描替代原「重开即重载」）
+    emitDomainEvent('clipping:file-modified', { path: '我的/文章/A.md' });
+    await new Promise((r) => setTimeout(r, 400));
     expect(document.querySelectorAll('.article-entry-card').length).toBe(1);
   });
 
