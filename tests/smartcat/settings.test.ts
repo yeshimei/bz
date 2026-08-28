@@ -227,19 +227,23 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
     });
   }
 
-  it('桌面端四组：外观/可视化/互动/记忆，图标与项数徽标正确', () => {
+  it('桌面端七组：外观/可视化/互动/记忆/存储与记忆/关联/显示，图标与项数徽标正确', () => {
     const hooks = { saves: [] as any[], appearances: [] as string[] };
     Platform.isMobile = false;
     openWith(baseConfig(), hooks);
     const popup = document.getElementById('bz-settings-modal-popup')!;
-    const heads = [...popup.querySelectorAll('.bz-settings-group')].map((g) => ({
-      icon: g.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon'),
-      name: g.querySelector('.bz-settings-group-name')!.textContent,
-      count: g.querySelector('.bz-settings-group-count')!.textContent,
-    }));
+    // ticket 131：移动端组挂 bz-setting-hidden 整组隐藏但仍留 DOM（可在移动端重求值），可见组过滤后与原行为一致
+    const heads = [...popup.querySelectorAll('.bz-settings-group')]
+      .filter((g) => !g.classList.contains('bz-setting-hidden'))
+      .map((g) => ({
+        icon: g.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon'),
+        name: g.querySelector('.bz-settings-group-name')!.textContent,
+        count: g.querySelector('.bz-settings-group-count')!.textContent,
+      }));
     expect(heads).toEqual([
       { icon: 'palette', name: '外观', count: '0 项' },
-      { icon: 'bar-chart-3', name: '可视化', count: '1 项' },
+      // 「打开数据面板」为 button 操作行（bz-setting-action-row 豁免徽标计数，ticket 131 声明式语义）
+      { icon: 'bar-chart-3', name: '可视化', count: '0 项' },
       { icon: 'message-circle', name: '互动', count: '3 项' },
       { icon: 'archive', name: '记忆', count: '4 项' },
       // P3 新增三组（ticket 123）
@@ -301,7 +305,8 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
       (g) => g.querySelector('.bz-settings-group-name')!.textContent === '可视化'
     )! as HTMLElement;
     expect(viz).not.toBeUndefined();
-    expect(viz.querySelector('.bz-settings-group-count')!.textContent).toBe('1 项');
+    // 「打开数据面板」为 button 操作行（actionRow 豁免徽标，ticket 131 声明式语义）
+    expect(viz.querySelector('.bz-settings-group-count')!.textContent).toBe('0 项');
     expect(viz.querySelector('.setting-item[data-name="打开数据面板"]')).not.toBeNull();
     expect(viz.querySelector('.bz-sc-personality-panel')).toBeNull();
   });

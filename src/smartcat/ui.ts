@@ -8,12 +8,12 @@
  * 同一个「移动端默认全屏」开关（smartcatMobileDefaultFullscreen），聊天头行不放 ⚙️，
  * 设置统一由小橘本体长按打开）。
  */
-import { Setting } from 'obsidian';
 import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
-import { closeSettingsModal, createSettingsGroup, openSettingsModal } from '../core/settings-modal';
-import { tryGetSettings, saveSettings } from '../core/settings-provider';
+import { closeSettingsModal, openSettingsModal } from '../core/settings-modal';
+import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
+import type { GroupDecl, SettingsSchema } from '../core/settings-schema';
 import type { Appearance } from './types';
 
 export const CAT_CONTAINER_ID = 'smart-companion-cat';
@@ -192,13 +192,209 @@ export function hideChatPanel(panels: SmartcatPanels): void {
 }
 
 /**
+ * smartcat 设置 schema（ticket 131；ADR-0064）：外观/可视化/互动/记忆/移动端/存储与记忆/关联/显示
+ * 八组。全部键为域数据（smartcat.json config 或 BzSettings 行为字段），走三函数绑定逃生口
+ * （get/set/save——save 落盘顺序与落盘目标逐字保持现状）。
+ * - 外观组 13 皮肤色块网格 = custom 插槽（无 Setting 行，不计徽标）；
+ * - 「打开数据面板」= button 行（onOpenDashboard 缺省时不挂组）；
+ * - 「移动端默认全屏」走 settingsKeys + setMobileFullscreen 外部绑定（非 BzSettings 键，手写组
+ *   并带 smartcat 专属 desc）；组序保持现状（移动端组位于记忆与存储之间）。
+ * - ticket 100 文案修正：行为流/关联窗口数字范围去括号改写自然句（键名/行为不动）。
+ * 置于模块顶层供文案 lint 直接引用；opts 仅在渲染/交互时经闭包引用，工厂构建无副作用。 */
+export function smartcatSettingsSchema(opts: {
+  getConfig: () => any;
+  saveConfig: (config: any) => Promise<void>;
+  settingsKeys: { enabled: boolean; mobileFullscreen: boolean };
+  setMobileFullscreen: (v: boolean) => Promise<void>;
+  onOpenDashboard?: () => void;
+  onAppearanceChanged?: (appearance: string) => void;
+}): SettingsSchema {
+  /** 域 config 键绑定（save 仅写 smartcat 数据） */
+  const bindConfig = (key: string) => ({
+    get: () => opts.getConfig()[key],
+    set: (v: unknown) => {
+      opts.getConfig()[key] = v;
+    },
+    save: () => opts.saveConfig(opts.getConfig()),
+  });
+  /** 行为字段（BzSettings）键绑定：保持双落盘（smartcat 数据 + data.json 同键），顺序照抄现状 */
+  const bindBehavior = (key: string) => ({
+    get: () => (tryGetSettings() as any)[key] ?? DEFAULT_BEHAVIOR[key as keyof typeof DEFAULT_BEHAVIOR],
+    set: (v: unknown) => {
+      (getSettings() as any)[key] = v;
+    },
+    save: async () => {
+      await opts.saveConfig(opts.getConfig());
+      await saveSettings();
+    },
+  });
+  /** 行为字段缺省开语义（键缺失视为开） */
+  const bindBehaviorOn = (key: string) => ({
+    get: () => (tryGetSettings() as any)[key] !== false,
+    set: (v: boolean) => {
+      (getSettings() as any)[key] = v;
+    },
+    save: async () => {
+      await opts.saveConfig(opts.getConfig());
+      await saveSettings();
+    },
+  });
+  // ===== 外观组（平铺色块选择器：13 皮肤，色块取自各皮肤主渐变；点击即换+落盘）=====
+  const lookGroup: GroupDecl = {
+    icon: 'palette',
+    name: '外观',
+    rows: [
+      {
+        type: 'custom',
+        render: (body) => {
+          const config = opts.getConfig();
+          const grid = document.createElement('div');
+          grid.className = 'bz-sc-skin-grid';
+          for (const skin of SKINS) {
+            const item = document.createElement('button');
+            item.className = 'bz-sc-skin-item' + (skin === config.appearance ? ' active' : '');
+            item.dataset.skin = skin;
+            const swatch = document.createElement('span');
+            swatch.className = 'bz-sc-skin-swatch bz-sc-skin-swatch-' + skin;
+            const name = document.createElement('span');
+            name.className = 'bz-sc-skin-name';
+            name.textContent = skinLabel(skin);
+            item.appendChild(swatch);
+            item.appendChild(name);
+            item.addEventListener('click', async () => {
+              if (opts.getConfig().appearance === skin) return;
+              opts.getConfig().appearance = skin;
+              for (const n of Array.from(grid.querySelectorAll('.bz-sc-skin-item'))) n.classList.toggle('active', n === item);
+              await opts.saveConfig(opts.getConfig());
+              opts.onAppearanceChanged?.(skin);
+            });
+            grid.appendChild(item);
+          }
+          body.appendChild(grid);
+        },
+      },
+    ],
+  };
+  // ===== 可视化组（2026-08-23 合并一套：仅保留数据面板入口；入口回调缺省时不挂组）=====
+  const vizGroups: GroupDecl[] = opts.onOpenDashboard
+    ? [
+        {
+          icon: 'bar-chart-3',
+          name: '可视化',
+          rows: [
+            {
+              type: 'button',
+              name: '打开数据面板',
+              desc: '查看小橘的状态全貌与每周懂你报告',
+              buttonText: '打开数据面板',
+              onClick: () => {
+                closeSettingsModal();
+                opts.onOpenDashboard!();
+              },
+            },
+          ],
+        },
+      ]
+    : [];
+  // ===== 移动端组（settingsKeys 外部绑定；desc 为 smartcat 专属文案逐字对齐现状）=====
+  const mobileGroup: GroupDecl = {
+    icon: 'smartphone',
+    name: '移动端',
+    visibleWhen: () => isMobileEnv(),
+    rows: [
+      {
+        type: 'toggle',
+        name: '移动端默认全屏',
+        desc: '移动端打开小橘窗口时默认全屏，关闭则显示常规卡片',
+        binding: {
+          get: () => opts.settingsKeys.mobileFullscreen,
+          set: (v: boolean) => {
+            opts.settingsKeys.mobileFullscreen = v;
+          },
+          save: () => opts.setMobileFullscreen(opts.settingsKeys.mobileFullscreen),
+        },
+        visibleWhen: () => isMobileEnv(),
+      },
+    ],
+  };
+  return {
+    groups: [
+      lookGroup,
+      ...vizGroups,
+      {
+        icon: 'message-circle',
+        name: '互动',
+        rows: [
+          { type: 'slider', name: '自言自语间隔', desc: '小橘每隔多久主动说一句话，范围 1 到 60 分钟', binding: bindConfig('speakInterval'), min: 1, max: 60, step: 1 },
+          { type: 'slider', name: '说话概率', desc: '定时到来时小橘主动说话的概率，范围为十分之一到一', binding: bindConfig('speakProbability'), min: 0.1, max: 1, step: 0.1 },
+          { type: 'toggle', name: '主动关心', desc: '按你的活跃时段，每周温和地主动搭话一两次', binding: bindConfig('proactiveCare') },
+        ],
+      },
+      {
+        icon: 'archive',
+        name: '记忆',
+        rows: [
+          { type: 'slider', name: '短期记忆量', desc: '保留最近多少轮对话作为短期记忆，范围 50 到 200', binding: bindConfig('shortTermMemory'), min: 50, max: 200, step: 10 },
+          { type: 'slider', name: '上下文字数限制', desc: '上下文内容的最大字数，设为 0 时仅取当前行', binding: bindConfig('contextLength'), min: 0, max: 1000, step: 50 },
+          { type: 'slider', name: '上下文分布比例', desc: '光标上下的上下文分配比例，十分之一到十分之九', binding: bindConfig('contextSplitRatio'), min: 0.1, max: 0.9, step: 0.1 },
+          {
+            type: 'select',
+            name: '记忆打分范围',
+            desc: '记忆质量打分的范围，智能模式自动分配云端与本地',
+            binding: bindConfig('cloudScoring'),
+            options: [
+              { value: 'smart', label: '智能（推荐）' },
+              { value: 'all', label: '全部（云端）' },
+              { value: 'diary', label: '仅日记' },
+              { value: 'local', label: '本地' },
+            ],
+          },
+        ],
+      },
+      mobileGroup,
+      {
+        icon: 'database',
+        name: '存储与记忆',
+        rows: [
+          { type: 'slider', name: '行为流保留天数', desc: '行为流条目最多保留 1 到 365 天，超出部分自动删除', binding: bindBehavior('behaviorMaxDays'), min: 1, max: 365, step: 1 },
+          { type: 'slider', name: '行为流最大条数', desc: '行为流最多保留 100 到 10000 条，超出部分删除最旧条目', binding: bindBehavior('behaviorMaxCount'), min: 100, max: 10000, step: 100 },
+        ],
+      },
+      {
+        icon: 'link',
+        name: '关联',
+        rows: [
+          { type: 'toggle', name: '启用关联自动发现', desc: '自动为同名实体的记忆建立关联 relatedIds', binding: bindBehaviorOn('enableAutoLinking') },
+          { type: 'slider', name: '关联发现窗口天数', desc: '同一实体在 1 到 30 天内的记忆自动关联', binding: bindBehavior('linkWindowDays'), min: 1, max: 30, step: 1 },
+        ],
+      },
+      {
+        icon: 'eye',
+        name: '显示',
+        rows: [
+          { type: 'toggle', name: '显示行为日志', desc: '在数据面板中显示行为日志页签', binding: bindBehaviorOn('showBehaviorLog') },
+        ],
+      },
+    ],
+  };
+}
+
+/** 行为字段（BzSettings）缺省值（原 bzSettings?.key ?? N 口径，slider 初始回填用） */
+const DEFAULT_BEHAVIOR = {
+  behaviorMaxDays: 30,
+  behaviorMaxCount: 2000,
+  linkWindowDays: 7,
+} as const;
+
+/**
  * 打开 smartcat 域设置弹窗（bz openSettingsModal；分组卡片方案 A：外观/可视化/互动/记忆 +
  * 移动端全屏，2026-08 用户拍板）。
  * 2026-08-23 合并一套：① 弹窗与聊天面板共用同一「移动端默认全屏」开关（打开即应用）；
  * ② 「每周懂你报告」入口换成「打开数据面板」（周报全文移入数据面板「报告」页签）；
  * ③ 人格成长可视化与重置成长已移除（ticket 123 UI 拍板），数据层面保留。
  * 分组：外观 palette（13 皮肤色块平铺）、可视化 bar-chart-3（数据面板）、
- * 互动 message-circle（自言自语间隔/说话概率/主动关心）、记忆 archive（记忆量/上下文/打分）；
+ * 互动 message-circle（自言自语间隔/说话概率/主动关心）、记忆 archive（记忆量/上下文/打分）、
+ * 存储与记忆 database / 关联 link / 显示 eye（P3 ticket 123）；
  * 移动端 smartphone 组仅 isMobileEnv 显示。
  */
 export function openSmartcatSettings(opts: {
@@ -213,227 +409,12 @@ export function openSmartcatSettings(opts: {
   /** 选皮肤即时生效（换色块后立刻切猫容器皮肤类，不必重载插件） */
   onAppearanceChanged?: (appearance: Appearance) => void;
 }): void {
-  const config = opts.getConfig();
   openSettingsModal({
     title: '小橘设置',
     maxWidth: 560,
     onClose: opts.onClose,
-    build: (el) => {
-      // ===== 外观组（平铺色块选择器：13 皮肤，色块取自各皮肤主渐变；点击即换+落盘） =====
-      const lookGroup = createSettingsGroup(el, { icon: 'palette', name: '外观' });
-      const grid = document.createElement('div');
-      grid.className = 'bz-sc-skin-grid';
-      for (const skin of SKINS) {
-        const item = document.createElement('button');
-        item.className = 'bz-sc-skin-item' + (skin === config.appearance ? ' active' : '');
-        item.dataset.skin = skin;
-        const swatch = document.createElement('span');
-        swatch.className = 'bz-sc-skin-swatch bz-sc-skin-swatch-' + skin;
-        const name = document.createElement('span');
-        name.className = 'bz-sc-skin-name';
-        name.textContent = skinLabel(skin);
-        item.appendChild(swatch);
-        item.appendChild(name);
-        item.addEventListener('click', async () => {
-          if (config.appearance === skin) return;
-          config.appearance = skin;
-          for (const n of Array.from(grid.querySelectorAll('.bz-sc-skin-item'))) n.classList.toggle('active', n === item);
-          await opts.saveConfig(config);
-          opts.onAppearanceChanged?.(skin);
-        });
-        grid.appendChild(item);
-      }
-      lookGroup.appendChild(grid);
-
-      // ===== 可视化组（2026-08-23 合并一套：人格成长可视化与重置已移除，仅保留数据面板入口） =====
-      if (opts.onOpenDashboard) {
-        const vizGroup = createSettingsGroup(el, { icon: 'bar-chart-3', name: '可视化' });
-        // 数据面板入口（归可视化组；周报全文在面板「报告」页签）
-        new Setting(vizGroup)
-          .setName('打开数据面板')
-          .setDesc('查看小橘的状态全貌与每周懂你报告')
-          .addButton((btn: any) => {
-            btn.setButtonText('打开数据面板').onClick(() => {
-              closeSettingsModal();
-              opts.onOpenDashboard!();
-            });
-          });
-      }
-
-      // ===== 互动组（陪伴说话节奏 + 主动关心） =====
-      const chatGroup = createSettingsGroup(el, { icon: 'message-circle', name: '互动' });
-      new Setting(chatGroup)
-        .setName('自言自语间隔')
-        .setDesc('小橘每隔多久主动说一句话，范围 1 到 60 分钟')
-        .addSlider((sl: any) => {
-          sl.setLimits(1, 60, 1);
-          sl.setValue(config.speakInterval);
-          sl.onChange(async (v: number) => {
-            config.speakInterval = v;
-            await opts.saveConfig(config);
-          });
-        });
-
-      new Setting(chatGroup)
-        .setName('说话概率')
-        .setDesc('定时到来时小橘主动说话的概率，范围 0.1 到 1')
-        .addSlider((sl: any) => {
-          sl.setLimits(0.1, 1, 0.1);
-          sl.setValue(config.speakProbability);
-          sl.onChange(async (v: number) => {
-            config.speakProbability = v;
-            await opts.saveConfig(config);
-          });
-        });
-
-      // ===== 记忆组（记忆量、上下文预算与打分范围） =====
-      const memGroup = createSettingsGroup(el, { icon: 'archive', name: '记忆' });
-      new Setting(memGroup)
-        .setName('短期记忆量')
-        .setDesc('保留最近多少轮对话作为短期记忆，范围 50 到 200')
-        .addSlider((sl: any) => {
-          sl.setLimits(50, 200, 10);
-          sl.setValue(config.shortTermMemory);
-          sl.onChange(async (v: number) => {
-            config.shortTermMemory = v;
-            await opts.saveConfig(config);
-          });
-        });
-
-      new Setting(memGroup)
-        .setName('上下文字数限制')
-        .setDesc('上下文内容的最大字数，设为 0 时仅取当前行')
-        .addSlider((sl: any) => {
-          sl.setLimits(0, 1000, 50);
-          sl.setValue(config.contextLength);
-          sl.onChange(async (v: number) => {
-            config.contextLength = v;
-            await opts.saveConfig(config);
-          });
-        });
-
-      new Setting(memGroup)
-        .setName('上下文分布比例')
-        .setDesc('光标上下的上下文分配比例，范围 0.1 到 0.9')
-        .addSlider((sl: any) => {
-          sl.setLimits(0.1, 0.9, 0.1);
-          sl.setValue(config.contextSplitRatio);
-          sl.onChange(async (v: number) => {
-            config.contextSplitRatio = v;
-            await opts.saveConfig(config);
-          });
-        });
-
-      // 主动关心（2026-08-23 用户拍板：每周温和主动搭话；默认开；归互动组）
-      new Setting(chatGroup)
-        .setName('主动关心')
-        .setDesc('按你的活跃时段，每周温和地主动搭话一两次')
-        .addToggle((toggle: any) =>
-          toggle.setValue(!!config.proactiveCare).onChange((v: boolean) => {
-            config.proactiveCare = v;
-            void opts.saveConfig(config);
-          })
-        );
-
-      // 云端打分范围（ADR-0025 追加决策：智能默认——省在线调用、保日记/反省/闪念质量；归记忆组）
-      new Setting(memGroup)
-        .setName('记忆打分范围')
-        .setDesc('记忆质量打分的范围，智能模式自动分配云端与本地')
-        .addDropdown((dd: any) => {
-          dd.addOption('smart', '智能（推荐）');
-          dd.addOption('all', '全部（云端）');
-          dd.addOption('diary', '仅日记');
-          dd.addOption('local', '本地');
-          dd.setValue(config.cloudScoring || 'smart');
-          dd.onChange(async (v: string) => {
-            config.cloudScoring = v;
-            await opts.saveConfig(config);
-          });
-        });
-
-      if (isMobileEnv()) {
-        // 移动端默认全屏（聊天/设置/数据面板共用同一开关，2026-08-23 合并一套）
-        const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
-        new Setting(mobileGroup)
-          .setName('移动端默认全屏')
-          .setDesc('移动端打开小橘窗口时默认全屏，关闭则显示常规卡片')
-          .addToggle((toggle: any) =>
-            toggle.setValue(!!opts.settingsKeys.mobileFullscreen).onChange(async (v: boolean) => {
-              await opts.setMobileFullscreen(v);
-            })
-          );
-      }
-
-      // ===== 存储与记忆组（P3 ticket 123：行为流保留策略） =====
-      const storageGroup = createSettingsGroup(el, { icon: 'database', name: '存储与记忆' });
-      const bzSettings = tryGetSettings() as any;
-      new Setting(storageGroup)
-        .setName('行为流保留天数')
-        .setDesc('行为流条目最多保留多少天（1-365），超出部分自动删除')
-        .addSlider((sl: any) => {
-          sl.setLimits(1, 365, 1);
-          sl.setValue(bzSettings?.behaviorMaxDays ?? 30);
-          sl.onChange(async (v: number) => {
-            bzSettings.behaviorMaxDays = v;
-            await opts.saveConfig(config);
-            await saveSettings();
-          });
-        });
-
-      new Setting(storageGroup)
-        .setName('行为流最大条数')
-        .setDesc('行为流最多保留多少条（100-10000），超出部分删除最旧条目')
-        .addSlider((sl: any) => {
-          sl.setLimits(100, 10000, 100);
-          sl.setValue(bzSettings?.behaviorMaxCount ?? 2000);
-          sl.onChange(async (v: number) => {
-            bzSettings.behaviorMaxCount = v;
-            await opts.saveConfig(config);
-            await saveSettings();
-          });
-        });
-
-      // ===== 关联组（P3 ticket 123：自动关联发现） =====
-      const linkGroup = createSettingsGroup(el, { icon: 'link', name: '关联' });
-      new Setting(linkGroup)
-        .setName('启用关联自动发现')
-        .setDesc('自动为同名实体的记忆建立关联（relatedIds）')
-        .addToggle((toggle: any) =>
-          toggle.setValue(bzSettings?.enableAutoLinking !== false).onChange(async (v: boolean) => {
-            bzSettings.enableAutoLinking = v;
-            await opts.saveConfig(config);
-            await saveSettings();
-          })
-        );
-
-      new Setting(linkGroup)
-        .setName('关联发现窗口天数')
-        .setDesc('同一实体在多少天内的记忆自动关联（1-30）')
-        .addSlider((sl: any) => {
-          sl.setLimits(1, 30, 1);
-          sl.setValue(bzSettings?.linkWindowDays ?? 7);
-          sl.onChange(async (v: number) => {
-            bzSettings.linkWindowDays = v;
-            await opts.saveConfig(config);
-            await saveSettings();
-          });
-        });
-
-      // ===== 显示组（P3 ticket 123：行为日志开关） =====
-      const displayGroup = createSettingsGroup(el, { icon: 'eye', name: '显示' });
-      new Setting(displayGroup)
-        .setName('显示行为日志')
-        .setDesc('在数据面板中显示行为日志页签')
-        .addToggle((toggle: any) =>
-          toggle.setValue(bzSettings?.showBehaviorLog !== false).onChange(async (v: boolean) => {
-            bzSettings.showBehaviorLog = v;
-            await opts.saveConfig(config);
-            await saveSettings();
-          })
-        );
-    },
+    schema: smartcatSettingsSchema(opts),
   });
-
   // 设置弹窗跟随同一「移动端默认全屏」开关（与聊天面板一套；桌面端 applyMobileWindowFullscreen 内部直接摘类）
   applyMobileWindowFullscreen(document.getElementById('bz-settings-modal-popup'), !!opts.settingsKeys.mobileFullscreen);
 }

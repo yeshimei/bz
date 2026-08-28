@@ -873,9 +873,14 @@ describe('EncryptAppController 覆盖补测', () => {
     const settingsBtn = [...document.querySelectorAll('button')].find((b) => b.title === '保险箱设置')!;
     settingsBtn.click();
     let popup = document.getElementById('bz-settings-modal-popup')!;
-    let names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as any).__setting.name);
+    // ticket 131：移动端组行仍留 DOM（bz-setting-hidden 整组隐藏），桌面端按组可见性过滤后与原行为一致
+    const visibleRows = () =>
+      [...popup.querySelectorAll('.setting-item')].filter(
+        (el) => !(el as HTMLElement).closest('.bz-settings-group')!.classList.contains('bz-setting-hidden')
+      );
+    let names = visibleRows().map((el) => (el as any).__setting.name);
     expect(names).toEqual(['保险箱根目录', '生成压缩预览', '预览长边', '预览质量', '预览自动加载原图', '安全模式']);
-    const controls = [...popup.querySelectorAll('.setting-item')].map((el) => (el as any).__setting.controls);
+    const controls = visibleRows().map((el) => (el as any).__setting.controls);
     // 保险箱根目录行：点「选择…」→ 选择器选「新/路径」→ 确定（点前缀隐藏目录 CONFIG/.ENCRYPT 亦在列表）
     expect(controls[0][0].text).toBe('选择…');
     controls[0][0].trigger();
@@ -893,8 +898,11 @@ describe('EncryptAppController 覆盖补测', () => {
     expect(s.encryptRoot).toBe('新/路径');
     await (controls[1][0] as any).trigger(false); // 预览开关
     expect(s.encryptPreviewEnabled).toBe(false);
+    // text 行（ticket 131 渲染器语义：800ms 防抖落盘 + 失焦立即 commit）——失焦立即落盘替代 waitFor 竞速
     await (controls[2][0] as any).trigger('512'); // 预览长边
+    (controls[2][0] as any).inputEl.dispatchEvent(new Event('blur'));
     await (controls[3][0] as any).trigger('0.8'); // 质量
+    (controls[3][0] as any).inputEl.dispatchEvent(new Event('blur'));
     await (controls[4][0] as any).trigger(true); // 自动加载原图
     await (controls[5][0] as any).trigger(true); // 安全模式
     expect(s.encryptSecurityMode).toBe(true);

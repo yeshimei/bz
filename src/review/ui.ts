@@ -3,13 +3,14 @@
  * 统一抽屉（桌面右键/移动长按）：开始复习/打开原文/移出；双击名称打开对应笔记（用户拍板保留）。
  */
 import type { App } from 'obsidian';
-import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { escapeHtml } from '../core/utils';
-import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
-import { openSettingsModal, createSettingsGroup, refreshSettingsGroupCounts } from '../core/settings-modal';
+import { applyMobileWindowFullscreen } from '../core/mobile';
+import { openSettingsModal } from '../core/settings-modal';
 import { openPathPicker } from '../core/path-picker';
+import { mobileFullscreenGroup } from '../core/settings-common';
+import type { SettingsSchema } from '../core/settings-schema';
 import {
   attachItemActions,
   registerSheetCompanion,
@@ -21,6 +22,210 @@ import { FSRS, FSRS_FIRST_TEXTS, LADDER_MAX, TOTAL_STAGES } from './fsrs';
 import type { Rating } from './fsrs';
 import type { ReviewItem } from './data';
 import { ReviewDataManager } from './data';
+
+/**
+ * 复习计划设置 schema（ticket 131 声明式；ADR-0064）：检查提醒/做题家/复习节奏/自动化/界面 +
+ * 移动端六组卡片。做题家子项显隐（原 quizBox style.display + refreshSettingsGroupCounts）收敛为
+ * visibleWhen 声明式联动；监听文件夹 chips 区与排除名单 chips 区走 custom 插槽（DOM id/类名零变化），
+ * 「添加监听文件夹」为 button 行（actionRow 豁免徽标计数）。置于模块顶层供文案 lint 直接引用；
+ * deps 仅在交互回调（custom/button）经闭包引用，工厂构建无副作用。
+ */
+export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataManager }): SettingsSchema {
+  // 两个 custom 插槽的 chips 重渲染句柄（原 renderWatchRows / renderExcludeRows；交互后调用）
+  let renderWatchRows: (() => void) | null = null;
+  let renderExcludeRows: (() => void) | null = null;
+  // enableAutoNotify 常驻轮询在 main.ts onload 注册、运行时按设置实时读值（app.ts checkOverdueAndNotify
+  // 门控），设置弹窗 toggle 只需落盘，渲染器键直绑自动完成，无需额外副作用回调。
+  return {
+    groups: [
+      {
+        icon: 'bell',
+        name: '检查提醒',
+        rows: [
+          { type: 'toggle', name: '到期提醒', desc: '有笔记到期待复习时自动弹出提醒', binding: { key: 'enableAutoNotify' } },
+          { type: 'toggle', name: '新笔记加入提醒', desc: '新笔记被自动加入时弹出提示，多条合并成一条', binding: { key: 'reviewAutoAddNotice' } },
+        ],
+      },
+      {
+        icon: 'graduation-cap',
+        name: '做题家',
+        rows: [
+          { type: 'toggle', name: '用做题测难度', desc: '开始复习即做题，按正确率自动定难度', binding: { key: 'forceQuizForReview' } },
+          // 出题子项：仅「用做题测难度」开启时显示（spec 2026-08-07 用户决策，仿 AI tab 隐藏模式）
+          { type: 'toggle', name: '允许多选题', desc: '开启后 AI 可能出多选题，关闭则只出单选题', binding: { key: 'enableMultipleChoice' }, visibleWhen: (s) => s.forceQuizForReview === true },
+          { type: 'text', name: '每篇笔记出题数量', desc: '固定每篇笔记出题的数量，留空/0=自动', binding: { key: 'questionsPerNote' }, visibleWhen: (s) => s.forceQuizForReview === true },
+          { type: 'toggle', name: '打乱出题顺序', desc: '做题时随机排列题目顺序', binding: { key: 'shuffleQuestions' }, visibleWhen: (s) => s.forceQuizForReview === true },
+          {
+            type: 'select',
+            name: '出题难度',
+            desc: '控制 AI 出题深浅',
+            binding: { key: 'difficulty' },
+            options: [
+              { value: 'random', label: '随机' },
+              { value: 'easy', label: '简单' },
+              { value: 'medium', label: '中等' },
+              { value: 'hard', label: '困难' },
+            ],
+            visibleWhen: (s) => s.forceQuizForReview === true,
+          },
+        ],
+      },
+      {
+        icon: 'timer',
+        name: '复习节奏',
+        rows: [
+          // 非正数钳制为 0（原 onChange 口径：>0 保留否则 0）；空串不写（防脏值落盘）
+          { type: 'number', name: '每日复习上限', desc: '一轮最多复习的篇数，不填则不限制', binding: { key: 'reviewDailyLimit' }, min: 0 },
+          // 原钳制「n>0 且 n<=5 保留、否则回 1」：渲染器 min/max 只做边界钳制，超上界回 1 语义在 onChange 复刻
+          {
+            type: 'number',
+            name: '复习间隔缩放',
+            desc: '数值越小复习越频繁，数值越大越宽松',
+            binding: { key: 'reviewIntervalScale' },
+            onChange: (v) => {
+              if (!(v > 0 && v <= 5)) (getSettings() as any).reviewIntervalScale = 1;
+            },
+          },
+        ],
+      },
+      {
+        icon: 'sliders-horizontal',
+        name: '自动化',
+        rows: [
+          { type: 'info', name: '监听文件夹', desc: '文件夹里的新笔记自动加入复习计划，包括子文件夹' },
+          // 监听文件夹 chips 区（DOM id/类名零变化；交互后经 renderWatchRows 重渲染）
+          {
+            type: 'custom',
+            render: (body) => {
+              const watchBox = document.createElement('div');
+              watchBox.id = 'review-watch-folders';
+              body.appendChild(watchBox);
+              renderWatchRows = () => {
+                watchBox.innerHTML = '';
+                const folders = (getSettings() as any).reviewWatchedFolders || [];
+                folders.forEach((folder) => {
+                  const chip = document.createElement('span');
+                  chip.className = 'bz-review-watch-chip';
+                  const name = document.createElement('span');
+                  name.className = 'bz-review-watch-name';
+                  name.textContent = folder;
+                  const close = document.createElement('button');
+                  close.className = 'bz-review-watch-close';
+                  close.setAttribute('aria-label', `移除监听文件夹 ${folder}`);
+                  close.textContent = '✕';
+                  close.onclick = () => {
+                    void (async () => {
+                      // ticket 099 追加：移除目录同时清空其下排除记录（否则二次添加时存量被旧黑名单挡住）
+                      const { ReviewWatcher } = await import('./watch');
+                      const cleared = await new ReviewWatcher(deps.app, deps.dataManager).removeWatchedFolder(folder);
+                      renderWatchRows?.();
+                      notice(cleared > 0 ? `已移除监听文件夹，并清理其下 ${cleared} 条排除记录` : '已移除监听文件夹', 'success');
+                    })();
+                  };
+                  chip.appendChild(name);
+                  chip.appendChild(close);
+                  watchBox.appendChild(chip);
+                });
+              };
+              renderWatchRows();
+            },
+          },
+          {
+            type: 'button',
+            name: '添加监听文件夹',
+            buttonText: '＋ 添加监听文件夹',
+            cta: true,
+            onClick: () => {
+              void (async () => {
+                const { ReviewWatcher } = await import('./watch');
+                // ticket 128：统一路径选择器（companion 档 11200 压设置弹窗 10050）；单选一次添加一个目录
+                openPathPicker({
+                  title: '选择监听文件夹',
+                  mode: 'single',
+                  okText: '确定',
+                  desc: '文件夹里的新笔记自动加入复习计划，包括子文件夹',
+                  selected: [],
+                  onConfirm: async (list) => {
+                    const folder = (list[0] || '').trim().replace(/^\/+|\/+$/g, '');
+                    if (!folder) {
+                      notice('未选择文件夹', 'warning');
+                      return;
+                    }
+                    if (((getSettings() as any).reviewWatchedFolders || []).includes(folder)) {
+                      notice('该文件夹已在监听列表', 'info');
+                      return;
+                    }
+                    // 选择后立即确认存量收编：取消=什么都不做（不添加目录、不写排除名单）
+                    const watcher = new ReviewWatcher(deps.app, deps.dataManager);
+                    const confirmed = await watcher.confirmBatchAddForFolder(folder);
+                    if (!confirmed) return;
+                    (getSettings() as any).reviewWatchedFolders = [...((getSettings() as any).reviewWatchedFolders || []), folder];
+                    await saveSettings();
+                    renderWatchRows?.();
+                  },
+                });
+              })();
+            },
+          },
+          { type: 'info', name: '排除名单', desc: '不参与监听自动加入的笔记，可在此单条解除' },
+          // 排除名单 chips 区（ticket 57 管理 UI；DOM id/类名零变化）
+          {
+            type: 'custom',
+            render: (body) => {
+              const excludeBox = document.createElement('div');
+              excludeBox.id = 'review-excluded-list';
+              body.appendChild(excludeBox);
+              renderExcludeRows = () => {
+                excludeBox.innerHTML = '';
+                const notes = (getSettings() as any).reviewExcludedNotes || [];
+                if (!notes.length) {
+                  const empty = document.createElement('div');
+                  empty.className = 'bz-review-exclude-empty';
+                  empty.textContent = '暂无排除笔记';
+                  excludeBox.appendChild(empty);
+                  return;
+                }
+                notes.forEach((path: string) => {
+                  const chip = document.createElement('span');
+                  chip.className = 'bz-review-exclude-chip';
+                  const name = document.createElement('span');
+                  name.className = 'bz-review-exclude-name';
+                  name.textContent = path;
+                  name.title = path;
+                  const remove = document.createElement('button');
+                  remove.className = 'bz-review-exclude-remove';
+                  remove.setAttribute('aria-label', `解除排除 ${path}`);
+                  remove.textContent = '✕';
+                  remove.onclick = () => {
+                    void (async () => {
+                      const { ReviewWatcher } = await import('./watch');
+                      await new ReviewWatcher(deps.app, deps.dataManager).removeExcludedNote(path);
+                      renderExcludeRows?.();
+                      notice('已解除排除', 'success');
+                    })();
+                  };
+                  chip.appendChild(name);
+                  chip.appendChild(remove);
+                  excludeBox.appendChild(chip);
+                });
+              };
+              renderExcludeRows();
+            },
+          },
+        ],
+      },
+      {
+        icon: 'eye',
+        name: '界面',
+        rows: [
+          { type: 'toggle', name: '文件树标记', desc: '在文件树中为复习笔记着色并标到期时间', binding: { key: 'reviewTreeBadge' } },
+        ],
+      },
+      // 「移动端默认全屏」desc 差异覆盖（settings-common 预设支持）：复习窗口专属文案逐字对齐现状
+      mobileFullscreenGroup('reviewMobileDefaultFullscreen', { desc: '移动端打开复习窗口时默认全屏显示' }),
+    ],
+  };
+}
 
 export class UIManager {
   app: App;
@@ -137,290 +342,16 @@ export class UIManager {
       this.refreshPanel();
     });
 
-    // 复习计划设置弹窗（ADR-0009：检查提醒/做题家/复习节奏/自动化/界面/移动端；分组卡片重设计）
+    // 复习计划设置弹窗（ADR-0009：检查提醒/做题家/复习节奏/自动化/界面/移动端；分组卡片重设计；
+    // ticket 131 声明式 schema——六组逐一转 schema，做题家子项显隐走 visibleWhen）
     header.querySelector('#review-btn-settings')!.addEventListener('click', () => {
       openSettingsModal({
         title: '复习计划设置',
         maxWidth: 560,
-        build: (el) => this._buildSettingsItems(el),
+        schema: reviewSettingsSchema({ app: this.app, dataManager: this.dataManager }),
       });
     });
     header.querySelector('#review-btn-close')!.addEventListener('click', () => this.hideMain());
-  }
-
-  /** 复习设置弹窗项：分组卡片编排（检查提醒/做题家/复习节奏/自动化/界面/移动端），ticket 100 文案 + ADR-0009 分组卡片重设计 */
-  _buildSettingsItems(el: HTMLElement): void {
-    const s = getSettings() as any;
-    this._addNotifySettings(el, s);
-    this._addQuizSettings(el, s);
-    this._addRhythmSettings(el, s);
-    this._addWatchFolderSettings(el, s);
-    this._addViewSettings(el, s);
-    this._addMobileSettings(el, s);
-  }
-
-  /** 检查提醒组：到期提醒 / 新笔记加入提醒 */
-  private _addNotifySettings(el: HTMLElement, s: any): void {
-    const notifyGroup = createSettingsGroup(el, { icon: 'bell', name: '检查提醒' });
-    new Setting(notifyGroup)
-      .setName('到期提醒')
-      .setDesc('有笔记到期待复习时自动弹出提醒')
-      .addToggle((toggle) =>
-        toggle.setValue(!!s.enableAutoNotify).onChange(async (v) => {
-          s.enableAutoNotify = v;
-          await saveSettings();
-        })
-      );
-    new Setting(notifyGroup)
-      .setName('新笔记加入提醒')
-      .setDesc('新笔记被自动加入时弹出提示，多条合并成一条')
-      .addToggle((toggle) =>
-        toggle.setValue(s.reviewAutoAddNotice !== false).onChange(async (v) => {
-          s.reviewAutoAddNotice = v;
-          await saveSettings();
-        })
-      );
-  }
-
-  /** 做题家组：用做题测难度（子项仅开启时显示）/ 多选题 / 题量 / 打乱 / 难度 */
-  private _addQuizSettings(el: HTMLElement, s: any): void {
-    const quizGroup = createSettingsGroup(el, { icon: 'graduation-cap', name: '做题家' });
-    new Setting(quizGroup)
-      .setName('用做题测难度')
-      .setDesc('开始复习即做题，按正确率自动定难度')
-      .addToggle((toggle) =>
-        toggle.setValue(!!s.forceQuizForReview).onChange(async (v) => {
-          s.forceQuizForReview = v;
-          await saveSettings();
-          quizBox.style.display = v ? '' : 'none';
-          refreshSettingsGroupCounts(el);
-        })
-      );
-    // 出题子容器：仅「用做题测难度」开启时显示（spec 2026-08-07 用户决策，仿 AI tab 隐藏模式）
-    const quizBox = document.createElement('div');
-    quizBox.id = 'review-quiz-settings';
-    quizGroup.appendChild(quizBox);
-    quizBox.style.display = s.forceQuizForReview ? '' : 'none';
-    new Setting(quizBox)
-      .setName('允许多选题')
-      .setDesc('开启后 AI 可能出多选题，关闭则只出单选题')
-      .addToggle((toggle) =>
-        toggle.setValue(!!s.enableMultipleChoice).onChange(async (v) => {
-          s.enableMultipleChoice = v;
-          await saveSettings();
-        })
-      );
-    new Setting(quizBox)
-      .setName('每篇笔记出题数量')
-      /* ticket f8-quiz（解冻文案）：留空/0=自动 */
-      .setDesc('固定每篇笔记出题的数量，留空/0=自动')
-      .addText((text) =>
-        text.setValue(s.questionsPerNote || '').onChange(async (v) => {
-          s.questionsPerNote = v;
-          await saveSettings();
-        })
-      );
-    new Setting(quizBox)
-      .setName('打乱出题顺序')
-      .setDesc('做题时随机排列题目顺序')
-      .addToggle((toggle) =>
-        toggle.setValue(!!s.shuffleQuestions).onChange(async (v) => {
-          s.shuffleQuestions = v;
-          await saveSettings();
-        })
-      );
-    new Setting(quizBox)
-      .setName('出题难度')
-      .setDesc('控制 AI 出题深浅')
-      .addDropdown((dd) => {
-        dd.addOption('random', '随机');
-        dd.addOption('easy', '简单');
-        dd.addOption('medium', '中等');
-        dd.addOption('hard', '困难');
-        dd.setValue(s.difficulty || 'random');
-        dd.onChange(async (v) => {
-          s.difficulty = v;
-          await saveSettings();
-        });
-      });
-  }
-
-  /** 复习节奏组：每日复习上限 / 复习间隔缩放 */
-  private _addRhythmSettings(el: HTMLElement, s: any): void {
-    const rhythmGroup = createSettingsGroup(el, { icon: 'timer', name: '复习节奏' });
-    new Setting(rhythmGroup)
-      .setName('每日复习上限')
-      .setDesc('一轮最多复习的篇数，不填则不限制')
-      .addText((text) =>
-        text.setValue(String(s.reviewDailyLimit ?? 0)).onChange(async (v) => {
-          s.reviewDailyLimit = Number(v) > 0 ? Number(v) : 0;
-          await saveSettings();
-        })
-      );
-    new Setting(rhythmGroup)
-      .setName('复习间隔缩放')
-      .setDesc('数值越小复习越频繁，数值越大越宽松')
-      .addText((text) =>
-        text.setValue(String(s.reviewIntervalScale ?? 1)).onChange(async (v) => {
-          const n = Number(v);
-          s.reviewIntervalScale = n > 0 && n <= 5 ? n : 1;
-          await saveSettings();
-        })
-      );
-  }
-
-  /** 自动化组（ticket 099）：监听文件夹——文件夹选择弹窗添加 + chip 关闭标签 */
-  private _addWatchFolderSettings(el: HTMLElement, s: any): void {
-    const autoGroup = createSettingsGroup(el, { icon: 'sliders-horizontal', name: '自动化' });
-    new Setting(autoGroup)
-      .setName('监听文件夹')
-      .setDesc('文件夹里的新笔记自动加入复习计划，包括子文件夹');
-    const watchBox = document.createElement('div');
-    watchBox.id = 'review-watch-folders';
-    autoGroup.appendChild(watchBox);
-    const renderWatchRows = () => {
-      watchBox.innerHTML = '';
-      const folders = s.reviewWatchedFolders || [];
-      folders.forEach((folder) => {
-        const chip = document.createElement('span');
-        chip.className = 'bz-review-watch-chip';
-        const name = document.createElement('span');
-        name.className = 'bz-review-watch-name';
-        name.textContent = folder;
-        const close = document.createElement('button');
-        close.className = 'bz-review-watch-close';
-        close.setAttribute('aria-label', `移除监听文件夹 ${folder}`);
-        close.textContent = '✕';
-        close.onclick = () => {
-          void (async () => {
-            // ticket 099 追加：移除目录同时清空其下排除记录（否则二次添加时存量被旧黑名单挡住）
-            const { ReviewWatcher } = await import('./watch');
-            const cleared = await new ReviewWatcher(this.app, this.dataManager).removeWatchedFolder(folder);
-            renderWatchRows();
-            notice(cleared > 0 ? `已移除监听文件夹，并清理其下 ${cleared} 条排除记录` : '已移除监听文件夹', 'success');
-          })();
-        };
-        chip.appendChild(name);
-        chip.appendChild(close);
-        watchBox.appendChild(chip);
-      });
-      const addRow = document.createElement('div');
-      // 纯操作行：复用 setting-item 布局 + bz-setting-action-row 豁免徽标计数（非设置项）
-      addRow.className = 'setting-item bz-setting-action-row';
-      addRow.style.cssText = 'border:none;padding:8px 0;';
-      const ctl = document.createElement('div');
-      ctl.className = 'setting-item-control';
-      const addBtn = document.createElement('button');
-      addBtn.className = 'mod-cta';
-      addBtn.textContent = '＋ 添加监听文件夹';
-      addBtn.onclick = () => {
-        void (async () => {
-          const { ReviewWatcher } = await import('./watch');
-          // ticket 128：统一路径选择器（companion 档 11200 压设置弹窗 10050）；单选一次添加一个目录
-          openPathPicker({
-            title: '选择监听文件夹',
-            mode: 'single',
-            okText: '确定',
-            desc: '文件夹里的新笔记自动加入复习计划，包括子文件夹',
-            selected: [],
-            onConfirm: async (list) => {
-              const folder = (list[0] || '').trim().replace(/^\/+|\/+$/g, '');
-              if (!folder) {
-                notice('未选择文件夹', 'warning');
-                return;
-              }
-              if ((s.reviewWatchedFolders || []).includes(folder)) {
-                notice('该文件夹已在监听列表', 'info');
-                return;
-              }
-              // 选择后立即确认存量收编：取消=什么都不做（不添加目录、不写排除名单）
-              const watcher = new ReviewWatcher(this.app, this.dataManager);
-              const confirmed = await watcher.confirmBatchAddForFolder(folder);
-              if (!confirmed) return;
-              s.reviewWatchedFolders = [...(s.reviewWatchedFolders || []), folder];
-              await saveSettings();
-              renderWatchRows();
-            },
-          });
-        })();
-      };
-      ctl.appendChild(addBtn);
-      addRow.appendChild(ctl);
-      watchBox.appendChild(addRow);
-    };
-    renderWatchRows();
-
-    // ticket 57：排除名单管理——查看 + 单条解除（数据 reviewExcludedNotes 既有；本组只补 UI）
-    new Setting(autoGroup)
-      .setName('排除名单')
-      .setDesc('不参与监听自动加入的笔记，可在此单条解除');
-    const excludeBox = document.createElement('div');
-    excludeBox.id = 'review-excluded-list';
-    autoGroup.appendChild(excludeBox);
-    const renderExcludeRows = () => {
-      excludeBox.innerHTML = '';
-      const notes = s.reviewExcludedNotes || [];
-      if (!notes.length) {
-        const empty = document.createElement('div');
-        empty.className = 'bz-review-exclude-empty';
-        empty.textContent = '暂无排除笔记';
-        excludeBox.appendChild(empty);
-        return;
-      }
-      notes.forEach((path: string) => {
-        const chip = document.createElement('span');
-        chip.className = 'bz-review-exclude-chip';
-        const name = document.createElement('span');
-        name.className = 'bz-review-exclude-name';
-        name.textContent = path;
-        name.title = path;
-        const remove = document.createElement('button');
-        remove.className = 'bz-review-exclude-remove';
-        remove.setAttribute('aria-label', `解除排除 ${path}`);
-        remove.textContent = '✕';
-        remove.onclick = () => {
-          void (async () => {
-            const { ReviewWatcher } = await import('./watch');
-            await new ReviewWatcher(this.app, this.dataManager).removeExcludedNote(path);
-            renderExcludeRows();
-            notice('已解除排除', 'success');
-          })();
-        };
-        chip.appendChild(name);
-        chip.appendChild(remove);
-        excludeBox.appendChild(chip);
-      });
-    };
-    renderExcludeRows();
-  }
-
-  /** 界面组：文件树标记开关 */
-  private _addViewSettings(el: HTMLElement, s: any): void {
-    const viewGroup = createSettingsGroup(el, { icon: 'eye', name: '界面' });
-    new Setting(viewGroup)
-      .setName('文件树标记')
-      .setDesc('在文件树中为复习笔记着色并标到期时间')
-      .addToggle((toggle) =>
-        toggle.setValue(s.reviewTreeBadge !== false).onChange(async (v) => {
-          s.reviewTreeBadge = v;
-          await saveSettings();
-        })
-      );
-  }
-
-  /** 移动端组（仅移动端显示）：移动端默认全屏 */
-  private _addMobileSettings(el: HTMLElement, s: any): void {
-    if (!isMobileEnv()) return;
-    const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
-    new Setting(mobileGroup)
-      .setName('移动端默认全屏')
-      .setDesc('移动端打开复习窗口时默认全屏显示')
-      .addToggle((toggle) =>
-        toggle.setValue(!!s.reviewMobileDefaultFullscreen).onChange(async (v) => {
-          s.reviewMobileDefaultFullscreen = v;
-          await saveSettings();
-        })
-      );
   }
 
   showMain(): void {
