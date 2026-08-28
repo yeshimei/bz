@@ -1393,14 +1393,19 @@ export class MemorySystem {
     const created = seed.created ?? nowIso;
     const fullText = typeof seed.fullText === 'string' ? seed.fullText : '';
     const source = seed.source ?? 'note';
-    const score = await this.scoreImportanceAndEmotion(fullText || description, { source });
+    // 去重/内容哈希提前到 LLM 打分之前：重启全量扫描对未变更段落零 AI 调用（bug 修复——
+    // 原实现先 scoreImportanceAndEmotion 后查重，每次重启全部重打分+重嵌入）
+    const hash = contentHashOf(fullText || description);
     const existing = this.stream.find((m) => m.ref && m.ref.path === refPath && (m.ref.locator ?? '') === (seed.locator ?? ''));
+    if (existing && existing.contentHash && existing.contentHash === hash) return; // 内容未变：跳过
+    const score = await this.scoreImportanceAndEmotion(fullText || description, { source });
     if (existing) {
       existing.description = description;
       existing.importance = score.importance;
       existing.emotion = score.emotion;
       existing.credibility = score.credibility;
       existing.suspicious = detectInjection(fullText || description) || undefined;
+      existing.contentHash = hash;
       if (seed.created) existing.created = seed.created;
       existing.lastAccessed = existing.lastAccessed || created; // R7：缺省 = created，不因更新回写
     } else {
@@ -1416,6 +1421,7 @@ export class MemorySystem {
         credibility: score.credibility,
         suspicious: detectInjection(fullText || description) || undefined,
         ref: { path: refPath, locator: seed.locator },
+        contentHash: hash,
       };
       this.stream.push(entry);
     }
@@ -1432,11 +1438,12 @@ export class MemorySystem {
     try {
       const idx = this.stream.indexOf(entry);
       if (idx < 0) return;
-      const chunks = chunkNoteText(text);
+      const chunks = chunkNoteText(text, chunkLimitChars());
+      const model = embeddingModelOverride() || undefined;
       await this.ensurePrimaryRowFree(idx);
       this.vectorExtraRows.delete(entry.id); // 更新语义：旧分块额外行作废（整库重排/紧凑时物理清理）
       for (let i = 0; i < chunks.length; i++) {
-        const vec = await getEmbedding(chunks[i], false);
+        const vec = await getEmbedding(chunks[i], false, undefined, model);
         if (!vec || !vec.length) continue;
         if (i === 0) this.writeVectorAt(idx, vec);
         else this.appendExtraVector(entry.id, vec);
@@ -2015,6 +2022,8 @@ export async function migrateSmartcatSidecars(app: App, data: SmartCatData): Pro
     try {
       const f = app.vault.getAbstractFileByPath(path);
       const raw = f ? await app.vault.read(f as any) : '';
+      const bak = app.vault.getAbstractFileByPath(path + '.bak');
+      if (bak) await app.vault.delete(bak as any); // 旧 .bak 先清（create 对已存在路径抛错，备份会静默失效）
       await app.vault.create((path + '.bak') as any, raw);
     } catch { /* 备份失败仍中止——宁可不迁，不可覆盖 */ }
     throw new Error(`smartcat sidecar 损坏，已备份 .bak 并中止迁移：${path}`);
@@ -2098,6 +2107,24 @@ export async function migrateSmartcatSidecars(app: App, data: SmartCatData): Pro
 
 /** 全文分块上限（bge-m3 8192 token；保守按字符估算——1 字符 ≈ 1 token 留安全余量） */
 export const NOTE_CHUNK_LIMIT_CHARS = 6000;
+
+/** 正文内容哈希（djb2，非加密用途——仅重启扫描「内容是否变化」比对） */
+export function contentHashOf(text: string): string {
+  let h = 5381;
+  for (let i = 0; i < text.length; i++) h = ((h << 5) + h + text.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
+
+/** 分块字符上限（设置面板可调，默认 800——中文语义检索精度优先；非法/未配置回退 800） */
+export function chunkLimitChars(): number {
+  const v = Number((tryGetSettings() as any)?.smartcatChunkLimitChars);
+  return Number.isFinite(v) && v >= 200 && v <= 6000 ? v : 800;
+}
+
+/** 向量化模型覆盖（'' = 跟随第二大脑设置；改模型需重建向量索引） */
+export function embeddingModelOverride(): string {
+  return String((tryGetSettings() as any)?.smartcatEmbeddingModel ?? '').trim();
+}
 
 /**
  * 笔记全文分块（纯函数可测）：超长笔记按标题行（# ~ ######）切块、无标题退空行段落，

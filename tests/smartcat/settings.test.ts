@@ -245,7 +245,7 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
       // 「打开数据面板」为 button 操作行（bz-setting-action-row 豁免徽标计数，ticket 131 声明式语义）
       { icon: 'bar-chart-3', name: '可视化', count: '0 项' },
       { icon: 'message-circle', name: '互动', count: '3 项' },
-      { icon: 'archive', name: '记忆', count: '4 项' },
+      { icon: 'archive', name: '记忆', count: '6 项' },
       // ADR-0069 记忆目录（记忆目录流）：多文件夹选择（path-picker 多选）
       { icon: 'folder-open', name: '记忆目录', count: '1 项' },
       // P3 新增三组（ticket 123）

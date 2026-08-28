@@ -201,7 +201,13 @@ export async function ensureSmartCat(app: App): Promise<void> {
   try {
     await migrateSmartcatSidecars(app, data);
   } catch (e) {
-    console.error('[bz] smartcat sidecar 迁移中止', e);
+    // bug 修复：原实现 catch 后继续装配——smartcat.json 已瘦身、双流恒空，运行时以空流启动，
+    // 面板记忆总数从 0 重建 + 每条重调 AI。现中止装配保留现场（sidecar 已备份 .bak），等人工介入
+    console.error('[bz] smartcat sidecar 迁移中止，小橘本轮不启动', e);
+    initialized = false;
+    data = null;
+    notice(`小橘记忆文件损坏，已自动备份（.bak）并暂停启动，避免覆盖记忆。请查看控制台日志处理。`, 'error', 0);
+    return;
   }
   // 竞态守卫：等待期间若被 unload（main 的 void ensureSmartCat 是 fire-and-forget），停止装配
   if (!initialized) {

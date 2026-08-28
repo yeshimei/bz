@@ -213,6 +213,8 @@ export interface MemoryStreamEntry {
   /** 引用定位（有值 = 引用型条目）：description 存 vault 路径(+#定位符)，prompt 拼装命中时经 refResolver 当场读正文，
    *  向量对笔记全文 embedding（超长分块、一条目挂多向量）。可选字段，事件类/洞察条目不写。 */
   ref?: { path: string; locator?: string };
+  /** 引用条目正文哈希（重启全量扫描跳过依据：与上次入库一致 → 不重调 LLM 打分/不重嵌入。可选字段旧数据容忍） */
+  contentHash?: string;
 }
 
 /**

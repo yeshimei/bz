@@ -25,15 +25,15 @@ async function httpFetch(url: string, opts: any, timeoutMs: number = EMBED_TIMEO
   }
 }
 
-/** 单条嵌入（isQuery 时加检索前缀） */
-export async function getEmbedding(text: string, isQuery: boolean, baseUrl?: string): Promise<number[]> {
+/** 单条嵌入（isQuery 时加检索前缀；model 缺省跟随第二大脑设置——小橘记忆库可经设置面板覆盖） */
+export async function getEmbedding(text: string, isQuery: boolean, baseUrl?: string, model?: string): Promise<number[]> {
   const CONFIG = buildConfig();
   const url = baseUrl || CONFIG.OLLAMA_URL;
   const prompt = isQuery ? `Represent this sentence for searching relevant passages: ${text}` : text;
   const resp = await httpFetch(`${url}/api/embeddings`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: CONFIG.EMBEDDING_MODEL, prompt }),
+    body: JSON.stringify({ model: model || CONFIG.EMBEDDING_MODEL, prompt }),
   });
   if (!resp.ok) throw new Error(`Ollama 错误: ${resp.status}`);
   const data = await resp.json();
