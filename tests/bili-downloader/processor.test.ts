@@ -65,6 +65,26 @@ describe('BatchRunner', () => {
     expect(ev.onBatchDone).not.toHaveBeenCalled();
   });
 
+  it('步骤文案持久化：[bz-step] 落库后 UI 重读可见（修「一直显示启动中」）', async () => {
+    const tasks = await seedTasks();
+    const ev = makeEvents();
+    const p = BatchRunner.runAll(tasks, ev);
+    await tick();
+    child.stdout.emit('data', Buffer.from('[bz-step] 解析中\n'));
+    await tick();
+    let all = await TasksData.loadTasks();
+    expect(all[0].status).toBe('processing');
+    expect(all[0].reason).toBe('解析中');
+    child.stdout.emit('data', Buffer.from('[bz-step] 下载中\n'));
+    await tick();
+    all = await TasksData.loadTasks();
+    expect(all[0].reason).toBe('下载中');
+    expect(ev.onTaskProgress).toHaveBeenCalledTimes(3); // 启动中 + 解析中 + 下载中
+    BatchRunner.abort();
+    child.emit('close', 0);
+    await p;
+  });
+
   it('严格串行：第一部 spawn 后未完成前不 spawn 第二部；逐步文案 + [bz-result] 落终态', async () => {
     const tasks = await seedTasks();
     const steps: string[] = [];
