@@ -976,7 +976,7 @@ export class UIManager {
     const title = document.createElement('h4');
     title.textContent = note.title;
     const closeBtn = document.createElement('button');
-    closeBtn.textContent = '✕';
+    closeBtn.textContent = '❌';
     closeBtn.className = 'bz-encrypt-btn bz-win-close';
     closeBtn.onclick = () => this.closePreview();
     header.appendChild(title);
