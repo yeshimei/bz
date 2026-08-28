@@ -454,10 +454,12 @@ describe('upsertNoteMemory 内容哈希跳过（重启全量扫描零 AI 调用�
     // 旧 sidecar 遗留脏条目（ref.path 带 #时间 尾巴）：同内容命中去重（不重打分重建），ref 自愈为纯路径
     const dirty = data.memory.memoryStream[0];
     dirty.ref = { path: '日记/2026-08-29.md#09:30', locator: '09:30' };
+    dirty.description = '日记/2026-08-29.md#09:30#09:30'; // 双 # 描述（旧版写入）
     const embeddingsBefore = vi.mocked(getEmbedding).mock.calls.length;
     await m.upsertNoteMemory(seed);
     expect(data.memory.memoryStream.length).toBe(1);
     expect(data.memory.memoryStream[0].ref!.path).toBe('日记/2026-08-29.md');
+    expect(data.memory.memoryStream[0].description).toBe('日记/2026-08-29.md#09:30'); // 描述同步自愈（单 #）
     expect(vi.mocked(getEmbedding).mock.calls.length).toBe(embeddingsBefore);
   });
 });

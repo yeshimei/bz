@@ -19,6 +19,7 @@
  * 与 registerEvent 清理语义等价）。
  */
 import type { App } from 'obsidian';
+import { MarkdownRenderer, Component } from 'obsidian';
 import { notice } from '../core/notice';
 import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
@@ -664,6 +665,15 @@ function formatDetailedDate(iso?: string): string {
   return `${dt.getFullYear()} 年 ${dt.getMonth() + 1} 月 ${dt.getDate()} 日 ${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
 }
 
+/** 最近记忆正文 markdown 渲染（失败回退纯文本，渲染前清占位） */
+function renderMemoryMarkdown(app: App, textEl: HTMLElement, md: string): void {
+  textEl.textContent = '';
+  try {
+    void Promise.resolve((MarkdownRenderer as any).render(app, md, textEl, '', new Component()))
+      .catch(() => { textEl.textContent = md; });
+  } catch { textEl.textContent = md; }
+}
+
 function renderMemory(pane: HTMLElement, data: SmartCatData): void {
   pane.innerHTML = '';
   const stream = data.memory?.memoryStream || [];
@@ -728,7 +738,10 @@ function renderMemory(pane: HTMLElement, data: SmartCatData): void {
   const listCard = card('最近记忆');
   if (stream.length) {
     const list = el('div', 'bz-sc-dash-list');
-    const recent = [...stream].reverse().slice(0, 30);
+    // 新→旧按 created 降序（插入序 ≠ 创建序：日记段靠 seed.created 还原真实时间），取前 30 条
+    const recent = [...stream]
+      .sort((a, b) => (Date.parse(b.created || '') || 0) - (Date.parse(a.created || '') || 0))
+      .slice(0, 30);
     // 092 方向二（ADR-0039）：DDID 展示层短索引——超长 insight_id 显示为 #N（不写盘、不影响数据层）
     const shortIndex = buildInsightShortIndex(stream);
     for (const m of recent) {
@@ -761,15 +774,18 @@ function renderMemory(pane: HTMLElement, data: SmartCatData): void {
       // 092 设计第 7 条 + P1-29：Dashboard「固定/废弃」人工修正（经常驻实例通道写点）
       if (m.type === 'insight' && m.id && dashState?.app) meta.appendChild(buildInsightActions(m));
       item.appendChild(meta);
-      // 正文直出：引用型条目当场读 vault 正文（日记段拆回该时间段），失效回显引用路径；
-      // 普通条目显完整 description。不再点击展开。
+      // 正文直出（markdown 渲染）：引用型条目当场读 vault 正文（日记段拆回该时间段），
+      // 失效回显引用路径；普通条目显完整 description。不再点击展开。
       const textEl = el('div', 'bz-sc-dash-memory-text', m.ref ? '加载中…' : truncateText(m.description, 400));
       item.appendChild(textEl);
       if (m.ref && dashState?.app) {
         void resolveMemoryDetail(dashState.app, m.ref).then((body) => {
           if (!textEl.isConnected) return; // 面板已重渲染
-          textEl.textContent = truncateText(body ?? `${m.ref!.path}#${m.ref!.locator ?? ''}（引用已失效）`, 400);
+          if (body != null) renderMemoryMarkdown(dashState!.app, textEl, body);
+          else textEl.textContent = truncateText(`${m.ref!.path}#${m.ref!.locator ?? ''}（引用已失效）`, 400);
         });
+      } else if (dashState?.app) {
+        renderMemoryMarkdown(dashState.app, textEl, m.description || '');
       }
       // P3 structured 摘要：entityType/action/name/tags 展示
       if (m.structured) {
