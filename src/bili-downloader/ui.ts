@@ -3,7 +3,7 @@
  * 主窗口：列表展示任务行（状态徽标 + 行内进度：详细模式=步骤时间线+百分比+耗时），
  * 桌面端头部功能区「➕ 添加 / ⬇️ 下载 / ▶️ 处理 / ⏹ 中止 / 🧹 清空 → ⚙️ → ✕」；
  * 移动端仅暂存录入（无处理/下载按钮）。
- * 点击按状态分流：成功→打开文献笔记 / 失败→查看原因 / 待处理→编辑。
+ * 点击按状态分流：成功→打开文献笔记 / 待处理→编辑（失败原因行内直显，不弹窗）。
  * 域事件分发（ADR-0066）：添加任务 → 'bili-tasks' {kind:'added'}；单条终态 → {kind:'converted'|'failed'}。
  */
 import type { App } from 'obsidian';
@@ -18,7 +18,7 @@ import { notice } from '../core/notice';
 import { topifyZ } from '../core/z-order';
 import { emitDomainEvent } from '../core/domain-bus';
 import { getApp } from '../core/app';
-import { TasksData, isValidTime } from './data';
+import { TasksData, normalizeLooseTime } from './data';
 import type { BiliTask } from './types';
 import { BatchRunner, type BatchEvents, type BiliProgress } from './processor';
 
@@ -64,7 +64,7 @@ export function biliTasksSettingsSchema(): SettingsSchema {
         rows: [
           { type: 'toggle', name: '详细进度提示', desc: '处理中显示当前步骤、耗时、百分比与步骤时间线；关闭则仅显示步骤徽章', binding: { key: 'biliProgressDetail' } },
           { type: 'toggle', name: '保留视频原件', desc: '转文献完成后保留视频文件；关闭则只生成文献笔记', binding: { key: 'biliKeepVideo' } },
-          { type: 'select', name: '下载清晰度', desc: '以视频源可用档位为准，低档优先命中缓存', binding: { key: 'biliQuality' }, options: [{ value: 'highest', label: '最高（默认）' }, { value: '1080', label: '1080P' }, { value: '720', label: '720P' }] },
+          { type: 'select', name: '下载清晰度', desc: '以视频源可用档位为准，低档优先命中缓存', binding: { key: 'biliQuality' }, options: [{ value: 'highest', label: '最高' }, { value: '1080', label: '1080P' }, { value: '720', label: '720P' }] },
           { type: 'toggle', name: '遇错即停', desc: '单条失败后停止处理剩余任务；关闭则失败后继续', binding: { key: 'biliStopOnFailure' } },
           { type: 'text', name: '输出目录', desc: '视频文件落地目录；留空跟随工具配置', binding: { key: 'biliOutputDir' }, placeholder: '如 D:/videos' },
         ],
@@ -185,13 +185,13 @@ export class UIManager {
       <label style="font-size:12px;color:var(--text-muted);">视频链接 / BV 号</label>
       <input id="bili-add-url" type="text" placeholder="https://www.bilibili.com/video/BV… 或 BV1xx411c7mD" style="width:100%;">
       <div style="display:flex;gap:10px;">
-        <div style="flex:1;"><label style="font-size:12px;color:var(--text-muted);">开始时间（留空 = 整片）</label>
-          <input id="bili-add-start" type="text" placeholder="mm:ss 或 hh:mm:ss(.S)"></div>
-        <div style="flex:1;"><label style="font-size:12px;color:var(--text-muted);">结束时间</label>
-          <input id="bili-add-end" type="text" placeholder="与开始成对填写"></div>
+        <div style="flex:1;"><label style="font-size:12px;color:var(--text-muted);">视频标题（可选）</label>
+          <input id="bili-add-vtitle" type="text" placeholder="队列里好认，留空用链接"></div>
+        <div style="flex:1;"><label style="font-size:12px;color:var(--text-muted);">UP主（可选）</label>
+          <input id="bili-add-uploader" type="text" placeholder="投稿 UP 主"></div>
       </div>
       <div style="display:flex;gap:10px;">
-        <div style="flex:1;"><label style="font-size:12px;color:var(--text-muted);">下载清晰度（留空 = 跟随全局设置）</label>
+        <div style="flex:1;"><label style="font-size:12px;color:var(--text-muted);">下载清晰度</label>
           <select id="bili-add-quality" style="width:100%;">
             <option value="">跟随全局设置</option>
             <option value="highest">最高</option>
@@ -201,13 +201,11 @@ export class UIManager {
         <div style="flex:1;"><label style="font-size:12px;color:var(--text-muted);">分P（留空 = 第 1 P）</label>
           <input id="bili-add-page" type="number" min="1" step="1" placeholder="如 2"></div>
       </div>
-      <label style="font-size:12px;color:var(--text-muted);">备注（可选）</label>
-      <input id="bili-add-remark" type="text" placeholder="为什么转这篇">
       <div style="display:flex;gap:10px;">
-        <div style="flex:1;"><label style="font-size:12px;color:var(--text-muted);">视频标题（可选）</label>
-          <input id="bili-add-vtitle" type="text" placeholder="队列里好认，留空用链接"></div>
-        <div style="flex:1;"><label style="font-size:12px;color:var(--text-muted);">UP主（可选）</label>
-          <input id="bili-add-uploader" type="text" placeholder="投稿 UP 主"></div>
+        <div style="flex:1;"><label style="font-size:12px;color:var(--text-muted);">开始时间（留空 = 整片）</label>
+          <input id="bili-add-start" type="text" placeholder="12.2 / 12-2 / 1:30:05"></div>
+        <div style="flex:1;"><label style="font-size:12px;color:var(--text-muted);">结束时间</label>
+          <input id="bili-add-end" type="text" placeholder="与开始成对填写"></div>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
         <button id="bili-add-cancel">取消</button>
@@ -245,7 +243,6 @@ export class UIManager {
     (q<HTMLInputElement>(this.addPopup, '#bili-add-end')!).value = editItem?.end ?? '';
     (q<HTMLSelectElement>(this.addPopup, '#bili-add-quality')!).value = editItem?.quality ?? '';
     (q<HTMLInputElement>(this.addPopup, '#bili-add-page')!).value = editItem?.page ? String(editItem.page) : '';
-    (q<HTMLInputElement>(this.addPopup, '#bili-add-remark')!).value = editItem?.remark ?? '';
     (q<HTMLInputElement>(this.addPopup, '#bili-add-vtitle')!).value = editItem?.title ?? '';
     (q<HTMLInputElement>(this.addPopup, '#bili-add-uploader')!).value = editItem?.uploader ?? '';
     topifyZ(this.addPopup); // ADR-0067：显示即发号
@@ -260,15 +257,14 @@ export class UIManager {
   private async _handleAddSave(): Promise<void> {
     if (!this.addPopup) return;
     const url = (q<HTMLInputElement>(this.addPopup, '#bili-add-url')?.value ?? '').trim();
-    const start = (q<HTMLInputElement>(this.addPopup, '#bili-add-start')?.value ?? '').trim();
-    const end = (q<HTMLInputElement>(this.addPopup, '#bili-add-end')?.value ?? '').trim();
-    const remark = (q<HTMLInputElement>(this.addPopup, '#bili-add-remark')?.value ?? '').trim();
+    const start = normalizeLooseTime(q<HTMLInputElement>(this.addPopup, '#bili-add-start')?.value);
+    const end = normalizeLooseTime(q<HTMLInputElement>(this.addPopup, '#bili-add-end')?.value);
     const quality = (q<HTMLSelectElement>(this.addPopup, '#bili-add-quality')?.value ?? '').trim() || null;
     const pageRaw = (q<HTMLInputElement>(this.addPopup, '#bili-add-page')?.value ?? '').trim();
     const vtitle = (q<HTMLInputElement>(this.addPopup, '#bili-add-vtitle')?.value ?? '').trim();
     const uploader = (q<HTMLInputElement>(this.addPopup, '#bili-add-uploader')?.value ?? '').trim();
     if (!url) { notice('请填写视频链接或 BV 号', 'error'); return; }
-    if (!isValidTime(start) || !isValidTime(end)) { notice('时间格式应为 mm:ss 或 hh:mm:ss(.S)', 'error'); return; }
+    if (start === null || end === null) { notice('时间格式看不懂：支持 12.2 / 12-2 / 1:30:05 等，单个数字按分钟算', 'error'); return; }
     if ((!start && end) || (start && !end)) { notice('开始与结束时间需成对填写（都留空 = 整片）', 'error'); return; }
     let page: number | null = null;
     if (pageRaw) {
@@ -277,7 +273,8 @@ export class UIManager {
       page = n;
     }
     try {
-      const patch = { url, start: start || null, end: end || null, remark: remark || null, quality, page, title: vtitle || null, uploader: uploader || null };
+      // 不带 remark：编辑旧任务时保留既有备注（数据格式兼容冻结），新任务备注恒空
+      const patch = { url, start: start || null, end: end || null, quality, page, title: vtitle || null, uploader: uploader || null };
       if (this.editingId) {
         await TasksData.updateTask(this.editingId, patch);
         emitDomainEvent('bili-tasks', { kind: 'edited', id: this.editingId });
@@ -431,10 +428,9 @@ export class UIManager {
     // 失败行：行内可见「重试」按钮（除悬浮菜单外的直达入口，ADR-0067）
     const retryBtn = q<HTMLButtonElement>(card, '.bz-bili-retry-btn');
     if (retryBtn) retryBtn.onclick = (e) => { e.stopPropagation(); void this.retryTask(task); };
-    // 点击分流：成功→文献笔记；失败→原因；待处理→编辑（处理中不响应）
+    // 点击分流：成功→文献笔记；待处理→编辑（失败原因已行内直显，处理中不响应）
     card.addEventListener('click', () => {
       if (task.status === 'success' && task.notePath) this.openNote(task.notePath);
-      else if (task.status === 'failed') void this.showReason(task);
       else if (task.status === 'pending') this.showAddDialog(task);
     });
     return card;
@@ -448,7 +444,6 @@ export class UIManager {
       actions.push({ icon: 'pencil', label: '编辑', onClick: () => this.showAddDialog(task) });
     } else if (task.status === 'failed') {
       actions.push({ icon: 'rotate-ccw', label: '重试', onClick: () => void this.retryTask(task) });
-      actions.push({ icon: 'info', label: '查看原因', onClick: () => void this.showReason(task) });
       actions.push({ icon: 'pencil', label: '编辑', onClick: () => this.showAddDialog(task) });
     } else if (task.status === 'pending') {
       actions.push({ icon: 'pencil', label: '编辑', onClick: () => this.showAddDialog(task) });
@@ -474,14 +469,6 @@ export class UIManager {
     if (v !== 'ok') return;
     await TasksData.deleteTask(task.id);
     await this.refreshPanel();
-  }
-
-  private async showReason(task: BiliTask): Promise<void> {
-    await openFlowDialog({
-      title: '处理失败',
-      message: task.reason || '未知原因',
-      actions: [{ label: '知道了', value: 'ok', cta: true }],
-    });
   }
 
   /** 行内进度定点更新（不等 storage 落库——[bz-step]/[bz-p] 一到立即刷 DOM，修「UI 滞后于 JSON」） */
