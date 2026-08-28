@@ -24,7 +24,7 @@ import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
-import { loadSmartCatData, saveSmartCatData, getSmartcatFilePath } from './data';
+import { loadSmartCatData, getSmartcatFilePath } from './data';
 import { MOOD_MAP, moodLevelFromPad } from './mood';
 import { TRAIT_GROUPS } from './character';
 import { sourceLabel, formatRelativeTime, emotionDensityStats } from './memory';
@@ -46,7 +46,7 @@ import {
   buildDossierNarratives,
 } from './dossier';
 import type { SmartCatData, MemoryStreamEntry, CharacterTraits, OceanProfile, BehaviorItem } from './types';
-import { promoteToMemory } from './memory';
+import { buildBehaviorWording, behaviorActionWord } from './behavior-wording';
 
 // ---------------- 中文标签表 ----------------
 
@@ -841,83 +841,145 @@ function renderReport(pane: HTMLElement, data: SmartCatData): void {
   pane.appendChild(histCard.root);
 }
 
-// ---------------- 行为页签（P3 ticket 123） ----------------
+// ---------------- 行为页签（P3 ticket 123；ticket 129：时间线 + 筛选 + 滚动加载） ----------------
 
-/** 行为来源中文标签 */
+/** 行为来源中文标签（覆盖 routing 全部来源 + secondbrain/system 等） */
 const BEHAVIOR_SOURCE_LABELS: Record<string, string> = {
   chat: '聊天', diary: '日记', flash: '闪念', clipping: '剪藏', movie: '影视', memo: '备忘录',
-  reading: '书库', pomodoro: '番茄钟', news: '聚合讯', favorites: '收藏', belongings: '归物',
+  reading: '书库', library: '书库', pomodoro: '番茄钟', news: '聚合讯', favorites: '收藏', belongings: '归物',
+  letter: '信', poem: '现代诗', reflection: '反省', 'weekly-report': '周报', dossier: '相处史',
+  secondbrain: '第二大脑', system: '系统',
 };
 
 function behaviorSourceLabel(source: string): string {
   return BEHAVIOR_SOURCE_LABELS[source] || source;
 }
 
+/** 行为列表单批加载条数（与旧截断值 50 对齐；首屏 + 触底/按钮追加均按此批次） */
+const BEHAVIOR_BATCH_SIZE = 50;
+
+/** 行为流按时间倒序（稳定副本） */
+function sortedBehavior(data: SmartCatData): BehaviorItem[] {
+  return [...(data.memory?.behaviorStream || [])]
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+}
+
+/** 单个行为条目 DOM（时间线节点：type 徽标文案化 + 来源 + 相对时间 + 人类文案；无提升按钮） */
+function buildBehaviorItemEl(b: BehaviorItem): HTMLElement {
+  const item = el('div', 'bz-sc-dash-behavior-item');
+  const meta = el('div', 'bz-sc-dash-behavior-meta');
+  meta.appendChild(el('span', 'bz-sc-dash-badge bz-sc-dash-behavior-type', behaviorActionWord(b.type)));
+  meta.appendChild(el('span', 'bz-sc-dash-behavior-source', behaviorSourceLabel(b.source)));
+  meta.appendChild(el('span', 'bz-sc-dash-behavior-time', formatRelativeTime(b.timestamp)));
+  item.appendChild(meta);
+  item.appendChild(el('div', 'bz-sc-dash-memory-text', truncateText(buildBehaviorWording(b), 80)));
+  return item;
+}
+
+/** 可点击来源统计块（点击筛选；「全部」块 data-source='' 常驻还原；active 高亮当前筛选态） */
+function buildFilterStat(source: string, count: number, label: string, activeFilter: string | null): HTMLElement {
+  const s = statBlock(count, label);
+  s.classList.add('bz-sc-dash-stat-click');
+  s.dataset.source = source;
+  const active = source === (activeFilter ?? '');
+  s.classList.toggle('active', active);
+  s.title = source ? `点击只显示「${label}」；再次点击还原` : '点击还原全部来源';
+  s.addEventListener('click', () => applyBehaviorFilter(source));
+  return s;
+}
+
+/** 来源筛选切换（点来源块筛选；点「全部」/再点已选来源还原——语义闭环）；
+ *  筛选态重置分页（回到首批 50 条）并重渲染行为页签。 */
+function applyBehaviorFilter(source: string): void {
+  const st = dashState;
+  if (!st || !st.panes.behavior || !st.lastData) return;
+  const normalized = source === '' ? null : source;
+  st.behaviorFilter = st.behaviorFilter === normalized ? null : normalized;
+  st.behaviorShown = BEHAVIOR_BATCH_SIZE;
+  renderBehavior(st.panes.behavior, st.lastData);
+}
+
+/** 追加下一批行为条目（触底滚动 / 加载更多按钮共用；直接 append 不整页重排，保持滚动位置） */
+function appendBehaviorBatch(): void {
+  const st = dashState;
+  if (!st || !st.behaviorListEl || !st.lastData) return;
+  const sorted = sortedBehavior(st.lastData);
+  const filtered = st.behaviorFilter ? sorted.filter((b) => b.source === st.behaviorFilter) : sorted;
+  const list = st.behaviorListEl;
+  const shown = st.behaviorShown;
+  if (shown >= filtered.length) return;
+  const next = Math.min(shown + BEHAVIOR_BATCH_SIZE, filtered.length);
+  const frag = document.createDocumentFragment();
+  for (let i = shown; i < next; i++) frag.appendChild(buildBehaviorItemEl(filtered[i]));
+  list.appendChild(frag);
+  st.behaviorShown = next;
+  if (st.behaviorLoadMoreBtn) st.behaviorLoadMoreBtn.style.display = next < filtered.length ? '' : 'none';
+}
+
 function renderBehavior(pane: HTMLElement, data: SmartCatData): void {
   pane.innerHTML = '';
   const items = data.memory?.behaviorStream || [];
 
-  // 统计
-  const stCard = card('行为流');
-  const stats = el('div', 'bz-sc-dash-stats');
-  stats.appendChild(statBlock(items.length, '行为总数'));
-  // 按来源分组统计
+  // 统计（全量口径，不受筛选/分页影响）：行为总数 + 来源 top4，点击筛选
   const bySource: Record<string, number> = {};
-  for (const b of items) {
-    bySource[b.source] = (bySource[b.source] || 0) + 1;
+  for (const b of items) bySource[b.source] = (bySource[b.source] || 0) + 1;
+  let filter = dashState?.behaviorFilter ?? null;
+  // 脏筛选守卫：来源已被滚动清理（条目清零）→ 自动还原全部，避免死区
+  if (filter && !(filter in bySource)) {
+    filter = null;
+    if (dashState) dashState.behaviorFilter = null;
   }
   const topSources = Object.entries(bySource).sort((a, b) => b[1] - a[1]).slice(0, 4);
+
+  const stCard = card('行为流');
+  const stats = el('div', 'bz-sc-dash-stats');
+  stats.appendChild(buildFilterStat('', items.length, '行为总数', filter));
   for (const [src, count] of topSources) {
-    stats.appendChild(statBlock(count, behaviorSourceLabel(src)));
+    stats.appendChild(buildFilterStat(src, count, behaviorSourceLabel(src), filter));
   }
   stCard.body.appendChild(stats);
+  if (filter) {
+    stCard.body.appendChild(el('div', 'bz-sc-dash-hint', `已筛选：${behaviorSourceLabel(filter)}——点击「行为总数」或再点该来源块还原。`));
+  }
   pane.appendChild(stCard.root);
 
-  // 行为列表（时间倒序，截前 50 条）
+  // 行为列表（时间线式；首屏 50 条，触底滚动 / 加载更多按钮追加）
   const listCard = card('最近行为');
-  if (items.length) {
-    const list = el('div', 'bz-sc-dash-list');
-    const sorted = [...items]
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, 50);
-    for (const b of sorted) {
-      const item = el('div', 'bz-sc-dash-behavior-item');
-      const meta = el('div', 'bz-sc-dash-behavior-meta');
-      meta.appendChild(el('span', 'bz-sc-dash-badge bz-sc-dash-behavior-type', b.type));
-      meta.appendChild(el('span', '', behaviorSourceLabel(b.source)));
-      meta.appendChild(el('span', '', formatRelativeTime(b.timestamp)));
-      // 提升为记忆按钮
-      const promoteBtn = el('button', 'bz-sc-dash-mini-btn bz-sc-dash-promote-btn', '提升为记忆');
-      promoteBtn.addEventListener('click', () => {
-        void handlePromote(b.id);
-      });
-      meta.appendChild(promoteBtn);
-      item.appendChild(meta);
-      item.appendChild(el('div', 'bz-sc-dash-memory-text', truncateText(b.description, 80)));
-      list.appendChild(item);
+  const sorted = sortedBehavior(data);
+  const filtered = filter ? sorted.filter((b) => b.source === filter) : sorted;
+  if (filtered.length) {
+    const tl = el('div', 'bz-sc-dash-behavior-tl');
+    const shown = Math.min(dashState?.behaviorShown ?? BEHAVIOR_BATCH_SIZE, filtered.length);
+    for (let i = 0; i < shown; i++) tl.appendChild(buildBehaviorItemEl(filtered[i]));
+    if (dashState) {
+      dashState.behaviorShown = shown;
+      dashState.behaviorListEl = tl;
     }
-    listCard.body.appendChild(list);
+    listCard.body.appendChild(tl);
+    if (filtered.length > shown) {
+      const btn = el('button', 'bz-sc-dash-load-more', '加载更多（还有 ' + (filtered.length - shown) + ' 条）');
+      btn.addEventListener('click', () => appendBehaviorBatch());
+      if (dashState) dashState.behaviorLoadMoreBtn = btn;
+      listCard.body.appendChild(btn);
+    } else if (dashState) {
+      dashState.behaviorLoadMoreBtn = null;
+    }
   } else {
-    listCard.body.appendChild(emptyHint('还没有行为记录——使用小橘的各种功能会自动记录行为轨迹。'));
+    listCard.body.appendChild(emptyHint(filter ? `「${behaviorSourceLabel(filter)}」暂无行为记录。` : '还没有行为记录——使用小橘的各种功能会自动记录行为轨迹。'));
+    if (dashState) {
+      dashState.behaviorListEl = null;
+      dashState.behaviorLoadMoreBtn = null;
+    }
   }
   pane.appendChild(listCard.root);
 }
 
-/** 处理 promote 按钮点击（P3 ticket 123） */
-async function handlePromote(behaviorId: string): Promise<void> {
-  if (!dashState) return;
-  try {
-    const data = await loadSmartCatData(dashState.app);
-    const result = promoteToMemory(data, behaviorId);
-    if (result) {
-      await saveSmartCatData(dashState.app, data);
-      notice('已提升为记忆', 'success');
-      renderPanes(data);
-    } else {
-      notice('未找到该行为条目', 'error');
-    }
-  } catch (e) {
-    notice('操作失败', 'error');
+/** 行为体滚动触底自动加载（.bz-sc-dash-body 是唯一滚动容器；仅行为页签生效；近底 120px 触发） */
+function onBehaviorBodyScroll(): void {
+  const st = dashState;
+  if (!st || !st.body || st.activeTab !== 'behavior') return;
+  if (st.body.scrollTop + st.body.clientHeight >= st.body.scrollHeight - 120) {
+    appendBehaviorBatch();
   }
 }
 
@@ -930,6 +992,8 @@ interface DashboardState {
   app: App;
   mask: HTMLElement;
   popup: HTMLElement;
+  /** 滚动体（.bz-sc-dash-body 唯一滚动容器；行为页签触底加载监听） */
+  body: HTMLElement;
   panes: Partial<Record<PaneKey, HTMLElement>>;
   tabs: Partial<Record<PaneKey, HTMLElement>>;
   activeTab: PaneKey;
@@ -941,6 +1005,16 @@ interface DashboardState {
   eventRefs: unknown[];
   /** C1 自动刷新：防抖计时器句柄（close clearTimeout 清理） */
   debounceTimer: number | null;
+  /** 最近一次渲染的数据引用（行为筛选/加载更多重渲染用；renderPanes 更新） */
+  lastData: SmartCatData | null;
+  /** 行为页签：当前来源筛选（null=全部） */
+  behaviorFilter: string | null;
+  /** 行为页签：已展示条数（首屏 50，触底/按钮追加） */
+  behaviorShown: number;
+  /** 行为页签：列表容器（追加加载复用，重渲染时重建） */
+  behaviorListEl: HTMLElement | null;
+  /** 行为页签：「加载更多」按钮（追加后按剩余条数显隐） */
+  behaviorLoadMoreBtn: HTMLElement | null;
 }
 
 let dashState: DashboardState | null = null;
@@ -958,6 +1032,7 @@ function activateTab(key: PaneKey): void {
 /** 重渲染全部页签（打开/刷新共用；数据现读现渲染；不触碰页签显隐 → 刷新保持当前页签） */
 function renderPanes(data: SmartCatData): void {
   if (!dashState) return;
+  dashState.lastData = data;
   if (dashState.panes.overview) renderOverview(dashState.panes.overview, data, dashState.memoTitles);
   if (dashState.panes.emotion) renderEmotion(dashState.panes.emotion, data);
   if (dashState.panes.personality) renderPersonality(dashState.panes.personality, data);
@@ -1068,9 +1143,16 @@ export async function openSmartcatDashboard(app: App): Promise<void> {
 
   // 当日备忘标题表现读（094「一起的日子」关键时刻；失败静默空表）
   const memoTitles = await loadMemoTitlesByDay(app);
-  dashState = { app, mask, popup, panes, tabs, activeTab: 'overview', visibleKeys, escHandle: null as any, memoTitles, eventRefs: [], debounceTimer: null };
+  dashState = {
+    app, mask, popup, body, panes, tabs, activeTab: 'overview', visibleKeys, escHandle: null as any,
+    memoTitles, eventRefs: [], debounceTimer: null, lastData: null,
+    behaviorFilter: null, behaviorShown: BEHAVIOR_BATCH_SIZE, behaviorListEl: null, behaviorLoadMoreBtn: null,
+  };
   renderPanes(data);
   activateTab('overview');
+
+  // ticket 129：行为页签滚动触底自动加载（body 是唯一滚动容器；行为页签激活才追加）
+  body.addEventListener('scroll', onBehaviorBodyScroll);
 
   // 移动端默认全屏（ticket 68 规范三件事之二：打开路径必经处应用；
   //  2026-08-23 合并一套：跟随聊天/设置面板共用的 smartcatMobileDefaultFullscreen 开关）

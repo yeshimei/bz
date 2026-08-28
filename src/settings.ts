@@ -517,7 +517,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
 
   // 小橘行为流设置（P1 数据基座，ticket 123）
   behaviorMaxDays: 30,
-  behaviorMaxCount: 1000,
+  /** 行为流最大保留条数（ticket 129：默认 1000→2000——行为流升级全量日志后条目增速上升，2000 条滚动窗口吸收；已有 data.json 值尊重、零迁移） */
+  behaviorMaxCount: 2000,
   showBehaviorLog: true,
   enableAutoLinking: true,
   linkWindowDays: 7,
