@@ -3538,6 +3538,61 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;
 }
+
+/* ---- ADR-0067：行内标题链接 / UP主 / 失败重试按钮 / 历史条 ---- */
+.bz-bili-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--text-accent);
+  text-decoration: none;
+}
+.bz-bili-title:hover {
+  text-decoration: underline;
+}
+.bz-bili-retry-btn {
+  margin-top: 6px;
+  font-size: 12px;
+  padding: 1px 12px;
+  line-height: 22px;
+  border-radius: 6px;
+  color: var(--text-on-accent);
+  background: var(--interactive-accent);
+  cursor: pointer;
+  border: none;
+}
+.bz-bili-retry-btn:hover {
+  filter: brightness(1.1);
+}
+.bz-bili-hstrip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  background: var(--background-modifier-hover);
+  color: var(--text-muted);
+}
+.bz-bili-hstrip button {
+  font-size: 12px;
+  padding: 0 10px;
+  line-height: 22px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  color: var(--text-error, #e5484d);
+  background: transparent;
+}
+.bz-bili-hstrip button:hover {
+  background: var(--background-modifier-hover);
+}
+#bili-btn-history.bz-bili-mode-active {
+  background: var(--interactive-accent);
+}
 ﻿/* ============================================================
  * 绗簩澶ц剳锛坰econdbrain 鍩燂紝ticket 103 寤?UI / 107 琛ユ牱寮忔枃浠?/ 108 闈㈡澘鎵撶（锛?
  * 鍏ㄩ儴琛ㄩ潰锛氫富闈㈡澘寮圭獥 / 妗岄潰绐勭獥 / 鍙傝€冨崱涓庢偓鍋滈瑙?/ AI 瀵硅瘽 / 绉诲姩绔娊灞?
