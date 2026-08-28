@@ -57,13 +57,14 @@ describe('core settings-modal 机制', () => {
     expect(popup!.querySelector('[data-name="测试项"]')).not.toBeNull();
   });
 
-  it('层级：设置弹窗 z-index 高于普通面板弹窗（10001-10005），低于入口页 10100', () => {
+  it('层级：设置弹窗 z 动态发号（ADR-0067），遮罩在下、本体在上', () => {
     openSettingsModal({ title: '层级测试', schema: { groups: [] } });
     const mask = document.getElementById('bz-settings-modal-mask');
     expect(mask).not.toBeNull();
     const z = parseInt(mask!.style.zIndex, 10);
-    expect(z).toBeGreaterThan(10005);
-    expect(z).toBeLessThan(10100);
+    expect(Number.isFinite(z)).toBe(true);
+    const popup = document.getElementById('bz-settings-modal-popup');
+    expect(parseInt(popup!.style.zIndex, 10)).toBe(z + 1);
   });
 
   it('空态：schema 未挂 setting-item 时显示 emptyText/emptyDesc', () => {

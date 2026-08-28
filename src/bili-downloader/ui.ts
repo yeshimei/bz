@@ -15,6 +15,7 @@ import { mobileFullscreenGroup } from '../core/settings-common';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { openFlowDialog } from '../core/flow-dialog';
 import { notice } from '../core/notice';
+import { topifyZ } from '../core/z-order';
 import { emitDomainEvent } from '../core/domain-bus';
 import { getApp } from '../core/app';
 import { TasksData, isValidTime } from './data';
@@ -109,7 +110,7 @@ export class UIManager {
   createMainUI(): void {
     const mask = document.createElement('div');
     mask.id = 'bili-tasks-mask';
-    Object.assign(mask.style, { position: 'fixed', inset: '0', background: 'rgba(0,0,0,.45)', zIndex: '100000', display: 'none' });
+    Object.assign(mask.style, { position: 'fixed', inset: '0', background: 'rgba(0,0,0,.45)', display: 'none' });
     mask.onclick = () => this.hideMain();
     const popup = document.createElement('div');
     popup.id = 'bili-tasks-popup';
@@ -117,7 +118,7 @@ export class UIManager {
       position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
       width: 'min(720px, 94vw)', maxHeight: '86vh', display: 'none',
       flexDirection: 'column', background: 'var(--background-primary)', color: 'var(--text-normal)',
-      borderRadius: '10px', boxShadow: '0 8px 40px rgba(0,0,0,.35)', zIndex: '100001',
+      borderRadius: '10px', boxShadow: '0 8px 40px rgba(0,0,0,.35)',
     });
     const header = document.createElement('div');
     header.className = 'bz-win-head';
@@ -176,7 +177,7 @@ export class UIManager {
     Object.assign(popup.style, {
       position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
       width: 'min(520px, 92vw)', background: 'var(--background-primary)', color: 'var(--text-normal)',
-      borderRadius: '10px', boxShadow: '0 8px 40px rgba(0,0,0,.35)', zIndex: '100002', display: 'none',
+      borderRadius: '10px', boxShadow: '0 8px 40px rgba(0,0,0,.35)', display: 'none',
       padding: '16px 18px', flexDirection: 'column', gap: '10px',
     });
     popup.innerHTML = `
@@ -221,6 +222,7 @@ export class UIManager {
   showMain(): void {
     if (!this.popup || !this.mask) return;
     applyMobileWindowFullscreen(this.popup, tryGetSettings().biliTasksMobileDefaultFullscreen === true);
+    topifyZ(this.mask, this.popup); // ADR-0067：显示即发号，谁后显示谁在上
     // 重开面板回到任务列表视图（历史视图不记忆）
     if (this.mode !== 'tasks') this.toggleMode();
     this.mask.style.display = 'block';
@@ -246,6 +248,7 @@ export class UIManager {
     (q<HTMLInputElement>(this.addPopup, '#bili-add-remark')!).value = editItem?.remark ?? '';
     (q<HTMLInputElement>(this.addPopup, '#bili-add-vtitle')!).value = editItem?.title ?? '';
     (q<HTMLInputElement>(this.addPopup, '#bili-add-uploader')!).value = editItem?.uploader ?? '';
+    topifyZ(this.addPopup); // ADR-0067：显示即发号
     this.addPopup.style.display = 'flex';
   }
 

@@ -25,9 +25,9 @@ function makeApp(vault: MockVault) {
   } as any;
 }
 
-/** 报告弹窗选择器（遮罩 z-index: 9999） */
+/** 报告弹窗选择器（bz-reading-report-overlay 遮罩） */
 function findModal(): HTMLElement | null {
-  return document.querySelector('div[style*="z-index: 9999"]') as HTMLElement | null;
+  return document.querySelector('.bz-reading-report-overlay') as HTMLElement | null;
 }
 
 /** 带一本已完成书的最小书库（完整链路/占位/卸载共用） */

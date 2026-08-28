@@ -1,7 +1,7 @@
 ﻿/* ============================================================
  * 绗簩澶ц剳锛坰econdbrain 鍩燂紝ticket 103 寤?UI / 107 琛ユ牱寮忔枃浠?/ 108 闈㈡澘鎵撶（锛?
  * 鍏ㄩ儴琛ㄩ潰锛氫富闈㈡澘寮圭獥 / 妗岄潰绐勭獥 / 鍙傝€冨崱涓庢偓鍋滈瑙?/ AI 瀵硅瘽 / 绉诲姩绔娊灞?
- * 绫诲悕 bz-sb- 鍓嶇紑锛涘眰绾у琛?settings-modal.ts z-index 瀹舵棌锛?
+ * 层级已动态发号（ADR-0067）：显示时 topifyZ/allocZ，无静态档
  *   绐勭獥/鎶藉眽 9000 < 娴崱路棰勮 9200 < 涓婚潰鏉块伄缃?9998 < 涓婚潰鏉?9999 < 璁剧疆寮圭獥 10050
  * ============================================================ */
 
@@ -20,7 +20,7 @@
   top: 0;
   right: 0;
   height: 100vh;
-  z-index: 9000;
+  /* z 动态发号（ADR-0067） */
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -157,7 +157,7 @@
 }
 /* 鎷栧嚭鐙珛娴崱锛歠ixed 瀹氫綅鐢?JS 鍐呰仈鍐欏叆 */
 .bz-sb-ref-card--float {
-  z-index: 9200;
+  /* z 动态发号（ADR-0067）：浮卡化时 allocZ（谁拖谁在上） */
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.24);
   cursor: default;
 }
@@ -237,7 +237,7 @@
   position: fixed;
   width: 460px;
   max-width: calc(100vw - 24px);
-  z-index: 9200;
+  /* z 动态发号（ADR-0067）：hover 创建时 allocZ */
   background: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
   border-radius: 8px;
@@ -371,7 +371,7 @@
 .bz-sb-panel-mask {
   position: fixed;
   inset: 0;
-  z-index: 9998;
+  /* z 动态发号（ADR-0067）：open() 时 topifyZ */
   display: none;
   background: rgba(0, 0, 0, 0.42);
 }
@@ -380,7 +380,7 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  z-index: 9999;
+  /* z 动态发号（ADR-0067） */
   width: min(720px, 92vw);
   max-height: 86vh;
   display: none;
@@ -731,7 +731,7 @@
   right: 0;
   bottom: 0;
   height: 45vh;
-  z-index: 9000;
+  /* z 动态发号（ADR-0067）：expand() 时 topifyZ */
   display: flex;
   flex-direction: column;
   background: var(--background-primary);

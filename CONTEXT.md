@@ -366,7 +366,9 @@ _Avoid_: 各脚本路径、存储路径们
 _Avoid_: 设置弹窗（指筛选时）
 
 
-**通知 (Notification)**: bz 自绘 toast 通知（`src/core/notice.ts`，ADR-0010，时长动态化见 ADR-0053），替代 Obsidian 原生 Notice 与 Q3 smartCat 气泡。右上角滑入 · z-index 100000 · 堆叠上限 5 · 点击关闭。类型图标即视觉前缀：**消息正文一律不带 emoji**（类型图标与正文 emoji 重复，2026-08-1x 用户决策）。11 种类型：info ℹ️ / success ✅ / warning ⚠️ / error ❌ / pause ⏸️ / accept ✨ / delete 🗑️ / confirm ✓ / restore ↩️ / skip 🚫 / archive 📁 / progress 转圈。支持动态消息（setMessage/setType）、进度条（setProgress，-1 不确定态）、富文本（title + action 按钮）。时长：默认 info/success/warning 3s、error 5s；**未指定 duration 时按文字长度动态计算**（≤20 字用默认值，>20 字每多 1 字加 60ms，上限 15s）；显式 duration 优先；progress 不自动消失。
+**动态层级 (Dynamic z-index)**: 全站 overlay 层级规则只有一条——**谁后显示谁在上**（ADR-0067）。`core/z-order.ts` 单调计数器发号：`allocZ()` 单元素、`topifyZ(遮罩, 本体)` 成组（本体=遮罩+1）、`registerAlwaysOnTop(el)` 恒顶层（小橘桌宠保持最高）。一次性弹窗创建即发号；show/hide 复用面板每次显示重新发号。旧静态档位家族表（9997~12000）与档位 z 规则已全部废除，档位修饰类名仅作标识钩子。
+_Avoid_: 层规表、家族表、抬档、z 档位、companion 档
+**通知 (Notification)**: bz 自绘 toast 通知（`src/core/notice.ts`，ADR-0010，时长动态化见 ADR-0053），替代 Obsidian 原生 Notice 与 Q3 smartCat 气泡。右上角滑入 · z 动态发号（每次弹出抬顶，ADR-0067）· 堆叠上限 5 · 点击关闭。类型图标即视觉前缀：**消息正文一律不带 emoji**（类型图标与正文 emoji 重复，2026-08-1x 用户决策）。11 种类型：info ℹ️ / success ✅ / warning ⚠️ / error ❌ / pause ⏸️ / accept ✨ / delete 🗑️ / confirm ✓ / restore ↩️ / skip 🚫 / archive 📁 / progress 转圈。支持动态消息（setMessage/setType）、进度条（setProgress，-1 不确定态）、富文本（title + action 按钮）。时长：默认 info/success/warning 3s、error 5s；**未指定 duration 时按文字长度动态计算**（≤20 字用默认值，>20 字每多 1 字加 60ms，上限 15s）；显式 duration 优先；progress 不自动消失。
 **通知类型规范**: 新增通知时先查 ICONS 表（`src/core/notice.ts`）——已有类型直接用；确无匹配再新增（加 ICONS 项 + 颜色 class + 默认时长），**不得把 emoji 写进消息正文**。
 _Avoid_: toast、气泡、原生通知、Notice
 

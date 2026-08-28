@@ -12,16 +12,12 @@
  * - ticket 133 设置行：空态只显示紧凑「选择…/添加…」按钮（无「未选择」灰字）；已选态按钮移出 DOM、
  *   chip 文本点击重开选择器、✕ 保留清除；移动端名称/描述与控件区同行（控件区恒 1 子元素）。
  * - 移动端近全屏（≤768 顶对齐避让软键盘 + 底部 safe-area）。
- * - z-index 11200/11201：companion 档（>11000），叠于域设置弹窗 10050 之上（对表 settings-modal.ts
- *   z-index 家族注释；原 secondbrain 白名单弹窗同档 11200，退役合并后继续沿用）。
+ * - z-index 动态发号（ADR-0067）：每次打开新建 DOM，创建即显示，谁后开谁在上。
  */
 import { Setting } from 'obsidian';
 import { getApp } from './app';
 import { createOverlay } from './dom';
 import { escManager, type EscHandle } from './esc-manager';
-
-/** 选择器遮罩 z-index（companion 档；本体 +1 = 11201） */
-export const PATH_PICKER_Z_MASK = 11200;
 
 export interface PathPickerOptions {
   /** 弹窗标题（缺省「选择文件夹」） */
@@ -335,7 +331,6 @@ export function openPathPicker(opts: PathPickerOptions): void {
   const { mask, popup } = createOverlay({
     maskId: 'bz-path-picker-mask',
     popupId: 'bz-path-picker-popup',
-    zIndex: PATH_PICKER_Z_MASK,
     // ticket 133：桌面/移动端统一一张居中卡——左右各 16px 外边距，宽视口封顶 440px（不分两套样式）
     width: 'min(calc(100vw - 32px), 440px)',
     maxWidth: 440,

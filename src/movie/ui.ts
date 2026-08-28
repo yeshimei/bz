@@ -4,6 +4,7 @@
 import type { App, TFile } from 'obsidian';
 import { notice, notify } from '../core/notice';
 import { escManager } from '../core/esc-manager';
+import { allocZ, topifyZ } from '../core/z-order';
 import { formatRelativeTime, pad2 } from '../core/utils';
 import { tryGetSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
@@ -366,7 +367,8 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
   }
 
   const addOverlayDiv = document.createElement('div');
-  addOverlayDiv.className = 'bz-movie-overlay--1200'; // e3：z-index 由根样式 .bz-movie-overlay--* 档位类提供
+  addOverlayDiv.className = 'bz-movie-overlay--1200'; // 标识钩子（层级已动态发号 ADR-0067）
+  addOverlayDiv.style.zIndex = String(allocZ()); // ADR-0067：新建即显示即发号
   addOverlayDiv.style.cssText = `
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.4);
@@ -595,7 +597,8 @@ export function openEditModal(item: any, app: App): void {
   }
 
   const editOverlayDiv = document.createElement('div');
-  editOverlayDiv.className = 'bz-movie-overlay--1200'; // e3：z-index 由根样式 .bz-movie-overlay--* 档位类提供
+  editOverlayDiv.className = 'bz-movie-overlay--1200'; // 标识钩子（层级已动态发号 ADR-0067）
+  editOverlayDiv.style.zIndex = String(allocZ()); // ADR-0067：新建即显示即发号
   editOverlayDiv.style.cssText = `
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.4);
@@ -936,7 +939,8 @@ export function openFilterModal(): void {
   }
 
   const settingsOverlayDiv = document.createElement('div');
-  settingsOverlayDiv.className = 'bz-movie-overlay--1100'; // e3：z-index 由根样式 .bz-movie-overlay--* 档位类提供
+  settingsOverlayDiv.className = 'bz-movie-overlay--1100'; // 标识钩子（层级已动态发号 ADR-0067）
+  settingsOverlayDiv.style.zIndex = String(allocZ()); // ADR-0067：新建即显示即发号
   settingsOverlayDiv.style.cssText = `
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.3);
@@ -1083,6 +1087,7 @@ export function createOverlay(app: App, statusType?: string): void {
   // 移动端默认全屏：复用打开（已存在 → visibility visible）也重挂，设置变更后重开生效
   applyMobileWindowFullscreen(M.currentOverlay?.firstElementChild as HTMLElement | null, tryGetSettings().movieMobileDefaultFullscreen === true);
   if (M.currentOverlay) {
+    topifyZ(M.currentOverlay); // ADR-0067：显示即发号，谁后显示谁在上
     M.currentOverlay.style.visibility = 'visible';
     renderList();
     return;
@@ -1090,7 +1095,8 @@ export function createOverlay(app: App, statusType?: string): void {
 
   const overlay = document.createElement('div');
   overlay.id = '__yin_ying__';
-  overlay.className = 'bz-movie-overlay--1000'; // e3：z-index 由根样式 .bz-movie-overlay--* 档位类提供
+  overlay.className = 'bz-movie-overlay--1000'; // 标识钩子（层级已动态发号 ADR-0067）
+  overlay.style.zIndex = String(allocZ()); // ADR-0067：首建即显示即发号（modal 为子节点随动）
   overlay.style.cssText = `
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.5);
@@ -1370,6 +1376,7 @@ function closeMovieTinyModal(mask: HTMLElement, modalEsc: { unregister: () => vo
 export function openRateModal(item: MovieItem, app: App, title: string, onDone?: () => void, forceTodayDate?: boolean): void {
   const mask = document.createElement('div');
   mask.className = 'bz-movie-tiny-mask';
+  mask.style.zIndex = String(allocZ()); // ADR-0067：新建即显示即发号（modal 为子节点随动）
   const modal = document.createElement('div');
   modal.className = 'bz-movie-tiny-modal';
 
@@ -1439,6 +1446,7 @@ export function openRateModal(item: MovieItem, app: App, title: string, onDone?:
 export function openReviewModal(item: MovieItem, app: App, title: string, onDone?: () => void): void {
   const mask = document.createElement('div');
   mask.className = 'bz-movie-tiny-mask';
+  mask.style.zIndex = String(allocZ()); // ADR-0067：新建即显示即发号（modal 为子节点随动）
   const modal = document.createElement('div');
   modal.className = 'bz-movie-tiny-modal';
 
@@ -1575,6 +1583,7 @@ function openDetailModal(item: MovieItem, app: App): void {
 
   const mask = document.createElement('div');
   mask.className = 'bz-movie-tiny-mask';
+  mask.style.zIndex = String(allocZ()); // ADR-0067：新建即显示即发号（modal 为子节点随动）
   const modal = document.createElement('div');
   modal.className = 'bz-movie-tiny-modal bz-movie-detail-modal';
 

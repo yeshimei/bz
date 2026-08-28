@@ -11,6 +11,7 @@ import type { App } from 'obsidian';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
 import { notify } from '../core/notice';
+import { allocZ } from '../core/z-order';
 import { getAllBookNotes, calculateReadingStats, getEpubBookNotes } from './stats';
 import { buildReportSections } from './report';
 
@@ -80,6 +81,7 @@ function openReportPopup(): { overlay: HTMLElement; body: HTMLElement } {
   const isDarkMode = document.body.classList.contains('theme-dark');
 
   const overlay = document.createElement('div');
+  overlay.className = 'bz-reading-report-overlay'; // 标识钩子（层级已动态发号 ADR-0067）
   overlay.style.cssText = `
     position: fixed;
     top: 0;
@@ -90,8 +92,8 @@ function openReportPopup(): { overlay: HTMLElement; body: HTMLElement } {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 9999;
   `;
+  overlay.style.zIndex = String(allocZ()); // ADR-0067：一次性报告浮层，创建即显示即发号（content 为子节点随动）
 
   const content = document.createElement('div');
   // p1 主题适配：面板/文字用主题变量，暗色主题可读（不再硬编码 white/#1e1e1e）

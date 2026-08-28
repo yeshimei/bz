@@ -10,7 +10,7 @@ import type { NoticeHandle } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { openFlowDialog } from '../core/flow-dialog';
-import { createIconBtn, createOverlay } from '../core/dom';
+import { createIconBtn, createOverlay, topifyZ } from '../core/dom';
 import {
   attachItemActions,
   registerSheetCompanion,
@@ -356,7 +356,7 @@ export class UIManager {
     document.body.appendChild(this.mask);
     document.body.appendChild(this.popup);
     // 预览窗
-    const ov = createOverlay({ maskId: 'bz-encrypt-preview-mask', popupId: 'bz-encrypt-preview-popup', zIndex: 10060, maxWidth: 640, onMaskClick: () => this.closePreview() });
+    const ov = createOverlay({ maskId: 'bz-encrypt-preview-mask', popupId: 'bz-encrypt-preview-popup', maxWidth: 640, onMaskClick: () => this.closePreview() });
     this.previewMask = ov.mask;
     this.previewPopup = ov.popup;
     document.body.appendChild(this.previewMask);
@@ -369,7 +369,6 @@ export class UIManager {
     const mask = document.createElement('div');
     mask.id = id;
     mask.className = 'bz-overlay-mask';
-    mask.style.zIndex = '9998';
     mask.style.display = 'none';
     mask.onclick = () => this.hide();
     return mask;
@@ -379,8 +378,7 @@ export class UIManager {
     const popup = document.createElement('div');
     popup.id = id;
     popup.className = 'bz-overlay-popup';
-    popup.style.zIndex = '9999';
-    // 视觉尺寸已收敛至 styles.css（#bz-encrypt-popup），此处只保留功能性 zIndex/显隐
+    // 视觉尺寸已收敛至 styles.css（#bz-encrypt-popup），此处只保留功能性显隐（display）
     popup.style.display = 'none';
     return popup;
   }
@@ -409,6 +407,7 @@ export class UIManager {
   show() {
     if (!this._initialized) this.ensureElements();
     applyMobileWindowFullscreen(this.popup, tryGetSettings().encryptMobileDefaultFullscreen === true);
+    topifyZ(this.mask!, this.popup!); // ADR-0067：显示即发号，谁后显示谁在上
     this.mask!.style.display = 'block';
     this.popup!.style.display = 'flex';
     void this.renderList();
@@ -436,6 +435,7 @@ export class UIManager {
       if (!ok) return;
     }
     if (!this.healthMask) this.ensureHealthElements();
+    topifyZ(this.healthMask!, this.healthPopup!); // ADR-0067：显示即发号
     this.healthMask!.style.display = 'flex';
     this.healthPopup!.style.display = 'flex';
     void this.runHealthScan();
@@ -445,12 +445,10 @@ export class UIManager {
     const mask = document.createElement('div');
     mask.id = 'bz-encrypt-health-mask';
     mask.className = 'bz-encrypt-health-mask';
-    mask.style.zIndex = '10080';
     mask.style.display = 'none';
     const popup = document.createElement('div');
     popup.id = 'bz-encrypt-health-popup';
     popup.className = 'bz-encrypt-health-box';
-    popup.style.zIndex = '10081';
     popup.style.display = 'none';
     const head = document.createElement('div');
     head.className = 'bz-encrypt-health-head';
@@ -697,7 +695,7 @@ export class UIManager {
     return new Promise((resolve) => {
       const mask = document.createElement('div');
       mask.className = 'bz-encrypt-dialog-mask';
-      mask.style.zIndex = '10070';
+      topifyZ(mask); // ADR-0067：一次性弹窗，创建即显示即发号
       mask.style.display = 'flex';
       const box = document.createElement('div');
       box.className = 'bz-encrypt-dialog-box';
@@ -1064,6 +1062,7 @@ export class UIManager {
     body.appendChild(loadHint);
     popup.appendChild(body);
     // 先显示弹窗（同步），内容异步填充，保证单击必然弹出
+    topifyZ(this.previewMask, this.previewPopup); // ADR-0067：复用面板显示即发号
     mask.style.display = 'block';
     popup.style.display = 'flex';
     void this.fillPreviewBody(note, body);

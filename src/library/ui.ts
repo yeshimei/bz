@@ -17,6 +17,7 @@ import {
   type ItemAction,
 } from '../core/item-actions';
 import { escManager } from '../core/esc-manager';
+import { allocZ, topifyZ } from '../core/z-order';
 import { tryGetSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
 import { mobileFullscreenGroup } from '../core/settings-common';
@@ -42,6 +43,7 @@ export function showLibrary(app: any) {
   // 移动端默认全屏：复用打开（visibility 常驻）也重挂，设置变更后重开生效
   applyMobileWindowFullscreen(document.querySelector<HTMLElement>('.bz-lib-modal--full'), tryGetSettings().libraryMobileDefaultFullscreen === true);
   if (libraryOverlay) {
+    topifyZ(libraryOverlay); // ADR-0067：显示即发号，谁后显示谁在上
     libraryOverlay.style.visibility = 'visible';
     // P1-19：复用打开前重扫数据（md 书目 + EPUB 条目），外部增删书目后重开即可见
     currentItems = getBookItems(app);
@@ -56,7 +58,8 @@ export function showLibrary(app: any) {
 
   const overlay = document.createElement('div');
   overlay.id = '__book_library__';
-  overlay.className = 'bz-lib-overlay bz-lib-overlay--1000';
+  overlay.className = 'bz-lib-overlay bz-lib-overlay--1000'; // 修饰名仅作标识钩子（层级已动态发号 ADR-0067）
+  overlay.style.zIndex = String(allocZ()); // ADR-0067：首建即显示即发号（modal 为子节点随动）
 
   const modal = document.createElement('div');
   modal.className = 'bz-lib-modal bz-lib-modal--full';
@@ -425,7 +428,8 @@ export function openFilterModal(app: any) {
   }
 
   const overlay = document.createElement('div');
-  overlay.className = 'bz-lib-overlay bz-lib-overlay--1100';
+  overlay.className = 'bz-lib-overlay bz-lib-overlay--1100'; // 修饰名仅作 0.3 半透明底视觉钩子（层级已动态化）
+  overlay.style.zIndex = String(allocZ()); // ADR-0067：新建即显示即发号
 
   const modal = document.createElement('div');
   modal.className = 'bz-lib-modal bz-lib-modal--sm';
@@ -746,8 +750,9 @@ export function showEpubBookNotes(app: any, item: BookItem) {
 /** 读书笔记/EPUB 读书笔记共享的外壳：遮罩+弹窗+头部+关闭，返回 overlay 与内容容器。 */
 function createBookNotesModal(title: string, onClose: () => void): { overlay: HTMLElement; contentContainer: HTMLElement } {
   const overlay = document.createElement('div');
-  // P0-7：读书笔记壳作为抽屉附属浮层，必须压过统一抽屉遮罩 10999/本体 11000（对照 movie 12000）
-  overlay.className = 'bz-lib-overlay bz-lib-overlay--11100';
+  // 读书笔记壳作为抽屉附属浮层（后于抽屉创建，动态发号自然压过——ADR-0067）
+  overlay.className = 'bz-lib-overlay bz-lib-overlay--11100'; // 修饰名仅作标识钩子
+  overlay.style.zIndex = String(allocZ());
   // 抽屉来源打开时：笔记弹窗作为附属浮层叠在抽屉上（内部点击不误关抽屉）
   registerSheetCompanion(overlay);
 
@@ -924,8 +929,9 @@ function openNoteEditModal(opts: {
   onSave: (value: string) => Promise<boolean>;
 }): void {
   const overlay = document.createElement('div');
-  // 编辑弹窗叠在读书笔记壳（11100）之上：11101 档保持压过
-  overlay.className = 'bz-lib-overlay bz-lib-overlay--11101';
+  // 编辑弹窗后于读书笔记壳创建，动态发号自然压过（ADR-0067）
+  overlay.className = 'bz-lib-overlay bz-lib-overlay--11101'; // 修饰名仅作标识钩子
+  overlay.style.zIndex = String(allocZ());
 
   const modal = document.createElement('div');
   modal.className = 'bz-lib-modal bz-lib-modal--sm';

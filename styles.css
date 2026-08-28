@@ -195,7 +195,6 @@ button.news-close-btn {
   position: fixed;
   top: calc(16px + env(safe-area-inset-top, 0px));
   right: 16px;
-  z-index: 100000;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -476,7 +475,6 @@ button.news-close-btn {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.3);
-  z-index: 10250;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -738,7 +736,7 @@ button.news-close-btn {
 
 /* 跟手菜单（右键弹出；定位由 JS 计算锚点+防溢出，样式仅布局与观感；小尺寸紧凑风，无边框无图标底色装饰） */
 .bz-item-menu {
-  position: fixed; z-index: 11000;
+  position: fixed;
   min-width: 132px; padding: 4px;
   background: var(--background-primary);
   border-radius: 8px;
@@ -778,16 +776,12 @@ button.news-close-btn {
 /* 移动端底部抽屉（长按卡片弹出，参照 B 站/网易云：遮罩 + 底部滑入 + 顶部选中条目信息） */
 .bz-item-sheet-mask {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  /* 家族表见 core/settings-modal.ts openSettingsModal 注释：999x 主面板族 / 10001-10060 域模态旧档 /
-     10050 设置弹窗 / 10999-11000 统一抽屉（此处遮罩）/ 11100+ companion（须 >11000）/ 12000 movie 小窗 / 200000 attach 选择器 */
-  z-index: 10999; /* 遮罩必须完整盖住主面板 */
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.4); /* z 动态发号（ADR-0067）：JS openItemSheet 创建时分配 */
   animation: bz-mask-in 0.18s ease-out;
   transition: opacity 0.2s ease; /* 下滑关闭时同步淡出 */
 }
 .bz-item-sheet {
   position: fixed; left: 0; right: 0; bottom: 0;
-  z-index: 11000;
   background: var(--background-primary);
   border-radius: 14px 14px 0 0;
   padding: 10px 14px calc(16px + env(safe-area-inset-bottom));
@@ -854,7 +848,7 @@ button.news-close-btn {
 
 /* ==================== 统一路径选择器（ticket 128，ADR-0061；core/path-picker.ts） ==================== */
 /* 卡片弹窗：标题头 + 搜索框 + 目录列表（滚动）+ 底部 selinfo/清空(多选)/确定；原型 picker-prototype A 变体为视觉基准。
-   z-index 11200/11201（companion 档）与宽 min(92vw, 440px) 为功能性几何，由 createOverlay/组件内联（铁律 8）；
+   宽 min(92vw, 440px) 为功能性几何，由 createOverlay 组件内联（铁律 8）；z 动态发号（ADR-0067）
    高度 min(560px, 82vh) 功能内联，其余视觉样式收敛于此。 */
 .bz-path-picker {
   display: flex;
@@ -1172,7 +1166,6 @@ button.news-close-btn {
     background: var(--background-primary);
     border-radius: 12px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    z-index: 10000;
     padding: 20px;
     max-width: 300px;
     width: 90%;
@@ -1349,7 +1342,6 @@ button.news-close-btn {
     background: var(--background-primary);
     border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    z-index: 10000;
     padding: 20px;
     display: none;
     max-width: 300px;
@@ -1696,10 +1688,7 @@ button.news-close-btn {
 }
 
 /* ==================== 入口页域样式（src/launcher/styles.css） ==================== */
-/* ---- e3 z 家族〔冻结面:CSS〕：入口页遮罩档位类（JS 不再内联 z-index；抬档值由 ux-css 在根样式统一裁定） ---- */
-.bz-launcher-overlay--10100 { z-index: 10100; }
-.bz-launcher-overlay--10101 { z-index: 10101; }
-.bz-launcher-overlay--10200 { z-index: 10200; }
+/* 入口页遮罩 z 已动态发号（ADR-0067）：JS open()/buildPicker 创建时分配 */
 /* ---- 长按编辑反馈（ticket 26）：长按计时中轻压 + 微高亮，避免长度不足提前松手误执行命令 ---- */
 #launcher-grid .launcher-tile.launcher-press-active,
 #launcher-grid.launcher-press-active {
@@ -1852,7 +1841,7 @@ button.news-close-btn {
 #todo-mask {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background: var(--background-modifier-cover);
-    z-index: 9998; display: none;
+    display: none;
 }
 #todo-popup {
     position: fixed; top: 50%; left: 50%;
@@ -1860,7 +1849,7 @@ button.news-close-btn {
     background: var(--background-primary);
     border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-    z-index: 9999; width: 90%; max-width: 700px; max-height: 80vh;
+    width: 90%; max-width: 700px; max-height: 80vh;
     display: none; flex-direction: column;
 }
 #todo-popup .bz-todo-head {
@@ -1888,7 +1877,7 @@ button.news-close-btn {
 #add-todo-mask {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.3);
-    z-index: 10001; display: none;
+    display: none;
 }
 #add-todo-popup {
     position: fixed; top: 50%; left: 50%;
@@ -1896,7 +1885,7 @@ button.news-close-btn {
     background: var(--background-primary);
     border-radius: 12px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    z-index: 10002; padding: 24px;
+    padding: 24px;
     max-width: 400px; width: 90%; max-height: 80vh; overflow-y: auto;
     display: none;
 }
@@ -2019,7 +2008,6 @@ button.news-close-btn {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background: var(--background-modifier-cover);
     backdrop-filter: blur(2px);
-    z-index: 9998;
     visibility: hidden;
 }
 .news-popup {
@@ -2029,7 +2017,6 @@ button.news-close-btn {
     background: var(--background-primary);
     border-radius: 12px;
     box-shadow: 0 12px 40px rgba(0,0,0,0.2);
-    z-index: 9999;
     width: 90%; max-width: 680px; max-height: 80vh;
     display: flex; flex-direction: column;
     font-family: -apple-system, BlinkMacSystemFont, Segoe UI, system-ui, sans-serif;
@@ -2678,8 +2665,8 @@ button.news-close-btn {
       .review-tag.overdue { background:#ff4757; color:white; }
       .review-tag.completed { background:#52c41a; color:white; }
       .review-time { font-size:12px; color:var(--text-faint); cursor:pointer; }
-      /* e3 抬档（冻结面授权）：评级弹窗须压过统一抽屉遮罩 10999/本体 11000 → 11102（避开 companion 11100/11101 档，对表 settings-modal.ts z-index 家族） */
-      .difficulty-dialog { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--background-primary); border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.3); padding:24px; z-index:11102; min-width:220px; display:none; }
+      /* 评级弹窗 z 动态发号（ADR-0067）：review showDifficultyDialog 创建时 allocZ */
+      .difficulty-dialog { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--background-primary); border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.3); padding:24px; min-width:220px; display:none; }
       .difficulty-dialog .diff-btn { display:block; width:100%; padding:10px; margin:6px 0; border:none; border-radius:6px; background:var(--background-secondary); cursor:pointer; font-size:14px; text-align:left; }
       .difficulty-dialog .diff-btn:hover { background:var(--interactive-accent); color:var(--text-on-accent); }
       .review-search-input { padding:4px 10px; border-radius:12px; border:1px solid var(--background-modifier-border); background:var(--background-secondary); color:var(--text-normal); font-size:13px; width:150px; outline:none; }
@@ -2800,8 +2787,7 @@ button.news-close-btn {
   
 
 /* ==================== 番茄钟弹窗（pomodoro，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
-    /* e3：域主弹窗层级收敛——z-index 从 JS 内联移入样式（password 先例 9998） */
-    #pomodoro-mask { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.45); z-index: 9998; }
+    #pomodoro-mask { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.45); } /* z 动态发号（ADR-0067） */
     #pomodoro-popup { width: 320px; padding: 24px; border-radius: 16px; background: var(--background-primary); box-shadow: 0 8px 40px rgba(0,0,0,0.3); text-align: center; position: relative; }
     #pomodoro-ring-svg { width: 160px; height: 160px; margin: 8px auto; display: block; }
     .pomodoro-ring-track { fill: none; stroke: var(--background-modifier-border); stroke-width: 8; }
@@ -2842,10 +2828,9 @@ button.news-close-btn {
 }
 /* e3 抬档：修饰符名保留旧 z 值作稳定挂类契约（JS 引用不变），实际层级见值；
    筛选档保留 0.3 半透明底（与主面板 0.5 区分用，统一去背景的例外，勿删） */
-.bz-lib-overlay--1000 { z-index: 9997; }
-.bz-lib-overlay--1100 { z-index: 9998; background: rgba(0, 0, 0, 0.3); }
-.bz-lib-overlay--11100 { z-index: 11100; }
-.bz-lib-overlay--11101 { z-index: 11101; }
+/* 层级已动态发号（ADR-0067）：--1000/--1100/--11100/--11101 修饰名仅作标识钩子；
+   筛选档保留 0.3 半透明底（与主面板 0.5 区分用，勿删） */
+.bz-lib-overlay--1100 { background: rgba(0, 0, 0, 0.3); }
 
 .bz-lib-modal {
   background: var(--background-primary);
@@ -3250,18 +3235,14 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
  * 本文件是样式源之一，构建时由 scripts/build-css.mjs 聚合成根 styles.css
  * ============================================================ */
 
-/* e3 低 z 族抬档（冻结面授权）：归物本主面板遮罩原 JS 内联 z-index 1000 → 主面板族 9997
-   （对表 settings-modal.ts z-index 家族；配套 JS 由 ux-misc 清内联并挂同款类） */
-.bz-belongings-overlay--1000 { z-index: 9997; }
+/* 层级已动态发号（ADR-0067）：主面板显示时 topifyZ、弹窗创建时 allocZ；--main/--modal/--dropdown 仅作标识钩子 */
 /* 主面板根（legacy id）双保险：JS 仅清内联 z 而暂未挂类时同样兜底抬档 */
-#__gui_wu_ben__ { z-index: 9997; }
+
 
 /* 子弹窗档位（createModalShell 生成：添加/编辑/删除/排序）：JS 已挂 .bz-belongings-overlay--11100/11101 类，
    值压过统一抽屉 10999/11000（companion 档 11100+，与家族表注释一致） */
-.bz-belongings-overlay--11100 { z-index: 11100; }
-.bz-belongings-overlay--11101 { z-index: 11101; }
 /* ==================== 影视域样式（src/movie/styles.css） ==================== */
-/* 影视域遮罩档位已由主仓库 ux-css 裁定（z-index 9997/9998 家族，本域不再定义档位类规则，
+/* 影视域遮罩层级已动态发号（ADR-0067，本域不再定义档位类规则，
    避免与本文件另处已合并的裁定值双规则并存/回退层级体系；JS 侧仅挂 class，由根/域样式接管） */
 /* ---- 影视抽屉头部（与影视卡片一字不差：海报 + 名称 + 徽章 + 影评） ---- */
 .bz-item-sheet-movie-name {
@@ -3287,7 +3268,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 /* ---- 影视小弹窗（评分窗 / 影评窗：遮罩点击 + ESC 关闭，无取消按钮） ---- */
 .bz-movie-tiny-mask {
   position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5);
-  z-index: 12000; display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: center; justify-content: center; /* z 动态发号（ADR-0067） */
 }
 .bz-movie-tiny-modal {
   width: 280px; max-width: 86vw;
@@ -3356,17 +3337,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   color: var(--text-normal); white-space: pre-wrap;
 }
 /* ---- e3 低 z 族抬档（冻结面授权）：影视遮罩档 ----
-   原 JS 内联 z-index（主面板 1000 / 筛选 1100 / 添加·编辑 1200 / 推荐 1300）→ 主面板族 9997/9998；
-   纯层级规则、统一不带背景（压暗由各遮罩内联 CSS 负责）；对表 settings-modal.ts z-index 家族；
-   配套 JS 由 ux-misc 清内联并挂同款类 */
-.bz-movie-overlay--1000 { z-index: 9997; }
-.bz-movie-overlay--1100 { z-index: 9998; }
-.bz-movie-overlay--1200 { z-index: 9998; }
-.bz-movie-overlay--1300 { z-index: 9998; }
-/* 主面板根（legacy id）双保险：JS 仅清内联 z 而暂未挂类时同样兜底抬档 */
-#__yin_ying__ { z-index: 9997; }
-/* 影视报告（movie-report 域无独立样式源，归属影视域文件）：分析弹窗遮罩原内联 1200 → 9998 */
-.bz-movie-report-overlay--1200 { z-index: 9998; }
+   层级已动态发号（ADR-0067）：主面板显示时 topifyZ、弹窗创建时 allocZ；--1000/--1100/--1200/--1300 修饰名仅作标识钩子；压暗由各遮罩内联 CSS 负责 */
 .bz-item-sheet-title {
   font-size: 14px; font-weight: 600; color: var(--text-normal);
   line-height: 1.4; word-break: break-word;
@@ -3596,7 +3567,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 ﻿/* ============================================================
  * 绗簩澶ц剳锛坰econdbrain 鍩燂紝ticket 103 寤?UI / 107 琛ユ牱寮忔枃浠?/ 108 闈㈡澘鎵撶（锛?
  * 鍏ㄩ儴琛ㄩ潰锛氫富闈㈡澘寮圭獥 / 妗岄潰绐勭獥 / 鍙傝€冨崱涓庢偓鍋滈瑙?/ AI 瀵硅瘽 / 绉诲姩绔娊灞?
- * 绫诲悕 bz-sb- 鍓嶇紑锛涘眰绾у琛?settings-modal.ts z-index 瀹舵棌锛?
+ * 层级已动态发号（ADR-0067）：显示时 topifyZ/allocZ，无静态档
  *   绐勭獥/鎶藉眽 9000 < 娴崱路棰勮 9200 < 涓婚潰鏉块伄缃?9998 < 涓婚潰鏉?9999 < 璁剧疆寮圭獥 10050
  * ============================================================ */
 
@@ -3615,7 +3586,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   top: 0;
   right: 0;
   height: 100vh;
-  z-index: 9000;
+  /* z 动态发号（ADR-0067） */
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -3752,7 +3723,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 }
 /* 鎷栧嚭鐙珛娴崱锛歠ixed 瀹氫綅鐢?JS 鍐呰仈鍐欏叆 */
 .bz-sb-ref-card--float {
-  z-index: 9200;
+  /* z 动态发号（ADR-0067）：浮卡化时 allocZ（谁拖谁在上） */
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.24);
   cursor: default;
 }
@@ -3832,7 +3803,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   position: fixed;
   width: 460px;
   max-width: calc(100vw - 24px);
-  z-index: 9200;
+  /* z 动态发号（ADR-0067）：hover 创建时 allocZ */
   background: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
   border-radius: 8px;
@@ -3966,7 +3937,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 .bz-sb-panel-mask {
   position: fixed;
   inset: 0;
-  z-index: 9998;
+  /* z 动态发号（ADR-0067）：open() 时 topifyZ */
   display: none;
   background: rgba(0, 0, 0, 0.42);
 }
@@ -3975,7 +3946,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  z-index: 9999;
+  /* z 动态发号（ADR-0067） */
   width: min(720px, 92vw);
   max-height: 86vh;
   display: none;
@@ -4326,7 +4297,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   right: 0;
   bottom: 0;
   height: 45vh;
-  z-index: 9000;
+  /* z 动态发号（ADR-0067）：expand() 时 topifyZ */
   display: flex;
   flex-direction: column;
   background: var(--background-primary);

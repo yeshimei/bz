@@ -10,6 +10,7 @@
  * 样式全部收敛 src/secondbrain/styles.css；内联仅显隐与动态几何。
  */
 import { escManager } from '../core/esc-manager';
+import { allocZ, topifyZ } from '../core/z-order';
 import { makeDraggable, makeResizable } from './ui-tools';
 
 export class FloatWindow {
@@ -102,6 +103,7 @@ export class FloatWindow {
 
     this.el.appendChild(this.header);
     this.el.appendChild(this.body);
+    topifyZ(this.el); // ADR-0067：创建即显示即发号
     document.body.appendChild(this.el);
 
     // right 贴边定位在首次拖拽/缩放前归一为 left 定位（QA L852-857/L892-897 同语义）
@@ -225,6 +227,7 @@ export class FloatWindow {
   show(): void {
     if (!this.isHidden) return;
     this.isHidden = false;
+    topifyZ(this.el); // ADR-0067：隐藏态恢复 = 重新显示，发号保证可见
     this.el.style.transform = 'translateX(0)';
     this.syncHiddenUI(false);
   }

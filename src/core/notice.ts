@@ -21,7 +21,10 @@
  *   未指定时按文字长度动态计算（≤20 字用默认值，>20 字每多 1 字加 60ms，上限 15s）；
  *   progress 类型默认不自动消失（调用方控制）
  * - 点击通知本体即关闭
+ * - z-index 动态发号（ADR-0067）：每次弹出抬顶容器——toast 永远盖过最新打开的 overlay
  */
+import { allocZ } from './z-order';
+
 export type NoticeType =
   | 'info'
   | 'success'
@@ -411,6 +414,8 @@ export function notify(msg: string, opts?: NoticeOptions): NoticeHandle {
   // 点击本体关闭
   el.addEventListener('click', () => hideNow(n));
 
+  // 抬顶（ADR-0067）：toast 与 overlay 共享动态层级空间，弹出时重发号保证永远可见
+  container.style.zIndex = String(allocZ());
   container.appendChild(el);
 
   live.push(n);

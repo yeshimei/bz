@@ -4,13 +4,9 @@
  * 本文件是样式源之一，构建时由 scripts/build-css.mjs 聚合成根 styles.css
  * ============================================================ */
 
-/* e3 低 z 族抬档（冻结面授权）：归物本主面板遮罩原 JS 内联 z-index 1000 → 主面板族 9997
-   （对表 settings-modal.ts z-index 家族；配套 JS 由 ux-misc 清内联并挂同款类） */
-.bz-belongings-overlay--1000 { z-index: 9997; }
+/* 层级已动态发号（ADR-0067）：主面板显示时 topifyZ、弹窗创建时 allocZ；--main/--modal/--dropdown 仅作标识钩子 */
 /* 主面板根（legacy id）双保险：JS 仅清内联 z 而暂未挂类时同样兜底抬档 */
-#__gui_wu_ben__ { z-index: 9997; }
+
 
 /* 子弹窗档位（createModalShell 生成：添加/编辑/删除/排序）：JS 已挂 .bz-belongings-overlay--11100/11101 类，
    值压过统一抽屉 10999/11000（companion 档 11100+，与家族表注释一致） */
-.bz-belongings-overlay--11100 { z-index: 11100; }
-.bz-belongings-overlay--11101 { z-index: 11101; }

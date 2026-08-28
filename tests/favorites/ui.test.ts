@@ -900,11 +900,12 @@ describe('收藏本修复回归（P0-7 层级 / P1-36 余额状态 / P1-37 并�
     vi.unstubAllGlobals();
   });
 
-  it('P0-7：添加弹窗遮罩/弹窗 zIndex 抬到 11100/11101（压过抽屉遮罩 10999 与抽屉本体 11000）', async () => {
+  it('添加弹窗遮罩/弹窗 z 动态发号（ADR-0067）：遮罩在下、本体在上', async () => {
     const { ui } = await setup();
     ui.build();
-    expect(Number(ui.addMask!.style.zIndex)).toBeGreaterThanOrEqual(11100);
-    expect(Number(ui.addPopup!.style.zIndex)).toBeGreaterThanOrEqual(11100);
+    const mz = parseInt(ui.addMask!.style.zIndex, 10);
+    expect(Number.isFinite(mz)).toBe(true);
+    expect(parseInt(ui.addPopup!.style.zIndex, 10)).toBeGreaterThan(mz); // 后创建/后显示者在上
   });
 
   it('P1-36：查询失败后自动刷新成功 → balanceError 清空（内存+落盘），卡片不再显示错误态', async () => {

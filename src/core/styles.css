@@ -189,7 +189,6 @@ button.news-close-btn {
   position: fixed;
   top: calc(16px + env(safe-area-inset-top, 0px));
   right: 16px;
-  z-index: 100000;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -470,7 +469,6 @@ button.news-close-btn {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.3);
-  z-index: 10250;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -732,7 +730,7 @@ button.news-close-btn {
 
 /* 跟手菜单（右键弹出；定位由 JS 计算锚点+防溢出，样式仅布局与观感；小尺寸紧凑风，无边框无图标底色装饰） */
 .bz-item-menu {
-  position: fixed; z-index: 11000;
+  position: fixed;
   min-width: 132px; padding: 4px;
   background: var(--background-primary);
   border-radius: 8px;
@@ -772,16 +770,12 @@ button.news-close-btn {
 /* 移动端底部抽屉（长按卡片弹出，参照 B 站/网易云：遮罩 + 底部滑入 + 顶部选中条目信息） */
 .bz-item-sheet-mask {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  /* 家族表见 core/settings-modal.ts openSettingsModal 注释：999x 主面板族 / 10001-10060 域模态旧档 /
-     10050 设置弹窗 / 10999-11000 统一抽屉（此处遮罩）/ 11100+ companion（须 >11000）/ 12000 movie 小窗 / 200000 attach 选择器 */
-  z-index: 10999; /* 遮罩必须完整盖住主面板 */
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.4); /* z 动态发号（ADR-0067）：JS openItemSheet 创建时分配 */
   animation: bz-mask-in 0.18s ease-out;
   transition: opacity 0.2s ease; /* 下滑关闭时同步淡出 */
 }
 .bz-item-sheet {
   position: fixed; left: 0; right: 0; bottom: 0;
-  z-index: 11000;
   background: var(--background-primary);
   border-radius: 14px 14px 0 0;
   padding: 10px 14px calc(16px + env(safe-area-inset-bottom));
@@ -848,7 +842,7 @@ button.news-close-btn {
 
 /* ==================== 统一路径选择器（ticket 128，ADR-0061；core/path-picker.ts） ==================== */
 /* 卡片弹窗：标题头 + 搜索框 + 目录列表（滚动）+ 底部 selinfo/清空(多选)/确定；原型 picker-prototype A 变体为视觉基准。
-   z-index 11200/11201（companion 档）与宽 min(92vw, 440px) 为功能性几何，由 createOverlay/组件内联（铁律 8）；
+   宽 min(92vw, 440px) 为功能性几何，由 createOverlay 组件内联（铁律 8）；z 动态发号（ADR-0067）
    高度 min(560px, 82vh) 功能内联，其余视觉样式收敛于此。 */
 .bz-path-picker {
   display: flex;
