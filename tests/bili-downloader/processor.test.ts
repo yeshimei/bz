@@ -1,7 +1,7 @@
 /**
- * 待转文献批量处理器测试（src/bili-downloader/processor.ts）：
- * 严格串行逐部（一次一部）、[bz-step]/[bz-result] 解析、单部失败继续、
- * 中止整批、非桌面端提示。
+ * 文献盒批量处理器测试（src/bili-downloader/processor.ts）：
+ * 严格串行逐部（一次一部）、[bz-step]/[bz-p]/[bz-result] 解析、单部失败继续、
+ * 遇错即停（设置项）、中止整批、非桌面端提示、设置项透传（清晰度/保留视频/输出目录）。
  * 外部进程一律经 window.require 打桩，无真实子进程与网络。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -10,6 +10,7 @@ import { BatchRunner } from '../../src/bili-downloader/processor';
 import { TasksData } from '../../src/bili-downloader/data';
 import type { BiliTask } from '../../src/bili-downloader/types';
 import { setApp } from '../../src/core/app';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 import { MockVault } from '../mock-vault';
 import { clearNotices, getNoticeMessages } from '../mock-obsidian-entry';
 
@@ -53,7 +54,9 @@ describe('BatchRunner', () => {
     vi.restoreAllMocks();
     BatchRunner.running = false;
     BatchRunner.aborted = false;
+    BatchRunner.stoppedFail = false;
     BatchRunner._child = null;
+    setSettingsProvider(() => ({}) as any);
     clearNotices();
   });
 
@@ -61,7 +64,7 @@ describe('BatchRunner', () => {
     (window as any).require = undefined;
     const ev = makeEvents();
     await BatchRunner.runAll([], ev);
-    expect(getNoticeMessages().join('\n')).toContain('仅桌面端可用：待转文献处理需要 Node.js 外部进程');
+    expect(getNoticeMessages().join('\n')).toContain('仅桌面端可用：文献盒处理需要 Node.js 外部进程');
     expect(ev.onBatchDone).not.toHaveBeenCalled();
   });
 
@@ -101,7 +104,11 @@ describe('BatchRunner', () => {
     const [cmd, args, opts] = cpMock.spawn.mock.calls[0];
     expect(cmd).toBe('bili-dl'); // 无 fs.existsSync → 全局 shim
     expect(args[0]).toBe('--batch');
-    expect(JSON.parse(args[1])).toEqual({ url: 'BV1xx411c7mD', start: '1:02:03', end: '1:05:00' });
+    // ADR-0066：设置项随任务 JSON 透传（测试无 provider → 默认值）
+    expect(JSON.parse(args[1])).toEqual({
+      url: 'BV1xx411c7mD', start: '1:02:03', end: '1:05:00',
+      options: { quality: 'highest', keepVideo: true, outputDir: '' },
+    });
     expect(opts.shell).toBe(true);
     child.stdout.emit('data', Buffer.from('[bz-step] 下载中\n[bz-step] 剪辑中\n'));
     child.stdout.emit('data', Buffer.from('[bz-result] {"note":"文献盒/测试.md","video":"CONFIG/APPENDIX/v.mp4"}\n'));
@@ -118,7 +125,7 @@ describe('BatchRunner', () => {
     const child2 = cpMock.spawn.mock.results[1].value;
     child2.emit('close', 0);
     await p;
-    expect(ev.onBatchDone).toHaveBeenCalledWith({ success: 2, failed: 0, aborted: false });
+    expect(ev.onBatchDone).toHaveBeenCalledWith({ success: 2, failed: 0, aborted: false, stopped: false });
     all = await TasksData.loadTasks();
     expect(all.map((x) => x.status).sort()).toEqual(['success', 'success']);
   });
@@ -136,7 +143,7 @@ describe('BatchRunner', () => {
     const child2 = cpMock.spawn.mock.results[1].value;
     child2.emit('close', 0);
     await p;
-    expect(ev.onBatchDone).toHaveBeenCalledWith({ success: 1, failed: 1, aborted: false });
+    expect(ev.onBatchDone).toHaveBeenCalledWith({ success: 1, failed: 1, aborted: false, stopped: false });
     const all = await TasksData.loadTasks();
     const f = all.find((x) => x.id === tasks[0].id)!;
     expect(f.status).toBe('failed');
@@ -155,7 +162,7 @@ describe('BatchRunner', () => {
     expect(all[0].reason).toContain('未找到 bili-dl');
     expect(all[1].status).toBe('failed');
     expect(all[1].reason).toContain('未找到 bili-dl');
-    expect(ev.onBatchDone).toHaveBeenCalledWith({ success: 0, failed: 2, aborted: false });
+    expect(ev.onBatchDone).toHaveBeenCalledWith({ success: 0, failed: 2, aborted: false, stopped: false });
   });
 
   it('中止整批：当前项标记已中止、kill 子进程、未开始项保持待处理', async () => {
@@ -170,7 +177,7 @@ describe('BatchRunner', () => {
     await tick();
     expect(cpMock.spawn).toHaveBeenCalledTimes(1); // 第二部不再启动
     await p;
-    expect(ev.onBatchDone).toHaveBeenCalledWith({ success: 0, failed: 1, aborted: true });
+    expect(ev.onBatchDone).toHaveBeenCalledWith({ success: 0, failed: 1, aborted: true, stopped: false });
     const all = await TasksData.loadTasks();
     expect(all.find((x) => x.id === tasks[0].id)!.status).toBe('failed');
     expect(all.find((x) => x.id === tasks[0].id)!.reason).toBe('已中止');
@@ -185,5 +192,61 @@ describe('BatchRunner', () => {
     expect(cpMock.spawn).not.toHaveBeenCalled();
     expect(ev.onBatchDone).not.toHaveBeenCalled();
     BatchRunner.running = false;
+  });
+
+  it('[bz-p] 进度行解析：onTaskProgress 第三参带阶段百分比，瞬态不落库', async () => {
+    const tasks = await seedTasks();
+    const seen: Array<{ step: string; prog: any }> = [];
+    const ev = {
+      onTaskProgress: (t: BiliTask, s: string, p?: any) => seen.push({ step: s, prog: p ?? null }),
+      onTaskDone: vi.fn(),
+      onBatchDone: vi.fn(),
+    };
+    const p = BatchRunner.runAll(tasks, ev);
+    await tick();
+    child.stdout.emit('data', Buffer.from('[bz-step] 下载中\n'));
+    child.stdout.emit('data', Buffer.from('[bz-p] {"phase":"download","pct":42.5}\n'));
+    child.stdout.emit('data', Buffer.from('[bz-p] {"phase":"download","pct":88}\n'));
+    child.stdout.emit('data', Buffer.from('[bz-p] {"phase":"download","pct":null}\n'));
+    await tick();
+    // 进度事件三连：step 文案沿用当前步骤，pct 依次 42.5 / 88 / null
+    const progs = seen.filter((x) => x.prog && x.prog.phase === 'download');
+    expect(progs.map((x) => x.prog.pct)).toEqual([42.5, 88, null]);
+    // 进度是瞬态：storage 里 reason 仍是步骤文案（未因进度行变化）
+    const all = await TasksData.loadTasks();
+    expect(all[0].reason).toBe('下载中');
+    BatchRunner.abort();
+    child.emit('close', 0);
+    await p;
+  });
+
+  it('遇错即停（设置开启）：首部失败后不再 spawn 剩余，onBatchDone stopped:true', async () => {
+    setSettingsProvider(() => ({ biliStopOnFailure: true }) as any);
+    const tasks = await seedTasks();
+    const ev = makeEvents();
+    const p = BatchRunner.runAll(tasks, ev);
+    await tick();
+    expect(cpMock.spawn).toHaveBeenCalledTimes(1);
+    child.emit('close', 1); // 首部失败
+    await tick();
+    expect(cpMock.spawn).toHaveBeenCalledTimes(1); // 不再跑第二部
+    await p;
+    expect(ev.onBatchDone).toHaveBeenCalledWith({ success: 0, failed: 1, aborted: false, stopped: true });
+    const all = await TasksData.loadTasks();
+    expect(all[0].status).toBe('failed');
+    expect(all[1].status).toBe('pending'); // 未开始项保持待处理
+  });
+
+  it('设置项透传：quality/keepVideo/outputDir 随任务 JSON 下发', async () => {
+    setSettingsProvider(() => ({ biliQuality: '720', biliKeepVideo: false, biliOutputDir: 'D:/videos' }) as any);
+    const tasks = await TasksData.loadTasks();
+    if (tasks.length === 0) await TasksData.addTask({ url: 'BV1xx411c7mD' });
+    const ev = makeEvents();
+    const p = BatchRunner.runAll(await TasksData.loadTasks(), ev);
+    await tick();
+    const [, args] = cpMock.spawn.mock.calls[0];
+    expect(JSON.parse(args[1]).options).toEqual({ quality: '720', keepVideo: false, outputDir: 'D:/videos' });
+    child.emit('close', 0);
+    await p;
   });
 });

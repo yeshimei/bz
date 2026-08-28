@@ -1,11 +1,12 @@
 /**
- * 待转文献面板 UI 测试（src/bili-downloader/ui.ts）：
- * 主窗口结构、空态/行渲染与状态徽标、添加/编辑弹窗与校验、点击分流、
- * 移动端仅暂存（隐藏处理按钮）、destroy 清理。
+ * 文献盒面板 UI 测试（src/bili-downloader/ui.ts）：
+ * 主窗口结构（正名「文献盒」+ ⬇️ 下载按钮钩子）、空态/行渲染与状态徽标、添加/编辑弹窗与校验、
+ * 点击分流、行内详细进度（[bz-step]/[bz-p] 时间线+百分比+耗时）、移动端仅暂存、destroy 清理。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { EventEmitter } from 'events';
 import { Platform } from 'obsidian';
-import { UIManager } from '../../src/bili-downloader/ui';
+import { UIManager, biliTasksSettingsSchema } from '../../src/bili-downloader/ui';
 import { TasksData } from '../../src/bili-downloader/data';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
@@ -26,7 +27,7 @@ function makeApp(vault: MockVault) {
   return { app, openFile };
 }
 
-describe('待转文献面板 UI', () => {
+describe('文献盒面板 UI', () => {
   let vault: MockVault;
   let openFile: ReturnType<typeof vi.fn>;
   let ui: UIManager;
@@ -46,15 +47,17 @@ describe('待转文献面板 UI', () => {
     document.body.innerHTML = '';
   });
 
-  it('showMain 渲染主窗口：头部行/关闭按钮/空态提示', async () => {
+  it('showMain 渲染主窗口：标题文献盒/头部行/关闭按钮/空态提示', async () => {
     ui.showMain();
     await vi.waitFor(() => expect(document.getElementById('bili-tasks-popup')).toBeTruthy());
     const popup = document.getElementById('bili-tasks-popup')!;
+    expect(popup.querySelector('.bz-win-head h3')!.textContent).toBe('文献盒');
     expect(popup.querySelector('.bz-win-head')).toBeTruthy();
     expect(popup.querySelector('.bz-win-close')).toBeTruthy();
     expect(popup.querySelector('#bili-btn-settings')).toBeTruthy();
     expect(popup.querySelector('#bili-btn-run')).toBeTruthy();
-    await vi.waitFor(() => expect(document.getElementById('bili-tasks-list')!.textContent).toContain('暂无待转文献'));
+    expect(popup.querySelector('#bili-btn-download')).toBeTruthy();
+    await vi.waitFor(() => expect(document.getElementById('bili-tasks-list')!.textContent).toContain('暂无转文献任务'));
   });
 
   it('行渲染：状态徽标（待处理/处理中/成功/失败）+ 时间范围 + 进度文案', async () => {
@@ -149,13 +152,62 @@ describe('待转文献面板 UI', () => {
     expect(openFile).toHaveBeenCalledTimes(1);
   });
 
-  it('移动端仅暂存：处理/中止/清空按钮隐藏', () => {
+  it('移动端仅暂存：处理/下载/中止/清空按钮隐藏', () => {
     ui.destroy();
     (Platform as any).isMobile = true;
     ui = new UIManager({} as any);
     expect((document.getElementById('bili-btn-run') as HTMLButtonElement).style.display).toBe('none');
+    expect((document.getElementById('bili-btn-download') as HTMLButtonElement).style.display).toBe('none');
     expect((document.getElementById('bili-btn-abort') as HTMLButtonElement).style.display).toBe('none');
     expect((document.getElementById('bili-btn-clear') as HTMLButtonElement).style.display).toBe('none');
+  });
+
+  it('⬇️ 下载按钮 → 触发 hooks.onDownload（弹出原 B站下载弹窗入口，ADR-0066）', () => {
+    ui.destroy();
+    const onDownload = vi.fn();
+    ui = new UIManager({} as any, { onDownload });
+    (document.getElementById('bili-btn-download') as HTMLButtonElement).click();
+    expect(onDownload).toHaveBeenCalledTimes(1);
+  });
+
+  it('设置 schema（ADR-0066）：移动端组 + 文献盒处理组五项设置', () => {
+    const schema = biliTasksSettingsSchema();
+    expect(schema.groups).toHaveLength(2);
+    const rows = schema.groups[1].rows.map((r: any) => r.name);
+    expect(rows).toEqual(['详细进度提示', '保留视频原件', '下载清晰度', '遇错即停', '输出目录']);
+    expect((schema.groups[1].rows[2] as any).options).toHaveLength(3); // 清晰度三档
+  });
+
+  it('批量处理中行内渲染：步骤时间线 + 百分比 + 耗时（[bz-step]/[bz-p] 驱动，ADR-0066）', async () => {
+    // 打桩 child_process：spawn 返回可控子进程
+    const origRequire = (window as any).require;
+    class FC extends EventEmitter { stdout = new EventEmitter(); stderr = new EventEmitter(); kill = vi.fn(); }
+    const child = new FC();
+    (window as any).require = () => ({ spawn: vi.fn(() => child) });
+    try {
+      ui.showMain();
+      await new Promise((r) => setTimeout(r, 0));
+      await TasksData.addTask({ url: 'BV1xx411c7mD' });
+      await ui.refreshPanel();
+      (document.getElementById('bili-btn-run') as HTMLButtonElement).click();
+      await vi.waitFor(() => expect(document.querySelector('.bz-bili-progress-box')).toBeTruthy());
+      child.stdout.emit('data', Buffer.from('[bz-step] 解析中\n[bz-step] 下载中\n'));
+      child.stdout.emit('data', Buffer.from('[bz-p] {"phase":"download","pct":42}\n'));
+      await vi.waitFor(() => {
+        const box = document.querySelector('.bz-bili-progress-box')!;
+        expect(box.textContent).toContain('解析中');
+        expect(box.textContent).toContain('下载中');
+        expect(box.textContent).toContain('42%');
+        expect(box.textContent).toContain('⌛');
+      });
+      // 已完成步骤带 ✓（时间线形态）
+      const done = document.querySelector('.bz-bili-step-done')!;
+      expect(done.textContent).toContain('✓ 解析中');
+    } finally {
+      // 无论断言成败都收尾整批（防 BatchRunner.running 卡死重试）
+      child.emit('close', 1);
+      (window as any).require = origRequire;
+    }
   });
 
   it('destroy 清空全部 DOM 与键盘监听', async () => {

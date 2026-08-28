@@ -105,8 +105,8 @@ test('runBatch：整片全流程（start/end 为 null）→ 交付 + 文献笔�
   const r = await core.runBatch({ url: 'https://www.bilibili.com/video/BV1GJ411x7h7', start: null, end: null }, {
     ...env.deps, conf: env.conf, onStep: s => steps.push(s),
   })
-  // 步骤行：无剪辑
-  assert.deepEqual(steps, ['解析中', '下载中', '转文字中', 'AI 生成文献笔记中'])
+  // 步骤行：无剪辑；交付中 + 笔记落盘中（v2 新增步骤）
+  assert.deepEqual(steps, ['解析中', '下载中', '转文字中', 'AI 生成文献笔记中', '交付中', '笔记落盘中'])
   // 结果字段：vault 相对路径
   assert.equal(r.note, '文献盒/批处理文献.md')
   assert.equal(r.video, 'CONFIG/APPENDIX/批处理测试视频_BV1GJ411x7h7.mp4')
@@ -212,6 +212,63 @@ test('runBatch：交付目录不在 vault 下 → video 退化为绝对路径（
   })
   assert.equal(r.video, path.resolve(outside, '批处理测试视频_BV1GJ411x7h7.mp4'))
   assert.equal(r.note, '文献盒/批处理文献.md')
+})
+
+test('runBatch：进度行 [bz-p]——转写哨兵 100% + AI 块级 100%；步骤含交付中/笔记落盘中', async () => {
+  const env = makeEnv()
+  env.seedCache('FAKE')
+  const pgs = []
+  const steps = []
+  await core.runBatch({ url: 'BV1GJ411x7h7', start: null, end: null }, {
+    ...env.deps, conf: env.conf, onStep: s => steps.push(s), onProgress: p => pgs.push(p),
+  })
+  // 交付/落盘步骤齐全
+  assert.ok(steps.includes('交付中'))
+  assert.ok(steps.includes('笔记落盘中'))
+  // 转写完成哨兵 → transcribe 100（stubRunPython 一次性吐文本+哨兵）
+  assert.ok(pgs.some(p => p.phase === 'transcribe' && p.pct === 100), JSON.stringify(pgs))
+  // AI 块级：单块 → ai 100
+  assert.ok(pgs.some(p => p.phase === 'ai' && p.pct === 100), JSON.stringify(pgs))
+  // pct 契约：0-100 数值或 null（不确定绝不假报）
+  for (const p of pgs) assert.ok(p.pct === null || (Number.isFinite(p.pct) && p.pct >= 0 && p.pct <= 100), JSON.stringify(p))
+})
+
+test('runBatch：options.keepVideo=false → 跳过交付（video=null、无视频双链、不落文件）', async () => {
+  const env = makeEnv()
+  env.seedCache('FAKE')
+  const steps = []
+  const r = await core.runBatch({ url: 'BV1GJ411x7h7', start: null, end: null, options: { keepVideo: false } }, {
+    ...env.deps, conf: env.conf, onStep: s => steps.push(s),
+  })
+  assert.equal(r.video, null)
+  assert.equal(r.videoPath, null)
+  assert.ok(!steps.includes('交付中'), JSON.stringify(steps))
+  assert.ok(steps.includes('笔记落盘中'))
+  // 交付目录无产物
+  assert.equal(fs.readdirSync(env.outDir).length, 0)
+  // 笔记无视频双链
+  const md = fs.readFileSync(path.join(env.vault, r.note), 'utf8')
+  assert.ok(!md.includes('![[CONFIG'))
+})
+
+test('runBatch：options.quality=720 → 命中 720 缓存键（清晰度档生效）', async () => {
+  const env = makeEnv()
+  // 只预置 720 档缓存：若 quality 未生效 → 走 1080 缓存键未命中 → 真实下载必败
+  const cached = core.cachePath(env.conf, core.cacheKey('BV1GJ411x7h7', 1001, 720))
+  fs.mkdirSync(path.dirname(cached), { recursive: true })
+  fs.writeFileSync(cached, 'FAKE-720')
+  const r = await core.runBatch({ url: 'BV1GJ411x7h7', start: null, end: null, options: { quality: '720' } }, { ...env.deps, conf: env.conf })
+  assert.equal(r.video, 'CONFIG/APPENDIX/批处理测试视频_BV1GJ411x7h7.mp4')
+})
+
+test('runBatch：options.outputDir 覆盖交付目录（vault 外绝对路径，默认目录不落产物）', async () => {
+  const env = makeEnv()
+  env.seedCache('FAKE')
+  const outside = path.join(tmp, 'override-' + Math.random().toString(36).slice(2))
+  const r = await core.runBatch({ url: 'BV1GJ411x7h7', start: null, end: null, options: { outputDir: outside } }, { ...env.deps, conf: env.conf })
+  assert.equal(r.video, path.resolve(outside, '批处理测试视频_BV1GJ411x7h7.mp4'))
+  assert.ok(fs.existsSync(path.join(outside, '批处理测试视频_BV1GJ411x7h7.mp4')))
+  assert.equal(fs.readdirSync(env.outDir).length, 0)
 })
 
 test('runBatch：缓存未命中且下载失败 → 报错（get 注入连接失败）', async () => {

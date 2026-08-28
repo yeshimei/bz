@@ -93,6 +93,10 @@ export const ROUTING_RULES: Record<string, RoutingRule> = {
   'library:added':      { stream: 'behavior' },
   'library:removed':    { stream: 'behavior' },
 
+  // === 文献盒（bili-downloader，ADR-0066：用户拍板仅行为流、不向量化） ===
+  'bili-downloader:added':     { stream: 'behavior' },
+  'bili-downloader:converted': { stream: 'behavior' },
+
   // === 反思 ===
   'reflection:insight': { stream: 'memory', importance: 0.90, defaultEmotion: 'calm', credibility: 0.9 },
   'reflection:digest':  { stream: 'memory', importance: 0.85, defaultEmotion: 'calm', credibility: 0.9 },

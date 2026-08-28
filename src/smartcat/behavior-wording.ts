@@ -221,6 +221,13 @@ registerEntity('dossier', {
 
 WORDING['secondbrain:*'] = (s) => (s.name ? `你在第二大脑记录了「${s.name}」` : '你在第二大脑有新的记录');
 
+// ==================== bili（文献盒：B站视频转文献，ADR-0066） ====================
+
+registerEntity('bili', {
+  added: (s) => `你添加了转文献任务（${s.name || 'BV 视频'}）`,
+  converted: (s) => `你把《${s.name || '一部视频'}》转成了文献`,
+}, ['bili-downloader'], (s) => `转文献动态：${s.name || '一部视频'}`);
+
 /**
  * 行为流条目 → 人类文案（渲染时生成，纯函数）。
  * 1) 有 structured（metadata.entityType）→ 按 `entityType:action` 精确模板 → 实体级默认（`entityType:*`）；

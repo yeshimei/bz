@@ -5,11 +5,15 @@
 //   bili-dl             启动本地服务 + 自动打开浏览器
 //   bili-dl --port 8080 指定端口（默认随机空闲端口）
 //   bili-dl --no-open   只打印地址，不自动开浏览器
-//   bili-dl --batch '<json>'   无头批处理（Obsidian 插件「待转文献」面板后台引擎）
-//       json = {"url":"…","start":"mm:ss|hh:mm:ss(.S)|null","end":"…"}；start/end 都 null = 整片不剪辑
-//       stdout 逐步打 [bz-step] 行（解析中 → 下载中 → 剪辑中(有起止才跑) → 转文字中 → AI 生成文献笔记中）；
-//       成功末尾一行 [bz-result] {"note":"文献盒/标题.md","video":"CONFIG/APPENDIX/xxx.mp4"}
-//       （note/video 为 vault 相对路径；不在 vault 下为绝对路径）并 exit 0；
+//   bili-dl --batch '<json>'   无头批处理（Obsidian 插件「文献盒」面板后台引擎）
+//       json = {"url":"…","start":"mm:ss|hh:mm:ss(.S)|null","end":"…","options":{...}}；start/end 都 null = 整片不剪辑
+//       options（可选，文献盒设置项）：quality="720"|"1080"|"highest"、keepVideo=false（跳过交付只出笔记）、
+//       outputDir（覆盖交付目录，空跟随 ~/.bilibili-dl.json）
+//       stdout 逐步打 [bz-step] 行（解析中 → 下载中 → 剪辑中(有起止才跑) → 转文字中 → AI 生成文献笔记中
+//       → 交付中(keepVideo=false 时跳过) → 笔记落盘中）；
+//       进度打 [bz-p] 行（{"phase":"download|trim|transcribe|ai","pct":0-100|null}，300ms 节流，pct=null 为不确定）；
+//       成功末尾一行 [bz-result] {"note":"文献盒/标题.md","video":"CONFIG/APPENDIX/xxx.mp4"|null}
+//       （note/video 为 vault 相对路径；不在 vault 下为绝对路径；video null = 未交付保留）并 exit 0；
 //       任一步失败 stderr 给中文原因（含缺失前置引导，如 whisper 环境 / AI key）并 exit 1，不写 [bz-result]。
 //       --batch 模式不打印横幅、不起服务，避免污染协议。
 // 实例复用（ticket 117）: 未指定 --port 时，若端口文件 ~/.bilibili-dl-port
@@ -54,6 +58,8 @@ function runBatchMode(rawJson) {
     conf: cfg.loadConfig(),
     cookie: cfg.loadCookie(),
     onStep: name => console.log(`[bz-step] ${name}`),
+    // 进度行：phase + 0-100 整数百分比（null = 不确定，绝不假报）
+    onProgress: p => console.log(`[bz-p] ${JSON.stringify({ phase: p.phase || 'step', pct: Number.isFinite(p.pct) ? Math.round(p.pct) : null })}`),
     tmpDir: tmp,
   }).then(r => {
     try { fs.rmSync(tmp, { recursive: true, force: true }) } catch {}

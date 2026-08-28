@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * 待转文献数据层测试（视频转文献，bili-downloader 域升级）：
+ * 文献盒数据层测试（视频转文献，bili-downloader 域；ADR-0066 正名）：
  * 时间格式校验、bili-tasks.json CRUD、状态流转、清空已完成（只清成功）。
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';

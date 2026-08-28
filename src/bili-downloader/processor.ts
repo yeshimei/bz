@@ -1,12 +1,14 @@
 /**
- * 待转文献批量处理器（视频转文献，bili-downloader 域升级）
+ * 文献盒批量处理器（视频转文献，bili-downloader 域；面板正名「文献盒」，ADR-0066）
  * 串行逐部：对「待处理」任务按列表顺序 spawn 工具无头批处理命令
  * （node <tools>/cli.js --batch '<json>' 或全局 bili-dl --batch），
  * _runOne 返回「子进程终结」Promise，循环内 await —— 严格一次一部；
- * 解析 stdout 步骤行（[bz-step] 名称 / [bz-result] {note,video}）驱动 UI 行内进度；
- * 单部失败继续剩余、失败项可重试；abort() 杀死当前子进程并中止整批。
+ * 解析 stdout 步骤行（[bz-step] 名称 / [bz-p] {"phase","pct"} 进度 / [bz-result] {note,video}）
+ * 驱动 UI 行内进度与阶段百分比；步骤文案落库（刷新面板重读可见）+ 进度走内存实时推送；
+ * 单部失败继续剩余（或按设置「遇错即停」中断）、失败项可重试；abort() 杀死当前子进程并中止整批。
  */
 import { notice } from '../core/notice';
+import { tryGetSettings } from '../core/settings-provider';
 import { TasksData } from './data';
 import type { BiliTask } from './types';
 
@@ -16,16 +18,26 @@ const INSTALL_HINT = '请先运行 npm install -g @jwbz/bili-downloader';
 
 const STEP_RE = /^\[bz-step\]\s*(.+)$/;
 const RESULT_RE = /^\[bz-result\]\s*(\{.*\})$/;
+/** [bz-p] {"phase":"download","pct":35}——阶段百分比进度行（pct 0-100，null=该阶段不确定，绝不假报） */
+const PROGRESS_RE = /^\[bz-p\]\s*(\{.*\})$/;
 
 export interface BatchSummary {
   success: number;
   failed: number;
   aborted: boolean;
+  /** 遇错即停（设置 biliStopOnFailure 触发）：失败后不再处理剩余，未开始项保持待处理 */
+  stopped: boolean;
+}
+
+/** 阶段百分比进度（[bz-p] 行解析结果；phase null = 未知阶段） */
+export interface BiliProgress {
+  phase: string | null;
+  pct: number | null;
 }
 
 export interface BatchEvents {
-  /** 任务行进度更新（步骤文案已写入 task.reason） */
-  onTaskProgress(task: BiliTask, stepText: string): void;
+  /** 任务行进度更新（步骤文案已写入 task.reason；progress 为 [bz-p] 行解析出的阶段百分比，无则 null） */
+  onTaskProgress(task: BiliTask, stepText: string, progress?: BiliProgress | null): void;
   /** 任务终态（成功/失败），task 已持久化 */
   onTaskDone(task: BiliTask): void;
   /** 整批结束 */
@@ -67,6 +79,8 @@ function nowTs(): string {
 export const BatchRunner = {
   running: false,
   aborted: false,
+  /** 遇错即停（设置 biliStopOnFailure）：当前任务失败后中断整批，未开始项保持待处理 */
+  stoppedFail: false,
   _child: null as any,
   _cp: null as any,
 
@@ -77,19 +91,21 @@ export const BatchRunner = {
 
   /**
    * 串行处理全部「待处理」任务（按数组顺序，一次一部）。
-   * 已成功/失败项不动；失败项不阻塞后续待处理项。
+   * 已成功/失败项不动；失败项默认不阻塞后续待处理项（遇错即停设置开启时失败后中断）。
    */
   async runAll(tasks: BiliTask[], events: BatchEvents): Promise<void> {
     if (this.running) return;
     this.running = true;
     this.aborted = false;
+    this.stoppedFail = false;
     const cp = getChildProcess();
     this._cp = cp;
     if (!cp) {
-      notice('仅桌面端可用：待转文献处理需要 Node.js 外部进程', 'error');
+      notice('仅桌面端可用：文献盒处理需要 Node.js 外部进程', 'error');
       this.running = false;
       return;
     }
+    const stopOnFailure = tryGetSettings().biliStopOnFailure === true;
     try {
       let success = 0;
       let failed = 0;
@@ -97,9 +113,12 @@ export const BatchRunner = {
         if (this.aborted) break;
         // 只处理待处理项；失败项等手动重试
         if (task.status !== 'pending') continue;
-        await this._runOne(cp, task, events, (ok: boolean) => { if (ok) success++; else failed++; });
+        let itemFailed = false;
+        await this._runOne(cp, task, events, (ok: boolean) => { if (ok) success++; else { failed++; itemFailed = true; } });
+        // 遇错即停：单条失败后停止整批（不 kill 子进程——已结束；未开始项保持待处理）
+        if (itemFailed && stopOnFailure) { this.stoppedFail = true; break; }
       }
-      events.onBatchDone({ success, failed, aborted: this.aborted });
+      events.onBatchDone({ success, failed, aborted: this.aborted, stopped: this.stoppedFail });
     } finally {
       this.running = false;
     }
@@ -111,10 +130,21 @@ export const BatchRunner = {
     try { this._child?.kill?.(); } catch { /* 已退出 */ }
   },
 
-  /** 单部执行：spawn → 解析步骤行 → 终态落库；Promise 在子进程终结（close/error）时 resolve */
+  /** 单部执行：spawn → 解析步骤/进度行 → 终态落库；Promise 在子进程终结（close/error）时 resolve */
   _runOne(cp: any, task: BiliTask, events: BatchEvents, onEnd: (ok: boolean) => void): Promise<void> {
     return new Promise((resolve) => {
-      const taskJson = JSON.stringify({ url: task.url, start: task.start ?? null, end: task.end ?? null });
+      // 文献盒设置项透传（ADR-0066）：清晰度 / 保留视频原件 / 输出目录覆盖；工具缺省 = 跟随工具配置
+      const s = tryGetSettings();
+      const taskJson = JSON.stringify({
+        url: task.url,
+        start: task.start ?? null,
+        end: task.end ?? null,
+        options: {
+          quality: (s && s.biliQuality) || 'highest',
+          keepVideo: !s || s.biliKeepVideo !== false,
+          outputDir: (s && s.biliOutputDir ? String(s.biliOutputDir).trim() : ''),
+        },
+      });
       void TasksData.updateTask(task.id, { status: 'processing', reason: '启动中…', processedAt: null }).then(() => {
         task.status = 'processing';
         task.reason = '启动中…';
@@ -148,7 +178,20 @@ export const BatchRunner = {
             task.reason = stepText;
             // 步骤文案必须落库：refreshPanel 重读 storage 渲染，仅改内存会一直显示「启动中…」
             void TasksData.updateTask(task.id, { reason: stepText });
-            events.onTaskProgress({ ...task }, stepText);
+            events.onTaskProgress({ ...task }, stepText, null);
+            continue;
+          }
+          // 阶段百分比进度行：走内存实时推送（不落库——瞬态值，刷新面板时由终态/步骤文案兜底）
+          m = line.match(PROGRESS_RE);
+          if (m) {
+            try {
+              const p = JSON.parse(m[1]);
+              const progress: BiliProgress = {
+                phase: p && typeof p.phase === 'string' ? p.phase : null,
+                pct: p && Number.isFinite(p.pct) ? Number(p.pct) : null,
+              };
+              events.onTaskProgress({ ...task }, task.reason || '', progress);
+            } catch { /* 忽略坏进度行 */ }
             continue;
           }
           m = line.match(RESULT_RE);
