@@ -26,8 +26,8 @@ export interface RoutingRule {
  */
 export const ROUTING_RULES: Record<string, RoutingRule> = {
   // === 日记 ===
-  'diary:created':   { stream: 'memory', importance: 0.85, defaultEmotion: 'calm', credibility: 0.9 },
-  'diary:updated':   { stream: 'memory', importance: 0.80, defaultEmotion: 'calm', credibility: 0.9 },
+  'diary:created':   { stream: 'behavior', importance: 0.85, defaultEmotion: 'calm', credibility: 0.9 },
+  'diary:updated':   { stream: 'behavior', importance: 0.80, defaultEmotion: 'calm', credibility: 0.9 },
   'diary:deleted':   { stream: 'behavior' },
 
   // === 闪念 ===
@@ -36,21 +36,21 @@ export const ROUTING_RULES: Record<string, RoutingRule> = {
   'flash:deleted':   { stream: 'behavior' },
 
   // === 诗 ===
-  'poem:created':    { stream: 'memory', importance: 0.75, defaultEmotion: 'calm', credibility: 0.9 },
-  'poem:updated':    { stream: 'memory', importance: 0.70, defaultEmotion: 'calm', credibility: 0.9 },
+  'poem:created':    { stream: 'behavior', importance: 0.75, defaultEmotion: 'calm', credibility: 0.9 },
+  'poem:updated':    { stream: 'behavior', importance: 0.70, defaultEmotion: 'calm', credibility: 0.9 },
   'poem:deleted':    { stream: 'behavior' },
 
   // === 信 ===
-  'letter:created':  { stream: 'memory', importance: 0.80, defaultEmotion: 'calm', credibility: 0.9 },
-  'letter:updated':  { stream: 'memory', importance: 0.75, defaultEmotion: 'calm', credibility: 0.9 },
+  'letter:created':  { stream: 'behavior', importance: 0.80, defaultEmotion: 'calm', credibility: 0.9 },
+  'letter:updated':  { stream: 'behavior', importance: 0.75, defaultEmotion: 'calm', credibility: 0.9 },
   'letter:deleted':  { stream: 'behavior' },
 
   // === 影视 ===
-  'movie:want':      { stream: 'memory', importance: 0.60, defaultEmotion: 'curious', credibility: 0.6 },
-  'movie:watching':  { stream: 'memory', importance: 0.65, defaultEmotion: 'focused', credibility: 0.6 },
-  'movie:watched':   { stream: 'memory', importance: 0.85, defaultEmotion: 'happy',   credibility: 0.6 },
-  'movie:rated':     { stream: 'memory', importance: 0.70, defaultEmotion: 'happy',   credibility: 0.6 },
-  'movie:reviewed':  { stream: 'memory', importance: 0.75, defaultEmotion: 'happy',   credibility: 0.6 },
+  'movie:want':      { stream: 'behavior', importance: 0.60, defaultEmotion: 'curious', credibility: 0.6 },
+  'movie:watching':  { stream: 'behavior', importance: 0.65, defaultEmotion: 'focused', credibility: 0.6 },
+  'movie:watched':   { stream: 'behavior', importance: 0.85, defaultEmotion: 'happy',   credibility: 0.6 },
+  'movie:rated':     { stream: 'behavior', importance: 0.70, defaultEmotion: 'happy',   credibility: 0.6 },
+  'movie:reviewed':  { stream: 'behavior', importance: 0.75, defaultEmotion: 'happy',   credibility: 0.6 },
   'movie:deleted':   { stream: 'behavior' },
 
   // === 备忘录 ===
@@ -80,17 +80,17 @@ export const ROUTING_RULES: Record<string, RoutingRule> = {
   'belongings:deleted': { stream: 'behavior' },
 
   // === 番茄钟 ===
-  'pomodoro:focus-done': { stream: 'memory', importance: 0.70, defaultEmotion: 'focused', credibility: 0.6 },
+  'pomodoro:focus-done': { stream: 'behavior', importance: 0.70, defaultEmotion: 'focused', credibility: 0.6 },
 
   // === 聊天 ===
-  'chat:said': { stream: 'memory', importance: 0.75, defaultEmotion: 'calm', credibility: 0.5 },
+  'chat:said': { stream: 'behavior', importance: 0.75, defaultEmotion: 'calm', credibility: 0.5 },
 
   // === 书库 ===
-  'library:started':    { stream: 'memory', importance: 0.70, defaultEmotion: 'curious',  credibility: 0.6 },
-  'library:completed':  { stream: 'memory', importance: 0.85, defaultEmotion: 'happy',    credibility: 0.6 },
-  'library:progressed': { stream: 'memory', importance: 0.60, defaultEmotion: 'focused',  credibility: 0.6 },
-  'library:highlight':  { stream: 'memory', importance: 0.65, defaultEmotion: 'focused',  credibility: 0.7 },
-  'library:thought':    { stream: 'memory', importance: 0.70, defaultEmotion: 'focused',  credibility: 0.75 },
+  'library:started':    { stream: 'behavior', importance: 0.70, defaultEmotion: 'curious',  credibility: 0.6 },
+  'library:completed':  { stream: 'behavior', importance: 0.85, defaultEmotion: 'happy',    credibility: 0.6 },
+  'library:progressed': { stream: 'behavior', importance: 0.60, defaultEmotion: 'focused',  credibility: 0.6 },
+  'library:highlight':  { stream: 'behavior', importance: 0.65, defaultEmotion: 'focused',  credibility: 0.7 },
+  'library:thought':    { stream: 'behavior', importance: 0.70, defaultEmotion: 'focused',  credibility: 0.75 },
   'library:added':      { stream: 'behavior' },
   'library:removed':    { stream: 'behavior' },
 

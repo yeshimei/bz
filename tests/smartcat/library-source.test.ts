@@ -299,7 +299,13 @@ const waitFor = (pred: () => boolean, timeout = 10000, step = 30) =>
     };
     tick();
   });
-const readStream = (): any[] => __getSmartcatInternals().data.memory.memoryStream;
+// ADR-0069：library 事件类全走 behavior 流，富描述在 metadata.snapshot.summary——
+// 这里映射出与旧记忆流条目同形的 { description, source } 视图，既有断言口径不变
+const readStream = (): any[] =>
+  __getSmartcatInternals().data.memory.behaviorStream.map((m: any) => ({
+    ...m,
+    description: m.metadata?.snapshot?.summary ?? m.description,
+  }));
 const WEAVE_PATH = 'CONFIG/STORAGE/weave-data.json';
 
 /** weave 文件先写入 vault → ensureSmartCat（首快照基线）→ 返回 */

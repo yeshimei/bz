@@ -42,43 +42,39 @@ beforeEach(() => {
   saver = vi.fn(async (d) => { data = d; });
 });
 
-describe('双写：memory 路由事件（ticket 129）', () => {
-  it('diary:created → 行为流 + 记忆流各一条，独立 id/时间戳、互不标记', async () => {
+describe('双写：memory 路由事件（ticket 129）→ ADR-0069 后事件类全部走行为流', () => {
+  it('diary:created → 仅行为流一条（memoryStream 不新增），条目字段完整', async () => {
     const m = make();
     const structured = { entityType: 'diary_entry', action: 'created', name: '2026-08-25 11:00' };
     const res = await m.addObservation('diary', { structured });
-    const memory = res as MemoryStreamEntry | null;
-    expect(memory).not.toBeNull();
-    expect(memory!.id).toMatch(/^memory_/);
-    expect(memory!.type).toBe('observation');
-    // 两流各有条目
-    expect(data.memory.behaviorStream.length).toBe(1);
-    expect(data.memory.memoryStream.length).toBe(1);
-    const beh = data.memory.behaviorStream[0];
-    // 独立：id 前缀不同、时间戳各自生成、无 originalSource/originalType 等互标字段
+    const beh = res as BehaviorItem;
+    expect(beh).not.toBeNull();
     expect(beh.id).toMatch(/^beh_/);
-    expect(beh.id).not.toBe(memory!.id);
+    // 仅行为流：记忆流不新增
+    expect(data.memory.behaviorStream.length).toBe(1);
+    expect(data.memory.memoryStream.length).toBe(0);
+    // 条目字段
+    expect(beh.id).toMatch(/^beh_/);
     expect(beh.metadata).toEqual(structured);
-    // 互不引用：行为条目不带记忆 id，记忆条目 structured 无 original* 标记
     expect((beh.metadata as any)?.originalType).toBeUndefined();
     expect((beh.metadata as any)?.memoryId).toBeUndefined();
-    expect(memory!.structured).toEqual(structured);
-    expect((memory!.structured as any)?.behaviorId).toBeUndefined();
     // 行为条目照旧 source:action name 描述
     expect(beh.description).toBe('diary:created 2026-08-25 11:00');
     expect(beh.type).toBe('created');
     expect(beh.source).toBe('diary');
   });
 
-  it('movie:watched 双写（重要性/情绪按路由规则进入记忆流）', async () => {
+  it('movie:watched → 仅行为流（importance/emotion 档位保留在路由规则，不落记忆流）', async () => {
     const m = make();
     const res = await m.addObservation('movie', {
       structured: { entityType: 'movie', action: 'watched', name: '肖申克的救赎' },
     });
-    const memory = res as MemoryStreamEntry;
-    expect(memory.importance).toBe(0.85); // routing movie:watched
-    expect(memory.emotion).toBe('happy');
+    const beh = res as BehaviorItem;
+    expect(beh.id).toMatch(/^beh_/);
+    expect(beh.source).toBe('movie');
+    expect(beh.type).toBe('watched');
     expect(data.memory.behaviorStream.some((b) => b.source === 'movie' && b.type === 'watched')).toBe(true);
+    expect(data.memory.memoryStream.length).toBe(0);
   });
 });
 
@@ -103,15 +99,15 @@ describe('双写：behavior 路由事件仅行为流', () => {
     expect(data.memory.memoryStream.length).toBe(0);
   });
 
-  it('返回值语义：behavior 路由返回 BehaviorItem；memory 路由返回 MemoryStreamEntry', async () => {
+  it('返回值语义：behavior 路由返回 BehaviorItem（事件类全退 behavior，ADR-0069）', async () => {
     const m = make();
     const beh = await m.addObservation('news', { structured: { entityType: 'news', action: 'read', name: 'T', extras: { platform: 'P', durationMin: 2 } } });
     expect((beh as BehaviorItem).id).toMatch(/^beh_/);
     expect((beh as BehaviorItem).timestamp).toBeTruthy();
-    const mem = await m.addObservation('diary', { structured: { entityType: 'diary_entry', action: 'created', name: 'D' } });
-    expect((mem as MemoryStreamEntry).id).toMatch(/^memory_/);
-    expect((mem as MemoryStreamEntry).importance).toBeGreaterThanOrEqual(0);
-    // memory 路由时行为条目已另行写入
+    const beh2 = await m.addObservation('diary', { structured: { entityType: 'diary_entry', action: 'created', name: 'D' } });
+    expect((beh2 as BehaviorItem).id).toMatch(/^beh_/);
+    // 事件类不再进记忆流
+    expect(data.memory.memoryStream.length).toBe(0);
     expect(data.memory.behaviorStream.some((b) => b.source === 'diary' && b.type === 'created')).toBe(true);
   });
 });
@@ -158,14 +154,14 @@ describe('滚动清理不受双写影响', () => {
     expect(data.memory.memoryStream.length).toBe(0);
   });
 
-  it('memory 路由事件超容量同样裁剪（双写两流各自独立清理）', async () => {
+  it('behavior 路由事件超容量照常裁剪（记忆流不新增、无上限问题）', async () => {
     mockSettings.behaviorMaxCount = 3;
     const m = make();
     for (let i = 0; i < 6; i++) {
       await m.addObservation('diary', { structured: { entityType: 'diary_entry', action: 'created', name: `D${i}` } });
     }
     expect(data.memory.behaviorStream.length).toBe(3); // 行为流裁剪到 3
-    expect(data.memory.memoryStream.length).toBe(6); // 记忆流无上限不裁剪
+    expect(data.memory.memoryStream.length).toBe(0); // 事件类不进记忆流（ADR-0069）
   });
 });
 

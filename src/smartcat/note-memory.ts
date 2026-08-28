@@ -175,6 +175,8 @@ export class NoteMemorySync {
   private refs = new Map<string, string[]>();
   /** 节流期内变更合并待重入库（R4） */
   private pending = new Set<string>();
+  /** path → 上次入库时正文（审查 P1：今日日记即时路径的内容去重——内容没变不重打分/重向量化） */
+  private lastContent = new Map<string, string>();
 
   constructor(deps: NoteMemoryDeps, throttleMs: number = NOTE_MEMORY_THROTTLE_MS) {
     this.deps = deps;
@@ -241,9 +243,17 @@ export class NoteMemorySync {
     const cls = classifyForMemory(p, dirs, this.deps.adapter.diaryDirectory());
     if (!cls) return;
     const now = this.deps.adapter.now();
-    // 「今天」的日记可即时（R4 豁免：当天日记段反复保存要即时可检索）
+    // 「今天」的日记可即时（R4 豁免：当天日记段反复保存要即时可检索）。
+    // 审查 P1：即时 ≠ 每次保存都重打分——内容与上次入库一致（Obsidian 自动保存空触发）直接跳过
     const immediate = cls.kind === 'diary' && cls.date === noteMemoryToday(now);
-    if (!immediate && now - (this.lastAt.get(p) ?? 0) < this.throttleMs) {
+    if (immediate) {
+      const content = await this.deps.adapter.readFile(p);
+      if (content != null && content === this.lastContent.get(p)) return;
+      await this.upsertFile(p, now, dirs);
+      if (content != null) this.lastContent.set(p, content);
+      return;
+    }
+    if (now - (this.lastAt.get(p) ?? 0) < this.throttleMs) {
       this.pending.add(p); // 期间变更合并为一次（R4）
       return;
     }
@@ -361,6 +371,7 @@ export class NoteMemorySync {
     this.refs.delete(p);
     this.lastAt.delete(p);
     this.pending.delete(p);
+    this.lastContent.delete(p);
   }
 
   /** 测试辅助：读取已跟踪 ref 表 */
@@ -378,5 +389,6 @@ export class NoteMemorySync {
     this.lastAt.clear();
     this.refs.clear();
     this.pending.clear();
+    this.lastContent.clear();
   }
 }

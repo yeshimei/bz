@@ -58,17 +58,24 @@ describe('路由规则表（ROUTING_RULES）', () => {
     }
   });
 
-  it('behavior 流规则无 importance/emotion', () => {
+  it('behavior 流规则可携带 importance/emotion 作档位记录；exempt 规则不得携带', () => {
     const behaviorRules = Object.entries(ROUTING_RULES).filter(([, r]) => r.stream === 'behavior');
     for (const [key, rule] of behaviorRules) {
-      expect(rule.importance, `${key} behavior 流不应有 importance`).toBeUndefined();
-      expect(rule.defaultEmotion, `${key} behavior 流不应有 defaultEmotion`).toBeUndefined();
+      if (rule.importance !== undefined) {
+        expect(rule.importance, `${key} importance 应在 0-1`).toBeGreaterThanOrEqual(0);
+        expect(rule.importance, `${key} importance 应在 0-1`).toBeLessThanOrEqual(1);
+      }
+    }
+    const exemptRules = Object.entries(ROUTING_RULES).filter(([, r]) => r.stream === 'exempt');
+    for (const [key, rule] of exemptRules) {
+      expect(rule.importance, `${key} exempt 流不应有 importance`).toBeUndefined();
+      expect(rule.defaultEmotion, `${key} exempt 流不应有 defaultEmotion`).toBeUndefined();
     }
   });
 
-  it('diary:created → memory, importance=0.85, emotion=calm', () => {
+  it('diary:created → behavior（ADR-0069：事件全退记忆流）, importance=0.85, emotion=calm', () => {
     const rule = ROUTING_RULES['diary:created'];
-    expect(rule.stream).toBe('memory');
+    expect(rule.stream).toBe('behavior');
     expect(rule.importance).toBe(0.85);
     expect(rule.defaultEmotion).toBe('calm');
   });
@@ -81,16 +88,16 @@ describe('路由规则表（ROUTING_RULES）', () => {
     expect(ROUTING_RULES['flash:created'].stream).toBe('behavior');
   });
 
-  it('movie:watched → memory, importance=0.85, emotion=happy', () => {
+  it('movie:watched → behavior（ADR-0069）, importance=0.85, emotion=happy', () => {
     const rule = ROUTING_RULES['movie:watched'];
-    expect(rule.stream).toBe('memory');
+    expect(rule.stream).toBe('behavior');
     expect(rule.importance).toBe(0.85);
     expect(rule.defaultEmotion).toBe('happy');
   });
 
-  it('movie:want → memory, importance=0.60, emotion=curious', () => {
+  it('movie:want → behavior（ADR-0069）, importance=0.60, emotion=curious', () => {
     const rule = ROUTING_RULES['movie:want'];
-    expect(rule.stream).toBe('memory');
+    expect(rule.stream).toBe('behavior');
     expect(rule.importance).toBe(0.60);
     expect(rule.defaultEmotion).toBe('curious');
   });
@@ -115,23 +122,23 @@ describe('路由规则表（ROUTING_RULES）', () => {
     expect(ROUTING_RULES['belongings:status'].stream).toBe('behavior');
   });
 
-  it('pomodoro:focus-done → memory, importance=0.70, emotion=focused', () => {
+  it('pomodoro:focus-done → behavior（ADR-0069）, importance=0.70, emotion=focused', () => {
     const rule = ROUTING_RULES['pomodoro:focus-done'];
-    expect(rule.stream).toBe('memory');
+    expect(rule.stream).toBe('behavior');
     expect(rule.importance).toBe(0.70);
     expect(rule.defaultEmotion).toBe('focused');
   });
 
-  it('chat:said → memory, importance=0.75, credibility=0.5', () => {
+  it('chat:said → behavior（ADR-0069：聊天记忆经日小结沉淀）, importance=0.75, credibility=0.5', () => {
     const rule = ROUTING_RULES['chat:said'];
-    expect(rule.stream).toBe('memory');
+    expect(rule.stream).toBe('behavior');
     expect(rule.importance).toBe(0.75);
     expect(rule.credibility).toBe(0.5);
   });
 
-  it('library:completed → memory, importance=0.85, emotion=happy', () => {
+  it('library:completed → behavior（ADR-0069）, importance=0.85, emotion=happy', () => {
     const rule = ROUTING_RULES['library:completed'];
-    expect(rule.stream).toBe('memory');
+    expect(rule.stream).toBe('behavior');
     expect(rule.importance).toBe(0.85);
     expect(rule.defaultEmotion).toBe('happy');
   });
@@ -176,7 +183,7 @@ describe('路由规则表（ROUTING_RULES）', () => {
 describe('resolveRouting', () => {
   it('精确匹配 source:action', () => {
     const rule = resolveRouting('diary', 'created');
-    expect(rule.stream).toBe('memory');
+    expect(rule.stream).toBe('behavior');
     expect(rule.importance).toBe(0.85);
   });
 
@@ -257,16 +264,16 @@ describe('ADR-0069：盘点补齐路由规则', () => {
     expect(resolveRouting('diary', 'encrypted-purged').stream).toBe('exempt');
   });
 
-  it('豁免规则不影响既有精确匹配：diary:created 仍 memory、diary:deleted 仍 behavior', () => {
-    expect(resolveRouting('diary', 'created').stream).toBe('memory');
+  it('豁免规则不影响既有精确匹配：diary:created 降 behavior（ADR-0069）、diary:deleted 仍 behavior', () => {
+    expect(resolveRouting('diary', 'created').stream).toBe('behavior');
     expect(resolveRouting('diary', 'deleted').stream).toBe('behavior');
   });
 
   it('每域每动作判定表（盘点矩阵：既有键 + 新增键 → 期望路由）', () => {
     const matrix: Array<[string, string, RoutingRule['stream']]> = [
       // 日记
-      ['diary', 'created', 'memory'],
-      ['diary', 'updated', 'memory'],
+      ['diary', 'created', 'behavior'],
+      ['diary', 'updated', 'behavior'],
       ['diary', 'deleted', 'behavior'],
       ['diary', 'tagged', 'behavior'],
       ['diary', 'entry-encrypted', 'exempt'],
@@ -274,11 +281,11 @@ describe('ADR-0069：盘点补齐路由规则', () => {
       ['diary', 'encrypted-purged', 'exempt'],
       // 闪念 / 诗 / 信
       ['flash', 'created', 'behavior'],
-      ['poem', 'created', 'memory'],
-      ['letter', 'created', 'memory'],
+      ['poem', 'created', 'behavior'],
+      ['letter', 'created', 'behavior'],
       // 影视
-      ['movie', 'want', 'memory'],
-      ['movie', 'watched', 'memory'],
+      ['movie', 'want', 'behavior'],
+      ['movie', 'watched', 'behavior'],
       ['movie', 'deleted', 'behavior'],
       // 备忘录
       ['memo', 'added', 'behavior'],
@@ -291,11 +298,11 @@ describe('ADR-0069：盘点补齐路由规则', () => {
       ['favorites', 'added', 'behavior'],
       ['belongings', 'status', 'behavior'],
       // 番茄钟 / 聊天
-      ['pomodoro', 'focus-done', 'memory'],
-      ['chat', 'said', 'memory'],
+      ['pomodoro', 'focus-done', 'behavior'],
+      ['chat', 'said', 'behavior'],
       // 书库
-      ['library', 'started', 'memory'],
-      ['library', 'highlight', 'memory'],
+      ['library', 'started', 'behavior'],
+      ['library', 'highlight', 'behavior'],
       ['library', 'added', 'behavior'],
       // 文献盒
       ['bili-downloader', 'added', 'behavior'],
