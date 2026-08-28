@@ -15,7 +15,7 @@ import { eventSystem, setSmartcatApp, setupVisibilityCheck, __resetVisibilityFor
 import { mountCatContainer, unmountCatContainer, applyAppearance, createChatPanel, showChatPanel, hideChatPanel, openSmartcatSettings } from './ui';
 import { BubbleManager } from './bubble';
 import { MoodSystem, PersonalityGrowth } from './mood';
-import { MemorySystem, USER_CONTENT_BOUNDARY, PROMPT_SLOTS } from './memory';
+import { MemorySystem, USER_CONTENT_BOUNDARY, PROMPT_SLOTS, migrateSmartcatSidecars, slimSmartCatData } from './memory';
 import { SmartCatAnimation } from './animation';
 import { InteractionManager, MobileInputAdapter } from './interaction';
 import { getSmartCatMessage } from './messages';
@@ -167,7 +167,10 @@ const dataProvider = (): SmartCatData => {
 };
 const dataSaver = async (d: SmartCatData): Promise<void> => {
   data = d;
-  if (appRef) await saveSmartCatData(appRef, d);
+  if (!appRef) return;
+  // ADR-0069：smartcat.json 只留 meta/config——memory 双流以 sidecar（smartcat-memory/behavior.json）为准，
+  // sidecar 落盘由 MemorySystem 30s tick 防抖合并写（关键路径另有即时 flush），此处写瘦身视图
+  await saveSmartCatData(appRef, slimSmartCatData(d));
 };
 
 /** 域配置读取（供 interaction） */
@@ -188,6 +191,9 @@ export async function ensureSmartCat(app: App): Promise<void> {
   setSmartcatApp(app);
 
   data = await loadSmartCatData(app);
+  // ADR-0069：存储 sidecar 化升级迁移（一次性幂等）——记忆/行为双流自 smartcat.json 迁出，
+  // 事件类记忆清空（R2）、孤儿向量清理、smartcat.json 瘦身重写（关键路径即时落盘）
+  await migrateSmartcatSidecars(app, data);
   // 竞态守卫：等待期间若被 unload（main 的 void ensureSmartCat 是 fire-and-forget），停止装配
   if (!initialized) {
     data = null;
@@ -219,6 +225,12 @@ export async function ensureSmartCat(app: App): Promise<void> {
   moodSystem.onDecayTick = () => { void quietGateSystem?.onDecayTick(); };
   personalityGrowth = new PersonalityGrowth(dataProvider, dataSaver);
   memorySystem = new MemorySystem(app, dataProvider, dataSaver);
+  // ADR-0069：注入「引用 → 正文」读取器（记忆目录引用型条目 prompt 拼装时当场读 vault；null=文件失效）
+  memorySystem.setRefResolver(async (ref: string) => {
+    const f = app.vault.getAbstractFileByPath(ref);
+    if (!f) return null;
+    return await app.vault.read(f as any);
+  });
   // ADR-0021：init = 探测 Ollama + 加载向量 + 反思调度（取代原 24h 固化调度）
   await memorySystem.init();
   if (!initialized) return; // 竞态守卫 2：init 期间被 unload 则丢弃装配
@@ -267,6 +279,7 @@ export async function ensureSmartCat(app: App): Promise<void> {
       const d = dataProvider();
       if (!applyInsightPatch(d, id, patch)) return false;
       await dataSaver(d);
+      memorySystem?.markMemoryDirty(); // ADR-0069：记忆条目字段已改 → 记忆 sidecar 标脏（30s tick 落盘）
       return true;
     },
   });
@@ -293,7 +306,13 @@ export async function ensureSmartCat(app: App): Promise<void> {
       if (!memorySystem) return '';
       try {
         const memories = await memorySystem.retrieve(query, undefined, { lexicalQuery });
-        return memories.length ? memorySystem.formatMemoriesForPrompt(memories, PROMPT_SLOTS.maxEntries) : '';
+        if (!memories.length) return '';
+        // ADR-0069：引用型条目经读取器当场取正文；失效引用返回并安排清理（不阻塞检索）
+        const { text, staleRefs } = await memorySystem.formatMemoriesForPromptWithRefs(memories, PROMPT_SLOTS.maxEntries);
+        for (const stale of staleRefs) {
+          try { await memorySystem.removeMemoryByRef(stale.ref!.path); } catch { /* 清理失败静默（下次检索再试） */ }
+        }
+        return text;
       } catch (e) {
         return '';
       }
@@ -588,7 +607,14 @@ export async function maybeProactiveCare(): Promise<void> {
       let memoriesText = '';
       try {
         const mems = await memorySystem.retrieve('', undefined);
-        memoriesText = mems.length ? memorySystem.formatMemoriesForPrompt(mems, PROMPT_SLOTS.maxEntries) : '';
+        if (mems.length) {
+          // ADR-0069：引用型条目当场取正文（失效引用顺手清理，不阻塞主动关心）
+          const { text, staleRefs } = await memorySystem.formatMemoriesForPromptWithRefs(mems, PROMPT_SLOTS.maxEntries);
+          for (const stale of staleRefs) {
+            try { await memorySystem.removeMemoryByRef(stale.ref!.path); } catch { /* 清理失败静默 */ }
+          }
+          memoriesText = text;
+        }
       } catch { /* 检索失败用空 */ }
       const companionContext = buildCompanionContext({
         memoryStream: data.memory.memoryStream,
@@ -1033,6 +1059,8 @@ export function unloadSmartCat(): void {
     greetTimer = null;
   }
   animation?.dispose();
+  // ADR-0069：卸载前尽力冲刷脏 sidecar（防抖窗口内的记忆/行为条目不丢）
+  try { void memorySystem?.flushSidecars(); } catch { /* 忽略 */ }
   memorySystem?.stopScheduler(); // 反思调度（含 ticket 075 memo 到期扫描 tick）一并停止
   moodSystem?.dispose();
   interaction?.dispose();

@@ -12,7 +12,7 @@
  *     历史记忆越长小橘越懂你，不淘汰；bge-m3 语义检索，Ollama 不可用降级词法
  */
 import type { App } from 'obsidian';
-import { getSmartcatVecPath, touchPresence } from './data';
+import { getSmartcatVecPath, touchPresence, smartcatStorageDir, saveSmartCatData } from './data';
 import { callChatJson, isAIConfigured } from './api';
 import { getEmbedding, checkRemoteOllama } from '../secondbrain/ollama';
 import { EMOTION_VAD, emotionToVAD, vadAffinity } from './cognitive';
@@ -20,6 +20,7 @@ import { isSupersededInsight, resolveTheme, buildReflectCandidates, applySuperse
 import type { SmartCatData, MemoryStreamEntry, CloudScoringMode, StructuredMeta, BehaviorItem, BehaviorSummary } from './types';
 import { resolveRouting, type RoutingRule } from './routing';
 import { trimBehaviorStream } from './behavior-trim';
+import { buildBehaviorWording } from './behavior-wording';
 import { tryGetSettings } from '../core/settings-provider';
 
 export const MEMORY_CONFIG = {
@@ -168,9 +169,12 @@ export function padToVadVector(pad: { pleasure: number; arousal: number; dominan
   return { valence: lin(pad?.pleasure), arousal: lin(pad?.arousal), dominance: lin(pad?.dominance) };
 }
 
-/** 时间锚点强度（选择排序用）：周年=2 > 星期几=1 > 未命中=0（周年是更强的人文锚点） */
+/** 时间锚点强度（选择排序用）：周年=2 > 星期几=1 > 未命中=0（周年是更强的人文锚点）
+ *  R8（ADR-0069）：时间席候选纳入 digest 条目（日小结 type=insight + source=digest）——
+ *  「最近在做什么」恰该占时间席；情绪席维持只认 observation 不变。 */
 function timeAnchorScore(m: MemoryStreamEntry, now: number): number {
-  if (m.type !== 'observation' || !m.created) return 0;
+  const eligible = m.type === 'observation' || (m.type === 'insight' && m.source === 'digest');
+  if (!eligible || !m.created) return 0;
   if (anniversaryAnchorHit(m.created, now)) return 2;
   if (weekdayAnchorHit(m.created, now)) return 1;
   return 0;
@@ -286,6 +290,73 @@ export class MemorySystem {
   private dim = 0;
   /** 已加载向量（行序对齐 stream；仅语义模式用） */
   private vectors: Float64Array | null = null;
+  // ---------------- ADR-0069：存储 sidecar 化 + 引用型记忆（笔记记忆库） ----------------
+  /** 记忆流 sidecar（smartcat-memory.json）脏标记——写入只标脏，30s tick 合并落盘（R5 防抖） */
+  private memoryDirty = false;
+  /** 行为流 sidecar（smartcat-behavior.json）脏标记 */
+  private behaviorDirty = false;
+  /** 引用型条目多向量「额外行」：id → 除主行（stream 下标对齐）外的 .vec 行号列表（分块向量） */
+  private vectorExtraRows: Map<string, number[]> = new Map();
+  /** 「引用 → 正文」读取器（index 接线注入；prompt 拼装命中引用条目时当场读 vault，null=文件失效） */
+  private refResolver: ((ref: string) => Promise<string | null>) | null = null;
+
+  /** 注入引用读取器（供「记忆目录」流接线；幂等覆盖） */
+  setRefResolver(fn: (ref: string) => Promise<string | null>): void {
+    this.refResolver = fn;
+  }
+
+  /** 标记记忆流 sidecar 脏（不立即写盘；30s tick 合并落盘） */
+  markMemoryDirty(): void {
+    this.memoryDirty = true;
+  }
+
+  /** 标记行为流 sidecar 脏 */
+  markBehaviorDirty(): void {
+    this.behaviorDirty = true;
+  }
+
+  /** 脏 sidecar 合并落盘（30s tick 与关键路径调用；单边失败保留脏标记下轮重试，不抛错） */
+  async flushSidecars(): Promise<void> {
+    if (this.behaviorDirty) {
+      this.behaviorDirty = false;
+      try {
+        await writeBehaviorSidecarFile(this.app, this.dataProvider().memory.behaviorStream);
+      } catch {
+        this.behaviorDirty = true; // 写失败恢复脏标记，下轮 tick 重试
+      }
+    }
+    if (this.memoryDirty) {
+      this.memoryDirty = false;
+      try {
+        await writeMemorySidecarFile(this.app, this.dataProvider().memory.memoryStream, this.extraRowsRecord());
+      } catch {
+        this.memoryDirty = true;
+      }
+    }
+  }
+
+  /** 额外向量行 → sidecar 记录（Record<string, number[]>） */
+  private extraRowsRecord(): Record<string, number[]> {
+    const rec: Record<string, number[]> = {};
+    this.vectorExtraRows.forEach((rows, id) => {
+      if (rows && rows.length) rec[id] = [...rows];
+    });
+    return rec;
+  }
+
+  /** 引用型条目初始化时恢复额外向量行（sidecar 记录；读失败静默降级——检索回退词法/主行） */
+  private async restoreExtraRows(): Promise<void> {
+    try {
+      const side = await readMemorySidecarFile(this.app);
+      if (side && side.extraVectorRows && typeof side.extraVectorRows === 'object') {
+        const map = new Map<string, number[]>();
+        for (const [id, rows] of Object.entries(side.extraVectorRows)) {
+          if (Array.isArray(rows) && rows.length) map.set(id, rows.filter((n) => Number.isInteger(n) && n >= 0));
+        }
+        this.vectorExtraRows = map;
+      }
+    } catch { /* 无文件/读取失败 → 空（首次启动或降级） */ }
+  }
 
   constructor(app: App, dataProvider: () => SmartCatData, dataSaver: (data: SmartCatData) => Promise<void>) {
     this.app = app;
@@ -302,8 +373,10 @@ export class MemorySystem {
     return this.dataProvider().memory.behaviorStream;
   }
 
-  /** 初始化：探测 Ollama + 加载向量 + 启动反思调度 */
+  /** 初始化：恢复 sidecar 额外向量行 + 探测 Ollama + 加载向量 + 启动反思调度（ADR-0069：
+   *  数据迁移由装配早期的 migrateSmartcatSidecars 完成，此处只恢复引用型条目多向量行号） */
   async init(): Promise<void> {
+    await this.restoreExtraRows();
     await this.probeSemantic();
     await this.loadVectors();
     this.startReflectionScheduler();
@@ -341,13 +414,39 @@ export class MemorySystem {
     // ticket 129：一律先写行为流（全量日志；含 memory 路由事件——双写）
     const behavior = await this.writeBehaviorStream(source, newOpts.structured);
 
+    // R0（ADR-0069，致命项）：生命线钩子上移到行为流写入后的公共路径——
+    // 事件全退记忆流后，behavior 路由也必须驱动在场/情绪共振/反思计数，三条生命线不因路由分叉而断
+    this.pendingSinceReflect++;
+    touchPresence(this.dataProvider());
+    if (this.onPresence) {
+      try { void this.onPresence(); } catch { /* 钩子失败静默 */ }
+    }
+
     if (rule.stream === 'behavior') {
-      // 行为路由：仅行为流（记忆流条目不写），返回行为条目
+      // 行为路由：仅行为流（记忆流条目不写），返回行为条目；
+      // onObservation（情绪共振/瞬时情绪/dossier）同样触发——构造伪记忆条目承载钩子契约，
+      // credibility 取 ruleCredibility 档位默认值（routing 无 behavior 档位，按来源+描述落档）
+      const pseudo: MemoryStreamEntry = {
+        id: behavior?.id ?? `memory_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        created: behavior?.timestamp ?? new Date().toISOString(),
+        lastAccessed: behavior?.timestamp ?? new Date().toISOString(),
+        description: behavior?.description ?? '',
+        importance: rule.importance ?? 0.5,
+        type: 'observation',
+        source,
+        emotion: newOpts.structured?.snapshot?.emotion,
+        credibility: ruleCredibility(source, behavior?.description ?? ''),
+        structured: newOpts.structured,
+      };
+      if (this.onObservation) {
+        try { await this.onObservation(pseudo); } catch { /* 钩子失败不影响行为主流程 */ }
+      }
       return behavior;
     }
 
     // memory 路由：行为条目已另行写入，此处再写记忆流条目（走原有逻辑：
-    // description 构建 / importance-emotion-credibility / 向量化 appendVector / onObservation 钩子 / touchPresence）
+    // description 构建 / importance-emotion-credibility / 向量化 appendVector / onObservation 钩子——
+    // 钩子/计数已上移公共路径，此处不再重复触发）
     const description = this.buildDescription(newOpts.structured);
     const importance = rule.importance ?? 0.5;
     const emotion = rule.defaultEmotion;
@@ -374,11 +473,7 @@ export class MemorySystem {
       structured: newOpts.structured,
     };
     this.stream.push(memory);
-    this.pendingSinceReflect++;
-    touchPresence(this.dataProvider());
-    if (this.onPresence) {
-      try { void this.onPresence(); } catch { /* 钩子失败静默 */ }
-    }
+    this.markMemoryDirty();
     await this.dataSaver(this.dataProvider());
     await this.appendVector(memory);
     if (this.onObservation) {
@@ -424,9 +519,8 @@ export class MemorySystem {
     const trimmed = trimBehaviorStream(this.behaviorStream, { maxDays, maxCount });
     this.dataProvider().memory.behaviorStream.length = 0;
     this.behaviorStream.push(...trimmed);
-    try {
-      await this.dataSaver(this.dataProvider());
-    } catch { /* 落盘失败静默——行为流条目已在内存，下次 dataSaver 会随整体落盘 */ }
+    // R5（ADR-0069）：行为流 sidecar 落盘防抖——只标脏，30s tick 合并落盘（不再每事件整写 json）
+    this.markBehaviorDirty();
     return item;
   }
 
@@ -448,6 +542,13 @@ export class MemorySystem {
     // ticket 129：全量口径——legacy 同样先写行为流（无 structured → description 兜底、metadata 缺省）
     const legacySource = opts.source ?? 'unknown';
     await this.writeBehaviorStream(legacySource, undefined, typeof description === 'string' ? description : String(description ?? ''));
+    // R0（ADR-0069）：生命线钩子上移——行为流已写，presence/共振计数对 legacy 同样成立
+    //（dedupe 短路前触发：行为条目已落，事件已发生）
+    this.pendingSinceReflect++;
+    touchPresence(this.dataProvider());
+    if (this.onPresence) {
+      try { void this.onPresence(); } catch { /* 钩子失败静默 */ }
+    }
     if (opts.dedupe) {
       const norm = (description || '').trim();
       const recent = this.stream.slice(-MemorySystem.dedupeWindow);
@@ -475,13 +576,7 @@ export class MemorySystem {
       suspicious: detectInjection(description) || undefined,
     };
     this.stream.push(memory);
-    this.pendingSinceReflect++;
-    // ticket 088：观察成功写入 = 用户在场（刷新 editingData.lastPresenceAt，随本 dataSaver 落盘，不新增独立写盘）
-    touchPresence(this.dataProvider());
-    // ticket 093：在场信号 → 缺席状态机（重逢判定 = 在场 + phase ≠ normal；钩子失败静默）
-    if (this.onPresence) {
-      try { void this.onPresence(); } catch { /* 钩子失败静默 */ }
-    }
+    this.markMemoryDirty();
     await this.dataSaver(this.dataProvider());
     await this.appendVector(memory);
     // ADR-0025：观察钩子（情绪共振/瞬时情绪由 index 接线）
@@ -498,6 +593,7 @@ export class MemorySystem {
     const memory = this.makeInsightMemory(description, evidenceIds, importance, emotion, source, theme);
     this.stream.push(memory);
     this.pendingSinceReflect++;
+    this.markMemoryDirty();
     await this.dataSaver(this.dataProvider());
     await this.appendVector(memory);
     return memory;
@@ -670,6 +766,7 @@ export class MemorySystem {
     if (touched.length) {
       const lastAccessed = new Date().toISOString();
       touched.forEach((m) => { m.lastAccessed = lastAccessed; });
+      this.markMemoryDirty();
       await this.dataSaver(this.dataProvider());
     }
     return top;
@@ -714,22 +811,32 @@ export class MemorySystem {
     }
   }
 
-  /** 记忆语义相关度（余弦；向量缺失 → 0） */
+  /** 记忆语义相关度（余弦；向量缺失 → 0）。
+   *  ADR-0069：引用型条目一条目挂多向量（主行 + 分块额外行）——取各行余弦最大值 */
   semanticRelevance(memoryId: string, queryVec: number[]): number {
     const vectors = this.vectors;
     if (!vectors || !this.dim) return 0;
-    const idx = this.memoryVectorIndex(memoryId);
-    if (idx < 0) return 0;
-    const memVec = vectors.subarray(idx * this.dim, (idx + 1) * this.dim);
-    if (!memVec.length || !queryVec.length) return 0;
-    let dot = 0, a = 0, b = 0;
-    for (let i = 0; i < this.dim; i++) {
-      dot += memVec[i] * (queryVec[i] ?? 0);
-      a += memVec[i] * memVec[i];
-      b += (queryVec[i] ?? 0) * (queryVec[i] ?? 0);
+    const rows: number[] = [];
+    const primary = this.memoryVectorIndex(memoryId);
+    if (primary >= 0) rows.push(primary);
+    for (const r of this.vectorExtraRows.get(memoryId) || []) {
+      if (r >= 0 && !rows.includes(r)) rows.push(r);
     }
-    const denom = Math.sqrt(a) * Math.sqrt(b);
-    return denom === 0 ? 0 : Math.max(0, dot / denom);
+    let best = 0;
+    for (const idx of rows) {
+      const memVec = vectors.subarray(idx * this.dim, (idx + 1) * this.dim);
+      if (!memVec.length || !queryVec.length) continue;
+      let dot = 0, a = 0, b = 0;
+      for (let i = 0; i < this.dim; i++) {
+        dot += memVec[i] * (queryVec[i] ?? 0);
+        a += memVec[i] * memVec[i];
+        b += (queryVec[i] ?? 0) * (queryVec[i] ?? 0);
+      }
+      const denom = Math.sqrt(a) * Math.sqrt(b);
+      const cos = denom === 0 ? 0 : Math.max(0, dot / denom);
+      if (cos > best) best = cos;
+    }
+    return best;
   }
 
   /** 记忆在向量文件中的行序（appendVector 维护 id→行序映射） */
@@ -781,25 +888,96 @@ export class MemorySystem {
     try {
       const vec = await getEmbedding(memory.description, false);
       if (!vec.length) return;
-      if (!this.dim) this.dim = vec.length;
       const idx = this.stream.indexOf(memory);
       if (idx < 0) return; // 条目已被移除（unload/重载竞态）→ 不写入不登记
-      if (!this.vectors) this.vectors = new Float64Array(0);
-      const rows = Math.floor(this.vectors.length / this.dim);
-      if (idx >= rows) {
-        // 目标行越过当前末尾：扩容并补零洞（交错期更晚提交的行先落位所致）
-        const grown = new Float64Array((idx + 1) * this.dim);
-        grown.set(this.vectors, 0);
-        this.vectors = grown;
-      }
-      const offset = idx * this.dim;
-      for (let i = 0; i < this.dim; i++) this.vectors[offset + i] = vec[i] ?? 0;
+      await this.ensurePrimaryRowFree(idx); // ADR-0069：额外行占用主行区时先整库重排
+      this.writeVectorAt(idx, vec);
       if (!this.vectorIndexMap) this.vectorIndexMap = new Map();
       this.vectorIndexMap.set(memory.id, idx);
       await this.persistVectors();
     } catch {
       /* 降级词法 */
     }
+  }
+
+  /** 单行向量写入（ grow 补零洞；ADR-0069 从 appendVector 提取，主行/额外行共用） */
+  private writeVectorAt(idx: number, vec: number[]): void {
+    if (!this.dim) this.dim = vec.length;
+    if (!this.vectors) this.vectors = new Float64Array(0);
+    const rows = Math.floor(this.vectors.length / this.dim);
+    if (idx >= rows) {
+      // 目标行越过当前末尾：扩容并补零洞（交错期更晚提交的行先落位所致）
+      const grown = new Float64Array((idx + 1) * this.dim);
+      grown.set(this.vectors, 0);
+      this.vectors = grown;
+    }
+    const offset = idx * this.dim;
+    for (let i = 0; i < this.dim; i++) this.vectors[offset + i] = vec[i] ?? 0;
+  }
+
+  /** 主行保护区（ADR-0069）：引用型条目分块向量占用的额外行若与将写入的主行下标冲突（行号 ≤ idx），
+   *  先整库紧凑重排（额外行移到 stream 尾界之外），再落主行——防主行覆盖别人的分块向量 */
+  private async ensurePrimaryRowFree(idx: number): Promise<void> {
+    let collide = false;
+    this.vectorExtraRows.forEach((rows) => {
+      if (rows && rows.some((r) => r >= 0 && r <= idx)) collide = true;
+    });
+    if (collide) await this.compactVectorsFull();
+  }
+
+  /** 额外行追加（分块向量第 2..N 块；行号 = max(当前末行, stream 长度) 起，保「额外行在主行区之外」布局） */
+  private appendExtraVector(id: string, vec: number[]): void {
+    if (!this.dim) this.dim = vec.length;
+    if (!this.vectors) this.vectors = new Float64Array(0);
+    const rows = Math.floor(this.vectors.length / this.dim);
+    const idx = Math.max(rows, this.stream.length);
+    this.writeVectorAt(idx, vec);
+    const list = this.vectorExtraRows.get(id) || [];
+    list.push(idx);
+    this.vectorExtraRows.set(id, list);
+  }
+
+  /** 向量整库紧凑重排（ADR-0069：条目删除后主行随 stream 下标平移、孤儿额外行清理）。
+   *  布局规范 = 主行（行号 = stream 下标，无向量条目补零行）+ 额外行（stream 尾界之后，按 stream 序）。
+   *  重排后更新 vectorIndexMap / vectorExtraRows 并即时落盘向量文件。 */
+  private async compactVectorsFull(): Promise<void> {
+    const dim = this.dim;
+    if (!dim) return;
+    const old = this.vectors;
+    const oldRows = old ? Math.floor(old.length / dim) : 0;
+    const streamLen = this.stream.length;
+    const newPrimary = new Map<string, number>();
+    const newExtras = new Map<string, number[]>();
+    const primaryRows: number[][] = [];
+    const extraRows: number[][] = [];
+    this.stream.forEach((m, i) => {
+      newPrimary.set(m.id, i);
+      const p = m.id ? this.vectorIndexMap?.get(m.id) : undefined;
+      primaryRows.push(p != null && p >= 0 && p < oldRows && old
+        ? Array.from(old.subarray(p * dim, (p + 1) * dim))
+        : new Array(dim).fill(0));
+      if (m.id) {
+        const extras = (this.vectorExtraRows.get(m.id) || []).filter((r) => r >= 0 && r < oldRows);
+        if (extras.length) {
+          const fresh: number[] = [];
+          for (const r of extras) {
+            extraRows.push(Array.from(old!.subarray(r * dim, (r + 1) * dim)));
+            fresh.push(streamLen + extraRows.length - 1);
+          }
+          newExtras.set(m.id, fresh);
+        }
+      }
+    });
+    const total = primaryRows.length + extraRows.length;
+    const out = new Float64Array(total * dim);
+    primaryRows.concat(extraRows).forEach((row, i) => {
+      for (let d = 0; d < dim; d++) out[i * dim + d] = row[d] ?? 0;
+    });
+    this.vectors = out;
+    this.vectorIndexMap = newPrimary;
+    this.vectorExtraRows = newExtras;
+    await this.persistVectors();
+    this.markMemoryDirty(); // 额外行号变了 → sidecar 记录需同步
   }
 
   /** 向量落盘（全量重写：dim 头 + float32 平铺） */
@@ -871,6 +1049,7 @@ export class MemorySystem {
       if (!written) return false; // 全部无效：不落盘也不退避（下次反思窗口再试）
       this.emotionBackfillBackoffUntil = 0; // 成功重置独立退避
       this.emotionBackfillBackoffMs = 5 * 60 * 1000;
+      this.markMemoryDirty();
       await this.dataSaver(this.dataProvider());
       return true;
     } catch (e) {
@@ -891,6 +1070,8 @@ export class MemorySystem {
     this.reflectionTimer = setInterval(() => {
       void this.maybeReflect();
       this.maybeDigest();
+      // R5（ADR-0069）：行为流/记忆流 sidecar 防抖落盘挂同一 30s tick（脏标记合并写，关键路径另走即时 flush）
+      void this.flushSidecars();
       if (this.onSchedulerTick) {
         try { void this.onSchedulerTick(); } catch (e) { /* tick 钩子失败静默 */ }
       }
@@ -1010,6 +1191,7 @@ export class MemorySystem {
       return this.makeInsightMemory(ins.text, evidenceIds, 0.75, undefined, 'reflection', ins.theme);
     });
     this.stream.push(...entries);
+    this.markMemoryDirty();
     try {
       await this.dataSaver(this.dataProvider());
     } catch (e) {
@@ -1047,10 +1229,21 @@ export class MemorySystem {
     return true;
   }
 
-  /** 触发条件：距上次日小结 ≥digestInterval 且期间新增观察 ≥digestMinNew；失败退避期不触发。
+  /** R1（ADR-0069）：日小结原料换源——距基线时间之后的行为流条目（事件全退记忆流后，
+   *  「用户做过的事」以 behaviorStream 为准；防自指天然成立——行为流不含小橘自身产出） */
+  private behaviorSince(base: number): BehaviorItem[] {
+    if (!base || !Number.isFinite(base)) return [];
+    return (this.behaviorStream || []).filter((b) => {
+      const t = new Date(b.timestamp).getTime();
+      return Number.isFinite(t) && t > base;
+    });
+  }
+
+  /** 触发条件：距上次日小结 ≥digestInterval 且期间新增行为条目 ≥digestMinNew；失败退避期不触发。
    *  P0-6 死锁修复：lastDigestAt=0（从未小结）原恒 false，注释宣称「等首次反思后再做日小结」
-   *  却没有任何路径能到达——改为「已反思过（lastReflectAt>0）且自上次反思以来新增观察 ≥digestMinNew」
-   *  即允许首次日小结（不等 18h 间隔——尚无上次小结可计）。 */
+   *  却没有任何路径能到达——改为「已反思过（lastReflectAt>0）且自上次反思以来新增 ≥digestMinNew」
+   *  即允许首次日小结（不等 18h 间隔——尚无上次小结可计）。
+   *  R1（ADR-0069）：触发计数从 memory stream 的 observation 换成 behaviorStream 条目。 */
   private shouldDigest(now: number): boolean {
     if (now < this.reflectBackoffUntil) return false; // 与反思共用退避（AI 不可用不空转）
     const refl = this.dataProvider().memory.reflection;
@@ -1059,31 +1252,29 @@ export class MemorySystem {
       // 从未小结过：以「上次反思」为基线（连反思都没发生过 → 数据太少无意义，维持不触发）
       const lastReflect = refl.lastReflectAt || 0;
       if (!lastReflect) return false;
-      const sinceReflect = this.stream.filter((m) => m.type === 'observation' && m.source !== 'digest' && new Date(m.created).getTime() > lastReflect).length;
-      return sinceReflect >= MEMORY_CONFIG.digestMinNew;
+      return this.behaviorSince(lastReflect).length >= MEMORY_CONFIG.digestMinNew;
     }
     if (now - last < MEMORY_CONFIG.digestInterval) return false;
-    // 距上次小结以来的新增观察数（observation 且创建时间 > last）
-    const since = this.stream.filter((m) => m.type === 'observation' && m.source !== 'digest' && new Date(m.created).getTime() > last).length;
-    return since >= MEMORY_CONFIG.digestMinNew;
+    // 距上次小结以来的新增行为条目数
+    return this.behaviorSince(last).length >= MEMORY_CONFIG.digestMinNew;
   }
 
-  /** 日小结主流程：上一日观察 → LLM 归纳 digestCount 条日小结 → 写回流（source digest，遮蔽反思 evidence）
+  /** 日小结主流程（R1 换源，ADR-0069）：上次小结以来的行为流条目 → behavior-wording 渲染成人类文案
+   *  → LLM 归纳 digestCount 条日小结 → 写回流（source digest，evidenceIds 指向行为条目 id）。
    *  无产出（AI 未配置/失败/证据不足）不推进 lastDigestAt——保持待消化状态。 */
   async digest(): Promise<void> {
     const data = this.dataProvider();
     const now = Date.now();
     const refl = data.memory.reflection;
     // P0-6：lastDigestAt 未播种（首次日小结）→ 证据基线与 shouldDigest 同源取上次反思时间，
-    // 防把全量历史观察当候选；scope 同步用基线时间。
+    // 防把全量历史行为当候选；scope 同步用基线时间。
     const base = refl.lastDigestAt || refl.lastReflectAt || 0;
-    const candidates = this.stream
-      .filter((m) => m.type === 'observation' && m.source !== 'digest' && new Date(m.created).getTime() > base)
-      .slice(-MEMORY_CONFIG.digestMaxEvidence);
+    const candidates = this.behaviorSince(base).slice(-MEMORY_CONFIG.digestMaxEvidence);
     if (candidates.length < MEMORY_CONFIG.digestMinNew) return;
 
     const scope = `过去一天（${new Date(base).toISOString().slice(0, 10)} 至 ${new Date(now).toISOString().slice(0, 10)}）`;
-    const numbered = candidates.map((m, i) => `${i + 1}. ${m.description}`).join('\n');
+    // R1：机读 description（source:action name）经 behavior-wording 渲染模板转人类文案再喂 LLM
+    const numbered = candidates.map((b, i) => `${i + 1}. ${buildBehaviorWording(b)}`).join('\n');
     const prompt =
       `你是小橘，一只陪伴猫咪。以下是用户${scope}的记忆（编号 1-${candidates.length}）：\n` +
       numbered +
@@ -1121,6 +1312,7 @@ export class MemorySystem {
       return this.makeInsightMemory(`【今日小结】${d.text}`, evidenceIds, 0.7, undefined, 'digest');
     });
     this.stream.push(...entries);
+    this.markMemoryDirty();
     try {
       await this.dataSaver(this.dataProvider());
     } catch (e) {
@@ -1169,6 +1361,133 @@ export class MemorySystem {
         return `${index + 1}. [${memory.type}${meta ? `（${meta}）` : ''}] ${content.substring(0, 200)}...`;
       })
       .join('\n');
+  }
+
+  // ---------------- ADR-0069：引用型记忆（笔记记忆库）公共 API ----------------
+
+  /**
+   * 引用型记忆入库/更新（供「记忆目录」流调用）：
+   *  - description 存引用（refPath(+locator)），正文不落 sidecar；
+   *  - importance/emotion 走现有打分链（LLM/规则降级），打分对象 = 全文；
+   *  - 向量对 fullText 全量 embedding（超长按 chunkNoteText 分块、一条目挂多向量）；
+   *  - created 支持 seed.created 指定（日记段 = 文件日期 + 段落时间），lastAccessed 缺省 = created（R7）；
+   *  - 同 refPath+locator 重复入库 = 更新（重打分 + 重向量化），created 沿用 seed 指定值。
+   */
+  async upsertNoteMemory(seed: { refPath: string; locator?: string; fullText: string; created?: string; source?: string }): Promise<void> {
+    const refPath = String(seed?.refPath || '').trim();
+    if (!refPath) return;
+    const description = seed.locator ? `${refPath}#${seed.locator}` : refPath;
+    const nowIso = new Date().toISOString();
+    const created = seed.created ?? nowIso;
+    const fullText = typeof seed.fullText === 'string' ? seed.fullText : '';
+    const source = seed.source ?? 'note';
+    const score = await this.scoreImportanceAndEmotion(fullText || description, { source });
+    const existing = this.stream.find((m) => m.ref && m.ref.path === refPath && (m.ref.locator ?? '') === (seed.locator ?? ''));
+    if (existing) {
+      existing.description = description;
+      existing.importance = score.importance;
+      existing.emotion = score.emotion;
+      existing.credibility = score.credibility;
+      existing.suspicious = detectInjection(fullText || description) || undefined;
+      if (seed.created) existing.created = seed.created;
+      existing.lastAccessed = existing.lastAccessed || created; // R7：缺省 = created，不因更新回写
+    } else {
+      const entry: MemoryStreamEntry = {
+        id: `memory_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        created,
+        lastAccessed: created, // R7：lastAccessed 初值 = created（老日记靠语义命中，不靠 recency 霸榜）
+        description,
+        importance: score.importance,
+        type: 'observation',
+        source,
+        emotion: score.emotion,
+        credibility: score.credibility,
+        suspicious: detectInjection(fullText || description) || undefined,
+        ref: { path: refPath, locator: seed.locator },
+      };
+      this.stream.push(entry);
+    }
+    this.markMemoryDirty();
+    await this.dataSaver(this.dataProvider());
+    await this.vectorizeNoteEntry(this.stream.find((m) => m.ref && m.ref.path === refPath && (m.ref.locator ?? '') === (seed.locator ?? ''))!, fullText || description);
+    await this.flushSidecars(); // 入库为显式操作：即时落盘
+  }
+
+  /** 引用型条目向量化：全文分块 embedding——首块写主行（stream 下标对齐）、其余块追加额外行（一条目多向量） */
+  private async vectorizeNoteEntry(entry: MemoryStreamEntry, text: string): Promise<void> {
+    const ok = await this.probeSemantic();
+    if (!ok) return;
+    try {
+      const idx = this.stream.indexOf(entry);
+      if (idx < 0) return;
+      const chunks = chunkNoteText(text);
+      await this.ensurePrimaryRowFree(idx);
+      this.vectorExtraRows.delete(entry.id); // 更新语义：旧分块额外行作废（整库重排/紧凑时物理清理）
+      for (let i = 0; i < chunks.length; i++) {
+        const vec = await getEmbedding(chunks[i], false);
+        if (!vec || !vec.length) continue;
+        if (i === 0) this.writeVectorAt(idx, vec);
+        else this.appendExtraVector(entry.id, vec);
+      }
+      if (!this.vectorIndexMap) this.vectorIndexMap = new Map();
+      this.vectorIndexMap.set(entry.id, idx);
+      await this.persistVectors();
+    } catch { /* 降级词法 */ }
+  }
+
+  /**
+   * 删除某引用（笔记路径）名下全部记忆条目及其全部向量（文件删除/移出记忆目录时由调用方触发）。
+   * 同步删内存条目 + 整库紧凑重排向量（主行随 stream 平移、被删条目向量随映射丢弃），即时落盘。
+   * @returns 删除的条目数（0 = 无此引用条目）
+   */
+  async removeMemoryByRef(refPath: string): Promise<number> {
+    const path = String(refPath || '').trim();
+    if (!path) return 0;
+    const kept = this.stream.filter((m) => !(m.ref && m.ref.path === path));
+    const removed = this.stream.length - kept.length;
+    if (!removed) return 0;
+    this.stream.length = 0;
+    this.stream.push(...kept);
+    if (this.dim) await this.compactVectorsFull(); // 主行随下标平移（关键路径即时落盘）
+    this.markMemoryDirty();
+    await this.dataSaver(this.dataProvider());
+    await this.flushSidecars();
+    return removed;
+  }
+
+  /**
+   * prompt 格式化（引用型条目版，ADR-0069 R3）：命中引用条目时经 setRefResolver 注入的读取器
+   * 当场取正文；返回 null（文件失效/读取失败）→ 跳过该条正文（回显引用路径）并计入 staleRefs
+   * （调用方安排清理，本流只保证不崩）。未注入读取器 / 非引用条目行为与同步版一致。
+   */
+  async formatMemoriesForPromptWithRefs(memories: MemoryStreamEntry[], maxEntries?: number): Promise<{ text: string; staleRefs: MemoryStreamEntry[] }> {
+    const alive = memories.filter((memory) => !isSupersededInsight(memory));
+    const picked = maxEntries !== undefined && alive.length > maxEntries
+      ? selectSlotMemories(alive, {
+          maxEntries,
+          currentVad: padToVadVector(this.dataProvider().mood?.pad ?? { pleasure: 50, arousal: 50, dominance: 50 }),
+          now: Date.now(),
+        })
+      : alive;
+    const staleRefs: MemoryStreamEntry[] = [];
+    const lines: string[] = [];
+    let index = 0;
+    for (const memory of picked) {
+      const raw = typeof memory.description === 'string' ? memory.description : JSON.stringify(memory.description);
+      const label = sourceLabel(memory.source);
+      const time = memory.created ? formatRelativeTime(memory.created) : '';
+      const meta = [label, time].filter(Boolean).join('·');
+      let content = raw;
+      if (memory.ref && this.refResolver) {
+        let body: string | null = null;
+        try { body = await this.refResolver(raw); } catch { body = null; }
+        if (body == null) staleRefs.push(memory); // 失效标记：正文跳过，不阻塞检索
+        else content = body;
+      }
+      index++;
+      lines.push(`${index}. [${memory.type}${meta ? `（${meta}）` : ''}] ${content.substring(0, 200)}...`);
+    }
+    return { text: lines.join('\n'), staleRefs };
   }
 }
 
@@ -1552,3 +1871,217 @@ export function buildStoryline(
   result.sort((a, b) => new Date(a.created).getTime() - new Date(b.created).getTime());
   return result;
 }
+
+// ==================== ADR-0069：存储 sidecar（smartcat-memory.json / smartcat-behavior.json） ====================
+
+/** 记忆流 sidecar 文件名（记忆流条目本体；smartcat.json 只留 meta/config） */
+export const SMARTCAT_MEMORY_SIDECAR_FILE = 'smartcat-memory.json';
+/** 行为流 sidecar 文件名（全量行为日志；滚动清理随 30s tick 整文件重写） */
+export const SMARTCAT_BEHAVIOR_SIDECAR_FILE = 'smartcat-behavior.json';
+
+/** 记忆流 sidecar 路径（与 smartcat.json 同目录，跟随共享 storagePath） */
+export function getSmartcatMemorySidecarPath(): string {
+  return `${smartcatStorageDir()}/${SMARTCAT_MEMORY_SIDECAR_FILE}`;
+}
+
+/** 行为流 sidecar 路径 */
+export function getSmartcatBehaviorSidecarPath(): string {
+  return `${smartcatStorageDir()}/${SMARTCAT_BEHAVIOR_SIDECAR_FILE}`;
+}
+
+/** 记忆流 sidecar 文件结构（v1；extraVectorRows = 引用型条目分块向量的额外行号记录） */
+export interface MemorySidecarFile {
+  version: 1;
+  lastUpdated: string;
+  entries: MemoryStreamEntry[];
+  extraVectorRows?: Record<string, number[]>;
+}
+
+/** 行为流 sidecar 文件结构（v1） */
+export interface BehaviorSidecarFile {
+  version: 1;
+  lastUpdated: string;
+  items: BehaviorItem[];
+}
+
+/** 读 sidecar json（不存在/坏 JSON → null，不抛错） */
+async function readJsonSidecar(app: App, path: string): Promise<any | null> {
+  try {
+    const f = app.vault.getAbstractFileByPath(path);
+    if (!f) return null;
+    return JSON.parse(await app.vault.read(f as any));
+  } catch {
+    return null;
+  }
+}
+
+/** 写 sidecar json（存在 modify / 不存在 create + 建目录兜底，与 data.ts saveSmartCatData 同款） */
+async function writeJsonSidecar(app: App, path: string, content: unknown): Promise<void> {
+  const c = JSON.stringify(content, null, 2);
+  const f = app.vault.getAbstractFileByPath(path);
+  if (f) {
+    await app.vault.modify(f as any, c);
+  } else {
+    const d = path.substring(0, path.lastIndexOf('/'));
+    if (d && !app.vault.getAbstractFileByPath(d)) await app.vault.createFolder(d);
+    await app.vault.create(path, c);
+  }
+}
+
+/** 读记忆流 sidecar（无文件/失败 → null） */
+export async function readMemorySidecarFile(app: App): Promise<MemorySidecarFile | null> {
+  return (await readJsonSidecar(app, getSmartcatMemorySidecarPath())) as MemorySidecarFile | null;
+}
+
+/** 写记忆流 sidecar */
+export async function writeMemorySidecarFile(app: App, entries: MemoryStreamEntry[], extraVectorRows?: Record<string, number[]>): Promise<void> {
+  const file: MemorySidecarFile = {
+    version: 1,
+    lastUpdated: new Date().toISOString(),
+    entries,
+    ...(extraVectorRows && Object.keys(extraVectorRows).length ? { extraVectorRows } : {}),
+  };
+  await writeJsonSidecar(app, getSmartcatMemorySidecarPath(), file);
+}
+
+/** 写行为流 sidecar */
+export async function writeBehaviorSidecarFile(app: App, items: BehaviorItem[]): Promise<void> {
+  const file: BehaviorSidecarFile = { version: 1, lastUpdated: new Date().toISOString(), items };
+  await writeJsonSidecar(app, getSmartcatBehaviorSidecarPath(), file);
+}
+
+/** smartcat.json 瘦身视图：memory 双流出清（sidecar 为准），meta/config 原样（不修改传入对象） */
+export function slimSmartCatData(data: SmartCatData): SmartCatData {
+  return {
+    ...data,
+    memory: {
+      ...data.memory,
+      memoryStream: [],
+      behaviorStream: [],
+    },
+  };
+}
+
+/**
+ * ADR-0069 升级迁移：记忆/行为双流从 smartcat.json 迁出到独立 sidecar（一次性，幂等）。
+ *  - smartcat-memory.json 已存在 → 采纳 sidecar 条目（smartcat.json 残留流数据弃用）；
+ *    不存在 → 从旧 smartcat.json 搬出，其中 type='observation' 事件类条目一次性清空（R2 拍板），
+ *    insight/digest 保留（evidenceIds 悬空可接受）；
+ *  - smartcat-behavior.json 同理（行为条目全量搬出）；
+ *  - 首次迁移时向量文件同步清理孤儿向量（仅保留存活条目主行、重排到新 stream 下标）；
+ *  - 双 sidecar 即时落盘 + smartcat.json 瘦身重写（关键路径不防抖）。
+ * 条目数组原位替换（各子系统经 dataProvider() 现取，不持旧数组引用）。
+ */
+export async function migrateSmartcatSidecars(app: App, data: SmartCatData): Promise<void> {
+  if (!data || !data.memory) return;
+  const memSide = await readJsonSidecar(app, getSmartcatMemorySidecarPath());
+  const behSide = await readJsonSidecar(app, getSmartcatBehaviorSidecarPath());
+  const oldStream: MemoryStreamEntry[] = Array.isArray(data.memory.memoryStream) ? data.memory.memoryStream : [];
+  const oldBehavior: BehaviorItem[] = Array.isArray(data.memory.behaviorStream) ? data.memory.behaviorStream : [];
+
+  let memoryEntries: MemoryStreamEntry[];
+  if (memSide && Array.isArray(memSide.entries)) {
+    memoryEntries = memSide.entries.filter((m: any) => m && typeof m === 'object' && typeof m.id === 'string' && typeof m.description === 'string');
+  } else {
+    // 首次迁移：R2（拍板）——事件类 observation 清空重建，insight/digest 保留
+    memoryEntries = oldStream.filter((m) => m && typeof m.id === 'string' && m.type !== 'observation');
+  }
+  let behaviorItems: BehaviorItem[];
+  if (behSide && Array.isArray(behSide.items)) {
+    behaviorItems = behSide.items.filter((b: any) => b && typeof b === 'object' && typeof b.id === 'string');
+  } else {
+    behaviorItems = oldBehavior.filter((b) => b && typeof b.id === 'string');
+  }
+
+  const needVectorCleanup = !memSide; // 仅首次迁移清理孤儿向量（sidecar 已在 → 行号映射仍有效）
+  const oldIndexById = new Map<string, number>();
+  oldStream.forEach((m, i) => { if (m && m.id) oldIndexById.set(m.id, i); });
+
+  // 原位替换（保引用）
+  data.memory.memoryStream.length = 0;
+  data.memory.memoryStream.push(...memoryEntries);
+  data.memory.behaviorStream.length = 0;
+  data.memory.behaviorStream.push(...behaviorItems);
+  data.memory.lastUpdated = new Date().toISOString();
+
+  if (needVectorCleanup) {
+    try {
+      const buf = await app.vault.adapter.readBinary(getSmartcatVecPath());
+      const arr = new Uint8Array(buf);
+      if (arr.length >= 8) {
+        const dim = new DataView(arr.buffer, arr.byteOffset, 4).getUint32(0, true);
+        if (dim > 0 && dim <= 10000) {
+          const payload = arr.slice(4);
+          const rows = Math.floor(payload.byteLength / 4 / dim);
+          const f32 = new Float32Array(payload.buffer, payload.byteOffset, rows * dim);
+          const kept: number[][] = [];
+          memoryEntries.forEach((m) => {
+            const oldIdx = oldIndexById.get(m.id);
+            if (oldIdx == null || oldIdx >= rows) return; // 无向量/孤儿行丢弃
+            kept.push(Array.from(f32.subarray(oldIdx * dim, (oldIdx + 1) * dim)));
+          });
+          const out = new Float64Array(memoryEntries.length * dim); // 主行 = 新 stream 下标（无向量条目补零行）
+          kept.forEach((row, i) => {
+            for (let d = 0; d < dim; d++) out[i * dim + d] = row[d] ?? 0;
+          });
+          const header = new Uint8Array(4);
+          new DataView(header.buffer).setUint32(0, dim, true);
+          const payloadOut = new Float32Array(out);
+          const dataOut = new Uint8Array(4 + payloadOut.byteLength);
+          dataOut.set(header, 0);
+          dataOut.set(new Uint8Array(payloadOut.buffer, payloadOut.byteOffset, payloadOut.byteLength), 4);
+          await app.vault.adapter.writeBinary(getSmartcatVecPath(), dataOut.buffer as ArrayBuffer);
+        }
+      }
+    } catch { /* 无向量文件/读取失败 → 无孤儿可清，不阻塞迁移 */ }
+  }
+
+  // 关键路径即时落盘：sidecar 双写 + smartcat.json 瘦身重写（失败不阻塞装配，下次 dataSaver 再写）
+  await writeMemorySidecarFile(app, data.memory.memoryStream);
+  await writeBehaviorSidecarFile(app, data.memory.behaviorStream);
+  try {
+    await saveSmartCatData(app, slimSmartCatData(data));
+  } catch { /* 瘦身重写失败静默 */ }
+}
+
+// ==================== ADR-0069：引用型条目全文分块（R3） ====================
+
+/** 全文分块上限（bge-m3 8192 token；保守按字符估算——1 字符 ≈ 1 token 留安全余量） */
+export const NOTE_CHUNK_LIMIT_CHARS = 6000;
+
+/**
+ * 笔记全文分块（纯函数可测）：超长笔记按标题行（# ~ ######）切块、无标题退空行段落，
+ * 单块 ≤ maxChars；单段超限硬切。**不静默截断**——全文覆盖，一笔记多块多向量。
+ */
+export function chunkNoteText(text: string, maxChars = NOTE_CHUNK_LIMIT_CHARS): string[] {
+  const src = typeof text === 'string' ? text : '';
+  if (!src) return [];
+  if (src.length <= maxChars) return [src];
+  // 先按标题行切（标题行起新段）；全文无标题 → 按空行段落切
+  const segments: string[] = [];
+  let cur: string[] = [];
+  for (const line of src.split('\n')) {
+    if (/^#{1,6}\s/.test(line) && cur.length) {
+      segments.push(cur.join('\n'));
+      cur = [];
+    }
+    cur.push(line);
+  }
+  if (cur.length) segments.push(cur.join('\n'));
+  const pieces = segments.length > 1 ? segments : src.split(/\n\n+/);
+  const chunks: string[] = [];
+  let buf = '';
+  const flush = () => { if (buf.trim()) chunks.push(buf); buf = ''; };
+  for (const piece of pieces) {
+    if (piece.length > maxChars) {
+      flush();
+      for (let i = 0; i < piece.length; i += maxChars) chunks.push(piece.slice(i, i + maxChars));
+      continue;
+    }
+    if (buf && buf.length + piece.length + 1 > maxChars) flush();
+    buf = buf ? `${buf}\n${piece}` : piece;
+  }
+  flush();
+  return chunks.length ? chunks : [src];
+}
+

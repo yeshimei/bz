@@ -256,8 +256,8 @@ describe('保存联动 auto-summary（方案 a，ticket 076）', () => {
 
 // ---------------- 行为流落盘测试（ticket 123 缺陷修复：writeBehaviorStream 补 dataSaver） ----------------
 
-describe('行为流落盘（writeBehaviorStream → dataSaver）', () => {
-  it('news:skipped 后读磁盘 smartcat.json 确认 behaviorStream 已持久化', async () => {
+describe('行为流落盘（writeBehaviorStream → sidecar 防抖落盘，ADR-0069）', () => {
+  it('news:skipped 后 flushSidecars 确认 behaviorStream 已持久化到 smartcat-behavior.json', async () => {
     const { app, vault } = makeApp();
     await ensureSmartCat(app);
     emitDomainEvent('news', { kind: 'read', evt: { title: '落盘验证文章', platform: '知乎日报', state: 'skipped', durationMin: 2 } });
@@ -268,10 +268,12 @@ describe('行为流落盘（writeBehaviorStream → dataSaver）', () => {
     expect(last.source).toBe('news');
     expect(last.type).toBe('skipped');
     expect(last.metadata.name).toBe('落盘验证文章');
-    // 读磁盘 smartcat.json 确认 behaviorStream 已持久化（现读现渲染面板的数据源）
-    const filePath = 'CONFIG/STORAGE/smartcat.json';
-    const raw = JSON.parse(await vault.adapter.read(filePath));
-    const persisted = raw.memory.behaviorStream;
+    // R5 防抖：内存写入只标脏，30s tick / 显式 flush 合并落盘到 sidecar（smartcat.json 不再随事件整写）
+    expect(__getSmartcatInternals().memorySystem).toBeTruthy();
+    await __getSmartcatInternals().memorySystem.flushSidecars();
+    const sidePath = 'CONFIG/STORAGE/smartcat-behavior.json';
+    const raw = JSON.parse(await vault.adapter.read(sidePath));
+    const persisted = raw.items;
     expect(Array.isArray(persisted)).toBe(true);
     expect(persisted.some((b: any) => b.source === 'news' && b.type === 'skipped' && b.metadata?.name === '落盘验证文章')).toBe(true);
   });
