@@ -2,8 +2,10 @@
  * 通用设置弹窗（ADR-0009 域设置弹窗）：各功能主面板右上角 ⚙️ 打开的功能专属设置弹窗。
  * 单例管理：同一时刻至多一个设置弹窗；重复调用先关闭旧弹窗（toggle 语义）。
  * 结构：mask + popup（标题栏 + 可滚动设置区），点击遮罩 / Esc 关闭（不放右上角关闭按钮）。
- * build 回调内用 obsidian Setting 挂设置项；未挂任何 .setting-item 时显示空态。
- * 重设计（2026-08 用户拍板方案 A 分组卡片）：build 内可用 createSettingsGroup 建
+ * 内容入口（ticket 131，ADR-0064）：`schema`（声明式渲染器 renderSettingsInto，唯一新口径）；
+ * `build` 手写回调保留为 @deprecated 过渡兼容（13 域弹窗迁移完成后删除）。未挂任何
+ * .setting-item 时显示空态。
+ * 重设计（2026-08 用户拍板方案 A 分组卡片）：schema/ build 内可用 createSettingsGroup 建
  * 「分组卡片」（原生图标+组名+项数徽标头 + 设置项体）；弹窗打开后徽标自动回填。
  * 焦点管理（UX 整改 37）：打开聚焦弹窗内首个可交互设置项（跳过隐藏项；
  * 移动端再跳过 input/textarea，避免弹软键盘遮挡并聚焦到按钮/开关/下拉），
@@ -13,6 +15,8 @@ import { Setting, setIcon } from 'obsidian';
 import { createOverlay } from './dom';
 import { escManager } from './esc-manager';
 import { isMobileEnv } from './mobile';
+import { renderSettingsInto } from './settings-schema';
+import type { SettingsSchema } from './settings-schema';
 
 /** 弹窗内可交互元素选择器（读屏/焦点管理的通用口径） */
 const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
@@ -20,8 +24,13 @@ const FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:
 export interface SettingsModalOptions {
   /** 弹窗标题，如「书库设置」 */
   title: string;
-  /** 设置项构建回调：在滚动内容区挂 Setting（可多次调用） */
-  build: (el: HTMLElement) => void;
+  /**
+   * @deprecated 过渡兼容（ticket 131 Wave-1：13 个域弹窗尚未迁移）。手写 Setting 构建回调，
+   * 新代码一律用 `schema`（ADR-0064 声明式渲染器）；后续域迁移票迁完后由主会话收尾删除。
+   */
+  build?: (el: HTMLElement) => void;
+  /** 声明式设置 schema（ADR-0064）：与 build 二选一，同时给出时 schema 优先 */
+  schema?: SettingsSchema;
   /** 空态主文案（无设置项时显示；归物本/收藏本用） */
   emptyText?: string;
   /** 空态二级说明 */
@@ -155,11 +164,17 @@ export function openSettingsModal(opts: SettingsModalOptions): void {
   const content = document.createElement('div');
   content.className = 'bz-settings-content';
 
-  opts.build(content);
-  // 分组卡片项数徽标回填（build 后、空态判断前）
-  refreshSettingsGroupCounts(content);
-  // 移动端两行式标注（ticket 128）：控件区 ≥2 子元素的设置行挂 .bz-setting-split（build 后统一挂）
-  markSettingSplitRows(content);
+  if (opts.schema) {
+    // ADR-0064 声明式渲染路径：渲染器内部完成徽标回填/两行式标注/显隐求值
+    renderSettingsInto(content, opts.schema);
+  } else if (opts.build) {
+    // @deprecated 过渡路径（13 域弹窗未迁移期间保留）
+    opts.build(content);
+    // 分组卡片项数徽标回填（build 后、空态判断前）
+    refreshSettingsGroupCounts(content);
+    // 移动端两行式标注（ticket 128）：控件区 ≥2 子元素的设置行挂 .bz-setting-split（build 后统一挂）
+    markSettingSplitRows(content);
+  }
 
   // 空态：build 未挂任何设置项（归物本/收藏本）
   if (!content.querySelector('.setting-item')) {
