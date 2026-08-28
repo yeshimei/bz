@@ -4,7 +4,7 @@
  * 时间格式校验、bili-tasks.json CRUD、状态流转、清空已完成（只清成功）。
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { TasksData, isValidTime, isTerminal, normalizeUrl } from '../../src/bili-downloader/data';
+import { TasksData, isValidTime, isTerminal, normalizeUrl, normalizeLooseTime } from '../../src/bili-downloader/data';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
 
@@ -27,6 +27,35 @@ describe('isValidTime', () => {
     expect(isValidTime('abc')).toBe(false);
     expect(isValidTime('1:2:3:4')).toBe(false);
     expect(isValidTime('30:00:00')).toBe(true); // 自由超长小时允许（长视频 100+ 分钟）
+  });
+});
+
+describe('normalizeLooseTime（宽松时间归一）', () => {
+  it('空 = 整片（返回空串）', () => {
+    expect(normalizeLooseTime('')).toBe('');
+    expect(normalizeLooseTime('   ')).toBe('');
+    expect(normalizeLooseTime(null)).toBe('');
+  });
+  it('已是规范格式原样保留（含 hh:mm:ss.S 小数）', () => {
+    expect(normalizeLooseTime('5:30')).toBe('5:30');
+    expect(normalizeLooseTime('1:02:03')).toBe('1:02:03');
+    expect(normalizeLooseTime('1:02:03.5')).toBe('1:02:03.5');
+  });
+  it('分隔符混用：12.2 / 12-2 / 1:02 → 12:02，三段 → hh:mm:ss', () => {
+    expect(normalizeLooseTime('12.2')).toBe('12:02');
+    expect(normalizeLooseTime('12-2')).toBe('12:02');
+    expect(normalizeLooseTime('12：02')).toBe('12:02');
+    expect(normalizeLooseTime('1.2.3')).toBe('1:02:03');
+    expect(normalizeLooseTime('1、2、3')).toBe('1:02:03');
+  });
+  it('单个数字 = 分钟（12 → 12:00）', () => {
+    expect(normalizeLooseTime('12')).toBe('12:00');
+    expect(normalizeLooseTime('2')).toBe('2:00');
+  });
+  it('无法解析返回 null', () => {
+    expect(normalizeLooseTime('abc')).toBeNull();
+    expect(normalizeLooseTime('12.2.3.4')).toBeNull();
+    expect(normalizeLooseTime('12.345')).toBeNull(); // 秒位溢出两位
   });
 });
 

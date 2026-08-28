@@ -36,6 +36,25 @@ export function isValidTime(t: string | null | undefined): boolean {
   return TIME_RE.test(t.trim());
 }
 
+/**
+ * 宽松时间输入归一：分隔符 . - ：等一律视为时/分/秒分隔（12.2 / 12-2 → 12:02），
+ * 单个数字 = 分钟（12 → 12:00，写秒用 0.30）；已是规范格式（含 hh:mm:ss.S 小数）原样保留。
+ * 返回规范 mm:ss / hh:mm:ss 落库；无法解析返回 null，空串返回 ''（整片）。
+ */
+export function normalizeLooseTime(t: string | null | undefined): string | null {
+  const s = (t ?? '').trim();
+  if (!s) return '';
+  if (TIME_RE.test(s)) return s;
+  const parts = s.split(/[:：.。\-—_、，,\s]+/).filter(Boolean);
+  if (parts.length === 0 || parts.length > 3 || parts.some((p) => !/^\d+$/.test(p))) return null;
+  const [a, b, c] = parts;
+  let canon: string;
+  if (c !== undefined) canon = `${a}:${b.padStart(2, '0')}:${c.padStart(2, '0')}`;
+  else if (b !== undefined) canon = `${a}:${b.padStart(2, '0')}`;
+  else canon = `${a}:00`;
+  return TIME_RE.test(canon) ? canon : null;
+}
+
 /** 提取展示用链接文本：BV 号原样，链接取完整串 */
 export function normalizeUrl(raw: string): string {
   return raw.trim();

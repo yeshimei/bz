@@ -66,7 +66,7 @@ describe('文献盒面板 UI', () => {
   });
 
   it('行渲染：状态徽标（待处理/处理中/成功/失败）+ 时间范围 + 进度文案', async () => {
-    const t1 = await TasksData.addTask({ url: 'BV1xx411c7mD', start: '1:02:03', end: '1:05:00', remark: '重点段' });
+    const t1 = await TasksData.addTask({ url: 'BV1xx411c7mD', start: '1:02:03', end: '1:05:00' });
     await TasksData.updateTask(t1.id, { status: 'processing', reason: '下载中…' } as any);
     const t2 = await TasksData.addTask({ url: 'BV1xx411c7mE' });
     await TasksData.updateTask(t2.id, { status: 'success', notePath: '文献盒/测试.md' } as any);
@@ -82,7 +82,6 @@ describe('文献盒面板 UI', () => {
     expect(txt).toContain('失败');
     expect(txt).toContain('BV1xx411c7mD');
     expect(txt).toContain('1:02:03 ~ 1:05:00');
-    expect(txt).toContain('重点段');
     expect(txt).toContain('下载中…');   // 行内进度文案
     expect(txt).toContain('视频已删除'); // 失败原因
     expect(txt).toContain('文献盒/测试.md');
@@ -100,33 +99,37 @@ describe('文献盒面板 UI', () => {
     expect((document.getElementById('bili-btn-run') as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it('添加弹窗：保存成功入库 + 字段回填（编辑态）', async () => {
+  it('添加弹窗：保存成功入库 + 字段回填（编辑态）+ 宽松时间归一', async () => {
     ui.showMain();
     await new Promise((r) => setTimeout(r, 0));
     (document.getElementById('bili-btn-add') as HTMLButtonElement)!.click();
     const popup = document.getElementById('bili-add-popup')!;
     expect(popup.style.display).toBe('flex');
     (document.getElementById('bili-add-url') as HTMLInputElement).value = 'https://www.bilibili.com/video/BV1xx411c7mD';
-    (document.getElementById('bili-add-start') as HTMLInputElement).value = '0:30';
-    (document.getElementById('bili-add-end') as HTMLInputElement).value = '2:10';
-    (document.getElementById('bili-add-remark') as HTMLInputElement).value = '精讲';
+    (document.getElementById('bili-add-start') as HTMLInputElement).value = '12.2';
+    (document.getElementById('bili-add-end') as HTMLInputElement).value = '12-30';
     (document.getElementById('bili-add-save') as HTMLButtonElement).click();
     await vi.waitFor(() => expect(strNotices()).toContain('已保存'));
     let all = await TasksData.loadTasks();
     expect(all).toHaveLength(1);
-    expect(all[0]).toMatchObject({ url: 'https://www.bilibili.com/video/BV1xx411c7mD', start: '0:30', end: '2:10', remark: '精讲', status: 'pending' });
+    expect(all[0]).toMatchObject({ url: 'https://www.bilibili.com/video/BV1xx411c7mD', start: '12:02', end: '12:30', status: 'pending' });
     // 点击待处理行 → 编辑回填
     (document.querySelector('.bz-bili-task-card') as HTMLElement).click();
     expect(popup.style.display).toBe('flex');
     expect((document.getElementById('bili-add-url') as HTMLInputElement).value).toContain('BV1xx411c7mD');
-    // 改备注保存 → 更新而非新增
-    (document.getElementById('bili-add-remark') as HTMLInputElement).value = '改过';
+    expect((document.getElementById('bili-add-start') as HTMLInputElement).value).toBe('12:02');
+    // 改时间保存 → 更新而非新增
+    (document.getElementById('bili-add-start') as HTMLInputElement).value = '12';
+    (document.getElementById('bili-add-end') as HTMLInputElement).value = '12.2';
     (document.getElementById('bili-add-save') as HTMLButtonElement).click();
     await vi.waitFor(async () => {
       all = await TasksData.loadTasks();
-      expect(all[0].remark).toBe('改过');
+      expect(all[0].start).toBe('12:00');
+      expect(all[0].end).toBe('12:02');
     });
     expect(all).toHaveLength(1);
+    // 弹窗无备注输入框（已移除）
+    expect(document.getElementById('bili-add-remark')).toBeNull();
   });
 
   it('添加校验：缺链接 / 时间格式错 / 起止不成对', async () => {
