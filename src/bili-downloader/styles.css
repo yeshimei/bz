@@ -125,7 +125,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- ADR-0067：行内标题链接 / UP主 / 失败重试按钮 / 历史条 ---- */
+/* ---- ADR-0067：行内标题链接 / UP主；ADR-0070：头部状态计数 / 历史分组笔记行 ---- */
 .bz-bili-title {
   flex: 1;
   overflow: hidden;
@@ -138,44 +138,32 @@
 .bz-bili-title:hover {
   text-decoration: underline;
 }
-.bz-bili-retry-btn {
-  margin-top: 6px;
-  font-size: 12px;
-  padding: 1px 12px;
-  line-height: 22px;
-  border-radius: 6px;
-  color: var(--text-on-accent);
-  background: var(--interactive-accent);
-  cursor: pointer;
-  border: none;
-}
-.bz-bili-retry-btn:hover {
-  filter: brightness(1.1);
-}
-.bz-bili-hstrip {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 10px;
-  margin-bottom: 8px;
-  border-radius: 8px;
-  font-size: 12px;
-  background: var(--background-modifier-hover);
+/* 头部标题旁状态计数（待处理/处理中/失败） */
+.bz-bili-counts {
+  font-size: 11px;
   color: var(--text-muted);
+  white-space: nowrap;
 }
-.bz-bili-hstrip button {
-  font-size: 12px;
-  padding: 0 10px;
-  line-height: 22px;
+/* 历史分组卡片：每条任务一行「📄 笔记路径 ⏱ 完成时间」 */
+.bz-bili-hgroup .bz-bili-hnote {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 5px;
+  padding: 3px 6px;
   border-radius: 6px;
-  border: none;
+  font-size: 12px;
+  color: var(--text-muted);
   cursor: pointer;
-  color: var(--text-error, #e5484d);
-  background: transparent;
+  overflow: hidden;
 }
-.bz-bili-hstrip button:hover {
+.bz-bili-hgroup .bz-bili-hnote:hover {
   background: var(--background-modifier-hover);
 }
-#bili-btn-history.bz-bili-mode-active {
-  background: var(--interactive-accent);
+.bz-bili-hgroup .bz-bili-hnote-time {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
 }
