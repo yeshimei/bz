@@ -7,10 +7,10 @@ import { initArticleView, applyArticleSettings, unloadClipping } from './view';
 
 let initialized = false;
 
-/** 幂等初始化（懒加载：UI 域首次打开初始化） */
+/** 幂等初始化（懒加载：UI 域首次打开初始化）；每次打开应用设置——目录设置变更时
+ *  applyArticleSettings 清缓存全量重载一次（ticket 130 / ADR-0063，此后重开零扫描）。 */
 export function ensureClipping(app: App): void {
-  if (initialized) return;
-  initialized = true;
+  if (!initialized) initialized = true;
   applyArticleSettings();
 }
 

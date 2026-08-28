@@ -61,11 +61,43 @@ export interface ArticleEntry {
   backlinkSources: string[];
 }
 
-/** 读取插件设置（剪藏目录；批次读设置） */
+/** 读取插件设置（剪藏目录；批次读设置）。
+ *  ticket 130 / ADR-0063 目录变更检测：设置 articleDirectory 与当前缓存目录不一致
+ *  → 清空模块列表/筛选态 + 全量重载一次（此后重开零扫描，旧目录文件不留存防错目录渲染）；
+ *  面板未建或已卸载（detached）时仅更新配置不重载（避免 hook 错位触发空载）。 */
 export function applyArticleSettings(): void {
   const s = tryGetSettings() as any;
-  ARTICLE_DIRECTORY = s.articleDirectory || '归档/网页剪藏';
-  BATCH_SIZE = parseInt(s.articleBatchSize || '20', 10) || 20;
+  const nextDir = s.articleDirectory || '归档/网页剪藏';
+  const nextBatch = parseInt(s.articleBatchSize || '20', 10) || 20;
+  if (articlePopup && articlePopup.isConnected && nextDir !== ARTICLE_DIRECTORY) {
+    resetArticleCache();
+    ARTICLE_DIRECTORY = nextDir;
+    BATCH_SIZE = nextBatch;
+    if (articlesContainer) showLoadingHint(); // 目录切换期间不残留旧目录内容（防错目录渲染）
+    void loadAllArticles();
+    return;
+  }
+  ARTICLE_DIRECTORY = nextDir;
+  BATCH_SIZE = nextBatch;
+}
+
+/** 目录变更重载前清空缓存（ticket 130）：模块列表/筛选态/滚动进度 + 待结算防抖
+ *  （旧目录路径不再结算，防旧目录文件混入新列表） + 搜索框回显同步清空。 */
+function resetArticleCache(): void {
+  allArticles = [];
+  filteredArticles = [];
+  currentDisplayCount = 0;
+  allLoaded = false;
+  selectedSite = null;
+  currentSearchKeyword = '';
+  if (refreshTimer) {
+    clearTimeout(refreshTimer);
+    refreshTimer = null;
+  }
+  pendingRefreshPaths.clear();
+  pendingDeletePaths.clear();
+  const input = document.getElementById('article-search-input') as HTMLInputElement | null;
+  if (input) input.value = '';
 }
 
 // ========== 初始化 ==========
@@ -87,12 +119,10 @@ export async function initArticleView(showImmediately = true): Promise<void> {
       setArticleViewVisible(true);
       // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
       applyMobileWindowFullscreen(articlePopup, tryGetSettings().clippingMobileDefaultFullscreen === true);
-      // 重开即重载：解析零 I/O（纯 metadataCache），外部删除/改名/换目录不留幽灵卡片跨重开（B1）
-      // 重载前先显示加载提示：重载期间内容区不残留旧列表，与首次打开「先弹窗后加载」一致
-      if (!isLoadingData) {
-        showLoadingHint();
-        void loadAllArticles();
-      }
+      // 重开缓存复用（ticket 130 / ADR-0063）：模块级 allArticles 跨重开常驻、面板显隐只切
+      // visibility 不清 DOM，旧列表直接展示——零扫描零加载提示（首开才先弹窗+加载提示+全量加载）。
+      // B1 幽灵卡片防护由常驻监听（modify/delete/rename 三通道，面板隐藏不卸、unloadClipping 才退订）
+      // 增量维护；仅剪藏目录设置变更时由 applyArticleSettings 清缓存全量重载一次。
     } else {
       setArticleViewVisible(false);
     }

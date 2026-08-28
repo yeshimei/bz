@@ -205,7 +205,7 @@ export function buildSimilarPrompt(item: any, watched: any[]): string {
 }
 
 /**
- * 统一推荐结果窗口（AI 荐片 / 找同类共用）：居中卡片、头部行 + ✕ 关闭（bz-win-close）、
+ * 统一推荐结果窗口（AI 荐片 / 找同类共用）：居中卡片、头部行 + ❌ 关闭（bz-win-close）、
  * 内容区滚动隐藏滚动条；遮罩点击/ESC 关闭。与主窗口视觉规范一致。
  */
 export function showResultWindow(app: App, title: string, list: any[]): void {
@@ -236,7 +236,7 @@ export function showResultWindow(app: App, title: string, list: any[]): void {
   titleEl.style.cssText = 'font-size: 1.05rem; font-weight: 600;';
   titleEl.textContent = title;
   const closeBtn = document.createElement('button');
-  closeBtn.textContent = '✕';
+  closeBtn.textContent = '❌';
   closeBtn.className = 'bz-win-close';
   closeBtn.addEventListener('click', () => {
     overlay.remove();
