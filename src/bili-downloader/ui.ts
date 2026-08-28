@@ -191,6 +191,12 @@ export class UIManager {
       </div>
       <label style="font-size:12px;color:var(--text-muted);">备注（可选）</label>
       <input id="bili-add-remark" type="text" placeholder="为什么转这篇">
+      <div style="display:flex;gap:10px;">
+        <div style="flex:1;"><label style="font-size:12px;color:var(--text-muted);">视频标题（可选）</label>
+          <input id="bili-add-vtitle" type="text" placeholder="队列里好认，留空用链接"></div>
+        <div style="flex:1;"><label style="font-size:12px;color:var(--text-muted);">UP主（可选）</label>
+          <input id="bili-add-uploader" type="text" placeholder="投稿 UP 主"></div>
+      </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
         <button id="bili-add-cancel">取消</button>
         <button id="bili-add-save" style="background:var(--interactive-accent);color:var(--text-on-accent);">保存</button>
@@ -214,14 +220,17 @@ export class UIManager {
     if (this.popup) this.popup.style.display = 'none';
   }
 
-  showAddDialog(editItem?: BiliTask): void {
+  showAddDialog(editItem?: Partial<BiliTask>): void {
     if (!this.addPopup) return;
     this.editingId = editItem?.id ?? null;
-    q<HTMLElement>(this.addPopup, '#bili-add-title')!.textContent = editItem ? '编辑转文献任务' : '添加转文献任务';
+    // 有 id = 编辑既有任务；无 id（含预填对象）= 新增模式（ticket 134：聚合讯入口预填不显示编辑态）
+    q<HTMLElement>(this.addPopup, '#bili-add-title')!.textContent = this.editingId ? '编辑转文献任务' : '添加转文献任务';
     (q<HTMLInputElement>(this.addPopup, '#bili-add-url')!).value = editItem?.url ?? '';
     (q<HTMLInputElement>(this.addPopup, '#bili-add-start')!).value = editItem?.start ?? '';
     (q<HTMLInputElement>(this.addPopup, '#bili-add-end')!).value = editItem?.end ?? '';
     (q<HTMLInputElement>(this.addPopup, '#bili-add-remark')!).value = editItem?.remark ?? '';
+    (q<HTMLInputElement>(this.addPopup, '#bili-add-vtitle')!).value = editItem?.title ?? '';
+    (q<HTMLInputElement>(this.addPopup, '#bili-add-uploader')!).value = editItem?.uploader ?? '';
     this.addPopup.style.display = 'flex';
   }
 
@@ -236,15 +245,17 @@ export class UIManager {
     const start = (q<HTMLInputElement>(this.addPopup, '#bili-add-start')?.value ?? '').trim();
     const end = (q<HTMLInputElement>(this.addPopup, '#bili-add-end')?.value ?? '').trim();
     const remark = (q<HTMLInputElement>(this.addPopup, '#bili-add-remark')?.value ?? '').trim();
+    const vtitle = (q<HTMLInputElement>(this.addPopup, '#bili-add-vtitle')?.value ?? '').trim();
+    const uploader = (q<HTMLInputElement>(this.addPopup, '#bili-add-uploader')?.value ?? '').trim();
     if (!url) { notice('请填写视频链接或 BV 号', 'error'); return; }
     if (!isValidTime(start) || !isValidTime(end)) { notice('时间格式应为 mm:ss 或 hh:mm:ss(.S)', 'error'); return; }
     if ((!start && end) || (start && !end)) { notice('开始与结束时间需成对填写（都留空 = 整片）', 'error'); return; }
     try {
       if (this.editingId) {
-        await TasksData.updateTask(this.editingId, { url, start: start || null, end: end || null, remark: remark || null });
+        await TasksData.updateTask(this.editingId, { url, start: start || null, end: end || null, remark: remark || null, title: vtitle || null, uploader: uploader || null });
         emitDomainEvent('bili-tasks', { kind: 'edited', id: this.editingId });
       } else {
-        await TasksData.addTask({ url, start: start || null, end: end || null, remark: remark || null });
+        await TasksData.addTask({ url, start: start || null, end: end || null, remark: remark || null, title: vtitle || null, uploader: uploader || null });
         emitDomainEvent('bili-tasks', { kind: 'added', url });
       }
       notice('已保存');
@@ -299,7 +310,7 @@ export class UIManager {
     card.innerHTML = `
       <div class="bz-bili-row">
         <span class="bz-bili-status ${meta.cls}">${meta.label}</span>
-        <span class="bz-bili-url" title="${task.url}">${task.url}</span>
+        <span class="bz-bili-url" title="${esc(task.url)}">${esc(task.title || task.url)}</span>
       </div>
       <div class="bz-bili-meta">${timeText}${task.remark ? ' · ' + task.remark : ''}</div>
       ${task.status === 'processing' ? (this.runState.has(task.id) ? '<div class="bz-bili-progress-box"></div>' : (task.reason ? `<div class="bz-bili-progress">${esc(task.reason)}</div>` : '')) : ''}

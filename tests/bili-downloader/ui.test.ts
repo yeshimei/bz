@@ -143,6 +143,42 @@ describe('文献盒面板 UI', () => {
     expect((await TasksData.loadTasks())).toHaveLength(0);
   });
 
+  it('添加弹窗新字段（ticket 134）：标题/UP主落库 + 聚合讯入口预填新增模式 + 编辑回填', async () => {
+    ui.showMain();
+    await new Promise((r) => setTimeout(r, 0));
+    (document.getElementById('bili-btn-add') as HTMLButtonElement)!.click();
+    (document.getElementById('bili-add-url') as HTMLInputElement).value = 'BV1xx411c7mD';
+    (document.getElementById('bili-add-vtitle') as HTMLInputElement).value = '某视频';
+    (document.getElementById('bili-add-uploader') as HTMLInputElement).value = 'UP主甲';
+    (document.getElementById('bili-add-save') as HTMLButtonElement).click();
+    await vi.waitFor(async () => {
+      const all = await TasksData.loadTasks();
+      expect(all[0]).toMatchObject({ title: '某视频', uploader: 'UP主甲' });
+    });
+    // 编辑回填：点击待处理行 → 两个新字段回显
+    (document.querySelector('.bz-bili-task-card') as HTMLElement).click();
+    expect((document.getElementById('bili-add-vtitle') as HTMLInputElement).value).toBe('某视频');
+    expect((document.getElementById('bili-add-uploader') as HTMLInputElement).value).toBe('UP主甲');
+    // 聚合讯入口预填（无 id = 新增模式，标题不显示「编辑」，起止留空）
+    ui.showAddDialog({ url: 'https://www.bilibili.com/video/BV1xx411c7mE', title: '预填标题', uploader: '预填UP' });
+    const popup = document.getElementById('bili-add-popup')!;
+    expect(popup.querySelector('#bili-add-title')!.textContent).toBe('添加转文献任务');
+    expect((document.getElementById('bili-add-url') as HTMLInputElement).value).toBe('https://www.bilibili.com/video/BV1xx411c7mE');
+    expect((document.getElementById('bili-add-vtitle') as HTMLInputElement).value).toBe('预填标题');
+    expect((document.getElementById('bili-add-uploader') as HTMLInputElement).value).toBe('预填UP');
+    expect((document.getElementById('bili-add-start') as HTMLInputElement).value).toBe('');
+  });
+
+  it('队列行展示优先标题（ticket 134）：有 title 显标题（悬停看链接），无回退链接', async () => {
+    await TasksData.addTask({ url: 'BV1xx411c7mD', title: '某视频标题' });
+    await TasksData.addTask({ url: 'BV1xx411c7mE' });
+    await ui.refreshPanel();
+    const cards = document.querySelectorAll('.bz-bili-task-card');
+    expect((cards[0].querySelector('.bz-bili-url') as HTMLElement).textContent).toBe('某视频标题');
+    expect((cards[0].querySelector('.bz-bili-url') as HTMLElement).title).toBe('BV1xx411c7mD');
+    expect((cards[1].querySelector('.bz-bili-url') as HTMLElement).textContent).toBe('BV1xx411c7mE');
+  });
+
   it('点击分流：成功项打开文献笔记', async () => {
     const t = await TasksData.addTask({ url: 'BV1xx411c7mD' });
     await TasksData.updateTask(t.id, { status: 'success', notePath: '文献盒/测试.md' } as any);

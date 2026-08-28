@@ -18,6 +18,9 @@ export interface BiliTaskInput {
   start?: string | null;
   end?: string | null;
   remark?: string | null;
+  /** 可选视频标题/UP主（聚合讯「保存至文献」入口预填，ticket 134；仅元数据不进转换流程） */
+  title?: string | null;
+  uploader?: string | null;
 }
 
 /** 时间格式：mm:ss 或 hh:mm:ss(.S)，与工具 @jwbz/bili-downloader 一致（0.1s 精度） */
@@ -73,6 +76,8 @@ export const TasksData = {
         status: (item.status as BiliTaskStatus) || 'pending',
         reason: item.reason || null,
         remark: item.remark || null,
+        title: item.title ?? null,
+        uploader: item.uploader ?? null,
         notePath: item.notePath || null,
         videoPath: item.videoPath || null,
         created: item.created || moment().format('YYYY-MM-DD HH:mm:ss'),
@@ -93,6 +98,8 @@ export const TasksData = {
       status: 'pending',
       reason: null,
       remark: input.remark?.trim() || null,
+      title: input.title?.trim() || null,
+      uploader: input.uploader?.trim() || null,
       notePath: null,
       videoPath: null,
       created: moment().format('YYYY-MM-DD HH:mm:ss'),
