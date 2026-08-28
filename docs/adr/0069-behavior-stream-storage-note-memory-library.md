@@ -1,7 +1,7 @@
 # ADR-0069: 行为流全量补齐 + 记忆流转型笔记记忆库 + 存储 sidecar 化
 
 日期：2026-08-29
-状态：已拍板（grill-with-docs 会话定案，未实施）
+状态：已实施（2026-08-29 三 worktree 流并行实施并合并：smartcat-memory-core / smartcat-memory-dirs / smartcat-coverage）
 
 ## 背景
 
