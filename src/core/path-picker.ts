@@ -19,7 +19,6 @@ import { Setting } from 'obsidian';
 import { getApp } from './app';
 import { createOverlay } from './dom';
 import { escManager, type EscHandle } from './esc-manager';
-import { isMobileEnv } from './mobile';
 
 /** 选择器遮罩 z-index（companion 档；本体 +1 = 11201） */
 export const PATH_PICKER_Z_MASK = 11200;
@@ -270,9 +269,11 @@ export function renderPathSettingRow(opts: PathSettingRowOptions): { refresh: ()
   const control = setting.settingEl.querySelector('.setting-item-control');
   if (control) control.appendChild(chipsWrap);
 
-  // ticket 133 已选态：按钮移出 DOM（控件区仅 1 子元素，两行式判定不触发，移动端同行）；
-  // 空态（含 ✕ 清除后）恢复按钮
+  // ticket 133 已选态：① 行级 data-filled 标志——CSS 据此隐藏选择按钮（[data-filled='1']），
+  // 不依赖按钮元素移除时序（双保险，任何环境下有值即不可见）；② 按钮移出 DOM（控件区干净）。
+  // 空态（含 ✕ 清除后）恢复按钮 + data-filled='0'
   const syncBtn = () => {
+    setting.settingEl.dataset.filled = current.length > 0 ? '1' : '0';
     if (!btn || !control) return;
     if (current.length === 0) {
       if (!btn.isConnected) control.appendChild(btn);
@@ -335,8 +336,8 @@ export function openPathPicker(opts: PathPickerOptions): void {
     maskId: 'bz-path-picker-mask',
     popupId: 'bz-path-picker-popup',
     zIndex: PATH_PICKER_Z_MASK,
-    // ticket 133 修订：移动端左右各留 16px 外边距（宽视口/桌面维持 92vw 居中卡）
-    width: isMobileEnv() ? 'min(calc(100vw - 32px), 440px)' : 'min(92vw, 440px)',
+    // ticket 133：桌面/移动端统一一张居中卡——左右各 16px 外边距，宽视口封顶 440px（不分两套样式）
+    width: 'min(calc(100vw - 32px), 440px)',
     maxWidth: 440,
     onMaskClick: () => closePathPicker(),
   });

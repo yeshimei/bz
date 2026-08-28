@@ -282,16 +282,19 @@ describe('renderPathSettingRow：设置行助手（chips + 选择按钮，无手
     expect(settingEl.dataset.name).toBe('剪藏目录');
     // 行挂移动端单行兜底类（ticket 133 修订：CSS 层保证同行，不依赖子元素计数）
     expect(settingEl.classList.contains('bz-path-picker-setting-row')).toBe(true);
+    // 已选态：data-filled=1（CSS 双保险隐藏按钮）+ 按钮移出 DOM
+    expect(settingEl.dataset.filled).toBe('1');
     // chips 在控件区内；已选态「选择…」按钮移出 DOM（控件区仅 chips，chip 内 ✕ 按钮不算）
     const control = settingEl.querySelector('.setting-item-control')!;
     expect(control.querySelectorAll('.bz-path-picker-chip-name').length).toBe(1);
     expect(control.querySelector('.bz-path-picker-btn--slim')).toBeNull();
     expect(control.querySelector('.bz-path-picker-chips--setting')).toBeTruthy();
-    // chips ✕ 清除 → onChange [] 并恢复空态：按钮回来、无「未选择」灰字（ticket 133）
+    // chips ✕ 清除 → onChange [] 并恢复空态：按钮回来、无「未选择」灰字、data-filled=0（ticket 133）
     (control.querySelector('.bz-path-picker-chip-x') as HTMLButtonElement).click();
     expect(onChange).toHaveBeenCalledWith([]);
     expect(control.querySelector('.bz-path-picker-chips-empty')).toBeNull();
     expect(control.querySelector('.bz-path-picker-btn--slim')).toBeTruthy();
+    expect(settingEl.dataset.filled).toBe('0');
 
     // 点按钮 → 打开选择器（单选框初始已清空）；选目录后确定 → onChange(['我的/日记'])
     ((settingEl as any).__setting.controls.find((c: any) => typeof c.trigger === 'function') as any).trigger();
@@ -302,8 +305,9 @@ describe('renderPathSettingRow：设置行助手（chips + 选择按钮，无手
     (popup.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).click();
     expect(onChange).toHaveBeenLastCalledWith(['我的/日记']);
     expect(control.querySelector('.bz-path-picker-chip-name')!.textContent).toBe('我的/日记');
-    // 再次已选态：「选择…」按钮移出 DOM
+    // 再次已选态：「选择…」按钮移出 DOM + data-filled=1
     expect(control.querySelector('.bz-path-picker-btn--slim')).toBeNull();
+    expect(settingEl.dataset.filled).toBe('1');
   });
 
   it('单值行：chip 文本点击重开选择器（初始已选高亮 + 置顶；✕ 不触发重开）', async () => {
@@ -419,6 +423,11 @@ describe('markSettingSplitRows：移动端两行式挂类', () => {
       expect(row.classList.contains('bz-setting-split')).toBe(false);
       expect(row.classList.contains('bz-path-picker-setting-row')).toBe(true);
     }
+    // data-filled 与行态同步（已选态 = '1'、空态 = '0'，CSS 据此隐藏按钮）
+    const rowA = rows.find((r) => r.dataset.name === '目录A')!;
+    const rowB = rows.find((r) => r.dataset.name === '目录B')!;
+    expect(rowA.dataset.filled).toBe('1');
+    expect(rowB.dataset.filled).toBe('0');
   });
 
   it('控件区 ≥2 子元素 → 挂 .bz-setting-split；单控件行不挂；幂等可重调', () => {
