@@ -385,7 +385,7 @@ export function openSmartcatSettings(opts: {
         .setDesc('行为流最多保留多少条（100-10000），超出部分删除最旧条目')
         .addSlider((sl: any) => {
           sl.setLimits(100, 10000, 100);
-          sl.setValue(bzSettings?.behaviorMaxCount ?? 1000);
+          sl.setValue(bzSettings?.behaviorMaxCount ?? 2000);
           sl.onChange(async (v: number) => {
             bzSettings.behaviorMaxCount = v;
             await opts.saveConfig(config);
