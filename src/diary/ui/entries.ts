@@ -4,7 +4,7 @@
  */
 import { Component, MarkdownRenderer } from 'obsidian';
 import { notice } from '../../core/notice';
-import { confirm } from '../../core/confirm';
+import { openFlowDialog } from '../../core/flow-dialog';
 import { emitDomainEvent } from '../../core/domain-bus';
 import { attachItemActions, type ItemAction } from '../../core/item-actions';
 import { getApp } from '../app';
@@ -490,15 +490,15 @@ async function encryptFromSheet(entryId: string) {
     // 保险箱弹窗解锁不触发 onUnlockChange：解锁成功后手动重并，保险箱里已有的加密日记立即注入列表
     //（与筛选栏「加密」标签解锁路径同策略；幂等，重复并只保留一次）
     await reloadWithEncrypted();
-    const proceed = await new Promise<boolean>((resolve) => {
-      confirm({
+    const proceed =
+      (await openFlowDialog({
         title: '加密日记',
         message: '确定将本条内容加密移出笔记？正文将从日记文件移除',
-        confirmText: '加密',
-        onConfirm: () => resolve(true),
-        onCancel: () => resolve(false),
-      });
-    });
+        actions: [
+          { label: '取消', value: 'cancel' },
+          { label: '加密', value: 'ok', cta: true },
+        ],
+      })) === 'ok';
     if (!proceed) return;
     const enc = await encryptEntry(entry);
     if (enc) {
@@ -519,15 +519,15 @@ async function encryptFromSheet(entryId: string) {
 async function decryptFromSheet(entryId: string) {
   const entry = state.data.originalDiaryEntries.find((e) => e.id === entryId);
   if (!entry || !entry.encrypted || !entry.noteId) return;
-  const proceed = await new Promise<boolean>((resolve) => {
-    confirm({
+  const proceed =
+    (await openFlowDialog({
       title: '解密日记',
       message: '解密此日记并恢复为普通类型（确定）？',
-      confirmText: '解密',
-      onConfirm: () => resolve(true),
-      onCancel: () => resolve(false),
-    });
-  });
+      actions: [
+        { label: '取消', value: 'cancel' },
+        { label: '解密', value: 'ok', cta: true },
+      ],
+    })) === 'ok';
   if (!proceed) return;
   try {
     const newTags = entry.tags.filter((t) => t !== ENCRYPT_TAG);
@@ -590,27 +590,30 @@ export function showConfirm(entryId: string) {
     if (tagSelectorMask) tagSelectorMask.style.display = 'none';
     if (tagSelectorPopup) tagSelectorPopup.style.display = 'none';
   };
-  confirm({
+  void openFlowDialog({
     title: '确认删除',
     message: isEncrypted
       ? '确定删除这篇加密日记吗？\n\n此操作不可撤销，密文将从保险箱永久销毁。'
       : '确定要删除这篇日记吗？\n\n此操作不可撤销，日记将从笔记中永久删除。',
-    confirmText: '删除日记',
-    onConfirm: async () => {
-      if (isEncrypted && entry && entry.noteId) {
-        // 加密条目：永久删除保险箱密文（ADR-0017）
-        await deleteEncryptedEntry(entry.noteId);
-        await reloadWithEncrypted();
-        // 动作埋点：加密日记密文销毁（本期无消费者，emit 即可）
-        emitDomainEvent('diary:encrypted-purged', { noteId: entry.noteId });
-      } else {
-        await deleteEntry(entryId);
-        // 动作埋点：普通条目删除意图（结构性事实 file-vacated 由 store 在整文件删除时另发）
-        if (entry) emitDomainEvent('diary:entry-deleted', { date: entry.date, time: entry.time, wasEncrypted: false });
-      }
-      notice('日记条目已删除', 'success');
-      hidePickers();
-    },
+    actions: [
+      { label: '取消', value: 'cancel' },
+      { label: '删除日记', value: 'ok', cta: true },
+    ],
+  }).then(async (v) => {
+    if (v !== 'ok') return;
+    if (isEncrypted && entry && entry.noteId) {
+      // 加密条目：永久删除保险箱密文（ADR-0017）
+      await deleteEncryptedEntry(entry.noteId);
+      await reloadWithEncrypted();
+      // 动作埋点：加密日记密文销毁（本期无消费者，emit 即可）
+      emitDomainEvent('diary:encrypted-purged', { noteId: entry.noteId });
+    } else {
+      await deleteEntry(entryId);
+      // 动作埋点：普通条目删除意图（结构性事实 file-vacated 由 store 在整文件删除时另发）
+      if (entry) emitDomainEvent('diary:entry-deleted', { date: entry.date, time: entry.time, wasEncrypted: false });
+    }
+    notice('日记条目已删除', 'success');
+    hidePickers();
   });
 }
 

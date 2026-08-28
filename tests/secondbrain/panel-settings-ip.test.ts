@@ -61,6 +61,7 @@ describe('第二大脑设置：本机局域网 IP（ticket 122）', () => {
     await vi.waitFor(() => expect(document.getElementById('__shared_confirm_popup__')).toBeTruthy());
     expect(document.getElementById('__shared_confirm_popup__')!.textContent).toContain('http://192.168.1.45:11434');
     (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
+    await Promise.resolve(); // 流程框确认走 Promise 微任务（ticket 131），等一拍再断言
 
     expect(settings.secondBrainRemoteOllamaUrl).toBe('http://192.168.1.45:11434');
     expect(saveSpy).toHaveBeenCalled();

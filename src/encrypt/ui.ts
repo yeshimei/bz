@@ -9,7 +9,7 @@ import { notice, notify } from '../core/notice';
 import type { NoticeHandle } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
-import { confirm } from '../core/confirm';
+import { openFlowDialog } from '../core/flow-dialog';
 import { createIconBtn, createOverlay } from '../core/dom';
 import {
   attachItemActions,
@@ -593,14 +593,15 @@ export class UIManager {
     const parts: string[] = [];
     if (dead > 0) parts.push(dead + ' 条失效条目（含残余附件镜像）');
     if (orphan > 0) parts.push(orphan + ' 个孤儿密文');
-    confirm({
+    void openFlowDialog({
       title: '清理确认',
       message: parts.join('、') + '将永久删除，不可恢复',
-      confirmText: '永久删除',
-      cancelText: '取消',
-      onConfirm: () => {
-        void this.executeHealthCleanup(keys);
-      },
+      actions: [
+        { label: '取消', value: 'cancel' },
+        { label: '永久删除', value: 'ok', cta: true },
+      ],
+    }).then((v) => {
+      if (v === 'ok') void this.executeHealthCleanup(keys);
     });
   }
 
@@ -731,14 +732,17 @@ export class UIManager {
             // 区分「清单损坏」与「密码错误」：损坏必须显式确认后才能重设，绝不静默
             const issue = this.dataManager.manifestIssue;
             if (issue === 'empty' || issue === 'corrupt') {
-              confirm({
+              void openFlowDialog({
                 title: '清单疑似损坏',
                 message:
                   '保险箱清单文件为空或无法解析（可能因写入中断/同步冲突损坏）。' +
                   '重设主密码将生成全新空清单，旧加密数据将永久无法恢复。确定重设吗？',
-                confirmText: '仍要重设',
-                cancelText: '暂不重设',
-                onConfirm: () => {
+                actions: [
+                  { label: '暂不重设', value: 'cancel' },
+                  { label: '仍要重设', value: 'ok', cta: true },
+                ],
+              }).then((v) => {
+                if (v === 'ok') {
                   void this.dataManager.unlock(pw, true).then((ok) => {
                     if (ok) {
                       this.resetUnlockThrottle();
@@ -749,10 +753,9 @@ export class UIManager {
                       notice('重设失败：无法写入清单', 'error');
                     }
                   });
-                },
-                onCancel: () => {
+                } else {
                   notice('未重设：请先检查或备份数据文件', 'warning');
-                },
+                }
               });
             } else {
               notice('密码错误，请重试', 'error');
@@ -904,44 +907,47 @@ export class UIManager {
   }
 
   confirmRestore(note: SafeNote) {
-    confirm({
+    void openFlowDialog({
       title: '还原',
       message: `将「${note.title}」的原文${note.attachments.length ? '与 ' + note.attachments.length + ' 个原质量附件' : ''}还原到原路径？`,
-      confirmText: '还原',
-      onConfirm: () => {
-        const h = progressNotify('还原 ' + note.title);
-        void this.dataManager
-          .restoreNote(note.id, (p) => updateProgress(h, p.done, p.total, p.current))
-          .then(({ conflicts, removed, manifestSaveFailed }) => {
-            const total = note.attachments.length + 1;
-            if (removed) {
-              // 取出即删：进度通知内直接显示完成；随后跳转笔记并关闭面板
-              finishProgress(h, total, '还原完成');
-              this.hide();
-              this.openRestoredNote(note);
-            } else if (manifestSaveFailed) {
-              // 文件已还原、仅清单落盘失败（磁盘异常）：如实告知，重试可幂等收敛
-              finishProgress(h, total, '文件已还原（清单保存失败）');
-              notice(
-                '笔记与附件已还原到原位置，但保险箱清单保存失败（磁盘异常）；下次解锁后重试还原将自动完成清理',
-                'warning'
-              );
-            } else {
-              // 原子还原（优化五）：任一冲突/失败 → 整体未写回，条目保留在保险箱
-              finishProgress(h, total, '还原未完成（' + conflicts.length + ' 个目标有冲突）');
-              notice(
-                '还原中止：' + conflicts.length + ' 个目标被占用或不可用，未写入任何文件，条目保留在保险箱',
-                'warning'
-              );
-            }
-            void this.renderList();
-          })
-          .catch((e: any) => {
-            // 失败分支收尾进度通知（ticket 5）：收起常驻转圈，不残留幽灵进度条
-            if (h) h.hide();
-            notice('还原失败：' + e.message, 'error');
-          });
-      },
+      actions: [
+        { label: '取消', value: 'cancel' },
+        { label: '还原', value: 'ok', cta: true },
+      ],
+    }).then((v) => {
+      if (v !== 'ok') return;
+      const h = progressNotify('还原 ' + note.title);
+      void this.dataManager
+        .restoreNote(note.id, (p) => updateProgress(h, p.done, p.total, p.current))
+        .then(({ conflicts, removed, manifestSaveFailed }) => {
+          const total = note.attachments.length + 1;
+          if (removed) {
+            // 取出即删：进度通知内直接显示完成；随后跳转笔记并关闭面板
+            finishProgress(h, total, '还原完成');
+            this.hide();
+            this.openRestoredNote(note);
+          } else if (manifestSaveFailed) {
+            // 文件已还原、仅清单落盘失败（磁盘异常）：如实告知，重试可幂等收敛
+            finishProgress(h, total, '文件已还原（清单保存失败）');
+            notice(
+              '笔记与附件已还原到原位置，但保险箱清单保存失败（磁盘异常）；下次解锁后重试还原将自动完成清理',
+              'warning'
+            );
+          } else {
+            // 原子还原（优化五）：任一冲突/失败 → 整体未写回，条目保留在保险箱
+            finishProgress(h, total, '还原未完成（' + conflicts.length + ' 个目标有冲突）');
+            notice(
+              '还原中止：' + conflicts.length + ' 个目标被占用或不可用，未写入任何文件，条目保留在保险箱',
+              'warning'
+            );
+          }
+          void this.renderList();
+        })
+        .catch((e: any) => {
+          // 失败分支收尾进度通知（ticket 5）：收起常驻转圈，不残留幽灵进度条
+          if (h) h.hide();
+          notice('还原失败：' + e.message, 'error');
+        });
     });
   }
 
@@ -1352,16 +1358,17 @@ export class EncryptAppController {
   }
 
   /** 二次确认：正文与附件将移入保险箱（原路径消失），点确认才开始 */
-  private confirmLockProceed(file: { basename: string }, attCount: number): Promise<boolean> {
-    return new Promise<boolean>((resolve) => {
-      confirm({
+  private async confirmLockProceed(file: { basename: string }, attCount: number): Promise<boolean> {
+    return (
+      (await openFlowDialog({
         title: '加密到保险箱',
         message: `把「${file.basename}」的正文${attCount ? '与 ' + attCount + ' 个附件' : ''}加密移入保险箱？加密后原笔记与附件将从原路径移出（保险箱内为密文）。`,
-        confirmText: '加密',
-        onConfirm: () => resolve(true),
-        onCancel: () => resolve(false),
-      });
-    });
+        actions: [
+          { label: '取消', value: 'cancel' },
+          { label: '加密', value: 'ok', cta: true },
+        ],
+      })) === 'ok'
+    );
   }
 
   /**

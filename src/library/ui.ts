@@ -10,7 +10,7 @@
  */
 import { Setting } from 'obsidian';
 import { notice, createIconBtn, longPress } from '../core/dom';
-import { confirm } from '../core/confirm';
+import { openFlowDialog } from '../core/flow-dialog';
 import {
   attachItemActions,
   registerSheetCompanion,
@@ -659,23 +659,25 @@ function renderHighlightBlock(hl: any, app: any, filePath: string): HTMLElement 
     });
   });
 
-  // 3. 长按日期区域 => 删除高亮（统一 core/confirm；壳层级 11100 > confirm 10060，先关壳再确认，取消/确认后均重开）
+  // 3. 长按日期区域 => 删除高亮（统一 core/flow-dialog；壳层级 11100 > 流程框 10060，先关壳再确认，取消/确认后均重开）
   if (hl.date) {
     longPress(dateEl, () => {
       closeBookNotesModal();
-      confirm({
+      void openFlowDialog({
         title: '删除划线',
         message: '确定要删除该高亮及其批注吗？此操作不可撤销。',
-        confirmText: '删除',
-        cancelText: '取消',
-        onConfirm: () => {
+        actions: [
+          { label: '取消', value: 'cancel' },
+          { label: '删除', value: 'ok', cta: true },
+        ],
+      }).then((v) => {
+        if (v === 'ok') {
           deleteHighlight(app, filePath, hl.id, hl.text, () => {
             showBookNotes(app, filePath);
           });
-        },
-        onCancel: () => {
+        } else {
           showBookNotes(app, filePath);
-        },
+        }
       });
     });
   }
@@ -911,22 +913,26 @@ function renderEpubHighlightBlock(
     openEpubEditCommentModal(app, vaultPath, highlightId, note, onChanged);
   });
 
-  // 长按日期 → 删除高亮（统一 core/confirm：壳 11100 > confirm 10060，先关壳，取消/确认后均重开）
+  // 长按日期 → 删除高亮（统一 core/flow-dialog：壳 11100 > 流程框 10060，先关壳，取消/确认后均重开）
   longPress(dateEl, () => {
     closeEpubBookNotesModal();
-    confirm({
+    void openFlowDialog({
       title: '删除划线',
       message: '确定要删除该划线和想法吗？此操作不可撤销。',
-      confirmText: '删除',
-      cancelText: '取消',
-      onConfirm: () => {
+      actions: [
+        { label: '取消', value: 'cancel' },
+        { label: '删除', value: 'ok', cta: true },
+      ],
+    }).then((v) => {
+      if (v === 'ok') {
         void deleteEpubNote(app, vaultPath, highlightId).then((ok) => {
           // 失败也重开壳（列表保留该条）并给明确 toast（B2：失败路径不能只剩关掉的壳、无任何反馈）
           if (!ok) notice('删除划线和想法失败，请重试', 'error');
           onChanged();
         });
-      },
-      onCancel: () => onChanged(),
+      } else {
+        onChanged();
+      }
     });
   });
 

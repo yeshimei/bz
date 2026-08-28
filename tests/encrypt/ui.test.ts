@@ -1059,6 +1059,7 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
     confirmBtn.click();
     await waitFor(() => !!document.getElementById('__shared_confirm_mask__'));
     (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
+    await Promise.resolve(); // 流程框取消走 Promise 微任务（ticket 131），等一拍再断言
     expect(hasNotice('未重设：请先检查或备份数据文件')).toBe(true);
     // 密码弹窗仍保留、未解锁
     expect(findDialog()).toBeTruthy();
