@@ -22,6 +22,9 @@ export interface BiliTaskInput {
   quality?: string | null;
   /** 分P 序号（1 起；null/空=第 1 P，ADR-0067） */
   page?: number | null;
+  /** 可选视频标题/UP主（聚合讯「保存至文献」入口预填，ticket 134/ADR-0068；解析后可被 [bz-info] 覆盖） */
+  title?: string | null;
+  uploader?: string | null;
 }
 
 /** 时间格式：mm:ss 或 hh:mm:ss(.S)，与工具 @jwbz/bili-downloader 一致（0.1s 精度） */
@@ -103,12 +106,12 @@ export const TasksData = {
       status: 'pending',
       reason: null,
       remark: input.remark?.trim() || null,
+      title: input.title?.trim() || null,
+      uploader: input.uploader?.trim() || null,
       notePath: null,
       videoPath: null,
       created: moment().format('YYYY-MM-DD HH:mm:ss'),
       processedAt: null,
-      title: null,
-      uploader: null,
       archived: false,
       archivedAt: null,
       quality: input.quality || null,

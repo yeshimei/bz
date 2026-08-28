@@ -82,6 +82,22 @@ describe('TasksData（bili-tasks.json）', () => {
     });
   });
 
+  it('title/uploader 可选字段（ticket 134）：addTask 去空白落库 + 旧数据补 null + updateTask 可改', async () => {
+    const t = await TasksData.addTask({ url: 'BV1xx411c7mD', title: '  某视频标题  ', uploader: ' UP主甲 ' });
+    expect(t.title).toBe('某视频标题');
+    expect(t.uploader).toBe('UP主甲');
+    // 旧数据（无新字段）读入零迁移：补 null 不崩（追加一条，不覆盖已有任务）
+    const cur = await TasksData.read();
+    cur.push({ id: 'legacy-2', url: 'BV1xx411c7mE' });
+    await TasksData.write(cur);
+    const legacy = await TasksData.loadTasks();
+    expect(legacy.find((x) => x.id === 'legacy-2')).toMatchObject({ title: null, uploader: null });
+    // 编辑可改可清空
+    await TasksData.updateTask(t.id, { title: '改标题', uploader: null });
+    const all = await TasksData.loadTasks();
+    expect(all.find((x) => x.id === t.id)).toMatchObject({ title: '改标题', uploader: null });
+  });
+
   it('updateTask 保留 id 与 created，仅合并补丁', async () => {
     const t = await TasksData.addTask({ url: 'BV1xx411c7mD' });
     await TasksData.updateTask(t.id, { status: 'success', notePath: '文献盒/测试.md' } as any);
