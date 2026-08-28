@@ -78,9 +78,11 @@ describe('卡片盒/现代诗/信 观察（per-file 10 分钟结算，ticket 083
     vault.files.set(path, '---\ndate: 2026-06-17 23:44\n---\n见字如面');
     vault.emit('modify', vault.file(path));
     await waitSettle();
-    const stream = readStream();
-    expect(stream[stream.length - 1].source).toBe('letter');
-    expect(stream[stream.length - 1].description).toBe('你在 2026-06-17 23:44 写了一封信「第2封信：在大理的风」：见字如面');
+    // ADR-0069：letter:created 走 behavior 流（富描述在 metadata.snapshot.summary）
+    const beh = readBehavior();
+    expect(beh[beh.length - 1].source).toBe('letter');
+    expect(beh[beh.length - 1].metadata.snapshot.summary).toBe('你在 2026-06-17 23:44 写了一封信「第2封信：在大理的风」：见字如面');
+    expect(readStream().length).toBe(0);
   });
 
   it('首落：新建现代诗（frontmatter date ISO）→ 带日期全文观察（frontmatter 不进入正文）', async () => {
@@ -90,9 +92,11 @@ describe('卡片盒/现代诗/信 观察（per-file 10 分钟结算，ticket 083
     vault.files.set(path, '---\ndate: 2026-03-01 09:30\n---\n黑夜给了我黑色的眼睛');
     vault.emit('modify', vault.file(path));
     await waitSettle();
-    const stream = readStream();
-    expect(stream[stream.length - 1].source).toBe('poem');
-    expect(stream[stream.length - 1].description).toBe('你在 2026-03-01 09:30 写了一首现代诗「0115」：黑夜给了我黑色的眼睛');
+    // ADR-0069：poem:created 走 behavior 流（富描述在 metadata.snapshot.summary）
+    const beh = readBehavior();
+    expect(beh[beh.length - 1].source).toBe('poem');
+    expect(beh[beh.length - 1].metadata.snapshot.summary).toBe('你在 2026-03-01 09:30 写了一首现代诗「0115」：黑夜给了我黑色的眼睛');
+    expect(readStream().length).toBe(0);
   });
 
   it('信无 frontmatter date → 不观察（不装计时、不产出）', async () => {
@@ -208,13 +212,15 @@ describe('卡片盒/现代诗/信 观察（per-file 10 分钟结算，ticket 083
     vault.files.set(path, '---\ndate: 2026-06-17 23:44\n---\n最初的正文\n\n后续补充的正文');
     vault.emit('modify', vault.file(path));
     await waitSettle();
-    const stream = readStream();
-    expect(stream.length).toBe(2);
-    // 两条观察都存在（补首落 + 修改 diff）；顺序不断言——两条都 fire-and-forget（appendVector 坑不可 await，流内顺序非契约）
-    const descriptions = stream.map((m) => m.description);
-    expect(descriptions).toContain('你在 2026-06-17 23:44 写了一封信「阿尼玛」：最初的正文\n\n后续补充的正文');
-    expect(descriptions).toContain('你修改了信「阿尼玛」：新增了第 2 段「后续补充的正文」');
-    expect(stream.every((m) => m.source === 'letter')).toBe(true);
+    // ADR-0069：letter 事件走 behavior 流；两条观察都存在（补首落 + 修改 diff）；
+    // 顺序不断言——两条都 fire-and-forget（appendVector 坑不可 await，流内顺序非契约）
+    const beh = readBehavior();
+    expect(beh.length).toBe(2);
+    const summaries = beh.map((m) => m.metadata.snapshot.summary);
+    expect(summaries).toContain('你在 2026-06-17 23:44 写了一封信「阿尼玛」：最初的正文\n\n后续补充的正文');
+    expect(summaries).toContain('你修改了信「阿尼玛」：新增了第 2 段「后续补充的正文」');
+    expect(beh.every((m) => m.source === 'letter')).toBe(true);
+    expect(readStream().length).toBe(0);
   });
 
   it('存量现代诗（无任何日期来源）：修改只产 diff，不补首落（v3）', async () => {
@@ -226,9 +232,11 @@ describe('卡片盒/现代诗/信 观察（per-file 10 分钟结算，ticket 083
     vault.files.set(path, '旧诗行\n\n新诗行');
     vault.emit('modify', vault.file(path));
     await waitSettle();
-    const stream = readStream();
-    expect(stream.length).toBe(1);
-    expect(stream[0].description).toBe('你修改了现代诗「无名诗」：新增了第 2 段「新诗行」');
+    // ADR-0069：poem:updated 走 behavior 流（富描述在 metadata.snapshot.summary）
+    const beh = readBehavior();
+    expect(beh.length).toBe(1);
+    expect(beh[0].metadata.snapshot.summary).toBe('你修改了现代诗「无名诗」：新增了第 2 段「新诗行」');
+    expect(readStream().length).toBe(0);
   });
 
   it('空文件不产：新建空文件结算不生成；补字后走首落（flash）', async () => {

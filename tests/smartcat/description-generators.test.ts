@@ -200,10 +200,10 @@ describe('未知 entityType 回退', () => {
 });
 
 describe('结构化路由集成（P2a）', () => {
-  it('diary:created → memory 流，importance 0.85', async () => {
+  it('diary:created → behavior 流（ADR-0069），importance 0.85 档位保留', async () => {
     const { ROUTING_RULES } = await import('../../src/smartcat/routing');
     const rule = ROUTING_RULES['diary:created'];
-    expect(rule.stream).toBe('memory');
+    expect(rule.stream).toBe('behavior');
     expect(rule.importance).toBe(0.85);
   });
 
@@ -212,10 +212,10 @@ describe('结构化路由集成（P2a）', () => {
     expect(ROUTING_RULES['diary:deleted'].stream).toBe('behavior');
   });
 
-  it('movie:watched → memory 流', async () => {
+  it('movie:watched → behavior 流（ADR-0069），importance 档位保留', async () => {
     const { ROUTING_RULES } = await import('../../src/smartcat/routing');
     const rule = ROUTING_RULES['movie:watched'];
-    expect(rule.stream).toBe('memory');
+    expect(rule.stream).toBe('behavior');
     expect(rule.importance).toBe(0.85);
   });
 
@@ -224,10 +224,10 @@ describe('结构化路由集成（P2a）', () => {
     expect(ROUTING_RULES['movie:deleted'].stream).toBe('behavior');
   });
 
-  it('library:completed → memory 流', async () => {
+  it('library:completed → behavior 流（ADR-0069），importance 档位保留', async () => {
     const { ROUTING_RULES } = await import('../../src/smartcat/routing');
     const rule = ROUTING_RULES['library:completed'];
-    expect(rule.stream).toBe('memory');
+    expect(rule.stream).toBe('behavior');
     expect(rule.importance).toBe(0.85);
   });
 
@@ -236,10 +236,10 @@ describe('结构化路由集成（P2a）', () => {
     expect(ROUTING_RULES['library:added'].stream).toBe('behavior');
   });
 
-  it('chat:said → memory 流', async () => {
+  it('chat:said → behavior 流（ADR-0069），importance 档位保留', async () => {
     const { ROUTING_RULES } = await import('../../src/smartcat/routing');
     const rule = ROUTING_RULES['chat:said'];
-    expect(rule.stream).toBe('memory');
+    expect(rule.stream).toBe('behavior');
     expect(rule.importance).toBe(0.75);
   });
 });

@@ -77,6 +77,7 @@
 
 ## 7. 待观察项（不阻塞实施）
 
+- **review/quiz/launcher/attach 四域：规则与文案构造已落表（routing + coverage-source），但域侧事件发射未接线**——行为流暂收不到这四域条目，各域后续触碰时补 emitDomainEvent/订阅即可（审查 P1-4 拍板：本 ADR「已实施」不含这四域的端到端）。
 - 召回即强化（MemoryBank 式 `lastAccessed` 命中回写 importance 微增益）：字段已有，差一行回写，效果观察后定。
 - 周报告统计源切到日层产出（digest+insight）：随 R1 顺带调整，统计口径变化不大。
 

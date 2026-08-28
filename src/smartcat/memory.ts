@@ -315,12 +315,16 @@ export class MemorySystem {
     this.behaviorDirty = true;
   }
 
-  /** 脏 sidecar 合并落盘（30s tick 与关键路径调用；单边失败保留脏标记下轮重试，不抛错） */
-  async flushSidecars(): Promise<void> {
+  /**
+   * 脏 sidecar 合并落盘（30s tick 与关键路径调用；单边失败保留脏标记下轮重试，不抛错）。
+   * 审查 P1：unload 时 dataProvider 已失效（data 置 null）——调用方可传入卸载前捕获的数据快照。
+   */
+  async flushSidecars(snapshot?: SmartCatData): Promise<void> {
+    const dp = () => (snapshot ?? this.dataProvider());
     if (this.behaviorDirty) {
       this.behaviorDirty = false;
       try {
-        await writeBehaviorSidecarFile(this.app, this.dataProvider().memory.behaviorStream);
+        await writeBehaviorSidecarFile(this.app, dp().memory.behaviorStream);
       } catch {
         this.behaviorDirty = true; // 写失败恢复脏标记，下轮 tick 重试
       }
@@ -328,7 +332,7 @@ export class MemorySystem {
     if (this.memoryDirty) {
       this.memoryDirty = false;
       try {
-        await writeMemorySidecarFile(this.app, this.dataProvider().memory.memoryStream, this.extraRowsRecord());
+        await writeMemorySidecarFile(this.app, dp().memory.memoryStream, this.extraRowsRecord());
       } catch {
         this.memoryDirty = true;
       }
@@ -428,17 +432,20 @@ export class MemorySystem {
     if (rule.stream !== 'memory') {
       // 行为路由：仅行为流（记忆流条目不写），返回行为条目；
       // onObservation（情绪共振/瞬时情绪/dossier）同样触发——构造伪记忆条目承载钩子契约，
-      // credibility 取 ruleCredibility 档位默认值（routing 无 behavior 档位，按来源+描述落档）
+      // credibility 取 ruleCredibility 档位默认值（routing 无 behavior 档位，按来源+描述落档）。
+      // 审查修复：description 用 snapshot.summary（人类句式）——dossier 白名单/情绪词法都按
+      // 人类文案匹配，机读 `source:action name` 会让正性钩子静默失联
+      const pseudoDesc = newOpts.structured?.snapshot?.summary || this.buildDescription(newOpts.structured) || behavior?.description || '';
       const pseudo: MemoryStreamEntry = {
         id: behavior?.id ?? `memory_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         created: behavior?.timestamp ?? new Date().toISOString(),
         lastAccessed: behavior?.timestamp ?? new Date().toISOString(),
-        description: behavior?.description ?? '',
+        description: pseudoDesc,
         importance: rule.importance ?? 0.5,
         type: 'observation',
         source,
         emotion: newOpts.structured?.snapshot?.emotion,
-        credibility: ruleCredibility(source, behavior?.description ?? ''),
+        credibility: ruleCredibility(source, pseudoDesc),
         structured: newOpts.structured,
       };
       if (this.onObservation) {
@@ -517,8 +524,8 @@ export class MemorySystem {
     this.behaviorStream.push(item);
     // 滚动窗口清理（使用 settings 的配置值，缺省走默认值）
     const s = tryGetSettings() as any;
-    const maxDays = s?.behaviorMaxDays ?? 30;
-    const maxCount = s?.behaviorMaxCount ?? 2000;
+    const maxDays = s?.behaviorMaxDays ?? 60;
+    const maxCount = s?.behaviorMaxCount ?? 10000;
     const trimmed = trimBehaviorStream(this.behaviorStream, { maxDays, maxCount });
     this.dataProvider().memory.behaviorStream.length = 0;
     this.behaviorStream.push(...trimmed);
@@ -542,8 +549,10 @@ export class MemorySystem {
    *  流，改为也进行为流（dedupe 短路前先落行为条目；无 structured → description 兜底条目）。
    *  @deprecated 使用新签名 addObservation(source, { structured }) 替代 */
   private async addObservationLegacy(description: string, opts: { source?: string; manuallyMarked?: boolean; importance?: number; emotion?: string; dedupe?: boolean; credibility?: number } = {}): Promise<MemoryStreamEntry | null> {
-    // ticket 129：全量口径——legacy 同样先写行为流（无 structured → description 兜底、metadata 缺省）
     const legacySource = opts.source ?? 'unknown';
+    // 审查 P2：exempt 契约对新旧签名一体适用——legacy 来源同样不落任何流
+    if (resolveRouting(legacySource, 'unknown').stream === 'exempt') return null;
+    // ticket 129：全量口径——legacy 同样先写行为流（无 structured → description 兜底、metadata 缺省）
     await this.writeBehaviorStream(legacySource, undefined, typeof description === 'string' ? description : String(description ?? ''));
     // R0（ADR-0069）：生命线钩子上移——行为流已写，presence/共振计数对 legacy 同样成立
     //（dedupe 短路前触发：行为条目已落，事件已发生）
@@ -1411,9 +1420,9 @@ export class MemorySystem {
       this.stream.push(entry);
     }
     this.markMemoryDirty();
-    await this.dataSaver(this.dataProvider());
+    // 审查 P1（写放大）：入库/更新不再即时双写整文件——标脏随 30s tick 合并落盘；
+    // 运行时检索读内存 stream，不受影响；卸载前 flushSidecars 兜底（见 index unload）
     await this.vectorizeNoteEntry(this.stream.find((m) => m.ref && m.ref.path === refPath && (m.ref.locator ?? '') === (seed.locator ?? ''))!, fullText || description);
-    await this.flushSidecars(); // 入库为显式操作：即时落盘
   }
 
   /** 引用型条目向量化：全文分块 embedding——首块写主行（stream 下标对齐）、其余块追加额外行（一条目多向量） */
@@ -1439,14 +1448,21 @@ export class MemorySystem {
   }
 
   /**
-   * 删除某引用（笔记路径）名下全部记忆条目及其全部向量（文件删除/移出记忆目录时由调用方触发）。
-   * 同步删内存条目 + 整库紧凑重排向量（主行随 stream 平移、被删条目向量随映射丢弃），即时落盘。
+   * 删除引用名下记忆条目及其全部向量（文件删除/移出记忆目录/失效段清理由调用方触发）。
+   * 审查 P0 修正——精确 ref 语义：入参含 `#`（`路径#定位符`）只删该段（防误杀同文件存活日记段）；
+   * 纯路径删整文件名下全部条目。同步删内存条目 + 整库紧凑重排向量，标脏随 tick 落盘。
    * @returns 删除的条目数（0 = 无此引用条目）
    */
   async removeMemoryByRef(refPath: string): Promise<number> {
-    const path = String(refPath || '').trim();
-    if (!path) return 0;
-    const kept = this.stream.filter((m) => !(m.ref && m.ref.path === path));
+    const key = String(refPath || '').trim();
+    if (!key) return 0;
+    const hash = key.lastIndexOf('#');
+    const segPath = hash > 0 ? key.slice(0, hash) : key;
+    const segLocator = hash > 0 ? key.slice(hash + 1) : null;
+    const kept = this.stream.filter((m) => {
+      if (!m.ref || m.ref.path !== segPath) return true;
+      return segLocator != null && (m.ref.locator ?? '') !== segLocator; // 带定位符只删该段
+    });
     const removed = this.stream.length - kept.length;
     if (!removed) return 0;
     this.stream.length = 0;
@@ -1456,6 +1472,15 @@ export class MemorySystem {
     await this.dataSaver(this.dataProvider());
     await this.flushSidecars();
     return removed;
+  }
+
+  /** 枚举全部引用条目的 ref 键（`路径` 或 `路径#定位符`；审查 P1：失效自愈/目录清理的候选来源，不依赖调用方内存表） */
+  async listRefPaths(): Promise<string[]> {
+    const keys = new Set<string>();
+    for (const m of this.stream) {
+      if (m.ref && m.ref.path) keys.add(m.ref.locator ? `${m.ref.path}#${m.ref.locator}` : m.ref.path);
+    }
+    return Array.from(keys);
   }
 
   /**
@@ -1907,14 +1932,14 @@ export interface BehaviorSidecarFile {
   items: BehaviorItem[];
 }
 
-/** 读 sidecar json（不存在/坏 JSON → null，不抛错） */
-async function readJsonSidecar(app: App, path: string): Promise<any | null> {
+/** 读 sidecar json；区分「不存在」（null）与「存在但坏 JSON」（corrupt 标记，调用方备份中止防二次清库） */
+async function readJsonSidecar(app: App, path: string): Promise<{ value: any | null; corrupt: boolean }> {
   try {
     const f = app.vault.getAbstractFileByPath(path);
-    if (!f) return null;
-    return JSON.parse(await app.vault.read(f as any));
+    if (!f) return { value: null, corrupt: false };
+    return { value: JSON.parse(await app.vault.read(f as any)), corrupt: false };
   } catch {
-    return null;
+    return { value: null, corrupt: true };
   }
 }
 
@@ -1933,7 +1958,7 @@ async function writeJsonSidecar(app: App, path: string, content: unknown): Promi
 
 /** 读记忆流 sidecar（无文件/失败 → null） */
 export async function readMemorySidecarFile(app: App): Promise<MemorySidecarFile | null> {
-  return (await readJsonSidecar(app, getSmartcatMemorySidecarPath())) as MemorySidecarFile | null;
+  return (await readJsonSidecar(app, getSmartcatMemorySidecarPath())).value as MemorySidecarFile | null;
 }
 
 /** 写记忆流 sidecar */
@@ -1977,8 +2002,20 @@ export function slimSmartCatData(data: SmartCatData): SmartCatData {
  */
 export async function migrateSmartcatSidecars(app: App, data: SmartCatData): Promise<void> {
   if (!data || !data.memory) return;
-  const memSide = await readJsonSidecar(app, getSmartcatMemorySidecarPath());
-  const behSide = await readJsonSidecar(app, getSmartcatBehaviorSidecarPath());
+  const memRead = await readJsonSidecar(app, getSmartcatMemorySidecarPath());
+  const behRead = await readJsonSidecar(app, getSmartcatBehaviorSidecarPath());
+  // 审查 P1：坏 JSON ≠ 不存在——先备份现场再中止迁移，防「以空流为权威覆盖」二次清库（vault.modify 非原子，崩溃场景真实）
+  for (const [read, path] of [[memRead, getSmartcatMemorySidecarPath()], [behRead, getSmartcatBehaviorSidecarPath()]] as const) {
+    if (!read.corrupt) continue;
+    try {
+      const f = app.vault.getAbstractFileByPath(path);
+      const raw = f ? await app.vault.read(f as any) : '';
+      await app.vault.create((path + '.bak') as any, raw);
+    } catch { /* 备份失败仍中止——宁可不迁，不可覆盖 */ }
+    throw new Error(`smartcat sidecar 损坏，已备份 .bak 并中止迁移：${path}`);
+  }
+  const memSide = memRead.value;
+  const behSide = behRead.value;
   const oldStream: MemoryStreamEntry[] = Array.isArray(data.memory.memoryStream) ? data.memory.memoryStream : [];
   const oldBehavior: BehaviorItem[] = Array.isArray(data.memory.behaviorStream) ? data.memory.behaviorStream : [];
 
@@ -2036,11 +2073,16 @@ export async function migrateSmartcatSidecars(app: App, data: SmartCatData): Pro
           await app.vault.adapter.writeBinary(getSmartcatVecPath(), dataOut.buffer as ArrayBuffer);
         }
       }
-    } catch { /* 无向量文件/读取失败 → 无孤儿可清，不阻塞迁移 */ }
+    } catch (e) {
+      // 审查 P2：重排失败若静默，.vec 将与新 stream 永久错位——留痕并标脏，下次 tick 重试写 sidecar 不解决 vec，但至少可诊断
+      console.warn('[bz] smartcat 向量重排失败（迁移）', e);
+    }
   }
 
   // 关键路径即时落盘：sidecar 双写 + smartcat.json 瘦身重写（失败不阻塞装配，下次 dataSaver 再写）
-  await writeMemorySidecarFile(app, data.memory.memoryStream);
+  // 审查 P0：重写必须透传 extraVectorRows（迁移每次启动都跑，漏传 = 每次重启丢分块向量记录）
+  const memSideExtraRows = memSide && typeof memSide === 'object' ? memSide.extraVectorRows : undefined;
+  await writeMemorySidecarFile(app, data.memory.memoryStream, memSideExtraRows && typeof memSideExtraRows === 'object' ? memSideExtraRows : undefined);
   await writeBehaviorSidecarFile(app, data.memory.behaviorStream);
   try {
     await saveSmartCatData(app, slimSmartCatData(data));

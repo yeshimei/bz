@@ -44,9 +44,12 @@ describe('notifyMovieAction（影视动作观察，域事件派发）', () => {
     await ensureSmartCat(app);
     emitDomainEvent('movie', { kind: 'created', name: '美丽人生', status: 'want', rating: -1, review: null });
     await settle();
-    const stream: any[] = __getSmartcatInternals().data.memory.memoryStream;
-    expect(stream[stream.length - 1].description).toBe('你把《美丽人生》加入想看');
-    expect(stream[stream.length - 1].source).toBe('movie');
+    // ADR-0069：movie 事件类走 behavior 流（富描述在 metadata.snapshot.summary）
+    const behavior: any[] = __getSmartcatInternals().data.memory.behaviorStream;
+    expect(behavior[behavior.length - 1].description).toBe('movie:want 美丽人生');
+    expect(behavior[behavior.length - 1].source).toBe('movie');
+    expect(behavior[behavior.length - 1].metadata.snapshot.summary).toBe('你把《美丽人生》加入想看');
+    expect(__getSmartcatInternals().data.memory.memoryStream.length).toBe(0);
   });
 
   it('状态流转/改分/影评/删除各事件 → 对应结构化观察', async () => {
@@ -59,18 +62,18 @@ describe('notifyMovieAction（影视动作观察，域事件派发）', () => {
     emitDomainEvent('movie', { kind: 'review', name: '美丽人生', fromReview: '经典', toReview: '' });
     emitDomainEvent('movie', { kind: 'deleted', name: '美丽人生' });
     await settle();
-    const stream: any[] = __getSmartcatInternals().data.memory.memoryStream;
+    // ADR-0069：全部 movie 事件走 behavior 流（富描述在 metadata.snapshot.summary）
     const behavior: any[] = __getSmartcatInternals().data.memory.behaviorStream;
-    // rated → memory, reviewed×2 → memory; status/deleted → behavior
-    const memTail = stream.slice(-3).map((m) => m.description);
-    expect(memTail).toEqual([
+    expect(__getSmartcatInternals().data.memory.memoryStream.length).toBe(0);
+    const movieBeh = behavior.filter((m) => m.source === 'movie');
+    expect(movieBeh.map((m) => m.type)).toEqual(['watched', 'rated', 'reviewed', 'reviewed', 'deleted']);
+    expect(movieBeh.map((m) => m.metadata.snapshot.summary)).toEqual([
+      '你看完了《美丽人生》', // status watching→watched
       '你把《美丽人生》的评分从 3.5 改为 4.5',
       '你写了《美丽人生》的影评：经典',
       '你删掉了《美丽人生》的影评',
+      '你删除了《美丽人生》的影视记录',
     ]);
-    // status/deleted → behavior 流（至少有 movie 来源的条目）
-    const movieBeh = behavior.filter((m) => m.source === 'movie');
-    expect(movieBeh.length).toBeGreaterThanOrEqual(1);
   });
 
   it('noteSource 关闭 → 静默不观察', async () => {
@@ -101,20 +104,20 @@ describe('notifyMovieAction（影视动作观察，域事件派发）', () => {
     const { app } = makeApp();
     await ensureSmartCat(app);
     const data: any = __getSmartcatInternals().data;
-    const before = data.memory.memoryStream.length;
+    const before = data.memory.behaviorStream.length;
     // 双击「已看」确认 → 重复 status 事件只入流一次
     emitDomainEvent('movie', { kind: 'status', name: '美丽人生', from: 'watching', to: 'watched' });
     emitDomainEvent('movie', { kind: 'status', name: '美丽人生', from: 'watching', to: 'watched' });
     await settle();
-    expect(data.memory.memoryStream.length).toBe(before + 1);
+    expect(data.memory.behaviorStream.length).toBe(before + 1);
     // payload 不同不误伤：紧随其后的改分事件正常入流（同 key 判定含 payload）
     emitDomainEvent('movie', { kind: 'rated', name: '美丽人生', fromRating: 4, toRating: 4.5 });
     await settle();
-    expect(data.memory.memoryStream.length).toBe(before + 2);
+    expect(data.memory.behaviorStream.length).toBe(before + 2);
     // 窗口外（>300ms）同事件可再次入流（防重不锁死）
     await new Promise((r) => setTimeout(r, 320));
     emitDomainEvent('movie', { kind: 'status', name: '美丽人生', from: 'watching', to: 'watched' });
     await settle();
-    expect(data.memory.memoryStream.length).toBe(before + 3);
+    expect(data.memory.behaviorStream.length).toBe(before + 3);
   });
 });
