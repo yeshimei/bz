@@ -45,11 +45,14 @@ describe('observationText（2026-08-23 用户拍板：全内容读取）', () =>
     expect(t).toContain('第二行细节'); // 全内容
   });
 
-  it('diary：读正文 + 标记关键词（原只标题计数）', async () => {
-    const t = await observationText(appOf('# 🐈 20:57\n今天读完东野圭吾，心里有些失落'), {} as any, 'diary');
+  it('diary：标记关键词（ADR-0069 R3 收缩：正文不再实时进观察文本）', async () => {
+    const body = '今天读完东野圭吾的新书，情节层层推进令人着迷。'.repeat(8); // 长正文（旧实现摘录 300 字进观察）
+    const t = await observationText(appOf('# 🐈 20:57\n' + body), {} as any, 'diary');
     expect(t).toContain('你写了日记');
-    expect(t).toContain('今天读完东野圭吾'); // 正文进观察
-    expect(t).toContain('关键词'); // 关键词标记
+    expect(t).toContain('关键词'); // 关键词标记保留（词法情绪/信任成长钩子不受影响）
+    // R3：正文摘录不再拼进观察（记忆目录拆条入库、正文进 prompt 改由记忆检索承担）——
+    // 观察文本只剩「你写了日记（关键词：…）」，远短于正文
+    expect(t!.length).toBeLessThan(150);
   });
 
   it('diary：无正文返回 null（空文件跳过）', async () => {
