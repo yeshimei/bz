@@ -7,7 +7,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { openSettingsModal, closeSettingsModal, createSettingsGroup } from '../src/core/settings-modal';
 import { setApp } from '../src/core/app';
-import { setSettingsProvider } from '../src/core/settings-provider';
+import { setSettingsProvider, setSettingsSaver } from '../src/core/settings-provider';
+import { mobileFullscreenGroup } from '../src/core/settings-common';
 import { setBzSettingsProvider } from '../src/memo';
 import { App } from '../src/memo/app';
 import { UIManager } from '../src/memo/ui';
@@ -59,6 +60,39 @@ describe('core settings-modal 机制', () => {
     expect(popup.textContent).toContain('没有可配置的设置项');
     expect(popup.textContent).toContain('路径由全局管理');
     expect(popup.querySelector('.setting-item')).toBeNull();
+  });
+
+  it('schema 仅含移动端组：桌面端整组隐藏 → 显示空态；移动端显示开关行（ticket 131）', () => {
+    setSettingsProvider(() => ({ diaryMobileDefaultFullscreen: false } as any));
+    setSettingsSaver(async () => {});
+    const prevMobile = MockPlatform.isMobile;
+    try {
+      MockPlatform.isMobile = false;
+      openSettingsModal({
+        title: '仅移动端组',
+        schema: { groups: [mobileFullscreenGroup('diaryMobileDefaultFullscreen')] },
+        emptyText: '桌面空态',
+      });
+      let popup = document.getElementById('bz-settings-modal-popup')!;
+      expect(popup.textContent).toContain('桌面空态');
+      closeSettingsModal();
+
+      MockPlatform.isMobile = true;
+      openSettingsModal({
+        title: '仅移动端组',
+        schema: { groups: [mobileFullscreenGroup('diaryMobileDefaultFullscreen')] },
+        emptyText: '桌面空态',
+      });
+      popup = document.getElementById('bz-settings-modal-popup')!;
+      expect(popup.querySelector('.bz-settings-empty')).toBeNull();
+      const mfs = [...popup.querySelectorAll('.setting-item')].find(
+        (el) => (el as HTMLElement).dataset.name === '移动端默认全屏'
+      );
+      expect(mfs).toBeTruthy();
+      closeSettingsModal();
+    } finally {
+      MockPlatform.isMobile = prevMobile;
+    }
   });
 
   it('不渲染右上角关闭按钮（关闭只走遮罩/Esc，用户拍板）', () => {
@@ -371,12 +405,13 @@ describe('归物本 ⚙️ / 🔀', () => {
     vault.files.set('CONFIG/STORAGE/belongings.json', JSON.stringify({ version: '1.0', last_updated: '', items: {} }));
     setApp({ vault, workspace: { getLeaf: () => ({ openFile: vi.fn() }) } } as any);
     setSettingsProvider(() => ({ belongingsDataFolder: 'CONFIG/STORAGE' } as any));
+    setSettingsSaver(async () => {});
     await openBelongingsPanel();
   });
 
   afterEach(() => cleanupBelongings());
 
-  it('排序按钮为 🔀（非 ⚙️），⚙️ 打开空弹窗', () => {
+  it('排序按钮为 🔀（非 ⚙️），⚙️ 打开空弹窗（桌面端移动端组整组隐藏 → 空态显示）', () => {
     const overlay = document.getElementById('__gui_wu_ben__')!;
     const sortBtn = [...overlay.querySelectorAll('button')].find((b) => b.textContent === '🔀')!;
     expect(sortBtn).toBeTruthy();
@@ -385,8 +420,29 @@ describe('归物本 ⚙️ / 🔀', () => {
     settingsBtn.click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect(popup.textContent).toContain('归物本设置');
-    expect(popup.textContent).toContain('没有可配置的设置项');
+    // 空态域 schema 化后（ticket 131）：桌面端整组隐藏 → 空态判定命中，内容区整体清空（与旧 build 空态 DOM 一致）
+    expect(popup.textContent).toContain('归物本没有可配置的设置项');
     expect(popup.querySelector('.setting-item')).toBeNull();
+    expect(popup.querySelector('.bz-settings-empty')).not.toBeNull();
+  });
+
+  it('归物本设置（移动端）：显示「移动端」组的全屏开关，无空态', () => {
+    const prevMobile = MockPlatform.isMobile;
+    try {
+      MockPlatform.isMobile = true;
+      const overlay = document.getElementById('__gui_wu_ben__')!;
+      const settingsBtn = [...overlay.querySelectorAll('button')].find((b) => b.textContent === '⚙️')!;
+      settingsBtn.click();
+      const popup = document.getElementById('bz-settings-modal-popup')!;
+      expect(popup.textContent).toContain('归物本设置');
+      expect(popup.querySelector('.bz-settings-empty')).toBeNull();
+      const mfs = [...popup.querySelectorAll('.setting-item')].find(
+        (el) => (el as HTMLElement).dataset.name === '移动端默认全屏'
+      );
+      expect(mfs).toBeTruthy();
+    } finally {
+      MockPlatform.isMobile = prevMobile;
+    }
   });
 });
 
