@@ -30,7 +30,7 @@ function setup(vault: MockVault, config = CONFIG) {
 }
 
 function findDialog(): HTMLElement | null {
-  return [...document.querySelectorAll('div')].find((d) => d.style.zIndex === '10070' && d.style.display === 'flex') as HTMLElement | null;
+  return [...document.querySelectorAll('div')].find((d) => d.classList.contains('bz-encrypt-dialog-mask') && d.style.display === 'flex') as HTMLElement | null;
 }
 
 describe('UIManager 解锁弹窗', () => {

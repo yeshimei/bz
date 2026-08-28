@@ -4,7 +4,6 @@
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background: var(--background-modifier-cover);
     backdrop-filter: blur(2px);
-    z-index: 9998;
     visibility: hidden;
 }
 .news-popup {
@@ -14,7 +13,6 @@
     background: var(--background-primary);
     border-radius: 12px;
     box-shadow: 0 12px 40px rgba(0,0,0,0.2);
-    z-index: 9999;
     width: 90%; max-width: 680px; max-height: 80vh;
     display: flex; flex-direction: column;
     font-family: -apple-system, BlinkMacSystemFont, Segoe UI, system-ui, sans-serif;

@@ -3,7 +3,8 @@
  */
 import moment from 'moment';
 import { notice, notify } from '../core/notice';
-import { createIconBtn } from '../core/dom';
+import { createIconBtn, topifyZ } from '../core/dom';
+import { allocZ } from '../core/z-order';
 import { openFlowDialog } from '../core/flow-dialog';
 import { escManager } from '../core/esc-manager';
 import {
@@ -124,11 +125,11 @@ export class UIManager {
       right: 0,
       bottom: 0,
       background: 'var(--background-modifier-cover)',
-      zIndex: 9998,
       display: 'none',
       alignItems: 'center',
       justifyContent: 'center',
     });
+    this.mask.style.zIndex = String(allocZ()); // ADR-0067：创建即发号（显示时 topifyZ 再抬）
     this.mask.onclick = (e) => {
       if (e.target === this.mask) this.hide();
     };
@@ -804,6 +805,7 @@ export class UIManager {
     this.isVisible = true;
     // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
     applyMobileWindowFullscreen(this.popup, tryGetSettings().favoritesMobileDefaultFullscreen === true);
+    topifyZ(this.mask!, this.popup!); // ADR-0067：显示即发号，谁后显示谁在上
     this.mask!.style.display = 'flex';
     this.popup!.style.display = 'flex';
     this._registerEscape();
@@ -845,12 +847,11 @@ export class UIManager {
       right: 0,
       bottom: 0,
       background: 'rgba(0,0,0,0.3)',
-      // P0-7：抬到抽屉遮罩(10999)/抽屉本体(11000)之上——抽屉来源的编辑弹窗（companion）不被遮罩倒挂压住
-      zIndex: 11100,
       display: 'none',
       alignItems: 'center',
       justifyContent: 'center',
     });
+    this.addMask.style.zIndex = String(allocZ()); // ADR-0067：创建即发号
     this.addMask.onclick = (e) => {
       if (e.target === this.addMask) this._hideAddDialog();
     };
@@ -870,8 +871,8 @@ export class UIManager {
       display: 'flex',
       flexDirection: 'column',
       gap: '12px',
-      zIndex: 11101, // P0-7：与 addMask 同抬（11100/11101 档）
     });
+    this.addPopup.style.zIndex = String(allocZ()); // ADR-0067：创建即发号
 
     // 标题
     const title = document.createElement('h4');
@@ -1217,6 +1218,7 @@ export class UIManager {
       this.addPopup!.querySelector('h4')!.textContent = '添加收藏';
     }
 
+    topifyZ(this.addMask!, this.addPopup!); // ADR-0067：显示即发号
     this.addMask!.style.display = 'flex';
     this.addPopup!.style.display = 'flex';
     setTimeout(() => this.addUrlInput!.focus(), 100);

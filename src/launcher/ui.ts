@@ -8,6 +8,7 @@ import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { getSettings } from '../core/settings-provider';
 import { escManager } from '../core/esc-manager';
+import { allocZ, topifyZ } from '../core/z-order';
 import { generateId } from '../core/utils';
 import { createIconBtn } from '../core/dom';
 import {
@@ -175,8 +176,7 @@ export class LauncherModal {
 
     // 遮罩 + 弹窗骨架（移动端：底部滑入贴底；桌面端：正常居中）
     const isMobile = LauncherModal.isMobileEnv();
-    // e3：z-index 由根样式 .bz-launcher-overlay--* 档位类提供（不再内联）
-    this.overlay.classList.add('bz-launcher-overlay--10100');
+    topifyZ(this.overlay); // ADR-0067：打开即发号，谁后打开谁在上
     this.overlay.style.cssText =
       'position:fixed;top:0;left:0;right:0;bottom:0;background:var(--background-modifier-cover);' +
       'display:flex;align-items:' + (isMobile ? 'flex-end' : 'center') +
@@ -259,8 +259,6 @@ export class LauncherModal {
   private buildDoneButton(): void {
     const wrap = document.createElement('div');
     wrap.id = 'launcher-edit-controls';
-    // e3：z-index 由根样式 .bz-launcher-overlay--* 档位类提供（不再内联）
-    wrap.classList.add('bz-launcher-overlay--10101');
     wrap.style.cssText =
       'position:fixed;top:34px;right:18px;display:none;align-items:center;gap:8px;';
 
@@ -453,7 +451,7 @@ export class LauncherModal {
     // 编辑模式：空白单元格渲染「＋」（点击添加命令）
     if (this.editing) this.renderEmptyCells(tiles);
     if (this.doneBtn) this.doneBtn.style.display = this.editing ? 'inline-flex' : 'none';
-    if (this.editControls) this.editControls.style.display = this.editing ? 'flex' : 'none';
+    if (this.editControls) { topifyZ(this.editControls); this.editControls.style.display = this.editing ? 'flex' : 'none'; } // ADR-0067：编辑模式开启即发号（隐藏时发号无副作用）
     if (this.syncTextToggle) this.syncTextToggle();
     if (this.gestureSel) {
       const v = this.gesture();
@@ -1135,8 +1133,7 @@ export class LauncherModal {
   private buildPicker(maskId: string, popupId: string, titleText: string): { mask: HTMLDivElement; popup: HTMLDivElement } {
     const mask = document.createElement('div');
     mask.id = maskId;
-    // e3：z-index 由根样式 .bz-launcher-overlay--* 档位类提供（不再内联）
-    mask.classList.add('bz-launcher-overlay--10200');
+    mask.style.zIndex = String(allocZ()); // ADR-0067：新建即显示即发号（popup 为子节点随动）
     mask.style.cssText =
       'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);' +
       'display:flex;align-items:center;justify-content:center;';

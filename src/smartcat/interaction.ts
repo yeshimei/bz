@@ -6,6 +6,7 @@
  * 陪伴定时器（自言自语）；聊天（多轮+上下文）；书评消息。
  * 全部命令/面板操作经回调注入（index 组装，避免模块间循环依赖）。
  */
+import { allocZ } from '../core/z-order';
 import { eventSystem, startThinking, stopThinking, stopAllThinking } from './state';
 import { EVENTS } from './types';
 import { getSmartCatMessage } from './messages';
@@ -584,7 +585,7 @@ export class MobileInputAdapter {
     this.catContainer.style.top = safeTop + 'px';
     this.catContainer.style.left = '50%';
     this.catContainer.style.transform = 'translateX(-50%)';
-    this.catContainer.style.zIndex = '9999';
+    this.catContainer.style.zIndex = String(allocZ()); // ADR-0067：拖拽抬升 = 动态发号（谁拖谁在上）
     this.catContainer.style.transition = 'top 0.3s ease';
   }
 

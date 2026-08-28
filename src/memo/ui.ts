@@ -8,6 +8,7 @@ import moment from 'moment';
 import { notice, notify } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
+import { topifyZ } from '../core/z-order';
 import { openFlowDialog } from '../core/flow-dialog';
 import { createSiteIcon } from '../core/dom';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
@@ -227,6 +228,7 @@ export const UIManager = {
     this.createMainUI();
     App.state.filter = filter || null;
     App.state.sortByPriority = sortByPriority || false;
+    topifyZ(this.mask!, this.popup!); // ADR-0067：显示即发号，谁后显示谁在上
     this.mask!.style.display = 'block';
     this.popup!.style.display = 'flex';
     // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
@@ -745,6 +747,7 @@ export const UIManager = {
       this.addPopup.querySelector('h4')!.textContent = '创建备忘录';
     }
 
+    topifyZ(this.addMask, this.addPopup); // ADR-0067：显示即发号
     this.addMask.style.display = 'block';
     this.addPopup.style.display = 'block';
     autoGrowContent(contentInput); // 打开/编辑回填后按内容调整高度

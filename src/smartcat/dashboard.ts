@@ -1096,7 +1096,6 @@ export async function openSmartcatDashboard(app: App): Promise<void> {
   const { mask, popup } = createOverlay({
     maskId: 'smartcat-dashboard-mask',
     popupId: 'smartcat-dashboard-panel',
-    zIndex: 9996,
     onMaskClick: () => closeSmartcatDashboard(),
     width: '94%',
     maxWidth: 720,

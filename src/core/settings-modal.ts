@@ -134,18 +134,8 @@ export function openSettingsModal(opts: SettingsModalOptions): void {
   const { mask, popup } = createOverlay({
     maskId: 'bz-settings-modal-mask',
     popupId: 'bz-settings-modal-popup',
-    // z-index 家族表（全站统一层规，改层级前先对表）：
-    //   9997-9998  主面板族（各域主面板 9999 / 遮罩 9998；原 1000 档影视/归物/书库遮罩 2026-08 抬入此族）
-    //   10001-10060 域模态旧档（各域历史弹窗/预览/加密确认等）
-    //   10050       设置弹窗（本组件，压域模态、被抽屉与 companion 盖）
-    //   10250       共享确认框（core/flow-dialog：必须 > 全部域弹窗 10060/10070/10080/10200，< 抽屉）
-    //   10999-11000 统一抽屉（core/item-actions：遮罩 10999 + 本体 11000）
-    //   11100+      companion 档（必须 >11000：抽屉之上叠的域内小弹窗；belongings 子弹窗 11100/11101 落此档；
-    //                            复习评级弹窗 11102 亦此档）
-    //   11200/11201 统一路径选择器（core/path-picker：遮罩 11200 + 本体 11201——叠于设置弹窗 10050 之上，
-    //                            原第二大脑白名单弹窗同档退役合并；附件搬移旧 FolderSelectModal 200000 档同退役）
-    //   12000       movie 小窗
-    zIndex: 10050,
+    // z-index 动态发号（ADR-0067）：原静态层规家族表随动态层级制退役，
+    // 全站规则只有一条——谁后显示谁在上（settings-modal 每次打开新建 DOM，创建即显示）
     maxWidth: opts.maxWidth,
     onMaskClick: () => closeSettingsModal(),
   });

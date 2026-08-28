@@ -17,6 +17,7 @@ import type { App } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { notice } from '../core/notice';
 import { buildConfig } from './config';
+import { topifyZ } from '../core/z-order';
 import { getCurrentContext } from './context';
 import { jumpToChunk, renderMarkdown } from './ui-tools';
 import { AI } from './ai';
@@ -202,6 +203,7 @@ export class MobilePanel {
   /** 展开（45vh），隐藏 mini */
   expand(): void {
     this.collapsed = false;
+    topifyZ(this.sheet); // ADR-0067：展开即发号，谁后展开谁在上
     this.sheet.classList.remove('bz-sb-mb-dragging');
     this.sheet.style.height = SNAP_MID + 'vh';
     this.sheet.classList.add('bz-sb-mb-open');

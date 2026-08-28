@@ -77,7 +77,7 @@ function makeUI(dm: SafeManager, config = BASE_CONFIG) {
 
 function findDialog(): HTMLElement | null {
   return [...document.querySelectorAll('div')].find(
-    (d) => d.style.zIndex === '10070' && d.style.display === 'flex'
+    (d) => d.classList.contains('bz-encrypt-dialog-mask') && d.style.display === 'flex'
   ) as HTMLElement | null;
 }
 

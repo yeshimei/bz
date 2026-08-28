@@ -219,12 +219,10 @@ describe('番茄钟弹窗', () => {
     const { app } = setup();
     await openPomodoro(app);
     expect(el('pomodoro-mask')).not.toBeNull();
-    // e3：域主弹窗层级不再 JS 内联——z-index 落在 src/pomodoro/styles.css（#pomodoro-mask 9998，低于设置页/设置弹窗）
-    expect(el('pomodoro-mask').style.zIndex).toBe('');
+    // ADR-0067：遮罩 z 动态发号（JS openPomodoro），样式源不再持有静态档
+    expect(Number.isFinite(parseInt(el('pomodoro-mask').style.zIndex, 10))).toBe(true);
     const css = readFileSync(resolve(process.cwd(), 'src/pomodoro/styles.css'), 'utf8');
-    const m = css.match(/#pomodoro-mask\s*\{[^}]*z-index:\s*(\d+)/);
-    expect(m).not.toBeNull();
-    expect(parseInt((m as RegExpMatchArray)[1], 10)).toBe(9998);
+    expect(/#pomodoro-mask\s*\{[^}]*z-index:/.test(css)).toBe(false);
     const popup = el('pomodoro-popup');
     expect(popup).not.toBeNull();
     expect(popup.querySelector('#pomodoro-ring-svg')).not.toBeNull();

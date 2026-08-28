@@ -4,6 +4,7 @@
  */
 import { escManager } from '../core/esc-manager';
 import { escapeHtml } from '../core/utils';
+import { allocZ } from '../core/z-order';
 
 export function showClipConfirmDialog({
   itemTitle,
@@ -17,11 +18,13 @@ export function showClipConfirmDialog({
   onConfirm: () => void;
 }): void {
   const mask = document.createElement('div');
+  mask.className = 'bz-clip-archive-mask'; // 标识钩子（层级已动态发号 ADR-0067）
   mask.style.cssText = `
     position: fixed; top:0; left:0; right:0; bottom:0;
-    background: rgba(0,0,0,0.5); z-index: 10000;
+    background: rgba(0,0,0,0.5);
     display: flex; align-items: center; justify-content: center;
   `;
+  mask.style.zIndex = String(allocZ()); // ADR-0067：一次性弹窗，创建即显示即发号（dialog 为 mask 子节点随动）
 
   const dialog = document.createElement('div');
   dialog.style.cssText = `

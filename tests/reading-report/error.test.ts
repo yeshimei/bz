@@ -48,7 +48,7 @@ describe('统计失败（m1b 人话化）', () => {
       await showReadingReport(makeApp(vault) as any);
 
       // 弹窗占位 → 人话错误（不展示原始异常字符串）
-      const modal = document.querySelector('div[style*="z-index: 9999"]') as HTMLElement;
+      const modal = document.querySelector('.bz-reading-report-overlay') as HTMLElement;
       expect(modal).not.toBeNull();
       expect(modal.textContent).toContain('统计失败');
       expect(modal.textContent).toContain('请查看控制台');

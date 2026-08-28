@@ -37,7 +37,7 @@
 #todo-mask {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background: var(--background-modifier-cover);
-    z-index: 9998; display: none;
+    display: none;
 }
 #todo-popup {
     position: fixed; top: 50%; left: 50%;
@@ -45,7 +45,7 @@
     background: var(--background-primary);
     border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-    z-index: 9999; width: 90%; max-width: 700px; max-height: 80vh;
+    width: 90%; max-width: 700px; max-height: 80vh;
     display: none; flex-direction: column;
 }
 #todo-popup .bz-todo-head {
@@ -73,7 +73,7 @@
 #add-todo-mask {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.3);
-    z-index: 10001; display: none;
+    display: none;
 }
 #add-todo-popup {
     position: fixed; top: 50%; left: 50%;
@@ -81,7 +81,7 @@
     background: var(--background-primary);
     border-radius: 12px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    z-index: 10002; padding: 24px;
+    padding: 24px;
     max-width: 400px; width: 90%; max-height: 80vh; overflow-y: auto;
     display: none;
 }

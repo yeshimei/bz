@@ -15,6 +15,7 @@
 import type { App } from 'obsidian';
 import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
+import { topifyZ } from '../core/z-order';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal, closeSettingsModal } from '../core/settings-modal';
@@ -262,6 +263,7 @@ export class SecondBrainPanel {
     this.createUI();
     // [l2-sb] ESC 监听与 open/close 成对：open 挂载、close 移除（幂等），反复开关不累积
     this.attachEscapeListener();
+    topifyZ(this.mask!, this.popup!); // ADR-0067：显示即发号，谁后显示谁在上
     this.mask!.style.display = 'block';
     this.popup!.style.display = 'flex';
     applyMobileWindowFullscreen(this.popup, tryGetSettings().secondBrainMobileDefaultFullscreen === true);

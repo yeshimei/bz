@@ -344,8 +344,6 @@ function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, Bilibi
   const { mask, popup } = createOverlay({
     maskId: 'bz-up-manager-mask',
     popupId: 'bz-up-manager-popup',
-    // z-index 家族（同 settings-modal 层规表）：10050 设置弹窗之下、10250 共享确认框之上
-    zIndex: 10100,
     maxWidth: 460,
     onMaskClick: close,
   });
