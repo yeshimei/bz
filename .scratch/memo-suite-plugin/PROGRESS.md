@@ -1,3 +1,16 @@
+## 2026-08-27 设置页声明化 Wave-1 完成（ticket 131；ADR-0064；master 1f76ef7 全绿 206 文件/3284 用例 + tsc 0）
+
+**状态：Wave-1（core 地基 + 主设置页 + 流程框声明）已合并 master；Wave-2（13 域弹窗迁移）交接至新会话——代理运行时资源耗尽，见 `.scratch/ticket-131-wave2/HANDOFF.md`**
+
+- ✅ **设置 schema 渲染器**（`src/core/settings-schema.ts`，518 行）：十类行 + `renderSettingsInto`——键直绑（keyof BzSettings 收窄）/外部 get-set-save 逃生口、text 800ms 防抖+blur+Enter+onCommit 一次性提示（对齐旧 textSetting 逐字语义）、toggle 即时、number 钳制、visibleWhen 声明式联动（显隐+组徽标+两行式一并收口）、path 接 ADR-0061 选择器、actionRow 豁免、custom 插槽
+- ✅ **通用设置组**（`settings-common.ts`）：`mobileFullscreenGroup(key, {desc?})`（desc 覆盖对齐四处差异文案）；批次数/排序下拉不同构未抽（TODO 留头）
+- ✅ **主设置页 schema 化**（`settings-main-schema.ts` + main.ts display 两区块）；旧私有 helper 退役；ticket 100 存量文案 4 处修正（键名/行为不动）
+- ✅ **流程框声明**（`flow-dialog.ts`）：openFlowDialog 承继 `__shared_confirm_*` DOM 契约（铁律 3）；confirm 退役、23 处调用点（15 文件）全量改写、文案逐字零变化
+- ✅ **文案 lint 引擎**（`settings-copy-lint-engine.ts` 抽离可复用，供 Wave-2 各组独立注册）；`.bz-tab-*` 死类清理
+- ✅ `settings-modal.ts`：schema 入口 + build @deprecated 过渡（13 域迁移完收尾删除）
+- 📄 文档：ADR-0064、issues/131 定稿、CONTEXT 四词条、spec/PROGRESS；Wave-2 交接文档 `.scratch/ticket-131-wave2/HANDOFF.md`（三份子代理 prompt 附录）
+- ⏳ 待办（新会话）：并发派 A/B/C 三组域迁移 → 合并 → build 参数收尾退役 → 构建部署 → Review
+
 ## 2026-08-27 设置页声明化定案（ticket 131 定稿；grill-with-docs 拍板 Q1–Q18，ADR-0064）
 
 **状态：设计共识闭环（原想法 A/B「行助手 + 组分发」升格为全页声明式 schema + 流程框声明），待排期实施**
