@@ -1,3 +1,15 @@
+## 2026-08-28 设置页声明化 Wave-2 完成（ticket 131；ADR-0064；master 4985f64）
+
+**状态：13 域设置弹窗 + UP 名单弹窗全部 schema 化并合入 master；全量 209 文件/3292 用例绿 + tsc 0；build 参数已收尾退役**
+
+- ✅ **域组 A**（`88682a4`，diary/memo/belongings/password）：四域 schema 工厂导出（供文案 lint 引用）；迁移期 core 三处补正——① `mobileFullscreenGroup` 组级 visibleWhen（isMobileEnv）② `openSettingsModal` 空态改可见项计数 ③ select 行空值回退首选项
+- ✅ **域组 B**（`bab8d88`，clipping+数据源组+UP 名单弹窗/favorites/library）：自动摘要详设 visibleWhen 联动（含标签数量二次联动）；数据源组（news.json 异步外部数据）整段 custom 插槽兜底 + 组壳保持；**UP 名单管理弹窗 = renderSettingsInto 渲染进自建 overlay**（bz-up-manager-mask/-popup id 与 z 序 10100/10101 零变化，不换 openSettingsModal 防顶掉底层弹窗）；favorites 空态 + maxWidth 520；library 闭包工厂退役
+- ✅ **域组 C**（`51f28d1`，movie/review/pomodoro/encrypt/secondbrain/smartcat）：六域 41 组/72 行；review 做题家子项显隐改 visibleWhen、监听文件夹 chips custom 插槽 + 添加按钮 actionRow；pomodoro 音量+试听同行按钮 custom；smartcat 皮肤网格 custom + 外部数据三函数绑定保双落盘；encrypt 移动端 warnReload 手写组保行为（预设无回调通道——渲染器缺口评估留待后续）
+- ✅ **文案 lint 三组**：`settings-copy-lint-{a,b,c}.test.ts` 各自注册本组域 schema 零违规（白名单 2 项注明理由：review 出题数量 desc、secondbrain「启用」短标题）；ticket 100 修正清单逐项落 doc
+- ✅ **build 参数收尾退役**（`4985f64`）：设置弹窗内容入口唯一化 `schema`（`renderSettingsInto` 直入，缺省空 groups）；`tests/settings-modal.test.ts` 全部 build 用例改写为 schema/custom 等价；`.auto-summary-detail` 死 CSS（随 visibleWhen 平铺消失）三规则清理；issues/131 置已完成
+- 📄 文档：ADR-0064、issues/131 已完成、HANDOFF.md 补 B/C 纪要；worktree t131-domains-{a,b,c} 待清理
+- ⏳ 收尾中：构建部署（产物直出 E 盘）→ worktree 清理 → Review（diff 审查 + 自审 + 门禁确认）
+
 ## 2026-08-27 设置页声明化 Wave-1 完成（ticket 131；ADR-0064；master 1f76ef7 全绿 206 文件/3284 用例 + tsc 0）
 
 **状态：Wave-1（core 地基 + 主设置页 + 流程框声明）已合并 master；Wave-2（13 域弹窗迁移）交接至新会话——代理运行时资源耗尽，见 `.scratch/ticket-131-wave2/HANDOFF.md`**
