@@ -192,11 +192,16 @@ describe('设置弹窗筛选', () => {
     const settingsBtn = [...document.querySelectorAll('#__yin_ying__ button')].find((b) => (b as HTMLElement).title === '影视设置') as HTMLElement;
     settingsBtn.click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
-    // 分组卡片结构：目录/默认视图两组（移动端组桌面不渲染），原生图标 + 徽标回填项数；组头不是 .setting-item
-    const heads = [...popup.querySelectorAll('.bz-settings-group-head')];
+    // 分组卡片结构：目录/默认视图两组（桌面端移动端组挂 bz-setting-hidden 整组隐藏——ticket 131
+    // 声明式联动保留结构以便重求值，可见性过滤后与原行为一致），原生图标 + 徽标回填项数；组头不是 .setting-item
+    const isHiddenGroup = (el: Element) =>
+      Boolean((el.closest('.bz-settings-group') as HTMLElement | null)?.classList.contains('bz-setting-hidden'));
+    const heads = [...popup.querySelectorAll('.bz-settings-group-head')].filter((el) => !isHiddenGroup(el));
     expect(heads.map((el) => (el as HTMLElement).textContent!.trim())).toEqual(['目录2 项', '默认视图5 项']);
     expect(heads.map((el) => el.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon'))).toEqual(['folder-open', 'monitor']);
-    const names = [...popup.querySelectorAll('.bz-settings-group-body .setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    const names = [...popup.querySelectorAll('.bz-settings-group-body .setting-item')]
+      .filter((el) => !(el as HTMLElement).classList.contains('bz-setting-hidden'))
+      .map((el) => (el as HTMLElement).dataset.name);
     expect(names).toEqual([
       '影视文件夹', '每页加载数量',
       '默认排序', '默认类型筛选', '默认状态筛选', '已看卡片评分显示', '海报抓取',
@@ -223,6 +228,39 @@ describe('设置弹窗筛选', () => {
     const notices = getNoticeMessages();
     expect(notices.filter((m) => m.includes('重载插件后生效')).length).toBe(1);
     closeFilterModal();
+  });
+
+  it('⚙️ 设置弹窗（移动端）：追加「移动端」组（移动端默认全屏 toggle）', () => {
+    MockPlatform.isMobile = true;
+    resetObsidianMocks();
+    resetMovieState();
+    document.body.innerHTML = '';
+    M.folderPath = '我的/影视';
+    const vault = new MockVault();
+    seed(vault);
+    M.appRef = makeApp(vault);
+    setSettingsProvider(() => ({ movieFolderPath: '我的/影视' }) as any);
+    createOverlay(M.appRef as any);
+    const settingsBtn = [...document.querySelectorAll('#__yin_ying__ button')].find((b) => (b as HTMLElement).title === '影视设置') as HTMLElement;
+    settingsBtn.click();
+    const popup = document.getElementById('bz-settings-modal-popup')!;
+    // 移动端组（smartphone 图标）可见，内含「移动端默认全屏」toggle（desc 多数派文案）
+    const mobileGroup = [...popup.querySelectorAll('.bz-settings-group')].find(
+      (g) => g.querySelector('.bz-settings-group-name')!.textContent === '移动端'
+    ) as HTMLElement;
+    expect(mobileGroup).toBeTruthy();
+    expect(mobileGroup.classList.contains('bz-setting-hidden')).toBe(false);
+    expect(mobileGroup.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon')).toBe('smartphone');
+    const mobileRow = mobileGroup.querySelector('.setting-item[data-name="移动端默认全屏"]') as HTMLElement;
+    expect(mobileRow).not.toBeNull();
+    expect((mobileRow as any).__setting.desc).toBe('移动端打开主窗口时默认全屏，关闭则显示常规卡片');
+    // 键直绑：toggle 变更即时写内存 + 落盘
+    const toggle = (mobileRow as any).__setting.controls[0];
+    expect(toggle.value).toBe(false);
+    toggle.trigger(true);
+    expect(toggle.value).toBe(true);
+    closeFilterModal();
+    MockPlatform.isMobile = false;
   });
 
   it('筛选/排序按钮组实时生效（类型单标签/状态/排序）', () => {
@@ -403,9 +441,16 @@ describe('ESC 层级', () => {
     settingsBtn.click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect(popup.textContent).toContain('影视设置');
-    // 分组卡片：目录（文件夹/每页）+ 默认视图（排序/类型/状态/评分显示），桌面端无移动端组
-    expect([...popup.querySelectorAll('.bz-settings-group-name')].map((el) => el.textContent)).toEqual(['目录', '默认视图']);
-    const names = [...popup.querySelectorAll('.bz-settings-group-body .setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    // 分组卡片：目录（文件夹/每页）+ 默认视图（排序/类型/状态/评分显示），桌面端移动端组整组隐藏
+    // （ticket 131 声明式联动保留结构，可见性过滤后与原行为一致）
+    const isHiddenGroup = (el: Element) =>
+      Boolean((el.closest('.bz-settings-group') as HTMLElement | null)?.classList.contains('bz-setting-hidden'));
+    expect(
+      [...popup.querySelectorAll('.bz-settings-group-name')].filter((el) => !isHiddenGroup(el)).map((el) => el.textContent)
+    ).toEqual(['目录', '默认视图']);
+    const names = [...popup.querySelectorAll('.bz-settings-group-body .setting-item')]
+      .filter((el) => !(el as HTMLElement).closest('.bz-settings-group')!.classList.contains('bz-setting-hidden'))
+      .map((el) => (el as HTMLElement).dataset.name);
     expect(names).toContain('影视文件夹');
     expect(names).toContain('每页加载数量');
     expect(names).toContain('默认排序');
@@ -414,8 +459,8 @@ describe('ESC 层级', () => {
     expect(names).toContain('已看卡片评分显示');
     // 海报抓取指引行（ADR-0007 外部工具，描述保留关键语义）
     expect(names).toContain('海报抓取');
-    // 桌面端不渲染移动端组
-    expect(popup.querySelector('.bz-settings-group-name')?.textContent).not.toBe('移动端');
+    // 桌面端移动端组整组隐藏（结构保留）
+    expect(popup.querySelector('.bz-settings-group.bz-setting-hidden .bz-settings-group-name')?.textContent).toBe('移动端');
   });
 });
 

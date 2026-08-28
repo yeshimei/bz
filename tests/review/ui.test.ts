@@ -201,11 +201,16 @@ describe('UIManager', () => {
     settingsBtn.click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect(popup.textContent).toContain('复习计划设置');
-    const names = () => [...popup.querySelectorAll('.setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    const names = () =>
+      [...popup.querySelectorAll('.setting-item')]
+        .filter((el) => !(el as HTMLElement).closest('.bz-settings-group')!.classList.contains('bz-setting-hidden'))
+        .map((el) => (el as HTMLElement).dataset.name);
     // 无检查间隔（已删）
     expect(names()).not.toContain('检查间隔（秒）');
-    // 分组卡片头（组名；桌面端无「移动端」组）
-    const groupNames = [...popup.querySelectorAll('.bz-settings-group-name')].map((el) => el.textContent);
+    // 分组卡片头（组名；桌面端移动端组挂 bz-setting-hidden 整组隐藏——ticket 131 声明式联动保留结构）
+    const isHiddenGroup = (el: Element) =>
+      Boolean((el.closest('.bz-settings-group') as HTMLElement | null)?.classList.contains('bz-setting-hidden'));
+    const groupNames = [...popup.querySelectorAll('.bz-settings-group-name')].filter((el) => !isHiddenGroup(el)).map((el) => el.textContent);
     expect(groupNames).toEqual(['检查提醒', '做题家', '复习节奏', '自动化', '界面']);
     // 检查提醒组
     expect(names()).toContain('到期提醒');
@@ -247,28 +252,38 @@ describe('UIManager', () => {
     seed(vault);
     const app = makeApp(vault);
     setApp(app);
-    setSettingsProvider(() => ({ forceQuizForReview: false } as any));
+    // 稳定引用：声明式联动（visibleWhen）经 tryGetSettings 读值，provider 必须返回同一对象引用
+    const quizSettings: any = { forceQuizForReview: false };
+    setSettingsProvider(() => quizSettings);
     const dm = new ReviewDataManager(app);
     const ui = new UIManager(app, dm);
     ui.showMain();
     (document.getElementById('review-btn-settings') as HTMLElement).click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
-    const quizBox = popup.querySelector('#review-quiz-settings') as HTMLElement;
-    expect(quizBox.style.display).toBe('none');
-    // 做题家组徽标：出题子容器隐藏时仅计 toggle → 1 项
+    // 做题家子项显隐（ticket 131 visibleWhen 声明式：隐藏行留在 DOM 但带 .bz-setting-hidden）
+    const hiddenOf = (name: string) => {
+      const el = [...popup.querySelectorAll('.setting-item')].find(
+        (s) => (s as HTMLElement).dataset.name === name
+      ) as HTMLElement;
+      return el?.classList.contains('bz-setting-hidden');
+    };
+    expect(hiddenOf('允许多选题')).toBe(true);
+    expect(hiddenOf('每篇笔记出题数量')).toBe(true);
+    // 做题家组徽标：出题子项隐藏时仅计 toggle → 1 项
     const badge = () =>
       [...popup.querySelectorAll('.bz-settings-group')].find(
         (g) => g.querySelector('.bz-settings-group-name')!.textContent === '做题家'
       )!.querySelector('.bz-settings-group-count')!.textContent;
     expect(badge()).toBe('1 项');
-    // 用做题测难度 toggle 开启 → 出题子容器显示，徽标经 refreshSettingsGroupCounts 刷新 → 5 项
+    // 用做题测难度 toggle 开启 → 出题子项显示（visibleWhen 重求值 + 徽标刷新），徽标 → 5 项
     const toggleSetting = [...popup.querySelectorAll('.setting-item')].find(
       (el) => (el as HTMLElement).dataset.name === '用做题测难度'
     ) as HTMLElement;
     const toggle = (toggleSetting as any).__setting.controls[0];
     toggle.trigger(true);
     await new Promise((r) => setTimeout(r, 20));
-    expect(quizBox.style.display).toBe('');
+    expect(hiddenOf('允许多选题')).toBe(false);
+    expect(hiddenOf('每篇笔记出题数量')).toBe(false);
     expect(badge()).toBe('5 项');
     closeSettingsModal();
     ui.destroy();
@@ -496,8 +511,11 @@ describe('移动端默认全屏（ticket 68）', () => {
     const ui = new UIManager(app, dm);
     setSettingsProvider(() => ({}) as any);
     const settingNames = () =>
-      [...document.querySelectorAll('#bz-settings-modal-popup .setting-item')].map((el) => (el as HTMLElement).dataset.name);
-    // 桌面端：无该行（设置项名在 dataset.name，与既有断言口径一致）
+      [...document.querySelectorAll('#bz-settings-modal-popup .setting-item')]
+        // ticket 131：隐藏行留在 DOM 带 .bz-setting-hidden，桌面端可见性过滤后与原行为一致
+        .filter((el) => !(el as HTMLElement).closest('.bz-settings-group')!.classList.contains('bz-setting-hidden'))
+        .map((el) => (el as HTMLElement).dataset.name);
+    // 桌面端：无该行（移动端组整组隐藏；设置项名在 dataset.name，与既有断言口径一致）
     (document.getElementById('review-btn-settings') as HTMLElement).click();
     expect(settingNames()).not.toContain('移动端默认全屏');
     // 移动端：有该行（toggle 语义：再点先关旧再开新）
@@ -587,8 +605,8 @@ describe('ticket 098 UI：做题家图标移除 / 挂起记录删除线 / 监听
       await new Promise((r) => setTimeout(r, 10));
     }
     expect(popup.querySelector('#review-watch-folders .bz-review-watch-chip')).toBeNull();
-    // ＋ 添加监听文件夹 → 打开统一路径选择器（ticket 128：core/path-picker，companion 档 11200 压设置弹窗）
-    const addBtn = [...popup.querySelectorAll('#review-watch-folders button')].find(
+    // ＋ 添加监听文件夹（ticket 131：声明式为 button 行，独立于 chips 插槽 #review-watch-folders）
+    const addBtn = [...popup.querySelectorAll('.setting-item.bz-setting-action-row button')].find(
       (b) => b.textContent === '＋ 添加监听文件夹'
     ) as HTMLElement;
     expect(addBtn).toBeTruthy();
