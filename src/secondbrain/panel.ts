@@ -17,7 +17,8 @@ import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
 import { tryGetSettings, saveSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
-import { openSettingsModal, closeSettingsModal, createSettingsGroup, refreshSettingsGroupCounts } from '../core/settings-modal';
+import { openSettingsModal, closeSettingsModal, createSettingsGroup, refreshSettingsGroupCounts, markSettingSplitRows } from '../core/settings-modal';
+import { renderPathSettingRow } from '../core/path-picker';
 import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { confirm } from '../core/confirm';
 import { getApp } from '../core/app';
@@ -26,7 +27,6 @@ import { loadStore, mutateStore } from './store-file';
 import { AI } from './ai';
 import type { VectorStore, SecondBrainMeta } from './vector-store';
 import { parsePathList, formatPathList } from './whitelist';
-import { openWhitelistPicker, renderSelectedChips } from './whitelist-modal';
 import { getLanIPs, formatRemoteOllamaUrl, pickPrimaryLanIp } from './local-ip';
 
 // ==================== 统计聚合（纯函数，可测） ====================
@@ -936,42 +936,21 @@ export function openSecondBrainSettings(_app?: App): void {
       new Setting(b1)
         .setName('Embedding 模型')
         .addText((t) => t.setValue(String(s.secondBrainEmbeddingModel ?? '')).onChange((v) => set('secondBrainEmbeddingModel', v.trim())));
-      const allowChipsWrap = document.createElement('div');
-      allowChipsWrap.className = 'bz-sb-pick-chips--setting';
-      const allowSetting = new Setting(b1)
-        .setName('白名单目录')
-        .setDesc('纳入第二大脑检索/候选来源的笔记目录；点「📁 选择」从库内文件夹勾选，也可直接改路径文本（英文逗号分隔）；留空 = 不索引')
-        .addText((t) =>
-          t.setValue(String(s.secondBrainAllowPaths ?? '')).onChange((v) => {
-            set('secondBrainAllowPaths', v);
-            renderAllowChips();
-          })
-        )
-        .addButton((b) =>
-          b.setButtonText('📁 选择').onClick(() =>
-            openWhitelistPicker({
-              selected: parsePathList((tryGetSettings() as any).secondBrainAllowPaths),
-              onConfirm: (list) => {
-                set('secondBrainAllowPaths', formatPathList(list));
-                renderAllowChips();
-              },
-            })
-          )
-        );
-      // chips 预览紧随设置行下方（显示当前已选目录，可 ✕ 移除）
-      allowChipsWrap.style.marginTop = '4px';
-      allowSetting.settingEl.insertAdjacentElement('afterend', allowChipsWrap);
-      const renderAllowChips = () => {
-        renderSelectedChips(
-          allowChipsWrap,
-          parsePathList((tryGetSettings() as any).secondBrainAllowPaths),
-          (list) => {
-            set('secondBrainAllowPaths', formatPathList(list));
-            renderAllowChips();
-          }
-        );
-      };
-      renderAllowChips();
+      // 白名单目录（ticket 128 统一选择器：chips + 选择按钮，无手输文本框；存储格式冻结——英文逗号分隔字符串）
+      renderPathSettingRow({
+        parent: b1,
+        name: '白名单目录',
+        desc: '纳入第二大脑检索/候选来源的笔记目录；点「📁 选择」从库内文件夹勾选（含空目录与点前缀目录）；留空 = 不索引',
+        mode: 'multi',
+        value: parsePathList(String((tryGetSettings() as any).secondBrainAllowPaths ?? '')),
+        pickerTitle: '选择白名单目录',
+        pickerDesc: '白名单为目录前缀语义：勾选祖先目录即覆盖其下全部子目录',
+        buttonText: '📁 选择',
+        emptyText: '暂未选择（留空 = 不索引任何目录）',
+        onChange: (list) => {
+          set('secondBrainAllowPaths', formatPathList(list));
+        },
+      });
       new Setting(b1)
         .setName('启用')
         .setDesc('仅控制启动时自动加载，关闭后仍可从命令面板手动打开') // [l7A] 语义修正
@@ -1015,21 +994,22 @@ export function openSecondBrainSettings(_app?: App): void {
           .setName('失效关联自动清理')
           .setDesc('笔记删除后自动移除指向它的失效 related 条目')
           .addToggle((t) => t.setValue((tryGetSettings() as any).linkAgentAutoClean !== false).onChange((v) => set('linkAgentAutoClean', v)));
-        new Setting(linkDetailBox)
-          .setName('关联范围')
-          .setDesc('决定哪些笔记会被自动关联（落盘监听与补链目标）；候选来源为白名单索引库全部笔记；留空 = 不自动关联')
-          .addText((t) =>
-            t.setValue(String((tryGetSettings() as any).linkAgentScopes ?? '')).onChange((v) => set('linkAgentScopes', v))
-          )
-          .addButton((b) =>
-            b.setButtonText('📁 选择').onClick(() =>
-              openWhitelistPicker({
-                title: '选择关联范围目录',
-                selected: parsePathList((tryGetSettings() as any).linkAgentScopes),
-                onConfirm: (list) => set('linkAgentScopes', formatPathList(list)),
-              })
-            )
-          );
+        // 关联范围（ticket 128 统一选择器：chips + 选择按钮；格式冻结——英文逗号分隔字符串）
+        renderPathSettingRow({
+          parent: linkDetailBox,
+          name: '关联范围',
+          desc: '决定哪些笔记会被自动关联（落盘监听与补链目标）；候选来源为白名单索引库全部笔记；留空 = 不自动关联',
+          mode: 'multi',
+          value: parsePathList(String((tryGetSettings() as any).linkAgentScopes ?? '')),
+          pickerTitle: '选择关联范围目录',
+          buttonText: '📁 选择',
+          emptyText: '暂未选择（留空 = 不自动关联）',
+          onChange: (list) => {
+            set('linkAgentScopes', formatPathList(list));
+          },
+        });
+        // 明细为动态重渲染区块：两行式标注按需重挂（控件区 ≥2 子元素的新建行）
+        markSettingSplitRows(linkDetailBox);
       };
       new Setting(bLink)
         .setName('自动双链')

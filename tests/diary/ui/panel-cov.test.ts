@@ -6,6 +6,7 @@
  */
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { setApp } from '../../../src/diary/app';
+import { setApp as setCoreApp } from '../../../src/core/app';
 import { applyDirectories, resetTagsConfig } from '../../../src/diary/config';
 import { init, unregisterEscLayer, setLoadingState, toggleSearch, showDiaryPanel } from '../../../src/diary/ui/panel';
 import { openAddDialog, createTagPicker, showDatePicker } from '../../../src/diary/ui/dialogs';
@@ -61,6 +62,7 @@ beforeEach(async () => {
   vault.files.set('我的/日记/2024-01-02.md', '# ✍️ 09:00\n第二条日记\n');
   app = mockAppWithVault(vault);
   setApp(app);
+  setCoreApp(app as any); // 统一路径选择器走 core getApp（ticket 128）
   await init({ registerEvent: () => {} });
 });
 
@@ -130,10 +132,23 @@ describe('⚙️ 日记本设置弹窗控件写回', () => {
     expect(document.getElementById('bz-settings-modal-popup')).toBeTruthy();
   }
 
-  it('目录组文本项 onChange 写回设置并应用目录常量', async () => {
+  it('目录组路径项经统一选择器写回设置并应用目录常量（ticket 128，无手输文本框）', async () => {
     openModal();
-    const [text] = settingControl('日记目录');
-    text.trigger('我的/日记X');
+    // 种候选目录（空目录经 adapter 补齐）：我的/日记X
+    vault.dirs.add('我的/日记X');
+    // 日记目录行：只有「选择…」按钮控件，无 text 输入框；点按钮 → 选择器 → 选目录 → 确定
+    const ctrls = settingControl('日记目录');
+    expect(ctrls.length).toBe(1);
+    expect(ctrls[0].text).toBe('选择…');
+    ctrls[0].trigger();
+    const popup = document.getElementById('bz-path-picker-popup')!;
+    await vi.waitFor(() => expect(popup.querySelectorAll('.bz-path-picker-row').length).toBeGreaterThan(0));
+    const row = [...popup.querySelectorAll('.bz-path-picker-row')].find(
+      (r) => (r as HTMLElement).dataset.path === '我的/日记X'
+    ) as HTMLElement;
+    expect(row).toBeTruthy();
+    row.click();
+    (popup.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).click();
     await new Promise((r) => setTimeout(r, 0));
     expect(settingsObj.diaryDirectory).toBe('我的/日记X');
     expect((configModule as any).DIARY_DIRECTORY).toBe('我的/日记X');

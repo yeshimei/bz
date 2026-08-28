@@ -8,6 +8,7 @@ import { escManager } from '../core/esc-manager';
 import { formatRelativeTime, pad2 } from '../core/utils';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { openSettingsModal, createSettingsGroup } from '../core/settings-modal';
+import { renderPathSettingRow } from '../core/path-picker';
 import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
 import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, getTypeColor, getStarRating, ALL_TAGS, getGroupForTag } from './constants';
 import { M, takeHomeFilmStatus, type MovieItem } from './state';
@@ -1086,16 +1087,18 @@ export function createOverlay(app: App, statusType?: string): void {
         };
         // ===== 目录组 =====
         const dirGroup = createSettingsGroup(el, { icon: 'folder-open', name: '目录' });
-        new Setting(dirGroup)
-          .setName('影视文件夹')
-          .setDesc('存放影视笔记的文件夹路径')
-          .addText((text) =>
-            text.setValue(s.movieFolderPath || '').onChange(async (v) => {
-              s.movieFolderPath = v;
-              await saveSettings();
-              warnReload();
-            })
-          );
+        // ticket 128：影视文件夹（统一路径选择器录入，无手输文本框）
+        renderPathSettingRow({
+          parent: dirGroup,
+          name: '影视文件夹',
+          desc: '存放影视笔记的文件夹路径',
+          mode: 'single',
+          value: s.movieFolderPath || '',
+          onChange: (list) => {
+            s.movieFolderPath = list[0] || '';
+            void saveSettings().then(warnReload);
+          },
+        });
         new Setting(dirGroup)
           .setName('每页加载数量')
           .setDesc('列表首次加载和滚动加载时显示的条数')

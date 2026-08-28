@@ -11,6 +11,7 @@ import { onDomainEvent } from '../../core/domain-bus';
 import { getSettings, saveSettings, tryGetSettings } from '../../core/settings-provider';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../../core/mobile';
 import { openSettingsModal, createSettingsGroup } from '../../core/settings-modal';
+import { renderPathSettingRow } from '../../core/path-picker';
 import { applyDirectories, getPrimaryTagsConfig, getPrimaryTagsInDisplayOrder, getTagEmoji } from '../config';
 import { applyUiSettings, getDefaultDateFilterSetting, getDefaultSelectedTagSetting } from './ui-settings';
 import { state } from '../state';
@@ -207,9 +208,24 @@ function dropdownSetting(
     });
 }
 
-/** 目录组：日记/影视/信目录 + 每批加载数量 */
+/** 目录组：日记/影视/信目录（ticket 128 统一路径选择器）+ 每批加载数量 */
 function addDirectoryGroup(el: HTMLElement, s: any) {
   const dirGroup = createSettingsGroup(el, { icon: 'folder-open', name: '目录' });
+  const pathSetting = (name: string, desc: string, field: string) =>
+    renderPathSettingRow({
+      parent: dirGroup,
+      name,
+      desc,
+      mode: 'single',
+      value: (s[field] as string) || '',
+      onChange: (list) => {
+        s[field] = list[0] || '';
+        void saveSettings().then(() => applyDirectories(s));
+      },
+    });
+  pathSetting('日记目录', '存放日记文件的文件夹路径', 'diaryDirectory');
+  pathSetting('影视目录', '存放影视笔记的文件夹路径', 'movieDirectory');
+  pathSetting('信目录', '存放信件的文件夹路径', 'letterDirectory');
   const textSetting = (name: string, desc: string, field: string) =>
     new Setting(dirGroup)
       .setName(name)
@@ -221,9 +237,6 @@ function addDirectoryGroup(el: HTMLElement, s: any) {
           applyDirectories(s);
         })
       );
-  textSetting('日记目录', '存放日记文件的文件夹路径', 'diaryDirectory');
-  textSetting('影视目录', '存放影视笔记的文件夹路径', 'movieDirectory');
-  textSetting('信目录', '存放信件的文件夹路径', 'letterDirectory');
   textSetting('每批加载数量', '滚动加载时每批显示的条目数', 'diaryBatchSize');
 }
 

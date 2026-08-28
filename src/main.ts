@@ -13,6 +13,8 @@ import { setAISettingsProvider, resetAIProviderCache } from './core/ai';
 import { setSettingsProvider, setSettingsSaver } from './core/settings-provider';
 import { clearDomainEvents } from './core/domain-bus';
 import { attachObsidianAdapter, detachObsidianAdapter } from './core/obsidian-adapter';
+import { markSettingSplitRows } from './core/settings-modal';
+import { renderPathSettingRow } from './core/path-picker';
 import { setBzSettingsProvider, unloadBz, ensureBz } from './memo';
 
 import BzSettings, { DEFAULT_SETTINGS, migrateSecondBrainSettings } from './settings';
@@ -459,71 +461,58 @@ export class BzSettingTab extends PluginSettingTab {
 
     // 📂 数据存储路径区块：共享 storagePath（ADR-0009，JSON 数据文件统一目录）
     containerEl.createDiv({ cls: 'bz-setting-section-title', text: '📂 数据存储路径' });
-    this.textSetting(
+    this.pathSetting(
       containerEl,
       '数据存储路径',
       '所有 JSON 数据文件（备忘录/归物本/密码本/收藏本/复习计划/做题家/第二大脑）的统一存放目录',
       s.storagePath,
       save,
       (v) => (s.storagePath = v),
-      undefined,
-      // f1：路径改动防错——仅改路径、文件不迁移，提示自行迁移 + 重载后生效（正文不带 emoji，铁律 7）
+      // f1：路径改动防错——仅改路径、文件不迁移，提示自行迁移 + 重载后生效（正文不带 emoji，铁律 7）；
+      // 语义与 textSetting 一致（值有变更才提示、同一设置会话至多一次、改回原值后可再次提示）
       () => {
         notice('存储路径已修改：仅改路径，文件不会自动迁移，旧数据需自行迁移；重载插件后生效。', 'warning');
       }
     );
+    // 移动端两行式标注（ticket 128）：控件区 ≥2 子元素（选择…按钮 + chips）的设置行挂类
+    markSettingSplitRows(containerEl);
   }
 
   // ---- 设置项 helper ----
-  /** 防抖窗口（ms）：连续输入不逐键落盘，停顿后才持久化（UX 整改 f1：textSetting 改为有意触发） */
-  private static readonly TEXT_COMMIT_DELAY = 800;
-
-  private textSetting(
+  /**
+   * 路径设置行（ticket 128，ADR-0061）：chips + 「选择…」按钮（经 core 统一选择器录入，无手输输入框）。
+   * 落盘/提示语义沿用原 textSetting（f1）：确认即落盘；值相对初始值有变更才触发 onCommit 提示，
+   * 同一次设置会话至多一次，改回原值后复位可再次提示（无防抖必要——选择器为离散确认，非逐步输入）。
+   */
+  private pathSetting(
     containerEl: HTMLElement,
     name: string,
     desc: string,
     value: string,
     onSave: () => Promise<void>,
     apply: (v: string) => void,
-    placeholder?: string,
     onCommit?: () => void
-  ): Setting {
-    return new Setting(containerEl).setName(name).setDesc(desc).addText((text) => {
-      text.setValue(value).setPlaceholder(placeholder || '');
-      let pending: ReturnType<typeof setTimeout> | null = null;
-      let last = value;
-      /** 已对当前初始值提示过（同一次编辑会话至多一次；改回原值后复位可再次提示） */
-      let warnedInitial: string | null = null;
-      /** 有意的落盘点：防抖到期 / 失焦 / 回车——统一落盘，值有变更才触发 onCommit 提示 */
-      const commit = (): void => {
-        if (pending) {
-          clearTimeout(pending);
-          pending = null;
-        }
+  ): void {
+    let warned = false;
+    renderPathSettingRow({
+      parent: containerEl,
+      name,
+      desc,
+      mode: 'single',
+      value,
+      onChange: (list) => {
+        const v = (list[0] || '').trim().replace(/^\/+|\/+$/g, '');
+        apply(v);
         void onSave();
-        if (last !== value) {
-          if (onCommit && warnedInitial !== value) {
-            warnedInitial = value;
-            onCommit();
+        if (v !== value) {
+          if (!warned) {
+            warned = true;
+            onCommit?.();
           }
         } else {
-          warnedInitial = null;
+          warned = false;
         }
-      };
-      text.onChange((v) => {
-        apply(v);
-        last = v;
-        if (pending) clearTimeout(pending);
-        pending = setTimeout(commit, BzSettingTab.TEXT_COMMIT_DELAY);
-      });
-      // 失焦/回车立即落盘（真实环境 Setting 控件含 inputEl；测试替身无此属性时跳过）
-      const inputEl = (text as any).inputEl as HTMLInputElement | undefined;
-      if (inputEl) {
-        inputEl.addEventListener('blur', commit);
-        inputEl.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') commit();
-        });
-      }
+      },
     });
   }
 

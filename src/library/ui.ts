@@ -20,6 +20,7 @@ import {
 import { escManager } from '../core/esc-manager';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { openSettingsModal, createSettingsGroup } from '../core/settings-modal';
+import { renderPathSettingRow } from '../core/path-picker';
 import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
 import type BzSettings from '../settings';
 import { formatFileSize } from '../core/utils';
@@ -190,7 +191,18 @@ function openLibrarySettings(app: any): void {
           );
       // ===== 目录组 =====
       const dirGroup = createSettingsGroup(el, { icon: 'folder-open', name: '目录' });
-      textSetting(dirGroup, '书库文件夹', '存放书籍笔记的文件夹路径', 'libraryFolderPath');
+      // ticket 128：书库文件夹（统一路径选择器录入，无手输文本框）
+      renderPathSettingRow({
+        parent: dirGroup,
+        name: '书库文件夹',
+        desc: '存放书籍笔记的文件夹路径',
+        mode: 'single',
+        value: String((s as any).libraryFolderPath || ''),
+        onChange: (list) => {
+          (s as any).libraryFolderPath = list[0] || '';
+          void saveSettings();
+        },
+      });
       textSetting(dirGroup, '书籍识别标签', '识别书籍笔记所用的标签名', 'bookTag');
       // ===== 列表显示组 =====
       const listGroup = createSettingsGroup(el, { icon: 'eye', name: '列表显示' });
