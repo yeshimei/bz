@@ -552,10 +552,12 @@ export function markAsRead(action: string): NewsReadEvent | null {
     // ticket 076 修订（2026-08-25 用户拍板：只发保存）→ ticket 123 追加（2026-08-27 用户拍板）：跳过也产观察
     // ——保存走 saved 立即形态 + auto-summary 补全；跳过走 news:skipped 入行为流（轻量记录，不向量化）；
     // 阅读无独立动作不发（域统计照记）；
-    // ticket 134 修订（ADR-0068）：B站视频条目不发（保存改道文献盒、跳过静音——普通文章保留跳过上报）；
+    // ticket 134（ADR-0068）对 B站条目的跳过静音，被 ADR-0069「行为流全量盘点补齐」反转：
+    // B站条目「下一篇/完成阅读」（skipped）也发 'news' 域事件进行为流；saved 对 B站不会走到此
+    // （保存改道文献盒 saveToLiterature，不标已读语义不变）；普通文章语义不变；
     // 时长 = 累计可视时间（hide 已暂停并入 accumMs，此处补挂起会话），毫秒/60000 取整分钟 ≥1
     // （原实现 ms/60 致时长虚增 60 倍——「读了 N 分钟」离谱根因之一）
-    if ((action === 'saved' || action === 'skipped') && !isBiliVideo(a)) {
+    if (action === 'saved' || action === 'skipped') {
       const now = Date.now();
       const durationSec = (openedAt ? now - openedAt : 0) + accumMs;
       const durationMin = Math.max(1, Math.round(durationSec / 60000));
