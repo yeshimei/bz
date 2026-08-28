@@ -1961,6 +1961,11 @@ export async function readMemorySidecarFile(app: App): Promise<MemorySidecarFile
   return (await readJsonSidecar(app, getSmartcatMemorySidecarPath())).value as MemorySidecarFile | null;
 }
 
+/** 读行为流 sidecar（无文件/失败 → null；数据面板等只读方用，ADR-0069 后 smartcat.json 不再含双流） */
+export async function readBehaviorSidecarFile(app: App): Promise<BehaviorSidecarFile | null> {
+  return (await readJsonSidecar(app, getSmartcatBehaviorSidecarPath())).value as BehaviorSidecarFile | null;
+}
+
 /** 写记忆流 sidecar */
 export async function writeMemorySidecarFile(app: App, entries: MemoryStreamEntry[], extraVectorRows?: Record<string, number[]>): Promise<void> {
   const file: MemorySidecarFile = {
