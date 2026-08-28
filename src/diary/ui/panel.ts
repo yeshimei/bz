@@ -2,16 +2,16 @@
  * 主面板与标签栏（原脚本 160-240 + 735-1362 的 UI 部分）。
  * 负责面板/遮罩/头部/标签栏/进度条的创建，init 幂等入口，ESC 注册。
  */
-import { Setting } from 'obsidian';
 import { pad2 } from '../../core/utils';
 import { notice } from '../../core/notice';
 import { escManager } from '../../core/esc-manager';
 import type { EscHandle } from '../../core/esc-manager';
 import { onDomainEvent } from '../../core/domain-bus';
-import { getSettings, saveSettings, tryGetSettings } from '../../core/settings-provider';
-import { applyMobileWindowFullscreen, isMobileEnv } from '../../core/mobile';
-import { openSettingsModal, createSettingsGroup } from '../../core/settings-modal';
-import { renderPathSettingRow } from '../../core/path-picker';
+import { getSettings, tryGetSettings } from '../../core/settings-provider';
+import { applyMobileWindowFullscreen } from '../../core/mobile';
+import { openSettingsModal } from '../../core/settings-modal';
+import { mobileFullscreenGroup } from '../../core/settings-common';
+import type { SettingsSchema } from '../../core/settings-schema';
 import { applyDirectories, getPrimaryTagsConfig, getPrimaryTagsInDisplayOrder, getTagEmoji } from '../config';
 import { applyUiSettings, getDefaultDateFilterSetting, getDefaultSelectedTagSetting } from './ui-settings';
 import { state } from '../state';
@@ -183,62 +183,7 @@ function createHeader() {
   return header;
 }
 
-// ===== 日记本设置弹窗（ADR-0009 域设置弹窗；分组卡片重设计，2026-08 用户拍板方案 A） =====
-
-/** 通用下拉设置项（显示组/默认视图组共用）；onUiChanged 在保存后同步 UI 状态 */
-function dropdownSetting(
-  parent: HTMLElement,
-  s: any,
-  name: string,
-  desc: string,
-  field: string,
-  options: [string, string][],
-  onUiChanged?: () => void
-) {
-  return new Setting(parent)
-    .setName(name)
-    .setDesc(desc)
-    .addDropdown((dd) => {
-      for (const [value, label] of options) dd.addOption(value, label);
-      dd.setValue(s[field] || options[0][0]).onChange(async (v) => {
-        s[field] = v;
-        await saveSettings();
-        onUiChanged?.();
-      });
-    });
-}
-
-/** 目录组：日记/影视/信目录（ticket 128 统一路径选择器）+ 每批加载数量 */
-function addDirectoryGroup(el: HTMLElement, s: any) {
-  const dirGroup = createSettingsGroup(el, { icon: 'folder-open', name: '目录' });
-  const pathSetting = (name: string, desc: string, field: string) =>
-    renderPathSettingRow({
-      parent: dirGroup,
-      name,
-      desc,
-      mode: 'single',
-      value: (s[field] as string) || '',
-      onChange: (list) => {
-        s[field] = list[0] || '';
-        void saveSettings().then(() => applyDirectories(s));
-      },
-    });
-  pathSetting('日记目录', '存放日记文件的文件夹路径', 'diaryDirectory');
-  pathSetting('影视目录', '存放影视笔记的文件夹路径', 'movieDirectory');
-  pathSetting('信目录', '存放信件的文件夹路径', 'letterDirectory');
-  const textSetting = (name: string, desc: string, field: string) =>
-    new Setting(dirGroup)
-      .setName(name)
-      .setDesc(desc)
-      .addText((text) =>
-        text.setValue(s[field] || '').onChange(async (v) => {
-          s[field] = v;
-          await saveSettings();
-          applyDirectories(s);
-        })
-      );
-  textSetting('每批加载数量', '滚动加载时每批显示的条目数', 'diaryBatchSize');
-}
+// ===== 日记本设置弹窗（ADR-0009 域设置弹窗；ticket 131 声明式 schema，分组卡片方案 A 形态保持） =====
 
 /** 显示组变更联动：应用 UI 设置并重建标签栏与列表 */
 function uiSettingsChanged(s: any) {
@@ -247,86 +192,51 @@ function uiSettingsChanged(s: any) {
   applyFilter();
 }
 
-/** 显示组：标签计数 / 默认日期取自文件 / 标签表情 / 渲染方式 / 标签排序 */
-function addViewGroup(el: HTMLElement, s: any) {
-  const viewGroup = createSettingsGroup(el, { icon: 'eye', name: '显示' });
-  const toggleSetting = (name: string, desc: string, field: string, syncUi: boolean) =>
-    new Setting(viewGroup)
-      .setName(name)
-      .setDesc(desc)
-      .addToggle((toggle) =>
-        toggle.setValue(!!s[field]).onChange(async (v) => {
-          s[field] = v;
-          await saveSettings();
-          if (syncUi) uiSettingsChanged(s);
-        })
-      );
-  toggleSetting('显示标签计数', '在标签按钮上显示该标签包含的条目数量', 'showTagCount', true);
-  toggleSetting('默认日期取自文件', '添加日记时默认日期取自当前打开的日记文件，否则用当前时间', 'useFileDateTime', true);
-  toggleSetting('标签按钮显示表情', '筛选栏与写日记弹窗的标签按钮显示表情，关闭则显示文字', 'diaryTagShowEmoji', true);
-  dropdownSetting(viewGroup, s, '卡片内容渲染方式', '日记卡片内容按格式渲染或纯文本显示', 'diaryContentRenderMode', [
-    ['markdown', 'Markdown'],
-    ['plain', '纯文本'],
-  ], () => uiSettingsChanged(s));
-  dropdownSetting(viewGroup, s, '标签排序', '筛选栏主标签按内置配置顺序或条目数量排序', 'diaryTagSortMode', [
-    ['fixed', '按固定顺序'],
-    ['count', '按条目数量'],
-  ], () => uiSettingsChanged(s));
-}
-
-/** 默认视图组：默认日期筛选 / 默认选中标签 / 保存后进入编辑 */
-function addDefaultViewGroup(el: HTMLElement, s: any) {
-  const defaultGroup = createSettingsGroup(el, { icon: 'monitor', name: '默认视图' });
-  dropdownSetting(defaultGroup, s, '面板默认日期筛选', '打开日记本面板时默认的日期范围', 'diaryDefaultDateFilter', [
-    ['all', '全部'],
-    ['this-month', '本月'],
-  ], () => uiSettingsChanged(s));
-  dropdownSetting(defaultGroup, s, '默认选中标签', '打开面板时默认选中的主标签', 'diaryDefaultSelectedTag', [
-    ['', '全部'],
-    ...Object.keys(getPrimaryTagsConfig()).map((tag) => [tag, tag] as [string, string]),
-  ], () => uiSettingsChanged(s));
-  new Setting(defaultGroup)
-    .setName('保存后进入编辑')
-    .setDesc('保存日记后直接进入编辑模式')
-    .addToggle((toggle) =>
-      toggle.setValue(!!s.diaryJumpToEditAfterSave).onChange(async (v) => {
-        s.diaryJumpToEditAfterSave = v;
-        await saveSettings();
-      })
-    );
-}
-
-/** 移动端组：仅移动端显示「移动端默认全屏」 */
-function addMobileGroup(el: HTMLElement, s: any) {
-  if (!isMobileEnv()) return;
-  const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
-  new Setting(mobileGroup)
-    .setName('移动端默认全屏')
-    .setDesc('移动端打开主窗口时默认全屏，关闭则显示常规卡片')
-    .addToggle((toggle) =>
-      toggle.setValue(!!s.diaryMobileDefaultFullscreen).onChange(async (v) => { s.diaryMobileDefaultFullscreen = v; await saveSettings(); })
-    );
+/** 日记本设置 schema（ticket 131 声明式；十类行，模块级行工厂退役） */
+export function diarySettingsSchema(): SettingsSchema {
+  return {
+    groups: [
+        {
+          icon: 'folder-open', name: '目录',
+          rows: [
+            { type: 'path', mode: 'single', name: '日记目录', desc: '存放日记文件的文件夹路径', binding: { key: 'diaryDirectory' }, onChange: () => applyDirectories(getSettings()) },
+            { type: 'path', mode: 'single', name: '影视目录', desc: '存放影视笔记的文件夹路径', binding: { key: 'movieDirectory' }, onChange: () => applyDirectories(getSettings()) },
+            { type: 'path', mode: 'single', name: '信件目录', desc: '存放信件的文件夹路径', binding: { key: 'letterDirectory' }, onChange: () => applyDirectories(getSettings()) },
+            { type: 'text', name: '每批加载数量', desc: '滚动加载时每批显示的条目数', binding: { key: 'diaryBatchSize' }, onCommit: () => applyDirectories(getSettings()) },
+          ],
+        },
+        {
+          icon: 'eye', name: '显示',
+          rows: [
+            { type: 'toggle', name: '显示标签计数', desc: '在标签按钮上显示该标签包含的条目数量', binding: { key: 'showTagCount' }, onChange: () => uiSettingsChanged(getSettings()) },
+            { type: 'toggle', name: '默认日期取自文件', desc: '添加日记时默认日期取自当前打开的日记文件，否则用当前时间', binding: { key: 'useFileDateTime' }, onChange: () => uiSettingsChanged(getSettings()) },
+            { type: 'toggle', name: '标签按钮显示表情', desc: '筛选栏与写日记弹窗的标签按钮显示表情，关闭则显示文字', binding: { key: 'diaryTagShowEmoji' }, onChange: () => uiSettingsChanged(getSettings()) },
+            { type: 'select', name: '卡片内容渲染方式', desc: '日记卡片内容按格式渲染或纯文本显示', binding: { key: 'diaryContentRenderMode' }, options: [{ value: 'markdown', label: 'Markdown' }, { value: 'plain', label: '纯文本' }], onChange: () => uiSettingsChanged(getSettings()) },
+            { type: 'select', name: '标签排序', desc: '筛选栏主标签按内置配置顺序或条目数量排序', binding: { key: 'diaryTagSortMode' }, options: [{ value: 'fixed', label: '按固定顺序' }, { value: 'count', label: '按条目数量' }], onChange: () => uiSettingsChanged(getSettings()) },
+          ],
+        },
+        {
+          icon: 'monitor', name: '默认视图',
+          rows: [
+            { type: 'select', name: '面板默认日期筛选', desc: '打开日记本面板时默认的日期范围', binding: { key: 'diaryDefaultDateFilter' }, options: [{ value: 'all', label: '全部' }, { value: 'this-month', label: '本月' }], onChange: () => uiSettingsChanged(getSettings()) },
+            { type: 'select', name: '默认选中标签', desc: '打开面板时默认选中的主标签', binding: { key: 'diaryDefaultSelectedTag' }, options: [{ value: '', label: '全部' }, ...Object.keys(getPrimaryTagsConfig()).map((tag) => ({ value: tag, label: tag }))], onChange: () => uiSettingsChanged(getSettings()) },
+            { type: 'toggle', name: '保存后进入编辑', desc: '保存日记后直接进入编辑模式', binding: { key: 'diaryJumpToEditAfterSave' } },
+          ],
+        },
+        mobileFullscreenGroup('diaryMobileDefaultFullscreen'),
+        {
+          icon: 'wrench', name: '维护',
+          rows: [
+            { type: 'button', name: '日记解析检测', desc: '扫描所有日记文件，定位未能解析的行，可一键修复标题格式问题', buttonText: '检测日记解析', cta: true, onClick: () => openDiaryRepairModal() },
+          ],
+        },
+      ],
+  };
 }
 
 /** 打开日记本设置弹窗 */
 function openDiarySettingsModal() {
-  openSettingsModal({
-    title: '日记本设置',
-    maxWidth: 560,
-    build: (el) => {
-      const s = getSettings() as any;
-      addDirectoryGroup(el, s);
-      addViewGroup(el, s);
-      addDefaultViewGroup(el, s);
-      addMobileGroup(el, s);
-      // ticket 121：解析检测入口（手动驱动，不自动触发）
-      const maintGroup = createSettingsGroup(el, { icon: 'wrench', name: '维护' });
-      new Setting(maintGroup)
-        .setName('日记解析检测')
-        .setDesc('扫描所有日记文件，定位未能解析的行；可一键修复标题格式问题')
-        .addButton((b) => b.setButtonText('检测日记解析').setCta().onClick(() => openDiaryRepairModal()));
-    },
-  });
+  openSettingsModal({ title: '日记本设置', maxWidth: 560, schema: diarySettingsSchema() });
 }
 
 // ===== 通用按钮（原 1132-1141） =====

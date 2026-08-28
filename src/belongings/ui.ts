@@ -5,14 +5,14 @@
  * 刷新：右上角 ⏳ 按钮已移除 → 打开期间监听 belongings.json 变更自动刷新（用户拍板）；
  * MutationObserver 主题变化重渲染。
  */
-import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { escapeHtml, formatRelativeTime } from '../core/utils';
-import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
-import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
+import { tryGetSettings } from '../core/settings-provider';
+import { applyMobileWindowFullscreen } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
+import { mobileFullscreenGroup } from '../core/settings-common';
 import {
   attachItemActions,
   refreshItemSheet,
@@ -25,6 +25,12 @@ import { loadDatabase, saveDatabase, calculateDailyCost, calculateDaysUsed, getD
 import type { BelongingsDatabase, BelongingsItem } from './types';
 import { emitDomainEvent } from '../core/domain-bus';
 import { belongingsEditChanges } from '../smartcat/belongings-source';
+import type { SettingsSchema } from '../core/settings-schema';
+
+/** 归物本设置 schema（ticket 131 声明式；空态域唯一内容为通用「移动端」组） */
+export function belongingSettingsSchema(): SettingsSchema {
+  return { groups: [mobileFullscreenGroup('belongingsMobileDefaultFullscreen')] };
+}
 
 // ----- 类型 -----
 /** 弹窗色板（createModalShell 返回值） */
@@ -1156,20 +1162,9 @@ export async function openBelongingsPanel(): Promise<void> {
   settingsBtn.addEventListener('click', () => {
     openSettingsModal({
       title: '归物本设置',
-      build: (el) => {
-        const s = getSettings();
-        if (isMobileEnv()) {
-          new Setting(el)
-            .setName('移动端默认全屏')
-            .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
-            .addToggle((toggle) =>
-              toggle.setValue(!!s.belongingsMobileDefaultFullscreen).onChange(async (v) => {
-                s.belongingsMobileDefaultFullscreen = v;
-                await saveSettings();
-              })
-            );
-        }
-      },
+      maxWidth: 520, // 拍板 Q11：空态域统一分组卡片口径、宽度向 520 看齐
+      // 空态域：唯一内容为通用「移动端」组（桌面端整组隐藏 → 照常显示空态文案）
+      schema: belongingSettingsSchema(),
       emptyText: '归物本没有可配置的设置项',
       emptyDesc: '数据文件路径由全局设置「数据存储路径」统一管理',
     });

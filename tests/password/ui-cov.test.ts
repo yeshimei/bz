@@ -322,7 +322,10 @@ describe('密码本 ⚙️ 设置弹窗覆盖补测', () => {
     const saveSpy = vi.fn(async () => {});
     setSettingsSaver(saveSpy);
     const popup = openModal();
-    const settings = [...popup.querySelectorAll('.setting-item')].map((el) => (el as any).__setting);
+    // 桌面端：移动端组整组隐藏（行仍在 DOM 挂 bz-setting-hidden，ticket 131 声明式联动保留结构）
+    const settings = [...popup.querySelectorAll('.setting-item')]
+      .filter((el) => !el.classList.contains('bz-setting-hidden'))
+      .map((el) => (el as any).__setting);
     expect(settings.length).toBe(3);
     const RELOAD_TIP = '密码本设置已保存，重载插件后生效';
     // 字符集 / 长度文本项

@@ -47,7 +47,7 @@ export function mobileFullscreenRow(
   };
 }
 
-/** 「移动端」分组卡片（icon smartphone；仅移动端显示）：内挂「移动端默认全屏」行 */
+/** 「移动端」分组卡片（icon smartphone；组级门控 = 仅移动端整组可见）：内挂「移动端默认全屏」行 */
 export function mobileFullscreenGroup(
   key: SettingsKeyOfType<boolean>,
   opts?: MobileFullscreenRowOptions
@@ -55,6 +55,9 @@ export function mobileFullscreenGroup(
   return {
     icon: 'smartphone',
     name: '移动端',
+    // 组级门控（ticket 131 域迁移补正）：现状各域是 `if (isMobileEnv())` 才挂整行、桌面端完全无痕；
+    // 仅行级 visibleWhen 会残留空卡片壳，且 DOM 存在性空态判定会被隐藏行抑制（归物本/收藏本桌面空态丢失）。
+    visibleWhen: (_snapshot: SettingsSnapshot) => isMobileEnv(),
     rows: [mobileFullscreenRow(key, opts)],
   };
 }

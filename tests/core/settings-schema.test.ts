@@ -102,12 +102,22 @@ describe('settings-common：移动端默认全屏预设', () => {
     expect(none.desc).toBeUndefined();
   });
 
-  it('组预设：移动端卡片（icon smartphone），内挂单行', () => {
+  it('组预设：移动端卡片（icon smartphone），内挂单行；组级门控 = 仅移动端整组可见', () => {
     const g = mobileFullscreenGroup('pomodoroMobileDefaultFullscreen');
     expect(g.icon).toBe('smartphone');
     expect(g.name).toBe('移动端');
     expect(g.rows.length).toBe(1);
     expect((g.rows[0] as { name: string }).name).toBe('移动端默认全屏');
+    const gv = g.visibleWhen as (s: SettingsSnapshot) => boolean;
+    const prev = Platform.isMobile;
+    try {
+      Platform.isMobile = false;
+      expect(gv(snapOf({}))).toBe(false);
+      Platform.isMobile = true;
+      expect(gv(snapOf({}))).toBe(true);
+    } finally {
+      Platform.isMobile = prev;
+    }
   });
 
   it('SettingsKeyOfType 收窄：布尔行接受布尔键（类型层样例，运行时核对键名）', () => {

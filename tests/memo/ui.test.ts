@@ -583,12 +583,16 @@ describe('设置弹窗与新建默认值（第 9 轮设置扩展）', () => {
     const settingsBtn = [...document.querySelectorAll('#todo-popup button')].find((b) => b.className === 'todo-btn-settings')!;
     (settingsBtn as HTMLElement).click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
-    // 分组卡片：4 个组头（桌面端无移动端组）+ 组内 9 项设置；组头不是 .setting-item
-    const heads = [...popup.querySelectorAll('.bz-settings-group-head')];
+    // 分组卡片：4 个组头可见（桌面端移动端组挂 bz-setting-hidden——ticket 131 声明式联动保留结构）+ 组内 9 项设置
+    const isHiddenGroup = (el: Element) =>
+      Boolean((el.closest('.bz-settings-group') as HTMLElement | null)?.classList.contains('bz-setting-hidden'));
+    const heads = [...popup.querySelectorAll('.bz-settings-group-head')].filter((el) => !isHiddenGroup(el));
     expect(heads.map((el) => el.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon'))).toEqual(['bell', 'eye', 'pencil-line', 'tags']);
-    expect([...popup.querySelectorAll('.bz-settings-group-name')].map((el) => el.textContent)).toEqual(['提醒', '显示', '新建', '场景列表']);
-    expect([...popup.querySelectorAll('.bz-settings-group-count')].map((el) => el.textContent)).toEqual(['2 项', '3 项', '3 项', '1 项']);
-    const names = [...popup.querySelectorAll('.bz-settings-group-body .setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    expect([...popup.querySelectorAll('.bz-settings-group-name')].filter((el) => !isHiddenGroup(el)).map((el) => el.textContent)).toEqual(['提醒', '显示', '新建', '场景列表']);
+    expect([...popup.querySelectorAll('.bz-settings-group-count')].filter((el) => !isHiddenGroup(el)).map((el) => el.textContent)).toEqual(['2 项', '3 项', '3 项', '1 项']);
+    const names = [...popup.querySelectorAll('.bz-settings-group-body .setting-item')]
+      .filter((el) => !el.classList.contains('bz-setting-hidden'))
+      .map((el) => (el as HTMLElement).dataset.name);
     // 9 项设置
     expect(names.length).toBe(9);
     expect(names).toEqual([
@@ -791,7 +795,9 @@ describe('移动端默认全屏（ticket 68）', () => {
     const vault = new MockVault();
     await initApp(vault);
     const settingNames = () =>
-      [...document.querySelectorAll('#bz-settings-modal-popup .setting-item')].map((el) => (el as HTMLElement).dataset.name);
+      [...document.querySelectorAll('#bz-settings-modal-popup .setting-item')]
+        .filter((el) => !el.classList.contains('bz-setting-hidden')) // ticket 131：隐藏行仍留 DOM，可见性过滤
+        .map((el) => (el as HTMLElement).dataset.name);
     // 桌面端：无该行（设置项名在 dataset.name，与既有断言口径一致）
     (document.querySelector('.todo-btn-settings') as HTMLElement).click();
     expect(settingNames()).not.toContain('移动端默认全屏');

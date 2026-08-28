@@ -439,7 +439,8 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
         if (row.visibleWhen) entries.push({ el: setting.settingEl, visibleWhen: row.visibleWhen });
         setting.addDropdown((dd) => {
           for (const opt of row.options) dd.addOption(opt.value, opt.label);
-          dd.setValue(String(acc.read() ?? ''));
+          // 空值回退首个选项（对齐原 diary 行 `s[field] || options[0][0]` 口径，防 undefined 值 setValue 抛错）
+          dd.setValue(String(acc.read() ?? '') || row.options[0].value);
           dd.onChange(async (v) => {
             acc.write(v);
             // 显隐随值同步切换（原 refreshKeys 口径）

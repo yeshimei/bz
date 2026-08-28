@@ -176,8 +176,12 @@ export function openSettingsModal(opts: SettingsModalOptions): void {
     markSettingSplitRows(content);
   }
 
-  // 空态：build 未挂任何设置项（归物本/收藏本）
-  if (!content.querySelector('.setting-item')) {
+  // 空态：无任何「可见设置项」（隐藏项/纯操作行不抑制空态——对齐 refreshSettingsGroupCounts 口径；
+  // 归物本/收藏本等仅移动端组或空 schema 的域，桌面端照常显示空态文案）
+  const hasVisibleItem = Array.from(content.querySelectorAll<HTMLElement>('.setting-item')).some(
+    (el) => !el.classList.contains('bz-setting-action-row') && !isItemHidden(el)
+  );
+  if (!hasVisibleItem) {
     content.innerHTML = '';
     const empty = document.createElement('div');
     empty.className = 'bz-settings-empty';
