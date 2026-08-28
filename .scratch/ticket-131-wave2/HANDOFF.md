@@ -17,16 +17,20 @@
   - `D:\Obsidian\.dsh-worktrees\t131-domains-a`（分支 `worktree/t131-domains-a`）
   - `D:\Obsidian\.dsh-worktrees\t131-domains-b`（分支 `worktree/t131-domains-b`）
   - `D:\Obsidian\.dsh-worktrees\t131-domains-c`（分支 `worktree/t131-domains-c`）
-- 主仓库 `D:\Obsidian\bz` 工作区干净，master 无未提交改动。
+- **域组 A（diary/memo/belongings/password）已迁移并提交**（分支 `worktree/t131-domains-a`，提交 `88682a4`，全量 207 文件/3287 用例绿 + tsc 0，未合并）：
+  - 四域 schema 工厂导出（`diarySettingsSchema/memoSettingsSchema/belongingSettingsSchema/passwordSettingsSchema`，供文案 lint 直接引用）
+  - 文案 lint 注册：`tests/core/settings-copy-lint-a.test.ts`
+  - 迁移期 core 三处补正（随 88682a4；B/C 组基于此继续）：① `mobileFullscreenGroup` 增加**组级 visibleWhen（isMobileEnv）**——仅行级隐藏会残留空卡片壳并抑制空态域空态文案；② `openSettingsModal` **空态判定改「可见项计数」**（隐藏项/action 行不抑制空态，对齐 refreshSettingsGroupCounts 口径）；③ `settings-schema.ts` select 行**空值回退首个选项**（对齐原 diary `|| options[0]`）
+  - **状态差异警告（B/C 组注意）**：声明式联动下「移动端组行在桌面端留在 DOM 但隐藏」——既有测试若按扁平 querySelectorAll 断言桌面端无该行/该组会破，需加可见性过滤（行 `.bz-setting-hidden`、组 `.closest('.bz-settings-group')`），请照域组 A 各测试改造先例
+- 主仓库 `D:\Obsidian\bz` 工作区干净，master = 1f76ef7（A 分支未合并）。
 
 ## 接手步骤（新会话照做）
 
-1. 对齐基线：`git -C D:\Obsidian\bz fetch origin` + `git pull --ff-only origin master`（本地领先可跳过），确认 master = 1f76ef7 之后。
-2. 并行派 **3 个子代理**（互不相交，可同时跑）：
-   - 代理 A → `D:\Obsidian\.dsh-worktrees\t131-domains-a`：diary / memo / belongings / password 设置弹窗 schema 化
+1. 对齐基线：`git -C D:\Obsidian\bz fetch origin` + `git pull --ff-only origin master`（本地领先可跳过）；**先合并域组 A**（`git merge worktree/t131-domains-a`，A 已全绿核验）再开 B/C——B/C 需要 A 的 core 三处补正。
+2. 并行派 **2 个子代理**（互不相交）：
    - 代理 B → `D:\Obsidian\.dsh-worktrees\t131-domains-b`：clipping（含数据源组与 UP 名单管理弹窗）/ favorites / library
    - 代理 C → `D:\Obsidian\.dsh-worktrees\t131-domains-c`：movie / review / pomodoro / encrypt / secondbrain / smartcat
-   - 三份任务 prompt 见下方附录（可直接原样发给子代理）。
+   - 任务 prompt 见下方附录（域组 B/C 二份；域组 A 已完成）。
 3. 每组完成 → 合并：`git merge worktree/t131-domains-<x>`（先确认该组测试全绿），每步全量测试。
 4. 收尾（全组合并后）：删除 `settings-modal.ts` 的 @deprecated build 参数与残留 build 调用方；`pnpm run build` 部署（产物直出 E 盘）；更新 issues/131 状态与 PROGRESS.md；清理三个 worktree（`git worktree remove` + `git branch -d`）。
 5. 完成门禁：全量测试 + tsc + 构建 + **Review**（用户要求：全部完成合并后 review——diff 审查子代理 + 自审）。
