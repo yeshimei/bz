@@ -366,12 +366,12 @@ describe('097 C1 事件驱动静默刷新', () => {
     expect(document.getElementById('bz-notice-container')).toBeNull();
   }, 15000);
 });
-// ---------------- 最近记忆展开详情（点击正文行读全文；引用型当场读 vault） ----------------
+// ---------------- 最近记忆正文直出（不再点击展开；引用型当场读 vault 正文） ----------------
 
-describe('最近记忆点击展开详情', () => {
-  it('普通条目展开显完整 description，再点收起', async () => {
+describe('最近记忆正文直出', () => {
+  it('普通条目行内直出完整 description，无展开交互', async () => {
     const d = fixtureData();
-    const long = '一段很长的描述'.repeat(30); // > 80 字，行内截断
+    const long = '一段很长的描述'.repeat(60); // > 400 字，行内截断兜底
     d.memory.memoryStream = [
       { id: 'm1', created: new Date().toISOString(), lastAccessed: new Date().toISOString(), description: long, importance: 0.8, type: 'observation', source: 'chat' },
     ];
@@ -380,41 +380,37 @@ describe('最近记忆点击展开详情', () => {
     const popup = document.getElementById('smartcat-dashboard-panel')!;
     (popup.querySelector('[data-tab="memory"]') as HTMLElement).click();
     const pane = popup.querySelector('[data-pane="memory"]') as HTMLElement;
-    const text = pane.querySelector('.bz-sc-dash-memory-text--expandable') as HTMLElement;
+    const text = pane.querySelector('.bz-sc-dash-memory-text') as HTMLElement;
     expect(text).toBeTruthy();
-    expect(text.textContent!.length).toBeLessThan(long.length); // 行内截断
-    text.click(); // 展开
-    await new Promise((r) => setTimeout(r, 0));
-    const detail = pane.querySelector('.bz-sc-dash-memory-detail-text') as HTMLElement;
-    expect(detail).toBeTruthy();
-    expect(detail.textContent).toBe(long); // 详情 = 完整内容
-    text.click(); // 收起
-    await new Promise((r) => setTimeout(r, 0));
-    expect(pane.querySelector('.bz-sc-dash-memory-detail')).toBeNull();
+    expect(text.classList.contains('bz-sc-dash-memory-text--expandable')).toBe(false); // 不再展开
+    expect(text.textContent!.startsWith('一段很长的描述')).toBe(true);
+    expect(text.textContent!.length).toBeLessThanOrEqual(long.length); // 截断兜底不超原文
     closeSmartcatDashboard();
   });
 
-  it('引用型条目（日记段）展开当场读 vault 正文（按定位符拆段）；文件失效显降级文案', async () => {
+  it('引用型条目直出 vault 正文（日记段按定位符拆回），meta 显详细日期；旧脏路径（带 #定位符尾巴）容错；失效显降级文案', async () => {
     const d = fixtureData();
     d.memory.memoryStream = [
-      { id: 'm1', created: new Date().toISOString(), lastAccessed: new Date().toISOString(), description: '我的/日记/2026-08-29.md#09:30', importance: 0.8, type: 'observation', source: 'diary', ref: { path: '我的/日记/2026-08-29.md', locator: '09:30' } },
-      { id: 'm2', created: new Date().toISOString(), lastAccessed: new Date().toISOString(), description: '归档/旧笔记.md', importance: 0.5, type: 'observation', source: 'note', ref: { path: '归档/已删除.md' } },
+      { id: 'm1', created: '2026-08-29T09:30:00', lastAccessed: '2026-08-29T09:30:00', description: '我的/日记/2026-08-29.md#09:30', importance: 0.8, type: 'observation', source: 'diary', ref: { path: '我的/日记/2026-08-29.md', locator: '09:30' } },
+      { id: 'm2', created: '2026-08-29T10:00:00', lastAccessed: '2026-08-29T10:00:00', description: '我的/日记/2026-08-29.md#10:00#10:00', importance: 0.7, type: 'observation', source: 'diary', ref: { path: '我的/日记/2026-08-29.md#10:00', locator: '10:00' } },
+      { id: 'm3', created: '2026-08-29T11:00:00', lastAccessed: '2026-08-29T11:00:00', description: '归档/旧笔记.md', importance: 0.5, type: 'observation', source: 'note', ref: { path: '归档/已删除.md' } },
     ];
     const { app, vault } = makeApp(d);
-    vault.create('我的/日记/2026-08-29.md', '# 🐱 09:30\n早上去跑了五公里，神清气爽。\n\n# 🌙 23:00\n睡前读了半小时书。');
+    vault.create('我的/日记/2026-08-29.md', '# 🐱 09:30\n早上去跑了五公里，神清气爽。\n\n# 🌙 10:00\n睡前读了半小时书。');
     await openSmartcatDashboard(app as any);
     const popup = document.getElementById('smartcat-dashboard-panel')!;
     (popup.querySelector('[data-tab="memory"]') as HTMLElement).click();
     const pane = popup.querySelector('[data-pane="memory"]') as HTMLElement;
     const rows = [...pane.querySelectorAll('.bz-sc-dash-memory')];
-    const diaryRow = rows.find((r) => (r.textContent || '').includes('#09:30'))!;
-    (diaryRow.querySelector('.bz-sc-dash-memory-text--expandable') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 0));
-    expect(diaryRow.querySelector('.bz-sc-dash-memory-detail-text')!.textContent).toBe('早上去跑了五公里，神清气爽。');
-    const staleRow = rows.find((r) => (r.textContent || '').includes('旧笔记'))!;
-    (staleRow.querySelector('.bz-sc-dash-memory-text--expandable') as HTMLElement).click();
-    await new Promise((r) => setTimeout(r, 0));
-    expect(staleRow.querySelector('.bz-sc-dash-memory-detail-text')!.textContent).toContain('读取失败');
+    await new Promise((r) => setTimeout(r, 0)); // 异步读正文落地
+    // 列表新→旧：m3, m2, m1
+    // m2：旧脏 ref.path 带 #10:00 尾巴也能容错读回该段
+    expect(rows[1].querySelector('.bz-sc-dash-memory-text')!.textContent).toBe('睡前读了半小时书。');
+    // m1：正文直出该时间段，meta 显详细日期
+    expect(rows[2].querySelector('.bz-sc-dash-memory-text')!.textContent).toBe('早上去跑了五公里，神清气爽。');
+    expect(rows[2].querySelector('.bz-sc-dash-memory-meta')!.textContent).toContain('2026 年 8 月 29 日 09:30');
+    // m3：文件失效 → 行内降级文案（含引用路径）
+    expect(rows[0].querySelector('.bz-sc-dash-memory-text')!.textContent).toContain('引用已失效');
     closeSmartcatDashboard();
   });
 });

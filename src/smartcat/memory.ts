@@ -1388,7 +1388,12 @@ export class MemorySystem {
   async upsertNoteMemory(seed: { refPath: string; locator?: string; fullText: string; created?: string; source?: string }): Promise<void> {
     const refPath = String(seed?.refPath || '').trim();
     if (!refPath) return;
-    const description = seed.locator ? `${refPath}#${seed.locator}` : refPath;
+    // diarySeeds 把定位符拼进 refPath（路径#时间），又单传 locator——防双 # 描述（path#t#t）
+    // 污染 refResolver/removeMemoryByRef 的定位符切分（曾致日记段被判失效反复删建、无限重打分）。
+    // 去重兼容旧 sidecar 里 ref.path 带定位符尾巴的条目：命中即自愈为纯路径。
+    let basePath = refPath;
+    if (seed.locator && refPath.endsWith(`#${seed.locator}`)) basePath = refPath.slice(0, refPath.length - seed.locator.length - 1);
+    const description = seed.locator ? `${basePath}#${seed.locator}` : basePath;
     const nowIso = new Date().toISOString();
     const created = seed.created ?? nowIso;
     const fullText = typeof seed.fullText === 'string' ? seed.fullText : '';
@@ -1396,10 +1401,16 @@ export class MemorySystem {
     // 去重/内容哈希提前到 LLM 打分之前：重启全量扫描对未变更段落零 AI 调用（bug 修复——
     // 原实现先 scoreImportanceAndEmotion 后查重，每次重启全部重打分+重嵌入）
     const hash = contentHashOf(fullText || description);
-    const existing = this.stream.find((m) => m.ref && m.ref.path === refPath && (m.ref.locator ?? '') === (seed.locator ?? ''));
-    if (existing && existing.contentHash && existing.contentHash === hash) return; // 内容未变：跳过
+    const findBySeed = (m: MemoryStreamEntry) =>
+      !!m.ref && (m.ref.path === basePath || m.ref.path === refPath) && (m.ref.locator ?? '') === (seed.locator ?? '');
+    const existing = this.stream.find(findBySeed);
+    if (existing && existing.contentHash && existing.contentHash === hash) {
+      if (existing.ref && existing.ref.path !== basePath) existing.ref = { path: basePath, locator: seed.locator }; // 旧数据自愈
+      return; // 内容未变：跳过
+    }
     const score = await this.scoreImportanceAndEmotion(fullText || description, { source });
     if (existing) {
+      if (existing.ref && existing.ref.path !== basePath) existing.ref = { path: basePath, locator: seed.locator }; // 旧数据自愈
       existing.description = description;
       existing.importance = score.importance;
       existing.emotion = score.emotion;
@@ -1420,7 +1431,7 @@ export class MemorySystem {
         emotion: score.emotion,
         credibility: score.credibility,
         suspicious: detectInjection(fullText || description) || undefined,
-        ref: { path: refPath, locator: seed.locator },
+        ref: { path: basePath, locator: seed.locator },
         contentHash: hash,
       };
       this.stream.push(entry);
@@ -1428,7 +1439,7 @@ export class MemorySystem {
     this.markMemoryDirty();
     // 审查 P1（写放大）：入库/更新不再即时双写整文件——标脏随 30s tick 合并落盘；
     // 运行时检索读内存 stream，不受影响；卸载前 flushSidecars 兜底（见 index unload）
-    await this.vectorizeNoteEntry(this.stream.find((m) => m.ref && m.ref.path === refPath && (m.ref.locator ?? '') === (seed.locator ?? ''))!, fullText || description);
+    await this.vectorizeNoteEntry(this.stream.find(findBySeed)!, fullText || description);
   }
 
   /** 引用型条目向量化：全文分块 embedding——首块写主行（stream 下标对齐）、其余块追加额外行（一条目多向量） */

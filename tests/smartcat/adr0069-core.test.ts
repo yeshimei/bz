@@ -439,4 +439,25 @@ describe('upsertNoteMemory 内容哈希跳过（重启全量扫描零 AI 调用�
     expect(vi.mocked(getEmbedding).mock.calls.length).toBeGreaterThan(embeddingCallsAfterFirst);
     expect(data.memory.memoryStream[0].contentHash).toBeTruthy();
   });
+
+  it('diarySeeds 式 refPath 自带 #定位符：描述不再双 #（path#t#t），ref.path 存纯路径；旧脏条目命中去重并自愈', async () => {
+    const { app } = makeFakeApp();
+    const m = make({ app });
+    (m as any).ollamaAvailable = true;
+    vi.mocked(getEmbedding).mockResolvedValue([1, 0]);
+    // diarySeeds 实际产出：refPath = 路径#时间，locator 又单传一份
+    const seed = { refPath: '日记/2026-08-29.md#09:30', locator: '09:30', fullText: '早上一杯咖啡，状态不错', created: '2026-08-29T09:30:00' };
+    await m.upsertNoteMemory(seed);
+    const e = data.memory.memoryStream[0];
+    expect(e.ref!.path).toBe('日记/2026-08-29.md'); // 纯路径（refResolver/removeMemoryByRef 切分正确）
+    expect(e.description).toBe('日记/2026-08-29.md#09:30'); // 单 #（不再 path#09:30#09:30）
+    // 旧 sidecar 遗留脏条目（ref.path 带 #时间 尾巴）：同内容命中去重（不重打分重建），ref 自愈为纯路径
+    const dirty = data.memory.memoryStream[0];
+    dirty.ref = { path: '日记/2026-08-29.md#09:30', locator: '09:30' };
+    const embeddingsBefore = vi.mocked(getEmbedding).mock.calls.length;
+    await m.upsertNoteMemory(seed);
+    expect(data.memory.memoryStream.length).toBe(1);
+    expect(data.memory.memoryStream[0].ref!.path).toBe('日记/2026-08-29.md');
+    expect(vi.mocked(getEmbedding).mock.calls.length).toBe(embeddingsBefore);
+  });
 });

@@ -640,44 +640,28 @@ function renderPersonality(pane: HTMLElement, data: SmartCatData): void {
   pane.appendChild(trailCard.root);
 }
 
-/** 引用型条目 → 笔记正文（日记带定位符按 diary parser 拆回该时间段；null = 文件失效） */
+/** 引用型条目 → 笔记正文（日记带定位符按 diary parser 拆回该时间段；null = 文件失效）。
+ *  路径按首个 # 截断：旧 sidecar 的 ref.path 曾带定位符尾巴（#时:分），容错兼容。 */
 async function resolveMemoryDetail(app: App, ref: { path: string; locator?: string }): Promise<string | null> {
   try {
-    const f = app.vault.getAbstractFileByPath(ref.path);
+    const filePath = ref.path.split('#')[0];
+    const f = app.vault.getAbstractFileByPath(filePath);
     if (!f) return null;
     const content = await (app.vault.read as (f: any) => Promise<string>)(f);
     if (!ref.locator) return content;
-    const date = noteMemoryDiaryDate(ref.path);
+    const date = noteMemoryDiaryDate(filePath);
     if (!date) return content;
     const seg = parseFile(content, date).find((e) => e.time === ref.locator);
     return seg && seg.content.trim() ? seg.content : null;
   } catch { return null; }
 }
 
-/** 最近记忆行点击展开/收起详情（面板仍只读——仅 DOM 显隐，不写任何数据） */
-function attachMemoryDetailToggle(item: HTMLElement, textEl: HTMLElement, m: MemoryStreamEntry): void {
-  let detailEl: HTMLElement | null = null;
-  textEl.addEventListener('click', async () => {
-    if (detailEl) {
-      detailEl.remove();
-      detailEl = null;
-      textEl.classList.remove('is-open');
-      return;
-    }
-    textEl.classList.add('is-open');
-    detailEl = el('div', 'bz-sc-dash-memory-detail');
-    detailEl.appendChild(el('div', 'bz-sc-dash-memory-detail-hint', '加载中…'));
-    item.appendChild(detailEl);
-    const app = dashState?.app;
-    const body = m.ref && app ? await resolveMemoryDetail(app, m.ref) : (m.description || '');
-    if (!detailEl) return; // 展开期间被收起
-    detailEl.textContent = '';
-    detailEl.appendChild(el(
-      'div',
-      'bz-sc-dash-memory-detail-text',
-      body ?? '正文读取失败——文件可能已被移动或删除。',
-    ));
-  });
+/** 详细日期（年 月 日 时:分；created 缺省回退相对时间），观察徽章后的元信息用 */
+function formatDetailedDate(iso?: string): string {
+  if (!iso) return '';
+  const dt = new Date(iso);
+  if (Number.isNaN(dt.getTime())) return formatRelativeTime(iso);
+  return `${dt.getFullYear()} 年 ${dt.getMonth() + 1} 月 ${dt.getDate()} 日 ${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
 }
 
 function renderMemory(pane: HTMLElement, data: SmartCatData): void {
@@ -772,15 +756,21 @@ function renderMemory(pane: HTMLElement, data: SmartCatData): void {
       }
       const src = sourceLabel(m.source);
       if (src) meta.appendChild(el('span', '', src));
-      if (m.created) meta.appendChild(el('span', '', formatRelativeTime(m.created)));
+      if (m.created) meta.appendChild(el('span', '', formatDetailedDate(m.created)));
       meta.appendChild(el('span', '', `重要度 ${Math.round((m.importance ?? 0) * 100)}`));
       // 092 设计第 7 条 + P1-29：Dashboard「固定/废弃」人工修正（经常驻实例通道写点）
       if (m.type === 'insight' && m.id && dashState?.app) meta.appendChild(buildInsightActions(m));
       item.appendChild(meta);
-      // 点击正文行展开详情：普通条目显完整 description；引用型条目（ADR-0069）当场读 vault 正文
-      const textEl = el('div', 'bz-sc-dash-memory-text bz-sc-dash-memory-text--expandable', truncateText(m.description, 80));
-      attachMemoryDetailToggle(item, textEl, m);
+      // 正文直出：引用型条目当场读 vault 正文（日记段拆回该时间段），失效回显引用路径；
+      // 普通条目显完整 description。不再点击展开。
+      const textEl = el('div', 'bz-sc-dash-memory-text', m.ref ? '加载中…' : truncateText(m.description, 400));
       item.appendChild(textEl);
+      if (m.ref && dashState?.app) {
+        void resolveMemoryDetail(dashState.app, m.ref).then((body) => {
+          if (!textEl.isConnected) return; // 面板已重渲染
+          textEl.textContent = truncateText(body ?? `${m.ref!.path}#${m.ref!.locator ?? ''}（引用已失效）`, 400);
+        });
+      }
       // P3 structured 摘要：entityType/action/name/tags 展示
       if (m.structured) {
         const structParts: string[] = [];

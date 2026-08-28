@@ -5624,36 +5624,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   line-height: 1.5;
   color: var(--text-normal);
   word-break: break-word;
-}
-/* 最近记忆行点击展开详情（引用型条目当场读 vault 正文；仅显隐，无数据写入） */
-.bz-sc-dash-memory-text--expandable {
-  cursor: pointer;
-}
-.bz-sc-dash-memory-text--expandable::after {
-  content: '▸ 展开';
-  font-size: 11px;
-  color: var(--text-faint);
-  margin-left: 6px;
-  white-space: nowrap;
-}
-.bz-sc-dash-memory-text--expandable.is-open::after {
-  content: '▾ 收起';
-}
-.bz-sc-dash-memory-detail {
-  margin-top: 6px;
-  border-left: 2px solid var(--background-modifier-border);
-  padding: 4px 8px;
-}
-.bz-sc-dash-memory-detail-hint {
-  font-size: 11px;
-  color: var(--text-faint);
-}
-.bz-sc-dash-memory-detail-text {
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--text-normal);
   white-space: pre-wrap;
-  word-break: break-word;
   max-height: 260px;
   overflow-y: auto;
 }
