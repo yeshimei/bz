@@ -861,6 +861,11 @@ describe('EncryptAppController 覆盖补测', () => {
       encryptSecurityMode: false,
     };
     setSettingsProvider(() => s);
+    // ticket 128：保险箱根目录走统一路径选择器——种库内目录（默认 CONFIG/.ENCRYPT + 新/路径）
+    const vault = new MockVault();
+    vault.create('CONFIG/.ENCRYPT/.safe.enc', 'x');
+    vault.create('新/路径/a.md', 'x');
+    setApp(mockAppWithVault(vault) as any);
     const saveSpy = vi.fn(async () => {});
     setSettingsSaver(saveSpy);
     const c = new EncryptAppController(makeConfig());
@@ -871,7 +876,19 @@ describe('EncryptAppController 覆盖补测', () => {
     let names = [...popup.querySelectorAll('.setting-item')].map((el) => (el as any).__setting.name);
     expect(names).toEqual(['保险箱根目录', '生成压缩预览', '预览长边', '预览质量', '预览自动加载原图', '安全模式']);
     const controls = [...popup.querySelectorAll('.setting-item')].map((el) => (el as any).__setting.controls);
-    await (controls[0][0] as any).trigger('新/路径'); // 根目录
+    // 保险箱根目录行：点「选择…」→ 选择器选「新/路径」→ 确定（点前缀隐藏目录 CONFIG/.ENCRYPT 亦在列表）
+    expect(controls[0][0].text).toBe('选择…');
+    controls[0][0].trigger();
+    const picker = document.getElementById('bz-path-picker-popup')!;
+    await waitFor(() => picker.querySelectorAll('.bz-path-picker-row').length > 0);
+    const paths = [...picker.querySelectorAll('.bz-path-picker-row')].map((r) => (r as HTMLElement).dataset.path);
+    expect(paths).toContain('CONFIG/.ENCRYPT'); // 点前缀目录经 adapter 补齐
+    expect(paths).toContain('新/路径');
+    const target = [...picker.querySelectorAll('.bz-path-picker-row')].find(
+      (r) => (r as HTMLElement).dataset.path === '新/路径'
+    ) as HTMLElement;
+    target.click();
+    (picker.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).click();
     expect(s.encryptRoot).toBe('新/路径');
     await (controls[1][0] as any).trigger(false); // 预览开关
     expect(s.encryptPreviewEnabled).toBe(false);

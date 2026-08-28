@@ -1,5 +1,5 @@
 /**
- * 附件搬移域 UI / 执行层测试（ticket 65）。
+ * 附件搬移域 UI / 执行层测试（ticket 65；ticket 128 起目标文件夹改用统一路径选择器 core/path-picker）。
  * 移动经 app.fileManager.renameFile（Obsidian 内建，自动更新内部链接），
  * mock 里 renameFile 只负责在 MockVault 中移动（链接更新是 Obsidian 内部职责）。
  */
@@ -8,7 +8,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { clearNotices, hasNotice } from '../mock-obsidian-entry';
-import { runMove, moveAttachments, FolderSelectModal } from '../../src/attach/ui';
+import { runMove, moveAttachments } from '../../src/attach/ui';
 import { ensureAttachSeed } from '../../src/attach/index';
 
 function makeApp(vault: MockVault, activePath?: string) {
@@ -151,12 +151,12 @@ describe('moveAttachments 命令入口', () => {
     const app = mockAppWithVault(vault) as any;
     setApp(app as any);
     clearNotices();
-    void moveAttachments(app);
+    moveAttachments(app);
     expect(hasNotice('没有打开的笔记')).toBe(true);
-    expect(document.getElementById('bz-attach-folder-mask')).toBeNull();
+    expect(document.getElementById('bz-path-picker-mask')).toBeNull();
   });
 
-  it('P20：选目标文件夹 → 先弹预览确认「将移动 N 个、改名 M 个」→ 确认后才执行', async () => {
+  it('P20：统一路径选择器选目标文件夹 → 先弹预览确认「将移动 N 个、改名 M 个」→ 确认后才执行', async () => {
     const vault = new MockVault();
     vault.create('笔记/章.md', '图：![[a.png]]');
     vault.create('笔记/a.png', '');
@@ -172,14 +172,20 @@ describe('moveAttachments 命令入口', () => {
     };
     setApp(app as any);
 
-    void moveAttachments(app);
+    moveAttachments(app);
     await new Promise((r) => setTimeout(r, 0));
-    const mask = document.getElementById('bz-attach-folder-mask')!;
+    const mask = document.getElementById('bz-path-picker-mask')!;
     expect(mask).not.toBeNull();
-    const input = document.querySelector('.bz-attach-input') as HTMLInputElement;
-    input.value = '附件';
-    input.dispatchEvent(new Event('input'));
-    (document.querySelector('.bz-attach-btn--primary') as HTMLButtonElement).click();
+    // 选择器：上一次记忆为空 → 「未选择」；搜索过滤「附件」→ 点选 → 确定
+    const popup = document.getElementById('bz-path-picker-popup')!;
+    const search = popup.querySelector('.bz-path-picker-search') as HTMLInputElement;
+    search.value = '附件';
+    search.dispatchEvent(new Event('input'));
+    const row = [...popup.querySelectorAll('.bz-path-picker-row')].find(
+      (r) => (r as HTMLElement).dataset.path === '附件'
+    ) as HTMLElement;
+    row.click();
+    (popup.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).click();
 
     // 预览确认弹出（执行前文件未动）
     await new Promise((r) => setTimeout(r, 30));
@@ -218,74 +224,41 @@ describe('moveAttachments 命令入口', () => {
     expect(vault.files.has('a.png')).toBe(true);
     expect(hasNotice(/已移动 1 个资源到 库根目录/)).toBe(true);
   });
-});
 
-describe('FolderSelectModal 文件夹选择弹窗', () => {
-  it('打开弹窗、预填上次文件夹、列出目录、提交回调', () => {
+  it('统一路径选择器（ticket 128）：记忆上次文件夹 attachLastFolder → 初始高亮；选（库根目录）→ 空串目标', async () => {
     const vault = new MockVault();
-    vault.create('笔记/章.md', 'x');
-    vault.create('归档/a.md', 'y');
-    vault.create('z.png', '');
+    vault.create('笔记/章.md', '图：![[a.png]]');
+    vault.create('笔记/a.png', '');
+    vault.create('归档/x.md', 'y');
     const settings: any = { attachLastFolder: '归档' };
     setSettingsProvider(() => settings as any);
     const app = mockAppWithVault(vault) as any;
     app.workspace.getActiveFile = () => vault.getAbstractFileByPath('笔记/章.md');
+    const calls: Array<[string, string]> = [];
+    app.fileManager = {
+      renameFile: vi.fn(async (file: any, newPath: string) => {
+        calls.push([file.path, newPath]);
+        await vault.rename(file, newPath);
+      }),
+    };
     setApp(app as any);
 
-    let picked = '';
-    const modal = new FolderSelectModal(app, (f) => (picked = f));
-    modal.open();
-
-    const mask = document.getElementById('bz-attach-folder-mask');
-    expect(mask).not.toBeNull();
-    const input = document.querySelector('.bz-attach-input') as HTMLInputElement;
-    expect(input.value).toBe('归档');
-    const items = Array.from(document.querySelectorAll('.bz-attach-folder-item')).map((el) => el.textContent);
-    expect(items).toContain('（库根目录）');
-    expect(items).toContain('笔记');
-    expect(items).toContain('归档');
-    // 输入过滤：只留匹配目录
-    input.value = '笔';
-    input.dispatchEvent(new Event('input'));
-    const filtered = Array.from(document.querySelectorAll('.bz-attach-folder-item')).map((el) => el.textContent);
-    expect(filtered.filter((t) => t !== '（库根目录）')).toEqual(['笔记']);
-    input.value = '附件';
-    (document.querySelector('.bz-attach-btn--primary') as HTMLButtonElement).click();
-    expect(picked).toBe('附件');
-    expect(document.getElementById('bz-attach-folder-mask')).toBeNull();
-    modal.close();
-  });
-
-  it('可配项（ticket 099 追加）：自定义标题/按钮/placeholder/initial；提供 initial 不读 attachLastFolder', () => {
-    const vault = new MockVault();
-    vault.create('卡片盒/复习/A.md', 'x');
-    const settings: any = { attachLastFolder: '归档' };
-    setSettingsProvider(() => settings as any);
-    const app = mockAppWithVault(vault) as any;
-    setApp(app as any);
-
-    let picked = '';
-    const modal = new FolderSelectModal(app, (f) => (picked = f), {
-      title: '选择监听文件夹',
-      okText: '确定',
-      placeholder: 'vault 内目录路径，如 卡片盒/复习',
-      initial: '',
-    });
-    modal.open();
-    const mask = document.getElementById('bz-attach-folder-mask')!;
-    expect(mask).not.toBeNull();
-    expect(mask.querySelector('.bz-attach-title')!.textContent).toBe('选择监听文件夹');
-    const input = document.querySelector('.bz-attach-input') as HTMLInputElement;
-    expect(input.placeholder).toBe('vault 内目录路径，如 卡片盒/复习');
-    expect(input.value).toBe(''); // initial='' → 不预填 attachLastFolder
-    // 点选目标目录（非首项「库根目录」）+ 确定回调（自定义按钮文案）
-    const target = [...mask.querySelectorAll('.bz-attach-folder-item')].find(
-      (el) => el.textContent === '卡片盒/复习'
-    ) as HTMLElement;
-    target.click();
-    (document.querySelector('.bz-attach-btn--primary') as HTMLButtonElement).click();
-    expect(picked).toBe('卡片盒/复习');
-    expect(document.getElementById('bz-attach-folder-mask')).toBeNull();
+    moveAttachments(app);
+    await new Promise((r) => setTimeout(r, 60));
+    const popup = document.getElementById('bz-path-picker-popup')!;
+    const rowOf = (p: string) =>
+      [...popup.querySelectorAll('.bz-path-picker-row')].find((r) => (r as HTMLElement).dataset.path === p) as HTMLElement;
+    // 记忆语义：上次文件夹「归档」初始高亮
+    await vi.waitFor(() => expect(rowOf('归档').classList.contains('bz-path-picker-row--sel')).toBe(true), { timeout: 3000 });
+    expect(popup.querySelector('.bz-path-picker-selinfo')!.textContent).toContain('归档');
+    // 改选（库根目录）→ 确定 → 预览确认 → 移动到 vault 根
+    rowOf('').click();
+    (popup.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).click();
+    await new Promise((r) => setTimeout(r, 60));
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 60));
+    expect(calls).toEqual([['笔记/a.png', 'a.png']]);
+    expect(hasNotice(/已移动 1 个资源到 库根目录/)).toBe(true);
   });
 });
 

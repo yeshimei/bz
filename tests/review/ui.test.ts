@@ -587,19 +587,21 @@ describe('ticket 098 UI：做题家图标移除 / 挂起记录删除线 / 监听
       await new Promise((r) => setTimeout(r, 10));
     }
     expect(popup.querySelector('#review-watch-folders .bz-review-watch-chip')).toBeNull();
-    // ＋ 添加监听文件夹 → 打开附件搬移同款选择弹窗（ticket 099 追加复用；层级 200000 压设置弹窗）
+    // ＋ 添加监听文件夹 → 打开统一路径选择器（ticket 128：core/path-picker，companion 档 11200 压设置弹窗）
     const addBtn = [...popup.querySelectorAll('#review-watch-folders button')].find(
       (b) => b.textContent === '＋ 添加监听文件夹'
     ) as HTMLElement;
     expect(addBtn).toBeTruthy();
     addBtn.click();
-    for (let i = 0; i < 100 && !document.getElementById('bz-attach-folder-mask'); i++) {
+    for (let i = 0; i < 100 && !document.getElementById('bz-path-picker-mask'); i++) {
       await new Promise((r) => setTimeout(r, 10));
     }
-    const pickerMask = document.getElementById('bz-attach-folder-mask')!;
+    const pickerMask = document.getElementById('bz-path-picker-mask')!;
     expect(pickerMask).not.toBeNull();
-    expect(pickerMask.querySelector('.bz-attach-title')!.textContent).toBe('选择监听文件夹');
-    expect(pickerMask.querySelector('.bz-attach-btn--primary')!.textContent).toBe('确定');
+    const pickerPopup = document.getElementById('bz-path-picker-popup')!;
+    expect(pickerPopup.querySelector('.bz-path-picker-title')!.textContent).toBe('选择监听文件夹');
+    expect(pickerPopup.querySelector('.bz-path-picker-btn--primary')!.textContent).toBe('确定');
+    expect(pickerMask.style.zIndex).toBe('11200'); // companion 档，叠于域设置弹窗 10050 之上
     closeSettingsModal();
     ui.destroy();
   });

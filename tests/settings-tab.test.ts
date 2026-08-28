@@ -1,11 +1,14 @@
 /**
  * 设置页测试（覆盖 main.ts BzSettingTab，ADR-0009）：单页两区块（🤖 AI / 📂 数据存储路径）渲染 +
  * 控件交互保存持久化 + storagePath 迁移（旧 7 字段 → 共享路径）。
+ * ticket 128：数据存储路径行改为统一路径选择器（chips + 选择…按钮，无手输文本框），
+ * 交互经选择器录入；onCommit 提示语义（有变更才提示、同一次会话至多一次、改回原值复位）保留。
  * 依赖 mock-obsidian-entry 的 Setting 链式 mock（MockDropdown/MockText/MockToggle）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import BzPlugin, { BzSettingTab } from '../src/main';
-import { MockVault } from './mock-vault';
+import { MockVault, mockAppWithVault } from './mock-vault';
+import { setApp } from '../src/core/app';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from './mock-obsidian-entry';
 
 const diskData: Record<string, any> = {};
@@ -74,11 +77,16 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
     expect(titles).toEqual(['🤖 AI', '📂 数据存储路径']);
   });
 
-  it('AI 区块：服务商下拉 + 两个 API Key；数据存储路径区块：storagePath 输入', () => {
+  it('AI 区块：服务商下拉 + 两个 API Key；数据存储路径区块：路径选择行（选择…按钮 + chips，无手输输入框）', () => {
     findSetting(tab, 'AI 服务商');
     findSetting(tab, 'DeepSeek API Key');
     findSetting(tab, 'OpenCode Go API Key');
-    findSetting(tab, '数据存储路径');
+    const storageRow = findSetting(tab, '数据存储路径');
+    // ticket 128：行内无 text 输入框（ddd），选择…按钮 + 控件区内 chips（当前值 chip）
+    expect(storageRow.querySelector('.setting-item-control input')).toBeNull();
+    const btn = storageRow.querySelector('.setting-item-control button') as HTMLButtonElement;
+    expect(btn.textContent).toBe('选择…');
+    expect(storageRow.querySelector('.setting-item-control .bz-path-picker-chip-name')!.textContent).toBe('CONFIG/STORAGE');
     // 域设置不再出现在设置页（已迁往各域 ⚙️ 弹窗）
     expect([...tab.containerEl.querySelectorAll('.setting-item')].some((s) => (s as HTMLElement).dataset.name === '启动时自动弹窗')).toBe(false);
     expect([...tab.containerEl.querySelectorAll('.setting-item')].some((s) => (s as HTMLElement).dataset.name === '剪藏目录')).toBe(false);
@@ -93,46 +101,47 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
     expect(diskData['bz'].aiProvider).toBe('opencode-go');
   });
 
-  it('数据存储路径输入：内存即时更新，落盘走防抖有意触发（UX 整改 f1）', async () => {
-    vi.useFakeTimers();
-    const el = findSetting(tab, '数据存储路径');
-    const text = (el as any).__setting.controls.find((c: any) => typeof c.trigger === 'function' && c.placeholder !== undefined);
-    // saveData mock 为按引用存储（diskData['bz'] 即 settings 同一对象），用 spy 数落盘调用
+  it('数据存储路径经统一选择器录入：确认即落盘 + f1 风险提示（同会话不重复、改回原值复位）', async () => {
+    // 选择器数据源 = vault 文件夹：种几个候选目录（含默认 CONFIG/STORAGE）
+    const vault = new MockVault();
+    vault.create('CONFIG/STORAGE/a.json', 'x');
+    vault.create('CONFIG/数据/b.json', 'x');
+    vault.create('CONFIG/数据2/c.json', 'x');
+    setApp(mockAppWithVault(vault) as any);
     const saveSpy = vi.spyOn(plugin, 'saveData');
-    text.trigger('CONFIG/数据');
-    // 不再逐键落盘：防抖窗口内未触发持久化，仅内存设置生效
-    expect(saveSpy).not.toHaveBeenCalled();
-    expect(plugin.settings.storagePath).toBe('CONFIG/数据');
-    // 防抖窗口过后有意落盘一次
-    await vi.advanceTimersByTimeAsync(900);
-    expect(saveSpy.mock.calls.length).toBeGreaterThanOrEqual(1);
-    expect(plugin.settings.storagePath).toBe('CONFIG/数据');
-    // 有变更 → 弹风险提示（仅改路径、文件不迁移、重载后生效；正文不带 emoji）
-    const msgs = getNoticeMessages();
-    expect(msgs.some((m) => m.includes('文件') && m.includes('迁移') && m.includes('重载'))).toBe(true);
-    vi.useRealTimers();
-  });
 
-  it('数据存储路径：改回原值不提示；同一次编辑会话不重复提示', async () => {
-    vi.useFakeTimers();
-    const el = findSetting(tab, '数据存储路径');
-    const text = (el as any).__setting.controls.find((c: any) => typeof c.trigger === 'function' && c.placeholder !== undefined);
-    // 输入新值 → 防抖提示一次
-    text.trigger('CONFIG/数据');
-    await vi.advanceTimersByTimeAsync(900);
-    expect(hasNotice(/重载/)).toBe(true);
+    const pickVia = async (path: string) => {
+      const el = findSetting(tab, '数据存储路径');
+      (el as any).__setting.controls[0].trigger(); // 「选择…」按钮 → 打开选择器
+      const popup = document.getElementById('bz-path-picker-popup')!;
+      await vi.waitFor(() => expect(popup.querySelectorAll('.bz-path-picker-row').length).toBeGreaterThan(0));
+      const row = [...popup.querySelectorAll('.bz-path-picker-row')].find(
+        (r) => (r as HTMLElement).dataset.path === path
+      ) as HTMLElement;
+      row.click();
+      (popup.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).click();
+      await new Promise((r) => setTimeout(r, 10));
+    };
+
+    // 选 CONFIG/数据 → 内存 + 落盘一次 + 风险提示（仅改路径、文件不迁移、重载后生效；正文不带 emoji）
+    await pickVia('CONFIG/数据');
+    expect(plugin.settings.storagePath).toBe('CONFIG/数据');
+    expect(saveSpy).toHaveBeenCalledTimes(1); // 离散选择 → 确认即落盘（无防抖必要，语义保留）
+    expect(getNoticeMessages().some((m) => m.includes('文件') && m.includes('迁移') && m.includes('重载'))).toBe(true);
+
+    // 同会话再改其它值：不重复提示（warned 去重）
     clearNotices();
-    // 同会话继续改动：不重复提示（warnedInitial 去重）
-    text.trigger('CONFIG/数据2');
-    await vi.advanceTimersByTimeAsync(900);
+    await pickVia('CONFIG/数据2');
+    expect(plugin.settings.storagePath).toBe('CONFIG/数据2');
     expect(getNoticeMessages().filter((m) => m.includes('重载')).length).toBe(0);
-    // 改回原值后再次改动 → 可再次提示
-    text.trigger('CONFIG/STORAGE');
-    await vi.advanceTimersByTimeAsync(900);
-    text.trigger('CONFIG/数据3');
-    await vi.advanceTimersByTimeAsync(900);
+
+    // 改回原值 → warned 复位（不提示）；再次改动 → 可再次提示
+    clearNotices();
+    await pickVia('CONFIG/STORAGE');
+    expect(plugin.settings.storagePath).toBe('CONFIG/STORAGE');
+    expect(getNoticeMessages().filter((m) => m.includes('重载')).length).toBe(0);
+    await pickVia('CONFIG/数据');
     expect(hasNotice(/重载/)).toBe(true);
-    vi.useRealTimers();
   });
 });
 

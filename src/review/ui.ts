@@ -9,7 +9,7 @@ import { getSettings, saveSettings, tryGetSettings } from '../core/settings-prov
 import { escapeHtml } from '../core/utils';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { openSettingsModal, createSettingsGroup, refreshSettingsGroupCounts } from '../core/settings-modal';
-import { FolderSelectModal } from '../attach/ui';
+import { openPathPicker } from '../core/path-picker';
 import {
   attachItemActions,
   registerSheetCompanion,
@@ -316,30 +316,32 @@ export class UIManager {
       addBtn.onclick = () => {
         void (async () => {
           const { ReviewWatcher } = await import('./watch');
-          const watcher = new ReviewWatcher(this.app, this.dataManager);
-          // ticket 099 追加：复用附件搬移的 FolderSelectModal（z-index 200000 压设置弹窗；不读 attachLastFolder）
-          new FolderSelectModal(this.app, async (picked) => {
-            const folder = picked.trim().replace(/^\/+|\/+$/g, '');
-            if (!folder) {
-              notice('未选择文件夹', 'warning');
-              return;
-            }
-            if ((s.reviewWatchedFolders || []).includes(folder)) {
-              notice('该文件夹已在监听列表', 'info');
-              return;
-            }
-            // 选择后立即确认存量收编：取消=什么都不做（不添加目录、不写排除名单）
-            const confirmed = await watcher.confirmBatchAddForFolder(folder);
-            if (!confirmed) return;
-            s.reviewWatchedFolders = [...(s.reviewWatchedFolders || []), folder];
-            await saveSettings();
-            renderWatchRows();
-          }, {
+          // ticket 128：统一路径选择器（companion 档 11200 压设置弹窗 10050）；单选一次添加一个目录
+          openPathPicker({
             title: '选择监听文件夹',
+            mode: 'single',
             okText: '确定',
-            placeholder: 'vault 内目录路径，如 卡片盒/复习',
-            initial: '',
-          }).open();
+            desc: '文件夹里的新笔记自动加入复习计划，包括子文件夹',
+            selected: [],
+            onConfirm: async (list) => {
+              const folder = (list[0] || '').trim().replace(/^\/+|\/+$/g, '');
+              if (!folder) {
+                notice('未选择文件夹', 'warning');
+                return;
+              }
+              if ((s.reviewWatchedFolders || []).includes(folder)) {
+                notice('该文件夹已在监听列表', 'info');
+                return;
+              }
+              // 选择后立即确认存量收编：取消=什么都不做（不添加目录、不写排除名单）
+              const watcher = new ReviewWatcher(this.app, this.dataManager);
+              const confirmed = await watcher.confirmBatchAddForFolder(folder);
+              if (!confirmed) return;
+              s.reviewWatchedFolders = [...(s.reviewWatchedFolders || []), folder];
+              await saveSettings();
+              renderWatchRows();
+            },
+          });
         })();
       };
       ctl.appendChild(addBtn);

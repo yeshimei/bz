@@ -20,6 +20,7 @@ import {
 import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { getSettings, tryGetSettings, saveSettings } from '../core/settings-provider';
 import { openSettingsModal, createSettingsGroup } from '../core/settings-modal';
+import { renderPathSettingRow } from '../core/path-picker';
 import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
 import { SafeManager, base64ToBytes, bytesToBase64, type SafeNote, type SafeAttachment, type HealthReport, type HealthItem, type LockAttachmentInput } from './data';
 import { compressImage, videoFrame } from './preview';
@@ -1198,16 +1199,18 @@ export class UIManager {
         const s = getSettings() as any;
         // ===== 存储组 =====
         const storeGroup = createSettingsGroup(el, { icon: 'folder-open', name: '存储' });
-        new Setting(storeGroup)
-          .setName('保险箱根目录')
-          .setDesc('加密清单与密文镜像的存放位置，点前缀目录在侧栏隐藏，防止误删')
-          .addText((text) =>
-            text.setValue(s.encryptRoot || 'CONFIG/.ENCRYPT').onChange(async (v) => {
-              s.encryptRoot = v;
-              await saveSettings();
-              warnReload();
-            })
-          );
+        // ticket 128：保险箱根目录（统一路径选择器录入，无手输文本框；点前缀目录可选自 CONFIG/.ENCRYPT）
+        renderPathSettingRow({
+          parent: storeGroup,
+          name: '保险箱根目录',
+          desc: '加密清单与密文镜像的存放位置，点前缀目录在侧栏隐藏，防止误删',
+          mode: 'single',
+          value: s.encryptRoot || 'CONFIG/.ENCRYPT',
+          onChange: (list) => {
+            s.encryptRoot = list[0] || '';
+            void saveSettings().then(warnReload);
+          },
+        });
         // ===== 预览组 =====
         const previewGroup = createSettingsGroup(el, { icon: 'image', name: '预览' });
         new Setting(previewGroup)
