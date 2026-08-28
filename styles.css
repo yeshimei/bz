@@ -894,6 +894,9 @@ button.news-close-btn {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /* 覆盖 .bz-overlay-popup 的 max-height: 80vh，与原型 min(560px, 82vh) 定稿一致
+     （height 由组件功能内联，此处兜底 max-height 防 80vh 截断） */
+  max-height: min(560px, 82vh);
 }
 .bz-path-picker-head {
   padding: 12px 16px 10px;
