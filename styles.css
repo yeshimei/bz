@@ -1035,7 +1035,8 @@ button.news-close-btn {
   font-size: 12px;
   color: var(--text-faint);
 }
-/* 设置行控件区内 chips 容器（renderPathSettingRow；并入 .setting-item-control 参与两行式计数） */
+/* 设置行控件区内 chips 容器（renderPathSettingRow；并入 .setting-item-control；
+   ticket 133 起路径行控件区恒 1 子元素：空态仅按钮 / 已选态仅 chips，不触发两行式） */
 .bz-path-picker-chips--setting {
   display: flex;
   flex-wrap: wrap;
