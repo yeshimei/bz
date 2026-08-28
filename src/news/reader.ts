@@ -76,7 +76,7 @@ function createMaskAndPopup() {
   // 关闭按钮（移动端显示）
   const closeBtn = document.createElement('button');
   closeBtn.className = 'news-close-btn';
-  closeBtn.innerHTML = '✕';
+  closeBtn.innerHTML = '❌';
   closeBtn.onclick = (e) => { e.stopPropagation(); hide(); };
   popup.appendChild(closeBtn);
 

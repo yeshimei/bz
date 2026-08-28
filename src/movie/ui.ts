@@ -958,7 +958,7 @@ export function openFilterModal(): void {
   `;
   settingsHeader.innerHTML = '<h3 style="margin:0;">筛选与排序</h3>';
   const closeSettingsBtn = document.createElement('button');
-  closeSettingsBtn.textContent = '✕';
+  closeSettingsBtn.textContent = '❌';
   closeSettingsBtn.className = 'bz-win-close';
   closeSettingsBtn.style.cssText = `
     background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-muted);

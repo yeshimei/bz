@@ -108,6 +108,17 @@ describe('书库面板', () => {
     expect(app.workspace.openLinkText).toHaveBeenCalledWith('书库/活着.md', '', false);
   });
 
+  it('主面板关闭按钮统一 ❌（ticket 130）：字符 + bz-win-close 类（createIconBtn ❌ 分支）', async () => {
+    vault.files.set('书库/活着.md', BOOK_MD);
+    const app = makeApp(vault);
+    showLibrary(app);
+    await new Promise((r) => setTimeout(r, 20));
+    const closeBtn = [...document.querySelectorAll<HTMLElement>('#__book_library__ button')].find((b) => b.title === '关闭') as HTMLButtonElement;
+    expect(closeBtn).toBeDefined();
+    expect(closeBtn.textContent).toBe('❌'); // 关闭按钮统一 ❌ emoji（chips 移除 ✕ 不动）
+    expect(closeBtn.classList.contains('bz-win-close')).toBe(true);
+  });
+
   it('桌面右键 → 菜单「读书笔记」→ 划线弹窗打开', async () => {
     vault.files.set('书库/活着.md', BOOK_MD);
     vault.files.set('书库/读书笔记/活着.md', NOTE_MD);

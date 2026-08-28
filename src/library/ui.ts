@@ -83,8 +83,8 @@ export function showLibrary(app: any) {
   // 书库设置弹窗（ADR-0009 域设置弹窗；分组卡片重设计：目录/列表显示/移动端）
   const settingsBtn = createIconBtn('⚙️', '书库设置', () => openLibrarySettings(app));
 
-  // 关闭图符统一（ticket 51）：bz-win-close + ✕
-  const closeBtn = createIconBtn('✕', '关闭', () => (overlay.style.visibility = 'hidden'));
+  // 关闭图符统一（ticket 51→130）：bz-win-close + ❌
+  const closeBtn = createIconBtn('❌', '关闭', () => (overlay.style.visibility = 'hidden'));
   closeBtn.classList.add('bz-win-close');
 
   // 按钮秩序：报告 → 筛选 → 设置 → 关闭（功能 → ⚙️ → 关闭）
@@ -466,7 +466,7 @@ export function openFilterModal(app: any) {
   title.textContent = '视图与筛选';
   const closeBtn = document.createElement('button');
   closeBtn.className = 'bz-lib-modal-close bz-win-close';
-  closeBtn.textContent = '✕';
+  closeBtn.textContent = '❌';
   closeBtn.addEventListener('click', closeFilterModal);
   header.appendChild(title);
   header.appendChild(closeBtn);
@@ -789,7 +789,7 @@ function createBookNotesModal(title: string, onClose: () => void): { overlay: HT
   titleSpan.textContent = title;
   const closeBtn = document.createElement('button');
   closeBtn.className = 'bz-lib-modal-close--sm bz-win-close';
-  closeBtn.textContent = '✕';
+  closeBtn.textContent = '❌';
   closeBtn.addEventListener('click', onClose);
   header.appendChild(titleSpan);
   header.appendChild(closeBtn);
@@ -960,7 +960,7 @@ function openNoteEditModal(opts: {
   title.textContent = opts.title;
   const closeBtn = document.createElement('button');
   closeBtn.className = 'bz-lib-modal-close bz-win-close';
-  closeBtn.textContent = '✕';
+  closeBtn.textContent = '❌';
   closeBtn.addEventListener('click', () => overlay.remove());
   header.appendChild(title);
   header.appendChild(closeBtn);
