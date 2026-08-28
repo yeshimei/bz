@@ -172,6 +172,28 @@ describe('buildBehaviorWording：reflection / weekly-report / dossier / secondbr
   });
 });
 
+describe('buildBehaviorWording：bili（文献盒，ADR-0066）', () => {
+  it('bili:added → 你添加了转文献任务（BV 号）', () => {
+    const item = makeItem('bili-downloader', 'added', { entityType: 'bili', action: 'added', name: 'BV1xx411c7mD' });
+    expect(buildBehaviorWording(item)).toBe('你添加了转文献任务（BV1xx411c7mD）');
+  });
+
+  it('bili:converted → 你把《标题》转成了文献', () => {
+    const item = makeItem('bili-downloader', 'converted', { entityType: 'bili', action: 'converted', name: '从零开始学B站', extras: { notePath: '文献盒/从零开始学B站.md' } });
+    expect(buildBehaviorWording(item)).toBe('你把《从零开始学B站》转成了文献');
+  });
+
+  it('routing 风格别名 bili-downloader:converted 同样命中', () => {
+    const item = makeItem('bili-downloader', 'converted', { entityType: 'bili-downloader', action: 'converted', name: 'X' });
+    expect(buildBehaviorWording(item)).toBe('你把《X》转成了文献');
+  });
+
+  it('bili 未知动作 → 实体默认', () => {
+    const item = makeItem('bili-downloader', 'weird', { entityType: 'bili', action: 'weird', name: 'X' });
+    expect(buildBehaviorWording(item)).toBe('转文献动态：X');
+  });
+});
+
 describe('buildBehaviorWording：兜底与边界', () => {
   it('无模板命中的未知 entityType → 旧式 source:action 名称', () => {
     const item = makeItem('unknown_domain', 'weird', { entityType: 'unknown_domain', action: 'weird', name: 'X' });

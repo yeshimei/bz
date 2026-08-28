@@ -1,5 +1,5 @@
 /**
- * 待转文献任务类型（视频转文献，bili-downloader 域升级）
+ * 文献盒转文献任务类型（视频转文献，bili-downloader 域；ADR-0066 正名「文献盒」）
  * 数据格式：CONFIG/STORAGE/bili-tasks.json（新数据文件，不涉及既有格式冻结）
  */
 export type BiliTaskStatus = 'pending' | 'processing' | 'success' | 'failed';

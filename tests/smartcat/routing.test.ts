@@ -33,6 +33,8 @@ describe('路由规则表（ROUTING_RULES）', () => {
       'chat:said',
       // 书库
       'library:started', 'library:completed', 'library:progressed', 'library:highlight', 'library:thought', 'library:added', 'library:removed',
+      // 文献盒（bili-downloader，ADR-0066）
+      'bili-downloader:added', 'bili-downloader:converted',
       // 反思
       'reflection:insight', 'reflection:digest',
       // 周报
@@ -134,8 +136,18 @@ describe('路由规则表（ROUTING_RULES）', () => {
     expect(rule.defaultEmotion).toBe('happy');
   });
 
+  it('resolveRouting：bili-downloader:converted 精确匹配 → behavior', () => {
+    const rule = resolveRouting('bili-downloader', 'converted');
+    expect(rule.stream).toBe('behavior');
+  });
+
   it('library:added → behavior', () => {
     expect(ROUTING_RULES['library:added'].stream).toBe('behavior');
+  });
+
+  it('bili-downloader:added / bili-downloader:converted → behavior（文献盒仅行为流，用户拍板，ADR-0066）', () => {
+    expect(ROUTING_RULES['bili-downloader:added'].stream).toBe('behavior');
+    expect(ROUTING_RULES['bili-downloader:converted'].stream).toBe('behavior');
   });
 
   it('reflection:insight → memory, importance=0.90', () => {

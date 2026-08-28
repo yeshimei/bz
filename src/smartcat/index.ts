@@ -32,6 +32,7 @@ import { noteFirstText, noteDeleteText, noteFileName, noteBodyText, parseNoteDat
 import { DIARY_DIRECTORY } from '../diary/config';
 
 import { buildBelongingsStructured, type BelongingsActionEvent } from './belongings-source';
+import { buildBiliStructured, type BiliActionEvent } from './bili-source';
 
 import { buildNewsReadStructured, buildNewsSavedStructured, type NewsReadEvent } from './news-source';
 import { buildFavoritesStructured, type FavoritesActionEvent } from './favorites-source';
@@ -368,6 +369,8 @@ export async function ensureSmartCat(app: App): Promise<void> {
   busUnsubs.push(onDomainEvent<FavoritesActionEvent>('favorites', (evt) => notifyFavoritesAction(evt)));
   busUnsubs.push(onDomainEvent<BelongingsActionEvent>('belongings', (evt) => notifyBelongingsAction(evt)));
   busUnsubs.push(onDomainEvent<PomodoroActionEvent>('pomodoro', (evt) => notifyPomodoroAction(evt)));
+  // 文献盒（ADR-0066）：bili 域经 'bili-tasks' 通道派发 → 行为流（用户拍板：添加任务/单条成功两个节点）
+  busUnsubs.push(onDomainEvent<BiliActionEvent>('bili-tasks', (evt) => notifyBiliAction(evt)));
 
   // 域 JSON 感知（2026-08-23 用户拍板：CONFIG/STORAGE 域数据 modify → 观察；懒启动探测）
   void onDomainActivity();
@@ -1174,6 +1177,25 @@ function notifyMemoAction(evt: MemoActionEvent): void {
   // B6（ticket 084a）：同事件同 key 近 300ms 防重（勾选完成与抽屉「标记完成」双入口/双击等）
   if (notifyDeduped(evt.kind, memoActionKey(evt))) return;
   void memorySystem.addObservation('memo', { structured });
+}
+
+// ------------- 文献盒动作观察（ADR-0066：bili-tasks 域事件接入小橘行为流） -------------
+
+/** 文献盒动作观察处理（bili 域 UI/处理器经 emitDomainEvent('bili-tasks', evt) 派发 → 总线订阅进入）。
+ *  未初始化 / 未启用（noteSource 关）→ 静默；用户拍板只收 added/converted——
+ *  编辑/失败由 buildBiliStructured 返回 null 直接跳过（不进小橘）。 */
+function notifyBiliAction(evt: BiliActionEvent): void {
+  if (!initialized || !memorySystem || !data?.config?.noteSource) return;
+  const structured = buildBiliStructured(evt);
+  if (!structured) return;
+  // 同事件同 key 近 300ms 防重（双击保存等双入口场景）
+  if (notifyDeduped(structured.action, biliActionKey(evt))) return;
+  void memorySystem.addObservation('bili-downloader', { structured });
+}
+
+/** 文献盒事件防重键：added=url（同链接连点一次算一次）；converted=url+notePath（重试/重复转换不重复计） */
+function biliActionKey(evt: BiliActionEvent): string {
+  return evt.kind === 'converted' ? `${evt.url}|${evt.notePath ?? ''}` : evt.url;
 }
 
 /** memo.json 路径（跟随共享 storagePath，同 smartcatStorageDir 目录规则） */

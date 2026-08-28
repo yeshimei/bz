@@ -706,20 +706,26 @@ function literaturePolishPrompt(chunk) {
 }
 
 // ---- 无头批处理（--batch）：runBatch ----
-// 契约（与 Obsidian 插件「待转文献」面板对齐，cli.js --batch 调用）：
-//   task = { url, start, end }；start/end 为 'HH:MM:SS(.S)'/'MM:SS'/秒 或 null；都 null = 整片不剪辑。
+// 契约（与 Obsidian 插件「文献盒」面板对齐，cli.js --batch 调用）：
+//   task = { url, start, end, options }；start/end 为 'HH:MM:SS(.S)'/'MM:SS'/秒 或 null；都 null = 整片不剪辑。
+//   task.options（「文献盒」设置提取项，全部可选）：quality='720'|'1080'|'highest'（缺省最高）、
+//     keepVideo=false 跳过交付（只出文献笔记，video 结果 null）、outputDir 覆盖交付目录（空跟随 conf）。
 //   deps（全部可注入，防循环依赖——core 不 require config.js，conf 由调用方读入传入）：
 //     conf（必需：vaultPath/outputDir/cacheDir/ffmpegPath/ffprobePath/pythonPath/whisperModel/literatureFolder）、
 //     cookie、fetchJson/get（网络注入，测试打桩）、ffmpeg、ffprobe、py、
-//     runPythonImpl、aiJsonImpl、aiChatImpl（AI/转录打桩）、onStep(名称)、tmpDir。
-// 9 步时序：resetAbort → 解析 → 下载（复刻 /api/download 缓存命中检测与回写）→ 剪辑（起止有值才跑，
+//     runPythonImpl、aiJsonImpl、aiChatImpl（AI/转录打桩）、onStep(名称)、onProgress(进度)、tmpDir。
+// 7 步时序：resetAbort → 解析 → 下载（复刻 /api/download 缓存命中检测与回写）→ 剪辑（起止有值才跑，
 //   parseTimeInput 转秒，trimVideo 沿用 ffprobe 校验 + 自动重编码兜底，crf=null 不压缩）→ 转文字
 //   （runPython + PY_TRANSCRIBE，parseTranscriptUnits 收文本）→ AI（loadBzAiConfig 校验配置，
 //   缺 key 按既有报错引导；aiJson 元数据 + chunkTranscript 分块 + 逐块 literaturePolishPrompt + aiChat 润色）
-//   → 交付（copyFileSync + unlink 移入 outputDir，buildFileName/uniquePath，makeWiki 等价自建）
-//   → 文献笔记（buildLiteratureNote 组装 + uniquePath 落 vaultPath/literatureFolder，永不覆盖）。
+//   → 交付（copyFileSync + unlink 移入 outputDir，buildFileName/uniquePath，makeWiki 等价自建；
+//     options.keepVideo=false 跳过本步）→ 文献笔记（buildLiteratureNote 组装 + uniquePath 落
+//   vaultPath/literatureFolder，永不覆盖）。
+// 进度：onProgress({phase:'download'|'trim'|'transcribe'|'ai', pct})，pct 为 0-100 或 null（不确定，
+//   绝不假报）；300ms 节流聚合高频事件。步骤行 onStep 覆盖：解析中/下载中/剪辑中/转文字中/
+//   AI 生成文献笔记中/交付中/笔记落盘中（交付被跳过时不出「交付中」）。
 // 返回 { note, video, notePath, videoPath, wiki, transcript, title }；note/video 为 vault 相对路径
-//   （不在 vault 下退化为绝对路径）。任一步失败抛错（中文文案带缺失前置引导）。
+//   （不在 vault 下退化为绝对路径；video 为 null = 未交付）。任一步失败抛错（中文文案带缺失前置引导）。
 function vaultRel(absPath, vaultPath) {
   if (!vaultPath) return absPath
   const vaultAbs = path.resolve(vaultPath)
@@ -755,6 +761,16 @@ async function runBatch(task, deps = {}) {
   const aiJsonImpl = deps.aiJsonImpl || aiJson
   const aiChatImpl = deps.aiChatImpl || aiChat
   const onStep = deps.onStep || (() => {})
+  const onProgress = deps.onProgress || (() => {})
+  // 进度行节流：各环 150ms 级高频事件聚合为每阶段 ≤300ms 一行（[bz-p] 协议行，插件逐行解析驱动行内进度）。
+  // 按 phase 独立计时——快速衔接的阶段（如缓存命中后转写→AI）互不吞行，跨阶段进度不会丢失。
+  const lastPgAt = {}
+  const pg = p => {
+    const now = Date.now()
+    if (now - (lastPgAt[p.phase] || 0) < 300) return
+    lastPgAt[p.phase] = now
+    onProgress(p)
+  }
   const tmpDir = deps.tmpDir || fs.mkdtempSync(path.join(os.tmpdir(), 'bili-dl-batch-'))
 
   const url = String((task && task.url) || '').trim()
@@ -767,13 +783,18 @@ async function runBatch(task, deps = {}) {
   // ② 下载（缓存命中检测与回写，同 /api/download）
   onStep('下载中')
   const bvid = extractBv(url)
-  const height = deps.quality || info.maxHeight
+  // 清晰度设置项（task.options.quality）：720/1080 精确档，highest/缺省跟随 parse 最高可用
+  const qOpt = task && task.options ? task.options.quality : undefined
+  const height = qOpt === '720' ? 720 : qOpt === '1080' ? 1080 : (deps.quality || info.maxHeight)
   const cachedPath = cachePath(conf, cacheKey(bvid, info.cid, height))
   const originalPath = path.join(tmpDir, `bili_${Date.now()}.mp4`)
   if (fs.existsSync(cachedPath)) {
     fs.copyFileSync(cachedPath, originalPath)
   } else {
-    await downloadVideo({ url, cookie, height, cid: info.cid, outPath: originalPath, ffmpeg, fetchJson, get })
+    await downloadVideo({
+      url, cookie, height, cid: info.cid, outPath: originalPath, ffmpeg, fetchJson, get,
+      onProgress: p => pg({ phase: 'download', pct: Number.isFinite(p.percent) ? p.percent : null }),
+    })
     // 未命中下载完成后回写缓存（剪辑/压缩件不进缓存）
     try { fs.mkdirSync(path.dirname(cachedPath), { recursive: true }); fs.copyFileSync(originalPath, cachedPath) } catch {}
   }
@@ -795,7 +816,10 @@ async function runBatch(task, deps = {}) {
       onStep('剪辑中')
       const clipPath = path.join(tmpDir, `bili_${Date.now()}_clip.mp4`)
       // crf=null：流复制优先，ffprobe 校验不过自动重编码兜底（不压缩）
-      await trimVideo({ inPath: originalPath, outPath: clipPath, ffmpeg, ffprobe, start: s, end: e, crf: null, totalMs: (e - s) * 1000 })
+      await trimVideo({
+        inPath: originalPath, outPath: clipPath, ffmpeg, ffprobe, start: s, end: e, crf: null, totalMs: (e - s) * 1000,
+        onProgress: p => pg({ phase: 'trim', pct: Number.isFinite(p.percent) ? p.percent : null }),
+      })
       srcForDeliver = clipPath
     }
   }
@@ -804,8 +828,17 @@ async function runBatch(task, deps = {}) {
   onStep('转文字中')
   if (!py) throw new Error('转文字失败：rc 未配置 pythonPath（faster-whisper 所在 Python 路径），请到设置页填写')
   let raw = ''
+  let doneFiles = 0
   try {
-    await runPythonImpl({ py, args: [model, srcForDeliver], onChunk: s => { raw += s } })
+    await runPythonImpl({
+      py, args: [model, srcForDeliver],
+      onChunk: s => {
+        raw += s
+        // 完成哨兵（\x1e<file>\x1f\x1f）计数 → 文件级进度（当前单文件：0→100 跳变，诚实不假报）
+        doneFiles += (String(s).match(/\x1e[^\x1f]*\x1f\x1f/g) || []).length
+        pg({ phase: 'transcribe', pct: doneFiles >= 1 ? 100 : null })
+      },
+    })
   } catch (err) {
     throw new Error(`转文字失败：${(err && err.message) || err}（请确认 faster-whisper 环境已安装：目标 Python 已 pip install faster-whisper）`)
   }
@@ -814,7 +847,7 @@ async function runBatch(task, deps = {}) {
   const transcript = (byFile.get(path.resolve(srcForDeliver)) || '').trim()
   if (!transcript) throw new Error('转文字未产出文本（视频可能无语音，或请确认 faster-whisper 环境可用、模型正常加载）')
 
-  // ⑤ AI 生成文献笔记：配置校验 → 元数据 → 分块润色；⑥ 交付；⑦ 笔记落盘
+  // ⑤ AI 生成文献笔记：配置校验 → 元数据 → 分块润色（块级进度）；⑥ 交付（可关）；⑦ 笔记落盘
   onStep('AI 生成文献笔记中')
   const ai = loadBzAiConfig(conf)   // 缺 key / 缺 bz 数据文件 → 既有报错文案（引导去 bz 设置）
   const firstChunks = chunkTranscript(transcript)
@@ -831,27 +864,38 @@ async function runBatch(task, deps = {}) {
   }
   const chunks = chunkTranscript(transcript)
   const polished = []
-  for (const c of chunks) {
-    polished.push(await aiChatImpl({ ...ai, messages: [{ role: 'user', content: literaturePolishPrompt(c) }], maxTokens: 4096 }))
+  for (let i = 0; i < chunks.length; i++) {
+    polished.push(await aiChatImpl({ ...ai, messages: [{ role: 'user', content: literaturePolishPrompt(chunks[i]) }], maxTokens: 4096 }))
+    pg({ phase: 'ai', pct: Math.round(((i + 1) / chunks.length) * 100) })
   }
   const whole = polished.join('')
 
-  // ⑥ 交付：文件移入 outputDir（copyFileSync + unlink，exFAT 兼容；重名 uniquePath 加序号）
-  if (!conf.outputDir) throw new Error('交付目录未配置（rc outputDir），请先运行网页端在设置中填写')
-  const outDirAbs = path.resolve(conf.outputDir)
-  fs.mkdirSync(outDirAbs, { recursive: true })
-  const name = buildFileName({
-    title: info.title, bv: bvid, page: '',
-    trimmed: seg ? !seg.full : false,
-    start: seg ? seg.start : 0, end: seg ? seg.end : info.duration,
-    duration: info.duration, compressed: false, crf: null,
-  })
-  const finalPath = uniquePath(path.join(outDirAbs, name))
-  fs.copyFileSync(srcForDeliver, finalPath)
-  if (srcForDeliver !== originalPath) { try { fs.unlinkSync(srcForDeliver) } catch {} }   // 剪辑临时件已交付，删
-  const wiki = batchWiki(finalPath, conf)
+  // ⑥ 交付：文件移入 outputDir（copyFileSync + unlink，exFAT 兼容；重名 uniquePath 加序号）；
+  //    输出目录可被 task.options.outputDir 覆盖；「保留视频原件」关（keepVideo=false）→ 整步跳过，
+  //    只出文献笔记（笔记内无双链），video 结果 null。
+  const keepVideo = !(task && task.options && task.options.keepVideo === false)
+  let finalPath = null
+  let wiki = ''
+  if (keepVideo) {
+    onStep('交付中')
+    const outOverride = task && task.options && String(task.options.outputDir || '').trim()
+    if (!conf.outputDir && !outOverride) throw new Error('交付目录未配置（rc outputDir），请先运行网页端在设置中填写')
+    const outDirAbs = outOverride ? path.resolve(outOverride) : path.resolve(conf.outputDir)
+    fs.mkdirSync(outDirAbs, { recursive: true })
+    const name = buildFileName({
+      title: info.title, bv: bvid, page: '',
+      trimmed: seg ? !seg.full : false,
+      start: seg ? seg.start : 0, end: seg ? seg.end : info.duration,
+      duration: info.duration, compressed: false, crf: null,
+    })
+    finalPath = uniquePath(path.join(outDirAbs, name))
+    fs.copyFileSync(srcForDeliver, finalPath)
+    if (srcForDeliver !== originalPath) { try { fs.unlinkSync(srcForDeliver) } catch {} }   // 剪辑临时件已交付，删
+    wiki = batchWiki(finalPath, conf)
+  }
 
   // ⑦ 文献笔记：frontmatter 七键 + 润色正文 + 视频双链；落 vaultPath/literatureFolder（缺省「文献盒」）
+  onStep('笔记落盘中')
   if (!conf.vaultPath) throw new Error('文献笔记落盘失败：rc 未配置 vaultPath（Obsidian vault 根目录）')
   const noteFolder = path.join(conf.vaultPath, conf.literatureFolder || '文献盒')
   fs.mkdirSync(noteFolder, { recursive: true })
@@ -869,7 +913,7 @@ async function runBatch(task, deps = {}) {
 
   return {
     note: vaultRel(notePath, conf.vaultPath),
-    video: vaultRel(finalPath, conf.vaultPath),
+    video: finalPath ? vaultRel(finalPath, conf.vaultPath) : null,
     notePath, videoPath: finalPath, wiki, transcript, title: meta.title,
   }
 }

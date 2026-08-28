@@ -1,5 +1,5 @@
 /**
- * 待转文献数据管理器（视频转文献，bili-downloader 域升级）
+ * 文献盒数据管理器（视频转文献，bili-downloader 域；ADR-0066 正名「文献盒」）
  * bili-tasks.json 读写（jsonStore）、任务 CRUD、状态流转、时间格式校验。
  */
 import moment from 'moment';

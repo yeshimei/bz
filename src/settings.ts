@@ -310,8 +310,18 @@ export default interface BzSettings {
   pomodoroMobileDefaultFullscreen: boolean;
   /** 保险箱：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   encryptMobileDefaultFullscreen: boolean;
-  /** 待转文献：移动端默认全屏（默认关——95% 居中卡，ADR-0065） */
+  /** 文献盒：移动端默认全屏（默认关——95% 居中卡，ADR-0065） */
   biliTasksMobileDefaultFullscreen: boolean;
+  /** 文献盒：步骤进度详细度（默认开——当前步骤+耗时+百分比+步骤时间线；关=仅步骤徽章，ADR-0066） */
+  biliProgressDetail: boolean;
+  /** 文献盒：处理完是否保留视频原件（默认保留；关=只出文献笔记不落视频，ADR-0066） */
+  biliKeepVideo: boolean;
+  /** 文献盒：下载清晰度（'highest'/'1080'/'720'，默认最高；透传工具 options.quality，ADR-0066） */
+  biliQuality: string;
+  /** 文献盒：遇错即停（默认关=失败后继续；开=单条失败后剩余保持待处理，ADR-0066） */
+  biliStopOnFailure: boolean;
+  /** 文献盒：输出目录覆盖（默认空=跟随工具配置 ~/.bilibili-dl.json 的 outputDir，ADR-0066） */
+  biliOutputDir: string;
 
   // ===== 🐱 小橘陪伴猫（smartcat 域：桌面宠物 + AI 陪伴）=====
   /** 小橘启用开关（l7A）：仅控制启动时自动加载（猫容器挂载/常驻行为），关闭后仍可从命令面板手动打开 */
@@ -512,6 +522,12 @@ export const DEFAULT_SETTINGS: BzSettings = {
   pomodoroMobileDefaultFullscreen: false,
   encryptMobileDefaultFullscreen: true,
   biliTasksMobileDefaultFullscreen: false,
+  // 文献盒处理设置（ADR-0066：默认值=既存行为不动，零迁移）
+  biliProgressDetail: true,
+  biliKeepVideo: true,
+  biliQuality: 'highest',
+  biliStopOnFailure: false,
+  biliOutputDir: '',
   secondBrainMobileDefaultFullscreen: true,
 
   // 小橘陪伴猫（smartcat 域；移动端默认全屏键聊天/设置/数据面板共用，2026-08-23 合并一套）

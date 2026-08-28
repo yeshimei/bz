@@ -3,7 +3,8 @@
  * 1) 启动命令 bz-bili-open：外部工具 @jwbz/bili-downloader（tools/bili-downloader，ADR-0011）
  *    桌面端 spawn 全局命令 bili-dl → 起本地服务并自动开浏览器；
  *    解析 stdout 中的服务地址，经自绘 toast 提示用户。
- * 2) 待转文献面板 bz-bili-tasks-open：移动端暂存录入 / 桌面端批量处理（ADR-0065），
+ * 2) 文献盒面板 bz-bili-tasks-open：移动端暂存录入 / 桌面端批量处理（ADR-0065；ADR-0066 正名、
+ *    并入口下载按钮、设置提取、行内进度、域事件分发），
  *    数据 CONFIG/STORAGE/bili-tasks.json，面板见 ui.ts，跑批器见 processor.ts。
  */
 import { notice } from '../core/notice';
@@ -91,20 +92,20 @@ export function openBiliDownloader(): void {
   }, 6000);
 }
 
-// ---- 待转文献面板（ADR-0065）----
+// ---- 文献盒面板（ADR-0065 待转文献正名，ADR-0066）----
 
 let initialized = false;
 let uiManager: UIManager | null = null;
 
-/** 懒加载初始化（ADR-0003 幂等）：数据层 + 面板 */
+/** 懒加载初始化（ADR-0003 幂等）：数据层 + 面板（⬇️ 下载按钮接入原 B站下载弹窗，ADR-0066） */
 export function ensureBiliTasks(app: App): void {
   if (initialized) return;
   initialized = true;
   TasksData.init({ storagePath: (tryGetSettings() as any)?.storagePath });
-  uiManager = new UIManager(app);
+  uiManager = new UIManager(app, { onDownload: () => openBiliDownloader() });
 }
 
-/** 打开待转文献面板（bz-bili-tasks-open 命令回调） */
+/** 打开文献盒面板（bz-bili-tasks-open 命令回调，面板正名「文献盒」） */
 export function openBiliTasksPanel(app: App): void {
   ensureBiliTasks(app);
   uiManager?.showMain();

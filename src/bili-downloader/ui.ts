@@ -1,10 +1,13 @@
 /**
- * 待转文献面板（视频转文献，bili-downloader 域升级）
- * 主窗口：列表展示任务行（状态徽标 + 行内进度文案），桌面端头部功能区
- * 「➕ 添加 / ▶️ 处理 / ⏹ 中止 / 🧹 清空 → ⚙️ → ✕」；移动端仅暂存录入（无处理按钮）。
+ * 文献盒面板（视频转文献，bili-downloader 域；正名「文献盒」，ADR-0066）
+ * 主窗口：列表展示任务行（状态徽标 + 行内进度：详细模式=步骤时间线+百分比+耗时），
+ * 桌面端头部功能区「➕ 添加 / ⬇️ 下载 / ▶️ 处理 / ⏹ 中止 / 🧹 清空 → ⚙️ → ✕」；
+ * 移动端仅暂存录入（无处理/下载按钮）。
  * 点击按状态分流：成功→打开文献笔记 / 失败→查看原因 / 待处理→编辑。
+ * 域事件分发（ADR-0066）：添加任务 → 'bili-tasks' {kind:'added'}；单条终态 → {kind:'converted'|'failed'}。
  */
 import type { App } from 'obsidian';
+import type { SettingsSchema } from '../core/settings-schema';
 import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
@@ -16,7 +19,7 @@ import { emitDomainEvent } from '../core/domain-bus';
 import { getApp } from '../core/app';
 import { TasksData, isValidTime } from './data';
 import type { BiliTask } from './types';
-import { BatchRunner } from './processor';
+import { BatchRunner, type BatchEvents, type BiliProgress } from './processor';
 
 interface StatusMeta { label: string; cls: string; }
 const STATUS_META: Record<BiliTask['status'], StatusMeta> = {
@@ -30,10 +33,48 @@ function q<T extends HTMLElement>(root: HTMLElement, sel: string): T | null {
   return root.querySelector(sel) as T | null;
 }
 
-export function biliTasksSettingsSchema() {
+/** HTML 转义（进度文案来自外部进程 stdout，统一转义防注入） */
+function esc(s: unknown): string {
+  return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+}
+
+/** 运行中行内进度态（内存瞬态，不落库；刷新面板重读 storage 时由步骤文案兜底） */
+interface RowRunState {
+  steps: string[];
+  phase: string | null;
+  pct: number | null;
+  startAt: number;
+}
+
+const fmtElapsed = (ms: number): string => {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(s / 60);
+  const h = Math.floor(m / 60);
+  return h > 0 ? `${h}:${String(m % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}` : `${m}:${String(s % 60).padStart(2, '0')}`;
+};
+
+export function biliTasksSettingsSchema(): SettingsSchema {
   return {
-    groups: [mobileFullscreenGroup('biliTasksMobileDefaultFullscreen')],
+    groups: [
+      mobileFullscreenGroup('biliTasksMobileDefaultFullscreen'),
+      {
+        icon: 'settings-2',
+        name: '文献盒处理',
+        rows: [
+          { type: 'toggle', name: '详细进度提示', desc: '处理中显示当前步骤、耗时、百分比与步骤时间线；关闭则仅显示步骤徽章', binding: { key: 'biliProgressDetail' } },
+          { type: 'toggle', name: '保留视频原件', desc: '转文献完成后保留视频文件；关闭则只生成文献笔记', binding: { key: 'biliKeepVideo' } },
+          { type: 'select', name: '下载清晰度', desc: '以视频源可用档位为准，低档优先命中缓存', binding: { key: 'biliQuality' }, options: [{ value: 'highest', label: '最高（默认）' }, { value: '1080', label: '1080P' }, { value: '720', label: '720P' }] },
+          { type: 'toggle', name: '遇错即停', desc: '单条失败后停止处理剩余任务；关闭则失败后继续', binding: { key: 'biliStopOnFailure' } },
+          { type: 'text', name: '输出目录', desc: '视频文件落地目录；留空跟随工具配置', binding: { key: 'biliOutputDir' }, placeholder: '如 D:/videos' },
+        ],
+      },
+    ],
   };
+}
+
+export interface UIManagerHooks {
+  /** ⬇️ 下载按钮：打开原有 B站下载弹窗（bz-bili-open 单条流程，ADR-0066） */
+  onDownload?: () => void;
 }
 
 export class UIManager {
@@ -44,9 +85,15 @@ export class UIManager {
   addPopup: HTMLElement | null = null;
   private editingId: string | null = null;
   private onKeydown: (e: KeyboardEvent) => void = () => {};
+  private hooks: UIManagerHooks = {};
+  /** 运行中行内进度态（task.id → 时间线/百分比/启动时刻） */
+  private runState = new Map<string, RowRunState>();
+  /** 耗时秒针（整批期间每秒刷新处理中行的耗时） */
+  private runTimer: ReturnType<typeof setInterval> | null = null;
 
-  constructor(app: App) {
+  constructor(app: App, hooks?: UIManagerHooks) {
     this.app = app;
+    this.hooks = hooks ?? {};
     this.createMainUI();
     this.createAddDialog();
     this.onKeydown = (e: KeyboardEvent) => {
@@ -73,9 +120,10 @@ export class UIManager {
     const header = document.createElement('div');
     header.className = 'bz-win-head';
     header.innerHTML = `
-      <h3 style="margin:0;font-size:15px;font-weight:600;">待转文献</h3>
+      <h3 style="margin:0;font-size:15px;font-weight:600;">文献盒</h3>
       <div style="display:flex;gap:6px;align-items:center;">
-        <button id="bili-btn-add" title="添加待转文献" style="width:30px;height:30px;">➕</button>
+        <button id="bili-btn-add" title="添加转文献任务" style="width:30px;height:30px;">➕</button>
+        <button id="bili-btn-download" title="下载并转文献（单条，桌面端）" style="width:30px;height:30px;">⬇️</button>
         <button id="bili-btn-run" title="批量处理（桌面端）" style="width:30px;height:30px;">▶️</button>
         <button id="bili-btn-abort" title="中止整批" style="width:30px;height:30px;display:none;">⏹</button>
         <button id="bili-btn-clear" title="清空已完成" style="width:30px;height:30px;">🧹</button>
@@ -93,12 +141,14 @@ export class UIManager {
     this.popup = popup;
     this.list = list;
     this._bindHeaderEvents();
-    // 移动端仅暂存录入：处理/中止/清空按钮隐藏（功能按钮区只留 ➕⚙️✕）
+    // 移动端仅暂存录入：处理/下载/中止/清空按钮隐藏（功能按钮区只留 ➕⚙️✕）
     if (isMobileEnv()) {
       const run = q<HTMLButtonElement>(popup, '#bili-btn-run');
+      const download = q<HTMLButtonElement>(popup, '#bili-btn-download');
       const abort = q<HTMLButtonElement>(popup, '#bili-btn-abort');
       const clear = q<HTMLButtonElement>(popup, '#bili-btn-clear');
       if (run) run.style.display = 'none';
+      if (download) download.style.display = 'none';
       if (abort) abort.style.display = 'none';
       if (clear) clear.style.display = 'none';
     }
@@ -108,11 +158,15 @@ export class UIManager {
     const p = this.popup;
     if (!p) return;
     q<HTMLButtonElement>(p, '#bili-btn-add')!.onclick = () => this.showAddDialog();
+    q<HTMLButtonElement>(p, '#bili-btn-download')!.onclick = () => {
+      if (this.hooks.onDownload) this.hooks.onDownload();
+      else notice('B站下载入口未就绪', 'error');
+    };
     q<HTMLButtonElement>(p, '#bili-btn-run')!.onclick = () => void this.onRunBatch();
     q<HTMLButtonElement>(p, '#bili-btn-abort')!.onclick = () => void this.onAbortBatch();
     q<HTMLButtonElement>(p, '#bili-btn-clear')!.onclick = () => void this.onClearFinished();
     q<HTMLButtonElement>(p, '#bili-btn-settings')!.onclick = () =>
-      openSettingsModal({ title: '待转文献设置', maxWidth: 560, schema: biliTasksSettingsSchema() });
+      openSettingsModal({ title: '文献盒设置', maxWidth: 560, schema: biliTasksSettingsSchema() });
     q<HTMLButtonElement>(p, '#bili-btn-close')!.onclick = () => this.hideMain();
   }
 
@@ -126,7 +180,7 @@ export class UIManager {
       padding: '16px 18px', flexDirection: 'column', gap: '10px',
     });
     popup.innerHTML = `
-      <h4 style="margin:0;font-size:14px;font-weight:600;" id="bili-add-title">添加待转文献</h4>
+      <h4 style="margin:0;font-size:14px;font-weight:600;" id="bili-add-title">添加转文献任务</h4>
       <label style="font-size:12px;color:var(--text-muted);">视频链接 / BV 号</label>
       <input id="bili-add-url" type="text" placeholder="https://www.bilibili.com/video/BV… 或 BV1xx411c7mD" style="width:100%;">
       <div style="display:flex;gap:10px;">
@@ -163,7 +217,7 @@ export class UIManager {
   showAddDialog(editItem?: BiliTask): void {
     if (!this.addPopup) return;
     this.editingId = editItem?.id ?? null;
-    q<HTMLElement>(this.addPopup, '#bili-add-title')!.textContent = editItem ? '编辑待转文献' : '添加待转文献';
+    q<HTMLElement>(this.addPopup, '#bili-add-title')!.textContent = editItem ? '编辑转文献任务' : '添加转文献任务';
     (q<HTMLInputElement>(this.addPopup, '#bili-add-url')!).value = editItem?.url ?? '';
     (q<HTMLInputElement>(this.addPopup, '#bili-add-start')!).value = editItem?.start ?? '';
     (q<HTMLInputElement>(this.addPopup, '#bili-add-end')!).value = editItem?.end ?? '';
@@ -202,8 +256,8 @@ export class UIManager {
   }
 
   async refreshPanel(): Promise<void> {
-    if (!this.list) return;
     const tasks = await TasksData.loadTasks();
+    if (!this.list) return; // await 期间面板被销毁（unload/测试清理）→ 放弃渲染
     this.list.innerHTML = '';
     const running = BatchRunner.running;
     // 运行中的批次横幅：处理到第几部
@@ -217,7 +271,7 @@ export class UIManager {
     if (tasks.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'bz-bili-empty';
-      empty.textContent = '暂无待转文献。点击 ➕ 添加视频链接与起止时间，回到桌面端即可批量处理。';
+      empty.textContent = '暂无转文献任务。点击 ➕ 添加视频链接与起止时间，回到桌面端即可批量处理。';
       this.list.appendChild(empty);
       this._syncRunButton(tasks);
       return;
@@ -248,9 +302,9 @@ export class UIManager {
         <span class="bz-bili-url" title="${task.url}">${task.url}</span>
       </div>
       <div class="bz-bili-meta">${timeText}${task.remark ? ' · ' + task.remark : ''}</div>
-      ${task.status === 'processing' && task.reason ? `<div class="bz-bili-progress">${task.reason}</div>` : ''}
-      ${task.status === 'failed' && task.reason ? `<div class="bz-bili-progress bz-bili-progress-error">${task.reason}</div>` : ''}
-      ${task.status === 'success' && task.notePath ? `<div class="bz-bili-note">📄 ${task.notePath}</div>` : ''}`;
+      ${task.status === 'processing' ? (this.runState.has(task.id) ? '<div class="bz-bili-progress-box"></div>' : (task.reason ? `<div class="bz-bili-progress">${esc(task.reason)}</div>` : '')) : ''}
+      ${task.status === 'failed' && task.reason ? `<div class="bz-bili-progress bz-bili-progress-error">${esc(task.reason)}</div>` : ''}
+      ${task.status === 'success' && task.notePath ? `<div class="bz-bili-note">📄 ${esc(task.notePath)}</div>` : ''}`;
     const actions = this.buildCardActions(task);
     if (actions.length) attachItemActions(card, actions);
     // 点击分流：成功→文献笔记；失败→原因；待处理→编辑（处理中不响应）
@@ -286,7 +340,7 @@ export class UIManager {
 
   private async confirmDelete(task: BiliTask): Promise<void> {
     const v = await openFlowDialog({
-      title: '删除这条待转文献？',
+      title: '删除这条转文献任务？',
       message: '仅从列表移除记录，已生成的文献笔记与视频不受影响。',
       actions: [
         { label: '取消', value: 'cancel' },
@@ -306,6 +360,55 @@ export class UIManager {
     });
   }
 
+  /** 行内进度定点更新（不等 storage 落库——[bz-step]/[bz-p] 一到立即刷 DOM，修「UI 滞后于 JSON」） */
+  private updateRowProgress(id: string): void {
+    if (!this.list) return;
+    const st = this.runState.get(id);
+    const card = q<HTMLElement>(this.list, `.bz-bili-task-card[data-id="${id}"]`);
+    if (!card || !st) return;
+    let box = q<HTMLElement>(card, '.bz-bili-progress-box');
+    if (!box) {
+      box = document.createElement('div');
+      box.className = 'bz-bili-progress-box';
+      const meta = q<HTMLElement>(card, '.bz-bili-meta');
+      if (meta) meta.after(box);
+      else card.appendChild(box);
+    }
+    // 简要模式（设置 biliProgressDetail=false 显式关闭）：仅当前步骤文本（对齐旧行为）；
+    // 缺省/未注入（=undefined）走详细模式——默认值即详细
+    if (tryGetSettings().biliProgressDetail === false) {
+      const cur = st.steps[st.steps.length - 1] || '处理中…';
+      box.innerHTML = `<div class="bz-bili-progress">${esc(cur)}</div>`;
+      return;
+    }
+    // 详细模式：✓ 已完成步骤时间线 → 当前步骤 + 百分比 + 进度条 + 耗时
+    const segs = st.steps.map((s, i) =>
+      i === st.steps.length - 1
+        ? `<span class="bz-bili-step-cur">${esc(s)}</span>`
+        : `<span class="bz-bili-step-done">✓ ${esc(s)}</span>`
+    );
+    const pct = st.pct;
+    const bar = pct != null
+      ? `<div class="bz-bili-progress-track"><div class="bz-bili-progress-fill" style="width:${Math.min(100, Math.max(0, pct))}%"></div></div>`
+      : '';
+    box.innerHTML = `
+      <div class="bz-bili-steps">${segs.join('<span class="bz-bili-step-arrow">→</span>')}${pct != null ? ` <span class="bz-bili-step-pct">${Math.round(pct)}%</span>` : ''}</div>
+      ${bar}
+      <div class="bz-bili-elapsed">⌛ ${fmtElapsed(Date.now() - st.startAt)}</div>`;
+  }
+
+  /** 整批耗时秒针：每秒刷新处理中行的耗时显示（步骤事件间隙也能看到时间在走） */
+  private startRunTimer(): void {
+    this.clearRunTimer();
+    this.runTimer = setInterval(() => {
+      for (const id of Array.from(this.runState.keys())) this.updateRowProgress(id);
+    }, 1000);
+  }
+
+  private clearRunTimer(): void {
+    if (this.runTimer !== null) { clearInterval(this.runTimer); this.runTimer = null; }
+  }
+
   private async onRunBatch(): Promise<void> {
     if (!BatchRunner.available()) {
       notice('仅桌面端可用：批量处理需要 Node.js 外部进程', 'error');
@@ -316,20 +419,37 @@ export class UIManager {
     const pending = tasks.filter((t) => t.status === 'pending');
     if (pending.length === 0) { notice('没有待处理的任务', 'info'); return; }
     const ui = this;
-    await BatchRunner.runAll(pending, {
-      onTaskProgress: () => { void ui.refreshPanel(); },
+    ui.startRunTimer();
+    const events: BatchEvents = {
+      // 步骤/进度事件：更新内存态 + 行内定点刷新（不整表重读，UI 与工具输出同步）
+      onTaskProgress: (t, stepText, progress) => {
+        let st = ui.runState.get(t.id);
+        if (!st) { st = { steps: [], phase: null, pct: null, startAt: Date.now() }; ui.runState.set(t.id, st); }
+        // 「启动中…」是占位文案不是工具步骤，不进时间线（真实第一步是「解析中」）
+        if (stepText && stepText !== '启动中…' && !st.steps.includes(stepText)) st.steps.push(stepText);
+        if (progress) {
+          if (progress.phase) st.phase = progress.phase;
+          if (progress.pct != null) st.pct = progress.pct;
+        }
+        ui.updateRowProgress(t.id);
+      },
       onTaskDone: (t) => {
-        emitDomainEvent('bili-tasks', { kind: t.status === 'success' ? 'converted' : 'failed', id: t.id, url: t.url });
+        ui.runState.delete(t.id);
+        // 域事件分发（ADR-0066）：成功 = 单条转文献完成（小橘行为流订阅），载荷带 notePath 供标题提取
+        emitDomainEvent('bili-tasks', { kind: t.status === 'success' ? 'converted' : 'failed', id: t.id, url: t.url, notePath: t.notePath ?? null });
         void ui.refreshPanel();
       },
       onBatchDone: (summary) => {
+        ui.clearRunTimer();
+        ui.runState.clear();
         const head = `处理完成：成功 ${summary.success} 部`;
         const tail = summary.failed ? `，失败 ${summary.failed} 部` : '';
-        const end = summary.aborted ? '（已中止）' : '';
-        notice(head + tail + end, summary.failed || summary.aborted ? 'warning' : 'success');
+        const end = summary.aborted ? '（已中止）' : summary.stopped ? '（遇错即停）' : '';
+        notice(head + tail + end, summary.failed || summary.aborted || summary.stopped ? 'warning' : 'success');
         void ui.refreshPanel();
       },
-    });
+    };
+    await BatchRunner.runAll(pending, events);
   }
 
   private async onAbortBatch(): Promise<void> {
@@ -374,6 +494,8 @@ export class UIManager {
   }
 
   destroy(): void {
+    this.clearRunTimer();
+    this.runState.clear();
     document.removeEventListener('keydown', this.onKeydown);
     this.mask?.remove();
     this.popup?.remove();
