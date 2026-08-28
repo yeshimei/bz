@@ -144,13 +144,29 @@
   color: var(--text-muted);
   white-space: nowrap;
 }
-/* 历史分组卡片：每条任务一行「📄 笔记路径 ⏱ 完成时间」 */
+/* 历史分组卡片：UP主名/笔记数紧随标题之后 */
+.bz-bili-hgroup .bz-bili-title {
+  flex: 0 1 auto;
+}
+.bz-bili-hgroup .bz-bili-hup {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bz-bili-hgroup .bz-bili-hcount {
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+/* 历史分组卡片：每条任务一行「📄 笔记路径 ⏱ 完成时间」（无左边距，与标题对齐） */
 .bz-bili-hgroup .bz-bili-hnote {
   display: flex;
   align-items: baseline;
   gap: 8px;
   margin-top: 5px;
-  padding: 3px 6px;
+  padding: 3px 0;
   border-radius: 6px;
   font-size: 12px;
   color: var(--text-muted);
