@@ -977,6 +977,23 @@ button.news-close-btn {
 }
 .bz-path-picker-btn--primary:hover { opacity: 0.88; }
 
+/* ticket 133：设置行「选择…/添加…」紧凑次级按钮（空态专用；已选态按钮移出 DOM）——
+   去 accent 主色、缩小内边距/字号，与 chips 同视觉重量 */
+.bz-path-picker-btn--slim {
+  font-size: 12px;
+  padding: 3px 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  cursor: pointer;
+  line-height: 1.4;
+}
+.bz-path-picker-btn--slim:hover { background: var(--background-modifier-hover); }
+/* 已选 chip 文本可点重开选择器（ticket 133）：指针 + 悬停强调；✕ 保持独立按钮语义 */
+.bz-path-picker-chip--click .bz-path-picker-chip-name { cursor: pointer; }
+.bz-path-picker-chip--click .bz-path-picker-chip-name:hover { color: var(--interactive-accent); }
+
 /* 已选 chips（设置行控件区内与选择器共用；随控件区 flex-wrap 自动折行） */
 .bz-path-picker-chips {
   display: flex;
@@ -1040,9 +1057,12 @@ button.news-close-btn {
 
 /* ==================== 移动端两行式（ticket 128，ADR-0061） ==================== */
 /* 口径：settings-modal.ts markSettingSplitRows 在 build 后遍历 .setting-item 挂 .bz-setting-split
-   （控件区 .setting-item-control ≥2 个子元素：如 选择…按钮 + chips）；主设置页 display 末尾同调用；
+   （控件区 .setting-item-control ≥2 个子元素：如 搜索框 + 下拉 等组合控件）；
+   主设置页 display 末尾同调用；
    动态重渲染处（如第二大脑自动双链明细）按需调用。类是 bz JS 专挂，原生非 bz 设置行不落类，
-   天然不误伤 Obsidian 原生设置弹窗；窄视口才拆两行，桌面宽视口保持原生布局（单控件行豁免）。 */
+   天然不误伤 Obsidian 原生设置弹窗；窄视口才拆两行，桌面宽视口保持原生布局（单控件行豁免）。
+   ticket 133 起路径行控件区恒为 1 子元素（空态仅按钮 / 已选态仅 chips），不再触发本规则——
+   移动端名称/描述与控件区同行（renderPathSettingRow syncBtn 注释）。 */
 @media (max-width: 768px) {
   .setting-item.bz-setting-split {
     flex-wrap: wrap;

@@ -7,6 +7,10 @@
  *   对点前缀不索引，只能经 adapter 列目录补齐）；去重排序。
  * - 搜索即时过滤（包含匹配，大小写不敏感；输入恰好等于某目录 → 显示全量）；
  * - 单选：点选高亮 + 确定提交；多选：点击切换勾选，确定回调全量列表。
+ * - ticket 133 列表排序：已选置顶（仅打开时按初始已选定序一次，点击勾选不重排）→ 库根第二梯队 →
+ *   其余目录整体反转（原 sort() 码点升序逆排 → 中文在前、英文在后；英文组内小写在前、大写在后）。
+ * - ticket 133 设置行：空态只显示紧凑「选择…/添加…」按钮（无「未选择」灰字）；已选态按钮移出 DOM、
+ *   chip 文本点击重开选择器、✕ 保留清除；移动端名称/描述与控件区同行（控件区恒 1 子元素）。
  * - 移动端近全屏（≤768 顶对齐避让软键盘 + 底部 safe-area）。
  * - z-index 11200/11201：companion 档（>11000），叠于域设置弹窗 10050 之上（对表 settings-modal.ts
  *   z-index 家族注释；原 secondbrain 白名单弹窗同档 11200，退役合并后继续沿用）。
@@ -147,16 +151,20 @@ export function normalizePicked(list: string[]): string[] {
 
 /* ==================== chips 渲染（设置行内与选择器共用） ==================== */
 
-/** 已选目录 chips 渲染：✕ 移除后 onChange 回传最新列表（行为同旧 renderSelectedChips，类名随新组件） */
+/** 已选目录 chips 渲染：✕ 移除后 onChange 回传最新列表；onChipClick 提供时 chip 文本可点重开选择器（ticket 133）。
+ *  emptyText 传 '' 时不渲染空态占位文字（ticket 133：设置行空态只显示选择按钮）。
+ *  ✕ 按钮事件不冒泡到文本点击（onclick 挂在 name 节点上）。 */
 export function renderPathChips(
   container: HTMLElement,
   selected: string[],
   onChange: (list: string[]) => void,
-  emptyText = '未选择'
+  emptyText = '未选择',
+  onChipClick?: (path: string) => void
 ): void {
   container.innerHTML = '';
   container.classList.add('bz-path-picker-chips');
   if (selected.length === 0) {
+    if (!emptyText) return;
     const empty = document.createElement('span');
     empty.className = 'bz-path-picker-chips-empty';
     empty.textContent = emptyText;
@@ -166,11 +174,12 @@ export function renderPathChips(
   for (const path of selected) {
     const label = path === '' ? '（库根目录）' : path;
     const chip = document.createElement('span');
-    chip.className = 'bz-path-picker-chip';
+    chip.className = 'bz-path-picker-chip' + (onChipClick ? ' bz-path-picker-chip--click' : '');
     chip.title = label;
     const name = document.createElement('span');
     name.className = 'bz-path-picker-chip-name';
     name.textContent = label;
+    if (onChipClick) name.onclick = () => onChipClick(path);
     const x = document.createElement('button');
     x.className = 'bz-path-picker-chip-x';
     x.textContent = '✕';
@@ -201,13 +210,15 @@ export interface PathSettingRowOptions {
   buttonText?: string;
   /** 确定按钮文案（透传选择器） */
   okText?: string;
-  /** 空态文案（chips 无已选时显示，覆盖缺省「未选择」） */
+  /** 空态文案（ticket 133 起废弃：设置行空态只显示按钮、不渲染占位文字；字段保留兼容 schema 传参，实现不再读取） */
   emptyText?: string;
   /** 选择器确定 / chip ✕ 移除后的统一回调（list = 最新目录清单；单值 [] = 未选择） */
   onChange: (list: string[]) => void;
 }
 
-/** 构建路径设置行：Setting（名称/描述 + 选择按钮）+ 控件区内 chips（成对 ✕）。
+/** 构建路径设置行：Setting（名称/描述）+ 控件区——空态：紧凑「选择…/添加…」按钮（无「未选择」灰字）；
+ *  已选态：按钮移出 DOM，chips 文本点击重开选择器、✕ 清除（ticket 133）。
+ *  控件区恒 1 子元素 → markSettingSplitRows 不挂 .bz-setting-split → 移动端名称/描述与控件区同行。
  *  不保留手输文本框（ADR-0061 拍板 3：路径一律经选择器录入，限 vault 内）。
  *  返回 { refresh } 供外部按需重渲染 chips（如设置被其他入口改动后回同步）。 */
 export function renderPathSettingRow(opts: PathSettingRowOptions): { refresh: () => void; settingEl: HTMLElement } {
@@ -220,39 +231,62 @@ export function renderPathSettingRow(opts: PathSettingRowOptions): { refresh: ()
   if (opts.desc) setting.setDesc(opts.desc);
   const chipsWrap = document.createElement('div');
   chipsWrap.className = 'bz-path-picker-chips--setting';
+
+  const openPicker = () =>
+    openPathPicker({
+      title: opts.pickerTitle || opts.name,
+      desc: opts.pickerDesc,
+      mode: opts.mode,
+      selected: current,
+      okText: opts.okText,
+      onConfirm: (list) => {
+        current = list;
+        opts.onChange(list);
+        renderAll();
+      },
+    });
+
   const render = () =>
     renderPathChips(chipsWrap, current, (next) => {
       current = next;
       opts.onChange(next);
-      render();
-    }, opts.emptyText);
-  setting.addButton((b) =>
+      renderAll();
+    }, '', openPicker);
+
+  let btn: HTMLButtonElement | null = null;
+  setting.addButton((b) => {
     b
       .setButtonText(opts.buttonText || (opts.mode === 'multi' ? '添加…' : '选择…'))
-      .setCta()
-      .onClick(() =>
-        openPathPicker({
-          title: opts.pickerTitle || opts.name,
-          desc: opts.pickerDesc,
-          mode: opts.mode,
-          selected: current,
-          okText: opts.okText,
-          onConfirm: (list) => {
-            current = list;
-            opts.onChange(list);
-            render();
-          },
-        })
-      )
-  );
-  // chips 并入控件区（移动端两行式按「控件区 ≥2 子元素」判定，button + chips 即触发）
+      .onClick(openPicker);
+    // ticket 133：紧凑次级按钮（不再 setCta——去掉 Obsidian 原生 accent 大按钮风），样式见 styles.css
+    b.buttonEl.classList.add('bz-path-picker-btn--slim');
+    btn = b.buttonEl;
+  });
+
+  // chips 并入控件区
   const control = setting.settingEl.querySelector('.setting-item-control');
   if (control) control.appendChild(chipsWrap);
-  const refresh = () => {
-    current = readValue();
+
+  // ticket 133 已选态：按钮移出 DOM（控件区仅 1 子元素，两行式判定不触发，移动端同行）；
+  // 空态（含 ✕ 清除后）恢复按钮
+  const syncBtn = () => {
+    if (!btn || !control) return;
+    if (current.length === 0) {
+      if (!btn.isConnected) control.appendChild(btn);
+    } else if (btn.isConnected) {
+      btn.remove();
+    }
+  };
+
+  const renderAll = () => {
+    syncBtn();
     render();
   };
-  render();
+  const refresh = () => {
+    current = readValue();
+    renderAll();
+  };
+  renderAll();
   return { refresh, settingEl: setting.settingEl };
 }
 
@@ -291,6 +325,8 @@ export function openPathPicker(opts: PathPickerOptions): void {
   const app = getApp();
   const mode = opts.mode || 'single';
   const selected = new Set(normalizePicked(opts.selected || []));
+  // ticket 133：已选置顶的定格快照——只在打开时按初始已选定序一次，点击勾选/取消不重排（防移动端点错）
+  const pinnedAtOpen = [...selected];
 
   const { mask, popup } = createOverlay({
     maskId: 'bz-path-picker-mask',
@@ -357,6 +393,21 @@ export function openPathPicker(opts: PathPickerOptions): void {
     opts.onConfirm(list);
   });
 
+  // ticket 133 排序：已选置顶（pinnedAtOpen 快照）→ 库根第二梯队 → 其余整体反转（中文在前、英文在后）
+  function orderedList(): string[] {
+    const pinned: string[] = [];
+    const rest: string[] = [];
+    const pinSet = new Set(pinnedAtOpen);
+    for (const f of state.folders) {
+      if (pinSet.has(f)) pinned.push(f);
+      else rest.push(f);
+    }
+    const rootIdx = rest.indexOf('');
+    const root = rootIdx >= 0 ? rest.splice(rootIdx, 1)[0] : null;
+    rest.reverse();
+    return [...pinned, ...(root === null ? [] : [root]), ...rest];
+  }
+
   function renderList(): void {
     listEl.innerHTML = '';
     const q = state.q.trim().toLowerCase();
@@ -367,7 +418,7 @@ export function openPathPicker(opts: PathPickerOptions): void {
     const LIMIT = 300;
     let n = 0;
     let total = 0;
-    for (const folder of state.folders) {
+    for (const folder of orderedList()) {
       if (q && !exact && !folder.toLowerCase().includes(q)) continue;
       total++;
       if (n >= LIMIT) continue;
