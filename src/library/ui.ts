@@ -8,7 +8,6 @@
  *  - 纯 EPUB 书库（无 markdown 书目）不再被空态提前 return 吞掉；
  *  - 删死变量 libraryModal / getSubfolder 转发。
  */
-import { Setting } from 'obsidian';
 import { notice, createIconBtn, longPress } from '../core/dom';
 import { openFlowDialog } from '../core/flow-dialog';
 import {
@@ -18,11 +17,11 @@ import {
   type ItemAction,
 } from '../core/item-actions';
 import { escManager } from '../core/esc-manager';
-import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
-import { openSettingsModal, createSettingsGroup } from '../core/settings-modal';
-import { renderPathSettingRow } from '../core/path-picker';
-import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
-import type BzSettings from '../settings';
+import { tryGetSettings } from '../core/settings-provider';
+import { openSettingsModal } from '../core/settings-modal';
+import { mobileFullscreenGroup } from '../core/settings-common';
+import type { SettingsSchema } from '../core/settings-schema';
+import { applyMobileWindowFullscreen } from '../core/mobile';
 import { formatFileSize } from '../core/utils';
 import { getBookItems, sortItemList, deriveBookSettings, loadEpubBookItems } from './items';
 import type { BookItem } from './items';
@@ -162,69 +161,41 @@ function renderLibraryEmpty(app: any): void {
   libraryListContainer.appendChild(empty);
 }
 
+// ===== 书库设置 schema（ticket 131 声明式，ADR-0064）=====
+// 闭包内 field 名驱动工厂（textSetting/toggleSetting）退役 → 键直绑行；组序/行序/maxWidth 保持现状。
+/** 书库设置 schema（置于模块顶层供文案 lint 直接引用） */
+export function librarySettingsSchema(): SettingsSchema {
+  return {
+    groups: [
+      {
+        icon: 'folder-open', name: '目录',
+        rows: [
+          // ticket 128：书库文件夹（统一路径选择器录入，无手输文本框）
+          { type: 'path', mode: 'single', name: '书库文件夹', desc: '存放书籍笔记的文件夹路径', binding: { key: 'libraryFolderPath' } },
+          { type: 'text', name: '书籍识别标签', desc: '识别书籍笔记所用的标签名', binding: { key: 'bookTag' } },
+        ],
+      },
+      {
+        icon: 'eye', name: '列表显示',
+        rows: [
+          { type: 'toggle', name: '显示文件大小', desc: '在书籍卡片上显示文件大小', binding: { key: 'showFileSize' } },
+          { type: 'toggle', name: '显示阅读时长', desc: '在书籍卡片上显示阅读时长', binding: { key: 'showReadingTime' } },
+          { type: 'toggle', name: '显示划线数', desc: '在书籍卡片上显示划线数量', binding: { key: 'showHighlights' } },
+          { type: 'toggle', name: '显示想法数', desc: '在书籍卡片上显示想法数量', binding: { key: 'showThinks' } },
+          { type: 'toggle', name: '显示书评摘要', desc: '在书籍卡片上显示书评摘要', binding: { key: 'showReview' } },
+        ],
+      },
+      mobileFullscreenGroup('libraryMobileDefaultFullscreen'),
+    ],
+  };
+}
+
 /** 书库设置弹窗（头部 ⚙️ 与空库空态「去设置」入口共用） */
 function openLibrarySettings(app: any): void {
   openSettingsModal({
     title: '书库设置',
     maxWidth: 560,
-    build: (el) => {
-      const s = getSettings();
-      const textSetting = (parent: HTMLElement, name: string, desc: string, field: keyof BzSettings) =>
-        new Setting(parent)
-          .setName(name)
-          .setDesc(desc)
-          .addText((text) =>
-            text.setValue(String((s as any)[field] || '')).onChange(async (v) => {
-              (s as any)[field] = v;
-              await saveSettings();
-            })
-          );
-      const toggleSetting = (parent: HTMLElement, name: string, desc: string, field: keyof BzSettings) =>
-        new Setting(parent)
-          .setName(name)
-          .setDesc(desc)
-          .addToggle((toggle) =>
-            toggle.setValue(!!(s as any)[field]).onChange(async (v) => {
-              (s as any)[field] = v;
-              await saveSettings();
-            })
-          );
-      // ===== 目录组 =====
-      const dirGroup = createSettingsGroup(el, { icon: 'folder-open', name: '目录' });
-      // ticket 128：书库文件夹（统一路径选择器录入，无手输文本框）
-      renderPathSettingRow({
-        parent: dirGroup,
-        name: '书库文件夹',
-        desc: '存放书籍笔记的文件夹路径',
-        mode: 'single',
-        value: String((s as any).libraryFolderPath || ''),
-        onChange: (list) => {
-          (s as any).libraryFolderPath = list[0] || '';
-          void saveSettings();
-        },
-      });
-      textSetting(dirGroup, '书籍识别标签', '识别书籍笔记所用的标签名', 'bookTag');
-      // ===== 列表显示组 =====
-      const listGroup = createSettingsGroup(el, { icon: 'eye', name: '列表显示' });
-      toggleSetting(listGroup, '显示文件大小', '在书籍卡片上显示文件大小', 'showFileSize');
-      toggleSetting(listGroup, '显示阅读时长', '在书籍卡片上显示阅读时长', 'showReadingTime');
-      toggleSetting(listGroup, '显示划线数', '在书籍卡片上显示划线数量', 'showHighlights');
-      toggleSetting(listGroup, '显示想法数', '在书籍卡片上显示想法数量', 'showThinks');
-      toggleSetting(listGroup, '显示书评摘要', '在书籍卡片上显示书评摘要', 'showReview');
-      // ===== 移动端组（仅移动端显示） =====
-      if (isMobileEnv()) {
-        const mobileGroup = createSettingsGroup(el, { icon: 'smartphone', name: '移动端' });
-        new Setting(mobileGroup)
-          .setName('移动端默认全屏')
-          .setDesc('移动端打开主窗口时默认全屏，关闭则显示常规卡片')
-          .addToggle((toggle) =>
-            toggle.setValue(!!s.libraryMobileDefaultFullscreen).onChange(async (v) => {
-              s.libraryMobileDefaultFullscreen = v;
-              await saveSettings();
-            })
-          );
-      }
-    },
+    schema: librarySettingsSchema(),
   });
 }
 

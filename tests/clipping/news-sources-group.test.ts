@@ -289,22 +289,34 @@ describe('剪藏本设置「数据源」组', () => {
     expect((cookieRow as any).__setting.desc).toContain('未配置');
   });
 
-  it('自动摘要详设：开关开 → 长度/标签/时机三项可见；关 → 隐藏', async () => {
+  it('自动摘要详设：开关开 → 长度/标签/数量/时机四项可见；关 → 隐藏（bz-setting-hidden 声明式联动）', async () => {
     await setup(false);
     const popup = await openSettings();
-    // SETTINGS.autoSummaryEnabled=true → 详设行可见
+    const detailRow = (name: string) =>
+      [...popup.querySelectorAll<HTMLElement>('.setting-item')].find((el) => el.dataset.name === name) as HTMLElement;
+    const detailStates = () =>
+      ['摘要长度', '生成标签', '标签数量', '摘要时机'].map((n) => detailRow(n).classList.contains('bz-setting-hidden'));
+    // SETTINGS.autoSummaryEnabled=true → 详设行全部可见
     expectSetting(popup, '摘要长度');
     expectSetting(popup, '生成标签');
+    expectSetting(popup, '标签数量');
     expectSetting(popup, '摘要时机');
-    // 关掉自动摘要 → 详设容器隐藏
+    expect(detailStates()).toEqual([false, false, false, false]);
+    // 关掉自动摘要 → 详设行隐藏（ticket 131 声明式联动：隐藏行留在 DOM 但带 .bz-setting-hidden）
     const auto = findSetting(popup, '自动摘要');
     const toggle = toggleOf(auto);
     toggle.trigger(false);
     await flushDom();
-    const detail = popup.querySelector<HTMLElement>('.auto-summary-detail');
-    expect(detail!.style.display).toBe('none');
+    expect(detailStates()).toEqual([true, true, true, true]);
     toggle.trigger(true);
     await flushDom();
-    expect(detail!.style.display).not.toBe('none');
+    expect(detailStates()).toEqual([false, false, false, false]);
+    // 标签数量二次联动（ticket 124）：生成标签关 → 仅「标签数量」隐藏，其余详设行仍在
+    toggleOf(findSetting(popup, '生成标签')).trigger(false);
+    await flushDom();
+    expect(detailStates()).toEqual([false, false, true, false]);
+    toggleOf(findSetting(popup, '生成标签')).trigger(true);
+    await flushDom();
+    expect(detailStates()).toEqual([false, false, false, false]);
   });
 });

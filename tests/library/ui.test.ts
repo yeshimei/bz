@@ -191,7 +191,7 @@ describe('书库面板', () => {
     expect(document.getElementById('__book_library__')!.textContent).toContain('活着');
   });
 
-  it('⚙️ 打开书库设置弹窗（分组卡片：目录/列表显示/移动端）；🔀 为筛选弹窗', () => {
+  it('⚙️ 打开书库设置弹窗（分组卡片：目录/列表显示；移动端组桌面整组隐藏）；🔀 为筛选弹窗', () => {
     vault.files.set('书库/活着.md', BOOK_MD);
     setSettingsProvider(() => ({ libraryFolderPath: '书库', bookTag: 'book' } as any));
     const app = makeApp(vault);
@@ -202,11 +202,16 @@ describe('书库面板', () => {
     settingsBtn.click();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect(popup.textContent).toContain('书库设置');
-    // 分组卡片结构：桌面 2 组（目录/列表显示；移动端组移动端才渲染），原生图标 + 徽标回填项数
-    const heads = [...popup.querySelectorAll('.bz-settings-group-head')];
+    // 分组卡片结构：桌面 2 组可见（目录/列表显示；移动端组挂 bz-setting-hidden 整组隐藏——ticket 131
+    // 声明式联动保留结构），原生图标 + 徽标回填项数
+    const isHiddenGroup = (el: Element) =>
+      Boolean((el.closest('.bz-settings-group') as HTMLElement | null)?.classList.contains('bz-setting-hidden'));
+    const heads = [...popup.querySelectorAll('.bz-settings-group-head')].filter((el) => !isHiddenGroup(el));
     expect(heads.map((el) => (el as HTMLElement).textContent!.trim())).toEqual(['目录2 项', '列表显示5 项']);
     expect(heads.map((el) => el.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon'))).toEqual(['folder-open', 'eye']);
-    const names = [...popup.querySelectorAll('.bz-settings-group-body .setting-item')].map((el) => (el as HTMLElement).dataset.name);
+    const names = [...popup.querySelectorAll('.bz-settings-group-body .setting-item')]
+      .filter((el) => !el.classList.contains('bz-setting-hidden'))
+      .map((el) => (el as HTMLElement).dataset.name);
     expect(names).toEqual([
       '书库文件夹', '书籍识别标签',
       '显示文件大小', '显示阅读时长', '显示划线数', '显示想法数', '显示书评摘要',
@@ -429,15 +434,18 @@ describe('移动端默认全屏（ticket 68）', () => {
     expect(modal!.classList.contains('bz-win-mfs')).toBe(true);
   });
 
-  it('书库设置弹窗：仅移动端显示「移动端默认全屏」行', async () => {
+  it('书库设置弹窗：仅移动端显示「移动端默认全屏」行（ticket 131 声明式：隐藏行留 DOM 带 bz-setting-hidden）', async () => {
     const vault = new MockVault();
     vault.files.set('书库/活着.md', BOOK_MD);
     setSettingsProvider(() => ({ libraryFolderPath: '书库', bookTag: 'book' } as any));
     const app = makeApp(vault);
     showLibrary(app);
     const settingsBtn = [...document.querySelectorAll('button')].find((b) => b.title === '书库设置')!;
+    // 可见性过滤：移动端组整组 + 行级 bz-setting-hidden（隐藏行仍留在 DOM）
     const settingNames = () =>
-      [...document.querySelectorAll('#bz-settings-modal-popup .setting-item')].map((el) => (el as HTMLElement).dataset.name);
+      [...document.querySelectorAll('#bz-settings-modal-popup .setting-item')]
+        .filter((el) => !el.classList.contains('bz-setting-hidden'))
+        .map((el) => (el as HTMLElement).dataset.name);
     settingsBtn.click();
     expect(settingNames()).not.toContain('移动端默认全屏');
     MockPlatform.isMobile = true;

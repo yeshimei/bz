@@ -2,7 +2,6 @@
  * 收藏本 UI 管理器（ticket 11）：源码 收藏本.js L237-1423 逐字移植。
  */
 import moment from 'moment';
-import { Setting } from 'obsidian';
 import { notice, notify } from '../core/notice';
 import { createIconBtn } from '../core/dom';
 import { openFlowDialog } from '../core/flow-dialog';
@@ -16,9 +15,11 @@ import {
   type ItemAction,
 } from '../core/item-actions';
 import { getApp } from '../core/app';
-import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
-import { applyMobileWindowFullscreen, isMobileEnv } from '../core/mobile';
+import { tryGetSettings } from '../core/settings-provider';
+import { applyMobileWindowFullscreen } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
+import { mobileFullscreenGroup } from '../core/settings-common';
+import type { SettingsSchema } from '../core/settings-schema';
 import { CONFIG } from './config';
 import { BalanceService, FavoritesAIService } from './ai';
 import type { DataManager } from './data';
@@ -50,6 +51,15 @@ function installMenuDismissWatcher(): void {
     },
     true
   );
+}
+
+/**
+ * 收藏本设置 schema（ticket 131 声明式；空态域唯一内容为通用「移动端」组）。
+ * 移动端全屏文案：原符号文案「移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）」按
+ * ticket 100 收敛为多数派逐字文案（与域组 A belongings 同口径，settings-copy-lint-a 白名单注释）。
+ */
+export function favoritesSettingsSchema(): SettingsSchema {
+  return { groups: [mobileFullscreenGroup('favoritesMobileDefaultFullscreen')] };
 }
 
 export class UIManager {
@@ -181,24 +191,12 @@ export class UIManager {
     const addBtn = this._createButton('✏️', '添加收藏', () => this._showAddDialog());
     actionGroup.appendChild(addBtn);
 
-    // 设置弹窗（ADR-0009：收藏本无行为设置，空弹窗）
+    // 设置弹窗（ADR-0009：收藏本无行为设置，空态域；ticket 131 声明式——分组卡片 + maxWidth 520）
     const settingsBtn = this._createButton('⚙️', '收藏本设置', () => {
       openSettingsModal({
         title: '收藏本设置',
-        build: (el) => {
-          const s = getSettings();
-          if (isMobileEnv()) {
-            new Setting(el)
-              .setName('移动端默认全屏')
-              .setDesc('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）')
-              .addToggle((toggle) =>
-                toggle.setValue(!!s.favoritesMobileDefaultFullscreen).onChange(async (v) => {
-                  s.favoritesMobileDefaultFullscreen = v;
-                  await saveSettings();
-                })
-              );
-          }
-        },
+        maxWidth: 520, // 拍板 Q11：空态域统一分组卡片口径，宽度向 520 看齐（与归物本一致）
+        schema: favoritesSettingsSchema(),
         emptyText: '收藏本没有可配置的设置项',
         emptyDesc: '数据文件路径由全局设置「数据存储路径」统一管理',
       });

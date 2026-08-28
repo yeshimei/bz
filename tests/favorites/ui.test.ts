@@ -1013,3 +1013,52 @@ describe('收藏本修复回归（P0-7 层级 / P1-36 余额状态 / P1-37 并�
     expect(store.find((x) => x.id === '2')!.title).toBe('B-并发改'); // 并发写入者的变更未丢
   });
 });
+
+describe('收藏本设置弹窗（ticket 131 声明式）', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    Platform.isMobile = false;
+  });
+
+  async function openSettings(ui: UIManager): Promise<HTMLElement> {
+    ui.build();
+    const settingsBtn = [...document.querySelectorAll('button')].find((b) => b.title === '收藏本设置')!;
+    settingsBtn.click();
+    return document.getElementById('bz-settings-modal-popup') as HTMLElement;
+  }
+
+  it('桌面端：空态域（emptyText/emptyDesc 保留）；无任何可见设置项（移动端组被空态整体替换）', async () => {
+    const { ui } = await setup();
+    const popup = await openSettings(ui);
+    expect(popup.textContent).toContain('收藏本设置');
+    // 空态（ticket 131 Q11：分组卡片方案下桌面端无可见设置项 → 照常显示空态文案，
+    // openSettingsModal 空态判定把隐藏的移动端组整体替换为 emptyText/emptyDesc）
+    expect(popup.querySelector('.bz-settings-empty')!.textContent).toContain('收藏本没有可配置的设置项');
+    expect(popup.querySelector('.bz-settings-empty-desc')!.textContent).toContain('数据文件路径由全局设置「数据存储路径」统一管理');
+    // 无任何分组卡片/设置项残留
+    expect(popup.querySelector('.bz-settings-group')).toBeNull();
+    expect(popup.querySelector('.setting-item')).toBeNull();
+  });
+
+  it('移动端：显示「移动端」分组卡片 + 「移动端默认全屏」行（多数派逐字文案），开关键直绑写 data.json', async () => {
+    Platform.isMobile = true;
+    const state = { favoritesStoragePath: 'CONFIG/STORAGE', favoritesMobileDefaultFullscreen: true } as Record<string, unknown>;
+    setSettingsProvider(() => state as any);
+    const dm = new DataManager('CONFIG/STORAGE/favorites.json');
+    const ui = new UIManager(dm, new FavoritesAIService(), null);
+    const popup = await openSettings(ui);
+    // 移动端可见组唯一：分组卡片（向 520 看齐——maxWidth 由弹窗壳承担）
+    const heads = [...popup.querySelectorAll('.bz-settings-group-head')];
+    expect(heads.map((el) => (el as HTMLElement).textContent!.trim())).toEqual(['移动端1 项']);
+    expect(popup.querySelector('.bz-settings-empty')).toBeNull(); // 有可见设置项 → 无空态
+    const row = [...popup.querySelectorAll('.setting-item')].find(
+      (el) => (el as HTMLElement).dataset.name === '移动端默认全屏'
+    ) as HTMLElement;
+    // 文案与现网一致（ticket 100 收敛为多数派逐字文案，同归物本）
+    expect((row as any).__setting.desc).toBe('移动端打开主窗口时默认全屏，关闭则显示常规卡片');
+    const toggle = (row as any).__setting.controls.find((c: any) => typeof c.trigger === 'function');
+    expect(toggle.value).toBe(true); // 键直绑初始值回填
+    toggle.trigger(false); // 即时写内存 + 落盘
+    expect(state.favoritesMobileDefaultFullscreen).toBe(false);
+  });
+});
