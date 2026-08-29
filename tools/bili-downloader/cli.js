@@ -4,6 +4,7 @@
 // 用法:
 //   bili-dl --batch '<json>'   无头批处理（Obsidian 插件「文献盒」面板后台引擎）
 //       json = {"url":"…","start":"mm:ss|hh:mm:ss(.S)|null","end":"…","options":{...}}；start/end 都 null = 整片不剪辑
+//       或 --batch 'b64:<base64>'（插件经 shell 启动时用——JSON 引号/空格会被 shell 对消，base64 安全，P2-5）
 //       options（bz「文献盒」设置全量下发，全部可选）：quality、keepVideo、outputDir、compress（缺省开）、
 //       crf（缺省 23，范围 18-28）、vaultPath、ffmpegPath、ffprobePath、pythonPath、whisperModel、cacheDir、cacheRetentionDays
 //       stdout 逐步打 [bz-step] 行（解析中 → 下载中 → 剪辑中(有起止才跑) → 压缩中(缺省开) → 转文字中
@@ -32,7 +33,7 @@ function runBatchMode(rawJson) {
   }
   let task
   try {
-    task = JSON.parse(rawJson)
+    task = core.decodeBatchArg(rawJson)
   } catch (e) {
     console.error(`--batch 参数不是合法 JSON：${e.message}`)
     process.exit(1)

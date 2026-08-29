@@ -5,9 +5,10 @@
  * 成功落库归档 + converted 域事件）、转录读取失败 / AI 失败（含未配置）→ 任务 failed
  * 不落半成品笔记（+ failed 域事件）、单部失败继续、遇错即停、中止整批、非桌面端提示、
  * taskJson options 全量下发（compress/crf/vaultPath/ffmpegPath 等）。
- * 终审修复（P2-1/P2-2/P2-4/P3-2）：终态落库抛错（处理中被删除）批量不挂起、
+ * 终审修复（P2-1/P2-2/P2-4/P3-2/P2-5）：终态落库抛错（处理中被删除）批量不挂起、
  * spawn 固定全局 bili-dl（无本地 CLI 指针探测）、CLI 非 0 退出清理转录临时文件、
- * [bz-info] 不再发射 parsed 域事件（契约收敛 converted/failed）。
+ * [bz-info] 不再发射 parsed 域事件（契约收敛 converted/failed）、
+ * --batch 参数经 shell 启动改传 base64（`b64:` 前缀——JSON 引号/空格会被 cmd 对消，P2-5）。
  * 外部进程一律经 window.require 打桩（child_process + fs），AI 经 vi.mock('note-gen')
  * 整模块打桩（仅用 generateVideoNote），无真实网络。
  */
@@ -278,7 +279,9 @@ describe('BatchRunner', () => {
     const p = BatchRunner.runAll(await LiteratureData.loadTasks(), ev);
     await tick();
     const [, args] = cpMock.spawn.mock.calls[0];
-    const json = JSON.parse(args[1]);
+    expect(args[0]).toBe('--batch');
+    expect(args[1]).toMatch(/^b64:/); // P2-5：经 shell 启动 JSON 改 base64 传输（b64: 前缀）
+    const json = JSON.parse(Buffer.from(args[1].slice(4), 'base64').toString('utf8'));
     expect(json.page).toBe(3);
     expect(json.options).toEqual({
       quality: '720', // 任务级 quality 优先于全局
@@ -306,7 +309,7 @@ describe('BatchRunner', () => {
     const [cmd, args, opts] = cpMock.spawn.mock.calls[0];
     expect(cmd).toBe('bili-dl');
     expect(opts.shell).toBe(true);
-    expect(JSON.parse(args[1])).toEqual({
+    expect(JSON.parse(Buffer.from(args[1].slice(4), 'base64').toString('utf8'))).toEqual({
       url: 'BV1xx411c7mD', start: null, end: null, page: null,
       options: {
         quality: 'highest', keepVideo: true, outputDir: '',

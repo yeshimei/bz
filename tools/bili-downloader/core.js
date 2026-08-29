@@ -591,6 +591,8 @@ function resumeTranscriptPath(conf, bv, cid, s, e) {
 
 // ---- 无头批处理（--batch）：runBatch ----
 // 契约（与 Obsidian 插件「文献盒」面板对齐，cli.js --batch 调用；ticket 136 起 AI/文献笔记回迁 bz）：
+// 插件经 shell 启动（.cmd shim 需 shell:true）时 JSON 的引号/空格会被 cmd 对消破坏，故传 `b64:<base64>`；
+// 手动命令行 `--batch '<json>'` 直传 JSON 照常支持（decodeBatchArg 二者皆收，P2-5）。
 //   task = { url, start, end, page, options }；start/end 为 'HH:MM:SS(.S)'/'MM:SS'/秒 或 null；都 null = 整片不剪辑。
 //   task.page（可选，ADR-0067 添加界面分P选择）：1 起的分P 序号，越界/缺省 = 第 1 P（按 P 独立缓存键）。
 //   task.options（bz「文献盒」设置全量下发，全部可选）：quality='720'|'1080'|'highest'（缺省最高）、
@@ -611,6 +613,19 @@ function resumeTranscriptPath(conf, bv, cid, s, e) {
 // 返回 { transcript, video, transcriptPath, videoPath, title, bvid, duration }：
 //   transcript = 转录临时文件**绝对路径**（UTF-8 全文，插件读取后自删）；video = vault 相对/绝对 或 null（未交付）。
 //   任一步失败抛错（中文文案带缺失前置引导）。
+/**
+ * 解析 --batch 参数（P2-5）：`b64:` 前缀 = base64 编码的 JSON（插件经 shell（.cmd shim）启动时
+ * JSON 引号/空格被 shell 对消破坏——Windows cmd 实测 argv 变 `{\"…` 报 position 1 JSON 错；
+ * base64 无引号无空格，shell 全程安全）；否则按 JSON 直解析（手动命令行）。
+ * 抛错沿用 JSON.parse 原生错误（cli.js 包中文前缀）。
+ */
+function decodeBatchArg(raw) {
+  if (typeof raw === 'string' && raw.indexOf('b64:') === 0) {
+    return JSON.parse(Buffer.from(raw.slice(4), 'base64').toString('utf8'))
+  }
+  return JSON.parse(raw)
+}
+
 function vaultRel(absPath, vaultPath) {
   if (!vaultPath) return absPath
   const vaultAbs = path.resolve(vaultPath)
@@ -833,5 +848,5 @@ module.exports = {
   abortAll, resetAbort, trackProc, runPython, PY_TRANSCRIBE, parseTranscriptUnits,
   cacheKey, getCacheDir, cachePath, cleanupCache,
   resumeKey, resumeClipPath, resumeCompressedPath, resumeTranscriptPath,
-  vaultRel, runBatch,
+  vaultRel, decodeBatchArg, runBatch,
 }
