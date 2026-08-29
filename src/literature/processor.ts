@@ -1,16 +1,28 @@
 /**
- * 文献盒批量处理器（视频转文献，bili-downloader 域；面板正名「文献盒」，ADR-0066）
- * 串行逐部：对「待处理」任务按列表顺序 spawn 工具无头批处理命令
- * （node <tools>/cli.js --batch '<json>' 或全局 bili-dl --batch），
- * _runOne 返回「子进程终结」Promise，循环内 await —— 严格一次一部；
- * 解析 stdout 步骤行（[bz-step] 名称 / [bz-p] {"phase","pct"} 进度 / [bz-result] {note,video}）
- * 驱动 UI 行内进度与阶段百分比；步骤文案落库（刷新面板重读可见）+ 进度走内存实时推送；
- * 单部失败继续剩余（或按设置「遇错即停」中断）、失败项可重试；abort() 杀死当前子进程并中止整批。
+ * 文献盒批量处理器（视频转文献，literature 域；ADR-0071：AI 回迁插件侧）
+ * 串行逐部：对「待处理/失败」任务按列表顺序 spawn 工具无头批处理命令
+ * （本地指针 node <tools>/cli.js --batch '<json>' 或全局 bili-dl --batch），
+ * _runOne 返回「子进程终结」Promise，循环内 await —— 严格一次一部。
+ *
+ * AI 回迁（ticket 136/ADR-0071）：CLI 不再调 AI、不再写笔记，只产出机械步骤
+ * （[bz-step]/[bz-p]/[bz-info]）+ 末尾 [bz-result] {"transcript","video"}（转录临时文件
+ * 绝对路径 + 视频落地路径 vault 相对|绝对|null）。插件侧在 close(0) 后接管：
+ * 读转录临时文件 → 插件侧 AI 生成文献笔记（note-gen.ts generateVideoNote）→
+ * 读毕删除转录临时文件 → 任务成功落库并归档；转录读取失败 / AI 失败（含 AI 未配置）
+ * → 该任务 failed（不落半成品笔记），临时文件尽力清理。
+ * 失败即整批语义：单部失败继续剩余（或按设置「遇错即停」中断）；失败项可重试。
+ * abort() 杀死当前子进程并中止整批；中止发生在 AI 阶段时（子进程已退出）当前部
+ * 照常跑完，未开始项保持待处理（数据一致性优先：已写好的笔记不丢弃）。
+ *
+ * 步骤文案：CLI 步骤行原样透传；插件侧 AI 步骤用固定文案「AI 生成文献笔记中」
+ * 「笔记落盘中」（ui.ts STEP_DONE_MAP 完成态文案按此精确匹配）。
  */
 import { notice } from '../core/notice';
 import { emitDomainEvent } from '../core/domain-bus';
 import { tryGetSettings } from '../core/settings-provider';
+import { getApp } from '../core/app';
 import { LiteratureData } from './data';
+import { generateVideoNote } from './note-gen';
 import type { LiteratureTask } from './types';
 
 /** 工具本地 CLI 指针（修复期临时，与 index.ts 保持一致；稳定后改回全局 bili-dl） */
@@ -23,6 +35,10 @@ const RESULT_RE = /^\[bz-result\]\s*(\{.*\})$/;
 const PROGRESS_RE = /^\[bz-p\]\s*(\{.*\})$/;
 /** [bz-info] {"title","uploader","bvid","url","duration"}——解析信息行（ADR-0067，行内「文字+链接」+ UP主） */
 const INFO_RE = /^\[bz-info\]\s*(\{.*\})$/;
+
+/** 插件侧 AI 步骤固定文案（ui.ts STEP_DONE_MAP 完成态文案按此精确匹配） */
+const AI_STEP_TEXT = 'AI 生成文献笔记中';
+const NOTE_STEP_TEXT = '笔记落盘中';
 
 export interface BatchSummary {
   success: number;
@@ -56,6 +72,13 @@ function getChildProcess(): any {
   try { return w.require('child_process'); } catch { return null; }
 }
 
+/** fs 模块（转录临时文件读/删）：非桌面端/不可得返回 null */
+function getFs(): any {
+  const w = window as any;
+  if (!w.require) return null;
+  try { return w.require('fs'); } catch { return null; }
+}
+
 /** 解析 spawn 目标：仓库内本地 CLI 优先（node 直启，免 shell 引号），兜底全局 bili-dl（.cmd shim 需 shell） */
 function resolveBatchSpawn(taskJson: string): { cmd: string; args: string[]; shell: boolean } {
   try {
@@ -66,6 +89,23 @@ function resolveBatchSpawn(taskJson: string): { cmd: string; args: string[]; she
     }
   } catch { /* 非桌面端/无 fs：走全局命令 */ }
   return { cmd: 'bili-dl', args: ['--batch', taskJson], shell: true };
+}
+
+/** 转录临时文件删除（尽力而为：已删/读失败等一律静默，不阻塞主流程） */
+function tryUnlink(path: string | null | undefined): void {
+  if (!path) return;
+  try {
+    const fsMod = getFs();
+    if (fsMod && typeof fsMod.unlinkSync === 'function') fsMod.unlinkSync(path);
+  } catch { /* 临时文件可能已被清走 */ }
+}
+
+/** vault 绝对路径（ADR-0071：随 taskJson 下发，供 CLI 计算视频相对路径）；不可得 → 空串 */
+function getVaultBasePath(): string {
+  try {
+    const bp = (getApp().vault as any)?.adapter?.getBasePath?.();
+    return typeof bp === 'string' ? bp : '';
+  } catch { return ''; }
 }
 
 /** 取 stderr 尾部做失败原因（滑窗 1KB） */
@@ -80,6 +120,9 @@ function nowTs(): string {
   const p = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
+
+/** 单部终态回调（内部：ok + reason + 笔记/视频路径；resolve 于落库完成后） */
+type FinishOne = (ok: boolean, reason: string | null, notePath: string | null, videoPath: string | null) => void;
 
 export const BatchRunner = {
   running: false,
@@ -136,11 +179,11 @@ export const BatchRunner = {
     try { this._child?.kill?.(); } catch { /* 已退出 */ }
   },
 
-  /** 单部执行：spawn → 解析步骤/进度行 → 终态落库；Promise 在子进程终结（close/error）时 resolve */
+  /** 单部执行：spawn → 解析步骤/进度/信息/结果行 → CLI 终态 → 插件侧 AI 阶段 → 落库；Promise 在终态落库后 resolve */
   _runOne(cp: any, task: LiteratureTask, events: BatchEvents, onEnd: (ok: boolean) => void): Promise<void> {
     return new Promise((resolve) => {
-      // 文献盒设置项透传（ADR-0066/0067）：清晰度 = 任务级覆盖优先、否则全局设置；保留视频/输出目录走全局；
-      // 分P 序号（task.page，1 起）随任务 JSON 下发（工具按 P 选 cid，独立缓存键）
+      // 文献盒设置项全量下发（ADR-0071）：CLI 不再读插件配置，taskJson 一次性带全；
+      // 分P 序号（task.page，1 起）随任务 JSON 下发；vaultPath 供 CLI 计算视频相对路径
       const s = tryGetSettings();
       const taskJson = JSON.stringify({
         url: task.url,
@@ -151,6 +194,15 @@ export const BatchRunner = {
           quality: (task.quality || (s && s.literatureQuality) || 'highest') as string,
           keepVideo: !s || s.literatureKeepVideo !== false,
           outputDir: (s && s.literatureOutputDir ? String(s.literatureOutputDir).trim() : ''),
+          compress: !s || s.literatureCompress !== false,
+          crf: (s && s.literatureCrf) || 23,
+          vaultPath: getVaultBasePath(),
+          ffmpegPath: (s && s.literatureFfmpegPath ? String(s.literatureFfmpegPath) : ''),
+          ffprobePath: (s && s.literatureFfprobePath ? String(s.literatureFfprobePath) : ''),
+          pythonPath: (s && s.literaturePythonPath ? String(s.literaturePythonPath) : ''),
+          whisperModel: (s && s.literatureWhisperModel ? String(s.literatureWhisperModel) : ''),
+          cacheDir: (s && s.literatureCacheDir ? String(s.literatureCacheDir) : ''),
+          cacheRetentionDays: (s && s.literatureCacheRetentionDays) || 7,
         },
       });
       void LiteratureData.updateTask(task.id, { status: 'processing', reason: '启动中…', processedAt: null }).then(() => {
@@ -161,10 +213,13 @@ export const BatchRunner = {
       const { cmd, args, shell } = resolveBatchSpawn(taskJson);
       let child: any;
       let settled = false;
-      const finish = (ok: boolean, reason: string | null, notePath: string | null, videoPath: string | null): void => {
+      // CLI 交付内容（[bz-result] 行）：转录临时文件绝对路径 + 视频落地路径（vault 相对|绝对|null）
+      let transcriptPath: string | null = null;
+      let videoPath: string | null = null;
+      const finish: FinishOne = (ok, reason, notePath, video) => {
         if (settled) return;
         settled = true;
-        void this._finish(task, events, onEnd, ok, reason, notePath, videoPath).then(resolve);
+        void this._finish(task, events, onEnd, ok, reason, notePath, video).then(resolve);
       };
       try {
         child = cp.spawn(cmd, args, { shell, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -174,8 +229,6 @@ export const BatchRunner = {
         return;
       }
       this._child = child;
-      let notePath: string | null = null;
-      let videoPath: string | null = null;
       const errChunks: Buffer[] = [];
       const onData = (d: Buffer) => {
         const text = String(d);
@@ -223,12 +276,13 @@ export const BatchRunner = {
             } catch { /* 忽略坏信息行 */ }
             continue;
           }
+          // 交付结果行（ADR-0071）：CLI 不再写笔记，只交付转录临时文件路径 + 视频路径
           m = line.match(RESULT_RE);
           if (m) {
             try {
               const r = JSON.parse(m[1]);
-              notePath = r.note || null;
-              videoPath = r.video || null;
+              transcriptPath = r && typeof r.transcript === 'string' && r.transcript ? r.transcript : null;
+              videoPath = r && typeof r.video === 'string' && r.video ? r.video : null;
             } catch { /* 忽略坏结果行 */ }
           }
         }
@@ -236,27 +290,81 @@ export const BatchRunner = {
       child.stdout?.on('data', onData);
       child.stderr?.on('data', (d: Buffer) => { errChunks.push(d); });
       child.on('error', (e: Error) => {
+        // 已终态（如 spawn 抛错路径）或 error 后再补发 close：一律忽略
+        if (settled) return;
         const reason = /ENOENT/.test(e.message) ? `未找到 bili-dl。${INSTALL_HINT}` : `启动失败：${e.message}`;
-        finish(false, reason, notePath, videoPath);
+        finish(false, reason, null, null);
       });
       child.on('close', (code: number) => {
+        // 幂等护栏：finish 已落终态（error/中止/重复 close）后不再触发 AI 阶段
+        if (settled) return;
         if (this.aborted) {
-          finish(false, '已中止', notePath, videoPath);
-        } else if (code === 0) {
-          finish(true, null, notePath, videoPath);
+          finish(false, '已中止', null, null);
+          return;
+        }
+        if (code === 0) {
+          // CLI 成功 → 插件侧 AI 阶段（ADR-0071：读转录 → 生成笔记 → 删临时文件）
+          void this._aiStep(task, events, transcriptPath, videoPath, finish);
         } else {
           const errTail = tailStderr(errChunks);
           const reason = errTail || `处理失败（退出码 ${code}）。${INSTALL_HINT}`;
-          finish(false, reason, notePath, videoPath);
+          finish(false, reason, null, null);
         }
       });
     });
+  },
+
+  /**
+   * 插件侧 AI 阶段（ADR-0071）：CLI close(0) 后由插件接管——
+   * 「AI 生成文献笔记中」→ 读转录临时文件 → generateVideoNote（元数据 + 分块润色 + 落盘）→
+   * 读毕删临时文件 → 「笔记落盘中」→ 成功终态。
+   * 转录读取失败 / AI 失败（含 AI 未配置）→ 该任务 failed（reason 中文、不落半成品笔记），
+   * 转录临时文件尽力清理；单部失败即整批语义与 CLI 失败一致（继续剩余 / 遇错即停）。
+   */
+  async _aiStep(task: LiteratureTask, events: BatchEvents, transcriptPath: string | null, videoPath: string | null, finish: FinishOne): Promise<void> {
+    task.reason = AI_STEP_TEXT;
+    void LiteratureData.updateTask(task.id, { reason: AI_STEP_TEXT });
+    events.onTaskProgress({ ...task }, AI_STEP_TEXT);
+    // 读转录临时文件（缺失/读取失败 → 该任务 failed）
+    let transcript: string;
+    try {
+      const fsMod = getFs();
+      if (!fsMod || typeof fsMod.readFileSync !== 'function' || !transcriptPath) {
+        throw new Error('无转录文件');
+      }
+      transcript = fsMod.readFileSync(transcriptPath, 'utf8');
+    } catch {
+      tryUnlink(transcriptPath);
+      finish(false, '转录文件读取失败', null, null);
+      return;
+    }
+    // 插件侧 AI 生成文献笔记（失败 → 该任务 failed，不落半成品笔记）
+    let notePath: string;
+    try {
+      notePath = await generateVideoNote({
+        transcript,
+        videoTitle: task.title || '',
+        url: task.url,
+        uploader: task.uploader || '',
+      });
+    } catch (e: any) {
+      tryUnlink(transcriptPath);
+      finish(false, `AI 生成文献笔记失败：${e?.message || String(e)}`, null, null);
+      return;
+    }
+    // 读毕删除转录临时文件（尽力而为）
+    tryUnlink(transcriptPath);
+    task.reason = NOTE_STEP_TEXT;
+    void LiteratureData.updateTask(task.id, { reason: NOTE_STEP_TEXT });
+    events.onTaskProgress({ ...task }, NOTE_STEP_TEXT);
+    finish(true, null, notePath, videoPath);
   },
 
   /** 终态落库 + 事件（resolve 于落库完成后）；成功 → 自动归档历史（archived+归档时间，ADR-0067） */
   async _finish(task: LiteratureTask, events: BatchEvents, onEnd: (ok: boolean) => void, ok: boolean, reason: string | null, notePath: string | null, videoPath: string | null): Promise<void> {
     task.status = ok ? 'success' : 'failed';
     task.reason = reason;
+    // 失败不清 notePath/videoPath：保留既有值（断点续跑时旧成果不丢）
     task.notePath = ok ? notePath : task.notePath;
     task.videoPath = ok ? videoPath : task.videoPath;
     task.processedAt = nowTs();
@@ -275,6 +383,13 @@ export const BatchRunner = {
       uploader: task.uploader,
     });
     events.onTaskDone({ ...task });
+    // 域事件（ADR-0071）：任务终态统一由处理器发射（smartcat 观察 converted；
+    // failed 为占位语义——ticket 136 起 smartcat 不再订阅失败）
+    if (ok) {
+      emitDomainEvent('literature:tasks', { kind: 'converted', id: task.id, url: task.url, notePath: task.notePath });
+    } else {
+      emitDomainEvent('literature:tasks', { kind: 'failed', id: task.id, url: task.url, notePath: task.notePath ?? null });
+    }
     onEnd(ok);
   },
 };
