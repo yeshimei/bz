@@ -89,3 +89,21 @@
 - [x] secondbrain：对话可取消+流式 / 历史持久化+清空 / 多行输入 / 移动端吞错修复 / 移除 AI 生成概括 / ESC 层级
 - [x] favorites：分页 / 排序（favoritesSortKey 设置键）/ 搜索空态区分 / 删除可撤销 / 保存防假死 / 脏表单拦截 / 样式收敛
 - [x] 全量 221 文件 / 3528 用例绿 + tsc 零错误；待办（真 Bug 剪藏/影视、通病接入、加密盒/密码/番茄钟/聚合讯/小橘/自动摘要/影视报告/阅读报告）见 issues/144-ux-batch.md
+
+## Ticket 146 — 文献盒交互第三轮（用户三条拍板；worktree 交付）
+
+**状态：进行中 → 已交付**
+
+- [x] 规格：`issues/146-literature-ux-round3.md`（spec.md「文献盒交互第三轮」节同步）
+- [x] 主面板列表：标题↔简介↔时间分档加大间距（summary 6→10px、date 6→12px）；日期改 `formatRelativeTime` 相对显示（无效回退原文、空不显示）
+- [x] 视频录入单钮态机：删独立 `#lit-btn-video-abort`；空闲「▶️ 批量处理」（无工作禁用）↔ 运行中「⏹ 终止」（仅失败项续跑「⏹ 终止整批」）；完成有失败可再点续跑；移动端整钮隐藏（`.bz-lit-run-btn` 文本钮）
+- [x] 测试：改写视频面板/移动端用例（无 abort、三态断言）+ 新增主面板日期用例 + 新增单钮态机用例（含失败续跑）；全量测试绿 + tsc 0 错 + 构建部署（worktree → master 合并）
+
+## Ticket 145 — bili-dl 压缩回退（压缩件比原文件大则采纳原文件；用户拍板，tools 交付）
+
+**状态：进行中 → 已交付**
+
+- [x] 规格：`issues/145-bili-downloader-compress-fallback.md`（spec.md「压缩回退」节同步；CONTEXT/README/cli.js 注释同步）
+- [x] tools/bili-downloader core.js ③.5：`needsCompressFallback`（压缩件严格更大 → 删压缩件沿用输入、不写压缩缓存、交付文件名不带 `_crf` 标记）；断点续跑命中缓存恒为采纳
+- [x] 测试：`needsCompressFallback` 单测（更大回退/更小·相等·stat 异常不回退）；tools `node --test` 49 全绿
+- [x] bz 侧 tsc + 全量测试 + 构建不回归；全局安装副本 core.js/文档同步生效

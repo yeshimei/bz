@@ -99,6 +99,14 @@
 .bz-lit-head-btns button:hover {
   background: var(--background-secondary);
 }
+/* ticket 146 批量处理单按钮：文本钮（▶️ 批量处理 ↔ 运行中 ⏹ 终止/终止整批），覆盖头行图标钮固定 22px 宽 */
+.bz-lit-head-btns .bz-lit-run-btn {
+  width: auto !important;
+  height: 26px !important;
+  padding: 0 10px !important;
+  font-size: 12px !important;
+  white-space: nowrap;
+}
 
 /* ---- 简洁工具栏（ticket 143：无窗口标题的窗口用，筛选 chips / 计数与动作钮同行） ---- */
 .bz-lit-toolbar {
@@ -250,7 +258,7 @@
   color: var(--text-muted);
   border: 1px solid var(--background-modifier-border);
 }
-/* 简介：两行超出省略号截断（抽屉头部同款，剪藏本先例） */
+/* 简介：两行超出省略号截断（抽屉头部同款，剪藏本先例）；ticket 146 加大与标题间距 */
 .bz-lit-card-summary {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -259,11 +267,12 @@
   color: var(--text-muted);
   line-height: 1.6;
   font-size: 12px;
-  margin-top: 6px;
+  margin-top: 10px;
   word-break: break-word;
 }
+/* ticket 146：日期用 BZ 相对时间（formatRelativeTime），加大与简介间距 */
 .bz-lit-card-date {
-  margin-top: 6px;
+  margin-top: 12px;
   font-size: 11px;
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;

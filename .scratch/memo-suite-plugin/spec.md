@@ -681,3 +681,29 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - **验收**：a) 主面板/视频录入保留 h3 标题（文献盒/视频录入），历史无 `bz-lit-title`；b) 搜索输入 placeholder 为空；c) 添加弹窗默认剪辑、
   编辑态 mode 标签、分P 无括号、URL 无 placeholder；d) 历史组头无「UP主」/条数、行去目录去 .md、
   时间等于 formatRelativeTime 结果；e) tsc + 全量测试 + 构建全绿（worktree 流程）。
+
+### 文献盒交互第三轮（ticket 146，用户三条拍板，worktree 交付）
+
+> ① 主面板列表加大行距 + 日期改相对时间；② 视频录入批量按钮单钮态机；③（承接）均不改数据格式与域事件契约。
+
+- **主面板卡片间距**：标题 → 简介 → 时间分档加大（`.bz-lit-card-summary` margin-top 6→10px、
+  `.bz-lit-card-date` margin-top 6→12px）。
+- **主面板日期**：`formatRelativeTime(n.date)` 相对显示（与历史同口径）；无效日期回退原文、空日期不显示。
+- **视频录入单钮态机**（去独立 ⏹ 终止钮）：
+  - 空闲 = 「▶️ 批量处理」（无待处理/失败任务时禁用；处理完成仍有失败 → 自动可再点续跑）；
+  - 运行中 = 该按钮即终止控制：整批（含待处理项）「⏹ 终止」；**仅失败项续跑**「⏹ 终止整批」；点击走原中止确认；
+  - 移动端整钮隐藏（`.bz-lit-run-btn` 文本钮，覆盖头行图标钮 22px 固定宽）。
+- **验收**：a) 主列表日期 = formatRelativeTime 结果、间距 CSS 加大；b) 视频头部无 `#lit-btn-video-abort`，
+  空闲/运行中/失败续跑三态按钮文案与禁用态正确；c) 移动端按钮隐藏；d) tsc + 全量测试 + 构建全绿（worktree 流程）。
+
+### 压缩回退（ticket 145，tools/bili-downloader，用户拍板）
+
+> 全局工具 @jwbz/bili-downloader（源码在 `tools/bili-downloader`，镜像发布）补回网页版旧有「压缩回退」：
+> 压缩件体积严格大于压缩输入（原件/剪辑件）→ 压缩无收益，丢弃压缩件沿用输入交付。不改插件侧（processor 仅透传 compress/crf）。
+
+- **core.js ③.5 压缩段**：`needsCompressFallback(inPath, outPath)`（stat 严格 >，异常保守 false）→ 回退：
+  删压缩件、不写 resume-compress 缓存、`srcForDeliver` 沿用输入；采纳才写缓存。
+- **交付文件名**：`compressed` 标记改传实际采纳 `compressedAdopted`——回退时文件名不带 `_crf<值>`；
+  断点续跑命中压缩缓存恒为采纳。
+- **验收**：tools `node --test` 全绿（新增 needsCompressFallback 单测：更大回退/更小·相等·stat 异常不回退）；
+  bz 侧 tsc + 全量测试 + 构建不回归；全局安装副本同步 core.js。
