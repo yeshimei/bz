@@ -1,6 +1,6 @@
 # 包仔插件工作区
 
-将 QuickAdd 宏脚本独立化为标准 Obsidian 插件：已交付「日记本」（`diary-notebook`），当前规划将剩余脚本（备忘录、剪藏本、聚合讯、密码本、收藏本、书库、影视、自动摘要、AI Agent、复习计划、做题家、闪念、归物本等 15 个）合并为**一个插件** `bz`（显示名「备忘录」，ADR-0003）。番茄钟（新域，原脚本代码已丢失、按手册重建，ADR-0012）不在 16 脚本迁移清单内，属范围扩张。B站下载为独立 NodeJS Web 工具（`tools/bili-downloader/`，见其 CONTEXT.md，ADR-0011）。源码在 `src/`，测试在 `tests/`。
+将 QuickAdd 宏脚本独立化为标准 Obsidian 插件：已交付「日记本」（`diary-notebook`），当前规划将剩余脚本（备忘录、剪藏本、聚合讯、密码本、收藏本、书库、影视、自动摘要、AI Agent、复习计划、做题家、闪念、归物本等 15 个）合并为**一个插件** `bz`（显示名「备忘录」，ADR-0003）。番茄钟（新域，原脚本代码已丢失、按手册重建，ADR-0012）不在 16 脚本迁移清单内，属范围扩张。B站下载为独立 NodeJS 工具（`tools/bili-downloader/`，见其 CONTEXT.md，ADR-0011；ticket 136 起去 AI 去网页版，仅无头批处理）。源码在 `src/`，测试在 `tests/`。
 
 ## Language
 
@@ -92,21 +92,27 @@ _Avoid_: 影视数据分析弹窗（旧词条口径——指本域窗口时用�
 **海报抓取 (Poster Fetch)**: 由独立守护进程（PM2 托管 `douban-poster watch`，ADR-0007）完成：监听影视文件夹新建/改动（10s 防抖）→ 全目录遍历缺「海报」字段的笔记 → 按创建时间倒序入队 → 每 15s 串行抓取「豆瓣搜索 → 高清海报下载 → 13 个 frontmatter 字段补全 → 正文海报 embed」。与 bz 插件完全分离：插件不含抓取逻辑，设置页仅提供安装与运行指引；脚本源码在 `tools/obsidian-douban-poster/`（npm 包 `@jwbz/obsidian-douban-poster`）。
 _Avoid_: 抓海报、豆瓣补全、poster fetch
 
-**桌面端专属能力 (Desktop-only Capability)**: 依赖 Node.js 外部进程（child_process）、移动端（Capacitor）不可用的功能。门禁：`window.require('child_process')` 为 null 即非桌面端；移动端不注册事件监听，设置项置灰标注「仅桌面端可用」，不静默降级。（当前实例：B站下载器启动、文献盒批量处理等外部工具；海报抓取已移出插件，由独立守护进程承担）
+**桌面端专属能力 (Desktop-only Capability)**: 依赖 Node.js 外部进程（child_process）、移动端（Capacitor）不可用的功能。门禁：`window.require('child_process')` 为 null 即非桌面端；移动端不注册事件监听，设置项置灰标注「仅桌面端可用」，不静默降级。（当前实例：文献盒批量处理等外部工具；海报抓取已移出插件，由独立守护进程承担）
 
 
 **自动摘要 (Auto Summary)**: 常驻监听 `归档/网页剪藏` 新文件 → AI（deepseek-v4-flash）生成摘要/标签写回 frontmatter。详设（ticket 124）三键：autoSummaryLength（simple/standard/detailed 摘要长度档位）、autoSummaryTagsEnabled + autoSummaryTagCount（标签生成开关与数量区间）、autoSummaryTiming（见「摘要时机」）。AI 配置走主设置页 core AI（ADR-0052）。
 
-**B站下载 (Bilibili Downloader)**: 输入链接 → B站 API 解析（封面/标题/清晰度）→ 下载合并（ffmpeg spawn）→ 多段剪辑（对一个下载原件定义 0..N 段落，时间 0.1s/HH:MM:SS(.S)）/合并（段序拼接）/压缩（ffmpeg，产物 ffprobe 校验兜底，交付模式：分开、每段一个；合并、单文件）→ 转文字（faster-whisper，python -c 内嵌代码）。**用户决策：独立 NodeJS Web 工具（`tools/bili-downloader/`，bin `bili-dl`），不并入 bz 插件**——运行即起本地网页，网页内完成全部操作，设置图标可改交付目录。**ADR-0065 起插件侧新增「文献盒」队列（见该词条）：批量处理 = spawn 工具无头批处理命令（`cli.js --batch`）跑既有快速流程；ADR-0066 起 ⬇️ 下载入口并入文献盒面板右侧按钮（弹出原单条弹窗，命令与弹窗契约不变）**。术语见 `tools/bili-downloader/CONTEXT.md`（ADR-0011）。
+**B站下载 (Bilibili Downloader)**: 输入链接 → B站 API 解析（封面/标题/清晰度）→ 下载合并（ffmpeg spawn）→ 多段剪辑（对一个下载原件定义 0..N 段落，时间 0.1s/HH:MM:SS(.S)）/合并（段序拼接）/压缩（ffmpeg，产物 ffprobe 校验兜底）→ 转文字（faster-whisper，python -c 内嵌代码）。**ticket 136 起（ADR-0071）外部工具去 AI 去网页版**：`tools/bili-downloader`（bin `bili-dl`）只保留无头批处理（`cli.js --batch`，解析/下载/剪辑/压缩/转文字/交付），产出**转录临时文件**交 bz 插件做文献笔记 AI 与落盘；网页版（server.js/public）与插件 `bz-bili-open` 命令已删除。文献盒批处理见「文献盒」词条。术语见 `tools/bili-downloader/CONTEXT.md`。
 
-**文献盒 (Literature Box Panel / Bilibili Task Queue)**: bili-downloader 域的面板+队列能力（ADR-0065 起建，ADR-0066 正名，ADR-0067 断点续跑/历史归档/行内信息，ADR-0070 UX 整改）——条目 = 视频链接 + 起止时间 + 清晰度任务级覆盖 + 分P（ADR-0067 添加界面可选）+ 状态（待处理/处理中/成功/失败）+ 标题/UP主（**双源**：ticket 134/ADR-0068 起聚合讯「保存至文献」入口预填 + `[bz-info]` 解析后落库覆盖，行内改为**标题文字链接**（点击浏览器打开）+ UP主；未解析显**短链接**——BV 号/短码优先提取、其余截断，完整链接悬浮可见，ADR-0070）+ archived，数据 `CONFIG/STORAGE/bili-tasks.json`；**移动端仅暂存录入**；**桌面端批量处理**：串行逐部 spawn `cli.js --batch`，**处理范围 = 待处理 + 失败**（整批完成后再次点击批量处理，失败项自动断点续跑；**无行内/菜单重试按钮，重试 = 再次点击 ▶️**，ADR-0070），产出「文献笔记」落「文献盒」。**断点续跑（ADR-0067 核心）**：成功步骤产物按指纹（BV+cid+起止，0.1s 精度）留存缓存目录（剪辑件/转写稿/AI 元数据/润色分块逐块落盘，`resume-*`，超期随缓存回收），失败重跑自动跳过已完成步骤、从出错步骤继续。**行内进度（ADR-0066/0067）**：✓步骤时间线（**已完成步骤显示完成态文案「已…」**，如「已解析/已下载」，ADR-0070）+ 当前步骤 + ⌛耗时；**百分比/进度条仅「下载中」显示**；支持中止整批、遇错即停（设置项）。**头部状态计数（ADR-0070）**：标题旁「N 待处理 · N 处理中 · N 失败」非零项展示。**历史（ADR-0067/0070）**：成功自动归档（archived），🕘 打开**独立历史弹窗**（自有遮罩 + ✕/ESC；同视频多条文献笔记归并一张分组卡片按行列出，笔记行点击打开、行级操作：打开笔记/复制视频路径/移出历史；**无成功徽标、无「历史 · N 条」条带**）；**清空历史入口在 ⚙️ 设置面板**（按钮行 + 确认弹窗，ADR-0070）。**添加弹窗（ADR-0070）**：独立遮罩层、无取消按钮（遮罩/ESC 关闭，与其他域弹窗一致）。**设置 ⚙️ 五键**（键直绑落 data.json；默认=既存行为）：详细进度提示 / 保留视频原件 / 下载清晰度 / 遇错即停 / 输出目录。**AI 自愈（ADR-0067）**：元数据 JSON 剥 markdown 围栏 + 失败自动重试一次，二次失败才报「AI 返回的不是 JSON」。**域事件（ADR-0066/0067）**：`'bili-tasks'` 通道（added/parsed/edited/converted/failed）；小橘只收 added+converted 新建行为流条目，**parsed 充实既有 added 条目**（BV 号 → 标题/UP主 语义，不新增），来源「文献盒」，不向量化不气泡。命令 `bz-bili-tasks-open`（名称「文献盒」）。
+**文献盒 (Literature Box)**: literature 域的面板+队列能力（ticket 136/ADR-0072 自 bili-downloader 迁出并正名）——主面板像剪藏本列出「文献目录」文件夹里的文献笔记（.md，扫描 + metadataCache 解析 frontmatter，**不从数据文件派生**）：顶部**领域筛选**（各领域带数量标签）+ **类型过滤**（全部/视频/术语）+ 搜索，滚动触底懒加载，域事件四通道自动刷新，**双击打开** + 统一抽屉（打开/复制双链/复制原文链接/删除，删除视频笔记同步清理任务记录）。右上角三按钮：**文字录入**（术语生成流程，见「术语文献」）/ **视频录入**（视频转文献任务队列：添加/处理/历史；**移动端仅添加+历史**；无 ⚙️ 无 ⬇️，设置全并入主面板设置面板）/ **设置**。数据 `CONFIG/STORAGE/literature.json` 单一文件（视频任务结构沿用 bili-tasks.json，**术语不留任务**；旧文件不迁移不做兼容）。命令 `bz-literature-open` / `bz-literature-note-term`。批处理 = spawn `cli.js --batch`，**AI（元数据+润色+type/domain）与笔记落盘在插件侧**（CLI 去 AI，产出转录临时文件）；压缩默认开（CRF 默认 23）。断点续跑、行内进度、历史归档等语义自 ADR-0065/0066/0067/0070 承继（CLI 缓存仅机械产物）。
 _Avoid_: 备忘录场景（用户拍板不走备忘录域）、视频剪切列表
 
-**快速流程 (Quick Flow)**: B站下载「转文字」之后的一键后续——AI 生成标题/标签/一句话简介并轻度润色转录正文，落一篇「文献笔记」；视频本体仍走既有交付流程，笔记嵌入交付文件。_Avoid_: 一键流程、AI 后处理
+**快速流程 (Quick Flow)**: B站下载「转文字」之后的一键后续——ticket 136 起（ADR-0071）AI（标题/标签/简介/润色 + 文献类型/领域）与文献笔记落盘由 **bz 插件**完成（CLI 去 AI，产出转录临时文件交插件）；视频本体交付仍走工具，笔记嵌入交付文件。_Avoid_: 一键流程、AI 后处理
 
-**文献笔记 (Literature Note)**: 由快速流程生成的视频文献笔记——frontmatter 含 AI 标题/标签/一句话简介/来源链接等七键，正文为逐段「润色正文 + 视频双链」排布（不含原始转录），存于「文献盒」。区别于书库「读书笔记」与聚合讯「剪藏文章」。_Avoid_: 读书笔记、视频笔记（指本词时）
+**文献笔记 (Literature Note)**: 存于「文献目录」的 AI 生成笔记，两种文献类型（ADR-0073）——**视频文献**（type: video）：frontmatter 九键（title/tags/summary/url/date/author/videoTitle/type/domain），正文逐段「润色正文 + 视频双链」；**术语文献**（type: term）：frontmatter 五键（title/type/domain/term/date），正文一段简介（百科总结式）。区别于书库「读书笔记」与聚合讯「剪藏文章」。_Avoid_: 读书笔记、视频笔记（指本词时）
 
-**文献盒 (Literature Box)**: 存放文献笔记的 vault 内目录，默认 vault 根下「文献盒」。_Avoid_: 笔记夹、输出目录
+**文献目录 (Literature Folder)**: 存放文献笔记的 vault 内目录，设置键 `literatureDirectory`，默认 vault 根下「文献盒」。_Avoid_: 笔记夹、输出目录
+
+**文献类型 (Literature Type)**: 文献笔记 frontmatter `type` 键，`'video'`（视频文献，视频转文献生成）| `'term'`（术语文献，术语生成流程产出）——区分两种生成来源，主面板按此做类型过滤与徽标。_Avoid_: 类型、分类（泛称时）
+
+**领域 (Subject)**: 文献笔记 frontmatter `domain` 键，中文值——来自可配置词表（设置面板维护，逗号分隔，**缺省空 = AI 自由写**）或 AI 直接产出；AI 自动分类、用户在术语预览/笔记编辑时可改；主面板按领域筛选 + 数量标签。_Avoid_: 学科分类（非本义）
+
+**术语文献 (Term Note)**: 术语生成流程（文字录入）产出的文献笔记——选中/输入术语（命令 `bz-literature-note-term` 预填编辑器选中词）→ AI 生成一段简介（百科总结式）→ 预览可改（术语/领域/正文）→ 确认写入「文献目录」并自动打开；frontmatter title/type:term/domain/term/date；生成成功入小橘行为流（term-generated）。_Avoid_: 名词笔记（非术语）
 
 **视频缓存 (Video Cache)**: 「下载原件」的跨任务持久缓存——同 BV 同分 P 同清晰度的重复下载优先复用缓存、跳过下载阶段，超期（默认 7 天）清理。_Avoid_: 产物缓存、中间缓存（剪辑/压缩件不进缓存）
 
