@@ -7,7 +7,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
-  favoritesAddedText, favoritesEditChanges, favoritesEditedText, favoritesDeletedText, buildFavoritesActionText,
+  favoritesAddedText, favoritesEditChanges, favoritesEditedText, favoritesDeletedText, favoritesArchivedText, buildFavoritesActionText,
   buildFavoritesStructured,
   type FavoritesActionEvent,
 } from '../../src/smartcat/favorites-source';
@@ -79,6 +79,9 @@ describe('favoritesEditedText / favoritesDeletedText（文案组装）', () => {
   it('删除仅标题', () => {
     expect(favoritesDeletedText('TokenLedger')).toBe('你删除了收藏《TokenLedger》');
   });
+  it('归档仅标题（ticket 140：与删除同构短文案）', () => {
+    expect(favoritesArchivedText('TokenLedger')).toBe('你归档了收藏《TokenLedger》');
+  });
 });
 
 describe('buildFavoritesActionText（事件 → 观察文本）', () => {
@@ -88,6 +91,9 @@ describe('buildFavoritesActionText（事件 → 观察文本）', () => {
     expect(buildFavoritesActionText({ kind: 'edit', title: 'TokenLedger', changes: ['改了简介'] })).toBe('你编辑了收藏《TokenLedger》：改了简介');
     expect(buildFavoritesActionText({ kind: 'edit', title: 'TokenLedger', changes: [] })).toBe('你编辑了收藏《TokenLedger》');
     expect(buildFavoritesActionText({ kind: 'delete', title: 'TokenLedger' })).toBe('你删除了收藏《TokenLedger》');
+  });
+  it('归档事件映射（ticket 140）', () => {
+    expect(buildFavoritesActionText({ kind: 'archive', title: 'TokenLedger' })).toBe('你归档了收藏《TokenLedger》');
   });
 });
 
@@ -110,5 +116,9 @@ describe('buildFavoritesStructured（收藏本事件 → StructuredMeta，行为
   it('delete：entityType=favorite, action=deleted', () => {
     const s = buildFavoritesStructured({ kind: 'delete', title: 'TokenLedger' });
     expect(s).toEqual({ entityType: 'favorite', action: 'deleted', name: 'TokenLedger' });
+  });
+  it('archive：entityType=favorite, action=archived（ticket 140，与 added/edited/deleted 并列）', () => {
+    const s = buildFavoritesStructured({ kind: 'archive', title: 'TokenLedger' });
+    expect(s).toEqual({ entityType: 'favorite', action: 'archived', name: 'TokenLedger' });
   });
 });

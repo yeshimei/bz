@@ -680,21 +680,21 @@ describe('收藏本抽屉（统一手势组件接入）', () => {
     return [...document.querySelectorAll('#fav-entries-container .fav-card')] as HTMLElement[];
   }
 
-  it('动作条件显示与顺序：打开→置顶→跳转笔记→刷新余额→编辑→删除', async () => {
+  it('动作条件显示与顺序：打开→置顶→跳转笔记→刷新余额→编辑→归档→删除', async () => {
     const { ui, dm } = await setup();
     const cards = await seedTwo(ui, dm);
     expect(cards.length).toBe(2);
 
     // 网页卡（无 url、有 linkedNote）：无「打开」「刷新余额」，跳转小字=笔记名
     await openByLongPress(cards[0]);
-    expect(actionLabels()).toEqual(['置顶', '跳转笔记', '编辑', '删除']);
+    expect(actionLabels()).toEqual(['置顶', '跳转笔记', '编辑', '归档', '删除']);
     const subs0 = [...document.querySelectorAll('.bz-item-sheet-item-sub')].map((e) => e.textContent);
     expect(subs0).toContain('说明.md');
     closeItemMenu();
 
     // 项目卡（有 url、无 llm）：打开在首位，小字=域名；无「跳转笔记」「刷新余额」
     await openByLongPress(cards[1]);
-    expect(actionLabels()).toEqual(['打开', '置顶', '编辑', '删除']);
+    expect(actionLabels()).toEqual(['打开', '置顶', '编辑', '归档', '删除']);
     const subs1 = [...document.querySelectorAll('.bz-item-sheet-item-sub')].map((e) => e.textContent);
     expect(subs1).toContain('github.com');
 
@@ -779,6 +779,87 @@ describe('收藏本抽屉（统一手势组件接入）', () => {
     await tick(30);
     expect((await dm.getAll()).length).toBe(0);
     expect(hasNotice('已删除收藏')).toBe(true);
+  });
+
+  it('归档：抽屉项先收抽屉再 confirm，确认后冷存消失（ticket 140，ADR-0074）', async () => {
+    const { ui, dm } = await setup();
+    await dm.add(makeItem());
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const card = document.querySelector('#fav-entries-container .fav-card') as HTMLElement;
+    await openByLongPress(card);
+    clickAction('归档');
+    await tick(10);
+    // 非 keepOpen：点归档即收抽屉，confirm 叠上
+    expect(document.querySelector('.bz-item-sheet')).toBeNull();
+    expect(document.getElementById('__shared_confirm_mask__')).not.toBeNull();
+
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    await tick(30);
+    const saved = (await dm.getAll())[0];
+    expect(saved.archived).toBe(true);
+    expect(saved.archivedAt).toBeTruthy();
+    expect(hasNotice('已归档收藏')).toBe(true);
+    // 纯冷存：确认后列表即不再渲染该条目
+    expect(document.querySelectorAll('#fav-entries-container .fav-card').length).toBe(0);
+  });
+
+  it('归档：confirm 取消 → 条目原样保留', async () => {
+    const { ui, dm } = await setup();
+    await dm.add(makeItem());
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const card = document.querySelector('#fav-entries-container .fav-card') as HTMLElement;
+    await openByLongPress(card);
+    clickAction('归档');
+    await tick(10);
+    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
+    await tick(30);
+    expect((await dm.getAll())[0].archived).toBeUndefined();
+    expect(document.querySelectorAll('#fav-entries-container .fav-card').length).toBe(1);
+  });
+});
+
+describe('收藏本归档冷存（ticket 140，ADR-0074 纯冷存不可见）', () => {
+  it('冷存条目全排除：主列表/搜索/标签计数均不含', async () => {
+    const { ui, dm } = await setup();
+    await dm.add(makeItem({ id: '1', title: '活条目' }));
+    await dm.add(makeItem({ id: '2', title: '冷存条目', archived: true, archivedAt: '2026-08-30 10:00:00' }));
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const container = document.getElementById('fav-entries-container')!;
+    expect(container.querySelectorAll('.fav-card').length).toBe(1);
+    expect(container.textContent).toContain('活条目');
+    expect(container.textContent).not.toContain('冷存条目');
+    // 标签计数只数未归档（两条同属 GitHub）
+    const tagBtns = [...document.querySelectorAll('.fav-tag-btn')] as HTMLElement[];
+    expect(tagBtns.find((b) => b.dataset.tag === 'GitHub')!.textContent).toContain('(1)');
+
+    // 搜索命中的已归档条目同样不出现
+    ui.searchInput!.value = '冷存';
+    ui.searchInput!.dispatchEvent(new Event('input'));
+    await new Promise((r) => setTimeout(r, 250));
+    expect(container.querySelectorAll('.fav-card').length).toBe(0);
+  });
+
+  it('批量余额只喂未归档条目（冷存不发 API）', async () => {
+    const { ui, dm } = await setup();
+    const llm = { apiKeys: 'sk', balanceUrl: 'https://api.example.com/balance' };
+    await dm.add(makeItem({ id: '1', tags: ['大模型'], type: '大模型', llmConfig: llm }));
+    await dm.add(makeItem({ id: '2', title: '冷存模型', tags: ['大模型'], type: '大模型', archived: true, llmConfig: llm }));
+    const spy = vi.spyOn(ui.balanceService, 'fetchAllBalances').mockResolvedValue({});
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy.mock.calls[0][0].map((i: any) => i.id)).toEqual(['1']);
   });
 });
 
@@ -876,6 +957,25 @@ describe('收藏本 smartcat 观察挂点（ticket 078 域事件派发）', () =
 
     expect(mockNotify).toHaveBeenCalledTimes(1);
     expect(mockNotify).toHaveBeenCalledWith({ kind: 'delete', title: '我的项目' });
+  });
+
+  it('归档挂点：确认归档成功后通知 {kind: archive, title}（ticket 140）', async () => {
+    const { ui, dm } = await setup();
+    await dm.add(makeItem());
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const card = document.querySelector('#fav-entries-container .fav-card') as HTMLElement;
+    rightClickOpen(card);
+    await new Promise((r) => setTimeout(r, 10));
+    clickAction('归档');
+    await new Promise((r) => setTimeout(r, 10));
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    await new Promise((r) => setTimeout(r, 20));
+
+    expect(mockNotify).toHaveBeenCalledTimes(1);
+    expect(mockNotify).toHaveBeenCalledWith({ kind: 'archive', title: '我的项目' });
   });
 
   it('保存失败（add 抛错）→ 不通知（挂点在 try 成功路径）', async () => {
