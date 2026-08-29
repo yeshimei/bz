@@ -1,5 +1,5 @@
 /**
- * 文献盒批量处理器测试（src/bili-downloader/processor.ts）：
+ * 文献盒批量处理器测试（src/literature/processor.ts）：
  * 严格串行逐部（一次一部）、[bz-step]/[bz-p]/[bz-result] 解析、单部失败继续、
  * 遇错即停（设置项）、中止整批、非桌面端提示、设置项透传（清晰度/保留视频/输出目录）。
  * 外部进程一律经 window.require 打桩，无真实子进程与网络。

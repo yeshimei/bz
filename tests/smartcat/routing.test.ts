@@ -33,8 +33,8 @@ describe('路由规则表（ROUTING_RULES）', () => {
       'chat:said',
       // 书库
       'library:started', 'library:completed', 'library:progressed', 'library:highlight', 'library:thought', 'library:added', 'library:removed',
-      // 文献盒（bili-downloader，ADR-0066）
-      'bili-downloader:added', 'bili-downloader:converted',
+      // 文献盒（literature，ADR-0066/0072：ticket 136 起 converted + term-generated 两节点）
+      'literature:converted', 'literature:term-generated',
       // 反思
       'reflection:insight', 'reflection:digest',
       // 周报
@@ -143,8 +143,8 @@ describe('路由规则表（ROUTING_RULES）', () => {
     expect(rule.defaultEmotion).toBe('happy');
   });
 
-  it('resolveRouting：bili-downloader:converted 精确匹配 → behavior', () => {
-    const rule = resolveRouting('bili-downloader', 'converted');
+  it('resolveRouting：literature:converted 精确匹配 → behavior', () => {
+    const rule = resolveRouting('literature', 'converted');
     expect(rule.stream).toBe('behavior');
   });
 
@@ -152,9 +152,9 @@ describe('路由规则表（ROUTING_RULES）', () => {
     expect(ROUTING_RULES['library:added'].stream).toBe('behavior');
   });
 
-  it('bili-downloader:added / bili-downloader:converted → behavior（文献盒仅行为流，用户拍板，ADR-0066）', () => {
-    expect(ROUTING_RULES['bili-downloader:added'].stream).toBe('behavior');
-    expect(ROUTING_RULES['bili-downloader:converted'].stream).toBe('behavior');
+  it('literature:converted / literature:term-generated → behavior（文献盒仅行为流，用户拍板，ADR-0066/0072）', () => {
+    expect(ROUTING_RULES['literature:converted'].stream).toBe('behavior');
+    expect(ROUTING_RULES['literature:term-generated'].stream).toBe('behavior');
   });
 
   it('reflection:insight → memory, importance=0.90', () => {
@@ -304,9 +304,9 @@ describe('ADR-0069：盘点补齐路由规则', () => {
       ['library', 'started', 'behavior'],
       ['library', 'highlight', 'behavior'],
       ['library', 'added', 'behavior'],
-      // 文献盒
-      ['bili-downloader', 'added', 'behavior'],
-      ['bili-downloader', 'converted', 'behavior'],
+      // 文献盒（ticket 136：converted + term-generated 两节点，added/parsed 已移除）
+      ['literature', 'converted', 'behavior'],
+      ['literature', 'term-generated', 'behavior'],
       // 剪藏（clipping:deleted 已按用户拍板断开移除，2026-08-29；未定义键走 system:fallback behavior）
       // 复习计划 / 题库 / 入口页 / 附件（新增，规则就绪）
       ['review', 'started', 'behavior'],

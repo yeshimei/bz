@@ -1,7 +1,7 @@
 // @vitest-environment node
 /**
- * 文献盒数据层测试（视频转文献，bili-downloader 域；ADR-0066 正名）：
- * 时间格式校验、bili-tasks.json CRUD、状态流转、清空已完成（只清成功）。
+ * 文献盒数据层测试（视频转文献，literature 域；ADR-0066 正名，ADR-0072 迁出）：
+ * 时间格式校验、literature.json CRUD、状态流转、清空已完成（只清成功）。
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { LiteratureData, isValidTime, isTerminal, normalizeUrl, normalizeLooseTime } from '../../src/literature/data';
@@ -71,7 +71,7 @@ describe('isTerminal / normalizeUrl', () => {
   });
 });
 
-describe('LiteratureData（bili-tasks.json）', () => {
+describe('LiteratureData（literature.json）', () => {
   let vault: MockVault;
 
   beforeEach(() => {
@@ -88,7 +88,7 @@ describe('LiteratureData（bili-tasks.json）', () => {
 
   it('首读自建空文件（[]），addTask 追加队尾且字段完整', async () => {
     const t = await LiteratureData.addTask({ url: 'https://www.bilibili.com/video/BV1xx411c7mD', start: '1:02:03', end: '1:05:00', remark: '重点段落' });
-    expect(t.id).toMatch(/^bili-task-/);
+    expect(t.id).toMatch(/^literature-task-/);
     expect(t.status).toBe('pending');
     expect(t.start).toBe('1:02:03');
     expect(t.end).toBe('1:05:00');

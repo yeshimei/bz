@@ -202,7 +202,8 @@ export const BatchRunner = {
             } catch { /* 忽略坏进度行 */ }
             continue;
           }
-          // 解析信息行（ADR-0067）：标题/UP主 落库 + 域事件分发（小橘充实既有 added 条目，不新增）。
+          // 解析信息行（ADR-0067）：标题/UP主 落库（面板行内「文字+链接」展示）。
+          // 'parsed' 域事件自 ticket 136 起无订阅者（smartcat 只收 converted/term-generated），保留发射作占位；
           // 先落库再发事件：UI onTaskInfo 整表刷新时能确定性读到新字段（避免读旧快照的竞态）
           m = line.match(INFO_RE);
           if (m) {

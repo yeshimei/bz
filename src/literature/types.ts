@@ -5,7 +5,7 @@
 export type LiteratureTaskStatus = 'pending' | 'processing' | 'success' | 'failed';
 
 export interface LiteratureTask {
-  /** generateId('bili-task') */
+  /** generateId('literature-task') */
   id: string;
   /** B站链接或 BV 号 */
   url: string;

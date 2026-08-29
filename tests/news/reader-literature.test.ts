@@ -8,7 +8,7 @@
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 // 跨域入口 mock：reader 仅函数级 import openLiteratureAddTask（真实实现会拉起文献盒面板 DOM，
-// 聚合讯侧只断言调用参数——面板自身行为由 tests/bili-downloader/* 覆盖）
+// 聚合讯侧只断言调用参数——面板自身行为由 tests/literature/* 覆盖）
 vi.mock('../../src/literature', () => ({ openLiteratureAddTask: vi.fn() }));
 import { openLiteratureAddTask } from '../../src/literature';
 import { setApp } from '../../src/core/app';

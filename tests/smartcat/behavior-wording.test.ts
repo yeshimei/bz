@@ -172,25 +172,25 @@ describe('buildBehaviorWording：reflection / weekly-report / dossier / secondbr
   });
 });
 
-describe('buildBehaviorWording：bili（文献盒，ADR-0066）', () => {
-  it('bili:added → 你添加了转文献任务（BV 号）', () => {
-    const item = makeItem('bili-downloader', 'added', { entityType: 'bili', action: 'added', name: 'BV1xx411c7mD' });
-    expect(buildBehaviorWording(item)).toBe('你添加了转文献任务（BV1xx411c7mD）');
-  });
-
-  it('bili:converted → 你把《标题》转成了文献', () => {
-    const item = makeItem('bili-downloader', 'converted', { entityType: 'bili', action: 'converted', name: '从零开始学B站', extras: { notePath: '文献盒/从零开始学B站.md' } });
+describe('buildBehaviorWording：literature（文献盒，ADR-0066/0072）', () => {
+  it('literature:converted → 你把《标题》转成了文献', () => {
+    const item = makeItem('literature', 'converted', { entityType: 'literature', action: 'converted', name: '从零开始学B站', extras: { notePath: '文献盒/从零开始学B站.md' } });
     expect(buildBehaviorWording(item)).toBe('你把《从零开始学B站》转成了文献');
   });
 
-  it('routing 风格别名 bili-downloader:converted 同样命中', () => {
-    const item = makeItem('bili-downloader', 'converted', { entityType: 'bili-downloader', action: 'converted', name: 'X' });
-    expect(buildBehaviorWording(item)).toBe('你把《X》转成了文献');
+  it('literature:term-generated → 你为「术语」生成了一篇术语文献', () => {
+    const item = makeItem('literature', 'term-generated', { entityType: 'literature', action: 'term-generated', name: '习得性无助' });
+    expect(buildBehaviorWording(item)).toBe('你为「习得性无助」生成了一篇术语文献');
   });
 
-  it('bili 未知动作 → 实体默认', () => {
-    const item = makeItem('bili-downloader', 'weird', { entityType: 'bili', action: 'weird', name: 'X' });
-    expect(buildBehaviorWording(item)).toBe('转文献动态：X');
+  it('遗留 bili-downloader:converted / bili 存量条目同样命中（别名兼容，ADR-0072）', () => {
+    const item = makeItem('bili-downloader', 'converted', { entityType: 'bili', action: 'converted', name: '旧视频笔记' });
+    expect(buildBehaviorWording(item)).toBe('你把《旧视频笔记》转成了文献');
+  });
+
+  it('literature 未知动作 → 实体默认', () => {
+    const item = makeItem('literature', 'weird', { entityType: 'literature', action: 'weird', name: 'X' });
+    expect(buildBehaviorWording(item)).toBe('文献动态：X');
   });
 });
 
