@@ -1,8 +1,12 @@
 /**
- * 文献盒批量处理器测试（src/literature/processor.ts）：
- * 严格串行逐部（一次一部）、[bz-step]/[bz-p]/[bz-result] 解析、单部失败继续、
- * 遇错即停（设置项）、中止整批、非桌面端提示、设置项透传（清晰度/保留视频/输出目录）。
- * 外部进程一律经 window.require 打桩，无真实子进程与网络。
+ * 文献盒批量处理器测试（src/literature/processor.ts，ticket 136/ADR-0071：AI 回迁插件侧）：
+ * 严格串行逐部（一次一部）、[bz-step]/[bz-p]/[bz-info]/[bz-result] 解析、
+ * CLI close(0) 后插件侧 AI 链路（读转录临时文件 → generateVideoNote → 删临时文件 →
+ * 成功落库归档 + converted 域事件）、转录读取失败 / AI 失败（含未配置）→ 任务 failed
+ * 不落半成品笔记（+ failed 域事件）、单部失败继续、遇错即停、中止整批、非桌面端提示、
+ * taskJson options 全量下发（compress/crf/vaultPath/ffmpegPath 等）。
+ * 外部进程一律经 window.require 打桩（child_process + fs），AI 经 vi.mock('note-gen')
+ * 整模块打桩（仅用 generateVideoNote），无真实网络。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { EventEmitter } from 'events';
@@ -14,6 +18,17 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { onDomainEvent } from '../../src/core/domain-bus';
 import { MockVault } from '../mock-vault';
 import { clearNotices, getNoticeMessages } from '../mock-obsidian-entry';
+
+// AI 打桩：整模块 mock note-gen（processor 仅用 generateVideoNote；ESM 命名导入可被 vi.mock 替换）
+const noteGenMocks = vi.hoisted(() => ({
+  generateVideoNote: vi.fn(async () => '文献盒/测试.md'),
+}));
+vi.mock('../../src/literature/note-gen', () => ({
+  generateVideoNote: noteGenMocks.generateVideoNote,
+}));
+
+/** 本地 CLI 指针（与 processor.ts LOCAL_CLI_CANDIDATE 一致） */
+const LOCAL_CLI = 'D:/Obsidian/bz/tools/bili-downloader/cli.js';
 
 /** 假子进程：stdout/stderr 可 emit；kill 可断言 */
 class FakeChild extends EventEmitter {
@@ -34,10 +49,15 @@ function makeEvents() {
   return { onTaskProgress: vi.fn(), onTaskInfo: vi.fn(), onTaskDone: vi.fn(), onBatchDone: vi.fn() };
 }
 
+const TRANSCRIPT = '这是转写文稿的第一段。这是第二段！';
+const RESULT_LINE = '[bz-result] {"transcript":"C:/tmp/bz-transcript-abc.txt","video":"CONFIG/APPENDIX/v.mp4"}\n';
+const INFO_LINE = '[bz-info] {"title":"从零开始学B站","uploader":"某UP","bvid":"BV1xx411c7mD","url":"https://www.bilibili.com/video/BV1xx411c7mD","duration":600}\n';
+
 describe('BatchRunner', () => {
   let vault: MockVault;
   let child: FakeChild;
   let cpMock: { spawn: ReturnType<typeof vi.fn> };
+  let fsMock: { existsSync: ReturnType<typeof vi.fn>; readFileSync: ReturnType<typeof vi.fn>; unlinkSync: ReturnType<typeof vi.fn> };
   const origRequire = (window as any).require;
 
   beforeEach(() => {
@@ -46,17 +66,29 @@ describe('BatchRunner', () => {
     LiteratureData.init({ storagePath: 'CONFIG/STORAGE' });
     child = new FakeChild();
     cpMock = { spawn: vi.fn(() => child) };
-    (window as any).require = () => cpMock;
+    fsMock = {
+      existsSync: vi.fn(() => false), // 本地 CLI 指针不存在 → 走全局 bili-dl shim
+      readFileSync: vi.fn(() => TRANSCRIPT),
+      unlinkSync: vi.fn(),
+    };
+    // window.require 路由：child_process → spawn 桩；fs → 文件桩（resolveBatchSpawn 探测 + AI 阶段读/删）
+    (window as any).require = (name: string) => {
+      if (name === 'child_process') return cpMock;
+      if (name === 'fs') return fsMock;
+      throw new Error('未知模块：' + name);
+    };
+    noteGenMocks.generateVideoNote.mockReset().mockResolvedValue('文献盒/测试.md');
     clearNotices();
   });
 
   afterEach(() => {
     (window as any).require = origRequire;
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
     BatchRunner.running = false;
     BatchRunner.aborted = false;
     BatchRunner.stoppedFail = false;
     BatchRunner._child = null;
+    BatchRunner._cp = null;
     setSettingsProvider(() => ({}) as any);
     clearNotices();
   });
@@ -89,50 +121,220 @@ describe('BatchRunner', () => {
     await p;
   });
 
-  it('严格串行：第一部 spawn 后未完成前不 spawn 第二部；逐步文案 + [bz-result] 落终态', async () => {
+  it('严格串行 + close(0) 驱动插件侧 AI：读转录 → generateVideoNote → 删临时文件 → 成功落库归档 + converted 事件', async () => {
     const tasks = await seedTasks();
     const steps: string[] = [];
     const done: LiteratureTask[] = [];
-    const ev = {
-      onTaskProgress: (t: LiteratureTask, s: string) => steps.push(`${t.id}:${s}`),
-      onTaskInfo: vi.fn(),
-      onTaskDone: (t: LiteratureTask) => done.push(t),
-      onBatchDone: vi.fn(),
-    };
-    const p = BatchRunner.runAll(tasks, ev);
-    await tick();
-    // 串行：只 spawn 了第一部
-    expect(cpMock.spawn).toHaveBeenCalledTimes(1);
-    const [cmd, args, opts] = cpMock.spawn.mock.calls[0];
-    expect(cmd).toBe('bili-dl'); // 无 fs.existsSync → 全局 shim
-    expect(args[0]).toBe('--batch');
-    // ADR-0066/0067：设置项与分P 随任务 JSON 透传（测试无 provider → 设置默认值、无分P）
-    expect(JSON.parse(args[1])).toEqual({
-      url: 'BV1xx411c7mD', start: '1:02:03', end: '1:05:00', page: null,
-      options: { quality: 'highest', keepVideo: true, outputDir: '' },
-    });
-    expect(opts.shell).toBe(true);
-    child.stdout.emit('data', Buffer.from('[bz-step] 下载中\n[bz-step] 剪辑中\n'));
-    child.stdout.emit('data', Buffer.from('[bz-result] {"note":"文献盒/测试.md","video":"CONFIG/APPENDIX/v.mp4"}\n'));
-    child.emit('close', 0);
-    await tick();
-    expect(steps).toContain(`${tasks[0].id}:下载中`);
-    expect(steps).toContain(`${tasks[0].id}:剪辑中`);
-    expect(done).toHaveLength(1);
-    expect(done[0]).toMatchObject({ status: 'success', notePath: '文献盒/测试.md', videoPath: 'CONFIG/APPENDIX/v.mp4' });
-    let all = await LiteratureData.loadTasks();
-    expect(all[0].status).toBe('success');
-    // 第一部完成后才 spawn 第二部
-    expect(cpMock.spawn).toHaveBeenCalledTimes(2);
-    const child2 = cpMock.spawn.mock.results[1].value;
-    child2.emit('close', 0);
-    await p;
-    expect(ev.onBatchDone).toHaveBeenCalledWith({ success: 2, failed: 0, aborted: false, stopped: false });
-    all = await LiteratureData.loadTasks();
-    expect(all.map((x) => x.status).sort()).toEqual(['success', 'success']);
+    const bus: any[] = [];
+    const sub = onDomainEvent('literature:tasks', (e) => bus.push(e));
+    try {
+      const ev = {
+        onTaskProgress: (t: LiteratureTask, s: string) => steps.push(`${t.id}:${s}`),
+        onTaskInfo: vi.fn(),
+        onTaskDone: (t: LiteratureTask) => done.push(t),
+        onBatchDone: vi.fn(),
+      };
+      const p = BatchRunner.runAll(tasks, ev);
+      await tick();
+      // 严格串行：第一部未完成前不 spawn 第二部；无本地 CLI 指针 → 全局 shim
+      expect(cpMock.spawn).toHaveBeenCalledTimes(1);
+      const [cmd, args, opts] = cpMock.spawn.mock.calls[0];
+      expect(cmd).toBe('bili-dl');
+      expect(args[0]).toBe('--batch');
+      expect(opts.shell).toBe(true);
+      child.stdout.emit('data', Buffer.from('[bz-step] 下载中\n[bz-step] 剪辑中\n'));
+      child.stdout.emit('data', Buffer.from(INFO_LINE));
+      child.stdout.emit('data', Buffer.from(RESULT_LINE));
+      child.emit('close', 0);
+      // 插件侧 AI：读转录（UTF-8 全文）→ generateVideoNote（title 取 [bz-info] 解析值）→ 删临时文件
+      await vi.waitFor(() => expect(noteGenMocks.generateVideoNote).toHaveBeenCalledTimes(1));
+      expect(fsMock.readFileSync).toHaveBeenCalledWith('C:/tmp/bz-transcript-abc.txt', 'utf8');
+      expect(fsMock.unlinkSync).toHaveBeenCalledWith('C:/tmp/bz-transcript-abc.txt'); // 读毕删除
+      expect(noteGenMocks.generateVideoNote).toHaveBeenCalledWith({
+        transcript: TRANSCRIPT,
+        videoTitle: '从零开始学B站',
+        url: 'BV1xx411c7mD',
+        uploader: '某UP',
+      });
+      // 插件侧 AI 步骤固定文案进时间线（ui.ts STEP_DONE_MAP 完成态按此匹配）
+      expect(steps).toContain(`${tasks[0].id}:AI 生成文献笔记中`);
+      expect(steps).toContain(`${tasks[0].id}:笔记落盘中`);
+      // 第一部（含 AI）完成后才 spawn 第二部
+      await vi.waitFor(() => expect(cpMock.spawn).toHaveBeenCalledTimes(2));
+      const child2 = cpMock.spawn.mock.results[1].value;
+      child2.stdout.emit('data', Buffer.from(RESULT_LINE));
+      child2.emit('close', 0);
+      await p;
+      expect(ev.onBatchDone).toHaveBeenCalledWith({ success: 2, failed: 0, aborted: false, stopped: false });
+      const all = await LiteratureData.loadTasks();
+      expect(all.map((x) => x.status).sort()).toEqual(['success', 'success']);
+      const first = all.find((x) => x.id === tasks[0].id)!;
+      expect(first.notePath).toBe('文献盒/测试.md'); // generateVideoNote 返回的笔记路径
+      expect(first.videoPath).toBe('CONFIG/APPENDIX/v.mp4'); // [bz-result] video 落库
+      expect(first.archived).toBe(true); // 成功自动归档
+      expect(first.archivedAt).toBeTruthy();
+      expect(done).toHaveLength(2);
+      // converted 域事件：成功任务各一条，载荷带 id/url/notePath
+      const converted = bus.filter((e) => e.kind === 'converted');
+      expect(converted).toHaveLength(2);
+      expect(converted[0]).toMatchObject({ kind: 'converted', id: tasks[0].id, url: 'BV1xx411c7mD', notePath: '文献盒/测试.md' });
+    } finally {
+      sub();
+    }
   });
 
-  it('单部失败继续剩余：失败项带原因、后续继续处理', async () => {
+  it('转录临时文件缺失/读取失败 → 任务 failed「转录文件读取失败」、不调 AI、临时文件尽量清理', async () => {
+    const tasks = await seedTasks();
+    const ev = makeEvents();
+    const bus: any[] = [];
+    const sub = onDomainEvent('literature:tasks', (e) => bus.push(e));
+    try {
+      // 首部转录读取失败 → 失败继续第二部（第二部读取正常、AI 成功）
+      fsMock.readFileSync = vi.fn()
+        .mockImplementationOnce(() => { throw new Error('ENOENT: no such file'); })
+        .mockImplementation(() => TRANSCRIPT);
+      const p = BatchRunner.runAll(tasks, ev);
+      await tick();
+      child.stdout.emit('data', Buffer.from(RESULT_LINE));
+      child.emit('close', 0);
+      // 首部失败后照常继续第二部
+      await vi.waitFor(() => expect(cpMock.spawn).toHaveBeenCalledTimes(2));
+      const child2 = cpMock.spawn.mock.results[1].value;
+      child2.stdout.emit('data', Buffer.from(RESULT_LINE));
+      child2.emit('close', 0);
+      await p;
+      expect(noteGenMocks.generateVideoNote).toHaveBeenCalledTimes(1); // 仅第二部进入 AI；首部读失败不调 AI
+      expect(fsMock.unlinkSync).toHaveBeenCalledWith('C:/tmp/bz-transcript-abc.txt'); // 失败也尝试清理
+      const all = await LiteratureData.loadTasks();
+      const f = all.find((x) => x.id === tasks[0].id)!;
+      expect(f.status).toBe('failed');
+      expect(f.reason).toBe('转录文件读取失败');
+      expect(all[1].status).toBe('success');
+      expect(ev.onBatchDone).toHaveBeenCalledWith({ success: 1, failed: 1, aborted: false, stopped: false });
+      expect(bus.filter((e) => e.kind === 'failed')).toHaveLength(1); // 失败部发射 failed，成功部发射 converted
+      expect(bus.filter((e) => e.kind === 'converted')).toHaveLength(1);
+    } finally {
+      sub();
+    }
+  });
+
+  it('AI 失败（含 AI 未配置）→ 该任务 failed、不落半成品笔记、临时文件清理、failed 域事件', async () => {
+    await LiteratureData.addTask({ url: 'BV1xx411c7mD' });
+    noteGenMocks.generateVideoNote.mockRejectedValue(new Error('未配置 AI 服务'));
+    const ev = makeEvents();
+    const bus: any[] = [];
+    const sub = onDomainEvent('literature:tasks', (e) => bus.push(e));
+    try {
+      const p = BatchRunner.runAll(await LiteratureData.loadTasks(), ev);
+      await tick();
+      child.stdout.emit('data', Buffer.from(RESULT_LINE));
+      child.emit('close', 0);
+      await p;
+      expect(fsMock.unlinkSync).toHaveBeenCalledWith('C:/tmp/bz-transcript-abc.txt'); // AI 失败也清理临时文件
+      const all = await LiteratureData.loadTasks();
+      expect(all[0].status).toBe('failed');
+      expect(all[0].reason).toContain('AI 生成文献笔记失败');
+      expect(all[0].reason).toContain('未配置 AI 服务');
+      expect(all[0].notePath).toBeNull(); // 不落半成品笔记
+      expect(all[0].archived).toBe(false);
+      expect(ev.onBatchDone).toHaveBeenCalledWith({ success: 0, failed: 1, aborted: false, stopped: false });
+      expect(bus).toEqual([expect.objectContaining({ kind: 'failed', id: all[0].id, url: 'BV1xx411c7mD' })]);
+    } finally {
+      sub();
+    }
+  });
+
+  it('[bz-result] video 为 null → videoPath null（keepVideo 关闭场景）', async () => {
+    await LiteratureData.addTask({ url: 'BV1xx411c7mD' });
+    const ev = makeEvents();
+    const p = BatchRunner.runAll(await LiteratureData.loadTasks(), ev);
+    await tick();
+    child.stdout.emit('data', Buffer.from('[bz-result] {"transcript":"C:/tmp/t.txt","video":null}\n'));
+    child.emit('close', 0);
+    await p;
+    const all = await LiteratureData.loadTasks();
+    expect(all[0].status).toBe('success');
+    expect(all[0].videoPath).toBeNull();
+    expect(all[0].notePath).toBe('文献盒/测试.md');
+  });
+
+  it('taskJson options 全量下发：compress/crf/vaultPath/ffmpegPath 等 + 任务级/全局设置映射（ADR-0071）', async () => {
+    (vault.adapter as any).getBasePath = () => 'D:/Obsidian/我的库';
+    setSettingsProvider(() => ({
+      literatureQuality: '1080',
+      literatureKeepVideo: false,
+      literatureOutputDir: 'D:/videos',
+      literatureCompress: true,
+      literatureCrf: 26,
+      literatureFfmpegPath: 'ffmpeg',
+      literatureFfprobePath: 'ffprobe',
+      literaturePythonPath: 'python',
+      literatureWhisperModel: 'small',
+      literatureCacheDir: 'D:/cache',
+      literatureCacheRetentionDays: 14,
+    }) as any);
+    await LiteratureData.addTask({ url: 'BV1xx411c7mD', quality: '720', page: 3 });
+    const ev = makeEvents();
+    const p = BatchRunner.runAll(await LiteratureData.loadTasks(), ev);
+    await tick();
+    const [, args] = cpMock.spawn.mock.calls[0];
+    const json = JSON.parse(args[1]);
+    expect(json.page).toBe(3);
+    expect(json.options).toEqual({
+      quality: '720', // 任务级 quality 优先于全局
+      keepVideo: false,
+      outputDir: 'D:/videos',
+      compress: true,
+      crf: 26,
+      vaultPath: 'D:/Obsidian/我的库',
+      ffmpegPath: 'ffmpeg',
+      ffprobePath: 'ffprobe',
+      pythonPath: 'python',
+      whisperModel: 'small',
+      cacheDir: 'D:/cache',
+      cacheRetentionDays: 14,
+    });
+    child.emit('close', 0);
+    await p;
+  });
+
+  it('空设置下的 options 默认值：quality highest / keepVideo / compress 开 / crf 23 / 路径全空', async () => {
+    await LiteratureData.addTask({ url: 'BV1xx411c7mD' });
+    const ev = makeEvents();
+    const p = BatchRunner.runAll(await LiteratureData.loadTasks(), ev);
+    await tick();
+    const [cmd, args, opts] = cpMock.spawn.mock.calls[0];
+    expect(cmd).toBe('bili-dl');
+    expect(opts.shell).toBe(true);
+    expect(JSON.parse(args[1])).toEqual({
+      url: 'BV1xx411c7mD', start: null, end: null, page: null,
+      options: {
+        quality: 'highest', keepVideo: true, outputDir: '',
+        compress: true, crf: 23, vaultPath: '',
+        ffmpegPath: '', ffprobePath: '', pythonPath: '', whisperModel: '',
+        cacheDir: '', cacheRetentionDays: 7,
+      },
+    });
+    child.emit('close', 0);
+    await p;
+  });
+
+  it('本地 CLI 指针存在 → node <path> --batch 直启（shell:false）', async () => {
+    fsMock.existsSync.mockReturnValue(true);
+    await LiteratureData.addTask({ url: 'BV1xx411c7mD' });
+    const ev = makeEvents();
+    const p = BatchRunner.runAll(await LiteratureData.loadTasks(), ev);
+    await tick();
+    const [cmd, args, opts] = cpMock.spawn.mock.calls[0];
+    expect(cmd).toBe('node');
+    expect(args[0]).toBe(LOCAL_CLI);
+    expect(args[1]).toBe('--batch');
+    expect(opts.shell).toBe(false);
+    child.emit('close', 0);
+    await p;
+  });
+
+  it('单部失败继续剩余：失败项带原因、后续继续处理（CLI close 非 0）', async () => {
     const tasks = await seedTasks();
     const ev = makeEvents();
     const p = BatchRunner.runAll(tasks, ev);
@@ -143,6 +345,7 @@ describe('BatchRunner', () => {
     await tick();
     expect(cpMock.spawn).toHaveBeenCalledTimes(2); // 继续跑第二部
     const child2 = cpMock.spawn.mock.results[1].value;
+    child2.stdout.emit('data', Buffer.from(RESULT_LINE));
     child2.emit('close', 0);
     await p;
     expect(ev.onBatchDone).toHaveBeenCalledWith({ success: 1, failed: 1, aborted: false, stopped: false });
@@ -153,7 +356,7 @@ describe('BatchRunner', () => {
     expect(all[1].status).toBe('success');
   });
 
-  it('spawn 同步抛 ENOENT → 失败原因含安装引导', async () => {
+  it('spawn 同步抛 ENOENT → 失败原因含安装引导，全部任务失败', async () => {
     cpMock = { spawn: vi.fn(() => { throw Object.assign(new Error('spawn bili-dl ENOENT'), { code: 'ENOENT' }); }) };
     const tasks = await seedTasks();
     const ev = makeEvents();
@@ -223,7 +426,7 @@ describe('BatchRunner', () => {
     await p;
   });
 
-  it('遇错即停（设置开启）：首部失败后不再 spawn 剩余，onBatchDone stopped:true', async () => {
+  it('遇错即停（设置开启）：首部 CLI 失败后不再 spawn 剩余，onBatchDone stopped:true', async () => {
     setSettingsProvider(() => ({ literatureStopOnFailure: true }) as any);
     const tasks = await seedTasks();
     const ev = makeEvents();
@@ -240,32 +443,21 @@ describe('BatchRunner', () => {
     expect(all[1].status).toBe('pending'); // 未开始项保持待处理
   });
 
-  it('设置项透传：quality/keepVideo/outputDir 随任务 JSON 下发', async () => {
-    setSettingsProvider(() => ({ literatureQuality: '720', literatureKeepVideo: false, literatureOutputDir: 'D:/videos' }) as any);
-    const tasks = await LiteratureData.loadTasks();
-    if (tasks.length === 0) await LiteratureData.addTask({ url: 'BV1xx411c7mD' });
+  it('AI 失败 + 遇错即停：单部 failed 后不再 spawn 剩余（插件侧失败同样触发中断）', async () => {
+    setSettingsProvider(() => ({ literatureStopOnFailure: true }) as any);
+    const tasks = await seedTasks();
+    noteGenMocks.generateVideoNote.mockRejectedValue(new Error('网络错误'));
     const ev = makeEvents();
-    const p = BatchRunner.runAll(await LiteratureData.loadTasks(), ev);
+    const p = BatchRunner.runAll(tasks, ev);
     await tick();
-    const [, args] = cpMock.spawn.mock.calls[0];
-    expect(JSON.parse(args[1]).options).toEqual({ quality: '720', keepVideo: false, outputDir: 'D:/videos' });
+    child.stdout.emit('data', Buffer.from(RESULT_LINE));
     child.emit('close', 0);
     await p;
-  });
-
-  it('任务级覆盖透传：task.page=2 / task.quality=1080 覆盖全局设置（ADR-0067）', async () => {
-    setSettingsProvider(() => ({ literatureQuality: 'highest' }) as any);
-    const t = await LiteratureData.addTask({ url: 'BV1xx411c7mD', quality: '1080', page: 2 });
-    const ev = makeEvents();
-    const p = BatchRunner.runAll(await LiteratureData.loadTasks(), ev);
-    await tick();
-    const [, args] = cpMock.spawn.mock.calls[0];
-    const json = JSON.parse(args[1]);
-    expect(json.page).toBe(2);
-    expect(json.options.quality).toBe('1080'); // 任务级优先于全局
-    child.emit('close', 0);
-    await p;
-    void t;
+    expect(cpMock.spawn).toHaveBeenCalledTimes(1); // 不再跑第二部
+    expect(ev.onBatchDone).toHaveBeenCalledWith({ success: 0, failed: 1, aborted: false, stopped: true });
+    const all = await LiteratureData.loadTasks();
+    expect(all[0].status).toBe('failed');
+    expect(all[1].status).toBe('pending');
   });
 
   it('[bz-info] 解析信息：落库 title/uploader + onTaskInfo + 域事件 parsed（ADR-0067）', async () => {
@@ -277,13 +469,14 @@ describe('BatchRunner', () => {
       const p = BatchRunner.runAll(tasks, ev);
       await tick();
       child.stdout.emit('data', Buffer.from('[bz-step] 解析中\n'));
-      child.stdout.emit('data', Buffer.from('[bz-info] {"title":"从零开始学B站","uploader":"某UP","bvid":"BV1xx411c7mD","url":"https://www.bilibili.com/video/BV1xx411c7mD","duration":600}\n'));
-      await tick();
-      expect(ev.onTaskInfo).toHaveBeenCalledTimes(1);
-      let all = await LiteratureData.loadTasks();
-      expect(all[0].title).toBe('从零开始学B站');
-      expect(all[0].uploader).toBe('某UP');
-      expect(bus).toHaveLength(1);
+      child.stdout.emit('data', Buffer.from(INFO_LINE));
+      await vi.waitFor(() => expect(ev.onTaskInfo).toHaveBeenCalledTimes(1));
+      await vi.waitFor(async () => {
+        const all = await LiteratureData.loadTasks();
+        expect(all[0].title).toBe('从零开始学B站');
+        expect(all[0].uploader).toBe('某UP');
+      });
+      expect(bus.filter((e) => e.kind === 'parsed')).toHaveLength(1);
       expect(bus[0]).toMatchObject({ kind: 'parsed', url: 'BV1xx411c7mD', title: '从零开始学B站', uploader: '某UP' });
       BatchRunner.abort();
       child.emit('close', 0);
@@ -298,18 +491,19 @@ describe('BatchRunner', () => {
     const ev = makeEvents();
     const p = BatchRunner.runAll(tasks, ev);
     await tick();
-    child.stdout.emit('data', Buffer.from('[bz-step] 解析中\n[bz-info] {"title":"测试视频","uploader":"UP主","bvid":"BV1xx411c7mD","url":"BV1xx411c7mD","duration":600}\n'));
+    child.stdout.emit('data', Buffer.from('[bz-step] 解析中\n'));
+    child.stdout.emit('data', Buffer.from(INFO_LINE));
     child.emit('close', 1); // 首部失败（解析信息已留存 → 断点续跑场景）
-    await tick();
-    expect(cpMock.spawn).toHaveBeenCalledTimes(2); // 第二部照常
+    await vi.waitFor(() => expect(cpMock.spawn).toHaveBeenCalledTimes(2)); // 第二部照常
     const child2 = cpMock.spawn.mock.results[1].value;
+    child2.stdout.emit('data', Buffer.from(RESULT_LINE));
     child2.emit('close', 0);
     await p;
     let all = await LiteratureData.loadTasks();
     expect(all[0].status).toBe('failed');
     await vi.waitFor(async () => {
       const cur = await LiteratureData.loadTasks();
-      expect(cur[0].title).toBe('测试视频'); // 解析信息落库（先落库后事件，确定性）
+      expect(cur[0].title).toBe('从零开始学B站'); // 解析信息落库（先落库后事件，确定性）
     });
     all = await LiteratureData.loadTasks();
     expect(all[1].archived).toBe(true);
@@ -319,31 +513,12 @@ describe('BatchRunner', () => {
     await tick();
     expect(cpMock.spawn).toHaveBeenCalledTimes(3); // 失败项续跑
     const child3 = cpMock.spawn.mock.results[2].value;
+    child3.stdout.emit('data', Buffer.from(RESULT_LINE));
     child3.emit('close', 0);
     await p2;
     expect(ev2.onBatchDone).toHaveBeenCalledWith({ success: 1, failed: 0, aborted: false, stopped: false });
     all = await LiteratureData.loadTasks();
     expect(all.filter((x) => x.status === 'failed')).toHaveLength(0);
     expect(all.filter((x) => x.archived)).toHaveLength(2); // 两部都归档
-  });
-
-  it('成功自动归档：archived=true + archivedAt 落库（ADR-0067）', async () => {
-    const tasks = await seedTasks();
-    const ev = makeEvents();
-    const p = BatchRunner.runAll(tasks, ev);
-    await tick();
-    child.stdout.emit('data', Buffer.from('[bz-result] {"note":"文献盒/测试.md","video":"CONFIG/APPENDIX/v.mp4"}\n'));
-    child.emit('close', 0);
-    await tick();
-    const all = await LiteratureData.loadTasks();
-    expect(all[0].status).toBe('success');
-    expect(all[0].archived).toBe(true);
-    expect(all[0].archivedAt).toBeTruthy();
-    expect(all[1].archived).toBe(false); // 未处理项不归档
-    // 收尾：第二部仍会 spawn——中止并关闭，防止悬挂
-    BatchRunner.abort();
-    const child2 = cpMock.spawn.mock.results[1]?.value;
-    if (child2) child2.emit('close', 0);
-    await p;
   });
 });
