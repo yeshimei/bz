@@ -1,109 +1,66 @@
 # B站下载器
 
-交互式本地 Web 工具：`bili-dl` 启动本地服务并打开网页，在网页内完成 B站视频的解析、下载、裁切/压缩、转文字与交付（移入交付目录 + 剪贴板）。由 QuickAdd 脚本《B站下载.js》独立化而来，核心逻辑（CORE）零依赖、可 headless 测试。
+无头批处理 CLI（`bili-dl --batch '<json>'`）：B站视频解析、分P 选择、下载（多 CDN 节点切换 + 下载原件本地缓存）、多段剪辑/压缩（ffmpeg，产物 ffprobe 校验兜底）、转文字（faster-whisper）、交付（移入交付目录）。由 QuickAdd 脚本《B站下载.js》独立化而来，核心逻辑（CORE）零依赖、可 headless 测试。**ticket 136 起网页版已移除、AI/文献笔记生成回迁 bz 插件**——本工具不再写笔记、不再调 AI。
 
 ## Language
 
-**下载任务 (Download Task)**:
-从解析链接到交付的完整处理流程（解析 → 下载 → 裁切/压缩 → 转文字 → 完成）。同一时刻只有一个任务；任务中止时删除全部产物。
+**批处理 (Batch)**:
+无头处理一条视频任务的完整流水（解析 → 下载 → 剪辑(有起止才跑) → 压缩(缺省开) → 转文字 → 交付），经 `--batch '<json>'` 由 Obsidian 插件「文献盒」面板驱动；stdout 打协议行（`[bz-step]`/`[bz-p]`/`[bz-info]`/`[bz-result]`），stderr 给失败中文原因。
 _Avoid_: 会话、作业
 
-**产物 (Artifact)**:
-任务过程中生成的视频文件（下载原件、裁切片段、压缩件），存于系统临时目录，任务中止或窗口清理时删除。
-_Avoid_: 临时文件、中间文件
-
 **下载原件 (Original)**:
-任务中下载合并后的原始视频文件，未被裁切/压缩；「↩ 原视频」即恢复到该文件重新裁切/压缩。
+任务中下载合并后的原始视频文件，未被剪辑/压缩；跨任务持久缓存（同 BV+cid+清晰度）命中即跳过下载。
 _Avoid_: 原片、原始文件
 
-**段落 (Segment)**:
-对一个「下载原件」定义的一个连续时间区间 {开始, 结束}，剪辑的最小单元；一个任务可有 0..N 个段落，以 0.1 秒精度起/止表示。段落源恒为下载原件。
-_Avoid_: 剪辑点、裁切范围
-
 **剪辑 (Clipping)**:
-对一个下载原件圈出一个或多个「段落」并决定交付形态的行为；交付模式分「分开交付」（每段一个交付文件，剪贴板多行 wikilink）与「合并成一个视频」（段序拼接为单一交付文件）。裁切/压缩皆作用于段落之上。
-_Avoid_: （区别于单一「裁切」）
+按起止区间裁出片段（流复制优先 + ffprobe 校验，失败自动重编码兜底）；仅 start/end 都有值才跑，步骤行「剪辑中」。
+_Avoid_: 裁切、裁剪
 
-**合并 (Merge)**:
-把多个段落按定义顺序拼接为一个产物（concat）；编码策略为流复制优先、失败自动重编码兜底，产物经 ffprobe 校验可播放性。
-_Avoid_: 拼接、合成
+**压缩 (Compression)**:
+对源（整片或剪辑后）做 libx264 重编码（CRF 档位，默认 23、范围 18-28）；ticket 136 起**缺省开**，步骤行「压缩中」，交付文件名带 `_crf<值>`。
+_Avoid_: 压缩回退（网页版专有，已移除）
 
-**交付模式 (Delivery Mode)**:
-「完成」时产物的形态：**分开交付**=每段落各出一个交付文件、剪贴板多行 wikilink（有转录时尾附全文一次）；**合并成一个视频**=段序拼接为单一交付文件、剪贴板单条 wikilink。切换模式不丢失已定义段落。
-_Avoid_: 输出模式、导出选项
+**转录文本 (Transcript)**:
+faster-whisper 转出的纯文本（逐段 flush 协议 `\x1e<file>\x1f<seg>\x1f` + 文件结束空哨兵 `\x1e<file>\x1f\x1f`）；完成后写**转录临时文件**（系统临时目录，UTF-8 全文）交 bz 插件做文献笔记 AI，插件读取后自删。
+_Avoid_: 字幕、转写稿
 
-**激活段 (Active Segment)**:
-段落列表中被选中、当前参与预览/校验/「✂ 应用裁切」的段落；无段落列表场景（单段）即唯一段落。
-_Avoid_: 当前段、选中段
-
-**压缩回退 (Compression Fallback)**:
-压缩产物不小于原件时丢弃压缩件、保留原件并提醒用户。
-_Avoid_: 压缩失败、保留原文件
+**转录临时文件 (Transcript Temp)**:
+批处理末尾写给插件读取的转录全文文件（`[bz-result].transcript` 绝对路径，系统临时目录）；**不是**断点续跑缓存，插件读完自删。
+_Avoid_: 转写稿缓存（那是 resume 产物）
 
 **交付文件 (Deliverable)**:
-点「完成」后移入交付目录的最终视频文件，文件名含标题/BV/裁切/压缩标记，重名自动加序号。
+移入交付目录的最终视频文件，文件名含标题/BV/剪辑/压缩标记，重名自动加序号；keepVideo=false 时跳过交付。
 _Avoid_: 成品、结果文件
 
 **交付目录 (Output Directory)**:
-设置图标中可配置的「视频最终放的位置」，默认 `E:/Obsidian/叫我包仔/CONFIG/APPENDIX`（vault 内）。
+「视频最终放的位置」，默认 `E:/Obsidian/叫我包仔/CONFIG/APPENDIX`（vault 内）；rc `outputDir` 可配，task.options.outputDir 可覆盖。
 _Avoid_: 输出文件夹、保存位置
 
 **rc 配置 (rc Config)**:
-`~/.bilibili-dl.json`，网页设置图标背后的存储：交付目录、ffmpeg/Python 路径、Whisper 模型等。
+`~/.bilibili-dl.json`：交付目录、vaultPath、ffmpeg/ffprobe/Python 路径、Whisper 模型、缓存目录与保留天数；bz 插件设置全量下发 task.options 时以 options 为准，rc 仅作独立使用时的兜底。
 _Avoid_: 配置文件、config.json
 
 **Cookie 凭据 (Cookie Credential)**:
-`~/.bilibili-cookies.json`（格式 `{cookie, savedAt}`），服务器端持有；B站 API 请求由 Node 发起，Cookie 不进浏览器，网页不回显明文。
+`~/.bilibili-cookies.json`（格式 `{cookie, savedAt}`）；B站 API 请求由 Node 发起，风控 412 时优先使用。
 _Avoid_: Cookie、登录态
 
-**转录文本 (Transcript)**:
-faster-whisper 转出的纯文本（一段文字，无换行），转录完成后自动复制到剪贴板。带剪辑段落时**逐段转录**并留存分段映射（`T.segmentTranscripts`：segId → 该段文字），供文献笔记按「视频链接、对应转文字」排布。
-_Avoid_: 字幕、转写稿
-
 **CDN 节点切换 (CDN Failover)**:
-下载时按 baseUrl → backupUrl 逐个尝试官方 CDN 节点；连接失败或前 6 秒速度 < 0.4MB/s 自动切换。
+下载时按 baseUrl → backupUrl 逐个尝试官方 CDN 节点；连接失败或长时间零字节自动切换（慢速持续有数据不切换）。
 _Avoid_: 重试、换线路
 
 **视频缓存 (Video Cache)**:
-「下载原件」的跨任务持久缓存——同 BV 同分 P(cid) 同清晰度的重复下载优先复用缓存、跳过下载+合并阶段；超期（默认 7 天，rc `cacheRetentionDays`）由启动清扫删除，目录 rc `cacheDir`（默认系统临时目录下 `bili-dl-cache`）。
-_Avoid_: 产物缓存、中间缓存（剪辑/压缩件不进缓存）
+「下载原件」的跨任务持久缓存——同 BV 同分 P(cid) 同清晰度的重复下载优先复用；超期（默认 7 天，rc `cacheRetentionDays`）由启动清扫删除，目录 rc `cacheDir`（默认系统临时目录下 `bili-dl-cache`）。
+_Avoid_: 产物缓存、中间缓存
 
-**任务快照 (Task Snapshot)**:
-`GET /api/state` 返回的当前任务 UI 恢复数据（info/清晰度/分P/段落/mode/crf/转录/lastFiles/curDur），页面刷新后据此重建界面；不回传 Cookie/临时路径/内部缓存。
-_Avoid_: 会话恢复、断点续传
-
-**转写进度 (Transcript Progress)**:
-转录的三态反馈（模型加载中 → 逐段文本实时流 → 第 i/N 个文件完成）+ 已用计时；逐段协议为 Python 每段识别完即 flush 一行（`\x1e<file>\x1f<seg>\x1f`），文件结束写空行哨兵 `\x1e<file>\x1f\x1f`（只标记完成、不计文本），服务端以文件为粒度计数广播。
-_Avoid_: 假百分比（Whisper CPU 无总时长锚点，不假报）
-
-**AI 润色进度 (Polish Progress)**:
-`note-progress` 事件携带 `phase('meta'|'polish')/done/total`；meta 阶段不定进度条（indet），正文逐块实进度；前端配合本地计时显示「已用 MM:SS」。
-_Avoid_: 进度条单行文案（旧 #flow-status 小字无感）
-
-**快速流程 (Quick Flow)**:
-一键全流水快捷命令——点击后自动执行 剪切/压缩（随交付）→ 转文字（未转录自动补跑）→ 交付 → AI 生成标题/标签/一句话简介并轻度润色转录正文，落一篇「文献笔记」；已转录/已交付则跳过对应步骤。笔记嵌入交付文件。
-_Avoid_: 一键流程、AI 后处理
-
-**文献笔记 (Literature Note)**:
-由快速流程生成的视频文献笔记——frontmatter 七键（AI 标题/标签/一句话简介/url/date/author UP主/videoTitle 视频原标题），正文为**逐段「该段润色正文 + 该段视频双链」依次排布**（不含原始转录「原文」；润色稿强制简体中文），存于「文献盒」。
-_Avoid_: 读书笔记、视频笔记
-
-**文献盒 (Literature Box)**:
-存放文献笔记的 vault 内目录，默认 vault 根下「文献盒」（rc `literatureFolder` 可配）。
-_Avoid_: 笔记夹、输出目录
+**断点续跑产物 (Resume Cache)**:
+失败重跑从出错步骤继续的机械产物缓存（`resume-clip-*`/`resume-compress-*`/`resume-transcript-*`，键 = BV+cid+起止+清晰度/crf）；ticket 136 起只留机械产物，AI 元数据/润色分块缓存随 AI 回迁 bz 而移除。
+_Avoid_: 断点续传、会话恢复
 
 ## Rules
 
-- **单任务语义**：任务进行中禁用操作按钮，「取消任务」= kill 子进程 + 删除全部产物（含所有未交付片段/合并件；已交付文件不受影响）。
-- **裁切/压缩后可返回原视频**：下载原件一直保留到交付，「↩ 原视频」恢复原件并重置裁切/压缩状态。
-- **压缩无收益即回退**：压缩产物不小于原件时丢弃压缩件、保留原件并提醒用户。
-- **中间产物不落交付目录**：一律先落系统临时目录，交付时才移入。
-- **交付即终局**：「完成」= 按交付模式批量产出全部交付文件并移入交付目录 + 剪贴板（分开=多行 wikilink，合并=单条；转录尾附一次）+ 逐产物写入下载历史。
-- **服务只绑 127.0.0.1**：随机空闲端口，无鉴权，启动自动开浏览器。
-- **零依赖**：node:http 原生服务器 + SSE 进度推送 + vanilla JS 前端，无构建步骤。
-- **缓存只存下载原件**：剪辑/压缩件不进缓存，仍按临时目录生命周期；缓存独立于 TMP_DIR，不随任务中止/窗口清理删除。
-- **缓存命中即跳过下载**：解析照跑（拿标题/BV/清晰度），缓存键（BV+cid+清晰度）全同则跳过下载+合并，缓存原件复制进临时目录充当「下载原件」；未命中下载后回写缓存。
-- **AI 配置一次职责归 bz**：生成文献笔记时直读 `<vaultPath>/.obsidian/plugins/bz/data.json`（aiProvider + 对应 apiKey），工具自持 provider→baseUrl/model 映射副本、无 quickadd 回退；缺 key 报错引导至 bz 设置。bz 数据文件只读不改。
-- **文献笔记一键直达**：「📄 生成文献笔记」为底部常驻快捷命令——点击自动执行 **剪切/压缩 → 转文字（未转录自动补跑）→ 交付 → AI → 写笔记**；已转录/已交付跳过对应步骤；前置仅「已下载」（按钮下载后即点亮）；`标题.md` 重名加序号、永不覆盖；AI 失败即中止可重试，不落半成品。
-- **下载后段落为空**：下载完成不再自动生成整片段落，用时间轴圈选后「+ 添加段落」手动添加（无激活段时圈选草稿 `S.draft`）；空段落 = 整片交付/转录。拖末尾把手时视频跟随到结束位置。
-- **重复启动复用实例**：未显式 `--port` 时先探测端口文件 `~/.bilibili-dl-port` 记录的旧实例（本工具页面才认）；存活则打印同格式「地址:」行并开浏览器后退出，不重复起服务/临时目录；探测失败（实例已死/其他应用占了端口）则正常起新实例并覆盖端口文件。
+- **零依赖**：node 原生，无 npm 运行时依赖，测试 `node --test`（core 纯函数 + mock 网络）。
+- **缓存只存下载原件**：剪辑/压缩件不进原件缓存；断点续跑机械产物存 cacheDir，同保留期回收。
+- **缓存命中即跳过下载**：解析照跑（拿标题/BV/清晰度），缓存键（BV+cid+清晰度）全同则跳过下载+合并。
+- **不写文献笔记、不调 AI（ticket 136）**：AI 与笔记落盘由 bz 插件完成（core/ai + 插件写 frontmatter）；本工具只产「转录临时文件 + 交付视频」。
+- **options 全量下发**：bz「文献盒」设置经 task.options 传入（quality/keepVideo/outputDir/compress/crf/vaultPath/ffmpegPath/ffprobePath/pythonPath/whisperModel/cacheDir/cacheRetentionDays），并入 conf 覆盖 rc 兜底。
+- **交付即终局**：交付文件移入交付目录（copy + unlink，exFAT 兼容），重名加序号、永不覆盖。
