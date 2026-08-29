@@ -318,19 +318,21 @@ button.news-close-btn {
 }
 .bz-notice-action {
   flex: 0 0 auto;
-  margin-top: 1px;
-  padding: 2px 10px;
-  border-radius: 6px;
-  border: 1px solid var(--background-modifier-border);
-  background: var(--background-secondary);
+  align-self: center;
+  margin-top: 0;
+  padding: 1px 8px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--interactive-accent);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
 }
 .bz-notice-action:hover {
   background: var(--background-modifier-hover);
+  border-color: var(--background-modifier-border);
 }
 .bz-notice-progress {
   position: absolute;
@@ -2645,10 +2647,407 @@ button.news-close-btn {
 .bz-item-sheet .bz-fav-sheet-balance--error {
   color: var(--text-error);
 }
+/* 抽屉头部内部布局（ticket 141 收敛：原 _buildSheetHead 内联） */
+.bz-item-sheet .bz-fav-sheet-body {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.bz-item-sheet .bz-fav-sheet-info {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ==================== 主面板（ticket 141 样式收敛：原 ui.ts 内联逐字搬运；display 显隐/动态 z/余额档位色留运行时） ==================== */
+#fav-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--background-modifier-cover);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+#fav-popup {
+  background: var(--background-primary);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  width: 90%;
+  max-width: 700px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+#fav-entries-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 20px 20px 20px;
+}
+/* 头部标题（行布局/按钮规格由「主窗口头部行统一规范」的 .fav-header 规则承担） */
+.fav-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+/* 搜索切换钮：未开搜索半透明、开启恢复（原内联 opacity 0.5/1） */
+.bz-fav-search-toggle { opacity: 0.5; }
+.bz-fav-search-toggle--on { opacity: 1; }
+
+/* ---- 标签栏 ---- */
+.fav-tagbar {
+  padding: 8px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.fav-tag-btn {
+  display: inline-flex;
+  border-radius: 10px;
+  background: var(--background-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-normal);
+  padding: 4px 12px;
+  border: none;
+  box-shadow: none;
+  transition: all 0.2s;
+}
+.fav-tag-btn.bz-fav-tag-btn--active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.bz-fav-tag-count {
+  margin-left: 4px;
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+/* ---- 搜索框 ---- */
+.bz-fav-search-wrapper {
+  padding: 8px 20px;
+  flex-shrink: 0;
+}
+.bz-fav-search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 14px;
+  box-sizing: border-box;
+  outline: none;
+}
+
+/* ---- 空态（空库欢迎 / 搜索无结果，ticket 141 区分） ---- */
+.bz-fav-empty {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 16px;
+}
+.bz-fav-empty-hint {
+  font-size: 13px;
+  margin-top: 6px;
+  opacity: 0.8;
+}
+
+/* ---- 列表卡片 ---- */
+.fav-card {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  background: var(--background-primary);
+  cursor: default;
+  transition: background 0.15s;
+  position: relative;
+}
+.fav-card.bz-fav-card--link { cursor: pointer; } /* 有链接 = 可见的点击入口（ticket 61） */
+.fav-card.bz-fav-card--pinned {
+  background: var(--background-modifier-hover);
+  border-left: 3px solid var(--interactive-accent);
+}
+/* hover 提亮仅未置顶卡（原 onmouseenter/onmouseleave 行为） */
+.fav-card:not(.bz-fav-card--pinned):hover {
+  background: var(--background-modifier-hover);
+}
+.bz-fav-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.bz-fav-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+.bz-fav-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+.bz-fav-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.bz-fav-tag-group {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.bz-fav-tag-badge {
+  font-size: 12px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: default;
+}
+.bz-fav-balance {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: 4px;
+  white-space: nowrap;
+}
+/* 分页加载指示（ticket 141，movie 同款文案与样式） */
+.bz-fav-load-more {
+  text-align: center;
+  padding: 8px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+/* ==================== 添加/编辑弹窗（ticket 141 收敛：原 _buildAddDialog/_buildLLMConfigSection 内联逐字搬运） ==================== */
+#fav-add-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.3);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+#fav-add-popup {
+  background: var(--background-primary);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  padding: 24px;
+  max-width: 450px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+#fav-add-popup h4 {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+.bz-fav-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 14px;
+  box-sizing: border-box;
+}
+.bz-fav-input--area {
+  resize: vertical;
+  min-height: 60px;
+  font-family: inherit;
+}
+.bz-fav-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+/* 类型/置顶选择钮：同风格 chip，选中态走 .active */
+.fav-type-btn,
+.bz-fav-pin-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  border: none;
+  box-shadow: none;
+  transition: all 0.2s;
+}
+.fav-type-btn.active,
+.bz-fav-pin-btn.active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.bz-fav-llm-section {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.bz-fav-llm-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-normal);
+  margin-bottom: 4px;
+}
+.bz-fav-llm-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.bz-fav-llm-input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 13px;
+  box-sizing: border-box;
+}
+.bz-fav-llm-input--area {
+  min-height: 60px;
+  font-family: monospace;
+  resize: vertical;
+}
+.bz-fav-llm-hint {
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-top: 4px;
+}
+.bz-fav-btn-group {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+.bz-fav-btn-secondary {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: var(--background-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-normal);
+  box-shadow: none;
+}
+.bz-fav-btn-primary {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: var(--interactive-accent);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-on-accent);
+  box-shadow: none;
+}
+.bz-fav-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ==================== 排序弹窗（ticket 141：movie 筛选排序弹窗同款交互与视觉） ==================== */
+.bz-fav-sort-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bz-fav-sort-popup {
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  border: 1px solid var(--background-modifier-border);
+}
+.bz-fav-sort-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.bz-fav-sort-head h3 {
+  margin: 0;
+}
+.bz-fav-sort-close {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+.bz-fav-sort-body {
+  padding: 16px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.bz-fav-sort-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.bz-fav-sort-option {
+  padding: 6px 12px;
+  border-radius: 16px;
+  box-shadow: none;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  cursor: pointer;
+  font-size: 0.85rem;
+  border: 1px solid var(--background-modifier-border);
+}
+.bz-fav-sort-option--active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent, white);
+  border-color: var(--interactive-accent);
+}
 /* ==================== 复习计划域样式（src/review/styles.css） ==================== */
 /* ==================== 复习计划（review，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
-      #review-mask { backdrop-filter: blur(2px); }
-      #review-popup { animation: slideUp 0.3s ease-out; }
+      /* ticket 141：主面板内联样式收敛——布局/配色值逐字搬运，display 显隐保留功能性内联 */
+      #review-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--background-modifier-cover); backdrop-filter: blur(2px); }
+      #review-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--background-primary); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 90%; max-width: 800px; max-height: 80vh; flex-direction: column; animation: slideUp 0.3s ease-out; }
+      #review-popup .bz-review-title { margin: 0; font-size: 18px; font-weight: 600; color: var(--text-normal); }
+      #review-search-wrap { padding: 0 24px 8px 24px; }
+      #review-entries-container { flex: 1; overflow-y: auto; padding: 0 20px; min-height: 200px; }
       #review-popup button:hover { background: var(--background-secondary); }
       @media (max-width: 768px) {
         /* 原强制全屏头排 34px 已废止（ticket 68：真全屏头排避让统一走 .bz-win-mfs） */
@@ -2661,15 +3060,33 @@ button.news-close-btn {
       /* ticket 098：挂起记录（文件不存在）删除线 */
       .review-card .review-content.review-missing { text-decoration: line-through; color: var(--text-faint); }
       .review-card .review-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-      .review-tag { padding:0 8px; border-radius:12px; font-size:11px; background:var(--background-secondary); color:var(--text-muted); line-height:20px; white-space:nowrap; cursor:pointer; transition:background 0.2s; }
+      /* ticket 141：标签点击已收敛进抽屉，指针恢复默认 */
+      .review-tag { padding:0 8px; border-radius:12px; font-size:11px; background:var(--background-secondary); color:var(--text-muted); line-height:20px; white-space:nowrap; cursor:default; transition:background 0.2s; }
       .review-tag.overdue { background:#ff4757; color:white; }
       .review-tag.completed { background:#52c41a; color:white; }
+      /* ticket 141：R(t) 值标签三档配色（原内联 background 逐字搬运） */
+      .review-tag.bz-review-r-high { background:#52c41a22; }
+      .review-tag.bz-review-r-mid { background:#faad1422; }
+      .review-tag.bz-review-r-low { background:#ff475722; }
       .review-time { font-size:12px; color:var(--text-faint); cursor:pointer; }
+      /* ticket 141：空态（原内联样式收敛） */
+      .bz-review-empty { padding:40px 24px; text-align:center; color:var(--text-faint); font-size:16px; }
+      .bz-review-empty-sub { margin-top:10px; font-size:13px; color:var(--text-muted); }
+      /* ticket 141：抽屉头部行（原内联样式收敛，bz-item-sheet-* 为 core 契约类） */
+      .bz-review-sheet-body { display:flex; align-items:flex-start; gap:10px; }
+      .bz-review-sheet-info { flex:1; min-width:0; }
       /* 评级弹窗 z 动态发号（ADR-0067）：review showDifficultyDialog 创建时 allocZ */
       .difficulty-dialog { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--background-primary); border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.3); padding:24px; min-width:220px; display:none; }
+      .difficulty-dialog h4 { margin:0 0 12px 0; font-size:16px; }
       .difficulty-dialog .diff-btn { display:block; width:100%; padding:10px; margin:6px 0; border:none; border-radius:6px; background:var(--background-secondary); cursor:pointer; font-size:14px; text-align:left; }
       .difficulty-dialog .diff-btn:hover { background:var(--interactive-accent); color:var(--text-on-accent); }
-      .review-search-input { padding:4px 10px; border-radius:12px; border:1px solid var(--background-modifier-border); background:var(--background-secondary); color:var(--text-normal); font-size:13px; width:150px; outline:none; }
+      /* ticket 141：难度色标（原内联 border-left 逐字搬运） */
+      .difficulty-dialog .diff-btn[data-diff='again'] { border-left:3px solid #ff4757; }
+      .difficulty-dialog .diff-btn[data-diff='hard'] { border-left:3px solid #ff9f43; }
+      .difficulty-dialog .diff-btn[data-diff='good'] { border-left:3px solid #2ed573; }
+      .difficulty-dialog .diff-btn[data-diff='easy'] { border-left:3px solid #7bed9f; }
+      .difficulty-dialog .diff-btn.diff-btn-cancel { margin-top:12px; color:var(--text-muted); }
+      .review-search-input { padding:4px 10px; border-radius:12px; border:1px solid var(--background-modifier-border); background:var(--background-secondary); color:var(--text-normal); font-size:13px; width:100%; outline:none; }
       .review-search-input:focus { border-color:var(--interactive-accent); }
       /* ticket 099：监听文件夹 chip（名字 + 关闭标签） */
       #review-watch-folders { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:4px 0; }
@@ -2688,7 +3105,17 @@ button.news-close-btn {
 
 /* ==================== 做题家域样式（src/quiz/styles.css） ==================== */
 /* ==================== 做题家（quiz，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
+      /* ticket 141：弹窗壳内联样式收敛进源头（值逐字搬运）+ 新增头行/题干/选项容器类 */
       #quiz-mask {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
         backdrop-filter: blur(2px);
       }
       #quiz-popup {
@@ -2699,11 +3126,19 @@ button.news-close-btn {
         max-width: 600px;
         width: 90%;
         max-height: 80vh;
+        overflow-y: auto;
         display: flex;
         flex-direction: column;
         position: relative;
         transition: none;
       }
+      .bz-quiz-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+      .bz-quiz-title { font-size: 15px; font-weight: 600; }
+      .bz-quiz-stats { font-size: 13px; color: var(--text-muted); }
+      .bz-quiz-question { font-size: 17px; font-weight: 500; margin-bottom: 20px; color: var(--text-normal); }
+      .bz-quiz-options { display: flex; flex-direction: column; gap: 6px; }
+      .bz-quiz-option-text { flex: 1; }
+      .quiz-next-btn--pending { opacity: 0.5; cursor: default; }
       .quiz-option-btn {
         padding:10px 14px;
         border:1px solid var(--background-modifier-border);
@@ -2763,16 +3198,6 @@ button.news-close-btn {
         box-shadow: none !important;
       }
       .quiz-next-btn:hover { background:var(--background-modifier-hover); }
-      /* Loading 样式 */
-      #quiz-loading .spinner {
-        display: inline-block;
-        width: 40px;
-        height: 40px;
-        border: 4px solid var(--background-modifier-border);
-        border-top-color: var(--interactive-accent);
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-      }
       @keyframes spin { to { transform: rotate(360deg); } }
     
 
@@ -4740,42 +5165,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   color: var(--text-muted);
 }
 
-/* ---- AI 涓€閿鎷?---- */
-.bz-sb-summary-btn {
-  font-size: 13px;
-  padding: 6px 14px;
-  border: none;
-  border-radius: 7px;
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-  cursor: pointer;
-}
-.bz-sb-summary-btn:hover {
-  opacity: 0.88;
-}
-.bz-sb-summary-btn:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-.bz-sb-summary-meta {
-  margin-left: 9px;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-.bz-sb-summary-text {
-  margin-top: 9px;
-  padding: 10px 12px;
-  background: var(--background-secondary);
-  border-radius: 8px;
-  font-size: 13px;
-  line-height: 1.65;
-  color: var(--text-normal);
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-.bz-sb-summary-text:not(:empty) {
-  display: block;
-}
+/* ticket 141：AI 生成概括入口移除，原 bz-sb-summary-* 样式随之删除 */
 
 /* ==================== 棣栨鍒濆鍖栧紩瀵硷紙ticket 107锛?==================== */
 .bz-sb-onboard {
@@ -5116,6 +5506,26 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   flex-shrink: 0;
   border-top: 1px solid var(--background-modifier-border);
   padding: 10px 12px;
+}
+
+/* ==================== AI 对话弹窗（ticket 141 UX 批次增量）==================== */
+/* 多行输入 textarea：沿用既有 bz-sb-chat-input 类名（DOM 契约不改名），此处仅 textarea 专属增量；
+   高度由 JS 自增（scrollHeight），max-height 钳制上限 5 行（5×1.5em + 上下内边距 12px + 边框 2px） */
+textarea.bz-sb-chat-input {
+  resize: none;
+  overflow-y: auto;
+  line-height: 1.5;
+  min-height: 33px;
+  max-height: calc(5 * 1.5em + 14px);
+  font-family: inherit;
+}
+/* 头部「清空对话」小按钮：覆盖 .bz-win-head button 的 22px 图标钮规格（文字钮需自适应宽） */
+.bz-sb-chat-head .bz-sb-chat-clear {
+  width: auto !important;
+  height: 22px !important;
+  padding: 0 8px !important;
+  font-size: 12px !important;
+  white-space: nowrap;
 }
 
 /**
