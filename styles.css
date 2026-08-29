@@ -1746,6 +1746,8 @@ button.news-close-btn {
   gap: 8px;
   cursor: pointer;
   user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none; /* 长按不弹系统菜单（ticket 157：长按进编辑/拖拽不被打断） */
   box-sizing: border-box;
   /* 安卓式实时让位：网格位置变化平滑动画 */
   transition: transform 0.15s ease, background 0.15s ease, grid-column 0.2s ease, grid-row 0.2s ease;
@@ -1770,6 +1772,8 @@ button.news-close-btn {
 #launcher-grid .launcher-tile.editing {
   border: 1.5px dashed var(--text-accent);
   cursor: grab;
+  /* 编辑模式磁贴禁用触屏默认手势（ticket 157：按住即拖不被滚动抢占 pointercancel） */
+  touch-action: none;
 }
 #launcher-grid .launcher-tile.editing:active {
   cursor: grabbing;
@@ -3134,7 +3138,6 @@ button.news-close-btn {
       }
       .bz-quiz-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
       .bz-quiz-title { font-size: 15px; font-weight: 600; }
-      .bz-quiz-stats { font-size: 13px; color: var(--text-muted); }
       .bz-quiz-question { font-size: 17px; font-weight: 500; margin-bottom: 20px; color: var(--text-normal); }
       .bz-quiz-options { display: flex; flex-direction: column; gap: 6px; }
       .bz-quiz-option-text { flex: 1; }
