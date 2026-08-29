@@ -1,15 +1,19 @@
 /**
  * 第二大脑主面板（ticket 103 建；ticket 107 首用引导；ticket 108 打磨；ticket 109 统计卡精简）
- * 统一入口弹窗：统计卡片 / 内容规模明细 / 来源分布树形 / 近 12 周趋势 / 最近向量化 / AI 概括。
+ * 统一入口弹窗：统计卡片 / 内容规模明细 / 来源分布树形 / 近 12 周趋势 / 最近向量化。
  * - ticket 108 打磨项：
  *   ① 存储占用=meta+向量合计单值（hover 明细）；上次索引与最近向量化行用共享 formatRelativeTime；
  *   ② 来源分布改树形逐级展开（名称左对齐，▸/▾ 递归下钻子目录）；
  *   ③ ticket 108 曾新增白名单覆盖率/内容规模/最厚笔记 Top5/一致性健康四项，其中覆盖率卡与 Top5 区块已按 ticket 109 移除（语义重复/需求砍掉）；
  *   ④ 每次打开自动增量索引：有待处理变更 → 全屏进度视图接管，完成后再进统计；无变更直接统计；
  *   ⑤ 概括走统一 AI 通道（主设置页服务商）；缓存并入 secondbrain.json panel 段（ticket 120），设置页清除入口移除。
+ *     （ticket 141：「AI 生成概括」入口与调用链整体移除——与「对话」区分，对话保留；
+ *      panel 段数据结构冻结保留，旧缓存仅不再消费/回显）
  * - 引导/进度视图三用：首次初始化（空库，带按钮）/ 自动增量（待处理块，纯进度）/ 重新索引（设置页确认后）。
  * - ticket 114：初始向量化进行中关页重开 → 恢复实时进度视图（原缺陷：重开回引导态且按钮
  *   因 initializing 守卫静默失效，看起来「点击没有任何反应」）；重复点击不再吞掉，接回进度。
+ * - ticket 141：ESC 迁 escManager 层级（原私挂 document keydown 废弃）——⚙️ 设置弹窗叠开时
+ *   其层级后注册在上，ESC 先关设置再关面板。
  * - 样式全部收敛 src/secondbrain/styles.css（bz-sb-panel-* / bz-sb-onboard-* / bz-sb-dist-*）。
  */
 import type { App } from 'obsidian';
@@ -23,10 +27,9 @@ import { mobileFullscreenRow } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { openFlowDialog } from '../core/flow-dialog';
+import { escManager } from '../core/esc-manager';
 import { getApp } from '../core/app';
 import { buildConfig, IS_MOBILE } from './config';
-import { loadStore, mutateStore } from './store-file';
-import { AI } from './ai';
 import type { VectorStore, SecondBrainMeta } from './vector-store';
 import { parsePathList, formatPathList } from './whitelist';
 import { getLanIPs, formatRemoteOllamaUrl, pickPrimaryLanIp } from './local-ip';
@@ -190,39 +193,7 @@ export function computeStats(meta: SecondBrainMeta, now = Date.now()): Omit<Seco
   };
 }
 
-// ==================== 概括缓存（secondbrain.json panel 段，ticket 120） ====================
-
-interface SummaryCache {
-  summary: string;
-  generatedAt: number;
-}
-
-async function readCache(): Promise<SummaryCache | null> {
-  try {
-    const store = await loadStore();
-    return store.panel;
-  } catch {
-    return null;
-  }
-}
-
-async function writeCache(cache: SummaryCache): Promise<void> {
-  await mutateStore((s) => {
-    s.panel = cache;
-  });
-}
-
-/** 构建概括提示词（纯函数） */
-export function buildSummaryPrompt(stats: Pick<SecondBrainStats, 'noteCount' | 'chunkCount' | 'bySource'>): string {
-  const dist = stats.bySource
-    .slice(0, 8)
-    .map((s) => `- ${s.name}：${s.notes} 篇 / ${s.chunks} 段`)
-    .join('\n');
-  return (
-    `你是「第二大脑」助手。用户的笔记向量库共有 ${stats.noteCount} 篇笔记、${stats.chunkCount} 个段落，分布如下：\n` +
-    `${dist}\n\n请用不超过 120 字的中文，概括这个知识库的构成与侧重，语气自然，不要罗列数字清单。`
-  );
-}
+// ==================== 概括缓存（已随 ticket 141 移除；panel 段数据结构冻结保留于 store-file） ====================
 
 // ==================== 主面板弹窗 ====================
 
@@ -237,7 +208,8 @@ export class SecondBrainPanel {
   private opts: PanelOptions;
   private mask: HTMLElement | null = null;
   private popup: HTMLElement | null = null;
-  private escapeHandler: ((e: KeyboardEvent) => void) | null = null;
+  /** ESC 层级句柄（ticket 141 迁移：原私挂 document keydown 废弃） */
+  private escHandle: ReturnType<typeof escManager.register> | null = null;
   private refreshing = false;
   /** 初始向量化视图进行中标记（ticket 114：runInitialIndexView 持有；进行中重复点击接回进度视图而非静默失效） */
   private initializing = false;
@@ -261,7 +233,7 @@ export class SecondBrainPanel {
 
   async open(): Promise<void> {
     this.createUI();
-    // [l2-sb] ESC 监听与 open/close 成对：open 挂载、close 移除（幂等），反复开关不累积
+    // [l2-sb] ESC 层级与 open/close 成对：open 注册、close 注销（幂等），反复开关不累积
     this.attachEscapeListener();
     topifyZ(this.mask!, this.popup!); // ADR-0067：显示即发号，谁后显示谁在上
     this.mask!.style.display = 'block';
@@ -272,25 +244,24 @@ export class SecondBrainPanel {
   }
 
   close(): void {
-    this.removeEscapeListener(); // [l2-sb] 面板关闭即移除 ESC 监听（与 open 成对）
+    this.removeEscapeListener(); // [l2-sb] 面板关闭即注销 ESC 层级（与 open 成对）
     if (this.mask) this.mask.style.display = 'none';
     if (this.popup) this.popup.style.display = 'none';
   }
 
-  /** [l2-sb] ESC 关闭监听：注册/移除成对（幂等）——open 挂载、close 移除 */
+  /** [l2-sb] ESC 关闭走 escManager 层级（ticket 141 迁移）：open 注册、close 注销成对（幂等）——
+   *  ⚙️ 设置弹窗叠开时其 'bz-settings-modal' 层后注册在上，ESC 先关设置、再 ESC 才关面板 */
   private attachEscapeListener(): void {
-    if (this.escapeHandler) return;
-    this.escapeHandler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') this.close();
-    };
-    document.addEventListener('keydown', this.escapeHandler);
+    if (this.escHandle) return;
+    this.escHandle = escManager.register('bz-sb-panel', {
+      isVisible: () => !!this.popup && this.popup.isConnected && this.popup.style.display === 'flex',
+      close: () => this.close(),
+    });
   }
 
   private removeEscapeListener(): void {
-    if (this.escapeHandler) {
-      document.removeEventListener('keydown', this.escapeHandler);
-      this.escapeHandler = null;
-    }
+    this.escHandle?.unregister();
+    this.escHandle = null;
   }
 
   destroy(): void {
@@ -545,22 +516,7 @@ export class SecondBrainPanel {
     recentBox.innerHTML = `<div class="bz-sb-section-title">最近向量化</div><div id="bz-sb-recent" class="bz-sb-recent"></div>`;
     content.appendChild(recentBox);
 
-    const summaryBox = document.createElement('div');
-    summaryBox.className = 'bz-sb-section';
-    const sumBtn = document.createElement('button');
-    sumBtn.className = 'bz-sb-summary-btn';
-    sumBtn.textContent = '✨ 生成概括';
-    sumBtn.onclick = () => void this.generateSummary(sumBtn);
-    const sumMeta = document.createElement('span');
-    sumMeta.className = 'bz-sb-summary-meta';
-    sumMeta.id = 'bz-sb-summary-meta';
-    const sumText = document.createElement('div');
-    sumText.className = 'bz-sb-summary-text';
-    sumText.id = 'bz-sb-summary-text';
-    summaryBox.appendChild(sumBtn);
-    summaryBox.appendChild(sumMeta);
-    summaryBox.appendChild(sumText);
-    content.appendChild(summaryBox);
+    // 「AI 生成概括」区块已随 ticket 141 整体移除（panel 段数据结构冻结保留）
 
     body.appendChild(content);
 
@@ -614,7 +570,7 @@ export class SecondBrainPanel {
     popup.appendChild(body);
     document.body.appendChild(mask);
     document.body.appendChild(popup);
-    // ESC 关闭监听移到 open()/close() 成对注册移除（[l2-sb]：不再每次 createUI 私挂 document keydown）
+    // ESC 层级在 open()/close() 成对注册注销（[l2-sb]/ticket 141：escManager 统一管理，不私挂 document keydown）
 
     this.mask = mask;
     this.popup = popup;
@@ -826,40 +782,6 @@ export class SecondBrainPanel {
         recentEl.appendChild(row);
       }
     }
-
-    // 概括缓存回显
-    const cache = await readCache();
-    if (cache) {
-      const text = document.getElementById('bz-sb-summary-text');
-      const meta = document.getElementById('bz-sb-summary-meta');
-      if (text) text.textContent = cache.summary;
-      if (meta) meta.textContent = `生成于 ${new Date(cache.generatedAt).toLocaleString()}`;
-    }
-  }
-
-  private async generateSummary(btn: HTMLButtonElement): Promise<void> {
-    const stats = computeStats(this.store.meta);
-    if (stats.chunkCount === 0) {
-      notice('第二大脑：向量库为空，先索引一些笔记吧');
-      return;
-    }
-    btn.disabled = true;
-    btn.textContent = '生成中…';
-    try {
-      const summary = await AI.ask(buildSummaryPrompt(stats));
-      const cache: SummaryCache = { summary, generatedAt: Date.now() };
-      await writeCache(cache);
-      const text = document.getElementById('bz-sb-summary-text');
-      const meta = document.getElementById('bz-sb-summary-meta');
-      if (text) text.textContent = summary;
-      if (meta) meta.textContent = `生成于 ${new Date(cache.generatedAt).toLocaleString()}`;
-    } catch (e) {
-      console.warn('[secondbrain] AI 概括失败', e);
-      notice('第二大脑：AI 概括失败，请确认主设置页 AI 服务商配置可用');
-    } finally {
-      btn.disabled = false;
-      btn.textContent = '✨ 生成概括';
-    }
   }
 
   /** ⚙️ 域设置弹窗（共享实现见 openSecondBrainSettings） */
@@ -1067,7 +989,8 @@ export function secondBrainSettingsSchema(): SettingsSchema {
           {
             type: 'button',
             name: 'AI 通道',
-            desc: '对话与概括统一走主设置页 AI 服务商，Embedding 仍走 Ollama',
+            // ticket 141：「AI 生成概括」移除后描述同步收敛（仅剩对话走主设置页 AI）
+            desc: '对话统一走主设置页 AI 服务商，Embedding 仍走 Ollama',
             buttonText: '前往配置',
             onClick: () => {
               closeSettingsModal();

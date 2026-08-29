@@ -612,42 +612,7 @@
   color: var(--text-muted);
 }
 
-/* ---- AI 涓€閿鎷?---- */
-.bz-sb-summary-btn {
-  font-size: 13px;
-  padding: 6px 14px;
-  border: none;
-  border-radius: 7px;
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-  cursor: pointer;
-}
-.bz-sb-summary-btn:hover {
-  opacity: 0.88;
-}
-.bz-sb-summary-btn:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-.bz-sb-summary-meta {
-  margin-left: 9px;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-.bz-sb-summary-text {
-  margin-top: 9px;
-  padding: 10px 12px;
-  background: var(--background-secondary);
-  border-radius: 8px;
-  font-size: 13px;
-  line-height: 1.65;
-  color: var(--text-normal);
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-.bz-sb-summary-text:not(:empty) {
-  display: block;
-}
+/* ticket 141：AI 生成概括入口移除，原 bz-sb-summary-* 样式随之删除 */
 
 /* ==================== 棣栨鍒濆鍖栧紩瀵硷紙ticket 107锛?==================== */
 .bz-sb-onboard {
@@ -988,5 +953,25 @@
   flex-shrink: 0;
   border-top: 1px solid var(--background-modifier-border);
   padding: 10px 12px;
+}
+
+/* ==================== AI 对话弹窗（ticket 141 UX 批次增量）==================== */
+/* 多行输入 textarea：沿用既有 bz-sb-chat-input 类名（DOM 契约不改名），此处仅 textarea 专属增量；
+   高度由 JS 自增（scrollHeight），max-height 钳制上限 5 行（5×1.5em + 上下内边距 12px + 边框 2px） */
+textarea.bz-sb-chat-input {
+  resize: none;
+  overflow-y: auto;
+  line-height: 1.5;
+  min-height: 33px;
+  max-height: calc(5 * 1.5em + 14px);
+  font-family: inherit;
+}
+/* 头部「清空对话」小按钮：覆盖 .bz-win-head button 的 22px 图标钮规格（文字钮需自适应宽） */
+.bz-sb-chat-head .bz-sb-chat-clear {
+  width: auto !important;
+  height: 22px !important;
+  padding: 0 8px !important;
+  font-size: 12px !important;
+  white-space: nowrap;
 }
 

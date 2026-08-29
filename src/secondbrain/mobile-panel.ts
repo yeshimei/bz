@@ -42,6 +42,8 @@ export class MobilePanel {
   collapsed = false;
   chatHistory: ChatHistoryItem[] = [];
   refResults: SearchHit[] = [];
+  /** 检索失败提示（ticket 141：不再吞错成「暂无相关笔记」，与桌面参考面板同款文案与形态；成功检索后清空） */
+  refError: string | null = null;
 
   private pillRef: HTMLElement;
   private pillChat: HTMLElement;
@@ -254,14 +256,18 @@ export class MobilePanel {
     const CONFIG = buildConfig();
     if (!query || query.length < 2) {
       this.refResults = [];
+      this.refError = null;
       if (this.mode === 'ref') this.renderRefTab();
       return;
     }
     try {
       this.refResults = await this.store.searchMobile(query, CONFIG.TOP_K);
+      this.refError = null; // 本次检索成功：清除上一轮失败态
     } catch (e) {
       console.warn('[secondbrain] 移动端检索失败', e);
       this.refResults = [];
+      // ticket 141：与桌面 reference-panel 同款真实错误提示（不再吞成「暂无相关笔记」）
+      this.refError = '检索失败：请检查 Ollama 服务后重试';
     }
     if (this.mode === 'ref') this.renderRefTab();
   }
@@ -280,7 +286,8 @@ export class MobilePanel {
     if (!filtered.length) {
       const empty = document.createElement('div');
       empty.className = 'bz-sb-mb-empty';
-      empty.textContent = '暂无相关笔记';
+      // ticket 141：检索失败给真实错误（与桌面同款文案），仅空结果才是「暂无相关笔记」
+      empty.textContent = this.refError || '暂无相关笔记';
       this.body.appendChild(empty);
       return;
     }

@@ -142,6 +142,34 @@ describe('ReviewDataManager', () => {
     expect(raw.length).toBe(0);
   });
 
+  it('restoreItem（ticket 141 通病 1）：移出后撤销原样插回，阶段/排期不重置', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      { id: '1', filePath: 'A.md', name: 'A', reviewStart: now.toISOString(), stage: 5, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [{ timestamp: now.toISOString(), stage: 6, rating: 'good' }], totalReviews: 6, averageConfidence: 0.8, nextReviewDate: new Date(now.getTime() + 86400000).toISOString(), lastReviewed: now.toISOString(), lastDifficulty: 'good', completed: false },
+    ]));
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    const items = await dm.loadItems();
+    const removed = items.find((i) => i.filePath === 'A.md')!;
+    await dm.removeItem('A.md');
+    expect(JSON.parse(vault.files.get(REVIEW_FILE_PATH)!).length).toBe(0);
+    // 撤销：原条目（含阶段 5/历史/次数）插回，运行时 file 字段不落盘
+    await dm.restoreItem(removed);
+    const raw = JSON.parse(vault.files.get(REVIEW_FILE_PATH)!);
+    expect(raw.length).toBe(1);
+    expect(raw[0].stage).toBe(5);
+    expect(raw[0].totalReviews).toBe(6);
+    expect(raw[0].reviewHistory).toHaveLength(1);
+    expect(raw[0].file).toBeUndefined();
+    // 已在计划中（重复插入防护）：restore 幂等不新增
+    const items2 = await dm.loadItems();
+    await dm.restoreItem(items2.find((i) => i.filePath === 'A.md')!);
+    expect(JSON.parse(vault.files.get(REVIEW_FILE_PATH)!).length).toBe(1);
+  });
+
   it('getOverdueCount', async () => {
     const vault = new MockVault();
     vault.files.set('A.md', '正文');

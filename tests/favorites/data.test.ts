@@ -51,6 +51,32 @@ describe('DataManager', () => {
     expect((await dm.getAll()).map((d) => d.id)).toEqual(['2']);
   });
 
+  it('restoreItem（ticket 141 通病 1）：删除后撤销，完整条目原样插回', async () => {
+    const item = {
+      id: '1', tags: ['GitHub'], title: 'A', description: '简介', pinned: true,
+      url: 'https://github.com/a/b', balance: '9.9', balanceCacheTime: 123, balanceError: null,
+      linkedNote: '笔记.md', created: '2025-06-01 08:00:00', type: 'GitHub',
+      llmConfig: { apiKeys: 'sk-1', balanceUrl: 'https://api.example.com/balance' },
+      archived: false,
+    };
+    await dm.add(item as any);
+    await dm.delete('1');
+    expect(await dm.getAll()).toEqual([]);
+
+    await dm.restoreItem(item as any);
+    const data = await dm.getAll();
+    expect(data.length).toBe(1);
+    expect(data[0]).toEqual(item as any); // 全字段原样（含 llmConfig/pinned/balance，不走 add 重置）
+  });
+
+  it('restoreItem：同 id 已存在 → 幂等跳过不重复插入', async () => {
+    const item = { id: '1', tags: [], title: 'A', description: '', pinned: false, url: '', balance: null, balanceCacheTime: null, balanceError: null, linkedNote: null, created: '', type: '' } as any;
+    await dm.add(item);
+    await dm.restoreItem(item); // 并发写回场景：同 id 已存在
+    const data = await dm.getAll();
+    expect(data.length).toBe(1);
+  });
+
   it('13 字段落盘格式', async () => {
     const item = {
       id: '1234567890', tags: ['GitHub'], title: 'T', description: 'D', pinned: true,

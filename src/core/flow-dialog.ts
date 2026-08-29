@@ -170,3 +170,21 @@ export function openFlowDialog(opts: FlowDialogOptions): Promise<string | undefi
     if (focusBtn) focusBtn.focus();
   });
 }
+
+/**
+ * 未保存草稿拦截（ticket 141 通病 3）：表单弹窗点遮罩 / ESC 关闭前，若表单已有输入，
+ * 先走流程框确认「放弃 or 继续编辑」，确认放弃才执行 proceed。脏检测（getDirty）由调用方负责——
+ * 这里只统一确认框文案与「默认聚焦继续编辑」的安全焦点（回车=继续编辑，防误触丢失草稿）。
+ */
+export function confirmDiscard(proceed: () => void, message?: string): void {
+  void openFlowDialog({
+    title: '放弃未保存的内容？',
+    message: message || '弹窗内有未保存的输入，关闭后将丢失',
+    actions: [
+      { label: '放弃', value: 'ok' },
+      { label: '继续编辑', value: 'cancel' },
+    ],
+  }).then((v) => {
+    if (v === 'ok') proceed();
+  });
+}

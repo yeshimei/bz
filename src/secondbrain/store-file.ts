@@ -1,6 +1,7 @@
 /**
- * 第二大脑共享数据文件层（ticket 120 数据整合）
- * - 单文件 secondbrain.json 承载三段 JSON：meta（索引元数据）/ panel（AI 概括缓存）/ link（双链队列+基准哈希）；
+ * 第二大脑共享数据文件层（ticket 120 数据整合；ticket 141 chatHistory 段加法扩展）
+ * - 单文件 secondbrain.json 承载 JSON 段：meta（索引元数据）/ panel（AI 概括缓存，ticket 141 起
+ *   仅存量保留不再消费）/ link（双链队列+基准哈希）/ chatHistory（AI 对话历史，ticket 141 加法扩展）；
  *   向量二进制独立 secondbrain.vec（原 secondbrain_vectors.vec 改名，ticket 120）。
  * - loadStore：读整文件 → parse → 段结构校验；损坏 → 留档 .corrupt- 重建空结构（jsonStore 同款容错）；
  *   首次调用触发一次性迁移（四旧 JSON + 旧 vec → 组装/改名 → 删旧；幂等：新文件存在即跳过）；
@@ -21,12 +22,26 @@ export interface LinkStoreSection {
   state: Record<string, { hash: string; linkedAt: string }>;
 }
 
-/** 单文件整体结构（v1） */
+/**
+ * chatHistory 段条目（ticket 141 加法扩展）：一轮问答各一条（user 提问 / assistant 回复）。
+ * 旧数据无此段视为空，零迁移可读；写入时超出 CHAT_HISTORY_LIMIT 截断最旧。
+ */
+export interface ChatHistoryEntry {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+/** 对话历史上限（ticket 141）：超出截断最旧 */
+export const CHAT_HISTORY_LIMIT = 100;
+
+/** 单文件整体结构（v1；chatHistory 为 ticket 141 加法扩展段） */
 export interface SecondBrainStore {
   version: number;
   meta: Record<string, unknown> | null;
   panel: { summary: string; generatedAt: number } | null;
   link: LinkStoreSection;
+  /** AI 对话历史（ticket 141 加法扩展：旧文件缺失 → []，normalizeStore 兜底，零迁移） */
+  chatHistory: ChatHistoryEntry[];
 }
 
 /** storagePath 唯一目录口径（ADR-0009 延续；同 config.ts） */
@@ -60,10 +75,24 @@ const LEGACY_FILES = [
 const LEGACY_VEC = 'secondbrain_vectors.vec';
 
 function emptyStore(): SecondBrainStore {
-  return { version: STORE_VERSION, meta: null, panel: null, link: { queue: [], state: {} } };
+  return { version: STORE_VERSION, meta: null, panel: null, link: { queue: [], state: {} }, chatHistory: [] };
 }
 
-/** 段结构校验：容忍旧写错 / 缺段（queue 非数组→[]；state 非对象→{}；panel/meta 缺省 null/{}） */
+/** chatHistory 段校验（ticket 141 加法扩展）：非数组 → []；条目 role/content 不合法的剔除，超限截断最旧 */
+function normalizeChatHistory(raw: unknown): ChatHistoryEntry[] {
+  if (!Array.isArray(raw)) return [];
+  const valid = raw.filter(
+    (e): e is ChatHistoryEntry =>
+      !!e &&
+      typeof e === 'object' &&
+      ((e as any).role === 'user' || (e as any).role === 'assistant') &&
+      typeof (e as any).content === 'string'
+  );
+  return valid.slice(-CHAT_HISTORY_LIMIT);
+}
+
+/** 段结构校验：容忍旧写错 / 缺段（queue 非数组→[]；state 非对象→{}；panel/meta 缺省 null/{}；
+ *  chatHistory 缺失→[]——ticket 141 加法扩展，旧数据零迁移可读） */
 function normalizeStore(raw: unknown): SecondBrainStore {
   const d = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
   const linkRaw = d.link && typeof d.link === 'object' ? (d.link as Record<string, unknown>) : {};
@@ -79,6 +108,7 @@ function normalizeStore(raw: unknown): SecondBrainStore {
           ? (linkRaw.state as LinkStoreSection['state'])
           : {},
     },
+    chatHistory: normalizeChatHistory(d.chatHistory),
   };
 }
 
@@ -279,4 +309,35 @@ export async function mutateStore(fn: (store: SecondBrainStore) => void, app?: a
     fn(store);
     await saveStoreRaw(store, app);
   });
+}
+
+// ---------------- chatHistory 段读写（ticket 141 加法扩展） ----------------
+
+/** 读 AI 对话历史（ticket 141）：经串行链；旧数据无段 / 空库 → [] */
+export async function loadChatHistory(app?: any): Promise<ChatHistoryEntry[]> {
+  return (await loadStore(app)).chatHistory;
+}
+
+/**
+ * 追加对话条目并写盘（ticket 141）：每轮问答（含 AI 回复完成/中止后）由 ChatPanel 调用；
+ * 超出 CHAT_HISTORY_LIMIT 截断最旧；返回截断后的全量历史。
+ */
+export async function appendChatHistory(
+  entries: ChatHistoryEntry | ChatHistoryEntry[],
+  app?: any
+): Promise<ChatHistoryEntry[]> {
+  const list = Array.isArray(entries) ? entries : [entries];
+  let result: ChatHistoryEntry[] = [];
+  await mutateStore((s) => {
+    s.chatHistory = [...s.chatHistory, ...list].slice(-CHAT_HISTORY_LIMIT);
+    result = s.chatHistory;
+  }, app);
+  return result;
+}
+
+/** 清空 AI 对话历史并写盘（ticket 141，「清空对话」入口确认后调用） */
+export async function clearChatHistory(app?: any): Promise<void> {
+  await mutateStore((s) => {
+    s.chatHistory = [];
+  }, app);
 }

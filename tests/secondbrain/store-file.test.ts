@@ -18,6 +18,9 @@ import {
   getSecondBrainVecPath,
   loadStore,
   mutateStore,
+  loadChatHistory,
+  appendChatHistory,
+  clearChatHistory,
 } from '../../src/secondbrain/store-file';
 import { loadQueue, enqueuePaths, dequeuePath, loadLinkState, upsertLinkState } from '../../src/secondbrain/link-agent/data';
 
@@ -87,19 +90,20 @@ describe('store-file 一次性迁移（ticket 120）', () => {
   it('无旧文件：返回空结构且不落盘（保持「空库不产生文件」语义）', async () => {
     const { vault } = makeEnv();
     const store = await loadStore();
-    expect(store).toEqual({ version: 1, meta: null, panel: null, link: { queue: [], state: {} } });
+    expect(store).toEqual({ version: 1, meta: null, panel: null, link: { queue: [], state: {} }, chatHistory: [] });
     expect(vault.files.has(getSecondBrainStorePath())).toBe(false);
   });
 });
 
 describe('store-file 段校验与损坏容错', () => {
-  it('缺 meta / panel / link 段 → 段默认值（partial 文件不崩）', async () => {
+  it('缺 meta / panel / link / chatHistory 段 → 段默认值（partial 文件不崩）', async () => {
     const { vault } = makeEnv();
     vault.files.set(getSecondBrainStorePath(), JSON.stringify({ version: 1 }));
     const store = await loadStore();
     expect(store.meta).toEqual({});
     expect(store.panel).toBeNull();
     expect(store.link).toEqual({ queue: [], state: {} });
+    expect(store.chatHistory).toEqual([]); // ticket 141 加法扩展：旧文件缺段 → 空，零迁移
   });
 
   it('queue 非数组 / state 非对象 → 分别归一为空（容忍旧写错）', async () => {
@@ -177,5 +181,87 @@ describe('store-file 串行写链（防并发覆盖）', () => {
     await mutateStore((s) => { (s.meta as any).world = 2; });
     expect(vault.modifiedPaths).toEqual([getSecondBrainStorePath()]);
     expect((await loadStore()).meta).toEqual({ hello: 1, world: 2 });
+  });
+});
+
+describe('store-file chatHistory 段（ticket 141 加法扩展）', () => {
+  it('旧数据无段 → loadChatHistory 返回空数组（零迁移），写盘后带 chatHistory 段', async () => {
+    const { vault } = makeEnv();
+    vault.files.set(
+      getSecondBrainStorePath(),
+      JSON.stringify({ version: 1, meta: { notes: {} }, panel: null, link: { queue: [], state: {} } })
+    );
+    expect(await loadChatHistory()).toEqual([]);
+    await appendChatHistory({ role: 'user', content: 'q1' });
+    const raw = JSON.parse(vault.files.get(getSecondBrainStorePath())!);
+    expect(raw.meta).toEqual({ notes: {} }); // 旧段原样保留
+    expect(raw.chatHistory).toEqual([{ role: 'user', content: 'q1' }]);
+  });
+
+  it('appendChatHistory 逐条/批量追加，读回顺序一致', async () => {
+    const { vault } = makeEnv();
+    await appendChatHistory({ role: 'user', content: 'q1' });
+    await appendChatHistory([
+      { role: 'assistant', content: 'a1' },
+      { role: 'user', content: 'q2' },
+    ]);
+    expect(await loadChatHistory()).toEqual([
+      { role: 'user', content: 'q1' },
+      { role: 'assistant', content: 'a1' },
+      { role: 'user', content: 'q2' },
+    ]);
+    expect(vault.files.has(getSecondBrainStorePath())).toBe(true); // 每轮写盘
+  });
+
+  it('上限 100 条：超出截断最旧', async () => {
+    makeEnv();
+    for (let i = 0; i < 120; i++) {
+      await appendChatHistory({ role: 'user', content: '问题' + i });
+    }
+    const hist = await loadChatHistory();
+    expect(hist).toHaveLength(100);
+    expect(hist[0].content).toBe('问题20'); // 最旧 20 条被截断
+    expect(hist[99].content).toBe('问题119');
+  });
+
+  it('clearChatHistory 清空并写盘（写盘断言）', async () => {
+    const { vault } = makeEnv();
+    await appendChatHistory({ role: 'user', content: 'q' });
+    expect((await loadChatHistory()).length).toBe(1);
+    await clearChatHistory();
+    expect(await loadChatHistory()).toEqual([]);
+    expect(JSON.parse(vault.files.get(getSecondBrainStorePath())!).chatHistory).toEqual([]);
+  });
+
+  it('段校验：chatHistory 非数组 → []；role/content 不合法条目剔除', async () => {
+    const { vault } = makeEnv();
+    vault.files.set(getSecondBrainStorePath(), JSON.stringify({ version: 1, chatHistory: 'bad' }));
+    expect(await loadChatHistory()).toEqual([]);
+
+    vault.files.set(
+      getSecondBrainStorePath(),
+      JSON.stringify({
+        version: 1,
+        chatHistory: [
+          { role: 'user', content: '合法' },
+          { role: 'system', content: '非法角色' },
+          { role: 'assistant' }, // 缺 content
+          '裸字符串',
+          null,
+        ],
+      })
+    );
+    expect(await loadChatHistory()).toEqual([{ role: 'user', content: '合法' }]);
+  });
+
+  it('与其他段共存：chatHistory 写入不覆盖 link/meta（串行链同文件多段）', async () => {
+    makeEnv(); // 新 env（前序用例的 app 单例不串扰）
+    await enqueuePaths(['文献盒/a.md'], { '文献盒/a.md': 'h1' });
+    await mutateStore((s) => { (s.meta as any).kept = true; });
+    await appendChatHistory({ role: 'user', content: '共存问题' });
+    const store = await loadStore();
+    expect((store.meta as any).kept).toBe(true);
+    expect(store.link.queue.map((q) => q.path)).toEqual(['文献盒/a.md']);
+    expect(store.chatHistory).toEqual([{ role: 'user', content: '共存问题' }]);
   });
 });

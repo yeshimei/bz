@@ -1,7 +1,11 @@
 /* ==================== 复习计划域样式（src/review/styles.css） ==================== */
 /* ==================== 复习计划（review，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
-      #review-mask { backdrop-filter: blur(2px); }
-      #review-popup { animation: slideUp 0.3s ease-out; }
+      /* ticket 141：主面板内联样式收敛——布局/配色值逐字搬运，display 显隐保留功能性内联 */
+      #review-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--background-modifier-cover); backdrop-filter: blur(2px); }
+      #review-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--background-primary); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 90%; max-width: 800px; max-height: 80vh; flex-direction: column; animation: slideUp 0.3s ease-out; }
+      #review-popup .bz-review-title { margin: 0; font-size: 18px; font-weight: 600; color: var(--text-normal); }
+      #review-search-wrap { padding: 0 24px 8px 24px; }
+      #review-entries-container { flex: 1; overflow-y: auto; padding: 0 20px; min-height: 200px; }
       #review-popup button:hover { background: var(--background-secondary); }
       @media (max-width: 768px) {
         /* 原强制全屏头排 34px 已废止（ticket 68：真全屏头排避让统一走 .bz-win-mfs） */
@@ -14,15 +18,33 @@
       /* ticket 098：挂起记录（文件不存在）删除线 */
       .review-card .review-content.review-missing { text-decoration: line-through; color: var(--text-faint); }
       .review-card .review-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-      .review-tag { padding:0 8px; border-radius:12px; font-size:11px; background:var(--background-secondary); color:var(--text-muted); line-height:20px; white-space:nowrap; cursor:pointer; transition:background 0.2s; }
+      /* ticket 141：标签点击已收敛进抽屉，指针恢复默认 */
+      .review-tag { padding:0 8px; border-radius:12px; font-size:11px; background:var(--background-secondary); color:var(--text-muted); line-height:20px; white-space:nowrap; cursor:default; transition:background 0.2s; }
       .review-tag.overdue { background:#ff4757; color:white; }
       .review-tag.completed { background:#52c41a; color:white; }
+      /* ticket 141：R(t) 值标签三档配色（原内联 background 逐字搬运） */
+      .review-tag.bz-review-r-high { background:#52c41a22; }
+      .review-tag.bz-review-r-mid { background:#faad1422; }
+      .review-tag.bz-review-r-low { background:#ff475722; }
       .review-time { font-size:12px; color:var(--text-faint); cursor:pointer; }
+      /* ticket 141：空态（原内联样式收敛） */
+      .bz-review-empty { padding:40px 24px; text-align:center; color:var(--text-faint); font-size:16px; }
+      .bz-review-empty-sub { margin-top:10px; font-size:13px; color:var(--text-muted); }
+      /* ticket 141：抽屉头部行（原内联样式收敛，bz-item-sheet-* 为 core 契约类） */
+      .bz-review-sheet-body { display:flex; align-items:flex-start; gap:10px; }
+      .bz-review-sheet-info { flex:1; min-width:0; }
       /* 评级弹窗 z 动态发号（ADR-0067）：review showDifficultyDialog 创建时 allocZ */
       .difficulty-dialog { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--background-primary); border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.3); padding:24px; min-width:220px; display:none; }
+      .difficulty-dialog h4 { margin:0 0 12px 0; font-size:16px; }
       .difficulty-dialog .diff-btn { display:block; width:100%; padding:10px; margin:6px 0; border:none; border-radius:6px; background:var(--background-secondary); cursor:pointer; font-size:14px; text-align:left; }
       .difficulty-dialog .diff-btn:hover { background:var(--interactive-accent); color:var(--text-on-accent); }
-      .review-search-input { padding:4px 10px; border-radius:12px; border:1px solid var(--background-modifier-border); background:var(--background-secondary); color:var(--text-normal); font-size:13px; width:150px; outline:none; }
+      /* ticket 141：难度色标（原内联 border-left 逐字搬运） */
+      .difficulty-dialog .diff-btn[data-diff='again'] { border-left:3px solid #ff4757; }
+      .difficulty-dialog .diff-btn[data-diff='hard'] { border-left:3px solid #ff9f43; }
+      .difficulty-dialog .diff-btn[data-diff='good'] { border-left:3px solid #2ed573; }
+      .difficulty-dialog .diff-btn[data-diff='easy'] { border-left:3px solid #7bed9f; }
+      .difficulty-dialog .diff-btn.diff-btn-cancel { margin-top:12px; color:var(--text-muted); }
+      .review-search-input { padding:4px 10px; border-radius:12px; border:1px solid var(--background-modifier-border); background:var(--background-secondary); color:var(--text-normal); font-size:13px; width:100%; outline:none; }
       .review-search-input:focus { border-color:var(--interactive-accent); }
       /* ticket 099：监听文件夹 chip（名字 + 关闭标签） */
       #review-watch-folders { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:4px 0; }
