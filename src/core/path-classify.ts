@@ -11,7 +11,7 @@
  */
 import { tryGetSettings } from './settings-provider';
 
-export type FileDomainKind = 'diary' | 'flash' | 'poem' | 'letter' | 'movie' | 'clipping';
+export type FileDomainKind = 'diary' | 'flash' | 'poem' | 'letter' | 'movie' | 'clipping' | 'literature';
 
 /** 目录归一：trim + 反斜杠转正斜杠 + 去尾斜杠 */
 function normalizeDir(dir: string): string {
@@ -34,7 +34,7 @@ function matchSettingDir(value: unknown, p: string, fallback: string): boolean {
 /**
  * 按 settings 目录配置识别 md 文件所属域；未命中返回 null（兜底通道用）。
  * 只认 .md（对齐 src/smartcat/context-source.ts classifyPath）；
- * 判定顺序沿用其既有优先级 diary → flash → clipping → movie → poem → letter，同路径命中多域取先者。
+ * 判定顺序沿用其既有优先级 diary → flash → clipping → movie → poem → letter → literature，同路径命中多域取先者。
  */
 export function classifyFilePath(path: string | null | undefined): FileDomainKind | null {
   if (!path) return null;
@@ -57,6 +57,8 @@ export function classifyFilePath(path: string | null | undefined): FileDomainKin
   // 信：settings.letterDirectory（「✉️ 信目录」）；缺键回退 '我的/信'
   // （出处：src/settings.ts DEFAULT_SETTINGS，同 src/diary/config.ts LETTER_DIRECTORY 初值）
   if (matchSettingDir(s.letterDirectory, p, '我的/信')) return 'letter';
+  // 文献盒：settings.literatureDirectory（「文献目录」）；缺键回退 '文献盒'（ADR-0072 迁出为新域）
+  if (matchSettingDir(s.literatureDirectory, p, '文献盒')) return 'literature';
   return null;
 }
 

@@ -1,10 +1,10 @@
 /**
- * 文献盒转文献任务类型（视频转文献，bili-downloader 域；ADR-0066 正名「文献盒」）
- * 数据格式：CONFIG/STORAGE/bili-tasks.json（新数据文件，不涉及既有格式冻结）
+ * 文献盒转文献任务类型（视频转文献，literature 域；ADR-0066 正名「文献盒」，ADR-0072 迁出为新域）
+ * 数据格式：CONFIG/STORAGE/literature.json（单一数据文件，字段形状沿用 bili-tasks.json）
  */
-export type BiliTaskStatus = 'pending' | 'processing' | 'success' | 'failed';
+export type LiteratureTaskStatus = 'pending' | 'processing' | 'success' | 'failed';
 
-export interface BiliTask {
+export interface LiteratureTask {
   /** generateId('bili-task') */
   id: string;
   /** B站链接或 BV 号 */
@@ -14,7 +14,7 @@ export interface BiliTask {
   /** 剪辑结束时间 HH:MM:SS(.S)，null = 整片不剪辑 */
   end: string | null;
   /** 待处理 / 处理中 / 成功 / 失败 */
-  status: BiliTaskStatus;
+  status: LiteratureTaskStatus;
   /** 失败原因；或处理中当前步骤文案（UI 行内进度显示） */
   reason: string | null;
   /** 可选备注 */

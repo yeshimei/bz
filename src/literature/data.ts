@@ -1,19 +1,19 @@
 /**
- * 文献盒数据管理器（视频转文献，bili-downloader 域；ADR-0066 正名「文献盒」）
- * bili-tasks.json 读写（jsonStore）、任务 CRUD、状态流转、时间格式校验。
+ * 文献盒数据管理器（视频转文献，literature 域；ADR-0066 正名「文献盒」，ADR-0072 迁出为新域）
+ * literature.json 读写（jsonStore）、任务 CRUD、状态流转、时间格式校验。
  */
 import moment from 'moment';
 import { jsonStore } from '../core/json-store';
 import { generateId } from '../core/utils';
-import type { BiliTask, BiliTaskStatus } from './types';
+import type { LiteratureTask, LiteratureTaskStatus } from './types';
 
-export interface BiliSettingsLike {
+export interface LiteratureSettingsLike {
   /** ADR-0009 共享数据路径（优先），旧独立路径不涉及 */
   storagePath?: string;
 }
 
 /** 任务 CRUD 时输入的字段（id/status 系由管理器维护） */
-export interface BiliTaskInput {
+export interface LiteratureTaskInput {
   url: string;
   start?: string | null;
   end?: string | null;
@@ -61,17 +61,17 @@ export function normalizeUrl(raw: string): string {
 }
 
 /** 状态是否终态（成功/失败） */
-export function isTerminal(status: BiliTaskStatus): boolean {
+export function isTerminal(status: LiteratureTaskStatus): boolean {
   return status === 'success' || status === 'failed';
 }
 
-export const TasksData = {
+export const LiteratureData = {
   filePath: '',
   _store: null as ReturnType<typeof jsonStore> | null,
 
-  init(settings: BiliSettingsLike) {
+  init(settings: LiteratureSettingsLike) {
     const folder = ((settings.storagePath || 'CONFIG/STORAGE') as string).trim().replace(/\/+$/, '');
-    this.filePath = folder + '/bili-tasks.json';
+    this.filePath = folder + '/literature.json';
     this._store = jsonStore(this.filePath);
   },
 
@@ -83,12 +83,12 @@ export const TasksData = {
   },
 
   /** 全量读取并统一字段形状（缺省补默认值，旧/手改数据零迁移） */
-  async loadTasks(): Promise<BiliTask[]> {
+  async loadTasks(): Promise<LiteratureTask[]> {
     const raw = await this.read();
     let needWrite = false;
     const tasks = raw.map((item: any) => {
       if (!item.id) {
-        item.id = generateId('bili-task');
+        item.id = generateId('literature-task');
         needWrite = true;
       }
       return {
@@ -96,7 +96,7 @@ export const TasksData = {
         url: item.url || '',
         start: item.start || null,
         end: item.end || null,
-        status: (item.status as BiliTaskStatus) || 'pending',
+        status: (item.status as LiteratureTaskStatus) || 'pending',
         reason: item.reason || null,
         remark: item.remark || null,
         notePath: item.notePath || null,
@@ -109,16 +109,16 @@ export const TasksData = {
         archivedAt: item.archivedAt || null,
         quality: item.quality || null,
         page: Number.isInteger(item.page) && Number(item.page) > 0 ? Number(item.page) : null,
-      } as BiliTask;
+      } as LiteratureTask;
     });
     if (needWrite) await this.write(raw);
     return tasks;
   },
 
   /** 追加一条待处理任务（队列尾 = 处理顺序尾） */
-  async addTask(input: BiliTaskInput): Promise<BiliTask> {
-    const task: BiliTask = {
-      id: generateId('bili-task'),
+  async addTask(input: LiteratureTaskInput): Promise<LiteratureTask> {
+    const task: LiteratureTask = {
+      id: generateId('literature-task'),
       url: normalizeUrl(input.url),
       start: input.start?.trim() || null,
       end: input.end?.trim() || null,
@@ -142,7 +142,7 @@ export const TasksData = {
     return task;
   },
 
-  async updateTask(id: string, patch: Partial<BiliTask>): Promise<void> {
+  async updateTask(id: string, patch: Partial<LiteratureTask>): Promise<void> {
     const data = await this.read();
     const idx = data.findIndex((d: any) => d.id === id);
     if (idx === -1) throw new Error('任务不存在');

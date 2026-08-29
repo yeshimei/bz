@@ -8,7 +8,7 @@
  * 点击按状态分流：成功→打开文献笔记 / 待处理→编辑（失败原因行内直显，不弹窗）。
  * 历史为独立弹窗（🕘 打开，ADR-0070）：同视频多条文献笔记归并在一张卡片内分组列出。
  * 添加弹窗与主面板同构：遮罩层 + 无取消按钮（ESC / 点遮罩关闭，与其他域一致，ADR-0070）。
- * 域事件分发（ADR-0066）：添加任务 → 'bili-tasks' {kind:'added'}；单条终态 → {kind:'converted'|'failed'}。
+ * 域事件分发（ADR-0066）：添加任务 → 'literature:tasks' {kind:'added'}；单条终态 → {kind:'converted'|'failed'}。
  */
 import type { App } from 'obsidian';
 import type { SettingsSchema } from '../core/settings-schema';
@@ -22,12 +22,12 @@ import { notice } from '../core/notice';
 import { topifyZ } from '../core/z-order';
 import { emitDomainEvent } from '../core/domain-bus';
 import { getApp } from '../core/app';
-import { TasksData, normalizeLooseTime } from './data';
-import type { BiliTask } from './types';
+import { LiteratureData, normalizeLooseTime } from './data';
+import type { LiteratureTask } from './types';
 import { BatchRunner, type BatchEvents, type BiliProgress } from './processor';
 
 interface StatusMeta { label: string; cls: string; }
-const STATUS_META: Record<BiliTask['status'], StatusMeta> = {
+const STATUS_META: Record<LiteratureTask['status'], StatusMeta> = {
   pending: { label: '待处理', cls: 'bz-bili-pending' },
   processing: { label: '处理中', cls: 'bz-bili-processing' },
   success: { label: '成功', cls: 'bz-bili-success' },
@@ -76,20 +76,20 @@ const fmtElapsed = (ms: number): string => {
   return h > 0 ? `${h}:${String(m % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}` : `${m}:${String(s % 60).padStart(2, '0')}`;
 };
 
-export function biliTasksSettingsSchema(opts?: { onClearHistory?: () => void | Promise<void> }): SettingsSchema {
+export function literatureSettingsSchema(opts?: { onClearHistory?: () => void | Promise<void> }): SettingsSchema {
   const rows: SettingsSchema['groups'][number]['rows'] = [
-    { type: 'toggle', name: '详细进度提示', desc: '处理中显示当前步骤、耗时、百分比与步骤时间线；关闭则仅显示步骤徽章', binding: { key: 'biliProgressDetail' } },
-    { type: 'toggle', name: '保留视频原件', desc: '转文献完成后保留视频文件；关闭则只生成文献笔记', binding: { key: 'biliKeepVideo' } },
-    { type: 'select', name: '下载清晰度', desc: '以视频源可用档位为准，低档优先命中缓存', binding: { key: 'biliQuality' }, options: [{ value: 'highest', label: '最高' }, { value: '1080', label: '1080P' }, { value: '720', label: '720P' }] },
-    { type: 'toggle', name: '遇错即停', desc: '单条失败后停止处理剩余任务；关闭则失败后继续', binding: { key: 'biliStopOnFailure' } },
-    { type: 'text', name: '输出目录', desc: '视频文件落地目录；留空跟随工具配置', binding: { key: 'biliOutputDir' }, placeholder: '如 D:/videos' },
+    { type: 'toggle', name: '详细进度提示', desc: '处理中显示当前步骤、耗时、百分比与步骤时间线；关闭则仅显示步骤徽章', binding: { key: 'literatureProgressDetail' } },
+    { type: 'toggle', name: '保留视频原件', desc: '转文献完成后保留视频文件；关闭则只生成文献笔记', binding: { key: 'literatureKeepVideo' } },
+    { type: 'select', name: '下载清晰度', desc: '以视频源可用档位为准，低档优先命中缓存', binding: { key: 'literatureQuality' }, options: [{ value: 'highest', label: '最高' }, { value: '1080', label: '1080P' }, { value: '720', label: '720P' }] },
+    { type: 'toggle', name: '遇错即停', desc: '单条失败后停止处理剩余任务；关闭则失败后继续', binding: { key: 'literatureStopOnFailure' } },
+    { type: 'text', name: '输出目录', desc: '视频文件落地目录；留空跟随工具配置', binding: { key: 'literatureOutputDir' }, placeholder: '如 D:/videos' },
   ];
   if (opts?.onClearHistory) {
     rows.push({ type: 'button', name: '清空历史', desc: '移除全部成功归档的历史记录；文献笔记与视频文件保留在 vault 中', buttonText: '清空历史', onClick: () => void opts.onClearHistory!() });
   }
   return {
     groups: [
-      mobileFullscreenGroup('biliTasksMobileDefaultFullscreen'),
+      mobileFullscreenGroup('literatureMobileDefaultFullscreen'),
       { icon: 'settings-2', name: '文献盒处理', rows },
     ],
   };
@@ -197,7 +197,7 @@ export class UIManager {
     q<HTMLButtonElement>(p, '#bili-btn-abort')!.onclick = () => void this.onAbortBatch();
     q<HTMLButtonElement>(p, '#bili-btn-history')!.onclick = () => this.showHistory();
     q<HTMLButtonElement>(p, '#bili-btn-settings')!.onclick = () =>
-      openSettingsModal({ title: '文献盒设置', maxWidth: 560, schema: biliTasksSettingsSchema({ onClearHistory: () => this.confirmClearHistory() }) });
+      openSettingsModal({ title: '文献盒设置', maxWidth: 560, schema: literatureSettingsSchema({ onClearHistory: () => this.confirmClearHistory() }) });
     q<HTMLButtonElement>(p, '#bili-btn-close')!.onclick = () => this.hideMain();
   }
 
@@ -287,7 +287,7 @@ export class UIManager {
 
   showMain(): void {
     if (!this.popup || !this.mask) return;
-    applyMobileWindowFullscreen(this.popup, tryGetSettings().biliTasksMobileDefaultFullscreen === true);
+    applyMobileWindowFullscreen(this.popup, tryGetSettings().literatureMobileDefaultFullscreen === true);
     topifyZ(this.mask, this.popup); // ADR-0067：显示即发号，谁后显示谁在上
     this.mask.style.display = 'block';
     this.popup.style.display = 'flex';
@@ -302,7 +302,7 @@ export class UIManager {
   /** 历史独立弹窗（ADR-0070）：主面板之上叠开，遮罩 + ✕/ESC/点遮罩关闭 */
   showHistory(): void {
     if (!this.historyPopup || !this.historyMask) return;
-    applyMobileWindowFullscreen(this.historyPopup, tryGetSettings().biliTasksMobileDefaultFullscreen === true);
+    applyMobileWindowFullscreen(this.historyPopup, tryGetSettings().literatureMobileDefaultFullscreen === true);
     topifyZ(this.historyMask, this.historyPopup);
     this.historyMask.style.display = 'block';
     this.historyPopup.style.display = 'flex';
@@ -314,7 +314,7 @@ export class UIManager {
     if (this.historyPopup) this.historyPopup.style.display = 'none';
   }
 
-  showAddDialog(editItem?: Partial<BiliTask>): void {
+  showAddDialog(editItem?: Partial<LiteratureTask>): void {
     if (!this.addPopup || !this.addMask) return;
     this.editingId = editItem?.id ?? null;
     // 有 id = 编辑既有任务；无 id（含预填对象）= 新增模式（ticket 134：聚合讯入口预填不显示编辑态）
@@ -359,11 +359,11 @@ export class UIManager {
       // 不带 remark：编辑旧任务时保留既有备注（数据格式兼容冻结），新任务备注恒空
       const patch = { url, start: start || null, end: end || null, quality, page, title: vtitle || null, uploader: uploader || null };
       if (this.editingId) {
-        await TasksData.updateTask(this.editingId, patch);
-        emitDomainEvent('bili-tasks', { kind: 'edited', id: this.editingId });
+        await LiteratureData.updateTask(this.editingId, patch);
+        emitDomainEvent('literature:tasks', { kind: 'edited', id: this.editingId });
       } else {
-        await TasksData.addTask(patch);
-        emitDomainEvent('bili-tasks', { kind: 'added', url });
+        await LiteratureData.addTask(patch);
+        emitDomainEvent('literature:tasks', { kind: 'added', url });
       }
       notice('已保存');
       this.hideAddDialog();
@@ -374,7 +374,7 @@ export class UIManager {
   }
 
   async refreshPanel(): Promise<void> {
-    const tasks = await TasksData.loadTasks();
+    const tasks = await LiteratureData.loadTasks();
     if (!this.list) return; // await 期间面板被销毁（unload/测试清理）→ 放弃渲染
     this.list.innerHTML = '';
     const active = tasks.filter((t) => !t.archived);
@@ -401,10 +401,10 @@ export class UIManager {
   }
 
   /** 头部状态计数（ADR-0070）：待处理/处理中/失败 非零项，一眼看清队列健康度 */
-  private _syncStatusCounts(tasks: BiliTask[]): void {
+  private _syncStatusCounts(tasks: LiteratureTask[]): void {
     const el = this.popup ? q<HTMLElement>(this.popup, '#bili-status-counts') : null;
     if (!el) return;
-    const count = (s: BiliTask['status']) => tasks.filter((t) => t.status === s).length;
+    const count = (s: LiteratureTask['status']) => tasks.filter((t) => t.status === s).length;
     const parts: string[] = [];
     if (count('pending')) parts.push(`${count('pending')} 待处理`);
     if (count('processing')) parts.push(`${count('processing')} 处理中`);
@@ -415,7 +415,7 @@ export class UIManager {
   /** 历史列表（ADR-0070）：无条带无成功徽标；同一视频的多条文献笔记归并在一张卡片内分组列出 */
   private async refreshHistory(): Promise<void> {
     if (!this.historyList) return;
-    const tasks = await TasksData.loadTasks();
+    const tasks = await LiteratureData.loadTasks();
     if (!this.historyList) return;
     this.historyList.innerHTML = '';
     const rows = tasks.filter((t) => t.archived);
@@ -427,7 +427,7 @@ export class UIManager {
       return;
     }
     // 按 url 分组（同一视频不同分P/起止 = 多条任务 → 多份文献笔记），组内按完成时间正序，组间按最新完成倒序
-    const groups = new Map<string, BiliTask[]>();
+    const groups = new Map<string, LiteratureTask[]>();
     for (const t of rows) {
       const key = t.url || t.id;
       const g = groups.get(key);
@@ -447,7 +447,7 @@ export class UIManager {
   }
 
   /** 历史分组卡片：标题链接（UP主名紧随其后，ADR-0070）+ 每条任务一行「📄 笔记路径 ⏱ 完成时间」，行级右键/长按操作 */
-  private renderHistoryGroup(group: BiliTask[]): HTMLElement {
+  private renderHistoryGroup(group: LiteratureTask[]): HTMLElement {
     const head = group[0];
     const card = document.createElement('div');
     card.className = 'bz-bili-task-card bz-bili-hgroup';
@@ -492,7 +492,7 @@ export class UIManager {
     }
   }
 
-  private _syncRunButton(tasks: BiliTask[]): void {
+  private _syncRunButton(tasks: LiteratureTask[]): void {
     if (!this.popup) return;
     const run = q<HTMLButtonElement>(this.popup, '#bili-btn-run');
     const abort = q<HTMLButtonElement>(this.popup, '#bili-btn-abort');
@@ -502,7 +502,7 @@ export class UIManager {
     if (abort) abort.style.display = BatchRunner.running && !isMobileEnv() ? '' : 'none';
   }
 
-  private renderRow(task: BiliTask): HTMLElement {
+  private renderRow(task: LiteratureTask): HTMLElement {
     const card = document.createElement('div');
     card.className = 'bz-bili-task-card';
     card.dataset.id = task.id;
@@ -536,7 +536,7 @@ export class UIManager {
     return card;
   }
 
-  private buildCardActions(task: BiliTask): ItemAction[] {
+  private buildCardActions(task: LiteratureTask): ItemAction[] {
     const actions: ItemAction[] = [];
     if (task.status === 'success') {
       if (task.notePath) actions.push({ icon: 'book-open', label: '打开文献笔记', onClick: () => this.openNote(task.notePath!) });
@@ -566,9 +566,9 @@ export class UIManager {
       if (meta) meta.after(box);
       else card.appendChild(box);
     }
-    // 简要模式（设置 biliProgressDetail=false 显式关闭）：仅当前步骤文本（对齐旧行为）；
+    // 简要模式（设置 literatureProgressDetail=false 显式关闭）：仅当前步骤文本（对齐旧行为）；
     // 缺省/未注入（=undefined）走详细模式——默认值即详细
-    if (tryGetSettings().biliProgressDetail === false) {
+    if (tryGetSettings().literatureProgressDetail === false) {
       const cur = st.steps[st.steps.length - 1] || '处理中…';
       box.innerHTML = `<div class="bz-bili-progress">${esc(cur)}</div>`;
       return;
@@ -608,7 +608,7 @@ export class UIManager {
       return;
     }
     if (BatchRunner.running) return;
-    const tasks = await TasksData.loadTasks();
+    const tasks = await LiteratureData.loadTasks();
     // ADR-0067 断点续跑：待处理 + 失败 项一起处理（失败项从出错步骤继续，成功项已归档不重跑）
     const work = tasks.filter((t) => !t.archived && (t.status === 'pending' || t.status === 'failed'));
     if (work.length === 0) { notice('没有待处理或失败的任务', 'info'); return; }
@@ -632,7 +632,7 @@ export class UIManager {
       onTaskDone: (t) => {
         ui.runState.delete(t.id);
         // 域事件分发（ADR-0066）：成功 = 单条转文献完成（小橘行为流订阅），载荷带 notePath 供标题提取
-        emitDomainEvent('bili-tasks', { kind: t.status === 'success' ? 'converted' : 'failed', id: t.id, url: t.url, notePath: t.notePath ?? null });
+        emitDomainEvent('literature:tasks', { kind: t.status === 'success' ? 'converted' : 'failed', id: t.id, url: t.url, notePath: t.notePath ?? null });
         void ui.refreshPanel();
       },
       onBatchDone: (summary) => {
@@ -663,7 +663,7 @@ export class UIManager {
     await this.refreshPanel();
   }
 
-  private async confirmDelete(task: BiliTask): Promise<void> {
+  private async confirmDelete(task: LiteratureTask): Promise<void> {
     const v = await openFlowDialog({
       title: '删除这条转文献任务？',
       message: '仅从列表移除记录，已生成的文献笔记与视频不受影响。',
@@ -673,7 +673,7 @@ export class UIManager {
       ],
     });
     if (v !== 'ok') return;
-    await TasksData.deleteTask(task.id);
+    await LiteratureData.deleteTask(task.id);
     await this.refreshPanel();
     await this.refreshHistory();
   }
@@ -688,7 +688,7 @@ export class UIManager {
       ],
     });
     if (v !== 'ok') return;
-    await TasksData.clearHistory();
+    await LiteratureData.clearHistory();
     await this.refreshHistory();
   }
 
