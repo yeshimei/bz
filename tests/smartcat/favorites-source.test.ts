@@ -80,7 +80,7 @@ describe('favoritesEditedText / favoritesDeletedText（文案组装）', () => {
     expect(favoritesDeletedText('TokenLedger')).toBe('你删除了收藏《TokenLedger》');
   });
   it('归档仅标题（ticket 140：与删除同构短文案）', () => {
-    expect(favoritesArchivedText('TokenLedger')).toBe('你归档了收藏《TokenLedger》');
+    expect(favoritesArchivedText('TokenLedger')).toBe('你归档了《TokenLedger》');
   });
 });
 
@@ -93,7 +93,7 @@ describe('buildFavoritesActionText（事件 → 观察文本）', () => {
     expect(buildFavoritesActionText({ kind: 'delete', title: 'TokenLedger' })).toBe('你删除了收藏《TokenLedger》');
   });
   it('归档事件映射（ticket 140）', () => {
-    expect(buildFavoritesActionText({ kind: 'archive', title: 'TokenLedger' })).toBe('你归档了收藏《TokenLedger》');
+    expect(buildFavoritesActionText({ kind: 'archive', title: 'TokenLedger' })).toBe('你归档了《TokenLedger》');
   });
 });
 

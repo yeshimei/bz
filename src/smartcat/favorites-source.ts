@@ -59,7 +59,7 @@ export function favoritesDeletedText(title: string): string {
 
 /** 归档观察文案（标题必填；ticket 140：与删除同构短文案，ADR-0074 冷存无查看面，观察流是唯一可读痕迹） */
 export function favoritesArchivedText(title: string): string {
-  return `你归档了收藏《${title}》`;
+  return `你归档了《${title}》`;
 }
 
 /** 事件 → 观察文本（smartcat.notifyFavoritesAction 调用；本域所有事件均有观察，保持 string | null 签名一致） */

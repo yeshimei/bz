@@ -101,6 +101,7 @@ registerEntity('favorite', {
   added: (s) => `你收藏了《${s.name || '未命名'}》`,
   edited: (s) => `你编辑了收藏《${s.name || '未命名'}》`,
   deleted: (s) => `你取消了收藏《${s.name || '未命名'}》`,
+  archived: (s) => `你归档了《${s.name || '未命名'}》`,
 }, ['favorites'], (s) => `收藏《${s.name || '未命名'}》有更新`);
 
 // ==================== belongings（归物本；实际 entityType=item，注册 belongings 别名） ====================
@@ -308,7 +309,7 @@ export const ACTION_WORD_LABELS: Record<string, string> = {
   status: '状态', 'focus-done': '专注', said: '说过',
   started: '开始读', progressed: '在读', highlight: '划线', thought: '想法', removed: '移出',
   insight: '洞察', digest: '小结', generated: '生成', unknown: '活动',
-  tagged: '标签', opened: '打开', moved: '搬移', answered: '答题',
+  tagged: '标签', opened: '打开', moved: '搬移', answered: '答题', archived: '归档',
 };
 
 /** action → 中文徽标词（未知回显原值） */

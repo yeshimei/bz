@@ -94,6 +94,7 @@ describe('buildBehaviorWording：favorites / belongings', () => {
     expect(buildBehaviorWording(makeItem('favorites', 'added', { entityType: 'favorite', action: 'added', name: 'GitHub' }))).toBe('你收藏了《GitHub》');
     expect(buildBehaviorWording(makeItem('favorites', 'edited', { entityType: 'favorite', action: 'edited', name: 'GitHub' }))).toBe('你编辑了收藏《GitHub》');
     expect(buildBehaviorWording(makeItem('favorites', 'deleted', { entityType: 'favorites', action: 'deleted', name: 'GitHub' }))).toBe('你取消了收藏《GitHub》');
+    expect(buildBehaviorWording(makeItem('favorites', 'archived', { entityType: 'favorite', action: 'archived', name: 'GitHub' }))).toBe('你归档了《GitHub》');
   });
 
   it('item 动作集（status 四态动词化）+ belongings 别名', () => {
