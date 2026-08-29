@@ -183,3 +183,10 @@ export async function fetchPageTitle(url: string): Promise<string | null> {
   } catch (e) { /* 静默 */ }
   return null;
 }
+
+/** 字节级比对（Syncthing 冲突止血「写前比对」共用：长度或任一字节不同即不等） */
+export function bytesEqual(a: ArrayLike<number>, b: ArrayLike<number>): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}

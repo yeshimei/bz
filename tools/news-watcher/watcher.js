@@ -163,23 +163,55 @@ function extractUpInfo(items) {
     return null;
 }
 
-/** ticket 127：按最近优先收满 limit 条未抓过的 B 站条目（无 24h 窗口）；已收满返回 true
- *  （纯函数，供 fetchBilibiliUp 与 node:test 单测使用） */
-function collectBilibiliBatch(items, existingUrls, limit, out) {
+/** ticket n：B 站窗口收集——按 feed 最近优先收前 limit 条视频投稿（无 24h 窗口、不看已抓过）；
+ *  收满返回 true（纯函数，供 fetchBilibiliUp 与 node:test 单测使用）。
+ *  语义修正（用户拍板 2026-08-29）：配置的 N 是「每 UP 保留最近 N 条」的总量口径，
+ *  不再是「每轮收 N 条没抓过的」增量口径——增量语义会让每 UP 条目每轮 +10 无上界累积。 */
+function collectBilibiliBatch(items, limit, out) {
     for (const it of items || []) {
         if (out.length >= limit) return true;
         const a = buildBilibiliArticle(it, null); // cutoff=null：不走 24h 窗口
         if (!a) continue;
-        if (a.url && existingUrls.has(a.url)) continue;
         out.push(a);
     }
     return out.length >= limit;
 }
 
-/** 单个 UP 主动态翻页抓取（仅 DYNAMIC_TYPE_AV 视频投稿；ticket 127：按「最近 N 条」收满即停，不走 24h 窗口）；
- *  返回 { articles, upInfo, rejected }——upInfo=本轮抓到的该 UP 主名字/头像（ticket 126，无则 null）；
+/** ticket n：B 站窗口裁剪纯函数（用户拍板 2026-08-29：每 UP 库内只保留最近 N 条）。
+ *  输入：现有 articles、本轮 fetchBilibili 的 perUp 窗口/风控标记/UP 资料。
+ *  规则：仅当该 UP 本轮未遭风控（rejected=false）且抓到了窗口时参与裁剪；
+ *        与该 UP 同名（author 匹配）的存量条目中，url 不在窗口内且 date 早于窗口内最早一条 → 裁掉
+ *        （date 为统一 'YYYY-MM-DD HH:mm:ss' 格式，字典序即可比较）。
+ *  保守边界：比窗口内最早一条更新的存量（分页截断等异常残留）不裁，防误删。
+ *  返回待裁剪的 url 列表（去重）。 */
+function pruneBilibiliWindow(existingArticles, perUpArticles, perUpRejected, upInfo) {
+    const pruned = [];
+    const seen = new Set();
+    for (const [uid, arts] of Object.entries(perUpArticles || {})) {
+        if (!Array.isArray(arts) || arts.length === 0) continue;
+        if (perUpRejected && perUpRejected[uid]) continue; // 风控轮窗口不完整，不裁
+        const name = upInfo && upInfo[uid] && upInfo[uid].name;
+        if (!name) continue;
+        const windowUrls = new Set(arts.map((a) => a.url));
+        const oldest = arts.map((a) => String(a.date || '')).sort()[0];
+        if (!oldest) continue;
+        for (const a of existingArticles || []) {
+            if (!a || a.platform !== 'B站' || a.author !== name) continue;
+            if (windowUrls.has(a.url) || seen.has(a.url)) continue;
+            if (a.date && String(a.date) < oldest) {
+                seen.add(a.url);
+                pruned.push(a.url);
+            }
+        }
+    }
+    return pruned;
+}
+
+/** 单个 UP 主动态翻页抓取（仅 DYNAMIC_TYPE_AV 视频投稿；ticket n：收「最近 N 条」窗口，不走 24h 窗口）；
+ *  返回 { articles, upInfo, rejected }——articles=该 UP 当前最近 N 条窗口（含已入库条目，去重交 checkAndFetch）；
+ *  upInfo=本轮抓到的该 UP 主名字/头像（ticket 126，无则 null）；
  *  rejected=接口被风控拦截（code -352/-412 等，ticket 127：匿名 Cookie 常见，交由 fetchBilibili 引导用户配登录 Cookie） */
-async function fetchBilibiliUp(uid, existingUrls, cookie, maxItems) {
+async function fetchBilibiliUp(uid, cookie, maxItems) {
     const articles = [];
     const limit = Math.max(1, Math.floor(Number(maxItems) || 10));
     let offset = '';
@@ -203,7 +235,7 @@ async function fetchBilibiliUp(uid, existingUrls, cookie, maxItems) {
         const items = data.data.items || [];
         if (items.length === 0) break;
         if (!upInfo) upInfo = extractUpInfo(items);
-        if (collectBilibiliBatch(items, existingUrls, limit, articles)) break; // 已收满
+        if (collectBilibiliBatch(items, limit, articles)) break; // 窗口已收满
         if (!data.data.has_more) break;
         offset = data.data.offset || '';
         if (!offset) break;
@@ -211,13 +243,14 @@ async function fetchBilibiliUp(uid, existingUrls, cookie, maxItems) {
     return { articles, upInfo, rejected };
 }
 
-/** B 站源：cookie 引导 + 逐 UP 主抓取（ticket 127：每 UP 最近 N 条，不走 24h 窗口；批内/库内双去重由 checkAndFetch 统一完成）；
- *  返回 { articles, upInfo }——upInfo=本轮各 UP 主资料合并（ticket 126） */
-async function fetchBilibili(existingUrls, upUids, maxItems, cookie) {
+/** B 站源：cookie 引导 + 逐 UP 主抓「最近 N 条」窗口（不走 24h 窗口；新增条目由 checkAndFetch 对库去重）；
+ *  返回 { articles, upInfo, perUpArticles, perUpRejected }——articles=全部 UP 窗口合并（批内去重），
+ *  perUpArticles/perUpRejected=逐 UP 窗口与风控标记（供 checkAndFetch 做窗口裁剪），upInfo=各 UP 主资料合并（ticket 126） */
+async function fetchBilibili(upUids, maxItems, cookie) {
     const list = upUids || [];
     if (list.length === 0) {
         console.log('  📡 B站 (无 UP 主名单，跳过)');
-        return { articles: [], upInfo: {} };
+        return { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {} };
     }
     const per = Math.max(1, Math.floor(Number(maxItems) || 10));
     console.log(`  📡 B站 (${list.length} 位 UP 主，每 UP 最近 ${per} 条)...`);
@@ -226,30 +259,32 @@ async function fetchBilibili(existingUrls, upUids, maxItems, cookie) {
     const ck = configured || (await getBilibiliCookie());
     if (!ck) {
         console.log('  ✗ B站 无可用 Cookie（自动引导失败或 API 风控 412）——请在剪藏本设置 ⚙️ → UP 主名单管理 → 粘贴登录后的 B 站 Cookie 后重试');
-        return { articles: [], upInfo: {} };
+        return { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {} };
     }
     const seen = new Set();
     const articles = [];
     const upInfo = {};
-    let rejected = false;
+    const perUpArticles = {};
+    const perUpRejected = {};
     for (const uid of list) {
-        const res = await fetchBilibiliUp(uid, existingUrls, ck, per);
+        const res = await fetchBilibiliUp(uid, ck, per);
+        perUpArticles[uid] = res.articles;
+        if (res.rejected) perUpRejected[uid] = true;
         for (const a of res.articles) {
             if (seen.has(a.url)) continue;
             seen.add(a.url);
             articles.push(a);
         }
-        if (res.rejected) rejected = true;
         if (res.upInfo) upInfo[uid] = res.upInfo;
     }
-    console.log(`  ✓ B站 ${articles.length} 条 (最近 ${per} 条/UP)`);
-    if (rejected) {
+    console.log(`  ✓ B站 窗口 ${articles.length} 条 (最近 ${per} 条/UP)`);
+    if (Object.keys(perUpRejected).length > 0) {
         // ticket 127：匿名/弱 Cookie 常被 -352/-412 拦截（返回空），引导配置登录后 Cookie（含 SESSDATA）
         console.log('  ✗ B站 接口风控拦截（-352/412）——匿名 Cookie 拿不到动态数据，请在剪藏本设置 ⚙️ → UP 主名单管理 → 粘贴浏览器「登录后」的 B 站 Cookie（含 SESSDATA）保存，下轮生效');
     } else if (articles.length === 0 && !configured) {
         console.log('  ℹ️ B站 本轮 0 条——若名单无误却应抓到内容，多因未登录 Cookie；请在该弹窗粘贴登录后的 Cookie 后重试');
     }
-    return { articles, upInfo };
+    return { articles, upInfo, perUpArticles, perUpRejected };
 }
 
 let running = false;
@@ -439,13 +474,14 @@ async function checkAndFetch() {
         else console.log('  🚫 知乎日报 已关闭（sources.zhihu=false），跳过');
         // B 站：并入 jobs 并行抓取，同时收集本轮 UP 主资料（ticket 126）与「最近 N 条」配置（ticket 127）
         const biliPromise = sources.bilibili !== false
-            ? fetchBilibili(existingUrls, disk.bilibiliUps, disk.bilibiliMaxItems, disk.bilibiliCookie)
+            ? fetchBilibili(disk.bilibiliUps, disk.bilibiliMaxItems, disk.bilibiliCookie)
             : null;
         if (!biliPromise) console.log('  🚫 B站 已关闭（sources.bilibili=false），跳过');
         if (biliPromise) jobs.push(biliPromise.then((r) => r.articles));
 
         const results = await Promise.all(jobs);
-        const biliUpInfo = biliPromise ? (await biliPromise).upInfo : {};
+        const biliRes = biliPromise ? await biliPromise : null;
+        const biliUpInfo = biliRes ? biliRes.upInfo : {};
         let newArticles = results.flat().filter(a => a && !existingUrls.has(a.url));
 
         // 标题去重
@@ -454,7 +490,15 @@ async function checkAndFetch() {
         const titleDupCount = beforeTitleDedup - newArticles.length;
         if (titleDupCount > 0) console.log(`  🏷️  标题去重过滤 ${titleDupCount} 篇`);
 
-        if (newArticles.length === 0) {
+        // ticket n（用户拍板 2026-08-29）：B 站窗口裁剪——每 UP 库内只保留最近 N 条，超出窗口的老条目移除
+        const prunedUrls = biliRes
+            ? pruneBilibiliWindow(existing, biliRes.perUpArticles, biliRes.perUpRejected, biliRes.upInfo)
+            : [];
+        if (prunedUrls.length > 0) console.log(`  🧹 B站 窗口外清理 ${prunedUrls.length} 条`);
+        const prunedSet = new Set(prunedUrls);
+        const remaining = prunedUrls.length > 0 ? existing.filter(a => !prunedSet.has(a.url)) : existing;
+
+        if (newArticles.length === 0 && prunedUrls.length === 0) {
             console.log('  ℹ️  无新增文章');
             return;
         }
@@ -464,9 +508,9 @@ async function checkAndFetch() {
         }
 
         // 五段写回：仅替换 articles 段 + 合并本轮 UP 主资料（保留 stats/bilibiliUps/sources——插件侧维护段）
-        writeNewsData({ ...disk, articles: [...existing, ...newArticles], bilibiliUpInfo: { ...(disk.bilibiliUpInfo || {}), ...biliUpInfo } });
+        writeNewsData({ ...disk, articles: [...remaining, ...newArticles], bilibiliUpInfo: { ...(disk.bilibiliUpInfo || {}), ...biliUpInfo } });
 
-        console.log(`  ✅ 新增 ${newArticles.length} 篇，总计 ${existing.length + newArticles.length} 篇`);
+        console.log(`  ✅ 新增 ${newArticles.length} 篇${prunedUrls.length > 0 ? `，窗口外清理 ${prunedUrls.length} 条` : ''}，总计 ${remaining.length + newArticles.length} 篇`);
         for (const a of newArticles) {
             console.log(`  📰 [${a.platform}] ${a.title} — ${a.author || '未知'}`);
         }
@@ -486,4 +530,4 @@ if (require.main === module) {
     setInterval(checkAndFetch, FETCH_INTERVAL_MS);
 }
 
-module.exports = { NEWS_PATH, FETCH_INTERVAL_MS, resolveNewsPath, checkAndFetch, readNewsData, fetchBilibiliUp, getBilibiliCookie, buildBilibiliArticle, extractUpInfo, parseBilibiliUpInfo, parseBilibiliMaxItems, parseBilibiliCookie, collectBilibiliBatch };
+module.exports = { NEWS_PATH, FETCH_INTERVAL_MS, resolveNewsPath, checkAndFetch, readNewsData, fetchBilibiliUp, getBilibiliCookie, buildBilibiliArticle, extractUpInfo, parseBilibiliUpInfo, parseBilibiliMaxItems, parseBilibiliCookie, collectBilibiliBatch, pruneBilibiliWindow };

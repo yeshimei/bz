@@ -12,7 +12,7 @@ import {
   migrateSmartcatSidecars, slimSmartCatData,
   getSmartcatMemorySidecarPath, getSmartcatBehaviorSidecarPath,
 } from '../../src/smartcat/memory';
-import { defaultSmartCatData, getSmartcatFilePath, getSmartcatVecPath } from '../../src/smartcat/data';
+import { defaultSmartCatData, getSmartcatFilePath, getSmartcatVecPath, saveSmartCatData } from '../../src/smartcat/data';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import type { SmartCatData, MemoryStreamEntry, BehaviorItem } from '../../src/smartcat/types';
 
@@ -222,6 +222,24 @@ describe('存储 sidecar 化：升级迁移（旧 smartcat.json → 新布局）
     expect(vec.rows[0]).toEqual([1, 1]);
   });
 
+  it('止血（用户拍板 2026-08-29）：首次迁移向量清理产物与现盘字节一致 → 跳过 writeBinary', async () => {
+    const { app, files, binaries } = makeFakeApp();
+    const data = oldFormatData();
+    // 只留一条 insight（下标 0），旧 vec 已与其对齐（1 行 [1,1]）→ 清理产物 == 现盘字节
+    data.memory.memoryStream = data.memory.memoryStream.filter((e) => e.id === 'insight_1');
+    files.set(getSmartcatFilePath(), JSON.stringify(data));
+    binaries.set(getSmartcatVecPath(), new Uint8Array(encodeVec(2, [[1, 1]])));
+    let binaryWrites = 0;
+    const adapter = app.vault.adapter as any;
+    const origWriteBinary = adapter.writeBinary.bind(adapter);
+    adapter.writeBinary = async (p: string, buf: ArrayBuffer) => { binaryWrites++; return origWriteBinary(p, buf); };
+
+    await migrateSmartcatSidecars(app, data);
+
+    expect(binaryWrites).toBe(0); // 清理产物与现盘一致 → 不写
+    expect(data.memory.memoryStream.map((e) => e.id)).toEqual(['insight_1']);
+  });
+
   it('幂等：sidecar 已在 → 采纳 sidecar 条目，不重复迁移不清数据', async () => {
     const { app, files } = makeFakeApp();
     const data = oldFormatData();
@@ -254,6 +272,45 @@ describe('存储 sidecar 化：升级迁移（旧 smartcat.json → 新布局）
     expect(JSON.parse(files.get(getSmartcatMemorySidecarPath())!).entries).toHaveLength(0);
     expect(JSON.parse(files.get(getSmartcatBehaviorSidecarPath())!).items).toHaveLength(0);
     expect(files.has(getSmartcatFilePath())).toBe(true);
+  });
+
+  it('止血（用户拍板 2026-08-29）：sidecar 已在的 adopt 轮零写盘——sidecar 不重写、smartcat.json 内容没变不落盘、lastUpdated 不刷新', async () => {
+    const { app, files } = makeFakeApp();
+    await migrateSmartcatSidecars(app, oldFormatData()); // 首次迁移：三份文件落盘
+    const before = files.get(getSmartcatFilePath())!;
+    // 记录后续写盘调用
+    const writes: string[] = [];
+    const v = app.vault as any;
+    const origModify = v.modify.bind(v);
+    v.modify = async (f: any, c: string) => { writes.push(f.path); return origModify(f, c); };
+    const origCreate = v.create.bind(v);
+    v.create = async (p: string, c: string) => { writes.push(p); return origCreate(p, c); };
+    // 重启场景：内存数据 = 盘上瘦身视图（loadSmartCatData 产物），sidecar 双双已在
+    const data2 = JSON.parse(before) as SmartCatData;
+    await migrateSmartcatSidecars(app, data2);
+    expect(writes).toEqual([]); // 三份文件一个都没动（旧实现每轮刷 mtime 制造同步冲突）
+    expect(files.get(getSmartcatFilePath())!).toBe(before);
+    expect(data2.memory.lastUpdated).toBe(JSON.parse(before).memory.lastUpdated);
+  });
+});
+
+describe('saveSmartCatData 写前比对（Syncthing 冲突止血，用户拍板 2026-08-29）', () => {
+  it('内容没变 → 不落盘；内容变了 → 照写', async () => {
+    const { app, files } = makeFakeApp();
+    const d = defaultSmartCatData();
+    await saveSmartCatData(app, d); // 首次 create
+    expect(files.has(getSmartcatFilePath())).toBe(true);
+    const writes: string[] = [];
+    const v = app.vault as any;
+    const origModify = v.modify.bind(v);
+    v.modify = async (f: any, c: string) => { writes.push(f.path); return origModify(f, c); };
+    // 同内容（序列化等价的对象）再存 → 跳过写
+    await saveSmartCatData(app, JSON.parse(JSON.stringify(d)) as SmartCatData);
+    expect(writes).toEqual([]);
+    // 内容变化 → modify 落盘
+    d.editingData = { lastPresenceAt: 123 };
+    await saveSmartCatData(app, d);
+    expect(writes).toEqual([getSmartcatFilePath()]);
   });
 });
 

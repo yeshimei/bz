@@ -247,12 +247,20 @@ async function readStoreRaw(app?: any): Promise<SecondBrainStore> {
   }
 }
 
-/** 写回整文件（仅经串行链调用；外部不许直接落盘以免交错） */
+/** 写回整文件（仅经串行链调用；外部不许直接落盘以免交错）。
+ *  Syncthing 冲突止血（用户拍板 2026-08-29）：写前比对盘上现读内容，没变就跳过——
+ *  mutateStore 的 no-op 变更（重复入队等）不再刷 mtime 制造多设备冲突窗口。 */
 async function saveStoreRaw(data: SecondBrainStore, app?: any): Promise<void> {
   const a = resolveApp(app) as any;
   const adapter = a?.vault?.adapter;
   if (!adapter) return;
-  await adapter.write(getSecondBrainStorePath(), JSON.stringify(data));
+  const next = JSON.stringify(data);
+  try {
+    if (typeof adapter.read === 'function' && (await adapter.read(getSecondBrainStorePath())) === next) return;
+  } catch {
+    /* 文件不存在/读失败 → 照写 */
+  }
+  await adapter.write(getSecondBrainStorePath(), next);
 }
 
 /** 对外读：经串行链排队（与写互斥，读到稳定态）。app 可显式传入（vector-store 构造持有） */

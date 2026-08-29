@@ -162,4 +162,20 @@ describe('store-file 串行写链（防并发覆盖）', () => {
     await dequeuePath('文献盒/a.md');
     expect(await loadQueue()).toEqual([]);
   });
+
+  it('止血（用户拍板 2026-08-29）：mutateStore 无实质变更 → 写前比对跳过落盘（不刷 mtime）', async () => {
+    const { vault } = makeEnv();
+    await mutateStore((s) => { s.meta = { hello: 1 }; }); // 首写建库
+    expect(vault.files.has(getSecondBrainStorePath())).toBe(true);
+    const before = vault.files.get(getSecondBrainStorePath())!;
+    vault.modifiedPaths.length = 0;
+    // no-op 变更（含 read→normalize→stringify 往返等价）→ 不写
+    await mutateStore(() => {});
+    expect(vault.modifiedPaths).toEqual([]);
+    expect(vault.files.get(getSecondBrainStorePath())).toBe(before);
+    // 实质变更 → 照写
+    await mutateStore((s) => { (s.meta as any).world = 2; });
+    expect(vault.modifiedPaths).toEqual([getSecondBrainStorePath()]);
+    expect((await loadStore()).meta).toEqual({ hello: 1, world: 2 });
+  });
 });

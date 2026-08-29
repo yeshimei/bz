@@ -22,6 +22,7 @@ import { resolveRouting, type RoutingRule } from './routing';
 import { trimBehaviorStream } from './behavior-trim';
 import { buildBehaviorWording } from './behavior-wording';
 import { tryGetSettings } from '../core/settings-provider';
+import { bytesEqual } from '../core/utils';
 
 export const MEMORY_CONFIG = {
   /** 检索返回条数 */
@@ -992,7 +993,9 @@ export class MemorySystem {
     this.markMemoryDirty(); // 额外行号变了 → sidecar 记录需同步
   }
 
-  /** 向量落盘（全量重写：dim 头 + float32 平铺） */
+  /** 向量落盘（全量重写：dim 头 + float32 平铺）。
+   *  Syncthing 冲突止血（用户拍板 2026-08-29）：写前比对盘上现读字节，没变就跳过——
+   *  .vec 为二进制整写，重复写是同步冲突的高发源。 */
   private async persistVectors(): Promise<void> {
     if (!this.vectors || !this.dim) return;
     try {
@@ -1003,6 +1006,10 @@ export class MemorySystem {
       const data = new Uint8Array(4 + payload.byteLength);
       data.set(header, 0);
       data.set(new Uint8Array(payload.buffer, payload.byteOffset, payload.byteLength), 4);
+      try {
+        const cur = new Uint8Array(await this.app.vault.adapter.readBinary(getSmartcatVecPath()));
+        if (bytesEqual(cur, data)) return;
+      } catch { /* 首写/无文件 → 照写 */ }
       await this.app.vault.adapter.writeBinary(getSmartcatVecPath(), data.buffer as ArrayBuffer);
     } catch {
       /* 落盘失败静默 */
@@ -1962,11 +1969,15 @@ async function readJsonSidecar(app: App, path: string): Promise<{ value: any | n
   }
 }
 
-/** 写 sidecar json（存在 modify / 不存在 create + 建目录兜底，与 data.ts saveSmartCatData 同款） */
+/** 写 sidecar json（存在 modify / 不存在 create + 建目录兜底，与 data.ts saveSmartCatData 同款）。
+ *  Syncthing 冲突止血（用户拍板 2026-08-29）：写前比对盘上现读内容，没变就跳过写。 */
 async function writeJsonSidecar(app: App, path: string, content: unknown): Promise<void> {
   const c = JSON.stringify(content, null, 2);
   const f = app.vault.getAbstractFileByPath(path);
   if (f) {
+    try {
+      if ((await app.vault.read(f as any)) === c) return;
+    } catch { /* 读失败照写 */ }
     await app.vault.modify(f as any, c);
   } else {
     const d = path.substring(0, path.lastIndexOf('/'));
@@ -2021,7 +2032,8 @@ export function slimSmartCatData(data: SmartCatData): SmartCatData {
  *    insight/digest 保留（evidenceIds 悬空可接受）；
  *  - smartcat-behavior.json 同理（行为条目全量搬出）；
  *  - 首次迁移时向量文件同步清理孤儿向量（仅保留存活条目主行、重排到新 stream 下标）；
- *  - 双 sidecar 即时落盘 + smartcat.json 瘦身重写（关键路径不防抖）。
+ *  - 仅首次迁移即时落盘（缺哪边写哪边）+ smartcat.json 瘦身重写（写前比对，无变化跳过）——
+ *    Syncthing 冲突止血（用户拍板 2026-08-29）：adopt 路径三份文件一律不重写，不再每次启动刷 mtime。
  * 条目数组原位替换（各子系统经 dataProvider() 现取，不持旧数组引用）。
  */
 export async function migrateSmartcatSidecars(app: App, data: SmartCatData): Promise<void> {
@@ -2060,6 +2072,9 @@ export async function migrateSmartcatSidecars(app: App, data: SmartCatData): Pro
   }
 
   const needVectorCleanup = !memSide; // 仅首次迁移清理孤儿向量（sidecar 已在 → 行号映射仍有效）
+  // Syncthing 冲突止血（用户拍板 2026-08-29）：sidecar 双双已在 = 无迁移发生，lastUpdated 不刷新——
+  // 旧实现每次启动无条件重写三份 JSON（mtime 全刷），两台设备各开一次就制造一轮冲突窗口
+  const firstMigration = !memSide || !behSide;
   const oldIndexById = new Map<string, number>();
   oldStream.forEach((m, i) => { if (m && m.id) oldIndexById.set(m.id, i); });
 
@@ -2068,7 +2083,7 @@ export async function migrateSmartcatSidecars(app: App, data: SmartCatData): Pro
   data.memory.memoryStream.push(...memoryEntries);
   data.memory.behaviorStream.length = 0;
   data.memory.behaviorStream.push(...behaviorItems);
-  data.memory.lastUpdated = new Date().toISOString();
+  if (firstMigration) data.memory.lastUpdated = new Date().toISOString();
 
   if (needVectorCleanup) {
     try {
@@ -2096,7 +2111,10 @@ export async function migrateSmartcatSidecars(app: App, data: SmartCatData): Pro
           const dataOut = new Uint8Array(4 + payloadOut.byteLength);
           dataOut.set(header, 0);
           dataOut.set(new Uint8Array(payloadOut.buffer, payloadOut.byteOffset, payloadOut.byteLength), 4);
-          await app.vault.adapter.writeBinary(getSmartcatVecPath(), dataOut.buffer as ArrayBuffer);
+          // 止血：重排结果与现盘字节一致 → 跳过写（bytesEqual 复用 persistVectors 同款比对）
+          if (!bytesEqual(arr, dataOut)) {
+            await app.vault.adapter.writeBinary(getSmartcatVecPath(), dataOut.buffer as ArrayBuffer);
+          }
         }
       }
     } catch (e) {
@@ -2105,11 +2123,16 @@ export async function migrateSmartcatSidecars(app: App, data: SmartCatData): Pro
     }
   }
 
-  // 关键路径即时落盘：sidecar 双写 + smartcat.json 瘦身重写（失败不阻塞装配，下次 dataSaver 再写）
-  // 审查 P0：重写必须透传 extraVectorRows（迁移每次启动都跑，漏传 = 每次重启丢分块向量记录）
+  // 落盘：首次迁移（sidecar 缺失边）即时写 sidecar；smartcat.json 瘦身视图经 saveSmartCatData
+  // 写前比对（adopt 路径无变化 → 跳过，不再每次启动刷 mtime）。
+  // 审查 P0（保留）：sidecar 重写必须透传 extraVectorRows（首次迁移场景，漏传 = 丢分块向量记录）
   const memSideExtraRows = memSide && typeof memSide === 'object' ? memSide.extraVectorRows : undefined;
-  await writeMemorySidecarFile(app, data.memory.memoryStream, memSideExtraRows && typeof memSideExtraRows === 'object' ? memSideExtraRows : undefined);
-  await writeBehaviorSidecarFile(app, data.memory.behaviorStream);
+  if (!memSide) {
+    await writeMemorySidecarFile(app, data.memory.memoryStream, memSideExtraRows && typeof memSideExtraRows === 'object' ? memSideExtraRows : undefined);
+  }
+  if (!behSide) {
+    await writeBehaviorSidecarFile(app, data.memory.behaviorStream);
+  }
   try {
     await saveSmartCatData(app, slimSmartCatData(data));
   } catch { /* 瘦身重写失败静默 */ }

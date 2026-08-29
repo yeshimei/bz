@@ -34,6 +34,7 @@ import { parallelMap } from './parallel';
 import { TFIDF } from './tfidf';
 import { searchTextIndex } from './text-search';
 import { checkRemoteOllama, EMBED_BATCH_SIZE, getEmbedding, getEmbeddingsBatch, SEARCH_TIMEOUT_MS } from './ollama';
+import { bytesEqual } from '../core/utils';
 
 // v8→v9（ticket 110）：切块剥离 frontmatter + 标题入首块——旧库版本不符走 load() 自动重建
 const VECTOR_STORE_VERSION = 9;
@@ -206,6 +207,17 @@ export class VectorStore {
     header.writeUInt32LE(dim, 0);
     const payload = new Uint8Array(this.vectors.buffer, this.vectors.byteOffset, this.vectors.byteLength);
     const data = MobileBuffer.concat([header._data, payload]);
+    // Syncthing 冲突止血（用户拍板 2026-08-29）：写前比对盘上现读字节，没变就跳过
+    // （.vec 为二进制整写，refresh/断点暂存的无变化重写是多设备冲突高发源）
+    try {
+      const adapter = this.app.vault.adapter as any;
+      if (typeof adapter?.readBinary === 'function') {
+        const cur = new Uint8Array(await adapter.readBinary(CONFIG.VEC_PATH));
+        if (bytesEqual(cur, data._data)) return;
+      }
+    } catch {
+      /* 首写/无文件 → 照写 */
+    }
     await this.app.vault.adapter.writeBinary(CONFIG.VEC_PATH, data._data.buffer as ArrayBuffer);
   }
 
