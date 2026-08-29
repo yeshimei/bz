@@ -64,6 +64,8 @@ function gridTiles(): HTMLElement[] {
 /**
  * 长按进入编辑模式（render 重建后返回新磁贴）。
  * 真实场景中长按后松手会触发一次 click——消费它（编辑模式菜单由后续点击打开）。
+ * ticket 157：松手（pointerup）同步模拟——长按延续监听必须等手指抬起才能解绑，
+ * 悬空按下会令后续用例的 document 级 pointermove 误触发同手势拖拽。
  */
 function longPressEnterEdit(tile: HTMLElement | undefined, x = 50, y = 50): HTMLElement {
   if (!tile) return document.createElement('div'); // 兜底（测试中磁贴必存在）
@@ -75,7 +77,10 @@ function longPressEnterEdit(tile: HTMLElement | undefined, x = 50, y = 50): HTML
     vi.useRealTimers();
   }
   const fresh = gridTiles().find((t) => t.dataset.tileId === tile.dataset.tileId) || gridTiles()[0];
-  if (fresh) fresh.click(); // 消费长按遗留的 click 抑制
+  if (fresh) {
+    firePointer(fresh, 'pointerup', x, y); // 抬起长按手指（解绑延续手势监听）
+    fresh.click(); // 消费长按遗留的 click 抑制
+  }
   return fresh as HTMLElement;
 }
 
@@ -147,12 +152,13 @@ describe('入口页 UI', () => {
     let tile = gridTiles()[0];
     vi.useFakeTimers();
     try {
-      firePointer(tile, 'pointerdown', 50, 50);
-      expect(tile.classList.contains('editing')).toBe(false);
-      vi.advanceTimersByTime(500);
-      // render 重建 DOM，重新查询
-      tile = gridTiles()[0];
-      expect(tile.classList.contains('editing')).toBe(true);
+    firePointer(tile, 'pointerdown', 50, 50);
+    expect(tile.classList.contains('editing')).toBe(false);
+    vi.advanceTimersByTime(500);
+    // render 重建 DOM，重新查询
+    tile = gridTiles()[0];
+    firePointer(tile, 'pointerup', 50, 50); // ticket 157：抬起手指解绑延续手势监听
+    expect(tile.classList.contains('editing')).toBe(true);
       // 编辑模式：无删除按钮/手柄（已收进操作菜单）
       expect(tile.querySelector('.launcher-del')).toBeNull();
       expect(tile.querySelector('.launcher-resize')).toBeNull();
@@ -221,6 +227,65 @@ describe('入口页 UI', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('ticket 157：长按不松手继续移动 → 同手势直接拖拽（iOS 式），松手落位写盘', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({
+        version: 1,
+        tiles: [
+          { id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 },
+          { id: 't2', commandId: 'bz-pw-open', x: 1, y: 0, w: 1, h: 1 },
+        ],
+      })
+    );
+    await openOnce(vault);
+    vi.useFakeTimers();
+    try {
+      firePointer(gridTiles()[0], 'pointerdown', STEP / 2, STEP / 2);
+      vi.advanceTimersByTime(500); // 长按触发：进编辑模式，手指未抬起
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(gridTiles()[0].classList.contains('editing')).toBe(true);
+    // 同一手势继续移动（>10px）→ 无需重按直接进入拖拽
+    firePointer(document, 'pointermove', 3 * STEP + STEP / 2, STEP / 2);
+    expect(document.querySelector('.launcher-placeholder')).not.toBeNull(); // 占位框出现
+    // 目标 (3,0) 为空位：t2 原地不动（仍 (1,0)）
+    expect(gridTiles().find((t) => t.dataset.commandId === 'bz-pw-open')!.style.gridColumn).toBe('2 / span 1');
+    // 松手 → 落位写盘
+    firePointer(document, 'pointerup', 3 * STEP + STEP / 2, STEP / 2);
+    await new Promise((r) => setTimeout(r, 0));
+    const saved = JSON.parse(vault.files.get(LAUNCHER_PATH)!);
+    expect(saved.desktop.tiles.find((t: any) => t.id === 't1')).toMatchObject({ x: 3, y: 0 });
+    expect(saved.desktop.tiles.find((t: any) => t.id === 't2')).toMatchObject({ x: 1, y: 0 });
+  });
+
+  it('ticket 157：长按后松手（无移动）→ 仅进编辑不拖拽；touchmove 阻断随抬起解除', async () => {
+    const vault = new MockVault();
+    await vault.create(
+      LAUNCHER_PATH,
+      JSON.stringify({ version: 1, tiles: [{ id: 't1', commandId: 'bz-memo-open', x: 0, y: 0, w: 1, h: 1 }] })
+    );
+    await openOnce(vault);
+    vi.useFakeTimers();
+    try {
+      firePointer(gridTiles()[0], 'pointerdown', 50, 50);
+      vi.advanceTimersByTime(500);
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(gridTiles()[0].classList.contains('editing')).toBe(true);
+    // 抬起（无移动）→ 只进编辑，不出现拖拽占位框
+    firePointer(gridTiles()[0], 'pointerup', 50, 50);
+    expect(document.querySelector('.launcher-placeholder')).toBeNull();
+    // 后续编辑模式重按拖拽仍走既有 prepDrag 链路
+    firePointer(gridTiles()[0], 'pointerdown', STEP / 2, STEP / 2);
+    firePointer(document, 'pointermove', 1 * STEP + STEP / 2, STEP / 2);
+    expect(document.querySelector('.launcher-placeholder')).not.toBeNull();
+    firePointer(document, 'pointerup', 1 * STEP + STEP / 2, STEP / 2);
   });
 
   it('长按空白区域进入编辑模式（空态无磁贴时的入口）', async () => {
@@ -465,6 +530,7 @@ describe('入口页 UI', () => {
     } finally {
       vi.useRealTimers();
     }
+    firePointer(gridTiles()[0], 'pointerup', 50, 50); // ticket 157：抬起手指解绑延续手势监听
     // 拖 t1（(0,0)）到 (1,0)（被 t2 占）
     const t1 = gridTiles().find((t) => t.dataset.commandId === 'bz-memo-open')!;
     firePointer(t1, 'pointerdown', 0 * STEP + STEP / 2, STEP / 2);

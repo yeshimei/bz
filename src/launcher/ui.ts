@@ -392,6 +392,8 @@ export class LauncherModal {
   /** 长按网格空白区域（非磁贴）进入编辑模式——空态无磁贴时的入口（空白区整体挂激活反馈） */
   private bindGridLongPress(): void {
     const lp = this.createLongPress(() => this.enterEdit(), this.grid);
+    // ticket 157：长按不弹系统右键菜单（移动端 contextmenu 会打断长按手势）
+    this.grid.addEventListener('contextmenu', (e) => e.preventDefault());
     this.grid.addEventListener('pointerdown', (e) => {
       if (this.editing) return;
       if ((e.target as HTMLElement).closest('.launcher-tile')) return; // 磁贴上由 bindDrag 处理
@@ -638,13 +640,55 @@ export class LauncherModal {
     this.render();
   }
 
-  /** 长按检测：pointerdown 计时，移动超阈值/提前松开取消；触发后抑制随后的 click */
+  /** 长按检测：pointerdown 计时，移动超阈值/提前松开取消；触发后抑制随后的 click。
+   *  ticket 157：长按触发（进入编辑模式）后延续同一手势——手指继续移动超阈值直接开始拖拽
+   *  该磁贴（iOS 式），无需松手重按；并用 touchmove 阻断滚动抢占（防 WebView pointercancel 杀手势）。 */
   private bindDrag(el: HTMLElement, tile: LauncherTile): void {
-    const lp = this.createLongPress(() => this.enterEdit(), el); // 26：磁贴长按计时中挂激活反馈
+    let fired = false;
+    const lp = this.createLongPress(() => {
+      fired = true;
+      this.enterEdit();
+    }, el); // 26：磁贴长按计时中挂激活反馈
 
     el.addEventListener('pointerdown', (e) => {
       if (this.editing) return; // 编辑模式：拖拽由 startDrag 处理
+      const pid = e.pointerId;
+      const sx = e.clientX;
+      const sy = e.clientY;
       lp.down(e);
+      // 长按触发后同一手势 → 直接进入该磁贴拖拽（render 重建后按 tile.id 找新元素）
+      const contMove = (ev: PointerEvent) => {
+        if (!fired || ev.pointerId !== pid) return;
+        if (Math.abs(ev.clientX - sx) <= MOVE_CANCEL && Math.abs(ev.clientY - sy) <= MOVE_CANCEL) return;
+        detachCont();
+        this.startDrag(tile, ev, sx, sy);
+      };
+      const detachCont = () => {
+        document.removeEventListener('pointermove', contMove);
+        document.removeEventListener('pointerup', contUp);
+        document.removeEventListener('pointercancel', contCancel);
+        endTouchBlock();
+        if (this.detachDragListeners === detachCont) this.detachDragListeners = null;
+      };
+      const contUp = () => detachCont();
+      const contCancel = () => detachCont();
+      // 触屏滚动阻断：长按触发后 preventDefault 掉 touchmove，防 WebView 判定滚动抢占
+      // → pointercancel 杀手势；拖拽全程保持，手指抬起（pointerup/cancel，含拖拽结束那次）解除
+      const touchBlock = (tev: TouchEvent) => {
+        if (fired && tev.cancelable) tev.preventDefault();
+      };
+      const endTouchBlock = () => {
+        document.removeEventListener('touchmove', touchBlock);
+        document.removeEventListener('pointerup', endTouchBlock);
+        document.removeEventListener('pointercancel', endTouchBlock);
+      };
+      document.addEventListener('pointermove', contMove);
+      document.addEventListener('pointerup', contUp);
+      document.addEventListener('pointercancel', contCancel);
+      document.addEventListener('touchmove', touchBlock, { passive: false });
+      document.addEventListener('pointerup', endTouchBlock);
+      document.addEventListener('pointercancel', endTouchBlock);
+      this.detachDragListeners = detachCont; // 关闭弹窗时兜底解绑
     });
 
     el.addEventListener('pointermove', lp.move);

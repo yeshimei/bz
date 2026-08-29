@@ -154,3 +154,12 @@
 - [x] 删头部 `.bz-quiz-stats` 对错统计（元素/字段/方法/样式）；结算面板统计保留
 - [x] `batchGenerateQuestions` 改「先清后生」：逐笔记清空 quiz.json 存量题再全新生成（上轮错题不再重考）
 - [x] 测试：quiz+review 187 用例绿（答对类补延时等待、新增延时竞态用例、批量出题断言先清空）+ tsc 0 错
+
+## Ticket 157 — 入口页：移动端长按无法拖拽图标（长按同手势直接拖）
+
+**状态：已交付**（2026-08-30）
+
+- [x] 规格：`issues/157-launcher-longpress-drag-mobile.md`（spec.md「入口页长按同手势拖拽」节同步）
+- [x] 根因（移动端）：长按只进编辑重建 DOM（拖拽需松手重按）+ touchmove 无阻断/touch-action 缺失（滚动抢占 pointercancel 杀手势）+ 系统长按菜单未拦
+- [x] 修复：长按触发后同手势延续监听（>10px 直接 startDrag）+ document 非被动 touchmove preventDefault（拖拽全程、抬起解除）+ `.launcher-tile.editing` touch-action:none + grid contextmenu 拦截 + callout 禁用
+- [x] 测试：launcher 76 用例绿（helper 补 pointerup 释放防悬空手势、新增同手势拖拽/仅进编辑两用例）+ tsc 0 错
