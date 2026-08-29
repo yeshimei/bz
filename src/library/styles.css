@@ -38,9 +38,10 @@
   border: 1px solid var(--background-modifier-border);
 }
 @media (max-width: 768px) {
-  /* 原强制全屏规则已废止（ticket 68：真全屏统一走 .bz-win-mfs）；常规卡收窄留边 */
-  .bz-lib-modal--full,
-  .bz-lib-modal--full-lg {
+  /* 原强制全屏规则已废止（ticket 68：真全屏统一走 .bz-win-mfs）；常规卡收窄留边。
+     须排除真全屏态：同权重 !important 下本块源序靠后会压过通用 100vw，导致全屏宽度只剩 95% */
+  .bz-lib-modal--full:not(.bz-win-mfs),
+  .bz-lib-modal--full-lg:not(.bz-win-mfs) {
     width: 95% !important;
     max-width: 95% !important;
   }
