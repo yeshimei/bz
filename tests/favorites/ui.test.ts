@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setApp, getApp } from '../../src/core/app';
-import { setSettingsProvider } from '../../src/core/settings-provider';
+import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { DataManager } from '../../src/favorites/data';
 import { FavoritesAIService } from '../../src/favorites/ai';
 import { UIManager } from '../../src/favorites/ui';
@@ -141,7 +141,9 @@ describe('收藏本面板', () => {
 
     const cards = document.querySelectorAll('.fav-card');
     expect(cards[0].textContent).toContain('置顶');
-    expect((cards[0] as HTMLElement).style.borderLeft).toContain('3px');
+    // 置顶视觉走类（ticket 141 样式收敛：原内联 border-left/background）
+    expect(cards[0].classList.contains('bz-fav-card--pinned')).toBe(true);
+    expect(cards[1].classList.contains('bz-fav-card--pinned')).toBe(false);
   });
 
   it('标签栏计数 + 点击过滤', async () => {
@@ -534,9 +536,9 @@ describe('收藏本面板', () => {
     urlCard.click(); // 300ms 窗口内同卡重复点击不重开（防双击双开）
     noUrlCard.click(); // 无链接不动作
     expect(app.openUrl).toHaveBeenCalledTimes(1);
-    // 可见入口提示：有链接 cursor=pointer，无链接保持 default（无 hover 图标排）
-    expect(urlCard.style.cursor).toBe('pointer');
-    expect(noUrlCard.style.cursor).toBe('default');
+    // 可见入口提示：有链接挂 bz-fav-card--link（cursor pointer），无链接不挂（无 hover 图标排）
+    expect(urlCard.classList.contains('bz-fav-card--link')).toBe(true);
+    expect(noUrlCard.classList.contains('bz-fav-card--link')).toBe(false);
   });
 
   it('打开可见入口（ticket 61）：双击窗口内同卡重复点击不重开（防双击连开两个标签页）', async () => {
@@ -778,7 +780,9 @@ describe('收藏本抽屉（统一手势组件接入）', () => {
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
     await tick(30);
     expect((await dm.getAll()).length).toBe(0);
-    expect(hasNotice('已删除收藏')).toBe(true);
+    // 撤销删除（ticket 141 通病 1）：toast 带标题与「撤销」按钮
+    expect(hasNotice('已删除收藏「我的项目」')).toBe(true);
+    expect([...document.querySelectorAll('.bz-notice-action')].some((b) => b.textContent === '撤销')).toBe(true);
   });
 
   it('归档：抽屉项先收抽屉再 confirm，确认后冷存消失（ticket 140，ADR-0074）', async () => {
@@ -1163,3 +1167,360 @@ describe('收藏本设置弹窗（ticket 131 声明式）', () => {
     expect(state.favoritesMobileDefaultFullscreen).toBe(false);
   });
 });
+
+describe('收藏本 ticket 141 UX 批次（分页/空态区分/排序/撤销/防重入/脏拦截）', () => {
+  afterEach(() => {
+    closeItemMenu();
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+    Platform.isMobile = false;
+  });
+
+  /** 注入可变设置对象 + 保存计数（排序持久化验证用） */
+  function useSettingsState(extra: Record<string, unknown> = {}) {
+    const state: Record<string, unknown> = { favoritesStoragePath: 'CONFIG/STORAGE', ...extra };
+    let saveCount = 0;
+    setSettingsProvider(() => state as any);
+    setSettingsSaver(async () => { saveCount++; });
+    return {
+      state,
+      get saveCount() { return saveCount; },
+    };
+  }
+
+  it('分页：超 50 条首屏只渲 50 + 加载指示，滚动到底自动加载全量', async () => {
+    const { ui, dm } = await setup();
+    for (let i = 0; i < 60; i++) {
+      await dm.add(makeItem({ id: String(i), title: '条目' + i, created: `2025-01-01 00:00:${String(i).padStart(2, '0')}` }));
+    }
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const container = document.getElementById('fav-entries-container')!;
+    expect(container.querySelectorAll('.fav-card').length).toBe(50);
+    expect(container.querySelector('.bz-fav-load-more')).not.toBeNull();
+    expect(container.querySelector('.bz-fav-load-more')!.textContent).toBe('滚动加载更多...');
+    expect(container.querySelector('.fav-card')!.textContent).toContain('条目59'); // 默认创建时间最新优先
+
+    // 滚动到底（jsdom 无布局：scrollHeight/clientHeight 为 0，阈值恒满足）→ 追加至全量
+    container.dispatchEvent(new Event('scroll'));
+    expect(container.querySelectorAll('.fav-card').length).toBe(60);
+    expect(container.querySelector('.bz-fav-load-more')).toBeNull();
+    // 全量后滚动不重复渲染
+    container.dispatchEvent(new Event('scroll'));
+    expect(container.querySelectorAll('.fav-card').length).toBe(60);
+
+    // 搜索词变化重置分页：命中 11 条 < 50 无指示器
+    ui.searchInput!.value = '条目5';
+    ui.searchInput!.dispatchEvent(new Event('input'));
+    await new Promise((r) => setTimeout(r, 250));
+    expect(container.querySelectorAll('.fav-card').length).toBe(11); // 条目5/50..59
+    expect(container.querySelector('.bz-fav-load-more')).toBeNull();
+  });
+
+  it('分页：标签筛选变化同样重置分页', async () => {
+    const { ui, dm } = await setup();
+    for (let i = 0; i < 55; i++) {
+      await dm.add(makeItem({ id: 'g' + i, title: 'G' + i, created: `2025-01-01 00:00:${String(i).padStart(2, '0')}` }));
+    }
+    await dm.add(makeItem({ id: 'w1', title: '网页', tags: ['网站'], type: '网站', url: '' }));
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const container = document.getElementById('fav-entries-container')!;
+    expect(container.querySelectorAll('.fav-card').length).toBe(50);
+
+    const tagBtns = [...document.querySelectorAll('.fav-tag-btn')] as HTMLElement[];
+    tagBtns.find((b) => b.dataset.tag === '网站')!.click();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(container.querySelectorAll('.fav-card').length).toBe(1);
+  });
+
+  it('搜索无结果与空库文案区分：无结果带关键词 + 小字提示；清空恢复', async () => {
+    const { ui, dm } = await setup();
+    await dm.add(makeItem());
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const container = document.getElementById('fav-entries-container')!;
+
+    // 命中：正常卡片
+    ui.searchInput!.value = '项目';
+    ui.searchInput!.dispatchEvent(new Event('input'));
+    await new Promise((r) => setTimeout(r, 250));
+    expect(container.querySelectorAll('.fav-card').length).toBe(1);
+
+    // 无结果：没有匹配「关键词」的收藏 + 试试其他关键词小字（不出现空库欢迎语）
+    ui.searchInput!.value = '不存在的词';
+    ui.searchInput!.dispatchEvent(new Event('input'));
+    await new Promise((r) => setTimeout(r, 250));
+    expect(container.textContent).toContain('没有匹配「不存在的词」的收藏');
+    expect(container.textContent).toContain('试试其他关键词，或清除搜索');
+    expect(container.textContent).not.toContain('暂无收藏');
+
+    // 清空搜索恢复列表
+    ui.searchInput!.value = '';
+    ui.searchInput!.dispatchEvent(new Event('input'));
+    await new Promise((r) => setTimeout(r, 250));
+    expect(container.querySelectorAll('.fav-card').length).toBe(1);
+  });
+
+  it('空库保留原欢迎文案（ticket 141 只改搜索无结果分支）', async () => {
+    const { ui } = await setup();
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+    const container = document.getElementById('fav-entries-container')!;
+    expect(container.textContent).toContain('暂无收藏 🎉');
+    expect(container.textContent).toContain('点右上角 ✏️ 添加第一个收藏');
+  });
+
+  it('排序：弹窗三选项实时生效 + 持久化 favoritesSortKey + 置顶优先于排序', async () => {
+    const { ui, dm } = await setup();
+    // 注入可变设置对象须在 setup 之后（setup 自带 provider 会覆盖）
+    const settings = useSettingsState({ favoritesSortKey: 'created' });
+    await dm.add(makeItem({ id: '1', title: 'Banana', url: 'https://a.com/x', created: '2025-01-01 00:00:00' }));
+    await dm.add(makeItem({ id: '2', title: 'Apple', url: 'https://z.com/x', created: '2025-01-02 00:00:00' }));
+    await dm.add(makeItem({ id: '3', title: 'Cherry', url: 'https://m.com/x', created: '2025-01-03 00:00:00', pinned: true }));
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const titles = () => [...document.querySelectorAll('#fav-entries-container .bz-fav-title')].map((e) => e.textContent);
+    // 默认 created 最新优先：置顶 Cherry 在前，其后 Apple(01-02)、Banana(01-01)
+    expect(titles()).toEqual(['Cherry', 'Apple', 'Banana']);
+
+    // 头部 🔀 打开排序弹窗
+    const sortBtn = [...document.querySelectorAll('.fav-header button')].find((b) => (b as HTMLButtonElement).title === '排序') as HTMLButtonElement;
+    sortBtn.click();
+    const mask = document.querySelector('.bz-fav-sort-mask') as HTMLElement;
+    expect(mask).not.toBeNull();
+    const options = [...mask.querySelectorAll('.bz-fav-sort-option')] as HTMLElement[];
+    expect(options.map((b) => b.textContent)).toEqual(['创建时间最新优先', '标题', '域名']);
+    expect(options[0].classList.contains('bz-fav-sort-option--active')).toBe(true);
+
+    // 标题：实时重排（置顶仍优先）+ 持久化
+    options.find((b) => b.textContent === '标题')!.click();
+    expect(titles()).toEqual(['Cherry', 'Apple', 'Banana']); // Cherry 置顶优先于标题排序
+    expect(settings.state.favoritesSortKey).toBe('title');
+    expect(settings.saveCount).toBe(1);
+    expect(mask.querySelector('.bz-fav-sort-option--active')!.textContent).toBe('标题'); // 弹窗保持 + 高亮更新
+
+    // 域名：a.com(Banana) → m.com(Cherry) → z.com(Apple)，置顶 Cherry 仍最前
+    options.find((b) => b.textContent === '域名')!.click();
+    expect(titles()).toEqual(['Cherry', 'Banana', 'Apple']);
+    expect(settings.state.favoritesSortKey).toBe('domain');
+    expect(settings.saveCount).toBe(2);
+
+    // ❌ 关闭弹窗
+    (mask.querySelector('.bz-fav-sort-close') as HTMLButtonElement).click();
+    expect(document.querySelector('.bz-fav-sort-mask')).toBeNull();
+  });
+
+  it('排序：无 favoritesSortKey / 非法值回退默认最新优先（无字段=默认）', async () => {
+    const { ui } = await setup();
+    const settings = useSettingsState();
+    expect(ui.sortKey).toBe('created'); // 无字段 = 默认
+    settings.state.favoritesSortKey = 'bogus';
+    expect(ui.sortKey).toBe('created'); // 非法值回退
+    settings.state.favoritesSortKey = 'domain';
+    expect(ui.sortKey).toBe('domain');
+  });
+
+  it('删除可撤销：撤销 toast 点击「撤销」→ restoreItem 原样插回 + 列表刷新', async () => {
+    const { ui, dm } = await setup();
+    await dm.add(makeItem({ id: '9', title: '被删条目' }));
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const card = document.querySelector('#fav-entries-container .fav-card') as HTMLElement;
+    rightClickOpen(card);
+    await new Promise((r) => setTimeout(r, 10));
+    clickAction('删除');
+    await new Promise((r) => setTimeout(r, 10));
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    await new Promise((r) => setTimeout(r, 20));
+    expect((await dm.getAll()).length).toBe(0);
+    expect(document.querySelectorAll('#fav-entries-container .fav-card').length).toBe(0);
+
+    const undoBtn = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '撤销') as HTMLButtonElement;
+    expect(undoBtn).toBeTruthy();
+    undoBtn.click();
+    await new Promise((r) => setTimeout(r, 20));
+
+    const restored = await dm.getAll();
+    expect(restored.length).toBe(1);
+    expect(restored[0].title).toBe('被删条目');
+    expect(restored[0].created).toBe('2025-06-01 08:00:00'); // 完整条目原样插回
+    expect(document.querySelectorAll('#fav-entries-container .fav-card').length).toBe(1); // 撤销后刷新列表
+    expect(document.querySelector('#fav-entries-container .fav-card')!.textContent).toContain('被删条目');
+  });
+
+  it('删除写盘失败（通病 2）：notifySaveError 人话提示，不弹撤销 toast，数据仍在', async () => {
+    const { ui, dm } = await setup();
+    await dm.add(makeItem({ id: '9', title: '删不掉' }));
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    vi.spyOn(dm, 'delete').mockRejectedValue(new Error('磁盘只读'));
+    const card = document.querySelector('#fav-entries-container .fav-card') as HTMLElement;
+    rightClickOpen(card);
+    await new Promise((r) => setTimeout(r, 10));
+    clickAction('删除');
+    await new Promise((r) => setTimeout(r, 10));
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    await new Promise((r) => setTimeout(r, 20));
+
+    expect(hasNotice('保存失败（删除收藏）：磁盘只读')).toBe(true);
+    expect([...document.querySelectorAll('.bz-notice-action')].some((b) => b.textContent === '撤销')).toBe(false);
+    expect((await dm.getAll()).length).toBe(1); // 数据仍在
+  });
+
+  it('保存防重入：保存中禁用确定 + 文案「保存中…」，重复点击不重复入库，完成恢复', async () => {
+    const { ui, dm } = await setup();
+    ui.build();
+    ui.openAddDialog();
+    const typeBtns = [...document.querySelectorAll('.fav-type-btn')] as HTMLElement[];
+    typeBtns.find((b) => b.dataset.tag === 'GitHub')!.click();
+    ui.addTitleInput!.value = '防重入条目';
+
+    let resolveAdd: (v: any[]) => void = () => {};
+    const addSpy = vi.spyOn(dm, 'add').mockImplementation(() => new Promise<any[]>((res) => { resolveAdd = res; }));
+    ui.addSaveBtn!.click();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(addSpy).toHaveBeenCalledTimes(1);
+    expect(ui.addSaveBtn!.disabled).toBe(true);
+    expect(ui.addSaveBtn!.textContent).toBe('保存中…');
+
+    ui.addSaveBtn!.click(); // 保存中再点：_saving 防重入拦截
+    await new Promise((r) => setTimeout(r, 10));
+    expect(addSpy).toHaveBeenCalledTimes(1);
+
+    resolveAdd([]);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(ui.addSaveBtn!.disabled).toBe(false);
+    expect(ui.addSaveBtn!.textContent).toBe('确定'); // 弹窗已关，复位添加态文案
+    expect(ui.addPopup!.style.display).toBe('none');
+  });
+
+  it('保存失败恢复按钮：add 抛错 → 按钮恢复可点 + 文案复位 + 弹窗保持', async () => {
+    const { ui, dm } = await setup();
+    ui.build();
+    ui.openAddDialog();
+    const typeBtns = [...document.querySelectorAll('.fav-type-btn')] as HTMLElement[];
+    typeBtns.find((b) => b.dataset.tag === 'GitHub')!.click();
+    ui.addTitleInput!.value = '会失败的条目';
+    vi.spyOn(dm, 'add').mockRejectedValue(new Error('磁盘错误'));
+
+    ui.addSaveBtn!.click();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(hasNotice('保存失败：磁盘错误')).toBe(true);
+    expect(ui.addSaveBtn!.disabled).toBe(false);
+    expect(ui.addSaveBtn!.textContent).toBe('确定');
+    expect(ui.addPopup!.style.display).toBe('flex'); // 弹窗保持打开可重试
+  });
+
+  it('保存态文案区分：大模型 + 余额URL → 「查询余额中…」，查询完成入库关窗', async () => {
+    const { ui, dm } = await setup();
+    // fetch 挂起可控行：捕获「查询余额中…」中间态
+    let resolveFetch: (v: any) => void = () => {};
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<any>((res) => { resolveFetch = res; })));
+    ui.build();
+    ui.openAddDialog();
+    const typeBtns = [...document.querySelectorAll('.fav-type-btn')] as HTMLElement[];
+    typeBtns.find((b) => b.dataset.tag === '大模型')!.click();
+    ui.addTitleInput!.value = 'LLM 条目';
+    ui.llmApiKeysInput!.value = 'sk-1';
+    ui.llmBalanceUrlInput!.value = 'https://api.example.com/balance';
+
+    ui.addSaveBtn!.click();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(ui.addSaveBtn!.disabled).toBe(true);
+    expect(ui.addSaveBtn!.textContent).toBe('查询余额中…');
+
+    resolveFetch({ ok: true, json: async () => ({ balance: 42.5 }) });
+    await new Promise((r) => setTimeout(r, 30));
+    expect(ui.addPopup!.style.display).toBe('none');
+    expect((await dm.getAll())[0].balance).toBe('42.5');
+    expect(ui.addSaveBtn!.disabled).toBe(false);
+  });
+
+  it('脏表单拦截：空白直接关；有输入点遮罩 → confirm「放弃」才关、「继续编辑」保持', async () => {
+    const { ui } = await setup();
+    ui.build();
+
+    // 空白：点遮罩直接关，无 confirm
+    ui.openAddDialog();
+    ui.addMask!.click();
+    expect(ui.addMask!.style.display).toBe('none');
+    expect(document.getElementById('__shared_confirm_mask__')).toBeNull();
+
+    // 有输入：confirm 弹出
+    ui.openAddDialog();
+    ui.addTitleInput!.value = '未保存草稿';
+    ui.addMask!.click();
+    expect(document.getElementById('__shared_confirm_mask__')).not.toBeNull();
+    expect(ui.addMask!.style.display).toBe('flex'); // 未直接关
+
+    // 继续编辑 → 弹窗保持 + 草稿还在
+    // （flow-dialog 双动作按位置定 id：第一动作「放弃」=__shared_confirm_cancel__（左），
+    //   第二动作「继续编辑」=__shared_confirm_ok__（右）——确认框 DOM 契约「取消左、确认右」）
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(ui.addMask!.style.display).toBe('flex');
+    expect(ui.addTitleInput!.value).toBe('未保存草稿');
+
+    // 放弃 → 关闭
+    ui.addMask!.click();
+    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(ui.addMask!.style.display).toBe('none');
+  });
+
+  it('脏表单拦截：ESC 关闭同样拦截；编辑模式未改动不误拦（基线=回填值）', async () => {
+    const { ui, dm } = await setup();
+    await dm.add(makeItem({ id: '7', title: '原标题' }));
+    ui.build();
+    ui.show();
+    await new Promise((r) => setTimeout(r, 20));
+
+    // ESC + 有输入 → confirm；「放弃」（第一动作 = __shared_confirm_cancel__）→ 关闭
+    ui.openAddDialog();
+    ui.addTitleInput!.value = '草稿';
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    await new Promise((r) => setTimeout(r, 10));
+    expect(document.getElementById('__shared_confirm_mask__')).not.toBeNull();
+    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(ui.addMask!.style.display).toBe('none');
+
+    // 编辑模式：未改动 → 遮罩直接关（回填值=基线，不算脏）
+    const card = document.querySelector('#fav-entries-container .fav-card') as HTMLElement;
+    rightClickOpen(card);
+    await new Promise((r) => setTimeout(r, 10));
+    clickAction('编辑');
+    await new Promise((r) => setTimeout(r, 10));
+    expect(ui.addSaveBtn!.textContent).toBe('更新');
+    ui.addMask!.click();
+    expect(ui.addMask!.style.display).toBe('none');
+    expect(document.getElementById('__shared_confirm_mask__')).toBeNull();
+
+    // 编辑模式：改动标题 → 拦截
+    rightClickOpen(card);
+    await new Promise((r) => setTimeout(r, 10));
+    clickAction('编辑');
+    await new Promise((r) => setTimeout(r, 10));
+    ui.addTitleInput!.value = '改了一半';
+    ui.addMask!.click();
+    expect(document.getElementById('__shared_confirm_mask__')).not.toBeNull();
+    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(ui.addMask!.style.display).toBe('none');
+  });
+});
+

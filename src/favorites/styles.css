@@ -63,3 +63,396 @@
 .bz-item-sheet .bz-fav-sheet-balance--error {
   color: var(--text-error);
 }
+/* 抽屉头部内部布局（ticket 141 收敛：原 _buildSheetHead 内联） */
+.bz-item-sheet .bz-fav-sheet-body {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.bz-item-sheet .bz-fav-sheet-info {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ==================== 主面板（ticket 141 样式收敛：原 ui.ts 内联逐字搬运；display 显隐/动态 z/余额档位色留运行时） ==================== */
+#fav-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--background-modifier-cover);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+#fav-popup {
+  background: var(--background-primary);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  width: 90%;
+  max-width: 700px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+#fav-entries-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 20px 20px 20px;
+}
+/* 头部标题（行布局/按钮规格由「主窗口头部行统一规范」的 .fav-header 规则承担） */
+.fav-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+/* 搜索切换钮：未开搜索半透明、开启恢复（原内联 opacity 0.5/1） */
+.bz-fav-search-toggle { opacity: 0.5; }
+.bz-fav-search-toggle--on { opacity: 1; }
+
+/* ---- 标签栏 ---- */
+.fav-tagbar {
+  padding: 8px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.fav-tag-btn {
+  display: inline-flex;
+  border-radius: 10px;
+  background: var(--background-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-normal);
+  padding: 4px 12px;
+  border: none;
+  box-shadow: none;
+  transition: all 0.2s;
+}
+.fav-tag-btn.bz-fav-tag-btn--active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.bz-fav-tag-count {
+  margin-left: 4px;
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+/* ---- 搜索框 ---- */
+.bz-fav-search-wrapper {
+  padding: 8px 20px;
+  flex-shrink: 0;
+}
+.bz-fav-search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 14px;
+  box-sizing: border-box;
+  outline: none;
+}
+
+/* ---- 空态（空库欢迎 / 搜索无结果，ticket 141 区分） ---- */
+.bz-fav-empty {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 16px;
+}
+.bz-fav-empty-hint {
+  font-size: 13px;
+  margin-top: 6px;
+  opacity: 0.8;
+}
+
+/* ---- 列表卡片 ---- */
+.fav-card {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  background: var(--background-primary);
+  cursor: default;
+  transition: background 0.15s;
+  position: relative;
+}
+.fav-card.bz-fav-card--link { cursor: pointer; } /* 有链接 = 可见的点击入口（ticket 61） */
+.fav-card.bz-fav-card--pinned {
+  background: var(--background-modifier-hover);
+  border-left: 3px solid var(--interactive-accent);
+}
+/* hover 提亮仅未置顶卡（原 onmouseenter/onmouseleave 行为） */
+.fav-card:not(.bz-fav-card--pinned):hover {
+  background: var(--background-modifier-hover);
+}
+.bz-fav-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.bz-fav-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+.bz-fav-desc {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+.bz-fav-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.bz-fav-tag-group {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.bz-fav-tag-badge {
+  font-size: 12px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: default;
+}
+.bz-fav-balance {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: 4px;
+  white-space: nowrap;
+}
+/* 分页加载指示（ticket 141，movie 同款文案与样式） */
+.bz-fav-load-more {
+  text-align: center;
+  padding: 8px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+/* ==================== 添加/编辑弹窗（ticket 141 收敛：原 _buildAddDialog/_buildLLMConfigSection 内联逐字搬运） ==================== */
+#fav-add-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.3);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+#fav-add-popup {
+  background: var(--background-primary);
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  padding: 24px;
+  max-width: 450px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+#fav-add-popup h4 {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+.bz-fav-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 14px;
+  box-sizing: border-box;
+}
+.bz-fav-input--area {
+  resize: vertical;
+  min-height: 60px;
+  font-family: inherit;
+}
+.bz-fav-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+/* 类型/置顶选择钮：同风格 chip，选中态走 .active */
+.fav-type-btn,
+.bz-fav-pin-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  border: none;
+  box-shadow: none;
+  transition: all 0.2s;
+}
+.fav-type-btn.active,
+.bz-fav-pin-btn.active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.bz-fav-llm-section {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.bz-fav-llm-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-normal);
+  margin-bottom: 4px;
+}
+.bz-fav-llm-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.bz-fav-llm-input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 13px;
+  box-sizing: border-box;
+}
+.bz-fav-llm-input--area {
+  min-height: 60px;
+  font-family: monospace;
+  resize: vertical;
+}
+.bz-fav-llm-hint {
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-top: 4px;
+}
+.bz-fav-btn-group {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+.bz-fav-btn-secondary {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: var(--background-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-normal);
+  box-shadow: none;
+}
+.bz-fav-btn-primary {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: var(--interactive-accent);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-on-accent);
+  box-shadow: none;
+}
+.bz-fav-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ==================== 排序弹窗（ticket 141：movie 筛选排序弹窗同款交互与视觉） ==================== */
+.bz-fav-sort-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bz-fav-sort-popup {
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  border: 1px solid var(--background-modifier-border);
+}
+.bz-fav-sort-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.bz-fav-sort-head h3 {
+  margin: 0;
+}
+.bz-fav-sort-close {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+.bz-fav-sort-body {
+  padding: 16px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.bz-fav-sort-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.bz-fav-sort-option {
+  padding: 6px 12px;
+  border-radius: 16px;
+  box-shadow: none;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  cursor: pointer;
+  font-size: 0.85rem;
+  border: 1px solid var(--background-modifier-border);
+}
+.bz-fav-sort-option--active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent, white);
+  border-color: var(--interactive-accent);
+}

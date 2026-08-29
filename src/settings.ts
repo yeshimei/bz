@@ -300,6 +300,11 @@ export default interface BzSettings {
   passwordMobileDefaultFullscreen: boolean;
   /** 收藏本：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   favoritesMobileDefaultFullscreen: boolean;
+  /** 收藏本：列表排序键（created=创建时间最新优先 / title=标题 / domain=域名，ticket 141。
+   *  排序选择持久化于 data.json 而非 favorites.json——favorites.json 顶层是纯条目数组，
+   *  顶层加字段需改根结构，会破坏仍在用的外部统计脚本 主页.js（读 favorites.length），
+   *  且违背「既有结构不改」铁律；排序键落设置与 memoSortMode/movieDefaultSort 同惯例） */
+  favoritesSortKey: string;
   /** 书库：移动端默认全屏（默认开——原 CSS ≤768 全屏主面板与读书笔记；阅读报告跟随此键） */
   libraryMobileDefaultFullscreen: boolean;
   /** 影视：移动端默认全屏（默认开——主面板/影视分析/影视报告同控，原 JS 内联强制全屏） */
@@ -542,6 +547,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   clippingMobileDefaultFullscreen: true,
   passwordMobileDefaultFullscreen: true,
   favoritesMobileDefaultFullscreen: true,
+  favoritesSortKey: 'created',
   libraryMobileDefaultFullscreen: true,
   movieMobileDefaultFullscreen: true,
   reviewMobileDefaultFullscreen: true,
