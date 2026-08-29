@@ -1,7 +1,7 @@
 ﻿/**
  * 做题家 UI 测试（ticket 141 重构版）：纯复习会话语义（普通模式随 ticket 098 退役入口一并删除）。
- * 覆盖：startReviewSession 契约 / 单选多选判定 / 持久化后计数 / 用户掌控跳题（无 800ms 强制）/ 
- * 键盘快捷键 / 头部对错计数 / 退出确认闸门 / 结果卡阶段防拆 DOM。
+ * 覆盖：startReviewSession 契约 / 单选多选判定 / 持久化后计数 / 答对 0.8s 亮绿后自动跳题（ticket 156）/
+ * 键盘快捷键 / 头部对错计数删除（ticket 156）/ 退出确认闸门 / 结果卡阶段防拆 DOM。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -25,6 +25,11 @@ async function flushPersist(): Promise<void> {
   await new Promise((r) => setTimeout(r, 0));
   await Promise.resolve();
   await Promise.resolve();
+}
+
+/** 答对自动跳题延时等待（ticket 156：0.8s 亮绿反馈后进入下一题） */
+async function flushJump(): Promise<void> {
+  await new Promise((r) => setTimeout(r, 850));
 }
 
 const Q = (question: string, correctIndices: number[], notePath = 'A.md'): QuizQuestion =>
@@ -53,8 +58,8 @@ describe('QuizMasterUI（纯复习会话）', () => {
     const btns = popup.querySelectorAll('.quiz-option-btn');
     expect(btns.length).toBe(4);
     expect(btns[0].querySelector('.check-mark')).not.toBeNull();
-    // ticket 141：头部实时对错计数（初始 0/0）
-    expect(popup.querySelector('.bz-quiz-stats')!.textContent).toBe('✅ 0 · ❌ 0');
+    // ticket 156：头部对错计数已删除（右上角不再显示 ✅/❌ 统计）
+    expect(popup.querySelector('.bz-quiz-stats')).toBeNull();
   });
 
   it('普通做题模式已删除：实例无 startQuiz/showLoadingPopup', () => {
@@ -94,18 +99,21 @@ describe('QuizMasterUI（纯复习会话）', () => {
     (document.querySelectorAll('.quiz-option-btn')[0] as HTMLElement).click();
     expect(document.querySelector('.quiz-next-btn')).toBeNull();
     expect(document.querySelectorAll('.quiz-option-btn')[0].classList.contains('correct')).toBe(true);
-    // 持久化成功：计数 + 头部计数同步 + 自动进入 Q2（题号 = 已完成数 + 1 = 2/2）
+    // 持久化成功：计数递增；ticket 156 延时窗口内仍停留当前题（亮绿反馈）
     await flushPersist();
     expect(ui.correctCount).toBe(1);
-    expect(document.querySelector('.bz-quiz-stats')!.textContent).toBe('✅ 1 · ❌ 0');
+    expect(document.getElementById('quiz-popup')!.textContent).toContain('Q1?');
+    // 0.8s 后自动进入 Q2（题号 = 已完成数 + 1 = 2/2）
+    await flushJump();
     expect(document.getElementById('quiz-popup')!.textContent).toContain('Q2?');
     expect(document.getElementById('quiz-popup')!.textContent).toContain('(2/2)');
     // P0-2 落盘终态：被答对的 Q1 已删除，恰剩未答的 Q2
     let quiz = JSON.parse(vault.files.get(QUIZ_FILE_PATH)!);
     expect(quiz.notes['A.md'].map((q: any) => q.question)).toEqual(['Q2?']);
-    // 答对 Q2 → 全部完成（持久化成功后自动 onComplete 回调）
+    // 答对 Q2 → 全部完成（延时后自动 onComplete 回调）
     (document.querySelectorAll('.quiz-option-btn')[1] as HTMLElement).click();
     await flushPersist();
+    await flushJump();
     expect(ui.correctCount).toBe(2);
     expect(onComplete).toHaveBeenCalledWith({ correct: 2, wrong: 0, total: 2, accuracy: 100 });
     expect(document.getElementById('quiz-popup')).not.toBeNull(); // 回调不关弹窗
@@ -125,6 +133,7 @@ describe('QuizMasterUI（纯复习会话）', () => {
       (document.querySelectorAll('.quiz-option-btn')[0] as HTMLElement).click();
       await flushPersist();
       expect(ui.correctCount).toBe(round);
+      await flushJump(); // ticket 156：亮绿 0.8s 后自动进入下一题
     }
     expect(onComplete).toHaveBeenCalledWith({ correct: 5, wrong: 0, total: 5, accuracy: 100 });
     const quiz = JSON.parse(vault.files.get(QUIZ_FILE_PATH)!);
@@ -153,11 +162,12 @@ describe('QuizMasterUI（纯复习会话）', () => {
     // 作答态已恢复：按钮不再 disabled，仍停在当前题
     expect(btns()[0].classList.contains('disabled')).toBe(false);
     expect(document.getElementById('quiz-popup')!.textContent).toContain('Q1?');
-    // 重答成功：只计一次，自动完成
+    // 重答成功：只计一次，延时后自动完成
     (btns()[0] as HTMLElement).click();
     await flushPersist();
     expect(ui.correctCount).toBe(1);
     expect(removeSpy).toHaveBeenCalledTimes(2);
+    await flushJump();
     expect(onComplete).toHaveBeenCalledWith({ correct: 1, wrong: 0, total: 1, accuracy: 100 });
     const quiz = JSON.parse(vault.files.get(QUIZ_FILE_PATH)!);
     expect(quiz.notes['A.md']).toEqual([]);
@@ -173,7 +183,8 @@ describe('QuizMasterUI（纯复习会话）', () => {
     const btns = document.querySelectorAll('.quiz-option-btn');
     (btns[1] as HTMLElement).click(); // 选错
     expect(ui.wrongCount).toBe(1);
-    expect(document.querySelector('.bz-quiz-stats')!.textContent).toBe('✅ 0 · ❌ 1');
+    // ticket 156：头部对错计数已删除
+    expect(document.querySelector('.bz-quiz-stats')).toBeNull();
     expect(btns[0].classList.contains('correct')).toBe(true);
     expect(btns[1].classList.contains('wrong')).toBe(true);
     const nextBtn = document.querySelector('.quiz-next-btn') as HTMLElement;
@@ -220,7 +231,8 @@ describe('QuizMasterUI（纯复习会话）', () => {
     await flushPersist();
     // ticket 098（ADR-0044）：多选答对递增 correctCount（P2：持久化成功后）
     expect(ui.correctCount).toBe(1);
-    // 题目被 splice 移除 → 答对自动完题 → onComplete（accuracy=100）；落盘同步删除
+    // 题目被 splice 移除 → 答对延时后自动完题 → onComplete（accuracy=100）；落盘同步删除
+    await flushJump();
     expect(onComplete).toHaveBeenCalledWith({ correct: 1, wrong: 0, total: 1, accuracy: 100 });
     const quiz = JSON.parse(vault.files.get(QUIZ_FILE_PATH)!);
     expect(quiz.notes['A.md']).toEqual([]);
@@ -270,7 +282,8 @@ describe('QuizMasterUI（纯复习会话）', () => {
     await flushPersist();
     expect(ui.correctCount).toBe(1);
     expect(document.querySelectorAll('.quiz-option-btn')[0].classList.contains('correct')).toBe(true);
-    // 答对自动完题（唯一一题）→ onComplete 已触发，无「下一题」按钮可点
+    // 答对自动完题（唯一一题，延时后触发）→ onComplete 已触发，无「下一题」按钮可点
+    await flushJump();
     expect(onComplete).toHaveBeenCalledTimes(1);
     expect(document.querySelector('.quiz-next-btn')).toBeNull();
     // 字母键 A：焦点在 body 时点击选项（无题可答，静默无害）
@@ -310,6 +323,30 @@ describe('QuizMasterUI（纯复习会话）', () => {
     // 勾选 0+2 后 Enter 提交 → 判对
     await flushPersist();
     expect(document.querySelectorAll('.quiz-option-btn')[0].classList.contains('correct')).toBe(true);
+  });
+
+  it('ticket 156：答对延时期间放弃做题 → 清除延时，不渲染僵尸题弹窗', async () => {
+    const vault = new MockVault();
+    seedQuiz(vault, { 'A.md': [Q('Q1?', [0]), Q('Q2?', [1])] });
+    const app = makeApp(vault);
+    setApp(app);
+    const ui = new QuizMasterUI();
+    const onComplete = vi.fn();
+    ui.startReviewSession({ questions: [Q('Q1?', [0]), Q('Q2?', [1])], onComplete });
+    // 答对 Q1 → 持久化成功，进入 0.8s 延时窗口
+    (document.querySelectorAll('.quiz-option-btn')[0] as HTMLElement).click();
+    await flushPersist();
+    expect(ui.correctCount).toBe(1);
+    // 延时窗口内 ESC → 放弃确认 → 结算关闭
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    const ok = document.getElementById('__shared_confirm_ok__') as HTMLElement;
+    expect(ok).not.toBeNull();
+    ok.click();
+    await flushJump(); // 若延时未清除，此处会迟到渲染 Q2 僵尸弹窗
+    expect(ui._sessionActive).toBe(false);
+    expect(document.getElementById('quiz-popup')).toBeNull();
+    expect(document.getElementById('quiz-mask')).toBeNull();
+    expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
   it('打乱出题顺序设置在会话入口生效（shuffleQuestions=false 保序；true 打乱后总题数不变）', () => {
@@ -419,11 +456,13 @@ describe('复习联动契约', () => {
     expect(onComplete).not.toHaveBeenCalled();
     expect(document.getElementById('quiz-popup')).not.toBeNull();
     expect(document.getElementById('quiz-popup')!.textContent).toContain('RQ1?');
-    // 继续作答到完成 → 恰好一次回调（答对自动跳题）
+    // 继续作答到完成 → 恰好一次回调（答对 0.8s 亮绿后自动跳题）
     (document.querySelectorAll('.quiz-option-btn')[0] as HTMLElement).click(); // 答对 RQ1
     await flushPersist();
+    await flushJump(); // 自动进入 RQ2
     (document.querySelectorAll('.quiz-option-btn')[1] as HTMLElement).click(); // 答对 RQ2（自动进入）
     await flushPersist();
+    await flushJump();
     expect(onComplete).toHaveBeenCalledTimes(1);
     expect(onComplete).toHaveBeenCalledWith({ correct: 2, wrong: 0, total: 2, accuracy: 100 });
   });
@@ -457,9 +496,10 @@ describe('复习联动契约', () => {
     const ui = new QuizMasterUI();
     const onComplete = vi.fn();
     ui.startReviewSession({ questions: [Q('RQ1?', [0])], onComplete });
-    // 答对唯一一题 → 自动完题消费回调（复习域显示结果卡）
+    // 答对唯一一题 → 0.8s 亮绿后自动完题消费回调（复习域显示结果卡）
     (document.querySelectorAll('.quiz-option-btn')[0] as HTMLElement).click();
     await flushPersist();
+    await flushJump();
     expect(onComplete).toHaveBeenCalledTimes(1);
     // 结果卡阶段：遮罩/ESC 均被忽略（弹窗 DOM 保留给复习域驱动）
     (document.getElementById('quiz-mask') as HTMLElement).click();
@@ -479,14 +519,16 @@ describe('复习联动契约', () => {
     const ui = new QuizMasterUI();
     const onComplete = vi.fn();
     ui.startReviewSession({ questions: [Q('RQ1?', [0]), Q('RQ2?', [1])], onComplete });
-    // 答对第一题 → 自动进入下一题（无 800ms 强制等待）
+    // 答对第一题 → 0.8s 亮绿后自动进入下一题
     (document.querySelectorAll('.quiz-option-btn')[0] as HTMLElement).click();
     await flushPersist();
     expect(onComplete).not.toHaveBeenCalled(); // 过渡不得误触发结算
+    await flushJump();
     expect(document.getElementById('quiz-popup')!.textContent).toContain('RQ2?');
     // 答对第二题 → 会话完成 → 回调恰好一次
     (document.querySelectorAll('.quiz-option-btn')[1] as HTMLElement).click();
     await flushPersist();
+    await flushJump();
     expect(onComplete).toHaveBeenCalledTimes(1);
     expect(onComplete).toHaveBeenCalledWith({ correct: 2, wrong: 0, total: 2, accuracy: 100 });
   });

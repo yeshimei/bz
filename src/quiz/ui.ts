@@ -22,6 +22,9 @@ export interface QuizReviewResults {
   accuracy: number;
 }
 
+/** ticket 156：答对后亮绿反馈到自动进入下一题的延时（用户拍板 0.8 秒） */
+const CORRECT_JUMP_DELAY_MS = 800;
+
 /** 清理选项文本，去除可能的前缀如 "A." "A、" "A)" "(A)" 等（renderModal 拆分） */
 function cleanOptionText(text: string): string {
   if (!text) return '';
@@ -64,10 +67,10 @@ export class QuizMasterUI {
   generator = new QuestionGenerator();
   /** ticket 098:多选提交按钮暂存（renderModal 选项后补挂，保证位于选项下方） */
   _pendingSubmitBtn: HTMLElement | null = null;
-  /** ticket 141：头部对错计数元素（renderModal 重建时更新引用） */
-  private _statsEl: HTMLElement | null = null;
   /** ticket 141：做题键盘快捷键句柄（1-4/A-D 选择、Enter 提交/下一题；ESC 走 escManager） */
   private _keyHandler: ((e: KeyboardEvent) => void) | null = null;
+  /** ticket 156：答对自动跳题延时句柄（亮绿 0.8s 再进下一题） */
+  private _jumpTimer: ReturnType<typeof setTimeout> | null = null;
 
   shuffleArray<T>(arr: T[]): T[] {
     for (let i = arr.length - 1; i > 0; i--) {
@@ -232,12 +235,7 @@ export class QuizMasterUI {
     const doneCount = this.totalQuestions - this.currentQuestions.length;
     title.textContent = noteName ? `📝 ${noteName} (${doneCount + 1}/${this.totalQuestions})` : `📝 (${doneCount + 1}/${this.totalQuestions})`;
     header.appendChild(title);
-    // ticket 141：头部实时对错计数（做题中即可见，不再只存不用）
-    const stats = document.createElement('span');
-    stats.className = 'bz-quiz-stats';
-    this._statsEl = stats;
-    this._syncHeaderStats();
-    header.appendChild(stats);
+    // ticket 156：头部对错计数删除（用户拍板去掉右上角 ✅/❌ 统计；结算面板统计保留）
     popup.appendChild(header);
 
     // 题目
@@ -312,9 +310,12 @@ export class QuizMasterUI {
     }
   }
 
-  /** ticket 141：头部对错计数同步（答对/答错即时刷新，无则静默跳过） */
-  private _syncHeaderStats(): void {
-    if (this._statsEl) this._statsEl.textContent = `✅ ${this.correctCount} · ❌ ${this.wrongCount}`;
+  /** ticket 156：清除答对自动跳题延时（换题/结算/强制关闭时防迟到渲染） */
+  private _clearJumpTimer(): void {
+    if (this._jumpTimer) {
+      clearTimeout(this._jumpTimer);
+      this._jumpTimer = null;
+    }
   }
 
   /** 选项按钮组构建与答题逻辑（renderModal 拆分）：单选即点即判 / 多选切换 + 提交 */
@@ -351,7 +352,6 @@ export class QuizMasterUI {
           } else {
             // 答错：显示正确答案，仅移出本轮会话（不落盘删除，留给重做队列），「下一题」按钮继续
             this.wrongCount++;
-            this._syncHeaderStats();
             this.currentQuestions.splice(this.currentIndex, 1);
             optionElements.forEach((b, i) => {
               if (i === q.correctIndices[0]) b.classList.add('correct');
@@ -407,7 +407,6 @@ export class QuizMasterUI {
         } else {
           // 答错：同单选——仅移出本轮会话（不落盘删除），「下一题」按钮继续
           this.wrongCount++;
-          this._syncHeaderStats();
           this.currentQuestions.splice(this.currentIndex, 1);
           this.addNextButton(optionsContainer);
         }
@@ -418,18 +417,24 @@ export class QuizMasterUI {
     return optionElements;
   }
 
-  /** 答对公共链路（ticket 141 重构）：稳定定位删题 → 计数 → splice 出当前题 → 头部计数同步 →
-   *  自动进入下一题。删除按题目内容在存储数组定位（P0-2），不再依赖会话期 _index 快照；
+  /** 答对公共链路（ticket 141 重构）：稳定定位删题 → 计数 → splice 出当前题 → 自动进入下一题。
+   *  删除按题目内容在存储数组定位（P0-2），不再依赖会话期 _index 快照；
    *  持久化成功后才计数并跳题（P2：失败恢复作答态时不重复计数），失败通知并恢复作答状态；
-   *  ticket 153：答对自动跳下一题（用户拍板：答对不出现「下一题」按钮，答错才由用户点按）。 */
+   *  ticket 153：答对自动跳下一题（答对不出现「下一题」按钮，答错才由用户点按）；
+   *  ticket 156：跳题延后 0.8s——亮绿正确选项让用户看到反馈再进入下一题；
+   *  延时期间放弃做题/强制关闭 → 清除延时（回调内再校验会话态，防迟到渲染僵尸弹窗）。 */
   private _answerCorrect(q: QuizQuestion, app: App, onFailRestore: () => void): void {
     this.manager
       .removeQuestion(app, q.notePath!, { question: q.question, options: q.options, correctIndices: q.correctIndices })
       .then(() => {
         this.correctCount++;
         this.currentQuestions.splice(this.currentIndex, 1);
-        this._syncHeaderStats();
-        this.showQuestion();
+        this._clearJumpTimer();
+        this._jumpTimer = setTimeout(() => {
+          this._jumpTimer = null;
+          if (!this._sessionActive) return;
+          this.showQuestion();
+        }, CORRECT_JUMP_DELAY_MS);
       })
       .catch((e) => {
         notice('删除题目失败：' + e.message, 'error');
@@ -484,7 +489,6 @@ export class QuizMasterUI {
     if (this.mask && this.mask.parentNode) this.mask.remove();
     this.mask = null;
     this.popup = null;
-    this._statsEl = null;
   }
 
   /**
@@ -503,6 +507,7 @@ export class QuizMasterUI {
       ],
     }).then((v) => {
       if (v !== 'ok') return;
+      this._clearJumpTimer();
       const cb = this.onComplete;
       this.onComplete = null;
       this._sessionActive = false;
@@ -513,6 +518,7 @@ export class QuizMasterUI {
 
   /** 强制关闭（复习域契约调用，如结果卡「复习此笔记」）：回调防御性结算，避免外层 Promise 悬挂 */
   close(): void {
+    this._clearJumpTimer();
     const cb = this.onComplete;
     this.onComplete = null;
     this._sessionActive = false;
