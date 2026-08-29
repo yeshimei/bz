@@ -663,6 +663,36 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
   c) 重新生成直接覆盖无确认弹窗；d) 确认写入传 AI 预览值落盘一次 + 自动打开 + term-generated + 面板关闭；
   e) tsc + 全量测试 + 构建全绿。
 
+### 备忘录删除行为流落盘加固（ticket 159，已交付）
+
+> 备忘录条目（scriptName 备忘录）：删除备忘录未入小橘行为流。
+
+- **实证**：源码链路完整（emit → notifyMemoAction → memo:deleted 路由 → 三套注册表齐）+ 测试覆盖；
+  真实行为流 added/completed/edited 均有、deleted 恒 0 ⇒ 症状 = 落盘时序：30s tick 合并写 + 卸载 fire-and-forget，
+  删除后 30s 内退出（移动端关后台快）条目确定丢失。
+- **加固**：`markBehaviorDirty` 追加 5s 短防抖直写（窗口内合并一次写，与 30s tick 并存）；
+  `stopScheduler` 清短防抖定时器；卸载冲刷快照路径不变。低频动作（删除/完成）落盘窗口 30s → 5s。
+- **验收**：a) 5s 触发直写/合并/停止清理（新用例）；b) smartcat 全量绿。
+
+### 小橘反思/日小结/周报饿死修复（ticket 158，已交付）
+
+> 备忘录条目（scriptName 小橘）：日小结，洞察和本周报告好像未生效。
+
+- **根因**：ADR-0069 R2 后记忆流断粮（观察改道行为流，「记忆目录」默认未配置）——反思证据 <2 静默空转、
+  首次日小结被 `!lastReflect` 门槛卡死、周报门槛/原料读记忆流恒 <3；`hour===10` 严格相等还有节拍跳档隐患。
+- **修复**：新增 `behaviorToObservations`（行为条目 → 观察伪条目派生视图，wording 渲染 + 来源档位 credibility）——
+  反思证据池并入（legacy 双写按描述去重）、周报门槛与原料并入；`shouldReflect` 从未反思时行为流攒够 20 条也触发；
+  `shouldDigest` 首次日小结与反思解耦（行为流攒够 3 条即触发，基线回退行为流最早条目）；周报 `hour>=10` + weekKey 去重。
+- **验收**：a) 反思证据含行为条目（wording 渲染、双写去重）；b) 无反思基线可首次日小结；c) smartcat 1137 用例绿。
+
+### 入口页长按同手势拖拽（ticket 157，已交付）
+
+> 备忘录条目（scriptName 入口页，移动端）：长按无法拖拽图标。
+
+- **根因**：长按只进编辑并重建 DOM（拖拽需松手重按）＋ 移动端 touchmove 无阻断/无 touch-action（WebView 滚动抢占 pointercancel 杀手势）＋ 系统长按菜单未拦。
+- **修复**：常态磁贴 pointerdown 挂延续监听——长按触发后同手势移动超阈值 → 直接 startDrag 该磁贴（render 后按 tile.id 重找元素）；长按触发后 document 非被动 touchmove preventDefault（拖拽全程，pointerup/cancel 解除）；`.launcher-tile.editing` 加 touch-action:none；grid contextmenu 拦截 + 磁贴 -webkit-touch-callout:none。常态磁贴不加 touch-action（保网格滚动）。
+- **验收**：a) 长按不松手移动直接拖拽、松手落位写盘（新用例）；b) 长按后松手仅进编辑；c) 既有编辑模式重按拖拽/pointercancel 语义不变（76 用例绿）。
+
 ### 做题家作答节奏与出题语义（ticket 156，已交付）
 
 > 备忘录条目（scriptName 做题家）：选对答案等待 0.8 秒自动转跳；去掉右上角对错统计；做错的题下次逾期复习应出新题。
