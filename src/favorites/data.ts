@@ -36,6 +36,17 @@ export class DataManager {
     return data;
   }
 
+  /**
+   * 撤销删除（ticket 141 通病 1）：删除前取到的完整条目原样插回（含 archived/llmConfig 等全部字段），
+   * 不走 add() 重排——同 id 已存在（并发写回）则幂等跳过。参照 review/data.ts restoreItem 先例。
+   */
+  async restoreItem(item: FavoritesItem): Promise<void> {
+    const data = await this.read();
+    if (data.some((d) => d.id === item.id)) return;
+    data.push(item);
+    await this.write(data);
+  }
+
   async update(id: string, newData: Partial<FavoritesItem>): Promise<FavoritesItem[]> {
     const data = await this.read();
     const idx = data.findIndex((d) => d.id === id);
