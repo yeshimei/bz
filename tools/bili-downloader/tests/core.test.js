@@ -62,6 +62,19 @@ test('needsCompressFallback：压缩件严格更大才回退（相等/更小/sta
   fs.rmSync(d, { recursive: true, force: true })
 })
 
+test('decodeBatchArg：b64: 前缀 base64 解码（shell 安全形态）；else JSON 直解析（手动命令行）；坏 JSON 双形态抛 SyntaxError', () => {
+  const task = { url: 'BV1GJ411x7h7', start: '0:12', end: '1:30', page: null, options: { compress: true, crf: 23 } }
+  const b64 = Buffer.from(JSON.stringify(task), 'utf8').toString('base64')
+  // b64: 前缀 → base64 解码（插件经 shell 启动的形态，P2-5）
+  assert.deepEqual(core.decodeBatchArg('b64:' + b64), task)
+  // 无前缀 → 按 JSON 直解析（手动命令行形态）
+  assert.deepEqual(core.decodeBatchArg(JSON.stringify(task)), task)
+  // 坏 JSON：直传形态
+  assert.throws(() => core.decodeBatchArg('{"url":'), SyntaxError)
+  // 坏 JSON：b64: 形态（解码后仍是坏 JSON）
+  assert.throws(() => core.decodeBatchArg('b64:' + Buffer.from('{', 'utf8').toString('base64')), SyntaxError)
+})
+
 test('uniquePath：重名自动加序号', () => {
   const f = path.join(tmp, '重名.mp4')
   fs.writeFileSync(f, 'x')

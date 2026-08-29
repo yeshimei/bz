@@ -78,9 +78,15 @@ function getFs(): any {
   try { return w.require('fs'); } catch { return null; }
 }
 
-/** 解析 spawn 目标（P2-2）：纯走全局 bili-dl --batch，.cmd shim 需 shell:true（不再探测本机 CLI 绝对路径） */
+/**
+ * 解析 spawn 目标（P2-2→P2-5）：纯走全局 bili-dl --batch，.cmd shim 需 shell:true；
+ * shell 会对消 JSON 的引号/空格（Windows cmd 实测 argv 损坏报 position 1 JSON 错，
+ * 面上表现「--batch 参数不是合法 JSON：Expected property name or '}'」），故 taskJson
+ * 改传 base64（`b64:` 前缀，cli.js decodeBatchArg 解码）——base64 无引号无空格，shell 全程安全。
+ */
 function resolveBatchSpawn(taskJson: string): { cmd: string; args: string[]; shell: boolean } {
-  return { cmd: 'bili-dl', args: ['--batch', taskJson], shell: true };
+  const b64 = Buffer.from(taskJson, 'utf8').toString('base64');
+  return { cmd: 'bili-dl', args: ['--batch', `b64:${b64}`], shell: true };
 }
 
 /** 转录临时文件删除（尽力而为：已删/读失败等一律静默，不阻塞主流程） */
