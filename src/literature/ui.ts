@@ -12,8 +12,8 @@
  *   复制原文链接[仅视频有 url]/删除 danger+flow-dialog 确认——删除视频笔记时同步清理
  *   literature.json 指向该笔记的任务记录）；打开主面板时调 backfillNotes() 补全旧笔记。
  * - 视频录入面板（showVideoEntry，任务队列）：原 bili-tasks 面板整体搬入，去掉 ⚙️ 设置 /
- *   ⬇️ 下载按钮；保留 ➕ 添加 / ▶️ 处理 / ⏹ 中止 / 🕘 历史 / ❌；移动端仅 ➕ 添加 + ❌
- *   （ticket 139：处理/中止/历史全部隐藏，移动端无处理能力）。
+ *   ⬇️ 下载按钮；保留 ➕ 添加 / 单钮（▶️ 批量处理 ↔ 运行中 ⏹ 终止，ticket 146）/ 🕘 历史 / ❌；
+ *   移动端仅 ➕ 添加 + ❌（ticket 139/144：批量按钮与历史全部隐藏，移动端无处理能力）。
  *   批处理调 BatchRunner.runAll（work = 非 archived 且 pending/failed），事件回调驱动行内进度/
  *   步骤时间线/完成态文案（STEP_DONE_MAP 覆盖「AI 生成文献笔记中」「笔记落盘中」）+ 整批通知。
  * - 术语生成面板（showTermEntry，文字录入）：遮罩 + 弹窗，术语输入（预填/可改）→ 「生成」调
@@ -38,6 +38,9 @@
  * + 去 placeholder + 失败提示条中性化；搜索框简洁化（去 placeholder，盒内 🔍 图标）；
  * 历史去标题（工具栏=计数+❌）+ 组头去「UP主」前缀与「N 条笔记」计数、笔记行去目录去 .md（shortNoteName）、
  * 时间用 formatRelativeTime 相对显示（ticket 143）。
+ * ticket 146（用户拍板三改）：① 主面板卡片加大标题/简介/日期间距，日期改 formatRelativeTime 相对显示；
+ * ② 视频录入去独立 ⏹ 终止按钮改为单钮态机——空闲「▶️ 批量处理」，运行中该按钮即「⏹ 终止」
+ * （仅失败项续跑时「⏹ 终止整批」），处理完成有失败仍可再点续跑，移动端整钮隐藏。
  */
 import type { App } from 'obsidian';
 import type { SettingsSchema } from '../core/settings-schema';
@@ -271,6 +274,8 @@ export class UIManager {
 
   private editingId: string | null = null;
   private onKeydown: (e: KeyboardEvent) => void = () => {};
+  /** 运行中终止按钮文案（ticket 146 单钮态机）：整批=「终止」；仅失败项续跑=「终止整批」；空闲=null */
+  private batchAbortLabel: '终止' | '终止整批' | null = null;
   /** 运行中行内进度态（task.id → 时间线/百分比/启动时刻） */
   private runState = new Map<string, RowRunState>();
   /** 耗时秒针（整批期间每秒刷新处理中行的耗时） */
@@ -696,13 +701,19 @@ export class UIManager {
     card.className = 'bz-lit-card';
     card.dataset.path = n.path;
     const domainBadge = n.domain ? `<span class="bz-lit-badge bz-lit-badge-domain">${esc(n.domain)}</span>` : '';
+    // ticket 146：日期用 BZ 相对时间函数（历史/主面板同口径）；无效日期回退原文，空日期不显示
+    let dateText = '';
+    if (n.date) {
+      const rel = formatRelativeTime(n.date);
+      dateText = rel === '无效日期' ? n.date : rel;
+    }
     card.innerHTML = `
       <div class="bz-lit-card-title-row">
         <span class="bz-lit-card-title">${esc(n.title || '无标题')}</span>
         ${domainBadge}
       </div>
       <div class="bz-lit-card-summary">${esc(n.summary || '（无简介）')}</div>
-      <div class="bz-lit-card-date">${esc(n.date)}</div>`;
+      <div class="bz-lit-card-date">${esc(dateText)}</div>`;
     // 双击打开（click 计数 300ms，影视先例 movie/ui.ts:155；单击无操作防误触）
     let lastClick = 0;
     card.addEventListener('click', (e) => {
@@ -874,8 +885,7 @@ export class UIManager {
       <h3 class="bz-lit-title">视频录入</h3>
       <div class="bz-lit-head-btns">
         <button id="lit-btn-video-add" title="添加转文献任务">➕</button>
-        <button id="lit-btn-video-run" title="批量处理（桌面端）">▶️</button>
-        <button id="lit-btn-video-abort" title="中止整批" style="display:none;">⏹</button>
+        <button id="lit-btn-video-run" class="bz-lit-run-btn" title="批量处理（桌面端）">▶️ 批量处理</button>
         <button id="lit-btn-video-history" title="历史">🕘</button>
         <button id="lit-btn-video-close" class="bz-win-close" title="关闭">❌</button>
       </div>`;
@@ -890,14 +900,12 @@ export class UIManager {
     this.videoPopup = popup;
     this.videoList = list;
     this._bindVideoHeaderEvents();
-    // 移动端仅 ➕ 添加 + ✕（ticket 139：处理/中止/历史全部隐藏——移动端无处理能力，
+    // 移动端仅 ➕ 添加 + ✕（ticket 139/144：单钮批量按钮与历史全部隐藏——移动端无处理能力，
     // 历史入口一并收起；原 ticket 136 §5 仅藏 处理/中止）
     if (isMobileEnv()) {
       const run = q<HTMLButtonElement>(popup, '#lit-btn-video-run');
-      const abort = q<HTMLButtonElement>(popup, '#lit-btn-video-abort');
       const history = q<HTMLButtonElement>(popup, '#lit-btn-video-history');
       if (run) run.style.display = 'none';
-      if (abort) abort.style.display = 'none';
       if (history) history.style.display = 'none';
     }
   }
@@ -906,8 +914,11 @@ export class UIManager {
     const p = this.videoPopup;
     if (!p) return;
     q<HTMLButtonElement>(p, '#lit-btn-video-add')!.onclick = () => this.showAddDialog();
-    q<HTMLButtonElement>(p, '#lit-btn-video-run')!.onclick = () => void this.onRunBatch();
-    q<HTMLButtonElement>(p, '#lit-btn-video-abort')!.onclick = () => void this.onAbortBatch();
+    // ticket 146 单钮态机：运行中该按钮即「终止」控制（onAbortBatch），空闲即「批量处理」
+    q<HTMLButtonElement>(p, '#lit-btn-video-run')!.onclick = () => {
+      if (BatchRunner.running) void this.onAbortBatch();
+      else void this.onRunBatch();
+    };
     q<HTMLButtonElement>(p, '#lit-btn-video-history')!.onclick = () => this.showHistory();
     q<HTMLButtonElement>(p, '#lit-btn-video-close')!.onclick = () => this.hideVideo();
   }
@@ -970,14 +981,26 @@ export class UIManager {
     el.textContent = parts.join(' · ');
   }
 
+  /**
+   * ticket 146 单钮态机（去独立 ⏹ 按钮）：空闲 = 「▶️ 批量处理」（无工作禁用；完成有失败仍在 → 可再点续跑）；
+   * 运行中 = 该按钮即终止控制——整批「⏹ 终止」/ 仅失败项续跑「⏹ 终止整批」；移动端整钮隐藏（isMobileEnv）。
+   */
   private _syncRunButton(tasks: LiteratureTask[]): void {
     if (!this.videoPopup) return;
     const run = q<HTMLButtonElement>(this.videoPopup, '#lit-btn-video-run');
-    const abort = q<HTMLButtonElement>(this.videoPopup, '#lit-btn-video-abort');
     if (!run) return;
+    const running = BatchRunner.running;
     const hasWork = tasks.some((t) => t.status === 'pending' || t.status === 'failed');
-    run.disabled = BatchRunner.running || !hasWork;
-    if (abort) abort.style.display = BatchRunner.running && !isMobileEnv() ? '' : 'none';
+    if (running) {
+      run.disabled = false; // 运行中按钮 = 终止控制，必须可点
+      const retry = this.batchAbortLabel === '终止整批';
+      run.textContent = retry ? '⏹ 终止整批' : '⏹ 终止';
+      run.title = retry ? '中止整批（处理失败任务中）' : '中止批量处理';
+    } else {
+      run.disabled = !hasWork;
+      run.textContent = '▶️ 批量处理';
+      run.title = '批量处理（桌面端）';
+    }
   }
 
   private renderRow(task: LiteratureTask): HTMLElement {
@@ -1089,6 +1112,8 @@ export class UIManager {
     // ADR-0067 断点续跑：待处理 + 失败 项一起处理（失败项从出错步骤继续，成功项已归档不重跑）
     const work = tasks.filter((t) => !t.archived && (t.status === 'pending' || t.status === 'failed'));
     if (work.length === 0) { notice('没有待处理或失败的任务', 'info'); return; }
+    // ticket 146：整批（含待处理项）→ 终止按钮文案「终止」；仅失败项续跑 →「终止整批」；仅文案区分，中止行为一致
+    this.batchAbortLabel = work.every((t) => t.status === 'failed') ? '终止整批' : '终止';
     const ui = this;
     ui.startRunTimer();
     const events: BatchEvents = {
@@ -1122,7 +1147,14 @@ export class UIManager {
         void ui.refreshVideoPanel();
       },
     };
-    await BatchRunner.runAll(work, events);
+    // runAll 同步段已置 running=true → 刷新一次让按钮立即转为「终止/终止整批」（不等首个任务事件）
+    const runP = BatchRunner.runAll(work, events);
+    void this.refreshVideoPanel();
+    try {
+      await runP;
+    } finally {
+      this.batchAbortLabel = null;
+    }
   }
 
   private async onAbortBatch(): Promise<void> {

@@ -1,13 +1,14 @@
 /**
  * 文献盒（literature 域）UI 测试（ticket 136 改版 + ticket 138 UX 修复）：
  * - 主面板（文献笔记列表）：标题/头部五按钮（emoji、🔍 在 ⚙️ 前，ticket 138 §3.1）/领域筛选行
- *   （类型分类栏已移除）/空态、卡片渲染（标题+领域徽标+简介+日期，无类型徽章 ticket 138 §3.2）与
+ *   （类型分类栏已移除）/空态、卡片渲染（标题+领域徽标+简介+日期[formatRelativeTime 相对显示，ticket 146]，
+ *   无类型徽章 ticket 138 §3.2）与
  *   最近创建降序、🔍 搜索 300ms 防抖、领域筛选、双击打开（click 计数 300ms）、
  *   抽屉（打开/复制双链/复制原文链接[video]/删除 danger+确认，删除同步清理指向该笔记的任务记录）、
  *   懒加载（批次 20 + 触底 + 尾部提示）、literature:file-* 四通道 300ms 防抖增量刷新、
  *   文献目录设置变更清缓存全量重载。
- * - 视频录入面板（任务队列）：去 ⚙️/⬇️；保留 ➕/▶️/⏹/🕘/✕；移动端仅 ➕/🕘+✕；
- *   添加弹窗（校验/编辑回填/预填叠开）、历史独立弹窗（分组/清空历史）、批量处理行内进度
+ * - 视频录入面板（任务队列）：去 ⚙️/⬇️ 与独立 ⏹ 终止钮；单钮态机 ➕/**▶️ 批量处理 ↔ 运行中 ⏹ 终止/终止整批**（ticket 146）/🕘/✕；
+ *   移动端仅 ➕+✕；添加弹窗（校验/编辑回填/预填叠开）、历史独立弹窗（分组/清空历史）、批量处理行内进度
  *   （[bz-step]/[bz-p] 时间线 + STEP_DONE_MAP「AI 生成文献笔记中/笔记落盘中」完成态文案）。
  * - 术语生成面板（ticket 138 §2.1 契约变更 + ticket 142 简洁版）：预填/空术语不生成/生成纯 AI 预览
  *   （mock note-gen generateTermDraft，未确认不落盘）/预览只读（无领域/正文输入框，上属性卡下内容卡，
@@ -151,7 +152,23 @@ describe('文献盒 UI（ticket 136）', () => {
     expect(first.querySelector('.bz-lit-badge-type')).toBeNull();
     expect(first.querySelector('.bz-lit-badge-domain')!.textContent).toBe('物理');
     expect(first.textContent).toContain('简介C');
-    expect(first.textContent).toContain('2026-09-01');
+    // ticket 146：日期用 BZ 相对时间函数（输出与 formatRelativeTime 同参数一致）
+    expect(first.querySelector('.bz-lit-card-date')!.textContent).toBe(formatRelativeTime('2026-09-01 10:00:00'));
+  });
+
+  it('主面板日期（ticket 146）：formatRelativeTime 相对显示；空日期不显示、无效日期回退原文', async () => {
+    vault.files.set('文献盒/A.md', noteMd({ title: 'A', date: '2026-09-01 10:00:00' }));
+    vault.files.set('文献盒/B.md', '---\ntitle: B\nsummary: "无日期"\n---\n\n正文');
+    vault.files.set('文献盒/C.md', noteMd({ title: 'C', date: '不是日期' }));
+    ui.showMain();
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-lit-card').length).toBe(3));
+    const dateOf = (marker: string) =>
+      Array.from(document.querySelectorAll('.bz-lit-card'))
+        .find((c) => c.textContent!.includes(marker))!
+        .querySelector('.bz-lit-card-date')!.textContent!;
+    expect(dateOf('A')).toBe(formatRelativeTime('2026-09-01 10:00:00'));
+    expect(dateOf('无日期')).toBe('');
+    expect(dateOf('C')).toBe('不是日期');
   });
 
   it('嵌套子目录笔记也显示（扫描口径与 backfillNotes 一致，P3-5）', async () => {
@@ -347,17 +364,21 @@ describe('文献盒 UI（ticket 136）', () => {
 
   // ==================== 视频录入面板（任务队列） ====================
 
-  it('视频录入面板：➕/▶️/⏹/🕘/✕ 存在；去 ⚙️ 设置与 ⬇️ 下载', () => {
+  it('视频录入面板（ticket 146）：➕/▶️ 批量处理单钮/🕘/✕ 存在；去 ⏹ 独立终止钮、⚙️ 设置与 ⬇️ 下载', async () => {
     ui.showVideoEntry();
     expect(document.getElementById('literature-video-popup')!.style.display).toBe('flex');
     const popup = document.getElementById('literature-video-popup')!;
     expect(popup.querySelector('#lit-btn-video-add')).toBeTruthy();
     expect(popup.querySelector('#lit-btn-video-run')).toBeTruthy();
-    expect(popup.querySelector('#lit-btn-video-abort')).toBeTruthy();
+    expect(popup.querySelector('#lit-btn-video-abort')).toBeNull(); // 单钮态机：初始无独立终止钮（ticket 146）
     expect(popup.querySelector('#lit-btn-video-history')).toBeTruthy();
     expect(popup.querySelector('#lit-btn-video-close')).toBeTruthy();
     expect(popup.querySelector('#lit-btn-video-settings')).toBeNull();
     expect(popup.querySelector('#lit-btn-video-download')).toBeNull();
+    // 空闲态单钮 = 「▶️ 批量处理」（初始无工作 → 禁用，_syncRunButton 异步补齐）
+    const run = document.getElementById('lit-btn-video-run') as HTMLButtonElement;
+    expect(run.textContent).toBe('▶️ 批量处理');
+    await vi.waitFor(() => expect(run.disabled).toBe(true));
     // ⚙️ 设置入口已移到主面板
     expect(document.getElementById('lit-btn-settings')).toBeTruthy();
   });
@@ -397,12 +418,12 @@ describe('文献盒 UI（ticket 136）', () => {
     expect(document.getElementById('lit-add-clip-fields')!.style.display).toBe('block');
   });
 
-  it('移动端视频面板仅 ➕ 添加 + ✕（处理/中止/历史全部隐藏，ticket 139）', () => {
+  it('移动端视频面板仅 ➕ 添加 + ✕（单钮批量按钮/历史全部隐藏，ticket 139/144：移动端无此功能）', () => {
     ui.destroy();
     (Platform as any).isMobile = true;
     ui = new UIManager(app);
     expect((document.getElementById('lit-btn-video-run') as HTMLButtonElement).style.display).toBe('none');
-    expect((document.getElementById('lit-btn-video-abort') as HTMLButtonElement).style.display).toBe('none');
+    expect(document.getElementById('lit-btn-video-abort')).toBeNull();
     expect((document.getElementById('lit-btn-video-history') as HTMLButtonElement).style.display).toBe('none');
     expect(document.getElementById('lit-btn-video-add')).toBeTruthy();
     expect(document.getElementById('lit-btn-video-close')).toBeTruthy();
@@ -479,7 +500,11 @@ describe('文献盒 UI（ticket 136）', () => {
       await new Promise((r) => setTimeout(r, 0));
       await LiteratureData.addTask({ url: 'BV1xx411c7mD' });
       await ui.refreshVideoPanel();
-      (document.getElementById('lit-btn-video-run') as HTMLButtonElement).click();
+      // ticket 146 单钮态机：空闲「▶️ 批量处理」→ 点击 → 运行中「⏹ 终止」
+      const runBtn = document.getElementById('lit-btn-video-run') as HTMLButtonElement;
+      expect(runBtn.textContent).toBe('▶️ 批量处理');
+      runBtn.click();
+      await vi.waitFor(() => expect(runBtn.textContent).toBe('⏹ 终止')); // 整批（含待处理）→ 终止
       await vi.waitFor(() => expect(document.querySelector('.bz-bili-progress-box')).toBeTruthy());
       child.stdout.emit('data', Buffer.from('[bz-step] 解析中\n[bz-step] 下载中\n'));
       child.stdout.emit('data', Buffer.from('[bz-p] {"phase":"download","pct":42}\n'));
@@ -502,6 +527,40 @@ describe('文献盒 UI（ticket 136）', () => {
     } finally {
       // 无论断言成败都收尾整批（防 BatchRunner.running 卡死重试）
       child.emit('close', 1);
+      (window as any).require = origRequire;
+    }
+  });
+
+  it('批量按钮单钮态机（ticket 146）：空闲按工作禁用/启用；运行中「⏹ 终止」；仅失败项续跑「⏹ 终止整批」；结束恢复可再点', async () => {
+    const origRequire = (window as any).require;
+    class FC extends EventEmitter { stdout = new EventEmitter(); stderr = new EventEmitter(); kill = vi.fn(); }
+    const children: FC[] = [];
+    (window as any).require = () => ({ spawn: vi.fn(() => { const c = new FC(); children.push(c); return c; }) });
+    try {
+      ui.showVideoEntry();
+      await new Promise((r) => setTimeout(r, 0));
+      const runBtn = document.getElementById('lit-btn-video-run') as HTMLButtonElement;
+      // 无工作 → 禁用；有待处理 → 启用（初始无独立 ⏹ 按钮已由前面用例覆盖）
+      await vi.waitFor(() => expect(runBtn.disabled).toBe(true));
+      await LiteratureData.addTask({ url: 'BV1xx411c7mD' });
+      await ui.refreshVideoPanel();
+      expect(runBtn.disabled).toBe(false);
+      expect(runBtn.textContent).toBe('▶️ 批量处理');
+      // 点击 → 运行中（整批含待处理）→ 按钮变「⏹ 终止」且可点（终止控制）
+      runBtn.click();
+      await vi.waitFor(() => expect(runBtn.textContent).toBe('⏹ 终止'));
+      expect(runBtn.disabled).toBe(false);
+      // 第一个任务失败收尾（close 非 0）→ 整批结束 → 按钮恢复「▶️ 批量处理」且因失败仍在 → 可再点
+      children[0].emit('close', 1);
+      await vi.waitFor(() => expect(runBtn.textContent).toBe('▶️ 批量处理'));
+      expect(runBtn.disabled).toBe(false);
+      // 再点（work 仅失败项）→ 续跑失败任务 → 按钮变「⏹ 终止整批」
+      runBtn.click();
+      await vi.waitFor(() => expect(runBtn.textContent).toBe('⏹ 终止整批'));
+      children[1].emit('close', 1);
+      await vi.waitFor(() => expect(runBtn.textContent).toBe('▶️ 批量处理'));
+    } finally {
+      for (const c of children) c.emit('close', 1);
       (window as any).require = origRequire;
     }
   });
