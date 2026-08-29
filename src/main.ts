@@ -43,7 +43,7 @@ import {
 import { openPomodoro, unloadPomodoro, ensurePomodoro } from './pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
 // 文献盒（literature 域，ADR-0072 自 bili-downloader 迁出；网页版已移除，见 tools/bili-downloader）
-import { openLiteraturePanel, unloadLiterature } from './literature';
+import { openLiteraturePanel, openTermNote, unloadLiterature } from './literature';
 // 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 入口页磁贴播种）
 import { openAttachMove, ensureAttachSeed, ATTACH_COMMAND_ID } from './attach';
 // 保险箱（encrypt 域：移出式清单容器加密，正文+图片/视频附件；原名「加密保险箱」，ticket 68 更名仅文案）
@@ -119,6 +119,7 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-pomodoro-open', name: '番茄钟', icon: 'timer', callback: () => openPomodoro(getApp()) },
   // 文献盒（literature 域：主面板=文献笔记列表 + 视频录入/文字录入/设置；ADR-0072 迁出、ADR-0071 AI 回迁）
   { id: 'bz-literature-open', name: '文献盒', icon: 'list-video', callback: () => openLiteraturePanel(getApp()) },
+  { id: 'bz-literature-note-term', name: '术语生成文献笔记', icon: 'book-type', callback: () => openTermNote(getApp()) },
   // 附件搬移（ticket 65 新域：移动当前笔记附件到指定文件夹，fileManager 自动更新内部链接）
   { id: ATTACH_COMMAND_ID, name: '移动附件', icon: 'folder-down', callback: () => openAttachMove(getApp()) },
   // 保险箱（encrypt 域：移出式清单容器加密；原名「加密保险箱」，ticket 68 更名仅文案）

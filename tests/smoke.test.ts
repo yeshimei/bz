@@ -69,7 +69,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-review-again', 'bz-review-hard', 'bz-review-good', 'bz-review-easy',
   'bz-secondbrain-panel', 'bz-secondbrain-open', 'bz-secondbrain-chat', 'bz-secondbrain-rebuild-links', 'bz-secondbrain-link-all',
   'bz-pomodoro-open',
-  'bz-literature-open',
+  'bz-literature-open', 'bz-literature-note-term',
   'bz-attach-move',
   'bz-encrypt-open', 'bz-encrypt-lock',
   'bz-smartcat-open', 'bz-smartcat-chat', 'bz-smartcat-hide', 'bz-smartcat-dashboard',
