@@ -224,7 +224,7 @@ describe('resolveRouting', () => {
 describe('ADR-0069：盘点补齐路由规则', () => {
   it('新增 behavior 规则键存在', () => {
     const keys = [
-      'diary:tagged', 'clipping:deleted',
+      'diary:tagged',
       'review:started', 'review:added', 'review:removed', 'review:rated',
       'quiz:added', 'quiz:answered',
       'launcher:opened', 'attach:moved',
@@ -307,8 +307,7 @@ describe('ADR-0069：盘点补齐路由规则', () => {
       // 文献盒
       ['bili-downloader', 'added', 'behavior'],
       ['bili-downloader', 'converted', 'behavior'],
-      // 剪藏（新增）
-      ['clipping', 'deleted', 'behavior'],
+      // 剪藏（clipping:deleted 已按用户拍板断开移除，2026-08-29；未定义键走 system:fallback behavior）
       // 复习计划 / 题库 / 入口页 / 附件（新增，规则就绪）
       ['review', 'started', 'behavior'],
       ['review', 'rated', 'behavior'],

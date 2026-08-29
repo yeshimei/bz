@@ -1,12 +1,11 @@
 // @vitest-environment node
 /**
  * ADR-0069 行为流全量盘点补齐——新观察文案构造层测试：
- * 日记分类调整（diary-source.buildDiaryTagsStructured）、剪藏删除（news-source.buildClippingDeletedStructured）、
- * 复习计划/题库/入口页/附件搬移（coverage-source），及对应 behavior-wording 人类文案渲染。
+ * 日记分类调整（diary-source.buildDiaryTagsStructured）、复习计划/题库/入口页/附件搬移（coverage-source），
+ * 及对应 behavior-wording 人类文案渲染。（剪藏删除 buildClippingDeletedStructured 已随功能断开移除，2026-08-29）
  */
 import { describe, it, expect } from 'vitest';
 import { buildDiaryTagsStructured } from '../../src/smartcat/diary-source';
-import { buildClippingDeletedStructured } from '../../src/smartcat/news-source';
 import {
   buildReviewStructured, buildQuizAddedStructured, buildQuizAnsweredStructured,
   buildLauncherOpenedStructured, buildAttachMovedStructured,
@@ -51,27 +50,6 @@ describe('buildDiaryTagsStructured（日记分类调整）', () => {
   it('行为流文案渲染：你调整了日记（…）的标签', () => {
     const s = buildDiaryTagsStructured({ date: '2026-08-29', time: '09:30', from: ['日记'], to: ['工作'] })!;
     expect(wordingOf('diary', s)).toBe('你调整了日记（2026-08-29 09:30）的标签');
-  });
-});
-
-describe('buildClippingDeletedStructured（剪藏删除）', () => {
-  it('路径 → clipping:deleted，name 去目录与 .md，refPath 保留原路径', () => {
-    const s = buildClippingDeletedStructured('归档/网页剪藏/某篇文章.md');
-    expect(s).not.toBeNull();
-    expect(s!.entityType).toBe('clipping');
-    expect(s!.action).toBe('deleted');
-    expect(s!.name).toBe('某篇文章');
-    expect(s!.refPath).toBe('归档/网页剪藏/某篇文章.md');
-  });
-
-  it('空路径 → null', () => {
-    expect(buildClippingDeletedStructured('')).toBeNull();
-    expect(buildClippingDeletedStructured(undefined as any)).toBeNull();
-  });
-
-  it('行为流文案渲染：你删除了剪藏《…》', () => {
-    const s = buildClippingDeletedStructured('归档/网页剪藏/某篇文章.md')!;
-    expect(wordingOf('clipping', s)).toBe('你删除了剪藏《某篇文章》');
   });
 });
 

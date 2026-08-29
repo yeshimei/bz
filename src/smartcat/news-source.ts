@@ -68,16 +68,4 @@ export function buildNewsSavedStructured(
     extras: { platform, durationMin, summary: summary ?? undefined, tags: tags ?? undefined },
   };
 }
-// ==================== clipping（剪藏；ADR-0069 行为流全量盘点补齐：删除感知） ====================
-
-/**
- * 剪藏文件删除 → StructuredMeta（行为流，clipping:deleted 路由）。
- * name = 文件名去 .md；refPath 保留 vault 原路径。空路径返回 null 不产观察。
- * created/modified 不产——保存观察已由 news 通道覆盖（含 auto-summary 补全），防双记录。
- */
-export function buildClippingDeletedStructured(path: string): StructuredMeta | null {
-  const p = String(path || '').trim();
-  if (!p) return null;
-  const name = p.replace(/\\/g, '/').split('/').pop()?.replace(/\.md$/i, '') || '';
-  return { entityType: 'clipping', action: 'deleted', name: name || p, refPath: p };
-}
+// （剪藏删除构建器已移除，2026-08-29 用户拍板断开 clipping:deleted 行为记录）
