@@ -16,7 +16,7 @@
 
 - `src/main.ts`：命令裸注册表、设置页、懒加载、onunload（39 命令）
 - `src/core/`：共享层（不挂 window）——app/settings-provider/ai/json-store/domain-bus/obsidian-adapter/path-classify/esc-manager/flow-dialog/utils/dom/changelog/notice（自绘 toast）/settings-modal/settings-schema/settings-common
-- `src/<域>/`：index.ts + data + ui；`src/settings.ts`；`styles.css`（唯一样式收敛处）；`docs/adr/`；`CONTEXT.md`；`.scratch/<feature>/`
+- `src/<域>/`：index.ts + data + ui + styles.css（该域样式源头，聚合进根 `styles.css`）；`src/settings.ts`；根 `styles.css`（构建聚合产物，勿手改）；`docs/adr/`；`CONTEXT.md`；`.scratch/<feature>/`
 - **依赖方向（ADR-0002）**：`core ← config/state ← parser ← store ← ui ← main`。store 无 DOM；UI 刷新靠回调订阅；禁止模块顶层互访，函数级引用环须函数体内延迟解析。
 
 ## 铁律
@@ -28,7 +28,7 @@
 5. **域间共享**：显式 import 或 core 层，不挂 window（`__MOVIE_FOLDER_PATH` 为遗留兼容，勿新增）。
 6. **架构决策**：设置页单页（域设置走 ⚙️ 弹窗）；通知用自绘 toast；AI 配置在 data.json，聚合讯 dataviewjs，第二大脑嵌入走 Ollama HTTP（ticket 103 起原「闪念」正名接管，ADR-0051；ticket 108 起对话与概括统一走主设置页 core AI，ADR-0052），B 站下载/海报抓取走外部 npm。
 7. **通知规范**：正文不带 emoji 前缀；新语义先查 `src/core/notice.ts` ICONS 表，确无匹配才新增；详见 CONTEXT.md「通知类型规范」。
-8. **样式收敛**：视觉样式一律写根 `styles.css`（构建自动复制），类名 `bz-` 前缀；禁止运行时注入 `<style>` 与内联视觉样式；功能性内联仅限显隐与动态计算。
+8. **样式收敛**：视觉样式一律写源头 `src/<域>/styles.css`（无则新建），构建时聚合并生成根 `styles.css` 与 E 盘产物——根 `styles.css` 是构建产物，勿手改（会被下次构建覆盖）；类名 `bz-` 前缀；禁止运行时注入 `<style>` 与内联视觉样式；功能性内联仅限显隐与动态计算。
 
 ## 主窗口样式规范
 
