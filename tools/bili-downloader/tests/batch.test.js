@@ -208,6 +208,29 @@ test('runBatch：whisper 失败 → 报错含 faster-whisper 环境引导', asyn
   )
 })
 
+test('runBatch：Python 找不到（ENOENT）→ 报错引导填 python / where python（不误导成 faster-whisper 未装）', async () => {
+  const env = makeEnv()
+  env.seedCache('FAKE')
+  await assert.rejects(
+    core.runBatch({ url: 'https://www.bilibili.com/video/BV1GJ411x7h7', start: null, end: null, options: { compress: false } }, {
+      ...env.deps, conf: env.conf,
+      runPythonImpl: async () => { throw new Error('无法启动 Python：spawn python ENOENT') },
+    }),
+    /转文字失败：找不到 Python（.*where python 可查/
+  )
+})
+
+test('runBatch：pythonPath 未配置 → 报错引导填写方式（填 python 或 where python 查绝对路径）', async () => {
+  const env = makeEnv()
+  env.seedCache('FAKE')
+  await assert.rejects(
+    core.runBatch({ url: 'https://www.bilibili.com/video/BV1GJ411x7h7', start: null, end: null, options: { compress: false } }, {
+      ...env.deps, conf: { ...env.conf, pythonPath: '' },   // 空串 = 未配置
+    }),
+    /未配置 pythonPath——.*where python 可查/
+  )
+})
+
 test('runBatch：重名不覆盖（交付视频加序号，原文件不动）', async () => {
   const env = makeEnv()
   env.seedCache('FAKE')

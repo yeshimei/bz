@@ -17,7 +17,9 @@ const DEFAULTS = {
   vaultPath: 'E:/Obsidian/叫我包仔',                   // Obsidian vault 根：交付目录在其下时生成相对路径
   ffmpegPath: 'ffmpeg',
   ffprobePath: 'ffprobe',                              // 产物校验（时长/可播放性）用
-  pythonPath: 'C:/Users/PC/AppData/Local/Programs/Python/Python312/python.exe',
+  // pythonPath 通用默认 = 'python'（spawn 走系统 PATH）。一般装了 Python（并 pip install faster-whisper）
+  // 的用户无需改；Windows 可用 `where python` 查绝对路径后填入（如 C:/Users/<你>/AppData/Local/Programs/Python/Python311/python.exe）
+  pythonPath: 'python',
   whisperModel: 'small',
   cacheDir: '',                                        // 视频/断点续跑缓存目录（留空 = 系统临时目录/bili-dl-cache）
   cacheRetentionDays: 7,                               // 缓存保留天数

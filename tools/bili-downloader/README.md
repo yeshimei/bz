@@ -44,7 +44,7 @@ bili-dl --batch '{"url":"https://www.bilibili.com/video/BV…","start":"0:12","e
   "vaultPath": "E:/Obsidian/叫我包仔",
   "ffmpegPath": "ffmpeg",
   "ffprobePath": "ffprobe",
-  "pythonPath": "C:/Users/PC/AppData/Local/Programs/Python/Python312/python.exe",
+  "pythonPath": "python",
   "whisperModel": "small",
   "cacheDir": "",
   "cacheRetentionDays": 7
@@ -57,7 +57,7 @@ bili-dl --batch '{"url":"https://www.bilibili.com/video/BV…","start":"0:12","e
 | `vaultPath` | Obsidian vault 根目录；交付目录在其下时生成相对路径 | vault 根 |
 | `ffmpegPath` | ffmpeg 可执行文件（可填完整路径） | `ffmpeg` |
 | `ffprobePath` | ffprobe 可执行文件（剪辑/压缩产物校验用） | `ffprobe` |
-| `pythonPath` | faster-whisper 所在 Python（需 3.11+） | 本机 Python |
+| `pythonPath` | faster-whisper 所在 Python（需 3.11+）。**一般填 `python` 即可**（走系统 PATH，前提已 `pip install faster-whisper`）；填错/不填时会用此默认。Windows 可在命令提示符运行 `where python` 查绝对路径填入 | `python` |
 | `whisperModel` | Whisper 模型（tiny/base/small/medium/large-v3） | `small` |
 | `cacheDir` | 视频/断点续跑缓存目录（留空 = 系统临时目录/bili-dl-cache） | 系统临时目录 |
 | `cacheRetentionDays` | 缓存保留天数 | `7` |
