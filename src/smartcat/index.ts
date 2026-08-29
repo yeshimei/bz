@@ -36,7 +36,7 @@ import { DIARY_DIRECTORY } from '../diary/config';
 import { buildBelongingsStructured, type BelongingsActionEvent } from './belongings-source';
 import { buildBiliStructured, enrichBiliAddedWithParsed, type BiliActionEvent } from './bili-source';
 
-import { buildNewsReadStructured, buildNewsSavedStructured, buildClippingDeletedStructured, type NewsReadEvent } from './news-source';
+import { buildNewsReadStructured, buildNewsSavedStructured, type NewsReadEvent } from './news-source';
 import { buildFavoritesStructured, type FavoritesActionEvent } from './favorites-source';
 
 import { buildPomodoroStructured, type PomodoroActionEvent } from './pomodoro-source';
@@ -417,9 +417,9 @@ export async function ensureSmartCat(app: App): Promise<void> {
   busUnsubs.push(onDomainEvent<PomodoroActionEvent>('pomodoro', (evt) => notifyPomodoroAction(evt)));
   // 文献盒（ADR-0066）：bili 域经 'bili-tasks' 通道派发 → 行为流（用户拍板：添加任务/单条成功两个节点）
   busUnsubs.push(onDomainEvent<BiliActionEvent>('bili-tasks', (evt) => notifyBiliAction(evt)));
-  // ADR-0069 行为流全量盘点补齐：日记分类调整（diary 域 dialogs 域事件）+ 剪藏删除（vault delete 语义通道）
+  // ADR-0069 行为流全量盘点补齐：日记分类调整（diary 域 dialogs 域事件）。
+  // 剪藏删除观察已按用户拍板断开（2026-08-29）：vault delete 不再入行为流。
   busUnsubs.push(onDomainEvent<DiaryTagsEvent>('diary:tags-changed', (evt) => notifyDiaryTagsChanged(evt)));
-  busUnsubs.push(onDomainEvent<{ path: string }>('clipping:file-deleted', (e) => notifyClippingDeleted(e)));
 
   // 域 JSON 感知（2026-08-23 用户拍板：CONFIG/STORAGE 域数据 modify → 观察；懒启动探测）
   void onDomainActivity();
@@ -1334,16 +1334,6 @@ function notifyDiaryTagsChanged(evt: DiaryTagsEvent): void {
   const structured = buildDiaryTagsStructured(evt);
   if (!structured) return;
   void memorySystem.addObservation('diary', { structured });
-}
-
-/** 剪藏删除观察（ADR-0069 盘点补齐）：vault delete 语义通道 'clipping:file-deleted' → 行为流。
- *  created/modified 不产——保存观察已由 news 通道覆盖（含 auto-summary 补全），防双记录；
- *  删除此前无任何观察，补齐。未初始化 / noteSource 关 / 空路径 → 静默。 */
-function notifyClippingDeleted(payload: { path: string }): void {
-  if (!initialized || !memorySystem || !data?.config?.noteSource) return;
-  const structured = buildClippingDeletedStructured(payload?.path ?? '');
-  if (!structured) return;
-  void memorySystem.addObservation('clipping', { structured });
 }
 
 /** memo.json 路径（跟随共享 storagePath，同 smartcatStorageDir 目录规则） */

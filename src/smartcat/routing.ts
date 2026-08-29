@@ -122,8 +122,7 @@ export const ROUTING_RULES: Record<string, RoutingRule> = {
   'diary:entry-decrypted':  { stream: 'exempt' },
   'diary:encrypted-purged': { stream: 'exempt' },
 
-  // === 剪藏（vault delete 语义通道接线；created/modified 不产——保存观察已由 news 通道覆盖，防双记录） ===
-  'clipping:deleted': { stream: 'behavior' },
+  // === 剪藏（created/modified/deleted 均不产：保存观察已由 news 通道覆盖，删除记录按用户拍板断开，2026-08-29） ===
 
   // === 密码域（ADR-0069 隐私豁免：查看/新增/生成等敏感操作不留痕；通配覆盖该域全部动作） ===
   'password:*': { stream: 'exempt' },
