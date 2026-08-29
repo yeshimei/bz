@@ -24,6 +24,7 @@ import { LiteratureData } from '../../src/literature/data';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { emitDomainEvent, onDomainEvent } from '../../src/core/domain-bus';
+import { formatRelativeTime } from '../../src/core/utils';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { clearNotices, getNoticeMessages, hasNotice, resetObsidianMocks } from '../mock-obsidian-entry';
 
@@ -115,10 +116,11 @@ describe('文献盒 UI（ticket 136）', () => {
 
   // ==================== 主面板：结构与空态 ====================
 
-  it('showMain 渲染主面板：标题文献盒/头部五按钮（emoji、功能→🔍→⚙️→✕）/领域筛选行/空态', async () => {
+  it('showMain 渲染主面板：标题文献盒（ticket 143 拍板保留）/头部五按钮（emoji、功能→🔍→⚙️→✕）/领域筛选行/空态', async () => {
     ui.showMain();
     await vi.waitFor(() => expect(document.getElementById('literature-popup')!.style.display).toBe('flex'));
     const popup = document.getElementById('literature-popup')!;
+    // ticket 143：主面板保留原标题（用户拍板）——bz-win-head「文献盒」+ 动作钮；chips 筛选行仍在下独立成行
     expect(popup.querySelector('.bz-win-head h3')!.textContent).toBe('文献盒');
     // 头部按钮秩序：📝文字 → 🎬视频 → 🔍搜索 → ⚙️设置 → ✕关闭（ticket 138 §3.1：emoji、🔍 在 ⚙️ 前）
     const btns = Array.from(popup.querySelectorAll<HTMLElement>('.bz-lit-head-btns button')).map((b) => b.id);
@@ -131,6 +133,8 @@ describe('文献盒 UI（ticket 136）', () => {
     // 类型分类栏已移除（ticket 138 §3.1），仅保留领域筛选行
     expect(popup.querySelector('#literature-typebar')).toBeNull();
     expect(popup.querySelector('#literature-sitebar')).toBeTruthy();
+    // 搜索框无 placeholder（简洁版：盒内 🔍 图标自明，ticket 143）
+    expect((document.getElementById('literature-search-input') as HTMLInputElement).placeholder).toBe('');
     await vi.waitFor(() => expect(document.getElementById('literature-list')!.textContent).toContain('还没有文献笔记'));
   });
 
@@ -362,10 +366,35 @@ describe('文献盒 UI（ticket 136）', () => {
     ui.showVideoEntry({ url: 'https://www.bilibili.com/video/BV1xx411c7mD', title: '预填标题', uploader: '预填UP' });
     expect(document.getElementById('literature-video-popup')!.style.display).toBe('flex');
     expect(document.getElementById('literature-add-popup')!.style.display).toBe('flex');
-    expect(document.getElementById('lit-add-title')!.textContent).toBe('添加转文献任务');
+    // ticket 143：无标题，新增模式无编辑标签
+    expect(document.getElementById('lit-add-mode')!.style.display).toBe('none');
     expect((document.getElementById('lit-add-url') as HTMLInputElement).value).toContain('BV1xx411c7mD');
     expect((document.getElementById('lit-add-vtitle') as HTMLInputElement).value).toBe('预填标题');
     expect((document.getElementById('lit-add-uploader') as HTMLInputElement).value).toBe('预填UP');
+  });
+
+  it('视频面板标题（ticket 143 拍板）：保留 h3「视频录入」+ 动作钮；标题后灰色计数小字去掉', () => {
+    ui.showVideoEntry();
+    const popup = document.getElementById('literature-video-popup')!;
+    expect(popup.querySelector('.bz-win-head h3')!.textContent).toBe('视频录入');
+    expect(document.getElementById('lit-video-counts')).toBeNull();
+    expect(popup.querySelector('#lit-btn-video-add')).toBeTruthy();
+    expect(popup.querySelector('#lit-btn-video-close')).toBeTruthy();
+  });
+
+  it('添加弹窗简洁版（ticket 143）：无标题 h4、链接输入无 placeholder、分P 无括号、默认剪辑片段', () => {
+    ui.showVideoEntry();
+    (document.getElementById('lit-btn-video-add') as HTMLButtonElement).click();
+    expect(document.getElementById('lit-add-title')).toBeNull();
+    expect((document.getElementById('lit-add-url') as HTMLInputElement).placeholder).toBe('');
+    // 链接输入行：label 在上，整片/剪辑开关与输入同行
+    expect(document.querySelector('#literature-add-popup .bz-lit-url-row #lit-add-range')).toBeTruthy();
+    const labels = Array.from(document.querySelectorAll('#literature-add-popup label')).map((l) => l.textContent);
+    expect(labels).toContain('视频链接 / BV 号');
+    expect(labels.find((t) => t && t.startsWith('分P'))).toBe('分P'); // 无括号说明
+    // 默认剪辑片段 + 时间输入可见
+    expect(document.querySelector('#lit-add-range button[data-range="clip"]')!.classList.contains('active')).toBe(true);
+    expect(document.getElementById('lit-add-clip-fields')!.style.display).toBe('block');
   });
 
   it('移动端视频面板仅 ➕ 添加 + ✕（处理/中止/历史全部隐藏，ticket 139）', () => {
@@ -395,12 +424,11 @@ describe('文献盒 UI（ticket 136）', () => {
     ui.showVideoEntry();
     await new Promise((r) => setTimeout(r, 0));
     (document.getElementById('lit-btn-video-add') as HTMLButtonElement).click();
-    // 默认整片模式（ticket 139）：时间输入隐藏
-    expect(document.getElementById('lit-add-clip-fields')!.style.display).toBe('none');
-    (document.getElementById('lit-add-url') as HTMLInputElement).value = 'https://www.bilibili.com/video/BV1xx411c7mD';
-    // 切「剪辑片段」→ 时间输入展开
-    (document.querySelector('#lit-add-range button[data-range="clip"]') as HTMLButtonElement).click();
+    // 默认剪辑片段（ticket 143）：时间输入可见 + clip 高亮
     expect(document.getElementById('lit-add-clip-fields')!.style.display).toBe('block');
+    expect(document.querySelector('#lit-add-range button[data-range="clip"]')!.classList.contains('active')).toBe(true);
+    (document.getElementById('lit-add-url') as HTMLInputElement).value = 'https://www.bilibili.com/video/BV1xx411c7mD';
+    // 剪辑模式下补一对时间（默认已剪辑）
     (document.getElementById('lit-add-start') as HTMLInputElement).value = '12.2';
     (document.getElementById('lit-add-end') as HTMLInputElement).value = '12-30';
     (document.getElementById('lit-add-save') as HTMLButtonElement).click();
@@ -416,10 +444,13 @@ describe('文献盒 UI（ticket 136）', () => {
     expect((document.getElementById('lit-add-start') as HTMLInputElement).value).toBe('12:02');
     expect(document.querySelector('#lit-add-range button[data-range="clip"]')!.classList.contains('active')).toBe(true);
     expect(document.getElementById('lit-add-clip-fields')!.style.display).toBe('block');
-    expect(document.getElementById('lit-add-title')!.textContent).toBe('编辑转文献任务');
+    // ticket 143：无标题，编辑态以右上角小标签表意
+    expect(document.getElementById('lit-add-title')).toBeNull();
+    expect(document.getElementById('lit-add-mode')!.style.display).toBe('inline-block');
+    expect(document.getElementById('lit-add-mode')!.textContent).toBe('编辑任务');
   });
 
-  it('任务行渲染：状态徽标 + 时间范围 + 失败原因行内直显 + 头部状态计数', async () => {
+  it('任务行渲染：状态徽标 + 时间范围 + 失败原因行内直显（头部灰色计数小字已去掉，ticket 143）', async () => {
     const t1 = await LiteratureData.addTask({ url: 'BV1xx411c7mD', start: '1:02:03', end: '1:05:00' });
     await LiteratureData.updateTask(t1.id, { status: 'processing', reason: '下载中…' } as any);
     const t2 = await LiteratureData.addTask({ url: 'BV1xx411c7mE' });
@@ -435,7 +466,7 @@ describe('文献盒 UI（ticket 136）', () => {
     expect(list.textContent).toContain('1:02:03 ~ 1:05:00');
     expect(list.textContent).toContain('下载中…');
     expect(list.textContent).toContain('视频已删除');
-    expect(document.getElementById('lit-video-counts')!.textContent).toBe('1 待处理 · 1 处理中 · 1 失败');
+    expect(document.getElementById('lit-video-counts')).toBeNull(); // 灰色计数小字已去掉（ticket 143）
   });
 
   it('批量处理：行内步骤时间线 + 完成态文案（含 STEP_DONE_MAP 两步）+ 百分比仅下载显示', async () => {
@@ -487,7 +518,9 @@ describe('文献盒 UI（ticket 136）', () => {
     await vi.waitFor(() => expect(document.getElementById('literature-history-popup')!.style.display).toBe('flex'));
     const hList = document.getElementById('literature-history-list')!;
     await vi.waitFor(() => expect(hList.textContent).toContain('从零开始学B站'));
-    expect(hList.textContent).toContain('文献盒/从零开始学B站.md');
+    expect(hList.textContent).toContain('📄 从零开始学B站'); // 去目录去 .md（ticket 143）
+    expect(hList.textContent).not.toContain('文献盒/从零开始学B站.md');
+    expect(document.getElementById('lit-history-counts')!.textContent).toContain('共 1 条');
     expect(hList.querySelector('.bz-bili-status')).toBeNull(); // 无成功徽标
     // 清空历史（设置面板按钮行触发）
     const schema = literatureSettingsSchema({ onClearHistory: () => (ui as any).confirmClearHistory() });
@@ -499,6 +532,28 @@ describe('文献盒 UI（ticket 136）', () => {
       expect(all.some((x) => x.archived)).toBe(false);
     });
     await vi.waitFor(() => expect(hList.textContent).toContain('暂无历史记录'));
+  });
+
+  it('历史行展示（ticket 143）：组头无「UP主」前缀无条数计数；笔记行去目录去 .md；时间用 formatRelativeTime', async () => {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const past = new Date(Date.now() - 2 * 3600e3); // 2 小时前（相对时间稳定落在「N小时前」）
+    const ts = `${past.getFullYear()}-${pad(past.getMonth() + 1)}-${pad(past.getDate())} ${pad(past.getHours())}:${pad(past.getMinutes())}:${pad(past.getSeconds())}`;
+    const a = await LiteratureData.addTask({ url: 'https://www.bilibili.com/video/BV1xx411c7mD', title: '量子纠缠' });
+    await LiteratureData.updateTask(a.id, { status: 'success', archived: true, archivedAt: ts, processedAt: ts, uploader: '物理所', notePath: '文献盒/物理/量子纠缠.md', videoPath: 'D:/vids/纠缠.mp4' } as any);
+    const b = await LiteratureData.addTask({ url: 'https://www.bilibili.com/video/BV1xx411c7mD', title: '量子纠缠' });
+    await LiteratureData.updateTask(b.id, { status: 'success', archived: true, archivedAt: ts, processedAt: ts, uploader: '物理所', notePath: '文献盒/物理/量子纠缠_2.md' } as any);
+    ui.showHistory();
+    const hList = document.getElementById('literature-history-list')!;
+    await vi.waitFor(() => expect(hList.textContent).toContain('量子纠缠'));
+    // 组头：UP主名直接跟在标题后（无「UP主」前缀、无「N 条笔记」计数）
+    const up = hList.querySelector('.bz-bili-hup') as HTMLElement;
+    expect(up.textContent).toBe('物理所');
+    expect(hList.textContent).not.toContain('UP主');
+    expect(hList.querySelector('.bz-bili-hcount')).toBeNull();
+    // 笔记行：去目录（含子目录）去 .md；时间用相对函数结果
+    expect(hList.textContent).toContain('📄 量子纠缠');
+    expect(hList.textContent).not.toContain('.md');
+    expect(hList.textContent).toContain(formatRelativeTime(ts));
   });
 
   // ==================== 术语生成面板（文字录入） ====================
@@ -757,11 +812,12 @@ ${summary ?? 'AI 生成的简介'}`);
     expect(alert.title).toContain('ETIMEDOUT');
   });
 
-  it('整片/剪辑开关（ticket 139）：整片模式有残留时间输入也按整片保存；剪辑缺时间报错不入库', async () => {
+  it('整片/剪辑开关（ticket 139 + 143）：显式切整片后有残留时间输入也按整片保存；剪辑缺时间报错不入库', async () => {
     ui.showVideoEntry();
     await new Promise((r) => setTimeout(r, 0));
-    // 整片模式（默认）：时间输入框有残留值 → 保存仍为整片（start/end null）
+    // 默认剪辑（ticket 143）；显式切「整片」后：时间输入框有残留值 → 保存仍为整片（start/end null）
     (document.getElementById('lit-btn-video-add') as HTMLButtonElement).click();
+    (document.querySelector('#lit-add-range button[data-range="whole"]') as HTMLButtonElement).click();
     (document.getElementById('lit-add-url') as HTMLInputElement).value = 'BV1xx411c7mD';
     (document.getElementById('lit-add-start') as HTMLInputElement).value = '1:00';
     (document.getElementById('lit-add-end') as HTMLInputElement).value = '2:00';

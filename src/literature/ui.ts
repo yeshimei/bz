@@ -33,6 +33,11 @@
  * 添加任务弹窗「整片/剪辑」分段开关 + 校验失败聚焦定位；术语面板重设计 + 重新生成手改确认。
  * ticket 142 术语面板简洁版（拍板）：删标题/术语 label/placeholder/状态行（加载并入按钮「生成中…」），
  * 预览只读——上属性卡（术语/领域/日期）下内容卡，无输入框不可编辑，「重新生成」手改守卫随之删除。
+ * ticket 143 全部窗口简洁布局 A（拍板）：主面板与视频录入**保留原标题**（用户拍板「还是使用之前的标题」），
+ * 添加弹窗去标题（编辑态右上角小标签）+ 链接输入 label + 整片/剪辑开关同行 + 默认剪辑片段 + 分P 去括号
+ * + 去 placeholder + 失败提示条中性化；搜索框简洁化（去 placeholder，盒内 🔍 图标）；
+ * 历史去标题（工具栏=计数+❌）+ 组头去「UP主」前缀与「N 条笔记」计数、笔记行去目录去 .md（shortNoteName）、
+ * 时间用 formatRelativeTime 相对显示（ticket 143）。
  */
 import type { App } from 'obsidian';
 import type { SettingsSchema } from '../core/settings-schema';
@@ -44,6 +49,7 @@ import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { patchKeyedCards } from '../core/list-patch';
 import { openFlowDialog } from '../core/flow-dialog';
 import { notice } from '../core/notice';
+import { formatRelativeTime } from '../core/utils';
 import { topifyZ } from '../core/z-order';
 import { emitDomainEvent, onDomainEvent } from '../core/domain-bus';
 import { getApp } from '../core/app';
@@ -68,6 +74,12 @@ function q<T extends HTMLElement>(root: HTMLElement, sel: string): T | null {
 /** HTML 转义（进度文案来自外部进程 stdout，统一转义防注入） */
 function esc(s: unknown): string {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+}
+
+/** 历史笔记行展示名：去目录（含反斜杠兼容）去 .md 后缀（ticket 143）；空路径回退原串 */
+function shortNoteName(path: string): string {
+  const base = String(path || '').replace(/\\/g, '/').split('/').pop() || '';
+  return base.replace(/\.md$/i, '') || String(path || '');
 }
 
 /**
@@ -300,6 +312,7 @@ export class UIManager {
     popup.className = 'bz-lit-window';
     popup.style.display = 'none';
 
+    // 主面板保留原标题（用户拍板，ticket 143）：bz-win-head「文献盒」+ 动作钮；领域筛选 chips 在下方独立行
     const header = document.createElement('div');
     header.className = 'bz-win-head';
     header.innerHTML = `
@@ -312,8 +325,6 @@ export class UIManager {
         <button id="lit-btn-close" class="bz-win-close" title="关闭">❌</button>
       </div>`;
     popup.appendChild(header);
-
-    // 顶部：领域筛选行（「全部/视频/术语」类型分类栏已按 ticket 138 §3.1 移除，仅保留领域筛选）
     const barBox = document.createElement('div');
     barBox.className = 'bz-lit-filterbar';
     const siteBar = document.createElement('div');
@@ -322,15 +333,19 @@ export class UIManager {
     barBox.appendChild(siteBar);
     popup.appendChild(barBox);
 
-    // 搜索框（🔍 按钮切换显隐，剪藏本同款）
+    // 搜索框（🔍 按钮切换显隐，剪藏本同款；简洁版：无 placeholder，盒内 🔍 图标自明，ticket 143）
     const searchContainer = document.createElement('div');
     searchContainer.id = 'literature-search-container';
     searchContainer.className = 'bz-lit-search';
     searchContainer.style.display = 'none';
+    const searchBox = document.createElement('div');
+    searchBox.className = 'bz-lit-search-box';
+    const searchIc = document.createElement('span');
+    searchIc.className = 'bz-lit-search-ic';
+    searchIc.textContent = '🔍';
     const searchInput = document.createElement('input');
     searchInput.id = 'literature-search-input';
     searchInput.type = 'text';
-    searchInput.placeholder = '🔍 搜索文献笔记（标题、简介）…';
     searchInput.addEventListener('input', (e) => {
       const keyword = (e.target as HTMLInputElement).value.trim();
       if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
@@ -339,7 +354,9 @@ export class UIManager {
         this.applyFilter();
       }, 300);
     });
-    searchContainer.appendChild(searchInput);
+    searchBox.appendChild(searchIc);
+    searchBox.appendChild(searchInput);
+    searchContainer.appendChild(searchBox);
     popup.appendChild(searchContainer);
 
     const list = document.createElement('div');
@@ -849,13 +866,12 @@ export class UIManager {
     popup.id = 'literature-video-popup';
     popup.className = 'bz-lit-window';
     popup.style.display = 'none';
+    // 视频录入保留原标题（用户拍板，ticket 143）：bz-win-head「视频录入」+ 动作钮；
+    // 标题后的灰色状态计数小字已去掉（用户拍板「去掉后面的灰色小字」）
     const header = document.createElement('div');
     header.className = 'bz-win-head';
     header.innerHTML = `
-      <div class="bz-lit-head-title">
-        <h3 class="bz-lit-title">视频录入</h3>
-        <span id="lit-video-counts" class="bz-bili-counts"></span>
-      </div>
+      <h3 class="bz-lit-title">视频录入</h3>
       <div class="bz-lit-head-btns">
         <button id="lit-btn-video-add" title="添加转文献任务">➕</button>
         <button id="lit-btn-video-run" title="批量处理（桌面端）">▶️</button>
@@ -1166,17 +1182,26 @@ export class UIManager {
     popup.id = 'literature-add-popup';
     popup.className = 'bz-lit-dialog';
     popup.style.display = 'none';
-    // 无取消按钮：遮罩 + ESC 关闭，与其他域弹窗一致（ADR-0070）；视觉样式收敛为 bz-lit-* 类（P3-1）
+    // ticket 143 简洁版（拍板布局 A）：无标题（编辑态右上角小标签 #lit-add-mode 表意）、
+    // 链接输入框上方 label 且与整片/剪辑开关同行、分P 去括号、去 placeholder、失败提示条中性化
     popup.innerHTML = `
-      <h4 id="lit-add-title">添加转文献任务</h4>
+      <div id="lit-add-mode" class="bz-lit-mode-tag" style="display:none;">编辑任务</div>
       <div id="lit-add-fail" class="bz-lit-form-alert" style="display:none;"></div>
-      <label>视频链接 / BV 号</label>
-      <input id="lit-add-url" type="text" placeholder="https://www.bilibili.com/video/BV… 或 BV1xx411c7mD">
+      <div class="bz-lit-form-col bz-lit-url-col">
+        <label>视频链接 / BV 号</label>
+        <div class="bz-lit-url-row">
+          <input id="lit-add-url" type="text">
+          <div class="bz-lit-range-toggle" id="lit-add-range">
+            <button type="button" data-range="whole">整片</button>
+            <button type="button" data-range="clip">剪辑片段</button>
+          </div>
+        </div>
+      </div>
       <div class="bz-lit-form-row">
         <div class="bz-lit-form-col"><label>视频标题（可选）</label>
-          <input id="lit-add-vtitle" type="text" placeholder="队列里好认，留空用链接"></div>
+          <input id="lit-add-vtitle" type="text"></div>
         <div class="bz-lit-form-col"><label>UP主（可选）</label>
-          <input id="lit-add-uploader" type="text" placeholder="投稿 UP 主"></div>
+          <input id="lit-add-uploader" type="text"></div>
       </div>
       <div class="bz-lit-form-row">
         <div class="bz-lit-form-col"><label>下载清晰度</label>
@@ -1186,22 +1211,15 @@ export class UIManager {
             <option value="1080">1080P</option>
             <option value="720">720P</option>
           </select></div>
-        <div class="bz-lit-form-col"><label>分P（留空 = 第 1 P）</label>
-          <input id="lit-add-page" type="number" min="1" step="1" placeholder="如 2"></div>
-      </div>
-      <div class="bz-lit-form-row">
-        <div class="bz-lit-form-col"><label>处理范围</label>
-          <div class="bz-lit-range-toggle" id="lit-add-range">
-            <button type="button" data-range="whole">整片</button>
-            <button type="button" data-range="clip">剪辑片段</button>
-          </div></div>
+        <div class="bz-lit-form-col"><label>分P</label>
+          <input id="lit-add-page" type="number" min="1" step="1"></div>
       </div>
       <div id="lit-add-clip-fields" style="display:none;">
         <div class="bz-lit-form-row">
           <div class="bz-lit-form-col"><label>开始时间</label>
-            <input id="lit-add-start" type="text" placeholder="12.2 / 12-2 / 1:30:05"></div>
+            <input id="lit-add-start" type="text"></div>
           <div class="bz-lit-form-col"><label>结束时间</label>
-            <input id="lit-add-end" type="text" placeholder="与开始成对填写"></div>
+            <input id="lit-add-end" type="text"></div>
         </div>
       </div>
       <div class="bz-lit-form-actions">
@@ -1231,8 +1249,10 @@ export class UIManager {
   showAddDialog(editItem?: Partial<LiteratureTask>): void {
     if (!this.addPopup || !this.addMask) return;
     this.editingId = editItem?.id ?? null;
-    // 有 id = 编辑既有任务；无 id（含预填对象）= 新增模式（ticket 134：聚合讯入口预填不显示编辑态）
-    q<HTMLElement>(this.addPopup, '#lit-add-title')!.textContent = this.editingId ? '编辑转文献任务' : '添加转文献任务';
+    // 有 id = 编辑既有任务；无 id（含预填对象）= 新增模式（ticket 134：聚合讯入口预填不显示编辑态）；
+    // ticket 143：无标题，编辑态以右上角小标签 #lit-add-mode 表意
+    const modeTag = q<HTMLElement>(this.addPopup, '#lit-add-mode');
+    if (modeTag) modeTag.style.display = this.editingId ? 'inline-block' : 'none';
     (q<HTMLInputElement>(this.addPopup, '#lit-add-url')!).value = editItem?.url ?? '';
     (q<HTMLInputElement>(this.addPopup, '#lit-add-start')!).value = editItem?.start ?? '';
     (q<HTMLInputElement>(this.addPopup, '#lit-add-end')!).value = editItem?.end ?? '';
@@ -1240,8 +1260,8 @@ export class UIManager {
     (q<HTMLInputElement>(this.addPopup, '#lit-add-page')!).value = editItem?.page ? String(editItem.page) : '';
     (q<HTMLInputElement>(this.addPopup, '#lit-add-vtitle')!).value = editItem?.title ?? '';
     (q<HTMLInputElement>(this.addPopup, '#lit-add-uploader')!).value = editItem?.uploader ?? '';
-    // 处理范围：编辑既有任务按 start/end 有无回显；新任务默认整片（ticket 139）
-    this._setAddRangeMode(editItem?.start || editItem?.end ? 'clip' : 'whole');
+    // 处理范围（ticket 143 拍板：新任务默认剪辑片段；编辑既有任务仍按 start/end 有无回显）
+    this._setAddRangeMode(this.editingId ? (editItem?.start || editItem?.end ? 'clip' : 'whole') : 'clip');
     // 失败任务编辑态：顶部原因提示条（白话 + 悬浮原文，ticket 139）
     const fail = q<HTMLElement>(this.addPopup, '#lit-add-fail');
     if (fail) {
@@ -1329,17 +1349,22 @@ export class UIManager {
     popup.id = 'literature-history-popup';
     popup.className = 'bz-lit-window';
     popup.style.display = 'none';
-    const header = document.createElement('div');
-    header.className = 'bz-win-head';
-    header.innerHTML = `
-      <h3 class="bz-lit-title">文献盒 · 历史</h3>
-      <div class="bz-lit-head-btns">
-        <button id="lit-history-close" class="bz-win-close" title="关闭">❌</button>
-      </div>`;
+    // 简洁工具栏（ticket 143）：无标题，历史计数 + 关闭钮同行
+    const toolbar = document.createElement('div');
+    toolbar.className = 'bz-lit-toolbar';
+    const counts = document.createElement('span');
+    counts.id = 'lit-history-counts';
+    counts.className = 'bz-lit-counts';
+    const headBtns = document.createElement('div');
+    headBtns.className = 'bz-lit-head-btns';
+    headBtns.innerHTML = `
+      <button id="lit-history-close" class="bz-win-close" title="关闭">❌</button>`;
+    toolbar.appendChild(counts);
+    toolbar.appendChild(headBtns);
     const list = document.createElement('div');
     list.id = 'literature-history-list';
     list.className = 'bz-lit-list';
-    popup.appendChild(header);
+    popup.appendChild(toolbar);
     popup.appendChild(list);
     document.body.appendChild(mask);
     document.body.appendChild(popup);
@@ -1371,6 +1396,9 @@ export class UIManager {
     if (!this.historyList) return;
     this.historyList.innerHTML = '';
     const rows = tasks.filter((t) => t.archived);
+    // 工具栏计数（ticket 143：无标题，计数替之）
+    const countsEl = this.historyPopup ? q<HTMLElement>(this.historyPopup, '#lit-history-counts') : null;
+    if (countsEl) countsEl.textContent = `🕘 历史 · 共 ${rows.length} 条`;
     if (rows.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'bz-bili-empty';
@@ -1398,7 +1426,8 @@ export class UIManager {
     for (const g of sortedGroups) this.historyList.appendChild(this.renderHistoryGroup(g));
   }
 
-  /** 历史分组卡片：标题链接（UP主名紧随其后，ADR-0070）+ 每条任务一行「📄 笔记路径 ⏱ 完成时间」 */
+  /** 历史分组卡片：标题链接 + UP主名（ticket 143：去掉「UP主」前缀与「N 条笔记」计数）；
+   *  每条任务一行「📄 笔记名（去目录去 .md）⏱ 相对时间（formatRelativeTime）」 */
   private renderHistoryGroup(group: LiteratureTask[]): HTMLElement {
     const head = group[0];
     const card = document.createElement('div');
@@ -1406,19 +1435,17 @@ export class UIManager {
     card.dataset.url = head.url || '';
     const href = head.url ? `href="${esc(head.url)}"` : '';
     const upText = head.uploader ? `<span class="bz-bili-hup">${esc(head.uploader)}</span>` : '';
-    const countText = group.length > 1 ? `<span class="bz-bili-hcount">${group.length} 条笔记</span>` : '';
     card.innerHTML = `
       <div class="bz-bili-row">
         ${head.title
           ? `<a class="bz-bili-title" ${href} title="${esc(head.url || '')}">${esc(head.title)}</a>`
           : `<span class="bz-bili-url" title="${esc(head.url || '')}">${esc(shortUrlText(head.url || ''))}</span>`}
         ${upText}
-        ${countText}
       </div>`;
     for (const task of group) {
       const line = document.createElement('div');
       line.className = 'bz-bili-hnote';
-      line.innerHTML = `📄 ${esc(task.notePath || '')}<span class="bz-bili-hnote-time">⏱ ${esc(task.processedAt || task.created || '')}</span>`;
+      line.innerHTML = `📄 ${esc(shortNoteName(task.notePath || ''))}<span class="bz-bili-hnote-time">⏱ ${esc(formatRelativeTime(task.processedAt || task.created || ''))}</span>`;
       line.addEventListener('click', () => { if (task.notePath) this.openNote(task.notePath); });
       const actions: ItemAction[] = [];
       if (task.notePath) actions.push({ icon: 'book-open', label: '打开文献笔记', onClick: () => this.openNote(task.notePath!) });
