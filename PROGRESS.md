@@ -107,3 +107,14 @@
 - [x] tools/bili-downloader core.js ③.5：`needsCompressFallback`（压缩件严格更大 → 删压缩件沿用输入、不写压缩缓存、交付文件名不带 `_crf` 标记）；断点续跑命中缓存恒为采纳
 - [x] 测试：`needsCompressFallback` 单测（更大回退/更小·相等·stat 异常不回退）；tools `node --test` 49 全绿
 - [x] bz 侧 tsc + 全量测试 + 构建不回归；全局安装副本 core.js/文档同步生效
+
+## Ticket 152 — secondbrain Syncthing 冲突文件自动自愈（worktree 交付）
+
+**状态：进行中 → 已交付**
+
+- [x] 诊断：冲突文件 `.sync-conflict-20260830-*.json/.vec` 为双设备并发 refresh 索引不同新笔记的真实分叉（conf 多 1 篇 + vec 恰好多 1 行，见 issues/152）；写前比对（2026-08-29 止血）挡不住「两端真写不同内容」
+- [x] 设计：store-file 每次读取扫描 `*.sync-conflict-*` —— JSON 段级 union（meta.notes 键并集取 mtime 大者 / panel 取 generatedAt 大者 / queue-state-chatHistory 并集去重）+ .vec 按合并后 meta 键序行级重排（meta 未变则主 .vec 复用）；兜底删向量走 indexIncomplete 全量重建（ticket 107）；损坏冲突 JSON 保留待人工处置
+- [x] 规格：`issues/152-secondbrain-syncthing-conflict-selfheal.md`；spec.md「冲突文件自愈」节（v1.6）同步；CONTEXT 第二大脑词条补冲突自愈
+- [x] 代码：`src/secondbrain/store-file.ts`（mergeStoreWithConflict / mergeVecByMeta / reconcileConflicts / reconcileVecConflicts / nukeVectorsForRebuild + readStoreRaw 出口统一收敛）；`tests/mock-vault.ts` adapter 补 readBinary/writeBinary + list 纳入 binaryFiles
+- [x] 测试：store-file 冲突自愈 7 用例（段级 union / vec 行级重排 / meta 未变复用 / 损坏保留 / 无冲突零行为 / 纯函数 / 无 list 降级）；全量 221 文件 3542 用例绿 + tsc 0 错
+- [x] 构建部署：worktree → master 合并后构建，产物同步 E 盘插件目录与仓库根目录三件套
