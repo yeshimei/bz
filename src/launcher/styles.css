@@ -55,6 +55,8 @@
   gap: 8px;
   cursor: pointer;
   user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none; /* 长按不弹系统菜单（ticket 157：长按进编辑/拖拽不被打断） */
   box-sizing: border-box;
   /* 安卓式实时让位：网格位置变化平滑动画 */
   transition: transform 0.15s ease, background 0.15s ease, grid-column 0.2s ease, grid-row 0.2s ease;
@@ -79,6 +81,8 @@
 #launcher-grid .launcher-tile.editing {
   border: 1.5px dashed var(--text-accent);
   cursor: grab;
+  /* 编辑模式磁贴禁用触屏默认手势（ticket 157：按住即拖不被滚动抢占 pointercancel） */
+  touch-action: none;
 }
 #launcher-grid .launcher-tile.editing:active {
   cursor: grabbing;
