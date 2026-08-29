@@ -64,6 +64,23 @@ function nowStamp(): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
+/**
+ * 单次 AI 调用超时上限（Promise.race；ticket 138 §1.3）。
+ * 底层 ai.json 无法中途取消，超时只是让调用方得以跳过该条继续整批，
+ * 挂起的 AI Promise 的 settle 结果被丢弃（本条已按超时处理，不算 AI 未配置）。
+ */
+const BACKFILL_AI_TIMEOUT_MS = 25000;
+
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`AI 请求超时（${label}，${ms}ms）`)), ms);
+    p.then(
+      (v) => { clearTimeout(timer); resolve(v); },
+      (e) => { clearTimeout(timer); reject(e); },
+    );
+  });
+}
+
 /** 写唯一路径笔记（永不覆盖；目录不存在自动建） */
 export async function writeUniqueNote(dir: string, baseName: string, content: string): Promise<string> {
   const app = getApp();
@@ -138,20 +155,51 @@ ${c}`,
   return writeUniqueNote(String(s.literatureDirectory || '文献盒'), sanitizeMdTitle(title), body);
 }
 
-/** 生成术语文献笔记：AI 一段百科式简介 + 领域 → 五键 frontmatter 落盘。返回 vault 相对笔记路径。 */
-export async function generateTermNote(opts: { term: string }): Promise<string> {
+/** 术语 AI 简介提示词（预览/落盘共用同一指令，领域词表一致） */
+function termPrompt(term: string, list: string[]): string {
+  return `你是百科知识整理助手。为术语「${term}」生成一篇文献笔记。只输出 JSON，不要任何解释：
+{"summary":"一段关于该术语的简明介绍（百科总结式，150-300字简体中文，连贯成文，涵盖定义、核心要点与必要背景）","domain": ${domainInstruction(list)}}`;
+}
+
+/**
+ * 术语 AI 预览（纯生成、不落盘，ticket 138 §2.1 契约变更）：
+ * 只调 AI 返回 {summary, domain}，供术语面板预览（领域/正文纯内存可编辑）；
+ * 确认写入才调 generateTermNote 落盘——预览阶段文献目录不出现任何文件。
+ */
+export async function generateTermDraft(term: string): Promise<{ summary: string; domain: string }> {
   const ai = createAI();
   const s = tryGetSettings();
   const list = parseDomainList(s.literatureDomainList);
+  const t = String(term || '').trim();
+  if (!t) throw new Error('术语为空');
+  const raw = await ai.json(termPrompt(t, list));
+  const meta = parseAiJson(raw);
+  return {
+    summary: String(meta?.summary || '').trim(),
+    domain: String(meta?.domain || '').trim(),
+  };
+}
+
+/**
+ * 生成术语文献笔记：五键 frontmatter（title/type/domain/term/date）+ 简介正文落盘。返回 vault 相对笔记路径。
+ * 可选 summary/domain：传入即**跳过 AI、所见即所得**（终审 P1-4——术语面板确认写入传面板当前值，
+ * 不再重跑一次 AI 造成与预览不一致、也不浪费一次调用）；不传则走 generateTermDraft（AI 生成）。
+ */
+export async function generateTermNote(opts: { term: string; summary?: string; domain?: string }): Promise<string> {
+  const s = tryGetSettings();
   const term = String(opts.term || '').trim();
   if (!term) throw new Error('术语为空');
-  const raw = await ai.json(
-    `你是百科知识整理助手。为术语「${term}」生成一篇文献笔记。只输出 JSON，不要任何解释：
-{"summary":"一段关于该术语的简明介绍（百科总结式，150-300字简体中文，连贯成文，涵盖定义、核心要点与必要背景）","domain": ${domainInstruction(list)}}`,
-  );
-  const meta = parseAiJson(raw);
-  const summary = String(meta?.summary || '').trim();
-  const domain = String(meta?.domain || '').trim();
+  // summary 显式传入（含空串）→ 跳过 AI、所见即所得；不传 → 走 generateTermDraft 恰好一次
+  let summary: string;
+  let domain: string;
+  if (opts.summary === undefined) {
+    const draft = await generateTermDraft(term);
+    summary = draft.summary;
+    domain = draft.domain;
+  } else {
+    summary = String(opts.summary).trim();
+    domain = String(opts.domain ?? '').trim();
+  }
   const fm = [
     '---',
     `title: ${quoteYaml(term)}`,
@@ -167,14 +215,18 @@ export async function generateTermNote(opts: { term: string }): Promise<string> 
 
 // ---------- 旧笔记自动补全（type 启发式 + domain AI） ----------
 
-/** 轻量解析 frontmatter（仅取键值字符串；list/inline 值原样字符串化） */
+/** 轻量解析 frontmatter（仅取键值字符串；P3-3：value 剥一层引号，避免 `type: "video"` 判定为缺 type 重复注入） */
 export function parseFrontmatter(content: string): Record<string, string> {
   const out: Record<string, string> = {};
   const m = String(content || '').match(/^---\r?\n([\s\S]*?)\r?\n---/);
   if (!m) return out;
   for (const line of m[1].split(/\r?\n/)) {
     const kv = line.match(/^([A-Za-z\u4e00-\u9fa5_]+):\s*(.*)$/);
-    if (kv) out[kv[1].trim()] = String(kv[2] ?? '').trim();
+    if (kv) {
+      const raw = String(kv[2] ?? '').trim();
+      const quoted = (raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"));
+      out[kv[1].trim()] = quoted ? raw.slice(1, -1) : raw;
+    }
   }
   return out;
 }
@@ -194,52 +246,64 @@ export function injectFrontmatter(content: string, entries: string[]): string {
 /**
  * 旧笔记自动补全：type 用启发式（有 url/author/videoTitle → video；有 term → term），
  * domain 用 AI 分类；补过落库不再重复；AI 未配置跳过。返回 {scanned, filled, aiSkipped}。
+ * ticket 138 §1.3：单次 AI 调用带超时（默认 25s），超时/失败即跳过该条继续，不卡死整批；
+ * aiTimeoutMs 供测试注入短超时。
+ * P1-2：domain 写回前对每条现读最新内容（type 启发式补丁可能已写盘），
+ * 避免用读入时的旧 content 整体覆盖回滚 type 补丁；P3-3 由 parseFrontmatter 剥引号兜底。
  */
-export async function backfillNotes(): Promise<{ scanned: number; filled: number; aiSkipped: boolean }> {
+export async function backfillNotes(opts: { aiTimeoutMs?: number } = {}): Promise<{ scanned: number; filled: number; aiSkipped: boolean }> {
   const app = getApp();
   const s = tryGetSettings();
+  const aiTimeoutMs = opts.aiTimeoutMs ?? BACKFILL_AI_TIMEOUT_MS;
   const dir = String(s.literatureDirectory || '文献盒').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
   const files = (app.vault.getFiles() || []).filter((f) => f.path.startsWith(dir + '/') && f.path.endsWith('.md'));
-  const needDomain: { file: any; content: string }[] = [];
+  const needDomain: { file: any }[] = [];
   let filled = 0;
   for (const f of files) {
     const content = await app.vault.read(f);
     const fm = parseFrontmatter(content);
     const hasType = fm.type === 'video' || fm.type === 'term';
     const hasDomain = !!fm.domain;
-    if (hasType && hasDomain) continue;
+    if (hasType && hasDomain) continue; // 已补全（含引号包裹值，parse 已剥引号）
     const patch: string[] = [];
     if (!hasType) {
       const type = (fm.url || fm.author || fm.videoTitle) ? 'video' : fm.term ? 'term' : '';
       if (type) patch.push(`type:${type}`);
     }
-    if (!hasDomain) needDomain.push({ file: f, content });
+    // domain 补全队列入列时只记 file——domain 写回时现读补丁后的最新内容
+    if (!hasDomain) needDomain.push({ file: f });
     if (patch.length) {
       const updated = injectFrontmatter(content, patch);
       if (updated !== content) { await app.vault.modify(f, updated); filled++; }
     }
   }
-  // AI 补 domain（逐个；AI 未配置 → 跳过并标记）
+  // AI 补 domain（逐个带超时；AI 未配置 → 跳过并标记）
   let aiSkipped = false;
   if (needDomain.length) {
     // createAI 不因缺 key 抛错；未配置在 ai.json() 时才抛（getAIProvider），由内层 catch 的
-    // /API Key|AI 配置/ 识别为整体跳过（aiSkipped），单条失败静默不阻塞。
+    // /API Key|AI 配置/ 识别为整体跳过（aiSkipped），单条失败/超时静默不阻塞。
     const ai = createAI();
     const list = parseDomainList(s.literatureDomainList);
-    for (const { file, content } of needDomain) {
+    for (const { file } of needDomain) {
       try {
-        const sample = content.replace(/^---[\s\S]*?---/, '').slice(0, 2000);
-        const raw = await ai.json(
-          `请判断下面这段文字所属的领域（${domainInstruction(list)}）。只输出 JSON：{"domain":"<领域词>"}\n\n【文本】\n${sample}`,
-          { modelOptions: { max_tokens: 80 } },
+        // P1-2：现读最新内容（type 启发式补丁已写盘），domain 注入不会回滚 type
+        const latest = await app.vault.read(file);
+        const sample = latest.replace(/^---[\s\S]*?---/, '').slice(0, 2000);
+        const raw = await withTimeout(
+          ai.json(
+            `请判断下面这段文字所属的领域（${domainInstruction(list)}）。只输出 JSON：{"domain":"<领域词>"}\n\n【文本】\n${sample}`,
+            { modelOptions: { max_tokens: 80 } },
+          ),
+          aiTimeoutMs,
+          '领域判定',
         );
         const domain = String(parseAiJson(raw)?.domain || '').trim();
         if (domain) {
-          await app.vault.modify(file, injectFrontmatter(content, [`domain:${domain}`]));
+          await app.vault.modify(file, injectFrontmatter(latest, [`domain:${domain}`]));
           filled++;
         }
       } catch (e: any) {
-        // 单条失败（含 AI 未配置）静默跳过，不阻塞；未配置整体标记
+        // 单条失败（含 AI 未配置/超时）静默跳过，继续下一条；未配置整体标记
         if (/API Key|AI 配置/.test(String(e?.message || ''))) aiSkipped = true;
       }
     }

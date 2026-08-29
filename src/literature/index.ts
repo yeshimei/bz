@@ -5,6 +5,7 @@
  * 数据 CONFIG/STORAGE/literature.json（视频任务）；术语生成不留任务记录（ticket 136 §2）。
  */
 import type { App } from 'obsidian';
+import { MarkdownView } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
 import { LiteratureData } from './data';
 import { UIManager } from './ui';
@@ -12,12 +13,21 @@ import { UIManager } from './ui';
 let initialized = false;
 let uiManager: UIManager | null = null;
 
-/** 懒加载初始化（ADR-0003 幂等）：数据层 + 面板 */
+/**
+ * 懒加载初始化（ADR-0003 幂等）：数据层 + 面板。
+ * ticket 138 §1.2：initialized 在构造成功后置位；构造函数若在真实环境抛错（jsdom 掩盖），
+ * 保持未初始化 → 下次命令自动重试，杜绝「构造失败后 uiManager 恒 null、面板永不再开」。
+ */
 export function ensureLiterature(app: App): void {
   if (initialized) return;
-  initialized = true;
-  LiteratureData.init({ storagePath: (tryGetSettings() as any)?.storagePath });
-  uiManager = new UIManager(app);
+  try {
+    LiteratureData.init({ storagePath: (tryGetSettings() as any)?.storagePath });
+    uiManager = new UIManager(app);
+    initialized = true;
+  } catch (e) {
+    console.error('bz: 文献盒初始化失败（下次打开命令将自动重试）', e);
+    uiManager = null;
+  }
 }
 
 /** 打开文献盒主面板（bz-literature-open 命令回调） */
@@ -45,8 +55,9 @@ export function openTermNote(app: App, term?: string): void {
   ensureLiterature(app);
   let t = term?.trim();
   if (!t) {
-    // 读当前激活 Markdown 编辑器选区（getActiveViewOfType('markdown') 字符串重载）
-    const view = (app.workspace.getActiveViewOfType as any)?.('markdown');
+    // ticket 138 §1.1：getActiveViewOfType 内部做 view instanceof type，右值必须是类（MarkdownView），
+    // 传字符串会在真实 Obsidian 抛 TypeError（测试 mock 掩盖）；选区空则 undefined → 空输入框手填
+    const view = app.workspace.getActiveViewOfType(MarkdownView);
     t = view?.editor?.getSelection()?.trim() || undefined;
   }
   uiManager?.showTermEntry(t);
