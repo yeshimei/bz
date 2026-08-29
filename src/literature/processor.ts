@@ -355,6 +355,8 @@ export const BatchRunner = {
         videoTitle: task.title || '',
         url: task.url,
         uploader: task.uploader || '',
+        // ticket 151：CLI 交付的 mp4 路径随笔记落盘（正文视频双链）；keepVideo=false 时为 null → 无视频段
+        videoPath: videoPath,
       });
     } catch (e: any) {
       tryUnlink(transcriptPath);

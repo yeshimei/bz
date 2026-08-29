@@ -107,7 +107,7 @@ _Avoid_: 备忘录场景（用户拍板不走备忘录域）、视频剪切列�
 
 **快速流程 (Quick Flow)**: B站下载「转文字」之后的一键后续——ticket 136 起（ADR-0071）AI（标题/标签/简介/润色 + 文献类型/领域）与文献笔记落盘由 **bz 插件**完成（CLI 去 AI，产出转录临时文件交插件）；视频本体交付仍走工具，笔记嵌入交付文件。_Avoid_: 一键流程、AI 后处理
 
-**文献笔记 (Literature Note)**: 存于「文献目录」的 AI 生成笔记，两种文献类型（ADR-0073）——**视频文献**（type: video）：frontmatter 九键（title/tags/summary/url/date/author/videoTitle/type/domain），正文逐段「润色正文 + 视频双链」；**术语文献**（type: term）：frontmatter 五键（title/type/domain/term/date），正文一段简介（百科总结式）。区别于书库「读书笔记」与聚合讯「剪藏文章」。_Avoid_: 读书笔记、视频笔记（指本词时）
+**文献笔记 (Literature Note)**: 存于「文献目录」的 AI 生成笔记，两种文献类型（ADR-0073）——**视频文献**（type: video）：frontmatter 九键（title/tags/summary/url/date/author/videoTitle/type/domain），正文逐段「润色正文 + 视频双链」（ticket 151 补回：CLI 交付的 mp4 以 `![[路径]]` 嵌正文尾部「## 视频」段，keepVideo=false 未交付则无视频段）；**术语文献**（type: term）：frontmatter 五键（title/type/domain/term/date），正文一段简介（百科总结式）。区别于书库「读书笔记」与聚合讯「剪藏文章」。_Avoid_: 读书笔记、视频笔记（指本词时）
 
 **文献目录 (Literature Folder)**: 存放文献笔记的 vault 内目录，设置键 `literatureDirectory`，默认 vault 根下「文献盒」。_Avoid_: 笔记夹、输出目录
 

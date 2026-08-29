@@ -166,6 +166,23 @@ describe('generateVideoNote（视频文献：九键 frontmatter + 润色正文�
     expect(fm.domain).toBe('心理');
     // 正文 = 两块润色拼接
     expect(content).toContain('润色润色');
+    // 未传 videoPath（keepVideo=false 等）→ 无视频段
+    expect(content).not.toContain('## 视频');
+  });
+
+  it('videoPath 非空 → 正文尾部附视频双链（ticket 151 补回，ADR-0066）', async () => {
+    const path = await generateVideoNote({
+      transcript: '第一段。第二段！', videoTitle: '短视频', url: 'BV1xx411c7mD', uploader: 'UP主',
+      videoPath: 'CONFIG/APPENDIX/短视频_BV1xx411c7mD.mp4',
+    });
+    const content = vault.files.get(path)!;
+    expect(content).toContain('## 视频');
+    expect(content).toContain('![[CONFIG/APPENDIX/短视频_BV1xx411c7mD.mp4]]');
+    // 反斜杠路径归一化为正斜杠（跨平台交付路径）
+    const p2 = await generateVideoNote({
+      transcript: 'x', videoTitle: 't2', url: 'u', uploader: 'w', videoPath: 'CONFIG\\APPENDIX\\v2.mp4',
+    });
+    expect(vault.files.get(p2)!).toContain('![[CONFIG/APPENDIX/v2.mp4]]');
   });
 
   it('短转录单块：一次 chat，正文为单段润色', async () => {

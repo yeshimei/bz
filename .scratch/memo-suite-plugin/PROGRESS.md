@@ -1,3 +1,14 @@
+## 2026-08-30 文献笔记补视频双链（ticket 151，用户实测「生成的文献笔记没有视频」）
+
+**状态：ADR-0066/0073 定义「正文=润色+视频双链」但 AI 回迁时实现漏掉——generateVideoNote 增 videoPath 参数、正文嵌 `![[路径]]`；note-gen/processor 测试绿 + tsc 0，构建已部署**
+
+- ✅ **根因**：generateVideoNote 从不接收 videoPath，正文只拼 frontmatter + 润色正文；CLI 交付的 mp4（[bz-result] video）在 _aiStep 拿到后从未进笔记
+- ✅ **修复**：note-gen.ts opts 增 `videoPath?: string | null` → 非空时正文尾部 `## 视频` + `![[vault相对路径]]`（反斜杠归一）；keepVideo=false（未交付）→ 无视频段；frontmatter 九键不动
+- ✅ **接线**：processor.ts _aiStep 传 videoPath（此前被丢弃）
+- ✅ **测试**：note-gen +1（视频段/反斜杠归一）+ 既有用例补「未传 → 无视频段」；processor 成功链路断言补 videoPath 键；tsc 0
+- 📄 文档：issues/151；CONTEXT「文献笔记」词条；spec 尾部；PROGRESS 本条目
+- ⏳ 收尾：全量测试确认 → 提交；用户侧重载插件后重跑任务即带视频（已有笔记可手动补）
+
 ## 2026-08-30 Python 路径填写体验：填 python 即可 + 通用默认 + 引导文案（ticket 150）
 
 **状态：DEFAULTS.pythonPath 通用化 'python'；ENOENT 与未配置错误细分引导（where python）；tools 52 + ui/processor 测试 + tsc 全绿**

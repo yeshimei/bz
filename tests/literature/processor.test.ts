@@ -156,6 +156,8 @@ describe('BatchRunner', () => {
         videoTitle: '从零开始学B站',
         url: 'BV1xx411c7mD',
         uploader: '某UP',
+        // ticket 151：CLI [bz-result] 交付的 video 路径随笔记落盘（正文视频双链）
+        videoPath: 'CONFIG/APPENDIX/v.mp4',
       });
       // 插件侧 AI 步骤固定文案进时间线（ui.ts STEP_DONE_MAP 完成态按此匹配）
       expect(steps).toContain(`${tasks[0].id}:AI 生成文献笔记中`);

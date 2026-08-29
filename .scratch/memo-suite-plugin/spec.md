@@ -749,3 +749,15 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
   ENOENT 消息不含 whisper 词不能挂 whisper 主块）；设置 desc 更新「装了 Python 一般填 python 即可…」。
 - **实测本机**：Python312（rc 指向）faster-whisper 1.2.1 已装；PATH python（miniconda）未装——填 `python` 应先在对应环境 pip install faster-whisper。
 - **验收**：tools 52 全绿（+ENOENT/未配置引导两用例）；ui/processor 测试绿 + tsc 0；全量测试 + 构建不回归。
+
+### 文献笔记补视频双链（ticket 151，用户实测「生成的文献笔记没有视频」）
+
+> ADR-0066/0073 定义视频文献「正文 = 润色 + 视频双链」，但 ticket 136 AI 回迁时实现漏掉——
+> generateVideoNote 从不接收 videoPath，交付的 mp4 从未进笔记。
+
+- **note-gen.ts**：`generateVideoNote` opts 增 `videoPath?: string | null`；非空 → 正文尾部
+  `## 视频\n\n![[<vault相对路径>]]`（反斜杠归一正斜杠，Obsidian mp4 双链内嵌播放器）；
+  空/未交付 → 无视频段。frontmatter 九键不动。
+- **processor.ts `_aiStep`**：generateVideoNote 传 `videoPath`（[bz-result] 解析出的交付路径，此前被丢弃）。
+- **验收**：note-gen +1 用例（视频段 + 反斜杠归一）+ 既有用例补「未传 → 无视频段」；
+  processor 成功链路断言补 videoPath 键；tsc + 全量测试 + 构建不回归。
