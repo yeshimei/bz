@@ -35,7 +35,9 @@ describe('openLiteratureAddTask（聚合讯「保存至文献」入口，ticket 
     expect((document.getElementById('lit-add-url') as HTMLInputElement).value).toBe('https://www.bilibili.com/video/BV1xx411c7mD');
     expect((document.getElementById('lit-add-vtitle') as HTMLInputElement).value).toBe('某视频');
     expect((document.getElementById('lit-add-uploader') as HTMLInputElement).value).toBe('UP主甲');
-    expect(document.getElementById('lit-add-title')!.textContent).toBe('添加转文献任务');
+    // ticket 143：无标题，新增模式无编辑标签
+    expect(document.getElementById('lit-add-title')).toBeNull();
+    expect(document.getElementById('lit-add-mode')!.style.display).toBe('none');
   });
 
   it('无 prefill：仅打开视频录入面板，不叠开添加弹窗', async () => {

@@ -100,7 +100,27 @@
   background: var(--background-secondary);
 }
 
-/* ---- 顶部筛选区：领域筛选行（类型分类栏已移除，ticket 138 §3.1）；左右留白 16px 与列表卡片对齐（ticket 139） ---- */
+/* ---- 简洁工具栏（ticket 143：无窗口标题的窗口用，筛选 chips / 计数与动作钮同行） ---- */
+.bz-lit-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px 6px;
+  flex-wrap: wrap;
+}
+.bz-lit-toolbar > .bz-lit-sitebar {
+  flex: 1;
+  min-width: 0;
+}
+.bz-lit-counts {
+  font-size: 12px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 主面板保留原标题：chips 筛选行仍在标题下方独立成行（ticket 143 拍板） */
 .bz-lit-filterbar {
   display: flex;
   flex-direction: column;
@@ -144,27 +164,44 @@
   border-color: transparent;
 }
 
-/* ---- 搜索框（🔍 按钮切换显隐；对齐日记本输入框：大内边距/圆角/聚焦高亮；留白 16px 对齐 ticket 139） ---- */
+/* ---- 搜索框（🔍 按钮切换显隐；简洁版：盒内 🔍 图标自明、无 placeholder，ticket 143） ---- */
 .bz-lit-search {
-  padding: 12px 16px 2px;
+  padding: 8px 16px 2px;
 }
-.bz-lit-search input {
-  width: 100%;
-  padding: 10px 12px;
-  font-size: 14px;
+.bz-lit-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   border: 1px solid var(--background-modifier-border);
   border-radius: 8px;
   background: var(--background-primary);
-  color: var(--text-normal);
-  outline: none;
-  box-sizing: border-box;
+  padding: 0 12px;
   transition: border-color .15s;
 }
-.bz-lit-search input::placeholder {
-  color: var(--text-faint);
-}
-.bz-lit-search input:focus {
+.bz-lit-search-box:focus-within {
   border-color: var(--interactive-accent);
+}
+.bz-lit-search-ic {
+  font-size: 13px;
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+.bz-lit-search-box input {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  box-sizing: border-box;
+  padding: 9px 0;
+  font-size: 13px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-normal);
+  outline: none;
+  box-shadow: none;
+}
+.bz-lit-search-box input::placeholder {
+  color: var(--text-faint);
 }
 
 /* ---- 文献笔记卡片（主面板 + 抽屉头部共用标题/简介；对齐日记本卡片：圆角/内边距/hover） ---- */
@@ -372,16 +409,43 @@
   background: var(--interactive-accent);
   color: var(--text-on-accent);
 }
-/* 失败原因提示条（添加任务弹窗编辑失败任务时，ticket 139） */
+/* 失败原因提示条（添加任务弹窗编辑失败任务时，ticket 139；ticket 143 去红色、中性化） */
 .bz-lit-form-alert {
   padding: 8px 12px;
   border-radius: 8px;
-  background: var(--background-modifier-error, rgba(229, 72, 77, .12));
-  color: var(--text-error, #e5484d);
+  background: var(--background-secondary);
+  color: var(--text-muted);
   font-size: 12px;
   line-height: 1.5;
   word-break: break-all;
   white-space: pre-line;
+}
+/* 编辑态小标签（添加任务弹窗，ticket 143：无标题，编辑时右上角表意） */
+.bz-lit-mode-tag {
+  align-self: flex-start;
+  font-size: 11px;
+  color: var(--interactive-accent);
+  border: 1px solid var(--interactive-accent);
+  border-radius: 999px;
+  padding: 1px 10px;
+}
+/* 链接输入行（label 上方 + 整片/剪辑开关同行，ticket 143） */
+.bz-lit-url-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.bz-lit-url-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.bz-lit-url-row > input {
+  flex: 1;
+  min-width: 0;
+}
+.bz-lit-url-row .bz-lit-range-toggle {
+  flex-shrink: 0;
 }
 /* 整片/剪辑分段开关（ticket 139） */
 .bz-lit-range-toggle {
@@ -456,6 +520,21 @@
   }
   .bz-lit-dialog {
     width: min(520px, 94vw);
+  }
+  /* 移动端每行一个输入框（ticket 143）：表单行/链接行折成单列，URL 与开关分行 */
+  .bz-lit-form-row {
+    flex-direction: column;
+  }
+  .bz-lit-url-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .bz-lit-url-row .bz-lit-range-toggle {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .bz-lit-url-row .bz-lit-range-toggle button {
+    flex: 1;
   }
   /* 无内边距滚动区（术语弹窗自身溢出滚动） */
   .bz-lit-term-dialog {

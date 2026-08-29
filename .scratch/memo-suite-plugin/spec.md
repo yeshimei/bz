@@ -662,3 +662,22 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - **验收**：a) 面板无标题/label/placeholder/状态行（UI 测试断言）；b) 预览内无任何 input/textarea（只读契约）；
   c) 重新生成直接覆盖无确认弹窗；d) 确认写入传 AI 预览值落盘一次 + 自动打开 + term-generated + 面板关闭；
   e) tsc + 全量测试 + 构建全绿。
+
+### 文献盒桌面窗口简洁版（ticket 143，每窗 4 套布局走查后全部拍板 A，worktree 交付）
+
+> 原型 `.scratch/literature-minimal/index.html` 四个窗口各出 A/B/C/D 四套布局走查，用户逐窗拍板选 A 后落地。
+> 不改数据格式（literature.json / 笔记 frontmatter）、不改命令与域事件契约。
+
+- **主面板**：**保留原标题**（用户拍板，bz-win-head「文献盒」+ 动作钮不变，领域筛选行独立在标题下方）；
+  仅搜索框简洁化（去 placeholder，盒内 🔍 图标自明，`#literature-search-input` id 不变）。
+- **视频录入**：**保留原标题**（用户拍板「视频录入也要加标题」）、标题后灰色状态计数小字去掉（「去掉后面的
+  灰色小字」）；bz-win-head「视频录入」+ ➕▶️⏹🕘❌；任务卡结构不变。
+- **添加任务 A**：h4 标题删除（编辑态右上角 `#lit-add-mode` 小标签「编辑任务」）；链接输入上方 label 且与
+  整片/剪辑开关同行；**新任务默认剪辑片段**（编辑按 start/end 回显）；分P label 去括号；全部输入去 placeholder；
+  失败提示条红色 → 中性化（文案与原文 title 保留）。
+- **历史 A**：标题删除，工具栏 = 「🕘 历史 · 共 N 条」+ ❌；分组卡结构不变，组头去「UP主」前缀与
+  「N 条笔记」计数；笔记行路径 `shortNoteName`（去目录/兼容反斜杠/去 .md）、时间 `formatRelativeTime` 相对显示。
+- **移动端**：表单行 / 链接行折单列，每行一个输入框，URL 与开关分行。
+- **验收**：a) 主面板/视频录入保留 h3 标题（文献盒/视频录入），历史无 `bz-lit-title`；b) 搜索输入 placeholder 为空；c) 添加弹窗默认剪辑、
+  编辑态 mode 标签、分P 无括号、URL 无 placeholder；d) 历史组头无「UP主」/条数、行去目录去 .md、
+  时间等于 formatRelativeTime 结果；e) tsc + 全量测试 + 构建全绿（worktree 流程）。
