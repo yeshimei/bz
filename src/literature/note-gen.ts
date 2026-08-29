@@ -189,6 +189,23 @@ export async function generateTermDraft(term: string): Promise<{ summary: string
   };
 }
 
+/** 术语简介总结（ticket 155）：对已生成的简介做一次 AI 精简（保留定义与关键事实、压缩篇幅），返回纯文本 */
+export async function summarizeTermSummary(text: string): Promise<string> {
+  const ai = createAI();
+  const t = String(text || '').trim();
+  if (!t) throw new Error('内容为空');
+  const out = await ai.chat(
+    `你是文字编辑。把下面的术语介绍压缩成更精简的一段话：保留术语定义与关键事实，删除冗余表述与重复内容，长度约为原文的一半。输出必须是简体中文。直接输出结果，不要解释、不要加标题、不要列表。
+
+【原文】
+${t}`,
+    { modelOptions: { max_tokens: 1024 } },
+  );
+  const s = String(out || '').trim();
+  if (!s) throw new Error('AI 返回为空');
+  return s;
+}
+
 /**
  * 生成术语文献笔记：五键 frontmatter（title/type/domain/term/date）+ 简介正文落盘。返回 vault 相对笔记路径。
  * 可选 summary/domain：传入即**跳过 AI、所见即所得**（终审 P1-4——术语面板确认写入传面板当前值，

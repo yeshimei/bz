@@ -127,3 +127,20 @@
 - [x] **bug 修复**：逾期通知「去复习」action 由「裸开最早逾期笔记」改为 `reviewApp.autoJumpOverdue()`——按「用做题测难度」（forceQuizForReview）分流：开启 → 批量出题做题；关闭 → 普通复习；删单篇跳转与 earliest 目标计算（newly diff 去重语义保留）
 - [x] **交互拍板**：做题答对（单选/多选）持久化成功后自动 `showQuestion()` 进入下一题，不再挂「下一题」按钮；答错才显示按钮（点按或 Enter）；删 `_enableNextButton`/`_removeNextButton`/disabled 占位参数与 `.quiz-next-btn--pending` 样式
 - [x] 测试：review/app.test.ts ticket 58 两用例改写 153 语义（「去复习」触发 autoJumpOverdue、不裸开单篇）；quiz/ui.test.ts 答对类用例改自动跳题断言 + 新增键盘 Enter 答错跳题用例；全量 3536 绿 + tsc 0 错 + 构建部署
+
+## Ticket 154 — 主页统计条「索引」改「文献」开文献盒
+
+**状态：已交付**（2026-08-30；vault 主页.js 仓库外改动）
+
+- [x] 规格：`issues/154-home-index-to-literature.md`（CONTEXT.md「主页统计条」词条同步）
+- [x] vault `CONFIG/SCRIPTS/DataView/主页.js`：计数 `indexCount`→`literatureCount`（`文献盒/` 笔记数，与卡片/主题口径一致）；点击动作 `__homeActions.文献` → `bz-literature-open` 开主面板
+- [x] 插件侧零改动（`bz-literature-open` → `openLiteraturePanel` 既有）；文档型提交
+
+## Ticket 155 — 术语窗口自动生成 + 生成/重新生成/总结按钮
+
+**状态：已交付**（2026-08-30）
+
+- [x] 规格：`issues/155-literature-term-autogen-summary.md`（spec.md「术语面板自动生成 + 总结按钮」节同步）
+- [x] `showTermEntry(term)` 预填非空自动生成（选中文字打开即生成）；`termHasDraft` 态机：生成成功输入行按钮「生成」→「重新生成」
+- [x] 底部按钮「重新生成」→「总结」（`#lit-term-regenerate` id 契约不变）：`summarizeTermSummary` AI 精简预览正文回填，所见即所得落入确认写入；无预览提示先生成，`termSummarizing` 防并发
+- [x] 测试：literature 121 用例绿（ui 622/732 改写 + 总结落盘新用例、note-gen 精简用例、index-cov 打桩断言自动生成）+ tsc 0 错
