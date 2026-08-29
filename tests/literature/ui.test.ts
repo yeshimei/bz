@@ -7,7 +7,7 @@
  *   抽屉（打开/复制双链/复制原文链接[video]/删除 danger+确认，删除同步清理指向该笔记的任务记录）、
  *   懒加载（批次 20 + 触底 + 尾部提示）、literature:file-* 四通道 300ms 防抖增量刷新、
  *   文献目录设置变更清缓存全量重载。
- * - 视频录入面板（任务队列）：去 ⚙️/⬇️ 与独立 ⏹ 终止钮；单钮态机 ➕/**▶️ 批量处理 ↔ 运行中 ⏹ 终止/终止整批**（ticket 146）/🕘/✕；
+ * - 视频录入面板（任务队列）：去 ⚙️/⬇️ 与独立 ⏹ 终止钮；单钮态机 ➕/**纯 emoji ▶️ ↔ ⏹**（ticket 146 单钮态机 + ticket 148 按钮去文字，区分移到 title hover）/🕘/✕；
  *   移动端仅 ➕+✕；添加弹窗（校验/编辑回填/预填叠开）、历史独立弹窗（分组/清空历史）、批量处理行内进度
  *   （[bz-step]/[bz-p] 时间线 + STEP_DONE_MAP「AI 生成文献笔记中/笔记落盘中」完成态文案）。
  * - 术语生成面板（ticket 138 §2.1 契约变更 + ticket 142 简洁版）：预填/空术语不生成/生成纯 AI 预览
@@ -377,7 +377,7 @@ describe('文献盒 UI（ticket 136）', () => {
     expect(popup.querySelector('#lit-btn-video-download')).toBeNull();
     // 空闲态单钮 = 「▶️ 批量处理」（初始无工作 → 禁用，_syncRunButton 异步补齐）
     const run = document.getElementById('lit-btn-video-run') as HTMLButtonElement;
-    expect(run.textContent).toBe('▶️ 批量处理');
+    expect(run.textContent).toBe('▶️');
     await vi.waitFor(() => expect(run.disabled).toBe(true));
     // ⚙️ 设置入口已移到主面板
     expect(document.getElementById('lit-btn-settings')).toBeTruthy();
@@ -502,9 +502,9 @@ describe('文献盒 UI（ticket 136）', () => {
       await ui.refreshVideoPanel();
       // ticket 146 单钮态机：空闲「▶️ 批量处理」→ 点击 → 运行中「⏹ 终止」
       const runBtn = document.getElementById('lit-btn-video-run') as HTMLButtonElement;
-      expect(runBtn.textContent).toBe('▶️ 批量处理');
+      expect(runBtn.textContent).toBe('▶️');
       runBtn.click();
-      await vi.waitFor(() => expect(runBtn.textContent).toBe('⏹ 终止')); // 整批（含待处理）→ 终止
+      await vi.waitFor(() => expect(runBtn.textContent).toBe('⏹')); // 整批（含待处理）→ 终止
       await vi.waitFor(() => expect(document.querySelector('.bz-bili-progress-box')).toBeTruthy());
       child.stdout.emit('data', Buffer.from('[bz-step] 解析中\n[bz-step] 下载中\n'));
       child.stdout.emit('data', Buffer.from('[bz-p] {"phase":"download","pct":42}\n'));
@@ -545,20 +545,22 @@ describe('文献盒 UI（ticket 136）', () => {
       await LiteratureData.addTask({ url: 'BV1xx411c7mD' });
       await ui.refreshVideoPanel();
       expect(runBtn.disabled).toBe(false);
-      expect(runBtn.textContent).toBe('▶️ 批量处理');
-      // 点击 → 运行中（整批含待处理）→ 按钮变「⏹ 终止」且可点（终止控制）
+      expect(runBtn.textContent).toBe('▶️');
+      // 点击 → 运行中（整批含待处理）→ 按钮变「⏹」且可点（终止控制，title 提示区分，ticket 148 纯 emoji）
       runBtn.click();
-      await vi.waitFor(() => expect(runBtn.textContent).toBe('⏹ 终止'));
+      await vi.waitFor(() => expect(runBtn.textContent).toBe('⏹'));
+      expect(runBtn.title).toBe('中止批量处理');
       expect(runBtn.disabled).toBe(false);
       // 第一个任务失败收尾（close 非 0）→ 整批结束 → 按钮恢复「▶️ 批量处理」且因失败仍在 → 可再点
       children[0].emit('close', 1);
-      await vi.waitFor(() => expect(runBtn.textContent).toBe('▶️ 批量处理'));
+      await vi.waitFor(() => expect(runBtn.textContent).toBe('▶️'));
       expect(runBtn.disabled).toBe(false);
-      // 再点（work 仅失败项）→ 续跑失败任务 → 按钮变「⏹ 终止整批」
+      // 再点（work 仅失败项）→ 续跑失败任务 → 按钮变「⏹」（title 中止整批，ticket 148 纯 emoji）
       runBtn.click();
-      await vi.waitFor(() => expect(runBtn.textContent).toBe('⏹ 终止整批'));
+      await vi.waitFor(() => expect(runBtn.textContent).toBe('⏹'));
+      expect(runBtn.title).toBe('中止整批（处理失败任务中）');
       children[1].emit('close', 1);
-      await vi.waitFor(() => expect(runBtn.textContent).toBe('▶️ 批量处理'));
+      await vi.waitFor(() => expect(runBtn.textContent).toBe('▶️'));
     } finally {
       for (const c of children) c.emit('close', 1);
       (window as any).require = origRequire;
