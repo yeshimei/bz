@@ -7,7 +7,7 @@
  *   领域筛选行（剪藏本 rebuildSiteBar 同款，按 count 降序）+ 类型过滤（全部/视频/术语，可叠加）、
  *   🔍 搜索（标题/简介，300ms 防抖）、scroll 触底懒加载（50px 阈值，批次 20，尾部「已显示所有笔记」）、
  *   literature:file-* 四通道 300ms 防抖增量刷新（照抄剪藏本 attachFileListener/scheduleRefreshFlush）、
- *   文献目录设置变更时清缓存全量重载；卡片 = 标题 + 类型徽标 + 领域徽标 + 简介两行省略 + 日期，
+ *   文献目录设置变更时清缓存全量重载；卡片 = 标题 + 领域徽标 + 简介两行省略 + 日期（ticket 138 §3.2 去类型徽章），
  *   双击打开笔记（click 计数 300ms，影视先例）、attachItemActions 抽屉（打开/复制双链/
  *   复制原文链接[仅视频有 url]/删除 danger+flow-dialog 确认——删除视频笔记时同步清理
  *   literature.json 指向该笔记的任务记录）；打开主面板时调 backfillNotes() 补全旧笔记。
@@ -16,11 +16,10 @@
  *   批处理调 BatchRunner.runAll（work = 非 archived 且 pending/failed），事件回调驱动行内进度/
  *   步骤时间线/完成态文案（STEP_DONE_MAP 覆盖「AI 生成文献笔记中」「笔记落盘中」）+ 整批通知。
  * - 术语生成面板（showTermEntry，文字录入）：遮罩 + 弹窗，术语输入（预填/可改）→ 「生成」调
- *   generateTermNote({term}) 得 AI 简介 → 预览（术语/领域可改、简介正文可编辑 textarea）→
- *   「重新生成」= 按当前术语重跑丢弃预览手改；「确认写入」= 再次调 generateTermNote 按面板
- *   当前术语落盘 + 按面板当前值覆盖 domain/正文（vault.modify）→ 自动打开新笔记 →
- *   emitDomainEvent('literature:tasks', { kind:'term-generated', term, title }) → 关闭面板。
- *   预览/重新生成产生的草稿笔记在「重新生成替换 / 确认写入 / 关闭面板」时删除——未确认不落盘。
+ *   generateTermDraft(term) 纯 AI 预览（领域/正文可编辑、纯内存，不写盘）→「重新生成」= 按当前
+ *   术语重跑丢弃预览手改；「确认写入」= 调 generateTermNote 传面板当前 term/summary/domain
+ *   （所见即所得、不重跑 AI）→ 自动打开新笔记 → emitDomainEvent('literature:tasks',
+ *   { kind:'term-generated', term, title }) → 关闭面板。预览阶段不产生任何文件（ticket 138 §2.1）。
  * - 设置面板：主面板 ⚙️ → openSettingsModal（五组声明式 schema，见 literatureSettingsSchema）。
  *
  * 移动端默认全屏（ticket 68 三件事）：主面板 + 历史弹窗两处 applyMobileWindowFullscreen。
@@ -41,7 +40,7 @@ import type BzSettings from '../settings';
 import { LiteratureData, normalizeLooseTime } from './data';
 import type { LiteratureTask } from './types';
 import { BatchRunner, type BatchEvents } from './processor';
-import { backfillNotes, generateTermNote } from './note-gen';
+import { backfillNotes, generateTermDraft, generateTermNote } from './note-gen';
 
 interface StatusMeta { label: string; cls: string; }
 const STATUS_META: Record<LiteratureTask['status'], StatusMeta> = {
@@ -107,40 +106,6 @@ function parseDateRaw(raw: string | undefined | null): number {
   if (!isNaN(d1.valueOf())) return d1.valueOf();
   const d2 = new Date(s);
   return d2.valueOf();
-}
-
-/** 轻量提取 frontmatter 键值（原样字符串；术语预览用；不剥引号——展示时自剥） */
-function extractFrontmatter(content: string): Record<string, string> {
-  const out: Record<string, string> = {};
-  const m = String(content || '').match(/^---\r?\n([\s\S]*?)\r?\n---/);
-  if (!m) return out;
-  for (const line of m[1].split(/\r?\n/)) {
-    const kv = line.match(/^([A-Za-z\u4e00-\u9fa5_]+):\s*(.*)$/);
-    if (kv) out[kv[1].trim()] = String(kv[2] ?? '').trim();
-  }
-  return out;
-}
-
-/** 覆盖 frontmatter 的 domain 键（保持 note-gen 引号包裹风格；缺键则追加） */
-function overrideDomain(content: string, domain: string): string {
-  const escV = String(domain).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-  const val = `"${escV}"`;
-  const m = String(content || '').match(/^---\r?\n([\s\S]*?)\r?\n---/);
-  if (!m) return content;
-  let found = false;
-  const next = m[1].split(/\r?\n/).map((line) => {
-    if (/^domain\s*:/.test(line)) { found = true; return `domain: ${val}`; }
-    return line;
-  });
-  if (!found) next.push(`domain: ${val}`);
-  return content.replace(/^---\r?\n[\s\S]*?\r?\n---/, '---\n' + next.join('\n') + '\n---');
-}
-
-/** 替换正文（frontmatter 之后的全部内容） */
-function overrideBody(content: string, body: string): string {
-  const m = String(content || '').match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
-  if (!m) return content;
-  return m[0] + (body || '');
 }
 
 /** 主面板文献笔记条目（parseNoteFile 产物；数据源 = 文献目录文件夹实况，不依赖 literature.json） */
@@ -221,7 +186,6 @@ export class UIManager {
   private allNotes: LiteratureNoteEntry[] = [];
   private filteredNotes: LiteratureNoteEntry[] = [];
   private selectedDomain: string | null = null;
-  private selectedType = '';
   private searchKeyword = '';
   private currentDisplayCount = 0;
   private allLoaded = false;
@@ -249,8 +213,8 @@ export class UIManager {
   // ---- 术语生成面板 ----
   termMask: HTMLElement | null = null;
   termPopup: HTMLElement | null = null;
-  /** 当前术语预览草稿（path + 面板当前展示值；确认前不视为落盘笔记） */
-  private termPreview: { path: string; domain: string; body: string } | null = null;
+  /** 当前术语预览（面板当前展示值，纯内存；确认前不落盘，ticket 138 §2.1） */
+  private termPreview: { domain: string; body: string } | null = null;
   private termGenerating = false;
 
   private editingId: string | null = null;
@@ -282,6 +246,9 @@ export class UIManager {
   // ==================== 主面板（文献笔记列表） ====================
 
   createMainUI(): void {
+    // 幂等重入守卫（review createMainUI 先例，ticket 138 §1.2）：掩码/窗口已挂载在 DOM 则复用；
+    // 节点被外部移除时自动重建（showMain 每次调此）——保证 bz-literature-open 单击即开、幂等。
+    if ((this.mask && this.mask.isConnected) || (this.popup && this.popup.isConnected)) return;
     const mask = document.createElement('div');
     mask.id = 'literature-mask';
     mask.className = 'bz-lit-mask';
@@ -296,30 +263,22 @@ export class UIManager {
     const header = document.createElement('div');
     header.className = 'bz-win-head';
     header.innerHTML = `
-      <h3 style="margin:0;font-size:16px;font-weight:600;color:var(--text-normal);">文献盒</h3>
+      <h3 class="bz-lit-title">文献盒</h3>
       <div class="bz-lit-head-btns">
+        <button id="lit-btn-text" title="文字录入：术语生成文献笔记">📝</button>
+        <button id="lit-btn-video" title="视频录入：添加转文献任务并批处理">🎬</button>
         <button id="lit-btn-search" title="切换搜索框">🔍</button>
-        <button id="lit-btn-text" title="文字录入：术语生成文献笔记">文字录入</button>
-        <button id="lit-btn-video" title="视频录入：添加转文献任务并批处理">视频录入</button>
         <button id="lit-btn-settings" title="设置">⚙️</button>
         <button id="lit-btn-close" class="bz-win-close" title="关闭">✕</button>
       </div>`;
     popup.appendChild(header);
 
-    // 顶部：领域筛选行 + 类型过滤（可叠加，ticket 136 §3）
+    // 顶部：领域筛选行（「全部/视频/术语」类型分类栏已按 ticket 138 §3.1 移除，仅保留领域筛选）
     const barBox = document.createElement('div');
     barBox.className = 'bz-lit-filterbar';
-    const typeBar = document.createElement('div');
-    typeBar.id = 'literature-typebar';
-    typeBar.className = 'bz-lit-typebar';
-    typeBar.innerHTML = `
-      <button class="bz-lit-filter-btn active" data-type="">全部</button>
-      <button class="bz-lit-filter-btn" data-type="video">视频</button>
-      <button class="bz-lit-filter-btn" data-type="term">术语</button>`;
     const siteBar = document.createElement('div');
     siteBar.id = 'literature-sitebar';
     siteBar.className = 'bz-lit-sitebar';
-    barBox.appendChild(typeBar);
     barBox.appendChild(siteBar);
     popup.appendChild(barBox);
 
@@ -407,21 +366,11 @@ export class UIManager {
         onClose: () => this.reloadIfDirChanged(),
       });
     q<HTMLButtonElement>(p, '#lit-btn-close')!.onclick = () => this.hideMain();
-    // 类型过滤（全部/视频/术语），与领域筛选叠加
-    const typeBar = q<HTMLElement>(p, '#literature-typebar');
-    if (typeBar) {
-      typeBar.querySelectorAll('button').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          this.selectedType = btn.dataset.type ?? '';
-          typeBar.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b === btn));
-          this.applyFilter();
-        });
-      });
-    }
   }
 
   /** 打开主面板（文献笔记列表）：移动端默认全屏、抬顶、刷新列表 + 旧笔记自动补全 */
   showMain(): void {
+    this.createMainUI(); // 自愈（ticket 138 §1.2）：DOM 丢失时重建，单击即开、幂等
     if (!this.popup || !this.mask) return;
     applyMobileWindowFullscreen(this.popup, tryGetSettings().literatureMobileDefaultFullscreen === true);
     topifyZ(this.mask, this.popup); // ADR-0067：显示即发号，谁后显示谁在上
@@ -448,20 +397,18 @@ export class UIManager {
     await this.loadNotes();
     if (!this.list) return; // await 期间面板被销毁 → 放弃渲染
     this.rebuildDomainBar();
-    this.syncTypebarActive();
     this.applyFilter(); // 以全部笔记（+当前筛选态）重建 filteredNotes 并渲染；纯 renderList 不会灌 filteredNotes
   }
 
-  /** 扫描「文献目录」下 .md（metadataCache 解析 frontmatter；不含文件本体 I/O） */
+  /** 扫描「文献目录」下全部 .md（含嵌套子目录——与 backfillNotes 前缀匹配口径一致，P3-5；
+ *  metadataCache 解析 frontmatter；不含文件本体 I/O） */
   private async loadNotes(): Promise<void> {
     const app = getApp();
     const dir = litDirOf(tryGetSettings());
+    const prefix = dir + '/';
+    const mdFiles = (app.vault.getFiles() || []).filter((f: any) => f.path.startsWith(prefix) && f.extension === 'md');
     let entries: LiteratureNoteEntry[] = [];
-    const folder = app.vault.getAbstractFileByPath(dir);
-    if (folder && (folder as any).children) {
-      const mdFiles = (folder as any).children.filter((f: any) => f.extension === 'md');
-      entries = (await Promise.all(mdFiles.map((f: any) => this.parseNoteFile(f)))).filter((e): e is LiteratureNoteEntry => e !== null);
-    }
+    entries = (await Promise.all(mdFiles.map((f: any) => this.parseNoteFile(f)))).filter((e): e is LiteratureNoteEntry => e !== null);
     entries.sort((a, b) => (b.created - a.created) || a.path.localeCompare(b.path));
     this.allNotes = entries;
     this.loadedDir = dir;
@@ -505,7 +452,6 @@ export class UIManager {
     this.currentDisplayCount = 0;
     this.allLoaded = false;
     this.selectedDomain = null;
-    this.selectedType = '';
     this.searchKeyword = '';
     if (this.searchDebounceTimer) { clearTimeout(this.searchDebounceTimer); this.searchDebounceTimer = null; }
     if (this.refreshTimer) { clearTimeout(this.refreshTimer); this.refreshTimer = null; }
@@ -571,17 +517,9 @@ export class UIManager {
     }
   }
 
-  private syncTypebarActive(): void {
-    if (!this.popup) return;
-    const typeBar = q<HTMLElement>(this.popup, '#literature-typebar');
-    if (!typeBar) return;
-    typeBar.querySelectorAll('button').forEach((b) => b.classList.toggle('active', (b.dataset.type ?? '') === this.selectedType));
-  }
-
-  /** 筛选管线：类型过滤（叠加）→ 领域筛选（叠加）→ 搜索（标题/简介） */
+  /** 筛选管线：领域筛选（叠加）→ 搜索（标题/简介）；类型分类栏已移除（ticket 138 §3.1），selectedType 一并清理 */
   private applyFilter(): void {
     let list = this.allNotes;
-    if (this.selectedType) list = list.filter((n) => n.type === this.selectedType);
     if (this.selectedDomain) list = list.filter((n) => (n.domain || '未分类') === this.selectedDomain);
     if (this.searchKeyword) {
       const kw = this.searchKeyword.toLowerCase();
@@ -605,7 +543,7 @@ export class UIManager {
       if (this.currentDisplayCount === 0) {
         const empty = document.createElement('div');
         empty.className = 'bz-lit-empty';
-        empty.textContent = this.selectedType || this.selectedDomain || this.searchKeyword
+        empty.textContent = this.selectedDomain || this.searchKeyword
           ? '没有符合条件的文献笔记'
           : `「${this.loadedDir || litDirOf(tryGetSettings())}」还没有文献笔记`;
         this.list.appendChild(empty);
@@ -627,18 +565,16 @@ export class UIManager {
     }
   }
 
-  /** 文献笔记卡片：标题 + 类型徽标 + 领域徽标 + 简介两行省略 + 日期；双击打开 + 抽屉 */
+  /** 文献笔记卡片：标题 + 领域徽标 + 简介两行省略 + 日期；双击打开 + 抽屉（类型徽章已移除，ticket 138 §3.2） */
   private renderNoteCard(n: LiteratureNoteEntry): HTMLElement {
     const card = document.createElement('div');
     card.className = 'bz-lit-card';
     card.dataset.path = n.path;
-    const typeLabel = n.type === 'video' ? '视频' : n.type === 'term' ? '术语' : '';
-    const typeBadge = typeLabel ? `<span class="bz-lit-badge bz-lit-badge-type">${typeLabel}</span>` : '';
     const domainBadge = n.domain ? `<span class="bz-lit-badge bz-lit-badge-domain">${esc(n.domain)}</span>` : '';
     card.innerHTML = `
       <div class="bz-lit-card-title-row">
         <span class="bz-lit-card-title">${esc(n.title || '无标题')}</span>
-        ${typeBadge}${domainBadge}
+        ${domainBadge}
       </div>
       <div class="bz-lit-card-summary">${esc(n.summary || '（无简介）')}</div>
       <div class="bz-lit-card-date">${esc(n.date)}</div>`;
@@ -799,8 +735,8 @@ export class UIManager {
     const header = document.createElement('div');
     header.className = 'bz-win-head';
     header.innerHTML = `
-      <div style="display:flex;gap:8px;align-items:baseline;min-width:0;">
-        <h3 style="margin:0;font-size:16px;font-weight:600;color:var(--text-normal);">视频录入</h3>
+      <div class="bz-lit-head-title">
+        <h3 class="bz-lit-title">视频录入</h3>
         <span id="lit-video-counts" class="bz-bili-counts"></span>
       </div>
       <div class="bz-lit-head-btns">
@@ -1107,36 +1043,36 @@ export class UIManager {
     popup.id = 'literature-add-popup';
     popup.className = 'bz-lit-dialog';
     popup.style.display = 'none';
-    // 无取消按钮：遮罩 + ESC 关闭，与其他域弹窗一致（ADR-0070）
+    // 无取消按钮：遮罩 + ESC 关闭，与其他域弹窗一致（ADR-0070）；视觉样式收敛为 bz-lit-* 类（P3-1）
     popup.innerHTML = `
-      <h4 style="margin:0;font-size:14px;font-weight:600;" id="lit-add-title">添加转文献任务</h4>
-      <label style="font-size:12px;color:var(--text-muted);">视频链接 / BV 号</label>
-      <input id="lit-add-url" type="text" placeholder="https://www.bilibili.com/video/BV… 或 BV1xx411c7mD" style="width:100%;box-sizing:border-box;">
-      <div style="display:flex;gap:10px;">
-        <div style="flex:1;"><label style="font-size:12px;color:var(--text-muted);">视频标题（可选）</label>
-          <input id="lit-add-vtitle" type="text" placeholder="队列里好认，留空用链接" style="width:100%;box-sizing:border-box;"></div>
-        <div style="flex:1;"><label style="font-size:12px;color:var(--text-muted);">UP主（可选）</label>
-          <input id="lit-add-uploader" type="text" placeholder="投稿 UP 主" style="width:100%;box-sizing:border-box;"></div>
+      <h4 id="lit-add-title">添加转文献任务</h4>
+      <label>视频链接 / BV 号</label>
+      <input id="lit-add-url" type="text" placeholder="https://www.bilibili.com/video/BV… 或 BV1xx411c7mD">
+      <div class="bz-lit-form-row">
+        <div class="bz-lit-form-col"><label>视频标题（可选）</label>
+          <input id="lit-add-vtitle" type="text" placeholder="队列里好认，留空用链接"></div>
+        <div class="bz-lit-form-col"><label>UP主（可选）</label>
+          <input id="lit-add-uploader" type="text" placeholder="投稿 UP 主"></div>
       </div>
-      <div style="display:flex;gap:10px;">
-        <div style="flex:1;"><label style="font-size:12px;color:var(--text-muted);">下载清晰度</label>
-          <select id="lit-add-quality" style="width:100%;">
+      <div class="bz-lit-form-row">
+        <div class="bz-lit-form-col"><label>下载清晰度</label>
+          <select id="lit-add-quality">
             <option value="">跟随全局设置</option>
             <option value="highest">最高</option>
             <option value="1080">1080P</option>
             <option value="720">720P</option>
           </select></div>
-        <div style="flex:1;"><label style="font-size:12px;color:var(--text-muted);">分P（留空 = 第 1 P）</label>
-          <input id="lit-add-page" type="number" min="1" step="1" placeholder="如 2" style="width:100%;box-sizing:border-box;"></div>
+        <div class="bz-lit-form-col"><label>分P（留空 = 第 1 P）</label>
+          <input id="lit-add-page" type="number" min="1" step="1" placeholder="如 2"></div>
       </div>
-      <div style="display:flex;gap:10px;">
-        <div style="flex:1;"><label style="font-size:12px;color:var(--text-muted);">开始时间（留空 = 整片）</label>
-          <input id="lit-add-start" type="text" placeholder="12.2 / 12-2 / 1:30:05" style="width:100%;box-sizing:border-box;"></div>
-        <div style="flex:1;"><label style="font-size:12px;color:var(--text-muted);">结束时间</label>
-          <input id="lit-add-end" type="text" placeholder="与开始成对填写" style="width:100%;box-sizing:border-box;"></div>
+      <div class="bz-lit-form-row">
+        <div class="bz-lit-form-col"><label>开始时间（留空 = 整片）</label>
+          <input id="lit-add-start" type="text" placeholder="12.2 / 12-2 / 1:30:05"></div>
+        <div class="bz-lit-form-col"><label>结束时间</label>
+          <input id="lit-add-end" type="text" placeholder="与开始成对填写"></div>
       </div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
-        <button id="lit-add-save" style="background:var(--interactive-accent);color:var(--text-on-accent);">保存</button>
+      <div class="bz-lit-form-actions">
+        <button id="lit-add-save" class="bz-lit-accent-btn">保存</button>
       </div>`;
     document.body.appendChild(addMask);
     document.body.appendChild(popup);
@@ -1189,12 +1125,12 @@ export class UIManager {
     try {
       // 不带 remark：编辑旧任务时保留既有备注（数据格式兼容冻结），新任务备注恒空
       const patch = { url, start: start || null, end: end || null, quality, page, title: vtitle || null, uploader: uploader || null };
+      // 域事件观察收敛（P3-2）：新增/编辑不再发射 added/edited（smartcat 对其返回 null），
+      // literature:tasks 只剩 converted（processor）与 term-generated（术语面板）两类
       if (this.editingId) {
         await LiteratureData.updateTask(this.editingId, patch);
-        emitDomainEvent('literature:tasks', { kind: 'edited', id: this.editingId });
       } else {
         await LiteratureData.addTask(patch);
-        emitDomainEvent('literature:tasks', { kind: 'added', url });
       }
       notice('已保存');
       this.hideAddDialog();
@@ -1219,7 +1155,7 @@ export class UIManager {
     const header = document.createElement('div');
     header.className = 'bz-win-head';
     header.innerHTML = `
-      <h3 style="margin:0;font-size:16px;font-weight:600;color:var(--text-normal);">文献盒 · 历史</h3>
+      <h3 class="bz-lit-title">文献盒 · 历史</h3>
       <div class="bz-lit-head-btns">
         <button id="lit-history-close" class="bz-win-close" title="关闭">✕</button>
       </div>`;
@@ -1334,23 +1270,23 @@ export class UIManager {
     const header = document.createElement('div');
     header.className = 'bz-win-head';
     header.innerHTML = `
-      <h3 style="margin:0;font-size:15px;font-weight:600;color:var(--text-normal);">术语生成文献笔记</h3>`;
+      <h3 class="bz-lit-title">术语生成文献笔记</h3>`;
     const body = document.createElement('div');
     body.className = 'bz-lit-term-body';
     body.innerHTML = `
-      <label style="font-size:12px;color:var(--text-muted);">术语</label>
-      <input id="lit-term-input" type="text" placeholder="如 黑洞 / 贝叶斯定理" style="width:100%;box-sizing:border-box;">
-      <div style="margin-top:10px;">
+      <label>术语</label>
+      <input id="lit-term-input" type="text" placeholder="如 黑洞 / 贝叶斯定理">
+      <div class="bz-lit-term-gen-wrap">
         <button id="lit-term-generate">生成</button>
       </div>
       <div id="lit-term-preview" class="bz-lit-term-preview" style="display:none;">
-        <label style="font-size:12px;color:var(--text-muted);">领域（可改，留空 = 无）</label>
-        <input id="lit-term-domain" type="text" placeholder="领域词，如 物理" style="width:100%;box-sizing:border-box;">
-        <label style="font-size:12px;color:var(--text-muted);">简介（可编辑）</label>
-        <textarea id="lit-term-body" rows="7" placeholder="AI 生成的百科式简介…" style="width:100%;box-sizing:border-box;resize:vertical;"></textarea>
+        <label>领域（可改，留空 = 无）</label>
+        <input id="lit-term-domain" type="text" placeholder="领域词，如 物理">
+        <label>简介（可编辑）</label>
+        <textarea id="lit-term-body" rows="7" placeholder="AI 生成的百科式简介…"></textarea>
         <div class="bz-lit-term-actions">
           <button id="lit-term-regenerate">重新生成</button>
-          <button id="lit-term-save" style="background:var(--interactive-accent);color:var(--text-on-accent);">确认写入</button>
+          <button id="lit-term-save" class="bz-lit-accent-btn">确认写入</button>
         </div>
       </div>`;
     popup.appendChild(header);
@@ -1402,7 +1338,7 @@ export class UIManager {
     }
   }
 
-  /** 生成/重新生成：调 generateTermNote({term}) 取 AI 简介 → 预览（丢弃上一版草稿与手改） */
+  /** 生成/重新生成：调 generateTermDraft 纯 AI 预览（不落盘）→ 填充预览（覆盖用户上一轮手改，ticket 138 §2.1） */
   private async onTermGenerate(): Promise<void> {
     if (!this.termPopup || this.termGenerating) return;
     const term = (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
@@ -1410,8 +1346,8 @@ export class UIManager {
     this.termGenerating = true;
     this.setTermGenLoading(true);
     try {
-      const path = await this.generateTermDraft(term);
-      await this.presentTermPreview(path);
+      const draft = await generateTermDraft(term);
+      this.presentTermPreview(draft);
     } catch (e) {
       this.noticeTermError(e);
     } finally {
@@ -1420,48 +1356,21 @@ export class UIManager {
     }
   }
 
-  /**
-   * 生成一篇术语草稿笔记：先调 generateTermNote 落盘（note-gen 现行为），成功后删除上一版草稿
-   * （重新生成/确认前旧稿不留——「未确认不落盘」收口，vault 不攒草稿）。
-   */
-  private async generateTermDraft(term: string): Promise<string> {
-    const prev = this.termPreview?.path ?? null;
-    const path = await generateTermNote({ term });
-    if (prev && prev !== path) {
-      try {
-        const f = getApp().vault.getAbstractFileByPath(prev);
-        if (f) await getApp().vault.delete(f);
-      } catch { /* 草稿已不存在 */ }
-    }
-    return path;
-  }
-
-  /** 读草稿内容 → 填充预览（术语输入框不变；领域/正文按 AI 结果，覆盖用户上一轮手改） */
-  private async presentTermPreview(path: string): Promise<void> {
-    const app = getApp();
-    const file = app.vault.getAbstractFileByPath(path) as any;
-    let domain = '';
-    let body = '';
-    if (file) {
-      try {
-        const content = await app.vault.read(file);
-        body = String(content || '').replace(/^---[\s\S]*?---\s*/, '').trim();
-        const fm = extractFrontmatter(content);
-        domain = String(fm.domain || '').replace(/^"(.*)"$/, '$1').trim();
-      } catch { /* 读失败按空预览 */ }
-    }
-    this.termPreview = { path, domain, body };
+  /** 填充预览：领域/正文按 AI 草稿回填输入框（纯内存，不写盘；术语输入框不变） */
+  private presentTermPreview(draft: { summary: string; domain: string }): void {
+    this.termPreview = { domain: draft.domain, body: draft.summary };
     if (!this.termPopup) return;
     const domainEl = q<HTMLInputElement>(this.termPopup, '#lit-term-domain');
-    if (domainEl) domainEl.value = domain;
+    if (domainEl) domainEl.value = draft.domain;
     const bodyEl = q<HTMLTextAreaElement>(this.termPopup, '#lit-term-body');
-    if (bodyEl) bodyEl.value = body;
+    if (bodyEl) bodyEl.value = draft.summary;
     this.setTermPreviewVisible(true);
   }
 
   /**
-   * 确认写入 = 当前术语再调 generateTermNote 落盘 + 按面板当前值覆盖 domain/正文（vault.modify）
-   * → 自动打开新笔记 → term-generated 域事件 → 关闭面板。
+   * 确认写入（ticket 138 §2.1 + 终审 P1-4）：须先有 AI 预览（无预览直接确认 → 提示先生成）；
+   * generateTermNote 传面板当前 term/summary(正文)/domain —— **所见即所得、不重跑 AI**
+   * （预览内容即最终落盘内容，手改即手改值）→ 自动打开新笔记 → term-generated 域事件 → 关闭面板。
    */
   private async onTermConfirm(): Promise<void> {
     if (!this.termPopup || this.termGenerating) return;
@@ -1473,31 +1382,13 @@ export class UIManager {
     this.termGenerating = true;
     this.setTermGenLoading(true);
     try {
-      // 1) 旧预览草稿先删（确认后不再需要；保证 generateTermNote 落盘取干净文件名）
-      const prevPath = this.termPreview.path;
-      try {
-        const f = getApp().vault.getAbstractFileByPath(prevPath);
-        if (f) await getApp().vault.delete(f);
-      } catch { /* 草稿已不存在 */ }
-      // 2) 以面板当前术语为准落盘（AI 重新生成一次，含领域）
-      const path = await generateTermNote({ term });
-      // 3) 按面板当前值覆盖 domain/正文（有变化才写回）
-      const app = getApp();
-      const file = app.vault.getAbstractFileByPath(path) as any;
-      if (file) {
-        const content = await app.vault.read(file);
-        const needDomain = domain !== this.termPreview.domain;
-        const needBody = body !== this.termPreview.body;
-        let updated = content;
-        if (needDomain) updated = overrideDomain(updated, domain);
-        if (needBody) updated = overrideBody(updated, body);
-        if ((needDomain || needBody) && updated !== content) await app.vault.modify(file, updated);
-      }
-      // 4) 自动打开新笔记
+      // 1) 以面板当前术语/领域/正文落盘一次（预览纯内存，无草稿/旧稿需要删除，也无需二次覆盖）
+      const path = await generateTermNote({ term, summary: body, domain });
+      // 2) 自动打开新笔记
       this.openNote(path);
-      // 5) 行为流观察（ticket 136 §10：term-generated，载荷 term/title）
+      // 3) 行为流观察（ticket 136 §10：term-generated，载荷 term/title）
       emitDomainEvent('literature:tasks', { kind: 'term-generated', term, title: term });
-      // 6) 关闭面板（草稿已清理，置空防 hideTermEntry 误删刚落盘的笔记）
+      // 4) 关闭面板（预览纯内存，置空即可，无文件误删风险）
       this.termPreview = null;
       this.hideTermEntry();
       notice('已生成术语文献笔记：' + term, 'success');
@@ -1509,15 +1400,8 @@ export class UIManager {
     }
   }
 
-  /** 关闭术语面板（遮罩 / ESC）；未确认的预览草稿一并删除（未确认不落盘） */
+  /** 关闭术语面板（遮罩 / ESC）；预览纯内存，无草稿文件可删（ticket 138 §2.1） */
   hideTermEntry(): void {
-    if (this.termPreview) {
-      const path = this.termPreview.path;
-      try {
-        const f = getApp().vault.getAbstractFileByPath(path);
-        if (f) void getApp().vault.delete(f);
-      } catch { /* 草稿已不存在 */ }
-    }
     this.termPreview = null;
     if (this.termMask) this.termMask.style.display = 'none';
     if (this.termPopup) this.termPopup.style.display = 'none';
@@ -1566,13 +1450,7 @@ export class UIManager {
     this.fileListenerRefs = [];
     this.fileListenerAttached = false;
     document.removeEventListener('keydown', this.onKeydown);
-    // 未确认术语草稿清理
-    if (this.termPreview) {
-      try {
-        const f = getApp().vault.getAbstractFileByPath(this.termPreview.path);
-        if (f) void getApp().vault.delete(f);
-      } catch { /* 忽略 */ }
-    }
+    // 术语预览纯内存（ticket 138 §2.1），无草稿文件清理
     this.termPreview = null;
     for (const el of [this.mask, this.popup, this.videoMask, this.videoPopup, this.addMask, this.addPopup, this.historyMask, this.historyPopup, this.termMask, this.termPopup]) {
       if (el && el.parentNode) el.parentNode.removeChild(el);

@@ -1,7 +1,7 @@
 /**
  * 文献盒批量处理器（视频转文献，literature 域；ADR-0071：AI 回迁插件侧）
  * 串行逐部：对「待处理/失败」任务按列表顺序 spawn 工具无头批处理命令
- * （本地指针 node <tools>/cli.js --batch '<json>' 或全局 bili-dl --batch），
+ * （全局 bili-dl --batch '<json>'，.cmd shim 以 shell:true 启动；P2-2 移除修复期本机 CLI 指针探测），
  * _runOne 返回「子进程终结」Promise，循环内 await —— 严格一次一部。
  *
  * AI 回迁（ticket 136/ADR-0071）：CLI 不再调 AI、不再写笔记，只产出机械步骤
@@ -25,8 +25,7 @@ import { LiteratureData } from './data';
 import { generateVideoNote } from './note-gen';
 import type { LiteratureTask } from './types';
 
-/** 工具本地 CLI 指针（修复期临时，与 index.ts 保持一致；稳定后改回全局 bili-dl） */
-const LOCAL_CLI_CANDIDATE = 'D:/Obsidian/bz/tools/bili-downloader/cli.js';
+/** 统一走全局 bili-dl（P2-2：移除修复期本机绝对路径 LOCAL_CLI_CANDIDATE；未安装由 INSTALL_HINT 引导） */
 const INSTALL_HINT = '请先运行 npm install -g @jwbz/bili-downloader';
 
 const STEP_RE = /^\[bz-step\]\s*(.+)$/;
@@ -79,15 +78,8 @@ function getFs(): any {
   try { return w.require('fs'); } catch { return null; }
 }
 
-/** 解析 spawn 目标：仓库内本地 CLI 优先（node 直启，免 shell 引号），兜底全局 bili-dl（.cmd shim 需 shell） */
+/** 解析 spawn 目标（P2-2）：纯走全局 bili-dl --batch，.cmd shim 需 shell:true（不再探测本机 CLI 绝对路径） */
 function resolveBatchSpawn(taskJson: string): { cmd: string; args: string[]; shell: boolean } {
-  try {
-    const w = window as any;
-    const fsMod = w.require && w.require('fs');
-    if (fsMod && typeof fsMod.existsSync === 'function' && fsMod.existsSync(LOCAL_CLI_CANDIDATE)) {
-      return { cmd: 'node', args: [LOCAL_CLI_CANDIDATE, '--batch', taskJson], shell: false };
-    }
-  } catch { /* 非桌面端/无 fs：走全局命令 */ }
   return { cmd: 'bili-dl', args: ['--batch', taskJson], shell: true };
 }
 
@@ -219,7 +211,9 @@ export const BatchRunner = {
       const finish: FinishOne = (ok, reason, notePath, video) => {
         if (settled) return;
         settled = true;
-        void this._finish(task, events, onEnd, ok, reason, notePath, video).then(resolve);
+        // P2-1：reject 兜底——_finish 意外抛错（任务处理中被删致 updateTask 抛错、或回调异常）时
+        // 也必须 resolve，否则本 Promise 永不 settle → runAll 卡死、BatchRunner.running 恒 true
+        void this._finish(task, events, onEnd, ok, reason, notePath, video).then(resolve, () => { onEnd(false); resolve(); });
       };
       try {
         child = cp.spawn(cmd, args, { shell, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -256,8 +250,8 @@ export const BatchRunner = {
             continue;
           }
           // 解析信息行（ADR-0067）：标题/UP主 落库（面板行内「文字+链接」展示）。
-          // 'parsed' 域事件自 ticket 136 起无订阅者（smartcat 只收 converted/term-generated），保留发射作占位；
-          // 先落库再发事件：UI onTaskInfo 整表刷新时能确定性读到新字段（避免读旧快照的竞态）
+          // 先落库再回调：UI onTaskInfo 整表刷新时能确定性读到新字段（避免读旧快照的竞态）。
+          // P3-2：不发射 literature:tasks 域事件——契约 §10 观察收敛为 converted/failed 两类，parsed 无订阅者
           m = line.match(INFO_RE);
           if (m) {
             try {
@@ -269,7 +263,6 @@ export const BatchRunner = {
                 task.uploader = uploader || task.uploader;
                 const patch: Partial<LiteratureTask> = { title, uploader: task.uploader };
                 void LiteratureData.updateTask(task.id, patch).then(() => {
-                  emitDomainEvent('literature:tasks', { kind: 'parsed', id: task.id, url: task.url, title, uploader: task.uploader || undefined });
                   events.onTaskInfo({ ...task });
                 });
               }
@@ -306,6 +299,8 @@ export const BatchRunner = {
           // CLI 成功 → 插件侧 AI 阶段（ADR-0071：读转录 → 生成笔记 → 删临时文件）
           void this._aiStep(task, events, transcriptPath, videoPath, finish);
         } else {
+          // P2-4：CLI 非 0 退出时转录文件可能已写出（失败瞬间产物残留系统临时目录），尽力清理一次
+          tryUnlink(transcriptPath);
           const errTail = tailStderr(errChunks);
           const reason = errTail || `处理失败（退出码 ${code}）。${INSTALL_HINT}`;
           finish(false, reason, null, null);
@@ -369,19 +364,23 @@ export const BatchRunner = {
     task.videoPath = ok ? videoPath : task.videoPath;
     task.processedAt = nowTs();
     if (ok) { task.archived = true; task.archivedAt = task.processedAt; }
-    await LiteratureData.updateTask(task.id, {
-      status: task.status,
-      reason,
-      notePath: task.notePath,
-      videoPath: task.videoPath,
-      processedAt: task.processedAt,
-      archived: task.archived,
-      archivedAt: task.archivedAt,
-      // 内存态解析信息一并落库（ADR-0067）：终态写与信息写并发时，终态写携带新字段，
-      // 避免读-改-写竞态把已落库的 title/uploader 覆盖丢失
-      title: task.title,
-      uploader: task.uploader,
-    });
+    // P2-1：任务处理中可能已被删除（抽屉「删除」对任意状态可用 / cleanupTaskRecordsForNote 连带删除），
+    // 终态落库视为尽力而为：updateTask 抛「任务不存在」不中断批处理，事件与回调照常（计数沿用原 ok）
+    try {
+      await LiteratureData.updateTask(task.id, {
+        status: task.status,
+        reason,
+        notePath: task.notePath,
+        videoPath: task.videoPath,
+        processedAt: task.processedAt,
+        archived: task.archived,
+        archivedAt: task.archivedAt,
+        // 内存态解析信息一并落库（ADR-0067）：终态写与信息写并发时，终态写携带新字段，
+        // 避免读-改-写竞态把已落库的 title/uploader 覆盖丢失
+        title: task.title,
+        uploader: task.uploader,
+      });
+    } catch { /* 任务已不存在：尽力落库失败，照常走事件/回调 */ }
     events.onTaskDone({ ...task });
     // 域事件（ADR-0071）：任务终态统一由处理器发射（smartcat 观察 converted；
     // failed 为占位语义——ticket 136 起 smartcat 不再订阅失败）

@@ -1,11 +1,14 @@
 /**
  * 文献盒补充覆盖测试（src/literature/index.ts 未触达分支）：
- * openLiteratureAddTask（聚合讯「保存至文献」入口，ticket 134/ADR-0068）与 unloadLiterature 卸载。
+ * openLiteratureAddTask（聚合讯「保存至文献」入口，ticket 134/ADR-0068）、
+ * openTermNote（bz-literature-note-term 命令：MarkdownView 类右值 + 选区预填，ticket 138 §1.1）、
+ * 与 unloadLiterature 卸载。
  * ticket 136 改版：入口打开的是「视频录入」面板（任务队列 + 叠开添加弹窗），id 前缀改 literature-/lit-；
  * （原 bz-bili-open 网页版启动器用例已随网页版移除，ticket 136）
  */
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { openLiteratureAddTask, unloadLiterature } from '../../src/literature';
+import { MarkdownView } from 'obsidian';
+import { openLiteratureAddTask, openTermNote, unloadLiterature } from '../../src/literature';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { MockVault, mockAppWithVault } from '../mock-vault';
@@ -47,5 +50,54 @@ describe('openLiteratureAddTask（聚合讯「保存至文献」入口，ticket 
 
     await vi.waitFor(() => expect(document.getElementById('literature-video-popup')!.style.display).toBe('flex'));
     expect(document.getElementById('literature-add-popup')!.style.display).toBe('none');
+  });
+});
+
+describe('openTermNote（bz-literature-note-term 命令：MarkdownView 类右值 + 选区预填，ticket 138 §1.1）', () => {
+  afterEach(() => {
+    unloadLiterature();
+    document.body.innerHTML = '';
+  });
+
+  /** 注入 getActiveViewOfType 桩：记录被调用参数（应为 MarkdownView 类），返回指定视图 */
+  function setupApp(viewOfType: any): any {
+    resetObsidianMocks();
+    const vault = new MockVault();
+    const app = mockAppWithVault(vault) as any;
+    app.workspace.getActiveViewOfType = vi.fn(() => viewOfType);
+    setApp(app);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', literatureDirectory: '文献盒' }) as any);
+    setSettingsSaver(async () => {});
+    return app;
+  }
+
+  it('无显式 term：读激活 Markdown 视图选区预填（getActiveViewOfType 传 MarkdownView 类而非字符串）', async () => {
+    const app = setupApp({ editor: { getSelection: () => '  黑洞  ' } });
+
+    openTermNote(app);
+
+    await vi.waitFor(() => expect(document.getElementById('literature-term-popup')!.style.display).toBe('flex'));
+    expect(app.workspace.getActiveViewOfType).toHaveBeenCalledWith(MarkdownView); // 类右值（1.1 根因修复）
+    expect((document.getElementById('lit-term-input') as HTMLInputElement).value).toBe('黑洞');
+    expect(document.getElementById('lit-term-preview')!.style.display).toBe('none');
+  });
+
+  it('显式 term 优先：不读选区；选区为空白 → 空输入框', async () => {
+    const app = setupApp({ editor: { getSelection: () => '   ' } });
+
+    openTermNote(app, '贝叶斯定理');
+
+    await vi.waitFor(() => expect(document.getElementById('literature-term-popup')!.style.display).toBe('flex'));
+    expect(app.workspace.getActiveViewOfType).not.toHaveBeenCalled();
+    expect((document.getElementById('lit-term-input') as HTMLInputElement).value).toBe('贝叶斯定理');
+  });
+
+  it('无激活视图（getActiveViewOfType 返回 null）→ 空输入框手填，不抛错', async () => {
+    const app = setupApp(null);
+
+    expect(() => openTermNote(app)).not.toThrow();
+
+    await vi.waitFor(() => expect(document.getElementById('literature-term-popup')!.style.display).toBe('flex'));
+    expect((document.getElementById('lit-term-input') as HTMLInputElement).value).toBe('');
   });
 });

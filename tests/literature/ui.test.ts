@@ -1,16 +1,18 @@
 /**
- * 文献盒（literature 域）UI 测试（ticket 136 改版，重写 src/literature/ui.ts）：
- * - 主面板（文献笔记列表）：标题/头部五按钮/类型过滤/领域筛选行/空态、卡片渲染（标题+类型徽标+
- *   领域徽标+简介+日期）与最近创建降序、🔍 搜索 300ms 防抖、类型过滤与领域筛选叠加、
- *   双击打开（click 计数 300ms）、抽屉（打开/复制双链/复制原文链接[video]/删除 danger+确认，
- *   删除同步清理指向该笔记的任务记录）、懒加载（批次 20 + 触底 + 尾部提示）、
- *   literature:file-* 四通道 300ms 防抖增量刷新、文献目录设置变更清缓存全量重载。
+ * 文献盒（literature 域）UI 测试（ticket 136 改版 + ticket 138 UX 修复）：
+ * - 主面板（文献笔记列表）：标题/头部五按钮（emoji、🔍 在 ⚙️ 前，ticket 138 §3.1）/领域筛选行
+ *   （类型分类栏已移除）/空态、卡片渲染（标题+领域徽标+简介+日期，无类型徽章 ticket 138 §3.2）与
+ *   最近创建降序、🔍 搜索 300ms 防抖、领域筛选、双击打开（click 计数 300ms）、
+ *   抽屉（打开/复制双链/复制原文链接[video]/删除 danger+确认，删除同步清理指向该笔记的任务记录）、
+ *   懒加载（批次 20 + 触底 + 尾部提示）、literature:file-* 四通道 300ms 防抖增量刷新、
+ *   文献目录设置变更清缓存全量重载。
  * - 视频录入面板（任务队列）：去 ⚙️/⬇️；保留 ➕/▶️/⏹/🕘/✕；移动端仅 ➕/🕘+✕；
  *   添加弹窗（校验/编辑回填/预填叠开）、历史独立弹窗（分组/清空历史）、批量处理行内进度
  *   （[bz-step]/[bz-p] 时间线 + STEP_DONE_MAP「AI 生成文献笔记中/笔记落盘中」完成态文案）。
- * - 术语生成面板：预填/空术语不生成/生成预览（mock note-gen generateTermNote）/重新生成丢弃手改/
- *   确认写入（generateTermNote 落盘 + 按面板当前值覆盖领域与正文 + 自动打开 + term-generated 事件）/
- *   未确认关闭清理草稿/AI 未配置提示。
+ * - 术语生成面板（ticket 138 §2.1 契约变更）：预填/空术语不生成/生成纯 AI 预览（mock note-gen
+ *   generateTermDraft，未确认不落盘）/重新生成丢弃手改/确认写入（generateTermNote 落盘一次 +
+ *   按面板当前值覆盖领域与正文 + 自动打开 + term-generated 事件）/无预览直接确认提示先生成/
+ *   AI 未配置提示。
  * - 设置 schema 五组键；主面板 ⚙️ 打开设置弹窗渲染。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -24,9 +26,10 @@ import { emitDomainEvent, onDomainEvent } from '../../src/core/domain-bus';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { clearNotices, getNoticeMessages, hasNotice, resetObsidianMocks } from '../mock-obsidian-entry';
 
-// ---- note-gen 打桩：generateTermNote/backfillNotes 由各用例注入实现，避免真实 AI ----
+// ---- note-gen 打桩：generateTermNote/generateTermDraft/backfillNotes 由各用例注入实现，避免真实 AI ----
 const noteGen = vi.hoisted(() => ({
   generateTermNote: vi.fn(),
+  generateTermDraft: vi.fn(),
   backfillNotes: vi.fn(),
 }));
 vi.mock('../../src/literature/note-gen', () => noteGen);
@@ -96,7 +99,9 @@ describe('文献盒 UI（ticket 136）', () => {
     clipWrite = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { value: { writeText: clipWrite }, configurable: true });
     noteGen.generateTermNote.mockReset();
+    noteGen.generateTermDraft.mockReset();
     noteGen.backfillNotes.mockReset();
+    noteGen.generateTermDraft.mockResolvedValue({ summary: '', domain: '' });
     noteGen.backfillNotes.mockResolvedValue({ scanned: 0, filled: 0, aiSkipped: false });
     ui = new UIManager(app);
   });
@@ -109,22 +114,26 @@ describe('文献盒 UI（ticket 136）', () => {
 
   // ==================== 主面板：结构与空态 ====================
 
-  it('showMain 渲染主面板：标题文献盒/五按钮/类型过滤/领域筛选行/空态', async () => {
+  it('showMain 渲染主面板：标题文献盒/头部五按钮（emoji、功能→🔍→⚙️→✕）/领域筛选行/空态', async () => {
     ui.showMain();
     await vi.waitFor(() => expect(document.getElementById('literature-popup')!.style.display).toBe('flex'));
     const popup = document.getElementById('literature-popup')!;
     expect(popup.querySelector('.bz-win-head h3')!.textContent).toBe('文献盒');
-    // 头部按钮秩序：🔍搜索 → 文字录入 → 视频录入 → ⚙️设置 → ✕关闭
+    // 头部按钮秩序：📝文字 → 🎬视频 → 🔍搜索 → ⚙️设置 → ✕关闭（ticket 138 §3.1：emoji、🔍 在 ⚙️ 前）
     const btns = Array.from(popup.querySelectorAll<HTMLElement>('.bz-lit-head-btns button')).map((b) => b.id);
-    expect(btns).toEqual(['lit-btn-search', 'lit-btn-text', 'lit-btn-video', 'lit-btn-settings', 'lit-btn-close']);
+    expect(btns).toEqual(['lit-btn-text', 'lit-btn-video', 'lit-btn-search', 'lit-btn-settings', 'lit-btn-close']);
+    expect((popup.querySelector('#lit-btn-text') as HTMLElement).textContent).toBe('📝');
+    expect((popup.querySelector('#lit-btn-video') as HTMLElement).textContent).toBe('🎬');
+    expect((popup.querySelector('#lit-btn-search') as HTMLElement).textContent).toBe('🔍');
+    expect((popup.querySelector('#lit-btn-settings') as HTMLElement).textContent).toBe('⚙️');
     expect(popup.querySelector('#lit-btn-close')!.classList.contains('bz-win-close')).toBe(true);
-    expect(popup.querySelector('#literature-typebar')).toBeTruthy();
+    // 类型分类栏已移除（ticket 138 §3.1），仅保留领域筛选行
+    expect(popup.querySelector('#literature-typebar')).toBeNull();
     expect(popup.querySelector('#literature-sitebar')).toBeTruthy();
-    expect(popup.querySelectorAll('#literature-typebar button')).toHaveLength(3);
     await vi.waitFor(() => expect(document.getElementById('literature-list')!.textContent).toContain('还没有文献笔记'));
   });
 
-  it('主面板列表：标题 + 类型徽标 + 领域徽标 + 简介 + 日期，最近创建降序', async () => {
+  it('主面板列表：标题 + 领域徽标（无类型徽章）+ 简介 + 日期，最近创建降序', async () => {
     vault.files.set('文献盒/视频A.md', noteMd({ title: '视频A', type: 'video', domain: '物理', date: '2026-08-30 10:00:00', summary: '简介A' }));
     vault.files.set('文献盒/术语B.md', noteMd({ title: '术语B', type: 'term', domain: '数学', date: '2026-08-28 10:00:00', summary: '简介B' }));
     vault.files.set('文献盒/视频C.md', noteMd({ title: '视频C', type: 'video', domain: '物理', date: '2026-09-01 10:00:00', summary: '简介C' }));
@@ -133,13 +142,21 @@ describe('文献盒 UI（ticket 136）', () => {
     const titles = Array.from(document.querySelectorAll('.bz-lit-card-title')).map((el) => el.textContent);
     expect(titles).toEqual(['视频C', '视频A', '术语B']); // 最近创建降序
     const first = document.querySelector('.bz-lit-card')!;
-    expect(first.querySelector('.bz-lit-badge-type')!.textContent).toBe('视频');
+    // 类型徽章（视频/术语）不再渲染（ticket 138 §3.2），领域徽章保留
+    expect(first.querySelector('.bz-lit-badge-type')).toBeNull();
     expect(first.querySelector('.bz-lit-badge-domain')!.textContent).toBe('物理');
     expect(first.textContent).toContain('简介C');
     expect(first.textContent).toContain('2026-09-01');
   });
 
-  it('领域筛选行：全部 (N) + 各领域按钮带数量，按 count 降序；类型过滤可叠加', async () => {
+  it('嵌套子目录笔记也显示（扫描口径与 backfillNotes 一致，P3-5）', async () => {
+    vault.files.set('文献盒/物理课/量子.md', noteMd({ title: '量子', type: 'term', domain: '物理', date: '2026-08-02 10:00:00' }));
+    ui.showMain();
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-lit-card').length).toBe(1));
+    expect(document.querySelector('.bz-lit-card')!.textContent).toContain('量子');
+  });
+
+  it('领域筛选行：全部 (N) + 各领域按钮带数量，按 count 降序；点击筛选/回退', async () => {
     vault.files.set('文献盒/A.md', noteMd({ title: 'A', type: 'video', domain: '物理' }));
     vault.files.set('文献盒/B.md', noteMd({ title: 'B', type: 'video', domain: '数学' }));
     vault.files.set('文献盒/C.md', noteMd({ title: 'C', type: 'term', domain: '物理' }));
@@ -151,19 +168,16 @@ describe('文献盒 UI（ticket 136）', () => {
     // 物理 2 条在前（count 降序），数学 1 条在后
     expect(domainBtns[1].textContent).toBe('物理 (2)');
     expect(domainBtns[2].textContent).toBe('数学 (1)');
-    // 领域筛选：物理 → 2 条
+    // 领域筛选：物理 → 2 条（A 与 C 同属物理，B 数学被排除）
     domainBtns[1].click();
     await vi.waitFor(() => expect(document.querySelectorAll('.bz-lit-card').length).toBe(2));
-    // 叠加类型过滤：物理 + 视频 → 仅剩 A（C 是术语、B 是数学）
-    (document.querySelector<HTMLElement>('#literature-typebar button[data-type="video"]')!).click();
-    await vi.waitFor(() => expect(document.querySelectorAll('.bz-lit-card').length).toBe(1));
     const listTxt = document.getElementById('literature-list')!.textContent!;
     expect(listTxt).toContain('A');
+    expect(listTxt).toContain('C');
     expect(listTxt).not.toContain('数学'); // B 被领域筛选排除
-    expect(listTxt).not.toContain('C'); // C 被类型筛选排除
-    // 关闭类型过滤回 2 条（物理 全部类型）
-    (document.querySelector<HTMLElement>('#literature-typebar button[data-type=""]')!).click();
-    await vi.waitFor(() => expect(document.querySelectorAll('.bz-lit-card').length).toBe(2));
+    // 回到全部（类型分类栏已移除，ticket 138 §3.1；领域筛选独立成立）
+    domainBtns[0].click();
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-lit-card').length).toBe(3));
   });
 
   it('🔍 搜索：切换显隐 + 300ms 防抖按标题/简介过滤', async () => {
@@ -478,22 +492,24 @@ describe('文献盒 UI（ticket 136）', () => {
     // 清空输入 → 空术语不生成
     (document.getElementById('lit-term-input') as HTMLInputElement).value = '';
     (document.getElementById('lit-term-generate') as HTMLButtonElement).click();
+    expect(noteGen.generateTermDraft).not.toHaveBeenCalled();
     expect(noteGen.generateTermNote).not.toHaveBeenCalled();
     expect(strNotices()).toContain('请输入术语');
   });
 
-  it('术语流程：生成 → 预览（领域/正文回填）→ 确认写入（generateTermNote 落盘 + 自动打开 + term-generated 事件 + 面板关闭）', async () => {
-    noteGen.generateTermNote.mockImplementation(async ({ term }: { term: string }) => {
+  it('术语流程（ticket 138 §2.1）：生成 → 纯 AI 预览（未确认不落盘）；确认写入 → generateTermNote 传面板值落盘 + 自动打开 + term-generated + 面板关闭', async () => {
+    noteGen.generateTermDraft.mockImplementation(async (term: string) => ({ summary: `${term}的百科式简介`, domain: '物理' }));
+    noteGen.generateTermNote.mockImplementation(async ({ term, summary, domain }: { term: string; summary?: string; domain?: string }) => {
       const path = `文献盒/${term}.md`;
       vault.files.set(path, `---
 title: "${term}"
 type: term
-domain: "物理"
+domain: "${domain ?? '物理'}"
 term: "${term}"
 date: "2026-08-30 10:00:00"
 ---
 
-${term}的百科式简介`);
+${summary ?? `${term}的百科式简介`}`);
       return path;
     });
     const events: any[] = [];
@@ -503,19 +519,23 @@ ${term}的百科式简介`);
       (document.getElementById('lit-term-input') as HTMLInputElement).value = '黑洞';
       (document.getElementById('lit-term-generate') as HTMLButtonElement).click();
       await vi.waitFor(() => expect(document.getElementById('lit-term-preview')!.style.display).toBe('block'));
-      expect(noteGen.generateTermNote).toHaveBeenCalledTimes(1);
-      expect(noteGen.generateTermNote).toHaveBeenCalledWith({ term: '黑洞' });
+      expect(noteGen.generateTermDraft).toHaveBeenCalledTimes(1);
+      expect(noteGen.generateTermDraft).toHaveBeenCalledWith('黑洞');
       expect((document.getElementById('lit-term-domain') as HTMLInputElement).value).toBe('物理');
       expect((document.getElementById('lit-term-body') as HTMLTextAreaElement).value).toContain('黑洞的百科式简介');
-      // 确认写入
+      // 未确认不落盘：生成/预览后 vault 无新增 md、generateTermNote 未被调用
+      expect(noteGen.generateTermNote).not.toHaveBeenCalled();
+      expect(vault.files.has('文献盒/黑洞.md')).toBe(false);
+      // 确认写入 → 此刻才落盘一次，且传的是面板当前值（所见即所得，P1-4 不重跑 AI）
       (document.getElementById('lit-term-save') as HTMLButtonElement).click();
-      await vi.waitFor(() => expect(noteGen.generateTermNote).toHaveBeenCalledTimes(2));
+      await vi.waitFor(() => expect(noteGen.generateTermNote).toHaveBeenCalledTimes(1));
+      expect(noteGen.generateTermNote).toHaveBeenCalledWith({ term: '黑洞', summary: '黑洞的百科式简介', domain: '物理' });
       await vi.waitFor(() => expect(openFile).toHaveBeenCalledTimes(1));
       // term-generated 行为流事件
       expect(events).toContainEqual(expect.objectContaining({ kind: 'term-generated', term: '黑洞' }));
       // 面板关闭
       await vi.waitFor(() => expect(document.getElementById('literature-term-popup')!.style.display).toBe('none'));
-      // 落盘文件存在（草稿清理后重新落盘，未被误删）
+      // 落盘文件存在（仅确认时落盘一次，未被误删）
       expect(vault.files.has('文献盒/黑洞.md')).toBe(true);
       expect(strNotices()).toContain('已生成术语文献笔记');
     } finally {
@@ -523,18 +543,19 @@ ${term}的百科式简介`);
     }
   });
 
-  it('术语流程：确认写入按面板当前值覆盖领域与正文（generateTermNote 落盘 + vault.modify 写回）', async () => {
-    noteGen.generateTermNote.mockImplementation(async ({ term }: { term: string }) => {
+  it('术语流程：确认写入所见即所得——手改领域/正文直接传给 generateTermNote（不重跑 AI、无 vault.modify 二次覆盖）', async () => {
+    noteGen.generateTermDraft.mockResolvedValue({ summary: '旧简介', domain: '物理' });
+    noteGen.generateTermNote.mockImplementation(async ({ term, summary, domain }: { term: string; summary?: string; domain?: string }) => {
       const path = `文献盒/${term}.md`;
       vault.files.set(path, `---
 title: "${term}"
 type: term
-domain: "物理"
+domain: "${domain ?? '物理'}"
 term: "${term}"
 date: "2026-08-30 10:00:00"
 ---
 
-旧简介`);
+${summary ?? '旧简介'}`);
       return path;
     });
     ui.showTermEntry();
@@ -546,6 +567,9 @@ date: "2026-08-30 10:00:00"
     (document.getElementById('lit-term-body') as HTMLTextAreaElement).value = '手改后的简介';
     (document.getElementById('lit-term-save') as HTMLButtonElement).click();
     await vi.waitFor(() => expect(openFile).toHaveBeenCalledTimes(1));
+    expect(noteGen.generateTermNote).toHaveBeenCalledTimes(1); // 预览不落盘，确认仅落一次
+    // 所见即所得：确认写入直接用面板当前值，不再二次覆盖
+    expect(noteGen.generateTermNote).toHaveBeenCalledWith({ term: '黑洞', summary: '手改后的简介', domain: '天体物理' });
     const content = vault.files.get('文献盒/黑洞.md')!;
     expect(content).toContain('domain: "天体物理"');
     expect(content).not.toContain('domain: "物理"');
@@ -553,45 +577,45 @@ date: "2026-08-30 10:00:00"
     expect(content).not.toContain('旧简介');
   });
 
-  it('术语流程：重新生成 = 按当前术语重跑丢弃预览手改；未确认关闭清理草稿', async () => {
+  it('术语流程：重新生成丢弃预览手改；无预览直接确认提示先生成；未确认关闭无落盘', async () => {
     let gen = 0;
-    noteGen.generateTermNote.mockImplementation(async ({ term }: { term: string }) => {
+    noteGen.generateTermDraft.mockImplementation(async (term: string) => {
       gen++;
-      const path = `文献盒/${term}.md`;
-      vault.files.set(path, `---
-title: "${term}"
-type: term
-domain: "物理"
-term: "${term}"
-date: "2026-08-30 10:00:00"
----
-
-第${gen}版简介`);
-      return path;
+      return { summary: `第${gen}版简介`, domain: '物理' };
     });
     ui.showTermEntry();
     (document.getElementById('lit-term-input') as HTMLInputElement).value = '黑洞';
     (document.getElementById('lit-term-generate') as HTMLButtonElement).click();
     await vi.waitFor(() => expect((document.getElementById('lit-term-body') as HTMLTextAreaElement).value).toContain('第1版简介'));
-    // 手改后「重新生成」→ 手改被新 AI 结果覆盖
+    // 手改后「重新生成」→ 手改被新 AI 预览覆盖
     (document.getElementById('lit-term-body') as HTMLTextAreaElement).value = '手改内容';
     (document.getElementById('lit-term-regenerate') as HTMLButtonElement).click();
     await vi.waitFor(() => expect((document.getElementById('lit-term-body') as HTMLTextAreaElement).value).toContain('第2版简介'));
     expect((document.getElementById('lit-term-body') as HTMLTextAreaElement).value).not.toContain('手改内容');
-    expect(noteGen.generateTermNote).toHaveBeenCalledTimes(2);
-    // 未确认 → 关闭面板清理草稿（未确认不落盘）
+    expect(noteGen.generateTermDraft).toHaveBeenCalledTimes(2);
+    // 全程只预览未落盘
+    expect(noteGen.generateTermNote).not.toHaveBeenCalled();
+    // 无预览直接确认 → 提示先点击「生成」
     (document.getElementById('literature-term-mask') as HTMLElement).click();
-    await vi.waitFor(() => expect(vault.files.has('文献盒/黑洞.md')).toBe(false));
+    ui.showTermEntry();
+    (document.getElementById('lit-term-input') as HTMLInputElement).value = '黑洞'; // 只有术语没有预览
+    (document.getElementById('lit-term-save') as HTMLButtonElement).click();
+    expect(strNotices()).toContain('请先点击「生成」');
+    expect(noteGen.generateTermNote).not.toHaveBeenCalled();
+    // 未确认关闭 → vault 无新增 md
+    (document.getElementById('literature-term-mask') as HTMLElement).click();
+    expect(vault.files.size).toBe(0);
     expect(openFile).not.toHaveBeenCalled();
   });
 
   it('术语流程：AI 未配置 → 提示去设置，不进入预览', async () => {
-    noteGen.generateTermNote.mockRejectedValue(new Error('未配置 OpenCode Go API Key：插件设置 → AI 配置'));
+    noteGen.generateTermDraft.mockRejectedValue(new Error('未配置 OpenCode Go API Key：插件设置 → AI 配置'));
     ui.showTermEntry();
     (document.getElementById('lit-term-input') as HTMLInputElement).value = '黑洞';
     (document.getElementById('lit-term-generate') as HTMLButtonElement).click();
     await vi.waitFor(() => expect(hasNotice(/未配置 AI/)).toBe(true));
     expect(document.getElementById('lit-term-preview')!.style.display).toBe('none');
+    expect(noteGen.generateTermNote).not.toHaveBeenCalled();
     // 生成按钮恢复可用
     expect((document.getElementById('lit-term-generate') as HTMLButtonElement).disabled).toBe(false);
   });

@@ -5,6 +5,9 @@
  * 成功落库归档 + converted 域事件）、转录读取失败 / AI 失败（含未配置）→ 任务 failed
  * 不落半成品笔记（+ failed 域事件）、单部失败继续、遇错即停、中止整批、非桌面端提示、
  * taskJson options 全量下发（compress/crf/vaultPath/ffmpegPath 等）。
+ * 终审修复（P2-1/P2-2/P2-4/P3-2）：终态落库抛错（处理中被删除）批量不挂起、
+ * spawn 固定全局 bili-dl（无本地 CLI 指针探测）、CLI 非 0 退出清理转录临时文件、
+ * [bz-info] 不再发射 parsed 域事件（契约收敛 converted/failed）。
  * 外部进程一律经 window.require 打桩（child_process + fs），AI 经 vi.mock('note-gen')
  * 整模块打桩（仅用 generateVideoNote），无真实网络。
  */
@@ -26,9 +29,6 @@ const noteGenMocks = vi.hoisted(() => ({
 vi.mock('../../src/literature/note-gen', () => ({
   generateVideoNote: noteGenMocks.generateVideoNote,
 }));
-
-/** 本地 CLI 指针（与 processor.ts LOCAL_CLI_CANDIDATE 一致） */
-const LOCAL_CLI = 'D:/Obsidian/bz/tools/bili-downloader/cli.js';
 
 /** 假子进程：stdout/stderr 可 emit；kill 可断言 */
 class FakeChild extends EventEmitter {
@@ -67,11 +67,11 @@ describe('BatchRunner', () => {
     child = new FakeChild();
     cpMock = { spawn: vi.fn(() => child) };
     fsMock = {
-      existsSync: vi.fn(() => false), // 本地 CLI 指针不存在 → 走全局 bili-dl shim
+      existsSync: vi.fn(() => false), // P2-2 后不再被探测；保留以断言 spawn 决议不触碰 fs
       readFileSync: vi.fn(() => TRANSCRIPT),
       unlinkSync: vi.fn(),
     };
-    // window.require 路由：child_process → spawn 桩；fs → 文件桩（resolveBatchSpawn 探测 + AI 阶段读/删）
+    // window.require 路由：child_process → spawn 桩；fs → 文件桩（AI 阶段读转录/删临时文件）
     (window as any).require = (name: string) => {
       if (name === 'child_process') return cpMock;
       if (name === 'fs') return fsMock;
@@ -136,7 +136,7 @@ describe('BatchRunner', () => {
       };
       const p = BatchRunner.runAll(tasks, ev);
       await tick();
-      // 严格串行：第一部未完成前不 spawn 第二部；无本地 CLI 指针 → 全局 shim
+      // 严格串行：第一部未完成前不 spawn 第二部；spawn 固定走全局 bili-dl shim（无本地指针探测）
       expect(cpMock.spawn).toHaveBeenCalledTimes(1);
       const [cmd, args, opts] = cpMock.spawn.mock.calls[0];
       expect(cmd).toBe('bili-dl');
@@ -319,17 +319,16 @@ describe('BatchRunner', () => {
     await p;
   });
 
-  it('本地 CLI 指针存在 → node <path> --batch 直启（shell:false）', async () => {
-    fsMock.existsSync.mockReturnValue(true);
+  it('spawn 决议唯一化（P2-2）：不探测本地 CLI 指针，固定全局 bili-dl --batch（shell:true）', async () => {
     await LiteratureData.addTask({ url: 'BV1xx411c7mD' });
     const ev = makeEvents();
     const p = BatchRunner.runAll(await LiteratureData.loadTasks(), ev);
     await tick();
+    expect(fsMock.existsSync).not.toHaveBeenCalled(); // 移除本机绝对路径探测（发布版不含开发者本机路径）
     const [cmd, args, opts] = cpMock.spawn.mock.calls[0];
-    expect(cmd).toBe('node');
-    expect(args[0]).toBe(LOCAL_CLI);
-    expect(args[1]).toBe('--batch');
-    expect(opts.shell).toBe(false);
+    expect(cmd).toBe('bili-dl');
+    expect(args[0]).toBe('--batch');
+    expect(opts.shell).toBe(true);
     child.emit('close', 0);
     await p;
   });
@@ -340,9 +339,12 @@ describe('BatchRunner', () => {
     const p = BatchRunner.runAll(tasks, ev);
     await tick();
     expect(cpMock.spawn).toHaveBeenCalledTimes(1);
+    // P2-4：转录已写出但 CLI 非 0 退出 → 临时文件仍要清理（不残留系统临时目录）
+    child.stdout.emit('data', Buffer.from(RESULT_LINE));
     child.stderr.emit('data', Buffer.from('视频已删除或失效'));
     child.emit('close', 1);
     await tick();
+    expect(fsMock.unlinkSync).toHaveBeenCalledWith('C:/tmp/bz-transcript-abc.txt');
     expect(cpMock.spawn).toHaveBeenCalledTimes(2); // 继续跑第二部
     const child2 = cpMock.spawn.mock.results[1].value;
     child2.stdout.emit('data', Buffer.from(RESULT_LINE));
@@ -354,6 +356,36 @@ describe('BatchRunner', () => {
     expect(f.status).toBe('failed');
     expect(f.reason).toContain('视频已删除或失效');
     expect(all[1].status).toBe('success');
+  });
+
+  it('任务终态落库抛错（处理中被删除）→ 批量不挂起：尽力走回调、后续任务继续、onBatchDone 正常（P2-1）', async () => {
+    const realUpdate = LiteratureData.updateTask.bind(LiteratureData);
+    const spy = vi.spyOn(LiteratureData, 'updateTask').mockImplementation(async (id: string, patch: any) => {
+      // 模拟任务处理中被删除（抽屉「删除」任意状态可用 / cleanupTaskRecordsForNote 连带删除）：
+      // 终态写必抛「任务不存在」，中间态写照常
+      if (patch && (patch.status === 'success' || patch.status === 'failed')) throw new Error('任务不存在');
+      return realUpdate(id, patch);
+    });
+    try {
+      const tasks = await seedTasks();
+      const ev = makeEvents();
+      const p = BatchRunner.runAll(tasks, ev);
+      await tick();
+      child.stdout.emit('data', Buffer.from(RESULT_LINE));
+      child.emit('close', 0);
+      // 首部终态落库失败 → 尽力走 onTaskDone/onEnd → 不挂起，继续第二部
+      await vi.waitFor(() => expect(cpMock.spawn).toHaveBeenCalledTimes(2));
+      expect(ev.onTaskDone).toHaveBeenCalledTimes(1);
+      const child2 = cpMock.spawn.mock.results[1].value;
+      child2.stdout.emit('data', Buffer.from(RESULT_LINE));
+      child2.emit('close', 0);
+      await p; // 无 reject 兜底时此处永不返回（_runOne Promise 卡死）
+      expect(ev.onBatchDone).toHaveBeenCalledWith({ success: 2, failed: 0, aborted: false, stopped: false });
+      expect(ev.onTaskDone).toHaveBeenCalledTimes(2);
+      expect(BatchRunner.running).toBe(false); // 无任务残留挂起状态
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it('spawn 同步抛 ENOENT → 失败原因含安装引导，全部任务失败', async () => {
@@ -460,7 +492,7 @@ describe('BatchRunner', () => {
     expect(all[1].status).toBe('pending');
   });
 
-  it('[bz-info] 解析信息：落库 title/uploader + onTaskInfo + 域事件 parsed（ADR-0067）', async () => {
+  it('[bz-info] 解析信息：落库 title/uploader + onTaskInfo 回调，不发射文献盒域事件（P3-2，契约收敛 converted/failed）', async () => {
     const bus: any[] = [];
     const sub = onDomainEvent('literature:tasks', (e) => bus.push(e));
     try {
@@ -476,8 +508,8 @@ describe('BatchRunner', () => {
         expect(all[0].title).toBe('从零开始学B站');
         expect(all[0].uploader).toBe('某UP');
       });
-      expect(bus.filter((e) => e.kind === 'parsed')).toHaveLength(1);
-      expect(bus[0]).toMatchObject({ kind: 'parsed', url: 'BV1xx411c7mD', title: '从零开始学B站', uploader: '某UP' });
+      // parsed 域事件已删除：解析信息不发射任何 literature:tasks 事件（仅 converted/failed 两类）
+      expect(bus).toEqual([]);
       BatchRunner.abort();
       child.emit('close', 0);
       await p;

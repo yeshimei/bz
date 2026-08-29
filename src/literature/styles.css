@@ -1,11 +1,14 @@
-/* ==================== 文献盒域样式（src/literature/styles.css，ticket 136 改版） ==================== */
-/* 保留 bz-bili-* 任务队列样式（视频录入面板/历史弹窗沿用）；新增 bz-lit-* 主面板/术语面板样式。 */
+/* ==================== 文献盒域样式（src/literature/styles.css，ticket 136 改版 + ticket 138 主面板质感对齐） ==================== */
+/* bz-bili-* 任务队列样式（视频录入面板/历史弹窗沿用，ticket 136 迁移时丢失、ticket 138 恢复）；
+   新增 bz-lit-* 主面板/术语面板样式；主面板视觉细节对齐日记本（ticket 138 §4）。 */
 
 /* ---- 主面板/术语面板共享遮罩与窗口（bz- 前缀，样式收敛于此处，不内联视觉） ---- */
 .bz-lit-mask {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, .45);
+  backdrop-filter: blur(2px); /* 对齐日记本遮罩质感 */
+  animation: bz-lit-fade-in .2s ease-out;
   z-index: 99999;
 }
 .bz-lit-window {
@@ -19,7 +22,8 @@
   background: var(--background-primary);
   color: var(--text-normal);
   border-radius: 12px;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, .35);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, .3); /* 对齐日记本弹窗阴影 */
+  animation: bz-lit-slide-up .25s ease-out;
   z-index: 100000;
 }
 /* 小型弹窗（添加任务 / 术语生成）：内容直接铺开，无需独立滚动区 */
@@ -37,7 +41,8 @@
   background: var(--background-primary);
   color: var(--text-normal);
   border-radius: 12px;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, .35);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, .3);
+  animation: bz-lit-slide-up .25s ease-out;
   z-index: 100000;
 }
 .bz-lit-list {
@@ -45,46 +50,63 @@
   overflow-y: auto;
   padding: 12px 16px;
   min-height: 220px;
+  /* 细滚动条（桌面端；移动端下方隐藏） */
+  scrollbar-width: thin;
+  scrollbar-color: var(--background-modifier-border) transparent;
+}
+.bz-lit-list::-webkit-scrollbar {
+  width: 8px;
+}
+.bz-lit-list::-webkit-scrollbar-thumb {
+  background: var(--background-modifier-border);
+  border-radius: 4px;
+}
+.bz-lit-list::-webkit-scrollbar-thumb:hover {
+  background: var(--background-modifier-border-hover);
+}
+.bz-lit-list::-webkit-scrollbar-track {
+  background: transparent;
 }
 /* 底部滚动区与弹窗同宽滚动一致 */
 .bz-lit-window, .bz-lit-list {
   box-sizing: border-box;
 }
 
-/* ---- 头部按钮组（文字录入/视频录入为文本钮，其余为图标钮，规格统一） ---- */
+/* ---- 标题（对齐日记本 18px/600；header 行内样式收敛于此） ---- */
+.bz-lit-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-normal);
+  line-height: 1.3;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- 头部按钮组（全部为 emoji/图标钮，规格统一走 core .bz-win-head button，ticket 138 §3.1） ---- */
 .bz-lit-head-btns {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 .bz-lit-head-btns button {
-  width: auto !important; /* 压过全局 .bz-win-head button 22px 定宽：文字录入/视频录入文本钮不被裁 */
-  height: 26px;
-  font-size: 12px;
-  padding: 0 8px;
-  border-radius: 4px;
-  background: none;
-  border: none;
-  box-shadow: none;
-  color: var(--text-muted);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   line-height: 1;
-  white-space: nowrap;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .bz-lit-head-btns button:hover {
   background: var(--background-secondary);
 }
 
-/* ---- 顶部筛选区：类型过滤 + 领域筛选行（剪藏本 rebuildSiteBar 同款式样） ---- */
+/* ---- 顶部筛选区：领域筛选行（类型分类栏已移除，ticket 138 §3.1） ---- */
 .bz-lit-filterbar {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 10px 24px 2px;
+  padding: 10px 24px 4px;
 }
-.bz-lit-typebar,
 .bz-lit-sitebar {
   display: flex;
   flex-wrap: wrap;
@@ -94,19 +116,19 @@
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
-.bz-lit-typebar::-webkit-scrollbar,
 .bz-lit-sitebar::-webkit-scrollbar {
   display: none;
 }
 .bz-lit-filter-btn {
-  border-radius: 20px;
+  border-radius: 999px;
   background: var(--background-secondary);
-  padding: 4px 14px;
+  padding: 5px 14px;
   font-size: 12px;
+  line-height: 1.5;
   cursor: pointer;
   border: 1px solid var(--background-modifier-border);
   color: var(--text-normal);
-  transition: all .2s;
+  transition: background .2s, border-color .2s, color .2s;
   box-shadow: none;
   display: inline-flex;
   align-items: center;
@@ -119,38 +141,47 @@
 .bz-lit-filter-btn.active {
   background: var(--interactive-accent);
   color: var(--text-on-accent);
+  border-color: transparent;
 }
 
-/* ---- 搜索框（🔍 按钮切换显隐） ---- */
+/* ---- 搜索框（🔍 按钮切换显隐；对齐日记本输入框：大内边距/圆角/聚焦高亮） ---- */
 .bz-lit-search {
   padding: 12px 24px 2px;
 }
 .bz-lit-search input {
   width: 100%;
-  padding: 8px 12px;
-  font-size: 13px;
+  padding: 10px 12px;
+  font-size: 14px;
   border: 1px solid var(--background-modifier-border);
   border-radius: 8px;
   background: var(--background-primary);
   color: var(--text-normal);
   outline: none;
   box-sizing: border-box;
+  transition: border-color .15s;
+}
+.bz-lit-search input::placeholder {
+  color: var(--text-faint);
+}
+.bz-lit-search input:focus {
+  border-color: var(--interactive-accent);
 }
 
-/* ---- 文献笔记卡片（主面板 + 抽屉头部共用标题/简介） ---- */
+/* ---- 文献笔记卡片（主面板 + 抽屉头部共用标题/简介；对齐日记本卡片：圆角/内边距/hover） ---- */
 .bz-lit-card {
   border: 1px solid var(--background-modifier-border);
-  border-radius: 10px;
-  padding: 12px 14px;
+  border-radius: 12px;
+  padding: 14px 16px;
   background: var(--background-primary);
-  margin: 8px 0;
+  margin: 10px 0;
   cursor: pointer;
-  transition: background .15s;
+  transition: background .15s, border-color .15s;
   -webkit-user-select: none;
   user-select: none;
 }
 .bz-lit-card:hover {
   background: var(--background-secondary);
+  border-color: var(--background-modifier-border-hover);
 }
 .bz-lit-card-title-row {
   display: flex;
@@ -159,7 +190,7 @@
   min-width: 0;
 }
 .bz-lit-card-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text-normal);
   overflow: hidden;
@@ -168,7 +199,7 @@
   flex: 1;
   min-width: 0;
 }
-/* 徽标：类型（视频/术语）+ 领域 */
+/* 徽标：仅领域（类型徽章已移除，ticket 138 §3.2） */
 .bz-lit-badge {
   flex-shrink: 0;
   font-size: 11px;
@@ -176,10 +207,6 @@
   padding: 0 8px;
   border-radius: 999px;
   white-space: nowrap;
-}
-.bz-lit-badge-type {
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
 }
 .bz-lit-badge-domain {
   background: var(--background-secondary);
@@ -218,9 +245,10 @@
 
 /* ---- 空态 / 懒加载尾部提示 ---- */
 .bz-lit-empty {
-  padding: 40px 12px;
+  padding: 44px 16px;
   text-align: center;
   font-size: 13px;
+  line-height: 1.8;
   color: var(--text-faint);
 }
 .bz-lit-tail {
@@ -240,9 +268,21 @@
   flex-direction: column;
   gap: 6px;
 }
+.bz-lit-term-body label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
 .bz-lit-term-body input,
 .bz-lit-term-body textarea {
   font-size: 13px;
+  box-sizing: border-box;
+  width: 100%;
+}
+.bz-lit-term-body textarea {
+  resize: vertical;
+}
+.bz-lit-term-gen-wrap {
+  margin-top: 10px;
 }
 .bz-lit-term-preview {
   margin-top: 12px;
@@ -263,4 +303,277 @@
 }
 .bz-lit-term-actions button {
   min-width: 84px;
+}
+
+/* ---- 弹窗（bz-lit-dialog）表单控件视觉收敛（P3-1）：标题/标签/输入/行/操作区/强调按钮 ---- */
+.bz-lit-dialog > h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+.bz-lit-dialog label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.bz-lit-dialog input,
+.bz-lit-dialog select,
+.bz-lit-dialog textarea {
+  box-sizing: border-box;
+  width: 100%;
+}
+.bz-lit-form-row {
+  display: flex;
+  gap: 10px;
+}
+.bz-lit-form-col {
+  flex: 1;
+  min-width: 0;
+}
+.bz-lit-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+.bz-lit-accent-btn {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+/* 头部标题组（视频录入面板：标题 + 状态计数并排基线对齐） */
+.bz-lit-head-title {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  min-width: 0;
+}
+
+/* ---- 动画（bz- 前缀，与日记本 fadeIn/slideUp 同质感但命名不冲突） ---- */
+@keyframes bz-lit-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes bz-lit-slide-up {
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 12px)); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+/* ---- 移动端适配（对齐日记本：紧凑间距/隐藏滚动条/常规卡宽度） ---- */
+@media (max-width: 768px) {
+  .bz-lit-window {
+    width: min(760px, 95vw);
+    max-height: 88vh;
+  }
+  .bz-lit-list {
+    min-height: 200px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .bz-lit-list::-webkit-scrollbar {
+    display: none;
+  }
+  .bz-lit-filterbar {
+    padding: 10px 20px 4px;
+  }
+  .bz-lit-search {
+    padding: 12px 20px 2px;
+  }
+  .bz-lit-card {
+    padding: 14px 12px;
+    margin: 12px 0;
+  }
+  .bz-lit-dialog {
+    width: min(520px, 94vw);
+  }
+  /* 无内边距滚动区（术语弹窗自身溢出滚动） */
+  .bz-lit-term-dialog {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+}
+
+/* ==================== 任务队列样式（bz-bili-*，视频录入面板/历史弹窗；ticket 136 迁移丢失后恢复） ==================== */
+
+/* ---- 任务行卡片 ---- */
+.bz-bili-task-card {
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  background: var(--background-secondary);
+  cursor: pointer;
+  position: relative;
+}
+.bz-bili-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.bz-bili-url {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-normal);
+}
+.bz-bili-meta {
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.bz-bili-progress {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-accent);
+}
+.bz-bili-progress-error {
+  color: var(--text-error, #e5484d);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.bz-bili-note {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--color-green, #46a758);
+}
+
+/* ---- 状态徽标 ---- */
+.bz-bili-status {
+  flex-shrink: 0;
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  color: #fff;
+  line-height: 18px;
+}
+.bz-bili-pending { background: var(--text-muted); }
+.bz-bili-processing { background: var(--interactive-accent); animation: bz-bili-pulse 1.2s ease-in-out infinite; }
+.bz-bili-success { background: var(--color-green, #46a758); }
+.bz-bili-failed { background: var(--text-error, #e5484d); }
+
+@keyframes bz-bili-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .55; }
+}
+
+/* ---- 批处理横幅 / 空态 ---- */
+.bz-bili-banner {
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--background-modifier-hover);
+  color: var(--text-accent);
+}
+.bz-bili-empty {
+  padding: 28px 12px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ---- 行内详细进度（ADR-0066：步骤时间线 + 百分比条 + 耗时） ---- */
+.bz-bili-progress-box {
+  margin-top: 5px;
+}
+.bz-bili-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.bz-bili-step-done {
+  color: var(--text-muted);
+}
+.bz-bili-step-cur {
+  color: var(--text-accent);
+  font-weight: 600;
+}
+.bz-bili-step-arrow {
+  color: var(--text-faint);
+}
+.bz-bili-step-pct {
+  color: var(--text-accent);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.bz-bili-progress-track {
+  margin-top: 4px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--background-modifier-hover);
+  overflow: hidden;
+}
+.bz-bili-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--interactive-accent);
+  transition: width .3s ease;
+}
+.bz-bili-elapsed {
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- 行内标题链接 / UP主；头部状态计数 / 历史分组笔记行（ADR-0067/0070） ---- */
+.bz-bili-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--text-accent);
+  text-decoration: none;
+}
+.bz-bili-title:hover {
+  text-decoration: underline;
+}
+/* 头部标题旁状态计数（待处理/处理中/失败） */
+.bz-bili-counts {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+/* 历史分组卡片：UP主名/笔记数紧随标题之后 */
+.bz-bili-hgroup .bz-bili-title {
+  flex: 0 1 auto;
+}
+.bz-bili-hgroup .bz-bili-hup {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bz-bili-hgroup .bz-bili-hcount {
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+/* 历史分组卡片：每条任务一行「📄 笔记路径 ⏱ 完成时间」（无左边距，与标题对齐） */
+.bz-bili-hgroup .bz-bili-hnote {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 5px;
+  padding: 3px 0;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  overflow: hidden;
+}
+.bz-bili-hgroup .bz-bili-hnote:hover {
+  background: var(--background-modifier-hover);
+}
+.bz-bili-hgroup .bz-bili-hnote-time {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
 }
