@@ -262,28 +262,16 @@
   animation: bz-lit-fade-in .3s ease-out;
 }
 
-/* ---- 术语生成面板（文字录入；ticket 139 重设计：输入同行、状态行、预览卡片化） ---- */
-.bz-lit-term-dialog .bz-win-head {
-  padding: 0 0 10px !important;
-  justify-content: flex-start !important;
-}
+/* ---- 术语生成面板（文字录入；ticket 142 简洁版：无标题/label/placeholder/状态行，预览只读双卡） ---- */
 .bz-lit-term-body {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-.bz-lit-term-body label {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-.bz-lit-term-body input,
-.bz-lit-term-body textarea {
+.bz-lit-term-body input {
   font-size: 13px;
   box-sizing: border-box;
   width: 100%;
-}
-.bz-lit-term-body textarea {
-  resize: vertical;
 }
 .bz-lit-term-inputrow {
   display: flex;
@@ -299,34 +287,51 @@
   min-width: 84px;
   white-space: nowrap;
 }
-.bz-lit-term-status {
-  font-size: 12px;
-  color: var(--text-accent);
+/* 预览（隐藏由 id 内联 display:none 控制）：上属性卡（术语/领域/日期）下内容卡，全部只读 */
+#lit-term-preview {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
-.bz-lit-term-preview {
-  margin-top: 10px;
+.bz-lit-term-card {
   border: 1px solid var(--background-modifier-border);
   border-radius: 10px;
   background: var(--background-secondary);
   padding: 12px 14px;
+}
+.bz-lit-term-meta {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
-.bz-lit-term-preview-head {
+.bz-lit-term-meta-row {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+.bz-lit-term-meta-k {
+  flex: 0 0 48px;
   font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
-  margin-bottom: 2px;
+  color: var(--text-faint);
 }
-.bz-lit-term-preview textarea {
-  min-height: 140px;
+.bz-lit-term-meta-v {
+  font-size: 13px;
+  color: var(--text-normal);
+  word-break: break-all;
+}
+.bz-lit-term-content {
+  font-size: 13px;
+  line-height: 1.85;
+  color: var(--text-normal);
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: text;
 }
 .bz-lit-term-actions {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
-  margin-top: 8px;
 }
 .bz-lit-term-actions button {
   min-width: 84px;
