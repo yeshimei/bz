@@ -116,6 +116,35 @@ export function notice(msg: string, type?: NoticeType, duration?: number): void 
   notify(msg, { type: type || 'info', duration });
 }
 
+/** 撤销型通知默认停留时长：比常规 toast 长，给用户足够的反悔窗口 */
+const UNDO_DURATION_MS = 6000;
+
+/**
+ * 撤销型通知（ticket 141 通病 1）：删除/移出/跳过类操作落地后，给 toast 挂「撤销」按钮，
+ * 点击执行回滚回调。把「此操作不可撤销」的事前威慑改成「已删除 + 可反悔」的事后兜底。
+ * 默认 delete 类型（🗑️）、6s 停留；跳过/归档等语义由调用方显式传 type。
+ */
+export function notifyUndo(
+  msg: string,
+  onUndo: () => void,
+  opts?: { type?: NoticeType; duration?: number }
+): NoticeHandle {
+  return notify(msg, {
+    type: (opts && opts.type) || 'delete',
+    duration: opts && opts.duration !== undefined ? opts.duration : UNDO_DURATION_MS,
+    action: { label: '撤销', onClick: onUndo },
+  });
+}
+
+/**
+ * 写盘失败统一提示（ticket 141 通病 2）：数据域裸 await 的保存调用失败时的人话错误 toast。
+ * 以前静默吞掉的 unhandled rejection 改走这里——用户改了但没存上，必须知道。
+ */
+export function notifySaveError(err: unknown, what?: string): void {
+  const msg = err instanceof Error ? err.message : String(err);
+  notify(what ? `保存失败（${what}）：${msg}` : `保存失败：${msg}`, { type: 'error' });
+}
+
 /** 当前视口是否为移动端（决定默认位置/动画：移动端顶部居中，桌面右侧弹出） */
 function isMobileView(): boolean {
   return (

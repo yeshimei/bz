@@ -4,7 +4,9 @@
  */
 import { Setting, type App } from 'obsidian';
 import { topifyZ, allocZ } from '../core/z-order';
-import { notice } from '../core/notice';
+import { notice, notifyUndo, notifySaveError } from '../core/notice';
+import { openFlowDialog } from '../core/flow-dialog';
+import { escManager } from '../core/esc-manager';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { escapeHtml } from '../core/utils';
 import { applyMobileWindowFullscreen } from '../core/mobile';
@@ -205,12 +207,10 @@ export class UIManager {
   mask: HTMLElement | null = null;
   popup: HTMLElement | null = null;
   entriesContainer: HTMLElement | null = null;
-  confirmMask: HTMLElement | null = null;
-  confirmPopup: HTMLElement | null = null;
-  confirmCallback: (() => void) | null = null;
-  escapeRegistered = false;
-  /** P2：keydown 引用（destroy 注销，防卸载后 ESC 处理器残留） */
-  private escapeHandler: ((e: KeyboardEvent) => void) | null = null;
+  /** ticket 141：ESC 走 escManager 层级（原私挂 document keydown 迁移，esc-manager 立约禁私挂） */
+  private escHandle: { unregister: () => void } | null = null;
+  /** 搜索防抖句柄（ticket 141：逐键全量重渲染收敛 180ms 防抖，对齐密码域先例） */
+  private searchTimer: number | null = null;
   searchInput: HTMLInputElement | null = null;
   showArchived = false;
 
@@ -218,52 +218,51 @@ export class UIManager {
     this.app = app;
     this.dataManager = dataManager;
     this.createMainUI();
-    this.createConfirmDialog();
-    this.registerEscape();
+    this.registerEscLayer();
   }
 
   createMainUI(): void {
     if (this.mask && document.body.contains(this.mask)) return;
     this.mask = document.createElement('div');
     this.mask.id = 'review-mask';
-    Object.assign(this.mask.style, { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'var(--background-modifier-cover)', display: 'none' });
+    // 显隐为功能性内联（铁律 8 允许）；布局/配色已收敛 styles.css
+    this.mask.style.display = 'none';
     this.mask.style.zIndex = String(allocZ()); // ADR-0067：创建即发号（显示时 topifyZ 再抬）
     this.mask.onclick = () => this.hideMain();
 
     this.popup = document.createElement('div');
     this.popup.id = 'review-popup';
-    Object.assign(this.popup.style, { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'var(--background-primary)', borderRadius: '12px', boxShadow: '0 10px 40px rgba(0,0,0,0.2)', width: '90%', maxWidth: '800px', maxHeight: '80vh', display: 'none', flexDirection: 'column' });
+    this.popup.style.display = 'none';
     this.popup.style.zIndex = String(allocZ()); // ADR-0067：创建即发号
+    // 头行按钮统一规格由 core styles.css `.bz-win-head button` 承担（含关闭钮隐藏/全屏显示约定）
     const header = document.createElement('div');
     header.className = 'bz-win-head';
-    header.style.cssText = 'padding:16px 24px 8px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;';
     header.innerHTML = `
-      <h3 style="margin:0;font-size:18px;font-weight:600;color:var(--text-normal);">复习计划</h3>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <button id="review-btn-add" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">➕</button>
-        <button id="review-btn-start" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">▶️</button>
-        <button id="review-btn-search" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">🔍</button>
-        <button id="review-btn-archive" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">📁</button>
-        <button id="review-btn-settings" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;width:22px;height:26px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">⚙️</button>
-        <button id="review-btn-close" class="bz-win-close" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0;width:21px;height:25px;border-radius:4px;box-shadow:none;color:var(--text-muted);display:flex;align-items:center;justify-content:center;">❌</button>
+      <h3 class="bz-review-title">复习计划</h3>
+      <div>
+        <button id="review-btn-add" title="加入当前笔记">➕</button>
+        <button id="review-btn-start" title="开始复习">▶️</button>
+        <button id="review-btn-search" title="搜索">🔍</button>
+        <button id="review-btn-archive" title="已完成（归档）">📁</button>
+        <button id="review-btn-settings" title="设置">⚙️</button>
+        <button id="review-btn-close" class="bz-win-close" title="关闭">❌</button>
       </div>
     `;
     this.popup.appendChild(header);
 
     const searchContainer = document.createElement('div');
-    searchContainer.style.cssText = 'padding:0 24px 8px 24px;display:none;';
+    searchContainer.id = 'review-search-wrap';
+    searchContainer.style.display = 'none';
     const searchInput = document.createElement('input');
     searchInput.type = 'text';
     searchInput.className = 'review-search-input';
     searchInput.placeholder = '搜索笔记...';
-    searchInput.style.width = '100%';
     searchContainer.appendChild(searchInput);
     this.popup.appendChild(searchContainer);
     this.searchInput = searchInput;
 
     const container = document.createElement('div');
     container.id = 'review-entries-container';
-    container.style.cssText = 'flex:1;overflow-y:auto;padding:0 20px;min-height:200px;';
     this.popup.appendChild(container);
     this.entriesContainer = container;
     // ticket x5：列表键盘路径（方向键移动焦点 + 回车执行主操作；低频，Tab 原生可达无焦点陷阱）
@@ -308,7 +307,14 @@ export class UIManager {
         this.refreshPanel();
       }
     });
-    searchInput.addEventListener('input', () => this.refreshPanel());
+    // ticket 141：搜索防抖 180ms（原逐键 loadItems + 全量重渲染）
+    searchInput.addEventListener('input', () => {
+      if (this.searchTimer !== null) window.clearTimeout(this.searchTimer);
+      this.searchTimer = window.setTimeout(() => {
+        this.searchTimer = null;
+        void this.refreshPanel();
+      }, 180);
+    });
     header.querySelector('#review-btn-archive')!.addEventListener('click', () => {
       this.showArchived = !this.showArchived;
       const btn = header.querySelector('#review-btn-archive') as HTMLElement;
@@ -353,49 +359,6 @@ export class UIManager {
     if (this.popup) this.popup.style.display = 'none';
   }
 
-  createConfirmDialog(): void {
-    if (this.confirmMask && document.body.contains(this.confirmMask)) return;
-    this.confirmMask = document.createElement('div');
-    Object.assign(this.confirmMask.style, { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.3)', display: 'none' });
-    this.confirmMask.onclick = (e) => {
-      if (e.target === this.confirmMask) this.hideConfirm();
-    };
-    this.confirmPopup = document.createElement('div');
-    Object.assign(this.confirmPopup.style, { position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'var(--background-primary)', borderRadius: '12px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)', padding: '24px', maxWidth: '400px', width: '90%', display: 'none', flexDirection: 'column', alignItems: 'center', textAlign: 'center' });
-    this.confirmPopup.innerHTML = `
-      <h4 id="confirm-title" style="margin:0 0 12px 0;font-size:18px;font-weight:600;">确认删除</h4>
-      <p id="confirm-message" style="margin:0 0 20px 0;font-size:15px;color:var(--text-muted);"></p>
-      <div style="display:flex;gap:12px;width:100%;">
-        <button id="confirm-cancel" style="flex:1;padding:8px;border:none;border-radius:6px;background:var(--background-secondary);cursor:pointer;">取消</button>
-        <button id="confirm-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:var(--interactive-accent);color:var(--text-on-accent);cursor:pointer;font-weight:500;">确定</button>
-      </div>
-    `;
-    document.body.appendChild(this.confirmMask);
-    document.body.appendChild(this.confirmPopup);
-    this.confirmPopup.querySelector('#confirm-cancel')!.addEventListener('click', () => this.hideConfirm());
-    this.confirmPopup.querySelector('#confirm-ok')!.addEventListener('click', () => {
-      if (typeof this.confirmCallback === 'function') this.confirmCallback();
-      this.hideConfirm();
-    });
-  }
-
-  showConfirm(title: string, msg: string, onConfirm?: () => void): void {
-    this.createConfirmDialog();
-    if (!this.confirmPopup || !this.confirmMask) return;
-    this.confirmPopup.querySelector('#confirm-title')!.textContent = title || '确认';
-    this.confirmPopup.querySelector('#confirm-message')!.textContent = msg || '';
-    this.confirmCallback = onConfirm || null;
-    topifyZ(this.confirmMask, this.confirmPopup); // ADR-0067：显示即发号
-    this.confirmMask.style.display = 'block';
-    this.confirmPopup.style.display = 'flex';
-  }
-
-  hideConfirm(): void {
-    if (this.confirmMask) this.confirmMask.style.display = 'none';
-    if (this.confirmPopup) this.confirmPopup.style.display = 'none';
-    this.confirmCallback = null;
-  }
-
   /** 难度弹窗（源码 L312-330 逐字） */
   showDifficultyDialog(item: ReviewItem, onSelect?: (diff: string) => void): void {
     const old = document.querySelector('.difficulty-dialog');
@@ -405,12 +368,12 @@ export class UIManager {
     div.style.zIndex = String(allocZ()); // ADR-0067：一次性弹窗，创建即显示即发号
     // ticket s1：文件名经 escapeHtml 转义后拼 HTML
     div.innerHTML = `
-      <h4 style="margin:0 0 12px 0;font-size:16px;">标记复习：${escapeHtml(item.name)}</h4>
-      <button class="diff-btn" data-diff="again" style="border-left:3px solid #ff4757;">🟥 忘了（Again）</button>
-      <button class="diff-btn" data-diff="hard" style="border-left:3px solid #ff9f43;">🟧 困难（Hard）</button>
-      <button class="diff-btn" data-diff="good" style="border-left:3px solid #2ed573;">🟩 一般（Good）</button>
-      <button class="diff-btn" data-diff="easy" style="border-left:3px solid #7bed9f;">✅ 简单（Easy）</button>
-      <button class="diff-btn" data-diff="cancel" style="margin-top:12px;color:var(--text-muted);">取消</button>
+      <h4>标记复习：${escapeHtml(item.name)}</h4>
+      <button class="diff-btn" data-diff="again">🟥 忘了（Again）</button>
+      <button class="diff-btn" data-diff="hard">🟧 困难（Hard）</button>
+      <button class="diff-btn" data-diff="good">🟩 一般（Good）</button>
+      <button class="diff-btn" data-diff="easy">✅ 简单（Easy）</button>
+      <button class="diff-btn diff-btn-cancel" data-diff="cancel">取消</button>
     `;
     document.body.appendChild(div);
     div.style.display = 'block';
@@ -435,22 +398,16 @@ export class UIManager {
     }, 100);
   }
 
-  registerEscape(): void {
-    if (this.escapeRegistered) return;
-    this.escapeRegistered = true;
-    this.escapeHandler = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      if (this.confirmMask?.style.display === 'block') {
-        this.hideConfirm();
-        e.preventDefault();
-        return;
-      }
-      if (this.mask?.style.display === 'block') {
-        this.hideMain();
-        e.preventDefault();
-      }
-    };
-    document.addEventListener('keydown', this.escapeHandler);
+  /**
+   * ticket 141：ESC 走 escManager 层级注册（原 registerEscape 私挂 document keydown 迁移）。
+   * 主面板层：确认框场景由 openFlowDialog 自带的 'q3-confirm' 层盖在其上，无需自管。
+   */
+  private registerEscLayer(): void {
+    if (this.escHandle) return;
+    this.escHandle = escManager.register('review-main', {
+      isVisible: () => !!this.mask && this.mask.style.display === 'block',
+      close: () => this.hideMain(),
+    });
   }
 
   /** 刷新列表（源码 App.refreshPanel → Renderer.render） */
@@ -472,14 +429,14 @@ export class UIManager {
       filtered = filtered.filter((i) => i.name.toLowerCase().includes(lower));
     }
     if (!filtered.length) {
-      // ticket l6（解冻：新增空态文案）：空态补首步引导
+      // ticket l6（解冻：新增空态文案）：空态补首步引导；ticket 141 样式收敛 classes
       if (this.showArchived) {
-        container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-faint);font-size:16px;">没有已完成（归档）的复习</div>`;
+        container.innerHTML = `<div class="bz-review-empty">没有已完成（归档）的复习</div>`;
       } else {
         container.innerHTML = `
-          <div style="padding:40px 24px;text-align:center;color:var(--text-faint);font-size:16px;">
+          <div class="bz-review-empty">
             <div>没有复习计划 🎉</div>
-            <div style="margin-top:10px;font-size:13px;color:var(--text-muted);">打开任意笔记使用「加入复习计划」命令，或在 ⚙️ 设置中添加监听文件夹</div>
+            <div class="bz-review-empty-sub">打开任意笔记使用「加入复习计划」命令，或在 ⚙️ 设置中添加监听文件夹</div>
           </div>`;
       }
       return;
@@ -509,7 +466,7 @@ export class UIManager {
     // 双击打开对应笔记（用户拍板保留双击；单击打开收敛进抽屉）
     content.addEventListener('dblclick', () => {
       if (item.isMissing) {
-        notice('文件已删除');
+        notice('文件已删除', 'warning');
         return;
       }
       void this.openItemFile(item);
@@ -530,7 +487,6 @@ export class UIManager {
       const conf = document.createElement('span');
       conf.className = 'review-tag';
       conf.textContent = `🎯 ${Math.round((item.averageConfidence || 0) * 100)}%`;
-      conf.style.cursor = 'default';
       meta.appendChild(conf);
     }
 
@@ -546,10 +502,9 @@ export class UIManager {
         const rTag = document.createElement('span');
         rTag.className = 'review-tag';
         rTag.textContent = `R=${rPct}%`;
-        rTag.style.cursor = 'default';
-        if (r >= 0.9) rTag.style.background = '#52c41a22';
-        else if (r >= 0.7) rTag.style.background = '#faad1422';
-        else rTag.style.background = '#ff475722';
+        if (r >= 0.9) rTag.classList.add('bz-review-r-high');
+        else if (r >= 0.7) rTag.classList.add('bz-review-r-mid');
+        else rTag.classList.add('bz-review-r-low');
         meta.appendChild(rTag);
       }
     }
@@ -599,14 +554,15 @@ export class UIManager {
     return '⏳ 待定';
   }
 
-  /** 打开对应笔记文件（双击名称与抽屉「打开原文」共用） */
+  /** 打开对应笔记文件（双击名称与抽屉「打开原文」共用）
+   *  ticket 141：文件缺失通知改 warning（原 success 红绿颠倒） */
   private async openItemFile(item: ReviewItem): Promise<void> {
     this.hideMain();
     const file = this.app.vault.getAbstractFileByPath(item.filePath);
     if (file) {
       const leaf = this.app.workspace.getLeaf();
       await leaf.openFile(file as any);
-    } else notice('文件已删除', 'success');
+    } else notice('文件已删除', 'warning');
   }
 
   /**
@@ -688,17 +644,42 @@ export class UIManager {
       },
     });
 
-    // 移出复习计划（danger：先收抽屉再确认）
+    // 移出复习计划（danger：确认走 core openFlowDialog；ticket 141 通病 1 落地后 toast 挂撤销）
     actions.push({
       icon: 'trash-2',
       label: '移出复习计划',
       kind: 'danger',
       onClick: () => {
-        this.showConfirm('移出复习计划', `确定移出“${item.name}”？`, async () => {
-          await this.dataManager.removeItem(item.filePath);
-          await this.refreshPanel();
-          const { reviewApp } = await import('./app');
-          await reviewApp.applyReviewStyles(this.app);
+        void openFlowDialog({
+          title: '移出复习计划',
+          message: `确定移出“${item.name}”？`,
+          actions: [
+            { label: '取消', value: 'cancel' },
+            { label: '确定', value: 'ok', cta: true },
+          ],
+        }).then(async (v) => {
+          if (v !== 'ok') return;
+          try {
+            await this.dataManager.removeItem(item.filePath);
+            await this.refreshPanel();
+            const { reviewApp } = await import('./app');
+            await reviewApp.applyReviewStyles(this.app);
+            // ticket 141 通病 1：原条目（含阶段/排期/历史）重新插回，进度不丢
+            notifyUndo(`已移出「${item.name}」`, () => {
+              void (async () => {
+                try {
+                  await this.dataManager.restoreItem(item);
+                  await this.refreshPanel();
+                  const { reviewApp: ra } = await import('./app');
+                  await ra.applyReviewStyles(this.app);
+                } catch (e) {
+                  notifySaveError(e, '恢复复习条目');
+                }
+              })();
+            });
+          } catch (e) {
+            notifySaveError(e, '移出复习条目');
+          }
         });
       },
     });
@@ -711,7 +692,7 @@ export class UIManager {
     const head = document.createElement('div');
     head.className = 'bz-item-sheet-entry';
     const body = document.createElement('div');
-    body.style.cssText = 'display:flex; align-items:flex-start; gap:10px;';
+    body.className = 'bz-review-sheet-body';
 
     const emoji = document.createElement('span');
     emoji.className = 'bz-item-sheet-emoji';
@@ -719,7 +700,7 @@ export class UIManager {
     body.appendChild(emoji);
 
     const info = document.createElement('div');
-    info.style.cssText = 'flex:1; min-width:0;';
+    info.className = 'bz-review-sheet-info';
     const title = document.createElement('div');
     title.className = 'bz-item-sheet-title';
     title.textContent = item.name.replace(/^《|》$/g, '');
@@ -737,21 +718,19 @@ export class UIManager {
   /** 销毁（卸载清理） */
   destroy(): void {
     this.hideMain();
-    this.hideConfirm();
-    // P2：注销 document keydown（ESC 处理器），防卸载后残留
-    if (this.escapeHandler) {
-      document.removeEventListener('keydown', this.escapeHandler);
-      this.escapeHandler = null;
+    if (this.searchTimer !== null) {
+      window.clearTimeout(this.searchTimer);
+      this.searchTimer = null;
     }
-    this.escapeRegistered = false;
+    // ticket 141：注销 escManager 层（原 document keydown 处理器清理迁移）
+    if (this.escHandle) {
+      this.escHandle.unregister();
+      this.escHandle = null;
+    }
     if (this.mask) this.mask.remove();
     if (this.popup) this.popup.remove();
-    if (this.confirmMask) this.confirmMask.remove();
-    if (this.confirmPopup) this.confirmPopup.remove();
     this.mask = null;
     this.popup = null;
-    this.confirmMask = null;
-    this.confirmPopup = null;
     this.entriesContainer = null;
   }
 }
