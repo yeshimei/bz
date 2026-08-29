@@ -528,6 +528,7 @@ export class UIManager {
     this.filteredNotes = list;
     this.currentDisplayCount = 0;
     this.allLoaded = false;
+    this.rebuildDomainBar(); // 活跃态随筛选重算（切「全部」/单域后高亮必须同步，勿漏）
     this.renderList(true);
   }
 

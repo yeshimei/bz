@@ -178,6 +178,16 @@ describe('文献盒 UI（ticket 136）', () => {
     // 回到全部（类型分类栏已移除，ticket 138 §3.1；领域筛选独立成立）
     domainBtns[0].click();
     await vi.waitFor(() => expect(document.querySelectorAll('.bz-lit-card').length).toBe(3));
+    // 高亮同步回归（applyFilter 内 rebuildDomainBar）：切回「全部」后 active 必须回到全部按钮
+    const bar2 = document.getElementById('literature-sitebar')!;
+    const btns2 = Array.from(bar2.querySelectorAll<HTMLElement>('button'));
+    expect(btns2[0].classList.contains('active')).toBe(true); // 全部高亮
+    expect(btns2[1].classList.contains('active')).toBe(false); // 物理不再高亮
+    // 再次点物理 → 高亮切到物理；再点物理（已选中）→ 回退全部
+    btns2[1].click();
+    await vi.waitFor(() => expect(bar2.querySelectorAll('button')[1].classList.contains('active')).toBe(true));
+    bar2.querySelectorAll('button')[1].click();
+    await vi.waitFor(() => expect(bar2.querySelectorAll('button')[0].classList.contains('active')).toBe(true));
   });
 
   it('🔍 搜索：切换显隐 + 300ms 防抖按标题/简介过滤', async () => {
