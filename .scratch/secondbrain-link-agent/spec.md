@@ -1,6 +1,6 @@
 # 第二大脑自动双链管线（link agent）设计 spec
 
-状态：已评审定稿（2026-08，六轮设计交流 + 用户逐项拍板）；v1.1 增量（ticket 115：启动存量补链 + 批量补链命令）+ v1.2 语义修订（ticket 116：范围只管目标侧 / 候选来源 = 白名单索引库 / 两目录字段默认空、空=什么也不录）+ v1.4 增量（ticket 119：正文大改自动重跑——基准哈希 + 修改监听）+ v1.5 数据整合（ticket 120：queue/state 并入 secondbrain.json link 段、vec 改名 secondbrain.vec、store-file 串行写链 + 一次性迁移）含内
+状态：已评审定稿（2026-08，六轮设计交流 + 用户逐项拍板）；v1.1 增量（ticket 115：启动存量补链 + 批量补链命令）+ v1.2 语义修订（ticket 116：范围只管目标侧 / 候选来源 = 白名单索引库 / 两目录字段默认空、空=什么也不录）+ v1.4 增量（ticket 119：正文大改自动重跑——基准哈希 + 修改监听）+ v1.5 数据整合（ticket 120：queue/state 并入 secondbrain.json link 段、vec 改名 secondbrain.vec、store-file 串行写链 + 一次性迁移）+ v1.6 冲突自愈（ticket 152：Syncthing 冲突文件段级 union + .vec 行级重排，见「冲突文件自愈」节）含内
 归属域：secondbrain
 前置依赖：ticket 110（切块剥离 frontmatter——向量候选质量的前提）
 
@@ -75,6 +75,16 @@ related:
 - queue：存**事件**不存半成品；同 path 重入队合并并刷新 hash；消费成功即移除；失败保留待下次；对应文件已删除的条目清理时顺带移除；
 - state：键 = vault 内笔记路径，值 = 该篇**最近一次成功建链时**的内容哈希（全文 `computeHash`）+ 时间戳；**只记成功**；用途 = 修改事件判定（哈希相同 → 跳过，不同/无基准 → 重跑并重建基准）；
 - 单文件位于 STORAGE 目录（不在 `.stignore` 排除范围），随 Syncthing 自然跨设备流动；向量二进制独立 `secondbrain.vec`（原 secondbrain_vectors.vec 改名）；meta/panel/link 四段写方共用一条串行写链（store-file `mutateStore`），杜绝并发交错覆盖。
+
+### 冲突文件自愈（v1.6/ticket 152）
+
+Syncthing 对「同步窗口内两端都修改的同一文件」必然保留 `secondbrain.sync-conflict-<时间戳>-<设备ID>.json/.vec` 副本（写前比对止血后仍发生——两端各自 refresh 索引不同新笔记，内容真实分叉，见 issues/152 诊断）。store-file **每次读取时**扫描 storageDir 并自动收敛：
+
+- **JSON 段级 union**（`mergeStoreWithConflict` 纯函数）：meta.notes 键并集/同 key 取 mtime 大者、panel 取 generatedAt 大者、link.queue 按 path 去重并集（主序在前）、link.state 键并集取 linkedAt 大者、chatHistory 按 role+content 去重并集（超 `CHAT_HISTORY_LIMIT` 截断最旧）；
+- **.vec 行级重排**（`mergeVecByMeta`）：行序不变式 = `meta.notes 键序 × 各篇 chunks 数`；合并后 meta 为权威，逐 path 从「mtime 大者侧」的 vec 拷贝行段；meta.notes 未变（冲突仅 link/panel/chatHistory）→ 主 .vec 直接复用；
+- **兜底**：无同批冲突 meta / 维度不符 / 行不足 → 删向量文件，下次 refresh 走既有 `indexIncomplete` 全量重建（ticket 107；元数据仍在，数据不丢）；
+- 合并后写回主文件并删除冲突文件；损坏冲突 JSON 保留待人工处置（不删不合并，console 留痕）；无冲突文件 → 仅一次 `adapter.list` 零行为；
+- 全程在串行写链内（`readStoreRaw` 出口统一收敛，返回合并后结构），与写入互斥；`adapter.list` 不可用 → 静默跳过。
 
 ## 核心流程
 
