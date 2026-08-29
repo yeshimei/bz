@@ -707,3 +707,19 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
   断点续跑命中压缩缓存恒为采纳。
 - **验收**：tools `node --test` 全绿（新增 needsCompressFallback 单测：更大回退/更小·相等·stat 异常不回退）；
   bz 侧 tsc + 全量测试 + 构建不回归；全局安装副本同步 core.js。
+
+### 视频录入批量按钮纯 emoji（ticket 148，用户拍板）+ --batch base64 传输（ticket 147）
+
+> 文献盒第四轮小改：① 批量按钮去文字只留 emoji（▶️/⏹），区分语义移 title hover；② 修复批量处理
+> 整批失败——`--batch` JSON 经 shell（.cmd shim 需 shell:true）启动时引号/空格被 cmd 对消，
+> argv 损坏报「Expected property name at position 1」，改 base64 传输。
+
+- **按钮纯 emoji（148，src/literature/ui.ts）**：空闲 `▶️`（title「批量处理（桌面端）」，无工作禁用）/
+  运行中 `⏹`（title「中止批量处理」）；仅失败项续跑 `⏹`（title「中止整批（处理失败任务中）」）；
+  移动端整钮隐藏不变；`batchAbortLabel` 逻辑与 `#lit-btn-video-run` 契约不动。
+- **base64 传参（147，tools/bili-downloader + processor.ts）**：core.js `decodeBatchArg(raw)`——
+  `b64:` 前缀 base64 解码后再 JSON.parse，无前缀直解析（手动命令行兼容）；cli.js 改用它；
+  插件 `resolveBatchSpawn` 把 taskJson 经 `Buffer` 转 base64 以 `b64:` 下发（无引号无空格，shell 安全）。
+- **验收**：tools `node --test` 全绿（decodeBatchArg 单测：b64 解码/直传解析/双形态坏 JSON 抛错）；
+  bz 侧 processor.test.ts spawn 参数断言改 b64 解码、ui.test.ts 按钮断言改纯 emoji + title；
+  tsc + 全量测试 + 构建全绿；全局安装副本同步 core.js/cli.js。

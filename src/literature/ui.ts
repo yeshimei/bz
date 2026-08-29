@@ -12,7 +12,7 @@
  *   复制原文链接[仅视频有 url]/删除 danger+flow-dialog 确认——删除视频笔记时同步清理
  *   literature.json 指向该笔记的任务记录）；打开主面板时调 backfillNotes() 补全旧笔记。
  * - 视频录入面板（showVideoEntry，任务队列）：原 bili-tasks 面板整体搬入，去掉 ⚙️ 设置 /
- *   ⬇️ 下载按钮；保留 ➕ 添加 / 单钮（▶️ 批量处理 ↔ 运行中 ⏹ 终止，ticket 146）/ 🕘 历史 / ❌；
+ *   ⬇️ 下载按钮；保留 ➕ 添加 / 单钮（纯 emoji ▶️ ↔ ⏹，文字移到 title hover，ticket 148）/ 🕘 历史 / ❌；
  *   移动端仅 ➕ 添加 + ❌（ticket 139/144：批量按钮与历史全部隐藏，移动端无处理能力）。
  *   批处理调 BatchRunner.runAll（work = 非 archived 且 pending/failed），事件回调驱动行内进度/
  *   步骤时间线/完成态文案（STEP_DONE_MAP 覆盖「AI 生成文献笔记中」「笔记落盘中」）+ 整批通知。
@@ -39,8 +39,9 @@
  * 历史去标题（工具栏=计数+❌）+ 组头去「UP主」前缀与「N 条笔记」计数、笔记行去目录去 .md（shortNoteName）、
  * 时间用 formatRelativeTime 相对显示（ticket 143）。
  * ticket 146（用户拍板三改）：① 主面板卡片加大标题/简介/日期间距，日期改 formatRelativeTime 相对显示；
- * ② 视频录入去独立 ⏹ 终止按钮改为单钮态机——空闲「▶️ 批量处理」，运行中该按钮即「⏹ 终止」
- * （仅失败项续跑时「⏹ 终止整批」），处理完成有失败仍可再点续跑，移动端整钮隐藏。
+ * ② 视频录入去独立 ⏹ 终止按钮改为单钮态机（ticket 146；ticket 148 起按钮纯 emoji、文字移到
+ * title hover）：空闲「▶️」，运行中该按钮即「⏹」（仅失败项续跑时 title 提示「中止整批」），
+ * 处理完成有失败仍可再点续跑，移动端整钮隐藏。
  */
 import type { App } from 'obsidian';
 import type { SettingsSchema } from '../core/settings-schema';
@@ -885,7 +886,7 @@ export class UIManager {
       <h3 class="bz-lit-title">视频录入</h3>
       <div class="bz-lit-head-btns">
         <button id="lit-btn-video-add" title="添加转文献任务">➕</button>
-        <button id="lit-btn-video-run" class="bz-lit-run-btn" title="批量处理（桌面端）">▶️ 批量处理</button>
+        <button id="lit-btn-video-run" class="bz-lit-run-btn" title="批量处理（桌面端）">▶️</button>
         <button id="lit-btn-video-history" title="历史">🕘</button>
         <button id="lit-btn-video-close" class="bz-win-close" title="关闭">❌</button>
       </div>`;
@@ -914,7 +915,7 @@ export class UIManager {
     const p = this.videoPopup;
     if (!p) return;
     q<HTMLButtonElement>(p, '#lit-btn-video-add')!.onclick = () => this.showAddDialog();
-    // ticket 146 单钮态机：运行中该按钮即「终止」控制（onAbortBatch），空闲即「批量处理」
+    // ticket 146 单钮态机：运行中该按钮即「终止」控制（onAbortBatch），空闲即「批量处理」（ticket 148 起纯 emoji）
     q<HTMLButtonElement>(p, '#lit-btn-video-run')!.onclick = () => {
       if (BatchRunner.running) void this.onAbortBatch();
       else void this.onRunBatch();
@@ -982,8 +983,9 @@ export class UIManager {
   }
 
   /**
-   * ticket 146 单钮态机（去独立 ⏹ 按钮）：空闲 = 「▶️ 批量处理」（无工作禁用；完成有失败仍在 → 可再点续跑）；
-   * 运行中 = 该按钮即终止控制——整批「⏹ 终止」/ 仅失败项续跑「⏹ 终止整批」；移动端整钮隐藏（isMobileEnv）。
+   * ticket 146 单钮态机（去独立 ⏹ 按钮；ticket 148 起按钮纯 emoji、文字移到 title hover）：
+   * 空闲 = 「▶️」（无工作禁用；完成有失败仍在 → 可再点续跑）；运行中 = 该按钮即终止控制「⏹」——
+   * 整批 title「中止批量处理」/ 仅失败项续跑 title「中止整批（处理失败任务中）」；移动端整钮隐藏（isMobileEnv）。
    */
   private _syncRunButton(tasks: LiteratureTask[]): void {
     if (!this.videoPopup) return;
@@ -994,11 +996,12 @@ export class UIManager {
     if (running) {
       run.disabled = false; // 运行中按钮 = 终止控制，必须可点
       const retry = this.batchAbortLabel === '终止整批';
-      run.textContent = retry ? '⏹ 终止整批' : '⏹ 终止';
+      // ticket 148 纯 emoji：文字移到 title 提示，按钮只显示图形（终止/终止整批同图，靠 title 区分）
+      run.textContent = '⏹';
       run.title = retry ? '中止整批（处理失败任务中）' : '中止批量处理';
     } else {
       run.disabled = !hasWork;
-      run.textContent = '▶️ 批量处理';
+      run.textContent = '▶️';
       run.title = '批量处理（桌面端）';
     }
   }

@@ -1,3 +1,13 @@
+## 2026-08-30 文献盒第四轮：批量按钮纯 emoji + --batch base64 传输修复（ticket 148 + 147）
+
+**状态：用户实测批量处理整批失败（--batch JSON 经 shell 引号被对消）→ 修复 + 按钮去文字；tools 50 测试 + bz 全量 221 文件/3534 用例绿 + tsc 0**
+
+- ✅ **ticket 147 修复 --batch JSON**：根因 `resolveBatchSpawn` shell:true 下发含引号空格 JSON，Windows cmd 对消引号致 argv 损坏（报 position 1 JSON 错）。方案：core.js 加 `decodeBatchArg`（`b64:` 前缀 base64 解码 / 无前缀直解析双形态），cli.js 改用它；插件侧 taskJson 经 Buffer base64 后 `b64:` 前缀下发——base64 无引号无空格，shell 全程安全
+- ✅ **ticket 148 批量按钮纯 emoji**（用户拍板「不要有文字显示，单纯的 emoji」）：空闲 `▶️`/运行中 `⏹`，终止 vs 终止整批区分移到 title hover（中止批量处理 / 中止整批（处理失败任务中））；移动端整钮隐藏不变，`#lit-btn-video-run` 契约与 `batchAbortLabel` 逻辑不动
+- ✅ **测试**：tools `node --test` 50 全绿（新增 decodeBatchArg 单测）；processor.test.ts 两处 spawn 参数断言改 b64 解码；ui.test.ts 按钮断言改纯 emoji + 补 title 断言；全量 221 文件/3534 用例绿 + tsc 0
+- 📄 文档：issues/147 + issues/148 立项；CONTEXT.md「B站下载」「文献盒」词条补 b64/纯 emoji；spec 尾部两节；PROGRESS 本条目
+- ⏳ 收尾：构建部署（main.js/styles.css 同步）→ 全局 @jwbz/bili-downloader 副本同步 core.js/cli.js（hash 校验）
+
 ## 2026-08-28 路径设置行空态/已选态翻转 + 选择器列表排序（ticket 133；master 84bca3c）
 
 **状态：路径行空态只显紧凑次级按钮、已选态隐藏按钮且 chip 可点重开选择器、选择器列表「已选置顶→库根→整体反转（中文在前英文在后）」；全量 209 文件/3297 用例绿 + tsc 0**
