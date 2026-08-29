@@ -447,7 +447,10 @@ export const reviewApp = {
     });
 },
 
-  /** 批量生成题目（返回 {filePath: questions[]} 映射） */
+  /** 批量生成题目（返回 {filePath: questions[]} 映射）
+   *  ticket 156：每次逾期复习都出**新题**——先清空该笔记存量题（上轮答错的题残留会再次出现）
+   *  再 ensureQuestions 全新生成（对齐待重做队列 regenerateQuestions 的「先清后生」范式）；
+   *  生成失败时 ensureQuestions 不写入，getQuestionsForNote 读不到题该笔记自然跳过。 */
   async batchGenerateQuestions(items: ReviewItem[]): Promise<Record<string, any[]>> {
     const quiz: any = await this.getQuiz();
     if (!quiz || !quiz.ai) {
@@ -456,10 +459,11 @@ export const reviewApp = {
       return {};
     }
 
-    const notePaths = items.map((i) => i.filePath);
-
-    // 复用做题家的 ensureQuestions：自动检查 quiz.json，只生成缺失的
-    await quiz.ensureQuestions(notePaths);
+    // 清空本轮各笔记存量题（上轮残留=答错的题，用户拍板下次应出新题）
+    for (const item of items) {
+      await quiz.manager.saveQuestionsForNote(getApp(), item.filePath, []);
+    }
+    await quiz.ensureQuestions(items.map((i) => i.filePath));
 
     // 从 quiz.json 读取所有题目，补上 notePath/_index（renderModal 需要）
     // 注意：getQuestionsForNote 签名为 (app, notePath)，缺参会导致 notePath=undefined 读不到题目

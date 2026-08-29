@@ -238,10 +238,12 @@ describe('autoJumpOverdue：做题决定难度开关', () => {
     const getQSpy = vi.fn(async (_app: any, notePath: string) =>
       notePath === 'A.md' ? [{ question: 'Q', options: ['a', 'b', 'c', 'd'], correctIndices: [0] }] : null
     );
+    // ticket 156：批量出题先清空存量题（上次答错残留）再生成新题
+    const saveQSpy = vi.fn(async () => {});
     (reviewApp as any)._quizOverride = {
       ai: {},
       ensureQuestions: async () => {},
-      manager: { getQuestionsForNote: getQSpy },
+      manager: { getQuestionsForNote: getQSpy, saveQuestionsForNote: saveQSpy },
     };
     const spyQL = vi.spyOn(reviewApp, 'quizReviewLoop').mockResolvedValue(undefined);
     const spyRL = vi.spyOn(reviewApp, 'reviewLoop').mockResolvedValue(undefined);
@@ -251,6 +253,8 @@ describe('autoJumpOverdue：做题决定难度开关', () => {
     // 参数错位 bug 回归：必须以 (app, notePath) 双参调用，否则读不到题目
     expect(getQSpy.mock.calls[0][0]).toBeTruthy(); // app
     expect(getQSpy.mock.calls[0][1]).toBe('A.md'); // notePath
+    // ticket 156：出题前先清空该笔记存量题（下次逾期复习出新题）
+    expect(saveQSpy).toHaveBeenCalledWith(expect.anything(), 'A.md', []);
   });
 
   it('关闭 → reviewLoop（普通复习，不弹做题）', async () => {
@@ -292,7 +296,7 @@ describe('autoJumpOverdue：做题决定难度开关', () => {
     (reviewApp as any)._quizOverride = {
       ai: {},
       ensureQuestions: async () => {},
-      manager: { getQuestionsForNote: async () => [] },
+      manager: { getQuestionsForNote: async () => [], saveQuestionsForNote: async () => {} },
     };
     const spyQL = vi.spyOn(reviewApp, 'quizReviewLoop').mockResolvedValue(undefined);
     const spyRL = vi.spyOn(reviewApp, 'reviewLoop').mockResolvedValue(undefined);

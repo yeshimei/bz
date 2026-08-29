@@ -29,7 +29,6 @@
       }
       .bz-quiz-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
       .bz-quiz-title { font-size: 15px; font-weight: 600; }
-      .bz-quiz-stats { font-size: 13px; color: var(--text-muted); }
       .bz-quiz-question { font-size: 17px; font-weight: 500; margin-bottom: 20px; color: var(--text-normal); }
       .bz-quiz-options { display: flex; flex-direction: column; gap: 6px; }
       .bz-quiz-option-text { flex: 1; }

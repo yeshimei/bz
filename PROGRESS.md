@@ -144,3 +144,13 @@
 - [x] `showTermEntry(term)` 预填非空自动生成（选中文字打开即生成）；`termHasDraft` 态机：生成成功输入行按钮「生成」→「重新生成」
 - [x] 底部按钮「重新生成」→「总结」（`#lit-term-regenerate` id 契约不变）：`summarizeTermSummary` AI 精简预览正文回填，所见即所得落入确认写入；无预览提示先生成，`termSummarizing` 防并发
 - [x] 测试：literature 121 用例绿（ui 622/732 改写 + 总结落盘新用例、note-gen 精简用例、index-cov 打桩断言自动生成）+ tsc 0 错
+
+## Ticket 156 — 做题家：答对 0.8s 亮绿跳题 + 去右上角统计 + 逾期复习出新题
+
+**状态：已交付**（2026-08-30）
+
+- [x] 规格：`issues/156-quiz-correct-jump-stats-newq.md`（spec.md「做题家作答节奏与出题语义」节同步）
+- [x] 答对延时 800ms 自动跳题（亮绿反馈窗口；放弃/强制关闭清除延时 + `_sessionActive` 守卫防僵尸弹窗）
+- [x] 删头部 `.bz-quiz-stats` 对错统计（元素/字段/方法/样式）；结算面板统计保留
+- [x] `batchGenerateQuestions` 改「先清后生」：逐笔记清空 quiz.json 存量题再全新生成（上轮错题不再重考）
+- [x] 测试：quiz+review 187 用例绿（答对类补延时等待、新增延时竞态用例、批量出题断言先清空）+ tsc 0 错
