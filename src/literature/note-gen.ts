@@ -1,6 +1,8 @@
 /**
  * 文献笔记生成（literature 域，ADR-0071：AI 回迁 bz 插件侧）
- * - 视频文献（type: video，frontmatter 九键：title/tags/summary/url/date/author/videoTitle/type/domain，正文=润色转录）
+ * - 视频文献（type: video，frontmatter 九键：title/tags/summary/url/date/author/videoTitle/type/domain，
+ *   正文 = 润色转录 + 视频双链——ticket 151 补回：videoPath 非空时正文尾部嵌 `![[路径]]`，
+ *   ADR-0066「保留视频原件」关（keepVideo=false）时 videoPath 为 null，无视频段）
  * - 术语文献（type: term，frontmatter 五键：title/type/domain/term/date，正文=一段百科式简介）
  * - 旧笔记自动补全（type 启发式 + domain AI，补过落库不重复）
  */
@@ -96,7 +98,8 @@ export async function writeUniqueNote(dir: string, baseName: string, content: st
 }
 
 /**
- * 生成视频文献笔记：元数据（title/tags/summary/domain）+ 分块润色 → 九键 frontmatter 落盘。
+ * 生成视频文献笔记：元数据（title/tags/summary/domain）+ 分块润色 → 九键 frontmatter 落盘；
+ * videoPath 非空时正文尾部附视频双链（ADR-0066/0073「正文 = 润色 + 视频双链」，ticket 151 补回）。
  * 返回 vault 相对笔记路径。
  */
 export async function generateVideoNote(opts: {
@@ -104,6 +107,7 @@ export async function generateVideoNote(opts: {
   videoTitle: string;
   url: string;
   uploader: string;
+  videoPath?: string | null;
 }): Promise<string> {
   const ai = createAI();
   const s = tryGetSettings();
@@ -137,6 +141,11 @@ ${c}`,
     polished.push(String(p || '').trim());
   }
   const whole = polished.join('');
+  // 视频双链（ticket 151 补回，ADR-0066）：CLI 交付的 mp4 vault 相对路径 → 正文尾部嵌 `![[…]]`；
+  // keepVideo=false（未交付）时 videoPath 为 null → 无视频段
+  const videoSection = opts.videoPath
+    ? `## 视频\n\n![[${String(opts.videoPath).replace(/\\/g, '/')}]]`
+    : null;
   const fm = [
     '---',
     `title: ${quoteYaml(title)}`,
@@ -151,7 +160,7 @@ ${c}`,
     `domain: ${quoteYaml(domain)}`,
     '---',
   ].join('\n');
-  const body = [fm, whole].filter(Boolean).join('\n\n');
+  const body = [fm, whole, videoSection].filter(Boolean).join('\n\n');
   return writeUniqueNote(String(s.literatureDirectory || '文献盒'), sanitizeMdTitle(title), body);
 }
 
