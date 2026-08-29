@@ -44,6 +44,24 @@ test('buildFileName：裁切/压缩标记组合（时间恒显小时位）', () 
   assert.equal(core.buildFileName({ ...base, page: 'P2', trimmed: true, start: 10, end: 80 }), '测试视频_BV1GJ411x7h7_P2_clip_00-00-10-00-01-20.mp4')
 })
 
+test('needsCompressFallback：压缩件严格更大才回退（相等/更小/stat 异常都不回退）', () => {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'bili-fallback-'))
+  const small = path.join(d, 'small.bin')
+  const big = path.join(d, 'big.bin')
+  const equal = path.join(d, 'equal.bin')
+  fs.writeFileSync(small, Buffer.alloc(10))
+  fs.writeFileSync(big, Buffer.alloc(20))
+  fs.writeFileSync(equal, Buffer.alloc(10))
+  // 压缩件 > 压缩输入 → 回退（采纳原文件）
+  assert.equal(core.needsCompressFallback(small, big), true)
+  // 压缩件 <= 压缩输入 → 不回退（采纳压缩件）
+  assert.equal(core.needsCompressFallback(big, small), false)
+  assert.equal(core.needsCompressFallback(small, equal), false)
+  // 输入文件缺失（stat 异常）→ 保守不回退
+  assert.equal(core.needsCompressFallback(path.join(d, 'no.bin'), big), false)
+  fs.rmSync(d, { recursive: true, force: true })
+})
+
 test('uniquePath：重名自动加序号', () => {
   const f = path.join(tmp, '重名.mp4')
   fs.writeFileSync(f, 'x')

@@ -391,6 +391,11 @@ async function trimVideo({ inPath, outPath, ffmpeg = 'ffmpeg', ffprobe = 'ffprob
   throw new Error(`压缩失败:${r3.err || '产物校验未通过'}`)
 }
 
+// 压缩回退判定：压缩件体积严格大于压缩输入 → 压缩无收益，回退沿用输入（stat 异常保守采纳压缩件）
+function needsCompressFallback(inPath, outPath) {
+  try { return fs.statSync(outPath).size > fs.statSync(inPath).size } catch { return false }
+}
+
 // ---- 合并参数构造（纯函数）----
 function buildMergeArgs({ mode, listPath, outPath, crf = 23, faststart = false }) {
   const header = ['-y', '-f', 'concat', '-safe', '0', '-i', listPath]
@@ -724,20 +729,31 @@ async function runBatch(task, deps = {}) {
   const opts = (task && task.options) || {}
   const compressEnabled = opts.compress !== false
   const crf = Math.min(28, Math.max(18, Number(opts.crf) || 23))
+  /** 实际采纳压缩件（压缩回退时为 false——交付文件名不带 _crf 标记；断点续跑命中压缩缓存恒为 true） */
+  let compressedAdopted = false
   if (compressEnabled) {
     onStep('压缩中')
     const compressCache = resumeCompressedPath(conf, bvid, playCid, crf, rStart, rEnd)
     if (fs.existsSync(compressCache)) {
       srcForDeliver = compressCache
       resumeCompressUsed = true
+      compressedAdopted = true
     } else {
       const prev = srcForDeliver
       const compressPath = path.join(tmpDir, `bili_${Date.now()}_crf${crf}.mp4`)
       await trimVideo({ inPath: srcForDeliver, outPath: compressPath, ffmpeg, ffprobe, start: 0, end: srcDur, crf, totalMs: srcDur * 1000, onProgress: p => pg({ phase: 'compress', pct: Number.isFinite(p.percent) ? p.percent : null }) })
-      // 压缩消费了中间剪辑临时件（非原件、非缓存件）→ 立即删，避免临时目录泄漏
-      if (prev !== originalPath && !resumeClipUsed) { try { fs.unlinkSync(prev) } catch {} }
-      srcForDeliver = compressPath
-      try { fs.mkdirSync(path.dirname(compressCache), { recursive: true }); fs.copyFileSync(compressPath, compressCache) } catch {}
+      // 压缩回退（用户拍板；原网页版旧有、CLI 迁移时移除，本次补回）：压缩件体积严格大于压缩输入（原件/剪辑件）
+      // → 压缩无收益，丢弃压缩件、沿用输入交付（不写压缩缓存、文件名不带 _crf 标记）；stat 异常保守采纳压缩件。
+      if (needsCompressFallback(prev, compressPath)) {
+        try { fs.unlinkSync(compressPath) } catch {}
+        srcForDeliver = prev
+      } else {
+        // 压缩消费了中间剪辑临时件（非原件、非缓存件）→ 立即删，避免临时目录泄漏
+        if (prev !== originalPath && !resumeClipUsed) { try { fs.unlinkSync(prev) } catch {} }
+        srcForDeliver = compressPath
+        compressedAdopted = true
+        try { fs.mkdirSync(path.dirname(compressCache), { recursive: true }); fs.copyFileSync(compressPath, compressCache) } catch {}
+      }
     }
   }
 
@@ -791,7 +807,7 @@ async function runBatch(task, deps = {}) {
       page: selPage && pageNum > 1 ? pageNum : '',   // 第 2 P 起文件名带 _N
       trimmed: seg ? !seg.full : false,
       start: seg ? seg.start : 0, end: seg ? seg.end : info.duration,
-      duration: info.duration, compressed: compressEnabled, crf,
+      duration: info.duration, compressed: compressedAdopted, crf,
     })
     finalPath = uniquePath(path.join(outDirAbs, name))
     fs.copyFileSync(srcForDeliver, finalPath)
@@ -811,7 +827,7 @@ module.exports = {
   UA, MIXIN_KEY_ENC_TAB, getMixinKey, fetchJsonImpl, getWbiKeys, wbiSign, getViewInfo, getPlayUrls,
   lastLine, qualityLabel, sanitizeName, extractBv, fmtTime, fmtDuration, fmtSec, parseTimeInput, buildFileName,
   parseVideo, fmtEta, downloadStream, mergeStreams, downloadVideo,
-  buildTrimArgs, runFfmpeg, probeDuration, validateClip, trimVideo,
+  buildTrimArgs, runFfmpeg, probeDuration, validateClip, trimVideo, needsCompressFallback,
   buildMergeArgs, writeConcatList, mergeSegments,
   loadCookies, saveCookies, readJson, writeJson, uniquePath,
   abortAll, resetAbort, trackProc, runPython, PY_TRANSCRIBE, parseTranscriptUnits,

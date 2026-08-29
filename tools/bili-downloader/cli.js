@@ -7,7 +7,7 @@
 //       options（bz「文献盒」设置全量下发，全部可选）：quality、keepVideo、outputDir、compress（缺省开）、
 //       crf（缺省 23，范围 18-28）、vaultPath、ffmpegPath、ffprobePath、pythonPath、whisperModel、cacheDir、cacheRetentionDays
 //       stdout 逐步打 [bz-step] 行（解析中 → 下载中 → 剪辑中(有起止才跑) → 压缩中(缺省开) → 转文字中
-//       → 交付中(keepVideo=false 时跳过)）；
+//       → 交付中(keepVideo=false 时跳过)）；压缩中若压缩件比原文件还大自动回退用原文件（ticket 145）；
 //       进度打 [bz-p] 行（{"phase":"download|trim|compress|transcribe","pct":0-100|null}，300ms 节流，pct=null 为不确定）；
 //       成功末尾一行 [bz-result] {"transcript":"<转录临时文件绝对路径>","video":"CONFIG/APPENDIX/xxx.mp4"|null}
 //       （transcript = UTF-8 转录全文临时文件，插件读取后自删；video 为 vault 相对/绝对路径，null = 未交付）并 exit 0；
