@@ -723,3 +723,17 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - **验收**：tools `node --test` 全绿（decodeBatchArg 单测：b64 解码/直传解析/双形态坏 JSON 抛错）；
   bz 侧 processor.test.ts spawn 参数断言改 b64 解码、ui.test.ts 按钮断言改纯 emoji + title；
   tsc + 全量测试 + 构建全绿；全局安装副本同步 core.js/cli.js。
+
+### 文献盒留空键不下发回退 rc（ticket 149，用户实测转写失败）
+
+> 用户批量处理在语音转写环节整批失败，提示「检查设置里的 Python 路径与 Whisper 模型」，但设置里
+> 两项留空（desc 承诺「留空跟随工具配置」）——空串覆盖 rc/DEFAULTS 兜底的代码 bug。
+
+- **processor.ts**：`nonEmpty()` helper——pythonPath/outputDir/ffmpegPath/ffprobePath/whisperModel/cacheDir
+  留空时返回 undefined（JSON.stringify 省略不下发），core.js `{...deps.conf, ...options}` 合并保留 rc
+  兜底（本机 rc pythonPath 存在）；显式填写仍下发覆盖。vaultPath/quality/keepVideo/compress/crf/cacheRetentionDays 不变。
+- **ui.ts humanizeError** whisper 分支细分：未配置 pythonPath（rc 也无）→「语音转写未配置…」；
+  faster-whisper 未安装（pip install 提示）→「语音转写失败：faster-whisper 未安装，请在目标 Python 中
+  运行 pip install faster-whisper」；其它 whisper 类 → 原提示。
+- **验收**：processor 空设置用例断言留空键不在下发 JSON（toEqual 忽略 undefined）；ui.test.ts 新增
+  humanizeError 三断言；tsc + 全量测试 + 构建全绿。

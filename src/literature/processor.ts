@@ -181,8 +181,16 @@ export const BatchRunner = {
   _runOne(cp: any, task: LiteratureTask, events: BatchEvents, onEnd: (ok: boolean) => void): Promise<void> {
     return new Promise((resolve) => {
       // 文献盒设置项全量下发（ADR-0071）：CLI 不再读插件配置，taskJson 一次性带全；
-      // 分P 序号（task.page，1 起）随任务 JSON 下发；vaultPath 供 CLI 计算视频相对路径
+      // 分P 序号（task.page，1 起）随任务 JSON 下发；vaultPath 供 CLI 计算视频相对路径。
+      // ticket 149：留空 = 跟随工具默认配置（rc/DEFAULTS）的键（pythonPath/outputDir/ffmpegPath/
+      // ffprobePath/whisperModel/cacheDir）在留空时**不下发**（undefined 被 JSON.stringify 省略）——
+      // 下发空串会在 core.js `{...deps.conf, ...options}` 合并里覆盖 rc 兜底，实测 Python 路径留空
+      // 整批在转写环节报「未配置 pythonPath」；显式填写仍正常下发覆盖。
       const s = tryGetSettings();
+      const nonEmpty = (v: string | null | undefined): string | undefined => {
+        const t = typeof v === 'string' ? v.trim() : '';
+        return t ? t : undefined;
+      };
       const taskJson = JSON.stringify({
         url: task.url,
         start: task.start ?? null,
@@ -191,15 +199,15 @@ export const BatchRunner = {
         options: {
           quality: (task.quality || (s && s.literatureQuality) || 'highest') as string,
           keepVideo: !s || s.literatureKeepVideo !== false,
-          outputDir: (s && s.literatureOutputDir ? String(s.literatureOutputDir).trim() : ''),
+          outputDir: nonEmpty(s && s.literatureOutputDir),
           compress: !s || s.literatureCompress !== false,
           crf: (s && s.literatureCrf) || 23,
           vaultPath: getVaultBasePath(),
-          ffmpegPath: (s && s.literatureFfmpegPath ? String(s.literatureFfmpegPath) : ''),
-          ffprobePath: (s && s.literatureFfprobePath ? String(s.literatureFfprobePath) : ''),
-          pythonPath: (s && s.literaturePythonPath ? String(s.literaturePythonPath) : ''),
-          whisperModel: (s && s.literatureWhisperModel ? String(s.literatureWhisperModel) : ''),
-          cacheDir: (s && s.literatureCacheDir ? String(s.literatureCacheDir) : ''),
+          ffmpegPath: nonEmpty(s && s.literatureFfmpegPath),
+          ffprobePath: nonEmpty(s && s.literatureFfprobePath),
+          pythonPath: nonEmpty(s && s.literaturePythonPath),
+          whisperModel: nonEmpty(s && s.literatureWhisperModel),
+          cacheDir: nonEmpty(s && s.literatureCacheDir),
           cacheRetentionDays: (s && s.literatureCacheRetentionDays) || 7,
         },
       });

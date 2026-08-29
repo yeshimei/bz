@@ -100,7 +100,17 @@ export function humanizeError(reason: string | null | undefined): string {
   }
   if (/ffmpeg/i.test(s)) return '视频处理工具（ffmpeg）不可用：检查电脑是否已安装，或设置里的「ffmpeg 路径」';
   if (/ffprobe/i.test(s)) return '视频探测工具（ffprobe）不可用：检查电脑是否已安装，或设置里的「ffprobe 路径」';
-  if (/whisper|faster.whisper|no module/i.test(s)) return '语音转写失败：检查设置里的「Python 路径」与「Whisper 模型」';
+  if (/whisper|faster.whisper|no module/i.test(s)) {
+    // 细分两种（ticket 149）：① pythonPath 未配置（设置留空且工具 rc/DEFAULTS 也无兜底）；
+    // ② faster-whisper 环境缺失（pythonPath 有值但目标 Python 未装 faster-whisper）
+    if (/未配置 pythonPath/i.test(s)) {
+      return '语音转写未配置：请在文献盒设置填写「Python 路径」（留空将跟随工具默认配置）';
+    }
+    if (/pip install faster-whisper|faster-whisper 环境已安装/i.test(s)) {
+      return '语音转写失败：faster-whisper 未安装，请在目标 Python 中运行 pip install faster-whisper';
+    }
+    return '语音转写失败：检查设置里的「Python 路径」与「Whisper 模型」';
+  }
   if (/API Key|AI 配置|未配置|Unauthorized|\b401\b|invalid_api_key|insufficient|quota/i.test(s)) {
     return 'AI 配置不可用：请在插件设置 → AI 配置里检查 API Key';
   }

@@ -1,3 +1,14 @@
+## 2026-08-30 文献盒转写失败修复：留空键不下发回退 rc（ticket 149）
+
+**状态：用户实测转写环节整批失败（提示检查 Python 路径/Whisper 模型，但设置留空）→ 根因 options 空串覆盖 rc/DEFAULTS 兜底；相关测试 + tsc 绿，构建已部署**
+
+- ✅ **根因**：processor.ts 对「留空=跟随工具配置」键下发空串，core.js `{...rc默认, ...options}` 合并覆盖 rc 的可用 pythonPath（本机 rc 有 C:/Users/PC/.../Python312/python.exe）→ py 空 → 「rc 未配置 pythonPath」→ UI 匹配 faster-whisper 给提示，形成「留空→报错让填→desc 说留空跟随」怪圈
+- ✅ **修复**：processor.ts 新增 nonEmpty()——pythonPath/outputDir/ffmpegPath/ffprobePath/whisperModel/cacheDir 留空 → undefined 不下发（JSON.stringify 省略），rc/DEFAULTS 兜底生效；显式填写仍覆盖；vaultPath/quality/keepVideo/compress/crf/cacheRetentionDays 不变
+- ✅ **提示细分**：ui.ts humanizeError whisper 分支三分——未配置 pythonPath（rc 也无）→「语音转写未配置：请在文献盒设置填写『Python 路径』（留空将跟随工具默认配置）」；faster-whisper 未安装 →「语音转写失败：faster-whisper 未安装，请在目标 Python 中运行 pip install faster-whisper」；其它 → 原提示
+- ✅ **测试**：processor 空设置用例改断言留空键不在下发 JSON（toEqual 忽略 undefined）；ui.test.ts humanizeError 新增三断言；全量测试 + tsc 0
+- 📄 文档：issues/149 立项；CONTEXT「文献盒」词条补留空不下发；spec 尾部；PROGRESS 本条目
+- ⏳ 收尾：构建部署（main.js 已同步根目录 + E 盘）→ 提交
+
 ## 2026-08-30 文献盒第四轮：批量按钮纯 emoji + --batch base64 传输修复（ticket 148 + 147）
 
 **状态：用户实测批量处理整批失败（--batch JSON 经 shell 引号被对消）→ 修复 + 按钮去文字；tools 50 测试 + bz 全量 221 文件/3534 用例绿 + tsc 0**

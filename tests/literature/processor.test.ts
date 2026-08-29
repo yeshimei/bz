@@ -301,7 +301,7 @@ describe('BatchRunner', () => {
     await p;
   });
 
-  it('空设置下的 options 默认值：quality highest / keepVideo / compress 开 / crf 23 / 路径全空', async () => {
+  it('空设置下的 options 默认值：quality highest / keepVideo / compress 开 / crf 23；留空键不下发（ticket 149 rc 兜底）', async () => {
     await LiteratureData.addTask({ url: 'BV1xx411c7mD' });
     const ev = makeEvents();
     const p = BatchRunner.runAll(await LiteratureData.loadTasks(), ev);
@@ -311,11 +311,12 @@ describe('BatchRunner', () => {
     expect(opts.shell).toBe(true);
     expect(JSON.parse(Buffer.from(args[1].slice(4), 'base64').toString('utf8'))).toEqual({
       url: 'BV1xx411c7mD', start: null, end: null, page: null,
+      // 留空 = 跟随工具默认配置（rc/DEFAULTS）→ 键不下发（undefined 被 JSON.stringify 省略），
+      // 避免空串覆盖 rc 兜底（ticket 149：Python 路径留空时整批转写报「未配置 pythonPath」）
       options: {
-        quality: 'highest', keepVideo: true, outputDir: '',
+        quality: 'highest', keepVideo: true,
         compress: true, crf: 23, vaultPath: '',
-        ffmpegPath: '', ffprobePath: '', pythonPath: '', whisperModel: '',
-        cacheDir: '', cacheRetentionDays: 7,
+        cacheRetentionDays: 7,
       },
     });
     child.emit('close', 0);

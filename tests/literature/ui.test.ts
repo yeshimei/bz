@@ -844,6 +844,10 @@ ${summary ?? 'AI 生成的简介'}`);
     expect(humanizeError('未找到 bili-dl。请先运行 npm install -g @jwbz/bili-downloader')).toContain('下载工具未安装');
     expect(humanizeError('ffmpeg exited with code 1')).toContain('ffmpeg');
     expect(humanizeError('ffprobe: No such file')).toContain('ffprobe');
+    // whisper 失败细分（ticket 149）：未配置 pythonPath vs faster-whisper 环境缺失 vs 其它 whisper 类
+    expect(humanizeError('转文字失败：rc 未配置 pythonPath（faster-whisper 所在 Python 路径）')).toContain('语音转写未配置');
+    expect(humanizeError('转文字失败：xxx（请确认 faster-whisper 环境已安装：目标 Python 已 pip install faster-whisper）')).toContain('faster-whisper 未安装');
+    expect(humanizeError('Whisper 模型加载失败 unknown_model')).toContain('语音转写失败');
     expect(humanizeError('AI 生成文献笔记失败：未配置 OpenCode Go API Key：插件设置 → AI 配置')).toContain('AI 配置不可用');
     expect(humanizeError('AI 请求超时（领域判定，25000ms）')).toContain('AI 响应异常');
     expect(humanizeError('转录文件读取失败')).toContain('转写稿缺失');
