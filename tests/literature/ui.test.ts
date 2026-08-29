@@ -10,10 +10,11 @@
  * - 视频录入面板（任务队列）：去 ⚙️/⬇️ 与独立 ⏹ 终止钮；单钮态机 ➕/**纯 emoji ▶️ ↔ ⏹**（ticket 146 单钮态机 + ticket 148 按钮去文字，区分移到 title hover）/🕘/✕；
  *   移动端仅 ➕+✕；添加弹窗（校验/编辑回填/预填叠开）、历史独立弹窗（分组/清空历史）、批量处理行内进度
  *   （[bz-step]/[bz-p] 时间线 + STEP_DONE_MAP「AI 生成文献笔记中/笔记落盘中」完成态文案）。
- * - 术语生成面板（ticket 138 §2.1 契约变更 + ticket 142 简洁版）：预填/空术语不生成/生成纯 AI 预览
- *   （mock note-gen generateTermDraft，未确认不落盘）/预览只读（无领域/正文输入框，上属性卡下内容卡，
- *   断言无 title/label/placeholder/状态行/textarea）/重新生成直接覆盖（无手改守卫）/确认写入
- *   （generateTermNote 落盘一次 + 按面板预览值 + 自动打开 + term-generated 事件）/无预览直接确认
+ * - 术语生成面板（ticket 138 §2.1 契约变更 + ticket 142 简洁版 + ticket 155 自动生成/总结）：
+ *   预填即自动生成（带词入口）/空术语不生成/生成纯 AI 预览（mock note-gen generateTermDraft，未确认不落盘）/
+ *   生成后输入行按钮变「重新生成」/预览只读（无领域/正文输入框，上属性卡下内容卡，
+ *   断言无 title/label/placeholder/状态行/textarea）/底部按钮「总结」AI 精简回填（mock summarizeTermSummary）/
+ *   确认写入（generateTermNote 落盘一次 + 按面板预览值 + 自动打开 + term-generated 事件）/无预览直接确认
  *   提示先生成/AI 未配置提示。
  * - 设置 schema 五组键；主面板 ⚙️ 打开设置弹窗渲染。
  */
@@ -29,10 +30,11 @@ import { formatRelativeTime } from '../../src/core/utils';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { clearNotices, getNoticeMessages, hasNotice, resetObsidianMocks } from '../mock-obsidian-entry';
 
-// ---- note-gen 打桩：generateTermNote/generateTermDraft/backfillNotes 由各用例注入实现，避免真实 AI ----
+// ---- note-gen 打桩：generateTermNote/generateTermDraft/summarizeTermSummary/backfillNotes 由各用例注入实现，避免真实 AI ----
 const noteGen = vi.hoisted(() => ({
   generateTermNote: vi.fn(),
   generateTermDraft: vi.fn(),
+  summarizeTermSummary: vi.fn(),
   backfillNotes: vi.fn(),
 }));
 vi.mock('../../src/literature/note-gen', () => noteGen);
@@ -103,8 +105,10 @@ describe('文献盒 UI（ticket 136）', () => {
     Object.defineProperty(navigator, 'clipboard', { value: { writeText: clipWrite }, configurable: true });
     noteGen.generateTermNote.mockReset();
     noteGen.generateTermDraft.mockReset();
+    noteGen.summarizeTermSummary.mockReset();
     noteGen.backfillNotes.mockReset();
     noteGen.generateTermDraft.mockResolvedValue({ summary: '', domain: '' });
+    noteGen.summarizeTermSummary.mockResolvedValue('精简版简介');
     noteGen.backfillNotes.mockResolvedValue({ scanned: 0, filled: 0, aiSkipped: false });
     ui = new UIManager(app);
   });
@@ -619,12 +623,22 @@ describe('文献盒 UI（ticket 136）', () => {
 
   // ==================== 术语生成面板（文字录入） ====================
 
-  it('showTermEntry：预填术语 + 空术语不生成', () => {
+  it('showTermEntry：带词入口自动生成（ticket 155），生成后输入行按钮变「重新生成」', async () => {
+    noteGen.generateTermDraft.mockResolvedValue({ summary: '贝叶斯定理的百科式简介', domain: '数学' });
     ui.showTermEntry('贝叶斯定理');
-    expect(document.getElementById('literature-term-popup')!.style.display).toBe('flex');
     expect((document.getElementById('lit-term-input') as HTMLInputElement).value).toBe('贝叶斯定理');
-    // 清空输入 → 空术语不生成
-    (document.getElementById('lit-term-input') as HTMLInputElement).value = '';
+    // 预填即自动生成，无需点击
+    await vi.waitFor(() => expect(noteGen.generateTermDraft).toHaveBeenCalledWith('贝叶斯定理'));
+    await vi.waitFor(() => expect(document.getElementById('lit-term-preview')!.style.display).toBe('flex'));
+    expect((document.getElementById('lit-term-content') as HTMLElement).textContent).toContain('贝叶斯定理的百科式简介');
+    // 已有结果：输入行按钮文案变「重新生成」
+    expect((document.getElementById('lit-term-generate') as HTMLButtonElement).textContent).toBe('重新生成');
+  });
+
+  it('showTermEntry：空术语不生成', () => {
+    ui.showTermEntry();
+    expect((document.getElementById('lit-term-input') as HTMLInputElement).value).toBe('');
+    // 空术语点击生成 → 提示，不调 AI
     (document.getElementById('lit-term-generate') as HTMLButtonElement).click();
     expect(noteGen.generateTermDraft).not.toHaveBeenCalled();
     expect(noteGen.generateTermNote).not.toHaveBeenCalled();
@@ -729,20 +743,29 @@ ${summary ?? 'AI 生成的简介'}`);
     expect(content).toContain('AI 生成的简介');
   });
 
-  it('术语流程：重新生成直接覆盖（无手改守卫，ticket 142）；无预览直接确认提示先生成；未确认关闭无落盘', async () => {
+  it('术语流程（ticket 155）：输入行「重新生成」直接覆盖；底部「总结」AI 精简回填；无预览直接确认提示先生成；未确认关闭无落盘', async () => {
     let gen = 0;
     noteGen.generateTermDraft.mockImplementation(async (term: string) => {
       gen++;
       return { summary: `第${gen}版简介`, domain: '物理' };
     });
+    noteGen.summarizeTermSummary.mockResolvedValue('第1版精简');
     ui.showTermEntry();
     (document.getElementById('lit-term-input') as HTMLInputElement).value = '黑洞';
     (document.getElementById('lit-term-generate') as HTMLButtonElement).click();
     await vi.waitFor(() => expect((document.getElementById('lit-term-content') as HTMLElement).textContent).toContain('第1版简介'));
-    // 预览只读无手改值，重新生成 → 直接重跑覆盖（无确认弹窗）
+    // 底部按钮语义已改「总结」（id 保留 DOM 契约）
+    expect((document.getElementById('lit-term-regenerate') as HTMLButtonElement).textContent).toBe('总结');
+    // 总结 → 对当前预览正文 AI 精简回填（不重跑生成），所见即所得
     (document.getElementById('lit-term-regenerate') as HTMLButtonElement).click();
-    await vi.waitFor(() => expect((document.getElementById('lit-term-content') as HTMLElement).textContent).toContain('第2版简介'));
+    await vi.waitFor(() => expect((document.getElementById('lit-term-content') as HTMLElement).textContent).toContain('第1版精简'));
+    expect(noteGen.summarizeTermSummary).toHaveBeenCalledTimes(1);
+    expect(noteGen.summarizeTermSummary).toHaveBeenCalledWith('第1版简介');
+    expect(noteGen.generateTermDraft).toHaveBeenCalledTimes(1);
     expect(document.getElementById('__shared_confirm_ok__')).toBeNull();
+    // 输入行「重新生成」→ 直接重跑覆盖（无确认弹窗），正文回到全新生成
+    (document.getElementById('lit-term-generate') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect((document.getElementById('lit-term-content') as HTMLElement).textContent).toContain('第2版简介'));
     expect(noteGen.generateTermDraft).toHaveBeenCalledTimes(2);
     // 全程只预览未落盘
     expect(noteGen.generateTermNote).not.toHaveBeenCalled();
@@ -759,6 +782,39 @@ ${summary ?? 'AI 生成的简介'}`);
     expect(openFile).not.toHaveBeenCalled();
   });
 
+  it('术语流程（ticket 155）：总结后确认写入传精简正文；无预览点总结提示先生成', async () => {
+    noteGen.generateTermDraft.mockResolvedValue({ summary: 'AI 生成的简介', domain: '物理' });
+    noteGen.summarizeTermSummary.mockResolvedValue('精简后的简介');
+    noteGen.generateTermNote.mockImplementation(async ({ term, summary, domain }: { term: string; summary?: string; domain?: string }) => {
+      const path = `文献盒/${term}.md`;
+      vault.files.set(path, `---
+title: "${term}"
+type: term
+domain: "${domain ?? '物理'}"
+term: "${term}"
+date: "2026-08-30 10:00:00"
+---
+
+${summary ?? ''}`);
+      return path;
+    });
+    ui.showTermEntry();
+    (document.getElementById('lit-term-input') as HTMLInputElement).value = '黑洞';
+    (document.getElementById('lit-term-generate') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(document.getElementById('lit-term-preview')!.style.display).toBe('flex'));
+    // 总结 → 确认写入落盘的是精简正文
+    (document.getElementById('lit-term-regenerate') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect((document.getElementById('lit-term-content') as HTMLElement).textContent).toContain('精简后的简介'));
+    (document.getElementById('lit-term-save') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(noteGen.generateTermNote).toHaveBeenCalledTimes(1));
+    expect(noteGen.generateTermNote).toHaveBeenCalledWith({ term: '黑洞', summary: '精简后的简介', domain: '物理' });
+    // 重开面板无预览：总结按钮提示先生成
+    ui.showTermEntry();
+    (document.getElementById('lit-term-regenerate') as HTMLButtonElement).click();
+    expect(strNotices()).toContain('请先生成简介');
+    expect(noteGen.summarizeTermSummary).toHaveBeenCalledTimes(1);
+  });
+
   it('术语流程：AI 未配置 → 提示去设置，不进入预览', async () => {
     noteGen.generateTermDraft.mockRejectedValue(new Error('未配置 OpenCode Go API Key：插件设置 → AI 配置'));
     ui.showTermEntry();
@@ -767,8 +823,9 @@ ${summary ?? 'AI 生成的简介'}`);
     await vi.waitFor(() => expect(hasNotice(/未配置 AI/)).toBe(true));
     expect(document.getElementById('lit-term-preview')!.style.display).toBe('none');
     expect(noteGen.generateTermNote).not.toHaveBeenCalled();
-    // 生成按钮恢复可用
+    // 生成按钮恢复可用，文案回到「生成」（无预览结果不显示「重新生成」）
     expect((document.getElementById('lit-term-generate') as HTMLButtonElement).disabled).toBe(false);
+    expect((document.getElementById('lit-term-generate') as HTMLButtonElement).textContent).toBe('生成');
   });
 
   // ==================== 设置 schema 与设置弹窗 ====================

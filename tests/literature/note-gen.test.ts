@@ -18,6 +18,7 @@ import {
   injectFrontmatter,
   generateVideoNote,
   generateTermDraft,
+  summarizeTermSummary,
   generateTermNote,
   backfillNotes,
 } from '../../src/literature/note-gen';
@@ -218,6 +219,39 @@ describe('generateTermDraft（纯 AI 预览，不落盘；ticket 138 §2.1 契�
     await expect(generateTermDraft('  ')).rejects.toThrow('术语为空');
     await expect(generateTermDraft('')).rejects.toThrow('术语为空');
     expect(vault.getMarkdownFiles()).toHaveLength(0);
+  });
+});
+
+describe('summarizeTermSummary（术语简介 AI 精简，ticket 155）', () => {
+  let vault: MockVault;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vault = new MockVault();
+    setApp({ vault } as any);
+    setSettingsProvider(() => ({ literatureDirectory: '文献盒', literatureDomainList: '心理, 计算机' }) as any);
+    aiStub.chat.mockResolvedValue('精简后的一段话');
+  });
+
+  afterEach(() => {
+    setSettingsProvider(() => ({}) as any);
+  });
+
+  it('走 ai.chat 精简，prompt 含原文，返回去空白结果，不写任何文件', async () => {
+    const out = await summarizeTermSummary('  一段很长很长的术语介绍  ');
+    expect(out).toBe('精简后的一段话');
+    expect(aiStub.chat).toHaveBeenCalledTimes(1);
+    const prompt = aiStub.chat.mock.calls[0][0] as string;
+    expect(prompt).toContain('一段很长很长的术语介绍');
+    expect(prompt).toContain('精简');
+    expect(vault.getMarkdownFiles()).toHaveLength(0);
+  });
+
+  it('空内容 → 抛错不调 AI；AI 返回空白 → 抛错', async () => {
+    await expect(summarizeTermSummary('  ')).rejects.toThrow('内容为空');
+    expect(aiStub.chat).not.toHaveBeenCalled();
+    aiStub.chat.mockResolvedValue('   ');
+    await expect(summarizeTermSummary('正文')).rejects.toThrow('AI 返回为空');
   });
 });
 

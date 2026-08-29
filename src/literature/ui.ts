@@ -61,7 +61,7 @@ import type BzSettings from '../settings';
 import { LiteratureData, normalizeLooseTime } from './data';
 import type { LiteratureTask } from './types';
 import { BatchRunner, type BatchEvents } from './processor';
-import { backfillNotes, generateTermDraft, generateTermNote } from './note-gen';
+import { backfillNotes, generateTermDraft, generateTermNote, summarizeTermSummary } from './note-gen';
 
 interface StatusMeta { label: string; cls: string; }
 const STATUS_META: Record<LiteratureTask['status'], StatusMeta> = {
@@ -285,6 +285,10 @@ export class UIManager {
   /** 当前术语预览（面板当前展示值，纯内存；确认前不落盘，ticket 138 §2.1） */
   private termPreview: { domain: string; body: string } | null = null;
   private termGenerating = false;
+  /** 总结中（ticket 155：底部按钮对预览正文做 AI 精简） */
+  private termSummarizing = false;
+  /** 本轮是否已有生成结果（ticket 155：有则输入行按钮文案为「重新生成」） */
+  private termHasDraft = false;
 
   private editingId: string | null = null;
   private onKeydown: (e: KeyboardEvent) => void = () => {};
@@ -1547,7 +1551,7 @@ export class UIManager {
           <div id="lit-term-content" class="bz-lit-term-content"></div>
         </div>
         <div class="bz-lit-term-actions">
-          <button id="lit-term-regenerate">重新生成</button>
+          <button id="lit-term-regenerate">总结</button>
           <button id="lit-term-save" class="bz-lit-accent-btn">确认写入</button>
         </div>
       </div>`;
@@ -1557,7 +1561,8 @@ export class UIManager {
     this.termMask = mask;
     this.termPopup = popup;
     q<HTMLButtonElement>(popup, '#lit-term-generate')!.onclick = () => void this.onTermGenerate();
-    q<HTMLButtonElement>(popup, '#lit-term-regenerate')!.onclick = () => void this.onTermGenerate();
+    // ticket 155：底部按钮语义由「重新生成」改「总结」（重跑生成职责归输入行按钮）；id 保留 DOM 契约
+    q<HTMLButtonElement>(popup, '#lit-term-regenerate')!.onclick = () => void this.onTermSummarize();
     q<HTMLButtonElement>(popup, '#lit-term-save')!.onclick = () => void this.onTermConfirm();
     // 术语输入框 Enter 直接生成（ticket 139）
     q<HTMLInputElement>(popup, '#lit-term-input')?.addEventListener('keydown', (e) => {
@@ -1565,10 +1570,12 @@ export class UIManager {
     });
   }
 
-  /** 打开术语生成面板；term 预填输入框（命令入口带编辑器选中词；主面板入口不带） */
+  /** 打开术语生成面板；term 预填输入框（命令入口带编辑器选中词；主面板入口不带）。
+   *  ticket 155：带词入口（选中文字打开）自动触发生成，无需再点按钮。 */
   showTermEntry(term?: string): void {
     if (!this.termPopup || !this.termMask) return;
     this.termPreview = null;
+    this.termHasDraft = false;
     const input = q<HTMLInputElement>(this.termPopup, '#lit-term-input');
     if (input) input.value = (term ?? '').trim();
     this.setTermPreviewVisible(false);
@@ -1577,6 +1584,7 @@ export class UIManager {
     this.termMask.style.display = 'block';
     this.termPopup.style.display = 'flex';
     if (input && !input.value) setTimeout(() => input.focus(), 100);
+    if (input && input.value) void this.onTermGenerate();
   }
 
   private setTermPreviewVisible(v: boolean): void {
@@ -1588,12 +1596,24 @@ export class UIManager {
   private setTermGenLoading(loading: boolean): void {
     if (!this.termPopup) return;
     const gen = q<HTMLButtonElement>(this.termPopup, '#lit-term-generate');
-    if (gen) { gen.disabled = loading; gen.textContent = loading ? '生成中…' : '生成'; }
+    // ticket 155：已有生成结果后按钮文案为「重新生成」，空态/首轮仍为「生成」
+    if (gen) { gen.disabled = loading; gen.textContent = loading ? '生成中…' : (this.termHasDraft ? '重新生成' : '生成'); }
     const regen = q<HTMLButtonElement>(this.termPopup, '#lit-term-regenerate');
     if (regen) regen.disabled = loading;
     const save = q<HTMLButtonElement>(this.termPopup, '#lit-term-save');
     if (save) save.disabled = loading;
     // ticket 142：状态行已删除，生成中态并入「生成」按钮文案，输入行下方无任何提示文字
+  }
+
+  /** 总结按钮禁用/进行中态（ticket 155）；生成按钮同步禁用防并发 */
+  private setTermSummarizing(s: boolean): void {
+    if (!this.termPopup) return;
+    const regen = q<HTMLButtonElement>(this.termPopup, '#lit-term-regenerate');
+    if (regen) { regen.disabled = s; regen.textContent = s ? '总结中…' : '总结'; }
+    const save = q<HTMLButtonElement>(this.termPopup, '#lit-term-save');
+    if (save) save.disabled = s;
+    const gen = q<HTMLButtonElement>(this.termPopup, '#lit-term-generate');
+    if (gen) gen.disabled = s;
   }
 
   private noticeTermError(e: unknown): void {
@@ -1605,8 +1625,9 @@ export class UIManager {
     }
   }
 
-  /** 生成/重新生成：调 generateTermDraft 纯 AI 预览（不落盘）→ 只读填充预览。
-   *  ticket 142：预览无输入框不可编辑，「重新生成」不再有手改覆盖守卫，直接覆盖上一轮预览。 */
+  /** 生成/重新生成（输入行按钮）：调 generateTermDraft 纯 AI 预览（不落盘）→ 只读填充预览。
+   *  ticket 142：预览无输入框不可编辑，重跑直接覆盖上一轮预览；
+   *  ticket 155：成功后 termHasDraft 置位，输入行按钮文案变「重新生成」。 */
   private async onTermGenerate(): Promise<void> {
     if (!this.termPopup || this.termGenerating) return;
     const term = (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
@@ -1624,9 +1645,29 @@ export class UIManager {
     }
   }
 
+  /** 总结（ticket 155）：对当前预览正文再做一次 AI 精简并回填内容卡（术语/领域不变，所见即所得落入确认写入）。 */
+  private async onTermSummarize(): Promise<void> {
+    if (!this.termPopup || this.termSummarizing || this.termGenerating) return;
+    if (!this.termPreview || !this.termPreview.body.trim()) { notice('请先生成简介', 'info'); return; }
+    this.termSummarizing = true;
+    this.setTermSummarizing(true);
+    try {
+      const summarized = await summarizeTermSummary(this.termPreview.body);
+      this.termPreview.body = summarized;
+      const contentEl = q<HTMLElement>(this.termPopup, '#lit-term-content');
+      if (contentEl) contentEl.textContent = summarized;
+    } catch (e) {
+      this.noticeTermError(e);
+    } finally {
+      this.termSummarizing = false;
+      this.setTermSummarizing(false);
+    }
+  }
+
   /** 填充预览（只读：属性卡/内容卡按 AI 草稿回填，纯内存不写盘；术语输入框不变，ticket 142） */
   private presentTermPreview(draft: { summary: string; domain: string }): void {
     this.termPreview = { domain: draft.domain, body: draft.summary };
+    this.termHasDraft = true;
     if (!this.termPopup) return;
     const term = (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
     const termEl = q<HTMLElement>(this.termPopup, '#lit-term-meta-term');

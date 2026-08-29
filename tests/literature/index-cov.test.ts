@@ -14,6 +14,16 @@ import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-p
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 
+// ticket 155：带词入口自动生成，openTermNote 用例统一打桩 note-gen（避免真实 AI 调用）
+const noteGen = vi.hoisted(() => ({
+  generateVideoNote: vi.fn(),
+  generateTermDraft: vi.fn().mockResolvedValue({ summary: 'AI 简介', domain: '物理' }),
+  summarizeTermSummary: vi.fn().mockResolvedValue('精简简介'),
+  generateTermNote: vi.fn().mockResolvedValue('文献盒/AI 简介.md'),
+  backfillNotes: vi.fn().mockResolvedValue({ scanned: 0, filled: 0, aiSkipped: false }),
+}));
+vi.mock('../../src/literature/note-gen', () => noteGen);
+
 describe('openLiteratureAddTask（聚合讯「保存至文献」入口，ticket 134/ADR-0068）', () => {
   afterEach(() => {
     unloadLiterature();
@@ -59,6 +69,8 @@ describe('openTermNote（bz-literature-note-term 命令：MarkdownView 类右值
   afterEach(() => {
     unloadLiterature();
     document.body.innerHTML = '';
+    noteGen.generateTermDraft.mockClear();
+    noteGen.generateTermNote.mockClear();
   });
 
   /** 注入 getActiveViewOfType 桩：记录被调用参数（应为 MarkdownView 类），返回指定视图 */
@@ -73,7 +85,7 @@ describe('openTermNote（bz-literature-note-term 命令：MarkdownView 类右值
     return app;
   }
 
-  it('无显式 term：读激活 Markdown 视图选区预填（getActiveViewOfType 传 MarkdownView 类而非字符串）', async () => {
+  it('无显式 term：读激活 Markdown 视图选区预填（getActiveViewOfType 传 MarkdownView 类而非字符串）；带词自动生成（ticket 155）', async () => {
     const app = setupApp({ editor: { getSelection: () => '  黑洞  ' } });
 
     openTermNote(app);
@@ -81,7 +93,8 @@ describe('openTermNote（bz-literature-note-term 命令：MarkdownView 类右值
     await vi.waitFor(() => expect(document.getElementById('literature-term-popup')!.style.display).toBe('flex'));
     expect(app.workspace.getActiveViewOfType).toHaveBeenCalledWith(MarkdownView); // 类右值（1.1 根因修复）
     expect((document.getElementById('lit-term-input') as HTMLInputElement).value).toBe('黑洞');
-    expect(document.getElementById('lit-term-preview')!.style.display).toBe('none');
+    // ticket 155：带词入口自动触发生成
+    await vi.waitFor(() => expect(noteGen.generateTermDraft).toHaveBeenCalledWith('黑洞'));
   });
 
   it('显式 term 优先：不读选区；选区为空白 → 空输入框', async () => {
@@ -92,14 +105,16 @@ describe('openTermNote（bz-literature-note-term 命令：MarkdownView 类右值
     await vi.waitFor(() => expect(document.getElementById('literature-term-popup')!.style.display).toBe('flex'));
     expect(app.workspace.getActiveViewOfType).not.toHaveBeenCalled();
     expect((document.getElementById('lit-term-input') as HTMLInputElement).value).toBe('贝叶斯定理');
+    await vi.waitFor(() => expect(noteGen.generateTermDraft).toHaveBeenCalledWith('贝叶斯定理'));
   });
 
-  it('无激活视图（getActiveViewOfType 返回 null）→ 空输入框手填，不抛错', async () => {
+  it('无激活视图（getActiveViewOfType 返回 null）→ 空输入框手填，不抛错、不自动生成', async () => {
     const app = setupApp(null);
 
     expect(() => openTermNote(app)).not.toThrow();
 
     await vi.waitFor(() => expect(document.getElementById('literature-term-popup')!.style.display).toBe('flex'));
     expect((document.getElementById('lit-term-input') as HTMLInputElement).value).toBe('');
+    expect(noteGen.generateTermDraft).not.toHaveBeenCalled();
   });
 });
