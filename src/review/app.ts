@@ -21,6 +21,8 @@ export const reviewApp = {
   _reviewNotice: null as NoticeHandle | null,
   /** 已通知逾期的笔记路径（ticket 100：diff 记忆集合，避免重复刷屏） */
   _notifiedOverdue: new Set<string>(),
+  /** 逾期常驻通知句柄：同键合并时 notify 返回空操作，留存真句柄供逾期清零时主动收起 */
+  _overdueNotice: null as NoticeHandle | null,
   /** ticket 48：已染色/挂徽章的文件路径（移出计划后据此回退；仅提交计划路径 + 曾染色路径，不再全库扫描） */
   _styledPaths: new Set<string>(),
 
@@ -283,7 +285,7 @@ export const reviewApp = {
             return;
           }
           if (failed) {
-            popup.innerHTML = this.buildFailCard(item, results, rating);
+            popup.innerHTML = this.buildFailCard(item, results, rating, { showAutoMark: false });
             await new Promise<void>((resolveClick) => {
               popup.querySelector('#quiz-review-note')!.onclick = () => {
                 quiz.close();
@@ -301,10 +303,12 @@ export const reviewApp = {
           const isLast = index >= items.length - 1;
           popup.innerHTML = this.buildPassCard(item, results, rating, {
             nextLabel: isLast ? '' : `下一篇（${index + 2}/${items.length}）`,
+            showAutoMark: false, // 二次复习不写评级数据，不显示自动标记（用户拍板 2026-08-29）
           });
           const action = await new Promise<string>((resolveAction) => {
             popup.querySelector('#quiz-next-note')!.onclick = () => resolveAction('next');
-            popup.querySelector('#quiz-end-review')!.onclick = () => resolveAction('end');
+            const endBtn = popup.querySelector('#quiz-end-review');
+            if (endBtn) endBtn.onclick = () => resolveAction('end'); // 最后一篇无此按钮
           });
           if (action === 'end') {
             quiz.endReviewSession();
@@ -318,38 +322,52 @@ export const reviewApp = {
   },
 
   /** 未通过结果卡（ADR-0044）：唯一按钮「复习此笔记」→ 点击关弹窗 + 开笔记 + 会话中断
-   *  ticket s1：文件名经 escapeHtml 转义后拼 HTML（review 结果卡 XSS 修复） */
-  buildFailCard(item: ReviewItem, results: any, rating: Rating): string {
+   *  ticket s1：文件名经 escapeHtml 转义后拼 HTML（review 结果卡 XSS 修复）
+   *  用户拍板 2026-08-29：二次复习（重做队列）不写评级数据，传 showAutoMark: false 隐藏「自动标记」徽标 */
+  buildFailCard(item: ReviewItem, results: any, rating: Rating, opts?: { showAutoMark?: boolean }): string {
     const ratingNames: Record<string, string> = { again: '忘了', hard: '困难', good: '一般', easy: '简单' };
     const tagColors: Record<string, string> = { again: '#ff4757', hard: '#ff9f43', good: '#2ed573', easy: '#7bed9f' };
     const name = escapeHtml(item.name.replace(/^《|》$/g, ''));
+    const autoMark =
+      opts?.showAutoMark === false
+        ? ''
+        : `<div style="display:inline-block;padding:6px 16px;border-radius:16px;font-size:14px;font-weight:500;background:${tagColors[rating]}22;color:${tagColors[rating]};margin-bottom:20px;">自动标记：${ratingNames[rating]}</div>`;
     return `
       <div style="text-align:center;padding:24px;">
         <div style="font-size:18px;font-weight:600;margin-bottom:16px;color:var(--text-normal);">🎯 ${name}</div>
         <div style="font-size:40px;margin-bottom:16px;">${results.correct}/${results.total}</div>
         <div style="font-size:14px;color:var(--text-muted);margin-bottom:12px;">✅ 答对 ${results.correct} 题　❌ 答错 ${results.wrong} 题</div>
-        <div style="display:inline-block;padding:6px 16px;border-radius:16px;font-size:14px;font-weight:500;background:${tagColors[rating]}22;color:${tagColors[rating]};margin-bottom:20px;">自动标记：${ratingNames[rating]}</div>
+        ${autoMark}
         <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">本次复习未通过，请打开笔记复习；下次点「开始复习」将为这篇重新做题</div>
       </div>
       <button id="quiz-review-note" style="display:block;width:100%;padding:10px;border:none;border-radius:6px;background:var(--interactive-accent);color:var(--text-on-accent);cursor:pointer;font-size:13px;font-weight:500;">复习此笔记</button>
     `;
   },
 
-  /** 通过结果卡（重做复用视觉）：下一篇/完成复习/结束这次复习
-   *  ticket s1：文件名经 escapeHtml 转义后拼 HTML（review 结果卡 XSS 修复） */
-  buildPassCard(item: ReviewItem, results: any, rating: Rating, opts: { nextLabel?: string }): string {
+  /** 通过结果卡（重做复用视觉）：下一篇/完成复习；最后一篇（nextLabel 空）只保留「完成复习」按钮
+   *  ticket s1：文件名经 escapeHtml 转义后拼 HTML（review 结果卡 XSS 修复）
+   *  用户拍板 2026-08-29：二次复习（重做队列）不写评级数据，传 showAutoMark: false 隐藏「自动标记」徽标 */
+  buildPassCard(item: ReviewItem, results: any, rating: Rating, opts: { nextLabel?: string; showAutoMark?: boolean }): string {
     const ratingNames: Record<string, string> = { again: '忘了', hard: '困难', good: '一般', easy: '简单' };
     const tagColors: Record<string, string> = { again: '#ff4757', hard: '#ff9f43', good: '#2ed573', easy: '#7bed9f' };
     const name = escapeHtml(item.name.replace(/^《|》$/g, ''));
+    const autoMark =
+      opts?.showAutoMark === false
+        ? ''
+        : `<div style="display:inline-block;padding:6px 16px;border-radius:16px;font-size:14px;font-weight:500;background:${tagColors[rating]}22;color:${tagColors[rating]};margin-bottom:20px;">自动标记：${ratingNames[rating]}</div>`;
+    // 非最后一篇才保留「结束这次复习」按钮；终局结算面板只有「完成复习」一条路（用户拍板 2026-08-29）
+    const endBtn = opts?.nextLabel
+      ? `<button id="quiz-end-review" style="display:block;width:100%;padding:10px;margin-top:8px;border:1px solid var(--background-modifier-border);border-radius:6px;background:var(--background-secondary);color:var(--text-muted);cursor:pointer;font-size:13px;">结束这次复习</button>`
+      : '';
     return `
       <div style="text-align:center;padding:24px;">
         <div style="font-size:18px;font-weight:600;margin-bottom:16px;color:var(--text-normal);">🎯 ${name}</div>
         <div style="font-size:40px;margin-bottom:16px;">${results.correct}/${results.total}</div>
         <div style="font-size:14px;color:var(--text-muted);margin-bottom:12px;">✅ 答对 ${results.correct} 题　❌ 答错 ${results.wrong} 题</div>
-        <div style="display:inline-block;padding:6px 16px;border-radius:16px;font-size:14px;font-weight:500;background:${tagColors[rating]}22;color:${tagColors[rating]};margin-bottom:20px;">自动标记：${ratingNames[rating]}</div>
+        ${autoMark}
       </div>
       <button id="quiz-next-note" style="display:block;width:100%;padding:10px;border:none;border-radius:6px;background:var(--interactive-accent);color:var(--text-on-accent);cursor:pointer;font-size:13px;font-weight:500;">${opts.nextLabel || '完成复习'}</button>
-      <button id="quiz-end-review" style="display:block;width:100%;padding:10px;margin-top:8px;border:1px solid var(--background-modifier-border);border-radius:6px;background:var(--background-secondary);color:var(--text-muted);cursor:pointer;font-size:13px;">结束这次复习</button>
+      ${endBtn}
     `;
   },
 
@@ -411,7 +429,8 @@ export const reviewApp = {
 
           const action = await new Promise<string>((resolveAction) => {
             popup.querySelector('#quiz-next-note')!.onclick = () => resolveAction('next');
-            popup.querySelector('#quiz-end-review')!.onclick = () => resolveAction('end');
+            const endBtn = popup.querySelector('#quiz-end-review');
+            if (endBtn) endBtn.onclick = () => resolveAction('end'); // 最后一篇无此按钮
           });
 
           if (action === 'end') {
@@ -642,8 +661,9 @@ export const reviewApp = {
 
   /**
    * 到期提醒 + 染色刷新（ticket 100：原只刷染色，重写为 diff + 通知；染色职责保留）
-   * 每轮与已通知集合对比：新增逾期 → 弹聚合通知；移出逾期（评级/完成/挂起）从集合剔除 → 之后再次逾期重新提醒。
-   * 启动首查把存量逾期当新产生 → 晨报式汇总（Q1 拍板接受）。
+   * 每轮与已通知集合对比：新增逾期 → 弹篇数常驻通知（duration 0，逾期清零主动收起；不列题目）；
+   * 移出逾期（评级/完成/挂起）从集合剔除 → 之后再次逾期重新提醒。
+   * 启动首查把存量逾期当新产生 → 汇总篇数（Q1 拍板接受）。
    * ticket 48 收敛：与本轮 loadItems 共用结果，不再二次读盘；
    * ticket 58：通知挂「去复习」action → 打开最早逾期笔记。
    */
@@ -665,9 +685,7 @@ export const reviewApp = {
       }
       if (newly.length) {
         for (const [p] of newly) this._notifiedOverdue.add(p);
-        const names = newly.map(([, i]) => i.name.replace(/^《|》$/g, ''));
-        const shown = names.slice(0, 3).join('、');
-        const tail = names.length > 3 ? `，等 ${names.length - 3} 篇` : '';
+        // 通知只报当前逾期篇数，不列具体题目（用户拍板 2026-08-29）；duration 0 = 常驻（通知系统语义）
         // ticket 58：最早逾期（最紧迫）作「去复习」跳转目标。
         // 修 #1：目标只从本次 newly（通知名单）取——全逾集合含已在通知而逾期未清的旧条目，
         // 同键合并通知的 action 闭包保持首目标，会出现「通知 B 却打开 A」。
@@ -678,26 +696,29 @@ export const reviewApp = {
               new Date((a.nextReviewDate as string) || '0').getTime() -
               new Date((b.nextReviewDate as string) || '0').getTime()
           )[0];
-        notify(
-          names.length > 1
-            ? `${names.length} 篇笔记到期待复习：${shown}${tail}`
-            : `${shown} 到期待复习`,
-          {
-            type: 'info',
-            dedupeKey: 'review-overdue-notice',
-            action: {
-              label: '去复习', // action 文案不带 emoji（通知规范）
-              onClick: () => {
-                if (!earliest) return;
-                const app = getApp();
-                const file = app.vault.getAbstractFileByPath(earliest.filePath);
-                if (!file) return;
-                const leaf = app.workspace.getLeaf(false);
-                void leaf.openFile(file as TFile);
-              },
+        const handle = notify(`有 ${overdueMap.size} 篇笔记逾期`, {
+          type: 'info',
+          duration: 0, // 常驻不自动消失，靠点击「去复习」/本体收起
+          dedupeKey: 'review-overdue-notice',
+          action: {
+            label: '去复习', // action 文案不带 emoji（通知规范）
+            onClick: () => {
+              if (!earliest) return;
+              const app = getApp();
+              const file = app.vault.getAbstractFileByPath(earliest.filePath);
+              if (!file) return;
+              const leaf = app.workspace.getLeaf(false);
+              void leaf.openFile(file as TFile);
             },
-          }
-        );
+          },
+        });
+        // 同键合并返回空操作句柄：仅当旧句柄已失联（被消费）时才换存新句柄，保证清零收起有效
+        const cur = this._overdueNotice;
+        if (!cur || !cur.el.isConnected) this._overdueNotice = handle;
+      } else if (!overdueMap.size) {
+        // 逾期清零：常驻通知失去时效，主动收起（句柄已被点击消费时 hide 幂等无害）
+        this._overdueNotice?.hide();
+        this._overdueNotice = null;
       }
     } catch (e) {
       console.error('复习计划检查出错:', e);
