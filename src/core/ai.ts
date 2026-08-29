@@ -84,12 +84,20 @@ export async function getAIProvider(override?: string | { endpoint?: string; api
 
 // ---------------- 请求实现 ----------------
 
-/** SSE 流式解析（fetch + ReadableStream） */
-async function streamChatCompletions(provider: AIProvider, body: any): Promise<string> {
+/** 取消异常（AbortError 语义；调用方以 signal.aborted 判定取消路径，ticket 141 对话可取消） */
+function abortError(): Error {
+  const e = new Error('请求已取消');
+  e.name = 'AbortError';
+  return e;
+}
+
+/** SSE 流式解析（fetch + ReadableStream）；signal 可中止，onDelta 逐段增量回调（ticket 141） */
+async function streamChatCompletions(provider: AIProvider, body: any, signal?: AbortSignal, onDelta?: (delta: string) => void): Promise<string> {
   const resp = await fetch(`${provider.endpoint}/chat/completions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${provider.apiKey}` },
     body: JSON.stringify(body),
+    signal,
   });
   if (!resp.ok) {
     let msg = `API ${resp.status}`;
@@ -121,21 +129,28 @@ async function streamChatCompletions(provider: AIProvider, body: any): Promise<s
       try {
         const chunk = JSON.parse(payload);
         const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
-        if (delta) full += delta;
+        if (delta) {
+          full += delta;
+          try {
+            onDelta?.(delta); // 增量回调异常不影响流式解析
+          } catch (e) { /* 忽略 */ }
+        }
       } catch (e) { /* 忽略坏 chunk */ }
     }
   }
   return full;
 }
 
-/** 非流式（requestUrl：Obsidian 官方 API，无 CORS 限制） */
-async function chatCompletionsNonStream(provider: AIProvider, body: any): Promise<string> {
+/** 非流式（requestUrl：Obsidian 官方 API，无 CORS 限制）；requestUrl 不支持中止 → 前后查 signal，已取消按丢弃处理 */
+async function chatCompletionsNonStream(provider: AIProvider, body: any, signal?: AbortSignal): Promise<string> {
+  if (signal?.aborted) throw abortError();
   const resp: any = await requestUrl({
     url: `${provider.endpoint}/chat/completions`,
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${provider.apiKey}` },
     body: JSON.stringify({ ...body, stream: false }),
   });
+  if (signal?.aborted) throw abortError();
   const data = JSON.parse(resp.text);
   // 兼容 OpenAI 与 opencode 的错误格式（opencode: {type, error:{type,message}}）
   const errMsg = (data.error && (data.error.message || data.error.type)) || (data.message && data.message);
@@ -162,7 +177,9 @@ export class AIService {
     this.defaultOptions = defaultOptions;
   }
 
-  /** 通用 AI 请求（fetch 流式，失败自动 fallback requestUrl 非流式） */
+  /** 通用 AI 请求（fetch 流式，失败自动 fallback requestUrl 非流式）；
+   *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
+   *  既有调用（不传这两项）行为零变化 */
   async prompt(promptText: string, model: string = this.defaultModel, options: AIOptions = {}): Promise<string> {
     const mergedOptions = this._mergeOptions(options);
     const provider = await getAIProvider(mergedOptions.provider);
@@ -180,16 +197,19 @@ export class AIService {
       if (k === 'max_tokens') continue;
       body[k] = mo[k];
     }
+    const signal = mergedOptions.signal instanceof AbortSignal ? (mergedOptions.signal as AbortSignal) : undefined;
+    const onDelta = typeof mergedOptions.onDelta === 'function' ? (mergedOptions.onDelta as (delta: string) => void) : undefined;
     try {
       // 无 CORS 头的服务（如 opencode.ai）直接走 requestUrl，跳过注定失败的 fetch
       const content = provider.noCors
-        ? await chatCompletionsNonStream(provider, body)
-        : await streamChatCompletions(provider, body);
+        ? await chatCompletionsNonStream(provider, body, signal)
+        : await streamChatCompletions(provider, body, signal, onDelta);
       return content;
     } catch (streamError: any) {
+      if (signal?.aborted) throw streamError; // 用户取消：不再走 requestUrl 兜底
       // fetch 失败（CORS/网络）→ requestUrl 非流式兜底
       try {
-        const content = await chatCompletionsNonStream(provider, body);
+        const content = await chatCompletionsNonStream(provider, body, signal);
         return content;
       } catch (e: any) {
         throw new Error(`AI 请求失败: ${streamError.message}（fallback: ${e.message}）`);

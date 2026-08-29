@@ -51,12 +51,11 @@ export class QuizMasterUI {
   popup: HTMLElement | null = null;
   currentQuestions: QuizQuestion[] = [];
   currentIndex = 0;
-  loadingMask: HTMLElement | null = null;
-  loadingPopup: HTMLElement | null = null;
-  _generating = false;
 
   // 复习联动（仅经 startReviewSession/endReviewSession 契约访问，复习域不得直接改写）
-  _reviewMode = false;
+  // ticket 141：普通做题模式删除（独立入口 ticket 098 退役后已是死代码）——做题家只是
+  // 复习流程中的一环，会话只能经 startReviewSession 开启，不再存在「无 onComplete 的裸会话」
+  _sessionActive = false;
   onComplete: ((results: QuizReviewResults) => void) | null = null;
   correctCount = 0;
   wrongCount = 0;
@@ -65,6 +64,10 @@ export class QuizMasterUI {
   generator = new QuestionGenerator();
   /** ticket 098:多选提交按钮暂存（renderModal 选项后补挂，保证位于选项下方） */
   _pendingSubmitBtn: HTMLElement | null = null;
+  /** ticket 141：头部对错计数元素（renderModal 重建时更新引用） */
+  private _statsEl: HTMLElement | null = null;
+  /** ticket 141：做题键盘快捷键句柄（1-4/A-D 选择、Enter 提交/下一题；ESC 走 escManager） */
+  private _keyHandler: ((e: KeyboardEvent) => void) | null = null;
 
   shuffleArray<T>(arr: T[]): T[] {
     for (let i = arr.length - 1; i > 0; i--) {
@@ -174,118 +177,34 @@ export class QuizMasterUI {
     if (failCount > 0) notify(`${failCount} 篇笔记出题失败${firstError ? `（${firstError}）` : ''}`, { type: 'warning', dedupeKey: 'quiz-generate' });
   }
 
-  /** 加载提示（源码 L401-418 逐字） */
-  showLoadingPopup(message: string): void {
-    this._teardownModal(); // 只关可能存在的弹窗 DOM（不走 close 的复习结算语义）
-    const mask = document.createElement('div');
-    mask.id = 'quiz-mask';
-    mask.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;';
-    const popup = document.createElement('div');
-    popup.id = 'quiz-loading';
-    popup.style.cssText = 'background:var(--background-primary);border-radius:12px;padding:30px;max-width:400px;text-align:center;';
-    popup.innerHTML = `
-      <div style="font-size:18px;margin-bottom:12px;">⏳ ${message}</div>
-      <div class="spinner"></div>
-    `;
-    mask.style.zIndex = String(allocZ()); // ADR-0067：一次性弹窗，创建即显示即发号（popup 为 mask 子节点随动）
-    mask.appendChild(popup);
-    document.body.appendChild(mask);
-    escManager.register('quiz-loading', {
-      isVisible: () => !!(this.loadingMask && this.loadingMask.isConnected),
-      close: () => this.closeLoading(),
-    });
-    this.loadingMask = mask;
-    this.loadingPopup = popup;
+  /** ticket 141：普通做题模式（startQuiz/showLoadingPopup）删除——独立入口 ticket 098 退役后
+   *  已无调用方，做题家只作为复习流程一环经 startReviewSession 进入。 */
+
+  /**
+   * 复习联动契约：开始一轮做题会话（复习计划经此进入做题模式）——ticket 141 起唯一入口。
+   * 会话状态（_sessionActive/currentQuestions/计数/onComplete）只允许在本方法内设置，
+   * 复习域禁止直接改写——契约化后复习域只需调用本方法与 endReviewSession。
+   * 「打乱出题顺序」设置在会话入口生效（原普通模式行为迁移，设置项保留语义不变）。
+   */
+  startReviewSession(opts: { questions: QuizQuestion[]; onComplete: ((results: QuizReviewResults) => void) | null }): void {
+    this._sessionActive = true;
+    const shuffle = QuizMasterUI.settings?.shuffleQuestions !== false;
+    this.currentQuestions = shuffle ? this.shuffleArray([...opts.questions]) : [...opts.questions];
+    this.currentIndex = 0;
+    this.correctCount = 0;
+    this.wrongCount = 0;
+    this.totalQuestions = this.currentQuestions.length;
+    this.onComplete = opts.onComplete;
+    this.showQuestion();
   }
 
-  closeLoading(): void {
-    if (this.loadingMask && this.loadingMask.parentNode) this.loadingMask.remove();
-    this.loadingMask = null;
-    this.loadingPopup = null;
-  }
-
-  /** 开始做题（源码 L428-511 逐字） */
-  async startQuiz(): Promise<void> {
-    if (this._generating) return;
-
-    if (!QuizMasterUI.ai) {
-      notice('AI 服务未配置，无法生成题目', 'warning', 5000);
-      return;
-    }
-
-    // P1-1：入口统一清理上次会话残留回调，避免普通做题误触发旧复习 onComplete
+  /** 复习联动契约：结束做题会话（结算回调已消费后由复习域调用，收尾弹窗；防御性结算防悬挂） */
+  endReviewSession(): void {
+    const cb = this.onComplete;
     this.onComplete = null;
-    this._generating = true;
-    const app = getApp();
-    try {
-      // 先尝试获取已有题目
-      let uncompleted = await this.manager.getUncompletedQuestions(app);
-
-      // 如果没有任何题目，则自动生成第一个活跃笔记的题目
-      if (uncompleted.length === 0) {
-        this.showLoadingPopup('正在获取题库，请稍候...');
-        try {
-          const activeItems = await loadActiveItems(app);
-          if (!activeItems.length) {
-            this.closeLoading();
-            notice('没有活跃笔记，无法生成题目', 'warning'); // P2：不再静默收尾
-            return;
-          }
-
-          const firstItem = activeItems[0];
-          const notePath = firstItem.filePath;
-          const file = app.vault.getAbstractFileByPath(notePath);
-          if (!file) {
-            this.closeLoading();
-            notice('笔记文件不存在', 'error');
-            return;
-          }
-
-          const content = await app.vault.read(file as any);
-          if (!content.trim()) {
-            this.closeLoading();
-            notice('笔记内容为空，无法生成题目', 'error');
-            return;
-          }
-
-          const settings = QuizMasterUI.settings || {};
-          const enableMultipleChoice = settings.enableMultipleChoice !== false;
-          const questionsPerNote = parseInt(settings.questionsPerNote) || 0;
-          const difficulty = settings.difficulty || 'random';
-
-          const newQuestions = await this.generator.generate(content, QuizMasterUI.ai, enableMultipleChoice, questionsPerNote, difficulty);
-
-          await this.manager.saveQuestionsForNote(app, notePath, newQuestions);
-
-          // 重新获取题目列表
-          uncompleted = await this.manager.getUncompletedQuestions(app);
-          if (uncompleted.length === 0) {
-            this.closeLoading();
-            notice('生成题目失败，请重试', 'error');
-            return;
-          }
-
-          this.closeLoading();
-        } catch (e: any) {
-          this.closeLoading();
-          notice('生成题目失败：' + e.message, 'error');
-          console.error(e);
-          return;
-        }
-      }
-
-      // 打乱题目（根据设置）
-      const shuffle = QuizMasterUI.settings?.shuffleQuestions !== false;
-      this.currentQuestions = shuffle ? this.shuffleArray(uncompleted) : uncompleted;
-      this.currentIndex = 0;
-      this.correctCount = 0;
-      this.wrongCount = 0;
-      // 固定总题数（在本次会话中不变）
-      this.totalQuestions = this.currentQuestions.length;
-      this.showQuestion();
-    } finally {
-      this._generating = false;
-    }
+    this._sessionActive = false;
+    if (cb) cb(this._buildResults());
+    this._teardownModal();
   }
 
   /** 渲染单题（源码 L514-676 逐字） */
@@ -295,37 +214,41 @@ export class QuizMasterUI {
 
     const mask = document.createElement('div');
     mask.id = 'quiz-mask';
-    mask.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;';
     this.mask = mask;
     mask.style.zIndex = String(allocZ()); // ADR-0067：换题重建 DOM，创建即显示即发号（popup 为 mask 子节点随动）
     const popup = document.createElement('div');
     popup.id = 'quiz-popup';
-    popup.style.cssText = 'background:var(--background-primary);border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.3);padding:24px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;display:flex;flex-direction:column;position:relative;';
     this.popup = popup;
 
     const header = document.createElement('div');
-    header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;';
+    header.className = 'bz-quiz-head';
     const title = document.createElement('span');
-    title.style.cssText = 'font-size:15px;font-weight:600;';
+    title.className = 'bz-quiz-title';
     // 使用固定的总题数 this.totalQuestions；题号 = 已消费题数 + 1：
-    // 答对走 splice（currentIndex 不增、剩余长度减 1），答错走 currentIndex++，
-    // 两路相加即已做题数——不依赖 correct/wrong 计数（多选计数为已知缺陷）
+    // ticket 141：答对/答错均 splice 出当前题（答错仅移出本轮会话，不落盘删除），
+    // 已消费数 = totalQuestions - 剩余长度——不依赖 correct/wrong 计数（多选计数为已知缺陷）
     // ticket 099：notePath 判空降级（待重做队列曾缺 notePath → q.notePath!.split 崩溃）
     const noteName = q.notePath ? q.notePath.split('/').pop()!.replace('.md', '') : '';
-    const doneCount = this.currentIndex + (this.totalQuestions - this.currentQuestions.length);
+    const doneCount = this.totalQuestions - this.currentQuestions.length;
     title.textContent = noteName ? `📝 ${noteName} (${doneCount + 1}/${this.totalQuestions})` : `📝 (${doneCount + 1}/${this.totalQuestions})`;
     header.appendChild(title);
+    // ticket 141：头部实时对错计数（做题中即可见，不再只存不用）
+    const stats = document.createElement('span');
+    stats.className = 'bz-quiz-stats';
+    this._statsEl = stats;
+    this._syncHeaderStats();
+    header.appendChild(stats);
     popup.appendChild(header);
 
     // 题目
     const questionDiv = document.createElement('div');
-    questionDiv.style.cssText = 'font-size:17px;font-weight:500;margin-bottom:20px;color:var(--text-normal);';
+    questionDiv.className = 'bz-quiz-question';
     questionDiv.textContent = q.question;
     popup.appendChild(questionDiv);
 
     // 选项容器
     const optionsContainer = document.createElement('div');
-    optionsContainer.style.cssText = 'display:flex;flex-direction:column;gap:6px;';
+    optionsContainer.className = 'bz-quiz-options';
     const selectedIndices = new Set<number>();
     const answeredRef = { value: false };
 
@@ -342,11 +265,56 @@ export class QuizMasterUI {
     document.body.appendChild(mask);
     escManager.register('quiz', {
       isVisible: () => !!(this.mask && this.mask.isConnected),
-      close: () => this.close(),
+      close: () => this.finishQuiz(),
     });
+    this._bindKeyboard();
     mask.addEventListener('click', (e) => {
       if (e.target === mask) this.finishQuiz();
     });
+  }
+
+  /**
+   * ticket 141：做题键盘快捷键（1-4/A-D 选择、Enter 提交/下一题）。
+   * 焦点在按钮/输入框上时原生行为优先（防 Enter 双触发）；ESC 不在此处理（escManager 层级）。
+   */
+  private _bindKeyboard(): void {
+    this._unbindKeyboard();
+    this._keyHandler = (e: KeyboardEvent) => {
+      if (!this.mask || !this.mask.isConnected) return;
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'BUTTON')) return;
+      const keys = ['1', '2', '3', '4'];
+      const letters = ['a', 'b', 'c', 'd'];
+      const key = e.key.toLowerCase();
+      const idx = keys.includes(key) ? keys.indexOf(key) : letters.indexOf(key);
+      if (idx >= 0 && idx <= 3) {
+        const btn = this.popup?.querySelector<HTMLElement>(`.quiz-option-btn[data-index="${idx}"]`);
+        if (btn && !btn.classList.contains('disabled')) btn.click();
+        return;
+      }
+      if (e.key === 'Enter') {
+        const submit = this.popup?.querySelector<HTMLButtonElement>('.quiz-submit-btn');
+        if (submit && !submit.disabled) {
+          submit.click();
+          return;
+        }
+        const next = this.popup?.querySelector<HTMLButtonElement>('.quiz-next-btn');
+        if (next && !next.disabled) next.click();
+      }
+    };
+    document.addEventListener('keydown', this._keyHandler);
+  }
+
+  private _unbindKeyboard(): void {
+    if (this._keyHandler) {
+      document.removeEventListener('keydown', this._keyHandler);
+      this._keyHandler = null;
+    }
+  }
+
+  /** ticket 141：头部对错计数同步（答对/答错即时刷新，无则静默跳过） */
+  private _syncHeaderStats(): void {
+    if (this._statsEl) this._statsEl.textContent = `✅ ${this.correctCount} · ❌ ${this.wrongCount}`;
   }
 
   /** 选项按钮组构建与答题逻辑（renderModal 拆分）：单选即点即判 / 多选切换 + 提交 */
@@ -360,7 +328,7 @@ export class QuizMasterUI {
       btn.className = 'quiz-option-btn';
       // 清理选项文本，避免重复前缀
       const cleanText = cleanOptionText(opt);
-      btn.innerHTML = `<span>${optionLabels[idx]}.</span><span style="flex:1">${escapeHtml(cleanText)}</span><span class="check-mark">✔️</span>`;
+      btn.innerHTML = `<span>${optionLabels[idx]}.</span><span class="bz-quiz-option-text">${escapeHtml(cleanText)}</span><span class="check-mark">✔️</span>`;
       btn.dataset.index = String(idx);
 
       btn.onclick = () => {
@@ -372,18 +340,21 @@ export class QuizMasterUI {
           const isCorrect = idx === q.correctIndices[0];
 
           if (isCorrect) {
-            // 答对：删除该题（计数在 _answerCorrect 持久化成功后递增）
+            // 答对（ticket 141）：即时亮出正确选项 + 挂待解锁「下一题」，持久化成功才解锁——节奏由用户掌控
+            optionElements.forEach((b, i) => {
+              if (i === q.correctIndices[0]) b.classList.add('correct');
+            });
+            this.addNextButton(optionsContainer, true);
             this._answerCorrect(q, app, () => {
               answeredRef.value = false;
               optionElements.forEach((b) => b.classList.remove('disabled'));
-            }, () => {
-              optionElements.forEach((b, i) => {
-                if (i === q.correctIndices[0]) b.classList.add('correct');
-              });
+              this._removeNextButton();
             });
           } else {
-            // 答错：显示正确答案，不删除，添加"下一题"按钮
+            // 答错：显示正确答案，仅移出本轮会话（不落盘删除，留给重做队列），「下一题」按钮继续
             this.wrongCount++;
+            this._syncHeaderStats();
+            this.currentQuestions.splice(this.currentIndex, 1);
             optionElements.forEach((b, i) => {
               if (i === q.correctIndices[0]) b.classList.add('correct');
               if (i === idx) b.classList.add('wrong');
@@ -429,12 +400,19 @@ export class QuizMasterUI {
         if (isCorrect) {
           // ticket 098（ADR-0044）：多选计数 bug 解冻——答对也递增 correctCount（唯一破铁律 1 项；
           // 递增时机在 _answerCorrect 持久化成功后，失败恢复作答态不重复计）
+          // ticket 141：同单选——「下一题」按钮由用户点按，持久化成功后解锁
+          this.addNextButton(optionsContainer, true);
           this._answerCorrect(q, app, () => {
             answeredRef.value = false;
             submitBtn.disabled = false;
             optionElements.forEach((b) => b.classList.remove('disabled'));
+            this._removeNextButton();
           });
         } else {
+          // 答错：同单选——仅移出本轮会话（不落盘删除），「下一题」按钮继续
+          this.wrongCount++;
+          this._syncHeaderStats();
+          this.currentQuestions.splice(this.currentIndex, 1);
           this.addNextButton(optionsContainer);
         }
       };
@@ -444,46 +422,22 @@ export class QuizMasterUI {
     return optionElements;
   }
 
-  /** 答对公共链路：稳定定位删题 → 计数 → splice 出当前题 → （单选补高亮）→ 800ms 后下一题；
-   *  删除按题目内容在存储数组定位（P0-2），不再依赖会话期 _index 快照；
-   *  持久化成功后才计数（P2：失败恢复作答态时不重复计数），失败通知并恢复作答状态。 */
-  private _answerCorrect(q: QuizQuestion, app: App, onFailRestore: () => void, onSplice?: () => void): void {
+  /** 答对公共链路（ticket 141 重构）：稳定定位删题 → 计数 → splice 出当前题 → 头部计数同步 →
+   *  解锁「下一题」。删除按题目内容在存储数组定位（P0-2），不再依赖会话期 _index 快照；
+   *  持久化成功后才计数并解锁跳题（P2：失败恢复作答态时不重复计数），失败通知并恢复作答状态。 */
+  private _answerCorrect(q: QuizQuestion, app: App, onFailRestore: () => void): void {
     this.manager
       .removeQuestion(app, q.notePath!, { question: q.question, options: q.options, correctIndices: q.correctIndices })
       .then(() => {
         this.correctCount++;
         this.currentQuestions.splice(this.currentIndex, 1);
-        onSplice?.();
-        setTimeout(() => {
-          this.showQuestion();
-        }, 800);
+        this._syncHeaderStats();
+        this._enableNextButton();
       })
       .catch((e) => {
         notice('删除题目失败：' + e.message, 'error');
         onFailRestore();
       });
-  }
-
-  /**
-   * 复习联动契约：开始一轮做题会话（复习计划经此进入做题模式）。
-   * 会话状态（_reviewMode/currentQuestions/计数/onComplete）只允许在本方法内设置，
-   * 复习域禁止直接改写——契约化后复习域只需调用本方法与 endReviewSession。
-   */
-  startReviewSession(opts: { questions: QuizQuestion[]; onComplete: ((results: QuizReviewResults) => void) | null }): void {
-    this._reviewMode = true;
-    this.currentQuestions = opts.questions;
-    this.currentIndex = 0;
-    this.correctCount = 0;
-    this.wrongCount = 0;
-    this.totalQuestions = opts.questions.length;
-    this.onComplete = opts.onComplete;
-    this.showQuestion();
-  }
-
-  /** 复习联动契约：结束做题会话（退出复习模式并按既有语义完成/关闭） */
-  endReviewSession(): void {
-    this._reviewMode = false;
-    this.finishQuiz();
   }
 
   /** 汇总本轮做题统计（showQuestion 完题 / finishQuiz 共用） */
@@ -511,31 +465,55 @@ export class QuizMasterUI {
     this.renderModal(this.currentQuestions[this.currentIndex]);
   }
 
-  /** 辅助：添加"下一题"按钮（用于错题后，源码 L702-713） */
-  addNextButton(popup: HTMLElement): void {
+  /**
+   * 辅助：添加「下一题」按钮（ticket 141 节奏改造：答对/答错统一由用户点按进入下一题，
+   * 去掉答对 800ms 强制自动跳题）。disabled=true 先挂占位，持久化成功后经 _enableNextButton 解锁。
+   */
+  addNextButton(popup: HTMLElement, disabled = false): void {
     const oldBtn = popup.querySelector('.quiz-next-btn');
     if (oldBtn) oldBtn.remove();
     const nextBtn = document.createElement('button');
     nextBtn.className = 'quiz-next-btn';
     nextBtn.textContent = '下一题 →';
+    if (disabled) {
+      (nextBtn as HTMLButtonElement).disabled = true;
+      nextBtn.classList.add('quiz-next-btn--pending');
+    }
     nextBtn.onclick = () => {
-      this.currentIndex++;
       this.showQuestion();
     };
     popup.appendChild(nextBtn);
   }
 
+  /** 持久化成功后解锁「下一题」（防持久化期间抢跑重复跳题） */
+  private _enableNextButton(): void {
+    const btn = this.popup?.querySelector<HTMLButtonElement>('.quiz-next-btn');
+    if (!btn) return;
+    btn.disabled = false;
+    btn.classList.remove('quiz-next-btn--pending');
+  }
+
+  /** 持久化失败时移除挂起的「下一题」（作答态恢复后可重试） */
+  private _removeNextButton(): void {
+    this.popup?.querySelector('.quiz-next-btn')?.remove();
+  }
+
+  /** 仅拆除弹窗 DOM（换题/结果卡等内部过渡用，不走结算语义；连带注销键盘监听） */
+  private _teardownModal(): void {
+    this._unbindKeyboard();
+    if (this.mask && this.mask.parentNode) this.mask.remove();
+    this.mask = null;
+    this.popup = null;
+    this._statsEl = null;
+  }
+
   /**
-   * ticket 17：复习模式中途退出确认闸门（点遮罩 / ESC）。
-   * 复习会话答题中途（_reviewMode 且回调未消费，即尚未结算）退出，先确认「放弃本次做题？」：
-   * 确认 → 执行 proceed（既有结算/写排期语义，信任 review/app.ts 契约）；取消 → 继续做题。
-   * 非复习模式或回调已消费 → 直接放行（不打断普通做题与结果卡阶段）。
+   * 点遮罩 / ESC（ticket 141：纯复习会话语义，原「普通模式直接关窗」分支随模式删除）。
+   * 答题中途（回调未消费）→ 先确认「放弃本次做题？」，确认才按既有语义结算；
+   * 结果卡阶段（回调已消费，复习域驱动下一步）→ 忽略，防止中途拆 DOM 令复习循环 Promise 悬挂。
    */
-  private gateAbortReview(proceed: () => void): void {
-    if (!this._reviewMode || !this.onComplete) {
-      proceed();
-      return;
-    }
+  finishQuiz(): void {
+    if (!this._sessionActive || !this.onComplete) return;
     void openFlowDialog({
       title: '放弃本次做题？',
       message: '未完成的题目将丢弃，本次复习将按已答题目结算评级',
@@ -544,41 +522,22 @@ export class QuizMasterUI {
         { label: '放弃', value: 'ok', cta: true },
       ],
     }).then((v) => {
-      if (v === 'ok') proceed();
-    });
-  }
-
-  /** 仅拆除弹窗 DOM（换题/加载等内部过渡用，不走结算语义） */
-  private _teardownModal(): void {
-    if (this.mask && this.mask.parentNode) this.mask.remove();
-    this.mask = null;
-    this.popup = null;
-  }
-
-  /** 关闭弹窗。P1-1：复习模式下回调未被消费时（如答题中途 ESC），按 finishQuiz 语义
-   *  先结算再关闭——否则复习域外层 Promise 将永久悬挂；total=0 按 ADR-0044 评 again 属既定语义。
-   *  回调已消费（正常完成/已结算）或非复习模式 → 纯关闭。
-   *  ticket 17：答题中途退出前先确认（确认才结算；取消继续做题）。 */
-  close(): void {
-    this.gateAbortReview(() => {
-      if (this._reviewMode && this.onComplete) {
-        const cb = this.onComplete;
-        this.onComplete = null;
-        cb(this._buildResults());
-      }
+      if (v !== 'ok') return;
+      const cb = this.onComplete;
+      this.onComplete = null;
+      this._sessionActive = false;
+      if (cb) cb(this._buildResults()); // total=0 按 ADR-0044 评 again 属既定语义
       this._teardownModal();
     });
   }
 
-  /** 做题结束（源码 L723-735：回调优先，否则关闭）
-   *  ticket 17：复习模式答题中途点遮罩 → 先确认（确认才结算；取消继续做题）。 */
-  finishQuiz(): void {
-    this.gateAbortReview(() => {
-      const cb = this.onComplete;
-      this.onComplete = null;
-      if (cb) cb(this._buildResults());
-      else this.close(); // 没有回调时才直接关闭
-    });
+  /** 强制关闭（复习域契约调用，如结果卡「复习此笔记」）：回调防御性结算，避免外层 Promise 悬挂 */
+  close(): void {
+    const cb = this.onComplete;
+    this.onComplete = null;
+    this._sessionActive = false;
+    if (cb) cb(this._buildResults());
+    this._teardownModal();
   }
 
   get manager(): QuizManager {

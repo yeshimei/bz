@@ -462,7 +462,7 @@ describe('第二大脑首用引导（ticket 107）', () => {
     panel.destroy();
   });
 
-  it('[l2-sb] ESC 监听与 open/close 成对：反复开关不累积 document keydown', async () => {
+  it('[l2-sb] ESC 走 escManager 层级（ticket 141 迁移）：open 注册 close 注销，反复开关不累积', async () => {
     const vault = new MockVault();
     vault.files.set('我的/A.md', '内容 A。');
     vault.files.set(
@@ -483,20 +483,49 @@ describe('第二大脑首用引导（ticket 107）', () => {
     const store = new VectorStore(app as any);
     await store.load();
     const panel = new SecondBrainPanel(app as any, store, { onOpenReference: () => {}, onOpenChat: () => {} });
-    const addSpy = vi.spyOn(document, 'addEventListener');
-    const removeSpy = vi.spyOn(document, 'removeEventListener');
-    const keydownAdds = () => addSpy.mock.calls.filter((c) => c[0] === 'keydown').length;
-    const keydownRemoves = () => removeSpy.mock.calls.filter((c) => c[0] === 'keydown').length;
+
+    const pressEsc = () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
 
     await panel.open();
-    expect(keydownAdds()).toBe(1); // 首次 open 挂载一次
-    panel.close();
-    expect(keydownRemoves()).toBe(1); // close 同步移除
+    expect((panel as any).escHandle).not.toBeNull();
+    pressEsc();
+    expect((panel as any).popup!.style.display).toBe('none'); // ESC 经层级关闭面板
+    expect((panel as any).escHandle).toBeNull(); // close 同步注销层级
+
     await panel.open();
-    expect(keydownAdds()).toBe(2); // 再次 open 重挂，不累积（每次关闭都摘除）
-    expect((panel as any).escapeHandler).not.toBeNull();
+    expect((panel as any).escHandle).not.toBeNull(); // 再次 open 重挂，不累积
     panel.close();
-    expect((panel as any).escapeHandler).toBeNull();
+    expect((panel as any).escHandle).toBeNull();
+    panel.destroy();
+  });
+
+  it('[l2-sb] ESC 层级语义：⚙️ 设置弹窗叠开时先关设置，面板保留（ticket 141 迁移）', async () => {
+    const vault = new MockVault();
+    vault.files.set('我的/A.md', '内容 A。');
+    vault.files.set(
+      STORE_PATH,
+      storeJSON({ version: 9, notes: { '我的/A.md': { mtime: 5, chunks: [{ text: 't' }] } }, _dim: 2 })
+    );
+    const { adapter } = makeAdapter(vault);
+    const app = makeApp(vault, adapter, { '我的/A.md': 5 });
+    setApp(app as any);
+
+    const store = new VectorStore(app as any);
+    await store.load();
+    const panel = new SecondBrainPanel(app as any, store, { onOpenReference: () => {}, onOpenChat: () => {} });
+    const pressEsc = () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+    await panel.open();
+    const { openSettingsModal } = await import('../../src/core/settings-modal');
+    openSettingsModal({ title: '第二大脑设置', schema: { groups: [] } });
+    expect(document.getElementById('bz-settings-modal-popup')).not.toBeNull();
+
+    pressEsc(); // 第一层 ESC：设置弹窗在上，先关设置
+    expect(document.getElementById('bz-settings-modal-popup')).toBeNull();
+    expect((panel as any).popup!.style.display).toBe('flex'); // 面板未被误关
+
+    pressEsc(); // 第二层 ESC：才轮到主面板
+    expect((panel as any).popup!.style.display).toBe('none');
     panel.destroy();
   });
 });
@@ -527,7 +556,7 @@ describe('第二大脑对话弹窗（ticket 108 改居中弹窗）', () => {
     expect(popup).not.toBeNull();
     expect(popup!.style.display).toBe('flex');
     expect(document.getElementById('bz-sb-chat-mask')!.style.display).toBe('block');
-    expect(popup!.querySelectorAll('button').length).toBe(1); // 只有发送钮，无头部按钮（ticket 108）
+    expect(popup!.querySelectorAll('button').length).toBe(2); // 发送钮 + 头部「清空对话」（ticket 141；仍无关闭钮，靠遮罩+ESC）
 
     chat.close();
     expect(popup!.style.display).toBe('none');

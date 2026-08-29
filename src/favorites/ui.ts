@@ -2,10 +2,10 @@
  * 收藏本 UI 管理器（ticket 11）：源码 收藏本.js L237-1423 逐字移植。
  */
 import moment from 'moment';
-import { notice, notify } from '../core/notice';
+import { notice, notify, notifyUndo, notifySaveError } from '../core/notice';
 import { createIconBtn, topifyZ } from '../core/dom';
 import { allocZ } from '../core/z-order';
-import { openFlowDialog } from '../core/flow-dialog';
+import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { escManager } from '../core/esc-manager';
 import {
   attachItemActions,
@@ -16,7 +16,7 @@ import {
   type ItemAction,
 } from '../core/item-actions';
 import { getApp } from '../core/app';
-import { tryGetSettings } from '../core/settings-provider';
+import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
 import { mobileFullscreenGroup } from '../core/settings-common';
@@ -32,6 +32,18 @@ import { favoritesEditChanges } from '../smartcat/favorites-source';
 const SEARCH_DEBOUNCE_MS = 180;
 /** 单击直开双击窗口（ticket 61）：同卡 300ms 内重复点击不重开（防双击连开两个标签页） */
 const OPEN_CLICK_WINDOW_MS = 300;
+/** 分页大小（ticket 141）：主列表每页 50 条，滚动到底自动加载（movie 域同款交互） */
+const PAGE_SIZE = 50;
+
+/** 排序键（ticket 141）：created=创建时间最新优先（默认）/ title=标题 / domain=域名 */
+const SORT_KEYS = ['created', 'title', 'domain'] as const;
+type SortKey = (typeof SORT_KEYS)[number];
+/** 排序选项（与 movie 筛选排序弹窗同交互风格：按钮组实时生效） */
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: 'created', label: '创建时间最新优先' },
+  { key: 'title', label: '标题' },
+  { key: 'domain', label: '域名' },
+];
 
 /**
  * 右键菜单「点外关闭」手势标记（审查阻断 A）：
@@ -87,6 +99,21 @@ export class UIManager {
   searchToggleBtn: HTMLButtonElement | null = null;
   searchDebounceTimer: ReturnType<typeof setTimeout> | null = null; // 搜索防抖（ticket 42）
 
+  // 分页（ticket 141）：已渲染条数 / 滚动加载防重入 / 本次渲染的筛选+排序结果
+  loadedCount = 0;
+  isLoadingMore = false;
+  _filteredItems: FavoritesItem[] = [];
+
+  // 排序弹窗（ticket 141）与 ESC 层
+  _sortMask: HTMLElement | null = null;
+  _sortEscHandle: { unregister: () => void } | null = null;
+
+  // 添加弹窗打开时的输入基线（ticket 141 通病 3 脏表单检测：相对基线有变化才拦）
+  _addBaseline: { title: string; url: string; desc: string; keys: string; balanceUrl: string } | null = null;
+
+  // 保存防重入（ticket 141 通病 4）
+  _saving = false;
+
   // 添加对话框 DOM
   addMask: HTMLElement | null = null;
   addPopup: HTMLElement | null = null;
@@ -111,24 +138,36 @@ export class UIManager {
     this.onRefresh = onRefresh;
   }
 
+  // ---------- 排序键读写（ticket 141） ----------
+  /**
+   * 当前排序键：读 data.json favoritesSortKey（ticket 141 加法扩展，经 settings-provider 持久化）。
+   * 偏离说明：任务原案为 favorites.json 顶层加 sortKey 字段——favorites.json 顶层是纯条目数组，
+   * 顶层加字段需改根结构为对象，会破坏仍在用的外部统计脚本 主页.js（读 favorites.length）并违背
+   * 「既有结构不改」铁律；故按 memoSortMode/movieDefaultSort 同惯例落设置键，非法值/无字段回退默认。
+   */
+  get sortKey(): SortKey {
+    const v = (tryGetSettings() as any).favoritesSortKey;
+    return (SORT_KEYS as readonly string[]).includes(v) ? (v as SortKey) : 'created';
+  }
+
+  /** 写排序键（内存对象直改 + saveSettings 落 data.json；设置未注入时静默降级为会话内生效） */
+  _setSortKey(key: SortKey): void {
+    try {
+      (getSettings() as any).favoritesSortKey = key;
+    } catch {
+      /* 设置提供者未注入（早期调用）：仅本次会话内存生效 */
+    }
+    void saveSettings();
+  }
+
   // ---------- 构建主 UI ----------
   build() {
     // 右键菜单点外关闭手势观察（审查阻断 A）：幂等安装
     installMenuDismissWatcher();
     // 移动端列表样式：平铺 + 隐藏滚动条
+    // （遮罩/面板视觉样式已收敛 src/favorites/styles.css ticket 141；display 显隐与动态 z 留运行时）
     this.mask = document.createElement('div');
     this.mask.id = 'fav-mask';
-    Object.assign(this.mask.style, {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'var(--background-modifier-cover)',
-      display: 'none',
-      alignItems: 'center',
-      justifyContent: 'center',
-    });
     this.mask.style.zIndex = String(allocZ()); // ADR-0067：创建即发号（显示时 topifyZ 再抬）
     this.mask.onclick = (e) => {
       if (e.target === this.mask) this.hide();
@@ -137,18 +176,6 @@ export class UIManager {
     // 弹出面板
     this.popup = document.createElement('div');
     this.popup.id = 'fav-popup';
-    Object.assign(this.popup.style, {
-      background: 'var(--background-primary)',
-      borderRadius: '12px',
-      boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-      width: '90%',
-      maxWidth: '700px',
-      maxHeight: '80vh',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden',
-      position: 'relative',
-    });
 
     // 标题栏（含搜索切换按钮）
     this.popup.appendChild(this._buildHeader());
@@ -165,11 +192,13 @@ export class UIManager {
     // 列表容器
     this.container = document.createElement('div');
     this.container.id = 'fav-entries-container';
-    this.container.style.cssText = 'flex:1; overflow-y:auto; padding: 12px 20px 20px 20px;';
     this.popup.appendChild(this.container);
 
     this.mask.appendChild(this.popup);
     document.body.appendChild(this.mask);
+
+    // 无限滚动（ticket 141 分页：滚动到底自动加载下一页）
+    this._setupInfiniteScroll();
 
     // 构建添加对话框（独立）
     this._buildAddDialog();
@@ -178,19 +207,34 @@ export class UIManager {
   _buildHeader(): HTMLElement {
     const header = document.createElement('div');
     header.className = 'fav-header';
-    header.style.cssText = 'padding:16px 24px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;';
 
     const title = document.createElement('h3');
     title.textContent = '收藏本';
-    title.style.cssText = 'margin:0; font-size:18px; font-weight:600; color:var(--text-normal);';
     header.appendChild(title);
 
     const actionGroup = document.createElement('div');
-    actionGroup.style.cssText = 'display:flex; gap:8px; align-items:center;';
+    actionGroup.className = 'bz-fav-head-actions';
 
     // 添加按钮（✏️）
     const addBtn = this._createButton('✏️', '添加收藏', () => this._showAddDialog());
     actionGroup.appendChild(addBtn);
+
+    // 搜索切换按钮（🔍）
+    this.searchToggleBtn = this._createButton('🔍', '搜索', () => {
+      this.searchVisible = !this.searchVisible;
+      this.searchWrapper!.style.display = this.searchVisible ? 'block' : 'none';
+      if (this.searchVisible) {
+        this.searchInput!.focus();
+      }
+      // 显隐态视觉走类（ticket 141 样式收敛：原内联 opacity）
+      this.searchToggleBtn!.classList.toggle('bz-fav-search-toggle--on', this.searchVisible);
+    });
+    this.searchToggleBtn.classList.add('bz-fav-search-toggle');
+    actionGroup.appendChild(this.searchToggleBtn);
+
+    // 排序弹窗（ticket 141：与 movie 筛选排序弹窗同交互风格，🔀 只做排序非设置）
+    const sortBtn = this._createButton('🔀', '排序', () => this._openSortModal());
+    actionGroup.appendChild(sortBtn);
 
     // 设置弹窗（ADR-0009：收藏本无行为设置，空态域；ticket 131 声明式——分组卡片 + maxWidth 520）
     const settingsBtn = this._createButton('⚙️', '收藏本设置', () => {
@@ -202,17 +246,6 @@ export class UIManager {
         emptyDesc: '数据文件路径由全局设置「数据存储路径」统一管理',
       });
     });
-    // 搜索切换按钮（🔍）
-    this.searchToggleBtn = this._createButton('🔍', '搜索', () => {
-      this.searchVisible = !this.searchVisible;
-      this.searchWrapper!.style.display = this.searchVisible ? 'block' : 'none';
-      if (this.searchVisible) {
-        this.searchInput!.focus();
-      }
-      this.searchToggleBtn!.style.opacity = this.searchVisible ? '1' : '0.5';
-    });
-    this.searchToggleBtn.style.opacity = '0.5';
-    actionGroup.appendChild(this.searchToggleBtn);
 
     // ⚙️ 设置置于关闭正前（用户拍板：所有窗口设置按钮都在关闭前）
     actionGroup.appendChild(settingsBtn);
@@ -234,26 +267,15 @@ export class UIManager {
     const container = document.createElement('div');
     container.className = 'fav-tagbar';
     // 类型多行平铺：移动端由 styles.css .fav-tagbar 覆写（常规卡窄幅也全部可见，不藏类型）
-    container.style.cssText = 'padding: 8px 20px; display:flex; flex-wrap:wrap; gap:6px;';
 
     for (const { tag, emoji } of CONFIG.DEFAULT_TAGS) {
       const btn = document.createElement('button');
       btn.textContent = `${emoji} ${tag}`;
       btn.className = 'fav-tag-btn';
       btn.dataset.tag = tag;
-      Object.assign(btn.style, {
-        borderRadius: '10px',
-        background: 'var(--background-secondary)',
-        cursor: 'pointer',
-        fontSize: '12px',
-        color: 'var(--text-normal)',
-        padding: '4px 12px',
-        border: 'none',
-        boxShadow: 'none',
-        transition: 'all 0.2s',
-      });
       btn.onclick = () => {
         this.selectedTag = this.selectedTag === tag ? null : tag;
+        this.loadedCount = 0; // 筛选变化重置分页（ticket 141）
         this._refreshTagsUI();
         this.render();
       };
@@ -266,14 +288,8 @@ export class UIManager {
     const btns = this.tagContainer!.querySelectorAll('.fav-tag-btn');
     btns.forEach((btn) => {
       const el = btn as HTMLElement;
-      const tag = el.dataset.tag;
-      if (this.selectedTag === tag) {
-        el.style.background = 'var(--interactive-accent)';
-        el.style.color = 'var(--text-on-accent)';
-      } else {
-        el.style.background = 'var(--background-secondary)';
-        el.style.color = 'var(--text-normal)';
-      }
+      // 选中态视觉走类（ticket 141 样式收敛：原内联 background/color）
+      el.classList.toggle('bz-fav-tag-btn--active', this.selectedTag === el.dataset.tag);
     });
     this._updateTagCounts();
   }
@@ -284,14 +300,12 @@ export class UIManager {
       const el = btn as HTMLElement;
       const tag = el.dataset.tag!;
       const emoji = CONFIG.DEFAULT_TAGS.find((t) => t.tag === tag)?.emoji || '📌';
-      // 所有按钮始终可见
-      el.style.display = 'inline-flex';
       // 选中分类后，选中项只显示标签名；其余（含未选中任何分类时）显示标签名+计数
       if (this.selectedTag && tag === this.selectedTag) {
         el.innerHTML = `${emoji} ${tag}`;
       } else {
         const count = this.currentItems.filter((item) => item.tags && item.tags.includes(tag)).length;
-        el.innerHTML = `${emoji} ${tag} <span style="margin-left:4px;font-size:10px;opacity:0.8;">(${count})</span>`;
+        el.innerHTML = `${emoji} ${tag} <span class="bz-fav-tag-count">(${count})</span>`;
       }
     });
   }
@@ -299,24 +313,15 @@ export class UIManager {
   // ---------- 搜索框 ----------
   _buildSearch(): HTMLElement {
     const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'padding: 8px 20px; flex-shrink:0;';
+    wrapper.className = 'bz-fav-search-wrapper';
 
     this.searchInput = document.createElement('input');
     this.searchInput.type = 'text';
     this.searchInput.placeholder = '🔍 搜索收藏（标题/简介/标签）...';
-    Object.assign(this.searchInput.style, {
-      width: '100%',
-      padding: '8px 12px',
-      borderRadius: '8px',
-      border: '1px solid var(--background-modifier-border)',
-      background: 'var(--background-primary)',
-      color: 'var(--text-normal)',
-      fontSize: '14px',
-      boxSizing: 'border-box',
-      outline: 'none',
-    });
+    this.searchInput.className = 'bz-fav-search-input';
     this.searchInput.oninput = () => {
       this.searchKeyword = this.searchInput!.value;
+      this.loadedCount = 0; // 搜索词变化重置分页（ticket 141）
       // 搜索防抖（ticket 42）：关键词即时记录，渲染延迟到输入静置 180ms 后，防高频输入卡顿
       if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
       this.searchDebounceTimer = setTimeout(() => {
@@ -339,66 +344,97 @@ export class UIManager {
       filtered = filtered.filter((item) => item.tags && item.tags.includes(this.selectedTag!));
     }
 
-    if (this.searchKeyword.trim()) {
-      const kw = this.searchKeyword.trim().toLowerCase();
+    const kw = this.searchKeyword.trim();
+    if (kw) {
+      const lower = kw.toLowerCase();
       filtered = filtered.filter(
         (item) =>
-          (item.title && item.title.toLowerCase().includes(kw)) ||
-          (item.description && item.description.toLowerCase().includes(kw)) ||
-          (item.tags && item.tags.some((t) => t.toLowerCase().includes(kw)))
+          (item.title && item.title.toLowerCase().includes(lower)) ||
+          (item.description && item.description.toLowerCase().includes(lower)) ||
+          (item.tags && item.tags.some((t) => t.toLowerCase().includes(lower)))
       );
     }
 
+    // 排序（ticket 141）：置顶优先于排序（保持现状语义），再按排序键排列
+    const sk = this.sortKey;
+    const domainOf = (item: FavoritesItem): string => {
+      const u = (item.url || '').trim();
+      return u ? this._hostOf(this._normalizeUrl(u)).toLowerCase() : '';
+    };
+    filtered = [...filtered].sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      if (sk === 'title') return (a.title || '').localeCompare(b.title || '');
+      if (sk === 'domain') return domainOf(a).localeCompare(domainOf(b));
+      return (b.created || '').localeCompare(a.created || ''); // created：最新优先（现状默认）
+    });
+    this._filteredItems = filtered;
+
     this.container.innerHTML = '';
     if (filtered.length === 0) {
-      // 空态首步引导（ticket l6-fav 解冻）：正文无 emoji，图标可提及（✏️ = 头部添加按钮）
       const empty = document.createElement('div');
-      empty.style.cssText = 'padding:40px; text-align:center; color:var(--text-faint); font-size:16px;';
-      const emptyMain = document.createElement('div');
-      emptyMain.textContent = '暂无收藏 🎉';
-      empty.appendChild(emptyMain);
-      const emptyHint = document.createElement('div');
-      emptyHint.textContent = '点右上角 ✏️ 添加第一个收藏';
-      emptyHint.style.cssText = 'font-size:13px; margin-top:6px; opacity:0.8;';
-      empty.appendChild(emptyHint);
+      empty.className = 'bz-fav-empty';
+      if (kw) {
+        // 搜索无结果（ticket 141）：与空库欢迎语区分
+        empty.textContent = `没有匹配「${kw}」的收藏`;
+        const hint = document.createElement('div');
+        hint.className = 'bz-fav-empty-hint';
+        hint.textContent = '试试其他关键词，或清除搜索';
+        empty.appendChild(hint);
+      } else {
+        // 空库首步引导（ticket l6-fav 解冻）：正文无 emoji，图标可提及（✏️ = 头部添加按钮）
+        const emptyMain = document.createElement('div');
+        emptyMain.textContent = '暂无收藏 🎉';
+        empty.appendChild(emptyMain);
+        const emptyHint = document.createElement('div');
+        emptyHint.className = 'bz-fav-empty-hint';
+        emptyHint.textContent = '点右上角 ✏️ 添加第一个收藏';
+        empty.appendChild(emptyHint);
+      }
       this.container.appendChild(empty);
       return;
     }
 
-    for (const item of filtered) {
+    // 分页（ticket 141）：每页 50 条，滚动到底自动加载（movie 域同款）
+    if (this.loadedCount === 0) this.loadedCount = Math.min(PAGE_SIZE, filtered.length);
+    const showCount = Math.min(this.loadedCount, filtered.length);
+
+    for (const item of filtered.slice(0, showCount)) {
       this.container.appendChild(this._renderCard(item));
     }
+
+    if (showCount < filtered.length) {
+      const loadMore = document.createElement('div');
+      loadMore.className = 'bz-fav-load-more';
+      loadMore.textContent = '滚动加载更多...';
+      this.container.appendChild(loadMore);
+    }
+  }
+
+  /** 无限滚动（ticket 141，movie 域同款）：容器滚动近底部自动追加下一页 */
+  _setupInfiniteScroll(): void {
+    const container = this.container!;
+    const oldListener = (container as any)._bzFavScrollListener;
+    if (oldListener) container.removeEventListener('scroll', oldListener);
+    const listener = () => {
+      if (this.isLoadingMore) return;
+      if (this.loadedCount >= this._filteredItems.length) return;
+      if (container.scrollTop + container.clientHeight >= container.scrollHeight - 100) {
+        this.isLoadingMore = true;
+        this.loadedCount = Math.min(this.loadedCount + PAGE_SIZE, this._filteredItems.length);
+        this.render();
+        this.isLoadingMore = false;
+      }
+    };
+    (container as any)._bzFavScrollListener = listener;
+    container.addEventListener('scroll', listener);
   }
 
   _renderCard(item: FavoritesItem): HTMLElement {
     const card = document.createElement('div');
-    card.className = 'fav-card';
     const rawUrl = (item.url || '').trim();
-    Object.assign(card.style, {
-      display: 'flex',
-      flexDirection: 'column',
-      padding: '16px',
-      marginBottom: '12px',
-      border: '1px solid var(--background-modifier-border)',
-      borderRadius: '10px',
-      background: 'var(--background-primary)',
-      cursor: rawUrl ? 'pointer' : 'default', // 有链接 = 可见的点击入口（ticket 61）
-      transition: 'background 0.15s',
-      position: 'relative',
-    });
-
-    // 置顶样式
-    if (item.pinned) {
-      card.style.background = 'var(--background-modifier-hover)';
-      card.style.borderLeft = '3px solid var(--interactive-accent)';
-    }
-
-    card.onmouseenter = () => {
-      if (!item.pinned) card.style.background = 'var(--background-modifier-hover)';
-    };
-    card.onmouseleave = () => {
-      if (!item.pinned) card.style.background = 'var(--background-primary)';
-    };
+    card.className = 'fav-card' + (item.pinned ? ' bz-fav-card--pinned' : '') + (rawUrl ? ' bz-fav-card--link' : '');
+    // 卡片视觉样式收敛 styles.css（ticket 141）：有链接 = 可见的点击入口（ticket 61，bz-fav-card--link cursor）
 
     // ---- 打开可见入口（ticket 61·拍板）----
     // 单击卡片主体（含标题/简介/元信息区）直接打开链接；长按/右键抽屉保持不变。
@@ -428,13 +464,13 @@ export class UIManager {
     if (item.description) {
       const desc = document.createElement('div');
       desc.textContent = item.description;
-      desc.style.cssText = 'font-size:14px; color:var(--text-muted); line-height:1.5; margin-bottom:8px; word-break:break-word;';
+      desc.className = 'bz-fav-desc';
       card.appendChild(desc);
     }
 
     // ---- 元信息（日期） ----
     const meta = document.createElement('div');
-    meta.style.cssText = 'display:flex; gap:12px; font-size:12px; color:var(--text-faint);';
+    meta.className = 'bz-fav-meta';
     const timeSpan = document.createElement('span');
     timeSpan.textContent = item.created || '';
     meta.appendChild(timeSpan);
@@ -466,7 +502,13 @@ export class UIManager {
         onClick: () => {
           void (async () => {
             item.pinned = !item.pinned;
-            await this.dataManager.update(item.id, { pinned: item.pinned });
+            try {
+              await this.dataManager.update(item.id, { pinned: item.pinned });
+            } catch (e) {
+              item.pinned = !item.pinned; // 写盘失败回滚内存翻转，防列表态与数据态漂移
+              notifySaveError(e, '置顶收藏');
+              return;
+            }
             void this.refreshData(); // 列表重排（置顶优先），抽屉保持
             rebuild();
           })();
@@ -511,10 +553,14 @@ export class UIManager {
                 item.balance = result.balance;
                 item.balanceCacheTime = result.timestamp;
                 item.balanceError = null;
-                await this.dataManager.update(item.id, {
-                  balance: result.balance,
-                  balanceCacheTime: result.timestamp,
-                });
+                try {
+                  await this.dataManager.update(item.id, {
+                    balance: result.balance,
+                    balanceCacheTime: result.timestamp,
+                  });
+                } catch (e) {
+                  notifySaveError(e, '保存余额'); // 查询成功但写盘失败：人话提示，错误态不误标
+                }
               } catch (error: any) {
                 item.balanceError = error.message;
               }
@@ -600,16 +646,12 @@ export class UIManager {
   /** 标题行：标题（纯文本）+ 余额展示 + 类型标签组；打开入口在卡片主体单击（ticket 61，标题不做 <a>） */
   _renderTitleRow(item: FavoritesItem): HTMLElement {
     const titleRow = document.createElement('div');
-    titleRow.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:6px;';
+    titleRow.className = 'bz-fav-title-row';
 
     // 标题：纯文本（打开入口 = 单击卡片主体直开链接，ticket 61；「打开」仍在抽屉，标题不做 <a> 保持列表干净）
     const titleElement = document.createElement('span');
     titleElement.textContent = item.title || '无标题';
-    Object.assign(titleElement.style, {
-      fontSize: '16px',
-      fontWeight: '600',
-      color: 'var(--text-normal)',
-    });
+    titleElement.className = 'bz-fav-title';
     titleRow.appendChild(titleElement);
 
     // ---- 大模型余额显示（紧跟标题后，纯展示；刷新在抽屉「刷新余额」） ----
@@ -621,12 +663,12 @@ export class UIManager {
     if (item.tags && item.tags.length) {
       const displayTags = this.selectedTag ? item.tags.filter((t) => t === this.selectedTag) : item.tags;
       const tagGroup = document.createElement('div');
-      tagGroup.style.cssText = 'display:flex; gap:6px; margin-left:auto; flex-shrink:0;';
+      tagGroup.className = 'bz-fav-tag-group';
       for (const tag of displayTags) {
         const tagEmoji = CONFIG.DEFAULT_TAGS.find((t) => t.tag === tag)?.emoji || '📌';
         const tagBadge = document.createElement('span');
         tagBadge.textContent = `${tagEmoji} ${tag}`;
-        tagBadge.style.cssText = 'font-size:12px; padding:2px 10px; border-radius:12px; background:var(--background-secondary); color:var(--text-muted); white-space:nowrap; cursor:default;';
+        tagBadge.className = 'bz-fav-tag-badge';
         tagGroup.appendChild(tagBadge);
       }
       titleRow.appendChild(tagGroup);
@@ -634,10 +676,10 @@ export class UIManager {
     return titleRow;
   }
 
-  /** 余额 span：按余额档位着色；纯展示（刷新走抽屉「刷新余额」，5 分钟缓存） */
+  /** 余额 span：按余额档位着色（动态计算留内联，ticket 141 样式收敛仅迁静态部分）；纯展示（刷新走抽屉「刷新余额」，5 分钟缓存） */
   _renderBalanceSpan(item: FavoritesItem): HTMLElement {
     const balanceSpan = document.createElement('span');
-    balanceSpan.style.cssText = 'font-size:12px; color:var(--text-muted); margin-left:4px; white-space:nowrap;';
+    balanceSpan.className = 'bz-fav-balance';
 
     if (item.balanceError) {
       balanceSpan.textContent = `(❌ ${item.balanceError})`;
@@ -692,7 +734,7 @@ export class UIManager {
     const head = document.createElement('div');
     head.className = 'bz-item-sheet-entry';
     const body = document.createElement('div');
-    body.style.cssText = 'display:flex; gap:10px; align-items:flex-start;';
+    body.className = 'bz-fav-sheet-body';
 
     // 分类 emoji（第一个标签的 emoji）
     const primaryTag = (item.tags && item.tags[0]) || item.type || '';
@@ -703,7 +745,7 @@ export class UIManager {
     body.appendChild(emojiEl);
 
     const info = document.createElement('div');
-    info.style.cssText = 'flex:1; min-width:0;';
+    info.className = 'bz-fav-sheet-info';
 
     const title = document.createElement('div');
     title.className = 'bz-fav-sheet-title';
@@ -816,17 +858,42 @@ export class UIManager {
   }
 
   async _deleteItem(id: string) {
+    // 删除前取完整条目快照（撤销恢复的数据源；并发下缺失则退化为普通删除提示）
     const item = this.currentItems.find((d) => d.id === id);
-    await this.dataManager.delete(id);
-    // ticket 078（域事件派发）：删除动作观察（先取 item 拿标题，删除成功后通知；数据缺失不通知）
+    try {
+      await this.dataManager.delete(id);
+    } catch (e) {
+      notifySaveError(e, '删除收藏');
+      return;
+    }
+    // ticket 078（域事件派发）：删除动作观察（删除成功后通知；数据缺失不通知）
     if (item) emitDomainEvent('favorites', { kind: 'delete', title: item.title });
     await this.refreshData();
-    notice('已删除收藏', 'success');
+    if (item) {
+      // 撤销删除（ticket 141 通病 1）：删除落地后给反悔窗口，点「撤销」原样插回并刷新
+      notifyUndo(`已删除收藏「${item.title}」`, () => {
+        void (async () => {
+          try {
+            await this.dataManager.restoreItem(item);
+            await this.refreshData();
+          } catch (e) {
+            notifySaveError(e, '恢复收藏');
+          }
+        })();
+      });
+    } else {
+      notice('已删除收藏', 'success');
+    }
   }
 
   async _archiveItem(id: string) {
     const item = this.currentItems.find((d) => d.id === id);
-    await this.dataManager.update(id, { archived: true, archivedAt: moment().format('YYYY-MM-DD HH:mm:ss') });
+    try {
+      await this.dataManager.update(id, { archived: true, archivedAt: moment().format('YYYY-MM-DD HH:mm:ss') });
+    } catch (e) {
+      notifySaveError(e, '归档收藏');
+      return;
+    }
     // ticket 140（域事件派发）：归档动作观察（ADR-0074 冷存无查看面，观察流是唯一可读痕迹；数据缺失不通知）
     if (item) emitDomainEvent('favorites', { kind: 'archive', title: item.title });
     await this.refreshData();
@@ -837,6 +904,7 @@ export class UIManager {
   show() {
     if (this.isVisible) return;
     this.isVisible = true;
+    this.loadedCount = 0; // 每次打开重置分页（ticket 141）
     // 移动端默认全屏：开关开=挂 .bz-win-mfs 全屏类（幂等），关=常规卡
     applyMobileWindowFullscreen(this.popup, tryGetSettings().favoritesMobileDefaultFullscreen === true);
     topifyZ(this.mask!, this.popup!); // ADR-0067：显示即发号，谁后显示谁在上
@@ -848,9 +916,88 @@ export class UIManager {
 
   hide() {
     this.isVisible = false;
+    if (this._sortMask) this._closeSortModal(); // 主面板关闭时排序弹窗一并收起
     if (this.mask) this.mask.style.display = 'none';
     if (this.popup) this.popup.style.display = 'none';
     this._unregisterEscape();
+  }
+
+  // ---------- 排序弹窗（ticket 141：🔀 头部入口，movie 筛选排序弹窗同交互风格——按钮组实时生效，点外/❌ 关闭） ----------
+  _openSortModal(): void {
+    if (this._sortMask) {
+      this._closeSortModal();
+      return;
+    }
+
+    const mask = document.createElement('div');
+    mask.className = 'bz-fav-sort-mask';
+    mask.style.zIndex = String(allocZ()); // ADR-0067：新建即显示即发号
+
+    const popup = document.createElement('div');
+    popup.className = 'bz-fav-sort-popup';
+
+    const head = document.createElement('div');
+    head.className = 'bz-fav-sort-head';
+    const title = document.createElement('h3');
+    title.textContent = '排序';
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.textContent = '❌';
+    closeBtn.className = 'bz-win-close bz-fav-sort-close';
+    closeBtn.addEventListener('click', () => this._closeSortModal());
+    head.appendChild(title);
+    head.appendChild(closeBtn);
+
+    const body = document.createElement('div');
+    body.className = 'bz-fav-sort-body';
+    this._renderSortOptions(body);
+
+    popup.appendChild(head);
+    popup.appendChild(body);
+    mask.appendChild(popup);
+    document.body.appendChild(mask);
+
+    mask.addEventListener('click', (e) => {
+      if (e.target === mask) this._closeSortModal();
+    });
+
+    this._sortMask = mask;
+    this._sortEscHandle = escManager.register('fav-sort', {
+      isVisible: () => !!this._sortMask && this._sortMask.isConnected,
+      close: () => this._closeSortModal(),
+    });
+  }
+
+  /** 排序选项按钮组（实时生效：点击即写排序键 + 重排列表；弹窗保持打开同 movie） */
+  _renderSortOptions(body: HTMLElement): void {
+    body.innerHTML = '';
+    const group = document.createElement('div');
+    group.className = 'bz-fav-sort-group';
+    for (const opt of SORT_OPTIONS) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = opt.label;
+      btn.className = 'bz-fav-sort-option' + (this.sortKey === opt.key ? ' bz-fav-sort-option--active' : '');
+      btn.addEventListener('click', () => {
+        this._setSortKey(opt.key);
+        this.loadedCount = 0; // 排序变化重置分页（ticket 141）
+        this.render();
+        this._renderSortOptions(body);
+      });
+      group.appendChild(btn);
+    }
+    body.appendChild(group);
+  }
+
+  _closeSortModal(): void {
+    if (this._sortMask) {
+      this._sortMask.remove();
+      this._sortMask = null;
+    }
+    if (this._sortEscHandle) {
+      this._sortEscHandle.unregister();
+      this._sortEscHandle = null;
+    }
   }
 
   // ---------- ESC 管理 ----------
@@ -858,7 +1005,8 @@ export class UIManager {
     this._escHandle = escManager.register('fav', {
       isVisible: () => this.isVisible || !!this.addMask && this.addMask.style.display === 'flex',
       close: () => {
-        if (this.addMask && this.addMask.style.display === 'flex') { this._hideAddDialog(); return; }
+        if (this._sortMask) { this._closeSortModal(); return; } // 排序弹窗还开着（防兜底路径跳过其 ESC 层）
+        if (this.addMask && this.addMask.style.display === 'flex') { this._requestCloseAddDialog(); return; }
         if (this.isVisible) this.hide();
       },
     });
@@ -871,102 +1019,47 @@ export class UIManager {
 
   // ==================== 添加/编辑对话框 ====================
   _buildAddDialog() {
-    // 遮罩
+    // 遮罩（视觉样式收敛 styles.css ticket 141；display 显隐与动态 z 留运行时）
     this.addMask = document.createElement('div');
     this.addMask.id = 'fav-add-mask';
-    Object.assign(this.addMask.style, {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(0,0,0,0.3)',
-      display: 'none',
-      alignItems: 'center',
-      justifyContent: 'center',
-    });
     this.addMask.style.zIndex = String(allocZ()); // ADR-0067：创建即发号
     this.addMask.onclick = (e) => {
-      if (e.target === this.addMask) this._hideAddDialog();
+      if (e.target === this.addMask) this._requestCloseAddDialog();
     };
 
     // 弹窗
     this.addPopup = document.createElement('div');
     this.addPopup.id = 'fav-add-popup';
-    Object.assign(this.addPopup.style, {
-      background: 'var(--background-primary)',
-      borderRadius: '12px',
-      boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-      padding: '24px',
-      maxWidth: '450px',
-      width: '90%',
-      maxHeight: '80vh',
-      overflowY: 'auto',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '12px',
-    });
     this.addPopup.style.zIndex = String(allocZ()); // ADR-0067：创建即发号
 
     // 标题
     const title = document.createElement('h4');
     title.textContent = '添加收藏';
-    title.style.cssText = 'margin:0 0 4px 0; font-size:18px; font-weight:600; color:var(--text-normal);';
     this.addPopup.appendChild(title);
 
     // ---- 标题输入 ----
     this.addTitleInput = document.createElement('input');
     this.addTitleInput.type = 'text';
     this.addTitleInput.placeholder = '标题';
-    Object.assign(this.addTitleInput.style, {
-      width: '100%',
-      padding: '8px 12px',
-      borderRadius: '6px',
-      border: '1px solid var(--background-modifier-border)',
-      background: 'var(--background-primary)',
-      color: 'var(--text-normal)',
-      fontSize: '14px',
-      boxSizing: 'border-box',
-    });
+    this.addTitleInput.className = 'bz-fav-input';
     this.addPopup.appendChild(this.addTitleInput);
 
     // ---- 链接输入 ----
     this.addUrlInput = document.createElement('input');
     this.addUrlInput.type = 'text';
     this.addUrlInput.placeholder = '链接';
-    Object.assign(this.addUrlInput.style, {
-      width: '100%',
-      padding: '8px 12px',
-      borderRadius: '6px',
-      border: '1px solid var(--background-modifier-border)',
-      background: 'var(--background-primary)',
-      color: 'var(--text-normal)',
-      fontSize: '14px',
-      boxSizing: 'border-box',
-    });
+    this.addUrlInput.className = 'bz-fav-input';
     this.addPopup.appendChild(this.addUrlInput);
 
     // ---- 简介输入 ----
     this.addDescInput = document.createElement('textarea');
     this.addDescInput.placeholder = '简介（可选）';
-    Object.assign(this.addDescInput.style, {
-      width: '100%',
-      padding: '8px 12px',
-      borderRadius: '6px',
-      border: '1px solid var(--background-modifier-border)',
-      background: 'var(--background-primary)',
-      color: 'var(--text-normal)',
-      fontSize: '14px',
-      boxSizing: 'border-box',
-      resize: 'vertical',
-      minHeight: '60px',
-      fontFamily: 'inherit',
-    });
+    this.addDescInput.className = 'bz-fav-input bz-fav-input--area';
     this.addPopup.appendChild(this.addDescInput);
 
     // ---- 类型选择（遍历所有默认标签） ----
     this.addTypeContainer = document.createElement('div');
-    this.addTypeContainer.style.cssText = 'display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;';
+    this.addTypeContainer.className = 'bz-fav-chip-row';
 
     for (const { tag, emoji } of CONFIG.DEFAULT_TAGS) {
       const btn = document.createElement('button');
@@ -974,28 +1067,9 @@ export class UIManager {
       btn.className = 'fav-type-btn';
       btn.dataset.tag = tag;
       btn.textContent = `${emoji} ${tag}`;
-      Object.assign(btn.style, {
-        padding: '6px 14px',
-        borderRadius: '20px',
-        background: 'var(--background-secondary)',
-        color: 'var(--text-muted)',
-        cursor: 'pointer',
-        fontSize: '14px',
-        border: 'none',
-        boxShadow: 'none',
-        transition: 'all 0.2s',
-      });
       btn.onclick = () => {
-        const isActive = btn.classList.contains('active');
-        if (isActive) {
-          btn.style.background = 'var(--background-secondary)';
-          btn.style.color = 'var(--text-muted)';
-          btn.classList.remove('active');
-        } else {
-          btn.style.background = 'var(--interactive-accent)';
-          btn.style.color = 'var(--text-on-accent)';
-          btn.classList.add('active');
-        }
+        // 选中态视觉走 .fav-type-btn.active 类（ticket 141 样式收敛：原内联 background/color）
+        btn.classList.toggle('active');
         // 控制大模型配置区域显示
         this._toggleLLMConfigVisibility();
       };
@@ -1010,87 +1084,40 @@ export class UIManager {
 
     // ---- 置顶切换（与分类按钮同风格） ----
     const pinRow = document.createElement('div');
-    pinRow.style.cssText = 'display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;';
+    pinRow.className = 'bz-fav-chip-row';
 
     this.addPinBtn = document.createElement('button');
     this.addPinBtn.type = 'button';
     this.addPinBtn.textContent = '📌 置顶';
-    Object.assign(this.addPinBtn.style, {
-      padding: '6px 14px',
-      borderRadius: '20px',
-      background: 'var(--background-secondary)',
-      color: 'var(--text-muted)',
-      cursor: 'pointer',
-      fontSize: '14px',
-      border: 'none',
-      boxShadow: 'none',
-      transition: 'all 0.2s',
-    });
+    this.addPinBtn.className = 'bz-fav-pin-btn';
     this.addPinBtn.onclick = () => {
-      const isActive = this.addPinBtn!.classList.contains('active');
-      if (isActive) {
-        this.addPinBtn!.style.background = 'var(--background-secondary)';
-        this.addPinBtn!.style.color = 'var(--text-muted)';
-        this.addPinBtn!.classList.remove('active');
-      } else {
-        this.addPinBtn!.style.background = 'var(--interactive-accent)';
-        this.addPinBtn!.style.color = 'var(--text-on-accent)';
-        this.addPinBtn!.classList.add('active');
-      }
+      this.addPinBtn!.classList.toggle('active');
     };
     pinRow.appendChild(this.addPinBtn);
     this.addPopup.appendChild(pinRow);
 
     // ---- 按钮组 ----
     const btnGroup = document.createElement('div');
-    btnGroup.style.cssText = 'display:flex; gap:12px; justify-content:flex-end; margin-top:8px;';
+    btnGroup.className = 'bz-fav-btn-group';
 
     // AI 推荐按钮
     this.addAiBtn = document.createElement('button');
     this.addAiBtn.textContent = '✨ AI 整理';
-    Object.assign(this.addAiBtn.style, {
-      padding: '8px 16px',
-      borderRadius: '6px',
-      border: 'none',
-      background: 'var(--background-secondary)',
-      cursor: 'pointer',
-      fontSize: '14px',
-      color: 'var(--text-normal)',
-      boxShadow: 'none',
-    });
+    this.addAiBtn.className = 'bz-fav-btn-secondary';
     this.addAiBtn.onclick = () => this._handleAIRecommend();
     btnGroup.appendChild(this.addAiBtn);
 
     // 取消按钮
     this.addCancelBtn = document.createElement('button');
     this.addCancelBtn.textContent = '取消';
-    Object.assign(this.addCancelBtn.style, {
-      padding: '8px 16px',
-      borderRadius: '6px',
-      border: 'none',
-      background: 'var(--background-secondary)',
-      cursor: 'pointer',
-      fontSize: '14px',
-      color: 'var(--text-normal)',
-      boxShadow: 'none',
-    });
+    this.addCancelBtn.className = 'bz-fav-btn-secondary';
     this.addCancelBtn.onclick = () => this._hideAddDialog();
     btnGroup.appendChild(this.addCancelBtn);
 
     // 确定按钮（文本动态变化）
     this.addSaveBtn = document.createElement('button');
     this.addSaveBtn.textContent = '确定';
-    Object.assign(this.addSaveBtn.style, {
-      padding: '8px 16px',
-      borderRadius: '6px',
-      border: 'none',
-      background: 'var(--interactive-accent)',
-      cursor: 'pointer',
-      fontSize: '14px',
-      fontWeight: '500',
-      color: 'var(--text-on-accent)',
-      boxShadow: 'none',
-    });
+    this.addSaveBtn.className = 'bz-fav-btn-primary';
     this.addSaveBtn.onclick = () => this._saveNewItem();
     btnGroup.appendChild(this.addSaveBtn);
 
@@ -1103,70 +1130,40 @@ export class UIManager {
   // 构建大模型配置区域
   _buildLLMConfigSection(): HTMLElement {
     const section = document.createElement('div');
-    section.style.cssText = `
-            margin-top: 12px;
-            padding: 12px;
-            border: 1px solid var(--background-modifier-border);
-            border-radius: 8px;
-            background: var(--background-secondary);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        `;
+    section.className = 'bz-fav-llm-section';
 
     const title = document.createElement('div');
     title.textContent = '🧠 大模型配置';
-    title.style.cssText = 'font-size:14px; font-weight:600; color:var(--text-normal); margin-bottom:4px;';
+    title.className = 'bz-fav-llm-title';
     section.appendChild(title);
 
     // API Keys（多行文本框）
     const keysLabel = document.createElement('label');
     keysLabel.textContent = 'API Keys（每行一个，第一个用于余额查询）:';
-    keysLabel.style.cssText = 'font-size:12px; color:var(--text-muted);';
+    keysLabel.className = 'bz-fav-llm-label';
     section.appendChild(keysLabel);
 
     this.llmApiKeysInput = document.createElement('textarea');
     this.llmApiKeysInput.placeholder = 'sk-key1\nsk-key2\nsk-key3';
-    Object.assign(this.llmApiKeysInput.style, {
-      width: '100%',
-      padding: '8px',
-      borderRadius: '6px',
-      border: '1px solid var(--background-modifier-border)',
-      background: 'var(--background-primary)',
-      color: 'var(--text-normal)',
-      fontSize: '13px',
-      boxSizing: 'border-box',
-      minHeight: '60px',
-      fontFamily: 'monospace',
-      resize: 'vertical',
-    });
+    this.llmApiKeysInput.className = 'bz-fav-llm-input bz-fav-llm-input--area';
     section.appendChild(this.llmApiKeysInput);
 
     // 余额查询URL（完整URL）
     const balanceUrlLabel = document.createElement('label');
     balanceUrlLabel.textContent = '余额查询URL（完整URL）:';
-    balanceUrlLabel.style.cssText = 'font-size:12px; color:var(--text-muted);';
+    balanceUrlLabel.className = 'bz-fav-llm-label';
     section.appendChild(balanceUrlLabel);
 
     this.llmBalanceUrlInput = document.createElement('input');
     this.llmBalanceUrlInput.type = 'text';
     this.llmBalanceUrlInput.placeholder = 'https://api.deepseek.com/user/balance';
-    Object.assign(this.llmBalanceUrlInput.style, {
-      width: '100%',
-      padding: '8px',
-      borderRadius: '6px',
-      border: '1px solid var(--background-modifier-border)',
-      background: 'var(--background-primary)',
-      color: 'var(--text-normal)',
-      fontSize: '13px',
-      boxSizing: 'border-box',
-    });
+    this.llmBalanceUrlInput.className = 'bz-fav-llm-input';
     section.appendChild(this.llmBalanceUrlInput);
 
     // 提示信息
     const hint = document.createElement('div');
     hint.textContent = '💡 系统会自动从返回对象中查找余额数字';
-    hint.style.cssText = 'font-size:11px; color:var(--text-faint); margin-top:4px;';
+    hint.className = 'bz-fav-llm-hint';
     section.appendChild(hint);
 
     return section;
@@ -1193,18 +1190,13 @@ export class UIManager {
     this.addUrlInput!.value = '';
     this.addDescInput!.value = '';
 
-    // 重置置顶按钮
+    // 重置置顶按钮（选中态走 .active 类，ticket 141 样式收敛）
     this.addPinBtn!.classList.remove('active');
-    this.addPinBtn!.style.background = 'var(--background-secondary)';
-    this.addPinBtn!.style.color = 'var(--text-muted)';
 
     // 重置类型按钮（全部取消选中）
     const btns = this.addTypeContainer!.querySelectorAll('.fav-type-btn');
     btns.forEach((b) => {
-      const el = b as HTMLElement;
-      el.style.background = 'var(--background-secondary)';
-      el.style.color = 'var(--text-muted)';
-      el.classList.remove('active');
+      (b as HTMLElement).classList.remove('active');
     });
 
     if (item) {
@@ -1215,8 +1207,6 @@ export class UIManager {
       // 置顶状态
       if (item.pinned) {
         this.addPinBtn!.classList.add('active');
-        this.addPinBtn!.style.background = 'var(--interactive-accent)';
-        this.addPinBtn!.style.color = 'var(--text-on-accent)';
       }
       // 选中条目对应的所有标签
       const tags = item.tags || (item.type ? [item.type] : []);
@@ -1224,8 +1214,6 @@ export class UIManager {
         btns.forEach((b) => {
           const el = b as HTMLElement;
           if (el.dataset.tag && tags.includes(el.dataset.tag)) {
-            el.style.background = 'var(--interactive-accent)';
-            el.style.color = 'var(--text-on-accent)';
             el.classList.add('active');
           }
         });
@@ -1252,10 +1240,43 @@ export class UIManager {
       this.addPopup!.querySelector('h4')!.textContent = '添加收藏';
     }
 
+    // 脏表单检测基线（ticket 141 通病 3）：打开时的输入快照——相对基线有变化才拦关闭
+    this._addBaseline = {
+      title: this.addTitleInput!.value,
+      url: this.addUrlInput!.value,
+      desc: this.addDescInput!.value,
+      keys: this.llmApiKeysInput!.value,
+      balanceUrl: this.llmBalanceUrlInput!.value,
+    };
+    // 上次保存失败等残留的保存态复位（ticket 141 防假死）
+    this.addSaveBtn!.disabled = false;
+
     topifyZ(this.addMask!, this.addPopup!); // ADR-0067：显示即发号
     this.addMask!.style.display = 'flex';
     this.addPopup!.style.display = 'flex';
     setTimeout(() => this.addUrlInput!.focus(), 100);
+  }
+
+  /** 关闭前脏表单拦截（ticket 141 通病 3）：任一输入框相对打开时基线有变化 → confirmDiscard 确认放弃才关；完全未动直接关 */
+  _requestCloseAddDialog(): void {
+    if (this._addDirty()) {
+      confirmDiscard(() => this._hideAddDialog());
+      return;
+    }
+    this._hideAddDialog();
+  }
+
+  /** 脏检测：标题/链接/简介/大模型配置任一输入框与基线不一致即为脏 */
+  _addDirty(): boolean {
+    const b = this._addBaseline;
+    if (!b || !this.addMask || this.addMask.style.display !== 'flex') return false;
+    return (
+      this.addTitleInput!.value !== b.title ||
+      this.addUrlInput!.value !== b.url ||
+      this.addDescInput!.value !== b.desc ||
+      this.llmApiKeysInput!.value !== b.keys ||
+      this.llmBalanceUrlInput!.value !== b.balanceUrl
+    );
   }
 
   _hideAddDialog() {
@@ -1264,6 +1285,7 @@ export class UIManager {
       this.addPopup!.style.display = 'none';
       this.editingItemId = null; // 重置编辑状态
     }
+    this._addBaseline = null; // 基线随弹窗关闭失效（ticket 141 通病 3）
     unregisterSheetCompanion(this.addMask!);
     this._sheetEditPending = false;
   }
@@ -1381,12 +1403,9 @@ GitHub 仓库信息（来自 GitHub API）：
       }
       if (recommendedTags && Array.isArray(recommendedTags)) {
         const btns = this.addTypeContainer!.querySelectorAll('.fav-type-btn');
-        // 先全部取消选中
+        // 先全部取消选中（选中态走 .active 类，ticket 141 样式收敛）
         btns.forEach((b) => {
-          const el = b as HTMLElement;
-          el.style.background = 'var(--background-secondary)';
-          el.style.color = 'var(--text-muted)';
-          el.classList.remove('active');
+          (b as HTMLElement).classList.remove('active');
         });
         // 选中匹配的标签
         const validTags = CONFIG.DEFAULT_TAGS.map((t) => t.tag);
@@ -1396,8 +1415,6 @@ GitHub 仓库信息（来自 GitHub API）：
             btns.forEach((b) => {
               const el = b as HTMLElement;
               if (el.dataset.tag === tag) {
-                el.style.background = 'var(--interactive-accent)';
-                el.style.color = 'var(--text-on-accent)';
                 el.classList.add('active');
               }
             });
@@ -1427,6 +1444,7 @@ GitHub 仓库信息（来自 GitHub API）：
   }
 
   async _saveNewItem() {
+    if (this._saving) return; // 防重入（ticket 141 通病 4）：保存进行中忽略再次点击
     const activeBtns = this.addTypeContainer!.querySelectorAll('.fav-type-btn.active');
     if (!activeBtns.length) {
       notice('请至少选择一个分类');
@@ -1444,49 +1462,55 @@ GitHub 仓库信息（来自 GitHub API）：
     }
     // 移除了对 url 的非空检查
 
-    const data: any = {
-      type: selectedTags[0],
-      url,                       // 可以为空字符串
-      title,
-      description,
-      tags: selectedTags,
-      pinned: this.addPinBtn!.classList.contains('active'),
-      created: moment().format('YYYY-MM-DD HH:mm:ss'),
-    };
-
-    // 如果选中了"大模型"标签，保存大模型配置
-    if (selectedTags.includes('大模型')) {
-      const apiKeys = this.llmApiKeysInput!.value.trim();
-      const balanceUrl = this.llmBalanceUrlInput!.value.trim();
-
-      // 验证必填项
-      if (!apiKeys) {
-        notice('请填写 API Keys');
-        return;
-      }
-
-      data.llmConfig = {
-        apiKeys,
-        balanceUrl: balanceUrl || '',
-      };
-
-      // 如果有余额查询URL，立即查询余额
-      if (apiKeys && balanceUrl) {
-        try {
-          const balanceService = new BalanceService();
-          const result = await balanceService.fetchBalance(data.llmConfig);
-          data.balance = result.balance;
-          data.balanceCacheTime = result.timestamp;
-        } catch (error: any) {
-          console.warn('初始余额查询失败:', error.message);
-          // 保存失败状态，但不阻止保存
-          data.balanceError = error.message;
-          notify('余额查询失败', { type: 'warning', dedupeKey: 'favorites-balance' });
-        }
-      }
+    // 大模型配置先读出（校验 + 判定本次保存是否触发余额同步查询）
+    const apiKeys = this.llmApiKeysInput!.value.trim();
+    const balanceUrl = this.llmBalanceUrlInput!.value.trim();
+    if (selectedTags.includes('大模型') && !apiKeys) {
+      notice('请填写 API Keys');
+      return;
     }
 
+    // 保存态（ticket 141 通病 4）：立即禁用确定 + 文案提示，完成或失败都在 finally 恢复。
+    // 本次会触发 AI 余额同步查询（大模型 + apiKeys + balanceUrl）时文案区分，提示等待原因。
+    this._saving = true;
+    const willQueryBalance = selectedTags.includes('大模型') && !!apiKeys && !!balanceUrl;
+    this.addSaveBtn!.disabled = true;
+    this.addSaveBtn!.textContent = willQueryBalance ? '查询余额中…' : '保存中…';
+
     try {
+      const data: any = {
+        type: selectedTags[0],
+        url,                       // 可以为空字符串
+        title,
+        description,
+        tags: selectedTags,
+        pinned: this.addPinBtn!.classList.contains('active'),
+        created: moment().format('YYYY-MM-DD HH:mm:ss'),
+      };
+
+      // 如果选中了"大模型"标签，保存大模型配置
+      if (selectedTags.includes('大模型')) {
+        data.llmConfig = {
+          apiKeys,
+          balanceUrl: balanceUrl || '',
+        };
+
+        // 如果有余额查询URL，立即查询余额
+        if (apiKeys && balanceUrl) {
+          try {
+            const balanceService = new BalanceService();
+            const result = await balanceService.fetchBalance(data.llmConfig);
+            data.balance = result.balance;
+            data.balanceCacheTime = result.timestamp;
+          } catch (error: any) {
+            console.warn('初始余额查询失败:', error.message);
+            // 保存失败状态，但不阻止保存
+            data.balanceError = error.message;
+            notify('余额查询失败', { type: 'warning', dedupeKey: 'favorites-balance' });
+          }
+        }
+      }
+
       if (this.editingItemId) {
         const all = await this.dataManager.getAll();
         const old = all.find((d) => d.id === this.editingItemId);
@@ -1534,6 +1558,11 @@ GitHub 仓库信息（来自 GitHub API）：
       if (fromSheet) closeItemMenu();
     } catch (e: any) {
       notice('保存失败：' + e.message, 'error');
+    } finally {
+      // 保存完成/失败都恢复按钮（弹窗已关时仅复位标志，下次 _showAddDialog 会复位文案）
+      this._saving = false;
+      this.addSaveBtn!.disabled = false;
+      this.addSaveBtn!.textContent = this.editingItemId ? '更新' : '确定';
     }
   }
 

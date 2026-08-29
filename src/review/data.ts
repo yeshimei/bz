@@ -142,6 +142,15 @@ export class ReviewDataManager {
     await this.saveItems(items);
   }
 
+  /** 撤销移出（ticket 141 通病 1）：原条目（含阶段/排期/历史）原样插回，不走 addItem 重置进度 */
+  async restoreItem(item: ReviewItem): Promise<void> {
+    const items = await this.loadItems();
+    if (items.some((i) => i.filePath === item.filePath)) return;
+    const { file: _file, ...rest } = item; // 运行时 TFile 不落盘（saveItems 同口径）
+    items.push(rest as ReviewItem);
+    await this.saveItems(items);
+  }
+
   getOverdueCount(items: ReviewItem[]): number {
     return items.filter((i) => i.isOverdue && !i.isCompleted).length;
   }

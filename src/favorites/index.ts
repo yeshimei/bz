@@ -32,6 +32,7 @@ export function unloadFavorites(): void {
   const ui = FavoritesApp.getInstance().getUI();
   if (ui) {
     if (ui._escHandle) { try { ui._escHandle.unregister(); } catch { /* 忽略 */ } }
+    ui._closeSortModal(); // 排序弹窗遮罩 + 其 ESC 层一并清理（ticket 141）
     ui.mask?.remove();
     ui.addMask?.remove();
   }
