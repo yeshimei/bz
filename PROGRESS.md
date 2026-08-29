@@ -163,3 +163,12 @@
 - [x] 根因（移动端）：长按只进编辑重建 DOM（拖拽需松手重按）+ touchmove 无阻断/touch-action 缺失（滚动抢占 pointercancel 杀手势）+ 系统长按菜单未拦
 - [x] 修复：长按触发后同手势延续监听（>10px 直接 startDrag）+ document 非被动 touchmove preventDefault（拖拽全程、抬起解除）+ `.launcher-tile.editing` touch-action:none + grid contextmenu 拦截 + callout 禁用
 - [x] 测试：launcher 76 用例绿（helper 补 pointerup 释放防悬空手势、新增同手势拖拽/仅进编辑两用例）+ tsc 0 错
+
+## Ticket 158 — 小橘：日小结/洞察/周报未生效（记忆流断粮饿死修复）
+
+**状态：已交付**（2026-08-30）
+
+- [x] 规格：`issues/158-smartcat-reflect-digest-weekly-starvation.md`（spec.md「小橘反思/日小结/周报饿死修复」节同步）
+- [x] 根因：ADR-0069 R2 后记忆流断粮——反思证据<2 静默空转、首次日小结被 `!lastReflect` 卡死、周报门槛/原料读记忆流恒<3
+- [x] 修复：`behaviorToObservations` 派生视图（wording+credibility）——反思证据池并入（双写去重）、周报门槛/原料并入；`shouldReflect` 行为流 20 条触发首次反思；`shouldDigest` 首次解耦反思（3 条即触发）；周报 `hour>=10` 防相位跳档
+- [x] 测试：smartcat 1137 用例绿（重写 2 旧语义用例 + 新增 4 用例）+ tsc 0 错

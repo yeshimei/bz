@@ -4,7 +4,7 @@
  * 三因子检索（词法/语义）/自增强 lastAccessed/500 上限/反思调度/降级链。
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { MemorySystem, MEMORY_CONFIG, ruleCredibility, CREDIBILITY_TIERS, sourceLabel, formatRelativeTime, buildRetrieveQuery, USER_CONTENT_BOUNDARY, detectInjection, sanitizeEmotion, clampLLMCredibility } from '../../src/smartcat/memory';
+import { MemorySystem, MEMORY_CONFIG, ruleCredibility, CREDIBILITY_TIERS, sourceLabel, formatRelativeTime, buildRetrieveQuery, USER_CONTENT_BOUNDARY, detectInjection, sanitizeEmotion, clampLLMCredibility, behaviorToObservations } from '../../src/smartcat/memory';
 import { defaultSmartCatData } from '../../src/smartcat/data';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { requestUrl } from '../mock-obsidian-entry';
@@ -279,6 +279,45 @@ describe('观察可信度 credibility（085，ADR-0036）', () => {
     await m.reflect();
     expect(capturedPrompt).toContain('1. 你在卡片盒记下了「可信内容本体」');
     expect(capturedPrompt).toContain('2. 你阅读了《X》（平台·读了 1 分钟）');
+    // ticket 158：legacy 双写（记忆流+行为流同文案）→ 证据池按描述去重不重复计
+    expect(capturedPrompt.match(/可信内容本体/g)?.length).toBe(1);
+  });
+
+  it('ticket 158：反思证据池并入行为流——记忆流无观察时行为条目可作证据（wording 渲染）', async () => {
+    const m = make({ ai: true });
+    // 模拟 ADR-0069 后域事件路径：只进行为流（记忆流无 observation）
+    data.memory.behaviorStream.push(
+      { id: 'beh_1', timestamp: new Date().toISOString(), type: 'completed', source: 'memo', description: 'memo:completed 写周报', metadata: { entityType: 'task', action: 'completed', name: '写周报' } } as any,
+      { id: 'beh_2', timestamp: new Date().toISOString(), type: 'read', source: 'news', description: 'news:read 标题', metadata: { entityType: 'news', action: 'read', name: '标题' } } as any,
+    );
+    let capturedPrompt = '';
+    (globalThis as any).fetch = vi.fn(async (_url: string, init?: any) => {
+      capturedPrompt = JSON.parse((init as any).body).messages[1].content as string;
+      return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify({ insights: [{ text: '结论', evidence: [1] }] }) } }] }) };
+    });
+    await m.reflect();
+    expect(capturedPrompt).toContain('你完成了备忘录「写周报」');
+    expect(capturedPrompt).toContain('你阅读了《标题》');
+  });
+
+  it('ticket 158：从未反思时行为流攒够 reflectionMinNew 也触发反思（shouldReflect）', async () => {
+    const m = make();
+    expect((m as any).shouldReflect(Date.now())).toBe(false);
+    for (let i = 0; i < 20; i++) {
+      data.memory.behaviorStream.push({ id: `beh_${i}`, timestamp: new Date().toISOString(), type: 'added', source: 'memo', description: `memo:added 条目${i}` } as any);
+    }
+    expect((m as any).shouldReflect(Date.now())).toBe(true);
+  });
+
+  it('behaviorToObservations：行为条目 → 观察伪条目（wording 渲染 + credibility 走来源档位；不入流）', () => {
+    const obs = behaviorToObservations([
+      { id: 'beh_1', timestamp: '2026-08-30T01:00:00.000Z', type: 'completed', source: 'memo', description: 'memo:completed 写周报', metadata: { entityType: 'task', action: 'completed', name: '写周报' } } as any,
+      { id: 'beh_2', timestamp: '2026-08-30T02:00:00.000Z', type: 'read', source: 'news', description: 'news:read 标题', metadata: { entityType: 'news', action: 'read', name: '标题' } } as any,
+    ]);
+    expect(obs).toHaveLength(2);
+    expect(obs[0]).toMatchObject({ id: 'beh_1', type: 'observation', description: '你完成了备忘录「写周报」', credibility: 0.75 });
+    expect(obs[0].created).toBe('2026-08-30T01:00:00.000Z');
+    expect(obs[1]).toMatchObject({ id: 'beh_2', description: '你阅读了《标题》', credibility: 0.45 });
   });
 
   it('旧数据无 credibility → 检索不崩且按 0.5 中性处理（不迁移字段）', async () => {
@@ -747,14 +786,17 @@ describe('RAG 增强（2026-08：来源标签/相对时间/情绪时段 query）
 });
 
 describe('睡前巩固（Digest，2026-08-23 增强）', () => {
-  it('从未反思过（lastReflectAt=0）→ 不触发（数据太少无意义；P0-6 后仍保留的门槛）', async () => {
+  it('从未反思过（lastReflectAt=0）→ 行为流攒够 digestMinNew 即触发（ticket 158 解耦反思；不足则不触发）', async () => {
     const m = make({ ai: true });
     await m.addObservation('用户说：a', { importance: 0.5 });
     await m.addObservation('用户说：b', { importance: 0.5 });
-    await m.addObservation('用户说：c', { importance: 0.5 });
+    // 行为流仅 2 条（< digestMinNew=3）→ 不触发
     expect(data.memory.reflection.lastReflectAt).toBe(0);
     expect((m as any).shouldDigest(Date.now())).toBe(false);
     expect(data.memory.reflection.digestCount).toBe(0);
+    // 第 3 条入行为流 → 首次日小结解锁（不再等反思先发生——反思可能因记忆流断粮长期无产出）
+    await m.addObservation('用户说：c', { importance: 0.5 });
+    expect((m as any).shouldDigest(Date.now())).toBe(true);
   });
 
   it('P0-6 首次日小结解锁：首次反思达标后可触发一次 digest，之后 lastDigestAt 正常推进', async () => {
@@ -762,8 +804,8 @@ describe('睡前巩固（Digest，2026-08-23 增强）', () => {
     await m.addObservation('用户说：a', { importance: 0.5 });
     await m.addObservation('用户说：b', { importance: 0.5 });
     await m.addObservation('用户说：c', { importance: 0.5 });
-    // 反思前不触发（原死锁：lastDigestAt=0 恒 false）
-    expect((m as any).shouldDigest(Date.now())).toBe(false);
+    // ticket 158：行为流已攒够 3 条 → 反思前即触发（首次基线回退行为流最早条目）
+    expect((m as any).shouldDigest(Date.now())).toBe(true);
     // 首次反思成功 → lastReflectAt 推进
     const fetchMock = vi.fn(async () => ({
       ok: true,
@@ -777,7 +819,7 @@ describe('睡前巩固（Digest，2026-08-23 增强）', () => {
     // 反思与后续观察可能落在同一毫秒（created > lastReflectAt 严格比较会漏计）→
     // 隔开数毫秒保证时间戳严格递增，消除毫秒边界竞态
     await new Promise((r) => setTimeout(r, 5));
-    // 自上次反思新增 ≥digestMinNew 条 → 首次日小结解锁（无需等 18h——尚无上次小结可计）
+    // 自上次反思新增 ≥digestMinNew 条 → 再次解锁（无需等 18h——尚无上次小结可计）
     await m.addObservation('用户说：d', { importance: 0.5 });
     await m.addObservation('用户说：e', { importance: 0.5 });
     await m.addObservation('用户说：f', { importance: 0.5 });
