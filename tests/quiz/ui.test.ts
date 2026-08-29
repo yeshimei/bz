@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 做题家 UI 测试（ticket 141 重构版）：纯复习会话语义（普通模式随 ticket 098 退役入口一并删除）。
  * 覆盖：startReviewSession 契约 / 单选多选判定 / 持久化后计数 / 用户掌控跳题（无 800ms 强制）/ 
  * 键盘快捷键 / 头部对错计数 / 退出确认闸门 / 结果卡阶段防拆 DOM。
@@ -81,7 +81,7 @@ describe('QuizMasterUI（纯复习会话）', () => {
     expect(popup.querySelectorAll('.quiz-option-btn span').length).toBe(12);
   });
 
-  it('单选答对：标绿 + 「下一题」待解锁（无 800ms 强制跳题）+ 持久化成功解锁 + splice 计数', async () => {
+  it('单选答对：标绿 + 持久化成功自动进入下一题（无「下一题」按钮）+ splice 计数', async () => {
     const vault = new MockVault();
     seedQuiz(vault, { 'A.md': [Q('Q1?', [0]), Q('Q2?', [1])] });
     const app = makeApp(vault);
@@ -90,29 +90,22 @@ describe('QuizMasterUI（纯复习会话）', () => {
     const onComplete = vi.fn();
     ui.startReviewSession({ questions: [Q('Q1?', [0]), Q('Q2?', [1])], onComplete });
     expect(ui.totalQuestions).toBe(2);
-    // 答对 Q1：按钮先挂但禁用（节奏由用户掌控），持久化成功后解锁
+    // 答对 Q1：答对不出现「下一题」按钮，正确选项即时标绿
     (document.querySelectorAll('.quiz-option-btn')[0] as HTMLElement).click();
-    const nextBtn = document.querySelector('.quiz-next-btn') as HTMLButtonElement;
-    expect(nextBtn).not.toBeNull();
-    expect(nextBtn.disabled).toBe(true);
-    // 正确选项即时标绿（原 onSplice 时机迁移）
+    expect(document.querySelector('.quiz-next-btn')).toBeNull();
     expect(document.querySelectorAll('.quiz-option-btn')[0].classList.contains('correct')).toBe(true);
-    // 持久化成功：计数 + 解锁 + 头部计数同步
+    // 持久化成功：计数 + 头部计数同步 + 自动进入 Q2（题号 = 已完成数 + 1 = 2/2）
     await flushPersist();
     expect(ui.correctCount).toBe(1);
-    expect(nextBtn.disabled).toBe(false);
     expect(document.querySelector('.bz-quiz-stats')!.textContent).toBe('✅ 1 · ❌ 0');
-    // 点击「下一题」才进入 Q2（题号 = 已完成数 + 1 = 2/2）
-    nextBtn.click();
     expect(document.getElementById('quiz-popup')!.textContent).toContain('Q2?');
     expect(document.getElementById('quiz-popup')!.textContent).toContain('(2/2)');
     // P0-2 落盘终态：被答对的 Q1 已删除，恰剩未答的 Q2
     let quiz = JSON.parse(vault.files.get(QUIZ_FILE_PATH)!);
     expect(quiz.notes['A.md'].map((q: any) => q.question)).toEqual(['Q2?']);
-    // 答对 Q2 → 全部完成（点下一题后 onComplete 回调）
+    // 答对 Q2 → 全部完成（持久化成功后自动 onComplete 回调）
     (document.querySelectorAll('.quiz-option-btn')[1] as HTMLElement).click();
     await flushPersist();
-    (document.querySelector('.quiz-next-btn') as HTMLElement).click();
     expect(ui.correctCount).toBe(2);
     expect(onComplete).toHaveBeenCalledWith({ correct: 2, wrong: 0, total: 2, accuracy: 100 });
     expect(document.getElementById('quiz-popup')).not.toBeNull(); // 回调不关弹窗
@@ -120,7 +113,7 @@ describe('QuizMasterUI（纯复习会话）', () => {
     expect(quiz.notes['A.md']).toEqual([]);
   });
 
-  it('P0-2：同笔记 5 题全对 → 库清空、会话完成回调 accuracy=100', async () => {
+  it('P0-2：同笔记 5 题全对 → 库清空、会话完成回调 accuracy=100（答对自动跳题）', async () => {
     const vault = new MockVault();
     seedQuiz(vault, { 'A.md': [1, 2, 3, 4, 5].map((n) => Q(`Q${n}?`, [0])) });
     const app = makeApp(vault);
@@ -132,14 +125,13 @@ describe('QuizMasterUI（纯复习会话）', () => {
       (document.querySelectorAll('.quiz-option-btn')[0] as HTMLElement).click();
       await flushPersist();
       expect(ui.correctCount).toBe(round);
-      (document.querySelector('.quiz-next-btn') as HTMLElement).click();
     }
     expect(onComplete).toHaveBeenCalledWith({ correct: 5, wrong: 0, total: 5, accuracy: 100 });
     const quiz = JSON.parse(vault.files.get(QUIZ_FILE_PATH)!);
     expect(quiz.notes['A.md']).toEqual([]); // 全对 → 库空
   });
 
-  it('P2：持久化失败 → 恢复作答态、移除挂起按钮且不重复计数；重答成功只计一次并落盘删除', async () => {
+  it('P2：持久化失败 → 恢复作答态且不重复计数；重答成功只计一次并自动完成落盘删除', async () => {
     const vault = new MockVault();
     seedQuiz(vault, { 'A.md': [Q('Q1?', [0])] });
     const app = makeApp(vault);
@@ -158,15 +150,14 @@ describe('QuizMasterUI（纯复习会话）', () => {
     await flushPersist();
     expect(ui.correctCount).toBe(0); // 失败不计数
     expect(getNoticeMessages().some((m) => m.includes('删除题目失败'))).toBe(true);
-    // 作答态已恢复：按钮不再 disabled、挂起按钮已移除、可重新作答
+    // 作答态已恢复：按钮不再 disabled，仍停在当前题
     expect(btns()[0].classList.contains('disabled')).toBe(false);
-    expect(document.querySelector('.quiz-next-btn')).toBeNull();
-    // 重答成功：只计一次
+    expect(document.getElementById('quiz-popup')!.textContent).toContain('Q1?');
+    // 重答成功：只计一次，自动完成
     (btns()[0] as HTMLElement).click();
     await flushPersist();
     expect(ui.correctCount).toBe(1);
     expect(removeSpy).toHaveBeenCalledTimes(2);
-    (document.querySelector('.quiz-next-btn') as HTMLElement).click();
     expect(onComplete).toHaveBeenCalledWith({ correct: 1, wrong: 0, total: 1, accuracy: 100 });
     const quiz = JSON.parse(vault.files.get(QUIZ_FILE_PATH)!);
     expect(quiz.notes['A.md']).toEqual([]);
@@ -208,7 +199,7 @@ describe('QuizMasterUI（纯复习会话）', () => {
     expect(document.getElementById('quiz-popup')!.textContent).toContain('(2/2)');
   });
 
-  it('多选：selected 勾选 + 提交判定（正确：绿 + 待解锁下一题 + 持久化计数）', async () => {
+  it('多选：selected 勾选 + 提交判定（正确：绿 + 自动完成 + 持久化计数）', async () => {
     const vault = new MockVault();
     seedQuiz(vault, { 'A.md': [{ ...Q('Q1?', [0, 2]) }] });
     const app = makeApp(vault);
@@ -229,8 +220,7 @@ describe('QuizMasterUI（纯复习会话）', () => {
     await flushPersist();
     // ticket 098（ADR-0044）：多选答对递增 correctCount（P2：持久化成功后）
     expect(ui.correctCount).toBe(1);
-    // 题目被 splice 移除 → 点下一题 → 无题 → onComplete（accuracy=100）；落盘同步删除
-    (document.querySelector('.quiz-next-btn') as HTMLElement).click();
+    // 题目被 splice 移除 → 答对自动完题 → onComplete（accuracy=100）；落盘同步删除
     expect(onComplete).toHaveBeenCalledWith({ correct: 1, wrong: 0, total: 1, accuracy: 100 });
     const quiz = JSON.parse(vault.files.get(QUIZ_FILE_PATH)!);
     expect(quiz.notes['A.md']).toEqual([]);
@@ -267,7 +257,7 @@ describe('QuizMasterUI（纯复习会话）', () => {
     expect(ui.wrongCount).toBe(0);
   });
 
-  it('ticket 141：键盘快捷键——1-4/A-D 选择、Enter 提交/下一题', async () => {
+  it('ticket 141/152：键盘快捷键——1-4/A-D 选择、Enter 提交/答错下一题', async () => {
     const vault = new MockVault();
     seedQuiz(vault, { 'A.md': [Q('Q1?', [0])] });
     const app = makeApp(vault);
@@ -280,12 +270,31 @@ describe('QuizMasterUI（纯复习会话）', () => {
     await flushPersist();
     expect(ui.correctCount).toBe(1);
     expect(document.querySelectorAll('.quiz-option-btn')[0].classList.contains('correct')).toBe(true);
-    // Enter 点「下一题」→ 会话完成
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    // 答对自动完题（唯一一题）→ onComplete 已触发，无「下一题」按钮可点
     expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(document.querySelector('.quiz-next-btn')).toBeNull();
     // 字母键 A：焦点在 body 时点击选项（无题可答，静默无害）
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'a' }));
     expect(onComplete).toHaveBeenCalledTimes(1);
+  });
+
+  it('ticket 153：答错显示「下一题」按钮，Enter 可触发进入下一题', async () => {
+    const vault = new MockVault();
+    seedQuiz(vault, { 'A.md': [Q('Q1?', [0]), Q('Q2?', [1])] });
+    const app = makeApp(vault);
+    setApp(app);
+    const ui = new QuizMasterUI();
+    const onComplete = vi.fn();
+    ui.startReviewSession({ questions: [Q('Q1?', [0]), Q('Q2?', [1])], onComplete });
+    // 数字键 2 选错（正确为索引 0）
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: '2' }));
+    expect(ui.wrongCount).toBe(1);
+    const nextBtn = document.querySelector('.quiz-next-btn') as HTMLElement;
+    expect(nextBtn).not.toBeNull(); // 答错才出现「下一题」按钮
+    // Enter 点「下一题」→ 进入 Q2
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    expect(document.getElementById('quiz-popup')!.textContent).toContain('Q2?');
+    expect(document.getElementById('quiz-popup')!.textContent).toContain('(2/2)');
   });
 
   it('ticket 141：键盘 Enter 多选提交（零选择时走 warning 不判题）', async () => {
@@ -410,13 +419,11 @@ describe('复习联动契约', () => {
     expect(onComplete).not.toHaveBeenCalled();
     expect(document.getElementById('quiz-popup')).not.toBeNull();
     expect(document.getElementById('quiz-popup')!.textContent).toContain('RQ1?');
-    // 继续作答到完成 → 恰好一次回调
+    // 继续作答到完成 → 恰好一次回调（答对自动跳题）
     (document.querySelectorAll('.quiz-option-btn')[0] as HTMLElement).click(); // 答对 RQ1
     await flushPersist();
-    (document.querySelector('.quiz-next-btn') as HTMLElement).click();
-    (document.querySelectorAll('.quiz-option-btn')[1] as HTMLElement).click(); // 答对 RQ2
+    (document.querySelectorAll('.quiz-option-btn')[1] as HTMLElement).click(); // 答对 RQ2（自动进入）
     await flushPersist();
-    (document.querySelector('.quiz-next-btn') as HTMLElement).click();
     expect(onComplete).toHaveBeenCalledTimes(1);
     expect(onComplete).toHaveBeenCalledWith({ correct: 2, wrong: 0, total: 2, accuracy: 100 });
   });
@@ -450,10 +457,9 @@ describe('复习联动契约', () => {
     const ui = new QuizMasterUI();
     const onComplete = vi.fn();
     ui.startReviewSession({ questions: [Q('RQ1?', [0])], onComplete });
-    // 答对唯一一题 → 点下一题 → showQuestion 完题消费回调（复习域显示结果卡）
+    // 答对唯一一题 → 自动完题消费回调（复习域显示结果卡）
     (document.querySelectorAll('.quiz-option-btn')[0] as HTMLElement).click();
     await flushPersist();
-    (document.querySelector('.quiz-next-btn') as HTMLElement).click();
     expect(onComplete).toHaveBeenCalledTimes(1);
     // 结果卡阶段：遮罩/ESC 均被忽略（弹窗 DOM 保留给复习域驱动）
     (document.getElementById('quiz-mask') as HTMLElement).click();
@@ -473,16 +479,14 @@ describe('复习联动契约', () => {
     const ui = new QuizMasterUI();
     const onComplete = vi.fn();
     ui.startReviewSession({ questions: [Q('RQ1?', [0]), Q('RQ2?', [1])], onComplete });
-    // 答对第一题 → 待解锁下一题（无 800ms 自动跳题）
+    // 答对第一题 → 自动进入下一题（无 800ms 强制等待）
     (document.querySelectorAll('.quiz-option-btn')[0] as HTMLElement).click();
     await flushPersist();
     expect(onComplete).not.toHaveBeenCalled(); // 过渡不得误触发结算
-    (document.querySelector('.quiz-next-btn') as HTMLElement).click();
     expect(document.getElementById('quiz-popup')!.textContent).toContain('RQ2?');
     // 答对第二题 → 会话完成 → 回调恰好一次
     (document.querySelectorAll('.quiz-option-btn')[1] as HTMLElement).click();
     await flushPersist();
-    (document.querySelector('.quiz-next-btn') as HTMLElement).click();
     expect(onComplete).toHaveBeenCalledTimes(1);
     expect(onComplete).toHaveBeenCalledWith({ correct: 2, wrong: 0, total: 2, accuracy: 100 });
   });

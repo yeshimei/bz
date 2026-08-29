@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 复习计划核心应用（ticket 16 修正版：对齐源码 App，含 quizReviewLoop/reviewLoop）
  */
 import type { App, TFile } from 'obsidian';
@@ -665,7 +665,8 @@ export const reviewApp = {
    * 移出逾期（评级/完成/挂起）从集合剔除 → 之后再次逾期重新提醒。
    * 启动首查把存量逾期当新产生 → 汇总篇数（Q1 拍板接受）。
    * ticket 48 收敛：与本轮 loadItems 共用结果，不再二次读盘；
-   * ticket 58：通知挂「去复习」action → 打开最早逾期笔记。
+   * ticket 58：通知挂「去复习」action → 打开最早逾期笔记；
+   * ticket 153：「去复习」升级为走 autoJumpOverdue 完整流程（做题决定难度分流）。
    */
   async checkOverdueAndNotify(): Promise<void> {
     try {
@@ -686,16 +687,9 @@ export const reviewApp = {
       if (newly.length) {
         for (const [p] of newly) this._notifiedOverdue.add(p);
         // 通知只报当前逾期篇数，不列具体题目（用户拍板 2026-08-29）；duration 0 = 常驻（通知系统语义）
-        // ticket 58：最早逾期（最紧迫）作「去复习」跳转目标。
-        // 修 #1：目标只从本次 newly（通知名单）取——全逾集合含已在通知而逾期未清的旧条目，
-        // 同键合并通知的 action 闭包保持首目标，会出现「通知 B 却打开 A」。
-        const earliest = newly
-          .map(([, i]) => i)
-          .sort(
-            (a, b) =>
-              new Date((a.nextReviewDate as string) || '0').getTime() -
-              new Date((b.nextReviewDate as string) || '0').getTime()
-          )[0];
+        // ticket 153：「去复习」不再只打开单篇（旧 ticket 58/修 #1 语义），
+        // 而是走 autoJumpOverdue 完整复习流程（按 forceQuizForReview 分流做题/普通复习），
+        // 通知名单仍只报 newly（diff 记忆语义保留，见上方过滤）。
         const handle = notify(`有 ${overdueMap.size} 篇笔记逾期`, {
           type: 'info',
           duration: 0, // 常驻不自动消失，靠点击「去复习」/本体收起
@@ -703,12 +697,9 @@ export const reviewApp = {
           action: {
             label: '去复习', // action 文案不带 emoji（通知规范）
             onClick: () => {
-              if (!earliest) return;
-              const app = getApp();
-              const file = app.vault.getAbstractFileByPath(earliest.filePath);
-              if (!file) return;
-              const leaf = app.workspace.getLeaf(false);
-              void leaf.openFile(file as TFile);
+              // ticket 153：走统一开始复习流程（autoJumpOverdue 内按 forceQuizForReview 分流：
+              // 开启 → 批量出题做题；关闭 → 普通复习跳转笔记），不再裸开最早逾期笔记
+              void reviewApp.autoJumpOverdue();
             },
           },
         });
