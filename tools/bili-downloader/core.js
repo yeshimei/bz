@@ -774,7 +774,7 @@ async function runBatch(task, deps = {}) {
 
   // ④ 转文字（断点续跑：转写稿留存 resume-transcript-*.txt，命中即跳过 python，从下一环继续）
   onStep('转文字中')
-  if (!py) throw new Error('转文字失败：rc 未配置 pythonPath（faster-whisper 所在 Python 路径），请在 bz 插件文献盒设置中填写')
+  if (!py) throw new Error('转文字失败：未配置 pythonPath——请在 bz 插件文献盒设置「Python 路径」填 python（一般装了 Python 即可，spawn 走系统 PATH），或填绝对路径（Windows 命令提示符运行 where python 可查）')
   const transPath = resumeTranscriptPath(conf, bvid, playCid, rStart, rEnd)
   let transcript = ''
   if (fs.existsSync(transPath)) {
@@ -793,7 +793,12 @@ async function runBatch(task, deps = {}) {
         },
       })
     } catch (err) {
-      throw new Error(`转文字失败：${(err && err.message) || err}（请确认 faster-whisper 环境已安装：目标 Python 已 pip install faster-whisper）`)
+      const m = (err && err.message) || err
+      // 找不到 Python（可执行名不在 PATH / 绝对路径不存在）→ 引导填写方式，不误导成 faster-whisper 未装
+      if (/无法启动 Python|ENOENT/i.test(String(m))) {
+        throw new Error(`转文字失败：找不到 Python（${lastLine(String(m))}）——文献盒设置「Python 路径」填 python 即可（走系统 PATH），或填绝对路径（Windows 命令提示符运行 where python 可查）`)
+      }
+      throw new Error(`转文字失败：${m}（请确认 faster-whisper 环境已安装：目标 Python 已 pip install faster-whisper）`)
     }
     const units = parseTranscriptUnits(raw)
     const byFile = new Map(units.map(u => [path.resolve(u.file), u.text]))

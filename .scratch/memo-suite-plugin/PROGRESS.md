@@ -1,3 +1,15 @@
+## 2026-08-30 Python 路径填写体验：填 python 即可 + 通用默认 + 引导文案（ticket 150）
+
+**状态：DEFAULTS.pythonPath 通用化 'python'；ENOENT 与未配置错误细分引导（where python）；tools 52 + ui/processor 测试 + tsc 全绿**
+
+- ✅ **config.js**：DEFAULTS.pythonPath 由开发机专属绝对路径改 `'python'`（spawn 走 PATH），注释教 Windows 用 `where python` 查绝对路径；rc 有值仍覆盖
+- ✅ **core.js**：777 未配置文案教填写方式（保留「未配置 pythonPath」子串）；转写 catch 对 `/无法启动 Python|ENOENT/` 专报「找不到 Python…where python 可查」，不再误报 faster-whisper 未装
+- ✅ **ui.ts**：humanizeError 四分支独立匹配（找不到 Python / 未配置 pythonPath / pip install faster-whisper / 通用 whisper——ENOENT 不含 whisper 词须独立）；设置 desc 更新「装了 Python 一般填 python 即可」
+- ✅ **测试**：tools +2（ENOENT 引导、未配置引导）；ui.test.ts +找不到 Python 断言；全量 + tsc 0
+- 📄 文档：issues/150；CONTEXT「文献盒」词条补；spec 尾部；PROGRESS 本条目
+- 🔍 本机实测：Python312（rc 指向）faster-whisper 1.2.1 已装 → 留空即可用；PATH python（miniconda）未装 → 填 `python` 需先在对应环境 pip install faster-whisper
+- ⏳ 收尾：构建部署 → 提交
+
 ## 2026-08-30 文献盒转写失败修复：留空键不下发回退 rc（ticket 149）
 
 **状态：用户实测转写环节整批失败（提示检查 Python 路径/Whisper 模型，但设置留空）→ 根因 options 空串覆盖 rc/DEFAULTS 兜底；相关测试 + tsc 绿，构建已部署**

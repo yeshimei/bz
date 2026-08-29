@@ -737,3 +737,15 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
   运行 pip install faster-whisper」；其它 whisper 类 → 原提示。
 - **验收**：processor 空设置用例断言留空键不在下发 JSON（toEqual 忽略 undefined）；ui.test.ts 新增
   humanizeError 三断言；tsc + 全量测试 + 构建全绿。
+
+### Python 路径填写体验（ticket 150，用户诉求「填一个 python 就能生效」）
+
+> 填 `python` 命令名即可生效（spawn 走 PATH）——但默认值曾硬编码开发机专属绝对路径（其他用户没有）、
+> 各提示都没教怎么找/填，ENOENT 还被误报成「faster-whisper 未安装」。
+
+- **config.js**：`DEFAULTS.pythonPath` → `'python'`（通用命令名）；注释教 Windows `where python` 查绝对路径。
+- **core.js**：777 未配置文案教填写方式；转写 catch 对 `/无法启动 Python|ENOENT/` 专报「找不到 Python…where python 可查」。
+- **ui.ts**：humanizeError 四分支独立匹配（找不到 Python / 未配置 pythonPath / pip install faster-whisper / 通用 whisper，
+  ENOENT 消息不含 whisper 词不能挂 whisper 主块）；设置 desc 更新「装了 Python 一般填 python 即可…」。
+- **实测本机**：Python312（rc 指向）faster-whisper 1.2.1 已装；PATH python（miniconda）未装——填 `python` 应先在对应环境 pip install faster-whisper。
+- **验收**：tools 52 全绿（+ENOENT/未配置引导两用例）；ui/processor 测试绿 + tsc 0；全量测试 + 构建不回归。

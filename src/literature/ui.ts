@@ -100,15 +100,18 @@ export function humanizeError(reason: string | null | undefined): string {
   }
   if (/ffmpeg/i.test(s)) return '视频处理工具（ffmpeg）不可用：检查电脑是否已安装，或设置里的「ffmpeg 路径」';
   if (/ffprobe/i.test(s)) return '视频探测工具（ffprobe）不可用：检查电脑是否已安装，或设置里的「ffprobe 路径」';
+  // Python 本身找不到（pythonPath 不可执行：spawn ENOENT / 启动失败）——消息不含 whisper 词，须独立匹配
+  if (/找不到 Python|无法启动 Python|python.*ENOENT/i.test(s)) {
+    return '语音转写失败：未找到 Python——设置里「Python 路径」填 python（一般装了 Python 即可），或运行 where python 查绝对路径填入';
+  }
+  // pythonPath 未配置（设置留空且工具 rc/DEFAULTS 也无兜底）
+  if (/未配置 pythonPath/i.test(s)) {
+    return '语音转写未配置：文献盒设置「Python 路径」填 python 即可（一般装了 Python 就能用，走系统 PATH），或填绝对路径（Windows 在命令提示符运行 where python 可查）';
+  }
+  if (/pip install faster-whisper|faster-whisper 环境已安装/i.test(s)) {
+    return '语音转写失败：faster-whisper 未安装，请在目标 Python 中运行 pip install faster-whisper';
+  }
   if (/whisper|faster.whisper|no module/i.test(s)) {
-    // 细分两种（ticket 149）：① pythonPath 未配置（设置留空且工具 rc/DEFAULTS 也无兜底）；
-    // ② faster-whisper 环境缺失（pythonPath 有值但目标 Python 未装 faster-whisper）
-    if (/未配置 pythonPath/i.test(s)) {
-      return '语音转写未配置：请在文献盒设置填写「Python 路径」（留空将跟随工具默认配置）';
-    }
-    if (/pip install faster-whisper|faster-whisper 环境已安装/i.test(s)) {
-      return '语音转写失败：faster-whisper 未安装，请在目标 Python 中运行 pip install faster-whisper';
-    }
     return '语音转写失败：检查设置里的「Python 路径」与「Whisper 模型」';
   }
   if (/API Key|AI 配置|未配置|Unauthorized|\b401\b|invalid_api_key|insufficient|quota/i.test(s)) {
@@ -223,7 +226,7 @@ export function literatureSettingsSchema(opts?: { onClearHistory?: () => void | 
         rows: [
           { type: 'text', name: 'ffmpeg 路径', desc: '视频处理用；留空跟随工具配置', binding: { key: 'literatureFfmpegPath' }, placeholder: '如 ffmpeg 或 D:/tools/ffmpeg.exe' },
           { type: 'text', name: 'ffprobe 路径', desc: '探测视频元数据用；留空跟随工具配置', binding: { key: 'literatureFfprobePath' }, placeholder: '如 ffprobe 或 D:/tools/ffprobe.exe' },
-          { type: 'text', name: 'Python 路径', desc: 'faster-whisper 依赖；留空跟随工具配置', binding: { key: 'literaturePythonPath' }, placeholder: '如 python 或 D:/tools/python.exe' },
+          { type: 'text', name: 'Python 路径', desc: '装了 Python 一般填 python 即可（走系统 PATH）；或填绝对路径（命令提示符运行 where python 可查）；留空跟随工具配置', binding: { key: 'literaturePythonPath' }, placeholder: '如 python 或 D:/tools/python.exe' },
           { type: 'text', name: 'Whisper 模型', desc: '转写模型档位（tiny/base/small/medium/large）', binding: { key: 'literatureWhisperModel' }, placeholder: '如 small' },
           { type: 'text', name: '缓存目录', desc: '剪辑产物与转写稿缓存；留空 = 系统临时目录', binding: { key: 'literatureCacheDir' }, placeholder: '如 D:/bili-dl-cache' },
           { type: 'number', name: '缓存保留天数', desc: '超过该天数的缓存自动清理', binding: { key: 'literatureCacheRetentionDays' }, min: 1, step: 1 },
