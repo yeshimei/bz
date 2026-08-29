@@ -55,11 +55,14 @@ describe('UIManager', () => {
     expect(mask.style.display).toBe('none');
     expect(popup.style.display).toBe('none');
     expect(Number.isFinite(parseInt(mask.style.zIndex, 10))).toBe(true); // 动态发号（ADR-0067）
-    expect(popup.style.maxWidth).toBe('800px');
+    // ticket 141：布局样式收敛 styles.css，显隐保留功能性内联
     expect(document.querySelector('style[data-review-styles]')).toBeNull(); // 样式已收敛 styles.css，不再运行时注入
     expect(document.getElementById('review-btn-add')).not.toBeNull();
     // 无 emoji 标题
     expect(popup.querySelector('h3')!.textContent).toBe('复习计划');
+    // ticket 141：头行走 .bz-win-head 统一规范，关闭钮挂 .bz-win-close
+    expect(popup.querySelector('.bz-win-head')!.querySelector('h3')!.textContent).toBe('复习计划');
+    expect(popup.querySelector('.bz-win-close')).not.toBeNull();
     ui.destroy();
   });
 
@@ -158,7 +161,8 @@ describe('UIManager', () => {
     const btns = dialog.querySelectorAll('.diff-btn');
     expect(btns.length).toBe(5);
     expect(btns[0].textContent).toContain('🟥 忘了（Again）');
-    expect((btns[0] as HTMLElement).style.borderLeft).toContain('3px solid rgb(255, 71, 87)'); // #ff4757
+    // ticket 141：难度色标收敛 CSS（data-diff 属性驱动），内联 border-left 已移除
+    expect((btns[0] as HTMLElement).dataset.diff).toBe('again');
     expect((btns[4] as HTMLElement).dataset.diff).toBe('cancel');
     // 外点关闭（等 100ms 后 handler 注册完成，再点外部区域）
     await new Promise((r) => setTimeout(r, 150));
@@ -168,17 +172,27 @@ describe('UIManager', () => {
     ui.destroy();
   });
 
-  it('确认框：confirm-* id + 确定按钮 accent', async () => {
+  it('移出确认走共享流程框（ticket 141：自绘确认框迁移 openFlowDialog）', async () => {
     const vault = new MockVault();
+    seed(vault);
     const app = makeApp(vault);
     setApp(app);
     const dm = new ReviewDataManager(app);
     const ui = new UIManager(app, dm);
-    ui.showConfirm('移出复习计划', '确定移出“A”？', () => {});
-    expect(ui.confirmPopup).not.toBeNull();
-    expect(ui.confirmPopup!.style.display).toBe('flex');
-    expect(document.getElementById('confirm-title')!.textContent).toBe('移出复习计划');
-    expect(document.getElementById('confirm-message')!.textContent).toBe('确定移出“A”？');
+    ui.showMain();
+    await ui.refreshPanel();
+    const container = document.getElementById('review-entries-container')!;
+    const card = container.querySelector('.review-card') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('contextmenu', { button: 2, bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
+    const removeItem = [...document.querySelectorAll('.bz-item-menu-item')].find(
+      (b) => b.textContent!.includes('移出复习计划')
+    ) as HTMLElement;
+    removeItem.click();
+    await new Promise((r) => setTimeout(r, 10));
+    const flowPopup = document.getElementById('__shared_confirm_popup__')!;
+    expect(flowPopup).not.toBeNull();
+    expect(flowPopup.textContent).toContain('移出复习计划');
+    expect(flowPopup.textContent).toContain('确定移出');
     ui.destroy();
   });
 
@@ -289,17 +303,23 @@ describe('UIManager', () => {
     ui.destroy();
   });
 
-  it('ESC：confirm 优先，其次主面板', async () => {
+  it('ESC：流程框层优先关闭，主面板不被误关；二次 ESC 才收主面板（escManager 层级）', async () => {
     const vault = new MockVault();
     const app = makeApp(vault);
     setApp(app);
     const dm = new ReviewDataManager(app);
     const ui = new UIManager(app, dm);
     ui.showMain();
-    ui.showConfirm('t', 'm', () => {});
+    // 打开共享流程框（模拟移出确认在途）
+    const { openFlowDialog } = await import('../../src/core/flow-dialog');
+    const dialogPromise = openFlowDialog({ message: 'm', actions: [{ label: '取消', value: 'cancel' }, { label: '确定', value: 'ok' }] });
+    await new Promise((r) => setTimeout(r, 0));
+    // 第一次 ESC：流程框关闭（取消语义），主面板保留
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    expect(ui.confirmPopup!.style.display).toBe('none');
+    await dialogPromise;
+    expect(document.getElementById('__shared_confirm_mask__')).toBeNull();
     expect(ui.mask!.style.display).toBe('block');
+    // 第二次 ESC：主面板关闭（escManager 'review-main' 层）
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(ui.mask!.style.display).toBe('none');
     ui.destroy();
@@ -323,7 +343,8 @@ describe('UIManager', () => {
     expect(removeItem).toBeTruthy();
     removeItem.click();
     await new Promise((r) => setTimeout(r, 10));
-    expect(document.getElementById('confirm-title')!.textContent).toBe('移出复习计划');
+    // ticket 141：确认框迁移共享流程框
+    expect(document.getElementById('__shared_confirm_popup__')!.textContent).toContain('移出复习计划');
     ui.destroy();
   });
 

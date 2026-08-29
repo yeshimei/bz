@@ -1,6 +1,16 @@
 /* ==================== 做题家域样式（src/quiz/styles.css） ==================== */
 /* ==================== 做题家（quiz，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
+      /* ticket 141：弹窗壳内联样式收敛进源头（值逐字搬运）+ 新增头行/题干/选项容器类 */
       #quiz-mask {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
         backdrop-filter: blur(2px);
       }
       #quiz-popup {
@@ -11,11 +21,19 @@
         max-width: 600px;
         width: 90%;
         max-height: 80vh;
+        overflow-y: auto;
         display: flex;
         flex-direction: column;
         position: relative;
         transition: none;
       }
+      .bz-quiz-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+      .bz-quiz-title { font-size: 15px; font-weight: 600; }
+      .bz-quiz-stats { font-size: 13px; color: var(--text-muted); }
+      .bz-quiz-question { font-size: 17px; font-weight: 500; margin-bottom: 20px; color: var(--text-normal); }
+      .bz-quiz-options { display: flex; flex-direction: column; gap: 6px; }
+      .bz-quiz-option-text { flex: 1; }
+      .quiz-next-btn--pending { opacity: 0.5; cursor: default; }
       .quiz-option-btn {
         padding:10px 14px;
         border:1px solid var(--background-modifier-border);
@@ -75,16 +93,6 @@
         box-shadow: none !important;
       }
       .quiz-next-btn:hover { background:var(--background-modifier-hover); }
-      /* Loading 样式 */
-      #quiz-loading .spinner {
-        display: inline-block;
-        width: 40px;
-        height: 40px;
-        border: 4px solid var(--background-modifier-border);
-        border-top-color: var(--interactive-accent);
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-      }
       @keyframes spin { to { transform: rotate(360deg); } }
     
 

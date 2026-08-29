@@ -120,9 +120,18 @@ describe('UIManager 头部按钮事件链', () => {
     expect(ui.searchInput!.value).toBe('');
     expect(refreshSpy).toHaveBeenCalled();
 
-    // 输入触发刷新
+    // 输入触发刷新（ticket 141：180ms 防抖）
     refreshSpy.mockClear();
     ui.searchInput!.dispatchEvent(new Event('input'));
+    expect(refreshSpy).not.toHaveBeenCalled(); // 防抖窗口内不刷新
+    await new Promise((r) => setTimeout(r, 220));
+    expect(refreshSpy).toHaveBeenCalledTimes(1);
+    // 连续输入只触发一次（防抖合并）
+    refreshSpy.mockClear();
+    ui.searchInput!.dispatchEvent(new Event('input'));
+    ui.searchInput!.dispatchEvent(new Event('input'));
+    ui.searchInput!.dispatchEvent(new Event('input'));
+    await new Promise((r) => setTimeout(r, 220));
     expect(refreshSpy).toHaveBeenCalledTimes(1);
   });
 
@@ -290,36 +299,13 @@ describe('难度弹窗与确认框', () => {
     ui.destroy();
   });
 
-  it('确认框：标题缺省回退「确认」；确定执行回调后关闭；取消/遮罩只关闭', () => {
-    const { ui } = mkUi();
-    let ran = 0;
-    ui.showConfirm('', '', () => ran++);
-    expect(document.getElementById('confirm-title')!.textContent).toBe('确认'); // 空标题回退
-    expect(document.getElementById('confirm-message')!.textContent).toBe('');
-    (document.getElementById('confirm-ok') as HTMLElement).click();
-    expect(ran).toBe(1);
-    expect(ui.confirmPopup!.style.display).toBe('none');
-
-    // 无回调点确定不炸
-    ui.showConfirm('t', 'm');
-    (document.getElementById('confirm-ok') as HTMLElement).click();
-    // 取消
-    ui.showConfirm('t2', 'm2', () => ran++);
-    (document.getElementById('confirm-cancel') as HTMLElement).click();
-    expect(ran).toBe(1);
-    // 点遮罩（target === mask）
-    ui.showConfirm('t3', 'm3', () => ran++);
-    ui.confirmMask!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(ran).toBe(1);
-    expect(ui.confirmPopup!.style.display).toBe('none');
-    ui.destroy();
-  });
-
-  it('registerEscape 幂等：重复注册后单次 ESC 只收一层', () => {
+  it('ESC 走 escManager 层级（ticket 141：原私挂 registerEscape 迁移）：主面板显示时单次 ESC 收一层', async () => {
     const { ui } = mkUi();
     ui.showMain();
-    ui.registerEscape(); // 二次注册应被 escapeRegistered 挡住
     const hideSpy = vi.spyOn(ui, 'hideMain');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(hideSpy).toHaveBeenCalledTimes(1);
+    // 面板隐藏后 ESC 不再误触
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(hideSpy).toHaveBeenCalledTimes(1);
     ui.destroy();
@@ -427,7 +413,7 @@ describe('renderEntries 与卡片标签全变体', () => {
       mkItem({ phase: 'fsrs', stage: 12, currentStage: 13, stability: 100, lastReviewed: new Date(now).toISOString() }),
     ]);
     let rTag = [...document.querySelectorAll('.review-tag')].find((e) => e.textContent!.startsWith('R=')) as HTMLElement;
-    expect(rTag.style.background).toBe('rgba(82, 196, 26, 0.133)'); // #52c41a22
+    expect(rTag.classList.contains('bz-review-r-high')).toBe(true); // ticket 141：三档配色收敛 CSS 类
 
     // ③ 0.7≤R<0.9 黄（stability 5、2 天前）
     ui.renderEntries([
@@ -440,7 +426,7 @@ describe('renderEntries 与卡片标签全变体', () => {
     const pct = parseInt(rTag.textContent!.replace(/\D/g, ''), 10);
     expect(pct).toBeGreaterThanOrEqual(70);
     expect(pct).toBeLessThan(90);
-    expect(rTag.style.background).toBe('rgba(250, 173, 20, 0.133)'); // #faad1422
+    expect(rTag.classList.contains('bz-review-r-mid')).toBe(true);
 
     // ④ R<0.7 红（stability 1、30 天前）
     ui.renderEntries([
@@ -451,7 +437,7 @@ describe('renderEntries 与卡片标签全变体', () => {
     ]);
     rTag = [...document.querySelectorAll('.review-tag')].find((e) => e.textContent!.startsWith('R=')) as HTMLElement;
     expect(parseInt(rTag.textContent!.replace(/\D/g, ''), 10)).toBeLessThan(70);
-    expect(rTag.style.background).toBe('rgba(255, 71, 87, 0.133)'); // #ff475722
+    expect(rTag.classList.contains('bz-review-r-low')).toBe(true);
 
     // ⑤ FSRS 但无 lastReviewed → 不渲染 R 标
     ui.renderEntries([mkItem({ phase: 'fsrs', stage: 12, currentStage: 13, stability: 100, lastReviewed: null })]);
@@ -521,7 +507,7 @@ describe('抽屉动作闭环（桌面右键菜单路径）', () => {
     expect(document.querySelector('.bz-item-menu')).toBeNull(); // 列表重绘后抽屉关闭
   });
 
-  it('移出复习计划 → 确认框确定 → removeItem + 刷新 + 染色', async () => {
+  it('移出复习计划 → 流程框确定 → removeItem + 刷新 + 染色 + 撤销 toast（ticket 141）', async () => {
     const now = new Date();
     seed(vault, [
       { id: '1', filePath: 'A.md', name: 'A', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() - 1000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
@@ -532,15 +518,26 @@ describe('抽屉动作闭环（桌面右键菜单路径）', () => {
     await ui.refreshPanel();
     const menu = openMenu(firstCard());
     ([...menu.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.includes('移出复习计划')) as HTMLElement).click();
-    expect(document.getElementById('confirm-title')!.textContent).toBe('移出复习计划');
+    await new Promise((r) => setTimeout(r, 10));
+    expect(document.getElementById('__shared_confirm_popup__')!.textContent).toContain('移出复习计划');
+    const restoreSpy = vi.spyOn(dm, 'restoreItem').mockResolvedValue(undefined);
     const removeSpy = vi.spyOn(dm, 'removeItem').mockResolvedValue(undefined);
     const styleSpy = vi.spyOn(reviewApp, 'applyReviewStyles').mockResolvedValue(undefined);
     const refreshSpy = vi.spyOn(ui, 'refreshPanel').mockResolvedValue(undefined);
-    (document.getElementById('confirm-ok') as HTMLElement).click();
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 20));
     expect(removeSpy).toHaveBeenCalledWith('A.md');
     expect(refreshSpy).toHaveBeenCalled();
     expect(styleSpy).toHaveBeenCalledWith(app);
+    // ticket 141 通病 1：移出落地后 toast 挂「撤销」，点击原样恢复条目
+    expect(getNoticeMessages().some((m) => m.includes('已移出「A」'))).toBe(true);
+    expect(restoreSpy).not.toHaveBeenCalled();
+    // 撤销按钮在存活 toast 上（去重合并句柄为 noop，直接找按钮）
+    const undoBtn = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '撤销') as HTMLElement;
+    expect(undoBtn).toBeTruthy();
+    undoBtn.click();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(restoreSpy).toHaveBeenCalled();
   });
 
   it('缺失记录抽屉「打开原文」→ 主面板隐藏 + 「文件已删除」成功通知', async () => {
