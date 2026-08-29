@@ -3780,14 +3780,20 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 
 /* ==================== 任务队列样式（bz-bili-*，视频录入面板/历史弹窗；ticket 136 迁移丢失后恢复） ==================== */
 
-/* ---- 任务行卡片 ---- */
+/* ---- 任务行卡片（ticket 138 统一：类名保留 bz-bili-*，视觉对齐主面板 bz-lit-card 质感） ---- */
 .bz-bili-task-card {
-  padding: 8px 10px;
-  border-radius: 8px;
-  margin-bottom: 6px;
-  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 0 0 10px 0;
+  background: var(--background-primary);
   cursor: pointer;
   position: relative;
+  transition: background .15s, border-color .15s;
+}
+.bz-bili-task-card:hover {
+  background: var(--background-secondary);
+  border-color: var(--background-modifier-border-hover);
 }
 .bz-bili-row {
   display: flex;
@@ -3803,7 +3809,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   color: var(--text-normal);
 }
 .bz-bili-meta {
-  margin-top: 3px;
+  margin-top: 4px;
   font-size: 11px;
   color: var(--text-muted);
 }
@@ -3842,20 +3848,21 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   50% { opacity: .55; }
 }
 
-/* ---- 批处理横幅 / 空态 ---- */
+/* ---- 批处理横幅 / 空态（ticket 138 统一：对齐主面板空态/提示质感） ---- */
 .bz-bili-banner {
-  padding: 8px 10px;
-  margin-bottom: 8px;
-  border-radius: 8px;
+  padding: 10px 16px;
+  margin-bottom: 10px;
+  border-radius: 12px;
   font-size: 13px;
   background: var(--background-modifier-hover);
   color: var(--text-accent);
 }
 .bz-bili-empty {
-  padding: 28px 12px;
+  padding: 44px 16px;
   text-align: center;
-  font-size: 12px;
-  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text-faint);
 }
 
 /* ---- 行内详细进度（ADR-0066：步骤时间线 + 百分比条 + 耗时） ---- */
@@ -3905,17 +3912,19 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- 行内标题链接 / UP主；头部状态计数 / 历史分组笔记行（ADR-0067/0070） ---- */
+/* ---- 行内标题链接 / UP主；头部状态计数 / 历史分组笔记行（ADR-0067/0070；ticket 138 统一：标题对齐主面板 15px/600） ---- */
 .bz-bili-title {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
-  color: var(--text-accent);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-normal);
   text-decoration: none;
 }
 .bz-bili-title:hover {
+  color: var(--text-accent);
   text-decoration: underline;
 }
 /* 头部标题旁状态计数（待处理/处理中/失败） */
@@ -3940,21 +3949,24 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   color: var(--text-faint);
   white-space: nowrap;
 }
-/* 历史分组卡片：每条任务一行「📄 笔记路径 ⏱ 完成时间」（无左边距，与标题对齐） */
+/* 历史分组卡片：每条任务一行「📄 笔记路径 ⏱ 完成时间」（无左边距，与标题对齐；hover 边框对齐主面板卡片质感） */
 .bz-bili-hgroup .bz-bili-hnote {
   display: flex;
   align-items: baseline;
   gap: 8px;
   margin-top: 5px;
-  padding: 3px 0;
-  border-radius: 6px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
   font-size: 12px;
   color: var(--text-muted);
   cursor: pointer;
   overflow: hidden;
+  transition: background .15s, border-color .15s;
 }
 .bz-bili-hgroup .bz-bili-hnote:hover {
-  background: var(--background-modifier-hover);
+  background: var(--background-secondary);
+  border-color: var(--background-modifier-border);
 }
 .bz-bili-hgroup .bz-bili-hnote-time {
   margin-left: auto;
