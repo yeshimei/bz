@@ -15,7 +15,7 @@ import { eventSystem, setSmartcatApp, setupVisibilityCheck, __resetVisibilityFor
 import { mountCatContainer, unmountCatContainer, applyAppearance, createChatPanel, showChatPanel, hideChatPanel, openSmartcatSettings } from './ui';
 import { BubbleManager } from './bubble';
 import { MoodSystem, PersonalityGrowth } from './mood';
-import { MemorySystem, USER_CONTENT_BOUNDARY, PROMPT_SLOTS, migrateSmartcatSidecars, slimSmartCatData } from './memory';
+import { MemorySystem, USER_CONTENT_BOUNDARY, PROMPT_SLOTS, migrateSmartcatSidecars, slimSmartCatData, behaviorToObservations } from './memory';
 import { SmartCatAnimation } from './animation';
 import { InteractionManager, MobileInputAdapter } from './interaction';
 import { getSmartCatMessage } from './messages';
@@ -535,9 +535,11 @@ function dispatchResidentTick(): void {
   // 30 分钟（60 节拍）→ 情绪趋势回写 + 心情门控心跳（maybeTrendDrift 内部喂 onHeartbeat）
   if (n % 60 === 0) void maybeTrendDrift();
   // 1 小时（120 节拍）→ 每周报告（沿用原 startWeeklyReport 的 10 点检查）+ 关系史叙事扫描
+  // ticket 158：hour===10 严格相等在节拍相位漂移时可能整点跳档 → ≥10 点后当周首个 tick 生成
+  // （maybeWeeklyReport 内部有 weekKey 去重，重复调用无副作用）
   if (n % 120 === 0) {
     const hour = new Date().getHours();
-    if (hour === 10) void maybeWeeklyReport();
+    if (hour >= 10) void maybeWeeklyReport();
     void maybeDossierNarrative();
   }
 }
@@ -758,13 +760,22 @@ async function maybeWeeklyReport(): Promise<void> {
   const [start] = win;
   // 周一起算：只在本周窗口已至少过去 1 天且本周有观察时生成（周二起才可能）
   if (Date.now() - start < 24 * 60 * 60 * 1000) return;
-  const weekEntries = data.memory.memoryStream.filter((m) => {
-    const t = m.created ? new Date(m.created).getTime() : NaN;
-    return Number.isFinite(t) && t >= win[0] && t <= win[1] && m.type === 'observation';
-  });
+  // ticket 158：ADR-0069 后用户观察改道行为流（记忆流唯一新来源「记忆目录」默认未配置）——
+  // 周报门槛与原料同步接入行为流（渲染成观察伪条目，R1 同源思路）
+  const behaviorWeek = behaviorToObservations((memorySystem.behaviorStream || []).filter((b) => {
+    const t = new Date(b.timestamp).getTime();
+    return Number.isFinite(t) && t >= win[0] && t <= win[1];
+  }));
+  const weekEntries = [
+    ...data.memory.memoryStream.filter((m) => {
+      const t = m.created ? new Date(m.created).getTime() : NaN;
+      return Number.isFinite(t) && t >= win[0] && t <= win[1] && m.type === 'observation';
+    }),
+    ...behaviorWeek,
+  ];
   if (weekEntries.length < 3) return; // 观察太少，本周报告无意义（下周再试）
   try {
-    const report = buildWeeklyReportData(data.memory.memoryStream, moodSystem.pad, Date.now());
+    const report = buildWeeklyReportData([...data.memory.memoryStream, ...behaviorWeek], moodSystem.pad, Date.now());
     const text = await generateWeeklyReport(report);
     if (!text) return;
     // 写回流（insight，source weekly-report，importance 高——记忆流可见但 insight 不作反思 evidence）
