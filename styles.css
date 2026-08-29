@@ -3383,190 +3383,271 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   to { opacity: 1; }
 }
 
-/* 待转文献面板（bili-downloader 域升级，ADR-0065；面板正名「文献盒」，ADR-0066） */
+/* ==================== 文献盒域样式（src/literature/styles.css，ticket 136 改版） ==================== */
+/* 保留 bz-bili-* 任务队列样式（视频录入面板/历史弹窗沿用）；新增 bz-lit-* 主面板/术语面板样式。 */
 
-/* ---- 任务行卡片 ---- */
-.bz-bili-task-card {
-  padding: 8px 10px;
-  border-radius: 8px;
-  margin-bottom: 6px;
-  background: var(--background-secondary);
-  cursor: pointer;
-  position: relative;
+/* ---- 主面板/术语面板共享遮罩与窗口（bz- 前缀，样式收敛于此处，不内联视觉） ---- */
+.bz-lit-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .45);
+  z-index: 99999;
 }
-.bz-bili-row {
+.bz-lit-window {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(760px, 94vw);
+  max-height: 86vh;
+  flex-direction: column;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, .35);
+  z-index: 100000;
+}
+/* 小型弹窗（添加任务 / 术语生成）：内容直接铺开，无需独立滚动区 */
+.bz-lit-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, 92vw);
+  max-height: 88vh;
+  overflow-y: auto;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, .35);
+  z-index: 100000;
+}
+.bz-lit-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px;
+  min-height: 220px;
+}
+/* 底部滚动区与弹窗同宽滚动一致 */
+.bz-lit-window, .bz-lit-list {
+  box-sizing: border-box;
+}
+
+/* ---- 头部按钮组（文字录入/视频录入为文本钮，其余为图标钮，规格统一） ---- */
+.bz-lit-head-btns {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
+  gap: 6px;
 }
-.bz-bili-url {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.bz-lit-head-btns button {
+  width: auto !important; /* 压过全局 .bz-win-head button 22px 定宽：文字录入/视频录入文本钮不被裁 */
+  height: 26px;
+  font-size: 12px;
+  padding: 0 8px;
+  border-radius: 4px;
+  background: none;
+  border: none;
+  box-shadow: none;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
   white-space: nowrap;
-  color: var(--text-normal);
 }
-.bz-bili-meta {
-  margin-top: 3px;
-  font-size: 11px;
-  color: var(--text-muted);
-}
-.bz-bili-progress {
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--text-accent);
-}
-.bz-bili-progress-error {
-  color: var(--text-error, #e5484d);
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-.bz-bili-note {
-  margin-top: 4px;
-  font-size: 12px;
-  color: var(--color-green, #46a758);
+.bz-lit-head-btns button:hover {
+  background: var(--background-secondary);
 }
 
-/* ---- 状态徽标 ---- */
-.bz-bili-status {
-  flex-shrink: 0;
-  font-size: 11px;
-  padding: 1px 8px;
-  border-radius: 999px;
-  color: #fff;
-  line-height: 18px;
+/* ---- 顶部筛选区：类型过滤 + 领域筛选行（剪藏本 rebuildSiteBar 同款式样） ---- */
+.bz-lit-filterbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 24px 2px;
 }
-.bz-bili-pending { background: var(--text-muted); }
-.bz-bili-processing { background: var(--interactive-accent); animation: bz-bili-pulse 1.2s ease-in-out infinite; }
-.bz-bili-success { background: var(--color-green, #46a758); }
-.bz-bili-failed { background: var(--text-error, #e5484d); }
-
-@keyframes bz-bili-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: .55; }
-}
-
-/* ---- 批处理横幅 / 空态 ---- */
-.bz-bili-banner {
-  padding: 8px 10px;
-  margin-bottom: 8px;
-  border-radius: 8px;
-  font-size: 13px;
-  background: var(--background-modifier-hover);
-  color: var(--text-accent);
-}
-.bz-bili-empty {
-  padding: 28px 12px;
-  text-align: center;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-/* ---- 行内详细进度（ADR-0066：步骤时间线 + 百分比条 + 耗时）---- */
-.bz-bili-progress-box {
-  margin-top: 5px;
-}
-.bz-bili-steps {
+.bz-lit-typebar,
+.bz-lit-sitebar {
   display: flex;
   flex-wrap: wrap;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.bz-lit-typebar::-webkit-scrollbar,
+.bz-lit-sitebar::-webkit-scrollbar {
+  display: none;
+}
+.bz-lit-filter-btn {
+  border-radius: 20px;
+  background: var(--background-secondary);
+  padding: 4px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-normal);
+  transition: all .2s;
+  box-shadow: none;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
-  line-height: 1.5;
+  white-space: nowrap;
 }
-.bz-bili-step-done {
-  color: var(--text-muted);
-}
-.bz-bili-step-cur {
-  color: var(--text-accent);
-  font-weight: 600;
-}
-.bz-bili-step-arrow {
-  color: var(--text-faint);
-}
-.bz-bili-step-pct {
-  color: var(--text-accent);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-.bz-bili-progress-track {
-  margin-top: 4px;
-  height: 4px;
-  border-radius: 2px;
+.bz-lit-filter-btn:hover {
   background: var(--background-modifier-hover);
-  overflow: hidden;
 }
-.bz-bili-progress-fill {
-  height: 100%;
-  border-radius: 2px;
+.bz-lit-filter-btn.active {
   background: var(--interactive-accent);
-  transition: width .3s ease;
-}
-.bz-bili-elapsed {
-  margin-top: 3px;
-  font-size: 11px;
-  color: var(--text-faint);
-  font-variant-numeric: tabular-nums;
+  color: var(--text-on-accent);
 }
 
-/* ---- ADR-0067：行内标题链接 / UP主；ADR-0070：头部状态计数 / 历史分组笔记行 ---- */
-.bz-bili-title {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* ---- 搜索框（🔍 按钮切换显隐） ---- */
+.bz-lit-search {
+  padding: 12px 24px 2px;
+}
+.bz-lit-search input {
+  width: 100%;
+  padding: 8px 12px;
   font-size: 13px;
-  color: var(--text-accent);
-  text-decoration: none;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  outline: none;
+  box-sizing: border-box;
 }
-.bz-bili-title:hover {
-  text-decoration: underline;
+
+/* ---- 文献笔记卡片（主面板 + 抽屉头部共用标题/简介） ---- */
+.bz-lit-card {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: var(--background-primary);
+  margin: 8px 0;
+  cursor: pointer;
+  transition: background .15s;
+  -webkit-user-select: none;
+  user-select: none;
 }
-/* 头部标题旁状态计数（待处理/处理中/失败） */
-.bz-bili-counts {
-  font-size: 11px;
-  color: var(--text-muted);
-  white-space: nowrap;
+.bz-lit-card:hover {
+  background: var(--background-secondary);
 }
-/* 历史分组卡片：UP主名/笔记数紧随标题之后 */
-.bz-bili-hgroup .bz-bili-title {
-  flex: 0 1 auto;
+.bz-lit-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
-.bz-bili-hgroup .bz-bili-hup {
-  font-size: 12px;
-  color: var(--text-muted);
-  white-space: nowrap;
+.bz-lit-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-normal);
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
-.bz-bili-hgroup .bz-bili-hcount {
+/* 徽标：类型（视频/术语）+ 领域 */
+.bz-lit-badge {
+  flex-shrink: 0;
   font-size: 11px;
-  color: var(--text-faint);
+  line-height: 16px;
+  padding: 0 8px;
+  border-radius: 999px;
   white-space: nowrap;
 }
-/* 历史分组卡片：每条任务一行「📄 笔记路径 ⏱ 完成时间」（无左边距，与标题对齐） */
-.bz-bili-hgroup .bz-bili-hnote {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-top: 5px;
-  padding: 3px 0;
-  border-radius: 6px;
-  font-size: 12px;
+.bz-lit-badge-type {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.bz-lit-badge-domain {
+  background: var(--background-secondary);
   color: var(--text-muted);
-  cursor: pointer;
+  border: 1px solid var(--background-modifier-border);
+}
+/* 简介：两行超出省略号截断（抽屉头部同款，剪藏本先例） */
+.bz-lit-card-summary {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
+  color: var(--text-muted);
+  line-height: 1.6;
+  font-size: 12px;
+  margin-top: 6px;
+  word-break: break-word;
 }
-.bz-bili-hgroup .bz-bili-hnote:hover {
-  background: var(--background-modifier-hover);
-}
-.bz-bili-hgroup .bz-bili-hnote-time {
-  margin-left: auto;
-  flex-shrink: 0;
+.bz-lit-card-date {
+  margin-top: 6px;
   font-size: 11px;
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 抽屉头部容器（sheetHead 复用卡片标题/简介） */
+.bz-lit-sheet-head {
+  min-width: 0;
+}
+.bz-lit-sheet-head .bz-lit-card-title {
+  white-space: normal;
+  text-overflow: clip;
+}
+
+/* ---- 空态 / 懒加载尾部提示 ---- */
+.bz-lit-empty {
+  padding: 40px 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+.bz-lit-tail {
+  padding: 16px 0 8px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+/* ---- 术语生成面板（文字录入） ---- */
+.bz-lit-term-dialog .bz-win-head {
+  padding: 0 0 10px !important;
+  justify-content: flex-start !important;
+}
+.bz-lit-term-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bz-lit-term-body input,
+.bz-lit-term-body textarea {
+  font-size: 13px;
+}
+.bz-lit-term-preview {
+  margin-top: 12px;
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bz-lit-term-preview textarea {
+  min-height: 120px;
+}
+.bz-lit-term-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+.bz-lit-term-actions button {
+  min-width: 84px;
 }
 ﻿/* ============================================================
  * 绗簩澶ц剳锛坰econdbrain 鍩燂紝ticket 103 寤?UI / 107 琛ユ牱寮忔枃浠?/ 108 闈㈡澘鎵撶（锛?
