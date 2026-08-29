@@ -223,11 +223,14 @@ registerEntity('dossier', {
 WORDING['secondbrain:*'] = (s) => (s.name ? `你在第二大脑记录了「${s.name}」` : '你在第二大脑有新的记录');
 
 // ==================== literature（文献盒：视频转文献 + 术语生成，ADR-0066/0072） ====================
+// 遗留兼容（ADR-0072 迁出后）：旧实体 'bili'/'bili-downloader' 存量行为条目继续命中同套中文模板；
+// added 模板保留仅供旧存量条目渲染（ticket 136 起新增观察不再产 added）。
 
 registerEntity('literature', {
   converted: (s) => `你把《${s.name || '一部视频'}》转成了文献`,
   'term-generated': (s) => `你为「${s.name || '一个术语'}」生成了一篇术语文献`,
-}, ['literature'], (s) => `文献动态：${s.name || '一部视频'}`);
+  added: (s) => `你添加了转文献任务（${s.name || 'BV 视频'}）`,   // 遗留：旧 added 存量条目
+}, ['literature', 'bili', 'bili-downloader'], (s) => `文献动态：${s.name || '一部视频'}`);
 
 // ==================== ADR-0069 行为流全量盘点补齐（新增实体模板） ====================
 

@@ -1598,6 +1598,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   reading: '书库', poem: '现代诗', letter: '信', reflection: '反省',
   library: '书库', // P2a：library 事件 source 统一为 'library'（兼容旧 'domain:library'）
   'literature': '文献盒', // ADR-0066/0072：文献盒域事件（literature:tasks 通道）
+  'bili-downloader': '文献盒', // 遗留：旧 bili-downloader 来源存量条目标签（ADR-0072 迁出后保留渲染兼容）
   'domain:memo': '备忘录', 'domain:pomodoro': '番茄钟', 'domain:news': '聚合讯',
   'domain:quiz': '做题', 'domain:review': '复习', 'domain:favorites': '收藏', 'domain:belongings': '归物',
   'domain:library': '书库', // 遗留兼容（旧数据/旧签名路径）
