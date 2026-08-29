@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 复习计划核心逻辑测试（ticket 16 修正版）：markReview 阶梯/FSRS/未到期/autoJumpOverdue
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -516,7 +516,7 @@ describe('ticket 100：到期提醒 / 每日上限 / 间隔缩放', () => {
     expect(String(noticeSpy.mock.calls[0][0])).toBe('有 2 篇笔记逾期');
   });
 
-  it('ticket 58：到期提醒挂「去复习」action → 打开 newly 中最早逾期（不同到期日精确断言）', async () => {
+  it('ticket 153：到期提醒挂「去复习」action → 走 autoJumpOverdue（做题分流，非单篇打开）', async () => {
     const noticeSpy = vi.spyOn(await import('../../src/core/notice'), 'notify');
     const vault = new MockVault();
     vault.files.set('A.md', '正文');
@@ -532,6 +532,8 @@ describe('ticket 100：到期提醒 / 每日上限 / 间隔缩放', () => {
     (app.workspace as any).getLeaf = () => ({ openFile });
     setApp(app);
     setSettingsProvider(() => ({ enableAutoNotify: true } as any));
+    // 拦截 autoJumpOverdue：验证「去复习」触发统一复习流程（而非直接 openFile）
+    const jumpSpy = vi.spyOn(reviewApp, 'autoJumpOverdue').mockResolvedValue(undefined);
     await reviewApp.checkOverdueAndNotify();
     const opts = noticeSpy.mock.calls[0][1] as any;
     expect(opts.action).toBeTruthy();
@@ -539,11 +541,11 @@ describe('ticket 100：到期提醒 / 每日上限 / 间隔缩放', () => {
     expect(String(noticeSpy.mock.calls[0][0])).toBe('有 2 篇笔记逾期');
     opts.action.onClick();
     await new Promise((r) => setTimeout(r, 10));
-    expect(openFile).toHaveBeenCalledTimes(1);
-    expect(openFile.mock.calls[0][0].path).toBe('A.md'); // 精确：newly 中最早逾期
+    expect(jumpSpy).toHaveBeenCalledTimes(1); // 走统一流程
+    expect(openFile).not.toHaveBeenCalled(); // 不再裸开单篇
   });
 
-  it('ticket 58 修 #1：已通知的旧逾期不夺位——跳转目标取 newly 而非全逾集合', async () => {
+  it('ticket 153：已通知的旧逾期不重复弹——「去复习」仍只对 newly 弹通知', async () => {
     const noticeSpy = vi.spyOn(await import('../../src/core/notice'), 'notify');
     const vault = new MockVault();
     vault.files.set('A.md', '正文');
@@ -560,9 +562,9 @@ describe('ticket 100：到期提醒 / 每日上限 / 间隔缩放', () => {
     setSettingsProvider(() => ({ enableAutoNotify: true } as any));
     await reviewApp.checkOverdueAndNotify();
     expect(String(noticeSpy.mock.calls[0][0])).toBe('有 1 篇笔记逾期');
-    // 第二轮：A 仍逾期（已在已通知集合），B 变逾期且晚于 A → 通知 B；
-    // 全逾集合最早是 A（旧实现打开 A），修 #1 后必须打开 newly 中最早 = B
+    // 第二轮：A 仍逾期（已在已通知集合），B 变逾期且晚于 A → 通知内容不变（不重复弹 A）
     noticeSpy.mockClear();
+    const jumpSpy = vi.spyOn(reviewApp, 'autoJumpOverdue').mockResolvedValue(undefined);
     seed([
       { ...aRow, nextReviewDate: new Date(now.getTime() - 2 * 86400000).toISOString() },
       { id: '2', filePath: 'B.md', reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() - 1 * 86400000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
@@ -572,8 +574,8 @@ describe('ticket 100：到期提醒 / 每日上限 / 间隔缩放', () => {
     const opts = noticeSpy.mock.calls[0][1] as any;
     opts.action.onClick();
     await new Promise((r) => setTimeout(r, 10));
-    expect(openFile).toHaveBeenCalledTimes(1);
-    expect(openFile.mock.calls[0][0].path).toBe('B.md');
+    expect(jumpSpy).toHaveBeenCalledTimes(1); // 点「去复习」走统一流程
+    expect(openFile).not.toHaveBeenCalled();
   });
 
   it('逾期通知只报篇数（多/单篇一致，不列题目；duration 0 常驻）', async () => {

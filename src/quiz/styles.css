@@ -33,7 +33,6 @@
       .bz-quiz-question { font-size: 17px; font-weight: 500; margin-bottom: 20px; color: var(--text-normal); }
       .bz-quiz-options { display: flex; flex-direction: column; gap: 6px; }
       .bz-quiz-option-text { flex: 1; }
-      .quiz-next-btn--pending { opacity: 0.5; cursor: default; }
       .quiz-option-btn {
         padding:10px 14px;
         border:1px solid var(--background-modifier-border);

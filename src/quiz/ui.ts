@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 做题家 UI（ticket 17 修正版：对齐源码 QuizMasterUI 逐字）
  * 模块单例 quizUI（复习域联动）。
  */
@@ -340,15 +340,13 @@ export class QuizMasterUI {
           const isCorrect = idx === q.correctIndices[0];
 
           if (isCorrect) {
-            // 答对（ticket 141）：即时亮出正确选项 + 挂待解锁「下一题」，持久化成功才解锁——节奏由用户掌控
+            // 答对（ticket 153）：亮出正确选项，持久化成功后自动进入下一题（不再挂「下一题」按钮）
             optionElements.forEach((b, i) => {
               if (i === q.correctIndices[0]) b.classList.add('correct');
             });
-            this.addNextButton(optionsContainer, true);
             this._answerCorrect(q, app, () => {
               answeredRef.value = false;
               optionElements.forEach((b) => b.classList.remove('disabled'));
-              this._removeNextButton();
             });
           } else {
             // 答错：显示正确答案，仅移出本轮会话（不落盘删除，留给重做队列），「下一题」按钮继续
@@ -400,13 +398,11 @@ export class QuizMasterUI {
         if (isCorrect) {
           // ticket 098（ADR-0044）：多选计数 bug 解冻——答对也递增 correctCount（唯一破铁律 1 项；
           // 递增时机在 _answerCorrect 持久化成功后，失败恢复作答态不重复计）
-          // ticket 141：同单选——「下一题」按钮由用户点按，持久化成功后解锁
-          this.addNextButton(optionsContainer, true);
+          // ticket 153：答对自动进入下一题（不再挂「下一题」按钮，持久化成功后自动跳）
           this._answerCorrect(q, app, () => {
             answeredRef.value = false;
             submitBtn.disabled = false;
             optionElements.forEach((b) => b.classList.remove('disabled'));
-            this._removeNextButton();
           });
         } else {
           // 答错：同单选——仅移出本轮会话（不落盘删除），「下一题」按钮继续
@@ -423,8 +419,9 @@ export class QuizMasterUI {
   }
 
   /** 答对公共链路（ticket 141 重构）：稳定定位删题 → 计数 → splice 出当前题 → 头部计数同步 →
-   *  解锁「下一题」。删除按题目内容在存储数组定位（P0-2），不再依赖会话期 _index 快照；
-   *  持久化成功后才计数并解锁跳题（P2：失败恢复作答态时不重复计数），失败通知并恢复作答状态。 */
+   *  自动进入下一题。删除按题目内容在存储数组定位（P0-2），不再依赖会话期 _index 快照；
+   *  持久化成功后才计数并跳题（P2：失败恢复作答态时不重复计数），失败通知并恢复作答状态；
+   *  ticket 153：答对自动跳下一题（用户拍板：答对不出现「下一题」按钮，答错才由用户点按）。 */
   private _answerCorrect(q: QuizQuestion, app: App, onFailRestore: () => void): void {
     this.manager
       .removeQuestion(app, q.notePath!, { question: q.question, options: q.options, correctIndices: q.correctIndices })
@@ -432,7 +429,7 @@ export class QuizMasterUI {
         this.correctCount++;
         this.currentQuestions.splice(this.currentIndex, 1);
         this._syncHeaderStats();
-        this._enableNextButton();
+        this.showQuestion();
       })
       .catch((e) => {
         notice('删除题目失败：' + e.message, 'error');
@@ -466,36 +463,19 @@ export class QuizMasterUI {
   }
 
   /**
-   * 辅助：添加「下一题」按钮（ticket 141 节奏改造：答对/答错统一由用户点按进入下一题，
-   * 去掉答对 800ms 强制自动跳题）。disabled=true 先挂占位，持久化成功后经 _enableNextButton 解锁。
+   * 辅助：添加「下一题」按钮（ticket 153：仅答错时出现——答对自动进入下一题，无需按钮；
+   * 答错由用户点按进入下一题）。
    */
-  addNextButton(popup: HTMLElement, disabled = false): void {
+  addNextButton(popup: HTMLElement): void {
     const oldBtn = popup.querySelector('.quiz-next-btn');
     if (oldBtn) oldBtn.remove();
     const nextBtn = document.createElement('button');
     nextBtn.className = 'quiz-next-btn';
     nextBtn.textContent = '下一题 →';
-    if (disabled) {
-      (nextBtn as HTMLButtonElement).disabled = true;
-      nextBtn.classList.add('quiz-next-btn--pending');
-    }
     nextBtn.onclick = () => {
       this.showQuestion();
     };
     popup.appendChild(nextBtn);
-  }
-
-  /** 持久化成功后解锁「下一题」（防持久化期间抢跑重复跳题） */
-  private _enableNextButton(): void {
-    const btn = this.popup?.querySelector<HTMLButtonElement>('.quiz-next-btn');
-    if (!btn) return;
-    btn.disabled = false;
-    btn.classList.remove('quiz-next-btn--pending');
-  }
-
-  /** 持久化失败时移除挂起的「下一题」（作答态恢复后可重试） */
-  private _removeNextButton(): void {
-    this.popup?.querySelector('.quiz-next-btn')?.remove();
   }
 
   /** 仅拆除弹窗 DOM（换题/结果卡等内部过渡用，不走结算语义；连带注销键盘监听） */

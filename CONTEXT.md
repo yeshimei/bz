@@ -1,4 +1,4 @@
-# 包仔插件工作区
+﻿# 包仔插件工作区
 
 将 QuickAdd 宏脚本独立化为标准 Obsidian 插件：已交付「日记本」（`diary-notebook`），当前规划将剩余脚本（备忘录、剪藏本、聚合讯、密码本、收藏本、书库、影视、自动摘要、AI Agent、复习计划、做题家、闪念、归物本等 15 个）合并为**一个插件** `bz`（显示名「备忘录」，ADR-0003）。番茄钟（新域，原脚本代码已丢失、按手册重建，ADR-0012）不在 16 脚本迁移清单内，属范围扩张。B站下载为独立 NodeJS 工具（`tools/bili-downloader/`，见其 CONTEXT.md，ADR-0011；ticket 136 起去 AI 去网页版，仅无头批处理）。源码在 `src/`，测试在 `tests/`。
 
@@ -127,9 +127,9 @@ _Avoid_: 引用同步单独成域（AI Agent 已解散）；跨域 import 他域
 
 **剪藏归档 (Clip Archive)**: memo 域功能——剪藏落盘（订 `'clipping:file-created'` 语义通道）→ 读 frontmatter url 在 memo.json 剪藏场景待办中 **URL 精确匹配**；命中即归档（写入 linkedNote 并置完成）；未命中且 enableAIClipMatch 开启时 AI 匹配候选条目并**弹窗征求批准**，确认后才写入。「URL 精确优先 / AI 弹窗批准」权限模型冻结（ADR-0048）。
 
-**复习计划 (Review Plan)**: FSRS v4 算法驱动的复习管理，数据 `CONFIG/STORAGE/review.json`。可配置多个「监听文件夹」自动收编笔记；做题会话自动评级未通过（忘了/困难）时结果卡变唯一按钮「复习此笔记」并置「待重做」，重做到通过才进下篇（首次评级=唯一排期来源，ADR-0044）；「做题家」命令入口已退役（ADR-0045），仅作复习引擎。ticket 100 起：**到期提醒**（enableAutoNotify，开启时插件启动即常驻轮询，有逾期笔记即弹聚合通知）；**每日复习上限**（reviewDailyLimit，一轮复习最多处理 N 篇逾期）；**复习间隔缩放**（reviewIntervalScale，FSRS 相位间隔乘系数，ADR-0046）；**文件树标记**（reviewTreeBadge，关闭则文件树不染色不挂徽章）；**自动加入提醒**（reviewAutoAddNotice，新笔记自动收编时 3 秒窗口合并一条通知）。
+**复习计划 (Review Plan)**: FSRS v4 算法驱动的复习管理，数据 `CONFIG/STORAGE/review.json`。可配置多个「监听文件夹」自动收编笔记；做题会话自动评级未通过（忘了/困难）时结果卡变唯一按钮「复习此笔记」并置「待重做」，重做到通过才进下篇（首次评级=唯一排期来源，ADR-0044）；「做题家」命令入口已退役（ADR-0045），仅作复习引擎。ticket 100 起：**到期提醒**（enableAutoNotify，开启时插件启动即常驻轮询，有逾期笔记即弹聚合通知；ticket 153 起通知「去复习」按钮走 `autoJumpOverdue` 完整流程——按「用做题测难度」分流做题/普通复习，不再单篇跳转）；**每日复习上限**（reviewDailyLimit，一轮复习最多处理 N 篇逾期）；**复习间隔缩放**（reviewIntervalScale，FSRS 相位间隔乘系数，ADR-0046）；**文件树标记**（reviewTreeBadge，关闭则文件树不染色不挂徽章）；**自动加入提醒**（reviewAutoAddNotice，新笔记自动收编时 3 秒窗口合并一条通知）。
 
-**做题家 (Quiz Master)**: 统一题库 `CONFIG/STORAGE/quiz.json`，多选支持，完成状态记录，自动替换全完成的笔记。命令入口 `bz-quiz-open`/`bz-quiz-update` 已删除注册（ADR-0045），仅经复习计划「用做题测难度」驱动（startReviewSession/endReviewSession 契约）；多选答对计数已修复（ADR-0044 唯一解冻项）。
+**做题家 (Quiz Master)**: 统一题库 `CONFIG/STORAGE/quiz.json`，多选支持，完成状态记录，自动替换全完成的笔记。命令入口 `bz-quiz-open`/`bz-quiz-update` 已删除注册（ADR-0045），仅经复习计划「用做题测难度」驱动（startReviewSession/endReviewSession 契约）；多选答对计数已修复（ADR-0044 唯一解冻项）。ticket 153：作答节奏拍板——**答对自动进入下一题**（持久化成功后直达，不出现「下一题」按钮），**答错才显示「下一题」按钮**（点按或 Enter）。
 
 **做题会话 (Quiz Session)**: 做题家对复习计划暴露的联动契约（`startReviewSession`/`endReviewSession` + `QuizReviewResults` 回调）。复习计划只经做题会话驱动做题家，禁止直接改写其内部状态（_reviewMode/currentQuestions 等）。
 
