@@ -29,8 +29,8 @@ news.json `bilibiliUpInfo` 段的 uid → `{name?, avatar?}` 映射（ticket 126
 _Avoid_: UP 主信息（非 canonical）
 
 **每 UP 最近 N 条 (latest N per UP)**:
-news.json `bilibiliMaxItems` 段（ticket 127，默认 10，夹取 1..50）——B 站源不走 24 小时窗口，按最近优先收满 N 条未抓过的动态即停（长期未更新的 UP 也能抓到最新动态）；插件「数据源」组设置。
-_Avoid_: 抓取条数（非 canonical）
+news.json `bilibiliMaxItems` 段（ticket 127，默认 10，夹取 1..50）——B 站源不走 24 小时窗口，**总量口径**：每 UP 库内只保留最近 N 条视频（ticket n，用户拍板 2026-08-29——旧「每轮收满 N 条未抓过的即停」增量口径会让条目每轮 +10 无上界累积）；超窗老条目由窗口裁剪移除，风控轮不裁。插件「数据源」组设置。
+_Avoid_: 抓取条数（非 canonical）, 增量条数（旧语义）
 
 **B 站 Cookie (bilibili cookie)**:
 news.json `bilibiliCookie` 段（ticket 127，可选字符串）——API 返回 412（风控）时优先使用；用户经插件「UP 主名单管理」弹窗配置（浏览器 F12 复制 buvid3/SESSDATA）；未配置回退自动引导（GET 主页收集 buvid3）。明文本地存储，随 vault 同步。
@@ -56,8 +56,9 @@ _Avoid_: 过滤, 查重
 
 ## Rules
 
-- **滚动 24 小时窗口仅用于果壳/知乎**，不是自然日 — 深夜发布的文章不丢；B 站源不走窗口（ticket 127：每 UP 最近 N 条，默认 `bilibiliMaxItems`=10）。
-- **一个轮次抓取窗口内的全部文章**，不限制数量；B 站按最近优先收满 N 条即停。
+- **滚动 24 小时窗口仅用于果壳/知乎**，不是自然日 — 深夜发布的文章不丢；B 站源不走窗口（每 UP 最近 N 条，默认 `bilibiliMaxItems`=10）。
+- **一个轮次抓取窗口内的全部文章**，不限制数量；B 站收「最近 N 条」窗口并裁剪库内同 UP 超窗老条目（风控轮不裁，防误删）。
+- **B 站窗口裁剪的保守边界**：只裁「url 不在窗口内且 date 早于窗口内最早一条」的同 UP 存量；分页截断等异常残留不裁。
 - **批内和库内都要去重**：API 可能返回重复数据，库内按 URL + 标题双去重。
 - **源级容错**：单个源失败不影响其他源，下个轮次自然重试，无重试状态机。
 - **多段整读写**：写回只动本进程负责的 articles 段 + 合并本轮 `bilibiliUpInfo`（保留 stats/bilibiliUps/bilibiliMaxItems/bilibiliCookie/sources——插件侧维护段）。

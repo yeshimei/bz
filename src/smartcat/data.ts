@@ -237,12 +237,17 @@ export async function loadSmartCatData(app: App): Promise<SmartCatData> {
   return defaultSmartCatData();
 }
 
-/** 保存（存在 modify / 不存在 create，建目录兜底） */
+/** 保存（存在 modify / 不存在 create，建目录兜底）。
+ *  Syncthing 冲突止血（用户拍板 2026-08-29）：写前与盘上现读内容比对，没变就跳过——
+ *  无变化写只刷新 mtime，多设备各开一次就制造一轮 *.sync-conflict-* 冲突窗口。 */
 export async function saveSmartCatData(app: App, data: SmartCatData): Promise<void> {
   const filePath = getSmartcatFilePath();
   const c = JSON.stringify(data, null, 2);
   const f = app.vault.getAbstractFileByPath(filePath);
   if (f) {
+    try {
+      if ((await app.vault.read(f as any)) === c) return;
+    } catch { /* 读失败照写（保守回退，不改变原写入语义） */ }
     await app.vault.modify(f as any, c);
   } else {
     const d = filePath.substring(0, filePath.lastIndexOf('/'));
