@@ -539,7 +539,31 @@ export class UIManager {
         },
       });
 
-      // 6. 删除（danger；confirm 确认后删除并关抽屉）
+      // 6. 归档（ADR-0074 纯冷存：confirm 确认后写 archived，条目从界面消失且无 UI 反悔，数据留 favorites.json）
+      acts.push({
+        icon: 'archive',
+        label: '归档',
+        title: '归档收藏',
+        onClick: () => {
+          void openFlowDialog({
+            title: '归档确认',
+            message: '确定归档收藏 "' + item.title + '" 吗？归档后不在列表显示，数据保留在 favorites.json。',
+            actions: [
+              { label: '取消', value: 'cancel' },
+              { label: '确定', value: 'ok', cta: true },
+            ],
+          }).then((v) => {
+            if (v === 'ok') {
+              void (async () => {
+                await this._archiveItem(item.id);
+                closeItemMenu();
+              })();
+            }
+          });
+        },
+      });
+
+      // 7. 删除（danger；confirm 确认后删除并关抽屉）
       acts.push({
         icon: 'trash-2',
         label: '删除',
@@ -711,7 +735,8 @@ export class UIManager {
 
   // ---------- 刷新 ----------
   async refreshData() {
-    this.currentItems = await this.dataManager.getAll();
+    // ticket 140（ADR-0074 纯冷存）：归档条目在唯一装载点排除——主列表/搜索/标签计数/余额批量随之全不含
+    this.currentItems = (await this.dataManager.getAll()).filter((item) => !item.archived);
     this.currentItems.sort((a, b) => {
       // 置顶的排在前面
       if (a.pinned && !b.pinned) return -1;
@@ -797,6 +822,15 @@ export class UIManager {
     if (item) emitDomainEvent('favorites', { kind: 'delete', title: item.title });
     await this.refreshData();
     notice('已删除收藏', 'success');
+  }
+
+  async _archiveItem(id: string) {
+    const item = this.currentItems.find((d) => d.id === id);
+    await this.dataManager.update(id, { archived: true, archivedAt: moment().format('YYYY-MM-DD HH:mm:ss') });
+    // ticket 140（域事件派发）：归档动作观察（ADR-0074 冷存无查看面，观察流是唯一可读痕迹；数据缺失不通知）
+    if (item) emitDomainEvent('favorites', { kind: 'archive', title: item.title });
+    await this.refreshData();
+    notice('已归档收藏', 'archive');
   }
 
   // ---------- 显示/隐藏主面板 ----------

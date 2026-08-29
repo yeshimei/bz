@@ -1,5 +1,6 @@
 /**
  * 收藏本类型（ticket 11）：13 字段（零迁移基准，与收藏本.js 数据格式一致）。
+ * ticket 140 加法扩展（ADR-0074）：archived/archivedAt 可选字段，旧数据无字段 = 未归档，照常可读。
  */
 export interface FavoritesItem {
   id: string;                 // 新增时 Date.now().toString()
@@ -15,4 +16,6 @@ export interface FavoritesItem {
   created: string;            // moment().format('YYYY-MM-DD HH:mm:ss')
   type: string;               // = tags[0]
   llmConfig?: { apiKeys: string; balanceUrl: string } | null;
+  archived?: boolean;         // 归档冷存（ADR-0074 纯冷存不可见：真 = 界面全排除，无 UI 反悔）
+  archivedAt?: string | null; // 归档时间 'YYYY-MM-DD HH:mm:ss'；未归档缺省
 }

@@ -63,6 +63,24 @@ describe('DataManager', () => {
     expect(saved[0]).toEqual(item);
     expect(Object.keys(saved[0]).length).toBe(13); // 12 必选字段 + llmConfig
   });
+
+  it('归档字段（ticket 140）：旧格式零迁移可读；归档 update 为加法扩展', async () => {
+    await dm.add({ id: '1', tags: ['GitHub'], title: 'A', description: '', pinned: false, url: '', balance: null, balanceCacheTime: null, balanceError: null, linkedNote: null, created: '2025-01-01 00:00:00', type: 'GitHub' } as any);
+    // 旧数据（无 archived 字段）原样读回 = 未归档
+    expect((await dm.getAll())[0].archived).toBeUndefined();
+
+    await dm.update('1', { archived: true, archivedAt: '2026-08-30 10:00:00' });
+    const saved = JSON.parse(vault.files.get('CONFIG/STORAGE/favorites.json')!);
+    expect(saved[0].archived).toBe(true);
+    expect(saved[0].archivedAt).toBe('2026-08-30 10:00:00');
+    expect(Object.keys(saved[0]).length).toBe(14); // 12 基准字段（无 llmConfig）+ archived + archivedAt
+
+    // 未归档条目不携带归档字段（写路径不加字段，兼容性最小扰动）
+    await dm.add({ id: '2', tags: [], title: 'B', description: '', pinned: false, url: '', balance: null, balanceCacheTime: null, balanceError: null, linkedNote: null, created: '', type: '' } as any);
+    const saved2 = JSON.parse(vault.files.get('CONFIG/STORAGE/favorites.json')!);
+    expect(Object.keys(saved2[0]).length).toBe(12); // unshift 在前 = 新条目 B（12 基准字段，无归档键）
+    expect(saved2[1].archived).toBe(true); // 已归档条目不受第二次写入影响
+  });
 });
 
 describe('存储路径解析（文件名固定 favorites.json）', () => {
