@@ -3486,12 +3486,12 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   background: var(--background-secondary);
 }
 
-/* ---- 顶部筛选区：领域筛选行（类型分类栏已移除，ticket 138 §3.1） ---- */
+/* ---- 顶部筛选区：领域筛选行（类型分类栏已移除，ticket 138 §3.1）；左右留白 16px 与列表卡片对齐（ticket 139） ---- */
 .bz-lit-filterbar {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 10px 24px 4px;
+  padding: 10px 16px 4px;
 }
 .bz-lit-sitebar {
   display: flex;
@@ -3530,9 +3530,9 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   border-color: transparent;
 }
 
-/* ---- 搜索框（🔍 按钮切换显隐；对齐日记本输入框：大内边距/圆角/聚焦高亮） ---- */
+/* ---- 搜索框（🔍 按钮切换显隐；对齐日记本输入框：大内边距/圆角/聚焦高亮；留白 16px 对齐 ticket 139） ---- */
 .bz-lit-search {
-  padding: 12px 24px 2px;
+  padding: 12px 16px 2px;
 }
 .bz-lit-search input {
   width: 100%;
@@ -3643,8 +3643,12 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   font-size: 12px;
   color: var(--text-faint);
 }
+/* 加载中占位（主面板首载/目录切换；布局复用 .bz-lit-empty，ticket 139） */
+.bz-lit-loading {
+  animation: bz-lit-fade-in .3s ease-out;
+}
 
-/* ---- 术语生成面板（文字录入） ---- */
+/* ---- 术语生成面板（文字录入；ticket 139 重设计：输入同行、状态行、预览卡片化） ---- */
 .bz-lit-term-dialog .bz-win-head {
   padding: 0 0 10px !important;
   justify-content: flex-start !important;
@@ -3667,19 +3671,42 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 .bz-lit-term-body textarea {
   resize: vertical;
 }
-.bz-lit-term-gen-wrap {
-  margin-top: 10px;
+.bz-lit-term-inputrow {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.bz-lit-term-inputrow input {
+  flex: 1;
+  min-width: 0;
+}
+.bz-lit-term-inputrow button {
+  flex-shrink: 0;
+  min-width: 84px;
+  white-space: nowrap;
+}
+.bz-lit-term-status {
+  font-size: 12px;
+  color: var(--text-accent);
 }
 .bz-lit-term-preview {
-  margin-top: 12px;
-  border-top: 1px solid var(--background-modifier-border);
-  padding-top: 10px;
+  margin-top: 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  background: var(--background-secondary);
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
+.bz-lit-term-preview-head {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
 .bz-lit-term-preview textarea {
-  min-height: 120px;
+  min-height: 140px;
 }
 .bz-lit-term-actions {
   display: flex;
@@ -3726,6 +3753,46 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   background: var(--interactive-accent);
   color: var(--text-on-accent);
 }
+/* 失败原因提示条（添加任务弹窗编辑失败任务时，ticket 139） */
+.bz-lit-form-alert {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--background-modifier-error, rgba(229, 72, 77, .12));
+  color: var(--text-error, #e5484d);
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-all;
+  white-space: pre-line;
+}
+/* 整片/剪辑分段开关（ticket 139） */
+.bz-lit-range-toggle {
+  display: flex;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  overflow: hidden;
+  width: fit-content;
+}
+.bz-lit-range-toggle button {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 6px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: none;
+  transition: background .15s, color .15s;
+}
+.bz-lit-range-toggle button + button {
+  border-left: 1px solid var(--background-modifier-border);
+}
+.bz-lit-range-toggle button:hover {
+  background: var(--background-modifier-hover);
+}
+.bz-lit-range-toggle button.active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
 /* 头部标题组（视频录入面板：标题 + 状态计数并排基线对齐） */
 .bz-lit-head-title {
   display: flex;
@@ -3759,10 +3826,10 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
     display: none;
   }
   .bz-lit-filterbar {
-    padding: 10px 20px 4px;
+    padding: 10px 16px 4px;
   }
   .bz-lit-search {
-    padding: 12px 20px 2px;
+    padding: 12px 16px 2px;
   }
   .bz-lit-card {
     padding: 14px 12px;
