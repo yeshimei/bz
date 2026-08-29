@@ -172,3 +172,12 @@
 - [x] 根因：ADR-0069 R2 后记忆流断粮——反思证据<2 静默空转、首次日小结被 `!lastReflect` 卡死、周报门槛/原料读记忆流恒<3
 - [x] 修复：`behaviorToObservations` 派生视图（wording+credibility）——反思证据池并入（双写去重）、周报门槛/原料并入；`shouldReflect` 行为流 20 条触发首次反思；`shouldDigest` 首次解耦反思（3 条即触发）；周报 `hour>=10` 防相位跳档
 - [x] 测试：smartcat 1137 用例绿（重写 2 旧语义用例 + 新增 4 用例）+ tsc 0 错
+
+## Ticket 159 — 备忘录：删除未入小橘行为流（落盘时序加固）
+
+**状态：已交付**（2026-08-30）
+
+- [x] 规格：`issues/159-memo-delete-behavior-flush.md`（spec.md「备忘录删除行为流落盘加固」节同步）
+- [x] 实证：事件链路完整且有测试；真实行为流 added×8/completed×7/edited×3/deleted×0 ⇒ 症状=落盘时序（30s 防抖 + 卸载 fire-and-forget，删除后 30s 内退出即丢）
+- [x] 加固：`markBehaviorDirty` 追加 5s 短防抖直写（窗口内合并；与 30s tick 并存）；`stopScheduler` 清定时器
+- [x] 测试：新增 5s 直写/合并/停止清理用例；smartcat 1138 用例绿 + tsc 0 错
