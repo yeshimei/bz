@@ -16,7 +16,7 @@ import { pad2 } from '../core/utils';
 // ticket 134 修订（ADR-0068）：B站视频条目保存改道文献盒（saveToLiterature）、跳过不发——普通文章保留
 import { emitDomainEvent } from '../core/domain-bus';
 // 域内函数级 import（无环，对齐 movie/ui → movie-report 先例）：B站条目保存入口
-import { openBiliAddTask } from '../bili-downloader';
+import { openLiteratureAddTask } from '../literature';
 import type { NewsReadEvent } from '../smartcat/news-source';
 
 // ---------- 常量 ----------
@@ -539,7 +539,7 @@ function saveCurrent(): void {
 export function saveToLiterature() {
   const a = articles[currentIndex];
   if (!a) return;
-  openBiliAddTask(getApp(), { url: a.url, title: a.title || null, uploader: a.author || null });
+  openLiteratureAddTask(getApp(), { url: a.url, title: a.title || null, uploader: a.author || null });
 }
 
 // ---------- 下一篇 / 标记已读 ----------

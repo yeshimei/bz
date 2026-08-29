@@ -94,9 +94,9 @@ export const ROUTING_RULES: Record<string, RoutingRule> = {
   'library:added':      { stream: 'behavior' },
   'library:removed':    { stream: 'behavior' },
 
-  // === 文献盒（bili-downloader，ADR-0066：用户拍板仅行为流、不向量化） ===
-  'bili-downloader:added':     { stream: 'behavior' },
-  'bili-downloader:converted': { stream: 'behavior' },
+  // === 文献盒（literature，ADR-0066 用户拍板仅行为流、不向量化；ADR-0072 迁出为 literature 域） ===
+  'literature:converted':      { stream: 'behavior' },
+  'literature:term-generated': { stream: 'behavior' },
 
   // === 反思 ===
   'reflection:insight': { stream: 'memory', importance: 0.90, defaultEmotion: 'calm', credibility: 0.9 },

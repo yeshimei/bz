@@ -34,7 +34,7 @@ import { noteFirstText, noteDeleteText, noteFileName, noteBodyText, parseNoteDat
 import { DIARY_DIRECTORY } from '../diary/config';
 
 import { buildBelongingsStructured, type BelongingsActionEvent } from './belongings-source';
-import { buildBiliStructured, enrichBiliAddedWithParsed, type BiliActionEvent } from './bili-source';
+import { buildLiteratureStructured, type LiteratureActionEvent } from './literature-source';
 
 import { buildNewsReadStructured, buildNewsSavedStructured, type NewsReadEvent } from './news-source';
 import { buildFavoritesStructured, type FavoritesActionEvent } from './favorites-source';
@@ -415,8 +415,8 @@ export async function ensureSmartCat(app: App): Promise<void> {
   busUnsubs.push(onDomainEvent<FavoritesActionEvent>('favorites', (evt) => notifyFavoritesAction(evt)));
   busUnsubs.push(onDomainEvent<BelongingsActionEvent>('belongings', (evt) => notifyBelongingsAction(evt)));
   busUnsubs.push(onDomainEvent<PomodoroActionEvent>('pomodoro', (evt) => notifyPomodoroAction(evt)));
-  // 文献盒（ADR-0066）：bili 域经 'bili-tasks' 通道派发 → 行为流（用户拍板：添加任务/单条成功两个节点）
-  busUnsubs.push(onDomainEvent<BiliActionEvent>('bili-tasks', (evt) => notifyBiliAction(evt)));
+  // 文献盒（ADR-0066/0072）：literature 域经 'literature:tasks' 通道派发 → 行为流（ticket 136：视频 converted + 术语 term-generated）
+  busUnsubs.push(onDomainEvent<LiteratureActionEvent>('literature:tasks', (evt) => notifyLiteratureAction(evt)));
   // ADR-0069 行为流全量盘点补齐：日记分类调整（diary 域 dialogs 域事件）。
   // 剪藏删除观察已按用户拍板断开（2026-08-29）：vault delete 不再入行为流。
   busUnsubs.push(onDomainEvent<DiaryTagsEvent>('diary:tags-changed', (evt) => notifyDiaryTagsChanged(evt)));
@@ -1298,30 +1298,24 @@ function notifyMemoAction(evt: MemoActionEvent): void {
   void memorySystem.addObservation('memo', { structured });
 }
 
-// ------------- 文献盒动作观察（ADR-0066：bili-tasks 域事件接入小橘行为流；ADR-0067 语义充实） -------------
+// ------------- 文献盒动作观察（ADR-0066/0072：literature:tasks 域事件接入小橘行为流；ticket 136 收敛为两节点） -------------
 
-/** 文献盒动作观察处理（bili 域 UI/处理器经 emitDomainEvent('bili-tasks', evt) 派发 → 总线订阅进入）。
+/** 文献盒动作观察处理（literature 域经 emitDomainEvent('literature:tasks', evt) 派发 → 总线订阅进入）。
  *  未初始化 / 未启用（noteSource 关）→ 静默。
- *  added/converted → 行为流新建条目（用户拍板只收这两个节点；编辑/失败跳过）；
- *  parsed（解析到标题/UP主）→ **不新增条目**，充实之前那条 added 条目（BV 号 → 标题语义，ADR-0067）。 */
-function notifyBiliAction(evt: BiliActionEvent): void {
+ *  视频转文献成功（converted）/ 术语生成成功（term-generated）→ 行为流新建条目
+ *  （ticket 136 用户拍板只收这两类；添加任务/解析/编辑/失败跳过）。 */
+function notifyLiteratureAction(evt: LiteratureActionEvent): void {
   if (!initialized || !memorySystem || !data?.config?.noteSource) return;
-  // parsed：改写既有 added 条目（命中即落盘，未命中静默——旧条目被清理等场景不追建）
-  if (evt.kind === 'parsed') {
-    if (!enrichBiliAddedWithParsed(memorySystem.behaviorStream, evt)) return;
-    void dataSaver(dataProvider());
-    return;
-  }
-  const structured = buildBiliStructured(evt);
+  const structured = buildLiteratureStructured(evt);
   if (!structured) return;
   // 同事件同 key 近 300ms 防重（双击保存等双入口场景）
-  if (notifyDeduped(structured.action, biliActionKey(evt))) return;
-  void memorySystem.addObservation('bili-downloader', { structured });
+  if (notifyDeduped(structured.action, literatureActionKey(evt))) return;
+  void memorySystem.addObservation('literature', { structured });
 }
 
-/** 文献盒事件防重键：added=url（同链接连点一次算一次）；converted=url+notePath（重试/重复转换不重复计） */
-function biliActionKey(evt: BiliActionEvent): string {
-  return evt.kind === 'converted' ? `${evt.url}|${evt.notePath ?? ''}` : evt.url;
+/** 文献盒事件防重键：converted=url+notePath（重试/重复转换不重复计）；term-generated=term（同词连点一次算一次） */
+function literatureActionKey(evt: LiteratureActionEvent): string {
+  return evt.kind === 'converted' ? `${evt.url}|${evt.notePath ?? ''}` : String(evt.term || '');
 }
 
 // ------------- ADR-0069 行为流全量盘点补齐（日记分类调整 / 剪藏删除） -------------

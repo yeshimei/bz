@@ -42,8 +42,8 @@ import {
 } from './secondbrain';
 import { openPomodoro, unloadPomodoro, ensurePomodoro } from './pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from './pomodoro/statusbar';
-// B站下载器启动命令（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
-import { openBiliDownloader, openBiliTasksPanel, unloadBiliDownloader } from './bili-downloader';
+// 文献盒（literature 域，ADR-0072 自 bili-downloader 迁出；网页版已移除，见 tools/bili-downloader）
+import { openLiteraturePanel, unloadLiterature } from './literature';
 // 附件搬移（ticket 65 新域：移动当前笔记附件，fileManager 自动更新内部链接 + 入口页磁贴播种）
 import { openAttachMove, ensureAttachSeed, ATTACH_COMMAND_ID } from './attach';
 // 保险箱（encrypt 域：移出式清单容器加密，正文+图片/视频附件；原名「加密保险箱」，ticket 68 更名仅文案）
@@ -117,10 +117,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-secondbrain-link-all', name: '为未关联笔记批量补链', icon: 'link-2', callback: () => runSecondBrainLinkAll(getApp()) },
   // 番茄钟（ticket 26-32 新域）
   { id: 'bz-pomodoro-open', name: '番茄钟', icon: 'timer', callback: () => openPomodoro(getApp()) },
-  // B站下载器（外部工具 @jwbz/bili-downloader，tools/bili-downloader，ADR-0011）
-  { id: 'bz-bili-open', name: 'B站下载器', icon: 'tv-minimal-play', callback: () => openBiliDownloader() },
-  // 文献盒（视频转文献，ADR-0065 起建 / ADR-0066 正名：面板并入下载入口 + 设置提取 + 行内进度）
-  { id: 'bz-bili-tasks-open', name: '文献盒', icon: 'list-video', callback: () => openBiliTasksPanel(getApp()) },
+  // 文献盒（literature 域：主面板=文献笔记列表 + 视频录入/文字录入/设置；ADR-0072 迁出、ADR-0071 AI 回迁）
+  { id: 'bz-literature-open', name: '文献盒', icon: 'list-video', callback: () => openLiteraturePanel(getApp()) },
   // 附件搬移（ticket 65 新域：移动当前笔记附件到指定文件夹，fileManager 自动更新内部链接）
   { id: ATTACH_COMMAND_ID, name: '移动附件', icon: 'folder-down', callback: () => openAttachMove(getApp()) },
   // 保险箱（encrypt 域：移出式清单容器加密；原名「加密保险箱」，ticket 68 更名仅文案）
@@ -296,8 +294,8 @@ export default class BzPlugin extends Plugin {
     unloadNewsReader();
     unloadArticleView();
     unloadAutoSummary();
-    // 文献盒（ADR-0065 起建：面板 DOM + 模块单例复位；ADR-0066 正名）
-    unloadBiliDownloader();
+    // 文献盒（ADR-0072 迁出：面板 DOM + 模块单例复位）
+    unloadLiterature();
     // 域事件总线收口：摘除 vault 订阅点 + 清空全部域事件订阅（总线为进程内单例，随插件卸载全量清空）
     detachObsidianAdapter();
     clearDomainEvents();

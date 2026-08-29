@@ -10,8 +10,8 @@
 import { notice } from '../core/notice';
 import { emitDomainEvent } from '../core/domain-bus';
 import { tryGetSettings } from '../core/settings-provider';
-import { TasksData } from './data';
-import type { BiliTask } from './types';
+import { LiteratureData } from './data';
+import type { LiteratureTask } from './types';
 
 /** 工具本地 CLI 指针（修复期临时，与 index.ts 保持一致；稳定后改回全局 bili-dl） */
 const LOCAL_CLI_CANDIDATE = 'D:/Obsidian/bz/tools/bili-downloader/cli.js';
@@ -28,7 +28,7 @@ export interface BatchSummary {
   success: number;
   failed: number;
   aborted: boolean;
-  /** 遇错即停（设置 biliStopOnFailure 触发）：失败后不再处理剩余，未开始项保持待处理 */
+  /** 遇错即停（设置 literatureStopOnFailure 触发）：失败后不再处理剩余，未开始项保持待处理 */
   stopped: boolean;
 }
 
@@ -40,11 +40,11 @@ export interface BiliProgress {
 
 export interface BatchEvents {
   /** 任务行进度更新（步骤文案已写入 task.reason；progress 为 [bz-p] 行解析出的阶段百分比，无则 null） */
-  onTaskProgress(task: BiliTask, stepText: string, progress?: BiliProgress | null): void;
+  onTaskProgress(task: LiteratureTask, stepText: string, progress?: BiliProgress | null): void;
   /** 解析信息落库回调（[bz-info] 行：title/uploader 已写入 task 与 storage，UI 整表刷新显示「文字+链接」） */
-  onTaskInfo(task: BiliTask): void;
+  onTaskInfo(task: LiteratureTask): void;
   /** 任务终态（成功/失败），task 已持久化 */
-  onTaskDone(task: BiliTask): void;
+  onTaskDone(task: LiteratureTask): void;
   /** 整批结束 */
   onBatchDone(summary: BatchSummary): void;
 }
@@ -84,7 +84,7 @@ function nowTs(): string {
 export const BatchRunner = {
   running: false,
   aborted: false,
-  /** 遇错即停（设置 biliStopOnFailure）：当前任务失败后中断整批，未开始项保持待处理 */
+  /** 遇错即停（设置 literatureStopOnFailure）：当前任务失败后中断整批，未开始项保持待处理 */
   stoppedFail: false,
   _child: null as any,
   _cp: null as any,
@@ -99,7 +99,7 @@ export const BatchRunner = {
    * 失败项重跑时工具自动跳过已成功步骤、从出错步骤继续）。
    * 已成功（归档）项不动；默认失败后继续（遇错即停设置开启时失败后中断）。
    */
-  async runAll(tasks: BiliTask[], events: BatchEvents): Promise<void> {
+  async runAll(tasks: LiteratureTask[], events: BatchEvents): Promise<void> {
     if (this.running) return;
     this.running = true;
     this.aborted = false;
@@ -111,7 +111,7 @@ export const BatchRunner = {
       this.running = false;
       return;
     }
-    const stopOnFailure = tryGetSettings().biliStopOnFailure === true;
+    const stopOnFailure = tryGetSettings().literatureStopOnFailure === true;
     try {
       let success = 0;
       let failed = 0;
@@ -137,7 +137,7 @@ export const BatchRunner = {
   },
 
   /** 单部执行：spawn → 解析步骤/进度行 → 终态落库；Promise 在子进程终结（close/error）时 resolve */
-  _runOne(cp: any, task: BiliTask, events: BatchEvents, onEnd: (ok: boolean) => void): Promise<void> {
+  _runOne(cp: any, task: LiteratureTask, events: BatchEvents, onEnd: (ok: boolean) => void): Promise<void> {
     return new Promise((resolve) => {
       // 文献盒设置项透传（ADR-0066/0067）：清晰度 = 任务级覆盖优先、否则全局设置；保留视频/输出目录走全局；
       // 分P 序号（task.page，1 起）随任务 JSON 下发（工具按 P 选 cid，独立缓存键）
@@ -148,12 +148,12 @@ export const BatchRunner = {
         end: task.end ?? null,
         page: task.page && task.page > 0 ? task.page : null,
         options: {
-          quality: (task.quality || (s && s.biliQuality) || 'highest') as string,
-          keepVideo: !s || s.biliKeepVideo !== false,
-          outputDir: (s && s.biliOutputDir ? String(s.biliOutputDir).trim() : ''),
+          quality: (task.quality || (s && s.literatureQuality) || 'highest') as string,
+          keepVideo: !s || s.literatureKeepVideo !== false,
+          outputDir: (s && s.literatureOutputDir ? String(s.literatureOutputDir).trim() : ''),
         },
       });
-      void TasksData.updateTask(task.id, { status: 'processing', reason: '启动中…', processedAt: null }).then(() => {
+      void LiteratureData.updateTask(task.id, { status: 'processing', reason: '启动中…', processedAt: null }).then(() => {
         task.status = 'processing';
         task.reason = '启动中…';
         events.onTaskProgress({ ...task }, '启动中…');
@@ -185,7 +185,7 @@ export const BatchRunner = {
             const stepText = m[1].trim();
             task.reason = stepText;
             // 步骤文案必须落库：refreshPanel 重读 storage 渲染，仅改内存会一直显示「启动中…」
-            void TasksData.updateTask(task.id, { reason: stepText });
+            void LiteratureData.updateTask(task.id, { reason: stepText });
             events.onTaskProgress({ ...task }, stepText, null);
             continue;
           }
@@ -213,9 +213,9 @@ export const BatchRunner = {
               if (title) {
                 task.title = title;
                 task.uploader = uploader || task.uploader;
-                const patch: Partial<BiliTask> = { title, uploader: task.uploader };
-                void TasksData.updateTask(task.id, patch).then(() => {
-                  emitDomainEvent('bili-tasks', { kind: 'parsed', id: task.id, url: task.url, title, uploader: task.uploader || undefined });
+                const patch: Partial<LiteratureTask> = { title, uploader: task.uploader };
+                void LiteratureData.updateTask(task.id, patch).then(() => {
+                  emitDomainEvent('literature:tasks', { kind: 'parsed', id: task.id, url: task.url, title, uploader: task.uploader || undefined });
                   events.onTaskInfo({ ...task });
                 });
               }
@@ -253,14 +253,14 @@ export const BatchRunner = {
   },
 
   /** 终态落库 + 事件（resolve 于落库完成后）；成功 → 自动归档历史（archived+归档时间，ADR-0067） */
-  async _finish(task: BiliTask, events: BatchEvents, onEnd: (ok: boolean) => void, ok: boolean, reason: string | null, notePath: string | null, videoPath: string | null): Promise<void> {
+  async _finish(task: LiteratureTask, events: BatchEvents, onEnd: (ok: boolean) => void, ok: boolean, reason: string | null, notePath: string | null, videoPath: string | null): Promise<void> {
     task.status = ok ? 'success' : 'failed';
     task.reason = reason;
     task.notePath = ok ? notePath : task.notePath;
     task.videoPath = ok ? videoPath : task.videoPath;
     task.processedAt = nowTs();
     if (ok) { task.archived = true; task.archivedAt = task.processedAt; }
-    await TasksData.updateTask(task.id, {
+    await LiteratureData.updateTask(task.id, {
       status: task.status,
       reason,
       notePath: task.notePath,

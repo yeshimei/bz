@@ -6,9 +6,9 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { EventEmitter } from 'events';
-import { BatchRunner } from '../../src/bili-downloader/processor';
-import { TasksData } from '../../src/bili-downloader/data';
-import type { BiliTask } from '../../src/bili-downloader/types';
+import { BatchRunner } from '../../src/literature/processor';
+import { LiteratureData } from '../../src/literature/data';
+import type { LiteratureTask } from '../../src/literature/types';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { onDomainEvent } from '../../src/core/domain-bus';
@@ -24,10 +24,10 @@ class FakeChild extends EventEmitter {
 
 const tick = () => new Promise((r) => setTimeout(r, 0));
 
-async function seedTasks(): Promise<BiliTask[]> {
-  await TasksData.addTask({ url: 'BV1xx411c7mD', start: '1:02:03', end: '1:05:00' });
-  await TasksData.addTask({ url: 'BV1xx411c7mE' });
-  return TasksData.loadTasks();
+async function seedTasks(): Promise<LiteratureTask[]> {
+  await LiteratureData.addTask({ url: 'BV1xx411c7mD', start: '1:02:03', end: '1:05:00' });
+  await LiteratureData.addTask({ url: 'BV1xx411c7mE' });
+  return LiteratureData.loadTasks();
 }
 
 function makeEvents() {
@@ -43,7 +43,7 @@ describe('BatchRunner', () => {
   beforeEach(() => {
     vault = new MockVault();
     setApp({ vault } as any);
-    TasksData.init({ storagePath: 'CONFIG/STORAGE' });
+    LiteratureData.init({ storagePath: 'CONFIG/STORAGE' });
     child = new FakeChild();
     cpMock = { spawn: vi.fn(() => child) };
     (window as any).require = () => cpMock;
@@ -76,12 +76,12 @@ describe('BatchRunner', () => {
     await tick();
     child.stdout.emit('data', Buffer.from('[bz-step] 解析中\n'));
     await tick();
-    let all = await TasksData.loadTasks();
+    let all = await LiteratureData.loadTasks();
     expect(all[0].status).toBe('processing');
     expect(all[0].reason).toBe('解析中');
     child.stdout.emit('data', Buffer.from('[bz-step] 下载中\n'));
     await tick();
-    all = await TasksData.loadTasks();
+    all = await LiteratureData.loadTasks();
     expect(all[0].reason).toBe('下载中');
     expect(ev.onTaskProgress).toHaveBeenCalledTimes(3); // 启动中 + 解析中 + 下载中
     BatchRunner.abort();
@@ -92,11 +92,11 @@ describe('BatchRunner', () => {
   it('严格串行：第一部 spawn 后未完成前不 spawn 第二部；逐步文案 + [bz-result] 落终态', async () => {
     const tasks = await seedTasks();
     const steps: string[] = [];
-    const done: BiliTask[] = [];
+    const done: LiteratureTask[] = [];
     const ev = {
-      onTaskProgress: (t: BiliTask, s: string) => steps.push(`${t.id}:${s}`),
+      onTaskProgress: (t: LiteratureTask, s: string) => steps.push(`${t.id}:${s}`),
       onTaskInfo: vi.fn(),
-      onTaskDone: (t: BiliTask) => done.push(t),
+      onTaskDone: (t: LiteratureTask) => done.push(t),
       onBatchDone: vi.fn(),
     };
     const p = BatchRunner.runAll(tasks, ev);
@@ -120,7 +120,7 @@ describe('BatchRunner', () => {
     expect(steps).toContain(`${tasks[0].id}:剪辑中`);
     expect(done).toHaveLength(1);
     expect(done[0]).toMatchObject({ status: 'success', notePath: '文献盒/测试.md', videoPath: 'CONFIG/APPENDIX/v.mp4' });
-    let all = await TasksData.loadTasks();
+    let all = await LiteratureData.loadTasks();
     expect(all[0].status).toBe('success');
     // 第一部完成后才 spawn 第二部
     expect(cpMock.spawn).toHaveBeenCalledTimes(2);
@@ -128,7 +128,7 @@ describe('BatchRunner', () => {
     child2.emit('close', 0);
     await p;
     expect(ev.onBatchDone).toHaveBeenCalledWith({ success: 2, failed: 0, aborted: false, stopped: false });
-    all = await TasksData.loadTasks();
+    all = await LiteratureData.loadTasks();
     expect(all.map((x) => x.status).sort()).toEqual(['success', 'success']);
   });
 
@@ -146,7 +146,7 @@ describe('BatchRunner', () => {
     child2.emit('close', 0);
     await p;
     expect(ev.onBatchDone).toHaveBeenCalledWith({ success: 1, failed: 1, aborted: false, stopped: false });
-    const all = await TasksData.loadTasks();
+    const all = await LiteratureData.loadTasks();
     const f = all.find((x) => x.id === tasks[0].id)!;
     expect(f.status).toBe('failed');
     expect(f.reason).toContain('视频已删除或失效');
@@ -159,7 +159,7 @@ describe('BatchRunner', () => {
     const ev = makeEvents();
     const p = BatchRunner.runAll(tasks, ev);
     await p;
-    const all = await TasksData.loadTasks();
+    const all = await LiteratureData.loadTasks();
     expect(all[0].status).toBe('failed');
     expect(all[0].reason).toContain('未找到 bili-dl');
     expect(all[1].status).toBe('failed');
@@ -180,7 +180,7 @@ describe('BatchRunner', () => {
     expect(cpMock.spawn).toHaveBeenCalledTimes(1); // 第二部不再启动
     await p;
     expect(ev.onBatchDone).toHaveBeenCalledWith({ success: 0, failed: 1, aborted: true, stopped: false });
-    const all = await TasksData.loadTasks();
+    const all = await LiteratureData.loadTasks();
     expect(all.find((x) => x.id === tasks[0].id)!.status).toBe('failed');
     expect(all.find((x) => x.id === tasks[0].id)!.reason).toBe('已中止');
     expect(all.find((x) => x.id === tasks[1].id)!.status).toBe('pending');
@@ -200,7 +200,7 @@ describe('BatchRunner', () => {
     const tasks = await seedTasks();
     const seen: Array<{ step: string; prog: any }> = [];
     const ev = {
-      onTaskProgress: (t: BiliTask, s: string, p?: any) => seen.push({ step: s, prog: p ?? null }),
+      onTaskProgress: (t: LiteratureTask, s: string, p?: any) => seen.push({ step: s, prog: p ?? null }),
       onTaskInfo: vi.fn(),
       onTaskDone: vi.fn(),
       onBatchDone: vi.fn(),
@@ -216,7 +216,7 @@ describe('BatchRunner', () => {
     const progs = seen.filter((x) => x.prog && x.prog.phase === 'download');
     expect(progs.map((x) => x.prog.pct)).toEqual([42.5, 88, null]);
     // 进度是瞬态：storage 里 reason 仍是步骤文案（未因进度行变化）
-    const all = await TasksData.loadTasks();
+    const all = await LiteratureData.loadTasks();
     expect(all[0].reason).toBe('下载中');
     BatchRunner.abort();
     child.emit('close', 0);
@@ -224,7 +224,7 @@ describe('BatchRunner', () => {
   });
 
   it('遇错即停（设置开启）：首部失败后不再 spawn 剩余，onBatchDone stopped:true', async () => {
-    setSettingsProvider(() => ({ biliStopOnFailure: true }) as any);
+    setSettingsProvider(() => ({ literatureStopOnFailure: true }) as any);
     const tasks = await seedTasks();
     const ev = makeEvents();
     const p = BatchRunner.runAll(tasks, ev);
@@ -235,17 +235,17 @@ describe('BatchRunner', () => {
     expect(cpMock.spawn).toHaveBeenCalledTimes(1); // 不再跑第二部
     await p;
     expect(ev.onBatchDone).toHaveBeenCalledWith({ success: 0, failed: 1, aborted: false, stopped: true });
-    const all = await TasksData.loadTasks();
+    const all = await LiteratureData.loadTasks();
     expect(all[0].status).toBe('failed');
     expect(all[1].status).toBe('pending'); // 未开始项保持待处理
   });
 
   it('设置项透传：quality/keepVideo/outputDir 随任务 JSON 下发', async () => {
-    setSettingsProvider(() => ({ biliQuality: '720', biliKeepVideo: false, biliOutputDir: 'D:/videos' }) as any);
-    const tasks = await TasksData.loadTasks();
-    if (tasks.length === 0) await TasksData.addTask({ url: 'BV1xx411c7mD' });
+    setSettingsProvider(() => ({ literatureQuality: '720', literatureKeepVideo: false, literatureOutputDir: 'D:/videos' }) as any);
+    const tasks = await LiteratureData.loadTasks();
+    if (tasks.length === 0) await LiteratureData.addTask({ url: 'BV1xx411c7mD' });
     const ev = makeEvents();
-    const p = BatchRunner.runAll(await TasksData.loadTasks(), ev);
+    const p = BatchRunner.runAll(await LiteratureData.loadTasks(), ev);
     await tick();
     const [, args] = cpMock.spawn.mock.calls[0];
     expect(JSON.parse(args[1]).options).toEqual({ quality: '720', keepVideo: false, outputDir: 'D:/videos' });
@@ -254,10 +254,10 @@ describe('BatchRunner', () => {
   });
 
   it('任务级覆盖透传：task.page=2 / task.quality=1080 覆盖全局设置（ADR-0067）', async () => {
-    setSettingsProvider(() => ({ biliQuality: 'highest' }) as any);
-    const t = await TasksData.addTask({ url: 'BV1xx411c7mD', quality: '1080', page: 2 });
+    setSettingsProvider(() => ({ literatureQuality: 'highest' }) as any);
+    const t = await LiteratureData.addTask({ url: 'BV1xx411c7mD', quality: '1080', page: 2 });
     const ev = makeEvents();
-    const p = BatchRunner.runAll(await TasksData.loadTasks(), ev);
+    const p = BatchRunner.runAll(await LiteratureData.loadTasks(), ev);
     await tick();
     const [, args] = cpMock.spawn.mock.calls[0];
     const json = JSON.parse(args[1]);
@@ -270,7 +270,7 @@ describe('BatchRunner', () => {
 
   it('[bz-info] 解析信息：落库 title/uploader + onTaskInfo + 域事件 parsed（ADR-0067）', async () => {
     const bus: any[] = [];
-    const sub = onDomainEvent('bili-tasks', (e) => bus.push(e));
+    const sub = onDomainEvent('literature:tasks', (e) => bus.push(e));
     try {
       const tasks = await seedTasks();
       const ev = makeEvents();
@@ -280,7 +280,7 @@ describe('BatchRunner', () => {
       child.stdout.emit('data', Buffer.from('[bz-info] {"title":"从零开始学B站","uploader":"某UP","bvid":"BV1xx411c7mD","url":"https://www.bilibili.com/video/BV1xx411c7mD","duration":600}\n'));
       await tick();
       expect(ev.onTaskInfo).toHaveBeenCalledTimes(1);
-      let all = await TasksData.loadTasks();
+      let all = await LiteratureData.loadTasks();
       expect(all[0].title).toBe('从零开始学B站');
       expect(all[0].uploader).toBe('某UP');
       expect(bus).toHaveLength(1);
@@ -305,13 +305,13 @@ describe('BatchRunner', () => {
     const child2 = cpMock.spawn.mock.results[1].value;
     child2.emit('close', 0);
     await p;
-    let all = await TasksData.loadTasks();
+    let all = await LiteratureData.loadTasks();
     expect(all[0].status).toBe('failed');
     await vi.waitFor(async () => {
-      const cur = await TasksData.loadTasks();
+      const cur = await LiteratureData.loadTasks();
       expect(cur[0].title).toBe('测试视频'); // 解析信息落库（先落库后事件，确定性）
     });
-    all = await TasksData.loadTasks();
+    all = await LiteratureData.loadTasks();
     expect(all[1].archived).toBe(true);
     // 再点批量处理：只处理失败项，成功（归档）项跳过
     const ev2 = makeEvents();
@@ -322,7 +322,7 @@ describe('BatchRunner', () => {
     child3.emit('close', 0);
     await p2;
     expect(ev2.onBatchDone).toHaveBeenCalledWith({ success: 1, failed: 0, aborted: false, stopped: false });
-    all = await TasksData.loadTasks();
+    all = await LiteratureData.loadTasks();
     expect(all.filter((x) => x.status === 'failed')).toHaveLength(0);
     expect(all.filter((x) => x.archived)).toHaveLength(2); // 两部都归档
   });
@@ -335,7 +335,7 @@ describe('BatchRunner', () => {
     child.stdout.emit('data', Buffer.from('[bz-result] {"note":"文献盒/测试.md","video":"CONFIG/APPENDIX/v.mp4"}\n'));
     child.emit('close', 0);
     await tick();
-    const all = await TasksData.loadTasks();
+    const all = await LiteratureData.loadTasks();
     expect(all[0].status).toBe('success');
     expect(all[0].archived).toBe(true);
     expect(all[0].archivedAt).toBeTruthy();

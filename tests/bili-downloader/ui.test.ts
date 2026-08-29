@@ -9,8 +9,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { EventEmitter } from 'events';
 import { Platform } from 'obsidian';
-import { UIManager, biliTasksSettingsSchema } from '../../src/bili-downloader/ui';
-import { TasksData } from '../../src/bili-downloader/data';
+import { UIManager, literatureSettingsSchema } from '../../src/literature/ui';
+import { LiteratureData } from '../../src/literature/data';
 import { setApp } from '../../src/core/app';
 import { MockVault } from '../mock-vault';
 import { clearNotices, getNoticeMessages, resetObsidianMocks } from '../mock-obsidian-entry';
@@ -42,7 +42,7 @@ describe('文献盒面板 UI', () => {
     resetObsidianMocks();
     vault = new MockVault();
     ({ openFile, openUrl } = makeApp(vault));
-    TasksData.init({ storagePath: 'CONFIG/STORAGE' });
+    LiteratureData.init({ storagePath: 'CONFIG/STORAGE' });
     clearNotices();
     ui = new UIManager({} as any);
   });
@@ -72,24 +72,24 @@ describe('文献盒面板 UI', () => {
     await new Promise((r) => setTimeout(r, 0));
     const counts = document.getElementById('bili-status-counts')!;
     expect(counts.textContent).toBe(''); // 空队列
-    const t1 = await TasksData.addTask({ url: 'BV1xx411c7mD' });
-    await TasksData.addTask({ url: 'BV1xx411c7mE' });
-    await TasksData.updateTask(t1.id, { status: 'failed', reason: 'boom' } as any);
+    const t1 = await LiteratureData.addTask({ url: 'BV1xx411c7mD' });
+    await LiteratureData.addTask({ url: 'BV1xx411c7mE' });
+    await LiteratureData.updateTask(t1.id, { status: 'failed', reason: 'boom' } as any);
     await ui.refreshPanel();
     expect(counts.textContent).toBe('1 待处理 · 1 失败');
-    await TasksData.updateTask(t1.id, { status: 'processing', reason: '下载中…' } as any);
+    await LiteratureData.updateTask(t1.id, { status: 'processing', reason: '下载中…' } as any);
     await ui.refreshPanel();
     expect(counts.textContent).toBe('1 待处理 · 1 处理中');
   });
 
   it('行渲染：状态徽标（待处理/处理中/成功/失败）+ 时间范围 + 进度文案', async () => {
-    const t1 = await TasksData.addTask({ url: 'BV1xx411c7mD', start: '1:02:03', end: '1:05:00' });
-    await TasksData.updateTask(t1.id, { status: 'processing', reason: '下载中…' } as any);
-    const t2 = await TasksData.addTask({ url: 'BV1xx411c7mE' });
-    await TasksData.updateTask(t2.id, { status: 'success', notePath: '文献盒/测试.md' } as any);
-    const t3 = await TasksData.addTask({ url: 'BV1xx411c7mF' });
-    await TasksData.updateTask(t3.id, { status: 'failed', reason: '视频已删除' } as any);
-    await TasksData.addTask({ url: 'BV1xx411c7mG' }); // 保留一条待处理
+    const t1 = await LiteratureData.addTask({ url: 'BV1xx411c7mD', start: '1:02:03', end: '1:05:00' });
+    await LiteratureData.updateTask(t1.id, { status: 'processing', reason: '下载中…' } as any);
+    const t2 = await LiteratureData.addTask({ url: 'BV1xx411c7mE' });
+    await LiteratureData.updateTask(t2.id, { status: 'success', notePath: '文献盒/测试.md' } as any);
+    const t3 = await LiteratureData.addTask({ url: 'BV1xx411c7mF' });
+    await LiteratureData.updateTask(t3.id, { status: 'failed', reason: '视频已删除' } as any);
+    await LiteratureData.addTask({ url: 'BV1xx411c7mG' }); // 保留一条待处理
     await ui.refreshPanel();
     const list = document.getElementById('bili-tasks-list')!;
     const txt = list.textContent!;
@@ -104,8 +104,8 @@ describe('文献盒面板 UI', () => {
   });
 
   it('未解析任务行显短链接（ADR-0070）：BV 号优先提取，普通长链接截断，完整链接在 title', async () => {
-    await TasksData.addTask({ url: 'https://www.bilibili.com/video/BV1xx411c7mD/?p=1&spm_id_from=333' });
-    await TasksData.addTask({ url: 'https://example.com/a/very/long/path/that/should/be/truncated Display' });
+    await LiteratureData.addTask({ url: 'https://www.bilibili.com/video/BV1xx411c7mD/?p=1&spm_id_from=333' });
+    await LiteratureData.addTask({ url: 'https://example.com/a/very/long/path/that/should/be/truncated Display' });
     await ui.refreshPanel();
     const list = document.getElementById('bili-tasks-list')!;
     const urls = Array.from(list.querySelectorAll('.bz-bili-url')) as HTMLElement[];
@@ -119,17 +119,17 @@ describe('文献盒面板 UI', () => {
     await ui.refreshPanel();
     const run = document.getElementById('bili-btn-run') as HTMLButtonElement;
     expect(run.disabled).toBe(true);
-    const r = await TasksData.addTask({ url: 'BV1xx411c7mD' });
+    const r = await LiteratureData.addTask({ url: 'BV1xx411c7mD' });
     await ui.refreshPanel();
     expect((document.getElementById('bili-btn-run') as HTMLButtonElement).disabled).toBe(false);
-    await TasksData.updateTask(r.id, { status: 'success' } as any);
+    await LiteratureData.updateTask(r.id, { status: 'success' } as any);
     await ui.refreshPanel();
     expect((document.getElementById('bili-btn-run') as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('无行内重试按钮（ADR-0070）：失败行不渲染重试，批量按钮对失败项可用（重试 = 再次点击 ▶️）', async () => {
-    const r = await TasksData.addTask({ url: 'BV1xx411c7mD' });
-    await TasksData.updateTask(r.id, { status: 'failed', reason: 'boom' } as any);
+    const r = await LiteratureData.addTask({ url: 'BV1xx411c7mD' });
+    await LiteratureData.updateTask(r.id, { status: 'failed', reason: 'boom' } as any);
     await ui.refreshPanel();
     expect(document.querySelector('.bz-bili-retry-btn')).toBeNull();
     expect((document.getElementById('bili-btn-run') as HTMLButtonElement).disabled).toBe(false);
@@ -171,7 +171,7 @@ describe('文献盒面板 UI', () => {
     (document.getElementById('bili-add-end') as HTMLInputElement).value = '12-30';
     (document.getElementById('bili-add-save') as HTMLButtonElement).click();
     await vi.waitFor(() => expect(strNotices()).toContain('已保存'));
-    let all = await TasksData.loadTasks();
+    let all = await LiteratureData.loadTasks();
     expect(all).toHaveLength(1);
     expect(all[0]).toMatchObject({ url: 'https://www.bilibili.com/video/BV1xx411c7mD', start: '12:02', end: '12:30', status: 'pending' });
     // 点击待处理行 → 编辑回填
@@ -184,7 +184,7 @@ describe('文献盒面板 UI', () => {
     (document.getElementById('bili-add-end') as HTMLInputElement).value = '12.2';
     (document.getElementById('bili-add-save') as HTMLButtonElement).click();
     await vi.waitFor(async () => {
-      all = await TasksData.loadTasks();
+      all = await LiteratureData.loadTasks();
       expect(all[0].start).toBe('12:00');
       expect(all[0].end).toBe('12:02');
     });
@@ -209,7 +209,7 @@ describe('文献盒面板 UI', () => {
     (document.getElementById('bili-add-end') as HTMLInputElement).value = '1:00';
     (document.getElementById('bili-add-save') as HTMLButtonElement).click();
     await vi.waitFor(() => expect(strNotices()).toContain('成对填写'));
-    expect((await TasksData.loadTasks())).toHaveLength(0);
+    expect((await LiteratureData.loadTasks())).toHaveLength(0);
   });
 
   it('添加弹窗新字段（ticket 134）：标题/UP主落库 + 聚合讯入口预填新增模式 + 编辑回填', async () => {
@@ -221,7 +221,7 @@ describe('文献盒面板 UI', () => {
     (document.getElementById('bili-add-uploader') as HTMLInputElement).value = 'UP主甲';
     (document.getElementById('bili-add-save') as HTMLButtonElement).click();
     await vi.waitFor(async () => {
-      const all = await TasksData.loadTasks();
+      const all = await LiteratureData.loadTasks();
       expect(all[0]).toMatchObject({ title: '某视频', uploader: 'UP主甲' });
     });
     // 编辑回填：点击待处理行 → 两个新字段回显
@@ -239,7 +239,7 @@ describe('文献盒面板 UI', () => {
   });
 
   it('队列行展示优先标题（ticket 134）：预填 title 即渲染标题文字链接', async () => {
-    await TasksData.addTask({ url: 'BV1xx411c7mD', title: '某视频标题' });
+    await LiteratureData.addTask({ url: 'BV1xx411c7mD', title: '某视频标题' });
     await ui.refreshPanel();
     const anchor = document.querySelector('.bz-bili-task-card a.bz-bili-title') as HTMLAnchorElement;
     expect(anchor.textContent).toBe('某视频标题');
@@ -247,8 +247,8 @@ describe('文献盒面板 UI', () => {
   });
 
   it('点击分流：成功项打开文献笔记', async () => {
-    const t = await TasksData.addTask({ url: 'BV1xx411c7mD' });
-    await TasksData.updateTask(t.id, { status: 'success', notePath: '文献盒/测试.md' } as any);
+    const t = await LiteratureData.addTask({ url: 'BV1xx411c7mD' });
+    await LiteratureData.updateTask(t.id, { status: 'success', notePath: '文献盒/测试.md' } as any);
     vault.files.set('文献盒/测试.md', '# 测试');
     await ui.refreshPanel();
     (document.querySelector('.bz-bili-task-card') as HTMLElement).click();
@@ -275,14 +275,14 @@ describe('文献盒面板 UI', () => {
   });
 
   it('设置 schema（ADR-0066/0070）：移动端组 + 文献盒处理组五项设置；传入回调时追加「清空历史」按钮行', () => {
-    const schema = biliTasksSettingsSchema();
+    const schema = literatureSettingsSchema();
     expect(schema.groups).toHaveLength(2);
     const rows = schema.groups[1].rows.map((r: any) => r.name);
     expect(rows).toEqual(['详细进度提示', '保留视频原件', '下载清晰度', '遇错即停', '输出目录']);
     expect((schema.groups[1].rows[2] as any).options).toHaveLength(3); // 清晰度三档
     // 清空历史入口在设置面板（不在历史弹窗，ADR-0070）
     const cleared = vi.fn();
-    const schema2 = biliTasksSettingsSchema({ onClearHistory: cleared });
+    const schema2 = literatureSettingsSchema({ onClearHistory: cleared });
     const rows2 = schema2.groups[1].rows as any[];
     expect(rows2).toHaveLength(6);
     expect(rows2[5].type).toBe('button');
@@ -300,7 +300,7 @@ describe('文献盒面板 UI', () => {
     try {
       ui.showMain();
       await new Promise((r) => setTimeout(r, 0));
-      await TasksData.addTask({ url: 'BV1xx411c7mD' });
+      await LiteratureData.addTask({ url: 'BV1xx411c7mD' });
       await ui.refreshPanel();
       (document.getElementById('bili-btn-run') as HTMLButtonElement).click();
       await vi.waitFor(() => expect(document.querySelector('.bz-bili-progress-box')).toBeTruthy());
@@ -330,8 +330,8 @@ describe('文献盒面板 UI', () => {
   });
 
   it('行内信息（ADR-0067）：标题链接（浏览器打开）+ UP主 + 失败原因行内直显', async () => {
-    const t = await TasksData.addTask({ url: 'https://www.bilibili.com/video/BV1xx411c7mD' });
-    await TasksData.updateTask(t.id, { title: '从零开始学B站', uploader: '某UP', status: 'failed', reason: 'AI 返回的不是 JSON：xxx' } as any);
+    const t = await LiteratureData.addTask({ url: 'https://www.bilibili.com/video/BV1xx411c7mD' });
+    await LiteratureData.updateTask(t.id, { title: '从零开始学B站', uploader: '某UP', status: 'failed', reason: 'AI 返回的不是 JSON：xxx' } as any);
     await ui.refreshPanel();
     const list = document.getElementById('bili-tasks-list')!;
     const txt = list.textContent!;
@@ -346,9 +346,9 @@ describe('文献盒面板 UI', () => {
   });
 
   it('历史独立弹窗（ADR-0070）：🕘 打开独立弹窗 + 遮罩；归档项不出现在主列表；无成功徽标无条带行', async () => {
-    const ok = await TasksData.addTask({ url: 'https://www.bilibili.com/video/BV1xx411c7mD' });
-    await TasksData.updateTask(ok.id, { status: 'success', archived: true, archivedAt: '2026-08-28 21:00:00', title: '从零开始学B站', notePath: '文献盒/从零开始学B站.md' } as any);
-    const pend = await TasksData.addTask({ url: 'BV1xx411c7mE' });
+    const ok = await LiteratureData.addTask({ url: 'https://www.bilibili.com/video/BV1xx411c7mD' });
+    await LiteratureData.updateTask(ok.id, { status: 'success', archived: true, archivedAt: '2026-08-28 21:00:00', title: '从零开始学B站', notePath: '文献盒/从零开始学B站.md' } as any);
+    const pend = await LiteratureData.addTask({ url: 'BV1xx411c7mE' });
     await ui.refreshPanel();
     // 主列表：归档项不可见，且历史视图不再就地切换（主列表始终是任务列表）
     const list = document.getElementById('bili-tasks-list')!;
@@ -371,12 +371,12 @@ describe('文献盒面板 UI', () => {
   });
 
   it('历史同视频分组（ADR-0070）：同一 url 多条任务归并一张卡片，多行笔记各自可点打开', async () => {
-    const a = await TasksData.addTask({ url: 'https://www.bilibili.com/video/BV1xx411c7mD', start: '1:00', end: '2:00' });
-    const b = await TasksData.addTask({ url: 'https://www.bilibili.com/video/BV1xx411c7mD', start: '3:00', end: '4:00' });
-    const c = await TasksData.addTask({ url: 'BV1xx411c7mZ' });
-    await TasksData.updateTask(a.id, { status: 'success', archived: true, processedAt: '2026-08-28 21:00:00', title: '同一视频', uploader: '某UP', notePath: '文献盒/同一视频.md' } as any);
-    await TasksData.updateTask(b.id, { status: 'success', archived: true, processedAt: '2026-08-28 22:00:00', title: '同一视频', notePath: '文献盒/同一视频-2.md' } as any);
-    await TasksData.updateTask(c.id, { status: 'success', archived: true, processedAt: '2026-08-28 20:00:00', title: '另一视频', notePath: '文献盒/另一视频.md' } as any);
+    const a = await LiteratureData.addTask({ url: 'https://www.bilibili.com/video/BV1xx411c7mD', start: '1:00', end: '2:00' });
+    const b = await LiteratureData.addTask({ url: 'https://www.bilibili.com/video/BV1xx411c7mD', start: '3:00', end: '4:00' });
+    const c = await LiteratureData.addTask({ url: 'BV1xx411c7mZ' });
+    await LiteratureData.updateTask(a.id, { status: 'success', archived: true, processedAt: '2026-08-28 21:00:00', title: '同一视频', uploader: '某UP', notePath: '文献盒/同一视频.md' } as any);
+    await LiteratureData.updateTask(b.id, { status: 'success', archived: true, processedAt: '2026-08-28 22:00:00', title: '同一视频', notePath: '文献盒/同一视频-2.md' } as any);
+    await LiteratureData.updateTask(c.id, { status: 'success', archived: true, processedAt: '2026-08-28 20:00:00', title: '另一视频', notePath: '文献盒/另一视频.md' } as any);
     vault.files.set('文献盒/同一视频.md', '# A');
     vault.files.set('文献盒/同一视频-2.md', '# B');
     ui.showHistory();
@@ -397,19 +397,19 @@ describe('文献盒面板 UI', () => {
   });
 
   it('清空历史（ADR-0070，设置面板入口）：确认后归档记录清空', async () => {
-    const ok = await TasksData.addTask({ url: 'BV1xx411c7mD' });
-    await TasksData.updateTask(ok.id, { status: 'success', archived: true, notePath: '文献盒/A.md' } as any);
+    const ok = await LiteratureData.addTask({ url: 'BV1xx411c7mD' });
+    await LiteratureData.updateTask(ok.id, { status: 'success', archived: true, notePath: '文献盒/A.md' } as any);
     ui.showHistory();
     await new Promise((r) => setTimeout(r, 0));
     expect(document.getElementById('bili-history-list')!.textContent).toContain('文献盒/A.md');
     // 设置面板按钮行触发（_bindHeaderEvents 传入的同一回调）
-    const schema = biliTasksSettingsSchema({ onClearHistory: () => (ui as any).confirmClearHistory() });
+    const schema = literatureSettingsSchema({ onClearHistory: () => (ui as any).confirmClearHistory() });
     const row = (schema.groups[1].rows as any[])[5];
     row.onClick({});
     await vi.waitFor(() => expect(document.getElementById('__shared_confirm_ok__')).toBeTruthy());
     (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
     await vi.waitFor(async () => {
-      const all = await TasksData.loadTasks();
+      const all = await LiteratureData.loadTasks();
       expect(all.some((x) => x.archived)).toBe(false);
     });
     await vi.waitFor(() => expect(document.getElementById('bili-history-list')!.textContent).toContain('暂无历史记录'));
@@ -424,7 +424,7 @@ describe('文献盒面板 UI', () => {
     (document.getElementById('bili-add-page') as HTMLInputElement).value = '2';
     (document.getElementById('bili-add-save') as HTMLButtonElement).click();
     await vi.waitFor(() => expect(strNotices()).toContain('已保存'));
-    let all = await TasksData.loadTasks();
+    let all = await LiteratureData.loadTasks();
     expect(all[0].quality).toBe('720');
     expect(all[0].page).toBe(2);
     // 非法分P：0 或小数 → 报错不入库
@@ -433,7 +433,7 @@ describe('文献盒面板 UI', () => {
     (document.getElementById('bili-add-page') as HTMLInputElement).value = '0';
     (document.getElementById('bili-add-save') as HTMLButtonElement).click();
     await vi.waitFor(() => expect(strNotices()).toContain('分P 应为正整数'));
-    all = await TasksData.loadTasks();
+    all = await LiteratureData.loadTasks();
     expect(all).toHaveLength(1);
   });
 

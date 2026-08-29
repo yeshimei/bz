@@ -222,12 +222,12 @@ registerEntity('dossier', {
 
 WORDING['secondbrain:*'] = (s) => (s.name ? `你在第二大脑记录了「${s.name}」` : '你在第二大脑有新的记录');
 
-// ==================== bili（文献盒：B站视频转文献，ADR-0066） ====================
+// ==================== literature（文献盒：视频转文献 + 术语生成，ADR-0066/0072） ====================
 
-registerEntity('bili', {
-  added: (s) => `你添加了转文献任务（${s.name || 'BV 视频'}）`,
+registerEntity('literature', {
   converted: (s) => `你把《${s.name || '一部视频'}》转成了文献`,
-}, ['bili-downloader'], (s) => `转文献动态：${s.name || '一部视频'}`);
+  'term-generated': (s) => `你为「${s.name || '一个术语'}」生成了一篇术语文献`,
+}, ['literature'], (s) => `文献动态：${s.name || '一部视频'}`);
 
 // ==================== ADR-0069 行为流全量盘点补齐（新增实体模板） ====================
 

@@ -7,10 +7,10 @@
  * 普通文章（果壳/知乎）原行为保留（ticket 123 跳过仍发）；url 缺失回退剪藏按钮。
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-// 跨域入口 mock：reader 仅函数级 import openBiliAddTask（真实实现会拉起文献盒面板 DOM，
+// 跨域入口 mock：reader 仅函数级 import openLiteratureAddTask（真实实现会拉起文献盒面板 DOM，
 // 聚合讯侧只断言调用参数——面板自身行为由 tests/bili-downloader/* 覆盖）
-vi.mock('../../src/bili-downloader', () => ({ openBiliAddTask: vi.fn() }));
-import { openBiliAddTask } from '../../src/bili-downloader';
+vi.mock('../../src/literature', () => ({ openLiteratureAddTask: vi.fn() }));
+import { openLiteratureAddTask } from '../../src/literature';
 import { setApp } from '../../src/core/app';
 import { loadArticles, loadStats, render, skipArticle, markAsRead, init } from '../../src/news/reader';
 import { MockVault } from '../mock-vault';
@@ -84,8 +84,8 @@ describe('聚合讯保存至文献（ticket 134）', () => {
     expect(saveBtn.textContent).toContain('保存至文献');
     expect(saveBtn.textContent).not.toContain('剪藏');
     saveBtn.click();
-    expect(openBiliAddTask).toHaveBeenCalledTimes(1);
-    expect(openBiliAddTask).toHaveBeenCalledWith(expect.anything(), {
+    expect(openLiteratureAddTask).toHaveBeenCalledTimes(1);
+    expect(openLiteratureAddTask).toHaveBeenCalledWith(expect.anything(), {
       url: 'https://www.bilibili.com/video/BV1xx411c7mD',
       title: 'B站视频一',
       uploader: 'UP主甲',
@@ -157,6 +157,6 @@ describe('聚合讯保存至文献（ticket 134）', () => {
     expect(document.querySelector('[data-action="save"]')!.textContent).toContain('保存至剪藏');
     (document.querySelector('[data-action="save"]') as HTMLElement).click();
     await vi.waitFor(() => expect(vault.files.get('归档/网页剪藏/B站视频一.md')).toBeDefined());
-    expect(openBiliAddTask).not.toHaveBeenCalled();
+    expect(openLiteratureAddTask).not.toHaveBeenCalled();
   });
 });
