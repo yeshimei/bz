@@ -8,6 +8,7 @@
 import { notice } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
 import { getApp } from '../core/app';
+import { patchKeyedCards } from '../core/list-patch';
 import { escManager } from '../core/esc-manager';
 import { createSiteIcon, topifyZ } from '../core/dom';
 import { formatRelativeTime } from '../core/utils';
@@ -441,19 +442,19 @@ export async function parseArticleFile(file: any): Promise<ArticleEntry | null> 
   }
 }
 
-// ========== 刷新数据（单文件增量，ticket 45 + B1） ==========
-/** 按路径移除存量条目并重渲染（删除/改名旧路径/解析失败共用；无此条目则不动） */
+// ========== 刷新数据（单文件增量，ticket 45 + B1；ticket 139 起文件事件只 patch 差异卡片） ==========
+/** 按路径移除存量条目并增量刷新（删除/改名旧路径/解析失败共用；无此条目则不动） */
 function removeArticleByPath(path: string): void {
   const idx = allArticles.findIndex((a) => a.path === path);
   if (idx === -1) return;
   allArticles.splice(idx, 1);
   allArticles.sort((a, b) => b.created.valueOf() - a.created.valueOf());
-  filteredArticles = [...allArticles];
-  applyFilter();
+  refilter();
+  patchEntryList(); // 被 key 不在目标区段 → patch 自动移除该卡；其余卡片复用（滚动不跳）
   rebuildSiteBar();
 }
 
-/** modify/rename 新路径：只重解析这一个文件并就地更新列表（parseArticleFile 无 I/O，代价低廉） */
+/** modify/rename 新路径：只重解析这一个文件并增量更新列表（parseArticleFile 无 I/O，代价低廉） */
 async function refreshSingleFile(path: string): Promise<void> {
   const app = getApp();
   const file = app.vault.getAbstractFileByPath(path) as any;
@@ -464,7 +465,9 @@ async function refreshSingleFile(path: string): Promise<void> {
   }
   if (file.extension !== 'md') return;
   const entry = await parseArticleFile(file);
+  let isNew = false;
   if (entry) {
+    isNew = !allArticles.some((a) => a.path === path);
     const idx = allArticles.findIndex((a) => a.path === path);
     if (idx >= 0) allArticles[idx] = entry;
     else allArticles.push(entry);
@@ -473,13 +476,19 @@ async function refreshSingleFile(path: string): Promise<void> {
     return;
   }
   allArticles.sort((a, b) => b.created.valueOf() - a.created.valueOf());
-  filteredArticles = [...allArticles];
-  applyFilter();
+  refilter();
+  if (isNew) {
+    // 新增条目落在已显示区段内（或列表为空/区段未开）→ 区段 +1，避免把区段尾部已有卡片挤出屏幕（ticket 139）
+    const fi = filteredArticles.findIndex((a) => a.path === path);
+    if (fi >= 0 && (fi < currentDisplayCount || currentDisplayCount === 0)) currentDisplayCount++;
+  }
+  patchEntryList(new Set([path]));
   rebuildSiteBar();
 }
 
 // ========== 筛选与排序（单选站点） ==========
-export function applyFilter() {
+/** 纯筛选重算（不动渲染与懒加载计数；ticket 139 从 applyFilter 拆出，文件事件增量路径共用） */
+function refilter() {
   let filtered = [...allArticles];
 
   if (selectedSite) {
@@ -500,9 +509,87 @@ export function applyFilter() {
   }
 
   filteredArticles = filtered;
+}
+
+export function applyFilter() {
+  refilter();
   currentDisplayCount = 0;
   allLoaded = false;
   renderEntries(true);
+}
+
+/**
+ * 文件事件增量路径（ticket 139）：core patchKeyedCards 只增/删/移/换差异卡片，
+ * 不再全列表 innerHTML 重建（根因：任一单文件变更销毁整个列表 DOM → 滚动位置跳顶）。
+ */
+function patchEntryList(changedPaths: ReadonlySet<string> = new Set()): void {
+  if (!articlesContainer) return;
+  currentDisplayCount = Math.min(currentDisplayCount, filteredArticles.length);
+  if (filteredArticles.length === 0) {
+    syncEntryHints();
+    return;
+  }
+  if (!scrollContainer) {
+    scrollContainer = document.createElement('div');
+    scrollContainer.className = 'article-scroll-container';
+    articlesContainer.appendChild(scrollContainer);
+  }
+  const keys = filteredArticles.slice(0, currentDisplayCount).map((a) => a.path);
+  patchKeyedCards({
+    container: scrollContainer,
+    keyAttr: 'path',
+    keys,
+    render: (p) => {
+      const a = filteredArticles.find((x) => x.path === p);
+      return a ? createArticleCard(a) : null;
+    },
+    changedKeys: changedPaths,
+  });
+  allLoaded = currentDisplayCount >= filteredArticles.length;
+  syncEntryHints();
+}
+
+/** 空态（外层容器）/ 懒加载尾部提示（内层滚动区）与增量 patch 后的列表状态同步（ticket 139） */
+function syncEntryHints(): void {
+  if (!articlesContainer) return;
+  const empty = articlesContainer.querySelector<HTMLElement>(':scope > .article-empty');
+  if (filteredArticles.length === 0) {
+    if (scrollContainer) {
+      scrollContainer.remove();
+      scrollContainer = null;
+    }
+    if (!empty) {
+      const fresh = document.createElement('div');
+      fresh.className = 'article-empty';
+      // 空态三态区分（ticket 63）口径与 renderEntries 一致
+      if (selectedSite || currentSearchKeyword) {
+        fresh.textContent = '没有符合条件的文章';
+      } else if (allArticles.length === 0) {
+        fresh.textContent = '目录为空，还没有剪藏文章';
+      } else {
+        fresh.textContent = '没有符合条件的文章';
+      }
+      articlesContainer.appendChild(fresh);
+    }
+    return;
+  }
+  if (empty) empty.remove();
+  if (!scrollContainer) {
+    scrollContainer = document.createElement('div');
+    scrollContainer.className = 'article-scroll-container';
+    articlesContainer.appendChild(scrollContainer);
+  }
+  if (allLoaded) {
+    let hint = scrollContainer.querySelector<HTMLElement>('.article-loading-hint');
+    if (!hint) {
+      hint = document.createElement('div');
+      hint.className = 'article-loading-hint';
+      hint.textContent = '已显示所有文章';
+    }
+    scrollContainer.appendChild(hint); // appendChild 自带移动语义：patch 后恒在末尾，幂等
+  } else {
+    scrollContainer.querySelectorAll('.article-loading-hint').forEach((el) => el.remove());
+  }
 }
 
 // ========== 渲染列表 ==========

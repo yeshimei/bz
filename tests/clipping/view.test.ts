@@ -757,11 +757,12 @@ describe('剪藏本修复回归（P0-8/P1-22/P1-23/P2）', () => {
     expect(document.querySelector('.article-scroll-container')).toBe(scBefore);
     expect(document.querySelectorAll('.article-entry-card').length).toBe(1);
 
-    // 目录内 modify → 防抖 300ms 后 refreshData 重渲染（scrollContainer 重建）
+    // 目录内 modify → 防抖 300ms 后增量刷新：容器不重建（ticket 139 卡片级 patch），新卡内容出现
     vault.files.set('我的/文章/B.md', makeArticleMd('https://x.com/b', '站', 'B', '2025-06-03T08:00:00.000Z'));
     emitDomainEvent('clipping:file-modified', { path: '我的/文章/B.md' });
     await new Promise((r) => setTimeout(r, 400));
-    expect(document.querySelector('.article-scroll-container')).not.toBe(scBefore);
+    expect(document.querySelector('.article-scroll-container')).toBe(scBefore);
     expect(document.querySelectorAll('.article-entry-card').length).toBe(2);
+    expect(document.body.textContent).toContain('B');
   });
 });

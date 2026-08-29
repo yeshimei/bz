@@ -12,7 +12,8 @@
  *   复制原文链接[仅视频有 url]/删除 danger+flow-dialog 确认——删除视频笔记时同步清理
  *   literature.json 指向该笔记的任务记录）；打开主面板时调 backfillNotes() 补全旧笔记。
  * - 视频录入面板（showVideoEntry，任务队列）：原 bili-tasks 面板整体搬入，去掉 ⚙️ 设置 /
- *   ⬇️ 下载按钮；保留 ➕ 添加 / ▶️ 处理 / ⏹ 中止 / 🕘 历史 / ✕；移动端仅 ➕ 添加 / 🕘 历史 + ✕。
+ *   ⬇️ 下载按钮；保留 ➕ 添加 / ▶️ 处理 / ⏹ 中止 / 🕘 历史 / ❌；移动端仅 ➕ 添加 + ❌
+ *   （ticket 139：处理/中止/历史全部隐藏，移动端无处理能力）。
  *   批处理调 BatchRunner.runAll（work = 非 archived 且 pending/failed），事件回调驱动行内进度/
  *   步骤时间线/完成态文案（STEP_DONE_MAP 覆盖「AI 生成文献笔记中」「笔记落盘中」）+ 整批通知。
  * - 术语生成面板（showTermEntry，文字录入）：遮罩 + 弹窗，术语输入（预填/可改）→ 「生成」调
@@ -22,7 +23,13 @@
  *   { kind:'term-generated', term, title }) → 关闭面板。预览阶段不产生任何文件（ticket 138 §2.1）。
  * - 设置面板：主面板 ⚙️ → openSettingsModal（五组声明式 schema，见 literatureSettingsSchema）。
  *
- * 移动端默认全屏（ticket 68 三件事）：主面板 + 历史弹窗两处 applyMobileWindowFullscreen。
+ * 移动端默认全屏（ticket 68 三件事）：主面板 + 历史弹窗 + 视频录入面板三处 applyMobileWindowFullscreen
+ * （ticket 139 补齐视频面板）。
+ *
+ * ticket 139 交互修订：📝/🎬 打开子面板不再隐藏主面板（topifyZ 叠开，关闭子面板回列表）；
+ * 文件事件增量刷新走 core patchKeyedCards 只动对应卡片（不再全列表重建，滚动不跳顶）；
+ * 打开文献笔记即收起文献盒全部窗口；失败原因行内白话化（humanizeError，原文见 title）；
+ * 添加任务弹窗「整片/剪辑」分段开关 + 校验失败聚焦定位；术语面板重设计 + 重新生成手改确认。
  */
 import type { App } from 'obsidian';
 import type { SettingsSchema } from '../core/settings-schema';
@@ -31,6 +38,7 @@ import { tryGetSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
 import { mobileFullscreenGroup } from '../core/settings-common';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
+import { patchKeyedCards } from '../core/list-patch';
 import { openFlowDialog } from '../core/flow-dialog';
 import { notice } from '../core/notice';
 import { topifyZ } from '../core/z-order';
@@ -57,6 +65,35 @@ function q<T extends HTMLElement>(root: HTMLElement, sel: string): T | null {
 /** HTML 转义（进度文案来自外部进程 stdout，统一转义防注入） */
 function esc(s: unknown): string {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+}
+
+/**
+ * 失败原因白话化（ticket 139，渲染层）：外部工具 stderr / AI 报错多为英文原文，
+ * 行内直出对使用者不可读。按常见失败模式映射为一句中文白话；未命中返回截断原文。
+ * 原文始终保留在卡片 title 悬浮与编辑弹窗失败提示条，白话只做行内展示。
+ */
+export function humanizeError(reason: string | null | undefined): string {
+  const s = String(reason ?? '').trim();
+  if (!s) return '';
+  // bili-dl 未安装（processor INSTALL_HINT 或 spawn ENOENT）
+  if (/未找到 bili-dl|npm install -g @jwbz\/bili-downloader|ENOENT.*bili-dl/i.test(s)) {
+    return '下载工具未安装：在电脑上运行 npm install -g @jwbz/bili-downloader 后重试';
+  }
+  if (/ffmpeg/i.test(s)) return '视频处理工具（ffmpeg）不可用：检查电脑是否已安装，或设置里的「ffmpeg 路径」';
+  if (/ffprobe/i.test(s)) return '视频探测工具（ffprobe）不可用：检查电脑是否已安装，或设置里的「ffprobe 路径」';
+  if (/whisper|faster.whisper|no module/i.test(s)) return '语音转写失败：检查设置里的「Python 路径」与「Whisper 模型」';
+  if (/API Key|AI 配置|未配置|Unauthorized|\b401\b|invalid_api_key|insufficient|quota/i.test(s)) {
+    return 'AI 配置不可用：请在插件设置 → AI 配置里检查 API Key';
+  }
+  if (/AI 请求超时|AI 返回的不是 JSON/i.test(s)) return 'AI 响应异常：网络不稳定或服务繁忙，稍后重试';
+  if (/转录文件读取失败|无转录文件/i.test(s)) return '转写稿缺失：视频处理步骤未完成，可重试';
+  if (/ETIMEDOUT|ESOCKETTIMEDOUT|timed? ?out|超时/i.test(s)) return '网络超时：请检查网络连接后重试';
+  if (/ECONNRESET|ECONNREFUSED|ENOTFOUND|EAI_AGAIN|getaddrinfo|fetch failed/i.test(s)) {
+    return '网络连接失败：请检查网络或代理设置后重试';
+  }
+  if (/^-352|\b412\b|风控|请求过于频繁/i.test(s)) return 'B 站风控拦截：稍后再试，或在设置里配置登录 Cookie';
+  if (/视频不存在|稿件不存在|\b404\b|not found/i.test(s)) return '视频不存在或已删除：请检查链接是否正确';
+  return s.length > 160 ? s.slice(0, 160) + '…' : s;
 }
 
 /** 运行中行内进度态（内存瞬态，不落库；刷新面板重读 storage 时由步骤文案兜底） */
@@ -269,7 +306,7 @@ export class UIManager {
         <button id="lit-btn-video" title="视频录入：添加转文献任务并批处理">🎬</button>
         <button id="lit-btn-search" title="切换搜索框">🔍</button>
         <button id="lit-btn-settings" title="设置">⚙️</button>
-        <button id="lit-btn-close" class="bz-win-close" title="关闭">✕</button>
+        <button id="lit-btn-close" class="bz-win-close" title="关闭">❌</button>
       </div>`;
     popup.appendChild(header);
 
@@ -348,13 +385,12 @@ export class UIManager {
         }
       }
     };
-    // 文字录入 → 术语生成面板；视频录入 → 任务队列（剪藏本互调先例：隐藏当前窗开目标窗）
+    // 文字录入 → 术语生成面板；视频录入 → 任务队列（ticket 139：不隐藏主面板，子面板 topifyZ
+    // 叠开，关闭子面板自然回到主面板——原「隐藏当前窗开目标窗」导致关闭后回不到列表）
     q<HTMLButtonElement>(p, '#lit-btn-text')!.onclick = () => {
-      this.hideMain();
       this.showTermEntry();
     };
     q<HTMLButtonElement>(p, '#lit-btn-video')!.onclick = () => {
-      this.hideMain();
       this.showVideoEntry();
     };
     q<HTMLButtonElement>(p, '#lit-btn-settings')!.onclick = () =>
@@ -394,10 +430,21 @@ export class UIManager {
       this.loadedDir = '';
       this.backfilledDir = ''; // 目录换了，旧目录的补全记录作废
     }
+    if (this.allNotes.length === 0) this.showListLoading(); // 首载/目录切换：加载态防白屏（ticket 139）
     await this.loadNotes();
     if (!this.list) return; // await 期间面板被销毁 → 放弃渲染
     this.rebuildDomainBar();
     this.applyFilter(); // 以全部笔记（+当前筛选态）重建 filteredNotes 并渲染；纯 renderList 不会灌 filteredNotes
+  }
+
+  /** 列表加载中占位（renderList(true) 重建时自然清掉；ticket 139） */
+  private showListLoading(): void {
+    if (!this.list) return;
+    this.list.innerHTML = '';
+    const loading = document.createElement('div');
+    loading.className = 'bz-lit-loading bz-lit-empty';
+    loading.textContent = '正在扫描文献目录…';
+    this.list.appendChild(loading);
   }
 
   /** 扫描「文献目录」下全部 .md（含嵌套子目录——与 backfillNotes 前缀匹配口径一致，P3-5；
@@ -517,8 +564,8 @@ export class UIManager {
     }
   }
 
-  /** 筛选管线：领域筛选（叠加）→ 搜索（标题/简介）；类型分类栏已移除（ticket 138 §3.1），selectedType 一并清理 */
-  private applyFilter(): void {
+  /** 纯筛选重算（不动渲染与懒加载计数）：领域筛选（叠加）→ 搜索（标题/简介） */
+  private refilter(): void {
     let list = this.allNotes;
     if (this.selectedDomain) list = list.filter((n) => (n.domain || '未分类') === this.selectedDomain);
     if (this.searchKeyword) {
@@ -526,10 +573,67 @@ export class UIManager {
       list = list.filter((n) => n.title.toLowerCase().includes(kw) || n.summary.toLowerCase().includes(kw));
     }
     this.filteredNotes = list;
+  }
+
+  /** 用户主动筛选/搜索：计数复位从头渲染（回顶是预期行为） */
+  private applyFilter(): void {
+    this.refilter();
     this.currentDisplayCount = 0;
     this.allLoaded = false;
     this.rebuildDomainBar(); // 活跃态随筛选重算（切「全部」/单域后高亮必须同步，勿漏）
     this.renderList(true);
+  }
+
+  /**
+   * 文件事件增量路径（ticket 139）：不重建整个列表 DOM（滚动跳顶根因），
+   * core patchKeyedCards 只增/删/移/换差异卡片；changedPaths 为内容需重建的 key。
+   */
+  private patchList(changedPaths: ReadonlySet<string> = new Set()): void {
+    if (!this.list) return;
+    this.currentDisplayCount = Math.min(this.currentDisplayCount, this.filteredNotes.length);
+    const keys = this.filteredNotes.slice(0, this.currentDisplayCount).map((n) => n.path);
+    patchKeyedCards({
+      container: this.list,
+      keyAttr: 'path',
+      keys,
+      render: (p) => {
+        const n = this.filteredNotes.find((x) => x.path === p);
+        return n ? this.renderNoteCard(n) : null;
+      },
+      changedKeys: changedPaths,
+    });
+    this.allLoaded = this.currentDisplayCount >= this.filteredNotes.length;
+    this.syncListHints();
+  }
+
+  /** 空态 / 懒加载尾部提示与增量 patch 后的列表状态同步（全量 renderList 亦复用收尾） */
+  private syncListHints(): void {
+    if (!this.list) return;
+    let empty = q<HTMLElement>(this.list, '.bz-lit-empty');
+    let tail = q<HTMLElement>(this.list, '.bz-lit-tail');
+    if (this.filteredNotes.length === 0) {
+      if (tail) tail.remove();
+      if (!empty) {
+        empty = document.createElement('div');
+        empty.className = 'bz-lit-empty';
+        empty.textContent = this.selectedDomain || this.searchKeyword
+          ? '没有符合条件的文献笔记'
+          : `「${this.loadedDir || litDirOf(tryGetSettings())}」还没有文献笔记`;
+        this.list.appendChild(empty);
+      }
+      return;
+    }
+    if (empty) empty.remove();
+    if (this.allLoaded) {
+      if (!tail) {
+        tail = document.createElement('div');
+        tail.className = 'bz-lit-tail';
+        tail.textContent = '已显示所有笔记';
+      }
+      this.list.appendChild(tail); // appendChild 自带移动语义：patch 后恒在末尾，幂等
+    } else if (tail) {
+      tail.remove();
+    }
   }
 
   /** 渲染列表（懒加载：reset 重建，否则追加下一批 ~20 条） */
@@ -661,7 +765,8 @@ export class UIManager {
     const idx = this.allNotes.findIndex((n) => n.path === path);
     if (idx === -1) return;
     this.allNotes.splice(idx, 1);
-    this.applyFilter();
+    this.refilter();
+    this.patchList(); // 被 key 不在目标区段 → patch 自动移除该卡；其余卡片原样复用（滚动不跳）
     this.rebuildDomainBar();
   }
 
@@ -673,11 +778,19 @@ export class UIManager {
     if (file.extension !== 'md') return;
     const entry = await this.parseNoteFile(file);
     if (entry) {
+      const isNew = !this.allNotes.some((n) => n.path === path);
       const idx = this.allNotes.findIndex((n) => n.path === path);
       if (idx >= 0) this.allNotes[idx] = entry;
       else this.allNotes.push(entry);
       this.allNotes.sort((a, b) => (b.created - a.created) || a.path.localeCompare(b.path));
-      this.applyFilter();
+      this.refilter();
+      if (isNew) {
+        // 新增条目落在已显示区段内（或列表为空/区段未开）→ 区段 +1，避免把区段尾部已有卡片挤出屏幕
+        const fi = this.filteredNotes.findIndex((n) => n.path === path);
+        if (fi >= 0 && (fi < this.currentDisplayCount || this.currentDisplayCount === 0)) this.currentDisplayCount++;
+      }
+      this.patchList(new Set([path]));
+      this.rebuildDomainBar(); // 领域徽标/计数可能随内容变化
     } else {
       this.removeNoteByPath(path);
     }
@@ -745,7 +858,7 @@ export class UIManager {
         <button id="lit-btn-video-run" title="批量处理（桌面端）">▶️</button>
         <button id="lit-btn-video-abort" title="中止整批" style="display:none;">⏹</button>
         <button id="lit-btn-video-history" title="历史">🕘</button>
-        <button id="lit-btn-video-close" class="bz-win-close" title="关闭">✕</button>
+        <button id="lit-btn-video-close" class="bz-win-close" title="关闭">❌</button>
       </div>`;
     const list = document.createElement('div');
     list.id = 'literature-video-list';
@@ -758,12 +871,15 @@ export class UIManager {
     this.videoPopup = popup;
     this.videoList = list;
     this._bindVideoHeaderEvents();
-    // 移动端仅 ➕ 添加 / 🕘 历史 + ✕（隐藏 处理/中止——原 isMobileEnv 逻辑扩展，ticket 136 §5）
+    // 移动端仅 ➕ 添加 + ✕（ticket 139：处理/中止/历史全部隐藏——移动端无处理能力，
+    // 历史入口一并收起；原 ticket 136 §5 仅藏 处理/中止）
     if (isMobileEnv()) {
       const run = q<HTMLButtonElement>(popup, '#lit-btn-video-run');
       const abort = q<HTMLButtonElement>(popup, '#lit-btn-video-abort');
+      const history = q<HTMLButtonElement>(popup, '#lit-btn-video-history');
       if (run) run.style.display = 'none';
       if (abort) abort.style.display = 'none';
+      if (history) history.style.display = 'none';
     }
   }
 
@@ -777,9 +893,11 @@ export class UIManager {
     q<HTMLButtonElement>(p, '#lit-btn-video-close')!.onclick = () => this.hideVideo();
   }
 
-  /** 打开视频录入面板（任务队列）；prefill 存在则叠开添加弹窗（聚合讯「保存至文献」入口，ADR-0068） */
+  /** 打开视频录入面板（任务队列）；prefill 存在则叠开添加弹窗（聚合讯「保存至文献」入口，ADR-0068）。
+   *  移动端默认全屏（ticket 139：主面板/历史弹窗同款三件事对齐）。 */
   showVideoEntry(prefill?: { url: string; title?: string | null; uploader?: string | null }): void {
     if (!this.videoPopup || !this.videoMask) return;
+    applyMobileWindowFullscreen(this.videoPopup, tryGetSettings().literatureMobileDefaultFullscreen === true);
     topifyZ(this.videoMask, this.videoPopup);
     this.videoMask.style.display = 'block';
     this.videoPopup.style.display = 'flex';
@@ -860,17 +978,18 @@ export class UIManager {
       </div>
       <div class="bz-bili-meta">${timeText}${upText}${task.remark ? ' · ' + esc(task.remark) : ''}</div>
       ${task.status === 'processing' ? (this.runState.has(task.id) ? '<div class="bz-bili-progress-box"></div>' : (task.reason ? `<div class="bz-bili-progress">${esc(task.reason)}</div>` : '')) : ''}
-      ${task.status === 'failed' && task.reason ? `<div class="bz-bili-progress bz-bili-progress-error">${esc(task.reason)}</div>` : ''}
+      ${task.status === 'failed' && task.reason ? `<div class="bz-bili-progress bz-bili-progress-error" title="${esc(task.reason)}">${esc(humanizeError(task.reason))}</div>` : ''}
       ${task.status === 'success' && task.notePath ? `<div class="bz-bili-note">📄 ${esc(task.notePath)}</div>` : ''}`;
     const actions = this.buildCardActions(task);
     if (actions.length) attachItemActions(card, actions);
     // 标题链接：浏览器打开（不停泡点击分流的冒泡）
     const titleLink = q<HTMLAnchorElement>(card, '.bz-bili-title');
     if (titleLink) titleLink.onclick = (e) => { e.stopPropagation(); this._openExternal(titleLink.href || task.url); };
-    // 点击分流：成功→打开文献笔记；待处理→编辑（失败原因已行内直显，处理中不响应）
+    // 点击分流：成功→打开文献笔记；待处理/失败→编辑（失败编辑弹窗带原因提示条，ticket 139；
+    // 处理中不响应——中途不可改，拍板 ADR-0070）
     card.addEventListener('click', () => {
       if (task.status === 'success' && task.notePath) this.openNote(task.notePath);
-      else if (task.status === 'pending') this.showAddDialog(task);
+      else if (task.status === 'pending' || task.status === 'failed') this.showAddDialog(task);
     });
     return card;
   }
@@ -1047,6 +1166,7 @@ export class UIManager {
     // 无取消按钮：遮罩 + ESC 关闭，与其他域弹窗一致（ADR-0070）；视觉样式收敛为 bz-lit-* 类（P3-1）
     popup.innerHTML = `
       <h4 id="lit-add-title">添加转文献任务</h4>
+      <div id="lit-add-fail" class="bz-lit-form-alert" style="display:none;"></div>
       <label>视频链接 / BV 号</label>
       <input id="lit-add-url" type="text" placeholder="https://www.bilibili.com/video/BV… 或 BV1xx411c7mD">
       <div class="bz-lit-form-row">
@@ -1067,10 +1187,19 @@ export class UIManager {
           <input id="lit-add-page" type="number" min="1" step="1" placeholder="如 2"></div>
       </div>
       <div class="bz-lit-form-row">
-        <div class="bz-lit-form-col"><label>开始时间（留空 = 整片）</label>
-          <input id="lit-add-start" type="text" placeholder="12.2 / 12-2 / 1:30:05"></div>
-        <div class="bz-lit-form-col"><label>结束时间</label>
-          <input id="lit-add-end" type="text" placeholder="与开始成对填写"></div>
+        <div class="bz-lit-form-col"><label>处理范围</label>
+          <div class="bz-lit-range-toggle" id="lit-add-range">
+            <button type="button" data-range="whole">整片</button>
+            <button type="button" data-range="clip">剪辑片段</button>
+          </div></div>
+      </div>
+      <div id="lit-add-clip-fields" style="display:none;">
+        <div class="bz-lit-form-row">
+          <div class="bz-lit-form-col"><label>开始时间</label>
+            <input id="lit-add-start" type="text" placeholder="12.2 / 12-2 / 1:30:05"></div>
+          <div class="bz-lit-form-col"><label>结束时间</label>
+            <input id="lit-add-end" type="text" placeholder="与开始成对填写"></div>
+        </div>
       </div>
       <div class="bz-lit-form-actions">
         <button id="lit-add-save" class="bz-lit-accent-btn">保存</button>
@@ -1080,6 +1209,20 @@ export class UIManager {
     this.addMask = addMask;
     this.addPopup = popup;
     q<HTMLButtonElement>(popup, '#lit-add-save')!.onclick = () => void this._handleAddSave();
+    // 整片/剪辑分段开关（ticket 139）：剪辑才展开时间输入
+    const rangeBox = q<HTMLElement>(popup, '#lit-add-range');
+    if (rangeBox) {
+      rangeBox.addEventListener('click', (e) => {
+        const btn = (e.target as HTMLElement).closest('button[data-range]');
+        if (btn) this._setAddRangeMode(btn.getAttribute('data-range') === 'clip' ? 'clip' : 'whole');
+      });
+    }
+    // 表单内 Enter 直接保存（ticket 139）
+    for (const sel of ['#lit-add-url', '#lit-add-vtitle', '#lit-add-uploader', '#lit-add-page', '#lit-add-start', '#lit-add-end']) {
+      q<HTMLInputElement>(popup, sel)?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); void this._handleAddSave(); }
+      });
+    }
   }
 
   showAddDialog(editItem?: Partial<LiteratureTask>): void {
@@ -1094,9 +1237,34 @@ export class UIManager {
     (q<HTMLInputElement>(this.addPopup, '#lit-add-page')!).value = editItem?.page ? String(editItem.page) : '';
     (q<HTMLInputElement>(this.addPopup, '#lit-add-vtitle')!).value = editItem?.title ?? '';
     (q<HTMLInputElement>(this.addPopup, '#lit-add-uploader')!).value = editItem?.uploader ?? '';
+    // 处理范围：编辑既有任务按 start/end 有无回显；新任务默认整片（ticket 139）
+    this._setAddRangeMode(editItem?.start || editItem?.end ? 'clip' : 'whole');
+    // 失败任务编辑态：顶部原因提示条（白话 + 悬浮原文，ticket 139）
+    const fail = q<HTMLElement>(this.addPopup, '#lit-add-fail');
+    if (fail) {
+      const reason = editItem?.status === 'failed' ? (editItem.reason || '') : '';
+      fail.style.display = reason ? 'block' : 'none';
+      fail.textContent = reason ? `上次处理失败：${humanizeError(reason)}` : '';
+      fail.title = reason;
+    }
     topifyZ(this.addMask, this.addPopup); // ADR-0067：显示即发号
     this.addMask.style.display = 'block';
     this.addPopup.style.display = 'flex';
+    const urlInput = q<HTMLInputElement>(this.addPopup, '#lit-add-url');
+    if (urlInput) setTimeout(() => urlInput.focus(), 100);
+  }
+
+  /** 整片/剪辑分段开关：active 高亮 + 时间输入区显隐（ticket 139） */
+  private _setAddRangeMode(mode: 'whole' | 'clip'): void {
+    if (!this.addPopup) return;
+    const box = q<HTMLElement>(this.addPopup, '#lit-add-range');
+    if (box) {
+      for (const btn of Array.from(box.querySelectorAll('button[data-range]'))) {
+        btn.classList.toggle('active', btn.getAttribute('data-range') === mode);
+      }
+    }
+    const clipFields = q<HTMLElement>(this.addPopup, '#lit-add-clip-fields');
+    if (clipFields) clipFields.style.display = mode === 'clip' ? 'block' : 'none';
   }
 
   hideAddDialog(): void {
@@ -1108,19 +1276,24 @@ export class UIManager {
   private async _handleAddSave(): Promise<void> {
     if (!this.addPopup) return;
     const url = (q<HTMLInputElement>(this.addPopup, '#lit-add-url')?.value ?? '').trim();
-    const start = normalizeLooseTime(q<HTMLInputElement>(this.addPopup, '#lit-add-start')?.value);
-    const end = normalizeLooseTime(q<HTMLInputElement>(this.addPopup, '#lit-add-end')?.value);
+    const clipMode = q<HTMLElement>(this.addPopup, '#lit-add-range')?.querySelector('button[data-range].active')?.getAttribute('data-range') === 'clip';
+    const startRaw = (q<HTMLInputElement>(this.addPopup, '#lit-add-start')?.value ?? '').trim();
+    const endRaw = (q<HTMLInputElement>(this.addPopup, '#lit-add-end')?.value ?? '').trim();
+    const start = clipMode ? normalizeLooseTime(startRaw) : '';
+    const end = clipMode ? normalizeLooseTime(endRaw) : '';
     const quality = (q<HTMLSelectElement>(this.addPopup, '#lit-add-quality')?.value ?? '').trim() || null;
     const pageRaw = (q<HTMLInputElement>(this.addPopup, '#lit-add-page')?.value ?? '').trim();
     const vtitle = (q<HTMLInputElement>(this.addPopup, '#lit-add-vtitle')?.value ?? '').trim();
     const uploader = (q<HTMLInputElement>(this.addPopup, '#lit-add-uploader')?.value ?? '').trim();
-    if (!url) { notice('请填写视频链接或 BV 号', 'error'); return; }
-    if (start === null || end === null) { notice('时间格式看不懂：支持 12.2 / 12-2 / 1:30:05 等，单个数字按分钟算', 'error'); return; }
-    if ((!start && end) || (start && !end)) { notice('开始与结束时间需成对填写（都留空 = 整片）', 'error'); return; }
+    const focusField = (sel: string): void => q<HTMLInputElement>(this.addPopup!, sel)?.focus();
+    if (!url) { notice('请填写视频链接或 BV 号', 'error'); focusField('#lit-add-url'); return; }
+    if (clipMode && !startRaw && !endRaw) { notice('剪辑片段需填写开始与结束时间', 'error'); focusField('#lit-add-start'); return; }
+    if (start === null || end === null) { notice('时间格式看不懂：支持 12.2 / 12-2 / 1:30:05 等，单个数字按分钟算', 'error'); focusField(start === null ? '#lit-add-start' : '#lit-add-end'); return; }
+    if ((!start && end) || (start && !end)) { notice('开始与结束时间需成对填写', 'error'); focusField(start ? '#lit-add-end' : '#lit-add-start'); return; }
     let page: number | null = null;
     if (pageRaw) {
       const n = Number(pageRaw);
-      if (!Number.isInteger(n) || n < 1) { notice('分P 应为正整数（留空 = 第 1 P）', 'error'); return; }
+      if (!Number.isInteger(n) || n < 1) { notice('分P 应为正整数（留空 = 第 1 P）', 'error'); focusField('#lit-add-page'); return; }
       page = n;
     }
     try {
@@ -1158,7 +1331,7 @@ export class UIManager {
     header.innerHTML = `
       <h3 class="bz-lit-title">文献盒 · 历史</h3>
       <div class="bz-lit-head-btns">
-        <button id="lit-history-close" class="bz-win-close" title="关闭">✕</button>
+        <button id="lit-history-close" class="bz-win-close" title="关闭">❌</button>
       </div>`;
     const list = document.createElement('div');
     list.id = 'literature-history-list';
@@ -1274,17 +1447,20 @@ export class UIManager {
       <h3 class="bz-lit-title">术语生成文献笔记</h3>`;
     const body = document.createElement('div');
     body.className = 'bz-lit-term-body';
+    // ticket 139 重设计：输入与生成同行、生成中状态行、预览区卡片化（id 契约不变）
     body.innerHTML = `
       <label>术语</label>
-      <input id="lit-term-input" type="text" placeholder="如 黑洞 / 贝叶斯定理">
-      <div class="bz-lit-term-gen-wrap">
-        <button id="lit-term-generate">生成</button>
+      <div class="bz-lit-term-inputrow">
+        <input id="lit-term-input" type="text" placeholder="如 黑洞 / 贝叶斯定理">
+        <button id="lit-term-generate" class="bz-lit-accent-btn">生成</button>
       </div>
+      <div id="lit-term-status" class="bz-lit-term-status" style="display:none;"></div>
       <div id="lit-term-preview" class="bz-lit-term-preview" style="display:none;">
+        <div class="bz-lit-term-preview-head">AI 预览 · 可直接修改，确认后写入文献盒</div>
         <label>领域（可改，留空 = 无）</label>
         <input id="lit-term-domain" type="text" placeholder="领域词，如 物理">
         <label>简介（可编辑）</label>
-        <textarea id="lit-term-body" rows="7" placeholder="AI 生成的百科式简介…"></textarea>
+        <textarea id="lit-term-body" rows="8" placeholder="AI 生成的百科式简介…"></textarea>
         <div class="bz-lit-term-actions">
           <button id="lit-term-regenerate">重新生成</button>
           <button id="lit-term-save" class="bz-lit-accent-btn">确认写入</button>
@@ -1299,6 +1475,10 @@ export class UIManager {
     q<HTMLButtonElement>(popup, '#lit-term-generate')!.onclick = () => void this.onTermGenerate();
     q<HTMLButtonElement>(popup, '#lit-term-regenerate')!.onclick = () => void this.onTermGenerate();
     q<HTMLButtonElement>(popup, '#lit-term-save')!.onclick = () => void this.onTermConfirm();
+    // 术语输入框 Enter 直接生成（ticket 139）
+    q<HTMLInputElement>(popup, '#lit-term-input')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); void this.onTermGenerate(); }
+    });
   }
 
   /** 打开术语生成面板；term 预填输入框（命令入口带编辑器选中词；主面板入口不带） */
@@ -1312,6 +1492,7 @@ export class UIManager {
     topifyZ(this.termMask, this.termPopup);
     this.termMask.style.display = 'block';
     this.termPopup.style.display = 'flex';
+    if (input && !input.value) setTimeout(() => input.focus(), 100);
   }
 
   private setTermPreviewVisible(v: boolean): void {
@@ -1328,6 +1509,12 @@ export class UIManager {
     if (regen) regen.disabled = loading;
     const save = q<HTMLButtonElement>(this.termPopup, '#lit-term-save');
     if (save) save.disabled = loading;
+    // 生成中状态行（ticket 139 重设计）
+    const status = q<HTMLElement>(this.termPopup, '#lit-term-status');
+    if (status) {
+      status.textContent = loading ? 'AI 生成中，请稍候…' : '';
+      status.style.display = loading ? 'block' : 'none';
+    }
   }
 
   private noticeTermError(e: unknown): void {
@@ -1339,11 +1526,27 @@ export class UIManager {
     }
   }
 
-  /** 生成/重新生成：调 generateTermDraft 纯 AI 预览（不落盘）→ 填充预览（覆盖用户上一轮手改，ticket 138 §2.1） */
+  /** 生成/重新生成：调 generateTermDraft 纯 AI 预览（不落盘）→ 填充预览（覆盖用户上一轮手改，ticket 138 §2.1）。
+   *  预览被手改时（当前值 ≠ 本轮 AI 预览记录）重新生成前先确认，防止无声覆盖（ticket 139）。 */
   private async onTermGenerate(): Promise<void> {
     if (!this.termPopup || this.termGenerating) return;
     const term = (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
     if (!term) { notice('请输入术语', 'error'); return; }
+    if (this.termPreview) {
+      const curDomain = (q<HTMLInputElement>(this.termPopup, '#lit-term-domain')?.value ?? '').trim();
+      const curBody = (q<HTMLTextAreaElement>(this.termPopup, '#lit-term-body')?.value ?? '').trim();
+      if (curDomain !== this.termPreview.domain || curBody !== this.termPreview.body) {
+        const v = await openFlowDialog({
+          title: '重新生成？',
+          message: '你修改过预览内容，重新生成将覆盖你的修改。',
+          actions: [
+            { label: '取消', value: 'cancel' },
+            { label: '重新生成', value: 'ok' },
+          ],
+        });
+        if (v !== 'ok') return;
+      }
+    }
     this.termGenerating = true;
     this.setTermGenLoading(true);
     try {
@@ -1413,8 +1616,15 @@ export class UIManager {
   private openNote(path: string): void {
     const app = getApp();
     const file = app.vault.getAbstractFileByPath(path);
-    if (file) void app.workspace.getLeaf(false).openFile(file as any);
-    else notice('文献笔记不存在：' + path, 'error');
+    if (file) {
+      void app.workspace.getLeaf(false).openFile(file as any);
+      // 打开笔记即收起文献盒全部窗口（ticket 139）：面板浮层盖着笔记，用户得先关面板才看得到
+      this.hideMain();
+      this.hideVideo();
+      this.hideHistory();
+    } else {
+      notice('文献笔记不存在：' + path, 'error');
+    }
   }
 
   private async copyWikilink(n: LiteratureNoteEntry): Promise<void> {

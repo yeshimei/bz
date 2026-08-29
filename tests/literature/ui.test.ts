@@ -367,14 +367,14 @@ describe('文献盒 UI（ticket 136）', () => {
     expect((document.getElementById('lit-add-uploader') as HTMLInputElement).value).toBe('预填UP');
   });
 
-  it('移动端视频面板仅 ➕ 添加 / 🕘 历史 + ✕（隐藏处理/中止，原 isMobileEnv 逻辑扩展）', () => {
+  it('移动端视频面板仅 ➕ 添加 + ✕（处理/中止/历史全部隐藏，ticket 139）', () => {
     ui.destroy();
     (Platform as any).isMobile = true;
     ui = new UIManager(app);
     expect((document.getElementById('lit-btn-video-run') as HTMLButtonElement).style.display).toBe('none');
     expect((document.getElementById('lit-btn-video-abort') as HTMLButtonElement).style.display).toBe('none');
+    expect((document.getElementById('lit-btn-video-history') as HTMLButtonElement).style.display).toBe('none');
     expect(document.getElementById('lit-btn-video-add')).toBeTruthy();
-    expect(document.getElementById('lit-btn-video-history')).toBeTruthy();
     expect(document.getElementById('lit-btn-video-close')).toBeTruthy();
   });
 
@@ -390,11 +390,16 @@ describe('文献盒 UI（ticket 136）', () => {
     expect(document.getElementById('literature-video-popup')!.style.display).toBe('none');
   });
 
-  it('添加弹窗：保存入库 + 宽松时间归一 + 编辑回填', async () => {
+  it('添加弹窗：保存入库 + 整片/剪辑开关 + 宽松时间归一 + 编辑回填', async () => {
     ui.showVideoEntry();
     await new Promise((r) => setTimeout(r, 0));
     (document.getElementById('lit-btn-video-add') as HTMLButtonElement).click();
+    // 默认整片模式（ticket 139）：时间输入隐藏
+    expect(document.getElementById('lit-add-clip-fields')!.style.display).toBe('none');
     (document.getElementById('lit-add-url') as HTMLInputElement).value = 'https://www.bilibili.com/video/BV1xx411c7mD';
+    // 切「剪辑片段」→ 时间输入展开
+    (document.querySelector('#lit-add-range button[data-range="clip"]') as HTMLButtonElement).click();
+    expect(document.getElementById('lit-add-clip-fields')!.style.display).toBe('block');
     (document.getElementById('lit-add-start') as HTMLInputElement).value = '12.2';
     (document.getElementById('lit-add-end') as HTMLInputElement).value = '12-30';
     (document.getElementById('lit-add-save') as HTMLButtonElement).click();
@@ -402,12 +407,14 @@ describe('文献盒 UI（ticket 136）', () => {
     let all = await LiteratureData.loadTasks();
     expect(all).toHaveLength(1);
     expect(all[0]).toMatchObject({ url: 'https://www.bilibili.com/video/BV1xx411c7mD', start: '12:02', end: '12:30', status: 'pending' });
-    // 点击待处理行 → 编辑回填（保存后弹窗已关闭，需点击行打开编辑态）
+    // 点击待处理行 → 编辑回填（保存后弹窗已关闭，需点击行打开编辑态）；带 start/end → 剪辑模式回显
     await vi.waitFor(() => expect(document.querySelector('.bz-bili-task-card')).toBeTruthy());
     (document.querySelector('.bz-bili-task-card') as HTMLElement).click();
     await vi.waitFor(() => expect(document.getElementById('literature-add-popup')!.style.display).toBe('flex'));
     expect((document.getElementById('lit-add-url') as HTMLInputElement).value).toContain('BV1xx411c7mD');
     expect((document.getElementById('lit-add-start') as HTMLInputElement).value).toBe('12:02');
+    expect(document.querySelector('#lit-add-range button[data-range="clip"]')!.classList.contains('active')).toBe(true);
+    expect(document.getElementById('lit-add-clip-fields')!.style.display).toBe('block');
     expect(document.getElementById('lit-add-title')!.textContent).toBe('编辑转文献任务');
   });
 
@@ -587,7 +594,7 @@ ${summary ?? '旧简介'}`);
     expect(content).not.toContain('旧简介');
   });
 
-  it('术语流程：重新生成丢弃预览手改；无预览直接确认提示先生成；未确认关闭无落盘', async () => {
+  it('术语流程：重新生成手改需确认（ticket 139）后覆盖；无预览直接确认提示先生成；未确认关闭无落盘', async () => {
     let gen = 0;
     noteGen.generateTermDraft.mockImplementation(async (term: string) => {
       gen++;
@@ -597,12 +604,18 @@ ${summary ?? '旧简介'}`);
     (document.getElementById('lit-term-input') as HTMLInputElement).value = '黑洞';
     (document.getElementById('lit-term-generate') as HTMLButtonElement).click();
     await vi.waitFor(() => expect((document.getElementById('lit-term-body') as HTMLTextAreaElement).value).toContain('第1版简介'));
-    // 手改后「重新生成」→ 手改被新 AI 预览覆盖
-    (document.getElementById('lit-term-body') as HTMLTextAreaElement).value = '手改内容';
+    // 未手改时重新生成 → 直接重跑（无确认弹窗）
     (document.getElementById('lit-term-regenerate') as HTMLButtonElement).click();
     await vi.waitFor(() => expect((document.getElementById('lit-term-body') as HTMLTextAreaElement).value).toContain('第2版简介'));
+    expect(document.getElementById('__shared_confirm_ok__')).toBeNull();
+    // 手改后「重新生成」→ 先弹确认，确认后才被新 AI 预览覆盖（ticket 139）
+    (document.getElementById('lit-term-body') as HTMLTextAreaElement).value = '手改内容';
+    (document.getElementById('lit-term-regenerate') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(document.getElementById('__shared_confirm_ok__')).toBeTruthy());
+    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect((document.getElementById('lit-term-body') as HTMLTextAreaElement).value).toContain('第3版简介'));
     expect((document.getElementById('lit-term-body') as HTMLTextAreaElement).value).not.toContain('手改内容');
-    expect(noteGen.generateTermDraft).toHaveBeenCalledTimes(2);
+    expect(noteGen.generateTermDraft).toHaveBeenCalledTimes(3);
     // 全程只预览未落盘
     expect(noteGen.generateTermNote).not.toHaveBeenCalled();
     // 无预览直接确认 → 提示先点击「生成」
@@ -671,16 +684,140 @@ ${summary ?? '旧简介'}`);
     await vi.waitFor(() => expect(document.getElementById('bz-settings-modal-popup')).toBeNull());
   });
 
+  // ==================== ticket 139：增量卡片级刷新 / 白话失败 / 范围开关 / ❌ 统一 ====================
+
+  it('增量刷新卡片级 patch：modified 只重建对应卡片，其余卡片节点引用不变（滚动不跳根因修复）', async () => {
+    vault.files.set('文献盒/A.md', noteMd({ title: 'A', date: '2026-08-02 10:00:00' }));
+    vault.files.set('文献盒/B.md', noteMd({ title: 'B', date: '2026-08-01 10:00:00' }));
+    ui.showMain();
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-lit-card').length).toBe(2));
+    const cardA = document.querySelector('.bz-lit-card[data-path="文献盒/A.md"]') as HTMLElement;
+    const cardB = document.querySelector('.bz-lit-card[data-path="文献盒/B.md"]') as HTMLElement;
+    emitDomainEvent('literature:file-modified', { path: '文献盒/A.md' });
+    vault.files.set('文献盒/A.md', noteMd({ title: 'A改', date: '2026-08-02 10:00:00' }));
+    await vi.waitFor(() => expect(document.body.textContent).toContain('A改'));
+    const cardA2 = document.querySelector('.bz-lit-card[data-path="文献盒/A.md"]');
+    const cardB2 = document.querySelector('.bz-lit-card[data-path="文献盒/B.md"]');
+    expect(cardA2).not.toBe(cardA); // A 内容变 → 替换节点
+    expect(cardB2).toBe(cardB);     // B 未变 → 原节点复用（不清列表）
+  });
+
+  it('主面板加载中状态：首载显示「正在扫描文献目录…」，加载完替换为列表/空态', async () => {
+    vault.files.set('文献盒/A.md', noteMd({ title: 'A', date: '2026-08-02 10:00:00' }));
+    ui.showMain();
+    // refreshPanel 同步段先渲染加载态
+    expect(document.getElementById('literature-list')!.textContent).toContain('正在扫描文献目录…');
+    await vi.waitFor(() => expect(document.querySelector('.bz-lit-card')).toBeTruthy());
+    expect(document.getElementById('literature-list')!.textContent).not.toContain('正在扫描文献目录…');
+  });
+
+  it('humanizeError：常见失败模式白话化，未命中保留原文，原文超长截断（ticket 139）', async () => {
+    const { humanizeError } = await import('../../src/literature/ui');
+    expect(humanizeError('未找到 bili-dl。请先运行 npm install -g @jwbz/bili-downloader')).toContain('下载工具未安装');
+    expect(humanizeError('ffmpeg exited with code 1')).toContain('ffmpeg');
+    expect(humanizeError('ffprobe: No such file')).toContain('ffprobe');
+    expect(humanizeError('AI 生成文献笔记失败：未配置 OpenCode Go API Key：插件设置 → AI 配置')).toContain('AI 配置不可用');
+    expect(humanizeError('AI 请求超时（领域判定，25000ms）')).toContain('AI 响应异常');
+    expect(humanizeError('转录文件读取失败')).toContain('转写稿缺失');
+    expect(humanizeError('connect ETIMEDOUT 1.2.3.4:443')).toContain('网络超时');
+    expect(humanizeError('getaddrinfo ENOTFOUND b23.tv')).toContain('网络连接失败');
+    expect(humanizeError('请求过于频繁(-352)')).toContain('风控');
+    expect(humanizeError('某个完全未知的错误')).toBe('某个完全未知的错误');
+    expect(humanizeError('x'.repeat(200))).toHaveLength(161);
+    expect(humanizeError('')).toBe('');
+  });
+
+  it('失败任务点击 → 编辑弹窗带失败原因提示条（白话展示 + title 保留原文，ticket 139）', async () => {
+    const t = await LiteratureData.addTask({ url: 'BV1xx411c7mD' });
+    await LiteratureData.updateTask(t.id, { status: 'failed', reason: 'connect ETIMEDOUT 1.2.3.4:443' } as any);
+    ui.showVideoEntry();
+    await vi.waitFor(() => expect(document.querySelector('.bz-bili-task-card')).toBeTruthy());
+    // 行内白话 + title 原文
+    const errEl = document.querySelector('.bz-bili-progress-error') as HTMLElement;
+    expect(errEl.textContent).toContain('网络超时');
+    expect(errEl.title).toContain('ETIMEDOUT');
+    // 点击失败卡片 → 编辑弹窗 + 提示条
+    (document.querySelector('.bz-bili-task-card') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('literature-add-popup')!.style.display).toBe('flex'));
+    const alert = document.getElementById('lit-add-fail')!;
+    expect(alert.style.display).toBe('block');
+    expect(alert.textContent).toContain('网络超时');
+    expect(alert.title).toContain('ETIMEDOUT');
+  });
+
+  it('整片/剪辑开关（ticket 139）：整片模式有残留时间输入也按整片保存；剪辑缺时间报错不入库', async () => {
+    ui.showVideoEntry();
+    await new Promise((r) => setTimeout(r, 0));
+    // 整片模式（默认）：时间输入框有残留值 → 保存仍为整片（start/end null）
+    (document.getElementById('lit-btn-video-add') as HTMLButtonElement).click();
+    (document.getElementById('lit-add-url') as HTMLInputElement).value = 'BV1xx411c7mD';
+    (document.getElementById('lit-add-start') as HTMLInputElement).value = '1:00';
+    (document.getElementById('lit-add-end') as HTMLInputElement).value = '2:00';
+    (document.getElementById('lit-add-save') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(strNotices()).toContain('已保存'));
+    const all = await LiteratureData.loadTasks();
+    expect(all).toHaveLength(1);
+    expect(all[0]).toMatchObject({ start: null, end: null });
+    // 剪辑模式缺时间 → 报错 + 不入库
+    await LiteratureData.deleteTask(all[0].id);
+    (document.getElementById('lit-btn-video-add') as HTMLButtonElement).click();
+    (document.querySelector('#lit-add-range button[data-range="clip"]') as HTMLButtonElement).click();
+    (document.getElementById('lit-add-url') as HTMLInputElement).value = 'BV1xx411c7mE';
+    (document.getElementById('lit-add-save') as HTMLButtonElement).click();
+    expect(strNotices()).toContain('剪辑片段需填写开始与结束时间');
+    expect(await LiteratureData.loadTasks()).toHaveLength(0);
+    // 填一对时间 → 入库成功（先清掉残留 notice，防 waitFor 撞上上一轮「已保存」）
+    (document.getElementById('lit-add-start') as HTMLInputElement).value = '12.2';
+    (document.getElementById('lit-add-end') as HTMLInputElement).value = '12-30';
+    clearNotices();
+    (document.getElementById('lit-add-save') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(strNotices()).toContain('已保存'));
+    const saved = await LiteratureData.loadTasks();
+    expect(saved).toHaveLength(1);
+    expect(saved[0]).toMatchObject({ start: '12:02', end: '12:30' });
+  });
+
+  it('关闭按钮 ❌ 统一（ticket 139）：主面板/视频面板/历史弹窗三处 bz-win-close', () => {
+    ui.showMain();
+    expect(document.getElementById('lit-btn-close')!.textContent).toBe('❌');
+    ui.showVideoEntry();
+    expect(document.getElementById('lit-btn-video-close')!.textContent).toBe('❌');
+    ui.showHistory();
+    expect(document.getElementById('lit-history-close')!.textContent).toBe('❌');
+  });
+
+  it('移动端全屏：showVideoEntry 挂 bz-win-mfs（三件事补齐视频面板，ticket 139）', () => {
+    ui.destroy();
+    (Platform as any).isMobile = true;
+    settings.literatureMobileDefaultFullscreen = true;
+    ui = new UIManager(app);
+    ui.showVideoEntry();
+    expect(document.getElementById('literature-video-popup')!.classList.contains('bz-win-mfs')).toBe(true);
+  });
+
+  it('术语输入框 Enter 直接生成（ticket 139）', async () => {
+    noteGen.generateTermDraft.mockResolvedValue({ summary: 'Enter简介', domain: '物理' });
+    ui.showTermEntry();
+    const input = document.getElementById('lit-term-input') as HTMLInputElement;
+    input.value = '黑洞';
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await vi.waitFor(() => expect((document.getElementById('lit-term-body') as HTMLTextAreaElement).value).toBe('Enter简介'));
+  });
+
   // ==================== 主面板入口按钮与清理 ====================
 
-  it('主面板入口：文字录入 → 术语面板；视频录入 → 视频面板（本窗隐藏）', () => {
+  it('主面板入口：文字录入 → 术语面板；视频录入 → 视频面板（主面板保持显示，ticket 139 叠开）', () => {
     ui.showMain();
     (document.getElementById('lit-btn-text') as HTMLButtonElement).click();
-    expect(document.getElementById('literature-popup')!.style.display).toBe('none');
+    expect(document.getElementById('literature-popup')!.style.display).toBe('flex'); // 不再隐藏主面板
     expect(document.getElementById('literature-term-popup')!.style.display).toBe('flex');
     (document.getElementById('literature-term-mask') as HTMLElement).click();
+    // 关闭术语面板 → 主面板仍在（导航闭环）
+    expect(document.getElementById('literature-popup')!.style.display).toBe('flex');
+    expect(document.getElementById('literature-term-popup')!.style.display).toBe('none');
     (document.getElementById('lit-btn-video') as HTMLButtonElement).click();
     expect(document.getElementById('literature-video-popup')!.style.display).toBe('flex');
+    expect(document.getElementById('literature-popup')!.style.display).toBe('flex');
   });
 
   it('destroy 清空全部 DOM、退订文件监听与键盘监听', async () => {
