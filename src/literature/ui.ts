@@ -17,8 +17,9 @@
  *   批处理调 BatchRunner.runAll（work = 非 archived 且 pending/failed），事件回调驱动行内进度/
  *   步骤时间线/完成态文案（STEP_DONE_MAP 覆盖「AI 生成文献笔记中」「笔记落盘中」）+ 整批通知。
  * - 术语生成面板（showTermEntry，文字录入）：遮罩 + 弹窗，术语输入（预填/可改）→ 「生成」调
- *   generateTermDraft(term) 纯 AI 预览（领域/正文可编辑、纯内存，不写盘）→「重新生成」= 按当前
- *   术语重跑丢弃预览手改；「确认写入」= 调 generateTermNote 传面板当前 term/summary/domain
+ *   generateTermDraft(term) 纯 AI 预览（只读展示、纯内存，不写盘；ticket 142 简洁版：无标题/label/
+ *   placeholder/状态行，生成中并入按钮文案；预览上属性卡[术语/领域/日期]下内容卡，无输入框不可编辑、
+ *   无手改覆盖守卫）→「确认写入」= 调 generateTermNote 传面板当前 term/summary/domain
  *   （所见即所得、不重跑 AI）→ 自动打开新笔记 → emitDomainEvent('literature:tasks',
  *   { kind:'term-generated', term, title }) → 关闭面板。预览阶段不产生任何文件（ticket 138 §2.1）。
  * - 设置面板：主面板 ⚙️ → openSettingsModal（五组声明式 schema，见 literatureSettingsSchema）。
@@ -30,6 +31,8 @@
  * 文件事件增量刷新走 core patchKeyedCards 只动对应卡片（不再全列表重建，滚动不跳顶）；
  * 打开文献笔记即收起文献盒全部窗口；失败原因行内白话化（humanizeError，原文见 title）；
  * 添加任务弹窗「整片/剪辑」分段开关 + 校验失败聚焦定位；术语面板重设计 + 重新生成手改确认。
+ * ticket 142 术语面板简洁版（拍板）：删标题/术语 label/placeholder/状态行（加载并入按钮「生成中…」），
+ * 预览只读——上属性卡（术语/领域/日期）下内容卡，无输入框不可编辑，「重新生成」手改守卫随之删除。
  */
 import type { App } from 'obsidian';
 import type { SettingsSchema } from '../core/settings-schema';
@@ -1429,7 +1432,14 @@ export class UIManager {
     return card;
   }
 
-  // ==================== 术语生成面板（文字录入，ticket 136 §6） ====================
+  // ==================== 术语生成面板（文字录入，ticket 136 §6；142 简洁版拍板） ====================
+
+  /** 当前时间戳（Y-m-d H:i:s，与落盘 frontmatter date 同款格式；预览「日期」只读展示） */
+  private termDateStamp(): string {
+    const d = new Date();
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  }
 
   createTermUI(): void {
     const mask = document.createElement('div');
@@ -1441,32 +1451,31 @@ export class UIManager {
     popup.id = 'literature-term-popup';
     popup.className = 'bz-lit-dialog bz-lit-term-dialog';
     popup.style.display = 'none';
-    const header = document.createElement('div');
-    header.className = 'bz-win-head';
-    header.innerHTML = `
-      <h3 class="bz-lit-title">术语生成文献笔记</h3>`;
     const body = document.createElement('div');
     body.className = 'bz-lit-term-body';
-    // ticket 139 重设计：输入与生成同行、生成中状态行、预览区卡片化（id 契约不变）
+    // ticket 142 简洁版：无标题（bz-win-head 整行删除）、无 label、无 placeholder、无状态行；
+    // 预览只读——上属性卡（术语/领域/日期）下内容卡，无输入框不可编辑（id 契约仅保留仍存在元素）
     body.innerHTML = `
-      <label>术语</label>
       <div class="bz-lit-term-inputrow">
-        <input id="lit-term-input" type="text" placeholder="如 黑洞 / 贝叶斯定理">
+        <input id="lit-term-input" type="text" autocomplete="off">
         <button id="lit-term-generate" class="bz-lit-accent-btn">生成</button>
       </div>
-      <div id="lit-term-status" class="bz-lit-term-status" style="display:none;"></div>
-      <div id="lit-term-preview" class="bz-lit-term-preview" style="display:none;">
-        <div class="bz-lit-term-preview-head">AI 预览 · 可直接修改，确认后写入文献盒</div>
-        <label>领域（可改，留空 = 无）</label>
-        <input id="lit-term-domain" type="text" placeholder="领域词，如 物理">
-        <label>简介（可编辑）</label>
-        <textarea id="lit-term-body" rows="8" placeholder="AI 生成的百科式简介…"></textarea>
+      <div id="lit-term-preview" style="display:none;">
+        <div class="bz-lit-term-card">
+          <div class="bz-lit-term-meta">
+            <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">术语</span><span id="lit-term-meta-term" class="bz-lit-term-meta-v"></span></div>
+            <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">领域</span><span id="lit-term-meta-domain" class="bz-lit-term-meta-v"></span></div>
+            <div class="bz-lit-term-meta-row"><span class="bz-lit-term-meta-k">日期</span><span id="lit-term-meta-date" class="bz-lit-term-meta-v"></span></div>
+          </div>
+        </div>
+        <div class="bz-lit-term-card">
+          <div id="lit-term-content" class="bz-lit-term-content"></div>
+        </div>
         <div class="bz-lit-term-actions">
           <button id="lit-term-regenerate">重新生成</button>
           <button id="lit-term-save" class="bz-lit-accent-btn">确认写入</button>
         </div>
       </div>`;
-    popup.appendChild(header);
     popup.appendChild(body);
     document.body.appendChild(mask);
     document.body.appendChild(popup);
@@ -1498,7 +1507,7 @@ export class UIManager {
   private setTermPreviewVisible(v: boolean): void {
     if (!this.termPopup) return;
     const p = q<HTMLElement>(this.termPopup, '#lit-term-preview');
-    if (p) p.style.display = v ? 'block' : 'none';
+    if (p) p.style.display = v ? 'flex' : 'none'; // 与 #lit-term-preview 的 flex column + gap 一致
   }
 
   private setTermGenLoading(loading: boolean): void {
@@ -1509,12 +1518,7 @@ export class UIManager {
     if (regen) regen.disabled = loading;
     const save = q<HTMLButtonElement>(this.termPopup, '#lit-term-save');
     if (save) save.disabled = loading;
-    // 生成中状态行（ticket 139 重设计）
-    const status = q<HTMLElement>(this.termPopup, '#lit-term-status');
-    if (status) {
-      status.textContent = loading ? 'AI 生成中，请稍候…' : '';
-      status.style.display = loading ? 'block' : 'none';
-    }
+    // ticket 142：状态行已删除，生成中态并入「生成」按钮文案，输入行下方无任何提示文字
   }
 
   private noticeTermError(e: unknown): void {
@@ -1526,27 +1530,12 @@ export class UIManager {
     }
   }
 
-  /** 生成/重新生成：调 generateTermDraft 纯 AI 预览（不落盘）→ 填充预览（覆盖用户上一轮手改，ticket 138 §2.1）。
-   *  预览被手改时（当前值 ≠ 本轮 AI 预览记录）重新生成前先确认，防止无声覆盖（ticket 139）。 */
+  /** 生成/重新生成：调 generateTermDraft 纯 AI 预览（不落盘）→ 只读填充预览。
+   *  ticket 142：预览无输入框不可编辑，「重新生成」不再有手改覆盖守卫，直接覆盖上一轮预览。 */
   private async onTermGenerate(): Promise<void> {
     if (!this.termPopup || this.termGenerating) return;
     const term = (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
     if (!term) { notice('请输入术语', 'error'); return; }
-    if (this.termPreview) {
-      const curDomain = (q<HTMLInputElement>(this.termPopup, '#lit-term-domain')?.value ?? '').trim();
-      const curBody = (q<HTMLTextAreaElement>(this.termPopup, '#lit-term-body')?.value ?? '').trim();
-      if (curDomain !== this.termPreview.domain || curBody !== this.termPreview.body) {
-        const v = await openFlowDialog({
-          title: '重新生成？',
-          message: '你修改过预览内容，重新生成将覆盖你的修改。',
-          actions: [
-            { label: '取消', value: 'cancel' },
-            { label: '重新生成', value: 'ok' },
-          ],
-        });
-        if (v !== 'ok') return;
-      }
-    }
     this.termGenerating = true;
     this.setTermGenLoading(true);
     try {
@@ -1560,34 +1549,37 @@ export class UIManager {
     }
   }
 
-  /** 填充预览：领域/正文按 AI 草稿回填输入框（纯内存，不写盘；术语输入框不变） */
+  /** 填充预览（只读：属性卡/内容卡按 AI 草稿回填，纯内存不写盘；术语输入框不变，ticket 142） */
   private presentTermPreview(draft: { summary: string; domain: string }): void {
     this.termPreview = { domain: draft.domain, body: draft.summary };
     if (!this.termPopup) return;
-    const domainEl = q<HTMLInputElement>(this.termPopup, '#lit-term-domain');
-    if (domainEl) domainEl.value = draft.domain;
-    const bodyEl = q<HTMLTextAreaElement>(this.termPopup, '#lit-term-body');
-    if (bodyEl) bodyEl.value = draft.summary;
+    const term = (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
+    const termEl = q<HTMLElement>(this.termPopup, '#lit-term-meta-term');
+    if (termEl) termEl.textContent = term || '—';
+    const domainEl = q<HTMLElement>(this.termPopup, '#lit-term-meta-domain');
+    if (domainEl) domainEl.textContent = draft.domain || '—';
+    const dateEl = q<HTMLElement>(this.termPopup, '#lit-term-meta-date');
+    if (dateEl) dateEl.textContent = this.termDateStamp();
+    const contentEl = q<HTMLElement>(this.termPopup, '#lit-term-content');
+    if (contentEl) contentEl.textContent = draft.summary;
     this.setTermPreviewVisible(true);
   }
 
   /**
    * 确认写入（ticket 138 §2.1 + 终审 P1-4）：须先有 AI 预览（无预览直接确认 → 提示先生成）；
-   * generateTermNote 传面板当前 term/summary(正文)/domain —— **所见即所得、不重跑 AI**
-   * （预览内容即最终落盘内容，手改即手改值）→ 自动打开新笔记 → term-generated 域事件 → 关闭面板。
+   * generateTermNote 传面板当前 term/this.termPreview（只读预览即最终值，所见即所得不重跑 AI）→
+   * 自动打开新笔记 → term-generated 域事件 → 关闭面板。
    */
   private async onTermConfirm(): Promise<void> {
     if (!this.termPopup || this.termGenerating) return;
     const term = (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
     if (!term) { notice('请输入术语', 'error'); return; }
     if (!this.termPreview) { notice('请先点击「生成」获取简介预览', 'info'); return; }
-    const domain = (q<HTMLInputElement>(this.termPopup, '#lit-term-domain')?.value ?? '').trim();
-    const body = (q<HTMLTextAreaElement>(this.termPopup, '#lit-term-body')?.value ?? '').trim();
     this.termGenerating = true;
     this.setTermGenLoading(true);
     try {
-      // 1) 以面板当前术语/领域/正文落盘一次（预览纯内存，无草稿/旧稿需要删除，也无需二次覆盖）
-      const path = await generateTermNote({ term, summary: body, domain });
+      // 1) 以面板当前术语/领域/正文落盘一次（预览只读纯内存，无手改值；无草稿/旧稿需要删除）
+      const path = await generateTermNote({ term, summary: this.termPreview.body, domain: this.termPreview.domain });
       // 2) 自动打开新笔记
       this.openNote(path);
       // 3) 行为流观察（ticket 136 §10：term-generated，载荷 term/title）

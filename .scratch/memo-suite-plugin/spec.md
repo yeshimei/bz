@@ -646,3 +646,19 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - **第 3 层 执行与反馈**：复用域既有函数落盘（如 literature `generateTermNote`）→ emit 域事件（`literature:tasks` term-generated，与 UI 手动生成同口径入行为流）→ 结果注入 AI 回复自然确认 + 自动打开产物 + toast；AI 不可用回退固定确认；失败白话化回复。
 - **边界**：数据格式零变化、域事件契约复用、命令单点不动、跨域显式 import（smartcat → literature，参考 smartcat → diary/config 先例）、纯增量。
 - **待拍板**：① 直接执行 vs 预览确认；② 参数缺失行为（多轮追问/开面板/不执行）；③ V1 范围（仅文献盒 / 文献盒+备忘录 / 多域）。
+
+### 术语生成面板简洁版（ticket 142，已交付）
+
+> 术语面板简洁化（用户逐条拍板，原型 `.scratch/term-note-panel/index.html` 方案 A 定稿；.scratch 不入库，决策已落码）。
+> 不改数据格式（frontmatter 五键 title/type/domain/term/date）、不改命令与域事件契约。
+
+- **删**：弹窗标题（bz-win-head 整行）、「术语」label、输入框 placeholder、输入框下方红色提示小字、
+  生成中状态行（并入「生成」按钮文案「生成中…」）——输入行下方无任何提示文字。
+- **预览只读**：领域 input / 简介 textarea 删除；预览 = 上属性卡（术语/领域/日期，无「属性」区标题）
+  ＋ 下内容卡（AI 简介段落，无「内容」区标题）；「类型」行不展示（type 固定 term）。
+- **「重新生成」守卫删除**：预览只读无手改值（ticket 139 引入的手改确认 flow-dialog 一并移除），直接覆盖上一轮预览。
+- **不变**：输入行 + 生成 / 重新生成 / 确认写入（传面板 term + 预览值，所见即所得不重跑 AI）/
+  Enter 生成 / ESC·遮罩关闭 / 命令预填编辑器选中词 / 行为流 term-generated / 预览阶段不落盘（ticket 138 §2.1）。
+- **验收**：a) 面板无标题/label/placeholder/状态行（UI 测试断言）；b) 预览内无任何 input/textarea（只读契约）；
+  c) 重新生成直接覆盖无确认弹窗；d) 确认写入传 AI 预览值落盘一次 + 自动打开 + term-generated + 面板关闭；
+  e) tsc + 全量测试 + 构建全绿。
