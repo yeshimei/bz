@@ -186,3 +186,29 @@ describe('promoteToMemory 保留接口（面板按钮已移除，直接调用仍
     expect(promoteToMemory(data, 'nonexistent')).toBeNull();
   });
 });
+describe('行为流 5s 短防抖直写（ticket 159）', () => {
+  it('markBehaviorDirty 5s 后触发 flushSidecars；窗口内连续标脏合并；stopScheduler 清定时器', async () => {
+    vi.useFakeTimers();
+    try {
+      const m = make();
+      const flushSpy = vi.spyOn(m, 'flushSidecars').mockResolvedValue(undefined);
+      await m.addObservation('memo', { structured: { entityType: 'task', action: 'deleted', name: '测试删除' } });
+      // 未到 5s：不触发
+      vi.advanceTimersByTime(4999);
+      expect(flushSpy).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(1);
+      expect(flushSpy).toHaveBeenCalledTimes(1);
+      // 首次冲刷后再标脏 → 新窗口，5s 后再次直写
+      await m.addObservation('memo', { structured: { entityType: 'task', action: 'deleted', name: '测试删除2' } });
+      vi.advanceTimersByTime(5000);
+      expect(flushSpy).toHaveBeenCalledTimes(2);
+      // 标脏后立即停止调度（卸载路径）→ 定时器清空不再触发
+      await m.addObservation('memo', { structured: { entityType: 'task', action: 'deleted', name: '测试删除3' } });
+      m.stopScheduler();
+      vi.advanceTimersByTime(10000);
+      expect(flushSpy).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

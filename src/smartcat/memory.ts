@@ -294,6 +294,9 @@ export class MemorySystem {
   // ---------------- ADR-0069：存储 sidecar 化 + 引用型记忆（笔记记忆库） ----------------
   /** 记忆流 sidecar（smartcat-memory.json）脏标记——写入只标脏，30s tick 合并落盘（R5 防抖） */
   private memoryDirty = false;
+
+  /** 行为流 5s 短防抖直写定时器（ticket 159；stopScheduler 一并清） */
+  private behaviorFlushTimer: ReturnType<typeof setTimeout> | null = null;
   /** 行为流 sidecar（smartcat-behavior.json）脏标记 */
   private behaviorDirty = false;
   /** 引用型条目多向量「额外行」：id → 除主行（stream 下标对齐）外的 .vec 行号列表（分块向量） */
@@ -311,9 +314,16 @@ export class MemorySystem {
     this.memoryDirty = true;
   }
 
-  /** 标记行为流 sidecar 脏 */
+  /** 标记行为流 sidecar 脏。
+   *  ticket 159：30s tick 合并写之外追加 5s 短防抖直写——删除等低频动作尽快落盘，
+   *  缩小「退出应用丢尾窗」（移动端关后台快，30s 窗口内退出即丢条目）；连续事件仍合并为一次写。 */
   markBehaviorDirty(): void {
     this.behaviorDirty = true;
+    if (this.behaviorFlushTimer) return;
+    this.behaviorFlushTimer = setTimeout(() => {
+      this.behaviorFlushTimer = null;
+      void this.flushSidecars();
+    }, 5000);
   }
 
   /**
@@ -1101,6 +1111,11 @@ export class MemorySystem {
     if (this.reflectionTimer) {
       clearInterval(this.reflectionTimer);
       this.reflectionTimer = null;
+    }
+    // ticket 159：行为流 5s 短防抖定时器一并清（卸载冲刷走 flushSidecars(snapshot) 快照路径）
+    if (this.behaviorFlushTimer) {
+      clearTimeout(this.behaviorFlushTimer);
+      this.behaviorFlushTimer = null;
     }
   }
 
