@@ -564,8 +564,8 @@ function cleanupCache(conf, now = Date.now()) {
 }
 
 // ---- 断点续跑产物缓存（ADR-0067 用户拍板：重试从出错步骤继续，成功步骤产物留存复用）----
+// ticket 136 起只留机械产物（剪辑件/压缩件/转写稿），AI 元数据/润色分块缓存随 AI 回迁 bz 插件而移除。
 // 键 = BV + cid(分P) + 起止范围（0.1s 精度，整片 = 0-duration）；文件放 cacheDir（cleanupCache 同保留期回收）。
-// 四档产物：剪辑件（.mp4，随原件缓存回收）/ 转写稿 / AI 元数据 / 润色分块（JSON 数组，逐块追加——分块级断点）。
 function resumeKey(bv, cid, s, e) {
   const bit = n => String(Math.round((Number(n) || 0) * 10))
   return `${bv}_${cid}_${bit(s)}-${bit(e)}`
@@ -573,189 +573,39 @@ function resumeKey(bv, cid, s, e) {
 function resumeClipPath(conf, bv, cid, height, s, e) {
   return path.join(getCacheDir(conf), `resume-clip-${resumeKey(bv, cid, s, e)}-${height}.mp4`)
 }
+function resumeCompressedPath(conf, bv, cid, crf, s, e) {
+  return path.join(getCacheDir(conf), `resume-compress-${resumeKey(bv, cid, s, e)}-crf${crf}.mp4`)
+}
 function resumeTranscriptPath(conf, bv, cid, s, e) {
   return path.join(getCacheDir(conf), `resume-transcript-${resumeKey(bv, cid, s, e)}.txt`)
 }
-function resumeMetaPath(conf, bv, cid, s, e) {
-  return path.join(getCacheDir(conf), `resume-meta-${resumeKey(bv, cid, s, e)}.json`)
-}
-function resumePolishPath(conf, bv, cid, s, e) {
-  return path.join(getCacheDir(conf), `resume-polish-${resumeKey(bv, cid, s, e)}.json`)
-}
 
-// ---- 文献笔记（F3/F4）：文件名 / frontmatter / 分块 / AI ----
-// 笔记文件名 = AI 标题：清洗 Windows 非法字符 + 空白折叠 + 截断 50 字 + 空兜底
-function sanitizeMdTitle(s) {
-  const t = String(s).replace(/[\\/:*?"<>|#^[\]]/g, '_').replace(/\s+/g, ' ').trim().slice(0, 50)
-  return t || '文献笔记'
-}
 
-// 转写文稿分块：优先按句边界（。！？；）切，单块不超 maxLen；超长单句硬切。
-// faster-whisper 输出为无换行的连接文本，句边界即自然段落。
-function chunkTranscript(text, maxLen = 4000) {
-  const src = String(text || '').trim()
-  if (!src) return []
-  const segs = src.split(/(?<=[。！？!?；;])/).map(s => s.trim()).filter(Boolean)
-  const chunks = []
-  let cur = ''
-  for (const seg of segs) {
-    if (cur && (cur + seg).length > maxLen) { chunks.push(cur); cur = '' }
-    if (seg.length <= maxLen) { cur += seg; continue }
-    if (cur) { chunks.push(cur); cur = '' }   // 前一块已入列，再硬切超长句
-    let rest = seg
-    while (rest.length > maxLen) { chunks.push(rest.slice(0, maxLen)); rest = rest.slice(maxLen) }
-    cur = rest
-  }
-  if (cur) chunks.push(cur)
-  return chunks
-}
 
-// frontmatter 引号包裹（对齐 auto-summary 的 YAML 风格，防冒号/引号破坏结构）
-function quoteYaml(s) {
-  return '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'
-}
 
-// 组装文献笔记全文（1.2.7）：frontmatter 七键 + 逐段「润色正文 + 视频双链」块依次排布
-// （blocks: [{text, wiki}] 每组 = 该段润色正文在上、双链在下；字符串项兼容为纯双链行）
-function buildLiteratureNote({ title, tags = [], summary, url, date, author, videoTitle, blocks = [] }) {
-  const tagLines = (Array.isArray(tags) ? tags : []).map(t => `  - ${quoteYaml(t)}`).join('\n')
-  const head = ['---',
-    `title: ${quoteYaml(title)}`,
-    'tags:',
-    tagLines,
-    `summary: ${quoteYaml(summary || '')}`,
-    `url: ${quoteYaml(url || '')}`,
-    `date: ${quoteYaml(date || '')}`,
-    `author: ${quoteYaml(author || '')}`,
-    `videoTitle: ${quoteYaml(videoTitle || '')}`,
-    '---',
-  ].join('\n')
-  const groups = (Array.isArray(blocks) ? blocks : []).filter(Boolean).map(item => {
-    if (typeof item === 'string') return item
-    const w = item && item.wiki ? String(item.wiki) : ''
-    const t = item && item.text ? String(item.text) : ''
-    return [t, w].filter(Boolean).join('\n\n')
-  })
-  return [head, ...groups].filter(Boolean).join('\n\n')
-}
-
-// ---- AI 直读 bz 配置（F2）：provider 映射与 bz core/ai.ts 同套，工具侧持有副本 ----
-const AI_TIMEOUT_MS = 180000
-const AI_PROVIDERS = {
-  'opencode-go': { endpoint: 'https://opencode.ai/zen/go/v1', model: 'deepseek-v4-flash', keyField: 'opencodeGoApiKey' },
-  deepseek: { endpoint: 'https://api.deepseek.com', model: 'deepseek-v4-flash', keyField: 'deepseekApiKey' },
-}
-
-// 直读 <vaultPath>/.obsidian/plugins/bz/data.json（只读；无 quickadd 回退，缺 key 报错）
-function loadBzAiConfig(conf) {
-  const vaultPath = conf && conf.vaultPath
-  if (!vaultPath) throw new Error('AI 配置读取失败：rc 未配置 vaultPath')
-  const data = readJson(path.join(vaultPath, '.obsidian', 'plugins', 'bz', 'data.json'), null)
-  if (!data) throw new Error('AI 配置读取失败：找不到 bz 插件数据文件（请确认 bz 插件已安装在该 vault）')
-  const name = data.aiProvider || 'opencode-go'
-  const p = AI_PROVIDERS[name]
-  if (!p) throw new Error(`AI 配置错误：不支持的 provider ${name}`)
-  const apiKey = data[p.keyField]
-  if (!apiKey) throw new Error(`AI 密钥缺失：请先在 bz（备忘录插件）设置中填写（${name === 'deepseek' ? 'DeepSeek' : 'OpenCode Go'} API Key）`)
-  return { provider: name, endpoint: p.endpoint, apiKey, model: p.model }
-}
-
-// AI 错误信息提取：兼容 OpenAI（{error:{message}}) 与 opencode（{error:{error:{message}}}）格式
-function aiErrMsg(j) {
-  if (!j) return ''
-  const e = j.error
-  if (e && typeof e === 'object') return e.message || e.msg || ((e.error && (e.error.message || e.error.msg)) || '')
-  if (typeof e === 'string') return e
-  return j.message || ''
-}
-
-// OpenAI 兼容 chat/completions（原生 https，零依赖；显式超时默认 180s）
-function aiChat({ endpoint, apiKey, model, messages, temperature = 0.3, maxTokens, responseFormat, timeoutMs = AI_TIMEOUT_MS, requestImpl = https.request }) {
-  return new Promise((resolve, reject) => {
-    const url = `${String(endpoint).replace(/\/+$/, '')}/chat/completions`
-    const body = JSON.stringify({
-      model, messages,
-      temperature,
-      ...(maxTokens ? { max_tokens: maxTokens } : {}),
-      ...(responseFormat ? { response_format: { type: responseFormat } } : {}),
-    })
-    const req = requestImpl(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      timeout: timeoutMs,
-    }, res => {
-      let d = ''
-      res.on('data', c => (d += c))
-      res.on('end', () => {
-        let j
-        try { j = JSON.parse(d) } catch { return reject(new Error('AI 响应解析失败')) }
-        if (!res.statusCode || res.statusCode >= 400) {
-          return reject(new Error(`AI 请求失败：${aiErrMsg(j) || 'HTTP ' + res.statusCode}`))
-        }
-        const content = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content
-        if (content == null) return reject(new Error('AI 响应缺少内容'))
-        resolve(String(content).trim())
-      })
-    })
-    req.on('error', e => reject(new Error(`AI 请求失败：${e.message}`)))
-    req.on('timeout', () => { req.destroy(new Error('AI 请求超时')) })
-    req.write(body)
-    req.end()
-  })
-}
-
-// JSON 模式调用：response_format=json_object + 残留文本容错提取。
-// 自愈（ADR-0067，用户实测「AI 返回的不是 JSON」）：先剥 markdown 代码围栏（```json … ```）
-// 再解析；仍失败自动重试一次（模型偶发输出围栏/杂讯）；二次失败才报错（带 120 字片段）。
-async function aiJson(args) {
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    const content = await aiChat({ ...args, responseFormat: 'json_object' })
-    const cleaned = String(content).replace(/```(?:json)?\s*/gi, '').replace(/```/g, '').trim()
-    try { return JSON.parse(cleaned) } catch {}
-    const m = cleaned.match(/\{[\s\S]*\}/)
-    if (m) { try { return JSON.parse(m[0]) } catch {} }
-    if (attempt === 1) continue
-    throw new Error('AI 返回的不是 JSON：' + content.slice(0, 120))
-  }
-}
-
-// 元数据提示词（1.2.7：标题/tags 规则对齐 bz 自动摘要；简介维持一句话 ≤60 字；全部简体中文）
-function literatureMetaPrompt(videoTitle, transcriptSample) {
-  return `你是文献整理助手。基于下方 B站视频《${videoTitle || '未命名'}》的转写文稿片段，生成文献笔记元数据。只输出 JSON，不要任何解释：
-{"title": "15-30字的中文完整陈述句或疑问句，禁止冒号、破折号、句中句号问号，需要连接时用逗号", "tags": ["3-6个中文标签，每个不超过5个字，涵盖主题领域、关键概念、应用场景"], "summary": "一句话简介，不超过60字"}
-所有字段一律使用简体中文。\n\n【转写文稿片段】\n${transcriptSample}`
-}
-
-// 润色提示词（轻度：口语转书面、去口水词，保原顺序原内容；简体中文兜底——繁体转写一并转为简体）
-function literaturePolishPrompt(chunk) {
-  return `你是文字编辑。把下面的视频转写文稿轻度润色为书面语：口语转书面、删除口水词与重复内容，保持原顺序、原事实（数字与专名不变）。输出必须是简体中文（繁体转写一律转为简体）。直接输出润色后的正文，不要解释、不要加标题、不要列表。\n\n【转写文稿】\n${chunk}`
-}
 
 // ---- 无头批处理（--batch）：runBatch ----
-// 契约（与 Obsidian 插件「文献盒」面板对齐，cli.js --batch 调用）：
+// 契约（与 Obsidian 插件「文献盒」面板对齐，cli.js --batch 调用；ticket 136 起 AI/文献笔记回迁 bz）：
 //   task = { url, start, end, page, options }；start/end 为 'HH:MM:SS(.S)'/'MM:SS'/秒 或 null；都 null = 整片不剪辑。
 //   task.page（可选，ADR-0067 添加界面分P选择）：1 起的分P 序号，越界/缺省 = 第 1 P（按 P 独立缓存键）。
-//   task.options（「文献盒」设置提取项，全部可选）：quality='720'|'1080'|'highest'（缺省最高）、
-//     keepVideo=false 跳过交付（只出文献笔记，video 结果 null）、outputDir 覆盖交付目录（空跟随 conf）。
+//   task.options（bz「文献盒」设置全量下发，全部可选）：quality='720'|'1080'|'highest'（缺省最高）、
+//     keepVideo=false 跳过交付（video 结果 null）、outputDir 覆盖交付目录（空跟随 conf.outputDir）、
+//     compress=false 关闭压缩（缺省开，用户拍板）、crf=18-28（缺省 23）、vaultPath/ffmpegPath/ffprobePath/
+//     pythonPath/whisperModel/cacheDir/cacheRetentionDays（缺省跟随 conf / rc 兜底）。
 //   deps（全部可注入，防循环依赖——core 不 require config.js，conf 由调用方读入传入）：
-//     conf（必需：vaultPath/outputDir/cacheDir/ffmpegPath/ffprobePath/pythonPath/whisperModel/literatureFolder）、
+//     conf（必需：vaultPath/outputDir/cacheDir/ffmpegPath/ffprobePath/pythonPath/whisperModel）、
 //     cookie、fetchJson/get（网络注入，测试打桩）、ffmpeg、ffprobe、py、
-//     runPythonImpl、aiJsonImpl、aiChatImpl（AI/转录打桩）、onStep(名称)、onProgress(进度)、
-//     onInfo(解析信息 {title,uploader,bvid,url,duration})、tmpDir。
-// 7 步时序：resetAbort → 解析 → 下载（复刻 /api/download 缓存命中检测与回写）→ 剪辑（起止有值才跑，
-//   parseTimeInput 转秒，trimVideo 沿用 ffprobe 校验 + 自动重编码兜底，crf=null 不压缩）→ 转文字
-//   （runPython + PY_TRANSCRIBE，parseTranscriptUnits 收文本）→ AI（loadBzAiConfig 校验配置，
-//   缺 key 按既有报错引导；aiJson 元数据 + chunkTranscript 分块 + 逐块 literaturePolishPrompt + aiChat 润色）
-//   → 交付（copyFileSync + unlink 移入 outputDir，buildFileName/uniquePath，makeWiki 等价自建；
-//     options.keepVideo=false 跳过本步）→ 文献笔记（buildLiteratureNote 组装 + uniquePath 落
-//   vaultPath/literatureFolder，永不覆盖）。
-// 进度：onProgress({phase:'download'|'trim'|'transcribe'|'ai', pct})，pct 为 0-100 或 null（不确定，
-//   绝不假报）；300ms 节流聚合高频事件。步骤行 onStep 覆盖：解析中/下载中/剪辑中/转文字中/
-//   AI 生成文献笔记中/交付中/笔记落盘中（交付被跳过时不出「交付中」）。
-// 断点续跑（ADR-0067）：成功步骤产物留存 cacheDir（resume-*：剪辑件/转写稿/AI 元数据/润色分块），
-//   同一任务重跑自动跳过已完成步骤、从出错步骤继续；cleanupCache 同保留期回收。
-// 返回 { note, video, notePath, videoPath, wiki, transcript, title }；note/video 为 vault 相对路径
-//   （不在 vault 下退化为绝对路径；video 为 null = 未交付）。任一步失败抛错（中文文案带缺失前置引导）。
+//     runPythonImpl（转录打桩）、onStep(名称)、onProgress(进度)、onInfo(解析信息 {title,uploader,bvid,url,duration})、tmpDir。
+// 步骤时序：resetAbort → 解析 → 下载（缓存命中检测与回写）→ 剪辑（起止有值才跑）→ 压缩（缺省开，crf 重编码）
+//   → 转文字（runPython + PY_TRANSCRIBE，parseTranscriptUnits 收文本）→ 写转录临时文件 → 交付（keepVideo 才跑）。
+//   **不再写文献笔记**（AI 与笔记落盘由 bz 插件完成）。
+// 进度：onProgress({phase:'download'|'trim'|'compress'|'transcribe', pct})，pct 为 0-100 或 null（不确定，绝不假报）；
+//   300ms 节流聚合高频事件。步骤行 onStep 覆盖：解析中/下载中/剪辑中/压缩中/转文字中/交付中。
+// 断点续跑（ADR-0067，ticket 136 缩减为机械产物）：剪辑件/压缩件/转写稿留存 cacheDir（resume-*），
+//   重跑自动跳过已完成步骤；AI 元数据/润色分块缓存已随 AI 回迁移除。cleanupCache 同保留期回收。
+// 返回 { transcript, video, transcriptPath, videoPath, title, bvid, duration }：
+//   transcript = 转录临时文件**绝对路径**（UTF-8 全文，插件读取后自删）；video = vault 相对/绝对 或 null（未交付）。
+//   任一步失败抛错（中文文案带缺失前置引导）。
 function vaultRel(absPath, vaultPath) {
   if (!vaultPath) return absPath
   const vaultAbs = path.resolve(vaultPath)
@@ -764,22 +614,11 @@ function vaultRel(absPath, vaultPath) {
   return absPath
 }
 
-// makeWiki 等价（server.js:93 未导出的纯函数副本）：vault 内 → ![[rel/finalName]]，否则绝对路径
-function batchWiki(finalPath, conf) {
-  const outAbs = path.resolve(conf && conf.outputDir ? conf.outputDir : path.dirname(finalPath))
-  if (conf && conf.vaultPath) {
-    const vaultAbs = path.resolve(conf.vaultPath)
-    const rel = path.relative(vaultAbs, outAbs)
-    if (rel && !rel.startsWith('..') && !path.isAbsolute(rel)) {
-      return `![[${rel.replace(/\\/g, '/')}/${path.basename(finalPath)}]]`
-    }
-  }
-  return finalPath
-}
-
 async function runBatch(task, deps = {}) {
   resetAbort()   // 全局中止标志复位（server resetTask 同规）
-  const conf = deps.conf || {}
+  // conf 缺省 = rc（调用方读入），task.options（bz 文献盒设置全量下发）并入 conf——
+  // 让 options 里的 vaultPath/ffmpegPath/ffprobePath/pythonPath/whisperModel/cacheDir/cacheRetentionDays/outputDir 覆盖 rc 兜底
+  const conf = { ...(deps.conf || {}), ...((task && task.options) || {}) }
   const cookie = deps.cookie || null
   const fetchJson = deps.fetchJson || fetchJsonImpl
   const get = deps.get
@@ -788,8 +627,6 @@ async function runBatch(task, deps = {}) {
   const py = deps.py || conf.pythonPath
   const model = conf.whisperModel || 'small'
   const runPythonImpl = deps.runPythonImpl || runPython
-  const aiJsonImpl = deps.aiJsonImpl || aiJson
-  const aiChatImpl = deps.aiChatImpl || aiChat
   const onStep = deps.onStep || (() => {})
   const onProgress = deps.onProgress || (() => {})
   // 进度行节流：各环 150ms 级高频事件聚合为每阶段 ≤300ms 一行（[bz-p] 协议行，插件逐行解析驱动行内进度）。
@@ -845,6 +682,8 @@ async function runBatch(task, deps = {}) {
   let seg = null
   let srcForDeliver = originalPath
   let resumeClipUsed = false   // 断点续跑命中剪辑缓存：交付后不得删缓存件
+  let resumeCompressUsed = false   // 断点续跑命中压缩缓存：交付后不得删缓存件
+  let srcDur = info.duration   // 压缩/转文字用的源时长（剪辑后为段长，整片为全片）
   // 断点续跑区间键（ADR-0067）：无剪辑/整片 → [0, duration]；剪辑 → [start, end]
   let rStart = 0
   let rEnd = info.duration
@@ -861,6 +700,7 @@ async function runBatch(task, deps = {}) {
     if (!seg.full) {
       rStart = s
       rEnd = e
+      srcDur = e - s
       onStep('剪辑中')
       // 断点续跑：剪辑件留存（resume-clip-*.mp4），命中即跳过 ffmpeg，从下一环继续
       const clipCache = resumeClipPath(conf, bvid, playCid, height, s, e)
@@ -880,9 +720,30 @@ async function runBatch(task, deps = {}) {
     }
   }
 
+  // ③.5 压缩（缺省开，用户拍板 ticket 136；crf 默认 23、钳制 18-28；断点续跑：压缩件留存 resume-compress-*.mp4）
+  const opts = (task && task.options) || {}
+  const compressEnabled = opts.compress !== false
+  const crf = Math.min(28, Math.max(18, Number(opts.crf) || 23))
+  if (compressEnabled) {
+    onStep('压缩中')
+    const compressCache = resumeCompressedPath(conf, bvid, playCid, crf, rStart, rEnd)
+    if (fs.existsSync(compressCache)) {
+      srcForDeliver = compressCache
+      resumeCompressUsed = true
+    } else {
+      const prev = srcForDeliver
+      const compressPath = path.join(tmpDir, `bili_${Date.now()}_crf${crf}.mp4`)
+      await trimVideo({ inPath: srcForDeliver, outPath: compressPath, ffmpeg, ffprobe, start: 0, end: srcDur, crf, totalMs: srcDur * 1000, onProgress: p => pg({ phase: 'compress', pct: Number.isFinite(p.percent) ? p.percent : null }) })
+      // 压缩消费了中间剪辑临时件（非原件、非缓存件）→ 立即删，避免临时目录泄漏
+      if (prev !== originalPath && !resumeClipUsed) { try { fs.unlinkSync(prev) } catch {} }
+      srcForDeliver = compressPath
+      try { fs.mkdirSync(path.dirname(compressCache), { recursive: true }); fs.copyFileSync(compressPath, compressCache) } catch {}
+    }
+  }
+
   // ④ 转文字（断点续跑：转写稿留存 resume-transcript-*.txt，命中即跳过 python，从下一环继续）
   onStep('转文字中')
-  if (!py) throw new Error('转文字失败：rc 未配置 pythonPath（faster-whisper 所在 Python 路径），请到设置页填写')
+  if (!py) throw new Error('转文字失败：rc 未配置 pythonPath（faster-whisper 所在 Python 路径），请在 bz 插件文献盒设置中填写')
   const transPath = resumeTranscriptPath(conf, bvid, playCid, rStart, rEnd)
   let transcript = ''
   if (fs.existsSync(transPath)) {
@@ -910,50 +771,19 @@ async function runBatch(task, deps = {}) {
     try { fs.writeFileSync(transPath, transcript, 'utf8') } catch {}
   }
 
-  // ⑤ AI 生成文献笔记：配置校验 → 元数据 → 分块润色（块级进度）；⑥ 交付（可关）；⑦ 笔记落盘
-  onStep('AI 生成文献笔记中')
-  const ai = loadBzAiConfig(conf)   // 缺 key / 缺 bz 数据文件 → 既有报错文案（引导去 bz 设置）
-  // 断点续跑：AI 元数据留存 resume-meta-*.json（润色正文基于同稿转写，改动转写时才需重生成）
-  const metaPath = resumeMetaPath(conf, bvid, playCid, rStart, rEnd)
-  let meta = null
-  try { meta = JSON.parse(fs.readFileSync(metaPath, 'utf8')) } catch { meta = null }
-  if (!meta || typeof meta !== 'object' || !meta.title) {
-    const firstChunks = chunkTranscript(transcript)
-    const metaRaw = await aiJsonImpl({
-      ...ai,
-      messages: [{ role: 'user', content: literatureMetaPrompt(info.title, firstChunks[0] || '') }],
-      maxTokens: 600,
-    })
-    const tags = Array.isArray(metaRaw && metaRaw.tags) ? metaRaw.tags.map(String).filter(Boolean).slice(0, 6) : []
-    meta = {
-      title: String((metaRaw && metaRaw.title) || '').trim() || info.title || '未命名',
-      tags,
-      summary: String((metaRaw && metaRaw.summary) || '').trim(),
-    }
-    try { fs.writeFileSync(metaPath, JSON.stringify(meta)) } catch {}
-  }
-  const chunks = chunkTranscript(transcript)
-  // 断点续跑：润色分块逐块落盘（resume-polish-*.json）——失败重跑从已润色块数继续，不重跑已成功块
-  const polishPath = resumePolishPath(conf, bvid, playCid, rStart, rEnd)
-  let polished = []
-  try { const arr = JSON.parse(fs.readFileSync(polishPath, 'utf8')); if (Array.isArray(arr)) polished = arr } catch { /* 无缓存从零开始 */ }
-  for (let i = polished.length; i < chunks.length; i++) {
-    polished.push(await aiChatImpl({ ...ai, messages: [{ role: 'user', content: literaturePolishPrompt(chunks[i]) }], maxTokens: 4096 }))
-    try { fs.writeFileSync(polishPath, JSON.stringify(polished)) } catch {}
-    pg({ phase: 'ai', pct: Math.round(((i + 1) / chunks.length) * 100) })
-  }
-  const whole = polished.join('')
+  // ⑤ 转录临时文件：转录全文 UTF-8 写系统临时目录（非批次临时目录——CLI 退出后插件仍需读取），返回绝对路径
+  const transcriptTemp = path.join(os.tmpdir(), `bili-dl-transcript-${resumeKey(bvid, playCid, rStart, rEnd)}-${Date.now()}-${Math.random().toString(36).slice(2)}.txt`)
+  fs.writeFileSync(transcriptTemp, transcript, 'utf8')
 
   // ⑥ 交付：文件移入 outputDir（copyFileSync + unlink，exFAT 兼容；重名 uniquePath 加序号）；
   //    输出目录可被 task.options.outputDir 覆盖；「保留视频原件」关（keepVideo=false）→ 整步跳过，
-  //    只出文献笔记（笔记内无双链），video 结果 null。
-  const keepVideo = !(task && task.options && task.options.keepVideo === false)
+  //    video 结果 null（转录临时文件仍产出——插件据此生成文献笔记）。
+  const keepVideo = !(opts.keepVideo === false)
   let finalPath = null
-  let wiki = ''
   if (keepVideo) {
     onStep('交付中')
-    const outOverride = task && task.options && String(task.options.outputDir || '').trim()
-    if (!conf.outputDir && !outOverride) throw new Error('交付目录未配置（rc outputDir），请先运行网页端在设置中填写')
+    const outOverride = String(opts.outputDir || '').trim()
+    if (!conf.outputDir && !outOverride) throw new Error('交付目录未配置（rc outputDir 或 options.outputDir），请在 bz 插件文献盒设置中填写')
     const outDirAbs = outOverride ? path.resolve(outOverride) : path.resolve(conf.outputDir)
     fs.mkdirSync(outDirAbs, { recursive: true })
     const name = buildFileName({
@@ -961,35 +791,19 @@ async function runBatch(task, deps = {}) {
       page: selPage && pageNum > 1 ? pageNum : '',   // 第 2 P 起文件名带 _N
       trimmed: seg ? !seg.full : false,
       start: seg ? seg.start : 0, end: seg ? seg.end : info.duration,
-      duration: info.duration, compressed: false, crf: null,
+      duration: info.duration, compressed: compressEnabled, crf,
     })
     finalPath = uniquePath(path.join(outDirAbs, name))
     fs.copyFileSync(srcForDeliver, finalPath)
-    if (srcForDeliver !== originalPath && !resumeClipUsed) { try { fs.unlinkSync(srcForDeliver) } catch {} }   // 剪辑临时件已交付，删（缓存件不删）
-    wiki = batchWiki(finalPath, conf)
+    if (srcForDeliver !== originalPath && !resumeClipUsed && !resumeCompressUsed) { try { fs.unlinkSync(srcForDeliver) } catch {} }   // 剪辑/压缩临时件已交付，删（缓存件不删）
   }
 
-  // ⑦ 文献笔记：frontmatter 七键 + 润色正文 + 视频双链；落 vaultPath/literatureFolder（缺省「文献盒」）
-  onStep('笔记落盘中')
-  if (!conf.vaultPath) throw new Error('文献笔记落盘失败：rc 未配置 vaultPath（Obsidian vault 根目录）')
-  const noteFolder = path.join(conf.vaultPath, conf.literatureFolder || '文献盒')
-  fs.mkdirSync(noteFolder, { recursive: true })
-  const now = new Date()
-  const p2 = n => String(n).padStart(2, '0')
-  const md = buildLiteratureNote({
-    title: meta.title, tags: meta.tags, summary: meta.summary,
-    url: bvid ? `https://www.bilibili.com/video/${bvid}` : url,
-    date: `${now.getFullYear()}-${p2(now.getMonth() + 1)}-${p2(now.getDate())} ${p2(now.getHours())}:${p2(now.getMinutes())}:${p2(now.getSeconds())}`,
-    author: info.uploader, videoTitle: info.title,
-    blocks: [{ text: whole, wiki }],
-  })
-  const notePath = uniquePath(path.join(noteFolder, sanitizeMdTitle(meta.title) + '.md'))
-  fs.writeFileSync(notePath, md, 'utf8')
-
   return {
-    note: vaultRel(notePath, conf.vaultPath),
+    transcript: transcriptTemp,
     video: finalPath ? vaultRel(finalPath, conf.vaultPath) : null,
-    notePath, videoPath: finalPath, wiki, transcript, title: meta.title,
+    transcriptPath: transcriptTemp,
+    videoPath: finalPath,
+    title: info.title, bvid, duration: info.duration,
   }
 }
 
@@ -1002,9 +816,6 @@ module.exports = {
   loadCookies, saveCookies, readJson, writeJson, uniquePath,
   abortAll, resetAbort, trackProc, runPython, PY_TRANSCRIBE, parseTranscriptUnits,
   cacheKey, getCacheDir, cachePath, cleanupCache,
-  resumeKey, resumeClipPath, resumeTranscriptPath, resumeMetaPath, resumePolishPath,
-  sanitizeMdTitle, chunkTranscript, buildLiteratureNote,
-  AI_TIMEOUT_MS, AI_PROVIDERS, loadBzAiConfig, aiChat, aiJson,
-  literatureMetaPrompt, literaturePolishPrompt,
-  vaultRel, batchWiki, runBatch,
+  resumeKey, resumeClipPath, resumeCompressedPath, resumeTranscriptPath,
+  vaultRel, runBatch,
 }
