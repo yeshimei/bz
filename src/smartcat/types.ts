@@ -232,7 +232,7 @@ export interface MemoryStream {
   reflection: {
     lastReflectAt: number;
     count: number;
-    /** 睡前巩固（digest）：上次日小结时间戳（2026-08-23 增强，可选字段旧数据直读） */
+    /** 行为小结（digest）：上次行为小结时间戳（可选字段旧数据直读；ticket 162 起为反思前置步骤） */
     lastDigestAt?: number;
     /** 睡前巩固次数 */
     digestCount?: number;

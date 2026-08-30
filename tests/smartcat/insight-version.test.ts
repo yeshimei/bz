@@ -129,6 +129,17 @@ describe('主题键：受限枚举校验 + 词法回退', () => {
   });
 });
 
+/** ticket 162：行为小结提问路由 digests 负载，其余调用返回 payload（并记录最后一条 user prompt） */
+function digestAware(payload: any) {
+  const f = vi.fn(async (_url: string, init?: any) => {
+    const user = (JSON.parse((init as any).body)?.messages?.[1]?.content as string) ?? '';
+    (f as any).lastPrompt = user;
+    const content = user.includes('行为记录（编号') ? { digests: [{ text: '行为小结', evidence: [1] }] } : payload;
+    return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify(content) } }] }) };
+  });
+  return f;
+}
+
 describe('reflect 集成：主题打标 + supersede 写点 + 候选通道', () => {
   async function seedTwoObservations(m: MemorySystem): Promise<void> {
     await m.addObservation('用户说：这周要考六级', { importance: 0.9 });
@@ -138,16 +149,10 @@ describe('reflect 集成：主题打标 + supersede 写点 + 候选通道', () =
   it('LLM 返回 theme 合法枚举 → 洞察落库带 theme；非法 → 词法兜底', async () => {
     const m = make({ ai: true });
     await seedTwoObservations(m);
-    const fetchMock = vi.fn(async () => ({
-      ok: true,
-      json: async () => ({
-        choices: [{ message: { content: JSON.stringify({ insights: [
-          { text: '用户最近项目冲刺很忙，天天加班到深夜', evidence: [1], theme: '学习' }, // 非法枚举 → 词法兜底
-          { text: '用户备考进入冲刺期', evidence: [2], theme: '工作' }, // 合法枚举（词义牵强但按契约放行）
-        ] }) } }],
-      }),
-    }));
-    (globalThis as any).fetch = fetchMock;
+    (globalThis as any).fetch = digestAware({ insights: [
+      { text: '用户最近项目冲刺很忙，天天加班到深夜', evidence: [1], theme: '学习' }, // 非法枚举 → 词法兜底
+      { text: '用户备考进入冲刺期', evidence: [2], theme: '工作' }, // 合法枚举（词义牵强但按契约放行）
+    ] });
     await m.reflect();
     const insights = data.memory.memoryStream.filter((x) => x.type === 'insight');
     expect(insights.length).toBe(2);
@@ -159,16 +164,13 @@ describe('reflect 集成：主题打标 + supersede 写点 + 候选通道', () =
     const m = make({ ai: true });
     await seedTwoObservations(m);
     data.memory.memoryStream.push(insight('old-i1', '用户在准备英语考试'));
-    let userPrompt = '';
-    const fetchMock = vi.fn(async (url: string, init?: any) => {
-      userPrompt = JSON.parse((init as any).body).messages[1].content as string;
-      return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify({
-        insights: [{ text: '用户的英语备考进入冲刺阶段', evidence: [1, 2] }],
-        supersede: 1,
-      }) } }] }) };
+    const fetchMock = digestAware({
+      insights: [{ text: '用户的英语备考进入冲刺阶段', evidence: [1, 2] }],
+      supersede: 1,
     });
     (globalThis as any).fetch = fetchMock;
     await m.reflect();
+    const userPrompt = (fetchMock as any).lastPrompt as string;
     expect(userPrompt).toContain('你既有的相关洞察'); // 候选块注入
     expect(userPrompt).toContain('C1[');
     expect(userPrompt).toContain('用户在准备英语考试'.slice(0, 10)); // 只注入描述片段
@@ -181,13 +183,10 @@ describe('reflect 集成：主题打标 + supersede 写点 + 候选通道', () =
     const m = make({ ai: true });
     await seedTwoObservations(m);
     data.memory.memoryStream.push(insight('old-s1', '用户偏好夜间学习'));
-    const fetchMock = vi.fn(async () => ({
-      ok: true,
-      json: async () => ({ choices: [{ message: { content: JSON.stringify({
-        insights: [{ text: '用户的学习习惯集中在深夜', evidence: [1] }],
-        supersede: 'old-s1',
-      }) } }] }) }),
-    ) as any;
+    const fetchMock = digestAware({
+      insights: [{ text: '用户的学习习惯集中在深夜', evidence: [1] }],
+      supersede: 'old-s1',
+    }) as any;
     (globalThis as any).fetch = fetchMock;
     await m.reflect();
     expect(data.memory.memoryStream.find((x) => x.id === 'old-s1')!.supersededBy).toBeTruthy();
@@ -197,13 +196,10 @@ describe('reflect 集成：主题打标 + supersede 写点 + 候选通道', () =
     const m = make({ ai: true });
     await seedTwoObservations(m);
     data.memory.memoryStream.push(insight('pin1', '用户长期坚持英语学习', { pinned: true }));
-    const fetchMock = vi.fn(async () => ({
-      ok: true,
-      json: async () => ({ choices: [{ message: { content: JSON.stringify({
-        insights: [{ text: '用户仍在坚持学英语', evidence: [1] }],
-        supersede: 1,
-      }) } }] }) }),
-    ) as any;
+    const fetchMock = digestAware({
+      insights: [{ text: '用户仍在坚持学英语', evidence: [1] }],
+      supersede: 1,
+    }) as any;
     (globalThis as any).fetch = fetchMock;
     await m.reflect();
     const target = data.memory.memoryStream.find((x) => x.id === 'pin1')!;
@@ -216,10 +212,7 @@ describe('reflect 集成：主题打标 + supersede 写点 + 候选通道', () =
     const m = make({ ai: true });
     await seedTwoObservations(m);
     data.memory.memoryStream.push({ id: 'bad-i', created: new Date().toISOString(), lastAccessed: new Date().toISOString(), description: null as any, importance: 0.7, type: 'insight' });
-    const fetchMock = vi.fn(async () => ({
-      ok: true,
-      json: async () => ({ choices: [{ message: { content: JSON.stringify({ insights: [{ text: '正常结论', evidence: [1] }] }) } }] }),
-    }));
+    const fetchMock = digestAware({ insights: [{ text: '正常结论', evidence: [1] }] });
     (globalThis as any).fetch = fetchMock;
     await expect(m.reflect()).resolves.not.toThrow();
     expect(data.memory.memoryStream.some((x) => x.description === '正常结论')).toBe(true);

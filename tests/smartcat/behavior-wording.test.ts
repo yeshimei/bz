@@ -162,7 +162,7 @@ describe('buildBehaviorWording：diary / letter / poem / flash', () => {
 describe('buildBehaviorWording：reflection / weekly-report / dossier / secondbrain', () => {
   it('系统产物文案', () => {
     expect(buildBehaviorWording(makeItem('reflection', 'insight', { entityType: 'reflection', action: 'insight' }))).toBe('小橘产生了一条新洞察');
-    expect(buildBehaviorWording(makeItem('reflection', 'digest', { entityType: 'reflection', action: 'digest' }))).toBe('小橘生成了今日小结');
+    expect(buildBehaviorWording(makeItem('reflection', 'digest', { entityType: 'reflection', action: 'digest' }))).toBe('小橘生成了行为小结');
     expect(buildBehaviorWording(makeItem('weekly-report', 'generated', { entityType: 'weekly-report', action: 'generated' }))).toBe('小橘生成了本周懂你报告');
     expect(buildBehaviorWording(makeItem('dossier', 'generated', { entityType: 'dossier', action: 'generated' }))).toBe('小橘整理了我们的相处故事');
   });

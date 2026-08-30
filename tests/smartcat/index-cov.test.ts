@@ -574,10 +574,12 @@ describe('定时任务链路（趋势漂移 / 每周报告 / 关系史叙事）'
     const { app } = makeApp();
     await ensureSmartCat(app);
     const d: any = __getSmartcatInternals().data;
-    // ticket 160：周报只吃洞察——另加本周 insight（含主题）过周报门槛；观察带情绪保留（趋势漂移原料）
+    // ticket 162：周报首窗锚定第一条洞察日期——洞察 created 回填 8 天前（首窗 [首洞察, +7d) 已满），
+    // 观察带情绪保留（趋势漂移原料）
+    const insightCreated = new Date(Date.now() - 8 * 86400000).toISOString();
     d.memory.memoryStream = [
       ...mkStream(4),
-      ...mkStream(3).map((m: any, i: number) => ({ ...m, id: `ins${i}`, type: 'insight', source: 'reflection', theme: ['工作', '兴趣', '关系'][i] })),
+      ...mkStream(3).map((m: any, i: number) => ({ ...m, id: `ins${i}`, created: insightCreated, type: 'insight', source: 'reflection', theme: ['工作', '兴趣', '关系'][i] })),
     ];
     d.editingData = {
       ...(d.editingData || {}),

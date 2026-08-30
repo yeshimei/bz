@@ -199,3 +199,13 @@
 - [x] 规格：`issues/161-smartcat-consolidation-number-input.md`（spec.md「巩固参数滑杆改输入框」节同步）
 - [x] 实现：src/smartcat/ui.ts 17 处 slider 行改 number 行（min/max/step/绑定/文案不变）；设置面板下滑误触滑杆问题消除
 - [x] 测试：smartcat ui/settings + settings-schema-ui 用例绿 + tsc 0 错 + 构建部署 E 盘
+
+## Ticket 162 — 小橘：巩固语义重定义（行为小结并入反思 + 阈值精简 + 周报锚定首洞察）
+
+**状态：已交付**（2026-08-30）
+
+- [x] 规格：`issues/162-consolidation-semantics-simplify.md`（spec.md「巩固语义重定义」节同步；CONTEXT.md「三层记忆流水线」词条改写）
+- [x] 语义：反思只看素材阈值（默认 20，无间隔闸）；「日小结」更名「行为小结」并改为反思前置步骤（上次反思以来全部行为流 →1 条 observation，首次 24h，不占素材额度）；反思证据池全量按重要度排序（洞察条数 AI 自定）；周报窗口锚定第一条洞察按 7 天链式推进（空窗静默推进、洞察门槛退役）
+- [x] 设置：巩固参数 11 → 2（反思观察阈值 + 引用摘录字数）；「移动端默认全屏」组挪面板最下；6 个退役设置键 data.json 残留值忽略
+- [x] 测试：memory.test「睡前巩固」describe 整体重写为「行为小结」+ routedFetch 路由 mock；insight-version/emotion-recall/adr0069-core/trait-attribution/index-cov/behavior-wording/settings 同步
+- [x] 门禁：tsc 0 错 + 全量 221 文件 3553 用例绿 + 构建部署 E 盘

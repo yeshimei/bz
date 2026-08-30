@@ -314,46 +314,57 @@ describe('saveSmartCatData 写前比对（Syncthing 冲突止血，用户拍板 
   });
 });
 
-describe('R1 日小结换源：原料/触发计数从 behaviorStream，evidenceIds 指向行为条目', () => {
-  it('行为条目驱动触发与产出：prompt 含 behavior-wording 人类文案，evidenceIds = 行为条目 id', async () => {
+describe('R1 行为小结换源（ticket 162 并入反思前置）：原料从 behaviorStream，evidenceIds 指向行为条目', () => {
+  it('行为条目驱动小结：prompt 含 behavior-wording 人类文案，evidenceIds = 行为条目 id', async () => {
     const m = make({ ai: true });
-    data.memory.reflection.lastDigestAt = Date.now() - 20 * 60 * 60 * 1000;
-    data.memory.reflection.digestCount = 1;
     const behs: BehaviorItem[] = [];
     for (const name of ['买菜', '跑步', '读书']) {
       const b = await m.addObservation('memo', { structured: { entityType: 'task', action: 'completed', name } }) as BehaviorItem;
       behs.push(b);
     }
     expect(data.memory.memoryStream.length).toBe(0); // 事件不进记忆流
-    expect((m as any).shouldDigest(Date.now())).toBe(true);
-    const fetchMock = vi.fn(async (url: string, init?: any) => ({
-      ok: true,
-      json: async () => ({
-        choices: [{ message: { content: JSON.stringify({ digests: [{ text: '一天过得充实', evidence: [1, 2] }] }) } }],
-      }),
-    }));
-    (globalThis as any).fetch = fetchMock;
-    await m.digest();
+    // 两条记忆流观察撑起证据池下限（小结本身是第 3 条证据）
+    data.memory.memoryStream.push(
+      { id: 'o1', created: new Date().toISOString(), lastAccessed: new Date().toISOString(), description: '观察一', importance: 0.8, type: 'observation' },
+      { id: 'o2', created: new Date().toISOString(), lastAccessed: new Date().toISOString(), description: '观察二', importance: 0.8, type: 'observation' },
+    );
+    const prompts: string[] = [];
+    (globalThis as any).fetch = vi.fn(async (_url: string, init?: any) => {
+      const body = JSON.parse((init as any).body);
+      const user = (body?.messages?.[1]?.content as string) ?? '';
+      prompts.push(user);
+      // 行为小结提问 → digests 负载；其余（洞察）→ insights 负载
+      const content = user.includes('行为记录（编号')
+        ? { digests: [{ text: '一天过得充实', evidence: [1, 2] }] }
+        : { insights: [{ text: '结论', evidence: [1] }] };
+      return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify(content) } }] }) };
+    });
+    await m.reflect();
     const digests = data.memory.memoryStream.filter((x) => x.type === 'observation' && x.source === 'digest');
     expect(digests.length).toBe(1);
     // evidenceIds 指向行为条目 id（R1）
     expect(digests[0].evidenceIds).toEqual([behs[0].id, behs[1].id]);
     // 喂 LLM 前机读 description 经 behavior-wording 渲染成人类文案
-    const body = JSON.parse((fetchMock.mock.calls[0][1] as any).body);
-    const prompt = body.messages[1].content as string;
-    expect(prompt).toContain('你完成了备忘录「买菜」');
-    expect(prompt).not.toContain('memo:completed 买菜');
+    const summaryPrompt = prompts.find((p) => p.includes('行为记录（编号'))!;
+    expect(summaryPrompt).toContain('你完成了备忘录「买菜」');
+    expect(summaryPrompt).not.toContain('memo:completed 买菜');
     expect(data.memory.reflection.lastDigestAt).toBeGreaterThan(0);
   });
 
-  it('无新增行为条目 → 不触发（计数换源自 behaviorStream）', async () => {
+  it('无新增行为条目 → 反思不做小结（换源语义：观察不驱动小结）', async () => {
     const m = make({ ai: true });
-    data.memory.reflection.lastDigestAt = Date.now() - 20 * 60 * 60 * 1000;
-    data.memory.reflection.digestCount = 1;
-    expect((m as any).shouldDigest(Date.now())).toBe(false);
-    // 直接往记忆流塞 observation 不再驱动日小结（换源语义）
-    data.memory.memoryStream.push({ id: 'o', created: new Date().toISOString(), lastAccessed: new Date().toISOString(), description: '旧式观察', importance: 0.8, type: 'observation' });
-    expect((m as any).shouldDigest(Date.now())).toBe(false);
+    const prompts: string[] = [];
+    (globalThis as any).fetch = vi.fn(async (_url: string, init?: any) => {
+      const body = JSON.parse((init as any).body);
+      prompts.push((body?.messages?.[1]?.content as string) ?? '');
+      return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify({ insights: [{ text: '结论', evidence: [1] }] }) } }] }) };
+    });
+    // 直接往记忆流塞 observation 不驱动小结（换源语义）
+    data.memory.memoryStream.push({ id: 'o1', created: new Date().toISOString(), lastAccessed: new Date().toISOString(), description: '旧式观察一', importance: 0.8, type: 'observation' });
+    data.memory.memoryStream.push({ id: 'o2', created: new Date().toISOString(), lastAccessed: new Date().toISOString(), description: '旧式观察二', importance: 0.8, type: 'observation' });
+    await m.reflect();
+    expect(prompts.some((p) => p.includes('行为记录（编号'))).toBe(false);
+    expect(data.memory.memoryStream.some((x) => x.source === 'digest')).toBe(false);
   });
 });
 

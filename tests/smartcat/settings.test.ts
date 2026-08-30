@@ -250,8 +250,8 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
       { icon: 'folder-open', name: '记忆目录', count: '1 项' },
       // P3 新增三组（ticket 123）
       { icon: 'database', name: '存储与记忆', count: '2 项' },
-      // ticket 160 记忆巩固（三层流水线：行为流→日小结→记忆流→反思/周报）
-      { icon: 'moon', name: '记忆巩固', count: '11 项' },
+      // ticket 162 记忆巩固精简（反思阈值 + 引用摘录两行；移动端组已挪到面板末尾）
+      { icon: 'moon', name: '记忆巩固', count: '2 项' },
       { icon: 'link', name: '关联', count: '2 项' },
       { icon: 'eye', name: '显示', count: '1 项' },
     ]);

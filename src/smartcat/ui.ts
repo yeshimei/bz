@@ -201,7 +201,7 @@ export function hideChatPanel(panels: SmartcatPanels): void {
  * - 外观组 13 皮肤色块网格 = custom 插槽（无 Setting 行，不计徽标）；
  * - 「打开数据面板」= button 行（onOpenDashboard 缺省时不挂组）；
  * - 「移动端默认全屏」走 settingsKeys + setMobileFullscreen 外部绑定（非 BzSettings 键，手写组
- *   并带 smartcat 专属 desc）；组序保持现状（移动端组位于记忆与存储之间）。
+ *   并带 smartcat 专属 desc）；组序 ticket 162 起移动端组位于面板末尾。
  * - ticket 100 文案修正：行为流/关联窗口数字范围去括号改写自然句（键名/行为不动）。
  * 置于模块顶层供文案 lint 直接引用；opts 仅在渲染/交互时经闭包引用，工厂构建无副作用。 */
 export function smartcatSettingsSchema(opts: {
@@ -386,7 +386,6 @@ export function smartcatSettingsSchema(opts: {
           },
         ],
       },
-      mobileGroup,
       {
         icon: 'database',
         name: '存储与记忆',
@@ -395,21 +394,14 @@ export function smartcatSettingsSchema(opts: {
           { type: 'number', name: '行为流最大条数', desc: '行为流最多保留 100 到 10000 条，超出部分删除最旧条目', binding: bindBehavior('behaviorMaxCount'), min: 100, max: 10000, step: 100 },
         ],
       },
-      // ticket 160 记忆巩固（三层流水线：行为流→日小结→记忆流→反思/周报；缺省与 MEMORY_CONFIG 对齐）
+      // ticket 160 记忆巩固；ticket 162 精简——反思攒够素材即归纳（证据池全量、洞察条数 AI 定）、
+      // 行为小结为反思前置步骤（上次反思以来全部行为流→1 条，首次 24h，不占素材额度）、
+      // 周报窗口=上次周报以来（首次 7 天）
       {
         icon: 'moon',
         name: '记忆巩固',
         rows: [
-          { type: 'number', name: '反思最小间隔', desc: '距上次反思至少间隔多少小时才再次归纳洞察，范围 1 到 168', binding: bindBehavior('smartcatReflectIntervalHours'), min: 1, max: 168, step: 1 },
-          { type: 'number', name: '反思观察阈值', desc: '自上次反思新增多少条观察后才允许再次归纳，范围 1 到 50', binding: bindBehavior('smartcatReflectMinNew'), min: 1, max: 50, step: 1 },
-          { type: 'number', name: '反思回看条数', desc: '反思时从记忆流最近多少条观察里挑选证据，范围 10 到 500', binding: bindBehavior('smartcatReflectEvidenceWindow'), min: 10, max: 500, step: 10 },
-          { type: 'number', name: '反思证据上限', desc: '候选池按重要度最多挑多少条交给 AI 归纳，范围 5 到 100', binding: bindBehavior('smartcatReflectEvidenceTop'), min: 5, max: 100, step: 5 },
-          { type: 'number', name: '洞察条数', desc: '每次反思归纳出的洞察结论条数，范围 1 到 10', binding: bindBehavior('smartcatInsightCount'), min: 1, max: 10, step: 1 },
-          { type: 'number', name: '日小结最小间隔', desc: '距上次日小结至少间隔多少小时才再次整理，范围 1 到 72', binding: bindBehavior('smartcatDigestIntervalHours'), min: 1, max: 72, step: 1 },
-          { type: 'number', name: '日小结行为阈值', desc: '距上次日小结新增多少条行为记录才再次整理，范围 1 到 50', binding: bindBehavior('smartcatDigestMinNew'), min: 1, max: 50, step: 1 },
-          { type: 'number', name: '日小结证据上限', desc: '每次日小结最多读取多少条行为记录，范围 3 到 100', binding: bindBehavior('smartcatDigestMaxEvidence'), min: 3, max: 100, step: 1 },
-          { type: 'number', name: '日小结条数', desc: '每次日小结压缩出的事实条数，范围 1 到 10', binding: bindBehavior('smartcatDigestCount'), min: 1, max: 10, step: 1 },
-          { type: 'number', name: '周报洞察门槛', desc: '本周新增洞察达到多少条才生成懂你报告，范围 1 到 20', binding: bindBehavior('smartcatWeeklyMinInsights'), min: 1, max: 20, step: 1 },
+          { type: 'number', name: '反思观察阈值', desc: '自上次反思记忆流新增多少条观察就归纳一次洞察，范围 1 到 50', binding: bindBehavior('smartcatReflectMinNew'), min: 1, max: 50, step: 1 },
           { type: 'number', name: '引用摘录字数', desc: '反思时引用笔记原文的最大字数，设为 0 不附原文，范围 0 到 2000', binding: bindBehavior('smartcatRefExcerptLimit'), min: 0, max: 2000, step: 50 },
         ],
       },
@@ -428,6 +420,8 @@ export function smartcatSettingsSchema(opts: {
           { type: 'toggle', name: '显示行为日志', desc: '在数据面板中显示行为日志页签', binding: bindBehaviorOn('showBehaviorLog') },
         ],
       },
+      // ticket 162：移动端组挪到面板末尾（原位于记忆与存储之间）
+      mobileGroup,
     ],
   };
 }
@@ -439,17 +433,8 @@ const DEFAULT_BEHAVIOR = {
   linkWindowDays: 7,
   smartcatEmbeddingModel: '',
   smartcatChunkLimitChars: 800,
-  // ticket 160 记忆巩固参数缺省（对齐 settings.ts DEFAULT_SETTINGS；仅 data.json 缺键时回填用）
-  smartcatReflectIntervalHours: 24,
-  smartcatReflectMinNew: 3,
-  smartcatReflectEvidenceWindow: 100,
-  smartcatReflectEvidenceTop: 50,
-  smartcatInsightCount: 3,
-  smartcatDigestIntervalHours: 18,
-  smartcatDigestMinNew: 3,
-  smartcatDigestMaxEvidence: 24,
-  smartcatDigestCount: 2,
-  smartcatWeeklyMinInsights: 3,
+  // ticket 160 引入；ticket 162 精简（对齐 settings.ts DEFAULT_SETTINGS；仅 data.json 缺键时回填用）
+  smartcatReflectMinNew: 20,
   smartcatRefExcerptLimit: 400,
 } as const;
 
