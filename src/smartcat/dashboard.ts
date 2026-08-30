@@ -185,7 +185,7 @@ export function buildEmotionTimeline(stream: MemoryStreamEntry[], limit = 20): E
   return points.slice(0, Math.max(1, limit));
 }
 
-/** 情绪分布（仅观察计数——洞察是系统产物不算用户情绪痕迹，口径对齐 report.buildWeeklyReportData） */
+/** 情绪分布（仅观察计数——洞察是系统产物不算用户情绪痕迹；ticket 160 起周报只吃洞察，此口径仅面板统计使用） */
 export function buildEmotionDistribution(stream: MemoryStreamEntry[]): Record<string, number> {
   const dist: Record<string, number> = {};
   for (const m of stream) {

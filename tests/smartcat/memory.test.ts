@@ -4,11 +4,17 @@
  * 三因子检索（词法/语义）/自增强 lastAccessed/500 上限/反思调度/降级链。
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { MemorySystem, MEMORY_CONFIG, ruleCredibility, CREDIBILITY_TIERS, sourceLabel, formatRelativeTime, buildRetrieveQuery, USER_CONTENT_BOUNDARY, detectInjection, sanitizeEmotion, clampLLMCredibility, behaviorToObservations } from '../../src/smartcat/memory';
+import { MemorySystem, MEMORY_CONFIG, ruleCredibility, CREDIBILITY_TIERS, sourceLabel, formatRelativeTime, buildRetrieveQuery, USER_CONTENT_BOUNDARY, detectInjection, sanitizeEmotion, clampLLMCredibility, getConsolidationConfig } from '../../src/smartcat/memory';
 import { defaultSmartCatData } from '../../src/smartcat/data';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { requestUrl } from '../mock-obsidian-entry';
 import type { SmartCatData, MemoryStreamEntry } from '../../src/smartcat/types';
+
+// ticket 160：巩固参数走 BzSettings smartcat* 键——mock settings-provider 控制覆盖值（其余键缺省）
+const mockSettings: Record<string, any> = { behaviorMaxDays: 30, behaviorMaxCount: 2000 };
+vi.mock('../../src/core/settings-provider', () => ({
+  tryGetSettings: () => mockSettings,
+}));
 
 let data: SmartCatData;
 let saver: ReturnType<typeof vi.fn<(d: SmartCatData) => Promise<void>>>;
@@ -283,9 +289,9 @@ describe('观察可信度 credibility（085，ADR-0036）', () => {
     expect(capturedPrompt.match(/可信内容本体/g)?.length).toBe(1);
   });
 
-  it('ticket 158：反思证据池并入行为流——记忆流无观察时行为条目可作证据（wording 渲染）', async () => {
+  it('ticket 160：反思证据池只吃记忆流——行为流条目不再直接作证据（须先经日小结沉淀入流）', async () => {
     const m = make({ ai: true });
-    // 模拟 ADR-0069 后域事件路径：只进行为流（记忆流无 observation）
+    // 模拟 ADR-0069 域事件路径：只进行为流（记忆流无 observation）
     data.memory.behaviorStream.push(
       { id: 'beh_1', timestamp: new Date().toISOString(), type: 'completed', source: 'memo', description: 'memo:completed 写周报', metadata: { entityType: 'task', action: 'completed', name: '写周报' } } as any,
       { id: 'beh_2', timestamp: new Date().toISOString(), type: 'read', source: 'news', description: 'news:read 标题', metadata: { entityType: 'news', action: 'read', name: '标题' } } as any,
@@ -296,28 +302,52 @@ describe('观察可信度 credibility（085，ADR-0036）', () => {
       return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify({ insights: [{ text: '结论', evidence: [1] }] }) } }] }) };
     });
     await m.reflect();
-    expect(capturedPrompt).toContain('你完成了备忘录「写周报」');
-    expect(capturedPrompt).toContain('你阅读了《标题》');
+    expect(capturedPrompt).not.toContain('你完成了备忘录「写周报」');
+    expect(capturedPrompt).not.toContain('你阅读了《标题》');
   });
 
-  it('ticket 158：从未反思时行为流攒够 reflectionMinNew 也触发反思（shouldReflect）', async () => {
+  it('ticket 160：从未反思 → 只看记忆流观察素材量（行为流条目不再触发）', async () => {
     const m = make();
     expect((m as any).shouldReflect(Date.now())).toBe(false);
     for (let i = 0; i < 20; i++) {
       data.memory.behaviorStream.push({ id: `beh_${i}`, timestamp: new Date().toISOString(), type: 'added', source: 'memo', description: `memo:added 条目${i}` } as any);
     }
+    // 行为流攒再多也不触发——素材只认记忆流观察
+    expect((m as any).shouldReflect(Date.now())).toBe(false);
+    await m.addObservation('用户说：甲', { importance: 0.5 });
+    await m.addObservation('用户说：乙', { importance: 0.5 });
+    await m.addObservation('用户说：丙', { importance: 0.5 });
     expect((m as any).shouldReflect(Date.now())).toBe(true);
   });
 
-  it('behaviorToObservations：行为条目 → 观察伪条目（wording 渲染 + credibility 走来源档位；不入流）', () => {
-    const obs = behaviorToObservations([
-      { id: 'beh_1', timestamp: '2026-08-30T01:00:00.000Z', type: 'completed', source: 'memo', description: 'memo:completed 写周报', metadata: { entityType: 'task', action: 'completed', name: '写周报' } } as any,
-      { id: 'beh_2', timestamp: '2026-08-30T02:00:00.000Z', type: 'read', source: 'news', description: 'news:read 标题', metadata: { entityType: 'news', action: 'read', name: '标题' } } as any,
-    ]);
-    expect(obs).toHaveLength(2);
-    expect(obs[0]).toMatchObject({ id: 'beh_1', type: 'observation', description: '你完成了备忘录「写周报」', credibility: 0.75 });
-    expect(obs[0].created).toBe('2026-08-30T01:00:00.000Z');
-    expect(obs[1]).toMatchObject({ id: 'beh_2', description: '你阅读了《标题》', credibility: 0.45 });
+  it('ticket 160：反思对引用型条目贴原文摘录（refResolver 读正文；失效回退路径；0=不附）', async () => {
+    const m = make({ ai: true });
+    const longBody = 'A'.repeat(1000);
+    (m as any).setRefResolver(async (ref: string) => (ref.includes('失效') ? null : longBody));
+    const mk = (id: string, path: string): MemoryStreamEntry => ({
+      id, created: new Date().toISOString(), lastAccessed: new Date().toISOString(),
+      description: path, importance: 0.9, type: 'observation', ref: { path },
+    });
+    data.memory.memoryStream.push(mk('r1', '笔记/好文.md'), mk('r2', '笔记/失效.md'), mk('r3', '笔记/另一篇.md'));
+    let capturedPrompt = '';
+    (globalThis as any).fetch = vi.fn(async (_url: string, init?: any) => {
+      capturedPrompt = JSON.parse((init as any).body).messages[1].content as string;
+      return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify({ insights: [{ text: '结论', evidence: [1] }] }) } }] }) };
+    });
+    await m.reflect();
+    expect(capturedPrompt).toContain('原文摘录：' + 'A'.repeat(400)); // 缺省截 400 字
+    expect(capturedPrompt).not.toContain('A'.repeat(401));
+    expect(capturedPrompt).toContain('笔记/失效.md'); // 读失败 → 回退路径显示，不崩
+    // 摘录关闭：smartcatRefExcerptLimit=0 → 不附原文
+    mockSettings.smartcatRefExcerptLimit = 0;
+    let p2 = '';
+    (globalThis as any).fetch = vi.fn(async (_url: string, init?: any) => {
+      p2 = JSON.parse((init as any).body).messages[1].content as string;
+      return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify({ insights: [{ text: '结论', evidence: [1] }] }) } }] }) };
+    });
+    await m.reflect();
+    expect(p2).not.toContain('原文摘录');
+    delete mockSettings.smartcatRefExcerptLimit;
   });
 
   it('旧数据无 credibility → 检索不崩且按 0.5 中性处理（不迁移字段）', async () => {
@@ -724,19 +754,30 @@ describe('反思（Reflection）', () => {
     expect(promptText.split('你既有的相关洞察')[0]).not.toContain('用户近期学习投入');
   });
 
-  it('shouldReflect：新增 ≥20 条触发（pendingSinceReflect）', async () => {
+  it('shouldReflect：间隔与素材双闸（ticket 160）——素材够但间隔不足不触发；阈值设置可覆盖', async () => {
     const m = make();
-    const before = data.memory.reflection.lastReflectAt;
-    for (let i = 0; i < MEMORY_CONFIG.reflectionMinNew; i++) {
-      await m.addObservation(`消息 ${i}`, { importance: 0.3 });
-    }
-    expect((m as any).pendingSinceReflect).toBe(MEMORY_CONFIG.reflectionMinNew);
+    for (let i = 0; i < 3; i++) await m.addObservation(`消息 ${i}`, { importance: 0.3 });
+    // 首次：素材 ≥缺省阈值 3 → 触发（素材计数=记忆流新增，legacy 观察计入）
+    expect((m as any).pendingSinceReflect).toBe(3);
     expect((m as any).shouldReflect(Date.now())).toBe(true);
-    // 复盘：不满 20 条且距上次未超 24h → false
+    // 已反思过：素材够但距上次 <24h → 不触发（旧「≥20 条立即触发」快车道退役）
+    data.memory.reflection.lastReflectAt = Date.now();
+    (m as any).pendingSinceReflect = 0;
+    for (let i = 0; i < 3; i++) await m.addObservation(`新素材 ${i}`, { importance: 0.3 });
+    expect((m as any).shouldReflect(Date.now())).toBe(false);
+    // 距上次 ≥24h 且素材 ≥3 → 触发
+    data.memory.reflection.lastReflectAt = Date.now() - 25 * 60 * 60 * 1000;
+    expect((m as any).shouldReflect(Date.now())).toBe(true);
+    // 素材不足（<3）且间隔已过 → 不触发
     const m2 = make();
     await m2.addObservation('一条', { importance: 0.3 });
+    await m2.addObservation('两条', { importance: 0.3 });
+    data.memory.reflection.lastReflectAt = Date.now() - 25 * 60 * 60 * 1000;
     expect((m2 as any).shouldReflect(Date.now())).toBe(false);
-    const _ = before; // 保留引用避免 lint
+    // 设置覆盖：阈值降到 1 → 触发
+    mockSettings.smartcatReflectMinNew = 1;
+    expect((m2 as any).shouldReflect(Date.now())).toBe(true);
+    delete mockSettings.smartcatReflectMinNew;
   });
 });
 
@@ -834,7 +875,8 @@ describe('睡前巩固（Digest，2026-08-23 增强）', () => {
     await m.digest();
     expect(data.memory.reflection.digestCount).toBe(1);
     expect(data.memory.reflection.lastDigestAt).toBeGreaterThan(0);
-    expect(data.memory.memoryStream.some((x) => x.type === 'insight' && x.source === 'digest')).toBe(true);
+    // ticket 160：产出为 observation（source digest）——反思/周报的口粮
+    expect(data.memory.memoryStream.some((x) => x.type === 'observation' && x.source === 'digest')).toBe(true);
     // 推进后走常规间隔闸门：刚小结完（<18h）不再触发
     expect((m as any).shouldDigest(Date.now())).toBe(false);
   });
@@ -894,7 +936,7 @@ describe('睡前巩固（Digest，2026-08-23 增强）', () => {
     // 恢复后重跑：恰好一批
     await m.digest();
     const texts = data.memory.memoryStream.filter((x) => x.source === 'digest').map((x) => x.description);
-    expect(texts).toEqual(['【今日小结】小结A', '【今日小结】小结B']);
+    expect(texts).toEqual(['小结A', '小结B']); // ticket 160：产出 observation，【今日小结】前缀取消
     expect(data.memory.reflection.digestCount).toBe(2);
   });
 
@@ -911,7 +953,7 @@ describe('睡前巩固（Digest，2026-08-23 增强）', () => {
     expect((m as any).shouldDigest(Date.now())).toBe(true);
   });
 
-  it('LLM 配置时 digest 生成【今日小结】写回流（source digest + evidenceIds + 推进 lastDigestAt）', async () => {
+  it('LLM 配置时 digest 产出 observation 入记忆流（source digest + evidenceIds + 推进 lastDigestAt）', async () => {
     const m = make({ ai: true });
     data.memory.reflection.lastDigestAt = Date.now() - 20 * 60 * 60 * 1000;
     data.memory.reflection.digestCount = 1;
@@ -926,9 +968,9 @@ describe('睡前巩固（Digest，2026-08-23 增强）', () => {
     }));
     (globalThis as any).fetch = fetchMock;
     await m.digest();
-    const digests = data.memory.memoryStream.filter((x) => x.type === 'insight' && x.source === 'digest');
+    const digests = data.memory.memoryStream.filter((x) => x.type === 'observation' && x.source === 'digest');
     expect(digests.length).toBe(1);
-    expect(digests[0].description).toContain('【今日小结】');
+    expect(digests[0].description).toBe('项目上线成功，晚上跑步放松'); // ticket 160：无【今日小结】前缀
     expect(digests[0].evidenceIds!.length).toBe(2);
     expect(data.memory.reflection.digestCount).toBe(2);
     expect(data.memory.reflection.lastDigestAt).toBeGreaterThan(0);
@@ -948,7 +990,7 @@ describe('睡前巩固（Digest，2026-08-23 增强）', () => {
     expect((m as any).reflectBackoffUntil).toBeGreaterThan(Date.now()); // 失败进入退避
   });
 
-  it('digest 产出的【今日小结】不进反思 evidence（防自引用）', async () => {
+  it('第二次 digest：无新增行为 → 不重复产出（小结素材不自我膨胀）', async () => {
     const m = make({ ai: true });
     data.memory.reflection.lastDigestAt = Date.now() - 20 * 60 * 60 * 1000;
     await m.addObservation('用户说：真实观察一', { importance: 0.8 });
@@ -960,14 +1002,63 @@ describe('睡前巩固（Digest，2026-08-23 增强）', () => {
     }));
     (globalThis as any).fetch = f1;
     await m.digest();
-    const insightCount = data.memory.memoryStream.filter((x) => x.type === 'insight').length;
-    expect(insightCount).toBe(1);
-    // 第二次 digest：候选应不含 digest 小结（source 过滤），且 observations 都被上次消化
+    const digestCount = data.memory.memoryStream.filter((x) => x.source === 'digest').length;
+    expect(digestCount).toBe(1);
+    // 第二次 digest：候选应不含上次小结（基线推进），且无新行为 → 不产出
     const f2 = vi.fn(async () => ({ ok: true, json: async () => ({ choices: [{ message: { content: '{}' } }] }) }));
     (globalThis as any).fetch = f2;
     await m.digest();
-    // 无新观察 → 不推进（应触发 shouldDigest 的阈值判断失败直接返回）
-    expect(data.memory.memoryStream.filter((x) => x.type === 'insight').length).toBe(1);
+    expect(data.memory.memoryStream.filter((x) => x.source === 'digest').length).toBe(1);
+  });
+
+  it('ticket 160：日小结产出 observation 入记忆流，成为反思口粮（digest → reflect 全链路）', async () => {
+    const m = make({ ai: true });
+    mockSettings.smartcatReflectMinNew = 1; // 1 条日小结产出即允许反思
+    data.memory.reflection.lastDigestAt = Date.now() - 20 * 60 * 60 * 1000;
+    data.memory.reflection.digestCount = 1;
+    for (let i = 0; i < 3; i++) {
+      data.memory.behaviorStream.push({ id: `bh${i}`, timestamp: new Date(Date.now() - 3600e3).toISOString(), type: 'completed', source: 'memo', description: `memo:completed 任务${i}`, metadata: { entityType: 'task', action: 'completed', name: `任务${i}` } } as any);
+    }
+    (globalThis as any).fetch = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ choices: [{ message: { content: JSON.stringify({ digests: [{ text: '今天完成了三个任务，进展顺利', evidence: [1] }] }) } }] }),
+    }));
+    await m.digest();
+    const digestEntry = data.memory.memoryStream.find((x) => x.source === 'digest');
+    expect(digestEntry).toBeTruthy();
+    expect(digestEntry!.type).toBe('observation');
+    expect(digestEntry!.evidenceIds!.length).toBe(1);
+    // digest 产出即反思素材 → shouldReflect 立即放行（首次反思；再补一条观察凑足 evidence 下限 2）
+    expect(data.memory.reflection.lastReflectAt).toBe(0);
+    await m.addObservation('用户说：真实观察', { importance: 0.9 });
+    expect((m as any).shouldReflect(Date.now())).toBe(true);
+    // 反思证据池含日小结文案
+    let capturedPrompt = '';
+    (globalThis as any).fetch = vi.fn(async (_u: string, init?: any) => {
+      capturedPrompt = JSON.parse((init as any).body).messages[1].content as string;
+      return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify({ insights: [{ text: '结论', evidence: [1] }] }) } }] }) };
+    });
+    await m.reflect();
+    expect(capturedPrompt).toContain('今天完成了三个任务，进展顺利');
+    delete mockSettings.smartcatReflectMinNew;
+  });
+});
+
+describe('巩固参数配置（ticket 160）', () => {
+  it('getConsolidationConfig：缺省回退 MEMORY_CONFIG；设置键覆盖；0 允许；非法值回退', () => {
+    const d = getConsolidationConfig();
+    expect(d.reflectIntervalMs).toBe(24 * 60 * 60 * 1000);
+    expect(d.digestMinNew).toBe(MEMORY_CONFIG.digestMinNew);
+    expect(d.refExcerptLimit).toBe(400);
+    mockSettings.smartcatDigestMinNew = 5;
+    mockSettings.smartcatRefExcerptLimit = 0;
+    const o = getConsolidationConfig();
+    expect(o.digestMinNew).toBe(5);
+    expect(o.refExcerptLimit).toBe(0);
+    mockSettings.smartcatDigestMinNew = -1;
+    expect(getConsolidationConfig().digestMinNew).toBe(MEMORY_CONFIG.digestMinNew);
+    delete mockSettings.smartcatDigestMinNew;
+    delete mockSettings.smartcatRefExcerptLimit;
   });
 });
 

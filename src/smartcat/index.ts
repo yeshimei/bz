@@ -15,7 +15,7 @@ import { eventSystem, setSmartcatApp, setupVisibilityCheck, __resetVisibilityFor
 import { mountCatContainer, unmountCatContainer, applyAppearance, createChatPanel, showChatPanel, hideChatPanel, openSmartcatSettings } from './ui';
 import { BubbleManager } from './bubble';
 import { MoodSystem, PersonalityGrowth } from './mood';
-import { MemorySystem, USER_CONTENT_BOUNDARY, PROMPT_SLOTS, migrateSmartcatSidecars, slimSmartCatData, behaviorToObservations } from './memory';
+import { MemorySystem, USER_CONTENT_BOUNDARY, PROMPT_SLOTS, migrateSmartcatSidecars, slimSmartCatData, getConsolidationConfig } from './memory';
 import { SmartCatAnimation } from './animation';
 import { InteractionManager, MobileInputAdapter } from './interaction';
 import { getSmartCatMessage } from './messages';
@@ -750,32 +750,21 @@ async function maybeTrendDrift(): Promise<void> {
 // ---------------- 每周懂你报告（2026-08-23「懂你」增强：⑦） ----------------
 // 周报按 1 小时节拍调度 + 10 点检查，由常驻心跳分派（startResidentHeartbeat / dispatchResidentTick，p2 收敛）
 
-/** 生成本周报告（仅当新周 + 本周有观察；LLM/兜底 → 写回流 source weekly-report + 气泡展示 + 状态推进） */
+/** 生成本周报告（ticket 160 三层流水线：只吃本周新增洞察；仅当新周 + 洞察达门槛；
+ *  LLM/兜底 → 写回流 source weekly-report + 气泡展示 + 状态推进） */
 async function maybeWeeklyReport(): Promise<void> {
   if (!data || !bubbleManager || !moodSystem || !memorySystem) return;
   const st = getWeeklyReportState();
   const weekKey = isoWeekKey();
   if (st.weekKey === weekKey) return; // 本周已生成
-  const win = weekWindow(Date.now());
-  const [start] = win;
-  // 周一起算：只在本周窗口已至少过去 1 天且本周有观察时生成（周二起才可能）
+  const [start] = weekWindow(Date.now());
+  // 周一起算：只在本周窗口已至少过去 1 天时生成（周二起才可能）
   if (Date.now() - start < 24 * 60 * 60 * 1000) return;
-  // ticket 158：ADR-0069 后用户观察改道行为流（记忆流唯一新来源「记忆目录」默认未配置）——
-  // 周报门槛与原料同步接入行为流（渲染成观察伪条目，R1 同源思路）
-  const behaviorWeek = behaviorToObservations((memorySystem.behaviorStream || []).filter((b) => {
-    const t = new Date(b.timestamp).getTime();
-    return Number.isFinite(t) && t >= win[0] && t <= win[1];
-  }));
-  const weekEntries = [
-    ...data.memory.memoryStream.filter((m) => {
-      const t = m.created ? new Date(m.created).getTime() : NaN;
-      return Number.isFinite(t) && t >= win[0] && t <= win[1] && m.type === 'observation';
-    }),
-    ...behaviorWeek,
-  ];
-  if (weekEntries.length < 3) return; // 观察太少，本周报告无意义（下周再试）
+  // ticket 160：周报只吃洞察（反思/叙事产出的高阶结论，buildWeeklyReportData 内剔除 superseded），
+  // 具体记忆/观察不再进报告；洞察不足门槛 → 安静跳过（小时心跳继续尝试，不报错不空转）
+  const report = buildWeeklyReportData(data.memory.memoryStream, moodSystem.pad, Date.now());
+  if (report.total < getConsolidationConfig().weeklyMinInsights) return;
   try {
-    const report = buildWeeklyReportData([...data.memory.memoryStream, ...behaviorWeek], moodSystem.pad, Date.now());
     const text = await generateWeeklyReport(report);
     if (!text) return;
     // 写回流（insight，source weekly-report，importance 高——记忆流可见但 insight 不作反思 evidence）

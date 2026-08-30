@@ -104,7 +104,7 @@ beforeEach(() => {
 });
 
 describe('R0 钩子上移（致命项）：behavior 路由同样驱动生命线', () => {
-  it('behavior-only 事件触发 onObservation（credibility=ruleCredibility 档位）+ onPresence + pendingSinceReflect++ + touchPresence', async () => {
+  it('behavior-only 事件触发 onObservation（credibility=ruleCredibility 档位）+ onPresence + touchPresence；素材计数不再随行为路由（ticket 160：反思素材只认记忆流）', async () => {
     const m = make();
     const seen: MemoryStreamEntry[] = [];
     let presenceCount = 0;
@@ -120,13 +120,13 @@ describe('R0 钩子上移（致命项）：behavior 路由同样驱动生命线'
     expect(seen[0].source).toBe('memo');
     expect(seen[0].type).toBe('observation');
     expect(seen[0].credibility).toBe(ruleCredibility('memo', beh.description));
-    // 在场 + 计数
+    // 在场驱动；素材计数不动（行为条目经日小结沉淀入流才计数）
     expect(presenceCount).toBe(1);
-    expect((m as any).pendingSinceReflect).toBe(1);
+    expect((m as any).pendingSinceReflect).toBe(0);
     expect(typeof data.editingData.lastPresenceAt).toBe('number');
   });
 
-  it('memory 路由：钩子/计数只触发一次（上移不重复计数），onObservation 带真实记忆条目', async () => {
+  it('memory 路由：钩子只触发一次（上移不重复），素材计数一次；onObservation 带真实记忆条目', async () => {
     const m = make();
     const seen: MemoryStreamEntry[] = [];
     let presenceCount = 0;
@@ -138,7 +138,7 @@ describe('R0 钩子上移（致命项）：behavior 路由同样驱动生命线'
     expect(seen[0].id).toBe(mem.id);
     expect(seen[0].credibility).toBe(0.5); // chat 走 routing 档位
     expect(presenceCount).toBe(1);
-    expect((m as any).pendingSinceReflect).toBe(1); // 不因双写而 +2
+    expect((m as any).pendingSinceReflect).toBe(1); // 记忆流新增素材计数一次（ticket 160 落 memory 分支）
   });
 });
 
@@ -334,7 +334,7 @@ describe('R1 日小结换源：原料/触发计数从 behaviorStream，evidenceI
     }));
     (globalThis as any).fetch = fetchMock;
     await m.digest();
-    const digests = data.memory.memoryStream.filter((x) => x.type === 'insight' && x.source === 'digest');
+    const digests = data.memory.memoryStream.filter((x) => x.type === 'observation' && x.source === 'digest');
     expect(digests.length).toBe(1);
     // evidenceIds 指向行为条目 id（R1）
     expect(digests[0].evidenceIds).toEqual([behs[0].id, behs[1].id]);

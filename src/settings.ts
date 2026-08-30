@@ -362,6 +362,30 @@ export default interface BzSettings {
   /** 小橘记忆库分块字符上限（200–6000；默认 800——中文语义检索粒度优先，改动后新入库条目生效） */
   smartcatChunkLimitChars: number;
 
+  // ===== 🐱 小橘记忆巩固（ticket 160 三层流水线：行为流→日小结→记忆流→反思/周报）=====
+  /** 反思最小间隔小时（距上次反思至少间隔才再次归纳洞察） */
+  smartcatReflectIntervalHours: number;
+  /** 反思新观察阈值（自上次反思新增素材达到该条数且满足间隔才触发；首次同门槛） */
+  smartcatReflectMinNew: number;
+  /** 反思证据回看条数（候选池取记忆流最近多少条观察） */
+  smartcatReflectEvidenceWindow: number;
+  /** 反思证据上限（候选池按重要度最多交给 AI 归纳的条数） */
+  smartcatReflectEvidenceTop: number;
+  /** 反思洞察条数（每次反思归纳的洞察条数） */
+  smartcatInsightCount: number;
+  /** 日小结最小间隔小时（距上次日小结至少间隔才再次整理） */
+  smartcatDigestIntervalHours: number;
+  /** 日小结新增行为阈值（距上次日小结新增行为达到该条数才整理） */
+  smartcatDigestMinNew: number;
+  /** 日小结证据上限（每次日小结最多读取的行为条数） */
+  smartcatDigestMaxEvidence: number;
+  /** 日小结条数（每次日小结压缩出的事实条数） */
+  smartcatDigestCount: number;
+  /** 周报洞察门槛（本周新增洞察达到该条数才生成懂你报告） */
+  smartcatWeeklyMinInsights: number;
+  /** 反思引用原文摘录字数（0 表示不附原文） */
+  smartcatRefExcerptLimit: number;
+
   // ===== 🐱 小橘行为流设置（P1 数据基座，ticket 123）=====
   /** 行为流最大保留天数（超出部分删除最旧条目） */
   behaviorMaxDays: number;
@@ -577,6 +601,19 @@ export const DEFAULT_SETTINGS: BzSettings = {
   smartcatMobileDefaultFullscreen: false,
   smartcatEmbeddingModel: '',
   smartcatChunkLimitChars: 800,
+
+  // 小橘记忆巩固（ticket 160：三层流水线参数，⚙️ 小橘设置弹窗「记忆巩固」组可调）
+  smartcatReflectIntervalHours: 24,
+  smartcatReflectMinNew: 3,
+  smartcatReflectEvidenceWindow: 100,
+  smartcatReflectEvidenceTop: 50,
+  smartcatInsightCount: 3,
+  smartcatDigestIntervalHours: 18,
+  smartcatDigestMinNew: 3,
+  smartcatDigestMaxEvidence: 24,
+  smartcatDigestCount: 2,
+  smartcatWeeklyMinInsights: 3,
+  smartcatRefExcerptLimit: 400,
 
   // 小橘行为流设置（P1 数据基座，ticket 123；ADR-0069：全量补齐后扩容 30→60 天 / 2000→10000 条）
   behaviorMaxDays: 60,

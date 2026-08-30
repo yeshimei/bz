@@ -816,3 +816,19 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - **processor.ts `_aiStep`**：generateVideoNote 传 `videoPath`（[bz-result] 解析出的交付路径，此前被丢弃）。
 - **验收**：note-gen +1 用例（视频段 + 反斜杠归一）+ 既有用例补「未传 → 无视频段」；
   processor 成功链路断言补 videoPath 键；tsc + 全量测试 + 构建不回归。
+
+### 三层记忆流水线 + 巩固参数面板（ticket 160，用户拍板推翻 158 合并池）
+
+> 「日小结接行为流，反思和周报接记忆流，反思和周报的记忆有引用内容要贴上原文；巩固参数尽量上设置面板，旧设置有废则删。」
+
+- **流水线（ADR-0075）**：行为流（append-only 原始日志）→ 日小结（每天，产出 observation 写入记忆流，source=digest，evidenceIds 溯源行为条目）→ 记忆流观察 → 反思（只吃观察，产出 insight）→ 周报（只吃本周新增 insight，产出报告 insight）。每层只吃下一层，单向；日小结产出从 insight 改 observation 是管道接通的关键（insight 被反思防自指闸挡在证据池外）。
+- **memory.ts**：
+  - 新增 `getConsolidationConfig()`：MEMORY_CONFIG 为缺省，BzSettings `smartcat*` 同义键覆盖（未注入/非法值回退缺省；refExcerptLimit 允许 0=不附原文）。
+  - `shouldReflect` 重写：距上次 ≥reflectIntervalHours **且**「新素材 ≥reflectMinNew」（首次只看素材量）；新素材 = max(pendingSinceReflect 计数, created 扫描)，计数覆盖回填日期的记忆目录入库，扫描覆盖重启恢复。删 158 的行为流兜底触发。
+  - `reflect` 证据池 = 记忆流最近 evidenceWindow 条观察（不再并行为流派生/不再按描述去重）；带 ref 条目经 refResolver 当场读正文，编号行附「原文摘录」截 refExcerptLimit 字（读失败回退路径不崩，失效自愈仍归记忆目录同步）。
+  - `digest` 产出 `makeDigestObservation`（type=observation/source=digest/importance 0.7/credibility 走档位/evidenceIds 保留；【今日小结】前缀取消）；upsertNoteMemory 新建分支补 pendingSinceReflect++。
+  - 删 `behaviorToObservations`（158 派生视图，158 补丁整体退役）；`behaviorEarliestBase` 保留（digest 基线）；SOURCE_LABELS 补 digest/weekly-report 中文标签。
+- **report.ts**：WeeklyReportData 收敛为 `{window,total,themeDist,insights,padAvg}`——吃本周新增 insight（isSupersededInsight 剔除；只吃本周窗，周周有增量）；formatWeeklyReport/generateWeeklyReport 重写为主题分组洞察清单叙述；旧统计字段（observationCount/sourceDist/emotionDist/topMemories）随观察原料一并移除。
+- **index.ts** maybeWeeklyReport：门槛 = 本周 insight ≥weeklyMinInsights（经 buildWeeklyReportData.total），删 behaviorWeek 并池与记忆流观察过滤。
+- **设置**：BzSettings 新增 11 键（smartcatReflectIntervalHours 24 / ReflectMinNew 3 / ReflectEvidenceWindow 100 / ReflectEvidenceTop 50 / InsightCount 3 / DigestIntervalHours 18 / DigestMinNew 3 / DigestMaxEvidence 24 / DigestCount 2 / WeeklyMinInsights 3 / RefExcerptLimit 400），⚙️ 弹窗新增「记忆巩固」组 11 滑杆（文案过 ticket 100 规范）；旧设置清点：无既有键与本重构重叠，废弃的是内部常量语义（reflectionMinNew=20 快车道、pending 单义计数）与死代码，非用户可见设置。
+- **验收**：memory.test 158 语义用例改写（行为流不再直进反思证据/digest 产出 observation/ref 原文/配置覆盖）+ report.test 全量改写洞察语义 + index-cov 周报链路喂洞察；tsc + 全量测试 + 构建全绿。
