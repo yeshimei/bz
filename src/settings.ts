@@ -230,6 +230,8 @@ export default interface BzSettings {
   linkAgentNotify: boolean;
   /** 失效关联自动清理（metadataCache 删除事件 + 低频巡检） */
   linkAgentAutoClean: boolean;
+  /** 已有关联不再建链（v1.7/ticket 167）：自动路径（创建/修改/队列消费）对 related 非空笔记跳过；手动重跑豁免 */
+  linkAgentRespectRelated: boolean;
 
   // ===== 常驻监听开关（懒加载架构，ADR-0003）=====
   // AI Agent 4 项（ADR-0009）：设置不暴露 UI，运行时读字段（默认值兜底，尊重旧 data.json 值）
@@ -521,6 +523,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   linkAgentMaxLinks: 0,
   linkAgentNotify: true,
   linkAgentAutoClean: true,
+  linkAgentRespectRelated: true, // v1.7/ticket 167：默认尊重「已有 related 不再自动建链」
 
   // 常驻监听
   aiAgentEnabled: true,

@@ -2,6 +2,19 @@
 
 > 进度同步总表（AGENTS.md）。每票一节，状态：计划中 → 进行中 → 门禁 → 已交付。
 
+## Ticket 167 — 已有 related 不再触发自动双链
+
+**状态：门禁（实现/测试全绿，构建部署收尾）**
+
+- [x] 需求确认（用户拍板，grill-with-docs：三条自动路径统一跳过 / related 非空才算「有」/ 手动重跑豁免 / 加开关默认开）
+- [x] 规格：`issues/167-link-agent-respect-related.md` + spec.md v1.7 节（尊重开关 + 自动路径统一跳过）
+- [x] 数据层：`link-agent/data.ts` 新增 `hasRelatedEntries`（related 非空判定统一出口）；settings.ts 新增 `linkAgentRespectRelated` 默认 true
+- [x] 管线：`pipeline.ts` `processNote` 尊重门（related 非空 → `skipped-related`，不探测不裁判不写入）；`consumeQueue` 已连接条目顺带移除队列；`runBatch` 静默不计
+- [x] 手动命令：`index.ts` `rebuildSecondBrainLinks` 传 `respectRelated:false` 豁免（显式意图强制重跑）
+- [x] ⚙️ 弹窗：`panel.ts` 自动双链组新增 toggle「已有关联不再建链」
+- [x] 测试：数据层 `hasRelatedEntries` + 七键断言；UI 层尊重门/空值语义/豁免/开关关闭恢复旧行为/队列消费移除；既有 3 处幂等重跑用例改豁免模式
+- [x] 构建验证 + 部署产物同步（worktree/167 合并 master 后）
+
 ## Ticket 165 — 通知 z-index 与小橘对齐 + 桌面端位置下移
 
 **状态：已交付**

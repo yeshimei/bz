@@ -14,6 +14,7 @@ import {
   computeBackfillTargets,
   computeHash,
   dequeuePath,
+  hasRelatedEntries,
   loadLinkState,
   removeLinkState,
   upsertLinkState,
@@ -33,7 +34,7 @@ import {
 import { getSecondBrainStorePath } from '../../src/secondbrain/store-file';
 
 describe('自动双链·设置键默认值', () => {
-  it('DEFAULT_SETTINGS 六键齐备且取 spec 默认值（ticket 116：关联范围默认空 = 什么也不录）', () => {
+  it('DEFAULT_SETTINGS 七键齐备且取 spec 默认值（ticket 116：关联范围默认空 = 什么也不录；ticket 167：尊重开关默认开）', () => {
     const s = DEFAULT_SETTINGS as any;
     expect(s.linkAgentEnabled).toBe(true);
     expect(s.linkAgentScopes).toBe('');
@@ -41,6 +42,7 @@ describe('自动双链·设置键默认值', () => {
     expect(s.linkAgentMaxLinks).toBe(0);
     expect(s.linkAgentNotify).toBe(true);
     expect(s.linkAgentAutoClean).toBe(true);
+    expect(s.linkAgentRespectRelated).toBe(true);
   });
 });
 
@@ -126,6 +128,18 @@ describe('related 解析与幂等合并', () => {
     const { keep, removed } = planRemovals(['[[文献盒/dead]]', '[[文献盒/live]]', '非链接文本'], alive);
     expect(removed).toEqual(['[[文献盒/dead]]']);
     expect(keep).toEqual(['[[文献盒/live]]', '非链接文本']);
+  });
+
+  it('hasRelatedEntries（v1.7/ticket 167）：related 非空才算「有」；空数组/空值/缺失 = 未接管', () => {
+    expect(hasRelatedEntries(['[[文献盒/a]]'])).toBe(true);
+    expect(hasRelatedEntries('[[文献盒/a]]')).toBe(true);
+    expect(hasRelatedEntries([])).toBe(false);
+    expect(hasRelatedEntries('')).toBe(false);
+    expect(hasRelatedEntries([null, ''])).toBe(false);
+    expect(hasRelatedEntries(undefined)).toBe(false);
+    expect(hasRelatedEntries(null)).toBe(false);
+    // 与存量补链 hasRelated 同一语义：空数组等同缺失
+    expect(hasRelatedEntries([])).toBe(false);
   });
 });
 
