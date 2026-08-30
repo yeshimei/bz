@@ -203,7 +203,7 @@ export const reviewApp = {
     }
 
     if (quiz && quiz.ai) {
-      const h = notify('正在批量生成题目…', { type: 'progress', dedupeKey: 'review-generate' });
+      const h = notify('正在批量生成题目…', { type: 'progress', dedupeKey: 'quiz-generate' });
       const batchQuestions = await this.batchGenerateQuestions(limited);
       const hasAny = Object.values(batchQuestions).some((qs) => (qs as any[]).length > 0);
       if (!hasAny) {
