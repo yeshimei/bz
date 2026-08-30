@@ -2,6 +2,24 @@
 
 > 进度同步总表（AGENTS.md）。每票一节，状态：计划中 → 进行中 → 门禁 → 已交付。
 
+## Ticket 165 — 通知 z-index 与小橘对齐 + 桌面端位置下移
+
+**状态：已交付**
+
+- [x] 调研：toast 已接入 ADR-0067 动态层级（`notice.ts:447` allocZ 抬顶），小橘猫恒压最高层但不与 toast 重叠（猫底部中央、toast 右上角）——z-index 无需改，改静态反而倒退
+- [x] 实现：`src/core/styles.css:190` 桌面端 `#bz-notice-container` top 16px → 56px（下移 40px 避开顶部栏）；移动端断点不动
+- [x] 测试：tsc 0 错 + 全量 221 文件 3563 用例绿（notice 无位置/z 断言）
+- [x] 构建验证 + 部署产物同步（worktree/165 合并 master 后）
+
+## Ticket 166 — 开始复习双 progress 通知合并为一条
+
+**状态：已交付**
+
+- [x] 根因：`review/app.ts:206`（key `review-generate`）与 `quiz/ui.ts:139`（key `quiz-generate`）两个不同 dedupeKey 的 progress 框并存，去重不生效
+- [x] 实现：`review/app.ts:206` dedupeKey 统一为 `'quiz-generate'`，同键原地合并更新文案，只留一条；失败/逐篇降级路径共用同键行为不变
+- [x] 测试：tsc 0 错 + 全量 221 文件 3563 用例绿（review/quiz/notice 测试无 key 断言）
+- [x] 构建验证 + 部署产物同步（worktree/166 合并 master 后）
+
 ## Ticket 164 — 通知操作按钮高度与文字对齐（button → span）
 
 **状态：已交付**
