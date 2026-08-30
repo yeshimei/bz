@@ -12,6 +12,7 @@ import { createAI, type AIService } from '../core/ai';
 import { notify } from '../core/notice';
 import { tryGetSettings } from '../core/settings-provider';
 import { onDomainEvent } from '../core/domain-bus';
+import { jsonFileStore, storageFile } from '../core/storage';
 import { DataManager } from './data';
 import { showClipConfirmDialog } from './clip-archive-dialog';
 
@@ -35,8 +36,7 @@ function getWatchedFolders(): string[] {
 /** 备忘录数据文件路径（照抄旧 ai-agent/index.ts：ADR-0009 storagePath 优先，旧 todoFilePath 兼容兜底） */
 function getMemoPath(): string {
   const s = tryGetSettings() as any;
-  const folder = ((s && (s.storagePath || s.todoFilePath)) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
-  return folder + '/memo.json';
+  return storageFile('memo.json', (s && (s.storagePath || s.todoFilePath)) || 'CONFIG/STORAGE');
 }
 
 /** AI 剪藏匹配开关（设置可配，默认开启） */
@@ -50,16 +50,10 @@ function inFolders(path: string, folders: string[]): boolean {
   return folders.some((f) => path.startsWith(f + '/') || path === f);
 }
 
-// ---------- JSON 读写（读候选走旧 loadJSON 私有副本，写归档走同域 DataManager） ----------
+// ---------- JSON 读写（读候选走统一数据读写层，写归档走同域 DataManager） ----------
 
 async function loadJSON(app: App, filePath: string): Promise<any[]> {
-  const file = app.vault.getAbstractFileByPath(filePath);
-  if (!file) return [];
-  try {
-    return JSON.parse(await app.vault.read(file as any));
-  } catch {
-    return [];
-  }
+  return jsonFileStore<any[]>(filePath).read();
 }
 
 // ---------- 队列（ai-agent/index.ts 逐行等价移植） ----------

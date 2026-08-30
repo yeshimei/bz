@@ -139,6 +139,8 @@ describe('聚合讯阅读流', () => {
     await loadArticles();
     render();
     markAsRead('saved');
+    // 冲刷 saveArticles 写回链（防 fire-and-forget 跨测试泄漏——统一数据读写层多一层 promise，时序更敏感）
+    await new Promise((r) => setTimeout(r, 0));
     expect(newsSpy).toHaveBeenCalledTimes(1);
     expect(newsSpy).toHaveBeenCalledWith(expect.objectContaining({
       kind: 'read',
@@ -148,23 +150,46 @@ describe('聚合讯阅读流', () => {
   });
 
   it('阅读时长：打开起算 → 关闭暂停 → 重开同篇续算 → 下一篇后重置（保存带时长，跳过同口径）', async () => {
-    vi.useFakeTimers();
+    // 跨用例串扰防护：前面 markAsRead 测试残留 currentIndex 指向第二篇，
+    // 会让 loadArticles 的 anchorCursor 锚定到第二篇（统一数据读写层微秒时序暴露此脆弱性）。
+    // 用 resetModules 拿全新模块状态（reader-cov 同款先例），保证从第一篇起算。
+    vi.resetModules();
+    const fresh = await import('../../src/news/reader');
+    const freshApp = await import('../../src/core/app');
+    const freshBus = await import('../../src/core/domain-bus');
+    const freshObsidian = await import('../mock-obsidian-entry');
+    freshObsidian.resetObsidianMocks();
+    document.body.innerHTML = '';
+    document.head.innerHTML = '';
+    const vault = new MockVault();
+    vault.files.set('CONFIG/STORAGE/news.json', JSON.stringify({ articles: NEWS_JSON, stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }, bilibiliUps: [], sources: { zhihu: true, guokr: true, bilibili: true } }));
+    freshApp.setApp({ vault, metadataCache: {}, workspace: { openLinkText: vi.fn() } } as any);
+    fresh.init(false);
+    // 挂到新模块的域总线（旧 newsSpy 是旧模块实例的，resetModules 后失效）
+    const freshSpy = vi.fn((_evt?: unknown) => {});
+    const freshOff = freshBus.onDomainEvent('news', (evt) => freshSpy(evt));
+    const freshLastEvt = () => {
+      const calls = freshSpy.mock.calls.map((c: any[]) => c[0]).filter((m: any) => m?.kind === 'read');
+      return calls[calls.length - 1]?.evt;
+    };
     try {
-      await loadArticles();
-      render();                                              // 打开第一篇 → 起算
-      vi.setSystemTime(Date.now() + 3 * 60 * 1000);          // 读 3 分钟
-      hide();                                                // 关闭 → 暂停
-      vi.setSystemTime(Date.now() + 2 * 60 * 60 * 1000);     // 关着 2 小时（不计入）
-      render();                                              // 重开同篇 → 续算
-      vi.setSystemTime(Date.now() + 1 * 60 * 1000);          // 再读 1 分钟
-      markAsRead('saved');                                   // 累计 4 分钟
-      expect(lastReadEvt()).toMatchObject({ state: 'saved', durationMin: 4 });
+      vi.useFakeTimers();
+      await fresh.loadArticles();
+      fresh.render();                                          // 打开第一篇 → 起算
+      vi.setSystemTime(Date.now() + 3 * 60 * 1000);            // 读 3 分钟
+      fresh.hide();                                            // 关闭 → 暂停
+      vi.setSystemTime(Date.now() + 2 * 60 * 60 * 1000);       // 关着 2 小时（不计入）
+      fresh.render();                                          // 重开同篇 → 续算
+      vi.setSystemTime(Date.now() + 1 * 60 * 1000);            // 再读 1 分钟
+      fresh.markAsRead('saved');                               // 累计 4 分钟
+      expect(freshLastEvt()).toMatchObject({ state: 'saved', durationMin: 4 });
       // 内部 render 已切到下一篇 → 累计清零
-      vi.setSystemTime(Date.now() + 5 * 60 * 1000);          // 下一篇读 5 分钟
-      markAsRead('saved');
-      expect(lastReadEvt()).toMatchObject({ title: '第二篇新闻', state: 'saved', durationMin: 5 });
+      vi.setSystemTime(Date.now() + 5 * 60 * 1000);            // 下一篇读 5 分钟
+      fresh.markAsRead('saved');
+      expect(freshLastEvt()).toMatchObject({ title: '第二篇新闻', state: 'saved', durationMin: 5 });
     } finally {
       vi.useRealTimers();
+      freshOff();
     }
   });
 

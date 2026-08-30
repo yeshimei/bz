@@ -3,6 +3,7 @@
  * 数据格式：CONFIG/STORAGE/launcher.json（铁律 1：格式稳定，字段勿改）。
  */
 import type { App } from 'obsidian';
+import { jsonFileStore, storageFile } from '../core/storage';
 
 /** 磁贴：入口页上的最小单元，对应一条命令，占据 列×行 个网格单元 */
 export interface LauncherTile {
@@ -43,6 +44,11 @@ export interface LauncherData {
 }
 
 export const LAUNCHER_PATH = 'CONFIG/STORAGE/launcher.json';
+
+/** 入口页数据文件路径（统一数据读写层：跟随 storagePath；默认值下与 LAUNCHER_PATH 一致） */
+export function getLauncherFilePath(): string {
+  return storageFile('launcher.json');
+}
 
 /** 校验单个磁贴字段合法 */
 function isTile(t: any): t is LauncherTile {
@@ -124,29 +130,18 @@ function cleanTiles(list: any[]): LauncherTile[] {
   return out;
 }
 
-/** 读取 launcher.json（不存在 → 空配置；解析失败 → 空配置，不覆盖文件） */
+/** 读取 launcher.json（统一数据读写层：不存在 → 建空配置文件；解析失败 → 原文件改名留档重建） */
 export async function loadLauncherData(app: App): Promise<LauncherData> {
-  try {
-    const f = app.vault.getAbstractFileByPath(LAUNCHER_PATH);
-    if (!f) return { version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 6 } };
-    const text = await app.vault.read(f as any);
-    return normalizeData(JSON.parse(text));
-  } catch (e) {
-    return { version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 6 } };
-  }
+  const raw = await jsonFileStore<any>(getLauncherFilePath(), {
+    defaultValue: () => ({ version: 3, desktop: { tiles: [], columns: 6 }, mobile: { tiles: [], columns: 6 } }),
+    app, // 注入调用方 app（attach 等域以参数传 app，不依赖模块级 getApp）
+  }).read();
+  return normalizeData(raw);
 }
 
-/** 保存 launcher.json（不存在 → 建目录建文件） */
+/** 保存 launcher.json（统一数据读写层：不存在 → 建目录建文件） */
 export async function saveLauncherData(app: App, data: LauncherData): Promise<void> {
-  const c = JSON.stringify(data, null, 2);
-  let f = app.vault.getAbstractFileByPath(LAUNCHER_PATH);
-  if (f) {
-    await app.vault.modify(f as any, c);
-  } else {
-    const d = LAUNCHER_PATH.substring(0, LAUNCHER_PATH.lastIndexOf('/'));
-    if (d && !app.vault.getAbstractFileByPath(d)) await app.vault.createFolder(d);
-    await app.vault.create(LAUNCHER_PATH, c);
-  }
+  await jsonFileStore<LauncherData>(getLauncherFilePath(), { app }).write(data);
 }
 
 /** 两个磁贴区域是否重叠（含边界相切？不相切——严格相交才算重叠） */

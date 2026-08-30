@@ -6,6 +6,7 @@ import moment from 'moment';
 import { jsonStore } from '../core/json-store';
 import { getApp } from '../core/app';
 import { generateId, extractUrlAndDisplay } from '../core/utils';
+import { storageFile } from '../core/storage';
 import type { MemoItem, MemoPosition } from './types';
 
 export interface BzSettingsLike {
@@ -62,8 +63,7 @@ export const DataManager = {
 
   init(settings: BzSettingsLike) {
     // ADR-0009：storagePath 优先，旧 todoFilePath 兼容兜底
-    const folder = ((settings.storagePath || settings.todoFilePath) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
-    this.todoFilePath = folder + '/memo.json';
+    this.todoFilePath = storageFile('memo.json', (settings.storagePath || settings.todoFilePath) || 'CONFIG/STORAGE');
     this._store = jsonStore(this.todoFilePath);
     // 场景：设置可编辑（逗号分隔），空则内置默认
     this.scenarios = parseScenarios(settings.memoScenarios);

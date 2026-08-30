@@ -3,17 +3,16 @@
  * review.json：CONFIG/STORAGE/review.json，jsonStore 读写。
  */
 import type { App, TFile } from 'obsidian';
-import { jsonStore } from '../core/json-store';
+import { jsonFileStore, storageFile } from '../core/storage';
 import { tryGetSettings } from '../core/settings-provider';
 import { FSRS_FIRST_INTERVALS, LADDER_MAX, TOTAL_STAGES } from './fsrs';
 
 export const REVIEW_FILE_PATH = 'CONFIG/STORAGE/review.json';
 
-/** 复习数据文件路径（ADR-0009：storagePath 优先，旧 reviewStoragePath 兼容兜底） */
+/** 复习数据文件路径（ADR-0009：storagePath 优先，旧 reviewStoragePath 兼容兜底；trim 收敛至 storageFile） */
 export function getReviewFilePath(): string {
   const s = tryGetSettings() as any;
-  const dir = (s && (s.storagePath || s.reviewStoragePath)) || 'CONFIG/STORAGE';
-  return `${dir}/review.json`;
+  return storageFile('review.json', (s && (s.storagePath || s.reviewStoragePath)) || 'CONFIG/STORAGE');
 }
 
 export interface ReviewItem {
@@ -53,9 +52,10 @@ export class ReviewDataManager {
     this.app = app;
   }
 
-  /** 加载条目（向后兼容旧字段；日期兼容 ISO 字符串与数字） */
+  /** 加载条目（向后兼容旧字段；日期兼容 ISO 字符串与数字）。
+   *  走模块级 getApp（reviewApp 为单例 dataManager，app 参数注入会绑定旧 app 导致跨测试/重开写错 vault） */
   async loadItems(): Promise<ReviewItem[]> {
-    const data = (await jsonStore(getReviewFilePath()).read()) as any;
+    const data = (await jsonFileStore<any[]>(getReviewFilePath()).read()) as any;
     const items = Array.isArray(data) ? data : [];
     const valid: ReviewItem[] = [];
 
@@ -93,10 +93,10 @@ export class ReviewDataManager {
     return valid;
   }
 
-  /** 保存（剥离运行时 file 字段） */
+  /** 保存（剥离运行时 file 字段；走模块级 getApp——见 loadItems 注释） */
   async saveItems(items: ReviewItem[]): Promise<void> {
     const data = items.map(({ file, ...rest }) => rest);
-    await jsonStore(getReviewFilePath()).write(data);
+    await jsonFileStore<any[]>(getReviewFilePath()).write(data);
   }
 
   /** 新增条目 */

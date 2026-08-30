@@ -6,16 +6,15 @@
  */
 import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
+import { jsonFileStore, storageFile } from '../core/storage';
 import type { PomodoroState, HistoryEntry } from './state';
 import { createInitialState, PHASES } from './state';
 
 export const POMODORO_FILE_PATH = 'CONFIG/STORAGE/pomodoro.json';
 
-/** 番茄钟数据文件路径（storagePath 优先，未注入回退默认；尾斜杠清理与全仓一致） */
+/** 番茄钟数据文件路径（storagePath 优先，未注入回退默认；尾斜杠清理收敛至 storageFile） */
 export function getPomodoroFilePath(): string {
-  const s = tryGetSettings() as any;
-  const dir = ((s && s.storagePath) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
-  return `${dir}/pomodoro.json`;
+  return storageFile('pomodoro.json', ((tryGetSettings() as any)?.storagePath) || 'CONFIG/STORAGE');
 }
 
 export interface PomodoroData {
@@ -64,29 +63,17 @@ export class PomodoroDataManager {
     this.app = app;
   }
 
-  /** 读取数据（不存在/坏 JSON → 默认数据） */
+  /** 读取数据（统一数据读写层：不存在 → 建默认数据文件；坏 JSON → 原文件改名留档后重建默认） */
   async load(): Promise<PomodoroData> {
-    const filePath = getPomodoroFilePath();
-    const f = this.app.vault.getAbstractFileByPath(filePath);
-    if (!f) return defaultPomodoroData();
-    try {
-      return normalizeData(JSON.parse(await this.app.vault.read(f as any)));
-    } catch (e) {
-      return defaultPomodoroData();
-    }
+    const raw = await jsonFileStore<any>(getPomodoroFilePath(), {
+      defaultValue: () => defaultPomodoroData(),
+      app: this.app,
+    }).read();
+    return normalizeData(raw);
   }
 
-  /** 保存（存在 modify / 不存在 create，建目录兜底） */
+  /** 保存（统一数据读写层：存在 modify / 不存在 create+建目录） */
   async save(data: PomodoroData): Promise<void> {
-    const filePath = getPomodoroFilePath();
-    const c = JSON.stringify(data, null, 2);
-    const f = this.app.vault.getAbstractFileByPath(filePath);
-    if (f) {
-      await this.app.vault.modify(f as any, c);
-    } else {
-      const d = filePath.substring(0, filePath.lastIndexOf('/'));
-      if (d && !this.app.vault.getAbstractFileByPath(d)) await this.app.vault.createFolder(d);
-      await this.app.vault.create(filePath, c);
-    }
+    await jsonFileStore<PomodoroData>(getPomodoroFilePath(), { app: this.app }).write(data);
   }
 }

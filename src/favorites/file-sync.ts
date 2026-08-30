@@ -13,6 +13,7 @@ import type { App } from 'obsidian';
 import { notify } from '../core/notice';
 import { tryGetSettings } from '../core/settings-provider';
 import { onDomainEvent } from '../core/domain-bus';
+import { jsonFileStore } from '../core/storage';
 import { getStoragePath } from './config';
 
 // ---------- 同步纯函数（ai-agent/sync.ts 私有副本） ----------
@@ -64,23 +65,14 @@ function inFolders(path: string, folders: string[]): boolean {
   return folders.some((f) => path.startsWith(f + '/') || path === f);
 }
 
-// ---------- JSON 读写（ai-agent/sync.ts 私有副本） ----------
+// ---------- JSON 读写（统一数据读写层；原 ai-agent 私有副本语义已统一至 jsonFileStore） ----------
 
 async function loadJSON(app: App, filePath: string): Promise<any[]> {
-  const file = app.vault.getAbstractFileByPath(filePath);
-  if (!file) return [];
-  try {
-    return JSON.parse(await app.vault.read(file as any));
-  } catch {
-    return [];
-  }
+  return jsonFileStore<any[]>(filePath).read();
 }
 
 async function saveJSON(app: App, filePath: string, data: any): Promise<void> {
-  const file = app.vault.getAbstractFileByPath(filePath);
-  const json = JSON.stringify(data, null, 2);
-  if (file) await app.vault.modify(file as any, json);
-  else await app.vault.create(filePath, json);
+  await jsonFileStore<any[]>(filePath).write(data);
 }
 
 // ---------- 路径 / 设置 ----------

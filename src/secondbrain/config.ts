@@ -7,6 +7,7 @@
  * - META_PATH/VEC_PATH 废弃设置键不再兜底：storagePath 为唯一目录口径（ADR-0009 延续）。
  */
 import { tryGetSettings } from '../core/settings-provider';
+import { storageFile } from '../core/storage';
 
 interface SecondBrainConfig {
   OLLAMA_URL: string;
@@ -30,15 +31,11 @@ interface SecondBrainConfig {
 
 export function buildConfig(): SecondBrainConfig {
   const s: any = tryGetSettings();
-  const dir =
-    String(s.storagePath ?? '')
-      .trim()
-      .replace(/\/+$/, '') || 'CONFIG/STORAGE';
   return {
     OLLAMA_URL: s.secondBrainOllamaUrl || 'http://localhost:11434',
     EMBEDDING_MODEL: s.secondBrainEmbeddingModel || 'bge-m3',
-    STORE_PATH: dir + '/secondbrain.json',
-    VEC_PATH: dir + '/secondbrain.vec',
+    STORE_PATH: storageFile('secondbrain.json'),
+    VEC_PATH: storageFile('secondbrain.vec'),
     TOP_K: Number(s.secondBrainTopK) || 20,
     CHAT_TOP_K: Number(s.secondBrainChatTopK) || 20,
     CHUNK_MIN_LENGTH: Number(s.secondBrainChunkMinLength) || 50,

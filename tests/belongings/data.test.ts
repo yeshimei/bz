@@ -27,7 +27,7 @@ describe('loadDatabase', () => {
     vi.restoreAllMocks();
   });
 
-  it('文件不存在 → 空数据库结构（version 1.0/items {}）+ 默认分类', async () => {
+  it('文件不存在 → 空数据库结构（version 1.0/items {}）+ 默认分类 + 建文件（统一读写语义）', async () => {
     setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
     const db = await loadDatabase();
     expect(db.version).toBe('1.0');
@@ -35,7 +35,7 @@ describe('loadDatabase', () => {
     expect(db.categories.length).toBeGreaterThan(1000); // 1226 条默认分类
     expect(db.categories[0]).toBe('📱 智能手机');
     expect(db.categoryIcons['📱 智能手机']).toBe('📱');
-    expect(vault.files.has('CONFIG/STORAGE/belongings.json')).toBe(false); // 加载不建文件
+    expect(vault.files.has('CONFIG/STORAGE/belongings.json')).toBe(true); // 统一读写语义：缺失建文件
   });
 
   it('分类固定为内置默认（自定义分类设置已移除）', async () => {
@@ -45,13 +45,22 @@ describe('loadDatabase', () => {
     expect(db.categories.filter((c) => c === '📱 智能手机').length).toBe(1);
   });
 
-  it('解析失败 → 警告 Notice + 重置为空库', async () => {
+  it('解析失败 → 原文件改名留档重建 + 警告 Notice + 重置为空库', async () => {
     setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
-    vault.files.set('CONFIG/STORAGE/belongings.json', '{broken');
+    const broken = '{broken';
+    vault.files.set('CONFIG/STORAGE/belongings.json', broken);
     const warnSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const db = await loadDatabase();
     expect(db.items).toEqual({});
     expect(hasNotice(/数据文件解析失败/)).toBe(true);
+    // 统一读写语义：原内容改名留档（不再直接覆盖丢失）
+    const backups = [...vault.files.keys()].filter((p) => p.startsWith('CONFIG/STORAGE/belongings.json.corrupt-'));
+    expect(backups).toHaveLength(1);
+    expect(vault.files.get(backups[0])).toBe(broken);
+    // 原路径重建空库
+    expect(JSON.parse(vault.files.get('CONFIG/STORAGE/belongings.json')!)).toEqual(
+      expect.objectContaining({ version: '1.0', items: {} })
+    );
     warnSpy.mockRestore();
   });
 

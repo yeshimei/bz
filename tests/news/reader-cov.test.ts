@@ -111,7 +111,7 @@ describe('聚合讯补测（每例全新模块状态）', () => {
     expect(errEl!.textContent).toContain('新闻数据读取失败');
   });
 
-  it('saveStats：news.json 存在 → stats 段改写；news.json 缺失 → 静默不落盘（首用引导一致）', async () => {
+  it('saveStats：news.json 存在 → stats 段改写；news.json 缺失 → 建文件并落盘（统一读写语义）', async () => {
     // ① 已有 news.json（四段）→ recordStat 写回 stats 段（保留 articles/bilibiliUps/sources）
     reader.recordStat('saved', makeArticle('X', { platform: '' }));
     await flush();
@@ -129,12 +129,16 @@ describe('聚合讯补测（每例全新模块状态）', () => {
     expect(disk2.stats.byPlatform['果壳']).toBe(1);
     expect(vault.modifiedPaths.filter((p) => p === NEWS_JSON).length).toBeGreaterThan(beforeModifies);
 
-    // ③ news.json 缺失（首用引导态）→ 静默不建文件不落盘
+    // ③ news.json 缺失（首用引导态）→ 统一读写语义：建文件并落盘 stats（不再静默不建）
     const emptyVault = new MockVault();
     setAppFresh({ vault: emptyVault, metadataCache: {}, workspace: {} } as any);
     reader.recordStat('saved', makeArticle('Z'));
     await flush();
-    expect(emptyVault.files.has(NEWS_JSON)).toBe(false);
+    expect(emptyVault.files.has(NEWS_JSON)).toBe(true); // 统一读写语义：缺失建文件
+    const disk3 = JSON.parse(emptyVault.files.get(NEWS_JSON)!);
+    expect(disk3.stats.totalSaved).toBe(2); // 模块内已累计（① 的 X + 本步 Z）
+    expect(disk3.stats.byPlatform['未知']).toBe(1); // X 归「未知」桶
+    expect(disk3.stats.byPlatform['站']).toBe(1); // Z 归「站」桶
   });
 
   /** 轮询等待条件成立（防 CPU 争抢下的 DOM 就绪抖动） */
