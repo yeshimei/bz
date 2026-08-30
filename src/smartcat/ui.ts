@@ -330,8 +330,8 @@ export function smartcatSettingsSchema(opts: {
         icon: 'message-circle',
         name: '互动',
         rows: [
-          { type: 'slider', name: '自言自语间隔', desc: '小橘每隔多久主动说一句话，范围 1 到 60 分钟', binding: bindConfig('speakInterval'), min: 1, max: 60, step: 1 },
-          { type: 'slider', name: '说话概率', desc: '定时到来时小橘主动说话的概率，范围为十分之一到一', binding: bindConfig('speakProbability'), min: 0.1, max: 1, step: 0.1 },
+          { type: 'number', name: '自言自语间隔', desc: '小橘每隔多久主动说一句话，范围 1 到 60 分钟', binding: bindConfig('speakInterval'), min: 1, max: 60, step: 1 },
+          { type: 'number', name: '说话概率', desc: '定时到来时小橘主动说话的概率，范围为十分之一到一', binding: bindConfig('speakProbability'), min: 0.1, max: 1, step: 0.1 },
           { type: 'toggle', name: '主动关心', desc: '按你的活跃时段，每周温和地主动搭话一两次', binding: bindConfig('proactiveCare') },
         ],
       },
@@ -339,9 +339,9 @@ export function smartcatSettingsSchema(opts: {
         icon: 'archive',
         name: '记忆',
         rows: [
-          { type: 'slider', name: '短期记忆量', desc: '保留最近多少轮对话作为短期记忆，范围 50 到 200', binding: bindConfig('shortTermMemory'), min: 50, max: 200, step: 10 },
-          { type: 'slider', name: '上下文字数限制', desc: '上下文内容的最大字数，设为 0 时仅取当前行', binding: bindConfig('contextLength'), min: 0, max: 1000, step: 50 },
-          { type: 'slider', name: '上下文分布比例', desc: '光标上下的上下文分配比例，十分之一到十分之九', binding: bindConfig('contextSplitRatio'), min: 0.1, max: 0.9, step: 0.1 },
+          { type: 'number', name: '短期记忆量', desc: '保留最近多少轮对话作为短期记忆，范围 50 到 200', binding: bindConfig('shortTermMemory'), min: 50, max: 200, step: 10 },
+          { type: 'number', name: '上下文字数限制', desc: '上下文内容的最大字数，设为 0 时仅取当前行', binding: bindConfig('contextLength'), min: 0, max: 1000, step: 50 },
+          { type: 'number', name: '上下文分布比例', desc: '光标上下的上下文分配比例，十分之一到十分之九', binding: bindConfig('contextSplitRatio'), min: 0.1, max: 0.9, step: 0.1 },
           {
             type: 'select',
             name: '记忆打分范围',
@@ -356,7 +356,7 @@ export function smartcatSettingsSchema(opts: {
           },
           // 首载/向量化参数（用户可调；改模型需重建记忆向量索引——删除 smartcat-memory-vectors.vec 后重扫）
           { type: 'text', name: '向量化模型', desc: '留空跟随第二大脑嵌入模型，改动后需重建记忆向量索引', binding: bindBehavior('smartcatEmbeddingModel') },
-          { type: 'slider', name: '分块字符上限', desc: '长笔记每块向量的最大字符数，200 到 6000，越小检索越精准', binding: bindBehavior('smartcatChunkLimitChars'), min: 200, max: 6000, step: 100 },
+          { type: 'number', name: '分块字符上限', desc: '长笔记每块向量的最大字符数，200 到 6000，越小检索越精准', binding: bindBehavior('smartcatChunkLimitChars'), min: 200, max: 6000, step: 100 },
         ],
       },
       // ADR-0069 记忆目录（记忆目录流）：多文件夹选择（core/path-picker 多选），其内笔记进入笔记记忆库
@@ -391,8 +391,8 @@ export function smartcatSettingsSchema(opts: {
         icon: 'database',
         name: '存储与记忆',
         rows: [
-          { type: 'slider', name: '行为流保留天数', desc: '行为流条目最多保留 1 到 365 天，超出部分自动删除', binding: bindBehavior('behaviorMaxDays'), min: 1, max: 365, step: 1 },
-          { type: 'slider', name: '行为流最大条数', desc: '行为流最多保留 100 到 10000 条，超出部分删除最旧条目', binding: bindBehavior('behaviorMaxCount'), min: 100, max: 10000, step: 100 },
+          { type: 'number', name: '行为流保留天数', desc: '行为流条目最多保留 1 到 365 天，超出部分自动删除', binding: bindBehavior('behaviorMaxDays'), min: 1, max: 365, step: 1 },
+          { type: 'number', name: '行为流最大条数', desc: '行为流最多保留 100 到 10000 条，超出部分删除最旧条目', binding: bindBehavior('behaviorMaxCount'), min: 100, max: 10000, step: 100 },
         ],
       },
       // ticket 160 记忆巩固（三层流水线：行为流→日小结→记忆流→反思/周报；缺省与 MEMORY_CONFIG 对齐）
@@ -400,17 +400,17 @@ export function smartcatSettingsSchema(opts: {
         icon: 'moon',
         name: '记忆巩固',
         rows: [
-          { type: 'slider', name: '反思最小间隔', desc: '距上次反思至少间隔多少小时才再次归纳洞察，范围 1 到 168', binding: bindBehavior('smartcatReflectIntervalHours'), min: 1, max: 168, step: 1 },
-          { type: 'slider', name: '反思观察阈值', desc: '自上次反思新增多少条观察后才允许再次归纳，范围 1 到 50', binding: bindBehavior('smartcatReflectMinNew'), min: 1, max: 50, step: 1 },
-          { type: 'slider', name: '反思回看条数', desc: '反思时从记忆流最近多少条观察里挑选证据，范围 10 到 500', binding: bindBehavior('smartcatReflectEvidenceWindow'), min: 10, max: 500, step: 10 },
-          { type: 'slider', name: '反思证据上限', desc: '候选池按重要度最多挑多少条交给 AI 归纳，范围 5 到 100', binding: bindBehavior('smartcatReflectEvidenceTop'), min: 5, max: 100, step: 5 },
-          { type: 'slider', name: '洞察条数', desc: '每次反思归纳出的洞察结论条数，范围 1 到 10', binding: bindBehavior('smartcatInsightCount'), min: 1, max: 10, step: 1 },
-          { type: 'slider', name: '日小结最小间隔', desc: '距上次日小结至少间隔多少小时才再次整理，范围 1 到 72', binding: bindBehavior('smartcatDigestIntervalHours'), min: 1, max: 72, step: 1 },
-          { type: 'slider', name: '日小结行为阈值', desc: '距上次日小结新增多少条行为记录才再次整理，范围 1 到 50', binding: bindBehavior('smartcatDigestMinNew'), min: 1, max: 50, step: 1 },
-          { type: 'slider', name: '日小结证据上限', desc: '每次日小结最多读取多少条行为记录，范围 3 到 100', binding: bindBehavior('smartcatDigestMaxEvidence'), min: 3, max: 100, step: 1 },
-          { type: 'slider', name: '日小结条数', desc: '每次日小结压缩出的事实条数，范围 1 到 10', binding: bindBehavior('smartcatDigestCount'), min: 1, max: 10, step: 1 },
-          { type: 'slider', name: '周报洞察门槛', desc: '本周新增洞察达到多少条才生成懂你报告，范围 1 到 20', binding: bindBehavior('smartcatWeeklyMinInsights'), min: 1, max: 20, step: 1 },
-          { type: 'slider', name: '引用摘录字数', desc: '反思时引用笔记原文的最大字数，设为 0 不附原文，范围 0 到 2000', binding: bindBehavior('smartcatRefExcerptLimit'), min: 0, max: 2000, step: 50 },
+          { type: 'number', name: '反思最小间隔', desc: '距上次反思至少间隔多少小时才再次归纳洞察，范围 1 到 168', binding: bindBehavior('smartcatReflectIntervalHours'), min: 1, max: 168, step: 1 },
+          { type: 'number', name: '反思观察阈值', desc: '自上次反思新增多少条观察后才允许再次归纳，范围 1 到 50', binding: bindBehavior('smartcatReflectMinNew'), min: 1, max: 50, step: 1 },
+          { type: 'number', name: '反思回看条数', desc: '反思时从记忆流最近多少条观察里挑选证据，范围 10 到 500', binding: bindBehavior('smartcatReflectEvidenceWindow'), min: 10, max: 500, step: 10 },
+          { type: 'number', name: '反思证据上限', desc: '候选池按重要度最多挑多少条交给 AI 归纳，范围 5 到 100', binding: bindBehavior('smartcatReflectEvidenceTop'), min: 5, max: 100, step: 5 },
+          { type: 'number', name: '洞察条数', desc: '每次反思归纳出的洞察结论条数，范围 1 到 10', binding: bindBehavior('smartcatInsightCount'), min: 1, max: 10, step: 1 },
+          { type: 'number', name: '日小结最小间隔', desc: '距上次日小结至少间隔多少小时才再次整理，范围 1 到 72', binding: bindBehavior('smartcatDigestIntervalHours'), min: 1, max: 72, step: 1 },
+          { type: 'number', name: '日小结行为阈值', desc: '距上次日小结新增多少条行为记录才再次整理，范围 1 到 50', binding: bindBehavior('smartcatDigestMinNew'), min: 1, max: 50, step: 1 },
+          { type: 'number', name: '日小结证据上限', desc: '每次日小结最多读取多少条行为记录，范围 3 到 100', binding: bindBehavior('smartcatDigestMaxEvidence'), min: 3, max: 100, step: 1 },
+          { type: 'number', name: '日小结条数', desc: '每次日小结压缩出的事实条数，范围 1 到 10', binding: bindBehavior('smartcatDigestCount'), min: 1, max: 10, step: 1 },
+          { type: 'number', name: '周报洞察门槛', desc: '本周新增洞察达到多少条才生成懂你报告，范围 1 到 20', binding: bindBehavior('smartcatWeeklyMinInsights'), min: 1, max: 20, step: 1 },
+          { type: 'number', name: '引用摘录字数', desc: '反思时引用笔记原文的最大字数，设为 0 不附原文，范围 0 到 2000', binding: bindBehavior('smartcatRefExcerptLimit'), min: 0, max: 2000, step: 50 },
         ],
       },
       {
@@ -418,7 +418,7 @@ export function smartcatSettingsSchema(opts: {
         name: '关联',
         rows: [
           { type: 'toggle', name: '启用关联自动发现', desc: '自动为同名实体的记忆建立关联 relatedIds', binding: bindBehaviorOn('enableAutoLinking') },
-          { type: 'slider', name: '关联发现窗口天数', desc: '同一实体在 1 到 30 天内的记忆自动关联', binding: bindBehavior('linkWindowDays'), min: 1, max: 30, step: 1 },
+          { type: 'number', name: '关联发现窗口天数', desc: '同一实体在 1 到 30 天内的记忆自动关联', binding: bindBehavior('linkWindowDays'), min: 1, max: 30, step: 1 },
         ],
       },
       {
@@ -432,7 +432,7 @@ export function smartcatSettingsSchema(opts: {
   };
 }
 
-/** 行为字段（BzSettings）缺省值（原 bzSettings?.key ?? N 口径，slider 初始回填用） */
+/** 行为字段（BzSettings）缺省值（原 bzSettings?.key ?? N 口径，number 行初始回填用） */
 const DEFAULT_BEHAVIOR = {
   behaviorMaxDays: 30,
   behaviorMaxCount: 2000,

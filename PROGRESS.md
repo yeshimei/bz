@@ -191,3 +191,11 @@
 - [x] 设置层：BzSettings +11 键（smartcatReflect*/smartcatDigest*/smartcatWeeklyMinInsights/smartcatRefExcerptLimit）+ ⚙️ 弹窗「记忆巩固」组 11 滑杆；getConsolidationConfig 统一读取（MEMORY_CONFIG 缺省，非法值回退）；旧设置清点：无既有键重叠，废弃面为内部常量语义与死代码
 - [x] 测试：memory.test 158 三用例改写（行为流不再直进反思证据/首反思只看记忆流）+ ref 原文（截断/失效回退/0 关闭）+ digest→reflect 全链路 + getConsolidationConfig 覆盖 + shouldReflect 双闸；report.test 重写洞察语义；adr0069-core 计数语义更新；index-cov 周报链路种子加洞察；settings.test 九组快照
 - [x] 门禁：tsc 0 错 + 全量 221 文件 3557 用例绿 + 构建部署 E 盘
+
+## Ticket 161 — 小橘：巩固参数滑杆改输入框
+
+**状态：已交付**（2026-08-30）
+
+- [x] 规格：`issues/161-smartcat-consolidation-number-input.md`（spec.md「巩固参数滑杆改输入框」节同步）
+- [x] 实现：src/smartcat/ui.ts 17 处 slider 行改 number 行（min/max/step/绑定/文案不变）；设置面板下滑误触滑杆问题消除
+- [x] 测试：smartcat ui/settings + settings-schema-ui 用例绿 + tsc 0 错 + 构建部署 E 盘

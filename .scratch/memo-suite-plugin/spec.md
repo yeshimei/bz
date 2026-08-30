@@ -832,3 +832,10 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - **index.ts** maybeWeeklyReport：门槛 = 本周 insight ≥weeklyMinInsights（经 buildWeeklyReportData.total），删 behaviorWeek 并池与记忆流观察过滤。
 - **设置**：BzSettings 新增 11 键（smartcatReflectIntervalHours 24 / ReflectMinNew 3 / ReflectEvidenceWindow 100 / ReflectEvidenceTop 50 / InsightCount 3 / DigestIntervalHours 18 / DigestMinNew 3 / DigestMaxEvidence 24 / DigestCount 2 / WeeklyMinInsights 3 / RefExcerptLimit 400），⚙️ 弹窗新增「记忆巩固」组 11 滑杆（文案过 ticket 100 规范）；旧设置清点：无既有键与本重构重叠，废弃的是内部常量语义（reflectionMinNew=20 快车道、pending 单义计数）与死代码，非用户可见设置。
 - **验收**：memory.test 158 语义用例改写（行为流不再直进反思证据/digest 产出 observation/ref 原文/配置覆盖）+ report.test 全量改写洞察语义 + index-cov 周报链路喂洞察；tsc + 全量测试 + 构建全绿。
+
+### 巩固参数滑杆改输入框（ticket 161）
+
+> 「小橘设置面板中的数字滑动都改成输入框，因为在下滑的时候偶尔会误触。」
+
+- 小橘 ⚙️ 弹窗全部 17 处 `slider` 行改 `number` 行（core/settings-schema 既有行类型）：min/max 钳制、step、绑定与文案均不变；schema 渲染器无改动。
+- 值语义沿用 number 行口径：空串/非数字不写入，防抖 800ms + 失焦/回车落盘。
