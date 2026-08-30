@@ -839,3 +839,13 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 
 - 小橘 ⚙️ 弹窗全部 17 处 `slider` 行改 `number` 行（core/settings-schema 既有行类型）：min/max 钳制、step、绑定与文案均不变；schema 渲染器无改动。
 - 值语义沿用 number 行口径：空串/非数字不写入，防抖 800ms + 失焦/回车落盘。
+
+### 巩固语义重定义：行为小结并入反思 + 阈值精简 + 周报锚定首洞察（ticket 162）
+
+> 「反思就是指定 20 条，从上一次攒过 20 条就反思；反思前先把上次反思之间的所有行为流合并总结成一条写入记忆流（首次拿 24 小时），行为小结不占反思额度；那 20 条是原始记忆，过滤掉洞察和每周报告；周报从第一条洞察的日期开始算，往后推一周；设置面板精简，移动端默认全屏放最下面。」
+
+- **反思**：只看素材阈值（smartcatReflectMinNew，默认 20）——自上次反思记忆流新增观察攒够即反思，时间间隔闸退役。证据池 = 自上次反思以来全部新增观察（原始记忆；insight/周报天然排除），按重要度降序全量进 prompt（evidenceWindow/evidenceTop 截断退役），洞察条数由 LLM 自定（smartcatInsightCount 退役）。
+- **行为小结（原「日小结」，source=digest 不变）**：独立调度退役，改为反思前置步骤——上次反思以来（首次最近 24h）全部行为流经 behavior-wording 渲染合并总结成 1 条 observation 写入记忆流（evidenceIds 溯源、lastDigestAt/digestCount 保留），保证每次反思恰有一条覆盖两窗行为的小结；小结不占反思素材额度（pendingSinceReflect 不推、created 扫描排除 source=digest）。前置证据闸：现有新观察 + 将产生的小结 <2 条则连小结也不做（防重复总结同一窗口）；小结失败（AI 未配置/调用失败/落盘失败）整轮反思退避中止。
+- **周报**：窗口锚定第一条洞察（排除 weekly-report 自身产物）日期，首窗 [首洞察, +7d)，此后每窗起点 = 上窗末端（weeklyReport.at 存窗口末端），7 天一周链式推进；空窗不出报告、窗口静默推进；洞察门槛（smartcatWeeklyMinInsights）退役；满 7 天且整点后由小时心跳分派。
+- **设置**：「记忆巩固」组 11 → 2 行（反思观察阈值、引用摘录字数）；退役键 smartcatReflectIntervalHours/ReflectEvidenceWindow/ReflectEvidenceTop/InsightCount、smartcatDigestIntervalHours/DigestMinNew/DigestMaxEvidence/DigestCount、smartcatWeeklyMinInsights（data.json 残留值忽略）；「移动端默认全屏」组挪面板末尾。
+- **测试**：memory.test「行为小结」describe 重写 + routedFetch 路由 mock（按「行为记录（编号」分流 digests/insights）；相关 7 个测试文件同步；全量绿。

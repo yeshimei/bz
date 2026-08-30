@@ -169,7 +169,10 @@ describe('H3-③ LLM 情绪追标（reflect evidenceTop 窗口）', () => {
     (globalThis as any).fetch = vi.fn(async (url: string, init?: any) => {
       callCount++;
       const body = JSON.parse((init as any).body);
-      if ((body.messages[1].content as string).includes('给每条标一个最贴切的情绪')) throw new Error('网络炸了');
+      const promptText = body.messages[1].content as string;
+      if (promptText.includes('给每条标一个最贴切的情绪')) throw new Error('网络炸了');
+      // ticket 162：前置行为小结提问路由 digests 负载
+      if (promptText.includes('行为记录（编号')) return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify({ digests: [{ text: '行为小结', evidence: [1] }] }) } }] }) };
       return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify({ insights: [{ text: '总结', evidence: [1] }] }) } }] }) };
     });
     await m.reflect();

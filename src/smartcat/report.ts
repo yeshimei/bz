@@ -20,25 +20,28 @@ export function weekWindow(now = Date.now()): [number, number] {
   return [start, start + 7 * 24 * 60 * 60 * 1000 - 1];
 }
 
-/** 周统计（纯函数）：本周新增洞察条数/主题分布/洞察清单 */
+/** 周统计（纯函数）：窗口内新增洞察条数/主题分布/洞察清单。
+ *  ticket 162：窗口 = 上次周报以来（baselineMs 起，截至 now）；未传 baseline 回退 ISO 周一窗口（旧口径兼容），
+ *  首次周报由调用方传 now-7d（「一周时间」）。洞察门槛退役——窗口内洞察全吃，0 条也出报告。 */
 export interface WeeklyReportData {
   window: [number, number];
-  /** 本周新增洞察条数（maybeWeeklyReport 门槛的判断依据） */
+  /** 窗口内新增洞察条数 */
   total: number;
   /** 主题分布（未打标主题计「未分类」） */
   themeDist: Record<string, number>;
-  /** 本周新增洞察（created 升序） */
+  /** 窗口内新增洞察（created 升序） */
   insights: MemoryStreamEntry[];
   padAvg: { pleasure: number; arousal: number; dominance: number };
 }
 
-/** 统计本周洞察（纯函数；洞察无情绪样本——padAvg 即当前 PAD，ADR-0025「周内观察情绪均值」口径随观察原料退役） */
-export function buildWeeklyReportData(stream: MemoryStreamEntry[], pad: PadDimensions, now = Date.now()): WeeklyReportData {
-  const [start, end] = weekWindow(now);
+/** 统计窗口内洞察（纯函数；洞察无情绪样本——padAvg 即当前 PAD，ADR-0025「周内观察情绪均值」口径随观察原料退役） */
+export function buildWeeklyReportData(stream: MemoryStreamEntry[], pad: PadDimensions, now = Date.now(), baselineMs?: number): WeeklyReportData {
+  const baseline = typeof baselineMs === 'number' && Number.isFinite(baselineMs) && baselineMs > 0 ? baselineMs : weekWindow(now)[0];
+  const window: [number, number] = [baseline, now];
   const insights = stream.filter((m) => {
     if (m.type !== 'insight' || isSupersededInsight(m)) return false;
     const t = m.created ? new Date(m.created).getTime() : NaN;
-    return Number.isFinite(t) && t >= start && t <= end;
+    return Number.isFinite(t) && t >= baseline && t <= now;
   }).sort((a, b) => new Date(a.created).getTime() - new Date(b.created).getTime());
   const themeDist: Record<string, number> = {};
   for (const m of insights) {
@@ -46,7 +49,7 @@ export function buildWeeklyReportData(stream: MemoryStreamEntry[], pad: PadDimen
     themeDist[k] = (themeDist[k] || 0) + 1;
   }
   return {
-    window: [start, end],
+    window,
     total: insights.length,
     themeDist,
     insights,

@@ -685,7 +685,7 @@ function renderMemory(pane: HTMLElement, data: SmartCatData): void {
   stats.appendChild(statBlock(st.streamCount, '记忆总数'));
   stats.appendChild(statBlock(st.observationCount, '观察'));
   stats.appendChild(statBlock(st.insightCount, '洞察'));
-  stats.appendChild(statBlock(st.digestCount || 0, '日小结次数'));
+  stats.appendChild(statBlock(st.digestCount || 0, '行为小结次数'));
   const statCard = card('记忆流');
   statCard.body.appendChild(stats);
   const lastReflect = typeof refl.lastReflectAt === 'number' && refl.lastReflectAt > 0
@@ -697,7 +697,7 @@ function renderMemory(pane: HTMLElement, data: SmartCatData): void {
   statCard.body.appendChild(el(
     'div',
     'bz-sc-dash-hint',
-    `上次反思：${lastReflect}（共 ${st.reflectionCount} 次）· 上次日小结：${lastDigest}。`,
+    `上次反思：${lastReflect}（共 ${st.reflectionCount} 次）· 上次行为小结：${lastDigest}。`,
   ));
   pane.appendChild(statCard.root);
 

@@ -32,12 +32,16 @@ function make(opts: { ai?: boolean } = {}): PersonalityGrowth {
   return new PersonalityGrowth(() => data, saver);
 }
 
-/** LLM 响应 mock（chat completions JSON 通道） */
+/** LLM 响应 mock（chat completions JSON 通道；ticket 162：行为小结提问路由 digests 负载，其余返回 payload） */
 function llmFetch(payload: any): ReturnType<typeof vi.fn> {
-  return vi.fn(async () => ({
-    ok: true,
-    json: async () => ({ choices: [{ message: { content: JSON.stringify(payload) } }] }),
-  }));
+  return vi.fn(async (_url: string, init?: any) => {
+    const body = JSON.parse((init as any).body);
+    const user = (body?.messages?.[1]?.content as string) ?? '';
+    const content = user.includes('行为记录（编号')
+      ? { digests: [{ text: '行为小结', evidence: [1] }] }
+      : payload;
+    return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify(content) } }] }) };
+  });
 }
 
 beforeEach(() => {
@@ -160,7 +164,7 @@ describe('来源约束：digest 排除 existential', () => {
       { origin: 'digest' },
     );
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(body.messages[1].content).toContain('日小结');
+    expect(body.messages[1].content).toContain('行为小结');
     const h = data.personalityGrowth.growthHistory;
     expect(h.length).toBe(1);
     expect(h[0].insights[0]).toContain('水彩');
@@ -368,16 +372,14 @@ describe('onReflect origin 元数据透传（memory → mood 链路）', () => {
     expect(seen).toEqual([{ n: 1, origin: 'reflection' }]);
   });
 
-  it('digest → onReflect(digests, {origin:"digest"})', async () => {
+  it('行为小结不再单独触发 onReflect（ticket 162：并入反思前置，仅 origin=reflection 一次）', async () => {
     const m = makeMemory({ ai: true });
-    data.memory.reflection.lastDigestAt = Date.now() - 20 * 60 * 60 * 1000;
     await m.addObservation('今日事一', { importance: 0.5, source: 'diary' });
     await m.addObservation('今日事二', { importance: 0.5, source: 'diary' });
-    await m.addObservation('今日事三', { importance: 0.5, source: 'diary' });
     const seen: Array<{ n: number; origin?: string }> = [];
     m.onReflect = async (insights, meta) => { seen.push({ n: insights.length, origin: meta?.origin }); };
-    (globalThis as any).fetch = llmFetch({ digests: [{ text: '平静的一天', evidence: [1] }] });
-    await m.digest();
-    expect(seen).toEqual([{ n: 1, origin: 'digest' }]);
+    (globalThis as any).fetch = llmFetch({ insights: [{ text: '用户最近平静', evidence: [1] }] });
+    await m.reflect();
+    expect(seen).toEqual([{ n: 1, origin: 'reflection' }]);
   });
 });

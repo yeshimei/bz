@@ -527,7 +527,7 @@ export class PersonalityGrowth {
                 `\n\n请为每条洞察选出最能说明「用户哪方面值得加深了解」的一个特质，候选仅限：${candidates}。\n` +
                 '- 必须从该条洞察原文中摘录一小段原话作为 quote 依据；\n' +
                 '- 拿不准或没有合适特质就返回 none，禁止硬挑；\n' +
-                (allowExistential ? '' : '- 本批洞察来自日小结，exist_depth/familiarity/concern 三个特质不可选；\n') +
+                (allowExistential ? '' : '- 本批洞察来自行为小结，exist_depth/familiarity/concern 三个特质不可选；\n') +
                 '只返回 JSON：{"attributions":[{"index":1,"trait":"exist_depth","quote":"原文片段"},{"index":2,"trait":"none"}]}',
             },
           ]);

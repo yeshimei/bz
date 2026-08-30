@@ -15,7 +15,7 @@ import { eventSystem, setSmartcatApp, setupVisibilityCheck, __resetVisibilityFor
 import { mountCatContainer, unmountCatContainer, applyAppearance, createChatPanel, showChatPanel, hideChatPanel, openSmartcatSettings } from './ui';
 import { BubbleManager } from './bubble';
 import { MoodSystem, PersonalityGrowth } from './mood';
-import { MemorySystem, USER_CONTENT_BOUNDARY, PROMPT_SLOTS, migrateSmartcatSidecars, slimSmartCatData, getConsolidationConfig } from './memory';
+import { MemorySystem, USER_CONTENT_BOUNDARY, PROMPT_SLOTS, migrateSmartcatSidecars, slimSmartCatData } from './memory';
 import { SmartCatAnimation } from './animation';
 import { InteractionManager, MobileInputAdapter } from './interaction';
 import { getSmartCatMessage } from './messages';
@@ -43,7 +43,7 @@ import { buildPomodoroStructured, type PomodoroActionEvent } from './pomodoro-so
 import { DOMAIN_FILES, snapshotDomains } from './domain-source';
 import { buildLibraryNoteText, type LibraryWeaveDiff } from './library-source';
 import { buildRhythmProfile, isActiveNow, describeRhythm, periodText, isoWeekKey } from './rhythm';
-import { buildWeeklyReportData, generateWeeklyReport, weekWindow } from './report';
+import { buildWeeklyReportData, generateWeeklyReport } from './report';
 import { appendDossierEvent, getDossierEvents, shouldScanDossierNarrative, buildNarrativeInput, generateDossierNarrative, advanceDossierScanKey } from './dossier';
 import { buildCompanionContext } from './companion-context';
 import { analyzeEmotionTrend, buildEmotionSnapshots, describeEmotionTrend, checkContradiction, extractStoredFacts, initBanditArm, sampleThompson, updateBandit } from './cognitive';
@@ -750,20 +750,44 @@ async function maybeTrendDrift(): Promise<void> {
 // ---------------- 每周懂你报告（2026-08-23「懂你」增强：⑦） ----------------
 // 周报按 1 小时节拍调度 + 10 点检查，由常驻心跳分派（startResidentHeartbeat / dispatchResidentTick，p2 收敛）
 
-/** 生成本周报告（ticket 160 三层流水线：只吃本周新增洞察；仅当新周 + 洞察达门槛；
- *  LLM/兜底 → 写回流 source weekly-report + 气泡展示 + 状态推进） */
+/** 第一条洞察的时间戳（周报首窗锚点；排除周报自身产物；无洞察返回 0） */
+function firstInsightAt(stream: { type?: string; source?: string; created?: string }[]): number {
+  let min = NaN;
+  for (const m of stream || []) {
+    if (m?.type !== 'insight' || m?.source === 'weekly-report') continue;
+    const t = m.created ? new Date(m.created).getTime() : NaN;
+    if (Number.isFinite(t) && (Number.isNaN(min) || t < min)) min = t;
+  }
+  return Number.isFinite(min) ? min : 0;
+}
+
+/** 生成懂你报告（ticket 162：窗口锚定第一条洞察的日期，按 7 天一周往后推链式生成——
+ *  首窗 = [第一条洞察, +7d)，此后每窗起点 = 上窗末端（st.at 存窗口末端）；整点后由小时心跳分派；
+ *  空窗不出报告、窗口静默推进（防卡死）。LLM/兜底 → 写回流 source weekly-report + 气泡 + 状态推进） */
 async function maybeWeeklyReport(): Promise<void> {
   if (!data || !bubbleManager || !moodSystem || !memorySystem) return;
   const st = getWeeklyReportState();
-  const weekKey = isoWeekKey();
-  if (st.weekKey === weekKey) return; // 本周已生成
-  const [start] = weekWindow(Date.now());
-  // 周一起算：只在本周窗口已至少过去 1 天时生成（周二起才可能）
-  if (Date.now() - start < 24 * 60 * 60 * 1000) return;
-  // ticket 160：周报只吃洞察（反思/叙事产出的高阶结论，buildWeeklyReportData 内剔除 superseded），
-  // 具体记忆/观察不再进报告；洞察不足门槛 → 安静跳过（小时心跳继续尝试，不报错不空转）
-  const report = buildWeeklyReportData(data.memory.memoryStream, moodSystem.pad, Date.now());
-  if (report.total < getConsolidationConfig().weeklyMinInsights) return;
+  const now = Date.now();
+  const WEEK = 7 * 24 * 60 * 60 * 1000;
+  // 基线 = 上窗末端；首次（无 at）= 第一条洞察的日期（无洞察不出报告）
+  let baseline = st.at || 0;
+  if (!baseline) {
+    baseline = firstInsightAt(data.memory.memoryStream);
+    if (!baseline) return;
+  }
+  if (now - baseline < WEEK) return; // 本窗未满 7 天
+  const windowEnd = baseline + WEEK;
+  // 周报只吃窗口内洞察（反思/叙事产出的高阶结论，buildWeeklyReportData 内剔除 superseded）
+  const report = buildWeeklyReportData(data.memory.memoryStream, moodSystem.pad, windowEnd, baseline);
+  const advance = async () => {
+    const d = dataProvider();
+    d.editingData = { ...(d.editingData || {}), weeklyReport: { weekKey: isoWeekKey(), at: windowEnd } as WeeklyReportState };
+    await dataSaver(d);
+  };
+  if (report.total === 0) {
+    await advance(); // 空窗：不出报告，窗口推进（下轮检查下一窗）
+    return;
+  }
   try {
     const text = await generateWeeklyReport(report);
     if (!text) return;
@@ -771,11 +795,9 @@ async function maybeWeeklyReport(): Promise<void> {
     await memorySystem.addInsight(`【本周懂你报告】${text}`, [], 0.8, undefined, 'weekly-report');
     // 气泡展示（隐藏超长：先给一句导语，全文在设置弹窗「查看报告」）
     bubbleManager.showBubble(`喵~ 我读完这周关于你的记录了。${text.length > 60 ? text.substring(0, 60) + '……' : text}`);
-    const d = dataProvider();
-    d.editingData = { ...(d.editingData || {}), weeklyReport: { weekKey, at: Date.now() } as WeeklyReportState };
-    await dataSaver(d);
+    await advance();
   } catch (e) {
-    /* 周报失败静默（下周再试；不推进状态） */
+    /* 周报失败静默（下轮小时检查再试；不推进状态） */
   }
 }
 
