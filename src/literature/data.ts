@@ -3,7 +3,8 @@
  * literature.json 读写（jsonStore）、任务 CRUD、状态流转、时间格式校验。
  */
 import moment from 'moment';
-import { jsonStore } from '../core/json-store';
+import { jsonFileStore, storageFile, type JsonFileStore } from '../core/storage';
+import { tryGetSettings } from '../core/settings-provider';
 import { generateId } from '../core/utils';
 import type { LiteratureTask, LiteratureTaskStatus } from './types';
 
@@ -67,19 +68,26 @@ export function isTerminal(status: LiteratureTaskStatus): boolean {
 
 export const LiteratureData = {
   filePath: '',
-  _store: null as ReturnType<typeof jsonStore> | null,
+  _store: null as JsonFileStore<any[]> | null,
 
+  /** 初始化（幂等）：固化文件路径与 store。未调用时 read/write 按当前设置惰性补齐（统一数据读写重构） */
   init(settings: LiteratureSettingsLike) {
     const folder = ((settings.storagePath || 'CONFIG/STORAGE') as string).trim().replace(/\/+$/, '');
     this.filePath = folder + '/literature.json';
-    this._store = jsonStore(this.filePath);
+    this._store = jsonFileStore<any[]>(this.filePath);
+  },
+
+  /** 惰性 store 获取：init 前调用时按当前设置补建（消除 init 前 _store 空指针） */
+  _ensureStore(): JsonFileStore<any[]> {
+    if (!this._store) this.init({ storagePath: (tryGetSettings() as any)?.storagePath });
+    return this._store!;
   },
 
   async read(): Promise<any[]> {
-    return this._store!.read();
+    return this._ensureStore().read();
   },
   async write(data: any): Promise<void> {
-    return this._store!.write(data);
+    return this._ensureStore().write(data);
   },
 
   /** 全量读取并统一字段形状（缺省补默认值，旧/手改数据零迁移） */

@@ -40,6 +40,8 @@ describe('UIManager', () => {
     resetObsidianMocks();
     document.body.innerHTML = '';
     setApp(null as any);
+    // 测试隔离加固：统一注入空 provider（不依赖跨用例残留；storagePath 空 → 回退 CONFIG/STORAGE）
+    setSettingsProvider(() => ({}) as any);
   });
 
   it('构造即建常驻 DOM（display none）+ 样式注入', () => {

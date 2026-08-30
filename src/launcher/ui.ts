@@ -12,7 +12,7 @@ import { allocZ, topifyZ } from '../core/z-order';
 import { generateId } from '../core/utils';
 import { createIconBtn } from '../core/dom';
 import {
-  LauncherTile, LauncherData, LauncherPlatformConfig, LAUNCHER_PATH,
+  LauncherTile, LauncherData, LauncherPlatformConfig, getLauncherFilePath,
   loadLauncherData, saveLauncherData, placeAtEnd, pushMove, canPlace,
 } from './data';
 import { filterIcons, LUCIDE_ICONS } from './icons';
@@ -953,7 +953,7 @@ export class LauncherModal {
       desktop: this.data.desktop,
       mobile: this.data.mobile,
     }).catch((e) => {
-      notice(`入口页保存失败：${LAUNCHER_PATH}`, 'error');
+      notice(`入口页保存失败：${getLauncherFilePath()}`, 'error');
     });
   }
 

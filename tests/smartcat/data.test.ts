@@ -30,14 +30,14 @@ describe('路径', () => {
 });
 
 describe('loadSmartCatData', () => {
-  it('文件不存在 → 默认数据（不建文件、不迁移）', async () => {
+  it('文件不存在 → 默认数据 + 建默认数据文件（统一读写语义；不迁移）', async () => {
     const vault = new MockVault();
     const app = baseApp(vault);
     const d = await loadSmartCatData(app);
     expect(d.config.appearance).toBe('orange');
     expect(d.config.conversationHistory).toEqual([]);
     expect(d.memory.memoryStream).toEqual([]);
-    expect(vault.files.has('CONFIG/STORAGE/smartcat.json')).toBe(false);
+    expect(vault.files.has('CONFIG/STORAGE/smartcat.json')).toBe(true); // 统一读写语义：缺失建文件
   });
 
   it('文件存在 → 读取归一化（新 schema）', async () => {

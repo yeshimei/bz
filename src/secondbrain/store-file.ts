@@ -16,7 +16,7 @@
  * - 纯数据层（无 DOM / 无 notice 依赖），node 环境可测；依赖 getApp()（同 data.ts/jsonStore 模式）。
  */
 import { getApp } from '../core/app';
-import { tryGetSettings } from '../core/settings-provider';
+import { storageDir, storageFile } from '../core/storage';
 import { bytesEqual } from '../core/utils';
 
 /** 单文件结构版本（ticket 120 首版） */
@@ -52,22 +52,17 @@ export interface SecondBrainStore {
 
 /** storagePath 唯一目录口径（ADR-0009 延续；同 config.ts） */
 function storeDir(): string {
-  const s = tryGetSettings() as any;
-  return (
-    String(s.storagePath ?? '')
-      .trim()
-      .replace(/\/+$/, '') || 'CONFIG/STORAGE'
-  );
+  return storageDir();
 }
 
 /** 单文件 JSON 路径（ticket 120：全部 JSON 数据一个文件） */
 export function getSecondBrainStorePath(): string {
-  return storeDir() + '/secondbrain.json';
+  return storageFile('secondbrain.json');
 }
 
 /** 向量二进制路径（ticket 120：原 secondbrain_vectors.vec 改名） */
 export function getSecondBrainVecPath(): string {
-  return storeDir() + '/secondbrain.vec';
+  return storageFile('secondbrain.vec');
 }
 
 /** 旧文件名清单（一次性迁移源；迁移成功即删除） */

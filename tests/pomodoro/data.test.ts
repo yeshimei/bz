@@ -39,7 +39,7 @@ describe('PomodoroDataManager', () => {
     document.body.innerHTML = '';
   });
 
-  it('load：文件不存在 → 默认数据（不建文件）', async () => {
+  it('load：文件不存在 → 默认数据 + 建默认数据文件（统一读写语义）', async () => {
     const vault = new MockVault();
     const app = makeApp(vault);
     setApp(app);
@@ -48,18 +48,24 @@ describe('PomodoroDataManager', () => {
     expect(data.version).toBe(1);
     expect(data.state).toEqual(createInitialState());
     expect(data.history).toEqual([]);
-    expect(vault.files.has(POMODORO_FILE_PATH)).toBe(false);
+    expect(vault.files.has(POMODORO_FILE_PATH)).toBe(true); // 统一读写语义：缺失建文件
   });
 
-  it('load：坏 JSON → 默认数据', async () => {
+  it('load：坏 JSON → 原文件改名留档重建 + 默认数据', async () => {
     const vault = new MockVault();
-    vault.files.set(POMODORO_FILE_PATH, '{oops');
+    const broken = '{oops';
+    vault.files.set(POMODORO_FILE_PATH, broken);
     const app = makeApp(vault);
     setApp(app);
     const dm = new PomodoroDataManager(app);
     const data = await dm.load();
     expect(data.state.phase).toBe('idle');
     expect(data.history).toEqual([]);
+    // 统一读写语义：原内容改名留档（不再直接覆盖丢失）
+    const backups = [...vault.files.keys()].filter((p) => p.startsWith(POMODORO_FILE_PATH + '.corrupt-'));
+    expect(backups).toHaveLength(1);
+    expect(vault.files.get(backups[0])).toBe(broken);
+    expect(JSON.parse(vault.files.get(POMODORO_FILE_PATH)!)).toEqual(defaultPomodoroData());
   });
 
   it('load：解析正常数据（含部分缺省补齐）', async () => {

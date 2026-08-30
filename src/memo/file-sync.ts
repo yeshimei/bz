@@ -12,6 +12,7 @@ import type { App } from 'obsidian';
 import { notify } from '../core/notice';
 import { tryGetSettings } from '../core/settings-provider';
 import { onDomainEvent } from '../core/domain-bus';
+import { jsonFileStore, storageFile } from '../core/storage';
 
 // ---------- 同步纯函数（ai-agent/sync.ts 私有副本） ----------
 
@@ -50,23 +51,15 @@ function inFolders(path: string, folders: string[]): boolean {
   return folders.some((f) => path.startsWith(f + '/') || path === f);
 }
 
-// ---------- JSON 读写（ai-agent/sync.ts 私有副本） ----------
+// ---------- JSON 读写（统一数据读写层；原 ai-agent 私有副本语义已统一至 jsonFileStore） ----------
 
+/** 读取 memo.json（jsonFileStore 语义：缺失建文件返回 []，损坏改名留档重建） */
 async function loadJSON(app: App, filePath: string): Promise<any[]> {
-  const file = app.vault.getAbstractFileByPath(filePath);
-  if (!file) return [];
-  try {
-    return JSON.parse(await app.vault.read(file as any));
-  } catch {
-    return [];
-  }
+  return jsonFileStore<any[]>(filePath).read();
 }
 
 async function saveJSON(app: App, filePath: string, data: any): Promise<void> {
-  const file = app.vault.getAbstractFileByPath(filePath);
-  const json = JSON.stringify(data, null, 2);
-  if (file) await app.vault.modify(file as any, json);
-  else await app.vault.create(filePath, json);
+  await jsonFileStore<any[]>(filePath).write(data);
 }
 
 // ---------- 路径 / 设置 ----------
@@ -74,8 +67,7 @@ async function saveJSON(app: App, filePath: string, data: any): Promise<void> {
 /** 备忘录数据文件路径（照抄旧 ai-agent/index.ts：ADR-0009 storagePath 优先，旧 todoFilePath 兼容兜底） */
 function getMemoPath(): string {
   const s = tryGetSettings() as any;
-  const folder = ((s && (s.storagePath || s.todoFilePath)) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
-  return folder + '/memo.json';
+  return storageFile('memo.json', (s && (s.storagePath || s.todoFilePath)) || 'CONFIG/STORAGE');
 }
 
 /** 监听文件夹列表（设置 aiAgentWatchedFolders 可配，逗号分隔；默认 卡片盒,归档/网页剪藏） */

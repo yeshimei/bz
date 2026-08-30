@@ -9,6 +9,7 @@
  */
 import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
+import { jsonFileStore, storageDir } from '../core/storage';
 import { defaultConfig, normalizeConfig } from './config';
 import { randomOceanSeed, characterSeed, DEFAULT_TRAITS, DEFAULT_OCEAN } from './character';
 import type { SmartCatData, MemoryStream, MemoryStreamEntry, PersonalityGrowthData, BehaviorItem } from './types';
@@ -40,8 +41,7 @@ export function getAbsenceDays(data: SmartCatData, now = Date.now()): number {
 
 /** 共享存储目录（跟随共享 storagePath；域内各 JSON 路径拼装的公共前缀） */
 export function smartcatStorageDir(): string {
-  const s = tryGetSettings() as any;
-  return ((s && s.storagePath) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
+  return storageDir();
 }
 
 /**
@@ -223,35 +223,18 @@ export function normalizePersonalityGrowth(raw: any, def: PersonalityGrowthData)
   };
 }
 
-/** 读取数据（不存在/坏 JSON → 默认数据；无迁移） */
+/** 读取数据（统一数据读写层：不存在 → 建默认数据文件；坏 JSON → 原文件改名留档重建；无迁移） */
 export async function loadSmartCatData(app: App): Promise<SmartCatData> {
-  const filePath = getSmartcatFilePath();
-  const f = app.vault.getAbstractFileByPath(filePath);
-  if (f) {
-    try {
-      return normalizeData(JSON.parse(await app.vault.read(f as any)));
-    } catch (e) {
-      return defaultSmartCatData();
-    }
-  }
-  return defaultSmartCatData();
+  const raw = await jsonFileStore<any>(getSmartcatFilePath(), {
+    defaultValue: () => defaultSmartCatData(),
+    app,
+  }).read();
+  return normalizeData(raw);
 }
 
-/** 保存（存在 modify / 不存在 create，建目录兜底）。
- *  Syncthing 冲突止血（用户拍板 2026-08-29）：写前与盘上现读内容比对，没变就跳过——
+/** 保存（统一数据读写层：存在 modify / 不存在 create，建目录兜底）。
+ *  Syncthing 冲突止血（用户拍板 2026-08-29）：writeIfChanged 写前与盘上现读内容比对，没变就跳过——
  *  无变化写只刷新 mtime，多设备各开一次就制造一轮 *.sync-conflict-* 冲突窗口。 */
 export async function saveSmartCatData(app: App, data: SmartCatData): Promise<void> {
-  const filePath = getSmartcatFilePath();
-  const c = JSON.stringify(data, null, 2);
-  const f = app.vault.getAbstractFileByPath(filePath);
-  if (f) {
-    try {
-      if ((await app.vault.read(f as any)) === c) return;
-    } catch { /* 读失败照写（保守回退，不改变原写入语义） */ }
-    await app.vault.modify(f as any, c);
-  } else {
-    const d = filePath.substring(0, filePath.lastIndexOf('/'));
-    if (d && !app.vault.getAbstractFileByPath(d)) await app.vault.createFolder(d);
-    await app.vault.create(filePath, c);
-  }
+  await jsonFileStore<SmartCatData>(getSmartcatFilePath(), { writeIfChanged: true, app }).write(data);
 }

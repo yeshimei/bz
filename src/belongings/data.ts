@@ -6,14 +6,14 @@
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { getSettings } from '../core/settings-provider';
+import { jsonFileStore, storageFile } from '../core/storage';
 import { DEFAULT_CATEGORIES } from './default-categories.gen';
 import type { BelongingsDatabase } from './types';
 
 /** 数据文件路径（ADR-0009：storagePath 优先，旧 dataFolder 兼容兜底） */
 export function getDataFilePath(): string {
   const s = getSettings() as any;
-  const folder = ((s.storagePath || s.belongingsDataFolder) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
-  return `${folder}/belongings.json`;
+  return storageFile('belongings.json', (s.storagePath || s.belongingsDataFolder) || 'CONFIG/STORAGE');
 }
 
 /** 空数据库结构 */
@@ -27,28 +27,25 @@ function emptyDatabase(): BelongingsDatabase {
   };
 }
 
-/** 加载数据库（解析失败 → 警告弹窗 + 重置；含默认/自定义分类合并） */
+/** 加载数据库（统一数据读写层语义：缺失建空库文件、损坏改名留档重建；notice 文案逐字保留——铁律 1） */
 export async function loadDatabase(): Promise<BelongingsDatabase> {
-  const app = getApp();
-  const DATA_FILE = getDataFilePath();
-  let db: Partial<BelongingsDatabase> = {};
-  const file = app.vault.getAbstractFileByPath(DATA_FILE);
-
-  if (file) {
-    try {
-      const content = await app.vault.read(file as any);
-      const parsed = JSON.parse(content);
-      // P2 形状容错：解析结果须为非空对象，否则走既有失败 notice 路径（不再 TypeError 白屏）
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || Object.keys(parsed).length === 0) {
-        throw new Error('数据文件结构异常（非对象或空对象）');
-      }
-      db = parsed;
-    } catch (error) {
+  const filePath = getDataFilePath();
+  const raw = await jsonFileStore<any>(filePath, {
+    defaultValue: () => emptyDatabase(),
+    onCorrupt: () => {
       notice('数据文件解析失败，已重置为空', 'warning', 5000);
-      console.error('数据文件解析错误:', error);
-      db = emptyDatabase();
+    },
+  }).read();
+  let db: BelongingsDatabase;
+  try {
+    // P2 形状容错：非对象/空对象/数组 → 走既有失败 notice 路径（不再 TypeError 白屏）
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw) || Object.keys(raw).length === 0) {
+      throw new Error('数据文件结构异常（非对象或空对象）');
     }
-  } else {
+    db = raw as BelongingsDatabase;
+  } catch (error) {
+    notice('数据文件解析失败，已重置为空', 'warning', 5000);
+    console.error('数据文件解析错误:', error);
     db = emptyDatabase();
   }
 
@@ -70,19 +67,12 @@ export async function loadDatabase(): Promise<BelongingsDatabase> {
 
 /** 保存数据库 */
 export async function saveDatabase(database: BelongingsDatabase): Promise<void> {
-  const app = getApp();
   const saveData = {
     version: database.version,
     last_updated: new Date().toISOString(),
     items: database.items,
   };
-  const content = JSON.stringify(saveData, null, 2);
-  const file = app.vault.getAbstractFileByPath(getDataFilePath());
-  if (file) {
-    await app.vault.modify(file as any, content);
-  } else {
-    await app.vault.create(getDataFilePath(), content);
-  }
+  await jsonFileStore<any>(getDataFilePath()).write(saveData);
 }
 
 // ----- 工具函数（复用） -----

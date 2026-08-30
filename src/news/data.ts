@@ -6,9 +6,15 @@
  */
 import { TFile } from 'obsidian';
 import { getApp } from '../core/app';
+import { jsonFileStore, storageFile } from '../core/storage';
 
 export const NEWS_JSON_PATH = 'CONFIG/STORAGE/news.json';
 export const STATS_JSON_PATH = 'CONFIG/STORAGE/news-stats.json';
+
+/** 聚合讯数据文件路径（统一数据读写层：跟随 storagePath；默认值下与 NEWS_JSON_PATH 一致） */
+export function getNewsFilePath(): string {
+  return storageFile('news.json');
+}
 
 export const DEFAULT_SOURCES = { zhihu: true, guokr: true, bilibili: true };
 export const DEFAULT_STATS = () => ({ totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {} as Record<string, number>, byDate: {} as Record<string, number> });
@@ -135,31 +141,31 @@ export function parseNewsFileContent(raw: string): NewsData | null {
   return null;
 }
 
-/** 读 news.json → 四段（含旧数组自动包裹迁移）；采用磁盘为基底，双写者各自保留非本域段 */
+/** 读 news.json → 四段（含旧数组自动包裹迁移）；采用磁盘为基底，双写者各自保留非本域段。
+ *  统一数据读写层：缺失 → 建空数据文件但 missing:true（首用引导）；
+ *  损坏 → 不清盘（保持原文件原样——崩溃半截 JSON 保护既有设计），返回错误态 */
 export async function readNewsData(): Promise<ReadNewsResult> {
-  const app = getApp();
-  const af = app.vault.getAbstractFileByPath(NEWS_JSON_PATH);
-  if (!af) return { ok: true, missing: true, data: emptyData() };
-  try {
-    const raw = await app.vault.read(af as TFile);
-    const parsed = parseNewsFileContent(raw);
-    if (!parsed) return { ok: false, missing: false, data: emptyData() };
-    return { ok: true, missing: false, data: parsed };
-  } catch {
-    return { ok: false, missing: false, data: emptyData() };
-  }
+  const missing = !getApp().vault.getAbstractFileByPath(getNewsFilePath());
+  let corrupt = false;
+  const parsed = await jsonFileStore<any>(getNewsFilePath(), {
+    defaultValue: () => emptyData(),
+    onCorrupt: () => {
+      corrupt = true;
+      return false;
+    },
+  }).read().catch(() => null);
+  if (parsed === null || corrupt) return { ok: false, missing: false, data: emptyData() };
+  // 走 parseNewsFileContent 做各段归一（parseBilibiliUpInfo 统一 https、parseBilibiliMaxItems 夹取 1-50 等）。
+  // stringify 再 parse 会丢 articles 里 body:undefined 的键——但 body 本就是 delete 后的预期状态，无碍。
+  const content = parseNewsFileContent(JSON.stringify(parsed));
+  if (!content) return { ok: false, missing: false, data: emptyData() };
+  return { ok: true, missing, data: content };
 }
 
-/** 写回 news.json 四段（整段覆盖；调用方负责先读盘保留非本域段） */
+/** 写回 news.json 四段（整段覆盖；调用方负责先读盘保留非本域段；静默吞错保持现状） */
 export async function writeNewsData(data: NewsData): Promise<void> {
-  const app = getApp();
   try {
-    const dir = NEWS_JSON_PATH.substring(0, NEWS_JSON_PATH.lastIndexOf('/'));
-    const dirAf = app.vault.getAbstractFileByPath(dir);
-    if (!dirAf) await app.vault.createFolder(dir);
-    const af = app.vault.getAbstractFileByPath(NEWS_JSON_PATH);
-    if (af) await app.vault.modify(af as TFile, JSON.stringify(data, null, 2));
-    else await app.vault.create(NEWS_JSON_PATH, JSON.stringify(data, null, 2));
+    await jsonFileStore<NewsData>(getNewsFilePath()).write(data);
   } catch (e) { /* 静默 */ }
 }
 

@@ -112,11 +112,13 @@ export async function loadStats() {
 
 export async function saveStats() {
   // 四段整读写：读盘保留 articles/bilibiliUps/sources，仅替换 stats 段；
-  // 写回串行队列（与 saveArticles 同文件，防并发覆盖）
+  // 写回串行队列（与 saveArticles 同文件，防并发覆盖）。
+  // 统一读写语义：缺失时 readNewsData 已建空数据文件（data=emptyData），
+  // 不再因 missing 跳过——首用统计落盘（loadArticles 的 missing 引导态仍由 UI 层区分）。
   enqueueWrite(async () => {
     try {
       const res = await readNewsData();
-      if (!res.ok || res.missing) return;
+      if (!res.ok) return;
       await writeNewsData({ ...res.data, stats });
     } catch (e) { /* 静默 */ }
   });
