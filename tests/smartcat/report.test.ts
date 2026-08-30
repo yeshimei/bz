@@ -88,6 +88,17 @@ describe('formatWeeklyReport', () => {
     expect(t).toContain('2 [工作] 洞察a');
     expect(t).toContain('愉悦 60');
   });
+
+  it('ticket 163：洞察描述里「你/用户」替换为称呼（默认包仔）', () => {
+    const now = new Date('2026-08-23T12:00:00').getTime();
+    const d = buildWeeklyReportData(
+      [{ ...ins('a', 0, now), description: '你最近在坚持复习，用户很投入' }],
+      { pleasure: 60, arousal: 50, dominance: 55 }, now,
+    );
+    const t = formatWeeklyReport(d);
+    expect(t).toContain('包仔最近在坚持复习，包仔很投入');
+    expect(t).not.toContain('你最近在坚持复习');
+  });
 });
 
 describe('generateWeeklyReport', () => {

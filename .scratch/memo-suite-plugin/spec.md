@@ -1,4 +1,4 @@
-﻿# Spec: QuickAdd 全脚本独立插件化（bz）
+# Spec: QuickAdd 全脚本独立插件化（bz）
 
 Status: `ready-for-agent`
 Type: spec
@@ -849,3 +849,12 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - **周报**：窗口锚定第一条洞察（排除 weekly-report 自身产物）日期，首窗 [首洞察, +7d)，此后每窗起点 = 上窗末端（weeklyReport.at 存窗口末端），7 天一周链式推进；空窗不出报告、窗口静默推进；洞察门槛（smartcatWeeklyMinInsights）退役；满 7 天且整点后由小时心跳分派。
 - **设置**：「记忆巩固」组 11 → 2 行（反思观察阈值、引用摘录字数）；退役键 smartcatReflectIntervalHours/ReflectEvidenceWindow/ReflectEvidenceTop/InsightCount、smartcatDigestIntervalHours/DigestMinNew/DigestMaxEvidence/DigestCount、smartcatWeeklyMinInsights（data.json 残留值忽略）；「移动端默认全屏」组挪面板末尾。
 - **测试**：memory.test「行为小结」describe 重写 + routedFetch 路由 mock（按「行为记录（编号」分流 digests/insights）；相关 7 个测试文件同步；全量绿。
+
+### 洞察上限 + 来源分布按追查目录 + 称呼替换（ticket 163）
+
+> 「AI 决定生成洞察的数量，一次给我生成 10 条，太多了！默认不超过 3 条，设置放面板里让用户自己选。记忆来源分布：日记下面怎么是记忆目录？应该根据设置页里记忆目录的追踪目录走。还有洞察和行为消息。设置页可以指定小橘对我的称呼，默认叫包仔；AI 调用记忆流和行为流时把「你/用户」这类指代用户的词都替换成称呼。」
+
+- **洞察条数上限**：新增设置 `smartcatReflectMaxInsights`（默认 3，⚙️ 小橘设置「记忆巩固」组「反思洞察条数上限」number 行 1-10）；`getConsolidationConfig` 增 `maxInsights`（负数回退 3、0 钳制到 1）；反思 prompt 改为「最多 N 条（宁缺毋滥，超出只取最重要的）」，LLM 返回按序 `.slice(0, N)` 硬截断兜底。
+- **记忆来源分布（dashboard 记忆页）**：`buildSourceDistribution(stream, dirs?)` 口径升级——① 洞察（type=insight，含周报洞察）按「洞察」单列一行计入（此前完全不计）；② source=note 的引用条目按「记忆目录」配置的追查目录分行（`resolveTrackedDirLabel`：ref 路径/description 路径段前缀匹配首个配置目录 → 标签为该目录字符串；未传目录/未命中回退「记忆目录」旧标签）；③ 行为小结（source=digest）行保留。最近记忆列表 note 行标签同口径（`我的/信` 而非统称「记忆目录」）。
+- **称呼替换**：新增设置 `smartcatUserName`（默认「包仔」，⚙️ 小橘设置「互动」组「小橘对我的称呼」text 行）；`replaceUserReference(text)` 把记忆流/行为流内容里的「你/你们/用户」替换为称呼（单趟正则 `你们|你|用户`，替代回调保证「你们」先匹配；存储格式冻结不写盘，只作用于喂 AI 的 prompt 文本）。应用点：formatMemoriesForPrompt / formatMemoriesForPromptWithRefs（聊天/主动关心/懂你上下文）、反思证据编号行 + 原文摘录、行为小结行为文案行、情绪追标编号行、周报洞察清单行、特质归因洞察行、懂你上下文块生成行（「你通常在…」「你和小橘的关系」）。模板/人物设定句（「你是小橘」、候选块头「你既有的相关洞察」——此处「你」指小橘）不做替换。
+- **测试**：memory.test（getConsolidationConfig maxInsights/getUserNickname/replaceUserReference/证据行替换/5→3 截断+prompt 声明+设置可调）；dashboard.test（洞察单列、note 按追查目录分行、未命中回退、UI 卡与列表标签）；report.test（洞察清单称呼替换）；companion-context.test（作息行包仔）；settings.test（互动 4 项/记忆巩固 3 项徽标）；trait-attribution/adr0069-core 断言同步为称呼文案。全量绿 + tsc 0 错 + 构建部署。

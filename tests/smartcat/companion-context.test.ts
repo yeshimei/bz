@@ -16,7 +16,7 @@ describe('buildCompanionContext（懂你上下文块）', () => {
     expect(buildCompanionContext({ memoryStream: [] })).toBe('');
   });
 
-  it('作息（≥3 条活跃）→ 作息行 + 当前时段', () => {
+  it('作息（≥3 条活跃）→ 作息行 + 当前时段；ticket 163：行内「你」替换为称呼（默认包仔）', () => {
     const now = new Date('2026-08-20T12:00:00').getTime();
     const stream: MemoryStreamEntry[] = [];
     for (let h = 20; h < 24; h++) {
@@ -25,7 +25,8 @@ describe('buildCompanionContext（懂你上下文块）', () => {
       stream.push(entry(d.toISOString()));
     }
     const c = buildCompanionContext({ memoryStream: stream, hour: 22, now });
-    expect(c).toContain('最活跃');
+    expect(c).toContain('包仔通常在');
+    expect(c).not.toContain('你通常在');
     expect(c).toContain('现在是晚上');
   });
 

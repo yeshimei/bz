@@ -4,7 +4,7 @@
  * 三因子检索（词法/语义）/自增强 lastAccessed/500 上限/反思调度/降级链。
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { MemorySystem, MEMORY_CONFIG, ruleCredibility, CREDIBILITY_TIERS, sourceLabel, formatRelativeTime, buildRetrieveQuery, USER_CONTENT_BOUNDARY, detectInjection, sanitizeEmotion, clampLLMCredibility, getConsolidationConfig } from '../../src/smartcat/memory';
+import { MemorySystem, MEMORY_CONFIG, ruleCredibility, CREDIBILITY_TIERS, sourceLabel, formatRelativeTime, buildRetrieveQuery, USER_CONTENT_BOUNDARY, detectInjection, sanitizeEmotion, clampLLMCredibility, getConsolidationConfig, getUserNickname, replaceUserReference } from '../../src/smartcat/memory';
 import { defaultSmartCatData } from '../../src/smartcat/data';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { requestUrl } from '../mock-obsidian-entry';
@@ -850,7 +850,7 @@ describe('行为小结（ticket 162：反思前置步骤，原日小结独立调
     expect(data.memory.reflection.lastDigestAt).toBeGreaterThan(0);
     // 小结 prompt 经 behavior-wording 渲染人类文案，且覆盖全部 3 条行为
     const summaryPrompt = prompts.find((p) => p.includes('行为记录（编号'))!;
-    expect(summaryPrompt).toContain('你完成了备忘录「买菜」');
+    expect(summaryPrompt).toContain('包仔完成了备忘录「买菜」'); // ticket 163：行为流文案「你」→称呼（默认包仔）
     expect(summaryPrompt).not.toContain('memo:completed');
     expect(summaryPrompt).toContain('3. ');
     // 小结入流后成为反思证据（编号段含小结文案）
@@ -949,19 +949,106 @@ describe('行为小结（ticket 162：反思前置步骤，原日小结独立调
 });
 
 describe('巩固参数配置（ticket 162 精简）', () => {
-  it('getConsolidationConfig：缺省（素材阈值 20/摘录 400）；设置键覆盖；0 允许；非法值回退', () => {
+  it('getConsolidationConfig：缺省（素材阈值 20/摘录 400/洞察上限 3）；设置键覆盖；非法值回退；0 钳制到 1', () => {
     const d = getConsolidationConfig();
     expect(d.reflectMinNew).toBe(20);
     expect(d.refExcerptLimit).toBe(400);
+    expect(d.maxInsights).toBe(3);
     mockSettings.smartcatReflectMinNew = 5;
     mockSettings.smartcatRefExcerptLimit = 0;
+    mockSettings.smartcatReflectMaxInsights = 6;
     const o = getConsolidationConfig();
     expect(o.reflectMinNew).toBe(5);
     expect(o.refExcerptLimit).toBe(0);
+    expect(o.maxInsights).toBe(6);
     mockSettings.smartcatReflectMinNew = -1;
+    mockSettings.smartcatReflectMaxInsights = -1;
     expect(getConsolidationConfig().reflectMinNew).toBe(20);
+    expect(getConsolidationConfig().maxInsights).toBe(3); // 负数 → 回退缺省
+    mockSettings.smartcatReflectMaxInsights = 0;
+    expect(getConsolidationConfig().maxInsights).toBe(1); // 0 → 下限 1
     delete mockSettings.smartcatReflectMinNew;
     delete mockSettings.smartcatRefExcerptLimit;
+    delete mockSettings.smartcatReflectMaxInsights;
+  });
+});
+
+describe('小橘对用户的称呼（ticket 163）', () => {
+  it('getUserNickname：缺省「包仔」；自定义称呼生效；空串回退', () => {
+    delete mockSettings.smartcatUserName;
+    expect(getUserNickname()).toBe('包仔');
+    mockSettings.smartcatUserName = '小名';
+    expect(getUserNickname()).toBe('小名');
+    mockSettings.smartcatUserName = '   ';
+    expect(getUserNickname()).toBe('包仔');
+    delete mockSettings.smartcatUserName;
+  });
+
+  it('replaceUserReference：你/你们/用户 → 称呼（默认包仔）；无指代词原样', () => {
+    delete mockSettings.smartcatUserName;
+    expect(replaceUserReference('你写了日记，你们一起去了公园，用户很开心')).toBe('包仔写了日记，包仔们一起去了公园，包仔很开心');
+    expect(replaceUserReference('没有指代词')).toBe('没有指代词');
+    expect(replaceUserReference('')).toBe('');
+    expect(replaceUserReference(undefined as any)).toBe('');
+  });
+
+  it('replaceUserReference：自定义称呼生效', () => {
+    mockSettings.smartcatUserName = '小名';
+    expect(replaceUserReference('你今天很努力，用户加油')).toBe('小名今天很努力，小名加油');
+    delete mockSettings.smartcatUserName;
+  });
+
+  it('formatMemoriesForPrompt / WithRefs：内容喂 AI 前替换称呼（存储不变）', async () => {
+    const m = make();
+    const text = m.formatMemoriesForPrompt([
+      { id: 'x', created: new Date(Date.now() - 86400000 * 2).toISOString(), lastAccessed: '', description: '用户说：你加油', importance: 0.6, type: 'observation', source: 'chat' } as any,
+    ]);
+    expect(text).toContain('包仔说：包仔加油');
+    expect(text).not.toContain('用户说：');
+    const withRefs = await m.formatMemoriesForPromptWithRefs([
+      { id: 'y', created: new Date(Date.now() - 3600e3).toISOString(), lastAccessed: '', description: '用户说：记得买牛奶', importance: 0.6, type: 'observation', source: 'chat' } as any,
+    ]);
+    expect(withRefs.text).toContain('包仔说：记得买牛奶');
+  });
+
+  it('反思证据编号行替换称呼；LLM 返回洞察原文不替换（存储冻结）', async () => {
+    const m = make({ ai: true });
+    await m.addObservation('用户说：这周要考六级', { importance: 0.9 });
+    await m.addObservation('用户说：项目下周上线', { importance: 0.8 });
+    await m.addObservation('memo', { structured: { entityType: 'task', action: 'completed', name: '买菜' } });
+    const { fetch, prompts } = routedFetch({ insights: [{ text: '用户最近压力很大', evidence: [1, 2] }] });
+    (globalThis as any).fetch = fetch;
+    await m.reflect();
+    const reflectPrompt = prompts.find((p) => p.includes('归纳'))!;
+    expect(reflectPrompt).toContain('包仔说：这周要考六级');
+    expect(reflectPrompt).not.toContain('用户说：这周要考六级');
+    const insights = data.memory.memoryStream.filter((x) => x.type === 'insight');
+    expect(insights[0].description).toBe('用户最近压力很大'); // 存储原文不动
+  });
+
+  it('洞察条数上限（ticket 163）：LLM 返回 5 条 → 只写 3 条；prompt 声明「最多 3 条」；设置可调', async () => {
+    const m = make({ ai: true });
+    for (let i = 0; i < 3; i++) await m.addObservation(`用户说：素材${i}`, { importance: 0.8 });
+    const many = Array.from({ length: 5 }, (_, i) => ({ text: `洞察${i + 1}`, evidence: [1] }));
+    const { fetch, prompts } = routedFetch({ insights: many });
+    (globalThis as any).fetch = fetch;
+    await m.reflect();
+    const insights = data.memory.memoryStream.filter((x) => x.type === 'insight');
+    expect(insights.length).toBe(3);
+    expect(insights.map((x) => x.description)).toEqual(['洞察1', '洞察2', '洞察3']);
+    expect(prompts.find((p) => p.includes('归纳'))!).toContain('最多 3 条');
+    // 设置上限 1 → 只写 1 条
+    mockSettings.smartcatReflectMaxInsights = 1;
+    const m2 = make({ ai: true });
+    for (let i = 0; i < 3; i++) await m2.addObservation(`用户说：素材${i}`, { importance: 0.8 });
+    const { fetch: f2, prompts: p2 } = routedFetch({ insights: [{ text: 'a', evidence: [1] }, { text: 'b', evidence: [1] }] });
+    (globalThis as any).fetch = f2;
+    await m2.reflect();
+    const insights2 = data.memory.memoryStream.filter((x) => x.type === 'insight');
+    expect(insights2.length).toBe(1);
+    expect(insights2[0].description).toBe('a');
+    expect(p2.find((p) => p.includes('归纳'))!).toContain('最多 1 条');
+    delete mockSettings.smartcatReflectMaxInsights;
   });
 });
 
