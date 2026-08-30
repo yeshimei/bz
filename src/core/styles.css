@@ -187,7 +187,7 @@ button.news-close-btn {
 /* 通知 toast（原 core/notice.ts NOTICE_CSS，ADR-0010） */
 #bz-notice-container {
   position: fixed;
-  top: calc(16px + env(safe-area-inset-top, 0px));
+  top: calc(56px + env(safe-area-inset-top, 0px));
   right: 16px;
   display: flex;
   flex-direction: column;
