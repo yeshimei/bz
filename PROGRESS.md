@@ -2,6 +2,16 @@
 
 > 进度同步总表（AGENTS.md）。每票一节，状态：计划中 → 进行中 → 门禁 → 已交付。
 
+## Ticket 164 — 通知操作按钮高度与文字对齐（button → span）
+
+**状态：已交付**
+
+- [x] 需求确认（用户拍板：按钮不用 HTML button，改用 span）
+- [x] 根因：Obsidian 核心 `button{height: var(--input-height)}` 32px 硬撑，`.bz-notice-action` 只覆盖 padding 未覆盖 height
+- [x] 实现：`core/notice.ts` + `auto-summary/processor.ts` 操作按钮改 span + `role="button"`；`core/styles.css` 补 `line-height: 1`
+- [x] 测试：tsc 0 错 + 全量 221 文件 3563 用例绿（既有断言只查文本不查标签类型）
+- [x] 构建验证 + 部署产物同步
+
 ## Ticket 163 — 洞察条数上限 + 记忆来源分布按追查目录 + 小橘对我的称呼
 
 **状态：门禁（实现/测试全绿，构建部署收尾）**

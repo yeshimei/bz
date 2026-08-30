@@ -327,6 +327,7 @@ button.news-close-btn {
   color: var(--interactive-accent);
   font-size: 12px;
   font-weight: 500;
+  line-height: 1;
   cursor: pointer;
   white-space: nowrap;
 }
