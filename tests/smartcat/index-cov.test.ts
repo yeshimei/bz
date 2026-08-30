@@ -574,7 +574,11 @@ describe('定时任务链路（趋势漂移 / 每周报告 / 关系史叙事）'
     const { app } = makeApp();
     await ensureSmartCat(app);
     const d: any = __getSmartcatInternals().data;
-    d.memory.memoryStream = mkStream(4);
+    // ticket 160：周报只吃洞察——另加本周 insight（含主题）过周报门槛；观察带情绪保留（趋势漂移原料）
+    d.memory.memoryStream = [
+      ...mkStream(4),
+      ...mkStream(3).map((m: any, i: number) => ({ ...m, id: `ins${i}`, type: 'insight', source: 'reflection', theme: ['工作', '兴趣', '关系'][i] })),
+    ];
     d.editingData = {
       ...(d.editingData || {}),
       weeklyReport: { weekKey: '2020-W01', at: 0 },

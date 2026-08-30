@@ -37,25 +37,52 @@ export const MEMORY_CONFIG = {
   alphaCredibility: 0.3,
   /** recency 指数衰减系数（RL 校准 ADR-0024：0.995 → 0.986 → 0.982 进化第 3 轮） */
   decay: 0.982,
-  /** 反思：距上次至少间隔（ms） */
+  /** 反思：距上次至少间隔（ms；缺省值，设置键 smartcatReflectIntervalHours 可覆盖） */
   reflectionInterval: 24 * 60 * 60 * 1000,
-  /** 反思：新增记忆达到该条数也触发 */
+  /** 反思：新增素材达到该条数也允许触发（缺省值，设置键 smartcatReflectMinNew 可覆盖；ticket 160 起 20 快车道退役，改「间隔 且 素材」双闸） */
   reflectionMinNew: 20,
-  /** 反思：evidence 取最近 N 条内 */
+  /** 反思：evidence 取最近 N 条内（缺省值，设置键 smartcatReflectEvidenceWindow 可覆盖） */
   evidenceWindow: 100,
-  /** 反思：evidence 取 importance 前 N 条 */
+  /** 反思：evidence 取 importance 前 N 条（缺省值，设置键 smartcatReflectEvidenceTop 可覆盖） */
   evidenceTop: 50,
-  /** 反思：一次生成洞察条数 */
+  /** 反思：一次生成洞察条数（缺省值，设置键 smartcatInsightCount 可覆盖） */
   insightCount: 3,
-  /** 睡前巩固（digest，2026-08-23 增强）：距上次日小结至少间隔（ms，≈18h 容许时差） */
+  /** 睡前巩固（digest，2026-08-23 增强）：距上次日小结至少间隔（ms，≈18h 容许时差；缺省值，设置键 smartcatDigestIntervalHours 可覆盖） */
   digestInterval: 18 * 60 * 60 * 1000,
-  /** 睡前巩固：距上次小结以来新增观察达到该条数才产出（太少无意义） */
+  /** 睡前巩固：距上次小结以来新增观察达到该条数才产出（缺省值，设置键 smartcatDigestMinNew 可覆盖） */
   digestMinNew: 3,
-  /** 睡前巩固：evidence 取距上次小结以来的新增观察，上限 N 条 */
+  /** 睡前巩固：evidence 取距上次小结以来的新增观察，上限 N 条（缺省值，设置键 smartcatDigestMaxEvidence 可覆盖） */
   digestMaxEvidence: 24,
-  /** 睡前巩固：一次生成日小结条数 */
+  /** 睡前巩固：一次生成日小结条数（缺省值，设置键 smartcatDigestCount 可覆盖） */
   digestCount: 2,
 } as const;
+
+/**
+ * 巩固参数（ticket 160 三层流水线）：MEMORY_CONFIG 为缺省值，BzSettings smartcat* 同义键覆盖
+ * （⚙️ 小橘设置弹窗「记忆巩固」组；未注入/非法值回退缺省；refExcerptLimit 允许 0=不附原文）。
+ * 纯读取函数，测试可经 settings-provider mock 控制返回值。
+ */
+export function getConsolidationConfig() {
+  let s: Record<string, unknown> = {};
+  try { s = (tryGetSettings() as any) ?? {}; } catch { /* 测试/早期调用安全 */ }
+  const num = (key: string, fallback: number): number => {
+    const v = Number((s as any)?.[key]);
+    return Number.isFinite(v) && v >= 0 ? v : fallback;
+  };
+  return {
+    reflectIntervalMs: num('smartcatReflectIntervalHours', 24) * 60 * 60 * 1000,
+    reflectMinNew: num('smartcatReflectMinNew', 3), // 缺省 3 对齐 DEFAULT_SETTINGS（MEMORY_CONFIG.reflectionMinNew=20 快车道常量已退役）
+    reflectEvidenceWindow: num('smartcatReflectEvidenceWindow', MEMORY_CONFIG.evidenceWindow),
+    reflectEvidenceTop: num('smartcatReflectEvidenceTop', MEMORY_CONFIG.evidenceTop),
+    insightCount: num('smartcatInsightCount', MEMORY_CONFIG.insightCount),
+    digestIntervalMs: num('smartcatDigestIntervalHours', 18) * 60 * 60 * 1000,
+    digestMinNew: num('smartcatDigestMinNew', MEMORY_CONFIG.digestMinNew),
+    digestMaxEvidence: num('smartcatDigestMaxEvidence', MEMORY_CONFIG.digestMaxEvidence),
+    digestCount: num('smartcatDigestCount', MEMORY_CONFIG.digestCount),
+    weeklyMinInsights: num('smartcatWeeklyMinInsights', 3),
+    refExcerptLimit: num('smartcatRefExcerptLimit', 400),
+  };
+}
 
 // ---------------- H4 记忆内容安全契约（087，ADR-0037） ----------------
 // 记忆 description 全部来自 vault 内容（剪藏/日记/信/诗/笔记正文），零可信边界，原样注入多处 LLM prompt
@@ -274,7 +301,8 @@ export class MemorySystem {
   private static readonly dedupeWindow = 20;
   /** 聊天记忆保留阈值（非 calm 情绪或 importance≥0.55 才落库） */
   private static readonly chatKeepImportance = 0.55;
-  /** 反思新增计数（距上次反思） */
+  /** 反思素材计数（ticket 160 重定义：只数记忆流新增——观察/日小结产出/记忆目录入库，
+   *  行为路由事件与 insight 不计；与 created 扫描取 max 作 shouldReflect 素材信号，不持久化） */
   private pendingSinceReflect = 0;
   private reflectionTimer: ReturnType<typeof setInterval> | null = null;
   private reflecting = false;
@@ -433,8 +461,8 @@ export class MemorySystem {
     const behavior = await this.writeBehaviorStream(source, newOpts.structured);
 
     // R0（ADR-0069，致命项）：生命线钩子上移到行为流写入后的公共路径——
-    // 事件全退记忆流后，behavior 路由也必须驱动在场/情绪共振/反思计数，三条生命线不因路由分叉而断
-    this.pendingSinceReflect++;
+    // 事件全退记忆流后，behavior 路由也必须驱动在场/情绪共振，两条生命线不因路由分叉而断
+    // （ticket 160：反思素材计数移出公共路径——behavior 路由不写记忆流，素材经日小结沉淀才计数）
     touchPresence(this.dataProvider());
     if (this.onPresence) {
       try { void this.onPresence(); } catch { /* 钩子失败静默 */ }
@@ -467,7 +495,8 @@ export class MemorySystem {
 
     // memory 路由：行为条目已另行写入，此处再写记忆流条目（走原有逻辑：
     // description 构建 / importance-emotion-credibility / 向量化 appendVector / onObservation 钩子——
-    // 钩子/计数已上移公共路径，此处不再重复触发）
+    // 钩子已上移公共路径，此处不再重复触发；ticket 160：素材计数落在本分支——只有记忆流新增才算）
+    this.pendingSinceReflect++;
     const description = this.buildDescription(newOpts.structured);
     const importance = rule.importance ?? 0.5;
     const emotion = rule.defaultEmotion;
@@ -615,7 +644,7 @@ export class MemorySystem {
   async addInsight(description: string, evidenceIds: string[], importance = 0.75, emotion?: string, source = 'reflection', theme?: string): Promise<MemoryStreamEntry> {
     const memory = this.makeInsightMemory(description, evidenceIds, importance, emotion, source, theme);
     this.stream.push(memory);
-    this.pendingSinceReflect++;
+    // ticket 160：insight 不计反思素材（反思只吃观察，防自指素材污染）
     this.markMemoryDirty();
     await this.dataSaver(this.dataProvider());
     await this.appendVector(memory);
@@ -637,6 +666,24 @@ export class MemorySystem {
     };
     if (typeof theme === 'string' && theme) memory.theme = theme; // 可选字段：空/缺省不写（旧数据零迁移）
     return memory;
+  }
+
+  /** 构造日小结观察条目（ticket 160：digest 产出从 insight 改 observation——成为反思/周报的口粮；
+   *  evidenceIds 仍指回行为条目 id 保留溯源；importance 0.7 对齐原 digest 产出；
+   *  credibility 走来源档位（digest 无专档 → 0.5 中性，负向词照降）。
+   *  纯构造不入流；P1-26 批量原子写与 digest 的唯一构造点。 */
+  private makeDigestObservation(text: string, evidenceIds: string[]): MemoryStreamEntry {
+    return {
+      id: `memory_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      created: new Date().toISOString(),
+      lastAccessed: new Date().toISOString(),
+      description: text,
+      importance: 0.7,
+      type: 'observation',
+      evidenceIds,
+      source: 'digest',
+      credibility: ruleCredibility('digest', text),
+    };
   }
 
   /** P1-26：批量落盘失败的回滚——把本批条目从流中整体摘除（游标未推，下轮重跑不重复） */
@@ -1119,17 +1166,28 @@ export class MemorySystem {
     }
   }
 
-  /** 触发条件：距上次反思 ≥24h 或 新增 ≥reflectionMinNew 条（从未反思只靠新增计数）；失败退避期不触发。
-   *  ticket 158：ADR-0069 R2 后记忆流断粮（观察改道行为流），pending 计数恒 0——
-   *  从未反思时行为流攒够同量级条目（reflectionMinNew）也触发首次反思。 */
+  /** 触发条件（ticket 160 三层流水线）：距上次反思 ≥间隔 且 新素材 ≥reflectMinNew；首次反思只看素材量。
+   *  反思只吃记忆流观察——素材 = 日小结产出/记忆目录/聊天等新增观察（insight 不算，防自指）；
+   *  信号取 max(pendingSinceReflect 计数, created 扫描)：计数覆盖记忆目录回填旧日期的入库
+   *  （upsertNoteMemory 新建分支计数），扫描覆盖重启恢复（计数不持久化）。
+   *  158 的行为流直触发兜底删除——行为条目须先经日小结沉淀进记忆流才作数。失败退避期不触发。 */
   private shouldReflect(now: number): boolean {
     if (now < this.reflectBackoffUntil) return false;
+    const cfg = getConsolidationConfig();
     const last = this.dataProvider().memory.reflection.lastReflectAt || 0;
-    if (!last) {
-      return this.pendingSinceReflect >= MEMORY_CONFIG.reflectionMinNew ||
-        (this.behaviorStream || []).length >= MEMORY_CONFIG.reflectionMinNew;
-    }
-    return now - last >= MEMORY_CONFIG.reflectionInterval || this.pendingSinceReflect >= MEMORY_CONFIG.reflectionMinNew;
+    const newCount = Math.max(this.pendingSinceReflect, this.newObservationCountSince(last));
+    if (!last) return newCount >= cfg.reflectMinNew;
+    return now - last >= cfg.reflectIntervalMs && newCount >= cfg.reflectMinNew;
+  }
+
+  /** 自基线以来新增的观察数（insight 不算；created 回填无效的条目不计入） */
+  private newObservationCountSince(base: number): number {
+    return this.stream.filter((m) => {
+      if (m.type !== 'observation') return false;
+      if (!base || !Number.isFinite(base)) return true;
+      const t = m.created ? new Date(m.created).getTime() : NaN;
+      return Number.isFinite(t) && t > base;
+    }).length;
   }
 
   /** 反思失败：指数退避（5min → 10min → 20min → 30min 封顶），期间不再触发也不再落盘 */
@@ -1150,36 +1208,46 @@ export class MemorySystem {
     }
   }
 
-  /** 反思主流程：evidence → LLM 归纳 3 条洞察 → 写回流（带 evidenceIds）
+  /** 反思主流程（ticket 160 三层流水线）：证据池只吃记忆流观察 → LLM 归纳洞察 → 写回流（带 evidenceIds）
+   *  素材 = 日小结产出/记忆目录引用/聊天等观察（insight 禁作 evidence——红队 B P1-1 防自引用膨胀）；
+   *  158 的行为流派生并池与描述去重删除（行为条目经日小结沉淀入流后自然成为证据）。
    *  092 方向二：候选既有洞察通道参照防重复 + 每条带主题键 + 顶层 {supersede} 写点（最多 1 个/批次）
    *  无产出（AI 未配置/调用失败/证据不足）时不推进 lastReflectAt——保持待反思状态，
-   *  配置 AI 后可由 pending 计数立即再触发。
+   *  配置 AI 后可由素材计数立即再触发。
    */
   async reflect(): Promise<void> {
     const data = this.dataProvider();
     const now = Date.now();
-    // evidence：最近 evidenceWindow 条内 importance 前 evidenceTop 条
-    // 红队 B P1-1：insight 禁止作 evidence（解自引用膨胀——小橘自己的洞察不再被当用户事实二次加工）
-    // ADR-0036：排序键 importance × (0.5 + credibility×0.5)——低可信度观察少进反思结论（旧条目无字段 → 0.5 中性）
-    // ticket 158：ADR-0069 R2 后用户动作只进行为流（记忆流断粮）——证据池并入行为流渲染观察（R1 同源）；
-    // legacy 双写路径同一内容两流各有一条 → 按描述去重（优先保留记忆流原件，其 importance/credibility 已打分）
-    const memObs = this.stream.slice(-MEMORY_CONFIG.evidenceWindow).filter((m) => m.type !== 'insight');
-    const seenDesc = new Set(memObs.map((m) => (m.description || '').trim()));
-    const behObs = behaviorToObservations((this.behaviorStream || []).slice(-MEMORY_CONFIG.evidenceWindow))
-      .filter((b) => (b.description || '').trim() && !seenDesc.has((b.description || '').trim()));
-    const recent = [...memObs, ...behObs];
+    const cfg = getConsolidationConfig();
+    // evidence：最近 evidenceWindow 条观察内按 importance × (0.5 + credibility×0.5) 取前 evidenceTop 条
+    // （ADR-0036 排序键——低可信度观察少进反思结论，旧条目无字段 → 0.5 中性）
+    const recent = this.stream.slice(-cfg.reflectEvidenceWindow).filter((m) => m.type === 'observation');
     const evidence = [...recent].sort((a, b) => {
       const wa = (a.importance ?? 0) * (0.5 + (a.credibility ?? 0.5) * 0.5);
       const wb = (b.importance ?? 0) * (0.5 + (b.credibility ?? 0.5) * 0.5);
       return wb - wa;
-    }).slice(0, MEMORY_CONFIG.evidenceTop);
+    }).slice(0, cfg.reflectEvidenceTop);
     if (evidence.length < 2) return; // 记忆太少不反思
 
     // H3/096：先对证据池做情绪追标（只补不覆盖、失败裁剪、独立退避——不阻断反思主流程；
     // 追标成功时已自行落盘，洞察产出后 reflect 末尾的 dataSaver 会再兜一次）
     try { await this.backfillEmotions(evidence); } catch { /* 方法内部已兜底，双保险 */ }
 
-    const numbered = evidence.map((m, i) => `${i + 1}. ${m.description}`).join('\n');
+    // 引用型条目贴原文（ticket 160）：description 存的是 vault 路径——经 refResolver 当场读正文，
+    // 编号行附「原文摘录」（截 refExcerptLimit 字，0=不附）；读失败回退路径显示
+    // （失效自愈归记忆目录同步，此处不崩不阻塞）
+    const parts: string[] = [];
+    for (let i = 0; i < evidence.length; i++) {
+      const m = evidence[i];
+      let line = `${i + 1}. ${m.description}`;
+      if (m.ref && cfg.refExcerptLimit > 0 && this.refResolver) {
+        let body: string | null = null;
+        try { body = await this.refResolver(m.description); } catch { body = null; }
+        if (body) line += `\n   原文摘录：${body.substring(0, cfg.refExcerptLimit)}`;
+      }
+      parts.push(line);
+    }
+    const numbered = parts.join('\n');
     // 092 方向二：候选既有洞察通道（防重复结论参照）——主题索引 + Top-N 相似 insight，
     // 独立 token 预算（只注入候选编号+描述前 N 字）；构造为纯函数且防御式不抛错，
     // 再兜一层 try/catch 裁剪为空块（异常不整轮失败，也不走反思退避通道）
@@ -1190,7 +1258,7 @@ export class MemorySystem {
     const prompt =
       `你是小橘，一只陪伴猫咪。下面是关于用户的一些记忆（编号 1-${evidence.length}）：\n` +
       numbered +
-      '\n\n请归纳出最重要的 ' + MEMORY_CONFIG.insightCount + ' 条高阶结论（关于用户的喜好/性格/习惯/关系），' +
+      '\n\n请归纳出最重要的 ' + cfg.insightCount + ' 条高阶结论（关于用户的喜好/性格/习惯/关系），' +
       '每条必须引用 1 条以上记忆编号作为依据；每条再标注一个主题（从 工作/兴趣/关系/健康/环境 中选最贴切的）。只返回 JSON：' +
       `{"insights":[{"text":"结论","evidence":[编号],"theme":"工作"}]}` +
       candidates.block;
@@ -1206,7 +1274,7 @@ export class MemorySystem {
         if (Array.isArray(r?.insights)) {
           insights = r.insights
             .filter((x: any) => x && typeof x.text === 'string' && x.text.trim())
-            .slice(0, MEMORY_CONFIG.insightCount)
+            .slice(0, cfg.insightCount)
             .map((x: any) => ({
               text: x.text.trim(),
               evidence: Array.isArray(x.evidence) ? x.evidence.map(Number) : [],
@@ -1293,32 +1361,37 @@ export class MemorySystem {
    *  行为流攒够 digestMinNew 条即允许首次日小结（证据基线回退行为流最早条目）。 */
   private shouldDigest(now: number): boolean {
     if (now < this.reflectBackoffUntil) return false; // 与反思共用退避（AI 不可用不空转）
+    const cfg = getConsolidationConfig();
     const refl = this.dataProvider().memory.reflection;
     const last = refl.lastDigestAt || 0;
     if (!last) {
       // 从未小结过：优先以「上次反思」为基线；无反思基线 → 行为流攒够 digestMinNew 即触发（ticket 158）
       const lastReflect = refl.lastReflectAt || 0;
-      if (lastReflect) return this.behaviorSince(lastReflect).length >= MEMORY_CONFIG.digestMinNew;
-      return (this.behaviorStream || []).length >= MEMORY_CONFIG.digestMinNew;
+      if (lastReflect) return this.behaviorSince(lastReflect).length >= cfg.digestMinNew;
+      return (this.behaviorStream || []).length >= cfg.digestMinNew;
     }
-    if (now - last < MEMORY_CONFIG.digestInterval) return false;
+    if (now - last < cfg.digestIntervalMs) return false;
     // 距上次小结以来的新增行为条目数
-    return this.behaviorSince(last).length >= MEMORY_CONFIG.digestMinNew;
+    return this.behaviorSince(last).length >= cfg.digestMinNew;
   }
 
   /** 日小结主流程（R1 换源，ADR-0069）：上次小结以来的行为流条目 → behavior-wording 渲染成人类文案
-   *  → LLM 归纳 digestCount 条日小结 → 写回流（source digest，evidenceIds 指向行为条目 id）。
+   *  → LLM 归纳 digestCount 条日小结 → 写入记忆流。
+   *  ticket 160：产出从 insight 改为 observation（source=digest，evidenceIds 溯源行为条目）——
+   *  三层流水线的关键一环：日小结产出是反思/周报的口粮，而 insight 会被反思的防自指闸挡在证据池外；
+   *  行为流不含小橘自身产出，observation 化不引入自指。〔今日小结〕前缀取消（source 标签承担）。
    *  无产出（AI 未配置/失败/证据不足）不推进 lastDigestAt——保持待消化状态。 */
   async digest(): Promise<void> {
     const data = this.dataProvider();
     const now = Date.now();
+    const cfg = getConsolidationConfig();
     const refl = data.memory.reflection;
     // P0-6：lastDigestAt 未播种（首次日小结）→ 证据基线与 shouldDigest 同源取上次反思时间，
     // 防把全量历史行为当候选；scope 同步用基线时间。
     // ticket 158：反思也从未发生（lastReflectAt=0）→ 回退行为流最早条目（-1ms 含首条）。
     const base = refl.lastDigestAt || refl.lastReflectAt || behaviorEarliestBase(this.behaviorStream || []);
-    const candidates = this.behaviorSince(base).slice(-MEMORY_CONFIG.digestMaxEvidence);
-    if (candidates.length < MEMORY_CONFIG.digestMinNew) return;
+    const candidates = this.behaviorSince(base).slice(-cfg.digestMaxEvidence);
+    if (candidates.length < cfg.digestMinNew) return;
 
     const scope = `过去一天（${new Date(base).toISOString().slice(0, 10)} 至 ${new Date(now).toISOString().slice(0, 10)}）`;
     // R1：机读 description（source:action name）经 behavior-wording 渲染模板转人类文案再喂 LLM
@@ -1326,7 +1399,7 @@ export class MemorySystem {
     const prompt =
       `你是小橘，一只陪伴猫咪。以下是用户${scope}的记忆（编号 1-${candidates.length}）：\n` +
       numbered +
-      '\n\n请把这几天用户重要的事压缩成 ' + MEMORY_CONFIG.digestCount + ' 条「日小结」（每条约 30 字，讲述用户经历了什么、情绪如何、进展如何），' +
+      '\n\n请把这几天用户重要的事压缩成 ' + cfg.digestCount + ' 条「日小结」（每条约 30 字，只陈述用户经历了什么、情绪如何、进展如何），' +
       '每条必须引用 1 条以上记忆编号。只返回 JSON：' +
       `{"digests":[{"text":"日小结","evidence":[编号]}]}`;
 
@@ -1340,7 +1413,7 @@ export class MemorySystem {
         if (Array.isArray(r?.digests)) {
           digests = r.digests
             .filter((x: any) => x && typeof x.text === 'string' && x.text.trim())
-            .slice(0, MEMORY_CONFIG.digestCount)
+            .slice(0, cfg.digestCount)
             .map((x: any) => ({ text: x.text.trim(), evidence: Array.isArray(x.evidence) ? x.evidence.map(Number) : [] }));
         }
       }
@@ -1357,9 +1430,10 @@ export class MemorySystem {
       const evidenceIds = d.evidence
         .map((n) => candidates[n - 1]?.id)
         .filter((id): id is string => !!id);
-      return this.makeInsightMemory(`【今日小结】${d.text}`, evidenceIds, 0.7, undefined, 'digest');
+      return this.makeDigestObservation(d.text, evidenceIds);
     });
     this.stream.push(...entries);
+    this.pendingSinceReflect += entries.length; // 素材计数：日小结产出是反思的口粮（ticket 160）
     this.markMemoryDirty();
     try {
       await this.dataSaver(this.dataProvider());
@@ -1472,6 +1546,7 @@ export class MemorySystem {
         contentHash: hash,
       };
       this.stream.push(entry);
+      this.pendingSinceReflect++; // 素材计数：新建引用条目（含回填旧日期的日记段）也算反思新素材（ticket 160）
     }
     this.markMemoryDirty();
     // 审查 P1（写放大）：入库/更新不再即时双写整文件——标脏随 30s tick 合并落盘；
@@ -1595,29 +1670,6 @@ export const CREDIBILITY_TIERS: Record<string, number> = {
 /** 负向词集（「跳过」等；命中 → 来源档基础 −0.15，下限 0.25） */
 const CREDIBILITY_NEGATIVE_WORDS = ['跳过', '移出', '移除', '删除', '删掉', '取消'];
 
-/**
- * 行为条目 → 记忆流观察伪条目（ticket 158）：
- * ADR-0069 R2 后用户动作只进行为流（记忆流唯一新来源「记忆目录」默认未配置），
- * 反思证据池与周报统计原读记忆流 observation → 饿死。此转换按 R1 同源思路把行为条目
- * 渲染成人类文案（buildBehaviorWording）、credibility 走来源档位（ruleCredibility），
- * 供证据合并/周报原料复用。不入流、不落盘——纯派生视图。
- */
-export function behaviorToObservations(items: BehaviorItem[]): MemoryStreamEntry[] {
-  return (items || []).map((b) => {
-    const description = buildBehaviorWording(b);
-    return {
-      id: b.id,
-      created: b.timestamp,
-      lastAccessed: b.timestamp,
-      description,
-      importance: 0.5,
-      type: 'observation' as const,
-      source: b.source,
-      credibility: ruleCredibility(b.source, description),
-    };
-  });
-}
-
 /** 行为流最早条目时间 - 1ms（无反思基线时作证据起点；-1ms 使首条也命中 behaviorSince 的严格大于） */
 export function behaviorEarliestBase(items: BehaviorItem[]): number {
   let min = NaN;
@@ -1664,6 +1716,8 @@ export const SOURCE_LABELS: Record<string, string> = {
   'domain:memo': '备忘录', 'domain:pomodoro': '番茄钟', 'domain:news': '聚合讯',
   'domain:quiz': '做题', 'domain:review': '复习', 'domain:favorites': '收藏', 'domain:belongings': '归物',
   'domain:library': '书库', // 遗留兼容（旧数据/旧签名路径）
+  digest: '日小结', 'weekly-report': '懂你报告', // ticket 160：三层流水线系统产物来源标签
+  note: '记忆目录', // ADR-0069 笔记记忆库引用条目
 };
 
 /** 来源 → 中文（未知来源回显原值；domain:<key> 查域表） */

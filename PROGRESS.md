@@ -181,3 +181,13 @@
 - [x] 实证：事件链路完整且有测试；真实行为流 added×8/completed×7/edited×3/deleted×0 ⇒ 症状=落盘时序（30s 防抖 + 卸载 fire-and-forget，删除后 30s 内退出即丢）
 - [x] 加固：`markBehaviorDirty` 追加 5s 短防抖直写（窗口内合并；与 30s tick 并存）；`stopScheduler` 清定时器
 - [x] 测试：新增 5s 直写/合并/停止清理用例；smartcat 1138 用例绿 + tsc 0 错
+
+## Ticket 160 — 小橘：三层记忆流水线 + 巩固参数设置面板（推翻 158 合并池）
+
+**状态：已交付**（2026-08-30）
+
+- [x] 规格：`issues/160-three-tier-memory-pipeline.md`（spec.md「三层记忆流水线 + 巩固参数面板」节同步；ADR-0075）
+- [x] 数据层：digest 产出 `makeDigestObservation`（observation/source=digest/evidenceIds 溯源，〔今日小结〕前缀取消）；reflect 证据池只吃记忆流观察（删 behaviorToObservations 并池与描述去重）+ ref 条目贴「原文摘录」（refResolver，读失败回退路径）；shouldReflect 改「≥间隔 且 新素材≥阈值」双闸（新素材=max(pending 计数, created 扫描)，计数落 memory 路由分支/日小结批量/记忆目录新建）；周报只吃本周新增 insight（buildWeeklyReportData 重写：themeDist/insights/padAvg，统计字段退役）；SOURCE_LABELS 补 digest/weekly-report/note
+- [x] 设置层：BzSettings +11 键（smartcatReflect*/smartcatDigest*/smartcatWeeklyMinInsights/smartcatRefExcerptLimit）+ ⚙️ 弹窗「记忆巩固」组 11 滑杆；getConsolidationConfig 统一读取（MEMORY_CONFIG 缺省，非法值回退）；旧设置清点：无既有键重叠，废弃面为内部常量语义与死代码
+- [x] 测试：memory.test 158 三用例改写（行为流不再直进反思证据/首反思只看记忆流）+ ref 原文（截断/失效回退/0 关闭）+ digest→reflect 全链路 + getConsolidationConfig 覆盖 + shouldReflect 双闸；report.test 重写洞察语义；adr0069-core 计数语义更新；index-cov 周报链路种子加洞察；settings.test 九组快照
+- [x] 门禁：tsc 0 错 + 全量 221 文件 3557 用例绿 + 构建部署 E 盘
