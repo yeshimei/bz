@@ -159,8 +159,9 @@ export async function processFile(app: any, ai: AIService, file: any): Promise<v
       if (h) {
         h.setMessage(reason);
         h.setType('error');
-        const retryBtn = document.createElement('button');
+        const retryBtn = document.createElement('span');
         retryBtn.className = 'bz-notice-action';
+        retryBtn.setAttribute('role', 'button');
         retryBtn.textContent = '重试';
         retryBtn.addEventListener('click', (e) => {
           e.stopPropagation();

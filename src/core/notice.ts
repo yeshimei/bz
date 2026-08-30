@@ -425,10 +425,11 @@ export function notify(msg: string, opts?: NoticeOptions): NoticeHandle {
 
   const n: InternalNotice = { el, timer: null, msgEl, progressEl, iconEl: icon, variant, isProgress, persistent: false };
 
-  // 操作按钮（可选）
+  // 操作按钮（可选；span 而非 button——Obsidian 核心 button 默认 height: var(--input-height) 会把通知框撑高）
   if (opts && opts.action) {
-    const btn = document.createElement('button');
+    const btn = document.createElement('span');
     btn.className = 'bz-notice-action';
+    btn.setAttribute('role', 'button');
     btn.textContent = opts.action.label;
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
