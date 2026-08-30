@@ -369,6 +369,10 @@ export default interface BzSettings {
   smartcatReflectMinNew: number;
   /** 反思引用原文摘录字数（0 表示不附原文） */
   smartcatRefExcerptLimit: number;
+  /** 每次反思最多归纳洞察条数（ticket 163：默认 3——LLM 输出超限按序截断，防一次性产出过多） */
+  smartcatReflectMaxInsights: number;
+  /** 小橘对我的称呼（ticket 163：默认「包仔」；把记忆流/行为流喂给 AI 时「你/用户」替换为称呼） */
+  smartcatUserName: string;
 
   // ===== 🐱 小橘行为流设置（P1 数据基座，ticket 123）=====
   /** 行为流最大保留天数（超出部分删除最旧条目） */
@@ -585,11 +589,15 @@ export const DEFAULT_SETTINGS: BzSettings = {
   smartcatMobileDefaultFullscreen: false,
   smartcatEmbeddingModel: '',
   smartcatChunkLimitChars: 800,
+  // 小橘对我的称呼（ticket 163）：默认包仔——把记忆流/行为流喂给 AI 时「你/用户」替换为此称呼
+  smartcatUserName: '包仔',
 
   // 小橘记忆巩固（ticket 160 引入；ticket 162 精简——窗口化语义，见接口注释。旧键（间隔/条数阈值/
   // 证据窗口/洞察条数/周报门槛）从默认值退役，data.json 残留值被忽略）
   smartcatReflectMinNew: 20,
   smartcatRefExcerptLimit: 400,
+  // ticket 163：洞察条数上限（默认 3——反思 prompt 最高 N 条 + LLM 返回按序截断）
+  smartcatReflectMaxInsights: 3,
 
   // 小橘行为流设置（P1 数据基座，ticket 123；ADR-0069：全量补齐后扩容 30→60 天 / 2000→10000 条）
   behaviorMaxDays: 60,

@@ -7,7 +7,8 @@
  *  1. 记忆对象 = { id, created, lastAccessed, description, importance, type, evidenceIds?, credibility? }
  *  2. 检索评分 = α1·decay^小时 + α2·importance + α3·relevance + αc·credibility（默认 α 全 1.0）
  *  3. 写入时 LLM 打分 importance（0-10 归一 0-1；AI 未配置降级规则分）
- *  4. 反思（Reflection）：记忆流自上次反思新增 ≥20 条触发（ticket 162，无时间间隔闸），洞察条数由 LLM 定
+ *  4. 反思（Reflection）：记忆流自上次反思新增 ≥20 条触发（ticket 162，无时间间隔闸），
+ *     洞察条数上限默认 3（ticket 163：LLM 输出按序截断，防一次性生成过多；设置可调）
  *  5. 无上限（085 追加拍板）：检索走向量库 top-N 相关召回，不把全量记忆发给在线 AI——
  *     历史记忆越长小橘越懂你，不淘汰；bge-m3 语义检索，Ollama 不可用降级词法
  */
@@ -57,7 +58,34 @@ export function getConsolidationConfig() {
   return {
     reflectMinNew: num('smartcatReflectMinNew', 20),
     refExcerptLimit: num('smartcatRefExcerptLimit', 400),
+    // ticket 163：洞察条数上限（默认 3；下限 1——0 无意义，防设置误填）
+    maxInsights: Math.max(1, num('smartcatReflectMaxInsights', 3)),
   };
+}
+
+// ---------------- ticket 163：小橘对用户的称呼（记忆流/行为流喂 AI 前把「你/用户」替换为称呼） ----------------
+
+/** 小橘对用户的称呼（BzSettings smartcatUserName；未配置/空 → 默认「包仔」） */
+export function getUserNickname(): string {
+  try {
+    const s = (tryGetSettings() as any) ?? {};
+    const v = typeof s.smartcatUserName === 'string' ? s.smartcatUserName.trim() : '';
+    return v || '包仔';
+  } catch {
+    return '包仔'; // 测试/早期调用安全
+  }
+}
+
+/**
+ * 记忆流/行为流内容喂 AI 前的称呼替换（ticket 163）：把内容里指代用户的「你/你们/用户」
+ * 替换为小橘对用户的称呼（默认「包仔」）——让 AI 用称呼称呼用户。纯文本变换只作用于
+ * prompt 拼装时的内容文本，不写盘（存储格式冻结）；只替换记忆/行为内容，不碰
+ * 模板/人物设定句（「你是小橘」等），避免误伤对话人格语义。
+ */
+export function replaceUserReference(text: string): string {
+  const nickname = getUserNickname();
+  const s = String(text ?? '');
+  return s.replace(/你们|你|用户/g, (m) => (m === '你们' ? `${nickname}们` : nickname));
 }
 
 // ---------------- H4 记忆内容安全契约（087，ADR-0037） ----------------
@@ -1069,8 +1097,9 @@ export class MemorySystem {
         this.backoffEmotionBackfill();
         return false;
       }
+      // ticket 163：追标内容同为记忆流素材——「你/用户」替换为小橘对用户的称呼
       const numbered = pool
-        .map((m, i) => `${i + 1}. ${(m.description || '').slice(0, EMOTION_BACKFILL_CONFIG.clipChars)}`)
+        .map((m, i) => `${i + 1}. ${replaceUserReference((m.description || '').slice(0, EMOTION_BACKFILL_CONFIG.clipChars))}`)
         .join('\n');
       const r = await callChatJson([
         { role: 'system', content: '你是辅助标注记忆情绪的助手，只输出合法 JSON。\n\n' + USER_CONTENT_BOUNDARY },
@@ -1226,11 +1255,12 @@ export class MemorySystem {
     const parts: string[] = [];
     for (let i = 0; i < evidence.length; i++) {
       const m = evidence[i];
-      let line = `${i + 1}. ${m.description}`;
+      // ticket 163：编号行与原文摘录同为记忆内容——「你/用户」替换为小橘对用户的称呼
+      let line = `${i + 1}. ${replaceUserReference(m.description)}`;
       if (m.ref && cfg.refExcerptLimit > 0 && this.refResolver) {
         let body: string | null = null;
         try { body = await this.refResolver(m.description); } catch { body = null; }
-        if (body) line += `\n   原文摘录：${body.substring(0, cfg.refExcerptLimit)}`;
+        if (body) line += `\n   原文摘录：${replaceUserReference(body.substring(0, cfg.refExcerptLimit))}`;
       }
       parts.push(line);
     }
@@ -1242,11 +1272,13 @@ export class MemorySystem {
     try {
       candidates = buildReflectCandidates(this.stream, evidence.map((m) => m.description || '').join(' '));
     } catch { /* 候选通道失败 → 空块，反思照常进行 */ }
+    // 候选既有洞察块头部「你既有的相关洞察」中「你」指小橘（AI 自身）——不做称呼替换；
+    // 块内描述为防重复参照材料，保持原文（主内容路径已替换，此处一致性影响可忽略）
     const prompt =
       `你是小橘，一只陪伴猫咪。下面是关于用户的一些记忆（编号 1-${evidence.length}）：\n` +
       numbered +
-      '\n\n请归纳出最重要的高阶结论（关于用户的喜好/性格/习惯/关系），条数由你根据记忆内容自行决定，' +
-      '每条必须引用 1 条以上记忆编号作为依据；每条再标注一个主题（从 工作/兴趣/关系/健康/环境 中选最贴切的）。只返回 JSON：' +
+      `\n\n请归纳出最重要的高阶结论（关于用户的喜好/性格/习惯/关系），最多 ${cfg.maxInsights} 条（宁缺毋滥，` +
+      '超出时只取最重要的），每条必须引用 1 条以上记忆编号作为依据；每条再标注一个主题（从 工作/兴趣/关系/健康/环境 中选最贴切的）。只返回 JSON：' +
       `{"insights":[{"text":"结论","evidence":[编号],"theme":"工作"}]}` +
       candidates.block;
 
@@ -1259,6 +1291,7 @@ export class MemorySystem {
           { role: 'user', content: prompt },
         ], 800);
         if (Array.isArray(r?.insights)) {
+          // ticket 163：洞察条数上限钳制——LLM 输出按序截断（prompt 已声明「最多 N 条」，此处硬截断兜底）
           insights = r.insights
             .filter((x: any) => x && typeof x.text === 'string' && x.text.trim())
             .map((x: any) => ({
@@ -1266,7 +1299,8 @@ export class MemorySystem {
               evidence: Array.isArray(x.evidence) ? x.evidence.map(Number) : [],
               // 092：主题键受限枚举校验，解析失败回退词法关键词映射（两路皆空 → undefined 不强标）
               theme: resolveTheme(x.theme, typeof x.text === 'string' ? x.text : ''),
-            }));
+            }))
+            .slice(0, cfg.maxInsights);
         }
         // 092：supersede 写点——LLM 输出顶层 {supersede: 候选编号|insightId}，最多取 1 个/批次；
         // 校验（存在/type=insight/pinned/幂等/环形）在 applySupersede 内部，非法静默拒绝
@@ -1344,7 +1378,8 @@ export class MemorySystem {
 
     const scope = `${new Date(base).toISOString().slice(0, 10)} 至 ${new Date(now).toISOString().slice(0, 10)}`;
     // R1：机读 description（source:action name）经 behavior-wording 渲染模板转人类文案再喂 LLM
-    const numbered = candidates.map((b, i) => `${i + 1}. ${buildBehaviorWording(b)}`).join('\n');
+    // ticket 163：行为流文案同为记忆产物——「你/用户」替换为小橘对用户的称呼
+    const numbered = candidates.map((b, i) => `${i + 1}. ${replaceUserReference(buildBehaviorWording(b))}`).join('\n');
     const prompt =
       `你是小橘，一只陪伴猫咪。以下是用户${scope}的行为记录（编号 1-${candidates.length}）：\n` +
       numbered +
@@ -1412,7 +1447,8 @@ export class MemorySystem {
       : alive;
     return picked
       .map((memory, index) => {
-        const content = typeof memory.description === 'string' ? memory.description : JSON.stringify(memory.description);
+        // ticket 163：记忆内容喂 AI 前把「你/用户」替换为小橘对用户的称呼（存储格式不变）
+        const content = replaceUserReference(typeof memory.description === 'string' ? memory.description : JSON.stringify(memory.description));
         const label = sourceLabel(memory.source);
         const time = memory.created ? formatRelativeTime(memory.created) : '';
         const meta = [label, time].filter(Boolean).join('·');
@@ -1571,12 +1607,13 @@ export class MemorySystem {
       const label = sourceLabel(memory.source);
       const time = memory.created ? formatRelativeTime(memory.created) : '';
       const meta = [label, time].filter(Boolean).join('·');
-      let content = raw;
+      // ticket 163：引用正文与普通描述同为记忆内容——喂 AI 前「你/用户」替换为称呼
+      let content = replaceUserReference(raw);
       if (memory.ref && this.refResolver) {
         let body: string | null = null;
         try { body = await this.refResolver(raw); } catch { body = null; }
         if (body == null) staleRefs.push(memory); // 失效标记：正文跳过，不阻塞检索
-        else content = body;
+        else content = replaceUserReference(body);
       }
       index++;
       lines.push(`${index}. [${memory.type}${meta ? `（${meta}）` : ''}] ${content.substring(0, 200)}...`);
