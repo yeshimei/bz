@@ -330,6 +330,8 @@ export function smartcatSettingsSchema(opts: {
         icon: 'message-circle',
         name: '互动',
         rows: [
+          // ticket 163：小橘对我的称呼（默认包仔；把记忆流/行为流喂给 AI 时「你/用户」替换为此称呼）
+          { type: 'text', name: '小橘对我的称呼', desc: '小橘提到你时使用的称呼，默认为包仔', binding: bindBehavior('smartcatUserName') },
           { type: 'number', name: '自言自语间隔', desc: '小橘每隔多久主动说一句话，范围 1 到 60 分钟', binding: bindConfig('speakInterval'), min: 1, max: 60, step: 1 },
           { type: 'number', name: '说话概率', desc: '定时到来时小橘主动说话的概率，范围为十分之一到一', binding: bindConfig('speakProbability'), min: 0.1, max: 1, step: 0.1 },
           { type: 'toggle', name: '主动关心', desc: '按你的活跃时段，每周温和地主动搭话一两次', binding: bindConfig('proactiveCare') },
@@ -402,6 +404,8 @@ export function smartcatSettingsSchema(opts: {
         name: '记忆巩固',
         rows: [
           { type: 'number', name: '反思观察阈值', desc: '自上次反思记忆流新增多少条观察就归纳一次洞察，范围 1 到 50', binding: bindBehavior('smartcatReflectMinNew'), min: 1, max: 50, step: 1 },
+          // ticket 163：洞察条数上限（默认 3——LLM 输出按序截断，防一次性生成过多）
+          { type: 'number', name: '反思洞察条数上限', desc: '每次反思最多归纳几条洞察，范围 1 到 10', binding: bindBehavior('smartcatReflectMaxInsights'), min: 1, max: 10, step: 1 },
           { type: 'number', name: '引用摘录字数', desc: '反思时引用笔记原文的最大字数，设为 0 不附原文，范围 0 到 2000', binding: bindBehavior('smartcatRefExcerptLimit'), min: 0, max: 2000, step: 50 },
         ],
       },
@@ -436,6 +440,9 @@ const DEFAULT_BEHAVIOR = {
   // ticket 160 引入；ticket 162 精简（对齐 settings.ts DEFAULT_SETTINGS；仅 data.json 缺键时回填用）
   smartcatReflectMinNew: 20,
   smartcatRefExcerptLimit: 400,
+  // ticket 163：洞察上限 3（对齐 settings.ts DEFAULT_SETTINGS）；称呼默认包仔
+  smartcatReflectMaxInsights: 3,
+  smartcatUserName: '包仔',
 } as const;
 
 /**

@@ -12,6 +12,7 @@ import {
   buildEmotionTimeline,
   buildEmotionDistribution,
   buildSourceDistribution,
+  resolveTrackedDirLabel,
   distributionRows,
   buildGrowthTrail,
   buildWeeklyReports,
@@ -115,6 +116,54 @@ describe('dashboard 纯函数', () => {
     expect(rows[0].count).toBeGreaterThanOrEqual(rows[rows.length - 1].count); // 降序
   });
 
+  it('buildSourceDistribution（ticket 163）：洞察按「洞察」单列一行；行为小结保留「行为小结」行', () => {
+    const d = fixtureData();
+    // 加一条行为小结（observation + source=digest）与一条周报洞察
+    d.memory.memoryStream.push(
+      { id: 'dg1', created: new Date().toISOString(), lastAccessed: new Date().toISOString(), description: '行为小结文案', importance: 0.6, type: 'observation', source: 'digest' },
+      { id: 'wr1', created: new Date().toISOString(), lastAccessed: new Date().toISOString(), description: '周报洞察', importance: 0.8, type: 'insight', source: 'weekly-report' },
+    );
+    const dist = buildSourceDistribution(d.memory.memoryStream);
+    expect(dist['洞察']).toBe(2); // i1 reflection + wr1 weekly-report
+    expect(dist['行为小结']).toBe(1);
+    expect(dist['日记']).toBe(1);
+    expect(dist['聊天']).toBe(1);
+  });
+
+  it('resolveTrackedDirLabel + buildSourceDistribution（ticket 163）：note 引用条目按追查目录分行；未命中回退「记忆目录」', () => {
+    const note = (path: string, extra: Record<string, any> = {}): any => ({
+      id: 'n1', created: new Date().toISOString(), lastAccessed: new Date().toISOString(),
+      description: path, importance: 0.5, type: 'observation', source: 'note', ref: { path, locator: undefined }, ...extra,
+    });
+    const dirs = ['我的/日记', '我的/信'];
+    // 我的/信 命中 → 标签为该配置目录
+    expect(resolveTrackedDirLabel(note('我的/信/第1封信.md'), dirs)).toBe('我的/信');
+    // 子目录前缀命中；反斜杠归一
+    expect(resolveTrackedDirLabel(note('我的/信/子目录/a.md'), dirs)).toBe('我的/信');
+    expect(resolveTrackedDirLabel(note('我的\\信\\a.md'), dirs)).toBe('我的/信');
+    // 不在配置目录 → null（回退旧标签）
+    expect(resolveTrackedDirLabel(note('归档/网页剪藏/x.md'), dirs)).toBeNull();
+    // 无 dirs / 非 note → null
+    expect(resolveTrackedDirLabel(note('我的/信/a.md'))).toBeNull();
+    expect(resolveTrackedDirLabel({ ...note('我的/信/a.md'), source: 'diary' } as any, dirs)).toBeNull();
+    // 无 ref 时从 description 取路径段
+    expect(resolveTrackedDirLabel({ ...note('我的/信/a.md'), ref: undefined } as any, dirs)).toBe('我的/信');
+    // 分布聚合：note 按目录分行
+    const stream = [
+      note('我的/信/第1封信.md'),
+      note('我的/信/第2封信.md'),
+      note('归档/网页剪藏/x.md'), // 不在配置 → 记忆目录
+      { id: 'd1', created: new Date().toISOString(), lastAccessed: new Date().toISOString(), description: '日记段', importance: 0.8, type: 'observation', source: 'diary' },
+    ];
+    const dist = buildSourceDistribution(stream, dirs);
+    expect(dist['我的/信']).toBe(2);
+    expect(dist['记忆目录']).toBe(1);
+    expect(dist['日记']).toBe(1);
+    // 未传 dirs → 全部 note 归「记忆目录」（旧口径兼容）
+    const distNoDirs = buildSourceDistribution(stream);
+    expect(distNoDirs['记忆目录']).toBe(3);
+  });
+
   it('buildGrowthTrail 时间倒序、来源中文化、非法时间过滤、详情摘要', () => {
     const trail = buildGrowthTrail(fixtureData().personalityGrowth.growthHistory, 10);
     expect(trail.length).toBe(2); // NaN 时间被过滤
@@ -196,6 +245,35 @@ describe('openSmartcatDashboard UI', () => {
     expect(memPane.querySelectorAll('.bz-sc-dash-memory').length).toBe(4);
     expect(memPane.querySelectorAll('.bz-sc-dash-badge.insight').length).toBe(1);
     expect(memPane.textContent).toContain('聊天');
+  }, 15000);
+
+  it('记忆页签来源分布（ticket 163）：配置记忆目录时 note 条目按追查目录分行；最近记忆列表同口径', async () => {
+    const d = fixtureData();
+    d.memory.memoryStream.push(
+      { id: 'n1', created: new Date().toISOString(), lastAccessed: new Date().toISOString(), description: '我的/信/第1封信.md', importance: 0.5, type: 'observation', source: 'note', ref: { path: '我的/信/第1封信.md', locator: undefined } },
+      { id: 'n2', created: new Date().toISOString(), lastAccessed: new Date().toISOString(), description: '我的/信/第2封信.md', importance: 0.5, type: 'observation', source: 'note', ref: { path: '我的/信/第2封信.md', locator: undefined } },
+    );
+    const vault = new MockVault();
+    vault.create(getSmartcatFilePath(), JSON.stringify(d));
+    const app = mockAppWithVault(vault);
+    setApp(app);
+    setSettingsProvider(() => ({
+      storagePath: 'CONFIG/STORAGE',
+      smartcatEnabled: true,
+      smartcatMobileDefaultFullscreen: false,
+      memoryDirectories: ['我的/日记', '我的/信'],
+    }) as any);
+    await openSmartcatDashboard(app as any);
+    const popup = document.getElementById('smartcat-dashboard-panel')!;
+    (popup.querySelector('[data-tab="memory"]') as HTMLElement).click();
+    const memPane = popup.querySelector('[data-pane="memory"]') as HTMLElement;
+    // 来源分布卡：我的/信 独立分行；洞察行计入（fixture i1）
+    expect(memPane.textContent).toContain('记忆来源分布');
+    expect(memPane.textContent).toContain('我的/信');
+    expect(memPane.textContent).toContain('洞察');
+    expect(memPane.textContent).not.toContain('记忆目录');
+    // 最近记忆列表：note 行标签同样显示 我的/信
+    expect(memPane.querySelectorAll('.bz-sc-dash-memory').length).toBe(6);
   }, 15000);
 
   it('P1-29：固定按钮经常驻实例通道落盘——常驻侧任意保存后 pinned 保持 true（不被副本回滚）', async () => {

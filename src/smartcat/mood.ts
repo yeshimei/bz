@@ -19,7 +19,7 @@ import { characterTransition, trustUpdate, characterFromExperience, characterSee
 import { buildRhythmProfile } from './rhythm';
 import { emotionToVAD } from './cognitive';
 import { callChatJson, isAIConfigured } from './api';
-import { USER_CONTENT_BOUNDARY } from './memory';
+import { USER_CONTENT_BOUNDARY, replaceUserReference } from './memory';
 
 /** 周深更新的互动样本门槛（ticket 072）：此前 applyWeeklyExperience 挂在反思/日小结节奏上
  *  （≥20 条观察即触发），每次都把 warmth 等顶格 +0.01——「周」更新实际按天甚至按小时跑。
@@ -511,7 +511,8 @@ export class PersonalityGrowth {
       try {
         if (await isAIConfigured()) {
           llmAttempted = true;
-          const numbered = insights.map((ins, i) => `${i + 1}. ${ins.text}`).join('\n');
+          // ticket 163：洞察文本同为记忆产物——喂 AI 前「你/用户」替换为小橘对用户的称呼
+          const numbered = insights.map((ins, i) => `${i + 1}. ${replaceUserReference(ins.text)}`).join('\n');
           const candidates = (TRAIT_ATTRIBUTION_CANDIDATES as readonly string[])
             .filter((t) => allowExistential || !(EXISTENTIAL_TRAITS as readonly string[]).includes(t))
             .map((t) => `${t}(${TRAIT_LABELS[t]})`)
