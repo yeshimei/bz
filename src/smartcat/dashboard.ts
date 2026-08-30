@@ -43,6 +43,8 @@ import { MOOD_MAP, moodLevelFromPad } from './mood';
 import { TRAIT_GROUPS } from './character';
 import { sourceLabel, formatRelativeTime, emotionDensityStats } from './memory';
 import { noteMemoryDiaryDate } from './note-memory';
+// ticket 163：来源分布按「记忆目录」的追查目录分行（标签随设置走）
+import { normalizeMemoryDirectories } from './config';
 import { parseFile } from '../diary/parser';
 import { buildInsightShortIndex, isSupersededInsight, MANUAL_SUPERSEDED_BY, sanitizeInsightTheme } from './insight-version';
 import { lazyAttachment, buildAbsenceCard } from './absence'; // ticket 093：读侧依恋视图 + 缺席状态卡
@@ -194,12 +196,44 @@ export function buildEmotionDistribution(stream: MemoryStreamEntry[]): Record<st
   return dist;
 }
 
-/** 观察来源分布（sourceLabel 中文归并；无来源计「其他」） */
-export function buildSourceDistribution(stream: MemoryStreamEntry[]): Record<string, number> {
+/**
+ * 追查目录标签（ticket 163）：source=note 的引用型条目按「记忆目录」的追踪目录分行——
+ * ref 路径（或 description 中的路径段）匹配已配置记忆目录（前缀语义，首个命中），
+ * 命中 → 返回该配置目录；未命中/未传目录 → null（调用方回退「记忆目录」旧标签）。
+ * 纯函数（可测）：与 note-memory.resolveOwnerDir 同语义，仅服务展示层标签。
+ */
+export function resolveTrackedDirLabel(m: MemoryStreamEntry, dirs?: string[]): string | null {
+  if (!m || m.source !== 'note') return null;
+  const list = Array.isArray(dirs) && dirs.length ? dirs : null;
+  if (!list) return null;
+  const path = (m.ref && typeof m.ref.path === 'string' ? m.ref.path : '')
+    || (typeof m.description === 'string' ? m.description.split('#')[0] : '');
+  if (!path) return null;
+  const norm = (p: string) => p.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+  const p = norm(path);
+  for (const dir of list) {
+    const d = norm(dir);
+    if (d === '' || p === d || p.startsWith(d + '/')) return dir;
+  }
+  return null;
+}
+
+/**
+ * 记忆来源分布（ticket 163 口径升级）：
+ *  - 洞察（type=insight，系统产物）按「洞察」单列一行计入；
+ *  - source=note 的引用条目按追查目录分行（dirs 传记忆目录配置）；未传/未命中回退「记忆目录」；
+ *  - 其余观察按 sourceLabel 中文归并（行为小结 source=digest → 「行为小结」行保留）；无来源计「其他」。
+ */
+export function buildSourceDistribution(stream: MemoryStreamEntry[], dirs?: string[]): Record<string, number> {
   const dist: Record<string, number> = {};
   for (const m of stream) {
+    if (m.type === 'insight') {
+      dist['洞察'] = (dist['洞察'] || 0) + 1;
+      continue;
+    }
     if (m.type !== 'observation') continue;
-    const label = sourceLabel(m.source) || '其他';
+    const dirLabel = resolveTrackedDirLabel(m, dirs);
+    const label = dirLabel ?? (sourceLabel(m.source) || '其他');
     dist[label] = (dist[label] || 0) + 1;
   }
   return dist;
@@ -677,6 +711,8 @@ function renderMemoryMarkdown(app: App, textEl: HTMLElement, md: string): void {
 function renderMemory(pane: HTMLElement, data: SmartCatData): void {
   pane.innerHTML = '';
   const stream = data.memory?.memoryStream || [];
+  // ticket 163：来源分布按「记忆目录」的追查目录分行（标签随设置走，日记目录条目 source=diary 已在来源表）
+  const dirs = normalizeMemoryDirectories((tryGetSettings() as any).memoryDirectories);
   const refl = data.memory?.reflection || ({} as SmartCatData['memory']['reflection']);
 
   // 统计
@@ -729,8 +765,8 @@ function renderMemory(pane: HTMLElement, data: SmartCatData): void {
   }
   pane.appendChild(rhythmCard.root);
 
-  // 来源分布
-  pane.appendChild(distributionCard('记忆来源分布', distributionRows(buildSourceDistribution(stream)).slice(0, 6), {
+  // 来源分布（ticket 163：洞察单列 + note 按追查目录分行）
+  pane.appendChild(distributionCard('记忆来源分布', distributionRows(buildSourceDistribution(stream, dirs)).slice(0, 6), {
     unit: '条', emptyText: '暂无观察来源。',
   }).root);
 
@@ -767,7 +803,8 @@ function renderMemory(pane: HTMLElement, data: SmartCatData): void {
           item.classList.add('bz-sc-dash-memory--superseded');
         }
       }
-      const src = sourceLabel(m.source);
+      // ticket 163：note 引用条目按追查目录显示（与来源分布卡同口径；未命中回退旧标签）
+      const src = m.source === 'note' ? (resolveTrackedDirLabel(m, dirs) ?? '记忆目录') : sourceLabel(m.source);
       if (src) meta.appendChild(el('span', '', src));
       if (m.created) meta.appendChild(el('span', '', formatDetailedDate(m.created)));
       meta.appendChild(el('span', '', `重要度 ${Math.round((m.importance ?? 0) * 100)}`));

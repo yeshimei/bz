@@ -2,6 +2,18 @@
 
 > 进度同步总表（AGENTS.md）。每票一节，状态：计划中 → 进行中 → 门禁 → 已交付。
 
+## Ticket 163 — 洞察条数上限 + 记忆来源分布按追查目录 + 小橘对我的称呼
+
+**状态：门禁（实现/测试全绿，构建部署收尾）**
+
+- [x] 需求确认（用户拍板：洞察上限默认 3 放面板；来源分布洞察计入 + note 按追查目录分行；称呼默认包仔，所有喂记忆/行为流的 AI 调用替换「你/用户」）
+- [x] 规格：`issues/163-smartcat-insight-cap-source-dist-nickname.md`（spec.md「洞察上限 + 来源分布按追查目录 + 称呼替换」节同步）
+- [x] 文档：ADR-0076（洞察上限 + 来源分布口径 + 称呼替换；CONTEXT.md「三层记忆流水线」词条修订 + 新增「小橘对我的称呼」词条）
+- [x] 数据层：settings.ts 两新键；memory.ts getConsolidationConfig.maxInsights + getUserNickname/replaceUserReference + 反思/小结/追标/格式化四处内容替换 + 洞察 `.slice(0,N)` 截断
+- [x] UI 层：⚙️ 互动组「小橘对我的称呼」+ 记忆巩固组「反思洞察条数上限」；dashboard 来源分布（洞察单列 + note 按追查目录分行 + 最近记忆列表同口径）
+- [x] 测试：memory/dashboard/report/companion-context/settings 新增 + trait-attribution/adr0069-core 断言同步；tsc 0 错 + 全量 221 文件 3563 用例绿
+- [x] 构建验证 + 部署 E 盘（worktree/dash-tweaks-163 合并 master 后）
+
 ## Ticket 136 — 文献盒改版（literature 域 / 术语生成 / AI 回迁 / 去网页版）
 
 **状态：已交付（含终审全项闭环）**

@@ -7,7 +7,7 @@
  */
 import type { MemoryStreamEntry, PadDimensions } from './types';
 import { callChatJson, isAIConfigured } from './api';
-import { USER_CONTENT_BOUNDARY } from './memory';
+import { USER_CONTENT_BOUNDARY, replaceUserReference } from './memory';
 import { isSupersededInsight } from './insight-version';
 
 /** 周窗口边界（ISO 周一 00:00 起 7 天；返回 [startMs, endMs]） */
@@ -70,7 +70,8 @@ export function formatWeeklyReport(d: WeeklyReportData): string {
   const themeTop = Object.entries(d.themeDist).sort((a, b) => b[1] - a[1]);
   if (themeTop.length) lines.push(`这周的收获集中在「${themeTop.map(([k, v]) => `${k}（${v} 条）`).join('、')}」。`);
   lines.push('本周我懂到的：');
-  d.insights.forEach((m, i) => lines.push(`${i + 1}${m.theme ? ` [${m.theme}]` : ''} ${m.description}`));
+  // ticket 163：洞察同为记忆产物——「你/用户」替换为小橘对用户的称呼
+  d.insights.forEach((m, i) => lines.push(`${i + 1}${m.theme ? ` [${m.theme}]` : ''} ${replaceUserReference(m.description)}`));
   lines.push(`当前小橘的心情（PAD）：愉悦 ${Math.round(d.padAvg.pleasure)} / 唤醒 ${Math.round(d.padAvg.arousal)} / 支配 ${Math.round(d.padAvg.dominance)}。`);
   return lines.join('\n');
 }

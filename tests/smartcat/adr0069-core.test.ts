@@ -346,7 +346,7 @@ describe('R1 行为小结换源（ticket 162 并入反思前置）：原料从 b
     expect(digests[0].evidenceIds).toEqual([behs[0].id, behs[1].id]);
     // 喂 LLM 前机读 description 经 behavior-wording 渲染成人类文案
     const summaryPrompt = prompts.find((p) => p.includes('行为记录（编号'))!;
-    expect(summaryPrompt).toContain('你完成了备忘录「买菜」');
+    expect(summaryPrompt).toContain('包仔完成了备忘录「买菜」'); // ticket 163：行为流文案「你」→称呼（默认包仔）
     expect(summaryPrompt).not.toContain('memo:completed 买菜');
     expect(data.memory.reflection.lastDigestAt).toBeGreaterThan(0);
   });

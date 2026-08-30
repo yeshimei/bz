@@ -63,7 +63,7 @@ describe('mode 标记落 growthHistory（ticket 091 测试要求 1）', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.messages[0].content).toContain(USER_CONTENT_BOUNDARY); // H4 继承
-    expect(body.messages[1].content).toContain('用户对天文充满好奇');
+    expect(body.messages[1].content).toContain('包仔对天文充满好奇'); // ticket 163：洞察文本喂 AI 前「用户」→称呼（默认包仔）
     const h = data.personalityGrowth.growthHistory;
     expect(h.length).toBe(1);
     expect(h[0].source).toBe('reflection');
