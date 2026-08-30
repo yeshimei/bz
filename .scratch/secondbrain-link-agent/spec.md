@@ -1,6 +1,6 @@
 # 第二大脑自动双链管线（link agent）设计 spec
 
-状态：已评审定稿（2026-08，六轮设计交流 + 用户逐项拍板）；v1.1 增量（ticket 115：启动存量补链 + 批量补链命令）+ v1.2 语义修订（ticket 116：范围只管目标侧 / 候选来源 = 白名单索引库 / 两目录字段默认空、空=什么也不录）+ v1.4 增量（ticket 119：正文大改自动重跑——基准哈希 + 修改监听）+ v1.5 数据整合（ticket 120：queue/state 并入 secondbrain.json link 段、vec 改名 secondbrain.vec、store-file 串行写链 + 一次性迁移）+ v1.6 冲突自愈（ticket 152：Syncthing 冲突文件段级 union + .vec 行级重排，见「冲突文件自愈」节）含内
+状态：已评审定稿（2026-08，六轮设计交流 + 用户逐项拍板）；v1.1 增量（ticket 115：启动存量补链 + 批量补链命令）+ v1.2 语义修订（ticket 116：范围只管目标侧 / 候选来源 = 白名单索引库 / 两目录字段默认空、空=什么也不录）+ v1.4 增量（ticket 119：正文大改自动重跑——基准哈希 + 修改监听）+ v1.5 数据整合（ticket 120：queue/state 并入 secondbrain.json link 段、vec 改名 secondbrain.vec、store-file 串行写链 + 一次性迁移）+ v1.6 冲突自愈（ticket 152：Syncthing 冲突文件段级 union + .vec 行级重排，见「冲突文件自愈」节）+ v1.7 增量（ticket 167：已有 related 不再自动建链——尊重开关 + 三条自动路径统一跳过）含内
 归属域：secondbrain
 前置依赖：ticket 110（切块剥离 frontmatter——向量候选质量的前提）
 
@@ -14,6 +14,8 @@ v1.2（ticket 116，用户澄清语义）：**关联范围只管"哪些笔记会
 
 v1.4（ticket 119，用户拍板）：**正文大改自动重跑**——记录每篇被处理笔记向量化/建链时的内容**基准哈希**（新状态文件 `secondbrain_link_state.json`，不动 frontmatter 格式）；监听 `vault:md-modified`（范围过滤），**内容哈希与基准不同才重跑该篇建链**：避免 Obsidian 高频保存（内容未变）空转裁判、避免自写 `related` 触发死循环；基准随每次成功建链/重跑刷新。
 
+v1.7（ticket 167，用户拍板）：**已有 related 不再自动建链**——新增尊重开关 `linkAgentRespectRelated`（默认开）；开启时**创建 / 修改 / 队列消费**三条自动路径对 **`related` 非空**（至少 1 个有效条目；空数组/空值/缺失 = 未接管，继续建链）的笔记一律跳过（`skipped-related`，队列条目顺带移除不滞留）；存量补链天然只收缺 `related` 者不受影响；**手动命令 `bz-secondbrain-rebuild-links` 豁免**（传 `respectRelated:false` 强制重跑，显式意图）。关闭开关 = 恢复旧行为（正文大改仍自动重跑）。
+
 ## 范围
 
 ### 本期做
@@ -24,6 +26,7 @@ v1.4（ticket 119，用户拍板）：**正文大改自动重跑**——记录�
 4. `related` 死链自动清理（完成后通知）；
 5. **存量补链（v1.1/ticket 115）**：每次启动自动扫描关联范围内缺 `related` 的存量笔记批量建链（`related` 即进度检查点，中断续跑天然增量）；手动命令 `bz-secondbrain-link-all` 同路径显式兜底。
 6. **正文大改自动重跑（v1.4/ticket 119）**：范围内笔记被修改且内容哈希较上次建链基准有变化 → 自动重跑该篇建链（原「新笔记落盘」触发只覆盖新建，大改的已连接笔记旧链不更新是 v1 边界，ticket 119 消除）。
+7. **已有 related 不再自动建链（v1.7/ticket 167）**：尊重开关（默认开）下，创建 / 修改 / 队列消费对 `related` 非空笔记跳过（队列条目顺带移除）；手动重跑命令豁免。
 
 ### 明确不做（用户拍板）
 
@@ -142,6 +145,7 @@ Syncthing 对「同步窗口内两端都修改的同一文件」必然保留 `se
 | `linkAgentMaxLinks` | number | 0 | 每篇 `related` 写入上限；0 = 不限，由 AI 自行决定（沿用复习域「0=不限制」惯例） |
 | `linkAgentNotify` | boolean | true | 处理完成后通知提醒（关闭则全程静默） |
 | `linkAgentAutoClean` | boolean | true | 失效关联自动清理 |
+| `linkAgentRespectRelated` | boolean | true | 已有关联不再自动建链（v1.7/ticket 167）：自动路径（创建/修改/队列消费）对 `related` 非空笔记跳过；手动重跑豁免 |
 | `linkAgentScopes` | string | ''（空） | 关联范围：**只决定哪些笔记会被自动关联**（目标/触发侧：落盘监听目录 + 存量补链目标 + 死链扫描）；**候选来源不受此限制**（见 ②，ticket 116）；英文逗号分隔；**空 = 什么也不录，不是全库**（ticket 116，无「文献盒」回退） |
 
 ### 设置面板联动行为（用户拍板补充）
@@ -173,6 +177,7 @@ Syncthing 对「同步窗口内两端都修改的同一文件」必然保留 `se
 - [ ] `linkAgentEnabled=false` 时无任何监听与写入；
 - [ ] **v1.1：启动后自动对存量缺 `related` 笔记补链（进度 toast + 汇总；全部已连接则静默）；手动 `bz-secondbrain-link-all` 各分支明确通知；批次与监听批次串行互斥（并发不重叠）**；
 - [ ] **v1.4：修改事件按基准哈希过滤——内容未实质变化（含自写 related 触发的 modify）不重跑；哈希不同 / 无基准才重跑；重跑成功后基准刷新；修改监听随 `linkAgentScopes` 与总开关生效**；
+- [ ] **v1.7：尊重开关默认开——创建/修改/队列消费对 `related` 非空笔记 `skipped-related`（不探测不裁判不写入，队列条目顺带移除）；`related: []`/缺失视为未接管照常建链；`respectRelated:false`（手动重跑）豁免强制重跑；开关关闭恢复旧行为**；
 - [ ] 数据层 + UI/通知层 Vitest 覆盖（队列 CRUD、幂等、清理逻辑、开关行为、补链目标清单与串行锁、空值语义），smoke 同步；
 - [ ] `pnpm exec tsc --noEmit` 与构建通过。
 

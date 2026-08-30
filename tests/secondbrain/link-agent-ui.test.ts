@@ -58,11 +58,11 @@ describe('⚙️ 弹窗「自动双链」开关联动显隐', () => {
     setApp({ vault: new MockVault() } as any);
   });
 
-  it('开启态：组名与五行明细渲染', () => {
+  it('开启态：组名与六行明细渲染', () => {
     openSecondBrainSettings();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     expect(popup.textContent).toContain('自动双链');
-    for (const name of ['单篇候选数量 TopK', '每篇关联上限', '完成通知', '失效关联自动清理', '关联范围']) {
+    for (const name of ['单篇候选数量 TopK', '每篇关联上限', '完成通知', '失效关联自动清理', '已有关联不再建链', '关联范围']) {
       expect([...popup.querySelectorAll('.setting-item')].some((el) => (el as HTMLElement).dataset.name === name)).toBe(true);
     }
     closeSettingsModal();
@@ -101,6 +101,7 @@ describe('⚙️ 弹窗「自动双链」开关联动显隐', () => {
     settings.linkAgentMaxLinks = 3;
     settings.linkAgentNotify = false;
     settings.linkAgentAutoClean = false;
+    settings.linkAgentRespectRelated = false;
     openSecondBrainSettings();
     const popup = document.getElementById('bz-settings-modal-popup')!;
     // 开启态还原（master 值来自当前设置）
@@ -112,6 +113,7 @@ describe('⚙️ 弹窗「自动双链」开关联动显隐', () => {
     rowTrigger(popup, '每篇关联上限')('5');
     rowTrigger(popup, '完成通知')(true);
     rowTrigger(popup, '失效关联自动清理')(true);
+    rowTrigger(popup, '已有关联不再建链')(true);
     // 关联范围（ticket 128 统一选择器）：种库内目录 → 点「📁 选择」→ 勾选 → 确定；存储格式仍逗号分隔串
     const scopeVault = new MockVault();
     scopeVault.create('文献盒/A.md', 'x');
@@ -138,6 +140,7 @@ describe('⚙️ 弹窗「自动双链」开关联动显隐', () => {
     expect(settings.linkAgentMaxLinks).toBe(5);
     expect(settings.linkAgentNotify).toBe(true);
     expect(settings.linkAgentAutoClean).toBe(true);
+    expect(settings.linkAgentRespectRelated).toBe(true);
     expect(settings.linkAgentScopes).toBe('文献盒,卡片盒');
     closeSettingsModal();
   });
@@ -215,8 +218,10 @@ describe('管线：related 幂等写入与可达性门', () => {
     expect(fmOfA).toContain('[[文献盒/B]]');
     expect(fmOfA).not.toContain('GONE');
 
-    // 幂等：同一裁决重跑不再新增
-    const r2 = await agent.processNote('文献盒/A.md');
+    // 幂等：同一裁决重跑不再新增。
+    // v1.7/ticket 167：A 已写入 related，自动路径被尊重门拦截（skipped-related，见新 describe），
+    // 此处用 respectRelated:false 模拟手动重跑豁免，验证幂等合并仍生效
+    const r2 = await agent.processNote('文献盒/A.md', { respectRelated: false });
     expect(r2).toEqual({ status: 'done', created: 0 });
     expect((fmOfA.match(/\[\[文献盒\/B\]\]/g) || []).length).toBe(1);
   });
@@ -309,6 +314,109 @@ describe('管线：related 幂等写入与可达性门', () => {
   });
 });
 
+describe('已有 related 不再自动建链（v1.7/ticket 167）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    clearDomainEvents();
+    document.body.innerHTML = '';
+    setSettingsProvider(baseSettings);
+    setSettingsSaver(() => Promise.resolve());
+  });
+
+  it('尊重门默认开启：related 非空的笔记直接 skipped-related，不探测不裁判不写入', async () => {
+    const { vault, agent, store, askSpy } = makeWorld({
+      hits: [{ path: '文献盒/B.md', chunk: 'B', score: 0.9 }],
+    });
+    // A 已有 related（已连接）
+    vault.files.set(
+      '文献盒/A.md',
+      '---\nrelated: ["[[文献盒/B]]"]\n---\n\n正文'
+    );
+    askSpy.mockResolvedValue('[{"id":1,"reason":"同主题"}]');
+    const r = await agent.processNote('文献盒/A.md');
+    expect(r).toEqual({ status: 'skipped-related' });
+    expect(store.refresh).not.toHaveBeenCalled();
+    expect(store.vectorSearch).not.toHaveBeenCalled();
+    expect(askSpy).not.toHaveBeenCalled();
+    // 未改动文件（未新增链）
+    expect(vault.files.get('文献盒/A.md')).toContain('[[文献盒/B]]');
+  });
+
+  it('related 为空数组 / 缺失：视为未接管，照常建链', async () => {
+    const { vault, agent, askSpy } = makeWorld({
+      hits: [{ path: '文献盒/B.md', chunk: 'B', score: 0.9 }],
+    });
+    vault.files.set('文献盒/A.md', '---\nrelated: []\n---\n\n正文'); // 空数组
+    vault.files.set('文献盒/C.md', '---\ntags: x\n---\n\n正文'); // 无 related 键
+    askSpy.mockResolvedValue('[{"id":1,"reason":"同主题"}]');
+    const r1 = await agent.processNote('文献盒/A.md');
+    expect(r1).toEqual({ status: 'done', created: 1 });
+    const r2 = await agent.processNote('文献盒/C.md');
+    expect(r2).toEqual({ status: 'done', created: 1 });
+  });
+
+  it('respectRelated:false（手动重跑）豁免：已有 related 也强制重跑并幂等合并', async () => {
+    const { vault, agent, askSpy } = makeWorld({
+      hits: [{ path: '文献盒/B.md', chunk: 'B', score: 0.9 }],
+    });
+    vault.files.set(
+      '文献盒/A.md',
+      '---\nrelated: ["[[文献盒/B]]"]\n---\n\n正文'
+    );
+    askSpy.mockResolvedValue('[{"id":1,"reason":"同主题"}]');
+    const r = await agent.processNote('文献盒/A.md', { respectRelated: false });
+    expect(r).toEqual({ status: 'done', created: 0 }); // 幂等：链已存在不加重复
+    expect(askSpy).toHaveBeenCalled();
+  });
+
+  it('开关关闭（linkAgentRespectRelated=false）：恢复旧行为——已有关联仍走完整管线', async () => {
+    setSettingsProvider(() => ({ ...baseSettings(), linkAgentRespectRelated: false }));
+    const { vault, agent, askSpy } = makeWorld({
+      hits: [{ path: '文献盒/B.md', chunk: 'B', score: 0.9 }],
+    });
+    vault.files.set(
+      '文献盒/A.md',
+      '---\nrelated: ["[[文献盒/B]]"]\n---\n\n正文'
+    );
+    askSpy.mockResolvedValue('[{"id":1,"reason":"同主题"}]');
+    const r = await agent.processNote('文献盒/A.md');
+    expect(r).toEqual({ status: 'done', created: 0 }); // 幂等重跑（旧行为）
+    expect(askSpy).toHaveBeenCalled();
+  });
+
+  it('队列消费：related 非空条目 skipped-related 且移除队列条目（不滞留）；未连接的照常建链', async () => {
+    const { vault, agent, askSpy } = makeWorld({
+      hits: [{ path: '文献盒/D.md', chunk: 'D', score: 0.8 }], // B 处理时自身被剔除，指向 D 保证建链
+    });
+    vault.files.set(
+      '文献盒/A.md',
+      '---\nrelated: ["[[文献盒/B]]"]\n---\n\n正文' // A 已连接
+    );
+    await enqueuePaths(['文献盒/A.md', '文献盒/B.md']); // B 未连接
+    askSpy.mockResolvedValue('[{"id":1,"reason":"同主题"}]');
+    const summary = await agent.consumeQueue();
+    // A 被尊重门跳过并移除；B 正常建链
+    expect(summary).toMatchObject({ total: 2, processed: 1, created: 1 });
+    expect((await loadQueue()).length).toBe(0); // 两条都被移除（无滞留）
+    const fmB = vault.files.get('文献盒/B.md')!;
+    expect(fmB).toContain('related');
+  });
+
+  it('队列消费：全部为已连接时 processed=0 且完成通知不出现（静默移除）', async () => {
+    const { vault, agent, askSpy } = makeWorld({});
+    vault.files.set('文献盒/A.md', '---\nrelated: ["[[文献盒/B]]"]\n---\n\n正文');
+    vault.files.set('文献盒/B.md', '---\nrelated: ["[[文献盒/A]]"]\n---\n\n正文');
+    await enqueuePaths(['文献盒/A.md', '文献盒/B.md']);
+    askSpy.mockResolvedValue('[]');
+    const summary = await agent.consumeQueue();
+    expect(summary).toMatchObject({ total: 2, processed: 0, created: 0, failed: 0 });
+    expect((await loadQueue()).length).toBe(0);
+    // processed=0 → 完成通知被收起（静默），不弹「处理完毕」文案
+    expect(getNoticeMessages().some((m) => m.includes('待处理关联已处理完毕'))).toBe(false);
+    expect(askSpy).not.toHaveBeenCalled();
+  });
+});
+
 describe('正文大改自动重跑（v1.4/ticket 119）', () => {
   beforeEach(() => {
     resetObsidianMocks();
@@ -328,21 +436,23 @@ describe('正文大改自动重跑（v1.4/ticket 119）', () => {
     expect(r1).toEqual({ status: 'done', created: 1 });
     let state = await loadLinkState();
     expect(state['文献盒/A.md'].hash).toBe(computeHash(vault.files.get('文献盒/A.md')!));
-    // ② 幂等重跑（created=0）→ 基准刷新为当前内容（幂等返回 done 仍记）
-    const r2 = await agent.processNote('文献盒/A.md');
+    // ② 幂等重跑（created=0）→ 基准刷新为当前内容（幂等返回 done 仍记）。
+    // v1.7/ticket 167：已连接笔记自动路径被尊重门拦截，此处用 respectRelated:false 模拟手动重跑豁免
+    const r2 = await agent.processNote('文献盒/A.md', { respectRelated: false });
     expect(r2).toEqual({ status: 'done', created: 0 });
     state = await loadLinkState();
     expect(state['文献盒/A.md'].hash).toBe(computeHash(vault.files.get('文献盒/A.md')!));
 
     clearNotices();
-    // ③ 不可达（入队）→ 不记基准：先大改正文（文件变了），入队后基准仍是旧内容哈希
+    // ③ 不可达（入队）→ 不记基准：先大改正文（文件变了），入队后基准仍是旧内容哈希。
+    // 同样传 respectRelated:false 豁免尊重门（A 已有 related，自动路径本会跳过入队——队列消费遇已连接条目是另一语义）
     vault.files.set('文献盒/A.md', '---\ntitle: 向量笔记\ntags: vec\n---\n\n入队后不更新基准的正文。');
     const agent2 = new LinkAgent({
       app: app as any,
       store: store as any,
       probe: vi.fn(async () => false), // 同 vault 不同探测：不可达
     });
-    expect((await agent2.processNote('文献盒/A.md')).status).toBe('queued');
+    expect((await agent2.processNote('文献盒/A.md', { respectRelated: false })).status).toBe('queued');
     state = await loadLinkState();
     expect(state['文献盒/A.md'].hash).not.toBe(computeHash(vault.files.get('文献盒/A.md')!)); // 基准未随入队刷新
   });
@@ -742,7 +852,7 @@ describe('命令 bz-secondbrain-rebuild-links 守卫分支', () => {
     // mock 掉管线本体（避免真实探测网络），验证命令放行进入管线而非被范围守卫拦截
     const spy = vi.spyOn(LinkAgent.prototype, 'processNote').mockResolvedValue({ status: 'done', created: 2 });
     await rebuildSecondBrainLinks(app as any);
-    expect(spy).toHaveBeenCalledWith('我的/日记/x.md');
+    expect(spy).toHaveBeenCalledWith('我的/日记/x.md', { respectRelated: false }); // v1.7/ticket 167：手动重跑豁免尊重门
     expect(getNoticeMessages().some((m) => m.includes('已新建关联 2 条'))).toBe(true);
   });
 

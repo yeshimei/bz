@@ -14,6 +14,9 @@
  * - 正文大改自动重跑（v1.4/ticket 119）：每次成功建链后把**全文内容哈希**记为基准
  *   （secondbrain.json link.state 段，ticket 120 起）；修改监听按基准过滤——内容未实质变化（含自写 related 触发的
  *   modify）不重跑，哈希不同 / 无基准才重跑该篇；
+ * - 已有 related 不再自动建链（v1.7/ticket 167）：尊重开关 `linkAgentRespectRelated`（默认开）开启时，
+ *   创建 / 修改 / 队列消费三条自动路径对 **related 非空** 的笔记一律跳过（`skipped-related`，队列条目顺带移除）；
+ *   手动命令 bz-secondbrain-rebuild-links 传 respectRelated:false 豁免（显式意图强制重跑）；
  * - 死链清理：关联范围（linkAgentScopes）各笔记 related 中指向不存在文件的条目移除；encrypt 锁定文件一律跳过。
  */
 import type { App, TFile } from 'obsidian';
@@ -29,6 +32,7 @@ import {
   computeHash,
   enqueuePaths,
   dequeuePath,
+  hasRelatedEntries,
   loadQueue,
   loadLinkState,
   matchesScope,
@@ -75,6 +79,7 @@ export type ProcessOutcome =
   | { status: 'done'; created: number }
   | { status: 'queued' }
   | { status: 'skipped' }
+  | { status: 'skipped-related' }
   | { status: 'failed'; error: string };
 
 export interface BatchSummary {
@@ -178,8 +183,21 @@ export class LinkAgent {
     return boolSetting(s.linkAgentNotify, true);
   }
 
-  /** 单篇完整管线；assumeReachable=true 时跳过探测（队列消费已在入口统一探过） */
-  async processNote(path: string, opts?: { assumeReachable?: boolean }): Promise<ProcessOutcome> {
+  /**
+   * 尊重「已有 related 不再自动建链」（v1.7/ticket 167）：默认开（缺省兜底 true）。
+   * 开启时 processNote 对 related 非空的笔记一律跳过；手动命令传 respectRelated:false 豁免。
+   */
+  private get respectRelated(): boolean {
+    const s = tryGetSettings() as any;
+    return boolSetting(s.linkAgentRespectRelated, true);
+  }
+
+  /**
+   * 单篇完整管线；assumeReachable=true 时跳过探测（队列消费已在入口统一探过）。
+   * v1.7/ticket 167：respectRelated !== false 时，frontmatter related 非空 → `skipped-related` 跳过
+   * （创建 / 修改 / 队列消费三条自动路径统一；存量补链目标天然只收缺 related 者，此门不触发）。
+   */
+  async processNote(path: string, opts?: { assumeReachable?: boolean; respectRelated?: boolean }): Promise<ProcessOutcome> {
     const s = tryGetSettings() as any;
     if (s.linkAgentEnabled === false) return { status: 'skipped' };
     const file = this.app.vault.getAbstractFileByPath(path) as TFile | null;
@@ -193,6 +211,14 @@ export class LinkAgent {
       return { status: 'skipped' };
     }
     const hash = computeHash(content);
+
+    // v1.7/ticket 167：尊重门——自动路径（respectRelated 未显式 false）对已有关联的笔记跳过。
+    // 读取 metadataCache frontmatter（与存量补链 hasRelated 同一数据源），缓存不可读按「未接管」放行
+    // （与存量补链不可读按「已连接」兜底同向：自动路径宁保守——不读就不跳过，交给管线幂等处理）。
+    if (opts?.respectRelated !== false && this.respectRelated) {
+      const fm = (this.app.metadataCache as any)?.getFileCache?.(file)?.frontmatter as Record<string, unknown> | undefined;
+      if (hasRelatedEntries(fm?.related)) return { status: 'skipped-related' };
+    }
 
     // ① 可达性门：不可达 → 入队（同 path 重入队由数据层合并刷新 hash）
     if (!opts?.assumeReachable) {
@@ -500,6 +526,9 @@ export class LinkAgent {
         summary.failed++; // 失败保留待下次
       } else if (outcome.status === 'queued') {
         summary.queued++;
+      } else if (outcome.status === 'skipped-related') {
+        // v1.7/ticket 167：尊重门跳过——条目代表「待处理」，已接管即处理完毕，移除避免队列滞留
+        await dequeuePath(items[i].path);
       }
       if (notifyOn) {
         notify(`待处理关联：处理中 ${i + 1}/${items.length} 篇`, { type: 'progress', dedupeKey: LINK_BATCH_NOTICE_KEY });

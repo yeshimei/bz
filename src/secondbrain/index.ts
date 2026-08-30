@@ -250,6 +250,7 @@ export async function runSecondBrainLinkAll(app: App): Promise<void> {
  * 命令 bz-secondbrain-rebuild-links（ticket 111）：对当前打开笔记重跑一次关联
  * （正文大改后的手动兜底入口）。手动触发即显式意图：不受 linkAgentScopes 范围限制，
  * 任何笔记可跑（候选仍按 linkAgentScopes 过滤）；embedding 不可达时入队待自动消费。
+ * v1.7/ticket 167：显式传 respectRelated:false 豁免「已有 related 不再自动建链」——手动重跑始终强制。
  */
 export async function rebuildSecondBrainLinks(app: App): Promise<void> {
   const file = app.workspace.getActiveFile?.() as { path: string } | null;
@@ -264,7 +265,7 @@ export async function rebuildSecondBrainLinks(app: App): Promise<void> {
   ensureSecondBrain(app);
   if (!linkAgent) return;
   try {
-    const outcome = await linkAgent.processNote(file.path);
+    const outcome = await linkAgent.processNote(file.path, { respectRelated: false });
     if (outcome.status === 'done') {
       notice(outcome.created > 0 ? `已新建关联 ${outcome.created} 条` : '未发现实质关联，未新建', 'success');
     } else if (outcome.status === 'queued') {

@@ -109,6 +109,15 @@ export function parseRelatedEntries(value: unknown): string[] {
   return raw.map((v) => String(v ?? '').trim()).filter((v) => v.length > 0);
 }
 
+/**
+ * 「笔记已有关联」判定（v1.7/ticket 167）：related **非空**（至少 1 个有效条目）才算「有」；
+ * `related: []` / 空值 / 缺失一律视为未接管（自动双链继续建链）。
+ * 与存量补链 hasRelated（ticket 115）同一语义，统一出口。
+ */
+export function hasRelatedEntries(value: unknown): boolean {
+  return parseRelatedEntries(value).length > 0;
+}
+
 /** 目标 vault 路径（含 .md）→ related 条目字符串 `[[路径去.md]]` */
 export function toRelatedEntry(targetPath: string): string {
   return `[[${targetPath.replace(/\.md$/i, '')}]]`;
