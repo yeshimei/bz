@@ -80,7 +80,6 @@
 ## Git / 工作流
 
 - **分支与提交**：主分支 `master`，提交信息遵循 Conventional Commits（`feat:`/`fix:`/`chore:` 等 + 简短说明，功能改动附 ticket 号）。
-- **Push**：master 有 remote（origin）且需要同步时，合并验证通过后 `git push origin master`；本地为准时可跳过，但不要在文档里写 fetch 却不 push。
 - **Worktree 流程（DSH）**
   1. 创建 worktree 前先对齐基线：主仓库 `git fetch origin && git pull --ff-only origin master`（无 remote 则省略），再创建 `git worktree add ../.dsh-worktrees/<分支名> -b worktree/<slug>`——确保分支从**最新 master** 分叉，不基于过期基线。
   2. worktree 内依赖用 `pnpm install`（store 在 `D:\.pnpm-store\`，与仓库/worktree 同卷硬链接，秒级完成；首次在本机装过即无需再从网络拉取）。
