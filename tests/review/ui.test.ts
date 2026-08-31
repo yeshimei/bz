@@ -377,9 +377,9 @@ describe('UIManager', () => {
     // 头部：🔁 + 名称 + 阶段·到期小字
     expect(sheet.querySelector('.bz-item-sheet-emoji')!.textContent).toBe('🔁');
     expect(sheet.querySelector('.bz-item-sheet-sub')!.textContent).toContain('逾期');
-    // 动作清单（ADR-0077 新增：置顶、查看历史）
+    // 动作清单（ticket 174：去置顶，保留查看历史）
     const labels = [...sheet.querySelectorAll('.bz-item-sheet-label')].map((e) => e.textContent);
-    expect(labels).toEqual(['开始复习', '打开原文', '置顶', '查看历史', '移出复习计划']);
+    expect(labels).toEqual(['开始复习', '打开原文', '查看历史', '移出复习计划']);
 
     // 点「开始复习」→ 难度弹窗（companion 叠抽屉）
     const startItem = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(

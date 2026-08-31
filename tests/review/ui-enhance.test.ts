@@ -48,7 +48,7 @@ describe('UIManager 增强（ADR-0077）', () => {
     closeStatsModal();
   });
 
-  it('头部含 📊 统计 / 🎲 抽查按钮；点击抽查展开输入区', async () => {
+  it('头部按钮：➕▶️🔍📊📁⚙️❌ 顺序（无抽查、统计在搜索后设置前）', async () => {
     const vault = new MockVault();
     seed(vault);
     const app = makeApp(vault);
@@ -59,11 +59,15 @@ describe('UIManager 增强（ADR-0077）', () => {
     const statsBtn = document.getElementById('review-btn-stats');
     const drillBtn = document.getElementById('review-btn-drill');
     expect(statsBtn).not.toBeNull();
-    expect(drillBtn).not.toBeNull();
-    // 点抽查 → 输入区显示
-    drillBtn!.click();
-    const wrap = document.getElementById('review-drill-wrap');
-    expect(wrap!.style.display).toBe('block');
+    expect(drillBtn).toBeNull(); // ticket 174：去掉抽查
+    // 按钮顺序：➕ ▶️ 🔍 📊 📁 ⚙️ ❌
+    const headBtns = [...document.querySelectorAll('#review-popup .bz-win-head button')].map((b) => b.id);
+    expect(headBtns).toEqual([
+      'review-btn-add', 'review-btn-start', 'review-btn-search',
+      'review-btn-stats', 'review-btn-archive', 'review-btn-settings', 'review-btn-close',
+    ]);
+    // 无抽查输入区
+    expect(document.getElementById('review-drill-wrap')).toBeNull();
     ui.destroy();
   });
 
@@ -81,18 +85,16 @@ describe('UIManager 增强（ADR-0077）', () => {
     const popup = document.getElementById('review-stats-popup');
     expect(popup).not.toBeNull();
     const text = popup!.textContent || '';
-    expect(text).toContain('全局指标');
+    expect(text).toContain('总复习（天）'); // 浅色卡
     expect(text).toContain('复习负载');
     expect(text).toContain('复习时间线');
-    // 指标值：总复习（天）= 2（两天）、连续天数、今日
-    expect(text).toContain('总复习');
     // 时间线列表有 A（有历史）
     expect(text).toContain('A');
     closeStatsModal();
     ui.destroy();
   });
 
-  it('单条时间线：点时间线列表条目 → 展示该笔记历史（评级/R/阶段）', async () => {
+  it('单条时间线：点时间线列表条目 → 弹独立复习历史（无返回按钮、无标题栏）', async () => {
     const vault = new MockVault();
     seed(vault);
     const app = makeApp(vault);
@@ -106,44 +108,23 @@ describe('UIManager 增强（ADR-0077）', () => {
     expect(row).not.toBeNull();
     row.click();
     await new Promise((r) => setTimeout(r, 20));
-    const body = document.getElementById('review-stats-body')!;
-    const text = body.textContent || '';
-    expect(text).toContain('返回统计');
+    // 独立历史弹窗（非统计弹窗 body）
+    const histPopup = document.getElementById('review-history-popup');
+    expect(histPopup).not.toBeNull();
+    const text = histPopup!.textContent || '';
+    // 无标题栏 / 无返回统计按钮
+    expect(text).not.toContain('返回统计');
+    expect(histPopup!.querySelector('.bz-win-head')).toBeNull();
+    // 历史内容：评级中文 + R + 阶段
     expect(text).toContain('一般'); // good 评级中文
     expect(text).toContain('简单'); // easy 评级中文
     expect(text).toContain('R='); // R 值展示
-    closeStatsModal();
-    ui.destroy();
-  });
-
-  it('置顶：抽屉含「置顶」动作，点击后条目 pinned 落盘 + 卡片出现 📌', async () => {
-    const vault = new MockVault();
-    seed(vault);
-    const app = makeApp(vault);
-    setApp(app);
-    const dm = new ReviewDataManager(app);
-    const ui = new UIManager(app, dm);
-    ui.showMain();
-    await ui.refreshPanel();
-    const card = document.querySelector('#review-entries-container .review-card') as HTMLElement;
-    // 触发抽屉（桌面右键 → 跟手菜单 .bz-item-menu）
-    card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 10, clientY: 10 }));
+    // 关闭历史 → 统计弹窗仍在
+    const closeBtn = document.getElementById('review-history-close') as HTMLElement;
+    closeBtn.click();
     await new Promise((r) => setTimeout(r, 10));
-    const menu = document.querySelector('.bz-item-menu') as HTMLElement;
-    expect(menu).not.toBeNull();
-    const pinItem = [...menu.querySelectorAll('.bz-item-menu-item')].find(
-      (b) => b.textContent!.includes('置顶')
-    ) as HTMLElement;
-    expect(pinItem).not.toBeNull();
-    pinItem.click();
-    await new Promise((r) => setTimeout(r, 20));
-    const items = await dm.loadItems();
-    expect(items.some((i) => i.filePath === 'A.md' && i.pinned)).toBe(true);
-    // 卡片 📌 标记（刷新后）
-    await ui.refreshPanel();
-    const cardAfter = document.querySelector('#review-entries-container .review-card') as HTMLElement;
-    expect(cardAfter.textContent).toContain('📌');
-    closeItemMenu();
+    expect(document.getElementById('review-stats-popup')).not.toBeNull();
+    closeStatsModal();
     ui.destroy();
   });
 
