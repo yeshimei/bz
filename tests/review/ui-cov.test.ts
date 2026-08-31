@@ -379,7 +379,7 @@ describe('renderEntries 与卡片标签全变体', () => {
     ui.showArchived = false;
   });
 
-  it('到期时间变体：2d / 5h / 45m / 📅 逾期 / ⏳ 待定 / 文件缺失 / ✅ 完成', () => {
+  it('到期时间变体：2d / 5h / 45m / 📅 逾期 / ⏳ 待定 / 文件缺失 / 已完成（相对时间）', () => {
     const now = Date.now();
     const cases: [any, string][] = [
       [{ nextReviewDate: new Date(now + 2 * 86400000 + 6 * 3600000).toISOString() }, '⏳ 2d'],
@@ -394,10 +394,13 @@ describe('renderEntries 与卡片标签全变体', () => {
       const time = document.querySelector('.review-time') as HTMLElement;
       expect(time.textContent).toBe(expected);
     }
-    // 已完成条目默认被归档过滤隐藏：开归档渲染后显示「✅ 完成」
+    // 已完成：时间列显示相对完成时间（ticket 174 去重复 ✅；无 lastReviewed → 空串）
     ui.showArchived = true;
-    ui.renderEntries([mkItem({ name: 'T', isCompleted: true, completed: true, nextReviewDate: new Date(now).toISOString() })]);
-    expect((document.querySelector('.review-time') as HTMLElement).textContent).toBe('✅ 完成');
+    ui.renderEntries([mkItem({ name: 'T', isCompleted: true, completed: true, lastReviewed: null, nextReviewDate: new Date(now).toISOString() })]);
+    expect((document.querySelector('.review-time') as HTMLElement).textContent).toBe('');
+    // 有 lastReviewed → 相对时间（非空）
+    ui.renderEntries([mkItem({ name: 'T', isCompleted: true, completed: true, lastReviewed: new Date(now - 60 * 1000).toISOString(), nextReviewDate: new Date(now).toISOString() })]);
+    expect((document.querySelector('.review-time') as HTMLElement).textContent).not.toBe('');
     ui.showArchived = false;
   });
 

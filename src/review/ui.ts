@@ -8,7 +8,7 @@ import { notice, notifyUndo, notifySaveError } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
 import { escManager } from '../core/esc-manager';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
-import { escapeHtml } from '../core/utils';
+import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
 import { mobileFullscreenGroup } from '../core/settings-common';
@@ -244,9 +244,6 @@ export class UIManager {
   previewBar: HTMLElement | null = null;
   /** ADR-0077：文件夹筛选输入 */
   filterInput: HTMLInputElement | null = null;
-  /** ADR-0077：抽查输入 */
-  drillInput: HTMLInputElement | null = null;
-  drillWrap: HTMLElement | null = null;
   /** ADR-0077：当前文件夹筛选（空=不过滤） */
   folderFilter = '';
 
@@ -278,9 +275,8 @@ export class UIManager {
       <div>
         <button id="review-btn-add" title="加入当前笔记">➕</button>
         <button id="review-btn-start" title="开始复习">▶️</button>
-        <button id="review-btn-drill" title="随机抽查">🎲</button>
-        <button id="review-btn-stats" title="统计">📊</button>
         <button id="review-btn-search" title="搜索">🔍</button>
+        <button id="review-btn-stats" title="统计">📊</button>
         <button id="review-btn-archive" title="已完成（归档）">📁</button>
         <button id="review-btn-settings" title="设置">⚙️</button>
         <button id="review-btn-close" class="bz-win-close" title="关闭">❌</button>
@@ -320,27 +316,6 @@ export class UIManager {
     this.popup.appendChild(filterBar);
     this.filterInput = filterInput;
 
-    const drillWrap = document.createElement('div');
-    drillWrap.id = 'review-drill-wrap';
-    drillWrap.className = 'bz-review-drill-wrap';
-    drillWrap.style.display = 'none';
-    const drillInput = document.createElement('input');
-    drillInput.type = 'number';
-    drillInput.id = 'review-drill-input';
-    drillInput.className = 'review-drill-input';
-    drillInput.min = '1';
-    drillInput.value = '5';
-    drillInput.placeholder = '抽查篇数';
-    const drillGo = document.createElement('button');
-    drillGo.id = 'review-drill-go';
-    drillGo.className = 'review-drill-go';
-    drillGo.textContent = '抽查';
-    drillWrap.appendChild(drillInput);
-    drillWrap.appendChild(drillGo);
-    this.popup.appendChild(drillWrap);
-    this.drillInput = drillInput;
-    this.drillWrap = drillWrap;
-
     const container = document.createElement('div');
     container.id = 'review-entries-container';
     this.popup.appendChild(container);
@@ -376,23 +351,6 @@ export class UIManager {
     header.querySelector('#review-btn-start')!.addEventListener('click', async () => {
       const { reviewApp } = await import('./app');
       await reviewApp.autoJumpOverdue();
-    });
-    // ADR-0077：随机抽查（面板内直接触发；纯抽查不排期）
-    header.querySelector('#review-btn-drill')!.addEventListener('click', () => {
-      const wrap = this.drillWrap;
-      if (!wrap) return;
-      const show = wrap.style.display !== 'block';
-      wrap.style.display = show ? 'block' : 'none';
-      if (show) this.drillInput?.focus();
-    });
-    this.drillWrap?.querySelector('#review-drill-go')?.addEventListener('click', async () => {
-      const n = Number(this.drillInput?.value) || 5;
-      if (n <= 0) {
-        notice('抽查篇数需大于 0', 'warning');
-        return;
-      }
-      const { reviewApp } = await import('./app');
-      await reviewApp.randomDrill(n);
     });
     // ADR-0077：统计弹窗（全局指标 + 负载 + 单条时间线）
     header.querySelector('#review-btn-stats')!.addEventListener('click', async () => {
@@ -599,13 +557,6 @@ export class UIManager {
     content.className = 'review-content';
     content.textContent = item.name.replace(/^《|》$/g, '');
     content.title = item.filePath;
-    // ADR-0077：置顶标记（名称前 📌）
-    if (item.pinned) {
-      const pinMark = document.createElement('span');
-      pinMark.className = 'review-pin-mark';
-      pinMark.textContent = '📌 ';
-      content.prepend(pinMark);
-    }
     // ticket 098：挂起记录（文件不存在）→ 删除线
     if (item.isMissing) content.classList.add('review-missing');
     // 双击打开对应笔记（用户拍板保留双击；单击打开收敛进抽屉）
@@ -678,10 +629,14 @@ export class UIManager {
     return `${item.currentStage}/${TOTAL_STAGES} ${FSRS_FIRST_TEXTS[(item.currentStage || 1) - 1]}`;
   }
 
-  /** 到期时间文本（卡片时间与抽屉头部共用） */
+  /** 到期时间文本（卡片时间与抽屉头部共用）
+   *  ticket 174：已完成卡片时间列不再重复 ✅，改用相对完成时间（formatRelativeTime） */
   private dueLabel(item: ReviewItem): string {
     if (item.isMissing) return '文件缺失';
-    if (item.isCompleted) return '✅ 完成';
+    if (item.isCompleted) {
+      // 已完成：显示相对完成时间（无 lastReviewed 则空，避免与阶段标签「✅ 已完成」重复）
+      return item.lastReviewed ? formatRelativeTime(new Date(item.lastReviewed)) : '';
+    }
     if (item.nextReviewDate) {
       const diff = new Date(item.nextReviewDate).getTime() - Date.now();
       if (diff > 0) {
@@ -786,27 +741,6 @@ export class UIManager {
       label: '打开原文',
       onClick: () => {
         void this.openItemFile(item);
-      },
-    });
-
-    // ADR-0077：置顶/取消置顶（列表优先排序 + 仅列表置顶；与 R 优先级互斥）
-    actions.push({
-      icon: item.pinned ? 'pin-off' : 'pin',
-      label: item.pinned ? '取消置顶' : '置顶',
-      onClick: () => {
-        void (async () => {
-          try {
-            await this.dataManager.updateItem(item.filePath, (it) => {
-              it.pinned = !item.pinned;
-            });
-            await this.refreshPanel();
-            const { reviewApp } = await import('./app');
-            await reviewApp.applyReviewStyles(this.app);
-            closeItemMenu();
-          } catch (e) {
-            notice('操作失败：' + (e as Error).message, 'error');
-          }
-        })();
       },
     });
 

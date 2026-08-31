@@ -103,13 +103,10 @@ export const reviewApp = {
   },
 
   /** ADR-0077：逾期队列排序 + 每日上限截断。
-   *  置顶优先（互斥于 R 重排）→ R 升序（遗忘风险最高优先，仅可算 R 的条目）→ nextReviewDate 升序。 */
+   *  R 升序（遗忘风险最高优先，仅可算 R 的条目）→ nextReviewDate 升序。
+   *  ticket 174：移除置顶（用户拍板去掉置顶功能）。 */
   sortOverdue(items: ReviewItem[], dailyLimit = 0): ReviewItem[] {
     const sorted = [...items].sort((a, b) => {
-      const ap = !!a.pinned;
-      const bp = !!b.pinned;
-      if (ap !== bp) return ap ? -1 : 1;
-      if (ap) return 0; // 置顶生效时不参与 R 重排（互斥）
       const rA = this.currentR(a);
       const rB = this.currentR(b);
       if (rA !== null && rB !== null && rA !== rB) return rA - rB;
@@ -321,58 +318,6 @@ export const reviewApp = {
       notify('做题家未初始化，已改用普通复习', { type: 'warning', dedupeKey: 'review-quiz-ai' });
       await this.reviewLoop(limited, 0);
     }
-  },
-
-  /** 随机抽查（ADR-0077）：从计划随机选 N 篇进入做题/普通复习流程。
-   *  纯抽查不排期：不改变 nextReviewDate，评级仍写 reviewHistory（由 markReview 正常写）。
-   *  复用做题/普通分流：forceQuizForReview 开 → 批量出题做题；关 → 普通复习跳转。 */
-  async randomDrill(n: number): Promise<void> {
-    const app = getApp();
-    this.ensure(app);
-    const dm = this.dataManager!;
-    const items = await dm.loadItems();
-    // 候选：未完成、文件存在、未挂起
-    const candidates = items.filter((i) => !i.completed && !i.isCompleted && i.file && !i.isMissing);
-    if (!candidates.length) {
-      notice('没有可抽查的笔记', 'warning');
-      return;
-    }
-    const k = Math.min(n, candidates.length);
-    // Fisher-Yates 抽 k 个
-    const pool = [...candidates];
-    const picked: ReviewItem[] = [];
-    for (let i = 0; i < k && pool.length; i++) {
-      const idx = Math.floor(Math.random() * pool.length);
-      picked.push(pool.splice(idx, 1)[0]);
-    }
-    if (!picked.length) return;
-
-    if (getSettings().forceQuizForReview) {
-      let quiz: any = null;
-      try {
-        quiz = await this.getQuiz();
-      } catch {
-        /* ignore */
-      }
-      if (quiz && !quiz.ai) {
-        try {
-          const { ensureQuiz } = await import('../quiz');
-          ensureQuiz(app);
-        } catch {
-          /* ignore */
-        }
-      }
-      if (quiz && quiz.ai) {
-        const batchQuestions = await this.batchGenerateQuestions(picked);
-        const hasAny = Object.values(batchQuestions).some((qs) => (qs as any[]).length > 0);
-        if (hasAny) {
-          await this.quizReviewLoop(picked, 0, batchQuestions);
-          return;
-        }
-      }
-      notify('做题家未初始化或出题失败，改用普通复习抽查', { type: 'warning', dedupeKey: 'review-quiz-ai' });
-    }
-    await this.reviewLoop(picked, 0);
   },
 
   /** 准确率 → 难度评级 */
