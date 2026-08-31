@@ -73,12 +73,12 @@ describe('constants 常量与工具', () => {
     expect(getGroupForTag('杂七杂八')).toBeNull();
   });
 
-  it('getStarRating（10 分制 → 5 星刻度，ticket 170）：整星 + 半星，0 分空串', () => {
+  it('getStarRating（10 分制 → 5 星刻度，ticket 170）：整星四舍五入，0 分空串', () => {
     expect(getStarRating(10)).toBe('⭐⭐⭐⭐⭐');
     expect(getStarRating(8)).toBe('⭐⭐⭐⭐');
-    expect(getStarRating(9)).toBe('⭐⭐⭐⭐⯪'); // 9 → 4.5 星 → 半星
-    expect(getStarRating(8.5)).toBe('⭐⭐⭐⭐⯪'); // 4.25 星 → 半星区间 [0.25,0.75)
-    expect(getStarRating(8.4)).toBe('⭐⭐⭐⭐'); // 4.2 星 → <0.25 不半星
+    expect(getStarRating(9)).toBe('⭐⭐⭐⭐⭐'); // 9 → 4.5 星 → 四舍五入 5 星
+    expect(getStarRating(8.5)).toBe('⭐⭐⭐⭐'); // 8.5 → 4.25 星 → 四舍五入 4 星
+    expect(getStarRating(8.4)).toBe('⭐⭐⭐⭐'); // 8.4 → 4.2 星 → 4 星
     expect(getStarRating(0)).toBe('');
   });
 });
