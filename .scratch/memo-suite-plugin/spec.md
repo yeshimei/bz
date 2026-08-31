@@ -21,7 +21,7 @@ Feature: memo-suite-plugin
 1. 作为用户，我希望启用插件后原 QuickAdd 宏仍可继续使用（不冲突、不破坏原数据），以便平滑切换、随时回退。
 2. 作为用户，我希望 Q3 的 21 个工具（escManager、confirm、notice、generateId、jsonStore、longPress、injectStyles、createSiteIcon、createIconBtn、formatRelativeTime、formatFileSize、displayChangelog、checkAndShowChangelog、AIService、createAI、extractUrlAndDisplay、getPlatformName、getCurrentNoteInfo、getCurrentCursorPosition、fetchPageTitle、createOverlay）全部可用，以便 15 个域移植时逐字保留调用。
 3. 作为用户，我希望 jsonStore 对 `CONFIG/STORAGE/*.json` 的读写（原子写、锁、迁移兼容）与原脚本完全一致，以便备忘录/归物本/密码本/复习计划的数据零迁移。
-4. 作为用户，我希望插件设置页包含 AI 配置（provider：deepseek / opencode-go、apiKey、endpoint/model 覆盖），以便沿用原 Q3 设置语义。
+4. 作为用户，我希望插件设置页包含 AI 配置（provider：deepseek / opencode-go、apiKey、endpoint/model 覆盖），以便沿用原 Q3 设置语义。（2026-08-31 拍板，ticket 173：模型名称行内嵌「获取模型名」按钮——拉取当前服务商模型列表（OpenAI 兼容 GET /models、Ollama GET /api/tags），弹选择器选中回填 per-provider 覆盖并落盘；fetch 优先 requestUrl 回退；失败 toast 报错按钮常亮）
 6. 作为用户，我希望插件命令全部沿用原脚本命令 id 且不带插件前缀，以便既有热键绑定（设置 → 快捷键）可继续使用。
 7. 作为用户，我希望插件不注册任何默认快捷键，以便不干扰我已有的热键方案。
 8. 作为开发者，我希望 core 层有完整测试覆盖（escManager/jsonStore/AIService/样式注入），以便后续域移植有可信底座。
