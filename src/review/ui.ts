@@ -89,6 +89,32 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
               if (!(v > 0 && v <= 5)) (getSettings() as any).reviewIntervalScale = 1;
             },
           },
+          // ADR-0077：R 目标阈值（低于该值视为可复习/提前；默认 0.9）
+          {
+            type: 'number',
+            name: 'R 目标阈值',
+            desc: '记忆保留度低于该值视为该复习了',
+            binding: { key: 'reviewRThreshold' },
+            min: 0.5,
+            max: 0.99,
+          },
+        ],
+      },
+      {
+        icon: 'brain',
+        name: '记忆算法',
+        rows: [
+          // ADR-0077：FSRS 参数自动拟合（全自动定期重算）
+          { type: 'toggle', name: '参数自动拟合', desc: '按个人复习历史拟合记忆参数，优化复习节奏', binding: { key: 'reviewEnableFit' } },
+          {
+            type: 'number',
+            name: '每 N 次复习重算',
+            desc: '累计 N 次评级后自动重拟合一次',
+            binding: { key: 'reviewFitEveryN' },
+            min: 1,
+            visibleWhen: (s) => (s as any).reviewEnableFit === true,
+            isChild: true,
+          },
         ],
       },
       {
@@ -214,6 +240,15 @@ export class UIManager {
   private searchTimer: number | null = null;
   searchInput: HTMLInputElement | null = null;
   showArchived = false;
+  /** ADR-0077：今日/明日预告条 */
+  previewBar: HTMLElement | null = null;
+  /** ADR-0077：文件夹筛选输入 */
+  filterInput: HTMLInputElement | null = null;
+  /** ADR-0077：抽查输入 */
+  drillInput: HTMLInputElement | null = null;
+  drillWrap: HTMLElement | null = null;
+  /** ADR-0077：当前文件夹筛选（空=不过滤） */
+  folderFilter = '';
 
   constructor(app: App, dataManager: ReviewDataManager) {
     this.app = app;
@@ -243,6 +278,8 @@ export class UIManager {
       <div>
         <button id="review-btn-add" title="加入当前笔记">➕</button>
         <button id="review-btn-start" title="开始复习">▶️</button>
+        <button id="review-btn-drill" title="随机抽查">🎲</button>
+        <button id="review-btn-stats" title="统计">📊</button>
         <button id="review-btn-search" title="搜索">🔍</button>
         <button id="review-btn-archive" title="已完成（归档）">📁</button>
         <button id="review-btn-settings" title="设置">⚙️</button>
@@ -261,6 +298,48 @@ export class UIManager {
     searchContainer.appendChild(searchInput);
     this.popup.appendChild(searchContainer);
     this.searchInput = searchInput;
+
+    // ADR-0077：今日/明日预告条 + 文件夹筛选栏 + 抽查输入（轻量，不另开窗）
+    const previewBar = document.createElement('div');
+    previewBar.id = 'review-preview-bar';
+    previewBar.className = 'bz-review-preview-bar';
+    previewBar.style.display = 'none';
+    this.popup.appendChild(previewBar);
+    this.previewBar = previewBar;
+
+    const filterBar = document.createElement('div');
+    filterBar.id = 'review-filter-bar';
+    filterBar.className = 'bz-review-filter-bar';
+    filterBar.style.display = 'none';
+    const filterInput = document.createElement('input');
+    filterInput.type = 'text';
+    filterInput.id = 'review-filter-input';
+    filterInput.className = 'review-filter-input';
+    filterInput.placeholder = '按文件夹筛选...（如 项目/A）';
+    filterBar.appendChild(filterInput);
+    this.popup.appendChild(filterBar);
+    this.filterInput = filterInput;
+
+    const drillWrap = document.createElement('div');
+    drillWrap.id = 'review-drill-wrap';
+    drillWrap.className = 'bz-review-drill-wrap';
+    drillWrap.style.display = 'none';
+    const drillInput = document.createElement('input');
+    drillInput.type = 'number';
+    drillInput.id = 'review-drill-input';
+    drillInput.className = 'review-drill-input';
+    drillInput.min = '1';
+    drillInput.value = '5';
+    drillInput.placeholder = '抽查篇数';
+    const drillGo = document.createElement('button');
+    drillGo.id = 'review-drill-go';
+    drillGo.className = 'review-drill-go';
+    drillGo.textContent = '抽查';
+    drillWrap.appendChild(drillInput);
+    drillWrap.appendChild(drillGo);
+    this.popup.appendChild(drillWrap);
+    this.drillInput = drillInput;
+    this.drillWrap = drillWrap;
 
     const container = document.createElement('div');
     container.id = 'review-entries-container';
@@ -297,6 +376,38 @@ export class UIManager {
     header.querySelector('#review-btn-start')!.addEventListener('click', async () => {
       const { reviewApp } = await import('./app');
       await reviewApp.autoJumpOverdue();
+    });
+    // ADR-0077：随机抽查（面板内直接触发；纯抽查不排期）
+    header.querySelector('#review-btn-drill')!.addEventListener('click', () => {
+      const wrap = this.drillWrap;
+      if (!wrap) return;
+      const show = wrap.style.display !== 'block';
+      wrap.style.display = show ? 'block' : 'none';
+      if (show) this.drillInput?.focus();
+    });
+    this.drillWrap?.querySelector('#review-drill-go')?.addEventListener('click', async () => {
+      const n = Number(this.drillInput?.value) || 5;
+      if (n <= 0) {
+        notice('抽查篇数需大于 0', 'warning');
+        return;
+      }
+      const { reviewApp } = await import('./app');
+      await reviewApp.randomDrill(n);
+    });
+    // ADR-0077：统计弹窗（全局指标 + 负载 + 单条时间线）
+    header.querySelector('#review-btn-stats')!.addEventListener('click', async () => {
+      const { showStatsModal } = await import('./stats-ui');
+      await showStatsModal(this.app, this.dataManager);
+    });
+    // ADR-0077：文件夹筛选栏（防抖重渲染）
+    const filterInput = this.filterInput;
+    filterInput?.addEventListener('input', () => {
+      if (this.searchTimer !== null) window.clearTimeout(this.searchTimer);
+      this.searchTimer = window.setTimeout(() => {
+        this.searchTimer = null;
+        this.folderFilter = filterInput.value.trim();
+        void this.refreshPanel();
+      }, 180);
     });
     let searchVisible = false;
     header.querySelector('#review-btn-search')!.addEventListener('click', () => {
@@ -344,6 +455,7 @@ export class UIManager {
     this.mask.style.display = 'block';
     this.popup.style.display = 'flex';
     this.refreshPanel();
+    this.refreshPreviewBar();
     // 自动更新题库（做题家命令入口已退役 → 模块直调，ADR-0045；异步不阻塞界面）
     void (async () => {
       try {
@@ -418,6 +530,26 @@ export class UIManager {
     this.renderEntries(items, searchText);
   }
 
+  /** ADR-0077：今日/明日预告条刷新（负载预览，固定显示在面板顶部） */
+  async refreshPreviewBar(): Promise<void> {
+    const bar = this.previewBar;
+    if (!bar) return;
+    const items = await this.dataManager.loadItems();
+    const { loadPreview } = await import('./stats');
+    const { today, tomorrow } = loadPreview(items);
+    bar.style.display = 'flex';
+    bar.innerHTML = '';
+    const todayEl = document.createElement('span');
+    todayEl.className = 'bz-review-preview-chip';
+    todayEl.textContent = `今日 ${today} 篇`;
+    if (today > 0) todayEl.classList.add('bz-review-preview-hot');
+    const tmrEl = document.createElement('span');
+    tmrEl.className = 'bz-review-preview-chip';
+    tmrEl.textContent = `明日 ${tomorrow} 篇`;
+    bar.appendChild(todayEl);
+    bar.appendChild(tmrEl);
+  }
+
   renderEntries(items: ReviewItem[], searchText = ''): void {
     const container = this.entriesContainer;
     if (!container) return;
@@ -425,6 +557,11 @@ export class UIManager {
     let filtered = items;
     // 归档开关：false=仅未完成，true=全部（源码语义）
     if (!this.showArchived) filtered = filtered.filter((i) => !i.isCompleted);
+    // ADR-0077：文件夹筛选（filePath 前缀匹配，空=不过滤）
+    if (this.folderFilter) {
+      const f = this.folderFilter.toLowerCase();
+      filtered = filtered.filter((i) => i.filePath.toLowerCase().startsWith(f));
+    }
     if (searchText) {
       const lower = searchText.toLowerCase();
       filtered = filtered.filter((i) => i.name.toLowerCase().includes(lower));
@@ -462,6 +599,13 @@ export class UIManager {
     content.className = 'review-content';
     content.textContent = item.name.replace(/^《|》$/g, '');
     content.title = item.filePath;
+    // ADR-0077：置顶标记（名称前 📌）
+    if (item.pinned) {
+      const pinMark = document.createElement('span');
+      pinMark.className = 'review-pin-mark';
+      pinMark.textContent = '📌 ';
+      content.prepend(pinMark);
+    }
     // ticket 098：挂起记录（文件不存在）→ 删除线
     if (item.isMissing) content.classList.add('review-missing');
     // 双击打开对应笔记（用户拍板保留双击；单击打开收敛进抽屉）
@@ -642,6 +786,39 @@ export class UIManager {
       label: '打开原文',
       onClick: () => {
         void this.openItemFile(item);
+      },
+    });
+
+    // ADR-0077：置顶/取消置顶（列表优先排序 + 仅列表置顶；与 R 优先级互斥）
+    actions.push({
+      icon: item.pinned ? 'pin-off' : 'pin',
+      label: item.pinned ? '取消置顶' : '置顶',
+      onClick: () => {
+        void (async () => {
+          try {
+            await this.dataManager.updateItem(item.filePath, (it) => {
+              it.pinned = !item.pinned;
+            });
+            await this.refreshPanel();
+            const { reviewApp } = await import('./app');
+            await reviewApp.applyReviewStyles(this.app);
+            closeItemMenu();
+          } catch (e) {
+            notice('操作失败：' + (e as Error).message, 'error');
+          }
+        })();
+      },
+    });
+
+    // ADR-0077：查看历史（单条复习时间线，reviewHistory 回放）
+    actions.push({
+      icon: 'history',
+      label: '查看历史',
+      onClick: () => {
+        void (async () => {
+          const { showTimeline } = await import('./stats-ui');
+          showTimeline(this.app, this.dataManager, item);
+        })();
       },
     });
 
