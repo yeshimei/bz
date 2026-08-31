@@ -90,6 +90,13 @@ export function openReviewPanel(app: App): void {
   uiManager?.showMain();
 }
 
+/** 复习计划分析报告（review-report）：独立命令，直接打开统计弹窗（ticket 174） */
+export async function openReviewReport(app: App): Promise<void> {
+  ensureReview(app);
+  const { showStatsModal } = await import('./stats-ui');
+  await showStatsModal(app, dataManager!);
+}
+
 /** 加入复习计划（review-add-current） */
 export async function reviewAddCurrent(app: App): Promise<void> {
   ensureReview(app);
