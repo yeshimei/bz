@@ -58,6 +58,12 @@ interface RowBase {
   desc?: string;
   /** 声明式显隐条件：初始渲染与任意行变更后重求值（省略 = 恒显示） */
   visibleWhen?: (snapshot: SettingsSnapshot) => boolean;
+  /**
+   * 子项联动显隐（ticket 170）：true = 本行跟随所在组内前面最近的 toggle 父项——父项关闭时
+   * 本行隐藏、开启才显示（与行自身 visibleWhen 取与）。父项须为键直绑（外部绑定无法判定）；
+   * 父键为「缺省开」语义（键缺失视为开）的域不适用 isChild，请显式写 visibleWhen。
+   */
+  isChild?: boolean;
 }
 
 export interface ToggleRow extends RowBase {
@@ -369,8 +375,19 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
     else setting.addText(addInto);
   };
 
-  const renderRow = (body: HTMLElement, row: SettingsRow): void => {
+  const renderRow = (body: HTMLElement, rowArg: SettingsRow, parentToggleKey?: string | null): void => {
     const ctx: SettingsRowContext = { rowEl: body, refreshVisibility: reevaluate };
+    let row = rowArg;
+    // isChild 联动显隐（ticket 170）：跟随组内前面最近的 toggle 父项（键直绑）——父项关闭时本行
+    // 隐藏、开启才显示，与行自身 visibleWhen 取与；父项为外部绑定（无 key）时不联动，恒显示。
+    if (row.isChild && parentToggleKey) {
+      row = {
+        ...row,
+        visibleWhen: (snap: SettingsSnapshot) =>
+          (snap as unknown as Record<string, unknown>)[parentToggleKey] === true &&
+          (rowArg.visibleWhen ? rowArg.visibleWhen(snap) : true),
+      } as SettingsRow;
+    }
 
     switch (row.type) {
       case 'custom': {
@@ -505,13 +522,22 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
     }
   };
 
+  /** 组内行渲染（ticket 170 isChild 联动）：本组首个键直绑 toggle 视为「组级父项」，
+   *  所有 isChild 行跟随它显隐——而非跟随「前面最近的 toggle」——避免组内多个 toggle 时
+   *  子项级联绑到错误父项。首个 toggle 自身的 isChild 会被忽略（无父项可跟）。 */
+  const renderGroupRows = (body: HTMLElement, rows: SettingsRow[]): void => {
+    const firstToggleKey =
+      (rows.find((r) => r.type === 'toggle' && 'key' in r.binding) as { binding: { key: string } } | undefined)?.binding.key ?? null;
+    for (const row of rows) renderRow(body, row, firstToggleKey);
+  };
+
   for (const group of schema.groups) {
     if (group.icon) {
       // 分组卡片形态（createSettingsGroup 基座收编）
       const body = createSettingsGroup(container, { icon: group.icon, name: group.name });
       const groupEl = (body.parentElement ?? container) as HTMLElement;
       if (group.visibleWhen) entries.push({ el: groupEl, visibleWhen: group.visibleWhen });
-      for (const row of group.rows) renderRow(body, row);
+      renderGroupRows(body, group.rows);
     } else {
       // 区块标题平铺形态（主设置页）：.bz-setting-section-title 契约保持
       const title = document.createElement('div');
@@ -519,7 +545,7 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
       title.textContent = group.name;
       container.appendChild(title);
       if (group.visibleWhen) entries.push({ el: title, visibleWhen: group.visibleWhen });
-      for (const row of group.rows) renderRow(container, row);
+      renderGroupRows(container, group.rows);
     }
   }
 

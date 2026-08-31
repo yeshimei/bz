@@ -176,7 +176,7 @@ describe('UIManager 主密码流程（统一走保险箱弹窗）', () => {
       .filter((el) => !el.classList.contains('bz-setting-hidden'))
       .map((el) => (el as any).__setting);
     expect(settings[1].desc).toBe('随机生成密码的字符个数');
-    expect(settings[2].desc).toBe('关闭密码本窗口时立即上锁，保险箱同步锁定');
+    expect(settings[2].desc).toBe('关闭窗口立即自动上锁'); // ticket 170 文案精简
   });
 
   it('⚙️ 设置弹窗（移动端）：追加「移动端」组（移动端默认全屏）', async () => {

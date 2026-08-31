@@ -12,6 +12,7 @@
 import { Setting } from 'obsidian';
 import { notice } from '../core/notice';
 import { getSettings, saveSettings } from '../core/settings-provider';
+import { numStrBinding } from '../core/settings-common';
 import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { renderSettingsInto } from '../core/settings-schema';
@@ -46,7 +47,6 @@ function renderDataSourceGroup(groupBody: HTMLElement, state: DataSourceState, r
   renderSourceSwitches(groupBody, state.sources, refreshVisibility);
   renderUpSection(groupBody, state.bilibiliUps, state.bilibiliUpInfo, state.sources.bilibili, state.bilibiliMaxItems, state.bilibiliCookie, refreshVisibility);
   renderRetention(groupBody, refreshVisibility);
-  renderStatusRow(groupBody, state);
   refreshVisibility();
 }
 
@@ -98,14 +98,6 @@ function upDisplayName(uid: string, info?: BilibiliUpInfo): string {
   return info && info.name ? info.name : `UP ${uid}`;
 }
 
-/** 名单概要（「管理」按钮行 desc）：已跟踪 N 位 + 名字预览（有资料用名字，否则 uid） */
-function buildUpSummary(ups: string[], upInfo: Record<string, BilibiliUpInfo>): string {
-  if (ups.length === 0) return '暂无跟踪 UP 主，点击「管理」粘贴主页链接或视频链接添加';
-  const names = ups.map((uid) => upDisplayName(uid, upInfo[uid]));
-  const preview = names.length > 3 ? `${names.slice(0, 3).join('、')} 等 ${names.length} 位` : names.join('、');
-  return `已跟踪 ${ups.length} 位：${preview}。点击「管理」添加/删除`;
-}
-
 /**
  * UP 主名单段（ticket 126）：组内只留「管理」按钮行 + 抓取条数行（ticket 127），添加/删除移入独立弹窗；
  * B 站源关闭时整段隐藏（与开关联动，不残留名单行）。
@@ -119,7 +111,7 @@ function renderUpSection(groupBody: HTMLElement, ups: string[], upInfo: Record<s
     section.innerHTML = '';
     const row = new Setting(section)
       .setName('UP 主名单')
-      .setDesc(buildUpSummary(ups, upInfo));
+      .setDesc(ups.length > 0 ? `已跟踪 ${ups.length} 位` : '暂未跟踪 UP 主');
     row.addButton((btn) =>
       btn.setButtonText('管理').setCta().onClick(() => {
         openUpManagerModal({
@@ -344,7 +336,7 @@ function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, Bilibi
   const { mask, popup } = createOverlay({
     maskId: 'bz-up-manager-mask',
     popupId: 'bz-up-manager-popup',
-    maxWidth: 460,
+    maxWidth: 560, // ticket 170 方案 A：加宽让描述换行，文字不再拥挤
     onMaskClick: close,
   });
 
@@ -375,49 +367,17 @@ function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, Bilibi
   handle = handleReg;
 }
 
-/** 保留天数（已保存 3 天 / 已跳过 7 天，设置可调） */
+/** 已跳过文章保留天数（ticket 170：与「已保存保留天数」同义去重；改为数字框，空值回退 7） */
 function renderRetention(groupBody: HTMLElement, refreshVisibility: () => void): void {
-  const s = getSettings();
-  new Setting(groupBody)
-    .setName('已保存文章保留天数')
-    .setDesc('已保存至剪藏（正文已清空）的骨架条目超过此时长删除；未读永不清理')
-    .addText((text) =>
-      text.setValue(s.newsRetentionSavedDays || '3').onChange(async (v) => {
-        s.newsRetentionSavedDays = v;
-        await saveSettings();
-      })
-    );
+  const binding = numStrBinding('newsRetentionSkippedDays', 7);
   new Setting(groupBody)
     .setName('已跳过文章保留天数')
-    .setDesc('已跳过（正文已清空）的骨架条目超过此时长删除')
+    .setDesc('删除')
     .addText((text) =>
-      text.setValue(s.newsRetentionSkippedDays || '7').onChange(async (v) => {
-        s.newsRetentionSkippedDays = v;
+      text.setValue(String(binding.get())).onChange(async (v) => {
+        const n = Number(v);
+        if (Number.isFinite(n) && n > 0) binding.set(n);
         await saveSettings();
-      })
-    );
-}
-
-/** 只读状态行：最近抓取时间 / UP 主数量 */
-function renderStatusRow(groupBody: HTMLElement, state: DataSourceState): void {
-  const upsCount = state.bilibiliUps.length;
-  const lastTime = state.lastFetchAt ? new Date(state.lastFetchAt.replace(' ', 'T')).toLocaleString() : '暂无抓取记录';
-  new Setting(groupBody)
-    .setName('抓取状态')
-    .setDesc(`最近抓取：${lastTime}；已跟踪 ${upsCount} 位 UP 主；共 ${state.totalArticles} 篇`)
-    .addButton((btn) =>
-      btn.setButtonText('刷新').onClick(async () => {
-        const fresh = await readDataSourceState();
-        btn.setDisabled(true);
-        btn.setButtonText('刷新中…');
-        notice(
-          fresh.lastFetchAt
-            ? `最近抓取：${new Date(fresh.lastFetchAt.replace(' ', 'T')).toLocaleString()}（${fresh.bilibiliUps.length} 位 UP 主）`
-            : '暂无抓取记录',
-          'info'
-        );
-        btn.setDisabled(false);
-        btn.setButtonText('刷新');
       })
     );
 }

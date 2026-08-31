@@ -222,7 +222,7 @@ export function literatureSettingsSchema(opts?: { onClearHistory?: () => void | 
         ],
       },
       {
-        icon: 'wrench', name: '工具',
+        icon: 'terminal', name: '工具',
         rows: [
           { type: 'text', name: 'ffmpeg 路径', desc: '视频处理用；留空跟随工具配置', binding: { key: 'literatureFfmpegPath' }, placeholder: '如 ffmpeg 或 D:/tools/ffmpeg.exe' },
           { type: 'text', name: 'ffprobe 路径', desc: '探测视频元数据用；留空跟随工具配置', binding: { key: 'literatureFfprobePath' }, placeholder: '如 ffprobe 或 D:/tools/ffprobe.exe' },
@@ -232,7 +232,7 @@ export function literatureSettingsSchema(opts?: { onClearHistory?: () => void | 
           { type: 'number', name: '缓存保留天数', desc: '超过该天数的缓存自动清理', binding: { key: 'literatureCacheRetentionDays' }, min: 1, step: 1 },
         ],
       },
-      mobileFullscreenGroup('literatureMobileDefaultFullscreen'),
+      mobileFullscreenGroup('literatureMobileDefaultFullscreen', { desc: '' }),
       {
         icon: 'wrench', name: '维护',
         rows: [

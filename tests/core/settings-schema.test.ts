@@ -10,7 +10,6 @@ import { mainSettingsSchema, STORAGE_PATH_COMMIT_NOTICE } from '../../src/core/s
 import {
   mobileFullscreenGroup,
   mobileFullscreenRow,
-  MOBILE_FULLSCREEN_DESC,
 } from '../../src/core/settings-common';
 import { parseClampedNumber } from '../../src/core/settings-schema';
 import type { SettingsSchema, SettingsSnapshot, SettingsKeyOfType } from '../../src/core/settings-schema';
@@ -23,9 +22,9 @@ function snapOf(partial: Partial<SettingsSnapshot>): SettingsSnapshot {
 describe('mainSettingsSchema：主设置页两区块', () => {
   const schema = mainSettingsSchema();
 
-  it('两区块均为无 icon 分组（区块标题平铺形态），标题 DOM 契约保持', () => {
+  it('ticket 170：两区块升级为分组卡片（带 icon），标题保持', () => {
     expect(schema.groups.map((g) => g.name)).toEqual(['🤖 AI', '📂 数据存储路径']);
-    expect(schema.groups.every((g) => g.icon === undefined)).toBe(true);
+    expect(schema.groups.map((g) => g.icon)).toEqual(['sparkles', 'folder-open']);
   });
 
   it('AI 区块：服务商下拉（键直绑）+ 两密钥行 + 自定义三行 + max token（ticket 170）', () => {
@@ -81,13 +80,12 @@ describe('mainSettingsSchema：主设置页两区块', () => {
 });
 
 describe('settings-common：移动端默认全屏预设', () => {
-  it('行结构：toggle + 键直绑 + 名称冻结；缺省描述 = 13 处手写块多数派逐字文案', () => {
+  it('行结构：toggle + 键直绑 + 名称冻结；ticket 170 起所有域统一无描述', () => {
     const row = mobileFullscreenRow('diaryMobileDefaultFullscreen') as unknown as Record<string, unknown>;
     expect(row.type).toBe('toggle');
     expect(row.name).toBe('移动端默认全屏');
     expect(row.binding).toEqual({ key: 'diaryMobileDefaultFullscreen' });
-    expect(row.desc).toBe(MOBILE_FULLSCREEN_DESC);
-    expect(MOBILE_FULLSCREEN_DESC).toBe('移动端打开主窗口时默认全屏，关闭则显示常规卡片');
+    expect(row.desc).toBeUndefined();
   });
 
   it('visibleWhen：桌面端隐藏、移动端显示（Platform.isMobile 口径）', () => {
@@ -105,12 +103,14 @@ describe('settings-common：移动端默认全屏预设', () => {
     }
   });
 
-  it('desc 覆盖：现网变体逐字对齐；空串 = 无描述（secondbrain 现状）', () => {
+  it('desc 覆盖：传非空字符串 = 覆盖；传空串或不传 = 无描述（ticket 170 全域统一）', () => {
     const overridden = mobileFullscreenRow('belongingsMobileDefaultFullscreen', {
       desc: '移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）',
     }) as { desc?: string };
     expect(overridden.desc).toBe('移动端打开主窗口时默认全屏显示（≤768px；关=常规卡）');
-    const none = mobileFullscreenRow('secondBrainMobileDefaultFullscreen', { desc: '' }) as { desc?: string };
+    const empty = mobileFullscreenRow('secondBrainMobileDefaultFullscreen', { desc: '' }) as { desc?: string };
+    expect(empty.desc).toBeUndefined();
+    const none = mobileFullscreenRow('memoMobileDefaultFullscreen') as { desc?: string };
     expect(none.desc).toBeUndefined();
   });
 
