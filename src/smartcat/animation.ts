@@ -1,8 +1,13 @@
 /**
  * 动画系统（移植自 SmartCatAnimation.js AdvancedAnimationSystem + 72 小动作注入）
  * 铁律 9 收敛：一次性动画通过 CSS 变量驱动（styles.css `.bz-sc-anim` 承载体，
- * JS 只设 --bz-sc-anim-name/--bz-sc-anim-dur——动态时间参数）；循环动画（心情/基础）
- * 用 styles.css 组合类（.bz-sc-anim-base/.bz-sc-mood-happy 等）。156 keyframes 全静态。
+ * JS 只设 --bz-sc-anim-name/--bz-sc-anim-dur——动态时间参数）；循环动画（基础）
+ * 用 styles.css 组合类（.bz-sc-anim-base 等）。keyframes 全静态。
+ *
+ * 2026-08-31 变更：去掉动画心情系统（AnimMood 状态机 / bz-sc-mood-* 组合类——
+ * PAD 数据心情基本不变，视觉心情无意义）；原心情动画 keyframes 保留并进随机池
+ * （happyBounce/curiousLook/sleepySway/excitedVibrate/playfulHop 作为普通动作随机触发）；
+ * 新增多部件组合动作（playMultiPartAnimation，一个动作同时驱动 body+tail+ears+eyes）。
  * 原版死代码（enhanceWith72Actions/setupSmartActionSequences/setupAdvancedSkinAnimations）
  * 无调用点 → 不移植（spec 决策）。
  */
@@ -13,6 +18,22 @@ export interface InjectedAction {
   part: AnimPart;
   animation: string;
   duration: number;
+  /** 多部件组合动作（同时驱动多个部件；设置后 part 为示意主部件，parts 全量生效） */
+  parts?: Array<{ part: AnimPart; animation: string }>;
+}
+
+/** 全动作池（含原 72 小动作 + 原心情动画 + 新增组合动作）；随机调度从此池抽取 */
+export function getAllActions(): InjectedAction[] {
+  return [
+    ...INJECTED_ACTIONS.basic,
+    ...INJECTED_ACTIONS.cute,
+    ...INJECTED_ACTIONS.lively,
+    ...INJECTED_ACTIONS.elegant,
+    ...INJECTED_ACTIONS.funny,
+    ...INJECTED_ACTIONS.special,
+    ...MOOD_ACTIONS,
+    ...COMBO_ACTIONS,
+  ];
 }
 
 /** 72 小动作表（原注入对象逐字：6 类 × 12） */
@@ -103,7 +124,113 @@ export const INJECTED_ACTIONS: Record<string, InjectedAction[]> = {
   ],
 };
 
-export type AnimMood = 'content' | 'happy' | 'curious' | 'sleepy' | 'excited' | 'playful';
+/** 原心情动画（去心情状态机后保留为随机池普通动作；keyframes 已存在 styles.css） */
+export const MOOD_ACTIONS: InjectedAction[] = [
+  { name: '开心蹦跳', part: 'body', animation: 'happyBounce', duration: 2000 },
+  { name: '好奇张望', part: 'body', animation: 'curiousLook', duration: 1500 },
+  { name: '困倦摇晃', part: 'body', animation: 'sleepySway', duration: 2500 },
+  { name: '兴奋抖动', part: 'body', animation: 'excitedVibrate', duration: 1000 },
+  { name: '欢快跳跃', part: 'body', animation: 'playfulHop', duration: 1800 },
+];
+
+/** 多部件组合动作（原心情状态机删除后新增；一个动作同时驱动多个部件） */
+export const COMBO_ACTIONS: InjectedAction[] = [
+  {
+    name: '组合跳跃', part: 'body', animation: 'comboJump', duration: 900,
+    parts: [
+      { part: 'body', animation: 'comboJump' },
+      { part: 'tail', animation: 'comboJumpTail' },
+      { part: 'ears', animation: 'comboJumpEars' },
+    ],
+  },
+  {
+    name: '开心转圈', part: 'body', animation: 'comboHappySpin', duration: 1400,
+    parts: [
+      { part: 'body', animation: 'comboHappySpin' },
+      { part: 'tail', animation: 'comboHappySpinTail' },
+      { part: 'eyes', animation: 'comboHappySpinEyes' },
+    ],
+  },
+  {
+    name: '伸懒腰', part: 'body', animation: 'comboYawn', duration: 1300,
+    parts: [
+      { part: 'body', animation: 'comboYawn' },
+      { part: 'eyes', animation: 'comboYawnEyes' },
+      { part: 'tail', animation: 'comboYawnTail' },
+    ],
+  },
+  {
+    name: '左右张望', part: 'body', animation: 'comboLookAround', duration: 1200,
+    parts: [
+      { part: 'body', animation: 'comboLookAround' },
+      { part: 'ears', animation: 'comboLookAroundEars' },
+      { part: 'eyes', animation: 'comboLookAroundEyes' },
+    ],
+  },
+  {
+    name: '蹭蹭屏幕', part: 'body', animation: 'comboPurr', duration: 1100,
+    parts: [
+      { part: 'body', animation: 'comboPurr' },
+      { part: 'tail', animation: 'comboPurrTail' },
+      { part: 'eyes', animation: 'comboPurrEyes' },
+    ],
+  },
+  {
+    name: '受惊跳起', part: 'body', animation: 'comboStartle', duration: 700,
+    parts: [
+      { part: 'body', animation: 'comboStartle' },
+      { part: 'ears', animation: 'comboStartleEars' },
+      { part: 'eyes', animation: 'comboStartleEyes' },
+    ],
+  },
+  {
+    name: '伸展前爪', part: 'body', animation: 'comboStretchArms', duration: 1100,
+    parts: [
+      { part: 'body', animation: 'comboStretchArms' },
+      { part: 'tail', animation: 'comboStretchArmsTail' },
+    ],
+  },
+  {
+    name: '扑跃玩耍', part: 'body', animation: 'comboPlayfulPounce', duration: 850,
+    parts: [
+      { part: 'body', animation: 'comboPlayfulPounce' },
+      { part: 'tail', animation: 'comboPlayfulPounceTail' },
+      { part: 'ears', animation: 'comboPlayfulPounceEars' },
+    ],
+  },
+  {
+    name: '打盹', part: 'body', animation: 'comboSleepyDozing', duration: 1600,
+    parts: [
+      { part: 'body', animation: 'comboSleepyDozing' },
+      { part: 'eyes', animation: 'comboSleepyDozingEyes' },
+      { part: 'tail', animation: 'comboSleepyDozingTail' },
+    ],
+  },
+  {
+    name: '好奇探头', part: 'body', animation: 'comboCuriousPeek', duration: 1000,
+    parts: [
+      { part: 'body', animation: 'comboCuriousPeek' },
+      { part: 'head', animation: 'comboCuriousPeekHead' },
+      { part: 'ears', animation: 'comboCuriousPeekEars' },
+    ],
+  },
+  {
+    name: '打滚', part: 'body', animation: 'comboRollOver', duration: 1500,
+    parts: [
+      { part: 'body', animation: 'comboRollOver' },
+      { part: 'tail', animation: 'comboRollOverTail' },
+      { part: 'eyes', animation: 'comboRollOverEyes' },
+    ],
+  },
+  {
+    name: '庆祝跳跃', part: 'body', animation: 'comboCelebrate', duration: 1200,
+    parts: [
+      { part: 'body', animation: 'comboCelebrate' },
+      { part: 'tail', animation: 'comboCelebrateTail' },
+      { part: 'ears', animation: 'comboCelebrateEars' },
+    ],
+  },
+];
 
 export class SmartCatAnimation {
   cat: HTMLElement;
@@ -114,9 +241,7 @@ export class SmartCatAnimation {
   face: HTMLElement;
   animationQueue: { animationName: string; duration: number }[] = [];
   isBusy = false;
-  mood: AnimMood = 'content';
   lastInteraction = Date.now();
-  private stateTimer: ReturnType<typeof setInterval> | null = null;
   private randomTimer: ReturnType<typeof setInterval> | null = null;
   private enhancedTimer: ReturnType<typeof setInterval> | null = null;
   private pendingTimeouts: ReturnType<typeof setTimeout>[] = [];
@@ -132,7 +257,6 @@ export class SmartCatAnimation {
 
   initialize(): void {
     this.setBaseAnimations();
-    this.startStateLoop();
     this.setupInteractions();
     this.startRandomActions();
     this.startEnhancedRandomActions();
@@ -155,50 +279,6 @@ export class SmartCatAnimation {
     this.face.classList.remove('bz-sc-anim');
   }
 
-  /** 状态循环（原 startStateLoop：5s 检查；30s 无互动→sleepy、5s 内有→excited、10% 随机换） */
-  startStateLoop(): void {
-    if (this.stateTimer) clearInterval(this.stateTimer);
-    this.stateTimer = setInterval(() => this.updateState(), 5000);
-  }
-
-  updateState(): void {
-    const now = Date.now();
-    const timeSinceLastInteraction = now - this.lastInteraction;
-    if (timeSinceLastInteraction > 30000 && this.mood !== 'sleepy') {
-      if (Math.random() < 0.3) this.setMood('sleepy');
-    } else if (timeSinceLastInteraction < 5000 && this.mood !== 'excited') {
-      if (Math.random() < 0.4) this.setMood('excited');
-    }
-    if (Math.random() < 0.1) {
-      const moods: AnimMood[] = ['content', 'happy', 'curious', 'playful'];
-      const randomMood = moods[Math.floor(Math.random() * moods.length)];
-      if (randomMood !== this.mood) this.setMood(randomMood);
-    }
-  }
-
-  /** 心情切换（原 setMood：写 mood + 组合类 + 触发一次性动画） */
-  setMood(newMood: AnimMood): void {
-    this.mood = newMood;
-    this.applyMoodAnimations();
-    switch (newMood) {
-      case 'happy': this.playAnimation('happyBounce', 2000); break;
-      case 'curious': this.playAnimation('curiousLook', 1500); break;
-      case 'sleepy': this.playAnimation('sleepySway', 2500); break;
-      case 'excited': this.playAnimation('excitedVibrate', 1000); break;
-      case 'playful': this.playAnimation('playfulHop', 1800); break;
-    }
-  }
-
-  /** 心情组合类切换（原 applyMoodAnimations：styles.css .bz-sc-mood-* 承担组合） */
-  applyMoodAnimations(): void {
-    this.body.classList.remove('bz-sc-mood-happy', 'bz-sc-mood-curious', 'bz-sc-mood-sleepy', 'bz-sc-mood-excited', 'bz-sc-mood-playful');
-    if (this.mood === 'content') {
-      this.setBaseAnimations();
-      return;
-    }
-    this.body.classList.add(`bz-sc-mood-${this.mood}`);
-  }
-
   /** 随机小动作（原 triggerRandomAction 5 选 1） */
   triggerRandomAction(): void {
     const actions = [
@@ -216,12 +296,12 @@ export class SmartCatAnimation {
   startRandomActions(): void {
     if (this.randomTimer) clearInterval(this.randomTimer);
     this.randomTimer = setInterval(() => {
-      if (this.isBusy || this.mood === 'sleepy') return;
+      if (this.isBusy) return;
       if (Math.random() < 0.3) this.triggerRandomAction();
     }, 8000);
   }
 
-  /** 整身一次性动画（原 playAnimation：busy 排队（blinkQuick 例外）→ none+重绘 → 应用 → duration 后恢复心情动画 + 播队内下一支） */
+  /** 整身一次性动画（原 playAnimation：busy 排队（blinkQuick 例外）→ none+重绘 → 应用 → duration 后恢复基础动画 + 播队内下一支） */
   playAnimation(animationName: string, duration = 1000): void {
     if (this.isBusy && animationName !== 'blinkQuick') {
       this.animationQueue.push({ animationName, duration });
@@ -236,7 +316,7 @@ export class SmartCatAnimation {
     const t = setTimeout(() => {
       this.isBusy = false;
       this.clearOneShot();
-      this.applyMoodAnimations();
+      this.setBaseAnimations();
       if (this.animationQueue.length > 0) {
         const next = this.animationQueue.shift()!;
         const t2 = setTimeout(() => this.playAnimation(next.animationName, next.duration), 200);
@@ -263,11 +343,35 @@ export class SmartCatAnimation {
     });
   }
 
-  /** 交互监听（原 setupInteractions：hover 刷新/attentionPulse、leave 刷新、click cat-body→excitedWiggle+excited+50%耳动） */
+  /** 多部件组合动画（一个动作同时驱动多个部件：body 主动画 + 各部件子动画，统一时长） */
+  playMultiPartAnimation(parts: Array<{ part: AnimPart; animation: string }>, duration = 1000): void {
+    if (this.isBusy) return;
+    this.isBusy = true;
+    const applied: HTMLElement[] = [];
+    parts.forEach(({ part, animation }) => {
+      this.getActionElements(part).forEach((element) => {
+        element.classList.add('bz-sc-anim');
+        (element as any).style.setProperty('--bz-sc-anim-name', animation);
+        (element as any).style.setProperty('--bz-sc-anim-dur', duration + 'ms');
+        void (element as HTMLElement).offsetWidth;
+        applied.push(element);
+      });
+    });
+    const t = setTimeout(() => {
+      applied.forEach((element) => {
+        element.classList.remove('bz-sc-anim');
+        (element as any).style.removeProperty('--bz-sc-anim-name');
+        (element as any).style.removeProperty('--bz-sc-anim-dur');
+      });
+      this.isBusy = false;
+    }, duration);
+    this.pendingTimeouts.push(t);
+  }
+
+  /** 交互监听（原 setupInteractions：hover 刷新/attentionPulse、leave 刷新、click cat-body→excitedWiggle+50%耳动） */
   setupInteractions(): void {
     this.cat.addEventListener('mouseenter', () => {
       this.lastInteraction = Date.now();
-      if (this.mood === 'sleepy') this.setMood('content');
       this.playAnimation('attentionPulse', 1500);
     });
     this.cat.addEventListener('mouseleave', () => {
@@ -278,7 +382,6 @@ export class SmartCatAnimation {
       if (target.closest && target.closest('#cat-body')) {
         this.lastInteraction = Date.now();
         this.playAnimation('excitedWiggle', 800);
-        this.setMood('excited');
         if (Math.random() < 0.5) {
           const t = setTimeout(() => {
             this.playPartAnimation('ears', Math.random() < 0.5 ? 'earFlickLeft' : 'earFlickRight', 600);
@@ -290,45 +393,28 @@ export class SmartCatAnimation {
   }
 
   /** 特殊场合（原 celebrate/greet/surprise/startListening/stopListening/thinking；无调用点的五个已随清理移除） */
-  greet(): void { this.playAnimation('greetingBow', 1200); this.setMood('happy'); }
+  greet(): void { this.playAnimation('greetingBow', 1200); }
 
-  // ---------- 72 小动作（增强版随机动作） ----------
+  // ---------- 全动作池（72 小动作 + 心情动画 + 组合动作） ----------
 
-  /** 增强随机调度（原 startEnhancedRandomActions：6s；mood 概率表） */
+  /** 增强随机调度（原 startEnhancedRandomActions：6s；去心情后固定 40% 概率） */
   startEnhancedRandomActions(): void {
     if (this.enhancedTimer) clearInterval(this.enhancedTimer);
     this.enhancedTimer = setInterval(() => {
-      if (this.isBusy || this.mood === 'sleepy') return;
-      let triggerProbability = 0.3;
-      switch (this.mood) {
-        case 'happy': triggerProbability = 0.5; break;
-        case 'excited': triggerProbability = 0.6; break;
-        case 'playful': triggerProbability = 0.7; break;
-        case 'curious': triggerProbability = 0.4; break;
-        case 'content': triggerProbability = 0.3; break;
-      }
-      if (Math.random() < triggerProbability) this.triggerEnhancedRandomAction();
+      if (this.isBusy) return;
+      if (Math.random() < 0.4) this.triggerEnhancedRandomAction();
     }, 6000);
   }
 
-  /** 触发增强动作（原 triggerEnhancedRandomAction） */
+  /** 触发增强动作（从全动作池抽一支；组合动作走多部件播放） */
   triggerEnhancedRandomAction(): void {
-    const moodActions = this.getMoodAppropriateActions();
-    if (!moodActions.length) return;
-    const randomAction = moodActions[Math.floor(Math.random() * moodActions.length)];
-    this.playEnhancedAnimation(randomAction);
-  }
-
-  /** 按心情筛选动作池（原 getMoodAppropriateActions 逐字） */
-  getMoodAppropriateActions(): InjectedAction[] {
-    const all = [...INJECTED_ACTIONS.basic, ...INJECTED_ACTIONS.cute, ...INJECTED_ACTIONS.lively, ...INJECTED_ACTIONS.elegant, ...INJECTED_ACTIONS.funny, ...INJECTED_ACTIONS.special];
-    switch (this.mood) {
-      case 'happy': return [...INJECTED_ACTIONS.cute, ...INJECTED_ACTIONS.lively, ...INJECTED_ACTIONS.special];
-      case 'excited': return [...INJECTED_ACTIONS.lively, ...INJECTED_ACTIONS.funny, ...INJECTED_ACTIONS.special];
-      case 'playful': return [...INJECTED_ACTIONS.funny, ...INJECTED_ACTIONS.lively, ...INJECTED_ACTIONS.cute];
-      case 'curious': return [...INJECTED_ACTIONS.basic, ...INJECTED_ACTIONS.elegant];
-      case 'sleepy': return INJECTED_ACTIONS.basic.filter((a) => a.duration < 1000);
-      default: return all;
+    const pool = getAllActions();
+    if (!pool.length) return;
+    const randomAction = pool[Math.floor(Math.random() * pool.length)];
+    if (randomAction.parts?.length) {
+      this.playMultiPartAnimation(randomAction.parts, randomAction.duration);
+    } else {
+      this.playEnhancedAnimation(randomAction);
     }
   }
 
@@ -368,10 +454,9 @@ export class SmartCatAnimation {
 
   /** 卸载清理：清 interval + 挂起 timeout（原版无清理，移植必须补） */
   dispose(): void {
-    if (this.stateTimer) clearInterval(this.stateTimer);
     if (this.randomTimer) clearInterval(this.randomTimer);
     if (this.enhancedTimer) clearInterval(this.enhancedTimer);
-    this.stateTimer = this.randomTimer = this.enhancedTimer = null;
+    this.randomTimer = this.enhancedTimer = null;
     for (const t of this.pendingTimeouts) clearTimeout(t);
     this.pendingTimeouts = [];
     this.animationQueue = [];
