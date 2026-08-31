@@ -79,10 +79,11 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
     expect(titles).toEqual(['🤖 AI', '📂 数据存储路径']);
   });
 
-  it('AI 区块：服务商下拉 + 两个密钥行；数据存储路径区块：路径选择行（已选态 chip + ✕，无按钮/手输框）', () => {
+  it('AI 区块：服务商下拉 + 密钥行；数据存储路径区块：路径选择行（已选态 chip + ✕，无按钮/手输框）', () => {
     findSetting(tab, 'AI 服务商');
     findSetting(tab, 'DeepSeek 密钥');
     findSetting(tab, 'OpenCode 密钥');
+    findSetting(tab, '最大输出 token'); // ticket 170
     const storageRow = findSetting(tab, '数据存储路径');
     // ticket 128：行内无 text 输入框；ticket 133：已选态「选择…」按钮移出 DOM（chip 内 ✕ 仍是 button）；
     // 默认值场景 data-filled=1（CSS 双保险隐藏按钮——用户反馈「有默认值时按钮不消失」的回归锁）
@@ -98,9 +99,10 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
 
   it('AI 服务商切换 → 密钥行 visibleWhen 显隐（ticket 131：默认 opencode-go 显示 OpenCode 行）', async () => {
     const hiddenOf = (name: string) => findSetting(tab, name).classList.contains('bz-setting-hidden');
-    // 默认 opencode-go：OpenCode 行显示、DeepSeek 行隐藏
+    // 默认 opencode-go：OpenCode 行显示、DeepSeek 行隐藏、custom 行隐藏
     expect(hiddenOf('DeepSeek 密钥')).toBe(true);
     expect(hiddenOf('OpenCode 密钥')).toBe(false);
+    expect(hiddenOf('自定义 API 地址')).toBe(true);
     // 切 deepseek：反转
     const aiSetting = findSetting(tab, 'AI 服务商');
     const dd = (aiSetting as any).__setting.controls.find((c: any) => c.options && 'deepseek' in c.options);
@@ -108,11 +110,20 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
     await new Promise((r) => setTimeout(r, 10));
     expect(hiddenOf('DeepSeek 密钥')).toBe(false);
     expect(hiddenOf('OpenCode 密钥')).toBe(true);
+    // 切 custom：仅 custom 行显示
+    dd.trigger('custom');
+    await new Promise((r) => setTimeout(r, 10));
+    expect(hiddenOf('DeepSeek 密钥')).toBe(true);
+    expect(hiddenOf('OpenCode 密钥')).toBe(true);
+    expect(hiddenOf('自定义 API 地址')).toBe(false);
+    expect(hiddenOf('自定义模型')).toBe(false);
+    expect(hiddenOf('自定义 API 密钥')).toBe(false);
     // 切回 opencode-go：再次反转
     dd.trigger('opencode-go');
     await new Promise((r) => setTimeout(r, 10));
     expect(hiddenOf('DeepSeek 密钥')).toBe(true);
     expect(hiddenOf('OpenCode 密钥')).toBe(false);
+    expect(hiddenOf('自定义 API 地址')).toBe(true);
   });
 
   it('AI 服务商切换更新设置并持久化', async () => {

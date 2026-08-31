@@ -20,13 +20,16 @@ export class FavoritesAIService {
    * 判定口径与 core/ai.ts getAIProvider 一致：provider = aiProvider || 'opencode-go'；
    * - opencode-go 无 legacy 兜底：缺 opencodeGoApiKey 即拦截；
    * - deepseek 的 quickadd data.json 兜底是异步文件读取（core/ai getAIProvider 运行时判定），
-   *   插件设置缺 key 不判死——交给运行时兜底，避免误拦仅 QuickAdd data.json 配置的老用户。
+   *   插件设置缺 key 不判死——交给运行时兜底，避免误拦仅 QuickAdd data.json 配置的老用户；
+   * - custom（ticket 170）：需 endpoint + key 齐全才算已配置。
    */
   isAvailable(): boolean {
     if (!this.ai) return false;
     const s = getSettings();
     const provider = s.aiProvider || 'opencode-go';
-    return provider === 'opencode-go' ? !!s.opencodeGoApiKey : true;
+    if (provider === 'opencode-go') return !!s.opencodeGoApiKey;
+    if (provider === 'custom') return !!s.aiCustomEndpoint && !!s.aiCustomApiKey;
+    return true;
   }
 
   /**
