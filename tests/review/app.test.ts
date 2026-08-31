@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 复习计划核心逻辑测试（ticket 16 修正版）：markReview 阶梯/FSRS/未到期/autoJumpOverdue
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -1034,5 +1034,96 @@ describe('P1-2 回归：reviewLoop 活动文件切走收尾', () => {
     expect(handle.setType).not.toHaveBeenCalledWith('warning');
     expect((reviewApp as any)._reviewNotice).not.toBeNull();
     (reviewApp as any)._reviewNotice = null;
+  });
+});
+
+describe('ADR-0077：置顶排序 + R 优先级 + 抽查 + 拟合触发', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setSettingsProvider(() => ({} as any));
+    (reviewApp as any).dataManager = null;
+    (reviewApp as any)._fittedW = null;
+    (reviewApp as any)._reviewCountSinceFit = 0;
+    (reviewApp as any)._fitRunning = false;
+  });
+
+  it('sortOverdue：置顶条目先于逾期队列，非置顶按 R 升序', async () => {
+    const now = new Date();
+    const mk = (path: string, nextDate: string, pinned?: boolean, stability?: number, lastReviewed?: string, phase = 'fsrs') => ({
+      id: path, filePath: path, name: path.replace('.md', ''), reviewStart: now.toISOString(),
+      stage: 10, phase, stability: stability ?? 1, difficulty: 0.3, reviewHistory: [],
+      totalReviews: 0, averageConfidence: 0, nextReviewDate: nextDate, lastReviewed: lastReviewed ?? null,
+      lastDifficulty: null, completed: false, pinned,
+    });
+    // A 置顶且逾期晚；B 未置顶逾期早但 R 高；C 未置顶逾期中 R 低
+    const items = [
+      mk('A.md', new Date(now.getTime() - 3600e3).toISOString(), true, 20, new Date(now.getTime() - 10 * 86400e3).toISOString()),
+      mk('B.md', new Date(now.getTime() - 86400e3 * 3).toISOString(), false, 20, new Date(now.getTime() - 1 * 86400e3).toISOString()),
+      mk('C.md', new Date(now.getTime() - 86400e3 * 2).toISOString(), false, 5, new Date(now.getTime() - 20 * 86400e3).toISOString()),
+    ];
+    const sorted = reviewApp.sortOverdue(items as any);
+    // A 置顶第一；C（R 低）先于 B（R 高）
+    expect(sorted[0].filePath).toBe('A.md');
+    expect(sorted[1].filePath).toBe('C.md');
+    expect(sorted[2].filePath).toBe('B.md');
+    // 每日上限截断
+    const limited = reviewApp.sortOverdue(items as any, 2);
+    expect(limited).toHaveLength(2);
+    expect(limited[0].filePath).toBe('A.md');
+  });
+
+  it('randomDrill：随机抽 N 篇（不排期，纯抽查）', async () => {
+    const vault = new MockVault();
+    const now = new Date();
+    const mk = (path: string) => ({
+      id: path, filePath: path, name: path.replace('.md', ''), reviewStart: now.toISOString(),
+      stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [],
+      totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() + 86400e3).toISOString(),
+      lastReviewed: null, lastDifficulty: null, completed: false,
+    });
+    for (const p of ['A.md', 'B.md', 'C.md', 'D.md', 'E.md']) vault.files.set(p, '正文');
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([mk('A.md'), mk('B.md'), mk('C.md'), mk('D.md'), mk('E.md')]));
+    const app = makeApp(vault);
+    setApp(app);
+    (app.workspace as any).getLeaf = () => ({ openFile: vi.fn().mockResolvedValue(undefined) });
+    // forceQuizForReview 关 → 走普通复习
+    setSettingsProvider(() => ({ forceQuizForReview: false } as any));
+    vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
+    const p = reviewApp.randomDrill(3);
+    await vi.advanceTimersByTimeAsync(4000);
+    await p;
+    vi.useRealTimers();
+    // 抽查不写排期：nextReviewDate 不变（未被 markReview 修改）
+    const items = await new ReviewDataManager(app).loadItems();
+    for (const it of items) expect(it.nextReviewDate).not.toBeNull();
+  });
+
+  it('maybeRunFit：每 N 次触发拟合重算（样本不足静默跳过）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    (reviewApp as any).dataManager = dm;
+    // 样本不足（<100）→ 不落盘、不提示
+    setSettingsProvider(() => ({ reviewEnableFit: true, reviewFitEveryN: 3 } as any));
+    await reviewApp.maybeRunFit(app);
+    await reviewApp.maybeRunFit(app);
+    await reviewApp.maybeRunFit(app); // 达阈值 3
+    const fitFile = vault.files.get('CONFIG/STORAGE/review-fit.json');
+    expect(fitFile).toBeUndefined(); // 样本不足未落盘
+  });
+
+  it('currentR：FSRS 相位且有 lastReviewed 可算；否则 null', () => {
+    const now = new Date();
+    const item = {
+      phase: 'fsrs', stability: 5, lastReviewed: new Date(now.getTime() - 86400e3).toISOString(),
+    } as any;
+    const r = reviewApp.currentR(item);
+    expect(r).not.toBeNull();
+    expect(r!).toBeGreaterThan(0);
+    expect(r!).toBeLessThan(1);
+    const ladder = { phase: 'ladder' } as any;
+    expect(reviewApp.currentR(ladder)).toBeNull();
   });
 });

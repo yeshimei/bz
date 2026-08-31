@@ -3148,6 +3148,66 @@ button.news-close-btn {
       .bz-review-exclude-remove { background:none; border:none; cursor:pointer; color:var(--text-faint); font-size:11px; line-height:1; padding:2px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:none !important; }
       .bz-review-exclude-remove:hover { color:var(--text-error, #ff4757); background:var(--background-modifier-hover); }
 
+      /* ==================== ADR-0077 复习计划增强（ticket 174） ==================== */
+      /* 今日/明日预告条 */
+      #review-preview-bar { display:flex; gap:8px; align-items:center; padding:0 24px 8px 24px; flex-wrap:wrap; }
+      .bz-review-preview-chip { font-size:12px; color:var(--text-muted); padding:2px 10px; border-radius:12px; background:var(--background-secondary); border:1px solid var(--background-modifier-border); }
+      .bz-review-preview-chip.bz-review-preview-hot { color:#ff4757; border-color:#ff4757; background:#ff475711; font-weight:500; }
+      /* 文件夹筛选栏 */
+      #review-filter-bar { padding:0 24px 8px 24px; }
+      .review-filter-input { padding:4px 10px; border-radius:12px; border:1px solid var(--background-modifier-border); background:var(--background-secondary); color:var(--text-normal); font-size:13px; width:100%; outline:none; }
+      .review-filter-input:focus { border-color:var(--interactive-accent); }
+      /* 抽查 */
+      #review-drill-wrap { display:flex; gap:8px; align-items:center; padding:0 24px 8px 24px; }
+      .review-drill-input { padding:4px 10px; border-radius:12px; border:1px solid var(--background-modifier-border); background:var(--background-secondary); color:var(--text-normal); font-size:13px; width:80px; outline:none; }
+      .review-drill-go { padding:4px 14px; border-radius:12px; border:none; background:var(--interactive-accent); color:var(--text-on-accent); font-size:13px; cursor:pointer; }
+      .review-drill-go:hover { opacity:0.9; }
+      /* 置顶标记 */
+      .review-pin-mark { font-size:12px; }
+      /* 统计弹窗 */
+      #review-stats-mask { position:fixed; top:0; left:0; right:0; bottom:0; background:var(--background-modifier-cover); backdrop-filter:blur(2px); }
+      #review-stats-popup { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--background-primary); border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.2); width:92%; max-width:760px; max-height:84vh; flex-direction:column; animation:slideUp 0.3s ease-out; }
+      #review-stats-body { flex:1; overflow-y:auto; padding:16px 24px 24px 24px; }
+      .bz-review-stats-section { margin-bottom:20px; }
+      .bz-review-stats-title { font-size:15px; font-weight:600; color:var(--text-normal); margin-bottom:12px; }
+      .bz-review-stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px; }
+      .bz-review-stats-cell { background:var(--background-secondary); border-radius:10px; padding:12px; text-align:center; }
+      .bz-review-stats-num { font-size:24px; font-weight:700; color:var(--text-normal); }
+      .bz-review-stats-label { font-size:11px; color:var(--text-muted); margin-top:2px; }
+      .bz-review-stats-sub { font-size:13px; color:var(--text-muted); margin:12px 0 8px 0; }
+      .bz-review-stats-bar-row { display:flex; align-items:center; gap:8px; margin:4px 0; }
+      .bz-review-stats-bar-label { width:40px; font-size:12px; text-align:right; }
+      .bz-review-stats-bar-track { flex:1; height:14px; border-radius:7px; background:var(--background-secondary); overflow:hidden; }
+      .bz-review-stats-bar-fill { height:100%; border-radius:7px; transition:width 0.3s; }
+      .bz-review-stats-bar-count { width:30px; font-size:12px; color:var(--text-muted); }
+      .bz-review-stats-days { display:flex; gap:6px; align-items:flex-end; height:70px; }
+      .bz-review-stats-day { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:2px; }
+      .bz-review-stats-day-bar { width:100%; max-width:24px; border-radius:4px 4px 0 0; background:var(--interactive-accent); opacity:0.8; }
+      .bz-review-stats-day-label { font-size:9px; color:var(--text-faint); }
+      .bz-review-stats-day-num { font-size:10px; color:var(--text-muted); }
+      /* 负载分布 */
+      .bz-review-stats-nswitch { display:flex; gap:6px; margin-bottom:8px; }
+      .bz-review-stats-nbtn { padding:2px 10px; border-radius:12px; border:1px solid var(--background-modifier-border); background:var(--background-secondary); color:var(--text-muted); font-size:12px; cursor:pointer; }
+      .bz-review-stats-nbtn.active { background:var(--interactive-accent); color:var(--text-on-accent); border-color:var(--interactive-accent); }
+      .bz-review-stats-dist { display:flex; gap:4px; align-items:flex-end; height:70px; overflow-x:auto; }
+      .bz-review-stats-dist-day { flex:1; min-width:14px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:2px; }
+      .bz-review-stats-dist-bar { width:100%; border-radius:4px 4px 0 0; background:#ff4757; opacity:0.85; }
+      .bz-review-stats-dist-label { font-size:9px; color:var(--text-faint); }
+      /* 日历热力图 */
+      .bz-review-stats-heat { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:8px; }
+      .bz-review-stats-heat-cell { aspect-ratio:1; border-radius:4px; background:var(--background-secondary); }
+      /* 时间线 */
+      .bz-review-stats-empty { padding:20px; text-align:center; color:var(--text-faint); font-size:13px; }
+      .bz-review-stats-timeline-list { display:flex; flex-direction:column; gap:4px; }
+      .bz-review-stats-tl-row { text-align:left; padding:8px 10px; border-radius:8px; border:none; background:var(--background-secondary); color:var(--text-normal); font-size:13px; cursor:pointer; }
+      .bz-review-stats-tl-row:hover { background:var(--background-modifier-hover); }
+      .bz-review-stats-back { padding:6px 12px; border-radius:8px; border:1px solid var(--background-modifier-border); background:var(--background-secondary); color:var(--text-normal); font-size:12px; cursor:pointer; margin-bottom:12px; }
+      .bz-review-stats-back:hover { background:var(--background-modifier-hover); }
+      .bz-review-stats-tl-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--background-modifier-border); font-size:13px; }
+      .bz-review-stats-tl-when { color:var(--text-muted); min-width:130px; }
+      .bz-review-stats-tl-rating { font-weight:500; min-width:40px; }
+      .bz-review-stats-tl-meta { color:var(--text-faint); }
+
 
 /* ==================== 做题家域样式（src/quiz/styles.css） ==================== */
 /* ==================== 做题家（quiz，ticket 60 收敛：原注入样式，逐字搬运） ==================== */
