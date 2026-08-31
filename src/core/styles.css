@@ -1090,3 +1090,34 @@ button.news-close-btn {
    （双保险：即使按钮元素未及时移出 DOM，只要行有值即不可见；桌面/移动端一致） */
 .setting-item.bz-path-picker-setting-row[data-filled='1'] .bz-path-picker-btn--slim { display: none; }
 
+
+/* ticket 173 模型选择器弹窗：列表行（名称 + 来源小字），当前生效值高亮；行内嵌按钮随输入框等宽 */
+.bz-model-picker-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+.bz-model-picker-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.bz-model-picker-row:hover {
+  background: var(--background-modifier-hover);
+}
+.bz-model-picker-row.is-current {
+  background: var(--background-modifier-active-hover);
+  font-weight: var(--font-semibold, 600);
+}
+.bz-model-picker-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  word-break: break-all;
+}
+.bz-model-picker-detail {
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: var(--text-muted);
+}
