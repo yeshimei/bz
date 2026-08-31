@@ -2444,190 +2444,390 @@ button.news-close-btn {
     font-size: 14px;
 }
 
-/* ==================== 密码本域样式（src/password/styles.css） ==================== */
-/* ==================== 密码本（password，ticket 60 收敛：原 PW_STYLES 运行时注入，逐字搬运） ==================== */
-    #pw-mask { backdrop-filter: blur(2px); }
-    #pw-popup { animation: slideUp 0.3s ease-out; }
-    #pw-entries-container::-webkit-scrollbar { width: 6px; }
-    #pw-entries-container::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
+/* ==================== 密码本域样式（src/password/styles.css） ====================
+ * 按 docs/ui-design-manual.md 重构（2026-09-01）：
+ *  - 4px 网格间距 / 圆角阶梯（4-6-8-10-12-14-999）/ 多层阴影（硬影+软影）
+ *  - 暗色表面色阶（层级越高越亮，M3 tonal surface 思路）
+ *  - Obsidian 与浏览器默认 CSS 差异重置段（按钮/输入框/标题/链接/滚动条/焦点环）
+ * DOM id/类名契约不变（pw-mask/pw-popup/pw-entries-container/pw-entry-card/...，铁律 3）。
+ * ==================== */
 
-    .pw-search-container {
-        padding: 0 24px 12px 24px;
-        display: none;
-    }
-    .pw-search-container input {
-        width: 100%;
-        padding: 6px 12px;
-        border-radius: 6px;
-        border: 1px solid var(--background-modifier-border);
-        background: var(--background-primary);
-        color: var(--text-normal);
-        font-size: 14px;
-        box-sizing: border-box;
-    }
+/* ===== 0. Obsidian 默认样式差异重置（浏览器没有、Obsidian 会压盖的） ===== */
+/* Obsidian 默认给 button 加灰底/边框/阴影/居中文本/hover 变亮——自绘按钮须全量重置。
+   用高特异性 + !important 压过 Obsidian 主题（core .bz-item-menu 同款先例）。 */
+#pw-popup button,
+#pw-add-popup button {
+  font-family: var(--font-interface, var(--font-text, sans-serif));
+  line-height: 1.25; /* 单行控件行高（手册 §3，Primer tight） */
+  background: none;
+  border: none;
+  box-shadow: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+/* Obsidian 默认 input/textarea 有自己的背景/边框/高度——统一重声明收敛差异 */
+#pw-popup input,
+#pw-popup textarea,
+#pw-add-popup input,
+#pw-add-popup textarea {
+  font-family: var(--font-interface, var(--font-text, sans-serif));
+  font-size: 14px;
+  line-height: 1.25;
+  box-sizing: border-box;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  color: var(--text-normal);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+#pw-popup input:focus,
+#pw-popup textarea:focus,
+#pw-add-popup input:focus,
+#pw-add-popup textarea:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+/* Obsidian 默认 h3/h4 有 margin 与主题字号——统一重置（手册 §3 标题档） */
+#pw-popup h3,
+#pw-add-popup h4 {
+  margin: 0;
+  color: var(--text-normal);
+}
+/* 链接：Obsidian 默认 accent 色 + hover 下划线——平台链接保持可点但视觉统一 */
+#pw-popup a {
+  text-decoration: none;
+}
+/* Obsidian 全局自定义滚动条——域内列表滚动条一致化 */
+#pw-entries-container::-webkit-scrollbar { width: 6px; }
+#pw-entries-container::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
+#pw-entries-container::-webkit-scrollbar-thumb:hover { background: var(--background-modifier-hover); }
+#pw-entries-container::-webkit-scrollbar-track { background: transparent; }
 
-    .pw-entry-card {
-        display: flex;
-        flex-direction: column;
-        padding: 10px 0;
-        border-bottom: 1px solid var(--background-modifier-border);
-    }
-    .pw-entry-top {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: nowrap;
-    }
-    .pw-account-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        flex: 0 0 40%;
-        max-width: 40%;
-        overflow: hidden;
-    }
-    .pw-platform-link, .pw-platform-text {
-        flex: 0 0 100px;
-        font-weight: 600;
-        font-size: 14px;
-        text-decoration: none;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .pw-platform-link {
-        color: var(--text-accent);
-    }
-    .pw-platform-link:hover {
-        text-decoration: underline;
-    }
-    .pw-platform-text {
-        color: var(--text-muted);
-    }
-    .pw-account {
-        flex: 1;
-        font-size: 14px;
-        color: var(--text-normal);
-        cursor: pointer;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .pw-password-area {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        flex: 1;
-        min-width: 0;
-        cursor: pointer;
-    }
-    .pw-password-text {
-        font-family: monospace;
-        cursor: pointer;
-        color: var(--text-muted);
-        font-size: 14px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .pw-eye {
-        cursor: pointer;
-        font-size: 14px;
-        user-select: none;
-        opacity: 0.6;
-        flex-shrink: 0;
-    }
-    .pw-date {
-        font-size: 12px;
-        color: var(--text-faint);
-        flex: 0 0 auto;
-        white-space: nowrap;
-        cursor: pointer;
-    }
-    .pw-note {
-        margin-top: 4px;
-        font-size: 13px;
-        color: var(--text-muted);
-        padding: 10px 0;
-        cursor: pointer;
-        white-space: pre-wrap;
-        word-break: break-word;
-    }
-    .pw-note.hidden {
-        color: transparent;
-        background: repeating-linear-gradient(45deg, var(--background-modifier-border) 0px, var(--background-modifier-border) 2px, transparent 2px, transparent 4px);
-        border-radius: 4px;
-        padding: 10px 0;
-        min-height: 1.2em;
-    }
+/* ===== 1. 主面板（pw-popup 居中卡） ===== */
+#pw-mask {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--background-modifier-cover);
+  backdrop-filter: blur(2px); /* 既有观感保留（轻微景深，非毛玻璃主体） */
+}
+#pw-popup {
+  /* 视觉基座（几何由 ui.ts 内联：position/transform/尺寸/显隐）：
+     背景、圆角、阴影、字体——手册 §5.2 shadow-lg 多层 + §4.2 r-lg */
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 14px;
+  box-shadow:
+    0 6px 16px -8px rgba(0, 0, 0, 0.5),
+    0 9px 28px 0 rgba(0, 0, 0, 0.4),
+    0 12px 48px 16px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: slideUp 0.25s ease-out;
+  font-family: var(--font-interface, var(--font-text, sans-serif));
+}
 
-    .pw-add-dialog input, .pw-add-dialog textarea {
-        width: 100%;
-        padding: 8px 12px;
-        border-radius: 6px;
-        font-size: 14px;
-        box-sizing: border-box;
-        margin-bottom: 12px;
-        border: 1px solid var(--background-modifier-border);
-        background: var(--background-primary);
-        color: var(--text-normal);
-    }
-    .pw-add-dialog textarea {
-        resize: vertical;
-        min-height: 60px;
-    }
-    .pw-generate-btn {
-        padding: 4px 12px;
-        border-radius: 16px;
-        background: var(--interactive-accent);
-        color: var(--text-on-accent);
-        border: none;
-        cursor: pointer;
-        font-size: 13px;
-        margin-left: 8px;
-    }
-    .pw-generate-btn:hover {
-        opacity: 0.8;
-    }
-    .pw-suggestions {
-        max-height: 120px;
-        overflow-y: auto;
-        background: var(--background-secondary);
-        border-radius: 4px;
-        margin-top: -8px;
-        margin-bottom: 12px;
-        display: none;
-        border: 1px solid var(--background-modifier-border);
-    }
-    .pw-suggestions .suggestion-item {
-        padding: 6px 12px;
-        cursor: pointer;
-        font-size: 14px;
-    }
-    .pw-suggestions .suggestion-item:hover {
-        background: var(--background-modifier-hover);
-    }
+/* 头行（core .bz-win-head 已统一；此处仅补密码本专属间距微调） */
+#pw-popup .bz-win-head {
+  padding: 16px 24px 10px;
+}
 
-    @media (max-width: 768px) {
-        .pw-entry-top {
-            flex-wrap: wrap;
-        }
-        .pw-account-wrapper {
-            flex: 0 0 100%;
-            max-width: 100%;
-        }
-        .pw-platform-link, .pw-platform-text {
-            flex: 0 0 80px;
-        }
-        .pw-password-area {
-            flex: 0 0 100%;
-            min-width: 0;
-        }
-        .pw-date {
-            margin-left: auto;
-        }
-    }
+/* ===== 2. 搜索容器 ===== */
+.pw-search-container {
+  padding: 0 24px 12px;
+}
+.pw-search-container input {
+  width: 100%;
+  padding: 7px 12px;
+  border-radius: 6px;
+}
 
+/* ===== 3. 条目列表 ===== */
+#pw-entries-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 24px 24px;
+  min-height: 200px;
+}
+/* 空态（手册 §8.3：图标 + 说明 + 动作，居中，40px 上下） */
+.pw-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 48px 24px;
+  text-align: center;
+}
+.pw-empty .pw-empty-icon { font-size: 28px; opacity: 0.5; }
+.pw-empty .pw-empty-title { font-size: 14px; font-weight: 600; color: var(--text-muted); }
+.pw-empty .pw-empty-desc { font-size: 12px; color: var(--text-faint); max-width: 240px; line-height: 1.5; }
+/* 空态动作（手册 §8.3 + §6.2 次级按钮）：secondary 底 + 边框。
+   #pw-popup 前缀提特异性，压过顶部「#pw-popup button 重置」的 background:none */
+#pw-popup .pw-empty-action {
+  margin-top: 10px;
+  padding: 7px 18px;
+  border-radius: 6px;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--background-modifier-border);
+  transition: background-color 0.15s ease;
+}
+#pw-popup .pw-empty-action:hover { background: var(--background-modifier-hover); }
+
+/* 条目卡片（分隔线式列表；hover 背景差，无边框堆叠——手册 §5.1 分隔优先级） */
+.pw-entry-card {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  margin: 0 -12px;
+  transition: background-color 0.15s ease;
+}
+.pw-entry-card:hover { background: var(--background-modifier-hover); }
+.pw-entry-card:last-child { border-bottom-color: transparent; }
+.pw-entry-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+.pw-account-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 40%;
+  max-width: 40%;
+  min-width: 0;
+  overflow: hidden;
+}
+.pw-platform-link,
+.pw-platform-text {
+  flex: 0 0 auto;
+  max-width: 110px;
+  font-weight: 600;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pw-platform-link { color: var(--interactive-accent); }
+.pw-platform-link:hover { text-decoration: underline; }
+.pw-platform-text { color: var(--text-muted); }
+.pw-account {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--text-normal);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pw-password-area {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+.pw-password-text {
+  font-family: var(--font-monospace, monospace);
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: 0.05em;
+}
+.pw-eye {
+  cursor: pointer;
+  font-size: 14px;
+  user-select: none;
+  opacity: 0.6;
+  flex-shrink: 0;
+  padding: 2px;
+  border-radius: 4px;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+.pw-eye:hover { opacity: 1; background: var(--background-modifier-hover); }
+.pw-date {
+  font-size: 12px;
+  color: var(--text-faint);
+  flex: 0 0 auto;
+  white-space: nowrap;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.pw-note {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 8px 0 2px;
+  cursor: pointer;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+}
+.pw-note.hidden {
+  color: transparent;
+  background: repeating-linear-gradient(45deg, var(--background-modifier-border) 0px, var(--background-modifier-border) 2px, transparent 2px, transparent 4px);
+  border-radius: 4px;
+  padding: 8px 0 2px;
+  min-height: 1.2em;
+}
+
+/* ===== 4. 添加/编辑弹窗（pw-add-popup） ===== */
+#pw-add-mask {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(1px);
+}
+#pw-add-popup {
+  /* 视觉基座（几何由 ui.ts 内联）：背景、圆角、阴影、内边距——手册 §4.2 r-md + §5.2 shadow-lg */
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  box-shadow:
+    0 6px 16px -8px rgba(0, 0, 0, 0.5),
+    0 9px 28px 0 rgba(0, 0, 0, 0.4),
+    0 12px 48px 16px rgba(0, 0, 0, 0.25);
+  padding: 24px;
+  animation: slideUp 0.25s ease-out;
+  font-family: var(--font-interface, var(--font-text, sans-serif));
+}
+.pw-add-dialog h4 {
+  font-size: 17px; /* 弹窗标题档（手册 §3 title） */
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.pw-add-dialog .field { position: relative; margin-bottom: 0; } /* 供 .pw-suggestions 绝对定位；间距由输入框自身 margin 承担 */
+.pw-add-dialog input,
+.pw-add-dialog textarea {
+  width: 100%;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
+.pw-add-dialog textarea {
+  resize: vertical;
+  min-height: 60px;
+  margin-bottom: 16px;
+}
+/* 密码行：输入 + 生成按钮同行 */
+.pw-password-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.pw-password-row input { flex: 1; margin-bottom: 0; }
+#pw-add-popup .pw-generate-btn {
+  padding: 0 14px;
+  border-radius: 6px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+  height: 36px;
+  transition: background-color 0.15s ease;
+}
+#pw-add-popup .pw-generate-btn:hover { background: var(--interactive-accent-hover, var(--interactive-accent)); opacity: 0.9; }
+/* 建议下拉（平台/账号联想） */
+.pw-suggestions {
+  position: absolute;
+  left: 0; right: 0;
+  max-height: 120px;
+  overflow-y: auto;
+  background: var(--background-secondary);
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12); /* shadow-sm */
+  z-index: 10;
+}
+.pw-suggestions .suggestion-item {
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-normal);
+}
+.pw-suggestions .suggestion-item:hover { background: var(--background-modifier-hover); }
+/* 弹窗底部按钮（手册 §6.2 主/次级；§9 确认框中性）。
+   #pw-add-popup 前缀提特异性，压过顶部「#pw-add-popup button 重置」 */
+#pw-add-popup .pw-add-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+#pw-add-popup .btn-cancel {
+  padding: 8px 20px;
+  border-radius: 6px;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  font-size: 14px;
+  border: 1px solid var(--background-modifier-border);
+  transition: background-color 0.15s ease;
+}
+#pw-add-popup .btn-cancel:hover { background: var(--background-modifier-hover); }
+#pw-add-popup .btn-save {
+  padding: 8px 20px;
+  border-radius: 6px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  transition: opacity 0.15s ease;
+}
+#pw-add-popup .btn-save:hover { opacity: 0.9; }
+
+/* ===== 5. 移动端（≤768px，手册 §8） ===== */
+
+/* 抽屉头部（长按抽屉顶部的选中条目信息；布局收敛于此） */
+.bz-pw-sheet-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.bz-pw-sheet-info {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .pw-entry-top {
+    flex-wrap: wrap;
+  }
+  .pw-account-wrapper {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+  .pw-platform-link,
+  .pw-platform-text {
+    flex: 0 0 auto;
+    max-width: 140px;
+  }
+  .pw-password-area {
+    flex: 0 0 100%;
+    min-width: 0;
+  }
+  .pw-date {
+    margin-left: auto;
+  }
+  #pw-popup .bz-win-head {
+    padding-top: max(16px, env(safe-area-inset-top)); /* 真全屏避让顶部安全区（core .bz-win-mfs 已垫，此处兜底） */
+  }
+  /* 触控热区：卡片行 min-height 44px（手册 §8.2） */
+  .pw-entry-card { padding-top: 12px; padding-bottom: 12px; }
+  .pw-eye { min-width: 32px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; }
+}
 /* ==================== 收藏本域样式（src/favorites/styles.css） ==================== */
 /* ==================== 收藏本（favorites，ticket 60 收敛：原 fav-mobile 注入，逐字搬运；后续优化：header 按钮去 box-shadow、标题栏去下边框、类型栏单行横滑；移动端列表卡片已恢复桌面样式（边框/圆角/间距随 ui.ts 内联样式），不再通栏平铺） ==================== */
       /* #fav-popup .fav-header .bz-icon-btn 去阴影已并入「主窗口头部行统一规范」（ticket 68 后续） */

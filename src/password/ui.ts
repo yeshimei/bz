@@ -162,7 +162,7 @@ export class UIManager {
 
     this.entriesContainer = document.createElement('div');
     this.entriesContainer.id = 'pw-entries-container';
-    this.entriesContainer.style.cssText = 'flex:1;overflow-y:auto;padding:0 20px;min-height:200px;';
+    // 功能性内联：flex 布局与滚动（视觉收敛进 styles.css）
 
     const header = this.createHeader();
     this.popup.appendChild(header);
@@ -183,8 +183,8 @@ export class UIManager {
   createMask(id: string): HTMLDivElement {
     const mask = document.createElement('div');
     mask.id = id;
-    mask.style.cssText =
-      'position:fixed;top:0;left:0;right:0;bottom:0;background:var(--background-modifier-cover);display:none;';
+    // 功能性内联仅显隐；视觉（背景/定位）收敛进 styles.css（铁律 8）
+    mask.style.display = 'none';
     mask.onclick = () => this.hide();
     return mask;
   }
@@ -192,20 +192,18 @@ export class UIManager {
   createPopup(): HTMLDivElement {
     const popup = document.createElement('div');
     popup.id = 'pw-popup';
+    // 功能性内联：居中定位/尺寸/显隐；视觉（圆角/阴影/字体）收敛进 styles.css
     popup.style.cssText =
-      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--background-primary);border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.2);width:90%;max-width:700px;max-height:80vh;display:none;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,system-ui,sans-serif;';
+      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:90%;max-width:700px;max-height:80vh;display:none;flex-direction:column;';
     return popup;
   }
 
   createHeader(): HTMLDivElement {
     const header = document.createElement('div');
     header.className = 'bz-win-head';
-    header.style.cssText = 'padding:16px 24px 8px 24px;display:flex;justify-content:space-between;align-items:center;';
     const title = document.createElement('h3');
     title.textContent = '密码本';
-    title.style.cssText = 'margin:0;font-size:18px;font-weight:600;color:var(--text-normal);';
-    const btnContainer = document.createElement('div');
-    btnContainer.style.cssText = 'display:flex;gap:8px;';
+    const btnContainer = document.createElement('div'); // 布局由 core .bz-win-head > div 统一（display:flex;gap:8px）
 
     const addBtn = createIconBtn('✏️', '添加密码条目', () => this.openAddDialog());
     const searchBtn = createIconBtn('🔍', '搜索', () => {
@@ -285,9 +283,29 @@ export class UIManager {
     }
 
     if (data.length === 0) {
+      // 空态（手册 §8.3：图标 + 说明 + 动作，不只是一行灰字）
       const empty = document.createElement('div');
-      empty.textContent = this.searchKeyword ? '没有匹配的条目' : '没有密码条目，点击 ✏️ 添加';
-      empty.style.cssText = 'padding:40px;text-align:center;color:var(--text-faint);font-size:16px;';
+      empty.className = 'pw-empty';
+      const icon = document.createElement('div');
+      icon.className = 'pw-empty-icon';
+      icon.textContent = this.searchKeyword ? '🔍' : '🔐';
+      const title = document.createElement('div');
+      title.className = 'pw-empty-title';
+      title.textContent = this.searchKeyword ? '没有匹配的条目' : '还没有密码条目';
+      const desc = document.createElement('div');
+      desc.className = 'pw-empty-desc';
+      desc.textContent = this.searchKeyword ? '换个关键词试试，或清空搜索' : '密码将加密保存在本地，只有主密码能解锁';
+      empty.appendChild(icon);
+      empty.appendChild(title);
+      empty.appendChild(desc);
+      if (!this.searchKeyword) {
+        // 空态动作（手册 §8.3）：引导添加第一条
+        const action = document.createElement('button');
+        action.className = 'pw-empty-action';
+        action.textContent = '＋ 添加第一条';
+        action.onclick = () => this.openAddDialog();
+        empty.appendChild(action);
+      }
       this.entriesContainer.appendChild(empty);
       return;
     }
@@ -463,7 +481,7 @@ export class UIManager {
     const head = document.createElement('div');
     head.className = 'bz-item-sheet-entry';
     const body = document.createElement('div');
-    body.style.cssText = 'display:flex; align-items:flex-start; gap:10px;';
+    body.className = 'bz-pw-sheet-body';
 
     const emoji = document.createElement('span');
     emoji.className = 'bz-item-sheet-emoji';
@@ -471,7 +489,7 @@ export class UIManager {
     body.appendChild(emoji);
 
     const info = document.createElement('div');
-    info.style.cssText = 'flex:1; min-width:0;';
+    info.className = 'bz-pw-sheet-info';
     const title = document.createElement('div');
     title.className = 'bz-item-sheet-title';
     title.textContent = item.platform || item.account || '密码条目';
@@ -497,8 +515,8 @@ export class UIManager {
 
     this.addMask = document.createElement('div');
     this.addMask.id = 'pw-add-mask';
-    this.addMask.style.cssText =
-      'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.3);display:none;';
+    // 功能性内联：显隐（视觉收敛进 styles.css）
+    this.addMask.style.display = 'none';
     this.addMask.onclick = (e) => {
       if (e.target === this.addMask) this.closeAddDialog();
     };
@@ -506,13 +524,13 @@ export class UIManager {
     this.addPopup = document.createElement('div');
     this.addPopup.id = 'pw-add-popup';
     this.addPopup.className = 'pw-add-dialog';
+    // 功能性内联：居中定位/尺寸/显隐（视觉收敛进 styles.css）
     this.addPopup.style.cssText =
-      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--background-primary);border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.3);padding:24px;max-width:420px;width:90%;display:none;';
+      'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);max-width:420px;width:90%;display:none;';
 
     const title = document.createElement('h4');
     title.id = 'pw-add-title';
     title.textContent = '添加密码条目';
-    title.style.cssText = 'margin:0 0 16px 0;font-size:18px;font-weight:600;color:var(--text-normal);';
 
     // 平台
     const platformWrapper = this.createSuggestionWrapper('platform', '平台（必填，如 GitHub）');
@@ -522,16 +540,14 @@ export class UIManager {
     const noteTextarea = this.createTextarea('备注（可选）');
 
     const btnContainer = document.createElement('div');
-    btnContainer.style.cssText = 'display:flex;gap:12px;justify-content:flex-end;';
+    btnContainer.className = 'pw-add-actions';
     const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn-cancel';
     cancelBtn.textContent = '取消';
-    cancelBtn.style.cssText =
-      'padding:8px 16px;border-radius:6px;border:none;background:var(--background-secondary);cursor:pointer;font-size:14px;box-shadow:none;';
     cancelBtn.onclick = () => this.closeAddDialog();
     const saveBtn = document.createElement('button');
+    saveBtn.className = 'btn-save';
     saveBtn.textContent = '保存';
-    saveBtn.style.cssText =
-      'padding:8px 16px;border-radius:6px;border:none;background:var(--interactive-accent);color:var(--text-on-accent);cursor:pointer;font-size:14px;font-weight:500;box-shadow:none;';
     saveBtn.onclick = async () => {
       const platform = platformWrapper.input.value.trim();
       const url = urlInput.value.trim();
@@ -592,12 +608,10 @@ export class UIManager {
 
   createSuggestionWrapper(field: string, placeholder: string) {
     const container = document.createElement('div');
-    container.style.cssText = 'position:relative;margin-bottom:12px;';
+    container.className = 'field'; // 视觉（相对定位/间距）收敛进 styles.css
     const input = document.createElement('input');
     input.type = 'text';
     input.placeholder = placeholder;
-    input.style.cssText =
-      'width:100%;padding:8px 12px;border-radius:6px;font-size:14px;box-sizing:border-box;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);';
     const suggest = document.createElement('div');
     suggest.className = 'pw-suggestions';
     container.appendChild(input);
@@ -641,19 +655,15 @@ export class UIManager {
     input.id = `pw-add-${id}`;
     input.type = type;
     input.placeholder = placeholder;
-    input.style.cssText =
-      'width:100%;padding:8px 12px;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:12px;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);';
     return input;
   }
 
   createPasswordWrapper() {
     const container = document.createElement('div');
-    container.style.cssText = 'display:flex;gap:8px;margin-bottom:12px;';
+    container.className = 'pw-password-row';
     const input = document.createElement('input');
     input.type = 'text';
     input.placeholder = '密码';
-    input.style.cssText =
-      'flex:1;padding:8px 12px;border-radius:6px;font-size:14px;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);';
     const genBtn = document.createElement('button');
     genBtn.type = 'button';
     genBtn.className = 'pw-generate-btn';
@@ -670,8 +680,6 @@ export class UIManager {
   createTextarea(placeholder: string): HTMLTextAreaElement {
     const textarea = document.createElement('textarea');
     textarea.placeholder = placeholder;
-    textarea.style.cssText =
-      'width:100%;padding:8px 12px;border-radius:6px;font-size:14px;box-sizing:border-box;margin-bottom:16px;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-normal);min-height:60px;resize:vertical;';
     return textarea;
   }
 

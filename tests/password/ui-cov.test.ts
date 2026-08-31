@@ -111,11 +111,21 @@ describe('密码本 UI 覆盖补测（面板交互）', () => {
     await dm.deleteItem(dm.pwData[0].id);
     await dm.deleteItem(dm.pwData[0].id);
     ui.show();
-    await waitFor(() => !!ui.entriesContainer!.textContent!.includes('没有密码条目'));
-    expect(ui.entriesContainer!.textContent).toContain('没有密码条目，点击 ✏️ 添加');
+    await waitFor(() => !!ui.entriesContainer!.textContent!.includes('还没有密码条目'));
+    expect(ui.entriesContainer!.textContent).toContain('还没有密码条目');
+    expect(ui.entriesContainer!.textContent).toContain('加密保存在本地');
+    expect(ui.entriesContainer!.querySelector('.pw-empty')).not.toBeNull(); // 结构化空态（手册 §8.3）
+    // 空态动作按钮：无关键词时引导添加
+    const actionBtn = ui.entriesContainer!.querySelector('.pw-empty-action') as HTMLButtonElement;
+    expect(actionBtn).not.toBeNull();
+    expect(actionBtn.textContent).toContain('添加第一条');
+    actionBtn.click();
+    await waitFor(() => document.getElementById('pw-add-popup')!.style.display === 'block');
+    ui.closeAddDialog();
     ui.searchKeyword = '不存在';
     await ui.renderList();
     expect(ui.entriesContainer!.textContent).toContain('没有匹配的条目');
+    expect(ui.entriesContainer!.querySelector('.pw-empty-icon')!.textContent).toBe('🔍');
   });
 
   it('renderList 防御：容器未初始化直接返回；数据加载失败提示错误', async () => {
