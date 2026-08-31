@@ -155,6 +155,7 @@ export class UIManager {
     // 搜索容器
     this.searchContainer = document.createElement('div');
     this.searchContainer.className = 'pw-search-container';
+    this.searchContainer.style.display = 'none'; // 与 CSS display:none 对齐（ticket 169：缺此内联初值致首点误判「可见」只收不展）
     this.searchInput = document.createElement('input');
     this.searchInput.type = 'text';
     this.searchInput.placeholder = '搜索平台、账号、备注...';
