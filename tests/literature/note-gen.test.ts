@@ -168,7 +168,7 @@ describe('generateVideoNote（视频文献：九键 frontmatter + 润色正文�
     // 正文 = 两块润色拼接
     expect(content).toContain('润色润色');
     // 未传 videoPath（keepVideo=false 等）→ 无视频段
-    expect(content).not.toContain('## 视频');
+    expect(content).not.toContain('![[CONFIG/APPENDIX/');
   });
 
   it('videoPath 非空 → 正文尾部附视频双链（ticket 151 补回，ADR-0066）', async () => {
@@ -177,7 +177,7 @@ describe('generateVideoNote（视频文献：九键 frontmatter + 润色正文�
       videoPath: 'CONFIG/APPENDIX/短视频_BV1xx411c7mD.mp4',
     });
     const content = vault.files.get(path)!;
-    expect(content).toContain('## 视频');
+    expect(content).not.toContain('## 视频');
     expect(content).toContain('![[CONFIG/APPENDIX/短视频_BV1xx411c7mD.mp4]]');
     // 反斜杠路径归一化为正斜杠（跨平台交付路径）
     const p2 = await generateVideoNote({
