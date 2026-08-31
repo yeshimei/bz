@@ -46,6 +46,8 @@ export function ensureReview(app: App): void {
   dataManager = new ReviewDataManager(app);
   uiManager = new UIManager(app, dataManager);
   reviewWatcher = new ReviewWatcher(app, dataManager);
+  // ADR-0077：启动加载拟合参数（个人化记忆曲线优先，回退默认）
+  void reviewApp.loadFitParams(app).catch(() => {});
 
   setTimeout(() => {
     reviewApp.checkOverdueAndNotify();
