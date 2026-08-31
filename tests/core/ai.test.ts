@@ -187,11 +187,11 @@ describe('AIService', () => {
     expect(JSON.parse(opts.body).model).toBe('m3');
   });
 
-  it('未配置任何 key → 抛「未找到 AI 配置」', async () => {
+  it('deepseek 未配置 key 且 QuickAdd 兜底失败 → 抛「未配置 DeepSeek API Key」', async () => {
     setAISettingsProvider(() => ({ aiProvider: 'deepseek', deepseekApiKey: '' }));
     resetAIProviderCache();
     const ai = new AIService({}, 'deepseek-v4-flash');
-    await expect(ai.prompt('x')).rejects.toThrow('未找到 AI 配置');
+    await expect(ai.prompt('x')).rejects.toThrow('未配置 DeepSeek API Key');
   });
 
   it('opencode-go 未配置 key → 抛「未配置 OpenCode Go API Key」', async () => {
@@ -199,6 +199,13 @@ describe('AIService', () => {
     resetAIProviderCache();
     const ai = new AIService({}, 'deepseek-v4-flash');
     await expect(ai.prompt('x')).rejects.toThrow('未配置 OpenCode Go API Key');
+  });
+
+  it('custom 未配置 endpoint/key → 抛「未配置自定义 AI 服务」', async () => {
+    setAISettingsProvider(() => ({ aiProvider: 'custom', aiCustomEndpoint: '', aiCustomApiKey: '' }));
+    resetAIProviderCache();
+    const ai = new AIService({}, 'deepseek-v4-flash');
+    await expect(ai.prompt('x')).rejects.toThrow('未配置自定义 AI 服务');
   });
 });
 

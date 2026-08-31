@@ -7,12 +7,20 @@
 
 export default interface BzSettings {
   // ===== 🤖 AI 全局（Q3 语义，spec「AI 全局」）=====
-  /** AI 服务商：deepseek / opencode-go */
+  /** AI 服务商：deepseek / opencode-go / custom（ticket 170 注册表 + 自定义 OpenAI 兼容） */
   aiProvider: string;
   /** 🔑 DeepSeek API Key（留空则回退读取 QuickAdd data.json） */
   deepseekApiKey: string;
   /** 🔑 OpenCode Go API Key */
   opencodeGoApiKey: string;
+  /** 🌐 自定义 AI 服务 API 地址（OpenAI 兼容，ticket 170；覆盖任意提供商如 commandcode） */
+  aiCustomEndpoint: string;
+  /** 🧠 自定义 AI 服务默认模型名（如 commandcode 的 taste-1） */
+  aiCustomModel: string;
+  /** 🔑 自定义 AI 服务 API Key */
+  aiCustomApiKey: string;
+  /** 📏 每次请求最大输出 token（0 = 用 API 默认；缺省取提供商默认） */
+  aiMaxTokens: number;
 
   // ===== 📂 数据存储路径（ADR-0009 共享数据路径）=====
   /** 共享 JSON 数据目录（memo/belongings/passwords/favorites/review/quiz/闪念 meta+vec 统一存放） */
@@ -400,6 +408,10 @@ export const DEFAULT_SETTINGS: BzSettings = {
   aiProvider: 'opencode-go',
   deepseekApiKey: '',
   opencodeGoApiKey: '',
+  aiCustomEndpoint: '',
+  aiCustomModel: '',
+  aiCustomApiKey: '',
+  aiMaxTokens: 0, // 0 = 用 API 默认（模型最大值）
 
   // 共享数据路径（ADR-0009）
   storagePath: 'CONFIG/STORAGE',
