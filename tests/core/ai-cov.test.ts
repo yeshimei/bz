@@ -99,13 +99,13 @@ describe('getAIProvider 解析与缓存', () => {
     expect(p.apiKey).toBe('qk');
   });
 
-  it('QuickAdd 读取抛错 → 「未找到 AI 配置」', async () => {
+  it('QuickAdd 读取抛错 → deepseek 无 key 时报「未配置 DeepSeek API Key」', async () => {
     setupAI({ aiProvider: 'deepseek' });
     setApp({ vault: { adapter: { read: async () => { throw new Error('file not found'); } } } } as any);
-    await expect(getAIProvider()).rejects.toThrow('未找到 AI 配置');
+    await expect(getAIProvider()).rejects.toThrow('未配置 DeepSeek API Key');
   });
 
-  it('QuickAdd 数据结构不含有效 provider（缺 endpoint/apiKey）→ 同样报未找到', async () => {
+  it('QuickAdd 数据结构不含有效 provider（缺 endpoint/apiKey）→ 同样报未配置', async () => {
     setupAI({ aiProvider: 'deepseek' });
     setApp({
       vault: {
@@ -114,7 +114,59 @@ describe('getAIProvider 解析与缓存', () => {
         },
       },
     } as any);
-    await expect(getAIProvider()).rejects.toThrow('未找到 AI 配置');
+    await expect(getAIProvider()).rejects.toThrow('未配置 DeepSeek API Key');
+  });
+
+  it('custom provider：endpoint/key/model 全部取自设置，尾斜杠清理', async () => {
+    setupAI({
+      aiProvider: 'custom',
+      aiCustomEndpoint: 'https://api.commandcode.ai/v1/',
+      aiCustomApiKey: 'sk-custom',
+      aiCustomModel: 'taste-1',
+    });
+    const p = await getAIProvider();
+    expect(p.endpoint).toBe('https://api.commandcode.ai/v1');
+    expect(p.apiKey).toBe('sk-custom');
+    expect(p.model).toBe('taste-1');
+    expect(p.noCors).toBeUndefined();
+  });
+
+  it('custom provider：无 endpoint → 抛「未配置自定义 AI 服务」', async () => {
+    setupAI({ aiProvider: 'custom', aiCustomEndpoint: '', aiCustomApiKey: 'sk-custom' });
+    await expect(getAIProvider()).rejects.toThrow('未配置自定义 AI 服务');
+  });
+
+  it('custom provider：无 key → 抛「未配置自定义 AI 服务」', async () => {
+    setupAI({ aiProvider: 'custom', aiCustomEndpoint: 'https://api.example.com/v1', aiCustomApiKey: '' });
+    await expect(getAIProvider()).rejects.toThrow('未配置自定义 AI 服务');
+  });
+
+  it('aiMaxTokens 设置生效：>0 时作为请求 max_tokens（ticket 170 默认用模型最大值）', async () => {
+    setupAI({ aiProvider: 'deepseek', deepseekApiKey: 'sk-deepseek-test', aiMaxTokens: 16000 });
+    (global as any).fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: sseBody(['data: {"choices":[{"delta":{"content":"hi"}}]}\n', 'data: [DONE]\n']),
+    });
+    const ai = new AIService({}, 'deepseek-v4-flash');
+    await ai.prompt('q');
+    const body = JSON.parse((global as any).fetch.mock.calls[0][1].body);
+    expect(body.max_tokens).toBe(16000);
+    delete (global as any).fetch;
+  });
+
+  it('aiMaxTokens=0 时回落默认 4096', async () => {
+    setupAI({ aiProvider: 'deepseek', deepseekApiKey: 'sk-deepseek-test', aiMaxTokens: 0 });
+    (global as any).fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: sseBody(['data: {"choices":[{"delta":{"content":"hi"}}]}\n', 'data: [DONE]\n']),
+    });
+    const ai = new AIService({}, 'deepseek-v4-flash');
+    await ai.prompt('q');
+    const body = JSON.parse((global as any).fetch.mock.calls[0][1].body);
+    expect(body.max_tokens).toBe(4096);
+    delete (global as any).fetch;
   });
 
   it('provider.model 存在但显式指定模型 → 显式值优先', async () => {

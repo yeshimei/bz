@@ -1,8 +1,12 @@
 /**
  * AIService / createAI（Q3.js window.__utils 移植，ticket 03）
- * provider：deepseek / opencode-go（插件设置注入，取代 Q3 的 QuickAdd 宏设置）；
- * override 字符串 'deepseek'/'opencode-go' 或对象 {endpoint, apiKey, model}。
+ * provider：deepseek / opencode-go / custom（OpenAI 兼容自定义端点，插件设置注入，取代 Q3 的
+ * QuickAdd 宏设置）；override 字符串 'deepseek'/'opencode-go'/'custom' 或对象
+ * {endpoint, apiKey, model}。
  * prompt：fetch 流式（stream:true），失败自动 fallback requestUrl 非流式；noCors 直接走 requestUrl。
+ * 策略模式（ticket 170）：提供商由 AI_PROVIDER_REGISTRY 注册表描述（默认端点/模型/密钥键/默认
+ * maxTokens），getAIProvider 查表解析；custom 走用户自填 endpoint/model，可覆盖任意 OpenAI 兼容
+ * 提供商（含 commandcode 等新服务，无需改码）。
  */
 import { requestUrl } from 'obsidian';
 import { getApp } from './app';
@@ -11,6 +15,10 @@ export interface AISettingsLike {
   aiProvider?: string;
   deepseekApiKey?: string;
   opencodeGoApiKey?: string;
+  aiCustomEndpoint?: string;
+  aiCustomModel?: string;
+  aiCustomApiKey?: string;
+  aiMaxTokens?: number;
 }
 
 let _settingsProvider: (() => AISettingsLike) | null = null;
@@ -22,6 +30,64 @@ export function setAISettingsProvider(fn: () => AISettingsLike): void {
 
 function getQ3Settings(): AISettingsLike {
   return _settingsProvider ? _settingsProvider() : {};
+}
+
+// ---------------- provider 注册表（策略模式，ticket 170） ----------------
+
+export interface AIProviderDescriptor {
+  /** 注册表键（settings.aiProvider 取值） */
+  id: string;
+  /** 设置页下拉展示名 */
+  label: string;
+  /** 默认 API endpoint（custom 为 ''，运行时用 aiCustomEndpoint） */
+  endpoint: string;
+  /** 默认模型（custom 为 ''，运行时用 aiCustomModel） */
+  model: string;
+  /** 默认 max_tokens（createAI 未显式给时生效；0 = 不设上限用 API 默认） */
+  defaultMaxTokens: number;
+  /** 默认请求上下文窗口（token 数；设置页提示用） */
+  defaultContextWindow: number;
+  /** 密钥在 AISettingsLike 的键名（custom 为 aiCustomApiKey） */
+  apiKeyKey: keyof AISettingsLike;
+  /** 无 CORS 头（fetch 必败 → 直接走 requestUrl） */
+  noCors?: boolean;
+}
+
+/** 内置提供商注册表（策略模式单一事实源；新增提供商 = 加一行，勿再改 getAIProvider 分支） */
+export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
+  {
+    id: 'deepseek',
+    label: 'DeepSeek',
+    endpoint: 'https://api.deepseek.com',
+    model: '', // 空 = 沿用调用方默认模型（原行为：deepseek 不强制模型）
+    defaultMaxTokens: 8192,
+    defaultContextWindow: 65536,
+    apiKeyKey: 'deepseekApiKey',
+  },
+  {
+    id: 'opencode-go',
+    label: 'OpenCode Go',
+    endpoint: 'https://opencode.ai/zen/go/v1',
+    model: 'deepseek-v4-flash',
+    defaultMaxTokens: 8192,
+    defaultContextWindow: 131072,
+    apiKeyKey: 'opencodeGoApiKey',
+    noCors: true,
+  },
+  {
+    id: 'custom',
+    label: '自定义（OpenAI 兼容）',
+    endpoint: '',
+    model: '',
+    defaultMaxTokens: 8192,
+    defaultContextWindow: 32768,
+    apiKeyKey: 'aiCustomApiKey',
+  },
+];
+
+/** 取注册表描述（未知名回退 custom，保证设置页与解析一致） */
+export function getProviderDescriptor(id?: string): AIProviderDescriptor {
+  return AI_PROVIDER_REGISTRY.find((p) => p.id === id) || AI_PROVIDER_REGISTRY[2];
 }
 
 // ---------------- provider 解析 ----------------
@@ -40,7 +106,7 @@ export function resetAIProviderCache(): void {
   _aiProviderCache = null;
 }
 
-/** 解析 AI provider（override 优先级最高），逻辑与 Q3 getAIProvider 逐字一致 */
+/** 解析 AI provider（override 优先级最高），逻辑与 Q3 getAIProvider 逐字一致（ticket 170 起查注册表） */
 export async function getAIProvider(override?: string | { endpoint?: string; apiKey?: string; model?: string }): Promise<AIProvider> {
   if (!override && _aiProviderCache) return _aiProviderCache;
   const s = getQ3Settings();
@@ -53,33 +119,43 @@ export async function getAIProvider(override?: string | { endpoint?: string; api
     };
   }
   const name = (typeof override === 'string' && override) || s.aiProvider || 'opencode-go';
-  if (name === 'opencode-go') {
-    if (!s.opencodeGoApiKey) {
-      throw new Error('未配置 OpenCode Go API Key：插件设置 → AI 配置 → OpenCode Go API Key');
+  const desc = getProviderDescriptor(name);
+  if (name === 'custom') {
+    // 自定义 OpenAI 兼容端点：用户自填 endpoint/model/key（无端点或密钥即报缺配置）
+    const endpoint = (s.aiCustomEndpoint || '').replace(/\/+$/, '');
+    if (!endpoint || !s.aiCustomApiKey) {
+      throw new Error('未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）');
     }
     _aiProviderCache = {
-      endpoint: 'https://opencode.ai/zen/go/v1',
-      apiKey: s.opencodeGoApiKey,
-      model: 'deepseek-v4-flash',
-      noCors: true, // opencode.ai 无 CORS 头，fetch 必败 → 直接走 requestUrl
+      endpoint,
+      apiKey: s.aiCustomApiKey,
+      model: s.aiCustomModel || undefined,
     };
     return _aiProviderCache;
   }
-  // deepseek：settings 里配的 key 优先，其次 QuickAdd data.json
-  if (s.deepseekApiKey) {
-    _aiProviderCache = { endpoint: 'https://api.deepseek.com', apiKey: s.deepseekApiKey };
-    return _aiProviderCache;
+  const key = s[desc.apiKeyKey];
+  if (!key && name === 'deepseek') {
+    // deepseek 兼容兜底：settings 缺 key 时读 QuickAdd data.json（legacy，无 UI）
+    try {
+      const raw = await getApp().vault.adapter.read('.obsidian/plugins/quickadd/data.json');
+      const cfg = JSON.parse(raw);
+      const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
+      if (provider && provider.endpoint && provider.apiKey) {
+        _aiProviderCache = { endpoint: String(provider.endpoint).replace(/\/+$/, ''), apiKey: provider.apiKey };
+        return _aiProviderCache;
+      }
+    } catch (e) { /* 读取失败由调用方提示 */ }
   }
-  try {
-    const raw = await getApp().vault.adapter.read('.obsidian/plugins/quickadd/data.json');
-    const cfg = JSON.parse(raw);
-    const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
-    if (provider && provider.endpoint && provider.apiKey) {
-      _aiProviderCache = { endpoint: String(provider.endpoint).replace(/\/+$/, ''), apiKey: provider.apiKey };
-      return _aiProviderCache;
-    }
-  } catch (e) { /* 读取失败由调用方提示 */ }
-  throw new Error('未找到 AI 配置：请在插件设置中配置 API Key（DeepSeek 或 OpenCode Go）');
+  if (!key) {
+    throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.label} 密钥`);
+  }
+  _aiProviderCache = {
+    endpoint: desc.endpoint,
+    apiKey: key as string,
+    model: desc.model || undefined,
+    noCors: desc.noCors,
+  };
+  return _aiProviderCache;
 }
 
 // ---------------- 请求实现 ----------------
@@ -186,10 +262,13 @@ export class AIService {
     // 调用方未显式指定模型时，用 provider 配置的默认模型（如 OpenCode Go 设置里的模型）
     const effModel = (model === this.defaultModel && provider.model) ? provider.model : model;
     const mo = mergedOptions.modelOptions || {};
+    // max_tokens：显式 modelOptions > 设置 aiMaxTokens（>0 时）> 4096（ticket 170 默认用模型最大值）
+    const settingsTokens = Number(getQ3Settings().aiMaxTokens) || 0;
+    const effMaxTokens = mo.max_tokens ?? (settingsTokens > 0 ? settingsTokens : 4096);
     const body: Record<string, any> = {
       model: effModel,
       messages: [{ role: 'user', content: promptText }],
-      max_tokens: mo.max_tokens || 4096,
+      max_tokens: effMaxTokens,
       stream: true,
     };
     // 透传其余 modelOptions（response_format / enable_thinking 等，不支持的字段由 API 忽略）
