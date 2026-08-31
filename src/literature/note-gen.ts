@@ -132,11 +132,13 @@ ${chunks[0] || ''}`,
   const polished: string[] = [];
   for (const c of chunks) {
     const p = await ai.chat(
-      `你是文字编辑。把下面的视频转写文稿轻度润色为书面语：口语转书面、删除口水词与重复内容，保持原顺序、原事实（数字与专名不变）。输出必须是简体中文（繁体转写一律转为简体）。直接输出润色后的正文，不要解释、不要加标题、不要列表。
+      `你是文字编辑。把下面的视频转写文稿轻度润色为书面语：口语转书面、删除口水词与重复内容，保持原顺序、原事实（数字与专名不变）。转写可能存在语音误听，专名与术语（如火箭型号、人名、地名、专业词）若明显是误听则按上下文纠正为最合理的写法；无法确定的保持原文。输出必须是简体中文（繁体转写一律转为简体）。直接输出润色后的正文，不要解释、不要加标题、不要列表。
 
 【转写文稿】
 ${c}`,
-      { modelOptions: { max_tokens: 4096 } },
+      // deepseek-v4-flash（带思考）长文润色时 reasoning_content 会吃光 max_tokens 导致 content 空串
+      // （ticket 复现：finish_reason=length、content=''）；deepseek-chat 无思考、输出直达 content，稳
+      { model: 'deepseek-chat', modelOptions: { max_tokens: 8192 } },
     );
     polished.push(String(p || '').trim());
   }
@@ -144,7 +146,7 @@ ${c}`,
   // 视频双链（ticket 151 补回，ADR-0066）：CLI 交付的 mp4 vault 相对路径 → 正文尾部嵌 `![[…]]`；
   // keepVideo=false（未交付）时 videoPath 为 null → 无视频段
   const videoSection = opts.videoPath
-    ? `## 视频\n\n![[${String(opts.videoPath).replace(/\\/g, '/')}]]`
+    ? `![[${String(opts.videoPath).replace(/\\/g, '/')}]]`
     : null;
   const fm = [
     '---',
