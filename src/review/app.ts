@@ -306,13 +306,13 @@ export const reviewApp = {
             showAutoMark: false, // 二次复习不写评级数据，不显示自动标记（用户拍板 2026-08-29）
           });
           const action = await new Promise<string>((resolveAction) => {
-            popup.querySelector('#quiz-next-note')!.onclick = () => resolveAction('next');
+            popup.querySelector('#quiz-next-note')!.onclick = () => resolveAction(isLast ? 'end' : 'next'); // 终局「完成复习」= 结束会话
             const endBtn = popup.querySelector('#quiz-end-review');
-            if (endBtn) endBtn.onclick = () => resolveAction('end'); // 最后一篇无此按钮
+            if (endBtn) endBtn.onclick = () => resolveAction('end');
           });
           if (action === 'end') {
-            quiz.endReviewSession();
-            resolve(null);
+            quiz.endReviewSession(); // 拆 #quiz-mask 收尾（ticket 168：重做终局此前漏调致遮罩残留卡死）
+            resolve(isLast ? passed : null); // 终局「完成复习」= 全部完成仍返回通过集；中途「结束」= 会话中断
             return;
           }
           resolve(await this.redoReviewLoop(items, index + 1, passed));
