@@ -338,7 +338,11 @@ _Avoid_: hover 操作条、行内图标排、行内按钮组（指列表卡片�
 **条目抽屉 (Item Sheet)**: 跨域统一的条目操作浮层（`core/item-actions.ts`）——移动端长按卡片滑出底部抽屉（遮罩 + 顶部条目信息 + 功能项逐行；顶部精简两行（标题+简介，两行省略号截断）），桌面端右键弹跟手菜单（fbf7830 全局方案，preventDefault 拦原生右键、longPressFilter 让位区放行）。动作随域定义；keepOpen 动作执行后抽屉保持并由域动态刷新；附属浮层（评分/影评等小弹窗）叠于抽屉之上。已接入域：备忘录、日记本、影视、收藏本、剪藏本。两种特例：剪藏本是唯一「单击整卡直接打开」的域（ticket 69，Q7a）；且其桌面端浮层关闭（`desktopActions=false`，右键菜单统一方案落地前接受空窗）。
 _Avoid_: 长按菜单、底部菜单（泛指时）、右键菜单（桌面端尚未实现的形态）
 
-**AIService / createAI**: Q3 的 AI 服务抽象——provider 可选 deepseek / opencode-go，key 存于 QuickAdd 宏设置（`aiProvider`、`opencodeGoApiKey`），支持 override 对象（endpoint/apiKey/model）；插件化后迁移至插件设置。
+**AIService / createAI**: Q3 的 AI 服务抽象——provider 由 **AI 提供商注册表（ticket 170）** 描述：`core/ai.ts` `AI_PROVIDER_REGISTRY`（deepseek / opencode-go / **custom** 三行 descriptor：endpoint/model/密钥键/默认 maxTokens），`getAIProvider` 查表解析（未知名回退 custom），新增提供商只需加一行注册。custom = OpenAI 兼容端点（endpoint/model/apiKey 用户自填，可覆盖 commandcode 等新服务）；deepseek 保留 QuickAdd data.json 兜底。key 存于插件设置（`aiProvider`、`deepseekApiKey`、`opencodeGoApiKey`、`aiCustomEndpoint/aiCustomModel/aiCustomApiKey`）；支持 override 对象（endpoint/apiKey/model）。`prompt` 的 max_tokens 优先级：显式 modelOptions > 设置 `aiMaxTokens`（>0）> 4096。主设置页 🤖 AI 区块：服务商下拉（注册表驱动）+ 各商密钥/自定义三行（visibleWhen 互斥）+ 最大输出 token 行。
+_Avoid_: getAIProvider 内新增 if-else 分支、各调用点硬编码 max_tokens
+
+**影视评分制 (Movie Rating)**: 10 分制（ticket 170 由 6 分制迁移）——frontmatter `评分` 取值 -1（想看）/ 0（在看）/ >0（已看，0.1 步进）；UI 滑块 1~10 默认 5、编辑输入 0.1~10；星星渲染 `getStarRating` 10 分制 → 5 星刻度（`rating/2`），0.25~0.75 出半星（⯪）。影视数据分析原生 10 分制（与豆瓣直比，无换算）：评分桶 ≥9/8~9/7~8/6~7/5~6/<5，宝藏 ≥9 且豆瓣<8、失望 ≤4 且豆瓣≥8.5。vault 存量数据经 `.scratch/migrate-movie-rating.py` 一次性迁移（×10/6 保留 1 位，-1/0/空不动）。
+_Avoid_: 6 分制、×1.67 换算、旧六桶（≥5.5/5~5.5/4~5/3~4/2~3/<2）
 
 **域事件总线 (Domain Event Bus)**: bz 的进程内发布订阅设施（ticket 101，ADR-0047，`src/core/domain-bus.ts`）——通道命名 `<域名>:<事件>`（如 `vault:md-modified`、`diary:file-renamed`），fire-and-forget 同步扇出、单 handler 抛错隔离、总线不做去重/防抖。vault 原生四事件由 `core/obsidian-adapter.ts` 全插件唯一订阅点收编并**双通道派发**：恒发通用兜底 `vault:md-*`（任意文件夹监听需求在此接），命中域目录另发语义 `<域>:file-*`；目录归类由 `core/path-classify.ts` 按 settings 实时动态构建（smartcat/context-source 硬编码副本的单源替代）。订阅端两条纪律：回环抑制只能在订阅端做（总线禁全局去环）；同源双订必须自带防双记录。跨域事件类型 type-only 导入，零运行时边。
 _Avoid_: 总线层全局去环、在 obsidian-adapter 之外直接 app.vault.on 订阅 md 四事件、预铺无消费者的通道
