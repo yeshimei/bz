@@ -47,6 +47,12 @@ export default interface BzSettings {
   aiCustomModel: string;
   /** 🔑 自定义 AI 服务 API Key */
   aiCustomApiKey: string;
+  /** 🧠 每提供商模型覆盖（ticket 172，键 = provider id）：未填用注册表默认模型 */
+  aiModelOverrides: Record<string, string>;
+  /** 📏 每提供商上下文窗口覆盖（token 数，键 = provider id）：未填用注册表 defaultContextWindow */
+  aiContextOverrides: Record<string, number>;
+  /** 📏 每提供商最大输出 token 覆盖（键 = provider id）：未填用注册表 defaultMaxTokens（=模型最大输出） */
+  aiMaxTokensOverrides: Record<string, number>;
   /** 📏 每次请求最大输出 token（0 = 用 API 默认；缺省取提供商默认） */
   aiMaxTokens: number;
 
@@ -452,6 +458,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
   aiCustomEndpoint: '',
   aiCustomModel: '',
   aiCustomApiKey: '',
+  aiModelOverrides: {},
+  aiContextOverrides: {},
+  aiMaxTokensOverrides: {},
   aiMaxTokens: 0, // 0 = 用 API 默认（模型最大值）
 
   // 共享数据路径（ADR-0009）

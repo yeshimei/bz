@@ -12,8 +12,9 @@
 - [x] `settings.ts` 新增 13 个提供商密钥键（openai/anthropic/google/moonshot/zhipu/dashscope/siliconflow/openrouter/xai/groq/mistral/together/ollama）+ DEFAULT_SETTINGS 默认空串
 - [x] `getAIProvider` 泛化：全部注册表提供商查表解析，无需 if-else；extraHeaders 注入请求头（anthropic-version 等）；ollama 本地无鉴权空密钥放行；deepseek QuickAdd 兜底 / custom 自填行为零变化
 - [x] `favorites/ai.ts` `isAvailable` 注册表驱动判定（ollama 恒 true、deepseek 不判死、其余查 apiKeyKey）
-- [x] 测试：注册表解析（openai 端点/模型）、缺密钥报错、anthropic extraHeaders 注入、ollama 空密钥、favorites 各提供商判定；schema/lint 断言改注册表驱动
-- [x] 门禁：tsc 0 错 + 全量 222 文件 3588 用例绿 + 构建通过
+- [x] **ticket 172 追加 per-provider 配置**：`aiModelOverrides`/`aiContextOverrides`/`aiMaxTokensOverrides` 三 map（键 = provider id），设置页「模型名称/上下文窗口/最大输出 token」三行默认填该模型最大输出值、切换 provider 联动刷新；注册表默认 max output 校准（anthropic 64000 / kimi 131072 等）
+- [x] 测试：注册表解析（openai 端点/模型）、缺密钥报错、anthropic extraHeaders 注入、ollama 空密钥、favorites 各提供商判定、per-provider 覆盖解析/隔离/请求体、设置页三行渲染/写入/切换联动；schema/lint 断言改注册表驱动
+- [x] 门禁：tsc 0 错 + 全量 222 文件 3594 用例绿 + 构建通过
 
 ## Ticket 170 — AI 提供商策略模式 + 影视 10 分制（memo 闭环）
 

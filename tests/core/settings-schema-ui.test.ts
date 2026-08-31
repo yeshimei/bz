@@ -13,6 +13,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { renderSettingsInto } from '../../src/core/settings-schema';
 import type { SettingsSchema } from '../../src/core/settings-schema';
+import { mainSettingsSchema } from '../../src/core/settings-main-schema';
 import { closePathPicker } from '../../src/core/path-picker';
 
 const state = { ...DEFAULT_SETTINGS } as BzSettings & Record<string, unknown>;
@@ -442,5 +443,61 @@ describe('path 行接入统一路径选择器（ADR-0061）', () => {
     (row.querySelector('.bz-path-picker-chip-x') as HTMLElement).click();
     expect(state.reviewWatchedFolders).toEqual([]);
     expect(saver).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('主设置页 AI per-provider 配置三行（ticket 172）', () => {
+  // 直接构造与 mainSettingsSchema 相同的三行（避免全量 schema 重渲染的 DOM 噪音）
+  function renderProviderRows(container: HTMLElement) {
+    const schema = mainSettingsSchema();
+    renderSettingsInto(container, { groups: [schema.groups[0]] });
+  }
+
+  it('模型名称/上下文窗口/最大输出 token 三行渲染，初始值 = 当前 provider 注册表默认', () => {
+    state.aiProvider = 'opencode-go';
+    const container = document.createElement('div');
+    renderProviderRows(container);
+    const modelRow = findRow(container, '模型名称');
+    const ctxRow = findRow(container, '上下文窗口');
+    const maxTokensRow = findRow(container, '最大输出 token');
+    // 初始 = 注册表默认（opencode-go: model deepseek-v4-flash / ctx 131072 / max 8192）
+    expect(textControlOf(modelRow).value).toBe('deepseek-v4-flash');
+    expect(textControlOf(ctxRow).value).toBe('131072');
+    expect(textControlOf(maxTokensRow).value).toBe('8192');
+  });
+
+  it('输入覆盖值写入 per-provider map；清空回落注册表默认', () => {
+    state.aiProvider = 'openai';
+    const container = document.createElement('div');
+    renderProviderRows(container);
+    const modelRow = findRow(container, '模型名称');
+    // 初始 = openai 注册表默认 gpt-4o-mini
+    expect(textControlOf(modelRow).value).toBe('gpt-4o-mini');
+    textControlOf(modelRow).trigger('gpt-4o');
+    expect(state.aiModelOverrides?.openai).toBe('gpt-4o');
+    textControlOf(modelRow).trigger('');
+    expect(state.aiModelOverrides?.openai).toBeUndefined(); // 清空 = 回落默认
+  });
+
+  it('切换 provider 后三行值联动刷新（onRefresh）', () => {
+    state.aiProvider = 'deepseek';
+    state.aiModelOverrides = {};
+    state.aiContextOverrides = {};
+    state.aiMaxTokensOverrides = {};
+    const container = document.createElement('div');
+    renderProviderRows(container);
+    // 先看 openai 时的默认
+    const providerRow = findRow(container, 'AI 服务商');
+    const dd = controlOf(providerRow);
+    dd.trigger('openai');
+    // 触发 reevaluate（select onChange 后渲染器自动 reevaluate → custom onRefresh 刷新）
+    expect(textControlOf(findRow(container, '模型名称')).value).toBe('gpt-4o-mini');
+    expect(textControlOf(findRow(container, '上下文窗口')).value).toBe('128000');
+    expect(textControlOf(findRow(container, '最大输出 token')).value).toBe('16384');
+    // 再切 deepseek
+    dd.trigger('deepseek');
+    expect(textControlOf(findRow(container, '模型名称')).value).toBe(''); // deepseek 注册表 model 为空
+    expect(textControlOf(findRow(container, '上下文窗口')).value).toBe('65536');
+    expect(textControlOf(findRow(container, '最大输出 token')).value).toBe('8192');
   });
 });

@@ -28,18 +28,20 @@ describe('mainSettingsSchema：主设置页两区块', () => {
     expect(schema.groups.map((g) => g.icon)).toEqual(['sparkles', 'folder-open']);
   });
 
-  it('AI 区块：服务商下拉（键直绑）+ 每家注册表提供商密钥行 + custom 三行 + max token（ticket 171）', () => {
+  it('AI 区块：服务商下拉 + 每家注册表提供商密钥行 + 自定义三行 + per-provider 配置三行（ticket 171/172）', () => {
     const rows = schema.groups[0].rows;
-    // 行序 = 服务商下拉 + 注册表非 custom 提供商密钥行（每行 text）+ custom 端点/模型/密钥（text×3）+ max token（number）
+    // 行序 = 服务商下拉 + 注册表非 custom 提供商密钥行（每行 text）+ 自定义端点/模型/密钥（text×3）
+    //         + per-provider 配置三行（custom：模型名称/上下文窗口/最大输出 token）
     const nonCustom = AI_PROVIDER_REGISTRY.filter((p) => p.id !== 'custom');
-    const types = ['select', ...nonCustom.map(() => 'text'), 'text', 'text', 'text', 'number'];
+    const types = ['select', ...nonCustom.map(() => 'text'), 'text', 'text', 'text', 'custom', 'custom', 'custom'];
     expect(rows.map((r) => r.type)).toEqual(types);
     // 密钥行标题来自注册表 apiKeyLabel（含 deepseek/opencode-go，顺序与注册表一致）
     const names = rows.map((r) => (r as { name: string }).name);
     const keyNames = nonCustom.map((p) => p.apiKeyLabel);
     expect(names).toEqual([
       'AI 服务商', ...keyNames,
-      '自定义 API 地址', '自定义模型', '自定义 API 密钥', '最大输出 token',
+      '自定义 API 地址', '自定义模型', '自定义 API 密钥',
+      '模型名称', '上下文窗口', '最大输出 token',
     ]);
     const [provider, ...rest] = rows as Array<{
       binding?: { key: string };
@@ -52,15 +54,22 @@ describe('mainSettingsSchema：主设置页两区块', () => {
       expect(rest[i].visibleWhen!(snapOf({ aiProvider: p.id }))).toBe(true);
       expect(rest[i].visibleWhen!(snapOf({ aiProvider: 'custom' }))).toBe(false);
     });
-    // custom 三行（端点/模型/密钥）+ max token
-    const [customEndpoint, customModel, customKey, maxTokens] = rest.slice(nonCustom.length) as Array<{
+    // 自定义三行（端点/模型/密钥）
+    const [customEndpoint, customModel, customKey] = rest.slice(nonCustom.length) as Array<{
       binding?: { key: string };
       visibleWhen?: (s: SettingsSnapshot) => boolean;
     }>;
     expect(customEndpoint.binding).toEqual({ key: 'aiCustomEndpoint' });
     expect(customModel.binding).toEqual({ key: 'aiCustomModel' });
     expect(customKey.binding).toEqual({ key: 'aiCustomApiKey' });
-    expect(maxTokens.binding).toEqual({ key: 'aiMaxTokens' });
+    // per-provider 配置三行（custom 行，无 key 直绑，常显）
+    const [modelRow, ctxRow, maxTokensRow] = rest.slice(nonCustom.length + 3) as Array<{
+      name: string;
+      type: string;
+      visibleWhen?: (s: SettingsSnapshot) => boolean;
+    }>;
+    expect([modelRow.name, ctxRow.name, maxTokensRow.name]).toEqual(['模型名称', '上下文窗口', '最大输出 token']);
+    expect(modelRow.visibleWhen!(snapOf({ aiProvider: 'deepseek' }))).toBe(true); // 常显
     // 显隐（ticket 170/171）：deepseek 显示 DeepSeek 行；opencode-go 显示 OpenCode 行；custom 显示自定义三行
     const findKey = (key: string) => {
       const idx = nonCustom.findIndex((p) => p.apiKeyKey === key);

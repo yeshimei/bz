@@ -84,7 +84,8 @@ export interface TextRow extends RowBase, TextualCommit {
   type: 'text';
   name: string;
   binding: RowBinding<string>;
-  placeholder?: string;
+  /** 占位提示；函数形式 = 随快照联动（ticket 172：placeholder 跟随 aiProvider 显示注册表默认） */
+  placeholder?: string | ((snapshot: SettingsSnapshot) => string);
   /** 每键触发（写内存后；落盘走防抖/失焦/回车 commit） */
   onChange?: (value: string, ctx: SettingsRowContext) => void;
 }
@@ -107,7 +108,8 @@ export interface NumberRow extends RowBase, TextualCommit {
   max?: number;
   /** 输入框步进（浏览器 spinner 口径；不参与写入钳制） */
   step?: number;
-  placeholder?: string;
+  /** 占位提示；函数形式 = 随快照联动（ticket 172） */
+  placeholder?: string | ((snapshot: SettingsSnapshot) => string);
   onChange?: (value: number, ctx: SettingsRowContext) => void;
 }
 
@@ -173,6 +175,8 @@ export interface InfoRow extends RowBase {
 export interface CustomRow extends RowBase {
   type: 'custom';
   render: (body: HTMLElement, ctx: SettingsRowContext) => void;
+  /** ticket 172：任意行变更后（含 aiProvider 切换）重求值时回调，供外部绑定行刷新显示值 */
+  onRefresh?: (ctx: SettingsRowContext) => void;
 }
 
 /** 十类行判别联合（Q5） */
@@ -288,11 +292,16 @@ export function parseClampedNumber(raw: string, min?: number, max?: number): num
  */
 export function renderSettingsInto(container: HTMLElement, schema: SettingsSchema): SettingsRenderHandle {
   const entries: VisibilityEntry[] = [];
+  /** ticket 172：custom 行 onRefresh 回调（provider 切换等任意变更后重刷外部绑定行显示值） */
+  const customRefreshes: Array<() => void> = [];
 
   const reevaluate = (): void => {
     const snap = currentSnapshot();
     for (const e of entries) {
       e.el.classList.toggle('bz-setting-hidden', e.visibleWhen ? !e.visibleWhen(snap) : false);
+    }
+    for (const fn of customRefreshes) {
+      try { fn(); } catch { /* 单行刷新失败不影响其余 */ }
     }
     refreshSettingsGroupCounts(container);
     markSettingSplitRows(container);
@@ -339,7 +348,16 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
       };
     }) => {
       t.setValue(initial);
-      if (row.placeholder && t.setPlaceholder) t.setPlaceholder(row.placeholder);
+      // placeholder：函数形式 = 随快照联动（ticket 172 提供商默认提示），字符串形式 = 静态
+      const place = (snap: SettingsSnapshot): string | undefined =>
+        typeof row.placeholder === 'function' ? row.placeholder(snap) : row.placeholder;
+      const applyPlaceholder = (): void => {
+        if (t.setPlaceholder) {
+          const p = place(currentSnapshot());
+          if (p !== undefined) t.setPlaceholder(p);
+        }
+      };
+      applyPlaceholder();
       t.onChange((v: string) => {
         if (isNumber) {
           const n = parseClampedNumber(v, (row as NumberRow).min, (row as NumberRow).max);
@@ -369,6 +387,14 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
           });
         }
       }
+      // 函数型 placeholder 随快照联动：任意行变更（含 aiProvider 切换）后刷新占位提示
+      if (typeof row.placeholder === 'function') {
+        const origReevaluate = ctx.refreshVisibility;
+        ctx.refreshVisibility = () => {
+          applyPlaceholder();
+          origReevaluate();
+        };
+      }
     };
     if (row.type === 'text') setting.addText(addInto);
     else if (row.type === 'textarea') setting.addTextArea(addInto);
@@ -396,6 +422,7 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
         body.appendChild(wrap);
         if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
         row.render(wrap, { rowEl: wrap, refreshVisibility: reevaluate });
+        if (row.onRefresh) customRefreshes.push(() => row.onRefresh!({ rowEl: wrap, refreshVisibility: reevaluate }));
         return;
       }
       case 'path': {
