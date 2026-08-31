@@ -207,6 +207,7 @@ describe('UIManager', () => {
       enableAutoNotify: true, reviewAutoAddNotice: true, forceQuizForReview: true,
       enableMultipleChoice: true, questionsPerNote: '0', shuffleQuestions: true, difficulty: 'random',
       reviewDailyLimit: 0, reviewIntervalScale: 1, reviewTreeBadge: true,
+      reviewEnableFit: true, reviewFitEveryN: 10, reviewRThreshold: 0.9,
     };
     setSettingsProvider(() => settings);
     const dm = new ReviewDataManager(app);
@@ -227,7 +228,7 @@ describe('UIManager', () => {
     const isHiddenGroup = (el: Element) =>
       Boolean((el.closest('.bz-settings-group') as HTMLElement | null)?.classList.contains('bz-setting-hidden'));
     const groupNames = [...popup.querySelectorAll('.bz-settings-group-name')].filter((el) => !isHiddenGroup(el)).map((el) => el.textContent);
-    expect(groupNames).toEqual(['检查提醒', '做题家', '复习节奏', '自动化', '界面']);
+    expect(groupNames).toEqual(['检查提醒', '做题家', '复习节奏', '记忆算法', '自动化', '界面']);
     // 检查提醒组
     expect(names()).toContain('到期提醒');
     expect(names()).toContain('新笔记加入提醒');
@@ -257,7 +258,8 @@ describe('UIManager', () => {
       )!.querySelector('.bz-settings-group-count')!.textContent;
     expect(badge('检查提醒')).toBe('2 项');
     expect(badge('做题家')).toBe('5 项');
-    expect(badge('复习节奏')).toBe('2 项');
+    expect(badge('复习节奏')).toBe('3 项'); // ADR-0077：+R 目标阈值
+    expect(badge('记忆算法')).toBe('2 项'); // ADR-0077：参数自动拟合 + 每 N 次重算
     expect(badge('自动化')).toBe('2 项');
     expect(badge('界面')).toBe('1 项');
     ui.destroy();
@@ -375,9 +377,9 @@ describe('UIManager', () => {
     // 头部：🔁 + 名称 + 阶段·到期小字
     expect(sheet.querySelector('.bz-item-sheet-emoji')!.textContent).toBe('🔁');
     expect(sheet.querySelector('.bz-item-sheet-sub')!.textContent).toContain('逾期');
-    // 动作清单
+    // 动作清单（ADR-0077 新增：置顶、查看历史）
     const labels = [...sheet.querySelectorAll('.bz-item-sheet-label')].map((e) => e.textContent);
-    expect(labels).toEqual(['开始复习', '打开原文', '移出复习计划']);
+    expect(labels).toEqual(['开始复习', '打开原文', '置顶', '查看历史', '移出复习计划']);
 
     // 点「开始复习」→ 难度弹窗（companion 叠抽屉）
     const startItem = [...sheet.querySelectorAll('.bz-item-sheet-item')].find(
