@@ -305,18 +305,18 @@ describe('添加/编辑弹窗', () => {
     // 状态按钮组（想看/在看/已看）
     const statusBtns = [...overlay.querySelectorAll('button')].filter((b) => ['想看', '在看', '已看'].includes(b.textContent!));
     expect(statusBtns.length).toBe(3);
-    // 默认已看 → 评分滑块显示（1~6 · 0.1 步进），无日期输入框
+    // 默认已看 → 评分滑块显示（1~10 · 0.1 步进，ticket 170），无日期输入框
     const ratingSlider = [...overlay.querySelectorAll('input')].find((i) => (i as HTMLInputElement).type === 'range') as HTMLInputElement;
     expect(ratingSlider).not.toBeNull();
     expect(ratingSlider.min).toBe('1');
-    expect(ratingSlider.max).toBe('6');
+    expect(ratingSlider.max).toBe('10');
     expect(ratingSlider.step).toBe('0.1');
-    expect(ratingSlider.value).toBe('3.5');
+    expect(ratingSlider.value).toBe('5');
     expect(ratingSlider.parentElement!.style.display).toBe('block');
     expect(overlay.querySelector('input[type="datetime-local"]')).toBeNull();
-    // 滑块对应分数实时显示（初始 3.5，拖动更新）
+    // 滑块对应分数实时显示（初始 5.0，拖动更新）
     const ratingValueEl = ratingSlider.parentElement!.querySelector('.bz-movie-rating-value') as HTMLElement;
-    expect(ratingValueEl.textContent).toBe('3.5');
+    expect(ratingValueEl.textContent).toBe('5.0');
     ratingSlider.value = '5.2';
     ratingSlider.dispatchEvent(new Event('input', { bubbles: true }));
     expect(ratingValueEl.textContent).toBe('5.2');
@@ -574,7 +574,7 @@ describe('抽屉（统一手势组件接入）', () => {
     const sheet = document.querySelector('.bz-item-sheet') as HTMLElement;
     expect(sheet.textContent).toContain('标记已看');
     const markBtn = [...sheet.querySelectorAll('.bz-item-sheet-item')].find((b) => b.textContent!.includes('标记已看')) as HTMLElement;
-    // keepOpen：评分窗叠于抽屉之上，触发前不写盘（不写默认 3.5）
+    // keepOpen：评分窗叠于抽屉之上，触发前不写盘（不写默认 5）
     const before = vault.files.get('我的/影视/《想看片》.md');
     markBtn.click();
     const modal = document.querySelector('.bz-movie-tiny-modal') as HTMLElement;
@@ -587,7 +587,7 @@ describe('抽屉（统一手势组件接入）', () => {
     slider.dispatchEvent(new Event('input', { bubbles: true }));
     (modal.querySelector('.bz-movie-tiny-confirm') as HTMLElement).click();
     await vi.advanceTimersByTimeAsync(50);
-    expect(vault.files.get('我的/影视/《想看片》.md')).toContain('评分: 4.2'); // 滑块值，非默认 3.5
+    expect(vault.files.get('我的/影视/《想看片》.md')).toContain('评分: 4.2'); // 滑块值，非默认 5
     expect(vault.files.get('我的/影视/《想看片》.md')).toMatch(/观影日期: \d{4}-\d{2}-\d{2}/); // 标记已看 → 观影日期=今天
     expect(vault.files.get('我的/影视/《想看片》.md')).not.toContain('状态');
     expect(hasNotice('已更新影视信息')).toBe(true);
@@ -621,10 +621,10 @@ describe('抽屉（统一手势组件接入）', () => {
     expect(modal).not.toBeNull();
     expect(modal.textContent).toContain('标记已看');
     const slider = modal.querySelector('input[type="range"]') as HTMLInputElement;
-    slider.dispatchEvent(new Event('input', { bubbles: true })); // 保持默认 3.5
+    slider.dispatchEvent(new Event('input', { bubbles: true })); // 保持默认 5
     (modal.querySelector('.bz-movie-tiny-confirm') as HTMLElement).click();
     await vi.advanceTimersByTimeAsync(50);
-    expect(vault.files.get('我的/影视/《在看片》.md')).toContain('评分: 3.5'); // 滑块默认 3.5（用户确认后）
+    expect(vault.files.get('我的/影视/《在看片》.md')).toContain('评分: 5'); // 滑块默认 5（用户确认后）
     expect(vault.files.get('我的/影视/《在看片》.md')).toMatch(/观影日期: \d{4}-\d{2}-\d{2}/); // 在看→已看：观影日期=今天
     expect(vault.files.get('我的/影视/《在看片》.md')).not.toContain('状态');
     expect(hasNotice('已更新影视信息')).toBe(true);
@@ -666,10 +666,10 @@ describe('抽屉（统一手势组件接入）', () => {
     const slider = modal.querySelector('input[type="range"]') as HTMLInputElement;
     expect(slider).not.toBeNull();
     expect(slider.min).toBe('1');
-    expect(slider.max).toBe('6');
+    expect(slider.max).toBe('10');
     expect(slider.step).toBe('0.1');
     expect(slider.value).toBe('4.5'); // 预填当前评分
-    expect(modal.querySelector('input[placeholder="评分（0.1~5）"]')).toBeNull(); // 滑块取代数字输入
+    expect(modal.querySelector('input[placeholder="评分（0.1~10）"]')).toBeNull(); // 滑块取代数字输入
     expect(modal.querySelector('input[type="datetime-local"]')).toBeNull(); // 无日期输入
     expect(modal.textContent).toContain('⭐ 4.5');
     const buttons = [...modal.querySelectorAll('button')];
@@ -735,7 +735,7 @@ describe('抽屉（统一手势组件接入）', () => {
     await vi.advanceTimersByTimeAsync(50);
     const fileContent = vault.files.get('我的/影视/《已看无评分》.md')!;
     expect(fileContent).not.toContain('状态'); // 状态字段已废除
-    expect(fileContent).toContain('评分: 3.5'); // 滑块默认 3.5
+    expect(fileContent).toContain('评分: 5'); // 滑块默认 5
     expect(fileContent).toMatch(/观影日期: \d{4}-\d{2}-\d{2}/); // 默认当年日期
   });
 

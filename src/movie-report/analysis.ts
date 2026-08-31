@@ -23,17 +23,18 @@ const TYPE_COLORS: Record<string, string> = {
   '公开课': '#E6DFF5',
 };
 
-const R6to10 = 10 / 6; // 个人6分制 → 10分制换算
+// ticket 170：个人评分原生 10 分制（不再 6→10 换算），豆瓣同为 10 分制，直接可比
 const REVIEW_KEYWORDS = ['好看', '喜欢', '推荐', '经典', '感动', '治愈', '失望', '无聊', '一般', '神作', '烂片', '封神', '震撼', '催泪', '熬夜', '二刷', '满分'];
 
 // ======================= 数据采集 =======================
+/** 评分桶（10 分制，ticket 170）：≥9 / 8~9 / 7~8 / 6~7 / 5~6 / <5 */
 function ratingBucketOf(r: number): string {
-  if (r >= 5.5) return '≥5.5';
-  if (r >= 5) return '5~5.5';
-  if (r >= 4) return '4~5';
-  if (r >= 3) return '3~4';
-  if (r >= 2) return '2~3';
-  return '<2';
+  if (r >= 9) return '≥9';
+  if (r >= 8) return '8~9';
+  if (r >= 7) return '7~8';
+  if (r >= 6) return '6~7';
+  if (r >= 5) return '5~6';
+  return '<5';
 }
 
 /** 空分析数据结构（buildAnalysisData 拆分） */
@@ -43,7 +44,7 @@ function createEmptyAnalysis(): any {
     ratingSum: 0, ratingCount: 0,
     doubanSum: 0, doubanCount: 0,
     groups: {}, tags: {}, years: {}, months: {},
-    buckets: { '≥5.5': 0, '5~5.5': 0, '4~5': 0, '3~4': 0, '2~3': 0, '<2': 0 },
+    buckets: { '≥9': 0, '8~9': 0, '7~8': 0, '6~7': 0, '5~6': 0, '<5': 0 },
     genres: {}, countries: {}, directors: {}, actors: {},
     topRated: [], wantList: [],
     // ① 片龄
@@ -195,12 +196,11 @@ function accumulateMovieStats(data: any, item: any, fm: any, d: Date | null, db:
 function accumulateMovieExtras(data: any, item: any, fm: any, db: number): void {
   const { status, typeTag, rating, name } = item;
 
-  // ④ 打分习惯（个人6分制 → 10分制换算）
+  // ④ 打分习惯（个人与豆瓣同为 10 分制，ticket 170；宝藏 ≥9 且豆瓣<8，失望 ≤4 且豆瓣≥8.5）
   if (status === STATUS_WATCHED && rating !== null && rating > 0 && !isNaN(db) && db > 0) {
-    const r10 = rating * R6to10;
-    data.diffSum += r10 - db; data.diffCount++;
-    if (r10 >= 8.33 && db < 8) data.treasure.push({ name, typeTag, rating, douban: db });
-    if (rating <= 2 && db >= 8.5) data.disappoint.push({ name, typeTag, rating, douban: db });
+    data.diffSum += rating - db; data.diffCount++;
+    if (rating >= 9 && db < 8) data.treasure.push({ name, typeTag, rating, douban: db });
+    if (rating <= 4 && db >= 8.5) data.disappoint.push({ name, typeTag, rating, douban: db });
   }
 
   // ⑤ 影评关键词
@@ -419,14 +419,14 @@ function topListHTML(list: any[], withRating: boolean): string {
   }).join('');
 }
 
-// 双榜（宝藏/失望）: 名称/类型/个人原分+换算/豆瓣
+// 双榜（宝藏/失望）: 名称/类型/个人原分/豆瓣（同为 10 分制，ticket 170 无换算）
 function ratingCompareListHTML(list: any[]): string {
   if (!list || !list.length) return emptyHTML();
   return list.map((it) => `
         <div style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--background-modifier-border);">
             <span style="flex:1;font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">《${it.name}》</span>
             <span style="font-size:.72rem;color:var(--text-muted);flex-shrink:0;">${it.typeTag}</span>
-            <span style="font-size:.78rem;font-weight:600;color:var(--text-accent);flex-shrink:0;">${it.rating}<span style="font-weight:400;color:var(--text-muted);font-size:.68rem;">(${(it.rating * R6to10).toFixed(1)})</span></span>
+            <span style="font-size:.78rem;font-weight:600;color:var(--text-accent);flex-shrink:0;">${it.rating}</span>
             <span style="font-size:.78rem;color:var(--text-muted);flex-shrink:0;">豆瓣${it.douban}</span>
         </div>`).join('');
 }
@@ -449,14 +449,14 @@ function buildAnalysisHTML(data: any): string {
   }
   const yearEntries = Object.keys(data.years).sort((a, b) => Number(a) - Number(b)).map((y) => ({ label: y, value: data.years[y] }));
   const monthEntries = Array.from({ length: 12 }, (_, i) => ({ label: (i + 1) + '月', value: data.months[i + 1] || 0 }));
-  const bucketEntries = ['≥5.5', '5~5.5', '4~5', '3~4', '2~3', '<2'].map((b) => ({ label: b, value: data.buckets[b] }));
+  const bucketEntries = ['≥9', '8~9', '7~8', '6~7', '5~6', '<5'].map((b) => ({ label: b, value: data.buckets[b] }));
   const topN = (map: any, n: number) => Object.entries(map).sort((a, b) => (b[1] as number) - (a[1] as number)).slice(0, n).map(([label, value]) => ({ label, value }));
   const typeEntries = Object.entries(data.groups).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([label, value]) => ({ label, value }));
   const typeColors = typeEntries.map((e: any) => TYPE_COLORS[e.label] || '#95a5a6');
   const tagChips = Object.entries(data.tags).sort((a, b) => (b[1] as number) - (a[1] as number))
     .map(([t, c]) => `<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:.72rem;background:var(--background-primary);color:var(--text-normal);border:1px solid var(--background-modifier-border);margin:2px;">${t} ${c}</span>`).join('');
 
-  const avgRating = data.ratingCount ? (data.ratingSum / data.ratingCount * R6to10).toFixed(2) : '—';
+  const avgRating = data.ratingCount ? (data.ratingSum / data.ratingCount).toFixed(2) : '—'; // 原生 10 分制，ticket 170
   const avgDouban = data.doubanCount ? (data.doubanSum / data.doubanCount).toFixed(2) : '—';
   const curMonth = new Date().getMonth(); // 0-11
 
@@ -476,8 +476,8 @@ function buildAnalysisHTML(data: any): string {
     ${sectionHTML('🗓️ 月度观影分布', barChartHTML(monthEntries, { color: '#CDF0EA', highlight: curMonth }), '#CDF0EA')}
     ${sectionHTML('📆 观影节奏', statInlineHTML([`月均 ${data.monthFreq} 部`, `周末 ${data.weekdays[0] + data.weekdays[6]} 部 (${data.total ? Math.round((data.weekdays[0] + data.weekdays[6]) / data.total * 100) : 0}%)`]) + barChartHTML(data.weekdayEntries, { color: '#D6E4FF' }) + (data.yearTrend.length ? '<div style="margin-top:10px;">' + statInlineHTML(data.yearTrend.map((t: any) => `${t.label} ${t.value >= 0 ? '+' : ''}${t.value}%`)) + '</div>' : ''), '#D6E4FF')}
     ${sectionHTML('⭐ 个人评分分布', barChartHTML(bucketEntries, { color: '#FADDE1' }), '#FADDE1')}
-    ${sectionHTML('📈 评分趋势（个人6分制）', barChartHTML(data.yearRatingEntries, { color: '#FFE5CC' }), '#FFE5CC')}
-    ${sectionHTML('⚖️ 打分习惯（换算10分制）', statInlineHTML([`平均差值 ${data.avgDiff >= 0 ? '+' : ''}${data.avgDiff}（个人−豆瓣）`]) + '<div style="font-weight:600;font-size:.8rem;margin:6px 0 4px;">💎 宝藏片（个人≥5 豆瓣&lt;8）</div>' + ratingCompareListHTML(data.treasure) + '<div style="font-weight:600;font-size:.8rem;margin:10px 0 4px;">🌧️ 失望榜（个人≤2 豆瓣≥8.5）</div>' + ratingCompareListHTML(data.disappoint), '#FADDE1')}
+    ${sectionHTML('📈 评分趋势（个人10分制）', barChartHTML(data.yearRatingEntries, { color: '#FFE5CC' }), '#FFE5CC')}
+    ${sectionHTML('⚖️ 打分习惯（个人−豆瓣）', statInlineHTML([`平均差值 ${data.avgDiff >= 0 ? '+' : ''}${data.avgDiff}（个人−豆瓣）`]) + '<div style="font-weight:600;font-size:.8rem;margin:6px 0 4px;">💎 宝藏片（个人≥9 豆瓣&lt;8）</div>' + ratingCompareListHTML(data.treasure) + '<div style="font-weight:600;font-size:.8rem;margin:10px 0 4px;">🌧️ 失望榜（个人≤4 豆瓣≥8.5）</div>' + ratingCompareListHTML(data.disappoint), '#FADDE1')}
     ${sectionHTML('🎭 题材偏好 TOP10', softBarHTML(topN(data.genres, 10), '#E6DFF5'), '#E6DFF5')}
     ${sectionHTML('🌍 制片国家/地区 TOP10', softBarHTML(topN(data.countries, 10), '#D6E4FF'), '#D6E4FF')}
     ${sectionHTML('🎥 最爱导演 TOP10', softBarHTML(topN(data.directors, 10), '#D8F3DC'), '#D8F3DC')}
@@ -488,7 +488,7 @@ function buildAnalysisHTML(data: any): string {
     ${sectionHTML('🔗 系列追踪', statInlineHTML([`追了 ${data.seriesList.length} 个系列（≥2部）`]) + (data.seriesList.length ? data.seriesList.map(([k, v]: any, i: number) => `<div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--background-modifier-border);"><span style="width:18px;flex-shrink:0;font-size:.72rem;color:var(--text-muted);text-align:center;">${i + 1}</span><span style="flex:1;font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">《${k}》</span><span style="font-size:.78rem;font-weight:600;color:var(--text-accent);flex-shrink:0;">${v} 部</span></div>`).join('') : emptyHTML()), '#D6E4FF')}
     ${sectionHTML('📺 追剧深度', statInlineHTML([`平均 ${data.avgSeason} 季`]) + (data.seasons.length ? data.seasons.map((s: any, i: number) => `<div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--background-modifier-border);"><span style="width:18px;flex-shrink:0;font-size:.72rem;color:var(--text-muted);text-align:center;">${i + 1}</span><span style="flex:1;font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">《${s.name}》</span><span style="font-size:.78rem;font-weight:600;color:var(--text-accent);flex-shrink:0;">${s.seasons} 季</span></div>`).join('') : emptyHTML()), '#CDF0EA')}
     ${sectionHTML('📌 想看清单（' + (data.wantTotal ?? data.wantList.length) + '）' + (data.wantAvgDouban !== '—' ? ' · 均豆瓣 ' + data.wantAvgDouban : ''), topListHTML(data.wantList, false) + (Object.keys(data.wantTags).length ? '<div style="margin-top:8px;">' + Object.entries(data.wantTags).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([t, c]) => `<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:.72rem;background:var(--background-primary);color:var(--text-normal);border:1px solid var(--background-modifier-border);margin:2px;">${t} ${c}</span>`).join('') + '</div>' : ''), '#FFF3C4')}
-    <p style="text-align:center;font-size:.68rem;color:var(--text-muted);margin-top:16px;">个人评分 6 分制 ⇄ 豆瓣 10 分制，换算 ×${R6to10.toFixed(2)}</p>
+    <p style="text-align:center;font-size:.68rem;color:var(--text-muted);margin-top:16px;">个人评分与豆瓣同为 10 分制，可直接对比</p>
     `;
 }
 

@@ -1,9 +1,19 @@
 /**
  * 影视常量与工具（ticket 14，源码逐字移植）
+ * ticket 170：评分制 6 分制 → 10 分制（滑块 1~10 步进 0.1，星星支持半星）
  */
 export const STATUS_WANT = 0;
 export const STATUS_WATCHING = 1;
 export const STATUS_WATCHED = 2;
+
+/** 评分制刻度上限（10 分制，ticket 170） */
+export const RATING_MAX = 10;
+/** 星星渲染的整星/半星字符 */
+export const STAR_FULL = '⭐';
+export const STAR_HALF = '⯪';
+
+/** 默认评分（标记已看直改默认分；ticket 170：10 分制中点 5） */
+export const DEFAULT_RATING = 5;
 
 export const TYPE_GROUPS: Record<string, string[]> = {
   电影: ['电影'],
@@ -35,6 +45,10 @@ export function getGroupForTag(tag: string): string | null {
   return null;
 }
 
+/** 星星串渲染（10 分制，ticket 170）：5 颗星封顶，支持半星（如 8.5 → ⭐⭐⭐⭐⯪） */
 export function getStarRating(rating: number): string {
-  return '⭐'.repeat(Math.floor(rating));
+  const stars = Math.min(Math.max(rating / 2, 0), 5); // 10 分制 → 5 星刻度
+  const full = Math.floor(stars);
+  const half = stars - full >= 0.25 && stars - full < 0.75;
+  return STAR_FULL.repeat(full) + (half ? STAR_HALF : stars - full >= 0.75 ? STAR_FULL : '');
 }

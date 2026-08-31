@@ -11,7 +11,7 @@ import { openSettingsModal } from '../core/settings-modal';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { mobileFullscreenGroup } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
-import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, getTypeColor, getStarRating, ALL_TAGS, getGroupForTag } from './constants';
+import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, getTypeColor, getStarRating, ALL_TAGS, getGroupForTag, RATING_MAX, DEFAULT_RATING } from './constants';
 import { M, takeHomeFilmStatus, type MovieItem } from './state';
 import { getDisplayItems, refreshDataAndView, rebuildItems } from './data';
 import { attachItemActions, refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, type ItemAction } from '../core/item-actions';
@@ -433,7 +433,7 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
     updateInputVisibility();
   }).container;
 
-  // 评分滑块（1~6 · 0.1 步进，默认 3.5）与影评（季集已移除；无日期字段——保存时默认当前日期）
+  // 评分滑块（1~10 · 0.1 步进，默认 5；ticket 170 10 分制）与影评（季集已移除；无日期字段——保存时默认当前日期）
   const ratingContainer = document.createElement('div');
   ratingContainer.style.cssText = 'display: none;'; // 仅已看状态下显示
   const ratingValue = document.createElement('div');
@@ -441,9 +441,9 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
   const ratingSlider = document.createElement('input');
   ratingSlider.type = 'range';
   ratingSlider.min = '1';
-  ratingSlider.max = '6';
+  ratingSlider.max = String(RATING_MAX);
   ratingSlider.step = '0.1';
-  ratingSlider.value = '3.5';
+  ratingSlider.value = String(DEFAULT_RATING);
   ratingSlider.className = 'bz-movie-rating-slider';
   const updateRatingValue = () => {
     ratingValue.textContent = Number(ratingSlider.value).toFixed(1); // 滑块对应分数实时显示
@@ -512,7 +512,7 @@ export function openAddModal(app: App, prefill?: { name?: string; tag?: string; 
     if (selectedStatus === STATUS_WANT) ratingValue = -1;
     else if (selectedStatus === STATUS_WATCHING) ratingValue = 0;
     else {
-      ratingValue = parseFloat(ratingSlider.value); // 滑块必有值（1~6），无需校验
+      ratingValue = parseFloat(ratingSlider.value); // 滑块必有值（1~10），无需校验
     }
 
     // 无日期字段：观影日期默认当前日期
@@ -677,9 +677,9 @@ export function openEditModal(item: any, app: App): void {
   const ratingInput = document.createElement('input');
   ratingInput.type = 'number';
   ratingInput.min = '0.1';
-  ratingInput.max = '5';
+  ratingInput.max = String(RATING_MAX);
   ratingInput.step = '0.1';
-  ratingInput.placeholder = '评分（0.1~5）';
+  ratingInput.placeholder = `评分（0.1~${RATING_MAX}）`;
   ratingInput.style.cssText = `
     flex: 1; padding: 6px 8px; border-radius: 6px;
     border: 1px solid var(--background-modifier-border);
@@ -1332,8 +1332,7 @@ function openMovieNote(item: MovieItem, app: App): void {
   closeOverlay();
 }
 
-/** 写评分时的默认分值（标记已看直改默认分；与评分窗滑块初始值一致） */
-const DEFAULT_RATING = 3.5;
+/** 写评分时的默认分值（标记已看直改默认分；与评分窗滑块初始值一致；ticket 170 10 分制中点 5） */
 
 /**
  * 快捷状态流转（想看 → 在看 直改标记，不弹窗）。
@@ -1388,10 +1387,10 @@ export function openRateModal(item: MovieItem, app: App, title: string, onDone?:
   const slider = document.createElement('input');
   slider.type = 'range';
   slider.min = '1';
-  slider.max = '6';
+  slider.max = String(RATING_MAX);
   slider.step = '0.1';
   slider.className = 'bz-movie-rating-slider';
-  slider.value = String(hasRating ? item.rating : DEFAULT_RATING);
+  slider.value = String(hasRating ? Math.min(item.rating as number, RATING_MAX) : DEFAULT_RATING);
 
   const valueLabel = document.createElement('div');
   valueLabel.className = 'bz-movie-rating-value';

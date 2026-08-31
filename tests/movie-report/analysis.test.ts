@@ -62,8 +62,8 @@ describe('buildAnalysisData 数据采集', () => {
     expect(data.want).toBe(1);
     expect(data.groups).toEqual({ 电影: 1, 剧集: 1, 动漫: 1, 其他: 1 });
     expect(data.tags).toEqual({ 电影: 1, 国产剧: 1, 日漫: 1, 杂项: 1 });
-    // 评分桶：5 分 ×2 → 5~5.5
-    expect(data.buckets['5~5.5']).toBe(2);
+    // 评分桶（10 分制，ticket 170）：5 分 ×2 → 5~6
+    expect(data.buckets['5~6']).toBe(2);
     expect(data.topRated.length).toBe(2);
     expect(data.topRated[0].name).toBe('A');
   });
@@ -104,7 +104,7 @@ describe('buildAnalysisData 数据采集', () => {
     expect(data.durBuckets['<90']).toBe(1);
     expect(data.durBuckets['90-120']).toBe(1);
     expect(data.durBuckets['>120']).toBe(1);
-    // 打分习惯：剧 个人2 豆瓣9 → r10=3.33 <8.33 非宝藏；评分≤2 且豆瓣≥8.5 → 失望榜
+    // 打分习惯（ticket 170 同为 10 分制）：剧 个人2 豆瓣9 → 失望榜（≤4 且豆瓣≥8.5）
     expect(data.disappoint.length).toBe(1);
     expect(data.disappoint[0].name).toBe('剧');
     // 影评关键词：好看/神作/一般/失望
