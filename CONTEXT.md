@@ -148,6 +148,24 @@ _Avoid_: 预期难度、期望评级
 **挂起记录 (Parked Record)**: 复习条目文件在 vault 中找不到（删除后保留、改名/移动后未更新路径）的保留态——列表以删除线展示，不计逾期、不进复习队列，文件恢复（同路径重建/路径更新）即复活；抽屉可手动移出清理。
 _Avoid_: 幽灵条目、孤儿记录
 
+**个人拟合参数 (Fitted Params)**: 按用户复习历史（reviewHistory）用自研纯 JS 优化器拟合出的 FSRS 权重（ADR-0077）——独立落盘 `fitParams`（含 `fitAt` 时间戳与 `fitCount` 样本数），不覆盖写死的 `DEFAULT_W`；调度时优先读拟合参数、缺失/异常回退默认。样本门槛：≥300 条全参、100~300 只拟合子集、<100 跳过。全自动每 N 次复习重算（N 可配默认 10）。**首版只拟合 w[0..7] 子集（初始稳定性/难度 + 遗忘幂律），跑通后再放开全 19 参数**；不引 WASM 包（npm 无纯 TS 优化器，官方 WASM 对应 FSRS-5/6 非本插件 v4）。
+_Avoid_: 个人权重、调参
+
+**复习负载 (Review Load)**: 各复习条目 `nextReviewDate` 落在某天的数量分布——未来 N 天分布（N 可切换 7/14/30）+ 日历热力图 + 今日/明日预告条，全部并入统计弹窗（预告条固定显示在复习面板顶部）。
+_Avoid_: 复习量、负载预测
+
+**复习统计 (Review Stats)**: 全局复习指标——总复习次数、连续天数 streak、评级分布、逾期率、平均 R 变化趋势，经面板头部「📊 统计」按钮的独立弹窗展示；单条复习时间线（reviewHistory 回放：每次评级/间隔/R 变化）经卡片抽屉「查看历史」展开。**streak 宽松口径**：所有评级都算，同一天多次复习算 1 次（仅去重，防刷指标）。
+_Avoid_: 复习报告、打卡统计
+
+**置顶 (Pinned)**: 复习条目的手动星标优先级（ADR-0077）——置顶条目先于逾期队列排序，同时仅列表置顶（纯 UI 排序不影响调度），且**置顶与 R 优先级互斥**（置顶生效时不参与按 R 重排）。
+_Avoid_: 收藏、标记重要
+
+**R 优先级 (R Priority)**: 按记忆保留度 R（FSRS）自动重排复习队列——逾期队列内按 R 升序（遗忘风险最高优先）、普通复习（跳转）也按 R；置顶之后作为第三优先级；R 目标阈值经设置页数字行配置（默认 0.9，低于即视为可复习/提前）。
+_Avoid_: 遗忘优先级、R 阈值
+
+**随机抽查 (Random Drill)**: 从复习计划随机选 N 篇进入做题/普通复习流程的突击模式——面板内「抽查 N 篇」按钮 + 输入框直接触发；**纯抽查不排期**（不改变 nextReviewDate，评级仍写 reviewHistory）。
+_Avoid_: 随机复习、抽查模式
+
 **第二大脑 (Second Brain)**: 笔记向量库的管理与检索功能（ticket 103 正名，前名「闪念」——QuickAdd《闪念.js》完整原型）：主面板统一入口（统计总览/来源分布/趋势/最近向量化/AI 一键概括）· 右侧窄窗（吸附缩起/悬停展开/参考卡拖出浮卡）· 向量检索增强（Ollama bge-m3，meta v9 段 + secondbrain.vec；ticket 110 起切块剥离 frontmatter、标题并入首块；ticket 120 起数据整合为**两文件**：`secondbrain.json`（meta/panel/link 三段 JSON）+ `secondbrain.vec`（向量二进制，原 secondbrain_vectors.vec 改名））· AI 对话（经主设置页 core AI 服务商，ticket 108 起统一；不再回退 Ollama 对话模型）。常驻监听光标移动与笔记变更。**引导态**（ticket 107）：本地无向量数据时三命令统一进主面板，首次向量化须用户点击按钮触发；**增量索引**（ticket 108）：打开面板时如有待处理变更，先以进度视图展示索引推进再进统计；**重新索引**（ticket 108）：设置弹窗确认后清空全库重嵌（区别于增量索引的 mtime 差异刷新）。**自动双链 link agent**（ticket 111 + 115 + 116 + 118 + 120）：**关联范围（`linkAgentScopes`）只决定"哪些笔记会被关联"（目标/触发侧：落盘监听 + 存量补链目标 + 死链扫描），候选来源 = 白名单索引库（`secondBrainAllowPaths`）中的全部笔记**（ticket 116，任一已索引笔记都可就近作候选）；建链检索**查询端用笔记全文嵌入**（ticket 118：剥 frontmatter 去空白，超长 8000 字安全截尾）→ 本地语义近邻召回候选 → 在线 AI 裁判择优（"只链实质关联，存疑不链"）→ 单侧幂等写 `related`（Obsidian 图谱双向呈现）；待处理队列与基准哈希并入 `secondbrain.json` 的 link 段（queue/state，原 secondbrain_link_queue.json / secondbrain_link_state.json 已由 store-file 一次性迁移合并，ticket 120）跨设备自动消费、死链自动清理；**存量补链**（ticket 115）：每次启动自动对范围内缺 `related` 的存量笔记批量建链（`related` 即进度检查点），命令 `bz-secondbrain-link-all` 手动兜底，批次与监听共用串行锁；**正文大改自动重跑**（ticket 119/v1.4）：每次成功建链后把全文内容哈希记入 link.state 基准，范围内笔记被修改时按基准哈希过滤——**内容实质变化才重跑该篇建链**（Obsidian 高频保存/自写 related 触发 → 哈希相同 → 不空转；无基准的升级前存量首次修改视为变化重跑并重建基准）。**白名单目录 / 关联范围两字段默认均空，空 = 什么也不录（不索引 / 不自动关联），不是"全库"**（ticket 116；`LINK_AGENT_DEFAULT_SCOPE`「文献盒」回退已移除）。**Syncthing 冲突自愈**（ticket 152）：多设备各自 refresh 索引不同新笔记 → 两端真实分叉，Syncthing 必然保留 `secondbrain.sync-conflict-*` 副本（写前比对止血后仍发生）；store-file **每次读取时**扫描并自动收敛——JSON 段级 union（meta.notes 键并集取 mtime 大者 / panel 取 generatedAt 大者 / queue-state-chatHistory 并集去重）写回主文件、.vec 按合并后 meta 键序行级重排（行序不变式 = 键序 × chunks 数，meta 未变则主 .vec 直接复用），随后删除冲突文件；无同批 meta/维度不符/行不足 → 删向量走既有 indexIncomplete 全量重建（ticket 107 兜底，元数据仍在数据不丢）；损坏冲突 JSON 保留待人工处置。
 _Avoid_: 闪念（旧功能名，仅存于「闪念笔记」文档类型语义）、AI 补全（ai_completion 时代旧称）
 
