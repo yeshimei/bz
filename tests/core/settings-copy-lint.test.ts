@@ -77,10 +77,15 @@ describe('全量 schema 文案 lint（注册表：LINT_TARGETS）', () => {
   it('主设置页修正后文案抽查：新标题收短、描述自然句、键名不动', () => {
     const schema = mainSettingsSchema();
     const rows = schema.groups[0].rows as Array<{ name: string; desc?: string }>;
-    // 键名/行为不动，标题可改（ticket 100 ④）
-    expect(rows.map((r) => r.name)).toEqual(['AI 服务商', 'DeepSeek 密钥', 'OpenCode 密钥']);
+    // 键名/行为不动，标题可改（ticket 100 ④）；ticket 170 新增自定义三行 + max token
+    expect(rows.map((r) => r.name)).toEqual([
+      'AI 服务商', 'DeepSeek 密钥', 'OpenCode 密钥',
+      '自定义 API 地址', '自定义模型', '自定义 API 密钥', '最大输出 token',
+    ]);
     expect(rows[1].desc).toBe('留空则自动回退读取外部配置密钥');
     expect(rows[2].desc).toBe('在订阅官网获取后填入这里');
+    expect(rows[3].desc).toBe('OpenAI 兼容服务的完整接口地址');
+    expect(rows[6].desc).toBe('每次请求输出上限，填 0 用 API 默认');
     const storageRow = schema.groups[1].rows[0] as { name: string; desc?: string };
     expect(storageRow.name).toBe('数据存储路径');
     expect(storageRow.desc).toBe('全部 JSON 数据文件统一存放的目录');

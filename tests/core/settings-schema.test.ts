@@ -28,25 +28,37 @@ describe('mainSettingsSchema：主设置页两区块', () => {
     expect(schema.groups.every((g) => g.icon === undefined)).toBe(true);
   });
 
-  it('AI 区块：服务商下拉（键直绑）+ 两个密钥行（visibleWhen 互斥显隐）', () => {
+  it('AI 区块：服务商下拉（键直绑）+ 两密钥行 + 自定义三行 + max token（ticket 170）', () => {
     const rows = schema.groups[0].rows;
-    expect(rows.map((r) => r.type)).toEqual(['select', 'text', 'text']);
-    expect(rows.map((r) => (r as { name: string }).name)).toEqual(['AI 服务商', 'DeepSeek 密钥', 'OpenCode 密钥']);
-    const [provider, deepseek, opencode] = rows as Array<{
+    expect(rows.map((r) => r.type)).toEqual(['select', 'text', 'text', 'text', 'text', 'text', 'number']);
+    expect(rows.map((r) => (r as { name: string }).name)).toEqual([
+      'AI 服务商', 'DeepSeek 密钥', 'OpenCode 密钥',
+      '自定义 API 地址', '自定义模型', '自定义 API 密钥', '最大输出 token',
+    ]);
+    const [provider, deepseek, opencode, customEndpoint, customModel, customKey, maxTokens] = rows as Array<{
       binding?: { key: string };
       visibleWhen?: (s: SettingsSnapshot) => boolean;
     }>;
     expect(provider.binding).toEqual({ key: 'aiProvider' });
     expect(deepseek.binding).toEqual({ key: 'deepseekApiKey' });
     expect(opencode.binding).toEqual({ key: 'opencodeGoApiKey' });
-    // 与原 main.ts refreshKeys 口径等价：deepseek 显示 DeepSeek 行，其余显示 OpenCode 行
+    expect(customEndpoint.binding).toEqual({ key: 'aiCustomEndpoint' });
+    expect(customModel.binding).toEqual({ key: 'aiCustomModel' });
+    expect(customKey.binding).toEqual({ key: 'aiCustomApiKey' });
+    expect(maxTokens.binding).toEqual({ key: 'aiMaxTokens' });
+    // 显隐（ticket 170）：deepseek 显示 DeepSeek 行；opencode-go 显示 OpenCode 行；custom 显示自定义三行
     const dv = deepseek.visibleWhen!;
     const ov = opencode.visibleWhen!;
+    const cev = customEndpoint.visibleWhen!;
     expect(dv(snapOf({ aiProvider: 'deepseek' }))).toBe(true);
     expect(ov(snapOf({ aiProvider: 'deepseek' }))).toBe(false);
+    expect(cev(snapOf({ aiProvider: 'deepseek' }))).toBe(false);
     expect(dv(snapOf({ aiProvider: 'opencode-go' }))).toBe(false);
     expect(ov(snapOf({ aiProvider: 'opencode-go' }))).toBe(true);
-    expect(ov(snapOf({ aiProvider: '其他值' }))).toBe(true); // 非 deepseek 一律 OpenCode 行（原口径）
+    expect(cev(snapOf({ aiProvider: 'opencode-go' }))).toBe(false);
+    expect(dv(snapOf({ aiProvider: 'custom' }))).toBe(false);
+    expect(ov(snapOf({ aiProvider: 'custom' }))).toBe(false);
+    expect(cev(snapOf({ aiProvider: 'custom' }))).toBe(true);
   });
 
   it('数据存储路径区块：path 单选行（键直绑）+ onCommit 提示文案逐字冻结', () => {
