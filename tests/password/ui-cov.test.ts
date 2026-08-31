@@ -66,11 +66,15 @@ describe('密码本 UI 覆盖补测（面板交互）', () => {
     resetControllers();
   });
 
-  it('🔍 搜索按钮：收起时清空关键词并重渲染，再点展开并聚焦', async () => {
+  it('🔍 搜索按钮：初始收起（CSS display:none 与内联一致）→ 点击展开并聚焦 → 再点收起清空关键词', async () => {
     ui.show();
     await waitFor(() => document.querySelectorAll('.pw-entry-card').length === 2);
     const searchBtn = [...document.querySelectorAll('button')].find((b) => b.title === '搜索')!;
-    expect(ui.searchContainer!.style.display).not.toBe('none');
+    // ticket 169：首次打开即内联 none（与 CSS 隐藏一致），首点即展开——修复前首点只写 none 需点两次
+    expect(ui.searchContainer!.style.display).toBe('none');
+    searchBtn.click(); // 隐藏 → 显示并聚焦
+    expect(ui.searchContainer!.style.display).toBe('block');
+    expect(document.activeElement).toBe(ui.searchInput);
     // 预置关键词后收起 → 关键词与输入框一并清空
     ui.searchKeyword = 'github';
     ui.searchInput!.value = 'github';
@@ -78,9 +82,8 @@ describe('密码本 UI 覆盖补测（面板交互）', () => {
     expect(ui.searchContainer!.style.display).toBe('none');
     expect(ui.searchKeyword).toBe('');
     expect(ui.searchInput!.value).toBe('');
-    searchBtn.click(); // 隐藏 → 显示并聚焦
+    searchBtn.click(); // 再次展开
     expect(ui.searchContainer!.style.display).toBe('block');
-    expect(document.activeElement).toBe(ui.searchInput);
   });
 
   it('👁 切换时同步显示/隐藏备注（有备注的条目）', async () => {
