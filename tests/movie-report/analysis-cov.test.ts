@@ -73,49 +73,52 @@ describe('constants 常量与工具', () => {
     expect(getGroupForTag('杂七杂八')).toBeNull();
   });
 
-  it('getStarRating：向下取整重复 ⭐，0 分为空串', () => {
-    expect(getStarRating(4.9)).toBe('⭐⭐⭐⭐');
-    expect(getStarRating(5)).toBe('⭐⭐⭐⭐⭐');
+  it('getStarRating（10 分制 → 5 星刻度，ticket 170）：整星 + 半星，0 分空串', () => {
+    expect(getStarRating(10)).toBe('⭐⭐⭐⭐⭐');
+    expect(getStarRating(8)).toBe('⭐⭐⭐⭐');
+    expect(getStarRating(9)).toBe('⭐⭐⭐⭐⯪'); // 9 → 4.5 星 → 半星
+    expect(getStarRating(8.5)).toBe('⭐⭐⭐⭐⯪'); // 4.25 星 → 半星区间 [0.25,0.75)
+    expect(getStarRating(8.4)).toBe('⭐⭐⭐⭐'); // 4.2 星 → <0.25 不半星
     expect(getStarRating(0)).toBe('');
   });
 });
 
-/** 富库：覆盖全部评分桶 / 双榜 / 片龄边界 / 系列 / 季集 / 关键词 */
+/** 富库：覆盖全部评分桶 / 双榜 / 片龄边界 / 系列 / 季集 / 关键词（评分均为 10 分制，ticket 170） */
 function seedRichVault(vault: MockVault) {
   vault.files.set('我的/影视/《高分》.md', movieMd({
-    tags: ['电影'], '观影日期': '2025-03-05T20:00:00', 评分: 5.5, '豆瓣评分': 7,
+    tags: ['电影'], '观影日期': '2025-03-05T20:00:00', 评分: 9.5, '豆瓣评分': 7,
     '上映日期': '2024-05-01', 片长: '130分钟', 影评: '好看，推荐，神作',
     导演: '诺兰', 主演: '演员甲/演员乙', 类型: '科幻/悬疑', '制片国家/地区': '美国',
   }));
   vault.files.set('我的/影视/《中评》.md', movieMd({
-    tags: ['美剧'], '观影日期': '2024-07-10T20:00:00', 评分: 5, '豆瓣评分': 8.6,
+    tags: ['美剧'], '观影日期': '2024-07-10T20:00:00', 评分: 8, '豆瓣评分': 8.6,
     '上映日期': '2010-01-01', 片长: '45分钟', 影评: '无聊，一般', '季集': '3季',
     导演: '诺兰', 主演: '演员甲/演员丙',
   }));
   vault.files.set('我的/影视/《失望》.md', movieMd({
-    tags: ['日漫'], '观影日期': '2025-01-20T20:00:00', 评分: 2, '豆瓣评分': 9,
+    tags: ['日漫'], '观影日期': '2025-01-20T20:00:00', 评分: 3, '豆瓣评分': 9,
     '上映日期': '2023-06-01', 片长: '90分钟', 影评: '失望',
     导演: '诺兰', 主演: '演员甲/演员乙', 类型: '奇幻',
   }));
   vault.files.set('我的/影视/《低分》.md', movieMd({
-    tags: ['纪录片'], '观影日期': '2024-11-11T20:00:00', 评分: 1.5, '豆瓣评分': 'abc',
+    tags: ['纪录片'], '观影日期': '2024-11-11T20:00:00', 评分: 2.5, '豆瓣评分': 'abc',
   }));
   vault.files.set('我的/影视/《在看》.md', movieMd({ tags: ['电影'], '观影日期': '', 评分: 0 }));
   vault.files.set('我的/影视/《想看甲》.md', movieMd({ tags: ['国产剧'], 评分: -1, '豆瓣评分': 8.2 }));
   vault.files.set('我的/影视/《想看乙》.md', movieMd({ tags: ['TED'], 评分: -1 }));
   vault.files.set('我的/影视/无书名号电影.md', movieMd({
-    tags: ['电影'], '观影日期': '2025-02-02T20:00:00', 评分: 4, '豆瓣评分': 6.5,
+    tags: ['电影'], '观影日期': '2025-02-02T20:00:00', 评分: 7, '豆瓣评分': 6.5,
   }));
   // 系列三部（基名剥离尾数字）
-  vault.files.set('我的/影视/《谍影重重》.md', movieMd({ tags: ['国漫'], '观影日期': '2025-05-01T20:00:00', 评分: 3 }));
-  vault.files.set('我的/影视/《谍影重重2》.md', movieMd({ tags: ['国漫'], '观影日期': '2025-05-02T20:00:00', 评分: 3 }));
-  vault.files.set('我的/影视/《谍影重重3》.md', movieMd({ tags: ['国漫'], '观影日期': '2025-05-03T20:00:00', 评分: 3 }));
+  vault.files.set('我的/影视/《谍影重重》.md', movieMd({ tags: ['国漫'], '观影日期': '2025-05-01T20:00:00', 评分: 5.5 }));
+  vault.files.set('我的/影视/《谍影重重2》.md', movieMd({ tags: ['国漫'], '观影日期': '2025-05-02T20:00:00', 评分: 5.5 }));
+  vault.files.set('我的/影视/《谍影重重3》.md', movieMd({ tags: ['国漫'], '观影日期': '2025-05-03T20:00:00', 评分: 5.5 }));
   // 纯数字书名：基名剥离后为空 → 回退原名（防误伤分支）
-  vault.files.set('我的/影视/《2046》.md', movieMd({ tags: ['电影'], '观影日期': '2025-04-04T20:00:00', 评分: 3.5 }));
+  vault.files.set('我的/影视/《2046》.md', movieMd({ tags: ['电影'], '观影日期': '2025-04-04T20:00:00', 评分: 6 }));
   // 标签为字符串（非数组）也能识别
-  vault.files.set('我的/影视/《字符串标签》.md', movieMd({ tags: '英剧', '观影日期': '2025-06-06T20:00:00', 评分: 4 }));
+  vault.files.set('我的/影视/《字符串标签》.md', movieMd({ tags: '英剧', '观影日期': '2025-06-06T20:00:00', 评分: 6.5 }));
   // 自定义标签（不在固定清单）→ 归「其他」组入统计（x4，不再忽略）
-  vault.files.set('我的/影视/《杂项》.md', movieMd({ tags: ['杂项'], 评分: 5 }));
+  vault.files.set('我的/影视/《杂项》.md', movieMd({ tags: ['杂项'], 评分: 8.5 }));
 }
 
 describe('buildAnalysisData 全维度统计', () => {
@@ -123,9 +126,9 @@ describe('buildAnalysisData 全维度统计', () => {
     const vault = new MockVault();
     seedRichVault(vault);
     const data = buildAnalysisData(makeApp(vault));
-    // 14 部入统计（含自定义 tag 归「其他」的杂项）：5.5→≥5.5、5×2→5~5.5、4×2→4~5、3~3.9×4（谍×3+2046）→3~4、2→2~3、1.5→<2
+    // 14 部入统计（含自定义 tag 归「其他」的杂项）：9.5→≥9、8+8.5→8~9、7+6.5→6~7、5.5×3→5~6、6→6~7、3+2.5→<5
     expect(data.total).toBe(14);
-    expect(data.buckets).toEqual({ '≥5.5': 1, '5~5.5': 2, '4~5': 2, '3~4': 4, '2~3': 1, '<2': 1 });
+    expect(data.buckets).toEqual({ '≥9': 1, '8~9': 2, '7~8': 1, '6~7': 2, '5~6': 3, '<5': 2 });
     expect(data.watched).toBeGreaterThan(0);
     expect(data.watching).toBe(1); // 评分 0 → 在看
     expect(data.want).toBe(2); // 评分 -1 → 想看
@@ -133,14 +136,14 @@ describe('buildAnalysisData 全维度统计', () => {
     expect(data.doubanCount).toBe(5);
   });
 
-  it('宝藏榜（个人换算≥8.33 且豆瓣<8）/ 失望榜（个人≤2 且豆瓣≥8.5）双向命中', () => {
+  it('宝藏榜（个人≥9 且豆瓣<8）/ 失望榜（个人≤4 且豆瓣≥8.5）双向命中', () => {
     const vault = new MockVault();
     seedRichVault(vault);
     const data = buildAnalysisData(makeApp(vault));
     const treasureNames = data.treasure.map((t: any) => t.name);
-    expect(treasureNames).toContain('高分'); // 5.5→9.17 且豆瓣 7<8
+    expect(treasureNames).toContain('高分'); // 9.5 且豆瓣 7<8
     const disappointNames = data.disappoint.map((d: any) => d.name);
-    expect(disappointNames).toContain('失望'); // 个人 2≤2 且豆瓣 9≥8.5
+    expect(disappointNames).toContain('失望'); // 个人 3≤4 且豆瓣 9≥8.5
     // 平均差值为负（失望项拉低）
     expect(Number(data.avgDiff)).toBeLessThan(0);
   });
