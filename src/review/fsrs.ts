@@ -3,9 +3,9 @@
  */
 export type Rating = 'again' | 'hard' | 'good' | 'easy';
 
-/** 19 个默认参数（FSRS v4） */
-const DEFAULT_W = [0.4, 0.6, 2.4, 5.8, 4.93, 0.94, 0.86, 0.01, 1.49, 0.14, 1.26, 0.07, 0.35, 2.06, 0.57, 0.09, 0.05, 0.33, 2.15];
-const DEFAULT_D = 0.9;
+/** 19 个默认参数（FSRS v4；导出供拟合优化器初始化/回退，ADR-0077） */
+export const DEFAULT_W = [0.4, 0.6, 2.4, 5.8, 4.93, 0.94, 0.86, 0.01, 1.49, 0.14, 1.26, 0.07, 0.35, 2.06, 0.57, 0.09, 0.05, 0.33, 2.15];
+export const DEFAULT_D = 0.9;
 
 export class FSRS {
   w: number[];

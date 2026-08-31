@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 复习计划核心应用（ticket 16 修正版：对齐源码 App，含 quizReviewLoop/reviewLoop）
  */
 import type { App, TFile } from 'obsidian';
@@ -11,6 +11,9 @@ import { FSRS, FSRS_FIRST_INTERVALS, FSRS_FIRST_TEXTS, LADDER_MAX } from './fsrs
 import type { Rating } from './fsrs';
 import type { ReviewItem } from './data';
 import { ReviewDataManager } from './data';
+import { loadFittedParams, saveFittedParams } from './data';
+import { fitFromItems, mergeFittedW } from './fit';
+import { DEFAULT_W } from './fsrs';
 
 export const reviewApp = {
   checkInterval: null as ReturnType<typeof setInterval> | null,
@@ -25,6 +28,12 @@ export const reviewApp = {
   _overdueNotice: null as NoticeHandle | null,
   /** ticket 48：已染色/挂徽章的文件路径（移出计划后据此回退；仅提交计划路径 + 曾染色路径，不再全库扫描） */
   _styledPaths: new Set<string>(),
+  /** ADR-0077：最近一次复习的累计计数（每 N 次触发拟合重算） */
+  _reviewCountSinceFit: 0,
+  /** ADR-0077：当前生效的拟合权重（null=用默认 DEFAULT_W） */
+  _fittedW: null as number[] | null,
+  /** ADR-0077：拟合运行防重入 */
+  _fitRunning: false,
 
   async getQuiz(): Promise<any> {
     if (this._quizOverride) return this._quizOverride;
@@ -33,6 +42,80 @@ export const reviewApp = {
 
   ensure(app: App): void {
     if (!this.dataManager) this.dataManager = new ReviewDataManager(app);
+  },
+
+  /** ADR-0077：加载拟合参数到 _fittedW（无则 null 回退默认）；ensureReview 启动时调用 */
+  async loadFitParams(app: App): Promise<void> {
+    try {
+      const fit = await loadFittedParams(app);
+      this._fittedW = fit ? mergeFittedW(fit.w) : null;
+    } catch (e) {
+      this._fittedW = null;
+    }
+  },
+
+  /**
+   * ADR-0077：每 N 次复习自动重拟合（全自动定期重算）。
+   * markReview 每次评级后调用（count+1）；达阈值且开关开 → 异步后台跑，完成后轻提示；
+   * 样本不足/失败静默回退默认；防重入。
+   */
+  async maybeRunFit(app: App): Promise<void> {
+    const s = getSettings() as any;
+    if (s.reviewEnableFit === false) return;
+    const n = Number(s.reviewFitEveryN) || 10;
+    this._reviewCountSinceFit++;
+    if (this._reviewCountSinceFit < n || this._fitRunning) return;
+    this._fitRunning = true;
+    this._reviewCountSinceFit = 0;
+    try {
+      const dm = this.dataManager!;
+      const items = await dm.loadItems();
+      const result = fitFromItems(items);
+      if (result) {
+        await saveFittedParams(app, {
+          w: result.fit.w,
+          fitAt: new Date().toISOString(),
+          fitCount: result.count,
+          full: result.fit.w.length >= 19,
+        });
+        this._fittedW = mergeFittedW(result.fit.w);
+        notice(`已根据 ${result.count} 条复习记录拟合记忆参数`, 'success');
+      }
+      // 样本不足 → 静默保留默认（不提示）
+    } catch (e) {
+      console.warn('复习参数拟合失败，回退默认:', e);
+    } finally {
+      this._fitRunning = false;
+    }
+  },
+
+  /** ADR-0077：获取当前生效权重（拟合参数优先，回退默认） */
+  currentW(): number[] {
+    return this._fittedW || DEFAULT_W;
+  },
+
+  /** ADR-0077：某条目当前记忆保留度 R（FSRS 相位且已复习过才可算；否则 null） */
+  currentR(item: ReviewItem): number | null {
+    if (item.phase !== 'fsrs' || !item.stability || !item.lastReviewed) return null;
+    const t = (new Date().getTime() - new Date(item.lastReviewed).getTime()) / 86400000;
+    if (!(t > 0)) return null;
+    return new FSRS(this.currentW()).R(t, item.stability);
+  },
+
+  /** ADR-0077：逾期队列排序 + 每日上限截断。
+   *  置顶优先（互斥于 R 重排）→ R 升序（遗忘风险最高优先，仅可算 R 的条目）→ nextReviewDate 升序。 */
+  sortOverdue(items: ReviewItem[], dailyLimit = 0): ReviewItem[] {
+    const sorted = [...items].sort((a, b) => {
+      const ap = !!a.pinned;
+      const bp = !!b.pinned;
+      if (ap !== bp) return ap ? -1 : 1;
+      if (ap) return 0; // 置顶生效时不参与 R 重排（互斥）
+      const rA = this.currentR(a);
+      const rB = this.currentR(b);
+      if (rA !== null && rB !== null && rA !== rB) return rA - rB;
+      return new Date(a.nextReviewDate as string).getTime() - new Date(b.nextReviewDate as string).getTime();
+    });
+    return dailyLimit > 0 ? sorted.slice(0, dailyLimit) : sorted;
   },
 
   async markReview(filePath: string, selectedDifficulty: Rating, opts?: { autoPending?: boolean }): Promise<void> {
@@ -61,7 +144,8 @@ export const reviewApp = {
 
     const rating = selectedDifficulty;
     const currentStage = item.stage;
-    const fsrs = new FSRS();
+    // ADR-0077：优先用拟合权重（个人化记忆曲线），回退默认
+    const fsrs = new FSRS(this.currentW());
 
     // ===== 阶段 0-9：固定阶梯 =====
     if (currentStage <= LADDER_MAX) {
@@ -95,6 +179,8 @@ export const reviewApp = {
         else if (rating === 'good' || rating === 'easy') it.pendingRedo = false;
       });
       notice(enteringFsrs ? `进入深度复习，${FSRS_FIRST_TEXTS[targetStage]}后复习` : `${FSRS_FIRST_TEXTS[targetStage]}后复习`, 'success');
+      // ADR-0077：评级也累计拟合计数（含阶梯阶段；样本过滤在 fit.ts 内做）
+      await this.maybeRunFit(getApp());
       return;
     }
 
@@ -127,6 +213,8 @@ export const reviewApp = {
     const days = Math.round(scaledDays);
     const rPct = Math.round(R * 100);
     notice(`R=${rPct}% → 下次复习：${days > 0 ? days + '天' : '1天'}后`, 'success');
+    // ADR-0077：每次评级后累计计数，达阈值触发拟合重算（异步后台）
+    await this.maybeRunFit(getApp());
   },
 
   /** 跳转逾期（做题决定难度：开启 → 做题复习；关闭 → 普通复习跳转笔记） */
@@ -166,16 +254,30 @@ export const reviewApp = {
       }
     }
 
-    const overdue = items.filter((i) => i.isOverdue && !i.isCompleted);
+    // ADR-0077：R 目标阈值——FSRS 相位条目当前 R < 阈值视为「提前逾期」（低于该值该复习了），
+    // 即使未到 nextReviewDate 也纳入本轮。默认 0.9。
+    const rThreshold = Number((getSettings() as any).reviewRThreshold) || 0.9;
+    const overdue = items.filter((i) => {
+      if (i.isCompleted || i.isMissing) return false;
+      if (i.isOverdue) return true;
+      // 未逾期但 R < 阈值 → 提前复习（仅 FSRS 相位可算 R）
+      if (i.phase === 'fsrs' && i.stability && i.lastReviewed) {
+        const t = (new Date().getTime() - new Date(i.lastReviewed).getTime()) / 86400000;
+        if (t > 0) {
+          const R = new FSRS(this.currentW()).R(t, i.stability);
+          if (R < rThreshold) return true;
+        }
+      }
+      return false;
+    });
     if (!overdue.length) {
       notice('没有逾期笔记', 'success');
       return;
     }
-    overdue.sort((a, b) => new Date(a.nextReviewDate as string).getTime() - new Date(b.nextReviewDate as string).getTime());
-
     // ticket 100：每日复习上限（0=不限）——逾期队列截断，剩余留到下次；待重做队列不受限（重做是强制通过路径）
     const dailyLimit = Number((getSettings() as any).reviewDailyLimit) || 0;
-    const limited = dailyLimit > 0 ? overdue.slice(0, dailyLimit) : overdue;
+    // ADR-0077：队列排序 = 置顶优先（互斥于 R 重排）→ R 优先级（逾期队列内按 R 升序）→ nextReviewDate 升序
+    const limited = this.sortOverdue(overdue, dailyLimit);
     if (limited.length < overdue.length) {
       notice(`本轮复习 ${limited.length} 篇，剩余 ${overdue.length - limited.length} 篇留到下次`, 'info');
     }
@@ -219,6 +321,58 @@ export const reviewApp = {
       notify('做题家未初始化，已改用普通复习', { type: 'warning', dedupeKey: 'review-quiz-ai' });
       await this.reviewLoop(limited, 0);
     }
+  },
+
+  /** 随机抽查（ADR-0077）：从计划随机选 N 篇进入做题/普通复习流程。
+   *  纯抽查不排期：不改变 nextReviewDate，评级仍写 reviewHistory（由 markReview 正常写）。
+   *  复用做题/普通分流：forceQuizForReview 开 → 批量出题做题；关 → 普通复习跳转。 */
+  async randomDrill(n: number): Promise<void> {
+    const app = getApp();
+    this.ensure(app);
+    const dm = this.dataManager!;
+    const items = await dm.loadItems();
+    // 候选：未完成、文件存在、未挂起
+    const candidates = items.filter((i) => !i.completed && !i.isCompleted && i.file && !i.isMissing);
+    if (!candidates.length) {
+      notice('没有可抽查的笔记', 'warning');
+      return;
+    }
+    const k = Math.min(n, candidates.length);
+    // Fisher-Yates 抽 k 个
+    const pool = [...candidates];
+    const picked: ReviewItem[] = [];
+    for (let i = 0; i < k && pool.length; i++) {
+      const idx = Math.floor(Math.random() * pool.length);
+      picked.push(pool.splice(idx, 1)[0]);
+    }
+    if (!picked.length) return;
+
+    if (getSettings().forceQuizForReview) {
+      let quiz: any = null;
+      try {
+        quiz = await this.getQuiz();
+      } catch {
+        /* ignore */
+      }
+      if (quiz && !quiz.ai) {
+        try {
+          const { ensureQuiz } = await import('../quiz');
+          ensureQuiz(app);
+        } catch {
+          /* ignore */
+        }
+      }
+      if (quiz && quiz.ai) {
+        const batchQuestions = await this.batchGenerateQuestions(picked);
+        const hasAny = Object.values(batchQuestions).some((qs) => (qs as any[]).length > 0);
+        if (hasAny) {
+          await this.quizReviewLoop(picked, 0, batchQuestions);
+          return;
+        }
+      }
+      notify('做题家未初始化或出题失败，改用普通复习抽查', { type: 'warning', dedupeKey: 'review-quiz-ai' });
+    }
+    await this.reviewLoop(picked, 0);
   },
 
   /** 准确率 → 难度评级 */

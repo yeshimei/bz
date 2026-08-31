@@ -33,6 +33,8 @@ export interface ReviewItem {
   completed: boolean;
   /** 待重做（做题会话首次评级 ∈ {忘了,困难} 置位；重做通过只清标记不写 FSRS——ADR-0044） */
   pendingRedo?: boolean;
+  /** 置顶/星标（ADR-0077：先于逾期队列排序、仅列表置顶、与 R 优先级互斥） */
+  pinned?: boolean;
   /** 运行时：文件在 vault 中不存在（挂起记录，列表删除线展示） */
   isMissing?: boolean;
   // 兼容旧字段（读取时映射）
@@ -166,4 +168,33 @@ export class ReviewDataManager {
     await this.saveItems(items);
     return true;
   }
+}
+
+/** 拟合参数落盘（ADR-0077：独立存储 review-fit.json，不覆盖 DEFAULT_W、不破坏 review.json 数组结构） */
+export interface FittedParams {
+  /** 拟合出的 19 权重（首版只填前 8 个，其余为 DEFAULT_W） */
+  w: number[];
+  /** 拟合时间戳 ISO */
+  fitAt: string;
+  /** 参与拟合的样本数 */
+  fitCount: number;
+  /** 全参(true)还是子集(false)拟合 */
+  full: boolean;
+}
+
+export const REVIEW_FIT_FILE_PATH = 'CONFIG/STORAGE/review-fit.json';
+
+export function getReviewFitFilePath(): string {
+  const s = tryGetSettings() as any;
+  return storageFile('review-fit.json', (s && (s.storagePath || s.reviewStoragePath)) || 'CONFIG/STORAGE');
+}
+
+export async function loadFittedParams(app: App): Promise<FittedParams | null> {
+  const data = (await jsonFileStore<any>(getReviewFitFilePath()).read()) as any;
+  if (!data || !Array.isArray(data.w) || data.w.length < 8) return null;
+  return data as FittedParams;
+}
+
+export async function saveFittedParams(app: App, fit: FittedParams): Promise<void> {
+  await jsonFileStore<FittedParams>(getReviewFitFilePath()).write(fit);
 }

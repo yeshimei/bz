@@ -208,6 +208,12 @@ export default interface BzSettings {
   reviewIntervalScale: number;
   /** 🆕 文件树标记（ticket 100：为复习笔记着色并标到期时间；关=清爽文件树） */
   reviewTreeBadge: boolean;
+  /** 🆕 FSRS 参数自动拟合开关（ADR-0077：按个人复习历史拟合权重，默认开） */
+  reviewEnableFit: boolean;
+  /** 🆕 每 N 次复习自动重拟合（ADR-0077：全自动定期重算，默认 10） */
+  reviewFitEveryN: number;
+  /** 🆕 R 目标阈值（ADR-0077：低于该值视为可复习/提前；默认 0.9） */
+  reviewRThreshold: number;
   /** 🗂️ 监听文件夹（多个目录；目录内未加入且未排除的 .md 自动进入复习计划，递归） */
   reviewWatchedFolders: string[];
   /** 🚫 排除名单（不参与监听自动加入的笔记路径数组；手动移除/确认移除/批量取消/不更新落此名单） */
@@ -552,6 +558,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
   reviewDailyLimit: 0,
   reviewIntervalScale: 1,
   reviewTreeBadge: true,
+  reviewEnableFit: true,
+  reviewFitEveryN: 10,
+  reviewRThreshold: 0.9,
   reviewWatchedFolders: [],
   reviewExcludedNotes: [],
 
