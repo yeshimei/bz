@@ -2,6 +2,19 @@
 
 > 进度同步总表（AGENTS.md）。每票一节，状态：计划中 → 进行中 → 门禁 → 已交付。
 
+## Ticket 171 — AI 提供商注册表策略模式完整化（常见提供商全量内置）
+
+**状态：已交付**
+
+- [x] 备忘闭环：memo「AI 这边使用策略模式，把市面上常用的 AI 提供商都给列出来，而不是只给一个什么兼容模式」——ticket 170 的三项注册表（deepseek/opencode-go/custom）扩展为 16 家全量注册表
+- [x] `core/ai.ts` `AI_PROVIDER_REGISTRY` 扩展：deepseek / opencode-go / openai / anthropic / google / moonshot / zhipu / dashscope / siliconflow / openrouter / xai / groq / mistral / together / ollama / custom（每家 descriptor 含端点/默认模型/密钥键/密钥行文案/默认 maxTokens/可选 extraHeaders）
+- [x] 设置 schema 注册表驱动：`settings-main-schema.ts` 密钥行由注册表 apiKeyLabel/apiKeyDesc 自动生成（新增提供商零 schema 改动）；custom 端点/模型/密钥三行顺序契约保持
+- [x] `settings.ts` 新增 13 个提供商密钥键（openai/anthropic/google/moonshot/zhipu/dashscope/siliconflow/openrouter/xai/groq/mistral/together/ollama）+ DEFAULT_SETTINGS 默认空串
+- [x] `getAIProvider` 泛化：全部注册表提供商查表解析，无需 if-else；extraHeaders 注入请求头（anthropic-version 等）；ollama 本地无鉴权空密钥放行；deepseek QuickAdd 兜底 / custom 自填行为零变化
+- [x] `favorites/ai.ts` `isAvailable` 注册表驱动判定（ollama 恒 true、deepseek 不判死、其余查 apiKeyKey）
+- [x] 测试：注册表解析（openai 端点/模型）、缺密钥报错、anthropic extraHeaders 注入、ollama 空密钥、favorites 各提供商判定；schema/lint 断言改注册表驱动
+- [x] 门禁：tsc 0 错 + 全量 222 文件 3588 用例绿 + 构建通过
+
 ## Ticket 170 — AI 提供商策略模式 + 影视 10 分制（memo 闭环）
 
 **状态：已交付**（vault 影视数据迁移待 Obsidian 关闭后执行脚本）

@@ -1,12 +1,13 @@
 /**
  * AIService / createAI（Q3.js window.__utils 移植，ticket 03）
- * provider：deepseek / opencode-go / custom（OpenAI 兼容自定义端点，插件设置注入，取代 Q3 的
- * QuickAdd 宏设置）；override 字符串 'deepseek'/'opencode-go'/'custom' 或对象
- * {endpoint, apiKey, model}。
+ * provider：注册表驱动（ticket 170/171 策略模式）——deepseek / opencode-go / openai / anthropic /
+ * google / moonshot / zhipu / dashscope / siliconflow / openrouter / xai / groq / mistral /
+ * together / ollama / custom（OpenAI 兼容自定义端点，插件设置注入，取代 Q3 的 QuickAdd 宏设置）；
+ * override 字符串（注册表 id）或对象 {endpoint, apiKey, model, extraHeaders}。
  * prompt：fetch 流式（stream:true），失败自动 fallback requestUrl 非流式；noCors 直接走 requestUrl。
  * 策略模式（ticket 170）：提供商由 AI_PROVIDER_REGISTRY 注册表描述（默认端点/模型/密钥键/默认
- * maxTokens），getAIProvider 查表解析；custom 走用户自填 endpoint/model，可覆盖任意 OpenAI 兼容
- * 提供商（含 commandcode 等新服务，无需改码）。
+ * maxTokens），getAIProvider 查表解析；新增提供商 = 注册表加一行（含设置页密钥行文案自动生成），
+ * 解析与设置页零分支改动；custom 走用户自填 endpoint/model，可覆盖任意 OpenAI 兼容服务无需改码。
  */
 import { requestUrl } from 'obsidian';
 import { getApp } from './app';
@@ -15,6 +16,19 @@ export interface AISettingsLike {
   aiProvider?: string;
   deepseekApiKey?: string;
   opencodeGoApiKey?: string;
+  openaiApiKey?: string;
+  anthropicApiKey?: string;
+  googleApiKey?: string;
+  moonshotApiKey?: string;
+  zhipuApiKey?: string;
+  dashscopeApiKey?: string;
+  siliconflowApiKey?: string;
+  openrouterApiKey?: string;
+  xaiApiKey?: string;
+  groqApiKey?: string;
+  mistralApiKey?: string;
+  togetherApiKey?: string;
+  ollamaApiKey?: string;
   aiCustomEndpoint?: string;
   aiCustomModel?: string;
   aiCustomApiKey?: string;
@@ -49,8 +63,14 @@ export interface AIProviderDescriptor {
   defaultContextWindow: number;
   /** 密钥在 AISettingsLike 的键名（custom 为 aiCustomApiKey） */
   apiKeyKey: keyof AISettingsLike;
+  /** 设置页密钥行标题（注册表驱动生成密钥行；ticket 171 策略模式完整化） */
+  apiKeyLabel: string;
+  /** 密钥行描述（设置页；约 20 字自然句，ticket 100 文案规范） */
+  apiKeyDesc?: string;
   /** 无 CORS 头（fetch 必败 → 直接走 requestUrl） */
   noCors?: boolean;
+  /** 附加请求头（如 Anthropic 的 anthropic-version；非 OpenAI 兼容服务在 extraHeaders 内声明） */
+  extraHeaders?: Record<string, string>;
 }
 
 /** 内置提供商注册表（策略模式单一事实源；新增提供商 = 加一行，勿再改 getAIProvider 分支） */
@@ -63,6 +83,8 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     defaultMaxTokens: 8192,
     defaultContextWindow: 65536,
     apiKeyKey: 'deepseekApiKey',
+    apiKeyLabel: 'DeepSeek 密钥',
+    apiKeyDesc: '留空则自动回退读取外部配置密钥',
   },
   {
     id: 'opencode-go',
@@ -72,7 +94,153 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     defaultMaxTokens: 8192,
     defaultContextWindow: 131072,
     apiKeyKey: 'opencodeGoApiKey',
+    apiKeyLabel: 'OpenCode 密钥',
+    apiKeyDesc: '在订阅官网获取后填入这里',
     noCors: true,
+  },
+  {
+    id: 'openai',
+    label: 'OpenAI',
+    endpoint: 'https://api.openai.com/v1',
+    model: 'gpt-4o-mini',
+    defaultMaxTokens: 16384,
+    defaultContextWindow: 128000,
+    apiKeyKey: 'openaiApiKey',
+    apiKeyLabel: 'OpenAI 密钥',
+    apiKeyDesc: '在 OpenAI 官网获取后填入这里',
+  },
+  {
+    id: 'anthropic',
+    label: 'Anthropic（Claude）',
+    endpoint: 'https://api.anthropic.com/v1',
+    model: 'claude-sonnet-4-5',
+    defaultMaxTokens: 8192,
+    defaultContextWindow: 200000,
+    apiKeyKey: 'anthropicApiKey',
+    apiKeyLabel: 'Anthropic 密钥',
+    apiKeyDesc: '在 Anthropic 官网获取后填入这里',
+    extraHeaders: { 'anthropic-version': '2023-06-01' },
+  },
+  {
+    id: 'google',
+    label: 'Google Gemini',
+    endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    model: 'gemini-2.0-flash',
+    defaultMaxTokens: 8192,
+    defaultContextWindow: 1048576,
+    apiKeyKey: 'googleApiKey',
+    apiKeyLabel: 'Gemini 密钥',
+    apiKeyDesc: '在 Google AI Studio 获取后填入这里',
+  },
+  {
+    id: 'moonshot',
+    label: 'Moonshot（Kimi）',
+    endpoint: 'https://api.moonshot.cn/v1',
+    model: 'kimi-k2-0711-preview',
+    defaultMaxTokens: 8192,
+    defaultContextWindow: 131072,
+    apiKeyKey: 'moonshotApiKey',
+    apiKeyLabel: 'Kimi 密钥',
+    apiKeyDesc: '在 Moonshot 开放平台获取后填入这里',
+  },
+  {
+    id: 'zhipu',
+    label: '智谱（GLM）',
+    endpoint: 'https://open.bigmodel.cn/api/paas/v4',
+    model: 'glm-4-flash',
+    defaultMaxTokens: 8192,
+    defaultContextWindow: 131072,
+    apiKeyKey: 'zhipuApiKey',
+    apiKeyLabel: '智谱密钥',
+    apiKeyDesc: '在智谱开放平台获取后填入这里',
+  },
+  {
+    id: 'dashscope',
+    label: '阿里云百炼（通义）',
+    endpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    model: 'qwen-plus',
+    defaultMaxTokens: 8192,
+    defaultContextWindow: 131072,
+    apiKeyKey: 'dashscopeApiKey',
+    apiKeyLabel: '百炼密钥',
+    apiKeyDesc: '在阿里云百炼获取 API Key 后填入这里',
+  },
+  {
+    id: 'siliconflow',
+    label: '硅基流动',
+    endpoint: 'https://api.siliconflow.cn/v1',
+    model: 'deepseek-ai/DeepSeek-V3',
+    defaultMaxTokens: 8192,
+    defaultContextWindow: 65536,
+    apiKeyKey: 'siliconflowApiKey',
+    apiKeyLabel: '硅基流动密钥',
+    apiKeyDesc: '在硅基流动官网获取后填入这里',
+  },
+  {
+    id: 'openrouter',
+    label: 'OpenRouter',
+    endpoint: 'https://openrouter.ai/api/v1',
+    model: 'deepseek/deepseek-chat',
+    defaultMaxTokens: 8192,
+    defaultContextWindow: 131072,
+    apiKeyKey: 'openrouterApiKey',
+    apiKeyLabel: 'OpenRouter 密钥',
+    apiKeyDesc: '在 OpenRouter 官网获取后填入这里',
+  },
+  {
+    id: 'xai',
+    label: 'xAI（Grok）',
+    endpoint: 'https://api.x.ai/v1',
+    model: 'grok-2-latest',
+    defaultMaxTokens: 8192,
+    defaultContextWindow: 131072,
+    apiKeyKey: 'xaiApiKey',
+    apiKeyLabel: 'xAI 密钥',
+    apiKeyDesc: '在 xAI 控制台获取后填入这里',
+  },
+  {
+    id: 'groq',
+    label: 'Groq',
+    endpoint: 'https://api.groq.com/openai/v1',
+    model: 'llama-3.3-70b-versatile',
+    defaultMaxTokens: 8192,
+    defaultContextWindow: 131072,
+    apiKeyKey: 'groqApiKey',
+    apiKeyLabel: 'Groq 密钥',
+    apiKeyDesc: '在 Groq 控制台获取后填入这里',
+  },
+  {
+    id: 'mistral',
+    label: 'Mistral',
+    endpoint: 'https://api.mistral.ai/v1',
+    model: 'mistral-large-latest',
+    defaultMaxTokens: 8192,
+    defaultContextWindow: 131072,
+    apiKeyKey: 'mistralApiKey',
+    apiKeyLabel: 'Mistral 密钥',
+    apiKeyDesc: '在 Mistral 控制台获取后填入这里',
+  },
+  {
+    id: 'together',
+    label: 'Together AI',
+    endpoint: 'https://api.together.xyz/v1',
+    model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+    defaultMaxTokens: 8192,
+    defaultContextWindow: 131072,
+    apiKeyKey: 'togetherApiKey',
+    apiKeyLabel: 'Together 密钥',
+    apiKeyDesc: '在 Together AI 官网获取后填入这里',
+  },
+  {
+    id: 'ollama',
+    label: 'Ollama（本地）',
+    endpoint: 'http://localhost:11434/v1',
+    model: 'llama3.1',
+    defaultMaxTokens: 8192,
+    defaultContextWindow: 32768,
+    apiKeyKey: 'ollamaApiKey',
+    apiKeyLabel: 'Ollama 密钥',
+    apiKeyDesc: '本地服务无需密钥，留空即可',
   },
   {
     id: 'custom',
@@ -82,12 +250,18 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     defaultMaxTokens: 8192,
     defaultContextWindow: 32768,
     apiKeyKey: 'aiCustomApiKey',
+    apiKeyLabel: '自定义 API 密钥',
+    apiKeyDesc: '在服务官网获取后填入这里',
   },
 ];
 
 /** 取注册表描述（未知名回退 custom，保证设置页与解析一致） */
 export function getProviderDescriptor(id?: string): AIProviderDescriptor {
-  return AI_PROVIDER_REGISTRY.find((p) => p.id === id) || AI_PROVIDER_REGISTRY[2];
+  return (
+    AI_PROVIDER_REGISTRY.find((p) => p.id === id) ||
+    AI_PROVIDER_REGISTRY.find((p) => p.id === 'custom') ||
+    AI_PROVIDER_REGISTRY[AI_PROVIDER_REGISTRY.length - 1]
+  );
 }
 
 // ---------------- provider 解析 ----------------
@@ -97,6 +271,7 @@ interface AIProvider {
   apiKey: string;
   model?: string;
   noCors?: boolean;
+  extraHeaders?: Record<string, string>;
 }
 
 let _aiProviderCache: AIProvider | null = null;
@@ -107,7 +282,9 @@ export function resetAIProviderCache(): void {
 }
 
 /** 解析 AI provider（override 优先级最高），逻辑与 Q3 getAIProvider 逐字一致（ticket 170 起查注册表） */
-export async function getAIProvider(override?: string | { endpoint?: string; apiKey?: string; model?: string }): Promise<AIProvider> {
+export async function getAIProvider(
+  override?: string | { endpoint?: string; apiKey?: string; model?: string; extraHeaders?: Record<string, string> }
+): Promise<AIProvider> {
   if (!override && _aiProviderCache) return _aiProviderCache;
   const s = getQ3Settings();
   // 调用方直接给完整配置（如脚本内指定第三方端点/key）
@@ -116,6 +293,7 @@ export async function getAIProvider(override?: string | { endpoint?: string; api
       endpoint: String((override as any).endpoint || 'https://api.deepseek.com').replace(/\/+$/, ''),
       apiKey: (override as any).apiKey,
       model: (override as any).model || undefined,
+      extraHeaders: (override as any).extraHeaders || undefined,
     };
   }
   const name = (typeof override === 'string' && override) || s.aiProvider || 'opencode-go';
@@ -130,6 +308,7 @@ export async function getAIProvider(override?: string | { endpoint?: string; api
       endpoint,
       apiKey: s.aiCustomApiKey,
       model: s.aiCustomModel || undefined,
+      extraHeaders: desc.extraHeaders,
     };
     return _aiProviderCache;
   }
@@ -146,14 +325,16 @@ export async function getAIProvider(override?: string | { endpoint?: string; api
       }
     } catch (e) { /* 读取失败由调用方提示 */ }
   }
-  if (!key) {
-    throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.label} 密钥`);
+  // ollama 本地服务无鉴权：空密钥放行（其余提供商缺 key 即拦截）
+  if (!key && name !== 'ollama') {
+    throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
   }
   _aiProviderCache = {
     endpoint: desc.endpoint,
-    apiKey: key as string,
+    apiKey: (key as string) || '',
     model: desc.model || undefined,
     noCors: desc.noCors,
+    extraHeaders: desc.extraHeaders,
   };
   return _aiProviderCache;
 }
@@ -169,9 +350,14 @@ function abortError(): Error {
 
 /** SSE 流式解析（fetch + ReadableStream）；signal 可中止，onDelta 逐段增量回调（ticket 141） */
 async function streamChatCompletions(provider: AIProvider, body: any, signal?: AbortSignal, onDelta?: (delta: string) => void): Promise<string> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${provider.apiKey}`,
+    ...(provider.extraHeaders || {}),
+  };
   const resp = await fetch(`${provider.endpoint}/chat/completions`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${provider.apiKey}` },
+    headers,
     body: JSON.stringify(body),
     signal,
   });
@@ -220,10 +406,15 @@ async function streamChatCompletions(provider: AIProvider, body: any, signal?: A
 /** 非流式（requestUrl：Obsidian 官方 API，无 CORS 限制）；requestUrl 不支持中止 → 前后查 signal，已取消按丢弃处理 */
 async function chatCompletionsNonStream(provider: AIProvider, body: any, signal?: AbortSignal): Promise<string> {
   if (signal?.aborted) throw abortError();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${provider.apiKey}`,
+    ...(provider.extraHeaders || {}),
+  };
   const resp: any = await requestUrl({
     url: `${provider.endpoint}/chat/completions`,
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${provider.apiKey}` },
+    headers,
     body: JSON.stringify({ ...body, stream: false }),
   });
   if (signal?.aborted) throw abortError();

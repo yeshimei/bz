@@ -7,12 +7,40 @@
 
 export default interface BzSettings {
   // ===== 🤖 AI 全局（Q3 语义，spec「AI 全局」）=====
-  /** AI 服务商：deepseek / opencode-go / custom（ticket 170 注册表 + 自定义 OpenAI 兼容） */
+  /** AI 服务商：注册表 id（ticket 170/171 策略模式；deepseek / opencode-go / openai / anthropic /
+   *  google / moonshot / zhipu / dashscope / siliconflow / openrouter / xai / groq / mistral /
+   *  together / ollama / custom） */
   aiProvider: string;
   /** 🔑 DeepSeek API Key（留空则回退读取 QuickAdd data.json） */
   deepseekApiKey: string;
   /** 🔑 OpenCode Go API Key */
   opencodeGoApiKey: string;
+  /** 🔑 OpenAI API Key */
+  openaiApiKey: string;
+  /** 🔑 Anthropic（Claude）API Key */
+  anthropicApiKey: string;
+  /** 🔑 Google Gemini API Key */
+  googleApiKey: string;
+  /** 🔑 Moonshot（Kimi）API Key */
+  moonshotApiKey: string;
+  /** 🔑 智谱（GLM）API Key */
+  zhipuApiKey: string;
+  /** 🔑 阿里云百炼（通义）API Key */
+  dashscopeApiKey: string;
+  /** 🔑 硅基流动 API Key */
+  siliconflowApiKey: string;
+  /** 🔑 OpenRouter API Key */
+  openrouterApiKey: string;
+  /** 🔑 xAI（Grok）API Key */
+  xaiApiKey: string;
+  /** 🔑 Groq API Key */
+  groqApiKey: string;
+  /** 🔑 Mistral API Key */
+  mistralApiKey: string;
+  /** 🔑 Together AI API Key */
+  togetherApiKey: string;
+  /** 🔑 Ollama（本地）API Key（本地服务通常无需密钥） */
+  ollamaApiKey: string;
   /** 🌐 自定义 AI 服务 API 地址（OpenAI 兼容，ticket 170；覆盖任意提供商如 commandcode） */
   aiCustomEndpoint: string;
   /** 🧠 自定义 AI 服务默认模型名（如 commandcode 的 taste-1） */
@@ -408,6 +436,19 @@ export const DEFAULT_SETTINGS: BzSettings = {
   aiProvider: 'opencode-go',
   deepseekApiKey: '',
   opencodeGoApiKey: '',
+  openaiApiKey: '',
+  anthropicApiKey: '',
+  googleApiKey: '',
+  moonshotApiKey: '',
+  zhipuApiKey: '',
+  dashscopeApiKey: '',
+  siliconflowApiKey: '',
+  openrouterApiKey: '',
+  xaiApiKey: '',
+  groqApiKey: '',
+  mistralApiKey: '',
+  togetherApiKey: '',
+  ollamaApiKey: '',
   aiCustomEndpoint: '',
   aiCustomModel: '',
   aiCustomApiKey: '',

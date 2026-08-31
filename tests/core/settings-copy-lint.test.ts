@@ -77,15 +77,26 @@ describe('全量 schema 文案 lint（注册表：LINT_TARGETS）', () => {
   it('主设置页修正后文案抽查：新标题收短、描述自然句、键名不动', () => {
     const schema = mainSettingsSchema();
     const rows = schema.groups[0].rows as Array<{ name: string; desc?: string }>;
-    // 键名/行为不动，标题可改（ticket 100 ④）；ticket 170 新增自定义三行 + max token
-    expect(rows.map((r) => r.name)).toEqual([
-      'AI 服务商', 'DeepSeek 密钥', 'OpenCode 密钥',
-      '自定义 API 地址', '自定义模型', '自定义 API 密钥', '最大输出 token',
-    ]);
-    expect(rows[1].desc).toBe('留空则自动回退读取外部配置密钥');
-    expect(rows[2].desc).toBe('在订阅官网获取后填入这里');
-    expect(rows[3].desc).toBe('OpenAI 兼容服务的完整接口地址');
-    expect(rows[6].desc).toBe('每次请求输出上限，填 0 用 API 默认');
+    // 键名/行为不动，标题可改（ticket 100 ④）；ticket 170 新增自定义三行 + max token；
+    // ticket 171 注册表扩展为全部提供商各一行密钥（标题取自注册表 apiKeyLabel）
+    const names = rows.map((r) => r.name);
+    expect(names[0]).toBe('AI 服务商');
+    expect(names).toContain('DeepSeek 密钥');
+    expect(names).toContain('OpenCode 密钥');
+    expect(names).toContain('OpenAI 密钥');
+    expect(names).toContain('Gemini 密钥');
+    expect(names).toContain('自定义 API 地址');
+    expect(names).toContain('自定义模型');
+    expect(names).toContain('自定义 API 密钥');
+    expect(names).toContain('最大输出 token');
+    const deepseekRow = rows.find((r) => r.name === 'DeepSeek 密钥')!;
+    const opencodeRow = rows.find((r) => r.name === 'OpenCode 密钥')!;
+    const customEndpoint = rows.find((r) => r.name === '自定义 API 地址')!;
+    const maxTokens = rows.find((r) => r.name === '最大输出 token')!;
+    expect(deepseekRow.desc).toBe('留空则自动回退读取外部配置密钥');
+    expect(opencodeRow.desc).toBe('在订阅官网获取后填入这里');
+    expect(customEndpoint.desc).toBe('OpenAI 兼容服务的完整接口地址');
+    expect(maxTokens.desc).toBe('每次请求输出上限，填 0 用 API 默认');
     const storageRow = schema.groups[1].rows[0] as { name: string; desc?: string };
     expect(storageRow.name).toBe('数据存储路径');
     expect(storageRow.desc).toBe('全部 JSON 数据文件统一存放的目录');
