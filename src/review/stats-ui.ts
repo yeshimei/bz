@@ -15,7 +15,7 @@ import { topifyZ, allocZ } from '../core/z-order';
 import { escManager } from '../core/esc-manager';
 import { escapeHtml, formatRelativeTime } from '../core/utils';
 import type { ReviewDataManager, ReviewItem } from './data';
-import { computeStats, loadDistribution, loadHeatmap, historyOf, RATING_NAMES, RATING_COLORS } from './stats';
+import { computeStats, loadDistribution, historyOf, RATING_NAMES, RATING_COLORS } from './stats';
 
 let statsMask: HTMLElement | null = null;
 let statsPopup: HTMLElement | null = null;
@@ -129,7 +129,7 @@ function renderStatsModal(app: App, dm: ReviewDataManager, items: ReviewItem[]):
   topifyZ(statsMask, statsPopup);
 
   const header = document.createElement('div');
-  header.className = 'bz-win-head';
+  header.className = 'bz-win-head bz-review-stats-head';
   header.innerHTML = `
     <h3 class="bz-review-title">复习统计</h3>
     <div><button id="review-stats-close" class="bz-win-close" title="关闭">❌</button></div>
@@ -205,17 +205,9 @@ function buildStatsHTML(app: App, dm: ReviewDataManager, items: ReviewItem[], st
     label: d.date === fmt(todayKey) ? '今' : `+${dist.indexOf(d)}`,
     value: d.count,
   }));
-  const heat = loadHeatmap(items, 35);
-  const maxH = Math.max(1, ...heat.map((h) => h.count));
-  const heatCells = heat.map((h) => {
-    const intensity = h.count === 0 ? 'background:var(--background-secondary);' : `background:rgba(255,71,87,${(0.15 + 0.85 * (h.count / maxH)).toFixed(2)});`;
-    return `<div style="aspect-ratio:1;border-radius:4px;${intensity}" title="${h.date}：${h.count} 篇"></div>`;
-  }).join('');
   const loadHTML = sectionHTML('复习负载',
     statInlineHTML([`今日 ${todayCnt} 篇`, `明日 ${tmrCnt} 篇`, `峰值 ${maxDist} 篇/天`]) +
-    barChartHTML(distBars, '#D6E4FF') +
-    `<div style="font-size:.72rem;color:var(--text-muted);margin:10px 0 6px;">日历热力图（近 35 天）</div>
-     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;">${heatCells}</div>`,
+    barChartHTML(distBars, '#D6E4FF'),
     '#D6E4FF');
 
   // 复习时间线（点文件 → 独立复习历史弹窗）

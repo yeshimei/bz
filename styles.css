@@ -3161,6 +3161,9 @@ button.news-close-btn {
       #review-stats-mask { position:fixed; top:0; left:0; right:0; bottom:0; background:var(--background-modifier-cover); backdrop-filter:blur(2px); }
       #review-stats-popup { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--background-primary); border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.2); width:92%; max-width:600px; max-height:88vh; flex-direction:column; animation:slideUp 0.3s ease-out; }
       #review-stats-body { flex:1; overflow-y:auto; }
+      /* 统计弹窗头部紧凑化（ticket 174：仿影视分析 `padding:0 26px` + 小标题，去 16px 上距） */
+      .bz-review-stats-head { padding: 8px 18px 6px !important; }
+      .bz-review-stats-head .bz-review-title { font-size: .92rem !important; font-weight: 600 !important; margin: 0 !important; }
       .bz-review-stats-tl-row:hover { background:var(--background-modifier-hover); }
       /* 复习历史弹窗（独立：无标题栏、无返回按钮；时间轴竖线式） */
       #review-history-mask { position:fixed; top:0; left:0; right:0; bottom:0; background:var(--background-modifier-cover); backdrop-filter:blur(2px); }
