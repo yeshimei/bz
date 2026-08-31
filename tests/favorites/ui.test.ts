@@ -1160,7 +1160,8 @@ describe('收藏本设置弹窗（ticket 131 声明式）', () => {
       (el) => (el as HTMLElement).dataset.name === '移动端默认全屏'
     ) as HTMLElement;
     // 文案与现网一致（ticket 100 收敛为多数派逐字文案，同归物本）
-    expect((row as any).__setting.desc).toBe('移动端打开主窗口时默认全屏，关闭则显示常规卡片');
+    // ticket 170：移动端组去描述
+    expect((row as any).__setting.desc).toBeFalsy();
     const toggle = (row as any).__setting.controls.find((c: any) => typeof c.trigger === 'function');
     expect(toggle.value).toBe(true); // 键直绑初始值回填
     toggle.trigger(false); // 即时写内存 + 落盘

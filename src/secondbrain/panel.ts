@@ -904,7 +904,7 @@ export function secondBrainSettingsSchema(): SettingsSchema {
             binding: pathsOf('secondBrainAllowPaths'),
             pickerTitle: '选择白名单目录',
             pickerDesc: '白名单为目录前缀语义：勾选祖先目录即覆盖其下全部子目录',
-            buttonText: '📁 选择',
+            buttonText: '选择',
             emptyText: '暂未选择（留空 = 不索引任何目录）',
           },
           { type: 'toggle', name: '启用', desc: '仅控制启动时自动加载，关闭后仍可从命令面板手动打开', binding: { key: 'secondBrainEnabled' }, onChange: warnReload },
@@ -929,6 +929,7 @@ export function secondBrainSettingsSchema(): SettingsSchema {
               save: () => saveSettings(),
             },
             visibleWhen: (s) => s.linkAgentEnabled !== false,
+            isChild: true,
             onChange: (v) => {
               const n = Math.floor(Number(v));
               (getSettings() as any).linkAgentTopK = Number.isFinite(n) && n > 0 ? n : 8;
@@ -947,14 +948,15 @@ export function secondBrainSettingsSchema(): SettingsSchema {
               save: () => saveSettings(),
             },
             visibleWhen: (s) => s.linkAgentEnabled !== false,
+            isChild: true,
             onChange: (v) => {
               const n = Math.floor(Number(v));
               (getSettings() as any).linkAgentMaxLinks = Number.isFinite(n) && n > 0 ? n : 0;
             },
           },
-          { type: 'toggle', name: '完成通知', desc: '处理完成后通知提醒，关闭则全程静默', binding: boolDefaultOn('linkAgentNotify'), visibleWhen: (s) => s.linkAgentEnabled !== false },
-          { type: 'toggle', name: '失效关联自动清理', desc: '笔记删除后自动移除指向它的失效 related 条目', binding: boolDefaultOn('linkAgentAutoClean'), visibleWhen: (s) => s.linkAgentEnabled !== false },
-          { type: 'toggle', name: '已有关联不再建链', desc: '笔记已有关联时自动跳过处理', binding: boolDefaultOn('linkAgentRespectRelated'), visibleWhen: (s) => s.linkAgentEnabled !== false },
+          { type: 'toggle', name: '完成通知', desc: '处理完成后通知提醒，关闭则全程静默', binding: boolDefaultOn('linkAgentNotify'), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
+          { type: 'toggle', name: '失效关联自动清理', desc: '笔记删除后自动移除指向它的失效 related 条目', binding: boolDefaultOn('linkAgentAutoClean'), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
+          { type: 'toggle', name: '已有关联不再建链', desc: '笔记已有关联时自动跳过处理', binding: boolDefaultOn('linkAgentRespectRelated'), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
           // 关联范围（ticket 128 统一选择器：chips + 选择按钮；格式冻结——英文逗号分隔字符串）
           {
             type: 'path',
@@ -963,8 +965,9 @@ export function secondBrainSettingsSchema(): SettingsSchema {
             desc: '决定哪些笔记会被自动关联，并作为落盘监听与补链目标',
             binding: pathsOf('linkAgentScopes'),
             visibleWhen: (s) => s.linkAgentEnabled !== false,
+            isChild: true,
             pickerTitle: '选择关联范围目录',
-            buttonText: '📁 选择',
+            buttonText: '选择', // ticket 170：去 emoji
             emptyText: '暂未选择（留空 = 不自动关联）',
           },
         ],

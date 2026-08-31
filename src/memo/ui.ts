@@ -150,7 +150,7 @@ export function memoSettingsSchema(): SettingsSchema {
       { icon: 'tags', name: '场景列表', rows: [
         { type: 'textarea', name: '自定义场景列表', desc: '场景名用逗号分隔，留空使用默认场景', placeholder: '剪藏,工作,学习,生活,代码,公开课', binding: { key: 'memoScenarios' }, onCommit: memoReloadScenes },
       ]},
-      mobileFullscreenGroup('memoMobileDefaultFullscreen'),
+      mobileFullscreenGroup('memoMobileDefaultFullscreen', { desc: '' }),
     ],
   };
 }
