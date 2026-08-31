@@ -65,7 +65,7 @@ export function buildTasteProfile(): any {
 
 /** 构建推荐提示词（逐字） */
 export function buildRecommendPrompt(profile: any, recent: string[], allNames: string[]): string {
-  return `你是资深影视推荐官。用户已看 ${profile.total} 部影视，以下是其口味画像（个人评分1~5加权统计，数值为加权分）：
+  return `你是资深影视推荐官。用户已看 ${profile.total} 部影视，以下是其口味画像（个人评分1~10加权统计，数值为加权分）：
 品类分布：${profile.groups.join('、') || '无'}
 类型偏好：${profile.genres.join('、') || '无'}
 导演偏好：${profile.directors.join('、') || '无'}
