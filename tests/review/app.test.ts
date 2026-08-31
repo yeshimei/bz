@@ -699,7 +699,13 @@ describe('ticket 098：待重做 / 重做流程（ADR-0044）', () => {
         document.body.appendChild(this.popup);
         this._cb = opts.onComplete;
       },
-      endReviewSession() {},
+      endReviewSession() {
+        // 对齐真实实现（quiz/ui.ts）：拆 #quiz-mask/#quiz-popup DOM
+        if (this.popup && this.popup.parentNode) this.popup.remove();
+        if (this.mask && this.mask.parentNode) this.mask.remove();
+        this.popup = null;
+        this.mask = null;
+      },
       close() {
         if (this.popup && this.popup.parentNode) this.popup.remove();
         if (this.mask && this.mask.parentNode) this.mask.remove();
@@ -855,6 +861,9 @@ describe('ticket 098：待重做 / 重做流程（ADR-0044）', () => {
     const result = await p;
     expect(result).toEqual(['A.md']);
     expect(markSpy).not.toHaveBeenCalled(); // 不写 FSRS
+    // ticket 168：终局「完成复习」= 结束会话 → 遮罩/弹窗拆除（此前残留 #quiz-mask 卡死）
+    expect(quiz.popup).toBeNull();
+    expect(quiz.mask).toBeNull();
     const after = (await dm.loadItems())[0];
     expect(after.pendingRedo).toBe(false);
     expect(after.nextReviewDate).toBe(before); // 排期未动
