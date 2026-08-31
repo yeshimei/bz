@@ -64,7 +64,7 @@ describe('AIService', () => {
     const body = JSON.parse(opts.body);
     expect(body.model).toBe('deepseek-v4-flash');
     expect(body.messages).toEqual([{ role: 'user', content: '请回答' }]);
-    expect(body.max_tokens).toBe(4096); // prompt 默认 4096
+    expect(body.max_tokens).toBe(8192); // deepseek 注册表 defaultMaxTokens（ticket 172 默认最大值）
     expect(body.stream).toBe(true);
   });
 
@@ -154,7 +154,7 @@ describe('AIService', () => {
     expect(body.enable_thinking).toBe(false);
   });
 
-  it('max_tokens 默认 4096，modelOptions.max_tokens 可覆盖', async () => {
+  it('max_tokens 默认注册表值（ticket 172），modelOptions.max_tokens 可覆盖', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       status: 200,

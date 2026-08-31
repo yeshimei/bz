@@ -47,3 +47,16 @@ ticket 170 的 `AI_PROVIDER_REGISTRY` 只有 3 行，设置页下拉只有 DeepS
 ## 门禁
 
 tsc 0 错；全量 222 文件 3588 用例绿（基线 3581 + 7 新增）；构建通过（main.js 同步仓库根目录）。
+
+---
+
+## 追加：per-provider 模型/上下文/max token 配置（ticket 172）
+
+> 用户反馈「在主设置页面暴露选项，允许用户选择模型，上下文，max token 等等，默认最大值」——注册表默认值即各模型最大输出上限，设置页输入框默认填入该值，可改。
+
+- 设置新增三个 per-provider map：`aiModelOverrides` / `aiContextOverrides` / `aiMaxTokensOverrides`（键 = provider id，值 = 用户覆盖；未填用注册表默认）。
+- `getAIProvider` 解析时覆盖优先于注册表默认（`overrideModel || desc.model` 等）；`prompt` 的 max_tokens 优先级：modelOptions > 全局 `aiMaxTokens`（>0）> provider 覆盖 > 注册表 defaultMaxTokens。
+- 设置页 AI 区块新增三行（custom 行渲染，`模型名称`/`上下文窗口`/`最大输出 token`）：初始值 = 当前 provider 的覆盖或注册表默认（= 模型最大输出），切换 provider 后 onRefresh 联动刷新输入框；清空输入 = 清除覆盖回落默认。
+- 注册表默认 max output 校准：anthropic claude-sonnet-4-5 → 64000、moonshot kimi-k2 → 131072，其余按模型常见上限（deepseek 8192 / openai 16384 / gemini 8192 / qwen 8192 等）。
+- 测试：`ai-cov` per-provider 覆盖解析/隔离/请求体；`settings-schema-ui` 三行渲染/写入/切换联动；schema/lint 行结构更新。
+- 门禁：tsc 0 错；全量 222 文件 3594 用例绿（+6）；构建通过。

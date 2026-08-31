@@ -32,6 +32,13 @@ export interface AISettingsLike {
   aiCustomEndpoint?: string;
   aiCustomModel?: string;
   aiCustomApiKey?: string;
+  /** 每提供商模型覆盖（键 = provider id；未填用注册表默认） */
+  aiModelOverrides?: Record<string, string>;
+  /** 每提供商上下文窗口覆盖（键 = provider id；未填用注册表 defaultContextWindow） */
+  aiContextOverrides?: Record<string, number>;
+  /** 每提供商最大输出 token 覆盖（键 = provider id；未填用注册表 defaultMaxTokens） */
+  aiMaxTokensOverrides?: Record<string, number>;
+  /** 全局 max_tokens 兜底（>0 时覆盖 per-provider 未配置项） */
   aiMaxTokens?: number;
 }
 
@@ -114,7 +121,7 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     label: 'Anthropic（Claude）',
     endpoint: 'https://api.anthropic.com/v1',
     model: 'claude-sonnet-4-5',
-    defaultMaxTokens: 8192,
+    defaultMaxTokens: 64000, // claude-sonnet-4-5 最大输出上限 64K（ticket 172 默认最大值）
     defaultContextWindow: 200000,
     apiKeyKey: 'anthropicApiKey',
     apiKeyLabel: 'Anthropic 密钥',
@@ -137,7 +144,7 @@ export const AI_PROVIDER_REGISTRY: AIProviderDescriptor[] = [
     label: 'Moonshot（Kimi）',
     endpoint: 'https://api.moonshot.cn/v1',
     model: 'kimi-k2-0711-preview',
-    defaultMaxTokens: 8192,
+    defaultMaxTokens: 131072, // kimi-k2 最大输出上限 128K（ticket 172 默认最大值）
     defaultContextWindow: 131072,
     apiKeyKey: 'moonshotApiKey',
     apiKeyLabel: 'Kimi 密钥',
@@ -272,6 +279,10 @@ interface AIProvider {
   model?: string;
   noCors?: boolean;
   extraHeaders?: Record<string, string>;
+  /** 注册表默认上下文窗口（token 数；设置页未覆盖时用） */
+  contextWindow?: number;
+  /** 注册表默认 max_tokens（设置 aiMaxTokens=0 时用） */
+  defaultMaxTokens?: number;
 }
 
 let _aiProviderCache: AIProvider | null = null;
@@ -294,6 +305,8 @@ export async function getAIProvider(
       apiKey: (override as any).apiKey,
       model: (override as any).model || undefined,
       extraHeaders: (override as any).extraHeaders || undefined,
+      contextWindow: (override as any).contextWindow,
+      defaultMaxTokens: (override as any).defaultMaxTokens,
     };
   }
   const name = (typeof override === 'string' && override) || s.aiProvider || 'opencode-go';
@@ -309,6 +322,8 @@ export async function getAIProvider(
       apiKey: s.aiCustomApiKey,
       model: s.aiCustomModel || undefined,
       extraHeaders: desc.extraHeaders,
+      contextWindow: desc.defaultContextWindow,
+      defaultMaxTokens: desc.defaultMaxTokens,
     };
     return _aiProviderCache;
   }
@@ -320,7 +335,12 @@ export async function getAIProvider(
       const cfg = JSON.parse(raw);
       const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
       if (provider && provider.endpoint && provider.apiKey) {
-        _aiProviderCache = { endpoint: String(provider.endpoint).replace(/\/+$/, ''), apiKey: provider.apiKey };
+        _aiProviderCache = {
+          endpoint: String(provider.endpoint).replace(/\/+$/, ''),
+          apiKey: provider.apiKey,
+          contextWindow: desc.defaultContextWindow,
+          defaultMaxTokens: desc.defaultMaxTokens,
+        };
         return _aiProviderCache;
       }
     } catch (e) { /* 读取失败由调用方提示 */ }
@@ -329,12 +349,18 @@ export async function getAIProvider(
   if (!key && name !== 'ollama') {
     throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
   }
+  // ticket 172 per-provider 覆盖：用户设置的模型/上下文/max token 优先于注册表默认
+  const overrideModel = s.aiModelOverrides?.[name];
+  const overrideContext = s.aiContextOverrides?.[name];
+  const overrideMaxTokens = s.aiMaxTokensOverrides?.[name];
   _aiProviderCache = {
     endpoint: desc.endpoint,
     apiKey: (key as string) || '',
-    model: desc.model || undefined,
+    model: overrideModel || desc.model || undefined,
     noCors: desc.noCors,
     extraHeaders: desc.extraHeaders,
+    contextWindow: overrideContext || desc.defaultContextWindow,
+    defaultMaxTokens: overrideMaxTokens || desc.defaultMaxTokens,
   };
   return _aiProviderCache;
 }
@@ -450,12 +476,15 @@ export class AIService {
   async prompt(promptText: string, model: string = this.defaultModel, options: AIOptions = {}): Promise<string> {
     const mergedOptions = this._mergeOptions(options);
     const provider = await getAIProvider(mergedOptions.provider);
-    // 调用方未显式指定模型时，用 provider 配置的默认模型（如 OpenCode Go 设置里的模型）
-    const effModel = (model === this.defaultModel && provider.model) ? provider.model : model;
+    const s = getQ3Settings();
+    // 模型优先级（ticket 172）：调用方显式指定 > provider 解析结果（含 per-provider 覆盖）> 默认
+    const isExplicit = model !== this.defaultModel;
+    const effModel = isExplicit ? model : (provider.model || model);
     const mo = mergedOptions.modelOptions || {};
-    // max_tokens：显式 modelOptions > 设置 aiMaxTokens（>0 时）> 4096（ticket 170 默认用模型最大值）
-    const settingsTokens = Number(getQ3Settings().aiMaxTokens) || 0;
-    const effMaxTokens = mo.max_tokens ?? (settingsTokens > 0 ? settingsTokens : 4096);
+    // max_tokens（ticket 172 默认最大值）：显式 modelOptions > 全局 aiMaxTokens（>0 时）>
+    // provider 解析结果（per-provider 覆盖 > 注册表 defaultMaxTokens = 模型最大输出）
+    const settingsTokens = Number(s.aiMaxTokens) || 0;
+    const effMaxTokens = mo.max_tokens ?? (settingsTokens > 0 ? settingsTokens : (provider.defaultMaxTokens || 4096));
     const body: Record<string, any> = {
       model: effModel,
       messages: [{ role: 'user', content: promptText }],

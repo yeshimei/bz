@@ -155,7 +155,7 @@ describe('getAIProvider 解析与缓存', () => {
     delete (global as any).fetch;
   });
 
-  it('aiMaxTokens=0 时回落默认 4096', async () => {
+  it('aiMaxTokens=0 时回落注册表默认（ticket 172：deepseek 8192）', async () => {
     setupAI({ aiProvider: 'deepseek', deepseekApiKey: 'sk-deepseek-test', aiMaxTokens: 0 });
     (global as any).fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -165,7 +165,7 @@ describe('getAIProvider 解析与缓存', () => {
     const ai = new AIService({}, 'deepseek-v4-flash');
     await ai.prompt('q');
     const body = JSON.parse((global as any).fetch.mock.calls[0][1].body);
-    expect(body.max_tokens).toBe(4096);
+    expect(body.max_tokens).toBe(8192);
     delete (global as any).fetch;
   });
 
@@ -215,6 +215,50 @@ describe('getAIProvider 解析与缓存', () => {
     expect(p.endpoint).toBe('http://localhost:11434/v1');
     expect(p.apiKey).toBe(''); // 本地无鉴权
     expect(p.model).toBe('llama3.1');
+  });
+
+  it('per-provider 覆盖（ticket 172）：aiModelOverrides/aiMaxTokensOverrides 优先于注册表默认', async () => {
+    setupAI({
+      aiProvider: 'openai',
+      openaiApiKey: 'sk-openai',
+      aiModelOverrides: { openai: 'gpt-4o' },
+      aiContextOverrides: { openai: 9999 },
+      aiMaxTokensOverrides: { openai: 32000 },
+    });
+    const p = await getAIProvider();
+    expect(p.model).toBe('gpt-4o'); // 覆盖注册表默认 gpt-4o-mini
+    expect(p.contextWindow).toBe(9999);
+    expect(p.defaultMaxTokens).toBe(32000);
+  });
+
+  it('per-provider 覆盖只影响对应提供商（deepseek 覆盖不影响 openai 解析）', async () => {
+    setupAI({
+      aiProvider: 'openai',
+      openaiApiKey: 'sk-openai',
+      aiModelOverrides: { deepseek: 'deepseek-chat' }, // 别的家的覆盖
+    });
+    const p = await getAIProvider();
+    expect(p.model).toBe('gpt-4o-mini'); // 注册表默认，未被 deepseek 覆盖污染
+  });
+
+  it('per-provider 覆盖驱动请求体（模型与 max_tokens 均用覆盖值）', async () => {
+    setupAI({
+      aiProvider: 'openai',
+      openaiApiKey: 'sk-openai',
+      aiModelOverrides: { openai: 'gpt-4o' },
+      aiMaxTokensOverrides: { openai: 32000 },
+    });
+    (global as any).fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      body: sseBody(['data: {"choices":[{"delta":{"content":"ok"}}]}\n', 'data: [DONE]\n']),
+    });
+    const ai = new AIService({}, 'deepseek-v4-flash');
+    await ai.prompt('q'); // 未显式指定模型 → 用 provider.model（覆盖后 gpt-4o）
+    const body = JSON.parse((global as any).fetch.mock.calls[0][1].body);
+    expect(body.model).toBe('gpt-4o');
+    expect(body.max_tokens).toBe(32000);
+    delete (global as any).fetch;
   });
 });
 
