@@ -147,18 +147,24 @@ export class UIManager {
     // 主遮罩和弹出
     this.mask = this.createMask('pw-mask');
     this.popup = this.createPopup();
-    // 搜索容器
+    // 工具栏（原型 .win-toolbar：搜索框常驻 + 添加按钮；头行 🔍 控制显隐——ticket 169 契约保留）
     this.searchContainer = document.createElement('div');
-    this.searchContainer.className = 'pw-search-container';
+    this.searchContainer.className = 'pw-toolbar';
     this.searchContainer.style.display = 'none'; // 与 CSS display:none 对齐（ticket 169：缺此内联初值致首点误判「可见」只收不展）
     this.searchInput = document.createElement('input');
     this.searchInput.type = 'text';
-    this.searchInput.placeholder = '搜索平台、账号、备注...';
+    this.searchInput.placeholder = '搜索平台、账号、备注…';
     this.searchInput.addEventListener('input', (e) => {
       this.searchKeyword = (e.target as HTMLInputElement).value.trim();
       this.scheduleSearchRender();
     });
+    const toolbarAddBtn = document.createElement('button');
+    toolbarAddBtn.className = 'pw-toolbar-add';
+    toolbarAddBtn.textContent = '＋ 添加';
+    toolbarAddBtn.title = '添加密码条目';
+    toolbarAddBtn.onclick = () => this.openAddDialog();
     this.searchContainer.appendChild(this.searchInput);
+    this.searchContainer.appendChild(toolbarAddBtn);
 
     this.entriesContainer = document.createElement('div');
     this.entriesContainer.id = 'pw-entries-container';
@@ -317,14 +323,27 @@ export class UIManager {
     }
   }
 
+  /** 密码强度档位（1 弱 / 2 中 / 3 强）：从密码特征推导——长度 + 字符种类数
+   *  （数据格式冻结不可加字段，铁律 1；强度是派生展示，不落盘） */
+  static passwordStrength(pwd: string): 1 | 2 | 3 {
+    if (!pwd) return 1;
+    const kinds =
+      (/[a-z]/.test(pwd) ? 1 : 0) + (/[A-Z]/.test(pwd) ? 1 : 0) +
+      (/[0-9]/.test(pwd) ? 1 : 0) + (/[^a-zA-Z0-9]/.test(pwd) ? 1 : 0);
+    if (pwd.length >= 12 && kinds >= 3) return 3;
+    if (pwd.length >= 8 && kinds >= 2) return 2;
+    return 1;
+  }
+
   createCard(item: PasswordEntry): HTMLDivElement {
     const card = document.createElement('div');
     card.className = 'pw-entry-card';
 
+    // 行式布局（原型 pw-row）：平台名（粗体）→ 账号（mono）→ 密码掩码 + 👁 → 强度条 → 时间
     const top = document.createElement('div');
     top.className = 'pw-entry-top';
 
-    // 账号与平台
+    // 平台（可点链接或纯文本）
     const accountWrapper = document.createElement('div');
     accountWrapper.className = 'pw-account-wrapper';
 
@@ -352,7 +371,7 @@ export class UIManager {
     accountWrapper.appendChild(accountSpan);
     top.appendChild(accountWrapper);
 
-    // 密码区域
+    // 密码区域（掩码 + 👁）
     const passwordArea = document.createElement('div');
     passwordArea.className = 'pw-password-area';
     const passwordSpan = document.createElement('span');
@@ -392,6 +411,20 @@ export class UIManager {
     passwordArea.appendChild(passwordSpan);
     passwordArea.appendChild(eyeSpan);
     top.appendChild(passwordArea);
+
+    // 强度条（原型 pw-strength：3 格竖条，从密码推导）
+    const strength = UIManager.passwordStrength(item.password || '');
+    const strengthEl = document.createElement('div');
+    strengthEl.className = 'pw-strength';
+    strengthEl.title = strength === 3 ? '强密码' : strength === 2 ? '中等密码' : '弱密码';
+    for (let i = 0; i < 3; i++) {
+      const bar = document.createElement('i');
+      if (i < strength) {
+        bar.className = strength >= 3 ? 'filled' : strength === 2 ? 'filled--mid' : 'filled--low';
+      }
+      strengthEl.appendChild(bar);
+    }
+    top.appendChild(strengthEl);
 
     // 日期
     const dateSpan = document.createElement('span');
