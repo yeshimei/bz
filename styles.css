@@ -2531,15 +2531,34 @@ button.news-close-btn {
   padding: 16px 24px 10px;
 }
 
-/* ===== 2. 搜索容器 ===== */
-.pw-search-container {
+/* ===== 2. 工具栏（原型 .win-toolbar：搜索框 + 添加按钮；头行 🔍 控制显隐） ===== */
+.pw-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 0 24px 12px;
+  flex-shrink: 0;
 }
-.pw-search-container input {
-  width: 100%;
+.pw-toolbar input {
+  flex: 1;
+  min-width: 0;
   padding: 7px 12px;
   border-radius: 6px;
 }
+/* 添加按钮（次级按钮风格：secondary 底 + 边框；#pw-popup 前缀提特异性压过顶部重置） */
+#pw-popup .pw-toolbar-add {
+  padding: 7px 16px;
+  border-radius: 6px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.15s ease;
+}
+#pw-popup .pw-toolbar-add:hover { opacity: 0.9; }
 
 /* ===== 3. 条目列表 ===== */
 #pw-entries-container {
@@ -2576,57 +2595,59 @@ button.news-close-btn {
 }
 #pw-popup .pw-empty-action:hover { background: var(--background-modifier-hover); }
 
-/* 条目卡片（分隔线式列表；hover 背景差，无边框堆叠——手册 §5.1 分隔优先级） */
+/* 条目卡片（原型 pw-row：行式布局、hover 圆角背景、无分隔线——手册 §5.1 分隔优先级：间距>背景差>边框） */
 .pw-entry-card {
   display: flex;
   flex-direction: column;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--background-modifier-border);
+  padding: 8px 10px;
   border-radius: 6px;
-  margin: 0 -12px;
+  margin: 0 -10px;
   transition: background-color 0.15s ease;
 }
 .pw-entry-card:hover { background: var(--background-modifier-hover); }
-.pw-entry-card:last-child { border-bottom-color: transparent; }
 .pw-entry-top {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: nowrap;
   min-width: 0;
 }
+/* 平台名（粗体，固定宽——原型 pw-name） */
 .pw-account-wrapper {
   display: flex;
-  align-items: center;
-  gap: 4px;
-  flex: 0 0 40%;
-  max-width: 40%;
+  align-items: baseline;
+  gap: 6px;
+  flex: 0 0 150px;
+  max-width: 150px;
   min-width: 0;
   overflow: hidden;
 }
 .pw-platform-link,
 .pw-platform-text {
   flex: 0 0 auto;
-  max-width: 110px;
+  max-width: 150px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .pw-platform-link { color: var(--interactive-accent); }
 .pw-platform-link:hover { text-decoration: underline; }
-.pw-platform-text { color: var(--text-muted); }
+.pw-platform-text { color: var(--text-normal); }
 .pw-account {
-  flex: 1;
+  flex: 0 0 auto;
+  max-width: 100px;
   min-width: 0;
-  font-size: 14px;
-  color: var(--text-normal);
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-monospace, monospace);
   cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* 密码区：掩码 + 👁（flex 1 自适应） */
 .pw-password-area {
   display: flex;
   align-items: center;
@@ -2639,7 +2660,7 @@ button.news-close-btn {
   font-family: var(--font-monospace, monospace);
   cursor: pointer;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 13px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2647,7 +2668,7 @@ button.news-close-btn {
 }
 .pw-eye {
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   user-select: none;
   opacity: 0.6;
   flex-shrink: 0;
@@ -2656,6 +2677,25 @@ button.news-close-btn {
   transition: opacity 0.15s ease, background-color 0.15s ease;
 }
 .pw-eye:hover { opacity: 1; background: var(--background-modifier-hover); }
+/* 强度条（原型 pw-strength：3 格竖条，从密码推导） */
+.pw-strength {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  padding: 0 2px;
+}
+.pw-strength i {
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--background-modifier-hover);
+  transition: background-color 0.15s ease;
+}
+.pw-strength i.filled { background: var(--color-green); }
+.pw-strength i.filled--mid { background: var(--color-orange); }
+.pw-strength i.filled--low { background: var(--color-red); }
+/* 时间（右对齐，弱化） */
 .pw-date {
   font-size: 12px;
   color: var(--text-faint);
@@ -2664,6 +2704,7 @@ button.news-close-btn {
   cursor: pointer;
   font-variant-numeric: tabular-nums;
 }
+/* 备注（次级行，斜纹隐藏态保留） */
 .pw-note {
   margin-top: 4px;
   font-size: 13px;
@@ -2802,24 +2843,27 @@ button.news-close-btn {
 }
 
 @media (max-width: 768px) {
-  .pw-entry-top {
-    flex-wrap: wrap;
-  }
+  /* 窄屏：平台名列收窄，账号弹性收缩，密码区占满余下空间 */
   .pw-account-wrapper {
-    flex: 0 0 100%;
-    max-width: 100%;
+    flex: 0 0 110px;
+    max-width: 110px;
   }
   .pw-platform-link,
   .pw-platform-text {
-    flex: 0 0 auto;
-    max-width: 140px;
+    max-width: 110px;
+  }
+  .pw-account {
+    display: none; /* 移动端账号进抽屉头部展示（长按看详情），行内不挤 */
   }
   .pw-password-area {
-    flex: 0 0 100%;
+    flex: 1;
     min-width: 0;
   }
   .pw-date {
-    margin-left: auto;
+    display: none; /* 移动端时间弱化：抽屉头部有小字 */
+  }
+  .pw-strength {
+    display: none; /* 移动端强度条省略（进抽屉？不——强度是卡片识别信息，但窄屏让位给密码区） */
   }
   #pw-popup .bz-win-head {
     padding-top: max(16px, env(safe-area-inset-top)); /* 真全屏避让顶部安全区（core .bz-win-mfs 已垫，此处兜底） */
@@ -2827,6 +2871,9 @@ button.news-close-btn {
   /* 触控热区：卡片行 min-height 44px（手册 §8.2） */
   .pw-entry-card { padding-top: 12px; padding-bottom: 12px; }
   .pw-eye { min-width: 32px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; }
+  /* 工具栏：搜索框 + 添加按钮同行（按钮收窄） */
+  .pw-toolbar { padding: 0 16px 10px; }
+  #pw-popup .pw-toolbar-add { padding: 7px 12px; }
 }
 /* ==================== 收藏本域样式（src/favorites/styles.css） ==================== */
 /* ==================== 收藏本（favorites，ticket 60 收敛：原 fav-mobile 注入，逐字搬运；后续优化：header 按钮去 box-shadow、标题栏去下边框、类型栏单行横滑；移动端列表卡片已恢复桌面样式（边框/圆角/间距随 ui.ts 内联样式），不再通栏平铺） ==================== */
