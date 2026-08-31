@@ -5901,22 +5901,9 @@ textarea.bz-sb-chat-input {
 #smart-companion-cat .bz-sc-anim-tail-base { animation: tailFlick 7s ease-in-out infinite; }
 #smart-companion-cat .bz-sc-anim-eye-base { animation: blinkSlow 5s ease-in-out infinite; }
 
-/* 心情组合动画（原 applyMoodAnimations 各 mood 组合；类加在 .cat-body 上） */
-#smart-companion-cat .bz-sc-mood-happy { animation: happyBounce 4s ease-in-out infinite, gentleSway 6s ease-in-out infinite; }
-#smart-companion-cat .bz-sc-mood-happy .cat-tail { animation: tailWagHappy 3s ease-in-out infinite; }
-#smart-companion-cat .bz-sc-mood-happy .cat-eye { animation: blinkQuick 3s ease-in-out infinite, eyesSparkle 5s ease-in-out infinite; }
-#smart-companion-cat .bz-sc-mood-curious { animation: curiousTilt 5s ease-in-out infinite; }
-#smart-companion-cat .bz-sc-mood-curious .cat-eye { animation: blinkSlow 4s ease-in-out infinite, eyesWiden 6s ease-in-out infinite; }
-#smart-companion-cat .bz-sc-mood-sleepy { animation: sleepySway 8s ease-in-out infinite; }
-#smart-companion-cat .bz-sc-mood-sleepy .cat-ear,
-#smart-companion-cat .bz-sc-mood-sleepy .cat-tail { animation: none; }
-#smart-companion-cat .bz-sc-mood-sleepy .cat-eye { animation: blinkSlow 8s ease-in-out infinite; }
-#smart-companion-cat .bz-sc-mood-excited { animation: excitedVibrate 2s ease-in-out infinite, breathing 2s ease-in-out infinite; }
-#smart-companion-cat .bz-sc-mood-excited .cat-tail { animation: tailSwish 1.5s ease-in-out infinite; }
-#smart-companion-cat .bz-sc-mood-excited .cat-eye { animation: blinkQuick 2s ease-in-out infinite; }
-#smart-companion-cat .bz-sc-mood-playful { animation: playfulHop 3s ease-in-out infinite; }
-#smart-companion-cat .bz-sc-mood-playful .cat-tail { animation: tailFlick 2s ease-in-out infinite; }
-#smart-companion-cat .bz-sc-mood-playful .cat-eye { animation: blinkQuick 3s ease-in-out infinite; }
+/* 心情组合动画（原 applyMoodAnimations 的 .bz-sc-mood-* 类）已删除——动画心情状态机移除，
+   对应 keyframes（happyBounce/curiousLook/sleepySway/excitedVibrate/playfulHop）保留，
+   作为随机池普通动作由 JS 一次性触发 */
 
 /* 聊天面板（bz 主窗口：chat-panel 由 createOverlay 生成；样式走 bz-overlay + 头行） */
 #chat-panel {
@@ -6339,6 +6326,168 @@ textarea.bz-sb-chat-input {
 @keyframes transparentEffect { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 @keyframes scalePulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
 @keyframes spinEffect { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(90deg); } }
+
+/* 组合动作 keyframes（playMultiPartAnimation 多部件同时驱动；2026-08-31 新增） */
+@keyframes comboJump {
+  0%, 100% { transform: translateY(0); }
+  35% { transform: translateY(-14px) scale(1.05, 0.95); }
+  60% { transform: translateY(0) scale(1, 1); }
+  80% { transform: translateY(-5px); }
+}
+@keyframes comboJumpTail {
+  0%, 100% { transform: rotate(0deg); }
+  35% { transform: rotate(30deg); }
+  60% { transform: rotate(-15deg); }
+}
+@keyframes comboJumpEars {
+  0%, 100% { transform: rotate(0deg); }
+  35% { transform: rotate(10deg) translateY(-2px); }
+}
+@keyframes comboHappySpin {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(180deg) translateY(-4px); }
+}
+@keyframes comboHappySpinTail {
+  0%, 100% { transform: rotate(0deg); }
+  25%, 75% { transform: rotate(40deg); }
+  50% { transform: rotate(-40deg); }
+}
+@keyframes comboHappySpinEyes {
+  0%, 100% { transform: scaleY(1); }
+  40%, 60% { transform: scaleY(0.3); }
+}
+@keyframes comboYawn {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  40% { transform: translateY(6px) scaleY(0.88); }
+  70% { transform: translateY(-4px) scaleY(1.05); }
+}
+@keyframes comboYawnEyes {
+  0%, 100% { transform: scaleY(1); }
+  40% { transform: scaleY(0.2); }
+  60% { transform: scaleY(0.4); }
+}
+@keyframes comboYawnTail {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-25deg); }
+}
+@keyframes comboLookAround {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(12deg); }
+  45% { transform: rotate(-10deg); }
+  70% { transform: rotate(8deg); }
+}
+@keyframes comboLookAroundEars {
+  0%, 100% { transform: rotate(0deg); }
+  25%, 60% { transform: rotate(14deg); }
+}
+@keyframes comboLookAroundEyes {
+  0%, 100% { transform: scaleY(1); }
+  20%, 45%, 70% { transform: scaleY(0.9); }
+}
+@keyframes comboPurr {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px) scale(1.02, 0.98); }
+  50% { transform: translateX(1px); }
+  75% { transform: translateX(-1px) scale(1.02, 0.98); }
+}
+@keyframes comboPurrTail {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(35deg); }
+}
+@keyframes comboPurrEyes {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.5); }
+}
+@keyframes comboStartle {
+  0%, 100% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(-10px) scale(1.15, 0.9); }
+  55% { transform: translateY(0) scale(0.95, 1.05); }
+}
+@keyframes comboStartleEars {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(-25deg); }
+  60% { transform: rotate(5deg); }
+}
+@keyframes comboStartleEyes {
+  0%, 100% { transform: scaleY(1); }
+  30%, 55% { transform: scaleY(1.5) scaleX(1.2); }
+}
+@keyframes comboStretchArms {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  45% { transform: translateY(8px) scaleY(0.8); }
+  70% { transform: translateY(-6px) scaleY(1.15); }
+}
+@keyframes comboStretchArmsTail {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-40deg); }
+}
+@keyframes comboPlayfulPounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  35% { transform: translateY(-12px) rotate(-6deg); }
+  65% { transform: translateY(4px) rotate(4deg); }
+}
+@keyframes comboPlayfulPounceTail {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(50deg); }
+  65% { transform: rotate(-30deg); }
+}
+@keyframes comboPlayfulPounceEars {
+  0%, 100% { transform: rotate(0deg); }
+  35%, 65% { transform: rotate(12deg); }
+}
+@keyframes comboSleepyDozing {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(5px) scale(0.95, 0.9); }
+}
+@keyframes comboSleepyDozingEyes {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.15); }
+}
+@keyframes comboSleepyDozingTail {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-15deg); }
+}
+@keyframes comboCuriousPeek {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  40% { transform: translateY(-6px) rotate(10deg); }
+  70% { transform: translateY(-2px) rotate(-6deg); }
+}
+@keyframes comboCuriousPeekHead {
+  0%, 100% { transform: rotate(0deg); }
+  40% { transform: rotate(18deg); }
+}
+@keyframes comboCuriousPeekEars {
+  0%, 100% { transform: rotate(0deg); }
+  40%, 70% { transform: rotate(15deg); }
+}
+@keyframes comboRollOver {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  50% { transform: rotate(360deg) translateY(-5px); }
+}
+@keyframes comboRollOverTail {
+  0%, 100% { transform: rotate(0deg); }
+  25%, 75% { transform: rotate(60deg); }
+}
+@keyframes comboRollOverEyes {
+  0%, 100% { transform: scaleY(1); }
+  40%, 60% { transform: scaleY(0.3); }
+}
+@keyframes comboCelebrate {
+  0%, 100% { transform: translateY(0); }
+  20% { transform: translateY(-12px); }
+  40% { transform: translateY(0); }
+  60% { transform: translateY(-8px) rotate(-4deg); }
+  80% { transform: translateY(0) rotate(0deg); }
+}
+@keyframes comboCelebrateTail {
+  0%, 100% { transform: rotate(0deg); }
+  15%, 45%, 75% { transform: rotate(45deg); }
+  30%, 60%, 90% { transform: rotate(-45deg); }
+}
+@keyframes comboCelebrateEars {
+  0%, 100% { transform: rotate(0deg); }
+  20%, 60% { transform: rotate(12deg) translateY(-2px); }
+}
 
 /* 快速动画引用（原 playAnimation 用不定时长的一次性动画：此处补齐动画应用） */
 #smart-companion-cat .bz-sc-anim[style*="--bz-sc-anim-name"] {
