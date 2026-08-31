@@ -8,9 +8,8 @@ export const STATUS_WATCHED = 2;
 
 /** 评分制刻度上限（10 分制，ticket 170） */
 export const RATING_MAX = 10;
-/** 星星渲染的整星/半星字符 */
+/** 星星渲染的整星字符 */
 export const STAR_FULL = '⭐';
-export const STAR_HALF = '⯪';
 
 /** 默认评分（标记已看直改默认分；ticket 170：10 分制中点 5） */
 export const DEFAULT_RATING = 5;
@@ -45,10 +44,8 @@ export function getGroupForTag(tag: string): string | null {
   return null;
 }
 
-/** 星星串渲染（10 分制，ticket 170）：5 颗星封顶，支持半星（如 8.5 → ⭐⭐⭐⭐⯪） */
+/** 星星串渲染（10 分制，ticket 170）：5 颗星封顶，整星四舍五入（如 8.5 → ⭐⭐⭐⭐⭐、9 → ⭐⭐⭐⭐⭐、7.2 → ⭐⭐⭐⭐） */
 export function getStarRating(rating: number): string {
-  const stars = Math.min(Math.max(rating / 2, 0), 5); // 10 分制 → 5 星刻度
-  const full = Math.floor(stars);
-  const half = stars - full >= 0.25 && stars - full < 0.75;
-  return STAR_FULL.repeat(full) + (half ? STAR_HALF : stars - full >= 0.75 ? STAR_FULL : '');
+  const stars = Math.min(Math.max(Math.round(rating / 2), 0), 5); // 10 分制 → 5 星刻度，四舍五入
+  return STAR_FULL.repeat(stars);
 }
