@@ -2,10 +2,6 @@
 
 独立 Obsidian 插件，20 功能域（详见领域清单）。数据沿用既有格式（`CONFIG/STORAGE/*.json`、`我的/*.md`、frontmatter），旧数据直接可读。**项目语言：中文**。
 
-## 环境
-
-- E 盘是 exFAT：write 工具的原子写（硬链接）在 exFAT 上不支持。
-
 ## 命令与构建
 
 - `pnpm install` / `pnpm run dev` / `pnpm run build` / `pnpm test` / `pnpm run test:watch` / `pnpm exec tsc --noEmit`（依赖管理已迁移 pnpm，勿用 npm 装依赖）
@@ -38,6 +34,8 @@
 3. ⚙️ 域设置弹窗 build 末尾挂「移动端默认全屏」行，仅 `if (isMobileEnv())` 显示。
 
 **统一视觉**：头部行用 `.bz-win-head`，关闭按钮用 `.bz-win-close`，按钮秩序：功能 → ⚙️ → 关闭；弹窗不放关闭按钮，靠 mask + ESC；全屏避让用全局规则。样式已集中 styles.css，勿另写差异。
+
+**视觉决策入口**：新增/修改任何 UI（桌面+移动端）前先读 `docs/ui-design-manual.md`——设计方向（好看/高级/简约）、CSS 变量取值表、字号/圆角/阴影/动效档位、两端断点与安全区、组件速查、改动自检清单，全部以它为准。
 
 ## 领域清单（数据均在 CONFIG/STORAGE/，表内只写文件名）
 
