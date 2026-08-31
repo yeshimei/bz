@@ -16,7 +16,7 @@ import { tryGetSettings } from '../core/settings-provider';
 import { onDomainEvent } from '../core/domain-bus';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
-import { mobileFullscreenGroup } from '../core/settings-common';
+import { batchSizeRow, mobileFullscreenGroup } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { ensureAutoSummary, stopAutoSummary } from '../auto-summary';
@@ -150,9 +150,9 @@ export async function initArticleView(showImmediately = true): Promise<void> {
 
 // ========== 创建 UI ==========
 // ===== 剪藏本设置 schema（ticket 131 声明式，ADR-0064）=====
-// 基础/智能组键直绑 + visibleWhen 联动（自动摘要详设随开关展开）；数据源组为 news.json
-// 外部数据 + 异步状态，整段走 custom 插槽保留内部联动（组壳卡片形态由渲染器承担）；
-// 移动端组 = 通用预设 mobileFullscreenGroup（行为/文案与现网逐字一致）。
+// 基础/智能组键直绑 + 智能子项 isChild 联动显隐（自动摘要详设随开关展开，ticket 170）；
+// 数据源组为 news.json 外部数据 + 异步状态，整段走 custom 插槽保留内部联动；
+// 移动端组 = 通用预设（无描述）。 */
 export function clippingSettingsSchema(): SettingsSchema {
   return {
     groups: [
@@ -160,7 +160,7 @@ export function clippingSettingsSchema(): SettingsSchema {
         icon: 'folder-open', name: '基础',
         rows: [
           { type: 'path', mode: 'single', name: '剪藏目录', desc: '存放网页剪藏文章的文件夹', binding: { key: 'articleDirectory' } },
-          { type: 'text', name: '每批加载数量', desc: '滚动加载时每批显示的条目数', binding: { key: 'articleBatchSize' } },
+          batchSizeRow('articleBatchSize'),
         ],
       },
       {
@@ -173,24 +173,28 @@ export function clippingSettingsSchema(): SettingsSchema {
               else stopAutoSummary(); // 关闭：摘除监听（initialized 保留，再开启复用注册）
             },
           },
-          // ticket 124（Q8/Q14）：自动摘要详设——开关开 → 显示详情设置项；关 → 隐藏（visibleWhen 联动）
+          // ticket 170：自动摘要详设——isChild 联动显隐（关→隐藏）+ visibleWhen 兜底
           { type: 'select', name: '摘要长度', desc: '控制生成的摘要详略程度', binding: { key: 'autoSummaryLength' },
             options: [
               { value: 'simple', label: '简短（50-100 字）' },
               { value: 'standard', label: '标准（150-250 字）' },
               { value: 'detailed', label: '详细（300-400 字）' },
             ],
-            visibleWhen: (s) => s.autoSummaryEnabled === true },
+            visibleWhen: (s) => s.autoSummaryEnabled === true,
+            isChild: true },
           { type: 'toggle', name: '生成标签', desc: '为剪藏生成中文标签', binding: { key: 'autoSummaryTagsEnabled' },
-            visibleWhen: (s) => s.autoSummaryEnabled === true },
+            visibleWhen: (s) => s.autoSummaryEnabled === true,
+            isChild: true },
           { type: 'text', name: '标签数量', desc: '生成的标签个数写成区间，如 3-6', binding: { key: 'autoSummaryTagCount' },
-            visibleWhen: (s) => s.autoSummaryEnabled === true && s.autoSummaryTagsEnabled === true },
+            visibleWhen: (s) => s.autoSummaryEnabled === true && s.autoSummaryTagsEnabled === true,
+            isChild: true },
           { type: 'select', name: '摘要时机', desc: '保存后立刻生成，或仅打开文件时才补全', binding: { key: 'autoSummaryTiming' },
             options: [
               { value: 'immediate', label: '保存后立刻' },
               { value: 'lazy', label: '懒触发（打开时）' },
             ],
-            visibleWhen: (s) => s.autoSummaryEnabled === true },
+            visibleWhen: (s) => s.autoSummaryEnabled === true,
+            isChild: true },
         ],
       },
       {
@@ -200,7 +204,7 @@ export function clippingSettingsSchema(): SettingsSchema {
           { type: 'custom', render: (body, ctx) => buildNewsSourcesGroup(body, ctx.refreshVisibility) },
         ],
       },
-      mobileFullscreenGroup('clippingMobileDefaultFullscreen'),
+      mobileFullscreenGroup('clippingMobileDefaultFullscreen', { desc: '' }),
     ],
   };
 }

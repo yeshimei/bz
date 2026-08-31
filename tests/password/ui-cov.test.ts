@@ -327,7 +327,7 @@ describe('密码本 ⚙️ 设置弹窗覆盖补测', () => {
       .filter((el) => !el.classList.contains('bz-setting-hidden'))
       .map((el) => (el as any).__setting);
     expect(settings.length).toBe(3);
-    const RELOAD_TIP = '密码本设置已保存，重载插件后生效';
+    const RELOAD_TIP = '设置已保存，重载插件后生效'; // ticket 170 统一文案
     // 字符集 / 长度文本项
     (settings[0].controls[0] as any).trigger('xyz789');
     expect(s.passwordCharset).toBe('xyz789');

@@ -30,7 +30,7 @@ import type { SettingsSchema } from '../core/settings-schema';
 
 /** 归物本设置 schema（ticket 131 声明式；空态域唯一内容为通用「移动端」组） */
 export function belongingSettingsSchema(): SettingsSchema {
-  return { groups: [mobileFullscreenGroup('belongingsMobileDefaultFullscreen')] };
+  return { groups: [mobileFullscreenGroup('belongingsMobileDefaultFullscreen', { desc: '' })] };
 }
 
 // ----- 类型 -----

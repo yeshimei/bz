@@ -22,6 +22,7 @@ export function mainSettingsSchema(): SettingsSchema {
   return {
     groups: [
       {
+        icon: 'sparkles',
         name: '🤖 AI',
         rows: [
           {
@@ -51,6 +52,7 @@ export function mainSettingsSchema(): SettingsSchema {
         ],
       },
       {
+        icon: 'folder-open',
         name: '📂 数据存储路径',
         rows: [
           {

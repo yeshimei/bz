@@ -14,7 +14,7 @@ import { tryGetSettings, getSettings, saveSettings } from '../core/settings-prov
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { notice } from '../core/notice';
 import { openSettingsModal } from '../core/settings-modal';
-import { mobileFullscreenGroup } from '../core/settings-common';
+import { mobileFullscreenGroup, numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 import { PomodoroDataManager } from './data';
 import { playSound } from './sound';
@@ -382,30 +382,39 @@ export function pomodoroSettingsSchema(): SettingsSchema {
             onChange: () => render(),
           },
           {
-            type: 'text',
+            type: 'number',
             name: '工作时长',
             desc: '自定义方案的工作阶段分钟数',
-            binding: { key: 'pomodoroWorkMin' },
+            binding: numStrBinding('pomodoroWorkMin', 25),
+            min: 1,
+            max: 120,
+            step: 1,
             visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
             onChange: () => render(),
           },
           {
-            type: 'text',
+            type: 'number',
             name: '短休息时长',
             desc: '自定义方案的短休息分钟数',
-            binding: { key: 'pomodoroShortBreakMin' },
+            binding: numStrBinding('pomodoroShortBreakMin', 5),
+            min: 1,
+            max: 60,
+            step: 1,
             visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
             onChange: () => render(),
           },
           {
-            type: 'text',
+            type: 'number',
             name: '长休息时长',
             desc: '自定义方案的长休息分钟数',
-            binding: { key: 'pomodoroLongBreakMin' },
+            binding: numStrBinding('pomodoroLongBreakMin', 15),
+            min: 1,
+            max: 60,
+            step: 1,
             visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
             onChange: () => render(),
           },
-          { type: 'text', name: '长休息间隔', desc: '每隔几个专注进入一次长休息', binding: { key: 'pomodoroLongBreakInterval' }, onChange: () => render() },
+          { type: 'number', name: '长休息间隔', desc: '每隔几个专注进入一次长休息', binding: numStrBinding('pomodoroLongBreakInterval', 4), min: 1, max: 20, step: 1, onChange: () => render() },
         ],
       },
       {
@@ -453,7 +462,7 @@ export function pomodoroSettingsSchema(): SettingsSchema {
           },
         ],
       },
-      mobileFullscreenGroup('pomodoroMobileDefaultFullscreen'),
+      mobileFullscreenGroup('pomodoroMobileDefaultFullscreen', { desc: '' }),
     ],
   };
 }

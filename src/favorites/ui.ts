@@ -72,7 +72,7 @@ function installMenuDismissWatcher(): void {
  * ticket 100 收敛为多数派逐字文案（与域组 A belongings 同口径，settings-copy-lint-a 白名单注释）。
  */
 export function favoritesSettingsSchema(): SettingsSchema {
-  return { groups: [mobileFullscreenGroup('favoritesMobileDefaultFullscreen')] };
+  return { groups: [mobileFullscreenGroup('favoritesMobileDefaultFullscreen', { desc: '' })] };
 }
 
 export class UIManager {

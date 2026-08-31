@@ -907,7 +907,7 @@ describe('EncryptAppController 覆盖补测', () => {
     await (controls[5][0] as any).trigger(true); // 安全模式
     expect(s.encryptSecurityMode).toBe(true);
     await waitFor(() => saveSpy.mock.calls.length >= 6);
-    expect(getNoticeMessages().filter((m) => m === '保险箱设置已保存，重载插件后生效').length).toBe(1); // 只提示一次
+    expect(getNoticeMessages().filter((m) => m === '设置已保存，重载插件后生效').length).toBe(1); // 只提示一次（ticket 170 统一文案）
     closeSettingsModal();
 
     // 移动端组

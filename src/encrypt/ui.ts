@@ -20,7 +20,8 @@ import {
 import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { tryGetSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
-import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
+import { applyMobileWindowFullscreen } from '../core/mobile';
+import { mobileFullscreenGroup, makeReloadWarnOnce, numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 import { SafeManager, base64ToBytes, bytesToBase64, type SafeNote, type SafeAttachment, type HealthReport, type HealthItem, type LockAttachmentInput } from './data';
 import { compressImage, videoFrame } from './preview';
@@ -234,18 +235,10 @@ function finishProgress(h: NoticeHandle | null, done: number, msg: string) {
 
 
 /** 保险箱设置 schema（ticket 131；ADR-0064）：存储/预览/安全/移动端四组 7 键。全部配置项为启动快照
- *  （控制器构造时读取），改动需重载插件后生效——warnReload 一次性提示收敛为渲染器 onCommit（text/path
- *  行值变更才提示）/ onChange 一次性闭包（toggle），文案逐字保留。置于模块顶层供文案 lint 直接引用。
- *  移动端组手写（非 mobileFullscreenGroup 预设）：原 toggle 同带 warnReload 启动快照提示，预设无回调
- *  通道，手写行保行为（desc 为多数派文案，逐字对齐现状）。 */
+ *  （控制器构造时读取），改动需重载插件后生效——warnReload 收敛为 makeReloadWarnOnce（onCommit/
+ *  onChange 一次性提示）。置于模块顶层供文案 lint 直接引用。移动端组走通用预设（mobileFullscreenGroup）。 */
 export function encryptSettingsSchema(): SettingsSchema {
-  let reloadWarned = false;
-  const warnReload = () => {
-    if (!reloadWarned) {
-      reloadWarned = true;
-      notice('保险箱设置已保存，重载插件后生效', 'info');
-    }
-  };
+  const warnReload = makeReloadWarnOnce();
   return {
     groups: [
       {
@@ -257,7 +250,7 @@ export function encryptSettingsSchema(): SettingsSchema {
             type: 'path',
             mode: 'single',
             name: '保险箱根目录',
-            desc: '加密清单与密文镜像的存放位置，点前缀目录在侧栏隐藏，防止误删',
+            desc: '加密文件的存放位置',
             binding: { key: 'encryptRoot' },
             onCommit: warnReload,
           },
@@ -267,35 +260,20 @@ export function encryptSettingsSchema(): SettingsSchema {
         icon: 'image',
         name: '预览',
         rows: [
-          { type: 'toggle', name: '生成压缩预览', desc: '加密时生成图片和视频的压缩预览，体积小但足够清晰', binding: { key: 'encryptPreviewEnabled' }, onChange: warnReload },
-          { type: 'text', name: '预览长边', desc: '压缩预览的目标长边像素，默认 384，数值越小打开越快', binding: { key: 'encryptPreviewSize' }, onCommit: warnReload },
-          { type: 'text', name: '预览质量', desc: '压缩图的 JPEG 质量，默认百分之五十，调低更省空间，画质会变模糊', binding: { key: 'encryptPreviewQuality' }, onCommit: warnReload },
-          { type: 'toggle', name: '预览自动加载原图', desc: '打开预览自动解密原图替换省略图，默认关闭，省流量和内存', binding: { key: 'encryptAutoLoadOriginal' }, onChange: warnReload },
+          { type: 'toggle', name: '生成压缩预览', desc: '加密时生成图片视频的压缩预览', binding: { key: 'encryptPreviewEnabled' }, onChange: warnReload },
+          { type: 'number', name: '预览长边', desc: '预览图目标长边像素', binding: numStrBinding('encryptPreviewSize', 384), min: 64, max: 1024, step: 16, onCommit: warnReload, isChild: true },
+          { type: 'number', name: '预览质量', desc: 'JPEG 图像压缩质量', binding: numStrBinding('encryptPreviewQuality', 0.5), min: 0.1, max: 1, step: 0.1, onCommit: warnReload, isChild: true },
+          { type: 'toggle', name: '预览自动加载原图', desc: '打开预览自动解密原图', binding: { key: 'encryptAutoLoadOriginal' }, onChange: warnReload, isChild: true },
         ],
       },
       {
         icon: 'shield',
         name: '安全',
         rows: [
-          { type: 'toggle', name: '安全模式', desc: '关闭保险箱面板立即自动上锁', binding: { key: 'encryptSecurityMode' }, onChange: warnReload },
+          { type: 'toggle', name: '安全模式', desc: '关闭面板立即自动上锁', binding: { key: 'encryptSecurityMode' }, onChange: warnReload },
         ],
       },
-      {
-        icon: 'smartphone',
-        name: '移动端',
-        // 组级门控（ticket 131 域迁移补正）：桌面端整组隐藏但结构保留，可重求值
-        visibleWhen: () => isMobileEnv(),
-        rows: [
-          {
-            type: 'toggle',
-            name: '移动端默认全屏',
-            desc: '移动端打开主窗口时默认全屏，关闭则显示常规卡片',
-            binding: { key: 'encryptMobileDefaultFullscreen' },
-            onChange: warnReload,
-            visibleWhen: () => isMobileEnv(),
-          },
-        ],
-      },
+      mobileFullscreenGroup('encryptMobileDefaultFullscreen', { desc: '' }),
     ],
   };
 }

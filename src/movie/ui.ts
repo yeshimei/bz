@@ -9,7 +9,7 @@ import { formatRelativeTime, pad2 } from '../core/utils';
 import { tryGetSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
 import { applyMobileWindowFullscreen } from '../core/mobile';
-import { mobileFullscreenGroup } from '../core/settings-common';
+import { batchSizeRow, mobileFullscreenGroup } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, getTypeColor, getStarRating, ALL_TAGS, getGroupForTag } from './constants';
 import { M, takeHomeFilmStatus, type MovieItem } from './state';
@@ -1008,7 +1008,8 @@ export function movieSettingsSchema(): SettingsSchema {
         rows: [
           // ticket 128：影视文件夹（统一路径选择器录入，无手输文本框）
           { type: 'path', mode: 'single', name: '影视文件夹', desc: '存放影视笔记的文件夹路径', binding: { key: 'movieFolderPath' }, onCommit: warnReload },
-          { type: 'text', name: '每页加载数量', desc: '列表首次加载和滚动加载时显示的条数', binding: { key: 'moviePageSize' }, onCommit: warnReload },
+          // ticket 170：与 diary/clipping 统一「每批加载数量」文案（数字框）
+          batchSizeRow('moviePageSize', { onCommit: warnReload }),
         ],
       },
       {
@@ -1058,13 +1059,13 @@ export function movieSettingsSchema(): SettingsSchema {
             binding: { key: 'movieRatingDisplay' },
             options: [
               { value: 'stars', label: '星星串' },
-              { value: 'number', label: '⭐数字' },
+              { value: 'number', label: '数字' },
             ],
           },
           { type: 'info', name: '海报抓取', desc: '海报与豆瓣信息由独立的外部工具提供，需另行安装运行' },
         ],
       },
-      mobileFullscreenGroup('movieMobileDefaultFullscreen'),
+      mobileFullscreenGroup('movieMobileDefaultFullscreen', { desc: '' }),
     ],
   };
 }
