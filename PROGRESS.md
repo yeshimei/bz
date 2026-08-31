@@ -2,6 +2,35 @@
 
 > 进度同步总表（AGENTS.md）。每票一节，状态：计划中 → 进行中 → 门禁 → 已交付。
 
+## Ticket 170 — AI 提供商策略模式 + 影视 10 分制（memo 闭环）
+
+**状态：已交付**（vault 影视数据迁移待 Obsidian 关闭后执行脚本）
+
+- [x] 备忘闭环：`memo.json` 两条代码备忘（ai「策略模式提供商」+ 影视「6→10 分制」）并行 worktree 开发
+- [x] AI Part A：`core/ai.ts` `AI_PROVIDER_REGISTRY` 注册表（deepseek/opencode-go/custom），`getAIProvider` 查表解析；custom OpenAI 兼容端点（可覆盖 commandcode 等）；设置 `aiCustomEndpoint/aiCustomModel/aiCustomApiKey/aiMaxTokens`；主设置页服务商下拉扩三项 + 自定义三行 + max token；`prompt` max_tokens 优先级 modelOptions > 设置 > 4096；favorites `isAvailable` 支持 custom
+- [x] 影视 Part B：10 分制（滑块/输入/默认分 5）+ 半星渲染（⯪，0.25~0.75）；movie-report 删 `R6to10` 换算改十桶、宝藏 ≥9/失望 ≤4、文案同步；recommend prompt 1~10
+- [x] 数据迁移脚本 `.scratch/migrate-movie-rating.py`（×10/6 保留 1 位；干跑 559 换算 30 跳过）——**待 Obsidian 关闭后执行**
+- [x] 测试：AI custom 解析/报错/max_tokens 生效；设置页 custom 显隐；lint 行列表补齐；影视滑块/半星/十桶/双榜新阈值
+- [x] 门禁：tsc 0 错 + 全量 222 文件 3581 用例绿 + 构建部署
+
+## Ticket 169 — 密码本搜索框首点展开（memo 闭环）
+
+**状态：已交付**
+
+- [x] 备忘闭环：`memo.json` 代码备忘「搜索框点两次才会打开」
+- [x] 根因：搜索容器 CSS `display:none` 隐藏，但 toggle 只读内联 `style.display`（初始 `''`）→ 首点误判「可见」只写 none
+- [x] 修复：`ensureElements` 创建时即设内联 `display:none`（单一事实源）；测试改首点即展开断言
+- [x] 门禁：tsc 0 错 + 全量绿 + 构建部署
+
+## Ticket 168 — 重做终局遮罩残留卡死（memo 闭环）
+
+**状态：已交付**
+
+- [x] 备忘闭环：`memo.json` 代码备忘「重做题结算面板点完成不消失、遮罩无反应卡死」
+- [x] 根因：`redoReviewLoop` 终局「完成复习」只 resolve 不调 `endReviewSession`，`#quiz-mask` 残留且 `onComplete` 已置 null → 遮罩/ESC 点击卡死
+- [x] 修复：终局「完成复习」= 结束会话（拆遮罩收尾 + 返回通过集）；测试 mock 真实拆 DOM + 终局遮罩拆除断言
+- [x] 门禁：tsc 0 错 + 全量绿 + 构建部署
+
 ## Ticket 167 — 已有 related 不再触发自动双链
 
 **状态：已交付**
