@@ -310,7 +310,7 @@ export function smartcatSettingsSchema(opts: {
       {
         type: 'toggle',
         name: '移动端默认全屏',
-        desc: '移动端打开小橘窗口时默认全屏，关闭则显示常规卡片',
+        // ticket 170：所有域移动端组统一无描述
         binding: {
           get: () => opts.settingsKeys.mobileFullscreen,
           set: (v: boolean) => {
@@ -343,16 +343,16 @@ export function smartcatSettingsSchema(opts: {
         rows: [
           { type: 'number', name: '短期记忆量', desc: '保留最近多少轮对话作为短期记忆，范围 50 到 200', binding: bindConfig('shortTermMemory'), min: 50, max: 200, step: 10 },
           { type: 'number', name: '上下文字数限制', desc: '上下文内容的最大字数，设为 0 时仅取当前行', binding: bindConfig('contextLength'), min: 0, max: 1000, step: 50 },
-          { type: 'number', name: '上下文分布比例', desc: '光标上下的上下文分配比例，十分之一到十分之九', binding: bindConfig('contextSplitRatio'), min: 0.1, max: 0.9, step: 0.1 },
+          { type: 'number', name: '上下文分布比例', desc: '光标上下的上下文分配比例，十分之一到十分之九', binding: bindConfig('contextSplitRatio'), min: 0.1, max: 0.9, step: 0.01 },
           {
             type: 'select',
             name: '记忆打分范围',
             desc: '记忆质量打分的范围，智能模式自动分配云端与本地',
             binding: bindConfig('cloudScoring'),
             options: [
-              { value: 'smart', label: '智能（推荐）' },
-              { value: 'all', label: '全部（云端）' },
-              { value: 'diary', label: '仅日记' },
+              { value: 'smart', label: '智能' },
+              { value: 'all', label: '云端' },
+              { value: 'diary', label: '日记' },
               { value: 'local', label: '本地' },
             ],
           },

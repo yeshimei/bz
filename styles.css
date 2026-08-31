@@ -34,6 +34,16 @@
     display: none !important;
 }
 
+/* 设置行控件统一最小宽度（ticket 170）：number/text 等输入控件对齐到 120px */
+.setting-item .setting-item-control input[type="number"],
+.setting-item .setting-item-control input[type="text"] {
+    min-width: 120px;
+}
+/* ticket 170：UP 主弹窗描述行允许换行（弹窗加宽后文字不再拥挤） */
+#bz-up-manager-popup .setting-item .setting-item-info .setting-item-description {
+    white-space: normal;
+}
+
 
 
 /* ==================== 主窗口头部行统一规范（ticket 68 后续，用户拍板） ==================== */

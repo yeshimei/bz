@@ -11,7 +11,7 @@ import { onDomainEvent } from '../../core/domain-bus';
 import { getSettings, tryGetSettings } from '../../core/settings-provider';
 import { applyMobileWindowFullscreen } from '../../core/mobile';
 import { openSettingsModal } from '../../core/settings-modal';
-import { mobileFullscreenGroup } from '../../core/settings-common';
+import { batchSizeRow, mobileFullscreenGroup } from '../../core/settings-common';
 import type { SettingsSchema } from '../../core/settings-schema';
 import { applyDirectories, getPrimaryTagsConfig, getPrimaryTagsInDisplayOrder, getTagEmoji } from '../config';
 import { applyUiSettings, getDefaultDateFilterSetting, getDefaultSelectedTagSetting } from './ui-settings';
@@ -197,41 +197,41 @@ function uiSettingsChanged(s: any) {
 export function diarySettingsSchema(): SettingsSchema {
   return {
     groups: [
-        {
-          icon: 'folder-open', name: '目录',
-          rows: [
-            { type: 'path', mode: 'single', name: '日记目录', desc: '存放日记文件的文件夹路径', binding: { key: 'diaryDirectory' }, onChange: () => applyDirectories(getSettings()) },
-            { type: 'path', mode: 'single', name: '影视目录', desc: '存放影视笔记的文件夹路径', binding: { key: 'movieDirectory' }, onChange: () => applyDirectories(getSettings()) },
-            { type: 'path', mode: 'single', name: '信件目录', desc: '存放信件的文件夹路径', binding: { key: 'letterDirectory' }, onChange: () => applyDirectories(getSettings()) },
-            { type: 'text', name: '每批加载数量', desc: '滚动加载时每批显示的条目数', binding: { key: 'diaryBatchSize' }, onCommit: () => applyDirectories(getSettings()) },
-          ],
-        },
-        {
-          icon: 'eye', name: '显示',
-          rows: [
-            { type: 'toggle', name: '显示标签计数', desc: '在标签按钮上显示该标签包含的条目数量', binding: { key: 'showTagCount' }, onChange: () => uiSettingsChanged(getSettings()) },
-            { type: 'toggle', name: '默认日期取自文件', desc: '添加日记时默认日期取自当前打开的日记文件，否则用当前时间', binding: { key: 'useFileDateTime' }, onChange: () => uiSettingsChanged(getSettings()) },
-            { type: 'toggle', name: '标签按钮显示表情', desc: '筛选栏与写日记弹窗的标签按钮显示表情，关闭则显示文字', binding: { key: 'diaryTagShowEmoji' }, onChange: () => uiSettingsChanged(getSettings()) },
-            { type: 'select', name: '卡片内容渲染方式', desc: '日记卡片内容按格式渲染或纯文本显示', binding: { key: 'diaryContentRenderMode' }, options: [{ value: 'markdown', label: 'Markdown' }, { value: 'plain', label: '纯文本' }], onChange: () => uiSettingsChanged(getSettings()) },
-            { type: 'select', name: '标签排序', desc: '筛选栏主标签按内置配置顺序或条目数量排序', binding: { key: 'diaryTagSortMode' }, options: [{ value: 'fixed', label: '按固定顺序' }, { value: 'count', label: '按条目数量' }], onChange: () => uiSettingsChanged(getSettings()) },
-          ],
-        },
-        {
-          icon: 'monitor', name: '默认视图',
-          rows: [
-            { type: 'select', name: '面板默认日期筛选', desc: '打开日记本面板时默认的日期范围', binding: { key: 'diaryDefaultDateFilter' }, options: [{ value: 'all', label: '全部' }, { value: 'this-month', label: '本月' }], onChange: () => uiSettingsChanged(getSettings()) },
-            { type: 'select', name: '默认选中标签', desc: '打开面板时默认选中的主标签', binding: { key: 'diaryDefaultSelectedTag' }, options: [{ value: '', label: '全部' }, ...Object.keys(getPrimaryTagsConfig()).map((tag) => ({ value: tag, label: tag }))], onChange: () => uiSettingsChanged(getSettings()) },
-            { type: 'toggle', name: '保存后进入编辑', desc: '保存日记后直接进入编辑模式', binding: { key: 'diaryJumpToEditAfterSave' } },
-          ],
-        },
-        mobileFullscreenGroup('diaryMobileDefaultFullscreen'),
-        {
-          icon: 'wrench', name: '维护',
-          rows: [
-            { type: 'button', name: '日记解析检测', desc: '扫描所有日记文件，定位未能解析的行，可一键修复标题格式问题', buttonText: '检测日记解析', cta: true, onClick: () => openDiaryRepairModal() },
-          ],
-        },
-      ],
+      {
+        icon: 'folder-open', name: '目录',
+        rows: [
+          { type: 'path', mode: 'single', name: '日记目录', desc: '存放日记文件的文件夹路径', binding: { key: 'diaryDirectory' }, onChange: () => applyDirectories(getSettings()) },
+          { type: 'path', mode: 'single', name: '影视目录', desc: '存放影视笔记的文件夹路径', binding: { key: 'movieDirectory' }, onChange: () => applyDirectories(getSettings()) },
+          { type: 'path', mode: 'single', name: '信件目录', desc: '存放信件的文件夹路径', binding: { key: 'letterDirectory' }, onChange: () => applyDirectories(getSettings()) },
+          batchSizeRow('diaryBatchSize', { onCommit: () => applyDirectories(getSettings()) }),
+        ],
+      },
+      {
+        icon: 'eye', name: '显示',
+        rows: [
+          { type: 'toggle', name: '显示标签计数', desc: '在标签按钮上显示该标签包含的条目数量', binding: { key: 'showTagCount' }, onChange: () => uiSettingsChanged(getSettings()) },
+          { type: 'toggle', name: '默认日期取自文件', desc: '添加日记时默认日期取自当前打开的日记文件，否则用当前时间', binding: { key: 'useFileDateTime' }, onChange: () => uiSettingsChanged(getSettings()) },
+          { type: 'toggle', name: '标签按钮显示表情', desc: '筛选栏与写日记弹窗的标签按钮显示表情，关闭则显示文字', binding: { key: 'diaryTagShowEmoji' }, onChange: () => uiSettingsChanged(getSettings()) },
+          { type: 'select', name: '卡片内容渲染方式', desc: '日记卡片内容按格式渲染或纯文本显示', binding: { key: 'diaryContentRenderMode' }, options: [{ value: 'markdown', label: 'Markdown' }, { value: 'plain', label: '纯文本' }], onChange: () => uiSettingsChanged(getSettings()) },
+          { type: 'select', name: '标签排序', desc: '筛选栏主标签按内置配置顺序或条目数量排序', binding: { key: 'diaryTagSortMode' }, options: [{ value: 'fixed', label: '按固定顺序' }, { value: 'count', label: '按条目数量' }], onChange: () => uiSettingsChanged(getSettings()) },
+        ],
+      },
+      {
+        icon: 'monitor', name: '默认视图',
+        rows: [
+          { type: 'select', name: '面板默认日期筛选', desc: '打开日记本面板时默认的日期范围', binding: { key: 'diaryDefaultDateFilter' }, options: [{ value: 'all', label: '全部' }, { value: 'this-month', label: '本月' }], onChange: () => uiSettingsChanged(getSettings()) },
+          { type: 'select', name: '默认选中标签', desc: '打开面板时默认选中的主标签', binding: { key: 'diaryDefaultSelectedTag' }, options: [{ value: '', label: '全部' }, ...Object.keys(getPrimaryTagsConfig()).map((tag) => ({ value: tag, label: tag }))], onChange: () => uiSettingsChanged(getSettings()) },
+          { type: 'toggle', name: '保存后进入编辑', desc: '保存日记后直接进入编辑模式', binding: { key: 'diaryJumpToEditAfterSave' } },
+        ],
+      },
+      mobileFullscreenGroup('diaryMobileDefaultFullscreen', { desc: '' }),
+      {
+        icon: 'wrench', name: '维护',
+        rows: [
+          { type: 'button', name: '日记解析检测', desc: '扫描所有日记文件，定位未能解析的行，可一键修复标题格式问题', buttonText: '检测日记解析', cta: true, onClick: () => openDiaryRepairModal() },
+        ],
+      },
+    ],
   };
 }
 

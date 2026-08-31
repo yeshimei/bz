@@ -188,7 +188,7 @@ export function librarySettingsSchema(): SettingsSchema {
           { type: 'toggle', name: '显示书评摘要', desc: '在书籍卡片上显示书评摘要', binding: { key: 'showReview' } },
         ],
       },
-      mobileFullscreenGroup('libraryMobileDefaultFullscreen'),
+      mobileFullscreenGroup('libraryMobileDefaultFullscreen', { desc: '' }),
     ],
   };
 }

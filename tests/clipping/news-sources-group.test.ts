@@ -160,17 +160,17 @@ describe('剪藏本设置「数据源」组', () => {
     expectSetting(popup, 'B站 UP 主');
     const upRow = findSetting(popup, 'UP 主名单');
     const upCtl = (upRow as any).__setting;
-    // 按钮行 desc：名字预览（后台回填优先，无资料回退 uid）
-    expect(upCtl.desc).toContain('老番茄');
-    expect(upCtl.desc).toContain('UP 999999');
+    // 按钮行 desc：已跟踪 N 位（ticket 170 简化，去掉「点击「管理」添加/删除」+ 名字预览）
+    expect(upCtl.desc).toContain('已跟踪');
+    expect(upCtl.desc).toContain('2 位');
     expect(upCtl.controls.some((c: any) => c.text === '管理')).toBe(true);
     // 组内不再直接渲染名单行（已移入弹窗）
     expect(popup.querySelector('[data-up-row]')).toBeNull();
-    expectSetting(popup, '已保存文章保留天数');
+    // ticket 170：与「已保存保留天数」同义去重 → 仅保留「已跳过文章保留天数」
+    expect(popup.querySelector('[data-name="已保存文章保留天数"]')).toBeNull();
     expectSetting(popup, '已跳过文章保留天数');
-    const status = expectSetting(popup, '抓取状态');
-    expect((status as any).__setting.desc).toContain('2 位 UP 主');
-    expect((status as any).__setting.desc).toContain('1 篇');
+    // ticket 170：删「抓取状态」诊断行（不是设置项）
+    expect(popup.querySelector('[data-name="抓取状态"]')).toBeNull();
     // 弹窗列表：有资料 → 名字+头像；无资料 → uid 回退
     const modal = await openUpManager(popup);
     const rows = [...modal.querySelectorAll<HTMLElement>('[data-up-row]')];
@@ -222,8 +222,7 @@ describe('剪藏本设置「数据源」组', () => {
     expect(disk.bilibiliUps).toEqual(['999999']);
     expect(disk.bilibiliUpInfo).toEqual({}); // 该 uid 资料一并清除
     const upCtl = (findSetting(popup, 'UP 主名单') as any).__setting;
-    expect(upCtl.desc).not.toContain('老番茄');
-    expect(upCtl.desc).toContain('UP 999999');
+    expect(upCtl.desc).toContain('已跟踪');
     expect(upCtl.desc).toContain('1 位');
   });
 

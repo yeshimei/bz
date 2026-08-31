@@ -21,7 +21,7 @@ import { formatRelativeTime } from '../core/utils';
 import { tryGetSettings } from '../core/settings-provider';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { openSettingsModal } from '../core/settings-modal';
-import { mobileFullscreenGroup } from '../core/settings-common';
+import { mobileFullscreenGroup, makeReloadWarnOnce, numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 import { ensureSafeUnlocked } from '../encrypt';
 import { DataManager, type PasswordEntry } from './data';
@@ -85,26 +85,21 @@ export function copySensitiveText(text: string): Promise<void> {
   }
 }
 
-/** 密码本设置 schema（ticket 131 声明式；启动快照语义——改动需重载生效，首次改动提示一次 ticket 55）
- *  置于模块顶层供文案 lint 直接引用。 */
+/** 密码本设置 schema（ticket 131 声明式；启动快照语义——改动需重载生效，warnReload 收敛为
+ *  makeReloadWarnOnce，首次改动提示一次）置于模块顶层供文案 lint 直接引用。 */
 export function passwordSettingsSchema(): SettingsSchema {
-  let reloadWarned = false;
-  const warnReload = () => {
-    if (!reloadWarned) {
-      reloadWarned = true;
-      notice('密码本设置已保存，重载插件后生效', 'info');
-    }
-  };
+  const warnReload = makeReloadWarnOnce();
   return {
     groups: [
       { icon: 'key-round', name: '生成', rows: [
         { type: 'text', name: '密码生成字符集', desc: '随机生成密码时使用的字符集', binding: { key: 'passwordCharset' }, onCommit: warnReload },
-        { type: 'text', name: '密码生成长度', desc: '随机生成密码的字符个数', binding: { key: 'passwordLength' }, onCommit: warnReload },
+        // string 键走 numStrBinding 转换绑定：number 行显示数字、落盘保持字符串
+        { type: 'number', name: '密码生成长度', desc: '随机生成密码的字符个数', binding: numStrBinding('passwordLength', 16), min: 4, max: 128, step: 1, onCommit: warnReload },
       ]},
       { icon: 'shield', name: '安全', rows: [
-        { type: 'toggle', name: '安全模式', desc: '关闭密码本窗口时立即上锁，保险箱同步锁定', binding: { key: 'securityMode' }, onChange: warnReload },
+        { type: 'toggle', name: '安全模式', desc: '关闭窗口立即自动上锁', binding: { key: 'securityMode' }, onChange: warnReload },
       ]},
-      mobileFullscreenGroup('passwordMobileDefaultFullscreen'),
+      mobileFullscreenGroup('passwordMobileDefaultFullscreen', { desc: '' }),
     ],
   };
 }

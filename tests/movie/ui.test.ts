@@ -203,7 +203,7 @@ describe('设置弹窗筛选', () => {
       .filter((el) => !(el as HTMLElement).classList.contains('bz-setting-hidden'))
       .map((el) => (el as HTMLElement).dataset.name);
     expect(names).toEqual([
-      '影视文件夹', '每页加载数量',
+      '影视文件夹', '每批加载数量',
       '默认排序', '默认类型筛选', '默认状态筛选', '已看卡片评分显示', '海报抓取',
     ]);
     closeFilterModal();
@@ -253,7 +253,8 @@ describe('设置弹窗筛选', () => {
     expect(mobileGroup.querySelector('.bz-settings-group-icon')!.getAttribute('data-icon')).toBe('smartphone');
     const mobileRow = mobileGroup.querySelector('.setting-item[data-name="移动端默认全屏"]') as HTMLElement;
     expect(mobileRow).not.toBeNull();
-    expect((mobileRow as any).__setting.desc).toBe('移动端打开主窗口时默认全屏，关闭则显示常规卡片');
+    // ticket 170：移动端组去描述（不再使用多数派文案）
+    expect((mobileRow as any).__setting.desc).not.toBe('移动端打开主窗口时默认全屏，关闭则显示常规卡片');
     // 键直绑：toggle 变更即时写内存 + 落盘
     const toggle = (mobileRow as any).__setting.controls[0];
     expect(toggle.value).toBe(false);
@@ -428,6 +429,7 @@ describe('ESC 层级', () => {
   });
 
   it('⚙️ 打开真设置弹窗（分组卡片 目录/默认视图）；🔀 为筛选弹窗', () => {
+    MockPlatform.isMobile = false; // 桌面端：移动端组整组隐藏
     setSettingsProvider(() => ({ movieFolderPath: '我的/影视', moviePageSize: '20' }) as any);
     createOverlay(M.appRef as any);
     // 🔀 筛选弹窗（原 ⚙️ 语义，ADR-0009）
@@ -452,7 +454,7 @@ describe('ESC 层级', () => {
       .filter((el) => !(el as HTMLElement).closest('.bz-settings-group')!.classList.contains('bz-setting-hidden'))
       .map((el) => (el as HTMLElement).dataset.name);
     expect(names).toContain('影视文件夹');
-    expect(names).toContain('每页加载数量');
+    expect(names).toContain('每批加载数量');
     expect(names).toContain('默认排序');
     expect(names).toContain('默认类型筛选');
     expect(names).toContain('默认状态筛选');
