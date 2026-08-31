@@ -7,6 +7,7 @@
 import { describe, it, expect } from 'vitest';
 import { Platform } from '../mock-obsidian-entry';
 import { mainSettingsSchema, STORAGE_PATH_COMMIT_NOTICE } from '../../src/core/settings-main-schema';
+import { AI_PROVIDER_REGISTRY } from '../../src/core/ai';
 import {
   mobileFullscreenGroup,
   mobileFullscreenRow,
@@ -27,27 +28,46 @@ describe('mainSettingsSchema：主设置页两区块', () => {
     expect(schema.groups.map((g) => g.icon)).toEqual(['sparkles', 'folder-open']);
   });
 
-  it('AI 区块：服务商下拉（键直绑）+ 两密钥行 + 自定义三行 + max token（ticket 170）', () => {
+  it('AI 区块：服务商下拉（键直绑）+ 每家注册表提供商密钥行 + custom 三行 + max token（ticket 171）', () => {
     const rows = schema.groups[0].rows;
-    expect(rows.map((r) => r.type)).toEqual(['select', 'text', 'text', 'text', 'text', 'text', 'number']);
-    expect(rows.map((r) => (r as { name: string }).name)).toEqual([
-      'AI 服务商', 'DeepSeek 密钥', 'OpenCode 密钥',
+    // 行序 = 服务商下拉 + 注册表非 custom 提供商密钥行（每行 text）+ custom 端点/模型/密钥（text×3）+ max token（number）
+    const nonCustom = AI_PROVIDER_REGISTRY.filter((p) => p.id !== 'custom');
+    const types = ['select', ...nonCustom.map(() => 'text'), 'text', 'text', 'text', 'number'];
+    expect(rows.map((r) => r.type)).toEqual(types);
+    // 密钥行标题来自注册表 apiKeyLabel（含 deepseek/opencode-go，顺序与注册表一致）
+    const names = rows.map((r) => (r as { name: string }).name);
+    const keyNames = nonCustom.map((p) => p.apiKeyLabel);
+    expect(names).toEqual([
+      'AI 服务商', ...keyNames,
       '自定义 API 地址', '自定义模型', '自定义 API 密钥', '最大输出 token',
     ]);
-    const [provider, deepseek, opencode, customEndpoint, customModel, customKey, maxTokens] = rows as Array<{
+    const [provider, ...rest] = rows as Array<{
       binding?: { key: string };
       visibleWhen?: (s: SettingsSnapshot) => boolean;
     }>;
     expect(provider.binding).toEqual({ key: 'aiProvider' });
-    expect(deepseek.binding).toEqual({ key: 'deepseekApiKey' });
-    expect(opencode.binding).toEqual({ key: 'opencodeGoApiKey' });
+    // 注册表每家的密钥行：键直绑 apiKeyKey + visibleWhen 跟随 aiProvider
+    nonCustom.forEach((p, i) => {
+      expect(rest[i].binding).toEqual({ key: p.apiKeyKey });
+      expect(rest[i].visibleWhen!(snapOf({ aiProvider: p.id }))).toBe(true);
+      expect(rest[i].visibleWhen!(snapOf({ aiProvider: 'custom' }))).toBe(false);
+    });
+    // custom 三行（端点/模型/密钥）+ max token
+    const [customEndpoint, customModel, customKey, maxTokens] = rest.slice(nonCustom.length) as Array<{
+      binding?: { key: string };
+      visibleWhen?: (s: SettingsSnapshot) => boolean;
+    }>;
     expect(customEndpoint.binding).toEqual({ key: 'aiCustomEndpoint' });
     expect(customModel.binding).toEqual({ key: 'aiCustomModel' });
     expect(customKey.binding).toEqual({ key: 'aiCustomApiKey' });
     expect(maxTokens.binding).toEqual({ key: 'aiMaxTokens' });
-    // 显隐（ticket 170）：deepseek 显示 DeepSeek 行；opencode-go 显示 OpenCode 行；custom 显示自定义三行
-    const dv = deepseek.visibleWhen!;
-    const ov = opencode.visibleWhen!;
+    // 显隐（ticket 170/171）：deepseek 显示 DeepSeek 行；opencode-go 显示 OpenCode 行；custom 显示自定义三行
+    const findKey = (key: string) => {
+      const idx = nonCustom.findIndex((p) => p.apiKeyKey === key);
+      return rest[idx].visibleWhen!;
+    };
+    const dv = findKey('deepseekApiKey');
+    const ov = findKey('opencodeGoApiKey');
     const cev = customEndpoint.visibleWhen!;
     expect(dv(snapOf({ aiProvider: 'deepseek' }))).toBe(true);
     expect(ov(snapOf({ aiProvider: 'deepseek' }))).toBe(false);
@@ -58,6 +78,10 @@ describe('mainSettingsSchema：主设置页两区块', () => {
     expect(dv(snapOf({ aiProvider: 'custom' }))).toBe(false);
     expect(ov(snapOf({ aiProvider: 'custom' }))).toBe(false);
     expect(cev(snapOf({ aiProvider: 'custom' }))).toBe(true);
+    // 每家提供商密钥行互斥显隐（选 A 不显示 B）
+    const openaiVw = findKey('openaiApiKey');
+    expect(openaiVw(snapOf({ aiProvider: 'openai' }))).toBe(true);
+    expect(openaiVw(snapOf({ aiProvider: 'deepseek' }))).toBe(false);
   });
 
   it('数据存储路径区块：path 单选行（键直绑）+ onCommit 提示文案逐字冻结', () => {

@@ -180,6 +180,42 @@ describe('getAIProvider 解析与缓存', () => {
     const reqOpts: any = vi.mocked(requestUrl).mock.calls[0][0];
     expect(JSON.parse(reqOpts.body).model).toBe('my-explicit-model');
   });
+
+  it('注册表提供商（ticket 171）：openai 解析端点/模型/密钥，未选时设置键直取', async () => {
+    setupAI({ aiProvider: 'openai', openaiApiKey: 'sk-openai' });
+    const p = await getAIProvider();
+    expect(p.endpoint).toBe('https://api.openai.com/v1');
+    expect(p.apiKey).toBe('sk-openai');
+    expect(p.model).toBe('gpt-4o-mini');
+    expect(p.noCors).toBeUndefined();
+  });
+
+  it('注册表提供商缺密钥 → 报「未配置 <label> API Key」', async () => {
+    setupAI({ aiProvider: 'moonshot', moonshotApiKey: '' });
+    await expect(getAIProvider()).rejects.toThrow('未配置 Moonshot（Kimi） API Key');
+  });
+
+  it('extraHeaders（ticket 171）：anthropic 注入 anthropic-version 请求头', async () => {
+    setupAI({ aiProvider: 'anthropic', anthropicApiKey: 'sk-an' });
+    vi.mocked(requestUrl).mockResolvedValue({
+      status: 200,
+      text: JSON.stringify({ choices: [{ message: { content: 'ok' } }] }),
+    });
+    const ai = new AIService({}, 'deepseek-v4-flash');
+    await ai.prompt('x');
+    const reqOpts: any = vi.mocked(requestUrl).mock.calls[0][0];
+    expect(reqOpts.url).toBe('https://api.anthropic.com/v1/chat/completions');
+    expect(reqOpts.headers['anthropic-version']).toBe('2023-06-01');
+    expect(reqOpts.headers.Authorization).toBe('Bearer sk-an');
+  });
+
+  it('ollama 本地服务：endpoint 指向 localhost，密钥可为空', async () => {
+    setupAI({ aiProvider: 'ollama', ollamaApiKey: '' });
+    const p = await getAIProvider();
+    expect(p.endpoint).toBe('http://localhost:11434/v1');
+    expect(p.apiKey).toBe(''); // 本地无鉴权
+    expect(p.model).toBe('llama3.1');
+  });
 });
 
 describe('流式与非流式解析边界', () => {

@@ -104,4 +104,25 @@ describe('isAvailable（ticket 23：真实读取插件 AI 配置，替代恒真 
     setSettingsProvider(() => ({ aiProvider: 'opencode-go', opencodeGoApiKey: '', deepseekApiKey: 'sk-d' }) as any);
     expect(new FavoritesAIService().isAvailable()).toBe(false);
   });
+
+  it('注册表提供商（ticket 171）：openai/gemini 等配对应 key → true；缺 key → false', () => {
+    setSettingsProvider(() => ({ aiProvider: 'openai', openaiApiKey: 'sk-oa' }) as any);
+    expect(new FavoritesAIService().isAvailable()).toBe(true);
+    setSettingsProvider(() => ({ aiProvider: 'openai', openaiApiKey: '' }) as any);
+    expect(new FavoritesAIService().isAvailable()).toBe(false);
+    setSettingsProvider(() => ({ aiProvider: 'google', googleApiKey: 'sk-g' }) as any);
+    expect(new FavoritesAIService().isAvailable()).toBe(true);
+    setSettingsProvider(() => ({ aiProvider: 'google', googleApiKey: '' }) as any);
+    expect(new FavoritesAIService().isAvailable()).toBe(false);
+  });
+
+  it('注册表提供商密钥互不顶替（选 openai 时其他家的 key 无效）', () => {
+    setSettingsProvider(() => ({ aiProvider: 'openai', openaiApiKey: '', anthropicApiKey: 'sk-an' }) as any);
+    expect(new FavoritesAIService().isAvailable()).toBe(false);
+  });
+
+  it('ollama（本地）无需密钥 → 恒 true', () => {
+    setSettingsProvider(() => ({ aiProvider: 'ollama', ollamaApiKey: '' }) as any);
+    expect(new FavoritesAIService().isAvailable()).toBe(true);
+  });
 });
