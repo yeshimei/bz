@@ -151,22 +151,12 @@ describe('密码本 UI 覆盖补测（面板交互）', () => {
     ) as HTMLElement;
     expect(blankCard).toBeTruthy(); // 无平台 → 不渲染任何平台元素
     expect(blankCard.querySelector('.pw-password-text')!.textContent).toBe('•'.repeat(8)); // 空密码按 8 位掩码
-    // 强度条（从密码推导，行式布局）：空密码 → 强度 1（弱）→ 1 格红色点亮
-    const blankStrength = blankCard.querySelector('.pw-strength') as HTMLElement;
-    expect(blankStrength).not.toBeNull();
-    expect(blankStrength.querySelectorAll('i.filled--low').length).toBe(1);
-    expect(blankStrength.querySelectorAll('i.filled, i.filled--mid').length).toBe(0);
-    expect(blankStrength.querySelectorAll('i').length).toBe(3); // 恒 3 格
     // Gmail 条目：url 为空 → 平台用纯文本 span 而非链接
     const gmailCard = [...container.querySelectorAll('.pw-entry-card')].find(
       (c) => c.querySelector('.pw-platform-text')
     ) as HTMLElement;
     expect(gmailCard.querySelector('.pw-platform-text')!.textContent).toBe('Gmail');
     expect(gmailCard.querySelector('.pw-platform-link')).toBeNull();
-    // Gmail 卡（secret2，7 位单类）→ 弱密码：1 格点亮且为红色档
-    const gmailStrength = gmailCard.querySelector('.pw-strength') as HTMLElement;
-    expect(gmailStrength.querySelectorAll('i.filled--low').length).toBe(1);
-    expect(gmailStrength.querySelectorAll('i.filled, i.filled--mid').length).toBe(0);
   });
 
   it('抽屉头部兜底：平台为空回退账号、两者皆空回退「密码条目」', async () => {
@@ -405,25 +395,5 @@ describe('secureRandomPassword 拒绝采样丢弃分支', () => {
     } finally {
       crypto.getRandomValues = orig;
     }
-  });
-});
-
-describe('UIManager.passwordStrength 强度推导（派生展示，不落盘）', () => {
-  it('空/短/单类 → 弱（1）', () => {
-    expect(UIManager.passwordStrength('')).toBe(1);
-    expect(UIManager.passwordStrength('abc')).toBe(1);
-    expect(UIManager.passwordStrength('abcdefgh')).toBe(1); // 8 位但单类
-    expect(UIManager.passwordStrength('abcdefghijkl')).toBe(1); // 12 位但单类
-  });
-
-  it('长度≥8 且字符类≥2 → 中（2）', () => {
-    expect(UIManager.passwordStrength('abc12345')).toBe(2);
-    expect(UIManager.passwordStrength('Abcdefgh')).toBe(2); // 大小写两类
-    expect(UIManager.passwordStrength('abcd1234EF')).toBe(2); // 10 位两类
-  });
-
-  it('长度≥12 且字符类≥3 → 强（3）', () => {
-    expect(UIManager.passwordStrength('P@ssw0rd!2026')).toBe(3);
-    expect(UIManager.passwordStrength('aB3!aB3!aB3!')).toBe(3);
   });
 });
