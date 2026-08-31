@@ -233,6 +233,11 @@ export class MockButton {
   setTooltip(_t: string): this {
     return this;
   }
+  /** ticket 173：加载态禁用（真实 Obsidian ButtonComponent 有 setDisabled；mock 同步 buttonEl） */
+  setDisabled(d: boolean): this {
+    this.buttonEl.disabled = d;
+    return this;
+  }
   onClick(cb: () => void): this {
     this.cb = cb;
     return this;

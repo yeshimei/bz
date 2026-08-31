@@ -20,6 +20,8 @@ import { Setting } from 'obsidian';
 import { AI_PROVIDER_REGISTRY, getProviderDescriptor } from './ai';
 import { notice } from './notice';
 import { tryGetSettings, saveSettings } from './settings-provider';
+import { fetchProviderModels, providerDescriptorOf } from './ai-models';
+import { openModelPicker } from './settings-model-picker';
 import type { SettingsSchema, SettingsRow, SettingsRowContext } from './settings-schema';
 
 /** 存储路径改动防错提示（f1；正文不带 emoji，铁律 7）——文案逐字冻结，勿改 */
@@ -83,6 +85,52 @@ function providerConfigRow(kind: 'model' | 'context' | 'maxTokens'): SettingsRow
           t.setValue(providerValue('model'));
           t.setPlaceholder('默认模型');
           t.onChange((v) => setProviderValue('aiModelOverrides', v));
+        });
+        // ticket 173「获取模型名」：行内嵌按钮（输入框右侧）——拉取当前服务商模型列表弹选择器回填
+        setting.addButton((b) => {
+          b.setButtonText('获取模型名').onClick(() => {
+            void (async () => {
+              if (b.disabled) return; // 加载中防连点
+              b.setDisabled(true);
+              b.setButtonText('获取中…');
+              try {
+                await saveSettings(); // 先落盘防抖中的手输值，再读当前状态拉取
+                const providerId = String((tryGetSettings() as any).aiProvider || 'opencode-go');
+                const desc = providerDescriptorOf(providerId);
+                const models = await fetchProviderModels(providerId);
+                // 打开弹窗前模型行仍可能被 provider 切换刷新——以当前 provider 为准
+                const curProvider = String((tryGetSettings() as any).aiProvider || 'opencode-go');
+                if (curProvider !== providerId) {
+                  notice('服务商已切换，请重新获取', 'warning');
+                  return;
+                }
+                openModelPicker({
+                  providerLabel: desc.label,
+                  current: providerValue('model'),
+                  models,
+                  onPick: (m) => {
+                    // 与输入框 onChange 同口径：写当前 provider 覆盖（custom 语义走 aiCustomModel）并落盘
+                    const p = String((tryGetSettings() as any).aiProvider || 'opencode-go');
+                    if (providerDescriptorOf(p).id === 'custom') {
+                      const s = tryGetSettings() as any;
+                      s.aiCustomModel = m.id;
+                      void saveSettings();
+                    } else {
+                      setProviderValue('aiModelOverrides', m.id);
+                    }
+                    ctx.refreshVisibility();
+                    if (input) input.setValue(m.id);
+                    notice(`模型已设为 ${m.id}`, 'success');
+                  },
+                });
+              } catch (e) {
+                notice(e instanceof Error ? e.message : String(e), 'error');
+              } finally {
+                b.setDisabled(false);
+                b.setButtonText('获取模型名');
+              }
+            })();
+          });
         });
       } else {
         setting.addText((t) => {
