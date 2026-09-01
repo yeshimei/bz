@@ -891,7 +891,8 @@ button.news-close-btn {
   border: 1px solid var(--background-modifier-border);
   border-radius: 8px;
   font-size: 13px;
-  background: var(--background-primary);
+  /* 与设置面板输入框同底色（--input-bg）：文件选择器配色与面板一致（用户拍板） */
+  background: var(--input-bg, var(--background-primary));
   color: var(--text-normal);
 }
 .bz-path-picker-search:focus { outline: none; border-color: var(--interactive-accent); }

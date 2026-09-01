@@ -23,8 +23,8 @@ function snapOf(partial: Partial<SettingsSnapshot>): SettingsSnapshot {
 describe('mainSettingsSchema：主设置页两区块', () => {
   const schema = mainSettingsSchema();
 
-  it('ticket 170：两区块升级为分组卡片（带 icon），标题保持', () => {
-    expect(schema.groups.map((g) => g.name)).toEqual(['🤖 AI', '📂 数据存储路径']);
+  it('ticket 170：两区块升级为分组卡片（带 icon），标题不带 emoji 前缀（emoji 由分组卡图标呈现，防两遍）', () => {
+    expect(schema.groups.map((g) => g.name)).toEqual(['AI', '数据存储路径']);
     expect(schema.groups.map((g) => g.icon)).toEqual(['sparkles', 'folder-open']);
   });
 

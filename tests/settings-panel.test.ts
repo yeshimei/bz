@@ -53,7 +53,7 @@ describe('设置面板（settings-panel）', () => {
     setApp({ vault: new MockVault(), workspace: { getLeaf: () => ({ openFile: vi.fn() }) } } as any);
   });
 
-  it('桌面端：构建侧栏工作台（品牌+搜索+域导航+右侧面板）', () => {
+  it('桌面端：构建侧栏工作台（品牌+搜索+域导航+右侧面板）', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
@@ -64,12 +64,17 @@ describe('设置面板（settings-panel）', () => {
     // 无底部快捷键提示 / 无右侧导航条 / 无面包屑
     expect(popup.querySelector('.bz-sp-foot')).toBeNull();
     expect(popup.querySelector('.bz-sp-crumb')).toBeNull();
-    // 导航项带徽标（原型 .b-ct：deep 域=组数、其余=·；全局=3 / 复习=6 / 番茄=2）
-    const badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
-    expect(badges[0]).toBe('3'); // 全局
-    expect(badges[3]).toBe('·'); // 归物本
-    expect(badges[11]).toBe('6'); // 复习计划
-    expect(badges[16]).toBe('2'); // 番茄钟
+    // 徽标动态计算（原型 .b-ct）：加载前 ·；无设置域 —；schema 加载后 = 可见组数
+    // 初始（全局 schema 尚未加载完成）：全局 ·、归物本 ·（有 schema 但桌面全门控隐藏 → 加载后仍 ·）
+    let badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
+    expect(badges[3]).toBe('·'); // 归物本（schema 加载后桌面端无可见组）
+    // 等全局 schema 加载完成（含 AI/数据存储路径两分组）→ 全局徽标回填可见组数 2
+    const deadline = Date.now() + 2000;
+    while (Date.now() < deadline && badges[0] === '·') {
+      await new Promise((r) => setTimeout(r, 30));
+      badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
+    }
+    expect(badges[0]).toBe('2'); // 全局：AI + 数据存储路径（桌面端移动端组不存在）
     // 导航图标为 emoji（原型 .b-ic）
     const navIcons = [...popup.querySelectorAll('.bz-sp-nav-ic')].map((i) => i.textContent);
     expect(navIcons[0]).toBe('⚙️');
@@ -312,7 +317,12 @@ describe('设置面板（settings-panel）', () => {
     // 先加载全局域 schema（行缓存填充；全局 schema 含「AI 服务商」「DeepSeek 密钥」等）
     const items = popup.querySelectorAll('.bz-sp-mob-item');
     (items[0] as HTMLElement).click(); // 全局
-    await tick();
+    // 等 schema 加载完成（动态 import 可能 >20ms；以弹窗内出现分组为完成标志）
+    const deadline = Date.now() + 2000;
+    while (Date.now() < deadline) {
+      if (document.querySelector('.bz-sp-mob-modal .bz-sp-group')) break;
+      await new Promise((r) => setTimeout(r, 30));
+    }
     // 关闭弹窗
     const modal = document.querySelector('.bz-sp-mob-modal');
     const modalMask = modal ? modal.previousElementSibling as HTMLElement : null;
