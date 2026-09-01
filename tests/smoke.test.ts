@@ -60,7 +60,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-belongings-add', 'bz-belongings-open',
   'bz-clipping-open',
   'bz-news-open',
-  'bz-pw-open', 'bz-pw-add', 'bz-pw-generate',
+  // 保险库（password-vault 域，ADR-0078）：密码本新 UI；旧密码本入口 bz-pw-* 已断开
+  'bz-password-vault-open',
   'bz-favorites-open', 'bz-favorites-add',
   'bz-library-open', 'bz-book-notes-open',
   'bz-reading-report-open',
