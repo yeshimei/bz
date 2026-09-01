@@ -369,8 +369,10 @@ export class DiaryWallAppController {
     const kw = this.searchKeyword.trim().toLowerCase();
     const df = this.selDateFilter;
     return this.entries.filter((e) => {
+      // 加密可见性以 encrypted 标志为准（tags 可能因 emoji 反解不含「加密」，P2-3 审查修复）
+      const isEnc = e.encrypted || e.tags.includes('加密');
       if (this.selTag === '加密') {
-        if (!e.tags.includes('加密')) return false;
+        if (!isEnc) return false;
       } else {
         // 二级标签已选中：只按二级标签精确过滤（日记条目标的是子标签而非主标签，如「四川」而非「旅游」）
         if (this.selSubTag) {
@@ -378,7 +380,7 @@ export class DiaryWallAppController {
         } else {
           if (this.selTag && !e.tags.includes(this.selTag)) return false;
         }
-        if (!this.lockedVisible && e.tags.includes('加密')) return false;
+        if (!this.lockedVisible && isEnc) return false;
       }
       if (df) {
         if (df.month) {
@@ -401,7 +403,11 @@ export class DiaryWallAppController {
 
   /** 类型 chips 行（主标签胶囊 + 计数；「加密」锁定态 🔒 虚线）——标签表取自 config（含旅游/收藏等带二级标签的主标签），非硬编码 */
   private renderChips() {
-    const countFor = (tag: string) => this.entries.filter((e) => e.tags.includes(tag)).length;
+    // 计数：加密条目（encrypted 标志）计入「加密」chip
+    const countFor = (tag: string) =>
+      tag === '加密'
+        ? this.entries.filter((e) => e.encrypted || e.tags.includes('加密')).length
+        : this.entries.filter((e) => e.tags.includes(tag)).length;
     // 全量主标签（展示顺序固定 + 「加密」垫底），emoji 走 config 映射（getTagEmoji 兜底 📖）
     const tagChips: [string, string][] = getPrimaryTagsInDisplayOrder().map((tag) => [tag, getTagEmoji(tag)]);
     [this.desk.chipRow, this.mob.chipRow].forEach((row) => {
@@ -486,6 +492,7 @@ export class DiaryWallAppController {
           lineNumber: e.lineNumber,
           id: e.id,
           noteId: e.noteId,
+          encrypted: true,
           kind: 'diary',
         });
       }
@@ -642,7 +649,7 @@ export class DiaryWallAppController {
         row.append(t, em);
         const tx = document.createElement('div');
         tx.className = 'bz-diary-wall-text-tx bz-diary-wall-md';
-        if (e.tags.includes('加密') && !this.lockedVisible) {
+        if ((e.encrypted || e.tags.includes('加密')) && !this.lockedVisible) {
           tx.textContent = '（已加密）';
         } else {
           void this.renderText(tx, e.text, e);
@@ -677,6 +684,9 @@ export class DiaryWallAppController {
       const { Component, MarkdownRenderer } = await import('obsidian');
       const sourcePath = e.filename && e.filename.includes('/') ? e.filename : `${DIARY_DIRECTORY}/${e.date}.md`;
       const comp = new Component();
+      // 超时/失败守卫：渲染可能挂起（encrypt 域 b0831de 同款），3s 未完成即回退纯文本；
+      // 回退后挂起的渲染若恢复完成会覆盖回退文本——用 dataset 标记阻断（P1-1 审查修复）
+      container.dataset.renderFallback = '0';
       const render = Promise.resolve(
         MarkdownRenderer.render(this.app(), md, container, sourcePath, comp)
       ).then(
@@ -691,8 +701,16 @@ export class DiaryWallAppController {
       }
       if (!finished) {
         // 超时/失败：MarkdownRenderer 可能只渲染了部分或完全没渲染——回退纯文本
+        container.dataset.renderFallback = '1';
         container.textContent = md;
       }
+      // 挂起的渲染若在回退后才完成，会向 container 写入节点——此时清除并保持回退文本
+      void render.then((ok) => {
+        if (!ok) return;
+        if (container.dataset.renderFallback === '1' && container.isConnected) {
+          container.textContent = md;
+        }
+      });
     } catch (err) {
       if (container.isConnected) container.textContent = md; // 渲染失败回退纯文本
     }
@@ -704,7 +722,7 @@ export class DiaryWallAppController {
     // 双击跳转（300ms 内两次点击）
     let lastClick = 0;
     item.addEventListener('click', (ev) => {
-      if (e.tags.includes('加密') && !this.lockedVisible) return;
+      if ((e.encrypted || e.tags.includes('加密')) && !this.lockedVisible) return;
       const now = Date.now();
       if (now - lastClick < 300) {
         lastClick = 0;
@@ -732,7 +750,7 @@ export class DiaryWallAppController {
         const idx = Number(item.dataset.widx);
         const e = this._wallEntries[idx];
         if (!e || Number.isNaN(idx)) return;
-        if (e.tags.includes('加密') && !this.lockedVisible) return;
+        if ((e.encrypted || e.tags.includes('加密')) && !this.lockedVisible) return;
         ev.preventDefault();
         ev.stopPropagation();
         ev.stopImmediatePropagation();
@@ -745,6 +763,14 @@ export class DiaryWallAppController {
   /** 双击跳转原文（diary jumpToEntry；自包含后改自己的实现） */
   private async jumpTo(e: WallEntry) {
     try {
+      // 加密条目：正文即预览（对齐日记本 entries.ts「加密条目不跳 md」），无对应 md 文件——
+      // 打开保险箱面板供查看/管理；不解密不跳转
+      if (e.encrypted) {
+        const { openEncrypt } = await import('../encrypt');
+        openEncrypt(this.app());
+        this.hide();
+        return;
+      }
       // 书（book）：filename 是完整路径，直接打开文件（diary 不识别 book 条目）
       if (e.kind === 'book' && e.filename) {
         const file = this.app().vault.getAbstractFileByPath(e.filename);
@@ -808,7 +834,7 @@ export class DiaryWallAppController {
     mk('↗', '打开原文', null, () => void this.jumpTo(e));
     mk('⧉', '复制双链', null, () => this.copyLink(e));
     mk('▤', '复制正文', null, () => this.copyContent(e));
-    if (!e.tags.includes('加密')) {
+    if (!e.encrypted && !e.tags.includes('加密')) {
       mk('⌘', '改标签', null, () => this.editTags(e));
       mk('🔒', '加密', 'bz-diary-wall-menu-item--accent', () => void this.encryptEntryAction(e));
     } else {
@@ -1024,7 +1050,8 @@ export class DiaryWallAppController {
     wall.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
   }
 
-  /** 滚动高亮：rAF 节流，当前月份在章节栏高亮并滚到可见 */
+  /** 滚动高亮：rAF 节流，当前月份在章节栏高亮并滚到可见。
+      与 scrollToMonth 同口径用 getBoundingClientRect 差值（content-visibility 下 offsetTop 不可靠，P2-1 审查修复） */
   private setupRailHighlight(wall: HTMLElement, rail: HTMLElement, key: 'desk' | 'mob') {
     let raf: number | null = null;
     const onScroll = () => {
@@ -1033,11 +1060,13 @@ export class DiaryWallAppController {
         raf = null;
         const heads = wall.querySelectorAll<HTMLElement>('.bz-diary-wall-day-head');
         if (!heads.length) return;
+        const wallRect = wall.getBoundingClientRect();
         let currentMonth: string | null = null;
         const scrollTop = wall.scrollTop;
         for (let i = 0; i < heads.length; i++) {
           const h = heads[i];
-          if (h.offsetTop <= scrollTop + 8) {
+          const relTop = h.getBoundingClientRect().top - wallRect.top;
+          if (relTop <= scrollTop + 8) {
             currentMonth = h.dataset.date!.slice(0, 7);
           } else break;
         }
@@ -1140,6 +1169,12 @@ export class DiaryWallAppController {
   // ---------- 条目动作（复制/改标签/加密/删除；自包含前复用 diary 域） ----------
   private async copyLink(e: WallEntry) {
     try {
+      // 加密条目：无 md 锚点可复制——复制正文作为替代（diary 面板对加密条目同样无跳转）
+      if (e.encrypted) {
+        await navigator.clipboard.writeText(e.content || e.text || '');
+        notice('已复制加密日记正文', 'success');
+        return;
+      }
       const { copyLink } = await import('../diary/ui/entries') as typeof import('../diary/ui/entries');
       const entry = this.toDiaryEntry(e);
       await copyLink(entry.id || '');
@@ -1234,9 +1269,28 @@ export class DiaryWallAppController {
     }
   }
 
-  /** 删除：接 diary showConfirm 流程 */
+  /** 删除：接 diary showConfirm 流程（加密条目走保险箱销毁——diary showConfirm 的 encrypted 分支） */
   private async deleteEntryAction(e: WallEntry) {
     try {
+      if (e.encrypted && e.noteId) {
+        // 加密条目：直接弹保险箱销毁确认（对齐 diary showConfirm 的 encrypted 分支，
+        // 不依赖 diary state 反查——回忆墙单独打开时 diary state 可能为空）
+        const { openFlowDialog } = await import('../core/flow-dialog');
+        const v = await openFlowDialog({
+          title: '删除加密日记',
+          message: '确定删除这篇加密日记吗？\n\n此操作不可撤销，密文将从保险箱永久销毁。',
+          actions: [
+            { label: '取消', value: 'cancel' },
+            { label: '删除', value: 'ok', cta: true },
+          ],
+        });
+        if (v !== 'ok') return;
+        const { deleteEncryptedEntry } = await import('../diary/encrypt');
+        await deleteEncryptedEntry(e.noteId);
+        notice('已删除加密日记', 'success');
+        void this.loadAndRender();
+        return;
+      }
       const { showConfirm } = await import('../diary/ui/entries') as typeof import('../diary/ui/entries');
       const entry = this.toDiaryEntry(e);
       showConfirm(entry.id || '');
@@ -1306,7 +1360,7 @@ export class DiaryWallAppController {
           notice(`附件：${e.media.map((m) => m.name).join('、')}`);
         });
       }
-      if (!e.tags.includes('加密')) {
+      if (!e.encrypted && !e.tags.includes('加密')) {
         mk('⌘', '改标签', null, '', () => {
           this.closeSheet();
           this.editTags(e);
