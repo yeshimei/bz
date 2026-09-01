@@ -31,7 +31,6 @@ const SOURCES = [
   "src/news/styles.css",
   "src/clipping/styles.css",
   "src/password/styles.css",
-  "src/password-vault/styles.css",
   "src/favorites/styles.css",
   "src/review/styles.css",
   "src/quiz/styles.css",

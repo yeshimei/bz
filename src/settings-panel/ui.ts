@@ -1,12 +1,12 @@
 /**
  * 设置面板 UI（settings-panel，ADR-0080）
- * 原型 .scratch/global-settings-panel-prototype.html 一比一复刻：
- * - 桌面端：B 侧栏工作台（左域导航 + 右内容区直接内嵌渲染该域全部设置分组）
+ * 原型 .scratch/global-settings-panel-prototype.html 1:1 复刻（完全自绘，抛弃 Obsidian 原生样式影响）：
+ * - 桌面端：B 侧栏工作台（左域导航 + 右内容区直接自绘渲染该域全部设置分组）
  * - 移动端：M1 命令面板（搜索 + 域列表，主面板真全屏 + 关闭按钮）
- * - 域设置内容：与各域 ⚙️ 弹窗**同一渲染器同一数据通道**——
- *   `renderSettingsInto`（core/settings-schema）内嵌渲染各域真实 schema，
- *   设置项（开关/输入/下拉/路径）直接在面板内可操作；路径行自动走
- *   renderPathSettingRow + openPathPicker（ADR-0061）。
+ * - 域设置内容：数据 = 各域真实 schema（xxxSettingsSchema()，与 ⚙️ 弹窗同源），
+ *   视觉 = 自绘渲染器 renderPanelSchema（自绘开关/输入/下拉/滑块/按钮/chips），
+ *   绑定逻辑照抄 core/settings-schema（键直绑 getSettings/saveSettings / 三函数 / visibleWhen / onChange）；
+ *   路径行复用 renderPathSettingRow + openPathPicker（ADR-0061）。
  * - 全局域 → mainSettingsSchema()（AI 服务商 + 数据存储路径）。
  */
 import { App, setIcon } from 'obsidian';
@@ -14,8 +14,8 @@ import { createOverlay, topifyZ } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
-import { renderSettingsInto } from '../core/settings-schema';
 import type { SettingsSchema } from '../core/settings-schema';
+import { renderPanelSchema } from './renderer';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 
@@ -235,7 +235,7 @@ export class SettingsPanelUI {
     try {
       const schema = await domain.schemaLoader();
       loading.remove();
-      const handle = renderSettingsInto(body, schema);
+      const handle = renderPanelSchema(body, schema);
       this.renderHandles.push(handle);
     } catch (e) {
       loading.remove();
@@ -365,7 +365,7 @@ export class SettingsPanelUI {
     try {
       const schema = await domain.schemaLoader();
       loading.remove();
-      renderSettingsInto(body, schema);
+      renderPanelSchema(body, schema);
     } catch (e) {
       loading.remove();
       const err = document.createElement('div');
