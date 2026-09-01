@@ -73,7 +73,19 @@ describe('cinema overlay', () => {
     // 海报网格：4 张卡片（含 1 想看 + 1 在看）
     const cards = overlay.querySelectorAll('[data-cinema-idx]');
     expect(cards.length).toBe(4);
-    expect(overlay.querySelector('.bz-cinema-close')).toBeTruthy();
+    // 桌面端关闭按钮隐藏（bz-cinema-mob-only，仅移动端显示）
+    const closeBtn = overlay.querySelector('.bz-cinema-close');
+    expect(closeBtn).toBeTruthy();
+    expect(closeBtn?.classList.contains('bz-cinema-mob-only')).toBe(true);
+  });
+
+  it('点遮罩关闭主面板（桌面端无关闭按钮，靠遮罩/ESC）', () => {
+    const { app } = seedVault();
+    createOverlay(app);
+    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    overlay.click();
+    expect(document.querySelector('.bz-cinema-overlay')).toBeNull();
+    expect(M.currentOverlay).toBeNull();
   });
 
   it('点分类筛选 + 再点取消', () => {
@@ -224,16 +236,21 @@ describe('cinema overlay', () => {
     expect(document.querySelector('.bz-cinema-overlay')).toBeNull();
   });
 
-  it('AI 荐片 / 分析页切换', () => {
+  it('AI 荐片 / 分析页切换', async () => {
     const { app } = seedVault();
     createOverlay(app);
     const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    // AI 页：引导页（画像预览 + 开始按钮）；runAIRecommend 真实调用在 recommend.test 覆盖
     (overlay.querySelector('[data-cinema-tool="ai"]') as HTMLElement).click();
     expect(M.view).toBe('ai');
-    expect(overlay.querySelector('.bz-cinema-page-title')?.textContent).toContain('AI 荐片');
+    expect(overlay.querySelector('.bz-cinema-ai-guide-title')?.textContent).toContain('AI 正在分析');
+    expect(overlay.querySelector('[data-cinema-ai-start]')).toBeTruthy();
+    // 分析页：完整版（15 板块）
     (overlay.querySelector('[data-cinema-tool="stat"]') as HTMLElement).click();
     expect(M.view).toBe('stat');
-    expect(overlay.querySelector('.bz-cinema-page-title')?.textContent).toContain('影视分析');
+    expect(overlay.querySelector('.bz-cinema-page')?.textContent).toContain('影视分析');
+    expect(overlay.querySelector('.bz-cinema-page')?.textContent).toContain('类型分布');
+    expect(overlay.querySelector('.bz-cinema-page')?.textContent).toContain('年度观影趋势');
   });
 
   it('添加弹窗（命令直达 + 落盘创建笔记）', async () => {

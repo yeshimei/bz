@@ -20,6 +20,8 @@ import {
 } from './constants';
 import { M, resetCinemaState, type CinemaItem } from './state';
 import { rebuildItems, getDisplayItems, refreshDataAndView } from './data';
+import { runAIRecommend, buildTasteProfile } from './recommend';
+import { buildAnalysisHTML } from './analysis';
 
 // ---------- 小工具 ----------
 
@@ -178,79 +180,21 @@ function renderListHtml(app: App): string {
 // ---------- 渲染：AI 荐片 / 分析页 ----------
 
 function renderAiPageHtml(app: App): string {
-  const watched = M.items.filter((i) => i.status === STATUS_WATCHED && i.rating && i.rating > 0);
-  const byGroup: Record<string, number> = {};
-  const byDirector: Record<string, number> = {};
-  const byActor: Record<string, number> = {};
-  watched.forEach((i) => {
-    byGroup[i.group] = (byGroup[i.group] || 0) + 1;
-    if (i.director) i.director.split('/').forEach((d) => { d = d.trim(); if (d) byDirector[d] = (byDirector[d] || 0) + 1; });
-    if (i.actors) i.actors.split('/').slice(0, 3).forEach((a) => { a = a.trim(); if (a) byActor[a] = (byActor[a] || 0) + 1; });
-  });
-  const top = (acc: Record<string, number>) => Object.keys(acc).sort((a, b) => acc[b] - acc[a])[0] || '未知';
-  const topGroup = top(byGroup) === '未知' ? '电影' : top(byGroup);
-  const topDirector = top(byDirector);
-  const topActor = top(byActor);
-  const avg = watched.length ? (watched.reduce((s, i) => s + (i.rating as number), 0) / watched.length).toFixed(1) : '—';
-
-  let cand = M.items.filter((i) => i.status === STATUS_WANT || i.status === STATUS_WATCHING);
-  if (cand.length < 5) cand = cand.concat(M.items.filter((i) => i.status === STATUS_WATCHED).slice(0, 5 - cand.length));
-  const recs = cand.slice(0, 5).map((i) => {
-    let reason: string;
-    if (i.status === STATUS_WANT) reason = `在你的想看清单里，${i.director ? `你偏爱 ${topDirector} 的风格，${i.director} 的作品很可能对味` : '口碑值得期待'}。`;
-    else if (i.status === STATUS_WATCHING) reason = `正在追的剧，${i.group === topGroup ? `与你最常看的 ${topGroup} 类型一致` : `拓展了你的 ${i.group} 类型版图`}。`;
-    else reason = `你给同类型影视的均分约 ${avg}，这部评分 ${Number(i.rating).toFixed(1)}，大概率合口味。`;
-    return { it: i, reason };
-  });
-
-  let html = '<div class="bz-cinema-page"><div class="bz-cinema-page-head"><span class="bz-cinema-page-title">🤖 AI 荐片</span><span class="bz-cinema-page-sub">基于 ' + watched.length + ' 部已看影视的口味画像</span></div>';
-  html += `<div class="bz-cinema-page-sub" style="margin-bottom:12px;">偏好：${topGroup} · ${topDirector} · ${topActor} · 均分 ${avg}</div>`;
-  for (const r of recs) {
-    html += `<div class="bz-cinema-rec-card">${posterBlock(r.it, app, 'bz-cinema-rec-poster')}
-      <div><div class="bz-cinema-rec-name">${esc(r.it.name)}</div>
-      <div class="bz-cinema-rec-meta">${esc(r.it.typeTag)}${r.it.rating ? ` · ${Number(r.it.rating).toFixed(1)}` : ` · ${statusText(r.it.status)}`}${r.it.director ? ` · ${esc(r.it.director)}` : ''}</div>
-      <div class="bz-cinema-rec-reason">${esc(r.reason)}</div></div></div>`;
-  }
-  html += '</div>';
+  const profile = buildTasteProfile();
+  let html = '<div class="bz-cinema-page"><div class="bz-cinema-page-head"><span class="bz-cinema-page-title">🤖 AI 荐片</span><span class="bz-cinema-page-sub">基于 ' + profile.total + ' 部已看影视的口味画像</span></div>';
+  html += '<div class="bz-cinema-page-sub" style="margin-bottom:12px;">偏好：' + (profile.groups[0] || '暂无') + ' · ' + (profile.genres[0] || '—') + ' · ' + (profile.directors[0] || '—') + ' · ' + (profile.actors[0] || '—') + '</div>';
+  html += '<div class="bz-cinema-ai-guide">';
+  html += '<div class="bz-cinema-ai-guide-ic">🤖</div>';
+  html += '<div class="bz-cinema-ai-guide-title">AI 正在分析你的观影口味</div>';
+  html += '<div class="bz-cinema-ai-guide-sub">点击下方按钮，AI 将基于你的 ' + profile.total + ' 部观影历史推荐 5 部影视</div>';
+  html += '<button class="bz-cinema-btn bz-cinema-btn-primary bz-cinema-ai-start" data-cinema-ai-start>开始 AI 荐片</button>';
+  html += '</div></div>';
   return html;
 }
 
 function renderStatPageHtml(): string {
-  const total = M.items.length;
-  const watchedN = M.items.filter((i) => i.status === STATUS_WATCHED).length;
-  const wantN = M.items.filter((i) => i.status === STATUS_WANT).length;
-  const watchingN = M.items.filter((i) => i.status === STATUS_WATCHING).length;
-  const withReview = M.items.filter((i) => i.review).length;
-  const watched = M.items.filter((i) => i.status === STATUS_WATCHED && i.rating && i.rating > 0);
-  const avg = watched.length ? (watched.reduce((s, i) => s + (i.rating as number), 0) / watched.length).toFixed(1) : '—';
-  const byGroup = countBy(M.items, (it) => it.group);
-  const byTag = countBy(M.items, (it) => it.typeTag);
-  const maxGroup = Math.max(1, ...Object.values(byGroup));
-  const maxTag = Math.max(1, ...Object.values(byTag));
-  const tagRows = Object.keys(byTag).sort((a, b) => byTag[b] - byTag[a]).slice(0, 6);
-
-  let html = '<div class="bz-cinema-page"><div class="bz-cinema-page-head"><span class="bz-cinema-page-title">📊 影视分析</span></div>';
-  html += '<div class="bz-cinema-stat-grid">';
-  html += `<div class="bz-cinema-stat-card"><div class="bz-cinema-stat-num">${total}</div><div class="bz-cinema-stat-label">全部影视</div></div>`;
-  html += `<div class="bz-cinema-stat-card"><div class="bz-cinema-stat-num">${watchedN}</div><div class="bz-cinema-stat-label">已看</div></div>`;
-  html += `<div class="bz-cinema-stat-card"><div class="bz-cinema-stat-num">${avg}</div><div class="bz-cinema-stat-label">平均评分</div></div>`;
-  html += `<div class="bz-cinema-stat-card"><div class="bz-cinema-stat-num">${wantN}</div><div class="bz-cinema-stat-label">想看</div></div>`;
-  html += `<div class="bz-cinema-stat-card"><div class="bz-cinema-stat-num">${watchingN}</div><div class="bz-cinema-stat-label">在看</div></div>`;
-  html += `<div class="bz-cinema-stat-card"><div class="bz-cinema-stat-num">${withReview}</div><div class="bz-cinema-stat-label">写了影评</div></div>`;
-  html += '</div>';
-  html += '<div class="bz-cinema-sec-title">类型分布</div>';
-  Object.keys(byGroup).sort((a, b) => byGroup[b] - byGroup[a]).forEach((g) => {
-    html += `<div class="bz-cinema-stat-bar"><span class="bz-cinema-stat-bar-label">${g}</span><div class="bz-cinema-stat-bar-track"><div class="bz-cinema-stat-bar-fill" style="width:${(byGroup[g] / maxGroup) * 100}%"></div></div><span class="bz-cinema-stat-bar-num">${byGroup[g]}</span></div>`;
-  });
-  html += '<div class="bz-cinema-sec-title">细分类型 TOP</div>';
-  tagRows.forEach((t) => {
-    html += `<div class="bz-cinema-stat-bar"><span class="bz-cinema-stat-bar-label">${t}</span><div class="bz-cinema-stat-bar-track"><div class="bz-cinema-stat-bar-fill" style="width:${(byTag[t] / maxTag) * 100}%"></div></div><span class="bz-cinema-stat-bar-num">${byTag[t]}</span></div>`;
-  });
-  html += '</div>';
-  return html;
+  return '<div class="bz-cinema-page"><div class="bz-cinema-page-head"><span class="bz-cinema-page-title">📊 影视分析</span></div>' + buildAnalysisHTML() + '</div>';
 }
-
-// ---------- 渲染：主内容区 ----------
 
 function renderContent(app: App): void {
   const content = M.currentOverlay?.querySelector('.bz-cinema-content') as HTMLElement | null;
@@ -555,7 +499,7 @@ export function createOverlay(app: App): void {
         <div class="bz-cinema-head-btns">
           <button class="bz-cinema-ic-btn bz-cinema-mob-only" data-cinema-tool="ai" title="AI 荐片">🤖</button>
           <button class="bz-cinema-ic-btn bz-cinema-mob-only" data-cinema-tool="stat" title="数据分析">📊</button>
-          <button class="bz-cinema-ic-btn bz-cinema-close" data-cinema-close title="关闭">❌</button>
+          <button class="bz-cinema-ic-btn bz-cinema-mob-only bz-cinema-close" data-cinema-close title="关闭">❌</button>
         </div>
       </div>
       <div class="bz-cinema-body">
@@ -579,6 +523,11 @@ export function createOverlay(app: App): void {
   // 事件
   overlay.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
+    // 点遮罩 = 关闭主面板（桌面端无关闭按钮，靠遮罩/ESC 关闭）
+    if (e.target === overlay) {
+      closeOverlay();
+      return;
+    }
     // 分类（含二级展开/再点取消）
     const navItem = t.closest('[data-cinema-type]') as HTMLElement | null;
     if (navItem) {
@@ -619,8 +568,21 @@ export function createOverlay(app: App): void {
     }
     const tool = t.closest('[data-cinema-tool]') as HTMLElement | null;
     if (tool) {
-      M.view = tool.dataset.cinemaTool === 'ai' ? 'ai' : 'stat';
-      renderAll(app);
+      if (tool.dataset.cinemaTool === 'ai') {
+        // AI 荐片：真实 AI 调用（进度通知 → 结果窗），内容区显示引导页
+        M.view = 'ai';
+        renderAll(app);
+        void runAIRecommend(app);
+      } else {
+        M.view = 'stat';
+        renderAll(app);
+      }
+      return;
+    }
+    // AI 引导页「开始 AI 荐片」
+    const aiStart = t.closest('[data-cinema-ai-start]') as HTMLElement | null;
+    if (aiStart) {
+      void runAIRecommend(app);
       return;
     }
     // 快速状态升级（想看/在看 灰色小字）
