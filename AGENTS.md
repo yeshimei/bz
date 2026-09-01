@@ -42,6 +42,7 @@
 | 域 | 数据 |
 |---|---|
 | diary | `我的/日记/*.md` |
+| diary-wall（回忆墙） | `我的/日记/*.md`（只读派生视图，ADR-0081） |
 | memo | memo.json |
 | belongings | belongings.json |
 | clipping | `归档/网页剪藏/*.md` |

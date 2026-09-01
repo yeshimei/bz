@@ -2,6 +2,21 @@
 
 > 进度同步总表（AGENTS.md）。每票一节，状态：计划中 → 进行中 → 门禁 → 已交付。
 
+## Ticket 回忆墙 — 新域 diary-wall 接入主入口与设置体系（ADR-0081）
+
+**状态：进行中**（数据层/UI 层由并行子代理编写，本票接主线）
+
+- [x] 需求（用户拍板）：日记本域 UI 兼容性冻结，另建全新「回忆墙」媒体优先形态（真实图片/视频/音频瀑布流 + 固定章节栏滚动高亮），不动旧 diary 数据/UI
+- [x] ADR-0081：新独立域 diary-wall，复用 diary parser 只读 `我的/日记/*.md`，媒体走 vault getResourcePath，reset 隔离 `bz-` 命名空间，懒加载 + 视口媒体懒加载性能
+- [x] main.ts：import `openDiaryWall/unloadDiaryWall` + 命令 `bz-diary-wall-open`（名称「回忆墙」，icon `images`）裸注册 + onunload `unloadDiaryWall`
+- [x] settings.ts：`diaryWallMobileDefaultFullscreen` 键（默认 true——媒体优先真全屏设计）+ Settings 接口 + DEFAULT_SETTINGS
+- [x] `src/diary-wall/settings.ts`：`diaryWallSettingsSchema()`（`mobileFullscreenGroup` 预设，仅移动端显示）
+- [x] `src/diary-wall/index.ts`：`ensureDiaryWall`（幂等懒加载）/ `openDiaryWall` / `unloadDiaryWall`（适配 UI 代理 `DiaryWallAppController.show()` 接口）
+- [x] build-css.mjs SOURCES 登记 `src/diary-wall/styles.css`
+- [x] 文档：ADR-0081 + CONTEXT.md「回忆墙 (Diary Wall)」词条 + AGENTS.md 领域清单行
+- [x] 测试：smoke.test.ts 命令全集加 `bz-diary-wall-open` + 独立用例（命令注册/名称/图标/回调不抛/ensureDiaryWall 幂等）
+- [ ] 门禁：tsc 0 错 + 全量测试绿 + 构建验证（等待数据层/UI 层子代理合入后统一跑）
+
 ## Ticket 172 — 设置面板新域（settings-panel，ADR-0080）+ 公用样式层提炼
 
 **状态：已交付**

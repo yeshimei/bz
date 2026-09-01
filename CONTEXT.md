@@ -31,6 +31,9 @@ _Avoid_: 类型、分类
 
 **全量刷新 / 轻量刷新**: 数据层向外发出的两类 UI 刷新信号——全量 = 重筛 + 重渲染 + 标签重建；轻量 = 仅标签重建与标题后缀。
 
+**回忆墙 (Diary Wall)**: 日记本数据的**媒体优先只读视图**（ADR-0081，`src/diary-wall/` 域，命令 `bz-diary-wall-open`）——真实图片/视频/音频瀑布流（正文 `![[媒体]]` 内链经 vault `getResourcePath` 渲染）+ 固定章节栏（月份，滚动自动高亮、点击定位）+ 灯箱/抽屉；数据复用 diary parser 只读 `我的/日记/*.md`，**不改写任何日记数据**；懒加载 + 视口媒体懒加载 + content-visibility 性能优化；移动端默认全屏键 `diaryWallMobileDefaultFullscreen`（默认 true）。
+_Avoid_: 日记本（它是交互式编辑面板，回忆墙是只读媒体视图；两者数据同源、UI 并存）、回忆墙视图（非 diary 面板内视图）
+
 ### 待迁移域
 
 **备忘录 (Memo/Todo)**: 待办事项管理，数据 `CONFIG/STORAGE/memo.json`，场景分类（剪藏/工作/学习/生活/代码/公开课），Todo 弹窗（#todo-popup）。被第二大脑引用；引用同步与剪藏归档已并入本域（ADR-0048）。
