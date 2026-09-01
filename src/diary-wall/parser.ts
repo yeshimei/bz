@@ -261,8 +261,9 @@ export async function parseLetterFile(file: any, app: any): Promise<DiaryEntry |
 /**
  * 解析书文件（书库/*.md），生成一个日记条目（每个文件对应一个条目）
  * - 日期：completionDate 优先，无则 readingDate，都无（或非法）返回 null（跳过）；
+ * - 必须有书评且非空（bookReview），否则返回 null 跳过（用户要求「书只获取有书评的」，与影视影评同语义）；
  * - title：frontmatter title，缺省回退文件名（不含扩展名）；
- * - content = `**《title》**` + 空行 + bookReview（bookReview 空则只标题）；
+ * - content = `**《title》**` + 空行 + bookReview；
  * - cover 拼进 content（`![[cover]]`），由数据层 extractMedia 提取为媒体；
  * - tag=['书']，emoji=getTagEmoji('书')；filename 为完整 vault 路径；id=makeEntryId('book',...)；
  * - 时间取文件创建时间（与影视/信同口径，用于同日混排）。
@@ -272,6 +273,10 @@ export async function parseBookFile(file: any, app: any): Promise<DiaryEntry | n
     const fm = getFileFrontmatter(file, app);
     if (!fm) return null;
 
+    // 必须有书评且非空（与影视影评同口径：无书评不进入回忆墙）
+    const review = fm.bookReview;
+    if (!review || String(review).trim() === '') return null;
+
     // 日期：completionDate 优先，无则 readingDate；都无跳过
     let dateStr = fm.completionDate ?? fm.readingDate;
     if (!dateStr || !moment(dateStr, 'YYYY-MM-DD', true).isValid()) return null;
@@ -280,9 +285,8 @@ export async function parseBookFile(file: any, app: any): Promise<DiaryEntry | n
     // 标题：frontmatter title 优先，缺省回退文件名
     const title = (fm.title && String(fm.title).trim() !== '' ? String(fm.title).trim() : null) || file.basename;
 
-    // 正文：`**《title》**` + bookReview（空则只标题）
+    // 正文：`**《title》**` + bookReview
     let content = `**《${title}》**`;
-    const review = fm.bookReview;
     if (review && String(review).trim() !== '') {
       content += `\n\n${String(review).trim()}`;
     }
