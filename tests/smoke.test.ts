@@ -62,6 +62,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-news-open',
   // 保险库（password-vault 域，ADR-0078）：密码本新 UI；旧密码本入口 bz-pw-* 已断开
   'bz-password-vault-open',
+  // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图
+  'bz-diary-wall-open',
   'bz-favorites-open', 'bz-favorites-add',
   'bz-library-open', 'bz-book-notes-open',
   'bz-reading-report-open',
@@ -147,6 +149,24 @@ describe('bz 骨架冒烟', () => {
     expect(icons.filter((i: string) => i === 'message-circle')).toHaveLength(1);
     expect(byId('bz-movie-report').icon).toBe('pie-chart');
     expect(byId('bz-smartcat-chat').icon).toBe('messages-square');
+  });
+
+  it('回忆墙（diary-wall，ADR-0081）：命令注册 + ensureDiaryWall 幂等可调用不抛错', async () => {
+    const app = makeMockApp();
+    await createPlugin(app);
+
+    // 命令已裸注册且名称/图标正确
+    const cmd = registeredCommands.find((c: any) => c.id === 'bz-diary-wall-open');
+    expect(cmd).toBeDefined();
+    expect(cmd.name).toBe('回忆墙');
+    expect(cmd.icon).toBe('images');
+    // 回调（openDiaryWall 异步 ensure 后 show）同步调用不抛
+    expect(() => cmd.callback()).not.toThrow();
+    // 幂等 ensureDiaryWall：mock app 下可调用且不抛（UI 层数据读取失败安全降级为空）
+    const { ensureDiaryWall, unloadDiaryWall } = await import('../src/diary-wall');
+    await expect(ensureDiaryWall(app as any)).resolves.toBeUndefined();
+    await expect(ensureDiaryWall(app as any)).resolves.toBeUndefined();
+    unloadDiaryWall();
   });
 
   it('onunload 清理 toast 容器（UX 整改 l2-toast）', async () => {
