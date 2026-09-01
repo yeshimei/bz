@@ -1,186 +1,1020 @@
-/* ==================== 密码本域样式（src/password/styles.css） ==================== */
-/* ==================== 密码本（password，ticket 60 收敛：原 PW_STYLES 运行时注入，逐字搬运） ==================== */
-    #pw-mask { backdrop-filter: blur(2px); }
-    #pw-popup { animation: slideUp 0.3s ease-out; }
-    #pw-entries-container::-webkit-scrollbar { width: 6px; }
-    #pw-entries-container::-webkit-scrollbar-thumb { background: var(--background-modifier-border); border-radius: 4px; }
+/* ==================== 密码本域样式（Route C 平台聚合，v1-vault 1Password 风格） ==================== */
 
-    .pw-search-container {
-        padding: 0 24px 12px 24px;
-        display: none;
-    }
-    .pw-search-container input {
-        width: 100%;
-        padding: 6px 12px;
-        border-radius: 6px;
-        border: 1px solid var(--background-modifier-border);
-        background: var(--background-primary);
-        color: var(--text-normal);
-        font-size: 14px;
-        box-sizing: border-box;
-    }
+/* ---------- 根容器 reset ---------- */
+.bz-vault,
+.bz-vault *,
+.bz-vault *::before,
+.bz-vault *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+.bz-vault {
+  font-family: var(--font-interface, var(--font-text, sans-serif));
+  color: var(--text-normal);
+  line-height: 1.5;
+}
+.bz-vault button {
+  font-family: inherit;
+  background: none;
+  border: none;
+  box-shadow: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  color: inherit;
+  font-size: inherit;
+  padding: 0;
+}
+.bz-vault input,
+.bz-vault textarea {
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  box-sizing: border-box;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  color: var(--text-normal);
+  transition: border-color 0.15s ease;
+}
+.bz-vault input:focus,
+.bz-vault textarea:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+.bz-vault input::placeholder,
+.bz-vault textarea::placeholder {
+  color: var(--text-faint);
+}
+.bz-vault a {
+  text-decoration: none;
+  color: var(--interactive-accent);
+}
+.bz-vault a:hover {
+  text-decoration: underline;
+}
 
-    .pw-entry-card {
-        display: flex;
-        flex-direction: column;
-        padding: 10px 0;
-        border-bottom: 1px solid var(--background-modifier-border);
-    }
-    .pw-entry-top {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: nowrap;
-    }
-    .pw-account-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        flex: 0 0 40%;
-        max-width: 40%;
-        overflow: hidden;
-    }
-    .pw-platform-link, .pw-platform-text {
-        flex: 0 0 100px;
-        font-weight: 600;
-        font-size: 14px;
-        text-decoration: none;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .pw-platform-link {
-        color: var(--text-accent);
-    }
-    .pw-platform-link:hover {
-        text-decoration: underline;
-    }
-    .pw-platform-text {
-        color: var(--text-muted);
-    }
-    .pw-account {
-        flex: 1;
-        font-size: 14px;
-        color: var(--text-normal);
-        cursor: pointer;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .pw-password-area {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        flex: 1;
-        min-width: 0;
-        cursor: pointer;
-    }
-    .pw-password-text {
-        font-family: monospace;
-        cursor: pointer;
-        color: var(--text-muted);
-        font-size: 14px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    .pw-eye {
-        cursor: pointer;
-        font-size: 14px;
-        user-select: none;
-        opacity: 0.6;
-        flex-shrink: 0;
-    }
-    .pw-date {
-        font-size: 12px;
-        color: var(--text-faint);
-        flex: 0 0 auto;
-        white-space: nowrap;
-        cursor: pointer;
-    }
-    .pw-note {
-        margin-top: 4px;
-        font-size: 13px;
-        color: var(--text-muted);
-        padding: 10px 0;
-        cursor: pointer;
-        white-space: pre-wrap;
-        word-break: break-word;
-    }
-    .pw-note.hidden {
-        color: transparent;
-        background: repeating-linear-gradient(45deg, var(--background-modifier-border) 0px, var(--background-modifier-border) 2px, transparent 2px, transparent 4px);
-        border-radius: 4px;
-        padding: 10px 0;
-        min-height: 1.2em;
-    }
+/* ==================== 桌面 3 列布局 ==================== */
+.pw-desk {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
 
-    .pw-add-dialog input, .pw-add-dialog textarea {
-        width: 100%;
-        padding: 8px 12px;
-        border-radius: 6px;
-        font-size: 14px;
-        box-sizing: border-box;
-        margin-bottom: 12px;
-        border: 1px solid var(--background-modifier-border);
-        background: var(--background-primary);
-        color: var(--text-normal);
-    }
-    .pw-add-dialog textarea {
-        resize: vertical;
-        min-height: 60px;
-    }
-    .pw-generate-btn {
-        padding: 4px 12px;
-        border-radius: 16px;
-        background: var(--interactive-accent);
-        color: var(--text-on-accent);
-        border: none;
-        cursor: pointer;
-        font-size: 13px;
-        margin-left: 8px;
-    }
-    .pw-generate-btn:hover {
-        opacity: 0.8;
-    }
-    .pw-suggestions {
-        max-height: 120px;
-        overflow-y: auto;
-        background: var(--background-secondary);
-        border-radius: 4px;
-        margin-top: -8px;
-        margin-bottom: 12px;
-        display: none;
-        border: 1px solid var(--background-modifier-border);
-    }
-    .pw-suggestions .suggestion-item {
-        padding: 6px 12px;
-        cursor: pointer;
-        font-size: 14px;
-    }
-    .pw-suggestions .suggestion-item:hover {
-        background: var(--background-modifier-hover);
-    }
+/* ---------- 左侧导航 ---------- */
+.pw-nav {
+  flex: 0 0 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px 12px;
+  border-right: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  overflow-y: auto;
+}
+.pw-navitem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+  white-space: nowrap;
+  user-select: none;
+}
+.pw-navitem:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+.pw-navitem.active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.pw-navitem.active svg {
+  color: var(--text-on-accent);
+}
+.pw-navitem svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+}
+.pw-navitem.active .pw-navbadge {
+  background: rgba(255, 255, 255, 0.25);
+  color: var(--text-on-accent);
+}
+.pw-navbadge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--background-modifier-hover);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-    @media (max-width: 768px) {
-        .pw-entry-top {
-            flex-wrap: wrap;
-        }
-        .pw-account-wrapper {
-            flex: 0 0 100%;
-            max-width: 100%;
-        }
-        .pw-platform-link, .pw-platform-text {
-            flex: 0 0 80px;
-        }
-        .pw-password-area {
-            flex: 0 0 100%;
-            min-width: 0;
-        }
-        .pw-date {
-            margin-left: auto;
-        }
-    }
+/* ---------- 中间列：平台列表 ---------- */
+.pw-list {
+  flex: 0 0 320px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--background-modifier-border);
+  min-height: 0;
+}
+.pw-listhead {
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.pw-listtitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-normal);
+  margin-bottom: 10px;
+}
+.pw-search {
+  position: relative;
+}
+.pw-search input {
+  width: 100%;
+  padding: 7px 12px 7px 32px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.pw-search svg {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  color: var(--text-faint);
+  pointer-events: none;
+}
+.pw-rows {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+.pw-rows::-webkit-scrollbar {
+  width: 5px;
+}
+.pw-rows::-webkit-scrollbar-thumb {
+  background: var(--background-modifier-border);
+  border-radius: 3px;
+}
+
+/* ---------- 平台行 ---------- */
+.pw-plrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+  user-select: none;
+}
+.pw-plrow:hover {
+  background: var(--background-modifier-hover);
+}
+.pw-plrow.active {
+  background: var(--interactive-accent);
+}
+.pw-plrow.active .pw-plname,
+.pw-plrow.active .pw-pltime,
+.pw-plrow.active .pw-plcount {
+  color: var(--text-on-accent);
+}
+.pw-plrow.active .pw-av {
+  color: var(--text-on-accent);
+}
+
+/* 头像 */
+.pw-av {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.pw-plinfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.pw-plname {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pw-plstar {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  color: var(--interactive-accent);
+}
+.pw-pltime {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+.pw-plcount {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--background-modifier-hover);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pw-plrow.active .pw-plcount {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--text-on-accent);
+}
+.pw-plchevron {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  color: var(--text-faint);
+}
+.pw-plrow.active .pw-plchevron {
+  color: var(--text-on-accent);
+}
+
+/* ==================== 右侧详情面板 ==================== */
+.pw-detail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 空态 */
+.pw-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text-faint);
+}
+.pw-empty svg {
+  width: 40px;
+  height: 40px;
+  opacity: 0.3;
+}
+.pw-empty span {
+  font-size: 14px;
+}
+
+/* 详情头部 */
+.pw-detailhead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.pw-detailhead .pw-av {
+  width: 44px;
+  height: 44px;
+  font-size: 18px;
+}
+.pw-detailhead .pw-dh-info {
+  flex: 1;
+  min-width: 0;
+}
+.pw-detailhead .pw-dh-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-normal);
+}
+.pw-detailhead .pw-dh-url {
+  font-size: 12px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pw-detailhead .pw-dh-url a {
+  color: var(--text-accent);
+}
+
+/* 账号列表头部 */
+.pw-accthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px 8px;
+}
+.pw-accthead span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* 账号卡片容器 */
+.pw-accts {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px 16px;
+}
+.pw-accts::-webkit-scrollbar {
+  width: 5px;
+}
+.pw-accts::-webkit-scrollbar-thumb {
+  background: var(--background-modifier-border);
+  border-radius: 3px;
+}
+
+/* 账号卡片 */
+.pw-acctcard {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition: border-color 0.12s ease;
+}
+.pw-acctcard:hover {
+  border-color: var(--background-modifier-hover);
+}
+.pw-acctcard .head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+.pw-acctcard .head:hover {
+  background: var(--background-modifier-hover);
+}
+.pw-acctcard .head .pw-acctname {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-normal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pw-acctcard .head .pw-acctstar {
+  width: 12px;
+  height: 12px;
+  color: var(--interactive-accent);
+  flex-shrink: 0;
+}
+.pw-acctcard .head .pw-acctchevron {
+  width: 14px;
+  height: 14px;
+  color: var(--text-faint);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+.pw-acctcard.expanded .head .pw-acctchevron {
+  transform: rotate(180deg);
+}
+
+/* 展开详情 */
+.pw-acctcard .details {
+  display: none;
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+.pw-acctcard.expanded .details {
+  display: block;
+}
+
+/* 字段行 */
+.pw-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+}
+.pw-field + .pw-field {
+  border-top: 1px solid var(--background-modifier-border);
+}
+.pw-field .pw-flabel {
+  flex: 0 0 50px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.pw-field .pw-fvalue {
+  flex: 1;
+  font-size: 13px;
+  font-family: var(--font-monospace, monospace);
+  color: var(--text-normal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  cursor: default;
+}
+.pw-field .pw-fvalue.pw-note-text {
+  font-family: var(--font-interface, var(--font-text, sans-serif));
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 小按钮（复制/显隐） */
+.pw-mini {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+.pw-mini:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+.pw-mini svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* 操作按钮行 */
+.pw-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 10px;
+}
+.pw-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  transition: background-color 0.12s ease, color 0.12s ease;
+  white-space: nowrap;
+}
+.pw-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+.pw-btn.pw-btn-danger:hover {
+  background: var(--text-error);
+  color: var(--text-on-accent);
+}
+.pw-btn svg {
+  width: 13px;
+  height: 13px;
+}
+.pw-btn-accent {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.pw-btn-accent:hover {
+  opacity: 0.88;
+}
+
+/* 添加账号按钮 */
+.pw-add-acct {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  margin: 4px 16px 16px;
+  border: 1px dashed var(--background-modifier-border);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.pw-add-acct:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+  border-color: var(--interactive-accent);
+}
+.pw-add-acct svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* 搜索模式下的账号行（平铺，非平台聚合） */
+.pw-srow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+.pw-srow:hover {
+  background: var(--background-modifier-hover);
+}
+.pw-srow .pw-sr-av {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+.pw-srow .pw-sr-info {
+  flex: 1;
+  min-width: 0;
+}
+.pw-srow .pw-sr-platform {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.pw-srow .pw-sr-account {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-normal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pw-srow .pw-sr-time {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+/* ==================== 移动端布局 ==================== */
+.pw-mob {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+/* 移动端头部栏 */
+.pw-mobbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+.pw-mobbar h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-normal);
+}
+.pw-mobbar .pw-mobbar-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pw-mobbar .pw-mobbar-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: background-color 0.12s ease;
+}
+.pw-mobbar .pw-mobbar-btn:hover {
+  background: var(--background-modifier-hover);
+}
+.pw-mobbar .pw-mobbar-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* 移动端搜索 */
+.pw-mobsearch {
+  padding: 8px 16px;
+  flex-shrink: 0;
+}
+.pw-mobsearch input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+/* 移动端卡片列表 */
+.pw-moblist {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px;
+}
+.pw-moblist::-webkit-scrollbar {
+  width: 0;
+}
+
+/* 移动端平台卡片 */
+.pw-mobcard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  margin-bottom: 6px;
+  border-radius: 12px;
+  background: var(--background-secondary);
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+  user-select: none;
+}
+.pw-mobcard:active {
+  background: var(--background-modifier-hover);
+}
+.pw-mobcard .pw-mobcard-info {
+  flex: 1;
+  min-width: 0;
+}
+.pw-mobcard .pw-mobcard-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-normal);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pw-mobcard .pw-mobcard-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.pw-mobcard .pw-mobcard-badge {
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: var(--background-modifier-hover);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pw-mobcard .pw-mobcard-chevron {
+  width: 16px;
+  height: 16px;
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+
+/* 移动端详情页 */
+.pw-mobpage {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: var(--background-primary);
+}
+.pw-mobpagebar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  border-bottom: 1px solid var(--background-modifier-border);
+  flex-shrink: 0;
+}
+.pw-mobpagebar .pw-mobback {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+.pw-mobpagebar .pw-mobback:hover {
+  background: var(--background-modifier-hover);
+}
+.pw-mobpagebar .pw-mobback svg {
+  width: 18px;
+  height: 18px;
+}
+.pw-mobpagebar h3 {
+  flex: 1;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-normal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pw-mobpage .pw-mobpage-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.pw-mobpage .pw-mobpage-head .pw-av {
+  width: 44px;
+  height: 44px;
+  font-size: 18px;
+}
+.pw-mobpage .pw-mobpage-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 12px 80px;
+}
+
+/* 移动端可折叠段（与桌面 pw-acctcard 同结构） */
+.pw-seg {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+.pw-seg .head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+}
+.pw-seg .head .pw-acctname {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-normal);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pw-seg .head .pw-acctchevron {
+  width: 14px;
+  height: 14px;
+  color: var(--text-faint);
+  transition: transform 0.2s ease;
+}
+.pw-seg.expanded .head .pw-acctchevron {
+  transform: rotate(180deg);
+}
+.pw-seg .details {
+  display: none;
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+.pw-seg.expanded .details {
+  display: block;
+}
+
+/* FAB */
+.pw-fab {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  z-index: 10;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.pw-fab:hover {
+  opacity: 0.9;
+}
+.pw-fab:active {
+  transform: scale(0.95);
+}
+.pw-fab svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* ==================== 对话框（添加/编辑） ==================== */
+.pw-dialog-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--background-modifier-cover);
+}
+.pw-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 14px;
+  box-shadow:
+    0 6px 16px -8px rgba(0, 0, 0, 0.5),
+    0 9px 28px 0 rgba(0, 0, 0, 0.4),
+    0 12px 48px 16px rgba(0, 0, 0, 0.25);
+  padding: 24px;
+  max-width: 420px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.pw-dialog h4 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-normal);
+  margin-bottom: 16px;
+}
+.pw-dialog .pw-dfield {
+  position: relative;
+  margin-bottom: 12px;
+}
+.pw-dialog .pw-dfield label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.pw-dialog .pw-dfield input,
+.pw-dialog .pw-dfield textarea {
+  width: 100%;
+  padding: 8px 12px;
+}
+.pw-dialog .pw-dfield textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+.pw-dialog .pw-dfield.pw-dfield-pwd {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.pw-dialog .pw-dfield.pw-dfield-pwd input {
+  flex: 1;
+}
+.pw-dialog .pw-genbtn {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border-radius: 6px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.pw-dialog .pw-genbtn:hover {
+  opacity: 0.88;
+}
+.pw-dialog .pw-dbtns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+.pw-dialog .pw-dbtns button {
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.pw-dialog .pw-dcancel {
+  background: var(--background-secondary);
+  color: var(--text-normal);
+}
+.pw-dialog .pw-dcancel:hover {
+  background: var(--background-modifier-hover);
+}
+.pw-dialog .pw-dsave {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.pw-dialog .pw-dsave:hover {
+  opacity: 0.88;
+}
+
+/* 自动补全下拉 */
+.pw-suggest {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 120px;
+  overflow-y: auto;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  margin-top: -1px;
+  z-index: 100;
+  display: none;
+}
+.pw-suggest-item {
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text-normal);
+}
+.pw-suggest-item:hover {
+  background: var(--background-modifier-hover);
+}
+
+/* ==================== 右键菜单 / 底部抽屉 ==================== */
+/* （使用 core/item-actions 的通用样式，此处仅补充密码域特有变体） */
+
+/* ==================== 移动端响应式 ==================== */
+@media (max-width: 768px) {
+  .pw-desk {
+    display: none;
+  }
+  .pw-mob {
+    display: flex;
+  }
+}
+@media (min-width: 769px) {
+  .pw-mob {
+    display: none;
+  }
+  /* 移动端详情页在桌面隐藏 */
+  .pw-mobpage {
+    display: none;
+  }
+}
+
+/* ==================== 移动端全屏模式（bz-win-mfs） ==================== */
+.bz-win-mfs .pw-desk {
+  height: 100%;
+}
+.bz-win-mfs .pw-mob {
+  height: 100%;
+}
+
+/* ==================== 滚动条统一样式 ==================== */
+.pw-rows::-webkit-scrollbar,
+.pw-accts::-webkit-scrollbar,
+.pw-moblist::-webkit-scrollbar,
+.pw-mobpage .pw-mobpage-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+.pw-rows::-webkit-scrollbar-thumb,
+.pw-accts::-webkit-scrollbar-thumb,
+.pw-moblist::-webkit-scrollbar-thumb,
+.pw-mobpage .pw-mobpage-scroll::-webkit-scrollbar-thumb {
+  background: var(--background-modifier-border);
+  border-radius: 3px;
+}
 
 
 /* ==================== 密码本 UI 原型预览（变体 A：清单·行式） ====================
@@ -407,7 +1241,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- 移动端（≤768px） ---- */
+/* ---- 预览移动端（≤768px） ---- */
 @media (max-width: 768px) {
   #pwv-popup {
     border-radius: 0;
