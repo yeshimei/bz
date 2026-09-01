@@ -168,6 +168,11 @@ export default interface BzSettings {
   /** 📝 显示书评摘要 */
   showReview: boolean;
 
+  // ===== 🎬 影院（cinema 域，新域与影视并存；后续影视删除后承接）=====
+  /** 📁 影视文件夹（影院域） */
+  cinemaFolderPath: string;
+  /** 📄 每页加载数量（影院域，字符串存储冻结） */
+  cinemaPageSize: string;
   // ===== 🎬 影视（5 项）=====
   /** 📁 影视文件夹 */
   movieFolderPath: string;
@@ -359,6 +364,8 @@ export default interface BzSettings {
   libraryMobileDefaultFullscreen: boolean;
   /** 影视：移动端默认全屏（默认开——主面板/影视分析/影视报告同控，原 JS 内联强制全屏） */
   movieMobileDefaultFullscreen: boolean;
+  /** 影院：移动端默认全屏（默认开——原 JS 内联强制全屏） */
+  cinemaMobileDefaultFullscreen: boolean;
   /** 复习计划：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   reviewMobileDefaultFullscreen: boolean;
   /** 番茄钟：移动端默认全屏（默认关——原移动端 320px 居中卡） */
@@ -545,6 +552,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
 
   // 影视
   movieFolderPath: '我的/影视',
+  // 影院（cinema）
+  cinemaFolderPath: '我的/影视',
+  cinemaPageSize: '20',
   moviePageSize: '20',
   movieDefaultSort: 'date-desc',
   movieDefaultTypeFilter: '',
@@ -644,6 +654,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   favoritesSortKey: 'created',
   libraryMobileDefaultFullscreen: true,
   movieMobileDefaultFullscreen: true,
+  cinemaMobileDefaultFullscreen: true,
   reviewMobileDefaultFullscreen: true,
   pomodoroMobileDefaultFullscreen: false,
   encryptMobileDefaultFullscreen: true,

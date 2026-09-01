@@ -32,6 +32,8 @@ import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorite
 import { openLibrary, openBookNotes, unloadLibrary } from './library';
 import { showReadingReport, unloadReadingReport } from './reading-report';
 import { openMovieManager, addMovieItem, unloadMovie } from './movie';
+// 影院（cinema 域，新域与影视并存；不修改旧影视代码）
+import { openCinema, addCinemaItem, unloadCinema } from './cinema';
 // 影视分析报告（独立域，ADR-0048）
 import { openMovieReport, unloadMovieReport } from './movie-report';
 import { openReviewPanel, openReviewReport, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart, ensureReview, unloadReview } from './review';
@@ -100,6 +102,9 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-movie-add', name: '加影视', icon: 'clapperboard', callback: () => addMovieItem(getApp()) },
   // 影视分析报告（独立域，ADR-0048；f7 解冻：去 clapperboard 重复 → pie-chart，id/名称契约不动）
   { id: 'bz-movie-report', name: '影视分析报告', icon: 'pie-chart', callback: () => openMovieReport(getApp()) },
+  // 影院（cinema 新域）
+  { id: 'bz-cinema-open', name: '影院', icon: 'film', callback: () => openCinema(getApp()) },
+  { id: 'bz-cinema-add', name: '加影视（影院）', icon: 'plus-circle', callback: () => addCinemaItem(getApp()) },
   // 复习计划（9 命令）
   { id: 'bz-review-open', name: '复习计划', icon: 'calendar', callback: () => openReviewPanel(getApp()) },
   // ticket 174：独立「复习计划分析报告」命令（直开统计弹窗）
@@ -302,6 +307,7 @@ export default class BzPlugin extends Plugin {
     unloadBelongings();
     unloadFavorites();
     unloadReview();
+    unloadCinema();
     unloadMovie();
     unloadMovieReport();
     unloadReadingReport();

@@ -61,8 +61,8 @@ describe('设置面板（settings-panel）', () => {
     expect(popup.classList.contains('bz-sp-desk')).toBe(true);
     expect(popup.querySelector('.bz-sp-brand-name')!.textContent).toBe('设置');
     // 无设置项的域不在左侧列表显示（用户拍板）：22 域中 8 个无 schema（聚合讯/阅读报告/做题家/
-    // 自动摘要/入口页/附件搬移/B站下载/小橘陪伴猫）→ 可见 14 个
-    expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBe(14);
+    // 自动摘要/入口页/附件搬移/B站下载/小橘陪伴猫）→ 可见 15 个（+影院 cinema）
+    expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBe(15);
     // 无底部快捷键提示 / 无右侧导航条 / 无面包屑
     expect(popup.querySelector('.bz-sp-foot')).toBeNull();
     expect(popup.querySelector('.bz-sp-crumb')).toBeNull();
@@ -126,8 +126,8 @@ describe('设置面板（settings-panel）', () => {
     const popup = document.getElementById('bz-settings-panel-popup')!;
     await tick();
     const items = popup.querySelectorAll('.bz-sp-nav-item');
-    // 点击「复习计划」（index 9）→ 内嵌渲染 review schema（检查提醒/做题家等分组）
-    (items[9] as HTMLElement).click();
+    // 点击「复习计划」（index 10，cinema 插入后移一位）→ 内嵌渲染 review schema（检查提醒/做题家等分组）
+    (items[10] as HTMLElement).click();
     await waitGroups(popup, 5);
     const groups = popup.querySelectorAll('.bz-sp-group');
     const paneHtml = popup.querySelector('.bz-sp-pane')!.innerHTML;
@@ -145,8 +145,8 @@ describe('设置面板（settings-panel）', () => {
     const popup = document.getElementById('bz-settings-panel-popup')!;
     await tick();
     const items = popup.querySelectorAll('.bz-sp-nav-item');
-    // 番茄钟 index 11
-    (items[11] as HTMLElement).click();
+    // 番茄钟 index 12（cinema 插入后移一位）
+    (items[12] as HTMLElement).click();
     await waitGroups(popup, 2);
     const groups = popup.querySelectorAll('.bz-sp-group');
     expect(groups.length).toBeGreaterThanOrEqual(2);
@@ -159,8 +159,8 @@ describe('设置面板（settings-panel）', () => {
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     await tick();
-    // 切到番茄钟（index 11，行为组有多个开关）
-    (popup.querySelectorAll('.bz-sp-nav-item')[11] as HTMLElement).click();
+    // 切到番茄钟（index 12，行为组有多个开关）
+    (popup.querySelectorAll('.bz-sp-nav-item')[12] as HTMLElement).click();
     await waitGroups(popup, 2);
     const sw = popup.querySelector('.bz-sp-sw');
     expect(sw).toBeTruthy();
@@ -175,8 +175,8 @@ describe('设置面板（settings-panel）', () => {
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     await tick();
-    // 切到番茄钟（index 11，时间方案组有预设下拉）
-    (popup.querySelectorAll('.bz-sp-nav-item')[11] as HTMLElement).click();
+    // 切到番茄钟（index 12，时间方案组有预设下拉）
+    (popup.querySelectorAll('.bz-sp-nav-item')[12] as HTMLElement).click();
     await waitGroups(popup, 2);
     const sel = popup.querySelector('.bz-sp-sel');
     expect(sel).toBeTruthy();
@@ -259,7 +259,7 @@ describe('设置面板（settings-panel）', () => {
     const popup = document.getElementById('bz-settings-panel-popup')!;
     // 只看域名（nav-name），避免描述包含（如剪藏本「网页剪藏与聚合讯」）误判
     const names = [...popup.querySelectorAll('.bz-sp-nav-name')].map((b) => b.textContent);
-    expect(names).toHaveLength(14);
+    expect(names).toHaveLength(15);
     // 8 个无设置域（聚合讯/阅读报告/做题家/自动摘要/入口页/附件搬移/B站下载/小橘陪伴猫）一律不出现
     for (const n of ['聚合讯', '阅读报告', '做题家', '自动摘要', '入口页', '附件搬移', 'B站下载', '小橘陪伴猫']) {
       expect(names).not.toContain(n);
@@ -284,7 +284,7 @@ describe('设置面板（settings-panel）', () => {
     const popup = document.getElementById('bz-settings-panel-popup')!;
     // 只看域名（mob-name），避免描述包含误判
     const names = [...popup.querySelectorAll('.bz-sp-mob-name')].map((b) => b.textContent);
-    expect(names).toHaveLength(14);
+    expect(names).toHaveLength(15);
     expect(names).not.toContain('聚合讯');
     expect(names).not.toContain('小橘陪伴猫');
     // 搜索也搜不到该无设置域
@@ -305,10 +305,10 @@ describe('设置面板（settings-panel）', () => {
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     await tick();
-    // 番茄钟（index 11）有 2 组（时间方案/行为）——加载后徽标回填
-    (popup.querySelectorAll('.bz-sp-nav-item')[11] as HTMLElement).click();
+    // 番茄钟（index 12，cinema 插入后移一位）有 2 组（时间方案/行为）——加载后徽标回填
+    (popup.querySelectorAll('.bz-sp-nav-item')[12] as HTMLElement).click();
     await waitGroups(popup, 2);
-    const badge = popup.querySelectorAll('.bz-sp-nav-item')[11].querySelector('.bz-sp-nav-count')!;
+    const badge = popup.querySelectorAll('.bz-sp-nav-item')[12].querySelector('.bz-sp-nav-count')!;
     expect(badge.textContent).toBe('2');
     ui.cleanup();
   });
@@ -321,10 +321,10 @@ describe('设置面板（settings-panel）', () => {
     expect(popup.classList.contains('bz-sp-mobile')).toBe(true);
     expect(popup.classList.contains('bz-win-mfs')).toBe(true);
     expect(popup.querySelector('.bz-sp-mob-close')).toBeTruthy();
-    // 无设置项的域不在列表显示（用户拍板）：22 域 → 可见 14 个
-    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(14);
+    // 无设置项的域不在列表显示（用户拍板）：22 域 → 可见 15 个（+影院 cinema）
+    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(15);
     // 头部计数与可见域数一致
-    expect(popup.querySelector('.bz-sp-mob-count')!.textContent).toBe('14 域');
+    expect(popup.querySelector('.bz-sp-mob-count')!.textContent).toBe('15 域');
     // 搜索有清除按钮（输入后显示）
     expect(popup.querySelector('.bz-sp-mob-clear')).toBeTruthy();
     ui.cleanup();
@@ -336,8 +336,8 @@ describe('设置面板（settings-panel）', () => {
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     const items = popup.querySelectorAll('.bz-sp-mob-item');
-    // 点「番茄钟」（index 11）
-    (items[11] as HTMLElement).click();
+    // 点「番茄钟」（index 12，cinema 插入后移一位）
+    (items[12] as HTMLElement).click();
     const deadline = Date.now() + 2000;
     let modal: Element | null = null;
     while (Date.now() < deadline) {
