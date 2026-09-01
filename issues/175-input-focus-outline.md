@@ -17,6 +17,15 @@ core 层 p3 焦点伞规则（`src/core/styles.css` 的 `:focus-visible` 全站�
 - 说明：`input[type="checkbox"]`/`radio` 属 `input` 亦被覆盖（点击不出环；键盘 Tab 仍可聚焦，视觉通过 Obsidian 原生 checked 态反馈，且原规则本就给 checkbox 出环——行为不变，仅去外环）。若需保留可后续细化，当前按用户诉求「输入框外围」整体去环。
 - 与既有 `outline: none` 输入框（review 搜索框、settings-panel `.bz-sp-input`、secondbrain 聊天输入等）不冲突：这些元素原本就靠 `:focus border-color` 高亮，伞规则被 `outline: none` 局部覆盖后无环；本覆盖后统一无环，boder 高亮保留。
 
+## 延伸修复（保险库/保险箱聚焦边框高亮）
+
+用户反馈「保险库的还存在」。根因排查：
+
+1. Obsidian 核心 `app.css` 对文本录入元素（`input[type=text/password/number]`、`textarea`、`select`）`:focus` 统一设置 `border-color: var(--background-modifier-border-focus)`——聚焦时边框变高亮色（Minimal 主题下 = `--ui3` active border）。
+2. ticket 175 只清了 `outline`，**边框高亮仍在**。保险库基态边框 `--pwv-line`（= `--background-modifier-border`），核心规则（特异 (0,2,1)）覆盖基态（特异 (0,2,0)）→ 聚焦时边框变 accent 系高亮色，特别明显。
+
+修复：`src/core/styles.css` 追加统一兜底 `[class*="bz-"] input:focus / textarea:focus / select:focus { border-color: var(--background-modifier-border) }`，特异性 (0,2,1) 与核心规则持平、bz 样式加载在后胜出；基态边框本就为 `--background-modifier-border` 的域（保险库/保险箱/日记/备忘录/收藏本等）聚焦无感；刻意 accent 高亮（review 搜索框 / settings-panel / path-picker / 保险库搜索框 transparent）因源顺序在后不受影响。
+
 ## 涉及文件
 
 - `src/core/styles.css`：追加覆盖规则 + 更新伞规则注释（原注释「属预期行为，接受」改为「ticket 175 去除文本录入元素点击聚焦外环」）。
@@ -25,6 +34,6 @@ core 层 p3 焦点伞规则（`src/core/styles.css` 的 `:focus-visible` 全站�
 
 ## 测试与门禁
 
-- 纯 CSS 变更：无新增单测；跑全量 `pnpm test` + `pnpm exec tsc --noEmit` 门禁。
+- 纯 CSS 变更：无新增单测；跑全量 `pnpm test` + `pnpm exec tsc --noEmit` 门禁（232 文件 3746 用例全绿）。
 - 构建：`pnpm run build`，确认根 `styles.css` 含覆盖规则、vault 插件目录（E:/Obsidian/叫我包仔/.obsidian/plugins/bz）styles.css 同步。
-- 人工验证点（用户侧）：点击任一输入框（备忘录搜索/日记添加/设置面板/聊天输入）不再出现外轮廓；Tab 键盘导航按钮/链接仍有焦点环。
+- 人工验证点（用户侧）：点击保险库/保险箱输入框不再出现高亮外环；Tab 键盘导航按钮/链接仍有焦点环。
