@@ -22,6 +22,9 @@ const mocks = vi.hoisted(() => ({
   showDatePicker: vi.fn(),
   openAddDialog: vi.fn(),
   jumpToEntry: vi.fn(),
+  ensureSafeUnlocked: vi.fn(async () => true),
+  isUnlocked: vi.fn(() => false),
+  loadEncryptedEntries: vi.fn(async (): Promise<any[]> => []),
 }));
 vi.mock('../../src/diary-wall/data', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/diary-wall/data')>();
@@ -37,6 +40,14 @@ vi.mock('../../src/diary/ui/dialogs', () => ({
 }));
 vi.mock('../../src/diary/ui/entries', () => ({
   jumpToEntry: mocks.jumpToEntry,
+}));
+// 加密解锁 mock（ui.ts 动态 import '../encrypt' 与 '../diary/encrypt'）
+vi.mock('../../src/encrypt', () => ({
+  ensureSafeUnlocked: mocks.ensureSafeUnlocked,
+}));
+vi.mock('../../src/diary/encrypt', () => ({
+  isUnlocked: mocks.isUnlocked,
+  loadEncryptedEntries: mocks.loadEncryptedEntries,
 }));
 
 let vault: MockVault;
@@ -56,6 +67,12 @@ beforeEach(async () => {
   mocks.showDatePicker.mockClear();
   mocks.openAddDialog.mockClear();
   mocks.jumpToEntry.mockClear();
+  mocks.ensureSafeUnlocked.mockClear();
+  mocks.ensureSafeUnlocked.mockResolvedValue(true);
+  mocks.isUnlocked.mockClear();
+  mocks.isUnlocked.mockReturnValue(false);
+  mocks.loadEncryptedEntries.mockClear();
+  mocks.loadEncryptedEntries.mockResolvedValue([]);
   vault = new MockVault();
   // 三个日期：2026-08-19（图片/视频/音频媒体 + 纯文字）、2026-06-11（摄影带图）、2026-06-12（纯文字对谈）
   vault.files.set(
@@ -154,6 +171,66 @@ describe('回忆墙 UI', () => {
     expect(desk.querySelector('.bz-diary-wall-lb--show')).toBeNull();
   });
 
+  it('灯箱副行显示日记正文文字而非媒体路径（#10）', async () => {
+    await openAndWait();
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    const media = desk.querySelector('.bz-diary-wall-media') as HTMLElement;
+    media.click();
+    const lb = desk.querySelector('.bz-diary-wall-lb--show') as HTMLElement;
+    expect(lb).toBeTruthy();
+    // 副行 = 条目正文（去媒体引用后的文字），不含 app:// 路径
+    const sub = lb.querySelector('.bz-diary-wall-lbsub') as HTMLElement;
+    expect(sub.textContent).toContain('上厕所时被猫盯着');
+    expect(sub.textContent).not.toContain('https://');
+    // 标题行 = 媒体文件名
+    const cap = lb.querySelector('.bz-diary-wall-lbcap') as HTMLElement;
+    expect(cap.textContent).toContain('IMG_20260819_164331.jpg');
+  });
+
+  it('媒体块不再显示 emoji 角标（#1 视频无 emoji、#2 图片无 🖼 角标）', async () => {
+    await openAndWait();
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    // 图片块：无 .bz-diary-wall-att 角标
+    expect(desk.querySelector('.bz-diary-wall-att')).toBeNull();
+    // 视频块占位：无 🎬 emoji 文字（ph 无文本内容）
+    const videoPh = Array.from(desk.querySelectorAll<HTMLElement>('.bz-diary-wall-media .bz-diary-wall-ph')).filter(
+      (el) => {
+        const wrap = el.closest('.bz-diary-wall-media')!;
+        return wrap.querySelector('video');
+      }
+    );
+    expect(videoPh.length).toBeGreaterThanOrEqual(1);
+    videoPh.forEach((ph) => expect(ph.textContent.trim()).toBe(''));
+    // 音频块仍保留 🎵 图标（无封面可显示）
+    const audioPh = Array.from(desk.querySelectorAll<HTMLElement>('.bz-diary-wall-media .bz-diary-wall-ph')).filter(
+      (el) => {
+        const wrap = el.closest('.bz-diary-wall-media')!;
+        return !wrap.querySelector('img, video');
+      }
+    );
+    expect(audioPh.length).toBeGreaterThanOrEqual(1);
+    expect(audioPh[0].textContent).toContain('🎵');
+  });
+
+  it('桌面右键：正文/图片/视频子元素右键都能打开条目菜单（#9 容器委托）', async () => {
+    await openAndWait();
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    // 正文（文字条内文本）右键
+    const tx = desk.querySelector('.bz-diary-wall-text-tx') as HTMLElement;
+    tx.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 50, clientY: 60 }));
+    expect(document.querySelector('.bz-diary-wall-menu')).toBeTruthy();
+    document.querySelector('.bz-diary-wall-menu')!.remove();
+    // 图片（img 元素）右键
+    const img = desk.querySelector('.bz-diary-wall-media img') as HTMLElement;
+    img.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 80, clientY: 90 }));
+    expect(document.querySelector('.bz-diary-wall-menu')).toBeTruthy();
+    document.querySelector('.bz-diary-wall-menu')!.remove();
+    // 视频（video 元素）右键
+    const video = desk.querySelector('.bz-diary-wall-media video') as HTMLElement;
+    video.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 120, clientY: 130 }));
+    expect(document.querySelector('.bz-diary-wall-menu')).toBeTruthy();
+  });
+
   it('空态：无日记时显示提示与动作按钮', async () => {
     const emptyVault = new MockVault();
     emptyVault.dirs.add('我的/日记');
@@ -212,17 +289,63 @@ describe('回忆墙 UI', () => {
     expect(document.querySelector('[data-act="settings"]')).toBeNull();
   });
 
-  it('加密 chip 常驻显示（即使无加密条目），锁定态可点击解锁', async () => {
+  it('加密 chip 常驻显示（即使无加密条目），锁定态点击 → 弹解锁面板，解锁后选中「加密」', async () => {
     await openAndWait();
     // mock 数据无加密条目 → 加密 chip 仍应显示（用户需要入口测试加密流程）
     const desk = document.querySelector('.bz-diary-wall-desk')!;
     const encChip = desk.querySelector<HTMLElement>('.bz-diary-wall-chip[data-tag="加密"]');
     expect(encChip).toBeTruthy();
     expect(encChip!.classList.contains('bz-diary-wall-chip--locked')).toBe(true);
-    // 点击解锁 → 选中「加密」（无条目则空态）
+    // 点击锁定态「加密」→ ensureSafeUnlocked 被调（保险箱弹解锁面板）
     encChip!.click();
+    await waitFor(() => mocks.ensureSafeUnlocked.mock.calls.length > 0);
+    expect(mocks.ensureSafeUnlocked).toHaveBeenCalled();
+    await waitFor(() => (DiaryWallAppController.instance as any).lockedVisible === true);
     expect((DiaryWallAppController.instance as any).lockedVisible).toBe(true);
     expect((DiaryWallAppController.instance as any).selTag).toBe('加密');
+  });
+
+  it('加密 chip：解锁被取消（ensureSafeUnlocked=false）→ 保持锁定态不选中', async () => {
+    mocks.ensureSafeUnlocked.mockResolvedValueOnce(false);
+    await openAndWait();
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    const encChip = desk.querySelector<HTMLElement>('.bz-diary-wall-chip[data-tag="加密"]');
+    encChip!.click();
+    await waitFor(() => mocks.ensureSafeUnlocked.mock.calls.length > 0);
+    // 解锁失败：lockedVisible 仍 false，未选中
+    expect((DiaryWallAppController.instance as any).lockedVisible).toBe(false);
+    expect((DiaryWallAppController.instance as any).selTag).toBeNull();
+  });
+
+  it('解锁后加载加密日记（loadEncryptedEntries 合并进 entries 并显示）', async () => {
+    mocks.isUnlocked.mockReturnValue(true);
+    const encEntry = {
+      date: '2026-07-01',
+      time: '10:30',
+      timeValue: 1030,
+      tags: ['日记', '加密'],
+      emoji: '📖🔐',
+      content: '加密的日记内容\n![[enc.jpg]]',
+      filename: '2026-07-01',
+      lineNumber: 0,
+      encrypted: true,
+      noteId: 'enc-1',
+      id: 'enc-diary-enc-1',
+    };
+    mocks.loadEncryptedEntries.mockResolvedValueOnce([encEntry]);
+    await openAndWait();
+    // 打开时保险箱已解锁 → 合并加密条目（loadAndRender 内 mergeEncryptedEntries）
+    await waitFor(() => {
+      const c = DiaryWallAppController.instance as any;
+      return c.entries.some((e: any) => e.noteId === 'enc-1');
+    });
+    expect(mocks.loadEncryptedEntries).toHaveBeenCalled();
+    // 加密条目在「加密」筛选下可见
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    const encChip = desk.querySelector<HTMLElement>('.bz-diary-wall-chip[data-tag="加密"]');
+    encChip!.click();
+    await waitFor(() => desk.querySelectorAll('.bz-diary-wall-day-head').length === 1);
+    expect(desk.querySelector('.bz-diary-wall-day-head')!.textContent).toContain('2026-07-01');
   });
 
   it('文字条右上角不再显示中文标签（去 tag），媒体块无 ⋯ 按钮', async () => {

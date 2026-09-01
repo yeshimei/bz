@@ -384,13 +384,13 @@ describe('parseBookFile（书库 frontmatter 解析）', () => {
     expect(entry!.content).toBe('**《人类简史》**\n\n好看');
   });
 
-  it('bookReview 空则只标题', async () => {
+  it('bookReview 缺失或空白 → 返回 null 跳过（用户要求：书只获取有书评的）', async () => {
     const app = makeApp({
       '书库/无评.md': '---\ntitle: 无评\ncompletionDate: 2024-02-02\n---\n',
+      '书库/空评.md': '---\ntitle: 空评\ncompletionDate: 2024-02-03\nbookReview: ""\n---\n',
     });
-    const entry = await parseBookFile(bookFile('书库/无评.md'), app);
-    expect(entry).not.toBeNull();
-    expect(entry!.content).toBe('**《无评》**');
+    expect(await parseBookFile(bookFile('书库/无评.md'), app)).toBeNull();
+    expect(await parseBookFile(bookFile('书库/空评.md'), app)).toBeNull();
   });
 
   it('completionDate 与 readingDate 都无（或非法）返回 null 跳过', async () => {
@@ -515,12 +515,14 @@ describe('loadWallEntries 聚合四类（日记+影视+信+书）', () => {
   it('只放日记文件时聚合结果仅含日记（目录不存在安全跳过）', async () => {
     const app = makeApp({
       '我的/日记/2024-01-01.md': '# 📖 08:00\nx\n',
-      '书库/a.md': '---\ntitle: a\ncompletionDate: 2024-01-02\n---\n',
+      // 无书评的书不进回忆墙（与影视影评同口径）；有书评的书正常聚合
+      '书库/无评.md': '---\ntitle: a\ncompletionDate: 2024-01-02\n---\n',
+      '书库/有评.md': '---\ntitle: b\ncompletionDate: 2024-01-03\nbookReview: 好看\n---\n',
     });
-    // 无影视/信文件：书库条目仍会聚合进来（验证四类目录各自独立读取）
+    // 无影视/信文件：有书评的书库条目仍会聚合进来（验证四类目录各自独立读取），无书评的跳过
     const entries = await loadWallEntries(app);
     expect(entries).toHaveLength(2);
-    expect(entries[0]).toMatchObject({ kind: 'book', date: '2024-01-02' });
+    expect(entries[0]).toMatchObject({ kind: 'book', date: '2024-01-03' });
     expect(entries[1]).toMatchObject({ kind: 'diary', date: '2024-01-01' });
   });
 });
