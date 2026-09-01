@@ -146,11 +146,10 @@ button.news-close-btn {
 }
 
 /* ==================== 键盘焦点可见（p3 冻结面授权）：全站 focus-visible 焦点环 ==================== */
-/* 仅 :focus-visible 触发（键盘 Tab 导航）；文本录入元素（text/number/date/textarea/select）点击聚焦
-   同样出环（浏览器对文本录入元素恒匹配 :focus-visible 的基线行为）——与既有 :focus border 高亮叠加
-   属预期行为，接受；非输入类元素鼠标点击不触发，与既有 hover/active 高亮互不冲突。
+/* 仅 :focus-visible 触发（键盘 Tab 导航）；非输入类元素鼠标点击不触发，与既有 hover/active 高亮互不冲突。
    伞规则按铁律 8 bz- 命名空间收敛（含 bz- 容器内无 bz- 类名的交互元素）；
-   遗留非 bz 类名根（日记/备忘录/复习/做题家/密码本/番茄钟/聚合讯/剪藏/影视/归物本/小橘对话等）下方显式补齐。 */
+   遗留非 bz 类名根（日记/备忘录/复习/做题家/密码本/番茄钟/聚合讯/剪藏/影视/归物本/小橘对话等）下方显式补齐。
+   （ticket 175：文本录入元素点击聚焦的强外环已单独去除，见本规则下方覆盖段。） */
 [class*="bz-"]:is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
 [class*="bz-"] :is(button, input, select, textarea, a[href], [tabindex], [contenteditable="true"]):focus-visible,
 /* 入口页磁贴（launcher-tile 非 bz- 类名，p3 覆盖项） */
@@ -197,6 +196,44 @@ button.news-close-btn {
 #__shared_confirm_mask__ :is(button, input, select, textarea, a[href], [tabindex]):focus-visible {
   outline: 2px solid var(--interactive-accent);
   outline-offset: 2px;
+}
+
+/* ==================== ticket 175：文本录入元素点击聚焦去外环 ==================== */
+/* 浏览器基线：文本录入元素（text/number/date/textarea/select/contenteditable）点击聚焦恒匹配
+   :focus-visible，被上方伞规则套上 2px outline 外环，视觉干扰明显。此处精确覆盖：
+   文本录入元素 :focus-visible 一律 outline: none（鼠标点击与键盘聚焦都不出外环）；
+   按钮/链接/[tabindex] 等非文本元素的键盘焦点环保留。
+   覆盖选择器与伞规则同构（bz- 伞 + 遗留根清单），源顺序在后保证同特异性胜出；
+   checkbox/radio 一并去外环（原生选中态仍可见）。 */
+[class*="bz-"]:is(input, select, textarea, [contenteditable="true"]):focus-visible,
+[class*="bz-"] :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#launcher-modal :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#launcher-edit-controls :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#launcher-cmd-popup :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#launcher-icon-popup :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#launcher-rename-popup :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#launcher-menu-popup :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#fav-popup :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#fav-add-popup :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#add-diary-popup :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#diary-filter-mask :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#diary-tag-selector-mask :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#diary-date-filter-mask :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#unified-datetime-picker-mask :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#todo-popup :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#add-todo-popup :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#review-popup :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#quiz-popup :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#pw-popup :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#pw-add-popup :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#pomodoro-popup :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+.news-popup :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#article-view-popup :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#__yin_ying__ :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#__gui_wu_ben__ :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#chat-panel :is(input, select, textarea, [contenteditable="true"]):focus-visible,
+#__shared_confirm_mask__ :is(input, select, textarea, [contenteditable="true"]):focus-visible {
+  outline: none;
 }
 
 /* ==================== core 层样式收敛（ticket 60 延伸：notice/settings-modal/confirm/dom） ==================== */
