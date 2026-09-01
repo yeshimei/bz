@@ -1757,6 +1757,7 @@ button.news-close-btn {
   --dw-green: var(--color-green);
   --dw-orange: var(--color-orange);
   --dw-cyan: var(--color-cyan);
+  --dw-bad: var(--text-error);
   --dw-mono: var(--font-monospace);
   --dw-shadow-sm: 0 1px 2px -2px rgba(0, 0, 0, 0.16), 0 3px 6px 0 rgba(0, 0, 0, 0.12);
   --dw-shadow-md: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
@@ -1917,11 +1918,11 @@ button.news-close-btn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 12px;
+  padding: 5px 10px;
   border-radius: 999px;
   background: var(--dw-surface);
   border: none;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--dw-ink);
   cursor: pointer;
   font-family: inherit;
@@ -1950,6 +1951,72 @@ button.news-close-btn {
 }
 .bz-diary-wall-chip--locked:hover {
   opacity: 1;
+}
+
+/* 二级标签行（选中主标签后显示其子标签 chips） */
+.bz-diary-wall-subrow {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 0 24px 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.bz-diary-wall-mob .bz-diary-wall-subrow {
+  padding: 0 20px 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+.bz-diary-wall-subchip {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--dw-surface);
+  border: none;
+  font-size: 10px;
+  color: var(--dw-muted);
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1.25;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.bz-diary-wall-subchip:hover {
+  background: var(--dw-hover);
+}
+.bz-diary-wall-subchip--on {
+  background: var(--dw-accent);
+  color: var(--dw-on-accent);
+}
+
+/* 搜索行 */
+.bz-diary-wall-searchrow {
+  padding: 0 24px 10px;
+  flex-shrink: 0;
+}
+.bz-diary-wall-mob .bz-diary-wall-searchrow {
+  padding: 0 20px 8px;
+}
+.bz-diary-wall-searchbox {
+  width: 100%;
+  padding: 8px 14px;
+  font-size: 13px;
+  border: 1px solid var(--dw-line);
+  border-radius: 8px;
+  background: var(--dw-bg);
+  color: var(--dw-ink);
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+.bz-diary-wall-searchbox:focus {
+  border-color: var(--dw-accent);
+}
+.bz-diary-wall-searchbox::placeholder {
+  color: var(--dw-faint);
 }
 
 /* ============ 主体：左章节栏 + 右瀑布 ============ */
@@ -2105,20 +2172,52 @@ button.news-close-btn {
   height: 1px;
   background: var(--dw-line);
 }
-/* masonry 瀑布（CSS 多列） */
+/* masonry 瀑布（Grid 三列 + 稀疏铺满：条数少时跨列占满横向空白） */
 .bz-diary-wall-masonry {
-  column-count: 3;
-  column-gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
   padding-top: 8px;
+  align-items: start;
 }
 .bz-diary-wall-masonry--mob {
-  column-count: 2;
-  column-gap: 8px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+/* 默认（≥3 条）：每项 span 2（= 三列流式） */
+.bz-diary-wall-masonry .bz-diary-wall-item {
+  grid-column: span 2;
+}
+.bz-diary-wall-masonry--mob .bz-diary-wall-item {
+  grid-column: span 2; /* 移动端 4 列 → 每项 span 2 = 两列流式 */
+}
+/* 稀疏 1 条：文字条占满整行；媒体块不放大（span 2 居中） */
+.bz-diary-wall-masonry--sparse-1 .bz-diary-wall-item.bz-diary-wall-text {
+  grid-column: 1 / -1;
+}
+.bz-diary-wall-masonry--sparse-1 .bz-diary-wall-item.bz-diary-wall-media-wrap {
+  grid-column: 2 / span 2;
+}
+/* 稀疏 2 条：各占半行（span 3） */
+.bz-diary-wall-masonry--sparse-2 .bz-diary-wall-item {
+  grid-column: span 3;
+}
+.bz-diary-wall-masonry--sparse-2 .bz-diary-wall-item.bz-diary-wall-media-wrap {
+  grid-column: span 2; /* 媒体块仍不放大，保持单列宽；文字条 span 3 占半行 */
+}
+.bz-diary-wall-masonry--mob.bz-diary-wall-masonry--sparse-1 .bz-diary-wall-item.bz-diary-wall-media-wrap {
+  grid-column: 2 / span 2; /* 移动端 4 列：媒体块居中占 2 列 */
+}
+.bz-diary-wall-masonry--mob.bz-diary-wall-masonry--sparse-2 .bz-diary-wall-item {
+  grid-column: span 2; /* 移动端 4 列：两条各占一半 */
+}
+.bz-diary-wall-masonry--mob.bz-diary-wall-masonry--sparse-2 .bz-diary-wall-item.bz-diary-wall-media-wrap {
+  grid-column: span 2;
 }
 
 /* 条目（性能：屏外内容跳过渲染 + 布局/绘制隔离，原型 .item） */
 .bz-diary-wall-item {
-  break-inside: avoid;
+  min-width: 0;
   margin-bottom: 10px;
   border-radius: 10px;
   -webkit-touch-callout: none;
@@ -2582,6 +2681,71 @@ button.news-close-btn {
   .bz-diary-wall-mob .bz-diary-wall-chiprow {
     padding-bottom: 10px;
   }
+}
+
+/* ============ 右键上下文菜单（桌面，跟手） ============ */
+.bz-diary-wall-menu {
+  position: fixed;
+  z-index: 2000;
+  min-width: 160px;
+  padding: 6px;
+  background: var(--dw-bg);
+  border: 1px solid var(--dw-line);
+  border-radius: 8px;
+  box-shadow: var(--dw-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: bz-diary-wall-menu-in 0.12s ease-out;
+}
+@keyframes bz-diary-wall-menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.bz-diary-wall-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  color: var(--dw-ink);
+  font-size: 13px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.12s;
+  line-height: 1.25;
+}
+.bz-diary-wall-menu-item:hover {
+  background: var(--dw-hover);
+}
+.bz-diary-wall-menu-ic {
+  width: 18px;
+  text-align: center;
+  color: var(--dw-muted);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.bz-diary-wall-menu-item--accent {
+  color: var(--dw-accent);
+}
+.bz-diary-wall-menu-item--accent .bz-diary-wall-menu-ic {
+  color: var(--dw-accent);
+}
+.bz-diary-wall-menu-item--danger {
+  color: var(--dw-bad);
+}
+.bz-diary-wall-menu-item--danger .bz-diary-wall-menu-ic {
+  color: var(--dw-bad);
 }
 /* ==================== 入口页域样式（src/launcher/styles.css） ==================== */
 /* 入口页遮罩 z 已动态发号（ADR-0067）：JS open()/buildPicker 创建时分配 */
