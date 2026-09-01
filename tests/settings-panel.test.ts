@@ -64,8 +64,18 @@ describe('设置面板（settings-panel）', () => {
     // 无底部快捷键提示 / 无右侧导航条 / 无面包屑
     expect(popup.querySelector('.bz-sp-foot')).toBeNull();
     expect(popup.querySelector('.bz-sp-crumb')).toBeNull();
-    // 导航项带组数徽标占位（数据加载后回填数字）
-    expect(popup.querySelector('.bz-sp-nav-count')).toBeTruthy();
+    // 导航项带徽标（原型 .b-ct：deep 域=组数、其余=·；全局=3 / 复习=6 / 番茄=2）
+    const badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
+    expect(badges[0]).toBe('3'); // 全局
+    expect(badges[3]).toBe('·'); // 归物本
+    expect(badges[11]).toBe('6'); // 复习计划
+    expect(badges[16]).toBe('2'); // 番茄钟
+    // 导航图标为 emoji（原型 .b-ic）
+    const navIcons = [...popup.querySelectorAll('.bz-sp-nav-ic')].map((i) => i.textContent);
+    expect(navIcons[0]).toBe('⚙️');
+    expect(navIcons[6]).toBe('🔐');
+    // 头部 logo 为 emoji ⚙️（原型 .b-logo）
+    expect(popup.querySelector('.bz-sp-logo')!.textContent).toBe('⚙️');
     ui.cleanup();
   });
 
@@ -79,6 +89,27 @@ describe('设置面板（settings-panel）', () => {
     expect(groups.length).toBeGreaterThanOrEqual(2);
     // 设置行真实渲染（自绘结构）
     expect(popup.querySelectorAll('.bz-sp-set-row').length).toBeGreaterThan(0);
+    ui.cleanup();
+  });
+
+  it('桌面端：分组卡图标为 emoji（原型 .gc-icon）', async () => {
+    const ui = new SettingsPanelUI();
+    ui.open();
+    const popup = document.getElementById('bz-settings-panel-popup')!;
+    await tick();
+    // 全局域分组：AI（sparkles→🤖）+ 数据存储路径（folder-open→📂）
+    const icons = [...popup.querySelectorAll('.bz-sp-group-icon')].map((i) => i.textContent);
+    expect(icons.length).toBeGreaterThanOrEqual(2);
+    expect(icons).toContain('🤖');
+    expect(icons).toContain('📂');
+    ui.cleanup();
+  });
+
+  it('桌面端：面板容器带原型边框（.b-modal 1px + shadow-md）', () => {
+    const ui = new SettingsPanelUI();
+    ui.open();
+    const popup = document.getElementById('bz-settings-panel-popup')!;
+    expect(popup.classList.contains('bz-sp-desk')).toBe(true);
     ui.cleanup();
   });
 
@@ -270,6 +301,31 @@ describe('设置面板（settings-panel）', () => {
     search.dispatchEvent(new Event('input', { bubbles: true }));
     expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(0);
     expect(popup.querySelector('.bz-sp-mob-empty')).toBeTruthy();
+    ui.cleanup();
+  });
+
+  it('移动端：搜索命中设置项 → 「设置项（N）」段（原型 m1-sec）', async () => {
+    mobileFlag = true;
+    const ui = new SettingsPanelUI();
+    ui.open();
+    const popup = document.getElementById('bz-settings-panel-popup')!;
+    // 先加载全局域 schema（行缓存填充；全局 schema 含「AI 服务商」「DeepSeek 密钥」等）
+    const items = popup.querySelectorAll('.bz-sp-mob-item');
+    (items[0] as HTMLElement).click(); // 全局
+    await tick();
+    // 关闭弹窗
+    const modal = document.querySelector('.bz-sp-mob-modal');
+    const modalMask = modal ? modal.previousElementSibling as HTMLElement : null;
+    if (modalMask) modalMask.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    // 搜「AI」→ 域段（全局）+ 设置项段
+    const search = popup.querySelector('.bz-sp-mob-search .bz-sp-search-in') as HTMLInputElement;
+    search.value = 'AI';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(popup.querySelector('.bz-sp-mob-sec')).toBeTruthy();
+    expect(popup.querySelectorAll('.bz-sp-mob-sec').length).toBeGreaterThanOrEqual(1);
+    // 设置项段存在（含「AI 服务商」等行）
+    const kindItems = popup.querySelectorAll('.bz-sp-mob-kind');
+    expect(kindItems.length).toBeGreaterThan(0);
     ui.cleanup();
   });
 
