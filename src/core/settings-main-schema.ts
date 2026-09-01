@@ -1,6 +1,6 @@
 /**
- * 主设置页 schema（ticket 131，ADR-0064）：BzSettingTab.display() 两区块（🤖 AI / 📂 数据存储
- * 路径）的声明式定义。归属 core 的理由：两区块均为跨域全局项（ADR-0009 设置所有权），且文案
+ * 主设置页 schema（ticket 131，ADR-0064）：BzSettingTab.display() 两区块（AI / 数据存储路径）
+ * 的声明式定义。归属 core 的理由：两区块均为跨域全局项（ADR-0009 设置所有权），且文案
  * lint（ticket 100）需以纯数据方式全量断言（本模块只依赖 core 与设置类型，node 环境可安全加载）。
  *
  * 行为零变化锚点：
@@ -223,12 +223,12 @@ export function mainSettingsSchema(): SettingsSchema {
     groups: [
       {
         icon: 'sparkles',
-        name: '🤖 AI',
+        name: 'AI',
         rows: aiGroupRows(),
       },
       {
         icon: 'folder-open',
-        name: '📂 数据存储路径',
+        name: '数据存储路径',
         rows: [
           {
             type: 'path',
