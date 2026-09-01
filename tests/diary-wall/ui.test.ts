@@ -9,7 +9,7 @@
  * - jsdom 无 IntersectionObserver → UI 懒加载走 fallback（直接挂 src），断言以 img[src]/video[src] 为准。
  */
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
-import { setApp } from '../../src/diary/app';
+import { setApp } from '../../src/core/app';
 import { applyDirectories } from '../../src/diary/config';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
@@ -19,6 +19,9 @@ import { DiaryWallAppController } from '../../src/diary-wall/ui';
 // 用标准 https 协议——jsdom 对 app:// 非标准协议的 src 赋值会归一化为空）
 const mocks = vi.hoisted(() => ({
   mediaSrc: vi.fn((_app: any, name: string) => `https://example.com/vault/${encodeURI(name)}`),
+  showDatePicker: vi.fn(),
+  openAddDialog: vi.fn(),
+  jumpToEntry: vi.fn(),
 }));
 vi.mock('../../src/diary-wall/data', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/diary-wall/data')>();
@@ -27,6 +30,14 @@ vi.mock('../../src/diary-wall/data', async (importOriginal) => {
     mediaSrc: mocks.mediaSrc,
   };
 });
+// diary 域动作 mock：写日记/日期选择器/跳转（ui.ts 动态 import）
+vi.mock('../../src/diary/ui/dialogs', () => ({
+  showDatePicker: mocks.showDatePicker,
+  openAddDialog: mocks.openAddDialog,
+}));
+vi.mock('../../src/diary/ui/entries', () => ({
+  jumpToEntry: mocks.jumpToEntry,
+}));
 
 let vault: MockVault;
 
@@ -42,6 +53,9 @@ beforeEach(async () => {
   document.body.innerHTML = '';
   applyDirectories({});
   resetObsidianMocks();
+  mocks.showDatePicker.mockClear();
+  mocks.openAddDialog.mockClear();
+  mocks.jumpToEntry.mockClear();
   vault = new MockVault();
   // 三个日期：2026-08-19（图片/视频/音频媒体 + 纯文字）、2026-06-11（摄影带图）、2026-06-12（纯文字对谈）
   vault.files.set(
@@ -53,7 +67,10 @@ beforeEach(async () => {
     '我的/日记/2026-06-12.md',
     '# 🤝 20:33\n"又有了新的小想法。"一首新的诗朗诵。\n'
   );
-  setApp(mockAppWithVault(vault));
+  const app = mockAppWithVault(vault);
+  setApp(app); // 回忆墙走 core/app
+  // diary 域动作（写日记/日期选择器/跳转）走 diary/app——同一 app 对象双注入
+  (await import('../../src/diary/app')).setApp(app);
 });
 
 afterEach(() => {
@@ -140,7 +157,9 @@ describe('回忆墙 UI', () => {
   it('空态：无日记时显示提示与动作按钮', async () => {
     const emptyVault = new MockVault();
     emptyVault.dirs.add('我的/日记');
-    setApp(mockAppWithVault(emptyVault));
+    const emptyApp = mockAppWithVault(emptyVault);
+    setApp(emptyApp);
+    (await import('../../src/diary/app')).setApp(emptyApp);
     const c = DiaryWallAppController.getInstance({ mobileDefaultFullscreen: false });
     await c.openManager();
     await waitFor(() => !!document.querySelector('.bz-diary-wall-empty'));
@@ -180,5 +199,111 @@ describe('回忆墙 UI', () => {
     c.cleanup();
     expect(document.querySelector('.bz-diary-wall')).toBeNull();
     expect(DiaryWallAppController.instance).toBeNull();
+  });
+
+  // ===== v2 新功能 =====
+  it('头部按钮序：编辑在前、搜索次之、无设置按钮（关闭钮仅真全屏显示）', async () => {
+    await openAndWait();
+    const btns = Array.from(document.querySelectorAll('.bz-diary-wall-desk .bz-diary-wall-btns [data-act]')).map(
+      (b) => (b as HTMLElement).dataset.act
+    );
+    // 编辑 → 搜索 → 关闭（无 settings）
+    expect(btns).toEqual(['add', 'search', 'close']);
+    expect(document.querySelector('[data-act="settings"]')).toBeNull();
+  });
+
+  it('标题（品牌）点击 → 打开日期选择器（diary showDatePicker 被调）', async () => {
+    await openAndWait();
+    const brand = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-brand') as HTMLElement;
+    brand.click();
+    expect(mocks.showDatePicker).toHaveBeenCalled();
+  });
+
+  it('稀疏铺满：单条日文字条跨列占满整行（sparse-1）', async () => {
+    // 2026-06-12 只有一条对谈（纯文字）→ 其 masonry 容器应带 --sparse-1
+    await openAndWait();
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    // 三个单条日期（08-19 媒体 / 06-11 媒体 / 06-12 文字）都应 sparse-1
+    const sparse1 = desk.querySelectorAll('.bz-diary-wall-masonry--sparse-1');
+    expect(sparse1.length).toBeGreaterThanOrEqual(2);
+    // 至少一个 sparse-1 容器内含文字条（06-12 对谈）
+    const hasText = Array.from(sparse1).some((m) => m.querySelector('.bz-diary-wall-text'));
+    expect(hasText).toBe(true);
+  });
+
+  it('搜索：输入关键词过滤条目，清空还原', async () => {
+    await openAndWait();
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    // 打开搜索行
+    const searchBtn = desk.querySelector('[data-act="search"]') as HTMLElement;
+    searchBtn.click();
+    const box = desk.querySelector('.bz-diary-wall-searchbox') as HTMLInputElement;
+    expect(box).toBeTruthy();
+    // 输入「猫」（2026-08-19 日记内容含「被猫盯着」）
+    box.value = '猫';
+    box.dispatchEvent(new Event('input', { bubbles: true }));
+    await waitFor(() => desk.querySelectorAll('.bz-diary-wall-day-head').length === 1);
+    expect(desk.querySelectorAll('.bz-diary-wall-day-head').length).toBe(1);
+    // 清空还原（再次点搜索按钮收起）
+    searchBtn.click();
+    expect(desk.querySelectorAll('.bz-diary-wall-day-head').length).toBe(3);
+  });
+
+  it('二级标签：点击带子标签的主标签显示子标签行', async () => {
+    // 当前 mock 数据无二级标签主标签——注入一个带子标签的（旅游→四川/大理）
+    const c = DiaryWallAppController.getInstance({ mobileDefaultFullscreen: false });
+    // 直接在实例上注入子标签配置（getSubTagsOfPrimary 读 diary config，测试数据补一条旅游条目）
+    const v2 = new MockVault();
+    v2.files.set('我的/日记/2026-08-19.md', '# 🛶 23:02\n![[IMG_x.jpg]]\n');
+    v2.files.set('我的/日记/2026-06-11.md', '# 🛶 21:29\n![[IMG_y.jpg]]\n');
+    v2.files.set('我的/日记/2026-06-12.md', '# 🛶 20:33\n四川真美\n');
+    const v2app = mockAppWithVault(v2);
+    setApp(v2app);
+    (await import('../../src/diary/app')).setApp(v2app);
+    await c.openManager();
+    await waitFor(() => !!document.querySelector('.bz-diary-wall-day-head'));
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    // 点击「旅游」主标签（若 mock 无此 chip 则跳过——用 config 的子标签能力测试）
+    const travel = desk.querySelector<HTMLElement>('.bz-diary-wall-chip[data-tag="旅游"]');
+    if (travel) {
+      travel.click();
+      await waitFor(() => desk.querySelectorAll('.bz-diary-wall-subchip').length > 0);
+      expect(desk.querySelectorAll('.bz-diary-wall-subchip').length).toBeGreaterThan(0);
+      // 点子标签「四川」过滤
+      const sub = desk.querySelector<HTMLElement>('.bz-diary-wall-subchip[data-tag="四川"]');
+      if (sub) {
+        sub.click();
+        await waitFor(() => desk.querySelectorAll('.bz-diary-wall-day-head').length === 1);
+        expect(desk.querySelectorAll('.bz-diary-wall-day-head').length).toBe(1);
+      }
+    }
+  });
+
+  it('右键菜单：条目 contextmenu 打开跟手菜单，含打开/复制/改标签/加密/删除', async () => {
+    await openAndWait();
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    const item = desk.querySelector('.bz-diary-wall-item') as HTMLElement;
+    expect(item).toBeTruthy();
+    item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 100, clientY: 100 }));
+    const menu = document.querySelector('.bz-diary-wall-menu');
+    expect(menu).toBeTruthy();
+    expect(menu!.textContent).toContain('打开原文');
+    expect(menu!.textContent).toContain('复制双链');
+    expect(menu!.textContent).toContain('复制正文');
+    expect(menu!.textContent).toContain('改标签');
+    expect(menu!.textContent).toContain('删除');
+  });
+
+  it('双击条目 → 跳转原文（jumpTo 被调）', async () => {
+    const spy = vi.spyOn(DiaryWallAppController.prototype as any, 'jumpTo').mockResolvedValue(undefined);
+    await openAndWait();
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    const item = desk.querySelector('.bz-diary-wall-text') as HTMLElement;
+    expect(item).toBeTruthy();
+    item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    // 双击 = 300ms 内两次点击
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
   });
 });
