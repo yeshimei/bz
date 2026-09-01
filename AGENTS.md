@@ -17,25 +17,11 @@
 
 ## 铁律
 
-1. **兼容性冻结**：数据格式（`CONFIG/STORAGE/*.json`、`我的/*`、frontmatter）、文案/CSS/公式、已知缺陷（多选计数 bug、主演计数取单次）一律不改。历史在案缺陷「flash refresh 不清理已删文件向量条目」已于 ticket 103 在第二大脑域修复（连带偏移错位隐患），冻结描述随 ADR-0051 修订。
-2. **命令注册单点**：id `bz-<域>-<动作>` 三段式；只在 main.ts COMMANDS 表注册一次，域内不重复 addCommand；卸载全量 removeCommand。id 是外部裸调用约定，改名需同步。
-3. **DOM 契约稳定**：外部依赖既有 id/类名，新增 UI 保持风格。
-4. **懒加载（ADR-0003）**：UI 域 `ensureXxx` 幂等初始化；事件常驻域（自动摘要 / memo·收藏本文件同步 / 第二大脑）按设置开关注册。
-5. **域间共享**：显式 import 或 core 层，不挂 window（`__MOVIE_FOLDER_PATH` 为遗留兼容，勿新增）。
-6. **架构决策**：设置页单页（域设置走 ⚙️ 弹窗）；通知用自绘 toast；AI 配置在 data.json，聚合讯 dataviewjs，第二大脑嵌入走 Ollama HTTP（ticket 103 起原「闪念」正名接管，ADR-0051；ticket 108 起对话与概括统一走主设置页 core AI，ADR-0052），B 站下载/海报抓取走外部 npm。
+1. 每次有改动必须走 worktree，流程详见「Git / 工作流」。
+2. **命令注册单点**：id `bz-<域>-<动作>` 三段式
 7. **通知规范**：正文不带 emoji 前缀；新语义先查 `src/core/notice.ts` ICONS 表，确无匹配才新增；详见 CONTEXT.md「通知类型规范」。
-8. **样式收敛**：视觉样式一律写源头 `src/<域>/styles.css`（无则新建），构建时聚合并生成根 `styles.css` 与 E 盘产物——根 `styles.css` 是构建产物，勿手改（会被下次构建覆盖）；类名 `bz-` 前缀；禁止运行时注入 `<style>` 与内联视觉样式；功能性内联仅限显隐与动态计算。
-
-## 主窗口样式规范
-
-**新主窗口接入三件事**（参考 src/review/ui.ts）：
-1. `src/settings.ts` 加 `<域前缀>MobileDefaultFullscreen` 布尔键 + DEFAULT_SETTINGS 默认值（原移动端全屏→`true`，居中卡→`false`）；
-2. 打开路径调 `applyMobileWindowFullscreen(popup, tryGetSettings().<键> === true)`（src/core/mobile.ts）；
-3. ⚙️ 域设置弹窗 build 末尾挂「移动端默认全屏」行，仅 `if (isMobileEnv())` 显示。
-
-**统一视觉**：头部行用 `.bz-win-head`，关闭按钮用 `.bz-win-close`，按钮秩序：功能 → ⚙️ → 关闭；弹窗不放关闭按钮，靠 mask + ESC；全屏避让用全局规则。样式已集中 styles.css，勿另写差异。
-
-**视觉决策入口**：新增/修改任何 UI（桌面+移动端）前先读 `docs/ui-design-manual.md`——设计方向（好看/高级/简约）、CSS 变量取值表、字号/圆角/阴影/动效档位、两端断点与安全区、组件速查、改动自检清单，全部以它为准。
+8. **样式收敛**：视觉样式一律写源头 `src/<域>/styles.css`（无则新建），构建时聚合并生成根 `styles.css` 
+9. **视觉决策入口**：UI（桌面+移动端） `docs/ui-design-manual.md`
 
 ## 领域清单（数据均在 CONFIG/STORAGE/，表内只写文件名）
 
