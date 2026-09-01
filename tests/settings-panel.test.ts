@@ -178,6 +178,7 @@ describe('设置面板（settings-panel）', () => {
     await waitGroups(popup, 2);
     const sel = popup.querySelector('.bz-sp-sel');
     expect(sel).toBeTruthy();
+    // 单次点击即打开（重写后不再因冒泡误关）
     sel!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     const menu = popup.querySelector('.bz-sp-sel-menu');
     expect(menu).toBeTruthy();
@@ -185,6 +186,15 @@ describe('设置面板（settings-panel）', () => {
     const before = popup.querySelector('.bz-sp-sel-val')!.textContent;
     opt.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(popup.querySelector('.bz-sp-sel-val')!.textContent).not.toBe(before);
+    // 选中后菜单关闭；重开菜单 → 选中态/✓ 跟随新值（不再显示旧选项）
+    expect(popup.querySelector('.bz-sp-sel-menu')).toBeNull();
+    sel!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const menu2 = popup.querySelector('.bz-sp-sel-menu');
+    expect(menu2).toBeTruthy();
+    const onOpt = [...menu2!.querySelectorAll('.bz-sp-sel-opt')].find((o) => o.classList.contains('on'));
+    expect(onOpt).toBeTruthy();
+    expect(onOpt!.textContent).toContain('✓');
+    expect(onOpt!.textContent).toContain(popup.querySelector('.bz-sp-sel-val')!.textContent!);
     ui.cleanup();
   });
 
