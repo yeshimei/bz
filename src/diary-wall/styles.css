@@ -1,0 +1,851 @@
+/* ==================== 回忆墙域样式（src/diary-wall/styles.css） ==================== */
+/* ==================== 回忆墙（diary-wall，原型 v5 章节固定 + 滚动高亮 + 性能优化） ==================== */
+/* 铁律 8：视觉样式写域源头，构建时聚合进根 styles.css；类名 bz- 前缀；禁止运行时注入 <style>。
+ * reset 隔离：所有规则以 .bz-diary-wall 为根，杜绝 Obsidian 全局样式渗透——
+ * box-sizing、清 margin、清 Obsidian 对 button/input 的默认样式、隐藏滚动条（用户明确要求）。
+ * 设计变量全部照搬原型，但映射 Obsidian 主题变量（不写死颜色）：
+ * --background-primary/secondary、--text-normal/muted/faint、--interactive-accent、
+ * --background-modifier-border/hover/active-hover、--color-green/orange/cyan。 */
+
+/* ---------- 设计变量（token 化，跟随 Obsidian 主题亮暗） ---------- */
+.bz-diary-wall {
+  --dw-bg: var(--background-primary);
+  --dw-surface: var(--background-secondary);
+  --dw-hover: var(--background-modifier-hover);
+  --dw-active-hover: var(--background-modifier-active-hover);
+  --dw-line: var(--background-modifier-border);
+  --dw-cover: var(--background-modifier-cover);
+  --dw-ink: var(--text-normal);
+  --dw-muted: var(--text-muted);
+  --dw-faint: var(--text-faint);
+  --dw-accent: var(--interactive-accent);
+  --dw-on-accent: var(--text-on-accent);
+  --dw-green: var(--color-green);
+  --dw-orange: var(--color-orange);
+  --dw-cyan: var(--color-cyan);
+  --dw-mono: var(--font-monospace);
+  --dw-shadow-sm: 0 1px 2px -2px rgba(0, 0, 0, 0.16), 0 3px 6px 0 rgba(0, 0, 0, 0.12);
+  --dw-shadow-md: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  --dw-shadow-lg: 0 6px 16px -8px rgba(0, 0, 0, 0.08), 0 9px 28px 0 rgba(0, 0, 0, 0.05), 0 12px 48px 16px rgba(0, 0, 0, 0.03);
+
+  /* 根容器：固定全屏遮罩层（JS 控制 display），居中卡由子元素承担 */
+  background: var(--dw-cover);
+  color: var(--dw-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+/* ============ reset 隔离（用户明确要求：杜绝 Obsidian 全局样式渗透） ============ */
+.bz-diary-wall *,
+.bz-diary-wall *::before,
+.bz-diary-wall *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+/* 隐藏滚动条（原型 scrollbar-width:none + ::-webkit-scrollbar display:none） */
+.bz-diary-wall {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.bz-diary-wall ::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+/* 清 Obsidian 对 button 的默认样式 */
+.bz-diary-wall button {
+  font: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+/* 清 Obsidian 对 input/textarea 的默认样式 */
+.bz-diary-wall input,
+.bz-diary-wall textarea {
+  font: inherit;
+  border: none;
+  background: none;
+  color: inherit;
+  outline: none;
+}
+.bz-diary-wall ::selection {
+  background: color-mix(in srgb, var(--dw-accent) 25%, transparent);
+}
+
+/* ============ 面板骨架：桌面居中卡 / 移动真全屏 ============ */
+/* 桌面实例：居中卡（980px 宽 82vh，原型 desk-panel） */
+.bz-diary-wall-desk {
+  position: relative;
+  width: 980px;
+  max-width: 95vw;
+  height: 82vh;
+  min-height: 640px;
+  display: flex;
+  flex-direction: column;
+  background: var(--dw-bg);
+  border-radius: 12px;
+  box-shadow: var(--dw-shadow-md);
+  overflow: hidden;
+  animation: bz-diary-wall-slide-up 0.24s ease-out;
+  flex-shrink: 0;
+}
+/* 移动实例：真全屏（默认隐藏，≤768px 显示） */
+.bz-diary-wall-mob {
+  display: none;
+  position: absolute;
+  inset: 0;
+  flex-direction: column;
+  background: var(--dw-bg);
+  padding-top: max(12px, env(safe-area-inset-top, 0px));
+}
+
+/* ============ 头部行（品牌 + 范围 + 按钮组） ============ */
+.bz-diary-wall-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 24px 10px;
+  flex-shrink: 0;
+}
+.bz-diary-wall-mob .bz-diary-wall-head {
+  padding: 14px 20px 8px;
+}
+.bz-diary-wall-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  cursor: pointer;
+}
+.bz-diary-wall-bookname {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--dw-ink);
+}
+.bz-diary-wall-range {
+  font-size: 13px;
+  color: var(--dw-muted);
+  font-weight: 400;
+  transition: color 0.15s;
+}
+.bz-diary-wall-brand:hover .bz-diary-wall-range {
+  color: var(--dw-accent);
+}
+.bz-diary-wall-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* 图标按钮（原型 icon-btn；关闭按钮规格由 core .bz-win-close 统一收窄） */
+.bz-diary-wall-icon-btn {
+  width: 22px;
+  height: 26px;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--dw-muted);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s;
+}
+.bz-diary-wall-icon-btn:hover {
+  background: var(--dw-surface);
+}
+
+/* ============ 类型 chips 行 ============ */
+.bz-diary-wall-chiprow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 24px 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.bz-diary-wall-mob .bz-diary-wall-chiprow {
+  padding: 2px 20px 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+.bz-diary-wall-mob .bz-diary-wall-chiprow .bz-diary-wall-chip {
+  flex-shrink: 0;
+}
+.bz-diary-wall-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--dw-surface);
+  border: none;
+  font-size: 12px;
+  color: var(--dw-ink);
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1.25;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.bz-diary-wall-chip:hover {
+  background: var(--dw-hover);
+}
+.bz-diary-wall-chip-cnt {
+  font-size: 10px;
+  color: var(--dw-faint);
+}
+.bz-diary-wall-chip--on {
+  background: var(--dw-accent);
+  color: var(--dw-on-accent);
+}
+.bz-diary-wall-chip--on .bz-diary-wall-chip-cnt {
+  color: rgba(255, 255, 255, 0.75);
+}
+/* 「加密」锁定态：虚线边框 + 半透明（原型 chip.locked） */
+.bz-diary-wall-chip--locked {
+  border: 1px dashed var(--dw-line);
+  opacity: 0.72;
+}
+.bz-diary-wall-chip--locked:hover {
+  opacity: 1;
+}
+
+/* ============ 主体：左章节栏 + 右瀑布 ============ */
+.bz-diary-wall-mob .bz-diary-wall-body {
+  height: 100%;
+}
+.bz-diary-wall-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* ---- 章节栏（固定不随瀑布滚动；自身超高时内部滚动；滚动自动高亮当前月份） ---- */
+.bz-diary-wall-rail {
+  width: 168px;
+  flex-shrink: 0;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-right: 1px solid var(--dw-line);
+  padding: 12px 10px 16px;
+  position: relative;
+}
+.bz-diary-wall-mob .bz-diary-wall-rail {
+  display: none;
+}
+.bz-diary-wall-rail-title {
+  font-size: 11px;
+  color: var(--dw-faint);
+  letter-spacing: 0.08em;
+  padding: 4px 10px 8px;
+  font-weight: 600;
+  position: sticky;
+  top: -12px;
+  background: var(--dw-bg);
+  z-index: 2;
+}
+.bz-diary-wall-month {
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+  border-left: 2px solid transparent;
+}
+.bz-diary-wall-month:hover {
+  background: var(--dw-hover);
+}
+.bz-diary-wall-month--on {
+  background: var(--dw-active-hover);
+  border-left-color: var(--dw-accent);
+}
+.bz-diary-wall-month-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.bz-diary-wall-month-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dw-ink);
+}
+.bz-diary-wall-month-count {
+  font-size: 10px;
+  color: var(--dw-faint);
+}
+.bz-diary-wall-month-strip {
+  display: flex;
+  gap: 3px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+.bz-diary-wall-month-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--dw-surface);
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.bz-diary-wall-month-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.bz-diary-wall-month-thumb--v {
+  background: linear-gradient(135deg, #2a9d8f, #80cbc4);
+  color: #fff;
+}
+.bz-diary-wall-month-thumb--a {
+  background: linear-gradient(135deg, #b4551d, #e8a15c);
+  color: #fff;
+}
+.bz-diary-wall-month-thumb--t {
+  font-size: 9px;
+  color: var(--dw-faint);
+}
+
+/* ---- 瀑布区（独立滚动容器） ---- */
+.bz-diary-wall-wall {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 24px 32px;
+  position: relative;
+  scroll-behavior: smooth;
+}
+.bz-diary-wall-mob .bz-diary-wall-wall {
+  padding: 0 16px 24px;
+}
+/* 日期节头（sticky：滚动时吸顶显示日期 + 周几 + 统计） */
+.bz-diary-wall-day-head {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 14px 0 10px;
+  background: var(--dw-bg);
+}
+.bz-diary-wall-day-date {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--dw-ink);
+}
+.bz-diary-wall-day-week {
+  font-size: 12px;
+  color: var(--dw-muted);
+}
+.bz-diary-wall-day-stat {
+  font-size: 11px;
+  color: var(--dw-faint);
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+.bz-diary-wall-day-stat b {
+  font-weight: 500;
+  color: var(--dw-muted);
+}
+.bz-diary-wall-day-head::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--dw-line);
+}
+/* masonry 瀑布（CSS 多列） */
+.bz-diary-wall-masonry {
+  column-count: 3;
+  column-gap: 10px;
+  padding-top: 8px;
+}
+.bz-diary-wall-masonry--mob {
+  column-count: 2;
+  column-gap: 8px;
+}
+
+/* 条目（性能：屏外内容跳过渲染 + 布局/绘制隔离，原型 .item） */
+.bz-diary-wall-item {
+  break-inside: avoid;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  -webkit-touch-callout: none;
+  user-select: none;
+  position: relative;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 240px;
+  contain: layout paint style;
+}
+
+/* ---- 媒体块 ---- */
+.bz-diary-wall-media-wrap {
+  position: relative;
+}
+.bz-diary-wall-media {
+  position: relative;
+  display: block;
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: zoom-in;
+  background: var(--dw-surface);
+  aspect-ratio: 4 / 3;
+}
+.bz-diary-wall-media img,
+.bz-diary-wall-media video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+/* 渐变占位（原型 .ph：加载失败/未加载时的兜底） */
+.bz-diary-wall-ph {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  transition: opacity 0.2s;
+}
+/* 描述条（hover 浮现：emoji + 时间 + 媒体名） */
+.bz-diary-wall-cap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 18px 10px 7px;
+  font-size: 11px;
+  color: #fff;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.bz-diary-wall-media:hover .bz-diary-wall-cap {
+  opacity: 1;
+}
+/* 视频 ▶ 播放角标（hover 浮现） */
+.bz-diary-wall-play {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.bz-diary-wall-media:hover .bz-diary-wall-play {
+  opacity: 1;
+}
+/* 时长角标（视频） */
+.bz-diary-wall-dur {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 10px;
+  font-family: var(--dw-mono);
+}
+/* 类型角标（图片 🖼 右上角） */
+.bz-diary-wall-att {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* ---- 文字条 ---- */
+.bz-diary-wall-text {
+  background: var(--dw-surface);
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.bz-diary-wall-text:hover {
+  background: var(--dw-hover);
+}
+.bz-diary-wall-text-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.bz-diary-wall-text-t {
+  font-family: var(--dw-mono);
+  font-size: 11px;
+  color: var(--dw-muted);
+}
+.bz-diary-wall-text-em {
+  font-size: 12px;
+}
+.bz-diary-wall-text-tag {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--dw-faint);
+}
+.bz-diary-wall-text-tx,
+.bz-diary-wall-tx {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--dw-ink);
+}
+.bz-diary-wall-tx {
+  padding: 8px 10px;
+  font-size: 12.5px;
+  color: var(--dw-muted);
+  line-height: 1.6;
+}
+.bz-diary-wall-text.bz-diary-wall-text--locked .bz-diary-wall-text-tx {
+  color: var(--dw-muted);
+}
+
+/* 条目 ⋯ 按钮（hover 浮现） */
+.bz-diary-wall-ops {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  z-index: 5;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 13px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.bz-diary-wall-item:hover .bz-diary-wall-ops {
+  display: flex;
+}
+.bz-diary-wall-ops:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+/* ============ 灯箱（全屏黑底，图片/视频/音频 controls 播放） ============ */
+.bz-diary-wall-lb {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(0, 0, 0, 0.9);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  animation: bz-diary-wall-fade-in 0.2s ease-out;
+}
+.bz-diary-wall-lb--show {
+  display: flex;
+}
+.bz-diary-wall-lb-media {
+  max-width: 94vw;
+  max-height: 84vh;
+  border-radius: 8px;
+  object-fit: contain;
+}
+.bz-diary-wall-lb video.bz-diary-wall-lb-media,
+.bz-diary-wall-lb audio.bz-diary-wall-lb-media {
+  background: #000;
+  width: min(92vw, 900px);
+}
+.bz-diary-wall-lb audio.bz-diary-wall-lb-media {
+  height: 54px;
+  border-radius: 8px;
+}
+.bz-diary-wall-lbcap {
+  margin-top: 14px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 13px;
+  max-width: 80vw;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-diary-wall-lbsub {
+  margin-top: 8px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  font-family: var(--dw-mono);
+}
+.bz-diary-wall-lbclose {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border: none;
+  font-size: 15px;
+  cursor: pointer;
+}
+.bz-diary-wall-lbclose:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+.bz-diary-wall-lberr {
+  color: #fff;
+  font-size: 40px;
+  text-align: center;
+}
+
+/* ============ 底部抽屉（长按/右键条目 → 动作列表） ============ */
+.bz-diary-wall-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  background: var(--dw-bg);
+  border-radius: 14px 14px 0 0;
+  box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.08), var(--dw-shadow-lg);
+  transform: translateY(100%);
+  transition: transform 0.24s cubic-bezier(0.32, 0.72, 0.24, 1);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+.bz-diary-wall-sheet--show {
+  transform: translateY(0);
+}
+.bz-diary-wall-sheet-grip {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--dw-line);
+  margin: 8px auto 4px;
+}
+.bz-diary-wall-sheet-head {
+  display: flex;
+  gap: 10px;
+  padding: 10px 20px 12px;
+  border-bottom: 1px solid var(--dw-line);
+}
+.bz-diary-wall-sheet-emoji {
+  font-size: 20px;
+  line-height: 1;
+}
+.bz-diary-wall-sheet-info {
+  flex: 1;
+  min-width: 0;
+}
+.bz-diary-wall-sheet-time {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--dw-ink);
+}
+.bz-diary-wall-sheet-content {
+  font-size: 13px;
+  color: var(--dw-muted);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.bz-diary-wall-sheet-media {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  overflow-x: auto;
+}
+.bz-diary-wall-sheet-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  background: var(--dw-surface);
+  cursor: pointer;
+}
+.bz-diary-wall-sheet-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.bz-diary-wall-sheet-actions {
+  overflow-y: auto;
+  padding: 6px 0 12px;
+}
+.bz-diary-wall-sheet-act {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 20px;
+  border: none;
+  background: none;
+  color: var(--dw-ink);
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.15s;
+}
+.bz-diary-wall-sheet-act:hover {
+  background: var(--dw-hover);
+}
+.bz-diary-wall-sheet-act-ic {
+  width: 22px;
+  text-align: center;
+  color: var(--dw-muted);
+  font-size: 15px;
+}
+.bz-diary-wall-sheet-act-sub {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--dw-faint);
+}
+.bz-diary-wall-sheet-act--danger {
+  color: var(--text-error);
+}
+.bz-diary-wall-sheet-act--danger .bz-diary-wall-sheet-act-ic {
+  color: var(--text-error);
+}
+.bz-diary-wall-sheet-act--accent {
+  color: var(--dw-accent);
+}
+.bz-diary-wall-sheet-act--accent .bz-diary-wall-sheet-act-ic {
+  color: var(--dw-accent);
+}
+
+/* ============ 空态 ============ */
+.bz-diary-wall-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 72px 24px;
+  text-align: center;
+}
+.bz-diary-wall-empty-ic {
+  font-size: 34px;
+  line-height: 1;
+  opacity: 0.55;
+}
+.bz-diary-wall-empty-title {
+  font-size: 14px;
+  color: var(--dw-muted);
+}
+.bz-diary-wall-empty-desc {
+  font-size: 12px;
+  color: var(--dw-faint);
+}
+.bz-diary-wall-empty-btn {
+  margin-top: 10px;
+  padding: 9px 22px;
+  border-radius: 8px;
+  border: none;
+  background: var(--dw-accent);
+  color: var(--dw-on-accent);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+.bz-diary-wall-empty-btn:hover {
+  opacity: 0.88;
+}
+
+/* ============ 动画 ============ */
+@keyframes bz-diary-wall-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes bz-diary-wall-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bz-diary-wall * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ============ 移动端：≤768px 真全屏（桌面实例隐藏，移动实例显示） ============ */
+@media (max-width: 768px) {
+  .bz-diary-wall {
+    padding: 0;
+  }
+  .bz-diary-wall-desk {
+    display: none;
+  }
+  .bz-diary-wall-mob {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+    padding-top: max(12px, env(safe-area-inset-top, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  /* 移动真全屏时的安全区避让：头部行顶部垫安全区（与 .bz-win-mfs 同规则） */
+  .bz-diary-wall-mob .bz-diary-wall-head {
+    padding-top: max(14px, env(safe-area-inset-top, 0px));
+  }
+  .bz-diary-wall-mob .bz-diary-wall-chiprow {
+    padding-bottom: 10px;
+  }
+}
