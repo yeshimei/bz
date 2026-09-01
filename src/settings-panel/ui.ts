@@ -4,16 +4,16 @@
  * - 桌面端：B 侧栏工作台（左域导航 + 右内容区直接自绘渲染该域全部设置分组）
  * - 移动端：M1 命令面板（搜索 + 域列表，主面板真全屏 + 关闭按钮）
  * - 域设置内容：数据 = 各域真实 schema（xxxSettingsSchema()，与 ⚙️ 弹窗同源），
- *   视觉 = 自绘渲染器 renderPanelSchema（自绘开关/输入/下拉/滑块/按钮/chips），
+ *   视觉 = 自绘渲染器 renderPanelSchema（自绘开关/输入/下拉/滑块/按钮/chips/路径行），
  *   绑定逻辑照抄 core/settings-schema（键直绑 getSettings/saveSettings / 三函数 / visibleWhen / onChange）；
- *   路径行复用 renderPathSettingRow + openPathPicker（ADR-0061）。
+ *   路径行走自绘 chips + openPathPicker（ADR-0061 选择器），不再嵌套原生设置行。
  * - 全局域 → mainSettingsSchema()（AI 服务商 + 数据存储路径）。
  */
 import { App, setIcon } from 'obsidian';
 import { createOverlay, topifyZ } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
-import { tryGetSettings } from '../core/settings-provider';
+import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import type { SettingsSchema } from '../core/settings-schema';
 import { renderPanelSchema } from './renderer';
 import { notice } from '../core/notice';
@@ -26,12 +26,10 @@ interface DomainDef {
   name: string;
   icon: string; // lucide 图标名（setIcon 用）
   desc: string;
-  /** 无任何设置项（归物本/收藏本等） */
+  /** 无任何设置项（聚合讯/做题家等：面板内显示空态） */
   noSettings?: boolean;
   /** 有真实 schema 的域：内嵌渲染（惰性加载） */
   schemaLoader?: () => Promise<SettingsSchema>;
-  /** 渲染该域设置时附加标题（缺省用域名） */
-  settingsTitle?: string;
 }
 
 /** 惰性 schema 加载器（与各域 ⚙️ 弹窗同源） */
@@ -39,6 +37,7 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   global: async () => (await import('../core/settings-main-schema')).mainSettingsSchema(),
   diary: async () => (await import('../diary/ui/panel')).diarySettingsSchema(),
   memo: async () => (await import('../memo/ui')).memoSettingsSchema(),
+  belongings: async () => (await import('../belongings/ui')).belongingSettingsSchema(),
   clipping: async () => (await import('../clipping/view')).clippingSettingsSchema(),
   password: async () => (await import('../password/ui')).passwordSettingsSchema(),
   favorites: async () => (await import('../favorites/ui')).favoritesSettingsSchema(),
@@ -55,13 +54,36 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   pomodoro: async () => (await import('../pomodoro/ui')).pomodoroSettingsSchema(),
   encrypt: async () => (await import('../encrypt/ui')).encryptSettingsSchema(),
   literature: async () => (await import('../literature/ui')).literatureSettingsSchema(),
+  smartcat: async () => {
+    const { loadSmartCatData } = await import('../smartcat/data');
+    const { smartcatSettingsSchema } = await import('../smartcat/ui');
+    const app = getApp();
+    const data = await loadSmartCatData(app);
+    const saveConfig = async (config: unknown): Promise<void> => {
+      const { saveSmartCatData } = await import('../smartcat/data');
+      data.config = config as never;
+      await saveSmartCatData(app, data);
+    };
+    return smartcatSettingsSchema({
+      getConfig: () => data.config,
+      saveConfig,
+      settingsKeys: {
+        enabled: (tryGetSettings() as any).smartcatEnabled !== false,
+        mobileFullscreen: (tryGetSettings() as any).smartcatMobileDefaultFullscreen === true,
+      },
+      setMobileFullscreen: async (v) => {
+        (getSettings() as any).smartcatMobileDefaultFullscreen = v;
+        await saveSettings();
+      },
+    });
+  },
 };
 
 const DOMAINS: DomainDef[] = [
   { id: 'global', name: '全局', icon: 'settings-2', desc: 'AI 服务商、数据存储路径、移动端全屏与入口偏好', schemaLoader: schemaLoaders.global },
   { id: 'diary', name: '日记本', icon: 'notebook', desc: '日记目录、显示与默认视图', schemaLoader: schemaLoaders.diary },
   { id: 'memo', name: '备忘录', icon: 'sticky-note', desc: '提醒与到期行为', schemaLoader: schemaLoaders.memo },
-  { id: 'belongings', name: '归物本', icon: 'package', desc: '物品登记与查找', noSettings: true },
+  { id: 'belongings', name: '归物本', icon: 'package', desc: '物品登记与查找', schemaLoader: schemaLoaders.belongings },
   { id: 'clipping', name: '剪藏本', icon: 'scissors', desc: '网页剪藏与聚合讯', schemaLoader: schemaLoaders.clipping },
   { id: 'news', name: '聚合讯', icon: 'rss', desc: '资讯聚合', noSettings: true },
   { id: 'password', name: '密码本', icon: 'key', desc: '账号密码管理', schemaLoader: schemaLoaders.password },
@@ -78,9 +100,12 @@ const DOMAINS: DomainDef[] = [
   { id: 'attach', name: '附件搬移', icon: 'folder-down', desc: '附件整理', noSettings: true },
   { id: 'bili-downloader', name: 'B站下载', icon: 'download', desc: 'B站视频下载任务', noSettings: true },
   { id: 'encrypt', name: '加密保险箱', icon: 'lock', desc: '加密文件保险箱', schemaLoader: schemaLoaders.encrypt },
-  { id: 'smartcat', name: '小橘陪伴猫', icon: 'cat', desc: '桌面宠物陪伴', noSettings: true },
+  { id: 'smartcat', name: '小橘陪伴猫', icon: 'cat', desc: '桌面宠物陪伴', schemaLoader: schemaLoaders.smartcat },
   { id: 'literature', name: '文献笔记', icon: 'book-open', desc: '文献管理与术语', schemaLoader: schemaLoaders.literature },
 ];
+
+/** 域名 → 设置组数徽标（桌面侧栏；数据加载后回填） */
+const groupCounts = new Map<string, number>();
 
 /* ==================== 面板 UI（桌面 B + 移动 M1） ==================== */
 
@@ -173,6 +198,12 @@ export class SettingsPanelUI {
         nm.className = 'bz-sp-nav-name';
         nm.textContent = d.name;
         b.append(ic, nm);
+        // 设置组数徽标（原型 b-ct；数据加载后回填）
+        const ct = document.createElement('span');
+        ct.className = 'bz-sp-nav-count';
+        const n = groupCounts.get(d.id);
+        ct.textContent = n !== undefined ? String(n) : '';
+        b.appendChild(ct);
         b.addEventListener('click', () => {
           this.activeDomain = i;
           renderNav(searchIn.value);
@@ -188,32 +219,15 @@ export class SettingsPanelUI {
   }
 
   /**
-   * 渲染某域设置到容器：内嵌 renderSettingsInto（与 ⚙️ 弹窗同一渲染器）。
-   * 无 schema 的域显示空态；smartcat 等深耦合域显示引导。
+   * 渲染某域设置到容器：内嵌自绘渲染器（与 ⚙️ 弹窗同数据源，视觉 1:1 原型）。
+   * 无 schema 的域显示空态。
    */
   private async renderDomain(pane: HTMLElement, domain: DomainDef): Promise<void> {
     // 清理旧渲染句柄
     this.renderHandles = [];
     pane.innerHTML = '';
 
-    // 头部：图标 + 名称 + 描述
-    const head = document.createElement('div');
-    head.className = 'bz-sp-pane-head';
-    const ic = document.createElement('span');
-    ic.className = 'bz-sp-pane-ic';
-    setIcon(ic, domain.icon);
-    const title = document.createElement('h3');
-    title.className = 'bz-sp-pane-title';
-    title.textContent = domain.name;
-    head.append(ic, title);
-    pane.appendChild(head);
-
-    const desc = document.createElement('div');
-    desc.className = 'bz-sp-pane-desc';
-    desc.textContent = domain.desc;
-    pane.appendChild(desc);
-
-    // 无设置项域
+    // 无设置项域 → 空态（原型 empty）
     if (domain.noSettings || !domain.schemaLoader) {
       const empty = document.createElement('div');
       empty.className = 'bz-sp-empty';
@@ -237,6 +251,20 @@ export class SettingsPanelUI {
       loading.remove();
       const handle = renderPanelSchema(body, schema);
       this.renderHandles.push(handle);
+      // 回填侧栏徽标（组数 = 可见分组卡片数；mobileFullscreenGroup 组级隐藏不计）
+      const groupEls = body.querySelectorAll<HTMLElement>('.bz-sp-group');
+      const visible = [...groupEls].filter((g) => g.style.display !== 'none').length;
+      groupCounts.set(domain.id, visible);
+      navCountRefresh(domain.id);
+      // 全部组被门控隐藏（如归物本仅移动端组，桌面无可配置项）→ 空态引导
+      if (visible === 0 && groupEls.length > 0) {
+        const empty = document.createElement('div');
+        empty.className = 'bz-sp-empty';
+        empty.innerHTML = `<div class="bz-sp-empty-ic"></div><div class="bz-sp-empty-title">${domain.name} · 暂无设置项</div><div class="bz-sp-empty-desc">该域的设置项仅移动端可见（如移动端默认全屏），桌面端无需配置</div>`;
+        setIcon(empty.querySelector('.bz-sp-empty-ic')!, 'smartphone');
+        body.appendChild(empty);
+      }
+      return;
     } catch (e) {
       loading.remove();
       const err = document.createElement('div');
@@ -256,22 +284,34 @@ export class SettingsPanelUI {
       <div class="bz-sp-mob-head">
         <h2>⚙️ 设置</h2>
         <span class="bz-sp-mob-count">${DOMAINS.length} 域</span>
-        <button class="bz-sp-mob-close" title="关闭">❌</button>
+        <button class="bz-sp-mob-close" title="关闭"></button>
       </div>
       <div class="bz-sp-mob-search">
         <span class="bz-sp-search-ic"></span>
         <input class="bz-sp-search-in" placeholder="搜索设置、域…" />
+        <button class="bz-sp-mob-clear" title="清除"></button>
       </div>
       <div class="bz-sp-mob-list"></div>
     `;
     setIcon(popup.querySelector('.bz-sp-mob-search .bz-sp-search-ic')!, 'search');
+    setIcon(popup.querySelector('.bz-sp-mob-close')!, 'x');
+    setIcon(popup.querySelector('.bz-sp-mob-clear')!, 'x');
 
     const list = popup.querySelector('.bz-sp-mob-list')!;
     const searchIn = popup.querySelector('.bz-sp-mob-search .bz-sp-search-in') as HTMLInputElement;
+    const clearBtn = popup.querySelector('.bz-sp-mob-clear') as HTMLElement;
+    const searchWrap = popup.querySelector('.bz-sp-mob-search')!;
     popup.querySelector('.bz-sp-mob-close')!.addEventListener('click', () => this.hide());
+    clearBtn.addEventListener('click', () => {
+      searchIn.value = '';
+      searchWrap.classList.remove('hasval');
+      render('');
+      searchIn.focus();
+    });
 
     const render = (q: string) => {
       const query = q.trim();
+      searchWrap.classList.toggle('hasval', !!query);
       list.innerHTML = '';
       DOMAINS.forEach((d) => {
         if (query && !d.name.includes(query) && !d.desc.includes(query)) return;
@@ -328,7 +368,7 @@ export class SettingsPanelUI {
     title.textContent = `${domain.name}设置`;
     const x = document.createElement('button');
     x.className = 'bz-sp-mob-modal-x';
-    x.textContent = '✕';
+    setIcon(x, 'x');
     x.title = '关闭';
     head.append(title, x);
     popup.appendChild(head);
@@ -396,4 +436,15 @@ export class SettingsPanelUI {
     }
     this.renderHandles = [];
   }
+}
+
+/** 侧栏导航徽标刷新（桌面端；指定域或全部） */
+export function navCountRefresh(domainId?: string): void {
+  document.querySelectorAll<HTMLElement>('.bz-sp-nav-item').forEach((b) => {
+    const id = DOMAINS[Number(b.dataset.i)]?.id;
+    if (!id || (domainId && id !== domainId)) return;
+    const ct = b.querySelector('.bz-sp-nav-count');
+    const n = groupCounts.get(id);
+    if (ct) ct.textContent = n !== undefined ? String(n) : '';
+  });
 }
