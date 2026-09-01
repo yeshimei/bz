@@ -5,12 +5,18 @@
  * （抛弃 Obsidian 原生 Setting 样式：自绘开关/输入/下拉/滑块/按钮/chips）。
  * 绑定逻辑照抄 core/settings-schema.ts：键直绑（getSettings/saveSettings）/
  * 三函数逃生口 / visibleWhen 求值 / onChange 回调 / text 防抖落盘。
- * 路径行复用 renderPathSettingRow + openPathPicker（ADR-0061 核心选择器）。
+ *
+ * 与 core/settings-schema.ts 渲染器的关键差异：
+ * 1. 行渲染完全不使用 Obsidian Setting 组件——路径行也是自绘（chips + 选择按钮 +
+ *    openPathPicker 选择器），不再出现「设置行里再套一层原生设置行」的嵌套；
+ * 2. custom 行走原型渲染器（自绘卡片行骨架，custom 内容渲染进控件区），
+ *    兼容现有各域 custom 插槽内的 new Setting() 代码（它们渲染进本面板的
+ *    .bz-sp-settings-body 时同样被自绘样式包裹）。
  */
 import { getSettings, saveSettings } from '../core/settings-provider';
 import type { SettingsSchema, SettingsRow, SettingsSnapshot, SettingsRowContext } from '../core/settings-schema';
 import { setIcon } from 'obsidian';
-import { renderPathSettingRow, openPathPicker } from '../core/path-picker';
+import { openPathPicker } from '../core/path-picker';
 import { notice } from '../core/notice';
 
 /** 快照读取（visibleWhen 求值输入；键直绑行从 getSettings 读，三函数行由外部提供） */
@@ -221,33 +227,94 @@ function makeButton(opts: { text: string; primary?: boolean; danger?: boolean; o
   return b;
 }
 
-/** 路径 chips（复用 renderPathSettingRow 逻辑：chips + 选择器） */
-function makePathRow(
-  parent: HTMLElement,
-  opts: {
-    name: string;
-    desc?: string;
-    mode: 'single' | 'multi';
-    value: string | string[];
-    pickerTitle?: string;
-    pickerDesc?: string;
-    buttonText?: string;
-    okText?: string;
-    onChange: (list: string[]) => void | string[] | Promise<void | string[]>;
-  }
-): void {
-  renderPathSettingRow({
-    parent,
-    name: opts.name,
-    desc: opts.desc,
-    mode: opts.mode,
-    value: opts.value,
-    pickerTitle: opts.pickerTitle,
-    pickerDesc: opts.pickerDesc,
-    buttonText: opts.buttonText,
-    okText: opts.okText,
-    onChange: (list) => opts.onChange(list),
-  });
+/* ==================== 路径行（自绘 chips + 选择按钮，原型样式） ==================== */
+
+/**
+ * 自绘路径行控件区：chips（已选目录，✕ 移除、文本点击重开选择器）+ 选择按钮（空态显示）。
+ * 与 core/path-picker 的 renderPathSettingRow 行为对齐（ticket 133 形态）：
+ * - 空态只显示「选择…/添加…」按钮（无「未选择」灰字）；
+ * - 已选态按钮移出 DOM，chips 文本点击重开选择器、✕ 清除；
+ * - 选择器确定 / ✕ 移除后统一回调 onChange（支持返回 Promise 改写）。
+ * 差异：完全自绘 DOM（无 Setting 组件），视觉 1:1 原型 chips（.bz-sp-chip）。
+ */
+export function makePathRowCtrl(opts: {
+  name: string;
+  mode: 'single' | 'multi';
+  value: string | string[];
+  pickerTitle?: string;
+  pickerDesc?: string;
+  buttonText?: string;
+  okText?: string;
+  onChange: (list: string[]) => void | string[] | Promise<void | string[]>;
+}): HTMLElement {
+  const readValue = (): string[] => {
+    const v = opts.value;
+    return Array.isArray(v) ? [...v] : v ? [v] : [];
+  };
+  let current = readValue();
+
+  const ctrl = document.createElement('div');
+  ctrl.className = 'bz-sp-chips';
+  const addBtn = document.createElement('button');
+  addBtn.className = 'bz-sp-btn bz-sp-path-btn';
+  addBtn.textContent = opts.buttonText || (opts.mode === 'multi' ? '添加…' : '选择…');
+
+  /** 统一变更入口：onChange 返回 Promise 时异步解析改写清单后重渲染；同步返回（含 void）立即重渲染 */
+  const apply = (list: string[]): void | Promise<void> => {
+    const res = opts.onChange(list);
+    if (res && typeof (res as { then?: unknown }).then === 'function') {
+      return Promise.resolve(res as Promise<void | string[]>).then((final) => {
+        current = Array.isArray(final) ? final : list;
+        renderAll();
+      });
+    }
+    current = Array.isArray(res) ? res : list;
+    renderAll();
+  };
+
+  const openPicker = () => {
+    openPathPicker({
+      title: opts.pickerTitle || opts.name,
+      desc: opts.pickerDesc,
+      mode: opts.mode,
+      selected: current,
+      okText: opts.okText,
+      onConfirm: (list) => {
+        void apply(list);
+      },
+    });
+  };
+
+  const renderChips = () => {
+    ctrl.querySelectorAll('.bz-sp-chip').forEach((c) => c.remove());
+    for (const path of current) {
+      const label = path === '' ? '（库根目录）' : path;
+      const chip = document.createElement('span');
+      chip.className = 'bz-sp-chip';
+      chip.title = label;
+      const name = document.createElement('span');
+      name.className = 'bz-sp-chip-name';
+      name.textContent = label;
+      name.addEventListener('click', openPicker); // 文本点击重开选择器
+      const x = document.createElement('button');
+      x.className = 'bz-sp-chip-x';
+      x.textContent = '✕';
+      x.setAttribute('aria-label', `移除 ${label}`);
+      x.addEventListener('click', () => {
+        void apply(current.filter((p) => p !== path));
+      });
+      chip.append(name, x);
+      ctrl.appendChild(chip);
+    }
+    addBtn.style.display = current.length ? 'none' : '';
+    if (!current.length && !addBtn.isConnected) ctrl.appendChild(addBtn);
+    if (current.length && addBtn.isConnected) addBtn.remove();
+  };
+  const renderAll = () => renderChips();
+  addBtn.addEventListener('click', openPicker);
+  ctrl.appendChild(addBtn);
+  renderChips();
+  return ctrl;
 }
 
 /* ==================== 行渲染 ==================== */
@@ -382,29 +449,34 @@ function renderRow(row: SettingsRow, refresh: () => void): HTMLElement {
     }
     case 'path': {
       const acc = bindValue<string | string[]>(row.binding as unknown as AnyBinding);
-      makePathRow(ctrl, {
+      const multi = row.mode === 'multi';
+      ctrl.appendChild(makePathRowCtrl({
         name: row.name,
-        desc: (row as { desc?: string }).desc,
         mode: row.mode,
-        value: acc.read(),
+        value: multi
+          ? Array.isArray(acc.read())
+            ? [...(acc.read() as string[])]
+            : []
+          : String(acc.read() ?? ''),
         pickerTitle: row.pickerTitle,
         pickerDesc: row.pickerDesc,
         buttonText: row.buttonText,
         okText: row.okText,
         onChange: (list) => {
+          const v = multi ? list : (list[0] || '').trim().replace(/^\/+|\/+$/g, '');
+          acc.write(v as string | string[]);
+          void acc.persist();
+          // 回调在落盘后触发（原口径）；返回清单（含异步解析结果）回传 path 行作 chips 渲染口径——
+          // 异步否决场景的落盘改写由回调自行负责（如外部 binding 自管写盘）
           const res = row.onChange?.(list, ctx);
           if (res && typeof (res as { then?: unknown }).then === 'function') {
-            return Promise.resolve(res as Promise<void | string[]>).then((final) => {
-              acc.write((Array.isArray(final) ? final : list) as never);
-              void acc.persist();
-              return final as never;
-            });
+            return Promise.resolve(res as Promise<void | string[]>).then(
+              (final) => (Array.isArray(final) ? final : list)
+            );
           }
-          acc.write(list as never);
-          void acc.persist();
-          return list as never;
+          return Array.isArray(res) ? res : undefined;
         },
-      });
+      }));
       break;
     }
     case 'button': {
@@ -423,10 +495,17 @@ function renderRow(row: SettingsRow, refresh: () => void): HTMLElement {
       break;
     }
     case 'custom': {
+      // 自绘行骨架（名称/描述在 info 区），custom 内容渲染进控件区插槽。
+      // 兼容现有 custom 插槽内的 new Setting(body) 代码：body 挂在控件区内，
+      // Setting 创建的原生设置行在面板内同样被自绘容器包裹（视觉由本面板容器收敛）。
       const slot = document.createElement('div');
       slot.className = 'bz-sp-custom-slot';
       ctrl.appendChild(slot);
-      row.render(slot, ctx);
+      try {
+        row.render(slot, ctx);
+      } catch (e) {
+        notice(`自定义设置行渲染失败：${e instanceof Error ? e.message : String(e)}`, 'error');
+      }
       break;
     }
     default:
@@ -475,7 +554,8 @@ function renderGroup(container: HTMLElement, group: { name: string; icon?: strin
 
 /**
  * 自绘渲染 schema 到容器（与 ⚙️ 同数据源，视觉 1:1 原型）。
- * visibleWhen 求值：false 的行挂 display none；isChild 行缩进。
+ * visibleWhen 求值：false 的行/组挂 display none（含组级 visibleWhen，如移动端组桌面隐藏）；
+ * isChild 行缩进。
  * 显隐条件用 WeakMap 存函数引用（不可序列化，避免 new Function 脆弱方案）。
  * 返回 { refresh }（重求值显隐）。
  */
@@ -487,11 +567,23 @@ export function renderPanelSchema(container: HTMLElement, schema: SettingsSchema
       if (!cond) return;
       el.style.display = cond(snapshot()) ? '' : 'none';
     });
+    container.querySelectorAll<HTMLElement>('[data-sp-group]').forEach((el) => {
+      const cond = visibleConditions.get(el);
+      if (!cond) return;
+      el.style.display = cond(snapshot()) ? '' : 'none';
+    });
   };
 
   schema.groups.forEach((g) => {
     const card = renderGroup(container, g, refresh);
     card.dataset.spGroup = g.name;
+    // 组级 visibleWhen（如 mobileFullscreenGroup 的 isMobileEnv 门控）：false 整组隐藏
+    const groupVw = (g as { visibleWhen?: (s: SettingsSnapshot) => boolean }).visibleWhen;
+    if (groupVw) {
+      card.dataset.spGroupCond = '1';
+      visibleConditions.set(card, groupVw);
+      card.style.display = groupVw(snapshot()) ? '' : 'none';
+    }
     g.rows.forEach((r, i) => {
       const rowEl = card.querySelectorAll('.bz-sp-set-row')[i] as HTMLElement | undefined;
       if (!rowEl) return;

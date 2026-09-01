@@ -3729,7 +3729,9 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 /* ==================== 设置面板域样式（src/settings-panel/styles.css，ADR-0080） ==================== */
 /* 原型 .scratch/global-settings-panel-prototype.html 1:1 复刻（用户拍板：完全自绘，抛弃 Obsidian 原生样式影响）。
    桌面 B 侧栏工作台 / 移动 M1 命令面板；取值参考 bz 保险库（encrypt）质感。
-   滚动条全隐藏（滚动功能保留）。 */
+   滚动条全隐藏（滚动功能保留）。
+   custom 插槽内容（各域 schema 内 new Setting() 构建的原生设置行）在面板作用域内被统一重绘为
+   原型行样式（见「custom 插槽作用域重绘」节），保证面板内视觉一致。 */
 
 /* ---- 桌面：B 侧栏工作台 ---- */
 .bz-sp-desk {
@@ -3828,32 +3830,23 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 .bz-sp-nav-ic { display: inline-flex; flex-shrink: 0; }
 .bz-sp-nav-ic svg { width: 15px; height: 15px; }
 .bz-sp-nav-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 设置组数徽标（原型 .b-ct） */
+.bz-sp-nav-count {
+  font-size: 11px;
+  color: var(--text-faint);
+  background: var(--background-modifier-hover);
+  border-radius: 9px;
+  padding: 0 6px;
+  flex-shrink: 0;
+  line-height: 1.6;
+}
+.bz-sp-nav-item.on .bz-sp-nav-count { color: var(--interactive-accent); background: var(--background-modifier-active-hover); }
 .bz-sp-desk-main {
   flex: 1;
   min-width: 0;
   overflow-y: auto;
   padding: 16px 24px 24px;
 }
-.bz-sp-pane-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 6px;
-}
-.bz-sp-pane-ic {
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
-  background: var(--tag-bg, rgba(124,108,240,0.14));
-  color: var(--interactive-accent);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.bz-sp-pane-ic svg { width: 16px; height: 16px; }
-.bz-sp-pane-title { margin: 0; font-size: 18px; font-weight: 700; color: var(--text-normal); }
-.bz-sp-pane-desc { margin: 0 0 16px; font-size: 13px; color: var(--text-muted); }
 
 /* ---- 自绘设置分组卡（保险库质感） ---- */
 .bz-sp-group {
@@ -4080,8 +4073,174 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 }
 .bz-sp-badge.gray { background: var(--background-modifier-hover); color: var(--text-muted); }
 
-/* custom 插槽 */
-.bz-sp-custom-slot { display: flex; align-items: center; gap: 8px; }
+/* ---- 自绘路径行（原型 chips + 选择按钮；无原生设置行嵌套） ---- */
+.bz-sp-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+  justify-content: flex-end;
+}
+.bz-sp-chip {
+  font-size: 12px;
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+  border-radius: 999px;
+  padding: 3px 6px 3px 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1.4;
+}
+.bz-sp-chip-name { cursor: pointer; }
+.bz-sp-chip-name:hover { color: var(--interactive-accent); }
+.bz-sp-chip-x {
+  color: var(--text-faint);
+  font-size: 10px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  line-height: 1;
+}
+.bz-sp-chip-x:hover { background: var(--background-secondary); color: var(--text-normal); }
+.bz-sp-path-btn { flex-shrink: 0; }
+
+/* ---- custom 插槽 ---- */
+.bz-sp-custom-slot { display: flex; align-items: center; gap: 8px; min-width: 0; }
+
+/* ---- custom 插槽作用域重绘：面板内 new Setting() 的原生行/控件统一换成原型样式 ----
+   各域 schema 的 custom 行（如第二大脑远程 URL、番茄钟提示音音量、剪藏数据源组、小橘外观）内部
+   仍用 Obsidian Setting 组件构建。在设置面板作用域内把它们重绘为与自绘行一致的外观，
+   保证面板内视觉统一（1:1 原型）；面板外（⚙️ 弹窗）不受影响。 */
+#bz-settings-panel-popup .setting-item,
+.bz-sp-mob-modal .setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+}
+#bz-settings-panel-popup .setting-item:hover,
+.bz-sp-mob-modal .setting-item:hover { background: var(--background-modifier-hover); }
+#bz-settings-panel-popup .setting-item-info,
+.bz-sp-mob-modal .setting-item-info {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  padding: 0;
+}
+#bz-settings-panel-popup .setting-item-name,
+.bz-sp-mob-modal .setting-item-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-normal);
+  line-height: 1.4;
+}
+#bz-settings-panel-popup .setting-item-description,
+.bz-sp-mob-modal .setting-item-description {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  line-height: 1.45;
+  padding: 0;
+}
+#bz-settings-panel-popup .setting-item-control,
+.bz-sp-mob-modal .setting-item-control {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  padding: 0;
+}
+/* 原生按钮 → 原型次级按钮 */
+#bz-settings-panel-popup .setting-item-control button,
+.bz-sp-mob-modal .setting-item-control button {
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  padding: 5px 11px;
+  font-size: 12.5px;
+  font-family: inherit;
+  cursor: pointer;
+  line-height: 1.25;
+  transition: background 0.15s, opacity 0.15s;
+  box-shadow: none;
+  margin: 0;
+}
+#bz-settings-panel-popup .setting-item-control button:hover,
+.bz-sp-mob-modal .setting-item-control button:hover { background: var(--background-modifier-hover); }
+#bz-settings-panel-popup .setting-item-control button.mod-cta,
+.bz-sp-mob-modal .setting-item-control button.mod-cta {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: transparent;
+}
+#bz-settings-panel-popup .setting-item-control button.mod-cta:hover,
+.bz-sp-mob-modal .setting-item-control button.mod-cta:hover { opacity: 0.88; }
+/* 原生文本输入 → 原型输入框 */
+#bz-settings-panel-popup .setting-item-control input[type="text"],
+#bz-settings-panel-popup .setting-item-control input[type="number"],
+.bz-sp-mob-modal .setting-item-control input[type="text"],
+.bz-sp-mob-modal .setting-item-control input[type="number"] {
+  width: 190px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--input-bg, var(--background-primary));
+  color: var(--text-normal);
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: inherit;
+  height: auto;
+  box-shadow: none;
+}
+#bz-settings-panel-popup .setting-item-control input[type="text"]:focus,
+#bz-settings-panel-popup .setting-item-control input[type="number"]:focus,
+.bz-sp-mob-modal .setting-item-control input[type="text"]:focus,
+.bz-sp-mob-modal .setting-item-control input[type="number"]:focus { border-color: var(--interactive-accent); }
+/* 原生滑块 → 原型滑块（Obsidian slider 组件 DOM 映射） */
+#bz-settings-panel-popup .setting-item-control input[type="range"],
+.bz-sp-mob-modal .setting-item-control input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 110px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--background-modifier-border);
+  outline: none;
+  cursor: pointer;
+  padding: 0;
+}
+#bz-settings-panel-popup .setting-item-control input[type="range"]::-webkit-slider-thumb,
+.bz-sp-mob-modal .setting-item-control input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-on-accent);
+  border: 2px solid var(--interactive-accent);
+  cursor: pointer;
+}
+#bz-settings-panel-popup .setting-item-control input[type="range"]::-moz-range-thumb,
+.bz-sp-mob-modal .setting-item-control input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-on-accent);
+  border: 2px solid var(--interactive-accent);
+  cursor: pointer;
+}
 
 /* 空态 / 加载 */
 .bz-sp-empty {
@@ -4149,8 +4308,12 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   flex-shrink: 0;
   padding: 0;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .bz-sp-mob-close:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
+.bz-sp-mob-close svg { width: 15px; height: 15px; }
 .bz-sp-mob-search {
   margin: 4px 16px 8px;
   display: flex;
@@ -4174,6 +4337,24 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   color: var(--text-normal);
   min-width: 0;
 }
+.bz-sp-mob-clear {
+  border: none;
+  background: var(--background-modifier-hover);
+  color: var(--text-muted);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 10px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  flex-shrink: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.bz-sp-mob-clear svg { width: 10px; height: 10px; }
+.bz-sp-mob-search.hasval .bz-sp-mob-clear { display: inline-flex; }
 .bz-sp-mob-list {
   flex: 1;
   overflow-y: auto;
@@ -4222,7 +4403,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 /* ---- 真全屏态关闭按钮 ---- */
 .bz-win-mfs .bz-sp-mob-close { display: inline-flex !important; }
 
-/* ---- 移动端子面板：域设置弹窗（自绘居中卡） ---- */
+/* ---- 移动端子面板：域设置弹窗（自绘居中卡，原型 m1-modal） ---- */
 .bz-sp-mob-modal {
   border-radius: 12px !important;
   box-shadow: var(--shadow-lg);
@@ -4231,8 +4412,7 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 16px 10px;
-  border-bottom: 1px solid var(--background-modifier-border);
+  padding: 16px 16px 12px;
   flex-shrink: 0;
 }
 .bz-sp-mob-modal-title {
@@ -4244,7 +4424,22 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
+.bz-sp-mob-modal-ic {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: var(--tag-bg, rgba(124,108,240,0.14));
+  color: var(--interactive-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.bz-sp-mob-modal-ic svg { width: 13px; height: 13px; }
 .bz-sp-mob-modal-x {
   border: none;
   background: transparent;
@@ -4257,12 +4452,16 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   flex-shrink: 0;
   padding: 0;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .bz-sp-mob-modal-x:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
+.bz-sp-mob-modal-x svg { width: 14px; height: 14px; }
 .bz-sp-mob-modal-body {
   flex: 1;
   overflow-y: auto;
-  padding: 12px 16px 20px;
+  padding: 4px 12px 16px;
 }
 
 /* ---- 全站隐藏滚动条（滚动保留） ---- */
