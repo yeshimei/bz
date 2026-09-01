@@ -11,6 +11,8 @@ import { SettingsPanelUI } from '../src/settings-panel/ui';
 import { openSettingsPanel, unloadSettingsPanel } from '../src/settings-panel';
 import { escManager } from '../src/core/esc-manager';
 import { setSettingsProvider } from '../src/core/settings-provider';
+import { setApp } from '../src/core/app';
+import { MockVault } from './mock-vault';
 
 // mock Platform.isMobile 切换（桌面/移动两态）
 let mobileFlag = false;
@@ -26,8 +28,17 @@ vi.mock('obsidian', async (importOriginal) => {
   };
 });
 
-/** 等渲染微任务完成 */
+/** 等渲染微任务完成（动态 import 首次加载可能 >20ms，用轮询等到分组出现或超时） */
 const tick = () => new Promise((r) => setTimeout(r, 20));
+/** 等待 pane 内出现 .bz-sp-group（最多 2s），超时返回 false */
+async function waitGroups(container: HTMLElement, min: number): Promise<boolean> {
+  const deadline = Date.now() + 2000;
+  while (Date.now() < deadline) {
+    if (container.querySelectorAll('.bz-sp-group').length >= min) return true;
+    await new Promise((r) => setTimeout(r, 30));
+  }
+  return false;
+}
 
 describe('设置面板（settings-panel）', () => {
   beforeEach(() => {
@@ -37,6 +48,8 @@ describe('设置面板（settings-panel）', () => {
     unloadSettingsPanel();
     (escManager as any).handlers = new Map();
     setSettingsProvider(() => ({ settingsPanelMobileDefaultFullscreen: true } as any));
+    // 注入 app（review schema 构造经 getApp；mock 与其它域测试一致）
+    setApp({ vault: new MockVault(), workspace: { getLeaf: () => ({ openFile: vi.fn() }) } } as any);
   });
 
   it('桌面端：构建侧栏工作台（品牌+搜索+域导航+右侧面板）', () => {
@@ -60,10 +73,10 @@ describe('设置面板（settings-panel）', () => {
     const popup = document.getElementById('bz-settings-panel-popup')!;
     await tick();
     // 全局 schema = mainSettingsSchema（AI + 数据存储路径两区块）
-    const groups = popup.querySelectorAll('.bz-settings-group');
+    const groups = popup.querySelectorAll('.bz-sp-group');
     expect(groups.length).toBeGreaterThanOrEqual(2);
-    // 设置行真实渲染（Obsidian Setting 结构）
-    expect(popup.querySelectorAll('.setting-item').length).toBeGreaterThan(0);
+    // 设置行真实渲染（自绘结构）
+    expect(popup.querySelectorAll('.bz-sp-set-row').length).toBeGreaterThan(0);
     ui.cleanup();
   });
 
@@ -76,12 +89,14 @@ describe('设置面板（settings-panel）', () => {
     // 点击「复习计划」（index 11）→ 内嵌渲染 review schema（检查提醒/做题家等分组）
     (items[11] as HTMLElement).click();
     expect(popup.querySelector('.bz-sp-pane-title')!.textContent).toBe('复习计划');
-    await tick();
-    const groups = popup.querySelectorAll('.bz-settings-group');
-    // review schema 至少 5 组（检查提醒/做题家/复习节奏/记忆算法/自动化/界面）
-    expect(groups.length).toBeGreaterThanOrEqual(5);
-    // 设置行真实渲染（开关/输入等）
-    expect(popup.querySelectorAll('.setting-item').length).toBeGreaterThan(0);
+    await waitGroups(popup, 5);
+    const groups = popup.querySelectorAll('.bz-sp-group');
+    const paneHtml = popup.querySelector('.bz-sp-pane')!.innerHTML;
+    // 若为空态，把描述（错误消息）打出来
+    const errDesc = popup.querySelector('.bz-sp-empty-desc');
+    expect(groups.length, 'err: ' + (errDesc ? errDesc.textContent : 'none')).toBeGreaterThanOrEqual(5);
+    // 设置行真实渲染（自绘开关/输入等）
+    expect(popup.querySelectorAll('.bz-sp-set-row').length).toBeGreaterThan(0);
     ui.cleanup();
   });
 
@@ -93,10 +108,46 @@ describe('设置面板（settings-panel）', () => {
     const items = popup.querySelectorAll('.bz-sp-nav-item');
     // 番茄钟 index 16
     (items[16] as HTMLElement).click();
-    await tick();
-    const groups = popup.querySelectorAll('.bz-settings-group');
+    await waitGroups(popup, 2);
+    const groups = popup.querySelectorAll('.bz-sp-group');
     expect(groups.length).toBeGreaterThanOrEqual(2);
-    expect(popup.querySelectorAll('.setting-item').length).toBeGreaterThan(0);
+    expect(popup.querySelectorAll('.bz-sp-set-row').length).toBeGreaterThan(0);
+    ui.cleanup();
+  });
+
+  it('桌面端：自绘开关点击切换（真实交互，番茄钟域）', async () => {
+    const ui = new SettingsPanelUI();
+    ui.open();
+    const popup = document.getElementById('bz-settings-panel-popup')!;
+    await tick();
+    // 切到番茄钟（index 16，行为组有多个开关）
+    (popup.querySelectorAll('.bz-sp-nav-item')[16] as HTMLElement).click();
+    await waitGroups(popup, 2);
+    const sw = popup.querySelector('.bz-sp-sw');
+    expect(sw).toBeTruthy();
+    const before = sw!.classList.contains('on');
+    sw!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(sw!.classList.contains('on')).toBe(!before);
+    ui.cleanup();
+  });
+
+  it('桌面端：自绘下拉点击弹出选项并选择（番茄钟预设）', async () => {
+    const ui = new SettingsPanelUI();
+    ui.open();
+    const popup = document.getElementById('bz-settings-panel-popup')!;
+    await tick();
+    // 切到番茄钟（index 16，时间方案组有预设下拉）
+    (popup.querySelectorAll('.bz-sp-nav-item')[16] as HTMLElement).click();
+    await waitGroups(popup, 2);
+    const sel = popup.querySelector('.bz-sp-sel');
+    expect(sel).toBeTruthy();
+    sel!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const menu = popup.querySelector('.bz-sp-sel-menu');
+    expect(menu).toBeTruthy();
+    const opt = menu!.querySelectorAll('.bz-sp-sel-opt')[1] as HTMLElement;
+    const before = popup.querySelector('.bz-sp-sel-val')!.textContent;
+    opt.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(popup.querySelector('.bz-sp-sel-val')!.textContent).not.toBe(before);
     ui.cleanup();
   });
 
@@ -146,12 +197,16 @@ describe('设置面板（settings-panel）', () => {
     const items = popup.querySelectorAll('.bz-sp-mob-item');
     // 点「番茄钟」（index 16）
     (items[16] as HTMLElement).click();
-    await tick();
-    const modal = document.querySelector('.bz-sp-mob-modal');
+    const deadline = Date.now() + 2000;
+    let modal: Element | null = null;
+    while (Date.now() < deadline) {
+      modal = document.querySelector('.bz-sp-mob-modal');
+      if (modal && modal.querySelectorAll('.bz-sp-group').length >= 2) break;
+      await new Promise((r) => setTimeout(r, 30));
+    }
     expect(modal).toBeTruthy();
     // 弹窗内真实设置分组
-    expect(modal!.querySelectorAll('.bz-settings-group').length).toBeGreaterThanOrEqual(2);
-    // 遮罩点击关闭（精确选弹窗遮罩：弹窗 mask 是 modal 的前一个兄弟）
+    expect(modal!.querySelectorAll('.bz-sp-group').length).toBeGreaterThanOrEqual(2);
     const modalMask = modal!.previousElementSibling as HTMLElement;
     expect(modalMask.classList.contains('bz-overlay-mask')).toBe(true);
     modalMask.dispatchEvent(new MouseEvent('click', { bubbles: true }));
