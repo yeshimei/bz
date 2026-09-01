@@ -1,136 +1,86 @@
 /**
  * 设置面板 UI（settings-panel，ADR-0080）
- * 一比一复刻原型 .scratch/global-settings-panel-prototype.html：
- * - 桌面端：B 侧栏工作台（左域导航 + 右内容区）；无底部快捷键提示、无右侧导航条
- * - 移动端：M1 命令面板（搜索 + 域列表）；主面板真全屏 + 关闭按钮
- * - 子面板（域设置 / 文件选择器）：一律复用既有 core 组件——
- *   域设置 → openSettingsModal + 各域既有 schema（功能性与 ⚙️ 完全一致）；
- *   路径行 → renderPathSettingRow + openPathPicker（ADR-0061）。
- * - 面板本身是聚合导航，不另造设置写入通道。
+ * 原型 .scratch/global-settings-panel-prototype.html 一比一复刻：
+ * - 桌面端：B 侧栏工作台（左域导航 + 右内容区直接内嵌渲染该域全部设置分组）
+ * - 移动端：M1 命令面板（搜索 + 域列表，主面板真全屏 + 关闭按钮）
+ * - 域设置内容：与各域 ⚙️ 弹窗**同一渲染器同一数据通道**——
+ *   `renderSettingsInto`（core/settings-schema）内嵌渲染各域真实 schema，
+ *   设置项（开关/输入/下拉/路径）直接在面板内可操作；路径行自动走
+ *   renderPathSettingRow + openPathPicker（ADR-0061）。
+ * - 全局域 → mainSettingsSchema()（AI 服务商 + 数据存储路径）。
  */
 import { App, setIcon } from 'obsidian';
 import { createOverlay, topifyZ } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
-import { openSettingsModal } from '../core/settings-modal';
+import { renderSettingsInto } from '../core/settings-schema';
+import type { SettingsSchema } from '../core/settings-schema';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
-import type { SettingsSchema } from '../core/settings-schema';
 
-/* ==================== 域清单（与原型一致，全局 + 20 域） ==================== */
+/* ==================== 域清单（全局 + 20 域） ==================== */
 
 interface DomainDef {
   id: string;
   name: string;
   icon: string; // lucide 图标名（setIcon 用）
   desc: string;
-  /** 无任何设置项（归物本/收藏本） */
+  /** 无任何设置项（归物本/收藏本等） */
   noSettings?: boolean;
-  /** 全局：打开 Obsidian 设置页（AI / 数据存储路径） */
-  openMainTab?: boolean;
-  /** 有真实设置 schema 的域：打开 openSettingsModal（与 ⚙️ 同源） */
-  hasSchema?: boolean;
+  /** 有真实 schema 的域：内嵌渲染（惰性加载） */
+  schemaLoader?: () => Promise<SettingsSchema>;
+  /** 渲染该域设置时附加标题（缺省用域名） */
+  settingsTitle?: string;
 }
+
+/** 惰性 schema 加载器（与各域 ⚙️ 弹窗同源） */
+const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
+  global: async () => (await import('../core/settings-main-schema')).mainSettingsSchema(),
+  diary: async () => (await import('../diary/ui/panel')).diarySettingsSchema(),
+  memo: async () => (await import('../memo/ui')).memoSettingsSchema(),
+  clipping: async () => (await import('../clipping/view')).clippingSettingsSchema(),
+  password: async () => (await import('../password/ui')).passwordSettingsSchema(),
+  favorites: async () => (await import('../favorites/ui')).favoritesSettingsSchema(),
+  library: async () => (await import('../library/ui')).librarySettingsSchema(),
+  movie: async () => (await import('../movie/ui')).movieSettingsSchema(),
+  review: async () => {
+    const { reviewApp } = await import('../review/app');
+    const { reviewSettingsSchema } = await import('../review/ui');
+    const app = getApp();
+    reviewApp.ensure(app);
+    return reviewSettingsSchema({ app, dataManager: reviewApp.dataManager! });
+  },
+  secondbrain: async () => (await import('../secondbrain/panel')).secondBrainSettingsSchema(),
+  pomodoro: async () => (await import('../pomodoro/ui')).pomodoroSettingsSchema(),
+  encrypt: async () => (await import('../encrypt/ui')).encryptSettingsSchema(),
+  literature: async () => (await import('../literature/ui')).literatureSettingsSchema(),
+};
 
 const DOMAINS: DomainDef[] = [
-  { id: 'global', name: '全局', icon: 'settings-2', desc: 'AI、存储路径、移动端全屏与入口偏好', openMainTab: true },
-  { id: 'diary', name: '日记本', icon: 'notebook', desc: '日记目录、显示与默认视图', hasSchema: true },
-  { id: 'memo', name: '备忘录', icon: 'sticky-note', desc: '提醒与到期行为', hasSchema: true },
+  { id: 'global', name: '全局', icon: 'settings-2', desc: 'AI 服务商、数据存储路径、移动端全屏与入口偏好', schemaLoader: schemaLoaders.global },
+  { id: 'diary', name: '日记本', icon: 'notebook', desc: '日记目录、显示与默认视图', schemaLoader: schemaLoaders.diary },
+  { id: 'memo', name: '备忘录', icon: 'sticky-note', desc: '提醒与到期行为', schemaLoader: schemaLoaders.memo },
   { id: 'belongings', name: '归物本', icon: 'package', desc: '物品登记与查找', noSettings: true },
-  { id: 'clipping', name: '剪藏本', icon: 'scissors', desc: '网页剪藏与聚合讯', hasSchema: true },
-  { id: 'news', name: '聚合讯', icon: 'rss', desc: '资讯聚合', hasSchema: true },
-  { id: 'password', name: '密码本', icon: 'key', desc: '账号密码管理', hasSchema: true },
-  { id: 'favorites', name: '收藏本', icon: 'star', desc: '收藏条目', noSettings: true },
-  { id: 'library', name: '书库', icon: 'library', desc: '藏书与读书笔记', hasSchema: true },
-  { id: 'reading-report', name: '阅读报告', icon: 'bar-chart-3', desc: '阅读统计', hasSchema: true },
-  { id: 'movie', name: '影视', icon: 'film', desc: '影视目录与海报', hasSchema: true },
-  { id: 'review', name: '复习计划', icon: 'calendar', desc: '间隔重复与做题', hasSchema: true },
-  { id: 'quiz', name: '做题家', icon: 'brain', desc: '题目练习（并入复习计划）', hasSchema: true },
-  { id: 'secondbrain', name: '第二大脑', icon: 'brain', desc: '嵌入检索与对话', hasSchema: true },
-  { id: 'auto-summary', name: '自动摘要', icon: 'sparkles', desc: '剪藏自动摘要', hasSchema: true },
-  { id: 'launcher', name: '入口页', icon: 'layout-grid', desc: '命令磁贴入口', hasSchema: true },
-  { id: 'pomodoro', name: '番茄钟', icon: 'timer', desc: '专注计时与休息', hasSchema: true },
-  { id: 'attach', name: '附件搬移', icon: 'folder-down', desc: '附件整理', hasSchema: true },
-  { id: 'bili-downloader', name: 'B站下载', icon: 'download', desc: 'B站视频下载任务', hasSchema: true },
-  { id: 'encrypt', name: '加密保险箱', icon: 'lock', desc: '加密文件保险箱', hasSchema: true },
-  { id: 'smartcat', name: '小橘陪伴猫', icon: 'cat', desc: '桌面宠物陪伴', hasSchema: true },
-  { id: 'literature', name: '文献笔记', icon: 'book-open', desc: '文献管理与术语', hasSchema: true },
+  { id: 'clipping', name: '剪藏本', icon: 'scissors', desc: '网页剪藏与聚合讯', schemaLoader: schemaLoaders.clipping },
+  { id: 'news', name: '聚合讯', icon: 'rss', desc: '资讯聚合', noSettings: true },
+  { id: 'password', name: '密码本', icon: 'key', desc: '账号密码管理', schemaLoader: schemaLoaders.password },
+  { id: 'favorites', name: '收藏本', icon: 'star', desc: '收藏条目', schemaLoader: schemaLoaders.favorites },
+  { id: 'library', name: '书库', icon: 'library', desc: '藏书与读书笔记', schemaLoader: schemaLoaders.library },
+  { id: 'reading-report', name: '阅读报告', icon: 'bar-chart-3', desc: '阅读统计', noSettings: true },
+  { id: 'movie', name: '影视', icon: 'film', desc: '影视目录与海报', schemaLoader: schemaLoaders.movie },
+  { id: 'review', name: '复习计划', icon: 'calendar', desc: '间隔重复与做题', schemaLoader: schemaLoaders.review },
+  { id: 'quiz', name: '做题家', icon: 'brain', desc: '题目练习（并入复习计划）', noSettings: true },
+  { id: 'secondbrain', name: '第二大脑', icon: 'brain', desc: '嵌入检索与对话', schemaLoader: schemaLoaders.secondbrain },
+  { id: 'auto-summary', name: '自动摘要', icon: 'sparkles', desc: '剪藏自动摘要', noSettings: true },
+  { id: 'launcher', name: '入口页', icon: 'layout-grid', desc: '命令磁贴入口', noSettings: true },
+  { id: 'pomodoro', name: '番茄钟', icon: 'timer', desc: '专注计时与休息', schemaLoader: schemaLoaders.pomodoro },
+  { id: 'attach', name: '附件搬移', icon: 'folder-down', desc: '附件整理', noSettings: true },
+  { id: 'bili-downloader', name: 'B站下载', icon: 'download', desc: 'B站视频下载任务', noSettings: true },
+  { id: 'encrypt', name: '加密保险箱', icon: 'lock', desc: '加密文件保险箱', schemaLoader: schemaLoaders.encrypt },
+  { id: 'smartcat', name: '小橘陪伴猫', icon: 'cat', desc: '桌面宠物陪伴', noSettings: true },
+  { id: 'literature', name: '文献笔记', icon: 'book-open', desc: '文献管理与术语', schemaLoader: schemaLoaders.literature },
 ];
-
-/**
- * 打开某域设置：与各域 ⚙️ 完全同源——复用既有声明式 schema + openSettingsModal。
- * review 的 schema 依赖 dataManager：走 reviewApp.ensure 惰性构造（与主面板同实例）。
- */
-async function openDomainSettings(domain: DomainDef): Promise<void> {
-  const app = getApp();
-  if (domain.noSettings) {
-    notice(`「${domain.name}」暂无设置项`);
-    return;
-  }
-  if (domain.openMainTab) {
-    // 全局 → 打开 Obsidian 设置页（bz 区块：AI / 数据存储路径）
-    (app as any).setting.open();
-    notice('请在 bz 设置页配置 AI 与数据存储路径');
-    return;
-  }
-
-  // 逐域懒加载真实 schema（与各域 ⚙️ 弹窗同一数据源）
-  let schema: SettingsSchema | null = null;
-  let title = `${domain.name}设置`;
-  try {
-    switch (domain.id) {
-      case 'review': {
-        const { reviewApp } = await import('../review/app');
-        reviewApp.ensure(app);
-        const { reviewSettingsSchema } = await import('../review/ui');
-        schema = reviewSettingsSchema({ app, dataManager: reviewApp.dataManager! });
-        title = '复习计划设置';
-        break;
-      }
-      case 'secondbrain': {
-        const { secondBrainSettingsSchema } = await import('../secondbrain/panel');
-        schema = secondBrainSettingsSchema();
-        title = '第二大脑设置';
-        break;
-      }
-      case 'pomodoro': {
-        const { pomodoroSettingsSchema } = await import('../pomodoro/ui');
-        schema = pomodoroSettingsSchema();
-        title = '番茄钟设置';
-        break;
-      }
-      case 'global':
-      case 'diary':
-      case 'memo':
-      case 'clipping':
-      case 'news':
-      case 'password':
-      case 'library':
-      case 'reading-report':
-      case 'movie':
-      case 'quiz':
-      case 'auto-summary':
-      case 'launcher':
-      case 'attach':
-      case 'bili-downloader':
-      case 'encrypt':
-      case 'smartcat':
-      case 'literature':
-      default:
-        // 未接入真实 schema 的域：占位提示（后续逐步接入）
-        notice(`「${domain.name}」设置将在此呈现（待接入各域 schema）`);
-        return;
-    }
-  } catch (e) {
-    notice(`打开「${domain.name}」设置失败：${(e as Error).message}`, 'error');
-    return;
-  }
-
-  if (schema) {
-    openSettingsModal({ title, maxWidth: 560, schema });
-  }
-}
 
 /* ==================== 面板 UI（桌面 B + 移动 M1） ==================== */
 
@@ -139,10 +89,11 @@ export class SettingsPanelUI {
   private popup: HTMLElement | null = null;
   private escHandle: { unregister: () => void } | null = null;
   private activeDomain = 0;
+  /** 保存渲染句柄，域切换时 dispose（防旧句柄 refresh 干扰） */
+  private renderHandles: Array<{ refresh: () => void }> = [];
 
   open(): void {
     if (this.mask && this.popup) {
-      // 已打开 → 顶置并显示（幂等）
       topifyZ(this.mask, this.popup);
       this.mask.style.display = 'block';
       this.popup.style.display = 'flex';
@@ -160,8 +111,6 @@ export class SettingsPanelUI {
     });
     this.mask = mask;
     this.popup = popup;
-
-    // 移动端默认全屏（ADR-0019 同款键；原型：主面板真全屏 + 关闭按钮）
     applyMobileWindowFullscreen(popup, tryGetSettings().settingsPanelMobileDefaultFullscreen === true);
 
     if (isMobileEnv()) {
@@ -182,7 +131,8 @@ export class SettingsPanelUI {
     });
   }
 
-  /** 桌面：B 侧栏工作台（左导航 + 右内容，无底部提示/右侧导航条） */
+  /* ---------- 桌面：B 侧栏工作台（左导航 + 右内嵌渲染） ---------- */
+
   private buildDesktop(popup: HTMLElement): void {
     popup.classList.add('bz-sp-desk');
     popup.innerHTML = `
@@ -226,7 +176,7 @@ export class SettingsPanelUI {
         b.addEventListener('click', () => {
           this.activeDomain = i;
           renderNav(searchIn.value);
-          this.renderPane(pane, d);
+          void this.renderDomain(pane, d);
         });
         nav.appendChild(b);
       });
@@ -234,12 +184,19 @@ export class SettingsPanelUI {
 
     searchIn.addEventListener('input', () => renderNav(searchIn.value));
     renderNav('');
-    this.renderPane(pane, DOMAINS[this.activeDomain]);
+    void this.renderDomain(pane, DOMAINS[this.activeDomain]);
   }
 
-  /** 桌面右侧内容区：当前域预览 + 「打开设置」（点开走真实设置弹窗，与 ⚙️ 同源） */
-  private renderPane(pane: HTMLElement, domain: DomainDef): void {
+  /**
+   * 渲染某域设置到容器：内嵌 renderSettingsInto（与 ⚙️ 弹窗同一渲染器）。
+   * 无 schema 的域显示空态；smartcat 等深耦合域显示引导。
+   */
+  private async renderDomain(pane: HTMLElement, domain: DomainDef): Promise<void> {
+    // 清理旧渲染句柄
+    this.renderHandles = [];
     pane.innerHTML = '';
+
+    // 头部：图标 + 名称 + 描述
     const head = document.createElement('div');
     head.className = 'bz-sp-pane-head';
     const ic = document.createElement('span');
@@ -256,23 +213,43 @@ export class SettingsPanelUI {
     desc.textContent = domain.desc;
     pane.appendChild(desc);
 
-    const openBtn = document.createElement('button');
-    openBtn.className = 'bz-sp-open-btn';
-    openBtn.textContent = domain.noSettings ? '查看设置' : '打开设置';
-    openBtn.addEventListener('click', () => void openDomainSettings(domain));
-    pane.appendChild(openBtn);
+    // 无设置项域
+    if (domain.noSettings || !domain.schemaLoader) {
+      const empty = document.createElement('div');
+      empty.className = 'bz-sp-empty';
+      empty.innerHTML = `<div class="bz-sp-empty-ic"></div><div class="bz-sp-empty-title">${domain.name} · 暂无设置项</div><div class="bz-sp-empty-desc">该域没有可在此配置的设置（设置就近在对应功能面板）</div>`;
+      setIcon(empty.querySelector('.bz-sp-empty-ic')!, 'file-question');
+      pane.appendChild(empty);
+      return;
+    }
 
-    const hint = document.createElement('div');
-    hint.className = 'bz-sp-pane-hint';
-    hint.textContent = domain.noSettings
-      ? '该域没有可配置的设置。'
-      : domain.openMainTab
-        ? 'AI 服务商与数据存储路径在 bz 设置页配置，点击上方按钮直达。'
-        : '点击「打开设置」进入该域设置（与面板右上角 ⚙️ 完全一致）。';
-    pane.appendChild(hint);
+    // 惰性加载 schema 并内嵌渲染
+    const body = document.createElement('div');
+    body.className = 'bz-sp-settings-body';
+    pane.appendChild(body);
+    const loading = document.createElement('div');
+    loading.className = 'bz-sp-loading';
+    loading.textContent = '加载设置…';
+    body.appendChild(loading);
+
+    try {
+      const schema = await domain.schemaLoader();
+      loading.remove();
+      const handle = renderSettingsInto(body, schema);
+      this.renderHandles.push(handle);
+    } catch (e) {
+      loading.remove();
+      const err = document.createElement('div');
+      err.className = 'bz-sp-empty';
+      err.innerHTML = `<div class="bz-sp-empty-ic"></div><div class="bz-sp-empty-title">加载失败</div><div class="bz-sp-empty-desc">${(e as Error).message}</div>`;
+      setIcon(err.querySelector('.bz-sp-empty-ic')!, 'alert-triangle');
+      pane.appendChild(err);
+      notice(`加载「${domain.name}」设置失败：${(e as Error).message}`, 'error');
+    }
   }
 
-  /** 移动端：M1 命令面板（搜索 + 域列表，主面板全屏 + 关闭按钮） */
+  /* ---------- 移动端：M1 命令面板（搜索 + 域列表 → 域设置弹窗） ---------- */
+
   private buildMobile(popup: HTMLElement): void {
     popup.classList.add('bz-sp-mobile');
     popup.innerHTML = `
@@ -316,7 +293,7 @@ export class SettingsPanelUI {
         chev.className = 'bz-sp-mob-chev';
         chev.textContent = '›';
         item.append(ic, t, chev);
-        item.addEventListener('click', () => void openDomainSettings(d));
+        item.addEventListener('click', () => void this.openMobileDomain(d));
         list.appendChild(item);
       });
       if (!list.children.length) {
@@ -329,6 +306,74 @@ export class SettingsPanelUI {
 
     searchIn.addEventListener('input', () => render(searchIn.value));
     render('');
+  }
+
+  /** 移动端：域设置 → 居中弹窗内嵌渲染（子面板一律弹窗，遮罩点击关闭） */
+  private async openMobileDomain(domain: DomainDef): Promise<void> {
+    const mask = document.createElement('div');
+    mask.className = 'bz-overlay-mask';
+    mask.style.display = 'block';
+    const popup = document.createElement('div');
+    popup.className = 'bz-overlay-popup bz-sp-mob-modal';
+    popup.style.display = 'flex';
+    popup.style.maxWidth = '560px';
+    popup.style.width = 'min(calc(100vw - 32px), 560px)';
+    popup.style.maxHeight = '82vh';
+    topifyZ(mask, popup);
+
+    const head = document.createElement('div');
+    head.className = 'bz-sp-mob-modal-head';
+    const title = document.createElement('h3');
+    title.className = 'bz-sp-mob-modal-title';
+    title.textContent = `${domain.name}设置`;
+    const x = document.createElement('button');
+    x.className = 'bz-sp-mob-modal-x';
+    x.textContent = '✕';
+    x.title = '关闭';
+    head.append(title, x);
+    popup.appendChild(head);
+
+    const body = document.createElement('div');
+    body.className = 'bz-sp-settings-body bz-sp-mob-modal-body';
+    popup.appendChild(body);
+
+    const close = () => {
+      mask.remove();
+      popup.remove();
+    };
+    x.addEventListener('click', close);
+    mask.addEventListener('click', (e) => {
+      if (e.target === mask) close();
+    });
+
+    document.body.appendChild(mask);
+    document.body.appendChild(popup);
+
+    if (domain.noSettings || !domain.schemaLoader) {
+      const empty = document.createElement('div');
+      empty.className = 'bz-sp-empty';
+      empty.innerHTML = `<div class="bz-sp-empty-ic"></div><div class="bz-sp-empty-title">${domain.name} · 暂无设置项</div><div class="bz-sp-empty-desc">该域没有可在此配置的设置</div>`;
+      setIcon(empty.querySelector('.bz-sp-empty-ic')!, 'file-question');
+      body.appendChild(empty);
+      return;
+    }
+
+    const loading = document.createElement('div');
+    loading.className = 'bz-sp-loading';
+    loading.textContent = '加载设置…';
+    body.appendChild(loading);
+    try {
+      const schema = await domain.schemaLoader();
+      loading.remove();
+      renderSettingsInto(body, schema);
+    } catch (e) {
+      loading.remove();
+      const err = document.createElement('div');
+      err.className = 'bz-sp-empty';
+      err.innerHTML = `<div class="bz-sp-empty-ic"></div><div class="bz-sp-empty-title">加载失败</div><div class="bz-sp-empty-desc">${(e as Error).message}</div>`;
+      setIcon(err.querySelector('.bz-sp-empty-ic')!, 'alert-triangle');
+      body.appendChild(err);
+    }
   }
 
   hide(): void {
@@ -349,5 +394,6 @@ export class SettingsPanelUI {
       this.popup.remove();
       this.popup = null;
     }
+    this.renderHandles = [];
   }
 }

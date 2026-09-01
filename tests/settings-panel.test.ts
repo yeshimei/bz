@@ -1,7 +1,8 @@
 /**
  * 设置面板域测试（settings-panel，ADR-0080）
- * UI 层：桌面侧栏工作台构建 / 移动命令面板构建 / 搜索过滤 / 关闭 / 卸载清理。
- * 数据层：无独立数据（面板是聚合导航，设置读写走既有 schema）。
+ * UI 层：桌面侧栏工作台构建 / 域导航切换内嵌渲染真实 schema / 搜索过滤 /
+ *       移动命令面板构建 / 域设置弹窗 / 关闭 / 卸载清理。
+ * 核心断言：面板内嵌渲染 = renderSettingsInto（与 ⚙️ 弹窗同一渲染器同一数据通道）。
  */
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -25,15 +26,16 @@ vi.mock('obsidian', async (importOriginal) => {
   };
 });
 
+/** 等渲染微任务完成 */
+const tick = () => new Promise((r) => setTimeout(r, 20));
+
 describe('设置面板（settings-panel）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     mobileFlag = false;
     document.body.innerHTML = '';
     unloadSettingsPanel();
-    // escManager 单例状态复位（register 会堆积）
     (escManager as any).handlers = new Map();
-    // 注入设置提供者（移动端默认全屏键默认 true）
     setSettingsProvider(() => ({ settingsPanelMobileDefaultFullscreen: true } as any));
   });
 
@@ -43,11 +45,8 @@ describe('设置面板（settings-panel）', () => {
     const popup = document.getElementById('bz-settings-panel-popup')!;
     expect(popup).toBeTruthy();
     expect(popup.classList.contains('bz-sp-desk')).toBe(true);
-    // 品牌「设置」+ emoji 图标
     expect(popup.querySelector('.bz-sp-brand-name')!.textContent).toBe('设置');
-    // 域导航 22 项（全局 + 20 域 + 文献）
     expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBe(22);
-    // 右侧面板显示当前域（全局）
     expect(popup.querySelector('.bz-sp-pane-title')!.textContent).toBe('全局');
     // 无底部快捷键提示 / 无右侧导航条
     expect(popup.querySelector('.bz-sp-foot')).toBeNull();
@@ -55,16 +54,62 @@ describe('设置面板（settings-panel）', () => {
     ui.cleanup();
   });
 
-  it('桌面端：点击域导航切换右侧面板', () => {
+  it('桌面端：全局域内嵌渲染 AI 服务商设置（renderSettingsInto 真实渲染）', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
+    await tick();
+    // 全局 schema = mainSettingsSchema（AI + 数据存储路径两区块）
+    const groups = popup.querySelectorAll('.bz-settings-group');
+    expect(groups.length).toBeGreaterThanOrEqual(2);
+    // 设置行真实渲染（Obsidian Setting 结构）
+    expect(popup.querySelectorAll('.setting-item').length).toBeGreaterThan(0);
+    ui.cleanup();
+  });
+
+  it('桌面端：点击域导航切换 → 内嵌渲染该域真实 schema', async () => {
+    const ui = new SettingsPanelUI();
+    ui.open();
+    const popup = document.getElementById('bz-settings-panel-popup')!;
+    await tick();
     const items = popup.querySelectorAll('.bz-sp-nav-item');
-    // 点击「复习计划」（index 11）
+    // 点击「复习计划」（index 11）→ 内嵌渲染 review schema（检查提醒/做题家等分组）
     (items[11] as HTMLElement).click();
     expect(popup.querySelector('.bz-sp-pane-title')!.textContent).toBe('复习计划');
-    // 选中态高亮
-    expect(popup.querySelector('.bz-sp-nav-item.on .bz-sp-nav-name')!.textContent).toBe('复习计划');
+    await tick();
+    const groups = popup.querySelectorAll('.bz-settings-group');
+    // review schema 至少 5 组（检查提醒/做题家/复习节奏/记忆算法/自动化/界面）
+    expect(groups.length).toBeGreaterThanOrEqual(5);
+    // 设置行真实渲染（开关/输入等）
+    expect(popup.querySelectorAll('.setting-item').length).toBeGreaterThan(0);
+    ui.cleanup();
+  });
+
+  it('桌面端：番茄钟域内嵌渲染（时间方案/行为分组）', async () => {
+    const ui = new SettingsPanelUI();
+    ui.open();
+    const popup = document.getElementById('bz-settings-panel-popup')!;
+    await tick();
+    const items = popup.querySelectorAll('.bz-sp-nav-item');
+    // 番茄钟 index 16
+    (items[16] as HTMLElement).click();
+    await tick();
+    const groups = popup.querySelectorAll('.bz-settings-group');
+    expect(groups.length).toBeGreaterThanOrEqual(2);
+    expect(popup.querySelectorAll('.setting-item').length).toBeGreaterThan(0);
+    ui.cleanup();
+  });
+
+  it('桌面端：无设置项域显示空态', async () => {
+    const ui = new SettingsPanelUI();
+    ui.open();
+    const popup = document.getElementById('bz-settings-panel-popup')!;
+    await tick();
+    const items = popup.querySelectorAll('.bz-sp-nav-item');
+    // 归物本 index 3
+    (items[3] as HTMLElement).click();
+    await tick();
+    expect(popup.querySelector('.bz-sp-empty')).toBeTruthy();
     ui.cleanup();
   });
 
@@ -87,12 +132,30 @@ describe('设置面板（settings-panel）', () => {
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     expect(popup.classList.contains('bz-sp-mobile')).toBe(true);
-    // 全屏类（settingsPanelMobileDefaultFullscreen 默认 true）
     expect(popup.classList.contains('bz-win-mfs')).toBe(true);
-    // 关闭按钮存在
     expect(popup.querySelector('.bz-sp-mob-close')).toBeTruthy();
-    // 域列表 22 项
     expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(22);
+    ui.cleanup();
+  });
+
+  it('移动端：点域 → 居中弹窗内嵌渲染真实 schema', async () => {
+    mobileFlag = true;
+    const ui = new SettingsPanelUI();
+    ui.open();
+    const popup = document.getElementById('bz-settings-panel-popup')!;
+    const items = popup.querySelectorAll('.bz-sp-mob-item');
+    // 点「番茄钟」（index 16）
+    (items[16] as HTMLElement).click();
+    await tick();
+    const modal = document.querySelector('.bz-sp-mob-modal');
+    expect(modal).toBeTruthy();
+    // 弹窗内真实设置分组
+    expect(modal!.querySelectorAll('.bz-settings-group').length).toBeGreaterThanOrEqual(2);
+    // 遮罩点击关闭（精确选弹窗遮罩：弹窗 mask 是 modal 的前一个兄弟）
+    const modalMask = modal!.previousElementSibling as HTMLElement;
+    expect(modalMask.classList.contains('bz-overlay-mask')).toBe(true);
+    modalMask.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(document.querySelector('.bz-sp-mob-modal')).toBeNull();
     ui.cleanup();
   });
 
@@ -116,7 +179,6 @@ describe('设置面板（settings-panel）', () => {
     const popup = document.getElementById('bz-settings-panel-popup')!;
     (popup.querySelector('.bz-sp-mob-close') as HTMLElement).click();
     expect(popup.style.display).toBe('none');
-    // 重开（幂等顶置）
     ui.open();
     expect(popup.style.display).toBe('flex');
     ui.cleanup();
@@ -137,7 +199,6 @@ describe('设置面板（settings-panel）', () => {
     ui.open();
     const mask = document.getElementById('bz-settings-panel-mask')!;
     const popup = document.getElementById('bz-settings-panel-popup')!;
-    // 点击遮罩本体（非弹窗）→ 隐藏
     mask.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(popup.style.display).toBe('none');
     ui.cleanup();
