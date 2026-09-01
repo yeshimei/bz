@@ -61,7 +61,6 @@ const EXPECTED_COMMAND_IDS = [
   'bz-clipping-open',
   'bz-news-open',
   'bz-pw-open', 'bz-pw-add', 'bz-pw-generate',
-  'bz-password-vault-open',
   'bz-favorites-open', 'bz-favorites-add',
   'bz-library-open', 'bz-book-notes-open',
   'bz-reading-report-open',

@@ -25,8 +25,6 @@ import { addBelongingsItem, openBelongings, unloadBelongings } from './belonging
 import { openArticleView, unloadArticleView } from './clipping';
 import { openNewsReader, unloadNewsReader } from './news';
 import { openPasswordManager, addPasswordEntry, generatePassword, unloadPassword } from './password';
-// 保险库（password-vault 域：原型 v1 一比一独立 UI，与旧密码本并存、共享保险箱数据）
-import { openPasswordVault, unloadPasswordVault } from './password-vault';
 import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorites';
 import { openLibrary, openBookNotes, unloadLibrary } from './library';
 import { showReadingReport, unloadReadingReport } from './reading-report';
@@ -85,8 +83,6 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-pw-open', name: '密码本', icon: 'key', callback: () => openPasswordManager(getApp()) },
   { id: 'bz-pw-add', name: '加密码', icon: 'key-round', callback: () => addPasswordEntry(getApp()) },
   { id: 'bz-pw-generate', name: '生成随机密码', icon: 'key-square', callback: () => generatePassword(getApp()) },
-  // 保险库（password-vault 域：原型 v1 一比一；与旧密码本并存）
-  { id: 'bz-password-vault-open', name: '保险库', icon: 'vault', callback: () => openPasswordVault(getApp()) },
   // 收藏本
   { id: 'bz-favorites-open', name: '收藏本', icon: 'star', callback: () => openFavoritesPanel(getApp()) },
   { id: 'bz-favorites-add', name: '加收藏', icon: 'bookmark', callback: () => addFavoriteItem(getApp()) },
@@ -297,7 +293,6 @@ export default class BzPlugin extends Plugin {
     // 各域卸载清理补全（fix(main)：unload 函数均不内部触发 ensure，可无条件调用；
     // 未初始化域调用为幂等空清理，不引起无谓装载）
     unloadPassword();
-    unloadPasswordVault();
     unloadBelongings();
     unloadFavorites();
     unloadReview();
