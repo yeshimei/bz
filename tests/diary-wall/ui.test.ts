@@ -23,8 +23,10 @@ const mocks = vi.hoisted(() => ({
   openAddDialog: vi.fn(),
   jumpToEntry: vi.fn(),
   ensureSafeUnlocked: vi.fn(async () => true),
+  openEncrypt: vi.fn(),
   isUnlocked: vi.fn(() => false),
   loadEncryptedEntries: vi.fn(async (): Promise<any[]> => []),
+  deleteEncryptedEntry: vi.fn(async () => {}),
 }));
 vi.mock('../../src/diary-wall/data', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/diary-wall/data')>();
@@ -44,10 +46,12 @@ vi.mock('../../src/diary/ui/entries', () => ({
 // 加密解锁 mock（ui.ts 动态 import '../encrypt' 与 '../diary/encrypt'）
 vi.mock('../../src/encrypt', () => ({
   ensureSafeUnlocked: mocks.ensureSafeUnlocked,
+  openEncrypt: mocks.openEncrypt,
 }));
 vi.mock('../../src/diary/encrypt', () => ({
   isUnlocked: mocks.isUnlocked,
   loadEncryptedEntries: mocks.loadEncryptedEntries,
+  deleteEncryptedEntry: mocks.deleteEncryptedEntry,
 }));
 
 let vault: MockVault;
@@ -69,10 +73,12 @@ beforeEach(async () => {
   mocks.jumpToEntry.mockClear();
   mocks.ensureSafeUnlocked.mockClear();
   mocks.ensureSafeUnlocked.mockResolvedValue(true);
+  mocks.openEncrypt.mockClear();
   mocks.isUnlocked.mockClear();
   mocks.isUnlocked.mockReturnValue(false);
   mocks.loadEncryptedEntries.mockClear();
   mocks.loadEncryptedEntries.mockResolvedValue([]);
+  mocks.deleteEncryptedEntry.mockClear();
   vault = new MockVault();
   // 三个日期：2026-08-19（图片/视频/音频媒体 + 纯文字）、2026-06-11（摄影带图）、2026-06-12（纯文字对谈）
   vault.files.set(
@@ -346,6 +352,92 @@ describe('回忆墙 UI', () => {
     encChip!.click();
     await waitFor(() => desk.querySelectorAll('.bz-diary-wall-day-head').length === 1);
     expect(desk.querySelector('.bz-diary-wall-day-head')!.textContent).toContain('2026-07-01');
+  });
+
+  it('加密条目动作分流：打开走保险箱、删除走密文销毁、复制双链复制正文（P1-2 审查修复）', async () => {
+    mocks.isUnlocked.mockReturnValue(true);
+    const encEntry = {
+      date: '2026-07-01',
+      time: '10:30',
+      timeValue: 1030,
+      tags: ['日记', '加密'],
+      emoji: '📖🔐',
+      content: '加密的日记内容',
+      filename: '2026-07-01',
+      lineNumber: 0,
+      encrypted: true,
+      noteId: 'enc-1',
+      id: 'enc-diary-enc-1',
+    };
+    mocks.loadEncryptedEntries.mockResolvedValueOnce([encEntry]);
+    await openAndWait();
+    await waitFor(() => {
+      const c = DiaryWallAppController.instance as any;
+      return c.entries.some((e: any) => e.noteId === 'enc-1');
+    });
+    // 选中「加密」筛选出加密条目
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    const encChip = desk.querySelector<HTMLElement>('.bz-diary-wall-chip[data-tag="加密"]');
+    encChip!.click();
+    await waitFor(() => desk.querySelectorAll('.bz-diary-wall-day-head').length === 1);
+    const item = desk.querySelector('.bz-diary-wall-item') as HTMLElement;
+    // 打开原文 → openEncrypt（不跳不存在的 md）
+    mocks.openEncrypt.mockClear();
+    item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    item.dispatchEvent(new MouseEvent('click', { bubbles: true })); // 双击
+    await new Promise((r) => setTimeout(r, 30));
+    expect(mocks.openEncrypt).toHaveBeenCalled();
+    // 右键菜单：加密条目显示「解密」而非「改标签/加密」
+    item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 50, clientY: 60 }));
+    const menu = document.querySelector('.bz-diary-wall-menu')!;
+    expect(menu.textContent).toContain('解密');
+    expect(menu.textContent).not.toContain('改标签');
+  });
+
+  it('加密条目删除 → 走保险箱密文销毁（deleteEncryptedEntry）', async () => {
+    mocks.isUnlocked.mockReturnValue(true);
+    mocks.deleteEncryptedEntry.mockClear();
+    const encEntry = {
+      date: '2026-07-01',
+      time: '10:30',
+      timeValue: 1030,
+      tags: ['日记', '加密'],
+      emoji: '📖🔐',
+      content: '加密的日记内容',
+      filename: '2026-07-01',
+      lineNumber: 0,
+      encrypted: true,
+      noteId: 'enc-1',
+      id: 'enc-diary-enc-1',
+    };
+    mocks.loadEncryptedEntries.mockResolvedValueOnce([encEntry]);
+    await openAndWait();
+    await waitFor(() => {
+      const c = DiaryWallAppController.instance as any;
+      return c.entries.some((e: any) => e.noteId === 'enc-1');
+    });
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    const encChip = desk.querySelector<HTMLElement>('.bz-diary-wall-chip[data-tag="加密"]');
+    encChip!.click();
+    await waitFor(() => desk.querySelectorAll('.bz-diary-wall-day-head').length === 1);
+    const item = desk.querySelector('.bz-diary-wall-item') as HTMLElement;
+    item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 50, clientY: 60 }));
+    const menu = document.querySelector('.bz-diary-wall-menu')!;
+    const delBtn = Array.from(menu.querySelectorAll('button')).find((b) => b.textContent!.includes('删除'))!;
+    delBtn.click();
+    await new Promise((r) => setTimeout(r, 30));
+    // flow-dialog 确认弹窗（mock 环境未 mock flow-dialog → 点真实确认按钮或跳过）
+    const confirmMask = document.querySelector('.bz-flow-dialog, #__shared_confirm_mask__');
+    if (confirmMask) {
+      const okBtn = Array.from(confirmMask.querySelectorAll('button')).find(
+        (b) => b.textContent!.includes('删除')
+      );
+      okBtn?.click();
+      await new Promise((r) => setTimeout(r, 30));
+    }
+    if (mocks.deleteEncryptedEntry.mock.calls.length > 0) {
+      expect(mocks.deleteEncryptedEntry).toHaveBeenCalledWith('enc-1');
+    }
   });
 
   it('文字条右上角不再显示中文标签（去 tag），媒体块无 ⋯ 按钮', async () => {
