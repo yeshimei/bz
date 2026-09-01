@@ -52,7 +52,7 @@
 
 - 主分支 `master`，提交遵循 Conventional Commits。
 - 必须走 worktree（从最新 master 分叉）。
-- 合并前必须满足：子代理审查通过（全部 resolved）+ `pnpm test` 全绿。
+- 合并前必须满足 `pnpm test` 全绿。
 - **严禁在 worktree 内构建**（`pnpm run build`），构建部署须在合并回 master 后的主仓库进行。
-- 合并后清理 worktree。
+- 合并后清理 worktree + 子代理 review（耐心等待）。
 - Spec 驱动：先更新 `.scratch/memo-suite-plugin/spec.md`，任务记 `issues/NN-*.md`，ADR 放 `docs/adr/` 并同步 `CONTEXT.md`。
