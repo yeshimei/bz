@@ -553,7 +553,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 影视
   movieFolderPath: '我的/影视',
   // 影院（cinema）
-  cinemaFolderPath: '我的/影视',
+  cinemaFolderPath: '', // 空 = 未配置（不抢占 movie 默认目录）；设置面板配置后生效
   cinemaPageSize: '20',
   moviePageSize: '20',
   movieDefaultSort: 'date-desc',

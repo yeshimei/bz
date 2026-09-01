@@ -143,20 +143,12 @@ function pcardHtml(item: CinemaItem, app: App): string {
     ? `<span class="bz-cinema-p-badge" style="background:${statusColor(item.status)}">${statusText(item.status)}</span>` : '';
   const upgradeable = item.status !== STATUS_WATCHED;
   const idx = M.items.indexOf(item);
-  const parts: string[] = [];
+  // 灰色小字：想看/在看 = 可点状态 + 相对日期；已看 = 星星（无数字）+ 相对日期
+  let metaInner = esc(relDate(item.watchDate));
   if (item.status === STATUS_WANT || item.status === STATUS_WATCHING) {
-    parts.push(`<span class="bz-cinema-st-label" data-cinema-upgrade="${idx}">${statusText(item.status)}</span>`);
+    metaInner = `<span class="bz-cinema-st-label" data-cinema-upgrade="${idx}">${statusText(item.status)}</span> · ${metaInner}`;
   } else if (item.rating && item.rating > 0) {
-    parts.push(`<span class="bz-cinema-stars">★</span>`); // 占位，实际由下方完整星星替换
-  }
-  // 已看：星星（无数字）
-  let metaInner = '';
-  if (item.status === STATUS_WATCHED && item.rating && item.rating > 0) {
-    metaInner = `<span class="bz-cinema-p-stars">${stars(item.rating)}</span> · ${esc(relDate(item.watchDate))}`;
-  } else {
-    metaInner = parts.filter((_, i) => i === 0 ? item.status !== STATUS_WATCHED : true).join('');
-    const stLabel = item.status !== STATUS_WATCHED ? `<span class="bz-cinema-st-label" data-cinema-upgrade="${idx}">${statusText(item.status)}</span>` : '';
-    metaInner = stLabel ? `${stLabel} · ${esc(relDate(item.watchDate))}` : esc(relDate(item.watchDate));
+    metaInner = `<span class="bz-cinema-p-stars">${stars(item.rating)}</span> · ${metaInner}`;
   }
   return `<div class="bz-cinema-pcard" data-cinema-idx="${idx}">
     ${posterBlock(item, app, 'bz-cinema-poster-wrap')}${badge}
@@ -284,10 +276,10 @@ function renderMobNavHtml(): string {
   let html = '';
   for (const g of GROUP_ORDER) {
     if (!groupCounts[g]) continue;
-    html += `<span class="bz-cinema-mob-chip${M.typeFilter === g && !M.subFilter ? ' bz-cinema-mob-chip-active' : ''}" data-cinema-type="${g}">${g}</span>`;
+    html += `<span class="bz-cinema-mob-chip${M.typeFilter === g && !M.subFilter ? ' bz-cinema-mob-chip-active' : ''}" data-cinema-mob data-cinema-type="${g}">${g}</span>`;
   }
   (['想看', '在看', '已看'] as const).forEach((s) => {
-    html += `<span class="bz-cinema-mob-chip${M.statusFilter === s ? ' bz-cinema-mob-chip-active' : ''}" data-cinema-status="${s}">${s}</span>`;
+    html += `<span class="bz-cinema-mob-chip${M.statusFilter === s ? ' bz-cinema-mob-chip-active' : ''}" data-cinema-mob data-cinema-status="${s}">${s}</span>`;
   });
   return html;
 }
@@ -356,6 +348,36 @@ function openDetail(item: CinemaItem, app: App): void {
 
 // ---------- 添加 / 编辑（评分滑杆） ----------
 
+/** 本地时间 YYYY-MM-DD HH:mm:ss（写笔记用） */
+function localNow(): string {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
+/** 把条目落盘：新增建笔记（movie 域同格式），编辑/快速状态写 frontmatter（保留海报/豆瓣字段） */
+async function persistItem(item: CinemaItem, app: App): Promise<void> {
+  if (!item.file) {
+    // 新增：创建《名称》.md（与 movie 域文件格式一致；海报/豆瓣字段由外部工具补）
+    const folder = M.folderPath;
+    if (!app.vault.getAbstractFileByPath(folder)) {
+      await app.vault.createFolder(folder);
+    }
+    const filePath = `${folder}/《${item.name}》.md`;
+    const content = `---\ntags:\n- ${item.typeTag}\n观影日期: ${item.watchDate || localNow()}\n评分: ${item.rating ?? 0}\n${item.review ? `影评: ${item.review}\n` : ''}海报: \n---\n`;
+    const f = await app.vault.create(filePath, content);
+    item.file = f;
+    return;
+  }
+  // 编辑/快速状态：写 frontmatter（不动海报/豆瓣等字段）
+  await app.fileManager.processFrontMatter(item.file, (fm: Record<string, unknown>) => {
+    fm['评分'] = item.rating ?? 0;
+    fm['观影日期'] = item.watchDate || localNow();
+    if (item.review) fm['影评'] = item.review;
+    else delete fm['影评'];
+  });
+}
+
 /** 打开添加弹窗（命令 bz-cinema-add 直达；未开主面板则先建） */
 export function openAddModalDirect(app: App): void {
   if (!M.currentOverlay) createOverlay(app);
@@ -395,15 +417,26 @@ function openEditForm(item: CinemaItem | null, app: App): void {
     const review = (modal.querySelector('#bz-cinema-f-review') as HTMLTextAreaElement).value.trim();
     const group = getGroupForTag(tag) ?? '其他';
     const mapped = status === '已看' ? rating : status === '想看' ? -1 : 0;
-    if (editing && item) {
-      item.name = name; item.typeTag = tag; item.group = group;
-      item.status = status === '想看' ? STATUS_WANT : status === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
-      item.rating = mapped; item.watchDate = date; item.review = review;
-    } else {
-      M.items.unshift({ file: null, name, typeTag: tag, group, status: status === '想看' ? STATUS_WANT : status === '在看' ? STATUS_WATCHING : STATUS_WATCHED, rating: mapped, watchDate: date, review, poster: null, genre: null, director: null, actors: null, region: null, year: null, doubanRating: null, doubanUrl: null, synopsis: null });
-    }
-    closeModal(mask);
-    renderAll(app);
+    const st = status === '想看' ? STATUS_WANT : status === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
+    void (async () => {
+      try {
+        if (editing && item) {
+          item.name = name; item.typeTag = tag; item.group = group;
+          item.status = st; item.rating = mapped; item.watchDate = date; item.review = review;
+          await persistItem(item, app);
+        } else {
+          const it: CinemaItem = { file: null, name, typeTag: tag, group, status: st, rating: mapped, watchDate: date, review, poster: null, genre: null, director: null, actors: null, region: null, year: null, doubanRating: null, doubanUrl: null, synopsis: null };
+          M.items.unshift(it);
+          await persistItem(it, app);
+        }
+        closeModal(mask);
+        notice(editing ? '已保存' : '已添加', 'success');
+        renderAll(app);
+      } catch (e) {
+        notice('保存失败', 'error');
+        console.error(e);
+      }
+    })();
   });
   registerModalEsc(mask);
 }
@@ -475,9 +508,17 @@ function openQuickStatus(item: CinemaItem, app: App): void {
     item.status = selected === '已看' ? STATUS_WATCHED : selected === '在看' ? STATUS_WATCHING : STATUS_WANT;
     item.rating = mapped;
     if (review) item.review = review;
-    closeModal(mask);
-    notice(`已标记${selected}`, 'success');
-    renderAll(app);
+    void (async () => {
+      try {
+        await persistItem(item, app);
+        closeModal(mask);
+        notice(`已标记${selected}`, 'success');
+        renderAll(app);
+      } catch (e) {
+        notice('保存失败', 'error');
+        console.error(e);
+      }
+    })();
   });
   registerModalEsc(mask);
 }
@@ -542,13 +583,15 @@ export function createOverlay(app: App): void {
     const navItem = t.closest('[data-cinema-type]') as HTMLElement | null;
     if (navItem) {
       const g = navItem.dataset.cinemaType as string;
+      const isMob = navItem.hasAttribute('data-cinema-mob');
       if (M.typeFilter === g && !M.subFilter) {
         M.typeFilter = null;
       } else {
         M.typeFilter = g;
         M.subFilter = null;
+        // 桌面左栏才触发展开二级；移动端 chip 只做筛选
         const subs = (GROUP_SUBS[g] || []).filter((s) => M.items.some((i) => i.typeTag === s));
-        if (subs.length) M.expanded[g] = !M.expanded[g];
+        if (subs.length && !isMob) M.expanded[g] = !M.expanded[g];
       }
       M.view = 'list';
       renderAll(app);

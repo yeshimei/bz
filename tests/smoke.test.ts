@@ -201,7 +201,7 @@ describe('bz 骨架冒烟', () => {
     expect(s.todoFilePath).toBe('CONFIG/STORAGE');
     expect(s.articleDirectory).toBe('归档/网页剪藏');
     expect(s.movieFolderPath).toBe('我的/影视');
-    expect(s.cinemaFolderPath).toBe('我的/影视');
+    expect(s.cinemaFolderPath).toBe(''); // 空 = 未配置（不抢占 movie 默认目录）
     expect(s.libraryFolderPath).toBe('书库');
     expect(s.favoritesStoragePath).toBe('CONFIG/STORAGE');
     expect(s.secondBrainOllamaUrl).toBe('http://localhost:11434');
