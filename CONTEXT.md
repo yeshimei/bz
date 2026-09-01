@@ -61,10 +61,10 @@ _Avoid_: 新闻抓取、新闻爬虫、news watcher 进程
 
 **摘要时机 (Summary Timing)**: 自动摘要详设（ticket 124，Q14）——autoSummaryTiming 设置：immediate（默认，保存后立刻：create+file-open 双监听）/ lazy（懒触发：仅打开文件时补全，不监听 create）。_Avoid_: 摘要触发模式
 
-**密码本 (Password Vault)**: 密码管理，存储路径可配置（storagePath）。样式在 `src/password/styles.css`（铁律 9 按域拆分，原「含样式注入」口径废止）。旧 UI（单列卡片弹窗）。数据已合并至保险箱（ADR-0015 路线 B：kind=password-vault SafeNote，共享主密码/解锁态）。
+**密码本 (Password Vault)**: 密码管理，存储路径可配置（storagePath）。样式在 `src/password/styles.css`（铁律 9 按域拆分，原「含样式注入」口径废止）。旧 UI（单列卡片弹窗）。数据已合并至保险箱（ADR-0015 路线 B：kind=password-vault SafeNote，共享主密码/解锁态）。**2026-09 入口切换（ADR-0078）**：命令 `bz-pw-*` 已从命令表断开（域代码保留，未被引用），密码管理入口统一切换为「保险库」域（见下）。
 _Avoid_: 保险库（新域，见下）
 
-**保险库 (Password Vault UI, password-vault 域)**: 密码管理的**新 UI 域**（ADR-0078）——原型 v1「保险库」一比一（桌面三栏工作台 + 移动端列表/详情/FAB + 金色视觉 + 自绘右键菜单/抽屉/确认/toast/锁屏）。与旧密码本域并存、互不影响（UI/代码层面），**共享同一数据源**（保险箱 kind=password-vault SafeNote）。命令 `bz-password-vault-open`。移动端恒真全屏（无开关）。样式在 `src/password-vault/styles.css`。收藏标记走条目 fav 字段（ADR-0079，旧数据缺失默认 false）。
+**保险库 (Password Vault UI, password-vault 域)**: 密码管理的**新 UI 域**（ADR-0078）——原型 v1「保险库」一比一（桌面三栏工作台 + 移动端列表/详情/FAB + 金色视觉 + 自绘右键菜单/抽屉/确认/toast/锁屏）。与旧密码本域并存、互不影响（UI/代码层面），**共享同一数据源**（保险箱 kind=password-vault SafeNote）。命令 `bz-password-vault-open`。移动端恒真全屏（无开关）。样式在 `src/password-vault/styles.css`。收藏标记走条目 fav 字段（ADR-0079，旧数据缺失默认 false）。**2026-09 起为密码管理唯一入口**（旧密码本命令已断开；设置入口并入设置面板 password 域，schema 见 `src/password-vault/settings.ts`）。
 _Avoid_: 保险箱（encrypt 域：加密容器本身）、密码本（旧 UI 域）
 
 **收藏本 (Favorites)**: 通用链接收藏管理（GitHub 🐙/桌面软件 💻/网站 🌐/大模型 🧠 等 9 类固定标签），数据 `CONFIG/STORAGE/favorites.json`；大模型条目带余额查询（5 分钟缓存）。列表手势收敛为**仅整卡长按弹统一抽屉**（动作序：打开 → 置顶 → 跳转笔记 → 刷新余额 → 编辑 → 归档 → 删除；余额纯展示）；添加/编辑共用一个弹窗，保存后若从抽屉进入则连抽屉一并关闭。**2026-08 UX 整改拍板**：有 url 的卡片标题单击直开（cursor pointer 作可见入口，双击 300ms 防双开、长按合成 click 由抽屉捕获层吞掉不穿透），长按/右键抽屉保留；AI 整理回填不覆盖手填字段（未配置 AI 直接拦截）。

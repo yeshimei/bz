@@ -16,7 +16,13 @@
  * 依赖方向（ADR-0002）：core ← 本层；不挂 window；import CryptoService 复用密码本。
  */
 import { getApp } from '../core/app';
+import { emitDomainEvent } from '../core/domain-bus';
 import { CryptoService, clearCryptoKeyCache } from '../password/crypto';
+
+/** 保险箱数据变更通道（ADR-0078：密码本/保险库等外部消费者订阅；写操作后广播） */
+export const ENCRYPT_CHANGED_CHANNEL = 'encrypt:changed' as const;
+/** 保险箱解锁态变更通道（ADR-0078：外部消费者订阅解锁/上锁） */
+export const ENCRYPT_UNLOCK_CHANGED_CHANNEL = 'encrypt:unlock-changed' as const;
 
 /** 附件类型 */
 export type AttachmentKind = 'image' | 'video';
@@ -299,6 +305,7 @@ export class SafeManager {
       this.password = password;
       this.unlocked = true;
       this.onUnlockChange?.(true);
+      emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: true });
       // 自愈（ADR-0018）：回滚挂起的半提交 + 清空暂存残留；失败不阻塞解锁
       try {
         await this.selfHeal();
@@ -318,6 +325,7 @@ export class SafeManager {
     this.password = password;
     this.unlocked = true;
     this.onUnlockChange?.(true);
+    emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: true });
     this.manifest = { version: 1, notes: [] };
     try {
       await this.saveManifest();
@@ -336,6 +344,7 @@ export class SafeManager {
     this.password = null;
     this.manifest = { version: 1, notes: [] };
     this.onUnlockChange?.(false);
+    emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: false });
     clearCryptoKeyCache();
   }
 
@@ -388,6 +397,8 @@ export class SafeManager {
     } catch (e) {
       /* 幂等（残留的 .bak 由解锁恢复清理） */
     }
+    // 清单变更广播（ADR-0078：保险库等外部消费者订阅重载；纯附加，无消费方依赖时不产生任何开销）
+    emitDomainEvent(ENCRYPT_CHANGED_CHANNEL, { noteId: null });
   }
 
   /**

@@ -7,9 +7,9 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../../src/password', async (importOriginal) => ({
+vi.mock('../../src/password-vault', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  unloadPassword: vi.fn(),
+  unloadPasswordVault: vi.fn(),
 }));
 vi.mock('../../src/belongings', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -51,7 +51,7 @@ vi.mock('../../src/core/item-actions', async (importOriginal) => ({
 import BzPlugin from '../../src/main';
 import { MockVault } from '../mock-vault';
 import { closeItemMenu } from '../../src/core/item-actions';
-import { unloadPassword } from '../../src/password';
+import { unloadPasswordVault } from '../../src/password-vault';
 import { unloadBelongings } from '../../src/belongings';
 import { unloadFavorites } from '../../src/favorites';
 import { unloadReview } from '../../src/review';
@@ -103,7 +103,7 @@ async function createPlugin(app: any) {
 function clearSpies(): void {
   [
     closeItemMenu,
-    unloadPassword,
+    unloadPasswordVault,
     unloadBelongings,
     unloadFavorites,
     unloadReview,
@@ -130,7 +130,7 @@ describe('onunload 卸载接线补全（fix(main)）', () => {
     await plugin.onunload();
 
     expect(closeItemMenu).toHaveBeenCalledTimes(1);
-    expect(unloadPassword).toHaveBeenCalledTimes(1);
+    expect(unloadPasswordVault).toHaveBeenCalledTimes(1);
     expect(unloadBelongings).toHaveBeenCalledTimes(1);
     expect(unloadFavorites).toHaveBeenCalledTimes(1);
     expect(unloadReview).toHaveBeenCalledTimes(1);
@@ -151,7 +151,7 @@ describe('onunload 卸载接线补全（fix(main)）', () => {
     const plugin = await createPlugin(makeMockApp());
     await plugin.onunload();
     await plugin.onunload();
-    expect(unloadPassword).toHaveBeenCalledTimes(2);
+    expect(unloadPasswordVault).toHaveBeenCalledTimes(2);
     expect(unloadAutoSummary).toHaveBeenCalledTimes(2);
   });
 });
