@@ -182,3 +182,244 @@
         }
     }
 
+
+/* ==================== 密码本 UI 原型预览（变体 A：清单·行式） ====================
+ * 纯展示稿（src/password/preview.ts 配套样式），全部 pwv- 前缀，与既有 pw-* 隔离。
+ * 布局复刻 .scratch/password-prototype/index.html 的变体 A。
+ * 只取 Obsidian CSS 变量（手册 §2/§3/§4/§5），不写死色值。
+ * ==================== */
+
+#pwv-mask {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--background-modifier-cover);
+  z-index: 5000;
+}
+#pwv-popup {
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 14px;
+  box-shadow:
+    0 6px 16px -8px rgba(0, 0, 0, 0.5),
+    0 9px 28px 0 rgba(0, 0, 0, 0.4),
+    0 12px 48px 16px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  z-index: 5001;
+  font-family: var(--font-interface, var(--font-text, sans-serif));
+}
+#pwv-popup button {
+  font-family: var(--font-interface, var(--font-text, sans-serif));
+  line-height: 1.25;
+  background: none;
+  border: none;
+  box-shadow: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+#pwv-popup input {
+  font-family: var(--font-interface, var(--font-text, sans-serif));
+  font-size: 14px;
+  line-height: 1.25;
+  box-sizing: border-box;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  color: var(--text-normal);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+#pwv-popup input:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+#pwv-popup h3 {
+  margin: 0;
+  color: var(--text-normal);
+  font-size: 17px;
+  font-weight: 600;
+}
+#pwv-popup a { text-decoration: none; }
+
+/* ---- 头行（对齐 core .bz-win-head 规格） ---- */
+.pwv-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 24px 10px;
+  flex-shrink: 0;
+}
+.pwv-head-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pwv-icon-btn {
+  width: 22px;
+  height: 26px;
+  font-size: 14px;
+  padding: 0;
+  border-radius: 4px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+}
+.pwv-icon-btn:hover { background: var(--background-secondary); }
+
+/* ---- 工具栏（搜索常驻 + 添加） ---- */
+.pwv-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 24px 12px;
+  flex-shrink: 0;
+}
+.pwv-search {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 12px;
+  border-radius: 8px;
+}
+.pwv-search::placeholder { color: var(--text-faint); }
+#pwv-popup .pwv-add-btn {
+  padding: 7px 16px;
+  border-radius: 6px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.15s ease;
+}
+#pwv-popup .pwv-add-btn:hover { opacity: 0.88; }
+
+/* ---- 列表 ---- */
+#pwv-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 24px 24px;
+  min-height: 200px;
+}
+/* 空态 */
+.pwv-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 48px 24px;
+  text-align: center;
+}
+.pwv-empty .pwv-empty-icon { font-size: 28px; opacity: 0.5; }
+.pwv-empty .pwv-empty-title { font-size: 14px; font-weight: 600; color: var(--text-muted); }
+.pwv-empty .pwv-empty-desc { font-size: 12px; color: var(--text-faint); max-width: 240px; line-height: 1.5; }
+
+/* 行：平台/账号列 → 密码掩码+👁 → 强度条 → 时间 */
+.pwv-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  margin: 0 -10px;
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
+}
+.pwv-row:hover { background: var(--background-modifier-hover); }
+.pwv-col-platform {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 0 0 150px;
+  max-width: 150px;
+  min-width: 0;
+  overflow: hidden;
+}
+.pwv-platform {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-normal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pwv-platform a { color: var(--interactive-accent); }
+.pwv-platform a:hover { text-decoration: underline; }
+.pwv-account {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-monospace, monospace);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pwv-pwd {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.pwv-mask {
+  font-family: var(--font-monospace, monospace);
+  font-size: 13px;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pwv-eye {
+  font-size: 13px;
+  opacity: 0.55;
+  flex-shrink: 0;
+  padding: 2px;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+.pwv-eye:hover { opacity: 1; background: var(--background-modifier-hover); }
+.pwv-strength {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  padding: 0 2px;
+}
+.pwv-strength i {
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--background-modifier-hover);
+}
+.pwv-strength i.filled { background: var(--color-green); }
+.pwv-strength i.mid { background: var(--color-orange); }
+.pwv-strength i.low { background: var(--color-red); }
+.pwv-date {
+  font-size: 12px;
+  color: var(--text-faint);
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- 移动端（≤768px） ---- */
+@media (max-width: 768px) {
+  #pwv-popup {
+    border-radius: 0;
+    border: none;
+    max-height: none;
+  }
+  .pwv-head { padding-top: max(16px, env(safe-area-inset-top)); }
+  .pwv-col-platform { flex: 0 0 120px; max-width: 120px; }
+  .pwv-account { display: none; }
+  .pwv-date { display: none; }
+  .pwv-row { padding-top: 12px; padding-bottom: 12px; }
+  .pwv-toolbar { padding: 0 16px 10px; }
+  .pwv-search { font-size: 16px; }
+  #pwv-popup .pwv-add-btn { padding: 7px 12px; }
+}

@@ -25,6 +25,8 @@ import { addBelongingsItem, openBelongings, unloadBelongings } from './belonging
 import { openArticleView, unloadArticleView } from './clipping';
 import { openNewsReader, unloadNewsReader } from './news';
 import { openPasswordManager, addPasswordEntry, generatePassword, unloadPassword } from './password';
+// 密码本 UI 原型预览（变体 A，纯展示稿；src/password/preview.ts，随时可删）
+import { showPasswordPreview, unloadPasswordPreview } from './password/preview';
 import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorites';
 import { openLibrary, openBookNotes, unloadLibrary } from './library';
 import { showReadingReport, unloadReadingReport } from './reading-report';
@@ -81,6 +83,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-pw-open', name: '密码本', icon: 'key', callback: () => openPasswordManager(getApp()) },
   { id: 'bz-pw-add', name: '加密码', icon: 'key-round', callback: () => addPasswordEntry(getApp()) },
   { id: 'bz-pw-generate', name: '生成随机密码', icon: 'key-square', callback: () => generatePassword(getApp()) },
+  // 原型预览（变体 A：清单·行式，纯 UI 展示，无功能）
+  { id: 'bz-pw-preview', name: '密码本·原型预览（A）', icon: 'palette', callback: () => showPasswordPreview() },
   // 收藏本
   { id: 'bz-favorites-open', name: '收藏本', icon: 'star', callback: () => openFavoritesPanel(getApp()) },
   { id: 'bz-favorites-add', name: '加收藏', icon: 'bookmark', callback: () => addFavoriteItem(getApp()) },
@@ -287,6 +291,7 @@ export default class BzPlugin extends Plugin {
     // 各域卸载清理补全（fix(main)：unload 函数均不内部触发 ensure，可无条件调用；
     // 未初始化域调用为幂等空清理，不引起无谓装载）
     unloadPassword();
+    unloadPasswordPreview();
     unloadBelongings();
     unloadFavorites();
     unloadReview();
