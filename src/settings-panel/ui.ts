@@ -46,6 +46,7 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   favorites: async () => (await import('../favorites/ui')).favoritesSettingsSchema(),
   library: async () => (await import('../library/ui')).librarySettingsSchema(),
   movie: async () => (await import('../movie/ui')).movieSettingsSchema(),
+  cinema: async () => (await import('../cinema/settings')).cinemaSettingsSchema(),
   review: async () => {
     const { reviewApp } = await import('../review/app');
     const { reviewSettingsSchema } = await import('../review/ui');
@@ -95,6 +96,8 @@ const DOMAINS: DomainDef[] = [
   { id: 'library', name: '书库', icon: '📚', desc: '藏书与读书笔记', schemaLoader: schemaLoaders.library },
   { id: 'reading-report', name: '阅读报告', icon: '📈', desc: '阅读统计', noSettings: true },
   { id: 'movie', name: '影视', icon: '🎬', desc: '影视目录与海报', schemaLoader: schemaLoaders.movie },
+
+  { id: 'cinema', name: '影院', icon: '🎬', desc: '影视海报墙（新域）', schemaLoader: schemaLoaders.cinema },
   { id: 'review', name: '复习计划', icon: '🔁', desc: '间隔重复与做题', schemaLoader: schemaLoaders.review },
   { id: 'quiz', name: '做题家', icon: '🧠', desc: '题目练习（并入复习计划）', noSettings: true },
   { id: 'secondbrain', name: '第二大脑', icon: '🧠', desc: '嵌入检索与对话', schemaLoader: schemaLoaders.secondbrain },
