@@ -163,6 +163,14 @@
 .bz-diary-wall-icon-btn:hover {
   background: var(--dw-surface);
 }
+/* 搜索按钮打开态（toggle 视觉反馈：搜索框展开时按钮高亮） */
+.bz-diary-wall-icon-btn--on {
+  background: var(--dw-active-hover);
+  color: var(--dw-accent);
+}
+.bz-diary-wall-icon-btn--on:hover {
+  background: var(--dw-active-hover);
+}
 
 /* ============ 类型 chips 行 ============ */
 .bz-diary-wall-chiprow {
@@ -205,6 +213,11 @@
   color: var(--dw-faint);
 }
 .bz-diary-wall-chip--on {
+  background: var(--dw-accent);
+  color: var(--dw-on-accent);
+  box-shadow: none;
+}
+.bz-diary-wall-chip--on:hover {
   background: var(--dw-accent);
   color: var(--dw-on-accent);
 }
@@ -618,11 +631,6 @@
 .bz-diary-wall-text-em {
   font-size: 12px;
 }
-.bz-diary-wall-text-tag {
-  margin-left: auto;
-  font-size: 10px;
-  color: var(--dw-faint);
-}
 .bz-diary-wall-text-tx,
 .bz-diary-wall-tx {
   font-size: 13px;
@@ -637,31 +645,6 @@
 }
 .bz-diary-wall-text.bz-diary-wall-text--locked .bz-diary-wall-text-tx {
   color: var(--dw-muted);
-}
-
-/* 条目 ⋯ 按钮（hover 浮现） */
-.bz-diary-wall-ops {
-  position: absolute;
-  right: 8px;
-  top: 8px;
-  z-index: 5;
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  border: none;
-  background: rgba(0, 0, 0, 0.45);
-  color: #fff;
-  font-size: 13px;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-.bz-diary-wall-item:hover .bz-diary-wall-ops {
-  display: flex;
-}
-.bz-diary-wall-ops:hover {
-  background: rgba(0, 0, 0, 0.7);
 }
 
 /* ============ 灯箱（全屏黑底，图片/视频/音频 controls 播放） ============ */
