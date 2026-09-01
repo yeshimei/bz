@@ -50,5 +50,5 @@
 
 ## Git / 工作流
 - 主分支 `master`，提交遵循 Conventional Commits。
-- 必须走 worktree 开发：从最新 master 分叉，测试全绿后合并回 master，构建部署最新代码，最后清理 worktree。
+- 必须走 worktree 开发：从最新 master 分叉，测试全绿后合并回 master，合并后才允许构建部署，最后清理 worktree。
 - Spec 驱动：先更新 `.scratch/memo-suite-plugin/spec.md`，任务记 `issues/NN-*.md`，ADR 放 `docs/adr/` 并同步 `CONTEXT.md`。
