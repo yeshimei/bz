@@ -897,7 +897,8 @@ button.news-close-btn {
   border: 1px solid var(--background-modifier-border);
   border-radius: 8px;
   font-size: 13px;
-  background: var(--background-primary);
+  /* 与设置面板输入框同底色（--input-bg）：文件选择器配色与面板一致（用户拍板） */
+  background: var(--input-bg, var(--background-primary));
   color: var(--text-normal);
 }
 .bz-path-picker-search:focus { outline: none; border-color: var(--interactive-accent); }
@@ -5521,6 +5522,17 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   line-height: 1.6;
 }
 .bz-sp-nav-item.on .bz-sp-nav-count { color: var(--interactive-accent); background: var(--background-modifier-active-hover); }
+/* 列表一律左对齐（用户拍板：导航/分组/移动列表文字不被主题 text-align 干扰） */
+#bz-settings-panel-popup .bz-sp-nav-item,
+#bz-settings-panel-popup .bz-sp-set-info,
+#bz-settings-panel-popup .bz-sp-set-name,
+#bz-settings-panel-popup .bz-sp-set-desc,
+#bz-settings-panel-popup .bz-sp-group-name,
+.bz-sp-mob-item,
+.bz-sp-mob-name,
+.bz-sp-mob-desc {
+  text-align: left;
+}
 .bz-sp-desk-main {
   flex: 1;
   min-width: 0;
@@ -5528,9 +5540,12 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   padding: 16px 24px 24px;
 }
 
-/* ---- 自绘设置分组卡（保险库质感） ---- */
+/* ---- 自绘设置分组卡（保险库质感；用户拍板：去边框/去白底/去阴影，背景透明） ----
+   设计手册 §5.1：分隔优先级 间距 > 背景差 > 边框——分组间靠间距与行 hover 分层，不堆材质。 */
 .bz-sp-group {
-  background: var(--background-secondary);
+  background: transparent;
+  border: none;
+  box-shadow: none;
   border-radius: 10px;
   margin-bottom: 10px;
   overflow: hidden;
@@ -5736,6 +5751,13 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
   cursor: pointer;
   line-height: 1.25;
   transition: background 0.15s, opacity 0.15s;
+  box-shadow: none;
+}
+/* 设置面板作用域全局：任何按钮不投影（用户拍板 box-shadow: none；
+   含原生 Setting 行内按钮与文件选择器按钮——custom 插槽内容收敛进面板作用域） */
+#bz-settings-panel-popup button,
+.bz-sp-mob-modal button {
+  box-shadow: none;
 }
 .bz-sp-btn:hover { background: var(--background-modifier-hover); }
 .bz-sp-btn.primary { background: var(--interactive-accent); color: var(--text-on-accent); border-color: transparent; }
@@ -5792,6 +5814,17 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 
 /* ---- custom 插槽 ---- */
 .bz-sp-custom-slot { display: flex; align-items: center; gap: 8px; min-width: 0; }
+/* custom 行插槽占满整行（面板不再渲染 info 区，标题/描述由插槽内容自带） */
+.bz-sp-custom-slot--full {
+  flex: 1;
+  width: 100%;
+  align-items: stretch;
+  flex-direction: column;
+}
+.bz-sp-custom-slot--full .setting-item {
+  width: 100%;
+  box-sizing: border-box;
+}
 
 /* ---- custom 插槽作用域重绘：面板内 new Setting() 的原生行/控件统一换成原型样式 ----
    各域 schema 的 custom 行（如第二大脑远程 URL、番茄钟提示音音量、剪藏数据源组、小橘外观）内部

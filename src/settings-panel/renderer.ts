@@ -218,7 +218,9 @@ function makeSelect(opts: {
         ck.textContent = '✓';
         b.appendChild(ck);
       }
-      b.addEventListener('click', () => {
+      b.addEventListener('click', (ev) => {
+        // 阻止冒泡到 sel：否则选项点击会再次触发 sel 的 open()，菜单反复重开（需多点几次才有反应）
+        ev.stopPropagation();
         // 选中后更新显示（label），再回调外部（写绑定 + 落盘）
         val.textContent = o.label;
         opts.onPick(o.value);
@@ -229,7 +231,7 @@ function makeSelect(opts: {
     sel.appendChild(menu);
   };
   sel.addEventListener('click', (e) => {
-    if (e.target !== menu) open();
+    if (e.target !== menu && !menu?.contains(e.target as Node)) open();
   });
   document.addEventListener('click', (e) => {
     if (menu && !menu.contains(e.target as Node) && e.target !== sel) close();
@@ -374,30 +376,39 @@ function renderRow(row: SettingsRow, refresh: () => void): HTMLElement {
   const ctx = makeCtx(el, refresh);
   const rowName = (row as { name?: string }).name;
 
-  const info = document.createElement('div');
-  info.className = 'bz-sp-set-info';
-  if (rowName) {
-    const name = document.createElement('div');
-    name.className = 'bz-sp-set-name';
-    name.textContent = rowName;
-    info.appendChild(name);
-  }
-  if ((row as { desc?: string }).desc) {
-    const desc = document.createElement('div');
-    desc.className = 'bz-sp-set-desc';
-    desc.textContent = (row as { desc?: string }).desc!;
-    info.appendChild(desc);
-  }
-  el.appendChild(info);
+  // custom 行：内容插槽自带标题/描述（各域 custom 内 new Setting().setName/setDesc），
+  // 若面板再渲染 info 区会导致标题描述出现两遍（ticket：设置面板内容重复 a/c）。
+  // 故 custom 行不渲染 info 区，控件区直接占满整行。
+  const isCustom = row.type === 'custom';
+  let ctrl: HTMLElement | null = null;
+  if (!isCustom) {
+    const info = document.createElement('div');
+    info.className = 'bz-sp-set-info';
+    if (rowName) {
+      const name = document.createElement('div');
+      name.className = 'bz-sp-set-name';
+      name.textContent = rowName;
+      info.appendChild(name);
+    }
+    if ((row as { desc?: string }).desc) {
+      const desc = document.createElement('div');
+      desc.className = 'bz-sp-set-desc';
+      desc.textContent = (row as { desc?: string }).desc!;
+      info.appendChild(desc);
+    }
+    el.appendChild(info);
 
-  const ctrl = document.createElement('div');
-  ctrl.className = 'bz-sp-set-ctrl';
-  el.appendChild(ctrl);
+    ctrl = document.createElement('div');
+    ctrl.className = 'bz-sp-set-ctrl';
+    el.appendChild(ctrl);
+  }
+  // 非 custom 分支全部挂到 ctrl（isCustom 时这些分支不可达；断言避免 TS 报 null 窄化）
+  const ctrlEl = ctrl as HTMLElement;
 
   switch (row.type) {
     case 'toggle': {
       const acc = bindValue<boolean>(row.binding as unknown as AnyBinding);
-      ctrl.appendChild(makeToggle(acc.read() === true, (v) => {
+      ctrlEl.appendChild(makeToggle(acc.read() === true, (v) => {
         acc.write(v);
         void acc.persist();
         row.onChange?.(v, ctx);
@@ -408,7 +419,7 @@ function renderRow(row: SettingsRow, refresh: () => void): HTMLElement {
     case 'text': {
       const acc = bindValue<string>(row.binding as unknown as AnyBinding);
       const ph = typeof row.placeholder === 'function' ? row.placeholder(snapshot()) : row.placeholder;
-      ctrl.appendChild(makeInput({
+      ctrlEl.appendChild(makeInput({
         value: acc.read() ?? '',
         mono: !!(row as { mono?: boolean }).mono,
         num: !!(row as { num?: boolean }).num,
@@ -439,7 +450,7 @@ function renderRow(row: SettingsRow, refresh: () => void): HTMLElement {
         timer = window.setTimeout(commit, 800);
       });
       ta.addEventListener('blur', commit);
-      ctrl.appendChild(ta);
+      ctrlEl.appendChild(ta);
       break;
     }
     case 'number': {
@@ -463,12 +474,12 @@ function renderRow(row: SettingsRow, refresh: () => void): HTMLElement {
         },
       });
       (input as HTMLInputElement).step = String(row.step ?? 1);
-      ctrl.appendChild(input);
+      ctrlEl.appendChild(input);
       break;
     }
     case 'select': {
       const acc = bindValue<string>(row.binding as unknown as AnyBinding);
-      ctrl.appendChild(makeSelect({
+      ctrlEl.appendChild(makeSelect({
         value: acc.read() ?? '',
         options: row.options,
         onPick: (v) => {
@@ -482,7 +493,7 @@ function renderRow(row: SettingsRow, refresh: () => void): HTMLElement {
     }
     case 'slider': {
       const acc = bindValue<number>(row.binding as unknown as AnyBinding);
-      ctrl.appendChild(makeSlider({
+      ctrlEl.appendChild(makeSlider({
         value: acc.read() ?? row.min,
         min: row.min,
         max: row.max,
@@ -498,7 +509,7 @@ function renderRow(row: SettingsRow, refresh: () => void): HTMLElement {
     case 'path': {
       const acc = bindValue<string | string[]>(row.binding as unknown as AnyBinding);
       const multi = row.mode === 'multi';
-      ctrl.appendChild(makePathRowCtrl({
+      ctrlEl.appendChild(makePathRowCtrl({
         name: row.name,
         mode: row.mode,
         value: multi
@@ -528,7 +539,7 @@ function renderRow(row: SettingsRow, refresh: () => void): HTMLElement {
       break;
     }
     case 'button': {
-      ctrl.appendChild(makeButton({
+      ctrlEl.appendChild(makeButton({
         text: row.buttonText,
         primary: row.cta,
         onClick: () => row.onClick(ctx),
@@ -539,16 +550,16 @@ function renderRow(row: SettingsRow, refresh: () => void): HTMLElement {
       const badge = document.createElement('span');
       badge.className = 'bz-sp-badge gray';
       badge.textContent = row.name;
-      ctrl.appendChild(badge);
+      ctrlEl.appendChild(badge);
       break;
     }
     case 'custom': {
-      // 自绘行骨架（名称/描述在 info 区），custom 内容渲染进控件区插槽。
-      // 兼容现有 custom 插槽内的 new Setting(body) 代码：body 挂在控件区内，
-      // Setting 创建的原生设置行在面板内同样被自绘容器包裹（视觉由本面板容器收敛）。
+      // custom 行：内容插槽自带标题/描述（各域 new Setting().setName/setDesc），面板不再渲染 info 区
+      // （否则标题描述两遍）；插槽直接占满整行，custom 内容（含原生 Setting 行）渲染进插槽，
+      // 原生设置行在面板内同样被自绘容器包裹（视觉由本面板容器收敛）。
       const slot = document.createElement('div');
-      slot.className = 'bz-sp-custom-slot';
-      ctrl.appendChild(slot);
+      slot.className = 'bz-sp-custom-slot bz-sp-custom-slot--full';
+      el.appendChild(slot);
       try {
         row.render(slot, ctx);
       } catch (e) {
@@ -563,7 +574,11 @@ function renderRow(row: SettingsRow, refresh: () => void): HTMLElement {
 }
 
 /** 渲染整组（分组卡片，原型样式） */
-function renderGroup(container: HTMLElement, group: { name: string; icon?: string; rows: SettingsRow[] }, refresh: () => void): HTMLElement {
+function renderGroup(
+  container: HTMLElement,
+  group: { name: string; icon?: string; rows: SettingsRow[] },
+  refresh: () => void
+): HTMLElement {
   const card = document.createElement('div');
   card.className = 'bz-sp-group';
 
@@ -589,6 +604,7 @@ function renderGroup(container: HTMLElement, group: { name: string; icon?: strin
   gname.className = 'bz-sp-group-name';
   gname.textContent = group.name;
   head.appendChild(gname);
+  // 项数徽标：动态计算（可见非 button 行数；button 行是操作行不计数，与 ⚙️ 弹窗 refreshSettingsGroupCounts 口径一致）
   const count = document.createElement('span');
   count.className = 'bz-sp-group-count';
   count.textContent = `${group.rows.length} 项`;
@@ -597,12 +613,32 @@ function renderGroup(container: HTMLElement, group: { name: string; icon?: strin
 
   const body = document.createElement('div');
   body.className = 'bz-sp-group-body';
+  const rowEls: HTMLElement[] = [];
   group.rows.forEach((r) => {
     const rowEl = renderRow(r, refresh);
+    rowEls.push(rowEl);
     body.appendChild(rowEl);
   });
   card.appendChild(body);
   container.appendChild(card);
+
+  /** 重算项数徽标：排除隐藏行（含 group 整体隐藏时恒 0）与 button 操作行 */
+  const updateCount = () => {
+    const groupHidden = card.style.display === 'none' || card.classList.contains('bz-sp-hidden');
+    let n = 0;
+    if (!groupHidden) {
+      group.rows.forEach((r, i) => {
+        if (r.type === 'button') return; // 操作行不计
+        const el = rowEls[i];
+        if (el && el.style.display !== 'none') n++;
+      });
+    }
+    count.textContent = `${n} 项`;
+    // 功能性显隐（铁律 8 允许）：0 项组隐藏徽标（对齐 ⚙️ 弹窗 refreshSettingsGroupCounts）
+    count.style.display = n > 0 ? '' : 'none';
+  };
+  (card as any).__bzSpUpdateCount = updateCount;
+  updateCount();
   return card;
 }
 
@@ -625,6 +661,11 @@ export function renderPanelSchema(container: HTMLElement, schema: SettingsSchema
       const cond = visibleConditions.get(el);
       if (!cond) return;
       el.style.display = cond(snapshot()) ? '' : 'none';
+    });
+    // 行/组显隐变化后重算各分组项数徽标（动态计算；button 操作行与隐藏行不计）
+    container.querySelectorAll<HTMLElement>('.bz-sp-group').forEach((card) => {
+      const upd = (card as any).__bzSpUpdateCount as (() => void) | undefined;
+      if (typeof upd === 'function') upd();
     });
   };
 
