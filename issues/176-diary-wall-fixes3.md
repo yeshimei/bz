@@ -1,5 +1,9 @@
 # Ticket 176 — 回忆墙（diary-wall）第三批交互细节修复（11 项）
 
+> 状态：✅ 已完成并部署（2026-09-02）
+> 提交：bf989b2（11 项功能）+ 39e7f2e（审查修复：加密动作分流/渲染守卫/滚动高亮）+ 构建产物提交
+> 审查：子代理 diff 审查发现 2 P1 + 5 P2，P1/P2-1/P2-3 已修，其余 P2 记录待后续迭代
+
 > 备忘：用户对回忆墙的 11 项修复诉求（2026-09-02），涉及媒体块 emoji、正文渲染、瀑布流、章节跳转、筛选、标签样式、日期选择器、右键菜单、灯箱、加密解锁。
 
 ## 背景
@@ -72,12 +76,21 @@
 
 ## 涉及文件
 
-- `src/diary-wall/ui.ts`（1/2/3/5/9/10/11）
+- `src/diary-wall/ui.ts`（1/2/3/5/9/10/11 + 审查修复）
 - `src/diary-wall/parser.ts`（6）
+- `src/diary-wall/data.ts`（WallEntry 补 encrypted 字段）
 - `src/diary-wall/styles.css`（1/2/4/7/8/10）
 - `tests/diary-wall/ui.test.ts`、`tests/diary-wall/data.test.ts`（6/11 等）
 - 根 `styles.css`：构建产物（勿手改）
 - `main.js`：构建产物（勿手改）
+
+## 审查修复记录（子代理审查）
+
+- **P1-1 renderText 超时守卫**：超时回退后挂起的 MarkdownRenderer 渲染恢复会覆盖回退文本——dataset.renderFallback 标记 + render.then 二次清写守卫。
+- **P1-2 加密条目动作分流**：加密条目「打开原文」不再跳不存在的 md → 打开保险箱面板；「删除」走 deleteEncryptedEntry 密文销毁（flow-dialog 确认）；「复制双链」改复制正文；菜单/抽屉显示「解密」而非「改标签/加密」。
+- **P2-1 滚动高亮 rect 化**：与章节跳转同口径 getBoundingClientRect 差值（content-visibility 下 offsetTop 不可靠）。
+- **P2-3 加密可见性用 encrypted 标志**：filtered()/chip 计数/右键/点击守卫用 `e.encrypted || tags.includes('加密')`（tags 由 emoji 反解可能不含「加密」）。
+- 未修 P2（记录）：P2-2 委托 stopImmediatePropagation 吞子元素右键（当前无冲突，可接受）；P2-4 超时回退展示 md 原文（保卡片不空白优先）；P2-5 灯箱副行 3 行截断无展开（可后续加）；P2-6 稀疏态 column-span 兼容性（视觉细节）。
 
 ## 测试与门禁
 
