@@ -14,6 +14,9 @@
   max-height: 80vh !important;
   padding: 0 !important;
   overflow: hidden !important;
+  /* 原型 .b-modal：1px 边框 + shadow-md（覆盖 core overlay 无边框浮空观感） */
+  border: 1px solid var(--background-modifier-border) !important;
+  box-shadow: var(--shadow-md) !important;
 }
 .bz-sp-desk-side {
   width: 232px;
@@ -41,7 +44,10 @@
   align-items: center;
   justify-content: center;
   font-size: 15px;
+  font-weight: 700;
   flex-shrink: 0;
+  /* emoji 图标（原型 .b-logo ⚙️） */
+  line-height: 1;
 }
 .bz-sp-logo svg { width: 15px; height: 15px; }
 .bz-sp-brand-name {
@@ -63,7 +69,7 @@
   flex-shrink: 0;
 }
 .bz-sp-search:focus-within { border-color: var(--interactive-accent); }
-.bz-sp-search-ic { display: inline-flex; }
+.bz-sp-search-ic { display: inline-flex; font-size: 13px; line-height: 1; }
 .bz-sp-search-ic svg { width: 14px; height: 14px; }
 .bz-sp-search-in {
   border: none;
@@ -99,7 +105,7 @@
 }
 .bz-sp-nav-item:hover { background: var(--background-modifier-hover); color: var(--text-normal); }
 .bz-sp-nav-item.on { background: var(--tag-bg, rgba(124,108,240,0.14)); color: var(--interactive-accent); font-weight: 600; }
-.bz-sp-nav-ic { display: inline-flex; flex-shrink: 0; }
+.bz-sp-nav-ic { display: inline-flex; flex-shrink: 0; font-size: 15px; line-height: 1; }
 .bz-sp-nav-ic svg { width: 15px; height: 15px; }
 .bz-sp-nav-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* 设置组数徽标（原型 .b-ct） */
@@ -144,6 +150,7 @@
   justify-content: center;
   font-size: 13px;
   flex-shrink: 0;
+  line-height: 1;
 }
 .bz-sp-group-icon svg { width: 13px; height: 13px; }
 .bz-sp-group-name { font-size: 15px; font-weight: 600; color: var(--text-normal); }
@@ -526,6 +533,7 @@
   margin-bottom: 8px;
   display: inline-flex;
   color: var(--text-faint);
+  line-height: 1;
 }
 .bz-sp-empty-ic svg { width: 26px; height: 26px; }
 .bz-sp-empty-title { color: var(--text-muted); font-size: 14px; margin-bottom: 4px; }
@@ -659,6 +667,7 @@
   justify-content: center;
   font-size: 16px;
   flex-shrink: 0;
+  line-height: 1;
 }
 .bz-sp-mob-ic svg { width: 16px; height: 16px; }
 .bz-sp-mob-t { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -670,6 +679,24 @@
   text-align: center;
   color: var(--text-faint);
   font-size: 13px;
+}
+/* 搜索命中分组标题（原型 .m1-sec） */
+.bz-sp-mob-sec {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 12px 4px 6px;
+}
+/* 搜索命中设置项徽标（原型 .m1-kind） */
+.bz-sp-mob-kind {
+  font-size: 10px;
+  color: var(--text-faint);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  flex-shrink: 0;
 }
 
 /* ---- 真全屏态关闭按钮 ---- */
@@ -696,9 +723,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 .bz-sp-mob-modal-ic {
   width: 22px;

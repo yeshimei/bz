@@ -24,6 +24,54 @@ function snapshot(): SettingsSnapshot {
   return getSettings() as unknown as SettingsSnapshot;
 }
 
+/** 分组卡图标：schema 的 lucide 图标名 → 原型风格 emoji（原型 .gc-icon 为 emoji）。
+ *  找不到映射的图标名回落 setIcon 线条图标（保持可用）。 */
+const GROUP_ICON_EMOJI: Record<string, string> = {
+  sparkles: '🤖', // AI 服务商
+  'folder-open': '📂', // 目录/数据存储
+  smartphone: '📱', // 移动端
+  bell: '🔔', // 提醒
+  'graduation-cap': '🎓', // 做题家
+  timer: '⏱️', // 复习节奏 / 番茄时间方案
+  brain: '🧠', // 记忆算法 / 做题家
+  'sliders-horizontal': '⚙️', // 行为 / 自动化
+  eye: '👁️', // 界面 / 显示
+  'message-circle': '💬', // 互动 / 对话
+  archive: '📦', // 记忆
+  database: '🗄️', // 存储与记忆
+  moon: '🌙', // 记忆巩固
+  link: '🔗', // 关联 / 自动双链
+  search: '🔍', // 检索
+  'layout-dashboard': '📊', // 面板
+  'message-square': '💬', // 对话
+  palette: '🎨', // 外观
+  'pencil-line': '✏️', // 新建
+  tags: '🏷️', // 场景列表
+  key: '🔑', // 生成
+  'key-round': '🔑', // 生成
+  shield: '🛡️', // 安全
+  monitor: '🖥️', // 默认视图
+  wrench: '🛠️', // 维护 / 工具
+  radio: '📡', // 数据源
+  image: '🖼️', // 预览
+  'book-open': '📖', // 文献 / 书库
+  highlighter: '🖍️', // 划线
+  terminal: '💻', // 视频处理
+  bot: '🤖', // AI
+  clock: '⏰', // 时间
+  'check-circle': '✅', // 完成
+  copy: '📋', // 复制
+  'external-link': '🔗', // 打开
+  'file-text': '📄', // 文件
+  globe: '🌐', // 网络
+  history: '🕘', // 历史
+  info: 'ℹ️', // 信息
+  play: '▶️', // 播放
+  'refresh-cw': '🔄', // 刷新
+  'rotate-ccw': '↩️', // 恢复
+  star: '⭐', // 收藏
+};
+
 /** 绑定统一读写通道（照抄 settings-schema.ts bindValue） */
 interface ValueAccess<V> {
   read: () => V;
@@ -524,10 +572,16 @@ function renderGroup(container: HTMLElement, group: { name: string; icon?: strin
   if (group.icon) {
     const ic = document.createElement('span');
     ic.className = 'bz-sp-group-icon';
-    try {
-      setIcon(ic, group.icon);
-    } catch {
-      /* ignore */
+    // 分组卡图标：lucide 名 → emoji 映射（原型 .gc-icon 为 emoji；找不到映射回落 setIcon 线条）
+    const emoji = GROUP_ICON_EMOJI[group.icon];
+    if (emoji) {
+      ic.textContent = emoji;
+    } else {
+      try {
+        setIcon(ic, group.icon);
+      } catch {
+        /* ignore */
+      }
     }
     head.appendChild(ic);
   }
