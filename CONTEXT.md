@@ -61,7 +61,11 @@ _Avoid_: 新闻抓取、新闻爬虫、news watcher 进程
 
 **摘要时机 (Summary Timing)**: 自动摘要详设（ticket 124，Q14）——autoSummaryTiming 设置：immediate（默认，保存后立刻：create+file-open 双监听）/ lazy（懒触发：仅打开文件时补全，不监听 create）。_Avoid_: 摘要触发模式
 
-**密码本 (Password Vault)**: 密码管理，存储路径可配置（storagePath）。样式在 `src/password/styles.css`（铁律 9 按域拆分，原「含样式注入」口径废止）。
+**密码本 (Password Vault)**: 密码管理，存储路径可配置（storagePath）。样式在 `src/password/styles.css`（铁律 9 按域拆分，原「含样式注入」口径废止）。旧 UI（单列卡片弹窗）。数据已合并至保险箱（ADR-0015 路线 B：kind=password-vault SafeNote，共享主密码/解锁态）。
+_Avoid_: 保险库（新域，见下）
+
+**保险库 (Password Vault UI, password-vault 域)**: 密码管理的**新 UI 域**（ADR-0078）——原型 v1「保险库」一比一（桌面三栏工作台 + 移动端列表/详情/FAB + 金色视觉 + 自绘右键菜单/抽屉/确认/toast/锁屏）。与旧密码本域并存、互不影响（UI/代码层面），**共享同一数据源**（保险箱 kind=password-vault SafeNote）。命令 `bz-password-vault-open`。移动端恒真全屏（无开关）。样式在 `src/password-vault/styles.css`。收藏标记走条目 fav 字段（ADR-0079，旧数据缺失默认 false）。
+_Avoid_: 保险箱（encrypt 域：加密容器本身）、密码本（旧 UI 域）
 
 **收藏本 (Favorites)**: 通用链接收藏管理（GitHub 🐙/桌面软件 💻/网站 🌐/大模型 🧠 等 9 类固定标签），数据 `CONFIG/STORAGE/favorites.json`；大模型条目带余额查询（5 分钟缓存）。列表手势收敛为**仅整卡长按弹统一抽屉**（动作序：打开 → 置顶 → 跳转笔记 → 刷新余额 → 编辑 → 归档 → 删除；余额纯展示）；添加/编辑共用一个弹窗，保存后若从抽屉进入则连抽屉一并关闭。**2026-08 UX 整改拍板**：有 url 的卡片标题单击直开（cursor pointer 作可见入口，双击 300ms 防双开、长按合成 click 由抽屉捕获层吞掉不穿透），长按/右键抽屉保留；AI 整理回填不覆盖手填字段（未配置 AI 直接拦截）。
 _Avoid_: GitHub 收藏管理（旧口径，实际已泛化到全部链接类型）
@@ -369,6 +373,9 @@ _Avoid_: 总线层全局去环、在 obsidian-adapter 之外直接 app.vault.on 
 
 **全局设置页 (Global Settings Page)**: Obsidian 设置中的 bz 设置页——单页平铺（无 tab），只含「AI」「数据存储路径」两个区块。
 _Avoid_: 设置 tab、分类设置、设置页分区
+
+**设置面板 (Settings Panel)**: bz 全域设置的聚合浏览入口（ADR-0080，`src/settings-panel/` 域，命令 `bz-settings-panel-open`）——桌面端侧栏工作台（左域导航 + 右设置分组卡）、移动端命令面板（搜索 + 域列表，主面板真全屏 + 关闭按钮，子面板一律居中弹窗、遮罩点击关闭）。与全局设置页/域设置弹窗**并存**，设置读写仍走既有 schema 与 settings-provider。为后续各域 UI 重设计提供基础公用样式层（core/styles.css `.bz-settings-card/.bz-set-row/.bz-toggle/.bz-input/.bz-select/.bz-empty/.bz-domain-icon`）。
+_Avoid_: 全局设置面板（与「全局设置页」混淆）、设置聚合器
 
 **主面板 (Main Panel)**: 功能域的完整主窗口，经命令 `bz-<域>-open` 打开，承载该域列表与全部功能入口；区别于域内小弹窗与快捷创建。
 _Avoid_: 大面板、完整面板、功能面板

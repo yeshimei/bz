@@ -441,6 +441,10 @@ export default interface BzSettings {
   // ===== 🧠 第二大脑 =====
   /** 第二大脑主面板：移动端默认全屏（默认开——总览信息密度高；ticket 103） */
   secondBrainMobileDefaultFullscreen: boolean;
+
+  // ===== ⚙️ 设置面板（ADR-0080） =====
+  /** 设置面板主窗口：移动端默认全屏（默认开；主面板全屏 + 关闭按钮，子面板一律弹窗） */
+  settingsPanelMobileDefaultFullscreen: boolean;
 }
 
 export const DEFAULT_SETTINGS: BzSettings = {
@@ -657,6 +661,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   literatureCacheDir: '',
   literatureCacheRetentionDays: 7,
   secondBrainMobileDefaultFullscreen: true,
+  // 设置面板（ADR-0080）：移动端默认全屏（默认开）
+  settingsPanelMobileDefaultFullscreen: true,
 
   // 小橘陪伴猫（smartcat 域；移动端默认全屏键聊天/设置/数据面板共用，2026-08-23 合并一套）
   smartcatEnabled: true,
