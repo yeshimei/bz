@@ -212,11 +212,67 @@ describe('回忆墙 UI', () => {
     expect(document.querySelector('[data-act="settings"]')).toBeNull();
   });
 
-  it('标题（品牌）点击 → 打开日期选择器（diary showDatePicker 被调）', async () => {
+  it('标题（品牌）点击 → 打开自包含日期选择器弹窗', async () => {
+    await openAndWait();
+    expect(mocks.showDatePicker).not.toHaveBeenCalled(); // 不再调 diary 面板的日期选择器
+    const brand = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-brand') as HTMLElement;
+    brand.click();
+    const popup = document.querySelector('.bz-diary-wall-datefilter') as HTMLElement;
+    expect(popup).toBeTruthy();
+    expect(popup.style.display).toBe('flex');
+    expect(popup.textContent).toContain('按日期筛选');
+    // 年份行（2026 / 2025 来自 mock 数据日期）
+    expect(popup.querySelectorAll('.bz-diary-wall-datefilter-year').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('日期选择器：点年份 → 月份网格；点月份 → 过滤该月条目', async () => {
     await openAndWait();
     const brand = document.querySelector('.bz-diary-wall-desk .bz-diary-wall-brand') as HTMLElement;
     brand.click();
-    expect(mocks.showDatePicker).toHaveBeenCalled();
+    const popup = document.querySelector('.bz-diary-wall-datefilter') as HTMLElement;
+    // 点 2026 年 → 弹窗重建出月份网格
+    const year2026 = popup.querySelector<HTMLElement>('.bz-diary-wall-datefilter-year[data-year="2026"]');
+    expect(year2026).toBeTruthy();
+    year2026!.click();
+    const popup2 = document.querySelector('.bz-diary-wall-datefilter') as HTMLElement;
+    expect(popup2.querySelectorAll('.bz-diary-wall-datefilter-month').length).toBe(12);
+    // 点 8 月（有数据）→ 应用过滤（只剩 2026-08-19 条目）并关闭弹窗
+    const aug = Array.from(popup2.querySelectorAll<HTMLElement>('.bz-diary-wall-datefilter-month')).find(
+      (m) => m.textContent!.includes('8月')
+    )!;
+    expect(aug).toBeTruthy();
+    aug.click();
+    expect(document.querySelector('.bz-diary-wall-datefilter')).toBeNull(); // 弹窗已关
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    const heads = Array.from(desk.querySelectorAll('.bz-diary-wall-day-head')).map((h) =>
+      (h as HTMLElement).dataset.date
+    );
+    expect(heads).toEqual(['2026-08-19']);
+  });
+
+  it('桌面单击条目 → 不开底部抽屉（动作入口为右键/⋯/双击）', async () => {
+    await openAndWait();
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    const item = desk.querySelector('.bz-diary-wall-item') as HTMLElement;
+    expect(item).toBeTruthy();
+    item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    // 抽屉不应打开
+    expect(desk.querySelector('.bz-diary-wall-sheet--show')).toBeNull();
+    // 但 ⋯ 按钮仍可开抽屉（桌面保留显式入口）
+    const ops = item.querySelector('.bz-diary-wall-ops') as HTMLElement;
+    expect(ops).toBeTruthy();
+    ops.click();
+    expect(desk.querySelector('.bz-diary-wall-sheet--show')).toBeTruthy();
+  });
+
+  it('移动端单击条目 → 打开底部抽屉', async () => {
+    await openAndWait();
+    // 移动实例（.bz-diary-wall-mob）的条目：jsdom 无媒体差异，移动实例与桌面共用 renderWall(mobile=true)
+    const mob = document.querySelector('.bz-diary-wall-mob')!;
+    const item = mob.querySelector('.bz-diary-wall-item') as HTMLElement;
+    expect(item).toBeTruthy();
+    item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(mob.querySelector('.bz-diary-wall-sheet--show')).toBeTruthy();
   });
 
   it('稀疏铺满：单条日文字条跨列占满整行（sparse-1）', async () => {
@@ -250,33 +306,30 @@ describe('回忆墙 UI', () => {
   });
 
   it('二级标签：点击带子标签的主标签显示子标签行', async () => {
-    // 当前 mock 数据无二级标签主标签——注入一个带子标签的（旅游→四川/大理）
+    // mock 数据：两条 🀄（四川 子标签）+ 一条 📖（普通日记）——点子标签「四川」后应只剩四川条目
     const c = DiaryWallAppController.getInstance({ mobileDefaultFullscreen: false });
-    // 直接在实例上注入子标签配置（getSubTagsOfPrimary 读 diary config，测试数据补一条旅游条目）
     const v2 = new MockVault();
-    v2.files.set('我的/日记/2026-08-19.md', '# 🛶 23:02\n![[IMG_x.jpg]]\n');
-    v2.files.set('我的/日记/2026-06-11.md', '# 🛶 21:29\n![[IMG_y.jpg]]\n');
-    v2.files.set('我的/日记/2026-06-12.md', '# 🛶 20:33\n四川真美\n');
+    v2.files.set('我的/日记/2026-08-19.md', '# 🀄 23:02\n![[IMG_x.jpg]]\n');
+    v2.files.set('我的/日记/2026-06-11.md', '# 🀄 21:29\n![[IMG_y.jpg]]\n');
+    v2.files.set('我的/日记/2026-06-12.md', '# 📖 20:33\n普通日记\n');
     const v2app = mockAppWithVault(v2);
     setApp(v2app);
     (await import('../../src/diary/app')).setApp(v2app);
     await c.openManager();
     await waitFor(() => !!document.querySelector('.bz-diary-wall-day-head'));
     const desk = document.querySelector('.bz-diary-wall-desk')!;
-    // 点击「旅游」主标签（若 mock 无此 chip 则跳过——用 config 的子标签能力测试）
+    // 标签列表来自 config 全量：旅游 chip 一定存在（renderChips 不再硬编码）
     const travel = desk.querySelector<HTMLElement>('.bz-diary-wall-chip[data-tag="旅游"]');
-    if (travel) {
-      travel.click();
-      await waitFor(() => desk.querySelectorAll('.bz-diary-wall-subchip').length > 0);
-      expect(desk.querySelectorAll('.bz-diary-wall-subchip').length).toBeGreaterThan(0);
-      // 点子标签「四川」过滤
-      const sub = desk.querySelector<HTMLElement>('.bz-diary-wall-subchip[data-tag="四川"]');
-      if (sub) {
-        sub.click();
-        await waitFor(() => desk.querySelectorAll('.bz-diary-wall-day-head').length === 1);
-        expect(desk.querySelectorAll('.bz-diary-wall-day-head').length).toBe(1);
-      }
-    }
+    expect(travel).toBeTruthy();
+    travel!.click();
+    await waitFor(() => desk.querySelectorAll('.bz-diary-wall-subchip').length > 0);
+    expect(desk.querySelectorAll('.bz-diary-wall-subchip').length).toBeGreaterThan(0);
+    // 点子标签「四川」过滤：只剩 2026-08-19 + 2026-06-11 两条
+    const sub = desk.querySelector<HTMLElement>('.bz-diary-wall-subchip[data-tag="四川"]');
+    expect(sub).toBeTruthy();
+    sub!.click();
+    await waitFor(() => desk.querySelectorAll('.bz-diary-wall-day-head').length === 2);
+    expect(desk.querySelectorAll('.bz-diary-wall-day-head').length).toBe(2);
   });
 
   it('右键菜单：条目 contextmenu 打开跟手菜单，含打开/复制/改标签/加密/删除', async () => {
