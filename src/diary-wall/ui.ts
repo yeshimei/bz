@@ -33,10 +33,10 @@ import { topifyZ } from '../core/dom';
 import { notice } from '../core/notice';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { getApp } from '../core/app';
-import { DIARY_DIRECTORY, getSubTagsOfPrimary } from './config';
+import { DIARY_DIRECTORY, getSubTagsOfPrimary, getPrimaryTagsInDisplayOrder, getTagEmoji } from './config';
 import { loadWallEntries, mediaSrc, groupByMonth, type WallEntry, type WallMedia } from './data';
 // TODO(自包含)：以下 diary 域入口在「删除日记本域」时改为回忆墙自己的实现
-import { openAddDialog, showDatePicker } from '../diary/ui/dialogs';
+import { openAddDialog } from '../diary/ui/dialogs';
 
 /** UI 配置（设置代理传入） */
 export interface DiaryWallUIConfig {
@@ -123,6 +123,8 @@ export class DiaryWallAppController {
   selTag: string | null = null;
   /** 搜索关键词（空 = 全部） */
   searchKeyword = '';
+  /** 日期筛选（null = 全部；{ year } = 年份；{ year, month } = 某月）——回忆墙自包含，不再依赖 diary 面板 filter */
+  selDateFilter: { year: string; month?: string } | null = null;
   /** 二级标签筛选（选中主标签后其子标签） */
   selSubTag: string | null = null;
   /** 加密条目是否可见（原型 S.locked：默认锁定隐藏） */
@@ -136,6 +138,8 @@ export class DiaryWallAppController {
   private sheetEntry: WallEntry | null = null;
   private _searchTimer: ReturnType<typeof setTimeout> | null = null;
   private _contextMenu: HTMLElement | null = null;
+  /** 日期筛选弹窗元素（null = 未打开） */
+  private _dateFilterEl: HTMLElement | null = null;
 
   constructor(private config: DiaryWallUIConfig) {}
 
@@ -355,16 +359,28 @@ export class DiaryWallAppController {
     this.mob.range.textContent = range;
   }
 
-  /** 过滤后的条目（加密条目默认隐藏，选中「加密」标签时显示；支持标签/二级标签/搜索） */
+  /** 过滤后的条目（加密条目默认隐藏，选中「加密」标签时显示；支持标签/二级标签/搜索/日期） */
   private filtered(): WallEntry[] {
     const kw = this.searchKeyword.trim().toLowerCase();
+    const df = this.selDateFilter;
     return this.entries.filter((e) => {
       if (this.selTag === '加密') {
         if (!e.tags.includes('加密')) return false;
       } else {
-        if (this.selTag && !e.tags.includes(this.selTag)) return false;
-        if (this.selSubTag && !e.tags.includes(this.selSubTag)) return false;
+        // 二级标签已选中：只按二级标签精确过滤（日记条目标的是子标签而非主标签，如「四川」而非「旅游」）
+        if (this.selSubTag) {
+          if (!e.tags.includes(this.selSubTag)) return false;
+        } else {
+          if (this.selTag && !e.tags.includes(this.selTag)) return false;
+        }
         if (!this.lockedVisible && e.tags.includes('加密')) return false;
+      }
+      if (df) {
+        if (df.month) {
+          if (!e.date.startsWith(`${df.year}-${df.month}`)) return false;
+        } else if (!e.date.startsWith(df.year)) {
+          return false;
+        }
       }
       if (kw) {
         const hit =
@@ -378,37 +394,11 @@ export class DiaryWallAppController {
     });
   }
 
-  /** 类型 chips 行（主标签胶囊 + 计数；「加密」锁定态 🔒 虚线） */
+  /** 类型 chips 行（主标签胶囊 + 计数；「加密」锁定态 🔒 虚线）——标签表取自 config（含旅游/收藏等带二级标签的主标签），非硬编码 */
   private renderChips() {
     const countFor = (tag: string) => this.entries.filter((e) => e.tags.includes(tag)).length;
-    const tagChips: [string, string][] = [
-      ['日记', '📖'],
-      ['念念碎', '😶'],
-      ['对谈', '🤝'],
-      ['随笔', '✍️'],
-      ['梦', '🌙'],
-      ['诗', '🌟'],
-      ['书', '📕'],
-      ['信', '✉️'],
-      ['摘抄', '📌'],
-      ['摄影', '📸'],
-      ['骑行', '🚴'],
-      ['代码', '⚙️'],
-      ['做饭', '🥘'],
-      ['游戏', '🎮'],
-      ['音乐', '🎧'],
-      ['电影', '📽️'],
-      ['电视剧', '📺'],
-      ['动漫', '🎨'],
-      ['纪录片', '🎞️'],
-      ['猫', '🐱'],
-      ['狗', '🐶'],
-      ['仓鼠', '🐹'],
-      ['熊猫', '🐼'],
-      ['博物馆', '🏛️'],
-      ['美食', '🍔'],
-      ['加密', '🔐'],
-    ];
+    // 全量主标签（展示顺序固定 + 「加密」垫底），emoji 走 config 映射（getTagEmoji 兜底 📖）
+    const tagChips: [string, string][] = getPrimaryTagsInDisplayOrder().map((tag) => [tag, getTagEmoji(tag)]);
     const hasEncrypted = this.entries.some((e) => e.tags.includes('加密'));
     [this.desk.chipRow, this.mob.chipRow].forEach((row) => {
       row.innerHTML = '';
@@ -570,7 +560,7 @@ export class DiaryWallAppController {
             item.appendChild(tx);
           }
           item.appendChild(this.entryOps(e));
-          this.bindItem(item, e);
+          this.bindItem(item, e, mobile);
           container.appendChild(item);
         });
       } else {
@@ -597,7 +587,7 @@ export class DiaryWallAppController {
           void this.renderText(tx, e.text, e);
         }
         item.append(row, tx);
-        this.bindItem(item, e);
+        this.bindItem(item, e, mobile);
         container.appendChild(item);
       }
     });
@@ -623,8 +613,8 @@ export class DiaryWallAppController {
     }
   }
 
-  /** 条目级交互：单击 → 抽屉；双击 → 跳转原文；右键 → 跟手上下文菜单（桌面）；加密隐藏时不弹 */
-  private bindItem(item: HTMLElement, e: WallEntry) {
+  /** 条目级交互：移动端单击 → 抽屉；双击 → 跳转原文；右键 → 跟手上下文菜单（桌面）；加密隐藏时不弹 */
+  private bindItem(item: HTMLElement, e: WallEntry, mobile: boolean) {
     const ops = item.querySelector('.bz-diary-wall-ops');
     if (ops) {
       ops.addEventListener('click', (ev) => {
@@ -632,7 +622,8 @@ export class DiaryWallAppController {
         this.openSheet(e);
       });
     }
-    // 双击跳转（300ms 内两次点击；单击开抽屉）
+    // 单击：仅移动端开抽屉（桌面端动作入口 = 右键菜单 / ⋯ 按钮 / 双击跳转，避免误触底部抽屉）
+    // 双击跳转（300ms 内两次点击）
     let lastClick = 0;
     item.addEventListener('click', (ev) => {
       if ((ev.target as HTMLElement).closest('.bz-diary-wall-ops')) return;
@@ -644,7 +635,7 @@ export class DiaryWallAppController {
         return;
       }
       lastClick = now;
-      this.openSheet(e);
+      if (mobile) this.openSheet(e);
     });
     // 桌面右键 → 跟手菜单（移动端长按走抽屉）
     item.addEventListener('contextmenu', (ev) => {
@@ -1273,7 +1264,11 @@ export class DiaryWallAppController {
     this.escUnregister = escManager.register('diary-wall', {
       isVisible: () => !!this.root && this.root.style.display === 'flex',
       close: () => {
-        // 抽屉优先，其次灯箱，最后整体关闭
+        // 日期弹窗优先，其次抽屉，其次灯箱，最后整体关闭
+        if (this._dateFilterEl) {
+          this.closeDateFilter();
+          return;
+        }
         if (this.desk.sheet.classList.contains('bz-diary-wall-sheet--show')) {
           this.closeSheet();
           return;
@@ -1312,6 +1307,7 @@ export class DiaryWallAppController {
 
   hide() {
     if (!this.root) return;
+    this.closeDateFilter();
     this.closeLightbox();
     this.closeSheet();
     this.root.style.display = 'none';
@@ -1338,12 +1334,113 @@ export class DiaryWallAppController {
     }
   }
 
-  /** 标题点击 → 日期选择器（diary 既有，按年份/月份筛选） */
+  /** 标题点击 → 回忆墙自包含日期选择器（按年份/月份过滤本域数据；不再调 diary showDatePicker——那是 diary 面板的 filter） */
   private openDatePicker() {
-    try {
-      showDatePicker();
-    } catch (e) {
-      notice('日期筛选暂不可用', 'error');
+    this._dateFilterEl = this.mkDateFilter();
+    document.body.appendChild(this._dateFilterEl);
+    topifyZ(this._dateFilterEl); // ADR-0067：后显示在上
+    this._dateFilterEl.style.display = 'flex';
+  }
+
+  /** 自绘日期筛选弹窗（年份行 + 月份网格 + 全部/关闭） */
+  private mkDateFilter(): HTMLElement {
+    const wrap = document.createElement('div');
+    wrap.className = 'bz-diary-wall-datefilter';
+    const card = document.createElement('div');
+    card.className = 'bz-diary-wall-datefilter-card';
+    const years = Array.from(new Set(this.entries.map((e) => e.date.slice(0, 4)))).sort((a, b) => b.localeCompare(a));
+    const cur = this.selDateFilter;
+
+    // 头部：标题 + 全部按钮 + 关闭
+    const head = document.createElement('div');
+    head.className = 'bz-diary-wall-datefilter-head';
+    const title = document.createElement('div');
+    title.className = 'bz-diary-wall-datefilter-title';
+    title.textContent = '按日期筛选';
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'bz-diary-wall-datefilter-reset';
+    resetBtn.textContent = '全部';
+    resetBtn.addEventListener('click', () => {
+      this.selDateFilter = null;
+      this.closeDateFilter();
+      this.renderAll();
+    });
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'bz-diary-wall-datefilter-close';
+    closeBtn.textContent = '✕';
+    closeBtn.addEventListener('click', () => this.closeDateFilter());
+    head.append(title, resetBtn, closeBtn);
+    card.appendChild(head);
+
+    // 年份行（chips）
+    const yearRow = document.createElement('div');
+    yearRow.className = 'bz-diary-wall-datefilter-years';
+    years.forEach((y) => {
+      const b = document.createElement('button');
+      b.className = 'bz-diary-wall-datefilter-year' + (cur?.year === y ? ' bz-diary-wall-datefilter-year--on' : '');
+      b.dataset.year = y;
+      b.textContent = y;
+      b.addEventListener('click', () => {
+        // 两段式：点年份 → 选中该年并（重）渲染月份网格（弹窗保持打开）；点月份才应用过滤并关闭
+        this.selDateFilter = { year: y };
+        this.closeDateFilter();
+        this._dateFilterEl = this.mkDateFilter();
+        document.body.appendChild(this._dateFilterEl);
+        topifyZ(this._dateFilterEl);
+        this._dateFilterEl.style.display = 'flex';
+      });
+      yearRow.appendChild(b);
+    });
+    card.appendChild(yearRow);
+
+    // 当前年份的月份网格（若已选年份）
+    if (cur?.year && years.includes(cur.year)) {
+      const monthRow = document.createElement('div');
+      monthRow.className = 'bz-diary-wall-datefilter-months';
+      const monthCounts = new Map<string, number>();
+      this.entries
+        .filter((e) => e.date.startsWith(cur.year))
+        .forEach((e) => {
+          const m = e.date.slice(5, 7);
+          monthCounts.set(m, (monthCounts.get(m) || 0) + 1);
+        });
+      for (let i = 1; i <= 12; i++) {
+        const ms = String(i).padStart(2, '0');
+        const cnt = monthCounts.get(ms) || 0;
+        const cardEl = document.createElement('button');
+        cardEl.className =
+          'bz-diary-wall-datefilter-month' +
+          (cnt === 0 ? ' bz-diary-wall-datefilter-month--empty' : '') +
+          (cur.month === ms ? ' bz-diary-wall-datefilter-month--on' : '');
+        cardEl.innerHTML = `<span class="bz-diary-wall-datefilter-month-name">${i}月</span><span class="bz-diary-wall-datefilter-month-cnt">${cnt} 条</span>`;
+        cardEl.addEventListener('click', () => {
+          if (cnt === 0) return;
+          this.selDateFilter = { year: cur.year, month: ms };
+          this.closeDateFilter();
+          this.renderAll();
+        });
+        monthRow.appendChild(cardEl);
+      }
+      card.appendChild(monthRow);
+    } else {
+      const hint = document.createElement('div');
+      hint.className = 'bz-diary-wall-datefilter-hint';
+      hint.textContent = '点击年份查看该年各月';
+      card.appendChild(hint);
+    }
+
+    wrap.appendChild(card);
+    // 遮罩点击关闭（点卡片外）
+    wrap.addEventListener('click', (e) => {
+      if (e.target === wrap) this.closeDateFilter();
+    });
+    return wrap;
+  }
+
+  private closeDateFilter() {
+    if (this._dateFilterEl) {
+      this._dateFilterEl.remove();
+      this._dateFilterEl = null;
     }
   }
 
@@ -1371,6 +1468,8 @@ export class DiaryWallAppController {
 
   // ---------- 卸载 ----------
   cleanup() {
+    this.closeDateFilter();
+    this.closeContextMenu();
     this.teardownScrollers();
     this.escUnregister?.unregister();
     this.escUnregister = null;
