@@ -230,6 +230,21 @@ button.news-close-btn {
   outline: none;
 }
 
+/* ==================== ticket 175 延伸：输入框聚焦保持基态边框 ==================== */
+/* Obsidian 核心 app.css 对文本录入元素（input[type=text/password/number]、textarea、select）
+   :focus 统一 border-color: var(--background-modifier-border-focus)——聚焦时边框变高亮色，
+   在保险库/保险箱等自绘输入框上尤其突兀（基态边框被覆盖成 accent 系）。
+   此处统一兜底：bz 作用域内文本录入元素聚焦时边框色恢复基态（var(--background-modifier-border)），
+   与绝大多数域输入框基态边框一致（保险库 --pwv-line 同源映射）；
+   刻意 accent 边框高亮的（review 搜索框 / settings-panel 输入框 / path-picker 搜索框 /
+   保险库搜索框 border-color:transparent）因源顺序在 core 之后，各自规则仍胜出不受影响。
+   特异性 (0,2,1) 与核心规则相同，bz 样式加载在后胜出。 */
+[class*="bz-"] input:focus,
+[class*="bz-"] textarea:focus,
+[class*="bz-"] select:focus {
+  border-color: var(--background-modifier-border);
+}
+
 /* ==================== core 层样式收敛（ticket 60 延伸：notice/settings-modal/confirm/dom） ==================== */
 /* 通知 toast（原 core/notice.ts NOTICE_CSS，ADR-0010） */
 #bz-notice-container {
