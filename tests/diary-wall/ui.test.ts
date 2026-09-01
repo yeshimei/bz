@@ -212,6 +212,31 @@ describe('回忆墙 UI', () => {
     expect(document.querySelector('[data-act="settings"]')).toBeNull();
   });
 
+  it('加密 chip 常驻显示（即使无加密条目），锁定态可点击解锁', async () => {
+    await openAndWait();
+    // mock 数据无加密条目 → 加密 chip 仍应显示（用户需要入口测试加密流程）
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    const encChip = desk.querySelector<HTMLElement>('.bz-diary-wall-chip[data-tag="加密"]');
+    expect(encChip).toBeTruthy();
+    expect(encChip!.classList.contains('bz-diary-wall-chip--locked')).toBe(true);
+    // 点击解锁 → 选中「加密」（无条目则空态）
+    encChip!.click();
+    expect((DiaryWallAppController.instance as any).lockedVisible).toBe(true);
+    expect((DiaryWallAppController.instance as any).selTag).toBe('加密');
+  });
+
+  it('文字条右上角不再显示中文标签（去 tag），媒体块无 ⋯ 按钮', async () => {
+    await openAndWait();
+    const desk = document.querySelector('.bz-diary-wall-desk')!;
+    // 文字条：无 .bz-diary-wall-text-tag
+    expect(desk.querySelector('.bz-diary-wall-text-tag')).toBeNull();
+    // 媒体块：无 .bz-diary-wall-ops
+    expect(desk.querySelector('.bz-diary-wall-ops')).toBeNull();
+    // 文字条仍保留 时间 + emoji 行
+    const textRow = desk.querySelector('.bz-diary-wall-text-row');
+    expect(textRow).toBeTruthy();
+  });
+
   it('标题（品牌）点击 → 打开自包含日期选择器弹窗', async () => {
     await openAndWait();
     expect(mocks.showDatePicker).not.toHaveBeenCalled(); // 不再调 diary 面板的日期选择器
@@ -250,7 +275,7 @@ describe('回忆墙 UI', () => {
     expect(heads).toEqual(['2026-08-19']);
   });
 
-  it('桌面单击条目 → 不开底部抽屉（动作入口为右键/⋯/双击）', async () => {
+  it('桌面单击条目 → 不开底部抽屉（动作入口为右键/双击）', async () => {
     await openAndWait();
     const desk = document.querySelector('.bz-diary-wall-desk')!;
     const item = desk.querySelector('.bz-diary-wall-item') as HTMLElement;
@@ -258,11 +283,8 @@ describe('回忆墙 UI', () => {
     item.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     // 抽屉不应打开
     expect(desk.querySelector('.bz-diary-wall-sheet--show')).toBeNull();
-    // 但 ⋯ 按钮仍可开抽屉（桌面保留显式入口）
-    const ops = item.querySelector('.bz-diary-wall-ops') as HTMLElement;
-    expect(ops).toBeTruthy();
-    ops.click();
-    expect(desk.querySelector('.bz-diary-wall-sheet--show')).toBeTruthy();
+    // 媒体块 ⋯ 按钮已移除（用户要求去掉右上角三点）
+    expect(item.querySelector('.bz-diary-wall-ops')).toBeNull();
   });
 
   it('移动端单击条目 → 打开底部抽屉', async () => {
