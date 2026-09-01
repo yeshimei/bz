@@ -32,9 +32,11 @@ import { escManager } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
 import { notice } from '../core/notice';
 import { applyMobileWindowFullscreen } from '../core/mobile';
-import { getApp } from '../diary/app';
-import { DIARY_DIRECTORY } from '../diary/config';
+import { getApp } from '../core/app';
+import { DIARY_DIRECTORY, getSubTagsOfPrimary } from './config';
 import { loadWallEntries, mediaSrc, groupByMonth, type WallEntry, type WallMedia } from './data';
+// TODO(自包含)：以下 diary 域入口在「删除日记本域」时改为回忆墙自己的实现
+import { openAddDialog, showDatePicker } from '../diary/ui/dialogs';
 
 /** UI 配置（设置代理传入） */
 export interface DiaryWallUIConfig {
@@ -74,6 +76,9 @@ export class DiaryWallAppController {
     head: HTMLElement;
     range: HTMLElement;
     chipRow: HTMLElement;
+    subRow: HTMLElement;
+    searchRow: HTMLElement;
+    searchBox: HTMLInputElement;
     body: HTMLElement;
     wall: HTMLElement;
     rail: HTMLElement;
@@ -93,6 +98,9 @@ export class DiaryWallAppController {
     head: HTMLElement;
     range: HTMLElement;
     chipRow: HTMLElement;
+    subRow: HTMLElement;
+    searchRow: HTMLElement;
+    searchBox: HTMLInputElement;
     body: HTMLElement;
     wall: HTMLElement;
     rail: HTMLElement;
@@ -113,6 +121,10 @@ export class DiaryWallAppController {
   entries: WallEntry[] = [];
   /** 当前筛选标签（null = 全部） */
   selTag: string | null = null;
+  /** 搜索关键词（空 = 全部） */
+  searchKeyword = '';
+  /** 二级标签筛选（选中主标签后其子标签） */
+  selSubTag: string | null = null;
   /** 加密条目是否可见（原型 S.locked：默认锁定隐藏） */
   lockedVisible = false;
   /** 移动端媒体 seed（原型 mediaSeed：比例轮换用） */
@@ -122,6 +134,8 @@ export class DiaryWallAppController {
   private observer: IntersectionObserver | null = null;
   private rafCleanup: (() => void) | null = null;
   private sheetEntry: WallEntry | null = null;
+  private _searchTimer: ReturnType<typeof setTimeout> | null = null;
+  private _contextMenu: HTMLElement | null = null;
 
   constructor(private config: DiaryWallUIConfig) {}
 
@@ -162,6 +176,9 @@ export class DiaryWallAppController {
       head: q('.bz-diary-wall-head'),
       range: q('.bz-diary-wall-range'),
       chipRow: q('.bz-diary-wall-chiprow'),
+      subRow: q('.bz-diary-wall-subrow'),
+      searchRow: q('.bz-diary-wall-searchrow'),
+      searchBox: q<HTMLInputElement>('.bz-diary-wall-searchbox'),
       body: q('.bz-diary-wall-body'),
       wall: q('.bz-diary-wall-wall'),
       rail: q('.bz-diary-wall-rail'),
@@ -181,18 +198,21 @@ export class DiaryWallAppController {
   private deskHTML(): string {
     return `
       <div class="bz-diary-wall-head bz-win-head">
-        <div class="bz-diary-wall-brand">
+        <div class="bz-diary-wall-brand" data-act="date-picker" title="按日期筛选">
           <span class="bz-diary-wall-bookname">日记本</span>
           <span class="bz-diary-wall-range"></span>
         </div>
         <div class="bz-diary-wall-btns">
-          <button class="bz-diary-wall-icon-btn" data-act="search" title="搜索">🔍</button>
           <button class="bz-diary-wall-icon-btn" data-act="add" title="写日记">✏️</button>
-          <button class="bz-diary-wall-icon-btn" data-act="settings" title="设置">⚙️</button>
+          <button class="bz-diary-wall-icon-btn" data-act="search" title="搜索">🔍</button>
           <button class="bz-diary-wall-icon-btn bz-diary-wall-close bz-win-close" data-act="close" title="关闭">✕</button>
         </div>
       </div>
       <div class="bz-diary-wall-chiprow"></div>
+      <div class="bz-diary-wall-subrow" style="display:none"></div>
+      <div class="bz-diary-wall-searchrow" style="display:none">
+        <input class="bz-diary-wall-searchbox" type="text" placeholder="搜索日记（正文、类型、时间）…" />
+      </div>
       <div class="bz-diary-wall-body">
         <div class="bz-diary-wall-rail"></div>
         <div class="bz-diary-wall-wall"></div>
@@ -222,18 +242,21 @@ export class DiaryWallAppController {
     // 移动端与桌面共用面板骨架（真全屏由 CSS ≤768px 控制；头部带显式关闭按钮）
     return `
       <div class="bz-diary-wall-head bz-win-head">
-        <div class="bz-diary-wall-brand">
+        <div class="bz-diary-wall-brand" data-act="date-picker" title="按日期筛选">
           <span class="bz-diary-wall-bookname">日记本</span>
           <span class="bz-diary-wall-range"></span>
         </div>
         <div class="bz-diary-wall-btns">
-          <button class="bz-diary-wall-icon-btn" data-act="search" title="搜索">🔍</button>
           <button class="bz-diary-wall-icon-btn" data-act="add" title="写日记">✏️</button>
-          <button class="bz-diary-wall-icon-btn" data-act="settings" title="设置">⚙️</button>
+          <button class="bz-diary-wall-icon-btn" data-act="search" title="搜索">🔍</button>
           <button class="bz-diary-wall-icon-btn bz-diary-wall-close bz-win-close" data-act="close" title="关闭">✕</button>
         </div>
       </div>
       <div class="bz-diary-wall-chiprow"></div>
+      <div class="bz-diary-wall-subrow" style="display:none"></div>
+      <div class="bz-diary-wall-searchrow" style="display:none">
+        <input class="bz-diary-wall-searchbox" type="text" placeholder="搜索日记（正文、类型、时间）…" />
+      </div>
       <div class="bz-diary-wall-body">
         <div class="bz-diary-wall-rail"></div>
         <div class="bz-diary-wall-wall"></div>
@@ -263,18 +286,12 @@ export class DiaryWallAppController {
   private bindPanel(ui: typeof this.desk, mobile: boolean) {
     // 关闭
     ui.head.querySelector('[data-act="close"]')?.addEventListener('click', () => this.hide());
-    // 搜索 / 写日记 / 设置：占位（TODO 主实现接线）
-    ui.head.querySelector('[data-act="search"]')?.addEventListener('click', () =>
-      notice('搜索：正文/类型/时间（待接线）')
-    );
-    ui.head.querySelector('[data-act="add"]')?.addEventListener('click', () => {
-      // TODO: 写日记入口由主实现接 diary 既有 openAddDialog（避免跨域耦合，此处占位）
-      notice('写日记：接入 diary 的 openAddDialog（待接线）');
-    });
-    ui.head.querySelector('[data-act="settings"]')?.addEventListener('click', () => {
-      // TODO: 设置弹窗沿用既有 schema（待接线）
-      notice('设置：弹窗沿用既有 schema（待接线）');
-    });
+    // 标题（品牌）点击 → 打开日期选择器（diary 既有，展示全部年份/月份筛选）
+    ui.head.querySelector('[data-act="date-picker"]')?.addEventListener('click', () => this.openDatePicker());
+    // 写日记：接 diary 既有 openAddDialog（自包含前先复用 diary 域；自包含后改自己的实现）
+    ui.head.querySelector('[data-act="add"]')?.addEventListener('click', () => this.openAddEntry());
+    // 搜索：toggle 真搜索框
+    ui.head.querySelector('[data-act="search"]')?.addEventListener('click', () => this.toggleSearch(ui));
     // 灯箱关闭按钮（双实例）
     ui.lb.querySelector('[data-act="lb-close"]')?.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -293,6 +310,25 @@ export class DiaryWallAppController {
       const item = (e.target as HTMLElement).closest<HTMLElement>('.bz-diary-wall-month');
       if (!item) return;
       this.scrollToMonth(item.dataset.month || '', ui.wall);
+    });
+    // 搜索输入：防抖过滤
+    ui.searchBox.addEventListener('input', () => {
+      if (this._searchTimer) clearTimeout(this._searchTimer);
+      this._searchTimer = setTimeout(() => {
+        this._searchTimer = null;
+        this.searchKeyword = ui.searchBox.value;
+        this.renderAll();
+      }, 250);
+    });
+    // ESC 在搜索框内：只清空/失焦（不关面板）
+    ui.searchBox.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        ui.searchBox.value = '';
+        this.searchKeyword = '';
+        this.renderAll();
+        ui.searchBox.blur();
+      }
     });
     void mobile;
   }
@@ -319,12 +355,25 @@ export class DiaryWallAppController {
     this.mob.range.textContent = range;
   }
 
-  /** 过滤后的条目（加密条目默认隐藏，选中「加密」标签时显示） */
+  /** 过滤后的条目（加密条目默认隐藏，选中「加密」标签时显示；支持标签/二级标签/搜索） */
   private filtered(): WallEntry[] {
+    const kw = this.searchKeyword.trim().toLowerCase();
     return this.entries.filter((e) => {
-      if (this.selTag === '加密') return e.tags.includes('加密');
-      if (this.selTag && !e.tags.includes(this.selTag)) return false;
-      if (!this.lockedVisible && e.tags.includes('加密')) return false;
+      if (this.selTag === '加密') {
+        if (!e.tags.includes('加密')) return false;
+      } else {
+        if (this.selTag && !e.tags.includes(this.selTag)) return false;
+        if (this.selSubTag && !e.tags.includes(this.selSubTag)) return false;
+        if (!this.lockedVisible && e.tags.includes('加密')) return false;
+      }
+      if (kw) {
+        const hit =
+          (e.text || '').toLowerCase().includes(kw) ||
+          e.tags.some((t) => t.toLowerCase().includes(kw)) ||
+          e.time.toLowerCase().includes(kw) ||
+          e.date.includes(kw);
+        if (!hit) return false;
+      }
       return true;
     });
   }
@@ -384,6 +433,8 @@ export class DiaryWallAppController {
               this.selTag = this.selTag === '加密' ? null : '加密';
             }
           } else {
+            // 切主标签：重置二级标签选中
+            if (this.selTag !== tag) this.selSubTag = null;
             this.selTag = this.selTag === tag ? null : tag;
           }
           this.renderAll();
@@ -394,6 +445,37 @@ export class DiaryWallAppController {
       row.querySelectorAll('.bz-diary-wall-chip--locked').forEach((el) => {
         if (!hasEncrypted) (el as HTMLElement).style.display = 'none';
       });
+    });
+    this.renderSubRow(this.desk);
+    this.renderSubRow(this.mob);
+  }
+
+  /** 二级标签行：选中的主标签有二级标签时显示（如 旅游 → 四川/大理） */
+  private renderSubRow(ui: typeof this.desk) {
+    const row = ui.subRow;
+    if (!row) return;
+    row.innerHTML = '';
+    if (!this.selTag) {
+      row.style.display = 'none';
+      return;
+    }
+    const subs = getSubTagsOfPrimary(this.selTag);
+    if (!subs || subs.length === 0) {
+      row.style.display = 'none';
+      return;
+    }
+    row.style.display = 'flex';
+    subs.forEach((sub) => {
+      const b = document.createElement('button');
+      b.className =
+        'bz-diary-wall-subchip' + (this.selSubTag === sub.tag ? ' bz-diary-wall-subchip--on' : '');
+      b.dataset.tag = sub.tag;
+      b.innerHTML = `${sub.emoji} ${sub.tag}`;
+      b.addEventListener('click', () => {
+        this.selSubTag = this.selSubTag === sub.tag ? null : sub.tag;
+        this.renderAll();
+      });
+      row.appendChild(b);
     });
   }
 
@@ -466,8 +548,12 @@ export class DiaryWallAppController {
         stat.innerHTML = this.statHtml(this.dayStats(dayList));
         head.append(date, week, stat);
         ui.wall.appendChild(head);
+        // 稀疏铺满：当天条目极少时跨列占满横向空白（文字条跨列、媒体块不放大居中）
+        const n = dayList.length;
+        const sparseCls =
+          n === 1 ? ' bz-diary-wall-masonry--sparse-1' : n === 2 ? ' bz-diary-wall-masonry--sparse-2' : '';
         const m = document.createElement('div');
-        m.className = 'bz-diary-wall-masonry' + (mobile ? ' bz-diary-wall-masonry--mob' : '');
+        m.className = 'bz-diary-wall-masonry' + (mobile ? ' bz-diary-wall-masonry--mob' : '') + sparseCls;
         ui.wall.appendChild(m);
       }
       const hasMedia = e.media.length > 0;
@@ -477,10 +563,10 @@ export class DiaryWallAppController {
           const item = document.createElement('div');
           item.className = 'bz-diary-wall-item bz-diary-wall-media-wrap';
           item.appendChild(this.mediaEl(k, e));
-          if (e.content) {
+          if (e.text) {
             const tx = document.createElement('div');
-            tx.className = 'bz-diary-wall-tx';
-            tx.textContent = e.content;
+            tx.className = 'bz-diary-wall-tx bz-diary-wall-md';
+            void this.renderText(tx, e.text, e);
             item.appendChild(tx);
           }
           item.appendChild(this.entryOps(e));
@@ -504,8 +590,12 @@ export class DiaryWallAppController {
         tag.textContent = e.tags.join(' ');
         row.appendChild(tag);
         const tx = document.createElement('div');
-        tx.className = 'bz-diary-wall-text-tx';
-        tx.textContent = e.tags.includes('加密') && !this.lockedVisible ? '（已加密）' : e.content;
+        tx.className = 'bz-diary-wall-text-tx bz-diary-wall-md';
+        if (e.tags.includes('加密') && !this.lockedVisible) {
+          tx.textContent = '（已加密）';
+        } else {
+          void this.renderText(tx, e.text, e);
+        }
         item.append(row, tx);
         this.bindItem(item, e);
         container.appendChild(item);
@@ -517,7 +607,23 @@ export class DiaryWallAppController {
     }
   }
 
-  /** 条目级交互：点击 → 抽屉（加密隐藏时不弹）；挂 ⋯ 按钮（也是抽屉） */
+  /** Markdown 渲染正文（支持 Obsidian 语法；sourcePath 用条目 filename 供链接解析） */
+  private async renderText(container: HTMLElement, md: string, e: WallEntry) {
+    if (!md) {
+      container.textContent = '';
+      return;
+    }
+    container.textContent = ''; // 先纯文本兜底（防注入）
+    try {
+      const { Component, MarkdownRenderer } = await import('obsidian');
+      const sourcePath = e.filename && e.filename.includes('/') ? e.filename : `${DIARY_DIRECTORY}/${e.date}.md`;
+      await MarkdownRenderer.render(this.app(), md, container, sourcePath, new Component());
+    } catch (err) {
+      container.textContent = md; // 渲染失败回退纯文本
+    }
+  }
+
+  /** 条目级交互：单击 → 抽屉；双击 → 跳转原文；右键 → 跟手上下文菜单（桌面）；加密隐藏时不弹 */
   private bindItem(item: HTMLElement, e: WallEntry) {
     const ops = item.querySelector('.bz-diary-wall-ops');
     if (ops) {
@@ -526,13 +632,119 @@ export class DiaryWallAppController {
         this.openSheet(e);
       });
     }
+    // 双击跳转（300ms 内两次点击；单击开抽屉）
+    let lastClick = 0;
     item.addEventListener('click', (ev) => {
       if ((ev.target as HTMLElement).closest('.bz-diary-wall-ops')) return;
       if (e.tags.includes('加密') && !this.lockedVisible) return;
+      const now = Date.now();
+      if (now - lastClick < 300) {
+        lastClick = 0;
+        void this.jumpTo(e);
+        return;
+      }
+      lastClick = now;
       this.openSheet(e);
     });
-    // TODO: 桌面右键 / 移动长按 → bz 统一抽屉（attachItemActions），后续接线
+    // 桌面右键 → 跟手菜单（移动端长按走抽屉）
+    item.addEventListener('contextmenu', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (e.tags.includes('加密') && !this.lockedVisible) return;
+      this.openContextMenu(ev.clientX, ev.clientY, e);
+    });
   }
+
+  /** 双击跳转原文（diary jumpToEntry；自包含后改自己的实现） */
+  private async jumpTo(e: WallEntry) {
+    try {
+      // 书（book）：filename 是完整路径，直接打开文件（diary 不识别 book 条目）
+      if (e.kind === 'book' && e.filename) {
+        const file = this.app().vault.getAbstractFileByPath(e.filename);
+        if (!file) {
+          notice('找不到书文件', 'error');
+          return;
+        }
+        await this.app().workspace.openLinkText(file.path, '', false, { active: true });
+        this.hide();
+        return;
+      }
+      const { jumpToEntry } = await import('../diary/ui/entries') as typeof import('../diary/ui/entries');
+      const entry = this.toDiaryEntry(e);
+      if (!entry) {
+        notice('找不到原文', 'error');
+        return;
+      }
+      await jumpToEntry(entry as any);
+      this.hide(); // 跳转后关回忆墙（对齐 diary 面板行为）
+    } catch (err) {
+      notice('跳转失败', 'error');
+    }
+  }
+
+  /** WallEntry → DiaryEntry（透传字段组装；id 可能为空，diary 侧按 filename/lineNumber 定位） */
+  private toDiaryEntry(e: WallEntry): any {
+    const kind = e.kind;
+    if ((kind === 'diary' || !kind) && e.filename) {
+      return { ...e, filename: e.filename };
+    }
+    return {
+      date: e.date,
+      time: e.time,
+      timeValue: parseInt(e.time.replace(':', ''), 10) || 0,
+      tags: e.tags,
+      emoji: e.emoji,
+      content: e.content,
+      filename: e.filename || e.date,
+      lineNumber: e.lineNumber || 0,
+      id: e.id,
+    };
+  }
+
+  /** 右键上下文菜单（自绘，跟手；动作与抽屉同源） */
+  private openContextMenu(x: number, y: number, e: WallEntry) {
+    this.closeContextMenu();
+    const menu = document.createElement('div');
+    menu.className = 'bz-diary-wall-menu';
+    menu.style.left = `${x}px`;
+    menu.style.top = `${y}px`;
+    const mk = (icon: string, label: string, cls: string | null, fn: () => void) => {
+      const b = document.createElement('button');
+      b.className = 'bz-diary-wall-menu-item' + (cls ? ' ' + cls : '');
+      b.innerHTML = `<span class="bz-diary-wall-menu-ic">${icon}</span>${label}`;
+      b.addEventListener('click', () => {
+        this.closeContextMenu();
+        fn();
+      });
+      menu.appendChild(b);
+    };
+    mk('↗', '打开原文', null, () => void this.jumpTo(e));
+    mk('⧉', '复制双链', null, () => this.copyLink(e));
+    mk('▤', '复制正文', null, () => this.copyContent(e));
+    if (!e.tags.includes('加密')) {
+      mk('⌘', '改标签', null, () => this.editTags(e));
+      mk('🔒', '加密', 'bz-diary-wall-menu-item--accent', () => void this.encryptEntryAction(e));
+    } else {
+      mk('🔓', '解密', 'bz-diary-wall-menu-item--accent', () => void this.decryptEntryAction(e));
+    }
+    mk('🗑', '删除', 'bz-diary-wall-menu-item--danger', () => void this.deleteEntryAction(e));
+    document.body.appendChild(menu);
+    this._contextMenu = menu;
+    // 点击别处 / ESC 关闭
+    setTimeout(() => {
+      document.addEventListener('click', this._onMenuOutside, { once: true });
+    }, 0);
+  }
+
+  private closeContextMenu() {
+    if (this._contextMenu) {
+      this._contextMenu.remove();
+      this._contextMenu = null;
+    }
+    document.removeEventListener('click', this._onMenuOutside);
+  }
+
+  private _onMenuOutside = () => this.closeContextMenu();
 
   /** 条目 ⋯ 按钮 */
   private entryOps(e: WallEntry): HTMLElement {
@@ -561,8 +773,7 @@ export class DiaryWallAppController {
     b.className = 'bz-diary-wall-empty-btn';
     b.textContent = '写第一篇';
     b.addEventListener('click', () => {
-      // TODO: 写日记入口由主实现接线 diary openAddDialog
-      notice('写日记：接入 diary 的 openAddDialog（待接线）');
+      this.openAddEntry();
     });
     empty.append(ic, t, d, b);
     return empty;
@@ -835,6 +1046,104 @@ export class DiaryWallAppController {
     });
   }
 
+  // ---------- 条目动作（复制/改标签/加密/删除；自包含前复用 diary 域） ----------
+  private async copyLink(e: WallEntry) {
+    try {
+      const { copyLink } = await import('../diary/ui/entries') as typeof import('../diary/ui/entries');
+      const entry = this.toDiaryEntry(e);
+      await copyLink(entry.id || '');
+    } catch (err) {
+      notice('复制双链失败', 'error');
+    }
+  }
+
+  private async copyContent(e: WallEntry) {
+    try {
+      await navigator.clipboard.writeText(e.content || e.text || '');
+      notice('已复制日记正文', 'success');
+    } catch (err) {
+      notice('复制失败', 'error');
+    }
+  }
+
+  /** 改标签：接 diary showTagPicker（需要 diary state 有该条目——先确保 diary 已加载） */
+  private editTags(e: WallEntry) {
+    void this.ensureDiaryLoaded().then(async () => {
+      try {
+        const { showTagPicker } = await import('../diary/ui/dialogs') as typeof import('../diary/ui/dialogs');
+        const entry = this.toDiaryEntry(e);
+        showTagPicker(entry.id || '');
+      } catch (err) {
+        notice('改标签暂不可用', 'error');
+      }
+    });
+  }
+
+  /** 加密：接 diary encryptEntry（需保险箱解锁，diary 流程处理） */
+  private async encryptEntryAction(e: WallEntry) {
+    try {
+      const { ensureSafeUnlocked } = await import('../encrypt') as typeof import('../encrypt');
+      const unlocked = await ensureSafeUnlocked();
+      if (!unlocked) return;
+      const diary = await import('../diary/ui/entries') as typeof import('../diary/ui/entries');
+      // 复用 diary 抽屉里的加密流程（encryptFromSheet 未导出，走完整 encryptEntry + deleteEntry）
+      const { encryptEntry } = await import('../diary/encrypt') as typeof import('../diary/encrypt');
+      const { deleteEntry } = await import('../diary/store') as typeof import('../diary/store');
+      const entry = this.toDiaryEntry(e);
+      const enc = await encryptEntry(entry);
+      if (enc && entry.id) {
+        await deleteEntry(entry.id);
+        notice('已加密移入保险箱', 'success');
+        void this.loadAndRender();
+      }
+    } catch (err) {
+      notice('加密失败', 'error');
+    }
+  }
+
+  /** 解密：接 diary 流程（reclassifyEntry 降级） */
+  private async decryptEntryAction(e: WallEntry) {
+    try {
+      const { reclassifyEntry } = await import('../diary/encrypt') as typeof import('../diary/encrypt');
+      const noteId = e.noteId;
+      if (!noteId) {
+        notice('无法解密（缺少保险箱记录）', 'error');
+        return;
+      }
+      const newTags = e.tags.filter((t) => t !== '加密');
+      const ok = await reclassifyEntry(noteId, newTags);
+      if (ok) {
+        notice('已解密还原', 'success');
+        void this.loadAndRender();
+      } else {
+        notice('解密失败', 'error');
+      }
+    } catch (err) {
+      notice('解密失败', 'error');
+    }
+  }
+
+  /** 删除：接 diary showConfirm 流程 */
+  private async deleteEntryAction(e: WallEntry) {
+    try {
+      const { showConfirm } = await import('../diary/ui/entries') as typeof import('../diary/ui/entries');
+      const entry = this.toDiaryEntry(e);
+      showConfirm(entry.id || '');
+    } catch (err) {
+      notice('删除暂不可用', 'error');
+    }
+  }
+
+  /** 确保 diary 数据已加载（改标签/删除依赖 diary state 有对应条目） */
+  private async ensureDiaryLoaded() {
+    try {
+      const { loadAll } = await import('../diary/store') as typeof import('../diary/store');
+      await loadAll();
+    } catch (e) {
+      /* 忽略：diary 未初始化时降级 */
+    }
+  }
+
   // ---------- 底部抽屉（动作占位） ----------
   private openSheet(e: WallEntry) {
     this.sheetEntry = e;
@@ -870,40 +1179,40 @@ export class DiaryWallAppController {
       };
       mk('↗', '打开', null, '', () => {
         this.closeSheet();
-        notice('打开：跳到原文 md（待接线）');
+        void this.jumpTo(e);
       });
       mk('⧉', '复制双链', null, '', () => {
         this.closeSheet();
-        notice('复制双链：已复制（待接线）');
+        void this.copyLink(e);
       });
       mk('▤', '复制正文', `${(e.content || '').trim().length} 字`, '', () => {
         this.closeSheet();
-        notice('复制正文：已复制（待接线）');
+        void this.copyContent(e);
       });
       if (e.media.length) {
         mk('📎', '附件', `${e.media.length} 个媒体`, '', () => {
           this.closeSheet();
-          notice('附件：导出/定位（待接线）');
+          notice(`附件：${e.media.map((m) => m.name).join('、')}`);
         });
       }
       if (!e.tags.includes('加密')) {
         mk('⌘', '改标签', null, '', () => {
           this.closeSheet();
-          notice('改标签：待接线');
+          this.editTags(e);
         });
         mk('🔒', '加密', null, 'bz-diary-wall-sheet-act--accent', () => {
           this.closeSheet();
-          notice('加密：解锁 → 确认 → 移入保险箱（待接线）');
+          void this.encryptEntryAction(e);
         });
       } else {
         mk('🔓', '解密', null, 'bz-diary-wall-sheet-act--accent', () => {
           this.closeSheet();
-          notice('解密：还原为普通日记（待接线）');
+          void this.decryptEntryAction(e);
         });
       }
       mk('🗑', '删除', null, 'bz-diary-wall-sheet-act--danger', () => {
         this.closeSheet();
-        notice('删除确认（待接线）');
+        void this.deleteEntryAction(e);
       });
       ui.sheet.classList.add('bz-diary-wall-sheet--show');
     });
@@ -1011,12 +1320,48 @@ export class DiaryWallAppController {
   /** 加载数据并渲染（openManager 主路径） */
   private async loadAndRender() {
     try {
-      this.entries = await loadWallEntries(this.app(), DIARY_DIRECTORY);
+      this.entries = await loadWallEntries(this.app());
     } catch (e: any) {
       this.entries = [];
       notice('加载日记失败：' + (e && e.message ? e.message : String(e)), 'error');
     }
     this.renderAll();
+  }
+
+  // ---------- 头部动作（写日记 / 搜索 / 日期选择器） ----------
+  /** 写日记：接 diary 既有 openAddDialog（自包含前复用 diary 域） */
+  private openAddEntry() {
+    try {
+      openAddDialog();
+    } catch (e) {
+      notice('写日记暂不可用：' + (e instanceof Error ? e.message : String(e)), 'error');
+    }
+  }
+
+  /** 标题点击 → 日期选择器（diary 既有，按年份/月份筛选） */
+  private openDatePicker() {
+    try {
+      showDatePicker();
+    } catch (e) {
+      notice('日期筛选暂不可用', 'error');
+    }
+  }
+
+  /** 搜索：toggle 搜索框（桌面/移动各一），输入过滤 */
+  private toggleSearch(ui: typeof this.desk) {
+    const row = ui.searchRow;
+    const box = ui.searchBox;
+    if (!row || !box) return;
+    if (row.style.display === 'none') {
+      row.style.display = 'block';
+      box.focus();
+      box.select();
+    } else {
+      row.style.display = 'none';
+      box.value = '';
+      this.searchKeyword = '';
+      this.renderAll();
+    }
   }
 
   /** App 实例（生产由主实现注入；测试 setApp——diary/app.ts 单例，与 diary 域同口径） */

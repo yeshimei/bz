@@ -52,3 +52,30 @@
 ## 术语
 
 - **回忆墙 (Diary Wall)**：日记本数据的媒体优先只读视图（新域 diary-wall），命令 `bz-diary-wall-open`；与「日记本」面板并存，数据同源（`我的/日记/*.md`）、互不改写。
+
+---
+
+## v2 修订（2026-09-02）：自包含 + 四域聚合 + 完整交互
+
+用户后续拍板三项重大变更，追加记录如下：
+
+### 决策 1：自包含（为删除日记本域铺路）
+
+- **背景**：用户明确「把需要的代码从日记本域中重新一遍，日后会删除日记本域」。diary 域被 smartcat（小橘）/影视/设置面板多处依赖，本次只做回忆墙自包含，删除 diary 留后续单独票。
+- **做法**：`src/diary/parser.ts`（parseFile/parseMovieFile/parseLetterFile）、`config.ts`（标签表 + 目录常量 + emoji 映射）、`types.ts`（DiaryEntry）**复制**进 `src/diary-wall/`，data.ts 的 import 全部改为 `./parser`/`./config`/`./types`，**零 `../diary` 依赖**（测试含 grep 断言）。App 一律参数注入（不再 import ../diary/app）。
+- **保留依赖**：写日记/日期选择器/跳转/改标签/加密等**动作**仍调 diary 域既有函数（`openAddDialog`/`showDatePicker`/`jumpToEntry`/`showTagPicker`/`encryptEntry`），标注 TODO（自包含）——删除 diary 域时改为回忆墙自己的实现。
+
+### 决策 2：四域聚合（日记 + 影视 + 信 + 书）
+
+- `loadWallEntries(app)` 聚合四类：日记（`我的/日记/*.md`）、影视（`我的/影视/*.md`，parseMovieFile）、信（`我的/信/*.md`，parseLetterFile）、书（`书库/*.md`，**新增 parseBookFile**：completionDate 优先→readingDate，content=`**《title》**`+bookReview+`![[cover]]`）。
+- 统一转 `WallEntry`（新增 `kind: 'diary'|'movie'|'letter'|'book'`），按 date 降序、time 降序混排成媒体优先全域时间线。
+- 影视/信/书 filename = 完整 vault 路径（跳转直接开文件）；日记 filename = dateStr（跳转 `我的/日记/${date}.md`）。书条目跳转在 UI 层直接 openLinkText。
+
+### 决策 3：完整交互 + Markdown 渲染
+
+- 标题「日记本」点击 → diary `showDatePicker`（日期筛选）；主标签带二级标签时显示子标签行（`getSubTagsOfPrimary`）；头部搜索框（正文/标签/时间/日期过滤）；写日记接 `openAddDialog`；按钮序：编辑 → 搜索 → 关闭（**移除设置按钮**）。
+- 条目交互：**单击** → 底部抽屉（打开/复制双链/复制正文/改标签/加密/删除，接 diary 既有动作）；**双击** → 跳转原文（diary `jumpToEntry`，书直接打开）；**桌面右键** → 自绘跟手上下文菜单（同动作集）。
+- **Markdown 渲染**：正文用 `MarkdownRenderer.render`（text 为去媒体嵌入后的 markdown 原文，`stripMediaLinks` 只删 `![[媒体]]`，保留加粗/链接/列表等语法），非纯文本。
+- **稀疏铺满**：瀑布从 CSS columns 改 **Grid 6 列**，当天 1 条 → 文字条跨整行（媒体块不放大居中）、2 条 → 各占半行、≥3 → 三列流式。
+- **正文不显示双链**：媒体嵌入 `![[...]]` 从卡片正文移除（text 字段），媒体以独立块呈现。
+- 标签 chips 字号 12px → 11px（更紧凑）。
