@@ -31,8 +31,6 @@ interface DomainDef {
   desc: string;
   /** 无任何设置项（聚合讯/做题家等：面板内显示空态） */
   noSettings?: boolean;
-  /** 列表栏徽标（原型 .b-ct：deep 域=组数 / 无设置=— / 其余=·） */
-  badge?: string;
   /** 有真实 schema 的域：内嵌渲染（惰性加载） */
   schemaLoader?: () => Promise<SettingsSchema>;
 }
@@ -84,34 +82,43 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   },
 };
 
-/** 域清单（原型 DOMAINS 1:1：emoji 图标 + 静态徽标） */
+/** 域清单（原型 DOMAINS 1:1：emoji 图标；徽标运行时动态计算，见 DomainDef.badge 注释） */
 const DOMAINS: DomainDef[] = [
-  { id: 'global', name: '全局', icon: '⚙️', desc: 'AI、存储路径、移动端全屏与入口偏好', badge: '3', schemaLoader: schemaLoaders.global },
-  { id: 'diary', name: '日记本', icon: '📖', desc: '日记目录、显示与默认视图', badge: '·', schemaLoader: schemaLoaders.diary },
-  { id: 'memo', name: '备忘录', icon: '📝', desc: '提醒与到期行为', badge: '·', schemaLoader: schemaLoaders.memo },
-  { id: 'belongings', name: '归物本', icon: '📦', desc: '物品登记与查找', badge: '·', schemaLoader: schemaLoaders.belongings },
-  { id: 'clipping', name: '剪藏本', icon: '📰', desc: '网页剪藏与聚合讯', badge: '·', schemaLoader: schemaLoaders.clipping },
-  { id: 'news', name: '聚合讯', icon: '📡', desc: '资讯聚合', badge: '·', noSettings: true },
-  { id: 'password', name: '密码本', icon: '🔐', desc: '账号密码管理', badge: '·', schemaLoader: schemaLoaders.password },
-  { id: 'favorites', name: '收藏本', icon: '⭐', desc: '收藏条目', badge: '·', schemaLoader: schemaLoaders.favorites },
-  { id: 'library', name: '书库', icon: '📚', desc: '藏书与读书笔记', badge: '·', schemaLoader: schemaLoaders.library },
-  { id: 'reading-report', name: '阅读报告', icon: '📈', desc: '阅读统计', badge: '·', noSettings: true },
-  { id: 'movie', name: '影视', icon: '🎬', desc: '影视目录与海报', badge: '·', schemaLoader: schemaLoaders.movie },
-  { id: 'review', name: '复习计划', icon: '🔁', desc: '间隔重复与做题', badge: '6', schemaLoader: schemaLoaders.review },
-  { id: 'quiz', name: '做题家', icon: '🧠', desc: '题目练习（并入复习计划）', badge: '·', noSettings: true },
-  { id: 'secondbrain', name: '第二大脑', icon: '🧠', desc: '嵌入检索与对话', badge: '5', schemaLoader: schemaLoaders.secondbrain },
-  { id: 'auto-summary', name: '自动摘要', icon: '✨', desc: '剪藏自动摘要', badge: '·', noSettings: true },
-  { id: 'launcher', name: '入口页', icon: '🧩', desc: '命令磁贴入口', badge: '·', noSettings: true },
-  { id: 'pomodoro', name: '番茄钟', icon: '🍅', desc: '专注计时与休息', badge: '2', schemaLoader: schemaLoaders.pomodoro },
-  { id: 'attach', name: '附件搬移', icon: '📎', desc: '附件整理', badge: '·', noSettings: true },
-  { id: 'bili-downloader', name: 'B站下载', icon: '📥', desc: 'B站视频下载任务', badge: '·', noSettings: true },
-  { id: 'encrypt', name: '加密保险箱', icon: '🔏', desc: '加密文件保险箱', badge: '·', schemaLoader: schemaLoaders.encrypt },
-  { id: 'smartcat', name: '小橘陪伴猫', icon: '🐱', desc: '桌面宠物陪伴', badge: '·', noSettings: true },
-  { id: 'literature', name: '文献笔记', icon: '📑', desc: '文献管理与术语', badge: '·', schemaLoader: schemaLoaders.literature },
+  { id: 'global', name: '全局', icon: '⚙️', desc: 'AI、存储路径、移动端全屏与入口偏好', schemaLoader: schemaLoaders.global },
+  { id: 'diary', name: '日记本', icon: '📖', desc: '日记目录、显示与默认视图', schemaLoader: schemaLoaders.diary },
+  { id: 'memo', name: '备忘录', icon: '📝', desc: '提醒与到期行为', schemaLoader: schemaLoaders.memo },
+  { id: 'belongings', name: '归物本', icon: '📦', desc: '物品登记与查找', schemaLoader: schemaLoaders.belongings },
+  { id: 'clipping', name: '剪藏本', icon: '📰', desc: '网页剪藏与聚合讯', schemaLoader: schemaLoaders.clipping },
+  { id: 'news', name: '聚合讯', icon: '📡', desc: '资讯聚合', noSettings: true },
+  { id: 'password', name: '密码本', icon: '🔐', desc: '账号密码管理', schemaLoader: schemaLoaders.password },
+  { id: 'favorites', name: '收藏本', icon: '⭐', desc: '收藏条目', schemaLoader: schemaLoaders.favorites },
+  { id: 'library', name: '书库', icon: '📚', desc: '藏书与读书笔记', schemaLoader: schemaLoaders.library },
+  { id: 'reading-report', name: '阅读报告', icon: '📈', desc: '阅读统计', noSettings: true },
+  { id: 'movie', name: '影视', icon: '🎬', desc: '影视目录与海报', schemaLoader: schemaLoaders.movie },
+  { id: 'review', name: '复习计划', icon: '🔁', desc: '间隔重复与做题', schemaLoader: schemaLoaders.review },
+  { id: 'quiz', name: '做题家', icon: '🧠', desc: '题目练习（并入复习计划）', noSettings: true },
+  { id: 'secondbrain', name: '第二大脑', icon: '🧠', desc: '嵌入检索与对话', schemaLoader: schemaLoaders.secondbrain },
+  { id: 'auto-summary', name: '自动摘要', icon: '✨', desc: '剪藏自动摘要', noSettings: true },
+  { id: 'launcher', name: '入口页', icon: '🧩', desc: '命令磁贴入口', noSettings: true },
+  { id: 'pomodoro', name: '番茄钟', icon: '🍅', desc: '专注计时与休息', schemaLoader: schemaLoaders.pomodoro },
+  { id: 'attach', name: '附件搬移', icon: '📎', desc: '附件整理', noSettings: true },
+  { id: 'bili-downloader', name: 'B站下载', icon: '📥', desc: 'B站视频下载任务', noSettings: true },
+  { id: 'encrypt', name: '加密保险箱', icon: '🔏', desc: '加密文件保险箱', schemaLoader: schemaLoaders.encrypt },
+  { id: 'smartcat', name: '小橘陪伴猫', icon: '🐱', desc: '桌面宠物陪伴', noSettings: true },
+  { id: 'literature', name: '文献笔记', icon: '📑', desc: '文献管理与术语', schemaLoader: schemaLoaders.literature },
 ];
 
 /** 已加载域的 schema 行缓存（移动端搜索「设置项」段用：域名 → 行名/描述列表） */
 const schemaRowCache = new Map<string, Array<{ name: string; desc: string }>>();
+
+/** 导航徽标运行时值（域 id → 徽标文案）：初始 ·；noSettings 域 —；schema 加载后回填可见组数。
+ *  动态计算：设置项/分组随 schema 增删或 visibleWhen 门控变化后，徽标自动跟随。 */
+const navBadges = new Map<string, string>();
+
+function badgeOf(d: DomainDef): string {
+  if (d.noSettings || !d.schemaLoader) return '—';
+  return navBadges.get(d.id) ?? '·';
+}
 
 /* ==================== 面板 UI（桌面 B + 移动 M1） ==================== */
 
@@ -120,6 +127,8 @@ export class SettingsPanelUI {
   private popup: HTMLElement | null = null;
   private escHandle: { unregister: () => void } | null = null;
   private activeDomain = 0;
+  /** 桌面导航容器引用（schema 加载后回填徽标用） */
+  private navEl: HTMLElement | null = null;
   /** 保存渲染句柄，域切换时 dispose（防旧句柄 refresh 干扰） */
   private renderHandles: Array<{ refresh: () => void }> = [];
 
@@ -183,7 +192,8 @@ export class SettingsPanelUI {
       </div>
     `;
 
-    const nav = popup.querySelector('.bz-sp-nav')!;
+    const nav = popup.querySelector('.bz-sp-nav') as HTMLElement;
+    this.navEl = nav;
     const pane = popup.querySelector('.bz-sp-pane') as HTMLElement;
     const searchIn = popup.querySelector('.bz-sp-search-in') as HTMLInputElement;
 
@@ -202,10 +212,10 @@ export class SettingsPanelUI {
         nm.className = 'bz-sp-nav-name';
         nm.textContent = d.name;
         b.append(ic, nm);
-        // 静态徽标（原型 .b-ct）
+        // 动态徽标（原型 .b-ct）：·/—/可见组数，随 schema 加载与显隐门控回填
         const ct = document.createElement('span');
         ct.className = 'bz-sp-nav-count';
-        ct.textContent = d.badge ?? '';
+        ct.textContent = badgeOf(d);
         b.appendChild(ct);
         b.addEventListener('click', () => {
           this.activeDomain = i;
@@ -219,6 +229,18 @@ export class SettingsPanelUI {
     searchIn.addEventListener('input', () => renderNav(searchIn.value));
     renderNav('');
     void this.renderDomain(pane, DOMAINS[this.activeDomain]);
+  }
+
+  /** 重绘桌面导航徽标（schema 加载/组数变化后调用；不重建导航项，只刷数字） */
+  private refreshNavBadges(): void {
+    if (!this.navEl) return;
+    this.navEl.querySelectorAll<HTMLElement>('.bz-sp-nav-item').forEach((b) => {
+      const i = Number(b.dataset.i);
+      const d = DOMAINS[i];
+      if (!d) return;
+      const ct = b.querySelector('.bz-sp-nav-count');
+      if (ct) ct.textContent = badgeOf(d);
+    });
   }
 
   /**
@@ -258,10 +280,14 @@ export class SettingsPanelUI {
         g.rows.map((r) => ({ name: (r as { name?: string }).name ?? '', desc: (r as { desc?: string }).desc ?? '' }))
       );
       schemaRowCache.set(domain.id, rowsOf);
-      // 全部组被门控隐藏（如归物本仅移动端组，桌面无可配置项）→ 空态引导
+      // 回填导航徽标：可见分组数（组级 visibleWhen 门控隐藏的组不计，如移动端组桌面不计）——
+      // 动态计算，随 schema 与当前端环境（桌面/移动）变化；0 组显示 ·（有 schema 但全被门控隐藏）
       const groupEls = body.querySelectorAll<HTMLElement>('.bz-sp-group');
-      const visible = [...groupEls].filter((g) => g.style.display !== 'none').length;
-      if (visible === 0 && groupEls.length > 0) {
+      const visibleGroups = [...groupEls].filter((g) => g.style.display !== 'none').length;
+      navBadges.set(domain.id, visibleGroups > 0 ? String(visibleGroups) : '·');
+      this.refreshNavBadges();
+      // 全部组被门控隐藏（如归物本仅移动端组，桌面无可配置项）→ 空态引导
+      if (visibleGroups === 0 && groupEls.length > 0) {
         const empty = document.createElement('div');
         empty.className = 'bz-sp-empty';
         empty.innerHTML = `<div class="bz-sp-empty-ic">📱</div><div class="bz-sp-empty-title">${domain.name} · 暂无设置项</div><div class="bz-sp-empty-desc">该域的设置项仅移动端可见（如移动端默认全屏），桌面端无需配置</div>`;
@@ -455,6 +481,15 @@ export class SettingsPanelUI {
       const schema = await domain.schemaLoader();
       loading.remove();
       renderPanelSchema(body, schema);
+      // 记录本域 schema 行（移动端搜索「设置项」段用；与桌面 renderDomain 同口径）
+      const rowsOf = schema.groups.flatMap((g) =>
+        g.rows.map((r) => ({ name: (r as { name?: string }).name ?? '', desc: (r as { desc?: string }).desc ?? '' }))
+      );
+      schemaRowCache.set(domain.id, rowsOf);
+      // 回填导航徽标（移动端列表无徽标展示，但保持与桌面一致的状态缓存）
+      const groupEls = body.querySelectorAll<HTMLElement>('.bz-sp-group');
+      const visibleGroups = [...groupEls].filter((g) => g.style.display !== 'none').length;
+      navBadges.set(domain.id, visibleGroups > 0 ? String(visibleGroups) : '·');
     } catch (e) {
       loading.remove();
       const err = document.createElement('div');
@@ -483,5 +518,9 @@ export class SettingsPanelUI {
       this.popup = null;
     }
     this.renderHandles = [];
+    this.navEl = null;
+    // 徽标/行缓存随面板销毁清空（下次打开重新动态计算）
+    navBadges.clear();
+    schemaRowCache.clear();
   }
 }

@@ -73,10 +73,10 @@ describe('设置页 BzSettingTab（ADR-0009 单页）', () => {
     if (plugin && plugin.unregisterGestures) plugin.unregisterGestures();
   });
 
-  it('单页平铺：无 tab；ticket 170：两区块升级为分组卡片（带 icon）', () => {
+  it('单页平铺：无 tab；ticket 170：两区块升级为分组卡片（带 icon，标题不带 emoji 前缀）', () => {
     expect(tab.containerEl.querySelectorAll('.bz-tab').length).toBe(0);
     const groupNames = [...tab.containerEl.querySelectorAll('.bz-settings-group-name')].map((t) => t.textContent);
-    expect(groupNames).toEqual(['🤖 AI', '📂 数据存储路径']);
+    expect(groupNames).toEqual(['AI', '数据存储路径']);
     const groupIcons = [...tab.containerEl.querySelectorAll('.bz-settings-group-icon')].map((i) => i.getAttribute('data-icon'));
     expect(groupIcons).toEqual(['sparkles', 'folder-open']);
   });
