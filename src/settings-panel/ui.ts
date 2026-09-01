@@ -108,6 +108,10 @@ const DOMAINS: DomainDef[] = [
   { id: 'literature', name: '文献笔记', icon: '📑', desc: '文献管理与术语', schemaLoader: schemaLoaders.literature },
 ];
 
+/** 可见域：无设置项的域（noSettings）不在左侧列表/移动端列表显示（用户拍板：没有设置的域隐藏）。
+ *  搜索同样只搜可见域（隐藏的域没有可配置项，不占列表位）。 */
+const visibleDomains = (): DomainDef[] => DOMAINS.filter((d) => !d.noSettings);
+
 /** 已加载域的 schema 行缓存（移动端搜索「设置项」段用：域名 → 行名/描述列表） */
 const schemaRowCache = new Map<string, Array<{ name: string; desc: string }>>();
 
@@ -126,7 +130,8 @@ export class SettingsPanelUI {
   private mask: HTMLElement | null = null;
   private popup: HTMLElement | null = null;
   private escHandle: { unregister: () => void } | null = null;
-  private activeDomain = 0;
+  /** 当前激活域 id（按 id 驱动：可见域过滤后索引会错位，不用数字下标） */
+  private activeDomainId = 'global';
   /** 桌面导航容器引用（schema 加载后回填徽标用） */
   private navEl: HTMLElement | null = null;
   /** 保存渲染句柄，域切换时 dispose（防旧句柄 refresh 干扰） */
@@ -200,11 +205,12 @@ export class SettingsPanelUI {
     const renderNav = (q: string) => {
       const query = q.trim();
       nav.innerHTML = '';
-      DOMAINS.forEach((d, i) => {
+      // 无设置项的域不在左侧列表显示（用户拍板）；搜索同样只搜可见域
+      visibleDomains().forEach((d) => {
         if (query && !d.name.includes(query) && !d.desc.includes(query)) return;
         const b = document.createElement('button');
-        b.className = 'bz-sp-nav-item' + (i === this.activeDomain && !query ? ' on' : '');
-        b.dataset.i = String(i);
+        b.className = 'bz-sp-nav-item' + (d.id === this.activeDomainId && !query ? ' on' : '');
+        b.dataset.d = d.id;
         const ic = document.createElement('span');
         ic.className = 'bz-sp-nav-ic';
         ic.textContent = d.icon; // emoji（原型 .b-ic）
@@ -218,7 +224,7 @@ export class SettingsPanelUI {
         ct.textContent = badgeOf(d);
         b.appendChild(ct);
         b.addEventListener('click', () => {
-          this.activeDomain = i;
+          this.activeDomainId = d.id;
           renderNav(searchIn.value);
           void this.renderDomain(pane, d);
         });
@@ -228,7 +234,7 @@ export class SettingsPanelUI {
 
     searchIn.addEventListener('input', () => renderNav(searchIn.value));
     renderNav('');
-    void this.renderDomain(pane, DOMAINS[this.activeDomain]);
+    void this.renderDomain(pane, DOMAINS.find((x) => x.id === this.activeDomainId) ?? DOMAINS[0]);
     // 打开即预加载全部域 schema 元数据（仅取分组结构，不渲染 UI）→ 左侧徽标全量动态计算
     void this.preloadAllBadges();
   }
@@ -271,8 +277,7 @@ export class SettingsPanelUI {
   private refreshNavBadges(): void {
     if (!this.navEl) return;
     this.navEl.querySelectorAll<HTMLElement>('.bz-sp-nav-item').forEach((b) => {
-      const i = Number(b.dataset.i);
-      const d = DOMAINS[i];
+      const d = DOMAINS.find((x) => x.id === b.dataset.d);
       if (!d) return;
       const ct = b.querySelector('.bz-sp-nav-count');
       if (ct) ct.textContent = badgeOf(d);
@@ -347,7 +352,7 @@ export class SettingsPanelUI {
     popup.innerHTML = `
       <div class="bz-sp-mob-head">
         <h2>⚙️ 设置</h2>
-        <span class="bz-sp-mob-count">${DOMAINS.length} 域</span>
+        <span class="bz-sp-mob-count">${visibleDomains().length} 域</span>
         <button class="bz-sp-mob-close" title="关闭">✕</button>
       </div>
       <div class="bz-sp-mob-search">
@@ -375,14 +380,14 @@ export class SettingsPanelUI {
       searchWrap.classList.toggle('hasval', !!query);
       list.innerHTML = '';
       if (!query) {
-        // 无搜索：全部域（原型 draw('') 分支）
-        DOMAINS.forEach((d) => {
+        // 无搜索：全部可见域（无设置项的域不显示，用户拍板；原型 draw('') 分支）
+        visibleDomains().forEach((d) => {
           list.appendChild(mobItem(d));
         });
         return;
       }
-      // 搜索：域段 + 设置项段（原型 m1-sec 两段）
-      const doms = DOMAINS.filter((d) => d.name.includes(query) || d.desc.includes(query));
+      // 搜索：域段 + 设置项段（原型 m1-sec 两段）；同样只搜可见域
+      const doms = visibleDomains().filter((d) => d.name.includes(query) || d.desc.includes(query));
       const rows: Array<{ icon: string; name: string; desc: string; domain: DomainDef }> = [];
       schemaRowCache.forEach((rowsOf, did) => {
         const d = DOMAINS.find((x) => x.id === did);
