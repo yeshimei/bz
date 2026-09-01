@@ -2,8 +2,8 @@
 /* 一比一复刻原型（movie-prototype-3b-full 定稿）：自绘主题变量（不套 Obsidian 变量），
    亮/暗随 Obsidian 主题切换；类名 bz-cinema-* 防冲突；面板内隐藏滚动条 */
 
-/* ---- 主题变量（跟随 Obsidian 亮/暗） ---- */
-.theme-dark .bz-cinema-overlay {
+/* ---- 主题变量（跟随 Obsidian 亮/暗；定义在 html 级，遮罩弹窗是 body 直接子元素也能取到） ---- */
+.theme-dark {
   --bz-cinema-bg: #1e1e1e; --bz-cinema-panel: #2a2a2a; --bz-cinema-card: #262626;
   --bz-cinema-hover: #333; --bz-cinema-input: #262626; --bz-cinema-chip: #2e2e2e;
   --bz-cinema-border: #3c3c3c; --bz-cinema-text: #ddd; --bz-cinema-strong: #fff;
@@ -12,7 +12,7 @@
   --bz-cinema-star: #ffcc00; --bz-cinema-shadow: rgba(0,0,0,0.45);
   --bz-cinema-danger: #ff6b6b;
 }
-.theme-light .bz-cinema-overlay {
+.theme-light {
   --bz-cinema-bg: #f2f3f5; --bz-cinema-panel: #ffffff; --bz-cinema-card: #ffffff;
   --bz-cinema-hover: #ececec; --bz-cinema-input: #f5f5f5; --bz-cinema-chip: #f0f0f0;
   --bz-cinema-border: #e2e2e2; --bz-cinema-text: #3a3a3a; --bz-cinema-strong: #1a1a1a;
@@ -37,9 +37,11 @@
   width: 940px; max-width: calc(100vw - 32px); height: 640px; max-height: 90vh;
   overflow: hidden;
 }
-/* 面板内隐藏滚动条（滚动功能保留） */
-.bz-cinema-overlay, .bz-cinema-overlay * { scrollbar-width: none; -ms-overflow-style: none; }
-.bz-cinema-overlay *::-webkit-scrollbar { display: none; }
+/* 面板内隐藏滚动条（滚动功能保留；遮罩弹窗是 body 直接子元素，需单独覆盖） */
+.bz-cinema-overlay, .bz-cinema-overlay *,
+.bz-cinema-mask, .bz-cinema-mask * { scrollbar-width: none; -ms-overflow-style: none; }
+.bz-cinema-overlay *::-webkit-scrollbar,
+.bz-cinema-mask *::-webkit-scrollbar { display: none; }
 
 .bz-cinema-head {
   display: flex; justify-content: space-between; align-items: center;

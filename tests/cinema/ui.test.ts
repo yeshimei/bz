@@ -236,8 +236,8 @@ describe('cinema overlay', () => {
     expect(overlay.querySelector('.bz-cinema-page-title')?.textContent).toContain('影视分析');
   });
 
-  it('添加弹窗（命令直达）', () => {
-    const { app } = seedVault();
+  it('添加弹窗（命令直达 + 落盘创建笔记）', async () => {
+    const { vault, app } = seedVault();
     openAddModalDirect(app);
     const mask = document.querySelector('.bz-cinema-mask') as HTMLElement;
     expect(mask).toBeTruthy();
@@ -248,8 +248,39 @@ describe('cinema overlay', () => {
     (modal.querySelector('#bz-cinema-f-name') as HTMLInputElement).value = '新片';
     (modal.querySelector('#bz-cinema-f-review') as HTMLTextAreaElement).value = '好看';
     (modal.querySelector('#bz-cinema-f-save') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 0)); // 等异步落盘
     const added = M.items.find((i) => i.name === '新片');
     expect(added).toBeTruthy();
     expect(added?.review).toBe('好看');
+    // 落盘：笔记文件已创建，frontmatter 含 tag/评分/影评
+    const filePath = '我的/影视/《新片》.md';
+    const content = vault.files.get(filePath);
+    expect(content).toBeTruthy();
+    expect(content).toContain('- 电影');
+    expect(content).toContain('评分: 5');
+    expect(content).toContain('影评: 好看');
+  });
+
+  it('快速状态窗升级 → 写 frontmatter 落盘', async () => {
+    const { vault, app } = seedVault();
+    createOverlay(app);
+    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    (overlay.querySelector('[data-cinema-status="想看"]') as HTMLElement).click();
+    const up = overlay.querySelector('[data-cinema-upgrade]') as HTMLElement;
+    up.click();
+    const mask = document.querySelector('.bz-cinema-mask') as HTMLElement;
+    const modal = mask.querySelector('.bz-cinema-modal') as HTMLElement;
+    (modal.querySelector('[data-cinema-qs="已看"]') as HTMLElement).click();
+    const rating = modal.querySelector('#bz-cinema-qs-rating') as HTMLInputElement;
+    rating.value = '9.5';
+    rating.dispatchEvent(new Event('input'));
+    (modal.querySelector('#bz-cinema-qs-save') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 0)); // 等异步落盘
+    const item = M.items.find((i) => i.name === '想看片');
+    expect(item?.status).toBe(2); // 已看
+    expect(item?.rating).toBe(9.5);
+    // 落盘：frontmatter 评分已更新
+    const content = vault.files.get('我的/影视/《想看片》.md');
+    expect(content).toContain('评分: 9.5');
   });
 });

@@ -92,6 +92,22 @@ describe('classifyFilePath（settings 注入自定义目录）', () => {
     expect(classifyFilePath('我的/影视/c.md')).toBe('movie');
   });
 
+  it('cinema 分支：仅显式配置 cinemaFolderPath 才生效（缺省不抢占 movie 默认目录）', () => {
+    // 缺省：我的/影视 仍归 movie（cinema 不抢占）
+    setSettingsProvider(() => ({} as any));
+    expect(classifyFilePath('我的/影视/c.md')).toBe('movie');
+    // 显式配置 cinemaFolderPath → 该目录归 cinema（在 movie 之前判定）
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影视' } as any));
+    expect(classifyFilePath('我的/影视/c.md')).toBe('cinema');
+    // 配置到别处 → 两域独立
+    setSettingsProvider(() => ({ cinemaFolderPath: '我的/影院', movieFolderPath: '我的/影视' } as any));
+    expect(classifyFilePath('我的/影院/c.md')).toBe('cinema');
+    expect(classifyFilePath('我的/影视/c.md')).toBe('movie');
+    // 空白值 → 不生效（回退 movie）
+    setSettingsProvider(() => ({ cinemaFolderPath: '   ' } as any));
+    expect(classifyFilePath('我的/影视/c.md')).toBe('movie');
+  });
+
   it('settings 值为空白字符串时回退默认目录（对齐现有 || 兜底习惯）', () => {
     setSettingsProvider(() => ({ diaryDirectory: '   ' } as any));
     expect(classifyFilePath('我的/日记/a.md')).toBe('diary');

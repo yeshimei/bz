@@ -25,7 +25,9 @@ export function ensureCinema(app: App): void {
   registerAutoRefresh(app);
 }
 
-/** 域事件自动刷新（cinema:file-created/deleted/modified，防抖 300ms，仅 overlay 打开时刷新） */
+/** 域事件自动刷新（cinema/movie/vault 多通道，防抖 300ms，仅 overlay 打开时刷新）。
+ *  cinema 语义通道需 path-classify 命中 cinema 才派发；未配置 cinemaFolderPath 时
+ *  同目录事件走 movie:file-* 或 vault:md-* 兜底——一律按 M.folderPath 前缀过滤，保证只刷本目录 */
 function registerAutoRefresh(app: App): void {
   if (autoRefreshRegistered) return;
   autoRefreshRegistered = true;
@@ -39,9 +41,14 @@ function registerAutoRefresh(app: App): void {
       renderAll(app);
     }, 300);
   };
-  onDomainEvent<{ path: string }>('cinema:file-created', (evt) => schedule({ path: evt.path }));
-  onDomainEvent<{ path: string }>('cinema:file-deleted', (evt) => schedule({ path: evt.path }));
-  onDomainEvent<{ path: string }>('cinema:file-modified', (evt) => schedule({ path: evt.path }));
+  for (const kind of ['cinema', 'movie']) {
+    onDomainEvent<{ path: string }>(`${kind}:file-created`, (evt) => schedule({ path: evt.path }));
+    onDomainEvent<{ path: string }>(`${kind}:file-deleted`, (evt) => schedule({ path: evt.path }));
+    onDomainEvent<{ path: string }>(`${kind}:file-modified`, (evt) => schedule({ path: evt.path }));
+  }
+  onDomainEvent<{ path: string }>('vault:md-created', (evt) => schedule({ path: evt.path }));
+  onDomainEvent<{ path: string }>('vault:md-deleted', (evt) => schedule({ path: evt.path }));
+  onDomainEvent<{ path: string }>('vault:md-modified', (evt) => schedule({ path: evt.path }));
 }
 
 /** 打开影院（命令 bz-cinema-open，toggle 语义） */
