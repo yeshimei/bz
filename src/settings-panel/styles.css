@@ -131,6 +131,23 @@
 .bz-sp-mob-desc {
   text-align: left;
 }
+/* 下拉文字左对齐（用户拍板）：桌面面板 + 移动端弹窗（mob-modal 不在面板作用域内，需单独前缀）；
+   主题常对 button/input 施加 text-align / justify-content，用 ID 前缀提升特异性压过；
+   sel/sel-opt 是 flex 容器，text-align 对 flex 子项不生效，需同时显式 justify-content: flex-start */
+#bz-settings-panel-popup .bz-sp-sel,
+#bz-settings-panel-popup .bz-sp-sel-val,
+#bz-settings-panel-popup .bz-sp-sel-opt,
+.bz-sp-mob-modal .bz-sp-sel,
+.bz-sp-mob-modal .bz-sp-sel-val,
+.bz-sp-mob-modal .bz-sp-sel-opt {
+  text-align: left;
+}
+#bz-settings-panel-popup .bz-sp-sel,
+#bz-settings-panel-popup .bz-sp-sel-opt,
+.bz-sp-mob-modal .bz-sp-sel,
+.bz-sp-mob-modal .bz-sp-sel-opt {
+  justify-content: flex-start;
+}
 .bz-sp-desk-main {
   flex: 1;
   min-width: 0;
