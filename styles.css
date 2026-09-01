@@ -251,6 +251,41 @@ button.news-close-btn {
   border-color: var(--background-modifier-border);
 }
 
+/* ==================== 全局：bz 所有输入框去 outline（用户拍板，!important 强制） ==================== */
+/* 覆盖所有 bz 输入框（含 bz- 容器内无 bz- 类名的输入框、遗留根 id 内的输入框），
+   !important 确保任何来源的 outline（Obsidian 核心/主题/域样式）都无法再给输入框加外环；
+   checkbox/radio 一并去除（原生选中态仍可见）；按钮/链接等非输入元素不受影响。 */
+[class*="bz-"] :is(input, select, textarea),
+[class*="bz-"]:is(input, select, textarea),
+#launcher-modal input, #launcher-modal select, #launcher-modal textarea,
+#launcher-edit-controls input, #launcher-edit-controls select, #launcher-edit-controls textarea,
+#launcher-cmd-popup input, #launcher-cmd-popup select, #launcher-cmd-popup textarea,
+#launcher-icon-popup input, #launcher-icon-popup select, #launcher-icon-popup textarea,
+#launcher-rename-popup input, #launcher-rename-popup select, #launcher-rename-popup textarea,
+#launcher-menu-popup input, #launcher-menu-popup select, #launcher-menu-popup textarea,
+#fav-popup input, #fav-popup select, #fav-popup textarea,
+#fav-add-popup input, #fav-add-popup select, #fav-add-popup textarea,
+#add-diary-popup input, #add-diary-popup select, #add-diary-popup textarea,
+#diary-filter-mask input, #diary-filter-mask select, #diary-filter-mask textarea,
+#diary-tag-selector-mask input, #diary-tag-selector-mask select, #diary-tag-selector-mask textarea,
+#diary-date-filter-mask input, #diary-date-filter-mask select, #diary-date-filter-mask textarea,
+#unified-datetime-picker-mask input, #unified-datetime-picker-mask select, #unified-datetime-picker-mask textarea,
+#todo-popup input, #todo-popup select, #todo-popup textarea,
+#add-todo-popup input, #add-todo-popup select, #add-todo-popup textarea,
+#review-popup input, #review-popup select, #review-popup textarea,
+#quiz-popup input, #quiz-popup select, #quiz-popup textarea,
+#pw-popup input, #pw-popup select, #pw-popup textarea,
+#pw-add-popup input, #pw-add-popup select, #pw-add-popup textarea,
+#pomodoro-popup input, #pomodoro-popup select, #pomodoro-popup textarea,
+.news-popup input, .news-popup select, .news-popup textarea,
+#article-view-popup input, #article-view-popup select, #article-view-popup textarea,
+#__yin_ying__ input, #__yin_ying__ select, #__yin_ying__ textarea,
+#__gui_wu_ben__ input, #__gui_wu_ben__ select, #__gui_wu_ben__ textarea,
+#chat-panel input, #chat-panel select, #chat-panel textarea,
+#__shared_confirm_mask__ input, #__shared_confirm_mask__ select, #__shared_confirm_mask__ textarea {
+  outline: none !important;
+}
+
 /* ==================== core 层样式收敛（ticket 60 延伸：notice/settings-modal/confirm/dom） ==================== */
 /* 通知 toast（原 core/notice.ts NOTICE_CSS，ADR-0010） */
 #bz-notice-container {
@@ -1949,6 +1984,14 @@ button.news-close-btn {
 .bz-diary-wall-icon-btn:hover {
   background: var(--dw-surface);
 }
+/* 搜索按钮打开态（toggle 视觉反馈：搜索框展开时按钮高亮） */
+.bz-diary-wall-icon-btn--on {
+  background: var(--dw-active-hover);
+  color: var(--dw-accent);
+}
+.bz-diary-wall-icon-btn--on:hover {
+  background: var(--dw-active-hover);
+}
 
 /* ============ 类型 chips 行 ============ */
 .bz-diary-wall-chiprow {
@@ -1991,6 +2034,11 @@ button.news-close-btn {
   color: var(--dw-faint);
 }
 .bz-diary-wall-chip--on {
+  background: var(--dw-accent);
+  color: var(--dw-on-accent);
+  box-shadow: none;
+}
+.bz-diary-wall-chip--on:hover {
   background: var(--dw-accent);
   color: var(--dw-on-accent);
 }
@@ -2404,11 +2452,6 @@ button.news-close-btn {
 .bz-diary-wall-text-em {
   font-size: 12px;
 }
-.bz-diary-wall-text-tag {
-  margin-left: auto;
-  font-size: 10px;
-  color: var(--dw-faint);
-}
 .bz-diary-wall-text-tx,
 .bz-diary-wall-tx {
   font-size: 13px;
@@ -2423,31 +2466,6 @@ button.news-close-btn {
 }
 .bz-diary-wall-text.bz-diary-wall-text--locked .bz-diary-wall-text-tx {
   color: var(--dw-muted);
-}
-
-/* 条目 ⋯ 按钮（hover 浮现） */
-.bz-diary-wall-ops {
-  position: absolute;
-  right: 8px;
-  top: 8px;
-  z-index: 5;
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  border: none;
-  background: rgba(0, 0, 0, 0.45);
-  color: #fff;
-  font-size: 13px;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-.bz-diary-wall-item:hover .bz-diary-wall-ops {
-  display: flex;
-}
-.bz-diary-wall-ops:hover {
-  background: rgba(0, 0, 0, 0.7);
 }
 
 /* ============ 灯箱（全屏黑底，图片/视频/音频 controls 播放） ============ */
