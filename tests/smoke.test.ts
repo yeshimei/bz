@@ -60,7 +60,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-belongings-add', 'bz-belongings-open',
   'bz-clipping-open',
   'bz-news-open',
-  'bz-pw-open', 'bz-pw-add', 'bz-pw-generate', 'bz-pw-preview',
+  'bz-pw-open', 'bz-pw-add', 'bz-pw-generate',
   'bz-favorites-open', 'bz-favorites-add',
   'bz-library-open', 'bz-book-notes-open',
   'bz-reading-report-open',
@@ -104,8 +104,9 @@ describe('bz 骨架冒烟', () => {
     await createPlugin(makeMockApp());
 
     const ids = registeredCommands.map((c: any) => c.id);
-    // bz-diary-write 由 diaryInit() 异步注册，onload 返回时可能尚未完成
-    expect(ids.sort()).toEqual(EXPECTED_COMMAND_IDS.sort());
+    // 含日记本 init 内注册的命令（bz-diary-write）
+    const expected = [...EXPECTED_COMMAND_IDS, 'bz-diary-write'];
+    expect(ids.sort()).toEqual(expected.sort());
     // 均未设置默认快捷键
     for (const c of registeredCommands) {
       expect(c.hotkeys).toBeUndefined();
@@ -233,8 +234,9 @@ ${failures.join('\n')}`).toEqual([]);
     const plugin = await createPlugin(makeMockApp());
     plugin.onunload();
 
-    // bz-diary-write 由 diaryInit() 异步注册，但 onunload 前已完成
-    expect(removedCommands.sort()).toEqual([...EXPECTED_COMMAND_IDS, 'bz-diary-write'].sort());
+    // 含日记本 init 内注册的命令（bz-diary-write）
+    const expectedRemoved = [...EXPECTED_COMMAND_IDS, 'bz-diary-write'];
+    expect(removedCommands.sort()).toEqual(expectedRemoved.sort());
   });
 
   it('设置持久化（saveData/loadData 往返）', async () => {
