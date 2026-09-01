@@ -2,7 +2,7 @@
  * 密码本数据管理器（合并至保险箱：路线 B 硬合并）
  * 数据不再独立落盘（无 passwords.enc）——整表作为保险箱清单里的一篇 SafeNote：
  *   kind='password-vault'，正文镜像（contentRef）存整表密文，与保险箱共享主密码/解锁态。
- * 条目 8 字段：id/platform/url/account/password/note/createdAt/favorite。
+ * 条目 7 字段不变：id/platform/url/account/password/note/createdAt（数据格式铁律 1）。
  * 加解密复用 SafeManager（CryptoService 本就共享）；增删改 = 整表重加密覆盖同一镜像（不产生孤儿）。
  */
 import { getSafeManager } from '../encrypt';
@@ -16,7 +16,6 @@ export interface PasswordEntry {
   password: string;
   note: string;
   createdAt: string;
-  favorite: boolean;
 }
 
 /** 保险箱清单条目约定：kind 值 + 虚拟路径/标题（无原文件，不参与还原/删除） */
@@ -59,7 +58,8 @@ export class DataManager {
       this.loadCache = null;
       return;
     }
-    // 缓存命中：同一清单条目且镜像密文字节未变 → 复用上次解密结果
+    // 缓存命中：同一清单条目且镜像密文字节未变 → 复用上次解密结果（读原始密文零解密开销）。
+    // 缓存只在成功解析后写入；解密失败不写缓存，下次 load 仍会真实重试并向上抛错（语义不变）。
     const cipher = await this.safe.readNotePayloadRaw(note);
     if (this.loadCache && this.loadCache.noteId === note.id && this.loadCache.cipher === cipher) {
       return;
@@ -72,11 +72,12 @@ export class DataManager {
     } catch (e) {
       throw new Error('密码本数据损坏');
     }
-    // 脏数据防御（P2）：过滤 null / 非对象元素
+    // 脏数据防御（P2）：过滤 null / 非对象元素（半写/被篡改的整表 JSON），
+    // 不再让单个脏元素炸掉整表加载；对象条目缺失字段由下方归一化补齐
     this.pwData = Array.isArray(parsed)
       ? parsed.filter((x): x is PasswordEntry => !!x && typeof x === 'object' && !Array.isArray(x))
       : [];
-    // 确保每个条目有 id、基本字段和 favorite
+    // 确保每个条目有 id 和基本字段
     this.pwData = this.pwData.map((item: any) => {
       if (!item.id) item.id = `pw-${Date.now()}-${Math.random()}`;
       if (!item.platform) item.platform = '';
@@ -85,7 +86,6 @@ export class DataManager {
       if (!item.password) item.password = '';
       if (!item.note) item.note = '';
       if (!item.createdAt) item.createdAt = new Date().toISOString();
-      if (typeof item.favorite !== 'boolean') item.favorite = false;
       return item;
     });
     this.loadCache = { noteId: note.id, cipher };
@@ -98,8 +98,10 @@ export class DataManager {
     const json = JSON.stringify(this.pwData, null, 2);
     const note = this.vaultNote;
     if (note) {
+      // 已有条目：整表重加密覆盖同一镜像（高频改写不产生孤儿密文）
       await this.safe.updateNotePayload(note.id, json);
     } else {
+      // 首次建立：走保险箱提交式加密序列（事务/自愈语义全继承）
       await this.safe.lockNote({
         path: VAULT_PATH,
         title: VAULT_TITLE,
@@ -110,7 +112,7 @@ export class DataManager {
     }
   }
 
-  /** 上锁：整体锁定（与保险箱共享解锁态），清空内存数据与 load 缓存 */
+  /** 上锁：整体锁定（与保险箱共享解锁态；安全模式/卸载时调用），清空内存数据与 load 缓存 */
   lock() {
     this.safe.lock();
     this.pwData = [];
@@ -121,7 +123,6 @@ export class DataManager {
     if (!this.unlocked) throw new Error('未解锁');
     (item as any).id = `pw-${Date.now()}-${Math.random()}`;
     (item as any).createdAt = new Date().toISOString();
-    if (typeof (item as any).favorite !== 'boolean') (item as any).favorite = false;
     this.pwData.push(item as PasswordEntry);
     return this.save();
   }
