@@ -26,6 +26,8 @@ import { openArticleView, unloadArticleView } from './clipping';
 import { openNewsReader, unloadNewsReader } from './news';
 // 保险库（password-vault 域，ADR-0078）：密码本新 UI；旧密码本域入口已断开（bz-pw-* 命令不再注册）
 import { openPasswordVault, unloadPasswordVault } from './password-vault';
+// 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图；复用 diary parser 读取，不改写旧数据
+import { openDiaryWall, unloadDiaryWall } from './diary-wall';
 import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorites';
 import { openLibrary, openBookNotes, unloadLibrary } from './library';
 import { showReadingReport, unloadReadingReport } from './reading-report';
@@ -82,6 +84,9 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-news-open', name: '聚合讯', icon: 'rss', callback: () => openNewsReader(getApp()) },
   // 保险库（password-vault 域，ADR-0078）：密码本新 UI，替换旧密码本入口（bz-pw-* 已断开）
   { id: 'bz-password-vault-open', name: '保险库', icon: 'key', callback: () => openPasswordVault(getApp()) },
+  // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图（真实图片/视频/音频瀑布流）
+  // icon 用 images（lucide 相册/媒体图标，与入口页磁贴媒体语义一致；未与其他命令重复）
+  { id: 'bz-diary-wall-open', name: '回忆墙', icon: 'images', callback: () => openDiaryWall(getApp()) },
   // 收藏本
   { id: 'bz-favorites-open', name: '收藏本', icon: 'star', callback: () => openFavoritesPanel(getApp()) },
   { id: 'bz-favorites-add', name: '加收藏', icon: 'bookmark', callback: () => addFavoriteItem(getApp()) },
@@ -292,6 +297,8 @@ export default class BzPlugin extends Plugin {
     // 各域卸载清理补全（fix(main)：unload 函数均不内部触发 ensure，可无条件调用；
     // 未初始化域调用为幂等空清理，不引起无谓装载）
     unloadPasswordVault();
+    // 回忆墙（diary-wall 域，ADR-0081）：面板 DOM 清理 + 模块单例复位
+    unloadDiaryWall();
     unloadBelongings();
     unloadFavorites();
     unloadReview();

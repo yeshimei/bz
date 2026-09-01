@@ -445,6 +445,10 @@ export default interface BzSettings {
   // ===== ⚙️ 设置面板（ADR-0080） =====
   /** 设置面板主窗口：移动端默认全屏（默认开；主面板全屏 + 关闭按钮，子面板一律弹窗） */
   settingsPanelMobileDefaultFullscreen: boolean;
+
+  // ===== 🖼️ 回忆墙（diary-wall 域，ADR-0081）=====
+  /** 回忆墙：移动端默认全屏（默认开——回忆墙为媒体优先瀑布流，移动端真全屏设计） */
+  diaryWallMobileDefaultFullscreen: boolean;
 }
 
 export const DEFAULT_SETTINGS: BzSettings = {
@@ -663,6 +667,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   secondBrainMobileDefaultFullscreen: true,
   // 设置面板（ADR-0080）：移动端默认全屏（默认开）
   settingsPanelMobileDefaultFullscreen: true,
+  // 回忆墙（diary-wall 域，ADR-0081）：移动端默认全屏（默认开——媒体优先瀑布流真全屏）
+  diaryWallMobileDefaultFullscreen: true,
 
   // 小橘陪伴猫（smartcat 域；移动端默认全屏键聊天/设置/数据面板共用，2026-08-23 合并一套）
   smartcatEnabled: true,

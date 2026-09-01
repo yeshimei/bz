@@ -26,6 +26,7 @@ const PLUGIN_DIR = "E:/Obsidian/叫我包仔/.obsidian/plugins/bz";
 const SOURCES = [
   "src/core/styles.css",
   "src/diary/styles.css",
+  "src/diary-wall/styles.css",
   "src/launcher/styles.css",
   "src/memo/styles.css",
   "src/news/styles.css",
