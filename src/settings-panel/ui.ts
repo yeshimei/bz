@@ -229,6 +229,42 @@ export class SettingsPanelUI {
     searchIn.addEventListener('input', () => renderNav(searchIn.value));
     renderNav('');
     void this.renderDomain(pane, DOMAINS[this.activeDomain]);
+    // 打开即预加载全部域 schema 元数据（仅取分组结构，不渲染 UI）→ 左侧徽标全量动态计算
+    void this.preloadAllBadges();
+  }
+
+  /**
+   * 预加载全部有 schema 的域，回填左侧导航徽标（可见分组数）。
+   * 面板打开即算全量徽标（用户拍板：日记本 4 个/备忘录 N 个/购物本无等，无需先点击各域）。
+   * 只调用 schemaLoader 取 groups 结构，不渲染 UI；副作用与点击加载一致（review.ensure 幂等）。
+   * 组级 visibleWhen 门控（如移动端组）按当前端环境过滤：桌面端不计移动端组。
+   */
+  private async preloadAllBadges(): Promise<void> {
+    const tasks = DOMAINS.filter((d) => d.schemaLoader).map(async (d) => {
+      try {
+        const schema = await d.schemaLoader!();
+        // 组级门控过滤：visibleWhen 求值（isMobileEnv 等）为 false 的组不计入徽标
+        const visibleCount = schema.groups.filter((g) => {
+          const vw = (g as { visibleWhen?: (s: unknown) => boolean }).visibleWhen;
+          if (!vw) return true;
+          try {
+            return vw(tryGetSettings() as unknown as never);
+          } catch {
+            return true; // 求值异常视为可见（保守）
+          }
+        }).length;
+        navBadges.set(d.id, visibleCount > 0 ? String(visibleCount) : '·');
+        // 顺带填充移动端搜索「设置项」缓存
+        const rowsOf = schema.groups.flatMap((g) =>
+          g.rows.map((r) => ({ name: (r as { name?: string }).name ?? '', desc: (r as { desc?: string }).desc ?? '' }))
+        );
+        schemaRowCache.set(d.id, rowsOf);
+      } catch {
+        navBadges.set(d.id, '·'); // 加载失败保守显示占位
+      }
+      this.refreshNavBadges();
+    });
+    await Promise.allSettled(tasks);
   }
 
   /** 重绘桌面导航徽标（schema 加载/组数变化后调用；不重建导航项，只刷数字） */
