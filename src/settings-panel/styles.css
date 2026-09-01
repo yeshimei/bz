@@ -21,7 +21,8 @@
 .bz-sp-desk-side {
   width: 232px;
   flex-shrink: 0;
-  background: var(--background-secondary);
+  /* 左侧列表背景透明（用户拍板：去背景色的是左侧列表；保留右分隔线区分左右区） */
+  background: transparent;
   border-right: 1px solid var(--background-modifier-border);
   display: flex;
   flex-direction: column;
@@ -137,16 +138,24 @@
   padding: 16px 24px 24px;
 }
 
-/* ---- 自绘设置分组卡（保险库质感；用户拍板：去边框/去白底/去阴影，背景透明） ----
-   设计手册 §5.1：分隔优先级 间距 > 背景差 > 边框——分组间靠间距与行 hover 分层，不堆材质。 */
+/* ---- 自绘设置分组卡（保险库质感；用户拍板：保留卡片背景色，去边框去阴影） ----
+   背景恢复 --background-secondary（ticket 174 修正：去背景色的是左侧列表，不是分组卡）。
+   overflow: visible + position: relative 关键——下拉菜单（.bz-sp-sel-menu）绝对定位挂在组内，
+   overflow: hidden 会把菜单裁剪掉（下拉被遮挡/打不开）；relative 建立层叠上下文，
+   使菜单 z-index 50 可浮于后续分组卡之上。 */
 .bz-sp-group {
-  background: transparent;
+  background: var(--background-secondary);
   border: none;
   box-shadow: none;
   border-radius: 10px;
   margin-bottom: 10px;
-  overflow: hidden;
+  overflow: visible;
+  /* relative + z-index:0 建立层叠上下文：下拉菜单（z-index 50）在组内浮起 */
+  position: relative;
+  z-index: 0;
 }
+/* 下拉打开时组卡浮到最上（JS 挂类兜底移动端 WebView 无 :has；桌面端 :has 规则同效） */
+.bz-sp-group-raised { z-index: 1; }
 .bz-sp-group-head {
   display: flex;
   align-items: center;
@@ -270,6 +279,10 @@
   line-height: 1.25;
 }
 .bz-sp-sel.open { border-color: var(--interactive-accent); }
+/* 下拉打开时其所在组卡浮到最上（组卡 z-index:0 同级时 DOM 靠后的组卡会盖住前面组的菜单——
+   :has() 提升打开下拉的祖先组卡；桌面端 Electron 支持（移动端 WebView 降级：菜单仍可滚动露出，
+   不阻断选择） */
+.bz-sp-group:has(.bz-sp-sel.open) { z-index: 1; }
 .bz-sp-sel-car { margin-left: auto; font-size: 10px; color: var(--text-faint); }
 .bz-sp-sel-menu {
   position: absolute;

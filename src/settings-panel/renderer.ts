@@ -178,7 +178,13 @@ function makeInput(opts: {
   return input;
 }
 
-/** 自绘下拉（点击弹出选项菜单） */
+/** 自绘下拉（点击弹出选项菜单）。
+ *  重写要点（ticket 174 修复）：
+ *  1. 当前值用可变 current 维护：选中后更新，重开菜单选中态/✓ 跟随最新值（原闭包捕获 opts.value 旧值，
+ *     选完再点开仍高亮旧选项）；
+ *  2. 打开/关闭用 open 标志位 + sel.contains 判定：点击 sel 任意子元素（val/car）都能正常开合，
+ *     不再因事件冒泡到 document 监听被立刻误关（原实现「开了又关」→ 看着像点不开、要点好几次）；
+ *  3. 菜单绝对定位挂 sel 下（组卡 overflow 由样式层修复为 visible，见 styles.css），z-index 抬高不被遮挡。 */
 function makeSelect(opts: {
   value: string;
   options: Array<{ value: string; label: string }>;
@@ -188,53 +194,71 @@ function makeSelect(opts: {
   sel.className = 'bz-sp-sel';
   const val = document.createElement('span');
   val.className = 'bz-sp-sel-val';
-  const cur = opts.options.find((o) => o.value === opts.value);
-  val.textContent = cur ? cur.label : opts.value;
   const car = document.createElement('span');
   car.className = 'bz-sp-sel-car';
   car.textContent = '▾';
   sel.append(val, car);
 
+  let current = opts.value;
+  const labelOf = (v: string) => {
+    const o = opts.options.find((x) => x.value === v);
+    return o ? o.label : v;
+  };
+  val.textContent = labelOf(current);
+
   let menu: HTMLElement | null = null;
+  let open_ = false;
+  /** 菜单打开时把所在组卡 z-index 提升（配合 styles.css :has 兜底移动端 WebView 无 :has 支持） */
+  const setGroupRaised = (raised: boolean) => {
+    const group = sel.closest('.bz-sp-group');
+    if (group) group.classList.toggle('bz-sp-group-raised', raised);
+  };
   const close = () => {
     if (menu) {
       menu.remove();
       menu = null;
     }
+    open_ = false;
     sel.classList.remove('open');
+    setGroupRaised(false);
   };
   const open = () => {
     close();
+    open_ = true;
     sel.classList.add('open');
-    menu = document.createElement('div');
-    menu.className = 'bz-sp-sel-menu';
+    setGroupRaised(true);
+    const m = document.createElement('div');
+    m.className = 'bz-sp-sel-menu';
+    menu = m;
     opts.options.forEach((o) => {
       const b = document.createElement('button');
-      b.className = 'bz-sp-sel-opt' + (o.value === opts.value ? ' on' : '');
+      b.type = 'button';
+      b.className = 'bz-sp-sel-opt' + (o.value === current ? ' on' : '');
       b.textContent = o.label;
-      if (o.value === opts.value) {
+      if (o.value === current) {
         const ck = document.createElement('span');
         ck.className = 'bz-sp-sel-ck';
         ck.textContent = '✓';
         b.appendChild(ck);
       }
       b.addEventListener('click', (ev) => {
-        // 阻止冒泡到 sel：否则选项点击会再次触发 sel 的 open()，菜单反复重开（需多点几次才有反应）
-        ev.stopPropagation();
-        // 选中后更新显示（label），再回调外部（写绑定 + 落盘）
-        val.textContent = o.label;
+        ev.stopPropagation(); // 阻止冒泡到 sel/document，避免开合连锁
+        current = o.value;
+        val.textContent = labelOf(current);
         opts.onPick(o.value);
         close();
       });
-      menu!.appendChild(b);
+      m.appendChild(b);
     });
-    sel.appendChild(menu);
+    sel.appendChild(m);
   };
-  sel.addEventListener('click', (e) => {
-    if (e.target !== menu && !menu?.contains(e.target as Node)) open();
+  sel.addEventListener('click', () => {
+    if (open_) close();
+    else open();
   });
+  // 点下拉外部关闭（含 menu 之外的任何元素；点 sel 自身已由上方开合处理，这里只关不误开）
   document.addEventListener('click', (e) => {
-    if (menu && !menu.contains(e.target as Node) && e.target !== sel) close();
+    if (menu && !sel.contains(e.target as Node)) close();
   });
   return sel;
 }
