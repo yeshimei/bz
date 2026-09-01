@@ -143,8 +143,9 @@
   align-items: center;
   gap: 8px;
 }
-/* 图标按钮（原型 icon-btn；关闭按钮规格由 core .bz-win-close 统一收窄） */
-.bz-diary-wall-icon-btn {
+/* 图标按钮（原型 icon-btn；关闭按钮规格由 core .bz-win-close 统一收窄）。
+   前缀 .bz-diary-wall：reset.css 全局按钮重置（(0,1,1)）会压掉 hover/选中态背景 */
+.bz-diary-wall .bz-diary-wall-icon-btn {
   width: 22px;
   height: 26px;
   font-size: 14px;
@@ -160,15 +161,15 @@
   padding: 0;
   transition: background 0.15s;
 }
-.bz-diary-wall-icon-btn:hover {
+.bz-diary-wall .bz-diary-wall-icon-btn:hover {
   background: var(--dw-surface);
 }
 /* 搜索按钮打开态（toggle 视觉反馈：搜索框展开时按钮高亮） */
-.bz-diary-wall-icon-btn--on {
+.bz-diary-wall .bz-diary-wall-icon-btn--on {
   background: var(--dw-active-hover);
   color: var(--dw-accent);
 }
-.bz-diary-wall-icon-btn--on:hover {
+.bz-diary-wall .bz-diary-wall-icon-btn--on:hover {
   background: var(--dw-active-hover);
 }
 
@@ -189,7 +190,10 @@
 .bz-diary-wall-mob .bz-diary-wall-chiprow .bz-diary-wall-chip {
   flex-shrink: 0;
 }
-.bz-diary-wall-chip {
+/* 选择器带 .bz-diary-wall 前缀（(0,2,0)+）：core reset.css 的全局按钮重置
+   `[class*="bz-"] button`（(0,1,1)）会清掉背景/字号/边框——用户反馈标签无背景色、
+   点击无高亮。前缀化后域样式胜出（reset 在根 styles.css 最前，域样式在后）。 */
+.bz-diary-wall .bz-diary-wall-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -197,6 +201,7 @@
   border-radius: 999px;
   background: var(--dw-surface);
   border: none;
+  box-shadow: none;
   font-size: 11px;
   color: var(--dw-ink);
   cursor: pointer;
@@ -205,31 +210,31 @@
   transition: background 0.15s, color 0.15s;
   white-space: nowrap;
 }
-.bz-diary-wall-chip:hover {
+.bz-diary-wall .bz-diary-wall-chip:hover {
   background: var(--dw-hover);
 }
 .bz-diary-wall-chip-cnt {
   font-size: 10px;
   color: var(--dw-faint);
 }
-.bz-diary-wall-chip--on {
+.bz-diary-wall .bz-diary-wall-chip--on {
   background: var(--dw-accent);
   color: var(--dw-on-accent);
   box-shadow: none;
 }
-.bz-diary-wall-chip--on:hover {
+.bz-diary-wall .bz-diary-wall-chip--on:hover {
   background: var(--dw-accent);
   color: var(--dw-on-accent);
 }
-.bz-diary-wall-chip--on .bz-diary-wall-chip-cnt {
+.bz-diary-wall .bz-diary-wall-chip--on .bz-diary-wall-chip-cnt {
   color: rgba(255, 255, 255, 0.75);
 }
 /* 「加密」锁定态：虚线边框 + 半透明（原型 chip.locked） */
-.bz-diary-wall-chip--locked {
+.bz-diary-wall .bz-diary-wall-chip--locked {
   border: 1px dashed var(--dw-line);
   opacity: 0.72;
 }
-.bz-diary-wall-chip--locked:hover {
+.bz-diary-wall .bz-diary-wall-chip--locked:hover {
   opacity: 1;
 }
 
@@ -247,7 +252,7 @@
   flex-wrap: nowrap;
   overflow-x: auto;
 }
-.bz-diary-wall-subchip {
+.bz-diary-wall .bz-diary-wall-subchip {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -256,6 +261,7 @@
   border-radius: 999px;
   background: var(--dw-surface);
   border: none;
+  box-shadow: none;
   font-size: 10px;
   color: var(--dw-muted);
   cursor: pointer;
@@ -264,10 +270,10 @@
   transition: background 0.15s, color 0.15s;
   white-space: nowrap;
 }
-.bz-diary-wall-subchip:hover {
+.bz-diary-wall .bz-diary-wall-subchip:hover {
   background: var(--dw-hover);
 }
-.bz-diary-wall-subchip--on {
+.bz-diary-wall .bz-diary-wall-subchip--on {
   background: var(--dw-accent);
   color: var(--dw-on-accent);
 }
@@ -452,47 +458,33 @@
   height: 1px;
   background: var(--dw-line);
 }
-/* masonry 瀑布（Grid 三列 + 稀疏铺满：条数少时跨列占满横向空白） */
+/* masonry 瀑布（CSS 列式填充 = 真瀑布流：列内竖向排布、不等高不产生行对齐空隙。
+   原型 v5 即 column-count:3；grid 行式在不等高媒体下会出现横向大空隙——用户反馈改回） */
 .bz-diary-wall-masonry {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 10px;
+  column-count: 3;
+  column-gap: 10px;
   padding-top: 8px;
-  align-items: start;
 }
 .bz-diary-wall-masonry--mob {
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  column-count: 2;
+  column-gap: 8px;
 }
-/* 默认（≥3 条）：每项 span 2（= 三列流式） */
+/* 每项避免跨列截断 */
 .bz-diary-wall-masonry .bz-diary-wall-item {
-  grid-column: span 2;
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
 }
-.bz-diary-wall-masonry--mob .bz-diary-wall-item {
-  grid-column: span 2; /* 移动端 4 列 → 每项 span 2 = 两列流式 */
-}
-/* 稀疏 1 条：文字条占满整行；媒体块不放大（span 2 居中） */
+/* 稀疏铺满（columns 下用全宽/半宽表达，避免大留白）：
+   稀疏 1 条：文字条全宽，媒体块保持单列宽（居中感由整块宽度表达） */
 .bz-diary-wall-masonry--sparse-1 .bz-diary-wall-item.bz-diary-wall-text {
-  grid-column: 1 / -1;
+  column-span: all;
+  margin-bottom: 10px;
 }
-.bz-diary-wall-masonry--sparse-1 .bz-diary-wall-item.bz-diary-wall-media-wrap {
-  grid-column: 2 / span 2;
-}
-/* 稀疏 2 条：各占半行（span 3） */
+/* 稀疏 2 条：各占半宽（文字条与媒体块都半宽并排） */
 .bz-diary-wall-masonry--sparse-2 .bz-diary-wall-item {
-  grid-column: span 3;
-}
-.bz-diary-wall-masonry--sparse-2 .bz-diary-wall-item.bz-diary-wall-media-wrap {
-  grid-column: span 2; /* 媒体块仍不放大，保持单列宽；文字条 span 3 占半行 */
-}
-.bz-diary-wall-masonry--mob.bz-diary-wall-masonry--sparse-1 .bz-diary-wall-item.bz-diary-wall-media-wrap {
-  grid-column: 2 / span 2; /* 移动端 4 列：媒体块居中占 2 列 */
-}
-.bz-diary-wall-masonry--mob.bz-diary-wall-masonry--sparse-2 .bz-diary-wall-item {
-  grid-column: span 2; /* 移动端 4 列：两条各占一半 */
-}
-.bz-diary-wall-masonry--mob.bz-diary-wall-masonry--sparse-2 .bz-diary-wall-item.bz-diary-wall-media-wrap {
-  grid-column: span 2;
+  width: calc(50% - 5px);
+  display: inline-block;
+  vertical-align: top;
 }
 
 /* 条目（性能：屏外内容跳过渲染 + 布局/绘制隔离，原型 .item） */
@@ -529,7 +521,8 @@
   object-fit: cover;
   display: block;
 }
-/* 渐变占位（原型 .ph：加载失败/未加载时的兜底） */
+/* 渐变占位（加载失败/未加载时的兜底；视频/图片无 emoji 文字——用户要求去掉，
+   纯渐变 + 媒体自身 hover 角标；音频保留 🎵 图标（无封面可显示）） */
 .bz-diary-wall-ph {
   position: absolute;
   inset: 0;
@@ -589,20 +582,6 @@
   color: #fff;
   font-size: 10px;
   font-family: var(--dw-mono);
-}
-/* 类型角标（图片 🖼 右上角） */
-.bz-diary-wall-att {
-  position: absolute;
-  right: 6px;
-  top: 6px;
-  padding: 1px 7px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
-  font-size: 10px;
-  display: flex;
-  align-items: center;
-  gap: 3px;
 }
 
 /* ---- 文字条 ---- */
@@ -687,13 +666,22 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* 灯箱副行：日记正文文字（不再显示媒体路径——用户要求）；
+   正文多行截断，行高与正文阅读一致，非等宽字体 */
 .bz-diary-wall-lbsub {
   margin-top: 8px;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
-  font-family: var(--dw-mono);
+  max-width: 76vw;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
 }
-.bz-diary-wall-lbclose {
+.bz-diary-wall .bz-diary-wall-lbclose {
   position: absolute;
   right: 20px;
   top: 20px;
@@ -706,7 +694,7 @@
   font-size: 15px;
   cursor: pointer;
 }
-.bz-diary-wall-lbclose:hover {
+.bz-diary-wall .bz-diary-wall-lbclose:hover {
   background: rgba(255, 255, 255, 0.25);
 }
 .bz-diary-wall-lberr {
@@ -799,7 +787,7 @@
   overflow-y: auto;
   padding: 6px 0 12px;
 }
-.bz-diary-wall-sheet-act {
+.bz-diary-wall .bz-diary-wall-sheet-act {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -814,7 +802,7 @@
   text-align: left;
   transition: background 0.15s;
 }
-.bz-diary-wall-sheet-act:hover {
+.bz-diary-wall .bz-diary-wall-sheet-act:hover {
   background: var(--dw-hover);
 }
 .bz-diary-wall-sheet-act-ic {
@@ -863,7 +851,7 @@
   font-size: 12px;
   color: var(--dw-faint);
 }
-.bz-diary-wall-empty-btn {
+.bz-diary-wall .bz-diary-wall-empty-btn {
   margin-top: 10px;
   padding: 9px 22px;
   border-radius: 8px;
@@ -876,7 +864,7 @@
   font-family: inherit;
   transition: opacity 0.15s;
 }
-.bz-diary-wall-empty-btn:hover {
+.bz-diary-wall .bz-diary-wall-empty-btn:hover {
   opacity: 0.88;
 }
 
@@ -958,7 +946,9 @@
     transform: scale(1) translateY(0);
   }
 }
-.bz-diary-wall-menu-item {
+/* 右键菜单挂 body（不在 .bz-diary-wall 根内）——前缀 .bz-diary-wall-menu 提升特异性，
+   防 reset.css 全局按钮重置清掉 hover 背景 */
+.bz-diary-wall-menu .bz-diary-wall-menu-item {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -975,7 +965,7 @@
   transition: background 0.12s;
   line-height: 1.25;
 }
-.bz-diary-wall-menu-item:hover {
+.bz-diary-wall-menu .bz-diary-wall-menu-item:hover {
   background: var(--dw-hover);
 }
 .bz-diary-wall-menu-ic {
@@ -985,16 +975,16 @@
   font-size: 14px;
   flex-shrink: 0;
 }
-.bz-diary-wall-menu-item--accent {
+.bz-diary-wall-menu .bz-diary-wall-menu-item--accent {
   color: var(--dw-accent);
 }
-.bz-diary-wall-menu-item--accent .bz-diary-wall-menu-ic {
+.bz-diary-wall-menu .bz-diary-wall-menu-item--accent .bz-diary-wall-menu-ic {
   color: var(--dw-accent);
 }
-.bz-diary-wall-menu-item--danger {
+.bz-diary-wall-menu .bz-diary-wall-menu-item--danger {
   color: var(--dw-bad);
 }
-.bz-diary-wall-menu-item--danger .bz-diary-wall-menu-ic {
+.bz-diary-wall-menu .bz-diary-wall-menu-item--danger .bz-diary-wall-menu-ic {
   color: var(--dw-bad);
 }
 
@@ -1033,18 +1023,22 @@
   color: var(--dw-ink);
   flex: 1;
 }
-.bz-diary-wall-datefilter-reset {
+/* 日期弹窗挂 body（不在 .bz-diary-wall 根内），其按钮同样被 core reset.css
+   `[class*="bz-"] button` 清背景——前缀 .bz-diary-wall-datefilter 提升特异性恢复
+   （用户反馈：日期选择器样式丢失、背景纯透明） */
+.bz-diary-wall-datefilter .bz-diary-wall-datefilter-reset {
   padding: 4px 12px;
   border-radius: 999px;
   background: var(--dw-surface);
+  box-shadow: none;
   color: var(--dw-muted);
   font-size: 12px;
   cursor: pointer;
 }
-.bz-diary-wall-datefilter-reset:hover {
+.bz-diary-wall-datefilter .bz-diary-wall-datefilter-reset:hover {
   background: var(--dw-hover);
 }
-.bz-diary-wall-datefilter-close {
+.bz-diary-wall-datefilter .bz-diary-wall-datefilter-close {
   width: 24px;
   height: 24px;
   border-radius: 6px;
@@ -1052,7 +1046,7 @@
   font-size: 13px;
   cursor: pointer;
 }
-.bz-diary-wall-datefilter-close:hover {
+.bz-diary-wall-datefilter .bz-diary-wall-datefilter-close:hover {
   background: var(--dw-hover);
 }
 .bz-diary-wall-datefilter-years {
@@ -1061,18 +1055,19 @@
   gap: 8px;
   padding: 14px 20px 4px;
 }
-.bz-diary-wall-datefilter-year {
+.bz-diary-wall-datefilter .bz-diary-wall-datefilter-year {
   padding: 5px 14px;
   border-radius: 999px;
   background: var(--dw-surface);
+  box-shadow: none;
   color: var(--dw-ink);
   font-size: 13px;
   cursor: pointer;
 }
-.bz-diary-wall-datefilter-year:hover {
+.bz-diary-wall-datefilter .bz-diary-wall-datefilter-year:hover {
   background: var(--dw-hover);
 }
-.bz-diary-wall-datefilter-year--on {
+.bz-diary-wall-datefilter .bz-diary-wall-datefilter-year--on {
   background: var(--dw-accent);
   color: var(--dw-on-accent);
 }
@@ -1082,7 +1077,7 @@
   gap: 10px;
   padding: 12px 20px 20px;
 }
-.bz-diary-wall-datefilter-month {
+.bz-diary-wall-datefilter .bz-diary-wall-datefilter-month {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1090,15 +1085,16 @@
   padding: 12px 8px;
   border-radius: 10px;
   background: var(--dw-surface);
+  box-shadow: none;
   cursor: pointer;
 }
-.bz-diary-wall-datefilter-month:hover {
+.bz-diary-wall-datefilter .bz-diary-wall-datefilter-month:hover {
   background: var(--dw-hover);
 }
-.bz-diary-wall-datefilter-month--on {
+.bz-diary-wall-datefilter .bz-diary-wall-datefilter-month--on {
   background: var(--dw-accent);
 }
-.bz-diary-wall-datefilter-month--on .bz-diary-wall-datefilter-month-name {
+.bz-diary-wall-datefilter .bz-diary-wall-datefilter-month--on .bz-diary-wall-datefilter-month-name {
   color: var(--dw-on-accent);
 }
 .bz-diary-wall-datefilter-month--empty {
