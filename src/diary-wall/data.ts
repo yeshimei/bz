@@ -31,7 +31,7 @@ export type WallEntryKind = 'diary' | 'movie' | 'letter' | 'book';
 export interface WallEntry
   extends Pick<
     DiaryEntry,
-    'date' | 'time' | 'tags' | 'emoji' | 'content' | 'filename' | 'lineNumber' | 'id' | 'noteId'
+    'date' | 'time' | 'tags' | 'emoji' | 'content' | 'filename' | 'lineNumber' | 'id' | 'noteId' | 'encrypted'
   > {
   kind: WallEntryKind;
   media: WallMedia[];
