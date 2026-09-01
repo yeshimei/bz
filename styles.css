@@ -1828,9 +1828,10 @@ button.news-close-btn {
   width: 0;
   height: 0;
 }
-/* 清 Obsidian 对 button 的默认样式 */
+/* 清 Obsidian 对 button 的默认样式（font-family 继承字体族即可；font-size 交由各组件自身声明——
+   `font: inherit` shorthand 特异性 (0,1,1) 会覆盖 .bz-diary-wall-chip 等组件的 font-size，导致字号失效） */
 .bz-diary-wall button {
-  font: inherit;
+  font-family: inherit;
   cursor: pointer;
   border: none;
   background: none;
@@ -1839,7 +1840,7 @@ button.news-close-btn {
 /* 清 Obsidian 对 input/textarea 的默认样式 */
 .bz-diary-wall input,
 .bz-diary-wall textarea {
-  font: inherit;
+  font-family: inherit;
   border: none;
   background: none;
   color: inherit;
@@ -2783,6 +2784,137 @@ button.news-close-btn {
 }
 .bz-diary-wall-menu-item--danger .bz-diary-wall-menu-ic {
   color: var(--dw-bad);
+}
+
+/* ============ 日期筛选弹窗（自包含，标题「日记本」点击打开） ============ */
+.bz-diary-wall-datefilter {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  background: var(--dw-cover);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+.bz-diary-wall-datefilter-card {
+  width: 460px;
+  max-width: 92vw;
+  max-height: 82vh;
+  overflow-y: auto;
+  background: var(--dw-bg);
+  border-radius: 14px;
+  box-shadow: var(--dw-shadow-md);
+  animation: bz-diary-wall-slide-up 0.2s ease-out;
+}
+.bz-diary-wall-datefilter-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--dw-line);
+}
+.bz-diary-wall-datefilter-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--dw-ink);
+  flex: 1;
+}
+.bz-diary-wall-datefilter-reset {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--dw-surface);
+  color: var(--dw-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+.bz-diary-wall-datefilter-reset:hover {
+  background: var(--dw-hover);
+}
+.bz-diary-wall-datefilter-close {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  color: var(--dw-muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+.bz-diary-wall-datefilter-close:hover {
+  background: var(--dw-hover);
+}
+.bz-diary-wall-datefilter-years {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 20px 4px;
+}
+.bz-diary-wall-datefilter-year {
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: var(--dw-surface);
+  color: var(--dw-ink);
+  font-size: 13px;
+  cursor: pointer;
+}
+.bz-diary-wall-datefilter-year:hover {
+  background: var(--dw-hover);
+}
+.bz-diary-wall-datefilter-year--on {
+  background: var(--dw-accent);
+  color: var(--dw-on-accent);
+}
+.bz-diary-wall-datefilter-months {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 12px 20px 20px;
+}
+.bz-diary-wall-datefilter-month {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 8px;
+  border-radius: 10px;
+  background: var(--dw-surface);
+  cursor: pointer;
+}
+.bz-diary-wall-datefilter-month:hover {
+  background: var(--dw-hover);
+}
+.bz-diary-wall-datefilter-month--on {
+  background: var(--dw-accent);
+}
+.bz-diary-wall-datefilter-month--on .bz-diary-wall-datefilter-month-name {
+  color: var(--dw-on-accent);
+}
+.bz-diary-wall-datefilter-month--empty {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.bz-diary-wall-datefilter-month-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dw-ink);
+}
+.bz-diary-wall-datefilter-month-cnt {
+  font-size: 11px;
+  color: var(--dw-faint);
+}
+.bz-diary-wall-datefilter-hint {
+  padding: 20px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--dw-faint);
+}
+@media (max-width: 768px) {
+  .bz-diary-wall-datefilter {
+    padding: 0;
+  }
+  .bz-diary-wall-datefilter-months {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 /* ==================== 入口页域样式（src/launcher/styles.css） ==================== */
 /* 入口页遮罩 z 已动态发号（ADR-0067）：JS open()/buildPicker 创建时分配 */
