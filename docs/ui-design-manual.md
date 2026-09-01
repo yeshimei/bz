@@ -343,6 +343,13 @@
 | 次级按钮 | 各域 `.bz-*-btn`（ghost/slim） | secondary 底 + 边框，12–13px |
 | 搜索框 | `.bz-path-picker-search` 样式（core） | 8px 圆角、focus 变 accent 边框 |
 | 空态 | `.bz-*-empty`（各域，参考 `.bz-todo-empty`） | 图标（faint）+ 说明（muted）+ 动作；`padding: 40px` 居中 |
+| 设置面板·侧栏工作台 | `.bz-sp-desk*`（settings-panel 域，ADR-0080） | 桌面：左 232px 导航（品牌+搜索+域列表）+ 右内容区；无底部提示/右侧导航条 |
+| 设置面板·命令面板 | `.bz-sp-mob*`（settings-panel 域） | 移动端：主面板真全屏 + ❌ 关闭钮；子面板（域设置/选择器）一律居中弹窗、遮罩点击关闭 |
+| 设置面板·域图标方块 | `.bz-sp-*-ic`（settings-panel 域） | 34×34、10px 圆角、tag-bg 底 + accent 图标；移动列表项同款 |
+
+**滚动条**：全站隐藏滚动条（`* { scrollbar-width: none }` + `*::-webkit-scrollbar { display: none }`），滚动功能保留（ADR-0080 用户拍板）；新 UI 一律不加滚动条样式。
+
+**设置面板的域设置内容**：不新造——点开 = `openSettingsModal` + 各域既有 schema（review/pomodoro/secondbrain 等与 ⚙️ 完全同源）；路径行 = `renderPathSettingRow` + `openPathPicker`（ADR-0061）。后续各域 UI 重设计时，从设置面板提炼的公用组件（设置卡/设置行/开关/输入/下拉/空态）逐步落进 core/styles.css 的 `bz-` 命名空间。
 
 **写新 UI 的固定路径**：查本表 → 没有 → 在 `src/core/styles.css` 加共享类（跨域通用）或在 `src/<域>/styles.css` 加域类（`bz-` 前缀）→ 类名 `bz-` 前缀 → 用本手册变量/圆角/阴影/动效 → 两端自检（§8）。
 

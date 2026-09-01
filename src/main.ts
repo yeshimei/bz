@@ -25,6 +25,8 @@ import { addBelongingsItem, openBelongings, unloadBelongings } from './belonging
 import { openArticleView, unloadArticleView } from './clipping';
 import { openNewsReader, unloadNewsReader } from './news';
 import { openPasswordManager, addPasswordEntry, generatePassword, unloadPassword } from './password';
+// 保险库（password-vault 域：原型 v1 一比一独立 UI，与旧密码本并存、共享保险箱数据）
+import { openPasswordVault, unloadPasswordVault } from './password-vault';
 import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorites';
 import { openLibrary, openBookNotes, unloadLibrary } from './library';
 import { showReadingReport, unloadReadingReport } from './reading-report';
@@ -62,6 +64,8 @@ import { state as diaryState } from './diary/state';
 import { applyUiSettings, init as diaryInit, showDiaryPanel, unregisterEscLayer } from './diary/ui/panel';
 // 小橘陪伴猫（smartcat 域：桌面宠物 + AI 陪伴；AI 走 bz core/ai，数据单 json smartcat.json）
 import { ensureSmartCat, unloadSmartCat, openSmartCat, openSmartCatChat, hideSmartCat, openSmartcatDashboard } from './smartcat';
+// 设置面板（settings-panel 域，ADR-0080：全域设置聚合入口，桌面侧栏工作台 / 移动命令面板）
+import { openSettingsPanel, unloadSettingsPanel } from './settings-panel';
 
 /** 命令表：id/name 统一命名（spec「命令 id 全清单」第 9 轮：bz-<域>-<动作>，icon 与入口页磁贴一致） */
 const COMMANDS: { id: string; name: string; icon: string; callback: () => void }[] = [
@@ -81,6 +85,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-pw-open', name: '密码本', icon: 'key', callback: () => openPasswordManager(getApp()) },
   { id: 'bz-pw-add', name: '加密码', icon: 'key-round', callback: () => addPasswordEntry(getApp()) },
   { id: 'bz-pw-generate', name: '生成随机密码', icon: 'key-square', callback: () => generatePassword(getApp()) },
+  // 保险库（password-vault 域：原型 v1 一比一；与旧密码本并存）
+  { id: 'bz-password-vault-open', name: '保险库', icon: 'vault', callback: () => openPasswordVault(getApp()) },
   // 收藏本
   { id: 'bz-favorites-open', name: '收藏本', icon: 'star', callback: () => openFavoritesPanel(getApp()) },
   { id: 'bz-favorites-add', name: '加收藏', icon: 'bookmark', callback: () => addFavoriteItem(getApp()) },
@@ -133,6 +139,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-smartcat-chat', name: '小橘聊天', icon: 'messages-square', callback: () => openSmartCatChat(getApp()) },
   { id: 'bz-smartcat-hide', name: '隐藏小橘', icon: 'eye-off', callback: () => hideSmartCat() },
   { id: 'bz-smartcat-dashboard', name: '小橘数据面板', icon: 'activity', callback: () => openSmartcatDashboard(getApp()) },
+  // 设置面板（ADR-0080：全域设置聚合入口）
+  { id: 'bz-settings-panel-open', name: '设置面板', icon: 'settings-2', callback: () => openSettingsPanel(getApp()) },
 ];
 
 /** 应用日记本设置到运行时常量（diary-notebook 原 applySettingsToRuntime） */
@@ -281,12 +289,15 @@ export default class BzPlugin extends Plugin {
     unloadLauncherPanel();
     unloadEncrypt();
     unloadSmartCat();
+    // 设置面板（ADR-0080：DOM 清理 + esc 注销）
+    unloadSettingsPanel();
     // 第二大脑：窄窗/抽屉 DOM、5s 防抖定时器、DeepSeek 服务、模块单例复位（ticket 107 补接线——
     // 原先 unloadSecondBrain 导出但从未被调用，禁用插件后残留窗体且防抖 refresh 仍会触发）
     unloadSecondBrain();
     // 各域卸载清理补全（fix(main)：unload 函数均不内部触发 ensure，可无条件调用；
     // 未初始化域调用为幂等空清理，不引起无谓装载）
     unloadPassword();
+    unloadPasswordVault();
     unloadBelongings();
     unloadFavorites();
     unloadReview();

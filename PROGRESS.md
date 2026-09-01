@@ -2,6 +2,20 @@
 
 > 进度同步总表（AGENTS.md）。每票一节，状态：计划中 → 进行中 → 门禁 → 已交付。
 
+## Ticket 172 — 设置面板新域（settings-panel，ADR-0080）+ 公用样式层提炼
+
+**状态：已交付**
+
+- [x] 需求（用户拍板，grill-with-docs 多轮 + 原型评审）：全域设置聚合入口；桌面 B 侧栏工作台（左导航+右内容，无底部提示/右侧导航条）、移动 M1 命令面板（主面板真全屏+关闭按钮，子面板一律居中弹窗、遮罩点击关闭）；参考 bz 保险库（encrypt）质感；文件选择器与各域设置面板**仿照源码已有实现**（core/path-picker + 各域 schema + settings-modal），功能性一致
+- [x] 原型：`.scratch/global-settings-panel-prototype.html`（桌面 B + 移动 M1，控件全部可交互，headless 探针 11/11 通过；后续迭代移动端 5 版→定稿 M1、去灰底分割线/滚动条）
+- [x] 新域 `src/settings-panel/`（index.ts 懒加载 + ui.ts + styles.css）：桌面侧栏工作台（⚙️ 品牌「设置」+ 搜索 + 22 域导航 + 右侧域预览/打开设置按钮）、移动命令面板（搜索过滤域+设置项、❌ 关闭、空态）；域设置点开 = `openSettingsModal` + 各域真实 schema（review 走 reviewApp.ensure 构造 dataManager，与 ⚙️ 同源）；全局域打开 Obsidian 设置页
+- [x] main.ts：命令 `bz-settings-panel-open`（icon settings-2）裸注册 + onunload `unloadSettingsPanel`；settings.ts 新增 `settingsPanelMobileDefaultFullscreen`（默认 true）
+- [x] scripts/build-css.mjs SOURCES 加入 `src/settings-panel/styles.css`
+- [x] 样式对比：保险库（encrypt）vs 原型提炼公用层结论——主窗口/弹窗/路径选择器直接复用 core 既有（.bz-win-head/.bz-overlay-popup/.bz-path-picker），新域样式走 `bz-sp-*` 命名空间；公用组件（设置卡/设置行/开关/输入/下拉/空态/域图标/滑块）拟提炼进 core（后续各域重设计逐步落地）
+- [x] ADR-0080 + CONTEXT.md「设置面板」术语
+- [x] 测试：`tests/settings-panel.test.ts` 8 用例（桌面构建/导航切换/搜索过滤/移动构建/全屏类/关闭按钮/命令入口/遮罩关闭）；smoke.test.ts 命令全集 + `bz-settings-panel-open`
+- [x] 门禁：tsc 0 错 + 全量 230 文件 3671 用例绿 + 构建通过 + 产物验证（styles.css 聚合含 bz-sp-*，main.js 命令注册正确）
+
 ## Ticket 171 — AI 提供商注册表策略模式完整化（常见提供商全量内置）
 
 **状态：已交付**

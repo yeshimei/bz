@@ -61,6 +61,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-clipping-open',
   'bz-news-open',
   'bz-pw-open', 'bz-pw-add', 'bz-pw-generate',
+  'bz-password-vault-open',
   'bz-favorites-open', 'bz-favorites-add',
   'bz-library-open', 'bz-book-notes-open',
   'bz-reading-report-open',
@@ -73,6 +74,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-attach-move',
   'bz-encrypt-open', 'bz-encrypt-lock',
   'bz-smartcat-open', 'bz-smartcat-chat', 'bz-smartcat-hide', 'bz-smartcat-dashboard',
+  // 设置面板（ADR-0080）
+  'bz-settings-panel-open',
   'bz-diary-open',
 ];
 
