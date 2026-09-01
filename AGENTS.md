@@ -49,6 +49,10 @@
 - **门禁全绿**：pnpm test + tsc --noEmit + 自审 + diff 审查 + 构建验证。
 
 ## Git / 工作流
+
 - 主分支 `master`，提交遵循 Conventional Commits。
-- 必须走 worktree 开发：从最新 master 分叉，测试全绿后合并回 master，合并后才允许构建部署，最后清理 worktree。
+- 必须走 worktree（从最新 master 分叉）。
+- 合并前必须满足：子代理审查通过（全部 resolved）+ `pnpm test` 全绿。
+- **严禁在 worktree 内构建**（`pnpm run build`），构建部署须在合并回 master 后的主仓库进行。
+- 合并后清理 worktree。
 - Spec 驱动：先更新 `.scratch/memo-suite-plugin/spec.md`，任务记 `issues/NN-*.md`，ADR 放 `docs/adr/` 并同步 `CONTEXT.md`。
