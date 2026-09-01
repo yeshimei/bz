@@ -2,6 +2,15 @@
 
 > 进度同步总表（AGENTS.md）。每票一节，状态：计划中 → 进行中 → 门禁 → 已交付。
 
+## Ticket 175 — 输入框点击聚焦去强化外轮廓（outline）
+
+**状态：已交付**
+
+- [x] 需求（用户拍板）：点击输入框时外围出现的加强外轮廓（outline 焦点环）去除——浏览器对文本录入元素点击聚焦恒匹配 `:focus-visible`，被 core p3 焦点伞规则套上 2px accent 外环
+- [x] 方案：`src/core/styles.css` 伞规则后追加精确覆盖——文本录入元素（`input/select/textarea/[contenteditable]`）`:focus-visible` 一律 `outline: none`；选择器与伞规则同构（bz- 伞 + 遗留根 id/类清单），同特异性源顺序胜出；按钮/链接/[tabindex] 键盘焦点环保留
+- [x] 核查：各域输入框（review 搜索框、settings-panel `.bz-sp-input`、secondbrain/smartcat 聊天输入、日记搜索框等）均自带 `outline: none` 或经 bz- 伞覆盖，行为统一；checkbox/radio 一并去外环（原生选中态仍可见）
+- [x] 门禁：tsc 0 错 + 全量 232 文件 3741 用例绿 + 构建通过（根 styles.css 聚合含覆盖规则，vault 插件目录同步）
+
 ## Ticket 回忆墙 — 新域 diary-wall 接入主入口与设置体系（ADR-0081）
 
 **状态：进行中**（数据层/UI 层由并行子代理编写，本票接主线）
