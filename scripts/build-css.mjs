@@ -12,7 +12,6 @@
 //
 // 拼接顺序 = 原 styles.css 的文档顺序（共享节前置，域间相对次序保持不变，
 // 级联行为与拆分前一致；跨节选择器经审计均为 !important 支配或互不冲突的复合选择器）。
-// reset.css 必须排最前：先重置 Obsidian 核心/主题/皮肤插件渗透，再应用各域样式。
 
 import fs from "node:fs";
 import path from "node:path";
@@ -25,7 +24,6 @@ const PLUGIN_DIR = "E:/Obsidian/叫我包仔/.obsidian/plugins/bz";
 
 // 聚合顺序清单（勿随意调整；新增域样式文件时在对应位置插入）
 const SOURCES = [
-  "src/core/reset.css",
   "src/core/styles.css",
   "src/diary/styles.css",
   "src/diary-wall/styles.css",
