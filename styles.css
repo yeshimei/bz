@@ -5,97 +5,382 @@
  * 重新生成：npm run dev / npm run build（scripts/build-css.mjs）
  * ============================================================ */
 /* ============================================================
- * bz（包仔）作用域 reset（src/core/reset.css）——克制版
+ * bz（包仔）作用域 normalize（src/core/reset.css）
  *
- * 目的：只压制 Obsidian 核心/主题/皮肤插件对 bz 自绘 UI 的
- *   「外发光型」样式渗透，不设任何具体视觉值。
- *   具体视觉（背景/边框/圆角/边距/内边距/字号/颜色）全部由
- *   各域样式自行声明，reset 绝不越权——否则会重蹈 v1 覆辙：
- *   reset 的 margin:0/padding:0/background:transparent 等
- *   以 (0,1,1) 特异性反压域样式，导致标注 1/2 的搜索框贴边、
- *   无底色、无边框问题。
+ * 结构参照社区 normalize.css v8.0.1（necolas，MIT）——取其
+ * 「跨引擎默认样式统一」条目，全量收敛到 bz 作用域，避免污染
+ * Obsidian 核心 UI（Electron 纯 Chromium，html/body/h1 等全局
+ * 条目对 bz 无意义，直接套 normalize 会打乱核心行高/字号）。
  *
- * 渗透源（已逐条对照官方 app.css 核实）：
- *   - app.css:6640 `button` 裸元素规则：display/inline-flex、border:0、
- *     padding、height、background 由 :not(.clickable-icon) 变量补底；
- *   - app.css:6660 `button:not(.clickable-icon)`：background-color
- *     var(--interactive-normal) + box-shadow var(--input-shadow)——灰底 + 阴影；
- *   - app.css:6665/6671 hover：box-shadow var(--input-shadow-hover)——hover 阴影加重；
- *   - app.css:6675 `button:focus-visible`：box-shadow 0 0 0 3px 高亮外圈；
- *   - app.css:7589+ input[type=...]：background/border/padding/radius 走
- *     主题变量（视觉协调，不压）；
- *   - app.css:7662+ input:focus/focus-visible：box-shadow 0 0 0 N px 高亮外圈。
- *   主题（Minimal/Blue Topaz…）与皮肤插件可继续往上述裸元素加值，
- *   故本 reset 对压制的属性统一 !important，恒定生效。
+ * 写法（现代 reset 共识，Andy Bell / Tailwind 同款）：
+ *   :where(根清单) :is(元素组)——:where() 把特异性归零，任何
+ *   域样式（哪怕 .bz-foo 一个类）都能胜出，绝不反压域样式
+ *   （v1 教训：reset 具体值 (0,1,1) 压死域样式，致标注 1/2
+ *   搜索框贴边无底色）。唯一例外是 Obsidian 核心渗透压制段，
+ *   用 !important 恒压核心/主题对裸 button/input 加的装饰。
  *
- * 收敛策略：
- *   - 只作用于 bz 容器（[class*="bz-"] 及其后代）与遗留根 id 清单
- *     （launcher/fav/todo/pw/新闻/影视主面板等自绘弹窗根，多为旧组件不带 bz- 类）；
- *   - 只写 box-shadow / outline 两个属性（外发光），绝不碰具体值属性；
- *   - 本文件是样式源之一，构建时聚合到根 styles.css 最前（scripts/build-css.mjs）。
+ * 根清单 = bz 容器伞 [class*="bz-"] + 26 个遗留弹窗根 id
+ *   （launcher/fav/todo/pw/news/影视/归物本/小橘/共享确认框等，
+ *   旧组件不带 bz- 类，只能显式枚举；清单见文件尾，勿手抄增减）。
+ *
+ * 本文件是样式源之一，构建时聚合到根 styles.css 最前。
  * ============================================================ */
 
-/* ==================== 按钮：去阴影 / 去 outline / 去灰底变量 ==================== */
-/* 核心 button 默认灰底由 --interactive-normal 上色，域按钮若不写背景即显灰——
-   观感突兀且与自绘 UI 不符。这里仅压 core/theme 加的背景与阴影、outline；
-   border/font/padding/margin 等一律不设（域样式自决）。
-   遗留根 id 清单覆盖旧组件根（launcher 主弹窗/编辑/命令/图标/改名/菜单，
-   fav 弹窗与添加、日记、todo、review/quiz、pw、pomodoro、news、剪藏文章、
-   影视主面板 __yin_ying__、归物本 __gui_wu_ben__、小橘 #chat-panel、共享确认框）。 */
-[class*="bz-"] button,
-[class*="bz-"] [role="button"],
-#launcher-modal button, #launcher-edit-controls button,
-#launcher-cmd-popup button, #launcher-icon-popup button,
-#launcher-rename-popup button, #launcher-menu-popup button,
-#fav-popup button, #fav-add-popup button,
-#add-diary-popup button,
-#diary-filter-mask button, #diary-tag-selector-mask button,
-#diary-date-filter-mask button, #unified-datetime-picker-mask button,
-#todo-popup button, #add-todo-popup button,
-#review-popup button, #quiz-popup button,
-#pw-popup button, #pw-add-popup button,
-#pomodoro-popup button, .news-popup button, #article-view-popup button,
-#__yin_ying__ button, #__gui_wu_ben__ button,
-#chat-panel button, #__shared_confirm_mask__ button {
+/* ==================== 盒模型：统一 border-box（modern-normalize/Tailwind 通用） ==================== */
+:where([class*="bz-"],
+#launcher-modal,
+#launcher-edit-controls,
+#launcher-cmd-popup,
+#launcher-icon-popup,
+#launcher-rename-popup,
+#launcher-menu-popup,
+#fav-popup,
+#fav-add-popup,
+#add-diary-popup,
+#diary-filter-mask,
+#diary-tag-selector-mask,
+#diary-date-filter-mask,
+#todo-popup,
+#add-todo-popup,
+#review-popup,
+#quiz-popup,
+#pw-popup,
+#pw-add-popup,
+#pomodoro-popup,
+.news-popup,
+#article-view-popup,
+#__yin_ying__,
+#__gui_wu_ben__,
+#chat-panel,
+#__shared_confirm_mask__,
+#__shared_confirm_popup__),
+:where([class*="bz-"] *,
+#launcher-modal *,
+#launcher-edit-controls *,
+#launcher-cmd-popup *,
+#launcher-icon-popup *,
+#launcher-rename-popup *,
+#launcher-menu-popup *,
+#fav-popup *,
+#fav-add-popup *,
+#add-diary-popup *,
+#diary-filter-mask *,
+#diary-tag-selector-mask *,
+#diary-date-filter-mask *,
+#todo-popup *,
+#add-todo-popup *,
+#review-popup *,
+#quiz-popup *,
+#pw-popup *,
+#pw-add-popup *,
+#pomodoro-popup *,
+.news-popup *,
+#article-view-popup *,
+#__yin_ying__ *,
+#__gui_wu_ben__ *,
+#chat-panel *,
+#__shared_confirm_mask__ *,
+#__shared_confirm_popup__ *) {
+  box-sizing: border-box;
+}
+
+/* ==================== normalize：form 元素字体继承 + 去 margin（normalize 'Forms' 首条）
+/* bz 弹窗自设字号，UA 默认 13.3px 会让裸 button/input 文字显小；
+   margin:0 防默认外边距渗入自绘布局。 ==================== */
+:where([class*="bz-"],
+       #launcher-modal,
+       #launcher-edit-controls,
+       #launcher-cmd-popup,
+       #launcher-icon-popup,
+       #launcher-rename-popup,
+       #launcher-menu-popup,
+       #fav-popup,
+       #fav-add-popup,
+       #add-diary-popup,
+       #diary-filter-mask,
+       #diary-tag-selector-mask,
+       #diary-date-filter-mask,
+       #todo-popup,
+       #add-todo-popup,
+       #review-popup,
+       #quiz-popup,
+       #pw-popup,
+       #pw-add-popup,
+       #pomodoro-popup,
+       .news-popup,
+       #article-view-popup,
+       #__yin_ying__,
+       #__gui_wu_ben__,
+       #chat-panel,
+       #__shared_confirm_mask__,
+       #__shared_confirm_popup__) :is(button, input, optgroup, select, textarea) {
+  font-family: inherit;
+  font-size: inherit;
+  margin: 0;
+}
+
+/* ==================== normalize：overflow / text-transform ==================== */
+:where([class*="bz-"],
+       #launcher-modal,
+       #launcher-edit-controls,
+       #launcher-cmd-popup,
+       #launcher-icon-popup,
+       #launcher-rename-popup,
+       #launcher-menu-popup,
+       #fav-popup,
+       #fav-add-popup,
+       #add-diary-popup,
+       #diary-filter-mask,
+       #diary-tag-selector-mask,
+       #diary-date-filter-mask,
+       #todo-popup,
+       #add-todo-popup,
+       #review-popup,
+       #quiz-popup,
+       #pw-popup,
+       #pw-add-popup,
+       #pomodoro-popup,
+       .news-popup,
+       #article-view-popup,
+       #__yin_ying__,
+       #__gui_wu_ben__,
+       #chat-panel,
+       #__shared_confirm_mask__,
+       #__shared_confirm_popup__) :is(button, input) {
+  overflow: visible;
+  text-transform: none;
+}
+
+/* ==================== normalize：去 UA 原生外观（button 自绘观感；checkbox/radio 需先归零再自绘） ==================== */
+:where([class*="bz-"],
+       #launcher-modal,
+       #launcher-edit-controls,
+       #launcher-cmd-popup,
+       #launcher-icon-popup,
+       #launcher-rename-popup,
+       #launcher-menu-popup,
+       #fav-popup,
+       #fav-add-popup,
+       #add-diary-popup,
+       #diary-filter-mask,
+       #diary-tag-selector-mask,
+       #diary-date-filter-mask,
+       #todo-popup,
+       #add-todo-popup,
+       #review-popup,
+       #quiz-popup,
+       #pw-popup,
+       #pw-add-popup,
+       #pomodoro-popup,
+       .news-popup,
+       #article-view-popup,
+       #__yin_ying__,
+       #__gui_wu_ben__,
+       #chat-panel,
+       #__shared_confirm_mask__,
+       #__shared_confirm_popup__) :is(button, input) {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* ==================== normalize：Firefox 内边距清理（Chromium 无 :-moz-*，兼容保留） ==================== */
+:where([class*="bz-"],
+       #launcher-modal,
+       #launcher-edit-controls,
+       #launcher-cmd-popup,
+       #launcher-icon-popup,
+       #launcher-rename-popup,
+       #launcher-menu-popup,
+       #fav-popup,
+       #fav-add-popup,
+       #add-diary-popup,
+       #diary-filter-mask,
+       #diary-tag-selector-mask,
+       #diary-date-filter-mask,
+       #todo-popup,
+       #add-todo-popup,
+       #review-popup,
+       #quiz-popup,
+       #pw-popup,
+       #pw-add-popup,
+       #pomodoro-popup,
+       .news-popup,
+       #article-view-popup,
+       #__yin_ying__,
+       #__gui_wu_ben__,
+       #chat-panel,
+       #__shared_confirm_mask__,
+       #__shared_confirm_popup__) :is(button, [type="button"], [type="reset"], [type="submit"])::-moz-focus-inner {
+  border-style: none;
+  padding: 0;
+}
+
+/* ==================== normalize：textarea 滚动条 / checkbox box-sizing ==================== */
+:where([class*="bz-"],
+       #launcher-modal,
+       #launcher-edit-controls,
+       #launcher-cmd-popup,
+       #launcher-icon-popup,
+       #launcher-rename-popup,
+       #launcher-menu-popup,
+       #fav-popup,
+       #fav-add-popup,
+       #add-diary-popup,
+       #diary-filter-mask,
+       #diary-tag-selector-mask,
+       #diary-date-filter-mask,
+       #todo-popup,
+       #add-todo-popup,
+       #review-popup,
+       #quiz-popup,
+       #pw-popup,
+       #pw-add-popup,
+       #pomodoro-popup,
+       .news-popup,
+       #article-view-popup,
+       #__yin_ying__,
+       #__gui_wu_ben__,
+       #chat-panel,
+       #__shared_confirm_mask__,
+       #__shared_confirm_popup__) textarea {
+  overflow: auto;
+}
+:where([class*="bz-"],
+       #launcher-modal,
+       #launcher-edit-controls,
+       #launcher-cmd-popup,
+       #launcher-icon-popup,
+       #launcher-rename-popup,
+       #launcher-menu-popup,
+       #fav-popup,
+       #fav-add-popup,
+       #add-diary-popup,
+       #diary-filter-mask,
+       #diary-tag-selector-mask,
+       #diary-date-filter-mask,
+       #todo-popup,
+       #add-todo-popup,
+       #review-popup,
+       #quiz-popup,
+       #pw-popup,
+       #pw-add-popup,
+       #pomodoro-popup,
+       .news-popup,
+       #article-view-popup,
+       #__yin_ying__,
+       #__gui_wu_ben__,
+       #chat-panel,
+       #__shared_confirm_mask__,
+       #__shared_confirm_popup__) :is(input[type="checkbox"], input[type="radio"]) {
+  box-sizing: border-box;
+  padding: 0;
+}
+
+/* ==================== 图片/链接去 UA 边框（normalize img；a 防主题下划线渗透） ==================== */
+:where([class*="bz-"],
+       #launcher-modal,
+       #launcher-edit-controls,
+       #launcher-cmd-popup,
+       #launcher-icon-popup,
+       #launcher-rename-popup,
+       #launcher-menu-popup,
+       #fav-popup,
+       #fav-add-popup,
+       #add-diary-popup,
+       #diary-filter-mask,
+       #diary-tag-selector-mask,
+       #diary-date-filter-mask,
+       #todo-popup,
+       #add-todo-popup,
+       #review-popup,
+       #quiz-popup,
+       #pw-popup,
+       #pw-add-popup,
+       #pomodoro-popup,
+       .news-popup,
+       #article-view-popup,
+       #__yin_ying__,
+       #__gui_wu_ben__,
+       #chat-panel,
+       #__shared_confirm_mask__,
+       #__shared_confirm_popup__) :is(img, a) {
+  border-style: none;
+  text-decoration: none;
+}
+
+/* ==================== Obsidian 核心渗透压制：按钮去阴影/外环
+/* app.css:6640 button 裸元素 + 6660 button:not(.clickable-icon) 灰底+阴影，
+   hover/focus 阴影加重、高亮外圈；主题/皮肤插件还会继续给裸 button 加值。
+   bz 自绘按钮一律不投影、不出外环；背景/边框/字体等具体视觉留给域样式。
+   !important：核心/主题声明可能更高特异，恒压。 ==================== */
+:where([class*="bz-"],
+       #launcher-modal,
+       #launcher-edit-controls,
+       #launcher-cmd-popup,
+       #launcher-icon-popup,
+       #launcher-rename-popup,
+       #launcher-menu-popup,
+       #fav-popup,
+       #fav-add-popup,
+       #add-diary-popup,
+       #diary-filter-mask,
+       #diary-tag-selector-mask,
+       #diary-date-filter-mask,
+       #todo-popup,
+       #add-todo-popup,
+       #review-popup,
+       #quiz-popup,
+       #pw-popup,
+       #pw-add-popup,
+       #pomodoro-popup,
+       .news-popup,
+       #article-view-popup,
+       #__yin_ying__,
+       #__gui_wu_ben__,
+       #chat-panel,
+       #__shared_confirm_mask__,
+       #__shared_confirm_popup__) :is(button, [role="button"]) {
   box-shadow: none !important;
   outline: none !important;
 }
 
-/* ==================== 输入框/文本域/下拉：去外环 ==================== */
-/* 核心对文本录入元素 :focus/:focus-visible 统一加 box-shadow 高亮外圈
-   （app.css:7662+），点击/键盘聚焦都触发，视觉干扰明显。
-   checkbox/radio 选中态原生可见，不受影响。 */
-[class*="bz-"] :is(input, select, textarea),
-[class*="bz-"]:is(input, select, textarea),
-#launcher-modal input, #launcher-modal select, #launcher-modal textarea,
-#launcher-edit-controls input, #launcher-edit-controls select, #launcher-edit-controls textarea,
-#launcher-cmd-popup input, #launcher-cmd-popup select, #launcher-cmd-popup textarea,
-#launcher-icon-popup input, #launcher-icon-popup select, #launcher-icon-popup textarea,
-#launcher-rename-popup input, #launcher-rename-popup select, #launcher-rename-popup textarea,
-#launcher-menu-popup input, #launcher-menu-popup select, #launcher-menu-popup textarea,
-#fav-popup input, #fav-popup select, #fav-popup textarea,
-#fav-add-popup input, #fav-add-popup select, #fav-add-popup textarea,
-#add-diary-popup input, #add-diary-popup select, #add-diary-popup textarea,
-#diary-filter-mask input, #diary-filter-mask select, #diary-filter-mask textarea,
-#diary-tag-selector-mask input, #diary-tag-selector-mask select, #diary-tag-selector-mask textarea,
-#diary-date-filter-mask input, #diary-date-filter-mask select, #diary-date-filter-mask textarea,
-#unified-datetime-picker-mask input, #unified-datetime-picker-mask select, #unified-datetime-picker-mask textarea,
-#todo-popup input, #todo-popup select, #todo-popup textarea,
-#add-todo-popup input, #add-todo-popup select, #add-todo-popup textarea,
-#review-popup input, #review-popup select, #review-popup textarea,
-#quiz-popup input, #quiz-popup select, #quiz-popup textarea,
-#pw-popup input, #pw-popup select, #pw-popup textarea,
-#pw-add-popup input, #pw-add-popup select, #pw-add-popup textarea,
-#pomodoro-popup input, #pomodoro-popup select, #pomodoro-popup textarea,
-.news-popup input, .news-popup select, .news-popup textarea,
-#article-view-popup input, #article-view-popup select, #article-view-popup textarea,
-#__yin_ying__ input, #__yin_ying__ select, #__yin_ying__ textarea,
-#__gui_wu_ben__ input, #__gui_wu_ben__ select, #__gui_wu_ben__ textarea,
-#chat-panel input, #chat-panel select, #chat-panel textarea,
-#__shared_confirm_mask__ input, #__shared_confirm_mask__ select, #__shared_confirm_mask__ textarea {
+/* ==================== Obsidian 核心渗透压制：输入框去聚焦外环
+/* 核心 input:focus/:focus-visible box-shadow 0 0 0 Npx 高亮外圈（app.css:7662+）。
+   checkbox/radio 选中态原生可见，不受影响。 ==================== */
+:where([class*="bz-"],
+       #launcher-modal,
+       #launcher-edit-controls,
+       #launcher-cmd-popup,
+       #launcher-icon-popup,
+       #launcher-rename-popup,
+       #launcher-menu-popup,
+       #fav-popup,
+       #fav-add-popup,
+       #add-diary-popup,
+       #diary-filter-mask,
+       #diary-tag-selector-mask,
+       #diary-date-filter-mask,
+       #todo-popup,
+       #add-todo-popup,
+       #review-popup,
+       #quiz-popup,
+       #pw-popup,
+       #pw-add-popup,
+       #pomodoro-popup,
+       .news-popup,
+       #article-view-popup,
+       #__yin_ying__,
+       #__gui_wu_ben__,
+       #chat-panel,
+       #__shared_confirm_mask__,
+       #__shared_confirm_popup__) :is(input, select, textarea) {
   box-shadow: none !important;
   outline: none !important;
 }
+
+/* 根清单（27 项 = bz 伞 + 26 个 legacy 根，news 为 class）：
+   [class*="bz-"], #launcher-modal, #launcher-edit-controls, #launcher-cmd-popup, #launcher-icon-popup, #launcher-rename-popup, #launcher-menu-popup, #fav-popup, #fav-add-popup, #add-diary-popup, #diary-filter-mask, #diary-tag-selector-mask, #diary-date-filter-mask, #todo-popup, #add-todo-popup, #review-popup, #quiz-popup, #pw-popup, #pw-add-popup, #pomodoro-popup, .news-popup, #article-view-popup, #__yin_ying__, #__gui_wu_ben__, #chat-panel, #__shared_confirm_mask__, #__shared_confirm_popup__
+*/
 /* ============================================================
  * bz（包仔）共享层/跨域样式（src/core/styles.css）
  * 设置页分页 / 主窗口头部行统一规范 / core 层（notice·settings-modal·confirm·dom）
@@ -6946,8 +7231,6 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 }
 .bz-sp-input:focus { border-color: var(--interactive-accent); }
 .bz-sp-input.mono { font-family: "SF Mono", Consolas, monospace; font-size: 12px; }
-.bz-sp-input.num { width: 76px; text-align: right; }
-.bz-sp-input.sec { width: 150px; }
 .bz-sp-textarea {
   width: 190px;
   min-height: 54px;
