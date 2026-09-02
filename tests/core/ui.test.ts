@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   uiBtn, uiIcon, uiIconBtn, uiBtnRow, uiChip, uiField, uiInput,
-  uiEmpty, uiSegmented, uiChoice, uiDialogActions, uiRange,
+  uiEmpty, uiSegmented, uiChoice, uiDialogActions, uiRange, uiSwitch, uiSelect,
 } from '../../src/core/ui';
 import { openLightbox, closeLightbox } from '../../src/core/ui';
 import { uiModal } from '../../src/core/ui';
@@ -314,6 +314,93 @@ describe('bz ui 组件库', () => {
       expect(v).not.toBeNull();
       expect(v!.getAttribute('controls')).not.toBeNull();
       closeLightbox();
+    });
+  });
+
+  describe('uiSwitch 开关', () => {
+    it('结构：bz-sw + role=switch + aria-checked，checked 初始 on', () => {
+      const { el } = uiSwitch({ checked: true });
+      expect(el.classList.contains('bz-sw')).toBe(true);
+      expect(el.classList.contains('on')).toBe(true);
+      expect(el.getAttribute('role')).toBe('switch');
+      expect(el.getAttribute('aria-checked')).toBe('true');
+    });
+    it('点击切换 on 态并回调（默认关）', () => {
+      const fn = vi.fn();
+      const { el } = uiSwitch({ onChange: fn });
+      expect(el.classList.contains('on')).toBe(false);
+      el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      expect(el.classList.contains('on')).toBe(true);
+      expect(el.getAttribute('aria-checked')).toBe('true');
+      expect(fn).toHaveBeenCalledWith(true);
+      el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      expect(fn).toHaveBeenLastCalledWith(false);
+    });
+    it('Space/Enter 键盘开合', () => {
+      const { el } = uiSwitch({});
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: ' ' }));
+      expect(el.classList.contains('on')).toBe(true);
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+      expect(el.classList.contains('on')).toBe(false);
+    });
+    it('setChecked 句柄强制状态', () => {
+      const { el, setChecked } = uiSwitch({});
+      setChecked(true);
+      expect(el.classList.contains('on')).toBe(true);
+      expect(el.getAttribute('aria-checked')).toBe('true');
+    });
+  });
+
+  describe('uiSelect 下拉', () => {
+    const selOpts = [
+      { value: 'a', label: '甲' },
+      { value: 'b', label: '乙' },
+      { value: 'c', label: '丙' },
+    ];
+    it('结构：bz-select + 当前值 + chevron 图标', () => {
+      const { el } = uiSelect({ options: selOpts, value: 'b', onChange: () => {} });
+      expect(el.classList.contains('bz-select')).toBe(true);
+      expect(el.querySelector('.bz-select-val')!.textContent).toBe('乙');
+      expect(el.querySelector('.bz-select-car')).not.toBeNull();
+    });
+    it('点击展开菜单（item 列表），再点关闭', () => {
+      const { el } = uiSelect({ options: selOpts, value: 'a', onChange: () => {} });
+      el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      expect(el.classList.contains('open')).toBe(true);
+      expect(el.querySelectorAll('.bz-select-item').length).toBe(3);
+      el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      expect(el.querySelector('.bz-select-menu')).toBeNull();
+    });
+    it('选中项回调 + 更新显示值 + 菜单关闭 + is-on 跟随', () => {
+      const fn = vi.fn();
+      const { el } = uiSelect({ options: selOpts, value: 'a', onChange: fn });
+      el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      const items = el.querySelectorAll('.bz-select-item');
+      expect(items[0].classList.contains('is-on')).toBe(true);
+      (items[1] as HTMLElement).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      expect(fn).toHaveBeenCalledWith('b');
+      expect(el.querySelector('.bz-select-val')!.textContent).toBe('乙');
+      expect(el.querySelector('.bz-select-menu')).toBeNull();
+      expect(el.classList.contains('open')).toBe(false);
+    });
+    it('外部点击关闭菜单', () => {
+      const { el } = uiSelect({ options: selOpts, value: 'a', onChange: () => {} });
+      el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      expect(el.querySelector('.bz-select-menu')).not.toBeNull();
+      document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      expect(el.querySelector('.bz-select-menu')).toBeNull();
+    });
+    it('onOpenChange 开合回调', () => {
+      const fn = vi.fn();
+      const { el } = uiSelect({ options: selOpts, value: 'a', onChange: () => {}, onOpenChange: fn });
+      el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      expect(fn).toHaveBeenLastCalledWith(true);
+      el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      expect(fn).toHaveBeenLastCalledWith(false);
+    });
+    it('未匹配值显示 placeholder', () => {
+      const { el } = uiSelect({ options: selOpts, value: 'z', placeholder: '请选择', onChange: () => {} });
+      expect(el.querySelector('.bz-select-val')!.textContent).toBe('请选择');
     });
   });
 });

@@ -93,3 +93,20 @@ export interface BzChoiceOpts<T extends string = string> {
   onChange: (value: T) => void;
   className?: string;
 }
+
+/** 开关（.bz-sw）：40×22 滑块，开 = 品牌实底 */
+export interface BzSwitchOpts {
+  checked?: boolean;
+  onChange?: (checked: boolean) => void;
+}
+
+/** 下拉选择（.bz-select）：选项多/文案长/行内放不下时的单行单选；
+ *  短选项组请用 .bz-choice 平铺胶囊替代 */
+export interface BzSelectOpts<T extends string = string> {
+  options: { value: T; label: string }[];
+  value: T;
+  placeholder?: string;              // 空值（无匹配选项）时显示
+  className?: string;                // 附加类（行内宽度等域布局用）
+  onOpenChange?: (open: boolean) => void; // 弹层开合回调（上层上下文处理：z 提层等）
+  onChange: (value: T) => void;
+}
