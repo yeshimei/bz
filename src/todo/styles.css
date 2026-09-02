@@ -67,6 +67,15 @@
 
 /* ---- 右栏 ---- */
 .bz-todo-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+/* 主头行（对齐原型 p1-main-head）：当前场景标题 + 计数 + 右侧新建按钮 */
+.bz-todo-main-head {
+  display: flex; align-items: center; gap: var(--bz-space-sm);
+  padding: 12px var(--bz-space-lg) 2px; flex-shrink: 0;
+}
+.bz-todo-main-title { font-size: 16px; font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
+.bz-todo-main-count { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
+.bz-todo-main-spacer { flex: 1; }
+.bz-todo-main-head .bz-btn { height: 30px; padding: 0 14px; font-size: var(--bz-font-meta); }
 .bz-todo-toolbar {
   display: flex; align-items: center; gap: var(--bz-space-sm); padding: 8px var(--bz-space-lg) 4px; flex-shrink: 0;
 }
@@ -190,6 +199,8 @@
   .bz-todo-close { display: inline-flex; }
   .bz-todo-head { padding-top: max(12px, env(safe-area-inset-top)); }
   .bz-todo-side { display: none; }
+  /* 主头行桌面专属（移动端新建走底部录入条） */
+  .bz-todo-main-head { display: none; }
   .bz-todo-mob-scenes {
     display: flex; gap: var(--bz-space-sm); padding: 10px var(--bz-space-lg) 2px;
     overflow-x: auto; flex-shrink: 0;
