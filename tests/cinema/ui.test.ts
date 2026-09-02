@@ -208,8 +208,12 @@ describe('cinema overlay', () => {
     // 评分滑杆存在（组件库 .bz-range 自绘外观）
     expect(modal.querySelector('#bz-cinema-qs-rating')).toBeTruthy();
     expect((modal.querySelector('#bz-cinema-qs-rating') as HTMLElement).classList.contains('bz-range')).toBe(true);
-    // 影评 textarea
+    // 影评 textarea（.bz-field 字段行：label 上置，不与 textarea 同排）
     expect(modal.querySelector('#bz-cinema-qs-review')).toBeTruthy();
+    expect(modal.querySelector('.bz-cinema-qs-review .bz-field-label')?.textContent).toBe('影评');
+    // 目标状态按钮为平铺单选（组件库 .bz-choice），默认选中第一项
+    expect(modal.querySelector('.bz-cinema-qs-btns .bz-choice-btn.is-on')?.getAttribute('data-value')).toBe('在看');
+    expect(modal.textContent).not.toContain('取消'); // 无取消钮：点遮罩/ESC 关闭
     // 升级到已看 + 保存
     (modal.querySelector('[data-cinema-qs="已看"]') as HTMLElement).click();
     const rating = modal.querySelector('#bz-cinema-qs-rating') as HTMLInputElement;
@@ -263,6 +267,13 @@ describe('cinema overlay', () => {
     expect(modal.textContent).toContain('添加影视');
     expect(modal.querySelector('#bz-cinema-f-rating')).toBeTruthy(); // 评分滑杆
     expect((modal.querySelector('#bz-cinema-f-rating') as HTMLElement).classList.contains('bz-range')).toBe(true);
+    // 字段行 = .bz-field（label 上置，不与控件同排）；类型/状态 = 平铺单选 .bz-choice（非下拉）
+    expect(modal.querySelectorAll('.bz-cinema-form .bz-field')).toHaveLength(6);
+    expect(modal.querySelectorAll('.bz-cinema-form .bz-choice')).toHaveLength(2);
+    expect(modal.querySelector('select')).toBeNull();
+    expect(modal.querySelector('.bz-choice-btn.is-on[data-cinema-f-tag]')?.getAttribute('data-value')).toBe('电影');
+    expect(modal.querySelector('.bz-choice-btn.is-on[data-cinema-f-status]')?.getAttribute('data-value')).toBe('已看');
+    expect(modal.textContent).not.toContain('取消'); // 无取消钮：点遮罩/ESC 关闭
     // 填写并保存
     (modal.querySelector('#bz-cinema-f-name') as HTMLInputElement).value = '新片';
     (modal.querySelector('#bz-cinema-f-review') as HTMLTextAreaElement).value = '好看';
@@ -278,6 +289,34 @@ describe('cinema overlay', () => {
     expect(content).toContain('- 电影');
     expect(content).toContain('评分: 5');
     expect(content).toContain('影评: 好看');
+  });
+
+  it('添加弹窗：类型/状态平铺点选生效（含色点与多选一）', async () => {
+    const { vault, app } = seedVault();
+    openAddModalDirect(app);
+    const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
+    const modal = mask.querySelector('.bz-overlay-popup') as HTMLElement;
+    // 点「日漫」→ 原默认「电影」取消选中；点「想看」
+    (modal.querySelector('[data-cinema-f-tag][data-value="日漫"]') as HTMLElement).click();
+    (modal.querySelector('[data-cinema-f-status][data-value="想看"]') as HTMLElement).click();
+    expect(modal.querySelectorAll('[data-cinema-f-tag].is-on')).toHaveLength(1);
+    expect(modal.querySelector('[data-cinema-f-tag].is-on')?.getAttribute('data-value')).toBe('日漫');
+    expect(modal.querySelector('[data-cinema-f-status].is-on')?.getAttribute('data-value')).toBe('想看');
+    // 色点为数据语义色（日漫 = 动漫组粉）
+    const dot = modal.querySelector('[data-cinema-f-tag][data-value="日漫"] .bz-choice-dot') as HTMLElement;
+    expect(dot).toBeTruthy();
+    expect(dot.style.backgroundColor).toBe('rgb(214, 77, 143)');
+    (modal.querySelector('#bz-cinema-f-name') as HTMLInputElement).value = '海贼王';
+    (modal.querySelector('#bz-cinema-f-save') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 0)); // 等异步落盘
+    const added = M.items.find((i) => i.name === '海贼王');
+    expect(added?.typeTag).toBe('日漫');
+    expect(added?.group).toBe('动漫');
+    expect(added?.status).toBe(0); // 想看
+    expect(added?.rating).toBe(-1);
+    const content = vault.files.get('我的/影视/《海贼王》.md');
+    expect(content).toContain('- 日漫');
+    expect(content).toContain('评分: -1');
   });
 
   it('快速状态窗升级 → 写 frontmatter 落盘', async () => {
@@ -301,5 +340,29 @@ describe('cinema overlay', () => {
     // 落盘：frontmatter 评分已更新
     const content = vault.files.get('我的/影视/《想看片》.md');
     expect(content).toContain('评分: 9.5');
+  });
+
+  it('详情 → 编辑弹窗：字段预选当前值，保存写回 frontmatter', async () => {
+    const { vault, app } = seedVault();
+    createOverlay(app);
+    const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
+    const card = overlay.querySelector('[data-cinema-idx]') as HTMLElement;
+    card.click();
+    const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
+    (mask.querySelector('[data-cinema-dm-edit]') as HTMLElement).click();
+    const editMask = document.querySelector('.bz-overlay-mask') as HTMLElement;
+    const modal = editMask.querySelector('.bz-overlay-popup') as HTMLElement;
+    expect(modal.textContent).toContain('编辑影视');
+    // 预选：类型 电影（默认第一项）/ 状态 已看；名称与影评回填
+    expect((modal.querySelector('#bz-cinema-f-name') as HTMLInputElement).value).toBe('星际穿越');
+    expect((modal.querySelector('#bz-cinema-f-review') as HTMLTextAreaElement).value).toBe('爱是穿越维度的唯一力量');
+    expect(modal.querySelector('[data-cinema-f-tag].is-on')?.getAttribute('data-value')).toBe('电影');
+    expect(modal.querySelector('[data-cinema-f-status].is-on')?.getAttribute('data-value')).toBe('已看');
+    // 改状态为「在看」+ 保存 → frontmatter 评分 0
+    (modal.querySelector('[data-cinema-f-status][data-value="在看"]') as HTMLElement).click();
+    (modal.querySelector('#bz-cinema-f-save') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 0)); // 等异步落盘
+    const content = vault.files.get('我的/影视/《星际穿越》.md');
+    expect(content).toContain('评分: 0');
   });
 });
