@@ -75,8 +75,9 @@ export interface SprintOpts {
   /** 取题：返回该篇题目（round=批量已生成映射 / single=现成题 / redo=重生成）；
    *  返回 null/空数组 = 该篇不可做题（调用方应跳过或降级） */
   fetchQuestions: (item: ReviewItem) => Promise<QuizQuestion[] | null>;
-  /** 通过：写排期（round/single → markReview autoPending；redo → 仅清 pendingRedo） */
-  onPassed: (item: ReviewItem, rating: string, entry: { acc: number; wrong: number }) => Promise<void>;
+  /** 通过：写排期（round/single → markReview autoPending；redo → 仅清 pendingRedo）。
+   *  返回该篇写盘后的下次复习时间（ISO），供结果卡展示真实间隔（快照 item 不会更新） */
+  onPassed: (item: ReviewItem, rating: string, entry: { acc: number; wrong: number }) => Promise<string | void>;
   /** 未通过（非 redo）：写排期 + 挂待重做 + 打开原文（由调用方执行，含会话结束语义） */
   onFailed: (item: ReviewItem, rating: string, entry: { acc: number; wrong: number }) => Promise<void>;
   /** 会话结束（正常/退出/未通过中断）统一回调：回队列视图 */
@@ -231,10 +232,10 @@ export class SprintSession {
     const passed = rating === 'easy' || rating === 'good';
 
     if (passed) {
-      await this.opts.onPassed(entry.item, rating, { acc: entry.acc, wrong: entry.wrong });
+      const nextReviewAt = await this.opts.onPassed(entry.item, rating, { acc: entry.acc, wrong: entry.wrong });
       if (this.finished) return;
       entry.state = 'passed';
-      entry.passNote = this.nextIntervalNote(entry.item);
+      entry.passNote = this.nextIntervalNote(nextReviewAt || entry.item.nextReviewDate);
     } else {
       // 未通过：写排期+挂待重做+打开原文（round/single 中断；redo 保持队列等下次）
       await this.opts.onFailed(entry.item, rating, { acc: entry.acc, wrong: entry.wrong });
@@ -252,10 +253,10 @@ export class SprintSession {
     return this.entries[this.cur];
   }
 
-  /** 通过后的下次间隔展示（从 nextReviewDate 已更新值推算） */
-  private nextIntervalNote(item: ReviewItem): string {
-    if (!item.nextReviewDate) return '';
-    const days = Math.max(1, Math.round((new Date(item.nextReviewDate).getTime() - Date.now()) / 86400000));
+  /** 通过后的下次间隔展示（onPassed 返回的写盘后 nextReviewDate） */
+  private nextIntervalNote(nextReviewAt: string | null | undefined): string {
+    if (!nextReviewAt) return '';
+    const days = Math.max(1, Math.round((new Date(nextReviewAt).getTime() - Date.now()) / 86400000));
     return `${days} 天后`;
   }
 
@@ -386,12 +387,11 @@ export class SprintSession {
     // 内容区由宿主清空后本会话自绘全部（含顶部）。为与队列互斥，宿主仅给空容器。
   }
 
-  private sprintHead(sub: string, extraRight = ''): string {
+  private sprintHead(extraRight = ''): string {
     return `
       <div class="bz-sprint-head">
         <div class="t">
           <div class="bz-sprint-title">做题冲刺</div>
-          <div class="bz-sprint-sub">${sub}</div>
         </div>
         <div class="tools">
           ${extraRight}
@@ -402,13 +402,9 @@ export class SprintSession {
 
   private showLoading(entry: SprintEntry): void {
     this.opts.host.innerHTML = `
-      ${this.sprintHead(this.subLabel())}
-      <div class="bz-sprint-loading"><span class="spinner"></span>正在准备「${escapeHtml(entry.item.name)}」的题目…</div>`;
+      ${this.sprintHead()}
+      <div class="bz-sprint-loading"><span class="spinner"></span>正在获取题目…</div>`;
     this.bindTop();
-  }
-
-  private subLabel(): string {
-    return this.mode === 'round' ? '开始本轮' : this.mode === 'redo' ? '待重做' : '单条复习';
   }
 
   private questionHeader(entry: SprintEntry): string {
@@ -416,7 +412,6 @@ export class SprintSession {
     const done = this.q!.doneCount;
     return `
       <div class="bz-sprint-qtop">
-        <span class="bz-sprint-file">${this.icon('file-text')} ${escapeHtml(entry.item.name)}</span>
         <span class="bz-sprint-progress">${done + 1}/${total}</span>
       </div>`;
   }
@@ -437,16 +432,16 @@ export class SprintSession {
           else if (isSel) extra = ' is-wrong';
         } else if (isSel) extra = ' is-sel';
         return `
-          <button class="bz-sprint-opt${extra}" data-i="${i}" ${q.answered ? 'disabled' : ''}>
+          <div class="bz-sprint-opt${extra}${q.answered ? ' is-disabled' : ''}" data-i="${i}" role="button" tabindex="${q.answered ? '-1' : '0'}" aria-disabled="${q.answered ? 'true' : 'false'}">
             <span class="k">${'ABCD'[i]}</span>
             <span class="t">${escapeHtml(opt)}</span>
             <span class="m">${q.answered && question.correctIndices.includes(i) ? this.mark('ok') : q.answered && isSel ? this.mark('bad') : ''}</span>
-          </button>`;
+          </div>`;
       })
       .join('');
 
     const needSubmit = !single && !q.answered;
-    // 答错后：还有题 → 「下一题」；本篇最后一题也答错 → 「结算本篇」（finishNote 按本篇 acc 评级出结果卡）
+    // 答错后：还有题 → 「下一题」；本篇最后一题也答错 → 「结束并结算」（finishNote 按本篇 acc 评级）
     const lastWrong = q.answered && !q.lastCorrect && !q.list.length;
     const nextBtn =
       q.answered && !q.lastCorrect && q.list.length
@@ -456,18 +451,8 @@ export class SprintSession {
           : '';
     const submit = needSubmit ? `<button class="bz-btn bz-btn--primary bz-sprint-submit" data-action="submit">提交答案</button>` : '';
 
-    const headNote = q.answered
-      ? q.lastCorrect
-        ? '答对 · 自动进入下一题'
-        : lastWrong
-          ? '本篇题目已答完，按当前正确率结束'
-          : '答错 · 查看正确答案'
-      : single
-        ? '选择即判对错 · 全对 = 轻松'
-        : '多选 · 勾选后提交';
-
     const html = `
-      ${this.sprintHead(this.subLabel())}
+      ${this.sprintHead()}
       <div class="bz-sprint-body">
         <div class="bz-sprint-main">
           ${this.questionHeader(entry)}
@@ -476,10 +461,7 @@ export class SprintSession {
             <div class="bz-sprint-qtext">${escapeHtml(question.question)}</div>
             <div class="bz-sprint-opts">${optsHtml}</div>
             ${submit}
-            <div class="bz-sprint-qfoot">
-              <span class="note">${headNote}</span>
-              ${nextBtn}
-            </div>
+            ${nextBtn ? `<div class="bz-sprint-qfoot">${nextBtn}</div>` : ''}
           </div>
         </div>
         <aside class="bz-sprint-queue">${this.queueHtml()}</aside>
@@ -493,7 +475,14 @@ export class SprintSession {
       void this.finishNote();
     });
     this.opts.host.querySelectorAll('.bz-sprint-opt').forEach((el) => {
-      el.addEventListener('click', () => this.answer(Number((el as HTMLElement).dataset.i)));
+      const activate = () => this.answer(Number((el as HTMLElement).dataset.i));
+      el.addEventListener('click', activate);
+      el.addEventListener('keydown', (e: KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          activate();
+        }
+      });
     });
     this.opts.onProgress?.();
   }
@@ -502,19 +491,15 @@ export class SprintSession {
     const rows = this.entries
       .map((e) => {
         const name = escapeHtml(e.item.name.replace(/^《|》$/g, ''));
-        if (e.state === 'passed') return `<div class="bz-sq-item passed"><span class="nm"><s>${name}</s></span><span class="meta">${this.mark('ok')} 已通过 · ${escapeHtml(e.passNote)}</span></div>`;
-        if (e.state === 'failed') return `<div class="bz-sq-item failed"><span class="nm">${name}</span><span class="meta">${this.mark('bad')} 未通过 · 挂待重做</span></div>`;
-        if (e.state === 'doing') return `<div class="bz-sq-item doing"><span class="nm">${name}</span><span class="meta">做题中…</span></div>`;
+        if (e.state === 'passed') return `<div class="bz-sq-item passed"><span class="nm"><s>${name}</s></span></div>`;
+        if (e.state === 'failed') return `<div class="bz-sq-item failed"><span class="nm">${name}</span></div>`;
+        if (e.state === 'doing') return `<div class="bz-sq-item doing"><span class="nm">${name}</span></div>`;
         return `<div class="bz-sq-item"><span class="nm">${name}</span></div>`;
       })
       .join('');
-    const passed = this.passedCount;
-    const failed = this.failedCount;
-    const remain = this.remainingCount;
     return `
-      <div class="bz-sq-head"><b>本轮队列</b><span>剩 ${remain} 篇</span></div>
-      <div class="bz-sq-list">${rows || '<div class="bz-sq-empty">— 队列完毕 —</div>'}</div>
-      <div class="bz-sq-foot">已通过 ${passed} · 未通过 ${failed}</div>`;
+      <div class="bz-sq-head"><b>本轮队列</b></div>
+      <div class="bz-sq-list">${rows || '<div class="bz-sq-empty">— 队列完毕 —</div>'}</div>`;
   }
 
   private renderResult(entry: SprintEntry): void {
@@ -536,23 +521,18 @@ export class SprintSession {
         <div class="bz-result-ic">${this.mark('ok', 'lg')}</div>
         <div class="bz-result-name">${name}</div>
         <div class="bz-result-score">${entry.acc}<span class="sl">/${total}</span></div>
-        <div class="bz-result-sub">答对 ${entry.acc} 题 · 答错 ${entry.wrong} 题 · 正确率 ${acc}%</div>
-        <span class="bz-result-rating pass">${this.mark('ok')} 自动评级：${RATING_NAMES[rating]}</span>
-        <div class="bz-result-meta">已写入复习计划 · 下次 <b>${escapeHtml(entry.passNote || '已排期')}</b></div>
+        <span class="bz-result-rating pass">${RATING_NAMES[rating]} · 下次 ${escapeHtml(entry.passNote || '已排期')}</span>
         <button class="bz-btn bz-btn--primary bz-btn--block" data-action="next">${nextLabel}</button>
         ${remain > 0 ? `<button class="bz-btn bz-btn--ghost bz-btn--block" data-action="end">结束这次复习</button>` : ''}`
       : `
         <div class="bz-result-ic bad">${this.mark('bad', 'lg')}</div>
         <div class="bz-result-name">${name}</div>
         <div class="bz-result-score">${entry.acc}<span class="sl">/${total}</span></div>
-        <div class="bz-result-sub">答对 ${entry.acc} 题 · 答错 ${entry.wrong} 题 · 正确率 ${acc}%</div>
-        <span class="bz-result-rating fail">${this.mark('bad')} 自动评级：${RATING_NAMES[rating]}</span>
-        <div class="bz-result-meta">已写入复习计划并挂「待重做」</div>
-        <button class="bz-btn bz-btn--danger bz-btn--block" data-action="note">${this.icon('file-text')} 复习此笔记 · 打开原文</button>
-        <div class="bz-result-note">打开笔记看一遍，稍后回来重做清掉它</div>`;
+        <span class="bz-result-rating fail">${RATING_NAMES[rating]} · 待重做</span>
+        <button class="bz-btn bz-btn--danger bz-btn--block" data-action="note">${this.icon('file-text')} 复习此笔记 · 打开原文</button>`;
 
     const html = `
-      ${this.sprintHead('本篇完成')}
+      ${this.sprintHead()}
       <div class="bz-sprint-body">
         <div class="bz-sprint-main"><div class="bz-result">${inner}</div></div>
         <aside class="bz-sprint-queue">${this.queueHtml()}</aside>
@@ -576,16 +556,14 @@ export class SprintSession {
     const failed = this.failedCount;
     const total = passed + failed;
     const html = `
-      ${this.sprintHead('本轮完成')}
+      ${this.sprintHead()}
       <div class="bz-summary">
         <div class="bz-summary-title">本轮复习完成</div>
-        <div class="bz-summary-sub">${total} 篇全部处理 · ${failed ? `${failed} 篇未通过` : '全部通过'}</div>
         <div class="bz-summary-stats">
           <div class="st"><b>${total}</b><span>复习篇数</span></div>
           <div class="st"><b>${passed}</b><span>通过</span></div>
-          <div class="st ${failed ? 'warn' : ''}"><b>${failed}</b><span>${failed ? '未通过' : '未通过'}</span></div>
+          <div class="st ${failed ? 'warn' : ''}"><b>${failed}</b><span>未通过</span></div>
         </div>
-        ${failed ? `<div class="bz-summary-note">${this.icon('rotate-ccw')} 未通过条目已挂待重做 · 打开笔记复习后再来清它们</div>` : ''}
         <button class="bz-btn bz-btn--primary bz-btn--block" data-action="done">完成 · 回到复习计划</button>
       </div>`;
     this.opts.host.innerHTML = html;
