@@ -31,9 +31,9 @@ describe('mainSettingsSchema：主设置页两区块', () => {
   it('AI 区块：服务商下拉 + 每家注册表提供商密钥行 + 自定义三行 + per-provider 配置三行（ticket 171/172）', () => {
     const rows = schema.groups[0].rows;
     // 行序 = 服务商下拉 + 注册表非 custom 提供商密钥行（每行 text）+ 自定义端点/模型/密钥（text×3）
-    //         + per-provider 配置三行（custom：模型名称/上下文窗口/最大输出 token）
+    //         + per-provider 配置三行（模型 custom；上下文/最大输出 token 标准 number）
     const nonCustom = AI_PROVIDER_REGISTRY.filter((p) => p.id !== 'custom');
-    const types = ['select', ...nonCustom.map(() => 'text'), 'text', 'text', 'text', 'custom', 'custom', 'custom'];
+    const types = ['select', ...nonCustom.map(() => 'text'), 'text', 'text', 'text', 'custom', 'number', 'number'];
     expect(rows.map((r) => r.type)).toEqual(types);
     // 密钥行标题来自注册表 apiKeyLabel（含 deepseek/opencode-go，顺序与注册表一致）
     const names = rows.map((r) => (r as { name: string }).name);
@@ -62,14 +62,20 @@ describe('mainSettingsSchema：主设置页两区块', () => {
     expect(customEndpoint.binding).toEqual({ key: 'aiCustomEndpoint' });
     expect(customModel.binding).toEqual({ key: 'aiCustomModel' });
     expect(customKey.binding).toEqual({ key: 'aiCustomApiKey' });
-    // per-provider 配置三行（custom 行，无 key 直绑，常显）
+    // per-provider 配置三行：模型行 custom（无 key 直绑，常显）；上下文/最大输出 token 标准 number 行
     const [modelRow, ctxRow, maxTokensRow] = rest.slice(nonCustom.length + 3) as Array<{
       name: string;
       type: string;
+      binding?: { key: string } | { get: () => unknown; set: (v: unknown) => void; save: () => unknown };
       visibleWhen?: (s: SettingsSnapshot) => boolean;
     }>;
     expect([modelRow.name, ctxRow.name, maxTokensRow.name]).toEqual(['模型名称', '上下文窗口', '最大输出 token']);
+    expect([modelRow.type, ctxRow.type, maxTokensRow.type]).toEqual(['custom', 'number', 'number']);
     expect(modelRow.visibleWhen!(snapOf({ aiProvider: 'deepseek' }))).toBe(true); // 常显
+    // 标准 number 行：三函数 binding（读写当前 provider 覆盖）+ 无 key 直绑
+    expect('key' in ctxRow.binding!).toBe(false);
+    expect('get' in ctxRow.binding!).toBe(true);
+    expect(ctxRow.visibleWhen).toBeUndefined();
     // 显隐（ticket 170/171）：deepseek 显示 DeepSeek 行；opencode-go 显示 OpenCode 行；custom 显示自定义三行
     const findKey = (key: string) => {
       const idx = nonCustom.findIndex((p) => p.apiKeyKey === key);
