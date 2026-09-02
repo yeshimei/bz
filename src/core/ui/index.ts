@@ -1,6 +1,6 @@
 /* ============================================================
  * bz 组件库（src/core/ui/）· 转发桶
- * 每个组件一个文件（icon/button/chip/field/empty/segmented/lightbox），
+ * 每个组件一个文件（icon/button/chip/field/empty/segmented/choice/lightbox），
  * 本文件只 re-export，统一入口：import { uiBtn } from 'core/ui'。
  *
  * 在样式库（tokens.css + components.css）之上提供"带功能"工厂：
@@ -13,7 +13,7 @@
 export type {
   BzTone, BzSize, BzIconName,
   BzButtonOpts, BzIconBtnOpts, BzChipOpts,
-  BzInputOpts, BzFieldOpts, BzEmptyOpts, BzSegOpts, BzRangeOpts,
+  BzInputOpts, BzFieldOpts, BzEmptyOpts, BzSegOpts, BzRangeOpts, BzChoiceOpts,
 } from './types';
 
 // 组件工厂（每组件一文件）
@@ -24,6 +24,7 @@ export { uiInput, uiField } from './field';
 export { uiRange } from './slider';
 export { uiEmpty } from './empty';
 export { uiSegmented } from './segmented';
+export { uiChoice } from './choice';
 export { openLightbox, closeLightbox } from './lightbox';
 export type { BzLightboxOpts } from './lightbox';
 export { uiModal } from './modal';

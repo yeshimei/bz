@@ -85,3 +85,11 @@ export interface BzSegOpts<T extends string = string> {
   onChange: (value: T) => void;
   className?: string;
 }
+
+/** 平铺单选组（.bz-choice）：选项胶囊可换行，单选带 is-on 态 */
+export interface BzChoiceOpts<T extends string = string> {
+  options: { value: T; label: string; dot?: string }[]; // dot = 前置色点（数据语义色）
+  value: T;
+  onChange: (value: T) => void;
+  className?: string;
+}

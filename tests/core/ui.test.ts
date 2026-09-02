@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   uiBtn, uiIcon, uiIconBtn, uiBtnRow, uiChip, uiField, uiInput,
-  uiEmpty, uiSegmented, uiDialogActions, uiRange,
+  uiEmpty, uiSegmented, uiChoice, uiDialogActions, uiRange,
 } from '../../src/core/ui';
 import { openLightbox, closeLightbox } from '../../src/core/ui';
 import { uiModal } from '../../src/core/ui';
@@ -174,6 +174,48 @@ describe('bz ui 组件库', () => {
       expect(fn).toHaveBeenCalledWith('b');
       expect(btns[1].classList.contains('is-on')).toBe(true);
       expect(btns[0].classList.contains('is-on')).toBe(false);
+    });
+  });
+
+  describe('uiChoice 平铺单选组', () => {
+    it('渲染选项 + 当前选中 is-on + data-value', () => {
+      const { el } = uiChoice({
+        options: [{ value: '电影', label: '电影' }, { value: '剧集', label: '剧集' }],
+        value: '剧集',
+        onChange: () => {},
+      });
+      const btns = el.querySelectorAll('.bz-choice-btn');
+      expect(btns).toHaveLength(2);
+      expect(el.classList.contains('bz-choice')).toBe(true);
+      expect(btns[1].classList.contains('is-on')).toBe(true);
+      expect(btns[0].classList.contains('is-on')).toBe(false);
+      expect((btns[0] as HTMLButtonElement).dataset.value).toBe('电影');
+    });
+    it('点击切换选中 + onChange 回传值', () => {
+      const fn = vi.fn();
+      const { el } = uiChoice({
+        options: [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }],
+        value: 'a',
+        onChange: fn,
+      });
+      const btns = el.querySelectorAll('.bz-choice-btn');
+      (btns[1] as HTMLButtonElement).click();
+      expect(fn).toHaveBeenCalledWith('b');
+      expect(btns[1].classList.contains('is-on')).toBe(true);
+      expect(btns[0].classList.contains('is-on')).toBe(false);
+    });
+    it('dot 前置色点 + setValue 句柄', () => {
+      const { el, setValue } = uiChoice({
+        options: [{ value: 'a', label: 'A', dot: '#e6951d' }, { value: 'b', label: 'B' }],
+        value: 'a',
+        onChange: () => {},
+      });
+      const dot = el.querySelector('.bz-choice-dot') as HTMLElement;
+      expect(dot).not.toBeNull();
+      expect(dot.style.backgroundColor).toBe('rgb(230, 149, 29)');
+      setValue('b');
+      expect(el.querySelectorAll('.is-on')).toHaveLength(1);
+      expect((el.querySelector('.bz-choice-btn.is-on') as HTMLElement).dataset.value).toBe('b');
     });
   });
 
