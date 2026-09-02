@@ -7,9 +7,8 @@
  */
 import type { App } from 'obsidian';
 import { notice, notify } from '../core/notice';
-import { allocZ } from '../core/z-order';
-import { escManager } from '../core/esc-manager';
 import { createAI } from '../core/ai';
+import { uiModal, uiIconBtn } from '../core/ui';
 import { STATUS_WANT, STATUS_WATCHED } from './constants';
 import type { CinemaItem } from './state';
 import { M } from './state';
@@ -138,51 +137,61 @@ tags:
   }
 }
 
-/** 结果窗（AI 荐片用）：居中卡片 + 头部 ❌（移动端；桌面遮罩/ESC）+ 内容滚动；每条可加入想看 */
+/** 结果窗（AI 荐片用）：居中卡片 + 头部 ✕（移动端；桌面遮罩/ESC）+ 内容滚动；每条可加入想看 */
 export function showResultWindow(app: App, title: string, list: any[]): void {
-  // 复用 cinema 弹窗容器（遮罩点击/ESC 已由 openModal 与 esc 管理）
-  const mask = document.createElement('div');
-  mask.className = 'bz-cinema-mask';
-  mask.style.zIndex = String(allocZ());
-  mask.innerHTML = `<div class="bz-cinema-modal bz-cinema-rec-modal">
-    <div class="bz-cinema-rec-head">
-      <span class="bz-cinema-rec-title">${title}</span>
-      <button class="bz-cinema-ic-btn bz-cinema-mob-only" data-cinema-rec-close title="关闭">❌</button>
-    </div>
-    <div class="bz-cinema-rec-list"></div>
-  </div>`;
-  document.body.appendChild(mask);
-  const listEl = mask.querySelector('.bz-cinema-rec-list') as HTMLElement;
+  // 头部（标题 + 移动端 ✕；桌面靠遮罩/ESC——与详情弹窗约定一致）
+  const head = document.createElement('div');
+  head.className = 'bz-dialog-head';
+  const titleEl = document.createElement('span');
+  titleEl.className = 'bz-dialog-title';
+  titleEl.textContent = title;
+  const xBtn = uiIconBtn({ icon: 'x', title: '关闭' });
+  xBtn.classList.add('bz-cinema-mob-only');
+  head.appendChild(titleEl);
+  head.appendChild(xBtn);
+
+  const body = document.createElement('div');
+  body.className = 'bz-cinema-rec-list';
 
   list.forEach((rec) => {
     const card = document.createElement('div');
     card.className = 'bz-cinema-rec-card';
-    const title = rec.title || rec.name || '未命名';
-    const year = rec.year ? `（${rec.year}）` : '';
-    const director = rec.director ? ` · ${rec.director}` : '';
-    const type = rec.type || '';
-    card.innerHTML = `
-      <div class="bz-cinema-rec-main">
-        <div class="bz-cinema-rec-name">《${title}》${year}</div>
-        <div class="bz-cinema-rec-meta">${type}${director}</div>
-        <div class="bz-cinema-rec-reason">${rec.reason || ''}</div>
-      </div>
-      <button class="bz-cinema-rec-add" data-rec-name="${title}" data-rec-type="${type}">＋ 想看</button>`;
-    card.querySelector('[data-rec-name]')?.addEventListener('click', (e) => {
+    const main = document.createElement('div');
+    main.className = 'bz-cinema-rec-main';
+    const name = document.createElement('div');
+    name.className = 'bz-cinema-rec-name';
+    name.textContent = `《${rec.title || rec.name || '未命名'}》${rec.year ? `（${rec.year}）` : ''}`;
+    const meta = document.createElement('div');
+    meta.className = 'bz-cinema-rec-meta';
+    meta.textContent = `${rec.type || ''}${rec.director ? ` · ${rec.director}` : ''}`;
+    const reason = document.createElement('div');
+    reason.className = 'bz-cinema-rec-reason';
+    reason.textContent = rec.reason || '';
+    main.appendChild(name);
+    main.appendChild(meta);
+    main.appendChild(reason);
+    // 加入想看按钮（组件库）
+    const addBtn = uiIconBtn({ icon: 'plus', title: '加入想看' });
+    addBtn.classList.add('bz-cinema-rec-add');
+    addBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      void quickAddWant(app, title, type);
+      void quickAddWant(app, rec.title || rec.name || '', rec.type || '');
     });
-    listEl.appendChild(card);
+    card.appendChild(main);
+    card.appendChild(addBtn);
+    body.appendChild(card);
   });
 
-  mask.addEventListener('click', (e) => {
-    if (e.target === mask) mask.remove();
+  const content = document.createElement('div');
+  content.appendChild(head);
+  content.appendChild(body);
+  // 弹窗骨架/ESC/遮罩由 uiModal 统一管理
+  const modal = uiModal({
+    content,
+    maxWidth: 560,
+    className: 'bz-cinema-rec-modal',
   });
-  mask.querySelector('[data-cinema-rec-close]')?.addEventListener('click', () => mask.remove());
-  escManager.register('bz-cinema-rec', {
-    isVisible: () => mask.isConnected,
-    close: () => mask.remove(),
-  });
+  xBtn.addEventListener('click', () => modal.close());
 }
 
 /** AI 荐片（动态通知模式，复刻 movie runAIRecommend） */
@@ -203,7 +212,7 @@ export async function runAIRecommend(app: App): Promise<void> {
     }
     handle.setType('success');
     handle.setMessage(`AI 分析完成，共推荐 ${parsed.length} 部`);
-    showResultWindow(app, '🤖 AI 荐片', parsed);
+    showResultWindow(app, 'AI 荐片', parsed);
   } catch (e: any) {
     handle.setType('error');
     handle.setMessage('AI 分析失败：' + (e.message || e));

@@ -25,3 +25,5 @@ export { uiEmpty } from './empty';
 export { uiSegmented } from './segmented';
 export { openLightbox, closeLightbox } from './lightbox';
 export type { BzLightboxOpts } from './lightbox';
+export { uiModal } from './modal';
+export type { BzModalOpts } from './modal';

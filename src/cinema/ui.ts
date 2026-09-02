@@ -1,19 +1,20 @@
 /**
- * 影院（cinema）域 UI：一比一复刻原型（movie-prototype-3b-full 定稿）
+ * 影院（cinema）域 UI：试点收编组件库（铁律 6）
  * 桌面：左栏分类树（类型+状态+底部 AI 荐片/分析）＋ 右侧海报网格（观影日期倒序）
- * 移动：右上角 🤖/📊/❌ ＋ 搜索/添加 ＋ 分类横滑 ＋ 海报网格（3 列）
- * 交互：点海报 → 详情弹窗（无滚动条/无关闭按钮，编辑/删除在弹窗内）
+ * 移动：右上角 AI/分析/关闭 ＋ 搜索/添加 ＋ 分类横滑 ＋ 海报网格（3 列）
+ * 交互：点海报 → 详情弹窗（无关闭按钮，编辑/删除在弹窗内）
  *       想看/在看 灰色小字 → 快速状态窗（升级+评分滑杆+影评）
  *       再点已选分类 → 取消筛选
- * 样式：自绘主题变量（不套 Obsidian 变量），亮/暗随 Obsidian 主题，类名 bz-cinema-*
+ * 基线：按钮/图标钮/输入/空态/弹窗骨架走组件库（src/core/ui）；域内只留影院特有布局。
+ * 图标：一律 lucide（emoji 已全换，字符串模板用 data-lucide 占位 → mountIcons 统一 setIcon）。
  */
 import type { App } from 'obsidian';
 import { TFile } from 'obsidian';
-import { escManager } from '../core/esc-manager';
-import { allocZ } from '../core/z-order';
 import { notice } from '../core/notice';
+import { escManager } from '../core/esc-manager';
 import { applyMobileWindowFullscreen } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
+import { uiModal, uiIcon } from '../core/ui';
 import {
   STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, RATING_MAX, DEFAULT_RATING,
   GROUP_ORDER, GROUP_SUBS, TYPE_COLORS, STATUS_COLORS, ALL_TAGS, getGroupForTag,
@@ -24,6 +25,24 @@ import { runAIRecommend, buildTasteProfile } from './recommend';
 import { buildAnalysisHTML } from './analysis';
 
 // ---------- 小工具 ----------
+
+/** lucide 图标名常量（均为 Obsidian setIcon 已注册名） */
+const ICON = {
+  ai: 'bot',
+  stat: 'bar-chart-3',
+  close: 'x',
+  search: 'search',
+  add: 'plus',
+  edit: 'pencil',
+  del: 'trash-2',
+  empty: 'clapperboard',
+  confirm: 'alert-circle',
+};
+
+/** lucide 占位 HTML（innerHTML 拼接用；渲染后 mountIcons 统一 setIcon） */
+function iconSpan(name: string, extra = ''): string {
+  return `<i data-lucide="${name}" class="bz-ic${extra ? ' ' + extra : ''}"></i>`;
+}
 
 function esc(s: unknown): string {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => (({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]));
@@ -59,7 +78,7 @@ export function relDate(d: string | null, now: Date = new Date()): string {
   return fmt(new Date(t));
 }
 
-/** 类型徽章色 */
+/** 类型徽章色（数据语义功能色，域内直给） */
 function groupColor(group: string): string {
   return TYPE_COLORS[group] ?? '#888';
 }
@@ -90,6 +109,19 @@ function posterBlock(item: CinemaItem, app: App, cls: string): string {
   const url = posterUrl(item, app);
   if (!url) return `<div class="bz-cinema-poster-blank ${cls}"></div>`;
   return `<div class="${cls}"><img src="${esc(url)}" alt="" loading="lazy" onerror="this.parentNode.innerHTML=''"></div>`;
+}
+
+// ---------- 图标挂载（data-lucide 占位 → setIcon） ----------
+
+/** 容器内所有 data-lucide 占位替换为 setIcon 渲染的真图标（保持 class 修饰） */
+function mountIcons(container: HTMLElement): void {
+  container.querySelectorAll('i[data-lucide]').forEach((el) => {
+    const name = el.getAttribute('data-lucide') || '';
+    const cls = el.className;
+    const fresh = uiIcon(name, '');
+    if (cls && cls !== 'bz-ic') fresh.className = cls;
+    el.replaceWith(fresh);
+  });
 }
 
 // ---------- 渲染：左栏 ----------
@@ -132,8 +164,8 @@ function renderNavHtml(app: App): string {
       <span class="bz-cinema-nav-dot" style="background:${STATUS_COLORS[s]}"></span>${s}<span class="bz-cinema-nav-cnt">${statusCounts[s]}</span></button>`;
   });
   html += '<div class="bz-cinema-nav-tools">';
-  html += `<button class="bz-cinema-nav-tool${M.view === 'ai' ? ' bz-cinema-nav-active' : ''}" data-cinema-tool="ai"><span class="bz-cinema-tool-ic">🤖</span>AI 荐片</button>`;
-  html += `<button class="bz-cinema-nav-tool${M.view === 'stat' ? ' bz-cinema-nav-active' : ''}" data-cinema-tool="stat"><span class="bz-cinema-tool-ic">📊</span>影视分析</button>`;
+  html += `<button class="bz-cinema-nav-tool${M.view === 'ai' ? ' bz-cinema-nav-active' : ''}" data-cinema-tool="ai"><span class="bz-cinema-tool-ic">${iconSpan(ICON.ai)}</span>AI 荐片</button>`;
+  html += `<button class="bz-cinema-nav-tool${M.view === 'stat' ? ' bz-cinema-nav-active' : ''}" data-cinema-tool="stat"><span class="bz-cinema-tool-ic">${iconSpan(ICON.stat)}</span>影视分析</button>`;
   html += '</div>';
   return html;
 }
@@ -158,7 +190,7 @@ function pcardHtml(item: CinemaItem, app: App): string {
     <div class="bz-cinema-p-meta${upgradeable ? ' bz-cinema-p-meta-up' : ''}">${metaInner}</div></div>`;
 }
 
-/** 星星串（5 星轨道，黄色） */
+/** 星星串（5 星轨道，黄色）——星级为分数语义展示，保留文本 ★☆（非图标用途） */
 function stars(rating: number): string {
   if (!rating || rating <= 0) return '';
   const st = Math.min(Math.round((rating / 2) * 2) / 2, 5);
@@ -172,7 +204,9 @@ function stars(rating: number): string {
 function renderListHtml(app: App): string {
   const list = getDisplayItems();
   if (!list.length) {
-    return '<div class="bz-cinema-empty"><div class="bz-cinema-empty-ic">🎬</div><p>没有符合条件的影视</p><div class="bz-cinema-empty-hint">试试清空筛选或搜索</div></div>';
+    return `<div class="bz-empty"><span class="bz-empty-ic">${iconSpan(ICON.empty)}</span>
+      <div class="bz-empty-title">没有符合条件的影视</div>
+      <div class="bz-empty-desc">试试清空筛选或搜索</div></div>`;
   }
   return `<div class="bz-cinema-grid">${list.map((it) => pcardHtml(it, app)).join('')}</div>`;
 }
@@ -181,19 +215,19 @@ function renderListHtml(app: App): string {
 
 function renderAiPageHtml(app: App): string {
   const profile = buildTasteProfile();
-  let html = '<div class="bz-cinema-page"><div class="bz-cinema-page-head"><span class="bz-cinema-page-title">🤖 AI 荐片</span><span class="bz-cinema-page-sub">基于 ' + profile.total + ' 部已看影视的口味画像</span></div>';
+  let html = `<div class="bz-cinema-page"><div class="bz-cinema-page-head"><span class="bz-cinema-page-title">${iconSpan(ICON.ai)}AI 荐片</span><span class="bz-cinema-page-sub">基于 ${profile.total} 部已看影视的口味画像</span></div>`;
   html += '<div class="bz-cinema-page-sub" style="margin-bottom:12px;">偏好：' + (profile.groups[0] || '暂无') + ' · ' + (profile.genres[0] || '—') + ' · ' + (profile.directors[0] || '—') + ' · ' + (profile.actors[0] || '—') + '</div>';
   html += '<div class="bz-cinema-ai-guide">';
-  html += '<div class="bz-cinema-ai-guide-ic">🤖</div>';
+  html += `<span class="bz-cinema-ai-guide-ic">${iconSpan(ICON.ai)}</span>`;
   html += '<div class="bz-cinema-ai-guide-title">AI 正在分析你的观影口味</div>';
   html += '<div class="bz-cinema-ai-guide-sub">点击下方按钮，AI 将基于你的 ' + profile.total + ' 部观影历史推荐 5 部影视</div>';
-  html += '<button class="bz-cinema-btn bz-cinema-btn-primary bz-cinema-ai-start" data-cinema-ai-start>开始 AI 荐片</button>';
+  html += '<button class="bz-btn bz-btn--primary bz-cinema-ai-start" data-cinema-ai-start>开始 AI 荐片</button>';
   html += '</div></div>';
   return html;
 }
 
 function renderStatPageHtml(): string {
-  return '<div class="bz-cinema-page"><div class="bz-cinema-page-head"><span class="bz-cinema-page-title">📊 影视分析</span></div>' + buildAnalysisHTML() + '</div>';
+  return `<div class="bz-cinema-page"><div class="bz-cinema-page-head"><span class="bz-cinema-page-title">${iconSpan(ICON.stat)}影视分析</span></div>${buildAnalysisHTML()}</div>`;
 }
 
 function renderContent(app: App): void {
@@ -202,11 +236,15 @@ function renderContent(app: App): void {
   if (M.view === 'ai') content.innerHTML = renderAiPageHtml(app);
   else if (M.view === 'stat') content.innerHTML = renderStatPageHtml();
   else content.innerHTML = renderListHtml(app);
+  mountIcons(content);
 }
 
 export function renderAll(app: App): void {
   const nav = M.currentOverlay?.querySelector('.bz-cinema-nav') as HTMLElement | null;
-  if (nav) nav.innerHTML = renderNavHtml(app);
+  if (nav) {
+    nav.innerHTML = renderNavHtml(app);
+    mountIcons(nav);
+  }
   const mobNav = M.currentOverlay?.querySelector('.bz-cinema-mob-nav') as HTMLElement | null;
   if (mobNav) mobNav.innerHTML = renderMobNavHtml();
   renderContent(app);
@@ -228,34 +266,21 @@ function renderMobNavHtml(): string {
   return html;
 }
 
-// ---------- 弹窗基础设施 ----------
+// ---------- 弹窗基础设施（组件库 uiModal：ESC/遮罩已统一） ----------
 
-/** 通用弹窗（遮罩 + 内容容器），返回 { mask, modal }；z 动态发号 */
-function openModal(contentHtml: string, maxWidth = 400): { mask: HTMLElement; modal: HTMLElement } {
-  const mask = document.createElement('div');
-  mask.className = 'bz-cinema-mask';
-  mask.style.zIndex = String(allocZ());
-  mask.innerHTML = `<div class="bz-cinema-modal" style="max-width:${maxWidth}px">${contentHtml}</div>`;
-  document.body.appendChild(mask);
-  const modal = mask.firstElementChild as HTMLElement;
-  mask.addEventListener('click', (e) => {
-    if (e.target === mask) mask.remove();
-  });
-  return { mask, modal };
+/** 通用弹窗（遮罩 + 内容容器），返回 uiModal 句柄 */
+function openModal(contentHtml: string, maxWidth = 400): ReturnType<typeof uiModal> {
+  return uiModal({ content: contentHtml, maxWidth });
 }
 
-function closeModal(mask: HTMLElement): void {
-  mask.remove();
-}
-
-// ---------- 详情弹窗（无滚动条、无关闭按钮；编辑/删除在弹窗内） ----------
+// ---------- 详情弹窗（无关闭按钮；编辑/删除在弹窗内） ----------
 
 function openDetail(item: CinemaItem, app: App): void {
   const html = `<div class="bz-cinema-dm-head">${posterBlock(item, app, 'bz-cinema-dm-poster')}
     <div><div class="bz-cinema-dm-title">${esc(item.name)}</div>
     <div class="bz-cinema-dm-badges">
-      <span class="bz-cinema-chip" style="background:${groupColor(item.group)}">${esc(item.typeTag)}</span>
-      ${item.status !== STATUS_WATCHED ? `<span class="bz-cinema-chip" style="background:${statusColor(item.status)}">${statusText(item.status)}</span>` : ''}
+      <span class="bz-chip bz-chip--locked" style="background:${groupColor(item.group)};border-color:transparent;color:var(--bz-on-overlay)">${esc(item.typeTag)}</span>
+      ${item.status !== STATUS_WATCHED ? `<span class="bz-chip bz-chip--locked" style="background:${statusColor(item.status)};border-color:transparent;color:var(--bz-on-overlay)">${statusText(item.status)}</span>` : ''}
       ${item.rating && item.rating > 0 ? `<span class="bz-cinema-dm-stars">${stars(item.rating)}</span><span class="bz-cinema-dm-rating">${Number(item.rating).toFixed(1)}</span>` : ''}
       ${item.watchDate ? `<span class="bz-cinema-dm-date">${esc(relDate(item.watchDate))}</span>` : ''}
     </div>
@@ -276,18 +301,17 @@ function openDetail(item: CinemaItem, app: App): void {
   }
   if (item.doubanUrl) body += `<div class="bz-cinema-kv"><span class="bz-cinema-kv-k">豆瓣链接</span><span class="bz-cinema-kv-v"><a href="${esc(item.doubanUrl)}" target="_blank" rel="noopener">${esc(item.doubanUrl)}</a></span></div>`;
   if (item.synopsis) body += `<div class="bz-cinema-sec-title">简介</div><div class="bz-cinema-synopsis">${esc(item.synopsis)}</div>`;
-  body += `<div class="bz-cinema-dm-actions"><button class="bz-cinema-btn" data-cinema-dm-edit>✏️ 编辑</button><button class="bz-cinema-btn bz-cinema-btn-danger" data-cinema-dm-del>🗑 删除</button></div>`;
-  const { mask, modal } = openModal(body, 400);
-  modal.classList.add('bz-cinema-dm');
-  modal.querySelector('[data-cinema-dm-edit]')?.addEventListener('click', () => {
-    mask.remove();
+  body += `<div class="bz-cinema-form-actions"><button class="bz-btn bz-btn--ghost" data-cinema-dm-edit>${iconSpan(ICON.edit, 'bz-ic--sm')}编辑</button><button class="bz-btn bz-btn--danger" data-cinema-dm-del>${iconSpan(ICON.del, 'bz-ic--sm')}删除</button></div>`;
+  const { popup, close } = uiModal({ content: body, maxWidth: 400, className: 'bz-cinema-dm' });
+  mountIcons(popup);
+  popup.querySelector('[data-cinema-dm-edit]')?.addEventListener('click', () => {
+    close();
     openEditForm(item, app);
   });
-  modal.querySelector('[data-cinema-dm-del]')?.addEventListener('click', () => {
-    mask.remove();
+  popup.querySelector('[data-cinema-dm-del]')?.addEventListener('click', () => {
+    close();
     openDeleteConfirm(item, app);
   });
-  registerModalEsc(mask);
 }
 
 // ---------- 添加 / 编辑（评分滑杆） ----------
@@ -335,30 +359,29 @@ function openEditForm(item: CinemaItem | null, app: App): void {
   const statusOptions = ['想看', '在看', '已看'].map((s) => `<option${item && statusText(item.status) === s ? ' selected' : s === '已看' && !item ? ' selected' : ''}>${s}</option>`).join('');
   const html = `<div class="bz-cinema-form-title">${editing ? '编辑影视' : '添加影视'}</div>
     <div class="bz-cinema-form">
-      <div><label>名称</label><input id="bz-cinema-f-name" value="${item ? esc(item.name) : ''}" placeholder="影视名称"></div>
+      <div><label>名称</label><input class="bz-input" id="bz-cinema-f-name" value="${item ? esc(item.name) : ''}" placeholder="影视名称"></div>
       <div class="bz-cinema-form-row">
-        <div><label>类型</label><select id="bz-cinema-f-tag">${tagOptions}</select></div>
-        <div><label>状态</label><select id="bz-cinema-f-status">${statusOptions}</select></div>
+        <div><label>类型</label><select class="bz-input" id="bz-cinema-f-tag">${tagOptions}</select></div>
+        <div><label>状态</label><select class="bz-input" id="bz-cinema-f-status">${statusOptions}</select></div>
       </div>
-      <div><label>观影日期</label><input id="bz-cinema-f-date" type="date" value="${item && item.watchDate ? String(item.watchDate).slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
+      <div><label>观影日期</label><input class="bz-input" type="date" id="bz-cinema-f-date" value="${item && item.watchDate ? String(item.watchDate).slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
       <div><label>评分（已看）</label><div class="bz-cinema-rating-row"><input type="range" id="bz-cinema-f-rating" min="1" max="${RATING_MAX}" step="0.1" value="${ratingVal}"><span class="bz-cinema-rating-val" id="bz-cinema-f-rating-val">${Number(ratingVal).toFixed(1)}</span></div></div>
-      <div><label>影评</label><textarea id="bz-cinema-f-review" placeholder="写点什么…">${item ? esc(item.review ?? '') : ''}</textarea></div>
+      <div><label>影评</label><textarea class="bz-input" id="bz-cinema-f-review" placeholder="写点什么…">${item ? esc(item.review ?? '') : ''}</textarea></div>
     </div>
-    <div class="bz-cinema-form-actions"><button class="bz-cinema-btn" id="bz-cinema-f-cancel">取消</button><button class="bz-cinema-btn bz-cinema-btn-primary" id="bz-cinema-f-save">${editing ? '保存' : '添加'}</button></div>`;
-  const { mask, modal } = openModal(html, 400);
-  modal.classList.add('bz-cinema-dm');
-  const ratingInput = modal.querySelector('#bz-cinema-f-rating') as HTMLInputElement;
-  const ratingValEl = modal.querySelector('#bz-cinema-f-rating-val') as HTMLElement;
+    <div class="bz-cinema-form-actions"><button class="bz-btn bz-btn--ghost" id="bz-cinema-f-cancel">取消</button><button class="bz-btn bz-btn--primary" id="bz-cinema-f-save">${editing ? '保存' : '添加'}</button></div>`;
+  const { popup, close } = uiModal({ content: html, maxWidth: 400, className: 'bz-cinema-dm' });
+  const ratingInput = popup.querySelector('#bz-cinema-f-rating') as HTMLInputElement;
+  const ratingValEl = popup.querySelector('#bz-cinema-f-rating-val') as HTMLElement;
   ratingInput.addEventListener('input', () => { ratingValEl.textContent = Number(ratingInput.value).toFixed(1); });
-  modal.querySelector('#bz-cinema-f-cancel')?.addEventListener('click', () => closeModal(mask));
-  modal.querySelector('#bz-cinema-f-save')?.addEventListener('click', () => {
-    const name = (modal.querySelector('#bz-cinema-f-name') as HTMLInputElement).value.trim();
+  popup.querySelector('#bz-cinema-f-cancel')?.addEventListener('click', () => close());
+  popup.querySelector('#bz-cinema-f-save')?.addEventListener('click', () => {
+    const name = (popup.querySelector('#bz-cinema-f-name') as HTMLInputElement).value.trim();
     if (!name) { notice('请输入名称'); return; }
-    const tag = (modal.querySelector('#bz-cinema-f-tag') as HTMLSelectElement).value;
-    const status = (modal.querySelector('#bz-cinema-f-status') as HTMLSelectElement).value;
+    const tag = (popup.querySelector('#bz-cinema-f-tag') as HTMLSelectElement).value;
+    const status = (popup.querySelector('#bz-cinema-f-status') as HTMLSelectElement).value;
     const rating = parseFloat(ratingInput.value);
-    const date = (modal.querySelector('#bz-cinema-f-date') as HTMLInputElement).value;
-    const review = (modal.querySelector('#bz-cinema-f-review') as HTMLTextAreaElement).value.trim();
+    const date = (popup.querySelector('#bz-cinema-f-date') as HTMLInputElement).value;
+    const review = (popup.querySelector('#bz-cinema-f-review') as HTMLTextAreaElement).value.trim();
     const group = getGroupForTag(tag) ?? '其他';
     const mapped = status === '已看' ? rating : status === '想看' ? -1 : 0;
     const st = status === '想看' ? STATUS_WANT : status === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
@@ -373,7 +396,7 @@ function openEditForm(item: CinemaItem | null, app: App): void {
           M.items.unshift(it);
           await persistItem(it, app);
         }
-        closeModal(mask);
+        close();
         notice(editing ? '已保存' : '已添加', 'success');
         renderAll(app);
       } catch (e) {
@@ -382,24 +405,23 @@ function openEditForm(item: CinemaItem | null, app: App): void {
       }
     })();
   });
-  registerModalEsc(mask);
 }
 
 // ---------- 删除确认 ----------
 
 function openDeleteConfirm(item: CinemaItem, app: App): void {
   const html = `<div class="bz-cinema-confirm">
-    <div class="bz-cinema-confirm-ic">🗑</div>
+    <span class="bz-cinema-confirm-ic">${iconSpan(ICON.confirm)}</span>
     <p>确定删除《${esc(item.name)}》吗？</p>
     <div class="bz-cinema-confirm-sub">此操作不可撤销</div>
-    <div class="bz-cinema-form-actions" style="justify-content:center;margin-top:16px;">
-      <button class="bz-cinema-btn" id="bz-cinema-d-cancel">取消</button>
-      <button class="bz-cinema-btn bz-cinema-btn-danger" id="bz-cinema-d-del">删除</button>
+    <div class="bz-btn-row bz-btn-row--center" style="margin-top:16px;">
+      <button class="bz-btn bz-btn--ghost" id="bz-cinema-d-cancel">取消</button>
+      <button class="bz-btn bz-btn--danger" id="bz-cinema-d-del">删除</button>
     </div></div>`;
-  const { mask, modal } = openModal(html, 320);
-  modal.classList.add('bz-cinema-dm');
-  modal.querySelector('#bz-cinema-d-cancel')?.addEventListener('click', () => closeModal(mask));
-  modal.querySelector('#bz-cinema-d-del')?.addEventListener('click', async () => {
+  const { popup, close } = uiModal({ content: html, maxWidth: 320, className: 'bz-cinema-dm' });
+  mountIcons(popup);
+  popup.querySelector('#bz-cinema-d-cancel')?.addEventListener('click', () => close());
+  popup.querySelector('#bz-cinema-d-del')?.addEventListener('click', async () => {
     if (item.file) {
       try {
         await app.vault.delete(item.file);
@@ -409,11 +431,10 @@ function openDeleteConfirm(item: CinemaItem, app: App): void {
     }
     const idx = M.items.indexOf(item);
     if (idx > -1) M.items.splice(idx, 1);
-    closeModal(mask);
+    close();
     notice('影视已删除', 'success');
     renderAll(app);
   });
-  registerModalEsc(mask);
 }
 
 // ---------- 快速状态窗（升级 + 评分滑杆 + 影评） ----------
@@ -428,26 +449,25 @@ function openQuickStatus(item: CinemaItem, app: App): void {
     <div class="bz-cinema-qs-rating"><div class="bz-cinema-qs-rating-label">评分（已看时生效）</div>
       <div class="bz-cinema-rating-row"><input type="range" id="bz-cinema-qs-rating" min="1" max="${RATING_MAX}" step="0.1" value="${curRating}">
       <span class="bz-cinema-rating-val" id="bz-cinema-qs-rating-val">${Number(curRating).toFixed(1)}</span></div></div>
-    <div class="bz-cinema-qs-review"><label>影评</label><textarea id="bz-cinema-qs-review" placeholder="写点什么…">${item.review ? esc(item.review) : ''}</textarea></div>
-    <div class="bz-cinema-form-actions"><button class="bz-cinema-btn" id="bz-cinema-qs-cancel">取消</button><button class="bz-cinema-btn bz-cinema-btn-primary" id="bz-cinema-qs-save">保存</button></div>
+    <div class="bz-cinema-qs-review"><label>影评</label><textarea class="bz-input" id="bz-cinema-qs-review" placeholder="写点什么…">${item.review ? esc(item.review) : ''}</textarea></div>
+    <div class="bz-cinema-form-actions"><button class="bz-btn bz-btn--ghost" id="bz-cinema-qs-cancel">取消</button><button class="bz-btn bz-btn--primary" id="bz-cinema-qs-save">保存</button></div>
     <div class="bz-cinema-qs-hint">想快速看完？点「在看」→「已看」，评分与影评一步保存。</div>`;
-  const { mask, modal } = openModal(html, 360);
-  modal.classList.add('bz-cinema-dm');
-  const ratingInput = modal.querySelector('#bz-cinema-qs-rating') as HTMLInputElement;
-  const ratingValEl = modal.querySelector('#bz-cinema-qs-rating-val') as HTMLElement;
+  const { popup, close } = uiModal({ content: html, maxWidth: 360, className: 'bz-cinema-dm' });
+  const ratingInput = popup.querySelector('#bz-cinema-qs-rating') as HTMLInputElement;
+  const ratingValEl = popup.querySelector('#bz-cinema-qs-rating-val') as HTMLElement;
   ratingInput.addEventListener('input', () => { ratingValEl.textContent = Number(ratingInput.value).toFixed(1); });
   let selected = targets[0];
-  modal.querySelectorAll('[data-cinema-qs]').forEach((b) => {
+  popup.querySelectorAll('[data-cinema-qs]').forEach((b) => {
     b.addEventListener('click', () => {
       selected = (b as HTMLElement).dataset.cinemaQs as string;
-      modal.querySelectorAll('[data-cinema-qs]').forEach((x) => x.classList.remove('bz-cinema-qs-active'));
+      popup.querySelectorAll('[data-cinema-qs]').forEach((x) => x.classList.remove('bz-cinema-qs-active'));
       b.classList.add('bz-cinema-qs-active');
     });
   });
-  modal.querySelector('#bz-cinema-qs-cancel')?.addEventListener('click', () => closeModal(mask));
-  modal.querySelector('#bz-cinema-qs-save')?.addEventListener('click', () => {
+  popup.querySelector('#bz-cinema-qs-cancel')?.addEventListener('click', () => close());
+  popup.querySelector('#bz-cinema-qs-save')?.addEventListener('click', () => {
     const ratingVal = parseFloat(ratingInput.value);
-    const review = (modal.querySelector('#bz-cinema-qs-review') as HTMLTextAreaElement).value.trim();
+    const review = (popup.querySelector('#bz-cinema-qs-review') as HTMLTextAreaElement).value.trim();
     const mapped = selected === '已看' ? ratingVal : selected === '在看' ? 0 : -1;
     item.status = selected === '已看' ? STATUS_WATCHED : selected === '在看' ? STATUS_WATCHING : STATUS_WANT;
     item.rating = mapped;
@@ -455,7 +475,7 @@ function openQuickStatus(item: CinemaItem, app: App): void {
     void (async () => {
       try {
         await persistItem(item, app);
-        closeModal(mask);
+        close();
         notice(`已标记${selected}`, 'success');
         renderAll(app);
       } catch (e) {
@@ -464,32 +484,18 @@ function openQuickStatus(item: CinemaItem, app: App): void {
       }
     })();
   });
-  registerModalEsc(mask);
-}
-
-// ---------- ESC ----------
-
-let modalEscRegistered = false;
-function registerModalEsc(mask: HTMLElement): void {
-  if (!modalEscRegistered) {
-    modalEscRegistered = true;
-    escManager.register('bz-cinema-modal', {
-      isVisible: () => !!document.querySelector('.bz-cinema-mask'),
-      close: () => {
-        document.querySelectorAll('.bz-cinema-mask').forEach((el) => el.remove());
-      },
-    });
-  }
-  // 单次：遮罩移除后 ESC 不再响应（isVisible 已覆盖）
-  void mask;
 }
 
 // ---------- 主 overlay ----------
 
+/** 头部图标钮 HTML（移动端工具/关闭） */
+function iconBtnHTML(icon: string, title: string, extraCls: string, toolAttr: string): string {
+  return `<button class="bz-icon-btn${extraCls ? ' ' + extraCls : ''}" data-cinema-tool="${toolAttr}" title="${title}">${iconSpan(icon)}</button>`;
+}
+
 export function createOverlay(app: App): void {
   const overlay = document.createElement('div');
   overlay.className = 'bz-cinema-overlay';
-  overlay.style.zIndex = String(allocZ());
   const fullscreen = (tryGetSettings() as Record<string, unknown>).cinemaMobileDefaultFullscreen === true;
 
   overlay.innerHTML = `
@@ -497,17 +503,17 @@ export function createOverlay(app: App): void {
       <div class="bz-cinema-head">
         <div class="bz-cinema-title">影视</div>
         <div class="bz-cinema-head-btns">
-          <button class="bz-cinema-ic-btn bz-cinema-mob-only" data-cinema-tool="ai" title="AI 荐片">🤖</button>
-          <button class="bz-cinema-ic-btn bz-cinema-mob-only" data-cinema-tool="stat" title="数据分析">📊</button>
-          <button class="bz-cinema-ic-btn bz-cinema-mob-only bz-cinema-close" data-cinema-close title="关闭">❌</button>
+          ${iconBtnHTML(ICON.ai, 'AI 荐片', 'bz-cinema-mob-only', 'ai')}
+          ${iconBtnHTML(ICON.stat, '影视分析', 'bz-cinema-mob-only', 'stat')}
+          ${iconBtnHTML(ICON.close, '关闭', 'bz-cinema-mob-only bz-cinema-close', 'close')}
         </div>
       </div>
       <div class="bz-cinema-body">
         <div class="bz-cinema-nav"></div>
         <div class="bz-cinema-main">
           <div class="bz-cinema-top">
-            <div class="bz-cinema-search"><input type="text" data-cinema-search placeholder="🔍 搜索影视（名称、类型、影评）..."></div>
-            <button class="bz-cinema-add" data-cinema-add>＋ 添加影视</button>
+            <div class="bz-cinema-search"><i class="bz-ic" data-lucide="${ICON.search}"></i><input class="bz-input" type="text" data-cinema-search placeholder="搜索影视（名称、类型、影评）..."></div>
+            <button class="bz-btn bz-btn--primary bz-cinema-add" data-cinema-add>${iconSpan(ICON.add, 'bz-ic--sm')} 添加影视</button>
           </div>
           <div class="bz-cinema-mob-nav"></div>
           <div class="bz-cinema-content"></div>
@@ -519,6 +525,7 @@ export function createOverlay(app: App): void {
   M.currentOverlay = overlay;
   M.renderFn = () => renderAll(app);
   applyMobileWindowFullscreen(overlay.querySelector('.bz-cinema-panel') as HTMLElement, fullscreen);
+  mountIcons(overlay);
 
   // 事件
   overlay.addEventListener('click', (e) => {
@@ -573,9 +580,11 @@ export function createOverlay(app: App): void {
         M.view = 'ai';
         renderAll(app);
         void runAIRecommend(app);
-      } else {
+      } else if (tool.dataset.cinemaTool === 'stat') {
         M.view = 'stat';
         renderAll(app);
+      } else if (tool.dataset.cinemaTool === 'close') {
+        closeOverlay();
       }
       return;
     }
@@ -602,8 +611,6 @@ export function createOverlay(app: App): void {
     }
     const add = t.closest('[data-cinema-add]') as HTMLElement | null;
     if (add) { openEditForm(null, app); return; }
-    const close = t.closest('[data-cinema-close]') as HTMLElement | null;
-    if (close) { closeOverlay(); return; }
   });
 
   // 搜索（防抖）
