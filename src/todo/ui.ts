@@ -200,6 +200,12 @@ export function openTodoPanel(app: App): void {
           <button class="bz-todo-side-add" data-todo-addscene>${iconSpan(ICON.addScene)} 添加场景</button>
         </div>
         <div class="bz-todo-main">
+          <div class="bz-todo-main-head">
+            <div class="bz-todo-main-title" data-todo-main-title>全部</div>
+            <div class="bz-todo-main-count" data-todo-main-count></div>
+            <div class="bz-todo-main-spacer"></div>
+            <button class="bz-btn bz-btn--primary" data-todo-newbtn>${iconSpan(ICON.add, 'bz-ic--sm')} 新建待办</button>
+          </div>
           <div class="bz-todo-toolbar">
             <div class="bz-todo-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-todo-search placeholder="搜索内容 / 场景…"></div>
             <div class="bz-todo-sort" data-todo-sort></div>
@@ -263,6 +269,9 @@ export function openTodoPanel(app: App): void {
     }
     const addScene = t.closest('[data-todo-addscene]');
     if (addScene) { openAddSceneDialog(); return; }
+    // 主头行「新建待办」按钮 → 打开创建编辑器
+    const newBtn = t.closest('[data-todo-newbtn]');
+    if (newBtn) { openEditor(null); return; }
     // 已完成折叠条
     const donebar = t.closest('[data-todo-donebar]');
     if (donebar) {
@@ -348,7 +357,21 @@ function renderAll(): void {
   if (!M.overlay) return;
   renderNav();
   renderMobScenes();
+  renderMainHead();
   renderContent();
+}
+
+/** 主头行（原型 p1-main-head）：当前场景标题 + “· N 项 · M 未完成” + 右侧新建按钮 */
+function renderMainHead(): void {
+  const overlay = M.overlay!;
+  const titleEl = overlay.querySelector('[data-todo-main-title]') as HTMLElement | null;
+  const countEl = overlay.querySelector('[data-todo-main-count]') as HTMLElement | null;
+  if (!titleEl || !countEl) return;
+  titleEl.textContent = M.activeScene;
+  // 计数 = 当前场景 + 当前搜索下的条目总数与未完成数（对齐原型 updateCount）
+  const items = getVisibleItems();
+  const undone = items.filter((i) => !i.completed).length;
+  countEl.textContent = `· ${items.length} 项 · ${undone} 未完成`;
 }
 
 /** 场景计数归一（桌面 nav / 移动 chips 共用） */
