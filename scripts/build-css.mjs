@@ -50,6 +50,7 @@ const SOURCES = [
   "src/belongings/styles.css",
   "src/movie/styles.css",
   "src/cinema/styles.css",
+  "src/bookshelf/styles.css",
   "src/literature/styles.css",
   "src/secondbrain/styles.css",
   "src/smartcat/styles.css",
