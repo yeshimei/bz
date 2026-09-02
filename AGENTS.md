@@ -30,6 +30,7 @@
 | diary | `我的/日记/*.md` |
 | diary-wall（回忆墙） | `我的/日记/*.md`（只读派生视图，ADR-0081） |
 | memo | memo.json |
+| todo（待办，新域） | memo.json（与 memo 同源；旧 memo 删除后接管） |
 | belongings | belongings.json |
 | clipping | `归档/网页剪藏/*.md` |
 | news | news.json |

@@ -19,6 +19,8 @@ import { setBzSettingsProvider, unloadBz, ensureBz } from './memo';
 
 import BzSettings, { DEFAULT_SETTINGS, migrateSecondBrainSettings } from './settings';
 
+// 待办（todo 域，与旧备忘录并存：同源 memo.json，UI/交互归本域；后台任务仍由 memo 执行）
+import { openTodoPanel, addTodoItem, unloadTodo } from './todo';
 // 15 域（懒加载：首次命令/事件触发时 ensureXxx 幂等初始化）
 import { openBzPanel, createMemoItem } from './memo';
 import { addBelongingsItem, openBelongings, unloadBelongings } from './belongings';
@@ -77,6 +79,9 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 备忘录
   { id: 'bz-memo-open', name: '备忘录', icon: 'sticky-note', callback: () => openBzPanel(getApp()) },
   { id: 'bz-memo-add', name: '加备忘', icon: 'pencil', callback: () => createMemoItem(getApp()) },
+  // 待办（todo 新域，与备忘录并存）
+  { id: 'bz-todo-open', name: '待办', icon: 'check-square', callback: () => openTodoPanel(getApp()) },
+  { id: 'bz-todo-add', name: '加待办（待办）', icon: 'clipboard-list', callback: () => addTodoItem(getApp()) },
   // 归物本
   { id: 'bz-belongings-add', name: '加物品', icon: 'archive', callback: () => addBelongingsItem(getApp()) },
   { id: 'bz-belongings-open', name: '归物本', icon: 'package', callback: () => openBelongings(getApp()) },
@@ -289,6 +294,7 @@ export default class BzPlugin extends Plugin {
     unmountEncryptStatusBar();
     unloadPomodoro();
     unloadBz();
+    unloadTodo();
     unloadMemoFileSync();
     unloadFavoritesFileSync();
     unloadLauncherPanel();

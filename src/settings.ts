@@ -347,6 +347,8 @@ export default interface BzSettings {
   diaryMobileDefaultFullscreen: boolean;
   /** 备忘录：移动端默认全屏（默认关——原移动端 95% 居中卡） */
   memoMobileDefaultFullscreen: boolean;
+  /** 待办（todo 新域）：移动端默认全屏（默认关——与旧备忘录一致） */
+  todoMobileDefaultFullscreen: boolean;
   /** 归物本：移动端默认全屏（默认开——原 JS 内联强制全屏） */
   belongingsMobileDefaultFullscreen: boolean;
   /** 剪藏本：移动端默认全屏（默认开——原 CSS !important 强制全屏；聚合讯跟随此键） */
@@ -647,6 +649,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 聚合讯跟随剪藏本键、阅读报告跟随书库键，不设独立键）
   diaryMobileDefaultFullscreen: true,
   memoMobileDefaultFullscreen: false,
+  todoMobileDefaultFullscreen: false,
   belongingsMobileDefaultFullscreen: true,
   clippingMobileDefaultFullscreen: true,
   passwordMobileDefaultFullscreen: true,
