@@ -160,9 +160,9 @@ describe('cinema overlay', () => {
     const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
     const card = overlay.querySelector('[data-cinema-idx]') as HTMLElement;
     card.click();
-    const mask = document.querySelector('.bz-cinema-mask') as HTMLElement;
+    const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
     expect(mask).toBeTruthy();
-    const modal = mask.querySelector('.bz-cinema-modal') as HTMLElement;
+    const modal = mask.querySelector('.bz-overlay-popup') as HTMLElement;
     expect(modal.textContent).toContain('星际穿越');
     expect(modal.textContent).toContain('爱是穿越维度的唯一力量'); // 影评
     expect(modal.textContent).toContain('诺兰');
@@ -177,11 +177,11 @@ describe('cinema overlay', () => {
     const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
     const card = overlay.querySelector('[data-cinema-idx]') as HTMLElement;
     card.click();
-    const mask = document.querySelector('.bz-cinema-mask') as HTMLElement;
+    const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
     const delBtn = mask.querySelector('[data-cinema-dm-del]') as HTMLElement;
     delBtn.click();
     // 确认框
-    const confirmMask = document.querySelector('.bz-cinema-mask') as HTMLElement;
+    const confirmMask = document.querySelector('.bz-overlay-mask') as HTMLElement;
     const delConfirm = confirmMask.querySelector('#bz-cinema-d-del') as HTMLElement;
     delConfirm.click();
     await new Promise((r) => setTimeout(r, 0)); // 等异步删除完成
@@ -198,9 +198,9 @@ describe('cinema overlay', () => {
     const up = overlay.querySelector('[data-cinema-upgrade]') as HTMLElement;
     expect(up).toBeTruthy();
     up.click();
-    const mask = document.querySelector('.bz-cinema-mask') as HTMLElement;
+    const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
     expect(mask).toBeTruthy();
-    const modal = mask.querySelector('.bz-cinema-modal') as HTMLElement;
+    const modal = mask.querySelector('.bz-overlay-popup') as HTMLElement;
     expect(modal.textContent).toContain('想看片');
     // 目标状态按钮（想看 → 在看/已看）
     const qsBtns = modal.querySelectorAll('[data-cinema-qs]');
@@ -226,10 +226,10 @@ describe('cinema overlay', () => {
     const overlay = document.querySelector('.bz-cinema-overlay') as HTMLElement;
     const card = overlay.querySelector('[data-cinema-idx]') as HTMLElement;
     card.click();
-    expect(document.querySelector('.bz-cinema-mask')).toBeTruthy();
+    expect(document.querySelector('.bz-overlay-mask')).toBeTruthy();
     // ESC 关弹窗
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    expect(document.querySelector('.bz-cinema-mask')).toBeNull();
+    expect(document.querySelector('.bz-overlay-mask')).toBeNull();
     expect(document.querySelector('.bz-cinema-overlay')).toBeTruthy();
     // ESC 关主面板
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
@@ -256,9 +256,9 @@ describe('cinema overlay', () => {
   it('添加弹窗（命令直达 + 落盘创建笔记）', async () => {
     const { vault, app } = seedVault();
     openAddModalDirect(app);
-    const mask = document.querySelector('.bz-cinema-mask') as HTMLElement;
+    const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
     expect(mask).toBeTruthy();
-    const modal = mask.querySelector('.bz-cinema-modal') as HTMLElement;
+    const modal = mask.querySelector('.bz-overlay-popup') as HTMLElement;
     expect(modal.textContent).toContain('添加影视');
     expect(modal.querySelector('#bz-cinema-f-rating')).toBeTruthy(); // 评分滑杆
     // 填写并保存
@@ -285,8 +285,8 @@ describe('cinema overlay', () => {
     (overlay.querySelector('[data-cinema-status="想看"]') as HTMLElement).click();
     const up = overlay.querySelector('[data-cinema-upgrade]') as HTMLElement;
     up.click();
-    const mask = document.querySelector('.bz-cinema-mask') as HTMLElement;
-    const modal = mask.querySelector('.bz-cinema-modal') as HTMLElement;
+    const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
+    const modal = mask.querySelector('.bz-overlay-popup') as HTMLElement;
     (modal.querySelector('[data-cinema-qs="已看"]') as HTMLElement).click();
     const rating = modal.querySelector('#bz-cinema-qs-rating') as HTMLInputElement;
     rating.value = '9.5';

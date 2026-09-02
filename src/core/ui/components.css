@@ -6,12 +6,33 @@
  * ============================================================ */
 
 /* ═══════════ 基元 ═══════════ */
+/* .bz-ic = setIcon 渲染的 lucide 容器（span + 内联 svg）：尺寸随字号 1em，颜色继承 */
 .bz-ic {
   width: 1em;
   height: 1em;
-  stroke-width: 2;
   flex-shrink: 0;
 }
+.bz-ic svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  stroke-width: 2;
+}
+/* 通用图标颜色修饰符（任何 .bz-ic 可加） */
+.bz-ic--brand { color: var(--bz-brand) !important; }
+.bz-ic--success { color: var(--bz-success) !important; }
+.bz-ic--warning { color: var(--bz-warning) !important; }
+.bz-ic--danger { color: var(--bz-danger) !important; }
+.bz-ic--info { color: var(--bz-info) !important; }
+.bz-ic--muted { color: var(--bz-text-3) !important; }
+.bz-ic--star { color: var(--bz-star) !important; }
+.bz-ic--on-brand { color: var(--bz-on-brand) !important; }
+/* 通用图标尺寸修饰 */
+.bz-ic--xs { width: 12px !important; height: 12px !important; }
+.bz-ic--sm { width: 14px !important; height: 14px !important; }
+.bz-ic--md { width: 18px !important; height: 18px !important; }
+.bz-ic--lg { width: 24px !important; height: 24px !important; }
+.bz-ic--xl { width: 32px !important; height: 32px !important; }
 
 /* ═══════════ 按钮 .bz-btn ═══════════ */
 .bz-btn {
@@ -296,3 +317,52 @@ textarea.bz-input { height: auto; padding: 8px 10px; line-height: var(--bz-leadi
   font-size: var(--bz-font-meta);
   text-align: center;
 }
+
+/* ═══════════ 居中模态 .bz-overlay-mask / .bz-overlay-popup（modal.ts） ═══════════ */
+.bz-overlay-mask {
+  position: fixed;
+  inset: 0;
+  background: var(--bz-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.bz-overlay-popup {
+  background: var(--bz-surface-3);
+  border-radius: var(--bz-radius-md);
+  border: 1px solid var(--bz-border);
+  box-shadow: var(--bz-shadow-lg);
+  min-width: 320px;
+  max-width: calc(100vw - 32px);
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  padding: var(--bz-space-lg);
+  overflow-y: auto;
+}
+/* 弹窗头行（标题 + 可选关闭钮） */
+.bz-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+.bz-dialog-title { font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
+.bz-dialog-body { display: flex; flex-direction: column; min-height: 0; }
+
+/* ═══════════ 加载 .bz-spinner ═══════════ */
+.bz-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--bz-track);
+  border-top-color: var(--bz-brand);
+  animation: bz-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+.bz-spinner--sm { width: 12px; height: 12px; border-width: 2px; }
+.bz-spinner--lg { width: 24px; height: 24px; border-width: 3px; }
+@keyframes bz-spin { to { transform: rotate(360deg); } }

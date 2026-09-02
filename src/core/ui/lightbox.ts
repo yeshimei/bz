@@ -4,6 +4,7 @@
  * 单例：同一时刻只开一个；Esc / 点背景 / ✕ 关闭。
  * 对齐 core 既有：escManager + z-order（详见下方 import）。
  * ============================================================ */
+import { uiIcon } from './icon';
 
 export interface BzLightboxOpts {
   src: string;              // 媒体地址（img / video / audio）
@@ -31,10 +32,7 @@ export function openLightbox(opts: BzLightboxOpts): { close: () => void } {
   closeBtn.type = 'button';
   closeBtn.className = 'bz-lightbox-close';
   closeBtn.setAttribute('aria-label', '关闭');
-  const x = document.createElement('i');
-  x.className = 'bz-ic';
-  x.setAttribute('data-lucide', 'x');
-  closeBtn.appendChild(x);
+  closeBtn.appendChild(uiIcon('x'));
   head.appendChild(title);
   head.appendChild(closeBtn);
 

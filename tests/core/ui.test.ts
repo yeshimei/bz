@@ -10,6 +10,7 @@ import {
   uiEmpty, uiSegmented, uiDialogActions,
 } from '../../src/core/ui';
 import { openLightbox, closeLightbox } from '../../src/core/ui';
+import { uiModal } from '../../src/core/ui';
 
 describe('bz ui 组件库', () => {
   beforeEach(() => {
@@ -31,9 +32,9 @@ describe('bz ui 组件库', () => {
       expect(b.classList.contains('bz-btn--sm')).toBe(true);
       expect(b.title).toBe('删除');
       expect(b.disabled).toBe(true);
-      const ic = b.querySelector('i');
+      const ic = b.querySelector('.bz-ic');
       expect(ic).not.toBeNull();
-      expect(ic!.getAttribute('data-lucide')).toBe('trash-2');
+      expect(ic!.getAttribute('data-icon')).toBe('trash-2');
       expect(ic!.classList.contains('bz-ic')).toBe(true);
     });
 
@@ -54,7 +55,7 @@ describe('bz ui 组件库', () => {
     it('基础：bz-icon-btn + 图标', () => {
       const b = uiIconBtn({ icon: 'settings', title: '设置' });
       expect(b.classList.contains('bz-icon-btn')).toBe(true);
-      expect(b.querySelector('i[data-lucide="settings"]')).not.toBeNull();
+      expect(b.querySelector('.bz-ic[data-icon="settings"]')).not.toBeNull();
       expect(b.title).toBe('设置');
     });
     it('on/lg/close/danger 修饰类', () => {
@@ -144,7 +145,7 @@ describe('bz ui 组件库', () => {
       const e = uiEmpty({ icon: 'inbox', title: '这里还没有日记', desc: '写几句', actions: uiBtnRow([btn]) });
       expect(e.classList.contains('bz-empty')).toBe(true);
       expect(e.querySelector('.bz-empty-title')!.textContent).toContain('还没有日记');
-      expect(e.querySelector('i[data-lucide="inbox"]')).not.toBeNull();
+      expect(e.querySelector('.bz-ic[data-icon="inbox"]')).not.toBeNull();
       expect(e.querySelector('.bz-btn--primary')!.textContent).toContain('去添加');
     });
   });
@@ -177,11 +178,43 @@ describe('bz ui 组件库', () => {
   });
 
   describe('uiIcon', () => {
-    it('生成 data-lucide <i>', () => {
+    it('生成 setIcon 容器（span.bz-ic + dataset.icon）', () => {
       const i = uiIcon('star', 'bz-ic--star');
-      expect(i.tagName).toBe('I');
-      expect(i.getAttribute('data-lucide')).toBe('star');
+      expect(i.tagName).toBe('SPAN');
+      expect(i.classList.contains('bz-ic')).toBe(true);
       expect(i.classList.contains('bz-ic--star')).toBe(true);
+      expect(i.getAttribute('data-icon')).toBe('star');
+    });
+  });
+
+  describe('uiModal 居中模态', () => {
+    it('openModal 渲染遮罩+弹窗+内容；点遮罩关闭', () => {
+      const onClose = vi.fn();
+      const { mask, popup } = uiModal({ content: '<div class="x">内容</div>', onClose });
+      expect(document.querySelector('.bz-overlay-mask')).not.toBeNull();
+      expect(popup.classList.contains('bz-overlay-popup')).toBe(true);
+      expect(popup.querySelector('.x')!.textContent).toBe('内容');
+      mask.click();
+      expect(document.querySelector('.bz-overlay-mask')).toBeNull();
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+    it('head 模式：标题 + ✕ 关闭钮', () => {
+      const { popup } = uiModal({ content: 'hi', head: true, title: '标题' });
+      expect(popup.querySelector('.bz-dialog-title')!.textContent).toBe('标题');
+      const x = popup.querySelector('.bz-icon-btn') as HTMLButtonElement;
+      expect(x).not.toBeNull();
+      x.click();
+      expect(document.querySelector('.bz-overlay-mask')).toBeNull();
+    });
+    it('ESC 关闭（escManager）', () => {
+      uiModal({ content: 'hi' });
+      expect(document.querySelector('.bz-overlay-mask')).not.toBeNull();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      expect(document.querySelector('.bz-overlay-mask')).toBeNull();
+    });
+    it('maxWidth 内联到弹窗', () => {
+      const { popup } = uiModal({ content: 'hi', maxWidth: 520 });
+      expect(popup.style.maxWidth).toContain('520');
     });
   });
 
