@@ -4234,6 +4234,226 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-todo-sep span { font-size: 14px; color: var(--text-faint); }
 
 
+/* ==================== 待办域样式（src/todo/styles.css） ==================== */
+/* 基线（按钮/图标钮/chip/输入/弹窗/空态/平铺选择）全部消费组件库（src/core/ui/components.css
+   的 .bz-* 类与 --bz-* token）；本文件只保留待办独有布局（面板骨架/左场景栏/条目卡/meta 标签/
+   录入行/编辑器额外区），取值一律取自 tokens.css。场景色为功能色（数据语义，域内直给）。
+   与旧 memo 并存：读写同一 memo.json；后台任务由旧 memo 域执行。 */
+
+/* ---- 遮罩 + 主面板骨架 ---- */
+.bz-todo-overlay {
+  position: fixed; inset: 0;
+  background: var(--bz-overlay);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--bz-font-ui);
+  z-index: 100000;
+}
+.bz-todo-panel {
+  background: var(--bz-surface-2); color: var(--bz-text-1);
+  border-radius: var(--bz-radius-md); border: 1px solid var(--bz-border);
+  box-shadow: var(--bz-shadow-lg);
+  display: flex; flex-direction: column;
+  width: 720px; max-width: calc(100vw - 32px); height: 580px; max-height: 92vh;
+  overflow: hidden;
+}
+/* 面板内隐藏滚动条（滚动功能保留，对齐「弹窗无滚动条」要求） */
+.bz-todo-overlay, .bz-todo-overlay * { scrollbar-width: none; -ms-overflow-style: none; }
+.bz-todo-overlay *::-webkit-scrollbar { display: none; }
+
+.bz-todo-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 var(--bz-space-lg); height: 44px;
+  border-bottom: 1px solid var(--bz-border); flex-shrink: 0;
+}
+.bz-todo-title { font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
+.bz-todo-head-btns { display: flex; align-items: center; gap: var(--bz-space-xs); }
+/* 关闭钮：桌面卡态隐藏（点遮罩/ESC 关），仅移动真全屏显示 */
+.bz-todo-close { display: none; }
+
+.bz-todo-body { display: flex; flex: 1; min-height: 0; }
+
+/* ---- 左场景栏 ---- */
+.bz-todo-side {
+  width: 168px; border-right: 1px solid var(--bz-border); padding: var(--bz-space-md) var(--bz-space-sm);
+  overflow-y: auto; flex-shrink: 0; display: flex; flex-direction: column; background: var(--bz-surface-1);
+}
+.bz-todo-side-label { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin: 0 var(--bz-space-xs) var(--bz-space-xs); letter-spacing: 0.06em; }
+.bz-todo-nav-item {
+  display: flex; align-items: center; gap: var(--bz-space-sm); width: 100%;
+  padding: 7px 10px; border-radius: 6px;
+  background: none; border: none; cursor: pointer;
+  font-size: var(--bz-font-label); color: var(--bz-text-1); text-align: left;
+  font-family: inherit;
+}
+.bz-todo-nav-item:hover { background: var(--bz-surface-hover); }
+.bz-todo-nav-item.bz-todo-nav-active { background: var(--bz-brand); color: var(--bz-on-brand); font-weight: var(--bz-weight-medium); }
+.bz-todo-nav-cnt { margin-left: auto; font-size: var(--bz-font-caption); color: var(--bz-text-3); background: var(--bz-surface-2); border-radius: 999px; padding: 0 7px; line-height: 17px; }
+.bz-todo-nav-item.bz-todo-nav-active .bz-todo-nav-cnt { color: inherit; background: transparent; opacity: 0.75; }
+.bz-todo-nav-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+/* 添加场景（底部） */
+.bz-todo-side-add {
+  margin: var(--bz-space-sm) var(--bz-space-xs) 0; padding: 6px 10px;
+  border: 1px dashed var(--bz-border-strong); border-radius: 8px;
+  background: transparent; color: var(--bz-text-3); cursor: pointer;
+  font-size: var(--bz-font-meta); font-family: inherit;
+  display: flex; align-items: center; gap: 6px; justify-content: center;
+}
+.bz-todo-side-add:hover { color: var(--bz-brand); border-color: var(--bz-brand); background: var(--bz-brand-soft); }
+.bz-todo-side-add .bz-ic { width: 13px; height: 13px; }
+
+/* ---- 右栏 ---- */
+.bz-todo-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+/* 主头行（对齐原型 p1-main-head）：当前场景标题 + 计数 + 右侧新建按钮 */
+.bz-todo-main-head {
+  display: flex; align-items: center; gap: var(--bz-space-sm);
+  padding: 12px var(--bz-space-lg) 2px; flex-shrink: 0;
+}
+.bz-todo-main-title { font-size: 16px; font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
+.bz-todo-main-count { font-size: var(--bz-font-meta); color: var(--bz-text-3); }
+.bz-todo-main-spacer { flex: 1; }
+.bz-todo-main-head .bz-btn { height: 30px; padding: 0 14px; font-size: var(--bz-font-meta); }
+.bz-todo-toolbar {
+  display: flex; align-items: center; gap: var(--bz-space-sm); padding: 8px var(--bz-space-lg) 4px; flex-shrink: 0;
+}
+.bz-todo-search { flex: 1; position: relative; min-width: 0; }
+.bz-todo-search .bz-ic { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--bz-text-3); pointer-events: none; }
+.bz-todo-search .bz-input { width: 100%; padding-left: 30px; }
+/* 排序：组件库 segmented 三档（替换自绘按钮） */
+.bz-todo-sort { flex-shrink: 0; }
+.bz-todo-sort .bz-segmented-btn { padding: 0 10px; font-size: var(--bz-font-caption); }
+
+/* 移动端场景横滑条（桌面隐藏） */
+.bz-todo-mob-scenes { display: none; }
+
+/* ---- 列表 ---- */
+.bz-todo-content { flex: 1; overflow-y: auto; padding: 4px var(--bz-space-md) var(--bz-space-md); display: flex; flex-direction: column; min-height: 0; }
+.bz-todo-section-label {
+  display: flex; align-items: center; gap: var(--bz-space-sm);
+  font-size: var(--bz-font-caption); font-weight: var(--bz-weight-semibold);
+  color: var(--bz-text-3); letter-spacing: 0.05em; padding: var(--bz-space-sm) var(--bz-space-xs) 2px;
+}
+.bz-todo-section-label::after { content: ''; flex: 1; height: 1px; background: var(--bz-border); }
+.bz-todo-section-label .bz-todo-sec-cnt { color: var(--bz-text-3); font-weight: var(--bz-weight-regular); }
+/* 已完成折叠条（无归档按钮，展开/收起都在条上） */
+.bz-todo-donebar {
+  display: flex; align-items: center; gap: var(--bz-space-sm);
+  margin: var(--bz-space-sm) var(--bz-space-xs) 2px; padding: 7px var(--bz-space-sm);
+  border: 1px dashed var(--bz-border-strong); border-radius: 8px;
+  background: var(--bz-surface-1); cursor: pointer;
+  font-size: var(--bz-font-meta); color: var(--bz-text-2);
+}
+.bz-todo-donebar:hover { color: var(--bz-text-1); border-color: var(--bz-brand); }
+.bz-todo-donebar .bz-todo-donebar-cnt { margin-left: auto; font-size: var(--bz-font-caption); color: var(--bz-text-3); }
+.bz-todo-donebar .bz-ic { width: 13px; height: 13px; transition: transform 0.15s ease; }
+.bz-todo-donebar.bz-todo-donebar-open .bz-ic { transform: rotate(180deg); }
+
+/* ---- 条目卡（右键菜单 / 长按抽屉由 core/item-actions 提供） ---- */
+.bz-todo-card {
+  display: flex; align-items: flex-start; gap: 10px; padding: 9px var(--bz-space-sm);
+  border-radius: 10px; cursor: default; user-select: none; -webkit-user-select: none;
+}
+.bz-todo-card:hover { background: var(--bz-surface-hover); }
+.bz-todo-card + .bz-todo-card { margin-top: 1px; }
+.bz-todo-card.bz-todo-done { opacity: 0.62; }
+.bz-todo-check {
+  width: 17px; height: 17px; border-radius: 5px; flex-shrink: 0; margin-top: 1px;
+  border: 1.5px solid var(--bz-border-strong); background: var(--bz-surface-2); position: relative;
+  cursor: pointer; display: inline-block; box-sizing: border-box;
+}
+.bz-todo-check:hover { border-color: var(--bz-brand); }
+.bz-todo-check.bz-todo-checked { background: var(--bz-brand); border-color: var(--bz-brand); }
+.bz-todo-check.bz-todo-checked::after {
+  content: ''; position: absolute; left: 4.5px; top: 1.5px;
+  width: 4.5px; height: 8px; border: solid var(--bz-on-brand); border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.bz-todo-body-text { flex: 1; min-width: 0; }
+.bz-todo-card-title { font-size: var(--bz-font-body); color: var(--bz-text-1); line-height: 1.5; word-break: break-word; overflow-wrap: anywhere; white-space: pre-wrap; }
+.bz-todo-card.bz-todo-done .bz-todo-card-title { text-decoration: line-through; color: var(--bz-text-2); }
+.bz-todo-card-title a { color: var(--bz-brand); text-decoration: underline; cursor: pointer; word-break: break-word; }
+
+/* meta 标签行（顺序对齐源码 buildMeta：课程→脚本→链接→位置→场景→截止→时间） */
+.bz-todo-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 3px; }
+.bz-todo-tag {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: var(--bz-font-caption); line-height: 18px; padding: 0 7px; border-radius: var(--bz-radius-full);
+  background: var(--bz-surface-2); color: var(--bz-text-2); white-space: nowrap;
+}
+.bz-todo-tag .bz-ic { width: 10px; height: 10px; }
+.bz-todo-tag.bz-todo-tag-course { background: var(--bz-brand-soft); color: var(--bz-brand); }
+.bz-todo-tag.bz-todo-tag-script { background: var(--bz-surface-3); color: var(--bz-info); }
+.bz-todo-tag.bz-todo-tag-url { background: var(--bz-surface-3); color: var(--bz-info); }
+.bz-todo-tag.bz-todo-tag-pos { background: var(--bz-surface-3); color: var(--bz-text-2); cursor: pointer; }
+.bz-todo-tag.bz-todo-tag-pos:hover { color: var(--bz-brand); }
+.bz-todo-tag.bz-todo-tag-scene { background: var(--bz-surface-3); color: var(--bz-text-2); }
+.bz-todo-tag.bz-todo-tag-scene.bz-todo-tag-important { background: var(--bz-danger); color: var(--bz-on-danger); font-weight: var(--bz-weight-medium); }
+.bz-todo-tag.bz-todo-tag-overdue { background: color-mix(in srgb, var(--bz-danger) 14%, transparent); color: var(--bz-danger); }
+.bz-todo-tag.bz-todo-tag-today { background: color-mix(in srgb, var(--bz-brand) 14%, transparent); color: var(--bz-brand); }
+.bz-todo-tag.bz-todo-tag-future { background: color-mix(in srgb, var(--bz-success) 12%, transparent); color: var(--bz-success); }
+.bz-todo-time { font-size: var(--bz-font-caption); color: var(--bz-text-3); flex-shrink: 0; }
+
+/* 空态 */
+.bz-todo-empty { text-align: center; color: var(--bz-text-3); font-size: var(--bz-font-body); padding: 40px 12px; }
+
+/* ---- 底部录入行（桌面 + 移动共用形态；无场景 chip 提示） ---- */
+.bz-todo-composer {
+  display: flex; align-items: center; gap: var(--bz-space-sm);
+  border-top: 1px solid var(--bz-border); padding: 10px var(--bz-space-lg);
+  background: var(--bz-surface-1); flex-shrink: 0;
+}
+.bz-todo-composer .bz-input { flex: 1; min-width: 0; height: 34px; }
+
+/* ---- 编辑器内容（弹窗骨架在组件库 modal，此处只留字段布局） ---- */
+.bz-todo-form-title { font-size: var(--bz-font-title); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
+.bz-todo-form { display: flex; flex-direction: column; gap: var(--bz-space-md); margin-top: var(--bz-space-md); }
+.bz-todo-form .bz-field { margin-bottom: 0; }
+.bz-todo-form textarea.bz-input { min-height: 64px; }
+/* 第二个输入框（剪藏标题/代码脚本/公开课课程）容器 */
+.bz-todo-extra { display: none; }
+.bz-todo-extra.bz-todo-extra-on { display: block; }
+.bz-todo-sug-box {
+  border: 1px solid var(--bz-border); border-radius: var(--bz-radius-sm);
+  background: var(--bz-surface-3); margin-top: 4px; overflow: hidden;
+}
+.bz-todo-sug-item { display: block; width: 100%; text-align: left; padding: 6px 10px; border: none; background: none; font-size: var(--bz-font-meta); color: var(--bz-text-1); cursor: pointer; font-family: inherit; }
+.bz-todo-sug-item + .bz-todo-sug-item { border-top: 1px solid var(--bz-border); }
+.bz-todo-sug-item:hover { background: var(--bz-surface-hover); }
+/* 定位行：垂直居中（按钮文字不再靠上），图标与文字同基线 */
+.bz-todo-pos-row { display: flex; align-items: center; gap: var(--bz-space-sm); min-height: 32px; }
+.bz-todo-pos-row .bz-btn { height: 32px; display: inline-flex; align-items: center; }
+.bz-todo-pos-row .bz-btn .bz-ic { width: 14px; height: 14px; }
+.bz-todo-pos-row .bz-todo-pos-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
+.bz-todo-pos-row .bz-todo-pos-hint .bz-ic { width: 12px; height: 12px; vertical-align: -2px; }
+.bz-todo-pos-row .bz-todo-pos-btn-active { background: var(--bz-brand-soft); color: var(--bz-brand); border-color: transparent; }
+
+/* ---- 移动端（≤768px）：真全屏 + 横滑场景条 + 头部关闭钮 ---- */
+@media (max-width: 768px) {
+  .bz-todo-panel {
+    width: 100vw; height: 100vh; max-width: none; max-height: none;
+    border-radius: 0; border: none;
+  }
+  .bz-todo-close { display: inline-flex; }
+  .bz-todo-head { padding-top: max(12px, env(safe-area-inset-top)); }
+  .bz-todo-side { display: none; }
+  /* 主头行桌面专属（移动端新建走底部录入条） */
+  .bz-todo-main-head { display: none; }
+  .bz-todo-mob-scenes {
+    display: flex; gap: var(--bz-space-sm); padding: 10px var(--bz-space-lg) 2px;
+    overflow-x: auto; flex-shrink: 0;
+  }
+  .bz-todo-mob-chip {
+    white-space: nowrap; font-size: var(--bz-font-meta); padding: var(--bz-space-sm) 14px;
+    border-radius: var(--bz-radius-full); background: var(--bz-surface-2); border: 1px solid var(--bz-border);
+    color: var(--bz-text-1); cursor: pointer; flex-shrink: 0; font-family: inherit;
+  }
+  .bz-todo-mob-chip.bz-todo-mob-chip-active { background: var(--bz-brand); color: var(--bz-on-brand); border-color: transparent; font-weight: var(--bz-weight-medium); }
+  .bz-todo-mob-chip .bz-todo-nav-dot { width: 7px; height: 7px; }
+  .bz-todo-content { padding: var(--bz-space-sm) var(--bz-space-lg) calc(var(--bz-space-lg) + env(safe-area-inset-bottom, 0px)); }
+  .bz-todo-card { padding: 11px var(--bz-space-sm); }
+  .bz-todo-card .bz-todo-check { width: 19px; height: 19px; }
+  .bz-todo-card .bz-todo-card-title { font-size: 15px; }
+  .bz-todo-composer .bz-input { height: 40px; }
+}
 /* ==================== 聚合讯域样式（src/news/styles.css） ==================== */
 /* ==================== 聚合讯（news，ticket 60 收敛：原 NEWS_CSS 运行时注入，逐字搬运） ==================== */
 .news-mask {
