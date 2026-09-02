@@ -45,12 +45,13 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   memo: async () => (await import('../memo/ui')).memoSettingsSchema(),
   todo: async () => (await import('../todo/settings')).todoSettingsSchema(),
   belongings: async () => (await import('../belongings/ui')).belongingSettingsSchema(),
-  clipping: async () => (await import('../clipping/view')).clippingSettingsSchema(),
+  clipping: async () => (await import('../clipbook/ui')).clipbookSettingsSchema(),
   password: async () => (await import('../password/ui')).passwordSettingsSchema(),
   favorites: async () => (await import('../favorites/ui')).favoritesSettingsSchema(),
   library: async () => (await import('../library/ui')).librarySettingsSchema(),
   movie: async () => (await import('../movie/ui')).movieSettingsSchema(),
   cinema: async () => (await import('../cinema/settings')).cinemaSettingsSchema(),
+  bookshelf: async () => (await import('../bookshelf/settings')).bookshelfSettingsSchema(),
   review: async () => {
     const { reviewApp } = await import('../review/app');
     const { reviewSettingsSchema } = await import('../review/ui');
@@ -94,8 +95,7 @@ const DOMAINS: DomainDef[] = [
   { id: 'memo', name: '备忘录', icon: 'sticky-note', desc: '提醒与到期行为', schemaLoader: schemaLoaders.memo },
   { id: 'todo', name: '待办', icon: 'check-square', desc: '备忘工作台（新域）', schemaLoader: schemaLoaders.todo },
   { id: 'belongings', name: '归物本', icon: 'package', desc: '物品登记与查找', schemaLoader: schemaLoaders.belongings },
-  { id: 'clipping', name: '剪藏本', icon: 'newspaper', desc: '网页剪藏与聚合讯', schemaLoader: schemaLoaders.clipping },
-  { id: 'news', name: '聚合讯', icon: 'radio', desc: '资讯聚合', noSettings: true },
+  { id: 'clipping', name: '剪藏本', icon: 'scissors', desc: '聚合讯未读流与剪藏笔记（融合域 ADR-0082）', schemaLoader: schemaLoaders.clipping },
   { id: 'password', name: '密码本', icon: 'lock', desc: '账号密码管理', schemaLoader: schemaLoaders.password },
   { id: 'favorites', name: '收藏本', icon: 'star', desc: '收藏条目', schemaLoader: schemaLoaders.favorites },
   { id: 'library', name: '书库', icon: 'library', desc: '藏书与读书笔记', schemaLoader: schemaLoaders.library },
@@ -103,11 +103,12 @@ const DOMAINS: DomainDef[] = [
   { id: 'movie', name: '影视', icon: 'film', desc: '影视目录与海报', schemaLoader: schemaLoaders.movie },
 
   { id: 'cinema', name: '影院', icon: 'clapperboard', desc: '影视海报墙（新域）', schemaLoader: schemaLoaders.cinema },
+  { id: 'bookshelf', name: '书架墙', icon: 'book-open', desc: '藏书封面墙（新域）', schemaLoader: schemaLoaders.bookshelf },
   { id: 'review', name: '复习计划', icon: 'repeat-2', desc: '间隔重复与做题', schemaLoader: schemaLoaders.review },
-  { id: 'quiz', name: '做题家', icon: 'brain', desc: '题目练习（并入复习计划）', noSettings: true },
   { id: 'secondbrain', name: '第二大脑', icon: 'network', desc: '嵌入检索与对话', schemaLoader: schemaLoaders.secondbrain },
   { id: 'auto-summary', name: '自动摘要', icon: 'sparkles', desc: '剪藏自动摘要', noSettings: true },
   { id: 'launcher', name: '入口页', icon: 'puzzle', desc: '命令磁贴入口', noSettings: true },
+  { id: 'home', name: '内容首页', icon: 'layout-grid', desc: '统计域卡首页（新域）', noSettings: true },
   { id: 'pomodoro', name: '番茄钟', icon: 'timer', desc: '专注计时与休息', schemaLoader: schemaLoaders.pomodoro },
   { id: 'attach', name: '附件搬移', icon: 'paperclip', desc: '附件整理', noSettings: true },
   { id: 'bili-downloader', name: 'B站下载', icon: 'download', desc: 'B站视频下载任务', noSettings: true },

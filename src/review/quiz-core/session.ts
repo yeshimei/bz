@@ -3,16 +3,16 @@
  * 模块单例 quizUI（复习域联动）。
  */
 import type { App } from 'obsidian';
-import { notice, notify } from '../core/notice';
-import { openFlowDialog } from '../core/flow-dialog';
-import { escManager } from '../core/esc-manager';
-import { allocZ } from '../core/z-order';
-import { getApp } from '../core/app';
+import { notice, notify } from '../../core/notice';
+import { openFlowDialog } from '../../core/flow-dialog';
+import { escManager } from '../../core/esc-manager';
+import { allocZ } from '../../core/z-order';
+import { getApp } from '../../core/app';
 import { QuizManager, loadActiveItems } from './manager';
 import { QuestionGenerator } from './generator';
-import { escapeHtml } from '../core/utils';
+import { escapeHtml } from '../../core/utils';
 import type { QuizQuestion } from './manager';
-import type { AIService } from '../core/ai';
+import type { AIService } from '../../core/ai';
 
 /** 复习联动结果：一轮做题会话完成后的统计（复习域经 onComplete 接收） */
 export interface QuizReviewResults {

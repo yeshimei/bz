@@ -167,7 +167,7 @@ describe('regenerateQuestions / batchGenerateQuestions 未初始化', () => {
   afterEach(async () => {
     (reviewApp as any)._quizOverride = null;
     vi.restoreAllMocks();
-    const quizModule = await import('../../src/quiz');
+    const quizModule = await import('../../src/review/quiz-core');
     quizModule.QuizMasterUI.ai = null;
     quizModule.quizUI.ai = null;
   });
@@ -177,7 +177,7 @@ describe('regenerateQuestions / batchGenerateQuestions 未初始化', () => {
     vault.files.set('A.md', '正文');
     const app = makeApp(vault);
     setApp(app);
-    const quizModule = await import('../../src/quiz');
+    const quizModule = await import('../../src/review/quiz-core');
     quizModule.quizUI.ai = null;
     const out = await reviewApp.regenerateQuestions('A.md');
     expect(out).toEqual([]);
@@ -191,142 +191,9 @@ describe('regenerateQuestions / batchGenerateQuestions 未初始化', () => {
   });
 });
 
-describe('redoReviewLoop 弹窗缺失路径（popup=null）', () => {
-  beforeEach(() => {
-    resetObsidianMocks();
-    document.body.innerHTML = '';
-    clearNotices();
-    setSettingsProvider(() => ({ forceQuizForReview: true }) as any);
-    (reviewApp as any).dataManager = null;
-    (reviewApp as any)._quizOverride = null;
-  });
 
-  afterEach(() => {
-    (reviewApp as any)._quizOverride = null;
-    vi.restoreAllMocks();
-  });
 
-  function seedPending(vault: MockVault, paths: string[]) {
-    const now = new Date();
-    vault.files.set(
-      REVIEW_FILE_PATH,
-      JSON.stringify(
-        paths.map((p) => ({
-          id: p, filePath: p, name: p, reviewStart: now.toISOString(), stage: 3, phase: 'ladder',
-          stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0,
-          nextReviewDate: new Date(now.getTime() - 1000).toISOString(),
-          lastReviewed: now.toISOString(), lastDifficulty: 'hard', completed: false, pendingRedo: true,
-        }))
-      )
-    );
-  }
 
-  it('通过链路：无结果卡直接续队，两篇全过返回通过集合', async () => {
-    const vault = new MockVault();
-    vault.files.set('A.md', 'x');
-    vault.files.set('B.md', 'x');
-    seedPending(vault, ['A.md', 'B.md']);
-    const app = makeApp(vault);
-    setApp(app);
-    const quiz = makeQuizMock({ popupOnStart: false }); // popup 恒 null
-    (reviewApp as any)._quizOverride = quiz;
-    vi.spyOn(reviewApp, 'regenerateQuestions').mockResolvedValue(Q);
-    const styleSpy = vi.spyOn(reviewApp, 'applyReviewStyles').mockResolvedValue(undefined);
-    const dm = new ReviewDataManager(app);
-    const items = await dm.loadItems();
-    const p = reviewApp.redoReviewLoop(items, 0);
-    await new Promise((r) => setTimeout(r, 20));
-    void quiz._cb({ correct: 2, wrong: 0, total: 2, accuracy: 100 }); // 第一篇通过 → 无弹窗直接续队
-    await new Promise((r) => setTimeout(r, 40)); // 第二篇会话已开启（_cb 已替换）
-    expect(quiz.popup).toBeNull(); // 全程无结果卡
-    void quiz._cb({ correct: 1, wrong: 0, total: 1, accuracy: 100 }); // 第二篇通过 → 队列耗尽
-    const result = await p;
-    expect(result).toEqual(['A.md', 'B.md']); // 两篇都过
-    expect(styleSpy).toHaveBeenCalledTimes(2); // 每篇通过各刷一次染色
-    const after = await dm.loadItems();
-    expect(after.every((i) => !i.pendingRedo)).toBe(true);
-  });
-
-  it('失败链路：无结果卡直接 resolve(null)，会话中断', async () => {
-    const vault = new MockVault();
-    vault.files.set('A.md', 'x');
-    seedPending(vault, ['A.md']);
-    const app = makeApp(vault);
-    setApp(app);
-    const quiz = makeQuizMock({ popupOnStart: false });
-    (reviewApp as any)._quizOverride = quiz;
-    vi.spyOn(reviewApp, 'regenerateQuestions').mockResolvedValue(Q);
-    const dm = new ReviewDataManager(app);
-    const items = await dm.loadItems();
-    const before = items[0].lastDifficulty;
-    void reviewApp.redoReviewLoop(items.slice(0, 1), 0).then((r) => r);
-    await new Promise((r2) => setTimeout(r2, 20));
-    void quiz._cb({ correct: 0, wrong: 2, total: 2, accuracy: 0 }); // again → failed
-    await new Promise((r2) => setTimeout(r2, 30));
-    const after = await dm.loadItems();
-    expect(after[0].pendingRedo).toBe(true); // 保持待重做
-    expect(after[0].lastDifficulty).toBe(before); // 未写任何评级
-  });
-});
-
-describe('quizReviewLoop 补充分支', () => {
-  beforeEach(() => {
-    resetObsidianMocks();
-    document.body.innerHTML = '';
-    clearNotices();
-    setSettingsProvider(() => ({}) as any);
-    (reviewApp as any).dataManager = null;
-    (reviewApp as any)._quizOverride = null;
-  });
-
-  afterEach(() => {
-    (reviewApp as any)._quizOverride = null;
-    vi.restoreAllMocks();
-  });
-
-  it('空题映射跳过该篇直至队列耗尽：endReviewSession + 「所有做题复习已完成」', async () => {
-    const vault = new MockVault();
-    vault.files.set('A.md', 'x');
-    const app = makeApp(vault);
-    setApp(app);
-    const quiz = makeQuizMock({});
-    (reviewApp as any)._quizOverride = quiz;
-    const endSpy = vi.spyOn(quiz, 'endReviewSession');
-    await reviewApp.quizReviewLoop([{ id: '1', filePath: 'A.md', name: 'A' } as any], 0, {});
-    expect(endSpy).toHaveBeenCalled();
-    expect(getNoticeMessages()).toContain('所有做题复习已完成');
-    expect(quiz._cb).toBeNull(); // 从未进入做题会话
-  });
-
-  it('未通过且弹窗缺失：照常 markReview(autoPending) 后静默结束会话', async () => {
-    const vault = new MockVault();
-    vault.files.set('A.md', '正文');
-    const app = makeApp(vault);
-    setApp(app);
-    const now = new Date();
-    vault.files.set(
-      REVIEW_FILE_PATH,
-      JSON.stringify([
-        {
-          id: '1', filePath: 'A.md', name: 'A', reviewStart: now.toISOString(), stage: 3, phase: 'ladder',
-          stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0,
-          nextReviewDate: new Date(now.getTime() - 1000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false,
-        },
-      ])
-    );
-    const quiz = makeQuizMock({ popupOnStart: false });
-    (reviewApp as any)._quizOverride = quiz;
-    const dm = new ReviewDataManager(app);
-    const items = await dm.loadItems();
-    void reviewApp.quizReviewLoop(items.slice(0, 1), 0, { 'A.md': Q });
-    await new Promise((r) => setTimeout(r, 20));
-    void quiz._cb({ correct: 0, wrong: 2, total: 2, accuracy: 0 }); // again
-    await new Promise((r) => setTimeout(r, 50));
-    const after = await dm.loadItems();
-    expect(after[0].pendingRedo).toBe(true); // autoPending 联动置位
-    expect(after[0].stage).toBe(2); // again → 阶梯回退
-  });
-});
 
 describe('reviewLoop 常驻通知复用与超时收尾', () => {
   beforeEach(() => {

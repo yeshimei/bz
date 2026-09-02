@@ -2,8 +2,8 @@
  * 做题家数据层（ticket 17 修正版：对齐源码 QuizManager，读方法每次读盘）
  */
 import type { App } from 'obsidian';
-import { jsonFileStore, storageFile } from '../core/storage';
-import { tryGetSettings } from '../core/settings-provider';
+import { jsonFileStore, storageFile } from '../../core/storage';
+import { tryGetSettings } from '../../core/settings-provider';
 
 /** 默认数据文件路径（设置 quizStoragePath/reviewStoragePath 可改目录） */
 export const QUIZ_FILE_PATH = 'CONFIG/STORAGE/quiz.json';

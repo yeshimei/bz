@@ -56,11 +56,12 @@ const registeredCommands: any[] = [];
 /** 期望的命令 id 全集（spec「命令 id 全清单」第 9 轮：COMMANDS 表 + 日记本 bz-diary-open） */
 const EXPECTED_COMMAND_IDS = [
   'bz-home',
+  'bz-home-open',
   'bz-memo-open', 'bz-memo-add',
   'bz-todo-open', 'bz-todo-add',
   'bz-belongings-add', 'bz-belongings-open',
-  'bz-clipping-open',
-  'bz-news-open',
+  // 剪藏本（clipbook 融合域，ADR-0082）：聚合讯未读流+剪藏笔记一体化；旧 bz-clipping-open/bz-news-open 断开
+  'bz-clipbook-open',
   // 保险库（password-vault 域，ADR-0078）：密码本新 UI；旧密码本入口 bz-pw-* 已断开
   'bz-password-vault-open',
   // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图
@@ -70,6 +71,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-reading-report-open',
   'bz-movie-open', 'bz-movie-add', 'bz-movie-report',
   'bz-cinema-open', 'bz-cinema-add',
+  // 书架墙（bookshelf 域，新域与书库并存）
+  'bz-bookshelf-open',
   'bz-review-open', 'bz-review-report', 'bz-review-start', 'bz-review-add', 'bz-review-remove', 'bz-review-overdue', 'bz-review-rate',
   'bz-review-again', 'bz-review-hard', 'bz-review-good', 'bz-review-easy',
   'bz-secondbrain-panel', 'bz-secondbrain-open', 'bz-secondbrain-chat', 'bz-secondbrain-rebuild-links', 'bz-secondbrain-link-all',
@@ -137,8 +140,12 @@ describe('bz 骨架冒烟', () => {
     expect(byId('bz-movie-add').name).toBe('加影视');
     expect(byId('bz-cinema-open').name).toBe('影院');
     expect(byId('bz-cinema-add').name).toBe('加影视（影院）');
+    // 书架墙（bookshelf 新域）
+    expect(byId('bz-bookshelf-open').name).toBe('书架墙');
     // todo 新域：待办 / 加待办（待办）
     expect(byId('bz-todo-open').name).toBe('待办');
+    // clipbook 融合域（ADR-0082）：剪藏本 = 聚合讯+剪藏本合一入口
+    expect(byId('bz-clipbook-open').name).toBe('剪藏本');
     expect(byId('bz-todo-add').name).toBe('加待办（待办）');
     // t2：阅读分析报告 → 阅读数据分析报告
     expect(byId('bz-reading-report-open').name).toBe('阅读数据分析报告');
@@ -206,11 +213,14 @@ describe('bz 骨架冒烟', () => {
     expect(s.articleDirectory).toBe('归档/网页剪藏');
     expect(s.movieFolderPath).toBe('我的/影视');
     expect(s.cinemaFolderPath).toBe(''); // 空 = 未配置（不抢占 movie 默认目录）
+    expect(s.bookshelfFolderPath).toBe(''); // 空 = 未配置（回落 libraryFolderPath 同显）
     expect(s.libraryFolderPath).toBe('书库');
     expect(s.favoritesStoragePath).toBe('CONFIG/STORAGE');
     expect(s.secondBrainOllamaUrl).toBe('http://localhost:11434');
     expect(s.secondBrainEmbeddingModel).toBe('bge-m3');
     expect(s.passwordLength).toBe('16');
+    // clipbook（ADR-0082）：移动端默认全屏对齐 clipping 默认开
+    expect(s.clipbookMobileDefaultFullscreen).toBe(true);
   });
 
   it('域命令回调不抛异常（已实现域真实执行，未实现域占位 Notice）', async () => {

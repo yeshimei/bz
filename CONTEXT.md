@@ -41,9 +41,11 @@ _Avoid_: 待办列表、任务
 
 **归物本 (Belongings)**: 物品登记管理，数据 `CONFIG/STORAGE/belongings.json`（目录可配置，8 字段零迁移）。**ADR-0083（2026-09-03）重设计为 P6「状态边栏×时间轴」**：整宽头行仅标题 + 左四态状态栏（全部/使用中/闲置/已转卖/已丢弃）+ 右时间轴（统计三卡：总资产=在用+闲置原价、日均=总原价/累计持有天数、在册件数 → 年节/月节点/物件行，年节可折叠）；桌面点行/右键 = 行操作浮层、移动点行 = 底部详情抽屉（动作：状态流转×3 keepOpen / 编辑 / 删除确认）；移动端头行右上 ＋记一笔 → 🔍搜索（默认隐藏可展开）→ ✕，状态横滑 chips，统计两列；全 lucide 图标（分类 emoji 属数据保留）；⚙️ 设置收敛设置面板；数据文件变更自动刷新（打开期间 modify 监听自写短路）+ 主题类变化重渲染。**数据零迁移口径**：无售价/转卖日期字段——转卖=直接状态流转（原型「填回本价」不落码），已用天数统一到今天（`data.calculateDaysUsed` 单一口径）。样式全消费组件库 token（`src/core/ui/`），域内仅布局。
 
+**剪藏本 (Clipbook, ADR-0082/issue 177)**: 聚合讯（news）+ 剪藏本（clipping）融合的单一工作台。桌面三栏（左 rail 源列表——全部未读/知乎日报/果壳科学人/B站/B站按 UP 展开/剪藏本聚合，底部「阅读分析数据」入口；中栏条目标题+摘要+状态点；右栏阅读）与移动双屏（源胶囊列表 + 详情+头栏保存钮）。数据 = news.json（外部 obsidian-news 守护进程写 articles/bilibiliUps/bilibiliUpInfo/bilibiliMaxItems/bilibiliCookie/sources 段；插件只写 stats/read/state）+ 剪藏目录 `归档/网页剪藏/*.md`（frontmatter url/author/site/summary/tags/date/created，url+created 缺失跳过）+ clipbook.json 侧写（articleOverrides 在读位 / savedArchive 已删残留归档 / order 预留）。状态机：unread 蓝 / reading 琥珀（侧写）/ read 空心（已处理骨架不进收件流）/ saved 绿（news state==='saved' ∨ 归档 ∨ url 命中剪藏目录保底）。动作：保存到剪藏本 = 写剪藏笔记（frontmatter 契约 P1-24 + dataviewjs 摘要块，迁移自 news reader）+ 标 news 已处理（read+saved、删 body、stats +1、发 news:read/saved 域事件——smartcat 行为流三跳依赖保留）；B站视频条目保存分流文献盒（ADR-0068，不标已读）；移出剪藏本仅清侧写与 news state（目录文件保留，保底 saved 判定仍命中）。命令 `bz-clipbook-open`（icon scissors），替换旧 `bz-clipping-open`/`bz-news-open`（旧域代码保留并存待删，设置面板 clipping 域 schema 已指向新域）。设置键沿用 articleDirectory/articleBatchSize/autoSummary*/newsRetention*，新增 clipbookMobileDefaultFullscreen（默认 true，对齐旧 clipping）。_Avoid_: 聚合讯、剪藏列表、网页剪藏（指旧独立面板时）
+
 **剪藏本 (Clipping)**: `我的/文章` 的剪藏文章展示面板——搜索、站点过滤、排序、反链笔记名显示（metadataCache.getBacklinksForFile）。交互（ticket 69 重构）：**单击整卡直接打开**文章（五域首例单击直开）、**移动端长按整卡弹统一抽屉**（打开/复制双链/复制原文链接/删除）；反链📌保留列表直点跳转；桌面右键弹跟手菜单（全局组件）。设置弹窗（ticket 124）新增「数据源」组（聚合讯数据源开关/UP 名单/保留天数/状态行，news.json 缺失时显示安装引导）与自动摘要详设（开关打开后展开长度档位/标签/时机）。**ticket 125**：打开面板先弹窗显示加载提示再异步加载（重开同）；自动摘要详设去左边距与父级平级。**ticket 126**：B 站开关关闭时整个 UP 名单段隐藏；UP 名单收敛为「管理」按钮，添加/删除移入独立管理弹窗（层 10100）；后台回填的 UP 主名字/头像（news.json `bilibiliUpInfo` 段）替换 uid 展示。**ticket 127**：UP 名单段内新增「B站抓取条数」（每 UP 最近 N 条，默认 10，写 news.json `bilibiliMaxItems`）；UP 名单管理弹窗底部新增「B 站 Cookie（可选）」配置区（412 风控引导，写 news.json `bilibiliCookie`，保存/清除 + 已配置/未配置状态）。**ticket 128**：重开缓存复用（ADR-0063）——重开仅显示旧列表零扫描（首开仍先弹窗+加载提示+全量），幽灵卡片防护由「重开即重载」改为常驻监听增量维护；仅剪藏目录设置变更时清缓存全量重载一次。
 
-**聚合讯 (News Aggregator)**: 抓取新闻写入 `归档/网页剪藏`（CLIP_DIR），管理 `CONFIG/STORAGE/news.json`（**ticket 124 起四段结构**：articles/stats/bilibiliUps/sources，兼容旧纯数组自动迁移；stats 由旧 news-stats.json 并入；**ticket 126 起可含第五段 `bilibiliUpInfo`**：uid → {name, avatar} 的 UP 主资料回填；**ticket 127 起可含 `bilibiliMaxItems`/`bilibiliCookie`**：每 UP 最近 N 条 与 Cookie 配置）；把 `dataviewjs` 代码块（`dv.view('CONFIG/SCRIPTS/DataView/摘要')`）写进笔记由 **Dataview 插件**渲染。
+**聚合讯 (News Aggregator, 旧域，已并入剪藏本 clipbook ADR-0082，待删)**: 抓取新闻写入 `归档/网页剪藏`（CLIP_DIR），管理 `CONFIG/STORAGE/news.json`（**ticket 124 起四段结构**：articles/stats/bilibiliUps/sources，兼容旧纯数组自动迁移；stats 由旧 news-stats.json 并入；**ticket 126 起可含第五段 `bilibiliUpInfo`**：uid → {name, avatar} 的 UP 主资料回填；**ticket 127 起可含 `bilibiliMaxItems`/`bilibiliCookie`**：每 UP 最近 N 条 与 Cookie 配置）；把 `dataviewjs` 代码块（`dv.view('CONFIG/SCRIPTS/DataView/摘要')`）写进笔记由 **Dataview 插件**渲染。
 
 **保存至文献 (Save to Literature)**: 聚合讯阅读器对 B站视频条目（platform='B站' 且 url 非空）的保存动作（ticket 134，ADR-0068）——底栏按钮替换「保存至剪藏」，点击打开文献盒主面板 + 添加转文献任务弹窗（预填视频链接/标题/UP主）；不落剪藏、不标已读、不发 'news' 域事件（不进小橘行为流），阅读器留在本篇未读；普通文章仍是「保存至剪藏」原行为（B站条目 url 异常缺失回退剪藏按钮）。B站条目「下一篇/完成阅读」同样不进行为流（部分推翻 ticket 123「跳过也发」，普通文章保留）。_Avoid_: 保存至剪藏（指 B站条目按钮时）、剪藏视频（无此动作）
 
@@ -193,6 +195,9 @@ _Avoid_: 主页、启动台、dashboard、控制台
 
 **幽灵磁贴 (Ghost Tile)**: 命令失效（所属插件被禁用等）后磁贴的保留态——保留位置与配置，灰色不可用，可删除，命令恢复后自动复活。
 _Avoid_: 无效磁贴、死磁贴
+
+**内容首页 (Content Home)**: 新域 `src/home`（ticket 177），入口页的「新标签页」升级——内容式首页弹窗（命令 `bz-home-open`，lucide layout-grid）：顶部问候/搜索、域卡网格（右下徽标 = 各域真实统计，点卡执行对应 `bz-*` 命令）、未钉域迷你 chips、移动端统计条与两列卡；编辑模式可增删钉选域（存 home.json pinned，默认 diary/memo/cinema/review）。与旧「入口页」并存不互改（cinema/movie 先例），后续旧 launcher 域可删。统计直读各域数据层、失败静默回落。
+_Avoid_: 新标签页、主页、dashboard、启动台
 
 ### 番茄钟域（规划中，ticket 26）
 

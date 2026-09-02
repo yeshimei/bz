@@ -24,8 +24,8 @@ import { openTodoPanel, addTodoItem, unloadTodo } from './todo';
 // 15 域（懒加载：首次命令/事件触发时 ensureXxx 幂等初始化）
 import { openBzPanel, createMemoItem } from './memo';
 import { addBelongingsItem, openBelongings, unloadBelongings } from './belongings';
-import { openArticleView, unloadArticleView } from './clipping';
-import { openNewsReader, unloadNewsReader } from './news';
+// 剪藏本融合域（clipbook，ADR-0082/issue 177）：聚合讯+剪藏本合一；旧 news/clipping 入口命令断开
+import { openClipbook, unloadClipbook } from './clipbook';
 // 保险库（password-vault 域，ADR-0078）：密码本新 UI；旧密码本域入口已断开（bz-pw-* 命令不再注册）
 import { openPasswordVault, unloadPasswordVault } from './password-vault';
 // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图；复用 diary parser 读取，不改写旧数据
@@ -36,6 +36,8 @@ import { showReadingReport, unloadReadingReport } from './reading-report';
 import { openMovieManager, addMovieItem, unloadMovie } from './movie';
 // 影院（cinema 域，新域与影视并存；不修改旧影视代码）
 import { openCinema, addCinemaItem, unloadCinema } from './cinema';
+// 书架墙（bookshelf 域，新域与书库并存；不修改旧书库代码）
+import { openBookshelf, unloadBookshelf } from './bookshelf';
 // 影视分析报告（独立域，ADR-0048）
 import { openMovieReport, unloadMovieReport } from './movie-report';
 import { openReviewPanel, openReviewReport, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart, ensureReview, unloadReview } from './review';
@@ -57,6 +59,8 @@ import { openAttachMove, ensureAttachSeed, ATTACH_COMMAND_ID } from './attach';
 import { openEncrypt, encryptCurrentNote, unloadEncrypt, mountEncryptStatusBar, unmountEncryptStatusBar } from './encrypt';
 import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setLauncherGestureSetter, LauncherModal } from './launcher';
 import { registerGestureListeners } from './launcher/gestures';
+// 内容首页（home 域，ticket 177：入口页「新标签页」升级；与旧入口页并存，不改 launcher）
+import { openHome, unloadHome } from './home';
 import { ensureAutoSummary, unloadAutoSummary } from './auto-summary';
 // ai-agent 域解散：文件同步拆入 memo/favorites 域（原 ensureAIAgent/unloadAIAgent 换线）
 import { ensureMemoFileSync, unloadMemoFileSync } from './memo';
@@ -76,6 +80,8 @@ import { openSettingsPanel, unloadSettingsPanel } from './settings-panel';
 const COMMANDS: { id: string; name: string; icon: string; callback: () => void }[] = [
   // 入口页（t1：主页 → 入口页，术语随 CONTEXT.md；id bz-home 不变）
   { id: 'bz-home', name: '入口页', icon: 'home', callback: () => openLauncherPanel(getApp()) },
+  // 内容首页（home 域，ticket 177：与旧入口页并存）
+  { id: 'bz-home-open', name: '内容首页', icon: 'layout-grid', callback: () => openHome(getApp()) },
   // 备忘录
   { id: 'bz-memo-open', name: '备忘录', icon: 'sticky-note', callback: () => openBzPanel(getApp()) },
   { id: 'bz-memo-add', name: '加备忘', icon: 'pencil', callback: () => createMemoItem(getApp()) },
@@ -85,10 +91,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 归物本
   { id: 'bz-belongings-add', name: '加物品', icon: 'archive', callback: () => addBelongingsItem(getApp()) },
   { id: 'bz-belongings-open', name: '归物本', icon: 'package', callback: () => openBelongings(getApp()) },
-  // 剪藏本
-  { id: 'bz-clipping-open', name: '剪藏本', icon: 'scissors', callback: () => openArticleView(getApp()) },
-  // 聚合讯
-  { id: 'bz-news-open', name: '聚合讯', icon: 'rss', callback: () => openNewsReader(getApp()) },
+  // 剪藏本（clipbook 融合域，ADR-0082：聚合讯未读流 + 剪藏笔记一体化工作台）
+  { id: 'bz-clipbook-open', name: '剪藏本', icon: 'scissors', callback: () => openClipbook(getApp()) },
   // 保险库（password-vault 域，ADR-0078）：密码本新 UI，替换旧密码本入口（bz-pw-* 已断开）
   { id: 'bz-password-vault-open', name: '保险库', icon: 'key', callback: () => openPasswordVault(getApp()) },
   // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图（真实图片/视频/音频瀑布流）
@@ -110,6 +114,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 影院（cinema 新域）
   { id: 'bz-cinema-open', name: '影院', icon: 'film', callback: () => openCinema(getApp()) },
   { id: 'bz-cinema-add', name: '加影视（影院）', icon: 'plus-circle', callback: () => addCinemaItem(getApp()) },
+  // 书架墙（bookshelf 新域）
+  { id: 'bz-bookshelf-open', name: '书架墙', icon: 'book-open', callback: () => openBookshelf(getApp()) },
   // 复习计划（9 命令）
   { id: 'bz-review-open', name: '复习计划', icon: 'calendar', callback: () => openReviewPanel(getApp()) },
   // ticket 174：独立「复习计划分析报告」命令（直开统计弹窗）
@@ -298,6 +304,7 @@ export default class BzPlugin extends Plugin {
     unloadMemoFileSync();
     unloadFavoritesFileSync();
     unloadLauncherPanel();
+    unloadHome();
     unloadEncrypt();
     unloadSmartCat();
     // 设置面板（ADR-0080：DOM 清理 + esc 注销）
@@ -314,12 +321,14 @@ export default class BzPlugin extends Plugin {
     unloadFavorites();
     unloadReview();
     unloadCinema();
+    // 书架墙（bookshelf 域：面板 DOM + 模块单例复位）
+    unloadBookshelf();
     unloadMovie();
     unloadMovieReport();
     unloadReadingReport();
     unloadLibrary();
-    unloadNewsReader();
-    unloadArticleView();
+    // 剪藏本融合域（ADR-0082）：卸载统一面板；旧 news/clipping 已无独立挂载
+    unloadClipbook();
     unloadAutoSummary();
     // 文献盒（ADR-0072 迁出：面板 DOM + 模块单例复位）
     unloadLiterature();
