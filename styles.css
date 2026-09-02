@@ -1435,6 +1435,493 @@ button.news-close-btn {
   font-size: 12px;
   color: var(--text-muted);
 }
+/* ============================================================
+ * bz design tokens（自绘，不依赖 Obsidian 变量）
+ * 三层：
+ *   1) :root           结构令牌（间距/圆角/字号/阴影/控件高/动效/字体）——明暗无关
+ *   2) .bz-theme-*     色彩令牌（表面/文字/品牌/语义/边框）——跟随明暗
+ * 挂载：Obsidian 在 <body> 挂 theme-dark / theme-light。
+ * 命名规范：--bz-<组>-<档>；组件只消费本文件变量。
+ * ============================================================ */
+
+/* ═══════════ 结构令牌（明暗无关） ═══════════ */
+:root {
+  /* 间距：4 倍数档位（块级 8 步进 / 行内 4 步进） */
+  --bz-space-xs: 4px;
+  --bz-space-sm: 8px;
+  --bz-space-md: 12px;
+  --bz-space-lg: 16px;
+  --bz-space-xl: 24px;
+  --bz-space-2xl: 32px;
+
+  /* 圆角：层级越大越圆 */
+  --bz-radius-xs: 4px;    /* 图标按钮、小控件 */
+  --bz-radius-sm: 8px;    /* 按钮、输入框、菜单项 */
+  --bz-radius-md: 12px;   /* 弹窗、卡片 */
+  --bz-radius-lg: 16px;   /* 抽屉、大卡片 */
+  --bz-radius-full: 999px;/* 胶囊 */
+
+  /* 字号阶梯（caption/meta/body/emphasis/title/display） */
+  --bz-font-caption: 11px;
+  --bz-font-meta: 12px;
+  --bz-font-label: 13px;  /* 按钮、输入、菜单项 */
+  --bz-font-body: 14px;   /* 默认正文 */
+  --bz-font-emphasis: 15px; /* 列表标题、弹窗标题 */
+  --bz-font-title: 17px;  /* 主窗口/对话框标题 */
+  --bz-font-display: 20px; /* 大数字、主展示 */
+
+  /* 字重 */
+  --bz-weight-regular: 400;
+  --bz-weight-medium: 500;
+  --bz-weight-semibold: 600;
+  --bz-weight-bold: 700;
+
+  /* 行高 */
+  --bz-leading-tight: 1.25; /* 单行控件 */
+  --bz-leading-normal: 1.5; /* 正文 */
+
+  /* 控件高度（桌面紧凑） */
+  --bz-control-h: 32px;    /* 按钮/输入/选择 */
+  --bz-control-h-sm: 24px;
+  --bz-control-h-lg: 40px;
+  --bz-icon-btn-w: 22px;   /* 桌面头行图标钮 */
+  --bz-icon-btn-h: 26px;
+  --bz-icon-btn-lg: 32px;  /* 触控档 */
+
+  /* 阴影三档（透明黑、表达抬升） */
+  --bz-shadow-sm:
+    0 1px 2px -2px rgba(0, 0, 0, 0.16),
+    0 3px 6px 0 rgba(0, 0, 0, 0.12);
+  --bz-shadow-md:
+    0 3px 6px -4px rgba(0, 0, 0, 0.12),
+    0 6px 16px 0 rgba(0, 0, 0, 0.08),
+    0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  --bz-shadow-lg:
+    0 6px 16px -8px rgba(0, 0, 0, 0.08),
+    0 9px 28px 0 rgba(0, 0, 0, 0.05),
+    0 12px 48px 16px rgba(0, 0, 0, 0.03);
+
+  /* 交互态（透明叠加，M3 state layer） */
+  --bz-state-hover: 0.08;
+  --bz-state-focus: 0.1;
+  --bz-state-pressed: 0.1;
+  --bz-state-dragged: 0.16;
+  --bz-state-disabled-content: 0.38;
+  --bz-state-disabled-container: 0.12;
+
+  /* 焦点环 */
+  --bz-focus-ring: 2px solid var(--bz-brand);
+
+  /* 动效（时长 ≤0.45s） */
+  --bz-dur-fast: 0.15s;
+  --bz-dur-base: 0.2s;
+  --bz-dur-slow: 0.3s;
+  --bz-ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+  --bz-ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1); /* toast bounce */
+
+  /* 字体 */
+  --bz-font-ui: -apple-system, "Segoe UI", system-ui, "PingFang SC",
+    "Microsoft YaHei", sans-serif;
+  --bz-font-mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+
+  /* 通用品牌黄（影视星轨、评分高亮；两主题同值） */
+  --bz-star: #f0b429;
+
+  /* 深色遮罩/图片浮层上的文字（两主题同值白） */
+  --bz-on-overlay: #ffffff;
+
+  /* 遮罩增强：灯箱等全屏黑底（两主题同值） */
+  --bz-scrim: rgba(0, 0, 0, 0.92);
+
+  /* 媒体比例 */
+  --bz-ratio-square: 1 / 1;
+  --bz-ratio-4-3: 4 / 3;
+  --bz-ratio-16-9: 16 / 9;
+}
+
+/* ── 暗色（默认）── */
+.theme-dark {
+  color-scheme: dark;
+
+  /* 表面：以近黑为底、逐层抬升 */
+  --bz-surface-0: #101014;
+  --bz-surface-1: #16161c;
+  --bz-surface-2: #1e1e26;
+  --bz-surface-3: #26262f;
+  --bz-surface-4: #2d2d37;   /* 浮层：菜单/dropdown/popover */
+  --bz-surface-hover: #2c2c36;
+  --bz-surface-active: #33333e;
+  --bz-overlay: rgba(0, 0, 0, 0.6);
+
+  /* 文字 */
+  --bz-text-1: #e8e8ec;
+  --bz-text-2: #9a9aa5;
+  --bz-text-3: #5f5f6b;
+  --bz-text-invert: #141418;
+
+  /* 品牌（默认中性暖橙） */
+  --bz-brand: #e67341;
+  --bz-brand-hover: #ef8352;
+  --bz-brand-soft: rgba(230, 115, 65, 0.16);
+  --bz-on-brand: #ffffff;
+
+  /* 语义 */
+  --bz-success: #3fb96a;
+  --bz-warning: #d9a13c;
+  --bz-danger: #e5534b;
+  --bz-on-danger: #ffffff;
+  --bz-info: #58a6ff;
+
+  /* 边框 */
+  --bz-border: rgba(255, 255, 255, 0.09);
+  --bz-border-strong: rgba(255, 255, 255, 0.18);
+  --bz-border-hover: rgba(255, 255, 255, 0.28);
+
+  /* 控件底（toggle 轨道等） */
+  --bz-track: rgba(255, 255, 255, 0.14);
+  --bz-thumb: #ffffff;
+  --bz-thumb-soft: #b9b9c4;
+  --bz-code-bg: rgba(255, 255, 255, 0.07);
+  --bz-mark-bg: rgba(230, 115, 65, 0.28);
+}
+
+/* ── 亮色 ── */
+.theme-light {
+  color-scheme: light;
+
+  --bz-surface-0: #f2f2f4;
+  --bz-surface-1: #fafafa;
+  --bz-surface-2: #ffffff;
+  --bz-surface-3: #ffffff;
+  --bz-surface-4: #ffffff;
+  --bz-surface-hover: #ececf0;
+  --bz-surface-active: #e0e0e6;
+  --bz-overlay: rgba(0, 0, 0, 0.35);
+
+  --bz-text-1: #1c1c21;
+  --bz-text-2: #5c5c66;
+  --bz-text-3: #9a9aa5;
+  --bz-text-invert: #ffffff;
+
+  --bz-brand: #e2571c;
+  --bz-brand-hover: #cc4a12;
+  --bz-brand-soft: rgba(226, 87, 28, 0.12);
+  --bz-on-brand: #ffffff;
+
+  --bz-success: #1f9d4d;
+  --bz-warning: #b57c13;
+  --bz-danger: #d43d31;
+  --bz-on-danger: #ffffff;
+  --bz-info: #0f6fdc;
+
+  --bz-border: rgba(20, 20, 24, 0.1);
+  --bz-border-strong: rgba(20, 20, 24, 0.2);
+  --bz-border-hover: rgba(20, 20, 24, 0.35);
+
+  --bz-track: rgba(20, 20, 24, 0.16);
+  --bz-thumb: #ffffff;
+  --bz-thumb-soft: #9a9aa5;
+  --bz-code-bg: rgba(20, 20, 24, 0.06);
+  --bz-mark-bg: rgba(226, 87, 28, 0.22);
+}
+/* ============================================================
+ * bz 组件库样式（src/core/ui/）
+ * 自绘 token 体系（见 tokens.css），不依赖 Obsidian 变量。
+ * 首批：按钮/按钮行/图标钮/chip/输入/字段/空态/分段。
+ * 命名 .bz-<组件> + .bz-<组件>--<修饰>；源顺序 = 级联顺序。
+ * ============================================================ */
+
+/* ═══════════ 基元 ═══════════ */
+.bz-ic {
+  width: 1em;
+  height: 1em;
+  stroke-width: 2;
+  flex-shrink: 0;
+}
+
+/* ═══════════ 按钮 .bz-btn ═══════════ */
+.bz-btn {
+  appearance: none;
+  border: 1px solid transparent;
+  background: var(--bz-surface-2);
+  color: var(--bz-text-1);
+  height: var(--bz-control-h);
+  padding: 0 16px;
+  border-radius: var(--bz-radius-sm);
+  font-size: var(--bz-font-label);
+  font-weight: var(--bz-weight-medium);
+  line-height: var(--bz-leading-tight);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: background-color var(--bz-dur-fast) ease, border-color var(--bz-dur-fast) ease, color var(--bz-dur-fast) ease, opacity var(--bz-dur-fast) ease;
+}
+.bz-btn:hover { background: var(--bz-surface-hover); }
+.bz-btn:active { background: var(--bz-surface-active); }
+.bz-btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+.bz-btn:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: 2px; }
+.bz-btn .bz-ic { width: 14px; height: 14px; }
+
+.bz-btn--primary { background: var(--bz-brand); color: var(--bz-on-brand); border-color: transparent; }
+.bz-btn--primary:hover { background: var(--bz-brand-hover); }
+.bz-btn--primary:active { background: var(--bz-brand-hover); opacity: 0.9; }
+
+.bz-btn--danger { background: var(--bz-danger); color: var(--bz-on-danger); }
+.bz-btn--danger:hover { background: var(--bz-danger); opacity: 0.9; }
+
+.bz-btn--ghost { background: transparent; border-color: var(--bz-border-strong); color: var(--bz-text-1); }
+.bz-btn--ghost:hover { background: var(--bz-surface-hover); }
+
+.bz-btn--sm { height: var(--bz-control-h-sm); padding: 0 10px; font-size: var(--bz-font-meta); border-radius: 6px; }
+.bz-btn--lg { height: var(--bz-control-h-lg); padding: 0 20px; font-size: var(--bz-font-body); border-radius: 10px; }
+.bz-btn--icon { width: var(--bz-control-h); padding: 0; }
+
+/* ═══════════ 按钮行 .bz-btn-row ═══════════ */
+.bz-btn-row { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.bz-btn-row--center { justify-content: center; }
+.bz-btn-row--grow .bz-btn { flex: 1; }
+
+/* ═══════════ 图标按钮 .bz-icon-btn ═══════════ */
+.bz-icon-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--bz-text-2);
+  width: var(--bz-icon-btn-w);
+  height: var(--bz-icon-btn-h);
+  border-radius: var(--bz-radius-xs);
+  font-size: var(--bz-font-body);
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background-color var(--bz-dur-fast) ease, color var(--bz-dur-fast) ease;
+}
+.bz-icon-btn:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
+.bz-icon-btn:active { background: var(--bz-surface-active); }
+.bz-icon-btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+.bz-icon-btn:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: 2px; }
+.bz-icon-btn .bz-ic { width: 14px; height: 14px; }
+
+.bz-icon-btn--on { color: var(--bz-brand); }
+.bz-icon-btn--on:hover { color: var(--bz-brand); background: var(--bz-brand-soft); }
+.bz-icon-btn--lg { width: var(--bz-icon-btn-lg); height: var(--bz-icon-btn-lg); border-radius: var(--bz-radius-sm); font-size: 16px; }
+.bz-icon-btn--lg .bz-ic { width: 16px; height: 16px; }
+.bz-icon-btn--xs { width: 18px; height: 18px; border-radius: 50%; }
+.bz-icon-btn--xs .bz-ic { width: 12px; height: 12px; }
+.bz-icon-btn--close { width: 20px; height: 24px; font-size: 12px; }
+.bz-icon-btn[data-danger] { color: var(--bz-danger); }
+.bz-icon-btn[data-danger]:hover { background: color-mix(in srgb, var(--bz-danger) 12%, transparent); }
+
+/* ═══════════ Chip .bz-chip ═══════════ */
+.bz-chip {
+  appearance: none;
+  border: 1px solid transparent;
+  background: var(--bz-surface-2);
+  color: var(--bz-text-2);
+  height: 24px;
+  padding: 0 12px;
+  border-radius: var(--bz-radius-full);
+  font-size: var(--bz-font-meta);
+  font-weight: var(--bz-weight-medium);
+  line-height: var(--bz-leading-tight);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: background-color var(--bz-dur-fast) ease, color var(--bz-dur-fast) ease;
+}
+.bz-chip:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
+.bz-chip:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+.bz-chip .bz-ic, .bz-chip-ic { width: 12px; height: 12px; flex-shrink: 0; }
+
+.bz-chip--on { background: var(--bz-brand); color: var(--bz-on-brand); }
+.bz-chip--on:hover { background: var(--bz-brand-hover); color: var(--bz-on-brand); }
+.bz-chip--sel { background: var(--bz-brand-soft); color: var(--bz-brand); }
+.bz-chip--sel:hover { background: var(--bz-brand-soft); color: var(--bz-brand); }
+.bz-chip--locked { border: 1px dashed var(--bz-border-strong); opacity: 0.55; cursor: not-allowed; background: var(--bz-surface-1); color: var(--bz-text-2); }
+.bz-chip--locked:hover { background: var(--bz-surface-1); color: var(--bz-text-2); }
+.bz-chip-cnt { margin-left: 2px; font-size: 10px; font-weight: 600; opacity: 0.75; }
+
+.bz-chip-x {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: inherit;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+.bz-chip-x:hover { background: rgba(0, 0, 0, 0.15); }
+.bz-chip-x .bz-ic { width: 10px; height: 10px; }
+
+/* ═══════════ 徽标 .bz-badge ═══════════ */
+.bz-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: var(--bz-radius-full);
+  background: var(--bz-surface-2);
+  color: var(--bz-text-2);
+  font-size: var(--bz-font-caption);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+.bz-badge--accent { background: var(--bz-brand-soft); color: var(--bz-brand); }
+.bz-badge--success { background: color-mix(in srgb, var(--bz-success) 16%, transparent); color: var(--bz-success); }
+.bz-badge--danger { background: color-mix(in srgb, var(--bz-danger) 16%, transparent); color: var(--bz-danger); }
+.bz-badge--warning { background: color-mix(in srgb, var(--bz-warning) 16%, transparent); color: var(--bz-warning); }
+.bz-badge--neutral { background: var(--bz-surface-1); color: var(--bz-text-3); }
+
+/* ═══════════ 输入框 .bz-input ═══════════ */
+.bz-input {
+  appearance: none;
+  border: 1px solid var(--bz-border-strong);
+  background: var(--bz-surface-1);
+  color: var(--bz-text-1);
+  height: var(--bz-control-h);
+  padding: 0 10px;
+  border-radius: var(--bz-radius-sm);
+  font-size: var(--bz-font-label);
+  font-family: inherit;
+  line-height: var(--bz-leading-tight);
+  width: 240px;
+  transition: border-color var(--bz-dur-fast) ease, box-shadow var(--bz-dur-fast) ease;
+}
+.bz-input::placeholder { color: var(--bz-text-3); }
+.bz-input:hover { border-color: var(--bz-border-hover); }
+.bz-input:focus { outline: none; border-color: var(--bz-brand); box-shadow: 0 0 0 2px var(--bz-brand-soft); }
+.bz-input:disabled { opacity: 0.5; cursor: not-allowed; }
+.bz-input--error { border-color: var(--bz-danger); }
+.bz-input--error:focus { box-shadow: 0 0 0 2px color-mix(in srgb, var(--bz-danger) 20%, transparent); }
+textarea.bz-input { height: auto; padding: 8px 10px; line-height: var(--bz-leading-normal); resize: vertical; }
+
+/* 带前缀图标的输入框 */
+.bz-input-wrap { position: relative; display: inline-block; }
+.bz-input-wrap .bz-input { width: 100%; padding-left: 30px; }
+.bz-input-wrap > .bz-ic {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--bz-text-3);
+  pointer-events: none;
+}
+
+/* ═══════════ 表单字段 .bz-field ═══════════ */
+.bz-field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+.bz-field-label { font-size: var(--bz-font-meta); font-weight: var(--bz-weight-medium); color: var(--bz-text-2); }
+.bz-field-desc { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
+.bz-field .bz-input, .bz-field .bz-select { width: 100%; }
+.bz-field-error { font-size: var(--bz-font-caption); color: var(--bz-danger); }
+
+/* ═══════════ 空态 .bz-empty ═══════════ */
+.bz-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  gap: 8px;
+}
+.bz-empty-ic { width: 36px; height: 36px; color: var(--bz-text-3); margin-bottom: 4px; }
+.bz-empty-title { font-size: var(--bz-font-body); font-weight: 600; color: var(--bz-text-2); }
+.bz-empty-desc { font-size: var(--bz-font-meta); color: var(--bz-text-3); max-width: 280px; }
+.bz-empty .bz-btn-row { margin-top: 12px; }
+
+/* ═══════════ 分段 .bz-segmented ═══════════ */
+.bz-segmented {
+  display: inline-flex;
+  background: var(--bz-surface-1);
+  border-radius: var(--bz-radius-sm);
+  padding: 3px;
+  gap: 2px;
+}
+.bz-segmented-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--bz-text-2);
+  height: 26px;
+  padding: 0 14px;
+  border-radius: 6px;
+  font-size: var(--bz-font-meta);
+  font-weight: var(--bz-weight-medium);
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background-color var(--bz-dur-fast) ease, color var(--bz-dur-fast) ease;
+}
+.bz-segmented-btn:hover { color: var(--bz-text-1); }
+.bz-segmented-btn.is-on { background: var(--bz-surface-2); color: var(--bz-text-1); font-weight: 600; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06); }
+
+/* ═══════════ 媒体灯箱 .bz-lightbox（lightbox.ts） ═══════════ */
+.bz-lightbox {
+  position: fixed;
+  inset: 0;
+  background: var(--bz-scrim, rgba(0, 0, 0, 0.92));
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.bz-lightbox-head {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  color: var(--bz-on-overlay, #fff);
+}
+.bz-lightbox-title { font-size: var(--bz-font-label); font-weight: 500; opacity: 0.9; }
+.bz-lightbox-close {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--bz-on-overlay, #fff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.bz-lightbox-close:hover { background: rgba(255, 255, 255, 0.24); }
+.bz-lightbox-close .bz-ic { width: 16px; height: 16px; }
+.bz-lightbox-media {
+  max-width: min(900px, 92vw);
+  max-height: 78vh;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.bz-lightbox-media img,
+.bz-lightbox-media video { max-width: 100%; max-height: 78vh; display: block; }
+.bz-lightbox-foot {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 14px 24px calc(14px + env(safe-area-inset-bottom, 0px));
+  color: rgba(255, 255, 255, 0.75);
+  font-size: var(--bz-font-meta);
+  text-align: center;
+}
 /* ==================== 日记本域样式（src/diary/styles.css） ==================== */
 /* ==================== 日记本（diary-notebook 合并） ==================== */
 /* 添加日记弹窗样式 */
