@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   uiBtn, uiIcon, uiIconBtn, uiBtnRow, uiChip, uiField, uiInput,
-  uiEmpty, uiSegmented, uiDialogActions,
+  uiEmpty, uiSegmented, uiDialogActions, uiRange,
 } from '../../src/core/ui';
 import { openLightbox, closeLightbox } from '../../src/core/ui';
 import { uiModal } from '../../src/core/ui';
@@ -184,6 +184,34 @@ describe('bz ui 组件库', () => {
       expect(i.classList.contains('bz-ic')).toBe(true);
       expect(i.classList.contains('bz-ic--star')).toBe(true);
       expect(i.getAttribute('data-icon')).toBe('star');
+    });
+  });
+
+  describe('uiRange 滑条', () => {
+    it('生成 .bz-range + 属性 + onChange 事件', () => {
+      const fn = vi.fn();
+      const r = uiRange({ min: 1, max: 10, step: 0.1, value: 5, onChange: fn });
+      expect(r.type).toBe('range');
+      expect(r.classList.contains('bz-range')).toBe(true);
+      expect(r.min).toBe('1');
+      expect(r.max).toBe('10');
+      expect(r.step).toBe('0.1');
+      expect(r.value).toBe('5');
+      r.value = '7.5';
+      r.dispatchEvent(new Event('change'));
+      expect(fn).toHaveBeenCalledWith(7.5);
+    });
+    it('className 附加 + disabled', () => {
+      const r = uiRange({ className: 'bz-range--lg', disabled: true });
+      expect(r.classList.contains('bz-range--lg')).toBe(true);
+      expect(r.disabled).toBe(true);
+    });
+    it('onInput 实时回调', () => {
+      const fn = vi.fn();
+      const r = uiRange({ onInput: fn });
+      r.value = '3';
+      r.dispatchEvent(new Event('input'));
+      expect(fn).toHaveBeenCalledWith(3);
     });
   });
 

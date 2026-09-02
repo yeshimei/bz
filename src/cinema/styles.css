@@ -147,9 +147,9 @@
 .bz-cinema-form-row > div { flex: 1; }
 .bz-cinema-form-row select.bz-input { width: 100%; }
 .bz-cinema-form-actions { display: flex; justify-content: flex-end; gap: var(--bz-space-sm); margin-top: 14px; }
-/* 评分滑杆 */
+/* 评分滑杆（轨道/滑块组件库 .bz-range；行内仅定布局） */
 .bz-cinema-rating-row { display: flex; align-items: center; gap: 10px; }
-.bz-cinema-rating-row input[type=range] { flex: 1; accent-color: var(--bz-brand); height: 6px; padding: 0; border: none; background: transparent; }
+.bz-cinema-rating-row .bz-range { flex: 1; align-self: center; }
 .bz-cinema-rating-val {
   width: 52px; text-align: center; font-size: var(--bz-font-display); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1);
   font-variant-numeric: tabular-nums;
