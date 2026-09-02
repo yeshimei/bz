@@ -2,6 +2,18 @@
 
 > 进度同步总表（AGENTS.md）。每票一节，状态：计划中 → 进行中 → 门禁 → 已交付。
 
+
+## Ticket 177 — 剪藏本×聚合讯融合（clipbook 域，ADR-0082）
+
+**状态：已交付**
+
+- [x] 需求（用户拍板）：news（聚合讯）+ clipping（剪藏本）融合成单一「剪藏本」工作台——聚合讯未读自动进收件流，中意内容一键「保存到剪藏本」转正式剪藏，全程无窗口跳转；原型 .zcode/ui-prototypes/clipping-p3-siteboxes.html
+- [x] 新域 src/clipbook/：桌面三栏（rail 源列表/中栏条目/右栏阅读）+ 移动双屏（源胶囊列表 + 详情头栏保存钮），组件库消费 + .bz-clip-* 域样式；数据 news.json（不新增段）+ 剪藏目录扫描 + clipbook.json 侧写（reading/savedArchive）
+- [x] 动作闭环：保存 = 写 `归档/网页剪藏/<cleanTitle>.md`（frontmatter 契约 P1-24 + dataviewjs 摘要块）+ 标 news 已处理（read+saved、删 body、stats +1、news:read/saved 域事件——smartcat 行为流三跳依赖保留）；B站视频条目保存分流文献盒（ADR-0068）；移出仅清侧写/news state，目录保留
+- [x] 接线：main.ts `bz-clipbook-open` 替换 `bz-clipping-open`/`bz-news-open`（旧域保留并存待删）；settings-panel clipping 域 schema 指向新域；settings.ts 增 clipbookMobileDefaultFullscreen（默认 true）；build-css 收 src/clipbook/styles.css
+- [x] 测试：clipbook 29 用例（md/scan/data/ui）+ smoke/lifecycle/settings-panel 适配
+- [x] 门禁：tsc 0 错 + 全量 3904 用例绿 + 主仓 build 直出部署（vault 插件目录同步，根 styles.css 含 .bz-clip-*）
+
 ## Ticket 175 — 输入框点击聚焦去强化外轮廓（outline）
 
 **状态：已交付**

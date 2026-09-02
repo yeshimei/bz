@@ -32,8 +32,9 @@
 | memo | memo.json |
 | todo（待办，新域） | memo.json（与 memo 同源；旧 memo 删除后接管） |
 | belongings | belongings.json |
-| clipping | `归档/网页剪藏/*.md` |
-| news | news.json |
+| clipbook（剪藏本，ADR-0082） | news.json（聚合讯未读流）+ `归档/网页剪藏/*.md` + clipbook.json（侧写） |
+| clipping | `归档/网页剪藏/*.md`（旧域，入口已并入 clipbook，待删） |
+| news | news.json（旧域，入口已并入 clipbook，待删） |
 | password | passwords.json |
 | favorites | favorites.json |
 | library | `书库/*.md`、`我的/读书笔记` |

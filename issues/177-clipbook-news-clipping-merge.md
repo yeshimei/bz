@@ -1,7 +1,7 @@
 # 177 · 剪藏本×聚合讯融合（新域 clipbook）
 
-- 状态：ready-for-agent
-- 分支：worktree/clipbook
+- 状态：done（2026-09-03 已交付部署，commit 585b3b8/09a87b6/ad9b1e7）
+- 分支：worktree/clipbook（已合并清理）
 - 来源：.zcode/ui-prototypes/clipping-prototypes/clipping-p3-siteboxes.html（用户拍板三栏融合交互原型）
 - 设计文件：docs/adr/0082-clipbook-news-clipping-merge.md
 
