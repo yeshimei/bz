@@ -31,8 +31,6 @@
 }
 .bz-todo-title { font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
 .bz-todo-head-btns { display: flex; align-items: center; gap: var(--bz-space-xs); }
-/* 关闭钮：桌面卡态隐藏（点遮罩/ESC 关），仅移动真全屏显示 */
-.bz-todo-close { display: none; }
 
 .bz-todo-body { display: flex; flex: 1; min-height: 0; }
 
@@ -196,7 +194,6 @@
     width: 100vw; height: 100vh; max-width: none; max-height: none;
     border-radius: 0; border: none;
   }
-  .bz-todo-close { display: inline-flex; }
   .bz-todo-head { padding-top: max(12px, env(safe-area-inset-top)); }
   .bz-todo-side { display: none; }
   /* 主头行桌面专属（移动端新建走底部录入条） */
