@@ -106,6 +106,32 @@ describe('home UI', () => {
     // 迷你 chips 补齐被移除域
     const miniIds = [...overlay.querySelectorAll('[data-home-mini]')].map((m) => (m as HTMLElement).dataset.homeMini);
     expect(miniIds.includes(firstId)).toBe(true);
+    // 编辑态点卡移除不误触发命令执行
+    expect(executedOf(app)).toEqual([]);
+  });
+
+  it('编辑态：点卡移除不执行命令（编辑态语义优先）', async () => {
+    seedHome(vault);
+    const app = homeApp(vault);
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 0));
+    const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
+    (overlay.querySelector('[data-home-edit]') as HTMLElement).click();
+    (overlay.querySelector('[data-home-card]') as HTMLElement).click();
+    expect(executedOf(app)).toEqual([]); // 无命令执行
+    expect(H.pinned.length).toBe(DEFAULT_PINNED.length - 1);
+  });
+
+  it('移动端形态：有关闭钮（桌面隐藏）', async () => {
+    seedHome(vault);
+    const app = homeApp(vault);
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 0));
+    const overlay = document.querySelector('.bz-home-overlay') as HTMLElement;
+    const closeBtn = overlay.querySelector('[data-home-close]') as HTMLElement;
+    expect(closeBtn).toBeTruthy();
+    // 桌面默认隐藏（CSS 控制，断言 class 存在即可；jsdom 无 media query 生效）
+    expect(closeBtn.classList.contains('bz-icon-btn')).toBe(true);
   });
 
   it('编辑态：加域 pick 钉选（进编辑 → 点加域卡 → 选未钉域）', async () => {
