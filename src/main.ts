@@ -24,8 +24,8 @@ import { openTodoPanel, addTodoItem, unloadTodo } from './todo';
 // 15 域（懒加载：首次命令/事件触发时 ensureXxx 幂等初始化）
 import { openBzPanel, createMemoItem } from './memo';
 import { addBelongingsItem, openBelongings, unloadBelongings } from './belongings';
-import { openArticleView, unloadArticleView } from './clipping';
-import { openNewsReader, unloadNewsReader } from './news';
+// 剪藏本融合域（clipbook，ADR-0082/issue 177）：聚合讯+剪藏本合一；旧 news/clipping 入口命令断开
+import { openClipbook, unloadClipbook } from './clipbook';
 // 保险库（password-vault 域，ADR-0078）：密码本新 UI；旧密码本域入口已断开（bz-pw-* 命令不再注册）
 import { openPasswordVault, unloadPasswordVault } from './password-vault';
 // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图；复用 diary parser 读取，不改写旧数据
@@ -87,10 +87,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 归物本
   { id: 'bz-belongings-add', name: '加物品', icon: 'archive', callback: () => addBelongingsItem(getApp()) },
   { id: 'bz-belongings-open', name: '归物本', icon: 'package', callback: () => openBelongings(getApp()) },
-  // 剪藏本
-  { id: 'bz-clipping-open', name: '剪藏本', icon: 'scissors', callback: () => openArticleView(getApp()) },
-  // 聚合讯
-  { id: 'bz-news-open', name: '聚合讯', icon: 'rss', callback: () => openNewsReader(getApp()) },
+  // 剪藏本（clipbook 融合域，ADR-0082：聚合讯未读流 + 剪藏笔记一体化工作台）
+  { id: 'bz-clipbook-open', name: '剪藏本', icon: 'scissors', callback: () => openClipbook(getApp()) },
   // 保险库（password-vault 域，ADR-0078）：密码本新 UI，替换旧密码本入口（bz-pw-* 已断开）
   { id: 'bz-password-vault-open', name: '保险库', icon: 'key', callback: () => openPasswordVault(getApp()) },
   // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图（真实图片/视频/音频瀑布流）
@@ -324,8 +322,8 @@ export default class BzPlugin extends Plugin {
     unloadMovieReport();
     unloadReadingReport();
     unloadLibrary();
-    unloadNewsReader();
-    unloadArticleView();
+    // 剪藏本融合域（ADR-0082）：卸载统一面板；旧 news/clipping 已无独立挂载
+    unloadClipbook();
     unloadAutoSummary();
     // 文献盒（ADR-0072 迁出：面板 DOM + 模块单例复位）
     unloadLiterature();

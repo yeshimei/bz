@@ -31,14 +31,10 @@ vi.mock('../../src/library', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   unloadLibrary: vi.fn(),
 }));
-vi.mock('../../src/news', async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  unloadNewsReader: vi.fn(),
-}));
-vi.mock('../../src/clipping', async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  unloadArticleView: vi.fn(),
-}));
+vi.mock('../../src/clipbook', async (importOriginal) => {
+  const mod = await importOriginal<any>();
+  return { ...mod, unloadClipbook: vi.fn() };
+});
 vi.mock('../../src/auto-summary', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   unloadAutoSummary: vi.fn(),
@@ -57,8 +53,7 @@ import { unloadFavorites } from '../../src/favorites';
 import { unloadReview } from '../../src/review';
 import { unloadMovie } from '../../src/movie';
 import { unloadLibrary } from '../../src/library';
-import { unloadNewsReader } from '../../src/news';
-import { unloadArticleView } from '../../src/clipping';
+import { unloadClipbook } from '../../src/clipbook';
 import { unloadAutoSummary } from '../../src/auto-summary';
 
 const removedCommands: string[] = [];
@@ -109,8 +104,7 @@ function clearSpies(): void {
     unloadReview,
     unloadMovie,
     unloadLibrary,
-    unloadNewsReader,
-    unloadArticleView,
+    unloadClipbook,
     unloadAutoSummary,
   ].forEach((fn) => vi.mocked(fn).mockClear());
 }
@@ -136,8 +130,8 @@ describe('onunload 卸载接线补全（fix(main)）', () => {
     expect(unloadReview).toHaveBeenCalledTimes(1);
     expect(unloadMovie).toHaveBeenCalledTimes(1);
     expect(unloadLibrary).toHaveBeenCalledTimes(1);
-    expect(unloadNewsReader).toHaveBeenCalledTimes(1);
-    expect(unloadArticleView).toHaveBeenCalledTimes(1);
+    // clipbook 融合域（ADR-0082）：旧 news/clipping unload 由本域接管
+    expect(unloadClipbook).toHaveBeenCalledTimes(1);
     expect(unloadAutoSummary).toHaveBeenCalledTimes(1);
 
     // 卸载接线不影响既有清理：裸注册命令仍全量移除
