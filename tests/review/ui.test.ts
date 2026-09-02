@@ -99,10 +99,10 @@ describe('UIManager 三区队列', () => {
     expect(cols.length).toBe(3);
     const headNames = [...document.querySelectorAll('.bz-q-col-head .name')].map((e) => e.textContent);
     expect(headNames).toEqual(['已逾期', '今天到期', '未来']);
-    // 卡片：A/B 可点（逾期/到期），C 未来禁用；D 已完成不在队列
-    const cards = [...document.querySelectorAll<HTMLButtonElement>('.bz-q-card')];
+    // 卡片（div role=button）：A/B 可点（逾期/到期，无 .no），C 未来禁用（.no）；D 已完成不在队列
+    const cards = [...document.querySelectorAll<HTMLElement>('.bz-q-card')];
     expect(cards.length).toBe(3);
-    const canClick = cards.filter((c) => !c.disabled);
+    const canClick = cards.filter((c) => !c.classList.contains('no'));
     expect(canClick.length).toBe(2);
     // 底部信息行存在（归档/统计文本落位）
     const footer = document.querySelector('.bz-q-footer')!;

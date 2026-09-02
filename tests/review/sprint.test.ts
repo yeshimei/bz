@@ -39,6 +39,8 @@ function setup(opts: {
   queue: ReviewItem[];
   questionsOf: (item: ReviewItem) => Promise<QuizQuestion[]> | QuizQuestion[];
   quiz?: any;
+  /** 模拟 onPassed 返回写盘后的真实排期（默认不返回 → 结果卡用快照回退） */
+  onPassedNextReviewAt?: string;
 }) {
   const host = document.createElement('div');
   const events: string[] = [];
@@ -54,6 +56,7 @@ function setup(opts: {
     },
     onPassed: async (item, rating) => {
       events.push(`passed:${item.name}:${rating}`);
+      return opts.onPassedNextReviewAt;
     },
     onFailed: async (item, rating) => {
       events.push(`failed:${item.name}:${rating}`);
@@ -155,7 +158,9 @@ describe('sprint 答题时序（bug2 回归）', () => {
     await vi.advanceTimersByTimeAsync(CORRECT_JUMP_DELAY_MS + 60);
     // 结果卡（通过态）
     expect(host.querySelector('.bz-result')).toBeTruthy();
-    expect(host.innerHTML).toContain('自动评级');
+    const ratingEl = host.querySelector('.bz-result-rating');
+    expect(ratingEl).toBeTruthy();
+    expect(ratingEl!.textContent).toContain('轻松'); // 全对 → 自动评级 easy
     host.querySelector<HTMLElement>('[data-action="next"]')!.click();
     await vi.advanceTimersByTimeAsync(30);
     // 无剩余 → 结算屏
@@ -166,5 +171,21 @@ describe('sprint 答题时序（bug2 回归）', () => {
     expect(st).toBe('done');
     expect(events.some((e) => e.startsWith('passed:笔记'))).toBe(true);
     expect(events).toContain('exit');
+  });
+
+  it('结果卡「下次」用 onPassed 返回的真实排期（非快照固定值）', async () => {
+    vi.useFakeTimers();
+    const in3d = new Date(Date.now() + 3 * 86400_000).toISOString();
+    const { host } = setup({
+      queue: [mkItem('笔记', 'n.md')],
+      questionsOf: () => [mkQ('唯一题？', [0])],
+      onPassedNextReviewAt: in3d,
+    });
+    await vi.advanceTimersByTimeAsync(30);
+    host.querySelector<HTMLElement>('.bz-sprint-opt[data-i="0"]')!.click(); // 答对
+    await vi.advanceTimersByTimeAsync(CORRECT_JUMP_DELAY_MS + 60);
+    const ratingEl = host.querySelector('.bz-result-rating');
+    expect(ratingEl!.textContent).toContain('3 天后');
+    expect(ratingEl!.textContent).not.toContain('1 天后');
   });
 });
