@@ -18,6 +18,11 @@
 3. 通知正文不带 emoji，新语义先查 `src/core/notice.ts` ICONS。
 4. 样式写 `src/<域>/styles.css`，构建聚合至根 `styles.css`。
 5. UI 设计参照 `docs/ui-design-manual.md`。
+6. **UI 分层依赖（自上而下单向）**：`设计手册 → 样式库 → 组件库 → 域`。
+   - 样式库（`src/core/ui/*.css`，token + 组件样式）**依据**设计手册取值/命名；
+   - 组件库（`src/core/ui/*.ts` 工厂）**只消费**样式库的类与 token，不新造视觉值；
+   - 各域 UI **只准用**组件库工厂 + 样式库类；域需要新视觉时，**先扩样式库/组件库**（共享类），禁止域内另起一套按钮/输入/chip 等基线；
+   - 仅当**既有组件/样式确实无法表达**新功能时，才允许新增组件/样式——新增须回写样式库手册与设计手册。
 
 ## 领域清单（数据均在 CONFIG/STORAGE/）
 | 域 | 数据 |
@@ -52,8 +57,7 @@
 
 - 主分支 `master`，提交遵循 Conventional Commits。
 - worktree 建在主仓库父级外（如 `../.dsh-worktrees/`），从最新 master 分叉。
-- 工作流：worktree 开发 → `pnpm test` 全绿 → 合并回主仓库 → 主仓库 `pnpm run build` 并部署 → 子代理审查（只一次）。
-- 审查不通过则回到原 worktree 修改，重新测试、合并、构建部署（不再二次审查）。
+- 工作流：worktree 开发 → `pnpm test` 全绿 → 合并回主仓库 → 主仓库 `pnpm run build` 并部署。
 - 严禁在 worktree 内构建。
 - 部署后清理 worktree。
 - Spec 驱动：先更新 `.scratch/memo-suite-plugin/spec.md`，任务记 `issues/NN-*.md`，ADR 放 `docs/adr/` 并同步 `CONTEXT.md`。
