@@ -51,8 +51,9 @@
 ## Git / 工作流
 
 - 主分支 `master`，提交遵循 Conventional Commits。
-- 必须走 worktree（从最新 master 分叉）。
-- 合并前必须满足 `pnpm test` 全绿。
-- **严禁在 worktree 内构建**（`pnpm run build`），构建部署须在合并回 master 后的主仓库进行。
-- 合并后清理 worktree + 子代理 review（耐心等待）。
+- worktree 建在主仓库父级外（如 `../.dsh-worktrees/`），从最新 master 分叉。
+- 工作流：worktree 开发 → `pnpm test` 全绿 → 合并回主仓库 → 主仓库 `pnpm run build` 并部署 → 子代理审查（只一次）。
+- 审查不通过则回到原 worktree 修改，重新测试、合并、构建部署（不再二次审查）。
+- 严禁在 worktree 内构建。
+- 部署后清理 worktree。
 - Spec 驱动：先更新 `.scratch/memo-suite-plugin/spec.md`，任务记 `issues/NN-*.md`，ADR 放 `docs/adr/` 并同步 `CONTEXT.md`。

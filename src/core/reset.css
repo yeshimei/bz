@@ -54,7 +54,10 @@
 }
 
 /* ==================== 交互元素基线重置 ==================== */
-/* 按钮：消除主题/核心的渐变背景、阴影、边框、默认内边距与 cursor */
+/* 按钮：消除主题/核心的渐变背景、阴影、边框、默认内边距与 cursor。
+   font-size 用 13px（Obsidian 核心按钮默认字号 var(--font-ui-small)），
+   不用 inherit——bz 弹窗容器字号更大（14-16px），inherit 会把按钮文字撑大；
+   各域有意定制的按钮字号（如头行 14px）仍由域样式覆盖。 */
 [class*="bz-"] button,
 [class*="bz-"] :is(button, [role="button"]),
 #launcher-modal button, #launcher-edit-controls button,
@@ -71,7 +74,7 @@
 #__yin_ying__ button, #__gui_wu_ben__ button,
 #chat-panel button, #__shared_confirm_mask__ button {
   font-family: inherit;
-  font-size: inherit;
+  font-size: 13px;
   line-height: 1.4;
   background: none;
   border: none;
