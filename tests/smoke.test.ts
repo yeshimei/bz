@@ -57,6 +57,7 @@ const registeredCommands: any[] = [];
 const EXPECTED_COMMAND_IDS = [
   'bz-home',
   'bz-memo-open', 'bz-memo-add',
+  'bz-todo-open', 'bz-todo-add',
   'bz-belongings-add', 'bz-belongings-open',
   'bz-clipping-open',
   'bz-news-open',
@@ -136,6 +137,9 @@ describe('bz 骨架冒烟', () => {
     expect(byId('bz-movie-add').name).toBe('加影视');
     expect(byId('bz-cinema-open').name).toBe('影院');
     expect(byId('bz-cinema-add').name).toBe('加影视（影院）');
+    // todo 新域：待办 / 加待办（待办）
+    expect(byId('bz-todo-open').name).toBe('待办');
+    expect(byId('bz-todo-add').name).toBe('加待办（待办）');
     // t2：阅读分析报告 → 阅读数据分析报告
     expect(byId('bz-reading-report-open').name).toBe('阅读数据分析报告');
     // f3：评级四命令去英文后缀、统一「复习（X）」标点
