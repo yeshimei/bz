@@ -37,7 +37,7 @@ export const reviewApp = {
 
   async getQuiz(): Promise<any> {
     if (this._quizOverride) return this._quizOverride;
-    return (await import('../quiz')).quizUI;
+    return (await import('./quiz-core')).quizUI;
   },
 
   ensure(app: App): void {
@@ -215,109 +215,9 @@ export const reviewApp = {
   },
 
   /** 跳转逾期（做题决定难度：开启 → 做题复习；关闭 → 普通复习跳转笔记） */
+  /** 跳转逾期（bz-review-start/overdue 命令入口）：完整复习流程 = startRoundSprint */
   async autoJumpOverdue(): Promise<void> {
-    const app = getApp();
-    this.ensure(app);
-    const dm = this.dataManager!;
-    let items = await dm.loadItems();
-
-    // ticket 098：待重做队列 FIFO 优先（ADR-0044）——全部通过后才进入逾期流程；中途失败/手动结束 → 本次会话终止
-    if (getSettings().forceQuizForReview) {
-      const pend = this.pendingRedoItems(items);
-      if (pend.length) {
-        let quiz: any = null;
-        try {
-          quiz = await this.getQuiz();
-        } catch {
-          /* ignore */
-        }
-        if (quiz && !quiz.ai) {
-          try {
-            const { ensureQuiz } = await import('../quiz');
-            ensureQuiz(app);
-          } catch {
-            /* ignore */
-          }
-        }
-        if (quiz && quiz.ai) {
-          const passed = await this.redoReviewLoop(pend, 0);
-          if (!passed) return;
-          const passedSet = new Set(passed);
-          // 本会话已重做通过的条目从逾期集剔除（防「1 分钟后」短间隔同会话循环）
-          items = items.filter((i) => !passedSet.has(i.filePath));
-        } else {
-          notify('做题家未初始化，跳过待重做队列', { type: 'warning', dedupeKey: 'review-quiz-ai' });
-        }
-      }
-    }
-
-    // ADR-0077：R 目标阈值——FSRS 相位条目当前 R < 阈值视为「提前逾期」（低于该值该复习了），
-    // 即使未到 nextReviewDate 也纳入本轮。默认 0.9。
-    const rThreshold = Number((getSettings() as any).reviewRThreshold) || 0.9;
-    const overdue = items.filter((i) => {
-      if (i.isCompleted || i.isMissing) return false;
-      if (i.isOverdue) return true;
-      // 未逾期但 R < 阈值 → 提前复习（仅 FSRS 相位可算 R）
-      if (i.phase === 'fsrs' && i.stability && i.lastReviewed) {
-        const t = (new Date().getTime() - new Date(i.lastReviewed).getTime()) / 86400000;
-        if (t > 0) {
-          const R = new FSRS(this.currentW()).R(t, i.stability);
-          if (R < rThreshold) return true;
-        }
-      }
-      return false;
-    });
-    if (!overdue.length) {
-      notice('没有逾期笔记', 'success');
-      return;
-    }
-    // ticket 100：每日复习上限（0=不限）——逾期队列截断，剩余留到下次；待重做队列不受限（重做是强制通过路径）
-    const dailyLimit = Number((getSettings() as any).reviewDailyLimit) || 0;
-    // ADR-0077：队列排序 = 置顶优先（互斥于 R 重排）→ R 优先级（逾期队列内按 R 升序）→ nextReviewDate 升序
-    const limited = this.sortOverdue(overdue, dailyLimit);
-    if (limited.length < overdue.length) {
-      notice(`本轮复习 ${limited.length} 篇，剩余 ${overdue.length - limited.length} 篇留到下次`, 'info');
-    }
-
-    // 做题决定难度关闭 → 普通复习（跳转笔记，逐篇等待评级）
-    if (!getSettings().forceQuizForReview) {
-      await this.reviewLoop(limited, 0);
-      return;
-    }
-
-    let quiz: any = null;
-    try {
-      quiz = await this.getQuiz();
-    } catch {
-      /* ignore */
-    }
-    // 未开过做题家时 ai 为 null：先初始化（AI 注入），避免静默降级为普通复习
-    if (quiz && !quiz.ai) {
-      try {
-        const { ensureQuiz } = await import('../quiz');
-        ensureQuiz(app);
-      } catch {
-        /* ignore */
-      }
-    }
-
-    if (quiz && quiz.ai) {
-      const h = notify('正在批量生成题目…', { type: 'progress', dedupeKey: 'quiz-generate' });
-      const batchQuestions = await this.batchGenerateQuestions(limited);
-      const hasAny = Object.values(batchQuestions).some((qs) => (qs as any[]).length > 0);
-      if (!hasAny) {
-        h.setType('warning');
-        h.setMessage('批量出题失败，改用普通复习');
-        await this.reviewLoop(limited, 0);
-      } else {
-        h.setType('success');
-        h.setMessage('题目已生成，开始做题复习');
-        await this.quizReviewLoop(limited, 0, batchQuestions);
-      }
-    } else {
-      notify('做题家未初始化，已改用普通复习', { type: 'warning', dedupeKey: 'review-quiz-ai' });
-      await this.reviewLoop(limited, 0);
-    }
+    await this.startRoundSprint();
   },
 
   /** 准确率 → 难度评级 */
@@ -337,9 +237,7 @@ export const reviewApp = {
           new Date(a.lastReviewed || a.reviewStart).getTime() - new Date(b.lastReviewed || b.reviewStart).getTime()
       );
   },
-
-  /** 重做出题（ADR-0044/Q7-②）：清空旧题 → ensureQuestions 全新生成；失败或空题回退剩余错题
-   *  ticket 099：与 batchGenerateQuestions 对齐补 notePath/_index（renderModal 需要；缺失曾致 split 崩溃） */
+  /** 重做出题（ADR-0044/Q7-②）：清空旧题 → ensureQuestions 全新生成；失败或空题回退剩余错题 */
   async regenerateQuestions(filePath: string): Promise<any[]> {
     const quiz: any = await this.getQuiz();
     if (!quiz || !quiz.ai) return [];
@@ -351,205 +249,7 @@ export const reviewApp = {
     return picked.map((q: any, i: number) => ({ ...q, notePath: filePath, _index: i }));
   },
 
-  /** 待重做队列复习（ADR-0044）：AI 全新出题 → 做题 → 通过仅清标记不写 FSRS；失败 → 「复习此笔记」中断会话
-   *  P1-3：passed 逐步累积，无题跳过项不入返回集合（留在逾期队列可进普通复习） */
-  async redoReviewLoop(items: ReviewItem[], index: number, passed: string[] = []): Promise<string[] | null> {
-    const app = getApp();
-    this.ensure(app);
-    if (index >= items.length) return passed;
-    const quiz: any = await this.getQuiz();
-    const item = items[index];
-    const questions = await this.regenerateQuestions(item.filePath);
-    if (!questions.length) {
-      notice('重做失败：无题目可用，保持待重做', 'warning');
-      return this.redoReviewLoop(items, index + 1, passed);
-    }
-    return new Promise((resolve) => {
-      quiz.startReviewSession({
-        questions,
-        onComplete: async (results: any) => {
-          const rating = this.accuracyToRating(results.accuracy);
-          const failed = rating === 'again' || rating === 'hard';
-          if (!failed) {
-            // 通过：仅清待重做标记，不写任何 FSRS 数据（排期/历史保持首次评级结果——ADR-0044）
-            await this.dataManager!.updateItem(item.filePath, (it) => {
-              it.pendingRedo = false;
-            });
-            await this.applyReviewStyles(app);
-            passed.push(item.filePath);
-          }
-          const popup = quiz.popup;
-          if (!popup) {
-            resolve(failed ? null : await this.redoReviewLoop(items, index + 1, passed));
-            return;
-          }
-          if (failed) {
-            popup.innerHTML = this.buildFailCard(item, results, rating, { showAutoMark: false });
-            await new Promise<void>((resolveClick) => {
-              popup.querySelector('#quiz-review-note')!.onclick = () => {
-                quiz.close();
-                resolveClick();
-              };
-            });
-            const file = app.vault.getAbstractFileByPath(item.filePath);
-            if (file) {
-              const leaf = app.workspace.getLeaf(false);
-              await leaf.openFile(file as TFile);
-            }
-            resolve(null);
-            return;
-          }
-          const isLast = index >= items.length - 1;
-          popup.innerHTML = this.buildPassCard(item, results, rating, {
-            nextLabel: isLast ? '' : `下一篇（${index + 2}/${items.length}）`,
-            showAutoMark: false, // 二次复习不写评级数据，不显示自动标记（用户拍板 2026-08-29）
-          });
-          const action = await new Promise<string>((resolveAction) => {
-            popup.querySelector('#quiz-next-note')!.onclick = () => resolveAction(isLast ? 'end' : 'next'); // 终局「完成复习」= 结束会话
-            const endBtn = popup.querySelector('#quiz-end-review');
-            if (endBtn) endBtn.onclick = () => resolveAction('end');
-          });
-          if (action === 'end') {
-            quiz.endReviewSession(); // 拆 #quiz-mask 收尾（ticket 168：重做终局此前漏调致遮罩残留卡死）
-            resolve(isLast ? passed : null); // 终局「完成复习」= 全部完成仍返回通过集；中途「结束」= 会话中断
-            return;
-          }
-          resolve(await this.redoReviewLoop(items, index + 1, passed));
-        },
-      });
-    });
-  },
-
-  /** 未通过结果卡（ADR-0044）：唯一按钮「复习此笔记」→ 点击关弹窗 + 开笔记 + 会话中断
-   *  ticket s1：文件名经 escapeHtml 转义后拼 HTML（review 结果卡 XSS 修复）
-   *  用户拍板 2026-08-29：二次复习（重做队列）不写评级数据，传 showAutoMark: false 隐藏「自动标记」徽标 */
-  buildFailCard(item: ReviewItem, results: any, rating: Rating, opts?: { showAutoMark?: boolean }): string {
-    const ratingNames: Record<string, string> = { again: '忘了', hard: '困难', good: '一般', easy: '简单' };
-    const tagColors: Record<string, string> = { again: '#ff4757', hard: '#ff9f43', good: '#2ed573', easy: '#7bed9f' };
-    const name = escapeHtml(item.name.replace(/^《|》$/g, ''));
-    const autoMark =
-      opts?.showAutoMark === false
-        ? ''
-        : `<div style="display:inline-block;padding:6px 16px;border-radius:16px;font-size:14px;font-weight:500;background:${tagColors[rating]}22;color:${tagColors[rating]};margin-bottom:20px;">自动标记：${ratingNames[rating]}</div>`;
-    return `
-      <div style="text-align:center;padding:24px;">
-        <div style="font-size:18px;font-weight:600;margin-bottom:16px;color:var(--text-normal);">🎯 ${name}</div>
-        <div style="font-size:40px;margin-bottom:16px;">${results.correct}/${results.total}</div>
-        <div style="font-size:14px;color:var(--text-muted);margin-bottom:12px;">✅ 答对 ${results.correct} 题　❌ 答错 ${results.wrong} 题</div>
-        ${autoMark}
-        <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">本次复习未通过，请打开笔记复习；下次点「开始复习」将为这篇重新做题</div>
-      </div>
-      <button id="quiz-review-note" style="display:block;width:100%;padding:10px;border:none;border-radius:6px;background:var(--interactive-accent);color:var(--text-on-accent);cursor:pointer;font-size:13px;font-weight:500;">复习此笔记</button>
-    `;
-  },
-
-  /** 通过结果卡（重做复用视觉）：下一篇/完成复习；最后一篇（nextLabel 空）只保留「完成复习」按钮
-   *  ticket s1：文件名经 escapeHtml 转义后拼 HTML（review 结果卡 XSS 修复）
-   *  用户拍板 2026-08-29：二次复习（重做队列）不写评级数据，传 showAutoMark: false 隐藏「自动标记」徽标 */
-  buildPassCard(item: ReviewItem, results: any, rating: Rating, opts: { nextLabel?: string; showAutoMark?: boolean }): string {
-    const ratingNames: Record<string, string> = { again: '忘了', hard: '困难', good: '一般', easy: '简单' };
-    const tagColors: Record<string, string> = { again: '#ff4757', hard: '#ff9f43', good: '#2ed573', easy: '#7bed9f' };
-    const name = escapeHtml(item.name.replace(/^《|》$/g, ''));
-    const autoMark =
-      opts?.showAutoMark === false
-        ? ''
-        : `<div style="display:inline-block;padding:6px 16px;border-radius:16px;font-size:14px;font-weight:500;background:${tagColors[rating]}22;color:${tagColors[rating]};margin-bottom:20px;">自动标记：${ratingNames[rating]}</div>`;
-    // 非最后一篇才保留「结束这次复习」按钮；终局结算面板只有「完成复习」一条路（用户拍板 2026-08-29）
-    const endBtn = opts?.nextLabel
-      ? `<button id="quiz-end-review" style="display:block;width:100%;padding:10px;margin-top:8px;border:1px solid var(--background-modifier-border);border-radius:6px;background:var(--background-secondary);color:var(--text-muted);cursor:pointer;font-size:13px;">结束这次复习</button>`
-      : '';
-    return `
-      <div style="text-align:center;padding:24px;">
-        <div style="font-size:18px;font-weight:600;margin-bottom:16px;color:var(--text-normal);">🎯 ${name}</div>
-        <div style="font-size:40px;margin-bottom:16px;">${results.correct}/${results.total}</div>
-        <div style="font-size:14px;color:var(--text-muted);margin-bottom:12px;">✅ 答对 ${results.correct} 题　❌ 答错 ${results.wrong} 题</div>
-        ${autoMark}
-      </div>
-      <button id="quiz-next-note" style="display:block;width:100%;padding:10px;border:none;border-radius:6px;background:var(--interactive-accent);color:var(--text-on-accent);cursor:pointer;font-size:13px;font-weight:500;">${opts.nextLabel || '完成复习'}</button>
-      ${endBtn}
-    `;
-  },
-
-  /** 做题复习循环（源码 L587-657 逐字；经做题会话契约驱动做题家，不直写内部状态） */
-  async quizReviewLoop(items: ReviewItem[], index: number, batchQuestions: Record<string, any[]>): Promise<void> {
-    const app = getApp();
-    const quiz: any = await this.getQuiz();
-
-    if (index >= items.length) {
-      quiz.endReviewSession();
-      notice('所有做题复习已完成', 'success');
-      return;
-    }
-    const item = items[index];
-    const questions = batchQuestions[item.filePath] || [];
-
-    if (!questions.length) {
-      await this.quizReviewLoop(items, index + 1, batchQuestions);
-      return;
-    }
-
-    return new Promise((resolve) => {
-      quiz.startReviewSession({
-        questions,
-        onComplete: async (results: any) => {
-        const rating = this.accuracyToRating(results.accuracy);
-
-        // 首次评级照常写排期/历史（预期判断标准，ADR-0044）；未通过联动待重做标记
-        await this.markReview(item.filePath, rating, { autoPending: true });
-        await this.applyReviewStyles(app);
-
-        // ticket 098：自动评级未通过（忘了/困难）→ 结果卡唯一按钮「复习此笔记」+ 强制打开笔记，本次会话中断
-        if (rating === 'again' || rating === 'hard') {
-          if (quiz.popup) {
-            quiz.popup.innerHTML = this.buildFailCard(item, results, rating);
-            await new Promise<void>((resolveClick) => {
-              quiz.popup!.querySelector('#quiz-review-note')!.onclick = () => {
-                quiz.close();
-                resolveClick();
-              };
-            });
-            const file = app.vault.getAbstractFileByPath(item.filePath);
-            if (file) {
-              const leaf = app.workspace.getLeaf(false);
-              await leaf.openFile(file as TFile);
-            }
-          }
-          resolve();
-          return;
-        }
-
-        // 在弹窗内显示结果（弹窗不关闭；结果卡与重做路径共用 buildPassCard）
-        const popup = quiz.popup;
-        if (popup) {
-          const isLast = index >= items.length - 1;
-          popup.innerHTML = this.buildPassCard(item, results, rating, {
-            nextLabel: isLast ? '' : `下一篇（${index + 2}/${items.length}）`,
-          });
-
-          const action = await new Promise<string>((resolveAction) => {
-            popup.querySelector('#quiz-next-note')!.onclick = () => resolveAction('next');
-            const endBtn = popup.querySelector('#quiz-end-review');
-            if (endBtn) endBtn.onclick = () => resolveAction('end'); // 最后一篇无此按钮
-          });
-
-          if (action === 'end') {
-            quiz.endReviewSession();
-            resolve();
-            return;
-          }
-        }
-
-        resolve();
-        await this.quizReviewLoop(items, index + 1, batchQuestions);
-      },
-    });
-    });
-},
-
-  /** 批量生成题目（返回 {filePath: questions[]} 映射）
-   *  ticket 156：每次逾期复习都出**新题**——先清空该笔记存量题（上轮答错的题残留会再次出现）
-   *  再 ensureQuestions 全新生成（对齐待重做队列 regenerateQuestions 的「先清后生」范式）；
-   *  生成失败时 ensureQuestions 不写入，getQuestionsForNote 读不到题该笔记自然跳过。 */
+  /** 批量生成题目（返回 {filePath: questions[]} 映射）：先清空存量题再 ensureQuestions 全新生成 */
   async batchGenerateQuestions(items: ReviewItem[]): Promise<Record<string, any[]>> {
     const quiz: any = await this.getQuiz();
     if (!quiz || !quiz.ai) {
@@ -557,15 +257,10 @@ export const reviewApp = {
       notify('做题家未初始化（缺少 AI），已改用普通复习', { type: 'warning', dedupeKey: 'review-quiz-ai' });
       return {};
     }
-
-    // 清空本轮各笔记存量题（上轮残留=答错的题，用户拍板下次应出新题）
     for (const item of items) {
       await quiz.manager.saveQuestionsForNote(getApp(), item.filePath, []);
     }
     await quiz.ensureQuestions(items.map((i) => i.filePath));
-
-    // 从 quiz.json 读取所有题目，补上 notePath/_index（renderModal 需要）
-    // 注意：getQuestionsForNote 签名为 (app, notePath)，缺参会导致 notePath=undefined 读不到题目
     const out: Record<string, any[]> = {};
     for (const item of items) {
       const qs = await quiz.manager.getQuestionsForNote(getApp(), item.filePath);
@@ -579,6 +274,180 @@ export const reviewApp = {
     }
     return out;
   },
+
+  /** 单条做题冲刺（点队列到期卡片）：该篇直接进入做题会话 */
+  async startSingleSprint(item: ReviewItem): Promise<void> {
+    const app = getApp();
+    this.ensure(app);
+    const quiz: any = await this.getQuiz();
+    if (quiz && !quiz.ai) {
+      try {
+        const { ensureQuiz } = await import('./quiz-core');
+        ensureQuiz(app);
+      } catch {
+        /* ignore */
+      }
+    }
+    if (!quiz || !quiz.ai) {
+      // 做题家不可用（无 AI）：降级为普通复习（打开笔记等自评）
+      notify('做题家未初始化，改用普通复习', { type: 'warning', dedupeKey: 'review-quiz-ai' });
+      await this.reviewLoop([item], 0);
+      return;
+    }
+    // 单条：取现成题（无题则重生成）；无题 → 会话内跳过提示
+    await this.runSprintSession([item], 'single');
+  },
+
+  /** 开始本轮（队列视图「开始本轮」）：待重做优先 → 逾期队列 → 做题/普通分流 */
+  async startRoundSprint(): Promise<void> {
+    const app = getApp();
+    this.ensure(app);
+    let items = await this.dataManager!.loadItems();
+    const pend = this.pendingRedoItems(items);
+    if (pend.length && getSettings().forceQuizForReview) {
+      const quiz: any = await this.getQuiz();
+      if (quiz && !quiz.ai) {
+        try {
+          const { ensureQuiz } = await import('./quiz-core');
+          ensureQuiz(app);
+        } catch {
+          /* ignore */
+        }
+      }
+      if (quiz && quiz.ai) {
+        await this.runSprintSession(pend, 'redo');
+        // 重做会话结束后重新读盘：pendingRedo 已清的 = 通过集（会话内 updateItem 落盘）
+        const fresh = await this.dataManager!.loadItems();
+        const passedSet = new Set(
+          fresh.filter((i) => pend.some((p) => p.filePath === i.filePath) && !i.pendingRedo).map((i) => i.filePath)
+        );
+        if (passedSet.size) items = fresh.filter((i) => !passedSet.has(i.filePath));
+        else items = fresh; // 无通过也刷新（会话内可能写过排期）
+      } else {
+        notify('做题家未初始化，跳过待重做队列', { type: 'warning', dedupeKey: 'review-quiz-ai' });
+      }
+    }
+
+    // 逾期集合（R 阈值提前逾期 + 每日上限）
+    const overdue = this.dueItems(items);
+    if (!overdue.length) {
+      notice('没有逾期笔记', 'success');
+      return;
+    }
+    const dailyLimit = Number((getSettings() as any).reviewDailyLimit) || 0;
+    const limited = this.sortOverdue(overdue, dailyLimit);
+    if (limited.length < overdue.length) {
+      notice(`本轮复习 ${limited.length} 篇，剩余 ${overdue.length - limited.length} 篇留到下次`, 'info');
+    }
+
+    if (!getSettings().forceQuizForReview) {
+      await this.reviewLoop(limited, 0);
+      return;
+    }
+    let quiz: any = null;
+    try {
+      quiz = await this.getQuiz();
+    } catch {
+      /* ignore */
+    }
+    if (quiz && !quiz.ai) {
+      try {
+        const { ensureQuiz } = await import('./quiz-core');
+        ensureQuiz(app);
+      } catch {
+        /* ignore */
+      }
+    }
+    if (!quiz || !quiz.ai) {
+      notify('做题家未初始化，已改用普通复习', { type: 'warning', dedupeKey: 'review-quiz-ai' });
+      await this.reviewLoop(limited, 0);
+      return;
+    }
+    const h = notify('正在批量生成题目…', { type: 'progress', dedupeKey: 'quiz-generate' });
+    const batchQuestions = await this.batchGenerateQuestions(limited);
+    const hasAny = Object.values(batchQuestions).some((qs) => (qs as any[]).length > 0);
+    if (!hasAny) {
+      h.setType('warning');
+      h.setMessage('批量出题失败，改用普通复习');
+      await this.reviewLoop(limited, 0);
+      return;
+    }
+    h.setType('success');
+    h.setMessage('题目已生成，开始做题复习');
+    await this.runSprintSession(limited, 'round');
+  },
+
+  /** 当前逾期条目（R 阈值提前逾期） */
+  dueItems(items: ReviewItem[]): ReviewItem[] {
+    const rThreshold = Number((getSettings() as any).reviewRThreshold) || 0.9;
+    return items.filter((i) => {
+      if (i.isCompleted || i.isMissing) return false;
+      if (i.isOverdue) return true;
+      if (i.phase === 'fsrs' && i.stability && i.lastReviewed) {
+        const t = (new Date().getTime() - new Date(i.lastReviewed).getTime()) / 86400000;
+        if (t > 0) {
+          const R = new FSRS(this.currentW()).R(t, i.stability);
+          if (R < rThreshold) return true;
+        }
+      }
+      return false;
+    });
+  },
+
+  /**
+   * 统一冲刺会话驱动：把队列交给 UI 层 SprintSession 渲染，本层只提供
+   * 取题/评级写盘回调。会话结束（done/quit/fail）后刷新列表与染色。
+   *  - round/single：通过 → markReview autoPending；未通过 → markReview autoPending + 开笔记
+   *  - redo：通过 → 仅清 pendingRedo（ADR-0044 不写 FSRS）；未通过 → 开笔记（保持待重做）
+   */
+  async runSprintSession(items: ReviewItem[], mode: 'round' | 'single' | 'redo'): Promise<void> {
+    const app = getApp();
+    const { uiManager } = await import('./index');
+    if (!uiManager) return;
+
+    const quiz: any = await this.getQuiz();
+    await uiManager.startSprint({
+      queue: items,
+      mode,
+      quiz,
+      fetchQuestions: async (item) => {
+        // round：题已批量生成（读现成）；single：现成无则重新生成；redo：重新生成
+        const qs = await quiz?.manager?.getQuestionsForNote(app, item.filePath);
+        if (qs && qs.length) {
+          return qs.map((q: any, i: number) => ({ ...q, notePath: item.filePath, _index: i }));
+        }
+        if (!quiz?.ai) return null;
+        const fresh = await this.regenerateQuestions(item.filePath);
+        return fresh.length ? fresh : null;
+      },
+      onPassed: async (item, rating, entry) => {
+        if (mode === 'redo') {
+          await this.dataManager!.updateItem(item.filePath, (it) => {
+            it.pendingRedo = false;
+          });
+        } else {
+          await this.markReview(item.filePath, rating as Rating, { autoPending: true });
+        }
+        await this.applyReviewStyles(app);
+      },
+      onFailed: async (item, rating, entry) => {
+        if (mode !== 'redo') {
+          await this.markReview(item.filePath, rating as Rating, { autoPending: true });
+          await this.applyReviewStyles(app);
+        }
+        // 打开原文（复习此笔记语义）
+        const file = app.vault.getAbstractFileByPath(item.filePath);
+        if (file) {
+          const leaf = app.workspace.getLeaf(false);
+          await leaf.openFile(file as TFile);
+        }
+      },
+    });
+    // 会话结束：回队列 + 染色 + 通知（done 全清）
+    await this.refreshPanel();
+    await this.applyReviewStyles(app);
+  },
+
 
   /** 顺序复习循环（源码 L686-709 逐字） */
   async reviewLoop(overdueNotes: ReviewItem[], index: number): Promise<void> {
