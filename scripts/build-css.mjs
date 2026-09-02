@@ -24,6 +24,7 @@ const PLUGIN_DIR = "E:/Obsidian/叫我包仔/.obsidian/plugins/bz";
 
 // 聚合顺序清单（勿随意调整；新增域样式文件时在对应位置插入）
 const SOURCES = [
+  "src/core/reset.css",
   "src/core/styles.css",
   "src/diary/styles.css",
   "src/diary-wall/styles.css",
