@@ -7680,7 +7680,6 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 /* ==================== 面板容器（既有契约） ==================== */
 #review-mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--background-modifier-cover); backdrop-filter: blur(2px); }
 #review-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--background-primary); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 94%; max-width: 900px; max-height: 84vh; flex-direction: column; animation: slideUp 0.3s ease-out; }
-#review-popup button:hover { background: var(--background-secondary); }
 @media (max-width: 768px) {
   #review-popup { animation: none !important; width: 100%; max-width: 100%; max-height: 100%; }
 }
@@ -7700,13 +7699,14 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-q-head .tools { display: flex; align-items: center; gap: 4px; }
 .bz-q-head .bz-icon-btn { width: 26px; height: 26px; }
 
-/* 工具行：搜索 */
-.bz-q-tools { padding: 4px 20px 6px; flex-shrink: 0; }
-.bz-q-search { display: flex; align-items: center; gap: 6px; padding: 0 10px; height: 28px; border-radius: 8px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-faint); }
+/* 工具行：搜索（限宽不铺满；胶囊；悬停/聚焦保持底色不变白） */
+.bz-q-tools { display: flex; align-items: center; padding: 4px 20px 6px; flex-shrink: 0; }
+.bz-q-search { flex: 0 1 300px; display: flex; align-items: center; gap: 6px; padding: 0 12px; height: 28px; border-radius: 999px; border: 1px solid var(--background-modifier-border); background: var(--background-secondary); color: var(--text-faint); }
+.bz-q-search:hover, .bz-q-search:focus-within { background: var(--background-secondary); }
 .bz-q-search .bz-q-ic { width: 13px; height: 13px; flex-shrink: 0; }
-.bz-q-search input { flex: 1; background: none; border: none; outline: none; font-size: 13px; color: var(--text-normal); min-width: 0; }
-.bz-q-search .kbd { font-size: 10px; color: var(--text-faint); border: 1px solid var(--background-modifier-border); border-radius: 4px; padding: 0 4px; }
-.bz-q-search.typing { border-color: var(--interactive-accent); }
+.bz-q-search input { flex: 1; background: transparent; border: none; outline: none; font-size: 13px; color: var(--text-normal); min-width: 0; font-family: inherit; }
+.bz-q-search .kbd { font-size: 10px; color: var(--text-faint); border: 1px solid var(--background-modifier-border); border-radius: 4px; padding: 0 4px; flex-shrink: 0; }
+.bz-q-search.typing { border-color: var(--interactive-accent); background: var(--background-secondary); }
 
 /* 开始本轮条 */
 .bz-q-strip { display: flex; align-items: center; gap: 8px; padding: 6px 20px 10px; flex-shrink: 0; }
@@ -7725,18 +7725,18 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-q-col.warn .cnt { color: var(--color-orange, #ff9f43); }
 .bz-q-col.future .cnt { color: var(--text-muted); }
 .bz-q-col-head .name { font-size: 13px; font-weight: 600; color: var(--text-normal); }
-.bz-q-col-head .sub { font-size: 11px; color: var(--text-faint); }
 
 /* 卡片（条目即按钮） */
-.bz-q-card { display: block; width: 100%; text-align: left; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; cursor: pointer; transition: border-color .15s, box-shadow .15s; box-shadow: none !important; }
-.bz-q-card:hover { border-color: var(--interactive-accent); }
+.bz-q-card { display: block; width: 100%; text-align: left; background: var(--background-primary); border: 1px solid var(--background-modifier-border); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; cursor: pointer; transition: border-color .15s, box-shadow .15s; box-shadow: none !important; box-sizing: border-box; min-width: 0; }
+.bz-q-card:hover { border-color: var(--interactive-accent); background: var(--background-primary); }
 .bz-q-card:disabled { cursor: default; opacity: .72; }
+.bz-q-card:disabled:hover { border-color: var(--background-modifier-border); background: var(--background-primary); }
 .bz-q-card.danger { border-left: 3px solid var(--color-red, #ff4757); }
 .bz-q-card .bz-q-card-top { display: flex; align-items: center; gap: 6px; justify-content: space-between; }
 .bz-q-card-title { font-size: 13px; color: var(--text-normal); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bz-q-card.done .bz-q-card-title s { color: var(--text-faint); }
 .bz-q-card-stage { font-size: 11px; color: var(--text-faint); flex-shrink: 0; }
-.bz-q-card-meta { display: flex; align-items: center; gap: 4px; margin-top: 5px; flex-wrap: wrap; }
+.bz-q-card-meta { display: flex; align-items: center; gap: 4px; margin-top: 5px; flex-wrap: wrap; min-width: 0; }
 
 /* 标签 */
 .bz-q-tag { font-size: 10px; line-height: 1; padding: 2px 7px; border-radius: 10px; background: var(--background-modifier-border); color: var(--text-muted); white-space: nowrap; }
@@ -7750,13 +7750,12 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-q-tag.is-future { color: var(--text-faint); }
 .bz-q-hint { font-size: 12px; color: var(--text-faint); text-align: center; padding: 18px 8px; }
 
-/* ==================== 底部信息行（归档/统计的非按钮落位） ==================== */
+/* ==================== 底部信息行（归档/统计的非按钮落位，整行可点无引导小字） ==================== */
 .bz-q-footer { display: flex; align-items: center; gap: 10px; padding: 8px 20px 12px; border-top: 1px solid var(--background-modifier-border); flex-shrink: 0; }
-.bz-q-fitem { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--text-faint); cursor: pointer; user-select: none; }
+.bz-q-fitem { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-faint); cursor: pointer; user-select: none; }
 .bz-q-fitem .bz-q-ic { width: 12px; height: 12px; }
 .bz-q-fitem .lbl b { color: var(--text-muted); font-weight: 600; }
-.bz-q-fitem .act { color: var(--text-muted); }
-.bz-q-fitem:hover .lbl, .bz-q-fitem:hover .act { color: var(--text-normal); }
+.bz-q-fitem:hover .lbl, .bz-q-fitem:hover b { color: var(--text-normal); }
 .bz-q-footer .sep { width: 1px; height: 12px; background: var(--background-modifier-border); }
 
 /* ==================== 整窗冲刺（bz-sprint-*） ==================== */
