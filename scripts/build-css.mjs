@@ -37,6 +37,7 @@ const SOURCES = [
   "src/todo/styles.css",
   "src/news/styles.css",
   "src/clipping/styles.css",
+  "src/clipbook/styles.css",
   "src/password/styles.css",
   "src/password-vault/styles.css",
   "src/favorites/styles.css",
