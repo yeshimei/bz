@@ -82,18 +82,18 @@ describe('cinema quickAddWant / showResultWindow', () => {
 
   it('结果窗：渲染推荐卡片 + 加入想看按钮 + 遮罩关闭', async () => {
     const app = M.appRef as any;
-    showResultWindow(app, '🤖 AI 荐片', [{ title: '星际穿越', year: '2014', director: '诺兰', type: '电影', reason: '你偏爱诺兰' }]);
-    const mask = document.querySelector('.bz-cinema-mask') as HTMLElement;
+    showResultWindow(app, 'AI 荐片', [{ title: '星际穿越', year: '2014', director: '诺兰', type: '电影', reason: '你偏爱诺兰' }]);
+    const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
     expect(mask).toBeTruthy();
     expect(mask.textContent).toContain('星际穿越');
     expect(mask.textContent).toContain('诺兰');
     // 点加入想看
-    (mask.querySelector('[data-rec-name]') as HTMLElement).click();
+    (mask.querySelector('.bz-cinema-rec-add') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 0));
     expect((app.vault as any).files.get('我的/影视/《星际穿越》.md')).toContain('评分: -1');
     // 遮罩关闭
     mask.click();
-    expect(document.querySelector('.bz-cinema-mask')).toBeNull();
+    expect(document.querySelector('.bz-overlay-mask')).toBeNull();
   });
 });
 
@@ -124,7 +124,7 @@ describe('cinema runAIRecommend（动态通知模式）', () => {
     await promise;
     expect(document.querySelector('.bz-notice--progress')).toBeNull();
     expect((document.querySelector('.bz-notice--success') as HTMLElement).textContent).toContain('AI 分析完成');
-    const mask = document.querySelector('.bz-cinema-mask') as HTMLElement;
+    const mask = document.querySelector('.bz-overlay-mask') as HTMLElement;
     expect(mask.textContent).toContain('AI 荐片');
     expect(mask.textContent).toContain('星际穿越');
   });
@@ -138,6 +138,6 @@ describe('cinema runAIRecommend（动态通知模式）', () => {
     (requestUrl as any).mockResolvedValue({ status: 200, text: JSON.stringify({ choices: [{ message: { content: 'not json' } }] }) });
     await runAIRecommend(M.appRef as any);
     expect((document.querySelector('.bz-notice--error') as HTMLElement).textContent).toContain('AI 分析失败');
-    expect(document.querySelector('.bz-cinema-mask')).toBeNull();
+    expect(document.querySelector('.bz-overlay-mask')).toBeNull();
   });
 });

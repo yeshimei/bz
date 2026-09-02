@@ -275,11 +275,12 @@ function softBarHTML(entries: any[], color: string): string {
     </div>`).join('');
 }
 
-function sectionHTML(title: string, body: string, accent?: string): string {
+function sectionHTML(title: string, body: string, accent?: string, icon?: string): string {
   const bar = accent || '#D6E4FF';
   return `<div style="margin-bottom:20px;padding:14px 14px 12px;background:var(--bz-cinema-card);border-radius:12px;border:1px solid var(--bz-cinema-border);">
     <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:.92rem;margin-bottom:12px;">
       <span style="width:4px;height:14px;border-radius:2px;background:${bar};flex-shrink:0;"></span>
+      ${icon ? `<i data-lucide="${icon}" class="bz-ic bz-ic--sm" style="color:var(--bz-cinema-muted)"></i>` : ''}
       <span>${title}</span>
     </div>
     ${body}
@@ -349,23 +350,23 @@ export function buildAnalysisHTML(): string {
       ${statCardHTML('平均评分（10分制）', avgRating, 4)}
       ${statCardHTML('平均豆瓣', avgDouban, 5)}
     </div>
-    ${sectionHTML('🎬 类型分布', donutChartHTML(typeEntries, typeColors, data.total), '#FFE5CC')}
-    ${sectionHTML('📅 年度观影趋势', barChartHTML(yearEntries, { color: '#D6E4FF' }), '#D6E4FF')}
-    ${sectionHTML('🕰️ 片龄画像', statInlineHTML([`平均片龄 ${data.avgAge} 年`, `片龄≥10年 ${data.ageBuckets['≥10年']} 部`]) + softBarHTML([{ label: '当年', value: data.ageBuckets['当年'] }, { label: '1-3年', value: data.ageBuckets['1-3年'] }, { label: '4-10年', value: data.ageBuckets['4-10年'] }, { label: '≥10年', value: data.ageBuckets['≥10年'] }], '#E6DFF5') + '<div style="margin-top:10px;">' + barChartHTML(data.eraEntries, { color: '#CDF0EA' }) + '</div>', '#E6DFF5')}
-    ${sectionHTML('🗓️ 月度观影分布', barChartHTML(monthEntries, { color: '#CDF0EA', highlight: curMonth }), '#CDF0EA')}
-    ${sectionHTML('📆 观影节奏', statInlineHTML([`月均 ${data.monthFreq} 部`, `周末 ${data.weekdays[0] + data.weekdays[6]} 部 (${data.total ? Math.round((data.weekdays[0] + data.weekdays[6]) / data.total * 100) : 0}%)`]) + barChartHTML(data.weekdayEntries, { color: '#D6E4FF' }) + (data.yearTrend.length ? '<div style="margin-top:10px;">' + statInlineHTML(data.yearTrend.map((t: any) => `${t.label} ${t.value >= 0 ? '+' : ''}${t.value}%`)) + '</div>' : ''), '#D6E4FF')}
-    ${sectionHTML('⭐ 个人评分分布', barChartHTML(bucketEntries, { color: '#FADDE1' }), '#FADDE1')}
-    ${sectionHTML('📈 评分趋势（个人10分制）', barChartHTML(data.yearRatingEntries, { color: '#FFE5CC' }), '#FFE5CC')}
-    ${sectionHTML('⚖️ 打分习惯（个人−豆瓣）', statInlineHTML([`平均差值 ${data.avgDiff >= 0 ? '+' : ''}${data.avgDiff}（个人−豆瓣）`]) + '<div style="font-weight:600;font-size:.8rem;margin:6px 0 4px;">💎 宝藏片（个人≥9 豆瓣&lt;8）</div>' + ratingCompareListHTML(data.treasure) + '<div style="font-weight:600;font-size:.8rem;margin:10px 0 4px;">🌧️ 失望榜（个人≤4 豆瓣≥8.5）</div>' + ratingCompareListHTML(data.disappoint), '#FADDE1')}
-    ${sectionHTML('🎭 题材偏好 TOP10', softBarHTML(topN(data.genres, 10), '#E6DFF5'), '#E6DFF5')}
-    ${sectionHTML('🌍 制片国家/地区 TOP10', softBarHTML(topN(data.countries, 10), '#D6E4FF'), '#D6E4FF')}
-    ${sectionHTML('🎥 最爱导演 TOP10', softBarHTML(topN(data.directors, 10), '#D8F3DC'), '#D8F3DC')}
-    ${sectionHTML('👥 最爱主演 TOP10', softBarHTML(topN(data.actors, 10), '#FADDE1'), '#FADDE1')}
-    ${sectionHTML('❤️ 真爱重复', statInlineHTML([`导演≥3部 ${data.dirRepeat} 人`, `主演≥3部 ${data.actRepeat} 人`]) + softBarHTML([{ label: '导演≥3部', value: data.dirRepeat }, { label: '主演≥3部', value: data.actRepeat }], '#D8F3DC'), '#D8F3DC')}
-    ${sectionHTML('💬 影评关键词', statInlineHTML([`有影评 ${data.reviewCount} 篇 (${data.reviewRate}%)`, `平均 ${data.reviewAvgChars} 字`]) + (data.keywordEntries.length ? data.keywordEntries.map(([k, v]) => `<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:.72rem;background:#E6DFF5;color:#3D4456;margin:2px;">${k} ${v}</span>`).join('') : emptyHTML()), '#E6DFF5')}
-    ${sectionHTML('🏆 我的高分 TOP10', topListHTML(data.topRated, true), '#FFE5CC')}
-    ${sectionHTML('🔗 系列追踪', statInlineHTML([`追了 ${data.seriesList.length} 个系列（≥2部）`]) + (data.seriesList.length ? data.seriesList.map(([k, v]: any, i: number) => `<div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--bz-cinema-border);"><span style="width:18px;flex-shrink:0;font-size:.72rem;color:var(--bz-cinema-muted);text-align:center;">${i + 1}</span><span style="flex:1;font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">《${k}》</span><span style="font-size:.78rem;font-weight:600;color:var(--bz-cinema-accent);flex-shrink:0;">${v} 部</span></div>`).join('') : emptyHTML()), '#D6E4FF')}
-    ${sectionHTML('📌 想看清单（' + (data.wantTotal ?? data.wantList.length) + '）' + (data.wantAvgDouban !== '—' ? ' · 均豆瓣 ' + data.wantAvgDouban : ''), topListHTML(data.wantList, false) + (Object.keys(data.wantTags).length ? '<div style="margin-top:8px;">' + Object.entries(data.wantTags).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([t, c]) => `<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:.72rem;background:var(--bz-cinema-panel);color:var(--bz-cinema-text);border:1px solid var(--bz-cinema-border);margin:2px;">${t} ${c}</span>`).join('') + '</div>' : ''), '#FFF3C4')}
+    ${sectionHTML('类型分布', donutChartHTML(typeEntries, typeColors, data.total), '#FFE5CC', 'pie-chart')}
+    ${sectionHTML('年度观影趋势', barChartHTML(yearEntries, { color: '#D6E4FF' }), '#D6E4FF', 'calendar')}
+    ${sectionHTML('片龄画像', statInlineHTML([`平均片龄 ${data.avgAge} 年`, `片龄≥10年 ${data.ageBuckets['≥10年']} 部`]) + softBarHTML([{ label: '当年', value: data.ageBuckets['当年'] }, { label: '1-3年', value: data.ageBuckets['1-3年'] }, { label: '4-10年', value: data.ageBuckets['4-10年'] }, { label: '≥10年', value: data.ageBuckets['≥10年'] }], '#E6DFF5') + '<div style="margin-top:10px;">' + barChartHTML(data.eraEntries, { color: '#CDF0EA' }) + '</div>', '#E6DFF5')}
+    ${sectionHTML('月度观影分布', barChartHTML(monthEntries, { color: '#CDF0EA', highlight: curMonth }), '#CDF0EA', 'calendar-days')}
+    ${sectionHTML('观影节奏', statInlineHTML([`月均 ${data.monthFreq} 部`, `周末 ${data.weekdays[0] + data.weekdays[6]} 部 (${data.total ? Math.round((data.weekdays[0] + data.weekdays[6]) / data.total * 100) : 0}%)`]) + barChartHTML(data.weekdayEntries, { color: '#D6E4FF' }) + (data.yearTrend.length ? '<div style="margin-top:10px;">' + statInlineHTML(data.yearTrend.map((t: any) => `${t.label} ${t.value >= 0 ? '+' : ''}${t.value}%`)) + '</div>' : ''), '#D6E4FF', 'activity')}
+    ${sectionHTML('个人评分分布', barChartHTML(bucketEntries, { color: '#FADDE1' }), '#FADDE1', 'star')}
+    ${sectionHTML('评分趋势（个人10分制）', barChartHTML(data.yearRatingEntries, { color: '#FFE5CC' }), '#FFE5CC', 'trending-up')}
+    ${sectionHTML('打分习惯（个人−豆瓣）', statInlineHTML([`平均差值 ${data.avgDiff >= 0 ? '+' : ''}${data.avgDiff}（个人−豆瓣）`]) + '<div style="font-weight:600;font-size:.8rem;margin:6px 0 4px;">宝藏片（个人≥9 豆瓣&lt;8）</div>' + ratingCompareListHTML(data.treasure) + '<div style="font-weight:600;font-size:.8rem;margin:10px 0 4px;">失望榜（个人≤4 豆瓣≥8.5）</div>' + ratingCompareListHTML(data.disappoint), '#FADDE1', 'list')}
+    ${sectionHTML('题材偏好 TOP10', softBarHTML(topN(data.genres, 10), '#E6DFF5'), '#E6DFF5', 'tags')}
+    ${sectionHTML('制片国家/地区 TOP10', softBarHTML(topN(data.countries, 10), '#D6E4FF'), '#D6E4FF', 'globe')}
+    ${sectionHTML('最爱导演 TOP10', softBarHTML(topN(data.directors, 10), '#D8F3DC'), '#D8F3DC', 'film')}
+    ${sectionHTML('最爱主演 TOP10', softBarHTML(topN(data.actors, 10), '#FADDE1'), '#FADDE1', 'users')}
+    ${sectionHTML('真爱重复', statInlineHTML([`导演≥3部 ${data.dirRepeat} 人`, `主演≥3部 ${data.actRepeat} 人`]) + softBarHTML([{ label: '导演≥3部', value: data.dirRepeat }, { label: '主演≥3部', value: data.actRepeat }], '#D8F3DC'), '#D8F3DC')}
+    ${sectionHTML('影评关键词', statInlineHTML([`有影评 ${data.reviewCount} 篇 (${data.reviewRate}%)`, `平均 ${data.reviewAvgChars} 字`]) + (data.keywordEntries.length ? data.keywordEntries.map(([k, v]) => `<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:.72rem;background:#E6DFF5;color:#3D4456;margin:2px;">${k} ${v}</span>`).join('') : emptyHTML()), '#E6DFF5', 'message-square')}
+    ${sectionHTML('我的高分 TOP10', topListHTML(data.topRated, true), '#FFE5CC', 'trophy')}
+    ${sectionHTML('系列追踪', statInlineHTML([`追了 ${data.seriesList.length} 个系列（≥2部）`]) + (data.seriesList.length ? data.seriesList.map(([k, v]: any, i: number) => `<div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--bz-cinema-border);"><span style="width:18px;flex-shrink:0;font-size:.72rem;color:var(--bz-cinema-muted);text-align:center;">${i + 1}</span><span style="flex:1;font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">《${k}》</span><span style="font-size:.78rem;font-weight:600;color:var(--bz-cinema-accent);flex-shrink:0;">${v} 部</span></div>`).join('') : emptyHTML()), '#D6E4FF', 'link')}
+    ${sectionHTML('想看清单（' + (data.wantTotal ?? data.wantList.length) + '）' + (data.wantAvgDouban !== '—' ? ' · 均豆瓣 ' + data.wantAvgDouban : ''), topListHTML(data.wantList, false) + (Object.keys(data.wantTags).length ? '<div style="margin-top:8px;">' + Object.entries(data.wantTags).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([t, c]) => `<span style="display:inline-block;padding:2px 10px;border-radius:10px;font-size:.72rem;background:var(--bz-cinema-panel);color:var(--bz-cinema-text);border:1px solid var(--bz-cinema-border);margin:2px;">${t} ${c}</span>`).join('') + '</div>' : ''), '#FFF3C4', 'bookmark')}
     <p style="text-align:center;font-size:.68rem;color:var(--bz-cinema-muted);margin-top:16px;">个人评分与豆瓣同为 10 分制，可直接对比</p>
   `;
 }
