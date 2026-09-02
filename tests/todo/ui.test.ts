@@ -193,6 +193,12 @@ describe('todo 编辑器', () => {
     const editor = document.querySelector('.bz-todo-editor') as HTMLElement;
     // 场景平铺 = uiChoice（.bz-choice），选中 = 品牌（非黑）
     expect(editor.querySelectorAll('.bz-choice-btn').length).toBeGreaterThanOrEqual(8); // 6 场景 + 2 优先级
+    // 平铺前无彩色圆点（.bz-choice-dot 不存在）
+    expect(editor.querySelector('.bz-choice-dot')).toBeNull();
+    // 第二输入框在场景平铺上方（第一个 extra 的 DOM 位置先于第一个 .bz-choice）
+    const extraEl = editor.querySelector('.bz-todo-extra') as HTMLElement;
+    const choiceEl = editor.querySelector('.bz-choice') as HTMLElement;
+    expect(extraEl.compareDocumentPosition(choiceEl) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     // 默认场景 = 第一个（剪藏）→ 标题框显示
     expect(editor.querySelector('.bz-todo-extra-on input')?.getAttribute('placeholder')).toBe('标题（可选）');
     // 无关闭按钮
