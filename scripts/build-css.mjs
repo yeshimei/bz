@@ -12,9 +12,7 @@
 //
 // 拼接顺序 = 原 styles.css 的文档顺序（共享节前置，域间相对次序保持不变，
 // 级联行为与拆分前一致；跨节选择器经审计均为 !important 支配或互不冲突的复合选择器）。
-// 顺序说明：vendor/normalize.css（官方全局 reset）置顶 → reset.css（bz 专属，
-// 压 Obsidian 核心对自绘 UI 的渗透，置于 normalize 之后可覆盖其部分默认）
-// → 共享层 → 各域样式。
+// 顺序说明：vendor/normalize.css（官方全局 reset）置顶 → 共享层 → 各域样式。
 
 import fs from "node:fs";
 import path from "node:path";
@@ -28,7 +26,6 @@ const PLUGIN_DIR = "E:/Obsidian/叫我包仔/.obsidian/plugins/bz";
 // 聚合顺序清单（勿随意调整；新增域样式文件时在对应位置插入）
 const SOURCES = [
   "src/core/vendor/normalize.css",
-  "src/core/reset.css",
   "src/core/styles.css",
   "src/diary/styles.css",
   "src/diary-wall/styles.css",
