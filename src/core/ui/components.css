@@ -298,6 +298,115 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-choice-btn.is-on:hover { background: var(--bz-brand-hover); }
 .bz-choice-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
+/* ═══════════ 开关 .bz-sw（switch.ts） ═══════════
+   设置/表单行的滑块开关（40×22）：关 = 轨道中性、开 = 品牌实底。
+   单元素 + ::after 滑块（span role=switch，键盘 Space/Enter 开合）。 */
+.bz-sw {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+  vertical-align: middle;
+  cursor: pointer;
+  border-radius: var(--bz-radius-full);
+  background: var(--bz-surface-4);
+  border: 1px solid var(--bz-border-strong);
+  transition: background-color var(--bz-dur-fast) ease, border-color var(--bz-dur-fast) ease;
+}
+.bz-sw::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--bz-thumb);
+  box-shadow: var(--bz-shadow-sm);
+  transition: transform var(--bz-dur-fast) ease;
+}
+.bz-sw:hover { border-color: var(--bz-border-hover); }
+.bz-sw.on { background: var(--bz-brand); border-color: var(--bz-brand); }
+.bz-sw.on:hover { background: var(--bz-brand-hover); }
+.bz-sw.on::after { transform: translateX(18px); }
+.bz-sw:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: 2px; }
+
+/* ═══════════ 下拉 .bz-select（select.ts） ═══════════
+   单行单选下拉（设置行等控件区）：触发元素 + 绝对定位选项菜单
+   （.bz-select-menu，surface-4 浮层）。行内放得下的短选项组建议
+   直接 .bz-choice 平铺；本组件供选项多/文案长场景。 */
+.bz-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 160px;
+  height: var(--bz-control-h);
+  padding: 0 10px;
+  border-radius: var(--bz-radius-sm);
+  border: 1px solid var(--bz-border-strong);
+  background: var(--bz-surface-1);
+  color: var(--bz-text-1);
+  font-size: var(--bz-font-label);
+  line-height: var(--bz-leading-tight);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color var(--bz-dur-fast) ease, box-shadow var(--bz-dur-fast) ease;
+}
+.bz-select:hover { border-color: var(--bz-border-hover); }
+.bz-select.open { border-color: var(--bz-brand); box-shadow: 0 0 0 2px var(--bz-brand-soft); }
+.bz-select-val {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+.bz-select-car { color: var(--bz-text-3); width: 12px; height: 12px; flex-shrink: 0; }
+.bz-select-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 60;
+  min-width: 100%;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 4px;
+  background: var(--bz-surface-4);
+  border: 1px solid var(--bz-border);
+  border-radius: var(--bz-radius-sm);
+  box-shadow: var(--bz-shadow-md);
+}
+.bz-select-item {
+  appearance: none;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: var(--bz-font-label);
+  font-family: inherit;
+  color: var(--bz-text-1);
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+.bz-select-item > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bz-select-item:hover { background: var(--bz-surface-hover); }
+.bz-select-item.is-on { color: var(--bz-brand); font-weight: var(--bz-weight-semibold); }
+.bz-select-item-ck { width: 12px; height: 12px; flex-shrink: 0; visibility: hidden; }
+.bz-select-item.is-on .bz-select-item-ck { visibility: visible; }
+
 /* ═══════════ 媒体灯箱 .bz-lightbox（lightbox.ts） ═══════════ */
 .bz-lightbox {
   position: fixed;
@@ -388,7 +497,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 /* ═══════════ 滑条 .bz-range（slider.ts） ═══════════
    自绘外观抗 Obsidian 全局 range 重置：appearance:none 时
    原生 track 不绘制，必须有显式 background + thumb 伪元素。
-   形制对齐已验证的 settings-panel .bz-sp-range（无 runnable-track）。 */
+   形制对齐设置行滑块观感（无 runnable-track）。 */
 .bz-range {
   -webkit-appearance: none;
   appearance: none;

@@ -14,6 +14,7 @@ export type {
   BzTone, BzSize, BzIconName,
   BzButtonOpts, BzIconBtnOpts, BzChipOpts,
   BzInputOpts, BzFieldOpts, BzEmptyOpts, BzSegOpts, BzRangeOpts, BzChoiceOpts,
+  BzSwitchOpts, BzSelectOpts,
 } from './types';
 
 // 组件工厂（每组件一文件）
@@ -25,6 +26,8 @@ export { uiRange } from './slider';
 export { uiEmpty } from './empty';
 export { uiSegmented } from './segmented';
 export { uiChoice } from './choice';
+export { uiSwitch } from './switch';
+export { uiSelect } from './select';
 export { openLightbox, closeLightbox } from './lightbox';
 export type { BzLightboxOpts } from './lightbox';
 export { uiModal } from './modal';
