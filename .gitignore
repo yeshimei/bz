@@ -7,3 +7,4 @@ viz/
 .scratch/
 x.dsh-worktrees/
 .dsh-worktrees/
+.zcode/
