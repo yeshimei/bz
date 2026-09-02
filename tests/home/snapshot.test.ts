@@ -42,8 +42,15 @@ describe('home 快照', () => {
     }
   });
 
-  it('NO_STAT_DOMAINS 覆盖 4 个纯工具域（attach/encrypt/smartcat/settings）', () => {
-    expect(NO_STAT_DOMAINS.size).toBe(4);
+  it('只读契约：空库快照不创建任何域数据文件（无写盘副作用）', async () => {
+    const filesBefore = new Set(vault.files.keys());
+    await collectHomeSnapshot(mockAppWithVault(vault) as any);
+    const created = [...vault.files.keys()].filter((p) => !filesBefore.has(p));
+    expect(created).toEqual([]);
+  });
+
+  it('NO_STAT_DOMAINS 覆盖纯工具域（attach/encrypt/smartcat/settings/wall/vault）', () => {
+    expect(NO_STAT_DOMAINS.size).toBe(6);
     for (const id of NO_STAT_DOMAINS) {
       expect(DOMAINS.some((d) => d.id === id)).toBe(true);
     }

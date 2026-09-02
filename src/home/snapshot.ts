@@ -1,28 +1,34 @@
 /**
- * 内容首页（home 域）跨域统计快照：为每张域卡读取真实数据（只读，不调任何
- * 带 DOM/轮询/通知副作用的 ensure/open；读失败一律静默回落默认，保证首页可开）。
+ * 内容首页（home 域）跨域统计快照：为每张域卡读取真实数据。
  *
- * 数据源逐域对齐（直连各域 data/stats 纯函数层与常量；目录取设置字符串，
- * 因各域模块常量可能尚未被该域 apply 覆写——目录不存在一律 null → 计数回落默认）：
+ * 只读契约（重点）：
+ *  - 不调任何带 DOM/轮询/通知副作用的 ensure/open；
+ *  - json 数据文件（memo/review/favorites/pomodoro/quiz/belongings/news）一律
+ *    **先探测文件是否存在，不存在直接回落空徽标**——统一读写层 jsonFileStore 的
+ *    read 缺省会自动建默认文件，首页只是快照，不得制造写盘副作用；
+ *  - memo 不依赖 DataManager 单例（其 _store 需 memo 域 init 才可用），改直读
+ *    core/storage 的 jsonFileStore（文件存在才读）；
+ *  - 目录（日记/影院/剪藏/书库）不存在 → null → 回落默认，不建目录。
+ *
+ * 数据源逐域口径：
  *  - diary    目录 children md 数 + 今日已写（文件名 = 日期）
- *  - memo     memo.json（memo DataManager.loadItems 无参，走 core getApp）
- *  - cinema   cinemaFolderPath 前缀扫描（纯 metadataCache，同步）
- *  - review   review.json（reviewApp.dataManager.loadItems，需先 reviewApp.ensure(app)）
+ *  - memo     memo.json 未完成条数（completed === null）+ 到期（overdue/today）
+ *  - cinema   cinemaFolderPath 前缀扫描 frontmatter（评分 -1/0/正 → 想看/在看/已看）
+ *  - review   review.json 经 reviewApp.dataManager.loadItems（isOverdue/isMissing
+ *             运行时字段由该域判定），徽标 = isOverdue 未完成非缺失条目数
  *  - pomodoro pomodoro.json（new PomodoroDataManager(app).load()）
- *  - favorites favs.json（favorites DataManager 构造参数 = 完整文件路径）
- *  - news     news.json（readNewsData）
- *  - quiz     quiz.json（loadQuiz(app)）
- *  - library  书库目录扫描（getBookItems(app)，settings 键 libraryFolderPath/bookTag）
- *  - belongings belongings.json（loadDatabase，需 setSettingsProvider 注入）
- *  - clipping 目录 children md 计数（最轻；该域无导出读取函数）
- *  - attach/encrypt/smartcat/settings：无持久化数字统计（徽标留空）
+ *  - favorites favorites.json（排除 archived）
+ *  - news     news.json（readNewsData，缺失本身不建文件）
+ *  - quiz     quiz.json 题目总数（loadQuiz(app)）
+ *  - library  书库目录扫描（getBookItems(app) 在读本数）
+ *  - belongings belongings.json（loadDatabase 物品总数）
+ *  - clipping 目录 children md 计数（最轻）
+ *  - attach/encrypt/smartcat/settings/wall/vault：无持久化数字统计（徽标留空）
  */
 import type { App, TFile } from 'obsidian';
 import { getApp } from '../core/app';
 import { tryGetSettings } from '../core/settings-provider';
-import { DataManager as MemoDataManager } from '../memo/data';
-import type { MemoItem } from '../memo/types';
-import { getDueStatus } from '../memo/due';
+import { jsonFileStore, storageFile } from '../core/storage';
 import { reviewApp } from '../review/app';
 import type { ReviewItem } from '../review/data';
 import { PomodoroDataManager } from '../pomodoro/data';
@@ -37,7 +43,7 @@ import { parseMovieFile } from '../cinema/data';
 import { STATUS_WANT, STATUS_WATCHING } from '../cinema/constants';
 
 /** 首页无需统计的域（纯工具/无持久化数据） */
-export const NO_STAT_DOMAINS: ReadonlySet<string> = new Set(['attach', 'encrypt', 'smartcat', 'settings']);
+export const NO_STAT_DOMAINS: ReadonlySet<string> = new Set(['attach', 'encrypt', 'smartcat', 'settings', 'wall', 'vault']);
 
 export interface DomainStat {
   /** 徽标主文案（如「3 条待办」；无数字统计为 ''） */
@@ -93,7 +99,7 @@ function countMdInDir(app: App, dir: string): number {
   }
 }
 
-/** 路径上文件是否存在 */
+/** 路径上文件是否存在（vault 内） */
 function fileExists(app: App, path: string): boolean {
   try {
     return !!app.vault.getAbstractFileByPath(path);
@@ -102,49 +108,56 @@ function fileExists(app: App, path: string): boolean {
   }
 }
 
-const DAY_MS = 86400000;
-const R_DEFAULT = 0.9;
-
-/** 复习到期口径（review/app.ts 同款：逾期或 R 提前逾期的未完成非缺失条目） */
-function overdueCount(items: ReviewItem[], now: number): number {
-  const s = tryGetSettings() as Record<string, unknown>;
-  const threshold = typeof s.reviewRThreshold === 'number' && s.reviewRThreshold > 0 ? (s.reviewRThreshold as number) : R_DEFAULT;
-  return items.filter((i) => {
-    if (i.completed || i.isMissing) return false;
-    if (i.isOverdue) return true;
-    if (i.phase === 'fsrs' && typeof i.stability === 'number' && i.lastReviewed) {
-      const t = i.nextReviewDate ? new Date(i.nextReviewDate).getTime() : NaN;
-      const dueDays = Number.isFinite(t) ? Math.max(0, (t - now) / DAY_MS) : 0;
-      // 简化 R 估算（仅供「提前逾期」展示口径；与 review 域 loadItems isOverdue 逻辑对齐）
-      const r = Math.exp(-dueDays / 30);
-      return r < threshold;
-    }
-    return false;
-  }).length;
+/** 读 json 文件原始内容（仅文件存在时读，不触发建文件；解析失败回落 null） */
+async function readJsonIfExists(app: App, filePath: string): Promise<unknown | null> {
+  if (!fileExists(app, filePath)) return null;
+  try {
+    const f = app.vault.getAbstractFileByPath(filePath) as TFile;
+    return JSON.parse(await app.vault.read(f));
+  } catch {
+    return null;
+  }
 }
 
-/** 今日到期数（nextReviewDate 落在今天） */
+const DAY_MS = 86400000;
+
+/** memo 到期数（completed === null 条目中 due 为 overdue/today 的） */
+function dueActiveCount(items: Array<{ completed: string | null; due: string | null }>): number {
+  let n = 0;
+  for (const it of items) {
+    if (it.completed || !it.due) continue;
+    const d = new Date(it.due.replace(/-/g, '/'));
+    const t = d.getTime();
+    if (Number.isNaN(t)) continue;
+    const now = Date.now();
+    if (t < now) n++; // 已过期
+    else {
+      const dd = new Date(now);
+      const start = new Date(dd.getFullYear(), dd.getMonth(), dd.getDate()).getTime();
+      if (t < start + DAY_MS) n++; // 今天
+    }
+  }
+  return n;
+}
+
+/** 复习到期口径：loadItems 已算 isOverdue/isMissing（review/app.ts 同源），仅过滤展示 */
+function overdueCount(items: ReviewItem[]): number {
+  return items.filter((i) => i.isOverdue && !i.completed && !i.isMissing).length;
+}
+
+/** 今日到期数（nextReviewDate 落在今天；未完成非缺失） */
 function todayDue(items: ReviewItem[], now: number): number {
   const d = new Date(now);
   const start = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   const end = start + DAY_MS;
   return items.filter((i) => {
-    if (i.completed || i.isMissing) return false;
-    if (!i.nextReviewDate) return false;
+    if (i.completed || i.isMissing || !i.nextReviewDate) return false;
     const t = new Date(i.nextReviewDate).getTime();
     return Number.isFinite(t) && t >= start && t < end;
   }).length;
 }
 
-/** 当前剩余秒（运行中按 endTime 实时算；否则 remaining） */
-function pomLeftSec(state: { endTime: number | null; remaining: number }, now: number): number {
-  if (typeof state.endTime === 'number' && state.endTime !== null) {
-    return Math.max(0, Math.ceil((state.endTime - now) / 1000));
-  }
-  return Math.max(0, state.remaining);
-}
-
-/** 聚合快照（注入 app 用显式参数；纯读取，不触发任何 ensure/轮询） */
+/** 聚合快照（注入 app 用显式参数；纯读取，不触发任何 ensure/轮询/写盘） */
 export async function collectHomeSnapshot(app?: App): Promise<HomeSnapshot> {
   const a = app ?? getApp();
   const now = Date.now();
@@ -161,25 +174,23 @@ export async function collectHomeSnapshot(app?: App): Promise<HomeSnapshot> {
     out.diary = EMPTY;
   }
 
-  // ---- memo：未完成待办 + 到期 ----
+  // ---- memo：直读 memo.json（不依赖 DataManager 单例初始化；文件缺失回落空） ----
   try {
-    const items = await MemoDataManager.loadItems();
-    const active = (Array.isArray(items) ? items : []).filter((i: MemoItem) => !i.completed);
+    const filePath = storageFile('memo.json');
+    const raw = await readJsonIfExists(a, filePath);
+    const all = Array.isArray(raw) ? (raw as Array<Record<string, unknown>>) : [];
+    const active = all.filter((i) => i.completed === null || i.completed === undefined);
     if (!active.length) {
       out.memo = EMPTY;
     } else {
-      let due = 0;
-      for (const it of active) {
-        const st = it.due ? getDueStatus(it.due) : null;
-        if (st === 'overdue' || st === 'today') due++;
-      }
+      const due = dueActiveCount(active as Array<{ completed: string | null; due: string | null }>);
       out.memo = { text: `${active.length} 条待办`, hl: active.length > 0, sub: due ? `到期 ${due}` : '' };
     }
   } catch {
     out.memo = EMPTY;
   }
 
-  // ---- cinema：folderPath 前缀扫描（同步） ----
+  // ---- cinema：folderPath 前缀扫描（同步，纯 metadataCache） ----
   try {
     const folder = settingDir(['cinemaFolderPath'], '我的/影视');
     const files = a.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folder + '/'));
@@ -197,61 +208,91 @@ export async function collectHomeSnapshot(app?: App): Promise<HomeSnapshot> {
     out.cinema = EMPTY;
   }
 
-  // ---- review：reviewApp.ensure + loadItems（jsonFileStore 无 app 注入走模块级 getApp） ----
+  // ---- review：reviewApp.ensure + loadItems（loadItems 由该域判 isOverdue/isMissing；
+  //      文件缺失 loadItems 返回 []，不建文件——jsonFileStore 缺失自动建，须先探测） ----
   try {
-    reviewApp.ensure(a);
-    const items = (await reviewApp.dataManager!.loadItems()) as ReviewItem[];
-    const ov = overdueCount(items, now);
-    const td = todayDue(items, now);
-    out.review = ov ? { text: `${ov} 张到期`, hl: ov > 0, sub: td ? `今日 ${td}` : '' } : EMPTY;
+    const filePath = storageFile('review.json');
+    if (!fileExists(a, filePath)) {
+      out.review = EMPTY;
+    } else {
+      reviewApp.ensure(a);
+      const items = (await reviewApp.dataManager!.loadItems()) as ReviewItem[];
+      const ov = overdueCount(items);
+      const td = todayDue(items, now);
+      out.review = ov ? { text: `${ov} 张到期`, hl: ov > 0, sub: td ? `今日 ${td}` : '' } : EMPTY;
+    }
   } catch {
     out.review = EMPTY;
   }
 
-  // ---- pomodoro：今日完成 + 运行中剩余 ----
+  // ---- pomodoro：今日完成 + 运行中剩余（文件缺失回落空，不建文件） ----
   try {
-    const data = await new PomodoroDataManager(a).load();
-    const st = data?.state ?? null;
-    const running = !!st && typeof st.endTime === 'number' && st.endTime !== null;
-    const done = st ? todayCount(data.history, now) : 0;
-    const sub = running && st ? `剩 ${fmtClock(pomLeftSec(st, now))}` : '';
-    out.pomodoro = done || running ? { text: `今日 ${done} 轮`, hl: running, sub } : EMPTY;
+    const filePath = storageFile('pomodoro.json');
+    if (!fileExists(a, filePath)) {
+      out.pomodoro = EMPTY;
+    } else {
+      const data = await new PomodoroDataManager(a).load();
+      const st = data?.state ?? null;
+      const running = !!st && typeof st.endTime === 'number' && st.endTime !== null;
+      const done = st ? todayCount(data.history, now) : 0;
+      let sub = '';
+      if (running && st) {
+        const left = st.endTime !== null ? Math.max(0, Math.ceil((st.endTime - now) / 1000)) : 0;
+        sub = `剩 ${fmtClock(left)}`;
+      }
+      out.pomodoro = done || running ? { text: `今日 ${done} 轮`, hl: running, sub } : EMPTY;
+    }
   } catch {
     out.pomodoro = EMPTY;
   }
 
-  // ---- favorites：条数（排除归档） ----
+  // ---- favorites：条数（排除归档；文件缺失回落空） ----
   try {
     const dir = settingDir(['favoritesStoragePath'], 'CONFIG/STORAGE');
-    const dm = new FavoritesDataManager(favoritesStoragePath(dir));
-    const all = await dm.getAll();
-    const n = (Array.isArray(all) ? all : []).filter((i) => !(i as { archived?: boolean }).archived).length;
-    out.favorites = n ? { text: `${n} 条收藏`, hl: n > 0, sub: '' } : EMPTY;
+    const filePath = favoritesStoragePath(dir);
+    if (!fileExists(a, filePath)) {
+      out.favorites = EMPTY;
+    } else {
+      const dm = new FavoritesDataManager(filePath);
+      const all = await dm.getAll();
+      const n = (Array.isArray(all) ? all : []).filter((i) => !(i as { archived?: boolean }).archived).length;
+      out.favorites = n ? { text: `${n} 条收藏`, hl: n > 0, sub: '' } : EMPTY;
+    }
   } catch {
     out.favorites = EMPTY;
   }
 
-  // ---- news：已读计数 ----
+  // ---- news：已读计数（先探测文件；readNewsData 缺失会建空文件，只读不得触发） ----
   try {
-    const r = await readNewsData();
-    const read = Number(r.data?.stats?.totalRead ?? 0);
-    out.news = read > 0 ? { text: `已读 ${read}`, hl: false, sub: '' } : EMPTY;
+    const filePath = storageFile('news.json');
+    if (!fileExists(a, filePath)) {
+      out.news = EMPTY;
+    } else {
+      const r = await readNewsData();
+      const read = Number(r.data?.stats?.totalRead ?? 0);
+      out.news = read > 0 ? { text: `已读 ${read}`, hl: false, sub: '' } : EMPTY;
+    }
   } catch {
     out.news = EMPTY;
   }
 
-  // ---- quiz：题目总数 ----
+  // ---- quiz：题目总数（文件缺失回落空，不建文件） ----
   try {
-    const quiz = await new QuizManager().loadQuiz(a);
-    const notes = (quiz as { notes?: Record<string, unknown[]> }).notes ?? {};
-    let total = 0;
-    for (const qs of Object.values(notes)) total += Array.isArray(qs) ? qs.length : 0;
-    out.quiz = total ? { text: `${total} 题`, hl: false, sub: '' } : EMPTY;
+    const filePath = storageFile('quiz.json');
+    if (!fileExists(a, filePath)) {
+      out.quiz = EMPTY;
+    } else {
+      const quiz = await new QuizManager().loadQuiz(a);
+      const notes = (quiz as { notes?: Record<string, unknown[]> }).notes ?? {};
+      let total = 0;
+      for (const qs of Object.values(notes)) total += Array.isArray(qs) ? qs.length : 0;
+      out.quiz = total ? { text: `${total} 题`, hl: false, sub: '' } : EMPTY;
+    }
   } catch {
     out.quiz = EMPTY;
   }
 
-  // ---- library：在读本数 ----
+  // ---- library：在读本数（目录扫描；读设置兜底） ----
   try {
     const books = getBookItems(a);
     const reading = (Array.isArray(books) ? books : []).filter((b) => (b as { status?: string }).status === '在读').length;
@@ -260,12 +301,17 @@ export async function collectHomeSnapshot(app?: App): Promise<HomeSnapshot> {
     out.library = EMPTY;
   }
 
-  // ---- belongings：物品总数 ----
+  // ---- belongings：物品总数（文件缺失回落空，不建文件） ----
   try {
-    const db = await loadBelongings();
-    const items = (db as { items?: Record<string, unknown> }).items ?? {};
-    const n = Object.keys(items).length;
-    out.belongings = n ? { text: `${n} 件`, hl: false, sub: '' } : EMPTY;
+    const filePath = storageFile('belongings.json');
+    if (!fileExists(a, filePath)) {
+      out.belongings = EMPTY;
+    } else {
+      const db = await loadBelongings();
+      const items = (db as { items?: Record<string, unknown> }).items ?? {};
+      const n = Object.keys(items).length;
+      out.belongings = n ? { text: `${n} 件`, hl: false, sub: '' } : EMPTY;
+    }
   } catch {
     out.belongings = EMPTY;
   }

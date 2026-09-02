@@ -4,7 +4,7 @@
  */
 import type { App } from 'obsidian';
 import { H, resetHomeState } from './state';
-import { createOverlay, closeOverlay, registerEscapeHandler } from './ui';
+import { createOverlay, closeOverlay, registerEscapeHandler, unregisterEscapeHandler } from './ui';
 
 let initialized = false;
 let escRegistered = false;
@@ -33,11 +33,13 @@ export function openHome(app: App): void {
 /** 卸载清理（main.ts onunload 调用） */
 export function unloadHome(): void {
   initialized = false;
-  escRegistered = false;
+  if (escRegistered) {
+    escRegistered = false;
+    unregisterEscapeHandler();
+  }
   if (H.currentOverlay) {
     H.currentOverlay.remove();
     H.currentOverlay = null;
   }
-  document.querySelectorAll('.bz-home-mask').forEach((el) => el.remove());
   resetHomeState();
 }

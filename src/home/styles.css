@@ -30,8 +30,11 @@
 .bz-home-hero-l { display: flex; align-items: baseline; gap: 12px; min-width: 0; flex: 1; }
 .bz-home-hello { font-size: 20px; font-weight: var(--bz-weight-bold); color: var(--bz-text-1); white-space: nowrap; }
 .bz-home-date { font-size: var(--bz-font-meta); color: var(--bz-text-3); white-space: nowrap; }
-.bz-home-edit.bz-icon-btn { background: var(--bz-surface-2); border: 1px solid var(--bz-border); border-radius: var(--bz-radius-sm); }
+.bz-home-edit.bz-icon-btn,
+.bz-home-close.bz-icon-btn { background: var(--bz-surface-2); border: 1px solid var(--bz-border); border-radius: var(--bz-radius-sm); }
 .bz-home-edit.on { background: var(--bz-brand) !important; color: var(--bz-on-brand) !important; border-color: transparent; }
+/* 移动端显示关闭钮（桌面无关闭钮，靠遮罩/ESC） */
+.bz-home-close { display: none; }
 
 /* 搜索条 */
 .bz-home-search {
@@ -229,6 +232,7 @@
   }
   .bz-home-hello { font-size: var(--bz-font-title); }
   .bz-home-date { display: none; }
+  .bz-home-close { display: inline-flex; }
   .bz-home-body { flex-direction: column; }
   .bz-home-main { padding: 0 18px calc(18px + env(safe-area-inset-bottom, 0px)); }
   .bz-home-mstats {

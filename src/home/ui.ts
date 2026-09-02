@@ -107,6 +107,7 @@ export function createOverlay(app: any): void {
             <span class="bz-home-date" data-home-date></span>
           </div>
           <button class="bz-icon-btn bz-home-edit" data-home-edit title="编辑钉选" aria-label="编辑钉选">${iconSpan(ICO.edit)}</button>
+          <button class="bz-icon-btn bz-home-close" data-home-close title="关闭" aria-label="关闭">${iconSpan(ICO.close)}</button>
         </div>
         <div class="bz-home-search">
           <span class="bz-home-search-ic">${iconSpan(ICO.search)}</span>
@@ -207,6 +208,11 @@ function bindEvents(overlay: HTMLElement, app: any): void {
     if (mini) {
       const id = mini.dataset.homeMini || '';
       if (id) openDomain(id, app);
+      return;
+    }
+    // 关闭钮
+    if (t.closest('[data-home-close]')) {
+      closeOverlay();
       return;
     }
     // 侧栏行
@@ -486,11 +492,20 @@ function toast(msg: string, type: 'info' | 'success' | 'warning' | 'error' = 'in
 }
 
 let escRegistered = false;
+let escHandle: { unregister: () => void } | null = null;
 export function registerEscapeHandler(): void {
   if (escRegistered) return;
   escRegistered = true;
-  escManager.register('bz-home', {
+  escHandle = escManager.register('bz-home', {
     isVisible: () => !!H.currentOverlay,
     close: closeOverlay,
   });
+}
+
+/** 注销 ESC 层（关闭面板/卸载时调用；escManager 层不随插件卸载自动清理） */
+export function unregisterEscapeHandler(): void {
+  if (!escRegistered) return;
+  escRegistered = false;
+  escHandle?.unregister();
+  escHandle = null;
 }
