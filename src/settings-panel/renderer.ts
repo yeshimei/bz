@@ -160,14 +160,17 @@ function makeInput(opts: {
   if (opts.max !== undefined) input.max = String(opts.max);
   // 防抖落盘（照抄 TEXT_COMMIT_DELAY=800 + 失焦/回车）
   let timer: number | null = null;
+  let dirty = false; // 用户是否实际编辑过（refreshKey 程序化 setValue 不置脏，防 blur 假写覆盖）
   const commit = () => {
     if (timer !== null) {
       window.clearTimeout(timer);
       timer = null;
     }
+    if (!dirty) return; // 未编辑（仅程序化刷新显示值）不落盘
     opts.onCommit(input.value);
   };
   input.addEventListener('input', () => {
+    dirty = true;
     if (timer !== null) window.clearTimeout(timer);
     timer = window.setTimeout(commit, 800);
   });
@@ -175,6 +178,11 @@ function makeInput(opts: {
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') commit();
   });
+  // refreshKey 联动刷新显示值的入口：程序化写值（不置脏——清 dirty 防后续 blur 假写覆盖）
+  ;(input as any).__setDisplayValue = (v: string) => {
+    dirty = false;
+    if (input.value !== v) input.value = v;
+  };
   return input;
 }
 
@@ -462,13 +470,12 @@ function renderRow(
       ctrlEl.appendChild(input);
       // refreshKey 联动：任意行变更（含 aiProvider 切换）后重读显示值写回输入框（不落盘）
       if (regRefresh && row.refreshKey !== undefined) {
-        const el = input as HTMLInputElement;
         const ref = row.refreshKey; // 闭包内窄化不保留，先提为局部常量
         regRefresh(() => {
           const snap = snapshot();
           const fresh = typeof ref === 'function' ? ref(snap) : String((snap as any)[ref]);
-          const f = String(fresh ?? '');
-          if (el.value !== f) el.value = f;
+          const setDisplay = (input as any).__setDisplayValue as ((v: string) => void) | undefined;
+          if (setDisplay) setDisplay(String(fresh ?? ''));
         });
       }
       break;
@@ -480,17 +487,31 @@ function renderRow(
       ta.value = acc.read() ?? '';
       if (row.placeholder) ta.placeholder = row.placeholder;
       let timer: number | null = null;
+      let dirty = false; // refreshKey 程序化写值不置脏（防 blur 假写覆盖，同 makeInput）
       const commit = () => {
         if (timer !== null) window.clearTimeout(timer);
+        if (!dirty) return;
         acc.write(ta.value);
         void acc.persist();
       };
       ta.addEventListener('input', () => {
+        dirty = true;
         if (timer !== null) window.clearTimeout(timer);
         timer = window.setTimeout(commit, 800);
       });
       ta.addEventListener('blur', commit);
       ctrlEl.appendChild(ta);
+      // refreshKey 联动：任意行变更后重读显示值写回（不落盘）
+      if (regRefresh && row.refreshKey !== undefined) {
+        const ref = row.refreshKey;
+        regRefresh(() => {
+          const snap = snapshot();
+          const fresh = typeof ref === 'function' ? ref(snap) : String((snap as any)[ref]);
+          dirty = false;
+          const f = String(fresh ?? '');
+          if (ta.value !== f) ta.value = f;
+        });
+      }
       break;
     }
     case 'number': {
@@ -504,6 +525,9 @@ function renderRow(
         min: row.min,
         max: row.max,
         onCommit: (raw) => {
+          // 空串不写不删键（对齐 core 渲染器 parseClampedNumber 空→null→不写语义）：
+          // 显式「0」才触发删键回落默认（见 setProviderValue 0=删键）；空串仅清显示
+          if (raw.trim() === '') return;
           let v = Number(raw);
           if (Number.isNaN(v)) v = 0;
           if (row.min !== undefined && v < row.min) v = row.min;
@@ -517,13 +541,12 @@ function renderRow(
       ctrlEl.appendChild(input);
       // refreshKey 联动：任意行变更（含 aiProvider 切换）后重读显示值写回输入框（不落盘）
       if (regRefresh && row.refreshKey !== undefined) {
-        const el = input as HTMLInputElement;
         const ref = row.refreshKey; // 闭包内窄化不保留，先提为局部常量
         regRefresh(() => {
           const snap = snapshot();
           const fresh = typeof ref === 'function' ? ref(snap) : String((snap as any)[ref]);
-          const f = String(fresh ?? '');
-          if (el.value !== f) el.value = f;
+          const setDisplay = (input as any).__setDisplayValue as ((v: string) => void) | undefined;
+          if (setDisplay) setDisplay(String(fresh ?? ''));
         });
       }
       break;
@@ -615,6 +638,11 @@ function renderRow(
         row.render(slot, ctx);
       } catch (e) {
         notice(`自定义设置行渲染失败：${e instanceof Error ? e.message : String(e)}`, 'error');
+      }
+      // custom 行 onRefresh：与 core 渲染器对齐（模型行等切 provider 后联动刷新内部输入框显示值）
+      if (regRefresh && (row as { onRefresh?: (c: SettingsRowContext) => void }).onRefresh) {
+        const onRefresh = (row as { onRefresh: (c: SettingsRowContext) => void }).onRefresh;
+        regRefresh(() => onRefresh(ctx));
       }
       break;
     }

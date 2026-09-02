@@ -42,13 +42,17 @@ async function waitGroups(container: HTMLElement, min: number): Promise<boolean>
 }
 
 describe('设置面板（settings-panel）', () => {
+  /** 共享 settings 单例（provider 每次返回同对象；beforeEach 重置） */
+  let panelState: Record<string, unknown>;
   beforeEach(() => {
     resetObsidianMocks();
     mobileFlag = false;
     document.body.innerHTML = '';
     unloadSettingsPanel();
     (escManager as any).handlers = new Map();
-    setSettingsProvider(() => ({ settingsPanelMobileDefaultFullscreen: true } as any));
+    // 共享单例 state（每次 getSettings 返回同一对象——否则 select 等写入落到临时对象丢失）
+    panelState = { settingsPanelMobileDefaultFullscreen: true } as any;
+    setSettingsProvider(() => panelState as any);
     // 注入 app（review schema 构造经 getApp；mock 与其它域测试一致）
     setApp({ vault: new MockVault(), workspace: { getLeaf: () => ({ openFile: vi.fn() }) } } as any);
   });
@@ -118,6 +122,31 @@ describe('设置面板（settings-panel）', () => {
       expect(input!.type).toBe('number');
       expect(rowEl.querySelector('.setting-item'), '无原生 Setting 嵌套').toBeFalsy();
     }
+    ui.cleanup();
+  });
+
+  it('桌面端：切 AI 服务商 → 上下文窗口/最大输出 token 输入值联动刷新（refreshKey）', async () => {
+    const ui = new SettingsPanelUI();
+    ui.open();
+    const popup = document.getElementById('bz-settings-panel-popup')!;
+    await tick();
+    const ctxInput = () => {
+      const rows = [...popup.querySelectorAll<HTMLElement>('.bz-sp-set-row')];
+      const row = rows.find((r) => r.querySelector('.bz-sp-set-name')?.textContent === '上下文窗口')!;
+      return row.querySelector<HTMLInputElement>('input.bz-sp-input')!;
+    };
+    // 初始 = 未设置回落 opencode-go（ctx 131072）；下拉初始空值无高亮
+    const sel = popup.querySelector('.bz-sp-sel')!; // AI 服务商下拉（组内首个下拉）
+    const before = ctxInput().value;
+    expect(before).toBe('131072');
+    // 切 deepseek（注册表第 1 项，ctx 默认 65536）→ ctx 输入值应联动刷新
+    sel.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const opt = popup.querySelectorAll('.bz-sp-sel-opt')[0] as HTMLElement; // deepseek
+    opt.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    // refreshKey 联动写回输入框（自绘渲染器 valueRefreshes）
+    const after = ctxInput().value;
+    expect(after).not.toBe(before);
+    expect(Number(after)).toBeGreaterThan(0);
     ui.cleanup();
   });
 
