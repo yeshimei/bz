@@ -1,6 +1,6 @@
-# Ticket 177 — 内容首页（home 域）：入口页的「新标签页」升级，落成独立新域
+# Ticket 178 — 内容首页（home 域）：入口页的「新标签页」升级，落成独立新域
 
-> 状态：进行中（worktree/home-homepage）
+> 状态：进行中（worktree/home-homepage）；注意：并发会话占用 177（clipbook），本票顺延为 178
 > 原型：`.zcode/ui-prototypes/launcher-prototypes/launcher-p3-newtab.html`（03 新标签页 · 已选中 · 可玩完整版）
 > 关联：ADR-0002（依赖方向）、ADR-0003（懒加载）、ADR-0004（命令裸注册）、ADR-0019（移动端默认全屏）、ADR-0078/0080/0081（原型一比一独立新域先例）、ADR-0083（若立项）
 
