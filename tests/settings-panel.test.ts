@@ -114,8 +114,6 @@ describe('设置面板（settings-panel）', () => {
     const maxRow = rows.find((r) => r.querySelector('.bz-sp-set-name')?.textContent === '最大输出 token');
     expect(ctxRow, '上下文窗口行存在').toBeTruthy();
     expect(maxRow, '最大输出 token 行存在').toBeTruthy();
-    // 自绘 number 输入（.bz-sp-input.num），且不内嵌原生 Setting 行（.setting-item 后代）——
-    // 即不再走 custom 套原生 Setting（曾导致 hover 双背景 + 输入框两套样式）
     for (const rowEl of [ctxRow!, maxRow!]) {
       const input = rowEl.querySelector<HTMLInputElement>('input.bz-sp-input');
       expect(input, '行内自绘输入框存在').toBeTruthy();

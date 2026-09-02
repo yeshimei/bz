@@ -273,8 +273,6 @@
 }
 .bz-sp-input:focus { border-color: var(--interactive-accent); }
 .bz-sp-input.mono { font-family: "SF Mono", Consolas, monospace; font-size: 12px; }
-.bz-sp-input.num { width: 76px; text-align: right; }
-.bz-sp-input.sec { width: 150px; }
 .bz-sp-textarea {
   width: 190px;
   min-height: 54px;
