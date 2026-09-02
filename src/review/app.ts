@@ -363,17 +363,8 @@ export const reviewApp = {
       await this.reviewLoop(limited, 0);
       return;
     }
-    const h = notify('正在批量生成题目…', { type: 'progress', dedupeKey: 'quiz-generate' });
-    const batchQuestions = await this.batchGenerateQuestions(limited);
-    const hasAny = Object.values(batchQuestions).some((qs) => (qs as any[]).length > 0);
-    if (!hasAny) {
-      h.setType('warning');
-      h.setMessage('批量出题失败，改用普通复习');
-      await this.reviewLoop(limited, 0);
-      return;
-    }
-    h.setType('success');
-    h.setMessage('题目已生成，开始做题复习');
+    // 直接进做题界面（题在 session 内懒批量生成：首篇 fetch 时触发整轮后台生成，
+    // 界面立即出现 + 中心 loading「正在准备题目」——不在进 session 前同步干等 AI）
     await this.runSprintSession(limited, 'round');
   },
 
@@ -406,17 +397,39 @@ export const reviewApp = {
     if (!uiManager) return;
 
     const quiz: any = await this.getQuiz();
+    // 懒批量：首篇 fetch 触发整轮后台生成；后续篇目直接读已生成结果
+    // （进 session 即出界面 + loading，不在进 session 前同步干等 AI）
+    let batchStarted = false;
+    let batchMap: Record<string, any[]> | null = null;
+    const ensureBatch = async (): Promise<void> => {
+      if (batchStarted) return;
+      batchStarted = true;
+      try {
+        batchMap = await this.batchGenerateQuestions(items);
+      } catch {
+        batchMap = {};
+      }
+    };
     await uiManager.startSprint({
       queue: items,
       mode,
       quiz,
       fetchQuestions: async (item) => {
-        // round：题已批量生成（读现成）；single：现成无则重新生成；redo：重新生成
+        // 现成题直接读（single：现成无则重新生成；redo：重新生成）
         const qs = await quiz?.manager?.getQuestionsForNote(app, item.filePath);
         if (qs && qs.length) {
           return qs.map((q: any, i: number) => ({ ...q, notePath: item.filePath, _index: i }));
         }
         if (!quiz?.ai) return null;
+        if (mode === 'round') {
+          // round：懒批量——首篇现场触发生成（本篇在批内），后台批完前先等本篇
+          await ensureBatch();
+          const mapped = batchMap?.[item.filePath];
+          if (mapped && mapped.length) {
+            return mapped;
+          }
+          return null; // 本篇生成失败/空 → 跳过（runNext 已有空题跳过语义）
+        }
         const fresh = await this.regenerateQuestions(item.filePath);
         return fresh.length ? fresh : null;
       },
@@ -425,10 +438,14 @@ export const reviewApp = {
           await this.dataManager!.updateItem(item.filePath, (it) => {
             it.pendingRedo = false;
           });
-        } else {
-          await this.markReview(item.filePath, rating as Rating, { autoPending: true });
+          return undefined;
         }
+        await this.markReview(item.filePath, rating as Rating, { autoPending: true });
         await this.applyReviewStyles(app);
+        // 返回写盘后的真实排期（markReview 内部 updateItem 改的是新 load 的对象，item 快照不更新）
+        const fresh = await this.dataManager!.loadItems();
+        const updated = fresh.find((i) => i.filePath === item.filePath);
+        return updated?.nextReviewDate || undefined;
       },
       onFailed: async (item, rating, entry) => {
         if (mode !== 'redo') {

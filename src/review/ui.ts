@@ -34,9 +34,6 @@ import type { QuizMasterUI } from './quiz-core/session';
 
 export { reviewSettingsSchema } from './settings-schema';
 
-/** 未来列提示（灰置不可点） */
-const FUTURE_HINT = '未到期 · 不可开始';
-
 /** 到期标签工具 */
 function dueLabelOf(item: ReviewItem): { label: string; cls: string } {
   if (item.isMissing) return { label: '文件缺失', cls: 'is-missing' };
@@ -265,12 +262,11 @@ export class UIManager {
       it.isMissing ? `<span class="bz-q-tag is-missing">文件缺失</span>` : `<span class="bz-q-tag ${due.cls}">${due.label}</span>`,
       this.stageTagHtml(it),
     ].join('');
-    const hint = !canPlay && !it.isCompleted && !it.isMissing ? `<span class="bz-q-tag is-future">${FUTURE_HINT}</span>` : '';
     return `
-      <button class="${cls}" data-id="${it.id}" ${canPlay ? '' : 'disabled'}>
+      <div class="${cls}" data-id="${it.id}" role="button" tabindex="0" aria-disabled="${canPlay ? 'false' : 'true'}">
         <div class="bz-q-card-top"><span class="bz-q-card-title">${title}</span><span class="bz-q-card-stage">${it.isMissing ? '挂起' : this.stageNum(it)}</span></div>
-        <div class="bz-q-card-meta">${tags}${hint}</div>
-      </button>`;
+        <div class="bz-q-card-meta">${tags}</div>
+      </div>`;
   }
 
   private stageTagHtml(it: ReviewItem): string {
@@ -326,11 +322,18 @@ export class UIManager {
         }, 180);
       });
     }
-    // 卡片点击（到期条目 → 单条冲刺）
-    container.querySelectorAll('.bz-q-card[data-id]:not(:disabled)').forEach((card) => {
-      card.addEventListener('click', () => {
-        const it = items.find((x) => x.id === (card as HTMLElement).dataset.id);
+    // 卡片点击（到期条目 → 单条冲刺；.no = 未来/不可做，div 无 disabled 用类排除）
+    container.querySelectorAll<HTMLElement>('.bz-q-card[data-id]:not(.no)').forEach((card) => {
+      const activate = () => {
+        const it = items.find((x) => x.id === card.dataset.id);
         if (it && isPlayable(it)) void this.beginSingle(it);
+      };
+      card.addEventListener('click', activate);
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          activate();
+        }
       });
     });
     // 右键/长按抽屉（保留既有统一抽屉：打开原文/查看历史/移出）
