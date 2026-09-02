@@ -365,7 +365,7 @@ function openEditForm(item: CinemaItem | null, app: App): void {
         <div><label>状态</label><select class="bz-input" id="bz-cinema-f-status">${statusOptions}</select></div>
       </div>
       <div><label>观影日期</label><input class="bz-input" type="date" id="bz-cinema-f-date" value="${item && item.watchDate ? String(item.watchDate).slice(0, 10) : new Date().toISOString().slice(0, 10)}"></div>
-      <div><label>评分（已看）</label><div class="bz-cinema-rating-row"><input type="range" id="bz-cinema-f-rating" min="1" max="${RATING_MAX}" step="0.1" value="${ratingVal}"><span class="bz-cinema-rating-val" id="bz-cinema-f-rating-val">${Number(ratingVal).toFixed(1)}</span></div></div>
+      <div><label>评分（已看）</label><div class="bz-cinema-rating-row"><input type="range" class="bz-range" id="bz-cinema-f-rating" min="1" max="${RATING_MAX}" step="0.1" value="${ratingVal}"><span class="bz-cinema-rating-val" id="bz-cinema-f-rating-val">${Number(ratingVal).toFixed(1)}</span></div></div>
       <div><label>影评</label><textarea class="bz-input" id="bz-cinema-f-review" placeholder="写点什么…">${item ? esc(item.review ?? '') : ''}</textarea></div>
     </div>
     <div class="bz-cinema-form-actions"><button class="bz-btn bz-btn--ghost" id="bz-cinema-f-cancel">取消</button><button class="bz-btn bz-btn--primary" id="bz-cinema-f-save">${editing ? '保存' : '添加'}</button></div>`;
@@ -447,7 +447,7 @@ function openQuickStatus(item: CinemaItem, app: App): void {
   const html = `<div class="bz-cinema-qs-title">${esc(item.name)}</div>
     <div class="bz-cinema-qs-btns">${btns}</div>
     <div class="bz-cinema-qs-rating"><div class="bz-cinema-qs-rating-label">评分（已看时生效）</div>
-      <div class="bz-cinema-rating-row"><input type="range" id="bz-cinema-qs-rating" min="1" max="${RATING_MAX}" step="0.1" value="${curRating}">
+      <div class="bz-cinema-rating-row"><input type="range" class="bz-range" id="bz-cinema-qs-rating" min="1" max="${RATING_MAX}" step="0.1" value="${curRating}">
       <span class="bz-cinema-rating-val" id="bz-cinema-qs-rating-val">${Number(curRating).toFixed(1)}</span></div></div>
     <div class="bz-cinema-qs-review"><label>影评</label><textarea class="bz-input" id="bz-cinema-qs-review" placeholder="写点什么…">${item.review ? esc(item.review) : ''}</textarea></div>
     <div class="bz-cinema-form-actions"><button class="bz-btn bz-btn--ghost" id="bz-cinema-qs-cancel">取消</button><button class="bz-btn bz-btn--primary" id="bz-cinema-qs-save">保存</button></div>

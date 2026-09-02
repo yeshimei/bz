@@ -353,6 +353,57 @@ textarea.bz-input { height: auto; padding: 8px 10px; line-height: var(--bz-leadi
 .bz-dialog-title { font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
 .bz-dialog-body { display: flex; flex-direction: column; min-height: 0; }
 
+/* ═══════════ 滑条 .bz-range（slider.ts） ═══════════
+   自绘外观抗 Obsidian 全局 range 重置：appearance:none 时
+   原生 track 不绘制，必须有显式 background + thumb 伪元素。
+   形制对齐已验证的 settings-panel .bz-sp-range（无 runnable-track）。 */
+.bz-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: var(--bz-radius-full);
+  background: var(--bz-track);
+  outline: none;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-family: inherit;
+}
+.bz-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--bz-thumb);
+  border: 2px solid var(--bz-brand);
+  cursor: pointer;
+}
+.bz-range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--bz-thumb);
+  border: 2px solid var(--bz-brand);
+  cursor: pointer;
+}
+.bz-range::-moz-range-track {
+  background: var(--bz-track);
+  height: 6px;
+  border-radius: var(--bz-radius-full);
+  border: none;
+}
+.bz-range:focus-visible {
+  outline: 2px solid var(--bz-brand);
+  outline-offset: 2px;
+}
+.bz-range:disabled { opacity: 0.5; cursor: not-allowed; }
+.bz-range--lg { height: 8px; }
+.bz-range--lg::-webkit-slider-thumb { width: 18px; height: 18px; }
+.bz-range--lg::-moz-range-thumb { width: 18px; height: 18px; }
+
 /* ═══════════ 加载 .bz-spinner ═══════════ */
 .bz-spinner {
   width: 16px;

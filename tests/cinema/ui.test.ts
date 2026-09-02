@@ -205,8 +205,9 @@ describe('cinema overlay', () => {
     // 目标状态按钮（想看 → 在看/已看）
     const qsBtns = modal.querySelectorAll('[data-cinema-qs]');
     expect(qsBtns.length).toBe(2);
-    // 评分滑杆存在
+    // 评分滑杆存在（组件库 .bz-range 自绘外观）
     expect(modal.querySelector('#bz-cinema-qs-rating')).toBeTruthy();
+    expect((modal.querySelector('#bz-cinema-qs-rating') as HTMLElement).classList.contains('bz-range')).toBe(true);
     // 影评 textarea
     expect(modal.querySelector('#bz-cinema-qs-review')).toBeTruthy();
     // 升级到已看 + 保存
@@ -261,6 +262,7 @@ describe('cinema overlay', () => {
     const modal = mask.querySelector('.bz-overlay-popup') as HTMLElement;
     expect(modal.textContent).toContain('添加影视');
     expect(modal.querySelector('#bz-cinema-f-rating')).toBeTruthy(); // 评分滑杆
+    expect((modal.querySelector('#bz-cinema-f-rating') as HTMLElement).classList.contains('bz-range')).toBe(true);
     // 填写并保存
     (modal.querySelector('#bz-cinema-f-name') as HTMLInputElement).value = '新片';
     (modal.querySelector('#bz-cinema-f-review') as HTMLTextAreaElement).value = '好看';

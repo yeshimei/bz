@@ -13,7 +13,7 @@
 export type {
   BzTone, BzSize, BzIconName,
   BzButtonOpts, BzIconBtnOpts, BzChipOpts,
-  BzInputOpts, BzFieldOpts, BzEmptyOpts, BzSegOpts,
+  BzInputOpts, BzFieldOpts, BzEmptyOpts, BzSegOpts, BzRangeOpts,
 } from './types';
 
 // 组件工厂（每组件一文件）
@@ -21,6 +21,7 @@ export { uiIcon } from './icon';
 export { uiBtn, uiIconBtn, uiBtnRow, uiDialogActions } from './button';
 export { uiChip } from './chip';
 export { uiInput, uiField } from './field';
+export { uiRange } from './slider';
 export { uiEmpty } from './empty';
 export { uiSegmented } from './segmented';
 export { openLightbox, closeLightbox } from './lightbox';

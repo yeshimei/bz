@@ -53,6 +53,18 @@ export interface BzInputOpts {
   onInput?: (value: string) => void;
 }
 
+/** 滑条（.bz-range）：评分/数值调节，自绘轨道+滑块（抗 Obsidian 默认 range 外观） */
+export interface BzRangeOpts {
+  min?: number;
+  max?: number;
+  step?: number;
+  value?: number;
+  disabled?: boolean;
+  className?: string;      // 附加类（如 bz-range--lg）
+  onInput?: (value: number) => void;
+  onChange?: (value: number) => void;
+}
+
 export interface BzFieldOpts {
   label?: string;
   desc?: string;           // 说明
