@@ -59,8 +59,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-memo-open', 'bz-memo-add',
   'bz-todo-open', 'bz-todo-add',
   'bz-belongings-add', 'bz-belongings-open',
-  'bz-clipping-open',
-  'bz-news-open',
+  // 剪藏本（clipbook 融合域，ADR-0082）：聚合讯未读流+剪藏笔记一体化；旧 bz-clipping-open/bz-news-open 断开
+  'bz-clipbook-open',
   // 保险库（password-vault 域，ADR-0078）：密码本新 UI；旧密码本入口 bz-pw-* 已断开
   'bz-password-vault-open',
   // 回忆墙（diary-wall 域，ADR-0081）：日记本数据的媒体优先只读视图
@@ -139,6 +139,8 @@ describe('bz 骨架冒烟', () => {
     expect(byId('bz-cinema-add').name).toBe('加影视（影院）');
     // todo 新域：待办 / 加待办（待办）
     expect(byId('bz-todo-open').name).toBe('待办');
+    // clipbook 融合域（ADR-0082）：剪藏本 = 聚合讯+剪藏本合一入口
+    expect(byId('bz-clipbook-open').name).toBe('剪藏本');
     expect(byId('bz-todo-add').name).toBe('加待办（待办）');
     // t2：阅读分析报告 → 阅读数据分析报告
     expect(byId('bz-reading-report-open').name).toBe('阅读数据分析报告');
@@ -211,6 +213,8 @@ describe('bz 骨架冒烟', () => {
     expect(s.secondBrainOllamaUrl).toBe('http://localhost:11434');
     expect(s.secondBrainEmbeddingModel).toBe('bge-m3');
     expect(s.passwordLength).toBe('16');
+    // clipbook（ADR-0082）：移动端默认全屏对齐 clipping 默认开
+    expect(s.clipbookMobileDefaultFullscreen).toBe(true);
   });
 
   it('域命令回调不抛异常（已实现域真实执行，未实现域占位 Notice）', async () => {

@@ -137,6 +137,9 @@ export default interface BzSettings {
   newsRetentionSavedDays: string;
   /** 🗑️ 聚合讯保留策略：已跳过骨架（state=skipped）保留天数——ticket 124 数据源组 */
   newsRetentionSkippedDays: string;
+  // ===== 📚 剪藏本（clipbook 融合域，ADR-0082；与旧 clipping/news 并存）=====
+  /** 移动端默认全屏（剪藏本融合面板） */
+  clipbookMobileDefaultFullscreen: boolean;
 
   // ===== 🔐 密码本（4 项）=====
   /** 📂 数据存储路径——ADR-0009 废弃，统一走 storagePath，仅兼容保留 */
@@ -532,6 +535,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   autoSummaryTiming: 'immediate',
   newsRetentionSavedDays: '3',
   newsRetentionSkippedDays: '7',
+  // clipbook（ADR-0082）：移动端默认全屏对齐 clipping 默认开
+  clipbookMobileDefaultFullscreen: true,
 
   // 密码本
   pwStoragePath: 'CONFIG/STORAGE',
