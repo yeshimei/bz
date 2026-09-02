@@ -8,9 +8,9 @@
  *   与原 refreshKeys 的 toggleClass 口径等价）；ticket 170 起 custom 显示自定义端点/模型/密钥行；
  *   ticket 171 起全部注册表提供商各生成一行密钥（apiKeyLabel 标题、apiKeyDesc 描述），custom 额外
  *   显示端点/模型两行——行列表由 AI_PROVIDER_REGISTRY 驱动，新增提供商零 schema 改动；
- * - ticket 172 per-provider 配置三行（模型/上下文/max token）：custom 行渲染，绑定当前 provider
- *   的覆盖值（aiModelOverrides / aiContextOverrides / aiMaxTokensOverrides），未填显示注册表默认
- *   （= 模型最大输出上限）；切换提供商 onRefresh 联动刷新输入框；
+ * - ticket 172 per-provider 配置三行（模型/上下文/max token）：模型行 custom（内嵌「获取模型名」
+ *   按钮，行级联动 onRefresh）；上下文/最大输出 token 为标准 number 行（三函数 binding +
+ *   refreshKey 随「AI 服务商」切换联动刷新，不再走 custom 套原生 Setting——统一两渲染器视觉）；
  * - 存储路径行 onCommit 的 warning 提示文案逐字保留（f1 防错提示，正文不带 emoji，铁律 7）；
  * - 区块标题 DOM 契约 .bz-setting-section-title 不破（无 icon 分组 = 区块标题平铺形态）。
  * - ticket 100 文案修正（键名/行为不动）：两个 API Key 行标题收短为「DeepSeek 密钥」「OpenCode 密钥」，
@@ -22,7 +22,7 @@ import { notice } from './notice';
 import { tryGetSettings, saveSettings } from './settings-provider';
 import { fetchProviderModels, providerDescriptorOf } from './ai-models';
 import { openModelPicker } from './settings-model-picker';
-import type { SettingsSchema, SettingsRow, SettingsRowContext } from './settings-schema';
+import type { NumberRow, SettingsSchema, SettingsRow, SettingsRowContext } from './settings-schema';
 
 /** 存储路径改动防错提示（f1；正文不带 emoji，铁律 7）——文案逐字冻结，勿改 */
 export const STORAGE_PATH_COMMIT_NOTICE = '存储路径已修改：仅改路径，文件不会自动迁移，旧数据需自行迁移；重载插件后生效。';
@@ -65,85 +65,72 @@ function setProviderValue(mapKey: OverrideMapKey, raw: string): void {
   void saveSettings();
 }
 
-/** per-provider 配置行（ticket 172）：custom 渲染，输入框绑定当前 provider 覆盖值，onRefresh 随切换联动 */
-function providerConfigRow(kind: 'model' | 'context' | 'maxTokens'): SettingsRow {
-  const label = kind === 'model' ? '模型名称' : kind === 'context' ? '上下文窗口' : '最大输出 token';
-  const desc =
-    kind === 'model' ? '留空用该服务商默认模型' : kind === 'context' ? '留空用该服务商默认窗口' : '留空用该服务商默认上限';
+/** 「模型名称」per-provider 行（ticket 172/173）：custom 渲染（内嵌「获取模型名」按钮——
+ *  原生 Setting 的 addText + addButton 组合，标准行无同行按钮原语），onRefresh 随切换联动 */
+function providerModelCustomRow(): SettingsRow {
+  const label = '模型名称';
+  const desc = '留空用该服务商默认模型';
   return {
     type: 'custom',
     name: label,
     desc,
-    visibleWhen: () => true, // 三行常显（随 provider 联动内容）
+    visibleWhen: () => true, // 常显（随 provider 联动内容）
     render: (body: HTMLElement, ctx: SettingsRowContext) => {
       const setting = new Setting(body).setName(label);
       if (desc) setting.setDesc(desc);
       let input: { setValue: (v: string) => unknown } | null = null;
-      if (kind === 'model') {
-        setting.addText((t) => {
-          input = t;
-          t.setValue(providerValue('model'));
-          t.setPlaceholder('默认模型');
-          t.onChange((v) => setProviderValue('aiModelOverrides', v));
-        });
-        // ticket 173「获取模型名」：行内嵌按钮（输入框右侧）——拉取当前服务商模型列表弹选择器回填
-        setting.addButton((b) => {
-          b.setButtonText('获取模型名').onClick(() => {
-            void (async () => {
-              if (b.disabled) return; // 加载中防连点
-              b.setDisabled(true);
-              b.setButtonText('获取中…');
-              try {
-                await saveSettings(); // 先落盘防抖中的手输值，再读当前状态拉取
-                const providerId = String((tryGetSettings() as any).aiProvider || 'opencode-go');
-                const desc = providerDescriptorOf(providerId);
-                const models = await fetchProviderModels(providerId);
-                // 打开弹窗前模型行仍可能被 provider 切换刷新——以当前 provider 为准
-                const curProvider = String((tryGetSettings() as any).aiProvider || 'opencode-go');
-                if (curProvider !== providerId) {
-                  notice('服务商已切换，请重新获取', 'warning');
-                  return;
-                }
-                openModelPicker({
-                  providerLabel: desc.label,
-                  current: providerValue('model'),
-                  models,
-                  onPick: (m) => {
-                    // 与输入框 onChange 同口径：写当前 provider 覆盖（custom 语义走 aiCustomModel）并落盘
-                    const p = String((tryGetSettings() as any).aiProvider || 'opencode-go');
-                    if (providerDescriptorOf(p).id === 'custom') {
-                      const s = tryGetSettings() as any;
-                      s.aiCustomModel = m.id;
-                      void saveSettings();
-                    } else {
-                      setProviderValue('aiModelOverrides', m.id);
-                    }
-                    ctx.refreshVisibility();
-                    if (input) input.setValue(m.id);
-                    notice(`模型已设为 ${m.id}`, 'success');
-                  },
-                });
-              } catch (e) {
-                notice(e instanceof Error ? e.message : String(e), 'error');
-              } finally {
-                b.setDisabled(false);
-                b.setButtonText('获取模型名');
+      setting.addText((t) => {
+        input = t;
+        t.setValue(providerValue('model'));
+        t.setPlaceholder('默认模型');
+        t.onChange((v) => setProviderValue('aiModelOverrides', v));
+      });
+      // ticket 173「获取模型名」：行内嵌按钮（输入框右侧）——拉取当前服务商模型列表弹选择器回填
+      setting.addButton((b) => {
+        b.setButtonText('获取模型名').onClick(() => {
+          void (async () => {
+            if (b.disabled) return; // 加载中防连点
+            b.setDisabled(true);
+            b.setButtonText('获取中…');
+            try {
+              await saveSettings(); // 先落盘防抖中的手输值，再读当前状态拉取
+              const providerId = String((tryGetSettings() as any).aiProvider || 'opencode-go');
+              const desc = providerDescriptorOf(providerId);
+              const models = await fetchProviderModels(providerId);
+              // 打开弹窗前模型行仍可能被 provider 切换刷新——以当前 provider 为准
+              const curProvider = String((tryGetSettings() as any).aiProvider || 'opencode-go');
+              if (curProvider !== providerId) {
+                notice('服务商已切换，请重新获取', 'warning');
+                return;
               }
-            })();
-          });
+              openModelPicker({
+                providerLabel: desc.label,
+                current: providerValue('model'),
+                models,
+                onPick: (m) => {
+                  // 与输入框 onChange 同口径：写当前 provider 覆盖（custom 语义走 aiCustomModel）并落盘
+                  const p = String((tryGetSettings() as any).aiProvider || 'opencode-go');
+                  if (providerDescriptorOf(p).id === 'custom') {
+                    const s = tryGetSettings() as any;
+                    s.aiCustomModel = m.id;
+                    void saveSettings();
+                  } else {
+                    setProviderValue('aiModelOverrides', m.id);
+                  }
+                  ctx.refreshVisibility();
+                  if (input) input.setValue(m.id);
+                  notice(`模型已设为 ${m.id}`, 'success');
+                },
+              });
+            } catch (e) {
+              notice(e instanceof Error ? e.message : String(e), 'error');
+            } finally {
+              b.setDisabled(false);
+              b.setButtonText('获取模型名');
+            }
+          })();
         });
-      } else {
-        setting.addText((t) => {
-          input = t;
-          t.setValue(providerValue(kind === 'context' ? 'context' : 'maxTokens'));
-          t.setPlaceholder(kind === 'context' ? '默认窗口' : '默认上限');
-          t.onChange((v) => {
-            const n = parseInt(v, 10);
-            if (isNaN(n)) return; // 非数字不写
-            setProviderValue(kind === 'context' ? 'aiContextOverrides' : 'aiMaxTokensOverrides', String(n));
-          });
-        });
-      }
+      });
       // 保存输入框引用供 onRefresh 用（行级闭包挂到包装容器）
       (body as any).__providerInput = input;
       void ctx;
@@ -152,10 +139,41 @@ function providerConfigRow(kind: 'model' | 'context' | 'maxTokens'): SettingsRow
     onRefresh: (ctx: SettingsRowContext) => {
       const input = (ctx.rowEl as any).__providerInput;
       if (input && typeof input.setValue === 'function') {
-        input.setValue(providerValue(kind === 'model' ? 'model' : kind === 'context' ? 'context' : 'maxTokens'));
+        input.setValue(providerValue('model'));
       }
     },
   } as SettingsRow;
+}
+
+/**
+ * 「上下文窗口 / 最大输出 token」per-provider 行（ticket 172）：标准 number 行（不再走 custom
+ * 套原生 Setting——统一 core / settings-panel 两渲染器的视觉与交互）。三函数 binding 读写当前
+ * provider 的覆盖值（未填回落注册表默认）；refreshKey 随「AI 服务商」切换联动刷新显示值。
+ */
+function providerNumberConfigRow(kind: 'context' | 'maxTokens'): NumberRow {
+  const mapKey: OverrideMapKey = kind === 'context' ? 'aiContextOverrides' : 'aiMaxTokensOverrides';
+  const label = kind === 'context' ? '上下文窗口' : '最大输出 token';
+  const desc = kind === 'context' ? '留空用该服务商默认窗口' : '留空用该服务商默认上限';
+  const placeholder = kind === 'context' ? '默认窗口' : '默认上限';
+  return {
+    type: 'number',
+    name: label,
+    desc,
+    binding: {
+      // 读当前 provider 的值：覆盖 > 注册表默认（providerValue 恒返回数字字符串；NaN 兜底 0）
+      get: () => {
+        const n = Number(providerValue(kind));
+        return Number.isFinite(n) ? n : 0;
+      },
+      // 写当前 provider 的覆盖（0 = 清除覆盖回落默认，与 setProviderValue 删键语义一致）
+      set: (v: number) => {
+        setProviderValue(mapKey, String(v));
+      },
+      save: () => saveSettings(),
+    },
+    refreshKey: () => providerValue(kind),
+    placeholder,
+  };
 }
 
 /**
@@ -209,10 +227,11 @@ function aiGroupRows(): SettingsRow[] {
       binding: { key: 'aiCustomApiKey' },
       visibleWhen: (snapshot) => snapshot.aiProvider === 'custom',
     },
-    // ticket 172 per-provider 配置三行
-    providerConfigRow('model'),
-    providerConfigRow('context'),
-    providerConfigRow('maxTokens'),
+    // ticket 172 per-provider 配置三行：模型行 custom（内嵌「获取模型名」按钮）+
+    // 上下文/最大输出 token 标准 number 行（refreshKey 随服务商切换联动）
+    providerModelCustomRow(),
+    providerNumberConfigRow('context'),
+    providerNumberConfigRow('maxTokens'),
   );
   return rows;
 }
