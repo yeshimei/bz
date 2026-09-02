@@ -112,6 +112,32 @@ describe('todo 面板', () => {
     });
   });
 
+  it('主头行：当前场景标题 + 计数 + 新建待办按钮打开编辑器', async () => {
+    const { app } = seedVault();
+    openTodoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-todo-main-count]')?.textContent).toContain('项');
+    });
+    const title = document.querySelector('[data-todo-main-title]') as HTMLElement;
+    const count = document.querySelector('[data-todo-main-count]') as HTMLElement;
+    // 默认「全部」：3 未完成 + 1 已完成 = 4 项 · 3 未完成
+    expect(title.textContent).toBe('全部');
+    expect(count.textContent).toContain('4 项');
+    expect(count.textContent).toContain('3 未完成');
+    // 切场景后标题与计数变化
+    const learnBtn = document.querySelector('[data-todo-scene="学习"]') as HTMLElement;
+    learnBtn.click();
+    await vi.waitFor(() => {
+      expect((document.querySelector('[data-todo-main-title]') as HTMLElement).textContent).toBe('学习');
+    });
+    expect((document.querySelector('[data-todo-main-count]') as HTMLElement).textContent).toContain('1 项');
+    // 新建按钮 → 编辑器打开
+    (document.querySelector('[data-todo-newbtn]') as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-todo-editor')).toBeTruthy();
+    });
+  });
+
   it('底部录入：输入 + 点击添加 → 条目落 memo.json 并出现在列表', async () => {
     const { app, vault } = seedVault();
     openTodoPanel(app);
