@@ -36,7 +36,7 @@ import { todayCount } from '../pomodoro/stats';
 import { DataManager as FavoritesDataManager } from '../favorites/data';
 import { getStoragePath as favoritesStoragePath } from '../favorites/config';
 import { readNewsData } from '../news/data';
-import { QuizManager } from '../quiz/manager';
+import { QuizManager } from '../review/quiz-core/manager';
 import { getBookItems } from '../library/items';
 import { loadDatabase as loadBelongings } from '../belongings/data';
 import { parseMovieFile } from '../cinema/data';
