@@ -13,8 +13,8 @@ import { setBzSettingsProvider } from '../src/memo';
 import { App } from '../src/memo/app';
 import { UIManager } from '../src/memo/ui';
 import { DataManager } from '../src/memo/data';
-import { openBelongingsPanel, cleanupBelongings } from '../src/belongings/ui';
-import { FavoritesApp } from '../src/favorites/app';
+import { belongingSettingsSchema } from '../src/belongings/ui';
+import { favoritesSettingsSchema } from '../src/favorites/ui';
 import { MockVault } from './mock-vault';
 import { resetObsidianMocks, Platform as MockPlatform } from './mock-obsidian-entry';
 import moment from 'moment';
@@ -485,79 +485,68 @@ describe('备忘录面板 ⚙️ 设置弹窗', () => {
   });
 });
 
-describe('归物本 ⚙️ / 🔀', () => {
-  beforeEach(async () => {
+describe('归物本设置 schema（⚙️ 收敛设置面板，ticket 177）', () => {
+  // 旧 ⚙️/🔀 头行按钮已随重设计移除：设置全收敛进设置面板（settings-panel schemaLoader）。
+  // 此处直测 schema 契约：桌面空态域 + 移动端「移动端默认全屏」组（与设置面板内嵌渲染同源）。
+  let settings: Record<string, unknown>;
+  beforeEach(() => {
     resetObsidianMocks();
     document.body.innerHTML = '';
-    localStorage.clear();
-    const vault = new MockVault();
-    vault.files.set('CONFIG/STORAGE/belongings.json', JSON.stringify({ version: '1.0', last_updated: '', items: {} }));
-    setApp({ vault, workspace: { getLeaf: () => ({ openFile: vi.fn() }) } } as any);
-    setSettingsProvider(() => ({ belongingsDataFolder: 'CONFIG/STORAGE' } as any));
+    settings = { belongingsDataFolder: 'CONFIG/STORAGE' };
+    setSettingsProvider(() => settings as any);
     setSettingsSaver(async () => {});
-    await openBelongingsPanel();
   });
 
-  afterEach(() => cleanupBelongings());
-
-  it('排序按钮为 🔀（非 ⚙️），⚙️ 打开空弹窗（桌面端移动端组整组隐藏 → 空态显示）', () => {
-    const overlay = document.getElementById('__gui_wu_ben__')!;
-    const sortBtn = [...overlay.querySelectorAll('button')].find((b) => b.textContent === '🔀')!;
-    expect(sortBtn).toBeTruthy();
-    const settingsBtn = [...overlay.querySelectorAll('button')].find((b) => b.textContent === '⚙️')!;
-    expect(settingsBtn).toBeTruthy();
-    settingsBtn.click();
-    const popup = document.getElementById('bz-settings-modal-popup')!;
-    expect(popup.textContent).toContain('归物本设置');
-    // 空态域 schema 化后（ticket 131）：桌面端整组隐藏 → 空态判定命中，内容区整体清空（与旧 build 空态 DOM 一致）
-    expect(popup.textContent).toContain('归物本没有可配置的设置项');
-    expect(popup.querySelector('.setting-item')).toBeNull();
-    expect(popup.querySelector('.bz-settings-empty')).not.toBeNull();
+  it('桌面端：schema 为空态域（仅移动端组，组级门控隐藏 → 无可渲染项）', () => {
+    const schema = belongingSettingsSchema();
+    expect(schema.groups).toHaveLength(1);
+    expect(schema.groups[0].name).toBe('移动端');
+    expect(schema.groups[0].visibleWhen!(settings as any)).toBe(false); // 桌面整组隐藏
   });
 
-  it('归物本设置（移动端）：显示「移动端」组的全屏开关，无空态', () => {
+  it('移动端：schema 暴露「移动端默认全屏」toggle，直绑 belongingsMobileDefaultFullscreen', () => {
     const prevMobile = MockPlatform.isMobile;
     try {
       MockPlatform.isMobile = true;
-      const overlay = document.getElementById('__gui_wu_ben__')!;
-      const settingsBtn = [...overlay.querySelectorAll('button')].find((b) => b.textContent === '⚙️')!;
-      settingsBtn.click();
-      const popup = document.getElementById('bz-settings-modal-popup')!;
-      expect(popup.textContent).toContain('归物本设置');
-      expect(popup.querySelector('.bz-settings-empty')).toBeNull();
-      const mfs = [...popup.querySelectorAll('.setting-item')].find(
-        (el) => (el as HTMLElement).dataset.name === '移动端默认全屏'
-      );
-      expect(mfs).toBeTruthy();
+      const schema = belongingSettingsSchema();
+      expect(schema.groups[0].visibleWhen!(settings as any)).toBe(true);
+      const row = schema.groups[0].rows[0] as any;
+      expect(row.name).toBe('移动端默认全屏');
+      expect(row.binding).toMatchObject({ key: 'belongingsMobileDefaultFullscreen' });
     } finally {
       MockPlatform.isMobile = prevMobile;
     }
   });
 });
 
-describe('收藏本 ⚙️ 空弹窗', () => {
-  beforeEach(async () => {
+describe('收藏本设置 schema（⚙️ 收敛设置面板，ticket 177）', () => {
+  let settings: Record<string, unknown>;
+  beforeEach(() => {
     resetObsidianMocks();
     document.body.innerHTML = '';
-    localStorage.clear();
-    const vault = new MockVault();
-    setApp({
-      vault,
-      workspace: { getLeaf: () => ({ openFile: vi.fn() }), on: () => ({ ref: 'r' }) },
-      metadataCache: { getFileCache: () => null, getBacklinksForFile: () => null },
-      commands: { executeCommandById: vi.fn() },
-      fileManager: { processFrontMatter: () => Promise.resolve() },
-    } as any);
-    setSettingsProvider(() => ({ favoritesStoragePath: 'CONFIG/STORAGE' } as any));
-    FavoritesApp.instance = null;
-    await FavoritesApp.getInstance().init();
+    settings = { favoritesStoragePath: 'CONFIG/STORAGE' };
+    setSettingsProvider(() => settings as any);
+    setSettingsSaver(async () => {});
   });
 
-  it('⚙️ 打开空弹窗（收藏本无设置项）', () => {
-    const settingsBtn = [...document.querySelectorAll('button')].find((b) => b.title === '收藏本设置')!;
-    settingsBtn.click();
-    const popup = document.getElementById('bz-settings-modal-popup')!;
-    expect(popup.textContent).toContain('收藏本设置');
-    expect(popup.textContent).toContain('没有可配置的设置项');
+  it('桌面端：schema 为空态域（仅移动端组，组级门控隐藏）', () => {
+    const schema = favoritesSettingsSchema();
+    expect(schema.groups).toHaveLength(1);
+    expect(schema.groups[0].name).toBe('移动端');
+    expect(schema.groups[0].visibleWhen!(settings as any)).toBe(false);
+  });
+
+  it('移动端：schema 暴露「移动端默认全屏」toggle，直绑 favoritesMobileDefaultFullscreen', () => {
+    const prevMobile = MockPlatform.isMobile;
+    try {
+      MockPlatform.isMobile = true;
+      const schema = favoritesSettingsSchema();
+      expect(schema.groups[0].visibleWhen!(settings as any)).toBe(true);
+      const row = schema.groups[0].rows[0] as any;
+      expect(row.name).toBe('移动端默认全屏');
+      expect(row.binding).toMatchObject({ key: 'favoritesMobileDefaultFullscreen' });
+    } finally {
+      MockPlatform.isMobile = prevMobile;
+    }
   });
 });
