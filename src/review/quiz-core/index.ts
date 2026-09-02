@@ -4,9 +4,9 @@
  * （review/app.ts ensureQuiz + startReviewSession、review/ui.ts quizUpdate）。
  */
 import type { App } from 'obsidian';
-import { createAI } from '../core/ai';
-import { getSettings } from '../core/settings-provider';
-import { QuizMasterUI, quizUI } from './ui';
+import { createAI } from '../../core/ai';
+import { getSettings } from '../../core/settings-provider';
+import { QuizMasterUI, quizUI } from './session';
 
 let initialized = false;
 

@@ -1,7 +1,7 @@
 /**
  * 做题家题目生成器（ticket 17 修正版：对齐源码 QuestionGenerator 逐字）
  */
-import type { AIService } from '../core/ai';
+import type { AIService } from '../../core/ai';
 import type { QuizQuestion } from './manager';
 
 export class QuestionGenerator {

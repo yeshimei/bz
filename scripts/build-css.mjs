@@ -41,7 +41,6 @@ const SOURCES = [
   "src/password-vault/styles.css",
   "src/favorites/styles.css",
   "src/review/styles.css",
-  "src/quiz/styles.css",
   "src/pomodoro/styles.css",
   "src/library/styles.css",
   "src/attach/styles.css",

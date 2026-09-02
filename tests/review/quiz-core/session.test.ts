@@ -4,12 +4,12 @@
  * 键盘快捷键 / 头部对错计数删除（ticket 156）/ 退出确认闸门 / 结果卡阶段防拆 DOM。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks, getNoticeMessages } from '../mock-obsidian-entry';
-import { setApp } from '../../src/core/app';
-import { QuizMasterUI, quizUI } from '../../src/quiz/ui';
-import { QUIZ_FILE_PATH } from '../../src/quiz/manager';
-import type { QuizQuestion } from '../../src/quiz/manager';
+import { MockVault, mockAppWithVault } from '../../mock-vault';
+import { resetObsidianMocks, getNoticeMessages } from '../../mock-obsidian-entry';
+import { setApp } from '../../../src/core/app';
+import { QuizMasterUI, quizUI } from '../../../src/review/quiz-core/session';
+import { QUIZ_FILE_PATH } from '../../../src/review/quiz-core/manager';
+import type { QuizQuestion } from '../../../src/review/quiz-core/manager';
 
 function makeApp(vault: MockVault) {
   return mockAppWithVault(vault);
@@ -554,9 +554,9 @@ describe('复习联动契约', () => {
   });
 
   it('ensureQuiz：quizUI.ai 实例镜像同步（复习域经实例读取判断）', async () => {
-    const { setSettingsProvider } = await import('../../src/core/settings-provider');
+    const { setSettingsProvider } = await import('../../../src/core/settings-provider');
     setSettingsProvider(() => ({}) as any);
-    const { ensureQuiz, QuizMasterUI: QUI } = await import('../../src/quiz');
+    const { ensureQuiz, QuizMasterUI: QUI } = await import('../../../src/review/quiz-core');
     ensureQuiz(null as any);
     expect(quizUI.ai).not.toBeNull();
     expect(QUI.ai).not.toBeNull();
