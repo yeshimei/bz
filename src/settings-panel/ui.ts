@@ -1,17 +1,19 @@
 /**
  * 设置面板 UI（settings-panel，ADR-0080）
- * 原型 .scratch/global-settings-panel-prototype.html 1:1 复刻（完全自绘，抛弃 Obsidian 原生样式影响）：
- * - 桌面端：B 侧栏工作台（左域导航 + 右内容区直接自绘渲染该域全部设置分组）
- * - 移动端：M1 命令面板（搜索 + 域列表，主面板真全屏 + 关闭按钮）
+ * 新体系组件库版（铁律 6 收编：按钮/输入/开关/下拉/chip/空态等全部消费 src/core/ui；
+ * 图标一律 lucide，禁止 emoji 当图标）：
+ * - 桌面端：B 侧栏工作台 = 影院式整宽头行（仅标题「设置」，占满 100% 宽）
+ *   + 左域导航 + 右内容区内嵌渲染该域全部设置分组；遮罩/ESC 关闭（头行无关闭钮）
+ * - 移动端：M1 命令面板（搜索 + 域列表，主面板真全屏 + 头行关闭按钮）
  * - 域设置内容：数据 = 各域真实 schema（xxxSettingsSchema()，与 ⚙️ 弹窗同源），
- *   视觉 = 自绘渲染器 renderPanelSchema（自绘开关/输入/下拉/滑块/按钮/chips/路径行），
- *   绑定逻辑照抄 core/settings-schema（键直绑 getSettings/saveSettings / 三函数 / visibleWhen / onChange）；
- *   路径行走自绘 chips + openPathPicker（ADR-0061 选择器），不再嵌套原生设置行。
- * - 图标系统 1:1 原型：域列表/分组卡/头部 logo/搜索/弹窗标题全部用 emoji（原型 DOMAINS 同款），
- *   桌面导航徽标静态预填（deep 域=组数 / 无设置=— / 其余=·）。
+ *   视觉 = 渲染器 renderPanelSchema（组件库控件），绑定逻辑与 ⚙️ 弹窗同一套
+ *   （键直绑 getSettings/saveSettings / 三函数 / visibleWhen / onChange）；
+ *   路径行走 uiChip 路径胶囊 + openPathPicker（ADR-0061 选择器）。
+ * - 桌面导航徽标静态预填（deep 域=组数 / 无设置=— / 其余=·）。
  * - 全局域 → mainSettingsSchema()（AI 服务商 + 数据存储路径）。
  */
-import { App, setIcon } from 'obsidian';
+import type { App } from 'obsidian';
+import { setIcon } from 'obsidian';
 import { createOverlay, topifyZ } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { isMobileEnv, applyMobileWindowFullscreen } from '../core/mobile';
@@ -20,13 +22,14 @@ import type { SettingsSchema } from '../core/settings-schema';
 import { renderPanelSchema } from './renderer';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
+import { uiIcon, uiIconBtn, uiEmpty } from '../core/ui';
 
-/* ==================== 域清单（全局 + 20 域；原型 DOMAINS 1:1） ==================== */
+/* ==================== 域清单（全局 + 20 域；图标 = lucide 名） ==================== */
 
 interface DomainDef {
   id: string;
   name: string;
-  /** 列表/头部 emoji 图标（原型 .b-ic/.m1-ic） */
+  /** 列表/头部图标（lucide 名，经 setIcon 渲染；对应原型 emoji 图标位） */
   icon: string;
   desc: string;
   /** 无任何设置项（聚合讯/做题家等：面板内显示空态） */
@@ -83,32 +86,32 @@ const schemaLoaders: Record<string, () => Promise<SettingsSchema>> = {
   },
 };
 
-/** 域清单（原型 DOMAINS 1:1：emoji 图标；徽标运行时动态计算，见 DomainDef.badge 注释） */
+/** 域清单（lucide 图标名；徽标运行时动态计算，见 badgeOf） */
 const DOMAINS: DomainDef[] = [
-  { id: 'global', name: '全局', icon: '⚙️', desc: 'AI、存储路径、移动端全屏与入口偏好', schemaLoader: schemaLoaders.global },
-  { id: 'diary', name: '日记本', icon: '📖', desc: '日记目录、显示与默认视图', schemaLoader: schemaLoaders.diary },
-  { id: 'memo', name: '备忘录', icon: '📝', desc: '提醒与到期行为', schemaLoader: schemaLoaders.memo },
-  { id: 'belongings', name: '归物本', icon: '📦', desc: '物品登记与查找', schemaLoader: schemaLoaders.belongings },
-  { id: 'clipping', name: '剪藏本', icon: '📰', desc: '网页剪藏与聚合讯', schemaLoader: schemaLoaders.clipping },
-  { id: 'news', name: '聚合讯', icon: '📡', desc: '资讯聚合', noSettings: true },
-  { id: 'password', name: '密码本', icon: '🔐', desc: '账号密码管理', schemaLoader: schemaLoaders.password },
-  { id: 'favorites', name: '收藏本', icon: '⭐', desc: '收藏条目', schemaLoader: schemaLoaders.favorites },
-  { id: 'library', name: '书库', icon: '📚', desc: '藏书与读书笔记', schemaLoader: schemaLoaders.library },
-  { id: 'reading-report', name: '阅读报告', icon: '📈', desc: '阅读统计', noSettings: true },
-  { id: 'movie', name: '影视', icon: '🎬', desc: '影视目录与海报', schemaLoader: schemaLoaders.movie },
+  { id: 'global', name: '全局', icon: 'settings', desc: 'AI、存储路径、移动端全屏与入口偏好', schemaLoader: schemaLoaders.global },
+  { id: 'diary', name: '日记本', icon: 'book-open', desc: '日记目录、显示与默认视图', schemaLoader: schemaLoaders.diary },
+  { id: 'memo', name: '备忘录', icon: 'sticky-note', desc: '提醒与到期行为', schemaLoader: schemaLoaders.memo },
+  { id: 'belongings', name: '归物本', icon: 'package', desc: '物品登记与查找', schemaLoader: schemaLoaders.belongings },
+  { id: 'clipping', name: '剪藏本', icon: 'newspaper', desc: '网页剪藏与聚合讯', schemaLoader: schemaLoaders.clipping },
+  { id: 'news', name: '聚合讯', icon: 'radio', desc: '资讯聚合', noSettings: true },
+  { id: 'password', name: '密码本', icon: 'lock', desc: '账号密码管理', schemaLoader: schemaLoaders.password },
+  { id: 'favorites', name: '收藏本', icon: 'star', desc: '收藏条目', schemaLoader: schemaLoaders.favorites },
+  { id: 'library', name: '书库', icon: 'library', desc: '藏书与读书笔记', schemaLoader: schemaLoaders.library },
+  { id: 'reading-report', name: '阅读报告', icon: 'bar-chart-3', desc: '阅读统计', noSettings: true },
+  { id: 'movie', name: '影视', icon: 'film', desc: '影视目录与海报', schemaLoader: schemaLoaders.movie },
 
-  { id: 'cinema', name: '影院', icon: '🎬', desc: '影视海报墙（新域）', schemaLoader: schemaLoaders.cinema },
-  { id: 'review', name: '复习计划', icon: '🔁', desc: '间隔重复与做题', schemaLoader: schemaLoaders.review },
-  { id: 'quiz', name: '做题家', icon: '🧠', desc: '题目练习（并入复习计划）', noSettings: true },
-  { id: 'secondbrain', name: '第二大脑', icon: '🧠', desc: '嵌入检索与对话', schemaLoader: schemaLoaders.secondbrain },
-  { id: 'auto-summary', name: '自动摘要', icon: '✨', desc: '剪藏自动摘要', noSettings: true },
-  { id: 'launcher', name: '入口页', icon: '🧩', desc: '命令磁贴入口', noSettings: true },
-  { id: 'pomodoro', name: '番茄钟', icon: '🍅', desc: '专注计时与休息', schemaLoader: schemaLoaders.pomodoro },
-  { id: 'attach', name: '附件搬移', icon: '📎', desc: '附件整理', noSettings: true },
-  { id: 'bili-downloader', name: 'B站下载', icon: '📥', desc: 'B站视频下载任务', noSettings: true },
-  { id: 'encrypt', name: '加密保险箱', icon: '🔏', desc: '加密文件保险箱', schemaLoader: schemaLoaders.encrypt },
-  { id: 'smartcat', name: '小橘陪伴猫', icon: '🐱', desc: '桌面宠物陪伴', noSettings: true },
-  { id: 'literature', name: '文献笔记', icon: '📑', desc: '文献管理与术语', schemaLoader: schemaLoaders.literature },
+  { id: 'cinema', name: '影院', icon: 'clapperboard', desc: '影视海报墙（新域）', schemaLoader: schemaLoaders.cinema },
+  { id: 'review', name: '复习计划', icon: 'repeat-2', desc: '间隔重复与做题', schemaLoader: schemaLoaders.review },
+  { id: 'quiz', name: '做题家', icon: 'brain', desc: '题目练习（并入复习计划）', noSettings: true },
+  { id: 'secondbrain', name: '第二大脑', icon: 'network', desc: '嵌入检索与对话', schemaLoader: schemaLoaders.secondbrain },
+  { id: 'auto-summary', name: '自动摘要', icon: 'sparkles', desc: '剪藏自动摘要', noSettings: true },
+  { id: 'launcher', name: '入口页', icon: 'puzzle', desc: '命令磁贴入口', noSettings: true },
+  { id: 'pomodoro', name: '番茄钟', icon: 'timer', desc: '专注计时与休息', schemaLoader: schemaLoaders.pomodoro },
+  { id: 'attach', name: '附件搬移', icon: 'paperclip', desc: '附件整理', noSettings: true },
+  { id: 'bili-downloader', name: 'B站下载', icon: 'download', desc: 'B站视频下载任务', noSettings: true },
+  { id: 'encrypt', name: '加密保险箱', icon: 'shield', desc: '加密文件保险箱', schemaLoader: schemaLoaders.encrypt },
+  { id: 'smartcat', name: '小橘陪伴猫', icon: 'cat', desc: '桌面宠物陪伴', noSettings: true },
+  { id: 'literature', name: '文献笔记', icon: 'file-text', desc: '文献管理与术语', schemaLoader: schemaLoaders.literature },
 ];
 
 /** 可见域：无设置项的域（noSettings）不在左侧列表/移动端列表显示（用户拍板：没有设置的域隐藏）。
@@ -179,31 +182,38 @@ export class SettingsPanelUI {
     });
   }
 
-  /* ---------- 桌面：B 侧栏工作台（左导航 + 右内嵌渲染） ---------- */
+  /* ---------- 头行（影院式：整宽、仅标题；关闭靠遮罩/ESC） ---------- */
+
+  private buildHeadHtml(): string {
+    // 桌面：只有标题（占满整宽的头条）；关闭钮由移动端 build 追加到 .bz-sp-head-tools
+    return `<div class="bz-sp-head"><span class="bz-sp-head-title">设置</span><span class="bz-sp-head-tools"></span></div>`;
+  }
+
+  /* ---------- 桌面：B 侧栏工作台（头行 + 左导航 + 右内嵌渲染） ---------- */
 
   private buildDesktop(popup: HTMLElement): void {
     popup.classList.add('bz-sp-desk');
     popup.innerHTML = `
-      <div class="bz-sp-desk-side">
-        <div class="bz-sp-brand">
-          <span class="bz-sp-logo">⚙️</span>
-          <span class="bz-sp-brand-name">设置</span>
+      ${this.buildHeadHtml()}
+      <div class="bz-sp-desk-body">
+        <div class="bz-sp-desk-side">
+          <div class="bz-sp-search">
+            <span class="bz-input-wrap"><i class="bz-ic"></i><input class="bz-input" placeholder="搜索设置…" /></span>
+          </div>
+          <div class="bz-sp-nav"></div>
         </div>
-        <div class="bz-sp-search">
-          <span class="bz-sp-search-ic">🔍</span>
-          <input class="bz-sp-search-in" placeholder="搜索设置…" />
+        <div class="bz-sp-desk-main">
+          <div class="bz-sp-pane"></div>
         </div>
-        <div class="bz-sp-nav"></div>
-      </div>
-      <div class="bz-sp-desk-main">
-        <div class="bz-sp-pane"></div>
       </div>
     `;
 
+    const searchIcon = popup.querySelector('.bz-sp-search .bz-ic') as HTMLElement;
+    setIcon(searchIcon, 'search');
     const nav = popup.querySelector('.bz-sp-nav') as HTMLElement;
     this.navEl = nav;
     const pane = popup.querySelector('.bz-sp-pane') as HTMLElement;
-    const searchIn = popup.querySelector('.bz-sp-search-in') as HTMLInputElement;
+    const searchIn = popup.querySelector('.bz-sp-search .bz-input') as HTMLInputElement;
 
     const renderNav = (q: string) => {
       const query = q.trim();
@@ -212,16 +222,16 @@ export class SettingsPanelUI {
       visibleDomains().forEach((d) => {
         if (query && !d.name.includes(query) && !d.desc.includes(query)) return;
         const b = document.createElement('button');
+        b.type = 'button';
         b.className = 'bz-sp-nav-item' + (d.id === this.activeDomainId && !query ? ' on' : '');
         b.dataset.d = d.id;
-        const ic = document.createElement('span');
-        ic.className = 'bz-sp-nav-ic';
-        ic.textContent = d.icon; // emoji（原型 .b-ic）
+        const ic = uiIcon(d.icon);
+        ic.classList.add('bz-sp-nav-ic');
         const nm = document.createElement('span');
         nm.className = 'bz-sp-nav-name';
         nm.textContent = d.name;
         b.append(ic, nm);
-        // 动态徽标（原型 .b-ct）：·/—/可见组数，随 schema 加载与显隐门控回填
+        // 动态徽标（·/—/可见组数，随 schema 加载与显隐门控回填）
         const ct = document.createElement('span');
         ct.className = 'bz-sp-nav-count';
         ct.textContent = badgeOf(d);
@@ -287,8 +297,25 @@ export class SettingsPanelUI {
     });
   }
 
+  /** 空态构建（组件库 uiEmpty：图标 lucide + 标题 + 描述） */
+  private emptyEl(icon: string, title: string, desc: string): HTMLElement {
+    return uiEmpty({ icon, title, desc });
+  }
+
+  /** 加载态（spinner + 文案） */
+  private loadingEl(): HTMLElement {
+    const loading = document.createElement('div');
+    loading.className = 'bz-sp-loading';
+    const sp = document.createElement('span');
+    sp.className = 'bz-spinner';
+    const tx = document.createElement('span');
+    tx.textContent = '加载设置…';
+    loading.append(sp, tx);
+    return loading;
+  }
+
   /**
-   * 渲染某域设置到容器：内嵌自绘渲染器（与 ⚙️ 弹窗同数据源，视觉 1:1 原型）。
+   * 渲染某域设置到容器：内嵌渲染器（与 ⚙️ 弹窗同数据源）。
    * 无 schema 的域显示空态。
    */
   private async renderDomain(pane: HTMLElement, domain: DomainDef): Promise<void> {
@@ -296,12 +323,13 @@ export class SettingsPanelUI {
     this.renderHandles = [];
     pane.innerHTML = '';
 
-    // 无设置项域 → 空态（原型 empty）
+    // 无设置项域 → 空态
     if (domain.noSettings || !domain.schemaLoader) {
-      const empty = document.createElement('div');
-      empty.className = 'bz-sp-empty';
-      empty.innerHTML = `<div class="bz-sp-empty-ic">🫙</div><div class="bz-sp-empty-title">${domain.name} · 暂无设置项</div><div class="bz-sp-empty-desc">该域没有可在此配置的设置（设置就近在对应功能面板）</div>`;
-      pane.appendChild(empty);
+      pane.appendChild(this.emptyEl(
+        'settings',
+        `${domain.name} · 暂无设置项`,
+        '该域没有可在此配置的设置（设置就近在对应功能面板）'
+      ));
       return;
     }
 
@@ -309,14 +337,11 @@ export class SettingsPanelUI {
     const body = document.createElement('div');
     body.className = 'bz-sp-settings-body';
     pane.appendChild(body);
-    const loading = document.createElement('div');
-    loading.className = 'bz-sp-loading';
-    loading.textContent = '加载设置…';
-    body.appendChild(loading);
+    body.appendChild(this.loadingEl());
 
     try {
       const schema = await domain.schemaLoader();
-      loading.remove();
+      body.innerHTML = '';
       const handle = renderPanelSchema(body, schema);
       this.renderHandles.push(handle);
       // 记录本域 schema 行（移动端搜索「设置项」段用）
@@ -332,45 +357,50 @@ export class SettingsPanelUI {
       this.refreshNavBadges();
       // 全部组被门控隐藏（如归物本仅移动端组，桌面无可配置项）→ 空态引导
       if (visibleGroups === 0 && groupEls.length > 0) {
-        const empty = document.createElement('div');
-        empty.className = 'bz-sp-empty';
-        empty.innerHTML = `<div class="bz-sp-empty-ic">📱</div><div class="bz-sp-empty-title">${domain.name} · 暂无设置项</div><div class="bz-sp-empty-desc">该域的设置项仅移动端可见（如移动端默认全屏），桌面端无需配置</div>`;
-        body.appendChild(empty);
+        body.appendChild(this.emptyEl(
+          'smartphone',
+          `${domain.name} · 暂无设置项`,
+          '该域的设置项仅移动端可见（如移动端默认全屏），桌面端无需配置'
+        ));
       }
       return;
     } catch (e) {
-      loading.remove();
-      const err = document.createElement('div');
-      err.className = 'bz-sp-empty';
-      err.innerHTML = `<div class="bz-sp-empty-ic">⚠️</div><div class="bz-sp-empty-title">加载失败</div><div class="bz-sp-empty-desc">${(e as Error).message}</div>`;
-      pane.appendChild(err);
+      body.innerHTML = '';
+      body.appendChild(this.emptyEl(
+        'alert-circle',
+        '加载失败',
+        (e as Error).message
+      ));
       notice(`加载「${domain.name}」设置失败：${(e as Error).message}`, 'error');
     }
   }
 
-  /* ---------- 移动端：M1 命令面板（搜索 + 域列表 → 域设置弹窗） ---------- */
+  /* ---------- 移动端：M1 命令面板（头行 + 搜索 + 域列表 → 域设置弹窗） ---------- */
 
   private buildMobile(popup: HTMLElement): void {
     popup.classList.add('bz-sp-mobile');
     popup.innerHTML = `
-      <div class="bz-sp-mob-head">
-        <h2>⚙️ 设置</h2>
-        <span class="bz-sp-mob-count">${visibleDomains().length} 域</span>
-        <button class="bz-sp-mob-close" title="关闭">✕</button>
+      <div class="bz-sp-head">
+        <span class="bz-sp-head-title">设置</span>
+        <span class="bz-sp-head-tools"></span>
       </div>
       <div class="bz-sp-mob-search">
-        <span class="bz-sp-search-ic">⌕</span>
-        <input class="bz-sp-search-in" placeholder="搜索设置、域…" />
-        <button class="bz-sp-mob-clear" title="清除">✕</button>
+        <span class="bz-input-wrap"><i class="bz-ic"></i><input class="bz-input" placeholder="搜索设置、域…" /></span>
       </div>
       <div class="bz-sp-mob-list"></div>
     `;
 
+    // 头行工具（移动端：关闭钮）
+    const tools = popup.querySelector('.bz-sp-head-tools') as HTMLElement;
+    tools.appendChild(uiIconBtn({ icon: 'x', lg: true, title: '关闭', className: 'bz-sp-mob-close', onClick: () => this.hide() }));
+
     const list = popup.querySelector('.bz-sp-mob-list')!;
-    const searchIn = popup.querySelector('.bz-sp-mob-search .bz-sp-search-in') as HTMLInputElement;
-    const clearBtn = popup.querySelector('.bz-sp-mob-clear') as HTMLElement;
-    const searchWrap = popup.querySelector('.bz-sp-mob-search')!;
-    popup.querySelector('.bz-sp-mob-close')!.addEventListener('click', () => this.hide());
+    const searchWrap = popup.querySelector('.bz-sp-mob-search') as HTMLElement;
+    const searchIn = popup.querySelector('.bz-sp-mob-search .bz-input') as HTMLInputElement;
+    const searchIcon = popup.querySelector('.bz-sp-mob-search .bz-ic') as HTMLElement;
+    setIcon(searchIcon, 'search');
+    const clearBtn = uiIconBtn({ icon: 'x', title: '清除', className: 'bz-sp-mob-clear' });
+    searchWrap.appendChild(clearBtn);
     clearBtn.addEventListener('click', () => {
       searchIn.value = '';
       searchWrap.classList.remove('hasval');
@@ -383,13 +413,13 @@ export class SettingsPanelUI {
       searchWrap.classList.toggle('hasval', !!query);
       list.innerHTML = '';
       if (!query) {
-        // 无搜索：全部可见域（无设置项的域不显示，用户拍板；原型 draw('') 分支）
+        // 无搜索：全部可见域（无设置项的域不显示，用户拍板）
         visibleDomains().forEach((d) => {
           list.appendChild(mobItem(d));
         });
         return;
       }
-      // 搜索：域段 + 设置项段（原型 m1-sec 两段）；同样只搜可见域
+      // 搜索：域段 + 设置项段
       const doms = visibleDomains().filter((d) => d.name.includes(query) || d.desc.includes(query));
       const rows: Array<{ icon: string; name: string; desc: string; domain: DomainDef }> = [];
       schemaRowCache.forEach((rowsOf, did) => {
@@ -412,10 +442,11 @@ export class SettingsPanelUI {
         html += `<div class="bz-sp-mob-sec">设置项（${rows.length}）</div>`;
         rows.forEach((r) => {
           const item = document.createElement('button');
+          item.type = 'button';
           item.className = 'bz-sp-mob-item';
           const ic = document.createElement('span');
           ic.className = 'bz-sp-mob-ic';
-          ic.textContent = r.icon;
+          ic.appendChild(uiIcon(r.icon));
           const t = document.createElement('span');
           t.className = 'bz-sp-mob-t';
           const nm = document.createElement('span');
@@ -439,13 +470,14 @@ export class SettingsPanelUI {
       list.innerHTML = html;
     };
 
-    /** 构造移动端域行（原型 .m1-item：emoji 图标 + 名称 + 描述 + ›） */
+    /** 构造移动端域行（图标方块 + 名称 + 描述 + ›） */
     const mobItem = (d: DomainDef): HTMLElement => {
       const item = document.createElement('button');
+      item.type = 'button';
       item.className = 'bz-sp-mob-item';
       const ic = document.createElement('span');
       ic.className = 'bz-sp-mob-ic';
-      ic.textContent = d.icon; // emoji（原型 .m1-ic）
+      ic.appendChild(uiIcon(d.icon));
       const t = document.createElement('span');
       t.className = 'bz-sp-mob-t';
       const nm = document.createElement('span');
@@ -457,7 +489,7 @@ export class SettingsPanelUI {
       t.append(nm, ds);
       const chev = document.createElement('span');
       chev.className = 'bz-sp-mob-chev';
-      chev.textContent = '›';
+      chev.appendChild(uiIcon('chevron-right'));
       item.append(ic, t, chev);
       item.addEventListener('click', () => void this.openMobileDomain(d));
       return item;
@@ -480,17 +512,18 @@ export class SettingsPanelUI {
     popup.style.maxHeight = '82vh';
     topifyZ(mask, popup);
 
+    // 弹窗头行：图标方块 + 名称 + 关闭钮（图标为 lucide，非 emoji）
     const head = document.createElement('div');
     head.className = 'bz-sp-mob-modal-head';
+    const ic = document.createElement('span');
+    ic.className = 'bz-sp-mob-modal-ic';
+    ic.appendChild(uiIcon(domain.icon));
     const title = document.createElement('h3');
     title.className = 'bz-sp-mob-modal-title';
-    // 弹窗标题带 emoji（原型 .m1-modal-title：`${domain.icon} ${domain.name}`）
-    title.textContent = `${domain.icon} ${domain.name}`;
-    const x = document.createElement('button');
-    x.className = 'bz-sp-mob-modal-x';
-    x.textContent = '✕';
-    x.title = '关闭';
-    head.append(title, x);
+    title.textContent = domain.name;
+    head.append(ic, title);
+    const x = uiIconBtn({ icon: 'x', lg: true, title: '关闭' });
+    head.appendChild(x);
     popup.appendChild(head);
 
     const body = document.createElement('div');
@@ -510,20 +543,18 @@ export class SettingsPanelUI {
     document.body.appendChild(popup);
 
     if (domain.noSettings || !domain.schemaLoader) {
-      const empty = document.createElement('div');
-      empty.className = 'bz-sp-empty';
-      empty.innerHTML = `<div class="bz-sp-empty-ic">🫙</div><div class="bz-sp-empty-title">${domain.name} · 暂无设置项</div><div class="bz-sp-empty-desc">该域没有可在此配置的设置</div>`;
-      body.appendChild(empty);
+      body.appendChild(this.emptyEl(
+        'settings',
+        `${domain.name} · 暂无设置项`,
+        '该域没有可在此配置的设置'
+      ));
       return;
     }
 
-    const loading = document.createElement('div');
-    loading.className = 'bz-sp-loading';
-    loading.textContent = '加载设置…';
-    body.appendChild(loading);
+    body.appendChild(this.loadingEl());
     try {
       const schema = await domain.schemaLoader();
-      loading.remove();
+      body.innerHTML = '';
       renderPanelSchema(body, schema);
       // 记录本域 schema 行（移动端搜索「设置项」段用；与桌面 renderDomain 同口径）
       const rowsOf = schema.groups.flatMap((g) =>
@@ -535,11 +566,12 @@ export class SettingsPanelUI {
       const visibleGroups = [...groupEls].filter((g) => g.style.display !== 'none').length;
       navBadges.set(domain.id, visibleGroups > 0 ? String(visibleGroups) : '·');
     } catch (e) {
-      loading.remove();
-      const err = document.createElement('div');
-      err.className = 'bz-sp-empty';
-      err.innerHTML = `<div class="bz-sp-empty-ic">⚠️</div><div class="bz-sp-empty-title">加载失败</div><div class="bz-sp-empty-desc">${(e as Error).message}</div>`;
-      body.appendChild(err);
+      body.innerHTML = '';
+      body.appendChild(this.emptyEl(
+        'alert-circle',
+        '加载失败',
+        (e as Error).message
+      ));
     }
   }
 

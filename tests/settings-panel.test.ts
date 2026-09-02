@@ -1,9 +1,11 @@
 /**
  * 设置面板域测试（settings-panel，ADR-0080）
- * UI 层：桌面侧栏工作台构建 / 域导航切换内嵌渲染真实 schema / 搜索过滤 /
- *       移动命令面板构建 / 域设置弹窗 / 关闭 / 卸载清理。
- * 核心断言：面板内嵌渲染 = 自绘渲染器 renderPanelSchema（与 ⚙️ 弹窗同数据源、同绑定通道，
- *   视觉完全自绘——面板内不出现 Obsidian 原生 .setting-item 设置行嵌套）。
+ * UI 层：桌面侧栏工作台（影院式整宽头行）构建 / 域导航切换内嵌渲染真实 schema /
+ *       搜索过滤 / 移动命令面板构建 / 域设置弹窗 / 关闭 / 卸载清理。
+ * 核心断言：面板内嵌渲染 = 渲染器 renderPanelSchema（与 ⚙️ 弹窗同数据源、同绑定通道，
+ *   控件全部走组件库（.bz-input/.bz-sw/.bz-select/.bz-chip/.bz-btn…），图标一律 lucide
+ *   （setIcon mock 记 data-icon）——面板内不出现 Obsidian 原生 .setting-item 设置行嵌套，
+ *   也不残留 emoji 图标（收编铁律 6）。
  */
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -41,6 +43,9 @@ async function waitGroups(container: HTMLElement, min: number): Promise<boolean>
   return false;
 }
 
+/** emoji 区间（面板收编后禁止 emoji 当图标，回归守卫） */
+const EMOJI_RE = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}]/u;
+
 describe('设置面板（settings-panel）', () => {
   /** 共享 settings 单例（provider 每次返回同对象；beforeEach 重置） */
   let panelState: Record<string, unknown>;
@@ -57,20 +62,26 @@ describe('设置面板（settings-panel）', () => {
     setApp({ vault: new MockVault(), workspace: { getLeaf: () => ({ openFile: vi.fn() }) } } as any);
   });
 
-  it('桌面端：构建侧栏工作台（品牌+搜索+域导航+右侧面板）', async () => {
+  it('桌面端：构建侧栏工作台（整宽头行仅标题 + 搜索 + 域导航 + 右侧面板）', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     expect(popup).toBeTruthy();
     expect(popup.classList.contains('bz-sp-desk')).toBe(true);
-    expect(popup.querySelector('.bz-sp-brand-name')!.textContent).toBe('设置');
+    // 头行：popup 首子元素 = 影院式整宽头行，仅标题「设置」（无 emoji、无工具钮）
+    const head = popup.firstElementChild as HTMLElement;
+    expect(head.classList.contains('bz-sp-head')).toBe(true);
+    expect(head.querySelector('.bz-sp-head-title')!.textContent).toBe('设置');
+    expect(head.querySelectorAll('.bz-sp-head-tools *').length).toBe(0);
+    expect(popup.querySelector('.bz-sp-brand-name')).toBeNull();
+    expect(popup.querySelector('.bz-sp-logo')).toBeNull();
     // 无设置项的域不在左侧列表显示（用户拍板）：22 域中 8 个无 schema（聚合讯/阅读报告/做题家/
     // 自动摘要/入口页/附件搬移/B站下载/小橘陪伴猫）→ 可见 15 个（+影院 cinema）
     expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBe(15);
     // 无底部快捷键提示 / 无右侧导航条 / 无面包屑
     expect(popup.querySelector('.bz-sp-foot')).toBeNull();
     expect(popup.querySelector('.bz-sp-crumb')).toBeNull();
-    // 徽标动态计算（原型 .b-ct）：加载前 ·；无设置域 —；schema 加载后 = 可见组数
+    // 徽标动态计算：加载前 ·；无设置域 —；schema 加载后 = 可见组数
     // 初始（全局 schema 尚未加载完成）：全局 ·、归物本 ·（有 schema 但桌面全门控隐藏 → 加载后仍 ·）
     let badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
     expect(badges[3]).toBe('·'); // 归物本（schema 加载后桌面端无可见组）
@@ -81,12 +92,13 @@ describe('设置面板（settings-panel）', () => {
       badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
     }
     expect(badges[0]).toBe('2'); // 全局：AI + 数据存储路径（桌面端移动端组不存在）
-    // 导航图标为 emoji（原型 .b-ic）
-    const navIcons = [...popup.querySelectorAll('.bz-sp-nav-ic')].map((i) => i.textContent);
-    expect(navIcons[0]).toBe('⚙️');
-    expect(navIcons[5]).toBe('🔐'); // 密码本（过滤后 index 5）
-    // 头部 logo 为 emoji ⚙️（原型 .b-logo）
-    expect(popup.querySelector('.bz-sp-logo')!.textContent).toBe('⚙️');
+    // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）
+    const navIcons = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-ic')];
+    expect(navIcons.length).toBe(15);
+    expect(navIcons[0].getAttribute('data-icon')).toBe('settings'); // 全局
+    expect(navIcons[5].getAttribute('data-icon')).toBe('lock'); // 密码本（过滤后 index 5）
+    // 无 emoji 图标残留（头行/列表/徽标全文本或 lucide）
+    expect(popup.textContent).not.toMatch(EMOJI_RE);
     ui.cleanup();
   });
 
@@ -103,7 +115,7 @@ describe('设置面板（settings-panel）', () => {
     ui.cleanup();
   });
 
-  it('桌面端：per-provider 上下文窗口/最大输出 token 渲染为自绘 number 输入（无原生 Setting 嵌套）', async () => {
+  it('桌面端：per-provider 上下文窗口/最大输出 token 渲染为组件库 number 输入（无原生 Setting 嵌套）', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
@@ -115,9 +127,10 @@ describe('设置面板（settings-panel）', () => {
     expect(ctxRow, '上下文窗口行存在').toBeTruthy();
     expect(maxRow, '最大输出 token 行存在').toBeTruthy();
     for (const rowEl of [ctxRow!, maxRow!]) {
-      const input = rowEl.querySelector<HTMLInputElement>('input.bz-sp-input');
-      expect(input, '行内自绘输入框存在').toBeTruthy();
+      const input = rowEl.querySelector<HTMLInputElement>('input.bz-input');
+      expect(input, '行内组件库输入框存在').toBeTruthy();
       expect(input!.type).toBe('number');
+      expect(input!.classList.contains('num'), '数字行宽度修饰').toBe(true);
       expect(rowEl.querySelector('.setting-item'), '无原生 Setting 嵌套').toBeFalsy();
     }
     ui.cleanup();
@@ -131,41 +144,47 @@ describe('设置面板（settings-panel）', () => {
     const ctxInput = () => {
       const rows = [...popup.querySelectorAll<HTMLElement>('.bz-sp-set-row')];
       const row = rows.find((r) => r.querySelector('.bz-sp-set-name')?.textContent === '上下文窗口')!;
-      return row.querySelector<HTMLInputElement>('input.bz-sp-input')!;
+      return row.querySelector<HTMLInputElement>('input.bz-input')!;
     };
     // 初始 = 未设置回落 opencode-go（ctx 131072）；下拉初始空值无高亮
-    const sel = popup.querySelector('.bz-sp-sel')!; // AI 服务商下拉（组内首个下拉）
+    const sel = popup.querySelector('.bz-select')!; // AI 服务商下拉（组内首个下拉）
     const before = ctxInput().value;
     expect(before).toBe('131072');
     // 切 deepseek（注册表第 1 项，ctx 默认 65536）→ ctx 输入值应联动刷新
     sel.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    const opt = popup.querySelectorAll('.bz-sp-sel-opt')[0] as HTMLElement; // deepseek
+    const opt = popup.querySelectorAll('.bz-select-item')[0] as HTMLElement; // deepseek
     opt.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    // refreshKey 联动写回输入框（自绘渲染器 valueRefreshes）
+    // refreshKey 联动写回输入框（渲染器 valueRefreshes）
     const after = ctxInput().value;
     expect(after).not.toBe(before);
     expect(Number(after)).toBeGreaterThan(0);
     ui.cleanup();
   });
 
-  it('桌面端：分组卡图标为 emoji（原型 .gc-icon）', async () => {
+  it('桌面端：分组卡图标为 lucide（schema 图标名 → setIcon data-icon）', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     await tick();
-    // 全局域分组：AI（sparkles→🤖）+ 数据存储路径（folder-open→📂）
-    const icons = [...popup.querySelectorAll('.bz-sp-group-icon')].map((i) => i.textContent);
+    // 全局域分组：AI（sparkles）+ 数据存储路径（folder-open）
+    const icons = [...popup.querySelectorAll('.bz-sp-group-icon')].map((i) => i.getAttribute('data-icon'));
     expect(icons.length).toBeGreaterThanOrEqual(2);
-    expect(icons).toContain('🤖');
-    expect(icons).toContain('📂');
+    expect(icons).toContain('sparkles');
+    expect(icons).toContain('folder-open');
     ui.cleanup();
   });
 
-  it('桌面端：面板容器带原型边框（.b-modal 1px + shadow-md）', () => {
+  it('桌面端：面板容器带整宽头行 + 面板壳（列布局：头行在内容之上）', () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     expect(popup.classList.contains('bz-sp-desk')).toBe(true);
+    const head = popup.querySelector(':scope > .bz-sp-head') as HTMLElement;
+    const body = popup.querySelector(':scope > .bz-sp-desk-body') as HTMLElement;
+    expect(head).toBeTruthy();
+    expect(body).toBeTruthy();
+    // 头行在内容区之前（整宽头条置于侧栏+内容之上）
+    expect(head.compareDocumentPosition(body) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
     ui.cleanup();
   });
 
@@ -181,9 +200,9 @@ describe('设置面板（settings-panel）', () => {
     const groups = popup.querySelectorAll('.bz-sp-group');
     const paneHtml = popup.querySelector('.bz-sp-pane')!.innerHTML;
     // 若为空态，把描述（错误消息）打出来
-    const errDesc = popup.querySelector('.bz-sp-empty-desc');
+    const errDesc = popup.querySelector('.bz-empty-desc');
     expect(groups.length, 'err: ' + (errDesc ? errDesc.textContent : 'none')).toBeGreaterThanOrEqual(5);
-    // 设置行真实渲染（自绘开关/输入等）
+    // 设置行真实渲染（组件库开关/输入等）
     expect(popup.querySelectorAll('.bz-sp-set-row').length).toBeGreaterThan(0);
     ui.cleanup();
   });
@@ -203,7 +222,7 @@ describe('设置面板（settings-panel）', () => {
     ui.cleanup();
   });
 
-  it('桌面端：自绘开关点击切换（真实交互，番茄钟域）', async () => {
+  it('桌面端：组件库开关点击切换（真实交互，番茄钟域）', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
@@ -211,15 +230,17 @@ describe('设置面板（settings-panel）', () => {
     // 切到番茄钟（index 12，行为组有多个开关）
     (popup.querySelectorAll('.bz-sp-nav-item')[12] as HTMLElement).click();
     await waitGroups(popup, 2);
-    const sw = popup.querySelector('.bz-sp-sw');
+    const sw = popup.querySelector('.bz-sw');
     expect(sw).toBeTruthy();
+    expect(sw!.getAttribute('role')).toBe('switch');
     const before = sw!.classList.contains('on');
     sw!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(sw!.classList.contains('on')).toBe(!before);
+    expect(sw!.getAttribute('aria-checked')).toBe(String(!before));
     ui.cleanup();
   });
 
-  it('桌面端：自绘下拉点击弹出选项并选择（番茄钟预设）', async () => {
+  it('桌面端：组件库下拉点击弹出选项并选择（番茄钟预设）', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
@@ -227,29 +248,29 @@ describe('设置面板（settings-panel）', () => {
     // 切到番茄钟（index 12，时间方案组有预设下拉）
     (popup.querySelectorAll('.bz-sp-nav-item')[12] as HTMLElement).click();
     await waitGroups(popup, 2);
-    const sel = popup.querySelector('.bz-sp-sel');
+    const sel = popup.querySelector('.bz-select');
     expect(sel).toBeTruthy();
-    // 单次点击即打开（重写后不再因冒泡误关）
+    // 单次点击即打开
     sel!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    const menu = popup.querySelector('.bz-sp-sel-menu');
+    const menu = popup.querySelector('.bz-select-menu');
     expect(menu).toBeTruthy();
-    const opt = menu!.querySelectorAll('.bz-sp-sel-opt')[1] as HTMLElement;
-    const before = popup.querySelector('.bz-sp-sel-val')!.textContent;
+    const opt = menu!.querySelectorAll('.bz-select-item')[1] as HTMLElement;
+    const before = popup.querySelector('.bz-select-val')!.textContent;
     opt.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(popup.querySelector('.bz-sp-sel-val')!.textContent).not.toBe(before);
+    expect(popup.querySelector('.bz-select-val')!.textContent).not.toBe(before);
     // 选中后菜单关闭；重开菜单 → 选中态/✓ 跟随新值（不再显示旧选项）
-    expect(popup.querySelector('.bz-sp-sel-menu')).toBeNull();
+    expect(popup.querySelector('.bz-select-menu')).toBeNull();
     sel!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    const menu2 = popup.querySelector('.bz-sp-sel-menu');
+    const menu2 = popup.querySelector('.bz-select-menu');
     expect(menu2).toBeTruthy();
-    const onOpt = [...menu2!.querySelectorAll('.bz-sp-sel-opt')].find((o) => o.classList.contains('on'));
+    const onOpt = [...menu2!.querySelectorAll('.bz-select-item')].find((o) => o.classList.contains('is-on'));
     expect(onOpt).toBeTruthy();
-    expect(onOpt!.textContent).toContain('✓');
-    expect(onOpt!.textContent).toContain(popup.querySelector('.bz-sp-sel-val')!.textContent!);
+    expect(onOpt!.querySelector('.bz-select-item-ck')).toBeTruthy();
+    expect(onOpt!.textContent).toContain(popup.querySelector('.bz-select-val')!.textContent!);
     ui.cleanup();
   });
 
-  it('桌面端：路径行自绘渲染（chips + 选择按钮，无原生设置行嵌套）', async () => {
+  it('桌面端：路径行自绘渲染（组件库 chips + 选择按钮，无原生设置行嵌套）', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
@@ -257,21 +278,23 @@ describe('设置面板（settings-panel）', () => {
     // 切到日记本（index 1，「目录」组有日记目录/影视目录/信件目录 path 行）
     (popup.querySelectorAll('.bz-sp-nav-item')[1] as HTMLElement).click();
     await waitGroups(popup, 3);
-    // 面板内不得出现 Obsidian 原生设置行（自绘行 + custom 插槽内的原生行都不应存在——custom 无原生行）
-    // 「日记目录」行 = 自绘 .bz-sp-set-row + .bz-sp-chips
+    // 面板内不得出现 Obsidian 原生设置行
+    // 「日记目录」行 = 自绘 .bz-sp-set-row + .bz-sp-chips（空态 = 选择按钮）
     const chips = popup.querySelector('.bz-sp-chips');
     expect(chips).toBeTruthy();
-    expect(popup.querySelector('.bz-sp-path-btn')).toBeTruthy();
+    const pathBtn = chips!.querySelector('.bz-sp-path-btn') as HTMLElement;
+    expect(pathBtn).toBeTruthy();
+    expect(pathBtn.classList.contains('bz-btn'), '按钮走组件库 bz-btn').toBe(true);
     // 无原生 .setting-item 嵌套（杜绝「设置行里再套一个设置行」）
     expect(popup.querySelector('.bz-sp-pane .setting-item')).toBeNull();
-    // 空态（未设置路径）只显示选择按钮
+    // 空态（未设置路径）只显示选择按钮，无 chip
     const pathRow = chips!.closest('.bz-sp-set-row')!;
     expect(pathRow.querySelector('.bz-sp-set-name')!.textContent).toBe('日记目录');
-    expect(chips!.querySelector('.bz-sp-path-btn')!.textContent).toBe('选择…');
+    expect(pathBtn.textContent).toBe('选择…');
     ui.cleanup();
   });
 
-  it('桌面端：无设置项域显示空态', async () => {
+  it('桌面端：无设置项域显示空态（组件库 bz-empty）', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
@@ -281,11 +304,12 @@ describe('设置面板（settings-panel）', () => {
     (items[3] as HTMLElement).click();
     const deadline = Date.now() + 2000;
     while (Date.now() < deadline) {
-      if (popup.querySelector('.bz-sp-empty')) break;
+      if (popup.querySelector('.bz-empty')) break;
       await new Promise((r) => setTimeout(r, 30));
     }
-    expect(popup.querySelector('.bz-sp-empty')).toBeTruthy();
-    expect(popup.querySelector('.bz-sp-empty-title')!.textContent).toContain('暂无设置项');
+    expect(popup.querySelector('.bz-empty')).toBeTruthy();
+    expect(popup.querySelector('.bz-empty-title')!.textContent).toContain('暂无设置项');
+    expect(popup.querySelector('.bz-empty .bz-ic[data-icon]'), '空态图标为 lucide').toBeTruthy();
     ui.cleanup();
   });
 
@@ -293,7 +317,7 @@ describe('设置面板（settings-panel）', () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
-    const search = popup.querySelector('.bz-sp-search-in') as HTMLInputElement;
+    const search = popup.querySelector('.bz-sp-search .bz-input') as HTMLInputElement;
     search.value = '番茄';
     search.dispatchEvent(new Event('input', { bubbles: true }));
     const items = popup.querySelectorAll('.bz-sp-nav-item');
@@ -314,7 +338,7 @@ describe('设置面板（settings-panel）', () => {
       expect(names).not.toContain(n);
     }
     // 搜索也搜不到该无设置域（无设置域不占列表位；但描述含词的可见域如「剪藏本」仍可能命中）
-    const search = popup.querySelector('.bz-sp-search-in') as HTMLInputElement;
+    const search = popup.querySelector('.bz-sp-search .bz-input') as HTMLInputElement;
     search.value = '聚合讯';
     search.dispatchEvent(new Event('input', { bubbles: true }));
     const hitNames = [...popup.querySelectorAll('.bz-sp-nav-name')].map((b) => b.textContent);
@@ -337,7 +361,7 @@ describe('设置面板（settings-panel）', () => {
     expect(names).not.toContain('聚合讯');
     expect(names).not.toContain('小橘陪伴猫');
     // 搜索也搜不到该无设置域
-    const search = popup.querySelector('.bz-sp-mob-search .bz-sp-search-in') as HTMLInputElement;
+    const search = popup.querySelector('.bz-sp-mob-search .bz-input') as HTMLInputElement;
     search.value = '聚合讯';
     search.dispatchEvent(new Event('input', { bubbles: true }));
     const hitNames = [...popup.querySelectorAll('.bz-sp-mob-name')].map((b) => b.textContent);
@@ -362,18 +386,26 @@ describe('设置面板（settings-panel）', () => {
     ui.cleanup();
   });
 
-  it('移动端：构建命令面板（搜索+域列表+关闭按钮，主面板真全屏）', () => {
+  it('移动端：构建命令面板（头行标题+关闭钮+搜索+域列表，主面板真全屏）', () => {
     mobileFlag = true;
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     expect(popup.classList.contains('bz-sp-mobile')).toBe(true);
     expect(popup.classList.contains('bz-win-mfs')).toBe(true);
-    expect(popup.querySelector('.bz-sp-mob-close')).toBeTruthy();
+    // 头行：标题「设置」无 emoji + 关闭图标钮（lucide x）
+    const headTitle = popup.querySelector('.bz-sp-head-title')!;
+    expect(headTitle.textContent).toBe('设置');
+    const closeBtn = popup.querySelector('.bz-sp-mob-close') as HTMLElement;
+    expect(closeBtn).toBeTruthy();
+    expect(closeBtn.querySelector('.bz-ic[data-icon="x"]')).toBeTruthy();
+    expect(popup.textContent).not.toMatch(EMOJI_RE);
     // 无设置项的域不在列表显示（用户拍板）：22 域 → 可见 15 个（+影院 cinema）
     expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(15);
-    // 头部计数与可见域数一致
-    expect(popup.querySelector('.bz-sp-mob-count')!.textContent).toBe('15 域');
+    // 移动列表图标为 lucide（tile 内 svg 容器）
+    const firstIc = popup.querySelector('.bz-sp-mob-item .bz-sp-mob-ic .bz-ic');
+    expect(firstIc).toBeTruthy();
+    expect(firstIc!.getAttribute('data-icon')).toBe('settings');
     // 搜索有清除按钮（输入后显示）
     expect(popup.querySelector('.bz-sp-mob-clear')).toBeTruthy();
     ui.cleanup();
@@ -397,9 +429,11 @@ describe('设置面板（settings-panel）', () => {
     expect(modal).toBeTruthy();
     // 弹窗内真实设置分组
     expect(modal!.querySelectorAll('.bz-sp-group').length).toBeGreaterThanOrEqual(2);
-    // 弹窗头部无分隔线（原型 m1-modal-head：无 border）
+    // 弹窗头行：图标方块（lucide）+ 域名 + 关闭钮；无分隔线（原型 m1-modal-head：无 border）
     const modalHead = modal!.querySelector('.bz-sp-mob-modal-head')!;
     expect((modalHead as HTMLElement).style.borderBottom).toBe('');
+    expect(modalHead.querySelector('.bz-sp-mob-modal-title')!.textContent).toBe('番茄钟');
+    expect(modalHead.querySelector('.bz-sp-mob-modal-ic .bz-ic[data-icon="timer"]')).toBeTruthy();
     const modalMask = modal!.previousElementSibling as HTMLElement;
     expect(modalMask.classList.contains('bz-overlay-mask')).toBe(true);
     modalMask.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -412,7 +446,7 @@ describe('设置面板（settings-panel）', () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
-    const search = popup.querySelector('.bz-sp-mob-search .bz-sp-search-in') as HTMLInputElement;
+    const search = popup.querySelector('.bz-sp-mob-search .bz-input') as HTMLInputElement;
     search.value = '不存在的域';
     search.dispatchEvent(new Event('input', { bubbles: true }));
     expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(0);
@@ -420,7 +454,7 @@ describe('设置面板（settings-panel）', () => {
     ui.cleanup();
   });
 
-  it('移动端：搜索命中设置项 → 「设置项（N）」段（原型 m1-sec）', async () => {
+  it('移动端：搜索命中设置项 → 「设置项（N）」段', async () => {
     mobileFlag = true;
     const ui = new SettingsPanelUI();
     ui.open();
@@ -439,7 +473,7 @@ describe('设置面板（settings-panel）', () => {
     const modalMask = modal ? modal.previousElementSibling as HTMLElement : null;
     if (modalMask) modalMask.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     // 搜「AI」→ 域段（全局）+ 设置项段
-    const search = popup.querySelector('.bz-sp-mob-search .bz-sp-search-in') as HTMLInputElement;
+    const search = popup.querySelector('.bz-sp-mob-search .bz-input') as HTMLInputElement;
     search.value = 'AI';
     search.dispatchEvent(new Event('input', { bubbles: true }));
     expect(popup.querySelector('.bz-sp-mob-sec')).toBeTruthy();

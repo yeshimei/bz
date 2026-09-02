@@ -8,10 +8,11 @@
 /* ===== bz 全局按钮基线：压 Obsidian 核心默认（app.css） ===== */
 /* Obsidian 核心 app.css 对裸 button:not(.clickable-icon) 统一喂默认
    color/background-color/box-shadow（--interactive-normal 底 + --input-shadow）。
-   此全局覆盖使按钮回到无样式基态，由各域样式自行决定外观；
-   所有 bz 按钮均落在 bz- 作用域或 legacy 弹窗根内，后续域规则源顺序在后正常覆盖。
-   特异性 (0,1,1) 等同核心规则，插件样式加载在后胜出。 */
-button:not(.clickable-icon) {
+   此全局覆盖使按钮回到无样式基态，由各域样式自行决定外观。
+   :where() 归零特异性（P0 收编前提，docs/ui-shared-components.md）：语义不变
+   （仍是兜底 unset），但任何单类按钮规则（.bz-btn/.bz-choice-btn 等 0,1,0）
+   即可覆盖——共享组件库的单类组件成立的前提。 */
+:where(button:not(.clickable-icon)) {
   color: unset;
   background-color: unset;
   box-shadow: unset;
