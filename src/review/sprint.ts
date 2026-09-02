@@ -52,6 +52,8 @@ interface SprintEntry {
 
 interface QuestionUi {
   list: QuizQuestion[]; // 剩余题目（首题为当前题）
+  /** 当前作答/刚作答的题：list shift 后仍指向已答原题供反馈渲染，切题时才更新 */
+  cur: QuizQuestion | null;
   answered: boolean;
   sel: Set<number>;
   lastCorrect: boolean;
@@ -210,6 +212,7 @@ export class SprintSession {
     entry.questions = questions;
     this.q = {
       list: questions.slice(),
+      cur: questions[0] ?? null,
       answered: false,
       sel: new Set(),
       lastCorrect: false,
@@ -258,7 +261,9 @@ export class SprintSession {
 
   // ================= 答题 =================
 
+  /** 渲染目标题：优先刚作答的题（答题反馈期），否则剩余队列首题 */
   private currentQuestion(): QuizQuestion | null {
+    if (this.q?.cur) return this.q.cur;
     return this.q && this.q.list.length ? this.q.list[0] : null;
   }
 
@@ -305,6 +310,8 @@ export class SprintSession {
   private consume(question: QuizQuestion, correct: boolean): void {
     const q = this.q!;
     const entry = this.entry();
+    // 先把已答题固化为「当前渲染目标」（list shift 后 renderQuestion 不会错指到下一题）
+    q.cur = question;
     q.list.shift();
     if (correct) entry.acc++;
     else entry.wrong++;
@@ -350,6 +357,7 @@ export class SprintSession {
     if (this.q!.list.length) {
       this.q!.answered = false;
       this.q!.sel = new Set();
+      this.q!.cur = this.q!.list[0]; // 进入下一题：渲染目标切到新首题
       this.renderQuestion();
       return;
     }
@@ -438,17 +446,22 @@ export class SprintSession {
       .join('');
 
     const needSubmit = !single && !q.answered;
-    const showNext = q.answered && !q.lastCorrect && !q.list.length; // 答错且是最后一题 → 结果前置，无下一题按钮
+    // 答错后：还有题 → 「下一题」；本篇最后一题也答错 → 「结算本篇」（finishNote 按本篇 acc 评级出结果卡）
+    const lastWrong = q.answered && !q.lastCorrect && !q.list.length;
     const nextBtn =
       q.answered && !q.lastCorrect && q.list.length
         ? `<button class="bz-btn bz-btn--primary" data-action="next">下一题 →</button>`
-        : '';
+        : lastWrong
+          ? `<button class="bz-btn bz-btn--primary" data-action="note">${this.icon('flag')} 结束并结算</button>`
+          : '';
     const submit = needSubmit ? `<button class="bz-btn bz-btn--primary bz-sprint-submit" data-action="submit">提交答案</button>` : '';
 
     const headNote = q.answered
       ? q.lastCorrect
         ? '答对 · 自动进入下一题'
-        : '答错 · 查看正确答案'
+        : lastWrong
+          ? '本篇题目已答完，按当前正确率结束'
+          : '答错 · 查看正确答案'
       : single
         ? '选择即判对错 · 全对 = 轻松'
         : '多选 · 勾选后提交';
@@ -476,6 +489,9 @@ export class SprintSession {
     this.bindTop();
     this.opts.host.querySelector('[data-action="submit"]')?.addEventListener('click', () => this.submitMulti());
     this.opts.host.querySelector('[data-action="next"]')?.addEventListener('click', () => this.nextQuestion());
+    this.opts.host.querySelector('[data-action="note"]')?.addEventListener('click', () => {
+      void this.finishNote();
+    });
     this.opts.host.querySelectorAll('.bz-sprint-opt').forEach((el) => {
       el.addEventListener('click', () => this.answer(Number((el as HTMLElement).dataset.i)));
     });

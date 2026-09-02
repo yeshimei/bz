@@ -26,6 +26,7 @@ import { unregisterSheetCompanion } from '../core/item-actions';
 import { FSRS, LADDER_MAX, TOTAL_STAGES } from './fsrs';
 import type { ReviewItem } from './data';
 import { ReviewDataManager } from './data';
+import { computeStats } from './stats';
 import { SprintSession } from './sprint';
 import type { SprintMode } from './sprint';
 import type { QuizQuestion } from './quiz-core/manager';
@@ -194,6 +195,8 @@ export class UIManager {
     const overCount = items.filter((i) => i.isOverdue && !i.isCompleted).length;
     const todayCount = items.filter((i) => isPlayable(i) && !i.isOverdue).length;
     const doneCount = items.filter((i) => i.isCompleted || i.completed).length;
+    // 底部统计真实数字（同步渲染，占位 … 时期已过）
+    const stats = computeStats(items);
 
     const head = `
       <div class="bz-q-head">
@@ -216,31 +219,30 @@ export class UIManager {
       </div>`;
 
     const body = this.showArchived
-      ? `<div class="bz-q-cols"><div class="bz-q-col done">${this.colHead(doneCount, '已完成', '归档')}${this.cardsOf(done)}</div></div>`
+      ? `<div class="bz-q-cols"><div class="bz-q-col done">${this.colHead(doneCount, '已完成')}${this.cardsOf(done)}</div></div>`
       : `<div class="bz-q-cols">
-          <div class="bz-q-col danger">${this.colHead(overCount, '已逾期', '点条目开始答题')}${this.cardsOf(over)}</div>
-          <div class="bz-q-col warn">${this.colHead(todayCount, '今天到期', '含待重做')}${this.cardsOf(today)}</div>
-          <div class="bz-q-col future">${this.colHead(future.length, '未来', FUTURE_HINT)}${this.cardsOf(future)}</div>
+          <div class="bz-q-col danger">${this.colHead(overCount, '已逾期')}${this.cardsOf(over)}</div>
+          <div class="bz-q-col warn">${this.colHead(todayCount, '今天到期')}${this.cardsOf(today)}</div>
+          <div class="bz-q-col future">${this.colHead(future.length, '未来')}${this.cardsOf(future)}</div>
         </div>`;
 
+    // 底部信息行：整行可点（归档 → 切换归档；统计 → 打开分布），无引导小字
     const footer = `
       <div class="bz-q-footer">
-        <span class="bz-q-fitem" data-act="arch">
-          ${this.icon('folder')}<span class="lbl">已完成 ${doneCount} 篇</span>
-          <span class="act">${this.showArchived ? '正在查看归档 · 点此返回' : '点此查看归档'}</span>
+        <span class="bz-q-fitem" data-act="arch" title="查看已完成复习">
+          ${this.icon('folder')}<span class="lbl">已完成 <b>${doneCount}</b> 篇</span>
         </span>
         <i class="sep"></i>
-        <span class="bz-q-fitem" data-act="stats">
-          ${this.icon('chart')}<span class="lbl">累计复习 <b id="bz-q-total">…</b> 次 · 连续 <b id="bz-q-streak">…</b> 天</span>
-          <span class="act">点此看分布</span>
+        <span class="bz-q-fitem" data-act="stats" title="查看复习统计分布">
+          ${this.icon('chart')}<span class="lbl">累计复习 <b>${stats.totalReviews}</b> 次 · 连续 <b>${stats.streak}</b> 天</span>
         </span>
       </div>`;
 
     return `<div class="bz-q-view">${head}${body}${footer}</div>`;
   }
 
-  private colHead(count: number, name: string, sub: string): string {
-    return `<div class="bz-q-col-head"><span class="cnt">${count}</span><span class="name">${name}</span><span class="sub">${sub}</span></div>`;
+  private colHead(count: number, name: string): string {
+    return `<div class="bz-q-col-head"><span class="cnt">${count}</span><span class="name">${name}</span></div>`;
   }
 
   private cardsOf(items: ReviewItem[]): string {
@@ -370,21 +372,8 @@ export class UIManager {
       onPassed: opts.onPassed,
       onFailed: opts.onFailed,
       onExit: () => this.showQueue(),
-      onProgress: () => void this.refreshFooter(),
     });
     return this.sprint.start();
-  }
-
-  /** 底部信息行数据刷新（冲刺进度后调用） */
-  private async refreshFooter(): Promise<void> {
-    const total = this.entriesContainer?.querySelector('#bz-q-total');
-    const streak = this.entriesContainer?.querySelector('#bz-q-streak');
-    if (!total || !streak) return;
-    const items = await this.dataManager.loadItems();
-    const { computeStats } = await import('./stats');
-    const stats = computeStats(items);
-    total.textContent = String(stats.totalReviews);
-    streak.textContent = String(stats.streak);
   }
 
   // ================= 归档 / 统计 =================
