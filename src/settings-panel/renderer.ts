@@ -394,7 +394,11 @@ export function makePathRowCtrl(opts: {
 /* ==================== 行渲染 ==================== */
 
 /** 渲染单行（自绘；返回行元素；子行挂 child 缩进） */
-function renderRow(row: SettingsRow, refresh: () => void): HTMLElement {
+function renderRow(
+  row: SettingsRow,
+  refresh: () => void,
+  regRefresh?: (fn: () => void) => void
+): HTMLElement {
   const el = document.createElement('div');
   el.className = 'bz-sp-set-row' + ((row as { isChild?: boolean }).isChild ? ' child' : '');
   const ctx = makeCtx(el, refresh);
@@ -443,7 +447,7 @@ function renderRow(row: SettingsRow, refresh: () => void): HTMLElement {
     case 'text': {
       const acc = bindValue<string>(row.binding as unknown as AnyBinding);
       const ph = typeof row.placeholder === 'function' ? row.placeholder(snapshot()) : row.placeholder;
-      ctrlEl.appendChild(makeInput({
+      const input = makeInput({
         value: acc.read() ?? '',
         mono: !!(row as { mono?: boolean }).mono,
         num: !!(row as { num?: boolean }).num,
@@ -454,7 +458,19 @@ function renderRow(row: SettingsRow, refresh: () => void): HTMLElement {
           void acc.persist();
           row.onChange?.(v, ctx);
         },
-      }));
+      });
+      ctrlEl.appendChild(input);
+      // refreshKey 联动：任意行变更（含 aiProvider 切换）后重读显示值写回输入框（不落盘）
+      if (regRefresh && row.refreshKey !== undefined) {
+        const el = input as HTMLInputElement;
+        const ref = row.refreshKey; // 闭包内窄化不保留，先提为局部常量
+        regRefresh(() => {
+          const snap = snapshot();
+          const fresh = typeof ref === 'function' ? ref(snap) : String((snap as any)[ref]);
+          const f = String(fresh ?? '');
+          if (el.value !== f) el.value = f;
+        });
+      }
       break;
     }
     case 'textarea': {
@@ -499,6 +515,17 @@ function renderRow(row: SettingsRow, refresh: () => void): HTMLElement {
       });
       (input as HTMLInputElement).step = String(row.step ?? 1);
       ctrlEl.appendChild(input);
+      // refreshKey 联动：任意行变更（含 aiProvider 切换）后重读显示值写回输入框（不落盘）
+      if (regRefresh && row.refreshKey !== undefined) {
+        const el = input as HTMLInputElement;
+        const ref = row.refreshKey; // 闭包内窄化不保留，先提为局部常量
+        regRefresh(() => {
+          const snap = snapshot();
+          const fresh = typeof ref === 'function' ? ref(snap) : String((snap as any)[ref]);
+          const f = String(fresh ?? '');
+          if (el.value !== f) el.value = f;
+        });
+      }
       break;
     }
     case 'select': {
@@ -601,7 +628,8 @@ function renderRow(row: SettingsRow, refresh: () => void): HTMLElement {
 function renderGroup(
   container: HTMLElement,
   group: { name: string; icon?: string; rows: SettingsRow[] },
-  refresh: () => void
+  refresh: () => void,
+  regRefresh?: (fn: () => void) => void
 ): HTMLElement {
   const card = document.createElement('div');
   card.className = 'bz-sp-group';
@@ -639,7 +667,7 @@ function renderGroup(
   body.className = 'bz-sp-group-body';
   const rowEls: HTMLElement[] = [];
   group.rows.forEach((r) => {
-    const rowEl = renderRow(r, refresh);
+    const rowEl = renderRow(r, refresh, regRefresh);
     rowEls.push(rowEl);
     body.appendChild(rowEl);
   });
@@ -675,6 +703,8 @@ function renderGroup(
  */
 export function renderPanelSchema(container: HTMLElement, schema: SettingsSchema): { refresh: () => void } {
   const visibleConditions = new WeakMap<HTMLElement, (s: SettingsSnapshot) => boolean>();
+  // refreshKey 联动：登记「任意行变更后重读显示值」的回调（refresh 内统一执行，不落盘）
+  const valueRefreshes: Array<() => void> = [];
   const refresh = () => {
     container.querySelectorAll<HTMLElement>('[data-sp-row]').forEach((el) => {
       const cond = visibleConditions.get(el);
@@ -691,10 +721,12 @@ export function renderPanelSchema(container: HTMLElement, schema: SettingsSchema
       const upd = (card as any).__bzSpUpdateCount as (() => void) | undefined;
       if (typeof upd === 'function') upd();
     });
+    // refreshKey：重读绑定值写回已渲染输入框（如 per-provider 输入随 aiProvider 切换联动）
+    for (const fn of valueRefreshes) fn();
   };
 
   schema.groups.forEach((g) => {
-    const card = renderGroup(container, g, refresh);
+    const card = renderGroup(container, g, refresh, (fn) => valueRefreshes.push(fn));
     card.dataset.spGroup = g.name;
     // 组级 visibleWhen（如 mobileFullscreenGroup 的 isMobileEnv 门控）：false 整组隐藏
     const groupVw = (g as { visibleWhen?: (s: SettingsSnapshot) => boolean }).visibleWhen;

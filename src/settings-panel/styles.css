@@ -214,6 +214,9 @@
   border-radius: 8px;
 }
 .bz-sp-set-row:hover { background: var(--background-modifier-hover); }
+/* custom 行内嵌原生 Setting（模型行等，样式见下方 456 段作用域重绘）：hover 背景由内层
+   .setting-item:hover 上色——外层再上色会叠出双背景（自绘行 hover + 原生行 hover 同色叠加） */
+.bz-sp-set-row:has(.bz-sp-custom-slot .setting-item):hover { background: transparent; }
 .bz-sp-set-row.child { padding-left: 26px; }
 .bz-sp-set-info { flex: 1; min-width: 0; }
 .bz-sp-set-name { font-size: 14px; font-weight: 500; color: var(--text-normal); line-height: 1.4; }
