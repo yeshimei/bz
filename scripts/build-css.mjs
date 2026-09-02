@@ -27,6 +27,9 @@ const PLUGIN_DIR = "E:/Obsidian/叫我包仔/.obsidian/plugins/bz";
 const SOURCES = [
   "src/core/vendor/normalize.css",
   "src/core/styles.css",
+  // bz 组件库（自绘 token + 组件样式，源顺序在 core 之后保证可覆盖旧基线）
+  "src/core/ui/tokens.css",
+  "src/core/ui/components.css",
   "src/diary/styles.css",
   "src/diary-wall/styles.css",
   "src/launcher/styles.css",
