@@ -36,6 +36,8 @@ import { showReadingReport, unloadReadingReport } from './reading-report';
 import { openMovieManager, addMovieItem, unloadMovie } from './movie';
 // 影院（cinema 域，新域与影视并存；不修改旧影视代码）
 import { openCinema, addCinemaItem, unloadCinema } from './cinema';
+// 书架墙（bookshelf 域，新域与书库并存；不修改旧书库代码）
+import { openBookshelf, unloadBookshelf } from './bookshelf';
 // 影视分析报告（独立域，ADR-0048）
 import { openMovieReport, unloadMovieReport } from './movie-report';
 import { openReviewPanel, openReviewReport, reviewAddCurrent, reviewRemoveCurrent, reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, reviewStart, ensureReview, unloadReview } from './review';
@@ -110,6 +112,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   // 影院（cinema 新域）
   { id: 'bz-cinema-open', name: '影院', icon: 'film', callback: () => openCinema(getApp()) },
   { id: 'bz-cinema-add', name: '加影视（影院）', icon: 'plus-circle', callback: () => addCinemaItem(getApp()) },
+  // 书架墙（bookshelf 新域）
+  { id: 'bz-bookshelf-open', name: '书架墙', icon: 'book-open', callback: () => openBookshelf(getApp()) },
   // 复习计划（9 命令）
   { id: 'bz-review-open', name: '复习计划', icon: 'calendar', callback: () => openReviewPanel(getApp()) },
   // ticket 174：独立「复习计划分析报告」命令（直开统计弹窗）
@@ -314,6 +318,8 @@ export default class BzPlugin extends Plugin {
     unloadFavorites();
     unloadReview();
     unloadCinema();
+    // 书架墙（bookshelf 域：面板 DOM + 模块单例复位）
+    unloadBookshelf();
     unloadMovie();
     unloadMovieReport();
     unloadReadingReport();

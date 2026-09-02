@@ -168,6 +168,12 @@ export default interface BzSettings {
   /** 📝 显示书评摘要 */
   showReview: boolean;
 
+  // ===== 📚 书架墙（bookshelf 域，新域与书库并存；数据同源回落 libraryFolderPath）=====
+  /** 📁 书库文件夹（书架墙域；空 = 沿用书库设置） */
+  bookshelfFolderPath: string;
+  /** 书架墙：移动端默认全屏（默认开——与书库同控） */
+  bookshelfMobileDefaultFullscreen: boolean;
+
   // ===== 🎬 影院（cinema 域，新域与影视并存；后续影视删除后承接）=====
   /** 📁 影视文件夹（影院域） */
   cinemaFolderPath: string;
@@ -551,6 +557,10 @@ export const DEFAULT_SETTINGS: BzSettings = {
   showHighlights: true,
   showThinks: true,
   showReview: true,
+
+  // 书架墙（bookshelf；空 = 未配置，回落书库设置——同一批书两域同显）
+  bookshelfFolderPath: '',
+  bookshelfMobileDefaultFullscreen: true,
 
   // 影视
   movieFolderPath: '我的/影视',

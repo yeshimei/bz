@@ -70,6 +70,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-reading-report-open',
   'bz-movie-open', 'bz-movie-add', 'bz-movie-report',
   'bz-cinema-open', 'bz-cinema-add',
+  // 书架墙（bookshelf 域，新域与书库并存）
+  'bz-bookshelf-open',
   'bz-review-open', 'bz-review-report', 'bz-review-start', 'bz-review-add', 'bz-review-remove', 'bz-review-overdue', 'bz-review-rate',
   'bz-review-again', 'bz-review-hard', 'bz-review-good', 'bz-review-easy',
   'bz-secondbrain-panel', 'bz-secondbrain-open', 'bz-secondbrain-chat', 'bz-secondbrain-rebuild-links', 'bz-secondbrain-link-all',
@@ -137,6 +139,8 @@ describe('bz 骨架冒烟', () => {
     expect(byId('bz-movie-add').name).toBe('加影视');
     expect(byId('bz-cinema-open').name).toBe('影院');
     expect(byId('bz-cinema-add').name).toBe('加影视（影院）');
+    // 书架墙（bookshelf 新域）
+    expect(byId('bz-bookshelf-open').name).toBe('书架墙');
     // todo 新域：待办 / 加待办（待办）
     expect(byId('bz-todo-open').name).toBe('待办');
     expect(byId('bz-todo-add').name).toBe('加待办（待办）');
@@ -206,6 +210,7 @@ describe('bz 骨架冒烟', () => {
     expect(s.articleDirectory).toBe('归档/网页剪藏');
     expect(s.movieFolderPath).toBe('我的/影视');
     expect(s.cinemaFolderPath).toBe(''); // 空 = 未配置（不抢占 movie 默认目录）
+    expect(s.bookshelfFolderPath).toBe(''); // 空 = 未配置（回落 libraryFolderPath 同显）
     expect(s.libraryFolderPath).toBe('书库');
     expect(s.favoritesStoragePath).toBe('CONFIG/STORAGE');
     expect(s.secondBrainOllamaUrl).toBe('http://localhost:11434');
