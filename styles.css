@@ -1627,7 +1627,7 @@ button.news-close-btn {
 /* ============================================================
  * bz 组件库样式（src/core/ui/）
  * 自绘 token 体系（见 tokens.css），不依赖 Obsidian 变量。
- * 首批：按钮/按钮行/图标钮/chip/输入/字段/空态/分段。
+ * 首批：按钮/按钮行/图标钮/chip/输入/字段/空态/分段/平铺单选组。
  * 命名 .bz-<组件> + .bz-<组件>--<修饰>；源顺序 = 级联顺序。
  * ============================================================ */
 
@@ -1830,7 +1830,7 @@ button.news-close-btn {
 .bz-input:disabled { opacity: 0.5; cursor: not-allowed; }
 .bz-input--error { border-color: var(--bz-danger); }
 .bz-input--error:focus { box-shadow: 0 0 0 2px color-mix(in srgb, var(--bz-danger) 20%, transparent); }
-textarea.bz-input { height: auto; padding: 8px 10px; line-height: var(--bz-leading-normal); resize: vertical; }
+textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-height: var(--bz-leading-normal); resize: vertical; }
 
 /* 带前缀图标的输入框 */
 .bz-input-wrap { position: relative; display: inline-block; }
@@ -1891,6 +1891,38 @@ textarea.bz-input { height: auto; padding: 8px 10px; line-height: var(--bz-leadi
 }
 .bz-segmented-btn:hover { color: var(--bz-text-1); }
 .bz-segmented-btn.is-on { background: var(--bz-surface-2); color: var(--bz-text-1); font-weight: 600; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06); }
+
+/* ═══════════ 平铺单选组 .bz-choice（choice.ts） ═══════════
+   表单里替代下拉的胶囊选项组：可换行、单选（.is-on 实心品牌）。
+   与分段 .bz-segmented 互补——选项多/文案长/需色点时用本组件。 */
+.bz-choice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bz-space-sm);
+}
+.bz-choice-btn {
+  appearance: none;
+  border: 1px solid transparent;
+  background: var(--bz-surface-2);
+  color: var(--bz-text-1);
+  height: var(--bz-control-h);
+  padding: 0 14px;
+  border-radius: var(--bz-radius-full);
+  font-size: var(--bz-font-label);
+  font-weight: var(--bz-weight-medium);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: background-color var(--bz-dur-fast) ease, color var(--bz-dur-fast) ease, border-color var(--bz-dur-fast) ease;
+}
+.bz-choice-btn:hover { background: var(--bz-surface-hover); }
+.bz-choice-btn:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: 2px; }
+.bz-choice-btn.is-on { background: var(--bz-brand); color: var(--bz-on-brand); }
+.bz-choice-btn.is-on:hover { background: var(--bz-brand-hover); }
+.bz-choice-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
 /* ═══════════ 媒体灯箱 .bz-lightbox（lightbox.ts） ═══════════ */
 .bz-lightbox {
@@ -8571,22 +8603,21 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 .bz-cinema-kv-v a:hover { text-decoration: underline; }
 .bz-cinema-synopsis { font-size: var(--bz-font-label); line-height: 1.8; color: var(--bz-text-1); white-space: pre-wrap; }
 
-/* ---- 表单（添加/编辑/快速状态：控件走组件库，此处只做网格与滑杆布局） ---- */
+/* ---- 表单（添加/编辑/快速状态） ----
+   字段行 = 组件库 .bz-field（label 上置 + 控件 100% 宽）；
+   平铺选择 = 组件库 .bz-choice（胶囊单选，类型/状态色点为数据语义色）；
+   本文件只留表单容器间距与评分滑杆行内布局。 */
 .bz-cinema-form-title { font-size: var(--bz-font-title); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); margin-bottom: 2px; }
 .bz-cinema-form { display: flex; flex-direction: column; gap: var(--bz-space-md); margin-top: var(--bz-space-md); }
-.bz-cinema-form label,
-.bz-cinema-qs-review label { font-size: var(--bz-font-meta); color: var(--bz-text-2); }
-.bz-cinema-form textarea.bz-input,
-.bz-cinema-qs-review textarea.bz-input { min-height: 80px; line-height: var(--bz-leading-normal); }
-.bz-cinema-form-row { display: flex; gap: 10px; }
-.bz-cinema-form-row > div { flex: 1; }
-.bz-cinema-form-row select.bz-input { width: 100%; }
-.bz-cinema-form-actions { display: flex; justify-content: flex-end; gap: var(--bz-space-sm); margin-top: 14px; }
-/* 评分滑杆（轨道/滑块组件库 .bz-range；行内仅定布局） */
-.bz-cinema-rating-row { display: flex; align-items: center; gap: 10px; }
+/* 行距由容器 gap 承担，抵消 .bz-field 自带 margin-bottom */
+.bz-cinema-form .bz-field { margin-bottom: 0; }
+.bz-cinema-form-actions { display: flex; justify-content: flex-end; gap: var(--bz-space-sm); margin-top: var(--bz-space-md); }
+/* 评分滑杆行（轨道/滑块组件库 .bz-range；读数轻量，随滑杆同一行） */
+.bz-cinema-rating-row { display: flex; align-items: center; gap: var(--bz-space-md); }
 .bz-cinema-rating-row .bz-range { flex: 1; align-self: center; }
 .bz-cinema-rating-val {
-  width: 52px; text-align: center; font-size: var(--bz-font-display); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1);
+  min-width: 40px; text-align: center;
+  font-size: var(--bz-font-label); font-weight: var(--bz-weight-regular); color: var(--bz-text-1);
   font-variant-numeric: tabular-nums;
 }
 
@@ -8598,18 +8629,11 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 
 /* ---- 快速状态窗 ---- */
 .bz-cinema-qs-title { font-size: var(--bz-font-emphasis); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1); }
+/* 目标状态：平铺单选（.bz-choice 胶囊），等宽铺满由域布局给 */
 .bz-cinema-qs-btns { display: flex; gap: var(--bz-space-sm); margin-top: var(--bz-space-md); }
-.bz-cinema-qs-btn {
-  flex: 1; padding: 8px 0; border-radius: var(--bz-radius-sm); border: 1px solid var(--bz-border); cursor: pointer;
-  background: var(--bz-surface-2); color: var(--bz-text-1); font-size: var(--bz-font-label); text-align: center;
-  font-family: inherit; transition: background-color var(--bz-dur-fast) ease, color var(--bz-dur-fast) ease, border-color var(--bz-dur-fast) ease;
-}
-.bz-cinema-qs-btn:hover { background: var(--bz-surface-hover); }
-.bz-cinema-qs-btn.bz-cinema-qs-active { background: var(--bz-brand); color: var(--bz-on-brand); border-color: transparent; font-weight: var(--bz-weight-medium); }
-.bz-cinema-qs-rating { margin-top: 14px; }
-.bz-cinema-qs-rating-label { font-size: var(--bz-font-meta); color: var(--bz-text-2); margin-bottom: 6px; }
-.bz-cinema-qs-review { margin-top: 14px; }
-.bz-cinema-qs-review textarea.bz-input { margin-top: 6px; min-height: 90px; }
+.bz-cinema-qs-btns .bz-choice-btn { flex: 1; }
+.bz-cinema-qs-rating { margin-top: var(--bz-space-md); }
+.bz-cinema-qs-review { margin-top: var(--bz-space-md); }
 .bz-cinema-qs-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin-top: 10px; line-height: 1.5; }
 
 /* ---- AI 荐片 / 分析页 ---- */
