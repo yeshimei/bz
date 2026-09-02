@@ -377,7 +377,7 @@ _Avoid_: 总线层全局去环、在 obsidian-adapter 之外直接 app.vault.on 
 **全局设置页 (Global Settings Page)**: Obsidian 设置中的 bz 设置页——单页平铺（无 tab），只含「AI」「数据存储路径」两个区块。
 _Avoid_: 设置 tab、分类设置、设置页分区
 
-**设置面板 (Settings Panel)**: bz 全域设置的聚合浏览入口（ADR-0080，`src/settings-panel/` 域，命令 `bz-settings-panel-open`）——桌面端侧栏工作台（左域导航 + 右设置分组卡）、移动端命令面板（搜索 + 域列表，主面板真全屏 + 关闭按钮，子面板一律居中弹窗、遮罩点击关闭）。与全局设置页/域设置弹窗**并存**，设置读写仍走既有 schema 与 settings-provider。为后续各域 UI 重设计提供基础公用样式层（core/styles.css `.bz-settings-card/.bz-set-row/.bz-toggle/.bz-input/.bz-select/.bz-empty/.bz-domain-icon`）。
+**设置面板 (Settings Panel)**: bz 全域设置的聚合浏览入口（ADR-0080，`src/settings-panel/` 域，命令 `bz-settings-panel-open`）——顶部为影院式**整宽头行（仅标题「设置」，桌面无关闭钮，遮罩/ESC 关）**；桌面端侧栏工作台（左域导航 + 右设置分组卡）、移动端命令面板（搜索 + 域列表，主面板真全屏 + 头行关闭钮，子面板一律居中弹窗、遮罩点击关闭）。与全局设置页/域设置弹窗**并存**，设置读写仍走既有 schema 与 settings-provider。控件基线已收编**组件库**（src/core/ui：`.bz-input/.bz-sw/.bz-select/.bz-range/.bz-chip/.bz-btn/.bz-badge/.bz-empty`），图标一律 lucide（禁止 emoji 当图标）。
 _Avoid_: 全局设置面板（与「全局设置页」混淆）、设置聚合器
 
 **主面板 (Main Panel)**: 功能域的完整主窗口，经命令 `bz-<域>-open` 打开，承载该域列表与全部功能入口；区别于域内小弹窗与快捷创建。
