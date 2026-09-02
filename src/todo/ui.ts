@@ -792,45 +792,7 @@ export function openEditor(item: TodoItem | null): void {
   contentField.append(contentLabel, contentInput);
   form.appendChild(contentField);
 
-  // 场景平铺单选（uiChoice：选中 = 品牌色非黑底）
-  const sceneField = document.createElement('div');
-  sceneField.className = 'bz-field';
-  const sceneLabel = document.createElement('span');
-  sceneLabel.className = 'bz-field-label';
-  sceneLabel.textContent = '场景';
-  sceneField.appendChild(sceneLabel);
-  const choice = uiChoice<string>({
-    options: scenes.map((s) => ({ value: s, label: s, dot: sceneDot(s) })),
-    value: defaultScene,
-    onChange: (v) => {
-      // 场景联动：剪藏 → 标题框；代码 → 脚本框；公开课 → 课程框（class 驱动显隐）
-      titleBox.classList.toggle('bz-todo-extra-on', v === '剪藏');
-      scriptBox.classList.toggle('bz-todo-extra-on', v === '代码');
-      courseBox.classList.toggle('bz-todo-extra-on', v === '公开课');
-    },
-  });
-  sceneField.appendChild(choice.el);
-  form.appendChild(sceneField);
-
-  // 优先级平铺单选
-  const prioField = document.createElement('div');
-  prioField.className = 'bz-field';
-  const prioLabel = document.createElement('span');
-  prioLabel.className = 'bz-field-label';
-  prioLabel.textContent = '优先级';
-  prioField.appendChild(prioLabel);
-  const prioChoice = uiChoice<string>({
-    options: [
-      { value: 'minor', label: '次要' },
-      { value: 'important', label: '重要' },
-    ],
-    value: editing ? editing.priority : (tryGetSettings() as any).memoDefaultPriority || 'minor',
-    onChange: () => { /* 值由保存时读取 */ },
-  });
-  prioField.appendChild(prioChoice.el);
-  form.appendChild(prioField);
-
-  // 第二输入框区（剪藏标题/代码脚本/公开课课程；随场景显隐）
+  // 第二输入框区（剪藏标题/代码脚本/公开课课程；随场景显隐）——放在场景平铺上方
   const titleBox = document.createElement('div');
   titleBox.className = 'bz-todo-extra' + (isClip ? ' bz-todo-extra-on' : '');
   const titleInput = document.createElement('input');
@@ -864,6 +826,44 @@ export function openEditor(item: TodoItem | null): void {
   courseBox.append(courseInput, courseSug);
   form.appendChild(courseBox);
 
+  // 场景平铺单选（uiChoice：无彩色圆点，选中 = 品牌色非黑底）
+  const sceneField = document.createElement('div');
+  sceneField.className = 'bz-field';
+  const sceneLabel = document.createElement('span');
+  sceneLabel.className = 'bz-field-label';
+  sceneLabel.textContent = '场景';
+  sceneField.appendChild(sceneLabel);
+  const choice = uiChoice<string>({
+    options: scenes.map((s) => ({ value: s, label: s })),
+    value: defaultScene,
+    onChange: (v) => {
+      // 场景联动：剪藏 → 标题框；代码 → 脚本框；公开课 → 课程框（class 驱动显隐）
+      titleBox.classList.toggle('bz-todo-extra-on', v === '剪藏');
+      scriptBox.classList.toggle('bz-todo-extra-on', v === '代码');
+      courseBox.classList.toggle('bz-todo-extra-on', v === '公开课');
+    },
+  });
+  sceneField.appendChild(choice.el);
+  form.appendChild(sceneField);
+
+  // 优先级平铺单选（无彩色圆点）
+  const prioField = document.createElement('div');
+  prioField.className = 'bz-field';
+  const prioLabel = document.createElement('span');
+  prioLabel.className = 'bz-field-label';
+  prioLabel.textContent = '优先级';
+  prioField.appendChild(prioLabel);
+  const prioChoice = uiChoice<string>({
+    options: [
+      { value: 'minor', label: '次要' },
+      { value: 'important', label: '重要' },
+    ],
+    value: editing ? editing.priority : (tryGetSettings() as any).memoDefaultPriority || 'minor',
+    onChange: () => { /* 值由保存时读取 */ },
+  });
+  prioField.appendChild(prioChoice.el);
+  form.appendChild(prioField);
+
   // 建议（从已有条目收集脚本名/课程名 + 公开课笔记）
   const knownScripts = [...new Set(M.items.map((i) => i.scriptName).filter((n): n is string => !!n))].sort();
   const knownCourses = [...new Set(M.items.map((i) => i.courseName).filter((n): n is string => !!n))].sort();
@@ -889,7 +889,7 @@ export function openEditor(item: TodoItem | null): void {
   void TodoData.getCourseNotes().then((notes) => {
     const extra = notes.map((n) => n.name);
     knownCourses.push(...extra.filter((n) => !knownCourses.includes(n)));
-    if (courseBox.style.display !== 'none') courseInput.dispatchEvent(new Event('focus'));
+    if (courseBox.classList.contains('bz-todo-extra-on')) courseInput.dispatchEvent(new Event('focus'));
   });
 
   // 截止时间
