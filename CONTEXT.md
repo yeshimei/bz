@@ -194,6 +194,9 @@ _Avoid_: 主页、启动台、dashboard、控制台
 **幽灵磁贴 (Ghost Tile)**: 命令失效（所属插件被禁用等）后磁贴的保留态——保留位置与配置，灰色不可用，可删除，命令恢复后自动复活。
 _Avoid_: 无效磁贴、死磁贴
 
+**内容首页 (Content Home)**: 新域 `src/home`（ticket 177），入口页的「新标签页」升级——内容式首页弹窗（命令 `bz-home-open`，lucide layout-grid）：顶部问候/搜索、域卡网格（右下徽标 = 各域真实统计，点卡执行对应 `bz-*` 命令）、未钉域迷你 chips、移动端统计条与两列卡；编辑模式可增删钉选域（存 home.json pinned，默认 diary/memo/cinema/review）。与旧「入口页」并存不互改（cinema/movie 先例），后续旧 launcher 域可删。统计直读各域数据层、失败静默回落。
+_Avoid_: 新标签页、主页、dashboard、启动台
+
 ### 番茄钟域（规划中，ticket 26）
 
 **番茄钟 (Pomodoro)**: bz 的专注计时域——中央弹窗 + 状态栏双承载的番茄工作法计时器，数据 `CONFIG/STORAGE/pomodoro.json`。原 QuickAdd 宏脚本代码已丢失，按使用手册重建（ADR-0012），无旧数据兼容义务。

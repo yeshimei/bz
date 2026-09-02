@@ -59,6 +59,8 @@ import { openAttachMove, ensureAttachSeed, ATTACH_COMMAND_ID } from './attach';
 import { openEncrypt, encryptCurrentNote, unloadEncrypt, mountEncryptStatusBar, unmountEncryptStatusBar } from './encrypt';
 import { openLauncherPanel, unloadLauncherPanel, setLauncherShowTextSetter, setLauncherGestureSetter, LauncherModal } from './launcher';
 import { registerGestureListeners } from './launcher/gestures';
+// 内容首页（home 域，ticket 177：入口页「新标签页」升级；与旧入口页并存，不改 launcher）
+import { openHome, unloadHome } from './home';
 import { ensureAutoSummary, unloadAutoSummary } from './auto-summary';
 // ai-agent 域解散：文件同步拆入 memo/favorites 域（原 ensureAIAgent/unloadAIAgent 换线）
 import { ensureMemoFileSync, unloadMemoFileSync } from './memo';
@@ -78,6 +80,8 @@ import { openSettingsPanel, unloadSettingsPanel } from './settings-panel';
 const COMMANDS: { id: string; name: string; icon: string; callback: () => void }[] = [
   // 入口页（t1：主页 → 入口页，术语随 CONTEXT.md；id bz-home 不变）
   { id: 'bz-home', name: '入口页', icon: 'home', callback: () => openLauncherPanel(getApp()) },
+  // 内容首页（home 域，ticket 177：与旧入口页并存）
+  { id: 'bz-home-open', name: '内容首页', icon: 'layout-grid', callback: () => openHome(getApp()) },
   // 备忘录
   { id: 'bz-memo-open', name: '备忘录', icon: 'sticky-note', callback: () => openBzPanel(getApp()) },
   { id: 'bz-memo-add', name: '加备忘', icon: 'pencil', callback: () => createMemoItem(getApp()) },
@@ -300,6 +304,7 @@ export default class BzPlugin extends Plugin {
     unloadMemoFileSync();
     unloadFavoritesFileSync();
     unloadLauncherPanel();
+    unloadHome();
     unloadEncrypt();
     unloadSmartCat();
     // 设置面板（ADR-0080：DOM 清理 + esc 注销）

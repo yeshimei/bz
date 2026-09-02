@@ -56,6 +56,7 @@ const registeredCommands: any[] = [];
 /** 期望的命令 id 全集（spec「命令 id 全清单」第 9 轮：COMMANDS 表 + 日记本 bz-diary-open） */
 const EXPECTED_COMMAND_IDS = [
   'bz-home',
+  'bz-home-open',
   'bz-memo-open', 'bz-memo-add',
   'bz-todo-open', 'bz-todo-add',
   'bz-belongings-add', 'bz-belongings-open',
