@@ -60,8 +60,10 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | 空态 | `.bz-empty` | 内 `.bz-empty-ic/-title/-desc` + `.bz-btn-row` | CTA 放按钮行 |
 | 分段 | `.bz-segmented` | 内 `.bz-segmented-btn.is-on` | 单选多段 |
 | 灯箱 | `.bz-lightbox` | 内 `.bz-lightbox-head/media/foot/-close` | 全屏看图/视频 |
+| 弹窗 | `.bz-overlay-mask` / `.bz-overlay-popup` | 内 `.bz-dialog-head/-title/-body`；底 `.bz-btn-row` | 居中模态（遮罩点关） |
+| 加载 | `.bz-spinner` | `--sm/--lg` | 占位加载态 |
 
-**图标**：一律 lucide（`<i data-lucide="名称">`），Obsidian 原生同款。颜色默认继承 `currentColor`（在按钮里自动变 on-brand 白），需要独立语义色加 `.bz-ic--brand/success/warning/danger/info/star/muted`，尺寸 `.bz-ic--xs/sm/md/lg/xl`。**禁止 emoji 当图标**。
+**图标**：一律 lucide 图标名（工厂经 `setIcon` 渲染 Obsidian 原生 SVG）。颜色默认继承 `currentColor`（在按钮里自动变 on-brand 白），需要独立语义色给图标元素加 `.bz-ic--brand/success/warning/danger/info/star/muted/on-brand`，尺寸 `.bz-ic--xs/sm/md/lg/xl`。**禁止 emoji 当图标、禁止文本符号当图标**。
 
 ### 3.3 最小可用片段
 ```html
