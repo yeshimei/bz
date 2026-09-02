@@ -2,11 +2,11 @@
  * 做题家数据层测试（ticket 17 修正版）：async 读盘接口/removeQuestion 不删空键
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
-import { setApp } from '../../src/core/app';
-import { setSettingsProvider } from '../../src/core/settings-provider';
-import { QuizManager, QUIZ_FILE_PATH, loadActiveItems, REVIEW_DATA_PATH, getQuizFilePath, getReviewDataPath } from '../../src/quiz/manager';
+import { MockVault, mockAppWithVault } from '../../mock-vault';
+import { resetObsidianMocks } from '../../mock-obsidian-entry';
+import { setApp } from '../../../src/core/app';
+import { setSettingsProvider } from '../../../src/core/settings-provider';
+import { QuizManager, QUIZ_FILE_PATH, loadActiveItems, REVIEW_DATA_PATH, getQuizFilePath, getReviewDataPath } from '../../../src/review/quiz-core/manager';
 
 describe('QuizManager', () => {
   beforeEach(() => {

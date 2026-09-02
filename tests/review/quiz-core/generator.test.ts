@@ -3,7 +3,7 @@
  * 做题家生成器测试（ticket 17 修正版）：逐字提示词/三难度/extractJSON/generate 校验
  */
 import { describe, it, expect, vi } from 'vitest';
-import { QuestionGenerator } from '../../src/quiz/generator';
+import { QuestionGenerator } from '../../../src/review/quiz-core/generator';
 
 function mkGen() {
   return new QuestionGenerator();
