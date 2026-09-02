@@ -130,10 +130,13 @@ describe('获取模型名按钮：拉取 → 选择器 → 回填', () => {
       (popup.querySelector('.bz-model-picker-row') as HTMLElement).click();
       await vi.waitFor(() => expect(state.aiCustomModel).toBe('taste-1'));
       expect(textControlOf(findRow(container, '模型名称')).value).toBe('taste-1');
-      // 上下文/最大输出两行不渲染按钮（仅模型行内嵌）
+      // 上下文/最大输出两行不渲染按钮（按钮仅模型行内嵌；此两行已是标准 number 行，非 custom）
       for (const name of ['上下文窗口', '最大输出 token']) {
         expect(buttonOf(findRow(container, name))).toBeFalsy();
       }
+      // 锁定：上下文/最大输出 token 是标准 number 行（input[type=number]，统一渲染器）
+      expect(textControlOf(findRow(container, '上下文窗口')).inputEl.type).toBe('number');
+      expect(textControlOf(findRow(container, '最大输出 token')).inputEl.type).toBe('number');
     } finally {
       vi.unstubAllGlobals();
     }

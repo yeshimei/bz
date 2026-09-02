@@ -78,6 +78,13 @@ export interface ToggleRow extends RowBase {
 interface TextualCommit {
   /** 防抖到期 / 失焦 / 回车（textarea 无回车提交）触发的落盘点回调 */
   onCommit?: () => void;
+  /**
+   * 行级联动刷新（ticket 172 延伸）：任意行变更后重求值时，重读本行输入框的显示值。
+   * 声明方式：键名（读 getSettings()[key]）或函数（从快照求值）——结果即为当前应显示值。
+   * 用途：per-provider 配置输入随「AI 服务商」切换刷新（值 = 覆盖 > 注册表默认）。
+   * 语义与 custom 行 onRefresh 一致：只刷新显示，不落盘（用户未编辑时重求值不触发保存）。
+   */
+  refreshKey?: string | ((snapshot: SettingsSnapshot) => string);
 }
 
 export interface TextRow extends RowBase, TextualCommit {
@@ -334,6 +341,8 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
       warn.fire(last);
       reevaluate(); // 有意变更点重求值显隐（逐键重排会闪烁，文本类行只在 commit 点联动）
     };
+    // refreshKey 联动刷新：保存输入框引用供重求值回调 setValue（声明在 addInto 外，闭包内写入）
+    let currentText: { setValue: (v: string) => unknown } | null = null;
     /** 文本/多行文本组件的最小结构面（真实 obsidian Text/TextAreaComponent 与 mock 均满足） */
     const addInto = (t: {
       setValue: (v: string) => unknown;
@@ -347,6 +356,7 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
         addEventListener: (type: string, listener: (e: { key: string }) => void) => void;
       };
     }) => {
+      currentText = t;
       t.setValue(initial);
       // placeholder：函数形式 = 随快照联动（ticket 172 提供商默认提示），字符串形式 = 静态
       const place = (snap: SettingsSnapshot): string | undefined =>
@@ -394,6 +404,17 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
           applyPlaceholder();
           origReevaluate();
         };
+      }
+      // refreshKey 联动刷新：任意行变更（含 aiProvider 切换）后重读显示值写回输入框（不落盘）
+      if (row.refreshKey !== undefined) {
+        const ref = row.refreshKey;
+        customRefreshes.push(() => {
+          if (currentText) {
+            const snap = currentSnapshot();
+            const fresh = typeof ref === 'function' ? ref(snap) : String((snap as any)[ref]);
+            if (currentText.setValue) currentText.setValue(String(fresh ?? ''));
+          }
+        });
       }
     };
     if (row.type === 'text') setting.addText(addInto);
