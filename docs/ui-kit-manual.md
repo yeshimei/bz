@@ -32,9 +32,9 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | 层 | 文件 | 内容 |
 |---|---|---|
 | 样式库 | `src/core/ui/tokens.css` | 全部 `--bz-*` token：结构层 `:root` + 色彩层 `body.theme-dark/light` |
-| 样式库 | `src/core/ui/components.css` | 组件类样式：`.bz-btn/.bz-icon-btn/.bz-chip/.bz-input/.bz-field/.bz-empty/.bz-segmented/.bz-badge/.bz-lightbox` 等 |
+| 样式库 | `src/core/ui/components.css` | 组件类样式：`.bz-btn/.bz-icon-btn/.bz-chip/.bz-input/.bz-field/.bz-empty/.bz-segmented/.bz-choice/.bz-badge/.bz-lightbox` 等 |
 | 组件库 | `src/core/ui/index.ts` | 转发桶（唯一 import 入口） |
-| 组件库 | `src/core/ui/{types,icon,button,chip,field,empty,segmented,lightbox}.ts` | 每组件一文件工厂 |
+| 组件库 | `src/core/ui/{types,icon,button,chip,field,empty,segmented,choice,lightbox}.ts` | 每组件一文件工厂 |
 | 构建 | `scripts/build-css.mjs` | SOURCES 聚合：normalize → core/styles.css → **ui/tokens.css → ui/components.css** → 各域 styles.css |
 
 > 注意：`src/core/styles.css` 是**旧体系**（用 Obsidian 变量，被 20 存量域依赖，冻结不改）；`src/core/ui/` 是**新体系**（自绘 token，新 UI 用）。同名类冲突处理见 §6。
@@ -58,7 +58,8 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | 输入框 | `.bz-input` | `--error`；`.bz-input-wrap` 前缀图标 | 32px 高 |
 | 字段行 | `.bz-field` | 内 `.bz-field-label/-desc/-error` | label+控件+说明 |
 | 空态 | `.bz-empty` | 内 `.bz-empty-ic/-title/-desc` + `.bz-btn-row` | CTA 放按钮行 |
-| 分段 | `.bz-segmented` | 内 `.bz-segmented-btn.is-on` | 单选多段 |
+| 分段 | `.bz-segmented` | 内 `.bz-segmented-btn.is-on` | 单选多段（等宽条） |
+| 平铺单选组 | `.bz-choice` | 内 `.bz-choice-btn.is-on`（可选 `.bz-choice-dot` 色点） | 表单替代下拉的胶囊选项组，可换行；选项多/文案长/需色点时用 |
 | 灯箱 | `.bz-lightbox` | 内 `.bz-lightbox-head/media/foot/-close` | 全屏看图/视频 |
 | 弹窗 | `.bz-overlay-mask` / `.bz-overlay-popup` | 内 `.bz-dialog-head/-title/-body`；底 `.bz-btn-row` | 居中模态（遮罩点关） |
 | 滑条 | `.bz-range` | `--lg` | 自绘轨道+滑块；抗 Obsidian 默认 range 外观重置 |
@@ -105,6 +106,7 @@ docs/ui-design-manual.md   ← 设计原则/取值权威（先读它）
 | `uiField` | `{label?, desc?, error?, control}` | `HTMLLabelElement` |
 | `uiEmpty` | `{icon?, title, desc?, actions?}` | `HTMLDivElement` |
 | `uiSegmented` | `<T>({options, value, onChange})` | `{el, setValue}` |
+| `uiChoice` | `<T>({options:{value,label,dot?}[], value, onChange, className?})` | `{el, setValue}` |
 | `uiIcon` | `(name, extraClass?)` | `HTMLElement` |
 | `openLightbox` | `{src, type?, title?, caption?}` | `{close}`；`closeLightbox()` |
 
