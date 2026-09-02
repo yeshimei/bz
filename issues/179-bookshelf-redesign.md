@@ -1,6 +1,10 @@
 # Ticket 177 — 收藏本 / 归物本 新 UI 落码（对照拍板原型，重写两域）
 
-> 状态：🔄 源码完成 / 测试重写中（worktree/books-redesign；ADR-0083 已落 docs/adr/，CONTEXT 词条已更新）
+> 状态：✅ 已完成并部署（2026-09-03）
+> 提交：2f49266（feat 源码+测试+文档）+ cb785a2（合流 master）+ d5a660a（重建产物）
+> 审查：子代理 diff 审查——无 P0/P1；P2 已修（归物保存防重入/分类下拉定位+外点关闭/死代码清理）
+> 门禁：全量 246 文件 3910 用例全绿 + tsc 0 错误（含 master 新 home/bookshelf/clipbook 域共存）
+> 文档：ADR-0083（docs/adr/0083-bookshelf-ui-redesign.md）、CONTEXT 词条更新
 > 原型：`.zcode/ui-prototypes/`（不入 git）——收藏本 P1「标签工作台」、归物本 P6「状态边栏×时间轴」均已在浏览器走查拍板并做成完整交互版
 > 数据：favorites.json / belongings.json 零迁移（旧数据直接可用，无新字段）
 > 策略：**就地重写** src/favorites + src/belongings（非新目录）——命令 id / 设置键 / smartcat 事件契约 / 设置面板 schemaLoader 全部不动；「旧域删除」即本次重写覆盖。收藏本 file-sync 后台逻辑保留不动。
