@@ -189,9 +189,6 @@ export function openTodoPanel(app: App): void {
     <div class="bz-todo-panel">
       <div class="bz-todo-head">
         <div class="bz-todo-title">待办</div>
-        <div class="bz-todo-head-btns">
-          <button class="bz-icon-btn bz-todo-close" data-todo-close title="关闭">${iconSpan(ICON.close)}</button>
-        </div>
       </div>
       <div class="bz-todo-body">
         <div class="bz-todo-side">
@@ -252,13 +249,11 @@ export function openTodoPanel(app: App): void {
   // 事件委托
   overlay.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
-    // 点遮罩 = 关闭主面板（桌面无关闭按钮）
+    // 点遮罩 = 关闭主面板（无关闭按钮，靠遮罩/ESC）
     if (e.target === overlay) {
       closeTodoPanel();
       return;
     }
-    const closeBtn = t.closest('[data-todo-close]');
-    if (closeBtn) { closeTodoPanel(); return; }
     // 场景切换（左栏 / 移动 chips）
     const nav = t.closest('[data-todo-scene]') as HTMLElement | null;
     if (nav) {

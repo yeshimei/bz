@@ -38,8 +38,8 @@
 .bz-btn {
   appearance: none;
   border: 1px solid transparent;
-  background: var(--bz-surface-2);
-  color: var(--bz-text-1);
+  background: var(--bz-surface-2) !important;
+  color: var(--bz-text-1) !important;
   height: var(--bz-control-h);
   padding: 0 16px;
   border-radius: var(--bz-radius-sm);
@@ -55,21 +55,21 @@
   font-family: inherit;
   transition: background-color var(--bz-dur-fast) ease, border-color var(--bz-dur-fast) ease, color var(--bz-dur-fast) ease, opacity var(--bz-dur-fast) ease;
 }
-.bz-btn:hover { background: var(--bz-surface-hover); }
-.bz-btn:active { background: var(--bz-surface-active); }
+.bz-btn:hover { background: var(--bz-surface-hover) !important; }
+.bz-btn:active { background: var(--bz-surface-active) !important; }
 .bz-btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 .bz-btn:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: 2px; }
 .bz-btn .bz-ic { width: 14px; height: 14px; }
 
-.bz-btn--primary { background: var(--bz-brand); color: var(--bz-on-brand); border-color: transparent; }
-.bz-btn--primary:hover { background: var(--bz-brand-hover); }
-.bz-btn--primary:active { background: var(--bz-brand-hover); opacity: 0.9; }
+.bz-btn--primary { background: var(--bz-brand) !important; color: var(--bz-on-brand) !important; border-color: transparent; }
+.bz-btn--primary:hover { background: var(--bz-brand-hover) !important; }
+.bz-btn--primary:active { background: var(--bz-brand-hover) !important; opacity: 0.9; }
 
-.bz-btn--danger { background: var(--bz-danger); color: var(--bz-on-danger); }
-.bz-btn--danger:hover { background: var(--bz-danger); opacity: 0.9; }
+.bz-btn--danger { background: var(--bz-danger) !important; color: var(--bz-on-danger) !important; }
+.bz-btn--danger:hover { background: var(--bz-danger) !important; opacity: 0.9; }
 
-.bz-btn--ghost { background: transparent; border-color: var(--bz-border-strong); color: var(--bz-text-1); }
-.bz-btn--ghost:hover { background: var(--bz-surface-hover); }
+.bz-btn--ghost { background: transparent !important; border-color: var(--bz-border-strong) !important; color: var(--bz-text-1) !important; }
+.bz-btn--ghost:hover { background: var(--bz-surface-hover) !important; }
 
 .bz-btn--sm { height: var(--bz-control-h-sm); padding: 0 10px; font-size: var(--bz-font-meta); border-radius: 6px; }
 .bz-btn--lg { height: var(--bz-control-h-lg); padding: 0 20px; font-size: var(--bz-font-body); border-radius: 10px; }
@@ -84,8 +84,8 @@
 .bz-icon-btn {
   appearance: none;
   border: none;
-  background: transparent;
-  color: var(--bz-text-2);
+  background: transparent !important;
+  color: var(--bz-text-2) !important;
   width: var(--bz-icon-btn-w);
   height: var(--bz-icon-btn-h);
   border-radius: var(--bz-radius-xs);
@@ -98,28 +98,28 @@
   padding: 0;
   transition: background-color var(--bz-dur-fast) ease, color var(--bz-dur-fast) ease;
 }
-.bz-icon-btn:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
-.bz-icon-btn:active { background: var(--bz-surface-active); }
+.bz-icon-btn:hover { background: var(--bz-surface-hover) !important; color: var(--bz-text-1) !important; }
+.bz-icon-btn:active { background: var(--bz-surface-active) !important; }
 .bz-icon-btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
 .bz-icon-btn:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: 2px; }
 .bz-icon-btn .bz-ic { width: 14px; height: 14px; }
 
-.bz-icon-btn--on { color: var(--bz-brand); }
-.bz-icon-btn--on:hover { color: var(--bz-brand); background: var(--bz-brand-soft); }
+.bz-icon-btn--on { color: var(--bz-brand) !important; }
+.bz-icon-btn--on:hover { color: var(--bz-brand) !important; background: var(--bz-brand-soft) !important; }
 .bz-icon-btn--lg { width: var(--bz-icon-btn-lg); height: var(--bz-icon-btn-lg); border-radius: var(--bz-radius-sm); font-size: 16px; }
 .bz-icon-btn--lg .bz-ic { width: 16px; height: 16px; }
 .bz-icon-btn--xs { width: 18px; height: 18px; border-radius: 50%; }
 .bz-icon-btn--xs .bz-ic { width: 12px; height: 12px; }
 .bz-icon-btn--close { width: 20px; height: 24px; font-size: 12px; }
-.bz-icon-btn[data-danger] { color: var(--bz-danger); }
-.bz-icon-btn[data-danger]:hover { background: color-mix(in srgb, var(--bz-danger) 12%, transparent); }
+.bz-icon-btn[data-danger] { color: var(--bz-danger) !important; }
+.bz-icon-btn[data-danger]:hover { background: color-mix(in srgb, var(--bz-danger) 12%, transparent) !important; }
 
 /* ═══════════ Chip .bz-chip ═══════════ */
 .bz-chip {
   appearance: none;
   border: 1px solid transparent;
-  background: var(--bz-surface-2);
-  color: var(--bz-text-2);
+  background: var(--bz-surface-2) !important;
+  color: var(--bz-text-2) !important;
   height: 24px;
   padding: 0 12px;
   border-radius: var(--bz-radius-full);
@@ -134,23 +134,23 @@
   font-family: inherit;
   transition: background-color var(--bz-dur-fast) ease, color var(--bz-dur-fast) ease;
 }
-.bz-chip:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
+.bz-chip:hover { background: var(--bz-surface-hover) !important; color: var(--bz-text-1) !important; }
 .bz-chip:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 .bz-chip .bz-ic, .bz-chip-ic { width: 12px; height: 12px; flex-shrink: 0; }
 
-.bz-chip--on { background: var(--bz-brand); color: var(--bz-on-brand); }
-.bz-chip--on:hover { background: var(--bz-brand-hover); color: var(--bz-on-brand); }
-.bz-chip--sel { background: var(--bz-brand-soft); color: var(--bz-brand); }
-.bz-chip--sel:hover { background: var(--bz-brand-soft); color: var(--bz-brand); }
-.bz-chip--locked { border: 1px dashed var(--bz-border-strong); opacity: 0.55; cursor: not-allowed; background: var(--bz-surface-1); color: var(--bz-text-2); }
-.bz-chip--locked:hover { background: var(--bz-surface-1); color: var(--bz-text-2); }
+.bz-chip--on { background: var(--bz-brand) !important; color: var(--bz-on-brand) !important; }
+.bz-chip--on:hover { background: var(--bz-brand-hover) !important; color: var(--bz-on-brand) !important; }
+.bz-chip--sel { background: var(--bz-brand-soft) !important; color: var(--bz-brand) !important; }
+.bz-chip--sel:hover { background: var(--bz-brand-soft) !important; color: var(--bz-brand) !important; }
+.bz-chip--locked { border: 1px dashed var(--bz-border-strong); opacity: 0.55; cursor: not-allowed; background: var(--bz-surface-1) !important; color: var(--bz-text-2) !important; }
+.bz-chip--locked:hover { background: var(--bz-surface-1) !important; color: var(--bz-text-2) !important; }
 .bz-chip-cnt { margin-left: 2px; font-size: 10px; font-weight: 600; opacity: 0.75; }
 
 .bz-chip-x {
   appearance: none;
   border: none;
-  background: transparent;
-  color: inherit;
+  background: transparent !important;
+  color: inherit !important;
   width: 16px;
   height: 16px;
   border-radius: 50%;
@@ -160,7 +160,7 @@
   cursor: pointer;
   padding: 0;
 }
-.bz-chip-x:hover { background: rgba(0, 0, 0, 0.15); }
+.bz-chip-x:hover { background: rgba(0, 0, 0, 0.15) !important; }
 .bz-chip-x .bz-ic { width: 10px; height: 10px; }
 
 /* ═══════════ 徽标 .bz-badge ═══════════ */
@@ -251,8 +251,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-segmented-btn {
   appearance: none;
   border: none;
-  background: transparent;
-  color: var(--bz-text-2);
+  background: transparent !important;
+  color: var(--bz-text-2) !important;
   height: 26px;
   padding: 0 14px;
   border-radius: 6px;
@@ -263,8 +263,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   white-space: nowrap;
   transition: background-color var(--bz-dur-fast) ease, color var(--bz-dur-fast) ease;
 }
-.bz-segmented-btn:hover { color: var(--bz-text-1); }
-.bz-segmented-btn.is-on { background: var(--bz-surface-2); color: var(--bz-text-1); font-weight: 600; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06); }
+.bz-segmented-btn:hover { color: var(--bz-text-1) !important; }
+.bz-segmented-btn.is-on { background: var(--bz-surface-2) !important; color: var(--bz-text-1) !important; font-weight: 600; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06) !important; }
 
 /* ═══════════ 平铺单选组 .bz-choice（choice.ts） ═══════════
    表单里替代下拉的胶囊选项组：可换行、单选（.is-on 实心品牌）。
@@ -277,8 +277,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-choice-btn {
   appearance: none;
   border: 1px solid transparent;
-  background: var(--bz-surface-2);
-  color: var(--bz-text-1);
+  background: var(--bz-surface-2) !important;
+  color: var(--bz-text-1) !important;
   height: var(--bz-control-h);
   padding: 0 14px;
   border-radius: var(--bz-radius-full);
@@ -292,10 +292,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   font-family: inherit;
   transition: background-color var(--bz-dur-fast) ease, color var(--bz-dur-fast) ease, border-color var(--bz-dur-fast) ease;
 }
-.bz-choice-btn:hover { background: var(--bz-surface-hover); }
+.bz-choice-btn:hover { background: var(--bz-surface-hover) !important; }
 .bz-choice-btn:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: 2px; }
-.bz-choice-btn.is-on { background: var(--bz-brand); color: var(--bz-on-brand); }
-.bz-choice-btn.is-on:hover { background: var(--bz-brand-hover); }
+.bz-choice-btn.is-on { background: var(--bz-brand) !important; color: var(--bz-on-brand) !important; }
+.bz-choice-btn.is-on:hover { background: var(--bz-brand-hover) !important; }
 .bz-choice-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
 /* ═══════════ 开关 .bz-sw（switch.ts） ═══════════
