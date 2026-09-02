@@ -33,6 +33,7 @@ const SOURCES = [
   "src/diary/styles.css",
   "src/diary-wall/styles.css",
   "src/launcher/styles.css",
+  "src/home/styles.css",
   "src/memo/styles.css",
   "src/todo/styles.css",
   "src/news/styles.css",

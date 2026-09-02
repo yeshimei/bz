@@ -108,6 +108,7 @@ const DOMAINS: DomainDef[] = [
   { id: 'secondbrain', name: '第二大脑', icon: 'network', desc: '嵌入检索与对话', schemaLoader: schemaLoaders.secondbrain },
   { id: 'auto-summary', name: '自动摘要', icon: 'sparkles', desc: '剪藏自动摘要', noSettings: true },
   { id: 'launcher', name: '入口页', icon: 'puzzle', desc: '命令磁贴入口', noSettings: true },
+  { id: 'home', name: '内容首页', icon: 'layout-grid', desc: '统计域卡首页（新域）', noSettings: true },
   { id: 'pomodoro', name: '番茄钟', icon: 'timer', desc: '专注计时与休息', schemaLoader: schemaLoaders.pomodoro },
   { id: 'attach', name: '附件搬移', icon: 'paperclip', desc: '附件整理', noSettings: true },
   { id: 'bili-downloader', name: 'B站下载', icon: 'download', desc: 'B站视频下载任务', noSettings: true },
