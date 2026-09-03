@@ -38,6 +38,10 @@ import { M } from './state';
 
 /** 待办主面板尺寸（ADR-0084：默认/最小/硬上限；实际上限另受视口 92% 约束） */
 const PANEL = { DEF_W: 720, DEF_H: 580, MIN_W: 720, MIN_H: 520, MAX_W: 1280, MAX_H: 880 };
+/** 搜索防抖（180ms，favorites/belongings 同值） */
+const SEARCH_DEBOUNCE_MS = 180;
+/** 搜索防抖计时（打开期间有效，面板关闭清理） */
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 // ---------- 小工具 ----------
 
@@ -396,11 +400,15 @@ export function openTodoPanel(app: App): void {
     if (e.key === 'Enter') addFromComposer();
   });
 
-  // 搜索（防抖 250ms）
+  // 搜索（防抖 180ms，对齐 favorites/belongings——修复前每键全量重渲且注释与实现不符）
   const searchInput = overlay.querySelector('[data-todo-search]') as HTMLInputElement;
   searchInput.addEventListener('input', () => {
-    M.search = searchInput.value.trim();
-    renderAll();
+    if (searchDebounceTimer !== null) clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      searchDebounceTimer = null;
+      M.search = searchInput.value.trim();
+      renderAll();
+    }, SEARCH_DEBOUNCE_MS);
   });
 
   void (async () => {
@@ -413,6 +421,11 @@ export function closeTodoPanel(): void {
   if (M.overlay) {
     M.overlay.remove();
     M.overlay = null;
+  }
+  // 防抖窗口内关闭面板：清计时器防孤儿回调
+  if (searchDebounceTimer !== null) {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = null;
   }
   // 卸载拖动缩放（detach 幂等；无会话内 handler 残留）
   if (panelResizeDetach) {
