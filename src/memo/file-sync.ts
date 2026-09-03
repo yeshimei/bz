@@ -12,7 +12,7 @@ import type { App } from 'obsidian';
 import { notify } from '../core/notice';
 import { tryGetSettings } from '../core/settings-provider';
 import { onDomainEvent } from '../core/domain-bus';
-import { jsonFileStore, storageFile } from '../core/storage';
+import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
 import { SYNC_WATCHED_FOLDERS } from '../core/settings-common';
 
 // ---------- 同步纯函数（ai-agent/sync.ts 私有副本） ----------
@@ -142,11 +142,15 @@ function createBatchFlusher<T>(run: (batch: T[]) => Promise<void>): ((ev: T) => 
 // ---------- 事件编排 ----------
 
 function createMemoFileSyncAgent(app: App): void {
-  /** 对 memo.json 执行同步函数，有变化才写回 */
+  /** 对 memo.json 执行同步函数，有变化才写回。
+   *  读改写整体入 per-path 串行队列：与 memo UI / todo UI 的 CRUD 同队列互斥，
+   *  后台同步不得用陈旧基线覆盖面板刚写入的数据（写竞态收敛）。 */
   async function syncSource(fn: (items: any[], ...args: any[]) => boolean, ...args: any[]) {
     const path = getMemoPath();
-    const items = await loadJSON(app, path);
-    if (fn(items, ...args)) await saveJSON(app, path, items);
+    await enqueueFileTask(path, async () => {
+      const items = await loadJSON(app, path);
+      if (fn(items, ...args)) await saveJSON(app, path, items);
+    });
   }
 
   const isMd = (file: any) => file && file.extension === 'md' && inFolders(file.path, getWatchedFolders());

@@ -8,7 +8,7 @@ import moment from 'moment';
 import { jsonStore } from '../core/json-store';
 import { getApp } from '../core/app';
 import { generateId, extractUrlAndDisplay } from '../core/utils';
-import { storageFile } from '../core/storage';
+import { enqueueFileTask, storageFile } from '../core/storage';
 import type { TodoItem } from './types';
 
 export interface TodoSettingsLike {
@@ -85,46 +85,52 @@ export const TodoData = {
   },
 
   /** 加载条目：读 + 缺 id 生成 + 字段归一（与旧 memo 一致：有缺 id 整写回补）。
- *  id 前缀用 generateId() 默认 'item'——与旧 memo 域同写 memo.json，保证两域对同文件
- *  的 id 形态完全一致（T5）。 */
+   *  id 前缀用 generateId() 默认 'item'——与旧 memo 域同写 memo.json，保证两域对同文件
+   *  的 id 形态完全一致（T5）。读改写整体入 per-path 串行队列（写竞态收敛，对照 memo/data.ts） */
   async loadItems(): Promise<TodoItem[]> {
-    const raw = await this.read();
-    let needWrite = false;
-    const items = raw.map((item: any) => {
-      if (!item.id) {
-        item.id = generateId();
-        needWrite = true;
-      }
-      // 统一字段形状（缺省补默认值，旧数据零迁移）
-      return normalizeItem(item);
+    return enqueueFileTask(this.todoFilePath, async () => {
+      const raw = await this.read();
+      let needWrite = false;
+      const items = raw.map((item: any) => {
+        if (!item.id) {
+          item.id = generateId();
+          needWrite = true;
+        }
+        // 统一字段形状（缺省补默认值，旧数据零迁移）
+        return normalizeItem(item);
+      });
+      if (needWrite) await this.write(raw);
+      return items;
     });
-    if (needWrite) await this.write(raw);
-    return items;
   },
 
   async addItem(item: TodoItem) {
-    const data = await this.read();
-    data.unshift(item as any);
-    await this.write(data);
+    return enqueueFileTask(this.todoFilePath, async () => {
+      const data = await this.read();
+      data.unshift(item as any);
+      await this.write(data);
+    });
   },
 
   async updateItem(id: string, newData: Partial<TodoItem>) {
-    const data = await this.read();
-    const idx = data.findIndex((d: any) => d.id === id);
-    if (idx === -1) throw new Error('条目不存在');
-    const old = data[idx];
-    // 如果新数据包含 title 但未提供 url，则自动提取
-    if ((newData as any).title !== undefined && (newData as any).url === undefined) {
-      const { url } = extractUrlAndDisplay((newData as any).title);
-      (newData as any).url = url;
-    }
-    data[idx] = {
-      ...old,
-      ...newData,
-      id: old.id,
-      created: old.created,
-    };
-    await this.write(data);
+    return enqueueFileTask(this.todoFilePath, async () => {
+      const data = await this.read();
+      const idx = data.findIndex((d: any) => d.id === id);
+      if (idx === -1) throw new Error('条目不存在');
+      const old = data[idx];
+      // 如果新数据包含 title 但未提供 url，则自动提取
+      if ((newData as any).title !== undefined && (newData as any).url === undefined) {
+        const { url } = extractUrlAndDisplay((newData as any).title);
+        (newData as any).url = url;
+      }
+      data[idx] = {
+        ...old,
+        ...newData,
+        id: old.id,
+        created: old.created,
+      };
+      await this.write(data);
+    });
   },
 
   async completeItem(id: string) {
@@ -133,12 +139,14 @@ export const TodoData = {
   },
 
   async deleteItem(id: string) {
-    const data = await this.read();
-    const idx = data.findIndex((d: any) => d.id === id);
-    if (idx !== -1) {
-      data.splice(idx, 1);
-      await this.write(data);
-    }
+    return enqueueFileTask(this.todoFilePath, async () => {
+      const data = await this.read();
+      const idx = data.findIndex((d: any) => d.id === id);
+      if (idx !== -1) {
+        data.splice(idx, 1);
+        await this.write(data);
+      }
+    });
   },
 
   /** 公开课笔记（影视目录中含 公开课 标签的文件） */
