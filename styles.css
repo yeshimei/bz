@@ -1956,6 +1956,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-sw.on:hover { background: var(--bz-brand-hover); }
 .bz-sw.on::after { transform: translateX(18px); }
 .bz-sw:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: 2px; }
+.bz-sw.is-disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+.bz-sw.is-disabled::after { opacity: 0.6; }
 
 /* ═══════════ 下拉 .bz-select（select.ts） ═══════════
    单行单选下拉（设置行等控件区）：触发元素 + 绝对定位选项菜单
@@ -1995,6 +1997,9 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   top: calc(100% + 4px);
   right: 0;
   z-index: 60;
+  /* max-content 随最长选项加宽（否则绝对定位收缩宽度被触发器钳住，长文案截断）；
+     min-width: 100% 兜底短选项组仍与触发器同宽 */
+  width: max-content;
   min-width: 100%;
   max-height: 220px;
   overflow-y: auto;
@@ -2037,7 +2042,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   position: fixed;
   inset: 0;
   background: var(--bz-scrim, rgba(0, 0, 0, 0.92));
-  z-index: 900;
+  /* z-index 由 lightbox.ts 经 allocZ() 动态分配（ADR-0067），此处不设固定档 */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -4086,6 +4091,9 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   font-family: inherit; outline: none; height: 100%;
 }
 .bz-home-q::placeholder { color: var(--bz-text-3); }
+/* CM4：编辑钉选模式禁用搜索，视觉同步降级 */
+.bz-home-q:disabled { opacity: .45; }
+.bz-home-search:has(.bz-home-q:disabled) { border-color: transparent; box-shadow: none; }
 
 /* 搜索面板（hero 下绝对定位下拉） */
 .bz-home-pal {
@@ -4501,7 +4509,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   background: var(--bz-overlay);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--bz-font-ui);
-  z-index: 100000;
+  /* z-index 由 openTodoPanel 经 topifyZ 动态分配（ADR-0067），此处不设静态档 */
 }
 .bz-todo-panel {
   background: var(--bz-surface-2); color: var(--bz-text-1);
@@ -7527,6 +7535,8 @@ body.theme-dark .bz-lib-badge--已读 { background: #388E3C; }
 /* 进度细条（封面底部；非已读且有进度时） */
 .bz-bs-prog { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(0, 0, 0, 0.14); }
 .bz-bs-prog i { display: block; height: 100%; background: var(--bz-brand); }
+/* B6：有书评渐变浮层时进度条上移到浮层上方（quote 高 = 14pt + 1 行 16.5 + 6pt ≈ 37px），否则被渐变遮住 */
+.bz-bs-cover-wrap:has(.bz-bs-quote) .bz-bs-prog { bottom: 37px; }
 /* 书评一句（封面底部渐变浮层，1 行截断） */
 .bz-bs-quote {
   position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 8px 6px;
