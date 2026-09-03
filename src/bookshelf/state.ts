@@ -10,7 +10,8 @@ export interface BookshelfItem {
   file: TFile | null;
   title: string;
   author: string;
-  category: string;
+  /** 分类（md 书 frontmatter category，未写回落「未分类」；EPUB 无分类 null，展示层兜底） */
+  category: string | null;
   /** 封面 vault 路径（相对路径由解析时补 CONFIG/BOOK 前缀；无封面 null） */
   cover: string | null;
   bookReview: string | null;
