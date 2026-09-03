@@ -23,7 +23,7 @@ import { diaryDataMap, state } from '../state';
 import { getJumpToEditAfterSaveSetting, getTagShowEmojiSetting, getUseFileDateTimeSetting } from './ui-settings';
 import { rebuildTags, updateTitleSuffix } from './filter-shared';
 import { applyFilter as applyFilterFromDialogs, insertCard, jumpToEntry, removeCard, showConfirm as showConfirmFromDialogs } from './entries';
-import { createDateTimeControl, syncDateTime } from './datetime-picker';
+import { createDateTimeControl, resetDateTimeControl } from './datetime-picker';
 
 // ===== 类型选择按钮（类型选择器与写日记弹窗共用） =====
 
@@ -582,10 +582,13 @@ export function openAddDialog() {
   // 否则保持当前时间
 
   const defaultDateTime = `${defaultDateStr} ${defaultTimeStr}`;
+  // P1 审查修复：打开时同步重置控件内部 currentMoment（显示与滚轮起点一致）。
+  // 旧路径只改 hiddenInput 显示值——控件内部时刻停在创建那天，隔天打开直接点
+  // 「确定」会把日记写回旧时刻
+  resetDateTimeControl(moment(defaultDateTime, 'YYYY-MM-DD HH:mm', true));
   const datetimeInput = document.getElementById('add-diary-datetime') as HTMLInputElement | null;
   if (datetimeInput) {
     datetimeInput.value = defaultDateTime;
-    syncDateTime();
   }
 
   topifyZ(mask, popup); // ADR-0067：显示即发号
