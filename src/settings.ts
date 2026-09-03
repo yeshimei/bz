@@ -73,6 +73,9 @@ export default interface BzSettings {
   autoPopupOnStart: boolean;
   /** 🔔 打开笔记自动提醒：打开笔记时若该笔记有重要/到期未完成备忘录，自动弹出面板 */
   openNoteReminder: boolean;
+  /** 🪟 待办面板桌面尺寸记忆（ADR-0084：拖动缩放后记住宽高；0 = 未拖过走默认 720×580） */
+  todoPanelWidth: number;
+  todoPanelHeight: number;
   /** 🏷️ 场景列表（逗号分隔，空则内置默认：剪藏,工作,学习,生活,代码,公开课） */
   memoScenarios: string;
   /** 🔀 默认排序方式：priority（紧急优先）/ due（仅到期）/ created（创建时间） */
@@ -514,6 +517,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
   memoAutoArchive: true,
   memoDefaultScene: '',
   memoDueFormat: 'relative',
+  // 待办面板桌面尺寸记忆（ADR-0084；0=未拖过，打开走默认 720×580）
+  todoPanelWidth: 0,
+  todoPanelHeight: 0,
 
   // 日记本
   diaryDirectory: '我的/日记',

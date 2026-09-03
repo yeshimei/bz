@@ -32,3 +32,5 @@ export { openLightbox, closeLightbox } from './lightbox';
 export type { BzLightboxOpts } from './lightbox';
 export { uiModal } from './modal';
 export type { BzModalOpts } from './modal';
+export { uiResizable } from './resize';
+export type { BzResizableOpts } from './resize';
