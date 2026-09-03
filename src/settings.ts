@@ -189,8 +189,7 @@ export default interface BzSettings {
   // ===== 🎬 影院（cinema 域；ADR-0087 起接管旧影视域）=====
   /** 📁 影视文件夹（影院域；缺省回落「我的/影视」） */
   cinemaFolderPath: string;
-  /** 📄 每页加载数量（影院域，字符串存储冻结） */
-  cinemaPageSize: string;
+  // 旧 cinemaPageSize（每批加载数量）已删除：全仓无消费点（列表一次全量渲染），死配置随审计清理
 
 
   // ===== 🧠 做题家（4 项，含 shuffleQuestions；设置并入复习计划 tab）=====
@@ -561,8 +560,6 @@ export const DEFAULT_SETTINGS: BzSettings = {
 
   // 影院（cinema；ADR-0087 起接管影视；缺省回落默认目录，旧 movieFolderPath 键已退役）
   cinemaFolderPath: '我的/影视',
-  cinemaPageSize: '20',
-
 
   // 做题家（设置并入复习计划 tab）
   enableMultipleChoice: true,
