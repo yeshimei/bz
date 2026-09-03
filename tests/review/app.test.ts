@@ -104,6 +104,65 @@ describe('markReview 阶梯分支', () => {
     expect(items[0].stage).toBe(2); // 未变
   });
 
+  it('P1 回归：R 阈值提前逾期（未到 nextReviewDate 但 R<阈值）→ 放行评级写盘刷新排期', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    // R(t=10, S=1) ≈ 0.106 < 0.9：dueItems 判提前逾期；但 nextReviewDate 在 5 天后（未到期守卫原会拦截）
+    const futureNext = new Date(now.getTime() + 5 * 86400e3).toISOString();
+    await seedOverdue(vault, {
+      stage: 12, phase: 'fsrs', stability: 1, difficulty: 0.3,
+      lastReviewed: new Date(now.getTime() - 10 * 86400e3).toISOString(),
+      nextReviewDate: futureNext,
+    });
+    const app = makeApp(vault);
+    setApp(app);
+    expect(reviewApp.dueItems(await new ReviewDataManager(app).loadItems()).map((i) => i.filePath)).toContain('A.md');
+    await reviewApp.markReview('A.md', 'good');
+    const items = await new ReviewDataManager(app).loadItems();
+    expect(items[0].totalReviews).toBe(1); // 写盘成功
+    expect(items[0].nextReviewDate).not.toBe(futureNext); // 排期刷新
+    expect(items[0].reviewHistory).toHaveLength(1);
+    // 通过（good）+ autoPending → 不挂待重做
+    expect(items[0].pendingRedo).toBeFalsy();
+  });
+
+  it('P1 回归：R 阈值提前逾期 + 答错（again）+ autoPending → 挂待重做', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    await seedOverdue(vault, {
+      stage: 12, phase: 'fsrs', stability: 1, difficulty: 0.3,
+      lastReviewed: new Date(now.getTime() - 10 * 86400e3).toISOString(),
+      nextReviewDate: new Date(now.getTime() + 5 * 86400e3).toISOString(),
+    });
+    const app = makeApp(vault);
+    setApp(app);
+    await reviewApp.markReview('A.md', 'again', { autoPending: true });
+    const items = await new ReviewDataManager(app).loadItems();
+    expect(items[0].pendingRedo).toBe(true); // 未通过 → 待重做（原被守卫整体拒掉）
+    expect(items[0].totalReviews).toBe(1);
+  });
+
+  it('P1 回归：未提前逾期（R≥阈值）→ 未到期拦截维持，不写盘', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文');
+    const now = new Date();
+    // R(t=1, S=100) ≈ 0.99 ≥ 0.9：不满足放行 → 拦截
+    const futureNext = new Date(now.getTime() + 5 * 86400e3).toISOString();
+    await seedOverdue(vault, {
+      stage: 12, phase: 'fsrs', stability: 100, difficulty: 0.3,
+      lastReviewed: new Date(now.getTime() - 1 * 86400e3).toISOString(),
+      nextReviewDate: futureNext,
+    });
+    const app = makeApp(vault);
+    setApp(app);
+    await reviewApp.markReview('A.md', 'good');
+    const items = await new ReviewDataManager(app).loadItems();
+    expect(items[0].totalReviews).toBe(0); // 未写盘
+    expect(items[0].nextReviewDate).toBe(futureNext);
+  });
+
   it('completed 条目 → 该笔记已完成全部复习', async () => {
     const vault = new MockVault();
     vault.files.set('A.md', '正文');

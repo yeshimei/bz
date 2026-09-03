@@ -133,10 +133,20 @@ export const reviewApp = {
     const now = new Date();
     const nextReview = item.nextReviewDate ? new Date(item.nextReviewDate) : new Date(0);
     if (now < nextReview) {
-      const diff = nextReview.getTime() - now.getTime();
-      const mins = Math.ceil(diff / 60000);
-      notice(`还未到复习时间（${mins}分钟后）`);
-      return;
+      // dueItems 的 R 阈值「提前逾期」口径放行（同款条件：fsrs 相位 + R < 阈值）——
+      // 否则开始本轮纳入的条目评级会被此处整体拒掉（通过不刷新排期、答错不挂待重做）
+      const rThreshold = Number((getSettings() as any).reviewRThreshold) || 0.9;
+      let earlyOverdue = false;
+      if (item.phase === 'fsrs' && item.stability && item.lastReviewed) {
+        const t = (now.getTime() - new Date(item.lastReviewed).getTime()) / 86400000;
+        if (t > 0) earlyOverdue = new FSRS(this.currentW()).R(t, item.stability) < rThreshold;
+      }
+      if (!earlyOverdue) {
+        const diff = nextReview.getTime() - now.getTime();
+        const mins = Math.ceil(diff / 60000);
+        notice(`还未到复习时间（${mins}分钟后）`);
+        return;
+      }
     }
 
     const rating = selectedDifficulty;
