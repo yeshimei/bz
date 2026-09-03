@@ -158,7 +158,9 @@ describe('统一保险库工作台（UIManager 三栏三资产）', () => {
     set('account', 'me@douban');
     set('password', 'pw123456');
     (dlg.querySelector('[data-pwv-dlg="save"]') as HTMLButtonElement).click();
-    await new Promise((r) => setTimeout(r, 40));
+    // 回归：保存回调要等完整加密落盘链（PBKDF2 派生 + 清单原子写）走完才 renderAll()，
+    // 固定 40ms 等待会断言到保存前的空态渲染——改为 waitFor 列表出现新平台（≥3s）
+    await waitFor(() => (document.querySelector('.bz-vault-listcol')!.textContent || '').includes('豆瓣'));
     expect(dm.pwData.length).toBe(1);
     expect(dm.pwData[0].platform).toBe('豆瓣');
     expect(document.querySelector('.bz-vault-listcol')!.textContent).toContain('豆瓣');
