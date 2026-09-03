@@ -1,6 +1,7 @@
 /**
- * 入口/工具补测（单文件 80% 目标）：favorites/clipping/news/movie index 分支、
+ * 入口/工具补测（单文件 80% 目标）：favorites/movie index 分支、
  * core/dom createSiteIcon 加载分支、main.ts onunload 清理分支。
+ * ADR-0085：news/clipping 入口已随旧域退役，对应 describe 删除。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from './mock-vault';
@@ -9,8 +10,6 @@ import { setApp } from '../src/core/app';
 import { setSettingsProvider } from '../src/core/settings-provider';
 import { emitDomainEvent } from '../src/core/domain-bus';
 import { ensureFavorites, openFavoritesPanel, addFavoriteItem, unloadFavorites } from '../src/favorites/index';
-import { ensureClipping, openArticleView, unloadArticleView } from '../src/clipping/index';
-import { ensureNews, openNewsReader, unloadNewsReader } from '../src/news/index';
 import { ensureMovie, openMovieManager, addMovieItem, unloadMovie } from '../src/movie/index';
 import { M as MovieM } from '../src/movie/state';
 import { createSiteIcon } from '../src/core/dom';
@@ -52,32 +51,6 @@ describe('favorites 入口', () => {
   it('unloadFavorites 清理（无 UI 实例安全）', () => {
     unloadFavorites();
     expect(() => unloadFavorites()).not.toThrow();
-  });
-});
-
-describe('clipping 入口', () => {
-  beforeEach(() => setup());
-
-  it('ensureClipping 幂等 + openArticleView', () => {
-    ensureClipping(app);
-    expect(() => openArticleView(app)).not.toThrow();
-  });
-
-  it('unloadArticleView 清理', () => {
-    expect(() => unloadArticleView()).not.toThrow();
-  });
-});
-
-describe('news 入口', () => {
-  beforeEach(() => setup());
-
-  it('ensureNews 幂等 + openNewsReader', () => {
-    ensureNews(app);
-    expect(() => openNewsReader(app)).not.toThrow();
-  });
-
-  it('unloadNewsReader 清理', () => {
-    expect(() => unloadNewsReader()).not.toThrow();
   });
 });
 
