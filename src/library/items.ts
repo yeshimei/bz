@@ -91,7 +91,9 @@ export function getBookItems(app: any): BookItem[] {
     const bookReview = fm.bookReview ? fm.bookReview.toString() : null;
     const readingDate = fm.readingDate ? fm.readingDate.toString() : null;
     const completionDate = fm.completionDate ? fm.completionDate.toString() : null;
-    const readingProgress = fm.readingProgress !== undefined ? Number(fm.readingProgress) : 0;
+    // audit H：`|| 0` 兜底——frontmatter readingProgress 为非法值（如 'abc'）时 Number() 得 NaN，
+    // 会让进度条/排序比较全程 NaN（口径同 bookshelf/data.ts parseBookFile）
+    const readingProgress = Number(fm.readingProgress) || 0;
     const readingTimeFormat = fm.readingTimeFormat || null;
     const highlights = fm.highlights || 0;
     const thinks = fm.thinks || 0;
