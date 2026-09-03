@@ -73,6 +73,8 @@ export class UIManager {
   entriesContainer: HTMLElement | null = null;
   /** 当前冲刺会话（内容区被占用时队列交互禁用） */
   private sprint: SprintSession | null = null;
+  /** 冲刺入口 in-flight 防抖（双击/并发触发只放行一次，防双开会话双倍 AI 调用） */
+  private sprintStarting = false;
   showArchived = false;
   private searchTimer: number | null = null;
   searchText = '';
@@ -141,8 +143,10 @@ export class UIManager {
   }
 
   destroy(): void {
-    this.sprint?.destroy();
+    // 先置空再销毁：destroy → finish → onExit → showQueue 不再对同一会话二次 destroy
+    const sprint = this.sprint;
     this.sprint = null;
+    sprint?.destroy();
     this.hideMain();
     if (this.searchTimer !== null) {
       window.clearTimeout(this.searchTimer);
@@ -179,10 +183,12 @@ export class UIManager {
     this.bindQueueEvents(container, items);
   }
 
-  /** 切回队列视图（冲刺结束回调） */
+  /** 切回队列视图（冲刺结束回调）；遇仍活动的会话先销毁再置空（防孤儿 ESC 层） */
   async showQueue(): Promise<void> {
     if (!this.entriesContainer) return;
+    const active = this.sprint;
     this.sprint = null;
+    active?.destroy();
     await this.refreshPanel();
   }
 
@@ -354,16 +360,29 @@ export class UIManager {
   // ================= 冲刺入口（连接 app 编排） =================
 
   private async beginRound(): Promise<void> {
-    const { reviewApp } = await import('./app');
-    await reviewApp.autoJumpOverdue();
+    if (this.sprintStarting) return; // 双击/并发防抖：只放行一次
+    this.sprintStarting = true;
+    try {
+      const { reviewApp } = await import('./app');
+      await reviewApp.autoJumpOverdue();
+    } finally {
+      this.sprintStarting = false;
+    }
   }
 
   private async beginSingle(item: ReviewItem): Promise<void> {
-    const { reviewApp } = await import('./app');
-    await reviewApp.startSingleSprint(item);
+    if (this.sprintStarting) return; // 双击/并发防抖：只放行一次
+    this.sprintStarting = true;
+    try {
+      const { reviewApp } = await import('./app');
+      await reviewApp.startSingleSprint(item);
+    } finally {
+      this.sprintStarting = false;
+    }
   }
 
-  /** 供 app 编排：进入做题冲刺会话（宿主接管内容区） */
+  /** 供 app 编排：进入做题冲刺会话（宿主接管内容区）。
+   *  互斥：进入前强制销毁旧会话（防孤儿冲刺 ESC 层 + 旧题面覆盖队列视图）。 */
   startSprint(opts: {
     queue: ReviewItem[];
     mode: SprintMode;
@@ -374,6 +393,9 @@ export class UIManager {
   }): Promise<'done' | 'quit' | 'fail'> {
     const container = this.entriesContainer;
     if (!container) return Promise.resolve('quit');
+    const old = this.sprint;
+    this.sprint = null;
+    old?.destroy();
     this.sprint = new SprintSession({
       app: this.app,
       host: container,
