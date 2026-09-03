@@ -981,9 +981,15 @@ function openNoteEditModal(opts: {
   saveBtn.className = 'bz-lib-btn bz-lib-btn--primary';
   saveBtn.textContent = '保存';
   saveBtn.addEventListener('click', () => {
-    void opts.onSave(textarea.value).then((ok) => {
-      if (ok) overlay.remove();
-    });
+    // audit H：onSave 失败（reject）不再无响应悬挂弹窗——notice + 弹窗保留
+    void opts.onSave(textarea.value)
+      .then((ok) => {
+        if (ok) overlay.remove();
+      })
+      .catch((e) => {
+        console.error('保存批注失败:', e);
+        notice('保存失败，请重试', 'error');
+      });
   });
 
   btnGroup.appendChild(cancelBtn);
@@ -1016,10 +1022,10 @@ export function openEditCommentModal(
     title: '编辑批注',
     quote: text,
     initial: oldComment || '',
+    // audit H：updateComment 返回 Promise<boolean>（false=文件缺失/未命中/IO 失败），
+    // 弹窗按结果开关，不再被「永不 resolve」的回调包装悬挂
     onSave: (v: string) =>
-      new Promise<boolean>((resolve) => {
-        updateComment(app, filePath, highlightId, text, v, () => resolve(true));
-      }).then((ok) => {
+      updateComment(app, filePath, highlightId, text, v).then((ok) => {
         if (ok && onDone) onDone();
         return ok;
       }),
