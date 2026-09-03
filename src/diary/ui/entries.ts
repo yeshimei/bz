@@ -614,6 +614,10 @@ export function showConfirm(entryId: string) {
     }
     notice('日记条目已删除', 'success');
     hidePickers();
+  }).catch((err: any) => {
+    // P3 审查修复：删除失败必须有人话提示（旧实现 .then 无 .catch，deleteEntry 抛错
+    // 成为 unhandled rejection，用户确认后什么都没发生也无从排查）
+    notice('删除日记失败：' + (err?.message || err), 'error');
   });
 }
 

@@ -1202,7 +1202,7 @@ export class DiaryWallAppController {
   private openLightbox(k: WallMedia, entry: WallEntry) {
     const src = this.mediaSrcFor(entry, k.name);
     const errHtml = `<div class="bz-diary-wall-lberr">${KIND_ICON[k.kind]} 无法加载</div>`;
-    // 媒体构建工厂：desk/mob 各构建真实元素（勿用 innerHTML 复制——img/video/audio 无子节点，
+    // 媒体构建工厂：构建真实元素（勿用 innerHTML 复制——img/video/audio 无子节点，
     // 复制结果为空串，移动端灯箱媒体会空白）
     const build = (box: HTMLElement) => {
       box.innerHTML = '';
@@ -1241,8 +1241,10 @@ export class DiaryWallAppController {
         box.appendChild(a);
       }
     };
-    build(this.desk.lbMedia);
-    build(this.mob.lbMedia);
+    // P3 审查修复：只填充当前端实例——旧实现双实例都 build，<video autoplay> 两份
+    // 同时加载播放；当前端按视口宽度判定
+    const mobileNow = typeof matchMedia === 'function' && matchMedia('(max-width: 768px)').matches;
+    build(mobileNow ? this.mob.lbMedia : this.desk.lbMedia);
     // 灯箱下方信息：标题行 = 文件名（或日期·时间·标签）；副行 = 日记正文文字（去掉媒体引用），
     // 不再显示资源路径（用户要求：放大后下面显示日记的文字而不是图片/视频路径）
     const cap = k.name || `${entry.date} ${entry.time} · ${entry.tags.join(' ')}`;
@@ -1252,7 +1254,6 @@ export class DiaryWallAppController {
     this.mob.lbCap.textContent = cap;
     this.mob.lbSub.textContent = sub;
     // 仅当前可见实例加 --show（≤768px 桌面实例 display:none；避免双实例重复 autoplay/冗余节点）
-    const mobileNow = typeof matchMedia === 'function' && matchMedia('(max-width: 768px)').matches;
     if (mobileNow) this.mob.lb.classList.add('bz-diary-wall-lb--show');
     else this.desk.lb.classList.add('bz-diary-wall-lb--show');
   }
@@ -1615,6 +1616,9 @@ export class DiaryWallAppController {
     this.closeDateFilter();
     this.closeLightbox();
     this.closeSheet();
+    // P3 审查修复：右键菜单挂 body（不在 root 内），不收起会在面板关闭后残留、
+    // 菜单动作仍可点击
+    this.closeContextMenu();
     this.root.style.display = 'none';
     this.unsubscribeVaultModify();
   }
