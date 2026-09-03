@@ -815,6 +815,33 @@ export class DiaryWallAppController {
     };
   }
 
+  /** 特殊条目（影视/信/书）：整文件即条目，无日记 md 块语义（对齐 diary 面板 !special 语义） */
+  private isSpecialWallEntry(e: WallEntry): boolean {
+    return e.kind === 'movie' || e.kind === 'letter' || e.kind === 'book';
+  }
+
+  /**
+   * 按 filename+lineNumber 反查 diary state 条目（P1 审查修复：id 断层——wall 侧
+   * 普通日记条目没有 id，直接拿空 id 走 diary 动作会静默失败甚至误删）。
+   * wall 与 diary 同源解析、行号一致；找不到时全量加载一次后重试（同 editTags 旧策略）。
+   */
+  private async findDiaryEntry(e: WallEntry, afterLoad = false): Promise<any | null> {
+    try {
+      const diaryState = (await import('../diary/state')).state;
+      const entry = diaryState.data.originalDiaryEntries.find(
+        (x: any) => x.filename === e.filename && x.lineNumber === e.lineNumber
+      );
+      if (entry) return entry;
+    } catch (err) {
+      /* diary 未初始化：走 loadAll 兜底 */
+    }
+    if (!afterLoad) {
+      await this.ensureDiaryLoaded();
+      return this.findDiaryEntry(e, true);
+    }
+    return null;
+  }
+
   /** 右键上下文菜单（自绘，跟手；动作与抽屉同源） */
   private openContextMenu(x: number, y: number, e: WallEntry) {
     this.closeContextMenu();
@@ -835,13 +862,19 @@ export class DiaryWallAppController {
     mk('↗', '打开原文', null, () => void this.jumpTo(e));
     mk('⧉', '复制双链', null, () => this.copyLink(e));
     mk('▤', '复制正文', null, () => this.copyContent(e));
+    // P1 审查修复：特殊条目（影视/信/书）不给「加密/删除」（对齐 diary 面板 !special 语义）
+    const special = this.isSpecialWallEntry(e);
     if (!e.encrypted && !e.tags.includes('加密')) {
       mk('⌘', '改标签', null, () => this.editTags(e));
-      mk('🔒', '加密', 'bz-diary-wall-menu-item--accent', () => void this.encryptEntryAction(e));
+      if (!special) {
+        mk('🔒', '加密', 'bz-diary-wall-menu-item--accent', () => void this.encryptEntryAction(e));
+      }
     } else {
       mk('🔓', '解密', 'bz-diary-wall-menu-item--accent', () => void this.decryptEntryAction(e));
     }
-    mk('🗑', '删除', 'bz-diary-wall-menu-item--danger', () => void this.deleteEntryAction(e));
+    if (!special) {
+      mk('🗑', '删除', 'bz-diary-wall-menu-item--danger', () => void this.deleteEntryAction(e));
+    }
     document.body.appendChild(menu);
     this._contextMenu = menu;
     // 点击别处 / ESC 关闭
@@ -1215,9 +1248,25 @@ export class DiaryWallAppController {
         notice('已复制加密日记正文', 'success');
         return;
       }
+      // 特殊条目（影视/信/书）：整文件即条目，无日记标题锚点——按文件路径本地拼双链
+      if (this.isSpecialWallEntry(e)) {
+        if (!e.filename) {
+          notice('找不到原文，无法复制双链', 'error');
+          return;
+        }
+        await navigator.clipboard.writeText(`[[${e.filename.replace(/\.md$/, '')}]]`);
+        notice('已复制双链引用', 'success');
+        return;
+      }
+      // 普通日记条目（P1 审查修复）：wall 侧条目没有 id，传空 id 会让 diary 侧静默失败——
+      // 按 filename+lineNumber 反查 diary 条目后走 diary 既有 copyLink
+      const entry = await this.findDiaryEntry(e);
+      if (!entry || !entry.id) {
+        notice('找不到原文条目，无法复制双链', 'error');
+        return;
+      }
       const { copyLink } = await import('../diary/ui/entries') as typeof import('../diary/ui/entries');
-      const entry = this.toDiaryEntry(e);
-      await copyLink(entry.id || '');
+      await copyLink(entry.id);
     } catch (err) {
       notice('复制双链失败', 'error');
     }
@@ -1244,19 +1293,11 @@ export class DiaryWallAppController {
 
   private async openTagPicker(e: WallEntry, afterLoad: boolean) {
     try {
-      const diaryState = (await import('../diary/state')).state;
-      const entry = diaryState.data.originalDiaryEntries.find(
-        (x: any) => x.filename === e.filename && x.lineNumber === e.lineNumber
-      );
+      // P1 审查修复：反查收口到 findDiaryEntry（filename+lineNumber，必要时全量加载一次后重试）
+      const entry = await this.findDiaryEntry(e, afterLoad);
       if (entry && entry.id) {
         const { showTagPicker } = await import('../diary/ui/dialogs') as typeof import('../diary/ui/dialogs');
         showTagPicker(entry.id);
-        return;
-      }
-      if (!afterLoad) {
-        // state 里没有（diary 未加载或条目特殊）→ 全量加载一次后重试
-        await this.ensureDiaryLoaded();
-        await this.openTagPicker(e, true);
         return;
       }
       notice('改标签暂不可用（找不到原文条目）', 'error');
@@ -1268,14 +1309,20 @@ export class DiaryWallAppController {
   /** 加密：接 diary encryptEntry（需保险箱解锁，diary 流程处理） */
   private async encryptEntryAction(e: WallEntry) {
     try {
+      // P1 审查修复：影视/信/书特殊条目不提供加密（入库语义错位）——菜单已屏蔽，此处兜底
+      if (this.isSpecialWallEntry(e)) return;
       const { ensureSafeUnlocked } = await import('../encrypt') as typeof import('../encrypt');
       const unlocked = await ensureSafeUnlocked();
       if (!unlocked) return;
-      const diary = await import('../diary/ui/entries') as typeof import('../diary/ui/entries');
-      // 复用 diary 抽屉里的加密流程（encryptFromSheet 未导出，走完整 encryptEntry + deleteEntry）
+      // P1 审查修复：反查 diary 真实条目再加密——wall 条目没有 id，旧实现删除被跳过，
+      // 原文留在 md、密文又进保险箱，解锁后同一条出现两次
+      const entry = await this.findDiaryEntry(e);
+      if (!entry || !entry.id) {
+        notice('找不到原文条目，无法加密', 'error');
+        return;
+      }
       const { encryptEntry } = await import('../diary/encrypt') as typeof import('../diary/encrypt');
       const { deleteEntry } = await import('../diary/store') as typeof import('../diary/store');
-      const entry = this.toDiaryEntry(e);
       const enc = await encryptEntry(entry);
       if (enc && entry.id) {
         await deleteEntry(entry.id);
@@ -1332,8 +1379,20 @@ export class DiaryWallAppController {
         return;
       }
       const { showConfirm } = await import('../diary/ui/entries') as typeof import('../diary/ui/entries');
-      const entry = this.toDiaryEntry(e);
-      showConfirm(entry.id || '');
+      // P1 审查修复：影视/信/书特殊条目不给删除——lineNumber=0 与 md 全部失配，
+      // diary deleteEntry 的「该时间仅一条」兜底可能误删同刻真实日记。菜单已屏蔽，此处兜底。
+      if (this.isSpecialWallEntry(e)) {
+        notice('影视、信、书条目请在对应面板中管理', 'info');
+        return;
+      }
+      // 普通日记条目：按 filename+lineNumber 反查后走 diary 确认删除（传空 id 会
+      // 抛「未找到日记条目」且无提示，用户确认后什么都没发生）
+      const entry = await this.findDiaryEntry(e);
+      if (!entry || !entry.id) {
+        notice('找不到原文条目，无法删除', 'error');
+        return;
+      }
+      showConfirm(entry.id);
     } catch (err) {
       notice('删除暂不可用', 'error');
     }
@@ -1400,25 +1459,31 @@ export class DiaryWallAppController {
           notice(`附件：${e.media.map((m) => m.name).join('、')}`);
         });
       }
+      // P1 审查修复：特殊条目（影视/信/书）不给「加密/删除」，与右键菜单同口径
+      const special = this.isSpecialWallEntry(e);
       if (!e.encrypted && !e.tags.includes('加密')) {
         mk('⌘', '改标签', null, '', () => {
           this.closeSheet();
           this.editTags(e);
         });
-        mk('🔒', '加密', null, 'bz-diary-wall-sheet-act--accent', () => {
-          this.closeSheet();
-          void this.encryptEntryAction(e);
-        });
+        if (!special) {
+          mk('🔒', '加密', null, 'bz-diary-wall-sheet-act--accent', () => {
+            this.closeSheet();
+            void this.encryptEntryAction(e);
+          });
+        }
       } else {
         mk('🔓', '解密', null, 'bz-diary-wall-sheet-act--accent', () => {
           this.closeSheet();
           void this.decryptEntryAction(e);
         });
       }
-      mk('🗑', '删除', null, 'bz-diary-wall-sheet-act--danger', () => {
-        this.closeSheet();
-        void this.deleteEntryAction(e);
-      });
+      if (!special) {
+        mk('🗑', '删除', null, 'bz-diary-wall-sheet-act--danger', () => {
+          this.closeSheet();
+          void this.deleteEntryAction(e);
+        });
+      }
       ui.sheet.classList.add('bz-diary-wall-sheet--show');
     });
   }
