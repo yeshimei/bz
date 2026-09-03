@@ -17,9 +17,11 @@ import { openFlowDialog } from '../core/flow-dialog';
 import { createOverlay, topifyZ } from '../core/dom';
 import {
   attachItemActions,
+  openItemSheet,
   registerSheetCompanion,
   unregisterSheetCompanion,
   type ItemAction,
+  type ItemActionsOptions,
 } from '../core/item-actions';
 import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
@@ -69,6 +71,13 @@ export function secureRandomPassword(length: number, charset: string): string {
 /** 复制敏感内容 + 60s 自动清空剪贴板 */
 const CLIPBOARD_CLEAR_DELAY_MS = 60_000;
 let clipboardClearTimer: ReturnType<typeof setTimeout> | null = null;
+/** 取消未触发的自动清空（卸载清理用，防插件禁用后定时器仍写剪贴板） */
+export function cancelClipboardClear(): void {
+  if (clipboardClearTimer !== null) {
+    clearTimeout(clipboardClearTimer);
+    clipboardClearTimer = null;
+  }
+}
 export function armClipboardClear(): void {
   if (clipboardClearTimer !== null) clearTimeout(clipboardClearTimer);
   clipboardClearTimer = setTimeout(() => {
@@ -630,6 +639,7 @@ export class UIManager {
       this.pwDataManager.lock();
       this.pwState = { ...DEFAULT_PW_STATE };
       this._selNoteId = null;
+      this._diaryPlain = {}; // G：明文缓存随上锁一并清出内存（与 lockNow 同口径）
       this.noticeAutoLock();
     }
   }
@@ -1157,26 +1167,28 @@ export class UIManager {
     const allNotes = [...this.dataManager.manifest.notes].filter((n) => n.kind !== 'password-vault');
     const attachments = allNotes.reduce((s, n) => s + n.attachments.length, 0);
     const pwPlats = this.pwDataManager.platforms();
-    const recent: OverviewStats['recent'] = [];
-    const pushRecent = (kind: 'pw' | 'note' | 'diary', title: string, sub: string, time: string) =>
-      recent.push({ kind, title, sub, time });
+    const recent: Array<{ kind: 'pw' | 'note' | 'diary'; title: string; sub: string; time: string; ts: number }> = [];
+    const pushRecent = (kind: 'pw' | 'note' | 'diary', title: string, sub: string, time: string, ts: number) =>
+      recent.push({ kind, title, sub, time, ts });
     // 密码：平台最近更新
     for (const p of pwPlats.slice(0, 3)) {
       const r = p.accounts[0];
-      pushRecent('pw', p.platform, r ? r.account || '(无账号)' : '', pwRelTime(r && r.createdAt));
+      const created = (r && r.createdAt) || '';
+      pushRecent('pw', p.platform, r ? r.account || '(无账号)' : '', pwRelTime(created), Date.parse(created) || 0);
     }
     // 笔记/日记
     for (const n of allNotes.slice(0, 3)) {
       const kind = n.kind === 'diary-entry' ? 'diary' : 'note';
-      pushRecent(kind, n.title, `${n.attachments.length} 个附件`, formatRelativeTime(n.createdAt));
+      pushRecent(kind, n.title, `${n.attachments.length} 个附件`, formatRelativeTime(n.createdAt), Date.parse(n.createdAt || '') || 0);
     }
-    recent.sort((a, b) => (a.time || '').localeCompare(b.time || '') * -1);
+    // G：按真实时间戳降序（旧实现按相对时间字符串 localeCompare——「今天」「3 天前」字典序无时序意义）
+    recent.sort((a, b) => b.ts - a.ts);
     return {
       counts: c,
       pwPlatforms: pwPlats.length,
       pwFavPlatforms: pwPlats.filter((p) => this.pwDataManager.hasFav(p.platform)).length,
       attachments,
-      recent: recent.slice(0, 6),
+      recent: recent.slice(0, 6).map(({ kind, title, sub, time }) => ({ kind, title, sub, time })),
       health: this.lastHealth, // E5：随最近一次体检结果更新（未体检 null → 显示「未体检」）
     };
   }
@@ -1347,8 +1359,8 @@ export class UIManager {
     }
   }
 
-  /** 笔记行/详情统一右键抽屉（预览/还原/删除） */
-  private attachNoteDrawer(el: HTMLElement, note: SafeNote, kind: 'note' | 'diary'): void {
+  /** 笔记/日记动作集（行卡抽屉与移动详情页 ⋮ 共用） */
+  private noteDrawerActions(note: SafeNote, kind: 'note' | 'diary'): { actions: ItemAction[]; opts: ItemActionsOptions } {
     const isDiary = kind === 'diary';
     const actions: ItemAction[] = [];
     actions.push({
@@ -1386,7 +1398,13 @@ export class UIManager {
         onClick: () => this.confirmDeleteNote(note),
       });
     }
-    attachItemActions(el, actions, { sheetHead: this.buildSheetHead(note, isDiary) });
+    return { actions, opts: { sheetHead: this.buildSheetHead(note, isDiary) } };
+  }
+
+  /** 笔记行/详情统一右键抽屉（预览/还原/删除） */
+  private attachNoteDrawer(el: HTMLElement, note: SafeNote, kind: 'note' | 'diary'): void {
+    const { actions, opts } = this.noteDrawerActions(note, kind);
+    attachItemActions(el, actions, opts);
   }
 
   private buildSheetHead(note: SafeNote, isDiary = false): HTMLElement {
@@ -1440,6 +1458,8 @@ export class UIManager {
 
   private _pwEditingId: string | null = null;
   private pwDlg: HTMLElement | null = null;
+  /** 密码添加/编辑弹窗的 ESC 层（E7：弹窗可见时 ESC 只关弹窗，不穿透关掉主面板） */
+  private pwDlgEsc: { unregister: () => void } | null = null;
 
   private ensurePwDialog(): HTMLElement {
     if (this.pwDlg && document.body.contains(this.pwDlg)) return this.pwDlg;
@@ -1504,8 +1524,27 @@ export class UIManager {
 
   private openPwDialogOverlay(open: boolean) {
     if (!this.pwDlg) return;
-    if (open) topifyZ(this.pwDlg); // ADR-0067：密码弹窗挂 body，显示即发号保证盖过 vault 面板
+    if (open) {
+      topifyZ(this.pwDlg); // ADR-0067：密码弹窗挂 body，显示即发号保证盖过 vault 面板
+      // E7：注册独立 ESC 层（isVisible = 弹窗 display，close = 关弹窗）——对照 save.ts confirmOverwrite。
+      // 此前 ESC 命中主面板层：安全模式下 hide() 随即上锁清数据，再点保存报「保存失败：未解锁」。
+      if (!this.pwDlgEsc) {
+        this.pwDlgEsc = escManager.register('bz-vault-pw-dlg', {
+          isVisible: () => !!this.pwDlg && this.pwDlg.style.display !== 'none' && document.body.contains(this.pwDlg),
+          close: () => this.openPwDialogOverlay(false),
+        });
+      }
+    } else {
+      this.pwDlgEsc?.unregister();
+      this.pwDlgEsc = null;
+    }
     this.pwDlg.style.display = open ? 'flex' : 'none';
+  }
+
+  /** 卸载辅助：关密码弹窗（注销 ESC 层）并移除 body 上无 id 的弹窗遮罩（G：cleanup 此前不清） */
+  closeAllDialogs(): void {
+    this.openPwDialogOverlay(false);
+    document.querySelectorAll('body > .bz-vault-dlg-mask').forEach((el) => el.remove());
   }
 
   /** 平台信息编辑弹窗（独立自绘） */
@@ -1526,10 +1565,21 @@ export class UIManager {
         <div class="btns"><button class="cancel" data-pf-act="cancel">取消</button><button class="save" data-pf-act="save">保存</button></div>
       </div>`;
     const errEl = mask.querySelector('[data-pf-err]') as HTMLElement;
-    mask.addEventListener('click', (e) => {
-      if (e.target === mask) mask.remove();
+    // E7：注册独立 ESC 层（isVisible = 遮罩在 DOM，close = 关弹窗），弹窗可见时 ESC 不穿透到主面板
+    let escH: { unregister: () => void } | null = null;
+    const closePf = () => {
+      escH?.unregister();
+      escH = null;
+      mask.remove();
+    };
+    escH = escManager.register('bz-vault-pw-platform-edit', {
+      isVisible: () => mask.isConnected,
+      close: closePf,
     });
-    mask.querySelector('[data-pf-act="cancel"]')?.addEventListener('click', () => mask.remove());
+    mask.addEventListener('click', (e) => {
+      if (e.target === mask) closePf();
+    });
+    mask.querySelector('[data-pf-act="cancel"]')?.addEventListener('click', () => closePf());
     mask.querySelector('[data-pf-act="save"]')?.addEventListener('click', async () => {
       const name = (mask.querySelector('[data-pf="platform"]') as HTMLInputElement).value.trim();
       if (!name) {
@@ -1541,7 +1591,7 @@ export class UIManager {
         await this.pwDataManager.updatePlatform(platform, { platform: name, url });
         this.pwState.selPlatform = name;
         this.pwState.selAccount = null;
-        mask.remove();
+        closePf();
         this.renderAll();
         this.toast('平台信息已更新');
       } catch (e: any) {
@@ -1642,7 +1692,8 @@ export class UIManager {
     // E5：上锁后体检结果无意义，复位未体检态
     this.lastHealth = null;
     this.notifyUnlockUi();
-    if (this.config.securityMode) {
+    if (this.config.securityMode || (tryGetSettings() as any)?.securityMode) {
+      // G：与 hide() 同双口径（securityMode 可能只写在旧全局键上——单读 config 会漏上锁）
       this.hide();
     }
   }
@@ -1684,7 +1735,11 @@ export class UIManager {
       ? notes.filter((n) => (n.title || '').toLowerCase().includes(kw.toLowerCase()) || (n.path || '').toLowerCase().includes(kw.toLowerCase()))
       : notes;
     if (!filtered.length) {
-      body.innerHTML = '<div class="bz-pwv-empty"><div class="t">还没有加密笔记</div><div class="d">用「加密当前笔记」把整篇笔记移入保险库</div></div>';
+      // G：日记空态不复用笔记文案（移动端此前恒显「加密当前笔记」引导，日记条目无从入口）
+      body.innerHTML =
+        kind === 'diary'
+          ? '<div class="bz-pwv-empty"><div class="t">还没有加密日记</div><div class="d">日记面板把条目改分类为「加密」后移入这里</div></div>'
+          : '<div class="bz-pwv-empty"><div class="t">还没有加密笔记</div><div class="d">用「加密当前笔记」把整篇笔记移入保险库</div></div>';
       return;
     }
     for (const n of filtered) {
@@ -1722,11 +1777,10 @@ export class UIManager {
     bind('destroy-diary', () => this.confirmDestroyDiary(note));
     page.querySelector('[data-mob-back]')?.addEventListener('click', () => page.remove());
     page.querySelector('[data-mob-menu]')?.addEventListener('click', () => {
-      // 右键抽屉逻辑复用行抽屉
-      const tmp = document.createElement('div');
-      this.attachNoteDrawer(tmp, note, kind);
-      tmp.click();
-      tmp.remove();
+      // 移动端详情 ⋮：直接开底部抽屉（E6：旧实现 tmp.click() 触发不了 contextmenu/长按手势，
+      // 移动端预览/还原/删除/编辑全入口丢失）
+      const { actions, opts } = this.noteDrawerActions(note, kind);
+      openItemSheet(actions, opts);
     });
     this.mob.body.appendChild(page);
     // 渲染日记正文预览
@@ -1744,6 +1798,8 @@ export class UIManager {
     page.innerHTML = `<div class="head"><button class="back" data-mob-back>${vIc('chevron-left', 16)}</button><div class="t">${escapeHtml(p.platform)}</div><button class="ic" data-mob-menu>${vIc('more-h', 16)}</button></div><div class="body"></div>`;
     this.pwView.renderMobPlatformPage(page.querySelector('.body') as HTMLElement, p, this.pwState);
     page.querySelector('[data-mob-back]')?.addEventListener('click', () => page.remove());
+    // E6：平台详情页 ⋮ 此前未绑事件（点击无反应）——移动端直接开底部抽屉
+    page.querySelector('[data-mob-menu]')?.addEventListener('click', () => this.pwView.openPlatformSheet(p.platform));
     this.mob.body.appendChild(page);
   }
 
@@ -1755,6 +1811,8 @@ export class UIManager {
     // 单账号详情（搜索态复用平台页单卡逻辑——直接构账号卡）
     this.pwView.renderDeskDetail(body, { ...st, selPlatform: d.platform, selAccount: d.id });
     page.querySelector('[data-mob-back]')?.addEventListener('click', () => page.remove());
+    // E6：账号详情页 ⋮ 此前未绑事件——移动端直接开底部抽屉
+    page.querySelector('[data-mob-menu]')?.addEventListener('click', () => this.pwView.openAccountSheet(d));
     this.mob.body.appendChild(page);
   }
 
@@ -2333,6 +2391,10 @@ export class EncryptAppController {
       const el = document.getElementById(id);
       if (el) el.remove();
     }
+    // G：密码弹窗（含平台编辑遮罩，无 id 挂 body）、剪贴板自动清空计时器、密码资产域事件订阅
+    this.uiManager.closeAllDialogs();
+    cancelClipboardClear();
+    this.uiManager.pwDataManager.destroy();
     this.uiManager.mask = null;
     this.uiManager.popup = null;
     this.uiManager.previewMask = null;

@@ -3,7 +3,8 @@
  * 检测 news.json 存在性、读/写 sources 开关与 bilibiliUps 名单、最近抓取时间。
  * 纯数据层（无 DOM），供 src/clipbook/news-sources-group.ts 设置组调用。
  */
-import { readNewsData, writeNewsData, NEWS_JSON_PATH, DEFAULT_SOURCES, type BilibiliUpInfo } from './news-data';
+import { readNewsData, writeNewsDataMerged, NEWS_JSON_PATH, DEFAULT_SOURCES, type BilibiliUpInfo } from './news-data';
+import { enqueueNewsWrite } from './write-queue';
 
 export interface DataSourceState {
   /** news.json 是否存在（news-watcher 库存在的检测信号） */
@@ -46,62 +47,58 @@ export async function readDataSourceState(): Promise<DataSourceState> {
   };
 }
 
-/** 写 sources 开关（读盘 → 替换 sources 段 → 写回，保留其它段）；文件缺失时先落默认骨架 */
+/** 写 sources 开关（串行队列 + 段级合并：只声明 sources 段，其余段取磁盘现值）；缺失时合并写落默认骨架 */
 export async function writeSources(sources: { zhihu: boolean; guokr: boolean; bilibili: boolean }): Promise<void> {
-  const res = await readNewsData();
-  if (res.missing) {
-    await writeNewsData({ articles: [], stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...sources } });
-    return;
-  }
-  if (!res.ok) return;
-  await writeNewsData({ ...res.data, sources: { ...sources } });
+  await enqueueNewsWrite(async () => {
+    const res = await readNewsData();
+    if (!res.ok) return;
+    await writeNewsDataMerged({ set: { sources: { ...sources } } });
+  });
 }
 
-/** 添加 UP 主 uid（去重；同时保留其它段） */
+/** 添加 UP 主 uid（去重；串行队列 + 段级合并只声明 bilibiliUps 段） */
 export async function addBilibiliUp(uid: string): Promise<boolean> {
   const id = String(uid || '').trim();
   if (!id) return false;
-  const res = await readNewsData();
-  if (res.missing) {
-    await writeNewsData({ articles: [], stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }, bilibiliUps: [id], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES } });
+  return enqueueNewsWrite(async () => {
+    const res = await readNewsData();
+    if (!res.ok) return false;
+    if (res.data.bilibiliUps.includes(id)) return false; // 已存在
+    await writeNewsDataMerged({ set: { bilibiliUps: [...res.data.bilibiliUps, id] } });
     return true;
-  }
-  if (!res.ok) return false;
-  if (res.data.bilibiliUps.includes(id)) return false; // 已存在
-  await writeNewsData({ ...res.data, bilibiliUps: [...res.data.bilibiliUps, id] });
-  return true;
+  });
 }
 
-/** 写 B 站每 UP 抓取条数（ticket 127；默认 10，夹取 1..50，非法回退 10；保留其它段） */
+/** 写 B 站每 UP 抓取条数（ticket 127；默认 10，夹取 1..50，非法回退 10；串行队列 + 段级合并） */
 export async function writeBilibiliMaxItems(v: string | number): Promise<void> {
   const n = Math.floor(Number(v));
   const maxItems = Number.isFinite(n) && n >= 1 ? Math.min(n, 50) : 10;
-  const res = await readNewsData();
-  if (res.missing) {
-    await writeNewsData({ articles: [], stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: maxItems, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES } });
-    return;
-  }
-  if (!res.ok) return;
-  await writeNewsData({ ...res.data, bilibiliMaxItems: maxItems });
+  await enqueueNewsWrite(async () => {
+    const res = await readNewsData();
+    if (!res.ok) return;
+    await writeNewsDataMerged({ set: { bilibiliMaxItems: maxItems } });
+  });
 }
 
-/** 写 B 站 Cookie（ticket 127；空串=清除，回到自动引导；保留其它段） */
+/** 写 B 站 Cookie（ticket 127；空串=清除，回到自动引导；串行队列 + 段级合并） */
 export async function writeBilibiliCookie(cookie: string): Promise<void> {
   const c = String(cookie || '').trim();
-  const res = await readNewsData();
-  if (res.missing) {
-    await writeNewsData({ articles: [], stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: c, sources: { ...DEFAULT_SOURCES } });
-    return;
-  }
-  if (!res.ok) return;
-  await writeNewsData({ ...res.data, bilibiliCookie: c });
+  await enqueueNewsWrite(async () => {
+    const res = await readNewsData();
+    if (!res.ok) return;
+    await writeNewsDataMerged({ set: { bilibiliCookie: c } });
+  });
 }
 
-/** 删除 UP 主 uid（连同其资料条目，保留其它段） */
+/** 删除 UP 主 uid（连同其资料条目；串行队列 + 段级合并声明 bilibiliUps/bilibiliUpInfo 两段） */
 export async function removeBilibiliUp(uid: string): Promise<void> {
-  const res = await readNewsData();
-  if (!res.ok || res.missing) return;
-  const info = { ...res.data.bilibiliUpInfo };
-  delete info[uid];
-  await writeNewsData({ ...res.data, bilibiliUps: res.data.bilibiliUps.filter((u) => u !== uid), bilibiliUpInfo: info });
+  await enqueueNewsWrite(async () => {
+    const res = await readNewsData();
+    if (!res.ok || res.missing) return;
+    const info = { ...res.data.bilibiliUpInfo };
+    delete info[uid];
+    await writeNewsDataMerged({
+      set: { bilibiliUps: res.data.bilibiliUps.filter((u) => u !== uid), bilibiliUpInfo: info },
+    });
+  });
 }
