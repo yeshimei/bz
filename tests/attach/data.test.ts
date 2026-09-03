@@ -51,6 +51,31 @@ describe('resolveTarget', () => {
     expect(resolveTarget(files, 'https://x/y.png', 'any.md', 'md')).toBeNull();
     expect(resolveTarget(files, 'noexist.png', 'any.md', 'wiki')).toBeNull();
   });
+
+  it('md 链接百分号编码解码后再解析（P2 审查修复：含空格文件名 %20）', () => {
+    const spaced = ['notes/My Image.png', 'notes/章.md'];
+    expect(resolveTarget(spaced, 'My%20Image.png', 'notes/章.md', 'md')).toBe('notes/My Image.png');
+    // 相对形式同样先解码
+    expect(resolveTarget(spaced, './My%20Image.png', 'notes/章.md', 'md')).toBe('notes/My Image.png');
+    // 带子目录的编码串
+    expect(resolveTarget(['a/视频 2024.mp4'], 'a/%E8%A7%86%E9%A2%91%202024.mp4', 'any.md', 'md')).toBe(
+      'a/视频 2024.mp4'
+    );
+  });
+
+  it('wiki 链接不解码（无百分号编码语义）；解码后无命中回退原串', () => {
+    const literal = ['a/My%20Image.png'];
+    // wiki：原样解析字面 % 文件名
+    expect(resolveTarget(literal, 'My%20Image.png', 'any.md', 'wiki')).toBe('a/My%20Image.png');
+    // md：解码后无命中（库里是字面 % 文件名）→ 回退原串命中
+    expect(resolveTarget(literal, 'My%20Image.png', 'any.md', 'md')).toBe('a/My%20Image.png');
+  });
+
+  it('非法编码序列（裸 %）不抛错，按原串解析', () => {
+    const bare = ['a/100%.png'];
+    expect(resolveTarget(bare, '100%.png', 'any.md', 'md')).toBe('a/100%.png');
+    expect(resolveTarget([], '100%.png', 'any.md', 'md')).toBeNull();
+  });
 });
 
 describe('collectResources', () => {
