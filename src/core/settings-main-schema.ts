@@ -236,8 +236,8 @@ function aiGroupRows(): SettingsRow[] {
   return rows;
 }
 
-/** 构造主设置页 schema（每次 display 重建；visibleWhen 在渲染器内随变更重求值） */
-export function mainSettingsSchema(): SettingsSchema {
+/** AI 设置组（issue 186：设置面板拆独立域；⚙️ 主设置页与本域共用同一组定义） */
+export function aiSettingsSchema(): SettingsSchema {
   return {
     groups: [
       {
@@ -245,6 +245,14 @@ export function mainSettingsSchema(): SettingsSchema {
         name: 'AI',
         rows: aiGroupRows(),
       },
+    ],
+  };
+}
+
+/** 通用设置组（原「全局」数据存储路径区块；issue 186 拆出 AI 后的剩余全局项） */
+export function generalSettingsSchema(): SettingsSchema {
+  return {
+    groups: [
       {
         icon: 'folder-open',
         name: '数据存储路径',
@@ -262,5 +270,12 @@ export function mainSettingsSchema(): SettingsSchema {
         ],
       },
     ],
+  };
+}
+
+/** 构造主设置页 schema（⚙️ 原生设置页两区块 = AI + 数据存储路径；每次 display 重建，visibleWhen 在渲染器内重求值） */
+export function mainSettingsSchema(): SettingsSchema {
+  return {
+    groups: [...aiSettingsSchema().groups, ...generalSettingsSchema().groups],
   };
 }

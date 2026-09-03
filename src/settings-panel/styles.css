@@ -107,9 +107,9 @@
   padding: var(--bz-space-lg) var(--bz-space-xl) var(--bz-space-xl);
 }
 
-/* ---- 设置分组卡（卡片抬升一档；下拉菜单溢出时组卡提层） ---- */
+/* ---- 设置分组卡（浅灰区块，用户拍板：不再用抬升白卡；下拉菜单溢出时组卡提层） ---- */
 .bz-sp-group {
-  background: var(--bz-surface-2);
+  background: var(--bz-surface-0);
   border: none;
   box-shadow: none;
   border-radius: 10px;
@@ -163,10 +163,7 @@
   border-radius: var(--bz-radius-sm);
 }
 .bz-sp-set-row:hover { background: var(--bz-surface-hover); }
-/* custom 行内嵌原生 Setting（模型行等，样式见下方作用域重绘）：hover 背景由内层
-   .setting-item:hover 上色——外层再上色会叠出双背景（自绘行 hover + 原生行 hover 同色叠加） */
-.bz-sp-set-row:has(.bz-sp-custom-slot .setting-item):hover { background: transparent; }
-.bz-sp-set-row.child { padding-left: 26px; }
+/* isChild 行不缩进（用户拍板 issue 186：子集关系由显隐联动表达，全部行左缘对齐） */
 .bz-sp-set-info { flex: 1; min-width: 0; }
 .bz-sp-set-name { font-size: var(--bz-font-body); font-weight: 500; color: var(--bz-text-1); line-height: 1.4; }
 .bz-sp-set-desc { font-size: var(--bz-font-meta); color: var(--bz-text-2); margin-top: 2px; line-height: 1.45; }
@@ -213,22 +210,24 @@
 }
 
 /* ---- custom 插槽作用域重绘：面板内 new Setting() 的原生行/控件统一换成组件库观感 ----
-   各域 schema 的 custom 行（如第二大脑远程 URL、番茄钟提示音音量、剪藏数据源组、小橘外观）内部
+   各域 schema 的 custom 行（如 AI 模型行、第二大脑远程 URL、番茄钟提示音音量、小橘外观）内部
    仍用 Obsidian Setting 组件构建。在设置面板作用域内把它们重绘为与自绘行一致的外观（tokens 取值），
-   保证面板内视觉统一；面板外（⚙️ 弹窗）不受影响。 */
+   保证面板内视觉统一；面板外（⚙️ 弹窗）不受影响。
+   横向 padding 归 0（用户拍板 issue 186：外层自绘行已有 10px 左右内距，内层再各缩 10px
+   会双重缩进——模型名称等 custom 行左缘必须与其他行对齐）；hover 统一由外层行上色。 */
 #bz-settings-panel-popup .setting-item,
 .bz-sp-mob-modal .setting-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--bz-space-md);
-  padding: 9px 10px;
+  padding: 9px 0;
   border-radius: var(--bz-radius-sm);
   border: none;
   background: transparent;
 }
 #bz-settings-panel-popup .setting-item:hover,
-.bz-sp-mob-modal .setting-item:hover { background: var(--bz-surface-hover); }
+.bz-sp-mob-modal .setting-item:hover { background: transparent; }
 #bz-settings-panel-popup .setting-item-info,
 .bz-sp-mob-modal .setting-item-info {
   flex: 1;

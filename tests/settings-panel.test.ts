@@ -75,52 +75,69 @@ describe('设置面板（settings-panel）', () => {
     expect(head.querySelectorAll('.bz-sp-head-tools *').length).toBe(0);
     expect(popup.querySelector('.bz-sp-brand-name')).toBeNull();
     expect(popup.querySelector('.bz-sp-logo')).toBeNull();
-    // 无设置项的域不在左侧列表显示（用户拍板）：21 域中 8 个无 schema（聚合讯/阅读报告/做题家/
-    // 自动摘要/入口页/附件搬移/B站下载/小橘陪伴猫）→ 可见 16 个（密码本已并入保险库 ADR-0085）
-    expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBe(15); // ADR-0085 密码本并入保险库；ADR-0087 影视并入影院
+    // 无设置项的域不在左侧列表显示（用户拍板）；issue 186 AI 自全局拆出独立成域（通用 + AI 两项）
+    expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBe(16);
     // 无底部快捷键提示 / 无右侧导航条 / 无面包屑
     expect(popup.querySelector('.bz-sp-foot')).toBeNull();
     expect(popup.querySelector('.bz-sp-crumb')).toBeNull();
-    // 徽标动态计算：加载前 ·；无设置域 —；schema 加载后 = 可见组数
+    // 徽标动态计算：加载前 ·；无设置域 —；schema 加载后 = 设置项总数（非分组数，issue 186）
     let badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
-    // 等全局 schema 加载完成（含 AI/数据存储路径两分组）→ 全局徽标回填可见组数 2
+    // 等 schema 加载完成（动态 import 首次加载较慢，轮询到首个徽标回填）
     const deadline = Date.now() + 3000;
-    while (Date.now() < deadline && (badges[0] === '·' || badges[3] === '·')) {
+    while (Date.now() < deadline && (badges[0] === '·' || badges[4] === '·')) {
       await new Promise((r) => setTimeout(r, 30));
       badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
     }
-    expect(badges[0]).toBe('2'); // 全局：AI + 数据存储路径（桌面端移动端组不存在）
-    expect(badges[3]).toBe('4'); // 待办（todo 新域，插入备忘录后 index 3：桌面可见 4 组）
-    expect(badges[4]).toBe('·'); // 归物本（schema 加载后桌面端无可见组）
+    expect(badges[0]).toBe('1'); // 通用：数据存储路径 1 项
+    expect(badges[1]).toBe('4'); // AI：服务商 + 模型名称 + 上下文窗口 + 最大输出（aiProvider 未设 → 各家密钥行门控隐藏）
+    expect(badges[4]).toBe('9'); // 待办（index 4，AI 插入后）：4 组 9 项
+    expect(badges[5]).toBe('·'); // 归物本（schema 仅移动端组，桌面门控全隐藏 → 0 项）
     // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）
     const navIcons = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-ic')];
-    expect(navIcons.length).toBe(15);
-    expect(navIcons[0].getAttribute('data-icon')).toBe('settings'); // 全局
-    expect(navIcons[3].getAttribute('data-icon')).toBe('check-square'); // 待办（todo，过滤后 index 3）
-    expect(navIcons[6].getAttribute('data-icon')).toBe('star'); // 收藏本（密码本域已并入保险库 ADR-0085）
+    expect(navIcons.length).toBe(16);
+    expect(navIcons[0].getAttribute('data-icon')).toBe('settings'); // 通用
+    expect(navIcons[1].getAttribute('data-icon')).toBe('sparkles'); // AI（issue 186 独立域）
+    expect(navIcons[4].getAttribute('data-icon')).toBe('check-square'); // 待办（index 4，AI 插入后）
+    expect(navIcons[7].getAttribute('data-icon')).toBe('star'); // 收藏本
     // 无 emoji 图标残留（头行/列表/徽标全文本或 lucide）
     expect(popup.textContent).not.toMatch(EMOJI_RE);
     ui.cleanup();
   });
 
-  it('桌面端：全局域内嵌渲染 AI 服务商设置（renderPanelSchema 真实渲染）', async () => {
+  it('桌面端：默认渲染通用域（数据存储路径），点 AI 域渲染 AI 服务商设置', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     await tick();
-    // 全局 schema = mainSettingsSchema（AI + 数据存储路径两区块）
-    const groups = popup.querySelectorAll('.bz-sp-group');
-    expect(groups.length).toBeGreaterThanOrEqual(2);
-    // 设置行真实渲染（自绘结构）
+    // 默认域 = 通用（issue 186：AI 拆出后全局改称通用，仅剩数据存储路径一组）
+    let groups = popup.querySelectorAll('.bz-sp-group');
+    expect(groups.length).toBe(1);
+    expect(groups[0].querySelector('.bz-sp-group-name')!.textContent).toBe('数据存储路径');
+    // 点 AI 域 → 内嵌渲染 AI 组（服务商 select 等）
+    const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
+      (el) => el.textContent?.includes('AI')
+    ) as HTMLElement;
+    expect(aiItem).toBeTruthy();
+    aiItem.click();
+    await waitGroups(popup, 1);
+    groups = popup.querySelectorAll('.bz-sp-group');
+    expect(groups.length).toBe(1);
+    expect(groups[0].querySelector('.bz-sp-group-name')!.textContent).toBe('AI');
     expect(popup.querySelectorAll('.bz-sp-set-row').length).toBeGreaterThan(0);
     ui.cleanup();
   });
 
-  it('桌面端：per-provider 上下文窗口/最大输出 token 渲染为组件库 number 输入（无原生 Setting 嵌套）', async () => {
+  it('桌面端：AI 域 per-provider 上下文窗口/最大输出 token 渲染为组件库 number 输入（无原生 Setting 嵌套）', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     await tick();
+    // 切到 AI 域（issue 186 AI 独立成域）
+    const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
+      (el) => el.textContent?.includes('AI')
+    ) as HTMLElement;
+    aiItem.click();
+    await waitGroups(popup, 1);
     // 找「上下文窗口」行：自绘行 .bz-sp-set-name 文本匹配
     const rows = [...popup.querySelectorAll<HTMLElement>('.bz-sp-set-row')];
     const ctxRow = rows.find((r) => r.querySelector('.bz-sp-set-name')?.textContent === '上下文窗口');
@@ -142,6 +159,12 @@ describe('设置面板（settings-panel）', () => {
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     await tick();
+    // 切到 AI 域（issue 186 AI 独立成域）
+    const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
+      (el) => el.textContent?.includes('AI')
+    ) as HTMLElement;
+    aiItem.click();
+    await waitGroups(popup, 1);
     const ctxInput = () => {
       const rows = [...popup.querySelectorAll<HTMLElement>('.bz-sp-set-row')];
       const row = rows.find((r) => r.querySelector('.bz-sp-set-name')?.textContent === '上下文窗口')!;
@@ -167,11 +190,17 @@ describe('设置面板（settings-panel）', () => {
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     await tick();
-    // 全局域分组：AI（sparkles）+ 数据存储路径（folder-open）
-    const icons = [...popup.querySelectorAll('.bz-sp-group-icon')].map((i) => i.getAttribute('data-icon'));
-    expect(icons.length).toBeGreaterThanOrEqual(2);
-    expect(icons).toContain('sparkles');
-    expect(icons).toContain('folder-open');
+    // 通用域分组：数据存储路径（folder-open）
+    let icons = [...popup.querySelectorAll('.bz-sp-group-icon')].map((i) => i.getAttribute('data-icon'));
+    expect(icons).toEqual(['folder-open']);
+    // AI 域分组：AI（sparkles）
+    const aiItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
+      (el) => el.textContent?.includes('AI')
+    ) as HTMLElement;
+    aiItem.click();
+    await waitGroups(popup, 1);
+    icons = [...popup.querySelectorAll('.bz-sp-group-icon')].map((i) => i.getAttribute('data-icon'));
+    expect(icons).toEqual(['sparkles']);
     ui.cleanup();
   });
 
@@ -283,8 +312,12 @@ describe('设置面板（settings-panel）', () => {
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     await tick();
-    // 切到日记本（index 1，「目录」组有日记目录/影视目录/信件目录 path 行）
-    (popup.querySelectorAll('.bz-sp-nav-item')[1] as HTMLElement).click();
+    // 切到日记本（「目录」组有日记目录/影视目录/信件目录 path 行；按文本定位）
+    const diaryItem = Array.from(popup.querySelectorAll('.bz-sp-nav-item')).find(
+      (el) => el.textContent?.includes('日记本')
+    ) as HTMLElement;
+    expect(diaryItem).toBeTruthy();
+    diaryItem.click();
     await waitGroups(popup, 3);
     // 面板内不得出现 Obsidian 原生设置行
     // 「日记目录」行 = 自绘 .bz-sp-set-row + .bz-sp-chips（空态 = 选择按钮）
@@ -342,7 +375,8 @@ describe('设置面板（settings-panel）', () => {
     const popup = document.getElementById('bz-settings-panel-popup')!;
     // 只看域名（nav-name），避免描述包含（如剪藏本「网页剪藏与聚合讯」）误判
     const names = [...popup.querySelectorAll('.bz-sp-nav-name')].map((b) => b.textContent);
-    expect(names).toHaveLength(15); // ADR-0085 密码本并入保险库；ADR-0087 影视并入影院
+    expect(names).toHaveLength(16); // issue 186：AI 自全局拆出独立成域
+    expect(names.slice(0, 2)).toEqual(['通用', 'AI']); // AI 紧随通用之后
     // 8 个无设置域（聚合讯/阅读报告/做题家/自动摘要/入口页/附件搬移/B站下载/小橘陪伴猫）一律不出现
     for (const n of ['聚合讯', '阅读报告', '做题家', '自动摘要', '入口页', '附件搬移', 'B站下载', '小橘陪伴猫']) {
       expect(names).not.toContain(n);
@@ -367,7 +401,8 @@ describe('设置面板（settings-panel）', () => {
     const popup = document.getElementById('bz-settings-panel-popup')!;
     // 只看域名（mob-name），避免描述包含误判
     const names = [...popup.querySelectorAll('.bz-sp-mob-name')].map((b) => b.textContent);
-    expect(names).toHaveLength(15); // ADR-0085 密码本并入保险库；ADR-0087 影视并入影院
+    expect(names).toHaveLength(16); // issue 186：AI 自全局拆出独立成域
+    expect(names.slice(0, 2)).toEqual(['通用', 'AI']);
     expect(names).not.toContain('聚合讯');
     expect(names).not.toContain('小橘陪伴猫');
     // 搜索也搜不到该无设置域
@@ -383,19 +418,19 @@ describe('设置面板（settings-panel）', () => {
     ui.cleanup();
   });
 
-  it('桌面端：域切换后侧栏徽标回填（组数）', async () => {
+  it('桌面端：域切换后侧栏徽标回填（设置项总数）', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     await tick();
-    // 番茄钟有 2 组（时间方案/行为）——加载后徽标回填（按文本定位，勿用硬索引）
+    // 番茄钟 2 组 12 项，其中 3 个自定义时长项受 pomodoroPreset 门控（未设 → 隐藏）→ 可见 9 项
     const items = popup.querySelectorAll('.bz-sp-nav-item');
     const pomoItem = Array.from(items).find((el) => el.textContent?.includes('番茄钟')) as HTMLElement;
     expect(pomoItem).toBeTruthy();
     pomoItem.click();
     await waitGroups(popup, 2);
     const badge = pomoItem.querySelector('.bz-sp-nav-count')!;
-    expect(badge.textContent).toBe('2');
+    expect(badge.textContent).toBe('9');
     ui.cleanup();
   });
 
@@ -413,8 +448,8 @@ describe('设置面板（settings-panel）', () => {
     expect(closeBtn).toBeTruthy();
     expect(closeBtn.querySelector('.bz-ic[data-icon="x"]')).toBeTruthy();
     expect(popup.textContent).not.toMatch(EMOJI_RE);
-    // 无设置项的域不在列表显示（用户拍板）：22 域 → 可见 15 个（+影院 cinema +书架墙 bookshelf）
-    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(15); // ADR-0085 密码本并入保险库；ADR-0087 影视并入影院
+    // 无设置项的域不在列表显示（用户拍板）；issue 186 AI 独立成域 → 16 个可见域
+    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(16);
     // 移动列表图标为 lucide（tile 内 svg 容器）
     const firstIc = popup.querySelector('.bz-sp-mob-item .bz-sp-mob-ic .bz-ic');
     expect(firstIc).toBeTruthy();
@@ -474,10 +509,9 @@ describe('设置面板（settings-panel）', () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
-    // 先加载全局域 schema（行缓存填充；全局 schema 含「AI 服务商」「DeepSeek 密钥」等）
+    // 先点开 AI 域（index 1）填充其行缓存（弹窗内出现分组为加载完成标志）
     const items = popup.querySelectorAll('.bz-sp-mob-item');
-    (items[0] as HTMLElement).click(); // 全局
-    // 等 schema 加载完成（动态 import 可能 >20ms；以弹窗内出现分组为完成标志）
+    (items[1] as HTMLElement).click(); // AI（issue 186 独立域）
     const deadline = Date.now() + 2000;
     while (Date.now() < deadline) {
       if (document.querySelector('.bz-sp-mob-modal .bz-sp-group')) break;
@@ -487,7 +521,7 @@ describe('设置面板（settings-panel）', () => {
     const modal = document.querySelector('.bz-sp-mob-modal');
     const modalMask = modal ? modal.previousElementSibling as HTMLElement : null;
     if (modalMask) modalMask.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    // 搜「AI」→ 域段（全局）+ 设置项段
+    // 搜「AI」→ 域段（AI）+ 设置项段
     const search = popup.querySelector('.bz-sp-mob-search .bz-input') as HTMLInputElement;
     search.value = 'AI';
     search.dispatchEvent(new Event('input', { bubbles: true }));

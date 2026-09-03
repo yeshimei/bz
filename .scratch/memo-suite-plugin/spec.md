@@ -868,3 +868,13 @@ ai-agent 域（ticket 19）解散（域数 21→20），三类跨域自动化按
 - **去掉类型/状态彩色圆**：`choiceGroupHtml` 调用不再传 `dots`（删 tagDots 定义；状态 STATUS_COLORS 仍被左栏导航圆点使用，保留）。
 - **AI 荐片机器人图标**：`.bz-cinema-ai-guide-ic` 改为 `display:inline-flex; align-items:center; justify-content:center` + 36px，使宽高真正生效（原 span inline 时 36px 无效、svg 100% 撑满父宽铺满页面）。
 - **测试**：tests/cinema/ui.test.ts 同步——字段 6→5 + 无 date 输入断言、类型/状态无彩色圆、选「想看」隐藏评分影评、新增落盘观影日期=当前日期、想看不保存影评。无 ADR（纯 UI 反馈，不改数据语义）。
+
+### 设置面板打磨：AI 独立域 + 徽标口径 + 浅灰分组卡 + 行对齐（ticket 186，ADR 无）
+
+> 用户诉：「设置面板，把 ai 独立出来放到全局的下面，把全局改成通用；列表后面的数字改成设置项的总数而不是分组的总数；右边的分组背景色改成浅灰色；剪藏本智能分组下面的自动摘要不需要左边距，全局的模型名称也有一个左边距也靠齐，其他设置页面都检查，边距都靠齐。」
+
+- **AI 独立成域**：settings-main-schema.ts 拆 `aiSettingsSchema()`/`generalSettingsSchema()`（mainSettingsSchema 重组为两者拼接，⚙️ 原生设置页两区块零变化）；settings-panel DOMAINS 插 `ai` 域（sparkles）于「通用」（原「全局」改名，desc「存储路径等跨域基础偏好」）之后。
+- **徽标口径 = 设置项总数**：新增 `visibleItemCount(schema)`（组级/行级 visibleWhen 求值过滤、异常保守视为可见、button 操作行不计与组卡徽标同口径）；preloadAllBadges/renderDomain/openMobileDomain 统一改此口径，不再数分组。
+- **分组卡浅灰**：`.bz-sp-group` 背景 `--bz-surface-2`（亮色白）→ `--bz-surface-0`（亮色 #f2f2f4，暗色更深区块）。
+- **全部行左缘对齐**：删 `.bz-sp-set-row.child` 26px 缩进（isChild 仅显隐联动，child 类保留为语义标记）；custom 插槽内 `.setting-item` 横向 padding 归 0（`9px 10px`→`9px 0`，消外层行+内层原生行双重 10px 缩进），hover 改透明统一由外层自绘行上色（矩形恢复满行宽）。
+- **测试**：settings-panel.test.ts 徽标口径（通用 1/AI 4/待办 9/归物本 ·）、nav 16 项与索引移位、默认域=通用、AI 域用例先切域、移动端设置项搜索点 AI 域。无 ADR（设置面板信息架构与视觉打磨，数据契约零变化）。
