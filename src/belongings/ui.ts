@@ -267,12 +267,24 @@ let autoRefreshOff: (() => void) | null = null;
 let selfWritePending = false;
 /** 主题变化监听（模块级持有，卸载时断开） */
 let bodyThemeObserver: MutationObserver | null = null;
+/** 打开中互斥（loadDatabase await 窗口内重入直接忽略，杜绝双触发双遮罩——僵尸遮罩只能重载） */
+let opening = false;
 
 export async function openPanel(): Promise<void> {
   if (M.overlay) {
     closePanel();
     return;
   }
+  if (opening) return;
+  opening = true;
+  try {
+    await openPanelInner();
+  } finally {
+    opening = false;
+  }
+}
+
+async function openPanelInner(): Promise<void> {
   M.db = await loadDatabase();
   const overlay = document.createElement('div');
   overlay.className = 'bz-bel-overlay';
