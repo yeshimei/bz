@@ -575,6 +575,14 @@ export function createOverlay(app: App): void {
   }
   bindSearch(overlay.querySelector('#bz-bs-dsearch') as HTMLInputElement);
   bindSearch(overlay.querySelector('#bz-bs-msearch') as HTMLInputElement);
+  // 重开残留回写：M.searchKeyword 只在插件卸载时清空，重挂面板把它回填输入框，
+  // 避免「网格被不可见关键字过滤但输入框为空」的排查黑洞
+  if (M.searchKeyword) {
+    for (const id of ['bz-bs-dsearch', 'bz-bs-msearch']) {
+      const input = overlay.querySelector(`#${id}`) as HTMLInputElement | null;
+      if (input) input.value = M.searchKeyword;
+    }
+  }
 
   mountIcons(overlay);
   // B8：首扫加载态——rebuild 完成前 shelves 显示占位，防异步读 weave-data 时空白闪烁

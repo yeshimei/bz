@@ -112,6 +112,24 @@ describe('bookshelf overlay', () => {
     closeOverlay();
   });
 
+  it('面板重开：搜索关键字回写两个输入框（过滤状态可见，不再空输入框静默过滤）', async () => {
+    const { vault, app } = seedVault();
+    await openPanel(vault, app);
+    const input = document.querySelector('#bz-bs-dsearch') as HTMLInputElement;
+    input.value = '钱钟书';
+    input.dispatchEvent(new Event('input'));
+    await new Promise((r) => setTimeout(r, 250));
+    closeOverlay();
+    // 重开：M.searchKeyword 残留，输入框必须回显同样的关键字
+    createOverlay(app);
+    await new Promise((r) => setTimeout(r, 20));
+    const overlay2 = document.querySelector('.bz-bs-overlay') as HTMLElement;
+    expect((overlay2.querySelector('#bz-bs-dsearch') as HTMLInputElement).value).toBe('钱钟书');
+    expect((overlay2.querySelector('#bz-bs-msearch') as HTMLInputElement).value).toBe('钱钟书');
+    expect(gridCards(overlay2).length).toBe(1); // 过滤仍生效且与输入框一致
+    closeOverlay();
+  });
+
   it('详情：打开书籍详情弹窗，改状态已读 → 保存 → 统计/计数联动 + frontmatter 落盘', async () => {
     const { vault, app } = seedVault();
     await openPanel(vault, app);
