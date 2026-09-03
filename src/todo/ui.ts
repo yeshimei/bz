@@ -38,6 +38,10 @@ import { M } from './state';
 
 /** 待办主面板尺寸（ADR-0084：默认/最小/硬上限；实际上限另受视口 92% 约束） */
 const PANEL = { DEF_W: 720, DEF_H: 580, MIN_W: 720, MIN_H: 520, MAX_W: 1280, MAX_H: 880 };
+/** 搜索防抖（180ms，favorites/belongings 同值） */
+const SEARCH_DEBOUNCE_MS = 180;
+/** 搜索防抖计时（打开期间有效，面板关闭清理） */
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 // ---------- 小工具 ----------
 
@@ -241,6 +245,11 @@ export function openTodoPanel(app: App): void {
   }
   TodoData.init(tryGetSettings() as any);
   const fullscreen = (tryGetSettings() as any).todoMobileDefaultFullscreen === true;
+  // 设置播种（P2）：「默认排序方式」（与 memo 共用 memoSortMode 键）与「默认显示归档」
+  // 在面板打开时初始化——此前恒「紧急优先」+ 折叠，两项设置对 todo 面板不生效
+  const sortSetting = (tryGetSettings() as any).memoSortMode;
+  M.sortMode = sortSetting === 'priority' || sortSetting === 'due' || sortSetting === 'created' ? sortSetting : 'priority';
+  M.showDone = (tryGetSettings() as any).memoShowArchivedByDefault === true;
 
   const overlay = document.createElement('div');
   overlay.className = 'bz-todo-overlay';
@@ -283,10 +292,14 @@ export function openTodoPanel(app: App): void {
   M.renderFn = () => renderAll();
 
   const panelEl = overlay.querySelector('.bz-todo-panel') as HTMLElement;
-  // 桌面尺寸记忆（ADR-0084）：flex 居中容器内改宽高即双向对称扩缩，越界值回落默认
-  const saved = savedPanelSize();
-  panelEl.style.width = `${saved.w}px`;
-  panelEl.style.height = `${saved.h}px`;
+  // 桌面尺寸记忆（ADR-0084）：flex 居中容器内改宽高即双向对称扩缩，越界值回落默认。
+  // 仅桌面写内联宽高——内联样式优先级高于移动端媒体查询的满屏规则，写了会把移动端
+  // 面板压成视口 92% 小卡（移动端尺寸交给 CSS）
+  if (!isMobileEnv()) {
+    const saved = savedPanelSize();
+    panelEl.style.width = `${saved.w}px`;
+    panelEl.style.height = `${saved.h}px`;
+  }
   applyMobileWindowFullscreen(panelEl, fullscreen);
   mountIcons(overlay);
 
@@ -387,11 +400,15 @@ export function openTodoPanel(app: App): void {
     if (e.key === 'Enter') addFromComposer();
   });
 
-  // 搜索（防抖 250ms）
+  // 搜索（防抖 180ms，对齐 favorites/belongings——修复前每键全量重渲且注释与实现不符）
   const searchInput = overlay.querySelector('[data-todo-search]') as HTMLInputElement;
   searchInput.addEventListener('input', () => {
-    M.search = searchInput.value.trim();
-    renderAll();
+    if (searchDebounceTimer !== null) clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      searchDebounceTimer = null;
+      M.search = searchInput.value.trim();
+      renderAll();
+    }, SEARCH_DEBOUNCE_MS);
   });
 
   void (async () => {
@@ -404,6 +421,11 @@ export function closeTodoPanel(): void {
   if (M.overlay) {
     M.overlay.remove();
     M.overlay = null;
+  }
+  // 防抖窗口内关闭面板：清计时器防孤儿回调
+  if (searchDebounceTimer !== null) {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = null;
   }
   // 卸载拖动缩放（detach 幂等；无会话内 handler 残留）
   if (panelResizeDetach) {
@@ -986,7 +1008,7 @@ export function openEditor(item: TodoItem | null): void {
   // 建议（从已有条目收集脚本名/课程名 + 公开课笔记）
   const knownScripts = [...new Set(M.items.map((i) => i.scriptName).filter((n): n is string => !!n))].sort();
   const knownCourses = [...new Set(M.items.map((i) => i.courseName).filter((n): n is string => !!n))].sort();
-  function bindSug(input: HTMLInputElement, sug: HTMLElement, list: () => string[]) {
+  function bindSug(input: HTMLInputElement, sug: HTMLElement, list: () => string[], onPick?: (val: string) => void) {
     const render = () => {
       const v = input.value.trim().toLowerCase();
       const all = list()
@@ -996,16 +1018,27 @@ export function openEditor(item: TodoItem | null): void {
       sug.innerHTML = all.map((s) => `<button class="bz-todo-sug-item" type="button">${esc(s)}</button>`).join('');
       sug.style.display = 'block';
       sug.querySelectorAll('.bz-todo-sug-item').forEach((b) => {
-        b.addEventListener('click', () => { input.value = (b as HTMLElement).textContent || ''; sug.style.display = 'none'; });
+        b.addEventListener('click', () => {
+          input.value = (b as HTMLElement).textContent || '';
+          sug.style.display = 'none';
+          onPick?.(input.value);
+        });
       });
     };
     input.addEventListener('input', render);
     input.addEventListener('focus', render);
     render();
   }
+  // 公开课课程路径（对照 memo：点建议记 path；手改名按名匹配兜底——课程标签跳转依赖 coursePath）
+  let courseNotes: { name: string; path: string }[] = [];
+  let pickedCourse: { name: string; path: string } | null =
+    editing?.courseName && editing.coursePath ? { name: editing.courseName, path: editing.coursePath } : null;
   bindSug(scriptInput, scriptSug, () => knownScripts);
-  bindSug(courseInput, courseSug, () => knownCourses);
+  bindSug(courseInput, courseSug, () => knownCourses, (val) => {
+    pickedCourse = courseNotes.find((n) => n.name === val) || null;
+  });
   void TodoData.getCourseNotes().then((notes) => {
+    courseNotes = notes;
     const extra = notes.map((n) => n.name);
     knownCourses.push(...extra.filter((n) => !knownCourses.includes(n)));
     if (courseBox.classList.contains('bz-todo-extra-on')) courseInput.dispatchEvent(new Event('focus'));
@@ -1105,7 +1138,21 @@ export function openEditor(item: TodoItem | null): void {
     const due = dueVal ? dueVal.replace('T', ' ') : null;
     const titleVal = titleInput.value.trim();
     const scriptName = scene === '代码' ? (scriptInput.value.trim() || null) : null;
-    const courseName = scene === '公开课' ? (courseInput.value.trim() || null) : null;
+    let courseName: string | null = null;
+    let coursePath: string | null = null;
+    if (scene === '公开课') {
+      const cv = courseInput.value.trim();
+      if (cv) {
+        courseName = cv;
+        // 课程路径（对照 memo 语义）：建议点选记录的 path 仅在名字一致时采用；
+        // 手改名字按名匹配建议列表兜底；匹配不到置 null（旧 path 必须清，防指向旧文件）
+        if (pickedCourse && pickedCourse.name === cv) coursePath = pickedCourse.path;
+        else {
+          const matched = courseNotes.find((n) => n.name.toLowerCase() === cv.toLowerCase());
+          if (matched) coursePath = matched.path;
+        }
+      }
+    }
     // 剪藏：标题可选（未填则用内容）
     const finalTitle = scene === '剪藏' && titleVal ? titleVal : content;
     const { url } = extractUrlAndDisplay(content);
@@ -1121,6 +1168,7 @@ export function openEditor(item: TodoItem | null): void {
             notePosition: posState.notePosition,
             scriptName,
             courseName,
+            coursePath,
             url: url ?? editing.url,
           } as any);
           emitDomainEvent('memo', { kind: 'edited', old: { title: editing.title }, next: { title: finalTitle, scene, priority, due } });
@@ -1138,7 +1186,7 @@ export function openEditor(item: TodoItem | null): void {
             notePosition: posState.notePosition,
             scriptName,
             courseName,
-            coursePath: null,
+            coursePath,
             linkedNote: null,
             url,
           };

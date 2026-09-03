@@ -807,3 +807,58 @@ describe('移动端默认全屏（ticket 68）', () => {
     expect(settingNames()).toContain('移动端默认全屏');
   });
 });
+
+// ==================== 编辑保存保留 url（剪藏/链接条目普通编辑不丢原网址） ====================
+
+describe('编辑保存保留 url', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+    localStorage.clear();
+    vi.useRealTimers();
+    clearNotices();
+  });
+
+  afterEach(() => {
+    MockPlatform.isMobile = false;
+  });
+
+  it('编辑保存：内容不含链接 → 原 url 保留（修复前被抹成 null）；内容换新链接 → 覆盖', async () => {
+    const vault = new MockVault();
+    await initApp(vault);
+    await seedItems(vault, [
+      { id: '1', title: '一篇剪藏', scene: '剪藏', priority: 'minor', created: '2025-06-14 10:00:00', completed: null, url: 'https://example.com/old' },
+    ]);
+    await App.refresh();
+    // 打开编辑（回填显示文本，不含 URL）→ 不动内容直接保存
+    UIManager.showAddDialog(App.state.todoItems[0]);
+    const content = document.getElementById('add-todo-content') as HTMLTextAreaElement;
+    expect(content.value).toBe('一篇剪藏');
+    (document.getElementById('add-todo-save') as HTMLButtonElement).click();
+    await new Promise((r) => setTimeout(r, 30));
+    let items = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(items[0].url).toBe('https://example.com/old');
+    expect(items[0].title).toBe('一篇剪藏');
+    // 再编辑：内容里带新链接 → 覆盖为链接条目新语义（title 取显示文本）
+    await App.loadData();
+    UIManager.showAddDialog(App.state.todoItems[0]);
+    const content2 = document.getElementById('add-todo-content') as HTMLTextAreaElement;
+    content2.value = '新链接文章 https://example.com/new 阅读后整理';
+    (document.getElementById('add-todo-save') as HTMLButtonElement).click();
+    await new Promise((r) => setTimeout(r, 30));
+    items = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(items[0].url).toBe('https://example.com/new');
+  });
+
+  it('新建条目：内容不含链接 → url 为 null（不变）', async () => {
+    const vault = new MockVault();
+    await initApp(vault);
+    UIManager.showAddDialog(null);
+    const content = document.getElementById('add-todo-content') as HTMLTextAreaElement;
+    content.value = '纯文本备忘';
+    (document.getElementById('add-todo-save') as HTMLButtonElement).click();
+    await new Promise((r) => setTimeout(r, 30));
+    const items = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(items[0].url).toBeNull();
+  });
+});

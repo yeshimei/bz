@@ -7,6 +7,7 @@ import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { getSettings } from '../core/settings-provider';
 import { jsonFileStore, storageFile } from '../core/storage';
+import moment from 'moment';
 import { DEFAULT_CATEGORIES } from './default-categories.gen';
 import type { BelongingsDatabase } from './types';
 
@@ -38,9 +39,10 @@ export async function loadDatabase(): Promise<BelongingsDatabase> {
   }).read();
   let db: BelongingsDatabase;
   try {
-    // P2 形状容错：非对象/空对象/数组 → 走既有失败 notice 路径（不再 TypeError 白屏）
-    if (!raw || typeof raw !== 'object' || Array.isArray(raw) || Object.keys(raw).length === 0) {
-      throw new Error('数据文件结构异常（非对象或空对象）');
+    // P2 形状容错：非对象/数组 → 走既有失败 notice 路径（不再 TypeError 白屏）；
+    // 合法空对象 {}（文件被手动清空等）视为空库，不告警
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      throw new Error('数据文件结构异常（非对象）');
     }
     db = raw as BelongingsDatabase;
   } catch (error) {
@@ -77,22 +79,20 @@ export async function saveDatabase(database: BelongingsDatabase): Promise<void> 
 
 // ----- 工具函数（复用） -----
 
+/** 已用天数（本地日历日口径，对照 memo/due 的 moment 用法）：
+ *  购买日与今天按本地时区取自然日相减；当天/无效日期 = 0 天（全价）。
+ *  原 new Date('YYYY-MM-DD') 按 UTC 解析，UTC+8 早 8 点前会多算一天。 */
+export function calculateDaysUsed(purchaseDate: string): number {
+  const purchase = moment(String(purchaseDate || '').slice(0, 10), 'YYYY-MM-DD');
+  if (!purchase.isValid()) return 0;
+  const days = moment().startOf('day').diff(purchase.startOf('day'), 'days');
+  return days > 0 ? days : 0;
+}
+
 export function calculateDailyCost(price: number, purchaseDate: string): string {
-  const purchase = new Date(purchaseDate);
-  const now = new Date();
-  const diffTime = Math.abs(now.getTime() - purchase.getTime());
-  const diffDays = Math.ceil(diffTime / 86400000);
-  // P2 形状容错：无效日期（NaN）与当天购买同走全价，不产出 "NaN"
+  const diffDays = calculateDaysUsed(purchaseDate);
+  // 当天/无效日期（0 天）同走全价，不产出 "NaN"
   if (!(diffDays > 0)) return price.toFixed(2);
   const dailyCost = price / diffDays;
   return dailyCost < 0.01 ? dailyCost.toFixed(4) : dailyCost.toFixed(2);
-}
-
-export function calculateDaysUsed(purchaseDate: string): number {
-  const purchase = new Date(purchaseDate);
-  const now = new Date();
-  const diffTime = Math.abs(now.getTime() - purchase.getTime());
-  // P2 形状容错：无效日期按 0 天，不产出 NaN
-  if (!isFinite(diffTime)) return 0;
-  return Math.ceil(diffTime / 86400000);
 }

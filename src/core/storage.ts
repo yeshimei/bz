@@ -44,6 +44,29 @@ export function storageFile(name: string, base?: string): string {
   return `${dir}/${name}`;
 }
 
+/**
+ * 同路径读改写事务串行队列（模块级）。
+ * jsonFileStore 本身无锁：同一文件被多个 store 实例（如 memo UI 的 DataManager 与 todo UI 的
+ * TodoData，同写 memo.json）并发「读→改→写」时，后写者会用陈旧基线覆盖先写者（丢写）。
+ * 把每个「读→改→写」整体作为 task 入队（键 = 文件路径），同类事务即互斥串行；
+ * 前序任务失败不阻塞后续；队尾空闲时清理条目防 Map 无限增长。
+ */
+const fileTaskQueues = new Map<string, Promise<unknown>>();
+
+export function enqueueFileTask<T>(filePath: string, task: () => Promise<T>): Promise<T> {
+  const prev = fileTaskQueues.get(filePath) ?? Promise.resolve();
+  const run = prev.then(task, task); // 前序成败都不阻塞本任务
+  const tail = run.then(
+    () => undefined,
+    () => undefined
+  );
+  fileTaskQueues.set(filePath, tail);
+  void tail.then(() => {
+    if (fileTaskQueues.get(filePath) === tail) fileTaskQueues.delete(filePath);
+  });
+  return run;
+}
+
 /** Obsidian vault.create 对已存在路径抛错（消息含 "already exists"）——并发首建竞态判定 */
 function isAlreadyExistsError(e: unknown): boolean {
   const msg = e instanceof Error ? e.message : String(e);
