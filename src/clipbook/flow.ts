@@ -28,14 +28,19 @@ let curKey = '';
 let openedAt = 0;
 let accumMs = 0;
 
-/** 切换阅读目标（UI 选中变化/关闭时调用；同篇不重置累计） */
+/** 切换阅读目标（UI 选中变化/关闭时调用；同篇不重置累计）
+ *  C7：同 key 重渲染（renderReader 反复触发）不再重置 openedAt——此前每次都重开计时，
+ *  上一段可视时长被丢弃致行为流 durationMin 偏小；仅切换目标时归零重开。 */
 export function setReadingSession(key: string): void {
   if (key !== curKey) {
     // 切换目标：旧篇累计封存逻辑（本实现不跨条目恢复，故归零）
     curKey = key;
     accumMs = 0;
+    openedAt = Date.now();
+  } else if (!openedAt) {
+    // 同篇且已暂停：恢复计时起点
+    openedAt = Date.now();
   }
-  openedAt = Date.now();
 }
 
 /** 暂停会话（面板隐藏/动作执行前调用；并入累计） */
@@ -51,6 +56,11 @@ function durationMin(): number {
   const now = Date.now();
   const total = (openedAt ? now - openedAt : 0) + accumMs;
   return Math.max(1, Math.round(total / 60000));
+}
+
+/** 测试钩子：读当前会话状态（C7 回归保护：同 key 重入不丢累计） */
+export function __readingSessionStateForTests(): { curKey: string; accumMs: number; opened: boolean } {
+  return { curKey, accumMs, opened: openedAt > 0 };
 }
 
 // ---------- news.json 统计/落盘串行队列 ----------
@@ -125,7 +135,8 @@ export async function flowSave(article: any): Promise<boolean> {
   }
   pauseReadingSession();
   try {
-    await writeClipNote(raw); // 内部 notice 成功/失败
+    const ok = await writeClipNote(raw); // 内部 notice 成功/失败；false = 空标题/取消覆盖/写盘异常
+    if (!ok) return false; // 未写盘 → 不标已处理、不进行为流（防文章被静默消费）
     // 写成功 → 标已处理（读盘重取 raw 最新态后写；writeClipNote 用传入 raw，标记同样适用）
     markHandled(raw, 'saved');
     bumpStats('saved', raw);

@@ -122,4 +122,51 @@ describe('clipbook UI 桌面三栏', () => {
     expect(document.querySelector('.bz-clip-overlay')).toBeNull();
     expect(M.overlay).toBeNull();
   });
+
+  it('C2/C6：同 UP 多条未读 rail 只出一行；upInfo 回填名字', async () => {
+    boot();
+    // 同 UP（author=9823496）3 条未读 + upInfo 回填名「影视飓风」
+    const app = getApp();
+    const raw = JSON.parse((app.vault as any).files.get('CONFIG/STORAGE/news.json'));
+    raw.articles = [
+      { platform: 'B站', title: '视频一', url: 'https://b23.tv/1', author: '9823496', date: '2026-09-01 08:00:00', body: 'b1' },
+      { platform: 'B站', title: '视频二', url: 'https://b23.tv/2', author: '9823496', date: '2026-09-01 09:00:00', body: 'b2' },
+      { platform: 'B站', title: '视频三', url: 'https://b23.tv/3', author: '9823496', date: '2026-09-01 10:00:00', body: 'b3' },
+    ];
+    raw.bilibiliUpInfo = { '9823496': { name: '影视飓风', avatar: 'https://a.b/c.png' } };
+    (app.vault as any).files.set('CONFIG/STORAGE/news.json', JSON.stringify(raw));
+    openClipbook(app);
+    await vi.waitFor(() => expect(M.open).toBe(true));
+    await vi.waitFor(() => expect(M.articles.length).toBe(3));
+    // rail：同 UP 去重后只有一行，显示回填名「影视飓风」而非 uid
+    const upRows = [...document.querySelectorAll('.bz-clip-rail-row')].filter((r) =>
+      (r as HTMLElement).textContent!.includes('影视飓风')
+    );
+    expect(upRows.length).toBe(1);
+    // uid 原文不再作为行名出现
+    const uidRows = [...document.querySelectorAll('.bz-clip-rail-row')].filter((r) =>
+      (r as HTMLElement).textContent!.includes('9823496')
+    );
+    expect(uidRows.length).toBe(0);
+    // 中栏 UP 名也回填（srcName）
+    expect(document.querySelector('.bz-clip-list')!.textContent).toContain('影视飓风');
+    closePanel();
+  });
+
+  it('C5：隐藏期目录事件不丢——重开面板按脏标记重读', async () => {
+    const vault = boot();
+    openClipbook(getApp());
+    await vi.waitFor(() => expect(M.articles.length).toBe(3));
+    closePanel();
+    expect(M.open).toBe(false);
+    // 隐藏期新增剪藏笔记（触发 reloadIfOpen——面板关着，事件只置脏）
+    vault.files.set('归档/网页剪藏/剪藏笔记B.md', '---\nurl: "https://new.example.com/x"\ncreated: 2026-09-02 10:00:00\n---\n正文B');
+    const { reloadIfOpen } = await import('../../src/clipbook/ui');
+    reloadIfOpen();
+    // 重开：脏标记生效 → 重读后剪藏本计数 +1
+    showPanel();
+    await vi.waitFor(() => expect(M.open).toBe(true));
+    await vi.waitFor(() => expect((M.clipNotes || []).length).toBe(2));
+    closePanel();
+  });
 });

@@ -17,8 +17,6 @@ import { escManager } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
 import { tryGetSettings } from '../core/settings-provider';
 import { notice } from '../core/notice';
-import { openLiteratureAddTask } from '../literature';
-import type { ClipArticle } from './types';
 import { localDatetime, toDatetime } from './constants';
 
 const yamlEscape = (v: any): string =>
@@ -30,36 +28,23 @@ export function clipDirOf(): string {
   return (s && s.articleDirectory) || '归档/网页剪藏';
 }
 
-/** 保存动作分流：B站视频 → 文献盒；其余 news 条目 → 写剪藏 */
-export function saveArticle(article: ClipArticle): Promise<void> {
-  const raw = article && article.raw;
-  if (!raw) return Promise.resolve();
-  if (isBiliVideoLike(raw)) {
-    openLiteratureAddTask(getApp(), { url: raw.url, title: raw.title || null, uploader: raw.author || null });
-    return Promise.resolve();
-  }
-  return writeClipNote(raw);
-}
+// C10：原 saveArticle 分流导出已删（无调用方——flow.ts 内联 B站/写剪藏分流）；
+// B站分流逻辑在 flow.flowSave 内实现。
 
-/** B站视频判定（与 store.isBiliVideo 同语义，避免循环依赖） */
-function isBiliVideoLike(a: any): boolean {
-  return a?.platform === 'B站' && !!String(a?.url || '').trim();
-}
-
-/** 写剪藏笔记（news 原文 raw） */
-export async function writeClipNote(raw: any): Promise<void> {
+/** 写剪藏笔记（news 原文 raw）。返回是否写盘成功；空标题/取消覆盖/写盘异常均返回 false（调用方不得标已处理） */
+export async function writeClipNote(raw: any): Promise<boolean> {
   const app = getApp();
   const dir = clipDirOf();
   const cleanTitle = String(raw.title || '').replace(/[\\/:*?"<>|]/g, '').trim();
   if (!cleanTitle) {
     notice('标题为空', 'error');
-    return;
+    return false;
   }
   const filePath = `${dir}/${cleanTitle}.md`;
 
   if (app.vault.getAbstractFileByPath(filePath)) {
     const ok = await confirmOverwrite(filePath);
-    if (!ok) return;
+    if (!ok) return false;
   }
 
   const tagsYaml = (raw.tags || []).map((t: string) => `  - "${yamlEscape(t)}"`).join('\n');
@@ -93,9 +78,11 @@ ${body}`;
     if (existing) await app.vault.modify(existing as TFile, md);
     else await app.vault.create(filePath, md);
     notice(`已保存：${cleanTitle}`, 'success');
+    return true;
   } catch (e) {
     console.error('[剪藏本] 保存剪藏失败', e);
     notice('保存失败，请稍后重试', 'error');
+    return false;
   }
 }
 
